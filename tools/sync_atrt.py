@@ -106,7 +106,8 @@ def parse(src):
             tasks.append({"client": norm_client(r[1]), "task": r[3], "am": r[4] if len(r) > 4 else "",
                           "ae": norm_ae(r[5] if len(r) > 5 else ""), "due": disp, "duekey": list(key),
                           "status": status, "action": find_action(r), "thread": find_thread(r),
-                          "is_test": is_test(r[3])})
+                          "is_test": is_test(r[3]),
+                          "header": r[7] if len(r) > 7 else "", "recv": parse_due(r[0])[1]})
         elif r[0] and not dre.match(r[0]) and any("Project Plan" in c or "Onboarding" in c for c in r):
             plan = next((c for c in r if "Project Plan" in c or "Onboarding" in c), "")
             plans.append({"client": r[0].strip(), "category": r[1].strip() if len(r) > 1 else "", "plan": plan})
@@ -224,6 +225,24 @@ def render_global(tasks):
                "synced": f'{td.day:02d} {MONTHS[td.month]} {td.year}'}
     return f'<script>window.ATRT={json.dumps(payload, ensure_ascii=False)};</script>'
 
+def render_comms(tasks):
+    comms = [t for t in tasks if t.get("thread")]
+    comms = list(reversed(comms))[:20]  # source is roughly chronological; show most-recent
+    rows = "".join(
+        f'<tr><td><b>{esc(t["client"])}</b></td>'
+        f'<td>{esc((t.get("header") or t["task"])[:82])}</td>'
+        f'<td>{esc(t.get("recv") or "—")}</td>'
+        f'<td><span class="tag tag-{STATUS_CLASS.get(t["status"],"hold")}">{esc(t["status"])}</span></td>'
+        f'<td><a class="thread" href="{esc(t["thread"])}" target="_blank" rel="noopener">Open ✉</a></td></tr>'
+        for t in comms)
+    return (
+        '<div class="panel">'
+        f'<h3>Client comms — from email</h3><div class="sub">{len(comms)} recent client threads the tracker captured from email · linked to Gmail</div>'
+        '<div style="overflow-x:auto"><table class="logtable"><thead><tr><th>Account</th><th>Subject / task</th><th>Received</th><th>Status</th><th>Thread</th></tr></thead>'
+        f'<tbody>{rows}</tbody></table></div>'
+        '<p class="note"><b>MVP:</b> these are the client emails (from ray@feedspark.com) the ATRT Tracker logged as tasks, linked back to the Gmail thread. '
+        'A live inbox pull is the next step — it needs the FeedSpark work account connected (the current integration points at the personal inbox).</p></div>')
+
 def splice(text, name, frag):
     a, b = f"<!-- ATRT:{name}:START -->", f"<!-- ATRT:{name}:END -->"
     i, j = text.find(a), text.find(b)
@@ -241,8 +260,8 @@ def main(argv):
         print(f"loaded {len(tasks)} tasks, {len(plans)} plans")
     doc = open(FCC, encoding="utf-8").read()
     for name, frag in [("KPI", render_kpi(tasks, plans)), ("LOG", render_log(tasks)),
-                       ("TESTS", render_tests(tasks)), ("PLANS", render_plans(plans)),
-                       ("GLOBAL", render_global(tasks))]:
+                       ("COMMS", render_comms(tasks)), ("TESTS", render_tests(tasks)),
+                       ("PLANS", render_plans(plans)), ("GLOBAL", render_global(tasks))]:
         doc = splice(doc, name, frag)
     open(FCC, "w", encoding="utf-8").write(doc)
     tk, _ = today_key()
