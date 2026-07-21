@@ -147,20 +147,23 @@ All HTML strategy decks include the inline edit + JSON patch sync system:
 
 ### FeedSpark-specific (do NOT use NAC resources)
 - KV namespace: `FEEDSPARK_DECK_EDITS` (id: `d93b5ac576c74f0d8a315c5b92dc8e16`)
-- Worker: `feedspark` (dir `cloudflare/feedspark-deck/`) at `feedspark.ray-vtt.workers.dev` — serves HTML decks with live-edit KV persistence
+- Worker: `feedspark` (dir `cloudflare/feedspark-deck/`) at `feedspark.ray-vtt.workers.dev` — the command center (landing hub at `/` + strategy decks at `/deck/<slug>`) with live-edit KV persistence
 - Requires Cloudflare Access gating for commercial data
 
-### Worker API
+### Worker API (multi-page command center)
 ```
-GET  /              → serve deck HTML (deck bundled from git + injected editor widget)
-GET  /api/edits     → return saved edits as JSON
-PUT  /api/edits     → save edit patch (merges with existing)
-DELETE /api/edits   → clear saved edits
-GET  /api/template  → info only; template is git-bundled (push to main to change it)
+GET  /                          → command center landing page (git-bundled + injected editor)
+GET  /deck/yumove               → YuMOVE strategy deck (git-bundled + injected editor)
+GET  /api/edits?page=<slug>     → return a page's saved edits as JSON
+PUT  /api/edits?page=<slug>     → save an edit patch (merges with existing)
+DELETE /api/edits?page=<slug>   → clear a page's saved edits
+GET  /api/template              → info only; pages are git-bundled (push to main to change them)
 ```
-- **Template = git**: `docs/YuMOVE_Strategy_Review_Jul26.html` is imported into the worker as a Text
-  module (root `wrangler.toml` `rules`). Push to `main` → Cloudflare rebuilds → new deck live. No
-  `PUT /api/template`. `wrangler.toml` lives at the **repo root** (deploy from root).
+- **Pages = git**: `docs/FeedSpark_Command_Center.html` (`/`) and `docs/YuMOVE_Strategy_Review_Jul26.html`
+  (`/deck/yumove`) are imported into the worker as Text modules (root `wrangler.toml` `rules`).
+  **Add a page = add an import + one line in the worker's `PAGES` map.** Push to `main` → Cloudflare
+  rebuilds → live. No `PUT /api/template`. `wrangler.toml` lives at the **repo root** (deploy from root).
+  KV edits are namespaced per page (`edits:<slug>`), so pages never collide.
 
 ---
 

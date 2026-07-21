@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FeedSpark · Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --orange:#F5A623; --orange-deep:#ED6F0B; --orange-ink:#B1550A;
+    --ink:#333333; --ink-2:#5b6470; --muted:#8a94a0;
+    --line:#E6E6E6; --paper:#ffffff; --wash:#F7F7F5; --wash-2:#F1F1EE;
+    --navy:#1A365D; --good:#15803D; --warn:#B45309; --risk:#B91C1C;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:Lato,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);
+    background:var(--paper);line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--orange-ink);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+
+  /* ---- topbar ---- */
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1120px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:20px}
+  .brand{font-weight:900;font-size:19px;letter-spacing:-.01em}
+  .brand span{color:var(--orange-deep)}
+  .tb-tag{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    border-left:1px solid var(--line);padding-left:14px}
+  .tb-nav{margin-left:auto;display:flex;gap:22px}
+  .tb-nav a{font-size:13.5px;font-weight:700;color:var(--ink-2)}
+  .tb-nav a:hover{color:var(--orange-deep);text-decoration:none}
+  .tb-who{font-size:12.5px;color:var(--muted);text-align:right;line-height:1.35;border-left:1px solid var(--line);padding-left:16px}
+  .tb-who b{color:var(--ink);font-weight:700}
+
+  /* ---- hero ---- */
+  .hero{padding:58px 0 34px;border-bottom:1px solid var(--line);background:
+    linear-gradient(180deg,#fff 0%,var(--wash) 100%)}
+  .eyebrow{font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--orange-deep)}
+  .hero h1{font-size:42px;line-height:1.1;margin:12px 0 0;font-weight:900;letter-spacing:-.02em;max-width:560px}
+  .hero .lede{font-size:17px;color:var(--ink-2);max-width:62ch;margin:16px 0 0}
+  .statstrip{display:flex;flex-wrap:wrap;gap:34px;margin-top:30px}
+  .statstrip .s .n{font-size:30px;font-weight:900;letter-spacing:-.02em}
+  .statstrip .s .n small{font-size:15px;color:var(--muted);font-weight:700}
+  .statstrip .s .l{font-size:12.5px;color:var(--muted);font-weight:700;letter-spacing:.02em;text-transform:uppercase;margin-top:2px}
+
+  /* ---- sections ---- */
+  section{padding:52px 0}
+  section+section{border-top:1px solid var(--line)}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:26px}
+  .sec-head h2{font-size:23px;font-weight:900;letter-spacing:-.01em;margin:0}
+  .sec-head .k{font-size:12px;font-weight:900;color:var(--orange);letter-spacing:.12em;text-transform:uppercase}
+  .sec-head p{margin:0 0 0 auto;font-size:13.5px;color:var(--muted);max-width:44ch;text-align:right}
+
+  /* ---- account grid ---- */
+  .accts{display:grid;grid-template-columns:repeat(auto-fill,minmax(324px,1fr));gap:18px}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:20px 20px 16px;display:flex;flex-direction:column;transition:box-shadow .15s,transform .15s}
+  .card:hover{box-shadow:0 2px 4px rgba(16,24,40,.05),0 14px 34px rgba(16,24,40,.10);transform:translateY(-2px)}
+  .card .top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .card h3{font-size:18px;font-weight:900;margin:0;letter-spacing:-.01em}
+  .card .cat{font-size:12.5px;color:var(--muted);font-weight:700;margin-top:3px}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:900;letter-spacing:.04em;
+    text-transform:uppercase;padding:5px 10px;border-radius:100px;white-space:nowrap}
+  .pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+  .pill.live{color:var(--good);background:#EBF7EF}
+  .pill.active{color:var(--orange-ink);background:#FCF1E3}
+  .pill.risk{color:var(--risk);background:#FBEBEB}
+  .pill.done{color:var(--navy);background:#EAEFF6}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin:15px 0 0}
+  .chip{font-size:12px;font-weight:700;color:var(--ink-2);background:var(--wash);border:1px solid var(--line);
+    border-radius:8px;padding:5px 9px}
+  .chip b{color:var(--ink);font-weight:900}
+  .card p.note{font-size:13px;color:var(--ink-2);margin:14px 0 0;line-height:1.5}
+  .card .links{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:16px}
+  .lnk{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;padding:7px 12px;border-radius:8px;
+    border:1px solid var(--line);color:var(--ink-2);background:#fff}
+  .lnk:hover{border-color:var(--orange);color:var(--orange-deep);text-decoration:none}
+  .lnk.primary{background:var(--orange);border-color:var(--orange);color:#fff}
+  .lnk.primary:hover{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+  .lnk.disabled{opacity:.5;pointer-events:none}
+
+  /* ---- two-column blocks ---- */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+  .panel h3{margin:0 0 4px;font-size:16px;font-weight:900}
+  .panel .sub{font-size:12.5px;color:var(--muted);font-weight:700;margin-bottom:14px}
+  .people{display:flex;flex-direction:column;gap:12px}
+  .person{display:flex;align-items:center;gap:12px}
+  .avatar{width:38px;height:38px;border-radius:50%;background:var(--wash-2);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:var(--navy);flex:none}
+  .person .who{font-size:14px;font-weight:800}
+  .person .role{font-size:12.5px;color:var(--muted)}
+  .planlist{display:flex;flex-direction:column;gap:2px}
+  .planrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 2px;border-bottom:1px solid var(--line)}
+  .planrow:last-child{border-bottom:0}
+  .planrow .nm{font-size:14px;font-weight:800}
+
+  /* ---- log scaffold ---- */
+  .logtable{width:100%;border-collapse:collapse;font-size:13.5px}
+  .logtable th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    font-weight:900;padding:8px 10px;border-bottom:1px solid var(--line)}
+  .logtable td{padding:11px 10px;border-bottom:1px solid var(--line);color:var(--ink-2)}
+  .logtable td b{color:var(--ink)}
+  .logtable tr:last-child td{border-bottom:0}
+  .tag{font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;background:var(--wash);color:var(--ink-2);border:1px solid var(--line)}
+  .scaffold{position:relative}
+  .scaffold::after{content:"Preview — wiring next";position:absolute;top:16px;right:16px;font-size:10.5px;font-weight:900;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--orange-ink);background:#FCF1E3;border:1px solid #F3D9B8;
+    padding:4px 9px;border-radius:100px}
+
+  /* ---- roadmap ---- */
+  .road{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .rd{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+  .rd .when{font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--orange-deep)}
+  .rd h4{margin:8px 0 12px;font-size:15px;font-weight:900}
+  .rd ul{margin:0;padding-left:18px}
+  .rd li{font-size:13.5px;color:var(--ink-2);margin-bottom:7px}
+  .rd.now{border-top:3px solid var(--orange)}
+  .rd.next{border-top:3px solid var(--navy)}
+  .rd.later{border-top:3px solid var(--line)}
+
+  /* ---- footer ---- */
+  footer{border-top:1px solid var(--line);background:var(--wash);padding:26px 0;margin-top:8px}
+  .foot-in{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase}
+
+  /* ---- reveal ---- */
+  .rv{opacity:0;transform:translateY(16px);transition:opacity .55s ease,transform .55s cubic-bezier(.22,.61,.36,1)}
+  .rv.in{opacity:1;transform:none}
+
+  @media(max-width:900px){
+    .grid-2,.road{grid-template-columns:1fr}
+    .tb-nav{display:none}
+    .hero h1{font-size:32px}
+  }
+  @media(max-width:560px){
+    .tb-who{display:none}.statstrip{gap:22px}
+  }
+  @media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">Feed<span>Spark</span></div>
+    <div class="tb-tag">Command Center</div>
+    <nav class="tb-nav">
+      <a href="#accounts">Accounts</a>
+      <a href="#plans">Plans</a>
+      <a href="#team">Team</a>
+      <a href="#log">Time&nbsp;log</a>
+      <a href="#roadmap">Roadmap</a>
+    </nav>
+    <div class="tb-who"><b>Ray Vũ</b><br>Senior Account Manager</div>
+  </div>
+</div>
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Private &amp; Confidential · July 2026</div>
+    <h1>The operating hub for FeedSpark account management.</h1>
+    <p class="lede">One place to run the accounts — strategy decks, project plans, the team, and the
+      time we spend. Built to run lean now and grow into an automated command center: client comms,
+      interaction logging, and hours that report themselves.</p>
+    <div class="statstrip">
+      <div class="s"><div class="n">6</div><div class="l">Active accounts</div></div>
+      <div class="s"><div class="n">7</div><div class="l">Brands managed</div></div>
+      <div class="s"><div class="n">1</div><div class="l">Live strategy deck</div></div>
+      <div class="s"><div class="n">30+</div><div class="l">Markets covered</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== ACCOUNTS ===== -->
+<section id="accounts">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="k">01</span><h2>Accounts</h2>
+      <p>Every account, its status, and the fastest route into its work.</p>
+    </div>
+    <div class="accts">
+
+      <!-- YuMOVE -->
+      <div class="card rv">
+        <div class="top">
+          <div><h3>YuMOVE</h3><div class="cat">Lintbells · Pet supplements · UK</div></div>
+          <span class="pill live">Strategy live</span>
+        </div>
+        <div class="chips">
+          <span class="chip"><b>2</b> channels · Shopping + Meta</span>
+          <span class="chip"><b>24h</b> + 21h ad-hoc / mo</span>
+          <span class="chip">Benefit copy <b>+24.7%</b></span>
+        </div>
+        <p class="note">Strategy Review live. Next-gen AI-Ready attribute build in flight; POC scoping
+          with Simon, bundles with Becca, tracking with Kinase.</p>
+        <div class="links">
+          <a class="lnk primary" href="/deck/yumove">Open strategy deck →</a>
+          <a class="lnk" href="https://docs.google.com/spreadsheets/d/1RMTN99Cw0J3l5mORwYPpITnoi5HCPt7tET4u8rQbsq0/edit#gid=841484251" target="_blank" rel="noopener">Project plan</a>
+        </div>
+      </div>
+
+      <!-- Reiss -->
+      <div class="card rv">
+        <div class="top">
+          <div><h3>Reiss</h3><div class="cat">Fashion · UK · 29 markets</div></div>
+          <span class="pill active">Tachyon live</span>
+        </div>
+        <div class="chips">
+          <span class="chip"><b>60</b> feeds</span>
+          <span class="chip">Golden Record <b>88.6%</b></span>
+          <span class="chip">AI Readiness <b>Tier 1→2</b></span>
+        </div>
+        <p class="note">Q2→Q3 strategy review delivered. Tachyon pipeline live: intent generation →
+          Shopping Graph matching → roundel overlay. Local-Language study across 16 EU/ME markets.</p>
+        <div class="links">
+          <a class="lnk disabled" href="#">Deck (SharePoint)</a>
+          <a class="lnk" href="#plans">Project plan</a>
+        </div>
+      </div>
+
+      <!-- ELC -->
+      <div class="card rv">
+        <div class="top">
+          <div><h3>Estée Lauder</h3><div class="cat">ELC · Luxury beauty · 14+ brands</div></div>
+          <span class="pill risk">Retention</span>
+        </div>
+        <div class="chips">
+          <span class="chip"><b>£498</b>/pcm per brand</span>
+          <span class="chip">DPA/PPC <b>£300</b>/pcm</span>
+          <span class="chip"><b>30+</b> feed issues</span>
+        </div>
+        <p class="note">At-risk account — retention defended (defence deck + parting-gift app).
+          Conversational-attribute story positioned as the differentiator. 5 fiscal cycles.</p>
+        <div class="links">
+          <a class="lnk" href="https://docs.google.com/spreadsheets/d/1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y/edit#gid=1574286896" target="_blank" rel="noopener">Project plan</a>
+        </div>
+      </div>
+
+      <!-- Schuh -->
+      <div class="card rv">
+        <div class="top">
+          <div><h3>Schuh</h3><div class="cat">Footwear · UK · EN/DE</div></div>
+          <span class="pill active">Onboarded</span>
+        </div>
+        <div class="chips">
+          <span class="chip">Onboarding <b>46h</b> UK/IE/DE</span>
+          <span class="chip">AI Readiness Scorecard</span>
+        </div>
+        <p class="note">AI Readiness Scorecard and 12-slide onboarding deck delivered. Converse Chuck
+          Taylor as the worked example. Team channel live at schuh@feedspark.com.</p>
+        <div class="links">
+          <a class="lnk" href="https://docs.google.com/spreadsheets/d/1rbr8FwZagdZdctR_fNesixm4-uDWG1VJPnBCJBdjSxc/edit" target="_blank" rel="noopener">Project plan</a>
+        </div>
+      </div>
+
+      <!-- Monsoon / Accessorize -->
+      <div class="card rv">
+        <div class="top">
+          <div><h3>Monsoon / Accessorize</h3><div class="cat">Fashion &amp; accessories · UK</div></div>
+          <span class="pill active">Active</span>
+        </div>
+        <div class="chips">
+          <span class="chip">Monsoon <b>12,314</b> SKUs · 32h</span>
+          <span class="chip">Accessorize <b>5,414</b> SKUs · 27h</span>
+          <span class="chip"><b>£585</b>+VAT / 8h block</span>
+        </div>
+        <p class="note">Two brands, one account. AI-optimisation pricing tool built (retainer comparison,
+          per-cohort AI tiers, task library). Dress overlay / image-cycling work ongoing.</p>
+        <div class="links">
+          <a class="lnk disabled" href="#">Pricing tool</a>
+          <a class="lnk" href="#plans">Project plan</a>
+        </div>
+      </div>
+
+      <!-- Superdry -->
+      <div class="card rv">
+        <div class="top">
+          <div><h3>Superdry</h3><div class="cat">Fashion · Service review</div></div>
+          <span class="pill done">Review delivered</span>
+        </div>
+        <div class="chips">
+          <span class="chip">Service Review V2</span>
+          <span class="chip">AM + Shopping YoY</span>
+        </div>
+        <p class="note">Service review delivered (SharePoint). Account-management hours deck and Google
+          Shopping YoY growth story built. Reference decks in the repo.</p>
+        <div class="links">
+          <a class="lnk disabled" href="#">Deck (SharePoint)</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== PLANS ===== -->
+<section id="plans">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="k">02</span><h2>Project plans</h2>
+      <p>Live Google Sheets — hours, tasks, sign-off. The source of truth for time.</p>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <h3>Google Sheet plans</h3>
+        <div class="sub">Wrapped &amp; locked in hours on the Monday catch-up cadence</div>
+        <div class="planlist">
+          <div class="planrow"><span class="nm">YuMOVE — Lintbells</span>
+            <a class="lnk" href="https://docs.google.com/spreadsheets/d/1RMTN99Cw0J3l5mORwYPpITnoi5HCPt7tET4u8rQbsq0/edit#gid=841484251" target="_blank" rel="noopener">Open sheet →</a></div>
+          <div class="planrow"><span class="nm">Estée Lauder (ELC)</span>
+            <a class="lnk" href="https://docs.google.com/spreadsheets/d/1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y/edit#gid=1574286896" target="_blank" rel="noopener">Open sheet →</a></div>
+          <div class="planrow"><span class="nm">Schuh</span>
+            <a class="lnk" href="https://docs.google.com/spreadsheets/d/1rbr8FwZagdZdctR_fNesixm4-uDWG1VJPnBCJBdjSxc/edit" target="_blank" rel="noopener">Open sheet →</a></div>
+          <div class="planrow"><span class="nm">Reiss · Monsoon/Accessorize · Superdry</span>
+            <span class="tag">to link</span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Monday catch-up</h3>
+        <div class="sub">~10–12 standing calls · plans updated, prepped, wrapped, locked</div>
+        <p class="note" style="margin-top:0">The weekly rhythm that keeps hours honest: each plan is
+          reviewed, prepped and locked against the retainer. The command center's job is to make that
+          faster — pull the numbers, surface what changed, and (next) log the interactions so the hours
+          write themselves into the strategy view.</p>
+        <div class="chips" style="margin-top:16px">
+          <span class="chip"><b>Google app access</b> · to wire</span>
+          <span class="chip">Hours → client reporting</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TEAM ===== -->
+<section id="team">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="k">03</span><h2>Team &amp; collaboration</h2>
+      <p>Who runs what — and where the hand-offs happen.</p>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <h3>The account team</h3>
+        <div class="sub">Field optimisation &amp; strategy review</div>
+        <div class="people">
+          <div class="person"><div class="avatar">RV</div><div><div class="who">Ray Vũ</div><div class="role">Senior Account Manager — accounts, strategy, commercial</div></div></div>
+          <div class="person"><div class="avatar">LN</div><div><div class="who">London Junior AM</div><div class="role">Co-manages the accounts day-to-day</div></div></div>
+          <div class="person"><div class="avatar">IN</div><div><div class="who">Content team</div><div class="role">India — titles, descriptions, attribute build</div></div></div>
+          <div class="person"><div class="avatar">AS</div><div><div class="who">ASBL</div><div class="role">Delivery partner — execution &amp; QA</div></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>How work moves</h3>
+        <div class="sub">The collaboration loop</div>
+        <p class="note" style="margin-top:0">Strategy and commercial sit with Ray; day-to-day co-management
+          with the London junior AM; production with the India content team; execution and QA with ASBL.
+          The next build wires <b>Ray ↔ ASBL comms straight into the command center</b> — every request,
+          hand-off and sign-off logged in one visible thread instead of scattered across email.</p>
+        <div class="chips" style="margin-top:16px">
+          <span class="chip">Gmail client comms · <b>MCP next</b></span>
+          <span class="chip">ASBL request log</span>
+          <span class="chip">Visible hand-offs</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TIME & INTERACTION LOG ===== -->
+<section id="log">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="k">04</span><h2>Time &amp; interaction log</h2>
+      <p>Log the interaction once → the hours report themselves to the client.</p>
+    </div>
+    <div class="panel scaffold">
+      <h3>Interaction log</h3>
+      <div class="sub">Every client touch and hand-off, timed — rolls up into the strategy view as client-facing hours</div>
+      <table class="logtable">
+        <thead><tr><th>Date</th><th>Account</th><th>Interaction</th><th>With</th><th>Type</th><th>Hrs</th></tr></thead>
+        <tbody>
+          <tr><td>Sample</td><td><b>YuMOVE</b></td><td>Strategy review prep &amp; deck build</td><td>Simon</td><td><span class="tag">Strategy</span></td><td><b>3.0</b></td></tr>
+          <tr><td>Sample</td><td><b>ELC</b></td><td>Retention defence — feed-issue triage</td><td>Alexandra</td><td><span class="tag">Account mgmt</span></td><td><b>2.5</b></td></tr>
+          <tr><td>Sample</td><td><b>Reiss</b></td><td>Tachyon roundel QA hand-off</td><td>ASBL</td><td><span class="tag">Production</span></td><td><b>1.5</b></td></tr>
+          <tr><td>Sample</td><td><b>Monsoon</b></td><td>Dress overlay image-cycling fix</td><td>Content (IN)</td><td><span class="tag">Technical</span></td><td><b>2.0</b></td></tr>
+        </tbody>
+      </table>
+      <p class="note">The mechanism: log an interaction here (or auto-capture it from Gmail), tag it to an
+        account and type, and the hours aggregate into each account's strategy view — turning "how much
+        time did we spend?" into a number the client can see, straight from the record.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ROADMAP ===== -->
+<section id="roadmap">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="k">05</span><h2>Roadmap</h2>
+      <p>Run lean now; automate the repeatable parts next.</p>
+    </div>
+    <div class="road">
+      <div class="rd now rv">
+        <div class="when">Now</div>
+        <h4>Next-gen AI-Ready feeds</h4>
+        <ul>
+          <li>YuMOVE strategy review — live &amp; editable</li>
+          <li>Conversational-attribute builds across accounts</li>
+          <li>Decks + project plans in one hub</li>
+          <li>Live edit + git-deploy, behind Access</li>
+        </ul>
+      </div>
+      <div class="rd next rv">
+        <div class="when">Next</div>
+        <h4>Comms &amp; time capture</h4>
+        <ul>
+          <li>Gmail client comms via MCP</li>
+          <li>Ray ↔ ASBL request/hand-off log</li>
+          <li>Interaction log → hours in strategy view</li>
+          <li>Google Sheets plan access wired in</li>
+        </ul>
+      </div>
+      <div class="rd later rv">
+        <div class="when">Later</div>
+        <h4>The full command center</h4>
+        <ul>
+          <li>Automate the repeatable account tasks</li>
+          <li>Client-facing time reporting from the record</li>
+          <li>One surface for every account interaction</li>
+          <li>Next-gen becomes one module of the whole</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-in">
+    <div>FeedSpark · Private &amp; Confidential</div>
+    <div>Command Center · v1</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var rv = document.querySelectorAll('.rv');
+  if(!reduce && 'IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(es){es.forEach(function(e){
+      if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},
+      {threshold:.12,rootMargin:'0px 0px -40px 0px'});
+    rv.forEach(function(el){io.observe(el)});
+  } else rv.forEach(function(el){el.classList.add('in')});
+})();
+</script>
+
+</body>
+</html>
