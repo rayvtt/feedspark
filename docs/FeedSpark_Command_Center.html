@@ -602,6 +602,9 @@
     var planCtl=editMode
       ?'<button class="lnk dz-linkplan">'+(b.plan?'Change plan link':'+ Link project plan')+'</button>'
       :(b.plan?'<a class="lnk primary" href="'+esc(b.plan)+'" target="_blank" rel="noopener">Project plan ↗</a>':'<span class="lnk disabled">'+esc(b.pn||'Plan in tracker')+'</span>');
+    var deckCtl=editMode
+      ?'<button class="lnk dz-gendeck">'+(b.deck?'↻ Regenerate deck link':'🎯 Generate deck')+'</button>'
+      :(b.deck?'<a class="lnk primary" href="'+esc(b.deck)+'" target="_blank" rel="noopener">Strategy deck →</a>':'');
     detail.innerHTML=
       '<div class="dz-head"><div class="dz-id">'+logo(b.dom,44)+'<div><h3>'+esc(name)+'</h3><div class="cat"><span'+edA('cat')+'>'+esc(b.cat||'')+'</span>'+((b.mk||editMode)?' · <span'+edA('mk')+'>'+esc(b.mk||'')+'</span>':'')+'</div></div></div>'
       +'<div class="dz-head-r">'+(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+delBtn+'</div></div>'
@@ -612,8 +615,7 @@
         +'<span class="chip"><b>'+tst.length+'</b> tests</span></div>'
       +'<div class="dz-work"><h4>Active work <span class="dz-histn">'+tasks.length+' tasks</span></h4>'+worklist(tasks)+'</div>'
       +historyBlock(name)
-      +'<div class="dz-foot">'+planCtl
-        +(b.deck?'<a class="lnk" href="'+esc(b.deck)+'">Strategy deck →</a>':'')
+      +'<div class="dz-foot">'+planCtl+deckCtl
         +(editMode?'<span class="dz-con"'+edA('con')+' data-ph="contacts…">'+esc(b.con||'')+'</span>':(b.con?'<span class="dz-con">'+esc(b.con)+'</span>':''))+'</div>';
     if(editMode){
       var del=detail.querySelector('.dz-x');
@@ -622,6 +624,15 @@
         saveStore(); mergeStore(); buildList(); var ks=Object.keys(B); if(ks.length)render(ks[0]); } };
       var lp=detail.querySelector('.dz-linkplan');
       if(lp) lp.onclick=function(){ var u=prompt('Paste the project-plan URL (Google Sheet, etc.):',b.plan||''); if(u!==null){ setField(name,'plan',u.trim()); render(name); } };
+      var gd=detail.querySelector('.dz-gendeck');
+      if(gd) gd.onclick=function(){
+        var slug=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+        if(!slug){ alert('Could not build a URL from that client name.'); return; }
+        var url='/deck/'+slug;
+        setField(name,'deck',url);
+        window.open(url+'?edit','_blank','noopener');
+        render(name);
+      };
       Array.prototype.forEach.call(detail.querySelectorAll('[data-ed]'),function(el){
         el.addEventListener('blur',function(){ setField(name, el.getAttribute('data-ed'), el.innerText.trim()); }); });
     }
