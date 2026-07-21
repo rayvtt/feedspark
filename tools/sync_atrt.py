@@ -35,6 +35,53 @@ STATUS_CLASS = {"open": "open", "with client": "client", "in progress": "progres
                 "test running": "test", "on hold": "hold", "done": "done"}
 STATUS_VOCAB = ["test running", "with client", "in progress", "on hold", "done", "open", "hide"]
 
+# brand -> category (for benchmarks)
+CATEGORY = {
+    "AllSaints": "Fashion", "Reiss": "Fashion", "Superdry": "Fashion", "Monsoon": "Fashion",
+    "Accessorize": "Fashion", "Schuh": "Footwear", "YuMOVE": "Health & supplements",
+    "Hobbycraft": "Hobby & crafts", "Estée Lauder": "Beauty", "Bobbi Brown": "Beauty",
+    "Benefit": "Beauty", "Jo Malone": "Beauty", "MAC": "Beauty", "Clinique": "Beauty",
+    "Craghoppers": "Outdoor", "Regatta": "Outdoor", "Dare2b": "Outdoor",
+    "House of Bruar": "Country & luxury", "American Golf": "Golf retail",
+}
+# FeedSpark feed-optimisation criteria: (dimension, weight, task-match regex, next-step suggestion)
+DIMS = [
+    ("Data & Golden Record", 20, r"migrat|feed|data ?field|scrape|custom label|golden|cleaning|master ?feed|supp feed|exclusion|node", "Run a Golden Record audit and close attribute gaps against the 99.9% target"),
+    ("Titles & MASK", 18, r"title|mask|\baot\b", "Restructure titles to MASK format and A/B test them"),
+    ("Conversational attributes", 16, r"q&a|question|variant|related|item.?group|attribute|conversational|popularity|document", "Build conversational attributes (Q&A, variant_option, related_product) via a supplemental feed"),
+    ("Testing cadence", 15, r"test|a/b|\bab\b|split|experiment|roadmap", "Stand up a recurring A/B testing cadence on titles and overlays"),
+    ("Creative & overlays", 12, r"overlay|roundel|\bdpa\b|image|cycler|badge|creative|social", "Add DPA / overlay creative — badges, roundels, image cycling"),
+    ("Keywords & localisation", 11, r"keyword|\bkw\b|localis|local language|\bmarket|translation|\blia\b|\bppc\b", "Expand keyword coverage and localise data fields across markets"),
+    ("AI-readiness", 8, r"ai |search intent|intent|ai mode|chatgpt|agentic|perplexity|reddit", "Prepare AI-Ready feeds: search-intent titles and AI-surface tracking"),
+]
+
+def compute_scores(tasks):
+    from collections import defaultdict, Counter
+    per = defaultdict(lambda: [0] * len(DIMS))
+    for t in tasks:
+        txt = t["task"].lower()
+        for i, (nm, w, rx, ns) in enumerate(DIMS):
+            if re.search(rx, txt):
+                per[t["client"]][i] += 1
+    scores = {}
+    for brand, counts in per.items():
+        dims, num, den = [], 0, 0
+        for i, (nm, w, rx, ns) in enumerate(DIMS):
+            s = min(100, counts[i] * 25)            # 4+ tasks in a dimension = maxed
+            dims.append({"n": nm, "s": s, "w": w})
+            num += s * w; den += w
+        total = round(num / den) if den else 0
+        cand = [d for d in dims if d["w"] >= 11]     # next step = weakest important dimension
+        nxt = min(cand, key=lambda d: (d["s"], -d["w"]))
+        ns_text = next(ns for (nm, w, rx, ns) in DIMS if nm == nxt["n"])
+        scores[brand] = {"total": total, "cat": CATEGORY.get(brand, "Other"),
+                         "dims": dims, "next": ns_text, "nextdim": nxt["n"]}
+    catv = defaultdict(list)
+    for b, s in scores.items():
+        catv[s["cat"]].append(s["total"])
+    bench = {c: round(sum(v) / len(v)) for c, v in catv.items()}
+    return scores, bench
+
 def clean(c):
     return (c or "").replace("\\*", "*").replace("\\[", "[").replace("\\]", "]").replace("\\#", "#").replace("\\>", ">").replace("\\-", "-").replace("\\_", "_").strip()
 
@@ -221,9 +268,44 @@ def render_global(tasks):
                 "od": 1 if is_overdue(t, tk) else 0, "x": 1 if t["is_test"] else 0}
         if t.get("thread"): item["u"] = t["thread"]
         brands.setdefault(t["client"], []).append(item)
+    scores, bench = compute_scores(tasks)
     payload = {"active": dict(counts), "overdue": dict(od), "brands": brands,
+               "scores": scores, "benchmarks": bench,
                "synced": f'{td.day:02d} {MONTHS[td.month]} {td.year}'}
     return f'<script>window.ATRT={json.dumps(payload, ensure_ascii=False)};</script>'
+
+def render_bench(tasks):
+    from collections import Counter
+    scores, bench = compute_scores(tasks)
+    items = sorted(bench.items(), key=lambda kv: -kv[1])
+    bars = "".join(
+        f'<div class="bmk-row"><span class="bmk-cat">{esc(c)}</span>'
+        f'<span class="bmk-track"><span class="bmk-fill" style="width:{max(v,2)}%"></span></span>'
+        f'<span class="bmk-val">{v}</span></div>' for c, v in items)
+    ranked = sorted(scores.items(), key=lambda kv: -kv[1]["total"])
+    lead = "".join(
+        f'<div class="planrow"><span class="nm">{esc(b)}<span style="color:var(--muted);font-weight:700"> · {esc(s["cat"])}</span></span>'
+        f'<span class="tag" style="background:{"#EBF7EF" if s["total"]>=66 else "#FCF1E3" if s["total"]>=40 else "#FBEBEB"};'
+        f'color:{"var(--good)" if s["total"]>=66 else "var(--orange-ink)" if s["total"]>=40 else "var(--risk)"}">'
+        f'{s["total"]}/100</span></div>' for b, s in ranked[:12])
+    catc = Counter(s["cat"] for s in scores.values())
+    comp = "".join(f'<span class="chip"><b>{v}</b> {esc(c)}</span>' for c, v in catc.most_common())
+    avg = round(sum(s["total"] for s in scores.values()) / len(scores)) if scores else 0
+    return (
+        '<div class="grid-2">'
+        '<div class="panel"><h3>Feed-optimisation score by category</h3>'
+        f'<div class="sub">Book average {avg}/100 · scored from ATRT activity against FeedSpark criteria</div>'
+        f'<div class="bmk">{bars}</div></div>'
+        '<div class="panel"><h3>Portfolio leaderboard</h3>'
+        f'<div class="sub">{len(scores)} accounts scored · furthest along on feed optimisation</div>'
+        f'<div class="planlist">{lead}</div></div>'
+        '</div>'
+        '<div class="panel" style="margin-top:18px"><h3>Portfolio composition</h3>'
+        '<div class="sub">Accounts by category</div>'
+        f'<div class="chips">{comp}</div>'
+        '<p class="note">Scores are computed from logged activity (a proxy for how far each feed is built out) against seven FeedSpark criteria — '
+        'Data &amp; Golden Record, Titles &amp; MASK, conversational attributes, testing cadence, creative/overlays, keywords/localisation and AI-readiness. '
+        'Weights are tunable in <code>tools/sync_atrt.py</code>.</p></div>')
 
 def render_comms(tasks):
     comms = [t for t in tasks if t.get("thread")]
@@ -261,7 +343,8 @@ def main(argv):
     doc = open(FCC, encoding="utf-8").read()
     for name, frag in [("KPI", render_kpi(tasks, plans)), ("LOG", render_log(tasks)),
                        ("COMMS", render_comms(tasks)), ("TESTS", render_tests(tasks)),
-                       ("PLANS", render_plans(plans)), ("GLOBAL", render_global(tasks))]:
+                       ("PLANS", render_plans(plans)), ("BENCH", render_bench(tasks)),
+                       ("GLOBAL", render_global(tasks))]:
         doc = splice(doc, name, frag)
     open(FCC, "w", encoding="utf-8").write(doc)
     tk, _ = today_key()
