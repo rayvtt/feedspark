@@ -13,6 +13,7 @@
    ],
    "status": "on hold",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -28,6 +29,7 @@
    ],
    "status": "on hold",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -43,6 +45,7 @@
    ],
    "status": "on hold",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -58,6 +61,7 @@
    ],
    "status": "on hold",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -73,13 +77,14 @@
    ],
    "status": "on hold",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
    "client": "Superdry",
    "task": "Adding stock from individual size",
    "am": "Ray",
-   "ae": "❓ invalid AE (ASPL)",
+   "ae": "ASPL",
    "due": "",
    "duekey": [
     9999,
@@ -88,6 +93,7 @@
    ],
    "status": "hide",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1989dfbd01f41cbf",
    "is_test": false
   },
   {
@@ -103,6 +109,7 @@
    ],
    "status": "hide",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1985f541605ccceb",
    "is_test": false
   },
   {
@@ -118,6 +125,7 @@
    ],
    "status": "hide",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/198a3c6388224297",
    "is_test": false
   },
   {
@@ -133,6 +141,7 @@
    ],
    "status": "hide",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/198a3c6388224297",
    "is_test": false
   },
   {
@@ -148,6 +157,7 @@
    ],
    "status": "on hold",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/199ddffb218966b3",
    "is_test": false
   },
   {
@@ -162,7 +172,8 @@
     14
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -177,7 +188,8 @@
     99
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -193,6 +205,7 @@
    ],
    "status": "on hold",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -208,6 +221,7 @@
    ],
    "status": "on hold",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -223,6 +237,7 @@
    ],
    "status": "on hold",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -238,6 +253,7 @@
    ],
    "status": "on hold",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -252,7 +268,8 @@
     21
    ],
    "status": "on hold",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -268,6 +285,7 @@
    ],
    "status": "on hold",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -283,6 +301,7 @@
    ],
    "status": "on hold",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -298,6 +317,7 @@
    ],
    "status": "on hold",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -313,6 +333,7 @@
    ],
    "status": "with client",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -328,6 +349,7 @@
    ],
    "status": "test running",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -343,6 +365,7 @@
    ],
    "status": "open",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -358,6 +381,7 @@
    ],
    "status": "with client",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -372,7 +396,8 @@
     99
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -387,7 +412,8 @@
     10
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": true
   },
   {
@@ -403,6 +429,7 @@
    ],
    "status": "open",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -417,7 +444,8 @@
     28
    ],
    "status": "in progress",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -433,6 +461,7 @@
    ],
    "status": "in progress",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -448,6 +477,7 @@
    ],
    "status": "open",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -463,6 +493,7 @@
    ],
    "status": "with client",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -478,6 +509,7 @@
    ],
    "status": "open",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -493,6 +525,7 @@
    ],
    "status": "open",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -508,6 +541,7 @@
    ],
    "status": "open",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -523,6 +557,7 @@
    ],
    "status": "with client",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -538,6 +573,7 @@
    ],
    "status": "with client",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -553,6 +589,7 @@
    ],
    "status": "with client",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -568,6 +605,7 @@
    ],
    "status": "with client",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -583,6 +621,7 @@
    ],
    "status": "open",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -598,6 +637,7 @@
    ],
    "status": "open",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -613,6 +653,7 @@
    ],
    "status": "open",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -627,7 +668,8 @@
     99
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -643,6 +685,7 @@
    ],
    "status": "open",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -657,7 +700,8 @@
     99
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -672,7 +716,8 @@
     99
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": true
   },
   {
@@ -687,7 +732,8 @@
     99
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": true
   },
   {
@@ -702,7 +748,8 @@
     99
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": true
   },
   {
@@ -717,7 +764,8 @@
     99
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": true
   },
   {
@@ -732,7 +780,8 @@
     28
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": true
   },
   {
@@ -747,7 +796,8 @@
     99
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -762,7 +812,8 @@
     99
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -778,13 +829,14 @@
    ],
    "status": "open",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
    "client": "Hobbycraft",
    "task": "AI package proposal (Full, Standard, Basic) - Hobbycraft next steps",
    "am": "Ray",
-   "ae": "",
+   "ae": "Unassigned",
    "due": "",
    "duekey": [
     9999,
@@ -792,14 +844,15 @@
     99
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
    "client": "YuMOVE",
    "task": "Review billing to remove Meta",
    "am": "Ray",
-   "ae": "",
+   "ae": "Unassigned",
    "due": "",
    "duekey": [
     9999,
@@ -807,7 +860,8 @@
     99
    ],
    "status": "",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -823,6 +877,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -838,6 +893,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/19624296e935dc41",
    "is_test": false
   },
   {
@@ -853,6 +909,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -868,6 +925,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -883,6 +941,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/19600a4f4cd851e9",
    "is_test": false
   },
   {
@@ -898,6 +957,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -913,6 +973,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -928,6 +989,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -943,6 +1005,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -958,6 +1021,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -973,6 +1037,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -988,6 +1053,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1003,6 +1069,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1018,6 +1085,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -1033,6 +1101,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/19634724218e9c8d",
    "is_test": false
   },
   {
@@ -1048,6 +1117,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1963856a24a3727a",
    "is_test": false
   },
   {
@@ -1063,6 +1133,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -1078,6 +1149,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1093,6 +1165,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/19634724218e9c8d",
    "is_test": false
   },
   {
@@ -1108,6 +1181,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -1123,6 +1197,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1138,6 +1213,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/19624296e935dc41",
    "is_test": false
   },
   {
@@ -1153,6 +1229,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1963ce0c79a8000e",
    "is_test": true
   },
   {
@@ -1168,6 +1245,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1183,6 +1261,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1198,11 +1277,12 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
    "client": "Monsoon",
-   "task": "\\_1.jpg * structure to check if this is full body center",
+   "task": "_1.jpg * structure to check if this is full body center",
    "am": "Ray",
    "ae": "Ray",
    "due": "",
@@ -1213,6 +1293,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1228,6 +1309,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1963856a24a3727a",
    "is_test": true
   },
   {
@@ -1243,6 +1325,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1964424ccc732fed",
    "is_test": false
   },
   {
@@ -1258,6 +1341,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1273,6 +1357,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1964424ccc732fed",
    "is_test": false
   },
   {
@@ -1288,6 +1373,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/19639577d7dc1fd5",
    "is_test": false
   },
   {
@@ -1303,6 +1389,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1318,6 +1405,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196638477e584b8d",
    "is_test": false
   },
   {
@@ -1333,6 +1421,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1963856a24a3727a",
    "is_test": false
   },
   {
@@ -1348,6 +1437,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1363,6 +1453,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -1378,6 +1469,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/19666e677982566b",
    "is_test": true
   },
   {
@@ -1393,6 +1485,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196638477e584b8d",
    "is_test": false
   },
   {
@@ -1408,6 +1501,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1423,6 +1517,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1963ce0c79a8000e",
    "is_test": false
   },
   {
@@ -1438,6 +1533,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1453,6 +1549,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1963a2671e6fb011",
    "is_test": false
   },
   {
@@ -1468,6 +1565,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196165927cf79bed",
    "is_test": true
   },
   {
@@ -1483,6 +1581,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/195aed20c67bdb58",
    "is_test": false
   },
   {
@@ -1498,6 +1597,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1965c60b3ef16ec6",
    "is_test": true
   },
   {
@@ -1513,6 +1613,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1968717430575dea",
    "is_test": false
   },
   {
@@ -1528,6 +1629,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -1543,6 +1645,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1558,6 +1661,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196abaa5b70def3e",
    "is_test": false
   },
   {
@@ -1573,6 +1677,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196a58c324ae6fa4",
    "is_test": false
   },
   {
@@ -1588,6 +1693,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1963a2671e6fb011",
    "is_test": false
   },
   {
@@ -1603,6 +1709,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1961a25ca67a1cb4",
    "is_test": true
   },
   {
@@ -1618,6 +1725,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1633,6 +1741,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1648,6 +1757,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -1663,6 +1773,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1678,6 +1789,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196af0329d0fe85c",
    "is_test": false
   },
   {
@@ -1693,6 +1805,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1708,6 +1821,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -1723,6 +1837,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196cec72a7ff4634",
    "is_test": true
   },
   {
@@ -1738,6 +1853,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1753,6 +1869,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1768,6 +1885,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -1783,6 +1901,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1798,6 +1917,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1813,6 +1933,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1961f01e2c06dd12",
    "is_test": false
   },
   {
@@ -1828,6 +1949,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196d4db91663910c",
    "is_test": false
   },
   {
@@ -1843,6 +1965,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -1858,6 +1981,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -1873,6 +1997,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196ed2d901b7ca3b",
    "is_test": true
   },
   {
@@ -1888,6 +2013,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196d4db91663910c",
    "is_test": false
   },
   {
@@ -1903,6 +2029,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1961f01e2c06dd12",
    "is_test": false
   },
   {
@@ -1918,6 +2045,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -1933,6 +2061,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196d4db91663910c",
    "is_test": false
   },
   {
@@ -1948,6 +2077,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196f32462da71de1",
    "is_test": true
   },
   {
@@ -1963,6 +2093,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196f8efc145a8f46",
    "is_test": false
   },
   {
@@ -1978,6 +2109,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -1993,6 +2125,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196f1ec54c1ac894",
    "is_test": false
   },
   {
@@ -2008,6 +2141,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2023,6 +2157,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/195482c3d5f0d41f",
    "is_test": true
   },
   {
@@ -2038,6 +2173,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196d3e2d681c967e",
    "is_test": true
   },
   {
@@ -2053,6 +2189,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196b07e95e594885",
    "is_test": false
   },
   {
@@ -2068,6 +2205,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1962421f20a1857b",
    "is_test": true
   },
   {
@@ -2083,6 +2221,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1961b5ccabb13641",
    "is_test": false
   },
   {
@@ -2098,6 +2237,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/194ff7edf60f3da5",
    "is_test": false
   },
   {
@@ -2113,6 +2253,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -2128,6 +2269,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/194ff7edf60f3da5",
    "is_test": false
   },
   {
@@ -2143,6 +2285,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196d4db91663910c",
    "is_test": false
   },
   {
@@ -2158,6 +2301,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196d3e2d681c967e",
    "is_test": true
   },
   {
@@ -2173,6 +2317,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -2188,6 +2333,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196f23e990b9393c",
    "is_test": false
   },
   {
@@ -2203,6 +2349,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196d32e95c6720d5",
    "is_test": false
   },
   {
@@ -2218,6 +2365,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2233,6 +2381,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196f28ec50fea825",
    "is_test": false
   },
   {
@@ -2248,6 +2397,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/19680ba1815ebfd5",
    "is_test": true
   },
   {
@@ -2263,6 +2413,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2278,6 +2429,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196ce28b3fb97736",
    "is_test": false
   },
   {
@@ -2293,6 +2445,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2308,6 +2461,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196f21e9372e6167",
    "is_test": true
   },
   {
@@ -2323,6 +2477,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196d3e2d681c967e",
    "is_test": true
   },
   {
@@ -2338,6 +2493,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/194ff7edf60f3da5",
    "is_test": false
   },
   {
@@ -2353,6 +2509,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196f30753bdd1118",
    "is_test": false
   },
   {
@@ -2368,6 +2525,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2383,6 +2541,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -2398,6 +2557,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -2413,6 +2573,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -2428,6 +2589,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -2443,6 +2605,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -2458,6 +2621,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196c8e621a148dbb",
    "is_test": false
   },
   {
@@ -2473,6 +2637,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1963f3d25f91a536",
    "is_test": false
   },
   {
@@ -2487,7 +2652,8 @@
     99
    ],
    "status": "done",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2503,6 +2669,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1973f3260fb9f6c9",
    "is_test": false
   },
   {
@@ -2518,6 +2685,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1973f3260fb9f6c9",
    "is_test": false
   },
   {
@@ -2532,7 +2700,8 @@
     99
    ],
    "status": "done",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2548,6 +2717,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1956c139139e902a",
    "is_test": false
   },
   {
@@ -2563,6 +2733,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196f30753bdd1118",
    "is_test": false
   },
   {
@@ -2578,6 +2749,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -2592,7 +2764,8 @@
     99
    ],
    "status": "done",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2607,7 +2780,8 @@
     99
    ],
    "status": "done",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2622,7 +2796,8 @@
     99
    ],
    "status": "done",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2637,7 +2812,8 @@
     99
    ],
    "status": "done",
-   "action": "",
+   "action": "other",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2653,6 +2829,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1971b7e498a86ea6",
    "is_test": false
   },
   {
@@ -2668,6 +2845,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1971b7e498a86ea6",
    "is_test": false
   },
   {
@@ -2683,6 +2861,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197355c6765442e0",
    "is_test": false
   },
   {
@@ -2698,6 +2877,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2713,6 +2893,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": true
   },
   {
@@ -2728,6 +2909,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1961b5ccabb13641",
    "is_test": false
   },
   {
@@ -2743,6 +2925,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/19778cd71cb4228a",
    "is_test": false
   },
   {
@@ -2758,6 +2941,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2773,6 +2957,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197887a22fcba85b",
    "is_test": true
   },
   {
@@ -2788,6 +2973,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2803,6 +2989,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2818,6 +3005,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2833,6 +3021,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2848,6 +3037,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2863,6 +3053,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -2878,6 +3069,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/19638864915c2564",
    "is_test": false
   },
   {
@@ -2893,6 +3085,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2908,6 +3101,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2923,6 +3117,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2938,6 +3133,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2953,6 +3149,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197354760c261eb0",
    "is_test": false
   },
   {
@@ -2968,6 +3165,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -2983,6 +3181,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/196ed2d901b7ca3b",
    "is_test": false
   },
   {
@@ -2998,6 +3197,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -3013,6 +3213,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -3028,6 +3229,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197a1a213dba570b",
    "is_test": false
   },
   {
@@ -3043,6 +3245,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197aaf1cfbf04693",
    "is_test": true
   },
   {
@@ -3058,6 +3261,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/19730133b9766dc1",
    "is_test": true
   },
   {
@@ -3073,6 +3277,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197a18b83e39cd32",
    "is_test": false
   },
   {
@@ -3088,6 +3293,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/19782a72834f3630",
    "is_test": false
   },
   {
@@ -3103,6 +3309,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/1973b5ddf110e753",
    "is_test": false
   },
   {
@@ -3118,6 +3325,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -3133,6 +3341,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/19730133b9766dc1",
    "is_test": true
   },
   {
@@ -3148,6 +3357,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -3163,6 +3373,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197a1b72ddd19f3a",
    "is_test": false
   },
   {
@@ -3178,6 +3389,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197825589b61ca8a",
    "is_test": false
   },
   {
@@ -3193,6 +3405,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197887a22fcba85b",
    "is_test": true
   },
   {
@@ -3208,6 +3421,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197a751bc6aa1c4f",
    "is_test": false
   },
   {
@@ -3223,6 +3437,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197887a22fcba85b",
    "is_test": true
   },
   {
@@ -3238,6 +3453,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -3253,6 +3469,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -3268,6 +3485,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": false
   },
   {
@@ -3283,6 +3501,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197209039144bbcb",
    "is_test": true
   },
   {
@@ -3298,6 +3517,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -3313,6 +3533,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -3328,6 +3549,7 @@
    ],
    "status": "done",
    "action": "monthly call",
+   "thread": "",
    "is_test": false
   },
   {
@@ -3343,6 +3565,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197825589b61ca8a",
    "is_test": false
   },
   {
@@ -3358,6 +3581,7 @@
    ],
    "status": "done",
    "action": "import",
+   "thread": "",
    "is_test": true
   },
   {
@@ -3373,13 +3597,14 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197c012a38c8a876",
    "is_test": true
   },
   {
    "client": "AllSaints",
    "task": "Supp keywords from UK > all",
    "am": "❓ invalid AM",
-   "ae": "❓ invalid AE",
+   "ae": "invalid AE",
    "due": "02 Jul 2025",
    "duekey": [
     2025,
@@ -3388,13 +3613,14 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197c012a38c8a876",
    "is_test": true
   },
   {
    "client": "Bobbi Brown",
    "task": "AB Test Title: 2 MASKS from BL",
    "am": "❓ invalid AM",
-   "ae": "❓ invalid AE",
+   "ae": "invalid AE",
    "due": "25 Jun 2025",
    "duekey": [
     2025,
@@ -3403,6 +3629,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197a613349a5dc4a",
    "is_test": true
   },
   {
@@ -3418,6 +3645,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197c68cf0fa291c6",
    "is_test": false
   },
   {
@@ -3433,6 +3661,7 @@
    ],
    "status": "done",
    "action": "email",
+   "thread": "https://mail.google.com/mail/u/0/#all/197c012a38c8a876",
    "is_test": true
   }
  ],

@@ -113,6 +113,29 @@
   .tag-client{background:#EAEFF6;color:var(--navy);border-color:#CFDBEA}
   .tag-test,.tag-done{background:#EBF7EF;color:var(--good);border-color:#CDE9D8}
   .tag-hold{background:#F4F4F2;color:var(--muted);border-color:var(--line)}
+  .od{color:var(--risk);font-weight:800;white-space:nowrap}
+  .thread{margin-left:6px;opacity:.55;font-size:12px}
+  .thread:hover{opacity:1}
+  .synced{margin-top:16px;font-size:12px;color:var(--muted);font-weight:700}
+  .statstrip .s .n.danger{color:var(--risk)}
+  .wl-filter{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+  .wl-filter .fchip{font:inherit;font-size:12px;font-weight:800;padding:5px 11px;border-radius:100px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer}
+  .wl-filter .fchip:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .wl-filter .fchip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .wl-filter .fsel{font:inherit;font-size:12.5px;font-weight:700;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink-2)}
+  .wl-filter input{margin-left:auto;font:inherit;font-size:13px;padding:7px 12px;border:1px solid var(--line);border-radius:8px;min-width:170px}
+  .linkish{background:none;border:0;color:var(--orange-ink);font:inherit;font-weight:800;cursor:pointer;padding:0;text-decoration:underline}
+  .logtable.wl thead th{position:sticky;top:55px;background:#fff;z-index:2}
+  .atrt-badge{background:#EBF7EF;border-color:#CDE9D8;color:var(--good)}
+  .atrt-badge.danger{background:#FBEBEB;border-color:#F3C7C7;color:var(--risk)}
+  @media print{
+    .topbar,.tb-nav,.wl-filter,.de-bar,.de-panel,.synced{display:none!important}
+    body{background:#fff}
+    section{padding:18px 0;border-top:1px solid #ddd;break-inside:avoid}
+    .card,.panel,.rd{box-shadow:none;break-inside:avoid}
+    a{color:inherit;text-decoration:none}
+    .hero{background:#fff}
+  }
   .scaffold{position:relative}
   .scaffold::after{content:"Preview — wiring next";position:absolute;top:16px;right:16px;font-size:10.5px;font-weight:900;
     letter-spacing:.08em;text-transform:uppercase;color:var(--orange-ink);background:#FCF1E3;border:1px solid #F3D9B8;
@@ -175,12 +198,12 @@
     <p class="lede">One place to run the accounts — strategy decks, project plans, the team, and the
       time we spend. Built to run lean now and grow into an automated command center: client comms,
       interaction logging, and hours that report themselves.</p>
-    <div class="statstrip">
-      <div class="s"><div class="n">6</div><div class="l">Active accounts</div></div>
-      <div class="s"><div class="n">7</div><div class="l">Brands managed</div></div>
-      <div class="s"><div class="n">1</div><div class="l">Live strategy deck</div></div>
-      <div class="s"><div class="n">30+</div><div class="l">Markets covered</div></div>
+    <div class="statstrip" id="kpi">
+      <!-- ATRT:KPI:START -->
+<div class="s"><div class="n ">35</div><div class="l">Active tasks</div></div><div class="s"><div class="n danger">16</div><div class="l">Overdue</div></div><div class="s"><div class="n ">1</div><div class="l">Due next 7 days</div></div><div class="s"><div class="n ">16</div><div class="l">Tests running</div></div><div class="s"><div class="n ">26</div><div class="l">Accounts</div></div>
+<!-- ATRT:KPI:END -->
     </div>
+    <div class="synced">ATRT Tracker synced <span id="synced">—</span> · live workload, tests &amp; plans below</div>
   </div>
 </header>
 
@@ -302,6 +325,44 @@
         </div>
       </div>
 
+      <!-- AllSaints -->
+      <div class="card rv">
+        <div class="top">
+          <div><h3>AllSaints</h3><div class="cat">Fashion · GB / EU / US</div></div>
+          <span class="pill active">Most active</span>
+        </div>
+        <div class="chips">
+          <span class="chip">DE/FR title AOT</span>
+          <span class="chip">DPA roundel + overlays</span>
+          <span class="chip">Re-pitch deck</span>
+        </div>
+        <p class="note">Highest task volume in the book — title optimisation across markets, DPA roundel
+          tests, AI-enrichment attributes and CL/PPC restructuring. Co-managed with Steven.</p>
+        <div class="links">
+          <a class="lnk primary" href="#log">Live tasks →</a>
+          <a class="lnk disabled" href="#">Onboarding plan</a>
+        </div>
+      </div>
+
+      <!-- Hobbycraft -->
+      <div class="card rv">
+        <div class="top">
+          <div><h3>Hobbycraft</h3><div class="cat">Hobby &amp; crafts · UK</div></div>
+          <span class="pill live">Tests running</span>
+        </div>
+        <div class="chips">
+          <span class="chip">AI Titles [Search Intent]</span>
+          <span class="chip">Overlay [Selling Fast]</span>
+          <span class="chip">C&amp;C vs LIA</span>
+        </div>
+        <p class="note">A live test bed — AI-title A/B on 200 products (running), [Selling Fast] /
+          [Trending Now] / [New] overlays, and a Click &amp; Collect vs LIA bid test for cheaper CPC.</p>
+        <div class="links">
+          <a class="lnk primary" href="#tests">Tests →</a>
+          <a class="lnk disabled" href="#">Project plan</a>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -392,7 +453,7 @@
       <p>Every task from email &amp; monthly calls, logged per client, AE and due date.</p>
     </div>
     <!-- ATRT:LOG:START -->
-<div class="panel"><h3>Live workload</h3><div class="sub">35 active tasks across the book · full history &amp; every logged interaction in the tracker</div><div style="overflow-x:auto"><table class="logtable"><thead><tr><th>Account</th><th>Task</th><th>AE</th><th>Due</th><th>Status</th></tr></thead><tbody><tr><td><b>AllSaints</b></td><td>Explore video GIF for Social ?</td><td>Ray</td><td>22 May 2025</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>AllSaints</b></td><td>MX standalone</td><td>Ray</td><td>22 May 2025</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>AllSaints</b></td><td>LIA : Light version for Google Hosted store-front.</td><td>Ray</td><td>22 May 2025</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Superdry</b></td><td>FS to share Testing Roadmap for Q2 Q3</td><td>Ray</td><td>22 May 2025</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Benefit</b></td><td>BAU: Stickers vs. {AI Matching Skintone Tool]</td><td>Ray</td><td>03 Jul 2025</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Reiss</b></td><td>Loyalty Program multiple region</td><td>Ezgi</td><td>06 Feb 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>YuMOVE</b></td><td>Symptom Matrix over the seasons, Summer, Winter, Spring - FS to automate adding these symptons i</td><td>Ezgi</td><td>09 Feb 2026</td><td><span class="tag tag-client">with client</span></td></tr><tr><td><b>AllSaints</b></td><td>Infer optimisation for AI enrichedment attributes</td><td>Ray</td><td>05 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>AllSaints</b></td><td>Deck prep for Re-Pitch</td><td>Ray</td><td>23 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Superdry</b></td><td>PPC: Image Overlay: (low stock, back in stock, % discount, x amount of stock left)</td><td>Ezgi</td><td>23 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Superdry</b></td><td>A/B Test - Tial test: revisit mockups again</td><td>Ezgi</td><td>24 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>AllSaints</b></td><td>DE/FR - title optimisation AOT</td><td>Ray</td><td>30 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Jo Malone</b></td><td>English Pear&#x27; KW optimization</td><td>Ezgi</td><td>02 Apr 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>AllSaints</b></td><td>MSS Sale ends date to confirm with AS</td><td>Ezgi</td><td>21 Apr 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Reiss</b></td><td>Review supplemental feed and devise keyword optimisation strategy/ cadence across markets  / key</td><td>Ray</td><td>22 Apr 2026</td><td><span class="tag tag-progress">in progress</span></td></tr><tr><td><b>Reiss</b></td><td>Issues with Product Type - remap wit new taxonomy</td><td>Ray</td><td>22 Apr 2026</td><td><span class="tag tag-client">with client</span></td></tr><tr><td><b>Reiss</b></td><td>Strategy Actions planner for Reiss - (MAY * JUNE)</td><td>Ray</td><td>15 May 2026</td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>Reiss</b></td><td>Keywords Planner - next batch</td><td>Ray</td><td>15 May 2026</td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>YuMOVE</b></td><td>LLM Descriptions - extend for all products YuMOVE</td><td>Ray</td><td>21 May 2026</td><td><span class="tag tag-client">with client</span></td></tr><tr><td><b>Schuh</b></td><td>Strategy Actions planner for Schuh</td><td>Ray</td><td>22 May 2026</td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>Schuh</b></td><td>Product Rating - subimit manually via retailer - FS to share fields of rating from Schuhs&#x27; dev</td><td>Ray</td><td>25 May 2026</td><td><span class="tag tag-client">with client</span></td></tr><tr><td><b>Reiss</b></td><td>[Brand] includsion (Reiss) - A/B Title Test - Shopping</td><td>Ezgi</td><td>26 May 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Schuh</b></td><td>CSS vs. CSS Google - Retest split test - no CPC benefit in UK market</td><td>Ray</td><td>31 May 2026</td><td><span class="tag tag-client">with client</span></td></tr><tr><td><b>Hobbycraft</b></td><td>Overlay [Selling Fast] [Trending Now] [New] - FS to share final design</td><td>Ezgi</td><td>01 Jun 2026</td><td><span class="tag tag-client">with client</span></td></tr><tr><td><b>Hobbycraft</b></td><td>Shall we try Click &amp; Collect vs, LIA  &gt; in BID for 20% cheaper CPC ?</td><td>Ray</td><td>01 Jun 2026</td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>Monsoon</b></td><td>AI package proposal (Full, Standard, Basic) - wrap up chaser to Monsoon</td><td>Ray</td><td>01 Jun 2026</td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>Reiss</b></td><td>Brand Bibles - to collect defined terms from Chelsea</td><td>Ray</td><td>01 Jun 2026</td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>Schuh</b></td><td>AI package proposal (Full, Standard, Basic) - Schuh next steps</td><td>Ray</td><td>01 Jun 2026</td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>YuMOVE</b></td><td>A/B Test - [Active Ingredient] inclusion (e.g., hyaluronic acid, omega-3, glucosamine)l.</td><td>Ray</td><td>08 Jun 2026</td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>Hobbycraft</b></td><td>SEO chat with Hobbycraft team x Matt - Chris to link wih new SEO Manager</td><td>Ray</td><td>15 Jun 2026</td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>Reiss</b></td><td>QBR Strategy in person</td><td>Ray</td><td>28 Jul 2026</td><td><span class="tag tag-progress">in progress</span></td></tr><tr><td><b>Hobbycraft</b></td><td>AI TItles A/B Test - [Search Intent] on 200 products</td><td>Ezgi</td><td>—</td><td><span class="tag tag-test">test running</span></td></tr><tr><td><b>Schuh</b></td><td>Will will share s360 description</td><td>Ray</td><td>—</td><td><span class="tag tag-client">with client</span></td></tr><tr><td><b>Schuh</b></td><td>A/B Test Titles - [Search Intent ] -</td><td>Steven</td><td>—</td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>YuMOVE</b></td><td>Integrate High-Volume Search Terms into FeedHero to Compare with Current Feed Data</td><td>Ray</td><td>—</td><td><span class="tag tag-open">open</span></td></tr></tbody></table></div><p class="note">Sourced from the <a href="https://docs.google.com/spreadsheets/d/1p_cPSRjmK16CDpLryoOBaOUjG3ZvnL-k4ORHhaHI5AE/edit" target="_blank" rel="noopener">ATRT Tracker</a> — tasks arriving by email (ad-hoc) or monthly call, per client, AM, AE and due date. Done items are archived in the tracker.</p></div>
+<div class="panel"><h3>Live workload</h3><div class="sub">35 active tasks · filter by account or status · full history in the tracker</div><div id="wl-filter" class="wl-filter"></div><div style="overflow-x:auto"><table class="logtable wl" id="wl-table"><thead><tr><th>Account</th><th>Task</th><th>AE</th><th>Due</th><th>Status</th></tr></thead><tbody><tr data-account="AllSaints" data-status="on hold" data-od="0"><td><b>AllSaints</b></td><td>Explore video GIF for Social ?</td><td>Ray</td><td>22 May 2025</td><td><span class="tag tag-hold">on hold</span></td></tr><tr data-account="AllSaints" data-status="on hold" data-od="0"><td><b>AllSaints</b></td><td>MX standalone</td><td>Ray</td><td>22 May 2025</td><td><span class="tag tag-hold">on hold</span></td></tr><tr data-account="AllSaints" data-status="on hold" data-od="0"><td><b>AllSaints</b></td><td>LIA : Light version for Google Hosted store-front.</td><td>Ray</td><td>22 May 2025</td><td><span class="tag tag-hold">on hold</span></td></tr><tr data-account="Superdry" data-status="on hold" data-od="0"><td><b>Superdry</b></td><td>FS to share Testing Roadmap for Q2 Q3</td><td>Ray</td><td>22 May 2025</td><td><span class="tag tag-hold">on hold</span></td></tr><tr data-account="Benefit" data-status="on hold" data-od="0"><td><b>Benefit</b></td><td>BAU: Stickers vs. {AI Matching Skintone Tool]</td><td>Ray</td><td>03 Jul 2025</td><td><span class="tag tag-hold">on hold</span></td></tr><tr data-account="Reiss" data-status="on hold" data-od="0"><td><b>Reiss</b></td><td>Loyalty Program multiple region <a class="thread" href="https://mail.google.com/mail/u/0/#all/199ddffb218966b3" target="_blank" rel="noopener" title="Open email thread">✉</a></td><td>Ezgi</td><td>06 Feb 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr data-account="YuMOVE" data-status="with client" data-od="1"><td><b>YuMOVE</b></td><td>Symptom Matrix over the seasons, Summer, Winter, Spring - FS to automate adding these symptons i</td><td>Ezgi</td><td><span class="od">⚠ 09 Feb 2026</span></td><td><span class="tag tag-client">with client</span></td></tr><tr data-account="AllSaints" data-status="on hold" data-od="0"><td><b>AllSaints</b></td><td>Infer optimisation for AI enrichedment attributes</td><td>Ray</td><td>05 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr data-account="AllSaints" data-status="on hold" data-od="0"><td><b>AllSaints</b></td><td>Deck prep for Re-Pitch</td><td>Ray</td><td>23 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr data-account="Superdry" data-status="on hold" data-od="0"><td><b>Superdry</b></td><td>PPC: Image Overlay: (low stock, back in stock, % discount, x amount of stock left)</td><td>Ezgi</td><td>23 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr data-account="Superdry" data-status="on hold" data-od="0"><td><b>Superdry</b></td><td>A/B Test - Tial test: revisit mockups again</td><td>Ezgi</td><td>24 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr data-account="AllSaints" data-status="on hold" data-od="0"><td><b>AllSaints</b></td><td>DE/FR - title optimisation AOT</td><td>Ray</td><td>30 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr data-account="Jo Malone" data-status="on hold" data-od="0"><td><b>Jo Malone</b></td><td>English Pear&#x27; KW optimization</td><td>Ezgi</td><td>02 Apr 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr data-account="AllSaints" data-status="on hold" data-od="0"><td><b>AllSaints</b></td><td>MSS Sale ends date to confirm with AS</td><td>Ezgi</td><td>21 Apr 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr data-account="Reiss" data-status="in progress" data-od="1"><td><b>Reiss</b></td><td>Review supplemental feed and devise keyword optimisation strategy/ cadence across markets  / key</td><td>Ray</td><td><span class="od">⚠ 22 Apr 2026</span></td><td><span class="tag tag-progress">in progress</span></td></tr><tr data-account="Reiss" data-status="with client" data-od="1"><td><b>Reiss</b></td><td>Issues with Product Type - remap wit new taxonomy</td><td>Ray</td><td><span class="od">⚠ 22 Apr 2026</span></td><td><span class="tag tag-client">with client</span></td></tr><tr data-account="Reiss" data-status="open" data-od="1"><td><b>Reiss</b></td><td>Strategy Actions planner for Reiss - (MAY * JUNE)</td><td>Ray</td><td><span class="od">⚠ 15 May 2026</span></td><td><span class="tag tag-open">open</span></td></tr><tr data-account="Reiss" data-status="open" data-od="1"><td><b>Reiss</b></td><td>Keywords Planner - next batch</td><td>Ray</td><td><span class="od">⚠ 15 May 2026</span></td><td><span class="tag tag-open">open</span></td></tr><tr data-account="YuMOVE" data-status="with client" data-od="1"><td><b>YuMOVE</b></td><td>LLM Descriptions - extend for all products YuMOVE</td><td>Ray</td><td><span class="od">⚠ 21 May 2026</span></td><td><span class="tag tag-client">with client</span></td></tr><tr data-account="Schuh" data-status="open" data-od="1"><td><b>Schuh</b></td><td>Strategy Actions planner for Schuh</td><td>Ray</td><td><span class="od">⚠ 22 May 2026</span></td><td><span class="tag tag-open">open</span></td></tr><tr data-account="Schuh" data-status="with client" data-od="1"><td><b>Schuh</b></td><td>Product Rating - subimit manually via retailer - FS to share fields of rating from Schuhs&#x27; dev</td><td>Ray</td><td><span class="od">⚠ 25 May 2026</span></td><td><span class="tag tag-client">with client</span></td></tr><tr data-account="Reiss" data-status="on hold" data-od="0"><td><b>Reiss</b></td><td>[Brand] includsion (Reiss) - A/B Title Test - Shopping</td><td>Ezgi</td><td>26 May 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr data-account="Schuh" data-status="with client" data-od="1"><td><b>Schuh</b></td><td>CSS vs. CSS Google - Retest split test - no CPC benefit in UK market</td><td>Ray</td><td><span class="od">⚠ 31 May 2026</span></td><td><span class="tag tag-client">with client</span></td></tr><tr data-account="Hobbycraft" data-status="with client" data-od="1"><td><b>Hobbycraft</b></td><td>Overlay [Selling Fast] [Trending Now] [New] - FS to share final design</td><td>Ezgi</td><td><span class="od">⚠ 01 Jun 2026</span></td><td><span class="tag tag-client">with client</span></td></tr><tr data-account="Hobbycraft" data-status="open" data-od="1"><td><b>Hobbycraft</b></td><td>Shall we try Click &amp; Collect vs, LIA  &gt; in BID for 20% cheaper CPC ?</td><td>Ray</td><td><span class="od">⚠ 01 Jun 2026</span></td><td><span class="tag tag-open">open</span></td></tr><tr data-account="Monsoon" data-status="open" data-od="1"><td><b>Monsoon</b></td><td>AI package proposal (Full, Standard, Basic) - wrap up chaser to Monsoon</td><td>Ray</td><td><span class="od">⚠ 01 Jun 2026</span></td><td><span class="tag tag-open">open</span></td></tr><tr data-account="Reiss" data-status="open" data-od="1"><td><b>Reiss</b></td><td>Brand Bibles - to collect defined terms from Chelsea</td><td>Ray</td><td><span class="od">⚠ 01 Jun 2026</span></td><td><span class="tag tag-open">open</span></td></tr><tr data-account="Schuh" data-status="open" data-od="1"><td><b>Schuh</b></td><td>AI package proposal (Full, Standard, Basic) - Schuh next steps</td><td>Ray</td><td><span class="od">⚠ 01 Jun 2026</span></td><td><span class="tag tag-open">open</span></td></tr><tr data-account="YuMOVE" data-status="open" data-od="1"><td><b>YuMOVE</b></td><td>A/B Test - [Active Ingredient] inclusion (e.g., hyaluronic acid, omega-3, glucosamine)l.</td><td>Ray</td><td><span class="od">⚠ 08 Jun 2026</span></td><td><span class="tag tag-open">open</span></td></tr><tr data-account="Hobbycraft" data-status="open" data-od="1"><td><b>Hobbycraft</b></td><td>SEO chat with Hobbycraft team x Matt - Chris to link wih new SEO Manager</td><td>Ray</td><td><span class="od">⚠ 15 Jun 2026</span></td><td><span class="tag tag-open">open</span></td></tr><tr data-account="Reiss" data-status="in progress" data-od="0"><td><b>Reiss</b></td><td>QBR Strategy in person</td><td>Ray</td><td>28 Jul 2026</td><td><span class="tag tag-progress">in progress</span></td></tr><tr data-account="Hobbycraft" data-status="test running" data-od="0"><td><b>Hobbycraft</b></td><td>AI TItles A/B Test - [Search Intent] on 200 products</td><td>Ezgi</td><td>—</td><td><span class="tag tag-test">test running</span></td></tr><tr data-account="Schuh" data-status="with client" data-od="0"><td><b>Schuh</b></td><td>Will will share s360 description</td><td>Ray</td><td>—</td><td><span class="tag tag-client">with client</span></td></tr><tr data-account="Schuh" data-status="open" data-od="0"><td><b>Schuh</b></td><td>A/B Test Titles - [Search Intent ] -</td><td>Steven</td><td>—</td><td><span class="tag tag-open">open</span></td></tr><tr data-account="YuMOVE" data-status="open" data-od="0"><td><b>YuMOVE</b></td><td>Integrate High-Volume Search Terms into FeedHero to Compare with Current Feed Data</td><td>Ray</td><td>—</td><td><span class="tag tag-open">open</span></td></tr></tbody></table></div><p class="note" id="wl-empty" style="display:none">No tasks match — <button class="linkish" id="wl-clear">clear filters</button>.</p><p class="note">Sourced from the <a href="https://docs.google.com/spreadsheets/d/1p_cPSRjmK16CDpLryoOBaOUjG3ZvnL-k4ORHhaHI5AE/edit" target="_blank" rel="noopener">ATRT Tracker</a> — tasks arriving by email (ad-hoc) or monthly call, per client, AM, AE and due date. ✉ opens the email thread.</p></div><div class="grid-2" style="margin-top:18px"><div class="panel"><h3>Load by account executive</h3><div class="sub">Active tasks per AE</div><div class="planlist"><div class="planrow"><span class="nm">Ray</span><span class="tag">25 active</span></div><div class="planrow"><span class="nm">Ezgi</span><span class="tag">9 active</span></div><div class="planrow"><span class="nm">Steven</span><span class="tag">1 active</span></div></div></div><div class="panel"><h3>How work arrives</h3><div class="sub">Active tasks by source</div><div class="planlist"><div class="planrow"><span class="nm">Monthly call</span><span class="tag">27</span></div><div class="planrow"><span class="nm">AM project plan</span><span class="tag">5</span></div><div class="planrow"><span class="nm">Other</span><span class="tag">2</span></div><div class="planrow"><span class="nm">Email / ad-hoc</span><span class="tag">1</span></div></div></div></div>
 <!-- ATRT:LOG:END -->
   </div>
 </section>
@@ -405,7 +466,7 @@
       <p>What we're testing across the book — titles, overlays, keywords, LIA, AI.</p>
     </div>
     <!-- ATRT:TESTS:START -->
-<div class="panel"><h3>Test book</h3><div class="sub">78 tests logged all-time · by type</div><div class="chips" style="margin-bottom:18px"><span class="chip"><b>22</b> Title / MASK A/B</span><span class="chip"><b>20</b> Overlay / badge</span><span class="chip"><b>16</b> A/B (other)</span><span class="chip"><b>16</b> Keyword</span><span class="chip"><b>4</b> LIA / C&amp;C</span></div><h3 style="margin-top:8px">Active &amp; running tests</h3><div class="sub">16 live right now</div><div style="overflow-x:auto"><table class="logtable"><thead><tr><th>Account</th><th>Test</th><th>Type</th><th>Due</th><th>Status</th></tr></thead><tbody><tr><td><b>AllSaints</b></td><td>LIA : Light version for Google Hosted store-front.</td><td>LIA / C&amp;C</td><td>22 May 2025</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Superdry</b></td><td>FS to share Testing Roadmap for Q2 Q3</td><td>A/B (other)</td><td>22 May 2025</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>YuMOVE</b></td><td>Symptom Matrix over the seasons, Summer, Winter, Spring - FS to automate adding these sympto</td><td>Keyword</td><td>09 Feb 2026</td><td><span class="tag tag-client">with client</span></td></tr><tr><td><b>Superdry</b></td><td>PPC: Image Overlay: (low stock, back in stock, % discount, x amount of stock left)</td><td>Overlay / badge</td><td>23 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Superdry</b></td><td>A/B Test - Tial test: revisit mockups again</td><td>A/B (other)</td><td>24 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>AllSaints</b></td><td>DE/FR - title optimisation AOT</td><td>Title / MASK A/B</td><td>30 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Jo Malone</b></td><td>English Pear&#x27; KW optimization</td><td>Keyword</td><td>02 Apr 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Reiss</b></td><td>Review supplemental feed and devise keyword optimisation strategy/ cadence across markets  /</td><td>Keyword</td><td>22 Apr 2026</td><td><span class="tag tag-progress">in progress</span></td></tr><tr><td><b>Reiss</b></td><td>Keywords Planner - next batch</td><td>Keyword</td><td>15 May 2026</td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>Reiss</b></td><td>[Brand] includsion (Reiss) - A/B Title Test - Shopping</td><td>Title / MASK A/B</td><td>26 May 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Schuh</b></td><td>CSS vs. CSS Google - Retest split test - no CPC benefit in UK market</td><td>A/B (other)</td><td>31 May 2026</td><td><span class="tag tag-client">with client</span></td></tr><tr><td><b>Hobbycraft</b></td><td>Overlay [Selling Fast] [Trending Now] [New] - FS to share final design</td><td>Overlay / badge</td><td>01 Jun 2026</td><td><span class="tag tag-client">with client</span></td></tr><tr><td><b>Hobbycraft</b></td><td>Shall we try Click &amp; Collect vs, LIA  &gt; in BID for 20% cheaper CPC ?</td><td>LIA / C&amp;C</td><td>01 Jun 2026</td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>YuMOVE</b></td><td>A/B Test - [Active Ingredient] inclusion (e.g., hyaluronic acid, omega-3, glucosamine)l.</td><td>A/B (other)</td><td>08 Jun 2026</td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>Hobbycraft</b></td><td>AI TItles A/B Test - [Search Intent] on 200 products</td><td>Title / MASK A/B</td><td>—</td><td><span class="tag tag-test">test running</span></td></tr><tr><td><b>Schuh</b></td><td>A/B Test Titles - [Search Intent ] -</td><td>Title / MASK A/B</td><td>—</td><td><span class="tag tag-open">open</span></td></tr></tbody></table></div></div>
+<div class="panel"><h3>Test book</h3><div class="sub">78 tests logged all-time · by type</div><div class="chips" style="margin-bottom:18px"><span class="chip"><b>22</b> Title / MASK A/B</span><span class="chip"><b>20</b> Overlay / badge</span><span class="chip"><b>16</b> A/B (other)</span><span class="chip"><b>16</b> Keyword</span><span class="chip"><b>4</b> LIA / C&amp;C</span></div><h3 style="margin-top:8px">Active &amp; running tests</h3><div class="sub">16 live right now</div><div style="overflow-x:auto"><table class="logtable"><thead><tr><th>Account</th><th>Test</th><th>Type</th><th>Due</th><th>Status</th></tr></thead><tbody><tr><td><b>AllSaints</b></td><td>LIA : Light version for Google Hosted store-front.</td><td>LIA / C&amp;C</td><td>22 May 2025</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Superdry</b></td><td>FS to share Testing Roadmap for Q2 Q3</td><td>A/B (other)</td><td>22 May 2025</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>YuMOVE</b></td><td>Symptom Matrix over the seasons, Summer, Winter, Spring - FS to automate adding these sympto</td><td>Keyword</td><td><span class="od">⚠ 09 Feb 2026</span></td><td><span class="tag tag-client">with client</span></td></tr><tr><td><b>Superdry</b></td><td>PPC: Image Overlay: (low stock, back in stock, % discount, x amount of stock left)</td><td>Overlay / badge</td><td>23 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Superdry</b></td><td>A/B Test - Tial test: revisit mockups again</td><td>A/B (other)</td><td>24 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>AllSaints</b></td><td>DE/FR - title optimisation AOT</td><td>Title / MASK A/B</td><td>30 Mar 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Jo Malone</b></td><td>English Pear&#x27; KW optimization</td><td>Keyword</td><td>02 Apr 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Reiss</b></td><td>Review supplemental feed and devise keyword optimisation strategy/ cadence across markets  /</td><td>Keyword</td><td><span class="od">⚠ 22 Apr 2026</span></td><td><span class="tag tag-progress">in progress</span></td></tr><tr><td><b>Reiss</b></td><td>Keywords Planner - next batch</td><td>Keyword</td><td><span class="od">⚠ 15 May 2026</span></td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>Reiss</b></td><td>[Brand] includsion (Reiss) - A/B Title Test - Shopping</td><td>Title / MASK A/B</td><td>26 May 2026</td><td><span class="tag tag-hold">on hold</span></td></tr><tr><td><b>Schuh</b></td><td>CSS vs. CSS Google - Retest split test - no CPC benefit in UK market</td><td>A/B (other)</td><td><span class="od">⚠ 31 May 2026</span></td><td><span class="tag tag-client">with client</span></td></tr><tr><td><b>Hobbycraft</b></td><td>Overlay [Selling Fast] [Trending Now] [New] - FS to share final design</td><td>Overlay / badge</td><td><span class="od">⚠ 01 Jun 2026</span></td><td><span class="tag tag-client">with client</span></td></tr><tr><td><b>Hobbycraft</b></td><td>Shall we try Click &amp; Collect vs, LIA  &gt; in BID for 20% cheaper CPC ?</td><td>LIA / C&amp;C</td><td><span class="od">⚠ 01 Jun 2026</span></td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>YuMOVE</b></td><td>A/B Test - [Active Ingredient] inclusion (e.g., hyaluronic acid, omega-3, glucosamine)l.</td><td>A/B (other)</td><td><span class="od">⚠ 08 Jun 2026</span></td><td><span class="tag tag-open">open</span></td></tr><tr><td><b>Hobbycraft</b></td><td>AI TItles A/B Test - [Search Intent] on 200 products</td><td>Title / MASK A/B</td><td>—</td><td><span class="tag tag-test">test running</span></td></tr><tr><td><b>Schuh</b></td><td>A/B Test Titles - [Search Intent ] -</td><td>Title / MASK A/B</td><td>—</td><td><span class="tag tag-open">open</span></td></tr></tbody></table></div></div>
 <!-- ATRT:TESTS:END -->
   </div>
 </section>
@@ -459,6 +520,9 @@
   </div>
 </footer>
 
+<!-- ATRT:GLOBAL:START -->
+<script>window.ATRT={"active": {"AllSaints": 7, "Superdry": 3, "Benefit": 1, "Reiss": 8, "Jo Malone": 1, "YuMOVE": 4, "Hobbycraft": 4, "Schuh": 6, "Monsoon": 1}, "overdue": {"YuMOVE": 3, "Hobbycraft": 3, "Reiss": 5, "Schuh": 4, "Monsoon": 1}, "synced": "21 Jul 2026"};</script>
+<!-- ATRT:GLOBAL:END -->
 <script>
 (function(){
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -469,6 +533,51 @@
       {threshold:.12,rootMargin:'0px 0px -40px 0px'});
     rv.forEach(function(el){io.observe(el)});
   } else rv.forEach(function(el){el.classList.add('in')});
+
+  /* ---- ATRT enhancements ---- */
+  var A = window.ATRT || {active:{},overdue:{},synced:''};
+  var sy = document.getElementById('synced'); if(sy && A.synced) sy.textContent = A.synced;
+
+  /* per-account activity badges on the account cards (matched by heading text) */
+  function acct(name){ var n=0,od=0; name.split('/').forEach(function(p){ p=p.trim(); n+=A.active[p]||0; od+=A.overdue[p]||0; }); return {n:n,od:od}; }
+  document.querySelectorAll('.accts .card').forEach(function(card){
+    var h=card.querySelector('h3'), chips=card.querySelector('.chips'); if(!h||!chips) return;
+    var c=acct(h.textContent.trim()); if(!c.n) return;
+    var b=document.createElement('span'); b.className='chip atrt-badge'+(c.od?' danger':'');
+    b.innerHTML='<b>'+c.n+'</b> active'+(c.od?' · '+c.od+' overdue':''); chips.insertBefore(b,chips.firstChild);
+  });
+
+  /* workload filter + search */
+  var table=document.getElementById('wl-table'), wrap=document.getElementById('wl-filter');
+  if(table && wrap){
+    var rows=Array.prototype.slice.call(table.tBodies[0].rows);
+    var accts={}; rows.forEach(function(r){ accts[r.getAttribute('data-account')]=1; });
+    var cur={acct:'',status:'',q:'',od:false};
+    var empty=document.getElementById('wl-empty');
+    function apply(){ var shown=0; rows.forEach(function(r){
+      var ok=true;
+      if(cur.acct && r.getAttribute('data-account')!==cur.acct) ok=false;
+      if(cur.status && r.getAttribute('data-status')!==cur.status) ok=false;
+      if(cur.od && r.getAttribute('data-od')!=='1') ok=false;
+      if(cur.q && r.textContent.toLowerCase().indexOf(cur.q)<0) ok=false;
+      r.style.display=ok?'':'none'; if(ok) shown++; });
+      if(empty) empty.style.display=shown?'none':''; }
+    var odb=document.createElement('button'); odb.className='fchip'; odb.textContent='⚠ Overdue'; odb.setAttribute('data-t','od');
+    odb.onclick=function(){ cur.od=!cur.od; odb.classList.toggle('on'); apply(); }; wrap.appendChild(odb);
+    ['on hold','open','with client','in progress','test running'].forEach(function(s){
+      var b=document.createElement('button'); b.className='fchip'; b.textContent=s; b.setAttribute('data-t','status');
+      b.onclick=function(){ cur.status=(cur.status===s?'':s);
+        wrap.querySelectorAll('[data-t=status]').forEach(function(x){x.classList.remove('on');});
+        if(cur.status) b.classList.add('on'); apply(); }; wrap.appendChild(b); });
+    var sel=document.createElement('select'); sel.className='fsel';
+    sel.innerHTML='<option value="">All accounts</option>'+Object.keys(accts).sort().map(function(a){return '<option>'+a+'</option>';}).join('');
+    sel.onchange=function(){ cur.acct=sel.value; apply(); }; wrap.appendChild(sel);
+    var q=document.createElement('input'); q.type='search'; q.placeholder='Search tasks…';
+    q.oninput=function(){ cur.q=q.value.toLowerCase(); apply(); }; wrap.appendChild(q);
+    var clr=document.getElementById('wl-clear');
+    if(clr) clr.onclick=function(){ cur={acct:'',status:'',q:'',od:false}; sel.value=''; q.value='';
+      wrap.querySelectorAll('.fchip').forEach(function(x){x.classList.remove('on');}); apply(); };
+  }
 })();
 </script>
 
