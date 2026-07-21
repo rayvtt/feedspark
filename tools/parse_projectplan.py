@@ -45,6 +45,30 @@ def norm_status(v):
        re.fullmatch(r'\d{1,2}(st|nd|rd|th)?[ -][a-z]{3,9}', lv): return "done"
     return "open"
 
+def bucket(raw):
+    """Coarse status bucket for the dossier filter: open / progress / hold / done."""
+    lv=(raw or "").lower().strip()
+    if not lv: return "open"
+    if any(w in lv for w in ("done","complete","launch","live","closed","set live","resolved","result")): return "done"
+    if re.match(r'^\d{1,2}[/-]\d', lv) or re.fullmatch(r"[a-z]{3}-\d{2}", lv): return "done"
+    if "progress" in lv or lv=="wip": return "progress"
+    if any(w in lv for w in ("hold","parked","postpon","await","with client","paused","block")): return "hold"
+    return "open"
+
+_MONTHNUM={m:i+1 for i,m in enumerate(("jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"))}
+def parse_period(text):
+    """Detect a month/quarter section header -> (label, sortkey YYYYMM). Else None."""
+    tl=(text or "").lower()
+    m=re.search(r"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*[ \-/]*'?(\d{2,4})\b", tl)
+    if m:
+        mo=_MONTHNUM[m.group(1)[:3]]; yr=int(m.group(2)); yr+= 2000 if yr<100 else 0
+        return (text.strip()[:26], yr*100+mo)
+    q=re.search(r"\bq([1-4])[ /\-]*'?(\d{2,4})\b", tl)
+    if q:
+        yr=int(q.group(2)); yr+= 2000 if yr<100 else 0
+        return (text.strip()[:26], yr*100+(int(q.group(1))-1)*3+1)
+    return None
+
 def scan_status(r, scol, ocol, dcol):
     """Find the row's status: mapped STATUS column first, then a window near owner."""
     order=[]
@@ -124,12 +148,16 @@ def parse(path):
     if hi is None: return []
     cm=col_map(rows[hi])
     dcol,ocol,scol=cm["desc"],cm["owner"],cm["status"]
-    tasks=[]; lane=None
+    tasks=[]; lane=None; period=""; pk=0
     for r in rows[hi+1:]:
         desc=g(r,dcol); owner=g(r,ocol); status=scan_status(r,scol,ocol,dcol)
         # lane/section tag often sits just left of desc
         tag=g(r,dcol-1) if dcol-1>=0 else ""
         if not desc: continue
+        # month/quarter section header (owner-less) -> advance the current period
+        if not owner:
+            per=parse_period(desc)
+            if per: period,pk=per; continue
         if is_skiptext(desc):
             continue
         # section header: a title with no owner & no status (e.g. '1  Data Fields & Titles')
@@ -139,8 +167,10 @@ def parse(path):
                 lane=desc
             continue
         if len(desc)<4: continue
+        raw=status.strip()
         tasks.append(dict(lane=(tag or lane or ""), desc=desc, owner=owner,
-                          status=status, ns=norm_status(status), cat=task_cat(desc)))
+                          status=raw, ns=norm_status(raw), bk=bucket(raw),
+                          period=period, pk=pk, cat=task_cat(desc)))
     return tasks
 
 def summarise(tasks):
