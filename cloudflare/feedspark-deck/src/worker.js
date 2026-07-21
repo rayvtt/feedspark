@@ -30,6 +30,7 @@ import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
 import ROADMAP from "../../../docs/FeedSpark_Roadmap.html";
 import READINESS from "../../../docs/FeedSpark_Readiness.html";
+import LEADERSHIP from "../../../docs/FeedSpark_Leadership.html";
 import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html";
 
 // path -> { html, slug }. slug namespaces each page's KV edit layer (KV key: edits:<slug>),
@@ -41,6 +42,7 @@ const PAGES = {
   '/library':     { html: TASKLIB,     slug: 'library' },
   '/roadmap':     { html: ROADMAP,     slug: 'roadmap' },
   '/readiness':   { html: READINESS,   slug: 'readiness' },
+  '/leadership':  { html: LEADERSHIP,  slug: 'leadership' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
 };
 

@@ -110,7 +110,7 @@ def splice(out):
     import re
     payload='window.PLANTASKS='+json.dumps(out, ensure_ascii=False)+';'
     block='<!-- PLANS:START -->\n<script>'+payload+'</script>\n<!-- PLANS:END -->'
-    for fn in ("FeedSpark_Command_Center.html","FeedSpark_Task_Library.html","FeedSpark_Readiness.html"):
+    for fn in ("FeedSpark_Command_Center.html","FeedSpark_Task_Library.html","FeedSpark_Readiness.html","FeedSpark_Leadership.html"):
         path=os.path.join(HERE,"..","docs",fn)
         if not os.path.exists(path): continue
         doc=open(path,encoding="utf-8").read()
