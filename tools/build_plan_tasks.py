@@ -19,12 +19,20 @@ OUT=sys.argv[1] if len(sys.argv)>1 else os.path.join(HERE,"..","docs","plan_task
 
 # csv file -> (brand(s)). A shared sheet (Monsoon/Accessorize) is split by MON/ACC lane tag.
 PLANS=[
- ("reiss_projectplan.csv",    ["Reiss"]),
- ("schuh_projectplan.csv",    ["Schuh"]),
- ("monsoon_projectplan.csv",  ["Monsoon","Accessorize"]),
- ("superdry_projectplan.csv", ["Superdry"]),
- ("jomalone_projectplan.csv", ["Jo Malone"]),
+ ("reiss_projectplan.csv",      ["Reiss"]),
+ ("schuh_projectplan.csv",      ["Schuh"]),
+ ("monsoon_projectplan.csv",    ["Monsoon","Accessorize"]),
+ ("superdry_projectplan.csv",   ["Superdry"]),
+ ("yumove_projectplan.csv",     ["YuMOVE"]),
+ ("hobbycraft_projectplan.csv", ["Hobbycraft"]),
+ ("jomalone_projectplan.csv",   ["Jo Malone"]),
 ]
+CORDER=["title","keyword","data","image","custom_label","product_type","technical","channel","test","account"]
+CLBL={"title":"Titles","keyword":"Keywords","data":"Data fields","image":"Imagery","custom_label":"Custom labels",
+      "product_type":"Product type","technical":"Feed & technical","channel":"Channels","test":"Testing",
+      "account":"Account & strategy","opt":"Optimisation"}
+_MON=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+def pk_label(pk): return _MON[pk%100]+" "+("%02d"%(pk//100%100))
 # curated category weights (feed-optimisation importance)
 WEIGHT={"title":1.3,"keyword":1.3,"data":1.2,"image":1.0,"custom_label":1.0,
         "product_type":1.1,"technical":1.0,"channel":0.9,"test":1.1,"account":0.6,"opt":0.8}
@@ -41,16 +49,35 @@ def score_of(tasks):
     breadth = sum(1 for c in cats if any(t["cat"]==c and t["ns"]=="done" for t in tasks))/max(1,len(WEIGHT))
     return max(1, round(100*(0.75*depth + 0.25*min(1.0,breadth*1.4))))
 
+def compact(t):
+    return {"t":t["desc"][:150],"o":t["owner"][:40],"c":t["cat"],"s":t["status"][:24],"b":t.get("bk","open")}
+
 def brand_payload(tasks, updated):
     s=summarise(tasks)
     cats={c:{"total":s["cats"][c],"done":s["catdone"][c]} for c in s["cats"]}
-    active=[{"desc":t["desc"][:140],"owner":t["owner"][:40],"cat":t["cat"],"ns":t["ns"]}
-            for t in tasks if t["ns"] in ("open","hold")][:60]
-    recent=[{"desc":t["desc"][:140],"owner":t["owner"][:40],"cat":t["cat"]}
-            for t in tasks if t["ns"]=="done"][:40]
+    # group by detected month period
+    byp={}
+    for t in tasks:
+        if t.get("pk"): byp.setdefault(t["pk"],[]).append(t)
+    pks=sorted(byp)
+    if len(pks)>=2:
+        volkind="month"
+        vol=[]
+        for k in pks[-9:]:
+            ts=byp[k]; done=sum(1 for t in ts if t["bk"]=="done")
+            vol.append({"l":pk_label(k),"d":done,"o":len(ts)-done})
+        top=set(pks[-3:])
+        latest=[compact(t) for t in tasks if t.get("pk") in top][:80]
+    else:
+        volkind="lane"
+        vol=[]
+        for c in CORDER:
+            cc=cats.get(c)
+            if cc and cc["total"]: vol.append({"l":CLBL.get(c,c),"d":cc["done"],"o":cc["total"]-cc["done"]})
+        latest=[compact(t) for t in tasks if t["bk"]!="done"][:70]
     return dict(score=score_of(tasks), total=s["total"], done=s["done"],
                 open=s["open"], hold=s["hold"], updated=updated,
-                cats=cats, active=active, recent=recent)
+                cats=cats, vol=vol, volkind=volkind, latest=latest)
 
 def main():
     out=OrderedDict()
