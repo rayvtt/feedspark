@@ -111,7 +111,8 @@ function getEditorScript(slug) {
   var css = 'body.de-on [data-eid]{outline:1px dashed rgba(237,111,11,.55);outline-offset:2px}'
     + 'body.de-on [data-eid]:focus{outline:2px solid #ED6F0B;outline-offset:2px}'
     + 'body.de-on [data-eid].de-pick{outline:2px solid #1A365D;outline-offset:2px}'
-    + '.de-bar{position:fixed;right:16px;bottom:16px;z-index:99999;display:flex;gap:8px;align-items:center;font:14px/1.2 -apple-system,Segoe UI,Roboto,sans-serif}'
+    + '.de-bar{position:fixed;right:16px;bottom:16px;z-index:99999;display:none;gap:8px;align-items:center;font:14px/1.2 -apple-system,Segoe UI,Roboto,sans-serif}'
+    + '.de-bar.de-show{display:flex}'
     + '.de-bar button{background:#1A365D;color:#fff;border:0;border-radius:8px;padding:9px 13px;cursor:pointer;font:inherit}'
     + '.de-bar button.on{background:#ED6F0B}'
     + '.de-bar span{color:#6b7a8d;min-width:60px}'
@@ -123,7 +124,9 @@ function getEditorScript(slug) {
     + '.de-panel .row button.alt{background:#1A365D}'
     + '.de-panel small{color:#6b7a8d}'
     + '.de-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:#1A365D;color:#fff;padding:9px 15px;border-radius:8px;z-index:99999;opacity:0;transition:opacity .25s;font:14px sans-serif}'
-    + '.de-toast.show{opacity:1}';
+    + '.de-toast.show{opacity:1}'
+    + '.tbl-wrap tbody tr>:first-child{cursor:grab}'
+    + '.tbl-wrap tbody tr.de-dragging{opacity:.35}';
   var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
 
   var bar=document.createElement('div'); bar.className='de-bar';
@@ -133,6 +136,17 @@ function getEditorScript(slug) {
   var stat=document.createElement('span'); stat.textContent='';
   bar.appendChild(bEdit); bar.appendChild(bPick); bar.appendChild(bExport); bar.appendChild(stat);
   document.body.appendChild(bar);
+
+  // Presentation mode: the editor bar is hidden by default (clean for client screen-share)
+  // and only appears once revealed — via ?edit in the URL or the Ctrl/Cmd+Shift+E shortcut.
+  // The reveal choice is remembered per-browser so Ray doesn't have to re-toggle every load.
+  var LS_KEY='de-bar-shown';
+  function showBar(on){ bar.classList.toggle('de-show',on); try{ localStorage.setItem(LS_KEY, on?'1':'0'); }catch(e){} if(!on && editing) setEditing(false); }
+  var wantsShown = /[?&]edit(=1)?(&|$)/.test(location.search);
+  var remembered = null; try{ remembered = localStorage.getItem(LS_KEY); }catch(e){}
+  showBar(wantsShown || remembered==='1');
+  document.addEventListener('keydown',function(e){
+    if(e.key.toLowerCase()==='e' && (e.ctrlKey||e.metaKey) && e.shiftKey){ e.preventDefault(); showBar(!bar.classList.contains('de-show')); } });
 
   var panel=document.createElement('div'); panel.className='de-panel';
   panel.innerHTML='<strong>Send an element to Claude Code</strong>'
@@ -155,9 +169,58 @@ function getEditorScript(slug) {
   function assignEids(){ var i=0; editable().forEach(function(el){ if(!el.getAttribute('data-eid')) el.setAttribute('data-eid','e'+i); i++; }); }
 
   function loadEdits(){ fetch(API+'/api/edits?page='+PAGE).then(function(r){ return r.json(); }).then(function(ed){
-    if(!ed) return; Object.keys(ed).forEach(function(k){ var el=document.querySelector('[data-eid="'+k+'"]'); if(!el) return;
+    if(!ed) return; Object.keys(ed).forEach(function(k){
+      if(k.indexOf('__order:')===0){
+        var table=document.querySelector('table[data-tid="'+k.slice(8)+'"]'); if(!table) return;
+        var tb=table.querySelector('tbody'); if(!tb) return;
+        ed[k].forEach(function(rid){ var tr=tb.querySelector('tr[data-rid="'+rid+'"]'); if(tr) tb.appendChild(tr); });
+        return;
+      }
+      var el=document.querySelector('[data-eid="'+k+'"]'); if(!el) return;
       var v=ed[k]; var h=(typeof v==='string')?v:v.html; if(h!=null) el.innerHTML=h;
       if(v && typeof v==='object' && v.style!=null) el.style.cssText=v.style; }); }).catch(function(){}); }
+
+  // ---- row drag-and-drop reordering — works even in presentation mode (bar hidden),
+  // drag starts only from a row's first cell so text selection elsewhere is unaffected.
+  function initRowDrag(){
+    var tid=0;
+    document.querySelectorAll('.tbl-wrap table').forEach(function(table){
+      var tb=table.querySelector('tbody'); if(!tb) return;
+      var tKey=table.getAttribute('data-tid'); if(!tKey){ tKey='t'+(tid++); table.setAttribute('data-tid',tKey); }
+      var rid=0;
+      Array.prototype.forEach.call(tb.children,function(tr){
+        if(tr.tagName!=='TR') return;
+        if(!tr.getAttribute('data-rid')) tr.setAttribute('data-rid',tKey+'-r'+(rid++));
+        var handle=tr.children[0]; if(!handle) return;
+        var arm=function(){ tr.setAttribute('draggable','true'); };
+        var disarm=function(){ tr.removeAttribute('draggable'); };
+        handle.addEventListener('mousedown',arm);
+        handle.addEventListener('mouseup',disarm);
+        tr.addEventListener('dragstart',function(e){ tr.classList.add('de-dragging'); e.dataTransfer.effectAllowed='move';
+          try{ e.dataTransfer.setData('text/plain', tr.getAttribute('data-rid')); }catch(er){} });
+        tr.addEventListener('dragend',function(){ tr.classList.remove('de-dragging'); disarm(); saveOrder(tb,tKey); });
+      });
+      tb.addEventListener('dragover',function(e){
+        var dragging=tb.querySelector('.de-dragging'); if(!dragging) return;
+        e.preventDefault();
+        var after=rowAfter(tb,e.clientY);
+        if(after==null) tb.appendChild(dragging); else if(after!==dragging) tb.insertBefore(dragging,after);
+      });
+    });
+  }
+  function rowAfter(tb,y){
+    var rows=Array.prototype.slice.call(tb.querySelectorAll('tr:not(.de-dragging)'));
+    var closest=null, closestOffset=-Infinity;
+    rows.forEach(function(r){ var box=r.getBoundingClientRect(); var offset=y-box.top-box.height/2;
+      if(offset<0 && offset>closestOffset){ closestOffset=offset; closest=r; } });
+    return closest;
+  }
+  function saveOrder(tb,tKey){
+    var order=Array.prototype.map.call(tb.querySelectorAll('tr'),function(tr){ return tr.getAttribute('data-rid'); });
+    var patch={}; patch['__order:'+tKey]=order;
+    fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
+      .then(function(r){ return r.json(); }).then(function(){ toast('Row order saved'); }).catch(function(){ toast('Order save failed'); });
+  }
 
   function entry(el){ return { html: el.innerHTML, style: el.getAttribute('style')||'', preview: el.textContent.trim().slice(0,80) }; }
   function queueSave(el){ var id=el.getAttribute('data-eid'); if(!id) return; dirty[id]=entry(el);
@@ -193,6 +256,7 @@ function getEditorScript(slug) {
   bExport.addEventListener('click',function(){ var patch={}; document.querySelectorAll('[data-eid]').forEach(function(el){ patch[el.getAttribute('data-eid')]=entry(el); });
     copy(JSON.stringify(patch,null,2), 'All edits copied as JSON'); });
 
+  initRowDrag();
   loadEdits();
 })();
 </script>`;
