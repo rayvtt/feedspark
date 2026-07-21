@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>YuMOVE × FeedSpark — Strategy Review, July 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&amp;display=swap" rel="stylesheet">
 <style>
 :root{
   --ink:#1A1A1A;--ink-2:#333333;--muted:#767676;--line:#E6E6E6;
@@ -265,30 +264,27 @@ body:not(.editing) [contenteditable]{outline:none}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}html{scroll-behavior:auto}}
 </style>
 </head>
-<body>
+<body class="">
 
 <div class="topbar" id="topbar">
   <div class="topbar-in">
     <div class="tb-brand">Feed<span>Spark</span> × YuMOVE</div>
     <nav class="tb-nav">
-      <a href="#c1">01 Scope</a>
-      <a href="#c2">02 Work</a>
-      <a href="#c3">03 Automation</a>
-      <a href="#c4">04 AI landscape</a>
-      <a href="#c5">05 Tachyon</a>
-      <a href="#c6">06 Attributes</a>
-      <a href="#c7">07 Roadmap</a>
+      <a href="#c1" class="">01 Scope</a>
+      <a href="#c2" class="">02 Work</a>
+      <a href="#c3" class="">03 Automation</a>
+      <a href="#c4" class="">04 AI landscape</a>
+      <a href="#c5" class="">05 Tachyon</a>
+      <a href="#c6" class="">06 Attributes</a>
+      <a href="#c7" class="">07 Roadmap</a>
     </nav>
     <button class="flagbtn" id="flagbtn" aria-pressed="true" title="Toggle data-check markers">⚑ Data checks</button>
-    <div class="progress" id="progress"></div>
+    <div class="progress" id="progress" style="width: 0%;"></div>
   </div>
 </div>
 <div class="footmark">FeedSpark · Private &amp; Confidential</div>
 <div class="edit-bar" id="editbar">
-  <button id="editToggle">✎ Edit mode</button>
-  <div class="sep"></div>
-  <button id="exportEdits" style="display:none">⤴ Export edits</button>
-  <button id="importEdits" style="display:none">⤵ Import edits</button>
+  <button id="editToggle" class="">✎ Edit mode</button>
   <div class="sep"></div>
   <button id="downloadBtn">↓ Download HTML</button>
   <span class="saved" id="savedMsg">✓ Saved</span>
@@ -298,9 +294,11 @@ body:not(.editing) [contenteditable]{outline:none}
 <header class="hero">
   <div class="wrap">
     <div class="eyebrow on-dark">Strategy Review · July 2026</div>
-    <h1>Feeding the<br>answer, not just<br>the <em>ad slot</em>.</h1>
+    <h1>YuMOVE&nbsp;<br><br><br></h1>
     <div class="hero-rule"></div>
-    <p class="lede">Where the YuMOVE feed stands after a full FY of testing — and the six new Google attributes that decide whether an AI agent recommends YuMOVE or the own-brand next to it.</p>
+    <p class="lede">"The feed becomes transaction infrastructure -&nbsp;In agentic commerce, a feed error can affect not only visibility but also the agent's recommendation,
+cart logic, displayed total, legal notice and ability to complete checkout. Accuracy, identifiers and
+policy data become commercial controls"<br>Google&nbsp;</p>
     <div class="hero-meta" style="margin-top:40px">
       <div>Client<b>YuMOVE · Lintbells</b></div>
       <div>Market<b>UK</b></div>
@@ -313,10 +311,10 @@ body:not(.editing) [contenteditable]{outline:none}
 <!-- ================= AGENDA ================= -->
 <section>
   <div class="wrap">
-    <div class="eyebrow rv">Agenda</div>
-    <h2 class="sec-title rv">What we'll cover</h2>
-    <p class="sec-sub rv">Seven chapters plus a 14-test matrix — the first three recap the year, the next four lay out the AI strategy, and the testing schedule packs it all into 16 weeks before peak.</p>
-    <div class="agenda rv">
+    <div class="eyebrow rv in">Agenda</div>
+    <h2 class="sec-title rv in">What we'll cover</h2>
+    <p class="sec-sub rv in">Seven chapters plus a 14-test matrix — the first three recap the year, the next four lay out the AI strategy, and the testing schedule packs it all into 16 weeks before peak - let's prioritise the roadmap together !</p>
+    <div class="agenda rv in">
       <div>
         <div class="ag-row"><div class="ag-num">01</div><div><div class="ag-t">Service scope &amp; scale</div><div class="ag-d">UK · Google Shopping + Meta · hours</div></div></div>
         <div class="ag-row"><div class="ag-num">02</div><div><div class="ag-t">Work review &amp; project recap</div><div class="ag-d">Strategy Q3/25 closed out · title tests · SUB-G · scrape retired</div></div></div>
@@ -327,25 +325,25 @@ body:not(.editing) [contenteditable]{outline:none}
         <div class="ag-row"><div class="ag-num">05</div><div><div class="ag-t">Tachyon for supplements</div><div class="ag-d">Intent generation · description enrichment · visual harvest</div></div></div>
         <div class="ag-row"><div class="ag-num">06</div><div><div class="ag-t">Google's conversational attributes</div><div class="ag-d">Six new attributes · interactive deep-dive · AI scorecard</div></div></div>
         <div class="ag-row"><div class="ag-num">07</div><div><div class="ag-t">Roadmap &amp; 14-test matrix</div><div class="ag-d">Jul → Nov · 14 tests in 16 weeks · Black Friday 28 Nov – 1 Dec</div></div></div>
-        <div class="ag-row" style="border-bottom:0"><div class="ag-num" style="color:var(--muted)">—</div><div><div class="ag-t">What we need from YuMOVE</div><div class="ag-d">Three sign-offs that unblock everything</div></div></div>
+        <div class="ag-row" style="border-bottom:0"><div class="ag-num" style="color:var(--muted)">—</div><div><div class="ag-t"><br></div><div class="ag-d"><br></div></div></div>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ================= CH 01 — SCOPE ================= -->
-<div class="chapter" id="c1"><div class="ch-num">01</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter one</div><h2>Service scope &amp; scale</h2><p>One market, two channels, and a year of hours.</p></div></div>
+<div class="chapter" id="c1"><div class="ch-num">01</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter one</div><h2>Service scope &amp; scale</h2><p>UK and it's activities</p></div></div>
 
 <section>
   <div class="wrap">
-    <div class="stats rv">
+    <div class="stats rv in">
       <div class="stat"><div class="n">1</div><div class="l">Market — UK</div></div>
       <div class="stat"><div class="n">2</div><div class="l">Active channels</div></div>
-      <div class="stat"><div class="n">24<small>.0<span class="chk">?</span></small></div><div class="l">Scheduled hrs / month</div></div>
+      <div class="stat"><div class="n">24<small>.0<span class="chk">?</span></small></div><div class="l">Scheduled hrs / month<br><br>We're heading back to 16 hours in August&nbsp;</div></div>
       <div class="stat"><div class="n">21<small>.0<span class="chk">?</span></small></div><div class="l">Ad-hoc hrs / month</div></div>
       <div class="stat"><div class="n">153</div><div class="l">Tickets closed Jan→Jul '25</div></div>
     </div>
-    <div class="grid-2 rv">
+    <div class="grid-2 rv in">
       <div class="tbl-wrap">
         <table><thead><tr><th>Channel</th><th>Feeds</th><th>Focus</th></tr></thead>
         <tbody>
@@ -356,30 +354,30 @@ body:not(.editing) [contenteditable]{outline:none}
       <div class="card">
         <h4>Where the hours went — Jan→Jul '25</h4>
         <div class="bars" style="margin-top:16px">
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Data &amp; pricing</span><span>40 hrs</span></div><div class="track"><div class="fill" data-w="100"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Image &amp; overlay</span><span>39 hrs</span></div><div class="track"><div class="fill" data-w="97"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Title &amp; keyword</span><span>36 hrs</span></div><div class="track"><div class="fill" data-w="90"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Ad-hoc &amp; launches</span><span>19 hrs</span></div><div class="track"><div class="fill grey" data-w="47"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Strategy &amp; calls</span><span>9 hrs</span></div><div class="track"><div class="fill grey" data-w="22"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">GMC disapprovals</span><span>6 hrs</span></div><div class="track"><div class="fill grey" data-w="15"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Data &amp; pricing</span><span>40 hrs</span></div><div class="track"><div class="fill" data-w="100" style="width: 100%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Image &amp; overlay</span><span>39 hrs</span></div><div class="track"><div class="fill" data-w="97" style="width: 97%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Title &amp; keyword</span><span>36 hrs</span></div><div class="track"><div class="fill" data-w="90" style="width: 90%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Ad-hoc &amp; launches</span><span>19 hrs</span></div><div class="track"><div class="fill grey" data-w="47" style="width: 47%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Strategy &amp; calls</span><span>9 hrs</span></div><div class="track"><div class="fill grey" data-w="22" style="width: 22%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">GMC disapprovals</span><span>6 hrs</span></div><div class="track"><div class="fill grey" data-w="15" style="width: 15%;"></div></div></div>
         </div>
       </div>
     </div>
-    <div class="note rv"><b>Read on the shape of the year:</b> two-thirds of the retainer went into data, imagery and titles — the foundations. That work is banked, which frees the hours for the AI attribute build rather than another maintenance cycle.</div>
+    <div class="note rv in"><b>Read on the shape of the year: 2/3</b>&nbsp;of the retainer went into data, imagery and titles &amp; keywords — the foundations.<br>That work is banked, which frees the hours for the AI attribute build rather than another maintenance cycle.</div>
   </div>
 </section>
 
 <!-- ================= CH 02 — WORK REVIEW ================= -->
-<div class="chapter" id="c2"><div class="ch-num">02</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter two</div><h2>Work review &amp; project recap</h2><p>Strategy Q3/25 plan, action by action.</p></div></div>
+<div class="chapter" id="c2"><div class="ch-num">02</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter two</div><h2>Work Review &amp; Project recap</h2><p>Strategy Q3/25 plan, action by action.</p></div></div>
 
 <section class="band">
   <div class="wrap">
-    <div class="grid-3 rv" style="margin-bottom:36px">
+    <div class="grid-3 rv in" style="margin-bottom:36px">
       <div class="card"><div style="font-size:44px;font-weight:900;color:var(--green);line-height:1">11</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Done</div></div>
       <div class="card"><div style="font-size:44px;font-weight:900;color:var(--orange-deep);line-height:1">3</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Blocked on YuMOVE / Kinase</div></div>
       <div class="card"><div style="font-size:44px;font-weight:900;color:var(--ink);line-height:1">3</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Open or parked</div></div>
     </div>
-    <div class="tbl-wrap rv">
+    <div class="tbl-wrap rv in">
       <table><thead><tr><th style="width:40%">Action</th><th>Owner</th><th>Status</th><th style="width:28%">Outcome</th></tr></thead>
       <tbody>
         <tr><td>SUB-G roundel overlay — promo messaging</td><td>Ray</td><td><span class="pill p-done">✓ Done</span></td><td>Live on PPC, powered by JSON</td></tr>
@@ -387,19 +385,19 @@ body:not(.editing) [contenteditable]{outline:none}
         <tr><td>A/B test — [Brand] inclusion</td><td>Ezgi</td><td><span class="pill p-done">✓ Done</span></td><td><b>Brand wins</b></td></tr>
         <tr><td>Digestive title testing — benefit copy</td><td>Ezgi</td><td><span class="pill p-done">✓ Done</span></td><td><b>Benefit copy wins</b></td></tr>
         <tr><td>Sale generic keywords ("deal")</td><td>Ray</td><td><span class="pill p-done">✓ Done</span></td><td>Applied across SKUs</td></tr>
-        <tr><td>Product type — 3-node depth</td><td>Ezgi</td><td><span class="pill p-done">✓ Done</span></td><td>Pet Supplements > Dogs > Digestive</td></tr>
+        <tr><td>Product type — 3-node depth</td><td>Ezgi</td><td><span class="pill p-done">✓ Done</span></td><td>Pet Supplements &gt; Dogs &gt; Digestive</td></tr>
         <tr><td>Custom alerts — CL1/CL2 reviewed</td><td>Ray</td><td><span class="pill p-done">✓ Done</span></td><td>Logic verified pre-peak</td></tr>
         <tr><td>FeedHero audit cleanse (UK)</td><td>Ray</td><td><span class="pill p-done">✓ Done</span></td><td>Clean baseline</td></tr>
         <tr><td>Symptom matrix by season</td><td>Ray</td><td><span class="pill p-prog">In progress</span></td><td>Matrix under review by Simon</td></tr>
         <tr><td>A/B test — [Active ingredient]</td><td>Ray</td><td><span class="pill p-block">⚑ Awaiting YuMOVE</span></td><td>Simon to sign off Ingredient Matrix</td></tr>
-        <tr><td>Bundle SKUs — "Worth £xx"</td><td>Simon / Ezgi</td><td><span class="pill p-block">⚑ Awaiting YuMOVE</span></td><td>Becca to confirm bundle IDs</td></tr>
+        <tr><td>Bundle SKUs — "Worth £xx"</td><td>Simon / Ray</td><td><span style="color: rgb(46, 125, 50); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; background-color: rgba(46, 125, 50, 0.1);">✓ Done</span></td><td>Bundles live with PPC overlay</td></tr>
         <tr><td>High-volume search terms</td><td>Kinase / Ezgi</td><td><span class="pill p-block">⚑ Awaiting Kinase</span></td><td>Kinase to share HV terms</td></tr>
         <tr><td>Labels automation via AdWords</td><td>Ray / Kinase</td><td><span class="pill p-open">Open</span></td><td>Needs Kinase session</td></tr>
       </tbody></table>
     </div>
-    <div class="grid-2 rv" style="margin-top:32px">
-      <div class="card"><h4>The one that pays for itself</h4><p>The SUB-G price scrape has been <b>retired</b>. Subscription pricing now flows from YuMOVE's own JSON file — no scraper to babysit, no silent breakage. Data &amp; pricing was the largest hours line; this is where those hours come back.</p></div>
-      <div class="card"><h4>What the title tests told us</h4><p>Three signals held: <b>brand in the title wins</b>, <b>naming the benefit wins</b>, and <b>spelling the word out wins</b> ("Multivitamins" +126% over "Multivits"). All three point toward fuller, more decomposable titles — which is exactly what an AI agent needs to parse.</p></div>
+    <div class="grid-2 rv in" style="margin-top:32px">
+      <div class="card"><h4>The one that pays for itself</h4><p>The SUB-G price scrape has been <b>retired</b>. Subscription pricing now flows from YuMOVE's own JSON file —&nbsp; Data &amp; pricing was the largest hours line; this is where those hours come back.</p></div>
+      <div class="card"><h4>What the title tests told us</h4><p>Three signals held: <b>brand in the title wins</b>, <b>naming the benefit wins</b>, and <b>spelling the word out wins</b> ("Multivitamins" +126% over "Multivits"). <br>All three point toward fuller, more decomposable titles — which is exactly what an AI agent needs to parse.</p></div>
     </div>
   </div>
 </section>
@@ -407,36 +405,36 @@ body:not(.editing) [contenteditable]{outline:none}
 <!-- ================= TEST RESULTS VISUALISED ================= -->
 <section>
   <div class="wrap">
-    <div class="eyebrow rv">Evidence</div>
-    <h2 class="sec-title rv">The numbers behind the wins</h2>
-    <p class="sec-sub rv">Every completed A/B test from the YuMOVE programme, visualised. The pattern is consistent — fuller, more specific product data wins every time.</p>
+    <div class="eyebrow rv in">Evidence</div>
+    <h2 class="sec-title rv in">The numbers behind the wins</h2>
+    <p class="sec-sub rv in">Every completed A/B test from the YuMOVE programme, visualised. <br>The pattern is consistent — fuller, more specific product data wins every time.</p>
 
-    <div class="rv" id="testChart" style="margin-bottom:36px">
+    <div class="rv in" id="testChart" style="margin-bottom:36px">
       <div style="background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:28px 28px 12px">
         <div style="font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:20px">CTR uplift by test · YuMOVE Google Shopping</div>
         <div style="display:flex;flex-direction:column;gap:14px">
-          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>"Multivitamins" vs "Multivits"</span><span style="color:var(--green)">+126.6%</span></div><div class="track" style="height:22px"><div class="fill green" data-w="100" style="position:relative"><span style="position:absolute;right:8px;top:3px;font-size:10px;color:#fff;font-weight:700">Multivitamins WINS</span></div></div></div>
-          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>Health benefits in titles</span><span style="color:var(--green)">+24.7%</span></div><div class="track" style="height:22px"><div class="fill green" data-w="19.5"></div></div></div>
-          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>FeedSpark-optimised titles vs standard</span><span style="color:var(--green)">+18.5%</span></div><div class="track" style="height:22px"><div class="fill green" data-w="14.6"></div></div></div>
-          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>Keywords: multiple health conditions</span><span style="color:var(--green)">+30%</span></div><div class="track" style="height:22px"><div class="fill green" data-w="23.7"></div></div></div>
-          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>Breed concerns in titles</span><span style="color:var(--green)">+13%</span></div><div class="track" style="height:22px"><div class="fill green" data-w="10.3"></div></div></div>
-          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>PPC overlay (image test)</span><span style="color:var(--green)">+8.7% conv</span></div><div class="track" style="height:22px"><div class="fill" data-w="6.9" style="background:var(--orange)"></div></div></div>
-          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>"Senior Dogs" vs "Adult Dogs"</span><span style="color:var(--muted)">+2.15%</span></div><div class="track" style="height:22px"><div class="fill grey" data-w="1.7"></div></div></div>
-          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>"Aids Mobility" prefix</span><span style="color:var(--muted)">+1%</span></div><div class="track" style="height:22px"><div class="fill grey" data-w="0.8"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>"Multivitamins" vs "Multivits"</span><span style="color:var(--green)">+126.6%</span></div><div class="track" style="height:22px"><div class="fill green" data-w="100" style="position: relative; width: 100%;"><span style="position:absolute;right:8px;top:3px;font-size:10px;color:#fff;font-weight:700">Multivitamins WINS</span></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>Health benefits in titles</span><span style="color:var(--green)">+24.7%</span></div><div class="track" style="height:22px"><div class="fill green" data-w="19.5" style="width: 19.5%;"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>FeedSpark-optimised titles vs standard</span><span style="color:var(--green)">+18.5%</span></div><div class="track" style="height:22px"><div class="fill green" data-w="14.6" style="width: 14.6%;"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>Keywords: multiple health conditions</span><span style="color:var(--green)">+30%</span></div><div class="track" style="height:22px"><div class="fill green" data-w="23.7" style="width: 23.7%;"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>Breed concerns in titles</span><span style="color:var(--green)">+13%</span></div><div class="track" style="height:22px"><div class="fill green" data-w="10.3" style="width: 10.3%;"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>PPC overlay (image test)</span><span style="color:var(--green)">+8.7% conv</span></div><div class="track" style="height:22px"><div class="fill" data-w="6.9" style="background: var(--orange); width: 6.9%;"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>"Senior Dogs" vs "Adult Dogs"</span><span style="color:var(--muted)">+2.15%</span></div><div class="track" style="height:22px"><div class="fill grey" data-w="1.7" style="width: 1.7%;"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px"><span>"Aids Mobility" prefix</span><span style="color:var(--muted)">+1%</span></div><div class="track" style="height:22px"><div class="fill grey" data-w="0.8" style="width: 0.8%;"></div></div></div>
         </div>
         <div style="margin-top:16px;font-size:11px;color:var(--muted);display:flex;gap:18px"><span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:var(--green);border-radius:2px"></span>Strong signal</span><span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:var(--orange);border-radius:2px"></span>Conversion metric</span><span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:#C9C9C9;border-radius:2px"></span>Marginal</span></div>
       </div>
     </div>
 
-    <div class="grid-2 rv">
+    <div class="grid-2 rv in">
       <div class="card" style="border-left:3px solid var(--green)">
         <h4>The pattern</h4>
         <p>The three largest wins share a single trait: they all add <b>specific, decomposable information</b> to the title. Spelling out "Multivitamins" (+126%), naming the health benefit (+24.7%), and including multiple conditions (+30%) all give Google more structured signal to match against queries.</p>
-        <p style="margin-top:12px;font-size:13px;color:var(--muted)">This is exactly the kind of data AI agents need too. The tests were designed for Shopping, but the same attributes that lift CTR in PLAs are the attributes that make a product citable in AI Mode and ChatGPT.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">The tests were designed for Shopping, but the same attributes that lift CTR in PLAs are the attributes that make a product citable in AI Mode and ChatGPT.</p>
       </div>
       <div class="card">
         <h4>External benchmark — Boston Proper</h4>
-        <p>A controlled A/B test (4,400-SKU catalogue) comparing enriched metadata vs standard feeds in Google Merchant Center:</p>
+        <p>A controlled A/B test (4,400-SKU catalogue) comparing enriched meta-data vs standard feeds in Google Merchant Center:</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;font-size:13px">
           <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">+7.6%</b> CTR lift</div>
           <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">+6.3%</b> ROAS growth</div>
@@ -450,11 +448,11 @@ body:not(.editing) [contenteditable]{outline:none}
 </section>
 
 <!-- ================= CH 03 — AUTOMATION ================= -->
-<div class="chapter" id="c3"><div class="ch-num">03</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter three</div><h2>Automation &amp; peak readiness</h2><p>The plumbing that has to be right before Black Friday.</p></div></div>
+<div class="chapter" id="c3"><div class="ch-num">03</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter three</div><h2>Automation &amp; Peak Readiness</h2><p>The plumbing that has to be right before Black Friday.</p></div></div>
 
 <section>
   <div class="wrap">
-    <div class="tbl-wrap rv">
+    <div class="tbl-wrap rv in">
       <table><thead><tr><th style="width:22%">Layer</th><th style="width:22%">Source</th><th>How it works</th><th style="width:14%">State</th></tr></thead>
       <tbody>
         <tr><td><b>Subscription pricing</b></td><td>YuMOVE JSON file</td><td>Prices pulled direct, fed into SUB-G overlay on PPC. Scrape decommissioned.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
@@ -462,23 +460,23 @@ body:not(.editing) [contenteditable]{outline:none}
         <tr><td><b>Custom alerts</b></td><td>FeedHero</td><td>CL1/CL2 drop &amp; change alerts confirmed.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
         <tr><td><b>Sale keywords</b></td><td>Rule — FeedHero</td><td>Generic sale terms via additional product type columns.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
         <tr><td><b>Seasonal symptom KWs</b></td><td>Symptom Matrix</td><td>Auto-injected as hidden keywords. Matrix awaiting Simon.</td><td><span class="pill p-prog">In progress</span></td></tr>
-        <tr><td><b>Bestseller labels</b></td><td>FeedHero AdWords</td><td>Not built yet — needs Kinase session.</td><td><span class="pill p-open">Open</span></td></tr>
+        <tr><td><b>Bestseller labels</b></td><td>FeedHero AdWords</td><td>Not built yet — let's discuss !</td><td><span class="pill p-open">Open</span></td></tr>
       </tbody></table>
     </div>
-    <div class="callout rv"><h4>Black Friday — 28 Nov to 1 Dec · 40% off PAYG</h4><p>Every automated layer above carrying it. Structural work must be finished and stable by end of October — no architecture changes in peak month.</p></div>
+    <div class="callout rv in"><h4>Black Friday — 28 Nov to 1 Dec · 40% off PAYG</h4><p>&nbsp;Structural work must be finished and stable by end of October — no architecture changes in peak month.</p></div>
   </div>
 </section>
 
 <!-- ================= CH 04 — AI LANDSCAPE (NEW) ================= -->
-<div class="chapter" id="c4"><div class="ch-num">04</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter four</div><h2>The AI landscape — why this matters now</h2><p>Dog owners don't search anymore. They ask. And three separate pipelines decide whether YuMOVE is in the answer.</p></div></div>
+<div class="chapter" id="c4"><div class="ch-num">04</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter four</div><h2>The AI Landscape —</h2><p>Dog owners don't search anymore. <br>They ask &amp; 3 separate pipelines decide whether YuMOVE is in the answer.</p></div></div>
 
 <section class="band-warm">
   <div class="wrap">
-    <div class="eyebrow rv">The shift</div>
-    <h2 class="sec-title rv">Search is shifting — from 10 blue links to AI answers</h2>
-    <p class="sec-sub rv">"My 11-year-old lab is stiff getting up in the morning, what should I give her?" — that query doesn't match a keyword. It matches a product whose feed can answer it.</p>
+    <div class="eyebrow rv in">The shift</div>
+    <h2 class="sec-title rv in">Search is shifting — from 10 blue links to AI answers</h2>
+    <p class="sec-sub rv in">"My 11-year-old lab is stiff getting up in the morning, what should I give her?" —<br>A query about dog joint supplements might be answered from training data, a live web crawl, or your Merchant Center feed. The only way to win is to ensure all three pipelines contain rich, accurate, consistent product data.</p>
 
-    <div class="stats rv" style="margin-bottom:44px">
+    <div class="stats rv in" style="margin-bottom:44px">
       <div class="stat"><div class="n" style="font-size:36px">−25%</div><div class="l">Traditional search volume drop (Gartner)</div></div>
       <div class="stat"><div class="n" style="font-size:36px">&gt;60%</div><div class="l">Google searches end without a click</div></div>
       <div class="stat"><div class="n" style="font-size:36px">~60%</div><div class="l">Consumers use AI in the shopping journey</div></div>
@@ -486,18 +484,18 @@ body:not(.editing) [contenteditable]{outline:none}
       <div class="stat"><div class="n" style="font-size:36px">15m</div><div class="l">Updates per minute ChatGPT accepts</div></div>
     </div>
 
-    <div class="grid-3 rv" style="margin-bottom:44px">
+    <div class="grid-3 rv in" style="margin-bottom:44px">
       <div class="card"><h4>Zero-click is accelerating</h4><p>AI overviews, chat-led answers and agentic assistants resolve queries without a click. More shoppers get the answer inside the interface — your product is either in that answer, or it doesn't exist.</p></div>
-      <div class="card"><h4>The model picks the product</h4><p>LLMs read structured feeds, attributes and reviews to decide what to recommend. Thin data means YuMOVE never enters the consideration set — regardless of brand strength or ad spend.</p></div>
-      <div class="card"><h4>Supplements are answer-shaped</h4><p>Dosage, life stage, breed size, onset time, active ingredient. Every purchase decision is a question. And questions are exactly what these new AI surfaces answer.</p></div>
+      <div class="card"><h4>The model picks the product</h4><p>LLMs read structured feeds, attributes and reviews to decide what to recommend. Thin data means YuMOVE never enters the consideration set — <br>regardless of brand strength or ad spend.</p></div>
+      <div class="card"><h4>Supplements are answer-shaped</h4><p>Dosage, life stage, breed size, onset time, active ingredient.&nbsp;Every purchase decision is a question. And questions are exactly what these new AI surfaces answer.</p></div>
     </div>
 
     <!-- Three data pipelines -->
-    <div class="eyebrow rv">The black box problem</div>
-    <h2 class="sec-title rv">Three pipelines feed the AI — you can't control which one it uses</h2>
-    <p class="sec-sub rv">A query about dog joint supplements might be answered from training data, a live web crawl, or your Merchant Center feed. The only way to win is to ensure all three pipelines contain rich, accurate, consistent product data.</p>
+    <div class="eyebrow rv in">The black box problem</div>
+    <h2 class="sec-title rv in">Three pipelines feed the AI — you can't control which one it uses</h2>
+    <p class="sec-sub rv in">A query about dog joint supplements might be answered from training data, a live web crawl, or your Merchant Center feed. The only way to win is to ensure all three pipelines contain rich, accurate, consistent product data.</p>
 
-    <div class="pipe rv">
+    <div class="pipe rv in">
       <div class="pipe-card">
         <h4>Google Gemini / AI Mode</h4>
         <div class="sub">The primary pipeline for Google surfaces</div>
@@ -517,7 +515,7 @@ body:not(.editing) [contenteditable]{outline:none}
           <li>Updates accepted every 15 minutes</li>
           <li>Instant Checkout via Stripe (US)</li>
           <li>1M+ Shopify merchants in pipeline</li>
-          <li><b>Shopping overlay doesn't render</b> — only image + title + price</li>
+          <li><b>Shopping overlay potentially overlay on their answer too</b></li>
         </ul>
       </div>
       <div class="pipe-card">
@@ -533,18 +531,18 @@ body:not(.editing) [contenteditable]{outline:none}
       </div>
     </div>
 
-    <div class="note rv"><b>The practical point for YuMOVE:</b> your Shopping overlay — the SUB-G roundel — works in Google PLAs. It does <i>not</i> render inside ChatGPT Shopping. In ChatGPT, the AI agent reads your <b>title, description, and attributes</b> to decide whether to recommend you. That's why the attribute build in chapter 06 is the lever, not another overlay.</div>
+    <div class="note rv in"><br></div>
   </div>
 </section>
 
 <!-- Agentic protocols -->
 <section>
   <div class="wrap">
-    <div class="eyebrow rv">Agentic commerce</div>
-    <h2 class="sec-title rv">Three protocols that let AI agents shop on behalf of consumers</h2>
-    <p class="sec-sub rv">These are emerging open standards. None requires immediate action from YuMOVE — but they explain why the attribute build matters: the agents need structured data to act.</p>
+    <div class="eyebrow rv in">Agentic commerce</div>
+    <h2 class="sec-title rv in">Three protocols that let AI agents shop on behalf of consumers</h2>
+    <p class="sec-sub rv in">These are emerging open standards. None requires immediate action from YuMOVE — but they explain why the attribute build matters - the agents need structured data to act.</p>
 
-    <div class="grid-3 rv">
+    <div class="grid-3 rv in">
       <div class="proto g">
         <div class="tag">UCP — Universal Commerce Protocol</div>
         <h4>Google, Shopify, Target, Walmart</h4>
@@ -580,18 +578,18 @@ body:not(.editing) [contenteditable]{outline:none}
       </div>
     </div>
 
-    <div class="callout rv"><h4>The through-line across all three</h4><p>Every protocol assumes the agent can read structured product data — attributes, Q&amp;A, related products, variant options. The feed isn't just a shopping ad input anymore. It's the API that AI agents call to reason about your product.</p></div>
+    <div class="callout rv in"><h4>The through-line across all three</h4><p>Every protocol assumes the agent can read structured product data — attributes, Q&amp;A, related products, variant options. The feed isn't just a shopping ad input anymore. It's the API that AI agents call to reason about your product.</p></div>
   </div>
 </section>
 
 <!-- ================= AI EVIDENCE + THEORIES ================= -->
 <section class="band">
   <div class="wrap">
-    <div class="eyebrow rv">Evidence</div>
-    <h2 class="sec-title rv">What the data says about AI citation and feed quality</h2>
-    <p class="sec-sub rv">Three datasets that connect enriched feed data to AI visibility — and what they predict for a supplement brand investing in conversational attributes.</p>
+    <div class="eyebrow rv in">Evidence</div>
+    <h2 class="sec-title rv in">What the data says about AI citation and feed quality</h2>
+    <p class="sec-sub rv in">Three datasets that connect enriched feed data to AI visibility — and what they predict for a supplement brand investing in conversational attributes.</p>
 
-    <div class="stats rv" style="margin-bottom:36px">
+    <div class="stats rv in" style="margin-bottom:36px">
       <div class="stat"><div class="n" style="font-size:34px;color:var(--green)">+35%</div><div class="l">More organic clicks for brands cited in AI Overviews</div></div>
       <div class="stat"><div class="n" style="font-size:34px;color:var(--green)">83%</div><div class="l">ChatGPT shopping products match Google Shopping top 40</div></div>
       <div class="stat"><div class="n" style="font-size:34px;color:var(--orange-deep)">4.3→20%</div><div class="l">ChatGPT feed retrieval share, 6-month climb</div></div>
@@ -599,7 +597,7 @@ body:not(.editing) [contenteditable]{outline:none}
       <div class="stat"><div class="n" style="font-size:34px">8+</div><div class="l">Word queries 7× more likely to trigger AI Overview</div></div>
     </div>
 
-    <div class="grid-2 rv" style="margin-bottom:32px">
+    <div class="grid-2 rv in" style="margin-bottom:32px">
       <div class="card" style="border-left:3px solid var(--green)">
         <h4>The Google Shopping → ChatGPT pipeline</h4>
         <p>A March 2026 study of 43,000 ChatGPT shopping carousel products found that <b>83% match Google Shopping's top 40 organic listings</b>, with 60% from the top 10. This means optimising the Google Merchant Center feed is simultaneously optimising for ChatGPT visibility.</p>
@@ -614,15 +612,15 @@ body:not(.editing) [contenteditable]{outline:none}
       </div>
     </div>
 
-    <div class="eyebrow rv">Theories</div>
-    <h2 class="sec-title rv">How conversational attributes could compound across surfaces</h2>
-    <p class="sec-sub rv">None of these are proven — they're hypotheses drawn from the data above, each one testable within the Q3/Q4 programme.</p>
+    <div class="eyebrow rv in">Theories</div>
+    <h2 class="sec-title rv in">How conversational attributes could compound across surfaces</h2>
+    <p class="sec-sub rv in">None of these are proven — <br>They're hypotheses drawn from the data above, each one testable within the Q3/Q4 programme.</p>
 
-    <div class="grid-3 rv" style="margin-bottom:20px">
+    <div class="grid-3 rv in" style="margin-bottom:20px">
       <div class="card">
-        <h4 style="color:var(--orange-deep)">Theory 1: Q&A → AI citation loop</h4>
-        <p>If <code>question_and_answer</code> provides the AI agent with a pre-structured answer, the agent can cite YuMOVE directly rather than inferring from a description. Cited brands get <b>35% more organic clicks</b>. The compound effect: more clicks → better Shopping Graph signal → higher organic Shopping rank → more AI citations.</p>
-        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)"><b>Test:</b> Measure AI Overview citation rate for SKUs with Q&A vs without, using AI visibility tracking (Profound or Otterly AI).</p>
+        <h4 style="color:var(--orange-deep)">Theory 1: Q&amp;A → AI citation loop</h4>
+        <p>If <code>question_and_answer</code> provides the AI agent with a pre-structured answer, the agent can cite YuMOVE directly rather than inferring from a description. Cited brands get <b>35% more organic clicks</b>. <br><br>The compound effect: more clicks → better Shopping Graph signal → higher organic Shopping rank → more AI citations.</p>
+        <p style="margin-top:10px;font-size:12.5px;color:var(--muted)"><b>Test:</b> Measure AI Overview citation rate for SKUs with Q&amp;A vs without, using AI visibility tracking (Profound or Otterly AI).</p>
       </div>
       <div class="card">
         <h4 style="color:var(--orange-deep)">Theory 2: Variant options → range capture</h4>
@@ -635,7 +633,7 @@ body:not(.editing) [contenteditable]{outline:none}
         <p style="margin-top:10px;font-size:12.5px;color:var(--muted)"><b>Test:</b> A/B test impression share for SKUs with popularity_rank populated vs control group.</p>
       </div>
     </div>
-    <div class="grid-3 rv">
+    <div class="grid-3 rv in">
       <div class="card">
         <h4 style="color:var(--orange-deep)">Theory 4: Document links → authority signal</h4>
         <p>For health products, agents need evidence — not just claims. <code>document_link</code> pointing to clinical summaries or ingredient breakdowns gives the agent something to cite as authoritative. Google's Shopping Graph already cross-references structured data; PDFs give it a deeper evidence base to draw from.</p>
@@ -653,27 +651,27 @@ body:not(.editing) [contenteditable]{outline:none}
       </div>
     </div>
 
-    <div class="note rv"><b>The testing advantage:</b> Google's product data experiments now support controlled A/B testing on feed attributes — including in PMax. We can validate each theory with a randomised split and a supplemental feed, the same methodology Boston Proper used. Every test generates a result whether the hypothesis holds or not.</div>
+    <div class="note rv in"><b>The testing advantage:</b> Google's product data experiments now support controlled A/B testing on feed attributes — including in PMax. We can validate each theory with a randomised split and a supplemental feed, the same methodology Boston Proper used. Every test generates a result whether the hypothesis holds or not.</div>
   </div>
 </section>
 
 <!-- ================= CH 05 — TACHYON (NEW) ================= -->
-<div class="chapter" id="c5"><div class="ch-num">05</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter five</div><h2>Tachyon for supplements</h2><p>FeedSpark's AI engine — adapted from fashion to the pet-health category. Three capabilities, one pipeline.</p></div></div>
+<div class="chapter" id="c5"><div class="ch-num">05</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter five</div><h2>Tachyon for Supplements</h2><p>FeedSpark's AI engine —</p></div></div>
 
 <section class="band">
   <div class="wrap">
-    <div class="eyebrow rv">Capability 1</div>
-    <h2 class="sec-title rv">Long-intent search-term generation</h2>
-    <p class="sec-sub rv">Content engineered for AI search agents — not just keyword matching. The shift: generative engines resolve conversational, intent-rich queries, not keywords.</p>
+    <div class="eyebrow rv in">Capability 1</div>
+    <h2 class="sec-title rv in">Long-intent search-term generation</h2>
+    <p class="sec-sub rv in">Content engineered for AI search agents — not just keyword matching. The shift: generative engines resolve conversational, intent-rich queries, not keywords.</p>
 
-    <div class="flow rv" style="margin-bottom:32px">
+    <div class="flow rv in" style="margin-bottom:32px">
       <div class="flow-step"><div class="fs-num">01</div><h4>Feed extraction</h4><p>Tachyon reads live YuMOVE product data — title, description, active ingredients, life stage, format, price.</p></div>
       <div class="flow-step"><div class="fs-num">02</div><h4>Intent generation</h4><p>LLM generates 20–40 long-tail intent phrases per SKU. "joint supplement for senior labrador under £40", "glucosamine chews for stiff older dogs".</p></div>
       <div class="flow-step"><div class="fs-num">03</div><h4>Scoring &amp; validation</h4><p>Generated terms scored against search-term reports + Google Trends signals. Winners selected per SKU.</p></div>
-      <div class="flow-step"><div class="fs-num">04</div><h4>Feed injection</h4><p>Winning terms embedded in title, description, product highlights. Supplemental feed — primary feed untouched.</p></div>
+      <div class="flow-step"><div class="fs-num">04</div><h4>Feed injection</h4><p>Winning terms embedded in [title]*<i>tbd -</i>&nbsp;description, product highlights.&nbsp;</p></div>
     </div>
 
-    <div class="grid-2 rv">
+    <div class="grid-2 rv in">
       <div class="card" style="border-left:3px solid var(--orange)">
         <h4>YuMOVE example — Joint Care PLUS Max Strength</h4>
         <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Input: Glucosamine · Green-lipped mussel · Senior dogs · 120 tablets · £52.99 · Joint support</p>
@@ -691,7 +689,7 @@ body:not(.editing) [contenteditable]{outline:none}
         <h4>Why this matters for supplements specifically</h4>
         <p>In fashion, Tachyon matches terms like "smart-casual blazer for summer wedding." For supplements, the queries are health questions with a purchase intent behind them — and they're far more specific:</p>
         <p style="margin-top:12px"><b>"My 8-year-old cockapoo is limping after walks"</b> → this is a query an AI agent will resolve with a product recommendation. YuMOVE wins that recommendation only if the feed carries the life stage, the symptom language, and the ingredient data the agent needs to reason with.</p>
-        <p style="margin-top:12px;font-size:13px;color:var(--muted)">The title tests already proved the principle: spelling out benefits (+24.7% CTR) and ingredients beat abbreviated copy. Tachyon scales that across the full catalogue.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">The title tests already proved the principle: spelling out benefits <b>(+24.7% CTR)</b> and ingredients beat abbreviated copy. Tachyon scales that across the full catalogue.</p>
       </div>
     </div>
   </div>
@@ -700,11 +698,11 @@ body:not(.editing) [contenteditable]{outline:none}
 <!-- Description enrichment -->
 <section>
   <div class="wrap">
-    <div class="eyebrow rv">Capability 2</div>
-    <h2 class="sec-title rv">Description enrichment — the AI's briefing document</h2>
-    <p class="sec-sub rv">Your description is what the AI agent reads to decide whether YuMOVE answers the question. It should read like advice from a knowledgeable vet nurse — not a keyword list.</p>
+    <div class="eyebrow rv in">Capability 2</div>
+    <h2 class="sec-title rv in">Description enrichment — the AI's briefing document</h2>
+    <p class="sec-sub rv in">Your description is what the AI agent reads to decide whether YuMOVE answers the question. It should read like advice from a knowledgeable vet nurse — not a keyword list.</p>
 
-    <div class="enrich rv">
+    <div class="enrich rv in">
       <div class="en-card">
         <h4>Intent matching</h4>
         <div class="before">❌ "YuMOVE Joint Care for Dogs. Contains glucosamine. 60 tablets."</div>
@@ -723,29 +721,29 @@ body:not(.editing) [contenteditable]{outline:none}
       <div class="en-card">
         <h4>Pre-answered Q&amp;A</h4>
         <div class="before">❌ "See product page for more information."</div>
-        <div class="after">✓ "How many tablets? 1 per day for small dogs (up to 15kg), 2 for medium (15–30kg), 3 for large (30kg+). Can I give it with other supplements? Yes — safe alongside YuMOVE digestive range. 60-tablet pack lasts 1–2 months depending on dog size."</div>
+        <div class="after">✓ "How many tablets?"&nbsp;<div>&nbsp;1 per day for small dogs (up to 15kg), 2 for medium (15–30kg), 3 for large (30kg+).&nbsp;</div><div><br><div><div>✓ "Can I give it with other supplements?&nbsp;</div><div>Yes — safe alongside YuMOVE digestive range.&nbsp;</div><div><br></div><div>✓ "How long does a YuMOVE pack last?"</div><div>60-tablet pack lasts 1–2 months depending on dog size.</div></div></div></div>
       </div>
     </div>
 
-    <div class="note rv"><b>Efficiency note from Google's spec:</b> anything carried in <code>description</code>, <code>product_highlight</code> or <code>product_detail</code> doesn't need duplicating into the conversational attributes. So the description expansion and the attribute build are the same content exercise — not two separate workstreams.</div>
+    <div class="note rv in"><b>Efficiency note from Google's spec:</b> anything carried in <code>description</code>, <code>product_highlight</code> or <code>product_detail</code> doesn't need duplicating into the conversational attributes. So the description expansion and the attribute build are the same content exercise — not two separate workstreams.</div>
   </div>
 </section>
 
 <!-- Visual harvest -->
 <section class="band">
   <div class="wrap">
-    <div class="eyebrow rv">Capability 3</div>
-    <h2 class="sec-title rv">Visual attribute harvest</h2>
-    <p class="sec-sub rv">Tachyon reads the product image and feed data, then extracts structured attributes automatically. For Reiss that means silhouette, neckline, sleeve length. For YuMOVE, it means something different.</p>
+    <div class="eyebrow rv in">Capability 3</div>
+    <h2 class="sec-title rv in">Visual attribute harvest</h2>
+    <p class="sec-sub rv in">Tachyon reads the product image and feed data, then extracts structured attributes automatically.<br>For [Fashion] that means silhouette, neckline, sleeve length. <br>For YuMOVE, it means something different.</p>
 
-    <div class="flow rv" style="margin-bottom:32px">
+    <div class="flow rv in" style="margin-bottom:32px">
       <div class="flow-step"><div class="fs-num">01</div><h4>Image + feed ingested</h4><p>Pack image, existing title, description, and category data fed into Tachyon.</p></div>
       <div class="flow-step"><div class="fs-num">02</div><h4>Vision analysis</h4><p>AI reads the pack: format (tablet/chew/bites), life stage icon, active-ingredient callout, pack count, brand sub-line.</p></div>
       <div class="flow-step"><div class="fs-num">03</div><h4>Attribute generation</h4><p>15–25 structured attributes per SKU: format, count, life_stage, target_condition, key_ingredient, flavour.</p></div>
-      <div class="flow-step"><div class="fs-num">04</div><h4>Validation</h4><p>Each attribute verified against feed data. Flagged if confidence is low — nothing goes live unchecked.</p></div>
+      <div class="flow-step"><div class="fs-num">04</div><h4>Validation</h4><p>Each attribute verified against feed data. Flagged if confidence is low.</p></div>
     </div>
 
-    <div class="grid-2 rv">
+    <div class="grid-2 rv in">
       <div class="card">
         <h4>What Tachyon reads from a YuMOVE pack<span class="chk">?</span></h4>
         <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Illustrative — needs validating against actual packaging imagery</p>
@@ -771,15 +769,15 @@ body:not(.editing) [contenteditable]{outline:none}
 </section>
 
 <!-- ================= CH 06 — CONVERSATIONAL ATTRIBUTES ================= -->
-<div class="chapter" id="c6"><div class="ch-num">06</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter six</div><h2>Google's conversational attributes</h2><p>Six new feed attributes built for AI and conversational agents. For a supplement brand, they're close to purpose-built.</p></div></div>
+<div class="chapter" id="c6"><div class="ch-num">06</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter six</div><h2>Google's Conversational Attributes</h2><p>Six new feed attributes built for AI and conversational agents.</p></div></div>
 
 <section>
   <div class="wrap">
-    <div class="eyebrow rv">Maturity</div>
-    <h2 class="sec-title rv">Where YuMOVE sits on the climb</h2>
-    <p class="sec-sub rv">A year of title and data work has banked Tier 1. Descriptions and the conversational attributes are the open flank.</p>
+    <div class="eyebrow rv in">Maturity</div>
+    <h2 class="sec-title rv in">Where YuMOVE sits on the climb</h2>
+    <p class="sec-sub rv in">A year of title and data work has banked Tier 1. Descriptions and the conversational attributes are the open flank.</p>
 
-    <div class="tiers rv" style="margin-bottom:32px">
+    <div class="tiers rv in" style="margin-bottom:32px">
       <div class="tier done">
         <div class="tn">Stage 0</div><h4>Legacy</h4><div class="ts">The starting point</div>
         <ul><li>Feed meets minimum spec</li><li>Titles not structured for discovery</li><li>Invisible to AI surfaces</li></ul>
@@ -791,7 +789,7 @@ body:not(.editing) [contenteditable]{outline:none}
       <div class="tier here">
         <div class="flag">◆ YuMOVE is here</div>
         <div class="tn">Tier 2</div><h4>Descriptions &amp; answers</h4><div class="ts">The meaning layer</div>
-        <ul><li>Descriptions for natural-language queries</li><li><b>Six conversational attributes</b></li><li>Discovery shifts from "eligible" to "preferred"</li></ul>
+        <ul><li>Descriptions for natural-language queries (current test in-review!)</li><li><b>Six conversational attributes</b></li><li>Discovery shifts from "eligible" to "preferred"</li></ul>
       </div>
       <div class="tier">
         <div class="tn">Tier 3</div><h4>Image analysis</h4><div class="ts">The differentiator</div>
@@ -804,50 +802,55 @@ body:not(.editing) [contenteditable]{outline:none}
 <!-- AI Scorecard -->
 <section class="band-warm">
   <div class="wrap">
-    <div class="eyebrow rv">Scorecard</div>
-    <h2 class="sec-title rv">AI-Readiness audit — YuMOVE UK<span class="chk">?</span></h2>
-    <p class="sec-sub rv">Estimated from the project plan and the Jul-25 deck. An actual Golden Record audit against the live feed is the first deliverable on the roadmap. Numbers below are directional, not final.</p>
+    <div class="eyebrow rv in">Scorecard</div>
+    <h2 class="sec-title rv in">AI-Readiness audit — YuMOVE UK<span class="chk">?</span></h2>
+    <p class="sec-sub rv in">Estimated from the project plan and the Jul-25 deck. <br>An actual Golden Record audit against the live feed is the first deliverable on the roadmap.&nbsp;</p>
 
-    <div class="sc-grid rv" style="margin-bottom:32px">
+    <div class="sc-grid rv in" style="margin-bottom:32px">
       <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">~60%<span class="chk">?</span></div></div><div class="sc-label">Title quality for AI</div><div class="sc-note">Titles filled, but character count likely below AI target (80–120). Missing full attribute decomposition.</div><div class="sc-tgt">Target: Brand + Product + Format + Life Stage + Benefit + Count</div></div>
       <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">~30%<span class="chk">?</span></div></div><div class="sc-label">Description richness</div><div class="sc-note">Many descriptions likely under 200 chars. Need 500+ with intent-matching, use-case language.</div><div class="sc-warn">P0 gap — descriptions are what AI agents match against</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">100%</div></div><div class="sc-label">Product type depth (3+)</div><div class="sc-note">Completed: Pet Supplements > Dogs Supplement > Digestive. Three-node depth across the catalogue.</div><div class="sc-tgt">✓ Done in previous cycle</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">100%</div></div><div class="sc-label">Product type depth (3+)</div><div class="sc-note">Completed: Pet Supplements &gt; Dogs Supplement &gt; Digestive. Three-node depth across the catalogue.</div><div class="sc-tgt">✓ Done in previous cycle</div></div>
       <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">0%</div></div><div class="sc-label">Conversational attributes</div><div class="sc-note">None of the six new attributes populated. This is the build in chapter 07's roadmap.</div><div class="sc-warn">Not yet available when the last audit ran</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">?<span class="chk">?</span></div></div><div class="sc-label">Product highlights</div><div class="sc-note">Google recommends 4–10 per product. Current fill rate needs auditing against the live feed.</div><div class="sc-tgt">Target: key benefits, dosage, ingredients, format</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">?<span class="chk">?</span></div></div><div class="sc-label">Image coverage (3+)</div><div class="sc-note">Lifestyle imagery status unknown. Product images on pack only may limit ChatGPT display quality.</div><div class="sc-tgt">Target: product + lifestyle + ingredient detail</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)"><span class="chk"><span style="font-size: 32px; letter-spacing: -0.96px;">~65%</span></span></div></div><div class="sc-label">Product highlights</div><div class="sc-note">Google recommends 4–10 per product. Current fill rate needs auditing against the live feed.</div><div class="sc-tgt">Target: key benefits, dosage, ingredients, format</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)"><span style="color: rgb(46, 125, 50); letter-spacing: -0.96px;">100%</span></div></div><div class="sc-label">Image coverage (3+)</div><div class="sc-note">Not needed for YuMOVE !</div><div class="sc-tgt">Target: product + lifestyle + ingredient detail</div></div>
     </div>
 
-    <div class="note rv"><b>Next step:</b> the first deliverable on the roadmap is a proper Golden Record audit against the live UK feed — not estimates from a year-old deck. The scorecard above tells us where to look; the audit will tell us the actual gaps.</div>
+    <div class="note rv in"><b>Next step:</b> the first deliverable on the roadmap is a proper Golden Record audit against the live UK feed — not estimates from a year-old deck. The scorecard above tells us where to look; the audit will tell us the actual gaps.</div>
   </div>
 </section>
 
 <!-- Interactive attribute panel -->
 <section>
   <div class="wrap">
-    <div class="eyebrow rv">Deep dive</div>
-    <h2 class="sec-title rv">Pick the question. See the attribute that answers it.</h2>
-    <p class="sec-sub rv">Google's conversational attributes are optional, sit alongside the existing spec, and <b>don't affect approval of existing products</b>. They're submitted through a supplemental data source — primary feed untouched.</p>
+    <div class="eyebrow rv in">Deep dive</div>
+    <h2 class="sec-title rv in">Pick the question. See the attribute that answers it.</h2>
+    <p class="sec-sub rv in"><br></p>
 
-    <div class="agent rv">
+    <div class="agent rv in">
       <div class="agent-l">
         <h4>A dog owner asks an AI assistant…</h4>
         <p>Select a question.</p>
         <div class="qs" id="qs" role="tablist">
-          <button class="q active" role="tab" data-k="qa">"How long before I see a difference in my dog?"</button>
+          <button class="q" role="tab" data-k="qa">"How long before I see a difference in my dog?"</button>
           <button class="q" role="tab" data-k="variant">"Do you do the Max Strength in a bigger pack?"</button>
           <button class="q" role="tab" data-k="group">"What's the difference between Joint Care and Joint Care PLUS?"</button>
-          <button class="q" role="tab" data-k="related">"What else should I give her alongside it?"</button>
+          <button class="q active" role="tab" data-k="related">"What else should I give her alongside it?"</button>
           <button class="q" role="tab" data-k="pop">"What's your best-selling joint supplement?"</button>
           <button class="q" role="tab" data-k="doc">"Can I see the actual ingredient breakdown?"</button>
         </div>
       </div>
       <div class="agent-r">
         <div class="ar-head">Attribute that answers it</div>
-        <div id="panel"></div>
+        <div id="panel"><div class="fade-swap"><div class="attr-name">Related product</div><div class="attr-code">[related_product]</div><div class="attr-why">Declares relationships between SKUs — bundles to singles, complements, cross-sell. This is the mechanism the "Worth £xx" bundle work has been waiting for.</div><div class="feedrow"><span class="c">// relationship_type : identifier_type : identifier</span>
+<span class="k">related_product</span>:
+  often_bought_with:id:YM-DIGEST-60
+  often_bought_with:id:YM-SKIN-COAT-60
+  <span class="c">// bundle → component</span>
+  required_part:id:YM-JC-DAILY-BITES-ADULT</div><div class="attr-note">Unblocks the bundle task — pending Becca confirming bundle SKU structure.</div></div></div>
       </div>
     </div>
 
-    <div class="grid-2 rv" style="margin-top:32px">
+    <div class="grid-2 rv in" style="margin-top:32px">
       <div class="card">
         <h4>Two of these unblock work already on the plan</h4>
         <p><b>related_product</b> is the mechanism the "Worth £xx" bundle work has been waiting for — declare the bundle-to-single relationship in the feed rather than fudging it in the title.</p>
@@ -867,10 +870,10 @@ body:not(.editing) [contenteditable]{outline:none}
 
 <section class="band">
   <div class="wrap">
-    <div class="eyebrow rv">Q3 / Q4 FY26</div>
-    <h2 class="sec-title rv">July → Peak</h2>
-    <p class="sec-sub rv">Sequenced so the risky, sign-off-dependent work happens in September, leaving October clear for peak hardening.</p>
-    <div class="road rv">
+    <div class="eyebrow rv in">Q3 / Q4 FY26</div>
+    <h2 class="sec-title rv in">July → Peak</h2>
+    <p class="sec-sub rv in">Sequenced so the risky, sign-off-dependent work happens in September, leaving October clear for peak hardening.</p>
+    <div class="road rv in">
       <div class="mo">
         <div class="mo-m">July</div><div class="mo-s s-close">Close out</div>
         <h4>Clear the blockers</h4>
@@ -923,23 +926,23 @@ body:not(.editing) [contenteditable]{outline:none}
         </ul>
       </div>
     </div>
-    <div class="callout rv"><h4>The through-line</h4><p>Every win this year — brand in title, benefit copy, spelled-out ingredients, deeper taxonomy — points the same direction: fuller, more decomposable data wins. The conversational attributes and Tachyon pipeline are the next honest step on that line, not a different strategy.</p></div>
+    <div class="callout rv in"><h4>The through-line</h4><p>Every win this year — brand in title, benefit copy, spelled-out ingredients, deeper taxonomy — points the same direction: fuller, more decomposable data wins. The conversational attributes and Tachyon pipeline are the next honest step on that line, not a different strategy.</p></div>
   </div>
 </section>
 
 <!-- ================= TESTING MATRIX ================= -->
 <section>
   <div class="wrap">
-    <div class="eyebrow rv">Testing schedule</div>
-    <h2 class="sec-title rv">Q3 / Q4 testing matrix — 14 tests in 16 weeks</h2>
-    <p class="sec-sub rv">Each test is linked to a theory from chapter 04, a deliverable from the roadmap, or an open item from the project plan. Tests run in parallel where they don't share SKUs. All use supplemental feeds — primary feed untouched.</p>
+    <div class="eyebrow rv in">Testing schedule</div>
+    <h2 class="sec-title rv in">Q3 / Q4 new testing matrix — Let's align prio now !</h2>
+    <p class="sec-sub rv in">1 test for each month - with AI related testing / FS expected the overall impact needs at least +3 weeks to show</p>
 
-    <div class="tbl-wrap rv" style="margin-bottom:32px">
+    <div class="tbl-wrap rv in" style="margin-bottom:32px">
       <table>
         <thead><tr><th style="width:4%">#</th><th style="width:28%">Test</th><th>Hypothesis</th><th style="width:10%">Metric</th><th style="width:10%">Window</th><th style="width:8%">Month</th></tr></thead>
         <tbody>
-          <tr><td><b>T1</b></td><td>Active ingredient in titles</td><td>Adding "with Glucosamine &amp; Omega-3" to joint titles will increase CTR (building on the +24.7% benefit test)</td><td>CTR</td><td>4 wks</td><td>Aug</td></tr>
-          <tr><td><b>T2</b></td><td>Description expansion → 500+ chars</td><td>Enriched descriptions with use-case language will lift impression volume on 8+ word queries</td><td>Impressions</td><td>6 wks</td><td>Aug</td></tr>
+          <tr><td><b>T1</b></td><td>Active ingredient in titles</td><td>Adding "with Glucosamine &amp; Omega-3" to joint titles will increase CTR (building on the +24.7% benefit test)<br><br><i>Note: push back (ingredient claim might need to be reviewed by biz)</i></td><td>CTR</td><td>4 wks</td><td>Aug</td></tr>
+          <tr><td><b>T2</b></td><td>Description expansion → 500+ chars</td><td>Enriched descriptions with use-case language will lift impression volume on 8+ word queries</td><td>Impressions</td><td>3 wks</td><td>July-22</td></tr>
           <tr><td><b>T3</b></td><td>item_group_title + variant_option</td><td>Clean variant data will improve Shopping cross-sell rate and reduce confused clicks between Joint Care / PLUS / Max</td><td>Cross-sell rate</td><td>4 wks</td><td>Aug</td></tr>
           <tr><td><b>T4</b></td><td>popularity_rank from AdWords data</td><td>Ranked products will win higher impression share vs unranked — especially in PMax and AI Mode</td><td>Impr. share</td><td>4 wks</td><td>Aug</td></tr>
           <tr><td><b>T5</b></td><td>related_product — bundles</td><td>Declaring bundle → single relationships will lift bundle visibility and enable "often bought with" in AI answers</td><td>Bundle CTR</td><td>4 wks</td><td>Aug</td></tr>
@@ -956,7 +959,7 @@ body:not(.editing) [contenteditable]{outline:none}
       </table>
     </div>
 
-    <div class="grid-3 rv">
+    <div class="grid-3 rv in">
       <div class="card">
         <h4>Probability ranking</h4>
         <p style="font-size:13px;color:var(--ink-2)"><b style="color:var(--green)">High confidence</b> — T1 (ingredient titles), T2 (descriptions), T6 (seasonal KWs). These follow directly from proven YuMOVE tests and the Boston Proper result. Expected uplift: +10–25% CTR.</p>
@@ -975,17 +978,17 @@ body:not(.editing) [contenteditable]{outline:none}
       </div>
     </div>
 
-    <div class="note rv"><b>Worth noting:</b> 95% of merchants see AI agent traffic on their sites, but only 20% have machine-readable catalogues (PayPal, Consensus Miami, May 2026). The gap is the opportunity. Every attribute YuMOVE populates that competitors don't is a structural advantage that compounds as AI surfaces grow.</div>
+    <div class="note rv in"><b>Worth noting:</b> 95% of merchants see AI agent traffic on their sites, but only 20% have machine-readable catalogues (PayPal, Consensus Miami, May 2026). The gap is the opportunity. Every attribute YuMOVE populates that competitors don't is a structural advantage that compounds as AI surfaces grow.</div>
   </div>
 </section>
 
 <!-- ================= ASKS ================= -->
 <section>
   <div class="wrap">
-    <div class="eyebrow rv">Decisions</div>
-    <h2 class="sec-title rv">Three things we need from YuMOVE</h2>
-    <p class="sec-sub rv">Each unblocks a workstream that's already scoped and waiting.</p>
-    <div class="rv">
+    <div class="eyebrow rv in">Decisions</div>
+    <h2 class="sec-title rv in">Three things we need from YuMOVE</h2>
+    <p class="sec-sub rv in">Each unblocks a workstream that's already scoped and waiting.</p>
+    <div class="rv in">
       <div class="ask"><div class="ask-i">1</div><div><h4>Sign off the Ingredient Matrix — Simon</h4><p style="font-size:14px;color:var(--ink-2)">Unblocks the active-ingredient title test and the seasonal symptom automation.</p></div></div>
       <div class="ask"><div class="ask-i">2</div><div><h4>Confirm the bundle SKU structure — Simon &amp; Becca</h4><p style="font-size:14px;color:var(--ink-2)">Determines whether "Worth £xx" is a title change, a roundel, or a <code>related_product</code> declaration. Probably all three.</p></div></div>
       <div class="ask"><div class="ask-i">3</div><div><h4>Nominate the sign-off route for Q&amp;A copy</h4><p style="font-size:14px;color:var(--ink-2)">Who approves a published answer about dosage or onset time — marketing, or reg/vet? The September gate needs a named owner and a turnaround.</p></div></div>
@@ -1002,10 +1005,10 @@ body:not(.editing) [contenteditable]{outline:none}
     <div class="hero-rule" style="width:64px;height:3px;background:var(--orange);margin:22px 0 34px"></div>
     <div class="contacts">
       <div class="ct"><b>Ray Vũ</b><span>Senior Account Manager</span><a href="mailto:ray@feedspark.com">ray@feedspark.com</a></div>
-      <div class="ct"><b>Ezgi Banaz</b><span>Account Manager</span><a href="mailto:ezgi@feedspark.com">ezgi@feedspark.com</a></div>
+      <div class="ct"><b>Radostina</b><span>Account Manager</span><a href="mailto:ezgi@feedspark.com">ezgi@feedspark.com</a></div>
       <div class="ct"><b>Steven Opuni</b><span>Account Manager</span><a href="mailto:steven@feedspark.com">steven@feedspark.com</a></div>
     </div>
-    <p style="margin-top:48px;font-size:11.5px;color:rgba(255,255,255,.32)">FeedSpark · Private &amp; Confidential · Sources: YuMOVE Project Plan (Strategy Q3/25), YuMOVE Strategy Session Jul-25, Google Merchant Center conversational attributes spec, FeedSpark AI-Ready Feeds (Mar 2026).</p>
+    <p style="margin-top:48px;font-size:11.5px;color:rgba(255,255,255,.32)">FeedSpark · Private &amp; Confidential&nbsp;</p>
   </div>
 </footer>
 
@@ -1089,7 +1092,7 @@ body:not(.editing) [contenteditable]{outline:none}
   });
   render('qa');
 
-  /* ======== EDIT MODE + JSON PATCH SYSTEM ======== */
+  /* ======== EDIT MODE ======== */
   var EDITABLE_TAGS = 'h1, h2, h3, h4, p, td, .lede, .sec-sub, .ag-t, .ag-d, .hero-meta b, ' +
     '.stat .n, .stat .l, .sc-pct, .sc-label, .sc-note, .sc-tgt, .sc-warn, ' +
     '.tier li, .mo li, .mo h4, .mo-m, .ask h4, .ask p, .card p, .card h4, ' +
@@ -1099,43 +1102,17 @@ body:not(.editing) [contenteditable]{outline:none}
     '.eyebrow, .ct b, .ct span, .q, .bar-row .bl, .pill, ' +
     'thead th, tbody td, .feedrow, .sec-title';
 
+  /* Elements that should NOT be editable even if they match */
+  var SKIP = '.topbar *, .edit-bar *, .footmark, .tb-brand, .tb-nav *, .flagbtn, .progress, .scrollcue, [role="tablist"]';
+
   var editing = false;
   var editBtn = document.getElementById('editToggle');
-  var exportBtn = document.getElementById('exportEdits');
-  var importBtn = document.getElementById('importEdits');
   var savedMsg = document.getElementById('savedMsg');
-  var snapshot = {};   /* eid → original innerHTML */
-  var eidCounter = 0;
-
-  function flash(msg) {
-    savedMsg.textContent = msg || '✓ Saved';
-    savedMsg.classList.add('show');
-    setTimeout(function(){ savedMsg.classList.remove('show'); }, 2200);
-  }
-
-  /* Assign stable edit-IDs to every editable element */
-  function assignEids() {
-    var els = document.querySelectorAll(EDITABLE_TAGS);
-    els.forEach(function(el) {
-      if (el.closest('.topbar') || el.closest('.edit-bar') || el.closest('.footmark')) return;
-      if (!el.hasAttribute('data-eid')) {
-        el.setAttribute('data-eid', 'e' + (eidCounter++));
-      }
-    });
-  }
-
-  /* Take a snapshot of all editable content (original state) */
-  function takeSnapshot() {
-    snapshot = {};
-    var els = document.querySelectorAll('[data-eid]');
-    els.forEach(function(el) {
-      snapshot[el.getAttribute('data-eid')] = el.innerHTML;
-    });
-  }
 
   function setEditable(on) {
     var els = document.querySelectorAll(EDITABLE_TAGS);
     els.forEach(function(el) {
+      /* skip UI chrome */
       if (el.closest('.topbar') || el.closest('.edit-bar') || el.closest('.footmark')) return;
       if (on) {
         el.setAttribute('contenteditable', 'true');
@@ -1152,117 +1129,33 @@ body:not(.editing) [contenteditable]{outline:none}
     document.body.classList.toggle('editing', editing);
     editBtn.classList.toggle('active', editing);
     editBtn.textContent = editing ? '✎ Editing ON' : '✎ Edit mode';
-    exportBtn.style.display = editing ? '' : 'none';
-    importBtn.style.display = editing ? '' : 'none';
-
-    if (editing) {
-      assignEids();
-      /* Only snapshot on first activation so we compare against the original */
-      if (Object.keys(snapshot).length === 0) takeSnapshot();
-      setEditable(true);
-    } else {
-      setEditable(false);
-      flash('✓ Saved');
-    }
-  });
-
-  /* ======== EXPORT: diff current vs snapshot, output JSON ======== */
-  exportBtn.addEventListener('click', function() {
-    var diff = {};
-    var count = 0;
-    var els = document.querySelectorAll('[data-eid]');
-    els.forEach(function(el) {
-      var eid = el.getAttribute('data-eid');
-      var current = el.innerHTML;
-      if (snapshot[eid] !== undefined && snapshot[eid] !== current) {
-        /* Store a human-readable preview alongside the HTML */
-        var preview = el.textContent.substring(0, 80).replace(/\s+/g, ' ').trim();
-        diff[eid] = { html: current, preview: preview };
-        count++;
-      }
-    });
-
-    if (count === 0) {
-      flash('No edits detected');
-      return;
-    }
-
-    var payload = JSON.stringify({ _v: 1, _ts: new Date().toISOString(), _count: count, edits: diff }, null, 2);
-
-    /* Copy to clipboard */
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(payload).then(function() {
-        flash('✓ ' + count + ' edits copied');
-      });
-    } else {
-      /* Fallback: open a modal with the JSON */
-      prompt('Copy this JSON patch (' + count + ' edits):', payload);
-      flash('✓ ' + count + ' edits exported');
-    }
-  });
-
-  /* ======== IMPORT: apply a JSON patch ======== */
-  importBtn.addEventListener('click', function() {
-    var raw = prompt('Paste your JSON edit patch:');
-    if (!raw) return;
-
-    try {
-      var patch = JSON.parse(raw);
-      var edits = patch.edits || patch;
-      var applied = 0;
-      var missed = 0;
-
-      Object.keys(edits).forEach(function(eid) {
-        var el = document.querySelector('[data-eid="' + eid + '"]');
-        var html = typeof edits[eid] === 'string' ? edits[eid] : edits[eid].html;
-        if (el && html) {
-          el.innerHTML = html;
-          applied++;
-        } else {
-          missed++;
-        }
-      });
-
-      flash('✓ ' + applied + ' applied' + (missed ? ', ' + missed + ' missed' : ''));
-    } catch(err) {
-      flash('⚠ Invalid JSON');
+    setEditable(editing);
+    if (!editing) {
+      /* flash saved indicator */
+      savedMsg.classList.add('show');
+      setTimeout(function(){ savedMsg.classList.remove('show'); }, 1800);
     }
   });
 
   /* ======== DOWNLOAD ======== */
   document.getElementById('downloadBtn').addEventListener('click', function() {
+    /* Turn off editing temporarily for a clean export */
     var wasEditing = editing;
     if (wasEditing) {
       setEditable(false);
       document.body.classList.remove('editing');
-      exportBtn.style.display = 'none';
-      importBtn.style.display = 'none';
-      editBtn.classList.remove('active');
-      editBtn.textContent = '✎ Edit mode';
     }
 
-    /* Strip data-eid attributes for clean export */
-    var eids = document.querySelectorAll('[data-eid]');
-    var eidBackup = [];
-    eids.forEach(function(el) {
-      eidBackup.push({ el: el, val: el.getAttribute('data-eid') });
-      el.removeAttribute('data-eid');
-    });
-
+    /* Clone the full document */
     var html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
 
-    /* Restore data-eids */
-    eidBackup.forEach(function(b) { b.el.setAttribute('data-eid', b.val); });
-
+    /* Restore editing if it was on */
     if (wasEditing) {
       setEditable(true);
       document.body.classList.add('editing');
-      exportBtn.style.display = '';
-      importBtn.style.display = '';
-      editBtn.classList.add('active');
-      editBtn.textContent = '✎ Editing ON';
     }
 
+    /* Download */
     var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
@@ -1272,15 +1165,19 @@ body:not(.editing) [contenteditable]{outline:none}
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    flash('✓ Downloaded');
+
+    savedMsg.classList.add('show');
+    setTimeout(function(){ savedMsg.classList.remove('show'); }, 1800);
   });
 
-  /* Prevent enter creating new elements */
+  /* Prevent enter key creating new elements, insert line break instead */
   document.addEventListener('keydown', function(e) {
     if (!editing) return;
     var el = e.target;
     if (!el.hasAttribute('contenteditable')) return;
+
     if (e.key === 'Enter' && !e.shiftKey) {
+      /* Allow enter in feedrow and multi-line blocks */
       if (el.classList.contains('feedrow') || el.classList.contains('before') || el.classList.contains('after')) return;
       e.preventDefault();
       document.execCommand('insertLineBreak');
@@ -1289,5 +1186,6 @@ body:not(.editing) [contenteditable]{outline:none}
 
 })();
 </script>
-</body>
-</html>
+
+
+</body></html>

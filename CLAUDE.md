@@ -95,6 +95,14 @@ pdftoppm -jpeg -r 130 output.pdf slide  # full deck QA
 pdftoppm -jpeg -r 130 -f 4 -l 4 output.pdf slide  # single slide QA
 ```
 
+> ⚠️ **In Claude Code (web/cloud), LibreOffice (`soffice`) and `pdftoppm` are UNAVAILABLE** — the
+> pipeline above only runs where those binaries exist. In Code, build decks with **`python-pptx`**
+> and QA them with the bundled Pillow previewer (renders `.pptx` → PNG, flags text overflow):
+> ```bash
+> python tools/preview_tmpl.py deck.pptx /tmp/qa   # -> /tmp/qa_1.png, _2.png, ...
+> ```
+> Full pipeline + gotchas: [`tools/README.md`](./tools/README.md).
+
 Key gotchas:
 - Shadow objects need a factory function (`makeShadow`) to avoid mutation
 - Smart quotes in XML stored as hex entities (`&#x201C;` / `&#x201D;`) — use encoded form in replacements
@@ -116,6 +124,8 @@ python pack.py unpacked/ output.pptx
 All HTML strategy decks include the inline edit + JSON patch sync system:
 - Edit mode toggle, export/import edits, download clean HTML, data-check flags
 - See `docs/FeedSpark_Deck_LiveEdit_Feature.md` for full spec
+- **Parallel editing** (Ray edits copy live; Claude Code edits structure): `docs/WAYS_OF_WORKING.md`.
+  Merge exported edit patches onto a template with `tools/apply_edits.py`; live host = `cloudflare/feedspark-deck/`
 - Cloudflare Pages + Access for confidential commercial data (not public GitHub Pages)
 
 ### Google Drive
