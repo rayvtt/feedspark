@@ -103,21 +103,21 @@ def main():
     json.dump(out, open(OUT,"w",encoding="utf-8"), ensure_ascii=False)
     total=sum(v["total"] for v in out.values())
     print(f"\nwrote {OUT}  |  {len(out)} brands  |  {total} task-rows  |  {os.path.getsize(OUT)//1024} KB")
-    splice_fcc(out)
+    splice(out)
 
-def splice_fcc(out):
-    """Inject window.PLANTASKS into the FCC between <!-- PLANS:START/END -->."""
-    fcc=os.path.join(HERE,"..","docs","FeedSpark_Command_Center.html")
-    if not os.path.exists(fcc):
-        print("  (FCC not found; skipped splice)"); return
-    doc=open(fcc,encoding="utf-8").read()
+def splice(out):
+    """Inject window.PLANTASKS into every page that has <!-- PLANS:START/END --> markers."""
+    import re
     payload='window.PLANTASKS='+json.dumps(out, ensure_ascii=False)+';'
     block='<!-- PLANS:START -->\n<script>'+payload+'</script>\n<!-- PLANS:END -->'
-    import re
-    new,n=re.subn(r'<!-- PLANS:START -->.*?<!-- PLANS:END -->', lambda m: block, doc, count=1, flags=re.S)
-    if not n:
-        print("  (PLANS markers not found in FCC; skipped splice)"); return
-    open(fcc,"w",encoding="utf-8").write(new)
-    print(f"  spliced window.PLANTASKS into FCC ({len(payload)//1024} KB)")
+    for fn in ("FeedSpark_Command_Center.html","FeedSpark_Task_Library.html"):
+        path=os.path.join(HERE,"..","docs",fn)
+        if not os.path.exists(path): continue
+        doc=open(path,encoding="utf-8").read()
+        new,n=re.subn(r'<!-- PLANS:START -->.*?<!-- PLANS:END -->', lambda m: block, doc, count=1, flags=re.S)
+        if not n:
+            print(f"  ({fn}: PLANS markers not found; skipped)"); continue
+        open(path,"w",encoding="utf-8").write(new)
+        print(f"  spliced window.PLANTASKS into {fn} ({len(payload)//1024} KB)")
 
 if __name__=="__main__": main()
