@@ -1,57 +1,59 @@
-# feedspark-deck — live deck worker
+# feedspark — live deck worker
 
-Serves a FeedSpark HTML deck at one URL with **parallel editing** and **no per-edit cost**:
+Serves the FeedSpark YuMOVE deck at one URL with **parallel editing** and **no per-edit cost**:
 
 - **Ray** edits copy in the browser (edit mode → `contenteditable`). Edits auto-save to KV, keyed by
   a stable `data-eid` per element.
-- **Claude Code** (the chat interface) makes structural / visual changes to the **template** and
-  pushes it with `PUT /api/template`. Ray's KV edits persist and re-merge on top.
-- The two layers never collide: **template = git / Claude Code**, **content = KV / Ray**.
+- **Claude Code** (the chat interface) makes structural / visual changes to the **deck in git** and
+  pushes to `main`. Cloudflare rebuilds and the new deck is bundled into the worker. Ray's KV edits
+  persist and re-overlay on top.
+- The two layers never collide: **template = git (bundled at build time)**, **content = KV / Ray**.
 
 There is **no Anthropic API key and no paid API call** — structural edits are done by asking Claude
 Code in chat, not by an in-deck model. The editor's **Copy for Claude Code** button hands over the
 exact element (`data-eid` + `outerHTML`) so the request is unambiguous.
 
+The deck HTML (`docs/YuMOVE_Strategy_Review_Jul26.html`) is imported into the worker as a **Text
+module** (see `rules` in the repo-root `wrangler.toml`), so it ships *inside* the Worker — there is
+no separate template-upload step.
+
 ## Routes
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/` | Serve the deck (template + injected editor widget) |
+| GET | `/` | Serve the deck (git-bundled template + injected editor widget) |
 | GET | `/api/edits` | Saved edits as JSON, keyed by `data-eid` |
 | PUT | `/api/edits` | Merge an edit patch (the widget calls this on auto-save) |
 | DELETE | `/api/edits` | Clear all saved edits |
-| GET | `/api/template` | Current template version timestamp |
-| PUT | `/api/template` | Replace the template HTML (Claude Code pushes new versions) |
+| GET | `/api/template` | Info only — the template is git-bundled; push to `main` to change it |
+
+There is **no `PUT /api/template`** on purpose: git is the single source of truth for the template.
 
 ## Deploy
 
-The worker is named `feedspark` (matches the worker already created in the dashboard). Deploying from
-this directory reads `wrangler.toml`, so it also **binds the KV namespace and enables the
-`workers.dev` URL** in one shot — no separate dashboard clicks:
+`wrangler.toml` lives at the **repo root** (so Cloudflare's default build finds it) and declares the
+worker name `feedspark`, the deck Text-module rule, and the KV binding — so a single deploy also
+**binds KV and enables the `workers.dev` URL**. No dashboard clicks needed.
 
 ```bash
-cd cloudflare/feedspark-deck
+# from the repo root
 npx wrangler login            # once, if not already authed
 npx wrangler deploy           # → https://feedspark.ray-vtt.workers.dev
 ```
 
-`wrangler.toml` binds the KV namespace `EDITS` (id `d93b5ac576c74f0d8a315c5b92dc8e16` =
-`FEEDSPARK_DECK_EDITS`). Then push the YuMOVE deck as the template:
+Verify the bundle first without deploying (no auth needed):
 
 ```bash
-curl -X PUT --data-binary @../../docs/YuMOVE_Strategy_Review_Jul26.html \
-  https://feedspark.ray-vtt.workers.dev/api/template
+npx wrangler deploy --dry-run --outdir /tmp/out   # should report ~97 KiB upload + the EDITS binding
 ```
 
-> Do the template push **before** you gate the worker with Access (below) — Access will block an
-> unauthenticated `PUT`. Or push it any time from a browser session that's already signed in to Access.
+### Git push-to-deploy (recommended)
 
-### Alt: git push-to-deploy (dashboard)
-
-The `feedspark` worker is already connected to `rayvtt/feedspark` in the dashboard, but its build
-failed because the config lives in a subdirectory. In the worker's **Settings → Build**, set
-**Root directory** to `cloudflare/feedspark-deck` (deploy command stays `npx wrangler deploy`). Every
-push to `main` then auto-deploys.
+The `feedspark` worker is already connected to `rayvtt/feedspark` in the dashboard. Because
+`wrangler.toml` is now at the repo root, the **default** build settings work — leave **Root
+directory** blank (repo root) and the deploy command as `npx wrangler deploy`. Every push to `main`
+then rebuilds and redeploys, deck included. (The earlier build failed only because the config used to
+live in this subdirectory.)
 
 ## Gate it — Cloudflare Access (required)
 

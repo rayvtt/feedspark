@@ -21,14 +21,14 @@ reference-files/                   ← Source PDFs and templates (design system,
 
 ### Deploy the Cloudflare Worker
 ```bash
-cd cloudflare/feedspark-deck
+# from the repo root (wrangler.toml lives here)
 npx wrangler deploy
 ```
 
 This deploys the `feedspark` worker at `feedspark.ray-vtt.workers.dev` with:
-- KV-backed edit persistence (auto-saves every 5s)
-- Template push API (`PUT /api/template`)
-- Edit sync API (`GET/PUT/DELETE /api/edits`)
+- The deck **bundled from git** (`docs/YuMOVE_Strategy_Review_Jul26.html` as a Text module) — push to
+  `main` to update it; the worker is already git-connected for push-to-deploy
+- KV-backed edit persistence for Ray's copy edits (`GET/PUT/DELETE /api/edits`)
 
 ### Add Cloudflare Access
 Gate the worker URL behind email-based access to protect commercial data.

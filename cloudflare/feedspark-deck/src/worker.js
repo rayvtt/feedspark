@@ -3,22 +3,27 @@
  * Serves an HTML strategy deck with parallel live editing — no paid API, no cost:
  *   - Ray edits copy in-browser (contenteditable) -> auto-saved to KV by data-eid
  *   - Claude Code (the chat interface) makes structural/visual edits to the TEMPLATE
- *     and pushes it via PUT /api/template; Ray's KV edits persist and re-merge on top
+ *     in git and pushes to main; Cloudflare rebuilds and the new deck is bundled in.
+ *     Ray's KV edits persist and re-overlay on top.
  *   - The editor's "Copy for Claude Code" button hands Claude the exact element to change
  *
- * The two layers never collide: template = git / Claude Code, content = KV / Ray.
+ * The two layers never collide: template = git (bundled at build time), content = KV / Ray.
  *
  * Routes:
- *   GET  /                -> serve deck HTML (template + injected editor widget)
+ *   GET  /                -> serve deck HTML (git-bundled template + injected editor widget)
  *   GET  /api/edits       -> saved edits as JSON (keyed by data-eid)
  *   PUT  /api/edits       -> merge an edit patch
  *   DELETE /api/edits     -> clear saved edits
- *   GET  /api/template    -> template version info
- *   PUT  /api/template    -> replace the template HTML (Claude Code pushes new versions)
+ *   GET  /api/template    -> info: template is git-bundled (push to main to change it)
  *
  * Gate the whole worker behind Cloudflare Access — the deck holds confidential
  * commercial data.
  */
+
+// The deck template is bundled from git at build time. Editing structure/layout means
+// editing this .html in git and pushing to main; Cloudflare rebuilds and redeploys.
+// (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
+import DECK from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -52,25 +57,17 @@ export default {
       }
     }
 
-    // ---- template (structure layer: Claude Code pushes new versions; KV edits re-merge) ----
-    if (path === '/api/template') {
-      if (request.method === 'GET') {
-        const ver = await env.EDITS.get('template_version');
-        return json({ version: ver || 'none' });
-      }
-      if (request.method === 'PUT') {
-        const body = await request.text();
-        const now = new Date().toISOString();
-        await env.EDITS.put('template_html', body);
-        await env.EDITS.put('template_version', now);
-        return json({ ok: true, version: now });
-      }
+    // ---- template (structure layer: bundled from git, not KV) ----
+    // To change structure/layout, edit docs/YuMOVE_Strategy_Review_Jul26.html and push to
+    // main — Cloudflare rebuilds and the new deck is bundled in. There is no PUT here on
+    // purpose: git is the single source of truth for the template.
+    if (path === '/api/template' && request.method === 'GET') {
+      return json({ source: 'git', note: 'template is git-bundled at build time; push to main to update it' });
     }
 
     // ---- serve the deck ----
     if (path === '/' || path === '/index.html') {
-      let html = (await env.EDITS.get('template_html')) || FALLBACK_HTML;
-      html = html.replace('</body>', getEditorScript() + '\n</body>');
+      const html = DECK.replace('</body>', getEditorScript() + '\n</body>');
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', ...CORS } });
     }
 
@@ -187,7 +184,3 @@ function getEditorScript() {
 })();
 </script>`;
 }
-
-const FALLBACK_HTML =
-  '<!DOCTYPE html><html><head><meta charset="utf-8"><title>FeedSpark Deck</title></head>' +
-  '<body><h1>No template uploaded yet</h1><p>Push one with <code>PUT /api/template</code>.</p></body></html>';

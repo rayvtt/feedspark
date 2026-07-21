@@ -45,8 +45,9 @@ land on the right elements when merged.
 The `cloudflare/feedspark-deck` worker serves the deck at one URL, behind Cloudflare Access:
 
 - Ray's edits **auto-save to KV** (keyed by `data-eid`), debounced — no export/paste step.
-- Claude pushes a new template with `PUT /api/template`; **KV content persists** and re-merges on
-  the next load. Both work on the same live URL, in parallel.
+- Claude edits the deck **in git** and pushes to `main`; Cloudflare rebuilds and the new deck is
+  bundled into the worker. **KV content persists** and re-overlays on the next load. Both work on the
+  same live URL, in parallel.
 - `GET /api/edits` / `PUT /api/edits` / `DELETE /api/edits` manage the content layer.
 
 This is Mode A with the patch handoff automated. Deploy: see `cloudflare/feedspark-deck/README.md`.
@@ -62,8 +63,8 @@ image added, or bullets turned into a grid, the deck's editor makes the hand-off
 1. In edit mode, click the element → the **◎ Element** panel shows its `data-eid` and tag.
 2. **Copy for Claude Code** copies the element's `data-eid` + `outerHTML` with a ready-made prompt.
 3. Paste it into the Claude Code chat and finish the sentence (*"…make this box orange"*).
-4. Claude Code edits the **template** (git) and pushes it with `PUT /api/template`. Ray's KV text
-   edits re-merge on top — nothing he typed is lost.
+4. Claude Code edits the **deck in git** and pushes to `main`; Cloudflare rebuilds and bundles the new
+   deck. Ray's KV text edits re-overlay on top — nothing he typed is lost.
 
 So the two of you edit in parallel with **zero API spend**: Ray on text (live, in KV), Claude Code
 on structure (git → template push), reconciled by `data-eid`. Setup: `cloudflare/feedspark-deck/README.md`.

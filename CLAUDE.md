@@ -152,12 +152,15 @@ All HTML strategy decks include the inline edit + JSON patch sync system:
 
 ### Worker API
 ```
-GET  /              → serve deck HTML
+GET  /              → serve deck HTML (deck bundled from git + injected editor widget)
 GET  /api/edits     → return saved edits as JSON
 PUT  /api/edits     → save edit patch (merges with existing)
 DELETE /api/edits   → clear saved edits
-PUT  /api/template  → push new HTML template version
+GET  /api/template  → info only; template is git-bundled (push to main to change it)
 ```
+- **Template = git**: `docs/YuMOVE_Strategy_Review_Jul26.html` is imported into the worker as a Text
+  module (root `wrangler.toml` `rules`). Push to `main` → Cloudflare rebuilds → new deck live. No
+  `PUT /api/template`. `wrangler.toml` lives at the **repo root** (deploy from root).
 
 ---
 
