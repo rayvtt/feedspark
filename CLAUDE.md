@@ -165,6 +165,16 @@ GET  /api/template              → info only; pages are git-bundled (push to ma
   rebuilds → live. No `PUT /api/template`. `wrangler.toml` lives at the **repo root** (deploy from root).
   KV edits are namespaced per page (`edits:<slug>`), so pages never collide.
 
+### Command center data — ATRT Tracker
+- The command center (`/`) shows **live workload**, **tests running** and **accounts & project plans**
+  sourced from the **ATRT Tracker** (Google Sheet `1p_cPSRjmK16CDpLryoOBaOUjG3ZvnL-k4ORHhaHI5AE`):
+  tab 1 = task/interaction log (per client, task, AM, AE, due, status; arrives by email/ad-hoc or monthly call),
+  tab 2 = accounts & project-plan links.
+- Committed record: `docs/atrt_data.json`. Sync tool: `tools/sync_atrt.py` splices the `<!-- ATRT:LOG -->`,
+  `<!-- ATRT:TESTS -->`, `<!-- ATRT:PLANS -->` marked regions in `docs/FeedSpark_Command_Center.html`.
+- **Refresh:** re-pull the sheet (Google Drive `read_file_content`) → save as a `.txt` →
+  `python tools/sync_atrt.py <txt>` → commit → push (auto-deploys). Only the marked regions change.
+
 ---
 
 ## Key technical concepts
