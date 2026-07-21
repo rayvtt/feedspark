@@ -1,0 +1,14 @@
+name = "feedspark"
+main = "cloudflare/feedspark-deck/src/worker.js"
+compatibility_date = "2024-12-01"
+
+# Bundle the deck HTML as a Text module so `import DECK from "...html"` in the worker
+# inlines the deck at build time. Push to main -> Cloudflare rebuilds -> new deck live.
+rules = [
+  { type = "Text", globs = ["**/*.html"], fallthrough = true }
+]
+
+# Ray's in-browser copy edits (data-eid patches) live here; they re-overlay client-side.
+[[kv_namespaces]]
+binding = "EDITS"
+id = "d93b5ac576c74f0d8a315c5b92dc8e16"
