@@ -214,7 +214,13 @@ def render_global(tasks):
     active = [t for t in tasks if t["status"] in ACTIVE]
     counts = Counter(t["client"] for t in active)
     od = Counter(t["client"] for t in active if is_overdue(t, tk))
-    payload = {"active": dict(counts), "overdue": dict(od),
+    brands = {}
+    for t in active:
+        item = {"t": t["task"][:88], "ae": t["ae"], "d": t["due"], "s": t["status"],
+                "od": 1 if is_overdue(t, tk) else 0, "x": 1 if t["is_test"] else 0}
+        if t.get("thread"): item["u"] = t["thread"]
+        brands.setdefault(t["client"], []).append(item)
+    payload = {"active": dict(counts), "overdue": dict(od), "brands": brands,
                "synced": f'{td.day:02d} {MONTHS[td.month]} {td.year}'}
     return f'<script>window.ATRT={json.dumps(payload, ensure_ascii=False)};</script>'
 

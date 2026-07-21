@@ -85,6 +85,33 @@
   .lnk.primary:hover{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
   .lnk.disabled{opacity:.5;pointer-events:none}
 
+
+  /* ---- brand dossier ---- */
+  .dossier{display:grid;grid-template-columns:288px 1fr;gap:20px;align-items:start}
+  .dz-list{display:flex;flex-direction:column;gap:5px;max-height:660px;overflow-y:auto;border:1px solid var(--line);border-radius:var(--radius);padding:9px;background:var(--wash)}
+  .dz-item{display:grid;grid-template-columns:1fr auto;gap:1px 10px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;cursor:pointer;font:inherit;transition:.12s}
+  .dz-item:hover{border-color:var(--orange)}
+  .dz-item.on{border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy)}
+  .dz-nm{font-weight:900;font-size:14px;color:var(--ink)}
+  .dz-meta{font-size:11.5px;color:var(--muted);font-weight:700;grid-column:1}
+  .dz-count{font-size:11px;font-weight:900;color:var(--good);align-self:center;grid-row:1/3;white-space:nowrap}
+  .dz-count.danger{color:var(--risk)}
+  .dz-count.zero{color:var(--muted)}
+  .dz-detail{border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;min-height:420px}
+  .dz-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px solid var(--line);padding-bottom:16px}
+  .dz-head h3{margin:0;font-size:22px;font-weight:900;letter-spacing:-.01em}
+  .dz-head .cat{font-size:13px;color:var(--muted);font-weight:700;margin-top:4px}
+  .dz-top{margin:18px 0 0}
+  .dz-top h4,.dz-col h4{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--orange-deep);font-weight:900;margin:0 0 8px}
+  .dz-top p{margin:0;font-size:14.5px;line-height:1.55;color:var(--ink-2)}
+  .dz-metrics{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 6px}
+  .dz-cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:14px}
+  .dz-col .logtable{font-size:12.5px}
+  .dz-col .logtable td{padding:8px 8px}
+  .dz-empty{font-size:13px;color:var(--muted);font-style:italic;margin:4px 0 0}
+  .dz-foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px;border-top:1px solid var(--line);margin-top:20px;padding-top:16px}
+  .dz-con{font-size:12.5px;color:var(--muted);font-weight:700;margin-left:auto;text-align:right;max-width:52%}
+  @media(max-width:860px){.dossier{grid-template-columns:1fr}.dz-list{flex-direction:row;overflow-x:auto;max-height:none}.dz-item{min-width:190px;flex:none}.dz-cols{grid-template-columns:1fr}.dz-con{margin-left:0;max-width:100%;text-align:left}}
   /* ---- two-column blocks ---- */
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
@@ -179,7 +206,7 @@
     <div class="brand">Feed<span>Spark</span></div>
     <div class="tb-tag">Command Center</div>
     <nav class="tb-nav">
-      <a href="#accounts">Accounts</a>
+      <a href="#accounts">Brands</a>
       <a href="#plans">Plans</a>
       <a href="#team">Team</a>
       <a href="#log">Workload</a>
@@ -207,162 +234,16 @@
   </div>
 </header>
 
-<!-- ===== ACCOUNTS ===== -->
+<!-- ===== BRAND DOSSIERS ===== -->
 <section id="accounts">
   <div class="wrap">
     <div class="sec-head">
-      <span class="k">01</span><h2>Accounts</h2>
-      <p>Every account, its status, and the fastest route into its work.</p>
+      <span class="k">01</span><h2>Brand dossiers</h2>
+      <p>Pick a brand — profile, current optimisation and live workload in one file.</p>
     </div>
-    <div class="accts">
-
-      <!-- YuMOVE -->
-      <div class="card rv">
-        <div class="top">
-          <div><h3>YuMOVE</h3><div class="cat">Lintbells · Pet supplements · UK</div></div>
-          <span class="pill live">Strategy live</span>
-        </div>
-        <div class="chips">
-          <span class="chip"><b>2</b> channels · Shopping + Meta</span>
-          <span class="chip"><b>24h</b> + 21h ad-hoc / mo</span>
-          <span class="chip">Benefit copy <b>+24.7%</b></span>
-        </div>
-        <p class="note">Strategy Review live. Next-gen AI-Ready attribute build in flight; POC scoping
-          with Simon, bundles with Becca, tracking with Kinase.</p>
-        <div class="links">
-          <a class="lnk primary" href="/deck/yumove">Open strategy deck →</a>
-          <a class="lnk" href="https://docs.google.com/spreadsheets/d/1RMTN99Cw0J3l5mORwYPpITnoi5HCPt7tET4u8rQbsq0/edit#gid=841484251" target="_blank" rel="noopener">Project plan</a>
-        </div>
-      </div>
-
-      <!-- Reiss -->
-      <div class="card rv">
-        <div class="top">
-          <div><h3>Reiss</h3><div class="cat">Fashion · UK · 29 markets</div></div>
-          <span class="pill active">Tachyon live</span>
-        </div>
-        <div class="chips">
-          <span class="chip"><b>60</b> feeds</span>
-          <span class="chip">Golden Record <b>88.6%</b></span>
-          <span class="chip">AI Readiness <b>Tier 1→2</b></span>
-        </div>
-        <p class="note">Q2→Q3 strategy review delivered. Tachyon pipeline live: intent generation →
-          Shopping Graph matching → roundel overlay. Local-Language study across 16 EU/ME markets.</p>
-        <div class="links">
-          <a class="lnk disabled" href="#">Deck (SharePoint)</a>
-          <a class="lnk" href="#plans">Project plan</a>
-        </div>
-      </div>
-
-      <!-- ELC -->
-      <div class="card rv">
-        <div class="top">
-          <div><h3>Estée Lauder</h3><div class="cat">ELC · Luxury beauty · 14+ brands</div></div>
-          <span class="pill risk">Retention</span>
-        </div>
-        <div class="chips">
-          <span class="chip"><b>£498</b>/pcm per brand</span>
-          <span class="chip">DPA/PPC <b>£300</b>/pcm</span>
-          <span class="chip"><b>30+</b> feed issues</span>
-        </div>
-        <p class="note">At-risk account — retention defended (defence deck + parting-gift app).
-          Conversational-attribute story positioned as the differentiator. 5 fiscal cycles.</p>
-        <div class="links">
-          <a class="lnk" href="https://docs.google.com/spreadsheets/d/1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y/edit#gid=1574286896" target="_blank" rel="noopener">Project plan</a>
-        </div>
-      </div>
-
-      <!-- Schuh -->
-      <div class="card rv">
-        <div class="top">
-          <div><h3>Schuh</h3><div class="cat">Footwear · UK · EN/DE</div></div>
-          <span class="pill active">Onboarded</span>
-        </div>
-        <div class="chips">
-          <span class="chip">Onboarding <b>46h</b> UK/IE/DE</span>
-          <span class="chip">AI Readiness Scorecard</span>
-        </div>
-        <p class="note">AI Readiness Scorecard and 12-slide onboarding deck delivered. Converse Chuck
-          Taylor as the worked example. Team channel live at schuh@feedspark.com.</p>
-        <div class="links">
-          <a class="lnk" href="https://docs.google.com/spreadsheets/d/1rbr8FwZagdZdctR_fNesixm4-uDWG1VJPnBCJBdjSxc/edit" target="_blank" rel="noopener">Project plan</a>
-        </div>
-      </div>
-
-      <!-- Monsoon / Accessorize -->
-      <div class="card rv">
-        <div class="top">
-          <div><h3>Monsoon / Accessorize</h3><div class="cat">Fashion &amp; accessories · UK</div></div>
-          <span class="pill active">Active</span>
-        </div>
-        <div class="chips">
-          <span class="chip">Monsoon <b>12,314</b> SKUs · 32h</span>
-          <span class="chip">Accessorize <b>5,414</b> SKUs · 27h</span>
-          <span class="chip"><b>£585</b>+VAT / 8h block</span>
-        </div>
-        <p class="note">Two brands, one account. AI-optimisation pricing tool built (retainer comparison,
-          per-cohort AI tiers, task library). Dress overlay / image-cycling work ongoing.</p>
-        <div class="links">
-          <a class="lnk disabled" href="#">Pricing tool</a>
-          <a class="lnk" href="#plans">Project plan</a>
-        </div>
-      </div>
-
-      <!-- Superdry -->
-      <div class="card rv">
-        <div class="top">
-          <div><h3>Superdry</h3><div class="cat">Fashion · Service review</div></div>
-          <span class="pill done">Review delivered</span>
-        </div>
-        <div class="chips">
-          <span class="chip">Service Review V2</span>
-          <span class="chip">AM + Shopping YoY</span>
-        </div>
-        <p class="note">Service review delivered (SharePoint). Account-management hours deck and Google
-          Shopping YoY growth story built. Reference decks in the repo.</p>
-        <div class="links">
-          <a class="lnk disabled" href="#">Deck (SharePoint)</a>
-        </div>
-      </div>
-
-      <!-- AllSaints -->
-      <div class="card rv">
-        <div class="top">
-          <div><h3>AllSaints</h3><div class="cat">Fashion · GB / EU / US</div></div>
-          <span class="pill active">Most active</span>
-        </div>
-        <div class="chips">
-          <span class="chip">DE/FR title AOT</span>
-          <span class="chip">DPA roundel + overlays</span>
-          <span class="chip">Re-pitch deck</span>
-        </div>
-        <p class="note">Highest task volume in the book — title optimisation across markets, DPA roundel
-          tests, AI-enrichment attributes and CL/PPC restructuring. Co-managed with Steven.</p>
-        <div class="links">
-          <a class="lnk primary" href="#log">Live tasks →</a>
-          <a class="lnk disabled" href="#">Onboarding plan</a>
-        </div>
-      </div>
-
-      <!-- Hobbycraft -->
-      <div class="card rv">
-        <div class="top">
-          <div><h3>Hobbycraft</h3><div class="cat">Hobby &amp; crafts · UK</div></div>
-          <span class="pill live">Tests running</span>
-        </div>
-        <div class="chips">
-          <span class="chip">AI Titles [Search Intent]</span>
-          <span class="chip">Overlay [Selling Fast]</span>
-          <span class="chip">C&amp;C vs LIA</span>
-        </div>
-        <p class="note">A live test bed — AI-title A/B on 200 products (running), [Selling Fast] /
-          [Trending Now] / [New] overlays, and a Click &amp; Collect vs LIA bid test for cheaper CPC.</p>
-        <div class="links">
-          <a class="lnk primary" href="#tests">Tests →</a>
-          <a class="lnk disabled" href="#">Project plan</a>
-        </div>
-      </div>
-
+    <div class="dossier">
+      <div class="dz-list" id="dz-list"></div>
+      <div class="dz-detail" id="dz-detail"></div>
     </div>
   </div>
 </section>
@@ -520,8 +401,9 @@
   </div>
 </footer>
 
+<script>window.BRANDS={"YuMOVE": {"cat": "Pet supplements (Lintbells)", "mk": "UK · Google Shopping + Meta", "st": "Strategy live", "sc": "live", "top": "Next-gen AI-Ready feed — conversational attributes (Q&A, variant option, related product), Description-AI testing, symptom matrix across seasons, bundles overlay. Strategy Review deck is live.", "plan": "https://docs.google.com/spreadsheets/d/1RMTN99Cw0J3l5mORwYPpITnoi5HCPt7tET4u8rQbsq0/edit#gid=841484251", "pn": "YuMOVE project plan", "deck": "/deck/yumove", "con": "Simon (YuMOVE) · Becca (bundles) · Kinase (agency)"}, "AllSaints": {"cat": "Fashion", "mk": "GB · EU · US", "st": "Most active", "sc": "active", "top": "Highest task volume in the book — DE/FR title AOT, DPA roundel tests, jerseys KW optimisation, FP/sale CL logic, EU structure change, US Reddit feed. Co-managed with Steven.", "plan": "", "pn": "ALLSAINTS — Project Plan / Onboarding", "deck": "", "con": "AE: Steven / Dinesh / Sandy"}, "Reiss": {"cat": "Fashion", "mk": "29 markets · 60 feeds", "st": "Tachyon live", "sc": "active", "top": "Tachyon pipeline live: intent generation → Shopping Graph matching → roundel overlay. Golden Record 88.6%, climbing to Tier 2. Local-language across 16 EU/ME markets; keyword-planner batches; Monetate rules in FeedHero.", "plan": "", "pn": "Reiss — Project Plan — FS", "deck": "", "con": "AE: Steven / Sara / Ezgi"}, "Schuh": {"cat": "Footwear", "mk": "UK · EN / DE", "st": "Onboarded", "sc": "active", "top": "AI Readiness Scorecard + 12-slide onboarding (46h). A/B title tests [Search Intent], CSS vs CSS-Google split test, PPC overlay A/B, supp-feed UK→IE titles, gaming CL restructure.", "plan": "https://docs.google.com/spreadsheets/d/1rbr8FwZagdZdctR_fNesixm4-uDWG1VJPnBCJBdjSxc/edit", "pn": "Schuh — Project/Onboarding Plan", "deck": "", "con": "schuh@feedspark.com · AE: Sandy / Steven"}, "Superdry": {"cat": "Fashion", "mk": "UK · multi-market", "st": "Review delivered", "sc": "done", "top": "Service Review V2 delivered. Migration phase 2 (SFCC move-over), PPC image overlay (low-stock / back-in-stock / % discount), zombie-CL / new-arrivals CL across markets. AM-hours + Shopping-YoY decks built.", "plan": "", "pn": "Superdry — Project Plan / Onboarding", "deck": "", "con": "AE: Ray / SLT"}, "Accessorize": {"cat": "Fashion & accessories", "mk": "UK · US", "st": "Active", "sc": "active", "top": "5,414 SKUs · 27h retainer. DPA roundel + overlay (jewellery & bags), ChatGPT keywords, LIA setup, Light-LIA Click&Collect, audit cleaning UK-US, always-on cycler.", "plan": "", "pn": "Monsoon-Accessorize — Project Plan — FH", "deck": "", "con": "AE: Isa / Dinesh"}, "Monsoon": {"cat": "Fashion", "mk": "UK · IE · US", "st": "Active", "sc": "active", "top": "12,314 SKUs · 32h retainer. Margin campaigns, DPA overlay, dress-cycler always-on, US migration + automation, holiday-shop scrape, short-title test.", "plan": "", "pn": "Monsoon-Accessorize — Project Plan — FH", "deck": "", "con": "AE: Sandy / Joao"}, "Hobbycraft": {"cat": "Hobby & crafts", "mk": "UK", "st": "Tests running", "sc": "live", "top": "A live test bed — AI-Titles A/B [Search Intent] on 200 products (running), [Selling Fast] / [Trending Now] / [New] overlays, Click & Collect vs LIA bid test, hourly new-hobby URL scraping.", "plan": "", "pn": "Hobbycraft — Project/Onboarding Plan — FS", "deck": "", "con": "AE: Ezgi / Steven"}, "Estée Lauder": {"cat": "Luxury beauty · 14+ brands", "mk": "UK", "st": "Retention", "sc": "risk", "top": "Account defended (retention deck + parting-gift web app). Conversational AI attributes positioned as the differentiator. 30+ feed issues across technical / optimisation / account-management. Self-managed £498/pcm per brand.", "plan": "https://docs.google.com/spreadsheets/d/1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y/edit#gid=1574286896", "pn": "Estée Lauder — Project/Onboarding Plan", "deck": "", "con": "Jessica Olivia · Cox Tara · Alexandra Perez · Carman Wong · Aysia Bailey"}, "Bobbi Brown": {"cat": "Cosmetics (ELC)", "mk": "UK", "st": "Active", "sc": "active", "top": "PPC overlay: bestseller / limited-edition / dynamic %. Live limited-edition tags; PDP↔feed price-mismatch fix.", "plan": "", "pn": "Bobbi Brown — Onboarding/Project Plan — FH", "deck": "", "con": "ELC portfolio"}, "Benefit": {"cat": "Cosmetics", "mk": "UK", "st": "Active", "sc": "active", "top": "MASK title test, DPA overlay, mix & match 25%-off promo, merged-image PPC, RedBrain optimisation, Advent-calendar all-stops opti.", "plan": "", "pn": "Benefit Cosmetics — Onboarding/Project Plan", "deck": "", "con": "AE: Sara / Ezgi"}, "Jo Malone": {"cat": "Fragrance (ELC)", "mk": "UK", "st": "Active", "sc": "active", "top": "Title-structure review across Shopping & Social; “English Pear” keyword optimisation.", "plan": "", "pn": "Jo Malone — Project Plan — FeedSpark", "deck": "", "con": "ELC portfolio"}, "Craghoppers": {"cat": "Outdoor apparel", "mk": "UK", "st": "Active", "sc": "active", "top": "Golf-product optimisation, National-Trust keyword alignment, supp-feed AOT to Dare2b UK/IE, custom-labels tasks.", "plan": "", "pn": "In tracker (tab 2)", "deck": "", "con": "AE: Sara / Dinesh"}, "Regatta": {"cat": "Outdoor apparel", "mk": "UK", "st": "Active", "sc": "active", "top": "20k products through the full AOT + rules stack; supp-feed AOT to Dare2b.", "plan": "", "pn": "In tracker (tab 2)", "deck": "", "con": "AE: Dinesh"}, "Dare2b": {"cat": "Outdoor apparel", "mk": "UK · IE", "st": "Active", "sc": "active", "top": "Feed split for testing (new arrivals); Dare 2b rebrand check across markets.", "plan": "", "pn": "In tracker (tab 2)", "deck": "", "con": "AE: Dinesh"}, "House of Bruar": {"cat": "Country & luxury", "mk": "UK", "st": "Active", "sc": "active", "top": "MASK title generation — 5 example titles per MASK, briefed to ASPL and compiled.", "plan": "", "pn": "In tracker (tab 2)", "deck": "", "con": "AE: ASPL"}, "American Golf": {"cat": "Golf retail", "mk": "UK", "st": "Active", "sc": "active", "top": "Emarsys parameter integration for the UK feed.", "plan": "", "pn": "In tracker (tab 2)", "deck": "", "con": "AE: Ray"}, "Clinique": {"cat": "Cosmetics (ELC)", "mk": "UK", "st": "Active", "sc": "active", "top": "ELC portfolio — feed optimisation & overlays.", "plan": "", "pn": "In tracker (tab 2)", "deck": "", "con": "ELC portfolio"}, "MAC": {"cat": "Cosmetics (ELC)", "mk": "UK", "st": "Active", "sc": "active", "top": "ELC portfolio onboarding — UK project plan.", "plan": "", "pn": "MAC Cosmetics [UK] Project Plan", "deck": "", "con": "ELC portfolio"}};</script>
 <!-- ATRT:GLOBAL:START -->
-<script>window.ATRT={"active": {"AllSaints": 7, "Superdry": 3, "Benefit": 1, "Reiss": 8, "Jo Malone": 1, "YuMOVE": 4, "Hobbycraft": 4, "Schuh": 6, "Monsoon": 1}, "overdue": {"YuMOVE": 3, "Hobbycraft": 3, "Reiss": 5, "Schuh": 4, "Monsoon": 1}, "synced": "21 Jul 2026"};</script>
+<script>window.ATRT={"active": {"AllSaints": 7, "Superdry": 3, "Benefit": 1, "Reiss": 8, "Jo Malone": 1, "YuMOVE": 4, "Hobbycraft": 4, "Schuh": 6, "Monsoon": 1}, "overdue": {"YuMOVE": 3, "Hobbycraft": 3, "Reiss": 5, "Schuh": 4, "Monsoon": 1}, "brands": {"AllSaints": [{"t": "Explore video GIF for Social ?", "ae": "Ray", "d": "22 May 2025", "s": "on hold", "od": 0, "x": 0}, {"t": "MX standalone", "ae": "Ray", "d": "22 May 2025", "s": "on hold", "od": 0, "x": 0}, {"t": "LIA : Light version for Google Hosted store-front.", "ae": "Ray", "d": "22 May 2025", "s": "on hold", "od": 0, "x": 1}, {"t": "MSS Sale ends date to confirm with AS", "ae": "Ezgi", "d": "21 Apr 2026", "s": "on hold", "od": 0, "x": 0}, {"t": "DE/FR - title optimisation AOT", "ae": "Ray", "d": "30 Mar 2026", "s": "on hold", "od": 0, "x": 1}, {"t": "Deck prep for Re-Pitch", "ae": "Ray", "d": "23 Mar 2026", "s": "on hold", "od": 0, "x": 0}, {"t": "Infer optimisation for AI enrichedment attributes", "ae": "Ray", "d": "05 Mar 2026", "s": "on hold", "od": 0, "x": 0}], "Superdry": [{"t": "FS to share Testing Roadmap for Q2 Q3", "ae": "Ray", "d": "22 May 2025", "s": "on hold", "od": 0, "x": 1}, {"t": "A/B Test - Tial test: revisit mockups again", "ae": "Ezgi", "d": "24 Mar 2026", "s": "on hold", "od": 0, "x": 1}, {"t": "PPC: Image Overlay: (low stock, back in stock, % discount, x amount of stock left)", "ae": "Ezgi", "d": "23 Mar 2026", "s": "on hold", "od": 0, "x": 1}], "Benefit": [{"t": "BAU: Stickers vs. {AI Matching Skintone Tool]", "ae": "Ray", "d": "03 Jul 2025", "s": "on hold", "od": 0, "x": 0}], "Reiss": [{"t": "Loyalty Program multiple region", "ae": "Ezgi", "d": "06 Feb 2026", "s": "on hold", "od": 0, "x": 0, "u": "https://mail.google.com/mail/u/0/#all/199ddffb218966b3"}, {"t": "[Brand] includsion (Reiss) - A/B Title Test - Shopping", "ae": "Ezgi", "d": "26 May 2026", "s": "on hold", "od": 0, "x": 1}, {"t": "QBR Strategy in person", "ae": "Ray", "d": "28 Jul 2026", "s": "in progress", "od": 0, "x": 0}, {"t": "Review supplemental feed and devise keyword optimisation strategy/ cadence across market", "ae": "Ray", "d": "22 Apr 2026", "s": "in progress", "od": 1, "x": 1}, {"t": "Brand Bibles - to collect defined terms from Chelsea", "ae": "Ray", "d": "01 Jun 2026", "s": "open", "od": 1, "x": 0}, {"t": "Strategy Actions planner for Reiss - (MAY * JUNE)", "ae": "Ray", "d": "15 May 2026", "s": "open", "od": 1, "x": 0}, {"t": "Keywords Planner - next batch", "ae": "Ray", "d": "15 May 2026", "s": "open", "od": 1, "x": 1}, {"t": "Issues with Product Type - remap wit new taxonomy", "ae": "Ray", "d": "22 Apr 2026", "s": "with client", "od": 1, "x": 0}], "Jo Malone": [{"t": "English Pear' KW optimization", "ae": "Ezgi", "d": "02 Apr 2026", "s": "on hold", "od": 0, "x": 1}], "YuMOVE": [{"t": "Symptom Matrix over the seasons, Summer, Winter, Spring - FS to automate adding these sy", "ae": "Ezgi", "d": "09 Feb 2026", "s": "with client", "od": 1, "x": 1}, {"t": "Integrate High-Volume Search Terms into FeedHero to Compare with Current Feed Data", "ae": "Ray", "d": "", "s": "open", "od": 0, "x": 0}, {"t": "LLM Descriptions - extend for all products YuMOVE", "ae": "Ray", "d": "21 May 2026", "s": "with client", "od": 1, "x": 0}, {"t": "A/B Test - [Active Ingredient] inclusion (e.g., hyaluronic acid, omega-3, glucosamine)l.", "ae": "Ray", "d": "08 Jun 2026", "s": "open", "od": 1, "x": 1}], "Hobbycraft": [{"t": "AI TItles A/B Test - [Search Intent] on 200 products", "ae": "Ezgi", "d": "", "s": "test running", "od": 0, "x": 1}, {"t": "Overlay [Selling Fast] [Trending Now] [New] - FS to share final design", "ae": "Ezgi", "d": "01 Jun 2026", "s": "with client", "od": 1, "x": 1}, {"t": "Shall we try Click & Collect vs, LIA  > in BID for 20% cheaper CPC ?", "ae": "Ray", "d": "01 Jun 2026", "s": "open", "od": 1, "x": 1}, {"t": "SEO chat with Hobbycraft team x Matt - Chris to link wih new SEO Manager", "ae": "Ray", "d": "15 Jun 2026", "s": "open", "od": 1, "x": 0}], "Schuh": [{"t": "Strategy Actions planner for Schuh", "ae": "Ray", "d": "22 May 2026", "s": "open", "od": 1, "x": 0}, {"t": "Will will share s360 description", "ae": "Ray", "d": "", "s": "with client", "od": 0, "x": 0}, {"t": "Product Rating - subimit manually via retailer - FS to share fields of rating from Schuh", "ae": "Ray", "d": "25 May 2026", "s": "with client", "od": 1, "x": 0}, {"t": "CSS vs. CSS Google - Retest split test - no CPC benefit in UK market", "ae": "Ray", "d": "31 May 2026", "s": "with client", "od": 1, "x": 1}, {"t": "AI package proposal (Full, Standard, Basic) - Schuh next steps", "ae": "Ray", "d": "01 Jun 2026", "s": "open", "od": 1, "x": 0}, {"t": "A/B Test Titles - [Search Intent ] -", "ae": "Steven", "d": "", "s": "open", "od": 0, "x": 1}], "Monsoon": [{"t": "AI package proposal (Full, Standard, Basic) - wrap up chaser to Monsoon", "ae": "Ray", "d": "01 Jun 2026", "s": "open", "od": 1, "x": 0}]}, "synced": "21 Jul 2026"};</script>
 <!-- ATRT:GLOBAL:END -->
 <script>
 (function(){
@@ -581,5 +463,50 @@
 })();
 </script>
 
+
+<script>
+(function(){
+  var B=window.BRANDS||{}, A=window.ATRT||{active:{},overdue:{},brands:{}};
+  var list=document.getElementById('dz-list'), detail=document.getElementById('dz-detail');
+  if(!list||!detail) return;
+  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function stag(s){var c=s==='on hold'?'hold':s==='with client'?'client':s==='in progress'?'progress':s==='test running'?'test':'open';
+    return '<span class="tag tag-'+c+'">'+esc(s)+'</span>';}
+  function rows(arr){ if(!arr.length) return '<p class="dz-empty">None active.</p>';
+    return '<div style="overflow-x:auto"><table class="logtable"><tbody>'+arr.map(function(t){
+      var due=t.od?'<span class="od">\u26a0 '+esc(t.d)+'</span>':(esc(t.d)||'\u2014');
+      var thr=t.u?' <a class="thread" href="'+esc(t.u)+'" target="_blank" rel="noopener" title="Open email thread">\u2709</a>':'';
+      return '<tr><td>'+esc(t.t)+thr+'</td><td>'+esc(t.ae)+'</td><td>'+due+'</td><td>'+stag(t.s)+'</td></tr>';
+    }).join('')+'</tbody></table></div>'; }
+  function render(name){
+    var b=B[name]||{}, tasks=(A.brands&&A.brands[name])||[], tst=tasks.filter(function(t){return t.x;}), od=A.overdue[name]||0;
+    detail.innerHTML=
+      '<div class="dz-head"><div><h3>'+esc(name)+'</h3><div class="cat">'+esc(b.cat||'')+(b.mk?' · '+esc(b.mk):'')+'</div></div>'
+      +(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+'</div>'
+      +'<div class="dz-top"><h4>Current optimisation</h4><p>'+esc(b.top||'\u2014')+'</p></div>'
+      +'<div class="dz-metrics"><span class="chip"><b>'+tasks.length+'</b> active</span>'
+        +(od?'<span class="chip atrt-badge danger"><b>'+od+'</b> overdue</span>':'')
+        +'<span class="chip"><b>'+tst.length+'</b> tests</span></div>'
+      +'<div class="dz-cols"><div class="dz-col"><h4>Active tasks</h4>'+rows(tasks)+'</div>'
+        +'<div class="dz-col"><h4>Tests</h4>'+rows(tst)+'</div></div>'
+      +'<div class="dz-foot">'
+        +(b.plan?'<a class="lnk primary" href="'+esc(b.plan)+'" target="_blank" rel="noopener">Project plan \u2197</a>':'<span class="lnk disabled">'+esc(b.pn||'Plan in tracker')+'</span>')
+        +(b.deck?'<a class="lnk" href="'+esc(b.deck)+'">Strategy deck \u2192</a>':'')
+        +(b.con?'<span class="dz-con">'+esc(b.con)+'</span>':'')
+      +'</div>';
+    Array.prototype.forEach.call(list.children,function(x){x.classList.toggle('on',x.getAttribute('data-b')===name);});
+  }
+  var names=Object.keys(B).sort(function(a,b){return (A.active[b]||0)-(A.active[a]||0);});
+  names.forEach(function(name){
+    var n=A.active[name]||0, od=A.overdue[name]||0, b=B[name]||{};
+    var btn=document.createElement('button'); btn.className='dz-item'; btn.setAttribute('data-b',name);
+    btn.innerHTML='<span class="dz-nm">'+esc(name)+'</span><span class="dz-meta">'+esc(b.cat||'')+'</span>'
+      +'<span class="dz-count'+(od?' danger':n?'':' zero')+'">'+(n?n+' active':'\u2014')+'</span>';
+    btn.onclick=function(){render(name);};
+    list.appendChild(btn);
+  });
+  if(names.length) render(names[0]);
+})();
+</script>
 </body>
 </html>
