@@ -25,18 +25,33 @@ exact element (`data-eid` + `outerHTML`) so the request is unambiguous.
 
 ## Deploy
 
+The worker is named `feedspark` (matches the worker already created in the dashboard). Deploying from
+this directory reads `wrangler.toml`, so it also **binds the KV namespace and enables the
+`workers.dev` URL** in one shot — no separate dashboard clicks:
+
 ```bash
 cd cloudflare/feedspark-deck
-npx wrangler deploy            # creates feedspark-deck.<subdomain>.workers.dev
+npx wrangler login            # once, if not already authed
+npx wrangler deploy           # → https://feedspark.ray-vtt.workers.dev
 ```
 
-`wrangler.toml` binds the KV namespace `EDITS` (id `d93b5ac576c74f0d8a315c5b92dc8e16`). Then push a
-template:
+`wrangler.toml` binds the KV namespace `EDITS` (id `d93b5ac576c74f0d8a315c5b92dc8e16` =
+`FEEDSPARK_DECK_EDITS`). Then push the YuMOVE deck as the template:
 
 ```bash
 curl -X PUT --data-binary @../../docs/YuMOVE_Strategy_Review_Jul26.html \
-  https://feedspark-deck.<subdomain>.workers.dev/api/template
+  https://feedspark.ray-vtt.workers.dev/api/template
 ```
+
+> Do the template push **before** you gate the worker with Access (below) — Access will block an
+> unauthenticated `PUT`. Or push it any time from a browser session that's already signed in to Access.
+
+### Alt: git push-to-deploy (dashboard)
+
+The `feedspark` worker is already connected to `rayvtt/feedspark` in the dashboard, but its build
+failed because the config lives in a subdirectory. In the worker's **Settings → Build**, set
+**Root directory** to `cloudflare/feedspark-deck` (deploy command stays `npx wrangler deploy`). Every
+push to `main` then auto-deploys.
 
 ## Gate it — Cloudflare Access (required)
 

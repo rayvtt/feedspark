@@ -25,7 +25,7 @@ cd cloudflare/feedspark-deck
 npx wrangler deploy
 ```
 
-This creates `feedspark-deck.<subdomain>.workers.dev` with:
+This deploys the `feedspark` worker at `feedspark.ray-vtt.workers.dev` with:
 - KV-backed edit persistence (auto-saves every 5s)
 - Template push API (`PUT /api/template`)
 - Edit sync API (`GET/PUT/DELETE /api/edits`)
