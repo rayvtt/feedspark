@@ -71,6 +71,20 @@ export default {
       }
     }
 
+    // ---- client store (dossier data layer: add / delete / link-sheet / edit-text persist here) ----
+    // A single JSON object: per-brand overrides/additions to the git profiles, plus a _deleted list.
+    if (path === '/api/clients') {
+      if (request.method === 'GET') {
+        const store = await env.EDITS.get('clients', 'json');
+        return json(store || {});
+      }
+      if (request.method === 'PUT') {
+        const body = await request.json();
+        await env.EDITS.put('clients', JSON.stringify(body));
+        return json({ ok: true, count: Object.keys(body).length });
+      }
+    }
+
     // ---- template info (structure layer: bundled from git, not KV) ----
     // To change structure/layout, edit the page's .html in git and push to main — Cloudflare
     // rebuilds and the new page is bundled in. No PUT on purpose: git is the source of truth.
