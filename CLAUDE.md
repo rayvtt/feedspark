@@ -147,7 +147,7 @@ All HTML strategy decks include the inline edit + JSON patch sync system:
 
 ### FeedSpark-specific (do NOT use NAC resources)
 - KV namespace: `FEEDSPARK_DECK_EDITS` (id: `d93b5ac576c74f0d8a315c5b92dc8e16`)
-- Worker: `feedspark-deck` — serves HTML decks with live-edit KV persistence
+- Worker: `feedspark` (dir `cloudflare/feedspark-deck/`) at `feedspark.ray-vtt.workers.dev` — serves HTML decks with live-edit KV persistence
 - Requires Cloudflare Access gating for commercial data
 
 ### Worker API

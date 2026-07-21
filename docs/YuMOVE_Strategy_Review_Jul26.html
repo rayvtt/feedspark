@@ -240,21 +240,6 @@ body.hide-checks .chk{display:none}
 .ct a{display:block;font-size:13px;color:var(--orange);text-decoration:none;margin-top:8px}
 .footmark{position:fixed;left:0;bottom:0;z-index:55;background:rgba(255,255,255,.9);border-top:1px solid var(--line);border-right:1px solid var(--line);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:7px 16px;backdrop-filter:blur(6px)}
 
-/* ---- edit mode ---- */
-.edit-bar{position:fixed;bottom:0;right:0;z-index:70;display:flex;gap:8px;padding:8px 14px;background:rgba(255,255,255,.94);border-top:1px solid var(--line);border-left:1px solid var(--line);backdrop-filter:blur(8px)}
-.edit-bar button{font-family:inherit;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);background:var(--paper);color:var(--muted);padding:6px 14px;cursor:pointer;transition:.15s;white-space:nowrap}
-.edit-bar button:hover{border-color:var(--orange);color:var(--orange-deep)}
-.edit-bar button.active{background:var(--orange);border-color:var(--orange);color:#fff}
-.edit-bar .sep{width:1px;background:var(--line);margin:0 4px}
-.edit-bar .saved{font-size:10px;color:var(--green);font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:6px 0;opacity:0;transition:opacity .3s}
-.edit-bar .saved.show{opacity:1}
-
-body.editing [contenteditable]{outline:1px dashed rgba(245,166,35,.35);outline-offset:2px;cursor:text;transition:outline-color .15s}
-body.editing [contenteditable]:hover{outline-color:rgba(245,166,35,.6)}
-body.editing [contenteditable]:focus{outline:2px solid var(--orange);outline-offset:2px;background:rgba(245,166,35,.04)}
-body.editing .feedrow[contenteditable]:focus,body.editing .before[contenteditable]:focus,body.editing .after[contenteditable]:focus{background:rgba(245,166,35,.08)}
-body:not(.editing) [contenteditable]{outline:none}
-
 /* reveal */
 .rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s cubic-bezier(.22,.61,.36,1)}
 .rv.in{opacity:1;transform:none}
@@ -283,12 +268,6 @@ body:not(.editing) [contenteditable]{outline:none}
   </div>
 </div>
 <div class="footmark">FeedSpark · Private &amp; Confidential</div>
-<div class="edit-bar" id="editbar">
-  <button id="editToggle" class="">✎ Edit mode</button>
-  <div class="sep"></div>
-  <button id="downloadBtn">↓ Download HTML</button>
-  <span class="saved" id="savedMsg">✓ Saved</span>
-</div>
 
 <!-- ================= HERO ================= -->
 <header class="hero">
@@ -1082,8 +1061,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
   var panel=document.getElementById('panel');
   function render(k){
     var d=DATA[k];
-    var ce = document.body.classList.contains('editing') ? ' contenteditable="true"' : '';
-    panel.innerHTML='<div class="fade-swap"><div class="attr-name"'+ce+'>'+d.name+'</div><div class="attr-code">['+d.code+']</div><div class="attr-why"'+ce+'>'+d.why+'</div><div class="feedrow"'+ce+'>'+d.row+'</div><div class="attr-note"'+ce+'>'+d.note+'</div></div>';
+    panel.innerHTML='<div class="fade-swap"><div class="attr-name">'+d.name+'</div><div class="attr-code">['+d.code+']</div><div class="attr-why">'+d.why+'</div><div class="feedrow">'+d.row+'</div><div class="attr-note">'+d.note+'</div></div>';
   }
   document.getElementById('qs').addEventListener('click',function(e){
     var b=e.target.closest('.q');if(!b)return;
@@ -1091,98 +1069,6 @@ policy data become commercial controls"<br>Google&nbsp;</p>
     b.classList.add('active');render(b.getAttribute('data-k'));
   });
   render('qa');
-
-  /* ======== EDIT MODE ======== */
-  var EDITABLE_TAGS = 'h1, h2, h3, h4, p, td, .lede, .sec-sub, .ag-t, .ag-d, .hero-meta b, ' +
-    '.stat .n, .stat .l, .sc-pct, .sc-label, .sc-note, .sc-tgt, .sc-warn, ' +
-    '.tier li, .mo li, .mo h4, .mo-m, .ask h4, .ask p, .card p, .card h4, ' +
-    '.note, .callout h4, .callout p, .proto li, .proto h4, .proto .desc, .proto .tag, ' +
-    '.pipe-card li, .pipe-card h4, .pipe-card .sub, .flow-step h4, .flow-step p, .fs-num, ' +
-    '.en-card h4, .en-card .before, .en-card .after, .attr-note, ' +
-    '.eyebrow, .ct b, .ct span, .q, .bar-row .bl, .pill, ' +
-    'thead th, tbody td, .feedrow, .sec-title';
-
-  /* Elements that should NOT be editable even if they match */
-  var SKIP = '.topbar *, .edit-bar *, .footmark, .tb-brand, .tb-nav *, .flagbtn, .progress, .scrollcue, [role="tablist"]';
-
-  var editing = false;
-  var editBtn = document.getElementById('editToggle');
-  var savedMsg = document.getElementById('savedMsg');
-
-  function setEditable(on) {
-    var els = document.querySelectorAll(EDITABLE_TAGS);
-    els.forEach(function(el) {
-      /* skip UI chrome */
-      if (el.closest('.topbar') || el.closest('.edit-bar') || el.closest('.footmark')) return;
-      if (on) {
-        el.setAttribute('contenteditable', 'true');
-        el.setAttribute('spellcheck', 'false');
-      } else {
-        el.removeAttribute('contenteditable');
-        el.removeAttribute('spellcheck');
-      }
-    });
-  }
-
-  editBtn.addEventListener('click', function() {
-    editing = !editing;
-    document.body.classList.toggle('editing', editing);
-    editBtn.classList.toggle('active', editing);
-    editBtn.textContent = editing ? '✎ Editing ON' : '✎ Edit mode';
-    setEditable(editing);
-    if (!editing) {
-      /* flash saved indicator */
-      savedMsg.classList.add('show');
-      setTimeout(function(){ savedMsg.classList.remove('show'); }, 1800);
-    }
-  });
-
-  /* ======== DOWNLOAD ======== */
-  document.getElementById('downloadBtn').addEventListener('click', function() {
-    /* Turn off editing temporarily for a clean export */
-    var wasEditing = editing;
-    if (wasEditing) {
-      setEditable(false);
-      document.body.classList.remove('editing');
-    }
-
-    /* Clone the full document */
-    var html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-
-    /* Restore editing if it was on */
-    if (wasEditing) {
-      setEditable(true);
-      document.body.classList.add('editing');
-    }
-
-    /* Download */
-    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'YuMOVE_Strategy_Review_Jul26_edited.html';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    savedMsg.classList.add('show');
-    setTimeout(function(){ savedMsg.classList.remove('show'); }, 1800);
-  });
-
-  /* Prevent enter key creating new elements, insert line break instead */
-  document.addEventListener('keydown', function(e) {
-    if (!editing) return;
-    var el = e.target;
-    if (!el.hasAttribute('contenteditable')) return;
-
-    if (e.key === 'Enter' && !e.shiftKey) {
-      /* Allow enter in feedrow and multi-line blocks */
-      if (el.classList.contains('feedrow') || el.classList.contains('before') || el.classList.contains('after')) return;
-      e.preventDefault();
-      document.execCommand('insertLineBreak');
-    }
-  });
 
 })();
 </script>
