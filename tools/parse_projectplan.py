@@ -153,11 +153,14 @@ def parse(path):
         desc=g(r,dcol); owner=g(r,ocol); status=scan_status(r,scol,ocol,dcol)
         # lane/section tag often sits just left of desc
         tag=g(r,dcol-1) if dcol-1>=0 else ""
-        if not desc: continue
-        # month/quarter section header (owner-less) -> advance the current period
-        if not owner:
-            per=parse_period(desc)
+        # month/quarter section header -> advance the current period.
+        # The marker may be in the desc column (D) OR the column to its left (C, e.g. Reiss).
+        # Checked before the empty-desc skip because Reiss's month rows have an empty desc,
+        # and Reiss repeats the label "Owner" in the owner column on those rows.
+        if not owner or owner.strip().lower() in ("owner","task owner","status","priority","prio","prio (w/c)","time required","notes"):
+            per=parse_period(tag) or parse_period(desc)
             if per: period,pk=per; continue
+        if not desc: continue
         if is_skiptext(desc):
             continue
         # section header: a title with no owner & no status (e.g. '1  Data Fields & Titles')
