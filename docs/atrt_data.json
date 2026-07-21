@@ -4184,5 +4184,1267 @@
    "category": "Cosmetics",
    "plan": "Bobbi Brown - Onboarding/ Project Plan - FH"
   }
+ ],
+ "plan_tasks": [
+  {
+   "client": "Reiss",
+   "task": "Top 3 labels - low spend but high REV & ROAS,  Reco based on Stock qty vs Spend & Roas."
+  },
+  {
+   "client": "Reiss",
+   "task": "Cam responded, but deffo needs more direct actions"
+  },
+  {
+   "client": "Reiss",
+   "task": "All local feeds are ready, all local sites are live"
+  },
+  {
+   "client": "Reiss",
+   "task": "Titles for all markets ( Shopping )"
+  },
+  {
+   "client": "Reiss",
+   "task": "New Social agency"
+  },
+  {
+   "client": "Reiss",
+   "task": "Social Agency onboard"
+  },
+  {
+   "client": "Reiss",
+   "task": "New PPC onboard"
+  },
+  {
+   "client": "Reiss",
+   "task": "Account Reviewed (Feeds & Hours)"
+  },
+  {
+   "client": "Reiss",
+   "task": "Account Reviewed (Feeds & Hours)"
+  },
+  {
+   "client": "Reiss",
+   "task": "Account Reviewed (Feeds & Hours)"
+  },
+  {
+   "client": "Reiss",
+   "task": "BF Keywords US"
+  },
+  {
+   "client": "Reiss",
+   "task": "US ALP Demo"
+  },
+  {
+   "client": "Reiss",
+   "task": "Gifting Keywords"
+  },
+  {
+   "client": "Reiss",
+   "task": "XMAS keywords"
+  },
+  {
+   "client": "Reiss",
+   "task": "Localisation for datafields across DE/FR/NL"
+  },
+  {
+   "client": "Reiss",
+   "task": "NL Keywords"
+  },
+  {
+   "client": "Reiss",
+   "task": "Supp feed UK Title to all English markets"
+  },
+  {
+   "client": "Reiss",
+   "task": "SA-CA / Launch"
+  },
+  {
+   "client": "Reiss",
+   "task": "Localisation for datafields across DE/FR/NL"
+  },
+  {
+   "client": "Reiss",
+   "task": "NL Keywords"
+  },
+  {
+   "client": "Reiss",
+   "task": "Supp feed UK Title to all English markets"
+  },
+  {
+   "client": "Reiss",
+   "task": "SA-CA / Launch"
+  },
+  {
+   "client": "Reiss",
+   "task": "Image test: dresses (UK & FR)"
+  },
+  {
+   "client": "Reiss",
+   "task": "SA-SA launch"
+  },
+  {
+   "client": "Reiss",
+   "task": "Testing Roadmap"
+  },
+  {
+   "client": "Reiss",
+   "task": "AOT queue"
+  },
+  {
+   "client": "Reiss",
+   "task": "NEXT ,migratoion"
+  },
+  {
+   "client": "Reiss",
+   "task": "BE/AT/IT/PL launch"
+  },
+  {
+   "client": "Reiss",
+   "task": "Translation piece"
+  },
+  {
+   "client": "Reiss",
+   "task": "Mone project"
+  },
+  {
+   "client": "Reiss",
+   "task": "Loyalty Program"
+  },
+  {
+   "client": "Reiss",
+   "task": "Restart scrape for translation"
+  },
+  {
+   "client": "Reiss",
+   "task": "new TikTok feed"
+  },
+  {
+   "client": "Accessorize",
+   "task": "DPA roundel"
+  },
+  {
+   "client": "Accessorize",
+   "task": "Low Spend - high ROAS, High Spend - low RoAS,"
+  },
+  {
+   "client": "Accessorize",
+   "task": "LIA is live, requesting MHSF, issue with image pixel"
+  },
+  {
+   "client": "Accessorize",
+   "task": "DPA for US"
+  },
+  {
+   "client": "Accessorize",
+   "task": "chat GPT KWs"
+  },
+  {
+   "client": "Accessorize",
+   "task": "Audit notice"
+  },
+  {
+   "client": "Accessorize",
+   "task": "URL Migration"
+  },
+  {
+   "client": "Accessorize",
+   "task": "TWC EU"
+  },
+  {
+   "client": "Accessorize",
+   "task": "ChatGPT AI"
+  },
+  {
+   "client": "Accessorize",
+   "task": "BAU KW"
+  },
+  {
+   "client": "Accessorize",
+   "task": "ChatGPT Keywords"
+  },
+  {
+   "client": "Accessorize",
+   "task": "QBR Q3"
+  },
+  {
+   "client": "Accessorize",
+   "task": "CSS SPlit ?"
+  },
+  {
+   "client": "Accessorize",
+   "task": "QBR Q3"
+  },
+  {
+   "client": "Accessorize",
+   "task": "Audit Cleaning UK-US"
+  },
+  {
+   "client": "Accessorize",
+   "task": "Zombie resetup"
+  },
+  {
+   "client": "Accessorize",
+   "task": "2 Cyclers analysi"
+  },
+  {
+   "client": "Accessorize",
+   "task": "DPA Overlay trial"
+  },
+  {
+   "client": "Accessorize",
+   "task": "DPA Overlay Jewellery & Bags"
+  },
+  {
+   "client": "Accessorize",
+   "task": "Meta Itemgroup issue"
+  },
+  {
+   "client": "Accessorize",
+   "task": "DPA Overlay Jewellery & Bags"
+  },
+  {
+   "client": "Accessorize",
+   "task": "Meta Itemgroup issue"
+  },
+  {
+   "client": "Accessorize",
+   "task": "BF keywords"
+  },
+  {
+   "client": "Accessorize",
+   "task": "DPA overlay"
+  },
+  {
+   "client": "Accessorize",
+   "task": "NY WoW & CL restructure"
+  },
+  {
+   "client": "Accessorize",
+   "task": "Cleaning labels overview"
+  },
+  {
+   "client": "Accessorize",
+   "task": "Stratey Review Q2"
+  },
+  {
+   "client": "Accessorize",
+   "task": "Cleaning labels overview"
+  },
+  {
+   "client": "Accessorize",
+   "task": "Stratey Review Q2"
+  },
+  {
+   "client": "Accessorize",
+   "task": "LIA preview"
+  },
+  {
+   "client": "Accessorize",
+   "task": "LIA setup"
+  },
+  {
+   "client": "Accessorize",
+   "task": "always-on cycler"
+  },
+  {
+   "client": "Accessorize",
+   "task": "DPA cycler setup"
+  },
+  {
+   "client": "AllSaints",
+   "task": "All Saints"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Top 3 labels - low spend but high REV & ROAS,  Reco based on Stock qty vs Spend & Roas."
+  },
+  {
+   "client": "AllSaints",
+   "task": "Client responded"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Trial (PPC)"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Xiao Li"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Migration/ non BAU"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Migration postponed to end of Sept"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Cachup Strategy"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Menswear focus"
+  },
+  {
+   "client": "AllSaints",
+   "task": "PPC CL restructure"
+  },
+  {
+   "client": "AllSaints",
+   "task": "QBR set-up"
+  },
+  {
+   "client": "AllSaints",
+   "task": "RC 70%"
+  },
+  {
+   "client": "AllSaints",
+   "task": "DPA Roundel"
+  },
+  {
+   "client": "AllSaints",
+   "task": "PPC Menswear Opti"
+  },
+  {
+   "client": "AllSaints",
+   "task": "DPA Roundel test"
+  },
+  {
+   "client": "AllSaints",
+   "task": "QBR Q3"
+  },
+  {
+   "client": "AllSaints",
+   "task": "DPA roundel BF"
+  },
+  {
+   "client": "AllSaints",
+   "task": "BF Keywords"
+  },
+  {
+   "client": "AllSaints",
+   "task": "New Masterfeed"
+  },
+  {
+   "client": "AllSaints",
+   "task": "DPA Ovleray for Peak"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Always-on Cycler PPC"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Maternity Leave"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Overlay kickstart"
+  },
+  {
+   "client": "AllSaints",
+   "task": "BF keywords"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Quote sent"
+  },
+  {
+   "client": "AllSaints",
+   "task": "PPC CL restructure"
+  },
+  {
+   "client": "AllSaints",
+   "task": "DPA overlay"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Zoomed Image issue"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Weighted RC"
+  },
+  {
+   "client": "AllSaints",
+   "task": "V-DAY Keywords"
+  },
+  {
+   "client": "AllSaints",
+   "task": "PPC CL restructring"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Stratey Review Q2"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Weighted RC"
+  },
+  {
+   "client": "AllSaints",
+   "task": "V-DAY Keywords"
+  },
+  {
+   "client": "AllSaints",
+   "task": "PPC CL restructring"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Stratey Review Q2"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Social DPA overlay test"
+  },
+  {
+   "client": "AllSaints",
+   "task": "LIA preview"
+  },
+  {
+   "client": "AllSaints",
+   "task": "CSS Testing"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Hours revew/ new process"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Image Cycler: William x AS"
+  },
+  {
+   "client": "AllSaints",
+   "task": "CSS testing analysis"
+  },
+  {
+   "client": "AllSaints",
+   "task": "Black Friday planning"
+  },
+  {
+   "client": "Monsoon",
+   "task": "to set up plan"
+  },
+  {
+   "client": "Monsoon",
+   "task": "Low Spend - high ROAS, High Spend - low RoAS,"
+  },
+  {
+   "client": "Monsoon",
+   "task": "Margin setup"
+  },
+  {
+   "client": "Monsoon",
+   "task": "KWs BAU"
+  },
+  {
+   "client": "Monsoon",
+   "task": "Bazaar brands"
+  },
+  {
+   "client": "Monsoon",
+   "task": "US Automation"
+  },
+  {
+   "client": "Monsoon",
+   "task": "Scrape CL4"
+  },
+  {
+   "client": "Monsoon",
+   "task": "Short Title"
+  },
+  {
+   "client": "Monsoon",
+   "task": "US Migration"
+  },
+  {
+   "client": "Monsoon",
+   "task": "IE launch"
+  },
+  {
+   "client": "Monsoon",
+   "task": "BAU assorted KWs"
+  },
+  {
+   "client": "Monsoon",
+   "task": "DPA roundel BF"
+  },
+  {
+   "client": "Monsoon",
+   "task": "BF Keywords"
+  },
+  {
+   "client": "Monsoon",
+   "task": "Margin campaign"
+  },
+  {
+   "client": "Monsoon",
+   "task": "Overlay kickstart"
+  },
+  {
+   "client": "Monsoon",
+   "task": "List waiting"
+  },
+  {
+   "client": "Monsoon",
+   "task": "BF keywords"
+  },
+  {
+   "client": "Monsoon",
+   "task": "DPA overlay"
+  },
+  {
+   "client": "Monsoon",
+   "task": "Social DPA ideas"
+  },
+  {
+   "client": "Monsoon",
+   "task": "PPC CL restructring"
+  },
+  {
+   "client": "Monsoon",
+   "task": "Social DPA ideas"
+  },
+  {
+   "client": "Monsoon",
+   "task": "PPC CL restructring"
+  },
+  {
+   "client": "Monsoon",
+   "task": "Social DPA overlay"
+  },
+  {
+   "client": "Monsoon",
+   "task": "PPC: Hero Sizes each PT"
+  },
+  {
+   "client": "Monsoon",
+   "task": "alway-on cycler (4)"
+  },
+  {
+   "client": "Monsoon",
+   "task": "Pixel issue solution"
+  },
+  {
+   "client": "Monsoon",
+   "task": "LIA setup"
+  },
+  {
+   "client": "Monsoon",
+   "task": "DPA cycler setup"
+  },
+  {
+   "client": "Monsoon",
+   "task": "exclusion review"
+  },
+  {
+   "client": "Schuh",
+   "task": "Top 3 Brands, Product Age, Mens & Womens size"
+  },
+  {
+   "client": "Schuh",
+   "task": "Xiao Li"
+  },
+  {
+   "client": "Schuh",
+   "task": "Top 500 Automation"
+  },
+  {
+   "client": "Schuh",
+   "task": "QBR Q2"
+  },
+  {
+   "client": "Schuh",
+   "task": "Gaming Scrape"
+  },
+  {
+   "client": "Schuh",
+   "task": "Gaming CL restructure"
+  },
+  {
+   "client": "Schuh",
+   "task": "Gaming Scrape"
+  },
+  {
+   "client": "Schuh",
+   "task": "Bundles setup"
+  },
+  {
+   "client": "Schuh",
+   "task": "Feed drop"
+  },
+  {
+   "client": "Schuh",
+   "task": "Keywords Test"
+  },
+  {
+   "client": "Schuh",
+   "task": "Active Q4 Plan"
+  },
+  {
+   "client": "Schuh",
+   "task": "BF keywords"
+  },
+  {
+   "client": "Schuh",
+   "task": "XMAS keywords"
+  },
+  {
+   "client": "Schuh",
+   "task": "Titles AB Testing"
+  },
+  {
+   "client": "Schuh",
+   "task": "Titles AB Testing"
+  },
+  {
+   "client": "Schuh",
+   "task": "DPA Overlay preview"
+  },
+  {
+   "client": "Schuh",
+   "task": "extracting Sale Features"
+  },
+  {
+   "client": "Benefit",
+   "task": "No Image Cycler"
+  },
+  {
+   "client": "Benefit",
+   "task": "batch received"
+  },
+  {
+   "client": "Benefit",
+   "task": "Top 3 categories,  franchise, Giftset performance"
+  },
+  {
+   "client": "Benefit",
+   "task": "RedBrain opti"
+  },
+  {
+   "client": "Benefit",
+   "task": "DPA overlays"
+  },
+  {
+   "client": "Benefit",
+   "task": "DPA overlay quote"
+  },
+  {
+   "client": "Benefit",
+   "task": "Image swap for Meta"
+  },
+  {
+   "client": "Benefit",
+   "task": "Image fix"
+  },
+  {
+   "client": "Benefit",
+   "task": "DPA roundel BF"
+  },
+  {
+   "client": "Benefit",
+   "task": "BF Keywords"
+  },
+  {
+   "client": "Benefit",
+   "task": "Merged Image"
+  },
+  {
+   "client": "Benefit",
+   "task": "Merged Image PPC"
+  },
+  {
+   "client": "Benefit",
+   "task": "Merged Image PPC"
+  },
+  {
+   "client": "Benefit",
+   "task": "BF keywords"
+  },
+  {
+   "client": "Benefit",
+   "task": "Gifting keywords"
+  },
+  {
+   "client": "Benefit",
+   "task": "Check paused campaign"
+  },
+  {
+   "client": "Benefit",
+   "task": "Check paused campaign"
+  },
+  {
+   "client": "Benefit",
+   "task": "MASK title test"
+  },
+  {
+   "client": "Benefit",
+   "task": "Loyalty Scheme"
+  },
+  {
+   "client": "Benefit",
+   "task": "Summer Sale"
+  },
+  {
+   "client": "Benefit",
+   "task": "Merged image proposal"
+  },
+  {
+   "client": "Benefit",
+   "task": "Black Friday call"
+  },
+  {
+   "client": "Benefit",
+   "task": "Advent Calendar - all-stops optimisation"
+  },
+  {
+   "client": "Benefit",
+   "task": "ChatGPT x SEO optimisation"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "LIA project"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "No Image Cycler"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "batch received"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "Revenue& efficiency, category& product drivers, feed & availability health, pricing & demand mix"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "Xiao Li"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "LIA is Live"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "DPA overlay ?"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "taxonomy change"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "new Taxonomy change"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "QBR Q3"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "TikTok CL"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "GMC issue"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "TikTok CL"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "BF Keywords"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "DPA Overlay trial"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "ALP call"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "DPA Overlays"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "DPA Overlays"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "BF keywords"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "XMAS keywords"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "PPC overly"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "[merged] PPC Overlay result review"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "[merged] PPC Overlay result review"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "Organic : Description structured data test"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "Easter keywords"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "Organic : Description structured data test"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "Easter keywords"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "internal PLP project"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "Loyalty Scheme"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "AB Test [Brand] in Titles for Machine"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "XMAS keywords"
+  },
+  {
+   "client": "Hobbycraft",
+   "task": "PPC & DPA overlay live"
+  },
+  {
+   "client": "Superdry",
+   "task": "hours boost"
+  },
+  {
+   "client": "Superdry",
+   "task": "Top 3 labels - low spend but high REV & ROAS,  Reco based on Stock qty vs Spend & Roas."
+  },
+  {
+   "client": "Superdry",
+   "task": "CLient responded well - PPC team involved to change structure"
+  },
+  {
+   "client": "Superdry",
+   "task": "Xiao Li"
+  },
+  {
+   "client": "Superdry",
+   "task": "DPA overlay ?"
+  },
+  {
+   "client": "Superdry",
+   "task": "New Masterfeed"
+  },
+  {
+   "client": "Superdry",
+   "task": "Image Cycler"
+  },
+  {
+   "client": "Superdry",
+   "task": "Migration qoute"
+  },
+  {
+   "client": "Superdry",
+   "task": "Migration qoute"
+  },
+  {
+   "client": "Superdry",
+   "task": "BF Keywords"
+  },
+  {
+   "client": "Superdry",
+   "task": "Strategy Review"
+  },
+  {
+   "client": "Superdry",
+   "task": "Strategy Review"
+  },
+  {
+   "client": "Superdry",
+   "task": "BF keywords (UK/DE/FR/IE)"
+  },
+  {
+   "client": "Superdry",
+   "task": "XMAS keywords"
+  },
+  {
+   "client": "Superdry",
+   "task": "Image Padding"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] 2nd Phase Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] 2nd Phase Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] 2nd Phase Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "[merged] 2nd Phase Migration"
+  },
+  {
+   "client": "Superdry",
+   "task": "Margin import"
+  },
+  {
+   "client": "Superdry",
+   "task": "Imaeg Cycler: Sweatshirt"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "Estee Lauder"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "PT change"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "No Image Cycler"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "Top 3 categories,  franchise, Giftset performance"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "Xiao Li"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "Image Cycler"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "Meta variant select"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "Bestseller update"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "Image check"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "QBR Q3"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "ELC Peak project"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "Spirable project"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "BF keywords"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "XMAS keywords"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "DPA overlay"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "PPC overlay proposal"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "PPC overlay testing"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "PPC overlay"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "Easter keywords"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "PPC overlay: mirror website"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "XMAS keywords"
+  },
+  {
+   "client": "Estée Lauder",
+   "task": "Peak Planning"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "batch received - XMAS giftsets"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "Top 3 categories,  franchise, Giftset performance"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "Xiao Li"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "DPA overlay ?"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "AI Keywords & Slots Automation"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "DPA overlay test"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "Monthly call setup"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "Virtual SKUs"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "Monthly call setup"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "ELC Peak project"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "DPA roundel BF"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "Scrape virtual sets"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "Tagging lifestyle image"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "BF keywords"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "DPA overlay"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "Lifestyle image setup"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "Lifestyle vs. Box"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "Lifestyle image setup"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "Lifestyle vs. Box"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "Easter optimistaion"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "PPC overlay: mirror website"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "Image 1000x1000 fix"
+  },
+  {
+   "client": "Jo Malone",
+   "task": "Peak Planning"
+  },
+  {
+   "client": "MAC",
+   "task": "No FY24/25 Cycler"
+  },
+  {
+   "client": "MAC",
+   "task": "Top 3 categories,  franchise, Giftset performance"
+  },
+  {
+   "client": "MAC",
+   "task": "Xiao Li"
+  },
+  {
+   "client": "MAC",
+   "task": "Image revamp"
+  },
+  {
+   "client": "MAC",
+   "task": "Image Merge ?"
+  },
+  {
+   "client": "MAC",
+   "task": "ELC Peak project"
+  },
+  {
+   "client": "MAC",
+   "task": "Spirable project"
+  },
+  {
+   "client": "MAC",
+   "task": "PPC Overlay"
+  },
+  {
+   "client": "MAC",
+   "task": "PPC Overlay"
+  },
+  {
+   "client": "MAC",
+   "task": "BF keywords"
+  },
+  {
+   "client": "MAC",
+   "task": "XMAS keywords"
+  },
+  {
+   "client": "MAC",
+   "task": "DPA overlay"
+  },
+  {
+   "client": "MAC",
+   "task": "PPC ovleray"
+  },
+  {
+   "client": "MAC",
+   "task": "PPC overlay: mirror website"
+  },
+  {
+   "client": "MAC",
+   "task": "Peak Planning"
+  },
+  {
+   "client": "Bobbi Brown",
+   "task": "Bobbi Brown"
+  },
+  {
+   "client": "Bobbi Brown",
+   "task": "No Image Cycler"
+  },
+  {
+   "client": "Bobbi Brown",
+   "task": "Top 3 categories,  franchise, Giftset performance"
+  },
+  {
+   "client": "Bobbi Brown",
+   "task": "PPC Overlay"
+  },
+  {
+   "client": "Bobbi Brown",
+   "task": "PPC Overlay"
+  },
+  {
+   "client": "Bobbi Brown",
+   "task": "BF keywords"
+  },
+  {
+   "client": "Bobbi Brown",
+   "task": "XMAS keywords"
+  },
+  {
+   "client": "Bobbi Brown",
+   "task": "DPA overlay"
+  },
+  {
+   "client": "Bobbi Brown",
+   "task": "PPC overlay: mirror website"
+  },
+  {
+   "client": "Bobbi Brown",
+   "task": "Searchterms optimisation: FACE/BROW/EYES"
+  },
+  {
+   "client": "Bobbi Brown",
+   "task": "Peak Planning"
+  }
  ]
 }

@@ -98,7 +98,7 @@ export default {
     const page = PAGES[path];
     if (page) {
       const html = page.html.replace('</body>', getEditorScript(page.slug) + '\n</body>');
-      return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', ...CORS } });
+      return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
     return new Response('Not found', { status: 404 });

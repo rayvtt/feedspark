@@ -126,6 +126,17 @@ def find_thread(cells):
         if m: return m.group(0).rstrip("|").strip()
     return ""
 
+# tab-2 activity cells = the project-plan task lists (the source of truth for analysis/scores)
+_PLAN_STOP = {"done", "yes", "no", "eta", "large", "medium", "small", "1st", "2nd", "fm",
+              "covered", "n/a", "na", "tbd", "collect later", "in tracker (tab 2)", "new agency"}
+def is_plan_task(c):
+    s = (c or "").strip(); cl = s.lower()
+    if len(s) < 6 or " " not in s: return False
+    if "project plan" in cl or "onboarding" in cl or cl in _PLAN_STOP: return False
+    if re.match(r"^[\d.,%£$/ +-]+$", s): return False
+    if not re.search(r"[a-z]", cl): return False
+    return True
+
 def test_type(t):
     t = t.lower()
     if "overlay" in t: return "Overlay / badge"
@@ -144,7 +155,7 @@ def parse(src):
     for ln in open(src, encoding="utf-8"):
         if ln.startswith("|"): rows.append([clean(c) for c in ln.strip().strip("|").split("|")])
     dre = re.compile(r"^\d{1,2}[/.]\d{1,2}[/.]\d{4}")
-    tasks, plans = [], []
+    tasks, plans, plan_tasks = [], [], []
     for r in rows:
         if not r: continue
         if dre.match(r[0]) and len(r) > 3:
@@ -158,7 +169,10 @@ def parse(src):
         elif r[0] and not dre.match(r[0]) and any("Project Plan" in c or "Onboarding" in c for c in r):
             plan = next((c for c in r if "Project Plan" in c or "Onboarding" in c), "")
             plans.append({"client": r[0].strip(), "category": r[1].strip() if len(r) > 1 else "", "plan": plan})
-    return tasks, plans
+            cli = norm_client(r[0])                       # tab-2 activity cells = this client's project-plan tasks
+            for c in r:
+                if is_plan_task(c): plan_tasks.append({"client": cli, "task": c})
+    return tasks, plans, plan_tasks
 
 def esc(s): return html.escape(str(s), quote=True)
 
@@ -257,7 +271,7 @@ def render_plans(plans):
         f'<p class="note" style="margin-top:14px"><a href="{TRACKER}#gid=100171143" target="_blank" rel="noopener">Open the ATRT Tracker</a> — '
         'tab 1 = task log, tab 2 = accounts &amp; project-plan links.</p></div>')
 
-def render_global(tasks):
+def render_global(tasks, plan_tasks):
     tk, td = today_key()
     active = [t for t in tasks if t["status"] in ACTIVE]
     counts = Counter(t["client"] for t in active)
@@ -268,15 +282,15 @@ def render_global(tasks):
                 "od": 1 if is_overdue(t, tk) else 0, "x": 1 if t["is_test"] else 0}
         if t.get("thread"): item["u"] = t["thread"]
         brands.setdefault(t["client"], []).append(item)
-    scores, bench = compute_scores(tasks)
+    scores, bench = compute_scores(plan_tasks)   # source of truth = project-plan tasks (tab 2)
     payload = {"active": dict(counts), "overdue": dict(od), "brands": brands,
                "scores": scores, "benchmarks": bench,
                "synced": f'{td.day:02d} {MONTHS[td.month]} {td.year}'}
     return f'<script>window.ATRT={json.dumps(payload, ensure_ascii=False)};</script>'
 
-def render_bench(tasks):
+def render_bench(plan_tasks):
     from collections import Counter
-    scores, bench = compute_scores(tasks)
+    scores, bench = compute_scores(plan_tasks)
     items = sorted(bench.items(), key=lambda kv: -kv[1])
     bars = "".join(
         f'<div class="bmk-row"><span class="bmk-cat">{esc(c)}</span>'
@@ -294,7 +308,7 @@ def render_bench(tasks):
     return (
         '<div class="grid-2">'
         '<div class="panel"><h3>Feed-optimisation score by category</h3>'
-        f'<div class="sub">Book average {avg}/100 · scored from ATRT activity against FeedSpark criteria</div>'
+        f'<div class="sub">Book average {avg}/100 · scored from the project-plan tasks against FeedSpark criteria</div>'
         f'<div class="bmk">{bars}</div></div>'
         '<div class="panel"><h3>Portfolio leaderboard</h3>'
         f'<div class="sub">{len(scores)} accounts scored · furthest along on feed optimisation</div>'
@@ -303,7 +317,7 @@ def render_bench(tasks):
         '<div class="panel" style="margin-top:18px"><h3>Portfolio composition</h3>'
         '<div class="sub">Accounts by category</div>'
         f'<div class="chips">{comp}</div>'
-        '<p class="note">Scores are computed from logged activity (a proxy for how far each feed is built out) against seven FeedSpark criteria — '
+        '<p class="note">Scores are computed from each client\'s <b>project-plan tasks</b> (the source of truth), against seven FeedSpark criteria — '
         'Data &amp; Golden Record, Titles &amp; MASK, conversational attributes, testing cadence, creative/overlays, keywords/localisation and AI-readiness. '
         'Weights are tunable in <code>tools/sync_atrt.py</code>.</p></div>')
 
@@ -334,17 +348,17 @@ def splice(text, name, frag):
 
 def main(argv):
     if len(argv) > 1:
-        tasks, plans = parse(argv[1])
-        json.dump({"tasks": tasks, "plans": plans}, open(DATA, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-        print(f"parsed {len(tasks)} tasks, {len(plans)} plans -> {os.path.relpath(DATA, ROOT)}")
+        tasks, plans, plan_tasks = parse(argv[1])
+        json.dump({"tasks": tasks, "plans": plans, "plan_tasks": plan_tasks}, open(DATA, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        print(f"parsed {len(tasks)} tasks, {len(plans)} plans, {len(plan_tasks)} project-plan tasks -> {os.path.relpath(DATA, ROOT)}")
     else:
-        d = json.load(open(DATA, encoding="utf-8")); tasks, plans = d["tasks"], d["plans"]
-        print(f"loaded {len(tasks)} tasks, {len(plans)} plans")
+        d = json.load(open(DATA, encoding="utf-8")); tasks, plans, plan_tasks = d["tasks"], d["plans"], d.get("plan_tasks", [])
+        print(f"loaded {len(tasks)} tasks, {len(plans)} plans, {len(plan_tasks)} project-plan tasks")
     doc = open(FCC, encoding="utf-8").read()
     for name, frag in [("KPI", render_kpi(tasks, plans)), ("LOG", render_log(tasks)),
-                       ("COMMS", render_comms(tasks)), ("TESTS", render_tests(tasks)),
-                       ("PLANS", render_plans(plans)), ("BENCH", render_bench(tasks)),
-                       ("GLOBAL", render_global(tasks))]:
+                       ("TESTS", render_tests(tasks)),
+                       ("PLANS", render_plans(plans)), ("BENCH", render_bench(plan_tasks)),
+                       ("GLOBAL", render_global(tasks, plan_tasks))]:
         doc = splice(doc, name, frag)
     open(FCC, "w", encoding="utf-8").write(doc)
     tk, _ = today_key()
