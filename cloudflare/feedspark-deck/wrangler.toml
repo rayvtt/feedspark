@@ -1,0 +1,7 @@
+name = "feedspark-deck"
+main = "src/worker.js"
+compatibility_date = "2024-12-01"
+
+[[kv_namespaces]]
+binding = "EDITS"
+id = "d93b5ac576c74f0d8a315c5b92dc8e16"
