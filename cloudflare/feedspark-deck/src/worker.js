@@ -26,12 +26,14 @@
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
+import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
 
 // path -> { html, slug }. slug namespaces each page's KV edit layer (KV key: edits:<slug>),
 // so edits on the landing page and each deck never collide. Add a page = add a line here.
 const PAGES = {
   '/':            { html: LANDING,     slug: 'home' },
   '/index.html':  { html: LANDING,     slug: 'home' },
+  '/templates':   { html: TEMPLATES,   slug: 'templates' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
 };
 
