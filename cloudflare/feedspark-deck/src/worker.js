@@ -1,29 +1,39 @@
 /**
- * FeedSpark Deck Worker
- * Serves an HTML strategy deck with parallel live editing — no paid API, no cost:
- *   - Ray edits copy in-browser (contenteditable) -> auto-saved to KV by data-eid
- *   - Claude Code (the chat interface) makes structural/visual edits to the TEMPLATE
- *     in git and pushes to main; Cloudflare rebuilds and the new deck is bundled in.
+ * FeedSpark Command Center Worker
+ * Serves the command center + strategy decks with parallel live editing — no paid API, no cost:
+ *   - Ray edits copy in-browser (contenteditable) -> auto-saved to KV by data-eid (per page)
+ *   - Claude Code (the chat interface) makes structural/visual edits to the page templates
+ *     in git and pushes to main; Cloudflare rebuilds and the new pages are bundled in.
  *     Ray's KV edits persist and re-overlay on top.
  *   - The editor's "Copy for Claude Code" button hands Claude the exact element to change
  *
  * The two layers never collide: template = git (bundled at build time), content = KV / Ray.
  *
  * Routes:
- *   GET  /                -> serve deck HTML (git-bundled template + injected editor widget)
- *   GET  /api/edits       -> saved edits as JSON (keyed by data-eid)
- *   PUT  /api/edits       -> merge an edit patch
- *   DELETE /api/edits     -> clear saved edits
- *   GET  /api/template    -> info: template is git-bundled (push to main to change it)
+ *   GET  /                 -> command center landing page (+ injected editor widget)
+ *   GET  /deck/yumove      -> YuMOVE strategy deck (+ injected editor widget)
+ *   GET  /api/edits?page=  -> a page's saved edits as JSON (keyed by data-eid)
+ *   PUT  /api/edits?page=  -> merge an edit patch for a page
+ *   DELETE /api/edits?page=-> clear a page's saved edits
+ *   GET  /api/template     -> info: pages are git-bundled (push to main to change them)
  *
  * Gate the whole worker behind Cloudflare Access — the deck holds confidential
  * commercial data.
  */
 
-// The deck template is bundled from git at build time. Editing structure/layout means
-// editing this .html in git and pushing to main; Cloudflare rebuilds and redeploys.
+// Pages are bundled from git at build time as Text modules. Editing structure/layout means
+// editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
-import DECK from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
+import LANDING from "../../../docs/FeedSpark_Command_Center.html";
+import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
+
+// path -> { html, slug }. slug namespaces each page's KV edit layer (KV key: edits:<slug>),
+// so edits on the landing page and each deck never collide. Add a page = add a line here.
+const PAGES = {
+  '/':            { html: LANDING,     slug: 'home' },
+  '/index.html':  { html: LANDING,     slug: 'home' },
+  '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
+};
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -38,36 +48,38 @@ export default {
 
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
 
-    // ---- edits (content layer: Ray, in-browser) ----
+    // ---- edits (content layer: Ray, in-browser) — namespaced per page by ?page=<slug> ----
     if (path === '/api/edits') {
+      const slug = (url.searchParams.get('page') || 'home').replace(/[^a-z0-9_-]/gi, '');
+      const key = 'edits:' + slug;
       if (request.method === 'GET') {
-        const edits = await env.EDITS.get('current_edits', 'json');
+        const edits = await env.EDITS.get(key, 'json');
         return json(edits || {});
       }
       if (request.method === 'PUT') {
         const incoming = await request.json();
-        const existing = (await env.EDITS.get('current_edits', 'json')) || {};
+        const existing = (await env.EDITS.get(key, 'json')) || {};
         const merged = { ...existing, ...incoming };
-        await env.EDITS.put('current_edits', JSON.stringify(merged));
-        return json({ ok: true, count: Object.keys(merged).length });
+        await env.EDITS.put(key, JSON.stringify(merged));
+        return json({ ok: true, page: slug, count: Object.keys(merged).length });
       }
       if (request.method === 'DELETE') {
-        await env.EDITS.delete('current_edits');
-        return json({ ok: true, cleared: true });
+        await env.EDITS.delete(key);
+        return json({ ok: true, page: slug, cleared: true });
       }
     }
 
-    // ---- template (structure layer: bundled from git, not KV) ----
-    // To change structure/layout, edit docs/YuMOVE_Strategy_Review_Jul26.html and push to
-    // main — Cloudflare rebuilds and the new deck is bundled in. There is no PUT here on
-    // purpose: git is the single source of truth for the template.
+    // ---- template info (structure layer: bundled from git, not KV) ----
+    // To change structure/layout, edit the page's .html in git and push to main — Cloudflare
+    // rebuilds and the new page is bundled in. No PUT on purpose: git is the source of truth.
     if (path === '/api/template' && request.method === 'GET') {
-      return json({ source: 'git', note: 'template is git-bundled at build time; push to main to update it' });
+      return json({ source: 'git', pages: Object.keys(PAGES), note: 'pages are git-bundled at build time; push to main to update them' });
     }
 
-    // ---- serve the deck ----
-    if (path === '/' || path === '/index.html') {
-      const html = DECK.replace('</body>', getEditorScript() + '\n</body>');
+    // ---- serve a git-bundled page + inject the editor widget for its slug ----
+    const page = PAGES[path];
+    if (page) {
+      const html = page.html.replace('</body>', getEditorScript(page.slug) + '\n</body>');
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', ...CORS } });
     }
 
@@ -86,11 +98,12 @@ function json(data, status = 200) {
 //   - "Export edits": copies the full KV patch as JSON (for the git / apply_edits.py flow).
 // Written with literal unicode chars and no backslash escapes so it stays valid inside
 // this template literal.
-function getEditorScript() {
+function getEditorScript(slug) {
   return `
 <script>
 (function(){
   var API = window.DECK_EDITOR_API || '';
+  var PAGE = ${JSON.stringify(slug)};
   var SEL = window.DECK_EDITOR_SELECTOR ||
     'h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.lede,.sec-sub,.stat,.callout,.card h4,.card p,.note,.pill,.q';
   var editing=false, lastSel=null, dirty={}, saveTimer=null;
@@ -123,7 +136,7 @@ function getEditorScript() {
 
   var panel=document.createElement('div'); panel.className='de-panel';
   panel.innerHTML='<strong>Send an element to Claude Code</strong>'
-    + '<div style="margin-top:6px"><small class="de-target">Click any element in the deck to select it.</small></div>'
+    + '<div style="margin-top:6px"><small class="de-target">Click any element on the page to select it.</small></div>'
     + '<div class="row"><button class="de-copy">Copy for Claude Code</button><button class="alt de-copysel">Copy data-eid</button></div>'
     + '<div style="margin-top:10px"><small>Paste it into the Claude Code chat and say what to change (resize, recolour, add an image, restructure). Claude edits the template; your text edits stay put.</small></div>';
   document.body.appendChild(panel);
@@ -141,7 +154,7 @@ function getEditorScript() {
   // Deterministic by DOM order so KV keys line up across reloads and template pushes.
   function assignEids(){ var i=0; editable().forEach(function(el){ if(!el.getAttribute('data-eid')) el.setAttribute('data-eid','e'+i); i++; }); }
 
-  function loadEdits(){ fetch(API+'/api/edits').then(function(r){ return r.json(); }).then(function(ed){
+  function loadEdits(){ fetch(API+'/api/edits?page='+PAGE).then(function(r){ return r.json(); }).then(function(ed){
     if(!ed) return; Object.keys(ed).forEach(function(k){ var el=document.querySelector('[data-eid="'+k+'"]'); if(!el) return;
       var v=ed[k]; var h=(typeof v==='string')?v:v.html; if(h!=null) el.innerHTML=h;
       if(v && typeof v==='object' && v.style!=null) el.style.cssText=v.style; }); }).catch(function(){}); }
@@ -150,7 +163,7 @@ function getEditorScript() {
   function queueSave(el){ var id=el.getAttribute('data-eid'); if(!id) return; dirty[id]=entry(el);
     if(saveTimer) clearTimeout(saveTimer); saveTimer=setTimeout(flush,1200); }
   function flush(){ var keys=Object.keys(dirty); if(!keys.length) return; var patch=dirty; dirty={}; stat.textContent='saving…';
-    fetch(API+'/api/edits',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
+    fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
       .then(function(r){ return r.json(); }).then(function(){ stat.textContent='✓ saved'; setTimeout(function(){ stat.textContent=''; },1500); })
       .catch(function(){ stat.textContent='save failed'; }); }
 
@@ -172,7 +185,7 @@ function getEditorScript() {
 
   panel.querySelector('.de-copy').addEventListener('click',function(){ if(!lastSel){ toast('Click an element first'); return; }
     var eid=lastSel.getAttribute('data-eid');
-    var msg='Please edit this element in the YuMOVE deck template (data-eid="'+eid+'"):\\n\\n\`\`\`html\\n'+lastSel.outerHTML+'\\n\`\`\`\\n\\nChange: ';
+    var msg='Please edit this element in the FeedSpark "'+PAGE+'" page template (data-eid="'+eid+'"):\\n\\n\`\`\`html\\n'+lastSel.outerHTML+'\\n\`\`\`\\n\\nChange: ';
     copy(msg,'Copied — paste into Claude Code and finish the sentence'); });
   panel.querySelector('.de-copysel').addEventListener('click',function(){ if(!lastSel){ toast('Click an element first'); return; }
     copy('data-eid="'+lastSel.getAttribute('data-eid')+'"','Copied data-eid'); });
