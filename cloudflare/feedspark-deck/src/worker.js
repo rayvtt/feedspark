@@ -28,6 +28,7 @@ import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
+import ROADMAP from "../../../docs/FeedSpark_Roadmap.html";
 import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html";
 
 // path -> { html, slug }. slug namespaces each page's KV edit layer (KV key: edits:<slug>),
@@ -37,6 +38,7 @@ const PAGES = {
   '/index.html':  { html: LANDING,     slug: 'home' },
   '/templates':   { html: TEMPLATES,   slug: 'templates' },
   '/library':     { html: TASKLIB,     slug: 'library' },
+  '/roadmap':     { html: ROADMAP,     slug: 'roadmap' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
 };
 

@@ -1,0 +1,190 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FeedSpark · Dashboard Roadmap</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
+  :root{--orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;--ink:#333;--ink-2:#4a4a4a;
+    --muted:#8a94a0;--line:#E6E6E6;--paper:#fff;--wash:#F7F7F5;--navy:#1A365D;--good:#15803D;--risk:#C0392B;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);--radius:14px}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Lato,system-ui,sans-serif;color:var(--ink);background:var(--wash);line-height:1.5}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+  a{color:var(--orange-deep)}
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1080px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:18px}
+  .brand{font-weight:900;font-size:18px}.brand span{color:var(--orange-deep)}
+  .tb-tag{font-size:12px;font-weight:800;color:var(--muted);border-left:1px solid var(--line);padding-left:16px}
+  .tb-nav{margin-left:auto;display:flex;gap:16px;flex-wrap:wrap}
+  .tb-nav a{font-size:13px;font-weight:700;color:var(--ink-2);text-decoration:none}
+  .tb-nav a:hover{color:var(--orange-deep)}
+  .hero{padding:44px 0 24px;background:linear-gradient(180deg,#fff,var(--wash));border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--orange-deep)}
+  h1{font-size:34px;font-weight:900;margin:8px 0 10px;letter-spacing:-.01em}
+  .hero p{color:var(--ink-2);font-size:15px;max-width:820px;margin:0}
+  .bar{margin:22px 0 2px;height:10px;border-radius:100px;background:#EEE;overflow:hidden}
+  .bar>span{display:block;height:100%;background:linear-gradient(90deg,var(--orange),var(--orange-deep));width:0;transition:width .3s}
+  .barlbl{font-size:12px;font-weight:800;color:var(--muted);margin-top:7px}
+  .toolbar{position:sticky;top:53px;z-index:40;background:var(--wash);padding:16px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+  .btn{border:none;border-radius:100px;padding:11px 18px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit}
+  .btn-primary{background:var(--orange-deep);color:#fff}.btn-primary:hover{background:var(--orange)}
+  .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink-2)}.btn-ghost:hover{border-color:var(--orange)}
+  .tb-count{font-weight:800;font-size:13px;color:var(--ink-2);margin-right:auto}
+  .grp{padding:30px 0 4px}
+  .grp-h{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+  .grp-h .gk{font-size:12px;font-weight:900;color:#fff;background:var(--orange-deep);border-radius:7px;padding:3px 9px}
+  .grp-h h2{font-size:20px;font-weight:900;margin:0}
+  .grp-sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+  .cards{display:grid;gap:12px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;display:grid;grid-template-columns:auto 1fr;gap:14px;cursor:pointer;transition:border-color .12s}
+  .card:hover{border-color:var(--orange)}
+  .card.on{border-color:var(--good);background:#FCFEFC}
+  .cb{width:22px;height:22px;border:2px solid var(--line);border-radius:7px;margin-top:2px;flex:none;display:flex;align-items:center;justify-content:center;transition:.12s}
+  .card.on .cb{background:var(--good);border-color:var(--good)}
+  .cb svg{width:13px;height:13px;stroke:#fff;stroke-width:3;fill:none;opacity:0}
+  .card.on .cb svg{opacity:1}
+  .c-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .c-h h3{font-size:15.5px;font-weight:900;margin:0}
+  .top10{font-size:9.5px;font-weight:900;letter-spacing:.05em;color:#fff;background:var(--orange);border-radius:100px;padding:2px 8px}
+  .c-d{color:var(--ink-2);font-size:13.5px;margin:7px 0 10px}
+  .chiprow{display:flex;gap:6px;flex-wrap:wrap}
+  .mchip{font-size:10.5px;font-weight:800;border-radius:6px;padding:3px 8px;border:1px solid var(--line);background:var(--wash);color:var(--ink-2)}
+  .mchip.imp-high{background:#FDEEE9;color:var(--risk);border-color:#F3C9BC}
+  .mchip.imp-med{background:#FCF1E3;color:var(--orange-ink);border-color:#F3D9B8}
+  .mchip.eff{background:#EEF2F7;color:var(--navy);border-color:#CFDBEA}
+  .mchip.ch{background:#F4F4F2;color:var(--muted)}
+  .footmark{padding:34px 0;color:var(--muted);font-size:12px;font-weight:700;border-top:1px solid var(--line);margin-top:30px}
+  .modal{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:22px}
+  .modal[hidden]{display:none}
+  .modal-bg{position:absolute;inset:0;background:rgba(16,24,40,.5)}
+  .modal-card{position:relative;background:#fff;border-radius:16px;max-width:760px;width:100%;max-height:86vh;overflow:auto;padding:24px;box-shadow:0 24px 60px rgba(16,24,40,.3)}
+  .modal-card h2{margin:0 0 6px}.modal-card p{color:var(--muted);font-size:13px;margin:0 0 14px}
+  textarea{width:100%;min-height:280px;border:1px solid var(--line);border-radius:12px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.55;color:var(--ink);resize:vertical}
+  .modal-x{position:absolute;top:14px;right:16px;border:none;background:none;font-size:24px;color:var(--muted);cursor:pointer}
+  .mrow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+  @media(max-width:640px){h1{font-size:27px}.card{grid-template-columns:auto 1fr}}
+</style>
+
+<div class="topbar"><div class="topbar-in">
+  <div class="brand">Feed<span>Spark</span></div><div class="tb-tag">Dashboard Roadmap</div>
+  <nav class="tb-nav"><a href="/">← Command center</a><a href="/library">Task library</a><a href="/templates">Templates</a></nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Private &amp; Confidential · Build roadmap</div>
+  <h1>Make the command center world-class</h1>
+  <p>The moves that turn this from a live account view into a world-class feed operating system — expert across every
+  output channel (Google Shopping &amp; PMax, Meta, Pinterest, TikTok, affiliate, LIA) and the new agentic surfaces
+  (ChatGPT Shopping, Perplexity, Google AI Mode). <b>Tick what you want, hit “Generate action plan”, and send it back to me to build.</b>
+  The <span class="top10" style="vertical-align:1px">TOP 10</span> are the highest-leverage first.</p>
+  <div class="bar"><span id="bar"></span></div>
+  <div class="barlbl" id="barlbl">0 of 0 selected</div>
+</div></header>
+
+<div class="toolbar"><div class="wrap" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;width:100%">
+  <span class="tb-count" id="count">Select the improvements you want next</span>
+  <button class="btn btn-ghost" id="pick10">★ Select Top 10</button>
+  <button class="btn btn-ghost" id="clear">Clear</button>
+  <button class="btn btn-primary" id="gen">Generate action plan →</button>
+</div></div>
+
+<main class="wrap" id="groups"></main>
+
+<div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Dashboard Roadmap · your ticks become my build queue</div></div>
+
+<div class="modal" id="modal" hidden><div class="modal-bg"></div><div class="modal-card">
+  <button class="modal-x" id="mx">×</button>
+  <h2>Your action plan</h2>
+  <p>Copy this and send it back to me — I’ll execute it against the command center. Checks are saved on this device.</p>
+  <textarea id="out" readonly></textarea>
+  <div class="mrow"><button class="btn btn-primary" id="copy">Copy to clipboard</button><span id="copied" style="align-self:center;color:var(--good);font-weight:800;font-size:13px"></span></div>
+</div></div>
+
+<script>
+var ROADMAP=[
+ {g:"AI &amp; agentic commerce",gk:"A",sub:"Get every brand ready for how people will shop next — LLMs and AI answer engines.",items:[
+   {id:"ai-ready",t:"AI-Ready Feeds readiness score",top:1,imp:"high",eff:"M",ch:["ChatGPT","Perplexity","Google AI Mode"],d:"A per-brand readiness score for agentic commerce: conversational attributes (question_and_answer, item_group_title, variant_option, popularity_rank), structured data, and LLM-crawlable schema — the Tachyon differentiator, scored next to feed-optimisation."},
+   {id:"conv-attr",t:"Conversational-attribute tracker",top:0,imp:"med",eff:"S",ch:["Google","AI Mode"],d:"Track which of Google's 2026 conversational attributes each brand has submitted via supplemental data source, with a fill-in checklist per market."},
+   {id:"protocols",t:"Agentic-protocol coverage (UCP / MCP / ACP)",top:0,imp:"med",eff:"M",ch:["ChatGPT","Shopify","Google"],d:"Show each brand's exposure to UCP (Google), MCP (Anthropic/Shopify) and ACP (OpenAI) so we position FeedSpark ahead of the agentic-commerce shift."},
+ ]},
+ {g:"Feed technicality &amp; data quality",gk:"B",sub:"The health layer — catch problems before Google/Meta do.",items:[
+   {id:"golden",t:"Golden Record data-quality monitor",top:2,imp:"high",eff:"M",ch:["Google","Meta","All"],d:"Live attribute-completeness meter per brand per channel (GTIN, MPN, material, colour, size, GPC, highlights) against the 99.9% target, surfacing the exact missing attributes."},
+   {id:"health",t:"Live feed-health &amp; disapproval alerts",top:4,imp:"high",eff:"L",ch:["GMC","Meta"],d:"Pull account-level disapprovals, policy issues and feed errors into a per-brand health strip with severity + trend. Needs GMC / Meta API access — an integration step."},
+   {id:"diag",t:"Diagnostics timeline",top:0,imp:"med",eff:"M",ch:["Google","Meta"],d:"A per-brand timeline of feed events (scrapes, refreshes, rule changes, disapproval spikes) so a new AM can see what changed and when."},
+ ]},
+ {g:"Feed optimisation depth",gk:"C",sub:"Turn the task history into a compounding optimisation engine.",items:[
+   {id:"tachyon",t:"Tachyon AI copilot in-dashboard",top:6,imp:"high",eff:"L",ch:["All"],d:"A Claude-powered assistant inside the FCC: “what should I do for Reiss this week?”, draft a brief, summarise a plan, or generate MASK titles / keyword sets from the feed. Builds on the existing /api/claude."},
+   {id:"uplift",t:"Test → uplift → BAU loop",top:5,imp:"high",eff:"M",ch:["All"],d:"Close the loop on every test: expected uplift, actual result (%), and roll winners into BAU. A quantified “tests that won” library (benefit copy +24.7%, Multivitamins +126%) — proof for QBRs."},
+   {id:"seasonal",t:"Seasonal keyword &amp; event engine",top:0,imp:"med",eff:"M",ch:["Google","Meta"],d:"A calendar-driven keyword/overlay engine (BF, XMAS, gifting, Ramadan, back-to-school) that pre-stages the right batches per brand ahead of each event."},
+ ]},
+ {g:"Cross-channel expansion",gk:"D",sub:"See and sell every channel — the upsell surface.",items:[
+   {id:"channel-matrix",t:"Cross-channel coverage matrix",top:3,imp:"high",eff:"S",ch:["Google","Meta","Pinterest","TikTok","Affiliate","LIA"],d:"A brand × channel grid (Shopping, PMax, Meta, Pinterest, TikTok, Snapchat, Partnerize/AWIN, LIA, Bing) showing live / optimised / missing — the expansion map and a clear upsell surface."},
+   {id:"social-dpa",t:"Social &amp; DPA creative tracker",top:0,imp:"med",eff:"M",ch:["Meta","TikTok","Pinterest"],d:"Track DPA overlays, image cyclers and creative tests per social channel, with which brand sets are live vs pending."},
+   {id:"affiliate",t:"Affiliate &amp; LIA readiness",top:0,imp:"med",eff:"S",ch:["Partnerize","AWIN","LIA"],d:"Per-brand affiliate feed status (Partnerize/AWIN) and Local Inventory Ads / Click-&-Collect readiness, with the gaps to open."},
+ ]},
+ {g:"Automation &amp; operations",gk:"E",sub:"Make the workload run itself.",items:[
+   {id:"live-sync",t:"Live sync from the plans",top:0,imp:"high",eff:"L",ch:["Ops"],d:"Worker reads each plan's Project Plan tab on demand (Google Sheets API → KV) so edits in your sheets refresh the dashboard without a rebuild. Needs a Google service-account credential."},
+   {id:"brief-pipe",t:"Brief → assign → remind → status pipeline",top:7,imp:"high",eff:"L",ch:["Ops"],d:"New plan row → auto-draft brief to ASPL → assign to a London AM → reminders → status write-back to the FCC and the sheet. The hands-off §04 workflow."},
+   {id:"hours",t:"Hours &amp; commercial intelligence",top:8,imp:"high",eff:"M",ch:["Commercial"],d:"Tie tasks to hours &amp; retainer: burn-down per client (used vs block), profitability flags, and auto-generated client hour reports — so hours report themselves."},
+   {id:"alerts",t:"Proactive alerts &amp; notifications",top:0,imp:"med",eff:"M",ch:["Ops"],d:"Email/Slack when a score drops, disapprovals spike, a test is ready to read, or a retainer is over-burning."},
+ ]},
+ {g:"Intelligence &amp; dashboard craft",gk:"F",sub:"From reporting to foresight.",items:[
+   {id:"competitor",t:"Competitor &amp; price-benchmark intelligence",top:9,imp:"high",eff:"L",ch:["Google","Market"],d:"Per-brand competitor share-of-voice on Shopping, GMC price-competitiveness benchmarks and category impression trends — so optimisation targets where the market actually is."},
+   {id:"priority",t:"Portfolio priority / forecast engine",top:10,imp:"high",eff:"L",ch:["All"],d:"Rank next-best-actions across the whole book by expected impact (feed gaps × test history) — the dashboard tells you where the next hour earns the most ROAS. A portfolio spend-optimiser."},
+   {id:"report",t:"One-click client-ready reports",top:0,imp:"med",eff:"M",ch:["Reporting"],d:"Export a branded PDF per brand straight from the dossier — score, wins, tests, next steps — for QBRs and retention."},
+   {id:"leadership",t:"Leadership &amp; mobile views",top:0,imp:"med",eff:"S",ch:["Exec"],d:"A roll-up view (book health, at-risk accounts, revenue-at-risk) and a mobile at-a-glance mode for the Monday catch-up on the move."},
+ ]},
+];
+
+var KEY="fcc-roadmap-checks";
+var checks={}; try{ checks=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){ checks={}; }
+var ALL=[]; ROADMAP.forEach(function(g){g.items.forEach(function(it){it._g=g.g;ALL.push(it);});});
+var groups=document.getElementById("groups");
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(checks)); }catch(e){} }
+function tick(){ var n=ALL.filter(function(i){return checks[i.id];}).length, tot=ALL.length;
+  document.getElementById("bar").style.width=Math.round(n/tot*100)+"%";
+  document.getElementById("barlbl").textContent=n+" of "+tot+" selected";
+  document.getElementById("count").textContent=n?(n+" improvement"+(n>1?"s":"")+" queued"):"Select the improvements you want next"; }
+function render(){
+  groups.innerHTML=ROADMAP.map(function(g){
+    return '<section class="grp"><div class="grp-h"><span class="gk">'+g.gk+'</span><h2>'+g.g+'</h2></div>'
+      +'<p class="grp-sub">'+g.sub+'</p><div class="cards">'
+      +g.items.map(function(it){ var on=checks[it.id]?' on':'';
+        var chips='<span class="mchip imp-'+it.imp+'">'+(it.imp==='high'?'High impact':'Med impact')+'</span>'
+          +'<span class="mchip eff">'+({S:'Quick',M:'Medium',L:'Larger build'}[it.eff])+'</span>'
+          +it.ch.map(function(c){return '<span class="mchip ch">'+c+'</span>';}).join('');
+        return '<div class="card'+on+'" data-id="'+it.id+'"><div class="cb"><svg viewBox="0 0 14 14"><path d="M2 7l3.5 3.5L12 3"/></svg></div>'
+          +'<div><div class="c-h"><h3>'+it.t+'</h3>'+(it.top?'<span class="top10">TOP 10 · #'+it.top+'</span>':'')+'</div>'
+          +'<div class="c-d">'+it.d+'</div><div class="chiprow">'+chips+'</div></div></div>'; }).join('')
+      +'</div></section>'; }).join('');
+  Array.prototype.forEach.call(groups.querySelectorAll('.card'),function(card){
+    card.onclick=function(){ var id=card.getAttribute('data-id'); checks[id]=!checks[id]; if(!checks[id])delete checks[id];
+      card.classList.toggle('on',!!checks[id]); save(); tick(); };
+  });
+  tick();
+}
+function planText(){
+  var picked=ALL.filter(function(i){return checks[i.id];});
+  if(!picked.length) return "No items selected yet — tick the improvements you want, then generate again.";
+  var d=new Date(), stamp=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);
+  var out="# FeedSpark Command Center — Action plan ("+stamp+")\n\nPlease build the following into the command center, in roughly this order:\n";
+  ROADMAP.forEach(function(g){
+    var gp=g.items.filter(function(i){return checks[i.id];});
+    if(!gp.length) return;
+    out+="\n## "+g.g.replace(/&amp;/g,"&")+"\n";
+    gp.forEach(function(it){ out+="- [ ] "+it.t+(it.top?" (Top 10 #"+it.top+")":"")+" — "+it.d.replace(/&amp;/g,"&")+" [impact: "+it.imp+", effort: "+it.eff+", channels: "+it.ch.join("/")+"]\n"; });
+  });
+  out+="\nTotal: "+picked.length+" item"+(picked.length>1?"s":"")+".";
+  return out;
+}
+var modal=document.getElementById("modal");
+document.getElementById("gen").onclick=function(){ document.getElementById("out").value=planText(); modal.hidden=false; };
+document.getElementById("mx").onclick=function(){ modal.hidden=true; };
+modal.querySelector(".modal-bg").onclick=function(){ modal.hidden=true; };
+document.getElementById("copy").onclick=function(){ var t=document.getElementById("out"); t.select();
+  try{ navigator.clipboard.writeText(t.value); }catch(e){ document.execCommand&&document.execCommand("copy"); }
+  document.getElementById("copied").textContent="Copied ✓"; setTimeout(function(){document.getElementById("copied").textContent="";},2000); };
+document.getElementById("clear").onclick=function(){ if(confirm("Clear all selections?")){ checks={}; save(); render(); } };
+document.getElementById("pick10").onclick=function(){ ALL.forEach(function(i){ if(i.top)checks[i.id]=true; }); save(); render(); };
+document.addEventListener("keydown",function(e){ if(e.key==="Escape")modal.hidden=true; });
+render();
+</script>
