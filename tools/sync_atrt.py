@@ -150,6 +150,15 @@ def test_type(t):
 def is_test(t):
     return bool(re.search(r"test|a/b|\bab\b|overlay|title|mask|keyword|\bkw\b|\blia\b|intent|click & collect", t, re.I))
 
+def task_cat(t):
+    # maps a task to one of the Task Library category buckets -> drives the dossier icon
+    t = t.lower()
+    if re.search(r"overlay|roundel|\bdpa\b|cycler|badge|creative|social|\bimage\b|visual|\blia\b|click ?& ?collect|\bppc\b|snapchat|tiktok|partnerize", t): return "creative"
+    if re.search(r"\btest\b|a/b|\bab\b|split|experiment|roadmap", t): return "test"
+    if re.search(r"title|mask|\baot\b|keyword|\bkw\b|search|intent|\bai\b|localis|translation|enrich", t): return "opt"
+    if re.search(r"review|\bqbr\b|proposal|quote|audit|onboard|\bintro\b|pitch|strateg", t): return "account"
+    return "tech"
+
 def parse(src):
     rows = []
     for ln in open(src, encoding="utf-8"):
@@ -271,6 +280,12 @@ def render_plans(plans):
         f'<p class="note" style="margin-top:14px"><a href="{TRACKER}#gid=100171143" target="_blank" rel="noopener">Open the ATRT Tracker</a> — '
         'tab 1 = task log, tab 2 = accounts &amp; project-plan links.</p></div>')
 
+def score_source(tasks, plan_tasks):
+    # score from project-plan tasks (tab 2, source of truth); for brands not in a project plan
+    # (e.g. YuMOVE — separate sheet), fall back to their ATRT-log tasks so they still get a score.
+    pc = {pt["client"] for pt in plan_tasks}
+    return list(plan_tasks) + [{"client": t["client"], "task": t["task"]} for t in tasks if t["client"] not in pc]
+
 def render_global(tasks, plan_tasks):
     tk, td = today_key()
     active = [t for t in tasks if t["status"] in ACTIVE]
@@ -279,18 +294,22 @@ def render_global(tasks, plan_tasks):
     brands = {}
     for t in active:
         item = {"t": t["task"][:88], "ae": t["ae"], "d": t["due"], "s": t["status"],
-                "od": 1 if is_overdue(t, tk) else 0, "x": 1 if t["is_test"] else 0}
+                "od": 1 if is_overdue(t, tk) else 0, "x": 1 if t["is_test"] else 0,
+                "c": task_cat(t["task"])}
         if t.get("thread"): item["u"] = t["thread"]
         brands.setdefault(t["client"], []).append(item)
-    scores, bench = compute_scores(plan_tasks)   # source of truth = project-plan tasks (tab 2)
+    scores, bench = compute_scores(score_source(tasks, plan_tasks))
+    ptasks = {}                                  # full historic project-plan tasks per brand
+    for pt in plan_tasks:
+        ptasks.setdefault(pt["client"], []).append(pt["task"])
     payload = {"active": dict(counts), "overdue": dict(od), "brands": brands,
-               "scores": scores, "benchmarks": bench,
+               "scores": scores, "benchmarks": bench, "plantasks": ptasks,
                "synced": f'{td.day:02d} {MONTHS[td.month]} {td.year}'}
     return f'<script>window.ATRT={json.dumps(payload, ensure_ascii=False)};</script>'
 
-def render_bench(plan_tasks):
+def render_bench(tasks, plan_tasks):
     from collections import Counter
-    scores, bench = compute_scores(plan_tasks)
+    scores, bench = compute_scores(score_source(tasks, plan_tasks))
     items = sorted(bench.items(), key=lambda kv: -kv[1])
     bars = "".join(
         f'<div class="bmk-row"><span class="bmk-cat">{esc(c)}</span>'
@@ -357,7 +376,7 @@ def main(argv):
     doc = open(FCC, encoding="utf-8").read()
     for name, frag in [("KPI", render_kpi(tasks, plans)), ("LOG", render_log(tasks)),
                        ("TESTS", render_tests(tasks)),
-                       ("PLANS", render_plans(plans)), ("BENCH", render_bench(plan_tasks)),
+                       ("PLANS", render_plans(plans)), ("BENCH", render_bench(tasks, plan_tasks)),
                        ("GLOBAL", render_global(tasks, plan_tasks))]:
         doc = splice(doc, name, frag)
     open(FCC, "w", encoding="utf-8").write(doc)
