@@ -159,6 +159,7 @@
   .dz-x{font:inherit;font-size:11.5px;font-weight:800;padding:5px 10px;border-radius:8px;border:1px solid #F3C7C7;background:#FBEBEB;color:var(--risk);cursor:pointer}
   .dz-editing [data-ed]{outline:1px dashed rgba(245,166,35,.55);outline-offset:3px;border-radius:4px;cursor:text}
   .dz-editing [data-ed]:focus{outline:2px solid var(--orange)}
+  [contenteditable][data-ph]:empty::before{content:attr(data-ph);color:var(--muted);font-style:italic}
   .dz-id{display:flex;align-items:center;gap:13px}
   .dz-logo{border-radius:9px;border:1px solid var(--line);background:#fff;object-fit:contain;padding:5px;flex:none}
   .dz-hist{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
@@ -595,13 +596,14 @@
   }
   function render(name){
     cur=name; var b=B[name]||{}, tasks=(A.brands&&A.brands[name])||[], tst=tasks.filter(function(t){return t.x;}), od=A.overdue[name]||0;
-    var ed=editMode?' contenteditable="true" data-ed="top" spellcheck="false"':'';
+    var edA=function(f){return editMode?' contenteditable="true" data-ed="'+f+'" spellcheck="false"':'';};
+    var ed=edA('top');
     var delBtn=editMode?'<button class="dz-x" title="Delete client">Delete</button>':'';
     var planCtl=editMode
       ?'<button class="lnk dz-linkplan">'+(b.plan?'Change plan link':'+ Link project plan')+'</button>'
       :(b.plan?'<a class="lnk primary" href="'+esc(b.plan)+'" target="_blank" rel="noopener">Project plan ↗</a>':'<span class="lnk disabled">'+esc(b.pn||'Plan in tracker')+'</span>');
     detail.innerHTML=
-      '<div class="dz-head"><div class="dz-id">'+logo(b.dom,44)+'<div><h3>'+esc(name)+'</h3><div class="cat">'+esc(b.cat||'')+(b.mk?' · '+esc(b.mk):'')+'</div></div></div>'
+      '<div class="dz-head"><div class="dz-id">'+logo(b.dom,44)+'<div><h3>'+esc(name)+'</h3><div class="cat"><span'+edA('cat')+'>'+esc(b.cat||'')+'</span>'+((b.mk||editMode)?' · <span'+edA('mk')+'>'+esc(b.mk||'')+'</span>':'')+'</div></div></div>'
       +'<div class="dz-head-r">'+(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+delBtn+'</div></div>'
       +scorePanel(name)
       +'<div class="dz-top"><h4>Current optimisation</h4><p'+ed+'>'+esc(b.top||'—')+'</p></div>'
@@ -612,7 +614,7 @@
       +historyBlock(name)
       +'<div class="dz-foot">'+planCtl
         +(b.deck?'<a class="lnk" href="'+esc(b.deck)+'">Strategy deck →</a>':'')
-        +(b.con?'<span class="dz-con">'+esc(b.con)+'</span>':'')+'</div>';
+        +(editMode?'<span class="dz-con"'+edA('con')+' data-ph="contacts…">'+esc(b.con||'')+'</span>':(b.con?'<span class="dz-con">'+esc(b.con)+'</span>':''))+'</div>';
     if(editMode){
       var del=detail.querySelector('.dz-x');
       if(del) del.onclick=function(){ if(confirm('Delete "'+name+'" from the dossier? It will be hidden from the command center (activity stays in the tracker).')){
@@ -620,8 +622,8 @@
         saveStore(); mergeStore(); buildList(); var ks=Object.keys(B); if(ks.length)render(ks[0]); } };
       var lp=detail.querySelector('.dz-linkplan');
       if(lp) lp.onclick=function(){ var u=prompt('Paste the project-plan URL (Google Sheet, etc.):',b.plan||''); if(u!==null){ setField(name,'plan',u.trim()); render(name); } };
-      var top=detail.querySelector('[data-ed="top"]');
-      if(top) top.addEventListener('blur',function(){ setField(name,'top',top.innerText.trim()); });
+      Array.prototype.forEach.call(detail.querySelectorAll('[data-ed]'),function(el){
+        el.addEventListener('blur',function(){ setField(name, el.getAttribute('data-ed'), el.innerText.trim()); }); });
     }
     Array.prototype.forEach.call(list.children,function(x){x.classList.toggle('on',x.getAttribute('data-b')===name);});
   }
@@ -640,8 +642,13 @@
   var host=document.querySelector('#accounts .sec-head');
   if(host){
     var ctl=document.createElement('div'); ctl.className='dz-controls';
-    ctl.innerHTML='<button class="dz-edit">✎ Edit dossier</button><button class="dz-add" style="display:none">+ Add client</button>';
+    ctl.innerHTML='<button class="dz-refresh" title="Re-fetch the latest saved edits">↻ Refresh</button>'
+      +'<button class="dz-sync" title="Reload to pull the latest project-plan data (updates on deploy)">⟳ Sync</button>'
+      +'<button class="dz-edit">✎ Edit dossier</button><button class="dz-add" style="display:none">+ Add client</button>';
     host.insertBefore(ctl, host.querySelector('p'));
+    ctl.querySelector('.dz-refresh').onclick=function(){ var b=this; b.textContent='↻ …';
+      fetch(API+'/api/clients').then(function(r){return r.json();}).then(function(s){ store=s||{}; mergeStore(); buildList(); if(cur)render(cur); b.textContent='↻ Refresh'; }).catch(function(){ b.textContent='↻ Refresh'; }); };
+    ctl.querySelector('.dz-sync').onclick=function(){ location.reload(); };
     ctl.querySelector('.dz-edit').onclick=function(){ editMode=!editMode; this.classList.toggle('on',editMode);
       this.textContent=editMode?'✓ Done editing':'✎ Edit dossier'; ctl.querySelector('.dz-add').style.display=editMode?'':'none';
       document.getElementById('accounts').classList.toggle('dz-editing',editMode); if(cur)render(cur); };
