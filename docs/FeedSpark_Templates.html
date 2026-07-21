@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FeedSpark · Templates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --orange:#F5A623; --orange-deep:#ED6F0B; --orange-ink:#B1550A;
+    --ink:#333333; --ink-2:#5b6470; --muted:#8a94a0;
+    --line:#E6E6E6; --paper:#ffffff; --wash:#F7F7F5; --wash-2:#F1F1EE;
+    --navy:#1A365D; --good:#15803D;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06); --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:Lato,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--paper);line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--orange-ink);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:920px;margin:0 auto;padding:0 28px}
+
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:920px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:18px}
+  .brand{font-weight:900;font-size:19px;letter-spacing:-.01em}
+  .brand span{color:var(--orange-deep)}
+  .tb-tag{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border-left:1px solid var(--line);padding-left:14px}
+  .tb-back{margin-left:auto;font-size:13.5px;font-weight:700;color:var(--ink-2)}
+
+  .hero{padding:44px 0 26px}
+  .eyebrow{font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--orange-deep)}
+  .hero h1{font-size:34px;line-height:1.12;margin:12px 0 0;font-weight:900;letter-spacing:-.02em}
+  .hero p{font-size:16px;color:var(--ink-2);max-width:64ch;margin:14px 0 0}
+
+  /* ---- tabs ---- */
+  .tabs{position:sticky;top:57px;z-index:40;display:flex;flex-wrap:wrap;gap:6px;padding:12px 0;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .tab{font:inherit;font-size:13.5px;font-weight:800;padding:9px 16px;border-radius:100px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer;transition:.12s;white-space:nowrap}
+  .tab:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .tab.on{background:var(--navy);border-color:var(--navy);color:#fff}
+
+  section.tpl{padding:34px 0 60px}
+  .tpanel{display:none}
+  .tpanel.on{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .tcard{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 30px}
+  .tcard .meta{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:8px}
+  .tcard h2{margin:0;font-size:22px;font-weight:900;letter-spacing:-.01em}
+  .tcard .use{font-size:13px;color:var(--muted);font-weight:700;margin-top:5px;max-width:56ch}
+  .btn{font:inherit;font-size:13px;font-weight:800;padding:9px 16px;border-radius:9px;border:1px solid var(--orange);background:var(--orange);color:#fff;cursor:pointer;white-space:nowrap}
+  .btn:hover{background:var(--orange-deep);border-color:var(--orange-deep)}
+  .btn.ghost{background:#fff;color:var(--ink-2);border-color:var(--line)}
+  .btn.ghost:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .btnrow{display:flex;gap:8px;flex-wrap:wrap}
+
+  .field-lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--orange-deep);font-weight:900;margin:20px 0 6px}
+  .subj{font-size:16px;font-weight:800;color:var(--ink);background:var(--wash);border:1px solid var(--line);border-radius:9px;padding:12px 14px}
+  .body{margin-top:4px}
+  .body p{margin:0 0 13px;font-size:15px;color:var(--ink-2)}
+  .body p:last-child{margin-bottom:0}
+  .ph{background:#FCF1E3;color:var(--orange-ink);border-radius:4px;padding:0 4px;font-weight:700;white-space:nowrap}
+  .tip{font-size:12.5px;color:var(--muted);margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+
+  .footmark{border-top:1px solid var(--line);color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:20px 0}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:9px;z-index:9999;opacity:0;transition:opacity .25s;font-size:14px;font-weight:700}
+  .toast.show{opacity:1}
+  @media(max-width:600px){.hero h1{font-size:27px}.tcard{padding:22px}.tabs{top:56px}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">Feed<span>Spark</span></div>
+    <div class="tb-tag">Templates</div>
+    <a class="tb-back" href="/">← Command center</a>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Client-ready · Private &amp; Confidential</div>
+    <h1>Message &amp; deliverable templates</h1>
+    <p>Reusable, on-brand text for every client touch — customise the placeholders, copy, send. Switch
+      tabs live during a call or an exchange. Every template is editable in place (⌘/Ctrl+Shift+E) and
+      your edits are saved.</p>
+  </div>
+</header>
+
+<div class="tabs-wrap"><div class="wrap"><div class="tabs" id="tabs">
+  <button class="tab on" data-tab="strategy">Strategy Review</button>
+  <button class="tab" data-tab="onboarding">Onboarding</button>
+  <button class="tab" data-tab="intro">Intro</button>
+  <button class="tab" data-tab="announce">Announcement</button>
+  <button class="tab" data-tab="method">ID Methodology</button>
+</div></div></div>
+
+<section class="tpl">
+  <div class="wrap">
+
+    <!-- STRATEGY REVIEW -->
+    <div class="tpanel on" data-tab="strategy">
+      <div class="tcard">
+        <div class="meta">
+          <div><h2>Strategy Review</h2>
+            <div class="use">Send alongside a quarterly Strategy Review deliverable — frames the deck and books the walkthrough.</div></div>
+          <div class="btnrow"><button class="btn copy">Copy</button></div>
+        </div>
+        <div class="field-lbl">Subject</div>
+        <p class="subj"><span class="ph">[Client]</span> × FeedSpark — <span class="ph">[Q2→Q3 2026]</span> Strategy Review</p>
+        <div class="field-lbl">Body</div>
+        <div class="body">
+          <p>Hi <span class="ph">[Contact]</span>,</p>
+          <p>Ahead of our session on <span class="ph">[date]</span>, here is the <span class="ph">[quarter]</span> Strategy Review for <span class="ph">[Client]</span>.</p>
+          <p>It covers three things: where the feed sits today (Golden Record completeness and AI-Readiness tier), the tests we've run this period and their results, and the roadmap for next quarter — prioritised by expected uplift against effort.</p>
+          <p>Headline this quarter: <span class="ph">[key result, e.g. benefit copy +24.7%]</span>. The deck is interactive — I'll walk you through it live and can pull any account detail on the call.</p>
+          <p>Best,<br><span class="ph">[Your name]</span></p>
+        </div>
+        <div class="tip">Tip: link the live deck rather than attaching a PDF — it stays current and you can present straight from it.</div>
+      </div>
+    </div>
+
+    <!-- ONBOARDING -->
+    <div class="tpanel" data-tab="onboarding">
+      <div class="tcard">
+        <div class="meta">
+          <div><h2>Onboarding</h2>
+            <div class="use">First substantive message to a newly-signed client — sets the plan, the milestones and the team.</div></div>
+          <div class="btnrow"><button class="btn copy">Copy</button></div>
+        </div>
+        <div class="field-lbl">Subject</div>
+        <p class="subj">Welcome to FeedSpark — <span class="ph">[Client]</span> onboarding</p>
+        <div class="field-lbl">Body</div>
+        <div class="body">
+          <p>Hi <span class="ph">[Contact]</span>,</p>
+          <p>Delighted to be working with <span class="ph">[Client]</span>. Here's how we start:</p>
+          <p><b>1. Baseline</b> — a full feed audit against a Golden Record, scoring attribute completeness so we know exactly where the gaps are.<br>
+             <b>2. Quick wins</b> — titles in MASK structure, data fields and custom labels, live within the first weeks.<br>
+             <b>3. Roadmap</b> — we agree the test plan and the hours across <span class="ph">[markets]</span>.</p>
+          <p>Your onboarding deck is attached — it lays out the <span class="ph">[46]</span>-hour plan and the team on your account. First milestone: <span class="ph">[milestone]</span> by <span class="ph">[date]</span>.</p>
+          <p>Looking forward to it,<br><span class="ph">[Your name]</span></p>
+        </div>
+        <div class="tip">Tip: name the AE and the India content team lead here — clients like knowing who does what from day one.</div>
+      </div>
+    </div>
+
+    <!-- INTRO -->
+    <div class="tpanel" data-tab="intro">
+      <div class="tcard">
+        <div class="meta">
+          <div><h2>Intro</h2>
+            <div class="use">Cold or warm introduction to a new contact — positions FeedSpark and asks for the first call.</div></div>
+          <div class="btnrow"><button class="btn copy">Copy</button></div>
+        </div>
+        <div class="field-lbl">Subject</div>
+        <p class="subj">Intro — FeedSpark × <span class="ph">[Client]</span></p>
+        <div class="field-lbl">Body</div>
+        <div class="body">
+          <p>Hi <span class="ph">[Contact]</span>,</p>
+          <p>I'm <span class="ph">[Your name]</span>, your account lead at FeedSpark — the feed-optimisation team within the Dentsu network.</p>
+          <p>We specialise in Google Shopping and agentic-commerce readiness: titles, structured data, conversational attributes and AI-Ready feeds, powered by our Tachyon AI and FeedHero tooling.</p>
+          <p>I'd value 30 minutes to understand <span class="ph">[Client]</span>'s priorities and share where we see the biggest opportunity in your feed. Are you free <span class="ph">[date / time]</span>?</p>
+          <p>Best,<br><span class="ph">[Your name]</span></p>
+        </div>
+        <div class="tip">Tip: swap the middle paragraph for one concrete, brand-specific observation if you've already looked at their feed — it lifts reply rates.</div>
+      </div>
+    </div>
+
+    <!-- ANNOUNCEMENT -->
+    <div class="tpanel" data-tab="announce">
+      <div class="tcard">
+        <div class="meta">
+          <div><h2>Announcement</h2>
+            <div class="use">Short proactive note when you ship a capability or spot an opportunity — keeps the account warm between reviews.</div></div>
+          <div class="btnrow"><button class="btn copy">Copy</button></div>
+        </div>
+        <div class="field-lbl">Subject</div>
+        <p class="subj">New from FeedSpark — <span class="ph">[capability]</span> for <span class="ph">[Client]</span></p>
+        <div class="field-lbl">Body</div>
+        <div class="body">
+          <p>Hi <span class="ph">[Contact]</span>,</p>
+          <p>Quick heads-up on something we've just rolled out: <span class="ph">[capability, e.g. conversational Q&amp;A attributes]</span> — <span class="ph">[one-line benefit]</span>.</p>
+          <p>What it means for <span class="ph">[Client]</span>: <span class="ph">[impact, e.g. the feed can now answer buyer questions directly in AI surfaces]</span>. Nothing needed on your side — we can <span class="ph">[action]</span> this week if you'd like to trial it.</p>
+          <p>Happy to walk through it on our next call.</p>
+          <p>Best,<br><span class="ph">[Your name]</span></p>
+        </div>
+        <div class="tip">Tip: keep it to four short paragraphs — announcements that read as FYIs (not asks) get opened and remembered.</div>
+      </div>
+    </div>
+
+    <!-- ID METHODOLOGY -->
+    <div class="tpanel" data-tab="method">
+      <div class="tcard">
+        <div class="meta">
+          <div><h2>ID Methodology</h2>
+            <div class="use">The "how we work" explainer — Identify → Deliver. Use in proposals, kick-offs and when a stakeholder asks what FeedSpark actually does.</div></div>
+          <div class="btnrow"><button class="btn copy">Copy</button></div>
+        </div>
+        <div class="field-lbl">Subject</div>
+        <p class="subj">How we work — the FeedSpark methodology</p>
+        <div class="field-lbl">Body</div>
+        <div class="body">
+          <p>Hi <span class="ph">[Contact]</span>,</p>
+          <p>A short note on how we approach <span class="ph">[Client]</span>'s feed — our <b>Identify → Deliver</b> method:</p>
+          <p><b>1. Identify</b> — audit the feed against a Golden Record (99.9% attribute-completeness target) and map intent: what your customers actually search for.<br>
+             <b>2. Structure</b> — titles in MASK format (Brand + Material + Fit + Colour + Use-case), structured data, and conversational attributes (Q&amp;A, variant option, related product).<br>
+             <b>3. Test</b> — controlled A/B on titles, overlays and keywords; every hypothesis returns a result, win or lose.<br>
+             <b>4. Scale</b> — winners roll out across markets, and AI-Ready feeds prepare you for ChatGPT Shopping, Perplexity and Google AI Mode.</p>
+          <p>We measure by uplift, not activity — the numbers report themselves back to you each review.</p>
+          <p>Best,<br><span class="ph">[Your name]</span></p>
+        </div>
+        <div class="tip">Tip: this doubles as the opening slide narrative for a new-business deck — same four steps, same order.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Templates</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var tabs = document.getElementById('tabs');
+  var panels = document.querySelectorAll('.tpanel');
+  function show(name){
+    Array.prototype.forEach.call(tabs.children, function(b){ b.classList.toggle('on', b.getAttribute('data-tab')===name); });
+    Array.prototype.forEach.call(panels, function(p){ p.classList.toggle('on', p.getAttribute('data-tab')===name); });
+    if(history.replaceState) history.replaceState(null,'','#'+name);
+  }
+  tabs.addEventListener('click', function(e){ var b=e.target.closest('.tab'); if(b) show(b.getAttribute('data-tab')); });
+  var start=(location.hash||'').replace('#',''); if(start && document.querySelector('.tab[data-tab="'+start+'"]')) show(start);
+
+  var toast=document.getElementById('toast');
+  function flash(m){ toast.textContent=m; toast.classList.add('show'); setTimeout(function(){toast.classList.remove('show');},1800); }
+  function copyText(t){ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(function(){flash('Copied — paste into your email');}); }
+    else { var a=document.createElement('textarea'); a.value=t; document.body.appendChild(a); a.select(); try{document.execCommand('copy');flash('Copied');}catch(e){} a.remove(); } }
+  document.addEventListener('click', function(e){
+    var btn=e.target.closest('.copy'); if(!btn) return;
+    var card=btn.closest('.tcard');
+    var subj=card.querySelector('.subj'), body=card.querySelector('.body');
+    var text=(subj?('Subject: '+subj.innerText.trim()+'\n\n'):'')+(body?body.innerText.trim():'');
+    copyText(text);
+  });
+})();
+</script>
+
+</body>
+</html>
