@@ -767,5 +767,54 @@
 <div class="panel"><h3>All accounts &amp; project plans</h3><div class="sub">12 accounts · plan links live on tab 2 of the tracker</div><div class="planlist"><div class="planrow"><span class="nm">Reiss<span style="color:var(--muted);font-weight:700"> · Apparel</span></span><span class="tag">Reiss - Project Plan - FS</span></div><div class="planrow"><span class="nm">Accessorize<span style="color:var(--muted);font-weight:700"> · Apparel</span></span><span class="tag">Monsoon-Accessorize - Project Plan - FH</span></div><div class="planrow"><span class="nm">All Saints<span style="color:var(--muted);font-weight:700"> · Apparel</span></span><span class="tag">ALLSAINTS - Project Plan / Onboarding - FH</span></div><div class="planrow"><span class="nm">Monsoon<span style="color:var(--muted);font-weight:700"> · Apparel</span></span><span class="tag">Monsoon-Accessorize - Project Plan - FH</span></div><div class="planrow"><span class="nm">Schuh<span style="color:var(--muted);font-weight:700"> · Footwear</span></span><span class="tag">Schuh - Project Plan/ Onboarding Plan - FH</span></div><div class="planrow"><span class="nm">Benefit<span style="color:var(--muted);font-weight:700"> · Cosmetics</span></span><span class="tag">Benefit Cosmetics -Onboarding Plan/  Project Plan.xlsx</span></div><div class="planrow"><span class="nm">Hobbycraft<span style="color:var(--muted);font-weight:700"> · Hobby</span></span><span class="tag">Hobbycraft - Project/ Onboarding Plan - FS</span></div><div class="planrow"><span class="nm">Superdry<span style="color:var(--muted);font-weight:700"> · Apparel</span></span><span class="tag">Superdry - Project Plan / Onboarding - FH</span></div><div class="planrow"><span class="nm">Estee Lauder<span style="color:var(--muted);font-weight:700"> · Cosmetics</span></span><span class="tag">Estee Lauder - Project/ Onboarding Plan - FH</span></div><div class="planrow"><span class="nm">Jomalone<span style="color:var(--muted);font-weight:700"> · Fragrance</span></span><span class="tag">Jo Malone - Project Plan - FeedSpark</span></div><div class="planrow"><span class="nm">Mac<span style="color:var(--muted);font-weight:700"> · Cosmetics</span></span><span class="tag">MAC Cosmetics [UK] Project Plan</span></div><div class="planrow"><span class="nm">Bobbi Brown<span style="color:var(--muted);font-weight:700"> · Cosmetics</span></span><span class="tag">Bobbi Brown - Onboarding/ Project Plan - FH</span></div></div><p class="note" style="margin-top:14px"><a href="https://docs.google.com/spreadsheets/d/1p_cPSRjmK16CDpLryoOBaOUjG3ZvnL-k4ORHhaHI5AE/edit#gid=100171143" target="_blank" rel="noopener">Open the ATRT Tracker</a> — tab 1 = task log, tab 2 = accounts &amp; project-plan links.</p></div>
 <!-- ATRT:PLANS:END --></div></div>
 <script>(function(){var m=document.getElementById("plans-modal"),t=document.getElementById("nav-plans");if(!m||!t)return;function op(e){if(e)e.preventDefault();m.hidden=false;}function cl(){m.hidden=true;}t.addEventListener("click",op);m.querySelector(".pm-x").addEventListener("click",cl);m.querySelector(".pm-bg").addEventListener("click",cl);document.addEventListener("keydown",function(e){if(e.key==="Escape")cl();});})();</script>
+<style>
+.mc-launch{position:fixed;right:18px;bottom:18px;z-index:150;background:var(--orange-deep);color:#fff;border:none;border-radius:100px;padding:12px 18px;font-weight:800;font-size:13px;box-shadow:0 8px 24px rgba(237,111,11,.35);cursor:pointer;display:flex;align-items:center;gap:8px}
+.mc-launch:hover{background:var(--orange)} .mc-launch .dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:mcp 1.8s infinite}
+@keyframes mcp{0%,100%{opacity:1}50%{opacity:.35}}
+.mc-panel{position:fixed;top:0;right:0;height:100vh;width:400px;max-width:92vw;background:#fff;border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(16,24,40,.15);z-index:200;transform:translateX(102%);transition:transform .28s ease;display:flex;flex-direction:column}
+.mc-panel.open{transform:none}
+.mc-head{padding:20px 22px 14px;border-bottom:1px solid var(--line);position:relative}
+.mc-head h3{margin:0;font-size:17px} .mc-head .wk{font-size:12px;color:var(--muted);font-weight:700;margin-top:3px}
+.mc-x{position:absolute;top:16px;right:16px;border:none;background:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer}
+.mc-body{overflow-y:auto;padding:12px 18px 28px;flex:1}
+.mc-kpi{display:flex;gap:8px;margin:2px 0 6px} .mc-kpi .chip{flex:1;text-align:center}
+.mc-brand{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.mc-brand-h{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:14px}
+.mc-brand-h .n{font-size:11px;color:var(--muted);font-weight:800}
+.mc-t{font-size:12.5px;color:var(--ink-2);padding:6px 0 0;display:flex;gap:8px;align-items:flex-start}
+.mc-t .st{font-size:9px;font-weight:900;padding:2px 6px;border-radius:5px;flex:none;margin-top:1px}
+</style>
+<button class="mc-launch" id="mc-launch" hidden><span class="dot"></span> Monday catch-up</button>
+<aside class="mc-panel" id="mc-panel" aria-hidden="true"><div class="mc-head"><h3>Monday catch-up</h3><div class="wk" id="mc-wk"></div><button class="mc-x" id="mc-x" aria-label="Close">×</button></div><div class="mc-body" id="mc-body"></div></aside>
+<script>(function(){
+  var PT=window.PLANTASKS||{}, A=window.ATRT||{overdue:{}};
+  var L=document.getElementById('mc-launch'),P=document.getElementById('mc-panel'),B=document.getElementById('mc-body'),X=document.getElementById('mc-x'),WK=document.getElementById('mc-wk');
+  if(!L||!P||!Object.keys(PT).length) return;
+  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  var now=new Date();
+  function lon(o){return new Intl.DateTimeFormat('en-GB',Object.assign({timeZone:'Europe/London'},o)).format(now);}
+  WK.textContent='Week of '+lon({weekday:'short',day:'numeric',month:'short'})+' · London 9:00';
+  var totO=0,totP=0,parts=[];
+  Object.keys(PT).map(function(b){
+    var o=(PT[b].latest||[]).filter(function(t){return t.b==='open'||t.b==='progress';});
+    return {b:b,o:o,od:A.overdue[b]||0}; })
+  .filter(function(x){return x.o.length||x.od;})
+  .sort(function(a,b){return b.o.length-a.o.length;})
+  .forEach(function(x){
+    x.o.forEach(function(t){ t.b==='progress'?totP++:totO++; });
+    var items=x.o.slice(0,5).map(function(t){var wip=t.b==='progress';
+      return '<div class="mc-t"><span class="st '+(wip?'tag-progress':'tag-open')+'">'+(wip?'WIP':'OPEN')+'</span><span>'+esc(t.t)+'</span></div>';}).join('');
+    var more=x.o.length>5?'<div class="mc-t" style="color:var(--muted);padding-left:2px">+ '+(x.o.length-5)+' more</div>':'';
+    parts.push('<div class="mc-brand"><div class="mc-brand-h"><span>'+esc(x.b)+'</span><span class="n">'+x.o.length+' open'+(x.od?' · '+x.od+' overdue':'')+'</span></div>'+items+more+'</div>');
+  });
+  B.innerHTML='<p class="sub" style="margin:0 0 10px">This week’s live work across every project plan — the latest sections still open.</p>'
+    +'<div class="mc-kpi"><span class="chip"><b>'+totO+'</b> open</span><span class="chip"><b>'+totP+'</b> in progress</span><span class="chip"><b>'+parts.length+'</b> plans</span></div>'
+    +(parts.join('')||'<p class="dz-empty">Nothing open in the latest sections — all caught up.</p>');
+  function op(){P.classList.add('open');P.setAttribute('aria-hidden','false');} function cl(){P.classList.remove('open');P.setAttribute('aria-hidden','true');}
+  L.hidden=false; L.onclick=op; X.onclick=cl;
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')cl();});
+  if(lon({weekday:'short'})==='Mon'){ var key='mc-'+lon({year:'numeric',month:'2-digit',day:'2-digit'});
+    try{ if(localStorage.getItem(key)!=='1'){ setTimeout(op,800); localStorage.setItem(key,'1'); } }catch(e){ setTimeout(op,800); } }
+})();</script>
 </body>
 </html>
