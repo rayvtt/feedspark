@@ -52,7 +52,7 @@ Proprietary tools:
 - Pet supplements, UK market
 - Google Shopping + Meta, 2 active channels
 - 24hrs scheduled + 21hrs ad-hoc per month
-- Strategy Review Jul 2026 deck (HTML landing page) — in progress
+- Strategy Review Jul 2026 deck — delivered, **client-approved (raving reviews)**; now the **master Strategy Review deck template** (clone per client). Live at `/deck/yumove`; linked from the Templates module.
 - Key tests completed: brand inclusion wins, benefit copy +24.7%, "Multivitamins" +126.62%, health conditions +30%
 - POC scoping: test SKUs, timeline, success metrics, sign-off flow
 - Google Sheets project plan: `1RMTN99Cw0J3l5mORwYPpITnoi5HCPt7tET4u8rQbsq0` (gid=841484251)
