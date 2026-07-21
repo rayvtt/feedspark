@@ -28,6 +28,7 @@ import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
+import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html";
 
 // path -> { html, slug }. slug namespaces each page's KV edit layer (KV key: edits:<slug>),
 // so edits on the landing page and each deck never collide. Add a page = add a line here.
@@ -101,6 +102,16 @@ export default {
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
+    // ---- dynamic client decks: any /deck/<slug> not in the static map above falls back to
+    // the generic Strategy Review template, with its own KV edit namespace (edits:<slug>).
+    // Lets the dossier's "Generate deck" button spin up a new client deck instantly — no git
+    // commit needed until it's ready to be hand-crafted into its own page like YuMOVE's.
+    const dynDeck = path.match(/^\/deck\/([a-z0-9-]+)$/);
+    if (dynDeck) {
+      const html = DECK_TEMPLATE.replace('</body>', getEditorScript(dynDeck[1]) + '\n</body>');
+      return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
+    }
+
     return new Response('Not found', { status: 404 });
   },
 };
@@ -125,6 +136,8 @@ function getEditorScript(slug) {
   var SEL = window.DECK_EDITOR_SELECTOR ||
     'h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.lede,.sec-sub,.stat,.callout,.card h4,.card p,.note,.pill,.q';
   var editing=false, lastSel=null, dirty={}, saveTimer=null;
+  var DESIGN_SEL='.card,.stat,.pipe-card,.proto,.flow-step,.en-card,.tier,.mo,.sc-cell,.ask,.callout,.note,.ag-row';
+  var blockN=0, groupN=0, groupIds=new WeakMap(), rowN={};
 
   var css = 'body.de-on [data-eid]{outline:1px dashed rgba(237,111,11,.55);outline-offset:2px}'
     + 'body.de-on [data-eid]:focus{outline:2px solid #ED6F0B;outline-offset:2px}'
@@ -144,15 +157,27 @@ function getEditorScript(slug) {
     + '.de-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:#1A365D;color:#fff;padding:9px 15px;border-radius:8px;z-index:99999;opacity:0;transition:opacity .25s;font:14px sans-serif}'
     + '.de-toast.show{opacity:1}'
     + '.tbl-wrap tbody tr>:first-child{cursor:grab}'
-    + '.tbl-wrap tbody tr.de-dragging{opacity:.35}';
+    + '.tbl-wrap tbody tr.de-dragging{opacity:.35}'
+    + 'body.de-design [data-de-block]{outline:1px dashed rgba(26,54,93,.35);outline-offset:2px;cursor:grab}'
+    + 'body.de-design [data-de-block]:hover{outline:2px solid rgba(26,54,93,.6)}'
+    + 'body.de-design [data-de-block].de-bsel{outline:2px solid #ED6F0B;cursor:default}'
+    + 'body.de-design [data-de-block].de-bdrag{opacity:.35}'
+    + '.de-toolbar{position:absolute;z-index:99998;display:flex;gap:4px;background:#1A365D;border-radius:8px;padding:5px;box-shadow:0 6px 20px rgba(0,0,0,.25)}'
+    + '.de-toolbar button{background:transparent;border:0;color:#fff;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:14px;line-height:1}'
+    + '.de-toolbar button:hover{background:rgba(255,255,255,.18)}'
+    + '.de-resize{position:absolute;z-index:99998;width:14px;height:14px;background:#ED6F0B;border:2px solid #fff;border-radius:50%;cursor:nwse-resize}'
+    + '.de-pop{position:absolute;z-index:99999;background:#fff;border:1px solid #E6E6E6;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:12px;display:flex;flex-direction:column;gap:8px;font:13px sans-serif;color:#333;min-width:190px}'
+    + '.de-pop label{font-size:11px;color:#6b7a8d;display:flex;justify-content:space-between;align-items:center;gap:8px}'
+    + '.de-pop select,.de-pop input[type=number]{font:inherit;padding:4px;border:1px solid #E6E6E6;border-radius:6px}';
   var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
 
   var bar=document.createElement('div'); bar.className='de-bar';
   var bEdit=document.createElement('button'); bEdit.textContent='✎ Edit';
+  var bDesign=document.createElement('button'); bDesign.textContent='🎨 Design';
   var bPick=document.createElement('button'); bPick.textContent='◎ Element'; bPick.style.display='none';
   var bExport=document.createElement('button'); bExport.textContent='⤴ Export edits'; bExport.style.display='none';
   var stat=document.createElement('span'); stat.textContent='';
-  bar.appendChild(bEdit); bar.appendChild(bPick); bar.appendChild(bExport); bar.appendChild(stat);
+  bar.appendChild(bEdit); bar.appendChild(bDesign); bar.appendChild(bPick); bar.appendChild(bExport); bar.appendChild(stat);
   document.body.appendChild(bar);
 
   // Presentation mode: the editor bar is hidden by default (clean for client screen-share)
@@ -187,15 +212,31 @@ function getEditorScript(slug) {
   function assignEids(){ var i=0; editable().forEach(function(el){ if(!el.getAttribute('data-eid')) el.setAttribute('data-eid','e'+i); i++; }); }
 
   function loadEdits(){ fetch(API+'/api/edits?page='+PAGE).then(function(r){ return r.json(); }).then(function(ed){
-    if(!ed) return; Object.keys(ed).forEach(function(k){
+    if(!ed) return;
+    // Pass 1: replay any runtime-added blocks (duplicated in Design mode) before content/order
+    // overlays run, so they exist in the DOM for those passes to find by data-eid/data-rid.
+    Object.keys(ed).forEach(function(k){
+      if(k.indexOf('__added:')!==0) return;
+      var parent=document.querySelector('[data-tid="'+k.slice(8)+'"]'); if(!parent) return;
+      (ed[k]||[]).forEach(function(a){
+        if(document.querySelector('[data-eid="'+a.id+'"]')) return; // already present
+        var tmp=document.createElement('div'); tmp.innerHTML=a.html; var node=tmp.firstElementChild; if(!node) return;
+        var after=a.after?parent.querySelector('[data-rid="'+a.after+'"]'):null;
+        if(after&&after.nextSibling) parent.insertBefore(node,after.nextSibling); else parent.appendChild(node);
+      });
+    });
+    Object.keys(ed).forEach(function(k){
       if(k.indexOf('__order:')===0){
-        var table=document.querySelector('table[data-tid="'+k.slice(8)+'"]'); if(!table) return;
-        var tb=table.querySelector('tbody'); if(!tb) return;
-        ed[k].forEach(function(rid){ var tr=tb.querySelector('tr[data-rid="'+rid+'"]'); if(tr) tb.appendChild(tr); });
+        var container=document.querySelector('[data-tid="'+k.slice(8)+'"]'); if(!container) return;
+        var scope=container.tagName==='TABLE'?container.querySelector('tbody'):container; if(!scope) return;
+        ed[k].forEach(function(rid){ var el=scope.querySelector('[data-rid="'+rid+'"]'); if(el) scope.appendChild(el); });
         return;
       }
+      if(k.indexOf('__added:')===0) return;
       var el=document.querySelector('[data-eid="'+k+'"]'); if(!el) return;
-      var v=ed[k]; var h=(typeof v==='string')?v:v.html; if(h!=null) el.innerHTML=h;
+      var v=ed[k];
+      if(v && typeof v==='object' && v.deleted){ el.remove(); return; }
+      var h=(typeof v==='string')?v:v.html; if(h!=null) el.innerHTML=h;
       if(v && typeof v==='object' && v.style!=null) el.style.cssText=v.style; }); }).catch(function(){}); }
 
   // ---- row drag-and-drop reordering — works even in presentation mode (bar hidden),
@@ -243,6 +284,173 @@ function getEditorScript(slug) {
   function entry(el){ return { html: el.innerHTML, style: el.getAttribute('style')||'', preview: el.textContent.trim().slice(0,80) }; }
   function queueSave(el){ var id=el.getAttribute('data-eid'); if(!id) return; dirty[id]=entry(el);
     if(saveTimer) clearTimeout(saveTimer); saveTimer=setTimeout(flush,1200); }
+  // Style-only save (resize/recolour/refont) — deliberately omits the html field so it can
+  // never clobber a separate, later text edit to the same element's children on load.
+  function queueStyleSave(el){ var id=el.getAttribute('data-eid'); if(!id) return;
+    dirty[id]=Object.assign({},dirty[id]||{},{style:el.getAttribute('style')||''});
+    if(saveTimer) clearTimeout(saveTimer); saveTimer=setTimeout(flush,600); }
+
+  // ---- Design mode: select / move / resize / recolour / refont / duplicate / delete
+  // any card-like block. Text mode (above) edits words; this edits the box around them.
+  function assignBlockIds(){
+    document.querySelectorAll(DESIGN_SEL).forEach(function(el){
+      if(el.closest('.de-bar,.de-panel,.de-pop,.de-toolbar')) return;
+      if(!el.getAttribute('data-eid')) el.setAttribute('data-eid','b'+(blockN++));
+      el.setAttribute('data-de-block','1');
+      var parent=el.parentElement; if(!parent) return;
+      var tid=groupIds.get(parent);
+      if(!tid){ tid='g'+(groupN++); groupIds.set(parent,tid); parent.setAttribute('data-tid',tid); }
+      if(!el.getAttribute('data-rid')) el.setAttribute('data-rid', tid+'-r'+(rowN[tid]=(rowN[tid]||0)+1));
+    });
+  }
+  function blockAfter(container,y){
+    var kids=Array.prototype.slice.call(container.children).filter(function(c){ return !c.classList.contains('de-bdrag'); });
+    var closest=null, closestOffset=-Infinity;
+    kids.forEach(function(c){ var box=c.getBoundingClientRect(); var offset=y-box.top-box.height/2;
+      if(offset<0 && offset>closestOffset){ closestOffset=offset; closest=c; } });
+    return closest;
+  }
+  function saveContainerOrder(container,tid){
+    var order=Array.prototype.slice.call(container.children).filter(function(c){ return c.getAttribute('data-rid'); })
+      .map(function(c){ return c.getAttribute('data-rid'); });
+    var patch={}; patch['__order:'+tid]=order;
+    fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)}).catch(function(){});
+  }
+  function initBlockDrag(){
+    document.querySelectorAll('[data-de-block]').forEach(function(el){
+      if(el.__deWired) return; el.__deWired=true;
+      el.addEventListener('mousedown',function(e){
+        if(!document.body.classList.contains('de-design')) return;
+        if(e.target.closest('.de-resize,.de-toolbar,.de-pop')) return;
+        el.setAttribute('draggable','true');
+      });
+      el.addEventListener('dragstart',function(e){
+        if(!document.body.classList.contains('de-design')){ e.preventDefault(); return; }
+        el.classList.add('de-bdrag'); e.dataTransfer.effectAllowed='move';
+        try{ e.dataTransfer.setData('text/plain', el.getAttribute('data-rid')||''); }catch(er){}
+      });
+      el.addEventListener('dragend',function(){
+        el.classList.remove('de-bdrag'); el.removeAttribute('draggable');
+        var parent=el.parentElement, tid=parent&&parent.getAttribute('data-tid');
+        if(tid) saveContainerOrder(parent,tid);
+        if(selEl===el) positionOverlay(el);
+      });
+    });
+    document.querySelectorAll('[data-tid]').forEach(function(container){
+      if(container.__deSortWired) return; container.__deSortWired=true;
+      container.addEventListener('dragover',function(e){
+        var dragging=container.querySelector('.de-bdrag'); if(!dragging) return;
+        e.preventDefault();
+        var after=blockAfter(container,e.clientY);
+        if(after==null) container.appendChild(dragging); else if(after!==dragging) container.insertBefore(dragging,after);
+      });
+    });
+  }
+
+  var selEl=null, toolbar=null, resizeHandle=null;
+  function closeAllPops(){ document.querySelectorAll('.de-pop').forEach(function(p){ p.remove(); }); }
+  function positionOverlay(el){
+    var r=el.getBoundingClientRect();
+    if(toolbar){ toolbar.style.top=(r.top+window.scrollY-38)+'px'; toolbar.style.left=(r.left+window.scrollX)+'px'; }
+    if(resizeHandle){ resizeHandle.style.top=(r.top+window.scrollY+r.height-7)+'px'; resizeHandle.style.left=(r.left+window.scrollX+r.width-7)+'px'; }
+  }
+  function clearSelection(){
+    if(selEl) selEl.classList.remove('de-bsel');
+    if(toolbar){ toolbar.remove(); toolbar=null; }
+    if(resizeHandle){ resizeHandle.remove(); resizeHandle=null; }
+    closeAllPops(); selEl=null;
+  }
+  function rgbToHex(rgb){ var m=/rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(rgb||''); if(!m) return '#ffffff';
+    return '#'+[1,2,3].map(function(i){ return ('0'+parseInt(m[i],10).toString(16)).slice(-2); }).join(''); }
+  function openColorPop(el,anchor){
+    closeAllPops();
+    var pop=document.createElement('div'); pop.className='de-pop';
+    var cs=getComputedStyle(el);
+    pop.innerHTML='<label>Background <input type="color" class="de-bg" value="'+rgbToHex(cs.backgroundColor)+'"></label>'
+      + '<label>Text <input type="color" class="de-fg" value="'+rgbToHex(cs.color)+'"></label>';
+    document.body.appendChild(pop);
+    var r=anchor.getBoundingClientRect(); pop.style.top=(r.bottom+window.scrollY+6)+'px'; pop.style.left=(r.left+window.scrollX)+'px';
+    pop.querySelector('.de-bg').addEventListener('input',function(){ el.style.background=this.value; });
+    pop.querySelector('.de-fg').addEventListener('input',function(){ el.style.color=this.value; });
+    pop.addEventListener('change',function(){ queueStyleSave(el); });
+  }
+  var FONTS=['Lato, sans-serif','Georgia, serif','Arial, sans-serif','\'Courier New\', monospace','\'Times New Roman\', serif','Verdana, sans-serif'];
+  function openFontPop(el,anchor){
+    closeAllPops();
+    var pop=document.createElement('div'); pop.className='de-pop';
+    var cs=getComputedStyle(el);
+    var opts=FONTS.map(function(f){ return '<option value="'+f.replace(/"/g,'&quot;')+'">'+f.split(',')[0].replace(/'/g,'')+'</option>'; }).join('');
+    pop.innerHTML='<label>Font <select class="de-ff">'+opts+'</select></label>'
+      + '<label>Size (px) <input type="number" class="de-fs" min="8" max="96" value="'+(parseInt(cs.fontSize,10)||14)+'"></label>'
+      + '<label>Weight <select class="de-fw"><option value="400">Regular</option><option value="700">Bold</option><option value="900">Black</option></select></label>';
+    document.body.appendChild(pop);
+    var r=anchor.getBoundingClientRect(); pop.style.top=(r.bottom+window.scrollY+6)+'px'; pop.style.left=(r.left+window.scrollX)+'px';
+    pop.querySelector('.de-ff').addEventListener('change',function(){ el.style.fontFamily=this.value; queueStyleSave(el); });
+    pop.querySelector('.de-fs').addEventListener('input',function(){ el.style.fontSize=this.value+'px'; queueStyleSave(el); positionOverlay(el); });
+    pop.querySelector('.de-fw').addEventListener('change',function(){ el.style.fontWeight=this.value; queueStyleSave(el); });
+  }
+  function wireResize(el,handle){
+    handle.addEventListener('mousedown',function(e){
+      e.preventDefault(); e.stopPropagation();
+      var startX=e.clientX, startY=e.clientY, box=el.getBoundingClientRect(), startW=box.width, startH=box.height;
+      function onMove(ev){
+        el.style.width=Math.max(80,startW+(ev.clientX-startX))+'px';
+        el.style.height=Math.max(40,startH+(ev.clientY-startY))+'px';
+        positionOverlay(el);
+      }
+      function onUp(){ document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp); queueStyleSave(el); }
+      document.addEventListener('mousemove',onMove); document.addEventListener('mouseup',onUp);
+    });
+  }
+  function deleteBlock(el){
+    if(!confirm('Delete this block? This removes it for everyone viewing this deck.')) return;
+    var eid=el.getAttribute('data-eid'); clearSelection(); delete dirty[eid]; el.remove();
+    var patch={}; patch[eid]={deleted:true};
+    fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
+      .then(function(){ toast('Block deleted'); }).catch(function(){ toast('Delete failed to save'); });
+  }
+  function duplicateBlock(el){
+    var clone=el.cloneNode(true);
+    var newId='b'+(blockN++)+'-'+Math.random().toString(36).slice(2,7);
+    clone.setAttribute('data-eid',newId); clone.classList.remove('de-bsel');
+    var parent=el.parentElement, tid=parent.getAttribute('data-tid')||'';
+    var newRid=tid+'-r'+(rowN[tid]=(rowN[tid]||0)+1);
+    clone.setAttribute('data-rid',newRid);
+    var afterRid=el.getAttribute('data-rid')||null;
+    parent.insertBefore(clone, el.nextSibling);
+    initBlockDrag();
+    fetch(API+'/api/edits?page='+PAGE).then(function(r){ return r.json(); }).then(function(ed){
+      ed=ed||{}; var key='__added:'+tid; var list=(ed[key]||[]).slice();
+      list.push({id:newId, after:afterRid, html:clone.outerHTML});
+      var patch={}; patch[key]=list;
+      return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)});
+    }).then(function(){ saveContainerOrder(parent,tid); toast('Block duplicated'); selectBlock(clone); })
+      .catch(function(){ toast('Duplicate failed to save'); });
+  }
+  function selectBlock(el){
+    if(selEl===el) return;
+    clearSelection(); selEl=el; el.classList.add('de-bsel');
+    toolbar=document.createElement('div'); toolbar.className='de-toolbar';
+    toolbar.innerHTML='<button data-a="color" title="Colour">🎨</button><button data-a="font" title="Font">Aa</button>'
+      + '<button data-a="dup" title="Duplicate">⧉</button><button data-a="del" title="Delete">🗑</button>';
+    document.body.appendChild(toolbar);
+    resizeHandle=document.createElement('div'); resizeHandle.className='de-resize'; document.body.appendChild(resizeHandle);
+    positionOverlay(el);
+    toolbar.addEventListener('click',function(e){
+      var b=e.target.closest('button'); if(!b) return; var a=b.getAttribute('data-a');
+      if(a==='color') openColorPop(el,b); else if(a==='font') openFontPop(el,b);
+      else if(a==='dup') duplicateBlock(el); else if(a==='del') deleteBlock(el);
+    });
+    wireResize(el,resizeHandle);
+  }
+  document.addEventListener('click',function(e){
+    if(!document.body.classList.contains('de-design')) return;
+    if(e.target.closest('.de-toolbar,.de-pop,.de-resize,.de-bar,.de-panel')) return;
+    var el=e.target.closest('[data-de-block]');
+    if(el) selectBlock(el); else clearSelection();
+  }, true);
+  window.addEventListener('scroll',function(){ if(selEl) positionOverlay(selEl); },true);
+  window.addEventListener('resize',function(){ if(selEl) positionOverlay(selEl); });
   function flush(){ var keys=Object.keys(dirty); if(!keys.length) return; var patch=dirty; dirty={}; stat.textContent='saving…';
     fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
       .then(function(r){ return r.json(); }).then(function(){ stat.textContent='✓ saved'; setTimeout(function(){ stat.textContent=''; },1500); })
@@ -256,6 +464,11 @@ function getEditorScript(slug) {
     editable().forEach(function(el){ if(on) el.setAttribute('contenteditable','true'); else el.removeAttribute('contenteditable'); }); }
 
   bEdit.addEventListener('click',function(){ setEditing(!editing); });
+  bDesign.addEventListener('click',function(){
+    var on=!document.body.classList.contains('de-design');
+    document.body.classList.toggle('de-design',on); bDesign.classList.toggle('on',on);
+    if(!on) clearSelection();
+  });
   bPick.addEventListener('click',function(){ panel.classList.toggle('show'); });
 
   document.addEventListener('input',function(e){ if(!editing) return; var el=e.target.closest?e.target.closest('[data-eid]'):null; if(el) queueSave(el); });
@@ -274,7 +487,13 @@ function getEditorScript(slug) {
   bExport.addEventListener('click',function(){ var patch={}; document.querySelectorAll('[data-eid]').forEach(function(el){ patch[el.getAttribute('data-eid')]=entry(el); });
     copy(JSON.stringify(patch,null,2), 'All edits copied as JSON'); });
 
+  // Ids must exist for EVERY viewer at load time, not just whoever clicks Edit/Design first —
+  // otherwise a saved KV patch has nothing to attach to and silently fails to apply for anyone
+  // who opens the link read-only (e.g. a client on the call).
+  assignEids();
+  assignBlockIds();
   initRowDrag();
+  initBlockDrag();
   loadEdits();
 })();
 </script>`;
