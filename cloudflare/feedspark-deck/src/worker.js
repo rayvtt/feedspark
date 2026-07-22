@@ -33,6 +33,9 @@ import READINESS from "../../../docs/FeedSpark_Readiness.html";
 import LEADERSHIP from "../../../docs/FeedSpark_Leadership.html";
 import DECKBUILDER from "../../../docs/FeedSpark_DeckBuilder.html";
 import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html";
+// Tachyon copilot widget (style + script fragment). Injected on the app pages only —
+// never on client-facing decks. Reads window.PLANTASKS and calls /api/claude.
+import TACHYON from "../../../docs/tachyon_widget.html";
 
 // path -> { html, slug }. slug namespaces each page's KV edit layer (KV key: edits:<slug>),
 // so edits on the landing page and each deck never collide. Add a page = add a line here.
@@ -103,10 +106,60 @@ export default {
       return json({ source: 'git', pages: Object.keys(PAGES), note: 'pages are git-bundled at build time; push to main to update them' });
     }
 
+    // ---- Tachyon copilot: server-side proxy to the Claude Messages API ----
+    // The dashboard POSTs { system, messages | prompt, max_tokens } and the worker calls
+    // Anthropic with env.ANTHROPIC_API_KEY — the key never reaches the browser. Degrades
+    // gracefully (200 + setup message) when the secret isn't set, so the UI stays usable.
+    //   Set the key:  wrangler secret put ANTHROPIC_API_KEY   (from the repo root)
+    if (path === '/api/claude') {
+      if (request.method === 'GET') {
+        return json({ ok: true, configured: !!env.ANTHROPIC_API_KEY, model: 'claude-opus-4-8' });
+      }
+      if (request.method === 'POST') {
+        if (!env.ANTHROPIC_API_KEY) {
+          return json({ error: 'no_key', message: 'Tachyon isn’t connected yet. Set an Anthropic API key as a Worker secret (wrangler secret put ANTHROPIC_API_KEY) and Tachyon goes live — no redeploy needed.' });
+        }
+        let body;
+        try { body = await request.json(); } catch (e) { return json({ error: 'bad_request', message: 'Invalid JSON body.' }, 400); }
+        const messages = Array.isArray(body.messages) && body.messages.length
+          ? body.messages
+          : [{ role: 'user', content: String(body.prompt || '') }];
+        const payload = {
+          model: body.model || 'claude-opus-4-8',
+          max_tokens: Math.min(Math.max(parseInt(body.max_tokens, 10) || 1600, 256), 4096),
+          messages,
+        };
+        if (body.system) payload.system = String(body.system);
+        let r;
+        try {
+          r = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              'x-api-key': env.ANTHROPIC_API_KEY,
+              'anthropic-version': '2023-06-01',
+            },
+            body: JSON.stringify(payload),
+          });
+        } catch (e) {
+          return json({ error: 'network', message: 'Could not reach the Claude API: ' + (e && e.message || e) });
+        }
+        if (!r.ok) {
+          const t = await r.text().catch(() => '');
+          return json({ error: 'upstream', status: r.status, message: t.slice(0, 600) || ('HTTP ' + r.status) });
+        }
+        const data = await r.json().catch(() => ({}));
+        const text = (data.content || []).filter(b => b && b.type === 'text').map(b => b.text).join('\n').trim();
+        return json({ text, usage: data.usage || null, model: payload.model });
+      }
+    }
+
     // ---- serve a git-bundled page + inject the editor widget for its slug ----
+    // App pages (everything except client-facing /deck/* decks) also get the Tachyon copilot.
     const page = PAGES[path];
     if (page) {
-      const html = page.html.replace('</body>', getEditorScript(page.slug) + '\n</body>');
+      let html = page.html.replace('</body>', getEditorScript(page.slug) + '\n</body>');
+      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n</body>');
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
