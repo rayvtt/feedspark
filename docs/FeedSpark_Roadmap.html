@@ -68,11 +68,25 @@
   .modal-x{position:absolute;top:14px;right:16px;border:none;background:none;font-size:24px;color:var(--muted);cursor:pointer}
   .mrow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
   @media(max-width:640px){h1{font-size:27px}.card{grid-template-columns:auto 1fr}}
+  /* rocket logo + module nav (shared) */
+  .nav-toggle{border:none;background:none;cursor:pointer;padding:1px;border-radius:10px;flex:none;transition:transform .22s ease;display:inline-flex;text-decoration:none}
+  .nav-toggle svg{width:26px;height:26px;display:block;overflow:visible}
+  .rk-lift{animation:rkbob 2.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+  .rk-body{fill:var(--ink-2);transition:fill .2s}.rk-win{fill:#fff}.rk-fin{fill:var(--orange-deep)}
+  .rk-flame{fill:var(--orange);transform-box:fill-box;transform-origin:center top;animation:rkflame .42s ease-in-out infinite alternate}
+  .nav-toggle:hover{transform:translateY(-3px)}.nav-toggle:hover .rk-body{fill:var(--orange-ink)}
+  @keyframes rkbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}
+  @keyframes rkflame{from{transform:scaleY(.6) scaleX(.82);opacity:.7}to{transform:scaleY(1.15) scaleX(1);opacity:1}}
+  .spk-flame{width:11px;height:15px;margin-left:2px;fill:var(--orange);transform-box:fill-box;transform-origin:center bottom;animation:rkflame .55s ease-in-out infinite alternate}
+  .tb-modules a.on{color:var(--orange-deep)}
+  @media(prefers-reduced-motion:reduce){.rk-lift,.rk-flame,.spk-flame{animation:none}}
 </style>
 
 <div class="topbar"><div class="topbar-in">
-  <div class="brand">Feed<span>Spark</span></div><div class="tb-tag">Dashboard Roadmap</div>
-  <nav class="tb-nav"><a href="/">← Command center</a><a href="/library">Task library</a><a href="/templates">Templates</a></nav>
+  <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
+  <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
+  <div class="tb-tag">Dashboard Roadmap</div>
+  <nav class="tb-nav tb-modules"><a href="/">Command center</a><a href="/workflow">Workflow</a><a href="/readiness">Readiness</a><a href="/leadership">Leadership</a><a href="/library">Task library</a><a href="/deck-builder">Deck generator</a><a href="/templates">Templates</a><a href="/roadmap" class="on">Build roadmap</a></nav>
 </div></div>
 
 <header class="hero"><div class="wrap">
@@ -118,7 +132,7 @@ var ROADMAP=[
    {id:"diag",t:"Diagnostics timeline",top:0,imp:"med",eff:"M",ch:["Google","Meta"],d:"A per-brand timeline of feed events (scrapes, refreshes, rule changes, disapproval spikes) so a new AM can see what changed and when."},
  ]},
  {g:"Feed optimisation depth",gk:"C",sub:"Turn the task history into a compounding optimisation engine.",items:[
-   {id:"tachyon",t:"Tachyon AI copilot in-dashboard",top:6,imp:"high",eff:"L",ch:["All"],d:"A Claude-powered assistant inside the FCC: “what should I do for Reiss this week?”, draft a brief, summarise a plan, or generate MASK titles / keyword sets from the feed. Builds on the existing /api/claude."},
+   {id:"tachyon",b:"/",t:"Tachyon AI copilot in-dashboard",top:6,imp:"high",eff:"L",ch:["All"],d:"Live — the rocket ‘Tachyon’ button on every app page opens a Claude-powered copilot: “what should I do for Reiss this week?”, draft a brief, summarise a plan, or generate MASK titles / keyword sets — grounded in each brand’s live project-plan data. Server-side via /api/claude; set ANTHROPIC_API_KEY to switch it on."},
    {id:"uplift",t:"Test → uplift → BAU loop",top:5,imp:"high",eff:"M",ch:["All"],d:"Close the loop on every test: expected uplift, actual result (%), and roll winners into BAU. A quantified “tests that won” library (benefit copy +24.7%, Multivitamins +126%) — proof for QBRs."},
    {id:"seasonal",b:"/readiness",t:"Seasonal keyword &amp; event engine",top:0,imp:"med",eff:"M",ch:["Google","Meta"],d:"A calendar-driven keyword/overlay engine (BF, XMAS, gifting, Ramadan, back-to-school) that pre-stages the right batches per brand ahead of each event."},
  ]},
@@ -129,8 +143,8 @@ var ROADMAP=[
  ]},
  {g:"Automation &amp; operations",gk:"E",sub:"Make the workload run itself.",items:[
    {id:"live-sync",t:"Live sync from the plans",top:0,imp:"high",eff:"L",ch:["Ops"],d:"Worker reads each plan's Project Plan tab on demand (Google Sheets API → KV) so edits in your sheets refresh the dashboard without a rebuild. Needs a Google service-account credential."},
-   {id:"brief-pipe",t:"Brief → assign → remind → status pipeline",top:7,imp:"high",eff:"L",ch:["Ops"],d:"New plan row → auto-draft brief to ASPL → assign to a London AM → reminders → status write-back to the FCC and the sheet. The hands-off §04 workflow."},
-   {id:"hours",t:"Hours &amp; commercial intelligence",top:8,imp:"high",eff:"M",ch:["Commercial"],d:"Tie tasks to hours &amp; retainer: burn-down per client (used vs block), profitability flags, and auto-generated client hour reports — so hours report themselves."},
+   {id:"brief-pipe",b:"/workflow",t:"Workflow control center — brief pipeline",top:7,imp:"high",eff:"L",ch:["Ops"],d:"Live — Client → London AM → ASPL Content in one board. Compose coded briefs the portal auto-scans ([ibfcode:client-gb], ibfdue:DDMMYYYY) and draft them to briefing@feedspark.com; intake from the project plans; 6-lane pipeline with due-date alerts; log ASPL replies with a done/finished/completed scan that auto-advances the ticket; and a client-confirmation email drafted from ASPL's note. Hourly Gmail auto-sync needs a Gmail credential."},
+   {id:"hours",b:"/leadership",t:"Hours &amp; commercial intelligence",top:8,imp:"high",eff:"M",ch:["Commercial"],d:"Live on the Leadership view — retainer burn-down per client (used vs block), utilisation &amp; over-block flags, a portfolio value roll-up, and one-click ‘copy hour report’ per client grounded in the plan. Set the rates &amp; used hours (editable); Monsoon/Accessorize/YuMOVE/Schuh blocks are pre-filled."},
    {id:"alerts",t:"Proactive alerts &amp; notifications",top:0,imp:"med",eff:"M",ch:["Ops"],d:"Email/Slack when a score drops, disapprovals spike, a test is ready to read, or a retainer is over-burning."},
  ]},
  {g:"Intelligence &amp; dashboard craft",gk:"F",sub:"From reporting to foresight.",items:[
@@ -144,7 +158,7 @@ var ROADMAP=[
    {id:"deck-live",t:"Deck → live rendered output",top:0,imp:"high",eff:"M",ch:["Sales"],d:"Render the Deck Generator's chosen sections into a live, styled deck the AM can present — placeholder copy auto-filled by Tachyon once the API key is in."},
    {id:"digest",t:"Weekly auto-digest",top:0,imp:"med",eff:"M",ch:["Ops"],d:"A Monday email/Slack digest per AM: what shipped, what's overdue, scores that moved, tests ready to read — the Monday panel, pushed."},
    {id:"feeddiff",t:"Feed change / diff alerts",top:0,imp:"med",eff:"L",ch:["Google","Meta"],d:"Detect when a plan tab or a live feed changes (new SKUs, dropped attributes, price shifts) and surface a diff so nothing slips."},
-   {id:"retention",t:"Account risk & retention radar",top:0,imp:"high",eff:"M",ch:["Exec"],d:"Blend score trend, overdue load, hours burn and sentiment into an at-risk score per account, with the play to save it."}
+   {id:"retention",b:"/leadership",t:"Account risk & retention radar",top:0,imp:"high",eff:"M",ch:["Exec"],d:"Live on the Leadership view — an at-risk score per account blending feed health, open backlog, parked work, retainer utilisation and your sentiment read, banded Healthy → Critical, each with the play to save it. Set the sentiment; the rest is live from the plans."}
  ]},
 ];
 

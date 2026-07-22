@@ -12,3 +12,10 @@ rules = [
 [[kv_namespaces]]
 binding = "EDITS"
 id = "d93b5ac576c74f0d8a315c5b92dc8e16"
+
+# Tachyon copilot (/api/claude) reads the Anthropic API key from a Worker SECRET — never
+# committed here. Set it once and the copilot goes live with no redeploy:
+#   wrangler secret put ANTHROPIC_API_KEY        (run from this repo root)
+#   — or Cloudflare dashboard → Workers → feedspark → Settings → Variables → Add secret.
+# Until it's set, /api/claude returns a friendly "not connected yet" message and the
+# in-dashboard copilot stays usable (it shows the setup step instead of an answer).

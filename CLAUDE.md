@@ -152,13 +152,21 @@ All HTML strategy decks include the inline edit + JSON patch sync system:
 
 ### Worker API (multi-page command center)
 ```
-GET  /                          → command center landing page (git-bundled + injected editor)
+GET  /                          → command center landing page (git-bundled + injected editor + Tachyon)
+GET  /workflow                  → Workflow control center (brief pipeline: Client→AM→ASPL)
+GET  /leadership /readiness /library /deck-builder /templates /roadmap → app modules
 GET  /deck/yumove               → YuMOVE strategy deck (git-bundled + injected editor)
 GET  /api/edits?page=<slug>     → return a page's saved edits as JSON
 PUT  /api/edits?page=<slug>     → save an edit patch (merges with existing)
 DELETE /api/edits?page=<slug>   → clear a page's saved edits
 GET  /api/template              → info only; pages are git-bundled (push to main to change them)
+GET|PUT /api/briefs             → Workflow brief pipeline store (KV `briefs`, whole-map PUT)
+GET|POST /api/claude            → Tachyon copilot proxy to Claude Messages API (needs ANTHROPIC_API_KEY secret)
 ```
+- **Injected on app pages** (not client decks): the live editor widget + the **Tachyon copilot**
+  (`docs/tachyon_widget.html`, reads `window.PLANTASKS`, calls `/api/claude`).
+- **Secrets**: `ANTHROPIC_API_KEY` powers Tachyon (`wrangler secret put ANTHROPIC_API_KEY`); both
+  the copilot and Gmail/plan live-sync degrade gracefully until their credential is set.
 - **Pages = git**: `docs/FeedSpark_Command_Center.html` (`/`) and `docs/YuMOVE_Strategy_Review_Jul26.html`
   (`/deck/yumove`) are imported into the worker as Text modules (root `wrangler.toml` `rules`).
   **Add a page = add an import + one line in the worker's `PAGES` map.** Push to `main` → Cloudflare
