@@ -454,7 +454,7 @@ window.addEventListener('load',restore);
   [data-theme=dark] .it-bulk{background:rgba(245,166,35,.12)}
   </style>
   <h2>Intake — every task, live</h2>
-  <p class="sub">Three streams in one table — monthly <b>project-plan</b> tasks, the <b>ATRT legacy</b> import (your retired tracker — 50 active tasks), and daily <b>client emails</b>. Change a <b>status</b> inline: plan rows write back to the sheet, ATRT rows save to the portal. Stack filters — pick several <b>sources</b>, <b>statuses</b> or <b>clients</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator. Works like a spreadsheet — click a cell, arrow-key around, <b>Cmd/Ctrl+C</b> to copy, <b>Ctrl+D</b> to fill down, <b>Ctrl+V</b> to paste; <b>double-click</b> to edit.</p>
+  <p class="sub">Three streams in one table — monthly <b>project-plan</b> tasks, the <b>ATRT legacy</b> import (your retired tracker — 50 active tasks), and daily <b>client emails</b>. Change a <b>status</b> inline: plan rows write back to the sheet, ATRT rows save to the portal. Stack filters — pick several <b>sources</b>, <b>statuses</b> or <b>clients</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator. Works like a spreadsheet — click a cell, arrow-key around, <b>Cmd/Ctrl+C</b> copy, <b>Ctrl+D</b> fill down, <b>Ctrl+V</b> paste, <b>Ctrl+Z</b> undo; <b>double-click</b> to edit; on a status cell just <b>type a letter</b> (O, B, I, H, W, D) to set it.</p>
   <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="add-task-btn" type="button">＋ Add task</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
   <div class="it-ctl">
     <div class="it-multi" id="it-views-wrap">
@@ -592,7 +592,7 @@ window.addEventListener('load',restore);
     var opts=STATUS_OPTS.map(function(o){ var sel=o.toLowerCase()===cur.toLowerCase(); if(sel)found=true;
       return '<option'+(sel?' selected':'')+'>'+esc(o)+'</option>'; }).join('');
     if(!found) opts='<option selected>'+esc(cur)+'</option>'+opts;
-    return '<select class="stat-sel tag-'+c+'" title="Change status — writes back to the plan sheet">'+opts+'</select>'; }
+    return '<select class="stat-sel tag-'+c+'" data-prev="'+esc(cur)+'" title="Change status — writes back to the plan sheet (type a letter to pick)">'+opts+'</select>'; }
   function statusOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskstatus')||'{}');}catch(e){return {};} }
   function saveStatus(client,task,val){ try{var o=statusOverlay(); o[client+'|'+task]=val; localStorage.setItem('fcc-taskstatus',JSON.stringify(o));}catch(e){} }
   function writeStatus(client,task,val){                 // 2-way write to the brand's plan sheet
@@ -930,7 +930,7 @@ window.addEventListener('load',restore);
   function renameOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskrename')||'{}');}catch(e){return {};} }
   function saveRename(c,oldT,newT){ try{var o=renameOverlay(); o[c+'|'+oldT]=newT; localStorage.setItem('fcc-taskrename',JSON.stringify(o));}catch(e){} }
   function editOwner(t){ var cur=(t.owner&&t.owner!=='—')?t.owner:''; var v=prompt('Task owner — who’s doing it (blank to clear):',cur); if(v===null)return; setOwner(t,(''+v).trim()); }
-  function setOwner(t,val){ saveOwnerLocal(t.client,t.task,val);
+  function setOwner(t,val){ recPush({client:t.client,task:t.task,source:t.source,key:'owner',prev:(t.owner==='—'?'':(t.owner||''))}); saveOwnerLocal(t.client,t.task,val);
     if(t.source==='plan' && PLANSHEET[t.client]) writeOwner(t.client,t.task,val);   // existing 2-way owner writer (sheet + refetch)
     else toast(val?'Owner updated':'Owner cleared');
     renderAll(); }
@@ -942,7 +942,7 @@ window.addEventListener('load',restore);
     if(HIDDEN[ok]){ HIDDEN[nk]=HIDDEN[ok]; delete HIDDEN[ok]; saveHidden(); }
     if(CARRY_STAT[ok]!=null){ CARRY_STAT[nk]=CARRY_STAT[ok]; delete CARRY_STAT[ok]; }
     if(DELETED[ok]){ DELETED[nk]=DELETED[ok]; delete DELETED[ok]; try{localStorage.setItem('fcc-deleted',JSON.stringify(DELETED));}catch(e){} } }
-  function setTaskText(t,val){ migrateKey(t.client,t.task,val); saveRename(t.client,t.task,val);
+  function setTaskText(t,val){ recPush({client:t.client,task:val,source:t.source,key:'task',prev:t.task}); migrateKey(t.client,t.task,val); saveRename(t.client,t.task,val);
     if(t.source==='plan'){ var id=PLANSHEET[t.client];
       if(id){ toast('Renaming task in '+t.client+'’s plan…');
         fetch('/api/sheets/task',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',match:t.task,value:val})})
@@ -965,6 +965,7 @@ window.addEventListener('load',restore);
     setDue(t, iso);
   }
   function setDue(t, iso){
+    recPush({client:t.client,task:t.task,source:t.source,key:'due',prev:(t.d||'')});
     saveDueLocal(t.client, t.task, iso);
     var ddmy = iso ? (iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4)) : '';   // DD/MM/YYYY for the sheet
     if(t.source==='plan'){ var id=PLANSHEET[t.client];
@@ -1025,11 +1026,16 @@ window.addEventListener('load',restore);
         sc.style.maxHeight=(h+(th?th.offsetHeight:38)+2)+'px'; }
       else sc.style.maxHeight=''; })();
     body.querySelectorAll('.it-cb').forEach(function(cb){ cb.onchange=function(){ var t=f[+cb.getAttribute('data-i')]; if(cb.checked)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; renderBulk(); }; });
-    body.querySelectorAll('.c-stat .stat-sel').forEach(function(sel){ sel.onchange=function(){ var td=sel.closest('.c-stat');
-      var cl=td.getAttribute('data-client'), tk=td.getAttribute('data-task');
-      sel.className='stat-sel tag-'+bucketOf(sel.value);
-      if(td.getAttribute('data-src')==='atrt') writeCarryover(cl,tk,sel.value); else writeStatus(cl,tk,sel.value);
-      setTimeout(renderAll,650); }; });
+    body.querySelectorAll('.c-stat .stat-sel').forEach(function(sel){
+      function commit(){ var prev=(sel.dataset.prev!=null?sel.dataset.prev:''); if(sel.value===prev)return;   // covers type-ahead: preselect then confirm w/o a change event
+        var td=sel.closest('.c-stat'), cl=td.getAttribute('data-client'), tk=td.getAttribute('data-task');
+        recPush({client:cl,task:tk,source:td.getAttribute('data-src'),key:'status',prev:prev});
+        sel.className='stat-sel tag-'+bucketOf(sel.value);
+        if(td.getAttribute('data-src')==='atrt') writeCarryover(cl,tk,sel.value); else writeStatus(cl,tk,sel.value);
+        sel.dataset.prev=sel.value; setTimeout(renderAll,650); }
+      sel.onchange=commit; sel.addEventListener('focusout',commit);
+      sel.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); sel.blur(); } else if(e.key==='Escape'){ var i=0; for(;i<sel.options.length;i++){ if(sel.options[i].value===sel.dataset.prev){ sel.selectedIndex=i; break; } } sel.blur(); } });
+    });
     var n=document.getElementById('it-n'); if(n)n.textContent=f.length+' task'+(f.length===1?'':'s');
     var ht=document.getElementById('it-hidden-tog'); if(ht){ var hc=hiddenInView();
       if(hc===0){ itState.showHidden=false; ht.hidden=true; }
@@ -1048,6 +1054,12 @@ window.addEventListener('load',restore);
   var COLS=['client','feed','task','owner','due','status','source'];
   var GEDIT={task:1,owner:1,due:1,status:1};                 // columns that write back
   var gridSel=null, gridRows=[], gridBody=null, gridFocus=false;
+  // ---- undo (Ctrl+Z): each edit records the cell's previous value; undo re-applies it via gridWrite ----
+  var UNDO=[], _rec=null;   // _rec is a live batch array while a multi-cell op runs, else null
+  function recPush(cell){ if(!cell)return; if(_rec){ _rec.push(cell); return; } UNDO.push({cells:[cell]}); if(UNDO.length>60)UNDO.shift(); }
+  function undoLast(){ if(!UNDO.length){ toast('Nothing to undo'); return; } var a=UNDO.pop(); var save=_rec; _rec=null;   // don't re-record the undo itself
+    a.cells.forEach(function(c){ gridWrite({client:c.client,task:c.task,source:c.source}, c.key, c.prev); }); _rec=save;
+    toast('Undid '+a.cells.length+' change'+(a.cells.length===1?'':'s')); setTimeout(renderAll,60); }
   function gclamp(v,a,b){ return v<a?a:(v>b?b:v); }
   function gnorm(){ return {r0:Math.min(gridSel.r0,gridSel.r1),r1:Math.max(gridSel.r0,gridSel.r1),c0:Math.min(gridSel.c0,gridSel.c1),c1:Math.max(gridSel.c0,gridSel.c1)}; }
   function cellAt(r,c){ return gridBody?gridBody.querySelector('td[data-r="'+r+'"][data-col="'+COLS[c]+'"]'):null; }
@@ -1068,6 +1080,12 @@ window.addEventListener('load',restore);
   function gPut(url,body){ try{ fetch(url,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).catch(function(){}); }catch(e){} }
   // write one cell to overlay + sheet, WITHOUT re-rendering (caller renders once at the end)
   function gridWrite(t,key,val){ if(!t||!(t.source==='plan'||t.source==='atrt'))return null; var id=PLANSHEET[t.client];
+    if(_rec){   // recording a batch (paste / fill-down): capture the previous value for undo
+      if(key==='task'){ var _nv=(''+val).trim(); if(_nv&&_nv!==t.task)_rec.push({client:t.client,task:_nv,source:t.source,key:'task',prev:t.task}); }
+      else if(key==='owner')_rec.push({client:t.client,task:t.task,source:t.source,key:'owner',prev:(t.owner==='—'?'':(t.owner||''))});
+      else if(key==='due')_rec.push({client:t.client,task:t.task,source:t.source,key:'due',prev:(t.d||'')});
+      else if(key==='status')_rec.push({client:t.client,task:t.task,source:t.source,key:'status',prev:(t.s||'')});
+    }
     if(key==='owner'){ val=(''+val).trim(); saveOwnerLocal(t.client,t.task,val); if(t.source==='plan'&&id)gPost('/api/sheets/owner',{id:id,tab:'Project Plan',match:t.task,value:val}); return 1; }
     if(key==='due'){ var iso=gridDate(val); saveDueLocal(t.client,t.task,iso); if(t.source==='plan'&&id){ var ddmy=iso?(iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4)):''; gPost('/api/sheets/due',{id:id,tab:'Project Plan',match:t.task,value:ddmy}); } return 1; }
     if(key==='status'){ var v=gridStatus(val); if(!v)return null; saveStatus(t.client,t.task,v); if(t.source==='atrt'){ CARRY_STAT[t.client+'|'+t.task]=v; gPut('/api/carryover',CARRY_STAT); } else if(id){ gPost('/api/sheets/status',{id:id,tab:'Project Plan',match:t.task,value:v}); } return 1; }
@@ -1088,16 +1106,20 @@ window.addEventListener('load',restore);
     var multi=(R.r1>R.r0)||(R.c1>R.c0);
     var gc=grid.reduce(function(m,row){ return Math.max(m,row.length); },1);
     var r1=multi?R.r1:(R.r0+gr-1), c1=multi?R.c1:(R.c0+gc-1);
+    _rec=[];
     for(var r=R.r0;r<=r1;r++){ if(r>=gridRows.length)break;
       for(var c=R.c0;c<=c1;c++){ if(c>6)break; var key=COLS[c]; if(!GEDIT[key])continue;
         var srcRow=grid[(r-R.r0)%gr]||['']; var val=srcRow[(c-R.c0)%srcRow.length]; if(val===undefined)val='';
         if(gridWrite(gridRows[r],key,val))n++; } }
-    if(n){ toast('Pasted into '+n+' cell'+(n===1?'':'s')+' — writing back'); setTimeout(renderAll,60); } else toast('Nothing pasteable — put the cursor on Task/Owner/Due/Status'); return n; }
+    if(_rec.length)UNDO.push({cells:_rec}); _rec=null;
+    if(n){ toast('Pasted into '+n+' cell'+(n===1?'':'s')+' — writing back (Ctrl+Z to undo)'); setTimeout(renderAll,60); } else toast('Nothing pasteable — put the cursor on Task/Owner/Due/Status'); return n; }
   function pasteGrid(){ var text=''; try{ if(navigator.clipboard&&navigator.clipboard.readText){ navigator.clipboard.readText().then(function(t){ applyTSV(t); },function(){ toast('Clipboard read blocked — click a cell first, then paste'); }); return; } }catch(e){} toast('Clipboard read not available here'); }
   function fillDownGrid(){ if(!gridSel)return; var R=gnorm(); if(R.r1<=R.r0){ toast('Select a range (top cell = source), then Cmd/Ctrl+D'); return; } var n=0;
+    _rec=[];
     for(var c=R.c0;c<=R.c1;c++){ var key=COLS[c]; if(!GEDIT[key])continue; var src=gridColValue(gridRows[R.r0],key);
       for(var r=R.r0+1;r<=R.r1;r++){ if(gridWrite(gridRows[r],key,src))n++; } }
-    if(n){ toast('Filled '+n+' cell'+(n===1?'':'s')+' down — writing back'); setTimeout(renderAll,60); } else toast('No editable column (Task/Owner/Due/Status) in the selection'); }
+    if(_rec.length)UNDO.push({cells:_rec}); _rec=null;
+    if(n){ toast('Filled '+n+' cell'+(n===1?'':'s')+' down — writing back (Ctrl+Z to undo)'); setTimeout(renderAll,60); } else toast('No editable column (Task/Owner/Due/Status) in the selection'); }
   function editActiveCell(){ if(!gridSel)return; var t=gridRows[gridSel.r0], key=COLS[gridSel.c0]; if(!t)return; var ed=(t.source==='plan'||t.source==='atrt');
     if(key==='task'&&ed)editTaskText(t); else if(key==='owner'&&ed)editOwner(t); else if(key==='due'&&ed)editDue(t);
     else if(key==='status'){ var s=cellAt(gridSel.r0,gridSel.c0); s=s&&s.querySelector('select'); if(s)s.focus(); } }
@@ -1111,9 +1133,23 @@ window.addEventListener('load',restore);
     document.addEventListener('keydown',function(e){ if(!gridSel||!gridFocus)return; var ae=document.activeElement, tag=ae?ae.tagName:'', mod=e.ctrlKey||e.metaKey;
       if(tag==='INPUT'||tag==='TEXTAREA')return; if(tag==='SELECT'&&!mod)return;
       // copy (Ctrl+C) and paste (Ctrl+V) are handled by the native copy/paste events below — do NOT preventDefault them here or the events never fire
+      if(mod&&(e.key==='z'||e.key==='Z')){ undoLast(); e.preventDefault(); return; }
       if(mod&&(e.key==='d'||e.key==='D')){ fillDownGrid(); e.preventDefault(); return; }
       if(e.key==='Escape'){ gridSel=null; highlightGrid(); return; }
       if(e.key==='Enter'){ editActiveCell(); e.preventDefault(); return; }
+      // type-ahead on the active Status cell: a letter opens its picker at the first matching option (then arrow/Enter is native)
+      if(!mod && e.key && e.key.length===1 && /[a-z0-9]/i.test(e.key) && COLS[gridSel.c0]==='status'){
+        var _t=gridRows[gridSel.r0];
+        if(_t && (_t.source==='plan'||_t.source==='atrt')){
+          var _td=cellAt(gridSel.r0,gridSel.c0), _sel=_td&&_td.querySelector('select');
+          if(_sel){ var _ch=e.key.toLowerCase(), _mi=-1;
+            for(var _o=0;_o<_sel.options.length;_o++){ if((_sel.options[_o].text||'').trim().toLowerCase().charAt(0)===_ch){ _mi=_o; break; } }
+            if(_mi>=0 && _mi!==_sel.selectedIndex){ _sel.selectedIndex=_mi; _sel.className='stat-sel tag-'+bucketOf(_sel.value); _sel.dispatchEvent(new Event('change',{bubbles:true})); }  // set + write back
+            _sel.focus(); try{ if(_sel.showPicker)_sel.showPicker(); }catch(_e){}   // open the picker so arrow/Enter can still adjust
+            e.preventDefault(); return;
+          }
+        }
+      }
       var dr=0,dc=0; if(e.key==='ArrowUp')dr=-1; else if(e.key==='ArrowDown')dr=1; else if(e.key==='ArrowLeft')dc=-1; else if(e.key==='ArrowRight')dc=1; else return;
       e.preventDefault(); var maxR=gridRows.length-1;
       if(e.shiftKey){ gridSel.r1=gclamp(gridSel.r1+dr,0,maxR); gridSel.c1=gclamp(gridSel.c1+dc,0,6); }
