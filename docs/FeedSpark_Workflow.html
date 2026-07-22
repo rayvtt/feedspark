@@ -296,6 +296,17 @@ window.addEventListener('load',restore);
   .it-src button{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
   .it-src button:hover{border-color:var(--orange);color:var(--orange-deep)}
   .it-src button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .it-grp{display:flex;align-items:center;gap:6px}
+  .it-lbl{font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .it-multi{position:relative}
+  .it-multi-btn{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);cursor:pointer;white-space:nowrap}
+  .it-multi-btn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .it-multi-btn.on{border-color:var(--navy);color:var(--navy);font-weight:800}
+  .it-multi-menu{position:absolute;top:calc(100% + 5px);left:0;z-index:30;min-width:190px;max-height:280px;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);padding:6px}
+  .it-multi-menu label{display:flex;align-items:center;gap:9px;padding:6px 9px;border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap}
+  .it-multi-menu label:hover{background:var(--wash)}
+  .it-multi-menu input{margin:0;accent-color:var(--orange-deep)}
+  .it-multi-menu .it-multi-all{border-bottom:1px solid var(--line);margin-bottom:4px;padding-bottom:8px;font-weight:800}
   .it-ctl select,.it-ctl input{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
   .it-ctl input{flex:1;min-width:150px}
   .it-ctl select:focus,.it-ctl input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
@@ -426,20 +437,19 @@ window.addEventListener('load',restore);
   [data-theme=dark] .it-bulk{background:rgba(245,166,35,.12)}
   </style>
   <h2>Intake — every task, live</h2>
-  <p class="sub">Three streams in one table — monthly <b>project-plan</b> tasks, the <b>ATRT legacy</b> import (your retired tracker — 50 active tasks), and daily <b>client emails</b>. Change a <b>status</b> inline: plan rows write back to the sheet, ATRT rows save to the portal. Filter by source or status, tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator.</p>
+  <p class="sub">Three streams in one table — monthly <b>project-plan</b> tasks, the <b>ATRT legacy</b> import (your retired tracker — 50 active tasks), and daily <b>client emails</b>. Change a <b>status</b> inline: plan rows write back to the sheet, ATRT rows save to the portal. Stack filters — pick several <b>sources</b>, <b>statuses</b> or <b>clients</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator.</p>
   <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
   <div class="it-ctl">
-    <div class="it-src" id="it-src"></div>
-    <select id="it-status" aria-label="Filter by status">
-      <option value="act">To action</option><option value="">All statuses</option>
-      <option value="open">Open</option><option value="progress">In progress</option>
-      <option value="hold">On hold</option><option value="client">With client</option><option value="done">Done</option>
-    </select>
+    <div class="it-grp"><span class="it-lbl">Source</span><div class="it-src" id="it-src" role="group" aria-label="Filter by source (multi-select)"></div></div>
+    <div class="it-grp"><span class="it-lbl">Status</span><div class="it-src" id="it-status" role="group" aria-label="Filter by status (multi-select)"></div></div>
     <select id="it-window" aria-label="Plan date window" title="Show only the latest N months of each brand's plan (email + ATRT unaffected)">
       <option value="2m">Plan: latest 2 months</option><option value="3m">Plan: latest 3 months</option>
       <option value="4m">Plan: latest 4 months</option><option value="">Plan: all history</option>
     </select>
-    <select id="it-client" aria-label="Filter by client"><option value="">All clients</option></select>
+    <div class="it-multi" id="it-client-wrap">
+      <button type="button" class="it-multi-btn" id="it-client-btn" aria-haspopup="true" aria-expanded="false">All clients ▾</button>
+      <div class="it-multi-menu" id="it-client-menu" role="group" aria-label="Filter by client (multi-select)" hidden></div>
+    </div>
     <input id="it-search" type="search" placeholder="Search tasks, owners…" aria-label="Search intake">
     <span class="it-n" id="it-n"></span>
   </div>
@@ -813,7 +823,7 @@ window.addEventListener('load',restore);
     var fromGmail=gmailItems.map(function(g){return {client:senderName(g.from),task:g.subject,cat:'',owner:senderName(g.from),source:'email',from:g.from,s:'',b:'open'};});
     return fromBriefs.concat(fromGmail); }
   function allIntake(){ return planTasks().concat(carryTasks()).concat(emailIntake()); }
-  var itState={src:'',client:'',q:'',status:'act',window:'2m',sort:'client',dir:1};
+  var itState={srcs:[],clients:[],q:'',statuses:['open','progress'],window:'2m',sort:'client',dir:1};   // multi-select: empty array = all
   var itSel={};   // bulk selection: key -> task object
   // UK-first date parse (DD/MM/YYYY, "DD Mon YYYY"); swaps if it reads as MM/DD
   function parseUKDate(s){ s=String(s||'').trim(); if(!s)return null; var m;
@@ -860,19 +870,17 @@ window.addEventListener('load',restore);
   function rowKey(t){ return t.client+'|'+t.task; }
   function intakeFiltered(){ var allow=allowedMonths();
     return allIntake().filter(function(r){
-      var st=itState.status==='act'?(r.b==='open'||r.b==='progress'):(!itState.status||r.b===itState.status);
+      var S=itState;
+      var st=!S.statuses.length||S.statuses.indexOf(r.b)>=0;   // empty = all statuses
       var win=true; if(allow && r.source==='plan'){ var pd=taskDate(r); if(pd) win=!!(allow[r.client]&&allow[r.client][monthKey(pd)]); }   // latest-N-months per brand; dateless plan rows always show
-      return win&&st&&!DELETED[r.client+'|'+r.task]&&(!itState.src||r.source===itState.src)&&(!itState.client||r.client===itState.client)
-        &&(!itState.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(itState.q)>=0); })
+      return win&&st&&!DELETED[r.client+'|'+r.task]&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0)&&(!S.clients.length||S.clients.indexOf(r.client)>=0)
+        &&(!S.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(S.q)>=0); })
       .sort(function(a,b){ var k=itState.sort;
         if(k==='dsort'){ var da=taskDate(a), db=taskDate(b); return ((da?da.getTime():0)-(db?db.getTime():0))*itState.dir; }
         return (((a[k]||'')+'').localeCompare((b[k]||'')+''))*itState.dir; }); }
   function renderIntake(){
     var body=document.getElementById('it-body'); if(!body)return;
-    var rows=allIntake();
-    var csel=document.getElementById('it-client');
-    if(csel && csel.options.length<=1){ var seen={}; rows.forEach(function(r){seen[r.client]=1;});
-      Object.keys(seen).sort().forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;csel.appendChild(o);}); }
+    ensureClientFilter();
     var f=intakeFiltered();
     body.innerHTML = f.length ? f.map(function(t,i){
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
@@ -889,7 +897,7 @@ window.addEventListener('load',restore);
            ?'<td class="c-due c-due-ed" data-i="'+i+'" title="Set due date (type DDMM)">'+esc(dueDisplay(t))+'</td>'
            :'<td class="c-due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>')
         +stat+'<td>'+src+'</td><td class="c-act"><button class="del-btn" data-i="'+i+'" title="Delete task">✕</button><button class="brief-btn" data-i="'+i+'">Brief</button></td></tr>';
-    }).join('') : '<tr><td colspan="9" class="it-empty">'+(itState.src==='email'?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
+    }).join('') : '<tr><td colspan="9" class="it-empty">'+((itState.srcs.length===1&&itState.srcs[0]==='email')?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
     body.querySelectorAll('.brief-btn').forEach(function(btn){ btn.onclick=function(){ prefill(f[+btn.getAttribute('data-i')]); }; });
     body.querySelectorAll('.del-btn').forEach(function(btn){ btn.onclick=function(){ deleteTask(f[+btn.getAttribute('data-i')]); }; });
     body.querySelectorAll('.c-due-ed').forEach(function(td){ td.onclick=function(){ editDue(f[+td.getAttribute('data-i')]); }; });
@@ -948,12 +956,55 @@ window.addEventListener('load',restore);
         scope:tpl.s+TWO_STREAMS,dod:tpl.d,assets:'—',due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
         source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++; });
     itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline'); }
-  (function(){ var wrap=document.getElementById('it-src');
-    [['','All'],['plan','Project plan'],['atrt','ATRT legacy'],['email','Incoming emails']].forEach(function(s){
-      var b=document.createElement('button'); b.textContent=s[1]; if(s[0]===itState.src)b.className='on';
-      b.onclick=function(){ itState.src=s[0]; [].forEach.call(wrap.children,function(x){x.classList.remove('on');}); b.classList.add('on'); renderIntake(); };
-      wrap.appendChild(b); }); })();
-  document.getElementById('it-client').addEventListener('change',function(){ itState.client=this.value; renderIntake(); });
+  // multi-select chip bars (source + status): empty selection = all; the "All" chip clears the set
+  function renderChipBar(id, opts, key){
+    var wrap=document.getElementById(id); if(!wrap)return; wrap.innerHTML='';
+    opts.forEach(function(s){
+      var b=document.createElement('button'); b.textContent=s[1];
+      var on = s[0]==='' ? itState[key].length===0 : itState[key].indexOf(s[0])>=0;
+      if(on)b.className='on';
+      b.onclick=function(){
+        if(s[0]===''){ itState[key]=[]; }
+        else { var i=itState[key].indexOf(s[0]); if(i>=0)itState[key].splice(i,1); else itState[key].push(s[0]); }
+        renderChipBar(id,opts,key); renderIntake(); };
+      wrap.appendChild(b); }); }
+  var SRC_OPTS=[['','All'],['plan','Project plan'],['atrt','ATRT legacy'],['email','Incoming emails']];
+  var STAT_OPTS=[['','All'],['open','Open'],['progress','In progress'],['hold','On hold'],['client','With client'],['done','Done']];
+  function renderSrcChips(){ renderChipBar('it-src',SRC_OPTS,'srcs'); }
+  function renderStatusChips(){ renderChipBar('it-status',STAT_OPTS,'statuses'); }
+  renderSrcChips(); renderStatusChips();
+  // client multi-select popover — compact button + checklist, keeps the filter bar to one line
+  function clientBtnLabel(){ var n=itState.clients.length; return (n===0?'All clients':n===1?itState.clients[0]:n+' clients')+' ▾'; }
+  function updateClientBtn(){ var btn=document.getElementById('it-client-btn'); if(!btn)return; btn.textContent=clientBtnLabel(); btn.classList.toggle('on',itState.clients.length>0); }
+  var _cliSig='';
+  function ensureClientFilter(){
+    var menu=document.getElementById('it-client-menu'); if(!menu)return;
+    var set={}; allIntake().forEach(function(r){ set[r.client]=1; }); var list=Object.keys(set).sort();
+    itState.clients=itState.clients.filter(function(c){return set[c];});   // drop picks whose client is gone
+    var sig=list.join('|');
+    if(sig===_cliSig){ updateClientBtn(); return; }   // no clients added/removed — just refresh the label
+    _cliSig=sig; menu.innerHTML='';
+    var allRow=document.createElement('label'); allRow.className='it-multi-all';
+    var allCb=document.createElement('input'); allCb.type='checkbox'; allCb.checked=itState.clients.length===0;
+    allCb.onchange=function(){ if(allCb.checked){ itState.clients=[]; menu.querySelectorAll('input').forEach(function(x){ if(x!==allCb)x.checked=false; }); }
+      else { allCb.checked=true; }   // "All" can't be switched off directly — tick a client instead
+      updateClientBtn(); renderIntake(); };
+    allRow.appendChild(allCb); allRow.appendChild(document.createTextNode('All clients')); menu.appendChild(allRow);
+    list.forEach(function(c){
+      var row=document.createElement('label');
+      var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=itState.clients.indexOf(c)>=0;
+      cb.onchange=function(){ var i=itState.clients.indexOf(c);
+        if(cb.checked){ if(i<0)itState.clients.push(c); } else { if(i>=0)itState.clients.splice(i,1); }
+        allCb.checked=itState.clients.length===0; updateClientBtn(); renderIntake(); };
+      row.appendChild(cb); row.appendChild(document.createTextNode(c)); menu.appendChild(row); });
+    updateClientBtn();
+  }
+  (function(){ var btn=document.getElementById('it-client-btn'), menu=document.getElementById('it-client-menu'), wrap=document.getElementById('it-client-wrap');
+    if(!btn||!menu||!wrap)return;
+    btn.onclick=function(e){ e.stopPropagation(); var willOpen=menu.hidden; menu.hidden=!willOpen; btn.setAttribute('aria-expanded',willOpen?'true':'false'); };
+    document.addEventListener('click',function(e){ if(menu.hidden)return; if(!wrap.contains(e.target)){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); } });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!menu.hidden){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); } });
+  })();
   document.getElementById('it-search').addEventListener('input',function(){ itState.q=this.value.trim().toLowerCase(); renderIntake(); });
   document.querySelectorAll('#itbl thead th[data-k]').forEach(function(th){ th.onclick=function(){
     var k=th.getAttribute('data-k'); if(itState.sort===k) itState.dir*=-1; else {itState.sort=k;itState.dir=1;}
@@ -962,7 +1013,6 @@ window.addEventListener('load',restore);
     renderIntake(); }; });
   // status filter · select-all · bulk actions · live refresh · add-test
   (function(){
-    var st=document.getElementById('it-status'); if(st)st.addEventListener('change',function(){ itState.status=this.value; renderIntake(); });
     var wsel=document.getElementById('it-window'); if(wsel){ wsel.value=itState.window; wsel.addEventListener('change',function(){ itState.window=this.value; renderIntake(); }); }
     var all=document.getElementById('it-all'); if(all)all.onchange=function(){ var on=all.checked; intakeFiltered().forEach(function(t){ if(on)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; }); renderIntake(); };
     var bb=document.getElementById('bulk-brief'); if(bb)bb.onclick=function(){ bulkBriefDraft(false); };
