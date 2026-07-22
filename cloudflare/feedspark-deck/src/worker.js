@@ -550,11 +550,22 @@ function resolveCols(rows) {
     dueCol: colFor(/due|deadline|target date|completion date|^date$/i) };
 }
 // Parse a plan tab's rows into clean task objects for the dashboard.
+function monthOf(s) { // detect a "month separator" label like "July-26", "Jun 2026", "Mar 26"
+  const m = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*['\s\-\/,.]*((?:20)?\d{2})\b/i.exec(String(s || ''));
+  if (!m) return '';
+  const mo = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'].indexOf(m[1].slice(0, 3).toLowerCase());
+  let y = +m[2]; if (y < 100) y += 2000;
+  return y + '-' + String(mo + 1).padStart(2, '0') + '-01';
+}
 function parsePlanRows(rows) {
   const c = resolveCols(rows), out = [];
   const start = c.headerRow >= 0 ? c.headerRow + 1 : 0;
+  let curMonth = ''; // ISO first-of-month of the current "month separator" section
   for (let r = start; r < rows.length; r++) {
     const row = rows[r] || [];
+    const hasStatus = row.some(v => isStatusTok(v));
+    // a sparse row carrying a month label is a section separator — it dates the tasks below it
+    if (!hasStatus) { let mm = ''; for (let k = 0; k < Math.min(row.length, 6); k++) { mm = monthOf(row[k]); if (mm) break; } if (mm) { curMonth = mm; continue; } }
     // task text: resolved column, else first long non-status/non-date cell
     let task = c.taskCol >= 0 ? row[c.taskCol] : '';
     if (!task || String(task).trim().length < 3) {
@@ -565,8 +576,9 @@ function parsePlanRows(rows) {
     let status = c.statusCol >= 0 ? String(row[c.statusCol] || '').trim() : '';
     if (!isStatusTok(status)) { for (let k = 1; k < Math.min(row.length, 14); k++) { if (isStatusTok(row[k])) { status = String(row[k]).trim(); break; } } }
     const owner = c.ownerCol >= 0 ? String(row[c.ownerCol] || '').trim() : '';
-    const due = c.dueCol >= 0 ? String(row[c.dueCol] || '').trim() : '';
-    out.push({ t: task, o: owner, s: status, b: planBucket(status), c: classifyCat(task), d: due, row: r + 1 });
+    const rawDue = c.dueCol >= 0 ? String(row[c.dueCol] || '').trim() : '';
+    // date = the row's Due column if the plan has one, else the current month-section
+    out.push({ t: task, o: owner, s: status, b: planBucket(status), c: classifyCat(task), d: rawDue || curMonth, row: r + 1 });
   }
   return out;
 }

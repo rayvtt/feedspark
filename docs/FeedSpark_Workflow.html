@@ -301,17 +301,22 @@ window.addEventListener('load',restore);
   .it-ctl select:focus,.it-ctl input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
   .it-n{font-size:12px;font-weight:800;color:var(--muted);margin-left:auto;white-space:nowrap}
   .it-scroll{max-height:62vh;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:var(--shadow)}
-  .itbl{width:100%;border-collapse:collapse;font-size:13px}
-  .itbl thead th{position:sticky;top:0;background:var(--paper);z-index:2;text-align:left;font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:11px 12px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;box-shadow:inset 0 -1px 0 var(--line)}
+  .itbl{width:100%;border-collapse:collapse;font-size:12.5px}
+  #itbl{table-layout:fixed}
+  #itbl col.cw-cb{width:30px}#itbl col.cw-client{width:9.5%}#itbl col.cw-feed{width:8.5%}
+  #itbl col.cw-task{width:auto}#itbl col.cw-owner{width:8.5%}#itbl col.cw-due{width:56px}
+  #itbl col.cw-status{width:104px}#itbl col.cw-source{width:72px}#itbl col.cw-act{width:60px}
+  .itbl thead th{position:sticky;top:0;background:var(--paper);z-index:2;text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);padding:9px 8px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;box-shadow:inset 0 -1px 0 var(--line);overflow:hidden;text-overflow:ellipsis}
   .itbl thead th.it-act{text-align:right;cursor:default}
   .itbl thead th[data-k]:hover{color:var(--orange-deep)}
   .itbl thead th .ar{font-size:9px;color:var(--orange-deep)}
-  .itbl tbody td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  .itbl tbody td{padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:top;overflow:hidden}
   .itbl tbody tr:last-child td{border-bottom:0}
   .itbl tbody tr:hover{background:var(--wash)}
-  .itbl .c-client{font-weight:800;white-space:nowrap}
-  .itbl .c-task{color:var(--ink);min-width:230px;line-height:1.35}
-  .itbl .c-owner{color:var(--muted);font-weight:700;white-space:nowrap}
+  .itbl .c-client{font-weight:800;white-space:nowrap;text-overflow:ellipsis}
+  .itbl .c-task{color:var(--ink);line-height:1.3;white-space:normal;word-break:break-word}
+  .itbl .c-owner{color:var(--muted);font-weight:700;white-space:nowrap;text-overflow:ellipsis}
+  .itbl .c-due{color:var(--ink-2);font-weight:700;white-space:nowrap}
   .itbl .feed-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--orange-ink);background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.28);border-radius:6px;padding:2px 7px;white-space:nowrap}
   .itbl .src-tag{font-size:10px;font-weight:800;border-radius:100px;padding:2px 9px;border:1px solid;white-space:nowrap}
   .itbl .src-plan{color:#5B82BE;background:rgba(91,130,190,.13);border-color:rgba(91,130,190,.32)}
@@ -443,10 +448,11 @@ window.addEventListener('load',restore);
     <button class="btn sm ghost" id="bulk-clear">Clear</button>
   </div>
   <div class="it-scroll"><table class="itbl" id="itbl">
+    <colgroup><col class="cw-cb"><col class="cw-client"><col class="cw-feed"><col class="cw-task"><col class="cw-owner"><col class="cw-due"><col class="cw-status"><col class="cw-source"><col class="cw-act"></colgroup>
     <thead><tr>
       <th class="it-cbh"><input type="checkbox" id="it-all" aria-label="Select all shown"></th>
       <th data-k="client">Client</th><th data-k="cat">Feed</th><th data-k="task">Task</th>
-      <th data-k="owner">Owner</th><th data-k="b">Status</th><th data-k="source">Source</th><th class="it-act">Brief</th>
+      <th data-k="owner">Owner</th><th data-k="dsort">Due</th><th data-k="b">Status</th><th data-k="source">Source</th><th class="it-act">Brief</th>
     </tr></thead><tbody id="it-body"></tbody>
   </table></div>
 
@@ -789,14 +795,20 @@ window.addEventListener('load',restore);
     var d2=new Date(s); return isNaN(d2)?null:d2; }
   function windowCutoff(){ var days={'3m':92,'6m':183,'12m':366}[itState.window]; if(!days)return null;
     var t=today(); return new Date(t.getFullYear(),t.getMonth(),t.getDate()-days); }
+  function taskDate(t){ if(t&&t.dk)return new Date(t.dk[0],t.dk[1]-1,t.dk[2]); if(t&&t.d)return parseUKDate(t.d); return null; }
+  function dueDisplay(t){ var d=taskDate(t); if(!d)return '—';
+    return d.getDate()===1 ? d.toLocaleDateString('en-GB',{month:'short',year:'2-digit'})   // month-section
+                           : d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}); }  // specific date
   function rowKey(t){ return t.client+'|'+t.task; }
   function intakeFiltered(){ var cut=windowCutoff();
     return allIntake().filter(function(r){
       var st=itState.status==='act'?(r.b==='open'||r.b==='progress'):(!itState.status||r.b===itState.status);
-      var win=true; if(cut && r.source==='plan' && r.d){ var pd=parseUKDate(r.d); if(pd && pd<cut) win=false; }   // date window: plan rows only
+      var win=true; if(cut && r.source==='plan'){ var pd=taskDate(r); if(pd && pd<cut) win=false; }   // date window: plan rows only
       return win&&st&&(!itState.src||r.source===itState.src)&&(!itState.client||r.client===itState.client)
         &&(!itState.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(itState.q)>=0); })
-      .sort(function(a,b){ var k=itState.sort; return (((a[k]||'')+'').localeCompare((b[k]||'')+''))*itState.dir; }); }
+      .sort(function(a,b){ var k=itState.sort;
+        if(k==='dsort'){ var da=taskDate(a), db=taskDate(b); return ((da?da.getTime():0)-(db?db.getTime():0))*itState.dir; }
+        return (((a[k]||'')+'').localeCompare((b[k]||'')+''))*itState.dir; }); }
   function renderIntake(){
     var body=document.getElementById('it-body'); if(!body)return;
     var rows=allIntake();
@@ -806,7 +818,7 @@ window.addEventListener('load',restore);
     var f=intakeFiltered();
     body.innerHTML = f.length ? f.map(function(t,i){
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
-      var src=t.source==='email'?'<span class="src-tag src-email">Email</span>':t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':'<span class="src-tag src-plan">Project plan</span>';
+      var src=t.source==='email'?'<span class="src-tag src-email">Email</span>':t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
       var k=rowKey(t), ck=itSel[k]?' checked':'';
       var stat=(t.source==='plan'||t.source==='atrt')
@@ -815,8 +827,9 @@ window.addEventListener('load',restore);
       return '<tr data-k="'+esc(k)+'"><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
         +'<td class="c-client">'+esc(t.client)+badge+'</td><td>'+feed+'</td>'
         +'<td class="c-task">'+esc(t.task)+'</td><td class="c-owner">'+esc(t.owner||'—')+'</td>'
+        +'<td class="c-due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>'
         +stat+'<td>'+src+'</td><td class="c-act"><button class="brief-btn" data-i="'+i+'">Brief →</button></td></tr>';
-    }).join('') : '<tr><td colspan="8" class="it-empty">'+(itState.src==='email'?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
+    }).join('') : '<tr><td colspan="9" class="it-empty">'+(itState.src==='email'?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
     body.querySelectorAll('.brief-btn').forEach(function(btn){ btn.onclick=function(){ prefill(f[+btn.getAttribute('data-i')]); }; });
     body.querySelectorAll('.it-cb').forEach(function(cb){ cb.onchange=function(){ var t=f[+cb.getAttribute('data-i')]; if(cb.checked)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; renderBulk(); }; });
     body.querySelectorAll('.c-stat .stat-sel').forEach(function(sel){ sel.onchange=function(){ var td=sel.closest('.c-stat');
