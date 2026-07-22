@@ -373,6 +373,40 @@ function getEditorScript(slug) {
   var FEEDBACK=[], fbN=0;
   function esc(s){ return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+  // ---- Undo: snapshot the whole saved-edits object before any mutating action, so Ctrl/Cmd+Z
+  // can restore exactly what was there before — covers text edits, style changes, deletes,
+  // duplicates and both reorder systems (they all ultimately live in one KV object per page,
+  // so "undo" is just "restore the previous version of that object"), not a per-field diff
+  // that would need separate logic for every action type.
+  var UNDO_KEY='de-undo-'+PAGE, undoing=false;
+  function loadUndoStack(){ try{ return JSON.parse(sessionStorage.getItem(UNDO_KEY)||'[]'); }catch(e){ return []; } }
+  function saveUndoStack(st){ try{ sessionStorage.setItem(UNDO_KEY, JSON.stringify(st.slice(-20))); }catch(e){} }
+  // Returns the pre-change state it captured, so a call site that needs to read-then-write
+  // (duplicateBlock) can reuse it instead of fetching twice. Callers that only mutate via a
+  // fresh PUT (saveOrder, deleteBlock, ...) just chain .then() and ignore the value.
+  function armUndo(){
+    if(undoing) return Promise.resolve(null);
+    return fetch(API+'/api/edits?page='+PAGE).then(function(r){ return r.json(); }).then(function(cur){
+      cur=cur||{}; var st=loadUndoStack(); st.push(cur); saveUndoStack(st); return cur;
+    }).catch(function(){ return null; });
+  }
+  function performUndo(){
+    var st=loadUndoStack();
+    if(!st.length){ toast('Nothing to undo'); return; }
+    var snap=st.pop(); saveUndoStack(st); undoing=true; toast('Undoing…');
+    fetch(API+'/api/edits?page='+PAGE,{method:'DELETE'})
+      .then(function(){ return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(snap)}); })
+      .then(function(){ location.reload(); })
+      .catch(function(){ undoing=false; toast('Undo failed — nothing was changed'); });
+  }
+  document.addEventListener('keydown',function(e){
+    if(!((e.ctrlKey||e.metaKey) && !e.shiftKey && e.key.toLowerCase()==='z')) return;
+    var ae=document.activeElement;
+    var typing = ae && (ae.isContentEditable || /^(INPUT|TEXTAREA)$/.test(ae.tagName));
+    if(typing) return; // let the browser's own per-field undo handle in-progress typing
+    e.preventDefault(); performUndo();
+  });
+
   var css = 'body.de-on [data-eid]{outline:1px dashed rgba(237,111,11,.55);outline-offset:2px}'
     + 'body.de-on [data-eid]:focus{outline:2px solid #ED6F0B;outline-offset:2px}'
     + 'body.de-on [data-eid].de-pick{outline:2px solid #1A365D;outline-offset:2px}'
@@ -448,10 +482,12 @@ function getEditorScript(slug) {
   var bEdit=document.createElement('button'); bEdit.textContent='✎ Edit';
   var bDesign=document.createElement('button'); bDesign.textContent='🎨 Design';
   var bFeedback=document.createElement('button'); bFeedback.textContent='💬 Feedback';
+  var bUndo=document.createElement('button'); bUndo.textContent='↺ Undo'; bUndo.title='Undo the last change (Ctrl/Cmd+Z)';
   var bPick=document.createElement('button'); bPick.textContent='◎ Element'; bPick.style.display='none';
   var bExport=document.createElement('button'); bExport.textContent='⤴ Export edits'; bExport.style.display='none';
+  var bReset=document.createElement('button'); bReset.textContent='🧹 Reset page'; bReset.title='Clear every saved edit on this page, back to the git template';
   var stat=document.createElement('span'); stat.textContent='';
-  bar.appendChild(bEdit); bar.appendChild(bDesign); bar.appendChild(bFeedback); bar.appendChild(bPick); bar.appendChild(bExport); bar.appendChild(stat);
+  bar.appendChild(bEdit); bar.appendChild(bDesign); bar.appendChild(bFeedback); bar.appendChild(bUndo); bar.appendChild(bPick); bar.appendChild(bExport); bar.appendChild(bReset); bar.appendChild(stat);
   document.body.appendChild(bar);
   // Always-visible, deliberately subtle — presentation mode hides the full bar, but there
   // must always be *something* on screen to click, or the toolbar is undiscoverable unless
@@ -563,16 +599,24 @@ function getEditorScript(slug) {
   function saveOrder(tb,tKey){
     var order=Array.prototype.map.call(tb.querySelectorAll('tr'),function(tr){ return tr.getAttribute('data-rid'); });
     var patch={}; patch['__order:'+tKey]=order;
-    fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
-      .then(function(r){ return r.json(); }).then(function(){ toast('Row order saved'); }).catch(function(){ toast('Order save failed'); });
+    armUndo().then(function(){
+      return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)});
+    }).then(function(r){ return r.json(); }).then(function(){ toast('Row order saved'); }).catch(function(){ toast('Order save failed'); });
   }
 
   function entry(el){ return { html: el.innerHTML, style: el.getAttribute('style')||'', preview: el.textContent.trim().slice(0,80) }; }
-  function queueSave(el){ var id=el.getAttribute('data-eid'); if(!id) return; dirty[id]=entry(el);
+  // Snapshot for undo only at the *start* of a dirty batch (dirty was empty), not on every
+  // keystroke/drag tick — one Ctrl+Z should undo "that edit", not one character of it. The
+  // debounce window (600-1200ms) comfortably outlasts the snapshot fetch, so no explicit
+  // sequencing is needed here the way the discrete actions below need it.
+  function queueSave(el){ var id=el.getAttribute('data-eid'); if(!id) return;
+    if(!Object.keys(dirty).length) armUndo();
+    dirty[id]=entry(el);
     if(saveTimer) clearTimeout(saveTimer); saveTimer=setTimeout(flush,1200); }
   // Style-only save (resize/recolour/refont) — deliberately omits the html field so it can
   // never clobber a separate, later text edit to the same element's children on load.
   function queueStyleSave(el){ var id=el.getAttribute('data-eid'); if(!id) return;
+    if(!Object.keys(dirty).length) armUndo();
     dirty[id]=Object.assign({},dirty[id]||{},{style:el.getAttribute('style')||''});
     if(saveTimer) clearTimeout(saveTimer); saveTimer=setTimeout(flush,600); }
 
@@ -600,7 +644,9 @@ function getEditorScript(slug) {
     var order=Array.prototype.slice.call(container.children).filter(function(c){ return c.getAttribute('data-rid'); })
       .map(function(c){ return c.getAttribute('data-rid'); });
     var patch={}; patch['__order:'+tid]=order;
-    fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)}).catch(function(){});
+    armUndo().then(function(){
+      return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)});
+    }).catch(function(){});
   }
   function initBlockDrag(){
     document.querySelectorAll('[data-de-block]').forEach(function(el){
@@ -665,9 +711,10 @@ function getEditorScript(slug) {
   function deleteBlock(el){
     if(!confirm('Delete this block? This removes it for everyone viewing this deck.')) return;
     var eid=el.getAttribute('data-eid'); clearSelection(); delete dirty[eid]; el.remove();
-    var patch={}; patch[eid]={deleted:true};
-    fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
-      .then(function(){ toast('Block deleted'); }).catch(function(){ toast('Delete failed to save'); });
+    armUndo().then(function(){
+      var patch={}; patch[eid]={deleted:true};
+      return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)});
+    }).then(function(){ toast('Block deleted'); }).catch(function(){ toast('Delete failed to save'); });
   }
   function duplicateBlock(el){
     var clone=el.cloneNode(true);
@@ -679,7 +726,7 @@ function getEditorScript(slug) {
     var afterRid=el.getAttribute('data-rid')||null;
     parent.insertBefore(clone, el.nextSibling);
     initBlockDrag();
-    fetch(API+'/api/edits?page='+PAGE).then(function(r){ return r.json(); }).then(function(ed){
+    armUndo().then(function(ed){
       ed=ed||{}; var key='__added:'+tid; var list=(ed[key]||[]).slice();
       list.push({id:newId, after:afterRid, html:clone.outerHTML});
       var patch={}; patch[key]=list;
@@ -791,6 +838,11 @@ function getEditorScript(slug) {
     if(!on) clearSelection();
   });
   bPick.addEventListener('click',function(){ panel.classList.toggle('show'); });
+  bUndo.addEventListener('click',performUndo);
+  bReset.addEventListener('click',function(){
+    if(!confirm('Clear every saved edit on this page and reload from the git template? This affects the whole page, not just what you last changed, and cannot itself be undone.')) return;
+    fetch(API+'/api/edits?page='+PAGE,{method:'DELETE'}).then(function(){ location.reload(); }).catch(function(){ toast('Reset failed'); });
+  });
 
   // ---- rich text: bold/italic/underline/link on a text selection while in Edit mode ----
   var rtbar=null;
