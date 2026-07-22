@@ -348,13 +348,26 @@ function getEditorScript(slug) {
     + 'body.de-design [data-de-block]:hover{outline:2px solid rgba(26,54,93,.6)}'
     + 'body.de-design [data-de-block].de-bsel{outline:2px solid #ED6F0B;cursor:default}'
     + 'body.de-design [data-de-block].de-bdrag{opacity:.35}'
-    + '.de-toolbar{position:absolute;z-index:99998;display:flex;gap:4px;background:#1A365D;border-radius:8px;padding:5px;box-shadow:0 6px 20px rgba(0,0,0,.25)}'
-    + '.de-toolbar button{background:transparent;border:0;color:#fff;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:14px;line-height:1}'
-    + '.de-toolbar button:hover{background:rgba(255,255,255,.18)}'
     + '.de-resize{position:absolute;z-index:99998;width:14px;height:14px;background:#ED6F0B;border:2px solid #fff;border-radius:50%;cursor:nwse-resize}'
-    + '.de-pop{position:absolute;z-index:99999;background:#fff;border:1px solid #E6E6E6;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:12px;display:flex;flex-direction:column;gap:8px;font:13px sans-serif;color:#333;min-width:190px}'
-    + '.de-pop label{font-size:11px;color:#6b7a8d;display:flex;justify-content:space-between;align-items:center;gap:8px}'
-    + '.de-pop select,.de-pop input[type=number]{font:inherit;padding:4px;border:1px solid #E6E6E6;border-radius:6px}'
+    + '.de-props{position:fixed;top:80px;right:16px;bottom:16px;z-index:99998;width:280px;max-width:88vw;overflow-y:auto;background:#fff;border:1px solid #E6E6E6;border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.2);display:none;font:13px sans-serif;color:#333}'
+    + '.de-props.show{display:block}'
+    + '.de-props .ph{padding:12px 14px;border-bottom:1px solid #E6E6E6;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1}'
+    + '.de-props .ph .tag{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#ED6F0B;background:rgba(237,111,11,.1);padding:3px 8px;border-radius:20px;font-weight:800}'
+    + '.de-props .pclose{cursor:pointer;color:#999;font-size:16px;background:none;border:0;line-height:1}'
+    + '.de-props section{padding:12px 14px;border-bottom:1px solid #F0F0F0}'
+    + '.de-props section h5{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#6b7a8d;margin-bottom:8px;font-weight:800}'
+    + '.de-props .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}'
+    + '.de-props label{display:block;font-size:10.5px;color:#6b7a8d;margin-bottom:3px}'
+    + '.de-props input[type=number],.de-props select{width:100%;font:inherit;padding:6px 8px;border:1px solid #E6E6E6;border-radius:6px;box-sizing:border-box}'
+    + '.de-props input[type=color]{width:100%;height:30px;border:1px solid #E6E6E6;border-radius:6px;padding:2px;cursor:pointer;box-sizing:border-box}'
+    + '.de-props input[type=range]{width:100%;margin-top:6px}'
+    + '.de-props .btnrow{display:flex;gap:6px}'
+    + '.de-props .btnrow button{flex:1;border:1px solid #E6E6E6;background:#fff;border-radius:6px;padding:7px;cursor:pointer;font:inherit}'
+    + '.de-props .btnrow button.on{background:#1A365D;color:#fff;border-color:#1A365D}'
+    + '.de-props .actions{padding:12px 14px;display:flex;gap:8px}'
+    + '.de-props .actions button{flex:1;border:0;border-radius:8px;padding:9px;cursor:pointer;font:inherit;font-weight:700}'
+    + '.de-props .actions .dup{background:#EEE;color:#333}.de-props .actions .rst{background:#EEE;color:#333}'
+    + '.de-props .actions .del{background:#FDE8E8;color:#C0392B}'
     + '.de-rtbar{position:absolute;z-index:99998;display:flex;gap:2px;background:#1A365D;border-radius:8px;padding:4px;box-shadow:0 6px 20px rgba(0,0,0,.25)}'
     + '.de-rtbar button{background:transparent;border:0;color:#fff;width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:13px;line-height:1}'
     + '.de-rtbar button:hover,.de-rtbar button.on{background:rgba(255,255,255,.22)}'
@@ -417,6 +430,9 @@ function getEditorScript(slug) {
 
   var fbPanel=document.createElement('div'); fbPanel.className='de-fbpanel';
   document.body.appendChild(fbPanel);
+
+  var propsPanel=document.createElement('div'); propsPanel.className='de-props';
+  document.body.appendChild(propsPanel);
 
   function toast(m){ var t=document.createElement('div'); t.className='de-toast'; t.textContent=m; document.body.appendChild(t);
     requestAnimationFrame(function(){ t.classList.add('show'); });
@@ -513,7 +529,7 @@ function getEditorScript(slug) {
   // any card-like block. Text mode (above) edits words; this edits the box around them.
   function assignBlockIds(){
     document.querySelectorAll(DESIGN_SEL).forEach(function(el){
-      if(el.closest('.de-bar,.de-panel,.de-pop,.de-toolbar')) return;
+      if(el.closest('.de-bar,.de-panel,.de-props,.de-fbpanel')) return;
       if(!el.getAttribute('data-eid')) el.setAttribute('data-eid','b'+(blockN++));
       el.setAttribute('data-de-block','1');
       var parent=el.parentElement; if(!parent) return;
@@ -540,7 +556,7 @@ function getEditorScript(slug) {
       if(el.__deWired) return; el.__deWired=true;
       el.addEventListener('mousedown',function(e){
         if(!document.body.classList.contains('de-design')) return;
-        if(e.target.closest('.de-resize,.de-toolbar,.de-pop')) return;
+        if(e.target.closest('.de-resize,.de-props')) return;
         el.setAttribute('draggable','true');
       });
       el.addEventListener('dragstart',function(e){
@@ -566,56 +582,30 @@ function getEditorScript(slug) {
     });
   }
 
-  var selEl=null, toolbar=null, resizeHandle=null;
-  function closeAllPops(){ document.querySelectorAll('.de-pop').forEach(function(p){ p.remove(); }); }
+  var selEl=null, resizeHandle=null;
   function positionOverlay(el){
     var r=el.getBoundingClientRect();
-    if(toolbar){ toolbar.style.top=(r.top+window.scrollY-38)+'px'; toolbar.style.left=(r.left+window.scrollX)+'px'; }
     if(resizeHandle){ resizeHandle.style.top=(r.top+window.scrollY+r.height-7)+'px'; resizeHandle.style.left=(r.left+window.scrollX+r.width-7)+'px'; }
   }
   function clearSelection(){
     if(selEl) selEl.classList.remove('de-bsel');
-    if(toolbar){ toolbar.remove(); toolbar=null; }
     if(resizeHandle){ resizeHandle.remove(); resizeHandle=null; }
-    closeAllPops(); selEl=null;
+    propsPanel.classList.remove('show');
+    selEl=null;
   }
   function rgbToHex(rgb){ var m=/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/.exec(rgb||''); if(!m) return '#ffffff';
     return '#'+[1,2,3].map(function(i){ return ('0'+parseInt(m[i],10).toString(16)).slice(-2); }).join(''); }
-  function openColorPop(el,anchor){
-    closeAllPops();
-    var pop=document.createElement('div'); pop.className='de-pop';
-    var cs=getComputedStyle(el);
-    pop.innerHTML='<label>Background <input type="color" class="de-bg" value="'+rgbToHex(cs.backgroundColor)+'"></label>'
-      + '<label>Text <input type="color" class="de-fg" value="'+rgbToHex(cs.color)+'"></label>';
-    document.body.appendChild(pop);
-    var r=anchor.getBoundingClientRect(); pop.style.top=(r.bottom+window.scrollY+6)+'px'; pop.style.left=(r.left+window.scrollX)+'px';
-    pop.querySelector('.de-bg').addEventListener('input',function(){ el.style.background=this.value; });
-    pop.querySelector('.de-fg').addEventListener('input',function(){ el.style.color=this.value; });
-    pop.addEventListener('change',function(){ queueStyleSave(el); });
-  }
   var FONTS=['Lato, sans-serif','Georgia, serif','Arial, sans-serif','\\'Courier New\\', monospace','\\'Times New Roman\\', serif','Verdana, sans-serif'];
-  function openFontPop(el,anchor){
-    closeAllPops();
-    var pop=document.createElement('div'); pop.className='de-pop';
-    var cs=getComputedStyle(el);
-    var opts=FONTS.map(function(f){ return '<option value="'+f.replace(/"/g,'&quot;')+'">'+f.split(',')[0].replace(/'/g,'')+'</option>'; }).join('');
-    pop.innerHTML='<label>Font <select class="de-ff">'+opts+'</select></label>'
-      + '<label>Size (px) <input type="number" class="de-fs" min="8" max="96" value="'+(parseInt(cs.fontSize,10)||14)+'"></label>'
-      + '<label>Weight <select class="de-fw"><option value="400">Regular</option><option value="700">Bold</option><option value="900">Black</option></select></label>';
-    document.body.appendChild(pop);
-    var r=anchor.getBoundingClientRect(); pop.style.top=(r.bottom+window.scrollY+6)+'px'; pop.style.left=(r.left+window.scrollX)+'px';
-    pop.querySelector('.de-ff').addEventListener('change',function(){ el.style.fontFamily=this.value; queueStyleSave(el); });
-    pop.querySelector('.de-fs').addEventListener('input',function(){ el.style.fontSize=this.value+'px'; queueStyleSave(el); positionOverlay(el); });
-    pop.querySelector('.de-fw').addEventListener('change',function(){ el.style.fontWeight=this.value; queueStyleSave(el); });
-  }
   function wireResize(el,handle){
     handle.addEventListener('mousedown',function(e){
       e.preventDefault(); e.stopPropagation();
       var startX=e.clientX, startY=e.clientY, box=el.getBoundingClientRect(), startW=box.width, startH=box.height;
       function onMove(ev){
-        el.style.width=Math.max(80,startW+(ev.clientX-startX))+'px';
-        el.style.height=Math.max(40,startH+(ev.clientY-startY))+'px';
+        var w=Math.max(80,startW+(ev.clientX-startX)), h=Math.max(40,startH+(ev.clientY-startY));
+        el.style.width=w+'px'; el.style.height=h+'px';
         positionOverlay(el);
+        var pw=propsPanel.querySelector('.p-w'), ph=propsPanel.querySelector('.p-h');
+        if(pw) pw.value=Math.round(w); if(ph) ph.value=Math.round(h);
       }
       function onUp(){ document.removeEventListener('mousemove',onMove); document.removeEventListener('mouseup',onUp); queueStyleSave(el); }
       document.addEventListener('mousemove',onMove); document.addEventListener('mouseup',onUp);
@@ -646,25 +636,86 @@ function getEditorScript(slug) {
     }).then(function(){ saveContainerOrder(parent,tid); toast('Block duplicated'); selectBlock(clone); })
       .catch(function(){ toast('Duplicate failed to save'); });
   }
+
+  // ---- Properties panel: a persistent Canva/PowerPoint-style inspector for whatever's
+  // selected — one place for text, fill/border and size, instead of scattered mini-popups.
+  function normWeight(w){ var n=parseInt(w,10); if(!isNaN(n)) return n>=700?(n>=900?'900':'700'):'400';
+    return (''+w).toLowerCase()==='bold' ? '700' : '400'; }
+  function blockState(el){
+    var cs=getComputedStyle(el), r=el.getBoundingClientRect();
+    return {
+      bg: rgbToHex(cs.backgroundColor), color: rgbToHex(cs.color),
+      borderColor: rgbToHex(cs.borderTopColor), borderWidth: parseInt(cs.borderTopWidth,10)||0,
+      radius: parseInt(cs.borderRadius,10)||0, opacity: Math.round((parseFloat(cs.opacity)||1)*100),
+      width: Math.round(r.width), height: Math.round(r.height),
+      fontSize: parseInt(cs.fontSize,10)||14, fontWeight: normWeight(cs.fontWeight), textAlign: cs.textAlign
+    };
+  }
+  function renderPropsPanel(el){
+    var st=blockState(el);
+    var fontOpts=FONTS.map(function(f){ return '<option value="'+f.replace(/"/g,'&quot;')+'">'+f.split(',')[0].replace(/'/g,'')+'</option>'; }).join('');
+    propsPanel.innerHTML =
+      '<div class="ph"><span><span class="tag">'+el.tagName.toLowerCase()+'</span></span><button class="pclose" title="Deselect">×</button></div>'
+      + '<section><h5>Text</h5>'
+        + '<label>Font</label><select class="p-ff">'+fontOpts+'</select>'
+        + '<div class="grid2" style="margin-top:8px">'
+          + '<div><label>Size (px)</label><input type="number" class="p-fs" min="8" max="96" value="'+st.fontSize+'"></div>'
+          + '<div><label>Weight</label><select class="p-fw"><option value="400">Regular</option><option value="700">Bold</option><option value="900">Black</option></select></div>'
+        + '</div>'
+        + '<label style="margin-top:8px">Align</label><div class="btnrow p-align">'
+          + '<button data-v="left">⟵</button><button data-v="center">•</button><button data-v="right">⟶</button></div>'
+        + '<label style="margin-top:8px">Text colour</label><input type="color" class="p-color" value="'+st.color+'">'
+      + '</section>'
+      + '<section><h5>Fill &amp; border</h5>'
+        + '<label>Background</label><input type="color" class="p-bg" value="'+st.bg+'">'
+        + '<div class="grid2" style="margin-top:8px">'
+          + '<div><label>Border colour</label><input type="color" class="p-bc" value="'+st.borderColor+'"></div>'
+          + '<div><label>Border width</label><input type="number" class="p-bw" min="0" max="12" value="'+st.borderWidth+'"></div>'
+        + '</div>'
+        + '<div class="grid2" style="margin-top:8px">'
+          + '<div><label>Corner radius</label><input type="number" class="p-radius" min="0" max="60" value="'+st.radius+'"></div>'
+          + '<div><label>Opacity %</label><input type="range" class="p-opacity" min="10" max="100" value="'+st.opacity+'"></div>'
+        + '</div>'
+      + '</section>'
+      + '<section><h5>Size</h5><div class="grid2">'
+        + '<div><label>Width (px)</label><input type="number" class="p-w" min="80" value="'+st.width+'"></div>'
+        + '<div><label>Height (px)</label><input type="number" class="p-h" min="40" value="'+st.height+'"></div>'
+      + '</div></section>'
+      + '<div class="actions"><button class="dup">⧉ Duplicate</button><button class="rst">↺ Reset</button><button class="del">🗑 Delete</button></div>';
+
+    propsPanel.querySelector('.pclose').addEventListener('click',clearSelection);
+    propsPanel.querySelectorAll('.p-align button').forEach(function(b){ b.classList.toggle('on',b.getAttribute('data-v')===st.textAlign); });
+    propsPanel.querySelector('.p-align').addEventListener('click',function(e){
+      var b=e.target.closest('button'); if(!b) return; el.style.textAlign=b.getAttribute('data-v'); queueStyleSave(el); renderPropsPanel(el); });
+    propsPanel.querySelector('.p-fw').value=st.fontWeight;
+    propsPanel.querySelector('.p-ff').addEventListener('change',function(){ el.style.fontFamily=this.value; queueStyleSave(el); });
+    propsPanel.querySelector('.p-fs').addEventListener('input',function(){ el.style.fontSize=this.value+'px'; queueStyleSave(el); positionOverlay(el); });
+    propsPanel.querySelector('.p-fw').addEventListener('change',function(){ el.style.fontWeight=this.value; queueStyleSave(el); });
+    propsPanel.querySelector('.p-color').addEventListener('input',function(){ el.style.color=this.value; queueStyleSave(el); });
+    propsPanel.querySelector('.p-bg').addEventListener('input',function(){ el.style.background=this.value; queueStyleSave(el); });
+    propsPanel.querySelector('.p-bc').addEventListener('input',function(){ el.style.borderColor=this.value; el.style.borderStyle='solid'; queueStyleSave(el); });
+    propsPanel.querySelector('.p-bw').addEventListener('input',function(){ el.style.borderWidth=this.value+'px'; el.style.borderStyle='solid'; queueStyleSave(el); });
+    propsPanel.querySelector('.p-radius').addEventListener('input',function(){ el.style.borderRadius=this.value+'px'; queueStyleSave(el); });
+    propsPanel.querySelector('.p-opacity').addEventListener('input',function(){ el.style.opacity=(this.value/100); queueStyleSave(el); });
+    propsPanel.querySelector('.p-w').addEventListener('input',function(){ el.style.width=this.value+'px'; queueStyleSave(el); positionOverlay(el); });
+    propsPanel.querySelector('.p-h').addEventListener('input',function(){ el.style.height=this.value+'px'; queueStyleSave(el); positionOverlay(el); });
+    propsPanel.querySelector('.dup').addEventListener('click',function(){ duplicateBlock(el); });
+    propsPanel.querySelector('.del').addEventListener('click',function(){ deleteBlock(el); });
+    propsPanel.querySelector('.rst').addEventListener('click',function(){
+      el.removeAttribute('style'); queueStyleSave(el); renderPropsPanel(el); positionOverlay(el); toast('Reset to default'); });
+  }
   function selectBlock(el){
     if(selEl===el) return;
     clearSelection(); selEl=el; el.classList.add('de-bsel');
-    toolbar=document.createElement('div'); toolbar.className='de-toolbar';
-    toolbar.innerHTML='<button data-a="color" title="Colour">🎨</button><button data-a="font" title="Font">Aa</button>'
-      + '<button data-a="dup" title="Duplicate">⧉</button><button data-a="del" title="Delete">🗑</button>';
-    document.body.appendChild(toolbar);
     resizeHandle=document.createElement('div'); resizeHandle.className='de-resize'; document.body.appendChild(resizeHandle);
     positionOverlay(el);
-    toolbar.addEventListener('click',function(e){
-      var b=e.target.closest('button'); if(!b) return; var a=b.getAttribute('data-a');
-      if(a==='color') openColorPop(el,b); else if(a==='font') openFontPop(el,b);
-      else if(a==='dup') duplicateBlock(el); else if(a==='del') deleteBlock(el);
-    });
     wireResize(el,resizeHandle);
+    renderPropsPanel(el);
+    propsPanel.classList.add('show');
   }
   document.addEventListener('click',function(e){
     if(!document.body.classList.contains('de-design')) return;
-    if(e.target.closest('.de-toolbar,.de-pop,.de-resize,.de-bar,.de-panel')) return;
+    if(e.target.closest('.de-props,.de-resize,.de-bar,.de-panel')) return;
     var el=e.target.closest('[data-de-block]');
     if(el) selectBlock(el); else clearSelection();
   }, true);
