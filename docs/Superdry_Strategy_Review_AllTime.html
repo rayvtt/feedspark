@@ -47,12 +47,14 @@ section{padding:104px 0}
 /* sticky left side-nav — compact numbered rail, hover reveals the label */
 .side-nav{position:fixed;top:50%;left:16px;transform:translateY(-50%);z-index:58;display:flex;flex-direction:column;gap:3px;opacity:0;pointer-events:none;transition:opacity .35s ease}
 .side-nav.show{opacity:1;pointer-events:auto}
-.side-nav a{position:relative;display:flex;align-items:center;justify-content:center;width:30px;height:26px;font-size:10px;font-weight:900;letter-spacing:.02em;color:#B9B9B9;text-decoration:none;border-left:2px solid var(--line);transition:color .2s,border-color .2s}
+.side-nav a{position:relative;display:flex;align-items:center;justify-content:center;width:30px;height:24px;font-size:10px;font-weight:900;letter-spacing:.02em;color:#BDBDBD;text-decoration:none;border-left:2px solid var(--line);transition:color .25s,border-color .25s,height .25s}
 .side-nav a:hover{color:var(--ink);border-left-color:var(--muted)}
-.side-nav a.active{color:var(--orange-deep);border-left-color:var(--orange)}
-.side-nav a .sn-l{position:absolute;left:34px;white-space:nowrap;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:rgba(255,255,255,.94);border:1px solid var(--line);box-shadow:var(--shadow);padding:4px 10px;opacity:0;pointer-events:none;transform:translateX(-5px);transition:opacity .18s,transform .18s}
-.side-nav a:hover .sn-l{opacity:1;transform:none}
-@media(max-width:1240px){.side-nav{display:none}}
+/* active section lights up and holds until the next one takes over */
+.side-nav a.active{color:var(--orange-deep);border-left-color:var(--orange);border-left-width:3px}
+.side-nav a .sn-l{position:absolute;left:34px;white-space:nowrap;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:rgba(255,255,255,.96);border:1px solid var(--line);border-left:2px solid var(--orange);box-shadow:var(--shadow);padding:4px 10px;opacity:0;pointer-events:none;transform:translateX(-5px);transition:opacity .22s,transform .22s}
+.side-nav a:hover .sn-l,.side-nav a.active .sn-l{opacity:1;transform:none}
+.side-nav a.active .sn-l{color:var(--orange-deep)}
+@media(max-width:1280px){.side-nav{display:none}}
 
 /* hero */
 .hero{background:var(--dark);color:#fff;min-height:88vh;display:flex;align-items:center;padding:120px 0 90px;position:relative;overflow:hidden}
