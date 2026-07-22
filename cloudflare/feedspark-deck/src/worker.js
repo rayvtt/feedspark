@@ -134,6 +134,16 @@ export default {
       }
     }
 
+    // ---- ATRT carry-over status (Workflow) — { "Client|task": "status" } for the retired tracker ----
+    if (path === '/api/carryover') {
+      if (request.method === 'GET') return json((await env.EDITS.get('carryover', 'json')) || {});
+      if (request.method === 'PUT') {
+        const body = await request.json();
+        await env.EDITS.put('carryover', JSON.stringify(body));
+        return json({ ok: true, count: Object.keys(body || {}).length });
+      }
+    }
+
     // ---- client store (dossier data layer: add / delete / link-sheet / edit-text persist here) ----
     // A single JSON object: per-brand overrides/additions to the git profiles, plus a _deleted list.
     if (path === '/api/clients') {
