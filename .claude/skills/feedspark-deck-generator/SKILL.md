@@ -100,6 +100,19 @@ line items often carry real test names, dates and outcomes an archive tab would 
 just less neatly organised. If genuinely nothing usable turns up, say so and ask Ray to
 share the specific tab as its own link/export — that sidesteps the tool limitation entirely.
 
+5. **An A/B test archive export**, if attached — a per-test log (one row per test, control vs.
+   test group) is a stronger source than any task-log status pill, because it carries the
+   actual quantified result, not just "Done"/"Reading". Parse it with `openpyxl` the same way
+   as a feed export and compute real aggregates (win rate, average lift, best/worst, broken
+   down by market/category) rather than reporting each test as a bare win/loss pill — the
+   aggregate is what makes 40+ scattered tests read as a track record instead of a wall of
+   rows. **Don't trust an auto-generated report's own narrative conclusion at face value** —
+   these exports are often templated (the same boilerplate paragraph copy-pasted per row with
+   numbers substituted in), and the template wording can say "uplift" for a negative number or
+   assert a framing ("Test Group performs better") that doesn't actually match that row's own
+   signed figures. Read the raw numbers, not the prose wrapped around them, and describe what
+   they actually show.
+
 If a client has no linked plan and no CLAUDE.md entry (a prospect deck), say so plainly and
 either ask Ray for the missing facts or write clearly-marked placeholders — never invent
 numbers, test results, or client facts that aren't sourced from somewhere above.
