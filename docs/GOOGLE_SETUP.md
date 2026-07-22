@@ -53,6 +53,21 @@ three live features at once:
   (add `https://www.googleapis.com/auth/drive.readonly` only if you want sheet-by-name lookup)
 - **Authorise.** This is what lets the service account impersonate `ray@feedspark.com`.
 
+### If you don't have admin access
+Step 6 is the **only** admin-gated action (domain-wide delegation is an org-level grant — no
+one can do it without super-admin). You do everything else; send whoever administers the
+`feedspark.com` Google Workspace this exact request:
+
+> Please authorise a service account for domain-wide delegation in the Google Admin console
+> (Security → Access and data control → API controls → Domain-wide delegation → Add new):
+> - **Client ID:** `103082021674924980826`
+> - **OAuth scopes:** `https://www.googleapis.com/auth/gmail.readonly,https://www.googleapis.com/auth/spreadsheets`
+> It only reads my own mailbox (`ray@feedspark.com`) and our project-plan sheets; you can revoke
+> it any time by removing that row.
+
+(Replace the Client ID with your service account's if different.) Once they confirm, continue
+at Step 7 — nothing else needs the admin.
+
 ## 7. Give the credential to the FCC worker
 From the repo root:
 ```bash
