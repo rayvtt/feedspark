@@ -364,35 +364,25 @@ window.addEventListener('load',restore);
     var t=TYPES.filter(function(x){return x[0]===cfg.type;})[0];
     var lbl={"1m":"Last month","3m":"Last 3 months","6m":"Last 6 months","fy":"Full FY","all":"All-time"}[cfg.lookback];
     var client=cfg.client||"[Prospect / generic]";
+    var slug=(cfg.client||"").toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
     var p=cfg.client&&PT[cfg.client]?PT[cfg.client]:null;
     var sheet=SHEETS[cfg.client];
     var L=[];
-    L.push("FEEDSPARK — DECK BUILD BRIEF  (paste into a Claude Code session; run with the /deck-generator skill)");
+    // skill-parseable skeleton (# title · ## Outline with **bold** labels · ## Live data) so the
+    // /deck-generator skill triggers and maps sections; enriched with the two build streams below.
+    L.push("# "+client+" — "+t[1]+" deck");
     L.push("");
-    L.push("GOAL");
-    L.push("Produce a client-ready "+t[1]+" deck for "+client+", matching the YuMOVE Strategy Review deck");
-    L.push("(the approved master template, live at /deck/yumove) and the FeedSpark design system exactly.");
-    L.push("Output a complete, QA'd deck — the full book, not an outline.");
+    L.push("- Client: "+client+(slug?" (slug: "+slug+")":""));
+    L.push("- Deck type: "+t[1]+" (id: "+t[0]+")");
+    L.push("- Look-back: "+lbl);
+    L.push("- Sections: "+cfg.out.length);
     L.push("");
-    L.push("INPUTS — TWO STREAMS (do both; do not summarise from memory — read the sources)");
-    L.push("");
-    L.push("STREAM A · PROJECT PLANS (the worksheet)");
-    L.push("- "+(sheet?("Google Sheet id "+sheet+" — read the 'Project Plan' tab in full: every task, owner, status, date."):("Link "+client+"'s plan sheet from the dossier and read the 'Project Plan' tab in full.")));
-    L.push("- Establish what's delivered, what's in flight, and the testing roadmap over "+lbl+".");
-    L.push("- The live snapshot below summarises this stream; the sheet holds the detail.");
-    L.push("");
-    L.push("STREAM B · PRODUCT DATA FEED (the source of truth)");
-    L.push("- Attach "+client+"'s current product feed — an up-to-date export (~5,000 rows). Treat it as the");
-    L.push("  single source of truth for every feed metric in the deck.");
-    L.push("- Analyse and SCORE it: title structure (MASK — Brand + Material + Fit + Colour + Use-case,");
-    L.push("  80–120 chars), attribute completeness (Golden Record 99.9% target), GPC / product_type depth,");
-    L.push("  imagery, custom labels, and conversational-attribute coverage (question_and_answer,");
-    L.push("  item_group_title, variant_option, popularity_rank, related_product).");
-    L.push("- Populate and UPDATE the analysis in every data-driven section from these findings — the");
-    L.push("  numbers come from the feed, not from memory. Cross-check against the plan snapshot below.");
+    L.push("## Outline");
+    if(!cfg.out.length){ L.push("_No sections yet — add sections in the generator._"); }
+    else cfg.out.forEach(function(id,i){ var s=SMAP[id]; L.push((i+1)+". **"+txt(s[1])+"** (`"+id+"`) — "+(GUIDE[id]||txt(s[2]))); });
     if(p){
       L.push("");
-      L.push("LIVE PLAN SNAPSHOT ("+client+", updated "+p.updated+")");
+      L.push("## Live data to weave in (from the plan)");
       L.push("- Feed-optimisation score: "+p.score+"/100");
       L.push("- Tasks: "+p.total+" total · "+p.done+" done · "+p.open+" open · "+(p.hold||0)+" parked");
       L.push("- Coverage by lane (done/total): "+Object.keys(p.cats||{}).map(function(k){var c=p.cats[k];return (CLBL[k]||k)+" "+c.done+"/"+c.total;}).join(", "));
@@ -401,26 +391,18 @@ window.addEventListener('load',restore);
       if(o){ L.push("- In flight / priorities (open):"); L.push(o); }
     }
     L.push("");
-    L.push("DECK SPEC");
-    L.push("- Type: "+t[1]+" ("+t[0]+")   ·   Look-back: "+lbl+"   ·   Sections: "+cfg.out.length);
-    L.push("- Build these sections, in order (id in brackets maps to the /deck-generator skill):");
-    if(!cfg.out.length){ L.push("   (no sections chosen yet — add sections in the generator)"); }
-    else cfg.out.forEach(function(id,i){ var s=SMAP[id]; L.push("   "+(i+1)+". "+txt(s[1])+" ["+id+"] — "+(GUIDE[id]||txt(s[2]))); });
+    L.push("## Two streams to run (source-of-truth build)");
+    L.push("**Stream A — project plans (the worksheet).** "+(sheet?("Google Sheet id "+sheet+" — read the 'Project Plan' tab in full: every task, owner, status, date."):("Link "+client+"'s plan sheet from the dossier and read the 'Project Plan' tab in full.")));
+    L.push("Establish what's delivered, what's in flight and the testing roadmap over "+lbl+". The snapshot above summarises it; the sheet holds the detail.");
     L.push("");
-    L.push("DESIGN SYSTEM (governing — Reiss–Dentsu reference; use only these)");
-    L.push("- Font Lato. Orange #F5A623 (primary), deep orange #ED6F0B, charcoal #333 body text,");
-    L.push("  white / #F7F7F5 card backgrounds, #E6E6E6 borders.");
-    L.push("- Footer: 'FeedSpark · Private & Confidential' left, page number right.");
-    L.push("- Prohibited: no FeedSpark logo, no page-number circles, no decorative lines. Clean white backgrounds.");
+    L.push("**Stream B — product data feed (the source of truth).** Attach "+client+"'s current product feed — an up-to-date export (~5,000 rows). Analyse and SCORE it: MASK title structure (Brand + Material + Fit + Colour + Use-case, 80–120 chars), attribute completeness (Golden Record 99.9% target), GPC / product-type depth, imagery, custom labels, and conversational-attribute coverage (question_and_answer, item_group_title, variant_option, popularity_rank, related_product). Populate and update every data-driven section from the feed — the numbers come from the feed, not from memory. Where the feed and the plan diverge, lead with the feed.");
     L.push("");
-    L.push("METHOD");
-    L.push("- Mirror the YuMOVE deck's structure, slide rhythm and component styling.");
-    L.push("- Build with the /deck-generator skill (python-pptx in Code) and QA slide-by-slide with the previewer.");
-    L.push("- Ground every claim in the two streams (project-plan worksheet + product feed). Where the feed");
-    L.push("  score and the plan diverge, lead with the feed — it is the source of truth.");
+    L.push("## Build notes");
+    L.push("- Build a real HTML deck from docs/FeedSpark_Strategy_Review_Template.html, matching docs/YuMOVE_Strategy_Review_Jul26.html (/deck/yumove) and the FeedSpark design system exactly (Lato; orange #F5A623 / #ED6F0B; charcoal #333; white / #F7F7F5 cards; #E6E6E6 borders; footer 'FeedSpark · Private & Confidential' + page number; no logo, no page-number circles, no decorative lines).");
+    L.push("- Wire the new deck into the worker at /deck/"+(slug||"<slug>")+". Leave no [bracket] placeholders.");
     L.push("- Flag any commercial figure (pricing, hours) for Ray to confirm — never invent client numbers or results.");
     L.push("");
-    L.push("DELIVERABLE: a complete "+cfg.out.length+"-section "+t[1]+" deck for "+client+", client-ready.");
+    L.push("_Generated by the FeedSpark Deck Generator. Run with the /deck-generator skill to build the full deck._");
     return L.join("\n");
   }
   var modal=document.getElementById("modal");
