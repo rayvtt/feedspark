@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Superdry × FeedSpark — Strategy Review (All-time), 2024–2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1A1A1A;--ink-2:#333333;--muted:#767676;--line:#E6E6E6;
+  --paper:#FFFFFF;--paper-2:#F7F7F5;--paper-warm:#FEF9F2;
+  --orange:#F5A623;--orange-deep:#ED6F0B;--dark:#1C1C1C;
+  --green:#2E7D32;--red:#C62828;--blue:#1565C0;--purple:#6A1B9A;
+  --shadow:0 2px 10px rgba(0,0,0,.06);--shadow-lift:0 8px 24px rgba(0,0,0,.10);
+  --maxw:1180px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Lato',-apple-system,sans-serif;color:var(--ink-2);background:var(--paper);-webkit-font-smoothing:antialiased;line-height:1.55}
+h1,h2,h3,h4{color:var(--ink);font-weight:700;line-height:1.15;letter-spacing:-.01em}
+a{color:var(--orange-deep)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--orange-deep)}
+
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 40px}
+section{padding:104px 0}
+.band{background:var(--paper-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.band-warm{background:var(--paper-warm);border-top:1px solid #EDE3D3;border-bottom:1px solid #EDE3D3}
+
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--orange-deep);margin-bottom:14px}
+.eyebrow.on-dark{color:var(--orange)}
+.sec-title{font-size:34px;margin-bottom:6px}
+.sec-sub{font-size:15.5px;color:var(--muted);margin-bottom:44px;max-width:760px}
+
+/* topbar */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);transform:translateY(-100%);transition:transform .3s ease}
+.topbar.show{transform:translateY(0)}
+.topbar-in{max-width:var(--maxw);margin:0 auto;padding:0 40px;height:56px;display:flex;align-items:center;gap:22px}
+.tb-brand{font-weight:900;font-size:13px;letter-spacing:.04em;color:var(--ink);white-space:nowrap}
+.tb-brand span{color:var(--orange-deep)}
+.tb-nav{display:flex;gap:18px;margin-left:auto;flex-wrap:wrap}
+.tb-nav a{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent;transition:.2s}
+.tb-nav a:hover,.tb-nav a.active{color:var(--ink);border-bottom-color:var(--orange)}
+.progress{position:absolute;bottom:-1px;left:0;height:2px;background:var(--orange);width:0}
+
+/* hero */
+.hero{background:var(--dark);color:#fff;min-height:88vh;display:flex;align-items:center;padding:120px 0 90px;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;top:0;left:0;width:112px;height:9px;background:var(--orange)}
+.hero:after{content:"";position:absolute;top:9px;left:0;right:0;height:1px;background:rgba(255,255,255,.16)}
+.hero h1{color:#fff;font-size:64px;font-weight:900;letter-spacing:-.025em;margin:18px 0 22px}
+.hero h1 em{font-style:normal;color:var(--orange)}
+.hero .lede{font-size:19px;color:rgba(255,255,255,.72);max-width:620px;font-weight:300}
+.hero-rule{width:64px;height:3px;background:var(--orange);margin:34px 0 26px}
+.hero-meta{display:flex;gap:36px;flex-wrap:wrap;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:700}
+.hero-meta b{display:block;color:#fff;font-size:15px;letter-spacing:0;text-transform:none;font-weight:700;margin-top:5px}
+.scrollcue{margin-top:56px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:700;display:flex;align-items:center;gap:10px}
+.scrollcue i{display:block;width:26px;height:1px;background:var(--orange);animation:cue 1.8s ease-in-out infinite}
+@keyframes cue{0%,100%{transform:scaleX(1)}50%{transform:scaleX(1.7)}}
+
+/* chapter divider */
+.chapter{background:var(--dark);color:#fff;padding:88px 0;position:relative;overflow:hidden}
+.chapter-in{max-width:var(--maxw);margin:0 auto;padding:0 40px;position:relative;z-index:2}
+.ch-num{position:absolute;right:40px;top:50%;transform:translateY(-50%);font-size:190px;font-weight:900;line-height:1;color:transparent;-webkit-text-stroke:1.5px rgba(245,166,35,.42);letter-spacing:-.04em;user-select:none;z-index:1}
+.chapter h2{color:#fff;font-size:42px;font-weight:900;letter-spacing:-.025em;margin-bottom:12px}
+.chapter p{color:rgba(255,255,255,.6);font-size:15.5px;max-width:640px}
+.ch-rule{width:48px;height:3px;background:var(--orange);margin-bottom:24px}
+
+/* agenda */
+.agenda{display:grid;grid-template-columns:1fr 1fr;gap:0 60px}
+.ag-row{display:grid;grid-template-columns:44px 1fr;gap:18px;padding:20px 0;border-bottom:1px solid var(--line)}
+.ag-num{font-size:13px;font-weight:900;color:var(--orange);letter-spacing:.06em;padding-top:2px}
+.ag-t{font-size:16.5px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.ag-d{font-size:13.5px;color:var(--muted)}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:40px}
+.stat{background:var(--paper);padding:26px 22px}
+.stat .n{font-size:40px;font-weight:900;color:var(--ink);letter-spacing:-.03em;line-height:1}
+.stat .n small{font-size:19px;font-weight:700;color:var(--muted)}
+.stat .l{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:9px}
+
+/* cards */
+.card{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:28px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.card h4{font-size:15px;margin-bottom:12px}
+.card p{font-size:14px;color:var(--ink-2)}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+thead th{background:var(--dark);color:#fff;text-align:left;padding:11px 14px;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even){background:var(--paper-2)}
+.tbl-wrap{border:1px solid var(--line);box-shadow:var(--shadow);background:var(--paper);overflow-x:auto}
+
+.pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:2px;white-space:nowrap}
+.p-done{background:rgba(46,125,50,.10);color:var(--green)}
+.p-prog{background:rgba(245,166,35,.16);color:var(--orange-deep)}
+.p-open{background:#EEE;color:var(--muted)}
+.p-block{background:rgba(237,111,11,.10);color:var(--orange-deep);border:1px solid rgba(237,111,11,.28)}
+
+/* bars */
+.bars{display:flex;flex-direction:column;gap:16px}
+.bar-row .bl{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.bar-row .bl span{color:var(--muted);font-weight:400}
+.track{height:7px;background:var(--paper-2);border:1px solid var(--line)}
+.fill{height:100%;width:0;background:var(--orange);transition:width 1.1s cubic-bezier(.22,.61,.36,1)}
+.fill.green{background:var(--green)}
+.fill.grey{background:#C9C9C9}
+.fill.red{background:var(--red)}
+
+/* protocol cards */
+.proto{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px;position:relative;overflow:hidden}
+.proto:before{content:"";position:absolute;top:0;left:0;right:0;height:4px}
+.proto.g:before{background:var(--green)}
+.proto.b:before{background:var(--blue)}
+.proto.p:before{background:var(--purple)}
+.proto .tag{font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px}
+.proto.g .tag{color:var(--green)}
+.proto.b .tag{color:var(--blue)}
+.proto.p .tag{color:var(--purple)}
+.proto h4{font-size:17px;margin-bottom:4px}
+.proto .desc{font-size:12px;font-style:italic;color:var(--muted);margin-bottom:14px}
+.proto ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.proto li{padding-left:14px;position:relative;margin-bottom:8px}
+.proto li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%}
+.proto.g li:before{background:var(--green)}
+.proto.b li:before{background:var(--blue)}
+.proto.p li:before{background:var(--purple)}
+
+/* pipeline */
+.pipe{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.pipe-card{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px;position:relative}
+.pipe-card h4{font-size:16px;margin-bottom:4px}
+.pipe-card .sub{font-size:12px;color:var(--muted);font-style:italic;margin-bottom:14px}
+.pipe-card ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.pipe-card li{padding-left:14px;position:relative;margin-bottom:8px}
+.pipe-card li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--orange);border-radius:50%}
+
+/* tachyon flow */
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--line);border:1px solid var(--line)}
+.flow-step{background:var(--paper);padding:24px 20px;position:relative}
+.flow-step:not(:last-child):after{content:"→";position:absolute;right:-7px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--orange);font-weight:900;z-index:2}
+.fs-num{font-size:11px;font-weight:900;letter-spacing:.2em;color:var(--orange);margin-bottom:10px}
+.flow-step h4{font-size:14px;margin-bottom:6px}
+.flow-step p{font-size:12.5px;color:var(--muted)}
+
+/* description enrichment */
+.enrich{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.en-card{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:22px;border-left:3px solid var(--orange)}
+.en-card h4{font-size:14px;margin-bottom:8px}
+.en-card .before{background:#FFF3F3;border:1px solid #FFCDD2;padding:12px 14px;font-size:12.5px;color:var(--red);margin-bottom:10px;font-family:ui-monospace,monospace;line-height:1.6}
+.en-card .after{background:#E8F5E9;border:1px solid #C8E6C9;padding:12px 14px;font-size:12.5px;color:var(--green);font-family:ui-monospace,monospace;line-height:1.6}
+
+/* maturity tiers */
+.tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.tier{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px 20px;position:relative}
+.tier.here{border-color:var(--orange);border-width:2px;box-shadow:var(--shadow-lift)}
+.tier .flag{position:absolute;top:-11px;left:20px;background:var(--orange);color:#fff;font-size:9.5px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;padding:4px 9px}
+.tier .tn{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:var(--orange-deep);margin-bottom:8px}
+.tier h4{font-size:17px;margin-bottom:3px}
+.tier .ts{font-size:12px;color:var(--muted);font-style:italic;margin-bottom:14px}
+.tier ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.tier li{padding-left:14px;position:relative;margin-bottom:9px}
+.tier li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--orange);border-radius:50%}
+.tier.done h4:after{content:" ✓";color:var(--green)}
+
+/* interactive panel */
+.agent{display:grid;grid-template-columns:1fr 1.15fr;gap:0;border:1px solid var(--line);box-shadow:var(--shadow-lift);background:var(--paper)}
+.agent-l{padding:32px;border-right:1px solid var(--line);background:var(--paper-2)}
+.agent-l h4{font-size:14px;margin-bottom:6px}
+.agent-l>p{font-size:13px;color:var(--muted);margin-bottom:20px}
+.qs{display:flex;flex-direction:column;gap:9px}
+.q{text-align:left;font-family:inherit;font-size:13.5px;color:var(--ink-2);background:var(--paper);border:1px solid var(--line);padding:12px 14px;cursor:pointer;transition:.18s;line-height:1.4}
+.q:hover{border-color:var(--orange);transform:translateX(3px)}
+.q.active{border-color:var(--orange);border-left:3px solid var(--orange);background:#fff;box-shadow:var(--shadow);font-weight:700;color:var(--ink)}
+.q:focus-visible{outline:2px solid var(--orange-deep);outline-offset:2px}
+.agent-r{padding:32px;min-height:340px}
+.ar-head{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:16px}
+.attr-name{font-size:22px;font-weight:900;color:var(--ink);letter-spacing:-.02em;margin-bottom:4px}
+.attr-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--orange-deep);margin-bottom:18px}
+.attr-why{font-size:14px;color:var(--ink-2);margin-bottom:20px}
+.feedrow{background:var(--dark);padding:16px 18px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#E8E8E8;line-height:1.65;overflow-x:auto}
+.feedrow .k{color:var(--orange)}
+.feedrow .c{color:#7A7A7A}
+.attr-note{font-size:12.5px;color:var(--muted);margin-top:16px;padding-left:12px;border-left:2px solid var(--orange)}
+.fade-swap{animation:sw .34s ease}
+@keyframes sw{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* scorecard */
+.sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.sc-cell{background:var(--paper);padding:22px}
+.sc-cell .sc-bar{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.sc-cell .sc-pct{font-size:32px;font-weight:900;letter-spacing:-.03em;line-height:1}
+.sc-cell .sc-label{font-size:14px;font-weight:700;color:var(--ink)}
+.sc-cell .sc-note{font-size:12.5px;color:var(--muted);margin-top:6px}
+.sc-cell .sc-tgt{font-size:11.5px;color:var(--green);margin-top:4px;font-weight:700}
+.sc-cell .sc-warn{font-size:11.5px;color:var(--red);margin-top:4px;font-weight:700}
+
+/* roadmap */
+.road{display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
+.mo{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:22px 18px;display:flex;flex-direction:column}
+.mo.peak{border-color:var(--orange);border-width:2px}
+.mo-m{font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:900;color:var(--ink);margin-bottom:12px}
+.mo-s{font-size:9.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;align-self:flex-start;margin-bottom:14px}
+.s-close{background:rgba(46,125,50,.10);color:var(--green)}
+.s-build{background:rgba(245,166,35,.18);color:var(--orange-deep)}
+.s-next{background:#EEE;color:var(--muted)}
+.s-peak{background:var(--orange);color:#fff}
+.mo h4{font-size:14px;margin-bottom:8px}
+.mo ul{list-style:none;font-size:12.5px;color:var(--ink-2);margin-top:auto}
+.mo li{padding-left:13px;position:relative;margin-bottom:9px;line-height:1.45}
+.mo li:before{content:"";position:absolute;left:0;top:7px;width:4px;height:4px;background:var(--orange);border-radius:50%}
+.mo li b{color:var(--ink)}
+
+/* asks */
+.ask{display:grid;grid-template-columns:34px 1fr;gap:16px;padding:20px 0;border-bottom:1px solid var(--line)}
+.ask-i{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--orange);display:flex;align-items:center;justify-content:center;color:var(--orange-deep);font-weight:900;font-size:13px}
+
+/* callout + note */
+.callout{background:var(--orange);color:#fff;padding:24px 28px;margin-top:32px}
+.callout h4{color:#fff;font-size:15px;margin-bottom:6px}
+.callout p{font-size:14px;color:rgba(255,255,255,.95)}
+.note{background:var(--paper-2);border:1px solid var(--line);border-left:3px solid var(--orange);padding:18px 22px;font-size:13.5px;color:var(--ink-2);margin-top:28px}
+.note b{color:var(--ink)}
+
+.chk{display:inline-block;font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--orange-deep);border:1px solid var(--orange);border-radius:2px;padding:0 4px;margin-left:5px;vertical-align:super;cursor:help}
+body.hide-checks .chk{display:none}
+.flagbtn{margin-left:auto;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:transparent;border:1px solid var(--line);color:var(--muted);padding:5px 10px;cursor:pointer;transition:.2s;white-space:nowrap}
+.flagbtn[aria-pressed="true"]{border-color:var(--orange);color:var(--orange-deep);background:rgba(245,166,35,.08)}
+
+/* close */
+.close{background:var(--dark);color:#fff;padding:96px 0}
+.close h2{color:#fff;font-size:44px;font-weight:900;margin-bottom:10px}
+.contacts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:8px}
+.ct{border-top:2px solid var(--orange);padding-top:16px}
+.ct b{display:block;color:#fff;font-size:16px;font-weight:700}
+.ct span{display:block;font-size:12.5px;color:rgba(255,255,255,.5);margin-top:2px}
+.ct a{display:block;font-size:13px;color:var(--orange);text-decoration:none;margin-top:8px}
+.footmark{position:fixed;left:0;bottom:0;z-index:55;background:rgba(255,255,255,.9);border-top:1px solid var(--line);border-right:1px solid var(--line);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:7px 16px;backdrop-filter:blur(6px)}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s cubic-bezier(.22,.61,.36,1)}
+.rv.in{opacity:1;transform:none}
+
+@media(max-width:1000px){.stats{grid-template-columns:repeat(2,1fr)}.tiers,.road,.pipe,.flow,.grid-4{grid-template-columns:1fr 1fr}.agent{grid-template-columns:1fr}.agent-l{border-right:0;border-bottom:1px solid var(--line)}.agenda,.enrich{grid-template-columns:1fr}.hero h1{font-size:44px}.ch-num{font-size:120px;opacity:.5}.contacts{grid-template-columns:1fr}}
+@media(max-width:640px){.wrap,.topbar-in,.chapter-in{padding:0 22px}section{padding:64px 0}.stats,.tiers,.road,.grid-2,.grid-3,.pipe,.flow,.sc-grid{grid-template-columns:1fr}.hero h1{font-size:34px}.sec-title{font-size:26px}.chapter h2{font-size:30px}.tb-nav{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body class="">
+
+<div class="topbar" id="topbar">
+  <div class="topbar-in">
+    <div class="tb-brand">Feed<span>Spark</span> × Superdry</div>
+    <nav class="tb-nav">
+      <a href="#c1">01 Scope</a>
+      <a href="#c2">02 Stack</a>
+      <a href="#c3">03 Recap</a>
+      <a href="#c4">04 Look-back</a>
+      <a href="#c5">05 Value</a>
+      <a href="#c6">06 Automation</a>
+      <a href="#c7">07 Wins</a>
+      <a href="#c8">08 Team</a>
+      <a href="#c9">09 Score</a>
+      <a href="#c10">10 AI</a>
+      <a href="#c11">11 Cases</a>
+      <a href="#c12">12 Roadmap</a>
+    </nav>
+    <button class="flagbtn" id="flagbtn" aria-pressed="true" title="Toggle data-check markers">⚑ Data checks</button>
+    <div class="progress" id="progress" style="width: 0%;"></div>
+  </div>
+</div>
+<div class="footmark">FeedSpark · Private &amp; Confidential</div>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow on-dark">Strategy Review · All-time · 2024–2026</div>
+    <h1>Superdry&nbsp;<br></h1>
+    <div class="hero-rule"></div>
+    <p class="lede">Two years, 19 markets, 1,294 tasks and 1,746 hours of feed engineering — one continuous programme. This review is the record of the work delivered, the value banked, and the plan to move Superdry from an optimised feed to an AI-ready one.</p>
+    <div class="hero-meta" style="margin-top:40px">
+      <div>Client<b>Superdry</b></div>
+      <div>Scope<b>19 markets · Shopping + Social</b></div>
+      <div>Window<b>Jul 2024 → Jul 2026</b></div>
+    </div>
+    <div class="scrollcue"><i></i> Scroll</div>
+  </div>
+</header>
+
+<!-- ================= AGENDA ================= -->
+<section>
+  <div class="wrap">
+    <div class="eyebrow rv in">Agenda</div>
+    <h2 class="sec-title rv in">What we'll cover</h2>
+    <p class="sec-sub rv in">Twelve chapters. The first six recap the scope, the stack and two years of delivered work; chapters seven to nine prove the value with the test archive and the feed score; the last three lay out AI readiness, the cross-category evidence and the roadmap for the period ahead.</p>
+    <div class="agenda rv in">
+      <div>
+        <div class="ag-row"><div class="ag-num">01</div><div><div class="ag-t">Service scope &amp; scale</div><div class="ag-d">19 markets · Shopping + Social · hours by market</div></div></div>
+        <div class="ag-row"><div class="ag-num">02</div><div><div class="ag-t">The delivery stack</div><div class="ag-d">FeedHero · Tachyon AI · scrapers &amp; supplemental feeds</div></div></div>
+        <div class="ag-row"><div class="ag-num">03</div><div><div class="ag-t">Review &amp; project recap</div><div class="ag-d">169 done · 86 open · 5 parked — action by action</div></div></div>
+        <div class="ag-row"><div class="ag-num">04</div><div><div class="ag-t">Look-back period</div><div class="ag-d">Two-year timeline · activity mix · task families</div></div></div>
+        <div class="ag-row"><div class="ag-num">05</div><div><div class="ag-t">Value delivered</div><div class="ag-d">1,746 hrs · 35% invested beyond billable</div></div></div>
+        <div class="ag-row" style="border-bottom:0"><div class="ag-num">06</div><div><div class="ag-t">Automation &amp; pick readiness</div><div class="ag-d">Range Completion · custom labels · overlays · Hero Sizes</div></div></div>
+      </div>
+      <div>
+        <div class="ag-row"><div class="ag-num">07</div><div><div class="ag-t">The A/B test archive &amp; wins</div><div class="ag-d">The experiments run and what they told us</div></div></div>
+        <div class="ag-row"><div class="ag-num">08</div><div><div class="ag-t">Team &amp; ways of working</div><div class="ag-d">AM in London · ASPL content pod · monthly catch-up</div></div></div>
+        <div class="ag-row"><div class="ag-num">09</div><div><div class="ag-t">Feed optimisation score</div><div class="ag-d">70/100 — coverage by lane</div></div></div>
+        <div class="ag-row"><div class="ag-num">10</div><div><div class="ag-t">AI readiness</div><div class="ag-d">Where Superdry sits on the climb · the gap to close</div></div></div>
+        <div class="ag-row"><div class="ag-num">11</div><div><div class="ag-t">Case studies &amp; comparable wins</div><div class="ag-d">The pattern that holds across categories</div></div></div>
+        <div class="ag-row" style="border-bottom:0"><div class="ag-num">12</div><div><div class="ag-t">Roadmap — next quarter</div><div class="ag-d">Open priorities · onboarding · testing roadmap</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 01 — SCOPE ================= -->
+<div class="chapter" id="c1"><div class="ch-num">01</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter one</div><h2>Service scope &amp; scale</h2><p>What FeedSpark runs for Superdry, and how big it is.</p></div></div>
+
+<section>
+  <div class="wrap">
+    <div class="stats rv in">
+      <div class="stat"><div class="n">19</div><div class="l">Markets managed</div></div>
+      <div class="stat"><div class="n">2</div><div class="l">Core channels — Shopping + Social</div></div>
+      <div class="stat"><div class="n">1,294</div><div class="l">Tasks delivered · 2yr</div></div>
+      <div class="stat"><div class="n">1,746<small><span class="chk">?</span></small></div><div class="l">Hours delivered · 2yr</div></div>
+      <div class="stat"><div class="n">260</div><div class="l">Live plan tasks tracked</div></div>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="tbl-wrap">
+        <table><thead><tr><th>Channel</th><th>Feeds</th><th>Focus</th></tr></thead>
+        <tbody>
+          <tr><td><b>Google Shopping / PMax</b></td><td>Per-market</td><td>Titles, category mapping, keywords, Range Completion, custom labels, disapprovals</td></tr>
+          <tr><td><b>Social / Meta</b></td><td>Per-market</td><td>Image overlays, catalogue hygiene, custom labels, DPA feed</td></tr>
+          <tr><td><b>LIA — Local Inventory</b></td><td>In progress</td><td>Store-ID / inventory work opened — store visits diagnostics ongoing</td></tr>
+        </tbody></table>
+      </div>
+      <div class="card">
+        <h4>Where the hours went — by market · 2yr</h4>
+        <div class="bars" style="margin-top:16px">
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">GB — anchor market</span><span>1,044 hrs</span></div><div class="track"><div class="fill" data-w="100" style="width:100%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">France</span><span>202 hrs</span></div><div class="track"><div class="fill" data-w="19" style="width:19%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Germany</span><span>170 hrs</span></div><div class="track"><div class="fill" data-w="16" style="width:16%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Ireland</span><span>98 hrs</span></div><div class="track"><div class="fill" data-w="9" style="width:9%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">US &amp; Canada</span><span>46 hrs</span></div><div class="track"><div class="fill grey" data-w="4" style="width:4%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">NL / BE / DK / SE / ES / PL / IT / NO / FI / CH</span><span>186 hrs</span></div><div class="track"><div class="fill grey" data-w="18" style="width:18%;"></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="note rv in"><b>GB is the engine, but the programme is genuinely pan-European.</b> Beyond the four anchor markets, FeedSpark has delivered work across 15 further locales — NL, BE-FR, BE-NL, DK, SE, ES, PL, IT, NO, FI, CH-DE, CH-FR, plus US and CA-EN/CA-FR — every one carrying the same title, category and Range Completion logic.</div>
+  </div>
+</section>
+
+<!-- ================= CH 02 — STACK ================= -->
+<div class="chapter" id="c2"><div class="ch-num">02</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter two</div><h2>The delivery stack</h2><p>The tools doing the work behind the Superdry programme.</p></div></div>
+
+<section class="band">
+  <div class="wrap">
+    <div class="eyebrow rv in">Unit / tech stack</div>
+    <h2 class="sec-title rv in">Four layers, mapped to what Superdry actually uses</h2>
+    <p class="sec-sub rv in">Every layer below is live on the account today — this isn't a capability menu, it's the machinery already running the 19-market feed.</p>
+    <div class="grid-4 rv in">
+      <div class="card" style="border-left:3px solid var(--orange)">
+        <h4>FeedHero</h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Feed management &amp; rules engine</p>
+        <p style="font-size:13px">Range Completion exclusion, Hero Sizes rule, custom labels CL0–CL4 (margin, low-performer, seasonal, bestseller), keyword injection, image-overlay rules, output-feed exclusions and per-market batch set-up.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange)">
+        <h4>Tachyon AI</h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:10px">LLM enrichment engine</p>
+        <p style="font-size:13px">Search-intent generation for keyword optimisation (Jackets, Coats, Dresses, Shorts), description enrichment, and visual attribute harvest from product imagery — the engine behind the title and keyword tests.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange)">
+        <h4>Scrapers &amp; supplemental</h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Data acquisition</p>
+        <p style="font-size:13px">Sale line-list ingestion, margin-label data, zombie-SKU detection (0 impressions / 30 days), competitor keyword capture and supplemental feeds for data-field back-filling.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange)">
+        <h4>Output channels</h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Where the feed lands</p>
+        <p style="font-size:13px">Google Shopping &amp; PMax, Meta / Social DPA, and Local Inventory Ads (in progress) — each market's feed built once, then split and localised per channel.</p>
+      </div>
+    </div>
+    <div class="note rv in"><b>The point of the stack:</b> the same enrichment built for Shopping — decomposed titles, deep categories, clean variants — is exactly the data an AI agent needs to read. Nothing here is throwaway; it all compounds toward the AI-readiness work in chapter ten.</div>
+  </div>
+</section>
+
+<!-- ================= CH 03 — RECAP ================= -->
+<div class="chapter" id="c3"><div class="ch-num">03</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter three</div><h2>Review &amp; project recap</h2><p>The live project plan — where the 260 tracked tasks stand.</p></div></div>
+
+<section>
+  <div class="wrap">
+    <div class="grid-4 rv in" style="margin-bottom:36px">
+      <div class="card"><div style="font-size:44px;font-weight:900;color:var(--green);line-height:1">169</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Done</div></div>
+      <div class="card"><div style="font-size:44px;font-weight:900;color:var(--orange-deep);line-height:1">86</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Open / in flight</div></div>
+      <div class="card"><div style="font-size:44px;font-weight:900;color:var(--ink);line-height:1">5</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Parked</div></div>
+      <div class="card"><div style="font-size:44px;font-weight:900;color:var(--ink);line-height:1">260</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Total tracked</div></div>
+    </div>
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:42%">Action</th><th>Lane</th><th>Status</th><th style="width:26%">Outcome</th></tr></thead>
+      <tbody>
+        <tr><td>Category mapping to deepest node — all markets</td><td>Product type</td><td><span class="pill p-done">✓ Done</span></td><td>112 mapping tasks closed across 19 markets</td></tr>
+        <tr><td>Range Completion exclusion — 60% (all markets)</td><td>Technical</td><td><span class="pill p-done">✓ Done</span></td><td><b>Live</b>; US &amp; CA tuned to 20%</td></tr>
+        <tr><td>Hero Sizes rule (AllSaints-style) — UK</td><td>Optimisation</td><td><span class="pill p-done">✓ Done</span></td><td>98% of products carrying hero size</td></tr>
+        <tr><td>Custom labels CL0–CL4 — margin, low-performer, seasonal</td><td>Custom labels</td><td><span class="pill p-done">✓ Done</span></td><td>16 of 18 label tasks closed</td></tr>
+        <tr><td>Title change — [Brand] moved to end of title</td><td>Titles</td><td><span class="pill p-done">✓ Done</span></td><td><b>A/B tested — brand-at-end won</b></td></tr>
+        <tr><td>Keyword optimisation — Jackets, Coats, Dresses, Shorts</td><td>Keywords</td><td><span class="pill p-done">✓ Done</span></td><td>20 of 29 keyword tasks closed</td></tr>
+        <tr><td>Data-field back-filling + rules (description, sizes, GAG, material)</td><td>Data fields</td><td><span class="pill p-prog">In flight</span></td><td>Mandatory-field rules being built</td></tr>
+        <tr><td>New platform + feeds build-out</td><td>Account</td><td><span class="pill p-prog">In flight</span></td><td>Onboarding &amp; requirements underway</td></tr>
+        <tr><td>Shipping rate configuration</td><td>Technical</td><td><span class="pill p-open">Open</span></td><td>Scoped, awaiting inputs</td></tr>
+        <tr><td>Title optimisation — "Superdry CULT" line</td><td>Titles</td><td><span class="pill p-done">✓ Done</span></td><td>Prepped &amp; keyworded</td></tr>
+        <tr><td>Mid-seasonal sale keywords — international mapping</td><td>Keywords</td><td><span class="pill p-block">⚑ Parked</span></td><td>Held pending sale calendar</td></tr>
+        <tr><td>Image-overlay trial (low stock / % discount / back-in-stock)</td><td>Testing</td><td><span class="pill p-open">Open</span></td><td>Trial-test route under review</td></tr>
+      </tbody></table>
+    </div>
+    <div class="grid-2 rv in" style="margin-top:32px">
+      <div class="card"><h4>Two years of compounding foundations</h4><p>The heavy structural work — <b>112 category-mapping passes</b>, Range Completion, Hero Sizes, and the CL0–CL4 label architecture — is banked. That's the base every future test and every AI-readiness gain is built on; it doesn't have to be redone.</p></div>
+      <div class="card"><h4>What the title work told us</h4><p>Two signals held on Superdry's own feed: <b>brand at the end of the title wins</b>, and <b>keyword-enriched category titles lift performance</b> (Jackets &amp; Coats keyword pass returned a measured <b>+5%</b>). Both point the same way — fuller, more decomposable titles — which is exactly what an AI agent needs to parse.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 04 — LOOK-BACK ================= -->
+<div class="chapter" id="c4"><div class="ch-num">04</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter four</div><h2>The look-back period</h2><p>Two years of delivery, quarter by quarter and lane by lane.</p></div></div>
+
+<section class="band">
+  <div class="wrap">
+    <div class="eyebrow rv in">Timeline</div>
+    <h2 class="sec-title rv in">Sustained delivery, Jul 2024 → Jul 2026</h2>
+    <p class="sec-sub rv in">Nine quarters of continuous work — never a quiet quarter, peaking at 307 hours in Q2 2025 around the summer and Black Friday build cycles.</p>
+    <div class="grid-2 rv in">
+      <div class="card">
+        <h4>Hours delivered by quarter</h4>
+        <div class="bars" style="margin-top:16px">
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">2024 Q3</span><span>93 hrs</span></div><div class="track"><div class="fill grey" data-w="30" style="width:30%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">2024 Q4</span><span>252 hrs</span></div><div class="track"><div class="fill" data-w="82" style="width:82%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">2025 Q1</span><span>242 hrs</span></div><div class="track"><div class="fill" data-w="79" style="width:79%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">2025 Q2 — peak</span><span>307 hrs</span></div><div class="track"><div class="fill" data-w="100" style="width:100%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">2025 Q3</span><span>229 hrs</span></div><div class="track"><div class="fill" data-w="75" style="width:75%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">2025 Q4</span><span>221 hrs</span></div><div class="track"><div class="fill" data-w="72" style="width:72%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">2026 Q1</span><span>245 hrs</span></div><div class="track"><div class="fill" data-w="80" style="width:80%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">2026 Q2</span><span>129 hrs</span></div><div class="track"><div class="fill grey" data-w="42" style="width:42%;"></div></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h4>Where the two years went — by activity type</h4>
+        <div class="bars" style="margin-top:16px">
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Technical &amp; feed management</span><span>694 hrs · 40%</span></div><div class="track"><div class="fill" data-w="100" style="width:100%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Optimisation — titles, keywords, labels, imagery</span><span>497 hrs · 28%</span></div><div class="track"><div class="fill" data-w="72" style="width:72%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Account &amp; strategy</span><span>251 hrs · 14%</span></div><div class="track"><div class="fill grey" data-w="36" style="width:36%;"></div></div></div>
+          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">A/B testing &amp; experimentation</span><span>174 hrs · 10%</span></div><div class="track"><div class="fill green" data-w="25" style="width:25%;"></div></div></div>
+        </div>
+        <p style="margin-top:16px;font-size:12.5px;color:var(--muted)">The 2-year activity split Superdry's own plan asks for: AB Test · Optimisation · Technical · Feed Management.</p>
+      </div>
+    </div>
+    <div class="tbl-wrap rv in" style="margin-top:32px">
+      <table><thead><tr><th style="width:34%">Task family</th><th>Volume · 2yr</th><th>Hours</th><th>What it covers</th></tr></thead>
+      <tbody>
+        <tr><td><b>Category mapping</b></td><td>112×</td><td>123 hrs</td><td>Deepest-node GPC mapping across every market</td></tr>
+        <tr><td><b>Keyword optimisation</b></td><td>64×</td><td>243 hrs</td><td>Intent keywords by category — the single biggest hours line</td></tr>
+        <tr><td><b>Data field update</b></td><td>86×</td><td>149 hrs</td><td>Attribute fills, normalisation, mandatory fields</td></tr>
+        <tr><td><b>Title optimisation</b></td><td>42×</td><td>238 hrs</td><td>Title structure, brand position, CULT line, coats</td></tr>
+        <tr><td><b>Disapprovals</b></td><td>93×</td><td>24 hrs</td><td>GMC disapproval fixes — protecting live inventory</td></tr>
+        <tr><td><b>Custom label update</b></td><td>32×</td><td>57 hrs</td><td>CL0–CL4 margin, seasonal, low-performer, bestseller</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 05 — VALUE DELIVERED ================= -->
+<div class="chapter" id="c5"><div class="ch-num">05</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter five</div><h2>The value delivered</h2><p>Not just hours booked — hours invested in the partnership.</p></div></div>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow rv in">The commitment</div>
+    <h2 class="sec-title rv in">Two years of delivery, and a third of it given</h2>
+    <p class="sec-sub rv in">The clearest proof of a partnership is what gets done off the clock. Across two years, more than a third of every hour FeedSpark delivered on Superdry was non-billable — invested at no charge to keep the feed clean, the disapprovals down and the launches on time.</p>
+
+    <div class="stats rv in" style="margin-bottom:40px">
+      <div class="stat"><div class="n">1,746<small><span class="chk">?</span></small></div><div class="l">Total hours delivered · 2yr</div></div>
+      <div class="stat"><div class="n">1,143<small><span class="chk">?</span></small></div><div class="l">Billable hours</div></div>
+      <div class="stat"><div class="n">603<small><span class="chk">?</span></small></div><div class="l">Non-billable hours invested</div></div>
+      <div class="stat"><div class="n">35<small>%</small></div><div class="l">Of all hours given at no charge</div></div>
+      <div class="stat"><div class="n">1,294</div><div class="l">Tasks completed</div></div>
+    </div>
+
+    <div class="grid-2 rv in">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>The invested-hours story</h4>
+        <p>The non-billable share held steady across all three calendar years — <b>35% in 2024, 33% in 2025, 38% in 2026</b> — this isn't a one-off gesture, it's how the account has always run.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Disapproval firefighting, urgent sale line-lists, Black Friday keyword pushes and feed-break fixes are the bulk of it: the work that protects live revenue but rarely lands on an invoice.</p>
+      </div>
+      <div class="card">
+        <h4>The protection work, quantified</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;font-size:13px">
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">93×</b> disapproval fixes</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">112×</b> category-mapping passes</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">86×</b> data-field updates</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">17×</b> feed health checks</div>
+        </div>
+        <p style="margin-top:14px;font-size:13px">Every disapproval cleared is a SKU kept live and serving. Every mapping pass is more of the range eligible for the right queries. This is the unglamorous work that keeps spend efficient — and most of it sat in the non-billable column.</p>
+      </div>
+    </div>
+    <div class="note rv in"><b>⚑ For Ray to confirm:</b> a monetary value for the 603 invested hours (and any blended rate) is a commercial figure — deliberately left out here. The hour counts above are taken directly from the two-year work log; the £ framing is yours to set before this goes to the client.</div>
+  </div>
+</section>
+
+<!-- ================= CH 06 — AUTOMATION ================= -->
+<div class="chapter" id="c6"><div class="ch-num">06</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter six</div><h2>Automation &amp; pick readiness</h2><p>What runs on rules, what still runs by hand, and how ready we are to scale.</p></div></div>
+
+<section class="band">
+  <div class="wrap">
+    <div class="tbl-wrap rv in">
+      <table><thead><tr><th style="width:22%">Layer</th><th style="width:20%">Source</th><th>How it works</th><th style="width:14%">State</th></tr></thead>
+      <tbody>
+        <tr><td><b>Range Completion</b></td><td>Rule — FeedHero</td><td>Exclusion at 60% across all markets; tuned to 20% for US &amp; CA. Keeps incomplete size-runs out of the feed.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
+        <tr><td><b>Custom labels CL0–CL4</b></td><td>Rule — FeedHero</td><td>Margin (high/med/low), low-performer (30d conv=0, spend &gt;£10), seasonal and zombie-SKU labels applied by rule.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
+        <tr><td><b>Hero Sizes</b></td><td>Rule — FeedHero</td><td>AllSaints-style hero-size logic across Shopping; ~98% of products carrying a hero size.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
+        <tr><td><b>Image overlays</b></td><td>Rule — FeedHero</td><td>Social overlays (logo, discount %, low-stock) applied per market via rule.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
+        <tr><td><b>Sale &amp; seasonal keywords</b></td><td>Line-list + rule</td><td>Sale line-lists ingested; generic sale terms injected via additional columns.</td><td><span class="pill p-prog">Semi-auto</span></td></tr>
+        <tr><td><b>Data-field back-filling</b></td><td>Supplemental + rules</td><td>Mandatory-field rules (description missing, size conversion, GAG, material, too-short, missing DE) being built now.</td><td><span class="pill p-prog">In progress</span></td></tr>
+        <tr><td><b>Dynamic overlay (live stock)</b></td><td>FeedHero — proposed</td><td>Back-in-stock / units-left / countdown overlays — trial-test route under review.</td><td><span class="pill p-open">Open</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="callout rv in"><h4>Pick readiness</h4><p>The structural spine — Range Completion, Hero Sizes, custom labels and category depth — is automated and stable. That's what makes Superdry ready to scale the enrichment work: the plumbing is done, so new hours go into optimisation and testing, not re-fixing the base.</p></div>
+  </div>
+</section>
+
+<!-- ================= CH 07 — WINS / AB TEST ARCHIVE ================= -->
+<div class="chapter" id="c7"><div class="ch-num">07</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter seven</div><h2>The A/B test archive</h2><p>Two years of experiments — what we ran, and what each one told us.</p></div></div>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow rv in">Evidence</div>
+    <h2 class="sec-title rv in">The experiments, and what they proved</h2>
+    <p class="sec-sub rv in">A live testing programme, not a one-off. Some tests returned a hard number, some a clear directional winner, some an honest "no difference" — all of them fed the same conclusion: fuller, more specific product data wins.</p>
+
+    <div class="tbl-wrap rv in" style="margin-bottom:32px">
+      <table><thead><tr><th style="width:30%">Test</th><th style="width:10%">Market</th><th>What it told us</th><th style="width:14%">Result</th></tr></thead>
+      <tbody>
+        <tr><td><b>Keyword opti — Jackets &amp; Coats</b></td><td>UK</td><td>Intent-keyword enrichment on the category lifted performance</td><td><span class="pill p-done">+5% uplift</span></td></tr>
+        <tr><td><b>Title — [Brand] front vs. end</b></td><td>UK</td><td>Brand placed at the <b>end</b> of the title outperformed brand-first</td><td><span class="pill p-done">Brand-at-end wins</span></td></tr>
+        <tr><td><b>Title — [Organic] term front vs. end</b></td><td>UK</td><td>Search-term position made no measurable difference — retired</td><td><span class="pill p-open">Inconclusive</span></td></tr>
+        <tr><td><b>Dynamic sale tags</b> [Mid-Season] / [Black Friday]</td><td>Multi</td><td>Event-driven title tags injected dynamically by marketing calendar</td><td><span class="pill p-done">Shipped</span></td></tr>
+        <tr><td><b>Smart Shopping — Jeans category move</b></td><td>UK</td><td>Structural campaign test on the jeans category</td><td><span class="pill p-done">Applied</span></td></tr>
+        <tr><td><b>Image test — e-commerce vs. lifestyle</b></td><td>UK</td><td>PPC creative / image-cycler test on primary imagery</td><td><span class="pill p-done">Complete</span></td></tr>
+        <tr><td><b>Bench × Superdry — co-brand title</b></td><td>UK</td><td>Sub-brand / collab title treatment</td><td><span class="pill p-done">Complete</span></td></tr>
+        <tr><td><b>Short (AI) vs. long description</b></td><td>US</td><td>AI-generated short copy vs. long description, ~3–4 week window</td><td><span class="pill p-prog">Read-out due<span class="chk">?</span></span></td></tr>
+        <tr><td><b>A/B — holiday &amp; beach lines</b></td><td>Multi</td><td>Bikinis, dresses, shorts, linen — seasonal keyword treatment</td><td><span class="pill p-prog">Live</span></td></tr>
+        <tr><td><b>Title — search-terms in Shopping titles (Shorts)</b></td><td>UK</td><td>Appending winning search-terms into Shorts titles</td><td><span class="pill p-open">Open</span></td></tr>
+      </tbody></table>
+    </div>
+
+    <div class="grid-2 rv in">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>The pattern</h4>
+        <p>Every test that moved the needle did so by adding <b>specific, decomposable information</b> — a benefit keyword on Jackets &amp; Coats (+5%), the brand read cleanly at the end of the title, event tags surfaced dynamically. The one test that showed nothing (organic term position) is the exception that proves it: <i>where</i> a term sits matters far less than <i>whether the right terms are there at all</i>.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">The same attributes that lift Shopping CTR are the attributes that make a product citable in AI Mode and ChatGPT — so this archive is also the evidence base for the AI-readiness roadmap.</p>
+      </div>
+      <div class="card">
+        <h4>External benchmark — fashion &amp; retail feeds</h4>
+        <p>A controlled A/B test (4,400-SKU catalogue) comparing enriched meta-data vs. standard feeds in Google Merchant Center:</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;font-size:13px">
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">+7.6%</b> CTR lift</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">+6.3%</b> ROAS growth</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">16.4×</b> ROI on enrichment</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">↑</b> Higher AOV</div>
+        </div>
+        <p style="margin-top:12px;font-size:12px;color:var(--muted)">Source: Stylitics / Tinuiti, supplemental GMC feed. The same enrichment methodology already running on Superdry's titles and categories.</p>
+      </div>
+    </div>
+    <div class="note rv in"><b>⚑ Data-check:</b> the +5% Jackets &amp; Coats uplift is the one figure carried verbatim from Superdry's own plan. Directional results (brand-at-end, inconclusive) are reported as recorded — no percentage is attached where the plan didn't record one. The US short-vs-long description read-out is due and should replace its placeholder once confirmed.</div>
+  </div>
+</section>
+
+<!-- ================= CH 08 — TEAM ================= -->
+<div class="chapter" id="c8"><div class="ch-num">08</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eight</div><h2>Team &amp; ways of working</h2><p>Who runs the account, and how the work moves.</p></div></div>
+
+<section class="band">
+  <div class="wrap">
+    <div class="eyebrow rv in">The pod</div>
+    <h2 class="sec-title rv in">One account manager, one content pod, one cadence</h2>
+    <p class="sec-sub rv in">Account management sits in London; the ASPL content team delivers the feed work; a standing monthly catch-up keeps Superdry, the media agency and FeedSpark aligned.</p>
+    <div class="grid-3 rv in" style="margin-bottom:32px">
+      <div class="card"><h4>Account management</h4><p style="font-size:13px;color:var(--muted);margin-bottom:8px">London</p><p style="font-size:13px">Ray leads the account — strategy, commercials and client relationship — with Steven Opuni and Ezgi as account managers across markets and campaigns.</p></div>
+      <div class="card"><h4>ASPL content team</h4><p style="font-size:13px;color:var(--muted);margin-bottom:8px">Delivery pod</p><p style="font-size:13px">Dino, Febin, Gary, Lara, Vitus, Tony, TK Raja and Sivanath deliver the category mapping, data fields, titles, keywords and rule builds behind the 1,294 tasks.</p></div>
+      <div class="card"><h4>Governance</h4><p style="font-size:13px;color:var(--muted);margin-bottom:8px">Cadence</p><p style="font-size:13px">A standing <b>SD × BFBC × FeedSpark</b> monthly catch-up aligns the brand, the media agency and FeedSpark; ad-hoc tickets flow in by email between calls.</p></div>
+    </div>
+    <div class="card rv in">
+      <h4>How work moves</h4>
+      <p style="font-size:14px">Requests arrive two ways — the <b>monthly catch-up</b> (planned optimisation and testing) and <b>ad-hoc tickets</b> (disapprovals, sale line-lists, urgent launches). Everything lands in the project plan, is scoped and estimated, then delivered by the ASPL pod and QA'd before it goes live. The billable / non-billable split is tracked per task — which is how the 35% invested-hours picture in chapter five is even visible.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 09 — FEED OPTIMISATION SCORE ================= -->
+<div class="chapter" id="c9"><div class="ch-num">09</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter nine</div><h2>Feed optimisation score</h2><p>A 1–100 read on how complete the optimisation is, lane by lane.</p></div></div>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow rv in">Scorecard</div>
+    <h2 class="sec-title rv in">Superdry feed optimisation — 70 / 100<span class="chk">?</span></h2>
+    <p class="sec-sub rv in">This score measures <b>task-completion coverage across the project plan</b> — how much of the scoped optimisation is closed in each lane. It is not yet a live-feed Golden Record audit; a scan of the current product export is the sharper next measure (see the flag below).</p>
+
+    <div class="sc-grid rv in" style="margin-bottom:32px">
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">89%</div></div><div class="sc-label">Custom labels</div><div class="sc-note">16 of 18 tasks closed — CL0–CL4 architecture live.</div><div class="sc-tgt">Strongest lane — margin, seasonal &amp; bestseller labels done</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">75%</div></div><div class="sc-label">Testing</div><div class="sc-note">6 of 8 tasks closed — an active, live testing programme.</div><div class="sc-tgt">Archive in chapter seven</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">69%</div></div><div class="sc-label">Keywords</div><div class="sc-note">20 of 29 closed — Jackets, Coats, Dresses, Shorts done; seasonal mapping open.</div><div class="sc-tgt">Target: full seasonal &amp; international coverage</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">67%</div></div><div class="sc-label">Imagery</div><div class="sc-note">20 of 30 closed — overlays live; dynamic stock overlay open.</div><div class="sc-tgt">Target: live-stock overlays &amp; lifestyle imagery</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">57%</div></div><div class="sc-label">Titles</div><div class="sc-note">8 of 14 closed — brand-at-end &amp; CULT line done; search-term tests open.</div><div class="sc-tgt">Target: MASK structure at 80–120 chars</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">20%</div></div><div class="sc-label">Data fields</div><div class="sc-note">1 of 5 closed — mandatory-field back-filling (description, size, GAG, material) in flight.</div><div class="sc-warn">P0 gap — the priority for the coming quarter</div></div>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="card"><h4>The other lanes</h4><p style="font-size:13px">Optimisation 57/88 (65%) · Feed &amp; technical 11/17 (65%) · Channels 18/26 (69%) · Account &amp; strategy 11/22 (50%) · Product type 1/3 (33%). Product type and data fields are the two lanes pulling the composite down — both are on the roadmap.</p></div>
+      <div class="card" style="border-left:3px solid var(--orange-deep)"><h4>⚑ What would sharpen this</h4><p style="font-size:13px">No live product-feed export was attached to this build, so the score reflects <b>plan-task coverage, not measured feed state</b>. A Golden Record scan of the current ~5,000-row export — title-length distribution, real attribute fill rates, GPC depth, conversational-attribute coverage — would convert this into a measured feed score. It's the first item on the roadmap.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 10 — AI READINESS ================= -->
+<div class="chapter" id="c10"><div class="ch-num">10</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter ten</div><h2>AI readiness</h2><p>From an optimised feed to an AI-ready one — where Superdry sits, and the gap to close.</p></div></div>
+
+<section class="band-warm">
+  <div class="wrap">
+    <div class="eyebrow rv in">Maturity</div>
+    <h2 class="sec-title rv in">Where Superdry sits on the climb</h2>
+    <p class="sec-sub rv in">Two years of title, category and data work has banked Tier 1. Descriptions and Google's conversational attributes are the open flank — the same "fuller data wins" lesson from the test archive, applied to the AI surfaces.</p>
+
+    <div class="tiers rv in" style="margin-bottom:32px">
+      <div class="tier done">
+        <div class="tn">Stage 0</div><h4>Legacy</h4><div class="ts">The starting point</div>
+        <ul><li>Feed meets minimum spec</li><li>Titles not structured for discovery</li><li>Invisible to AI surfaces</li></ul>
+      </div>
+      <div class="tier done">
+        <div class="tn">Tier 1</div><h4>Titles &amp; data fields</h4><div class="ts">The foundation — banked</div>
+        <ul><li>Brand position tested &amp; won (brand-at-end)</li><li>Category mapping at deepest node</li><li>Keyword enrichment by category</li><li>Custom labels CL0–CL4 live</li></ul>
+      </div>
+      <div class="tier here">
+        <div class="flag">◆ Superdry is here</div>
+        <div class="tn">Tier 2</div><h4>Descriptions &amp; answers</h4><div class="ts">The meaning layer</div>
+        <ul><li>Data-field back-filling in flight</li><li>Description enrichment (AI short-vs-long test running)</li><li><b>Six conversational attributes — not yet built</b></li></ul>
+      </div>
+      <div class="tier">
+        <div class="tn">Tier 3</div><h4>Image analysis</h4><div class="ts">The differentiator</div>
+        <ul><li>Tachyon vision reads product imagery</li><li>Silhouette, fit, material, use-case extracted</li><li>Feeds back into titles &amp; descriptions</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow rv in">Scorecard</div>
+    <h2 class="sec-title rv in">AI-readiness audit — Superdry<span class="chk">?</span></h2>
+    <p class="sec-sub rv in">Estimated from the project plan and the test archive. An actual Golden Record audit against the live feed — the flag from chapter nine — is what turns these estimates into measured numbers.</p>
+
+    <div class="sc-grid rv in" style="margin-bottom:32px">
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">~65%<span class="chk">?</span></div></div><div class="sc-label">Title quality for AI</div><div class="sc-note">Structure tested and improving (brand-at-end won), but MASK decomposition &amp; the 80–120 char band need measuring against the live feed.</div><div class="sc-tgt">Target: Brand + Material + Fit + Colour + Use-case</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">~30%<span class="chk">?</span></div></div><div class="sc-label">Description richness</div><div class="sc-note">Data-field work flags many descriptions missing or too short. Need 500+ chars with use-case language for AI matching.</div><div class="sc-warn">P0 gap — descriptions are what AI agents match against</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">~90%</div></div><div class="sc-label">Product type depth</div><div class="sc-note">112 category-mapping passes to deepest node across all markets — the strongest AI-readiness asset in place.</div><div class="sc-tgt">✓ Deep taxonomy banked</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">0%</div></div><div class="sc-label">Conversational attributes</div><div class="sc-note">None of the six (question_and_answer, item_group_title, variant_option, popularity_rank, related_product, document_link) populated.</div><div class="sc-warn">The build on the roadmap — competitors haven't populated these either</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">~89%</div></div><div class="sc-label">Custom labels / signals</div><div class="sc-note">CL0–CL4 live — margin, bestseller and seasonal signals feed both PMax and a future popularity_rank.</div><div class="sc-tgt">Build once, use twice — labels → popularity_rank</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">~67%<span class="chk">?</span></div></div><div class="sc-label">Imagery coverage</div><div class="sc-note">Overlays live across Social; lifestyle &amp; ingredient-style detail imagery and the visual harvest are the Tier 3 step.</div><div class="sc-tgt">Target: product + lifestyle + detail imagery</div></div>
+    </div>
+    <div class="note rv in"><b>The opportunity in one line:</b> 95% of merchants now see AI-agent traffic, but only 20% have machine-readable catalogues (PayPal, May 2026). Superdry's deep taxonomy and label architecture put it ahead of most — the conversational attributes and description enrichment are the two moves that convert that lead into AI visibility.</div>
+  </div>
+</section>
+
+<!-- ================= CH 11 — CASE STUDIES ================= -->
+<div class="chapter" id="c11"><div class="ch-num">11</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eleven</div><h2>Case studies &amp; comparable wins</h2><p>The same pattern, proven across FeedSpark's other programmes.</p></div></div>
+
+<section class="band">
+  <div class="wrap">
+    <div class="eyebrow rv in">Proof</div>
+    <h2 class="sec-title rv in">Fuller, more decomposable data wins — everywhere we've tested it</h2>
+    <p class="sec-sub rv in">Superdry's own +5% and brand-at-end results are one data point on a much longer line. Across FeedSpark's client base, the same enrichment thesis returns the same direction — often at far larger magnitudes.</p>
+
+    <div class="grid-3 rv in" style="margin-bottom:24px">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>Spelling it out</h4>
+        <p style="font-size:28px;font-weight:900;color:var(--green);line-height:1;margin-bottom:8px">+126.6%</p>
+        <p style="font-size:13px">"Multivitamins" beat "Multivits" on CTR in a controlled title test. Writing the full word out — not the abbreviation — is the single largest title win FeedSpark has recorded.</p>
+        <p style="margin-top:8px;font-size:12px;color:var(--muted)">YuMOVE · Google Shopping</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>Naming the benefit</h4>
+        <p style="font-size:28px;font-weight:900;color:var(--green);line-height:1;margin-bottom:8px">+24.7%</p>
+        <p style="font-size:13px">Putting the product benefit into the title — not just the product name — lifted CTR. The direct analogue for Superdry: fit, material and use-case in the title, not just "Superdry Jacket".</p>
+        <p style="margin-top:8px;font-size:12px;color:var(--muted)">YuMOVE · benefit copy test</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>More specific matching</h4>
+        <p style="font-size:28px;font-weight:900;color:var(--green);line-height:1;margin-bottom:8px">+30%</p>
+        <p style="font-size:13px">Adding multiple qualifying terms (multiple conditions) to titles lifted CTR — the more specific the match signal, the better it performs. Superdry's category-keyword work is the same lever.</p>
+        <p style="margin-top:8px;font-size:12px;color:var(--muted)">YuMOVE · keyword specificity</p>
+      </div>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="card">
+        <h4>Why these transfer to Superdry</h4>
+        <p>These are different categories — supplements, not apparel — but the mechanism is identical: <b>every attribute you add gives the ranking (and now the AI) engine more to match against.</b> Superdry's own tests already show the same direction; the cross-client results say how much headroom is left when the enrichment goes deeper.</p>
+      </div>
+      <div class="card">
+        <h4>Superdry's own results, in context</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;font-size:13px">
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">+5%</b> Jackets &amp; Coats keywords</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">✓</b> Brand-at-end title win</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">✓</b> Dynamic sale tags shipped</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">98%</b> Hero-size coverage</div>
+        </div>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">The wins are real and directional; the cross-client magnitudes show what a deeper enrichment programme — descriptions, conversational attributes, MASK titles — could unlock next.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 12 — ROADMAP ================= -->
+<div class="chapter" id="c12"><div class="ch-num">12</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter twelve</div><h2>Roadmap — next quarter</h2><p>The open priorities, sequenced, plus the testing roadmap.</p></div></div>
+
+<section class="band">
+  <div class="wrap">
+    <div class="eyebrow rv in">Next period</div>
+    <h2 class="sec-title rv in">What comes next</h2>
+    <p class="sec-sub rv in">Lead with the open priorities on the plan — onboarding, platform build and data-field rules — then the enrichment and AI-readiness testing that the two-year foundation has earned.</p>
+    <div class="road rv in">
+      <div class="mo">
+        <div class="mo-m">Now</div><div class="mo-s s-build">Onboard &amp; scope</div>
+        <h4>Clear the runway</h4>
+        <ul>
+          <li><b>Onboarding call</b> &amp; requirements</li>
+          <li><b>Create platform + feeds</b></li>
+          <li><b>Shipping rate</b> configuration</li>
+          <li>Deepest-node category mapping</li>
+        </ul>
+      </div>
+      <div class="mo peak">
+        <div class="mo-m">Priority</div><div class="mo-s s-peak">P0</div>
+        <h4>Data fields</h4>
+        <ul>
+          <li><b>Back-fill mandatory fields</b></li>
+          <li>Rules: description missing</li>
+          <li>Rules: size conversion</li>
+          <li>GAG · material · too-short · missing DE</li>
+        </ul>
+      </div>
+      <div class="mo">
+        <div class="mo-m">Then</div><div class="mo-s s-build">Enrich</div>
+        <h4>Titles &amp; descriptions</h4>
+        <ul>
+          <li>MASK titles → 80–120 chars</li>
+          <li>Description expansion (500+)</li>
+          <li>Tachyon intent terms — next batch</li>
+          <li>Read out US short-vs-long test</li>
+        </ul>
+      </div>
+      <div class="mo">
+        <div class="mo-m">Build</div><div class="mo-s s-build">AI-ready</div>
+        <h4>Conversational attrs</h4>
+        <ul>
+          <li>item_group_title + variant_option</li>
+          <li>popularity_rank from labels</li>
+          <li>related_product — outfits/bundles</li>
+          <li>question_and_answer (governed)</li>
+        </ul>
+      </div>
+      <div class="mo">
+        <div class="mo-m">Measure</div><div class="mo-s s-next">Prove</div>
+        <h4>Score &amp; test</h4>
+        <ul>
+          <li><b>Golden Record feed audit</b></li>
+          <li>Shorts search-term title test</li>
+          <li>Holiday/beach AB read-out</li>
+          <li>Dynamic-overlay trial test</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="eyebrow rv in" style="margin-top:56px">Testing roadmap</div>
+    <h2 class="sec-title rv in">The tests queued for the coming quarter</h2>
+    <p class="sec-sub rv in">Sequenced so the structural data-field work lands first, then the enrichment tests that depend on it.</p>
+    <div class="tbl-wrap rv in">
+      <table>
+        <thead><tr><th style="width:4%">#</th><th style="width:26%">Test</th><th>Hypothesis</th><th style="width:10%">Metric</th><th style="width:10%">Priority</th></tr></thead>
+        <tbody>
+          <tr><td><b>T1</b></td><td>MASK titles — full structure</td><td>Brand + Material + Fit + Colour + Use-case at 80–120 chars lifts CTR vs. current titles (building on the +5% keyword result)</td><td>CTR</td><td><span class="pill p-done">High</span></td></tr>
+          <tr><td><b>T2</b></td><td>Description expansion → 500+ chars</td><td>Enriched, use-case descriptions lift impression volume on long-tail &amp; AI queries</td><td>Impressions</td><td><span class="pill p-done">High</span></td></tr>
+          <tr><td><b>T3</b></td><td>Search-terms in Shopping titles — Shorts</td><td>Appending winning search-terms into Shorts titles captures queries current titles miss</td><td>CTR</td><td><span class="pill p-done">High</span></td></tr>
+          <tr><td><b>T4</b></td><td>US — short (AI) vs. long description</td><td>Read out the running test; if AI-short wins, roll the format across markets</td><td>CVR</td><td><span class="pill p-prog">Medium</span></td></tr>
+          <tr><td><b>T5</b></td><td>item_group_title + variant_option</td><td>Clean variant data improves cross-sell and reduces confused clicks across size/colour runs</td><td>Cross-sell</td><td><span class="pill p-prog">Medium</span></td></tr>
+          <tr><td><b>T6</b></td><td>related_product — outfit &amp; bundle links</td><td>Declaring outfit/complement relationships lifts "shop the look" visibility in Shopping &amp; AI answers</td><td>AOV</td><td><span class="pill p-prog">Medium</span></td></tr>
+          <tr><td><b>T7</b></td><td>Holiday &amp; beach lines AB — read-out</td><td>Confirm the seasonal keyword treatment on bikinis/dresses/shorts and lock the winner</td><td>CTR</td><td><span class="pill p-prog">Medium</span></td></tr>
+          <tr><td><b>T8</b></td><td>Dynamic image overlay — trial</td><td>Live-stock / countdown overlays lift Social CTR without breaking image-type tags</td><td>CTR</td><td><span class="pill p-open">Low</span></td></tr>
+          <tr><td><b>T9</b></td><td>question_and_answer — top categories</td><td>Pre-answered Q&amp;A (fit, care, sizing) increases AI-citation rate on Superdry product queries</td><td>AI citations</td><td><span class="pill p-open">Low</span></td></tr>
+          <tr><td><b>T10</b></td><td>AI visibility baseline + tracking</td><td>Establish baseline citation rate across Google AI Mode, ChatGPT &amp; Perplexity to measure the attribute build</td><td>AI citations</td><td><span class="pill p-open">Low</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout rv in"><h4>The through-line</h4><p>Every win across two years — brand-at-end, category depth, keyword enrichment, the +5% on Jackets &amp; Coats — points the same direction: fuller, more decomposable data wins. The data-field back-fill, MASK titles and conversational attributes are the next honest step on that line, not a new strategy.</p></div>
+  </div>
+</section>
+
+<!-- ================= CLOSE ================= -->
+<footer class="close">
+  <div class="wrap">
+    <div class="eyebrow on-dark">Thank you</div>
+    <h2>Questions?</h2>
+    <div class="hero-rule" style="width:64px;height:3px;background:var(--orange);margin:22px 0 34px"></div>
+    <div class="contacts">
+      <div class="ct"><b>Ray Vũ</b><span>Senior Account Manager</span><a href="mailto:ray@feedspark.com">ray@feedspark.com</a></div>
+      <div class="ct"><b>Steven Opuni</b><span>Account Manager</span><a href="mailto:steven@feedspark.com">steven@feedspark.com</a></div>
+      <div class="ct"><b>Ezgi</b><span>Account Manager</span><a href="mailto:ezgi@feedspark.com">ezgi@feedspark.com</a></div>
+    </div>
+    <p style="margin-top:48px;font-size:11.5px;color:rgba(255,255,255,.32)">FeedSpark · Private &amp; Confidential&nbsp;</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ======== reveal ======== */
+  var rv = document.querySelectorAll('.rv');
+  if(!reduce && 'IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+    rv.forEach(function(el){io.observe(el)});
+  } else rv.forEach(function(el){el.classList.add('in')});
+
+  /* ======== bars ======== */
+  var fills = document.querySelectorAll('.fill');
+  if('IntersectionObserver' in window){
+    var io3 = new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.style.width=e.target.getAttribute('data-w')+'%';io3.unobserve(e.target)}})},{threshold:.4});
+    fills.forEach(function(el){io3.observe(el)});
+  } else fills.forEach(function(el){el.style.width=el.getAttribute('data-w')+'%'});
+
+  /* ======== topbar + progress ======== */
+  var tb=document.getElementById('topbar'),pg=document.getElementById('progress');
+  var links=Array.prototype.slice.call(document.querySelectorAll('.tb-nav a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))});
+  function onScroll(){
+    var y=window.scrollY||document.documentElement.scrollTop;
+    tb.classList.toggle('show',y>420);
+    var h=document.documentElement.scrollHeight-window.innerHeight;
+    pg.style.width=(h>0?(y/h)*100:0)+'%';
+    var idx=-1;
+    secs.forEach(function(s,i){if(s&&s.getBoundingClientRect().top<=120)idx=i});
+    links.forEach(function(a,i){a.classList.toggle('active',i===idx)});
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+  /* ======== data-check toggle ======== */
+  document.getElementById('flagbtn').addEventListener('click',function(){
+    var on=this.getAttribute('aria-pressed')==='true';
+    this.setAttribute('aria-pressed',String(!on));
+    document.body.classList.toggle('hide-checks',on);
+  });
+
+})();
+</script>
+
+
+</body></html>
