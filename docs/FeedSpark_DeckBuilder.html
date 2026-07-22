@@ -55,6 +55,48 @@
   .modal-x{position:absolute;top:14px;right:16px;border:none;background:none;font-size:24px;color:var(--muted);cursor:pointer}
   textarea{width:100%;min-height:300px;border:1px solid var(--line);border-radius:12px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.55}
   .mrow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center}
+  .genrow{display:flex;align-items:center;gap:14px}
+  .brief-link{font-size:12.5px;font-weight:800;color:var(--muted);cursor:pointer;text-decoration:underline}
+  .brief-link:hover{color:var(--orange-deep)}
+  /* loading overlay */
+  .dg-load{position:fixed;inset:0;z-index:300;background:rgba(255,255,255,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+  .dg-load[hidden]{display:none}
+  .dg-ring{--p:0;width:120px;height:120px;border-radius:50%;display:grid;place-items:center;
+    background:conic-gradient(var(--orange-deep) calc(var(--p)*1%),#EEE 0);position:relative}
+  .dg-ring::before{content:"";position:absolute;inset:11px;background:#fff;border-radius:50%}
+  .dg-ring span{position:relative;font-size:26px;font-weight:900;color:var(--ink)}
+  .dg-phase{font-weight:800;color:var(--ink-2);font-size:15px}
+  .dg-load .sub2{color:var(--muted);font-size:13px;font-weight:700}
+  /* deck stage */
+  .dg-stage{position:fixed;inset:0;z-index:280;background:#eceae6;overflow-y:auto}
+  .dg-stage[hidden]{display:none}
+  .dg-bar{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:11px 20px;display:flex;align-items:center;gap:14px;z-index:2}
+  .dg-bar .t{font-weight:900}.dg-bar .s{color:var(--muted);font-size:12px;font-weight:700}
+  .dg-bar .sp{margin-left:auto;display:flex;gap:8px}
+  .dg-slides{max-width:960px;margin:26px auto;padding:0 20px;display:flex;flex-direction:column;gap:22px}
+  .slide{background:#fff;border:1px solid #E6E6E6;border-radius:12px;box-shadow:0 2px 6px rgba(16,24,40,.06),0 14px 40px rgba(16,24,40,.07);
+    aspect-ratio:16/9;padding:44px 52px;position:relative;display:flex;flex-direction:column;overflow:hidden}
+  .slide .sk{position:absolute;top:0;left:0;width:6px;height:100%;background:var(--orange)}
+  .slide .eyebrow2{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--orange-deep)}
+  .slide h2{font-size:30px;font-weight:900;margin:8px 0 6px;letter-spacing:-.01em;color:var(--ink)}
+  .slide .lead{color:var(--ink-2);font-size:16px;max-width:80%}
+  .slide .foot{position:absolute;bottom:18px;left:52px;right:52px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-weight:700;border-top:1px solid var(--line);padding-top:10px}
+  .slide.cover{justify-content:center;background:linear-gradient(160deg,#fff,#FCF6EE)}
+  .slide.cover h1{font-size:46px;font-weight:900;letter-spacing:-.02em;margin:6px 0}
+  .slide.cover .meta{color:var(--ink-2);font-weight:700;margin-top:8px;font-size:15px}
+  .s-body{flex:1;margin-top:16px;display:flex;flex-direction:column;gap:12px;justify-content:center}
+  .s-bul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
+  .s-bul li{font-size:16px;color:var(--ink-2);padding-left:24px;position:relative}
+  .s-bul li::before{content:"";position:absolute;left:0;top:8px;width:9px;height:9px;border-radius:2px;background:var(--orange)}
+  .s-cards{display:flex;gap:14px;flex-wrap:wrap}
+  .s-card{flex:1;min-width:120px;background:var(--wash);border:1px solid var(--line);border-radius:11px;padding:16px}
+  .s-card .n{font-size:32px;font-weight:900}.s-card .l{font-size:12px;color:var(--muted);font-weight:800;text-transform:uppercase;margin-top:4px}
+  .s-ring{--p:0;--c:var(--orange);width:120px;height:120px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--c) calc(var(--p)*1%),#EEE 0);position:relative;flex:none}
+  .s-ring::before{content:"";position:absolute;inset:11px;background:#fff;border-radius:50%}.s-ring b{position:relative;font-size:28px}
+  .s-lane{display:grid;grid-template-columns:120px 1fr 34px;gap:10px;align-items:center;font-size:13px;margin:5px 0}
+  .s-lane .tk{height:9px;border-radius:6px;background:var(--wash);border:1px solid var(--line);overflow:hidden}
+  .s-lane .fl{height:100%;background:var(--orange)}
+  @media print{.dg-bar{display:none}.dg-slides{margin:0}.slide{box-shadow:none;page-break-after:always;border:none}}
 </style>
 
 <div class="topbar"><div class="topbar-in">
@@ -73,7 +115,7 @@
     <div class="fld"><label>Look-back</label><select id="lookback">
       <option value="1m">Last month</option><option value="3m" selected>Last 3 months</option>
       <option value="6m">Last 6 months</option><option value="fy">Full FY</option><option value="all">All-time</option></select></div>
-    <div class="gen"><button class="btn btn-primary" id="gen">Generate deck →</button></div>
+    <div class="gen genrow"><span class="brief-link" id="brief-link">Copy brief</span><button class="btn btn-primary" id="gen">Generate deck →</button></div>
   </div>
 </div></header>
 
@@ -86,6 +128,21 @@
 </main>
 
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Deck Generator · your composition saves on this device</div></div>
+
+<div class="dg-load" id="dg-load" hidden>
+  <div class="dg-ring" id="dg-ring" style="--p:0"><span id="dg-pct">0%</span></div>
+  <div class="dg-phase" id="dg-phase">Composing your deck…</div>
+  <div class="sub2" id="dg-subp">Pulling the plan data</div>
+</div>
+<div class="dg-stage" id="dg-stage" hidden>
+  <div class="dg-bar"><span class="t" id="dg-title">Deck</span><span class="s" id="dg-sub2"></span>
+    <span class="sp">
+      <button class="btn" style="background:#fff;border:1px solid var(--line);color:var(--ink-2)" onclick="window.print()">Print / PDF</button>
+      <button class="btn" style="background:#fff;border:1px solid var(--line);color:var(--ink-2)" id="dg-edit">Edit sections</button>
+      <button class="btn btn-primary" id="dg-close">Close</button>
+    </span></div>
+  <div class="dg-slides" id="dg-slides"></div>
+</div>
 
 <div class="modal" id="modal" hidden><div class="modal-bg"></div><div class="modal-card">
   <button class="modal-x" id="mx">×</button>
@@ -198,11 +255,78 @@
     return o;
   }
   var modal=document.getElementById("modal");
-  document.getElementById("gen").onclick=function(){
-    if(!cfg.out.length){ alert("Add at least one section to the outline first."); return; }
-    document.getElementById("mtitle").textContent=(cfg.client||"Prospect")+" — "+TYPES.filter(function(x){return x[0]===cfg.type;})[0][1]+" deck";
+  function typeName(){return TYPES.filter(function(x){return x[0]===cfg.type;})[0][1];}
+  document.getElementById("brief-link").onclick=function(){
+    if(!cfg.out.length){ alert("Add at least one section first."); return; }
+    document.getElementById("mtitle").textContent=(cfg.client||"Prospect")+" — "+typeName()+" deck";
     document.getElementById("out-spec").value=brief(); modal.hidden=false;
   };
+
+  // ---- live deck renderer (FeedSpark / YuMOVE aesthetic) ----
+  function chOptCount(c){ try{ var s=JSON.parse(localStorage.getItem("fcc-readiness")||"{}"); var o=(s.ch&&s.ch[c])||{}; return Object.keys(o).filter(function(k){return o[k]===2;}).length; }catch(e){ return 0; } }
+  function card(n,l){return '<div class="s-card"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>';}
+  function bul(a){return '<ul class="s-bul">'+a.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>';}
+  var CLBL={title:"Titles",keyword:"Keywords",data:"Data fields",image:"Imagery",custom_label:"Custom labels",product_type:"Product type",technical:"Feed & technical",channel:"Channels",test:"Testing",account:"Account",opt:"Optimisation"};
+  function scoreBody(p){ if(!p) return bul(["Feed-optimisation score appears once this client's plan is linked."]);
+    var col=p.score>=66?'var(--good)':p.score>=40?'var(--orange)':'var(--risk)';
+    var lanes=["title","keyword","data","image","custom_label","technical","channel","test"].map(function(k){var cc=p.cats&&p.cats[k];if(!cc||!cc.total)return '';var pct=Math.round(cc.done/cc.total*100);
+      return '<div class="s-lane"><span>'+CLBL[k]+'</span><span class="tk"><span class="fl" style="width:'+pct+'%"></span></span><span>'+pct+'</span></div>';}).join('');
+    return '<div style="display:flex;gap:34px;align-items:center"><div style="text-align:center"><div class="s-ring" style="--p:'+p.score+';--c:'+col+'"><b>'+p.score+'</b></div><div style="font-size:12px;color:var(--muted);font-weight:800;margin-top:8px">/ 100</div></div><div style="flex:1">'+lanes+'</div></div>';
+  }
+  var CONTENT={
+    scope:function(p,c){return{eye:"Service",h:"Scope &amp; scale",body:'<div class="s-cards">'+card(p?p.total:'—','tasks in plan')+card(chOptCount(c)||'—','optimised channels')+card(p?p.open:'—','live workstreams')+card('Google + social','surfaces')+'</div>'};},
+    stack:function(){return{eye:"Delivery",h:"Unit &amp; tech stack",body:bul(["FeedHero — rules, alerts, custom labels, A/B testing","Tachyon AI — intent generation, description enrichment, visual attribute harvest","Scraping &amp; supplemental feeds for titles, AOT and conversational attributes","Multi-channel output: Google Shopping/PMax, Meta, social, affiliate, LIA"])};},
+    recap:function(p){return{eye:"Review",h:"Project recap",body:bul([(p?p.done+" tasks delivered across the account":"Work delivered across the account"),"Titles, data fields, keywords and imagery optimised to the FeedSpark MASK standard","Testing cadence established, wins rolled into BAU","Full history maintained in the live project plan"])};},
+    lookback:function(p){return{eye:"Look-back",h:"The period in review",body: p&&p.vol&&p.vol.length? '<div style="display:flex;flex-direction:column;gap:8px">'+p.vol.slice(-6).map(function(v){var t=v.d+v.o,w=Math.round(v.d/Math.max(1,t)*100);return '<div class="s-lane"><span>'+v.l+'</span><span class="tk"><span class="fl" style="width:'+w+'%;background:var(--good)"></span></span><span>'+v.d+'/'+t+'</span></div>';}).join('')+'</div>' : bul(["Timeline of tasks and milestones across the selected window."]) };},
+    wins:function(p){return{eye:"Results",h:"Wins this period",body:'<div class="s-cards">'+card(p?p.done:'—','tasks completed')+card('+24.7%','benefit copy')+card('+126%','\"Multivitamins\"')+card('+30%','health conditions')+'</div><p class="lead" style="margin-top:14px">Winning tests roll into always-on BAU across the catalogue.</p>'};},
+    auto:function(){return{eye:"Automation",h:"Automation &amp; pick readiness",body:bul(["Scheduled monthly tasks run on an automated cadence","Rules-based feeds cut manual touch on titles, labels and exclusions","Readiness to scale volume without linear hours","Next: brief → assign → status automation across the book"])};},
+    airead:function(p){return{eye:"AI readiness",h:"Ready for agentic commerce",body:bul(["Titles &amp; structured data prepared for LLM shopping surfaces","Conversational attributes (Q&amp;A, item_group_title, variant_option) on the roadmap","AI-crawlable schema to expose for ChatGPT, Perplexity &amp; Google AI Mode","The gap to a full AI-Ready feed is the agentic-commerce opportunity"])};},
+    landscape:function(){return{eye:"Context",h:"The AI landscape",body:bul(["Shopping is shifting from search boxes to AI answer engines","ChatGPT Shopping, Perplexity &amp; Google AI Mode read structured feeds directly","Protocols emerging: UCP (Google), MCP (Anthropic/Shopify), ACP (OpenAI)","Feeds that are AI-ready win the agentic shelf first"])};},
+    fit:function(){return{eye:"Fit",h:"Why FeedSpark fits",body:bul(["Proprietary Tachyon AI + FeedHero cover generation and management end-to-end","Proven across fashion, beauty, footwear, outdoor &amp; supplements","Golden Record discipline targets 99.9% attribute completeness","One partner across every output channel"])};},
+    spark:function(){return{eye:"Tachyon",h:"The Spark AI engine",body:bul(["Intent generation — titles built from how buyers actually search","Description enrichment at catalogue scale","Visual attribute harvest from product imagery","Feeds the conversational &amp; structured layers agentic surfaces reward"])};},
+    conv:function(){return{eye:"Google 2026",h:"Conversational attributes",body:bul(["question_and_answer · item_group_title · variant_option","popularity_rank · related_product · document_link","Submitted via a supplemental data source, per market","The layer that makes products answerable, not just listed"])};},
+    score:function(p){return{eye:"Score",h:"Feed-optimisation score",body:scoreBody(p)};},
+    channels:function(){return{eye:"Channels",h:"Channel coverage",body:bul(["Google Shopping &amp; PMax — the core","Meta &amp; social — DPA, cyclers, creative tests","Pinterest / TikTok / Snapchat — expansion","Affiliate (Partnerize/AWIN) &amp; LIA — where it fits"])};},
+    cases:function(){return{eye:"Proof",h:"Case studies &amp; test wins",body:bul(["Brand-inclusion titles — measurable uplift","Benefit copy +24.7%","\"Multivitamins\" +126.62%","Health-condition keywords +30%"])};},
+    roadmap:function(){return{eye:"Ahead",h:"Roadmap &amp; next quarter",body:bul(["Close the biggest feed-completion gaps first","Stage seasonal keyword &amp; overlay batches ahead of each event","Advance AI-readiness: conversational attributes + schema","Expand into the next-best channel per brand"])};},
+    team:function(){return{eye:"People",h:"Team &amp; ways of working",body:bul(["Senior AM — strategy, commercial, account","London junior AM — day-to-day co-management","India content team — titles, descriptions, attributes","ASPL — execution &amp; QA; visible hand-offs"])};},
+    comm:function(){return{eye:"Commercials",h:"Scope &amp; investment",body:bul(["Retainer scoped to markets, feeds and hours","Add-on scope: DPA/PPC overlays, extra channels","Hours reported transparently against the block","Clear path to scale as results compound"])};}
+  };
+  function slideFor(id,i,total,p){ var f=CONTENT[id]; if(!f) return '';
+    var s=f(p,cfg.client), client=cfg.client||"Prospect";
+    return '<section class="slide"><div class="sk"></div><div class="eyebrow2">'+s.eye+'</div><h2>'+s.h+'</h2>'
+      +'<div class="s-body">'+s.body+'</div>'
+      +'<div class="foot"><span>FeedSpark · Private &amp; Confidential · '+esc(client)+'</span><span>'+i+' / '+total+'</span></div></section>';
+  }
+  function renderDeck(){
+    var p=cfg.client?PT[cfg.client]:null, client=cfg.client||"[Prospect]";
+    var lbl={"1m":"Last month","3m":"Last 3 months","6m":"Last 6 months","fy":"Full FY","all":"All-time"}[cfg.lookback];
+    var total=cfg.out.length+1;
+    var cover='<section class="slide cover"><div class="sk"></div><div class="eyebrow2">FeedSpark · '+esc(typeName())+'</div>'
+      +'<h1>'+esc(client)+'</h1><div class="meta">'+esc(typeName())+' · look-back: '+lbl+'</div>'
+      +(p?'<div class="meta">Feed-optimisation score '+p.score+'/100 · '+p.total+' tasks · '+p.done+' delivered</div>':'')
+      +'<div class="foot"><span>FeedSpark · Private &amp; Confidential</span><span>1 / '+total+'</span></div></section>';
+    document.getElementById("dg-slides").innerHTML=cover+cfg.out.map(function(id,i){return slideFor(id,i+2,total,p);}).join('');
+    document.getElementById("dg-title").textContent=client+" — "+typeName();
+    document.getElementById("dg-sub2").textContent=total+" slides · "+lbl;
+    document.getElementById("dg-stage").hidden=false; window.scrollTo(0,0);
+  }
+  function runLoad(){
+    if(!cfg.out.length){ alert("Add at least one section to the outline first."); return; }
+    var load=document.getElementById("dg-load"); load.hidden=false;
+    var pct=0, pi=0, ring=document.getElementById("dg-ring"), pctEl=document.getElementById("dg-pct"),
+        ph=document.getElementById("dg-phase"), sp=document.getElementById("dg-subp");
+    var phs=[[12,"Pulling the plan data"],[36,"Reading tasks &amp; score"],[60,"Laying out the sections"],[82,"Applying the FeedSpark design"],[100,"Deck ready"]];
+    var iv=setInterval(function(){ pct=Math.min(100,pct+(Math.random()*9+3));
+      ring.style.setProperty('--p',pct); pctEl.textContent=Math.round(pct)+'%';
+      while(pi<phs.length-1 && pct>=phs[pi][0]) pi++;
+      ph.textContent=pct>=100?"Deck ready":"Composing your deck…"; sp.innerHTML=phs[pi][1];
+      if(pct>=100){ clearInterval(iv); setTimeout(function(){ load.hidden=true; renderDeck(); },420); }
+    },130);
+  }
+  document.getElementById("gen").onclick=runLoad;
+  document.getElementById("dg-close").onclick=function(){ document.getElementById("dg-stage").hidden=true; };
+  document.getElementById("dg-edit").onclick=function(){ document.getElementById("dg-stage").hidden=true; };
   document.getElementById("mx").onclick=function(){modal.hidden=true;};
   modal.querySelector(".modal-bg").onclick=function(){modal.hidden=true;};
   document.getElementById("copy").onclick=function(){ var t=document.getElementById("out-spec"); t.select();

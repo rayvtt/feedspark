@@ -38,6 +38,12 @@
   .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;display:grid;grid-template-columns:auto 1fr;gap:14px;cursor:pointer;transition:border-color .12s}
   .card:hover{border-color:var(--orange)}
   .card.on{border-color:var(--good);background:#FCFEFC}
+  .card.shipped{border-color:#CDE9D8;background:#FAFEFB;cursor:pointer}
+  .card.shipped .cb.cbok{background:var(--good);border-color:var(--good)}
+  .card.shipped .cb svg{opacity:1}
+  .built{font-size:10px;font-weight:900;letter-spacing:.04em;color:#fff;background:var(--good);border-radius:100px;padding:2px 9px}
+  .openlink{font-size:12px;font-weight:800;color:var(--orange-deep);text-decoration:none;margin-left:auto}
+  .openlink:hover{text-decoration:underline}
   .cb{width:22px;height:22px;border:2px solid var(--line);border-radius:7px;margin-top:2px;flex:none;display:flex;align-items:center;justify-content:center;transition:.12s}
   .card.on .cb{background:var(--good);border-color:var(--good)}
   .cb svg{width:13px;height:13px;stroke:#fff;stroke-width:3;fill:none;opacity:0}
@@ -102,8 +108,8 @@
 <script>
 var ROADMAP=[
  {g:"AI &amp; agentic commerce",gk:"A",sub:"Get every brand ready for how people will shop next — LLMs and AI answer engines.",items:[
-   {id:"ai-ready",t:"AI-Ready Feeds readiness score",top:1,imp:"high",eff:"M",ch:["ChatGPT","Perplexity","Google AI Mode"],d:"A per-brand readiness score for agentic commerce: conversational attributes (question_and_answer, item_group_title, variant_option, popularity_rank), structured data, and LLM-crawlable schema — the Tachyon differentiator, scored next to feed-optimisation."},
-   {id:"conv-attr",t:"Conversational-attribute tracker",top:0,imp:"med",eff:"S",ch:["Google","AI Mode"],d:"Track which of Google's 2026 conversational attributes each brand has submitted via supplemental data source, with a fill-in checklist per market."},
+   {id:"ai-ready",b:"/readiness",t:"AI-Ready Feeds readiness score",top:1,imp:"high",eff:"M",ch:["ChatGPT","Perplexity","Google AI Mode"],d:"A per-brand readiness score for agentic commerce: conversational attributes (question_and_answer, item_group_title, variant_option, popularity_rank), structured data, and LLM-crawlable schema — the Tachyon differentiator, scored next to feed-optimisation."},
+   {id:"conv-attr",b:"/readiness",t:"Conversational-attribute tracker",top:0,imp:"med",eff:"S",ch:["Google","AI Mode"],d:"Track which of Google's 2026 conversational attributes each brand has submitted via supplemental data source, with a fill-in checklist per market."},
    {id:"protocols",t:"Agentic-protocol coverage (UCP / MCP / ACP)",top:0,imp:"med",eff:"M",ch:["ChatGPT","Shopify","Google"],d:"Show each brand's exposure to UCP (Google), MCP (Anthropic/Shopify) and ACP (OpenAI) so we position FeedSpark ahead of the agentic-commerce shift."},
  ]},
  {g:"Feed technicality &amp; data quality",gk:"B",sub:"The health layer — catch problems before Google/Meta do.",items:[
@@ -114,11 +120,11 @@ var ROADMAP=[
  {g:"Feed optimisation depth",gk:"C",sub:"Turn the task history into a compounding optimisation engine.",items:[
    {id:"tachyon",t:"Tachyon AI copilot in-dashboard",top:6,imp:"high",eff:"L",ch:["All"],d:"A Claude-powered assistant inside the FCC: “what should I do for Reiss this week?”, draft a brief, summarise a plan, or generate MASK titles / keyword sets from the feed. Builds on the existing /api/claude."},
    {id:"uplift",t:"Test → uplift → BAU loop",top:5,imp:"high",eff:"M",ch:["All"],d:"Close the loop on every test: expected uplift, actual result (%), and roll winners into BAU. A quantified “tests that won” library (benefit copy +24.7%, Multivitamins +126%) — proof for QBRs."},
-   {id:"seasonal",t:"Seasonal keyword &amp; event engine",top:0,imp:"med",eff:"M",ch:["Google","Meta"],d:"A calendar-driven keyword/overlay engine (BF, XMAS, gifting, Ramadan, back-to-school) that pre-stages the right batches per brand ahead of each event."},
+   {id:"seasonal",b:"/readiness",t:"Seasonal keyword &amp; event engine",top:0,imp:"med",eff:"M",ch:["Google","Meta"],d:"A calendar-driven keyword/overlay engine (BF, XMAS, gifting, Ramadan, back-to-school) that pre-stages the right batches per brand ahead of each event."},
  ]},
  {g:"Cross-channel expansion",gk:"D",sub:"See and sell every channel — the upsell surface.",items:[
-   {id:"channel-matrix",t:"Cross-channel coverage matrix",top:3,imp:"high",eff:"S",ch:["Google","Meta","Pinterest","TikTok","Affiliate","LIA"],d:"A brand × channel grid (Shopping, PMax, Meta, Pinterest, TikTok, Snapchat, Partnerize/AWIN, LIA, Bing) showing live / optimised / missing — the expansion map and a clear upsell surface."},
-   {id:"social-dpa",t:"Social &amp; DPA creative tracker",top:0,imp:"med",eff:"M",ch:["Meta","TikTok","Pinterest"],d:"Track DPA overlays, image cyclers and creative tests per social channel, with which brand sets are live vs pending."},
+   {id:"channel-matrix",b:"/readiness",t:"Cross-channel coverage matrix",top:3,imp:"high",eff:"S",ch:["Google","Meta","Pinterest","TikTok","Affiliate","LIA"],d:"A brand × channel grid (Shopping, PMax, Meta, Pinterest, TikTok, Snapchat, Partnerize/AWIN, LIA, Bing) showing live / optimised / missing — the expansion map and a clear upsell surface."},
+   {id:"social-dpa",b:"/readiness",t:"Social &amp; DPA creative tracker",top:0,imp:"med",eff:"M",ch:["Meta","TikTok","Pinterest"],d:"Track DPA overlays, image cyclers and creative tests per social channel, with which brand sets are live vs pending."},
    {id:"affiliate",t:"Affiliate &amp; LIA readiness",top:0,imp:"med",eff:"S",ch:["Partnerize","AWIN","LIA"],d:"Per-brand affiliate feed status (Partnerize/AWIN) and Local Inventory Ads / Click-&-Collect readiness, with the gaps to open."},
  ]},
  {g:"Automation &amp; operations",gk:"E",sub:"Make the workload run itself.",items:[
@@ -130,8 +136,15 @@ var ROADMAP=[
  {g:"Intelligence &amp; dashboard craft",gk:"F",sub:"From reporting to foresight.",items:[
    {id:"competitor",t:"Competitor &amp; price-benchmark intelligence",top:9,imp:"high",eff:"L",ch:["Google","Market"],d:"Per-brand competitor share-of-voice on Shopping, GMC price-competitiveness benchmarks and category impression trends — so optimisation targets where the market actually is."},
    {id:"priority",t:"Portfolio priority / forecast engine",top:10,imp:"high",eff:"L",ch:["All"],d:"Rank next-best-actions across the whole book by expected impact (feed gaps × test history) — the dashboard tells you where the next hour earns the most ROAS. A portfolio spend-optimiser."},
+   {id:"deckgen",b:"/deck-builder",t:"Deck Generator",top:0,imp:"high",eff:"M",ch:["Sales","AM"],d:"Compose any client deck from a section library (strategy / onboarding / intro / methodology) with drag-drop inclusion, look-back window and a build-ready brief that folds in the live plan data."},
    {id:"report",t:"One-click client-ready reports",top:0,imp:"med",eff:"M",ch:["Reporting"],d:"Export a branded PDF per brand straight from the dossier — score, wins, tests, next steps — for QBRs and retention."},
-   {id:"leadership",t:"Leadership &amp; mobile views",top:0,imp:"med",eff:"S",ch:["Exec"],d:"A roll-up view (book health, at-risk accounts, revenue-at-risk) and a mobile at-a-glance mode for the Monday catch-up on the move."},
+   {id:"leadership",b:"/leadership",t:"Leadership &amp; mobile views",top:0,imp:"med",eff:"S",ch:["Exec"],d:"A roll-up view (book health, at-risk accounts, revenue-at-risk) and a mobile at-a-glance mode for the Monday catch-up on the move."},
+ ]},
+  {g:"Suggested next builds",gk:"G",sub:"Fresh ideas now the first wave has shipped — pick the next sprint.",items:[
+   {id:"deck-live",t:"Deck → live rendered output",top:0,imp:"high",eff:"M",ch:["Sales"],d:"Render the Deck Generator's chosen sections into a live, styled deck the AM can present — placeholder copy auto-filled by Tachyon once the API key is in."},
+   {id:"digest",t:"Weekly auto-digest",top:0,imp:"med",eff:"M",ch:["Ops"],d:"A Monday email/Slack digest per AM: what shipped, what's overdue, scores that moved, tests ready to read — the Monday panel, pushed."},
+   {id:"feeddiff",t:"Feed change / diff alerts",top:0,imp:"med",eff:"L",ch:["Google","Meta"],d:"Detect when a plan tab or a live feed changes (new SKUs, dropped attributes, price shifts) and surface a diff so nothing slips."},
+   {id:"retention",t:"Account risk & retention radar",top:0,imp:"high",eff:"M",ch:["Exec"],d:"Blend score trend, overdue load, hours burn and sentiment into an at-risk score per account, with the play to save it."}
  ]},
 ];
 
@@ -140,35 +153,41 @@ var checks={}; try{ checks=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e
 var ALL=[]; ROADMAP.forEach(function(g){g.items.forEach(function(it){it._g=g.g;ALL.push(it);});});
 var groups=document.getElementById("groups");
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(checks)); }catch(e){} }
-function tick(){ var n=ALL.filter(function(i){return checks[i.id];}).length, tot=ALL.length;
-  document.getElementById("bar").style.width=Math.round(n/tot*100)+"%";
-  document.getElementById("barlbl").textContent=n+" of "+tot+" selected";
-  document.getElementById("count").textContent=n?(n+" improvement"+(n>1?"s":"")+" queued"):"Select the improvements you want next"; }
+function tick(){ var shipped=ALL.filter(function(i){return i.b;}).length, tot=ALL.length;
+  var sel=ALL.filter(function(i){return checks[i.id]&&!i.b;}).length;
+  document.getElementById("bar").style.width=Math.round(shipped/tot*100)+"%";
+  document.getElementById("barlbl").textContent=shipped+" of "+tot+" shipped"+(sel?" · "+sel+" queued for next":"");
+  document.getElementById("count").textContent=sel?(sel+" improvement"+(sel>1?"s":"")+" queued"):(shipped+" shipped — pick what's next"); }
 function render(){
   groups.innerHTML=ROADMAP.map(function(g){
     return '<section class="grp"><div class="grp-h"><span class="gk">'+g.gk+'</span><h2>'+g.g+'</h2></div>'
       +'<p class="grp-sub">'+g.sub+'</p><div class="cards">'
-      +g.items.map(function(it){ var on=checks[it.id]?' on':'';
+      +g.items.map(function(it){
         var chips='<span class="mchip imp-'+it.imp+'">'+(it.imp==='high'?'High impact':'Med impact')+'</span>'
           +'<span class="mchip eff">'+({S:'Quick',M:'Medium',L:'Larger build'}[it.eff])+'</span>'
           +it.ch.map(function(c){return '<span class="mchip ch">'+c+'</span>';}).join('');
+        if(it.b) return '<div class="card shipped" data-url="'+it.b+'"><div class="cb cbok"><svg viewBox="0 0 14 14"><path d="M2 7l3.5 3.5L12 3"/></svg></div>'
+          +'<div><div class="c-h"><h3>'+it.t+'</h3><span class="built">✓ Shipped</span><a class="openlink" href="'+it.b+'">Open →</a></div>'
+          +'<div class="c-d">'+it.d+'</div><div class="chiprow">'+chips+'</div></div></div>';
+        var on=checks[it.id]?' on':'';
         return '<div class="card'+on+'" data-id="'+it.id+'"><div class="cb"><svg viewBox="0 0 14 14"><path d="M2 7l3.5 3.5L12 3"/></svg></div>'
           +'<div><div class="c-h"><h3>'+it.t+'</h3>'+(it.top?'<span class="top10">TOP 10 · #'+it.top+'</span>':'')+'</div>'
           +'<div class="c-d">'+it.d+'</div><div class="chiprow">'+chips+'</div></div></div>'; }).join('')
       +'</div></section>'; }).join('');
   Array.prototype.forEach.call(groups.querySelectorAll('.card'),function(card){
+    if(card.classList.contains('shipped')){ card.onclick=function(e){ if(!e.target.closest('a')) location.href=card.getAttribute('data-url'); }; return; }
     card.onclick=function(){ var id=card.getAttribute('data-id'); checks[id]=!checks[id]; if(!checks[id])delete checks[id];
       card.classList.toggle('on',!!checks[id]); save(); tick(); };
   });
   tick();
 }
 function planText(){
-  var picked=ALL.filter(function(i){return checks[i.id];});
-  if(!picked.length) return "No items selected yet — tick the improvements you want, then generate again.";
+  var picked=ALL.filter(function(i){return checks[i.id]&&!i.b;});
+  if(!picked.length) return "No items selected yet — tick the not-yet-built improvements you want, then generate again.";
   var d=new Date(), stamp=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);
   var out="# FeedSpark Command Center — Action plan ("+stamp+")\n\nPlease build the following into the command center, in roughly this order:\n";
   ROADMAP.forEach(function(g){
-    var gp=g.items.filter(function(i){return checks[i.id];});
+    var gp=g.items.filter(function(i){return checks[i.id]&&!i.b;});
     if(!gp.length) return;
     out+="\n## "+g.g.replace(/&amp;/g,"&")+"\n";
     gp.forEach(function(it){ out+="- [ ] "+it.t+(it.top?" (Top 10 #"+it.top+")":"")+" — "+it.d.replace(/&amp;/g,"&")+" [impact: "+it.imp+", effort: "+it.eff+", channels: "+it.ch.join("/")+"]\n"; });
