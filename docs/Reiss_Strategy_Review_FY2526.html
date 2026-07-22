@@ -242,13 +242,14 @@ body.hide-checks .chk{display:none}
       <a href="#c5" class="">05 Wins</a>
       <a href="#c6" class="">06 Score</a>
       <a href="#c7" class="">07 Auto</a>
-      <a href="#c8" class="">08 Landscape</a>
-      <a href="#c9" class="">09 Spark</a>
-      <a href="#c10" class="">10 Attributes</a>
-      <a href="#c11" class="">11 AI ready</a>
-      <a href="#c12" class="">12 Cases</a>
-      <a href="#c13" class="">13 Roadmap</a>
-      <a href="#c14" class="">14 Fit</a>
+      <a href="#c8" class="">08 Audit</a>
+      <a href="#c9" class="">09 Landscape</a>
+      <a href="#c10" class="">10 Spark</a>
+      <a href="#c11" class="">11 Attributes</a>
+      <a href="#c12" class="">12 AI ready</a>
+      <a href="#c13" class="">13 Cases</a>
+      <a href="#c14" class="">14 Roadmap</a>
+      <a href="#c15" class="">15 Fit</a>
     </nav>
     <button class="flagbtn" id="flagbtn" aria-pressed="true" title="Toggle data-check markers">⚑ Data checks</button>
     <div class="progress" id="progress" style="width: 0%;"></div>
@@ -332,7 +333,16 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         <p style="margin-top:12px;font-size:13px;color:var(--muted)">2,304 distinct product groups within this sample — an average of 2.2 SKUs (sizes/colours) per style.</p>
       </div>
     </div>
-    <div class="note rv in"><b>Read this as a sample, not the catalogue:</b> the brand and SKU figures on this page come from one ~5,000-row export FeedSpark was given to analyse — not a confirmed count of Reiss' full live feed across all 29 markets and 60 feeds, which is almost certainly larger. Treat the brand-line breakdown as "what's visible in this sample," not "the account's true brand mix," until it's checked against the full feed. Markets and feed counts come from the account record; hours needs Ray to confirm before this goes to Reiss.</div>
+    <div class="tbl-wrap rv in" style="margin-top:24px">
+      <table><thead><tr><th>Market</th><th style="width:20%">Live SKUs (FeedHero audit)</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><b>GB</b></td><td>60,345</td><td><span class="pill p-done">Confirmed — full catalogue</span></td></tr>
+        <tr><td><b>DE</b></td><td>59,093</td><td><span class="pill p-done">Confirmed — full catalogue</span></td></tr>
+        <tr><td><b>FR</b></td><td>60,208</td><td><span class="pill p-done">Confirmed — full catalogue</span></td></tr>
+        <tr><td colspan="3" style="text-align:center;color:var(--muted);font-style:italic">— remaining 26 markets not yet audited; see chapter 08 for the full breakdown —</td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>Read the brand table above as a sample, the market table above as confirmed:</b> the brand-line breakdown still comes from one ~5,000-row export, not a confirmed count of Reiss' full catalogue — treat it as "what's visible in that sample" until it's checked against the full feed. The GB/DE/FR row is different: those are FeedHero's own live audit of the full catalogue in each market — <b>179,646 real SKUs</b>, not a sample — see chapter 08. The other 26 markets and their feeds still aren't confirmed either way. Hours needs Ray to confirm before this goes to Reiss.</div>
   </div>
 </section>
 
@@ -378,7 +388,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
     </div>
     <div class="grid-2 rv in" style="margin-top:32px">
       <div class="card"><h4>The one that's actually verified</h4><p>39% of titles were flagged as duplicated across the catalogue. Checking the live feed directly: duplicates are now down to 0.1% (4 rows, 2 pairs). The fix didn't just ship — it worked.</p></div>
-      <div class="card"><h4>What's moving right now</h4><p>The <b>[Search Intent] vs. none</b> title A/B is live and reading. Between that and the Local Language programme (chapter 12), FY26/27 opens with two structural tests already in flight rather than starting cold.</p></div>
+      <div class="card"><h4>What's moving right now</h4><p>The <b>[Search Intent] vs. none</b> title A/B is live and reading. Between that and the Local Language programme (chapter 13), FY26/27 opens with two structural tests already in flight rather than starting cold.</p></div>
     </div>
   </div>
 </section>
@@ -467,7 +477,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       </div>
       <div class="card" style="border-left:3px solid var(--orange)">
         <h4>Where it's weakest — EU market</h4>
-        <p style="font-size:13px">EU is the only market where keyword tests trend negative (2 of 6 positive, avg −4.6%/−5.7%), the opposite of GB and DE. Worth reading alongside chapter 12's Local Language case study — a market running English-sourced keywords against non-English search behaviour is exactly the kind of gap that case study is built to catch, though the archive alone doesn't say that's the cause here.</p>
+        <p style="font-size:13px">EU is the only market where keyword tests trend negative (2 of 6 positive, avg −4.6%/−5.7%), the opposite of GB and DE. Worth reading alongside chapter 13's Local Language case study — a market running English-sourced keywords against non-English search behaviour is exactly the kind of gap that case study is built to catch, though the archive alone doesn't say that's the cause here.</p>
       </div>
     </div>
     <div class="note rv in"><b>External benchmark — apparel/fashion:</b> a controlled A/B test comparing enriched meta-data vs. standard feeds in Google Merchant Center showed +7.6% CTR lift, +6.3% ROAS growth and 16.4× ROI on enrichment (Stylitics/Tinuiti). Reiss' own 2-year keyword-test average (+5.9% impressions, +6.8% clicks in GB/DE) sits in the same range — the external pattern holds for this account, with EU the clear exception.</div>
@@ -501,6 +511,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
     </div>
     <p class="sec-sub rv in" style="max-width:none;margin-top:0">Every figure above is a straight measurement (a length, a count, a fill rate) against a named target — not a weighted composite, so there's nothing here that could be "wrong" the way an opaque single score could be. Where a number looks alarming (1.4%, 5.8%, 0%), the note under it says exactly what was measured and against what target.</p>
     <div class="callout rv in"><h4>Golden Record cross-check</h4><p>The last audit put Golden Record completeness at 88.6%. Core structural attributes (colour, material, size, gender, age group, GTIN, item-group ID, condition) are 100% filled in this export — the gap sits in the softer content layer above: keywords, description length and highlights, not raw data presence.</p></div>
+    <div class="note rv in"><b>Confirmed at full catalogue scale (chapter 08):</b> FeedHero's own live audit of GB/DE/FR — 179,646 real SKUs, not this 4,999-row sample — flags "No keywords" as the single biggest issue in every market (89–97%) and product highlights as a Red-priority gap in DE specifically (74% insufficient). Two independent methods, the same two weak points. The audit also surfaces the Item-group ID issue above as "Broken size runs," present at an almost identical rate in all three markets (43–44%) — a structural, cross-market issue, not a quirk of this sample.</div>
   </div>
 </section>
 
@@ -512,7 +523,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
     <div class="tbl-wrap rv in">
       <table><thead><tr><th style="width:22%">Layer</th><th style="width:20%">Source</th><th>How it works</th><th style="width:16%">State</th></tr></thead>
       <tbody>
-        <tr><td><b>Title de-duplication</b></td><td>Rule — auto-optimised-title</td><td>Detects and rewrites duplicate titles automatically. Verified working: 0.1% duplicates remain.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
+        <tr><td><b>Title de-duplication</b></td><td>Rule — auto-optimised-title</td><td>Detects and rewrites duplicate titles automatically. Verified working in GB: 0.1% duplicates remain — but FR's live audit (chapter 08) still shows 9% duplicate titles, so the fix hasn't fully reached every market yet.</td><td><span class="pill p-prog">GB done, FR open</span></td></tr>
         <tr><td><b>Custom labels</b></td><td>FeedHero</td><td>Bestseller and attribute labels, rule-driven; 3.5 of 6 slots filled on average.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
         <tr><td><b>Keyword targeting</b></td><td>Reiss Keyword Planner</td><td>Tool is live; rollout across the catalogue is the open item — 5.8% coverage today.</td><td><span class="pill p-prog">In progress</span></td></tr>
         <tr><td><b>Product type depth</b></td><td>Rule — FeedHero</td><td>Further categorisation breakdown in build — feed shows depth averaging 2.2 levels today.</td><td><span class="pill p-prog">In progress</span></td></tr>
@@ -521,11 +532,57 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       </tbody></table>
     </div>
     <div class="callout rv in"><h4>The pattern to watch</h4><p>&nbsp;Every open item in this table sits on the same fault line — a dependency on a NEXT-side feed fix. Closing that dependency, not adding more FeedSpark automation, is what unblocks the rest of the automation layer.</p></div>
+    <div class="note rv in"><b>Confirmed at scale:</b> the live FeedHero audit (chapter 08) shows "Broken size runs" — this same Item Group ID issue — at 43–44% in GB, DE <i>and</i> FR alike. That consistency across three independently-audited markets is itself evidence this is one structural NEXT-side issue, not three separate local problems.</div>
   </div>
 </section>
 
-<!-- ================= CH 08 — THE AI LANDSCAPE ================= -->
-<div class="chapter" id="c8"><div class="ch-num">08</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eight</div><h2>The AI Landscape</h2><p>Reiss shoppers don't only search anymore. Three pipelines decide whether Reiss is in the answer.</p></div></div>
+<!-- ================= CH 08 — LIVE FEEDHERO AUDIT ================= -->
+<div class="chapter" id="c8"><div class="ch-num">08</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eight</div><h2>Live FeedHero Audit — GB / DE / FR</h2><p>179,646 live SKUs, audited directly by FeedHero — the widest, most current data in this deck.</p></div></div>
+
+<section class="band">
+  <div class="wrap">
+    <p class="sec-sub rv in" style="max-width:none;margin-top:0">A third, independent source alongside the 4,999-row feed sample (chapter 06) and the 2-year A/B archive (chapter 05): FeedHero's own audit tool, run directly against the full live catalogue in three markets. No sampling — every SKU currently live in GB, DE and FR was checked.</p>
+    <div class="stats rv in">
+      <div class="stat"><div class="n">179,646</div><div class="l">Live SKUs audited across GB, DE, FR</div></div>
+      <div class="stat"><div class="n">3</div><div class="l">Red-priority issues shared by all three markets</div></div>
+      <div class="stat"><div class="n">89–97%</div><div class="l">"No keywords" — the single biggest gap, every market</div></div>
+      <div class="stat"><div class="n">6</div><div class="l">Content-QC gaps at 100% in DE &amp; FR, absent from GB's own Red list</div></div>
+    </div>
+
+    <div class="tbl-wrap rv in" style="margin-bottom:32px">
+      <table><thead><tr><th>Universal Red flag — present in every market</th><th style="width:12%">GB</th><th style="width:12%">DE</th><th style="width:12%">FR</th><th style="width:20%">Also seen in</th></tr></thead>
+      <tbody>
+        <tr><td>No keywords</td><td><span class="pill p-block">89%</span></td><td><span class="pill p-block">91%</span></td><td><span class="pill p-block">97%</span></td><td>Ch.06 — 5.8% Keyword Planner coverage (different metric, same gap)</td></tr>
+        <tr><td>Broken size runs (Item Group ID)</td><td><span class="pill p-block">43%</span></td><td><span class="pill p-block">44%</span></td><td><span class="pill p-block">43%</span></td><td>Ch.06 &amp; Ch.07 — the open Item Group ID → Item No. switchover</td></tr>
+        <tr><td>Products missing highly desirable data fields</td><td><span class="pill p-block">44%</span></td><td><span class="pill p-block">44%</span></td><td><span class="pill p-block">44%</span></td><td>Identical rate in all three — one shared rule set, not three local issues</td></tr>
+      </tbody></table>
+    </div>
+
+    <div class="grid-2 rv in" style="margin-bottom:32px">
+      <div class="card" style="border-left:3px solid var(--red)">
+        <h4>The DE/FR content gap GB doesn't have</h4>
+        <p style="font-size:13px">Six issues sit at or near <b>100% Red</b> in DE and FR that don't appear on GB's own Red list at all: no lifestyle image, products not human-reviewed, no enhanced data fields, missing optional data fields (all 100% in both DE and FR), plus gender missing from title (DE 85%, FR 87%). Reads as one story — the content-enhancement work behind GB's catalogue hasn't been run on the DE/FR translations at all, not a smaller version of the same gap.</p>
+      </div>
+      <div class="card">
+        <h4>Why this matters for chapter 13</h4>
+        <p style="font-size:13px">This is the concrete, catalogue-level version of the EU keyword-test underperformance flagged in chapter 05 (33% positive vs. 75% in GB) and the reason the Local Language case study exists. Three independent signals — a task-log gap, an underperforming A/B test, and now a full-catalogue content audit — all pointing at the same non-GB markets.</p>
+      </div>
+    </div>
+
+    <div class="eyebrow rv in">Market-specific</div>
+    <h2 class="sec-title rv in">What's unique to each market</h2>
+    <p class="sec-sub rv in">Not every Red flag is shared — some are specific enough to be a targeted fix rather than a structural one.</p>
+    <div class="grid-3 rv in">
+      <div class="card"><h4>GB — image quality</h4><p style="font-size:13px"><b>99%</b> images not square, <b>98%</b> scene images (not on plain background), <b>36%</b> missing required data fields. GB's images are live at 100% coverage (chapter 06) but the format itself needs work — not present as a Red flag in DE or FR.</p></div>
+      <div class="card"><h4>DE — highlights &amp; trash</h4><p style="font-size:13px"><b>74%</b> insufficient product highlights — confirms the 17% average fill rate from chapter 06 at full catalogue scale. <b>35%</b> flagged as trash products, the highest of the three markets.</p></div>
+      <div class="card"><h4>FR — category depth</h4><p style="font-size:13px"><b>100%</b> of products have a shallow category tree — the widest single gap in this audit. <b>26%</b> long-materials issue and a 9% duplicate-titles rate (chapter 07) also unique to FR.</p></div>
+    </div>
+    <div class="note rv in"><b>Reading three sources together, not picking one:</b> the feed-sample analysis (chapter 06) says what's structurally present on a snapshot; the A/B archive (chapter 05) says what's been tested and proven; this audit says what FeedHero's own rules catch across the full live catalogue today. Where they overlap (keywords, highlights, Item Group ID), that's the strongest possible signal. Where they diverge (title de-duplication: fixed in GB, still 9% in FR) — that's the useful finding, not a contradiction to resolve away.</div>
+  </div>
+</section>
+
+<!-- ================= CH 09 — THE AI LANDSCAPE ================= -->
+<div class="chapter" id="c9"><div class="ch-num">09</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter nine</div><h2>The AI Landscape</h2><p>Reiss shoppers don't only search anymore. Three pipelines decide whether Reiss is in the answer.</p></div></div>
 
 <section class="band-warm">
   <div class="wrap">
@@ -578,7 +635,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
 </section>
 
 <!-- ================= CH 09 — SPARK AI ENGINE (TACHYON) ================= -->
-<div class="chapter" id="c9"><div class="ch-num">09</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter nine</div><h2>Spark AI Engine (Tachyon)</h2><p>Intent generation, description enrichment, visual attribute harvest.</p></div></div>
+<div class="chapter" id="c10"><div class="ch-num">10</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter ten</div><h2>Spark AI Engine (Tachyon)</h2><p>Intent generation, description enrichment, visual attribute harvest.</p></div></div>
 
 <section class="band">
   <div class="wrap">
@@ -611,7 +668,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
 </section>
 
 <!-- ================= CH 10 — GOOGLE CONVERSATIONAL ATTRIBUTES ================= -->
-<div class="chapter" id="c10"><div class="ch-num">10</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter ten</div><h2>Google Conversational Attributes</h2><p>Six new feed attributes built for AI and conversational agents — current submission status: none live.</p></div></div>
+<div class="chapter" id="c11"><div class="ch-num">11</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eleven</div><h2>Google Conversational Attributes</h2><p>Six new feed attributes built for AI and conversational agents — current submission status: none live.</p></div></div>
 
 <section>
   <div class="wrap">
@@ -650,7 +707,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
 </section>
 
 <!-- ================= CH 11 — AI READINESS ================= -->
-<div class="chapter" id="c11"><div class="ch-num">11</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eleven</div><h2>AI Readiness</h2><p>Tier 1 banked. Tier 2 — the meaning layer — is next, and the feed shows exactly what's blocking it.</p></div></div>
+<div class="chapter" id="c12"><div class="ch-num">12</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter twelve</div><h2>AI Readiness</h2><p>Tier 1 banked. Tier 2 — the meaning layer — is next, and the feed shows exactly what's blocking it.</p></div></div>
 
 <section class="band-warm">
   <div class="wrap">
@@ -687,7 +744,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
 </section>
 
 <!-- ================= CH 12 — CASE STUDIES / TEST WINS ================= -->
-<div class="chapter" id="c12"><div class="ch-num">12</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter twelve</div><h2>Case Studies / Test Wins</h2><p>Reiss' own tests in flight, plus the proof already banked on comparable FeedSpark accounts.</p></div></div>
+<div class="chapter" id="c13"><div class="ch-num">13</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter thirteen</div><h2>Case Studies / Test Wins</h2><p>Reiss' own tests in flight, plus the proof already banked on comparable FeedSpark accounts.</p></div></div>
 
 <section class="band">
   <div class="wrap">
@@ -717,7 +774,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
 </section>
 
 <!-- ================= CH 13 — ROADMAP / NEXT QUARTER ================= -->
-<div class="chapter" id="c13"><div class="ch-num">13</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter thirteen</div><h2>Roadmap / Next Quarter</h2><p>The open tasks plus what the feed audit surfaced — sequenced, not a wishlist.</p></div></div>
+<div class="chapter" id="c14"><div class="ch-num">14</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter fourteen</div><h2>Roadmap / Next Quarter</h2><p>The open tasks plus what the feed audit surfaced — sequenced, not a wishlist.</p></div></div>
 
 <section>
   <div class="wrap">
@@ -777,7 +834,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
 </section>
 
 <!-- ================= CH 14 — TECH FIT ================= -->
-<div class="chapter" id="c14"><div class="ch-num">14</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter fourteen</div><h2>Tech Fit</h2><p>Why the FeedSpark stack fits a 29-market, multi-brand fashion retailer — and where the feed shows the fit isn't finished yet.</p></div></div>
+<div class="chapter" id="c15"><div class="ch-num">15</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter fifteen</div><h2>Tech Fit</h2><p>Why the FeedSpark stack fits a 29-market, multi-brand fashion retailer — and where the feed shows the fit isn't finished yet.</p></div></div>
 
 <section class="band">
   <div class="wrap">
