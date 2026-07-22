@@ -316,7 +316,7 @@ window.addEventListener('load',restore);
   #itbl{table-layout:fixed}
   #itbl col.cw-cb{width:30px}#itbl col.cw-client{width:9.5%}#itbl col.cw-feed{width:8.5%}
   #itbl col.cw-task{width:auto}#itbl col.cw-owner{width:8.5%}#itbl col.cw-due{width:56px}
-  #itbl col.cw-status{width:104px}#itbl col.cw-source{width:70px}#itbl col.cw-act{width:96px}
+  #itbl col.cw-status{width:104px}#itbl col.cw-source{width:70px}#itbl col.cw-act{width:122px}
   .itbl thead th{position:sticky;top:0;background:var(--paper);z-index:2;text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);padding:9px 8px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;box-shadow:inset 0 -1px 0 var(--line);overflow:hidden;text-overflow:ellipsis}
   .itbl thead th.it-act{text-align:right;cursor:default}
   .itbl thead th[data-k]:hover{color:var(--orange-deep)}
@@ -345,6 +345,14 @@ window.addEventListener('load',restore);
   .itbl .del-btn{font:inherit;font-size:12px;font-weight:800;padding:4px 7px;margin-right:4px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer}
   .itbl .del-btn:hover{border-color:#C0392B;color:#C0392B}
   .itbl .brief-btn:hover{background:var(--orange);color:#fff}
+  .itbl .hide-btn{display:inline-flex;align-items:center;justify-content:center;padding:4px 6px;margin-right:4px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer;vertical-align:middle}
+  .itbl .hide-btn:hover{border-color:var(--navy);color:var(--navy)}
+  .itbl .hide-btn.on{border-color:var(--navy);color:var(--navy);background:rgba(26,54,93,.08)}
+  .itbl tr.row-hidden{opacity:.5}
+  .itbl tr.row-hidden .c-task{font-style:italic}
+  .it-hidden-tog{font:inherit;font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:100px;border:1px dashed var(--line);background:var(--paper);color:var(--muted);cursor:pointer;white-space:nowrap;margin-left:8px}
+  .it-hidden-tog:hover{border-color:var(--navy);color:var(--navy)}
+  .it-hidden-tog.on{border-style:solid;border-color:var(--navy);color:var(--navy);background:rgba(26,54,93,.08)}
   .it-empty{text-align:center;color:var(--muted);font-size:13px;padding:24px}
   .tpl-hint{font-weight:600;color:var(--muted);font-size:11px}
   /* live sync bar */
@@ -452,6 +460,7 @@ window.addEventListener('load',restore);
     </div>
     <input id="it-search" type="search" placeholder="Search tasks, owners…" aria-label="Search intake">
     <span class="it-n" id="it-n"></span>
+    <button type="button" class="it-hidden-tog" id="it-hidden-tog" hidden aria-pressed="false"></button>
   </div>
   <div class="atrt-actions"><span class="atrt-note" id="atrt-note"></span><button class="btn sm" id="atrt-push" style="display:none"></button><button class="btn sm ghost" id="atrt-undo" style="display:none"></button></div>
   <div class="it-bulk" id="it-bulk" style="display:none">
@@ -735,6 +744,16 @@ window.addEventListener('load',restore);
   // ---- deleted tasks (hidden locally; plan deletes also remove the row from the sheet) ----
   var DELETED={}; try{DELETED=JSON.parse(localStorage.getItem('fcc-deleted')||'{}');}catch(e){}
   function markDel(c,t){ DELETED[c+'|'+t]=1; try{localStorage.setItem('fcc-deleted',JSON.stringify(DELETED));}catch(e){} }
+  // HIDE — local, reversible view-suppression for rows that are really just notes. Unlike delete it
+  // never touches the Project-Plan sheet; the row stays in the plan, it just leaves the FCC task list.
+  var HIDDEN={}; try{HIDDEN=JSON.parse(localStorage.getItem('fcc-hidden')||'{}');}catch(e){}
+  var EYEOFF='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.6 10.6 0 0 1 12 20C5 20 1 12 1 12a19 19 0 0 1 5.1-6M9.9 4.2A10.9 10.9 0 0 1 12 4c7 0 11 8 11 8a19 19 0 0 1-2.2 3.2M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="M1 1l22 22"/></svg>';
+  var EYEON='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  function saveHidden(){ try{localStorage.setItem('fcc-hidden',JSON.stringify(HIDDEN));}catch(e){} }
+  function isHidden(t){ return !!HIDDEN[t.client+'|'+t.task]; }
+  function hideTask(t){ HIDDEN[t.client+'|'+t.task]=1; saveHidden(); toast('Hidden as a note — still in '+(t.source==='plan'?(t.client+'’s plan'):'the record')); renderAll(); }
+  function unhideTask(t){ delete HIDDEN[t.client+'|'+t.task]; saveHidden(); toast('Restored to the task list'); renderAll(); }
+  function hiddenInView(){ var n=0; allIntake().forEach(function(r){ if(HIDDEN[r.client+'|'+r.task])n++; }); return n; }
   // delete a task — plan rows are removed from the Project-Plan sheet (2-way); others just leave the inbox
   function deleteTask(t){
     var msg=t.source==='plan'?('Delete this task and remove its row from '+t.client+'’s Project Plan?\n\n'+t.task)
@@ -823,7 +842,7 @@ window.addEventListener('load',restore);
     var fromGmail=gmailItems.map(function(g){return {client:senderName(g.from),task:g.subject,cat:'',owner:senderName(g.from),source:'email',from:g.from,s:'',b:'open'};});
     return fromBriefs.concat(fromGmail); }
   function allIntake(){ return planTasks().concat(carryTasks()).concat(emailIntake()); }
-  var itState={srcs:[],clients:[],q:'',statuses:['open','progress'],window:'2m',sort:'client',dir:1};   // multi-select: empty array = all
+  var itState={srcs:[],clients:[],q:'',statuses:['open','progress'],window:'2m',sort:'client',dir:1,showHidden:false};   // multi-select: empty array = all
   var itSel={};   // bulk selection: key -> task object
   // UK-first date parse (DD/MM/YYYY, "DD Mon YYYY"); swaps if it reads as MM/DD
   function parseUKDate(s){ s=String(s||'').trim(); if(!s)return null; var m;
@@ -873,7 +892,7 @@ window.addEventListener('load',restore);
       var S=itState;
       var st=!S.statuses.length||S.statuses.indexOf(r.b)>=0;   // empty = all statuses
       var win=true; if(allow && r.source==='plan'){ var pd=taskDate(r); if(pd) win=!!(allow[r.client]&&allow[r.client][monthKey(pd)]); }   // latest-N-months per brand; dateless plan rows always show
-      return win&&st&&!DELETED[r.client+'|'+r.task]&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0)&&(!S.clients.length||S.clients.indexOf(r.client)>=0)
+      return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0)&&(!S.clients.length||S.clients.indexOf(r.client)>=0)
         &&(!S.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(S.q)>=0); })
       .sort(function(a,b){ var k=itState.sort;
         if(k==='dsort'){ var da=taskDate(a), db=taskDate(b); return ((da?da.getTime():0)-(db?db.getTime():0))*itState.dir; }
@@ -886,20 +905,21 @@ window.addEventListener('load',restore);
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
       var src=t.source==='email'?'<span class="src-tag src-email">Email</span>':t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
-      var k=rowKey(t), ck=itSel[k]?' checked':'';
+      var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t);
       var stat=(t.source==='plan'||t.source==='atrt')
         ?('<td class="c-stat" data-src="'+t.source+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
         :'<td class="c-stat"><span class="c-owner">—</span></td>';
-      return '<tr data-k="'+esc(k)+'"><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
+      return '<tr data-k="'+esc(k)+'"'+(hid?' class="row-hidden"':'')+'><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
         +'<td class="c-client">'+esc(t.client)+badge+'</td><td>'+feed+'</td>'
         +'<td class="c-task">'+esc(t.task)+'</td><td class="c-owner">'+esc(t.owner||'—')+'</td>'
         +((t.source==='plan'||t.source==='atrt')
            ?'<td class="c-due c-due-ed" data-i="'+i+'" title="Set due date (type DDMM)">'+esc(dueDisplay(t))+'</td>'
            :'<td class="c-due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>')
-        +stat+'<td>'+src+'</td><td class="c-act"><button class="del-btn" data-i="'+i+'" title="Delete task">✕</button><button class="brief-btn" data-i="'+i+'">Brief</button></td></tr>';
+        +stat+'<td>'+src+'</td><td class="c-act"><button class="hide-btn'+(hid?' on':'')+'" data-i="'+i+'" title="'+(hid?'Restore to the task list':'Hide — it’s just a note (stays in the plan)')+'">'+(hid?EYEON:EYEOFF)+'</button><button class="del-btn" data-i="'+i+'" title="Delete task">✕</button><button class="brief-btn" data-i="'+i+'">Brief</button></td></tr>';
     }).join('') : '<tr><td colspan="9" class="it-empty">'+((itState.srcs.length===1&&itState.srcs[0]==='email')?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
     body.querySelectorAll('.brief-btn').forEach(function(btn){ btn.onclick=function(){ prefill(f[+btn.getAttribute('data-i')]); }; });
     body.querySelectorAll('.del-btn').forEach(function(btn){ btn.onclick=function(){ deleteTask(f[+btn.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.hide-btn').forEach(function(btn){ btn.onclick=function(){ var t=f[+btn.getAttribute('data-i')]; if(isHidden(t))unhideTask(t); else hideTask(t); }; });
     body.querySelectorAll('.c-due-ed').forEach(function(td){ td.onclick=function(){ editDue(f[+td.getAttribute('data-i')]); }; });
     body.querySelectorAll('.it-cb').forEach(function(cb){ cb.onchange=function(){ var t=f[+cb.getAttribute('data-i')]; if(cb.checked)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; renderBulk(); }; });
     body.querySelectorAll('.c-stat .stat-sel').forEach(function(sel){ sel.onchange=function(){ var td=sel.closest('.c-stat');
@@ -908,6 +928,11 @@ window.addEventListener('load',restore);
       if(td.getAttribute('data-src')==='atrt') writeCarryover(cl,tk,sel.value); else writeStatus(cl,tk,sel.value);
       setTimeout(renderAll,650); }; });
     var n=document.getElementById('it-n'); if(n)n.textContent=f.length+' task'+(f.length===1?'':'s');
+    var ht=document.getElementById('it-hidden-tog'); if(ht){ var hc=hiddenInView();
+      if(hc===0){ itState.showHidden=false; ht.hidden=true; }
+      else { ht.hidden=false; ht.classList.toggle('on',itState.showHidden);
+        ht.textContent=itState.showHidden?('Hide '+hc+' note'+(hc===1?'':'s')):('Show '+hc+' hidden');
+        ht.setAttribute('aria-pressed',itState.showHidden?'true':'false'); } }
     var an=document.getElementById('atrt-note'); if(an){ var uniq=CARRY.length-CARRY_DUP;
       an.innerHTML='<b>ATRT import:</b> '+CARRY.length+' active tasks · <b>'+CARRY_DUP+'</b> already in a project plan (auto-hidden as duplicates) · <b>'+uniq+'</b> unique in this inbox.'; }
     var pb=document.getElementById('atrt-push'); if(pb){ var pc=pushableCarry().length; pb.style.display=pc?'inline-flex':'none';
@@ -1006,6 +1031,7 @@ window.addEventListener('load',restore);
     document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!menu.hidden){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); } });
   })();
   document.getElementById('it-search').addEventListener('input',function(){ itState.q=this.value.trim().toLowerCase(); renderIntake(); });
+  (function(){ var ht=document.getElementById('it-hidden-tog'); if(ht)ht.onclick=function(){ itState.showHidden=!itState.showHidden; renderIntake(); }; })();
   document.querySelectorAll('#itbl thead th[data-k]').forEach(function(th){ th.onclick=function(){
     var k=th.getAttribute('data-k'); if(itState.sort===k) itState.dir*=-1; else {itState.sort=k;itState.dir=1;}
     document.querySelectorAll('#itbl thead th .ar').forEach(function(a){a.remove();});
