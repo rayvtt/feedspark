@@ -318,6 +318,10 @@ window.addEventListener('load',restore);
   .itbl .c-due-ed:hover{color:var(--orange-deep);text-decoration:underline}
   .itbl .c-task-ed,.itbl .c-owner-ed{cursor:pointer}
   .itbl .c-task-ed:hover,.itbl .c-owner-ed:hover{text-decoration:underline dotted;text-underline-offset:2px;text-decoration-color:var(--orange)}
+  .itbl td.g-sel{background:rgba(245,166,35,.14)}
+  .itbl td.g-active{outline:2px solid var(--orange);outline-offset:-2px;background:rgba(245,166,35,.2)}
+  [data-theme=dark] .itbl td.g-sel{background:rgba(245,166,35,.16)}
+  [data-theme=dark] .itbl td.g-active{background:rgba(245,166,35,.24)}
   .itbl .feed-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--orange-ink);background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.28);border-radius:6px;padding:2px 7px;white-space:nowrap}
   .itbl .src-tag{font-size:10px;font-weight:800;border-radius:100px;padding:2px 9px;border:1px solid;white-space:nowrap}
   .itbl .src-plan{color:#5B82BE;background:rgba(91,130,190,.13);border-color:rgba(91,130,190,.32)}
@@ -372,7 +376,8 @@ window.addEventListener('load',restore);
   .c-stat .stat-sel.tag-hold{color:var(--muted)}
   .c-stat .stat-sel.tag-progress{color:#C96A12;border-color:#F5D3A6;background:rgba(245,166,35,.14)}
   .c-stat .stat-sel.tag-client{color:var(--navy);border-color:#CFDBEA}
-  .c-stat .stat-sel.tag-open{color:var(--orange-ink);border-color:#F3D9B8}
+  .c-stat .stat-sel.tag-open{color:var(--muted);border-color:var(--line)}
+  [data-theme=dark] .c-stat .stat-sel.tag-open{color:#9AA6B2!important;border-color:var(--line)!important;background:var(--paper)!important}
   .c-stat .stat-sel.tag-briefed{color:#7A5AA8;border-color:#D9CEEA}
   [data-theme=dark] .c-stat .stat-sel.tag-briefed{color:#B79BDB;border-color:rgba(122,90,168,.4)}
   .new-tag{font-size:9px;font-weight:900;letter-spacing:.04em;color:#fff;background:var(--good);border-radius:4px;padding:1px 5px;vertical-align:middle}
@@ -447,7 +452,7 @@ window.addEventListener('load',restore);
   [data-theme=dark] .it-bulk{background:rgba(245,166,35,.12)}
   </style>
   <h2>Intake — every task, live</h2>
-  <p class="sub">Three streams in one table — monthly <b>project-plan</b> tasks, the <b>ATRT legacy</b> import (your retired tracker — 50 active tasks), and daily <b>client emails</b>. Change a <b>status</b> inline: plan rows write back to the sheet, ATRT rows save to the portal. Stack filters — pick several <b>sources</b>, <b>statuses</b> or <b>clients</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator.</p>
+  <p class="sub">Three streams in one table — monthly <b>project-plan</b> tasks, the <b>ATRT legacy</b> import (your retired tracker — 50 active tasks), and daily <b>client emails</b>. Change a <b>status</b> inline: plan rows write back to the sheet, ATRT rows save to the portal. Stack filters — pick several <b>sources</b>, <b>statuses</b> or <b>clients</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator. Works like a spreadsheet — click a cell, arrow-key around, <b>Cmd/Ctrl+C</b> to copy, <b>Ctrl+D</b> to fill down, <b>Ctrl+V</b> to paste; <b>double-click</b> to edit.</p>
   <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="add-task-btn" type="button">＋ Add task</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
   <div class="it-ctl">
     <div class="it-multi" id="it-views-wrap">
@@ -992,25 +997,26 @@ window.addEventListener('load',restore);
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
       var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt');
       var stat=(t.source==='plan'||t.source==='atrt')
-        ?('<td class="c-stat" data-src="'+t.source+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
-        :'<td class="c-stat"><span class="c-owner">—</span></td>';
-      return '<tr data-k="'+esc(k)+'"'+(hid?' class="row-hidden"':'')+'><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
-        +'<td class="c-client">'+esc(t.client)+badge+'</td><td>'+feed+'</td>'
-        +(ed?'<td class="c-task c-task-ed" data-i="'+i+'" title="Edit task — writes back to the plan">'+esc(t.task)+'</td>'
-             :'<td class="c-task">'+esc(t.task)+'</td>')
-        +(ed?'<td class="c-owner c-owner-ed" data-i="'+i+'" title="Set owner — writes back to the plan">'+esc(t.owner||'—')+'</td>'
-             :'<td class="c-owner">'+esc(t.owner||'—')+'</td>')
+        ?('<td class="c-stat" data-r="'+i+'" data-col="status" data-src="'+t.source+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
+        :'<td class="c-stat" data-r="'+i+'" data-col="status"><span class="c-owner">—</span></td>';
+      return '<tr data-k="'+esc(k)+'" data-r="'+i+'"'+(hid?' class="row-hidden"':'')+'><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
+        +'<td class="c-client" data-r="'+i+'" data-col="client">'+esc(t.client)+badge+'</td><td data-r="'+i+'" data-col="feed">'+feed+'</td>'
+        +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click to edit — writes back to the plan">'+esc(t.task)+'</td>'
+             :'<td class="c-task" data-r="'+i+'" data-col="task">'+esc(t.task)+'</td>')
+        +(ed?'<td class="c-owner c-owner-ed" data-r="'+i+'" data-col="owner" data-i="'+i+'" title="Double-click to set owner — writes back to the plan">'+esc(t.owner||'—')+'</td>'
+             :'<td class="c-owner" data-r="'+i+'" data-col="owner">'+esc(t.owner||'—')+'</td>')
         +((t.source==='plan'||t.source==='atrt')
-           ?'<td class="c-due c-due-ed" data-i="'+i+'" title="Set due date (type DDMM)">'+esc(dueDisplay(t))+'</td>'
-           :'<td class="c-due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>')
-        +stat+'<td>'+src+'</td><td class="c-act"><button class="hide-btn'+(hid?' on':'')+'" data-i="'+i+'" title="'+(hid?'Restore to the task list':'Hide — it’s just a note (stays in the plan)')+'">'+(hid?EYEON:EYEOFF)+'</button><button class="del-btn" data-i="'+i+'" title="Delete task">✕</button><button class="brief-btn" data-i="'+i+'">Brief</button></td></tr>';
+           ?'<td class="c-due c-due-ed" data-r="'+i+'" data-col="due" data-i="'+i+'" title="Double-click to set due date (DDMM)">'+esc(dueDisplay(t))+'</td>'
+           :'<td class="c-due" data-r="'+i+'" data-col="due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>')
+        +stat+'<td data-r="'+i+'" data-col="source">'+src+'</td><td class="c-act"><button class="hide-btn'+(hid?' on':'')+'" data-i="'+i+'" title="'+(hid?'Restore to the task list':'Hide — it’s just a note (stays in the plan)')+'">'+(hid?EYEON:EYEOFF)+'</button><button class="del-btn" data-i="'+i+'" title="Delete task">✕</button><button class="brief-btn" data-i="'+i+'">Brief</button></td></tr>';
     }).join('') : '<tr><td colspan="9" class="it-empty">'+((itState.srcs.length===1&&itState.srcs[0]==='email')?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
     body.querySelectorAll('.brief-btn').forEach(function(btn){ btn.onclick=function(){ var t=f[+btn.getAttribute('data-i')]; markBriefed(t); prefill(t); renderAll(); }; });
     body.querySelectorAll('.del-btn').forEach(function(btn){ btn.onclick=function(){ deleteTask(f[+btn.getAttribute('data-i')]); }; });
     body.querySelectorAll('.hide-btn').forEach(function(btn){ btn.onclick=function(){ var t=f[+btn.getAttribute('data-i')]; if(isHidden(t))unhideTask(t); else hideTask(t); }; });
-    body.querySelectorAll('.c-due-ed').forEach(function(td){ td.onclick=function(){ editDue(f[+td.getAttribute('data-i')]); }; });
-    body.querySelectorAll('.c-task-ed').forEach(function(td){ td.onclick=function(){ editTaskText(f[+td.getAttribute('data-i')]); }; });
-    body.querySelectorAll('.c-owner-ed').forEach(function(td){ td.onclick=function(){ editOwner(f[+td.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.c-due-ed').forEach(function(td){ td.ondblclick=function(){ editDue(f[+td.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.c-task-ed').forEach(function(td){ td.ondblclick=function(){ editTaskText(f[+td.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.c-owner-ed').forEach(function(td){ td.ondblclick=function(){ editOwner(f[+td.getAttribute('data-i')]); }; });
+    wireGrid(body, f);
     body.querySelectorAll('.it-cb').forEach(function(cb){ cb.onchange=function(){ var t=f[+cb.getAttribute('data-i')]; if(cb.checked)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; renderBulk(); }; });
     body.querySelectorAll('.c-stat .stat-sel').forEach(function(sel){ sel.onchange=function(){ var td=sel.closest('.c-stat');
       var cl=td.getAttribute('data-client'), tk=td.getAttribute('data-task');
@@ -1031,6 +1037,75 @@ window.addEventListener('load',restore);
       ub.textContent='↩ Undo last write ('+pn+')'; }
     renderBulk();
   }
+  // ---- spreadsheet grid: cell select, keyboard nav, copy/paste (TSV), fill-down (Excel-style) ----
+  var COLS=['client','feed','task','owner','due','status','source'];
+  var GEDIT={task:1,owner:1,due:1,status:1};                 // columns that write back
+  var gridSel=null, gridRows=[], gridBody=null, gridFocus=false;
+  function gclamp(v,a,b){ return v<a?a:(v>b?b:v); }
+  function gnorm(){ return {r0:Math.min(gridSel.r0,gridSel.r1),r1:Math.max(gridSel.r0,gridSel.r1),c0:Math.min(gridSel.c0,gridSel.c1),c1:Math.max(gridSel.c0,gridSel.c1)}; }
+  function cellAt(r,c){ return gridBody?gridBody.querySelector('td[data-r="'+r+'"][data-col="'+COLS[c]+'"]'):null; }
+  function cellText(r,c){ var td=cellAt(r,c); if(!td)return ''; var s=td.querySelector('select'); if(s)return s.value; var v=(td.textContent||'').replace(/\s+/g,' ').trim(); return v==='—'?'':v; }
+  function highlightGrid(){ if(!gridBody)return;
+    gridBody.querySelectorAll('td.g-sel,td.g-active').forEach(function(td){ td.classList.remove('g-sel','g-active'); });
+    if(!gridSel)return; var R=gnorm();
+    for(var r=R.r0;r<=R.r1;r++)for(var c=R.c0;c<=R.c1;c++){ var td=cellAt(r,c); if(td)td.classList.add('g-sel'); }
+    var a=cellAt(gridSel.r0,gridSel.c0); if(a)a.classList.add('g-active'); }
+  function gridColValue(t,key){ if(!t)return '';
+    if(key==='owner')return (t.owner&&t.owner!=='—')?t.owner:''; if(key==='task')return t.task; if(key==='status')return t.s||'';
+    if(key==='due'){ var d=taskDate(t); return d?(pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()):''; } return ''; }
+  function gridDate(val){ val=(''+val).trim(); if(!val)return ''; var digits=val.replace(/\D/g,'');
+    if(digits.length===4||digits.length===8){ var iso=ddmmToIso(digits); if(iso)return iso; }
+    var d=parseUKDate(val); return d?(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())):''; }
+  function gridStatus(val){ val=(''+val).trim(); if(!val)return ''; var M={open:'Open',briefed:'Briefed',progress:'In Progress',hold:'On Hold',client:'With Client',done:'Done'}; return M[bucketOf(val)]||'Open'; }
+  function gPost(url,body){ try{ fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).catch(function(){}); }catch(e){} }
+  function gPut(url,body){ try{ fetch(url,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).catch(function(){}); }catch(e){} }
+  // write one cell to overlay + sheet, WITHOUT re-rendering (caller renders once at the end)
+  function gridWrite(t,key,val){ if(!t||!(t.source==='plan'||t.source==='atrt'))return null; var id=PLANSHEET[t.client];
+    if(key==='owner'){ val=(''+val).trim(); saveOwnerLocal(t.client,t.task,val); if(t.source==='plan'&&id)gPost('/api/sheets/owner',{id:id,tab:'Project Plan',match:t.task,value:val}); return 1; }
+    if(key==='due'){ var iso=gridDate(val); saveDueLocal(t.client,t.task,iso); if(t.source==='plan'&&id){ var ddmy=iso?(iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4)):''; gPost('/api/sheets/due',{id:id,tab:'Project Plan',match:t.task,value:ddmy}); } return 1; }
+    if(key==='status'){ var v=gridStatus(val); if(!v)return null; saveStatus(t.client,t.task,v); if(t.source==='atrt'){ CARRY_STAT[t.client+'|'+t.task]=v; gPut('/api/carryover',CARRY_STAT); } else if(id){ gPost('/api/sheets/status',{id:id,tab:'Project Plan',match:t.task,value:v}); } return 1; }
+    if(key==='task'){ val=(''+val).trim(); if(!val||val===t.task)return null; migrateKey(t.client,t.task,val); saveRename(t.client,t.task,val); if(t.source==='plan'&&id)gPost('/api/sheets/task',{id:id,tab:'Project Plan',match:t.task,value:val}); return 1; }
+    return null; }
+  function clipFallback(tsv,n){ try{ var ta=document.createElement('textarea'); ta.value=tsv; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('Copied '+n+' cell'+(n===1?'':'s')+' — paste into Excel/Sheets'); }catch(e){ toast('Copy was blocked — press Cmd/Ctrl+C again'); } }
+  function copyGrid(){ if(!gridSel)return; var R=gnorm(), lines=[], n=0;
+    for(var r=R.r0;r<=R.r1;r++){ var row=[]; for(var c=R.c0;c<=R.c1;c++){ row.push(cellText(r,c)); n++; } lines.push(row.join('\t')); }
+    var tsv=lines.join('\n'); window.__lastCopy=tsv;
+    try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(tsv).then(function(){ toast('Copied '+n+' cell'+(n===1?'':'s')+' — paste into Excel/Sheets'); },function(){ clipFallback(tsv,n); }); } else clipFallback(tsv,n); }catch(e){ clipFallback(tsv,n); } }
+  function applyTSV(text){ if(!gridSel||!text)return 0; var rows=(''+text).replace(/\r/g,'').split('\n'); while(rows.length&&rows[rows.length-1]==='')rows.pop(); var R=gnorm(), n=0;
+    for(var i=0;i<rows.length;i++){ var r=R.r0+i; if(r>=gridRows.length)break; var cells=rows[i].split('\t');
+      for(var j=0;j<cells.length;j++){ var c=R.c0+j; if(c>6)break; var key=COLS[c]; if(!GEDIT[key])continue; if(gridWrite(gridRows[r],key,cells[j]))n++; } }
+    if(n){ toast('Pasted '+n+' cell'+(n===1?'':'s')+' — writing back'); setTimeout(renderAll,60); } else toast('Nothing pasteable — put the cursor on Task/Owner/Due/Status'); return n; }
+  function pasteGrid(){ var text=''; try{ if(navigator.clipboard&&navigator.clipboard.readText){ navigator.clipboard.readText().then(function(t){ applyTSV(t); },function(){ toast('Clipboard read blocked — click a cell first, then paste'); }); return; } }catch(e){} toast('Clipboard read not available here'); }
+  function fillDownGrid(){ if(!gridSel)return; var R=gnorm(); if(R.r1<=R.r0){ toast('Select a range (top cell = source), then Cmd/Ctrl+D'); return; } var n=0;
+    for(var c=R.c0;c<=R.c1;c++){ var key=COLS[c]; if(!GEDIT[key])continue; var src=gridColValue(gridRows[R.r0],key);
+      for(var r=R.r0+1;r<=R.r1;r++){ if(gridWrite(gridRows[r],key,src))n++; } }
+    if(n){ toast('Filled '+n+' cell'+(n===1?'':'s')+' down — writing back'); setTimeout(renderAll,60); } else toast('No editable column (Task/Owner/Due/Status) in the selection'); }
+  function editActiveCell(){ if(!gridSel)return; var t=gridRows[gridSel.r0], key=COLS[gridSel.c0]; if(!t)return; var ed=(t.source==='plan'||t.source==='atrt');
+    if(key==='task'&&ed)editTaskText(t); else if(key==='owner'&&ed)editOwner(t); else if(key==='due'&&ed)editDue(t);
+    else if(key==='status'){ var s=cellAt(gridSel.r0,gridSel.c0); s=s&&s.querySelector('select'); if(s)s.focus(); } }
+  function wireGrid(body,f){ gridBody=body; gridRows=f;
+    body.querySelectorAll('td[data-col]').forEach(function(td){
+      td.addEventListener('mousedown',function(ev){ var r=+td.getAttribute('data-r'), c=COLS.indexOf(td.getAttribute('data-col')); if(c<0||isNaN(r))return; gridFocus=true;
+        if(ev.shiftKey&&gridSel){ gridSel.r1=r; gridSel.c1=c; if(td.querySelector('select'))ev.preventDefault(); } else { gridSel={r0:r,c0:c,r1:r,c1:c}; }
+        highlightGrid(); }); });
+    if(gridSel){ if(gridSel.r0>f.length-1||gridSel.r1>f.length-1)gridSel=null; highlightGrid(); } }
+  (function(){
+    document.addEventListener('keydown',function(e){ if(!gridSel||!gridFocus)return; var ae=document.activeElement, tag=ae?ae.tagName:'', mod=e.ctrlKey||e.metaKey;
+      if(tag==='INPUT'||tag==='TEXTAREA')return; if(tag==='SELECT'&&!mod)return;
+      if(mod&&(e.key==='c'||e.key==='C')){ copyGrid(); e.preventDefault(); return; }
+      if(mod&&(e.key==='v'||e.key==='V')){ pasteGrid(); e.preventDefault(); return; }
+      if(mod&&(e.key==='d'||e.key==='D')){ fillDownGrid(); e.preventDefault(); return; }
+      if(e.key==='Escape'){ gridSel=null; highlightGrid(); return; }
+      if(e.key==='Enter'){ editActiveCell(); e.preventDefault(); return; }
+      var dr=0,dc=0; if(e.key==='ArrowUp')dr=-1; else if(e.key==='ArrowDown')dr=1; else if(e.key==='ArrowLeft')dc=-1; else if(e.key==='ArrowRight')dc=1; else return;
+      e.preventDefault(); var maxR=gridRows.length-1;
+      if(e.shiftKey){ gridSel.r1=gclamp(gridSel.r1+dr,0,maxR); gridSel.c1=gclamp(gridSel.c1+dc,0,6); }
+      else { var nr=gclamp(gridSel.r0+dr,0,maxR), nc=gclamp(gridSel.c0+dc,0,6); gridSel={r0:nr,c0:nc,r1:nr,c1:nc}; }
+      highlightGrid(); var a=cellAt(gridSel.r0,gridSel.c0); if(a&&a.scrollIntoView)a.scrollIntoView({block:'nearest'}); });
+    document.addEventListener('mousedown',function(e){ var t=e.target, td=t.closest?t.closest('td[data-col]'):null, inScroll=t.closest?t.closest('.it-scroll'):null;
+      if(td&&inScroll)gridFocus=true; else if(!inScroll){ gridFocus=false; if(gridSel){ gridSel=null; highlightGrid(); } } });
+    window.__grid={copy:copyGrid,applyTSV:applyTSV,fill:fillDownGrid,sel:function(a){ gridSel=a; gridFocus=true; highlightGrid(); },get:function(){ return gridSel; }};
+  })();
   // ---- bulk brief + delegate ----
   function renderBulk(){ var bar=document.getElementById('it-bulk'); if(!bar)return;
     var keys=Object.keys(itSel), n=keys.length;
