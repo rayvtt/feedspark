@@ -217,6 +217,8 @@ window.addEventListener('load',restore);
 
 <main class="wrap">
 
+  <div class="wf-alerts" id="wf-alerts" style="display:none"></div>
+
   <div class="glive"><div class="gi">✉</div><div class="gt">
     <div><span class="gdot" id="gdot"></span><b>Gmail live sync</b> — hourly scan of client task emails and ASPL replies. <span id="gstate">Not connected — set a Gmail credential to switch it on.</span></div>
     <div style="margin-top:4px;color:var(--muted)">Project-plan intake is live below now. Until the Gmail credential is set, add email tasks with <b>New brief</b> and log ASPL replies on each ticket — the completion scan and client-confirmation draft work either way.</div>
@@ -258,6 +260,15 @@ window.addEventListener('load',restore);
         <div class="fld"><label>Source</label><select id="bg-source"><option value="email">Email</option><option value="plan">Project plan</option></select></div>
       </div>
       <div class="fld"><label>Task</label><input id="bg-task" placeholder="e.g. Rewrite 200 MASK titles — SS26 sandals"></div>
+      <div class="fld"><label>Category <span class="tpl-hint">— auto-fills scope, definition of done &amp; the two streams</span></label>
+        <select id="bg-cat">
+          <option value="">— choose to load a template —</option>
+          <option value="title">Titles</option><option value="image">Imagery</option>
+          <option value="keyword">Keywords</option><option value="custom_label">Custom labels</option>
+          <option value="product_type">Product type</option><option value="data">Data fields</option>
+          <option value="technical">Feed &amp; technical</option><option value="channel">Channels</option>
+          <option value="test">Testing</option><option value="opt">Optimisation</option><option value="account">Account</option>
+        </select></div>
       <div class="fld"><label>Scope / detail</label><textarea id="bg-scope" placeholder="Markets, categories, rules, constraints…"></textarea></div>
       <div class="fld"><label>Definition of done</label><textarea id="bg-dod" placeholder="What ‘finished’ looks like — live in FeedHero, QA'd, sample approved…"></textarea></div>
       <div class="fld"><label>Assets / links</label><textarea id="bg-assets" placeholder="Sheet, feed, brand guide, examples…"></textarea></div>
@@ -309,25 +320,147 @@ window.addEventListener('load',restore);
   .itbl .brief-btn{font:inherit;font-size:11.5px;font-weight:800;padding:5px 13px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
   .itbl .brief-btn:hover{background:var(--orange);color:#fff}
   .it-empty{text-align:center;color:var(--muted);font-size:13px;padding:24px}
+  .tpl-hint{font-weight:600;color:var(--muted);font-size:11px}
+  /* live sync bar */
+  .live-bar{display:flex;align-items:center;gap:10px;margin:2px 0 10px;font-size:12.5px;color:var(--muted);font-weight:600}
+  .live-dot{width:9px;height:9px;border-radius:50%;background:#C9CDD4;flex:none}
+  .live-dot.on{background:var(--good);box-shadow:0 0 0 3px rgba(72,208,126,.18)}
+  .live-state{flex:1;min-width:0}
+  .live-refresh{font:inherit;font-size:11.5px;font-weight:800;padding:5px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
+  .live-refresh:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .live-refresh:disabled{opacity:.5;cursor:default}
+  /* select + status cells */
+  .itbl thead th.it-cbh,.itbl td.c-sel{width:34px;text-align:center;padding-left:10px;padding-right:2px;cursor:default}
+  .itbl td.c-stat{white-space:nowrap}
+  .c-stat .stat-sel{font:inherit;font-size:11px;font-weight:800;border:1px solid var(--line);border-radius:100px;padding:3px 7px;background:var(--paper);color:var(--ink-2);cursor:pointer;max-width:130px}
+  .c-stat .stat-sel:hover{border-color:var(--orange)}
+  .c-stat .stat-sel.tag-done{color:var(--good);border-color:#CDE9D8}
+  .c-stat .stat-sel.tag-hold{color:var(--muted)}
+  .c-stat .stat-sel.tag-progress{color:#2F6FB0;border-color:#CFE0F0}
+  .c-stat .stat-sel.tag-client{color:var(--navy);border-color:#CFDBEA}
+  .c-stat .stat-sel.tag-open{color:var(--orange-ink);border-color:#F3D9B8}
+  .new-tag{font-size:9px;font-weight:900;letter-spacing:.04em;color:#fff;background:var(--good);border-radius:4px;padding:1px 5px;vertical-align:middle}
+  .c-client .live-dot{display:inline-block;width:7px;height:7px;margin-left:5px;background:var(--good)}
+  /* bulk bar */
+  .it-bulk{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;padding:9px 12px;background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.3);border-radius:10px}
+  .it-bulk-n{font-size:12.5px;font-weight:900;color:var(--orange-ink);margin-right:2px}
+  .btn.sm{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
+  .btn.sm:hover{background:var(--orange);color:#fff}
+  .btn.sm.navy{border-color:var(--navy);color:#fff;background:var(--navy)}
+  .btn.sm.ghost{border-color:var(--line);color:var(--muted);background:none}
+  .mini-btn{font:inherit;font-size:11px;font-weight:800;padding:3px 9px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
+  .mini-btn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  /* alerts banner */
+  .wf-alerts{display:flex;align-items:center;gap:12px;margin:16px 0 4px;padding:11px 15px;background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.28);border-radius:12px}
+  .wf-alerts .al-ic{font-size:18px}
+  .wf-alerts .al-body{flex:1;min-width:0;font-size:13px}
+  .wf-alerts .al-over{color:#C0392B;font-weight:900}
+  .wf-alerts .al-soon{color:var(--orange-deep);font-weight:900}
+  .wf-alerts .al-list{color:var(--muted);font-size:12px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wf-alerts .al-btn{font:inherit;font-size:12px;font-weight:800;padding:6px 13px;border-radius:100px;border:1px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer;white-space:nowrap}
+  .wf-alerts .al-x{border:0;background:none;color:var(--muted);font-size:19px;line-height:1;cursor:pointer;padding:0 2px}
+  /* SLA board */
+  .sla-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+  .sla-card{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:13px 15px}
+  .sla-card.warn{border-color:rgba(245,166,35,.5)}
+  .sla-name{font-size:14px;font-weight:900;margin-bottom:8px}
+  .sla-row{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted);padding:3px 0}
+  .sla-row b{color:var(--ink);font-size:14px}
+  .sla-row b.bad{color:#C0392B}
+  .stall-list{display:flex;flex-direction:column;gap:2px}
+  .stall-row{display:grid;grid-template-columns:1.1fr 3fr 1fr auto auto;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px}
+  .stall-row:last-child{border-bottom:0}
+  .stall-row:hover{background:var(--wash)}
+  .stall-c{font-weight:800;white-space:nowrap}
+  .stall-t{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .stall-a{color:var(--muted);font-weight:700;white-space:nowrap}
+  .stall-d{color:#C0392B;font-weight:800;font-size:12px;white-space:nowrap}
+  /* timeline */
+  .tl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:var(--shadow);padding:12px}
+  .tl-grid{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(160px,1fr);gap:10px;min-width:760px}
+  .tl-week{border-left:2px solid var(--line);padding:0 8px}
+  .tl-wh{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:8px}
+  .tl-wh.now{color:var(--orange-deep)}
+  .tl-ev{font-size:11.5px;font-weight:700;line-height:1.3;padding:6px 8px;border-radius:8px;margin-bottom:6px;background:var(--wash);border-left:3px solid var(--navy);cursor:pointer;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .tl-ev.test{border-left-color:var(--orange)}
+  .tl-ev.over{border-left-color:#C0392B;background:rgba(192,57,43,.07)}
+  .tl-empty{color:var(--muted);font-size:12px;padding:4px}
+  /* tests register */
+  .tst-head{display:flex;justify-content:flex-end;margin-bottom:8px}
+  .tstbl td{font-size:12.5px}
+  .tst-badge{font-size:10px;font-weight:900;border-radius:100px;padding:2px 9px;white-space:nowrap}
+  .tst-badge.win{color:var(--good);background:rgba(72,208,126,.14);border:1px solid #CDE9D8}
+  .tst-badge.running{color:#2F6FB0;background:rgba(91,130,190,.13);border:1px solid #CFE0F0}
+  .tst-badge.done{color:var(--muted);background:var(--wash);border:1px solid var(--line)}
+  .tst-ro{font-weight:800;white-space:nowrap}
+  .tst-ro.soon{color:var(--orange-deep)}
+  .tst-ro.over{color:#C0392B}
+  /* workload heatmap */
+  .wk-panel{padding:14px 16px}
+  .wk-row{display:grid;grid-template-columns:120px 1fr auto;grid-template-areas:'name bar num' 'name sub sub';gap:2px 12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+  .wk-row:last-child{border-bottom:0}
+  .wk-name{grid-area:name;font-weight:800;font-size:13.5px}
+  .wk-bar{grid-area:bar;height:12px;background:var(--wash);border-radius:100px;overflow:hidden}
+  .wk-fill{display:block;height:100%;background:linear-gradient(90deg,var(--orange),var(--orange-deep));border-radius:100px}
+  .wk-num{grid-area:num;font-weight:900;font-size:15px}
+  .wk-sub{grid-area:sub;font-size:11.5px;color:var(--muted)}
+  .wk-more{font-size:12px;color:var(--muted);font-weight:600;padding:9px 2px 0;font-style:italic}
+  [data-theme=dark] .c-stat .stat-sel.tag-done{border-color:rgba(72,208,126,.3)}
+  [data-theme=dark] .wf-alerts{background:rgba(192,57,43,.12)}
+  [data-theme=dark] .it-bulk{background:rgba(245,166,35,.12)}
   </style>
-  <h2>Intake — ready to brief</h2>
-  <p class="sub">Both streams in one table — monthly <b>project-plan</b> tasks and daily <b>client emails</b>. Filter by source, sort any column, and hit <b>Brief</b> to prefill the generator.</p>
+  <h2>Intake — every task, live</h2>
+  <p class="sub">Both streams in one table — monthly <b>project-plan</b> tasks and daily <b>client emails</b>. Change a <b>status</b> inline and it writes straight back to the plan sheet. Filter by source or status, sort any column, tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator.</p>
+  <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
   <div class="it-ctl">
     <div class="it-src" id="it-src"></div>
+    <select id="it-status" aria-label="Filter by status">
+      <option value="act">To action</option><option value="">All statuses</option>
+      <option value="open">Open</option><option value="progress">In progress</option>
+      <option value="hold">On hold</option><option value="client">With client</option><option value="done">Done</option>
+    </select>
     <select id="it-client" aria-label="Filter by client"><option value="">All clients</option></select>
     <input id="it-search" type="search" placeholder="Search tasks, owners…" aria-label="Search intake">
     <span class="it-n" id="it-n"></span>
   </div>
+  <div class="it-bulk" id="it-bulk" style="display:none">
+    <span class="it-bulk-n" id="it-bulk-n">0 selected</span>
+    <button class="btn sm" id="bulk-brief">✉ Batched brief</button>
+    <button class="btn sm" id="bulk-split">✉ Split by ASPL</button>
+    <button class="btn sm navy" id="bulk-save">＋ Save all to pipeline</button>
+    <button class="btn sm ghost" id="bulk-clear">Clear</button>
+  </div>
   <div class="it-scroll"><table class="itbl" id="itbl">
     <thead><tr>
+      <th class="it-cbh"><input type="checkbox" id="it-all" aria-label="Select all shown"></th>
       <th data-k="client">Client</th><th data-k="cat">Feed</th><th data-k="task">Task</th>
-      <th data-k="owner">Owner</th><th data-k="source">Source</th><th class="it-act">Brief</th>
+      <th data-k="owner">Owner</th><th data-k="b">Status</th><th data-k="source">Source</th><th class="it-act">Brief</th>
     </tr></thead><tbody id="it-body"></tbody>
   </table></div>
 
   <h2>Brief pipeline</h2>
-  <p class="sub">Every brief from send to sign-off. Drag a ticket between lanes; click it to log ASPL replies, run the completion scan and draft the client confirmation. Due badges flag what's approaching or overdue.</p>
+  <p class="sub">Every brief from send to sign-off. Drag a ticket between lanes; click it to log ASPL replies, run the completion scan, chase, and draft the client confirmation. Due badges flag what's approaching or overdue.</p>
   <div class="board" id="board"></div>
+
+  <h2>ASPL SLA &amp; turnaround</h2>
+  <p class="sub">Load, delivery and average turnaround per ASPL owner. <b>Stalled</b> = a briefed / in-progress ticket with no reply for over 3 days — chase it in one click and rebalance who gets the next brief.</p>
+  <div class="sla-grid" id="sla-grid"></div>
+  <div class="panel" style="margin-top:12px"><h3>Stalled briefs</h3><div id="sla-stalled" class="stall-list"></div></div>
+
+  <h2>Timeline — next 6 weeks</h2>
+  <p class="sub">Every brief due date and test read-out on one axis. Overdue items sit in week 1. Click a brief to open it.</p>
+  <div class="tl-wrap"><div class="tl-grid" id="tl-grid"></div></div>
+
+  <h2>Test &amp; experiment register</h2>
+  <p class="sub">Every A/B in one place — hypothesis, cohort, read-out date and result. Read-out dates feed the timeline and alerts so no test dies un-analysed; the wins are your deck ammo.</p>
+  <div class="tst-head"><button class="btn sm navy" id="test-add">＋ Add test</button></div>
+  <div class="it-scroll"><table class="itbl tstbl">
+    <thead><tr><th>Client</th><th>Test</th><th>Hypothesis</th><th>Cohort</th><th>Read-out</th><th>Status / result</th><th class="it-act">·</th></tr></thead>
+    <tbody id="tests-body"></tbody></table></div>
+
+  <h2>Team workload</h2>
+  <p class="sub">Open + in-progress plan tasks by account executive. The longest bars are your bottlenecks — rebalance before they slip.</p>
+  <div class="panel wk-panel"><div id="wk-grid"></div></div>
 
 </main>
 
@@ -354,6 +487,75 @@ window.addEventListener('load',restore);
   var STAGES=[['intake','Intake','#8a94a0'],['briefed','Briefed to ASPL','#B1550A'],['progress','In progress','#2F6FB0'],
     ['blocked','Blocked','#C0392B'],['done','Done — ASPL','#15803D'],['confirmed','Client confirmed','#15803D']];
   var DONE_RE=/\b(done|finished|complete|completed|delivered|live|actioned|signed[\s-]?off)\b/i;
+
+  // ---- plan sheet IDs (mirror the Command Center BRANDS plan links) — live sync + write-back ----
+  var PLANSHEET={
+    'Reiss':'1hGcpxaTYVax4hB_nLYCMlol7sIi3qqF0xQgJGjIgZSg',
+    'Schuh':'1rbr8FwZagdZdctR_fNesixm4-uDWG1VJPnBCJBdjSxc',
+    'Superdry':'16Sn9HB56eaNytr7pM3sY0aJTRhK-I-RpNr84EQ36KMI',
+    'Accessorize':'1SM52DXN3ecY5EDCIIqlRPONSmxkFvOM1xaeDrMlJ79w',
+    'Monsoon':'1SM52DXN3ecY5EDCIIqlRPONSmxkFvOM1xaeDrMlJ79w',
+    'Hobbycraft':'1oHdoFO4gazfhQZM6rp1fl5pWlDRVzr8t_THquU861fg',
+    'YuMOVE':'1RMTN99Cw0J3l5mORwYPpITnoi5HCPt7tET4u8rQbsq0',
+    'Estée Lauder':'1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+    'Bobbi Brown':'1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+    'Benefit':'1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+    'Clinique':'1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+    'MAC':'1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+    'Jo Malone':'1m99-z1R4FI4Iw86I6P8TyLY7G-Td9sh2vNjy-y95UMc',
+    'House of Bruar':'1lgO-SrzWtHmsvKRXg2Xgzq3d7fCwv5V2Fauu6pJgYOA'
+  };
+  var STALL_DAYS=3;                 // a brief with no ASPL reply for this long is "stalled"
+  var LIVE={}, LIVE_AT=null, LIVE_CONN=false;   // live plan tasks per brand (from /api/plan/live)
+
+  // ---- editable status (writes back to the plan sheet, shared overlay with the dossier) ----
+  var STATUS_OPTS=['Open','In Progress','On Hold','With Client','Done'];
+  function bucketOf(s){ s=String(s||'').toLowerCase();
+    if(/(done|complete|finish|live|delivered|actioned|signed)/.test(s))return 'done';
+    if(/(hold|park)/.test(s))return 'hold';
+    if(/(progress|wip|ongoing|review)/.test(s))return 'progress';
+    if(/client/.test(s))return 'client'; return 'open'; }
+  function statSel(t){ var cur=String(t.s||(t.b==='done'?'Done':'Open'));
+    var c=t.b||bucketOf(cur); if(['done','hold','progress','client','open'].indexOf(c)<0)c=bucketOf(cur);
+    var found=false;
+    var opts=STATUS_OPTS.map(function(o){ var sel=o.toLowerCase()===cur.toLowerCase(); if(sel)found=true;
+      return '<option'+(sel?' selected':'')+'>'+esc(o)+'</option>'; }).join('');
+    if(!found) opts='<option selected>'+esc(cur)+'</option>'+opts;
+    return '<select class="stat-sel tag-'+c+'" title="Change status — writes back to the plan sheet">'+opts+'</select>'; }
+  function statusOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskstatus')||'{}');}catch(e){return {};} }
+  function saveStatus(client,task,val){ try{var o=statusOverlay(); o[client+'|'+task]=val; localStorage.setItem('fcc-taskstatus',JSON.stringify(o));}catch(e){} }
+  function writeStatus(client,task,val){                 // 2-way write to the brand's plan sheet
+    saveStatus(client,task,val);
+    var id=PLANSHEET[client]; if(!id){ toast('Status saved · link '+client+'’s plan sheet to write it back'); return; }
+    toast('Writing status to '+client+'’s plan…');
+    fetch('/api/sheets/status',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({id:id,tab:'Project Plan',match:task,value:val})}).then(function(r){return r.json();})
+      .then(function(d){ toast(d.ok?('✓ Written to '+d.cell):('Sheet: '+(d.error||'write failed'))); })
+      .catch(function(){ toast('Sheet write failed — check the plan is shared with the service account'); }); }
+
+  // ---- category-aware brief templates (auto-fill scope + definition of done) ----
+  var CAT_LBL={title:'Titles',image:'Imagery',keyword:'Keywords',custom_label:'Custom labels',product_type:'Product type',data:'Data fields',technical:'Feed & technical',channel:'Channels',test:'Testing',opt:'Optimisation',account:'Account'};
+  var TWO_STREAMS='\n\nRun TWO streams before actioning:\n • Stream A — Project-plan worksheet: read the full tab, confirm this task’s current state, dependencies and prior notes.\n • Stream B — Live product feed (~5,000 rows) as source of truth: analyse, score and update against the actual feed data, not assumptions.';
+  var TEMPLATES={
+    title:{s:'Rewrite/optimise titles to MASK structure (Brand + Material + Fit + Colour + Use-case, 80–120 chars). Markets/categories: [confirm]. Respect character limits and brand tone.',d:'Titles live in FeedHero, QA’d against the feed; 5 sample titles approved by AM before full roll-out; no truncation >150 chars.'},
+    image:{s:'Image work — tag/cycle imagery by type (product-only vs on-model), overlays or roundels as specified. Confirm the image_type source and rotation rules.',d:'Overlay/cycler live in FeedHero, QA’d on 10 sample SKUs across categories, no image_link rotation wiping tags.'},
+    keyword:{s:'Keyword optimisation — inject high-volume/search-intent terms into the target attributes. Source terms: [Keyword Planner / list]. Markets: [confirm].',d:'Keywords live, mapped to the right attribute, QA’d against duplicate/over-stuffing rules; before/after sample shared.'},
+    custom_label:{s:'Custom-label build/update (CL[n]) — define the rule/values and where they feed (Shopping/Social/PPC). Scrape or data source: [confirm].',d:'CL populated in FeedHero, values validated on the feed, campaign-side mapping confirmed with PPC/Social.'},
+    product_type:{s:'Product-type / category mapping — deepen taxonomy to [n]-level granularity (FS Tachyon). Confirm GPC vs product_type split.',d:'product_type rolled out across the market, spot-checked against the feed, no non-existent values.'},
+    data:{s:'Data-field back-fill / attribute enrichment — fill mandatory + AI-enriched fields. Confirm which fields and the source (master feed / Tachyon).',d:'Fields populated + validated on the feed, disapprovals cleared, sample QA’d by AM.'},
+    technical:{s:'Feed / technical change — migration, refresh cadence, item-group/ID logic or rule change. Confirm the switch-over date and rollback.',d:'Change live in all target feeds, monitored for 48h, no campaign disruption, confirmed with the client.'},
+    channel:{s:'Channel work — Meta/Social/LIA/PPC overlay or feed architecture. Confirm markets, creative/typography and identifiers.',d:'Live in the target channel, QA’d on sample, mockup/typography approved by client.'},
+    test:{s:'A/B test — define hypothesis, control vs variant, SKUs, market and duration. Ensure the cohort is excluded from AI enrichment so the read is clean.',d:'Test live, tracked in the Test register with a read-out date; result logged (uplift %); winner rolled out or parked.'},
+    opt:{s:'Feed optimisation task — confirm exact scope, markets and rules with the AM before starting.',d:'Change live in FeedHero, QA’d against the feed, sample approved by AM.'},
+    account:{s:'Account / strategy action — deck, proposal, call prep or commercial item. Confirm the deliverable and audience.',d:'Deliverable shared with the client / internal owner and signed off.'}
+  };
+  function applyTemplate(cat){ var tpl=TEMPLATES[cat]||TEMPLATES.opt;
+    document.getElementById('bg-scope').value=tpl.s+TWO_STREAMS;
+    document.getElementById('bg-dod').value=tpl.d; }
+
+  // ---- ASPL delegation ----
+  function asplFor(seed){ return ASPL[Math.abs(hashStr(seed))%ASPL.length]; }   // stable per-task
+  function hashStr(s){ s=s||''; var h=0; for(var i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return h; }
 
   function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
   function slug(s){return (s||'').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'');}
@@ -451,6 +653,7 @@ window.addEventListener('load',restore);
   fillClientSelect(); renderBrands();
   ['bg-client','bg-market','bg-source','bg-task','bg-scope','bg-dod','bg-assets','bg-due','bg-priority'].forEach(function(id){
     var el=document.getElementById(id); el.addEventListener('input',refreshPreview); el.addEventListener('change',refreshPreview); });
+  (function(){ var cs=document.getElementById('bg-cat'); if(cs)cs.addEventListener('change',function(){ if(cs.value){ applyTemplate(cs.value); } refreshPreview(); }); })();
 
   function copy(text,msg){ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){toast(msg);});}
     else{var a=document.createElement('textarea');a.value=text;document.body.appendChild(a);a.select();try{document.execCommand('copy');toast(msg);}catch(e){}a.remove();} }
@@ -471,9 +674,19 @@ window.addEventListener('load',restore);
 
   // ---- intake table: project-plan + incoming-email streams (ATRT-style, filter + sort) ----
   var FEEDLBL={technical:'Feed & tech',title:'Titles',keyword:'Keywords',data:'Data fields',product_type:'Product type',opt:'Optimisation',image:'Imagery',custom_label:'Custom labels',channel:'Channels',account:'Account',test:'Testing'};
-  function planOpen(){ var out=[];
-    CLIENTS.forEach(function(c){ var p=PT[c]; if(!p||!p.latest)return;
-      p.latest.forEach(function(t){ if(t.b==='open'||t.b==='progress'){ out.push({client:c,task:t.t,cat:t.c,owner:t.o,source:'plan'}); } }); });
+  function nrm(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim(); }
+  // Every plan task (all statuses), preferring LIVE sheet data over the git snapshot, with the
+  // local status overlay applied and new-since-snapshot rows flagged. The status filter (default
+  // "to action") keeps the brief flow focused; switch it to see/edit any status.
+  function planTasks(){ var out=[], ov=statusOverlay();
+    CLIENTS.forEach(function(c){
+      var live=LIVE[c]&&LIVE[c].tasks, snap=(PT[c]&&PT[c].latest)||[];
+      var isLive=!!(live&&live.length), list=isLive?live:snap;
+      var newSet=(isLive&&LIVE[c].newSet)||{};
+      list.forEach(function(t){ var task=t.t, k=c+'|'+task, ovv=ov[k];
+        var s=ovv!=null?ovv:t.s, b=ovv!=null?bucketOf(ovv):(t.b||bucketOf(s));
+        out.push({client:c,task:task,cat:t.c,owner:t.o||'—',source:'plan',s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||''}); });
+    });
     return out; }
   var gmailItems=[]; // live client emails pulled from Gmail (once the service account is connected)
   function senderName(from){ var m=/^\s*"?([^"<]+?)"?\s*</.exec(from||''); if(m)return m[1].trim();
@@ -481,31 +694,87 @@ window.addEventListener('load',restore);
   function emailIntake(){ // email-sourced items awaiting a brief
     var fromBriefs=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];})
       .filter(function(b){return b.source==='email'&&b.status==='intake';})
-      .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email'};});
-    var fromGmail=gmailItems.map(function(g){return {client:senderName(g.from),task:g.subject,cat:'',owner:senderName(g.from),source:'email',from:g.from};});
+      .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email',s:'',b:'open'};});
+    var fromGmail=gmailItems.map(function(g){return {client:senderName(g.from),task:g.subject,cat:'',owner:senderName(g.from),source:'email',from:g.from,s:'',b:'open'};});
     return fromBriefs.concat(fromGmail); }
-  function allIntake(){ return planOpen().concat(emailIntake()); }
-  var itState={src:'',client:'',q:'',sort:'client',dir:1};
+  function allIntake(){ return planTasks().concat(emailIntake()); }
+  var itState={src:'',client:'',q:'',status:'act',sort:'client',dir:1};
+  var itSel={};   // bulk selection: key -> task object
+  function rowKey(t){ return t.client+'|'+t.task; }
+  function intakeFiltered(){
+    return allIntake().filter(function(r){
+      var st=itState.status==='act'?(r.b==='open'||r.b==='progress'):(!itState.status||r.b===itState.status);
+      return st&&(!itState.src||r.source===itState.src)&&(!itState.client||r.client===itState.client)
+        &&(!itState.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(itState.q)>=0); })
+      .sort(function(a,b){ var k=itState.sort; return (((a[k]||'')+'').localeCompare((b[k]||'')+''))*itState.dir; }); }
   function renderIntake(){
     var body=document.getElementById('it-body'); if(!body)return;
     var rows=allIntake();
     var csel=document.getElementById('it-client');
     if(csel && csel.options.length<=1){ var seen={}; rows.forEach(function(r){seen[r.client]=1;});
       Object.keys(seen).sort().forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;csel.appendChild(o);}); }
-    var f=rows.filter(function(r){
-      return (!itState.src||r.source===itState.src)&&(!itState.client||r.client===itState.client)
-        &&(!itState.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(itState.q)>=0); });
-    f.sort(function(a,b){ var k=itState.sort; return (((a[k]||'')+'').localeCompare((b[k]||'')+''))*itState.dir; });
+    var f=intakeFiltered();
     body.innerHTML = f.length ? f.map(function(t,i){
-      var feed=t.cat?('<span class="feed-tag">'+esc(FEEDLBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
+      var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
       var src=t.source==='email'?'<span class="src-tag src-email">Email</span>':'<span class="src-tag src-plan">Project plan</span>';
-      return '<tr><td class="c-client">'+esc(t.client)+'</td><td>'+feed+'</td>'
+      var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
+      var k=rowKey(t), ck=itSel[k]?' checked':'';
+      var stat=t.source==='plan'
+        ?('<td class="c-stat" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
+        :'<td class="c-stat"><span class="c-owner">—</span></td>';
+      return '<tr data-k="'+esc(k)+'"><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
+        +'<td class="c-client">'+esc(t.client)+badge+'</td><td>'+feed+'</td>'
         +'<td class="c-task">'+esc(t.task)+'</td><td class="c-owner">'+esc(t.owner||'—')+'</td>'
-        +'<td>'+src+'</td><td class="c-act"><button class="brief-btn" data-i="'+i+'">Brief →</button></td></tr>';
-    }).join('') : '<tr><td colspan="6" class="it-empty">'+(itState.src==='email'?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match.')+'</td></tr>';
+        +stat+'<td>'+src+'</td><td class="c-act"><button class="brief-btn" data-i="'+i+'">Brief →</button></td></tr>';
+    }).join('') : '<tr><td colspan="8" class="it-empty">'+(itState.src==='email'?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
     body.querySelectorAll('.brief-btn').forEach(function(btn){ btn.onclick=function(){ prefill(f[+btn.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.it-cb').forEach(function(cb){ cb.onchange=function(){ var t=f[+cb.getAttribute('data-i')]; if(cb.checked)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; renderBulk(); }; });
+    body.querySelectorAll('.c-stat .stat-sel').forEach(function(sel){ sel.onchange=function(){ var td=sel.closest('.c-stat');
+      sel.className='stat-sel tag-'+bucketOf(sel.value); writeStatus(td.getAttribute('data-client'),td.getAttribute('data-task'),sel.value);
+      setTimeout(renderAll,650); }; });
     var n=document.getElementById('it-n'); if(n)n.textContent=f.length+' task'+(f.length===1?'':'s');
+    renderBulk();
   }
+  // ---- bulk brief + delegate ----
+  function renderBulk(){ var bar=document.getElementById('it-bulk'); if(!bar)return;
+    var keys=Object.keys(itSel), n=keys.length;
+    bar.style.display=n?'flex':'none';
+    var c=bar.querySelector('#it-bulk-n'); if(c)c.textContent=n+' selected';
+  }
+  function bulkList(){ return Object.keys(itSel).map(function(k){return itSel[k];}); }
+  function bulkBriefDraft(split){
+    var items=bulkList(); if(!items.length)return;
+    if(split){ // one draft per ASPL owner, tasks grouped
+      var groups={}; ASPL.forEach(function(a){groups[a]=[];});
+      items.forEach(function(t){ groups[asplFor(t.client+t.task)].push(t); });
+      var opened=0;
+      ASPL.forEach(function(a){ var g=groups[a]; if(!g.length)return; opened++;
+        var body=asplBatchBody(a,g); var subj='[FS Brief] '+g.length+' tasks · '+a+' · ASPL batch';
+        window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body),'_blank','noopener'); });
+      toast(opened+' brief draft'+(opened===1?'':'s')+' opened — one per ASPL owner');
+    } else { var body=asplBatchBody('ASPL team',items); var subj='[FS Brief] '+items.length+' tasks · batch';
+      window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body),'_blank','noopener');
+      toast('Batched brief draft opened'); }
+  }
+  function asplBatchBody(owner,items){ var L=[]; var d=new Date(); d.setDate(d.getDate()+5);
+    var dd=isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()));
+    L.push('FEEDSPARK BATCH BRIEF — '+owner); L.push('AM: Ray · London   Default due: '+humanDD(dd)+' ('+dd+')');
+    L.push('──────────────────────────────');
+    items.forEach(function(t,i){ var c=code(t.client,'gb');
+      L.push((i+1)+'. '+t.client+'  ['+c+']  ibfdue:'+dd);
+      L.push('   Task: '+t.task);
+      L.push('   Category: '+(CAT_LBL[t.cat]||'Optimisation'));
+      L.push(''); });
+    L.push('Two streams per task: (A) project-plan worksheet, (B) the live ~5,000-row feed as source of truth.');
+    L.push('Reply-all to update status. Keep the [ibfcode] + ibfdue tokens intact.');
+    L.push('FeedSpark · Private & Confidential'); return L.join('\n'); }
+  function bulkSaveAll(){ var items=bulkList(); if(!items.length)return; var made=0;
+    items.forEach(function(t){ var id=newId(t.client); var c=code(t.client,'gb'); var d=new Date(); d.setDate(d.getDate()+5);
+      var tpl=TEMPLATES[t.cat]||TEMPLATES.opt;
+      BRIEFS[id]={id:id,created:Date.now(),updated:Date.now(),status:'intake',comms:[],client:t.client,code:c,task:t.task,
+        scope:tpl.s+TWO_STREAMS,dod:tpl.d,assets:'—',due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
+        source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++; });
+    itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline'); }
   (function(){ var wrap=document.getElementById('it-src');
     [['','All'],['plan','Project plan'],['email','Incoming emails']].forEach(function(s){
       var b=document.createElement('button'); b.textContent=s[1]; if(s[0]===itState.src)b.className='on';
@@ -518,15 +787,27 @@ window.addEventListener('load',restore);
     document.querySelectorAll('#itbl thead th .ar').forEach(function(a){a.remove();});
     var ar=document.createElement('span'); ar.className='ar'; ar.textContent=itState.dir>0?' ▲':' ▼'; th.appendChild(ar);
     renderIntake(); }; });
+  // status filter · select-all · bulk actions · live refresh · add-test
+  (function(){
+    var st=document.getElementById('it-status'); if(st)st.addEventListener('change',function(){ itState.status=this.value; renderIntake(); });
+    var all=document.getElementById('it-all'); if(all)all.onchange=function(){ var on=all.checked; intakeFiltered().forEach(function(t){ if(on)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; }); renderIntake(); };
+    var bb=document.getElementById('bulk-brief'); if(bb)bb.onclick=function(){ bulkBriefDraft(false); };
+    var bs=document.getElementById('bulk-split'); if(bs)bs.onclick=function(){ bulkBriefDraft(true); };
+    var bv=document.getElementById('bulk-save'); if(bv)bv.onclick=bulkSaveAll;
+    var bc=document.getElementById('bulk-clear'); if(bc)bc.onclick=function(){ itSel={}; renderIntake(); };
+    var lr=document.getElementById('live-refresh'); if(lr)lr.onclick=function(){ fetchLive(true); };
+    var ta=document.getElementById('test-add'); if(ta)ta.onclick=function(){ editTest(-1); };
+  })();
   function prefill(t){
     window.__editId=null;
     document.getElementById('bg-client').value= CLIENTS.indexOf(t.client)>=0? t.client : CLIENTS[0];
     document.getElementById('bg-source').value= t.source||'plan';
     document.getElementById('bg-task').value=t.task;
-    document.getElementById('bg-scope').value=''; document.getElementById('bg-dod').value='';
+    var cat=t.cat||'opt', cs=document.getElementById('bg-cat'); if(cs)cs.value=(TEMPLATES[cat]?cat:'');
+    applyTemplate(cat);                 // #2 auto-fill scope + DoD + the two streams
     refreshPreview();
     window.scrollTo({top:0,behavior:'smooth'});
-    toast('Prefilled — set the due date and save');
+    toast('Prefilled from the '+(CAT_LBL[cat]||'optimisation')+' template — set the due date and save');
   }
 
   // ---- KPIs ----
@@ -602,12 +883,14 @@ window.addEventListener('load',restore);
       +'<div class="m-meta"><span class="m-pill">Due '+humanDD(b.due)+'</span><span class="m-pill">'+esc(b.priority||'Normal')+'</span>'
         +'<span class="m-pill">'+(b.source==='plan'?'Project plan':'Email')+'</span>'+(dueBadge(b))+'</div>'
       +'<div class="m-sec"><h4>Stage</h4><div class="stat-seg" id="m-stat">'+stat+'</div></div>'
-      +'<div class="m-sec"><h4>ASPL tracking</h4><div id="m-comms">'+comms+'</div>'
+      +'<div class="m-sec"><h4>ASPL tracking <span class="m-owner">· Owner <select id="m-aspl">'+ASPL.map(function(n){return '<option'+(asplOf(b)===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select></span></h4><div id="m-comms">'+comms+'</div>'
         +'<div class="addc"><select id="m-from">'+ASPL.concat(['Client','Ray','Other']).map(function(n){return '<option>'+n+'</option>';}).join('')+'</select>'
         +'<input id="m-note" placeholder="Paste / summarise their reply…"><button class="btn" id="m-log">Log</button></div>'
         +'<div class="scan-hit" id="m-scan"></div></div>'
       +'<div class="m-act">'
         +'<a class="btn pri" id="m-brief" target="_blank" rel="noopener">✉ Re-draft brief to ASPL</a>'
+        +'<a class="btn" id="m-chase" target="_blank" rel="noopener">⏰ Chase ASPL</a>'
+        +'<a class="btn" id="m-chasec" target="_blank" rel="noopener">⏰ Chase client</a>'
         +'<a class="btn navy'+(doneNote?'':' ')+'" id="m-confirm" target="_blank" rel="noopener">✓ Draft client confirmation</a>'
         +'<span class="grow"></span><button class="btn" id="m-del" style="border-color:#F3C9BC;color:#C0392B">Delete</button></div>';
     scrim.classList.add('on');
@@ -630,6 +913,10 @@ window.addEventListener('load',restore);
     var cbody=clientConfirm(b,doneNote);
     conf.href='https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark · '+b.client+' — '+b.task+' completed')+'&body='+encodeURIComponent(cbody);
     conf.addEventListener('click',function(){ if(b.status==='done'){ b.status='confirmed'; b.updated=Date.now(); persist(); setTimeout(function(){renderAll();},400); } });
+    // #4 chase drafts + ASPL owner reassign
+    document.getElementById('m-chase').href=chaseAspl(b);
+    document.getElementById('m-chasec').href=chaseClient(b);
+    var asplSel=document.getElementById('m-aspl'); if(asplSel)asplSel.onchange=function(){ b.aspl=asplSel.value; b.updated=Date.now(); persist(); renderSLA(); toast('Owner → '+b.aspl); };
   }
   function lastDoneNote(b){ if(!b.comms)return ''; for(var i=b.comms.length-1;i>=0;i--){ if(b.comms[i].done||DONE_RE.test(b.comms[i].note)) return b.comms[i].note; } return ''; }
   function clientConfirm(b,doneNote){
@@ -643,13 +930,203 @@ window.addEventListener('load',restore);
     return L.join('\n');
   }
 
-  function renderAll(){ renderKPIs(); renderIntake(); renderBoard(); }
+  // ================= elevated Workflow engines =================
+  function isoDate(iso){ if(!iso)return null; var p=(''+iso).split('-'); if(p.length!==3)return null; var d=new Date(+p[0],+p[1]-1,+p[2]); return isNaN(d)?null:d; }
+  function humanISO(iso){ var d=isoDate(iso); if(!d)return iso?esc(iso):'—'; return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}); }
+  function timeAgo(ts){ var s=Math.round((Date.now()-ts)/1000); if(s<60)return 'just now'; var m=Math.round(s/60); if(m<60)return m+'m ago'; return Math.round(m/60)+'h ago'; }
+  function daysTo(dd){ var d=ddmmyyyyToDate(dd); return d?Math.round((d-today())/86400000):null; }
+  function dueState(b){ var days=daysTo(b.due); if(days==null)return 'no due date set';
+    return days<0?('overdue by '+(-days)+' day'+(days===-1?'':'s')):days===0?'due today':('due in '+days+' day'+(days===1?'':'s')); }
+
+  // ---- #1 live plan sync ----
+  function connectedSheets(){ var m={}; CLIENTS.forEach(function(c){ if(PLANSHEET[c]) m[c]=PLANSHEET[c]; }); return m; }
+  function fetchLive(force){
+    var sheets=connectedSheets(), banner=document.getElementById('live-state');
+    if(!Object.keys(sheets).length) return;
+    if(banner) banner.textContent='Syncing plans…';
+    var btn=document.getElementById('live-refresh'); if(btn)btn.disabled=true;
+    fetch('/api/plan/live',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sheets:sheets,force:!!force})})
+      .then(function(r){return r.json();}).then(function(d){
+        if(btn)btn.disabled=false;
+        if(d && d.connected){ LIVE_CONN=true; LIVE={}; var n=0,brands=0,errs=[];
+          Object.keys(d.brands||{}).forEach(function(b){ var e=d.brands[b]; if(!e)return; if(e.error){errs.push(b);return;} if(!e.tasks)return;
+            var sk='fcc-seen:'+b, seen={}; try{seen=JSON.parse(localStorage.getItem(sk)||'{}');}catch(x){}
+            var had=Object.keys(seen).length>0, ns={};
+            e.tasks.forEach(function(t){ var kk=nrm(t.t); if(had&&!seen[kk])ns[kk]=1; seen[kk]=1; });
+            try{localStorage.setItem(sk,JSON.stringify(seen));}catch(x){}
+            e.newSet=ns; LIVE[b]=e; n+=e.tasks.length; if(e.tasks.length)brands++; });
+          LIVE_AT=Date.now(); var dot=document.getElementById('live-dot'); if(dot)dot.classList.add('on');
+          if(banner) banner.textContent='Live — '+n+' tasks across '+brands+' plans · synced '+timeAgo(LIVE_AT)+(errs.length?(' · '+errs.length+' not shared with the service account'):'');
+          renderAll();
+        } else { if(banner) banner.textContent=(d&&d.error==='no_sa')?'Not connected — set the Google service-account secret to sync plans live.':'Sync unavailable — showing the last snapshot.'; }
+      }).catch(function(){ if(btn)btn.disabled=false; if(banner) banner.textContent='Sync failed — showing the last snapshot.'; });
+  }
+
+  // ---- #4 chase drafts ----
+  function chaseAspl(b){ var L=['Hi '+(asplOf(b)||'team')+',','','Chasing this brief — '+dueState(b)+':','',
+    '• '+b.task+'  ['+b.code+']  ibfdue:'+(b.due||'TBC'),'','Could you confirm status / ETA? Reply-all keeps the portal in sync.','','Thanks,','Ray'];
+    return 'https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent('[FS Chase] '+b.client+' · '+b.task)+'&body='+encodeURIComponent(L.join('\n')); }
+  function chaseClient(b){ var L=['Hi team,','','Quick update on the below — checking you have everything you need from us to move it forward:','',
+    '• '+b.task,'','Happy to jump on a quick call if easier.','','Best,','Ray','FeedSpark'];
+    return 'https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark · '+b.client+' — '+b.task)+'&body='+encodeURIComponent(L.join('\n')); }
+
+  // ---- #5 ASPL SLA board ----
+  function asplOf(b){ return b.aspl||asplFor((b.client||'')+(b.task||'')); }
+  function briefAgeDays(b){ return Math.floor((Date.now()-(b.updated||b.created||Date.now()))/86400000); }
+  function lastReplyDays(b){ if(!b.comms||!b.comms.length)return null; return Math.floor((Date.now()-b.comms[b.comms.length-1].when)/86400000); }
+  function silentDays(b){ var lr=lastReplyDays(b); return lr==null?briefAgeDays(b):lr; }
+  function turnaroundDays(b){ if(!b.comms)return null; for(var i=0;i<b.comms.length;i++){ if(b.comms[i].done) return Math.max(0,Math.round((b.comms[i].when-(b.created||b.comms[i].when))/86400000)); } return null; }
+  function renderSLA(){ var host=document.getElementById('sla-grid'); if(!host)return;
+    var arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];});
+    var mem={}; ASPL.forEach(function(a){mem[a]={open:0,done:0,ta:[],stall:0};});
+    arr.forEach(function(b){ var a=asplOf(b); if(!mem[a])mem[a]={open:0,done:0,ta:[],stall:0};
+      if(b.status==='briefed'||b.status==='progress'){ mem[a].open++; if(silentDays(b)>=STALL_DAYS)mem[a].stall++; }
+      if(b.status==='done'||b.status==='confirmed'){ mem[a].done++; var t=turnaroundDays(b); if(t!=null)mem[a].ta.push(t); } });
+    host.innerHTML=ASPL.map(function(a){ var m=mem[a]; var avg=m.ta.length?Math.round(m.ta.reduce(function(x,y){return x+y;},0)/m.ta.length):null;
+      return '<div class="sla-card'+(m.stall?' warn':'')+'"><div class="sla-name">'+esc(a)+'</div>'
+        +'<div class="sla-row"><span>Open</span><b>'+m.open+'</b></div>'
+        +'<div class="sla-row"><span>Stalled</span><b class="'+(m.stall?'bad':'')+'">'+m.stall+'</b></div>'
+        +'<div class="sla-row"><span>Delivered</span><b>'+m.done+'</b></div>'
+        +'<div class="sla-row"><span>Avg turnaround</span><b>'+(avg==null?'—':avg+'d')+'</b></div></div>'; }).join('');
+    var s=document.getElementById('sla-stalled'); if(!s)return;
+    var stalled=arr.filter(function(b){return (b.status==='briefed'||b.status==='progress')&&silentDays(b)>=STALL_DAYS;}).sort(function(a,b){return silentDays(b)-silentDays(a);});
+    s.innerHTML = stalled.length? stalled.map(function(b){ var lr=lastReplyDays(b);
+      return '<div class="stall-row" data-id="'+esc(b.id)+'"><span class="stall-c">'+esc(b.client)+'</span><span class="stall-t">'+esc(b.task)+'</span>'
+        +'<span class="stall-a">'+esc(asplOf(b))+'</span><span class="stall-d">'+(lr==null?('briefed '+briefAgeDays(b)+'d ago'):('silent '+lr+'d'))+'</span>'
+        +'<button class="mini-btn" data-chase="'+esc(b.id)+'">Chase</button></div>'; }).join('')
+      : '<div class="sub" style="margin:0">No stalled briefs — all replies within '+STALL_DAYS+' days. 👌</div>';
+    s.querySelectorAll('[data-chase]').forEach(function(btn){ btn.onclick=function(e){ e.stopPropagation(); var b=BRIEFS[btn.getAttribute('data-chase')]; if(b)window.open(chaseAspl(b),'_blank','noopener'); }; });
+    s.querySelectorAll('.stall-row').forEach(function(r){ r.onclick=function(){ openModal(r.getAttribute('data-id')); }; });
+  }
+
+  // ---- #8 timeline ----
+  function renderTimeline(){ var host=document.getElementById('tl-grid'); if(!host)return;
+    var t0=today(), WEEKS=6, evs=[];
+    Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed')return; var d=ddmmyyyyToDate(b.due); if(!d)return;
+      evs.push({d:d,label:b.client+' · '+b.task,kind:'brief',id:b.id}); });
+    TESTS.forEach(function(t){ if(t.result||!t.readout)return; var d=isoDate(t.readout); if(!d)return;
+      evs.push({d:d,label:t.client+' · '+t.name+' · read-out',kind:'test'}); });
+    var html='';
+    for(var w=0;w<WEEKS;w++){ var ws=new Date(t0); ws.setDate(ws.getDate()+w*7);
+      var head='w'+(w+1)+' · '+ws.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+      var inWk=evs.filter(function(e){ var off=Math.round((e.d-t0)/86400000); return off<(w+1)*7 && (w===0?true:off>=w*7); }).sort(function(a,b){return a.d-b.d;});
+      html+='<div class="tl-week"><div class="tl-wh'+(w===0?' now':'')+'">'+head+'</div>'+
+        (inWk.length? inWk.map(function(e){ var off=Math.round((e.d-t0)/86400000);
+          return '<div class="tl-ev '+e.kind+(off<0?' over':'')+'"'+(e.id?' data-id="'+esc(e.id)+'"':'')+' title="'+esc(e.label)+'">'+esc(e.label)+'</div>'; }).join('') : '<div class="tl-empty">—</div>')+'</div>';
+    }
+    host.innerHTML=html;
+    host.querySelectorAll('.tl-ev[data-id]').forEach(function(el){ el.onclick=function(){ openModal(el.getAttribute('data-id')); }; });
+  }
+
+  // ---- #10 test & experiment register ----
+  var TESTS=[];
+  function saveTests(){ try{localStorage.setItem('fcc-tests',JSON.stringify(TESTS));}catch(e){}
+    fetch('/api/tests',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(TESTS)}).catch(function(){}); }
+  function seedTests(){ var seed=[
+      {client:'YuMOVE',name:'Benefit copy in titles',hypo:'Benefit-led beats feature-led',skus:'FP range',start:'2026-03-01',readout:'',status:'done',result:'+24.7%'},
+      {client:'YuMOVE',name:'“Multivitamins” category term',hypo:'Category term lifts CTR',skus:'Multivit SKUs',start:'2026-04-01',readout:'',status:'done',result:'+126.62%'},
+      {client:'YuMOVE',name:'Health-condition targeting',hypo:'Condition keywords lift conversions',skus:'Joint/ageing',start:'2026-05-01',readout:'',status:'done',result:'+30%'}];
+    Object.keys(PT).forEach(function(c){ var p=PT[c]; ((p&&p.latest)||[]).forEach(function(t){ if(t.c==='test'&&t.b!=='done'){ seed.push({client:c,name:t.t.slice(0,70),hypo:'',skus:'',start:'',readout:'',status:'running',result:''}); } }); });
+    return seed; }
+  function renderTests(){ var host=document.getElementById('tests-body'); if(!host)return;
+    if(!TESTS.length){ host.innerHTML='<tr><td colspan="7" class="it-empty">No tests yet — add one, or they seed from your test-category plan tasks.</td></tr>'; return; }
+    host.innerHTML=TESTS.map(function(t,i){ var days=t.readout?Math.round((isoDate(t.readout)-today())/86400000):null;
+      var rocls=(days!=null&&!t.result)?(days<0?'over':days<=7?'soon':''):'';
+      var stat=t.result?'<span class="tst-badge win">'+esc(t.result)+'</span>':'<span class="tst-badge '+esc(t.status||'running')+'">'+esc(t.status||'running')+'</span>';
+      return '<tr><td class="c-client">'+esc(t.client)+'</td><td class="c-task">'+esc(t.name)+'</td>'
+        +'<td>'+esc(t.hypo||'—')+'</td><td class="c-owner">'+esc(t.skus||'—')+'</td>'
+        +'<td class="tst-ro '+rocls+'">'+(t.readout?humanISO(t.readout):'—')+'</td><td>'+stat+'</td>'
+        +'<td class="c-act"><button class="mini-btn" data-te="'+i+'">Edit</button> <button class="mini-btn" data-td="'+i+'">✕</button></td></tr>'; }).join('');
+    host.querySelectorAll('[data-te]').forEach(function(b){ b.onclick=function(){ editTest(+b.getAttribute('data-te')); }; });
+    host.querySelectorAll('[data-td]').forEach(function(b){ b.onclick=function(){ if(confirm('Delete this test?')){ TESTS.splice(+b.getAttribute('data-td'),1); saveTests(); renderTests(); renderTimeline(); renderAlerts(); } }; });
+  }
+  function editTest(i){ var t=i>=0?TESTS[i]:{client:CLIENTS[0],name:'',hypo:'',skus:'',start:'',readout:'',status:'running',result:''};
+    var name=prompt('Test name:',t.name); if(name===null)return; if(!name.trim())return;
+    var client=prompt('Client:',t.client)||t.client;
+    var hypo=prompt('Hypothesis:',t.hypo)||'';
+    var skus=prompt('SKUs / cohort:',t.skus)||'';
+    var readout=prompt('Read-out date (YYYY-MM-DD, blank if TBC):',t.readout)||'';
+    var result=prompt('Result (blank if still running, e.g. +24.7%):',t.result)||'';
+    var nt={client:client,name:name.trim(),hypo:hypo,skus:skus,start:t.start||'',readout:readout.trim(),status:result?'done':'running',result:result.trim()};
+    if(i>=0)TESTS[i]=nt; else TESTS.push(nt); saveTests(); renderTests(); renderTimeline(); renderAlerts(); }
+
+  // ---- bonus: AE workload heatmap (+ owner reassign write-back) ----
+  // markets/brands leak into some plans' owner columns — treat them as unassigned, not AEs
+  var NOT_AE={denmark:1,canada:1,switzerland:1,italy:1,norway:1,poland:1,spain:1,sweden:1,germany:1,france:1,netherlands:1,ireland:1,austria:1,next:1,superdry:1,reiss:1,schuh:1,monsoon:1,accessorize:1,hobbycraft:1,yumove:1};
+  function ownerKey(o){ o=(o||'').trim(); if(!o||o==='—')return 'Unassigned'; var m=/^([A-Za-z]+)/.exec(o); var k=m?m[1]:o; return NOT_AE[k.toLowerCase()]?'Unassigned':k; }
+  function renderWorkload(){ var host=document.getElementById('wk-grid'); if(!host)return;
+    var tasks=planTasks().filter(function(t){return t.b==='open'||t.b==='progress';});
+    var by={}; tasks.forEach(function(t){ var o=ownerKey(t.owner); if(!by[o])by[o]={open:0,prog:0,brands:{}}; if(t.b==='progress')by[o].prog++; else by[o].open++; by[o].brands[t.client]=1; });
+    var names=Object.keys(by).sort(function(a,b){ return (by[b].open+by[b].prog)-(by[a].open+by[a].prog); });
+    var extra=names.length>12?names.length-12:0; names=names.slice(0,12);
+    var max=1; names.forEach(function(n){ max=Math.max(max,by[n].open+by[n].prog); });
+    host.innerHTML= (names.length? names.map(function(n){ var w=by[n], tot=w.open+w.prog, pct=Math.round(tot/max*100), nb=Object.keys(w.brands).length;
+      return '<div class="wk-row"><span class="wk-name">'+esc(n)+'</span>'
+        +'<span class="wk-bar"><span class="wk-fill" style="width:'+pct+'%"></span></span>'
+        +'<span class="wk-num">'+tot+'</span><span class="wk-sub">'+w.prog+' in progress · '+nb+' brand'+(nb===1?'':'s')+'</span></div>'; }).join('')
+      : '<div class="sub" style="margin:0">No open tasks assigned.</div>')
+      + (extra?'<div class="wk-more">+ '+extra+' more owners with fewer open tasks</div>':''); }
+  function writeOwner(client,task,val){ var id=PLANSHEET[client]; if(!id){ toast('No plan sheet linked for '+client); return; }
+    toast('Reassigning in '+client+'’s plan…');
+    fetch('/api/sheets/owner',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',match:task,value:val})})
+      .then(function(r){return r.json();}).then(function(d){ toast(d.ok?('✓ Owner → '+d.cell):('Sheet: '+(d.error||'write failed'))); if(d.ok&&LIVE[client])fetchLive(true); }).catch(function(){ toast('Owner write failed'); }); }
+
+  // ---- #9 alerts + digest ----
+  function computeAlerts(){ var over=[], soon=[];
+    Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed')return; var days=daysTo(b.due); if(days==null)return; if(days<0)over.push(b); else if(days<=2)soon.push(b); });
+    TESTS.forEach(function(t){ if(t.result||!t.readout)return; var d=isoDate(t.readout); if(!d)return; var days=Math.round((d-today())/86400000);
+      if(days<0)over.push({client:t.client,task:t.name+' · read-out'}); else if(days<=2)soon.push({client:t.client,task:t.name+' · read-out'}); });
+    return {over:over,soon:soon}; }
+  function renderAlerts(){ var host=document.getElementById('wf-alerts'); if(!host)return; var a=computeAlerts();
+    if(!a.over.length && !a.soon.length){ host.style.display='none'; return; } host.style.display='flex';
+    host.innerHTML='<div class="al-ic">🔔</div><div class="al-body"><b>'
+      +(a.over.length?'<span class="al-over">'+a.over.length+' overdue</span>':'')
+      +(a.over.length&&a.soon.length?' · ':'')
+      +(a.soon.length?'<span class="al-soon">'+a.soon.length+' due ≤ 48h</span>':'')+'</b>'
+      +'<div class="al-list">'+a.over.concat(a.soon).slice(0,4).map(function(b){return esc((b.client||'')+' · '+b.task);}).join(' &nbsp;·&nbsp; ')+'</div></div>'
+      +'<button class="al-btn" id="al-digest">Week digest</button><button class="al-x" id="al-x" aria-label="Dismiss">×</button>';
+    document.getElementById('al-x').onclick=function(){ host.style.display='none'; };
+    document.getElementById('al-digest').onclick=openDigest;
+  }
+  function buildDigest(){ var t0=today(), arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}), L=[];
+    function fmt(b){ return '  • '+b.client+' · '+b.task+'  ('+dueState(b)+')'; }
+    var over=arr.filter(function(b){return b.status!=='confirmed'&&daysTo(b.due)!=null&&daysTo(b.due)<0;});
+    var wk=arr.filter(function(b){var d=daysTo(b.due);return b.status!=='confirmed'&&d!=null&&d>=0&&d<=7;});
+    var withClient=arr.filter(function(b){return b.status==='done';});
+    var shipped=arr.filter(function(b){return b.status==='confirmed';});
+    var tro=TESTS.filter(function(t){return !t.result&&t.readout;});
+    L.push('FEEDSPARK — WEEK AHEAD  ('+t0.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+')'); L.push('AM: Ray · London'); L.push('');
+    L.push('OVERDUE ('+over.length+')'); over.length?over.forEach(function(b){L.push(fmt(b));}):L.push('  • none'); L.push('');
+    L.push('DUE THIS WEEK ('+wk.length+')'); wk.length?wk.forEach(function(b){L.push(fmt(b));}):L.push('  • none'); L.push('');
+    L.push('AWAITING CLIENT SIGN-OFF ('+withClient.length+')'); withClient.length?withClient.forEach(function(b){L.push('  • '+b.client+' · '+b.task);}):L.push('  • none'); L.push('');
+    L.push('SHIPPED / CONFIRMED ('+shipped.length+')'); shipped.length?shipped.forEach(function(b){L.push('  • '+b.client+' · '+b.task);}):L.push('  • none'); L.push('');
+    L.push('TEST READ-OUTS DUE ('+tro.length+')'); tro.length?tro.forEach(function(t){L.push('  • '+t.client+' · '+t.name+'  ('+humanISO(t.readout)+')');}):L.push('  • none'); L.push('');
+    L.push('FeedSpark · Private & Confidential'); return L.join('\n'); }
+  function openDigest(){ var body=buildDigest();
+    modalEl.innerHTML='<div style="display:flex;align-items:flex-start"><div><h3>Week-ahead digest</h3><div class="mc">Review, then copy or draft it</div></div><button class="x" id="dg-x">×</button></div>'
+      +'<pre class="brief" style="max-height:52vh;overflow:auto">'+esc(body)+'</pre>'
+      +'<div class="m-act"><button class="btn navy" id="dg-copy">⧉ Copy</button><a class="btn pri" id="dg-mail" target="_blank" rel="noopener">✉ Draft in Gmail</a><span class="grow"></span><button class="btn" id="dg-notify">🔔 Desktop alerts</button></div>';
+    scrim.classList.add('on');
+    document.getElementById('dg-x').onclick=closeModal;
+    document.getElementById('dg-copy').onclick=function(){ copy(body,'Digest copied'); };
+    document.getElementById('dg-mail').href='https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark — Week ahead')+'&body='+encodeURIComponent(body);
+    document.getElementById('dg-notify').onclick=function(){ if(!('Notification' in window)){toast('Notifications not supported here');return;} Notification.requestPermission().then(function(p){ toast(p==='granted'?'Desktop alerts on':'Alerts dismissed'); maybeNotify(); }); };
+  }
+  function maybeNotify(){ if(!('Notification' in window)||Notification.permission!=='granted')return; var a=computeAlerts(); if(!a.over.length)return;
+    try{ new Notification('FeedSpark — '+a.over.length+' overdue', {body:a.over.slice(0,3).map(function(b){return (b.client||'')+' · '+b.task;}).join('\n')}); }catch(e){} }
+
+  function renderAll(){ renderKPIs(); renderIntake(); renderBoard(); renderSLA(); renderTimeline(); renderTests(); renderWorkload(); renderAlerts(); }
 
   // set a sensible default due date (today + 5 working-ish days) and boot
   (function(){ var d=new Date(); d.setDate(d.getDate()+5);
     document.getElementById('bg-due').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); })();
   refreshPreview();
-  apiGet().then(function(d){ BRIEFS=d||{}; renderAll(); });
+  apiGet().then(function(d){ BRIEFS=d||{}; renderAll(); setTimeout(maybeNotify,800); });
+  // #10 load the test register (KV; seed from wins + plan test-tasks on first run)
+  fetch('/api/tests').then(function(r){return r.json();}).then(function(d){ if(d&&d.length){TESTS=d;} else {TESTS=seedTests(); saveTests();} renderTests(); renderTimeline(); renderAlerts(); })
+    .catch(function(){ try{TESTS=JSON.parse(localStorage.getItem('fcc-tests'));}catch(e){} if(!TESTS||!TESTS.length)TESTS=seedTests(); renderTests(); renderTimeline(); renderAlerts(); });
+  // #1 pull live plan rows on load (falls back to the git snapshot until the SA is connected)
+  fetchLive(false);
   // pull the live Gmail intake (client task emails) once the service account is connected
   (function(){ var dot=document.getElementById('gdot'), st=document.getElementById('gstate');
     fetch('/api/gmail/intake').then(function(r){return r.json();}).then(function(d){
