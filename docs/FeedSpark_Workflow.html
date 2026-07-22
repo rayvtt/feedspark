@@ -426,6 +426,10 @@ window.addEventListener('load',restore);
       <option value="open">Open</option><option value="progress">In progress</option>
       <option value="hold">On hold</option><option value="client">With client</option><option value="done">Done</option>
     </select>
+    <select id="it-window" aria-label="Plan date window" title="Limits project-plan tasks by date (email + ATRT unaffected)">
+      <option value="3m">Plan: last 3 months</option><option value="6m">Plan: last 6 months</option>
+      <option value="12m">Plan: last year</option><option value="">Plan: all dates</option>
+    </select>
     <select id="it-client" aria-label="Filter by client"><option value="">All clients</option></select>
     <input id="it-search" type="search" placeholder="Search tasks, owners…" aria-label="Search intake">
     <span class="it-n" id="it-n"></span>
@@ -696,7 +700,8 @@ window.addEventListener('load',restore);
       var newSet=(isLive&&LIVE[c].newSet)||{};
       list.forEach(function(t){ var task=t.t, k=c+'|'+task, ovv=ov[k];
         var s=ovv!=null?ovv:t.s, b=ovv!=null?bucketOf(ovv):(t.b||bucketOf(s));
-        out.push({client:c,task:task,cat:t.c,owner:t.o||'—',source:'plan',s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||''}); });
+        var dd=t.d||''; if(!dd && /\d{1,2}[\/-]\d{1,2}|\d{1,2}\s+[a-z]{3}/i.test(String(t.s||''))) dd=t.s;   // live due col, or a date sitting in the snapshot status
+        out.push({client:c,task:task,cat:t.c,owner:t.o||'—',source:'plan',s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||'',d:dd}); });
     });
     _planCache=out; return out; }
 
@@ -776,13 +781,20 @@ window.addEventListener('load',restore);
     var fromGmail=gmailItems.map(function(g){return {client:senderName(g.from),task:g.subject,cat:'',owner:senderName(g.from),source:'email',from:g.from,s:'',b:'open'};});
     return fromBriefs.concat(fromGmail); }
   function allIntake(){ return planTasks().concat(carryTasks()).concat(emailIntake()); }
-  var itState={src:'',client:'',q:'',status:'act',sort:'client',dir:1};
+  var itState={src:'',client:'',q:'',status:'act',window:'3m',sort:'client',dir:1};
   var itSel={};   // bulk selection: key -> task object
+  // UK-first date parse (DD/MM/YYYY, "DD Mon YYYY"); swaps if it reads as MM/DD
+  function parseUKDate(s){ s=String(s||'').trim(); if(!s)return null; var m;
+    if(m=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/.exec(s)){ var y=+m[3]; if(y<100)y+=2000; var mo=+m[2]-1, da=+m[1]; if(mo>11){ var t=da-1; da=mo+1; mo=t; } var d=new Date(y,mo,da); return isNaN(d)?null:d; }
+    var d2=new Date(s); return isNaN(d2)?null:d2; }
+  function windowCutoff(){ var days={'3m':92,'6m':183,'12m':366}[itState.window]; if(!days)return null;
+    var t=today(); return new Date(t.getFullYear(),t.getMonth(),t.getDate()-days); }
   function rowKey(t){ return t.client+'|'+t.task; }
-  function intakeFiltered(){
+  function intakeFiltered(){ var cut=windowCutoff();
     return allIntake().filter(function(r){
       var st=itState.status==='act'?(r.b==='open'||r.b==='progress'):(!itState.status||r.b===itState.status);
-      return st&&(!itState.src||r.source===itState.src)&&(!itState.client||r.client===itState.client)
+      var win=true; if(cut && r.source==='plan' && r.d){ var pd=parseUKDate(r.d); if(pd && pd<cut) win=false; }   // date window: plan rows only
+      return win&&st&&(!itState.src||r.source===itState.src)&&(!itState.client||r.client===itState.client)
         &&(!itState.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(itState.q)>=0); })
       .sort(function(a,b){ var k=itState.sort; return (((a[k]||'')+'').localeCompare((b[k]||'')+''))*itState.dir; }); }
   function renderIntake(){
@@ -876,6 +888,7 @@ window.addEventListener('load',restore);
   // status filter · select-all · bulk actions · live refresh · add-test
   (function(){
     var st=document.getElementById('it-status'); if(st)st.addEventListener('change',function(){ itState.status=this.value; renderIntake(); });
+    var wsel=document.getElementById('it-window'); if(wsel){ wsel.value=itState.window; wsel.addEventListener('change',function(){ itState.window=this.value; renderIntake(); }); }
     var all=document.getElementById('it-all'); if(all)all.onchange=function(){ var on=all.checked; intakeFiltered().forEach(function(t){ if(on)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; }); renderIntake(); };
     var bb=document.getElementById('bulk-brief'); if(bb)bb.onclick=function(){ bulkBriefDraft(false); };
     var bs=document.getElementById('bulk-split'); if(bs)bs.onclick=function(){ bulkBriefDraft(true); };

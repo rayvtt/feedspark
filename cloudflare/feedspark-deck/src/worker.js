@@ -565,7 +565,8 @@ function parsePlanRows(rows) {
     let status = c.statusCol >= 0 ? String(row[c.statusCol] || '').trim() : '';
     if (!isStatusTok(status)) { for (let k = 1; k < Math.min(row.length, 14); k++) { if (isStatusTok(row[k])) { status = String(row[k]).trim(); break; } } }
     const owner = c.ownerCol >= 0 ? String(row[c.ownerCol] || '').trim() : '';
-    out.push({ t: task, o: owner, s: status, b: planBucket(status), c: classifyCat(task), row: r + 1 });
+    const due = c.dueCol >= 0 ? String(row[c.dueCol] || '').trim() : '';
+    out.push({ t: task, o: owner, s: status, b: planBucket(status), c: classifyCat(task), d: due, row: r + 1 });
   }
   return out;
 }
