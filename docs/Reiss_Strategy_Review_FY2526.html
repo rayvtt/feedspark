@@ -38,8 +38,8 @@ section{padding:104px 0}
 .topbar-in{max-width:var(--maxw);margin:0 auto;padding:0 40px;height:56px;display:flex;align-items:center;gap:22px}
 .tb-brand{font-weight:900;font-size:13px;letter-spacing:.04em;color:var(--ink);white-space:nowrap}
 .tb-brand span{color:var(--orange-deep)}
-.tb-nav{display:flex;gap:18px;margin-left:auto;flex-wrap:wrap}
-.tb-nav a{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent;transition:.2s}
+.tb-nav{display:flex;gap:14px;margin-left:auto;flex-wrap:wrap}
+.tb-nav a{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent;transition:.2s}
 .tb-nav a:hover,.tb-nav a.active{color:var(--ink);border-bottom-color:var(--orange)}
 .progress{position:absolute;bottom:-1px;left:0;height:2px;background:var(--orange);width:0}
 
@@ -67,10 +67,10 @@ section{padding:104px 0}
 
 /* agenda */
 .agenda{display:grid;grid-template-columns:1fr 1fr;gap:0 60px}
-.ag-row{display:grid;grid-template-columns:44px 1fr;gap:18px;padding:20px 0;border-bottom:1px solid var(--line)}
+.ag-row{display:grid;grid-template-columns:44px 1fr;gap:18px;padding:16px 0;border-bottom:1px solid var(--line)}
 .ag-num{font-size:13px;font-weight:900;color:var(--orange);letter-spacing:.06em;padding-top:2px}
-.ag-t{font-size:16.5px;font-weight:700;color:var(--ink);margin-bottom:3px}
-.ag-d{font-size:13.5px;color:var(--muted)}
+.ag-t{font-size:15.5px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.ag-d{font-size:12.5px;color:var(--muted)}
 
 /* stats */
 .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:40px}
@@ -128,15 +128,6 @@ tbody tr:nth-child(even){background:var(--paper-2)}
 .proto.g li:before{background:var(--green)}
 .proto.b li:before{background:var(--blue)}
 .proto.p li:before{background:var(--purple)}
-
-/* pipeline */
-.pipe{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.pipe-card{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px;position:relative}
-.pipe-card h4{font-size:16px;margin-bottom:4px}
-.pipe-card .sub{font-size:12px;color:var(--muted);font-style:italic;margin-bottom:14px}
-.pipe-card ul{list-style:none;font-size:13px;color:var(--ink-2)}
-.pipe-card li{padding-left:14px;position:relative;margin-bottom:8px}
-.pipe-card li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--orange);border-radius:50%}
 
 /* tachyon flow */
 .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--line);border:1px solid var(--line)}
@@ -244,15 +235,20 @@ body.hide-checks .chk{display:none}
   <div class="topbar-in">
     <div class="tb-brand">Feed<span>Spark</span> × Reiss</div>
     <nav class="tb-nav">
-      <a href="#c1" class="">01 Recap</a>
-      <a href="#c2" class="">02 Look-back</a>
-      <a href="#c3" class="">03 Wins</a>
-      <a href="#c4" class="">04 Score</a>
-      <a href="#c5" class="">05 Automation</a>
-      <a href="#c6" class="">06 AI ready</a>
-      <a href="#c7" class="">07 Cases</a>
-      <a href="#c8" class="">08 Roadmap</a>
-      <a href="#c9" class="">09 Fit</a>
+      <a href="#c1" class="">01 Scope</a>
+      <a href="#c2" class="">02 Stack</a>
+      <a href="#c3" class="">03 Recap</a>
+      <a href="#c4" class="">04 Look-back</a>
+      <a href="#c5" class="">05 Wins</a>
+      <a href="#c6" class="">06 Score</a>
+      <a href="#c7" class="">07 Auto</a>
+      <a href="#c8" class="">08 Landscape</a>
+      <a href="#c9" class="">09 Spark</a>
+      <a href="#c10" class="">10 Attributes</a>
+      <a href="#c11" class="">11 AI ready</a>
+      <a href="#c12" class="">12 Cases</a>
+      <a href="#c13" class="">13 Roadmap</a>
+      <a href="#c14" class="">14 Fit</a>
     </nav>
     <button class="flagbtn" id="flagbtn" aria-pressed="true" title="Toggle data-check markers">⚑ Data checks</button>
     <div class="progress" id="progress" style="width: 0%;"></div>
@@ -283,27 +279,80 @@ policy data become commercial controls"<br>Google&nbsp;</p>
   <div class="wrap">
     <div class="eyebrow rv in">Agenda</div>
     <h2 class="sec-title rv in">What we'll cover</h2>
-    <p class="sec-sub rv in">Nine sections spanning the full FY25/26 — where the programme stands today, what shipped, what's proven, and what's next.</p>
+    <p class="sec-sub rv in">Fourteen sections, two sources: the project plan (what shipped, what's next) and a live 4,999-SKU export of the actual feed (what's really live on the catalogue today). Where they disagree, the feed wins — it's the ground truth.</p>
     <div class="agenda rv in">
       <div>
-        <div class="ag-row"><div class="ag-num">01</div><div><div class="ag-t">Review &amp; project recap</div><div class="ag-d">446 tasks in plan · 263 delivered · action by action</div></div></div>
-        <div class="ag-row"><div class="ag-num">02</div><div><div class="ag-t">Look-back period</div><div class="ag-d">Jul 2025 → Jun 2026, month by month</div></div></div>
-        <div class="ag-row"><div class="ag-num">03</div><div><div class="ag-t">Number of wins / results</div><div class="ag-d">What's proven this year, honestly scored</div></div></div>
-        <div class="ag-row"><div class="ag-num">04</div><div><div class="ag-t">Feed optimisation score</div><div class="ag-d">65/100 — by lane, where the gaps are</div></div></div>
-        <div class="ag-row" style="border-bottom:0"><div class="ag-num">05</div><div><div class="ag-t">Automation &amp; pick readiness</div><div class="ag-d">What's automated, what's still manual</div></div></div>
+        <div class="ag-row"><div class="ag-num">01</div><div><div class="ag-t">Service scope &amp; scale</div><div class="ag-d">29 markets · 60 feeds · ~5,000 SKUs analysed</div></div></div>
+        <div class="ag-row"><div class="ag-num">02</div><div><div class="ag-t">Unit / tech stack</div><div class="ag-d">FeedHero + Tachyon, what's actually switched on</div></div></div>
+        <div class="ag-row"><div class="ag-num">03</div><div><div class="ag-t">Review &amp; project recap</div><div class="ag-d">446 tasks in plan · 263 delivered</div></div></div>
+        <div class="ag-row"><div class="ag-num">04</div><div><div class="ag-t">Look-back period</div><div class="ag-d">Jul 2025 → Jun 2026, month by month</div></div></div>
+        <div class="ag-row"><div class="ag-num">05</div><div><div class="ag-t">Number of wins / results</div><div class="ag-d">What's proven, honestly scored</div></div></div>
+        <div class="ag-row"><div class="ag-num">06</div><div><div class="ag-t">Feed optimisation score</div><div class="ag-d">Measured live off the feed, by lane</div></div></div>
+        <div class="ag-row" style="border-bottom:0"><div class="ag-num">07</div><div><div class="ag-t">Automation &amp; pick readiness</div><div class="ag-d">What's automated, what's blocked on NEXT</div></div></div>
       </div>
       <div>
-        <div class="ag-row"><div class="ag-num">06</div><div><div class="ag-t">AI readiness</div><div class="ag-d">Tier 1 banked, Tier 2 in motion</div></div></div>
-        <div class="ag-row"><div class="ag-num">07</div><div><div class="ag-t">Case studies / test wins</div><div class="ag-d">Reiss' own tests, plus comparable-brand proof</div></div></div>
-        <div class="ag-row"><div class="ag-num">08</div><div><div class="ag-t">Roadmap / next quarter</div><div class="ag-d">The open workstreams, sequenced</div></div></div>
-        <div class="ag-row" style="border-bottom:0"><div class="ag-num">09</div><div><div class="ag-t">Tech fit</div><div class="ag-d">Why the FeedSpark stack fits Reiss</div></div></div>
+        <div class="ag-row"><div class="ag-num">08</div><div><div class="ag-t">The AI landscape</div><div class="ag-d">Why agentic commerce changes discovery</div></div></div>
+        <div class="ag-row"><div class="ag-num">09</div><div><div class="ag-t">Spark AI engine (Tachyon)</div><div class="ag-d">Intent generation, enrichment, visual harvest</div></div></div>
+        <div class="ag-row"><div class="ag-num">10</div><div><div class="ag-t">Google conversational attributes</div><div class="ag-d">Six attributes, current submission status</div></div></div>
+        <div class="ag-row"><div class="ag-num">11</div><div><div class="ag-t">AI readiness</div><div class="ag-d">Tier 1 banked, the gap to Tier 2</div></div></div>
+        <div class="ag-row"><div class="ag-num">12</div><div><div class="ag-t">Case studies / test wins</div><div class="ag-d">Reiss' own tests, plus comparable-brand proof</div></div></div>
+        <div class="ag-row"><div class="ag-num">13</div><div><div class="ag-t">Roadmap / next quarter</div><div class="ag-d">Open tasks + what the feed audit surfaced</div></div></div>
+        <div class="ag-row" style="border-bottom:0"><div class="ag-num">14</div><div><div class="ag-t">Tech fit</div><div class="ag-d">Why the stack fits Reiss specifically</div></div></div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ================= CH 01 — REVIEW & PROJECT RECAP ================= -->
-<div class="chapter" id="c1"><div class="ch-num">01</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter one</div><h2>Review &amp; Project Recap</h2><p>446 tasks, one programme — what shipped this year, action by action.</p></div></div>
+<!-- ================= CH 01 — SERVICE SCOPE & SCALE ================= -->
+<div class="chapter" id="c1"><div class="ch-num">01</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter one</div><h2>Service Scope &amp; Scale</h2><p>29 markets, 60 feeds, one catalogue — the shape of the account.</p></div></div>
+
+<section>
+  <div class="wrap">
+    <div class="stats rv in">
+      <div class="stat"><div class="n">29</div><div class="l">Markets</div></div>
+      <div class="stat"><div class="n">60</div><div class="l">Feeds</div></div>
+      <div class="stat"><div class="n">~5.0<small>k</small></div><div class="l">SKUs in the analysed export</div></div>
+      <div class="stat"><div class="n">2</div><div class="l">Active channels — Google Shopping, Meta</div></div>
+      <div class="stat"><div class="n">6<small><span class="chk">?</span></small></div><div class="l">Brand lines in the feed (Reiss + collabs)<br><br><span style="font-size:11px">Scheduled/ad-hoc hours: <b>[confirm with Ray]</b></span></div></div>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="tbl-wrap">
+        <table><thead><tr><th>Brand line</th><th>SKUs in export</th><th>Share</th></tr></thead>
+        <tbody>
+          <tr><td><b>Reiss</b></td><td>4,673</td><td>93.5%</td></tr>
+          <tr><td>Reiss McLaren</td><td>113</td><td>2.3%</td></tr>
+          <tr><td>Atelier</td><td>51</td><td>1.0%</td></tr>
+          <tr><td>Good American</td><td>42</td><td>0.8%</td></tr>
+          <tr><td>PAIGE</td><td>34</td><td>0.7%</td></tr>
+        </tbody></table>
+      </div>
+      <div class="card">
+        <h4>What this means for the feed</h4>
+        <p>Reiss isn't a single-brand catalogue — collaboration and stocked third-party lines (McLaren, Atelier, Good American, PAIGE) sit inside the same feed. Every optimisation rule needs to hold across all of them, not just the core Reiss line.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">2,304 distinct product groups across the export — an average of 2.2 SKUs (sizes/colours) per style.</p>
+      </div>
+    </div>
+    <div class="note rv in"><b>Source note:</b> the SKU and brand figures on this page come directly from the attached live feed export (4,999 rows). Markets, feeds and hours come from the account record — hours specifically needs Ray to confirm before this goes to Reiss.</div>
+  </div>
+</section>
+
+<!-- ================= CH 02 — UNIT / TECH STACK ================= -->
+<div class="chapter" id="c2"><div class="ch-num">02</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter two</div><h2>Unit / Tech Stack</h2><p>What's actually switched on for Reiss today, not the full capability list.</p></div></div>
+
+<section class="band">
+  <div class="wrap">
+    <div class="grid-4 rv in">
+      <div class="card"><h4>FeedHero — rules</h4><p>Custom-label rules live: an average of 3.5 of 6 label slots populated per SKU, including a "Best Sellers" flag on 20% of the catalogue.</p></div>
+      <div class="card"><h4>Tachyon — auto-optimised-title</h4><p>Every one of the 4,999 titles in the export has been through the AOT pipeline — title text differs from the raw base title on 100% of rows.</p></div>
+      <div class="card"><h4>Scraping &amp; supplemental feeds</h4><p>NEXT supplies the base product data; FeedSpark's supplemental layer carries the FeedHero-specific fields (custom labels, opti flags, social title) on top.</p></div>
+      <div class="card"><h4>Multi-channel output</h4><p>Google Shopping is the primary surface today; Meta/social is reviewed and merged from the same feed base, per the July recap.</p></div>
+    </div>
+    <div class="note rv in"><b>Read this alongside chapter 07:</b> the stack is doing its job on titles and labels — the open items in Automation &amp; pick readiness are about a NEXT-side data dependency (stock accuracy, item-group ID mapping), not a gap in the FeedSpark layer itself.</div>
+  </div>
+</section>
+
+<!-- ================= CH 03 — REVIEW & PROJECT RECAP ================= -->
+<div class="chapter" id="c3"><div class="ch-num">03</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter three</div><h2>Review &amp; Project Recap</h2><p>446 tasks, one programme — what shipped this year, action by action.</p></div></div>
 
 <section>
   <div class="wrap">
@@ -318,8 +367,8 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       <tbody>
         <tr><td>QBR Strategy — in person</td><td>FS × Reiss</td><td><span class="pill p-done">✓ Done</span></td><td>Full account review across UK + international</td></tr>
         <tr><td>Recrawl titles — PDP vs. titles received from NEXT</td><td>Ray / ASPL</td><td><span class="pill p-done">✓ Done</span></td><td>Title-source accuracy corrected</td></tr>
-        <tr><td>39% duplicated titles — routed through auto-optimised-title</td><td>Ray</td><td><span class="pill p-done">✓ Done</span></td><td>Duplication fix live in the pipeline</td></tr>
-        <tr><td>Weak keyword targeting — new Keyword Planner</td><td>Ezgi / Eliza</td><td><span class="pill p-done">✓ Done</span></td><td>Planner live, targeting sharpened</td></tr>
+        <tr><td>39% duplicated titles — routed through auto-optimised-title</td><td>Ray</td><td><span class="pill p-done">✓ Done</span></td><td>Confirmed fixed — see chapter 05</td></tr>
+        <tr><td>Weak keyword targeting — new Keyword Planner</td><td>Ezgi / Eliza</td><td><span class="pill p-done">✓ Done</span></td><td>Planner tool live — rollout still early, see chapter 06</td></tr>
         <tr><td>IE LIA (Click &amp; Collect) set up</td><td>Ray / Eliza</td><td><span class="pill p-done">✓ Done</span></td><td>Local Inventory Ads live in IE</td></tr>
         <tr><td>A/B Titles Test — [Search Intent] vs. none</td><td>Ezgi</td><td><span class="pill p-prog">In progress</span></td><td>Reading early signal</td></tr>
         <tr><td>Product type — further breakdown categorisation</td><td>Eliza</td><td><span class="pill p-prog">In progress</span></td><td>Deeper taxonomy in build</td></tr>
@@ -328,14 +377,14 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       </tbody></table>
     </div>
     <div class="grid-2 rv in" style="margin-top:32px">
-      <div class="card"><h4>The one that pays for itself</h4><p>39% of titles were flagged as duplicated across the catalogue — the fix now runs through <b>auto-optimised-title</b>, so new duplication gets caught without a manual re-crawl every cycle.</p></div>
-      <div class="card"><h4>What's moving right now</h4><p>The <b>[Search Intent] vs. none</b> title A/B is live and reading. Between that and the Local Language programme (chapter 07), FY26/27 opens with two structural tests already in flight rather than starting cold.</p></div>
+      <div class="card"><h4>The one that's actually verified</h4><p>39% of titles were flagged as duplicated across the catalogue. Checking the live feed directly: duplicates are now down to 0.1% (4 rows, 2 pairs). The fix didn't just ship — it worked.</p></div>
+      <div class="card"><h4>What's moving right now</h4><p>The <b>[Search Intent] vs. none</b> title A/B is live and reading. Between that and the Local Language programme (chapter 12), FY26/27 opens with two structural tests already in flight rather than starting cold.</p></div>
     </div>
   </div>
 </section>
 
-<!-- ================= CH 02 — LOOK-BACK PERIOD ================= -->
-<div class="chapter" id="c2"><div class="ch-num">02</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter two</div><h2>Look-back Period</h2><p>Full FY25/26 — nine months of delivery, month by month.</p></div></div>
+<!-- ================= CH 04 — LOOK-BACK PERIOD ================= -->
+<div class="chapter" id="c4"><div class="ch-num">04</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter four</div><h2>Look-back Period</h2><p>Full FY25/26 — nine months of delivery, month by month.</p></div></div>
 
 <section>
   <div class="wrap">
@@ -357,28 +406,28 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       <div class="card">
         <h4>Reading the shape of the year</h4>
         <p>A steady Jul–Oct delivery cadence, a quiet December, then a deliberate scoping month in March — 19 tasks logged and none closed yet, the plan being rebuilt for the FY26/27 push rather than a stall.</p>
-        <p style="margin-top:12px">April through June answered that scoping with the year's strongest delivery run: 21 tasks closed in three months, including the title de-duplication fix and the new Keyword Planner.</p>
+        <p style="margin-top:12px">April through June answered that scoping with the year's strongest delivery run: 21 tasks closed in three months, including the verified title de-duplication fix and the new Keyword Planner.</p>
         <p style="margin-top:12px;font-size:13px;color:var(--muted)">Volume by month, ATRT Tracker · ATRT-sourced, not estimated.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ================= CH 03 — NUMBER OF WINS / RESULTS ================= -->
-<div class="chapter" id="c3"><div class="ch-num">03</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter three</div><h2>Number of Wins / Results</h2><p>What's proven this year — scored honestly, not inflated.</p></div></div>
+<!-- ================= CH 05 — NUMBER OF WINS / RESULTS ================= -->
+<div class="chapter" id="c5"><div class="ch-num">05</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter five</div><h2>Number of Wins / Results</h2><p>What's proven this year — checked against the live feed, not just marked done in the plan.</p></div></div>
 
 <section class="band">
   <div class="wrap">
     <div class="grid-2 rv in">
       <div class="card" style="border-left:3px solid var(--green)">
-        <h4>Delivered this year</h4>
+        <h4>Verified against the live feed</h4>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;font-size:13px">
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">39% → 0.1%</b> duplicate titles</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">100%</b> of titles through AOT</div>
+          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">100%</b> images live (avg 5.9/SKU)</div>
           <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">263</b> tasks completed</div>
-          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">39%→</b> title duplication fixed</div>
-          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">75%</b> custom-label coverage</div>
-          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">88.6%</b> Golden Record completeness</div>
         </div>
-        <p style="margin-top:14px;font-size:13px;color:var(--muted)">These are the wins with a number behind them today. The rest of this year's proof is <i>in flight, not yet read</i> — shown honestly below rather than dressed up with an uplift we haven't measured.</p>
+        <p style="margin-top:14px;font-size:13px;color:var(--muted)">These are checked, not claimed — pulled straight from the 4,999-row export. The rest of this year's proof is <i>in flight, not yet read</i> — shown honestly below rather than dressed up with an uplift we haven't measured.</p>
       </div>
       <div class="card">
         <h4>In flight — reading now</h4>
@@ -394,45 +443,171 @@ policy data become commercial controls"<br>Google&nbsp;</p>
   </div>
 </section>
 
-<!-- ================= CH 04 — FEED OPTIMISATION SCORE ================= -->
-<div class="chapter" id="c4"><div class="ch-num">04</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter four</div><h2>Feed Optimisation Score</h2><p>65/100 — the FeedSpark score by lane, and where the gap actually is.</p></div></div>
+<!-- ================= CH 06 — FEED OPTIMISATION SCORE ================= -->
+<div class="chapter" id="c6"><div class="ch-num">06</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter six</div><h2>Feed Optimisation Score</h2><p>Measured directly off the live 4,999-SKU export — the plan says 65/100 on tasks; the feed tells a more specific story.</p></div></div>
 
 <section>
   <div class="wrap">
     <div class="sc-grid rv in" style="margin-bottom:32px">
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">61%</div></div><div class="sc-label">Titles</div><div class="sc-note">30 of 49 title tasks delivered.</div><div class="sc-tgt">Target: full MASK structuring across markets</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">62%</div></div><div class="sc-label">Keywords</div><div class="sc-note">31 of 50 keyword tasks delivered.</div><div class="sc-tgt">Target: full rollout of the new Keyword Planner</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">32%</div></div><div class="sc-label">Data fields</div><div class="sc-note">8 of 25 data-field tasks delivered.</div><div class="sc-warn">Biggest single gap — the next priority lane</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">75%</div></div><div class="sc-label">Custom labels</div><div class="sc-note">30 of 40 delivered — bestseller &amp; attribute labels live.</div><div class="sc-tgt">✓ Strongest lane in the programme</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">60%</div></div><div class="sc-label">Feed &amp; technical</div><div class="sc-note">25 of 42 delivered — Item Group ID switchover still open.</div><div class="sc-tgt">Target: close the NEXT-dependent items</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">43%</div></div><div class="sc-label">Imagery</div><div class="sc-note">13 of 30 delivered.</div><div class="sc-warn">Second-largest gap after data fields</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">1.4%<span class="chk">?</span></div></div><div class="sc-label">Titles at MASK length (80–120 chars)</div><div class="sc-note">Average title is 53 characters. The AOT pipeline has touched 100% of titles — but for structure, not yet for length.</div><div class="sc-warn">Process complete; MASK target still open</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">5.8%<span class="chk">?</span></div></div><div class="sc-label">Keyword-optimised SKUs</div><div class="sc-note">The new Keyword Planner is live as a tool, but only 289 of 4,999 SKUs carry its output today.</div><div class="sc-warn">Biggest gap between "tool built" and "catalogue covered"</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">47.8%<span class="chk">?</span></div></div><div class="sc-label">Descriptions meeting quality bar</div><div class="sc-note">Only 6.3% reach the 500+ char AI-matching target; median length is 62 characters.</div><div class="sc-tgt">Target: 500+ chars, use-case language</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">100%</div></div><div class="sc-label">Image coverage</div><div class="sc-note">Average 5.9 of 7 image slots filled; 90% of SKUs carry all 6.</div><div class="sc-tgt">✓ Strongest lane in the feed</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">42.1%<span class="chk">?</span></div></div><div class="sc-label">Product highlights populated</div><div class="sc-note">Average 1.7 of 10 slots — 58% of SKUs have zero highlights at all.</div><div class="sc-warn">Google recommends 4–10 per product</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">0%<span class="chk">?</span></div></div><div class="sc-label">Item-group ID mapping</div><div class="sc-note">Flagged not-yet-mapped across every SKU — this is the open Item Group ID → Item No. switchover from chapter 03.</div><div class="sc-warn">Confirms the plan's open item, doesn't contradict it</div></div>
     </div>
-    <div class="note rv in"><b>Two different measures, on purpose:</b> the 65/100 score is FeedSpark's weighted scoring across all eleven task lanes (title, keyword, data, image, custom label, technical, channel, test, opt, account, product type). The <b>88.6% Golden Record</b> figure from the last audit measures raw attribute completeness on the live feed — a narrower, stricter check. Both point the same direction: data fields and imagery are the lanes furthest from done.</div>
+    <div class="note rv in"><b>Two measures, both real, on purpose:</b> the plan's 65/100 scores <i>task completion</i> (has the work order been closed). The figures above score <i>catalogue coverage</i> (has the SKU actually been touched). They diverge hardest on keywords — 62% of keyword <i>tasks</i> are marked done, but only 5.8% of <i>SKUs</i> carry the output — because the tasks delivered were largely building the Keyword Planner tool, not yet running it across all 4,999 products. Per the brief: where they disagree, the feed is the number to lead with.</div>
+    <div class="callout rv in"><h4>Golden Record cross-check</h4><p>The last audit put Golden Record completeness at 88.6%. Core structural attributes (colour, material, size, gender, age group, GTIN, item-group ID, condition) are 100% filled in this export — the gap sits in the softer content layer above: keywords, description richness and highlights, not raw data presence.</p></div>
   </div>
 </section>
 
-<!-- ================= CH 05 — AUTOMATION & PICK READINESS ================= -->
-<div class="chapter" id="c5"><div class="ch-num">05</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter five</div><h2>Automation &amp; Pick Readiness</h2><p>What's running itself, what still needs a hand, and what's blocked on NEXT.</p></div></div>
+<!-- ================= CH 07 — AUTOMATION & PICK READINESS ================= -->
+<div class="chapter" id="c7"><div class="ch-num">07</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter seven</div><h2>Automation &amp; Pick Readiness</h2><p>What's running itself, what still needs a hand, and what's blocked on NEXT.</p></div></div>
 
-<section>
+<section class="band">
   <div class="wrap">
     <div class="tbl-wrap rv in">
       <table><thead><tr><th style="width:22%">Layer</th><th style="width:20%">Source</th><th>How it works</th><th style="width:16%">State</th></tr></thead>
       <tbody>
-        <tr><td><b>Title de-duplication</b></td><td>Rule — auto-optimised-title</td><td>Detects and rewrites duplicate titles automatically.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
-        <tr><td><b>Custom labels</b></td><td>FeedHero</td><td>Bestseller and attribute labels, rule-driven.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
-        <tr><td><b>Keyword targeting</b></td><td>Reiss Keyword Planner</td><td>New planner live; targeting refresh in progress.</td><td><span class="pill p-prog">In progress</span></td></tr>
-        <tr><td><b>Product type depth</b></td><td>Rule — FeedHero</td><td>Further categorisation breakdown in build.</td><td><span class="pill p-prog">In progress</span></td></tr>
+        <tr><td><b>Title de-duplication</b></td><td>Rule — auto-optimised-title</td><td>Detects and rewrites duplicate titles automatically. Verified working: 0.1% duplicates remain.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
+        <tr><td><b>Custom labels</b></td><td>FeedHero</td><td>Bestseller and attribute labels, rule-driven; 3.5 of 6 slots filled on average.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
+        <tr><td><b>Keyword targeting</b></td><td>Reiss Keyword Planner</td><td>Tool is live; rollout across the catalogue is the open item — 5.8% coverage today.</td><td><span class="pill p-prog">In progress</span></td></tr>
+        <tr><td><b>Product type depth</b></td><td>Rule — FeedHero</td><td>Further categorisation breakdown in build — feed shows depth averaging 2.2 levels today.</td><td><span class="pill p-prog">In progress</span></td></tr>
         <tr><td><b>Stock availability accuracy</b></td><td>NEXT feed dependency</td><td>Stock_flag doesn't yet reflect actual availability.</td><td><span class="pill p-block">⚑ Awaiting NEXT</span></td></tr>
-        <tr><td><b>Item Group ID → Item No.</b></td><td>NEXT feed dependency</td><td>Switchover date to be confirmed.</td><td><span class="pill p-open">Open</span></td></tr>
+        <tr><td><b>Item Group ID → Item No.</b></td><td>NEXT feed dependency</td><td>Confirmed unmapped across the whole export — switchover date to be confirmed.</td><td><span class="pill p-open">Open</span></td></tr>
       </tbody></table>
     </div>
     <div class="callout rv in"><h4>The pattern to watch</h4><p>&nbsp;Every open item in this table sits on the same fault line — a dependency on a NEXT-side feed fix. Closing that dependency, not adding more FeedSpark automation, is what unblocks the rest of the automation layer.</p></div>
   </div>
 </section>
 
-<!-- ================= CH 06 — AI READINESS ================= -->
-<div class="chapter" id="c6"><div class="ch-num">06</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter six</div><h2>AI Readiness</h2><p>Tier 1 banked. Tier 2 — the meaning layer — is next.</p></div></div>
+<!-- ================= CH 08 — THE AI LANDSCAPE ================= -->
+<div class="chapter" id="c8"><div class="ch-num">08</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eight</div><h2>The AI Landscape</h2><p>Reiss shoppers don't only search anymore. Three pipelines decide whether Reiss is in the answer.</p></div></div>
+
+<section class="band-warm">
+  <div class="wrap">
+    <div class="eyebrow rv in">The shift</div>
+    <h2 class="sec-title rv in">Search is shifting — from 10 blue links to AI answers</h2>
+    <p class="sec-sub rv in">"What should I wear to a summer wedding that isn't too formal?" — a query like this might be answered from training data, a live web crawl, or the Merchant Center feed. The only way to win is rich, accurate, consistent product data across all three.</p>
+
+    <div class="stats rv in" style="margin-bottom:44px">
+      <div class="stat"><div class="n" style="font-size:36px">−25%</div><div class="l">Traditional search volume drop (Gartner)</div></div>
+      <div class="stat"><div class="n" style="font-size:36px">&gt;60%</div><div class="l">Google searches end without a click</div></div>
+      <div class="stat"><div class="n" style="font-size:36px">~60%</div><div class="l">Consumers use AI in the shopping journey</div></div>
+      <div class="stat"><div class="n" style="font-size:36px">50+</div><div class="l">Feed attributes to enrich for AI readiness</div></div>
+      <div class="stat"><div class="n" style="font-size:36px">15m</div><div class="l">Updates per minute ChatGPT accepts</div></div>
+    </div>
+
+    <div class="grid-3 rv in">
+      <div class="card"><h4>Zero-click is accelerating</h4><p>AI overviews and agentic assistants resolve queries without a click. Reiss is either in that answer, or it doesn't exist for that shopper.</p></div>
+      <div class="card"><h4>The model picks the product</h4><p>LLMs read structured feeds, attributes and reviews. Titles averaging 53 characters and 42% highlight coverage mean the model has less to work with than the catalogue could give it.</p></div>
+      <div class="card"><h4>Fashion is answer-shaped</h4><p>Fit, occasion, fabric, size availability — every purchase decision is a question about a specific SKU in a specific size, and that's exactly what these surfaces answer.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="eyebrow rv in">Agentic commerce</div>
+    <h2 class="sec-title rv in">Three protocols that let AI agents shop on behalf of consumers</h2>
+    <p class="sec-sub rv in">Emerging open standards. None requires immediate action from Reiss — but they explain why the attribute build in chapters 09–11 matters.</p>
+    <div class="grid-3 rv in">
+      <div class="proto g">
+        <div class="tag">UCP — Universal Commerce Protocol</div>
+        <h4>Google, Shopify, Target, Walmart</h4>
+        <div class="desc">Common language for AI commerce</div>
+        <ul><li>Agents handle discounts, loyalty, subscriptions</li><li>Checkout inside the AI conversation</li><li>Activated via <code>native_commerce</code> in Merchant Center</li></ul>
+      </div>
+      <div class="proto b">
+        <div class="tag">MCP — Model Context Protocol</div>
+        <h4>Anthropic, adopted by Shopify</h4>
+        <div class="desc">Real-time data access for AI assistants</div>
+        <ul><li>Live inventory, pricing, order status via API</li><li>Relevant later, once stock-flag accuracy (ch.07) is fixed</li></ul>
+      </div>
+      <div class="proto p">
+        <div class="tag">ACP — Agentic Commerce Protocol</div>
+        <h4>OpenAI (powers ChatGPT Shopping)</h4>
+        <div class="desc">Instant checkout inside ChatGPT</div>
+        <ul><li>Integrates with Stripe, PayPal</li><li>Currently US-only for checkout; discovery is global</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 09 — SPARK AI ENGINE (TACHYON) ================= -->
+<div class="chapter" id="c9"><div class="ch-num">09</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter nine</div><h2>Spark AI Engine (Tachyon)</h2><p>Intent generation, description enrichment, visual attribute harvest.</p></div></div>
+
+<section class="band">
+  <div class="wrap">
+    <div class="flow rv in" style="margin-bottom:32px">
+      <div class="flow-step"><div class="fs-num">01</div><h4>Feed extraction</h4><p>Tachyon reads live Reiss product data — title, description, colour, material, size, price.</p></div>
+      <div class="flow-step"><div class="fs-num">02</div><h4>Intent generation</h4><p>LLM generates 20–40 long-tail intent phrases per SKU from the real attributes already in the feed.</p></div>
+      <div class="flow-step"><div class="fs-num">03</div><h4>Scoring &amp; validation</h4><p>Terms scored against search-term reports; winners selected per SKU.</p></div>
+      <div class="flow-step"><div class="fs-num">04</div><h4>Feed injection</h4><p>Winning terms embedded in title, description, product highlights — closing the 42% highlight gap from chapter 06.</p></div>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="card" style="border-left:3px solid var(--orange)">
+        <h4>Reiss example — Stanton Petite Wide-Leg Trousers</h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Input (real SKU from the export): Cream · Cotton · Petite · Size 4 · £58 sale</p>
+        <div style="background:var(--dark);padding:16px;font-family:ui-monospace,monospace;font-size:12px;color:#E8E8E8;line-height:1.8">
+          <span style="color:var(--orange)">AI-generated intent terms:</span><br>
+          "petite wide-leg trousers for short women"<br>
+          "cream corduroy trousers office wear"<br>
+          "cotton wide-leg trousers under £60"<br>
+          "petite fit trousers 5ft 3in and under"<br>
+          <span style="color:#7A7A7A">// 20-40 generated, top 4-6 used per SKU</span>
+        </div>
+      </div>
+      <div class="card">
+        <h4>Why this matters for a 4-brand, 29-market catalogue</h4>
+        <p>Manually writing intent-rich copy for ~5,000 SKUs across 6 brand lines and 29 markets isn't a resourcing question, it's a throughput question. Tachyon generates the long-tail language at catalogue scale from data that's already 100%-complete on the structural side (colour, material, size).</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">The title-fix precedent (chapter 05) already proved the AOT pipeline can touch every SKU — Tachyon extends the same reach to descriptions and highlights.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 10 — GOOGLE CONVERSATIONAL ATTRIBUTES ================= -->
+<div class="chapter" id="c10"><div class="ch-num">10</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter ten</div><h2>Google Conversational Attributes</h2><p>Six new feed attributes built for AI and conversational agents — current submission status: none live.</p></div></div>
+
+<section>
+  <div class="wrap">
+    <div class="agent rv in">
+      <div class="agent-l">
+        <h4>A Reiss shopper asks an AI assistant…</h4>
+        <p>Select a question.</p>
+        <div class="qs" id="qs" role="tablist">
+          <button class="q" role="tab" data-k="qa">"Does this run true to size?"</button>
+          <button class="q" role="tab" data-k="variant">"Do you do the Stanton trousers in a size 6?"</button>
+          <button class="q" role="tab" data-k="group">"What's the difference between Reiss and Reiss McLaren?"</button>
+          <button class="q active" role="tab" data-k="related">"What should I wear this with?"</button>
+          <button class="q" role="tab" data-k="pop">"What's your best-selling trouser style?"</button>
+          <button class="q" role="tab" data-k="doc">"What's the full fabric composition?"</button>
+        </div>
+      </div>
+      <div class="agent-r">
+        <div class="ar-head">Attribute that answers it</div>
+        <div id="panel"><div class="fade-swap"><div class="attr-name">Related product</div><div class="attr-code">[related_product]</div><div class="attr-why">Declares relationships between SKUs — outfit-complete pairings, bundles, cross-sell. None of the six attributes are submitted for Reiss today; this is a build, not a fix.</div><div class="feedrow"><span class="c">// relationship_type : identifier_type : identifier</span>
+<span class="k">related_product</span>:
+  often_bought_with:id:G76537
+  often_bought_with:id:Y25175</div><div class="attr-note">Depends on item-group mapping (chapter 07) being resolved first.</div></div></div>
+      </div>
+    </div>
+    <div class="grid-2 rv in" style="margin-top:32px">
+      <div class="card">
+        <h4>What the feed confirms</h4>
+        <p>None of <code>question_and_answer</code>, <code>item_group_title</code>, <code>variant_option</code>, <code>popularity_rank</code> or <code>related_product</code> appear anywhere in the current export — the same starting point as any FeedSpark client before this build begins.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>⚑ The governance flag — Q&amp;A copy</h4>
+        <p><b>question_and_answer</b> is the highest-value attribute and the highest-risk one for a fashion retailer — fit and sizing answers carry return-rate consequences if wrong. Proposal: draft from approved PDP copy only, nothing live without sign-off.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CH 11 — AI READINESS ================= -->
+<div class="chapter" id="c11"><div class="ch-num">11</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eleven</div><h2>AI Readiness</h2><p>Tier 1 banked. Tier 2 — the meaning layer — is next, and the feed shows exactly what's blocking it.</p></div></div>
 
 <section class="band-warm">
   <div class="wrap">
@@ -444,43 +619,43 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       <div class="tier here">
         <div class="flag">◆ Reiss is here</div>
         <div class="tn">Tier 1</div><h4>Titles &amp; data fields</h4><div class="ts">The foundation</div>
-        <ul><li>Title de-duplication live (auto-optimised-title)</li><li>[Search Intent] title test in flight</li><li>Local Language testing framework live, 16 markets</li></ul>
+        <ul><li>Title de-duplication verified (0.1% remaining)</li><li>Core attributes (colour, material, size) 100% filled</li><li>[Search Intent] title test in flight</li></ul>
       </div>
       <div class="tier">
         <div class="tn">Tier 2</div><h4>Descriptions &amp; answers</h4><div class="ts">The meaning layer — next</div>
-        <ul><li>Description enrichment via Tachyon</li><li>Six conversational attributes</li><li>Data-field lane (32%) is the gate to clear first</li></ul>
+        <ul><li>Descriptions: only 6.3% reach the 500+ char target</li><li>Six conversational attributes — 0% submitted</li><li>Keyword rollout — 5.8% of catalogue covered</li></ul>
       </div>
       <div class="tier">
         <div class="tn">Tier 3</div><h4>Image analysis</h4><div class="ts">The differentiator</div>
-        <ul><li>Tachyon vision models read product imagery</li><li>Imagery lane (43%) needs closing first</li><li>Feeds back into titles and descriptions</li></ul>
+        <ul><li>Tachyon vision models read product imagery</li><li>Image coverage is already 100% — the raw material is ready</li><li>Feeds back into titles and descriptions</li></ul>
       </div>
     </div>
     <div class="grid-2 rv in">
       <div class="card">
         <h4>The pipeline already live</h4>
-        <p>Tachyon's intent-generation pipeline runs end to end for Reiss today: intent generation → Shopping Graph matching → roundel overlay. It's the delivery mechanism for Tier 2 — the work is plugging in description enrichment and the conversational attributes, not building new infrastructure.</p>
+        <p>Tachyon's intent-generation pipeline runs end to end for Reiss today: intent generation → Shopping Graph matching → roundel overlay. Titles prove it can reach 100% of the catalogue — Tier 2 is applying that same reach to descriptions and attributes.</p>
       </div>
       <div class="card" style="border-left:3px solid var(--orange-deep)">
-        <h4>The honest gap</h4>
-        <p>None of the six conversational attributes (<code>question_and_answer</code>, <code>item_group_title</code>, <code>variant_option</code>, <code>popularity_rank</code>, <code>related_product</code>, <code>document_link</code>) are populated yet — same starting point as every FeedSpark client before this build begins. The data-field lane at 32% is the real blocker to clear first.</p>
+        <h4>The honest gap, quantified</h4>
+        <p>Not "some work to do" — specifically: descriptions need to move from 6.3% to a majority hitting 500+ chars, keywords from 5.8% to full-catalogue rollout, and all six conversational attributes from 0%. Three concrete, measured targets, not a vague direction.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ================= CH 07 — CASE STUDIES / TEST WINS ================= -->
-<div class="chapter" id="c7"><div class="ch-num">07</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter seven</div><h2>Case Studies / Test Wins</h2><p>Reiss' own tests in flight, plus the proof already banked on comparable FeedSpark accounts.</p></div></div>
+<!-- ================= CH 12 — CASE STUDIES / TEST WINS ================= -->
+<div class="chapter" id="c12"><div class="ch-num">12</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter twelve</div><h2>Case Studies / Test Wins</h2><p>Reiss' own tests in flight, plus the proof already banked on comparable FeedSpark accounts.</p></div></div>
 
 <section class="band">
   <div class="wrap">
     <div class="grid-2 rv in" style="margin-bottom:32px">
       <div class="card" style="border-left:3px solid var(--orange)">
         <h4>Reiss — Local Language case study</h4>
-        <p>Local Language vs. English Shopping campaigns, tested across 16 EU/ME markets. This is a structural test on how much translated, market-native copy actually moves performance versus running English campaigns everywhere — a question specific to a 29-market fashion retailer, not a generic playbook item.</p>
+        <p>Local Language vs. English Shopping campaigns, tested across 16 EU/ME markets — a structural test on how much translated, market-native copy moves performance versus running English everywhere, specific to a 29-market retailer.</p>
       </div>
       <div class="card" style="border-left:3px solid var(--orange)">
-        <h4>Reiss — Title de-duplication + Search Intent A/B</h4>
-        <p>39% of titles were duplicated before the auto-optimised-title fix; the [Search Intent] vs. none A/B test that followed is reading now. Two structural, sequential tests on the same lever — title quality — rather than one-off experiments.</p>
+        <h4>Reiss — Title de-duplication, verified</h4>
+        <p>39% of titles were duplicated before the auto-optimised-title fix; the live feed now shows 0.1% remaining. This is the one result in this deck backed by a direct before/after measurement rather than a task status.</p>
       </div>
     </div>
     <div class="eyebrow rv in">Proof from comparable brands</div>
@@ -488,14 +663,14 @@ policy data become commercial controls"<br>Google&nbsp;</p>
     <p class="sec-sub rv in">Same testing methodology, same title-quality thesis — run on other clients ahead of Reiss, not projected numbers.</p>
     <div class="grid-3 rv in">
       <div class="card"><h4>Brand inclusion in titles</h4><p>Adding the brand name to the title measurably lifted CTR on a comparable FeedSpark account — the same structural lever Reiss' title work is built on.</p></div>
-      <div class="card"><h4>Benefit copy in titles</h4><p>+24.7% CTR from naming the benefit directly in the title rather than leaving it implicit — the same "spell it out, don't imply it" principle behind the Search Intent test.</p></div>
+      <div class="card"><h4>Benefit copy in titles</h4><p>+24.7% CTR from naming the benefit directly in the title rather than leaving it implicit — relevant once Reiss titles move past the 1.4% currently at MASK length.</p></div>
       <div class="card"><h4>Full-word spelling</h4><p>+126.6% CTR from spelling a term out in full rather than abbreviating it — evidence that decomposable, unambiguous titles consistently outperform compressed ones.</p></div>
     </div>
   </div>
 </section>
 
-<!-- ================= CH 08 — ROADMAP / NEXT QUARTER ================= -->
-<div class="chapter" id="c8"><div class="ch-num">08</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eight</div><h2>Roadmap / Next Quarter</h2><p>The 176 open tasks, sequenced — not a wishlist, the actual next moves.</p></div></div>
+<!-- ================= CH 13 — ROADMAP / NEXT QUARTER ================= -->
+<div class="chapter" id="c13"><div class="ch-num">13</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter thirteen</div><h2>Roadmap / Next Quarter</h2><p>The open tasks plus what the feed audit surfaced — sequenced, not a wishlist.</p></div></div>
 
 <section>
   <div class="wrap">
@@ -511,11 +686,11 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       </div>
       <div class="mo">
         <div class="mo-m">This quarter</div><div class="mo-s s-build">Build</div>
-        <h4>Close the data-field gap</h4>
+        <h4>Close the coverage gaps the feed found</h4>
         <ul>
-          <li><b>Data fields</b> — lift the 32% lane, the biggest gap in the score</li>
-          <li><b>Imagery</b> — lift the 43% lane</li>
-          <li>Product type — finish the deeper-breakdown rollout</li>
+          <li><b>Keyword rollout</b> — 5.8% → full catalogue</li>
+          <li><b>Product highlights</b> — 42% → Google's 4–10 target</li>
+          <li><b>Description enrichment</b> — 6.3% → 500+ chars</li>
         </ul>
       </div>
       <div class="mo">
@@ -531,8 +706,8 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         <div class="mo-m">Next</div><div class="mo-s s-next">Tier 2</div>
         <h4>Start the AI-readiness build</h4>
         <ul>
-          <li>Description enrichment via Tachyon</li>
-          <li>First conversational attributes, once data fields clear</li>
+          <li>First conversational attributes, once keywords/descriptions clear</li>
+          <li>MASK title-length uplift (1.4% → target)</li>
           <li>Golden Record re-audit against the live feed</li>
         </ul>
       </div>
@@ -543,28 +718,29 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         <tbody>
           <tr><td><b>W1</b></td><td>Stock_flag accuracy fix</td><td>NEXT to update the stock-flag file on a proper cadence</td><td>Aimee</td><td><span class="pill p-done">High</span></td></tr>
           <tr><td><b>W2</b></td><td>Item Group ID → Item No. switchover</td><td>Confirmed cutover date from NEXT</td><td>Eliza / Ray</td><td><span class="pill p-done">High</span></td></tr>
-          <tr><td><b>W3</b></td><td>Data-field lane build-out</td><td>Chelsey's SEO-mapping attribute inclusion in the optimisation roadmap</td><td>Ray</td><td><span class="pill p-prog">Medium</span></td></tr>
-          <tr><td><b>W4</b></td><td>Product type — deeper breakdown</td><td>Categorisation rollout, currently in progress</td><td>Eliza</td><td><span class="pill p-prog">Medium</span></td></tr>
-          <tr><td><b>W5</b></td><td>Creative testing</td><td>Design follow-up, scoping stage</td><td>Eliza</td><td><span class="pill p-open">Low</span></td></tr>
+          <tr><td><b>W3</b></td><td>Keyword rollout to full catalogue</td><td>Apply the live Keyword Planner output beyond the current 5.8%</td><td>Ezgi</td><td><span class="pill p-done">High</span></td></tr>
+          <tr><td><b>W4</b></td><td>Product highlight population</td><td>Close the 58% zero-highlight gap the feed audit found</td><td>Ray</td><td><span class="pill p-prog">Medium</span></td></tr>
+          <tr><td><b>W5</b></td><td>Product type — deeper breakdown</td><td>Categorisation rollout, currently in progress</td><td>Eliza</td><td><span class="pill p-prog">Medium</span></td></tr>
+          <tr><td><b>W6</b></td><td>Creative testing</td><td>Design follow-up, scoping stage</td><td>Eliza</td><td><span class="pill p-open">Low</span></td></tr>
         </tbody>
       </table>
     </div>
-    <div class="note rv in"><b>Sequencing logic:</b> the NEXT-dependent items (W1, W2) block the rest of the automation layer (chapter 05) and get chased first regardless of effort, because everything downstream waits on them. Data fields and imagery (W3, W4) are the levers that move the 65/100 score fastest, since they're the two lowest lanes today.</div>
+    <div class="note rv in"><b>Sequencing logic:</b> the NEXT-dependent items (W1, W2) block the automation layer (chapter 07) regardless of effort, so they're chased first. W3 and W4 are new priorities the feed audit surfaced, not the plan — they're the two levers that move the feed score (chapter 06) fastest, since keywords and highlights are the widest gaps between "tool built" and "catalogue covered."</div>
   </div>
 </section>
 
-<!-- ================= CH 09 — TECH FIT ================= -->
-<div class="chapter" id="c9"><div class="ch-num">09</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter nine</div><h2>Tech Fit</h2><p>Why the FeedSpark stack fits a 29-market fashion retailer specifically.</p></div></div>
+<!-- ================= CH 14 — TECH FIT ================= -->
+<div class="chapter" id="c14"><div class="ch-num">14</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter fourteen</div><h2>Tech Fit</h2><p>Why the FeedSpark stack fits a 29-market, multi-brand fashion retailer — and where the feed shows the fit isn't finished yet.</p></div></div>
 
 <section class="band">
   <div class="wrap">
     <div class="grid-4 rv in">
-      <div class="card"><h4>One stack, every market</h4><p>Tachyon AI + FeedHero cover generation and management end to end — one build, not 29 separate market-by-market projects.</p></div>
-      <div class="card"><h4>Proven across fashion</h4><p>The same title-quality methodology behind Reiss' de-duplication fix and Search Intent test is already proven across fashion, footwear, beauty and outdoor accounts.</p></div>
-      <div class="card"><h4>Golden Record discipline</h4><p>99.9% attribute-completeness target across every feed dimension — the 88.6% figure from the last audit is the checkpoint against that target, not the ceiling.</p></div>
-      <div class="card"><h4>One partner per channel</h4><p>Google Shopping/PMax, Meta, social and LIA all run off the same optimisation engine — no separate vendor per surface as Reiss' channel mix grows.</p></div>
+      <div class="card"><h4>One stack, six brand lines</h4><p>Reiss, Reiss McLaren, Atelier, Good American and PAIGE all run through the same FeedHero + Tachyon pipeline — proven on the core line's 100% AOT title coverage, not yet extended in depth to every collab line.</p></div>
+      <div class="card"><h4>Proven across fashion</h4><p>The same title-quality methodology behind the verified de-duplication fix is already proven across fashion, footwear, beauty and outdoor accounts.</p></div>
+      <div class="card"><h4>Golden Record discipline</h4><p>99.9% attribute-completeness target — core structural fields are already at 100% in this export; the gap the feed shows is content depth (keywords, descriptions, highlights), not missing data.</p></div>
+      <div class="card"><h4>One partner per channel</h4><p>Google Shopping and Meta run off the same optimisation engine today — LIA is live in IE, giving a template to extend Click &amp; Collect to other markets as the account grows.</p></div>
     </div>
-    <div class="callout rv in"><h4>The through-line</h4><p>Every proven lever this year — de-duplicated titles, the Keyword Planner, custom labels at 75% — is the same fuller, more decomposable data pattern that Tier 2 and the conversational attributes scale up next. It's the next step on the line already being walked, not a new strategy.</p></div>
+    <div class="callout rv in"><h4>The through-line</h4><p>Every verified lever this year — de-duplicated titles, the live Keyword Planner tool, 100% image coverage — is the same fuller, more decomposable data pattern that Tier 2 and the conversational attributes scale up next. The feed audit didn't find a new strategy to pursue; it found exactly how far the current one has reached, and where it hasn't yet.</p></div>
   </div>
 </section>
 
@@ -621,6 +797,46 @@ policy data become commercial controls"<br>Google&nbsp;</p>
     this.setAttribute('aria-pressed',String(!on));
     document.body.classList.toggle('hide-checks',on);
   });
+
+  /* ======== agent panel ======== */
+  var DATA={
+    qa:{name:'Question and answer',code:'question_and_answer',
+      why:'Pre-answers fit/sizing questions customers actually ask, in the feed itself — the agent can quote you instead of guessing. Highest-value attribute for fashion, and the one most likely to need sign-off given return-rate implications.',
+      row:'<span class="c">// supplemental feed · Reiss Stanton Petite trousers</span>\n<span class="k">question_and_answer</span>:\n  "Does this run true to size?":\n    "Fits true to size — model wears a size 8 at 5ft 9in."\n  "Is this suitable for petite heights?":\n    "Yes — Petite fit is cut for 5ft 3in and under."',
+      note:'Draft from approved PDP copy only. Every answer carries fit/return-rate consequences.'},
+    variant:{name:'Variant option',code:'variant_option',
+      why:'Names every property that separates one variant from another — size, colour, fit. Without it the agent sees 2.2 near-identical SKUs per style and picks arbitrarily.',
+      row:'<span class="c">// used with item_group_id + item_group_title</span>\n<span class="k">item_group_id</span>: SV142028\n<span class="k">variant_option</span>:\n  size: 4\n  colour: Cream\n  fit: Petite',
+      note:'Structural only — no copy approval needed. Blocked on the item-group ID mapping in chapter 07.'},
+    group:{name:'Item group title',code:'item_group_title',
+      why:'Gives the whole variant family — and each brand line — one clean parent name. It\'s how the agent tells a core Reiss style apart from a Reiss McLaren or Atelier line.',
+      row:'<span class="k">item_group_id</span>: SV142028\n<span class="k">item_group_title</span>: Reiss Stanton Petite Cotton Corduroy Wide-Leg Trousers\n<span class="k">title</span>: Reiss Cream Stanton Petite Cotton Corduroy Wide-Leg Trousers, 4',
+      note:'Directly addresses telling brand lines apart across the 6-line portfolio.'},
+    related:{name:'Related product',code:'related_product',
+      why:'Declares relationships between SKUs — outfit-complete pairings, bundles, cross-sell.',
+      row:'<span class="c">// relationship_type : identifier_type : identifier</span>\n<span class="k">related_product</span>:\n  often_bought_with:id:G76537\n  often_bought_with:id:Y25175',
+      note:'None of the six attributes are submitted for Reiss today — this is a build, not a fix.'},
+    pop:{name:'Popularity rank',code:'popularity_rank',
+      why:'A percentile of how a product performs vs. Reiss\' own inventory. A direct, honest ranking signal handed to the agent — 20% of the catalogue already carries a "Best Sellers" custom label as raw material for this.',
+      row:'<span class="c">// percentile of total inventory</span>\n<span class="k">popularity_rank</span>: [XX.X]\n\n<span class="c">// source: existing "Best Sellers" custom-label logic</span>',
+      note:'Build once, use twice — the custom-label logic and popularity_rank can share one aggregation.'},
+    doc:{name:'Document link',code:'document_link',
+      why:'Points the agent at authoritative fabric/size-guide PDFs. For fashion, this is where full composition and fit-guide detail lives without bloating the title or description.',
+      row:'<span class="c">// comma-separated for multiple documents</span>\n<span class="k">document_link</span>:\n  https://reiss.com/size-guide,\n  https://reiss.com/fabric-care/[style]',
+      note:'Needs stable public URLs per document — worth auditing what Reiss already publishes.'}
+  };
+  var panel=document.getElementById('panel');
+  function render(k){
+    var d=DATA[k];
+    panel.innerHTML='<div class="fade-swap"><div class="attr-name">'+d.name+'</div><div class="attr-code">['+d.code+']</div><div class="attr-why">'+d.why+'</div><div class="feedrow">'+d.row+'</div><div class="attr-note">'+d.note+'</div></div>';
+  }
+  document.getElementById('qs').addEventListener('click',function(e){
+    var b=e.target.closest('.q');if(!b)return;
+    this.querySelectorAll('.q').forEach(function(x){x.classList.remove('active')});
+    b.classList.add('active');render(b.getAttribute('data-k'));
+  });
+  render('qa');
+
 })();
 </script>
 
