@@ -204,7 +204,7 @@ export default {
     if (path === '/api/gmail/intake' && request.method === 'GET') {
       if (!env.GOOGLE_SA_JSON || !env.GOOGLE_IMPERSONATE) return json({ connected: false, items: [] });
       try {
-        const token = await googleToken(env, 'https://www.googleapis.com/auth/gmail.readonly');
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/gmail.readonly', true);
         const q = encodeURIComponent('newer_than:30d -in:sent -in:chats');
         const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=25&q=' + q, { headers: { Authorization: 'Bearer ' + token } });
         const list = await listRes.json();
@@ -220,6 +220,22 @@ export default {
       } catch (e) {
         return json({ connected: false, error: String((e && e.message) || e), items: [] });
       }
+    }
+
+    // ---- Sheets read (no admin needed: share the sheet with the service-account email) ----
+    // GET /api/sheets/read?id=<spreadsheetId>&range=<A1 range>. The SA acts as itself, so any
+    // sheet shared with its client_email is reachable without domain-wide delegation.
+    if (path === '/api/sheets/read' && request.method === 'GET') {
+      if (!env.GOOGLE_SA_JSON) return json({ connected: false, error: 'no_sa', values: [] });
+      const id = url.searchParams.get('id'); const range = url.searchParams.get('range') || 'A1:Z100';
+      if (!id) return json({ error: 'missing id' }, 400);
+      try {
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
+        const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(range), { headers: { Authorization: 'Bearer ' + token } });
+        const d = await r.json();
+        if (d.error) return json({ connected: true, error: d.error.message, values: [] });
+        return json({ connected: true, range: d.range || range, values: d.values || [] });
+      } catch (e) { return json({ connected: false, error: String((e && e.message) || e), values: [] }); }
     }
 
     // ---- serve a git-bundled page + inject the editor widget for its slug ----
@@ -264,11 +280,14 @@ function pemToArrayBuffer(pem) {
   for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
   return buf.buffer;
 }
-async function googleToken(env, scope) {
+// impersonate=true adds a `sub` (needs domain-wide delegation — Gmail). Omit it for Sheets:
+// the service account then acts as itself and can reach any sheet shared with its email —
+// no admin / delegation required.
+async function googleToken(env, scope, impersonate) {
   const sa = JSON.parse(env.GOOGLE_SA_JSON);
   const now = Math.floor(Date.now() / 1000);
   const claim = { iss: sa.client_email, scope, aud: 'https://oauth2.googleapis.com/token', exp: now + 3600, iat: now };
-  if (env.GOOGLE_IMPERSONATE) claim.sub = env.GOOGLE_IMPERSONATE;
+  if (impersonate && env.GOOGLE_IMPERSONATE) claim.sub = env.GOOGLE_IMPERSONATE;
   const unsigned = b64urlStr(JSON.stringify({ alg: 'RS256', typ: 'JWT' })) + '.' + b64urlStr(JSON.stringify(claim));
   const key = await crypto.subtle.importKey('pkcs8', pemToArrayBuffer(sa.private_key), { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
   const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(unsigned));
