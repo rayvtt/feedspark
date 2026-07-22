@@ -222,6 +222,30 @@ window.addEventListener('load',restore);
     <div style="margin-top:4px;color:var(--muted)">Project-plan intake is live below now. Until the Gmail credential is set, add email tasks with <b>New brief</b> and log ASPL replies on each ticket — the completion scan and client-confirmation draft work either way.</div>
   </div></div>
 
+  <style>
+  .wf-bpanel{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:13px 15px;margin:20px 0 4px}
+  .wf-bhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .wf-bhead h3{margin:0;font-size:14px;font-weight:900}
+  .wf-bhead .wf-bn{font-size:11.5px;font-weight:800;color:var(--muted)}
+  .wf-badd{margin-left:auto;display:flex;gap:6px}
+  .wf-badd input{font:inherit;font-size:12.5px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);min-width:150px}
+  .wf-badd input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
+  .wf-badd button{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:8px;border:1px solid var(--orange);background:var(--orange);color:#fff;cursor:pointer}
+  .wf-blink{font:inherit;font-size:11.5px;font-weight:800;color:var(--muted);background:none;border:0;cursor:pointer;text-decoration:underline}
+  #wf-brands{display:flex;gap:6px;flex-wrap:wrap}
+  .wf-brand{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;padding:4px 5px 4px 11px;border-radius:100px;border:1px solid var(--line);background:var(--wash);color:var(--ink-2)}
+  .wf-brand.live{border-color:#CDE9D8;background:rgba(72,208,126,.12);color:var(--good)}
+  .wf-brand .wf-x{border:0;background:none;color:inherit;opacity:.55;cursor:pointer;font-size:15px;line-height:1;padding:0 3px;border-radius:50%}
+  .wf-brand .wf-x:hover{opacity:1;color:var(--risk)}
+  </style>
+  <div class="wf-bpanel">
+    <div class="wf-bhead"><h3>Brands in your book</h3><span class="wf-bn" id="wf-brand-n"></span>
+      <span class="wf-badd"><input id="wf-brand-add" placeholder="Add a brand…" aria-label="Add a brand"><button id="wf-brand-addbtn">＋ Add</button>
+      <button class="wf-blink" id="wf-brand-reset" title="Restore the full book">Reset</button></span></div>
+    <div id="wf-brands"></div>
+    <p class="sub" style="margin:9px 0 0">Every brand here is selectable in the brief generator. Green = has a live plan feeding the intake below. Remove any you don't run; add new ones. Saved on this device.</p>
+  </div>
+
   <h2>New brief</h2>
   <p class="sub">Compose a coded brief the ASPL portal can auto-scan. The <span style="color:var(--orange-ink);font-weight:800">[ibfcode:…]</span> and <span style="color:var(--orange-ink);font-weight:800">ibfdue:…</span> tokens are generated for you and embedded in the subject and body.</p>
   <div class="gen">
@@ -317,8 +341,14 @@ window.addEventListener('load',restore);
 <script>
 (function(){
   var PT=window.PLANTASKS||{};
-  var CLIENTS=Object.keys(PT);
-  if(!CLIENTS.length) CLIENTS=['Reiss','Schuh','Monsoon','Accessorize','Superdry','YuMOVE','Hobbycraft'];
+  // full book roster (editable): every brand can be briefed, not just those with a live plan.
+  var ALL_BRANDS=['Reiss','AllSaints','Schuh','Superdry','Accessorize','Monsoon','Hobbycraft','YuMOVE',
+    'Estée Lauder','Bobbi Brown','Benefit','Jo Malone','Clinique','MAC','Craghoppers','Regatta','Dare2b','House of Bruar','American Golf'];
+  var BKEY='fcc-wf-brands';
+  function loadBrands(){ try{var s=JSON.parse(localStorage.getItem(BKEY)); if(s&&s.length)return s;}catch(e){}
+    return Array.from(new Set(ALL_BRANDS.concat(Object.keys(PT)))).sort(function(a,b){return a.localeCompare(b);}); }
+  var CLIENTS=loadBrands();
+  function saveBrands(){ try{localStorage.setItem(BKEY,JSON.stringify(CLIENTS));}catch(e){} }
   var ASPL=['Dinesh','Thia','Mariraj','Muji'];
   var BRIEF_TO='briefing@feedspark.com';
   var STAGES=[['intake','Intake','#8a94a0'],['briefed','Briefed to ASPL','#B1550A'],['progress','In progress','#2F6FB0'],
@@ -401,9 +431,24 @@ window.addEventListener('load',restore);
     return {f:f,id:id,subj:subj,body:body};
   }
 
-  // ---- populate generator ----
-  (function(){ var sel=document.getElementById('bg-client');
-    sel.innerHTML=CLIENTS.map(function(c){return '<option>'+esc(c)+'</option>';}).join(''); })();
+  // ---- brand roster management (select / add / delete) + generator client list ----
+  function fillClientSelect(){ var sel=document.getElementById('bg-client'); if(!sel)return; var cur=sel.value;
+    sel.innerHTML=CLIENTS.map(function(c){return '<option>'+esc(c)+'</option>';}).join('');
+    if(CLIENTS.indexOf(cur)>=0) sel.value=cur; }
+  function renderBrands(){ var host=document.getElementById('wf-brands'); if(!host)return;
+    host.innerHTML=CLIENTS.map(function(c){ var live=!!PT[c];
+      return '<span class="wf-brand'+(live?' live':'')+'" title="'+(live?'live plan':'no live plan')+'">'+esc(c)
+        +'<button class="wf-x" data-b="'+esc(c)+'" title="Remove from Workflow" aria-label="Remove '+esc(c)+'">×</button></span>'; }).join('');
+    host.querySelectorAll('.wf-x').forEach(function(b){ b.onclick=function(){ var name=b.getAttribute('data-b');
+      CLIENTS=CLIENTS.filter(function(x){return x!==name;}); saveBrands(); fillClientSelect(); renderBrands(); renderIntake(); }; });
+    var n=document.getElementById('wf-brand-n'); if(n)n.textContent=CLIENTS.length+' brands';
+  }
+  (function(){ var add=document.getElementById('wf-brand-add'), btn=document.getElementById('wf-brand-addbtn');
+    function doAdd(){ var v=(add.value||'').trim(); if(!v)return; if(CLIENTS.indexOf(v)<0){ CLIENTS.push(v); CLIENTS.sort(function(a,b){return a.localeCompare(b);}); saveBrands(); fillClientSelect(); renderBrands(); renderIntake(); } add.value=''; add.focus(); }
+    if(btn)btn.onclick=doAdd; if(add)add.addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();doAdd();} });
+    var reset=document.getElementById('wf-brand-reset'); if(reset)reset.onclick=function(){ try{localStorage.removeItem(BKEY);}catch(e){} CLIENTS=loadBrands(); fillClientSelect(); renderBrands(); renderIntake(); };
+  })();
+  fillClientSelect(); renderBrands();
   ['bg-client','bg-market','bg-source','bg-task','bg-scope','bg-dod','bg-assets','bg-due','bg-priority'].forEach(function(id){
     var el=document.getElementById(id); el.addEventListener('input',refreshPreview); el.addEventListener('change',refreshPreview); });
 
