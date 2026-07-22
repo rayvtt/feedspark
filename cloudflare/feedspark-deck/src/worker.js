@@ -970,7 +970,7 @@ function getEditorScript(slug) {
         el.classList.remove('de-bdrag'); el.removeAttribute('draggable');
         var parent=el.parentElement, tid=parent&&parent.getAttribute('data-tid');
         if(tid) saveContainerOrder(parent,tid);
-        if(selEl===el) positionOverlay(el);
+        if(selEls.size===1 && selEls.has(el)) positionOverlay(el);
       });
     });
     document.querySelectorAll('[data-tid]').forEach(function(container){
@@ -984,16 +984,60 @@ function getEditorScript(slug) {
     });
   }
 
-  var selEl=null, resizeHandle=null;
+  // Shift-click adds/removes a block from selEls instead of replacing the selection, so
+  // several blocks can be deleted or duplicated together. Resizing and the full style panel
+  // stay single-element-only (dragging one resize handle for N differently-sized blocks
+  // isn't a coherent action) — multi-select gets a simplified panel with bulk actions.
+  var selEls=new Set(), resizeHandle=null;
   function positionOverlay(el){
     var r=el.getBoundingClientRect();
     if(resizeHandle){ resizeHandle.style.top=(r.top+window.scrollY+r.height-7)+'px'; resizeHandle.style.left=(r.left+window.scrollX+r.width-7)+'px'; }
   }
+  function removeResizeHandle(){ if(resizeHandle){ resizeHandle.remove(); resizeHandle=null; } }
   function clearSelection(){
-    if(selEl) selEl.classList.remove('de-bsel');
-    if(resizeHandle){ resizeHandle.remove(); resizeHandle=null; }
+    selEls.forEach(function(el){ el.classList.remove('de-bsel'); });
+    selEls.clear();
+    removeResizeHandle();
     propsPanel.classList.remove('show');
-    selEl=null;
+  }
+  function refreshSelectionUI(){
+    removeResizeHandle();
+    if(!selEls.size){ propsPanel.classList.remove('show'); return; }
+    if(selEls.size===1){
+      var el=Array.from(selEls)[0];
+      resizeHandle=document.createElement('div'); resizeHandle.className='de-resize'; document.body.appendChild(resizeHandle);
+      positionOverlay(el);
+      wireResize(el,resizeHandle);
+      renderPropsPanel(el);
+    } else {
+      renderMultiPropsPanel();
+    }
+    propsPanel.classList.add('show');
+  }
+  function deleteSelection(){
+    var els=Array.from(selEls);
+    if(!confirm('Delete '+els.length+' blocks? This removes them for everyone viewing this deck.')) return;
+    var patch={};
+    els.forEach(function(el){ var eid=el.getAttribute('data-eid'); delete dirty[eid]; patch[eid]={deleted:true}; });
+    clearSelection();
+    els.forEach(function(el){ el.remove(); });
+    armUndo().then(function(){
+      return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)});
+    }).then(function(){ toast(els.length+' blocks deleted'); }).catch(function(){ toast('Delete failed to save'); });
+  }
+  function duplicateSelection(){
+    var els=Array.from(selEls);
+    clearSelection();
+    els.forEach(function(el){ duplicateBlock(el); });
+  }
+  function renderMultiPropsPanel(){
+    propsPanel.innerHTML =
+      '<div class="ph"><span><span class="tag">'+selEls.size+' selected</span></span><button class="pclose" title="Deselect">×</button></div>'
+      + '<section><p style="font-size:12.5px;color:#6b7a8d;margin:0">Shift-click a block to add or remove it from this selection. Style editing (font, colour, size) works one block at a time — select just one to use it.</p></section>'
+      + '<div class="actions"><button class="dup">⧉ Duplicate all</button><button class="del">🗑 Delete all</button></div>';
+    propsPanel.querySelector('.pclose').addEventListener('click',clearSelection);
+    propsPanel.querySelector('.dup').addEventListener('click',duplicateSelection);
+    propsPanel.querySelector('.del').addEventListener('click',deleteSelection);
   }
   function rgbToHex(rgb){ var m=/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/.exec(rgb||''); if(!m) return '#ffffff';
     return '#'+[1,2,3].map(function(i){ return ('0'+parseInt(m[i],10).toString(16)).slice(-2); }).join(''); }
@@ -1107,23 +1151,25 @@ function getEditorScript(slug) {
     propsPanel.querySelector('.rst').addEventListener('click',function(){
       el.removeAttribute('style'); queueStyleSave(el); renderPropsPanel(el); positionOverlay(el); toast('Reset to default'); });
   }
-  function selectBlock(el){
-    if(selEl===el) return;
-    clearSelection(); selEl=el; el.classList.add('de-bsel');
-    resizeHandle=document.createElement('div'); resizeHandle.className='de-resize'; document.body.appendChild(resizeHandle);
-    positionOverlay(el);
-    wireResize(el,resizeHandle);
-    renderPropsPanel(el);
-    propsPanel.classList.add('show');
+  function selectBlock(el, additive){
+    if(additive){
+      if(selEls.has(el)){ el.classList.remove('de-bsel'); selEls.delete(el); }
+      else { el.classList.add('de-bsel'); selEls.add(el); }
+    } else {
+      if(selEls.size===1 && selEls.has(el)) return;
+      selEls.forEach(function(s){ s.classList.remove('de-bsel'); }); selEls.clear();
+      el.classList.add('de-bsel'); selEls.add(el);
+    }
+    refreshSelectionUI();
   }
   document.addEventListener('click',function(e){
     if(!document.body.classList.contains('de-design')) return;
     if(e.target.closest('.de-props,.de-resize,.de-bar,.de-panel')) return;
     var el=e.target.closest('[data-de-block]');
-    if(el) selectBlock(el); else clearSelection();
+    if(el) selectBlock(el, e.shiftKey); else if(!e.shiftKey) clearSelection();
   }, true);
-  window.addEventListener('scroll',function(){ if(selEl) positionOverlay(selEl); },true);
-  window.addEventListener('resize',function(){ if(selEl) positionOverlay(selEl); });
+  window.addEventListener('scroll',function(){ if(selEls.size===1) positionOverlay(Array.from(selEls)[0]); },true);
+  window.addEventListener('resize',function(){ if(selEls.size===1) positionOverlay(Array.from(selEls)[0]); });
   function flush(){ var keys=Object.keys(dirty); if(!keys.length) return; var patch=dirty; dirty={}; stat.textContent='saving…';
     fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
       .then(function(r){ return r.json(); }).then(function(){ stat.textContent='✓ saved'; setTimeout(function(){ stat.textContent=''; },1500); })
