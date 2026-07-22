@@ -43,6 +43,18 @@ section{padding:104px 0}
 .tb-nav a:hover,.tb-nav a.active{color:var(--ink);border-bottom-color:var(--orange)}
 .progress{position:absolute;bottom:-1px;left:0;height:2px;background:var(--orange);width:0}
 
+/* Frozen agenda — a persistent left-side jump list once there's room beside the content
+   column; collapsed to numbers only so it never competes with the page, full labels slide
+   out on hover like a real agenda. Hidden below 1300px, same cutoff logic as .tb-nav's own
+   mobile hide, since there's no side margin left to put it in on narrower viewports. */
+.side-nav{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:59;display:none;flex-direction:column;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:10px;padding:8px 0;box-shadow:0 8px 28px rgba(0,0,0,.10);max-height:74vh;overflow-y:auto}
+.side-nav a{display:flex;align-items:center;padding:6px 14px;text-decoration:none;color:var(--muted);border-left:2px solid transparent;white-space:nowrap}
+.side-nav a .num{font-size:10px;font-weight:800;letter-spacing:.06em;width:16px;flex-shrink:0}
+.side-nav a .lbl{opacity:0;max-width:0;overflow:hidden;transition:opacity .2s ease,max-width .25s ease;font-size:12px;font-weight:600}
+.side-nav:hover a .lbl{opacity:1;max-width:170px;margin-left:6px}
+.side-nav a:hover,.side-nav a.active{color:var(--ink);border-left-color:var(--orange)}
+@media(min-width:1300px){.side-nav{display:flex}}
+
 /* hero */
 .hero{background:var(--dark);color:#fff;min-height:88vh;display:flex;align-items:center;padding:120px 0 90px;position:relative;overflow:hidden}
 .hero:before{content:"";position:absolute;top:0;left:0;width:112px;height:9px;background:var(--orange)}
@@ -267,6 +279,17 @@ body.hide-checks .chk{display:none}
     <div class="progress" id="progress" style="width: 0%;"></div>
   </div>
 </div>
+<nav class="side-nav">
+  <a href="#c1"><span class="num">01</span><span class="lbl">Scope</span></a>
+  <a href="#c2"><span class="num">02</span><span class="lbl">Work</span></a>
+  <a href="#c3"><span class="num">03</span><span class="lbl">Automation</span></a>
+  <a href="#c4"><span class="num">04</span><span class="lbl">AI landscape</span></a>
+  <a href="#c5"><span class="num">05</span><span class="lbl">Tachyon</span></a>
+  <a href="#c6"><span class="num">06</span><span class="lbl">Attributes</span></a>
+  <a href="#c7"><span class="num">07</span><span class="lbl">Roadmap</span></a>
+</nav>
+<!-- side-nav links must mirror .tb-nav above 1:1 (same hrefs, same order) — if this deck's
+     outline differs from the 7-chapter default, update both navs together. -->
 <div class="footmark">FeedSpark · Private &amp; Confidential</div>
 
 <!-- ================= HERO ================= -->
@@ -950,6 +973,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
   /* ======== topbar + progress ======== */
   var tb=document.getElementById('topbar'),pg=document.getElementById('progress');
   var links=Array.prototype.slice.call(document.querySelectorAll('.tb-nav a'));
+  var sideLinks=Array.prototype.slice.call(document.querySelectorAll('.side-nav a'));
   var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))});
   function onScroll(){
     var y=window.scrollY||document.documentElement.scrollTop;
@@ -959,6 +983,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
     var idx=-1;
     secs.forEach(function(s,i){if(s&&s.getBoundingClientRect().top<=120)idx=i});
     links.forEach(function(a,i){a.classList.toggle('active',i===idx)});
+    sideLinks.forEach(function(a,i){a.classList.toggle('active',i===idx)});
   }
   window.addEventListener('scroll',onScroll,{passive:true});onScroll();
 

@@ -43,6 +43,18 @@ section{padding:104px 0}
 .tb-nav a:hover,.tb-nav a.active{color:var(--ink);border-bottom-color:var(--orange)}
 .progress{position:absolute;bottom:-1px;left:0;height:2px;background:var(--orange);width:0}
 
+/* Frozen agenda — a persistent left-side jump list once there's room beside the content
+   column; collapsed to numbers only so it never competes with the page, full labels slide
+   out on hover like a real agenda. Hidden below 1300px, same cutoff logic as .tb-nav's own
+   mobile hide, since there's no side margin left to put it in on narrower viewports. */
+.side-nav{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:59;display:none;flex-direction:column;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:10px;padding:8px 0;box-shadow:0 8px 28px rgba(0,0,0,.10);max-height:74vh;overflow-y:auto}
+.side-nav a{display:flex;align-items:center;padding:6px 14px;text-decoration:none;color:var(--muted);border-left:2px solid transparent;white-space:nowrap}
+.side-nav a .num{font-size:10px;font-weight:800;letter-spacing:.06em;width:16px;flex-shrink:0}
+.side-nav a .lbl{opacity:0;max-width:0;overflow:hidden;transition:opacity .2s ease,max-width .25s ease;font-size:12px;font-weight:600}
+.side-nav:hover a .lbl{opacity:1;max-width:170px;margin-left:6px}
+.side-nav a:hover,.side-nav a.active{color:var(--ink);border-left-color:var(--orange)}
+@media(min-width:1300px){.side-nav{display:flex}}
+
 /* hero */
 .hero{background:var(--dark);color:#fff;min-height:88vh;display:flex;align-items:center;padding:120px 0 90px;position:relative;overflow:hidden}
 .hero:before{content:"";position:absolute;top:0;left:0;width:112px;height:9px;background:var(--orange)}
@@ -255,6 +267,23 @@ body.hide-checks .chk{display:none}
     <div class="progress" id="progress" style="width: 0%;"></div>
   </div>
 </div>
+<nav class="side-nav">
+  <a href="#c1"><span class="num">01</span><span class="lbl">Scope</span></a>
+  <a href="#c2"><span class="num">02</span><span class="lbl">Stack</span></a>
+  <a href="#c3"><span class="num">03</span><span class="lbl">Recap</span></a>
+  <a href="#c4"><span class="num">04</span><span class="lbl">Look-back</span></a>
+  <a href="#c5"><span class="num">05</span><span class="lbl">Wins</span></a>
+  <a href="#c6"><span class="num">06</span><span class="lbl">Score</span></a>
+  <a href="#c7"><span class="num">07</span><span class="lbl">Auto</span></a>
+  <a href="#c8"><span class="num">08</span><span class="lbl">Audit</span></a>
+  <a href="#c9"><span class="num">09</span><span class="lbl">Landscape</span></a>
+  <a href="#c10"><span class="num">10</span><span class="lbl">Spark</span></a>
+  <a href="#c11"><span class="num">11</span><span class="lbl">Attributes</span></a>
+  <a href="#c12"><span class="num">12</span><span class="lbl">AI ready</span></a>
+  <a href="#c13"><span class="num">13</span><span class="lbl">Cases</span></a>
+  <a href="#c14"><span class="num">14</span><span class="lbl">Roadmap</span></a>
+  <a href="#c15"><span class="num">15</span><span class="lbl">Fit</span></a>
+</nav>
 <div class="footmark">FeedSpark · Private &amp; Confidential</div>
 
 <!-- ================= HERO ================= -->
@@ -280,25 +309,26 @@ policy data become commercial controls"<br>Google&nbsp;</p>
   <div class="wrap">
     <div class="eyebrow rv in">Agenda</div>
     <h2 class="sec-title rv in">What we'll cover</h2>
-    <p class="sec-sub rv in">Fourteen sections, two sources: the project plan (what shipped, what's next) and a live 4,999-SKU export of the actual feed (what's really live on the catalogue today). Where they disagree, the feed wins — it's the ground truth.</p>
+    <p class="sec-sub rv in">Fifteen sections, three sources: the project plan (what shipped, what's next), a live 4,999-SKU feed export analysed directly, and FeedHero's own full-catalogue audit of GB/DE/FR. Where they disagree, the most direct measurement wins.</p>
     <div class="agenda rv in">
       <div>
-        <div class="ag-row"><div class="ag-num">01</div><div><div class="ag-t">Service scope &amp; scale</div><div class="ag-d">29 markets · 60 feeds · ~5,000 SKUs analysed</div></div></div>
+        <div class="ag-row"><div class="ag-num">01</div><div><div class="ag-t">Service scope &amp; scale</div><div class="ag-d">29 markets · 60 feeds · 179,646 confirmed SKUs in GB/DE/FR</div></div></div>
         <div class="ag-row"><div class="ag-num">02</div><div><div class="ag-t">Unit / tech stack</div><div class="ag-d">FeedHero + Tachyon, what's actually switched on</div></div></div>
         <div class="ag-row"><div class="ag-num">03</div><div><div class="ag-t">Review &amp; project recap</div><div class="ag-d">446 tasks in plan · 263 delivered</div></div></div>
         <div class="ag-row"><div class="ag-num">04</div><div><div class="ag-t">Look-back period</div><div class="ag-d">Jul 2025 → Jun 2026, month by month</div></div></div>
-        <div class="ag-row"><div class="ag-num">05</div><div><div class="ag-t">Number of wins / results</div><div class="ag-d">What's proven, honestly scored</div></div></div>
+        <div class="ag-row"><div class="ag-num">05</div><div><div class="ag-t">Number of wins / results</div><div class="ag-d">2-year A/B archive, 38 tests, honestly scored</div></div></div>
         <div class="ag-row"><div class="ag-num">06</div><div><div class="ag-t">Feed optimisation score</div><div class="ag-d">Measured live off the feed, by lane</div></div></div>
         <div class="ag-row" style="border-bottom:0"><div class="ag-num">07</div><div><div class="ag-t">Automation &amp; pick readiness</div><div class="ag-d">What's automated, what's blocked on NEXT</div></div></div>
+        <div class="ag-row" style="border-bottom:0"><div class="ag-num">08</div><div><div class="ag-t">Live FeedHero audit</div><div class="ag-d">179,646 SKUs, GB/DE/FR, no sampling</div></div></div>
       </div>
       <div>
-        <div class="ag-row"><div class="ag-num">08</div><div><div class="ag-t">The AI landscape</div><div class="ag-d">Why agentic commerce changes discovery</div></div></div>
-        <div class="ag-row"><div class="ag-num">09</div><div><div class="ag-t">Spark AI engine (Tachyon)</div><div class="ag-d">Intent generation, enrichment, visual harvest</div></div></div>
-        <div class="ag-row"><div class="ag-num">10</div><div><div class="ag-t">Google conversational attributes</div><div class="ag-d">Six attributes, current submission status</div></div></div>
-        <div class="ag-row"><div class="ag-num">11</div><div><div class="ag-t">AI readiness</div><div class="ag-d">Tier 1 banked, the gap to Tier 2</div></div></div>
-        <div class="ag-row"><div class="ag-num">12</div><div><div class="ag-t">Case studies / test wins</div><div class="ag-d">Reiss' own tests, plus comparable-brand proof</div></div></div>
-        <div class="ag-row"><div class="ag-num">13</div><div><div class="ag-t">Roadmap / next quarter</div><div class="ag-d">Open tasks + what the feed audit surfaced</div></div></div>
-        <div class="ag-row" style="border-bottom:0"><div class="ag-num">14</div><div><div class="ag-t">Tech fit</div><div class="ag-d">Why the stack fits Reiss specifically</div></div></div>
+        <div class="ag-row"><div class="ag-num">09</div><div><div class="ag-t">The AI landscape</div><div class="ag-d">Why agentic commerce changes discovery</div></div></div>
+        <div class="ag-row"><div class="ag-num">10</div><div><div class="ag-t">Spark AI engine (Tachyon)</div><div class="ag-d">Intent generation, enrichment, visual harvest</div></div></div>
+        <div class="ag-row"><div class="ag-num">11</div><div><div class="ag-t">Google conversational attributes</div><div class="ag-d">Six attributes, current submission status</div></div></div>
+        <div class="ag-row"><div class="ag-num">12</div><div><div class="ag-t">AI readiness</div><div class="ag-d">Tier 1 banked, the gap to Tier 2</div></div></div>
+        <div class="ag-row"><div class="ag-num">13</div><div><div class="ag-t">Case studies / test wins</div><div class="ag-d">Reiss' own tests, plus comparable-brand proof</div></div></div>
+        <div class="ag-row"><div class="ag-num">14</div><div><div class="ag-t">Roadmap / next quarter</div><div class="ag-d">Open tasks + what the feed audit surfaced</div></div></div>
+        <div class="ag-row" style="border-bottom:0"><div class="ag-num">15</div><div><div class="ag-t">Tech fit</div><div class="ag-d">Why the stack fits Reiss specifically</div></div></div>
       </div>
     </div>
   </div>
@@ -883,6 +913,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
   /* ======== topbar + progress ======== */
   var tb=document.getElementById('topbar'),pg=document.getElementById('progress');
   var links=Array.prototype.slice.call(document.querySelectorAll('.tb-nav a'));
+  var sideLinks=Array.prototype.slice.call(document.querySelectorAll('.side-nav a'));
   var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))});
   function onScroll(){
     var y=window.scrollY||document.documentElement.scrollTop;
@@ -892,6 +923,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
     var idx=-1;
     secs.forEach(function(s,i){if(s&&s.getBoundingClientRect().top<=120)idx=i});
     links.forEach(function(a,i){a.classList.toggle('active',i===idx)});
+    sideLinks.forEach(function(a,i){a.classList.toggle('active',i===idx)});
   }
   window.addEventListener('scroll',onScroll,{passive:true});onScroll();
 
