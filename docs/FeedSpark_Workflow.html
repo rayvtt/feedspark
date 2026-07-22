@@ -367,15 +367,16 @@ window.addEventListener('load',restore);
   .live-refresh:disabled{opacity:.5;cursor:default}
   .live-add{font:inherit;font-size:11.5px;font-weight:800;padding:5px 12px;border-radius:100px;border:1px solid var(--orange);background:var(--orange);color:#fff;cursor:pointer;margin-left:auto}
   .live-add:hover{background:var(--orange-deep);border-color:var(--orange-deep)}
-  /* add-task modal form */
-  .add-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0 16px}
-  .add-grid label{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
-  .add-grid label.full{grid-column:1 / -1}
-  .add-grid input,.add-grid select{font:inherit;font-size:14px;font-weight:600;text-transform:none;letter-spacing:0;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
-  .add-grid input:focus,.add-grid select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
-  .add-actions{display:flex;justify-content:flex-end;gap:10px}
-  .btn.primary{background:var(--orange);border-color:var(--orange);color:#fff}
-  .btn.primary:hover{background:var(--orange-deep);border-color:var(--orange-deep)}
+  /* add-task inline hovering row (sticky under the table) */
+  #it-addfoot{position:sticky;bottom:0;z-index:3}
+  .add-row td{background:var(--wash);border-top:2px solid var(--orange);padding:7px 8px;box-shadow:0 -7px 16px rgba(16,24,40,.09)}
+  .add-row .c-sel{color:var(--orange-deep);font-weight:900;text-align:center}
+  .add-row .af-feed{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase}
+  .add-row input,.add-row select{width:100%;box-sizing:border-box;font:inherit;font-size:12px;font-weight:600;padding:5px 7px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}
+  .add-row input:focus,.add-row select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 2px rgba(245,166,35,.18)}
+  .add-row .af-add{font:inherit;font-size:11.5px;font-weight:800;padding:5px 11px;margin-right:4px;border-radius:100px;border:1px solid var(--orange);background:var(--orange);color:#fff;cursor:pointer}
+  .add-row .af-add:hover{background:var(--orange-deep);border-color:var(--orange-deep)}
+  .live-add.on{background:var(--orange-deep);border-color:var(--orange-deep)}
   /* select + status cells */
   .itbl thead th.it-cbh,.itbl td.c-sel{width:34px;text-align:center;padding-left:10px;padding-right:2px;cursor:default}
   .itbl td.c-stat{white-space:nowrap}
@@ -464,7 +465,10 @@ window.addEventListener('load',restore);
   <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="add-task-btn" type="button">＋ Add task</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
   <div class="it-ctl">
     <div class="it-grp"><span class="it-lbl">Source</span><div class="it-src" id="it-src" role="group" aria-label="Filter by source (multi-select)"></div></div>
-    <div class="it-grp"><span class="it-lbl">Status</span><div class="it-src" id="it-status" role="group" aria-label="Filter by status (multi-select)"></div></div>
+    <div class="it-multi" id="it-status-wrap">
+      <button type="button" class="it-multi-btn" id="it-status-btn" aria-haspopup="true" aria-expanded="false">All statuses ▾</button>
+      <div class="it-multi-menu" id="it-status-menu" role="group" aria-label="Filter by status (multi-select)" hidden></div>
+    </div>
     <select id="it-window" aria-label="Plan date window" title="Show only the latest N months of each brand's plan (email + ATRT unaffected)">
       <option value="2m">Plan: latest 2 months</option><option value="3m">Plan: latest 3 months</option>
       <option value="4m">Plan: latest 4 months</option><option value="">Plan: all history</option>
@@ -492,6 +496,17 @@ window.addEventListener('load',restore);
       <th data-k="client">Client</th><th data-k="cat">Feed</th><th data-k="task">Task</th>
       <th data-k="owner">Owner</th><th data-k="dsort">Due</th><th data-k="b">Status</th><th data-k="source">Source</th><th class="it-act">Brief</th>
     </tr></thead><tbody id="it-body"></tbody>
+    <tfoot id="it-addfoot" hidden><tr class="add-row">
+      <td class="c-sel">＋</td>
+      <td><select id="af-client" aria-label="New task — client"></select></td>
+      <td class="af-feed" title="Auto-detected from the task">auto</td>
+      <td><input id="af-task" placeholder="New task…" autocomplete="off"></td>
+      <td><input id="af-owner" placeholder="Owner" autocomplete="off"></td>
+      <td><input id="af-due" placeholder="DDMM" inputmode="numeric" autocomplete="off"></td>
+      <td><select id="af-status" aria-label="New task — status"></select></td>
+      <td><span class="src-tag src-plan">Plan</span></td>
+      <td class="c-act"><button class="af-add" id="af-save" type="button">Add</button><button class="del-btn" id="af-cancel" type="button" title="Cancel">✕</button></td>
+    </tr></tfoot>
   </table></div>
 
   <h2>Brief pipeline</h2>
@@ -880,39 +895,28 @@ window.addEventListener('load',restore);
       var y=today().getFullYear(), d=new Date(y,mm-1,dd); if((d-today())/86400000<-60)d=new Date(y+1,mm-1,dd);
       return d.getFullYear()+'-'+pad(mm)+'-'+pad(dd); }
     if(v.length===8)return v.slice(4,8)+'-'+v.slice(2,4)+'-'+v.slice(0,2); return ''; }
-  // ---- manual "Add task" modal (writes back to the plan via /api/sheets/append) ----
-  function openAddTask(){
-    var clients=Object.keys(PLANSHEET).sort();
-    var copts=clients.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
-    var sopts=STATUS_OPTS.map(function(o){return '<option'+(o==='Open'?' selected':'')+'>'+esc(o)+'</option>';}).join('');
-    modalEl.innerHTML=''
-      +'<div style="display:flex;align-items:flex-start"><div><h3>Add a task</h3>'
-        +'<div class="mc">Writes a new row into the client’s Project Plan</div></div><button class="x" id="at-x">×</button></div>'
-      +'<div class="add-grid">'
-        +'<label>Client<select id="at-client">'+copts+'</select></label>'
-        +'<label>Owner<input id="at-owner" placeholder="e.g. Ray" autocomplete="off"></label>'
-        +'<label class="full">Task<input id="at-task" placeholder="What needs doing…" autocomplete="off"></label>'
-        +'<label>Due · DDMM<input id="at-due" placeholder="2707" inputmode="numeric" autocomplete="off"></label>'
-        +'<label>Status<select id="at-status">'+sopts+'</select></label>'
-      +'</div>'
-      +'<div class="add-actions"><button class="btn" id="at-cancel" type="button">Cancel</button><button class="btn primary" id="at-save" type="button">Add task →</button></div>';
-    scrim.classList.add('on');
-    document.getElementById('at-x').onclick=closeModal;
-    document.getElementById('at-cancel').onclick=closeModal;
-    document.getElementById('at-save').onclick=submitAddTask;
-    var ti=document.getElementById('at-task'); ti.focus();
-    ti.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitAddTask(); } });
+  // ---- manual "Add task": an inline hovering row under the table (writes back via /api/sheets/append) ----
+  function ensureAddRow(){
+    var cs=document.getElementById('af-client'); if(cs && !cs.options.length){ Object.keys(PLANSHEET).sort().forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; cs.appendChild(o); }); }
+    var ss=document.getElementById('af-status'); if(ss && !ss.options.length){ STATUS_OPTS.forEach(function(s){ var o=document.createElement('option'); o.textContent=s; if(s==='Open')o.selected=true; ss.appendChild(o); }); }
+  }
+  function toggleAddRow(show){
+    var f=document.getElementById('it-addfoot'); if(!f)return;
+    f.hidden = (show===undefined) ? !f.hidden : !show;
+    var btn=document.getElementById('add-task-btn'); if(btn)btn.classList.toggle('on',!f.hidden);
+    if(!f.hidden){ ensureAddRow(); var ti=document.getElementById('af-task'); if(ti)ti.focus(); }
   }
   function submitAddTask(){
-    var client=document.getElementById('at-client').value;
-    var task=(document.getElementById('at-task').value||'').trim();
-    var owner=(document.getElementById('at-owner').value||'').trim();
-    var status=document.getElementById('at-status').value||'Open';
-    var dueRaw=(document.getElementById('at-due').value||'').replace(/\D/g,'');
-    if(!task){ toast('Type the task first'); return; }
+    var client=document.getElementById('af-client').value;
+    var ti=document.getElementById('af-task'), task=(ti.value||'').trim();
+    var owner=(document.getElementById('af-owner').value||'').trim();
+    var status=document.getElementById('af-status').value||'Open';
+    var dueRaw=(document.getElementById('af-due').value||'').replace(/\D/g,'');
+    if(!task){ toast('Type the task first'); ti.focus(); return; }
     var due=''; if(dueRaw){ var iso=ddmmToIso(dueRaw); if(!iso){ toast('Due — type DDMM, e.g. 2707'); return; } due=iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4); }
     MANUAL.push({client:client,task:task,owner:owner,status:status,due:due}); saveManual();   // optimistic — show at once
-    closeModal(); renderAll();
+    ti.value=''; document.getElementById('af-owner').value=''; document.getElementById('af-due').value='';   // clear for the next quick add; keep the row open + client/status sticky
+    renderAll(); ti.focus();
     var id=PLANSHEET[client];
     if(id){ toast('Adding to '+client+'’s plan…');
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',rows:[{task:task,owner:owner,status:status,due:due}]})})
@@ -1091,7 +1095,7 @@ window.addEventListener('load',restore);
         scope:tpl.s+TWO_STREAMS,dod:tpl.d,assets:'—',due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
         source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++; markBriefed(t); });
     itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline · marked Briefed'); }
-  // multi-select chip bars (source + status): empty selection = all; the "All" chip clears the set
+  // SOURCE stays a compact chip bar (4 options): empty selection = all; the "All" chip clears the set
   function renderChipBar(id, opts, key){
     var wrap=document.getElementById(id); if(!wrap)return; wrap.innerHTML='';
     opts.forEach(function(s){
@@ -1104,42 +1108,53 @@ window.addEventListener('load',restore);
         renderChipBar(id,opts,key); renderIntake(); };
       wrap.appendChild(b); }); }
   var SRC_OPTS=[['','All'],['plan','Project plan'],['atrt','ATRT legacy'],['email','Incoming emails']];
-  var STAT_OPTS=[['','All'],['open','Open'],['briefed','Briefed'],['progress','In progress'],['hold','On hold'],['client','With client'],['done','Done']];
   function renderSrcChips(){ renderChipBar('it-src',SRC_OPTS,'srcs'); }
-  function renderStatusChips(){ renderChipBar('it-status',STAT_OPTS,'statuses'); }
-  renderSrcChips(); renderStatusChips();
-  // client multi-select popover — compact button + checklist, keeps the filter bar to one line
-  function clientBtnLabel(){ var n=itState.clients.length; return (n===0?'All clients':n===1?itState.clients[0]:n+' clients')+' ▾'; }
-  function updateClientBtn(){ var btn=document.getElementById('it-client-btn'); if(!btn)return; btn.textContent=clientBtnLabel(); btn.classList.toggle('on',itState.clients.length>0); }
-  var _cliSig='';
-  function ensureClientFilter(){
-    var menu=document.getElementById('it-client-menu'); if(!menu)return;
-    var set={}; allIntake().forEach(function(r){ set[r.client]=1; }); var list=Object.keys(set).sort();
-    itState.clients=itState.clients.filter(function(c){return set[c];});   // drop picks whose client is gone
-    var sig=list.join('|');
-    if(sig===_cliSig){ updateClientBtn(); return; }   // no clients added/removed — just refresh the label
-    _cliSig=sig; menu.innerHTML='';
-    var allRow=document.createElement('label'); allRow.className='it-multi-all';
-    var allCb=document.createElement('input'); allCb.type='checkbox'; allCb.checked=itState.clients.length===0;
-    allCb.onchange=function(){ if(allCb.checked){ itState.clients=[]; menu.querySelectorAll('input').forEach(function(x){ if(x!==allCb)x.checked=false; }); }
-      else { allCb.checked=true; }   // "All" can't be switched off directly — tick a client instead
-      updateClientBtn(); renderIntake(); };
-    allRow.appendChild(allCb); allRow.appendChild(document.createTextNode('All clients')); menu.appendChild(allRow);
-    list.forEach(function(c){
-      var row=document.createElement('label');
-      var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=itState.clients.indexOf(c)>=0;
-      cb.onchange=function(){ var i=itState.clients.indexOf(c);
-        if(cb.checked){ if(i<0)itState.clients.push(c); } else { if(i>=0)itState.clients.splice(i,1); }
-        allCb.checked=itState.clients.length===0; updateClientBtn(); renderIntake(); };
-      row.appendChild(cb); row.appendChild(document.createTextNode(c)); menu.appendChild(row); });
-    updateClientBtn();
-  }
-  (function(){ var btn=document.getElementById('it-client-btn'), menu=document.getElementById('it-client-menu'), wrap=document.getElementById('it-client-wrap');
-    if(!btn||!menu||!wrap)return;
+  renderSrcChips();
+  // reusable multi-select DROPDOWN (status + client): compact button + checklist, keeps the bar tidy
+  function setupMulti(cfg){
+    var btn=document.getElementById(cfg.btn), menu=document.getElementById(cfg.menu), wrap=document.getElementById(cfg.wrap);
+    if(!btn||!menu||!wrap)return function(){};
+    function label(){ var sel=cfg.selected(), n=sel.length; return (n===0?cfg.allLabel:(n===1?cfg.one(sel[0]):n+' '+cfg.noun))+' ▾'; }
+    function updateBtn(){ btn.textContent=label(); btn.classList.toggle('on',cfg.selected().length>0); }
+    var sig='';
+    function build(){
+      var opts=cfg.options(), s=opts.map(function(o){return o.v;}).join('|');
+      if(s===sig){ updateBtn(); return; }                 // option set unchanged — just refresh the label
+      sig=s; menu.innerHTML='';
+      var allRow=document.createElement('label'); allRow.className='it-multi-all';
+      var allCb=document.createElement('input'); allCb.type='checkbox'; allCb.checked=cfg.selected().length===0;
+      allCb.onchange=function(){ if(allCb.checked){ cfg.clear(); menu.querySelectorAll('input').forEach(function(x){ if(x!==allCb)x.checked=false; }); }
+        else { allCb.checked=true; }                       // "All" can't be switched off directly — tick an option instead
+        updateBtn(); renderIntake(); };
+      allRow.appendChild(allCb); allRow.appendChild(document.createTextNode(cfg.allLabel)); menu.appendChild(allRow);
+      opts.forEach(function(o){
+        var row=document.createElement('label');
+        var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=cfg.selected().indexOf(o.v)>=0;
+        cb.onchange=function(){ cfg.toggle(o.v,cb.checked); allCb.checked=cfg.selected().length===0; updateBtn(); renderIntake(); };
+        row.appendChild(cb); row.appendChild(document.createTextNode(o.l)); menu.appendChild(row); });
+      updateBtn();
+    }
     btn.onclick=function(e){ e.stopPropagation(); var willOpen=menu.hidden; menu.hidden=!willOpen; btn.setAttribute('aria-expanded',willOpen?'true':'false'); };
     document.addEventListener('click',function(e){ if(menu.hidden)return; if(!wrap.contains(e.target)){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); } });
     document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!menu.hidden){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); } });
-  })();
+    return build;
+  }
+  var STAT_FILTER=[['open','Open'],['briefed','Briefed'],['progress','In progress'],['hold','On hold'],['client','With client'],['done','Done']];
+  var STAT_LBL={}; STAT_FILTER.forEach(function(s){ STAT_LBL[s[0]]=s[1]; });
+  var buildStatusFilter=setupMulti({ btn:'it-status-btn', menu:'it-status-menu', wrap:'it-status-wrap',
+    allLabel:'All statuses', noun:'statuses', one:function(v){ return STAT_LBL[v]||v; },
+    options:function(){ return STAT_FILTER.map(function(s){ return {v:s[0],l:s[1]}; }); },
+    selected:function(){ return itState.statuses; },
+    toggle:function(v,on){ var i=itState.statuses.indexOf(v); if(on){ if(i<0)itState.statuses.push(v); } else if(i>=0)itState.statuses.splice(i,1); },
+    clear:function(){ itState.statuses=[]; } });
+  var buildClientFilter=setupMulti({ btn:'it-client-btn', menu:'it-client-menu', wrap:'it-client-wrap',
+    allLabel:'All clients', noun:'clients', one:function(v){ return v; },
+    options:function(){ var set={}; allIntake().forEach(function(r){ set[r.client]=1; }); itState.clients=itState.clients.filter(function(c){ return set[c]; }); return Object.keys(set).sort().map(function(c){ return {v:c,l:c}; }); },
+    selected:function(){ return itState.clients; },
+    toggle:function(v,on){ var i=itState.clients.indexOf(v); if(on){ if(i<0)itState.clients.push(v); } else if(i>=0)itState.clients.splice(i,1); },
+    clear:function(){ itState.clients=[]; } });
+  function ensureClientFilter(){ buildStatusFilter(); buildClientFilter(); }   // rebuilt each render from renderIntake
+  buildStatusFilter(); buildClientFilter();
   document.getElementById('it-search').addEventListener('input',function(){ itState.q=this.value.trim().toLowerCase(); renderIntake(); });
   (function(){ var ht=document.getElementById('it-hidden-tog'); if(ht)ht.onclick=function(){ itState.showHidden=!itState.showHidden; renderIntake(); }; })();
   document.querySelectorAll('#itbl thead th[data-k]').forEach(function(th){ th.onclick=function(){
@@ -1156,7 +1171,11 @@ window.addEventListener('load',restore);
     var bv=document.getElementById('bulk-save'); if(bv)bv.onclick=bulkSaveAll;
     var bc=document.getElementById('bulk-clear'); if(bc)bc.onclick=function(){ itSel={}; renderIntake(); };
     var lr=document.getElementById('live-refresh'); if(lr)lr.onclick=function(){ fetchLive(true); };
-    var atb=document.getElementById('add-task-btn'); if(atb)atb.onclick=openAddTask;
+    var atb=document.getElementById('add-task-btn'); if(atb)atb.onclick=function(){ toggleAddRow(); };
+    var afs=document.getElementById('af-save'); if(afs)afs.onclick=submitAddTask;
+    var afc=document.getElementById('af-cancel'); if(afc)afc.onclick=function(){ toggleAddRow(false); };
+    ['af-task','af-due','af-owner'].forEach(function(fid){ var el=document.getElementById(fid);
+      if(el)el.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitAddTask(); } else if(e.key==='Escape'){ toggleAddRow(false); } }); });
     var ta=document.getElementById('test-add'); if(ta)ta.onclick=function(){ editTest(-1); };
     var ap=document.getElementById('atrt-push'); if(ap)ap.onclick=pushUniquesToPlans;
     var au=document.getElementById('atrt-undo'); if(au)au.onclick=undoPushToPlans;
