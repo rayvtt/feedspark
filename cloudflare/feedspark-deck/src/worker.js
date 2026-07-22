@@ -380,7 +380,7 @@ function getEditorScript(slug) {
   var DESIGN_SEL='.card,.stat,.pipe-card,.proto,.flow-step,.en-card,.tier,.mo,.sc-cell,.ask,.callout,.note,.ag-row'
     + ',.chapter,header.hero,.pill,.ct,.q,.feedrow,.agent,.agent-l,.agent-r,.eyebrow,.lede,.sec-sub'
     + ',h1,h2,h3,h4,h5,p,li,blockquote,figcaption,img,table,code';
-  var blockN=0, groupN=0, groupIds=new WeakMap(), rowN={};
+  var blockN={}, groupN={}, groupIds=new WeakMap(), rowN={};
   var FEEDBACK=[], fbN=0;
   function esc(s){ return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -541,8 +541,32 @@ function getEditorScript(slug) {
   function editable(){ return Array.prototype.slice.call(document.querySelectorAll(SEL)).filter(function(el){
     return !el.closest('.de-bar') && !el.closest('.de-panel') && el.textContent.trim().length>0; }); }
 
-  // Deterministic by DOM order so KV keys line up across reloads and template pushes.
-  function assignEids(){ var i=0; editable().forEach(function(el){ if(!el.getAttribute('data-eid')) el.setAttribute('data-eid','e'+i); i++; }); }
+  // Chapter-scoped id assignment. A pure global "Nth element in document order" counter
+  // (the original scheme) looks deterministic, but isn't: editing chapter 3 to add a card
+  // shifts the index of every element in chapters 4-14, so a saved KV edit like "e214: {...}"
+  // silently re-lands on a completely different, unrelated element after the next template
+  // push — a stale style edit becomes a rogue margin on some other box, a stale text edit
+  // becomes text in a location that never asked for it, a stale delete tombstone removes
+  // the wrong heading. Scoping every counter to the nearest preceding chapter id (c1, c2, ...)
+  // means a structural change in one chapter can only ever shift ids *within that same
+  // chapter* — every other chapter's saved edits keep lining up across template pushes. A
+  // key that no longer matches any element is simply skipped on load (see loadEdits), not
+  // misapplied, so this also self-heals edits that were already corrupted by the old scheme.
+  var CHAPTERS = Array.prototype.slice.call(document.querySelectorAll('.chapter[id]'));
+  function chapterKeyFor(el){
+    var found='top';
+    for(var i=0;i<CHAPTERS.length;i++){
+      var c=CHAPTERS[i];
+      if(c===el || (c.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)) found=c.id; else break;
+    }
+    return found;
+  }
+  var eidN={};
+  function assignEids(){ editable().forEach(function(el){
+    if(el.getAttribute('data-eid')) return;
+    var k=chapterKeyFor(el); eidN[k]=(eidN[k]||0);
+    el.setAttribute('data-eid', k+'-e'+(eidN[k]++));
+  }); }
 
   function loadEdits(){ fetch(API+'/api/edits?page='+PAGE).then(function(r){ return r.json(); }).then(function(ed){
     if(!ed) return;
@@ -575,10 +599,10 @@ function getEditorScript(slug) {
   // ---- row drag-and-drop reordering — works even in presentation mode (bar hidden),
   // drag starts only from a row's first cell so text selection elsewhere is unaffected.
   function initRowDrag(){
-    var tid=0;
+    var tidN={};
     document.querySelectorAll('.tbl-wrap table').forEach(function(table){
       var tb=table.querySelector('tbody'); if(!tb) return;
-      var tKey=table.getAttribute('data-tid'); if(!tKey){ tKey='t'+(tid++); table.setAttribute('data-tid',tKey); }
+      var tKey=table.getAttribute('data-tid'); if(!tKey){ var tk=chapterKeyFor(table); tidN[tk]=(tidN[tk]||0); tKey=tk+'-t'+(tidN[tk]++); table.setAttribute('data-tid',tKey); }
       var rid=0;
       Array.prototype.forEach.call(tb.children,function(tr){
         if(tr.tagName!=='TR') return;
@@ -636,11 +660,11 @@ function getEditorScript(slug) {
   function assignBlockIds(){
     document.querySelectorAll(DESIGN_SEL).forEach(function(el){
       if(el.closest('.de-bar,.de-panel,.de-props,.de-fbpanel')) return;
-      if(!el.getAttribute('data-eid')) el.setAttribute('data-eid','b'+(blockN++));
+      if(!el.getAttribute('data-eid')){ var bk=chapterKeyFor(el); blockN[bk]=(blockN[bk]||0); el.setAttribute('data-eid', bk+'-b'+(blockN[bk]++)); }
       el.setAttribute('data-de-block','1');
       var parent=el.parentElement; if(!parent) return;
       var tid=groupIds.get(parent);
-      if(!tid){ tid='g'+(groupN++); groupIds.set(parent,tid); parent.setAttribute('data-tid',tid); }
+      if(!tid){ var gk=chapterKeyFor(parent); groupN[gk]=(groupN[gk]||0); tid=gk+'-g'+(groupN[gk]++); groupIds.set(parent,tid); parent.setAttribute('data-tid',tid); }
       if(!el.getAttribute('data-rid')) el.setAttribute('data-rid', tid+'-r'+(rowN[tid]=(rowN[tid]||0)+1));
     });
   }
