@@ -193,6 +193,35 @@ export default {
       }
     }
 
+    // ---- Google connection status (Option A: service account + domain-wide delegation) ----
+    if (path === '/api/google/status' && request.method === 'GET') {
+      return json({ configured: !!env.GOOGLE_SA_JSON, impersonate: env.GOOGLE_IMPERSONATE || null });
+    }
+
+    // ---- Gmail intake: recent client task emails → Workflow "Incoming emails" stream ----
+    // Reads (readonly) the impersonated mailbox via the service account. Degrades to
+    // {connected:false, items:[]} until GOOGLE_SA_JSON + GOOGLE_IMPERSONATE are set.
+    if (path === '/api/gmail/intake' && request.method === 'GET') {
+      if (!env.GOOGLE_SA_JSON || !env.GOOGLE_IMPERSONATE) return json({ connected: false, items: [] });
+      try {
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/gmail.readonly');
+        const q = encodeURIComponent('newer_than:30d -in:sent -in:chats');
+        const listRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=25&q=' + q, { headers: { Authorization: 'Bearer ' + token } });
+        const list = await listRes.json();
+        const ids = (list.messages || []).slice(0, 15).map(m => m.id);
+        const items = [];
+        for (const id of ids) {
+          const mRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date', { headers: { Authorization: 'Bearer ' + token } });
+          const m = await mRes.json();
+          const h = {}; ((m.payload && m.payload.headers) || []).forEach(x => { h[x.name.toLowerCase()] = x.value; });
+          items.push({ id, from: h.from || '', subject: h.subject || '(no subject)', date: h.date || '', snippet: (m.snippet || '').slice(0, 160) });
+        }
+        return json({ connected: true, items });
+      } catch (e) {
+        return json({ connected: false, error: String((e && e.message) || e), items: [] });
+      }
+    }
+
     // ---- serve a git-bundled page + inject the editor widget for its slug ----
     // App pages (everything except client-facing /deck/* decks) also get the Tachyon copilot.
     const page = PAGES[path];
@@ -218,6 +247,39 @@ export default {
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS } });
+}
+
+// ---- Google service-account auth: sign a JWT with the SA private key, impersonate the
+// GOOGLE_IMPERSONATE user (domain-wide delegation), exchange it for a scoped access token.
+// All WebCrypto — no external deps. Throws if GOOGLE_SA_JSON isn't set / the grant fails.
+function b64urlBuf(buf) {
+  let s = ''; const bytes = new Uint8Array(buf);
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64urlStr(str) { return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function pemToArrayBuffer(pem) {
+  const b64 = pem.replace(/-----BEGIN [^-]+-----/, '').replace(/-----END [^-]+-----/, '').replace(/\s+/g, '');
+  const bin = atob(b64); const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return buf.buffer;
+}
+async function googleToken(env, scope) {
+  const sa = JSON.parse(env.GOOGLE_SA_JSON);
+  const now = Math.floor(Date.now() / 1000);
+  const claim = { iss: sa.client_email, scope, aud: 'https://oauth2.googleapis.com/token', exp: now + 3600, iat: now };
+  if (env.GOOGLE_IMPERSONATE) claim.sub = env.GOOGLE_IMPERSONATE;
+  const unsigned = b64urlStr(JSON.stringify({ alg: 'RS256', typ: 'JWT' })) + '.' + b64urlStr(JSON.stringify(claim));
+  const key = await crypto.subtle.importKey('pkcs8', pemToArrayBuffer(sa.private_key), { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(unsigned));
+  const jwt = unsigned + '.' + b64urlBuf(sig);
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: 'grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=' + encodeURIComponent(jwt),
+  });
+  const data = await res.json();
+  if (!data.access_token) throw new Error('token ' + (data.error || res.status) + ' ' + (data.error_description || ''));
+  return data.access_token;
 }
 
 // Injected before </body>. Self-contained editor:

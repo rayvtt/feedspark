@@ -475,10 +475,15 @@ window.addEventListener('load',restore);
     CLIENTS.forEach(function(c){ var p=PT[c]; if(!p||!p.latest)return;
       p.latest.forEach(function(t){ if(t.b==='open'||t.b==='progress'){ out.push({client:c,task:t.t,cat:t.c,owner:t.o,source:'plan'}); } }); });
     return out; }
-  function emailIntake(){ // email-sourced items awaiting a brief (fills once the Gmail sync is on)
-    return Object.keys(BRIEFS).map(function(k){return BRIEFS[k];})
+  var gmailItems=[]; // live client emails pulled from Gmail (once the service account is connected)
+  function senderName(from){ var m=/^\s*"?([^"<]+?)"?\s*</.exec(from||''); if(m)return m[1].trim();
+    var e=/([^@<\s]+)@/.exec(from||''); return e?e[1]:(from||'—'); }
+  function emailIntake(){ // email-sourced items awaiting a brief
+    var fromBriefs=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];})
       .filter(function(b){return b.source==='email'&&b.status==='intake';})
-      .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email'};}); }
+      .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email'};});
+    var fromGmail=gmailItems.map(function(g){return {client:senderName(g.from),task:g.subject,cat:'',owner:senderName(g.from),source:'email',from:g.from};});
+    return fromBriefs.concat(fromGmail); }
   function allIntake(){ return planOpen().concat(emailIntake()); }
   var itState={src:'',client:'',q:'',sort:'client',dir:1};
   function renderIntake(){
@@ -645,5 +650,11 @@ window.addEventListener('load',restore);
     document.getElementById('bg-due').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); })();
   refreshPreview();
   apiGet().then(function(d){ BRIEFS=d||{}; renderAll(); });
+  // pull the live Gmail intake (client task emails) once the service account is connected
+  (function(){ var dot=document.getElementById('gdot'), st=document.getElementById('gstate');
+    fetch('/api/gmail/intake').then(function(r){return r.json();}).then(function(d){
+      if(d && d.connected){ gmailItems=d.items||[]; if(dot)dot.classList.add('on');
+        if(st)st.textContent='Connected — '+gmailItems.length+' recent client email'+(gmailItems.length===1?'':'s')+' in the intake below.'; renderAll(); }
+    }).catch(function(){}); })();
 })();
 </script>
