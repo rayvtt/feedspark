@@ -218,6 +218,13 @@ window.addEventListener('load',restore);
   .dz-work{margin-top:14px}
   .dz-work>h4{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--orange-deep);font-weight:900;margin:0 0 6px}
   .worklist{list-style:none;margin:0;padding:0}
+  .wl-item .stat-sel{font:inherit;font-size:11px;font-weight:800;border:1px solid var(--line);border-radius:100px;padding:3px 7px;background:var(--paper);color:var(--ink-2);cursor:pointer;max-width:132px;flex:none;align-self:center}
+  .wl-item .stat-sel:hover{border-color:var(--orange)}
+  .wl-item .stat-sel.tag-done{color:var(--good);border-color:#CDE9D8}
+  .wl-item .stat-sel.tag-hold{color:var(--muted);border-color:var(--line)}
+  .wl-item .stat-sel.tag-progress{color:#2F6FB0;border-color:#CFE0F0}
+  .wl-item .stat-sel.tag-client{color:var(--navy);border-color:#CFDBEA}
+  .wl-item .stat-sel.tag-open{color:var(--orange-ink);border-color:#F3D9B8}
   .wl-item{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:11px 2px;border-bottom:1px solid var(--line)}
   .wl-item:last-child{border-bottom:0}
   .wl-ic{width:32px;height:32px;border-radius:9px;background:var(--wash);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex:none}
@@ -679,11 +686,28 @@ window.addEventListener('load',restore);
     return {t:t.t, ae:t.o, c:(PCAT[t.c]||'opt'), s:t.s, b:t.b||'open', x:(t.c==='test')}; }); }
   function btag(s,b){ var c=(b==='done'||b==='hold'||b==='progress')?b:'open';
     return '<span class="tag tag-'+c+'">'+esc(s||(b==='done'?'Done':'Open'))+'</span>'; }
+  // editable status → bucket (colour) mapping + a pill-styled <select> that writes back to the plan
+  var STATUS_OPTS=['Open','In Progress','On Hold','With Client','Done'];
+  function bucketOf(s){ s=String(s||'').toLowerCase();
+    if(/(done|complete|finish|live|delivered|actioned)/.test(s))return 'done';
+    if(/(hold|park)/.test(s))return 'hold';
+    if(/(progress|wip|ongoing)/.test(s))return 'progress';
+    if(/client/.test(s))return 'client'; return 'open'; }
+  function statSel(t){ var cur=String(t.s||(t.b==='done'?'Done':'Open'));
+    var c=t.b||bucketOf(cur); if(['done','hold','progress','client','open'].indexOf(c)<0)c=bucketOf(cur);
+    var found=false;
+    var opts=STATUS_OPTS.map(function(o){ var sel=o.toLowerCase()===cur.toLowerCase(); if(sel)found=true;
+      return '<option'+(sel?' selected':'')+'>'+esc(o)+'</option>'; }).join('');
+    if(!found) opts='<option selected>'+esc(cur)+'</option>'+opts;
+    return '<select class="stat-sel tag-'+c+'" title="Change status — writes back to the project plan">'+opts+'</select>'; }
+  function tzt(m){ var t=document.createElement('div'); t.className='fcc-toast'; t.textContent=m;
+    t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1A365D;color:#fff;padding:9px 15px;border-radius:8px;z-index:99999;font:700 13px sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.2)';
+    document.body.appendChild(t); setTimeout(function(){t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(function(){t.remove();},300);},2200); }
   function planList(items){ if(!items.length) return '<p class="dz-empty">No tasks in the latest sections.</p>';
     return '<ul class="worklist">'+items.map(function(t){ var c=t.c||'opt';
-      return '<li class="wl-item" data-b="'+esc(t.b)+'"><span class="wl-ic ic-'+c+'" title="'+(CATLBL[c]||c)+'">'+(ICONS[c]||ICONS.tech)+'</span>'
+      return '<li class="wl-item" data-b="'+esc(t.b)+'" data-task="'+esc(t.t)+'"><span class="wl-ic ic-'+c+'" title="'+(CATLBL[c]||c)+'">'+(ICONS[c]||ICONS.tech)+'</span>'
         +'<span class="wl-body"><span class="wl-t">'+esc(t.t)+(t.x?'<span class="wl-test">test</span>':'')+'</span>'
-        +'<span class="wl-meta">'+esc(t.ae||'—')+'</span></span>'+btag(t.s,t.b)+'</li>'; }).join('')+'</ul>'; }
+        +'<span class="wl-meta">'+esc(t.ae||'—')+'</span></span>'+statSel(t)+'</li>'; }).join('')+'</ul>'; }
   var WLF=[['','All'],['open','Open'],['progress','In progress'],['hold','On hold'],['done','Done']];
   function filterBar(){ return '<div class="wl-filter" id="wlf">'+WLF.map(function(f){
     return '<button class="wf'+(f[0]===''?' on':'')+'" data-b="'+f[0]+'">'+f[1]+'</button>'; }).join('')+'</div>'; }
@@ -777,6 +801,9 @@ window.addEventListener('load',restore);
   function render(name){
     cur=name; var b=B[name]||{}, p=PT[name];
     var tasks = p ? planItems(p) : ((A.brands&&A.brands[name])||[]);
+    // overlay any locally-saved status changes (2-way: also written to the plan sheet)
+    try{ var _ov=JSON.parse(localStorage.getItem('fcc-taskstatus')||'{}');
+      tasks.forEach(function(t){ var v=_ov[name+'|'+t.t]; if(v){ t.s=v; t.b=bucketOf(v); } }); }catch(e){}
     var tst=tasks.filter(function(t){return t.x;}), od=A.overdue[name]||0;
     var workHtml = p
       ? '<div class="dz-work"><div class="dz-work-head"><h4>Active work <span class="dz-sub">latest sections</span> <span class="dz-histn">'+tasks.length+' shown</span></h4>'+filterBar()+'</div>'+planList(tasks)+'</div>'+volChart(p)
@@ -827,6 +854,22 @@ window.addEventListener('load',restore);
         Array.prototype.forEach.call(wlf.querySelectorAll('.wf'),function(x){x.classList.remove('on');}); btn.classList.add('on');
         var bk=btn.getAttribute('data-b');
         Array.prototype.forEach.call(lis,function(li){ li.style.display=(!bk||li.getAttribute('data-b')===bk)?'':'none'; }); }; }); }
+    // ---- 2-way status: change a status pill -> save locally + write it back to the plan sheet ----
+    var sheetId=(function(){ var m=/\/d\/([a-zA-Z0-9_-]{20,})/.exec((b&&b.plan)||''); return m?m[1]:''; })();
+    Array.prototype.forEach.call(detail.querySelectorAll('.stat-sel'),function(sel){
+      sel.addEventListener('change',function(){
+        var li=sel.closest('.wl-item'), task=li?li.getAttribute('data-task'):'', val=sel.value;
+        var bk=bucketOf(val); sel.className='stat-sel tag-'+bk; if(li) li.setAttribute('data-b',bk);
+        try{ var ov=JSON.parse(localStorage.getItem('fcc-taskstatus')||'{}'); ov[name+'|'+task]=val; localStorage.setItem('fcc-taskstatus',JSON.stringify(ov)); }catch(e){}
+        if(!sheetId){ tzt('Status saved · link '+name+'’s plan sheet to write it back'); return; }
+        tzt('Writing status to '+name+'’s plan…');
+        fetch('/api/sheets/status',{method:'POST',headers:{'content-type':'application/json'},
+          body:JSON.stringify({id:sheetId,tab:'Project Plan',match:task,value:val})})
+          .then(function(r){return r.json();})
+          .then(function(d){ tzt(d.ok?('✓ Written to '+d.cell):('Sheet: '+(d.error||'write failed'))); })
+          .catch(function(){ tzt('Sheet write failed — check the plan is shared with the service account'); });
+      });
+    });
     Array.prototype.forEach.call(list.children,function(x){x.classList.toggle('on',x.getAttribute('data-b')===name);});
   }
   function buildList(){

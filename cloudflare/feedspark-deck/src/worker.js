@@ -238,6 +238,48 @@ export default {
       } catch (e) { return json({ connected: false, error: String((e && e.message) || e), values: [] }); }
     }
 
+    // ---- 2-way status: write a task's status back into its Project-Plan tab ----
+    // POST { id, tab?, match, value, statusCol? }. Reads the tab, finds the row whose
+    // description matches `match`, detects the Status column from the header (or uses
+    // statusCol), and writes `value` there. No delegation — the sheet is shared with the SA.
+    if (path === '/api/sheets/status' && request.method === 'POST') {
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' });
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const id = body.id, tab = body.tab || 'Project Plan', match = String(body.match || '').trim(), value = body.value;
+      if (!id || !match || value == null) return json({ ok: false, error: 'missing id / match / value' }, 400);
+      try {
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
+        const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+        const rd = await rr.json();
+        if (rd.error) return json({ ok: false, error: rd.error.message });
+        const rows = rd.values || [];
+        const norm = s => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        // status column: explicit, else from a header row that names it
+        let statusCol = (typeof body.statusCol === 'number') ? body.statusCol : -1;
+        if (statusCol < 0) {
+          for (let r = 0; r < Math.min(rows.length, 20); r++) {
+            const idx = (rows[r] || []).findIndex(c => /^(status|task status|progress)$/i.test(String(c || '').trim()));
+            if (idx >= 0) { statusCol = idx; break; }
+          }
+        }
+        // data row: description cell that matches (either direction, first ~45 chars)
+        const key = norm(match).slice(0, 45); let targetRow = -1;
+        for (let r = 0; r < rows.length; r++) {
+          if ((rows[r] || []).some(c => { const cn = norm(c); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; }
+        }
+        if (targetRow < 0) return json({ ok: false, error: 'task row not found in ' + tab, match });
+        if (statusCol < 0) return json({ ok: false, error: 'no Status column header found — pass statusCol', row: targetRow + 1 });
+        const cell = tab + '!' + colLetter(statusCol) + (targetRow + 1);
+        const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(cell) + '?valueInputOption=USER_ENTERED', {
+          method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' },
+          body: JSON.stringify({ values: [[value]] }),
+        });
+        const wd = await wr.json();
+        if (wd.error) return json({ ok: false, error: wd.error.message, cell });
+        return json({ ok: true, cell, updated: wd.updatedCells || 1 });
+      } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
+    }
+
     // ---- serve a git-bundled page + inject the editor widget for its slug ----
     // App pages (everything except client-facing /deck/* decks) also get the Tachyon copilot.
     const page = PAGES[path];
@@ -274,6 +316,7 @@ function b64urlBuf(buf) {
   return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 function b64urlStr(str) { return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function colLetter(n) { let s = ''; n = n + 1; while (n > 0) { const r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26); } return s; }
 function pemToArrayBuffer(pem) {
   const b64 = pem.replace(/-----BEGIN [^-]+-----/, '').replace(/-----END [^-]+-----/, '').replace(/\s+/g, '');
   const bin = atob(b64); const buf = new Uint8Array(bin.length);
