@@ -259,10 +259,11 @@
     var t=TYPES.filter(function(x){return x[0]===cfg.type;})[0];
     var lbl={"1m":"Last month","3m":"Last 3 months","6m":"Last 6 months","fy":"Full FY","all":"All-time"}[cfg.lookback];
     var client=cfg.client||"[Prospect / generic]";
+    var slug=(cfg.client||"").toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
     var o="# "+client+" — "+t[1]+" deck\n\n";
-    o+="- Client: "+client+"\n- Deck type: "+t[1]+"\n- Look-back: "+lbl+"\n- Sections: "+cfg.out.length+"\n\n## Outline\n";
+    o+="- Client: "+client+(slug?" (slug: "+slug+")":"")+"\n- Deck type: "+t[1]+" (id: "+t[0]+")\n- Look-back: "+lbl+"\n- Sections: "+cfg.out.length+"\n\n## Outline\n";
     if(!cfg.out.length){ o+="_No sections yet._\n"; }
-    else cfg.out.forEach(function(id,i){ var s=SMAP[id]; o+=(i+1)+". **"+txt(s[1])+"** — "+txt(s[2])+"\n"; });
+    else cfg.out.forEach(function(id,i){ var s=SMAP[id]; o+=(i+1)+". **"+txt(s[1])+"** (`"+id+"`) — "+txt(s[2])+"\n"; });
     if(cfg.client && PT[cfg.client]){ var p=PT[cfg.client];
       o+="\n## Live data to weave in (from the plan)\n- Feed-optimisation score: "+p.score+"/100\n- Tasks: "+p.total+" total · "+p.done+" done · "+p.open+" open\n"; }
     o+="\n_Generated from the FeedSpark Deck Generator. Send back to draft each section with Tachyon._\n";
