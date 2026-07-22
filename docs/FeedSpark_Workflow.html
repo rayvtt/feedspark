@@ -317,6 +317,8 @@ window.addEventListener('load',restore);
   .itbl .c-task{color:var(--ink);line-height:1.3;white-space:normal;word-break:break-word}
   .itbl .c-owner{color:var(--muted);font-weight:700;white-space:nowrap;text-overflow:ellipsis}
   .itbl .c-due{color:var(--ink-2);font-weight:700;white-space:nowrap}
+  .itbl .c-due-ed{cursor:pointer}
+  .itbl .c-due-ed:hover{color:var(--orange-deep);text-decoration:underline}
   .itbl .feed-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--orange-ink);background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.28);border-radius:6px;padding:2px 7px;white-space:nowrap}
   .itbl .src-tag{font-size:10px;font-weight:800;border-radius:100px;padding:2px 9px;border:1px solid;white-space:nowrap}
   .itbl .src-plan{color:#5B82BE;background:rgba(91,130,190,.13);border-color:rgba(91,130,190,.32)}
@@ -701,14 +703,14 @@ window.addEventListener('load',restore);
   // local status overlay applied and new-since-snapshot rows flagged. The status filter (default
   // "to action") keeps the brief flow focused; switch it to see/edit any status.
   var _planCache=null;
-  function planTasks(){ if(_planCache)return _planCache; var out=[], ov=statusOverlay();
+  function planTasks(){ if(_planCache)return _planCache; var out=[], ov=statusOverlay(), duo=dueOverlay();
     CLIENTS.forEach(function(c){
       var live=LIVE[c]&&LIVE[c].tasks, snap=(PT[c]&&PT[c].latest)||[];
       var isLive=!!(live&&live.length), list=isLive?live:snap;
       var newSet=(isLive&&LIVE[c].newSet)||{};
       list.forEach(function(t){ var task=t.t, k=c+'|'+task, ovv=ov[k];
         var s=ovv!=null?ovv:t.s, b=ovv!=null?bucketOf(ovv):(t.b||bucketOf(s));
-        var dd=t.d||''; if(!dd && /\d{1,2}[\/-]\d{1,2}|\d{1,2}\s+[a-z]{3}/i.test(String(t.s||''))) dd=t.s;   // live due col, or a date sitting in the snapshot status
+        var dd=(duo[k]!=null?duo[k]:(t.d||'')); if(!dd && /\d{1,2}[\/-]\d{1,2}|\d{1,2}\s+[a-z]{3}/i.test(String(t.s||''))) dd=t.s;   // due override, else live due col / snapshot-status date
         out.push({client:c,task:task,cat:t.c,owner:t.o||'—',source:'plan',s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||'',d:dd}); });
     });
     _planCache=out; return out; }
@@ -751,7 +753,7 @@ window.addEventListener('load',restore);
     if(/data field|attribute|material|content id|size/.test(t))return 'data'; if(/meta|social|\blia\b|ppc|dpa|reddit/.test(t))return 'channel';
     if(/call|review|proposal|quote|contract|billing|strateg|qbr|package|audit|loyalty|risk|scope/.test(t))return 'account';
     return 'opt'; }
-  function carryTasks(){ var ov=statusOverlay(); CARRY_DUP=0;
+  function carryTasks(){ var ov=statusOverlay(), duo=dueOverlay(); CARRY_DUP=0;
     // index plan tasks per client so an ATRT row that already exists in the plan is hidden
     var idx={}; planTasks().forEach(function(p){ (idx[p.client]=idx[p.client]||[]).push(p.task); });
     var out=[];
@@ -761,7 +763,7 @@ window.addEventListener('load',restore);
       var k=t.c+'|'+t.t; if(CARRY_STAT[k]==='__deleted__'||DELETED[k])return;
       var st=ov[k]!=null?ov[k]:(CARRY_STAT[k]!=null?CARRY_STAT[k]:t.s);
       out.push({client:t.c,task:t.t,cat:classifyLite(t.t),owner:t.ae||'—',source:'atrt',s:st,b:bucketOf(st),
-        due:t.due||'',dk:t.dk||null,thread:t.th||'',isTest:t.x,sheet:''}); });
+        d:(duo[k]||dkIso(t.dk)||t.due||''),due:t.due||'',dk:t.dk||null,thread:t.th||'',isTest:t.x,sheet:''}); });
     return out; }
   function writeCarryover(client,task,val){ var k=client+'|'+task; CARRY_STAT[k]=val; saveStatus(client,task,val);
     fetch('/api/carryover',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(CARRY_STAT)}).catch(function(){});
@@ -823,7 +825,35 @@ window.addEventListener('load',restore);
     var by={}; planTasks().forEach(function(t){ var d=taskDate(t); if(!d)return; (by[t.client]=by[t.client]||{})[monthKey(d)]=1; });
     var map={}; Object.keys(by).forEach(function(b){ var ms=Object.keys(by[b]).sort().reverse().slice(0,n); map[b]={}; ms.forEach(function(m){ map[b][m]=1; }); });
     return map; }
-  function taskDate(t){ if(t&&t.dk)return new Date(t.dk[0],t.dk[1]-1,t.dk[2]); if(t&&t.d)return parseUKDate(t.d); return null; }
+  function taskDate(t){ if(t&&t.d){ var p=parseUKDate(t.d); if(p)return p; } if(t&&t.dk)return new Date(t.dk[0],t.dk[1]-1,t.dk[2]); return null; }
+  function dkIso(dk){ return dk ? (dk[0]+'-'+pad(dk[1])+'-'+pad(dk[2])) : ''; }
+  function dueOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskdue')||'{}');}catch(e){return {};} }
+  function saveDueLocal(c,t,iso){ try{var o=dueOverlay(); if(iso)o[c+'|'+t]=iso; else delete o[c+'|'+t]; localStorage.setItem('fcc-taskdue',JSON.stringify(o));}catch(e){} }
+  // edit a due date: input DDMM -> display "DD Mon" -> write back to PP as DD/MM/YYYY (2-way)
+  function editDue(t){
+    var cur=taskDate(t), curv=cur?(pad(cur.getDate())+pad(cur.getMonth()+1)):'';
+    var v=prompt('Due date — type DDMM (e.g. 2707 = 27 Jul). Blank to clear:', curv);
+    if(v===null)return; v=(''+v).replace(/\D/g,''); var iso='';
+    if(v){ if(v.length===4){ var dd=+v.slice(0,2), mm=+v.slice(2,4);
+        if(dd<1||dd>31||mm<1||mm>12){ toast('Use DDMM — e.g. 2707'); return; }
+        var y=today().getFullYear(), d=new Date(y,mm-1,dd);
+        if((d-today())/86400000 < -60) d=new Date(y+1,mm-1,dd);   // a near-past DDMM rolls to next year
+        iso=d.getFullYear()+'-'+pad(mm)+'-'+pad(dd); }
+      else if(v.length===8){ iso=v.slice(4,8)+'-'+v.slice(2,4)+'-'+v.slice(0,2); }   // DDMMYYYY
+      else { toast('Type 4 digits: DDMM'); return; } }
+    setDue(t, iso);
+  }
+  function setDue(t, iso){
+    saveDueLocal(t.client, t.task, iso);
+    var ddmy = iso ? (iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4)) : '';   // DD/MM/YYYY for the sheet
+    if(t.source==='plan'){ var id=PLANSHEET[t.client];
+      if(id){ toast('Writing due date to '+t.client+'’s plan…');
+        fetch('/api/sheets/due',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',match:t.task,value:ddmy})})
+          .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Due → '+d.cell):('Sheet: '+((d&&d.error)||'write failed'))); }).catch(function(){ toast('Due write failed — needs a Due column shared with the SA'); });
+      } else { toast('Saved · no plan sheet linked to write it back'); }
+    } else { toast(iso?'Due updated':'Due cleared'); }
+    renderAll();
+  }
   function dueDisplay(t){ var d=taskDate(t); if(!d)return '—';
     return d.getDate()===1 ? d.toLocaleDateString('en-GB',{month:'short',year:'2-digit'})   // month-section
                            : d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}); }  // specific date
@@ -855,11 +885,14 @@ window.addEventListener('load',restore);
       return '<tr data-k="'+esc(k)+'"><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
         +'<td class="c-client">'+esc(t.client)+badge+'</td><td>'+feed+'</td>'
         +'<td class="c-task">'+esc(t.task)+'</td><td class="c-owner">'+esc(t.owner||'—')+'</td>'
-        +'<td class="c-due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>'
+        +((t.source==='plan'||t.source==='atrt')
+           ?'<td class="c-due c-due-ed" data-i="'+i+'" title="Set due date (type DDMM)">'+esc(dueDisplay(t))+'</td>'
+           :'<td class="c-due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>')
         +stat+'<td>'+src+'</td><td class="c-act"><button class="del-btn" data-i="'+i+'" title="Delete task">✕</button><button class="brief-btn" data-i="'+i+'">Brief</button></td></tr>';
     }).join('') : '<tr><td colspan="9" class="it-empty">'+(itState.src==='email'?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
     body.querySelectorAll('.brief-btn').forEach(function(btn){ btn.onclick=function(){ prefill(f[+btn.getAttribute('data-i')]); }; });
     body.querySelectorAll('.del-btn').forEach(function(btn){ btn.onclick=function(){ deleteTask(f[+btn.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.c-due-ed').forEach(function(td){ td.onclick=function(){ editDue(f[+td.getAttribute('data-i')]); }; });
     body.querySelectorAll('.it-cb').forEach(function(cb){ cb.onchange=function(){ var t=f[+cb.getAttribute('data-i')]; if(cb.checked)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; renderBulk(); }; });
     body.querySelectorAll('.c-stat .stat-sel').forEach(function(sel){ sel.onchange=function(){ var td=sel.closest('.c-stat');
       var cl=td.getAttribute('data-client'), tk=td.getAttribute('data-task');
