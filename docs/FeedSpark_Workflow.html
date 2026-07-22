@@ -305,7 +305,7 @@ window.addEventListener('load',restore);
   #itbl{table-layout:fixed}
   #itbl col.cw-cb{width:30px}#itbl col.cw-client{width:9.5%}#itbl col.cw-feed{width:8.5%}
   #itbl col.cw-task{width:auto}#itbl col.cw-owner{width:8.5%}#itbl col.cw-due{width:56px}
-  #itbl col.cw-status{width:104px}#itbl col.cw-source{width:72px}#itbl col.cw-act{width:60px}
+  #itbl col.cw-status{width:104px}#itbl col.cw-source{width:70px}#itbl col.cw-act{width:96px}
   .itbl thead th{position:sticky;top:0;background:var(--paper);z-index:2;text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);padding:9px 8px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;box-shadow:inset 0 -1px 0 var(--line);overflow:hidden;text-overflow:ellipsis}
   .itbl thead th.it-act{text-align:right;cursor:default}
   .itbl thead th[data-k]:hover{color:var(--orange-deep)}
@@ -328,7 +328,9 @@ window.addEventListener('load',restore);
   #atrt-push{border-color:#7A5AA8;color:#7A5AA8}
   #atrt-push:hover{background:#7A5AA8;color:#fff}
   .itbl .c-act{text-align:right;white-space:nowrap}
-  .itbl .brief-btn{font:inherit;font-size:11.5px;font-weight:800;padding:5px 13px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
+  .itbl .brief-btn{font:inherit;font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
+  .itbl .del-btn{font:inherit;font-size:12px;font-weight:800;padding:4px 7px;margin-right:4px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer}
+  .itbl .del-btn:hover{border-color:#C0392B;color:#C0392B}
   .itbl .brief-btn:hover{background:var(--orange);color:#fff}
   .it-empty{text-align:center;color:var(--muted);font-size:13px;padding:24px}
   .tpl-hint{font-weight:600;color:var(--muted);font-size:11px}
@@ -718,6 +720,27 @@ window.addEventListener('load',restore);
   function sameTask(a,b){ var na=normTask(a), nb=normTask(b); if(!na||!nb)return false; if(na===nb)return true;
     if(na.length>=15&&nb.length>=15&&(na.indexOf(nb)>=0||nb.indexOf(na)>=0))return true; return taskDice(a,b)>=0.6; }
 
+  // ---- deleted tasks (hidden locally; plan deletes also remove the row from the sheet) ----
+  var DELETED={}; try{DELETED=JSON.parse(localStorage.getItem('fcc-deleted')||'{}');}catch(e){}
+  function markDel(c,t){ DELETED[c+'|'+t]=1; try{localStorage.setItem('fcc-deleted',JSON.stringify(DELETED));}catch(e){} }
+  // delete a task — plan rows are removed from the Project-Plan sheet (2-way); others just leave the inbox
+  function deleteTask(t){
+    var msg=t.source==='plan'?('Delete this task and remove its row from '+t.client+'’s Project Plan?\n\n'+t.task)
+                              :('Remove this task from the inbox?\n\n'+t.task);
+    if(!confirm(msg))return;
+    markDel(t.client,t.task);
+    if(t.source==='plan'){ var id=PLANSHEET[t.client];
+      if(id){ toast('Deleting from '+t.client+'’s plan…');
+        fetch('/api/sheets/unappend',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',tasks:[t.task]})})
+          .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Removed '+(d.deleted||0)+' row from the plan'):('Sheet: '+((d&&d.error)||'delete failed — hidden locally'))); if(d&&d.ok)setTimeout(function(){fetchLive(true);},400); })
+          .catch(function(){ toast('Sheet delete failed — hidden locally; check SA has Editor access'); });
+      } else { toast('Hidden — no plan sheet linked to write the delete back'); }
+    } else if(t.source==='atrt'){ var k=t.client+'|'+t.task; CARRY_STAT[k]='__deleted__';
+      fetch('/api/carryover',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(CARRY_STAT)}).catch(function(){});
+      toast('Removed from the inbox');
+    } else { toast('Removed from the inbox'); }
+    renderAll();
+  }
   // ---- ATRT carry-over inbox: the retired tracker's 50 active tasks, now editable in the FCC ----
   var CARRY=(window.ATRTCARRY||[]), CARRY_STAT={}, CARRY_DUP=0;
   function classifyLite(t){ t=(t||'').toLowerCase();
@@ -735,7 +758,8 @@ window.addEventListener('load',restore);
     CARRY.forEach(function(t){ var plan=idx[t.c]||[], isDup=false;
       for(var i=0;i<plan.length;i++){ if(sameTask(t.t,plan[i])){isDup=true;break;} }
       if(isDup){ CARRY_DUP++; return; }
-      var k=t.c+'|'+t.t, st=ov[k]!=null?ov[k]:(CARRY_STAT[k]!=null?CARRY_STAT[k]:t.s);
+      var k=t.c+'|'+t.t; if(CARRY_STAT[k]==='__deleted__'||DELETED[k])return;
+      var st=ov[k]!=null?ov[k]:(CARRY_STAT[k]!=null?CARRY_STAT[k]:t.s);
       out.push({client:t.c,task:t.t,cat:classifyLite(t.t),owner:t.ae||'—',source:'atrt',s:st,b:bucketOf(st),
         due:t.due||'',dk:t.dk||null,thread:t.th||'',isTest:t.x,sheet:''}); });
     return out; }
@@ -808,7 +832,7 @@ window.addEventListener('load',restore);
     return allIntake().filter(function(r){
       var st=itState.status==='act'?(r.b==='open'||r.b==='progress'):(!itState.status||r.b===itState.status);
       var win=true; if(allow && r.source==='plan'){ var pd=taskDate(r); if(pd) win=!!(allow[r.client]&&allow[r.client][monthKey(pd)]); }   // latest-N-months per brand; dateless plan rows always show
-      return win&&st&&(!itState.src||r.source===itState.src)&&(!itState.client||r.client===itState.client)
+      return win&&st&&!DELETED[r.client+'|'+r.task]&&(!itState.src||r.source===itState.src)&&(!itState.client||r.client===itState.client)
         &&(!itState.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(itState.q)>=0); })
       .sort(function(a,b){ var k=itState.sort;
         if(k==='dsort'){ var da=taskDate(a), db=taskDate(b); return ((da?da.getTime():0)-(db?db.getTime():0))*itState.dir; }
@@ -832,9 +856,10 @@ window.addEventListener('load',restore);
         +'<td class="c-client">'+esc(t.client)+badge+'</td><td>'+feed+'</td>'
         +'<td class="c-task">'+esc(t.task)+'</td><td class="c-owner">'+esc(t.owner||'—')+'</td>'
         +'<td class="c-due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>'
-        +stat+'<td>'+src+'</td><td class="c-act"><button class="brief-btn" data-i="'+i+'">Brief →</button></td></tr>';
+        +stat+'<td>'+src+'</td><td class="c-act"><button class="del-btn" data-i="'+i+'" title="Delete task">✕</button><button class="brief-btn" data-i="'+i+'">Brief</button></td></tr>';
     }).join('') : '<tr><td colspan="9" class="it-empty">'+(itState.src==='email'?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
     body.querySelectorAll('.brief-btn').forEach(function(btn){ btn.onclick=function(){ prefill(f[+btn.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.del-btn').forEach(function(btn){ btn.onclick=function(){ deleteTask(f[+btn.getAttribute('data-i')]); }; });
     body.querySelectorAll('.it-cb').forEach(function(cb){ cb.onchange=function(){ var t=f[+cb.getAttribute('data-i')]; if(cb.checked)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; renderBulk(); }; });
     body.querySelectorAll('.c-stat .stat-sel').forEach(function(sel){ sel.onchange=function(){ var td=sel.closest('.c-stat');
       var cl=td.getAttribute('data-client'), tk=td.getAttribute('data-task');
