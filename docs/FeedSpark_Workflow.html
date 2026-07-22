@@ -317,6 +317,8 @@ window.addEventListener('load',restore);
   .itbl .src-plan{color:#5B82BE;background:rgba(91,130,190,.13);border-color:rgba(91,130,190,.32)}
   .itbl .src-email{color:var(--orange-ink);background:rgba(245,166,35,.13);border-color:rgba(245,166,35,.32)}
   .itbl .src-atrt{color:#7A5AA8;background:rgba(122,90,168,.13);border-color:rgba(122,90,168,.34)}
+  .atrt-note{font-size:11.5px;color:var(--muted);margin:-4px 0 11px;font-weight:600}
+  .atrt-note b{color:var(--ink-2);font-weight:800}
   .itbl .c-act{text-align:right;white-space:nowrap}
   .itbl .brief-btn{font:inherit;font-size:11.5px;font-weight:800;padding:5px 13px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
   .itbl .brief-btn:hover{background:var(--orange);color:#fff}
@@ -425,6 +427,7 @@ window.addEventListener('load',restore);
     <input id="it-search" type="search" placeholder="Search tasks, owners…" aria-label="Search intake">
     <span class="it-n" id="it-n"></span>
   </div>
+  <div class="atrt-note" id="atrt-note"></div>
   <div class="it-bulk" id="it-bulk" style="display:none">
     <span class="it-bulk-n" id="it-bulk-n">0 selected</span>
     <button class="btn sm" id="bulk-brief">✉ Batched brief</button>
@@ -682,7 +685,8 @@ window.addEventListener('load',restore);
   // Every plan task (all statuses), preferring LIVE sheet data over the git snapshot, with the
   // local status overlay applied and new-since-snapshot rows flagged. The status filter (default
   // "to action") keeps the brief flow focused; switch it to see/edit any status.
-  function planTasks(){ var out=[], ov=statusOverlay();
+  var _planCache=null;
+  function planTasks(){ if(_planCache)return _planCache; var out=[], ov=statusOverlay();
     CLIENTS.forEach(function(c){
       var live=LIVE[c]&&LIVE[c].tasks, snap=(PT[c]&&PT[c].latest)||[];
       var isLive=!!(live&&live.length), list=isLive?live:snap;
@@ -691,10 +695,17 @@ window.addEventListener('load',restore);
         var s=ovv!=null?ovv:t.s, b=ovv!=null?bucketOf(ovv):(t.b||bucketOf(s));
         out.push({client:c,task:task,cat:t.c,owner:t.o||'—',source:'plan',s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||''}); });
     });
-    return out; }
+    _planCache=out; return out; }
+
+  // ---- fuzzy task matching (ATRT vs plan can be worded differently) ----
+  function normTask(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
+  function taskDice(a,b){ var A=normTask(a).split(' ').filter(function(w){return w.length>2;}), B=normTask(b).split(' ').filter(function(w){return w.length>2;});
+    if(A.length<3||B.length<3)return 0; var sb={}; B.forEach(function(w){sb[w]=1;}); var i=0; A.forEach(function(w){if(sb[w])i++;}); return 2*i/(A.length+B.length); }
+  function sameTask(a,b){ var na=normTask(a), nb=normTask(b); if(!na||!nb)return false; if(na===nb)return true;
+    if(na.length>=15&&nb.length>=15&&(na.indexOf(nb)>=0||nb.indexOf(na)>=0))return true; return taskDice(a,b)>=0.6; }
 
   // ---- ATRT carry-over inbox: the retired tracker's 50 active tasks, now editable in the FCC ----
-  var CARRY=(window.ATRTCARRY||[]), CARRY_STAT={};
+  var CARRY=(window.ATRTCARRY||[]), CARRY_STAT={}, CARRY_DUP=0;
   function classifyLite(t){ t=(t||'').toLowerCase();
     if(/title|mask/.test(t))return 'title'; if(/image|visual|overlay|roundel|cycler|\.jpg/.test(t))return 'image';
     if(/keyword|search term|intent/.test(t))return 'keyword'; if(/custom label|\bcl\d|bestseller|bazaar/.test(t))return 'custom_label';
@@ -703,10 +714,17 @@ window.addEventListener('load',restore);
     if(/data field|attribute|material|content id|size/.test(t))return 'data'; if(/meta|social|\blia\b|ppc|dpa|reddit/.test(t))return 'channel';
     if(/call|review|proposal|quote|contract|billing|strateg|qbr|package|audit|loyalty|risk|scope/.test(t))return 'account';
     return 'opt'; }
-  function carryTasks(){ var ov=statusOverlay(); return CARRY.map(function(t){ var k=t.c+'|'+t.t;
-    var st=ov[k]!=null?ov[k]:(CARRY_STAT[k]!=null?CARRY_STAT[k]:t.s);
-    return {client:t.c,task:t.t,cat:classifyLite(t.t),owner:t.ae||'—',source:'atrt',s:st,b:bucketOf(st),
-      due:t.due||'',dk:t.dk||null,thread:t.th||'',isTest:t.x,sheet:''}; }); }
+  function carryTasks(){ var ov=statusOverlay(); CARRY_DUP=0;
+    // index plan tasks per client so an ATRT row that already exists in the plan is hidden
+    var idx={}; planTasks().forEach(function(p){ (idx[p.client]=idx[p.client]||[]).push(p.task); });
+    var out=[];
+    CARRY.forEach(function(t){ var plan=idx[t.c]||[], isDup=false;
+      for(var i=0;i<plan.length;i++){ if(sameTask(t.t,plan[i])){isDup=true;break;} }
+      if(isDup){ CARRY_DUP++; return; }
+      var k=t.c+'|'+t.t, st=ov[k]!=null?ov[k]:(CARRY_STAT[k]!=null?CARRY_STAT[k]:t.s);
+      out.push({client:t.c,task:t.t,cat:classifyLite(t.t),owner:t.ae||'—',source:'atrt',s:st,b:bucketOf(st),
+        due:t.due||'',dk:t.dk||null,thread:t.th||'',isTest:t.x,sheet:''}); });
+    return out; }
   function writeCarryover(client,task,val){ var k=client+'|'+task; CARRY_STAT[k]=val; saveStatus(client,task,val);
     fetch('/api/carryover',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(CARRY_STAT)}).catch(function(){});
     toast('ATRT task updated · '+val); }
@@ -757,6 +775,8 @@ window.addEventListener('load',restore);
       if(td.getAttribute('data-src')==='atrt') writeCarryover(cl,tk,sel.value); else writeStatus(cl,tk,sel.value);
       setTimeout(renderAll,650); }; });
     var n=document.getElementById('it-n'); if(n)n.textContent=f.length+' task'+(f.length===1?'':'s');
+    var an=document.getElementById('atrt-note'); if(an){ var uniq=CARRY.length-CARRY_DUP;
+      an.innerHTML='<b>ATRT import:</b> '+CARRY.length+' active tasks · <b>'+CARRY_DUP+'</b> already in a project plan (auto-hidden as duplicates) · <b>'+uniq+'</b> unique in this inbox.'; }
     renderBulk();
   }
   // ---- bulk brief + delegate ----
@@ -1143,7 +1163,7 @@ window.addEventListener('load',restore);
   function maybeNotify(){ if(!('Notification' in window)||Notification.permission!=='granted')return; var a=computeAlerts(); if(!a.over.length)return;
     try{ new Notification('FeedSpark — '+a.over.length+' overdue', {body:a.over.slice(0,3).map(function(b){return (b.client||'')+' · '+b.task;}).join('\n')}); }catch(e){} }
 
-  function renderAll(){ renderKPIs(); renderIntake(); renderBoard(); renderSLA(); renderTimeline(); renderTests(); renderWorkload(); renderAlerts(); }
+  function renderAll(){ _planCache=null; renderKPIs(); renderIntake(); renderBoard(); renderSLA(); renderTimeline(); renderTests(); renderWorkload(); renderAlerts(); }
 
   // set a sensible default due date (today + 5 working-ish days) and boot
   (function(){ var d=new Date(); d.setDate(d.getDate()+5);
