@@ -33,6 +33,7 @@ CLBL={"title":"Titles","keyword":"Keywords","data":"Data fields","image":"Imager
       "account":"Account & strategy","opt":"Optimisation"}
 _MON=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 def pk_label(pk): return _MON[pk%100]+" "+("%02d"%(pk//100%100))
+def pk_iso(pk): return ("%04d-%02d-01" % (pk//100, pk%100)) if pk else ""   # month-section date for the FCC date filter
 # curated category weights (feed-optimisation importance)
 WEIGHT={"title":1.3,"keyword":1.3,"data":1.2,"image":1.0,"custom_label":1.0,
         "product_type":1.1,"technical":1.0,"channel":0.9,"test":1.1,"account":0.6,"opt":0.8}
@@ -49,8 +50,16 @@ def score_of(tasks):
     breadth = sum(1 for c in cats if any(t["cat"]==c and t["ns"]=="done" for t in tasks))/max(1,len(WEIGHT))
     return max(1, round(100*(0.75*depth + 0.25*min(1.0,breadth*1.4))))
 
+_HDRWORDS={"owner","task owner","priority","prio","status"}
+_HDRDESC={"action required","action plan","status","priority","owner","areas to optimised","feed comp",
+          "scheduled tasks","am notes","initial optimisation","action after onboarding"}
+def is_hdr(t):
+    # CSV exports drop cell colour, so section-separator rows can slip through the text parser.
+    # Drop them by the tell-tale header leak (owner cell = "Owner", or desc = a section label).
+    o=(t.get("owner") or "").strip().lower(); d=(t.get("desc") or "").strip().lower()
+    return o in _HDRWORDS or d in _HDRDESC or len(d)<4
 def compact(t):
-    return {"t":t["desc"][:150],"o":t["owner"][:40],"c":t["cat"],"s":t["status"][:24],"b":t.get("bk","open")}
+    return {"t":t["desc"][:150],"o":t["owner"][:40],"c":t["cat"],"s":t["status"][:24],"b":t.get("bk","open"),"d":pk_iso(t.get("pk"))}
 
 def brand_payload(tasks, updated):
     s=summarise(tasks)
@@ -66,15 +75,15 @@ def brand_payload(tasks, updated):
         for k in pks[-9:]:
             ts=byp[k]; done=sum(1 for t in ts if t["bk"]=="done")
             vol.append({"l":pk_label(k),"d":done,"o":len(ts)-done})
-        top=set(pks[-3:])
-        latest=[compact(t) for t in tasks if t.get("pk") in top][:80]
+        top=set(pks[-4:])   # carry ~4 recent months so the "latest 2 months" filter has history to expand into
+        latest=[compact(t) for t in tasks if t.get("pk") in top and not is_hdr(t)][:140]
     else:
         volkind="lane"
         vol=[]
         for c in CORDER:
             cc=cats.get(c)
             if cc and cc["total"]: vol.append({"l":CLBL.get(c,c),"d":cc["done"],"o":cc["total"]-cc["done"]})
-        latest=[compact(t) for t in tasks if t["bk"]!="done"][:70]
+        latest=[compact(t) for t in tasks if t["bk"]!="done" and not is_hdr(t)][:70]
     # per-window category aggregates (look-back on the coverage matrix), relative to this brand's latest month
     def midx(pk): return (pk//100)*12+(pk%100-1)
     dated=[t for t in tasks if t.get("pk")]
