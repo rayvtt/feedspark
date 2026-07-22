@@ -330,15 +330,9 @@ export default {
           const ck = 'planlive:' + id;
           let cached = force ? null : await env.EDITS.get(ck, 'json');
           if (!cached) {
-            let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
-            let rd = await rr.json();
-            // tab name varies per plan — if "Project Plan" isn't there, fall back to the first sheet
-            if (rd.error) {
-              rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent('A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
-              rd = await rr.json();
-            }
-            if (rd.error) { out[brand] = { error: rd.error.message, tasks: [] }; seen[id] = out[brand]; continue; }
-            cached = { tasks: parsePlanRows(rd.values || []), updated: Date.now() };
+            const g = await fetchGrid(id, tab, token); // values + background colours (to skip filled separator rows)
+            if (g.error) { out[brand] = { error: g.error, tasks: [] }; seen[id] = out[brand]; continue; }
+            cached = { tasks: parsePlanRows(g.values, g.bg), updated: Date.now() };
             try { await env.EDITS.put(ck, JSON.stringify(cached), { expirationTtl: 300 }); } catch (e) {}
           }
           out[brand] = cached; seen[id] = cached;
@@ -480,9 +474,9 @@ export default {
       const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
       for (const id of ids) {
         try {
-          const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent('Project Plan!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
-          const rd = await rr.json(); if (rd.error) continue;
-          await env.EDITS.put('planlive:' + id, JSON.stringify({ tasks: parsePlanRows(rd.values || []), updated: Date.now() }), { expirationTtl: 5400 });
+          const g = await fetchGrid(id, 'Project Plan', token);
+          if (g.error) continue;
+          await env.EDITS.put('planlive:' + id, JSON.stringify({ tasks: parsePlanRows(g.values, g.bg), updated: Date.now() }), { expirationTtl: 5400 });
         } catch (e) {}
       }
     } catch (e) {}
@@ -550,11 +544,44 @@ function resolveCols(rows) {
     dueCol: colFor(/due|deadline|target date|completion date|^date$/i) };
 }
 // Parse a plan tab's rows into clean task objects for the dashboard.
-function parsePlanRows(rows) {
-  const c = resolveCols(rows), out = [];
+function monthOf(s) { // detect a "month separator" label like "July-26", "Jun 2026", "Mar 26"
+  const m = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*['\s\-\/,.]*((?:20)?\d{2})\b/i.exec(String(s || ''));
+  if (!m) return '';
+  const mo = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'].indexOf(m[1].slice(0, 3).toLowerCase());
+  let y = +m[2]; if (y < 100) y += 2000;
+  return y + '-' + String(mo + 1).padStart(2, '0') + '-01';
+}
+// a non-white cell fill = a section separator (blue/grey header), NOT a task (Ray's rule)
+function isFilled(rgb) { return !!rgb && Math.min(rgb[0], rgb[1], rgb[2]) < 0.93; }
+// read a tab's values AND per-cell background colour (needed to tell separators from tasks)
+async function fetchGrid(id, tab, token) {
+  const fields = 'sheets(properties(title),data(rowData(values(formattedValue,effectiveFormat(backgroundColor)))))';
+  const tryRange = async range => (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '?ranges=' + encodeURIComponent(range) + '&includeGridData=true&fields=' + encodeURIComponent(fields), { headers: { Authorization: 'Bearer ' + token } })).json();
+  let d = await tryRange((tab ? tab + '!' : '') + 'A1:Z600');
+  if (d.error && tab) d = await tryRange('A1:Z600'); // tab name varies — fall back to the first sheet
+  if (d.error) return { error: d.error.message };
+  const sheet = (d.sheets || [])[0];
+  const rowData = (sheet && sheet.data && sheet.data[0] && sheet.data[0].rowData) || [];
+  const values = [], bg = [];
+  for (const row of rowData) {
+    const cells = row.values || [];
+    values.push(cells.map(c => (c && c.formattedValue != null) ? String(c.formattedValue) : ''));
+    bg.push(cells.map(c => { const b = c && c.effectiveFormat && c.effectiveFormat.backgroundColor; return b ? [b.red || 0, b.green || 0, b.blue || 0] : null; }));
+  }
+  return { values, bg, title: (sheet && sheet.properties && sheet.properties.title) || '' };
+}
+function parsePlanRows(values, bg) {
+  const c = resolveCols(values), out = [];
   const start = c.headerRow >= 0 ? c.headerRow + 1 : 0;
-  for (let r = start; r < rows.length; r++) {
-    const row = rows[r] || [];
+  const tcol = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
+  const haveBg = Array.isArray(bg) && bg.length > 0;
+  let curMonth = ''; // ISO first-of-month of the current month section
+  for (let r = start; r < values.length; r++) {
+    const row = values[r] || [];
+    let monthHere = ''; for (let k = 0; k < Math.min(row.length, 6); k++) { monthHere = monthOf(row[k]); if (monthHere) break; }
+    // separator = a filled task cell (with formatting), else fall back to a month-labelled statusless row
+    const isSep = haveBg ? isFilled(((bg[r]) || [])[tcol]) : (!!monthHere && !row.some(v => isStatusTok(v)));
+    if (isSep) { if (monthHere) curMonth = monthHere; continue; }
     // task text: resolved column, else first long non-status/non-date cell
     let task = c.taskCol >= 0 ? row[c.taskCol] : '';
     if (!task || String(task).trim().length < 3) {
@@ -565,8 +592,9 @@ function parsePlanRows(rows) {
     let status = c.statusCol >= 0 ? String(row[c.statusCol] || '').trim() : '';
     if (!isStatusTok(status)) { for (let k = 1; k < Math.min(row.length, 14); k++) { if (isStatusTok(row[k])) { status = String(row[k]).trim(); break; } } }
     const owner = c.ownerCol >= 0 ? String(row[c.ownerCol] || '').trim() : '';
-    const due = c.dueCol >= 0 ? String(row[c.dueCol] || '').trim() : '';
-    out.push({ t: task, o: owner, s: status, b: planBucket(status), c: classifyCat(task), d: due, row: r + 1 });
+    const rawDue = c.dueCol >= 0 ? String(row[c.dueCol] || '').trim() : '';
+    // date = the row's Due column if the plan has one, else the current month-section
+    out.push({ t: task, o: owner, s: status, b: planBucket(status), c: classifyCat(task), d: rawDue || curMonth, row: r + 1 });
   }
   return out;
 }
