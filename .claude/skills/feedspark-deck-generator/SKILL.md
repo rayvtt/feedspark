@@ -205,3 +205,36 @@ commit or a separate one) make a late-breaking conflict a clean rebase instead o
 After pushing, tell Ray the deck's live URL (`/deck/<slug>`) and flag anything you couldn't
 source real data for (Step 2's "never invent numbers" rule) so he knows what still needs a
 human answer before it goes in front of the client.
+
+## Step 7 — Handling a feedback-loop prompt
+
+Every deck has a 💬 Feedback mode: Ray leaves notes anchored to specific chapters/blocks,
+then "Generate rework prompt" compiles them into a markdown block starting `# <slug> deck —
+feedback round, <date>`, with a `## <chapter title>` heading per chapter and his notes as
+bullets underneath. When a prompt in that shape lands in a session, do all three of these —
+not just the deck rework:
+
+1. **Rework the deck.** Open `docs/<Client>_...html`, find each chapter the feedback names,
+   apply the change. Same QA pass as Step 5 (bracket check, nav-count check, worker syntax
+   check) before pushing — a feedback round is still a push to the shared file.
+2. **Save the round as a markdown file**, so there's a durable record of what was asked for
+   and what changed — feedback given verbally in a chat only exists in that chat's history,
+   which isn't where anyone will look for it later. Append to (creating if absent)
+   `docs/feedback/<slug>.md`:
+   ```markdown
+   ## <date> — round N
+   ### <Chapter title>
+   - <note text, verbatim from the prompt>
+     → <one line: what you changed, or why you didn't>
+   ```
+   Keep one file per deck slug, newest round at the bottom, so the log reads as a history of
+   the deck's evolution. This is a real content file, not KV — commit and push it with the
+   deck change.
+3. **Update the skill, not just the deck, when the feedback would recur.** Ask: if Ray gave
+   this same note on the *next* deck, would it still apply? If yes — a component pattern
+   that's consistently wrong, a data source that should be checked earlier, a QA gap that
+   let something through — fix it in `SKILL.md` or `references/section-patterns.md`, not
+   only in this one deck file. If a note is genuinely one-off (a client-specific fact, a
+   wording preference for this deck only), say so in the markdown log instead of forcing a
+   skill change that wouldn't generalise. Every feedback round should end with an explicit
+   yes/no on this, in the summary you give Ray — not silently skipped.

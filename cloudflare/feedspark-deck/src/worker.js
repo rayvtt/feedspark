@@ -308,6 +308,9 @@ function getEditorScript(slug) {
     + 'body.de-on [data-eid].de-pick{outline:2px solid #1A365D;outline-offset:2px}'
     + '.de-bar{position:fixed;right:16px;bottom:16px;z-index:99999;display:none;gap:8px;align-items:center;font:14px/1.2 -apple-system,Segoe UI,Roboto,sans-serif}'
     + '.de-bar.de-show{display:flex}'
+    + '.de-handle{position:fixed;right:16px;bottom:16px;z-index:99998;width:34px;height:34px;border-radius:50%;background:rgba(26,54,93,.35);color:#fff;border:0;cursor:pointer;font-size:15px;opacity:.55;transition:opacity .2s,background .2s}'
+    + '.de-handle:hover{opacity:1;background:#1A365D}'
+    + '.de-bar.de-show + .de-handle{display:none}'
     + '.de-bar button{background:#1A365D;color:#fff;border:0;border-radius:8px;padding:9px 13px;cursor:pointer;font:inherit}'
     + '.de-bar button.on{background:#ED6F0B}'
     + '.de-bar span{color:#6b7a8d;min-width:60px}'
@@ -367,6 +370,12 @@ function getEditorScript(slug) {
   var stat=document.createElement('span'); stat.textContent='';
   bar.appendChild(bEdit); bar.appendChild(bDesign); bar.appendChild(bFeedback); bar.appendChild(bPick); bar.appendChild(bExport); bar.appendChild(stat);
   document.body.appendChild(bar);
+  // Always-visible, deliberately subtle — presentation mode hides the full bar, but there
+  // must always be *something* on screen to click, or the toolbar is undiscoverable unless
+  // you already know the ?edit param or the keyboard shortcut.
+  var handle=document.createElement('button'); handle.className='de-handle'; handle.title='Open editor'; handle.textContent='✎';
+  document.body.appendChild(handle);
+  handle.addEventListener('click',function(){ showBar(true); });
 
   // Presentation mode: the editor bar is hidden by default (clean for client screen-share)
   // and only appears once revealed — via ?edit in the URL or the Ctrl/Cmd+Shift+E shortcut.
@@ -551,7 +560,7 @@ function getEditorScript(slug) {
     if(resizeHandle){ resizeHandle.remove(); resizeHandle=null; }
     closeAllPops(); selEl=null;
   }
-  function rgbToHex(rgb){ var m=/rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(rgb||''); if(!m) return '#ffffff';
+  function rgbToHex(rgb){ var m=/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/.exec(rgb||''); if(!m) return '#ffffff';
     return '#'+[1,2,3].map(function(i){ return ('0'+parseInt(m[i],10).toString(16)).slice(-2); }).join(''); }
   function openColorPop(el,anchor){
     closeAllPops();
@@ -565,7 +574,7 @@ function getEditorScript(slug) {
     pop.querySelector('.de-fg').addEventListener('input',function(){ el.style.color=this.value; });
     pop.addEventListener('change',function(){ queueStyleSave(el); });
   }
-  var FONTS=['Lato, sans-serif','Georgia, serif','Arial, sans-serif','\'Courier New\', monospace','\'Times New Roman\', serif','Verdana, sans-serif'];
+  var FONTS=['Lato, sans-serif','Georgia, serif','Arial, sans-serif','\\'Courier New\\', monospace','\\'Times New Roman\\', serif','Verdana, sans-serif'];
   function openFontPop(el,anchor){
     closeAllPops();
     var pop=document.createElement('div'); pop.className='de-pop';
@@ -759,7 +768,7 @@ function getEditorScript(slug) {
       return '<div class="de-fbitem"><span class="del" data-id="'+f.id+'">×</span><b>'+esc(f.label.split(' — ')[0])+'</b>'+esc(f.note)+'</div>';
     }).join('') : '<div class="de-fbempty">No notes yet. Turn Feedback on, then click any card, table or chapter to leave one.</div>';
     fbPanel.innerHTML = '<h3>💬 Feedback ('+FEEDBACK.length+')</h3>'
-      + '<div class="hint">Click a block or chapter while Feedback is on to leave a note there. When you\'re done, generate a prompt to paste into a Claude Code session.</div>'
+      + '<div class="hint">Click a block or chapter while Feedback is on to leave a note there. When you\\'re done, generate a prompt to paste into a Claude Code session.</div>'
       + '<div id="fb-list">'+body+'</div>'
       + '<div class="row"><button class="gen">⤴ Generate rework prompt</button></div>'
       + (FEEDBACK.length ? '<div class="row"><button class="clr">🗑 Clear all</button></div>' : '');
@@ -785,7 +794,7 @@ function getEditorScript(slug) {
     pop.querySelector('.cancel').addEventListener('click',function(){ pop.remove(); });
     pop.querySelector('.save').addEventListener('click',function(){
       var note=ta.value.trim(); if(!note){ pop.remove(); return; }
-      FEEDBACK.push({ id:'f'+(fbN++), target:targetKey(el), label:chapterFor(el)+' — "'+el.textContent.trim().replace(/\s+/g,' ').slice(0,60)+'"', note:note, ts:new Date().toISOString() });
+      FEEDBACK.push({ id:'f'+(fbN++), target:targetKey(el), label:chapterFor(el)+' — "'+el.textContent.trim().replace(/\\s+/g,' ').slice(0,60)+'"', note:note, ts:new Date().toISOString() });
       saveFeedback(); renderFeedbackPanel(); renderMarkers();
       pop.remove(); toast('Feedback saved');
     });
@@ -794,12 +803,12 @@ function getEditorScript(slug) {
     if(!FEEDBACK.length){ toast('No feedback to generate a prompt from'); return; }
     var byChapter={}, order=[];
     FEEDBACK.forEach(function(f){ var ch=f.label.split(' — ')[0]; if(!byChapter[ch]){ byChapter[ch]=[]; order.push(ch); } byChapter[ch].push(f.note); });
-    var md='# '+PAGE+' deck — feedback round, '+(new Date().toISOString().slice(0,10))+'\n\n'
-      + 'Rework the deck at /deck/'+PAGE+' using the feedspark-deck-generator skill, based on this feedback:\n\n';
+    var md='# '+PAGE+' deck — feedback round, '+(new Date().toISOString().slice(0,10))+'\\n\\n'
+      + 'Rework the deck at /deck/'+PAGE+' using the feedspark-deck-generator skill, based on this feedback:\\n\\n';
     order.forEach(function(ch){
-      md+='## '+ch+'\n'; byChapter[ch].forEach(function(n){ md+='- '+n.replace(/\n+/g,' ')+'\n'; }); md+='\n';
+      md+='## '+ch+'\\n'; byChapter[ch].forEach(function(n){ md+='- '+n.replace(/\\n+/g,' ')+'\\n'; }); md+='\\n';
     });
-    md+='If any of this feedback reflects a pattern that should apply to future decks too (not just this one), update .claude/skills/feedspark-deck-generator/ accordingly.\n';
+    md+='Follow the feedspark-deck-generator skill\\'s Step 7: rework the deck, log this round to docs/feedback/'+PAGE+'.md, and update the skill itself if any note here would recur on a future deck.\\n';
     copy(md,'Feedback prompt copied — paste into Claude Code');
   }
   function loadFeedback(){
