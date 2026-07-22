@@ -360,7 +360,15 @@ function getEditorScript(slug) {
   var SEL = window.DECK_EDITOR_SELECTOR ||
     'h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.lede,.sec-sub,.stat,.callout,.card h4,.card p,.note,.pill,.q';
   var editing=false, lastSel=null, dirty={}, saveTimer=null;
-  var DESIGN_SEL='.card,.stat,.pipe-card,.proto,.flow-step,.en-card,.tier,.mo,.sc-cell,.ask,.callout,.note,.ag-row';
+  // Broad on purpose — Design mode should be able to target essentially every visible
+  // element on a deck (headings, paragraphs, list items, images, chapter dividers, the
+  // hero, tables, code blocks), not just a curated set of "card-like" containers. Table
+  // rows/cells are deliberately left out of the drag-reorder side of this (they already
+  // have their own dedicated row-drag system below) but are still selectable for styling
+  // via the plain h1-h5/p/li/td/th text-element entries.
+  var DESIGN_SEL='.card,.stat,.pipe-card,.proto,.flow-step,.en-card,.tier,.mo,.sc-cell,.ask,.callout,.note,.ag-row'
+    + ',.chapter,header.hero,.pill,.ct,.q,.feedrow,.agent,.agent-l,.agent-r,.eyebrow,.lede,.sec-sub'
+    + ',h1,h2,h3,h4,h5,p,li,blockquote,figcaption,img,table,code';
   var blockN=0, groupN=0, groupIds=new WeakMap(), rowN={};
   var FEEDBACK=[], fbN=0;
   function esc(s){ return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
