@@ -59,6 +59,52 @@
   .spk-flame{width:11px;height:15px;margin-left:2px;fill:var(--orange);transform-box:fill-box;transform-origin:center bottom;animation:rkflame .55s ease-in-out infinite alternate}
   .tb-modules a.on{color:var(--orange-deep)}
   @media(prefers-reduced-motion:reduce){.rk-lift,.rk-flame,.spk-flame{animation:none}}
+  /* ---- Hours & commercial ---- */
+  .cm-roll{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:2px 0 18px}
+  .cm-roll .kpi .sub2{font-size:11px;color:var(--muted);font-weight:700;margin-top:3px}
+  .cm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .cm-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:15px 16px}
+  .cm-hd{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+  .cm-hd .nm{font-weight:900;font-size:15px}
+  .cm-pill{margin-left:auto;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;border-radius:100px;padding:2px 9px;border:1px solid}
+  .cm-pill.ok{color:var(--good);background:#EBF7EF;border-color:#CDE9D8}
+  .cm-pill.warn{color:var(--orange-ink);background:#FEF3E2;border-color:#F5D9A8}
+  .cm-pill.risk{color:var(--risk);background:#FDEEE9;border-color:#F3C9BC}
+  .cm-pill.na{color:var(--muted);background:var(--wash);border-color:var(--line)}
+  .cm-bar{height:12px;border-radius:7px;background:var(--wash);border:1px solid var(--line);overflow:hidden;position:relative}
+  .cm-fill{height:100%;background:var(--good);transition:width .3s}
+  .cm-fill.over{background:var(--risk)}.cm-fill.under{background:var(--orange)}
+  .cm-nums{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);font-weight:700;margin-top:8px}
+  .cm-val{cursor:pointer;border-bottom:1px dashed var(--muted);font-weight:900;color:var(--ink)}
+  .cm-val:hover{color:var(--orange-deep);border-color:var(--orange)}
+  .cm-val.unset{color:var(--muted);font-weight:800;font-style:italic}
+  .cm-ed{font:inherit;font-size:12px;font-weight:800;width:66px;border:1px solid var(--orange);border-radius:6px;padding:2px 5px}
+  .cm-foot{display:flex;gap:8px;margin-top:11px}
+  .cm-rep{flex:1;font:inherit;font-size:11.5px;font-weight:800;padding:7px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer}
+  .cm-rep:hover{border-color:var(--orange);color:var(--orange-deep)}
+  /* ---- Retention radar ---- */
+  .rd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+  .rd-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:15px 16px;display:flex;flex-direction:column;gap:11px}
+  .rd-card.crit{border-color:#F3C9BC;background:#FFFCFB}
+  .rd-top{display:flex;align-items:center;gap:12px}
+  .rd-ring{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:15px;position:relative;flex:none;
+    background:conic-gradient(var(--c) calc(var(--p)*1%),#EEE 0)}
+  .rd-ring::before{content:"";position:absolute;inset:4px;background:#fff;border-radius:50%}.rd-ring span{position:relative;z-index:1}
+  .rd-who .nm{font-weight:900;font-size:15.5px}
+  .rd-band{display:inline-block;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;border-radius:100px;padding:2px 9px;margin-top:4px;border:1px solid}
+  .rd-band.b0{color:var(--good);background:#EBF7EF;border-color:#CDE9D8}
+  .rd-band.b1{color:#8a6d1f;background:#FEF6E4;border-color:#F0E0B0}
+  .rd-band.b2{color:var(--orange-ink);background:#FEF3E2;border-color:#F5D9A8}
+  .rd-band.b3{color:var(--risk);background:#FDEEE9;border-color:#F3C9BC}
+  .rd-drivers{display:flex;gap:5px;flex-wrap:wrap}
+  .rd-dv{font-size:11px;font-weight:700;color:var(--ink-2);background:var(--wash);border:1px solid var(--line);border-radius:7px;padding:2px 8px}
+  .rd-play{font-size:12.5px;line-height:1.5;color:var(--ink-2);background:var(--wash);border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:9px 11px}
+  .rd-play b{color:var(--orange-ink);font-weight:900}
+  .rd-sent{display:flex;gap:5px}
+  .sent-seg{flex:1;font:inherit;font-size:11px;font-weight:800;padding:6px 4px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;border-radius:7px}
+  .sent-seg.on{color:#fff;border-color:transparent}
+  .sent-seg.on.s-pos{background:var(--good)}.sent-seg.on.s-neu{background:var(--muted)}
+  .sent-seg.on.s-wat{background:var(--orange)}.sent-seg.on.s-rsk{background:var(--risk)}
 </style>
 
 <div class="topbar"><div class="topbar-in">
@@ -79,6 +125,19 @@
   <h2>Accounts — attention first</h2>
   <p class="sub">Sorted by open load and lowest score. Flagged rows are below the book average or carrying the heaviest backlog.</p>
   <div class="acct" id="acct"></div>
+
+  <section id="commercial">
+    <h2>Hours &amp; commercial</h2>
+    <p class="sub">Retainer burn-down and a profitability read per client. <b>Click any figure</b> to set the contracted block, rate and hours used — saved to this browser. Rates and used-hours are yours to confirm; nothing is invented.</p>
+    <div class="cm-roll" id="cm-roll"></div>
+    <div class="cm-grid" id="cm-grid"></div>
+  </section>
+
+  <section id="radar">
+    <h2>Retention radar</h2>
+    <p class="sub">An at-risk score per account — blending feed health, open backlog, parked work, retainer utilisation and your sentiment read — each with the play to save it. Set the sentiment; the rest is live from the plans.</p>
+    <div class="rd-grid" id="rd-grid"></div>
+  </section>
 </main>
 
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Leadership view · live from the project plans</div></div>
@@ -116,5 +175,162 @@
       +'<div class="pmeta"><span>'+pct+'% done</span><span>'+x.open+' open</span>'+(x.hold?'<span>'+x.hold+' parked</span>':'')+'</div></div>'
       +'<div class="mini"><div class="b">'+x.open+'</div><div class="s">open now</div></div></div>';
   }).join('');
+})();
+</script>
+<script>
+(function(){
+  var PT=window.PLANTASKS||{}, brands=Object.keys(PT);
+  if(!brands.length) return;
+  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  var MON=(PT[brands[0]]&&PT[brands[0]].updated)||'2026-07';
+
+  // ---- commercial data: only brief-confirmed figures are pre-filled; the rest are for Ray
+  // to set. Persisted per-browser (localStorage) until it moves to the KV client store. ----
+  var CM_KEY='fcc-commercial';
+  var CM_DEF={ Monsoon:{hours:32,rate:73.125}, Accessorize:{hours:27,rate:73.125},
+    YuMOVE:{hours:24,adhoc:21}, Schuh:{hours:46} };
+  var cm={}; (function(){ var saved={}; try{saved=JSON.parse(localStorage.getItem(CM_KEY))||{};}catch(e){}
+    brands.forEach(function(b){ cm[b]=Object.assign({hours:null,rate:null,adhoc:null,used:null}, CM_DEF[b]||{}, saved[b]||{}); }); })();
+  function saveCM(){ try{localStorage.setItem(CM_KEY, JSON.stringify(cm));}catch(e){} }
+  function num(v){ return (v==null||v==='')?null:(isNaN(+v)?null:+v); }
+  function money(n){ return '£'+(Math.round(n)).toLocaleString('en-GB'); }
+  function util(c){ if(!c.hours||c.used==null) return null; return c.used/c.hours; }
+
+  // ---- retention sentiment store ----
+  var RD_KEY='fcc-radar'; var rd={}; try{rd=JSON.parse(localStorage.getItem(RD_KEY))||{};}catch(e){}
+  function saveRD(){ try{localStorage.setItem(RD_KEY, JSON.stringify(rd));}catch(e){} }
+
+  // ===================== HOURS & COMMERCIAL =====================
+  function utilClass(u){ if(u==null) return 'na'; if(u>1.05) return 'risk'; if(u<0.6) return 'warn'; return 'ok'; }
+  function utilLabel(u){ if(u==null) return 'set hours'; if(u>1.05) return 'over block'; if(u<0.6) return 'under-used'; if(u>=0.85) return 'healthy'; return 'on track'; }
+  function valSpan(b,field,suffix){ var v=cm[b][field];
+    var txt = v==null? '+ set' : (v+(suffix||''));
+    return '<span class="cm-val'+(v==null?' unset':'')+'" data-b="'+esc(b)+'" data-f="'+field+'">'+txt+'</span>'; }
+  function renderCM(){
+    var grid=document.getElementById('cm-grid'); if(!grid) return;
+    var order=brands.slice().sort(function(a,b){ return (cm[b].hours||0)-(cm[a].hours||0); });
+    grid.innerHTML=order.map(function(b){
+      var c=cm[b], u=util(c), uc=utilClass(u);
+      var pct=u==null?0:Math.max(0,Math.min(100,Math.round(u*100)));
+      var fillClass=u==null?'':(u>1.05?'over':(u<0.6?'under':''));
+      var moLine = c.rate&&c.hours ? (money(c.hours*c.rate)+'/mo') : 'rate to confirm';
+      return '<div class="cm-card"><div class="cm-hd"><span class="nm">'+esc(b)+'</span>'
+        +'<span class="cm-pill '+uc+'">'+utilLabel(u)+'</span></div>'
+        +'<div class="cm-bar"><span class="cm-fill '+fillClass+'" style="width:'+pct+'%"></span></div>'
+        +'<div class="cm-nums"><span>Used '+valSpan(b,'used','h')+' / block '+valSpan(b,'hours','h')+'</span>'
+        +'<span>'+(u==null?'—':pct+'%')+'</span></div>'
+        +'<div class="cm-nums"><span>Rate '+valSpan(b,'rate','')+' · ad-hoc '+valSpan(b,'adhoc','h')+'</span><span>'+moLine+'</span></div>'
+        +'<div class="cm-foot"><button class="cm-rep" data-rep="'+esc(b)+'">⧉ Copy hour report</button></div></div>';
+    }).join('');
+    wireVals(); wireReports();
+    // roll-up
+    var roll=document.getElementById('cm-roll');
+    var totH=0, totMo=0, rateSet=0, us=[];
+    brands.forEach(function(b){ var c=cm[b]; if(c.hours)totH+=c.hours; if(c.rate&&c.hours){totMo+=c.hours*c.rate;rateSet++;} var u=util(c); if(u!=null)us.push(u); });
+    var avgU=us.length?Math.round(us.reduce(function(s,x){return s+x;},0)/us.length*100):null;
+    roll.innerHTML=[
+      ['',totH+'h','Contracted / mo','across '+brands.filter(function(b){return cm[b].hours;}).length+' set'],
+      ['good',totMo?money(totMo):'—','Retainer value / mo', rateSet+' rate'+(rateSet===1?'':'s')+' confirmed'],
+      [avgU==null?'':(avgU>105?'risk':avgU<60?'warn':'good'), avgU==null?'—':avgU+'%','Avg utilisation', us.length+' with used hrs'],
+      ['warn', brands.filter(function(b){var u=util(cm[b]);return u!=null&&u>1.05;}).length,'Over block', 'margin watch']
+    ].map(function(k){return '<div class="kpi '+k[0]+'"><div class="n">'+k[1]+'</div><div class="l">'+k[2]+'</div><div class="sub2">'+k[3]+'</div></div>';}).join('');
+  }
+  function wireVals(){
+    document.querySelectorAll('.cm-val').forEach(function(el){ el.onclick=function(){
+      if(el.querySelector('input')) return;
+      var b=el.getAttribute('data-b'), f=el.getAttribute('data-f'), cur=cm[b][f];
+      var inp=document.createElement('input'); inp.className='cm-ed'; inp.type='number'; inp.step='any'; inp.value=cur==null?'':cur;
+      el.textContent=''; el.appendChild(inp); inp.focus(); inp.select();
+      function commit(){ cm[b][f]=num(inp.value); saveCM(); renderCM(); renderRadar(); }
+      inp.onblur=commit; inp.onkeydown=function(e){ if(e.key==='Enter'){e.preventDefault();inp.blur();} if(e.key==='Escape'){renderCM();} };
+    }; });
+  }
+  function wireReports(){
+    document.querySelectorAll('[data-rep]').forEach(function(btn){ btn.onclick=function(){
+      var b=btn.getAttribute('data-rep'); copy(hourReport(b), 'Hour report for '+b+' copied'); }; });
+  }
+  function hourReport(b){
+    var x=PT[b], c=cm[b], u=util(c);
+    var doneRecent=(x.latest||[]).filter(function(t){return t.b==='done';}).slice(0,5).map(function(t){return '• '+t.t;});
+    var openNext=(x.latest||[]).filter(function(t){return t.b==='open'||t.b==='progress';}).slice(0,3).map(function(t){return '• '+t.t;});
+    var L=[];
+    L.push(b+' — hours report ('+MON+')');
+    L.push('');
+    var blk = c.hours? (c.hours+'h block'+(c.rate?(' · '+money(c.hours*c.rate)+'/mo'):'')) : 'block to confirm';
+    var used = c.used!=null? (c.used+'h used'+(u!=null?(' · '+Math.round(u*100)+'% of block'):'')) : 'used hours to confirm';
+    L.push('Retainer: '+blk+(c.adhoc?(' · +'+c.adhoc+'h ad-hoc'):''));
+    L.push('This cycle: '+used);
+    L.push('Feed-optimisation score: '+x.score+'/100 · '+x.done+'/'+x.total+' tasks delivered all-time');
+    L.push('');
+    L.push('Delivered recently:'); L.push.apply(L, doneRecent.length?doneRecent:['• (see project plan)']);
+    L.push(''); L.push('In flight / next:'); L.push.apply(L, openNext.length?openNext:['• (see project plan)']);
+    L.push(''); L.push('FeedSpark · Private & Confidential');
+    return L.join('\n');
+  }
+
+  // ===================== RETENTION RADAR =====================
+  var SENT=[['pos','Positive','s-pos'],['neu','Neutral','s-neu'],['wat','Watch','s-wat'],['rsk','At-risk','s-rsk']];
+  var SENT_ADJ={pos:-18,neu:0,wat:16,rsk:34};
+  function riskFor(b){
+    var x=PT[b], c=cm[b], u=util(c);
+    var delivery=(100-(x.score||0))*0.40;
+    var openRatio=x.total? x.open/x.total : 0;
+    var backlog=Math.min(100, openRatio*140)*0.25;
+    var holdRatio=x.total? (x.hold||0)/x.total : 0;
+    var parked=Math.min(100, holdRatio*400)*0.10;
+    var hoursAdj=0, hoursWhy='';
+    if(u!=null){ if(u>1.05){hoursAdj=12;hoursWhy='over block';} else if(u<0.6){hoursAdj=10;hoursWhy='under-used';} }
+    var sent=(rd[b]&&rd[b].sent)||'neu';
+    var sentAdj=SENT_ADJ[sent]||0;
+    var risk=Math.max(0,Math.min(100,Math.round(delivery+backlog+parked+hoursAdj+sentAdj)));
+    var drivers=[];
+    if(x.score<55) drivers.push('low score '+x.score);
+    if(openRatio>0.45) drivers.push(x.open+' open ('+Math.round(openRatio*100)+'%)');
+    if((x.hold||0)>=3) drivers.push(x.hold+' parked');
+    if(hoursWhy) drivers.push(hoursWhy);
+    if(sent==='wat') drivers.push('sentiment: watch');
+    if(sent==='rsk') drivers.push('sentiment: at-risk');
+    return {risk:risk, drivers:drivers, sent:sent, u:u, openRatio:openRatio};
+  }
+  function band(r){ return r>=58?3:r>=38?2:r>=22?1:0; }
+  var BANDLBL=['Healthy','Watch','At risk','Critical'];
+  function playFor(b,R){
+    var x=PT[b], c=cm[b], u=R.u;
+    if(R.sent==='rsk') return '<b>Save play:</b> Exec check-in now + defence deck. Lead with wins (score, tests), agree a 90-day retention plan and a renewal date.';
+    if(u!=null && u>1.05) return '<b>Save play:</b> You are over block — re-scope the retainer or agree an uplift. Show delivered value before the conversation, not after.';
+    if(x.score<55) return '<b>Save play:</b> Ship one visible quick win this week and book a strategy review — lift the feed score off the floor and make progress felt.';
+    if(u!=null && u<0.6) return '<b>Save play:</b> Hours are under-used — proactive upsell (new channel or AI package) and re-engage before renewal risk sets in.';
+    if(x.open>x.done) return '<b>Save play:</b> Burn down the backlog — sequence the top open tasks and report progress at the Monday call.';
+    return '<b>Hold play:</b> Healthy — keep cadence: monthly review, a test always in flight, one upsell in the pipeline.';
+  }
+  function renderRadar(){
+    var grid=document.getElementById('rd-grid'); if(!grid) return;
+    var rows=brands.map(function(b){ return {b:b, R:riskFor(b)}; }).sort(function(a,b){ return b.R.risk-a.R.risk; });
+    grid.innerHTML=rows.map(function(o){
+      var b=o.b, R=o.R, bd=band(R.risk);
+      var col=bd>=3?'var(--risk)':bd===2?'var(--orange)':bd===1?'#D6A72A':'var(--good)';
+      var drv=R.drivers.length? R.drivers.map(function(d){return '<span class="rd-dv">'+esc(d)+'</span>';}).join('') : '<span class="rd-dv">no active risk drivers</span>';
+      var sent=R.sent;
+      var segs=SENT.map(function(s){ return '<button class="sent-seg'+(sent===s[0]?' on '+s[2]:'')+'" data-b="'+esc(b)+'" data-s="'+s[0]+'">'+s[1]+'</button>'; }).join('');
+      return '<div class="rd-card'+(bd>=3?' crit':'')+'"><div class="rd-top">'
+        +'<div class="rd-ring" style="--p:'+R.risk+';--c:'+col+'"><span>'+R.risk+'</span></div>'
+        +'<div class="rd-who"><div class="nm">'+esc(b)+'</div><span class="rd-band b'+bd+'">'+BANDLBL[bd]+'</span></div></div>'
+        +'<div class="rd-drivers">'+drv+'</div>'
+        +'<div class="rd-play">'+playFor(b,R)+'</div>'
+        +'<div class="rd-sent">'+segs+'</div></div>';
+    }).join('');
+    document.querySelectorAll('.sent-seg').forEach(function(btn){ btn.onclick=function(){
+      var b=btn.getAttribute('data-b'), s=btn.getAttribute('data-s');
+      rd[b]=Object.assign({},rd[b],{sent:s}); saveRD(); renderRadar(); }; });
+  }
+
+  // clipboard helper (matches the deck editor's approach)
+  function copy(text,msg){ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){ toast(msg); }); }
+    else { var a=document.createElement('textarea'); a.value=text; document.body.appendChild(a); a.select(); try{document.execCommand('copy');toast(msg);}catch(e){} a.remove(); } }
+  function toast(m){ var t=document.createElement('div'); t.textContent=m;
+    t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1A365D;color:#fff;padding:9px 15px;border-radius:8px;z-index:99999;font-weight:700;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2)';
+    document.body.appendChild(t); setTimeout(function(){t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(function(){t.remove();},300);},1800); }
+
+  renderCM(); renderRadar();
 })();
 </script>

@@ -144,7 +144,7 @@ var ROADMAP=[
  {g:"Automation &amp; operations",gk:"E",sub:"Make the workload run itself.",items:[
    {id:"live-sync",t:"Live sync from the plans",top:0,imp:"high",eff:"L",ch:["Ops"],d:"Worker reads each plan's Project Plan tab on demand (Google Sheets API → KV) so edits in your sheets refresh the dashboard without a rebuild. Needs a Google service-account credential."},
    {id:"brief-pipe",t:"Brief → assign → remind → status pipeline",top:7,imp:"high",eff:"L",ch:["Ops"],d:"New plan row → auto-draft brief to ASPL → assign to a London AM → reminders → status write-back to the FCC and the sheet. The hands-off §04 workflow."},
-   {id:"hours",t:"Hours &amp; commercial intelligence",top:8,imp:"high",eff:"M",ch:["Commercial"],d:"Tie tasks to hours &amp; retainer: burn-down per client (used vs block), profitability flags, and auto-generated client hour reports — so hours report themselves."},
+   {id:"hours",b:"/leadership",t:"Hours &amp; commercial intelligence",top:8,imp:"high",eff:"M",ch:["Commercial"],d:"Live on the Leadership view — retainer burn-down per client (used vs block), utilisation &amp; over-block flags, a portfolio value roll-up, and one-click ‘copy hour report’ per client grounded in the plan. Set the rates &amp; used hours (editable); Monsoon/Accessorize/YuMOVE/Schuh blocks are pre-filled."},
    {id:"alerts",t:"Proactive alerts &amp; notifications",top:0,imp:"med",eff:"M",ch:["Ops"],d:"Email/Slack when a score drops, disapprovals spike, a test is ready to read, or a retainer is over-burning."},
  ]},
  {g:"Intelligence &amp; dashboard craft",gk:"F",sub:"From reporting to foresight.",items:[
@@ -158,7 +158,7 @@ var ROADMAP=[
    {id:"deck-live",t:"Deck → live rendered output",top:0,imp:"high",eff:"M",ch:["Sales"],d:"Render the Deck Generator's chosen sections into a live, styled deck the AM can present — placeholder copy auto-filled by Tachyon once the API key is in."},
    {id:"digest",t:"Weekly auto-digest",top:0,imp:"med",eff:"M",ch:["Ops"],d:"A Monday email/Slack digest per AM: what shipped, what's overdue, scores that moved, tests ready to read — the Monday panel, pushed."},
    {id:"feeddiff",t:"Feed change / diff alerts",top:0,imp:"med",eff:"L",ch:["Google","Meta"],d:"Detect when a plan tab or a live feed changes (new SKUs, dropped attributes, price shifts) and surface a diff so nothing slips."},
-   {id:"retention",t:"Account risk & retention radar",top:0,imp:"high",eff:"M",ch:["Exec"],d:"Blend score trend, overdue load, hours burn and sentiment into an at-risk score per account, with the play to save it."}
+   {id:"retention",b:"/leadership",t:"Account risk & retention radar",top:0,imp:"high",eff:"M",ch:["Exec"],d:"Live on the Leadership view — an at-risk score per account blending feed health, open backlog, parked work, retainer utilisation and your sentiment read, banded Healthy → Critical, each with the play to save it. Set the sentiment; the rest is live from the plans."}
  ]},
 ];
 
