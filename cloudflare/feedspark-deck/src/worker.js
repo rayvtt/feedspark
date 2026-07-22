@@ -254,22 +254,33 @@ export default {
         if (rd.error) return json({ ok: false, error: rd.error.message });
         const rows = rd.values || [];
         const norm = s => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
-        // status column: explicit, else from a header row that names it
-        let statusCol = (typeof body.statusCol === 'number') ? body.statusCol : -1;
-        if (statusCol < 0) {
-          for (let r = 0; r < Math.min(rows.length, 20); r++) {
-            const idx = (rows[r] || []).findIndex(c => /^(status|task status|progress)$/i.test(String(c || '').trim()));
-            if (idx >= 0) { statusCol = idx; break; }
-          }
-        }
-        // data row: description cell that matches (either direction, first ~45 chars)
+        const TOK = ['open', 'done', 'on hold', 'on-hold', 'onhold', 'in progress', 'in-progress', 'wip', 'with client', 'parked', 'completed', 'complete', 'live', 'not started', 'to do', 'todo', 'blocked'];
+        const isTok = v => TOK.indexOf(norm(v)) >= 0;
+        // find the row whose description matches the FCC task text
         const key = norm(match).slice(0, 45); let targetRow = -1;
         for (let r = 0; r < rows.length; r++) {
           if ((rows[r] || []).some(c => { const cn = norm(c); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; }
         }
         if (targetRow < 0) return json({ ok: false, error: 'task row not found in ' + tab, match });
-        if (statusCol < 0) return json({ ok: false, error: 'no Status column header found — pass statusCol', row: targetRow + 1 });
-        const cell = tab + '!' + colLetter(statusCol) + (targetRow + 1);
+        // Status column: header cell named "Status", re-aligned to the data (the header can sit
+        // one column left of the values when there's a leading number column), then confirmed
+        // against the actual target row — handles stacked sub-tables with their own layout.
+        let statusCol = (typeof body.statusCol === 'number') ? body.statusCol : -1, headerRow = -1;
+        if (statusCol < 0) {
+          for (let r = 0; r < Math.min(rows.length, 25); r++) {
+            const idx = (rows[r] || []).findIndex(c => /^(status|task status)$/i.test(String(c || '').trim()));
+            if (idx >= 0) { statusCol = idx; headerRow = r; break; }
+          }
+          if (statusCol >= 0) {
+            let a = 0, b = 0;
+            for (let r = headerRow + 1; r < Math.min(rows.length, headerRow + 45); r++) { const row = rows[r] || []; if (isTok(row[statusCol])) a++; if (isTok(row[statusCol + 1])) b++; }
+            if (b > a) statusCol += 1;
+          }
+        }
+        let writeCol = statusCol; const trow = rows[targetRow] || [];
+        if (writeCol < 0 || !isTok(trow[writeCol])) { for (let c = 1; c < Math.min(trow.length, 14); c++) { if (isTok(trow[c])) { writeCol = c; break; } } }
+        if (writeCol < 0) return json({ ok: false, error: 'could not resolve the Status column — pass statusCol', row: targetRow + 1, matched: trow[1] || trow[0] || '' });
+        const cell = tab + '!' + colLetter(writeCol) + (targetRow + 1);
         const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(cell) + '?valueInputOption=USER_ENTERED', {
           method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' },
           body: JSON.stringify({ values: [[value]] }),
