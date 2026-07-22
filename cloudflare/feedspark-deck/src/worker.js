@@ -32,6 +32,7 @@ import ROADMAP from "../../../docs/FeedSpark_Roadmap.html";
 import READINESS from "../../../docs/FeedSpark_Readiness.html";
 import LEADERSHIP from "../../../docs/FeedSpark_Leadership.html";
 import DECKBUILDER from "../../../docs/FeedSpark_DeckBuilder.html";
+import WORKFLOW from "../../../docs/FeedSpark_Workflow.html";
 import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html";
 // Tachyon copilot widget (style + script fragment). Injected on the app pages only —
 // never on client-facing decks. Reads window.PLANTASKS and calls /api/claude.
@@ -48,6 +49,7 @@ const PAGES = {
   '/readiness':   { html: READINESS,   slug: 'readiness' },
   '/leadership':  { html: LEADERSHIP,  slug: 'leadership' },
   '/deck-builder':{ html: DECKBUILDER, slug: 'deckbuilder' },
+  '/workflow':    { html: WORKFLOW,    slug: 'workflow' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
 };
 
@@ -82,6 +84,20 @@ export default {
       if (request.method === 'DELETE') {
         await env.EDITS.delete(key);
         return json({ ok: true, page: slug, cleared: true });
+      }
+    }
+
+    // ---- briefs store (Workflow control center: brief/ticket pipeline, shared across the team) ----
+    // A single JSON object keyed by brief id: {id: {client, code, task, due, status, comms, ...}}.
+    // The board owns its state and PUTs the whole map; small N, no races worth the complexity.
+    if (path === '/api/briefs') {
+      if (request.method === 'GET') {
+        return json((await env.EDITS.get('briefs', 'json')) || {});
+      }
+      if (request.method === 'PUT') {
+        const body = await request.json();
+        await env.EDITS.put('briefs', JSON.stringify(body));
+        return json({ ok: true, count: Object.keys(body || {}).length });
       }
     }
 
