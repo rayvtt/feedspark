@@ -430,7 +430,7 @@ window.addEventListener('load',restore);
     <input id="it-search" type="search" placeholder="Search tasks, owners…" aria-label="Search intake">
     <span class="it-n" id="it-n"></span>
   </div>
-  <div class="atrt-actions"><span class="atrt-note" id="atrt-note"></span><button class="btn sm" id="atrt-push" style="display:none"></button></div>
+  <div class="atrt-actions"><span class="atrt-note" id="atrt-note"></span><button class="btn sm" id="atrt-push" style="display:none"></button><button class="btn sm ghost" id="atrt-undo" style="display:none"></button></div>
   <div class="it-bulk" id="it-bulk" style="display:none">
     <span class="it-bulk-n" id="it-bulk-n">0 selected</span>
     <button class="btn sm" id="bulk-brief">✉ Batched brief</button>
@@ -751,6 +751,21 @@ window.addEventListener('load',restore);
           if(done===brands.length) finishPush(pushed,wrote,fail);
         }).catch(function(){ done++; fail++; if(done===brands.length) finishPush(pushed,wrote,fail); }); });
   }
+  // ---- undo the last ATRT->plan write (removes the rows we added) ----
+  function finishUndo(del,fail){ try{localStorage.removeItem('fcc-atrt-pushed');}catch(e){}
+    toast(fail?('Removed '+del+' row'+(del===1?'':'s')+' · '+fail+' plan(s) failed'):('✓ Removed '+del+' row'+(del===1?'':'s')+' — tasks are back in the inbox'));
+    setTimeout(function(){ fetchLive(true); },700); }
+  function undoPushToPlans(){
+    var pushed=pushedSet(), keys=Object.keys(pushed); if(!keys.length){ toast('Nothing to undo'); return; }
+    if(!confirm('Remove the '+keys.length+' ATRT task row'+(keys.length===1?'':'s')+' just written into the plans? (They return to the inbox.)')) return;
+    var byBrand={}; keys.forEach(function(k){ var i=k.indexOf('|'), cl=k.slice(0,i), tk=k.slice(i+1); if(PLANSHEET[cl])(byBrand[cl]=byBrand[cl]||[]).push(tk); });
+    var brands=Object.keys(byBrand), done=0, del=0, fail=0;
+    toast('Undoing writes in '+brands.length+' plan'+(brands.length===1?'':'s')+'…');
+    brands.forEach(function(bn){
+      fetch('/api/sheets/unappend',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:PLANSHEET[bn],tab:'Project Plan',tasks:byBrand[bn]})})
+        .then(function(r){return r.json();}).then(function(d){ done++; if(d&&d.ok)del+=d.deleted||0; else fail++; if(done===brands.length) finishUndo(del,fail); })
+        .catch(function(){ done++; fail++; if(done===brands.length) finishUndo(del,fail); }); });
+  }
   var gmailItems=[]; // live client emails pulled from Gmail (once the service account is connected)
   function senderName(from){ var m=/^\s*"?([^"<]+?)"?\s*</.exec(from||''); if(m)return m[1].trim();
     var e=/([^@<\s]+)@/.exec(from||''); return e?e[1]:(from||'—'); }
@@ -802,6 +817,8 @@ window.addEventListener('load',restore);
       an.innerHTML='<b>ATRT import:</b> '+CARRY.length+' active tasks · <b>'+CARRY_DUP+'</b> already in a project plan (auto-hidden as duplicates) · <b>'+uniq+'</b> unique in this inbox.'; }
     var pb=document.getElementById('atrt-push'); if(pb){ var pc=pushableCarry().length; pb.style.display=pc?'inline-flex':'none';
       pb.textContent='⤴ Write '+pc+' unique task'+(pc===1?'':'s')+' into their plans'; }
+    var ub=document.getElementById('atrt-undo'); if(ub){ var pn=Object.keys(pushedSet()).length; ub.style.display=pn?'inline-flex':'none';
+      ub.textContent='↩ Undo last write ('+pn+')'; }
     renderBulk();
   }
   // ---- bulk brief + delegate ----
@@ -867,6 +884,7 @@ window.addEventListener('load',restore);
     var lr=document.getElementById('live-refresh'); if(lr)lr.onclick=function(){ fetchLive(true); };
     var ta=document.getElementById('test-add'); if(ta)ta.onclick=function(){ editTest(-1); };
     var ap=document.getElementById('atrt-push'); if(ap)ap.onclick=pushUniquesToPlans;
+    var au=document.getElementById('atrt-undo'); if(au)au.onclick=undoPushToPlans;
   })();
   function prefill(t){
     window.__editId=null;

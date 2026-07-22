@@ -391,20 +391,58 @@ export default {
           rd = await rr.json(); realTab = '';
         }
         if (rd.error) return json({ ok: false, error: rd.error.message });
-        const c = resolveCols(rd.values || []);
+        const grid = rd.values || [];
+        const c = resolveCols(grid);
         const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
         const oc = c.ownerCol, sc = c.statusCol, dc = c.dueCol;
         const width = Math.max(tc, oc, sc, dc, 0) + 1;
         const values = rows.map(r => { const a = new Array(width).fill(''); a[tc] = r.task || ''; if (oc >= 0) a[oc] = r.owner || ''; if (sc >= 0) a[sc] = r.status || 'Open'; if (dc >= 0 && r.due) a[dc] = r.due; return a; });
-        const range = realTab ? (realTab + '!A1') : 'A1';
-        const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(range) + ':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS', {
-          method: 'POST', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values }) });
+        // find the LAST row that has any content and write directly below it — the values:append
+        // API mis-detects the table on multi-block plan layouts and drops rows at the top.
+        let lastRow = 0; for (let r = 0; r < grid.length; r++) { if ((grid[r] || []).some(x => String(x || '').trim() !== '')) lastRow = r; }
+        const startRow = lastRow + 2; // 1-based row just after the last content row
+        const range = (realTab ? realTab + '!' : '') + 'A' + startRow;
+        const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(range) + '?valueInputOption=USER_ENTERED', {
+          method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values }) });
         const wd = await wr.json();
         if (wd.error) return json({ ok: false, error: wd.error.message });
-        // invalidate the live cache so the appended rows show on the next sync
         try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
-        return json({ ok: true, appended: (wd.updates && wd.updates.updatedRows) || values.length, tab: realTab || '(first sheet)',
+        return json({ ok: true, appended: values.length, tab: realTab || '(first sheet)', atRow: startRow,
           cols: { task: colLetter(tc), owner: oc >= 0 ? colLetter(oc) : null, status: sc >= 0 ? colLetter(sc) : null, due: dc >= 0 ? colLetter(dc) : null } });
+      } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
+    }
+
+    // ---- undo an ATRT->plan write: delete the rows whose task matches a written task ----
+    // POST { id, tab?, tasks:[text,...] }. Safe: those tasks were unique (not in the plan)
+    // before the write, so the only rows that match are the ones we added.
+    if (path === '/api/sheets/unappend' && request.method === 'POST') {
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' });
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const id = body.id, tab = body.tab || 'Project Plan';
+      const tasks = (body.tasks || []).map(t => normCell(t)).filter(Boolean);
+      if (!id || !tasks.length) return json({ ok: false, error: 'missing id / tasks' }, 400);
+      try {
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
+        let realTab = tab;
+        let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+        let rd = await rr.json();
+        if (rd.error) { rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent('A1:Z600'), { headers: { Authorization: 'Bearer ' + token } }); rd = await rr.json(); realTab = ''; }
+        if (rd.error) return json({ ok: false, error: rd.error.message });
+        const grid = rd.values || [], c = resolveCols(grid), tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
+        const del = [];
+        for (let r = 0; r < grid.length; r++) { const v = normCell((grid[r] || [])[tc]); if (v && tasks.indexOf(v) >= 0) del.push(r); }
+        if (!del.length) return json({ ok: true, deleted: 0, note: 'no matching rows' });
+        // resolve the tab's numeric sheetId for deleteDimension
+        const meta = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '?fields=sheets.properties(sheetId,title)', { headers: { Authorization: 'Bearer ' + token } })).json();
+        const sheets = meta.sheets || [];
+        const match = realTab && sheets.find(s => s.properties.title === realTab);
+        const sheetId = (match ? match.properties.sheetId : (sheets[0] && sheets[0].properties.sheetId)) || 0;
+        const reqs = del.sort((a, b) => b - a).map(r => ({ deleteDimension: { range: { sheetId, dimension: 'ROWS', startIndex: r, endIndex: r + 1 } } }));
+        const br = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + ':batchUpdate', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ requests: reqs }) });
+        const bd = await br.json();
+        if (bd.error) return json({ ok: false, error: bd.error.message });
+        try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
+        return json({ ok: true, deleted: del.length });
       } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
     }
 
