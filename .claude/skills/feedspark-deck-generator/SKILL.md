@@ -83,7 +83,22 @@ avoid. Before writing a single section, gather what's actually known about this 
    a client has no entry in `plan_tasks.json` yet. It's a messy pivot-table dump, not clean
    data; if you need it, `tools/parse_projectplan.py` and `tools/build_plan_tasks.py` show
    how it's normally parsed into `plan_tasks.json` — consider running that pipeline instead
-   of hand-parsing the CSV.
+   of hand-parsing the CSV. **It's also worth a direct `grep` even when you're not building
+   `plan_tasks.json`** — a client's project plan often has line items an aggregate summary
+   drops (e.g. Reiss's own inline "A/B Testing" section, itemised tests with results in the
+   task text itself), and this file already has it committed — no live Drive call needed.
+
+**A named sub-tab you can't select isn't the same as data you can't reach.** The Drive tools
+available here (`read_file_content`, `download_file_content`, `get_file_metadata`) return one
+default sheet per spreadsheet file with no way to pick a specific tab by name/gid — if a brief
+or a plan note references a specific tab (e.g. an "A/B Test Archive" tab living inside the
+Project Plan spreadsheet), expect that tab specifically to stay out of reach even once Drive
+access itself is working. Don't stop at "the tab isn't reachable, here's a placeholder" —
+mine the sheet/CSV content you *can* get (the tab that does come through, or the local
+`plan_exports` CSV) for the same information under a different name; a task log's own
+line items often carry real test names, dates and outcomes an archive tab would also hold,
+just less neatly organised. If genuinely nothing usable turns up, say so and ask Ray to
+share the specific tab as its own link/export — that sidesteps the tool limitation entirely.
 
 If a client has no linked plan and no CLAUDE.md entry (a prospect deck), say so plainly and
 either ask Ray for the missing facts or write clearly-marked placeholders — never invent
