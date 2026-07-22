@@ -224,30 +224,6 @@ window.addEventListener('load',restore);
     <div style="margin-top:4px;color:var(--muted)">Project-plan intake is live below now. Until the Gmail credential is set, add email tasks with <b>New brief</b> and log ASPL replies on each ticket — the completion scan and client-confirmation draft work either way.</div>
   </div></div>
 
-  <style>
-  .wf-bpanel{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:13px 15px;margin:20px 0 4px}
-  .wf-bhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-  .wf-bhead h3{margin:0;font-size:14px;font-weight:900}
-  .wf-bhead .wf-bn{font-size:11.5px;font-weight:800;color:var(--muted)}
-  .wf-badd{margin-left:auto;display:flex;gap:6px}
-  .wf-badd input{font:inherit;font-size:12.5px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);min-width:150px}
-  .wf-badd input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
-  .wf-badd button{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:8px;border:1px solid var(--orange);background:var(--orange);color:#fff;cursor:pointer}
-  .wf-blink{font:inherit;font-size:11.5px;font-weight:800;color:var(--muted);background:none;border:0;cursor:pointer;text-decoration:underline}
-  #wf-brands{display:flex;gap:6px;flex-wrap:wrap}
-  .wf-brand{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;padding:4px 5px 4px 11px;border-radius:100px;border:1px solid var(--line);background:var(--wash);color:var(--ink-2)}
-  .wf-brand.live{border-color:#CDE9D8;background:rgba(72,208,126,.12);color:var(--good)}
-  .wf-brand .wf-x{border:0;background:none;color:inherit;opacity:.55;cursor:pointer;font-size:15px;line-height:1;padding:0 3px;border-radius:50%}
-  .wf-brand .wf-x:hover{opacity:1;color:var(--risk)}
-  </style>
-  <div class="wf-bpanel">
-    <div class="wf-bhead"><h3>Brands in your book</h3><span class="wf-bn" id="wf-brand-n"></span>
-      <span class="wf-badd"><input id="wf-brand-add" placeholder="Add a brand…" aria-label="Add a brand"><button id="wf-brand-addbtn">＋ Add</button>
-      <button class="wf-blink" id="wf-brand-reset" title="Restore the full book">Reset</button></span></div>
-    <div id="wf-brands"></div>
-    <p class="sub" style="margin:9px 0 0">Every brand here is selectable in the brief generator. Green = has a live plan feeding the intake below. Remove any you don't run; add new ones. Saved on this device.</p>
-  </div>
-
   <h2>New brief</h2>
   <p class="sub">Compose a coded brief the ASPL portal can auto-scan. The <span style="color:var(--orange-ink);font-weight:800">[ibfcode:…]</span> and <span style="color:var(--orange-ink);font-weight:800">ibfdue:…</span> tokens are generated for you and embedded in the subject and body.</p>
   <div class="gen">
@@ -307,10 +283,20 @@ window.addEventListener('load',restore);
   .it-multi-menu label:hover{background:var(--wash)}
   .it-multi-menu input{margin:0;accent-color:var(--orange-deep)}
   .it-multi-menu .it-multi-all{border-bottom:1px solid var(--line);margin-bottom:4px;padding-bottom:8px;font-weight:800}
+  #it-views-menu{min-width:210px}
+  .it-view-row{display:flex;align-items:center;gap:2px}
+  .it-view-apply{flex:1;text-align:left;font:inherit;font-size:13px;font-weight:700;padding:6px 9px;border:none;background:none;color:var(--ink);cursor:pointer;border-radius:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .it-view-apply:hover{background:var(--wash)}
+  .it-view-del{font:inherit;font-size:11px;padding:4px 7px;border:none;background:none;color:var(--muted);cursor:pointer;border-radius:100px}
+  .it-view-del:hover{color:#C0392B}
+  .it-view-sep{height:1px;background:var(--line);margin:5px 0}
+  .it-view-empty{font-size:12px;color:var(--muted);padding:4px 9px 8px}
+  .it-view-save{width:100%;text-align:left;font:inherit;font-size:12.5px;font-weight:800;padding:7px 9px;border:none;background:none;color:var(--orange-ink);cursor:pointer;border-radius:7px}
+  .it-view-save:hover{background:rgba(245,166,35,.1)}
   .it-ctl select,.it-ctl input{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
-  .it-ctl input{flex:1;min-width:150px}
+  .it-ctl input{flex:0 1 220px;min-width:150px}
   .it-ctl select:focus,.it-ctl input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
-  .it-n{font-size:12px;font-weight:800;color:var(--muted);margin-left:auto;white-space:nowrap}
+  .it-n{font-size:12px;font-weight:800;color:var(--muted);margin-left:4px;white-space:nowrap}
   .it-scroll{max-height:62vh;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:var(--shadow)}
   .itbl{width:100%;border-collapse:collapse;font-size:12.5px}
   #itbl{table-layout:fixed}
@@ -464,6 +450,10 @@ window.addEventListener('load',restore);
   <p class="sub">Three streams in one table — monthly <b>project-plan</b> tasks, the <b>ATRT legacy</b> import (your retired tracker — 50 active tasks), and daily <b>client emails</b>. Change a <b>status</b> inline: plan rows write back to the sheet, ATRT rows save to the portal. Stack filters — pick several <b>sources</b>, <b>statuses</b> or <b>clients</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator.</p>
   <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="add-task-btn" type="button">＋ Add task</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
   <div class="it-ctl">
+    <div class="it-multi" id="it-views-wrap">
+      <button type="button" class="it-multi-btn" id="it-views-btn" aria-haspopup="true" aria-expanded="false" title="Save & reapply filter views">★ Views ▾</button>
+      <div class="it-multi-menu" id="it-views-menu" role="menu" aria-label="Saved filter views" hidden></div>
+    </div>
     <div class="it-grp"><span class="it-lbl">Source</span><div class="it-src" id="it-src" role="group" aria-label="Filter by source (multi-select)"></div></div>
     <div class="it-multi" id="it-status-wrap">
       <button type="button" class="it-multi-btn" id="it-status-btn" aria-haspopup="true" aria-expanded="false">All statuses ▾</button>
@@ -711,20 +701,7 @@ window.addEventListener('load',restore);
   function fillClientSelect(){ var sel=document.getElementById('bg-client'); if(!sel)return; var cur=sel.value;
     sel.innerHTML=CLIENTS.map(function(c){return '<option>'+esc(c)+'</option>';}).join('');
     if(CLIENTS.indexOf(cur)>=0) sel.value=cur; }
-  function renderBrands(){ var host=document.getElementById('wf-brands'); if(!host)return;
-    host.innerHTML=CLIENTS.map(function(c){ var live=!!PT[c];
-      return '<span class="wf-brand'+(live?' live':'')+'" title="'+(live?'live plan':'no live plan')+'">'+esc(c)
-        +'<button class="wf-x" data-b="'+esc(c)+'" title="Remove from Workflow" aria-label="Remove '+esc(c)+'">×</button></span>'; }).join('');
-    host.querySelectorAll('.wf-x').forEach(function(b){ b.onclick=function(){ var name=b.getAttribute('data-b');
-      CLIENTS=CLIENTS.filter(function(x){return x!==name;}); saveBrands(); fillClientSelect(); renderBrands(); renderIntake(); }; });
-    var n=document.getElementById('wf-brand-n'); if(n)n.textContent=CLIENTS.length+' brands';
-  }
-  (function(){ var add=document.getElementById('wf-brand-add'), btn=document.getElementById('wf-brand-addbtn');
-    function doAdd(){ var v=(add.value||'').trim(); if(!v)return; if(CLIENTS.indexOf(v)<0){ CLIENTS.push(v); CLIENTS.sort(function(a,b){return a.localeCompare(b);}); saveBrands(); fillClientSelect(); renderBrands(); renderIntake(); } add.value=''; add.focus(); }
-    if(btn)btn.onclick=doAdd; if(add)add.addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();doAdd();} });
-    var reset=document.getElementById('wf-brand-reset'); if(reset)reset.onclick=function(){ try{localStorage.removeItem(BKEY);}catch(e){} CLIENTS=loadBrands(); fillClientSelect(); renderBrands(); renderIntake(); };
-  })();
-  fillClientSelect(); renderBrands();
+  fillClientSelect();   // CLIENTS still drives the brief generator + intake; the brand-book panel was removed
   ['bg-client','bg-market','bg-source','bg-task','bg-scope','bg-dod','bg-assets','bg-due','bg-priority'].forEach(function(id){
     var el=document.getElementById(id); el.addEventListener('input',refreshPreview); el.addEventListener('change',refreshPreview); });
   (function(){ var cs=document.getElementById('bg-cat'); if(cs)cs.addEventListener('change',function(){ if(cs.value){ applyTemplate(cs.value); } refreshPreview(); }); })();
@@ -1155,6 +1132,41 @@ window.addEventListener('load',restore);
     clear:function(){ itState.clients=[]; } });
   function ensureClientFilter(){ buildStatusFilter(); buildClientFilter(); }   // rebuilt each render from renderIntake
   buildStatusFilter(); buildClientFilter();
+  // ---- saved filter views: name the current filter set, reapply or delete later (per device) ----
+  function savedViews(){ try{return JSON.parse(localStorage.getItem('fcc-filters')||'{}');}catch(e){return {};} }
+  function saveViews(v){ try{localStorage.setItem('fcc-filters',JSON.stringify(v));}catch(e){} }
+  function captureFilter(){ return {srcs:itState.srcs.slice(),statuses:itState.statuses.slice(),clients:itState.clients.slice(),window:itState.window,q:itState.q,showHidden:itState.showHidden}; }
+  function applyFilter(f){
+    itState.srcs=(f.srcs||[]).slice(); itState.statuses=(f.statuses||[]).slice(); itState.clients=(f.clients||[]).slice();
+    itState.window=f.window||''; itState.q=f.q||''; itState.showHidden=!!f.showHidden;
+    renderSrcChips(); buildStatusFilter(); buildClientFilter();                       // sync the controls to the view
+    var w=document.getElementById('it-window'); if(w)w.value=itState.window;
+    var s=document.getElementById('it-search'); if(s)s.value=itState.q;
+    renderIntake();
+  }
+  function saveCurrentView(){ var name=prompt('Save this filter as…'); if(name===null)return; name=name.trim(); if(!name)return;
+    var v=savedViews(); v[name]=captureFilter(); saveViews(v); toast('View “'+name+'” saved'); renderViewsMenu(); }
+  function deleteView(name){ var v=savedViews(); delete v[name]; saveViews(v); toast('View removed'); renderViewsMenu(); }
+  function renderViewsMenu(){ var menu=document.getElementById('it-views-menu'); if(!menu)return; menu.innerHTML='';
+    var v=savedViews(), names=Object.keys(v).sort();
+    if(names.length){ names.forEach(function(n){
+        var row=document.createElement('div'); row.className='it-view-row';
+        var a=document.createElement('button'); a.className='it-view-apply'; a.textContent=n; a.title='Apply “'+n+'”';
+        a.onclick=function(){ applyFilter(v[n]); menu.hidden=true; };
+        var x=document.createElement('button'); x.className='it-view-del'; x.textContent='✕'; x.title='Delete “'+n+'”';
+        x.onclick=function(e){ e.stopPropagation(); deleteView(n); };
+        row.appendChild(a); row.appendChild(x); menu.appendChild(row); });
+      var sep=document.createElement('div'); sep.className='it-view-sep'; menu.appendChild(sep); }
+    else { var em=document.createElement('div'); em.className='it-view-empty'; em.textContent='No saved views yet.'; menu.appendChild(em); }
+    var save=document.createElement('button'); save.className='it-view-save'; save.textContent='＋ Save current filters…';
+    save.onclick=function(){ saveCurrentView(); }; menu.appendChild(save);
+  }
+  (function(){ var btn=document.getElementById('it-views-btn'), menu=document.getElementById('it-views-menu'), wrap=document.getElementById('it-views-wrap');
+    if(!btn||!menu||!wrap)return;
+    btn.onclick=function(e){ e.stopPropagation(); renderViewsMenu(); var willOpen=menu.hidden; menu.hidden=!willOpen; btn.setAttribute('aria-expanded',willOpen?'true':'false'); };
+    document.addEventListener('click',function(e){ if(menu.hidden)return; if(!wrap.contains(e.target)){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); } });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!menu.hidden){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); } });
+  })();
   document.getElementById('it-search').addEventListener('input',function(){ itState.q=this.value.trim().toLowerCase(); renderIntake(); });
   (function(){ var ht=document.getElementById('it-hidden-tog'); if(ht)ht.onclick=function(){ itState.showHidden=!itState.showHidden; renderIntake(); }; })();
   document.querySelectorAll('#itbl thead th[data-k]').forEach(function(th){ th.onclick=function(){
