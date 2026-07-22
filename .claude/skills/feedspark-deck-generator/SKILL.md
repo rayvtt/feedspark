@@ -112,6 +112,19 @@ share the specific tab as its own link/export — that sidesteps the tool limita
    assert a framing ("Test Group performs better") that doesn't actually match that row's own
    signed figures. Read the raw numbers, not the prose wrapped around them, and describe what
    they actually show.
+6. **A live audit-tool export** (FeedHero or similar — one row per issue, with an affected-%
+   and a Red/Orange/Yellow priority), if attached — this is a different kind of source again:
+   not a test result, a point-in-time scan of the *entire* live catalogue in whichever
+   market(s) it covers, no sampling. Parse every market's file and diff them against each
+   other, not just against each market alone — issues at near-identical rates across markets
+   point to one shared structural cause (a rule, a feed dependency); issues Red in some
+   markets but absent from others are the more specific, targeted findings. When a claim
+   elsewhere in the deck was built from a smaller sample (the feed export in Step 2a) or a
+   single market, and this audit covers the same ground at full scale, cross-reference the
+   two explicitly rather than just replacing one number with the other — agreement is a
+   stronger claim, and disagreement (e.g. a fix verified in one market's own test but not
+   yet visible in another market's live audit) is itself a real, deck-worthy finding, not
+   a discrepancy to quietly resolve by picking the source you like better.
 
 If a client has no linked plan and no CLAUDE.md entry (a prospect deck), say so plainly and
 either ask Ray for the missing facts or write clearly-marked placeholders — never invent
@@ -265,6 +278,18 @@ not just the deck rework:
 1. **Rework the deck.** Open `docs/<Client>_...html`, find each chapter the feedback names,
    apply the change. Same QA pass as Step 5 (bracket check, nav-count check, worker syntax
    check) before pushing — a feedback round is still a push to the shared file.
+
+   **Inserting a brand-new chapter into an already-shipped deck** (vs. editing an existing
+   one) needs one extra step: every chapter after the insertion point has to be renumbered.
+   Do it mechanically, not by hand-editing each one: for each existing chapter N at or after
+   the insertion point, working from the *highest* number down to the lowest (so a rename
+   never collides with a not-yet-renamed chapter), update its `id="cN"`, `<div class="ch-num">`
+   digits, and `Chapter <word>` eyebrow text to N+1. Then update the topbar nav (`href="#cN"`
+   and the visible label) the same way, insert the new chapter's own nav link, and `grep -n
+   "chapter [0-9]"` the whole file for prose cross-references (e.g. "see chapter 12") that
+   need bumping too — these are easy to miss since they don't live near the chapter divs
+   themselves. Verify after: chapter count == nav link count, `id="cN"` sequence has no gaps
+   or dupes, and every prose "chapter N" mention still points at the chapter it claims to.
 2. **Save the round as a markdown file**, so there's a durable record of what was asked for
    and what changed — feedback given verbally in a chat only exists in that chat's history,
    which isn't where anyone will look for it later. Append to (creating if absent)
