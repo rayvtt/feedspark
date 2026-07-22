@@ -1,6 +1,6 @@
 ---
 name: feedspark-deck-generator
-description: Builds a full, on-brand FeedSpark client deck (Strategy Review, Onboarding, Intro, etc.) from a brief produced by the FCC Deck Generator (/deck-builder), or from plain-English instructions naming a client and a set of sections. Turns a bullet-point outline into real, polished HTML — the same chapter/card/tier/table components already used in the YuMOVE deck — wired into the live worker and populated with the client's actual numbers from the ATRT plan data, not placeholder copy. Use this whenever Ray pastes a "Deck brief" block (starts with "# [Client] — [Deck type] deck", has a "## Outline" list and optionally a "## Live data to weave in" block), or asks to "build/generate/create the deck for [client]", "turn this brief into a deck", "make the Strategy Review for [client]", or similar — even if he doesn't say the word "skill". The Deck Generator module only produces a rough in-browser mockup and the brief text; this skill produces the real, client-ready, fully-editable deck file.
+description: Builds a full, on-brand FeedSpark client deck (Strategy Review, Onboarding, Intro, etc.) from a brief produced by the FCC Deck Generator (/deck-builder), or from plain-English instructions naming a client and a set of sections. Turns a bullet-point outline into real, polished HTML — the same chapter/card/tier/table components already used in the YuMOVE deck — wired into the live worker and populated with the client's actual numbers from the ATRT plan data AND, when attached, a live product-feed export analysed directly (title/attribute/taxonomy/image scoring), not placeholder copy. Use this whenever Ray pastes a "Deck brief" or "Deck Build Brief" block (starts with "# [Client] — [Deck type] deck" or "FEEDSPARK — DECK BUILD BRIEF", has an outline/section list), attaches a feed export (.xlsx/.csv) alongside a deck request, or asks to "build/generate/create the deck for [client]", "turn this brief into a deck", "make the Strategy Review for [client]", or similar — even if he doesn't say the word "skill". The Deck Generator module only produces a rough in-browser mockup and the brief text; this skill produces the real, client-ready, fully-editable deck file.
 ---
 
 # FeedSpark Deck Generator
@@ -50,6 +50,16 @@ Match each outline line back to a **section id** using `references/section-patte
 match on the bold label text (e.g. "Review & project recap" → `recap`). If the brief's
 labels don't match any known section, ask rather than guessing what component to build.
 
+Some briefs ("FEEDSPARK — DECK BUILD BRIEF" format) explicitly name **two data streams**
+and attach a live product-feed export (`.xlsx`/`.csv`, ~thousands of SKUs) alongside the
+project-plan snapshot. Treat any attached feed export as **Stream B** and analyse it for
+real — see Step 2a below — it's not optional colour, it's usually the more current and
+more precise source for every feed-quality claim in the deck. A brief mentioning
+"python-pptx" or "the previewer" is reusing generic boilerplate from CLAUDE.md's general
+build-pipeline section — it doesn't mean switch output formats. The explicit goal line
+("matching the deck... live at /deck/yumove") is the actual instruction: build the same
+live, worker-hosted HTML system every other deck uses, not a PPTX file.
+
 ## Step 2 — Resolve the client's real data
 
 Placeholder copy (`[Client]`, `[N]`, "illustrative") is exactly what this skill exists to
@@ -78,6 +88,47 @@ avoid. Before writing a single section, gather what's actually known about this 
 If a client has no linked plan and no CLAUDE.md entry (a prospect deck), say so plainly and
 either ask Ray for the missing facts or write clearly-marked placeholders — never invent
 numbers, test results, or client facts that aren't sourced from somewhere above.
+
+### Step 2a — Analyse an attached product feed (Stream B), when present
+
+A live feed export is ground truth about the catalogue *today* — the project plan only
+tells you what tasks were closed, not what's actually live on every SKU. Load it with
+`openpyxl`/`pandas` (install if missing) and score it directly rather than summarising a
+few sample rows from memory:
+
+- **Title structure (MASK)** — Brand + Material + Fit + Colour + Use-case, 80–120 chars.
+  Compute the real length distribution and the % actually landing in that band. Don't
+  trust an internal "optimised" flag alone (e.g. a `c:fs_data_opti`-style column) at face
+  value — it usually means "process has run," which can be true even when the structural
+  target (length, MASK component coverage) isn't met yet. Report both if they diverge; that
+  gap is itself a real, deck-worthy finding.
+- **Attribute completeness** — fill rate for GTIN/identifier, colour, material, size,
+  gender, age group, item-group ID, condition, pattern. Compare against any previously
+  reported Golden Record % — they're different methodologies measuring related things, not
+  the same number; explain the difference rather than picking one silently.
+- **Taxonomy depth** — GPC (`google_product_category`) and custom `product_type` depth
+  (count segments split on `>`), separately — they're often not the same depth.
+  - **Imagery** — count of populated image fields per SKU vs. the slots available.
+- **Custom labels** — how many of the available label slots are actually populated, and
+  what real values they carry (bestseller flags, sub-brand/collab lines, etc. — these often
+  surface genuinely useful scope facts, like a multi-brand portfolio hiding inside one
+  feed).
+- **Conversational-attribute coverage** — check whether `question_and_answer`,
+  `item_group_title`, `variant_option`, `popularity_rank`, `related_product`,
+  `document_link` exist as columns at all. Their total absence is itself a fact worth
+  stating plainly (0%, confirmed from the schema — not inferred).
+- **Cross-check Stream A against Stream B wherever the deck asserts a % done or a fix
+  landed.** If the plan says a problem is "fixed," verify it in the feed (e.g. re-measure
+  the specific defect rate before/after) rather than reporting the plan's claim unchecked —
+  a verified before/after number is a far stronger deck moment than a task-status pill, and
+  catching a genuine divergence (a tool built but not yet rolled out across the catalogue,
+  for instance) is exactly the kind of insight a plan-only deck can't produce.
+- **Where Stream A (tasks) and Stream B (feed) disagree, lead with the feed** — say so
+  explicitly in the deck rather than silently picking a number, and explain *why* they
+  diverge (usually: a task closes when a tool/process ships, not when it's been applied to
+  every SKU). That explanation is more valuable to Ray than either number alone.
+- Pull a **real SKU** from the export for any illustrative example (Tachyon output, an
+  attribute code sample) instead of inventing one — it reads as authentic because it is.
 
 ## Step 3 — Build the deck
 
