@@ -75,9 +75,25 @@ def brand_payload(tasks, updated):
             cc=cats.get(c)
             if cc and cc["total"]: vol.append({"l":CLBL.get(c,c),"d":cc["done"],"o":cc["total"]-cc["done"]})
         latest=[compact(t) for t in tasks if t["bk"]!="done"][:70]
+    # per-window category aggregates (look-back on the coverage matrix), relative to this brand's latest month
+    def midx(pk): return (pk//100)*12+(pk%100-1)
+    dated=[t for t in tasks if t.get("pk")]
+    ref=max((midx(t["pk"]) for t in dated), default=None)
+    def catsFor(sel):
+        ct=Counter(); cd=Counter()
+        for t in sel:
+            ct[t["cat"]]+=1
+            if t["ns"]=="done": cd[t["cat"]]+=1
+        return {c:{"total":ct[c],"done":cd[c]} for c in ct}
+    # only emit numeric windows when the brand has dated tasks; undated (lane-based)
+    # brands keep just "all", so the coverage matrix falls back to all-time for them.
+    catsw={"all":cats}
+    if ref is not None:
+        for N in (1,3,6,12):
+            catsw[str(N)]=catsFor([t for t in dated if midx(t["pk"])>=ref-(N-1)])
     return dict(score=score_of(tasks), total=s["total"], done=s["done"],
                 open=s["open"], hold=s["hold"], updated=updated,
-                cats=cats, vol=vol, volkind=volkind, latest=latest)
+                cats=cats, catsw=catsw, vol=vol, volkind=volkind, latest=latest)
 
 def main():
     out=OrderedDict()
