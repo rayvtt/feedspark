@@ -124,6 +124,16 @@ export default {
       }
     }
 
+    // ---- test & experiment register (Workflow) — a single JSON array of test cards ----
+    if (path === '/api/tests') {
+      if (request.method === 'GET') return json((await env.EDITS.get('tests', 'json')) || []);
+      if (request.method === 'PUT') {
+        const body = await request.json();
+        await env.EDITS.put('tests', JSON.stringify(body));
+        return json({ ok: true, count: (body || []).length });
+      }
+    }
+
     // ---- client store (dossier data layer: add / delete / link-sheet / edit-text persist here) ----
     // A single JSON object: per-brand overrides/additions to the git profiles, plus a _deleted list.
     if (path === '/api/clients') {
@@ -291,6 +301,68 @@ export default {
       } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
     }
 
+    // ---- live plan sync: read each brand's Project-Plan tab and return parsed tasks ----
+    // POST { sheets: { "<Brand>": "<sheetId>", ... }, tab?, force? }. Caches per sheet in KV
+    // (planlive:<id>, ~5 min TTL) so the dashboard reflects new plan rows with no git rebuild.
+    // Also stashes the brand->sheet map (plansheets) so the cron can warm the cache.
+    if (path === '/api/plan/live' && request.method === 'POST') {
+      if (!env.GOOGLE_SA_JSON) return json({ connected: false, error: 'no_sa', brands: {} });
+      let body; try { body = await request.json(); } catch (e) { return json({ connected: false, error: 'bad_json' }, 400); }
+      const sheets = body.sheets || {}, tab = body.tab || 'Project Plan', force = !!body.force;
+      try { await env.EDITS.put('plansheets', JSON.stringify(sheets)); } catch (e) {}
+      const out = {};
+      try {
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
+        const seen = {};
+        for (const brand of Object.keys(sheets)) {
+          const id = sheets[brand]; if (!id) continue;
+          if (seen[id]) { out[brand] = seen[id]; continue; }
+          const ck = 'planlive:' + id;
+          let cached = force ? null : await env.EDITS.get(ck, 'json');
+          if (!cached) {
+            let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+            let rd = await rr.json();
+            // tab name varies per plan — if "Project Plan" isn't there, fall back to the first sheet
+            if (rd.error) {
+              rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent('A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+              rd = await rr.json();
+            }
+            if (rd.error) { out[brand] = { error: rd.error.message, tasks: [] }; seen[id] = out[brand]; continue; }
+            cached = { tasks: parsePlanRows(rd.values || []), updated: Date.now() };
+            try { await env.EDITS.put(ck, JSON.stringify(cached), { expirationTtl: 300 }); } catch (e) {}
+          }
+          out[brand] = cached; seen[id] = cached;
+        }
+        return json({ connected: true, brands: out });
+      } catch (e) { return json({ connected: false, error: String((e && e.message) || e), brands: out }); }
+    }
+
+    // ---- 2-way owner reassign: write an AE/owner back into the plan tab (workload heatmap) ----
+    // POST { id, tab?, match, value }. Same row-match + uniform-offset resolution as status.
+    if (path === '/api/sheets/owner' && request.method === 'POST') {
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' });
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const id = body.id, tab = body.tab || 'Project Plan', match = String(body.match || '').trim(), value = body.value;
+      if (!id || !match || value == null) return json({ ok: false, error: 'missing id / match / value' }, 400);
+      try {
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
+        const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+        const rd = await rr.json(); if (rd.error) return json({ ok: false, error: rd.error.message });
+        const rows = rd.values || [];
+        const key = normCell(match).slice(0, 45); let targetRow = -1;
+        for (let r = 0; r < rows.length; r++) { if ((rows[r] || []).some(cc => { const cn = normCell(cc); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; } }
+        if (targetRow < 0) return json({ ok: false, error: 'task row not found in ' + tab, match });
+        const c = resolveCols(rows);
+        let writeCol = c.ownerCol;
+        if (writeCol < 0) return json({ ok: false, error: 'could not resolve the Owner column' });
+        const cell = tab + '!' + colLetter(writeCol) + (targetRow + 1);
+        const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(cell) + '?valueInputOption=USER_ENTERED', {
+          method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values: [[value]] }) });
+        const wd = await wr.json(); if (wd.error) return json({ ok: false, error: wd.error.message, cell });
+        return json({ ok: true, cell, updated: wd.updatedCells || 1 });
+      } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
+    }
+
     // ---- serve a git-bundled page + inject the editor widget for its slug ----
     // App pages (everything except client-facing /deck/* decks) also get the Tachyon copilot.
     const page = PAGES[path];
@@ -312,6 +384,26 @@ export default {
 
     return new Response('Not found', { status: 404 });
   },
+
+  // ---- cron: warm the live plan-sync cache so the dashboard is instant on open ----
+  // Reads the brand->sheet map the dashboard last posted (KV `plansheets`) and re-parses
+  // each Project-Plan tab into KV (planlive:<id>). Registered in wrangler.toml [triggers].
+  async scheduled(event, env, ctx) {
+    if (!env.GOOGLE_SA_JSON) return;
+    try {
+      const sheets = (await env.EDITS.get('plansheets', 'json')) || {};
+      const ids = Array.from(new Set(Object.keys(sheets).map(b => sheets[b]).filter(Boolean)));
+      if (!ids.length) return;
+      const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
+      for (const id of ids) {
+        try {
+          const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent('Project Plan!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+          const rd = await rr.json(); if (rd.error) continue;
+          await env.EDITS.put('planlive:' + id, JSON.stringify({ tasks: parsePlanRows(rd.values || []), updated: Date.now() }), { expirationTtl: 5400 });
+        } catch (e) {}
+      }
+    } catch (e) {}
+  },
 };
 
 function json(data, status = 200) {
@@ -328,6 +420,71 @@ function b64urlBuf(buf) {
 }
 function b64urlStr(str) { return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
 function colLetter(n) { let s = ''; n = n + 1; while (n > 0) { const r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26); } return s; }
+
+// ---- shared Project-Plan parsing (used by live-sync + 2-way writes) ----
+// Plan sheets vary: some carry a leading task-number column, so the header row sits one
+// column left of its data. We anchor on the Status header, then VOTE header-col vs col+1 by
+// how many rows carry a status token — that vote yields a single `offset` that applies to
+// EVERY column (the whole data row is shifted uniformly), so owner/task columns realign too.
+const STATUS_TOK = ['open', 'done', 'on hold', 'on-hold', 'onhold', 'in progress', 'in-progress', 'wip', 'with client', 'parked', 'completed', 'complete', 'live', 'not started', 'to do', 'todo', 'blocked', 'ongoing', 'in review'];
+function normCell(s) { return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+function isStatusTok(v) { return STATUS_TOK.indexOf(normCell(v)) >= 0; }
+function planBucket(s) { s = normCell(s);
+  if (/(done|complete|finish|live|delivered|actioned|signed)/.test(s)) return 'done';
+  if (/(hold|park)/.test(s)) return 'hold';
+  if (/(progress|wip|ongoing|review)/.test(s)) return 'progress';
+  if (/client/.test(s)) return 'client';
+  if (!s) return 'open'; return 'open'; }
+function classifyCat(t) { t = String(t || '').toLowerCase();
+  if (/\btitle|mask\b/.test(t)) return 'title';
+  if (/image|visual|overlay|roundel|cycler|photo/.test(t)) return 'image';
+  if (/keyword|search term|kw\b|intent/.test(t)) return 'keyword';
+  if (/custom label|\bcl\d|clearance flag|bestseller/.test(t)) return 'custom_label';
+  if (/product type|category mapping|taxonom|gpc/.test(t)) return 'product_type';
+  if (/a\/b|test|experiment|split test/.test(t)) return 'test';
+  if (/feed|technical|migration|refresh|item group|disapprov|rule/.test(t)) return 'technical';
+  if (/data field|attribute|back fill|material|gtin/.test(t)) return 'data';
+  if (/meta|social|shopping|lia|channel|ppc|dpa|bing/.test(t)) return 'channel';
+  if (/call|review|proposal|quote|contract|onboard|invoice|billing|strategy|qbr|access/.test(t)) return 'account';
+  return 'opt'; }
+// Resolve the header row + the uniform data offset from the Status column.
+function resolveCols(rows) {
+  let headerRow = -1, statusHdr = -1;
+  for (let r = 0; r < Math.min(rows.length, 25); r++) {
+    const idx = (rows[r] || []).findIndex(c => /^(status|task status)$/i.test(String(c || '').trim()));
+    if (idx >= 0) { statusHdr = idx; headerRow = r; break; }
+  }
+  let offset = 0;
+  if (statusHdr >= 0) { let a = 0, b = 0;
+    for (let r = headerRow + 1; r < Math.min(rows.length, headerRow + 45); r++) { const row = rows[r] || []; if (isStatusTok(row[statusHdr])) a++; if (isStatusTok(row[statusHdr + 1])) b++; }
+    if (b > a) offset = 1; }
+  // header column for a name/regex, then shifted by the data offset
+  const hdr = rows[headerRow] || [];
+  const colFor = re => { const i = hdr.findIndex(c => re.test(String(c || '').trim())); return i < 0 ? -1 : i + offset; };
+  return { headerRow, offset, statusCol: statusHdr < 0 ? -1 : statusHdr + offset,
+    taskCol: colFor(/task|area|activit|description|optimis|action/i),
+    ownerCol: colFor(/owner|\bae\b|assignee|responsib|fs\b/i) };
+}
+// Parse a plan tab's rows into clean task objects for the dashboard.
+function parsePlanRows(rows) {
+  const c = resolveCols(rows), out = [];
+  const start = c.headerRow >= 0 ? c.headerRow + 1 : 0;
+  for (let r = start; r < rows.length; r++) {
+    const row = rows[r] || [];
+    // task text: resolved column, else first long non-status/non-date cell
+    let task = c.taskCol >= 0 ? row[c.taskCol] : '';
+    if (!task || String(task).trim().length < 3) {
+      for (let k = 0; k < Math.min(row.length, 4); k++) { const v = String(row[k] || '').trim();
+        if (v.length > 6 && !isStatusTok(v) && !/^\d/.test(v)) { task = v; break; } }
+    }
+    task = String(task || '').trim(); if (task.length < 3) continue;
+    let status = c.statusCol >= 0 ? String(row[c.statusCol] || '').trim() : '';
+    if (!isStatusTok(status)) { for (let k = 1; k < Math.min(row.length, 14); k++) { if (isStatusTok(row[k])) { status = String(row[k]).trim(); break; } } }
+    const owner = c.ownerCol >= 0 ? String(row[c.ownerCol] || '').trim() : '';
+    out.push({ t: task, o: owner, s: status, b: planBucket(status), c: classifyCat(task), row: r + 1 });
+  }
+  return out;
+}
 function pemToArrayBuffer(pem) {
   const b64 = pem.replace(/-----BEGIN [^-]+-----/, '').replace(/-----END [^-]+-----/, '').replace(/\s+/g, '');
   const bin = atob(b64); const buf = new Uint8Array(bin.length);

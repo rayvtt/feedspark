@@ -8,6 +8,12 @@ rules = [
   { type = "Text", globs = ["**/*.html"], fallthrough = true }
 ]
 
+# Cron: hourly warm of the live plan-sync cache (KV planlive:<id>) so the Workflow
+# dashboard opens instantly with current project-plan rows. The scheduled() handler in
+# the worker reads the brand->sheet map the dashboard posts (KV plansheets).
+[triggers]
+crons = ["0 * * * *"]
+
 # Ray's in-browser copy edits (data-eid patches) live here; they re-overlay client-side.
 [[kv_namespaces]]
 binding = "EDITS"
