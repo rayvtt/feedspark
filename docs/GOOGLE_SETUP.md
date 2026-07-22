@@ -10,6 +10,23 @@ three live features at once:
 | `spreadsheets` (read) | **Plan live-sync** — the dashboard refreshes from each Project-Plan tab without a git rebuild |
 | `spreadsheets` (write) | **2-way status** — change a task's status in the FCC and it writes back into the brand's Project-Plan tab |
 
+> ## ⚡ No Workspace admin? Do the Sheets half without one.
+> Domain-wide delegation (step 6) is admin-only and only **Gmail** truly needs it — a mailbox
+> can't be shared with a service account. **Google Sheets needs no delegation and no admin:** a
+> service account can read/write any sheet that's simply **shared with its email** (the
+> `client_email` in your JSON key, e.g. `feedspark-fcc@<project>.iam.gserviceaccount.com`),
+> exactly like sharing with a colleague.
+>
+> So if you can't do step 6:
+> 1. Open each client's Project-Plan Google Sheet → **Share** → add the service-account email as
+>    **Editor** (Viewer is enough for read-only plan sync; Editor is needed for the 2-way status
+>    write-back). No admin, no delegation.
+> 2. The FCC's plan live-sync and 2-way status run on that (`GOOGLE_IMPERSONATE` is ignored for
+>    Sheets — the SA acts as itself).
+> 3. **Gmail** email-intake still needs either step 6 (admin) or a one-time OAuth consent to your
+>    own inbox (ask me to wire "Option B"). Until then, keep adding email tasks by hand in the
+>    Workflow.
+
 > You need a **Google Workspace admin** for step 6 (authorising the delegation). If you're not
 > the admin for `feedspark.com`, send steps 6's Client-ID + scopes to whoever administers the
 > Workspace. Everything else you can do yourself.
