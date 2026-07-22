@@ -255,10 +255,51 @@ window.addEventListener('load',restore);
     </div>
   </div>
 
-  <h2>Intake — from the project plans</h2>
-  <p class="sub">Open tasks across the book, ready to brief. Click <b>Brief this</b> to prefill the generator. This is the monthly project-plan stream.</p>
-  <div class="intake" id="intake"></div>
-  <button class="itk-more" id="intake-more" style="display:none">Show more open tasks</button>
+  <style>
+  .it-ctl{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:2px 0 12px}
+  .it-src{display:flex;gap:5px}
+  .it-src button{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
+  .it-src button:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .it-src button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .it-ctl select,.it-ctl input{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+  .it-ctl input{flex:1;min-width:150px}
+  .it-ctl select:focus,.it-ctl input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
+  .it-n{font-size:12px;font-weight:800;color:var(--muted);margin-left:auto;white-space:nowrap}
+  .it-scroll{max-height:62vh;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:var(--shadow)}
+  .itbl{width:100%;border-collapse:collapse;font-size:13px}
+  .itbl thead th{position:sticky;top:0;background:var(--paper);z-index:2;text-align:left;font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:11px 12px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;box-shadow:inset 0 -1px 0 var(--line)}
+  .itbl thead th.it-act{text-align:right;cursor:default}
+  .itbl thead th[data-k]:hover{color:var(--orange-deep)}
+  .itbl thead th .ar{font-size:9px;color:var(--orange-deep)}
+  .itbl tbody td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  .itbl tbody tr:last-child td{border-bottom:0}
+  .itbl tbody tr:hover{background:var(--wash)}
+  .itbl .c-client{font-weight:800;white-space:nowrap}
+  .itbl .c-task{color:var(--ink);min-width:230px;line-height:1.35}
+  .itbl .c-owner{color:var(--muted);font-weight:700;white-space:nowrap}
+  .itbl .feed-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--orange-ink);background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.28);border-radius:6px;padding:2px 7px;white-space:nowrap}
+  .itbl .src-tag{font-size:10px;font-weight:800;border-radius:100px;padding:2px 9px;border:1px solid;white-space:nowrap}
+  .itbl .src-plan{color:#5B82BE;background:rgba(91,130,190,.13);border-color:rgba(91,130,190,.32)}
+  .itbl .src-email{color:var(--orange-ink);background:rgba(245,166,35,.13);border-color:rgba(245,166,35,.32)}
+  .itbl .c-act{text-align:right;white-space:nowrap}
+  .itbl .brief-btn{font:inherit;font-size:11.5px;font-weight:800;padding:5px 13px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
+  .itbl .brief-btn:hover{background:var(--orange);color:#fff}
+  .it-empty{text-align:center;color:var(--muted);font-size:13px;padding:24px}
+  </style>
+  <h2>Intake — ready to brief</h2>
+  <p class="sub">Both streams in one table — monthly <b>project-plan</b> tasks and daily <b>client emails</b>. Filter by source, sort any column, and hit <b>Brief</b> to prefill the generator.</p>
+  <div class="it-ctl">
+    <div class="it-src" id="it-src"></div>
+    <select id="it-client" aria-label="Filter by client"><option value="">All clients</option></select>
+    <input id="it-search" type="search" placeholder="Search tasks, owners…" aria-label="Search intake">
+    <span class="it-n" id="it-n"></span>
+  </div>
+  <div class="it-scroll"><table class="itbl" id="itbl">
+    <thead><tr>
+      <th data-k="client">Client</th><th data-k="cat">Feed</th><th data-k="task">Task</th>
+      <th data-k="owner">Owner</th><th data-k="source">Source</th><th class="it-act">Brief</th>
+    </tr></thead><tbody id="it-body"></tbody>
+  </table></div>
 
   <h2>Brief pipeline</h2>
   <p class="sub">Every brief from send to sign-off. Drag a ticket between lanes; click it to log ASPL replies, run the completion scan and draft the client confirmation. Due badges flag what's approaching or overdue.</p>
@@ -383,30 +424,54 @@ window.addEventListener('load',restore);
     BRIEFS[id]=b; window.__editId=null; persist(); renderAll();
     toast(existing?'Brief updated':'Brief saved to pipeline'); };
 
-  // ---- intake from plan ----
-  var intakeShown=9;
+  // ---- intake table: project-plan + incoming-email streams (ATRT-style, filter + sort) ----
+  var FEEDLBL={technical:'Feed & tech',title:'Titles',keyword:'Keywords',data:'Data fields',product_type:'Product type',opt:'Optimisation',image:'Imagery',custom_label:'Custom labels',channel:'Channels',account:'Account',test:'Testing'};
   function planOpen(){ var out=[];
     CLIENTS.forEach(function(c){ var p=PT[c]; if(!p||!p.latest)return;
-      p.latest.forEach(function(t){ if(t.b==='open'||t.b==='progress'){ out.push({client:c,task:t.t,cat:t.c,owner:t.o}); } }); });
+      p.latest.forEach(function(t){ if(t.b==='open'||t.b==='progress'){ out.push({client:c,task:t.t,cat:t.c,owner:t.o,source:'plan'}); } }); });
     return out; }
+  function emailIntake(){ // email-sourced items awaiting a brief (fills once the Gmail sync is on)
+    return Object.keys(BRIEFS).map(function(k){return BRIEFS[k];})
+      .filter(function(b){return b.source==='email'&&b.status==='intake';})
+      .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email'};}); }
+  function allIntake(){ return planOpen().concat(emailIntake()); }
+  var itState={src:'',client:'',q:'',sort:'client',dir:1};
   function renderIntake(){
-    var host=document.getElementById('intake'); var all=planOpen();
-    host.innerHTML=all.slice(0,intakeShown).map(function(t,i){
-      return '<div class="itk"><div class="ic">'+esc(t.client)+' · '+esc(t.cat||'task')+'</div>'
-        +'<div class="it">'+esc(t.task)+'</div>'
-        +'<div class="im">'+esc(t.owner||'—')+'</div>'
-        +'<button data-i="'+i+'">Brief this →</button></div>'; }).join('') || '<p class="sub">No open plan tasks.</p>';
-    host.querySelectorAll('button[data-i]').forEach(function(btn){ btn.onclick=function(){
-      var t=all[+btn.getAttribute('data-i')]; prefill(t); }; });
-    var more=document.getElementById('intake-more');
-    more.style.display= all.length>intakeShown ? '' : 'none';
-    more.textContent='Show more open tasks ('+(all.length-intakeShown)+')';
+    var body=document.getElementById('it-body'); if(!body)return;
+    var rows=allIntake();
+    var csel=document.getElementById('it-client');
+    if(csel && csel.options.length<=1){ var seen={}; rows.forEach(function(r){seen[r.client]=1;});
+      Object.keys(seen).sort().forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;csel.appendChild(o);}); }
+    var f=rows.filter(function(r){
+      return (!itState.src||r.source===itState.src)&&(!itState.client||r.client===itState.client)
+        &&(!itState.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(itState.q)>=0); });
+    f.sort(function(a,b){ var k=itState.sort; return (((a[k]||'')+'').localeCompare((b[k]||'')+''))*itState.dir; });
+    body.innerHTML = f.length ? f.map(function(t,i){
+      var feed=t.cat?('<span class="feed-tag">'+esc(FEEDLBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
+      var src=t.source==='email'?'<span class="src-tag src-email">Email</span>':'<span class="src-tag src-plan">Project plan</span>';
+      return '<tr><td class="c-client">'+esc(t.client)+'</td><td>'+feed+'</td>'
+        +'<td class="c-task">'+esc(t.task)+'</td><td class="c-owner">'+esc(t.owner||'—')+'</td>'
+        +'<td>'+src+'</td><td class="c-act"><button class="brief-btn" data-i="'+i+'">Brief →</button></td></tr>';
+    }).join('') : '<tr><td colspan="6" class="it-empty">'+(itState.src==='email'?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match.')+'</td></tr>';
+    body.querySelectorAll('.brief-btn').forEach(function(btn){ btn.onclick=function(){ prefill(f[+btn.getAttribute('data-i')]); }; });
+    var n=document.getElementById('it-n'); if(n)n.textContent=f.length+' task'+(f.length===1?'':'s');
   }
-  document.getElementById('intake-more').onclick=function(){ intakeShown+=9; renderIntake(); };
+  (function(){ var wrap=document.getElementById('it-src');
+    [['','All'],['plan','Project plan'],['email','Incoming emails']].forEach(function(s){
+      var b=document.createElement('button'); b.textContent=s[1]; if(s[0]===itState.src)b.className='on';
+      b.onclick=function(){ itState.src=s[0]; [].forEach.call(wrap.children,function(x){x.classList.remove('on');}); b.classList.add('on'); renderIntake(); };
+      wrap.appendChild(b); }); })();
+  document.getElementById('it-client').addEventListener('change',function(){ itState.client=this.value; renderIntake(); });
+  document.getElementById('it-search').addEventListener('input',function(){ itState.q=this.value.trim().toLowerCase(); renderIntake(); });
+  document.querySelectorAll('#itbl thead th[data-k]').forEach(function(th){ th.onclick=function(){
+    var k=th.getAttribute('data-k'); if(itState.sort===k) itState.dir*=-1; else {itState.sort=k;itState.dir=1;}
+    document.querySelectorAll('#itbl thead th .ar').forEach(function(a){a.remove();});
+    var ar=document.createElement('span'); ar.className='ar'; ar.textContent=itState.dir>0?' ▲':' ▼'; th.appendChild(ar);
+    renderIntake(); }; });
   function prefill(t){
     window.__editId=null;
     document.getElementById('bg-client').value= CLIENTS.indexOf(t.client)>=0? t.client : CLIENTS[0];
-    document.getElementById('bg-source').value='plan';
+    document.getElementById('bg-source').value= t.source||'plan';
     document.getElementById('bg-task').value=t.task;
     document.getElementById('bg-scope').value=''; document.getElementById('bg-dod').value='';
     refreshPreview();
