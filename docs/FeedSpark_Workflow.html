@@ -330,6 +330,8 @@ window.addEventListener('load',restore);
   .itbl .c-due{color:var(--ink-2);font-weight:700;white-space:nowrap}
   .itbl .c-due-ed{cursor:pointer}
   .itbl .c-due-ed:hover{color:var(--orange-deep);text-decoration:underline}
+  .itbl .c-task-ed,.itbl .c-owner-ed{cursor:pointer}
+  .itbl .c-task-ed:hover,.itbl .c-owner-ed:hover{text-decoration:underline dotted;text-underline-offset:2px;text-decoration-color:var(--orange)}
   .itbl .feed-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--orange-ink);background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.28);border-radius:6px;padding:2px 7px;white-space:nowrap}
   .itbl .src-tag{font-size:10px;font-weight:800;border-radius:100px;padding:2px 9px;border:1px solid;white-space:nowrap}
   .itbl .src-plan{color:#5B82BE;background:rgba(91,130,190,.13);border-color:rgba(91,130,190,.32)}
@@ -363,6 +365,17 @@ window.addEventListener('load',restore);
   .live-refresh{font:inherit;font-size:11.5px;font-weight:800;padding:5px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
   .live-refresh:hover{border-color:var(--orange);color:var(--orange-deep)}
   .live-refresh:disabled{opacity:.5;cursor:default}
+  .live-add{font:inherit;font-size:11.5px;font-weight:800;padding:5px 12px;border-radius:100px;border:1px solid var(--orange);background:var(--orange);color:#fff;cursor:pointer;margin-left:auto}
+  .live-add:hover{background:var(--orange-deep);border-color:var(--orange-deep)}
+  /* add-task modal form */
+  .add-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0 16px}
+  .add-grid label{display:flex;flex-direction:column;gap:5px;font-size:11px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+  .add-grid label.full{grid-column:1 / -1}
+  .add-grid input,.add-grid select{font:inherit;font-size:14px;font-weight:600;text-transform:none;letter-spacing:0;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+  .add-grid input:focus,.add-grid select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
+  .add-actions{display:flex;justify-content:flex-end;gap:10px}
+  .btn.primary{background:var(--orange);border-color:var(--orange);color:#fff}
+  .btn.primary:hover{background:var(--orange-deep);border-color:var(--orange-deep)}
   /* select + status cells */
   .itbl thead th.it-cbh,.itbl td.c-sel{width:34px;text-align:center;padding-left:10px;padding-right:2px;cursor:default}
   .itbl td.c-stat{white-space:nowrap}
@@ -373,6 +386,8 @@ window.addEventListener('load',restore);
   .c-stat .stat-sel.tag-progress{color:#2F6FB0;border-color:#CFE0F0}
   .c-stat .stat-sel.tag-client{color:var(--navy);border-color:#CFDBEA}
   .c-stat .stat-sel.tag-open{color:var(--orange-ink);border-color:#F3D9B8}
+  .c-stat .stat-sel.tag-briefed{color:#7A5AA8;border-color:#D9CEEA}
+  [data-theme=dark] .c-stat .stat-sel.tag-briefed{color:#B79BDB;border-color:rgba(122,90,168,.4)}
   .new-tag{font-size:9px;font-weight:900;letter-spacing:.04em;color:#fff;background:var(--good);border-radius:4px;padding:1px 5px;vertical-align:middle}
   .c-client .live-dot{display:inline-block;width:7px;height:7px;margin-left:5px;background:var(--good)}
   /* bulk bar */
@@ -446,7 +461,7 @@ window.addEventListener('load',restore);
   </style>
   <h2>Intake — every task, live</h2>
   <p class="sub">Three streams in one table — monthly <b>project-plan</b> tasks, the <b>ATRT legacy</b> import (your retired tracker — 50 active tasks), and daily <b>client emails</b>. Change a <b>status</b> inline: plan rows write back to the sheet, ATRT rows save to the portal. Stack filters — pick several <b>sources</b>, <b>statuses</b> or <b>clients</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator.</p>
-  <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
+  <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="add-task-btn" type="button">＋ Add task</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
   <div class="it-ctl">
     <div class="it-grp"><span class="it-lbl">Source</span><div class="it-src" id="it-src" role="group" aria-label="Filter by source (multi-select)"></div></div>
     <div class="it-grp"><span class="it-lbl">Status</span><div class="it-src" id="it-status" role="group" aria-label="Filter by status (multi-select)"></div></div>
@@ -552,14 +567,15 @@ window.addEventListener('load',restore);
   var LIVE={}, LIVE_AT=null, LIVE_CONN=false;   // live plan tasks per brand (from /api/plan/live)
 
   // ---- editable status (writes back to the plan sheet, shared overlay with the dossier) ----
-  var STATUS_OPTS=['Open','In Progress','On Hold','With Client','Done'];
+  var STATUS_OPTS=['Open','Briefed','In Progress','On Hold','With Client','Done'];
   function bucketOf(s){ s=String(s||'').toLowerCase();
     if(/(done|complete|finish|live|delivered|actioned|signed)/.test(s))return 'done';
     if(/(hold|park)/.test(s))return 'hold';
+    if(/brief/.test(s))return 'briefed';
     if(/(progress|wip|ongoing|review)/.test(s))return 'progress';
     if(/client/.test(s))return 'client'; return 'open'; }
   function statSel(t){ var cur=String(t.s||(t.b==='done'?'Done':'Open'));
-    var c=t.b||bucketOf(cur); if(['done','hold','progress','client','open'].indexOf(c)<0)c=bucketOf(cur);
+    var c=t.b||bucketOf(cur); if(['done','hold','progress','client','open','briefed'].indexOf(c)<0)c=bucketOf(cur);
     var found=false;
     var opts=STATUS_OPTS.map(function(o){ var sel=o.toLowerCase()===cur.toLowerCase(); if(sel)found=true;
       return '<option'+(sel?' selected':'')+'>'+esc(o)+'</option>'; }).join('');
@@ -722,15 +738,16 @@ window.addEventListener('load',restore);
   // local status overlay applied and new-since-snapshot rows flagged. The status filter (default
   // "to action") keeps the brief flow focused; switch it to see/edit any status.
   var _planCache=null;
-  function planTasks(){ if(_planCache)return _planCache; var out=[], ov=statusOverlay(), duo=dueOverlay();
+  function planTasks(){ if(_planCache)return _planCache; var out=[], ov=statusOverlay(), duo=dueOverlay(), owo=ownerOverlay(), ren=renameOverlay();
     CLIENTS.forEach(function(c){
       var live=LIVE[c]&&LIVE[c].tasks, snap=(PT[c]&&PT[c].latest)||[];
       var isLive=!!(live&&live.length), list=isLive?live:snap;
       var newSet=(isLive&&LIVE[c].newSet)||{};
-      list.forEach(function(t){ var task=t.t, k=c+'|'+task, ovv=ov[k];
+      list.forEach(function(t){ var orig=t.t, task=ren[c+'|'+orig]||orig, k=c+'|'+task, ovv=ov[k];   // apply any local rename first
         var s=ovv!=null?ovv:t.s, b=ovv!=null?bucketOf(ovv):(t.b||bucketOf(s));
         var dd=(duo[k]!=null?duo[k]:(t.d||'')); if(!dd && /\d{1,2}[\/-]\d{1,2}|\d{1,2}\s+[a-z]{3}/i.test(String(t.s||''))) dd=t.s;   // due override, else live due col / snapshot-status date
-        out.push({client:c,task:task,cat:t.c,owner:t.o||'—',source:'plan',s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||'',d:dd}); });
+        var ow=owo[k]!=null?owo[k]:(t.o||'—');
+        out.push({client:c,task:task,cat:t.c,owner:ow,source:'plan',s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||'',d:dd}); });
     });
     _planCache=out; return out; }
 
@@ -782,16 +799,17 @@ window.addEventListener('load',restore);
     if(/data field|attribute|material|content id|size/.test(t))return 'data'; if(/meta|social|\blia\b|ppc|dpa|reddit/.test(t))return 'channel';
     if(/call|review|proposal|quote|contract|billing|strateg|qbr|package|audit|loyalty|risk|scope/.test(t))return 'account';
     return 'opt'; }
-  function carryTasks(){ var ov=statusOverlay(), duo=dueOverlay(); CARRY_DUP=0;
+  function carryTasks(){ var ov=statusOverlay(), duo=dueOverlay(), owo=ownerOverlay(), ren=renameOverlay(); CARRY_DUP=0;
     // index plan tasks per client so an ATRT row that already exists in the plan is hidden
     var idx={}; planTasks().forEach(function(p){ (idx[p.client]=idx[p.client]||[]).push(p.task); });
     var out=[];
-    CARRY.forEach(function(t){ var plan=idx[t.c]||[], isDup=false;
-      for(var i=0;i<plan.length;i++){ if(sameTask(t.t,plan[i])){isDup=true;break;} }
+    CARRY.forEach(function(t){ var task=ren[t.c+'|'+t.t]||t.t; var plan=idx[t.c]||[], isDup=false;
+      for(var i=0;i<plan.length;i++){ if(sameTask(task,plan[i])){isDup=true;break;} }
       if(isDup){ CARRY_DUP++; return; }
-      var k=t.c+'|'+t.t; if(CARRY_STAT[k]==='__deleted__'||DELETED[k])return;
+      var k=t.c+'|'+task; if(CARRY_STAT[k]==='__deleted__'||DELETED[k])return;
       var st=ov[k]!=null?ov[k]:(CARRY_STAT[k]!=null?CARRY_STAT[k]:t.s);
-      out.push({client:t.c,task:t.t,cat:classifyLite(t.t),owner:t.ae||'—',source:'atrt',s:st,b:bucketOf(st),
+      var ow=owo[k]!=null?owo[k]:(t.ae||'—');
+      out.push({client:t.c,task:task,cat:classifyLite(task),owner:ow,source:'atrt',s:st,b:bucketOf(st),
         d:(duo[k]||dkIso(t.dk)||t.due||''),due:t.due||'',dk:t.dk||null,thread:t.th||'',isTest:t.x,sheet:''}); });
     return out; }
   function writeCarryover(client,task,val){ var k=client+'|'+task; CARRY_STAT[k]=val; saveStatus(client,task,val);
@@ -841,8 +859,68 @@ window.addEventListener('load',restore);
       .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email',s:'',b:'open'};});
     var fromGmail=gmailItems.map(function(g){return {client:senderName(g.from),task:g.subject,cat:'',owner:senderName(g.from),source:'email',from:g.from,s:'',b:'open'};});
     return fromBriefs.concat(fromGmail); }
-  function allIntake(){ return planTasks().concat(carryTasks()).concat(emailIntake()); }
-  var itState={srcs:[],clients:[],q:'',statuses:['open','progress'],window:'2m',sort:'client',dir:1,showHidden:false};   // multi-select: empty array = all
+  // ---- manually-added tasks: written into the plan sheet, shown here until live sync pulls them back ----
+  var MANUAL=[]; try{MANUAL=JSON.parse(localStorage.getItem('fcc-manual')||'[]');}catch(e){}
+  function saveManual(){ try{localStorage.setItem('fcc-manual',JSON.stringify(MANUAL));}catch(e){} }
+  function manualTasks(){
+    var idx={}; planTasks().forEach(function(p){ (idx[p.client]=idx[p.client]||[]).push(p.task); });
+    var ov=statusOverlay(), duo=dueOverlay(), owo=ownerOverlay(), ren=renameOverlay();
+    return MANUAL.map(function(m){ var task=ren[m.client+'|'+m.task]||m.task; return {c:m.client,orig:m.task,task:task}; })
+      .filter(function(m){ var plan=idx[m.c]||[];                          // suppress once the real plan contains it
+        for(var i=0;i<plan.length;i++){ if(sameTask(m.task,plan[i]))return false; }
+        return !DELETED[m.c+'|'+m.task]; })
+      .map(function(m){ var src=MANUAL.filter(function(x){return x.client===m.c&&x.task===m.orig;})[0]||{}; var k=m.c+'|'+m.task;
+        var s=ov[k]!=null?ov[k]:(src.status||'Open');
+        return {client:m.c,task:m.task,cat:classifyLite(m.task),owner:(owo[k]!=null?owo[k]:(src.owner||'—')),source:'plan',
+          s:s,b:bucketOf(s),live:false,manual:true,sheet:PLANSHEET[m.c]||'',d:(duo[k]||src.due||'')}; }); }
+  function allIntake(){ return planTasks().concat(manualTasks()).concat(carryTasks()).concat(emailIntake()); }
+  // DDMM (or DDMMYYYY) -> ISO yyyy-mm-dd; a near-past DDMM rolls to next year
+  function ddmmToIso(v){ v=String(v||'').replace(/\D/g,'');
+    if(v.length===4){ var dd=+v.slice(0,2), mm=+v.slice(2,4); if(dd<1||dd>31||mm<1||mm>12)return '';
+      var y=today().getFullYear(), d=new Date(y,mm-1,dd); if((d-today())/86400000<-60)d=new Date(y+1,mm-1,dd);
+      return d.getFullYear()+'-'+pad(mm)+'-'+pad(dd); }
+    if(v.length===8)return v.slice(4,8)+'-'+v.slice(2,4)+'-'+v.slice(0,2); return ''; }
+  // ---- manual "Add task" modal (writes back to the plan via /api/sheets/append) ----
+  function openAddTask(){
+    var clients=Object.keys(PLANSHEET).sort();
+    var copts=clients.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
+    var sopts=STATUS_OPTS.map(function(o){return '<option'+(o==='Open'?' selected':'')+'>'+esc(o)+'</option>';}).join('');
+    modalEl.innerHTML=''
+      +'<div style="display:flex;align-items:flex-start"><div><h3>Add a task</h3>'
+        +'<div class="mc">Writes a new row into the client’s Project Plan</div></div><button class="x" id="at-x">×</button></div>'
+      +'<div class="add-grid">'
+        +'<label>Client<select id="at-client">'+copts+'</select></label>'
+        +'<label>Owner<input id="at-owner" placeholder="e.g. Ray" autocomplete="off"></label>'
+        +'<label class="full">Task<input id="at-task" placeholder="What needs doing…" autocomplete="off"></label>'
+        +'<label>Due · DDMM<input id="at-due" placeholder="2707" inputmode="numeric" autocomplete="off"></label>'
+        +'<label>Status<select id="at-status">'+sopts+'</select></label>'
+      +'</div>'
+      +'<div class="add-actions"><button class="btn" id="at-cancel" type="button">Cancel</button><button class="btn primary" id="at-save" type="button">Add task →</button></div>';
+    scrim.classList.add('on');
+    document.getElementById('at-x').onclick=closeModal;
+    document.getElementById('at-cancel').onclick=closeModal;
+    document.getElementById('at-save').onclick=submitAddTask;
+    var ti=document.getElementById('at-task'); ti.focus();
+    ti.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitAddTask(); } });
+  }
+  function submitAddTask(){
+    var client=document.getElementById('at-client').value;
+    var task=(document.getElementById('at-task').value||'').trim();
+    var owner=(document.getElementById('at-owner').value||'').trim();
+    var status=document.getElementById('at-status').value||'Open';
+    var dueRaw=(document.getElementById('at-due').value||'').replace(/\D/g,'');
+    if(!task){ toast('Type the task first'); return; }
+    var due=''; if(dueRaw){ var iso=ddmmToIso(dueRaw); if(!iso){ toast('Due — type DDMM, e.g. 2707'); return; } due=iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4); }
+    MANUAL.push({client:client,task:task,owner:owner,status:status,due:due}); saveManual();   // optimistic — show at once
+    closeModal(); renderAll();
+    var id=PLANSHEET[client];
+    if(id){ toast('Adding to '+client+'’s plan…');
+      fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',rows:[{task:task,owner:owner,status:status,due:due}]})})
+        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Added to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok&&LIVE[client])setTimeout(function(){fetchLive(true);},800); })
+        .catch(function(){ toast('Saved locally — sheet write failed (check the SA has Editor access)'); });
+    } else toast('Added locally · no plan sheet linked for '+client);
+  }
+  var itState={srcs:[],clients:[],q:'',statuses:['open','progress','briefed'],window:'2m',sort:'client',dir:1,showHidden:false};   // multi-select: empty array = all
   var itSel={};   // bulk selection: key -> task object
   // UK-first date parse (DD/MM/YYYY, "DD Mon YYYY"); swaps if it reads as MM/DD
   function parseUKDate(s){ s=String(s||'').trim(); if(!s)return null; var m;
@@ -858,6 +936,32 @@ window.addEventListener('load',restore);
   function dkIso(dk){ return dk ? (dk[0]+'-'+pad(dk[1])+'-'+pad(dk[2])) : ''; }
   function dueOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskdue')||'{}');}catch(e){return {};} }
   function saveDueLocal(c,t,iso){ try{var o=dueOverlay(); if(iso)o[c+'|'+t]=iso; else delete o[c+'|'+t]; localStorage.setItem('fcc-taskdue',JSON.stringify(o));}catch(e){} }
+  // ---- 2-way OWNER + TASK-TEXT edits (join the existing status/due editors) ----
+  function ownerOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskowner')||'{}');}catch(e){return {};} }
+  function saveOwnerLocal(c,t,v){ try{var o=ownerOverlay(); if(v)o[c+'|'+t]=v; else delete o[c+'|'+t]; localStorage.setItem('fcc-taskowner',JSON.stringify(o));}catch(e){} }
+  function renameOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskrename')||'{}');}catch(e){return {};} }
+  function saveRename(c,oldT,newT){ try{var o=renameOverlay(); o[c+'|'+oldT]=newT; localStorage.setItem('fcc-taskrename',JSON.stringify(o));}catch(e){} }
+  function editOwner(t){ var cur=(t.owner&&t.owner!=='—')?t.owner:''; var v=prompt('Task owner — who’s doing it (blank to clear):',cur); if(v===null)return; setOwner(t,(''+v).trim()); }
+  function setOwner(t,val){ saveOwnerLocal(t.client,t.task,val);
+    if(t.source==='plan' && PLANSHEET[t.client]) writeOwner(t.client,t.task,val);   // existing 2-way owner writer (sheet + refetch)
+    else toast(val?'Owner updated':'Owner cleared');
+    renderAll(); }
+  function editTaskText(t){ var v=prompt('Edit the task — writes back to the plan:',t.task); if(v===null)return; v=(''+v).trim(); if(!v||v===t.task)return; setTaskText(t,v); }
+  // renaming changes a task's identity — carry its status/due/owner/hidden/deleted state to the new key
+  function migrateKey(c,oldT,newT){ var ok=c+'|'+oldT, nk=c+'|'+newT;
+    ['fcc-taskstatus','fcc-taskdue','fcc-taskowner'].forEach(function(store){
+      try{ var o=JSON.parse(localStorage.getItem(store)||'{}'); if(o[ok]!=null){ o[nk]=o[ok]; delete o[ok]; localStorage.setItem(store,JSON.stringify(o)); } }catch(e){} });
+    if(HIDDEN[ok]){ HIDDEN[nk]=HIDDEN[ok]; delete HIDDEN[ok]; saveHidden(); }
+    if(CARRY_STAT[ok]!=null){ CARRY_STAT[nk]=CARRY_STAT[ok]; delete CARRY_STAT[ok]; }
+    if(DELETED[ok]){ DELETED[nk]=DELETED[ok]; delete DELETED[ok]; try{localStorage.setItem('fcc-deleted',JSON.stringify(DELETED));}catch(e){} } }
+  function setTaskText(t,val){ migrateKey(t.client,t.task,val); saveRename(t.client,t.task,val);
+    if(t.source==='plan'){ var id=PLANSHEET[t.client];
+      if(id){ toast('Renaming task in '+t.client+'’s plan…');
+        fetch('/api/sheets/task',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',match:t.task,value:val})})
+          .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Task updated · '+d.cell):('Sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok&&LIVE[t.client])setTimeout(function(){fetchLive(true);},700); }).catch(function(){ toast('Task rename failed — needs the plan shared with the SA'); });
+      } else toast('Renamed locally · no plan sheet linked to write it back'); }
+    else toast('Task updated');
+    renderAll(); }
   // edit a due date: input DDMM -> display "DD Mon" -> write back to PP as DD/MM/YYYY (2-way)
   function editDue(t){
     var cur=taskDate(t), curv=cur?(pad(cur.getDate())+pad(cur.getMonth()+1)):'';
@@ -905,22 +1009,27 @@ window.addEventListener('load',restore);
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
       var src=t.source==='email'?'<span class="src-tag src-email">Email</span>':t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
-      var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t);
+      var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt');
       var stat=(t.source==='plan'||t.source==='atrt')
         ?('<td class="c-stat" data-src="'+t.source+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
         :'<td class="c-stat"><span class="c-owner">—</span></td>';
       return '<tr data-k="'+esc(k)+'"'+(hid?' class="row-hidden"':'')+'><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
         +'<td class="c-client">'+esc(t.client)+badge+'</td><td>'+feed+'</td>'
-        +'<td class="c-task">'+esc(t.task)+'</td><td class="c-owner">'+esc(t.owner||'—')+'</td>'
+        +(ed?'<td class="c-task c-task-ed" data-i="'+i+'" title="Edit task — writes back to the plan">'+esc(t.task)+'</td>'
+             :'<td class="c-task">'+esc(t.task)+'</td>')
+        +(ed?'<td class="c-owner c-owner-ed" data-i="'+i+'" title="Set owner — writes back to the plan">'+esc(t.owner||'—')+'</td>'
+             :'<td class="c-owner">'+esc(t.owner||'—')+'</td>')
         +((t.source==='plan'||t.source==='atrt')
            ?'<td class="c-due c-due-ed" data-i="'+i+'" title="Set due date (type DDMM)">'+esc(dueDisplay(t))+'</td>'
            :'<td class="c-due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>')
         +stat+'<td>'+src+'</td><td class="c-act"><button class="hide-btn'+(hid?' on':'')+'" data-i="'+i+'" title="'+(hid?'Restore to the task list':'Hide — it’s just a note (stays in the plan)')+'">'+(hid?EYEON:EYEOFF)+'</button><button class="del-btn" data-i="'+i+'" title="Delete task">✕</button><button class="brief-btn" data-i="'+i+'">Brief</button></td></tr>';
     }).join('') : '<tr><td colspan="9" class="it-empty">'+((itState.srcs.length===1&&itState.srcs[0]==='email')?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
-    body.querySelectorAll('.brief-btn').forEach(function(btn){ btn.onclick=function(){ prefill(f[+btn.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.brief-btn').forEach(function(btn){ btn.onclick=function(){ var t=f[+btn.getAttribute('data-i')]; markBriefed(t); prefill(t); renderAll(); }; });
     body.querySelectorAll('.del-btn').forEach(function(btn){ btn.onclick=function(){ deleteTask(f[+btn.getAttribute('data-i')]); }; });
     body.querySelectorAll('.hide-btn').forEach(function(btn){ btn.onclick=function(){ var t=f[+btn.getAttribute('data-i')]; if(isHidden(t))unhideTask(t); else hideTask(t); }; });
     body.querySelectorAll('.c-due-ed').forEach(function(td){ td.onclick=function(){ editDue(f[+td.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.c-task-ed').forEach(function(td){ td.onclick=function(){ editTaskText(f[+td.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.c-owner-ed').forEach(function(td){ td.onclick=function(){ editOwner(f[+td.getAttribute('data-i')]); }; });
     body.querySelectorAll('.it-cb').forEach(function(cb){ cb.onchange=function(){ var t=f[+cb.getAttribute('data-i')]; if(cb.checked)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; renderBulk(); }; });
     body.querySelectorAll('.c-stat .stat-sel').forEach(function(sel){ sel.onchange=function(){ var td=sel.closest('.c-stat');
       var cl=td.getAttribute('data-client'), tk=td.getAttribute('data-task');
@@ -961,6 +1070,7 @@ window.addEventListener('load',restore);
     } else { var body=asplBatchBody('ASPL team',items); var subj='[FS Brief] '+items.length+' tasks · batch';
       window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body),'_blank','noopener');
       toast('Batched brief draft opened'); }
+    var mb=0; items.forEach(function(t){ if(markBriefed(t))mb++; }); if(mb)renderAll();
   }
   function asplBatchBody(owner,items){ var L=[]; var d=new Date(); d.setDate(d.getDate()+5);
     var dd=isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()));
@@ -979,8 +1089,8 @@ window.addEventListener('load',restore);
       var tpl=TEMPLATES[t.cat]||TEMPLATES.opt;
       BRIEFS[id]={id:id,created:Date.now(),updated:Date.now(),status:'intake',comms:[],client:t.client,code:c,task:t.task,
         scope:tpl.s+TWO_STREAMS,dod:tpl.d,assets:'—',due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
-        source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++; });
-    itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline'); }
+        source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++; markBriefed(t); });
+    itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline · marked Briefed'); }
   // multi-select chip bars (source + status): empty selection = all; the "All" chip clears the set
   function renderChipBar(id, opts, key){
     var wrap=document.getElementById(id); if(!wrap)return; wrap.innerHTML='';
@@ -994,7 +1104,7 @@ window.addEventListener('load',restore);
         renderChipBar(id,opts,key); renderIntake(); };
       wrap.appendChild(b); }); }
   var SRC_OPTS=[['','All'],['plan','Project plan'],['atrt','ATRT legacy'],['email','Incoming emails']];
-  var STAT_OPTS=[['','All'],['open','Open'],['progress','In progress'],['hold','On hold'],['client','With client'],['done','Done']];
+  var STAT_OPTS=[['','All'],['open','Open'],['briefed','Briefed'],['progress','In progress'],['hold','On hold'],['client','With client'],['done','Done']];
   function renderSrcChips(){ renderChipBar('it-src',SRC_OPTS,'srcs'); }
   function renderStatusChips(){ renderChipBar('it-status',STAT_OPTS,'statuses'); }
   renderSrcChips(); renderStatusChips();
@@ -1046,6 +1156,7 @@ window.addEventListener('load',restore);
     var bv=document.getElementById('bulk-save'); if(bv)bv.onclick=bulkSaveAll;
     var bc=document.getElementById('bulk-clear'); if(bc)bc.onclick=function(){ itSel={}; renderIntake(); };
     var lr=document.getElementById('live-refresh'); if(lr)lr.onclick=function(){ fetchLive(true); };
+    var atb=document.getElementById('add-task-btn'); if(atb)atb.onclick=openAddTask;
     var ta=document.getElementById('test-add'); if(ta)ta.onclick=function(){ editTest(-1); };
     var ap=document.getElementById('atrt-push'); if(ap)ap.onclick=pushUniquesToPlans;
     var au=document.getElementById('atrt-undo'); if(au)au.onclick=undoPushToPlans;
@@ -1060,6 +1171,17 @@ window.addEventListener('load',restore);
     refreshPreview();
     window.scrollTo({top:0,behavior:'smooth'});
     toast('Prefilled from the '+(CAT_LBL[cat]||'optimisation')+' template — set the due date and save');
+  }
+  // when a task is briefed, move its status to Briefed (2-way, quiet — the caller shows the summary)
+  function markBriefed(t){
+    if(!t||!(t.source==='plan'||t.source==='atrt'))return false;   // only rows that carry a status
+    if(t.b==='briefed'||t.b==='done')return false;                  // already briefed or closed — leave it
+    saveStatus(t.client,t.task,'Briefed');
+    if(t.source==='atrt'){ CARRY_STAT[t.client+'|'+t.task]='Briefed';
+      fetch('/api/carryover',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(CARRY_STAT)}).catch(function(){}); }
+    else { var id=PLANSHEET[t.client]; if(id) fetch('/api/sheets/status',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({id:id,tab:'Project Plan',match:t.task,value:'Briefed'})}).catch(function(){}); }
+    return true;
   }
 
   // ---- KPIs ----
