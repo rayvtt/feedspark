@@ -317,8 +317,11 @@ window.addEventListener('load',restore);
   .itbl .src-plan{color:#5B82BE;background:rgba(91,130,190,.13);border-color:rgba(91,130,190,.32)}
   .itbl .src-email{color:var(--orange-ink);background:rgba(245,166,35,.13);border-color:rgba(245,166,35,.32)}
   .itbl .src-atrt{color:#7A5AA8;background:rgba(122,90,168,.13);border-color:rgba(122,90,168,.34)}
-  .atrt-note{font-size:11.5px;color:var(--muted);margin:-4px 0 11px;font-weight:600}
+  .atrt-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:-4px 0 11px}
+  .atrt-note{font-size:11.5px;color:var(--muted);font-weight:600}
   .atrt-note b{color:var(--ink-2);font-weight:800}
+  #atrt-push{border-color:#7A5AA8;color:#7A5AA8}
+  #atrt-push:hover{background:#7A5AA8;color:#fff}
   .itbl .c-act{text-align:right;white-space:nowrap}
   .itbl .brief-btn{font:inherit;font-size:11.5px;font-weight:800;padding:5px 13px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
   .itbl .brief-btn:hover{background:var(--orange);color:#fff}
@@ -427,7 +430,7 @@ window.addEventListener('load',restore);
     <input id="it-search" type="search" placeholder="Search tasks, owners…" aria-label="Search intake">
     <span class="it-n" id="it-n"></span>
   </div>
-  <div class="atrt-note" id="atrt-note"></div>
+  <div class="atrt-actions"><span class="atrt-note" id="atrt-note"></span><button class="btn sm" id="atrt-push" style="display:none"></button></div>
   <div class="it-bulk" id="it-bulk" style="display:none">
     <span class="it-bulk-n" id="it-bulk-n">0 selected</span>
     <button class="btn sm" id="bulk-brief">✉ Batched brief</button>
@@ -728,6 +731,26 @@ window.addEventListener('load',restore);
   function writeCarryover(client,task,val){ var k=client+'|'+task; CARRY_STAT[k]=val; saveStatus(client,task,val);
     fetch('/api/carryover',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(CARRY_STAT)}).catch(function(){});
     toast('ATRT task updated · '+val); }
+  // ---- write the unique ATRT tasks (not found in a plan) INTO their brand's Project Plan ----
+  function pushedSet(){ try{return JSON.parse(localStorage.getItem('fcc-atrt-pushed')||'{}');}catch(e){return {};} }
+  function pushableCarry(){ var pushed=pushedSet(); return carryTasks().filter(function(t){ return PLANSHEET[t.client] && !pushed[t.client+'|'+t.task]; }); }
+  function finishPush(pushed,wrote,fail){ try{localStorage.setItem('fcc-atrt-pushed',JSON.stringify(pushed));}catch(e){}
+    toast(fail?('Wrote '+wrote+' · '+fail+' plan(s) failed — check the SA has Editor access'):('✓ Wrote '+wrote+' task'+(wrote===1?'':'s')+' into their plans'));
+    setTimeout(function(){ fetchLive(true); },700); }
+  function pushUniquesToPlans(){
+    var items=pushableCarry(); if(!items.length){ toast('Nothing to write — every unique is already in a plan'); return; }
+    if(!confirm('Write '+items.length+' unique ATRT task'+(items.length===1?'':'s')+' into their project plans? (AllSaints & Damson have no plan sheet — they stay in the inbox.)')) return;
+    var byBrand={}; items.forEach(function(t){ (byBrand[t.client]=byBrand[t.client]||[]).push(t); });
+    var brands=Object.keys(byBrand), done=0, wrote=0, fail=0, pushed=pushedSet();
+    toast('Writing '+items.length+' task'+(items.length===1?'':'s')+' into '+brands.length+' plan'+(brands.length===1?'':'s')+'…');
+    brands.forEach(function(bn){ var id=PLANSHEET[bn];
+      var rows=byBrand[bn].map(function(t){ return {task:t.task,owner:t.owner==='—'?'':t.owner,status:t.s||'Open',due:t.due||''}; });
+      fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',rows:rows})})
+        .then(function(r){return r.json();}).then(function(d){ done++;
+          if(d && d.ok){ wrote+=d.appended||rows.length; byBrand[bn].forEach(function(t){ pushed[t.client+'|'+t.task]=1; }); } else { fail++; }
+          if(done===brands.length) finishPush(pushed,wrote,fail);
+        }).catch(function(){ done++; fail++; if(done===brands.length) finishPush(pushed,wrote,fail); }); });
+  }
   var gmailItems=[]; // live client emails pulled from Gmail (once the service account is connected)
   function senderName(from){ var m=/^\s*"?([^"<]+?)"?\s*</.exec(from||''); if(m)return m[1].trim();
     var e=/([^@<\s]+)@/.exec(from||''); return e?e[1]:(from||'—'); }
@@ -777,6 +800,8 @@ window.addEventListener('load',restore);
     var n=document.getElementById('it-n'); if(n)n.textContent=f.length+' task'+(f.length===1?'':'s');
     var an=document.getElementById('atrt-note'); if(an){ var uniq=CARRY.length-CARRY_DUP;
       an.innerHTML='<b>ATRT import:</b> '+CARRY.length+' active tasks · <b>'+CARRY_DUP+'</b> already in a project plan (auto-hidden as duplicates) · <b>'+uniq+'</b> unique in this inbox.'; }
+    var pb=document.getElementById('atrt-push'); if(pb){ var pc=pushableCarry().length; pb.style.display=pc?'inline-flex':'none';
+      pb.textContent='⤴ Write '+pc+' unique task'+(pc===1?'':'s')+' into their plans'; }
     renderBulk();
   }
   // ---- bulk brief + delegate ----
@@ -841,6 +866,7 @@ window.addEventListener('load',restore);
     var bc=document.getElementById('bulk-clear'); if(bc)bc.onclick=function(){ itSel={}; renderIntake(); };
     var lr=document.getElementById('live-refresh'); if(lr)lr.onclick=function(){ fetchLive(true); };
     var ta=document.getElementById('test-add'); if(ta)ta.onclick=function(){ editTest(-1); };
+    var ap=document.getElementById('atrt-push'); if(ap)ap.onclick=pushUniquesToPlans;
   })();
   function prefill(t){
     window.__editId=null;

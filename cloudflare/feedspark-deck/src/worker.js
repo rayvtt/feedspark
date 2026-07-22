@@ -373,6 +373,41 @@ export default {
       } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
     }
 
+    // ---- append new task rows into a plan tab (ATRT uniques -> project plan) ----
+    // POST { id, tab?, rows:[{task, owner, status}] }. Resolves the tab's column layout
+    // (same uniform-offset logic as the writers) and places each value in the right column.
+    if (path === '/api/sheets/append' && request.method === 'POST') {
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' });
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const id = body.id, tab = body.tab || 'Project Plan', rows = body.rows || [];
+      if (!id || !rows.length) return json({ ok: false, error: 'missing id / rows' }, 400);
+      try {
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
+        let realTab = tab;
+        let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+        let rd = await rr.json();
+        if (rd.error) { // tab name varies — fall back to the first sheet
+          rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent('A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+          rd = await rr.json(); realTab = '';
+        }
+        if (rd.error) return json({ ok: false, error: rd.error.message });
+        const c = resolveCols(rd.values || []);
+        const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
+        const oc = c.ownerCol, sc = c.statusCol, dc = c.dueCol;
+        const width = Math.max(tc, oc, sc, dc, 0) + 1;
+        const values = rows.map(r => { const a = new Array(width).fill(''); a[tc] = r.task || ''; if (oc >= 0) a[oc] = r.owner || ''; if (sc >= 0) a[sc] = r.status || 'Open'; if (dc >= 0 && r.due) a[dc] = r.due; return a; });
+        const range = realTab ? (realTab + '!A1') : 'A1';
+        const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(range) + ':append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS', {
+          method: 'POST', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values }) });
+        const wd = await wr.json();
+        if (wd.error) return json({ ok: false, error: wd.error.message });
+        // invalidate the live cache so the appended rows show on the next sync
+        try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
+        return json({ ok: true, appended: (wd.updates && wd.updates.updatedRows) || values.length, tab: realTab || '(first sheet)',
+          cols: { task: colLetter(tc), owner: oc >= 0 ? colLetter(oc) : null, status: sc >= 0 ? colLetter(sc) : null, due: dc >= 0 ? colLetter(dc) : null } });
+      } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
+    }
+
     // ---- serve a git-bundled page + inject the editor widget for its slug ----
     // App pages (everything except client-facing /deck/* decks) also get the Tachyon copilot.
     const page = PAGES[path];
@@ -473,7 +508,8 @@ function resolveCols(rows) {
   const colFor = re => { const i = hdr.findIndex(c => re.test(String(c || '').trim())); return i < 0 ? -1 : i + offset; };
   return { headerRow, offset, statusCol: statusHdr < 0 ? -1 : statusHdr + offset,
     taskCol: colFor(/task|area|activit|description|optimis|action/i),
-    ownerCol: colFor(/owner|\bae\b|assignee|responsib|fs\b/i) };
+    ownerCol: colFor(/owner|\bae\b|assignee|responsib|fs\b/i),
+    dueCol: colFor(/due|deadline|target date|completion date|^date$/i) };
 }
 // Parse a plan tab's rows into clean task objects for the dashboard.
 function parsePlanRows(rows) {
