@@ -89,6 +89,27 @@ export default {
       }
     }
 
+    // ---- feedback store (per-deck review notes, namespaced per page like /api/edits) ----
+    // A JSON array of {id, target, label, note, ts} — the whole array is owned by the page's
+    // feedback panel and PUT wholesale; small N (a review round's worth of notes), no races
+    // worth the complexity.
+    if (path === '/api/feedback') {
+      const slug = (url.searchParams.get('page') || 'home').replace(/[^a-z0-9_-]/gi, '');
+      const key = 'feedback:' + slug;
+      if (request.method === 'GET') {
+        return json((await env.EDITS.get(key, 'json')) || []);
+      }
+      if (request.method === 'PUT') {
+        const body = await request.json();
+        await env.EDITS.put(key, JSON.stringify(body));
+        return json({ ok: true, page: slug, count: (body || []).length });
+      }
+      if (request.method === 'DELETE') {
+        await env.EDITS.delete(key);
+        return json({ ok: true, page: slug, cleared: true });
+      }
+    }
+
     // ---- briefs store (Workflow control center: brief/ticket pipeline, shared across the team) ----
     // A single JSON object keyed by brief id: {id: {client, code, task, due, status, comms, ...}}.
     // The board owns its state and PUTs the whole map; small N, no races worth the complexity.
@@ -217,6 +238,8 @@ function getEditorScript(slug) {
   var editing=false, lastSel=null, dirty={}, saveTimer=null;
   var DESIGN_SEL='.card,.stat,.pipe-card,.proto,.flow-step,.en-card,.tier,.mo,.sc-cell,.ask,.callout,.note,.ag-row';
   var blockN=0, groupN=0, groupIds=new WeakMap(), rowN={};
+  var FEEDBACK=[], fbN=0;
+  function esc(s){ return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   var css = 'body.de-on [data-eid]{outline:1px dashed rgba(237,111,11,.55);outline-offset:2px}'
     + 'body.de-on [data-eid]:focus{outline:2px solid #ED6F0B;outline-offset:2px}'
@@ -247,16 +270,40 @@ function getEditorScript(slug) {
     + '.de-resize{position:absolute;z-index:99998;width:14px;height:14px;background:#ED6F0B;border:2px solid #fff;border-radius:50%;cursor:nwse-resize}'
     + '.de-pop{position:absolute;z-index:99999;background:#fff;border:1px solid #E6E6E6;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:12px;display:flex;flex-direction:column;gap:8px;font:13px sans-serif;color:#333;min-width:190px}'
     + '.de-pop label{font-size:11px;color:#6b7a8d;display:flex;justify-content:space-between;align-items:center;gap:8px}'
-    + '.de-pop select,.de-pop input[type=number]{font:inherit;padding:4px;border:1px solid #E6E6E6;border-radius:6px}';
+    + '.de-pop select,.de-pop input[type=number]{font:inherit;padding:4px;border:1px solid #E6E6E6;border-radius:6px}'
+    + '.de-rtbar{position:absolute;z-index:99998;display:flex;gap:2px;background:#1A365D;border-radius:8px;padding:4px;box-shadow:0 6px 20px rgba(0,0,0,.25)}'
+    + '.de-rtbar button{background:transparent;border:0;color:#fff;width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:13px;line-height:1}'
+    + '.de-rtbar button:hover,.de-rtbar button.on{background:rgba(255,255,255,.22)}'
+    + '.de-rtbar button.b{font-weight:900}.de-rtbar button.i{font-style:italic}.de-rtbar button.u{text-decoration:underline}'
+    + 'body.de-feedback [data-de-block],body.de-feedback .chapter,body.de-feedback header.hero{outline:1px dashed rgba(237,111,11,.4);outline-offset:2px;cursor:copy}'
+    + 'body.de-feedback [data-de-block]:hover,body.de-feedback .chapter:hover,body.de-feedback header.hero:hover{outline:2px solid #ED6F0B}'
+    + '.de-fbmark{position:absolute;width:18px;height:18px;background:#ED6F0B;color:#fff;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;z-index:99997;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.3)}'
+    + '.de-fbnote{position:absolute;z-index:99999;background:#fff;border:1px solid #E6E6E6;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:10px;width:260px;font:13px sans-serif;color:#333}'
+    + '.de-fbnote textarea{width:100%;min-height:70px;font:inherit;border:1px solid #E6E6E6;border-radius:6px;padding:6px;resize:vertical;box-sizing:border-box}'
+    + '.de-fbnote .row{display:flex;gap:6px;margin-top:8px}'
+    + '.de-fbnote .row button{flex:1;border:0;border-radius:6px;padding:7px;cursor:pointer;font:inherit}'
+    + '.de-fbnote .save{background:#ED6F0B;color:#fff}.de-fbnote .cancel{background:#EEE;color:#333}'
+    + '.de-fbpanel{position:fixed;right:16px;bottom:66px;z-index:99999;width:360px;max-width:92vw;max-height:66vh;overflow-y:auto;background:#fff;border:1px solid #E6E6E6;border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.18);padding:14px;display:none;font:13px/1.4 sans-serif;color:#333}'
+    + '.de-fbpanel.show{display:block}'
+    + '.de-fbpanel h3{font-size:13px;margin-bottom:4px}'
+    + '.de-fbpanel .hint{font-size:11.5px;color:#6b7a8d;margin-bottom:10px}'
+    + '.de-fbitem{border:1px solid #E6E6E6;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:12.5px;position:relative}'
+    + '.de-fbitem b{display:block;font-size:10.5px;color:#ED6F0B;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}'
+    + '.de-fbitem .del{position:absolute;top:6px;right:8px;cursor:pointer;color:#999;font-size:14px;line-height:1}'
+    + '.de-fbpanel .row{display:flex;gap:8px;margin-top:6px}'
+    + '.de-fbpanel .row button{flex:1;border:0;border-radius:8px;padding:9px 12px;cursor:pointer;font:inherit;font-weight:700}'
+    + '.de-fbpanel .gen{background:#ED6F0B;color:#fff}.de-fbpanel .clr{background:#EEE;color:#333}'
+    + '.de-fbempty{color:#6b7a8d;font-size:12.5px;padding:10px 0}';
   var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
 
   var bar=document.createElement('div'); bar.className='de-bar';
   var bEdit=document.createElement('button'); bEdit.textContent='✎ Edit';
   var bDesign=document.createElement('button'); bDesign.textContent='🎨 Design';
+  var bFeedback=document.createElement('button'); bFeedback.textContent='💬 Feedback';
   var bPick=document.createElement('button'); bPick.textContent='◎ Element'; bPick.style.display='none';
   var bExport=document.createElement('button'); bExport.textContent='⤴ Export edits'; bExport.style.display='none';
   var stat=document.createElement('span'); stat.textContent='';
-  bar.appendChild(bEdit); bar.appendChild(bDesign); bar.appendChild(bPick); bar.appendChild(bExport); bar.appendChild(stat);
+  bar.appendChild(bEdit); bar.appendChild(bDesign); bar.appendChild(bFeedback); bar.appendChild(bPick); bar.appendChild(bExport); bar.appendChild(stat);
   document.body.appendChild(bar);
 
   // Presentation mode: the editor bar is hidden by default (clean for client screen-share)
@@ -277,6 +324,9 @@ function getEditorScript(slug) {
     + '<div style="margin-top:10px"><small>Paste it into the Claude Code chat and say what to change (resize, recolour, add an image, restructure). Claude edits the template; your text edits stay put.</small></div>';
   document.body.appendChild(panel);
   var tgt=panel.querySelector('.de-target');
+
+  var fbPanel=document.createElement('div'); fbPanel.className='de-fbpanel';
+  document.body.appendChild(fbPanel);
 
   function toast(m){ var t=document.createElement('div'); t.className='de-toast'; t.textContent=m; document.body.appendChild(t);
     requestAnimationFrame(function(){ t.classList.add('show'); });
@@ -550,6 +600,42 @@ function getEditorScript(slug) {
   });
   bPick.addEventListener('click',function(){ panel.classList.toggle('show'); });
 
+  // ---- rich text: bold/italic/underline/link on a text selection while in Edit mode ----
+  var rtbar=null;
+  function hideRtbar(){ if(rtbar){ rtbar.remove(); rtbar=null; } }
+  function showRtbar(range){
+    hideRtbar();
+    rtbar=document.createElement('div'); rtbar.className='de-rtbar';
+    rtbar.innerHTML='<button class="b" data-c="bold" title="Bold">B</button>'
+      + '<button class="i" data-c="italic" title="Italic">I</button>'
+      + '<button class="u" data-c="underline" title="Underline">U</button>'
+      + '<button data-c="link" title="Link">🔗</button>'
+      + '<button data-c="clear" title="Clear formatting">✕</button>';
+    document.body.appendChild(rtbar);
+    var r=range.getBoundingClientRect();
+    rtbar.style.top=(r.top+window.scrollY-38)+'px';
+    rtbar.style.left=Math.max(8,r.left+window.scrollX+r.width/2-70)+'px';
+    rtbar.addEventListener('mousedown',function(e){ e.preventDefault(); }); // keep the text selection alive
+    rtbar.addEventListener('click',function(e){
+      var b=e.target.closest('button'); if(!b) return;
+      var cmd=b.getAttribute('data-c');
+      var host=lastSel; // the [data-eid] element currently being edited
+      if(cmd==='link'){ var u=prompt('Link URL:','https://'); if(u) document.execCommand('createLink',false,u); }
+      else if(cmd==='clear') document.execCommand('removeFormat');
+      else document.execCommand(cmd);
+      if(host) queueSave(host);
+      hideRtbar();
+    });
+  }
+  document.addEventListener('selectionchange',function(){
+    if(!editing){ hideRtbar(); return; }
+    var s=window.getSelection();
+    if(!s || s.isCollapsed || !s.rangeCount){ hideRtbar(); return; }
+    var el=s.anchorNode && s.anchorNode.nodeType===3 ? s.anchorNode.parentElement : s.anchorNode;
+    if(!el || !el.closest || !el.closest('[contenteditable="true"]')){ hideRtbar(); return; }
+    showRtbar(s.getRangeAt(0));
+  });
+
   document.addEventListener('input',function(e){ if(!editing) return; var el=e.target.closest?e.target.closest('[data-eid]'):null; if(el) queueSave(el); });
   document.addEventListener('click',function(e){ if(!editing) return; var el=e.target.closest?e.target.closest('[data-eid]'):null;
     if(el && !el.closest('.de-bar') && !el.closest('.de-panel')){
@@ -566,6 +652,112 @@ function getEditorScript(slug) {
   bExport.addEventListener('click',function(){ var patch={}; document.querySelectorAll('[data-eid]').forEach(function(el){ patch[el.getAttribute('data-eid')]=entry(el); });
     copy(JSON.stringify(patch,null,2), 'All edits copied as JSON'); });
 
+  // ---- Feedback module: leave a note on any block or chapter, then generate a single
+  // rework prompt for a fresh Claude Code session — the review-round equivalent of
+  // "Copy for Claude Code" above, but for accumulated feedback instead of one element.
+  function chapterFor(el){
+    var marks=[];
+    document.querySelectorAll('.chapter h2').forEach(function(h){
+      var ch=h.closest('.chapter'); if(!ch) return;
+      marks.push({ t: h.textContent.trim(), y: ch.getBoundingClientRect().top+window.scrollY });
+    });
+    var y=el.getBoundingClientRect().top+window.scrollY, best=null;
+    marks.forEach(function(m){ if(m.y<=y+4) best=m; });
+    return best ? best.t : 'Intro / hero';
+  }
+  function targetKey(el){
+    if(el.id) return '#'+el.id;
+    if(el.getAttribute('data-eid')) return 'eid:'+el.getAttribute('data-eid');
+    if(!el.getAttribute('data-fbid')) el.setAttribute('data-fbid','fb'+Math.random().toString(36).slice(2,8));
+    return 'fbid:'+el.getAttribute('data-fbid');
+  }
+  function findByKey(key){
+    if(!key) return null;
+    if(key.charAt(0)==='#') return document.getElementById(key.slice(1));
+    if(key.indexOf('eid:')===0) return document.querySelector('[data-eid="'+key.slice(4)+'"]');
+    if(key.indexOf('fbid:')===0) return document.querySelector('[data-fbid="'+key.slice(5)+'"]');
+    return null;
+  }
+  function saveFeedback(){
+    fetch(API+'/api/feedback?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(FEEDBACK)}).catch(function(){});
+  }
+  function renderMarkers(){
+    document.querySelectorAll('.de-fbmark').forEach(function(m){ m.remove(); });
+    FEEDBACK.forEach(function(f){
+      var el=findByKey(f.target); if(!el) return;
+      var m=document.createElement('div'); m.className='de-fbmark'; m.textContent='💬'; m.title=f.note.slice(0,120);
+      var r=el.getBoundingClientRect();
+      m.style.top=(r.top+window.scrollY-8)+'px'; m.style.left=(r.left+window.scrollX-8)+'px';
+      m.addEventListener('click',function(e){ e.stopPropagation(); fbPanel.classList.add('show'); });
+      document.body.appendChild(m);
+    });
+  }
+  function renderFeedbackPanel(){
+    var body = FEEDBACK.length ? FEEDBACK.map(function(f){
+      return '<div class="de-fbitem"><span class="del" data-id="'+f.id+'">×</span><b>'+esc(f.label.split(' — ')[0])+'</b>'+esc(f.note)+'</div>';
+    }).join('') : '<div class="de-fbempty">No notes yet. Turn Feedback on, then click any card, table or chapter to leave one.</div>';
+    fbPanel.innerHTML = '<h3>💬 Feedback ('+FEEDBACK.length+')</h3>'
+      + '<div class="hint">Click a block or chapter while Feedback is on to leave a note there. When you\'re done, generate a prompt to paste into a Claude Code session.</div>'
+      + '<div id="fb-list">'+body+'</div>'
+      + '<div class="row"><button class="gen">⤴ Generate rework prompt</button></div>'
+      + (FEEDBACK.length ? '<div class="row"><button class="clr">🗑 Clear all</button></div>' : '');
+    fbPanel.querySelectorAll('.del').forEach(function(x){ x.addEventListener('click',function(){
+      var id=x.getAttribute('data-id'); FEEDBACK=FEEDBACK.filter(function(f){ return f.id!==id; });
+      saveFeedback(); renderFeedbackPanel(); renderMarkers(); }); });
+    var gen=fbPanel.querySelector('.gen'); if(gen) gen.addEventListener('click',generatePrompt);
+    var clr=fbPanel.querySelector('.clr'); if(clr) clr.addEventListener('click',function(){
+      if(!confirm('Clear all '+FEEDBACK.length+' feedback notes?')) return;
+      FEEDBACK=[]; saveFeedback(); renderFeedbackPanel(); renderMarkers(); });
+  }
+  function openNotePopup(el){
+    document.querySelectorAll('.de-fbnote').forEach(function(p){ p.remove(); });
+    var pop=document.createElement('div'); pop.className='de-fbnote';
+    pop.innerHTML='<div style="font-size:11px;color:#ED6F0B;text-transform:uppercase;font-weight:800;margin-bottom:6px">'+esc(chapterFor(el))+'</div>'
+      + '<textarea placeholder="What should change here?"></textarea>'
+      + '<div class="row"><button class="save">Save note</button><button class="cancel">Cancel</button></div>';
+    document.body.appendChild(pop);
+    var r=el.getBoundingClientRect();
+    pop.style.top=(r.top+window.scrollY)+'px';
+    pop.style.left=Math.max(8,Math.min(window.innerWidth-276,r.right+window.scrollX+10))+'px';
+    var ta=pop.querySelector('textarea'); ta.focus();
+    pop.querySelector('.cancel').addEventListener('click',function(){ pop.remove(); });
+    pop.querySelector('.save').addEventListener('click',function(){
+      var note=ta.value.trim(); if(!note){ pop.remove(); return; }
+      FEEDBACK.push({ id:'f'+(fbN++), target:targetKey(el), label:chapterFor(el)+' — "'+el.textContent.trim().replace(/\s+/g,' ').slice(0,60)+'"', note:note, ts:new Date().toISOString() });
+      saveFeedback(); renderFeedbackPanel(); renderMarkers();
+      pop.remove(); toast('Feedback saved');
+    });
+  }
+  function generatePrompt(){
+    if(!FEEDBACK.length){ toast('No feedback to generate a prompt from'); return; }
+    var byChapter={}, order=[];
+    FEEDBACK.forEach(function(f){ var ch=f.label.split(' — ')[0]; if(!byChapter[ch]){ byChapter[ch]=[]; order.push(ch); } byChapter[ch].push(f.note); });
+    var md='# '+PAGE+' deck — feedback round, '+(new Date().toISOString().slice(0,10))+'\n\n'
+      + 'Rework the deck at /deck/'+PAGE+' using the feedspark-deck-generator skill, based on this feedback:\n\n';
+    order.forEach(function(ch){
+      md+='## '+ch+'\n'; byChapter[ch].forEach(function(n){ md+='- '+n.replace(/\n+/g,' ')+'\n'; }); md+='\n';
+    });
+    md+='If any of this feedback reflects a pattern that should apply to future decks too (not just this one), update .claude/skills/feedspark-deck-generator/ accordingly.\n';
+    copy(md,'Feedback prompt copied — paste into Claude Code');
+  }
+  function loadFeedback(){
+    fetch(API+'/api/feedback?page='+PAGE).then(function(r){ return r.json(); }).then(function(list){
+      FEEDBACK=list||[]; fbN=FEEDBACK.length; renderFeedbackPanel(); renderMarkers();
+    }).catch(function(){ FEEDBACK=[]; renderFeedbackPanel(); });
+  }
+  bFeedback.addEventListener('click',function(){
+    var on=!document.body.classList.contains('de-feedback');
+    document.body.classList.toggle('de-feedback',on); bFeedback.classList.toggle('on',on);
+    fbPanel.classList.toggle('show',on);
+  });
+  document.addEventListener('click',function(e){
+    if(!document.body.classList.contains('de-feedback')) return;
+    if(e.target.closest('.de-fbnote,.de-fbpanel,.de-fbmark,.de-bar')) return;
+    var el=e.target.closest('[data-de-block],.chapter,header.hero'); if(!el) return;
+    openNotePopup(el);
+  }, true);
+  window.addEventListener('resize',renderMarkers);
+
   // Ids must exist for EVERY viewer at load time, not just whoever clicks Edit/Design first —
   // otherwise a saved KV patch has nothing to attach to and silently fails to apply for anyone
   // who opens the link read-only (e.g. a client on the call).
@@ -574,6 +766,7 @@ function getEditorScript(slug) {
   initRowDrag();
   initBlockDrag();
   loadEdits();
+  loadFeedback();
 })();
 </script>`;
 }
