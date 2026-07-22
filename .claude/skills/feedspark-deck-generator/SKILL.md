@@ -89,6 +89,16 @@ If a client has no linked plan and no CLAUDE.md entry (a prospect deck), say so 
 either ask Ray for the missing facts or write clearly-marked placeholders — never invent
 numbers, test results, or client facts that aren't sourced from somewhere above.
 
+**A feed export is a sample, not a catalogue, unless the brief says otherwise.** A brief
+attaching a feed export rarely states it covers every SKU/brand/market the account actually
+runs (e.g. a ~5,000-row export against a client known to run tens of thousands of SKUs
+across many markets/feeds) — treat any count derived from that export (SKU total, brand
+list, distinct product groups) as scoped to the sample until the brief or CLAUDE.md
+confirms it's the full live feed. Say "in this sample"/"in this export," not "across the
+account," and mark derived breakdowns (e.g. brand share) as unconfirmed rather than
+presenting them as the account's true mix. This applies to every deck built from an
+attached export, not just Reiss.
+
 ### Step 2a — Analyse an attached product feed (Stream B), when present
 
 A live feed export is ground truth about the catalogue *today* — the project plan only
@@ -190,6 +200,16 @@ Follow the exact pattern already used for every other deck in
 - Sanity-check the new HTML: no stray `[bracket]` placeholders, no leftover mentions of a
   different client (e.g. grep for "YuMOVE" if you built the file by adapting YuMOVE's
   markup), topbar nav count matches chapter count, chapter numbers are sequential.
+- **Headline number must match its own note.** In any scorecard-style block (`.sc-cell`,
+  `.stat`, or similar) where a big headline number sits above a smaller explanatory note,
+  check they're describing the same metric — not a process-completion flag headlined next
+  to a note that actually describes a different, stricter outcome measurement (or vice
+  versa). If two related-but-different numbers exist for the same claim (a "processed" flag
+  vs. an actual structural pass rate; "has at least one" vs. a true average fill rate), the
+  honest/stricter one is the headline and the softer one moves into the note as context —
+  never the other way round. This caught a real bug in the Reiss deck's Feed Optimisation
+  Score chapter (round 1 feedback) and is worth checking on every scorecard-style section,
+  not just when feedback flags it.
 - Preview if the tooling is available (`tools/preview_tmpl.py` / `tools/preview_simple.py`
   per `tools/README.md`) — Claude Code on the web usually doesn't have LibreOffice/
   `pdftoppm`, but the Pillow-based previewer works without them.
