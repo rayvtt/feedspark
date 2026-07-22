@@ -187,11 +187,11 @@ window.addEventListener('load',restore);
 /* semantic tint pills — green */
 [data-theme=dark] .built,[data-theme=dark] .atrt-badge,[data-theme=dark] .cm-pill.ok,[data-theme=dark] .rd-band.b0,[data-theme=dark] .scan-hit,[data-theme=dark] .tag-open,[data-theme=dark] .card.on,[data-theme=dark] .card.shipped,[data-theme=dark] .wl-test{background:rgba(72,208,126,.14)!important;border-color:rgba(72,208,126,.3)!important;color:#6FE0A0!important}
 /* orange */
-[data-theme=dark] .mchip.imp-med,[data-theme=dark] .cm-pill.warn,[data-theme=dark] .rd-band.b2,[data-theme=dark] .due.soon,[data-theme=dark] .tag-hold,[data-theme=dark] .top10,[data-theme=dark] .top,[data-theme=dark] .rd-band.b1{background:rgba(245,166,35,.15)!important;border-color:rgba(245,166,35,.32)!important;color:#F0A44E!important}
+[data-theme=dark] .mchip.imp-med,[data-theme=dark] .cm-pill.warn,[data-theme=dark] .rd-band.b2,[data-theme=dark] .due.soon,[data-theme=dark] .tag-hold,[data-theme=dark] .tag-progress,[data-theme=dark] .top10,[data-theme=dark] .top,[data-theme=dark] .rd-band.b1{background:rgba(245,166,35,.15)!important;border-color:rgba(245,166,35,.32)!important;color:#F0A44E!important}
 /* red */
 [data-theme=dark] .mchip.imp-high,[data-theme=dark] .cm-pill.risk,[data-theme=dark] .rd-band.b3,[data-theme=dark] .due.over,[data-theme=dark] .atrt-badge.danger,[data-theme=dark] .tag-risk,[data-theme=dark] .row.attn,[data-theme=dark] .rd-card.crit{background:rgba(241,112,122,.13)!important;border-color:rgba(241,112,122,.3)!important;color:#F3868F!important}
 /* navy/blue */
-[data-theme=dark] .mchip.eff,[data-theme=dark] .who-chip,[data-theme=dark] .tag-progress,[data-theme=dark] .tag-client{background:rgba(91,130,190,.18)!important;border-color:rgba(91,130,190,.36)!important;color:#93B4E0!important}
+[data-theme=dark] .mchip.eff,[data-theme=dark] .who-chip,[data-theme=dark] .tag-client{background:rgba(91,130,190,.18)!important;border-color:rgba(91,130,190,.36)!important;color:#93B4E0!important}
 /* neutral chips */
 [data-theme=dark] .mchip,[data-theme=dark] .mini,[data-theme=dark] .mchip.ch,[data-theme=dark] .tag,[data-theme=dark] .pill,[data-theme=dark] .cm-pill.na,[data-theme=dark] .m-pill{background:#20242E;border-color:var(--line);color:var(--ink-2)}
 [data-theme=dark] .lc-cell.lc-0 .lc-dim{color:var(--muted)}
@@ -223,30 +223,6 @@ window.addEventListener('load',restore);
     <div><span class="gdot" id="gdot"></span><b>Gmail live sync</b> — hourly scan of client task emails and ASPL replies. <span id="gstate">Not connected — set a Gmail credential to switch it on.</span></div>
     <div style="margin-top:4px;color:var(--muted)">Project-plan intake is live below now. Until the Gmail credential is set, add email tasks with <b>New brief</b> and log ASPL replies on each ticket — the completion scan and client-confirmation draft work either way.</div>
   </div></div>
-
-  <style>
-  .wf-bpanel{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:13px 15px;margin:20px 0 4px}
-  .wf-bhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-  .wf-bhead h3{margin:0;font-size:14px;font-weight:900}
-  .wf-bhead .wf-bn{font-size:11.5px;font-weight:800;color:var(--muted)}
-  .wf-badd{margin-left:auto;display:flex;gap:6px}
-  .wf-badd input{font:inherit;font-size:12.5px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);min-width:150px}
-  .wf-badd input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
-  .wf-badd button{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:8px;border:1px solid var(--orange);background:var(--orange);color:#fff;cursor:pointer}
-  .wf-blink{font:inherit;font-size:11.5px;font-weight:800;color:var(--muted);background:none;border:0;cursor:pointer;text-decoration:underline}
-  #wf-brands{display:flex;gap:6px;flex-wrap:wrap}
-  .wf-brand{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;padding:4px 5px 4px 11px;border-radius:100px;border:1px solid var(--line);background:var(--wash);color:var(--ink-2)}
-  .wf-brand.live{border-color:#CDE9D8;background:rgba(72,208,126,.12);color:var(--good)}
-  .wf-brand .wf-x{border:0;background:none;color:inherit;opacity:.55;cursor:pointer;font-size:15px;line-height:1;padding:0 3px;border-radius:50%}
-  .wf-brand .wf-x:hover{opacity:1;color:var(--risk)}
-  </style>
-  <div class="wf-bpanel">
-    <div class="wf-bhead"><h3>Brands in your book</h3><span class="wf-bn" id="wf-brand-n"></span>
-      <span class="wf-badd"><input id="wf-brand-add" placeholder="Add a brand…" aria-label="Add a brand"><button id="wf-brand-addbtn">＋ Add</button>
-      <button class="wf-blink" id="wf-brand-reset" title="Restore the full book">Reset</button></span></div>
-    <div id="wf-brands"></div>
-    <p class="sub" style="margin:9px 0 0">Every brand here is selectable in the brief generator. Green = has a live plan feeding the intake below. Remove any you don't run; add new ones. Saved on this device.</p>
-  </div>
 
   <h2>New brief</h2>
   <p class="sub">Compose a coded brief the ASPL portal can auto-scan. The <span style="color:var(--orange-ink);font-weight:800">[ibfcode:…]</span> and <span style="color:var(--orange-ink);font-weight:800">ibfdue:…</span> tokens are generated for you and embedded in the subject and body.</p>
@@ -296,16 +272,39 @@ window.addEventListener('load',restore);
   .it-src button{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
   .it-src button:hover{border-color:var(--orange);color:var(--orange-deep)}
   .it-src button.on{background:var(--navy);border-color:var(--navy);color:#fff}
-  .it-ctl select,.it-ctl input{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
-  .it-ctl input{flex:1;min-width:150px}
-  .it-ctl select:focus,.it-ctl input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
-  .it-n{font-size:12px;font-weight:800;color:var(--muted);margin-left:auto;white-space:nowrap}
-  .it-scroll{max-height:62vh;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:var(--shadow)}
+  .it-grp{display:flex;align-items:center;gap:6px}
+  .it-lbl{font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .it-multi{position:relative}
+  .it-multi-btn{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);cursor:pointer;white-space:nowrap}
+  .it-multi-btn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .it-multi-btn.on{border-color:var(--navy);color:var(--navy);font-weight:800}
+  .it-multi-menu{position:absolute;top:calc(100% + 5px);left:0;z-index:30;width:170px;max-height:280px;overflow-x:hidden;overflow-y:auto;background:var(--paper);border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);padding:5px}
+  .it-multi-menu label{display:flex;align-items:center;justify-content:flex-start;text-align:left;gap:7px;padding:5px 8px;border-radius:7px;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .it-multi-menu label:hover{background:var(--wash)}
+  .it-multi-menu input[type=checkbox]{margin:0;flex:none;width:15px;height:15px;min-width:0;padding:0;border-radius:4px;accent-color:var(--orange-deep)}
+  .it-multi-menu .it-multi-all{border-bottom:1px solid var(--line);margin-bottom:4px;padding-bottom:7px;font-weight:800}
+  #it-status-menu{width:156px}
+  #it-client-menu{width:184px}
+  #it-views-menu{width:214px}
+  .it-view-row{display:flex;align-items:center;gap:2px}
+  .it-view-apply{flex:1;text-align:left;font:inherit;font-size:13px;font-weight:700;padding:6px 9px;border:none;background:none;color:var(--ink);cursor:pointer;border-radius:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .it-view-apply:hover{background:var(--wash)}
+  .it-view-del{font:inherit;font-size:11px;padding:4px 7px;border:none;background:none;color:var(--muted);cursor:pointer;border-radius:100px}
+  .it-view-del:hover{color:#C0392B}
+  .it-view-sep{height:1px;background:var(--line);margin:5px 0}
+  .it-view-empty{font-size:12px;color:var(--muted);padding:4px 9px 8px}
+  .it-view-save{width:100%;text-align:left;font:inherit;font-size:12.5px;font-weight:800;padding:7px 9px;border:none;background:none;color:var(--orange-ink);cursor:pointer;border-radius:7px}
+  .it-view-save:hover{background:rgba(245,166,35,.1)}
+  .it-ctl>select,.it-ctl>input{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+  .it-ctl>input{flex:0 1 220px;min-width:150px}
+  .it-ctl>select:focus,.it-ctl>input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
+  .it-n{font-size:12px;font-weight:800;color:var(--muted);margin-left:4px;white-space:nowrap}
+  .it-scroll{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:var(--shadow)}
   .itbl{width:100%;border-collapse:collapse;font-size:12.5px}
   #itbl{table-layout:fixed}
   #itbl col.cw-cb{width:30px}#itbl col.cw-client{width:9.5%}#itbl col.cw-feed{width:8.5%}
   #itbl col.cw-task{width:auto}#itbl col.cw-owner{width:8.5%}#itbl col.cw-due{width:56px}
-  #itbl col.cw-status{width:104px}#itbl col.cw-source{width:70px}#itbl col.cw-act{width:96px}
+  #itbl col.cw-status{width:104px}#itbl col.cw-source{width:70px}#itbl col.cw-act{width:122px}
   .itbl thead th{position:sticky;top:0;background:var(--paper);z-index:2;text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);padding:9px 8px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;box-shadow:inset 0 -1px 0 var(--line);overflow:hidden;text-overflow:ellipsis}
   .itbl thead th.it-act{text-align:right;cursor:default}
   .itbl thead th[data-k]:hover{color:var(--orange-deep)}
@@ -319,6 +318,12 @@ window.addEventListener('load',restore);
   .itbl .c-due{color:var(--ink-2);font-weight:700;white-space:nowrap}
   .itbl .c-due-ed{cursor:pointer}
   .itbl .c-due-ed:hover{color:var(--orange-deep);text-decoration:underline}
+  .itbl .c-task-ed,.itbl .c-owner-ed{cursor:pointer}
+  .itbl .c-task-ed:hover,.itbl .c-owner-ed:hover{text-decoration:underline dotted;text-underline-offset:2px;text-decoration-color:var(--orange)}
+  .itbl td.g-sel{background:rgba(245,166,35,.14)}
+  .itbl td.g-active{outline:2px solid var(--orange);outline-offset:-2px;background:rgba(245,166,35,.2)}
+  [data-theme=dark] .itbl td.g-sel{background:rgba(245,166,35,.16)}
+  [data-theme=dark] .itbl td.g-active{background:rgba(245,166,35,.24)}
   .itbl .feed-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--orange-ink);background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.28);border-radius:6px;padding:2px 7px;white-space:nowrap}
   .itbl .src-tag{font-size:10px;font-weight:800;border-radius:100px;padding:2px 9px;border:1px solid;white-space:nowrap}
   .itbl .src-plan{color:#5B82BE;background:rgba(91,130,190,.13);border-color:rgba(91,130,190,.32)}
@@ -334,6 +339,14 @@ window.addEventListener('load',restore);
   .itbl .del-btn{font:inherit;font-size:12px;font-weight:800;padding:4px 7px;margin-right:4px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer}
   .itbl .del-btn:hover{border-color:#C0392B;color:#C0392B}
   .itbl .brief-btn:hover{background:var(--orange);color:#fff}
+  .itbl .hide-btn{display:inline-flex;align-items:center;justify-content:center;padding:4px 6px;margin-right:4px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer;vertical-align:middle}
+  .itbl .hide-btn:hover{border-color:var(--navy);color:var(--navy)}
+  .itbl .hide-btn.on{border-color:var(--navy);color:var(--navy);background:rgba(26,54,93,.08)}
+  .itbl tr.row-hidden{opacity:.5}
+  .itbl tr.row-hidden .c-task{font-style:italic}
+  .it-hidden-tog{font:inherit;font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:100px;border:1px dashed var(--line);background:var(--paper);color:var(--muted);cursor:pointer;white-space:nowrap;margin-left:8px}
+  .it-hidden-tog:hover{border-color:var(--navy);color:var(--navy)}
+  .it-hidden-tog.on{border-style:solid;border-color:var(--navy);color:var(--navy);background:rgba(26,54,93,.08)}
   .it-empty{text-align:center;color:var(--muted);font-size:13px;padding:24px}
   .tpl-hint{font-weight:600;color:var(--muted);font-size:11px}
   /* live sync bar */
@@ -344,6 +357,18 @@ window.addEventListener('load',restore);
   .live-refresh{font:inherit;font-size:11.5px;font-weight:800;padding:5px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
   .live-refresh:hover{border-color:var(--orange);color:var(--orange-deep)}
   .live-refresh:disabled{opacity:.5;cursor:default}
+  .live-add{font:inherit;font-size:11.5px;font-weight:800;padding:5px 12px;border-radius:100px;border:1px solid var(--orange);background:var(--orange);color:#fff;cursor:pointer;margin-left:auto}
+  .live-add:hover{background:var(--orange-deep);border-color:var(--orange-deep)}
+  /* add-task inline hovering row (sticky under the table) */
+  #it-addfoot{position:sticky;bottom:0;z-index:3}
+  .add-row td{background:var(--wash);border-top:2px solid var(--orange);padding:7px 8px;box-shadow:0 -7px 16px rgba(16,24,40,.09)}
+  .add-row .c-sel{color:var(--orange-deep);font-weight:900;text-align:center}
+  .add-row .af-feed{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase}
+  .add-row input,.add-row select{width:100%;box-sizing:border-box;font:inherit;font-size:12px;font-weight:600;padding:5px 7px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}
+  .add-row input:focus,.add-row select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 2px rgba(245,166,35,.18)}
+  .add-row .af-add{font:inherit;font-size:11.5px;font-weight:800;padding:5px 11px;margin-right:4px;border-radius:100px;border:1px solid var(--orange);background:var(--orange);color:#fff;cursor:pointer}
+  .add-row .af-add:hover{background:var(--orange-deep);border-color:var(--orange-deep)}
+  .live-add.on{background:var(--orange-deep);border-color:var(--orange-deep)}
   /* select + status cells */
   .itbl thead th.it-cbh,.itbl td.c-sel{width:34px;text-align:center;padding-left:10px;padding-right:2px;cursor:default}
   .itbl td.c-stat{white-space:nowrap}
@@ -351,9 +376,12 @@ window.addEventListener('load',restore);
   .c-stat .stat-sel:hover{border-color:var(--orange)}
   .c-stat .stat-sel.tag-done{color:var(--good);border-color:#CDE9D8}
   .c-stat .stat-sel.tag-hold{color:var(--muted)}
-  .c-stat .stat-sel.tag-progress{color:#2F6FB0;border-color:#CFE0F0}
+  .c-stat .stat-sel.tag-progress{color:#C96A12;border-color:#F5D3A6;background:rgba(245,166,35,.14)}
   .c-stat .stat-sel.tag-client{color:var(--navy);border-color:#CFDBEA}
-  .c-stat .stat-sel.tag-open{color:var(--orange-ink);border-color:#F3D9B8}
+  .c-stat .stat-sel.tag-open{color:var(--muted);border-color:var(--line)}
+  [data-theme=dark] .c-stat .stat-sel.tag-open{color:#9AA6B2!important;border-color:var(--line)!important;background:var(--paper)!important}
+  .c-stat .stat-sel.tag-briefed{color:#7A5AA8;border-color:#D9CEEA}
+  [data-theme=dark] .c-stat .stat-sel.tag-briefed{color:#B79BDB;border-color:rgba(122,90,168,.4)}
   .new-tag{font-size:9px;font-weight:900;letter-spacing:.04em;color:#fff;background:var(--good);border-radius:4px;padding:1px 5px;vertical-align:middle}
   .c-client .live-dot{display:inline-block;width:7px;height:7px;margin-left:5px;background:var(--good)}
   /* bulk bar */
@@ -426,22 +454,29 @@ window.addEventListener('load',restore);
   [data-theme=dark] .it-bulk{background:rgba(245,166,35,.12)}
   </style>
   <h2>Intake — every task, live</h2>
-  <p class="sub">Three streams in one table — monthly <b>project-plan</b> tasks, the <b>ATRT legacy</b> import (your retired tracker — 50 active tasks), and daily <b>client emails</b>. Change a <b>status</b> inline: plan rows write back to the sheet, ATRT rows save to the portal. Filter by source or status, tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator.</p>
-  <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
+  <p class="sub">Three streams in one table — monthly <b>project-plan</b> tasks, the <b>ATRT legacy</b> import (your retired tracker — 50 active tasks), and daily <b>client emails</b>. Change a <b>status</b> inline: plan rows write back to the sheet, ATRT rows save to the portal. Stack filters — pick several <b>sources</b>, <b>statuses</b> or <b>clients</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator. Works like a spreadsheet — click a cell, arrow-key around, <b>Cmd/Ctrl+C</b> copy, <b>Ctrl+D</b> fill down, <b>Ctrl+V</b> paste, <b>Ctrl+Z</b> undo; <b>double-click</b> to edit; on a status cell just <b>type a letter</b> (O, B, I, H, W, D) to set it.</p>
+  <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="add-task-btn" type="button">＋ Add task</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
   <div class="it-ctl">
-    <div class="it-src" id="it-src"></div>
-    <select id="it-status" aria-label="Filter by status">
-      <option value="act">To action</option><option value="">All statuses</option>
-      <option value="open">Open</option><option value="progress">In progress</option>
-      <option value="hold">On hold</option><option value="client">With client</option><option value="done">Done</option>
-    </select>
+    <div class="it-multi" id="it-views-wrap">
+      <button type="button" class="it-multi-btn" id="it-views-btn" aria-haspopup="true" aria-expanded="false" title="Save & reapply filter views">★ Views ▾</button>
+      <div class="it-multi-menu" id="it-views-menu" role="menu" aria-label="Saved filter views" hidden></div>
+    </div>
+    <div class="it-grp"><span class="it-lbl">Source</span><div class="it-src" id="it-src" role="group" aria-label="Filter by source (multi-select)"></div></div>
+    <div class="it-multi" id="it-status-wrap">
+      <button type="button" class="it-multi-btn" id="it-status-btn" aria-haspopup="true" aria-expanded="false">All statuses ▾</button>
+      <div class="it-multi-menu" id="it-status-menu" role="group" aria-label="Filter by status (multi-select)" hidden></div>
+    </div>
     <select id="it-window" aria-label="Plan date window" title="Show only the latest N months of each brand's plan (email + ATRT unaffected)">
       <option value="2m">Plan: latest 2 months</option><option value="3m">Plan: latest 3 months</option>
       <option value="4m">Plan: latest 4 months</option><option value="">Plan: all history</option>
     </select>
-    <select id="it-client" aria-label="Filter by client"><option value="">All clients</option></select>
+    <div class="it-multi" id="it-client-wrap">
+      <button type="button" class="it-multi-btn" id="it-client-btn" aria-haspopup="true" aria-expanded="false">All clients ▾</button>
+      <div class="it-multi-menu" id="it-client-menu" role="group" aria-label="Filter by client (multi-select)" hidden></div>
+    </div>
     <input id="it-search" type="search" placeholder="Search tasks, owners…" aria-label="Search intake">
     <span class="it-n" id="it-n"></span>
+    <button type="button" class="it-hidden-tog" id="it-hidden-tog" hidden aria-pressed="false"></button>
   </div>
   <div class="atrt-actions"><span class="atrt-note" id="atrt-note"></span><button class="btn sm" id="atrt-push" style="display:none"></button><button class="btn sm ghost" id="atrt-undo" style="display:none"></button></div>
   <div class="it-bulk" id="it-bulk" style="display:none">
@@ -458,6 +493,17 @@ window.addEventListener('load',restore);
       <th data-k="client">Client</th><th data-k="cat">Feed</th><th data-k="task">Task</th>
       <th data-k="owner">Owner</th><th data-k="dsort">Due</th><th data-k="b">Status</th><th data-k="source">Source</th><th class="it-act">Brief</th>
     </tr></thead><tbody id="it-body"></tbody>
+    <tfoot id="it-addfoot" hidden><tr class="add-row">
+      <td class="c-sel">＋</td>
+      <td><select id="af-client" aria-label="New task — client"></select></td>
+      <td class="af-feed" title="Auto-detected from the task">auto</td>
+      <td><input id="af-task" placeholder="New task…" autocomplete="off"></td>
+      <td><input id="af-owner" placeholder="Owner" autocomplete="off"></td>
+      <td><input id="af-due" placeholder="DDMM" inputmode="numeric" autocomplete="off"></td>
+      <td><select id="af-status" aria-label="New task — status"></select></td>
+      <td><span class="src-tag src-plan">Plan</span></td>
+      <td class="c-act"><button class="af-add" id="af-save" type="button">Add</button><button class="del-btn" id="af-cancel" type="button" title="Cancel">✕</button></td>
+    </tr></tfoot>
   </table></div>
 
   <h2>Brief pipeline</h2>
@@ -533,19 +579,20 @@ window.addEventListener('load',restore);
   var LIVE={}, LIVE_AT=null, LIVE_CONN=false;   // live plan tasks per brand (from /api/plan/live)
 
   // ---- editable status (writes back to the plan sheet, shared overlay with the dossier) ----
-  var STATUS_OPTS=['Open','In Progress','On Hold','With Client','Done'];
+  var STATUS_OPTS=['Open','Briefed','In Progress','On Hold','With Client','Done'];
   function bucketOf(s){ s=String(s||'').toLowerCase();
     if(/(done|complete|finish|live|delivered|actioned|signed)/.test(s))return 'done';
     if(/(hold|park)/.test(s))return 'hold';
+    if(/brief/.test(s))return 'briefed';
     if(/(progress|wip|ongoing|review)/.test(s))return 'progress';
     if(/client/.test(s))return 'client'; return 'open'; }
   function statSel(t){ var cur=String(t.s||(t.b==='done'?'Done':'Open'));
-    var c=t.b||bucketOf(cur); if(['done','hold','progress','client','open'].indexOf(c)<0)c=bucketOf(cur);
+    var c=t.b||bucketOf(cur); if(['done','hold','progress','client','open','briefed'].indexOf(c)<0)c=bucketOf(cur);
     var found=false;
     var opts=STATUS_OPTS.map(function(o){ var sel=o.toLowerCase()===cur.toLowerCase(); if(sel)found=true;
       return '<option'+(sel?' selected':'')+'>'+esc(o)+'</option>'; }).join('');
     if(!found) opts='<option selected>'+esc(cur)+'</option>'+opts;
-    return '<select class="stat-sel tag-'+c+'" title="Change status — writes back to the plan sheet">'+opts+'</select>'; }
+    return '<select class="stat-sel tag-'+c+'" data-prev="'+esc(cur)+'" title="Change status — writes back to the plan sheet (type a letter to pick)">'+opts+'</select>'; }
   function statusOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskstatus')||'{}');}catch(e){return {};} }
   function saveStatus(client,task,val){ try{var o=statusOverlay(); o[client+'|'+task]=val; localStorage.setItem('fcc-taskstatus',JSON.stringify(o));}catch(e){} }
   function writeStatus(client,task,val){                 // 2-way write to the brand's plan sheet
@@ -661,20 +708,7 @@ window.addEventListener('load',restore);
   function fillClientSelect(){ var sel=document.getElementById('bg-client'); if(!sel)return; var cur=sel.value;
     sel.innerHTML=CLIENTS.map(function(c){return '<option>'+esc(c)+'</option>';}).join('');
     if(CLIENTS.indexOf(cur)>=0) sel.value=cur; }
-  function renderBrands(){ var host=document.getElementById('wf-brands'); if(!host)return;
-    host.innerHTML=CLIENTS.map(function(c){ var live=!!PT[c];
-      return '<span class="wf-brand'+(live?' live':'')+'" title="'+(live?'live plan':'no live plan')+'">'+esc(c)
-        +'<button class="wf-x" data-b="'+esc(c)+'" title="Remove from Workflow" aria-label="Remove '+esc(c)+'">×</button></span>'; }).join('');
-    host.querySelectorAll('.wf-x').forEach(function(b){ b.onclick=function(){ var name=b.getAttribute('data-b');
-      CLIENTS=CLIENTS.filter(function(x){return x!==name;}); saveBrands(); fillClientSelect(); renderBrands(); renderIntake(); }; });
-    var n=document.getElementById('wf-brand-n'); if(n)n.textContent=CLIENTS.length+' brands';
-  }
-  (function(){ var add=document.getElementById('wf-brand-add'), btn=document.getElementById('wf-brand-addbtn');
-    function doAdd(){ var v=(add.value||'').trim(); if(!v)return; if(CLIENTS.indexOf(v)<0){ CLIENTS.push(v); CLIENTS.sort(function(a,b){return a.localeCompare(b);}); saveBrands(); fillClientSelect(); renderBrands(); renderIntake(); } add.value=''; add.focus(); }
-    if(btn)btn.onclick=doAdd; if(add)add.addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();doAdd();} });
-    var reset=document.getElementById('wf-brand-reset'); if(reset)reset.onclick=function(){ try{localStorage.removeItem(BKEY);}catch(e){} CLIENTS=loadBrands(); fillClientSelect(); renderBrands(); renderIntake(); };
-  })();
-  fillClientSelect(); renderBrands();
+  fillClientSelect();   // CLIENTS still drives the brief generator + intake; the brand-book panel was removed
   ['bg-client','bg-market','bg-source','bg-task','bg-scope','bg-dod','bg-assets','bg-due','bg-priority'].forEach(function(id){
     var el=document.getElementById(id); el.addEventListener('input',refreshPreview); el.addEventListener('change',refreshPreview); });
   (function(){ var cs=document.getElementById('bg-cat'); if(cs)cs.addEventListener('change',function(){ if(cs.value){ applyTemplate(cs.value); } refreshPreview(); }); })();
@@ -703,15 +737,16 @@ window.addEventListener('load',restore);
   // local status overlay applied and new-since-snapshot rows flagged. The status filter (default
   // "to action") keeps the brief flow focused; switch it to see/edit any status.
   var _planCache=null;
-  function planTasks(){ if(_planCache)return _planCache; var out=[], ov=statusOverlay(), duo=dueOverlay();
+  function planTasks(){ if(_planCache)return _planCache; var out=[], ov=statusOverlay(), duo=dueOverlay(), owo=ownerOverlay(), ren=renameOverlay();
     CLIENTS.forEach(function(c){
       var live=LIVE[c]&&LIVE[c].tasks, snap=(PT[c]&&PT[c].latest)||[];
       var isLive=!!(live&&live.length), list=isLive?live:snap;
       var newSet=(isLive&&LIVE[c].newSet)||{};
-      list.forEach(function(t){ var task=t.t, k=c+'|'+task, ovv=ov[k];
+      list.forEach(function(t){ var orig=t.t, task=ren[c+'|'+orig]||orig, k=c+'|'+task, ovv=ov[k];   // apply any local rename first
         var s=ovv!=null?ovv:t.s, b=ovv!=null?bucketOf(ovv):(t.b||bucketOf(s));
         var dd=(duo[k]!=null?duo[k]:(t.d||'')); if(!dd && /\d{1,2}[\/-]\d{1,2}|\d{1,2}\s+[a-z]{3}/i.test(String(t.s||''))) dd=t.s;   // due override, else live due col / snapshot-status date
-        out.push({client:c,task:task,cat:t.c,owner:t.o||'—',source:'plan',s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||'',d:dd}); });
+        var ow=owo[k]!=null?owo[k]:(t.o||'—');
+        out.push({client:c,task:task,cat:t.c,owner:ow,source:'plan',s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||'',d:dd}); });
     });
     _planCache=out; return out; }
 
@@ -725,6 +760,16 @@ window.addEventListener('load',restore);
   // ---- deleted tasks (hidden locally; plan deletes also remove the row from the sheet) ----
   var DELETED={}; try{DELETED=JSON.parse(localStorage.getItem('fcc-deleted')||'{}');}catch(e){}
   function markDel(c,t){ DELETED[c+'|'+t]=1; try{localStorage.setItem('fcc-deleted',JSON.stringify(DELETED));}catch(e){} }
+  // HIDE — local, reversible view-suppression for rows that are really just notes. Unlike delete it
+  // never touches the Project-Plan sheet; the row stays in the plan, it just leaves the FCC task list.
+  var HIDDEN={}; try{HIDDEN=JSON.parse(localStorage.getItem('fcc-hidden')||'{}');}catch(e){}
+  var EYEOFF='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.6 10.6 0 0 1 12 20C5 20 1 12 1 12a19 19 0 0 1 5.1-6M9.9 4.2A10.9 10.9 0 0 1 12 4c7 0 11 8 11 8a19 19 0 0 1-2.2 3.2M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="M1 1l22 22"/></svg>';
+  var EYEON='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  function saveHidden(){ try{localStorage.setItem('fcc-hidden',JSON.stringify(HIDDEN));}catch(e){} }
+  function isHidden(t){ return !!HIDDEN[t.client+'|'+t.task]; }
+  function hideTask(t){ HIDDEN[t.client+'|'+t.task]=1; saveHidden(); toast('Hidden as a note — still in '+(t.source==='plan'?(t.client+'’s plan'):'the record')); renderAll(); }
+  function unhideTask(t){ delete HIDDEN[t.client+'|'+t.task]; saveHidden(); toast('Restored to the task list'); renderAll(); }
+  function hiddenInView(){ var n=0; allIntake().forEach(function(r){ if(HIDDEN[r.client+'|'+r.task])n++; }); return n; }
   // delete a task — plan rows are removed from the Project-Plan sheet (2-way); others just leave the inbox
   function deleteTask(t){
     var msg=t.source==='plan'?('Delete this task and remove its row from '+t.client+'’s Project Plan?\n\n'+t.task)
@@ -753,16 +798,17 @@ window.addEventListener('load',restore);
     if(/data field|attribute|material|content id|size/.test(t))return 'data'; if(/meta|social|\blia\b|ppc|dpa|reddit/.test(t))return 'channel';
     if(/call|review|proposal|quote|contract|billing|strateg|qbr|package|audit|loyalty|risk|scope/.test(t))return 'account';
     return 'opt'; }
-  function carryTasks(){ var ov=statusOverlay(), duo=dueOverlay(); CARRY_DUP=0;
+  function carryTasks(){ var ov=statusOverlay(), duo=dueOverlay(), owo=ownerOverlay(), ren=renameOverlay(); CARRY_DUP=0;
     // index plan tasks per client so an ATRT row that already exists in the plan is hidden
     var idx={}; planTasks().forEach(function(p){ (idx[p.client]=idx[p.client]||[]).push(p.task); });
     var out=[];
-    CARRY.forEach(function(t){ var plan=idx[t.c]||[], isDup=false;
-      for(var i=0;i<plan.length;i++){ if(sameTask(t.t,plan[i])){isDup=true;break;} }
+    CARRY.forEach(function(t){ var task=ren[t.c+'|'+t.t]||t.t; var plan=idx[t.c]||[], isDup=false;
+      for(var i=0;i<plan.length;i++){ if(sameTask(task,plan[i])){isDup=true;break;} }
       if(isDup){ CARRY_DUP++; return; }
-      var k=t.c+'|'+t.t; if(CARRY_STAT[k]==='__deleted__'||DELETED[k])return;
+      var k=t.c+'|'+task; if(CARRY_STAT[k]==='__deleted__'||DELETED[k])return;
       var st=ov[k]!=null?ov[k]:(CARRY_STAT[k]!=null?CARRY_STAT[k]:t.s);
-      out.push({client:t.c,task:t.t,cat:classifyLite(t.t),owner:t.ae||'—',source:'atrt',s:st,b:bucketOf(st),
+      var ow=owo[k]!=null?owo[k]:(t.ae||'—');
+      out.push({client:t.c,task:task,cat:classifyLite(task),owner:ow,source:'atrt',s:st,b:bucketOf(st),
         d:(duo[k]||dkIso(t.dk)||t.due||''),due:t.due||'',dk:t.dk||null,thread:t.th||'',isTest:t.x,sheet:''}); });
     return out; }
   function writeCarryover(client,task,val){ var k=client+'|'+task; CARRY_STAT[k]=val; saveStatus(client,task,val);
@@ -812,8 +858,57 @@ window.addEventListener('load',restore);
       .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email',s:'',b:'open'};});
     var fromGmail=gmailItems.map(function(g){return {client:senderName(g.from),task:g.subject,cat:'',owner:senderName(g.from),source:'email',from:g.from,s:'',b:'open'};});
     return fromBriefs.concat(fromGmail); }
-  function allIntake(){ return planTasks().concat(carryTasks()).concat(emailIntake()); }
-  var itState={src:'',client:'',q:'',status:'act',window:'2m',sort:'client',dir:1};
+  // ---- manually-added tasks: written into the plan sheet, shown here until live sync pulls them back ----
+  var MANUAL=[]; try{MANUAL=JSON.parse(localStorage.getItem('fcc-manual')||'[]');}catch(e){}
+  function saveManual(){ try{localStorage.setItem('fcc-manual',JSON.stringify(MANUAL));}catch(e){} }
+  function manualTasks(){
+    var idx={}; planTasks().forEach(function(p){ (idx[p.client]=idx[p.client]||[]).push(p.task); });
+    var ov=statusOverlay(), duo=dueOverlay(), owo=ownerOverlay(), ren=renameOverlay();
+    return MANUAL.map(function(m){ var task=ren[m.client+'|'+m.task]||m.task; return {c:m.client,orig:m.task,task:task}; })
+      .filter(function(m){ var plan=idx[m.c]||[];                          // suppress once the real plan contains it
+        for(var i=0;i<plan.length;i++){ if(sameTask(m.task,plan[i]))return false; }
+        return !DELETED[m.c+'|'+m.task]; })
+      .map(function(m){ var src=MANUAL.filter(function(x){return x.client===m.c&&x.task===m.orig;})[0]||{}; var k=m.c+'|'+m.task;
+        var s=ov[k]!=null?ov[k]:(src.status||'Open');
+        return {client:m.c,task:m.task,cat:classifyLite(m.task),owner:(owo[k]!=null?owo[k]:(src.owner||'—')),source:'plan',
+          s:s,b:bucketOf(s),live:false,manual:true,sheet:PLANSHEET[m.c]||'',d:(duo[k]||src.due||'')}; }); }
+  function allIntake(){ return planTasks().concat(manualTasks()).concat(carryTasks()).concat(emailIntake()); }
+  // DDMM (or DDMMYYYY) -> ISO yyyy-mm-dd; a near-past DDMM rolls to next year
+  function ddmmToIso(v){ v=String(v||'').replace(/\D/g,'');
+    if(v.length===4){ var dd=+v.slice(0,2), mm=+v.slice(2,4); if(dd<1||dd>31||mm<1||mm>12)return '';
+      var y=today().getFullYear(), d=new Date(y,mm-1,dd); if((d-today())/86400000<-60)d=new Date(y+1,mm-1,dd);
+      return d.getFullYear()+'-'+pad(mm)+'-'+pad(dd); }
+    if(v.length===8)return v.slice(4,8)+'-'+v.slice(2,4)+'-'+v.slice(0,2); return ''; }
+  // ---- manual "Add task": an inline hovering row under the table (writes back via /api/sheets/append) ----
+  function ensureAddRow(){
+    var cs=document.getElementById('af-client'); if(cs && !cs.options.length){ Object.keys(PLANSHEET).sort().forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; cs.appendChild(o); }); }
+    var ss=document.getElementById('af-status'); if(ss && !ss.options.length){ STATUS_OPTS.forEach(function(s){ var o=document.createElement('option'); o.textContent=s; if(s==='Open')o.selected=true; ss.appendChild(o); }); }
+  }
+  function toggleAddRow(show){
+    var f=document.getElementById('it-addfoot'); if(!f)return;
+    f.hidden = (show===undefined) ? !f.hidden : !show;
+    var btn=document.getElementById('add-task-btn'); if(btn)btn.classList.toggle('on',!f.hidden);
+    if(!f.hidden){ ensureAddRow(); var ti=document.getElementById('af-task'); if(ti)ti.focus(); }
+  }
+  function submitAddTask(){
+    var client=document.getElementById('af-client').value;
+    var ti=document.getElementById('af-task'), task=(ti.value||'').trim();
+    var owner=(document.getElementById('af-owner').value||'').trim();
+    var status=document.getElementById('af-status').value||'Open';
+    var dueRaw=(document.getElementById('af-due').value||'').replace(/\D/g,'');
+    if(!task){ toast('Type the task first'); ti.focus(); return; }
+    var due=''; if(dueRaw){ var iso=ddmmToIso(dueRaw); if(!iso){ toast('Due — type DDMM, e.g. 2707'); return; } due=iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4); }
+    MANUAL.push({client:client,task:task,owner:owner,status:status,due:due}); saveManual();   // optimistic — show at once
+    ti.value=''; document.getElementById('af-owner').value=''; document.getElementById('af-due').value='';   // clear for the next quick add; keep the row open + client/status sticky
+    renderAll(); ti.focus();
+    var id=PLANSHEET[client];
+    if(id){ toast('Adding to '+client+'’s plan…');
+      fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',rows:[{task:task,owner:owner,status:status,due:due}]})})
+        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Added to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok&&LIVE[client])setTimeout(function(){fetchLive(true);},800); })
+        .catch(function(){ toast('Saved locally — sheet write failed (check the SA has Editor access)'); });
+    } else toast('Added locally · no plan sheet linked for '+client);
+  }
+  var itState={srcs:[],clients:[],q:'',statuses:['open','progress','briefed'],window:'2m',sort:'client',dir:1,showHidden:false};   // multi-select: empty array = all
   var itSel={};   // bulk selection: key -> task object
   // UK-first date parse (DD/MM/YYYY, "DD Mon YYYY"); swaps if it reads as MM/DD
   function parseUKDate(s){ s=String(s||'').trim(); if(!s)return null; var m;
@@ -829,6 +924,32 @@ window.addEventListener('load',restore);
   function dkIso(dk){ return dk ? (dk[0]+'-'+pad(dk[1])+'-'+pad(dk[2])) : ''; }
   function dueOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskdue')||'{}');}catch(e){return {};} }
   function saveDueLocal(c,t,iso){ try{var o=dueOverlay(); if(iso)o[c+'|'+t]=iso; else delete o[c+'|'+t]; localStorage.setItem('fcc-taskdue',JSON.stringify(o));}catch(e){} }
+  // ---- 2-way OWNER + TASK-TEXT edits (join the existing status/due editors) ----
+  function ownerOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskowner')||'{}');}catch(e){return {};} }
+  function saveOwnerLocal(c,t,v){ try{var o=ownerOverlay(); if(v)o[c+'|'+t]=v; else delete o[c+'|'+t]; localStorage.setItem('fcc-taskowner',JSON.stringify(o));}catch(e){} }
+  function renameOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskrename')||'{}');}catch(e){return {};} }
+  function saveRename(c,oldT,newT){ try{var o=renameOverlay(); o[c+'|'+oldT]=newT; localStorage.setItem('fcc-taskrename',JSON.stringify(o));}catch(e){} }
+  function editOwner(t){ var cur=(t.owner&&t.owner!=='—')?t.owner:''; var v=prompt('Task owner — who’s doing it (blank to clear):',cur); if(v===null)return; setOwner(t,(''+v).trim()); }
+  function setOwner(t,val){ recPush({client:t.client,task:t.task,source:t.source,key:'owner',prev:(t.owner==='—'?'':(t.owner||''))}); saveOwnerLocal(t.client,t.task,val);
+    if(t.source==='plan' && PLANSHEET[t.client]) writeOwner(t.client,t.task,val);   // existing 2-way owner writer (sheet + refetch)
+    else toast(val?'Owner updated':'Owner cleared');
+    renderAll(); }
+  function editTaskText(t){ var v=prompt('Edit the task — writes back to the plan:',t.task); if(v===null)return; v=(''+v).trim(); if(!v||v===t.task)return; setTaskText(t,v); }
+  // renaming changes a task's identity — carry its status/due/owner/hidden/deleted state to the new key
+  function migrateKey(c,oldT,newT){ var ok=c+'|'+oldT, nk=c+'|'+newT;
+    ['fcc-taskstatus','fcc-taskdue','fcc-taskowner'].forEach(function(store){
+      try{ var o=JSON.parse(localStorage.getItem(store)||'{}'); if(o[ok]!=null){ o[nk]=o[ok]; delete o[ok]; localStorage.setItem(store,JSON.stringify(o)); } }catch(e){} });
+    if(HIDDEN[ok]){ HIDDEN[nk]=HIDDEN[ok]; delete HIDDEN[ok]; saveHidden(); }
+    if(CARRY_STAT[ok]!=null){ CARRY_STAT[nk]=CARRY_STAT[ok]; delete CARRY_STAT[ok]; }
+    if(DELETED[ok]){ DELETED[nk]=DELETED[ok]; delete DELETED[ok]; try{localStorage.setItem('fcc-deleted',JSON.stringify(DELETED));}catch(e){} } }
+  function setTaskText(t,val){ recPush({client:t.client,task:val,source:t.source,key:'task',prev:t.task}); migrateKey(t.client,t.task,val); saveRename(t.client,t.task,val);
+    if(t.source==='plan'){ var id=PLANSHEET[t.client];
+      if(id){ toast('Renaming task in '+t.client+'’s plan…');
+        fetch('/api/sheets/task',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',match:t.task,value:val})})
+          .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Task updated · '+d.cell):('Sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok&&LIVE[t.client])setTimeout(function(){fetchLive(true);},700); }).catch(function(){ toast('Task rename failed — needs the plan shared with the SA'); });
+      } else toast('Renamed locally · no plan sheet linked to write it back'); }
+    else toast('Task updated');
+    renderAll(); }
   // edit a due date: input DDMM -> display "DD Mon" -> write back to PP as DD/MM/YYYY (2-way)
   function editDue(t){
     var cur=taskDate(t), curv=cur?(pad(cur.getDate())+pad(cur.getMonth()+1)):'';
@@ -844,6 +965,7 @@ window.addEventListener('load',restore);
     setDue(t, iso);
   }
   function setDue(t, iso){
+    recPush({client:t.client,task:t.task,source:t.source,key:'due',prev:(t.d||'')});
     saveDueLocal(t.client, t.task, iso);
     var ddmy = iso ? (iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4)) : '';   // DD/MM/YYYY for the sheet
     if(t.source==='plan'){ var id=PLANSHEET[t.client];
@@ -860,46 +982,66 @@ window.addEventListener('load',restore);
   function rowKey(t){ return t.client+'|'+t.task; }
   function intakeFiltered(){ var allow=allowedMonths();
     return allIntake().filter(function(r){
-      var st=itState.status==='act'?(r.b==='open'||r.b==='progress'):(!itState.status||r.b===itState.status);
+      var S=itState;
+      var st=!S.statuses.length||S.statuses.indexOf(r.b)>=0;   // empty = all statuses
       var win=true; if(allow && r.source==='plan'){ var pd=taskDate(r); if(pd) win=!!(allow[r.client]&&allow[r.client][monthKey(pd)]); }   // latest-N-months per brand; dateless plan rows always show
-      return win&&st&&!DELETED[r.client+'|'+r.task]&&(!itState.src||r.source===itState.src)&&(!itState.client||r.client===itState.client)
-        &&(!itState.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(itState.q)>=0); })
+      return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0)&&(!S.clients.length||S.clients.indexOf(r.client)>=0)
+        &&(!S.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(S.q)>=0); })
       .sort(function(a,b){ var k=itState.sort;
         if(k==='dsort'){ var da=taskDate(a), db=taskDate(b); return ((da?da.getTime():0)-(db?db.getTime():0))*itState.dir; }
         return (((a[k]||'')+'').localeCompare((b[k]||'')+''))*itState.dir; }); }
   function renderIntake(){
     var body=document.getElementById('it-body'); if(!body)return;
-    var rows=allIntake();
-    var csel=document.getElementById('it-client');
-    if(csel && csel.options.length<=1){ var seen={}; rows.forEach(function(r){seen[r.client]=1;});
-      Object.keys(seen).sort().forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;csel.appendChild(o);}); }
+    ensureClientFilter();
     var f=intakeFiltered();
     body.innerHTML = f.length ? f.map(function(t,i){
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
       var src=t.source==='email'?'<span class="src-tag src-email">Email</span>':t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
-      var k=rowKey(t), ck=itSel[k]?' checked':'';
+      var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt');
       var stat=(t.source==='plan'||t.source==='atrt')
-        ?('<td class="c-stat" data-src="'+t.source+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
-        :'<td class="c-stat"><span class="c-owner">—</span></td>';
-      return '<tr data-k="'+esc(k)+'"><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
-        +'<td class="c-client">'+esc(t.client)+badge+'</td><td>'+feed+'</td>'
-        +'<td class="c-task">'+esc(t.task)+'</td><td class="c-owner">'+esc(t.owner||'—')+'</td>'
+        ?('<td class="c-stat" data-r="'+i+'" data-col="status" data-src="'+t.source+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
+        :'<td class="c-stat" data-r="'+i+'" data-col="status"><span class="c-owner">—</span></td>';
+      return '<tr data-k="'+esc(k)+'" data-r="'+i+'"'+(hid?' class="row-hidden"':'')+'><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
+        +'<td class="c-client" data-r="'+i+'" data-col="client">'+esc(t.client)+badge+'</td><td data-r="'+i+'" data-col="feed">'+feed+'</td>'
+        +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click to edit — writes back to the plan">'+esc(t.task)+'</td>'
+             :'<td class="c-task" data-r="'+i+'" data-col="task">'+esc(t.task)+'</td>')
+        +(ed?'<td class="c-owner c-owner-ed" data-r="'+i+'" data-col="owner" data-i="'+i+'" title="Double-click to set owner — writes back to the plan">'+esc(t.owner||'—')+'</td>'
+             :'<td class="c-owner" data-r="'+i+'" data-col="owner">'+esc(t.owner||'—')+'</td>')
         +((t.source==='plan'||t.source==='atrt')
-           ?'<td class="c-due c-due-ed" data-i="'+i+'" title="Set due date (type DDMM)">'+esc(dueDisplay(t))+'</td>'
-           :'<td class="c-due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>')
-        +stat+'<td>'+src+'</td><td class="c-act"><button class="del-btn" data-i="'+i+'" title="Delete task">✕</button><button class="brief-btn" data-i="'+i+'">Brief</button></td></tr>';
-    }).join('') : '<tr><td colspan="9" class="it-empty">'+(itState.src==='email'?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
-    body.querySelectorAll('.brief-btn').forEach(function(btn){ btn.onclick=function(){ prefill(f[+btn.getAttribute('data-i')]); }; });
+           ?'<td class="c-due c-due-ed" data-r="'+i+'" data-col="due" data-i="'+i+'" title="Double-click to set due date (DDMM)">'+esc(dueDisplay(t))+'</td>'
+           :'<td class="c-due" data-r="'+i+'" data-col="due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>')
+        +stat+'<td data-r="'+i+'" data-col="source">'+src+'</td><td class="c-act"><button class="hide-btn'+(hid?' on':'')+'" data-i="'+i+'" title="'+(hid?'Restore to the task list':'Hide — it’s just a note (stays in the plan)')+'">'+(hid?EYEON:EYEOFF)+'</button><button class="del-btn" data-i="'+i+'" title="Delete task">✕</button><button class="brief-btn" data-i="'+i+'">Brief</button></td></tr>';
+    }).join('') : '<tr><td colspan="9" class="it-empty">'+((itState.srcs.length===1&&itState.srcs[0]==='email')?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
+    body.querySelectorAll('.brief-btn').forEach(function(btn){ btn.onclick=function(){ var t=f[+btn.getAttribute('data-i')]; markBriefed(t); prefill(t); renderAll(); }; });
     body.querySelectorAll('.del-btn').forEach(function(btn){ btn.onclick=function(){ deleteTask(f[+btn.getAttribute('data-i')]); }; });
-    body.querySelectorAll('.c-due-ed').forEach(function(td){ td.onclick=function(){ editDue(f[+td.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.hide-btn').forEach(function(btn){ btn.onclick=function(){ var t=f[+btn.getAttribute('data-i')]; if(isHidden(t))unhideTask(t); else hideTask(t); }; });
+    body.querySelectorAll('.c-due-ed').forEach(function(td){ td.ondblclick=function(){ editDue(f[+td.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.c-task-ed').forEach(function(td){ td.ondblclick=function(){ editTaskText(f[+td.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.c-owner-ed').forEach(function(td){ td.ondblclick=function(){ editOwner(f[+td.getAttribute('data-i')]); }; });
+    wireGrid(body, f);
+    // grow the tracker to show every filtered row (esp. after filtering); cap at 100 rows so the page stays usable
+    (function(){ var sc=body.closest('.it-scroll'); if(!sc)return; var trs=body.children, CAP=100;
+      if(trs.length>CAP){ var h=0; for(var i=0;i<CAP;i++){ h+=(trs[i].offsetHeight||46); } var th=document.querySelector('#itbl thead');
+        sc.style.maxHeight=(h+(th?th.offsetHeight:38)+2)+'px'; }
+      else sc.style.maxHeight=''; })();
     body.querySelectorAll('.it-cb').forEach(function(cb){ cb.onchange=function(){ var t=f[+cb.getAttribute('data-i')]; if(cb.checked)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; renderBulk(); }; });
-    body.querySelectorAll('.c-stat .stat-sel').forEach(function(sel){ sel.onchange=function(){ var td=sel.closest('.c-stat');
-      var cl=td.getAttribute('data-client'), tk=td.getAttribute('data-task');
-      sel.className='stat-sel tag-'+bucketOf(sel.value);
-      if(td.getAttribute('data-src')==='atrt') writeCarryover(cl,tk,sel.value); else writeStatus(cl,tk,sel.value);
-      setTimeout(renderAll,650); }; });
+    body.querySelectorAll('.c-stat .stat-sel').forEach(function(sel){
+      function commit(){ var prev=(sel.dataset.prev!=null?sel.dataset.prev:''); if(sel.value===prev)return;   // covers type-ahead: preselect then confirm w/o a change event
+        var td=sel.closest('.c-stat'), cl=td.getAttribute('data-client'), tk=td.getAttribute('data-task');
+        recPush({client:cl,task:tk,source:td.getAttribute('data-src'),key:'status',prev:prev});
+        sel.className='stat-sel tag-'+bucketOf(sel.value);
+        if(td.getAttribute('data-src')==='atrt') writeCarryover(cl,tk,sel.value); else writeStatus(cl,tk,sel.value);
+        sel.dataset.prev=sel.value; setTimeout(renderAll,650); }
+      sel.onchange=commit; sel.addEventListener('focusout',commit);
+      sel.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); sel.blur(); } else if(e.key==='Escape'){ var i=0; for(;i<sel.options.length;i++){ if(sel.options[i].value===sel.dataset.prev){ sel.selectedIndex=i; break; } } sel.blur(); } });
+    });
     var n=document.getElementById('it-n'); if(n)n.textContent=f.length+' task'+(f.length===1?'':'s');
+    var ht=document.getElementById('it-hidden-tog'); if(ht){ var hc=hiddenInView();
+      if(hc===0){ itState.showHidden=false; ht.hidden=true; }
+      else { ht.hidden=false; ht.classList.toggle('on',itState.showHidden);
+        ht.textContent=itState.showHidden?('Hide '+hc+' note'+(hc===1?'':'s')):('Show '+hc+' hidden');
+        ht.setAttribute('aria-pressed',itState.showHidden?'true':'false'); } }
     var an=document.getElementById('atrt-note'); if(an){ var uniq=CARRY.length-CARRY_DUP;
       an.innerHTML='<b>ATRT import:</b> '+CARRY.length+' active tasks · <b>'+CARRY_DUP+'</b> already in a project plan (auto-hidden as duplicates) · <b>'+uniq+'</b> unique in this inbox.'; }
     var pb=document.getElementById('atrt-push'); if(pb){ var pc=pushableCarry().length; pb.style.display=pc?'inline-flex':'none';
@@ -908,6 +1050,120 @@ window.addEventListener('load',restore);
       ub.textContent='↩ Undo last write ('+pn+')'; }
     renderBulk();
   }
+  // ---- spreadsheet grid: cell select, keyboard nav, copy/paste (TSV), fill-down (Excel-style) ----
+  var COLS=['client','feed','task','owner','due','status','source'];
+  var GEDIT={task:1,owner:1,due:1,status:1};                 // columns that write back
+  var gridSel=null, gridRows=[], gridBody=null, gridFocus=false;
+  // ---- undo (Ctrl+Z): each edit records the cell's previous value; undo re-applies it via gridWrite ----
+  var UNDO=[], _rec=null;   // _rec is a live batch array while a multi-cell op runs, else null
+  function recPush(cell){ if(!cell)return; if(_rec){ _rec.push(cell); return; } UNDO.push({cells:[cell]}); if(UNDO.length>60)UNDO.shift(); }
+  function undoLast(){ if(!UNDO.length){ toast('Nothing to undo'); return; } var a=UNDO.pop(); var save=_rec; _rec=null;   // don't re-record the undo itself
+    a.cells.forEach(function(c){ gridWrite({client:c.client,task:c.task,source:c.source}, c.key, c.prev); }); _rec=save;
+    toast('Undid '+a.cells.length+' change'+(a.cells.length===1?'':'s')); setTimeout(renderAll,60); }
+  function gclamp(v,a,b){ return v<a?a:(v>b?b:v); }
+  function gnorm(){ return {r0:Math.min(gridSel.r0,gridSel.r1),r1:Math.max(gridSel.r0,gridSel.r1),c0:Math.min(gridSel.c0,gridSel.c1),c1:Math.max(gridSel.c0,gridSel.c1)}; }
+  function cellAt(r,c){ return gridBody?gridBody.querySelector('td[data-r="'+r+'"][data-col="'+COLS[c]+'"]'):null; }
+  function cellText(r,c){ var td=cellAt(r,c); if(!td)return ''; var s=td.querySelector('select'); if(s)return s.value; var v=(td.textContent||'').replace(/\s+/g,' ').trim(); return v==='—'?'':v; }
+  function highlightGrid(){ if(!gridBody)return;
+    gridBody.querySelectorAll('td.g-sel,td.g-active').forEach(function(td){ td.classList.remove('g-sel','g-active'); });
+    if(!gridSel)return; var R=gnorm();
+    for(var r=R.r0;r<=R.r1;r++)for(var c=R.c0;c<=R.c1;c++){ var td=cellAt(r,c); if(td)td.classList.add('g-sel'); }
+    var a=cellAt(gridSel.r0,gridSel.c0); if(a)a.classList.add('g-active'); }
+  function gridColValue(t,key){ if(!t)return '';
+    if(key==='owner')return (t.owner&&t.owner!=='—')?t.owner:''; if(key==='task')return t.task; if(key==='status')return t.s||'';
+    if(key==='due'){ var d=taskDate(t); return d?(pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()):''; } return ''; }
+  function gridDate(val){ val=(''+val).trim(); if(!val)return ''; var digits=val.replace(/\D/g,'');
+    if(digits.length===4||digits.length===8){ var iso=ddmmToIso(digits); if(iso)return iso; }
+    var d=parseUKDate(val); return d?(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())):''; }
+  function gridStatus(val){ val=(''+val).trim(); if(!val)return ''; var M={open:'Open',briefed:'Briefed',progress:'In Progress',hold:'On Hold',client:'With Client',done:'Done'}; return M[bucketOf(val)]||'Open'; }
+  function gPost(url,body){ try{ fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).catch(function(){}); }catch(e){} }
+  function gPut(url,body){ try{ fetch(url,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).catch(function(){}); }catch(e){} }
+  // write one cell to overlay + sheet, WITHOUT re-rendering (caller renders once at the end)
+  function gridWrite(t,key,val){ if(!t||!(t.source==='plan'||t.source==='atrt'))return null; var id=PLANSHEET[t.client];
+    if(_rec){   // recording a batch (paste / fill-down): capture the previous value for undo
+      if(key==='task'){ var _nv=(''+val).trim(); if(_nv&&_nv!==t.task)_rec.push({client:t.client,task:_nv,source:t.source,key:'task',prev:t.task}); }
+      else if(key==='owner')_rec.push({client:t.client,task:t.task,source:t.source,key:'owner',prev:(t.owner==='—'?'':(t.owner||''))});
+      else if(key==='due')_rec.push({client:t.client,task:t.task,source:t.source,key:'due',prev:(t.d||'')});
+      else if(key==='status')_rec.push({client:t.client,task:t.task,source:t.source,key:'status',prev:(t.s||'')});
+    }
+    if(key==='owner'){ val=(''+val).trim(); saveOwnerLocal(t.client,t.task,val); if(t.source==='plan'&&id)gPost('/api/sheets/owner',{id:id,tab:'Project Plan',match:t.task,value:val}); return 1; }
+    if(key==='due'){ var iso=gridDate(val); saveDueLocal(t.client,t.task,iso); if(t.source==='plan'&&id){ var ddmy=iso?(iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4)):''; gPost('/api/sheets/due',{id:id,tab:'Project Plan',match:t.task,value:ddmy}); } return 1; }
+    if(key==='status'){ var v=gridStatus(val); if(!v)return null; saveStatus(t.client,t.task,v); if(t.source==='atrt'){ CARRY_STAT[t.client+'|'+t.task]=v; gPut('/api/carryover',CARRY_STAT); } else if(id){ gPost('/api/sheets/status',{id:id,tab:'Project Plan',match:t.task,value:v}); } return 1; }
+    if(key==='task'){ val=(''+val).trim(); if(!val||val===t.task)return null; migrateKey(t.client,t.task,val); saveRename(t.client,t.task,val); if(t.source==='plan'&&id)gPost('/api/sheets/task',{id:id,tab:'Project Plan',match:t.task,value:val}); return 1; }
+    return null; }
+  function clipFallback(tsv,n){ try{ var ta=document.createElement('textarea'); ta.value=tsv; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('Copied '+n+' cell'+(n===1?'':'s')+' — paste into Excel/Sheets'); }catch(e){ toast('Copy was blocked — press Cmd/Ctrl+C again'); } }
+  function buildTSV(){ if(!gridSel)return null; var R=gnorm(), lines=[], n=0;
+    for(var r=R.r0;r<=R.r1;r++){ var row=[]; for(var c=R.c0;c<=R.c1;c++){ row.push(cellText(r,c)); n++; } lines.push(row.join('\t')); }
+    var tsv=lines.join('\n'); window.__lastCopy=tsv; window.__lastCopyN=n; return tsv; }
+  function copyGrid(){ var tsv=buildTSV(); if(tsv==null)return; var n=window.__lastCopyN;
+    try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(tsv).then(function(){ toast('Copied '+n+' cell'+(n===1?'':'s')+' — paste into Excel/Sheets'); },function(){ clipFallback(tsv,n); }); } else clipFallback(tsv,n); }catch(e){ clipFallback(tsv,n); } }
+  function applyTSV(text){ if(!gridSel||!text)return 0;
+    var lines=(''+text).replace(/\r/g,'').split('\n'); while(lines.length&&lines[lines.length-1]==='')lines.pop(); if(!lines.length)return 0;
+    var grid=lines.map(function(l){ return l.split('\t'); }), gr=grid.length;
+    var R=gnorm(), n=0;
+    // if the selection spans more than one cell, fill/tile the clipboard across the WHOLE selection (Excel-style);
+    // otherwise paste the clipboard's own footprint starting at the anchor
+    var multi=(R.r1>R.r0)||(R.c1>R.c0);
+    var gc=grid.reduce(function(m,row){ return Math.max(m,row.length); },1);
+    var r1=multi?R.r1:(R.r0+gr-1), c1=multi?R.c1:(R.c0+gc-1);
+    _rec=[];
+    for(var r=R.r0;r<=r1;r++){ if(r>=gridRows.length)break;
+      for(var c=R.c0;c<=c1;c++){ if(c>6)break; var key=COLS[c]; if(!GEDIT[key])continue;
+        var srcRow=grid[(r-R.r0)%gr]||['']; var val=srcRow[(c-R.c0)%srcRow.length]; if(val===undefined)val='';
+        if(gridWrite(gridRows[r],key,val))n++; } }
+    if(_rec.length)UNDO.push({cells:_rec}); _rec=null;
+    if(n){ toast('Pasted into '+n+' cell'+(n===1?'':'s')+' — writing back (Ctrl+Z to undo)'); setTimeout(renderAll,60); } else toast('Nothing pasteable — put the cursor on Task/Owner/Due/Status'); return n; }
+  function pasteGrid(){ var text=''; try{ if(navigator.clipboard&&navigator.clipboard.readText){ navigator.clipboard.readText().then(function(t){ applyTSV(t); },function(){ toast('Clipboard read blocked — click a cell first, then paste'); }); return; } }catch(e){} toast('Clipboard read not available here'); }
+  function fillDownGrid(){ if(!gridSel)return; var R=gnorm(); if(R.r1<=R.r0){ toast('Select a range (top cell = source), then Cmd/Ctrl+D'); return; } var n=0;
+    _rec=[];
+    for(var c=R.c0;c<=R.c1;c++){ var key=COLS[c]; if(!GEDIT[key])continue; var src=gridColValue(gridRows[R.r0],key);
+      for(var r=R.r0+1;r<=R.r1;r++){ if(gridWrite(gridRows[r],key,src))n++; } }
+    if(_rec.length)UNDO.push({cells:_rec}); _rec=null;
+    if(n){ toast('Filled '+n+' cell'+(n===1?'':'s')+' down — writing back (Ctrl+Z to undo)'); setTimeout(renderAll,60); } else toast('No editable column (Task/Owner/Due/Status) in the selection'); }
+  function editActiveCell(){ if(!gridSel)return; var t=gridRows[gridSel.r0], key=COLS[gridSel.c0]; if(!t)return; var ed=(t.source==='plan'||t.source==='atrt');
+    if(key==='task'&&ed)editTaskText(t); else if(key==='owner'&&ed)editOwner(t); else if(key==='due'&&ed)editDue(t);
+    else if(key==='status'){ var s=cellAt(gridSel.r0,gridSel.c0); s=s&&s.querySelector('select'); if(s)s.focus(); } }
+  function wireGrid(body,f){ gridBody=body; gridRows=f;
+    body.querySelectorAll('td[data-col]').forEach(function(td){
+      td.addEventListener('mousedown',function(ev){ var r=+td.getAttribute('data-r'), c=COLS.indexOf(td.getAttribute('data-col')); if(c<0||isNaN(r))return; gridFocus=true;
+        if(ev.shiftKey&&gridSel){ gridSel.r1=r; gridSel.c1=c; if(td.querySelector('select'))ev.preventDefault(); } else { gridSel={r0:r,c0:c,r1:r,c1:c}; }
+        highlightGrid(); }); });
+    if(gridSel){ if(gridSel.r0>f.length-1||gridSel.r1>f.length-1)gridSel=null; highlightGrid(); } }
+  (function(){
+    document.addEventListener('keydown',function(e){ if(!gridSel||!gridFocus)return; var ae=document.activeElement, tag=ae?ae.tagName:'', mod=e.ctrlKey||e.metaKey;
+      if(tag==='INPUT'||tag==='TEXTAREA')return; if(tag==='SELECT'&&!mod)return;
+      // copy (Ctrl+C) and paste (Ctrl+V) are handled by the native copy/paste events below — do NOT preventDefault them here or the events never fire
+      if(mod&&(e.key==='z'||e.key==='Z')){ undoLast(); e.preventDefault(); return; }
+      if(mod&&(e.key==='d'||e.key==='D')){ fillDownGrid(); e.preventDefault(); return; }
+      if(e.key==='Escape'){ gridSel=null; highlightGrid(); return; }
+      if(e.key==='Enter'){ editActiveCell(); e.preventDefault(); return; }
+      // type-ahead on the active Status cell: a letter opens its picker at the first matching option (then arrow/Enter is native)
+      if(!mod && e.key && e.key.length===1 && /[a-z0-9]/i.test(e.key) && COLS[gridSel.c0]==='status'){
+        var _t=gridRows[gridSel.r0];
+        if(_t && (_t.source==='plan'||_t.source==='atrt')){
+          var _td=cellAt(gridSel.r0,gridSel.c0), _sel=_td&&_td.querySelector('select');
+          if(_sel){ var _ch=e.key.toLowerCase(), _mi=-1;
+            for(var _o=0;_o<_sel.options.length;_o++){ if((_sel.options[_o].text||'').trim().toLowerCase().charAt(0)===_ch){ _mi=_o; break; } }
+            if(_mi>=0 && _mi!==_sel.selectedIndex){ _sel.selectedIndex=_mi; _sel.className='stat-sel tag-'+bucketOf(_sel.value); _sel.dispatchEvent(new Event('change',{bubbles:true})); }  // set + write back
+            _sel.focus(); try{ if(_sel.showPicker)_sel.showPicker(); }catch(_e){}   // open the picker so arrow/Enter can still adjust
+            e.preventDefault(); return;
+          }
+        }
+      }
+      var dr=0,dc=0; if(e.key==='ArrowUp')dr=-1; else if(e.key==='ArrowDown')dr=1; else if(e.key==='ArrowLeft')dc=-1; else if(e.key==='ArrowRight')dc=1; else return;
+      e.preventDefault(); var maxR=gridRows.length-1;
+      if(e.shiftKey){ gridSel.r1=gclamp(gridSel.r1+dr,0,maxR); gridSel.c1=gclamp(gridSel.c1+dc,0,6); }
+      else { var nr=gclamp(gridSel.r0+dr,0,maxR), nc=gclamp(gridSel.c0+dc,0,6); gridSel={r0:nr,c0:nc,r1:nr,c1:nc}; }
+      highlightGrid(); var a=cellAt(gridSel.r0,gridSel.c0); if(a&&a.scrollIntoView)a.scrollIntoView({block:'nearest'}); });
+    document.addEventListener('mousedown',function(e){ var t=e.target, td=t.closest?t.closest('td[data-col]'):null, inScroll=t.closest?t.closest('.it-scroll'):null;
+      if(td&&inScroll)gridFocus=true; else if(!inScroll){ gridFocus=false; if(gridSel){ gridSel=null; highlightGrid(); } } });
+    // native copy/paste — reliable (no clipboard permission) and delivers the whole multi-cell TSV block
+    function gridBusy(){ var tag=document.activeElement?document.activeElement.tagName:''; return tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'; }
+    document.addEventListener('copy',function(e){ if(!gridSel||!gridFocus||gridBusy())return; var tsv=buildTSV(); if(tsv==null)return;
+      try{ (e.clipboardData||window.clipboardData).setData('text/plain',tsv); e.preventDefault(); toast('Copied '+window.__lastCopyN+' cell'+(window.__lastCopyN===1?'':'s')+' — paste into Excel/Sheets'); }catch(err){} });
+    document.addEventListener('paste',function(e){ if(!gridSel||!gridFocus||gridBusy())return; var txt=''; try{ txt=(e.clipboardData||window.clipboardData).getData('text'); }catch(err){} if(txt){ e.preventDefault(); applyTSV(txt); } });
+    window.__grid={copy:copyGrid,applyTSV:applyTSV,fill:fillDownGrid,sel:function(a){ gridSel=a; gridFocus=true; highlightGrid(); },get:function(){ return gridSel; }};
+  })();
   // ---- bulk brief + delegate ----
   function renderBulk(){ var bar=document.getElementById('it-bulk'); if(!bar)return;
     var keys=Object.keys(itSel), n=keys.length;
@@ -928,6 +1184,7 @@ window.addEventListener('load',restore);
     } else { var body=asplBatchBody('ASPL team',items); var subj='[FS Brief] '+items.length+' tasks · batch';
       window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body),'_blank','noopener');
       toast('Batched brief draft opened'); }
+    var mb=0; items.forEach(function(t){ if(markBriefed(t))mb++; }); if(mb)renderAll();
   }
   function asplBatchBody(owner,items){ var L=[]; var d=new Date(); d.setDate(d.getDate()+5);
     var dd=isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()));
@@ -946,15 +1203,105 @@ window.addEventListener('load',restore);
       var tpl=TEMPLATES[t.cat]||TEMPLATES.opt;
       BRIEFS[id]={id:id,created:Date.now(),updated:Date.now(),status:'intake',comms:[],client:t.client,code:c,task:t.task,
         scope:tpl.s+TWO_STREAMS,dod:tpl.d,assets:'—',due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
-        source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++; });
-    itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline'); }
-  (function(){ var wrap=document.getElementById('it-src');
-    [['','All'],['plan','Project plan'],['atrt','ATRT legacy'],['email','Incoming emails']].forEach(function(s){
-      var b=document.createElement('button'); b.textContent=s[1]; if(s[0]===itState.src)b.className='on';
-      b.onclick=function(){ itState.src=s[0]; [].forEach.call(wrap.children,function(x){x.classList.remove('on');}); b.classList.add('on'); renderIntake(); };
-      wrap.appendChild(b); }); })();
-  document.getElementById('it-client').addEventListener('change',function(){ itState.client=this.value; renderIntake(); });
+        source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++; markBriefed(t); });
+    itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline · marked Briefed'); }
+  // SOURCE stays a compact chip bar (4 options): empty selection = all; the "All" chip clears the set
+  function renderChipBar(id, opts, key){
+    var wrap=document.getElementById(id); if(!wrap)return; wrap.innerHTML='';
+    opts.forEach(function(s){
+      var b=document.createElement('button'); b.textContent=s[1];
+      var on = s[0]==='' ? itState[key].length===0 : itState[key].indexOf(s[0])>=0;
+      if(on)b.className='on';
+      b.onclick=function(){
+        if(s[0]===''){ itState[key]=[]; }
+        else { var i=itState[key].indexOf(s[0]); if(i>=0)itState[key].splice(i,1); else itState[key].push(s[0]); }
+        renderChipBar(id,opts,key); renderIntake(); };
+      wrap.appendChild(b); }); }
+  var SRC_OPTS=[['','All'],['plan','Project plan'],['atrt','ATRT legacy'],['email','Incoming emails']];
+  function renderSrcChips(){ renderChipBar('it-src',SRC_OPTS,'srcs'); }
+  renderSrcChips();
+  // reusable multi-select DROPDOWN (status + client): compact button + checklist, keeps the bar tidy
+  function setupMulti(cfg){
+    var btn=document.getElementById(cfg.btn), menu=document.getElementById(cfg.menu), wrap=document.getElementById(cfg.wrap);
+    if(!btn||!menu||!wrap)return function(){};
+    function label(){ var sel=cfg.selected(), n=sel.length; return (n===0?cfg.allLabel:(n===1?cfg.one(sel[0]):n+' '+cfg.noun))+' ▾'; }
+    function updateBtn(){ btn.textContent=label(); btn.classList.toggle('on',cfg.selected().length>0); }
+    var sig='';
+    function build(){
+      var opts=cfg.options(), s=opts.map(function(o){return o.v;}).join('|');
+      if(s===sig){ updateBtn(); return; }                 // option set unchanged — just refresh the label
+      sig=s; menu.innerHTML='';
+      var allRow=document.createElement('label'); allRow.className='it-multi-all';
+      var allCb=document.createElement('input'); allCb.type='checkbox'; allCb.checked=cfg.selected().length===0;
+      allCb.onchange=function(){ if(allCb.checked){ cfg.clear(); menu.querySelectorAll('input').forEach(function(x){ if(x!==allCb)x.checked=false; }); }
+        else { allCb.checked=true; }                       // "All" can't be switched off directly — tick an option instead
+        updateBtn(); renderIntake(); };
+      allRow.appendChild(allCb); allRow.appendChild(document.createTextNode(cfg.allLabel)); menu.appendChild(allRow);
+      opts.forEach(function(o){
+        var row=document.createElement('label');
+        var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=cfg.selected().indexOf(o.v)>=0;
+        cb.onchange=function(){ cfg.toggle(o.v,cb.checked); allCb.checked=cfg.selected().length===0; updateBtn(); renderIntake(); };
+        row.appendChild(cb); row.appendChild(document.createTextNode(o.l)); menu.appendChild(row); });
+      updateBtn();
+    }
+    btn.onclick=function(e){ e.stopPropagation(); var willOpen=menu.hidden; menu.hidden=!willOpen; btn.setAttribute('aria-expanded',willOpen?'true':'false'); };
+    document.addEventListener('click',function(e){ if(menu.hidden)return; if(!wrap.contains(e.target)){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); } });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!menu.hidden){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); } });
+    return build;
+  }
+  var STAT_FILTER=[['open','Open'],['briefed','Briefed'],['progress','In progress'],['hold','On hold'],['client','With client'],['done','Done']];
+  var STAT_LBL={}; STAT_FILTER.forEach(function(s){ STAT_LBL[s[0]]=s[1]; });
+  var buildStatusFilter=setupMulti({ btn:'it-status-btn', menu:'it-status-menu', wrap:'it-status-wrap',
+    allLabel:'All statuses', noun:'statuses', one:function(v){ return STAT_LBL[v]||v; },
+    options:function(){ return STAT_FILTER.map(function(s){ return {v:s[0],l:s[1]}; }); },
+    selected:function(){ return itState.statuses; },
+    toggle:function(v,on){ var i=itState.statuses.indexOf(v); if(on){ if(i<0)itState.statuses.push(v); } else if(i>=0)itState.statuses.splice(i,1); },
+    clear:function(){ itState.statuses=[]; } });
+  var buildClientFilter=setupMulti({ btn:'it-client-btn', menu:'it-client-menu', wrap:'it-client-wrap',
+    allLabel:'All clients', noun:'clients', one:function(v){ return v; },
+    options:function(){ var set={}; allIntake().forEach(function(r){ set[r.client]=1; }); itState.clients=itState.clients.filter(function(c){ return set[c]; }); return Object.keys(set).sort().map(function(c){ return {v:c,l:c}; }); },
+    selected:function(){ return itState.clients; },
+    toggle:function(v,on){ var i=itState.clients.indexOf(v); if(on){ if(i<0)itState.clients.push(v); } else if(i>=0)itState.clients.splice(i,1); },
+    clear:function(){ itState.clients=[]; } });
+  function ensureClientFilter(){ buildStatusFilter(); buildClientFilter(); }   // rebuilt each render from renderIntake
+  buildStatusFilter(); buildClientFilter();
+  // ---- saved filter views: name the current filter set, reapply or delete later (per device) ----
+  function savedViews(){ try{return JSON.parse(localStorage.getItem('fcc-filters')||'{}');}catch(e){return {};} }
+  function saveViews(v){ try{localStorage.setItem('fcc-filters',JSON.stringify(v));}catch(e){} }
+  function captureFilter(){ return {srcs:itState.srcs.slice(),statuses:itState.statuses.slice(),clients:itState.clients.slice(),window:itState.window,q:itState.q,showHidden:itState.showHidden}; }
+  function applyFilter(f){
+    itState.srcs=(f.srcs||[]).slice(); itState.statuses=(f.statuses||[]).slice(); itState.clients=(f.clients||[]).slice();
+    itState.window=f.window||''; itState.q=f.q||''; itState.showHidden=!!f.showHidden;
+    renderSrcChips(); buildStatusFilter(); buildClientFilter();                       // sync the controls to the view
+    var w=document.getElementById('it-window'); if(w)w.value=itState.window;
+    var s=document.getElementById('it-search'); if(s)s.value=itState.q;
+    renderIntake();
+  }
+  function saveCurrentView(){ var name=prompt('Save this filter as…'); if(name===null)return; name=name.trim(); if(!name)return;
+    var v=savedViews(); v[name]=captureFilter(); saveViews(v); toast('View “'+name+'” saved'); renderViewsMenu(); }
+  function deleteView(name){ var v=savedViews(); delete v[name]; saveViews(v); toast('View removed'); renderViewsMenu(); }
+  function renderViewsMenu(){ var menu=document.getElementById('it-views-menu'); if(!menu)return; menu.innerHTML='';
+    var v=savedViews(), names=Object.keys(v).sort();
+    if(names.length){ names.forEach(function(n){
+        var row=document.createElement('div'); row.className='it-view-row';
+        var a=document.createElement('button'); a.className='it-view-apply'; a.textContent=n; a.title='Apply “'+n+'”';
+        a.onclick=function(){ applyFilter(v[n]); menu.hidden=true; };
+        var x=document.createElement('button'); x.className='it-view-del'; x.textContent='✕'; x.title='Delete “'+n+'”';
+        x.onclick=function(e){ e.stopPropagation(); deleteView(n); };
+        row.appendChild(a); row.appendChild(x); menu.appendChild(row); });
+      var sep=document.createElement('div'); sep.className='it-view-sep'; menu.appendChild(sep); }
+    else { var em=document.createElement('div'); em.className='it-view-empty'; em.textContent='No saved views yet.'; menu.appendChild(em); }
+    var save=document.createElement('button'); save.className='it-view-save'; save.textContent='＋ Save current filters…';
+    save.onclick=function(){ saveCurrentView(); }; menu.appendChild(save);
+  }
+  (function(){ var btn=document.getElementById('it-views-btn'), menu=document.getElementById('it-views-menu'), wrap=document.getElementById('it-views-wrap');
+    if(!btn||!menu||!wrap)return;
+    btn.onclick=function(e){ e.stopPropagation(); renderViewsMenu(); var willOpen=menu.hidden; menu.hidden=!willOpen; btn.setAttribute('aria-expanded',willOpen?'true':'false'); };
+    document.addEventListener('click',function(e){ if(menu.hidden)return; if(!wrap.contains(e.target)){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); } });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!menu.hidden){ menu.hidden=true; btn.setAttribute('aria-expanded','false'); } });
+  })();
   document.getElementById('it-search').addEventListener('input',function(){ itState.q=this.value.trim().toLowerCase(); renderIntake(); });
+  (function(){ var ht=document.getElementById('it-hidden-tog'); if(ht)ht.onclick=function(){ itState.showHidden=!itState.showHidden; renderIntake(); }; })();
   document.querySelectorAll('#itbl thead th[data-k]').forEach(function(th){ th.onclick=function(){
     var k=th.getAttribute('data-k'); if(itState.sort===k) itState.dir*=-1; else {itState.sort=k;itState.dir=1;}
     document.querySelectorAll('#itbl thead th .ar').forEach(function(a){a.remove();});
@@ -962,7 +1309,6 @@ window.addEventListener('load',restore);
     renderIntake(); }; });
   // status filter · select-all · bulk actions · live refresh · add-test
   (function(){
-    var st=document.getElementById('it-status'); if(st)st.addEventListener('change',function(){ itState.status=this.value; renderIntake(); });
     var wsel=document.getElementById('it-window'); if(wsel){ wsel.value=itState.window; wsel.addEventListener('change',function(){ itState.window=this.value; renderIntake(); }); }
     var all=document.getElementById('it-all'); if(all)all.onchange=function(){ var on=all.checked; intakeFiltered().forEach(function(t){ if(on)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; }); renderIntake(); };
     var bb=document.getElementById('bulk-brief'); if(bb)bb.onclick=function(){ bulkBriefDraft(false); };
@@ -970,6 +1316,11 @@ window.addEventListener('load',restore);
     var bv=document.getElementById('bulk-save'); if(bv)bv.onclick=bulkSaveAll;
     var bc=document.getElementById('bulk-clear'); if(bc)bc.onclick=function(){ itSel={}; renderIntake(); };
     var lr=document.getElementById('live-refresh'); if(lr)lr.onclick=function(){ fetchLive(true); };
+    var atb=document.getElementById('add-task-btn'); if(atb)atb.onclick=function(){ toggleAddRow(); };
+    var afs=document.getElementById('af-save'); if(afs)afs.onclick=submitAddTask;
+    var afc=document.getElementById('af-cancel'); if(afc)afc.onclick=function(){ toggleAddRow(false); };
+    ['af-task','af-due','af-owner'].forEach(function(fid){ var el=document.getElementById(fid);
+      if(el)el.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); submitAddTask(); } else if(e.key==='Escape'){ toggleAddRow(false); } }); });
     var ta=document.getElementById('test-add'); if(ta)ta.onclick=function(){ editTest(-1); };
     var ap=document.getElementById('atrt-push'); if(ap)ap.onclick=pushUniquesToPlans;
     var au=document.getElementById('atrt-undo'); if(au)au.onclick=undoPushToPlans;
@@ -984,6 +1335,17 @@ window.addEventListener('load',restore);
     refreshPreview();
     window.scrollTo({top:0,behavior:'smooth'});
     toast('Prefilled from the '+(CAT_LBL[cat]||'optimisation')+' template — set the due date and save');
+  }
+  // when a task is briefed, move its status to Briefed (2-way, quiet — the caller shows the summary)
+  function markBriefed(t){
+    if(!t||!(t.source==='plan'||t.source==='atrt'))return false;   // only rows that carry a status
+    if(t.b==='briefed'||t.b==='done')return false;                  // already briefed or closed — leave it
+    saveStatus(t.client,t.task,'Briefed');
+    if(t.source==='atrt'){ CARRY_STAT[t.client+'|'+t.task]='Briefed';
+      fetch('/api/carryover',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(CARRY_STAT)}).catch(function(){}); }
+    else { var id=PLANSHEET[t.client]; if(id) fetch('/api/sheets/status',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({id:id,tab:'Project Plan',match:t.task,value:'Briefed'})}).catch(function(){}); }
+    return true;
   }
 
   // ---- KPIs ----

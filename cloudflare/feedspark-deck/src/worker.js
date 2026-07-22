@@ -394,6 +394,31 @@ export default {
       } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
     }
 
+    // ---- 2-way task text: rename a task in place (match old text -> write new text to the Task column) ----
+    if (path === '/api/sheets/task' && request.method === 'POST') {
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' });
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const id = body.id, tab = body.tab || 'Project Plan', match = String(body.match || '').trim(), value = body.value;
+      if (!id || !match || value == null || !String(value).trim()) return json({ ok: false, error: 'missing id / match / value' }, 400);
+      try {
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
+        const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+        const rd = await rr.json(); if (rd.error) return json({ ok: false, error: rd.error.message });
+        const rows = rd.values || [];
+        const key = normCell(match).slice(0, 45); let targetRow = -1;
+        for (let r = 0; r < rows.length; r++) { if ((rows[r] || []).some(cc => { const cn = normCell(cc); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; } }
+        if (targetRow < 0) return json({ ok: false, error: 'task row not found in ' + tab, match });
+        const c = resolveCols(rows);
+        const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
+        const cell = tab + '!' + colLetter(tc) + (targetRow + 1);
+        const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(cell) + '?valueInputOption=USER_ENTERED', {
+          method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values: [[value]] }) });
+        const wd = await wr.json(); if (wd.error) return json({ ok: false, error: wd.error.message, cell });
+        try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
+        return json({ ok: true, cell, updated: wd.updatedCells || 1 });
+      } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
+    }
+
     // ---- append new task rows into a plan tab (ATRT uniques -> project plan) ----
     // POST { id, tab?, rows:[{task, owner, status}] }. Resolves the tab's column layout
     // (same uniform-offset logic as the writers) and places each value in the right column.
