@@ -290,6 +290,13 @@ not just the deck rework:
    need bumping too — these are easy to miss since they don't live near the chapter divs
    themselves. Verify after: chapter count == nav link count, `id="cN"` sequence has no gaps
    or dupes, and every prose "chapter N" mention still points at the chapter it claims to.
+   **Also check for a standalone agenda-preview section** ("What we'll cover" near the hero,
+   a `.agenda` grid separate from the topbar/side nav) — it lists every chapter by number and
+   title too, and it's easy to renumber the nav correctly while leaving this one stale (a
+   real bug caught in a later round on Reiss: the nav was right, the agenda preview still
+   said "Fourteen sections" and was missing the new chapter). If a `.side-nav` exists, it also
+   needs the same href/label updates as `.tb-nav` — the two are meant to mirror each other
+   1:1.
 2. **Save the round as a markdown file**, so there's a durable record of what was asked for
    and what changed — feedback given verbally in a chat only exists in that chat's history,
    which isn't where anyone will look for it later. Append to (creating if absent)
