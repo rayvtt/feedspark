@@ -311,28 +311,28 @@ policy data become commercial controls"<br>Google&nbsp;</p>
     <div class="stats rv in">
       <div class="stat"><div class="n">29</div><div class="l">Markets</div></div>
       <div class="stat"><div class="n">60</div><div class="l">Feeds</div></div>
-      <div class="stat"><div class="n">~5.0<small>k</small></div><div class="l">SKUs in the analysed export</div></div>
+      <div class="stat"><div class="n">~5.0<small>k</small></div><div class="l">SKUs in this analysed sample<span class="chk">?</span></div></div>
       <div class="stat"><div class="n">2</div><div class="l">Active channels — Google Shopping, Meta</div></div>
-      <div class="stat"><div class="n">6<small><span class="chk">?</span></small></div><div class="l">Brand lines in the feed (Reiss + collabs)<br><br><span style="font-size:11px">Scheduled/ad-hoc hours: <b>[confirm with Ray]</b></span></div></div>
+      <div class="stat"><div class="n">5+<small><span class="chk">?</span></small></div><div class="l">Brand lines seen in this sample<br><br><span style="font-size:11px">Scheduled/ad-hoc hours: <b>[confirm with Ray]</b></span></div></div>
     </div>
     <div class="grid-2 rv in">
       <div class="tbl-wrap">
-        <table><thead><tr><th>Brand line</th><th>SKUs in export</th><th>Share</th></tr></thead>
+        <table><thead><tr><th>Brand line</th><th>SKUs in this sample</th><th>Full catalogue?</th></tr></thead>
         <tbody>
-          <tr><td><b>Reiss</b></td><td>4,673</td><td>93.5%</td></tr>
-          <tr><td>Reiss McLaren</td><td>113</td><td>2.3%</td></tr>
-          <tr><td>Atelier</td><td>51</td><td>1.0%</td></tr>
-          <tr><td>Good American</td><td>42</td><td>0.8%</td></tr>
-          <tr><td>PAIGE</td><td>34</td><td>0.7%</td></tr>
+          <tr><td><b>Reiss</b></td><td>4,673</td><td><span class="pill p-open">Unconfirmed</span></td></tr>
+          <tr><td>Reiss McLaren</td><td>113</td><td><span class="pill p-open">Unconfirmed</span></td></tr>
+          <tr><td>Atelier</td><td>51</td><td><span class="pill p-open">Unconfirmed</span></td></tr>
+          <tr><td>Good American</td><td>42</td><td><span class="pill p-open">Unconfirmed</span></td></tr>
+          <tr><td>PAIGE</td><td>34</td><td><span class="pill p-open">Unconfirmed</span></td></tr>
         </tbody></table>
       </div>
       <div class="card">
         <h4>What this means for the feed</h4>
         <p>Reiss isn't a single-brand catalogue — collaboration and stocked third-party lines (McLaren, Atelier, Good American, PAIGE) sit inside the same feed. Every optimisation rule needs to hold across all of them, not just the core Reiss line.</p>
-        <p style="margin-top:12px;font-size:13px;color:var(--muted)">2,304 distinct product groups across the export — an average of 2.2 SKUs (sizes/colours) per style.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">2,304 distinct product groups within this sample — an average of 2.2 SKUs (sizes/colours) per style.</p>
       </div>
     </div>
-    <div class="note rv in"><b>Source note:</b> the SKU and brand figures on this page come directly from the attached live feed export (4,999 rows). Markets, feeds and hours come from the account record — hours specifically needs Ray to confirm before this goes to Reiss.</div>
+    <div class="note rv in"><b>Read this as a sample, not the catalogue:</b> the brand and SKU figures on this page come from one ~5,000-row export FeedSpark was given to analyse — not a confirmed count of Reiss' full live feed across all 29 markets and 60 feeds, which is almost certainly larger. Treat the brand-line breakdown as "what's visible in this sample," not "the account's true brand mix," until it's checked against the full feed. Markets and feed counts come from the account record; hours needs Ray to confirm before this goes to Reiss.</div>
   </div>
 </section>
 
@@ -414,29 +414,36 @@ policy data become commercial controls"<br>Google&nbsp;</p>
 </section>
 
 <!-- ================= CH 05 — NUMBER OF WINS / RESULTS ================= -->
-<div class="chapter" id="c5"><div class="ch-num">05</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter five</div><h2>Number of Wins / Results</h2><p>What's proven this year — checked against the live feed, not just marked done in the plan.</p></div></div>
+<div class="chapter" id="c5"><div class="ch-num">05</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter five</div><h2>Number of Wins / Results</h2><p>Sourced from the Project Plan's A/B Test Archive tab, Full FY25/26 look-back — pending full read, see note below.</p></div></div>
 
 <section class="band">
   <div class="wrap">
+    <div class="note rv in" style="margin-top:0;border-left-color:var(--red)"><b>⚑ Data gap — flagging rather than guessing:</b> the Project Plan references a dedicated <b>A/B Test Archive</b> tab as the source of record for this section. That tab wasn't reachable this round (Google Drive access expired mid-session) — the table below is structured the way the archive should populate it, but only carries the tests independently confirmed elsewhere (the plan's task log, the live feed). <b>Reconnect Drive access and re-run this section</b> to pull the complete Full FY25/26 archive rather than this partial view.</div>
+
+    <div class="tbl-wrap rv in" style="margin-bottom:32px">
+      <table><thead><tr><th style="width:26%">Test</th><th>Hypothesis</th><th style="width:14%">Window</th><th style="width:16%">Result</th></tr></thead>
+      <tbody>
+        <tr><td>Title de-duplication</td><td>Routing titles through auto-optimised-title removes the 39% duplication flagged in the plan</td><td>FY25/26</td><td><span class="pill p-done">39% → 0.1%</span></td></tr>
+        <tr><td>A/B Titles — [Search Intent] vs. none</td><td>Search-intent phrasing in titles lifts CTR over the unmodified control</td><td>In progress</td><td><span class="pill p-prog">Reading</span></td></tr>
+        <tr><td>Local Language vs. EN Shopping</td><td>Market-native copy outperforms English-language campaigns across 16 EU/ME markets</td><td>In progress</td><td><span class="pill p-prog">Reading</span></td></tr>
+        <tr><td colspan="4" style="text-align:center;color:var(--muted);font-style:italic">— remaining Full FY25/26 tests pending the A/B Test Archive tab —</td></tr>
+      </tbody></table>
+    </div>
+
     <div class="grid-2 rv in">
       <div class="card" style="border-left:3px solid var(--green)">
-        <h4>Verified against the live feed</h4>
+        <h4>Verified against the live feed (not archive-dependent)</h4>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;font-size:13px">
           <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">39% → 0.1%</b> duplicate titles</div>
           <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">100%</b> of titles through AOT</div>
           <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">100%</b> images live (avg 5.9/SKU)</div>
           <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">263</b> tasks completed</div>
         </div>
-        <p style="margin-top:14px;font-size:13px;color:var(--muted)">These are checked, not claimed — pulled straight from the 4,999-row export. The rest of this year's proof is <i>in flight, not yet read</i> — shown honestly below rather than dressed up with an uplift we haven't measured.</p>
+        <p style="margin-top:14px;font-size:13px;color:var(--muted)">These didn't need the archive — pulled straight from the 4,999-row feed export and the plan's task log directly.</p>
       </div>
       <div class="card">
-        <h4>In flight — reading now</h4>
-        <ul style="list-style:none;font-size:13px;color:var(--ink-2)">
-          <li style="padding-left:14px;position:relative;margin-bottom:10px"><span style="position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--orange);border-radius:50%"></span><b>A/B Titles Test</b> — [Search Intent] vs. none, live now</li>
-          <li style="padding-left:14px;position:relative;margin-bottom:10px"><span style="position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--orange);border-radius:50%"></span><b>Local Language case study</b> — LL vs. EN Shopping across 16 EU/ME markets</li>
-          <li style="padding-left:14px;position:relative;margin-bottom:10px"><span style="position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--orange);border-radius:50%"></span><b>Product type breakdown</b> — deeper taxonomy, rollout in progress</li>
-        </ul>
-        <p style="margin-top:12px;font-size:12px;color:var(--muted)">Full reads land in the next Strategy Review once each test has run its window.</p>
+        <h4>What the full archive should add</h4>
+        <p style="font-size:13px">The Project Plan's task log references A/B tests beyond the three above (a shipping test, title tests via Crealytics, keyword-enhancement tests by category) without results attached — exactly the detail the archive tab exists to hold. Once reachable, this section becomes a full Full FY25/26 test log instead of a partial one.</p>
       </div>
     </div>
     <div class="note rv in"><b>External benchmark — apparel/fashion:</b> a controlled A/B test comparing enriched meta-data vs. standard feeds in Google Merchant Center showed +7.6% CTR lift, +6.3% ROAS growth and 16.4× ROI on enrichment (Stylitics/Tinuiti). Same methodology as the tests above — the pattern is proven at category level; Reiss' own reads confirm whether it holds here too.</div>
@@ -444,20 +451,32 @@ policy data become commercial controls"<br>Google&nbsp;</p>
 </section>
 
 <!-- ================= CH 06 — FEED OPTIMISATION SCORE ================= -->
-<div class="chapter" id="c6"><div class="ch-num">06</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter six</div><h2>Feed Optimisation Score</h2><p>Measured directly off the live 4,999-SKU export — the plan says 65/100 on tasks; the feed tells a more specific story.</p></div></div>
+<div class="chapter" id="c6"><div class="ch-num">06</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter six</div><h2>Feed Optimisation Score</h2><p>One score from the plan, six measurements from the feed itself — kept separate on purpose, not blended into a false average.</p></div></div>
 
 <section>
   <div class="wrap">
-    <div class="sc-grid rv in" style="margin-bottom:32px">
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">1.4%<span class="chk">?</span></div></div><div class="sc-label">Titles at MASK length (80–120 chars)</div><div class="sc-note">Average title is 53 characters. The AOT pipeline has touched 100% of titles — but for structure, not yet for length.</div><div class="sc-warn">Process complete; MASK target still open</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">5.8%<span class="chk">?</span></div></div><div class="sc-label">Keyword-optimised SKUs</div><div class="sc-note">The new Keyword Planner is live as a tool, but only 289 of 4,999 SKUs carry its output today.</div><div class="sc-warn">Biggest gap between "tool built" and "catalogue covered"</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">47.8%<span class="chk">?</span></div></div><div class="sc-label">Descriptions meeting quality bar</div><div class="sc-note">Only 6.3% reach the 500+ char AI-matching target; median length is 62 characters.</div><div class="sc-tgt">Target: 500+ chars, use-case language</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">100%</div></div><div class="sc-label">Image coverage</div><div class="sc-note">Average 5.9 of 7 image slots filled; 90% of SKUs carry all 6.</div><div class="sc-tgt">✓ Strongest lane in the feed</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">42.1%<span class="chk">?</span></div></div><div class="sc-label">Product highlights populated</div><div class="sc-note">Average 1.7 of 10 slots — 58% of SKUs have zero highlights at all.</div><div class="sc-warn">Google recommends 4–10 per product</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">0%<span class="chk">?</span></div></div><div class="sc-label">Item-group ID mapping</div><div class="sc-note">Flagged not-yet-mapped across every SKU — this is the open Item Group ID → Item No. switchover from chapter 03.</div><div class="sc-warn">Confirms the plan's open item, doesn't contradict it</div></div>
+    <div class="grid-2 rv in" style="margin-bottom:32px">
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>Two different questions, two different answers</h4>
+        <p><b>The plan's 65/100</b> answers "has the work order been closed?" — task completion.</p>
+        <p style="margin-top:8px"><b>The six figures below</b> each answer "has this actually reached the catalogue?" — for one specific, narrow thing, measured directly off the 4,999-SKU export. They're not sub-scores that add up to 65; they're a different, more specific kind of check.</p>
+      </div>
+      <div class="card">
+        <h4>Where the two disagree most</h4>
+        <p>Keywords: 62% of keyword <i>tasks</i> are marked done in the plan, but only 5.8% of <i>SKUs</i> carry keyword output today. The delivered work mostly built the Keyword Planner tool — running it across the catalogue is the part still ahead. Per the brief: where plan and feed disagree, the feed is the number to lead with.</p>
+      </div>
     </div>
-    <div class="note rv in"><b>Two measures, both real, on purpose:</b> the plan's 65/100 scores <i>task completion</i> (has the work order been closed). The figures above score <i>catalogue coverage</i> (has the SKU actually been touched). They diverge hardest on keywords — 62% of keyword <i>tasks</i> are marked done, but only 5.8% of <i>SKUs</i> carry the output — because the tasks delivered were largely building the Keyword Planner tool, not yet running it across all 4,999 products. Per the brief: where they disagree, the feed is the number to lead with.</div>
-    <div class="callout rv in"><h4>Golden Record cross-check</h4><p>The last audit put Golden Record completeness at 88.6%. Core structural attributes (colour, material, size, gender, age group, GTIN, item-group ID, condition) are 100% filled in this export — the gap sits in the softer content layer above: keywords, description richness and highlights, not raw data presence.</p></div>
+
+    <div class="sc-grid rv in" style="margin-bottom:12px">
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">1.4%</div></div><div class="sc-label">Titles at MASK length (80–120 chars)</div><div class="sc-note">Average title is 53 characters.</div><div class="sc-warn">The AOT pipeline has touched 100% of titles for structure — length is the part still open</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">5.8%</div></div><div class="sc-label">Keyword-optimised SKUs</div><div class="sc-note">289 of 4,999 SKUs carry Keyword Planner output.</div><div class="sc-warn">Biggest gap between "tool built" and "catalogue covered"</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">6.3%</div></div><div class="sc-label">Descriptions at the AI-matching length (500+ chars)</div><div class="sc-note">Median description is 62 characters.</div><div class="sc-warn">A separate internal flag marks 47.8% "processed" — processed isn't the same as long enough</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">100%</div></div><div class="sc-label">Image coverage</div><div class="sc-note">Average 5.9 of 7 image slots filled; 90% of SKUs carry all 6.</div><div class="sc-tgt">✓ Strongest lane in the feed</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">17%</div></div><div class="sc-label">Product highlights, average fill</div><div class="sc-note">Average 1.7 of Google's recommended 4–10 slots — 58% of SKUs have zero.</div><div class="sc-warn">"At least one" would read 42% — the fill rate is the honest number</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">0%</div></div><div class="sc-label">Item-group ID mapping</div><div class="sc-note">Not yet mapped, across every SKU in the sample.</div><div class="sc-warn">This is the open Item Group ID → Item No. switchover from chapter 03 — same issue, seen from the feed</div></div>
+    </div>
+    <p class="sec-sub rv in" style="max-width:none;margin-top:0">Every figure above is a straight measurement (a length, a count, a fill rate) against a named target — not a weighted composite, so there's nothing here that could be "wrong" the way an opaque single score could be. Where a number looks alarming (1.4%, 5.8%, 0%), the note under it says exactly what was measured and against what target.</p>
+    <div class="callout rv in"><h4>Golden Record cross-check</h4><p>The last audit put Golden Record completeness at 88.6%. Core structural attributes (colour, material, size, gender, age group, GTIN, item-group ID, condition) are 100% filled in this export — the gap sits in the softer content layer above: keywords, description length and highlights, not raw data presence.</p></div>
   </div>
 </section>
 
