@@ -34,6 +34,7 @@ import LEADERSHIP from "../../../docs/FeedSpark_Leadership.html";
 import DECKBUILDER from "../../../docs/FeedSpark_DeckBuilder.html";
 import WORKFLOW from "../../../docs/FeedSpark_Workflow.html";
 import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html";
+import DECK_REISS from "../../../docs/Reiss_Strategy_Review_FY2526.html";
 // Tachyon copilot widget (style + script fragment). Injected on the app pages only —
 // never on client-facing decks. Reads window.PLANTASKS and calls /api/claude.
 import TACHYON from "../../../docs/tachyon_widget.html";
@@ -51,6 +52,7 @@ const PAGES = {
   '/deck-builder':{ html: DECKBUILDER, slug: 'deckbuilder' },
   '/workflow':    { html: WORKFLOW,    slug: 'workflow' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
+  '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
 };
 
 const CORS = {
