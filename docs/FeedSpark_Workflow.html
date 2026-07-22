@@ -278,12 +278,14 @@ window.addEventListener('load',restore);
   .it-multi-btn{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);cursor:pointer;white-space:nowrap}
   .it-multi-btn:hover{border-color:var(--orange);color:var(--orange-deep)}
   .it-multi-btn.on{border-color:var(--navy);color:var(--navy);font-weight:800}
-  .it-multi-menu{position:absolute;top:calc(100% + 5px);left:0;z-index:30;min-width:190px;max-height:280px;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);padding:6px}
-  .it-multi-menu label{display:flex;align-items:center;gap:9px;padding:6px 9px;border-radius:8px;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap}
+  .it-multi-menu{position:absolute;top:calc(100% + 5px);left:0;z-index:30;width:178px;max-height:280px;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);padding:5px}
+  .it-multi-menu label{display:flex;align-items:center;justify-content:flex-start;text-align:left;gap:8px;padding:5px 8px;border-radius:7px;font-size:13px;color:var(--ink);cursor:pointer;white-space:nowrap}
   .it-multi-menu label:hover{background:var(--wash)}
-  .it-multi-menu input{margin:0;accent-color:var(--orange-deep)}
-  .it-multi-menu .it-multi-all{border-bottom:1px solid var(--line);margin-bottom:4px;padding-bottom:8px;font-weight:800}
-  #it-views-menu{min-width:210px}
+  .it-multi-menu input{margin:0;flex:none;accent-color:var(--orange-deep)}
+  .it-multi-menu .it-multi-all{border-bottom:1px solid var(--line);margin-bottom:4px;padding-bottom:7px;font-weight:800}
+  #it-status-menu{width:168px}
+  #it-client-menu{width:198px}
+  #it-views-menu{width:214px}
   .it-view-row{display:flex;align-items:center;gap:2px}
   .it-view-apply{flex:1;text-align:left;font:inherit;font-size:13px;font-weight:700;padding:6px 9px;border:none;background:none;color:var(--ink);cursor:pointer;border-radius:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .it-view-apply:hover{background:var(--wash)}
@@ -1067,9 +1069,10 @@ window.addEventListener('load',restore);
     if(key==='task'){ val=(''+val).trim(); if(!val||val===t.task)return null; migrateKey(t.client,t.task,val); saveRename(t.client,t.task,val); if(t.source==='plan'&&id)gPost('/api/sheets/task',{id:id,tab:'Project Plan',match:t.task,value:val}); return 1; }
     return null; }
   function clipFallback(tsv,n){ try{ var ta=document.createElement('textarea'); ta.value=tsv; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); toast('Copied '+n+' cell'+(n===1?'':'s')+' — paste into Excel/Sheets'); }catch(e){ toast('Copy was blocked — press Cmd/Ctrl+C again'); } }
-  function copyGrid(){ if(!gridSel)return; var R=gnorm(), lines=[], n=0;
+  function buildTSV(){ if(!gridSel)return null; var R=gnorm(), lines=[], n=0;
     for(var r=R.r0;r<=R.r1;r++){ var row=[]; for(var c=R.c0;c<=R.c1;c++){ row.push(cellText(r,c)); n++; } lines.push(row.join('\t')); }
-    var tsv=lines.join('\n'); window.__lastCopy=tsv;
+    var tsv=lines.join('\n'); window.__lastCopy=tsv; window.__lastCopyN=n; return tsv; }
+  function copyGrid(){ var tsv=buildTSV(); if(tsv==null)return; var n=window.__lastCopyN;
     try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(tsv).then(function(){ toast('Copied '+n+' cell'+(n===1?'':'s')+' — paste into Excel/Sheets'); },function(){ clipFallback(tsv,n); }); } else clipFallback(tsv,n); }catch(e){ clipFallback(tsv,n); } }
   function applyTSV(text){ if(!gridSel||!text)return 0; var rows=(''+text).replace(/\r/g,'').split('\n'); while(rows.length&&rows[rows.length-1]==='')rows.pop(); var R=gnorm(), n=0;
     for(var i=0;i<rows.length;i++){ var r=R.r0+i; if(r>=gridRows.length)break; var cells=rows[i].split('\t');
@@ -1092,8 +1095,7 @@ window.addEventListener('load',restore);
   (function(){
     document.addEventListener('keydown',function(e){ if(!gridSel||!gridFocus)return; var ae=document.activeElement, tag=ae?ae.tagName:'', mod=e.ctrlKey||e.metaKey;
       if(tag==='INPUT'||tag==='TEXTAREA')return; if(tag==='SELECT'&&!mod)return;
-      if(mod&&(e.key==='c'||e.key==='C')){ copyGrid(); e.preventDefault(); return; }
-      if(mod&&(e.key==='v'||e.key==='V')){ pasteGrid(); e.preventDefault(); return; }
+      // copy (Ctrl+C) and paste (Ctrl+V) are handled by the native copy/paste events below — do NOT preventDefault them here or the events never fire
       if(mod&&(e.key==='d'||e.key==='D')){ fillDownGrid(); e.preventDefault(); return; }
       if(e.key==='Escape'){ gridSel=null; highlightGrid(); return; }
       if(e.key==='Enter'){ editActiveCell(); e.preventDefault(); return; }
@@ -1104,6 +1106,11 @@ window.addEventListener('load',restore);
       highlightGrid(); var a=cellAt(gridSel.r0,gridSel.c0); if(a&&a.scrollIntoView)a.scrollIntoView({block:'nearest'}); });
     document.addEventListener('mousedown',function(e){ var t=e.target, td=t.closest?t.closest('td[data-col]'):null, inScroll=t.closest?t.closest('.it-scroll'):null;
       if(td&&inScroll)gridFocus=true; else if(!inScroll){ gridFocus=false; if(gridSel){ gridSel=null; highlightGrid(); } } });
+    // native copy/paste — reliable (no clipboard permission) and delivers the whole multi-cell TSV block
+    function gridBusy(){ var tag=document.activeElement?document.activeElement.tagName:''; return tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'; }
+    document.addEventListener('copy',function(e){ if(!gridSel||!gridFocus||gridBusy())return; var tsv=buildTSV(); if(tsv==null)return;
+      try{ (e.clipboardData||window.clipboardData).setData('text/plain',tsv); e.preventDefault(); toast('Copied '+window.__lastCopyN+' cell'+(window.__lastCopyN===1?'':'s')+' — paste into Excel/Sheets'); }catch(err){} });
+    document.addEventListener('paste',function(e){ if(!gridSel||!gridFocus||gridBusy())return; var txt=''; try{ txt=(e.clipboardData||window.clipboardData).getData('text'); }catch(err){} if(txt){ e.preventDefault(); applyTSV(txt); } });
     window.__grid={copy:copyGrid,applyTSV:applyTSV,fill:fillDownGrid,sel:function(a){ gridSel=a; gridFocus=true; highlightGrid(); },get:function(){ return gridSel; }};
   })();
   // ---- bulk brief + delegate ----
