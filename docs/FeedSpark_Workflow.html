@@ -299,7 +299,7 @@ window.addEventListener('load',restore);
   .it-ctl>input{flex:0 1 220px;min-width:150px}
   .it-ctl>select:focus,.it-ctl>input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
   .it-n{font-size:12px;font-weight:800;color:var(--muted);margin-left:4px;white-space:nowrap}
-  .it-scroll{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:var(--shadow)}
+  .it-scroll{overflow:auto;max-height:72vh;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:var(--shadow)}
   .itbl{width:100%;border-collapse:collapse;font-size:12.5px}
   #itbl{table-layout:fixed}
   #itbl col.cw-cb{width:30px}#itbl col.cw-client{width:9.5%}#itbl col.cw-feed{width:8.5%}
@@ -546,7 +546,7 @@ window.addEventListener('load',restore);
   var PT=window.PLANTASKS||{};
   // full book roster (editable): every brand can be briefed, not just those with a live plan.
   var ALL_BRANDS=['Reiss','AllSaints','Schuh','Superdry','Accessorize','Monsoon','Hobbycraft','YuMOVE',
-    'Estée Lauder','Bobbi Brown','Benefit','Jo Malone','Clinique','MAC','Craghoppers','Regatta','Dare2b','House of Bruar','American Golf'];
+    'Estée Lauder','Bobbi Brown','Benefit','Jo Malone','Clinique','MAC','Craghoppers','Regatta','Dare2b','House of Bruar','American Golf','Ryobi'];
   var BKEY='fcc-wf-brands';
   function loadBrands(){ try{var s=JSON.parse(localStorage.getItem(BKEY)); if(s&&s.length)return s;}catch(e){}
     return Array.from(new Set(ALL_BRANDS.concat(Object.keys(PT)))).sort(function(a,b){return a.localeCompare(b);}); }
@@ -567,6 +567,7 @@ window.addEventListener('load',restore);
     'Monsoon':'1SM52DXN3ecY5EDCIIqlRPONSmxkFvOM1xaeDrMlJ79w',
     'Hobbycraft':'1oHdoFO4gazfhQZM6rp1fl5pWlDRVzr8t_THquU861fg',
     'YuMOVE':'1RMTN99Cw0J3l5mORwYPpITnoi5HCPt7tET4u8rQbsq0',
+    'Ryobi':'1WofQrZ6igucGIvGnUOLgBiXP7MqK-7ZtG8Xt4LLaA1E',
     'Estée Lauder':'1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
     'Bobbi Brown':'1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
     'Benefit':'1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
@@ -1020,11 +1021,10 @@ window.addEventListener('load',restore);
     body.querySelectorAll('.c-task-ed').forEach(function(td){ td.ondblclick=function(){ editTaskText(f[+td.getAttribute('data-i')]); }; });
     body.querySelectorAll('.c-owner-ed').forEach(function(td){ td.ondblclick=function(){ editOwner(f[+td.getAttribute('data-i')]); }; });
     wireGrid(body, f);
-    // grow the tracker to show every filtered row (esp. after filtering); cap at 100 rows so the page stays usable
-    (function(){ var sc=body.closest('.it-scroll'); if(!sc)return; var trs=body.children, CAP=100;
-      if(trs.length>CAP){ var h=0; for(var i=0;i<CAP;i++){ h+=(trs[i].offsetHeight||46); } var th=document.querySelector('#itbl thead');
-        sc.style.maxHeight=(h+(th?th.offsetHeight:38)+2)+'px'; }
-      else sc.style.maxHeight=''; })();
+    // The tracker scrolls inside a viewport-bounded panel (CSS .it-scroll max-height:72vh) so the
+    // column header (position:sticky; top:0) stays frozen while you scroll the rows. Clear any stale
+    // inline height a previous render may have set, so the CSS cap governs.
+    (function(){ var sc=body.closest('.it-scroll'); if(sc)sc.style.maxHeight=''; })();
     body.querySelectorAll('.it-cb').forEach(function(cb){ cb.onchange=function(){ var t=f[+cb.getAttribute('data-i')]; if(cb.checked)itSel[rowKey(t)]=t; else delete itSel[rowKey(t)]; renderBulk(); }; });
     body.querySelectorAll('.c-stat .stat-sel').forEach(function(sel){
       function commit(){ var prev=(sel.dataset.prev!=null?sel.dataset.prev:''); if(sel.value===prev)return;   // covers type-ahead: preselect then confirm w/o a change event
@@ -1259,7 +1259,8 @@ window.addEventListener('load',restore);
     clear:function(){ itState.statuses=[]; } });
   var buildClientFilter=setupMulti({ btn:'it-client-btn', menu:'it-client-menu', wrap:'it-client-wrap',
     allLabel:'All clients', noun:'clients', one:function(v){ return v; },
-    options:function(){ var set={}; allIntake().forEach(function(r){ set[r.client]=1; }); itState.clients=itState.clients.filter(function(c){ return set[c]; }); return Object.keys(set).sort().map(function(c){ return {v:c,l:c}; }); },
+    options:function(){ var set={}; allIntake().forEach(function(r){ if(!DELETED[r.client+'|'+r.task]) set[r.client]=1; });   // a client with no remaining (non-deleted) task drops out of the filter
+      itState.clients=itState.clients.filter(function(c){ return set[c]; }); return Object.keys(set).sort().map(function(c){ return {v:c,l:c}; }); },
     selected:function(){ return itState.clients; },
     toggle:function(v,on){ var i=itState.clients.indexOf(v); if(on){ if(i<0)itState.clients.push(v); } else if(i>=0)itState.clients.splice(i,1); },
     clear:function(){ itState.clients=[]; } });
