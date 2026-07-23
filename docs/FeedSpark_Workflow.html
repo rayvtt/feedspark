@@ -1182,6 +1182,28 @@ window.addEventListener('load',restore);
   var SVQ_PREFIX='SVQ3-26 - ';
   var MONTH_NAMES=['','January','February','March','April','May','June','July','August','September','October','November','December'];
   function monthLabel(iso){ var m=/^(\d{4})-(\d{2})/.exec(String(iso||'')); return m?(MONTH_NAMES[+m[2]]+' '+m[1]):''; }   // 2026-08-01 -> "August 2026"
+  // Write-through: mirror the manual "Add task" — once a plan is connected live, append any
+  // SVQ3-26 roadmap task not already in the sheet (roadmapTasks() excludes plan rows), under its
+  // month section. Runs once per browser; the dedup-against-live-plan makes it idempotent so it
+  // can't create duplicates. Only fires when LIVE_CONN — i.e. the service account can write.
+  function autoPushRoadmap(){
+    if(!LIVE_CONN || window.__svqPushing) return;
+    try{ if(localStorage.getItem('fcc-svq-pushed')==='1') return; }catch(e){}
+    var items=roadmapTasks().filter(function(t){ return PLANSHEET[t.client]; });
+    if(!items.length){ try{localStorage.setItem('fcc-svq-pushed','1');}catch(e){} return; }
+    window.__svqPushing=true;
+    items.sort(function(a,b){ return String(a.d||'').localeCompare(String(b.d||'')); });   // cluster by month
+    var byBrand={}; items.forEach(function(t){ (byBrand[t.client]=byBrand[t.client]||[]).push(t); });
+    var brands=Object.keys(byBrand), done=0, ok=0;
+    brands.forEach(function(bn){ var id=PLANSHEET[bn];
+      var rows=byBrand[bn].map(function(t){ return {task:t.task,owner:t.owner==='—'?'':t.owner,status:t.s||'Open',due:'',month:monthLabel(t.d)}; });
+      fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',rows:rows})})
+        .then(function(r){return r.json();}).then(function(d){ done++; if(d&&d.ok)ok+=rows.length;
+          if(done===brands.length){ window.__svqPushing=false;
+            if(ok){ try{localStorage.setItem('fcc-svq-pushed','1');}catch(e){} toast('✓ Wrote '+ok+' SVQ3-26 test'+(ok===1?'':'s')+' into the plan'); setTimeout(function(){fetchLive(true);},900); } }
+        }).catch(function(){ done++; if(done===brands.length)window.__svqPushing=false; });
+    });
+  }
   function roadmapTasks(){ var ov=statusOverlay(), owo=ownerOverlay(), ren=renameOverlay();
     // hide any that were pushed into the real plan already (matched by fuzzy task text)
     var idx={}; planTasks().forEach(function(p){ if(p.client==='YuMOVE')(idx[nrm(p.task)]=1); });
@@ -1835,6 +1857,7 @@ window.addEventListener('load',restore);
           LIVE_AT=Date.now(); var dot=document.getElementById('live-dot'); if(dot)dot.classList.add('on');
           if(banner) banner.textContent='Live — '+n+' tasks across '+brands+' plans · synced '+timeAgo(LIVE_AT)+(errs.length?(' · '+errs.length+' not shared with the service account'):'');
           renderAll();
+          autoPushRoadmap();   // write-through the SVQ3-26 roadmap tests into the plan (once, deduped)
         } else { if(banner) banner.textContent=(d&&d.error==='no_sa')?'Not connected — set the Google service-account secret to sync plans live.':'Sync unavailable — showing the last snapshot.'; }
       }).catch(function(){ if(btn)btn.disabled=false; if(banner) banner.textContent='Sync failed — showing the last snapshot.'; });
   }
