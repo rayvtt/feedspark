@@ -1151,7 +1151,36 @@ window.addEventListener('load',restore);
         var s=ov[k]!=null?ov[k]:(src.status||'Open');
         return {client:m.c,task:m.task,cat:classifyLite(m.task),owner:(owo[k]!=null?owo[k]:(src.owner||'—')),source:'plan',
           s:s,b:bucketOf(s),live:false,manual:true,sheet:PLANSHEET[m.c]||'',d:(duo[k]||src.due||'')}; }); }
-  function allIntake(){ return planTasks().concat(manualTasks()).concat(carryTasks()).concat(emailIntake()); }
+  // ---- YuMOVE Q3/Q4 testing matrix (14 tests from the Strategy Review roadmap) -----------
+  // These live in the deck's testing matrix, not the plan CSV, so they never reached the PP
+  // intake. Surface them as test-category YuMOVE tasks so the 14-test roadmap shows in the PP.
+  // Status is editable inline like any row (overlay saved to /api/carryover, source 'atrt').
+  var YUMOVE_ROADMAP=[
+    {id:'T1', task:'Active ingredient in titles', metric:'CTR', month:'2026-08-01', prio:'High'},
+    {id:'T2', task:'Description expansion → 500+ chars', metric:'Impressions', month:'2026-07-01', prio:'High'},
+    {id:'T6', task:'Seasonal symptom keywords (summer)', metric:'CTR', month:'2026-08-01', prio:'High'},
+    {id:'T3', task:'item_group_title + variant_option', metric:'Cross-sell rate', month:'2026-08-01', prio:'Medium'},
+    {id:'T4', task:'popularity_rank from AdWords data', metric:'Impression share', month:'2026-08-01', prio:'Medium'},
+    {id:'T5', task:'related_product — bundles', metric:'Bundle CTR', month:'2026-08-01', prio:'Medium'},
+    {id:'T9', task:'Product highlights — 4–10 per SKU', metric:'Rich results', month:'2026-09-01', prio:'Medium'},
+    {id:'T10', task:'Tachyon intent terms in titles', metric:'Long-tail impressions', month:'2026-09-01', prio:'Medium'},
+    {id:'T7', task:'question_and_answer — joint line', metric:'AI citations', month:'2026-09-01', prio:'Low'},
+    {id:'T8', task:'document_link — ingredient PDFs', metric:'AI citations', month:'2026-09-01', prio:'Low'},
+    {id:'T11', task:'Visual attribute harvest → feed', metric:'Attribute fill', month:'2026-09-01', prio:'Low'},
+    {id:'T12', task:'question_and_answer — digestive line', metric:'AI citations', month:'2026-10-01', prio:'Low'},
+    {id:'T13', task:'ChatGPT Merchant Program enrolment', metric:'ChatGPT visibility', month:'2026-10-01', prio:'Low'},
+    {id:'T14', task:'AI visibility baseline + tracking', metric:'AI citations', month:'2026-10-01', prio:'Low'}
+  ];
+  function roadmapTasks(){ var ov=statusOverlay(), owo=ownerOverlay(), ren=renameOverlay();
+    // hide any that were pushed into the real plan already (matched by fuzzy task text)
+    var idx={}; planTasks().forEach(function(p){ if(p.client==='YuMOVE')(idx[nrm(p.task)]=1); });
+    return YUMOVE_ROADMAP.map(function(t){ var task=ren['YuMOVE|'+t.task]||t.task; var k='YuMOVE|'+task;
+      if(CARRY_STAT[k]==='__deleted__'||DELETED[k])return null;
+      var s=ov[k]!=null?ov[k]:(CARRY_STAT[k]!=null?CARRY_STAT[k]:'Open');
+      return {client:'YuMOVE',task:task,cat:'test',owner:(owo[k]!=null?owo[k]:'Ray'),source:'atrt',
+        s:s,b:bucketOf(s),live:false,roadmap:true,prio:t.prio,tid:t.id,d:t.month}; })
+      .filter(function(r){ return r && !idx[nrm(r.task)]; }); }
+  function allIntake(){ return planTasks().concat(manualTasks()).concat(carryTasks()).concat(roadmapTasks()).concat(emailIntake()); }
   // DDMM (or DDMMYYYY) -> ISO yyyy-mm-dd; a near-past DDMM rolls to next year
   function ddmmToIso(v){ v=String(v||'').replace(/\D/g,'');
     if(v.length===4){ var dd=+v.slice(0,2), mm=+v.slice(2,4); if(dd<1||dd>31||mm<1||mm>12)return '';
@@ -1275,7 +1304,7 @@ window.addEventListener('load',restore);
     var f=intakeFiltered();
     body.innerHTML = f.length ? f.map(function(t,i){
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
-      var src=t.source==='email'?'<span class="src-tag src-email">Email</span>':t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':'<span class="src-tag src-plan">Plan</span>';
+      var src=t.roadmap?'<span class="src-tag src-plan" title="YuMOVE Q3/Q4 testing roadmap — 14-test matrix from the Strategy Review">Roadmap</span>':t.source==='email'?'<span class="src-tag src-email">Email</span>':t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
       var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt');
       var stat=(t.source==='plan'||t.source==='atrt')
