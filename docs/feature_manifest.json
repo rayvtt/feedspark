@@ -15,6 +15,12 @@
     { "name": "Workflow: frozen tracker header (viewport-bounded panel)", "file": "docs/FeedSpark_Workflow.html", "pattern": "max-height:72vh", "pr": 53 },
     { "name": "Workflow: RYOBI in brand roster + plan sheets", "file": "docs/FeedSpark_Workflow.html", "pattern": "1WofQrZ6igucGIvGnUOLgBiXP7MqK-7ZtG8Xt4LLaA1E", "pr": 53 },
     { "name": "Workflow: ATRT legacy source RETIRED (must stay gone)", "file": "docs/FeedSpark_Workflow.html", "pattern": "ATRT legacy", "forbidden": true, "pr": 53 },
+    { "name": "Workflow: client-level remove from intake (reversible)", "file": "docs/FeedSpark_Workflow.html", "pattern": "fcc-wf-removed", "pr": 66 },
+    { "name": "Workflow: courts strip — 3-team ball tracking", "file": "docs/FeedSpark_Workflow.html", "pattern": "renderCourts", "pr": 66 },
+    { "name": "Workflow: stage-change handoff history", "file": "docs/FeedSpark_Workflow.html", "pattern": "function setStage", "pr": 66 },
+    { "name": "Workflow: brief-to-intake taskKey tie", "file": "docs/FeedSpark_Workflow.html", "pattern": "taskKey", "min": 5, "pr": 66 },
+    { "name": "Workflow: paste-an-update reply router", "file": "docs/FeedSpark_Workflow.html", "pattern": "function routeUpdate", "pr": 66 },
+    { "name": "Workflow: court-aware SLA escalations", "file": "docs/FeedSpark_Workflow.html", "pattern": "SLA_STAGE", "pr": 66 },
     { "name": "DeckBuilder: RYOBI plan sheet wired", "file": "docs/FeedSpark_DeckBuilder.html", "pattern": "1WofQrZ6igucGIvGnUOLgBiXP7MqK-7ZtG8Xt4LLaA1E", "pr": 53 }
   ]
 }
