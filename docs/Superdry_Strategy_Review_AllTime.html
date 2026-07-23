@@ -665,7 +665,7 @@ body.hide-checks .chk{display:none}
   <div class="wrap">
     <div class="eyebrow rv in">Scorecard</div>
     <h2 class="sec-title rv in">Superdry feed optimisation — 70 / 100<span class="chk">?</span></h2>
-    <p class="sec-sub rv in">This score measures <b>task-completion coverage across the project plan</b> — how much of the scoped optimisation is closed in each lane. It is not yet a live-feed Golden Record audit; a scan of the current product export is the sharper next measure (see the flag below).</p>
+    <p class="sec-sub rv in">This score measures <b>task-completion coverage across the project plan</b> — how much of the scoped optimisation is closed in each lane.</p>
 
     <div class="sc-grid rv in" style="margin-bottom:32px">
       <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">89%</div></div><div class="sc-label">Custom labels</div><div class="sc-note">16 of 18 tasks closed — CL0–CL4 architecture live.</div><div class="sc-tgt">Strongest lane — margin, seasonal &amp; bestseller labels done</div></div>
@@ -673,12 +673,36 @@ body.hide-checks .chk{display:none}
       <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">69%</div></div><div class="sc-label">Keywords</div><div class="sc-note">20 of 29 closed — Jackets, Coats, Dresses, Shorts done; seasonal mapping open.</div><div class="sc-tgt">Target: full seasonal &amp; international coverage</div></div>
       <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">67%</div></div><div class="sc-label">Imagery</div><div class="sc-note">20 of 30 closed — overlays live; dynamic stock overlay open.</div><div class="sc-tgt">Target: live-stock overlays &amp; lifestyle imagery</div></div>
       <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">57%</div></div><div class="sc-label">Titles</div><div class="sc-note">8 of 14 closed — brand-at-end &amp; CULT line done; search-term tests open.</div><div class="sc-tgt">Target: MASK structure at 80–120 chars</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">20%</div></div><div class="sc-label">Data fields</div><div class="sc-note">1 of 5 closed — mandatory-field back-filling (description, size, GAG, material) in flight.</div><div class="sc-warn">P0 gap — the priority for the coming quarter</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">20%</div></div><div class="sc-label">Data fields</div><div class="sc-note">1 of 5 closed — mandatory-field back-filling (description, size, GAG, material) in flight.</div><div class="sc-warn">P0 gap on the plan — see the live feed below</div></div>
     </div>
-    <div class="grid-2 rv in">
+    <div class="grid-2 rv in" style="margin-bottom:48px">
       <div class="card"><h4>The other lanes</h4><p style="font-size:13px">Optimisation 57/88 (65%) · Feed &amp; technical 11/17 (65%) · Channels 18/26 (69%) · Account &amp; strategy 11/22 (50%) · Product type 1/3 (33%). Product type and data fields are the two lanes pulling the composite down — both are on the roadmap.</p></div>
-      <div class="card" style="border-left:3px solid var(--orange-deep)"><h4>⚑ What would sharpen this</h4><p style="font-size:13px">No live product-feed export was attached to this build, so the score reflects <b>plan-task coverage, not measured feed state</b>. A Golden Record scan of the current ~5,000-row export — title-length distribution, real attribute fill rates, GPC depth, conversational-attribute coverage — would convert this into a measured feed score. It's the first item on the roadmap.</p></div>
+      <div class="card" style="border-left:3px solid var(--green)"><h4>✓ Now measured against the live feed</h4><p style="font-size:13px">A full export of the GB Shopping feed has been analysed directly — 22,527 SKUs, every title, attribute and label scored. That audit sits below: where it agrees with the plan-task score, the two corroborate each other; where it diverges, the feed wins.</p></div>
     </div>
+
+    <div class="eyebrow rv in">Live feed audit</div>
+    <h2 class="sec-title rv in">What the GB feed actually shows — 22,527 SKUs</h2>
+    <p class="sec-sub rv in">Every title, attribute, image slot and label scored directly from the current Superdry UK Shopping feed export. This covers the <b>GB market only</b> — DE, FR, IE and the other 15 markets aren't in this export, so treat these numbers as GB-specific, not account-wide.</p>
+
+    <div class="stats rv in" style="margin-bottom:32px">
+      <div class="stat"><div class="n">22,527</div><div class="l">SKUs analysed · GB feed</div></div>
+      <div class="stat"><div class="n" style="color:var(--orange-deep)">63<small>%</small></div><div class="l">Titles in the 80–120 char MASK band</div></div>
+      <div class="stat"><div class="n" style="color:var(--orange-deep)">58<small>%</small></div><div class="l">Descriptions at 500+ chars</div></div>
+      <div class="stat"><div class="n" style="color:var(--green)">100<small>%</small></div><div class="l">Core attributes filled (GTIN, colour, size, gender, brand)</div></div>
+      <div class="stat"><div class="n" style="color:var(--red)">0<small>%</small></div><div class="l">Conversational attributes — confirmed absent from schema</div></div>
+    </div>
+
+    <div class="grid-2 rv in">
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h4>Where the plan and the feed agree</h4>
+        <p style="font-size:13px">Custom labels: CL0 (100%), CL2 category (99.7%) and CL4 margin tier (89.9%) are essentially complete — matching the plan's 89% custom-label score. Imagery is <b>fully populated</b> — both primary and additional image slots on all 22,527 SKUs, ahead of what the plan lane implied. GPC (Google's fixed taxonomy) sits at 100% fill, average depth 3.18.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>⚑ Where they diverge — and why</h4>
+        <p style="font-size:13px">The plan's "data fields" lane shows only 20% done — but the <b>live feed shows core attributes (GTIN, colour, size, gender, age group, condition, item group ID, brand) at ~100% fill</b>, with material at 99.8%. The gap: that plan lane tracks specific remaining edge-case rules (short titles, missing-DE back-fill) and other markets — not the GB base state, which is already strong. <b>Pattern is the one real fill gap at 66.7%</b>, and custom product-type depth is inconsistent: only <b>43% of SKUs reach 3+ levels</b> — the other 54% sit at a single level, despite 112 category-mapping passes on the plan.</p>
+      </div>
+    </div>
+    <div class="note rv in"><b>⚑ A second internal signal is worth flagging:</b> the feed's own <code>c:fs_data_opti</code> processing flag shows Title and Category "touched" on 100% of SKUs, Keywords on 43.1%, but <b>Description and Identifier enrichment on 0%</b> — even though descriptions and identifiers are themselves well-filled. Read together with the length/depth numbers above, this means the base data is populated, but hasn't yet been through Tachyon's enrichment pass. That's the real work left, not a fill-rate problem.</div>
   </div>
 </section>
 
@@ -716,18 +740,18 @@ body.hide-checks .chk{display:none}
 <section>
   <div class="wrap">
     <div class="eyebrow rv in">Scorecard</div>
-    <h2 class="sec-title rv in">AI-readiness audit — Superdry<span class="chk">?</span></h2>
-    <p class="sec-sub rv in">Estimated from the project plan and the test archive. An actual Golden Record audit against the live feed — the flag from chapter nine — is what turns these estimates into measured numbers.</p>
+    <h2 class="sec-title rv in">AI-readiness audit — Superdry GB</h2>
+    <p class="sec-sub rv in">Measured directly from the GB Shopping feed export (22,527 SKUs) — no longer estimates. Where a figure moved from the earlier plan-based estimate, the note says which way and why.</p>
 
     <div class="sc-grid rv in" style="margin-bottom:32px">
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">~65%<span class="chk">?</span></div></div><div class="sc-label">Title quality for AI</div><div class="sc-note">Structure tested and improving (brand-at-end won), but MASK decomposition &amp; the 80–120 char band need measuring against the live feed.</div><div class="sc-tgt">Target: Brand + Material + Fit + Colour + Use-case</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">~30%<span class="chk">?</span></div></div><div class="sc-label">Description richness</div><div class="sc-note">Data-field work flags many descriptions missing or too short. Need 500+ chars with use-case language for AI matching.</div><div class="sc-warn">P0 gap — descriptions are what AI agents match against</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">~90%</div></div><div class="sc-label">Product type depth</div><div class="sc-note">112 category-mapping passes to deepest node across all markets — the strongest AI-readiness asset in place.</div><div class="sc-tgt">✓ Deep taxonomy banked</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">0%</div></div><div class="sc-label">Conversational attributes</div><div class="sc-note">None of the six (question_and_answer, item_group_title, variant_option, popularity_rank, related_product, document_link) populated.</div><div class="sc-warn">The build on the roadmap — competitors haven't populated these either</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">~89%</div></div><div class="sc-label">Custom labels / signals</div><div class="sc-note">CL0–CL4 live — margin, bestseller and seasonal signals feed both PMax and a future popularity_rank.</div><div class="sc-tgt">Build once, use twice — labels → popularity_rank</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">~67%<span class="chk">?</span></div></div><div class="sc-label">Imagery coverage</div><div class="sc-note">Overlays live across Social; lifestyle &amp; ingredient-style detail imagery and the visual harvest are the Tier 3 step.</div><div class="sc-tgt">Target: product + lifestyle + detail imagery</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">63%</div></div><div class="sc-label">Title quality for AI</div><div class="sc-note">63% of titles land in the 80–120 char MASK band (avg 83.4 chars). The feed's own processing flag shows titles "touched" on 100% of SKUs — the gap is between processed and structurally landed.</div><div class="sc-tgt">Target: Brand + Material + Fit + Colour + Use-case</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">58%</div></div><div class="sc-label">Description richness</div><div class="sc-note">Better than assumed: 100% of SKUs carry a description (avg 544 chars), 58% at the 500+ AI target. But 0% have been through Tachyon's enrichment pass — base copy, not yet AI-enriched.</div><div class="sc-tgt">↑ from ~30% estimate — real gap is enrichment, not fill</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">43%</div></div><div class="sc-label">Product type depth</div><div class="sc-note">Google's fixed taxonomy (GPC) is 100% filled, avg depth 3.18 — strong. But FeedSpark's own custom product-type is only 3+ levels deep on 43% of SKUs; the other 54% sit at a single level.</div><div class="sc-warn">↓ from ~90% estimate — the plan's 112 mapping passes haven't reached every SKU yet</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">0%</div></div><div class="sc-label">Conversational attributes</div><div class="sc-note">Confirmed from the feed's own schema — none of the six (question_and_answer, item_group_title, variant_option, popularity_rank, related_product, document_link) exist as columns.</div><div class="sc-warn">The build on the roadmap — competitors haven't populated these either</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--orange-deep)">65%</div></div><div class="sc-label">Custom labels / signals</div><div class="sc-note">CL0 (100%), CL2 category (99.7%) and CL4 margin (89.9%) are essentially complete. CL1 sub-collection (12.8%) and CL3 seasonal event (20.3%) are lightly used — same pipeline, just under-populated.</div><div class="sc-tgt">3 of 5 label slots done; 2 are quick wins</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">100%</div></div><div class="sc-label">Imagery coverage</div><div class="sc-note">Both primary and additional image slots are populated across all 22,527 SKUs. Product highlights are the real imagery-adjacent gap: only 30.5% of SKUs carry Google's recommended 4–10 highlights; 63.3% have none.</div><div class="sc-tgt">↑ from ~67% estimate on image slots; highlights are the new finding</div></div>
     </div>
-    <div class="note rv in"><b>The opportunity in one line:</b> 95% of merchants now see AI-agent traffic, but only 20% have machine-readable catalogues (PayPal, May 2026). Superdry's deep taxonomy and label architecture put it ahead of most — the conversational attributes and description enrichment are the two moves that convert that lead into AI visibility.</div>
+    <div class="note rv in"><b>The opportunity in one line:</b> 95% of merchants now see AI-agent traffic, but only 20% have machine-readable catalogues (PayPal, May 2026). The GB feed's core attributes, imagery and GPC depth are already strong — the conversational-attribute build, a Tachyon description-enrichment pass, deeper custom product-type coverage and populating product highlights are the four moves that convert that base into AI visibility.</div>
   </div>
 </section>
 
@@ -752,12 +776,12 @@ body.hide-checks .chk{display:none}
       </div>
       <div class="mo peak">
         <div class="mo-m">Priority</div><div class="mo-s s-peak">P0</div>
-        <h4>Data fields</h4>
+        <h4>Data fields — the real gaps</h4>
         <ul>
-          <li><b>Back-fill mandatory fields</b></li>
-          <li>Rules: description missing</li>
-          <li>Rules: size conversion</li>
-          <li>GAG · material · too-short · missing DE</li>
+          <li><b>Pattern field</b> — 66.7% → target ~100%</li>
+          <li>Deepen custom product-type — 43% of SKUs stuck at 1 level</li>
+          <li>CL1 &amp; CL3 back-fill (12.8% / 20.3%)</li>
+          <li>Same rules, extended to DE/FR/IE + other markets</li>
         </ul>
       </div>
       <div class="mo">
@@ -784,10 +808,10 @@ body.hide-checks .chk{display:none}
         <div class="mo-m">Measure</div><div class="mo-s s-next">Prove</div>
         <h4>Score &amp; test</h4>
         <ul>
-          <li><b>Golden Record feed audit</b></li>
+          <li><b>✓ GB feed audited</b> — 22,527 SKUs scored</li>
+          <li>Extend the audit to DE/FR/IE + other markets</li>
           <li>Shorts search-term title test</li>
           <li>Holiday/beach AB read-out</li>
-          <li>Dynamic-overlay trial test</li>
         </ul>
       </div>
     </div>
@@ -802,13 +826,14 @@ body.hide-checks .chk{display:none}
           <tr><td><b>T1</b></td><td>MASK titles — full structure</td><td>Brand + Material + Fit + Colour + Use-case at 80–120 chars lifts CTR vs. current titles (building on the +12% avg keyword result)</td><td>CTR</td><td><span class="pill p-done">High</span></td></tr>
           <tr><td><b>T2</b></td><td>Description expansion → 500+ chars</td><td>Enriched, use-case descriptions lift impression volume on long-tail &amp; AI queries</td><td>Impressions</td><td><span class="pill p-done">High</span></td></tr>
           <tr><td><b>T3</b></td><td>Search-terms in Shopping titles — Shorts</td><td>Appending winning search-terms into Shorts titles captures queries current titles miss</td><td>CTR</td><td><span class="pill p-done">High</span></td></tr>
-          <tr><td><b>T4</b></td><td>US — short (AI) vs. long description</td><td>Read out the running test; if AI-short wins, roll the format across markets</td><td>CVR</td><td><span class="pill p-prog">Medium</span></td></tr>
-          <tr><td><b>T5</b></td><td>item_group_title + variant_option</td><td>Clean variant data improves cross-sell and reduces confused clicks across size/colour runs</td><td>Cross-sell</td><td><span class="pill p-prog">Medium</span></td></tr>
-          <tr><td><b>T6</b></td><td>related_product — outfit &amp; bundle links</td><td>Declaring outfit/complement relationships lifts "shop the look" visibility in Shopping &amp; AI answers</td><td>AOV</td><td><span class="pill p-prog">Medium</span></td></tr>
-          <tr><td><b>T7</b></td><td>Holiday &amp; beach lines AB — read-out</td><td>Confirm the seasonal keyword treatment on bikinis/dresses/shorts and lock the winner</td><td>CTR</td><td><span class="pill p-prog">Medium</span></td></tr>
-          <tr><td><b>T8</b></td><td>Dynamic image overlay — trial</td><td>Live-stock / countdown overlays lift Social CTR without breaking image-type tags</td><td>CTR</td><td><span class="pill p-open">Low</span></td></tr>
-          <tr><td><b>T9</b></td><td>question_and_answer — top categories</td><td>Pre-answered Q&amp;A (fit, care, sizing) increases AI-citation rate on Superdry product queries</td><td>AI citations</td><td><span class="pill p-open">Low</span></td></tr>
-          <tr><td><b>T10</b></td><td>AI visibility baseline + tracking</td><td>Establish baseline citation rate across Google AI Mode, ChatGPT &amp; Perplexity to measure the attribute build</td><td>AI citations</td><td><span class="pill p-open">Low</span></td></tr>
+          <tr><td><b>T4</b></td><td>Product highlights build-out</td><td>Populating Google's recommended 4–10 highlights per SKU (currently 30.5% in-range, 63.3% at zero — a live-feed finding) lifts rich-result eligibility and CTR</td><td>Rich results / CTR</td><td><span class="pill p-done">High</span></td></tr>
+          <tr><td><b>T5</b></td><td>US — short (AI) vs. long description</td><td>Read out the running test; if AI-short wins, roll the format across markets</td><td>CVR</td><td><span class="pill p-prog">Medium</span></td></tr>
+          <tr><td><b>T6</b></td><td>item_group_title + variant_option</td><td>Clean variant data improves cross-sell and reduces confused clicks across size/colour runs</td><td>Cross-sell</td><td><span class="pill p-prog">Medium</span></td></tr>
+          <tr><td><b>T7</b></td><td>related_product — outfit &amp; bundle links</td><td>Declaring outfit/complement relationships lifts "shop the look" visibility in Shopping &amp; AI answers</td><td>AOV</td><td><span class="pill p-prog">Medium</span></td></tr>
+          <tr><td><b>T8</b></td><td>Holiday &amp; beach lines AB — read-out</td><td>Confirm the seasonal keyword treatment on bikinis/dresses/shorts and lock the winner</td><td>CTR</td><td><span class="pill p-prog">Medium</span></td></tr>
+          <tr><td><b>T9</b></td><td>Dynamic image overlay — trial</td><td>Live-stock / countdown overlays lift Social CTR without breaking image-type tags</td><td>CTR</td><td><span class="pill p-open">Low</span></td></tr>
+          <tr><td><b>T10</b></td><td>question_and_answer — top categories</td><td>Pre-answered Q&amp;A (fit, care, sizing) increases AI-citation rate on Superdry product queries</td><td>AI citations</td><td><span class="pill p-open">Low</span></td></tr>
+          <tr><td><b>T11</b></td><td>AI visibility baseline + tracking</td><td>Establish baseline citation rate across Google AI Mode, ChatGPT &amp; Perplexity to measure the attribute build</td><td>AI citations</td><td><span class="pill p-open">Low</span></td></tr>
         </tbody>
       </table>
     </div>
