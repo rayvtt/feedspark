@@ -191,6 +191,14 @@ root-cause history, protocol + runbook: [`docs/DEPLOY_PROTOCOL.md`](./docs/DEPLO
 > (Access-gated endpoints can't be curled from CI, so `modified_on` + a green run are the machine-checkable
 > signals; `/api/version` is the human check once logged in.)
 
+### Multi-session development (4–5 parallel Claude Code sessions)
+Trunk-based: each session = its **own short-lived branch** off latest `main` (`claude/<module>-<slug>`),
+small module-prefixed PRs (`[Workflow] …`), never a shared branch. Default one session per module
+(Workflow / Command Center / Deck Gen / Worker / other pages) as a **guideline**; crossing is fine if you
+check open PRs + `claude/*` branches first and **sequence** same-file edits. Before every PR:
+**`bash tools/presync.sh`** (merges latest main + re-validates). After merge: verify LIVE per the rule
+above, then restart the branch from latest main. Full protocol: [`docs/WAYS_OF_WORKING.md`](./docs/WAYS_OF_WORKING.md).
+
 ### Command center data — ATRT Tracker
 - The command center (`/`) shows **live workload**, **tests running** and **accounts & project plans**
   sourced from the **ATRT Tracker** (Google Sheet `1p_cPSRjmK16CDpLryoOBaOUjG3ZvnL-k4ORHhaHI5AE`):
