@@ -31,13 +31,24 @@ jobs:
         with:
           node-version: 20
 
+      - name: Stamp build time
+        id: stamp
+        run: echo "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
+      # `wrangler deploy` publishes to the edge synchronously — its exit code is authoritative
+      # (green here == the new version is live), unlike CF's git-integration build/promote split
+      # that stalled. The --var flags stamp the live build so /api/version reports what's running.
       - name: Deploy worker
         if: ${{ env.CF_API_TOKEN != '' }}
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+          command: >-
+            deploy
+            --var GIT_SHA:${{ github.sha }}
+            --var GIT_REF:${{ github.ref_name }}
+            --var BUILT_AT:${{ steps.stamp.outputs.built_at }}
 
       - name: Secrets not set — deploy skipped
         if: ${{ env.CF_API_TOKEN == '' }}

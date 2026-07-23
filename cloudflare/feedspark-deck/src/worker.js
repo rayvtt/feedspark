@@ -70,6 +70,13 @@ export default {
 
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
 
+    // ---- deploy version marker: confirm which git build is actually live (the deploy Action
+    // stamps GIT_SHA / GIT_REF / BUILT_AT via `wrangler deploy --var`). Answers "is my push live?"
+    // in one request instead of guessing whether CF is serving a stale build.
+    if (path === '/api/version') {
+      return json({ worker: 'feedspark', sha: env.GIT_SHA || 'dev', ref: env.GIT_REF || '', builtAt: env.BUILT_AT || '' });
+    }
+
     // ---- edits (content layer: Ray, in-browser) — namespaced per page by ?page=<slug> ----
     if (path === '/api/edits') {
       const slug = (url.searchParams.get('page') || 'home').replace(/[^a-z0-9_-]/gi, '');
