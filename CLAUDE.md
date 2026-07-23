@@ -160,7 +160,7 @@ GET  /api/edits?page=<slug>     → return a page's saved edits as JSON
 PUT  /api/edits?page=<slug>     → save an edit patch (merges with existing)
 DELETE /api/edits?page=<slug>   → clear a page's saved edits
 GET  /api/template              → info only; pages are git-bundled (push to main to change them)
-GET|PUT /api/briefs             → Workflow brief pipeline store (KV `briefs`, whole-map PUT)
+GET|PUT /api/briefs             → Workflow brief pipeline store (KV `briefs`; per-key merged via kvmerge.js + X-Sync-Base — same for /api/clients)
 GET|POST /api/claude            → Tachyon copilot proxy to Claude Messages API (needs ANTHROPIC_API_KEY secret)
 ```
 - **Injected on app pages** (not client decks): the live editor widget + the **Tachyon copilot**
