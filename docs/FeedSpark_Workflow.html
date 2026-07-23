@@ -284,8 +284,17 @@ window.addEventListener('load',restore);
   .it-multi-menu input[type=checkbox]{margin:0;flex:none;width:15px;height:15px;min-width:0;padding:0;border-radius:4px;accent-color:var(--orange-deep)}
   .it-multi-menu .it-multi-all{border-bottom:1px solid var(--line);margin-bottom:4px;padding-bottom:7px;font-weight:800}
   #it-status-menu{width:156px}
-  #it-client-menu{width:184px}
+  #it-client-menu{width:208px}
   #it-am-menu{width:150px}
+  .it-cl-rm{margin-left:auto;flex:none;border:0;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:900;line-height:1;padding:2px 5px;border-radius:5px;cursor:pointer;opacity:0}
+  .it-multi-menu label:hover .it-cl-rm{opacity:.7}
+  .it-cl-rm:hover{opacity:1;color:#C0392B;background:rgba(192,57,43,.1)}
+  .it-cl-removed{border-top:1px solid var(--line);margin-top:5px;padding-top:5px}
+  .it-cl-removed-h{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:3px 8px}
+  .it-cl-removed-row{display:flex;align-items:center;gap:7px;padding:4px 8px;font-size:12.5px;color:var(--muted)}
+  .it-cl-removed-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through}
+  .it-cl-restore{margin-left:auto;flex:none;font:inherit;font-size:10.5px;font-weight:800;padding:2px 9px;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--navy);cursor:pointer;white-space:nowrap}
+  .it-cl-restore:hover{border-color:var(--navy)}
   #it-views-menu{width:214px}
   .it-view-row{display:flex;align-items:center;gap:2px}
   .it-view-apply{flex:1;text-align:left;font:inherit;font-size:13px;font-weight:700;padding:6px 9px;border:none;background:none;color:var(--ink);cursor:pointer;border-radius:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -398,6 +407,46 @@ window.addEventListener('load',restore);
   .wf-alerts .al-list{color:var(--muted);font-size:12px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .wf-alerts .al-btn{font:inherit;font-size:12px;font-weight:800;padding:6px 13px;border-radius:100px;border:1px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer;white-space:nowrap}
   .wf-alerts .al-x{border:0;background:none;color:var(--muted);font-size:19px;line-height:1;cursor:pointer;padding:0 2px}
+  /* courts strip — which of the 3 teams holds the ball */
+  .courts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 12px}
+  .court{display:flex;flex-direction:column;gap:1px;align-items:flex-start;text-align:left;font:inherit;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer;box-shadow:var(--shadow)}
+  .court:hover{border-color:var(--navy)}
+  .court.on{border-color:var(--navy);box-shadow:0 0 0 2px rgba(26,54,93,.14)}
+  .court .ct-n{font-size:22px;font-weight:900;color:var(--ink);line-height:1.1}
+  .court .ct-c{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+  .court .ct-s{font-size:11.5px;color:var(--muted)}
+  .court .ct-m{font-size:11.5px;color:var(--muted);margin-top:3px}
+  .court .ct-m b{color:#C0392B}
+  .crt-am .ct-c{color:var(--orange-deep)} .crt-aspl .ct-c{color:#2F6FB0} .crt-client .ct-c{color:#15803D}
+  .tik.dim{opacity:.22}
+  .tik .crt{font-size:10px;font-weight:900;padding:1px 7px;border-radius:100px;background:var(--wash);color:var(--muted);white-space:nowrap}
+  .tik .crt.warn{background:rgba(192,57,43,.12);color:#C0392B}
+  /* paste-an-update router */
+  .lu{display:flex;gap:8px;align-items:stretch;margin:0 0 12px}
+  .lu textarea{flex:1;font:inherit;font-size:12.5px;padding:8px 12px;border:1px dashed var(--line);border-radius:11px;background:var(--paper);color:var(--ink);resize:vertical;min-height:40px;max-height:140px}
+  .lu textarea:focus{outline:none;border-color:var(--navy);border-style:solid}
+  .lu-out{font-size:12.5px;font-weight:700;margin:-4px 0 12px;padding:7px 12px;border-radius:9px}
+  .lu-out.hit{background:rgba(21,128,61,.08);color:#15803D}
+  .lu-out.miss{background:rgba(192,57,43,.08);color:#C0392B}
+  /* ticket journey (modal) + cross-domain links */
+  .jny{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+  .jn{font-size:11px;font-weight:800;padding:2px 9px;border:1.5px solid;border-radius:100px;color:var(--ink);opacity:.72}
+  .jn.cur{opacity:1}
+  .jn em{font-style:normal;color:var(--muted);margin-left:5px;font-weight:700}
+  .jarr{color:var(--muted);font-size:11px}
+  .jcyc{font-size:11px;font-weight:900;color:#15803D;margin-left:4px}
+  .m-xl{display:flex;flex-wrap:wrap;gap:14px;margin-top:9px}
+  .xl{font-size:12px;font-weight:800;color:var(--navy);text-decoration:none}
+  a.xl:hover{text-decoration:underline}
+  span.xl{color:var(--muted)}
+  /* linked-brief chip on intake rows */
+  .bf-chip{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:100px;font-size:9.5px;font-weight:900;color:#fff;cursor:pointer;vertical-align:1px;white-space:nowrap}
+  /* escalation court chips */
+  .crtchip{font-size:9.5px;font-weight:900;padding:2px 8px;border-radius:100px;background:var(--wash);white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
+  .crtchip.c-am{color:var(--orange-deep);background:rgba(237,111,11,.1)}
+  .crtchip.c-aspl{color:#2F6FB0;background:rgba(47,111,176,.1)}
+  .crtchip.c-client{color:#15803D;background:rgba(21,128,61,.1)}
+  .stall-row.esc{grid-template-columns:auto 1.1fr 3fr 1fr auto auto}
   /* SLA board */
   .sla-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
   .sla-card{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:13px 15px}
@@ -506,13 +555,16 @@ window.addEventListener('load',restore);
   </table></div>
 
   <h2>Brief pipeline</h2>
-  <p class="sub">Every brief from send to sign-off. Drag a ticket between lanes; click it to log ASPL replies, run the completion scan, chase, and draft the client confirmation. Due badges flag what's approaching or overdue.</p>
+  <p class="sub">Every brief from send to sign-off. Drag a ticket between lanes; click it to log ASPL replies, run the completion scan, chase, and draft the client confirmation. The <b>court cards</b> show which of the three teams holds the ball on every ticket — click one to spotlight its tickets on the board. Paste any reply into the <b>router</b> and it finds the right ticket (by <code>[ibfcode]</code>, brief ID or task wording), logs it, and moves the stage.</p>
+  <div class="courts" id="courts"></div>
+  <div class="lu"><textarea id="lu-text" rows="2" placeholder="⚡ Paste an ASPL / client reply here — it routes to the right ticket, logs the comm, moves the stage and picks up any ETA. (Cmd/Ctrl+Enter to route)"></textarea><button class="btn navy" id="lu-go" type="button">Route update</button></div>
+  <div class="lu-out" id="lu-out" hidden></div>
   <div class="board" id="board"></div>
 
   <h2>ASPL SLA &amp; turnaround</h2>
-  <p class="sub">Load, delivery and average turnaround per ASPL owner. <b>Stalled</b> = a briefed / in-progress ticket with no reply for over 3 days — chase it in one click and rebalance who gets the next brief.</p>
+  <p class="sub">Load, delivery and average turnaround per ASPL owner. Escalations flag any ticket sitting too long in <em>any</em> court — unbriefed or blocked with the AM, silent 3+ days with ASPL, or awaiting client sign-off 3+ days — with the right chase one click away.</p>
   <div class="sla-grid" id="sla-grid"></div>
-  <div class="panel" style="margin-top:12px"><h3>Stalled briefs</h3><div id="sla-stalled" class="stall-list"></div></div>
+  <div class="panel" style="margin-top:12px"><h3>Escalations — over-SLA in any court</h3><div id="sla-stalled" class="stall-list"></div></div>
 
   <h2>Timeline — next 6 weeks</h2>
   <p class="sub">Every brief due date and test read-out on one axis. Overdue items sit in week 1. Click a brief to open it.</p>
@@ -553,7 +605,25 @@ window.addEventListener('load',restore);
   var BRIEF_TO='briefing@feedspark.com';
   var STAGES=[['intake','Intake','#8a94a0'],['briefed','Briefed to ASPL','#B1550A'],['progress','In progress','#2F6FB0'],
     ['blocked','Blocked','#C0392B'],['done','Done — ASPL','#15803D'],['confirmed','Client confirmed','#15803D']];
+  var STAGE_LBL={},STAGE_COLOR={}; STAGES.forEach(function(s){STAGE_LBL[s[0]]=s[1];STAGE_COLOR[s[0]]=s[2];});
   var DONE_RE=/\b(done|finished|complete|completed|delivered|live|actioned|signed[\s-]?off)\b/i;
+  // ---- the 3 courts: which team/domain holds the ball at each stage ----
+  var COURT={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',confirmed:''};
+  var SLA_STAGE={intake:2,blocked:1,done:3};   // max days sitting in a stage before it escalates (ASPL court uses the silence rule)
+  // every stage change goes through here so the handoff history (b.hist) stays complete
+  function setStage(b,stage){ if(!b||b.status===stage)return;
+    (b.hist=(b.hist&&b.hist.length)?b.hist:[{s:b.status||'intake',t:b.created||Date.now()}]).push({s:stage,t:Date.now()});
+    b.status=stage; b.updated=Date.now(); }
+  function courtOf(b){ return COURT[b.status]||''; }
+  function stageSince(b){ var h=b.hist; return (h&&h.length)?h[h.length-1].t:(b.updated||b.created||Date.now()); }
+  function daysInStage(b){ return Math.floor((Date.now()-stageSince(b))/86400000); }
+  function courtSince(b){ var c=courtOf(b); if(!c)return null; var h=b.hist;
+    if(!h||!h.length)return b.updated||b.created||Date.now();
+    var t=h[h.length-1].t; for(var i=h.length-1;i>=0&&(COURT[h[i].s]||'')===c;i--)t=h[i].t; return t; }
+  function daysInCourt(b){ var t=courtSince(b); return t==null?0:Math.floor((Date.now()-t)/86400000); }
+  function stageBreached(b){
+    if(b.status==='briefed'||b.status==='progress')return silentDays(b)>=STALL_DAYS;
+    var lim=SLA_STAGE[b.status]; return lim!=null&&daysInStage(b)>lim; }
 
   // ---- plan sheet IDs (mirror the Command Center BRANDS plan links) — live sync + write-back ----
   var PLANSHEET={
@@ -726,10 +796,14 @@ window.addEventListener('load',restore);
   document.getElementById('bg-save').onclick=function(){
     var o=refreshPreview(); if(!o.f.task){ toast('Add a task first'); return; }
     var id=o.id, existing=BRIEFS[id];
-    var b=existing||{ created:Date.now(), status:'intake', comms:[] };
+    var b=existing||{ created:Date.now(), status:'intake', comms:[], hist:[{s:'intake',t:Date.now()}] };
     b.id=id; b.client=o.f.client; b.code=code(o.f.client,o.f.market); b.task=o.f.task; b.scope=o.f.scope;
     b.dod=o.f.dod; b.assets=o.f.assets; b.due=isoToDDMMYYYY(o.f.dueIso); b.source=o.f.source; b.priority=o.f.priority;
     b.subject=o.subj; b.body=o.body; b.updated=Date.now();
+    // tie the ticket to its plan row: the prefill link if it still matches, else auto-match on task wording
+    var lk=window.__linkKey; if(lk&&lk.split('|')[0]!==o.f.client)lk=null;
+    if(!lk){ var cand=allIntake().filter(function(r){ return r.client===o.f.client&&sameTask(r.task,o.f.task); }); if(cand.length)lk=rowKey(cand[0]); }
+    if(lk)b.taskKey=lk; window.__linkKey=null;
     BRIEFS[id]=b; window.__editId=null; persist(); renderAll();
     toast(existing?'Brief updated':'Brief saved to pipeline'); };
 
@@ -773,6 +847,14 @@ window.addEventListener('load',restore);
   function hideTask(t){ HIDDEN[t.client+'|'+t.task]=1; saveHidden(); toast('Hidden as a note — still in '+(t.source==='plan'?(t.client+'’s plan'):'the record')); renderAll(); }
   function unhideTask(t){ delete HIDDEN[t.client+'|'+t.task]; saveHidden(); toast('Restored to the task list'); renderAll(); }
   function hiddenInView(){ var n=0; allIntake().forEach(function(r){ if(HIDDEN[r.client+'|'+r.task])n++; }); return n; }
+  // REMOVE CLIENT — drop a whole client out of the intake and every filter (local, reversible).
+  // Plan sheets are untouched; restore any time from the bottom of the client-filter menu.
+  var RMCL={}; try{RMCL=JSON.parse(localStorage.getItem('fcc-wf-removed')||'{}');}catch(e){}
+  function saveRmcl(){ try{localStorage.setItem('fcc-wf-removed',JSON.stringify(RMCL));}catch(e){} }
+  function removeClient(c){ RMCL[c]=1; saveRmcl();
+    itState.clients=itState.clients.filter(function(x){return x!==c;});
+    toast(c+' removed from the intake — restore it from the client filter'); renderAll(); }
+  function restoreClient(c){ delete RMCL[c]; saveRmcl(); toast(c+' restored to the intake'); renderAll(); }
   // delete a task — plan rows are removed from the Project-Plan sheet (2-way); others just leave the inbox
   function deleteTask(t){
     var msg=t.source==='plan'?('Delete this task and remove its row from '+t.client+'’s Project Plan?\n\n'+t.task)
@@ -820,7 +902,7 @@ window.addEventListener('load',restore);
         var s=ov[k]!=null?ov[k]:(src.status||'Open');
         return {client:m.c,task:m.task,cat:classifyLite(m.task),owner:(owo[k]!=null?owo[k]:(src.owner||'—')),source:'plan',
           s:s,b:bucketOf(s),live:false,manual:true,sheet:PLANSHEET[m.c]||'',d:(duo[k]||src.due||'')}; }); }
-  function allIntake(){ return planTasks().concat(manualTasks()).concat(emailIntake()); }
+  function allIntake(){ return planTasks().concat(manualTasks()).concat(emailIntake()).filter(function(r){ return !RMCL[r.client]; }); }
   // DDMM (or DDMMYYYY) -> ISO yyyy-mm-dd; a near-past DDMM rolls to next year
   function ddmmToIso(v){ v=String(v||'').replace(/\D/g,'');
     if(v.length===4){ var dd=+v.slice(0,2), mm=+v.slice(2,4); if(dd<1||dd>31||mm<1||mm>12)return '';
@@ -888,7 +970,8 @@ window.addEventListener('load',restore);
     ['fcc-taskstatus','fcc-taskdue','fcc-taskowner'].forEach(function(store){
       try{ var o=JSON.parse(localStorage.getItem(store)||'{}'); if(o[ok]!=null){ o[nk]=o[ok]; delete o[ok]; localStorage.setItem(store,JSON.stringify(o)); } }catch(e){} });
     if(HIDDEN[ok]){ HIDDEN[nk]=HIDDEN[ok]; delete HIDDEN[ok]; saveHidden(); }
-    if(DELETED[ok]){ DELETED[nk]=DELETED[ok]; delete DELETED[ok]; try{localStorage.setItem('fcc-deleted',JSON.stringify(DELETED));}catch(e){} } }
+    if(DELETED[ok]){ DELETED[nk]=DELETED[ok]; delete DELETED[ok]; try{localStorage.setItem('fcc-deleted',JSON.stringify(DELETED));}catch(e){} }
+    var relinked=false; Object.keys(BRIEFS).forEach(function(id){ if(BRIEFS[id]&&BRIEFS[id].taskKey===ok){ BRIEFS[id].taskKey=nk; relinked=true; } }); if(relinked)persist(); }
   function setTaskText(t,val){ recPush({client:t.client,task:val,source:t.source,key:'task',prev:t.task}); migrateKey(t.client,t.task,val); saveRename(t.client,t.task,val);
     if(t.source==='plan'){ var id=PLANSHEET[t.client];
       if(id){ toast('Renaming task in '+t.client+'’s plan…');
@@ -941,18 +1024,20 @@ window.addEventListener('load',restore);
     var body=document.getElementById('it-body'); if(!body)return;
     ensureClientFilter();
     var f=intakeFiltered();
+    var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey)BK[b.taskKey]=b; });   // intake row -> its live ticket
     body.innerHTML = f.length ? f.map(function(t,i){
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
       var src=t.source==='email'?'<span class="src-tag src-email">Email</span>':t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
       var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt');
+      var bf=BK[k], bfChip=bf?('<span class="bf-chip" data-bid="'+esc(bf.id)+'" style="background:'+(STAGE_COLOR[bf.status]||'#8a94a0')+'" title="Ticket '+esc(bf.id)+' — '+esc(STAGE_LBL[bf.status]||bf.status)+(courtOf(bf)?(' · ball with '+courtOf(bf)):'')+'. Click to open">'+esc(STAGE_LBL[bf.status]||bf.status)+'</span>'):'';
       var stat=(t.source==='plan'||t.source==='atrt')
         ?('<td class="c-stat" data-r="'+i+'" data-col="status" data-src="'+t.source+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
         :'<td class="c-stat" data-r="'+i+'" data-col="status"><span class="c-owner">—</span></td>';
       return '<tr data-k="'+esc(k)+'" data-r="'+i+'"'+(hid?' class="row-hidden"':'')+'><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
         +'<td class="c-client" data-r="'+i+'" data-col="client">'+esc(t.client)+badge+'</td><td data-r="'+i+'" data-col="feed">'+feed+'</td>'
-        +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click to edit — writes back to the plan">'+esc(t.task)+'</td>'
-             :'<td class="c-task" data-r="'+i+'" data-col="task">'+esc(t.task)+'</td>')
+        +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click to edit — writes back to the plan">'+esc(t.task)+bfChip+'</td>'
+             :'<td class="c-task" data-r="'+i+'" data-col="task">'+esc(t.task)+bfChip+'</td>')
         +(ed?'<td class="c-owner c-owner-ed" data-r="'+i+'" data-col="owner" data-i="'+i+'" title="Double-click to set owner — writes back to the plan">'+esc(t.owner||'—')+'</td>'
              :'<td class="c-owner" data-r="'+i+'" data-col="owner">'+esc(t.owner||'—')+'</td>')
         +((t.source==='plan'||t.source==='atrt')
@@ -966,6 +1051,7 @@ window.addEventListener('load',restore);
     body.querySelectorAll('.c-due-ed').forEach(function(td){ td.ondblclick=function(){ editDue(f[+td.getAttribute('data-i')]); }; });
     body.querySelectorAll('.c-task-ed').forEach(function(td){ td.ondblclick=function(){ editTaskText(f[+td.getAttribute('data-i')]); }; });
     body.querySelectorAll('.c-owner-ed').forEach(function(td){ td.ondblclick=function(){ editOwner(f[+td.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.bf-chip').forEach(function(ch){ ch.onclick=function(e){ e.stopPropagation(); openModal(ch.getAttribute('data-bid')); }; });
     wireGrid(body, f);
     // The tracker scrolls inside a viewport-bounded panel (CSS .it-scroll max-height:72vh) so the
     // column header (position:sticky; top:0) stays frozen while you scroll the rows. Clear any stale
@@ -1141,7 +1227,8 @@ window.addEventListener('load',restore);
   function bulkSaveAll(){ var items=bulkList(); if(!items.length)return; var made=0;
     items.forEach(function(t){ var id=newId(t.client); var c=code(t.client,'gb'); var d=new Date(); d.setDate(d.getDate()+5);
       var tpl=TEMPLATES[t.cat]||TEMPLATES.opt;
-      BRIEFS[id]={id:id,created:Date.now(),updated:Date.now(),status:'intake',comms:[],client:t.client,code:c,task:t.task,
+      BRIEFS[id]={id:id,created:Date.now(),updated:Date.now(),status:'intake',comms:[],hist:[{s:'intake',t:Date.now()}],
+        taskKey:rowKey(t),client:t.client,code:c,task:t.task,
         scope:tpl.s+TWO_STREAMS,dod:tpl.d,assets:'—',due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
         source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++; markBriefed(t); });
     itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline · marked Briefed'); }
@@ -1168,7 +1255,7 @@ window.addEventListener('load',restore);
     function updateBtn(){ btn.textContent=label(); btn.classList.toggle('on',cfg.selected().length>0); }
     var sig='';
     function build(){
-      var opts=cfg.options(), s=opts.map(function(o){return o.v;}).join('|');
+      var opts=cfg.options(), s=opts.map(function(o){return o.v;}).join('|')+(cfg.sigExtra?'§'+cfg.sigExtra():'');
       if(s===sig){ updateBtn(); return; }                 // option set unchanged — just refresh the label
       sig=s; menu.innerHTML='';
       var allRow=document.createElement('label'); allRow.className='it-multi-all';
@@ -1181,7 +1268,10 @@ window.addEventListener('load',restore);
         var row=document.createElement('label');
         var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=cfg.selected().indexOf(o.v)>=0;
         cb.onchange=function(){ cfg.toggle(o.v,cb.checked); allCb.checked=cfg.selected().length===0; updateBtn(); renderIntake(); };
-        row.appendChild(cb); row.appendChild(document.createTextNode(o.l)); menu.appendChild(row); });
+        row.appendChild(cb); row.appendChild(document.createTextNode(o.l));
+        if(cfg.rowAction){ var act=cfg.rowAction(o.v); if(act)row.appendChild(act); }
+        menu.appendChild(row); });
+      if(cfg.footer){ var ft=cfg.footer(); if(ft)menu.appendChild(ft); }
       updateBtn();
     }
     btn.onclick=function(e){ e.stopPropagation(); var willOpen=menu.hidden; menu.hidden=!willOpen; btn.setAttribute('aria-expanded',willOpen?'true':'false'); };
@@ -1203,7 +1293,22 @@ window.addEventListener('load',restore);
       itState.clients=itState.clients.filter(function(c){ return set[c]; }); return Object.keys(set).sort().map(function(c){ return {v:c,l:c}; }); },
     selected:function(){ return itState.clients; },
     toggle:function(v,on){ var i=itState.clients.indexOf(v); if(on){ if(i<0)itState.clients.push(v); } else if(i>=0)itState.clients.splice(i,1); },
-    clear:function(){ itState.clients=[]; } });
+    clear:function(){ itState.clients=[]; },
+    rowAction:function(c){ var x=document.createElement('button'); x.type='button'; x.className='it-cl-rm'; x.textContent='✕';
+      x.title='Remove '+c+' from the intake — all its tasks leave the list and filters (reversible)';
+      x.onclick=function(e){ e.preventDefault(); e.stopPropagation();
+        if(confirm('Remove '+c+' from the intake?\n\nAll its tasks leave the task list and filters. The plan sheet is untouched — restore it any time from the bottom of this menu.'))removeClient(c); };
+      return x; },
+    footer:function(){ var names=Object.keys(RMCL).sort(); if(!names.length)return null;
+      var box=document.createElement('div'); box.className='it-cl-removed';
+      var h=document.createElement('div'); h.className='it-cl-removed-h'; h.textContent='Removed from the intake'; box.appendChild(h);
+      names.forEach(function(c){ var row=document.createElement('div'); row.className='it-cl-removed-row';
+        var nm=document.createElement('span'); nm.textContent=c; nm.title=c; row.appendChild(nm);
+        var b=document.createElement('button'); b.type='button'; b.className='it-cl-restore'; b.textContent='↩ Restore'; b.title='Restore '+c+' to the intake and filters';
+        b.onclick=function(e){ e.stopPropagation(); restoreClient(c); };
+        row.appendChild(b); box.appendChild(row); });
+      return box; },
+    sigExtra:function(){ return Object.keys(RMCL).sort().join('|'); } });
   var buildAmFilter=setupMulti({ btn:'it-am-btn', menu:'it-am-menu', wrap:'it-am-wrap',
     allLabel:'All AMs', noun:'AMs', one:function(v){ return v; },
     options:function(){ var set={}; allIntake().forEach(function(r){ if(!DELETED[r.client+'|'+r.task]) set[amOf(r.client)]=1; });   // only AMs that still have live tasks
@@ -1273,6 +1378,7 @@ window.addEventListener('load',restore);
   })();
   function prefill(t){
     window.__editId=null;
+    window.__linkKey=rowKey(t);   // tie the brief being drafted back to this intake row
     document.getElementById('bg-client').value= CLIENTS.indexOf(t.client)>=0? t.client : CLIENTS[0];
     document.getElementById('bg-source').value= t.source||'plan';
     document.getElementById('bg-task').value=t.task;
@@ -1319,16 +1425,32 @@ window.addEventListener('load',restore);
     return '<span class="due '+cls+'">'+lbl+'</span>'; }
   function lastWho(b){ if(!b.comms||!b.comms.length)return ''; var c=b.comms[b.comms.length-1];
     return '<span class="who-chip">'+esc(c.from)+'</span>'; }
+  // ---- courts strip: live count + oldest + SLA breaches per team; click to spotlight the board ----
+  var courtSel='';
+  function renderCourts(){ var host=document.getElementById('courts'); if(!host)return;
+    var arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}).filter(function(b){return b.status!=='confirmed';});
+    var C={AM:[],ASPL:[],Client:[]};
+    arr.forEach(function(b){ var c=courtOf(b); if(C[c])C[c].push(b); });
+    var META={AM:['Ray — to brief / unblock','crt-am'],ASPL:['production — to deliver','crt-aspl'],Client:['awaiting sign-off','crt-client']};
+    host.innerHTML=Object.keys(C).map(function(c){ var L=C[c], oldest=0, br=0;
+      L.forEach(function(b){ oldest=Math.max(oldest,daysInCourt(b)); if(stageBreached(b))br++; });
+      return '<button type="button" class="court '+META[c][1]+(courtSel===c?' on':'')+'" data-c="'+c+'" title="'+(courtSel===c?'Clear the spotlight':'Spotlight '+c+'’s tickets on the board')+'">'
+        +'<span class="ct-n">'+L.length+'</span><span class="ct-c">Ball with '+c+'</span><span class="ct-s">'+META[c][0]+'</span>'
+        +'<span class="ct-m">'+(L.length?('oldest '+oldest+'d'+(br?' · <b>'+br+' over SLA</b>':'')):'clear ✓')+'</span></button>'; }).join('');
+    host.querySelectorAll('.court').forEach(function(el){ el.onclick=function(){
+      var c=el.getAttribute('data-c'); courtSel=(courtSel===c)?'':c; renderCourts(); renderBoard(); }; });
+  }
   function renderBoard(){
     var board=document.getElementById('board');
     board.innerHTML=STAGES.map(function(s){
       var items=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}).filter(function(b){return b.status===s[0];})
         .sort(function(a,b){ var da=ddmmyyyyToDate(a.due),db=ddmmyyyyToDate(b.due); return (da?da:9e15)-(db?db:9e15); });
       var cards=items.map(function(b){
-        return '<div class="tik" draggable="true" data-id="'+esc(b.id)+'">'
+        var crt=courtOf(b), crtChip=crt?('<span class="crt'+(stageBreached(b)?' warn':'')+'" title="Ball in '+crt+'’s court">'+crt+' '+daysInCourt(b)+'d</span>'):'';
+        return '<div class="tik'+(courtSel&&crt!==courtSel?' dim':'')+'" draggable="true" data-id="'+esc(b.id)+'">'
           +'<div class="tk-c">'+esc(b.client)+' · '+esc(b.code)+'</div>'
           +'<div class="tk-t">'+esc(b.task)+'</div>'
-          +'<div class="tk-f">'+dueBadge(b)+lastWho(b)+(b.priority&&b.priority!=='Normal'?'<span class="due soon">'+esc(b.priority)+'</span>':'')+'</div></div>';
+          +'<div class="tk-f">'+dueBadge(b)+lastWho(b)+(b.priority&&b.priority!=='Normal'?'<span class="due soon">'+esc(b.priority)+'</span>':'')+crtChip+'</div></div>';
       }).join('') || '<div class="board-empty">—</div>';
       return '<div class="lane" data-stage="'+s[0]+'"><div class="lane-h"><span class="dot" style="background:'+s[2]+'"></span>'+s[1]+'<span class="ct">'+items.length+'</span></div>'+cards+'</div>';
     }).join('');
@@ -1346,7 +1468,7 @@ window.addEventListener('load',restore);
       l.addEventListener('dragover',function(e){ e.preventDefault(); l.classList.add('drop'); });
       l.addEventListener('dragleave',function(){ l.classList.remove('drop'); });
       l.addEventListener('drop',function(e){ e.preventDefault(); l.classList.remove('drop');
-        if(dragId&&BRIEFS[dragId]){ BRIEFS[dragId].status=l.getAttribute('data-stage'); BRIEFS[dragId].updated=Date.now(); persist(); renderAll(); } });
+        if(dragId&&BRIEFS[dragId]){ setStage(BRIEFS[dragId],l.getAttribute('data-stage')); persist(); renderAll(); } });
     });
   }
 
@@ -1359,12 +1481,20 @@ window.addEventListener('load',restore);
     var comms=(b.comms||[]).map(function(c){ return '<div class="comm"><span class="cw">'+esc(c.from)+'</span><span class="cb">'+esc(c.note)+(c.done?' <span class="ck">✓ done signal</span>':'')+'</span></div>'; }).join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
     var stat=STAGES.map(function(s){ return '<button data-s="'+s[0]+'" class="'+(b.status===s[0]?'on':'')+'">'+s[1]+'</button>'; }).join('');
     var doneNote=lastDoneNote(b);
+    var crt=courtOf(b);
+    var xl=[];
+    if(b.taskKey) xl.push('<span class="xl" title="Linked plan-row task">⛓ '+esc((b.taskKey.split('|')[1]||'').slice(0,48))+'</span>');
+    if(PLANSHEET[b.client]) xl.push('<a class="xl" target="_blank" rel="noopener" href="https://docs.google.com/spreadsheets/d/'+PLANSHEET[b.client]+'">📊 Open '+esc(b.client)+'’s plan sheet</a>');
+    if(b.code) xl.push('<a class="xl" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent('ibfcode:'+b.code)+'">✉ Find the email thread ('+esc(b.code)+')</a>');
     modalEl.innerHTML=''
       +'<div style="display:flex;align-items:flex-start"><div><h3>'+esc(b.task)+'</h3>'
         +'<div class="mc">'+esc(b.id)+' · '+esc(b.client)+' · ['+esc(b.code)+']</div></div><button class="x" id="m-x">×</button></div>'
       +'<div class="m-meta"><span class="m-pill">Due '+humanDD(b.due)+'</span><span class="m-pill">'+esc(b.priority||'Normal')+'</span>'
-        +'<span class="m-pill">'+(b.source==='plan'?'Project plan':'Email')+'</span>'+(dueBadge(b))+'</div>'
+        +'<span class="m-pill">'+(b.source==='plan'?'Project plan':'Email')+'</span>'
+        +'<span class="m-pill"'+(stageBreached(b)?' style="color:#C0392B;border-color:rgba(192,57,43,.4)"':'')+'>Ball: '+(crt?(crt+' · '+daysInCourt(b)+'d'):'—')+'</span>'+(dueBadge(b))+'</div>'
       +'<div class="m-sec"><h4>Stage</h4><div class="stat-seg" id="m-stat">'+stat+'</div></div>'
+      +'<div class="m-sec"><h4>Journey — handoffs across the three courts</h4><div class="jny">'+journeyHtml(b)+'</div>'
+        +(xl.length?('<div class="m-xl">'+xl.join('')+'</div>'):'')+'</div>'
       +'<div class="m-sec"><h4>ASPL tracking <span class="m-owner">· Owner <select id="m-aspl">'+ASPL.map(function(n){return '<option'+(asplOf(b)===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select></span></h4><div id="m-comms">'+comms+'</div>'
         +'<div class="addc"><select id="m-from">'+ASPL.concat(['Client','Ray','Other']).map(function(n){return '<option>'+n+'</option>';}).join('')+'</select>'
         +'<input id="m-note" placeholder="Paste / summarise their reply…"><button class="btn" id="m-log">Log</button></div>'
@@ -1379,7 +1509,7 @@ window.addEventListener('load',restore);
     document.getElementById('m-x').onclick=closeModal;
     document.getElementById('m-del').onclick=function(){ if(confirm('Delete brief '+b.id+'?')){ delete BRIEFS[b.id]; persist(); renderAll(); closeModal(); } };
     document.querySelectorAll('#m-stat button').forEach(function(btn){ btn.onclick=function(){
-      b.status=btn.getAttribute('data-s'); b.updated=Date.now(); persist(); renderAll(); openModal(b.id); }; });
+      setStage(b,btn.getAttribute('data-s')); persist(); renderAll(); openModal(b.id); }; });
     // brief re-draft link
     document.getElementById('m-brief').href='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(b.subject||('[FS Brief] '+b.client))+'&body='+encodeURIComponent(b.body||'');
     // completion scan on new note
@@ -1388,13 +1518,13 @@ window.addEventListener('load',restore);
     document.getElementById('m-log').onclick=function(){ var note=noteEl.value.trim(); if(!note)return;
       var done=DONE_RE.test(note); b.comms=b.comms||[]; b.comms.push({from:document.getElementById('m-from').value,note:note,done:done,when:Date.now()});
       // a completion signal from ASPL moves the brief to Done from any active stage (not once confirmed).
-      if(done && b.status!=='confirmed' && b.status!=='done') b.status='done';
+      if(done && b.status!=='confirmed' && b.status!=='done') setStage(b,'done');
       b.updated=Date.now(); persist(); renderAll(); openModal(b.id); };
     // client confirmation draft
     var conf=document.getElementById('m-confirm');
     var cbody=clientConfirm(b,doneNote);
     conf.href='https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark · '+b.client+' — '+b.task+' completed')+'&body='+encodeURIComponent(cbody);
-    conf.addEventListener('click',function(){ if(b.status==='done'){ b.status='confirmed'; b.updated=Date.now(); persist(); setTimeout(function(){renderAll();},400); } });
+    conf.addEventListener('click',function(){ if(b.status==='done'){ setStage(b,'confirmed'); persist(); setTimeout(function(){renderAll();},400); } });
     // #4 chase drafts + ASPL owner reassign
     document.getElementById('m-chase').href=chaseAspl(b);
     document.getElementById('m-chasec').href=chaseClient(b);
@@ -1444,6 +1574,45 @@ window.addEventListener('load',restore);
       }).catch(function(){ if(btn)btn.disabled=false; if(banner) banner.textContent='Sync failed — showing the last snapshot.'; });
   }
 
+  // ---- ticket journey: every handoff with how long each stage held the ball ----
+  function journeyHtml(b){ var h=(b.hist&&b.hist.length)?b.hist:[{s:b.status,t:b.created||b.updated||Date.now()}];
+    var out=h.map(function(e,i){ var end=(i<h.length-1)?h[i+1].t:Date.now(); var d=Math.floor((end-e.t)/86400000);
+      return '<span class="jn'+(i===h.length-1?' cur':'')+'" style="border-color:'+(STAGE_COLOR[e.s]||'#8a94a0')+'">'+esc(STAGE_LBL[e.s]||e.s)+'<em>'+(d>0?d+'d':'&lt;1d')+'</em></span>'; }).join('<span class="jarr">→</span>');
+    if(b.status==='confirmed'&&h.length>1){ var tot=Math.max(1,Math.round((h[h.length-1].t-h[0].t)/86400000)); out+='<span class="jcyc">cycle '+tot+'d</span>'; }
+    return out; }
+
+  // ---- paste-an-update router: any reply → the right ticket, logged + staged, no hunting ----
+  function findBriefFor(text){ var arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];});
+    var m=/ibfcode:([a-z0-9-]+)/i.exec(text);
+    if(m){ var c=m[1].toLowerCase(), hits=arr.filter(function(b){return (b.code||'').toLowerCase()===c;});
+      if(hits.length){ if(hits.length>1)hits.sort(function(a,b){return taskDice(text,b.task)-taskDice(text,a.task);}); return hits[0]; } }
+    var im=/\b([A-Z]{2,4}-\d{8}-\d{2})\b/.exec(text); if(im&&BRIEFS[im[1]])return BRIEFS[im[1]];
+    var best=null,bs=0; arr.forEach(function(b){ if(b.status==='confirmed')return; var s2=taskDice(text,b.task); if(s2>bs){bs=s2;best=b;} });
+    return bs>=0.45?best:null; }
+  function routeUpdate(){ var ta=document.getElementById('lu-text'), out=document.getElementById('lu-out'); if(!ta||!out)return;
+    var text=ta.value.trim(); if(!text){ toast('Paste a reply first'); return; }
+    var b=findBriefFor(text); out.hidden=false;
+    if(!b){ out.className='lu-out miss'; out.textContent='No ticket matched — include the [ibfcode:…] token, the brief ID, or more of the task wording.'; return; }
+    var sender='ASPL'; ASPL.forEach(function(n){ if(new RegExp('\\b'+n+'\\b','i').test(text))sender=n; });
+    var done=DONE_RE.test(text), blocked=/\b(blocked|blocker|waiting on|on hold|stuck|dependency)\b/i.test(text),
+        prog=/\b(started|in progress|underway|working on|wip|eta|will complete|picking (this|it) up)\b/i.test(text);
+    b.comms=b.comms||[]; b.comms.push({from:sender,note:text.slice(0,600),done:done,when:Date.now()});
+    var moved='';
+    if(done&&b.status!=='confirmed'&&b.status!=='done'){ setStage(b,'done'); moved=STAGE_LBL.done; }
+    else if(blocked&&(b.status==='briefed'||b.status==='progress')){ setStage(b,'blocked'); moved=STAGE_LBL.blocked; }
+    else if(prog&&(b.status==='intake'||b.status==='briefed')){ setStage(b,'progress'); moved=STAGE_LBL.progress; }
+    var dueTxt='', dd8='', dm=/ibfdue:(\d{8})/.exec(text);
+    if(dm)dd8=dm[1];
+    else { var em2=/\beta\b[^\d]{0,8}(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?/i.exec(text);
+      if(em2){ var y1=em2[3]?((''+em2[3]).length===2?('20'+em2[3]):(''+em2[3])):(''+today().getFullYear()); dd8=pad(+em2[1])+pad(+em2[2])+y1; } }
+    if(dd8&&dd8.length===8&&dd8!==b.due&&ddmmyyyyToDate(dd8)){ b.due=dd8; dueTxt=' · due → '+humanDD(dd8); }
+    b.updated=Date.now(); persist(); renderAll(); ta.value='';
+    out.className='lu-out hit';
+    out.innerHTML='✓ Logged to <b>'+esc(b.id)+'</b> — '+esc(b.client)+' · '+esc(b.task.slice(0,60))+(moved?' · moved → <b>'+esc(moved)+'</b>':'')+esc(dueTxt)+' · from '+esc(sender)+'.';
+  }
+  (function(){ var go=document.getElementById('lu-go'); if(go)go.onclick=routeUpdate;
+    var ta=document.getElementById('lu-text'); if(ta)ta.addEventListener('keydown',function(e){ if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); routeUpdate(); } }); })();
+
   // ---- #4 chase drafts ----
   function chaseAspl(b){ var L=['Hi '+(asplOf(b)||'team')+',','','Chasing this brief — '+dueState(b)+':','',
     '• '+b.task+'  ['+b.code+']  ibfdue:'+(b.due||'TBC'),'','Could you confirm status / ETA? Reply-all keeps the portal in sync.','','Thanks,','Ray'];
@@ -1471,13 +1640,24 @@ window.addEventListener('load',restore);
         +'<div class="sla-row"><span>Delivered</span><b>'+m.done+'</b></div>'
         +'<div class="sla-row"><span>Avg turnaround</span><b>'+(avg==null?'—':avg+'d')+'</b></div></div>'; }).join('');
     var s=document.getElementById('sla-stalled'); if(!s)return;
-    var stalled=arr.filter(function(b){return (b.status==='briefed'||b.status==='progress')&&silentDays(b)>=STALL_DAYS;}).sort(function(a,b){return silentDays(b)-silentDays(a);});
-    s.innerHTML = stalled.length? stalled.map(function(b){ var lr=lastReplyDays(b);
-      return '<div class="stall-row" data-id="'+esc(b.id)+'"><span class="stall-c">'+esc(b.client)+'</span><span class="stall-t">'+esc(b.task)+'</span>'
-        +'<span class="stall-a">'+esc(asplOf(b))+'</span><span class="stall-d">'+(lr==null?('briefed '+briefAgeDays(b)+'d ago'):('silent '+lr+'d'))+'</span>'
-        +'<button class="mini-btn" data-chase="'+esc(b.id)+'">Chase</button></div>'; }).join('')
-      : '<div class="sub" style="margin:0">No stalled briefs — all replies within '+STALL_DAYS+' days. 👌</div>';
-    s.querySelectorAll('[data-chase]').forEach(function(btn){ btn.onclick=function(e){ e.stopPropagation(); var b=BRIEFS[btn.getAttribute('data-chase')]; if(b)window.open(chaseAspl(b),'_blank','noopener'); }; });
+    // escalations across all three courts — each with the right next action
+    var items=[];
+    arr.forEach(function(b){ if(b.status==='confirmed')return; var ds=daysInStage(b);
+      if(b.status==='intake'&&ds>SLA_STAGE.intake) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'in intake '+ds+'d — needs briefing',act:'open',lbl:'Open'});
+      else if(b.status==='blocked'&&ds>SLA_STAGE.blocked) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'blocked '+ds+'d — unblock / reassign',act:'chaseA',lbl:'Chase ASPL'});
+      else if((b.status==='briefed'||b.status==='progress')&&silentDays(b)>=STALL_DAYS){ var lr=lastReplyDays(b);
+        items.push({b:b,c:'ASPL',cls:'c-aspl',d:silentDays(b),why:(lr==null?('briefed '+briefAgeDays(b)+'d ago — no reply'):('silent '+lr+'d')),act:'chaseA',lbl:'Chase ASPL'}); }
+      else if(b.status==='done'&&ds>SLA_STAGE.done) items.push({b:b,c:'Client',cls:'c-client',d:ds,why:'awaiting sign-off '+ds+'d',act:'chaseC',lbl:'Chase client'}); });
+    items.sort(function(a,b2){return b2.d-a.d;});
+    s.innerHTML = items.length? items.map(function(it){ var b=it.b;
+      return '<div class="stall-row esc" data-id="'+esc(b.id)+'"><span class="crtchip '+it.cls+'">'+it.c+'</span>'
+        +'<span class="stall-c">'+esc(b.client)+'</span><span class="stall-t">'+esc(b.task)+'</span>'
+        +'<span class="stall-a">'+esc(asplOf(b))+'</span><span class="stall-d">'+esc(it.why)+'</span>'
+        +'<button class="mini-btn" data-act="'+it.act+'" data-b="'+esc(b.id)+'">'+it.lbl+'</button></div>'; }).join('')
+      : '<div class="sub" style="margin:0">Nothing over SLA in any court — every ticket is moving. 👌</div>';
+    s.querySelectorAll('[data-act]').forEach(function(btn){ btn.onclick=function(e){ e.stopPropagation(); var b=BRIEFS[btn.getAttribute('data-b')]; if(!b)return;
+      var a=btn.getAttribute('data-act');
+      if(a==='chaseA')window.open(chaseAspl(b),'_blank','noopener'); else if(a==='chaseC')window.open(chaseClient(b),'_blank','noopener'); else openModal(b.id); }; });
     s.querySelectorAll('.stall-row').forEach(function(r){ r.onclick=function(){ openModal(r.getAttribute('data-id')); }; });
   }
 
@@ -1537,7 +1717,7 @@ window.addEventListener('load',restore);
   var NOT_AE={denmark:1,canada:1,switzerland:1,italy:1,norway:1,poland:1,spain:1,sweden:1,germany:1,france:1,netherlands:1,ireland:1,austria:1,next:1,superdry:1,reiss:1,schuh:1,monsoon:1,accessorize:1,hobbycraft:1,yumove:1};
   function ownerKey(o){ o=(o||'').trim(); if(!o||o==='—')return 'Unassigned'; var m=/^([A-Za-z]+)/.exec(o); var k=m?m[1]:o; return NOT_AE[k.toLowerCase()]?'Unassigned':k; }
   function renderWorkload(){ var host=document.getElementById('wk-grid'); if(!host)return;
-    var tasks=planTasks().concat(manualTasks()).filter(function(t){return t.b==='open'||t.b==='progress';});
+    var tasks=planTasks().concat(manualTasks()).filter(function(t){return !RMCL[t.client]&&(t.b==='open'||t.b==='progress');});
     var by={}; tasks.forEach(function(t){ var o=ownerKey(t.owner); if(!by[o])by[o]={open:0,prog:0,brands:{}}; if(t.b==='progress')by[o].prog++; else by[o].open++; by[o].brands[t.client]=1; });
     var names=Object.keys(by).sort(function(a,b){ return (by[b].open+by[b].prog)-(by[a].open+by[a].prog); });
     var extra=names.length>12?names.length-12:0; names=names.slice(0,12);
@@ -1597,7 +1777,7 @@ window.addEventListener('load',restore);
   function maybeNotify(){ if(!('Notification' in window)||Notification.permission!=='granted')return; var a=computeAlerts(); if(!a.over.length)return;
     try{ new Notification('FeedSpark — '+a.over.length+' overdue', {body:a.over.slice(0,3).map(function(b){return (b.client||'')+' · '+b.task;}).join('\n')}); }catch(e){} }
 
-  function renderAll(){ _planCache=null; renderKPIs(); renderIntake(); renderBoard(); renderSLA(); renderTimeline(); renderTests(); renderWorkload(); renderAlerts(); }
+  function renderAll(){ _planCache=null; renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTimeline(); renderTests(); renderWorkload(); renderAlerts(); }
 
   // set a sensible default due date (today + 5 working-ish days) and boot
   (function(){ var d=new Date(); d.setDate(d.getDate()+5);
