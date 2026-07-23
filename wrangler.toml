@@ -32,6 +32,10 @@ id = "d93b5ac576c74f0d8a315c5b92dc8e16"
 # Cloudflare rejected every `wrangler deploy` with "does not export class 'Store'" (code
 # 10064). This deletes that unused class so deploys go through. It does NOT touch the EDITS
 # KV namespace (a separate store), where all real data lives.
+#
+# Tag is "v2": Cloudflare already has migration tag "v1" recorded for this script (from
+# whatever originally created the Store DO), so a "v1" delete is treated as already-applied
+# and skipped. "v2" makes wrangler actually send the delete.
 [[migrations]]
-tag = "v1"
+tag = "v2"
 deleted_classes = ["Store"]
