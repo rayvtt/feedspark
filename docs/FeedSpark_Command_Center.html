@@ -867,16 +867,59 @@ window.addEventListener('load',restore);
       list.appendChild(btn);
     });
   }
+  // ---- live plan-sync: pull every dossier's linked Google Sheet through /api/plan/live and
+  // rebuild PLANTASKS client-side, so scoring/tests/dossier reflect the sheets RIGHT NOW (not the
+  // last baked deploy). A brand only needs a plan URL in its dossier (e.g. Ryobi) to join.
+  function planSheetId(u){ var m=/\/d\/([A-Za-z0-9_-]{20,})/.exec(u||''); return m?m[1]:''; }
+  function ptFromLive(tasks,stamp){
+    var p={score:0,total:0,done:0,open:0,hold:0,updated:stamp,cats:{},latest:[],recent:[],vol:[],volkind:'month'};
+    var byMonth={};
+    tasks.forEach(function(t){ var b=t.b||'open';
+      p.total++; if(b==='done')p.done++; else if(b==='hold')p.hold++; else p.open++;
+      var c=t.c||'opt'; if(!p.cats[c])p.cats[c]={total:0,done:0}; p.cats[c].total++; if(b==='done')p.cats[c].done++;
+      var mk=/^(\d{4})-(\d{2})/.exec(t.d||''); if(mk){ var k=mk[1]+'-'+mk[2]; if(!byMonth[k])byMonth[k]={d:0,o:0}; if(b==='done')byMonth[k].d++; else byMonth[k].o++; }
+      p.latest.push({t:t.t,o:t.o,c:c,s:t.s,b:b,d:t.d||''});
+      if(b==='done')p.recent.push({desc:t.t}); });
+    p.recent=p.recent.slice(-24).reverse();
+    if(p.latest.length>150)p.latest=p.latest.slice(-150);
+    var MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    p.vol=Object.keys(byMonth).sort().slice(-12).map(function(k){ return {l:MO[+k.slice(5,7)-1]+' '+k.slice(2,4), d:byMonth[k].d, o:byMonth[k].o}; });
+    // score = 70% task completion + 30% lane breadth (11 lanes) — matches the baked scoring
+    var comp=p.total?p.done/p.total*100:0, breadth=Math.min(100,Object.keys(p.cats).length/11*100);
+    p.score=Math.round(0.7*comp+0.3*breadth);
+    return p; }
+  var liveSyncing=false;
+  function liveSync(force,btn){
+    if(liveSyncing)return;
+    var sheets={}; Object.keys(B).forEach(function(k){ var id=planSheetId((B[k]||{}).plan); if(id)sheets[k]=id; });
+    var n=Object.keys(sheets).length;
+    if(!n){ if(btn)btn.textContent='⟳ Sync — no plan links'; return; }
+    liveSyncing=true; if(btn)btn.textContent='⟳ syncing '+n+' plans…';
+    fetch(API+'/api/plan/live',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sheets:sheets,force:!!force})})
+      .then(function(r){return r.json();})
+      .then(function(d){ liveSyncing=false;
+        if(!d||!d.connected){ if(btn)btn.textContent='⟳ Sync — SA not connected'; return; }
+        var ok=0,fail=0,failed=[],now=new Date();
+        var stamp='live '+('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
+        Object.keys(d.brands||{}).forEach(function(k){ var b=d.brands[k];
+          if(b&&b.tasks&&b.tasks.length){ PT[k]=ptFromLive(b.tasks,stamp); ok++; }
+          else if(b&&b.error){ fail++; failed.push(k); } });
+        if(btn){ btn.textContent='⟳ Sync ✓ '+ok+(fail?' · '+fail+' unreachable':'');
+          btn.title=fail?('Unreachable (share the sheet with the service account): '+failed.join(', ')):('Pulled '+ok+' plans live'); }
+        var sy=document.getElementById('synced'); if(sy&&ok)sy.textContent=stamp+' · '+ok+' plans';
+        if(ok){ if(cur)render(cur); if(window.__renderPTSections)window.__renderPTSections(); } })
+      .catch(function(){ liveSyncing=false; if(btn)btn.textContent='⟳ Sync — offline'; }); }
   var host=document.querySelector('#accounts .sec-head');
   if(host){
     var ctl=document.createElement('div'); ctl.className='dz-controls';
     ctl.innerHTML='<button class="dz-refresh" title="Re-fetch the latest saved edits">↻ Refresh</button>'
-      +'<button class="dz-sync" title="Reload to pull the latest project-plan data (updates on deploy)">⟳ Sync</button>'
+      +'<button class="dz-sync" title="Pull every linked project-plan sheet live and re-score the dashboard">⟳ Sync</button>'
       +'<button class="dz-edit">✎ Edit dossier</button><button class="dz-add" style="display:none">+ Add client</button>';
     host.insertBefore(ctl, host.querySelector('p'));
     ctl.querySelector('.dz-refresh').onclick=function(){ var b=this; b.textContent='↻ …';
       fetch(API+'/api/clients').then(function(r){return r.json();}).then(function(s){ store=s||{}; mergeStore(); buildList(); if(cur)render(cur); b.textContent='↻ Refresh'; }).catch(function(){ b.textContent='↻ Refresh'; }); };
-    ctl.querySelector('.dz-sync').onclick=function(){ location.reload(); };
+    ctl.querySelector('.dz-sync').onclick=function(){ liveSync(true,this); };
+    setTimeout(function(){ liveSync(false,ctl.querySelector('.dz-sync')); },600);   // auto-pull on open (KV-cached server-side)
     ctl.querySelector('.dz-edit').onclick=function(){ editMode=!editMode; this.classList.toggle('on',editMode);
       this.textContent=editMode?'✓ Done editing':'✎ Edit dossier'; ctl.querySelector('.dz-add').style.display=editMode?'':'none';
       document.getElementById('accounts').classList.toggle('dz-editing',editMode); if(cur)render(cur); };
@@ -895,13 +938,16 @@ window.addEventListener('load',restore);
 <script>
 /* Section 05 (Tests) + Section 06 (Analysis) — live from window.PLANTASKS */
 (function(){
-  var PT=window.PLANTASKS||{}, brands=Object.keys(PT);
+  var PT=window.PLANTASKS||{};
   var FEEDS=[['tech','Feed & technical'],['opt','Optimisation'],['test','Testing'],['creative','Creative / PPC'],['channel','Channels'],['account','Account & strategy']];
   var MAP={technical:'tech',title:'opt',keyword:'opt',data:'opt',product_type:'opt',opt:'opt',test:'test',image:'creative',custom_label:'creative',channel:'channel',account:'account'};
   function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
   function feedAgg(b){var o={};FEEDS.forEach(function(f){o[f[0]]={t:0,d:0};});var c=(PT[b]&&PT[b].cats)||{};
     Object.keys(c).forEach(function(k){var f=MAP[k]||'opt';o[f].t+=c[k].total||0;o[f].d+=c[k].done||0;});return o;}
 
+  // re-runnable so the dossier's live plan-sync can refresh these sections after pulling new data
+  function renderPTSections(){
+  var brands=Object.keys(PT);
   var th=document.getElementById('tests-live');
   if(th && brands.length){
     var rt=brands.map(function(b){var c=(PT[b].cats&&PT[b].cats.test)||{total:0,done:0};
@@ -935,6 +981,9 @@ window.addEventListener('load',restore);
       +gaps.map(function(g){return '<div class="gaprow"><span class="nm">'+esc(g.b)+'</span><span class="gap-f">'+esc(g.w.f)+'</span><span class="tag tag-open">'+g.w.rem+' to do · '+g.w.pct+'%</span></div>';}).join('')+'</div></div>';
     bh.innerHTML='<div class="grid-2">'+lb+fb+'</div>'+gp;
   }
+  }
+  renderPTSections();
+  window.__renderPTSections=renderPTSections;
 })();
 </script>
 <style>
