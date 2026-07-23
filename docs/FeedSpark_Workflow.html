@@ -288,6 +288,9 @@ window.addEventListener('load',restore);
   #it-am-menu{width:150px}
   .it-cl-rm{margin-left:auto;flex:none;border:0;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:900;line-height:1;padding:2px 5px;border-radius:5px;cursor:pointer;opacity:0}
   .it-multi-menu label:hover .it-cl-rm{opacity:.7}
+  .cl-rm{margin-left:5px;border:0;background:none;color:var(--muted);font:inherit;font-size:10.5px;font-weight:900;line-height:1;padding:1px 4px;border-radius:5px;cursor:pointer;opacity:0;vertical-align:1px}
+  .itbl tbody tr:hover .cl-rm{opacity:.55}
+  .cl-rm:hover{opacity:1;color:#C0392B;background:rgba(192,57,43,.1)}
   .it-cl-rm:hover{opacity:1;color:#C0392B;background:rgba(192,57,43,.1)}
   .it-cl-removed{border-top:1px solid var(--line);margin-top:5px;padding-top:5px}
   .it-cl-removed-h{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:3px 8px}
@@ -1043,7 +1046,8 @@ window.addEventListener('load',restore);
         ?('<td class="c-stat" data-r="'+i+'" data-col="status" data-src="'+t.source+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
         :'<td class="c-stat" data-r="'+i+'" data-col="status"><span class="c-owner">—</span></td>';
       return '<tr data-k="'+esc(k)+'" data-r="'+i+'"'+(hid?' class="row-hidden"':'')+'><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
-        +'<td class="c-client" data-r="'+i+'" data-col="client">'+esc(t.client)+badge+'</td><td data-r="'+i+'" data-col="feed">'+feed+'</td>'
+        +'<td class="c-client" data-r="'+i+'" data-col="client">'+esc(t.client)+badge
+          +'<button class="cl-rm" data-c="'+esc(t.client)+'" title="Remove '+esc(t.client)+' from the intake and all filters — every task, reversible from the client-filter menu">✕</button></td><td data-r="'+i+'" data-col="feed">'+feed+'</td>'
         +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click to edit — writes back to the plan">'+esc(t.task)+bfChip+'</td>'
              :'<td class="c-task" data-r="'+i+'" data-col="task">'+esc(t.task)+bfChip+'</td>')
         +(ed?'<td class="c-owner c-owner-ed" data-r="'+i+'" data-col="owner" data-i="'+i+'" title="Double-click to set owner — writes back to the plan">'+esc(t.owner||'—')+'</td>'
@@ -1060,6 +1064,9 @@ window.addEventListener('load',restore);
     body.querySelectorAll('.c-task-ed').forEach(function(td){ td.ondblclick=function(){ editTaskText(f[+td.getAttribute('data-i')]); }; });
     body.querySelectorAll('.c-owner-ed').forEach(function(td){ td.ondblclick=function(){ editOwner(f[+td.getAttribute('data-i')]); }; });
     body.querySelectorAll('.bf-chip').forEach(function(ch){ ch.onclick=function(e){ e.stopPropagation(); openModal(ch.getAttribute('data-bid')); }; });
+    body.querySelectorAll('.cl-rm').forEach(function(x){ x.onmousedown=function(e){ e.stopPropagation(); };   // don't grab the grid selection
+      x.onclick=function(e){ e.stopPropagation(); var c=x.getAttribute('data-c');
+        if(confirm('Remove '+c+' from the intake?\n\nAll its tasks leave the task list and filters. The plan sheet is untouched — restore it any time from the bottom of the client-filter menu.'))removeClient(c); }; });
     wireGrid(body, f);
     // The tracker scrolls inside a viewport-bounded panel (CSS .it-scroll max-height:72vh) so the
     // column header (position:sticky; top:0) stays frozen while you scroll the rows. Clear any stale
