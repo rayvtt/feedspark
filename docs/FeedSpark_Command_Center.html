@@ -295,6 +295,8 @@ window.addEventListener('load',restore);
   .wl-filter .fchip.on{background:var(--navy);border-color:var(--navy);color:#fff}
   .wl-filter .fsel{font:inherit;font-size:12.5px;font-weight:700;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink-2)}
   .wl-filter input{margin-left:auto;font:inherit;font-size:13px;padding:7px 12px;border:1px solid var(--line);border-radius:8px;min-width:170px}
+  .wl-rmchip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:var(--ink-2);background:var(--wash,#F5F5F5);border:1px solid var(--line);border-radius:100px;padding:2px 4px 2px 10px}
+  .wl-rmchip button{border:0;background:var(--navy);color:#fff;border-radius:100px;width:18px;height:18px;line-height:1;cursor:pointer;font-size:11px}
   .linkish{background:none;border:0;color:var(--orange-ink);font:inherit;font-weight:800;cursor:pointer;padding:0;text-decoration:underline}
   /* workload table scrolls inside its own box so the header can stick to the TOP of that
      box (top:0). Anchoring to the viewport broke because overflow-x:auto forces overflow-y
@@ -613,9 +615,13 @@ window.addEventListener('load',restore);
     var accts={}; rows.forEach(function(r){ accts[r.getAttribute('data-account')]=1; });
     var cur={acct:'',status:'',q:'',od:false};
     var empty=document.getElementById('wl-empty');
+    var API=window.DECK_EDITOR_API||'';
+    var removed=[];   // clients removed from the live tracker (shared _removed list in the clients store)
+    function isRm(a){ return removed.indexOf(a)>=0; }
     function apply(){ var shown=0; rows.forEach(function(r){
-      var ok=true;
-      if(cur.acct && r.getAttribute('data-account')!==cur.acct) ok=false;
+      var ok=true; var acc=r.getAttribute('data-account');
+      if(isRm(acc)) ok=false;
+      if(cur.acct && acc!==cur.acct) ok=false;
       if(cur.status && r.getAttribute('data-status')!==cur.status) ok=false;
       if(cur.od && r.getAttribute('data-od')!=='1') ok=false;
       if(cur.q && r.textContent.toLowerCase().indexOf(cur.q)<0) ok=false;
@@ -641,13 +647,33 @@ window.addEventListener('load',restore);
         wrap.querySelectorAll('[data-t=status]').forEach(function(x){x.classList.remove('on');});
         if(cur.status) b.classList.add('on'); apply(); }; wrap.appendChild(b); });
     var sel=document.createElement('select'); sel.className='fsel';
-    sel.innerHTML='<option value="">All accounts</option>'+Object.keys(accts).sort().map(function(a){return '<option>'+a+'</option>';}).join('');
+    function fillSel(){ var keep=Object.keys(accts).filter(function(a){return !isRm(a);}).sort();
+      sel.innerHTML='<option value="">All accounts</option>'+keep.map(function(a){return '<option>'+a+'</option>';}).join('');
+      if(keep.indexOf(cur.acct)<0){ cur.acct=''; } sel.value=cur.acct; }
+    fillSel();
     sel.onchange=function(){ cur.acct=sel.value; apply(); }; wrap.appendChild(sel);
     var q=document.createElement('input'); q.type='search'; q.placeholder='Search tasks…';
     q.oninput=function(){ cur.q=q.value.toLowerCase(); apply(); }; wrap.appendChild(q);
     var clr=document.getElementById('wl-clear');
     if(clr) clr.onclick=function(){ cur={acct:'',status:'',q:'',od:false}; sel.value=''; q.value='';
       wrap.querySelectorAll('.fchip').forEach(function(x){x.classList.remove('on');}); apply(); };
+
+    // ---- remove client from the live tracker (shared _removed list; restore any time) ----
+    var rmBtn=document.createElement('button'); rmBtn.className='fchip'; rmBtn.textContent='⊘ Remove account';
+    rmBtn.title='Remove the account selected in the dropdown from this live tracker';
+    rmBtn.onclick=function(){ var a=cur.acct; if(!a){ alert('Pick an account in the dropdown first, then remove it.'); return; }
+      if(!confirm('Remove "'+a+'" from the live workload tracker? Its rows hide here and in the Workflow intake. You can restore it below.')) return;
+      if(!isRm(a)) removed.push(a); cur.acct=''; saveRemoved(); fillSel(); apply(); renderRm(); };
+    wrap.appendChild(rmBtn);
+    var rmHost=document.createElement('div'); rmHost.className='wl-removed'; rmHost.style.cssText='flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:2px';
+    wrap.appendChild(rmHost);
+    function renderRm(){ if(!removed.length){ rmHost.innerHTML=''; return; }
+      rmHost.innerHTML='<span style="font-size:12px;font-weight:800;color:var(--muted)">Removed ('+removed.length+'):</span>'
+        +removed.slice().sort().map(function(a){return '<span class="wl-rmchip">'+a+'<button data-r="'+a.replace(/"/g,'&quot;')+'" title="Restore">↩</button></span>';}).join('');
+      rmHost.querySelectorAll('[data-r]').forEach(function(b){ b.onclick=function(){ var a=b.getAttribute('data-r'); var i=removed.indexOf(a); if(i>=0)removed.splice(i,1); saveRemoved(); fillSel(); apply(); renderRm(); }; }); }
+    function saveRemoved(){ fetch(API+'/api/clients',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({_removed:removed})}).catch(function(){}); }
+    // load the shared list (written by either screen) and apply it
+    fetch(API+'/api/clients').then(function(r){return r.json();}).then(function(s){ if(s&&Array.isArray(s._removed)){ removed=s._removed; fillSel(); apply(); renderRm(); } }).catch(function(){});
   }
 })();
 </script>
@@ -743,11 +769,13 @@ window.addEventListener('load',restore);
     }).join('')+'</ul>'; }
   function mergeStore(){
     B={}; Object.keys(GIT).forEach(function(k){ B[k]=GIT[k]; });
-    Object.keys(store).forEach(function(k){ if(k==='_deleted')return; var o={}; var g=GIT[k]||{}; for(var p in g)o[p]=g[p]; var s=store[k]||{}; for(var q in s)o[q]=s[q]; B[k]=o; });
+    Object.keys(store).forEach(function(k){ if(k==='_deleted'||k==='_removed')return; var o={}; var g=GIT[k]||{}; for(var p in g)o[p]=g[p]; var s=store[k]||{}; for(var q in s)o[q]=s[q]; B[k]=o; });
     (store._deleted||[]).forEach(function(k){ delete B[k]; });
   }
   function saveStore(){ if(saveT)clearTimeout(saveT); saveT=setTimeout(function(){
-    fetch(API+'/api/clients',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(store)}).catch(function(){}); },600); }
+    // don't send _removed — the live-tracker module owns it; upsert-merge preserves it server-side.
+    var payload={}; Object.keys(store).forEach(function(k){ if(k!=='_removed') payload[k]=store[k]; });
+    fetch(API+'/api/clients',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}).catch(function(){}); },600); }
   function setField(name,field,val){ store[name]=store[name]||{}; store[name][field]=val; saveStore(); mergeStore(); }
   function planAvg(){ var s=0,n=0; for(var k in PT){ if(PT[k]&&PT[k].score){s+=PT[k].score;n++;} } return n?Math.round(s/n):0; }
   function planScore(name,p){

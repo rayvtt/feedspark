@@ -158,6 +158,15 @@ window.addEventListener('load',restore);
   .ip-act{flex:none;display:flex;gap:6px}
   .mini-btn.pri{background:var(--navy);color:#fff;border-color:var(--navy)}
   .mini-btn.pri:hover{opacity:.9;color:#fff}
+  /* remove-client manager */
+  #rm-manage.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .rm-panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 14px;box-shadow:var(--shadow)}
+  .rm-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0}
+  .rm-row label{font-size:12px;font-weight:800;color:var(--ink-2)}
+  .rm-row select{font:inherit;font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+  .rm-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .rm-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:var(--ink-2);background:var(--wash);border:1px solid var(--line);border-radius:100px;padding:2px 4px 2px 10px}
+  .rm-chip button{border:0;background:var(--navy);color:#fff;border-radius:100px;width:18px;height:18px;line-height:1;cursor:pointer;font-size:11px}
   .comm .ck{font-size:10px;font-weight:800;color:var(--good);text-transform:uppercase;letter-spacing:.03em}
   .addc{display:grid;grid-template-columns:120px 1fr auto;gap:7px;margin-top:9px}
   .addc select,.addc input{font:inherit;font-size:12.5px;padding:7px 9px;border:1px solid var(--line);border-radius:8px}
@@ -488,7 +497,8 @@ window.addEventListener('load',restore);
   </style>
   <h2>Intake — every task, live</h2>
   <p class="sub">Three streams in one table — monthly <b>project-plan</b> tasks, the <b>ATRT legacy</b> import (your retired tracker — 50 active tasks), and daily <b>client emails</b>. Change a <b>status</b> inline: plan rows write back to the sheet, ATRT rows save to the portal. Stack filters — pick several <b>sources</b>, <b>statuses</b> or <b>clients</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator. Works like a spreadsheet — click a cell, arrow-key around, <b>Cmd/Ctrl+C</b> copy, <b>Ctrl+D</b> fill down, <b>Ctrl+V</b> paste, <b>Ctrl+Z</b> undo; <b>double-click</b> to edit; on a status cell just <b>type a letter</b> (O, B, I, H, W, D) to set it.</p>
-  <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="add-task-btn" type="button">＋ Add task</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
+  <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="add-task-btn" type="button">＋ Add task</button><button class="live-refresh" id="rm-manage" type="button">⊘ Remove client</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
+  <div class="rm-panel" id="rm-panel" hidden></div>
   <div class="it-ctl">
     <div class="it-multi" id="it-views-wrap">
       <button type="button" class="it-multi-btn" id="it-views-btn" aria-haspopup="true" aria-expanded="false" title="Save & reapply filter views">★ Views ▾</button>
@@ -589,6 +599,18 @@ window.addEventListener('load',restore);
     return Array.from(new Set(ALL_BRANDS.concat(Object.keys(PT)))).sort(function(a,b){return a.localeCompare(b);}); }
   var CLIENTS=loadBrands();
   function saveBrands(){ try{localStorage.setItem(BKEY,JSON.stringify(CLIENTS));}catch(e){} }
+  // ---- removed clients: one shared list across FCC. Persisted to the clients store under the
+  // _removed key (upsert, so it stacks with the Command Center's copy and survives multi-session);
+  // a localStorage mirror keeps it working offline. A removed client drops out of the live intake
+  // tracker and every client picker, but its briefs/history are untouched (restore re-shows it).
+  var RKEY='fcc-removed';
+  var REMOVED=(function(){ try{return JSON.parse(localStorage.getItem(RKEY))||[];}catch(e){return [];} })();
+  function isRemoved(c){ return REMOVED.indexOf(c)>=0; }
+  function saveRemoved(){ try{localStorage.setItem(RKEY,JSON.stringify(REMOVED));}catch(e){}
+    fetch('/api/clients',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({_removed:REMOVED})}).catch(function(){}); }
+  function removeClient(c){ if(!c||isRemoved(c))return; REMOVED.push(c); saveRemoved(); }
+  function restoreClient(c){ var i=REMOVED.indexOf(c); if(i<0)return; REMOVED.splice(i,1); saveRemoved(); }
+  function visibleClients(){ return CLIENTS.filter(function(c){return !isRemoved(c);}); }
   var ASPL=['Dinesh','Thia','Mariraj','Muji'];
   var BRIEF_TO='briefing@feedspark.com';
   var STAGES=[['intake','Intake','#8a94a0'],['briefed','Briefed to ASPL','#B1550A'],['progress','In progress','#2F6FB0'],
@@ -948,9 +970,23 @@ window.addEventListener('load',restore);
 
   // ---- brand roster management (select / add / delete) + generator client list ----
   function fillClientSelect(){ var sel=document.getElementById('bg-client'); if(!sel)return; var cur=sel.value;
-    sel.innerHTML=CLIENTS.map(function(c){return '<option>'+esc(c)+'</option>';}).join('');
-    if(CLIENTS.indexOf(cur)>=0) sel.value=cur; }
+    sel.innerHTML=visibleClients().map(function(c){return '<option>'+esc(c)+'</option>';}).join('');
+    if(visibleClients().indexOf(cur)>=0) sel.value=cur; }
   fillClientSelect();   // CLIENTS still drives the brief generator + intake; the brand-book panel was removed
+  // ---- remove-client manager (shared _removed list; restore any time) ----
+  function renderRmPanel(){ var p=document.getElementById('rm-panel'); if(!p)return;
+    var opts=visibleClients().map(function(c){return '<option>'+esc(c)+'</option>';}).join('') || '<option value="">(all clients removed)</option>';
+    var chips=REMOVED.length? REMOVED.slice().sort().map(function(c){return '<span class="rm-chip">'+esc(c)+'<button data-restore="'+esc(c)+'" title="Restore to tracker">↩</button></span>';}).join('') : '<span class="sub" style="margin:0">None removed.</span>';
+    p.innerHTML='<div class="rm-row"><label>Remove from the live tracker &amp; pickers</label>'
+      +'<select id="rm-select">'+opts+'</select><button class="btn" id="rm-do">⊘ Remove</button></div>'
+      +'<div class="rm-row"><label>Removed ('+REMOVED.length+')</label><span class="rm-chips">'+chips+'</span></div>';
+    var doBtn=document.getElementById('rm-do'); if(doBtn)doBtn.onclick=function(){ var s=document.getElementById('rm-select'), c=s&&s.value; if(!c)return;
+      if(!confirm('Remove "'+c+'" from the live tracker? Its intake rows and picker entries hide (briefs & history stay). You can restore it here anytime.'))return;
+      removeClient(c); fillClientSelect(); renderAll(); renderRmPanel(); toast(c+' removed from tracker'); };
+    p.querySelectorAll('[data-restore]').forEach(function(b){ b.onclick=function(){ restoreClient(b.getAttribute('data-restore')); fillClientSelect(); renderAll(); renderRmPanel(); toast('Restored to tracker'); }; });
+  }
+  (function(){ var mb=document.getElementById('rm-manage'), p=document.getElementById('rm-panel');
+    if(mb&&p){ mb.onclick=function(){ p.hidden=!p.hidden; mb.classList.toggle('on',!p.hidden); if(!p.hidden)renderRmPanel(); }; } })();
   ['bg-client','bg-market','bg-source','bg-task','bg-scope','bg-dod','bg-assets','bg-due','bg-priority'].forEach(function(id){
     var el=document.getElementById(id); el.addEventListener('input',refreshPreview); el.addEventListener('change',refreshPreview); });
   (function(){ var cs=document.getElementById('bg-cat'); if(cs)cs.addEventListener('change',function(){ if(cs.value){ applyTemplate(cs.value); } refreshPreview(); }); })();
@@ -1228,7 +1264,7 @@ window.addEventListener('load',restore);
       var S=itState;
       var st=!S.statuses.length||S.statuses.indexOf(r.b)>=0;   // empty = all statuses
       var win=true; if(allow && r.source==='plan'){ var pd=taskDate(r); if(pd) win=!!(allow[r.client]&&allow[r.client][monthKey(pd)]); }   // latest-N-months per brand; dateless plan rows always show
-      return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0)&&(!S.clients.length||S.clients.indexOf(r.client)>=0)
+      return win&&st&&!isRemoved(r.client)&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0)&&(!S.clients.length||S.clients.indexOf(r.client)>=0)
         &&(!S.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(S.q)>=0); })
       .sort(function(a,b){ var k=itState.sort;
         if(k==='dsort'){ var da=taskDate(a), db=taskDate(b); return ((da?da.getTime():0)-(db?db.getTime():0))*itState.dir; }
@@ -1949,6 +1985,8 @@ window.addEventListener('load',restore);
   fetchLive(false);
   // ATRT carry-over: load saved statuses for the imported legacy tasks (retired tracker)
   fetch('/api/carryover').then(function(r){ var v=r.headers.get('X-Store-Rev'); if(v!=null)REV.carryover=+v||0; return r.json(); }).then(function(d){ CARRY_STAT=d||{}; renderAll(); }).catch(function(){});
+  // shared removed-clients list (same _removed key the Command Center writes) — hides them here too
+  fetch('/api/clients').then(function(r){return r.json();}).then(function(s){ if(s&&Array.isArray(s._removed)){ REMOVED=s._removed; try{localStorage.setItem(RKEY,JSON.stringify(REMOVED));}catch(e){} fillClientSelect(); renderAll(); } }).catch(function(){});
 
   // ---- live cross-session sync ----------------------------------------------------------
   // Poll each board for deltas since our last-seen revision and merge other sessions' changes
