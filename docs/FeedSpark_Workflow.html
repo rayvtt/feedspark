@@ -1173,13 +1173,14 @@ window.addEventListener('load',restore);
     {id:'T13', task:'ChatGPT Merchant Program enrolment', metric:'ChatGPT visibility', month:'2026-10-01', prio:'Low'},
     {id:'T14', task:'AI visibility baseline + tracking', metric:'AI citations', month:'2026-10-01', prio:'Low'}
   ];
-  // Source prefix so every task shows where it came from. SVS = Strategy Review Session
-  // (the deck's testing matrix). Reuse the same 'SVS - ' prefix for future SRS-sourced tasks.
-  var SVS_PREFIX='SVS - ';
+  // Source code so every task shows where it came from — carried in the task name so it also
+  // survives the write-back into the plan sheet. SVQ3-26 = Strategy Review, Q3 2026 (the YuMOVE
+  // Q3/Q4 testing-matrix roadmap). Pattern SV<quarter>-<yy> for future Strategy-Review sources.
+  var SVQ_PREFIX='SVQ3-26 - ';
   function roadmapTasks(){ var ov=statusOverlay(), owo=ownerOverlay(), ren=renameOverlay();
     // hide any that were pushed into the real plan already (matched by fuzzy task text)
     var idx={}; planTasks().forEach(function(p){ if(p.client==='YuMOVE')(idx[nrm(p.task)]=1); });
-    return YUMOVE_ROADMAP.map(function(t){ var base=SVS_PREFIX+t.task; var task=ren['YuMOVE|'+base]||base; var k='YuMOVE|'+task;
+    return YUMOVE_ROADMAP.map(function(t){ var base=SVQ_PREFIX+t.task; var task=ren['YuMOVE|'+base]||base; var k='YuMOVE|'+task;
       if(CARRY_STAT[k]==='__deleted__'||DELETED[k])return null;
       var s=ov[k]!=null?ov[k]:(CARRY_STAT[k]!=null?CARRY_STAT[k]:'Open');
       return {client:'YuMOVE',task:task,cat:'test',owner:(owo[k]!=null?owo[k]:'Ray'),source:'atrt',
@@ -1309,7 +1310,7 @@ window.addEventListener('load',restore);
     var f=intakeFiltered();
     body.innerHTML = f.length ? f.map(function(t,i){
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
-      var src=t.roadmap?'<span class="src-tag src-plan" title="YuMOVE Q3/Q4 testing roadmap — 14-test matrix from the Strategy Review">Roadmap</span>':t.source==='email'?'<span class="src-tag src-email">Email</span>':t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':'<span class="src-tag src-plan">Plan</span>';
+      var src=t.roadmap?'<span class="src-tag src-plan" title="Strategy Review Q3 2026 — the YuMOVE 14-test matrix roadmap">SVQ3-26</span>':t.source==='email'?'<span class="src-tag src-email">Email</span>':t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
       var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt');
       var stat=(t.source==='plan'||t.source==='atrt')

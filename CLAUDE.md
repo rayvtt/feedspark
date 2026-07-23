@@ -186,10 +186,12 @@ GET|POST /api/claude            → Tachyon copilot proxy to Claude Messages API
   `briefing@feedspark.com`) are set; until then a paste-to-test box validates the scanner. The
   scanner (`classifyEmail`/`replySignal`) is pure/deterministic so it can move to a scheduled worker
   job later.
-- **Task source prefixes** (Workflow intake): a task surfaced from a named source carries a short
-  prefix so its origin is visible in the task name. **`SVS - `** = **Strategy Review Session** (e.g.
-  the YuMOVE 14-test matrix lifted from the Strategy Review deck's testing roadmap). Reuse the same
-  `SVS - ` prefix for any future Strategy-Review-sourced tasks; add new prefixes here as sources grow.
+- **Task source codes** (Workflow intake): a task surfaced from a named source carries a short code
+  as both its **Source** badge and a **task-name prefix** (the prefix is what survives the write-back
+  into the plan sheet, so the origin is visible in the PP too). **`SVQ3-26`** = **Strategy Review
+  Q3 2026** (the YuMOVE 14-test matrix lifted from the Strategy Review deck's testing roadmap).
+  Pattern: **`SV<quarter>-<yy>`** for Strategy-Review-sourced tasks (e.g. `SVQ4-26`). Add new source
+  codes here as sources grow.
 - **Pages = git**: `docs/FeedSpark_Command_Center.html` (`/`) and `docs/YuMOVE_Strategy_Review_Jul26.html`
   (`/deck/yumove`) are imported into the worker as Text modules (root `wrangler.toml` `rules`).
   **Add a page = add an import + one line in the worker's `PAGES` map.** Push to `main` → Cloudflare
