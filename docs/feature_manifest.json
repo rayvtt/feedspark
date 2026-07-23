@@ -22,9 +22,9 @@
     { "name": "Workflow: brief-to-intake taskKey tie", "file": "docs/FeedSpark_Workflow.html", "pattern": "taskKey", "min": 5, "pr": 66 },
     { "name": "Workflow: paste-an-update reply router", "file": "docs/FeedSpark_Workflow.html", "pattern": "function routeUpdate", "pr": 66 },
     { "name": "Workflow: court-aware SLA escalations", "file": "docs/FeedSpark_Workflow.html", "pattern": "SLA_STAGE", "pr": 66 },
-    { "name": "worker: per-key KV merge for clients/briefs (kvmerge)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "kvmerge", "pr": 67 },
-    { "name": "worker: kvmerge module present", "file": "cloudflare/feedspark-deck/src/kvmerge.js", "pattern": "mergeIntoEnvelope", "pr": 67 },
-    { "name": "CmdCenter: sync-base echo on dossier saves", "file": "docs/FeedSpark_Command_Center.html", "pattern": "X-Sync-Base", "pr": 67 },
-    { "name": "Workflow: sync-base echo on brief saves", "file": "docs/FeedSpark_Workflow.html", "pattern": "X-Sync-Base", "pr": 67 }
+    { "name": "worker: per-key KV merge for clients/briefs (kvmerge)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "kvmerge", "pr": 68 },
+    { "name": "worker: kvmerge module present", "file": "cloudflare/feedspark-deck/src/kvmerge.js", "pattern": "mergeIntoEnvelope", "pr": 68 },
+    { "name": "CmdCenter: sync-base echo on dossier saves", "file": "docs/FeedSpark_Command_Center.html", "pattern": "X-Sync-Base", "pr": 68 },
+    { "name": "Workflow: sync-base echo on brief saves", "file": "docs/FeedSpark_Workflow.html", "pattern": "X-Sync-Base", "pr": 68 }
   ]
 }
