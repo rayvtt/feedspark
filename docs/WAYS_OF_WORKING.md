@@ -80,6 +80,53 @@ No separate board/issue tracker to maintain.
 - ❌ Two sessions live-editing the same monolith file in parallel
 - ❌ Reporting "shipped" on a merge alone — always verify live (CLAUDE.md rule)
 
+## Overlap safeguards — tooling + protocol (added after the 2026‑07‑23 near-misses)
+
+Three real incidents on one day of 4–5 parallel sessions, all on shared files:
+
+1. **Semantic clobber (the dangerous one).** PR #60 replaced the deck download block with a *new*
+   block while another session was guarding the *old* one. The git merge was textually clean —
+   and the feature was still broken on the live page (button back on the CC). **A clean merge is
+   not an intact feature.**
+2. **Competing implementations.** A per-deck Download-PDF button (ec200f6) was reverted (5a8044e)
+   in favour of the universal exporter (9947cc1) — duplicated work, revert churn.
+3. **Same-file doc races.** CLAUDE.md rewritten by two sessions ~30 min apart (#57, #58); merged
+   luckily-clean.
+
+The audit also confirmed **no shipped feature was actually lost** — but only manual inspection
+caught #1, so the protocol now makes that inspection automatic:
+
+### 1. Feature manifest — the overwrite tripwire (`docs/feature_manifest.json`)
+Every shipped feature that lives in a **shared file** gets a one-line marker entry
+(name → file → grep pattern; `forbidden: true` pins *retired* features so they stay gone).
+`tools/check_markers.js` asserts every marker on every PR (validate.yml) and in `presync.sh`.
+If your merge silently reverts another session's shipped work, **CI goes red with the PR number
+that shipped it**. Duties:
+- **Ship a feature in a shared file → add its marker in the same PR.**
+- Never remove/weaken someone else's marker except in a PR that deliberately retires the feature.
+
+### 2. Overlap detector (`tools/overlap.sh`)
+Diffs your branch against every **active** `claude/*` branch (merged-into-main ones are skipped)
+and lists common files, flagging 🔥 hot files (worker.js, wrangler.toml, CLAUDE.md, the app-page
+monoliths, atrt_data.json). Runs automatically in `presync.sh`; run it standalone when you START
+a task, before writing code. On a 🔥 hit: **sequence** — check the open-PR list, agree order,
+wait for the other merge, then presync.
+
+### 3. The semantic-integration rule (lesson of incident #1)
+After `presync.sh` merges latest `main` into your branch, if the merge brought changes to a file
+you're editing: **re-verify your feature *behaves*, not just that git merged.** Re-run your QA
+against the merged tree and re-read the touching region — another session may have restructured
+the code your change hooks into (new block, renamed function, moved anchor).
+
+### 4. Known gap — FCC runtime data (KV last-write-wins)
+`PUT /api/clients` (dossier edits) and `PUT /api/briefs` (Workflow pipeline) write the **whole
+map** — two open browser tabs, or two people (Ray + Steven), can silently clobber each other's
+saves. `/api/edits` merges per-key and is safe. Phase‑2 fix, deliberately not rushed: per-key
+server-side merge with `updatedAt` per entry + tombstone timestamps (a naive merge would
+resurrect deleted entries), or a `_rev` optimistic-concurrency check returning 409 → refetch +
+merge client-side. Until it ships: one editor at a time per surface; refresh (`↻`) before a burst
+of dossier/brief edits.
+
 ---
 
 # Parallel Editing — Ray + Claude on one deck

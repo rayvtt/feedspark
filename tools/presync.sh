@@ -32,4 +32,11 @@ echo "── validating: dashboard inline scripts"
 node tools/check_inline_scripts.js >/dev/null
 echo "   ✓ inline scripts parse"
 
+echo "── validating: shipped-feature markers (overwrite tripwire)"
+node tools/check_markers.js >/dev/null
+echo "   ✓ no shipped feature regressed"
+
+echo "── checking overlap with other active claude/* branches"
+bash tools/overlap.sh || true
+
 echo "✓ presync clean — $BRANCH is synced with main and validates. Open/merge the PR."
