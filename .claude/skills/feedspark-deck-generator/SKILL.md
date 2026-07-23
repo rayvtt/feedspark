@@ -230,8 +230,15 @@ Follow the exact pattern already used for every other deck in
    If the dossier already generated a `/deck/<slug>` link for this client via the dynamic
    template fallback, use that exact slug so the existing link keeps working.
 3. Leave `getEditorScript()` and everything else in the worker untouched — every page it
-   serves already gets the full text-edit + Design-mode widget for free; you don't need to
-   do anything extra to make the new deck editable.
+   serves already gets the full text-edit + Design-mode widget **and** a "Download PDF"
+   button for free; you don't need to do anything extra to make the new deck editable or
+   printable. **Never add a print/PDF button, print stylesheet, or `window.print()` call to
+   an individual deck's HTML** — it already exists once, universally, injected via
+   `getEditorScript()` (client-side `window.print()` with a print stylesheet that forces
+   `.rv`/`.fill` reveal animations to their final state, keeps dark sections via
+   `print-color-adjust:exact`, and paginates one chapter per page). A per-deck copy would
+   duplicate and drift from the shared one — this was tried once on YuMOVE and reverted in
+   favour of the universal version the same session.
 
 ## Step 5 — QA before pushing
 

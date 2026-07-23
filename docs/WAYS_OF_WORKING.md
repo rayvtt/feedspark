@@ -69,6 +69,11 @@ image added, or bullets turned into a grid, the deck's editor makes the hand-off
 So the two of you edit in parallel with **zero API spend**: Ray on text (live, in KV), Claude Code
 on structure (git → template push), reconciled by `data-eid`. Setup: `cloudflare/feedspark-deck/README.md`.
 
+**PDF export is also universal, not per-deck.** Every deck gets a "Download PDF" button for free
+via `getEditorScript()` in `worker.js` (client-side `window.print()` + a print stylesheet) — same
+injection point as the edit widget above. Don't add a print button or print CSS to an individual
+deck's HTML file; extend the shared implementation in `worker.js` instead.
+
 ---
 
 ## Git conventions for parallel work
