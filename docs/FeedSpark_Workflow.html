@@ -284,8 +284,17 @@ window.addEventListener('load',restore);
   .it-multi-menu input[type=checkbox]{margin:0;flex:none;width:15px;height:15px;min-width:0;padding:0;border-radius:4px;accent-color:var(--orange-deep)}
   .it-multi-menu .it-multi-all{border-bottom:1px solid var(--line);margin-bottom:4px;padding-bottom:7px;font-weight:800}
   #it-status-menu{width:156px}
-  #it-client-menu{width:184px}
+  #it-client-menu{width:208px}
   #it-am-menu{width:150px}
+  .it-cl-rm{margin-left:auto;flex:none;border:0;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:900;line-height:1;padding:2px 5px;border-radius:5px;cursor:pointer;opacity:0}
+  .it-multi-menu label:hover .it-cl-rm{opacity:.7}
+  .it-cl-rm:hover{opacity:1;color:#C0392B;background:rgba(192,57,43,.1)}
+  .it-cl-removed{border-top:1px solid var(--line);margin-top:5px;padding-top:5px}
+  .it-cl-removed-h{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:3px 8px}
+  .it-cl-removed-row{display:flex;align-items:center;gap:7px;padding:4px 8px;font-size:12.5px;color:var(--muted)}
+  .it-cl-removed-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:line-through}
+  .it-cl-restore{margin-left:auto;flex:none;font:inherit;font-size:10.5px;font-weight:800;padding:2px 9px;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--navy);cursor:pointer;white-space:nowrap}
+  .it-cl-restore:hover{border-color:var(--navy)}
   #it-views-menu{width:214px}
   .it-view-row{display:flex;align-items:center;gap:2px}
   .it-view-apply{flex:1;text-align:left;font:inherit;font-size:13px;font-weight:700;padding:6px 9px;border:none;background:none;color:var(--ink);cursor:pointer;border-radius:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -773,6 +782,14 @@ window.addEventListener('load',restore);
   function hideTask(t){ HIDDEN[t.client+'|'+t.task]=1; saveHidden(); toast('Hidden as a note — still in '+(t.source==='plan'?(t.client+'’s plan'):'the record')); renderAll(); }
   function unhideTask(t){ delete HIDDEN[t.client+'|'+t.task]; saveHidden(); toast('Restored to the task list'); renderAll(); }
   function hiddenInView(){ var n=0; allIntake().forEach(function(r){ if(HIDDEN[r.client+'|'+r.task])n++; }); return n; }
+  // REMOVE CLIENT — drop a whole client out of the intake and every filter (local, reversible).
+  // Plan sheets are untouched; restore any time from the bottom of the client-filter menu.
+  var RMCL={}; try{RMCL=JSON.parse(localStorage.getItem('fcc-wf-removed')||'{}');}catch(e){}
+  function saveRmcl(){ try{localStorage.setItem('fcc-wf-removed',JSON.stringify(RMCL));}catch(e){} }
+  function removeClient(c){ RMCL[c]=1; saveRmcl();
+    itState.clients=itState.clients.filter(function(x){return x!==c;});
+    toast(c+' removed from the intake — restore it from the client filter'); renderAll(); }
+  function restoreClient(c){ delete RMCL[c]; saveRmcl(); toast(c+' restored to the intake'); renderAll(); }
   // delete a task — plan rows are removed from the Project-Plan sheet (2-way); others just leave the inbox
   function deleteTask(t){
     var msg=t.source==='plan'?('Delete this task and remove its row from '+t.client+'’s Project Plan?\n\n'+t.task)
@@ -820,7 +837,7 @@ window.addEventListener('load',restore);
         var s=ov[k]!=null?ov[k]:(src.status||'Open');
         return {client:m.c,task:m.task,cat:classifyLite(m.task),owner:(owo[k]!=null?owo[k]:(src.owner||'—')),source:'plan',
           s:s,b:bucketOf(s),live:false,manual:true,sheet:PLANSHEET[m.c]||'',d:(duo[k]||src.due||'')}; }); }
-  function allIntake(){ return planTasks().concat(manualTasks()).concat(emailIntake()); }
+  function allIntake(){ return planTasks().concat(manualTasks()).concat(emailIntake()).filter(function(r){ return !RMCL[r.client]; }); }
   // DDMM (or DDMMYYYY) -> ISO yyyy-mm-dd; a near-past DDMM rolls to next year
   function ddmmToIso(v){ v=String(v||'').replace(/\D/g,'');
     if(v.length===4){ var dd=+v.slice(0,2), mm=+v.slice(2,4); if(dd<1||dd>31||mm<1||mm>12)return '';
@@ -1168,7 +1185,7 @@ window.addEventListener('load',restore);
     function updateBtn(){ btn.textContent=label(); btn.classList.toggle('on',cfg.selected().length>0); }
     var sig='';
     function build(){
-      var opts=cfg.options(), s=opts.map(function(o){return o.v;}).join('|');
+      var opts=cfg.options(), s=opts.map(function(o){return o.v;}).join('|')+(cfg.sigExtra?'§'+cfg.sigExtra():'');
       if(s===sig){ updateBtn(); return; }                 // option set unchanged — just refresh the label
       sig=s; menu.innerHTML='';
       var allRow=document.createElement('label'); allRow.className='it-multi-all';
@@ -1181,7 +1198,10 @@ window.addEventListener('load',restore);
         var row=document.createElement('label');
         var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=cfg.selected().indexOf(o.v)>=0;
         cb.onchange=function(){ cfg.toggle(o.v,cb.checked); allCb.checked=cfg.selected().length===0; updateBtn(); renderIntake(); };
-        row.appendChild(cb); row.appendChild(document.createTextNode(o.l)); menu.appendChild(row); });
+        row.appendChild(cb); row.appendChild(document.createTextNode(o.l));
+        if(cfg.rowAction){ var act=cfg.rowAction(o.v); if(act)row.appendChild(act); }
+        menu.appendChild(row); });
+      if(cfg.footer){ var ft=cfg.footer(); if(ft)menu.appendChild(ft); }
       updateBtn();
     }
     btn.onclick=function(e){ e.stopPropagation(); var willOpen=menu.hidden; menu.hidden=!willOpen; btn.setAttribute('aria-expanded',willOpen?'true':'false'); };
@@ -1203,7 +1223,22 @@ window.addEventListener('load',restore);
       itState.clients=itState.clients.filter(function(c){ return set[c]; }); return Object.keys(set).sort().map(function(c){ return {v:c,l:c}; }); },
     selected:function(){ return itState.clients; },
     toggle:function(v,on){ var i=itState.clients.indexOf(v); if(on){ if(i<0)itState.clients.push(v); } else if(i>=0)itState.clients.splice(i,1); },
-    clear:function(){ itState.clients=[]; } });
+    clear:function(){ itState.clients=[]; },
+    rowAction:function(c){ var x=document.createElement('button'); x.type='button'; x.className='it-cl-rm'; x.textContent='✕';
+      x.title='Remove '+c+' from the intake — all its tasks leave the list and filters (reversible)';
+      x.onclick=function(e){ e.preventDefault(); e.stopPropagation();
+        if(confirm('Remove '+c+' from the intake?\n\nAll its tasks leave the task list and filters. The plan sheet is untouched — restore it any time from the bottom of this menu.'))removeClient(c); };
+      return x; },
+    footer:function(){ var names=Object.keys(RMCL).sort(); if(!names.length)return null;
+      var box=document.createElement('div'); box.className='it-cl-removed';
+      var h=document.createElement('div'); h.className='it-cl-removed-h'; h.textContent='Removed from the intake'; box.appendChild(h);
+      names.forEach(function(c){ var row=document.createElement('div'); row.className='it-cl-removed-row';
+        var nm=document.createElement('span'); nm.textContent=c; nm.title=c; row.appendChild(nm);
+        var b=document.createElement('button'); b.type='button'; b.className='it-cl-restore'; b.textContent='↩ Restore'; b.title='Restore '+c+' to the intake and filters';
+        b.onclick=function(e){ e.stopPropagation(); restoreClient(c); };
+        row.appendChild(b); box.appendChild(row); });
+      return box; },
+    sigExtra:function(){ return Object.keys(RMCL).sort().join('|'); } });
   var buildAmFilter=setupMulti({ btn:'it-am-btn', menu:'it-am-menu', wrap:'it-am-wrap',
     allLabel:'All AMs', noun:'AMs', one:function(v){ return v; },
     options:function(){ var set={}; allIntake().forEach(function(r){ if(!DELETED[r.client+'|'+r.task]) set[amOf(r.client)]=1; });   // only AMs that still have live tasks
@@ -1537,7 +1572,7 @@ window.addEventListener('load',restore);
   var NOT_AE={denmark:1,canada:1,switzerland:1,italy:1,norway:1,poland:1,spain:1,sweden:1,germany:1,france:1,netherlands:1,ireland:1,austria:1,next:1,superdry:1,reiss:1,schuh:1,monsoon:1,accessorize:1,hobbycraft:1,yumove:1};
   function ownerKey(o){ o=(o||'').trim(); if(!o||o==='—')return 'Unassigned'; var m=/^([A-Za-z]+)/.exec(o); var k=m?m[1]:o; return NOT_AE[k.toLowerCase()]?'Unassigned':k; }
   function renderWorkload(){ var host=document.getElementById('wk-grid'); if(!host)return;
-    var tasks=planTasks().concat(manualTasks()).filter(function(t){return t.b==='open'||t.b==='progress';});
+    var tasks=planTasks().concat(manualTasks()).filter(function(t){return !RMCL[t.client]&&(t.b==='open'||t.b==='progress');});
     var by={}; tasks.forEach(function(t){ var o=ownerKey(t.owner); if(!by[o])by[o]={open:0,prog:0,brands:{}}; if(t.b==='progress')by[o].prog++; else by[o].open++; by[o].brands[t.client]=1; });
     var names=Object.keys(by).sort(function(a,b){ return (by[b].open+by[b].prog)-(by[a].open+by[a].prog); });
     var extra=names.length>12?names.length-12:0; names=names.slice(0,12);
