@@ -816,7 +816,7 @@ function getEditorScript(slug) {
     + '.de-fbpanel .row button{flex:1;border:0;border-radius:8px;padding:9px 12px;cursor:pointer;font:inherit;font-weight:700}'
     + '.de-fbpanel .gen{background:#ED6F0B;color:#fff}.de-fbpanel .clr{background:#EEE;color:#333}'
     + '.de-fbempty{color:#6b7a8d;font-size:12.5px;padding:10px 0}';
-  var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
+  var st=document.createElement('style'); st.id='fs-editor-css'; st.textContent=css; document.head.appendChild(st);
 
   var bar=document.createElement('div'); bar.className='de-bar';
   var bEdit=document.createElement('button'); bEdit.textContent='✎ Edit';
@@ -1423,8 +1423,10 @@ function getEditorScript(slug) {
   loadFeedback();
 })();
 </script>
-<!-- Universal PDF export — every deck gets this for free, no per-deck edits needed.
-     Injected here (not hardcoded per deck) so future decks pick it up automatically. -->
+<!-- Universal exports — every deck gets these for free, no per-deck edits needed.
+     Injected here (not hardcoded per deck) so future decks pick them up automatically.
+     Print stylesheet stays available (native Cmd/Ctrl+P, and it travels with the exported
+     HTML file below too) even though the dedicated PDF button was replaced by "Download HTML". -->
 <style>
 @page{size:A4 landscape;margin:11mm 13mm}
 @media print{
@@ -1454,12 +1456,68 @@ function getEditorScript(slug) {
     document.querySelectorAll('.fill[data-w]').forEach(function(el){ var w=el.getAttribute('data-w'); if(w) el.style.width=w+'%'; });
   }
   window.addEventListener('beforeprint', preparePrint);
+  window.__fsPreparePrint = preparePrint;
+})();
+</script>
+<!-- "Download HTML" — bakes in the current live state (KV text edits + reveal/bar-fill
+     animations already applied), strips every internal-only element (editor widget,
+     data-check flags, data-eid/de-block attributes, contenteditable) so the exported file is
+     safe and clean to email or hand straight to an external client — no Cloudflare Access
+     gate, no dependency on the live worker or its /api endpoints. The client's copy keeps
+     the print stylesheet above (self-contained, no API calls) so they can still save their
+     own PDF from it if they want one, but not the export button itself — no reason for them
+     to re-export a file they already have. -->
+<script>
+(function(){
+  function slug(s){ return (s||'strategy-review').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'strategy-review'; }
+  function buildClientHtml(){
+    if(window.__fsPreparePrint) window.__fsPreparePrint();
+    var doc = document.cloneNode(true);
+    ['.de-bar','.de-handle','.de-panel','.de-props','.de-toast','.de-resize','#fs-editor-css','#htmlBtn'].forEach(function(sel){
+      Array.prototype.slice.call(doc.querySelectorAll(sel)).forEach(function(el){ el.remove(); });
+    });
+    Array.prototype.slice.call(doc.querySelectorAll('.chk')).forEach(function(el){ el.remove(); });
+    // hide, don't remove: every deck's own template script unconditionally does
+    // document.getElementById('flagbtn').addEventListener(...) — removing the element makes
+    // that call throw on the exported file's own load and can abort the rest of that script
+    // (topbar scroll-spy, reveal/bar observers, the interactive attribute picker). Nothing
+    // left to toggle anyway once .chk markers are stripped below, so hiding is equivalent.
+    var flag = doc.getElementById('flagbtn'); if(flag){ flag.style.display='none'; flag.removeAttribute('aria-pressed'); }
+    Array.prototype.slice.call(doc.querySelectorAll('[data-eid]')).forEach(function(el){ el.removeAttribute('data-eid'); });
+    Array.prototype.slice.call(doc.querySelectorAll('[data-de-block]')).forEach(function(el){ el.removeAttribute('data-de-block'); });
+    Array.prototype.slice.call(doc.querySelectorAll('[contenteditable]')).forEach(function(el){ el.removeAttribute('contenteditable'); });
+    Array.prototype.slice.call(doc.querySelectorAll('[spellcheck]')).forEach(function(el){ el.removeAttribute('spellcheck'); });
+    if(doc.body) doc.body.className = doc.body.className.replace(/\\bde-\\S+/g,'').replace(/\\bhide-checks\\b/g,'').trim();
+    Array.prototype.slice.call(doc.querySelectorAll('script')).forEach(function(s){
+      var t = s.textContent||'';
+      if(/armUndo|assignEids|loadFeedback|buildClientHtml/.test(t)) s.remove();
+    });
+    // strip every HTML comment — some (like this feature's own build notes) reference internal
+    // implementation detail (KV edits, Access gating, worker.js internals) that has no business
+    // sitting in a file a client could View Source on.
+    if(doc.createTreeWalker){
+      var walker = doc.createTreeWalker(doc, NodeFilter.SHOW_COMMENT);
+      var comments = [], n;
+      while((n = walker.nextNode())) comments.push(n);
+      comments.forEach(function(c){ if(c.parentNode) c.parentNode.removeChild(c); });
+    }
+    return '<!doctype html>\\n' + doc.documentElement.outerHTML;
+  }
+  function downloadClientHtml(){
+    var html = buildClientHtml();
+    var blob = new Blob([html], {type:'text/html'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = slug(document.title) + '.html';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  }
   function addBtn(){
-    if(document.getElementById('pdfBtn')) return;
+    if(document.getElementById('htmlBtn')) return;
     var btn=document.createElement('button');
-    btn.id='pdfBtn'; btn.className='flagbtn'; btn.title='Save this deck as a PDF to send to clients';
-    btn.textContent='⬇ Download PDF'; btn.style.marginLeft='8px';
-    btn.addEventListener('click',function(){ preparePrint(); setTimeout(function(){ window.print(); },60); });
+    btn.id='htmlBtn'; btn.className='flagbtn'; btn.title='Download a clean, standalone HTML copy to send to a client';
+    btn.textContent='⬇ Download HTML'; btn.style.marginLeft='8px';
+    btn.addEventListener('click', downloadClientHtml);
     var flag=document.getElementById('flagbtn');
     var host=document.querySelector('.topbar-in');
     if(flag && flag.parentNode) flag.insertAdjacentElement('afterend', btn);
