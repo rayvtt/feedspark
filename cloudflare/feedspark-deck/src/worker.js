@@ -1451,6 +1451,8 @@ function getEditorScript(slug) {
 </style>
 <script>
 (function(){
+  // client decks only — the FCC app pages (/, /workflow, …) aren't a download deliverable
+  if(!/^\\/deck\\//.test(location.pathname)) return;
   function preparePrint(){
     document.querySelectorAll('.rv').forEach(function(el){ el.classList.add('in'); });
     document.querySelectorAll('.fill[data-w]').forEach(function(el){ var w=el.getAttribute('data-w'); if(w) el.style.width=w+'%'; });
@@ -1469,6 +1471,8 @@ function getEditorScript(slug) {
      to re-export a file they already have. -->
 <script>
 (function(){
+  // client decks only — the FCC app pages (/, /workflow, …) aren't a client deliverable
+  if(!/^\\/deck\\//.test(location.pathname)) return;
   function slug(s){ return (s||'strategy-review').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'strategy-review'; }
   function buildClientHtml(){
     if(window.__fsPreparePrint) window.__fsPreparePrint();
