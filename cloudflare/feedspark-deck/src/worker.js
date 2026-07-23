@@ -59,8 +59,11 @@ const PAGES = {
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, PUT, POST, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
+  // X-Store-Rev carries the collaborative store's revision so the browser poller can ask for
+  // deltas (?since=<rev>). It must be exposed or fetch() can't read it cross-origin.
+  'Access-Control-Expose-Headers': 'X-Store-Rev',
 };
 
 export default {
@@ -70,94 +73,42 @@ export default {
 
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
 
-    // ---- edits (content layer: Ray, in-browser) — namespaced per page by ?page=<slug> ----
+    // ---- All mutable collaborative stores now route through the Store Durable Object.
+    // Each PUT UPSERTS (never implicit-deletes), so two sessions editing the same board
+    // stack instead of clobbering; GET ?since=<rev> serves deltas for live cross-session
+    // sync. seedKey = the legacy KV key, imported once on first touch so nothing is lost.
+
+    // edits (content layer: Ray, in-browser) — namespaced per page by ?page=<slug>.
+    // Keys are data-eid patches (plus __order:/__added: structural keys), each its own entry.
     if (path === '/api/edits') {
       const slug = (url.searchParams.get('page') || 'home').replace(/[^a-z0-9_-]/gi, '');
-      const key = 'edits:' + slug;
-      if (request.method === 'GET') {
-        const edits = await env.EDITS.get(key, 'json');
-        return json(edits || {});
-      }
-      if (request.method === 'PUT') {
-        const incoming = await request.json();
-        const existing = (await env.EDITS.get(key, 'json')) || {};
-        const merged = { ...existing, ...incoming };
-        await env.EDITS.put(key, JSON.stringify(merged));
-        return json({ ok: true, page: slug, count: Object.keys(merged).length });
-      }
-      if (request.method === 'DELETE') {
-        await env.EDITS.delete(key);
-        return json({ ok: true, page: slug, cleared: true });
-      }
+      return handleStore(request, env, url, 'edits:' + slug, 'edits:' + slug, 'map');
     }
 
-    // ---- feedback store (per-deck review notes, namespaced per page like /api/edits) ----
-    // A JSON array of {id, target, label, note, ts} — the whole array is owned by the page's
-    // feedback panel and PUT wholesale; small N (a review round's worth of notes), no races
-    // worth the complexity.
+    // feedback (per-deck review notes) — array of {id, target, label, note, ts}, keyed by id.
     if (path === '/api/feedback') {
       const slug = (url.searchParams.get('page') || 'home').replace(/[^a-z0-9_-]/gi, '');
-      const key = 'feedback:' + slug;
-      if (request.method === 'GET') {
-        return json((await env.EDITS.get(key, 'json')) || []);
-      }
-      if (request.method === 'PUT') {
-        const body = await request.json();
-        await env.EDITS.put(key, JSON.stringify(body));
-        return json({ ok: true, page: slug, count: (body || []).length });
-      }
-      if (request.method === 'DELETE') {
-        await env.EDITS.delete(key);
-        return json({ ok: true, page: slug, cleared: true });
-      }
+      return handleStore(request, env, url, 'feedback:' + slug, 'feedback:' + slug, 'array');
     }
 
-    // ---- briefs store (Workflow control center: brief/ticket pipeline, shared across the team) ----
-    // A single JSON object keyed by brief id: {id: {client, code, task, due, status, comms, ...}}.
-    // The board owns its state and PUTs the whole map; small N, no races worth the complexity.
+    // briefs (Workflow brief/ticket pipeline, shared across the team) — map keyed by brief id.
     if (path === '/api/briefs') {
-      if (request.method === 'GET') {
-        return json((await env.EDITS.get('briefs', 'json')) || {});
-      }
-      if (request.method === 'PUT') {
-        const body = await request.json();
-        await env.EDITS.put('briefs', JSON.stringify(body));
-        return json({ ok: true, count: Object.keys(body || {}).length });
-      }
+      return handleStore(request, env, url, 'briefs', 'briefs', 'map');
     }
 
-    // ---- test & experiment register (Workflow) — a single JSON array of test cards ----
+    // tests (Workflow test & experiment register) — array of test cards, keyed by test id.
     if (path === '/api/tests') {
-      if (request.method === 'GET') return json((await env.EDITS.get('tests', 'json')) || []);
-      if (request.method === 'PUT') {
-        const body = await request.json();
-        await env.EDITS.put('tests', JSON.stringify(body));
-        return json({ ok: true, count: (body || []).length });
-      }
+      return handleStore(request, env, url, 'tests', 'tests', 'array');
     }
 
-    // ---- ATRT carry-over status (Workflow) — { "Client|task": "status" } for the retired tracker ----
+    // carry-over status (Workflow) — map { "Client|task": "status" }.
     if (path === '/api/carryover') {
-      if (request.method === 'GET') return json((await env.EDITS.get('carryover', 'json')) || {});
-      if (request.method === 'PUT') {
-        const body = await request.json();
-        await env.EDITS.put('carryover', JSON.stringify(body));
-        return json({ ok: true, count: Object.keys(body || {}).length });
-      }
+      return handleStore(request, env, url, 'carryover', 'carryover', 'map');
     }
 
-    // ---- client store (dossier data layer: add / delete / link-sheet / edit-text persist here) ----
-    // A single JSON object: per-brand overrides/additions to the git profiles, plus a _deleted list.
+    // client store (dossier data layer) — map of per-brand overrides/additions + a _deleted list.
     if (path === '/api/clients') {
-      if (request.method === 'GET') {
-        const store = await env.EDITS.get('clients', 'json');
-        return json(store || {});
-      }
-      if (request.method === 'PUT') {
-        const body = await request.json();
-        await env.EDITS.put('clients', JSON.stringify(body));
-        return json({ ok: true, count: Object.keys(body).length });
-      }
+      return handleStore(request, env, url, 'clients', 'clients', 'map');
     }
 
     // ---- template info (structure layer: bundled from git, not KV) ----
@@ -535,8 +486,75 @@ export default {
   },
 };
 
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS } });
+function json(data, status = 200, extraHeaders) {
+  return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS, ...(extraHeaders || {}) } });
+}
+
+// ============================================================================
+// Collaborative store — Durable Object backed, so concurrent multi-session
+// writes SERIALIZE instead of racing. KV has no atomic read-modify-write, so
+// two sessions saving the same board could silently clobber each other; a
+// Durable Object runs single-threaded, so every merge sees the latest state.
+//
+//   env.STORE.get(idFromName('briefs'))  -> one instance per store name
+//     GET  /snapshot?seed=<kvKey>  -> { rev, entries:{key:value} }  (imports legacy KV once)
+//     GET  /delta?since=<rev>      -> { rev, set:{key:value}, del:[key] }  (for live poll)
+//     POST /merge  {set,del}       -> upsert keys / tombstone deletes; bumps rev once
+//     POST /clear                  -> wipe (tombstones all keys so pollers drop them)
+//
+// The worker never implicit-deletes: a whole-map/array PUT only ever UPSERTS its
+// keys, so a session posting its (possibly stale) view can add/edit its own items
+// without erasing items another session added. Deletes are explicit (__del / clear).
+// ============================================================================
+function storeStub(env, name) { return env.STORE.get(env.STORE.idFromName(name)); }
+async function storeSnapshot(env, name, seedKey) {
+  const r = await storeStub(env, name).fetch('https://do/snapshot' + (seedKey ? ('?seed=' + encodeURIComponent(seedKey)) : ''));
+  return r.json();
+}
+async function storeDelta(env, name, since) {
+  const r = await storeStub(env, name).fetch('https://do/delta?since=' + (since || 0));
+  return r.json();
+}
+async function storeMerge(env, name, set, del) {
+  const r = await storeStub(env, name).fetch('https://do/merge', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ set: set || {}, del: del || [] }) });
+  return r.json();
+}
+async function storeClear(env, name) {
+  const r = await storeStub(env, name).fetch('https://do/clear', { method: 'POST' });
+  return r.json();
+}
+
+// Generic HTTP surface for a collaborative store. shape:'array' materialises the
+// keyed map back to an array (Object.values) so array-shaped stores (tests, feedback)
+// keep their old JSON contract; shape:'map' returns the object as-is (briefs, clients, ...).
+async function handleStore(request, env, url, name, seedKey, shape) {
+  const method = request.method;
+  if (method === 'GET') {
+    const since = url.searchParams.get('since');
+    if (since != null) return json(await storeDelta(env, name, +since || 0));
+    const snap = await storeSnapshot(env, name, seedKey);
+    const body = shape === 'array' ? Object.values(snap.entries) : snap.entries;
+    return json(body, 200, { 'X-Store-Rev': String(snap.rev) });
+  }
+  if (method === 'PUT' || method === 'POST') {
+    const body = await request.json();
+    let set = {}, del = [];
+    if (body && !Array.isArray(body) && (body.__set || body.__del)) {
+      set = body.__set || {}; del = body.__del || [];
+    } else if (Array.isArray(body)) {
+      // Whole-array save: key by item id (every item must carry a stable `id`).
+      body.forEach(function (it, i) { const k = (it && it.id != null) ? String(it.id) : ('i' + i); set[k] = it; });
+    } else {
+      set = body || {}; // whole-map save == upsert every key; never implicit-delete
+    }
+    const res = await storeMerge(env, name, set, del);
+    return json({ ok: true, rev: res.rev, count: res.count }, 200, { 'X-Store-Rev': String(res.rev) });
+  }
+  if (method === 'DELETE') {
+    const res = await storeClear(env, name);
+    return json({ ok: true, cleared: true, rev: res.rev });
+  }
+  return json({ error: 'method not allowed' }, 405);
 }
 
 // ---- Google service-account auth: sign a JWT with the SA private key, impersonate the
@@ -890,7 +908,10 @@ function getEditorScript(slug) {
     el.setAttribute('data-eid', k+'-e'+(eidN[k]++));
   }); }
 
-  function loadEdits(){ fetch(API+'/api/edits?page='+PAGE).then(function(r){ return r.json(); }).then(function(ed){
+  // Apply a patch map (data-eid -> value, plus __added:/__order: structural keys) to the DOM.
+  // live=true means this is a background delta from another session's save — in that case we
+  // must not stomp an element the local user is mid-edit in, or their cursor/typing is lost.
+  function applyEdits(ed, live){
     if(!ed) return;
     // Pass 1: replay any runtime-added blocks (duplicated in Design mode) before content/order
     // overlays run, so they exist in the DOM for those passes to find by data-eid/data-rid.
@@ -913,10 +934,34 @@ function getEditorScript(slug) {
       }
       if(k.indexOf('__added:')===0) return;
       var el=document.querySelector('[data-eid="'+k+'"]'); if(!el) return;
+      // Never overwrite the element the local user is actively editing (live deltas only).
+      if(live && (el===document.activeElement || el.contains(document.activeElement))) return;
       var v=ed[k];
       if(v && typeof v==='object' && v.deleted){ el.remove(); return; }
-      var h=(typeof v==='string')?v:v.html; if(h!=null) el.innerHTML=h;
-      if(v && typeof v==='object' && v.style!=null) el.style.cssText=v.style; }); }).catch(function(){}); }
+      var h=(typeof v==='string')?v:v.html; if(h!=null && el.innerHTML!==h) el.innerHTML=h;
+      if(v && typeof v==='object' && v.style!=null && el.style.cssText!==v.style) el.style.cssText=v.style; });
+  }
+
+  // Live cross-session sync: track the store revision, then poll for deltas so a second
+  // session's edits stack onto this page within a few seconds — no reload, no clobber.
+  var EDITS_REV=0;
+  function loadEdits(){ fetch(API+'/api/edits?page='+PAGE).then(function(r){
+    var rv=r.headers.get('X-Store-Rev'); if(rv!=null) EDITS_REV=+rv||0; return r.json();
+  }).then(function(ed){ applyEdits(ed, false); startEditsSync(); }).catch(function(){ startEditsSync(); }); }
+
+  var editsSyncOn=false;
+  function startEditsSync(){ if(editsSyncOn) return; editsSyncOn=true;
+    setInterval(function(){
+      if(document.hidden) return;
+      fetch(API+'/api/edits?page='+PAGE+'&since='+EDITS_REV).then(function(r){ return r.json(); }).then(function(d){
+        if(!d || d.rev==null) return;
+        if(d.rev===EDITS_REV) return;                 // nothing new since last poll
+        EDITS_REV=d.rev;
+        if(d.set && Object.keys(d.set).length) applyEdits(d.set, true);
+        if(d.del && d.del.length){ d.del.forEach(function(k){ var el=document.querySelector('[data-eid="'+k+'"]'); if(el && !(el===document.activeElement||el.contains(document.activeElement))) el.remove(); }); }
+      }).catch(function(){});
+    }, 5000);
+  }
 
   // ---- row drag-and-drop reordering — works even in presentation mode (bar hidden),
   // drag starts only from a row's first cell so text selection elsewhere is unaffected.
@@ -1326,8 +1371,14 @@ function getEditorScript(slug) {
     return null;
   }
   function saveFeedback(){
+    // whole-array PUT == upsert every note by id (never implicit-delete) so two reviewers'
+    // notes stack instead of clobbering. Removals go through explicit __del / DELETE below.
     fetch(API+'/api/feedback?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(FEEDBACK)}).catch(function(){});
   }
+  function delFeedback(id){ FEEDBACK=FEEDBACK.filter(function(f){ return f.id!==id; });
+    fetch(API+'/api/feedback?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({__del:[id]})}).catch(function(){}); }
+  function clearFeedback(){ FEEDBACK=[];
+    fetch(API+'/api/feedback?page='+PAGE,{method:'DELETE'}).catch(function(){}); }
   function renderMarkers(){
     document.querySelectorAll('.de-fbmark').forEach(function(m){ m.remove(); });
     FEEDBACK.forEach(function(f){
@@ -1349,12 +1400,12 @@ function getEditorScript(slug) {
       + '<div class="row"><button class="gen">⤴ Generate rework prompt</button></div>'
       + (FEEDBACK.length ? '<div class="row"><button class="clr">🗑 Clear all</button></div>' : '');
     fbPanel.querySelectorAll('.del').forEach(function(x){ x.addEventListener('click',function(){
-      var id=x.getAttribute('data-id'); FEEDBACK=FEEDBACK.filter(function(f){ return f.id!==id; });
-      saveFeedback(); renderFeedbackPanel(); renderMarkers(); }); });
+      var id=x.getAttribute('data-id'); delFeedback(id);
+      renderFeedbackPanel(); renderMarkers(); }); });
     var gen=fbPanel.querySelector('.gen'); if(gen) gen.addEventListener('click',generatePrompt);
     var clr=fbPanel.querySelector('.clr'); if(clr) clr.addEventListener('click',function(){
       if(!confirm('Clear all '+FEEDBACK.length+' feedback notes?')) return;
-      FEEDBACK=[]; saveFeedback(); renderFeedbackPanel(); renderMarkers(); });
+      clearFeedback(); renderFeedbackPanel(); renderMarkers(); });
   }
   function openNotePopup(el){
     document.querySelectorAll('.de-fbnote').forEach(function(p){ p.remove(); });
@@ -1370,7 +1421,7 @@ function getEditorScript(slug) {
     pop.querySelector('.cancel').addEventListener('click',function(){ pop.remove(); });
     pop.querySelector('.save').addEventListener('click',function(){
       var note=ta.value.trim(); if(!note){ pop.remove(); return; }
-      FEEDBACK.push({ id:'f'+(fbN++), target:targetKey(el), label:chapterFor(el)+' — "'+el.textContent.trim().replace(/\\s+/g,' ').slice(0,60)+'"', note:note, ts:new Date().toISOString() });
+      FEEDBACK.push({ id:'f'+(fbN++)+'_'+Date.now().toString(36), target:targetKey(el), label:chapterFor(el)+' — "'+el.textContent.trim().replace(/\\s+/g,' ').slice(0,60)+'"', note:note, ts:new Date().toISOString() });
       saveFeedback(); renderFeedbackPanel(); renderMarkers();
       pop.remove(); toast('Feedback saved');
     });
@@ -1417,3 +1468,99 @@ function getEditorScript(slug) {
 })();
 </script>`;
 }
+
+// ============================================================================
+// Store — Durable Object. One instance per store name. Single-threaded, so
+// concurrent PUTs from two sessions queue and each sees the other's committed
+// state: nothing is lost, and edits from multiple sessions stack seamlessly.
+//
+// State blob: { rev, e:{key:{v,r}}, tomb:{key:r} }
+//   rev  = monotonic revision, bumped once per merge
+//   e    = live entries; each carries the rev (r) at which it last changed
+//   tomb = tombstones; the rev at which a key was deleted (so pollers can drop it)
+// GET /delta?since=<rev> returns every entry with r>since plus every tomb>since,
+// which is exactly what a session hasn't seen yet — the basis for live stack-in.
+// ============================================================================
+export class Store {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+    this.S = null;
+    this.state.blockConcurrencyWhile(async () => {
+      this.S = (await this.state.storage.get('S')) || { rev: 0, e: {}, tomb: {} };
+    });
+  }
+
+  // One-time import of pre-existing KV data so anything already saved survives the
+  // cutover. Runs only while the DO is still empty; keyed maps import verbatim, arrays
+  // are keyed by item id (stamped in if missing) so later upserts line up, not duplicate.
+  async seedFrom(kvKey) {
+    if (!kvKey) return;
+    if (this.S.rev !== 0 || Object.keys(this.S.e).length) return;
+    let legacy = null;
+    try { legacy = await this.env.EDITS.get(kvKey, 'json'); } catch (e) { return; }
+    if (!legacy) return;
+    let set;
+    if (Array.isArray(legacy)) {
+      set = {};
+      legacy.forEach((it, i) => {
+        let k = (it && it.id != null) ? String(it.id) : ('t' + i);
+        if (it && typeof it === 'object' && it.id == null) it.id = k;
+        set[k] = it;
+      });
+    } else {
+      set = legacy;
+    }
+    this.S.rev = 1;
+    for (const k in set) this.S.e[k] = { v: set[k], r: 1 };
+    await this.state.storage.put('S', this.S);
+  }
+
+  materialize() {
+    const out = {};
+    for (const k in this.S.e) out[k] = this.S.e[k].v;
+    return out;
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    const op = url.pathname;
+
+    if (op === '/snapshot') {
+      await this.seedFrom(url.searchParams.get('seed'));
+      return djson({ rev: this.S.rev, entries: this.materialize() });
+    }
+
+    if (op === '/delta') {
+      const since = +(url.searchParams.get('since') || 0) || 0;
+      const set = {}, del = [];
+      for (const k in this.S.e) if (this.S.e[k].r > since) set[k] = this.S.e[k].v;
+      for (const k in this.S.tomb) if (this.S.tomb[k] > since) del.push(k);
+      return djson({ rev: this.S.rev, set, del });
+    }
+
+    if (op === '/merge') {
+      const body = await request.json();
+      const set = (body && body.set) || {}, del = (body && body.del) || [];
+      const nrev = this.S.rev + 1;
+      let touched = 0;
+      for (const k in set) { this.S.e[k] = { v: set[k], r: nrev }; delete this.S.tomb[k]; touched++; }
+      for (const k of del) { if (this.S.e[k]) delete this.S.e[k]; this.S.tomb[k] = nrev; touched++; }
+      if (touched) { this.S.rev = nrev; await this.state.storage.put('S', this.S); }
+      return djson({ rev: this.S.rev, count: Object.keys(this.S.e).length });
+    }
+
+    if (op === '/clear') {
+      const nrev = this.S.rev + 1;
+      const tomb = {};
+      for (const k in this.S.e) tomb[k] = nrev;     // tell pollers every key is gone
+      for (const k in this.S.tomb) tomb[k] = tomb[k] || this.S.tomb[k];
+      this.S = { rev: nrev, e: {}, tomb };
+      await this.state.storage.put('S', this.S);
+      return djson({ rev: this.S.rev, cleared: true });
+    }
+
+    return djson({ error: 'bad op' }, 400);
+  }
+}
+function djson(o, s = 200) { return new Response(JSON.stringify(o), { status: s, headers: { 'content-type': 'application/json' } }); }

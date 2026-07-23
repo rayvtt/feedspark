@@ -643,8 +643,12 @@ window.addEventListener('load',restore);
   var BRIEFS={};
   function apiGet(){ return fetch('/api/briefs').then(function(r){return r.json();})
     .catch(function(){ try{return JSON.parse(localStorage.getItem('fcc-briefs'))||{};}catch(e){return {};} }); }
+  // persist == upsert the whole map (server never implicit-deletes), so a save from this
+  // session can't wipe a brief another session just added. Deletes are explicit (delBrief).
   function persist(){ try{localStorage.setItem('fcc-briefs',JSON.stringify(BRIEFS));}catch(e){}
     fetch('/api/briefs',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(BRIEFS)}).catch(function(){}); }
+  function delBrief(id){ delete BRIEFS[id]; try{localStorage.setItem('fcc-briefs',JSON.stringify(BRIEFS));}catch(e){}
+    fetch('/api/briefs',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({__del:[id]})}).catch(function(){}); }
 
   // ---- brief building ----
   function code(client,market){ return slug(client)+'-'+(slug(market)||'gb'); }
@@ -652,7 +656,11 @@ window.addEventListener('load',restore);
     var d=new Date(), day=''+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate());
     var pre=slug(client).toUpperCase().slice(0,4)||'FS';
     var n=1; Object.keys(BRIEFS).forEach(function(k){ if(k.indexOf(pre+'-'+day)===0) n++; });
-    return pre+'-'+day+'-'+pad(n);
+    // Random 2-char suffix so two sessions creating a brief for the same client on the same
+    // day can't mint the same id (which would make one overwrite the other on merge).
+    var sfx=Math.floor(Math.random()*1296).toString(36).toUpperCase();
+    while(sfx.length<2) sfx='0'+sfx;
+    return pre+'-'+day+'-'+pad(n)+sfx;
   }
   function fields(){
     return { client:document.getElementById('bg-client').value, market:document.getElementById('bg-market').value||'gb',
@@ -1395,8 +1403,8 @@ window.addEventListener('load',restore);
   var dragId=null;
   function wireDrag(){
     document.querySelectorAll('.tik').forEach(function(c){
-      c.addEventListener('dragstart',function(){ dragId=c.getAttribute('data-id'); c.__drag=true; c.classList.add('drag'); });
-      c.addEventListener('dragend',function(){ c.classList.remove('drag'); setTimeout(function(){c.__drag=false;},50); });
+      c.addEventListener('dragstart',function(){ dragId=c.getAttribute('data-id'); c.__drag=true; window.__wfDragging=true; c.classList.add('drag'); });
+      c.addEventListener('dragend',function(){ c.classList.remove('drag'); window.__wfDragging=false; setTimeout(function(){c.__drag=false;},50); });
     });
     document.querySelectorAll('.lane').forEach(function(l){
       l.addEventListener('dragover',function(e){ e.preventDefault(); l.classList.add('drop'); });
@@ -1410,7 +1418,7 @@ window.addEventListener('load',restore);
   var scrim=document.getElementById('scrim'), modalEl=document.getElementById('modal');
   scrim.addEventListener('click',function(e){ if(e.target===scrim) closeModal(); });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeModal(); });
-  function closeModal(){ scrim.classList.remove('on'); }
+  function closeModal(){ scrim.classList.remove('on'); if(window.__wfSyncPending) scheduleWfRender(); }
   function openModal(id){ var b=BRIEFS[id]; if(!b)return;
     var comms=(b.comms||[]).map(function(c){ return '<div class="comm"><span class="cw">'+esc(c.from)+'</span><span class="cb">'+esc(c.note)+(c.done?' <span class="ck">✓ done signal</span>':'')+'</span></div>'; }).join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
     var stat=STAGES.map(function(s){ return '<button data-s="'+s[0]+'" class="'+(b.status===s[0]?'on':'')+'">'+s[1]+'</button>'; }).join('');
@@ -1433,7 +1441,7 @@ window.addEventListener('load',restore);
         +'<span class="grow"></span><button class="btn" id="m-del" style="border-color:#F3C9BC;color:#C0392B">Delete</button></div>';
     scrim.classList.add('on');
     document.getElementById('m-x').onclick=closeModal;
-    document.getElementById('m-del').onclick=function(){ if(confirm('Delete brief '+b.id+'?')){ delete BRIEFS[b.id]; persist(); renderAll(); closeModal(); } };
+    document.getElementById('m-del').onclick=function(){ if(confirm('Delete brief '+b.id+'?')){ delBrief(b.id); renderAll(); closeModal(); } };
     document.querySelectorAll('#m-stat button').forEach(function(btn){ btn.onclick=function(){
       b.status=btn.getAttribute('data-s'); b.updated=Date.now(); persist(); renderAll(); openModal(b.id); }; });
     // brief re-draft link
@@ -1560,8 +1568,14 @@ window.addEventListener('load',restore);
 
   // ---- #10 test & experiment register ----
   var TESTS=[];
-  function saveTests(){ try{localStorage.setItem('fcc-tests',JSON.stringify(TESTS));}catch(e){}
+  // Every test carries a stable id so concurrent sessions merge by id (not array index):
+  // two people adding a test at once both survive, and deletes target the right card.
+  function testId(){ return 'ts_'+Date.now().toString(36)+'_'+Math.floor(Math.random()*1e6).toString(36); }
+  function ensureTestIds(){ var dirty=false; TESTS.forEach(function(t){ if(t&&!t.id){ t.id=testId(); dirty=true; } }); return dirty; }
+  function saveTests(){ ensureTestIds(); try{localStorage.setItem('fcc-tests',JSON.stringify(TESTS));}catch(e){}
     fetch('/api/tests',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(TESTS)}).catch(function(){}); }
+  function delTest(id){ TESTS=TESTS.filter(function(t){return t.id!==id;}); try{localStorage.setItem('fcc-tests',JSON.stringify(TESTS));}catch(e){}
+    fetch('/api/tests',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({__del:[id]})}).catch(function(){}); }
   function seedTests(){ var seed=[
       {client:'YuMOVE',name:'Benefit copy in titles',hypo:'Benefit-led beats feature-led',skus:'FP range',start:'2026-03-01',readout:'',status:'done',result:'+24.7%'},
       {client:'YuMOVE',name:'“Multivitamins” category term',hypo:'Category term lifts CTR',skus:'Multivit SKUs',start:'2026-04-01',readout:'',status:'done',result:'+126.62%'},
@@ -1576,9 +1590,9 @@ window.addEventListener('load',restore);
       return '<tr><td class="c-client">'+esc(t.client)+'</td><td class="c-task">'+esc(t.name)+'</td>'
         +'<td>'+esc(t.hypo||'—')+'</td><td class="c-owner">'+esc(t.skus||'—')+'</td>'
         +'<td class="tst-ro '+rocls+'">'+(t.readout?humanISO(t.readout):'—')+'</td><td>'+stat+'</td>'
-        +'<td class="c-act"><button class="mini-btn" data-te="'+i+'">Edit</button> <button class="mini-btn" data-td="'+i+'">✕</button></td></tr>'; }).join('');
+        +'<td class="c-act"><button class="mini-btn" data-te="'+i+'">Edit</button> <button class="mini-btn" data-td="'+esc(t.id||'')+'">✕</button></td></tr>'; }).join('');
     host.querySelectorAll('[data-te]').forEach(function(b){ b.onclick=function(){ editTest(+b.getAttribute('data-te')); }; });
-    host.querySelectorAll('[data-td]').forEach(function(b){ b.onclick=function(){ if(confirm('Delete this test?')){ TESTS.splice(+b.getAttribute('data-td'),1); saveTests(); renderTests(); renderTimeline(); renderAlerts(); } }; });
+    host.querySelectorAll('[data-td]').forEach(function(b){ b.onclick=function(){ if(confirm('Delete this test?')){ delTest(b.getAttribute('data-td')); renderTests(); renderTimeline(); renderAlerts(); } }; });
   }
   function editTest(i){ var t=i>=0?TESTS[i]:{client:CLIENTS[0],name:'',hypo:'',skus:'',start:'',readout:'',status:'running',result:''};
     var name=prompt('Test name:',t.name); if(name===null)return; if(!name.trim())return;
@@ -1587,7 +1601,7 @@ window.addEventListener('load',restore);
     var skus=prompt('SKUs / cohort:',t.skus)||'';
     var readout=prompt('Read-out date (YYYY-MM-DD, blank if TBC):',t.readout)||'';
     var result=prompt('Result (blank if still running, e.g. +24.7%):',t.result)||'';
-    var nt={client:client,name:name.trim(),hypo:hypo,skus:skus,start:t.start||'',readout:readout.trim(),status:result?'done':'running',result:result.trim()};
+    var nt={id:(i>=0&&t.id)?t.id:testId(),client:client,name:name.trim(),hypo:hypo,skus:skus,start:t.start||'',readout:readout.trim(),status:result?'done':'running',result:result.trim()};
     if(i>=0)TESTS[i]=nt; else TESTS.push(nt); saveTests(); renderTests(); renderTimeline(); renderAlerts(); }
 
   // ---- bonus: AE workload heatmap (+ owner reassign write-back) ----
@@ -1663,14 +1677,50 @@ window.addEventListener('load',restore);
   (function(){ var d=new Date(); d.setDate(d.getDate()+5);
     document.getElementById('bg-due').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); })();
   refreshPreview();
-  apiGet().then(function(d){ BRIEFS=d||{}; renderAll(); setTimeout(maybeNotify,800); });
+  // Store revisions per collaborative board — the live-sync loop asks for deltas since these.
+  var REV={briefs:0,tests:0,carryover:0};
+  fetch('/api/briefs').then(function(r){ var v=r.headers.get('X-Store-Rev'); if(v!=null)REV.briefs=+v||0; return r.json(); })
+    .then(function(d){ BRIEFS=d||{}; renderAll(); setTimeout(maybeNotify,800); startWfSync(); })
+    .catch(function(){ apiGet().then(function(d){ BRIEFS=d||{}; renderAll(); }); });
   // #10 load the test register (KV; seed from wins + plan test-tasks on first run)
-  fetch('/api/tests').then(function(r){return r.json();}).then(function(d){ if(d&&d.length){TESTS=d;} else {TESTS=seedTests(); saveTests();} renderTests(); renderTimeline(); renderAlerts(); })
+  fetch('/api/tests').then(function(r){ var v=r.headers.get('X-Store-Rev'); if(v!=null)REV.tests=+v||0; return r.json(); }).then(function(d){ if(d&&d.length){TESTS=d;} else {TESTS=seedTests(); saveTests();} if(ensureTestIds())saveTests(); renderTests(); renderTimeline(); renderAlerts(); })
     .catch(function(){ try{TESTS=JSON.parse(localStorage.getItem('fcc-tests'));}catch(e){} if(!TESTS||!TESTS.length)TESTS=seedTests(); renderTests(); renderTimeline(); renderAlerts(); });
   // #1 pull live plan rows on load (falls back to the git snapshot until the SA is connected)
   fetchLive(false);
   // ATRT carry-over: load saved statuses for the imported legacy tasks (retired tracker)
-  fetch('/api/carryover').then(function(r){return r.json();}).then(function(d){ CARRY_STAT=d||{}; renderAll(); }).catch(function(){});
+  fetch('/api/carryover').then(function(r){ var v=r.headers.get('X-Store-Rev'); if(v!=null)REV.carryover=+v||0; return r.json(); }).then(function(d){ CARRY_STAT=d||{}; renderAll(); }).catch(function(){});
+
+  // ---- live cross-session sync ----------------------------------------------------------
+  // Poll each board for deltas since our last-seen revision and merge other sessions' changes
+  // in. Data is applied to the in-memory maps immediately (never lost); the re-render is held
+  // back while a modal is open or a card is being dragged, then flushed, so a teammate's edit
+  // can't yank the board out from under an in-progress action.
+  function wfBusy(){ return !!window.__wfDragging || (scrim && scrim.classList.contains('on')); }
+  function scheduleWfRender(){ if(wfBusy()){ window.__wfSyncPending=true; return; } window.__wfSyncPending=false; renderAll(); }
+  function idxById(arr,id){ for(var i=0;i<arr.length;i++){ if(arr[i]&&arr[i].id===id) return i; } return -1; }
+  function startWfSync(){ if(window.__wfSyncOn) return; window.__wfSyncOn=true;
+    setInterval(function(){
+      if(document.hidden) return;
+      fetch('/api/briefs?since='+REV.briefs).then(function(r){return r.json();}).then(function(d){
+        if(!d||d.rev==null||d.rev===REV.briefs) return; REV.briefs=d.rev; var ch=false;
+        if(d.set) Object.keys(d.set).forEach(function(k){ BRIEFS[k]=d.set[k]; ch=true; });
+        if(d.del) d.del.forEach(function(k){ if(BRIEFS[k]){ delete BRIEFS[k]; ch=true; } });
+        if(ch){ try{localStorage.setItem('fcc-briefs',JSON.stringify(BRIEFS));}catch(e){} scheduleWfRender(); }
+      }).catch(function(){});
+      fetch('/api/tests?since='+REV.tests).then(function(r){return r.json();}).then(function(d){
+        if(!d||d.rev==null||d.rev===REV.tests) return; REV.tests=d.rev; var ch=false;
+        if(d.set) Object.keys(d.set).forEach(function(k){ var v=d.set[k]; var id=(v&&v.id)||k; var i=idxById(TESTS,id); if(i>=0)TESTS[i]=v; else TESTS.push(v); ch=true; });
+        if(d.del) d.del.forEach(function(k){ var i=idxById(TESTS,k); if(i>=0){ TESTS.splice(i,1); ch=true; } });
+        if(ch){ try{localStorage.setItem('fcc-tests',JSON.stringify(TESTS));}catch(e){} scheduleWfRender(); }
+      }).catch(function(){});
+      fetch('/api/carryover?since='+REV.carryover).then(function(r){return r.json();}).then(function(d){
+        if(!d||d.rev==null||d.rev===REV.carryover) return; REV.carryover=d.rev; var ch=false;
+        if(d.set) Object.keys(d.set).forEach(function(k){ CARRY_STAT[k]=d.set[k]; ch=true; });
+        if(d.del) d.del.forEach(function(k){ if(CARRY_STAT[k]!=null){ delete CARRY_STAT[k]; ch=true; } });
+        if(ch) scheduleWfRender();
+      }).catch(function(){});
+    }, 5000);
+  }
   // pull the live Gmail intake (client task emails) once the service account is connected
   (function(){ var dot=document.getElementById('gdot'), st=document.getElementById('gstate');
     fetch('/api/gmail/intake').then(function(r){return r.json();}).then(function(d){

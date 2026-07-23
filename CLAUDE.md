@@ -156,8 +156,9 @@ GET  /                          → command center landing page (git-bundled + i
 GET  /workflow                  → Workflow control center (brief pipeline: Client→AM→ASPL)
 GET  /leadership /readiness /library /deck-builder /templates /roadmap → app modules
 GET  /deck/yumove               → YuMOVE strategy deck (git-bundled + injected editor)
-GET  /api/edits?page=<slug>     → return a page's saved edits as JSON
-PUT  /api/edits?page=<slug>     → save an edit patch (merges with existing)
+GET  /api/edits?page=<slug>     → return a page's saved edits as JSON (X-Store-Rev header)
+GET  /api/edits?page=<slug>&since=<rev> → delta {rev,set,del} for live cross-session sync
+PUT  /api/edits?page=<slug>     → upsert an edit patch (whole map = upsert; {__del:[..]} to remove)
 DELETE /api/edits?page=<slug>   → clear a page's saved edits
 GET  /api/template              → info only; pages are git-bundled (push to main to change them)
 GET|PUT /api/briefs             → Workflow brief pipeline store (KV `briefs`, whole-map PUT)
@@ -167,6 +168,13 @@ GET|POST /api/claude            → Tachyon copilot proxy to Claude Messages API
   (`docs/tachyon_widget.html`, reads `window.PLANTASKS`, calls `/api/claude`).
 - **Secrets**: `ANTHROPIC_API_KEY` powers Tachyon (`wrangler secret put ANTHROPIC_API_KEY`); both
   the copilot and Gmail/plan live-sync degrade gracefully until their credential is set.
+- **Multi-session safety**: every mutable store (`edits`, `feedback`, `briefs`, `tests`, `carryover`,
+  `clients`) is backed by a **`Store` Durable Object** (one per name, single-threaded → concurrent
+  writes serialize, nothing lost). PUT **upserts** (never implicit-deletes) so two sessions stack
+  instead of clobbering; deletes are explicit (`{__del:[id]}` / `DELETE`). Each store has a monotonic
+  `rev` (`X-Store-Rev`); open tabs poll `GET ?since=<rev>` and merge others' changes in live. Stores
+  seed from their old KV key once on first touch (zero-migration). Binding + `new_sqlite_classes`
+  migration are in the repo-root `wrangler.toml`; KV `EDITS` stays bound as the seed source.
 - **Pages = git**: `docs/FeedSpark_Command_Center.html` (`/`) and `docs/YuMOVE_Strategy_Review_Jul26.html`
   (`/deck/yumove`) are imported into the worker as Text modules (root `wrangler.toml` `rules`).
   **Add a page = add an import + one line in the worker's `PAGES` map.** Push to `main` → Cloudflare

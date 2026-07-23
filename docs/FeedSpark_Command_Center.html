@@ -888,7 +888,29 @@ window.addEventListener('load',restore);
       saveStore(); mergeStore(); buildList(); render(nm); };
   }
   function boot(){ mergeStore(); buildList(); var ks=Object.keys(B); if(ks.length) render(ks[0]); }
-  fetch(API+'/api/clients').then(function(r){return r.json();}).then(function(s){ store=s||{}; boot(); }).catch(function(){ store={}; boot(); });
+  var CLIENTS_REV=0;
+  fetch(API+'/api/clients').then(function(r){ var v=r.headers.get('X-Store-Rev'); if(v!=null)CLIENTS_REV=+v||0; return r.json(); })
+    .then(function(s){ store=s||{}; boot(); startClientsSync(); }).catch(function(){ store={}; boot(); });
+
+  // ---- live cross-session sync: pull other sessions' dossier edits and stack them in ------
+  // Data is merged into `store` immediately so nothing is lost; the visible re-render is
+  // deferred while you're actively typing in an editable field, then applied — so a
+  // teammate's change never clobbers text you're mid-edit.
+  function ccBusy(){ var a=document.activeElement; return editMode && a && (a.isContentEditable || /^(INPUT|TEXTAREA)$/.test(a.tagName)); }
+  var ccPending=false;
+  function ccRerender(){ if(ccBusy()){ ccPending=true; return; } ccPending=false; mergeStore(); buildList(); if(cur&&B[cur])render(cur); else { var ks=Object.keys(B); if(ks.length)render(ks[0]); } }
+  document.addEventListener('focusout',function(){ if(ccPending) setTimeout(ccRerender,0); });
+  function startClientsSync(){ if(window.__ccSyncOn) return; window.__ccSyncOn=true;
+    setInterval(function(){
+      if(document.hidden) return;
+      fetch(API+'/api/clients?since='+CLIENTS_REV).then(function(r){return r.json();}).then(function(d){
+        if(!d||d.rev==null||d.rev===CLIENTS_REV) return; CLIENTS_REV=d.rev; var ch=false;
+        if(d.set) Object.keys(d.set).forEach(function(k){ store[k]=d.set[k]; ch=true; });
+        if(d.del) d.del.forEach(function(k){ if(store[k]!=null){ delete store[k]; ch=true; } });
+        if(ch) ccRerender();
+      }).catch(function(){});
+    }, 6000);
+  }
 })();
 </script>
 

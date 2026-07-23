@@ -22,12 +22,32 @@ no separate template-upload step.
 | Method | Path | Purpose |
 |---|---|---|
 | GET | `/` | Serve the deck (git-bundled template + injected editor widget) |
-| GET | `/api/edits` | Saved edits as JSON, keyed by `data-eid` |
-| PUT | `/api/edits` | Merge an edit patch (the widget calls this on auto-save) |
+| GET | `/api/edits` | Saved edits as JSON, keyed by `data-eid` (returns `X-Store-Rev` header) |
+| GET | `/api/edits?since=<rev>` | Delta since a revision: `{rev, set:{key:val}, del:[key]}` (live sync) |
+| PUT | `/api/edits` | Upsert an edit patch (auto-save). Whole map = upsert; `{__del:[...]}` to remove |
 | DELETE | `/api/edits` | Clear all saved edits |
 | GET | `/api/template` | Info only — the template is git-bundled; push to `main` to change it |
 
 There is **no `PUT /api/template`** on purpose: git is the single source of truth for the template.
+
+## Multi-session safety (no overwrites, live stack-in)
+
+Every mutable store (`/api/edits`, `/api/feedback`, `/api/briefs`, `/api/tests`, `/api/carryover`,
+`/api/clients`) is backed by a **`Store` Durable Object** — one instance per store name. Because a
+Durable Object runs **single-threaded**, concurrent writes from two sessions *serialize* instead of
+racing, so nothing is silently lost (plain KV has no atomic read-modify-write and would clobber).
+
+- **PUT upserts, never implicit-deletes.** A session posting its whole (possibly stale) map only
+  ever adds/updates *its* keys — it can't erase a brief/test/client another session just added.
+  Deletes are explicit: `PUT {__del:[id,...]}` or `DELETE` (clear all).
+- **Monotonic revision + deltas.** Each store carries a `rev` (returned in `X-Store-Rev`). Open tabs
+  poll `GET ?since=<rev>` every few seconds and merge other sessions' changes in live — no reload,
+  and never over the element/field the local user is mid-edit in.
+- **Zero-migration cutover.** On first touch each Store imports its old KV key (`briefs`,
+  `edits:<slug>`, …) once, so everything already saved carries over. KV stays bound as the seed source.
+
+Binding + migration live in the repo-root `wrangler.toml` (`[[durable_objects.bindings]]` +
+`new_sqlite_classes = ["Store"]`) — SQLite-backed, so it runs on the same plan the worker already uses.
 
 ## Deploy
 

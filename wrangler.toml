@@ -15,9 +15,23 @@ rules = [
 crons = ["0 * * * *"]
 
 # Ray's in-browser copy edits (data-eid patches) live here; they re-overlay client-side.
+# Still the seed source: the Store DO imports each key from KV once on first touch.
 [[kv_namespaces]]
 binding = "EDITS"
 id = "d93b5ac576c74f0d8a315c5b92dc8e16"
+
+# Collaborative store — Durable Object. Every mutable board (briefs, tests, carryover,
+# clients, per-page edits/feedback) runs through one Store instance per name. Single-threaded
+# execution serializes concurrent writes so two sessions on the same dashboard never overwrite
+# each other, and a monotonic revision drives live ?since=<rev> stack-in. SQLite-backed, so it
+# runs on the same plan the worker already uses — no extra provisioning.
+[[durable_objects.bindings]]
+name = "STORE"
+class_name = "Store"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Store"]
 
 # Tachyon copilot (/api/claude) reads the Anthropic API key from a Worker SECRET — never
 # committed here. Set it once and the copilot goes live with no redeploy:
