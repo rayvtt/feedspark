@@ -169,9 +169,27 @@ GET|POST /api/claude            → Tachyon copilot proxy to Claude Messages API
   the copilot and Gmail/plan live-sync degrade gracefully until their credential is set.
 - **Pages = git**: `docs/FeedSpark_Command_Center.html` (`/`) and `docs/YuMOVE_Strategy_Review_Jul26.html`
   (`/deck/yumove`) are imported into the worker as Text modules (root `wrangler.toml` `rules`).
-  **Add a page = add an import + one line in the worker's `PAGES` map.** Push to `main` → Cloudflare
-  rebuilds → live. No `PUT /api/template`. `wrangler.toml` lives at the **repo root** (deploy from root).
-  KV edits are namespaced per page (`edits:<slug>`), so pages never collide.
+  **Add a page = add an import + one line in the worker's `PAGES` map.** Push to `main` → **GitHub Actions
+  runs `wrangler deploy`** → live. No `PUT /api/template`. `wrangler.toml` lives at the **repo root** (deploy
+  from root). KV edits are namespaced per page (`edits:<slug>`), so pages never collide.
+
+### Deploy pipeline (GitHub Actions) — ALWAYS verify end-to-end
+Deploys run via **GitHub Actions `wrangler deploy`** on every push to `main` (`.github/workflows/deploy.yml`);
+a green run means the new version is live (synchronous edge publish — no CF git-integration build/promote
+stall, no "nudge" commits). PRs are gated by `validate.yml` (dry-run build + inline-script check). Full
+root-cause history, protocol + runbook: [`docs/DEPLOY_PROTOCOL.md`](./docs/DEPLOY_PROTOCOL.md).
+
+> ⚠️ **A feature is NOT done until it is confirmed LIVE on the FCC — always watch the deploy end-to-end.**
+> Never report a change as shipped on the strength of a merge alone. After merging to `main`:
+> 1. Confirm the **Deploy** Action run went **green** (GitHub Actions tab / `actions_list`).
+> 2. Confirm the worker actually re-published — its Cloudflare `modified_on` advanced (Cloudflare MCP
+>    `workers_list`) or the Deploy run succeeded.
+> 3. Verify the live build at **`/api/version`** — the returned `sha` matches the merge commit.
+> 4. Sanity-check the actual page/feature is present.
+>
+> If a deploy fails, read the Action log, fix forward, and re-verify — don't leave a feature half-published.
+> (Access-gated endpoints can't be curled from CI, so `modified_on` + a green run are the machine-checkable
+> signals; `/api/version` is the human check once logged in.)
 
 ### Command center data — ATRT Tracker
 - The command center (`/`) shows **live workload**, **tests running** and **accounts & project plans**
