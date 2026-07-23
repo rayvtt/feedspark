@@ -746,8 +746,18 @@ window.addEventListener('load',restore);
     Object.keys(store).forEach(function(k){ if(k==='_deleted')return; var o={}; var g=GIT[k]||{}; for(var p in g)o[p]=g[p]; var s=store[k]||{}; for(var q in s)o[q]=s[q]; B[k]=o; });
     (store._deleted||[]).forEach(function(k){ delete B[k]; });
   }
+  // Concurrency-safe dossier saves: the worker merges per client (deletes only via _deleted),
+  // echoes back the MERGED map + a fresh X-Sync-Base read-stamp, and we adopt it — so edits from
+  // another tab/person survive our save. Adoption skips re-rendering while ✎ Edit mode is active
+  // (a re-render mid-typing would eat the caret); the next natural render shows the merged state.
+  var storeBase=0;
   function saveStore(){ if(saveT)clearTimeout(saveT); saveT=setTimeout(function(){
-    fetch(API+'/api/clients',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(store)}).catch(function(){}); },600); }
+    fetch(API+'/api/clients',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(storeBase)},body:JSON.stringify(store)})
+      .then(function(r){ storeBase=+r.headers.get('X-Sync-Base')||storeBase; return r.json(); })
+      .then(function(m){ if(!m||typeof m!=='object'||m.ok)return;   // old worker shape — don't adopt
+        if(JSON.stringify(m)===JSON.stringify(store))return;
+        store=m; mergeStore(); if(!editMode){ buildList(); if(cur)render(cur); } })
+      .catch(function(){}); },600); }
   function setField(name,field,val){ store[name]=store[name]||{}; store[name][field]=val; saveStore(); mergeStore(); }
   function planAvg(){ var s=0,n=0; for(var k in PT){ if(PT[k]&&PT[k].score){s+=PT[k].score;n++;} } return n?Math.round(s/n):0; }
   function planScore(name,p){
@@ -917,7 +927,7 @@ window.addEventListener('load',restore);
       +'<button class="dz-edit">✎ Edit dossier</button><button class="dz-add" style="display:none">+ Add client</button>';
     host.insertBefore(ctl, host.querySelector('p'));
     ctl.querySelector('.dz-refresh').onclick=function(){ var b=this; b.textContent='↻ …';
-      fetch(API+'/api/clients').then(function(r){return r.json();}).then(function(s){ store=s||{}; mergeStore(); buildList(); if(cur)render(cur); b.textContent='↻ Refresh'; }).catch(function(){ b.textContent='↻ Refresh'; }); };
+      fetch(API+'/api/clients').then(function(r){ storeBase=+r.headers.get('X-Sync-Base')||storeBase; return r.json(); }).then(function(s){ store=s||{}; mergeStore(); buildList(); if(cur)render(cur); b.textContent='↻ Refresh'; }).catch(function(){ b.textContent='↻ Refresh'; }); };
     ctl.querySelector('.dz-sync').onclick=function(){ liveSync(true,this); };
     setTimeout(function(){ liveSync(false,ctl.querySelector('.dz-sync')); },600);   // auto-pull on open (KV-cached server-side)
     ctl.querySelector('.dz-edit').onclick=function(){ editMode=!editMode; this.classList.toggle('on',editMode);
@@ -931,7 +941,7 @@ window.addEventListener('load',restore);
       saveStore(); mergeStore(); buildList(); render(nm); };
   }
   function boot(){ mergeStore(); buildList(); var ks=Object.keys(B); if(ks.length) render(ks[0]); }
-  fetch(API+'/api/clients').then(function(r){return r.json();}).then(function(s){ store=s||{}; boot(); }).catch(function(){ store={}; boot(); });
+  fetch(API+'/api/clients').then(function(r){ storeBase=+r.headers.get('X-Sync-Base')||0; return r.json(); }).then(function(s){ store=s||{}; boot(); }).catch(function(){ store={}; boot(); });
 })();
 </script>
 

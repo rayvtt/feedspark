@@ -713,11 +713,19 @@ window.addEventListener('load',restore);
     return d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'});}
 
   // ---- store: KV via /api/briefs when served by the worker; localStorage fallback for offline ----
-  var BRIEFS={};
-  function apiGet(){ return fetch('/api/briefs').then(function(r){return r.json();})
+  // Concurrency-safe: the worker merges per brief (not last-tab-wins). GET hands us a read-stamp
+  // (X-Sync-Base); PUT echoes it and returns the MERGED map, which we adopt — so briefs saved by
+  // another tab/person survive our save and appear here.
+  var BRIEFS={}, BRIEFS_BASE=0;
+  function apiGet(){ return fetch('/api/briefs').then(function(r){ BRIEFS_BASE=+r.headers.get('X-Sync-Base')||0; return r.json(); })
     .catch(function(){ try{return JSON.parse(localStorage.getItem('fcc-briefs'))||{};}catch(e){return {};} }); }
   function persist(){ try{localStorage.setItem('fcc-briefs',JSON.stringify(BRIEFS));}catch(e){}
-    fetch('/api/briefs',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(BRIEFS)}).catch(function(){}); }
+    fetch('/api/briefs',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(BRIEFS_BASE)},body:JSON.stringify(BRIEFS)})
+      .then(function(r){ BRIEFS_BASE=+r.headers.get('X-Sync-Base')||BRIEFS_BASE; return r.json(); })
+      .then(function(m){ if(!m||typeof m!=='object'||m.ok)return;   // old worker shape ({ok:true}) — don't adopt
+        var merged=JSON.stringify(m); if(merged===JSON.stringify(BRIEFS))return;
+        BRIEFS=m; try{localStorage.setItem('fcc-briefs',merged);}catch(e){} renderAll(); })
+      .catch(function(){}); }
 
   // ---- brief building ----
   function code(client,market){ return slug(client)+'-'+(slug(market)||'gb'); }

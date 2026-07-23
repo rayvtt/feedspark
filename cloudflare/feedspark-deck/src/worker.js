@@ -24,6 +24,7 @@
 // Pages are bundled from git at build time as Text modules. Editing structure/layout means
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
+import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
@@ -123,14 +124,9 @@ export default {
     // A single JSON object keyed by brief id: {id: {client, code, task, due, status, comms, ...}}.
     // The board owns its state and PUTs the whole map; small N, no races worth the complexity.
     if (path === '/api/briefs') {
-      if (request.method === 'GET') {
-        return json((await env.EDITS.get('briefs', 'json')) || {});
-      }
-      if (request.method === 'PUT') {
-        const body = await request.json();
-        await env.EDITS.put('briefs', JSON.stringify(body));
-        return json({ ok: true, count: Object.keys(body || {}).length });
-      }
+      // brief pipeline: deletion = absence, disambiguated by the writer's X-Sync-Base read-stamp
+      const r = await mapStoreRoute(env, request, 'briefs', {});
+      if (r) return r;
     }
 
     // ---- test & experiment register (Workflow) — a single JSON array of test cards ----
@@ -156,15 +152,9 @@ export default {
     // ---- client store (dossier data layer: add / delete / link-sheet / edit-text persist here) ----
     // A single JSON object: per-brand overrides/additions to the git profiles, plus a _deleted list.
     if (path === '/api/clients') {
-      if (request.method === 'GET') {
-        const store = await env.EDITS.get('clients', 'json');
-        return json(store || {});
-      }
-      if (request.method === 'PUT') {
-        const body = await request.json();
-        await env.EDITS.put('clients', JSON.stringify(body));
-        return json({ ok: true, count: Object.keys(body).length });
-      }
+      // dossier store: deletions travel in the explicit `_deleted` array, never by absence
+      const r = await mapStoreRoute(env, request, 'clients', { explicitTombstones: true });
+      if (r) return r;
     }
 
     // ---- template info (structure layer: bundled from git, not KV) ----
@@ -542,8 +532,29 @@ export default {
   },
 };
 
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS } });
+function json(data, status = 200, extraHeaders) {
+  return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS, ...(extraHeaders || {}) } });
+}
+
+// Concurrency-safe whole-map store (clients / briefs): per-key merge via kvmerge.js instead of
+// last-writer-wins overwrite. GET hands the client a read-stamp (X-Sync-Base); PUT echoes it so
+// "key absent" can be told apart from "key deleted", merges, and returns the MERGED map + a fresh
+// stamp for the client to adopt. Legacy pages that PUT plain maps without the header degrade to
+// union-only merges (nothing lost, absence never deletes).
+async function mapStoreRoute(env, request, kvKey, opts) {
+  if (request.method === 'GET') {
+    const lifted = liftEnvelope(await env.EDITS.get(kvKey, 'json'), Date.now());
+    return json(envelopeToClient(lifted, opts), 200, { 'X-Sync-Base': String(Date.now()) });
+  }
+  if (request.method === 'PUT') {
+    let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+    const base = Number(request.headers.get('X-Sync-Base') || 0) || 0;
+    const now = Date.now();
+    const envx = mergeIntoEnvelope(liftEnvelope(await env.EDITS.get(kvKey, 'json'), now), body, base, now, opts);
+    await env.EDITS.put(kvKey, JSON.stringify(envx));
+    return json(envelopeToClient(envx, opts), 200, { 'X-Sync-Base': String(Date.now()) });
+  }
+  return null;
 }
 
 // ---- Google service-account auth: sign a JWT with the SA private key, impersonate the

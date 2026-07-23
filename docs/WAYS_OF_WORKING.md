@@ -118,14 +118,22 @@ you're editing: **re-verify your feature *behaves*, not just that git merged.** 
 against the merged tree and re-read the touching region — another session may have restructured
 the code your change hooks into (new block, renamed function, moved anchor).
 
-### 4. Known gap — FCC runtime data (KV last-write-wins)
-`PUT /api/clients` (dossier edits) and `PUT /api/briefs` (Workflow pipeline) write the **whole
-map** — two open browser tabs, or two people (Ray + Steven), can silently clobber each other's
-saves. `/api/edits` merges per-key and is safe. Phase‑2 fix, deliberately not rushed: per-key
-server-side merge with `updatedAt` per entry + tombstone timestamps (a naive merge would
-resurrect deleted entries), or a `_rev` optimistic-concurrency check returning 409 → refetch +
-merge client-side. Until it ships: one editor at a time per surface; refresh (`↻`) before a burst
-of dossier/brief edits.
+### 4. FCC runtime data — per-key KV merge (shipped)
+`PUT /api/clients` (dossier edits) and `PUT /api/briefs` (Workflow pipeline) used to write the
+**whole map** — two open tabs, or two people (Ray + Steven), silently clobbered each other's
+saves. Fixed with a per-key LWW merge (`cloudflare/feedspark-deck/src/kvmerge.js`): every key
+carries a server-side timestamp, deletions become tombstones, and "absent from the incoming map"
+is disambiguated with the writer's read-stamp (**X-Sync-Base**: absent + stored-newer = writer
+never saw it → keep; absent + stored-older = writer deleted it → tombstone). The dossier store
+deletes **only** via its explicit `_deleted` array; a tombstone newer than a writer's read beats
+their stale copy (no resurrection), and a deliberate re-add after a fresh read wins back. PUT
+returns the **merged** map + a fresh stamp, which both pages adopt (skipping re-render while ✎
+Edit mode is active, so the caret survives). Legacy pages that PUT without the header degrade to
+union-only merges — nothing lost, absence never deletes. Unit-suite: 10 scenarios incl. the
+two-stale-tabs clobber, tombstone-vs-stale-writer, un-delete, and the v1→v2 envelope lift.
+Residual (accepted): two PUTs inside the same few **milliseconds** can still interleave — KV has
+no transactions; the minutes-long stale-tab window was the real failure mode. `/api/edits`
+already merged per-key and is untouched.
 
 ---
 
