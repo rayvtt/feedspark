@@ -1449,6 +1449,8 @@ function getEditorScript(slug) {
 </style>
 <script>
 (function(){
+  // client decks only — the FCC app pages (/, /workflow, …) aren't a download deliverable
+  if(!/^\\/deck\\//.test(location.pathname)) return;
   function preparePrint(){
     document.querySelectorAll('.rv').forEach(function(el){ el.classList.add('in'); });
     document.querySelectorAll('.fill[data-w]').forEach(function(el){ var w=el.getAttribute('data-w'); if(w) el.style.width=w+'%'; });
