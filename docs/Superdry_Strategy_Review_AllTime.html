@@ -44,16 +44,15 @@ section{padding:104px 0}
 .progress{position:absolute;bottom:-1px;left:0;height:2px;background:var(--orange);width:0}
 .tb-sub{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 
-/* sticky left side-nav — compact numbered rail, hover reveals the label */
-.side-nav{position:fixed;top:50%;left:16px;transform:translateY(-50%);z-index:58;display:flex;flex-direction:column;gap:3px;opacity:0;pointer-events:none;transition:opacity .35s ease}
+/* sticky left side-nav — every section always visible; inactive muted/low-opacity, active gently lit */
+.side-nav{position:fixed;top:50%;left:18px;transform:translateY(-50%);z-index:58;display:flex;flex-direction:column;gap:1px;padding:8px 6px;background:rgba(255,255,255,.55);backdrop-filter:blur(4px);border:1px solid rgba(230,230,230,.55);opacity:0;pointer-events:none;transition:opacity .35s ease}
 .side-nav.show{opacity:1;pointer-events:auto}
-.side-nav a{position:relative;display:flex;align-items:center;justify-content:center;width:30px;height:24px;font-size:10px;font-weight:900;letter-spacing:.02em;color:#BDBDBD;text-decoration:none;border-left:2px solid var(--line);transition:color .25s,border-color .25s,height .25s}
-.side-nav a:hover{color:var(--ink);border-left-color:var(--muted)}
-/* active section lights up and holds until the next one takes over */
-.side-nav a.active{color:var(--orange-deep);border-left-color:var(--orange);border-left-width:3px}
-.side-nav a .sn-l{position:absolute;left:34px;white-space:nowrap;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:rgba(255,255,255,.96);border:1px solid var(--line);border-left:2px solid var(--orange);box-shadow:var(--shadow);padding:4px 10px;opacity:0;pointer-events:none;transform:translateX(-5px);transition:opacity .22s,transform .22s}
-.side-nav a:hover .sn-l,.side-nav a.active .sn-l{opacity:1;transform:none}
-.side-nav a.active .sn-l{color:var(--orange-deep)}
+.side-nav a{display:flex;align-items:center;gap:9px;padding:4px 10px 4px 11px;border-left:2px solid var(--line);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;text-decoration:none;color:var(--muted);opacity:.45;white-space:nowrap;transition:opacity .2s,color .2s,border-color .2s}
+.side-nav a .sn-n{font-weight:900;color:#BDBDBD;min-width:15px;transition:color .2s}
+.side-nav a:hover{opacity:.85;color:var(--ink)}
+/* active section: full opacity + a gentle orange accent (not a loud pill) */
+.side-nav a.active{opacity:1;color:var(--orange-deep);border-left-color:var(--orange);border-left-width:3px}
+.side-nav a.active .sn-n{color:var(--orange-deep)}
 @media(max-width:1280px){.side-nav{display:none}}
 
 /* hero */
