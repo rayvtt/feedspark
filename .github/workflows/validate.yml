@@ -24,3 +24,6 @@ jobs:
 
       - name: Syntax-check the dashboard pages' inline scripts
         run: node tools/check_inline_scripts.js
+
+      - name: Shipped-feature markers (multi-session overwrite tripwire)
+        run: node tools/check_markers.js
