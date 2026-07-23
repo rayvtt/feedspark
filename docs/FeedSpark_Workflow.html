@@ -1187,7 +1187,7 @@ window.addEventListener('load',restore);
         .catch(function(){ toast('Saved locally — sheet write failed (check the SA has Editor access)'); });
     } else toast('Added locally · no plan sheet linked for '+client);
   }
-  var itState={srcs:[],clients:[],q:'',statuses:['open','progress','briefed'],window:'2m',sort:'client',dir:1,showHidden:false};   // multi-select: empty array = all
+  var itState={srcs:[],clients:[],q:'',statuses:[],window:'2m',sort:'client',dir:1,showHidden:false};   // multi-select: empty array = all statuses (show everything by default; narrow manually)
   var itSel={};   // bulk selection: key -> task object
   // UK-first date parse (DD/MM/YYYY, "DD Mon YYYY"); swaps if it reads as MM/DD
   function parseUKDate(s){ s=String(s||'').trim(); if(!s)return null; var m;
