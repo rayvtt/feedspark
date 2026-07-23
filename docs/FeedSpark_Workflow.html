@@ -1095,13 +1095,15 @@ window.addEventListener('load',restore);
     toast('ATRT task updated · '+val); }
   // ---- write the unique ATRT tasks (not found in a plan) INTO their brand's Project Plan ----
   function pushedSet(){ try{return JSON.parse(localStorage.getItem('fcc-atrt-pushed')||'{}');}catch(e){return {};} }
-  function pushableCarry(){ var pushed=pushedSet(); return carryTasks().filter(function(t){ return PLANSHEET[t.client] && !pushed[t.client+'|'+t.task]; }); }
+  // pushable = ATRT-imported tasks + SVS roadmap tasks (both source 'atrt') that have a plan
+  // sheet and haven't been written yet. "Push to plans" appends these into the brand's sheet.
+  function pushableCarry(){ var pushed=pushedSet(); return carryTasks().concat(roadmapTasks()).filter(function(t){ return PLANSHEET[t.client] && !pushed[t.client+'|'+t.task]; }); }
   function finishPush(pushed,wrote,fail){ try{localStorage.setItem('fcc-atrt-pushed',JSON.stringify(pushed));}catch(e){}
     toast(fail?('Wrote '+wrote+' · '+fail+' plan(s) failed — check the SA has Editor access'):('✓ Wrote '+wrote+' task'+(wrote===1?'':'s')+' into their plans'));
     setTimeout(function(){ fetchLive(true); },700); }
   function pushUniquesToPlans(){
-    var items=pushableCarry(); if(!items.length){ toast('Nothing to write — every unique is already in a plan'); return; }
-    if(!confirm('Write '+items.length+' unique ATRT task'+(items.length===1?'':'s')+' into their project plans? (AllSaints & Damson have no plan sheet — they stay in the inbox.)')) return;
+    var items=pushableCarry(); if(!items.length){ toast('Nothing to write — every task is already in a plan'); return; }
+    if(!confirm('Write '+items.length+' task'+(items.length===1?'':'s')+' (ATRT imports + SVS roadmap) into their project plans? Needs the Google service account connected with Editor access to each sheet.')) return;
     var byBrand={}; items.forEach(function(t){ (byBrand[t.client]=byBrand[t.client]||[]).push(t); });
     var brands=Object.keys(byBrand), done=0, wrote=0, fail=0, pushed=pushedSet();
     toast('Writing '+items.length+' task'+(items.length===1?'':'s')+' into '+brands.length+' plan'+(brands.length===1?'':'s')+'…');
