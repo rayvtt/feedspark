@@ -393,7 +393,24 @@ export default {
         const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
         const oc = c.ownerCol, sc = c.statusCol, dc = c.dueCol;
         const width = Math.max(tc, oc, sc, dc, 0) + 1;
-        const values = rows.map(r => { const a = new Array(width).fill(''); a[tc] = r.task || ''; if (oc >= 0) a[oc] = r.owner || ''; if (sc >= 0) a[sc] = r.status || 'Open'; if (dc >= 0 && r.due) a[dc] = r.due; return a; });
+        // Month-section aware: a row may carry a `month` label (e.g. "August 2026"). Detect which
+        // month sections already exist in the plan; when a row's month has no section yet, emit a
+        // month-header row before it (once), so tasks land under the right monthly section — new
+        // future sections (Aug/Sep/Oct 26) are created rather than dumped flat at the bottom.
+        const existingMonths = new Set();
+        for (let r = 0; r < grid.length; r++) {
+          const row = grid[r] || []; let mh = '';
+          for (let k = 0; k < Math.min(row.length, 6); k++) { mh = monthOf(row[k]); if (mh) break; }
+          if (mh && !row.some(v => isStatusTok(v))) existingMonths.add(mh);
+        }
+        const taskRow = r => { const a = new Array(width).fill(''); a[tc] = r.task || ''; if (oc >= 0) a[oc] = r.owner || ''; if (sc >= 0) a[sc] = r.status || 'Open'; if (dc >= 0 && r.due) a[dc] = r.due; return a; };
+        const emitted = new Set();
+        const values = [];
+        for (const r of rows) {
+          const label = r.month || ''; const iso = label ? monthOf(label) : '';
+          if (iso && !existingMonths.has(iso) && !emitted.has(iso)) { const h = new Array(width).fill(''); h[tc] = label; values.push(h); emitted.add(iso); }
+          values.push(taskRow(r));
+        }
         // find the LAST row that has any content and write directly below it — the values:append
         // API mis-detects the table on multi-block plan layouts and drops rows at the top.
         let lastRow = 0; for (let r = 0; r < grid.length; r++) { if ((grid[r] || []).some(x => String(x || '').trim() !== '')) lastRow = r; }

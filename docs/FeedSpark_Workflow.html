@@ -1108,7 +1108,10 @@ window.addEventListener('load',restore);
     var brands=Object.keys(byBrand), done=0, wrote=0, fail=0, pushed=pushedSet();
     toast('Writing '+items.length+' task'+(items.length===1?'':'s')+' into '+brands.length+' plan'+(brands.length===1?'':'s')+'…');
     brands.forEach(function(bn){ var id=PLANSHEET[bn];
-      var rows=byBrand[bn].map(function(t){ return {task:t.task,owner:t.owner==='—'?'':t.owner,status:t.s||'Open',due:t.due||''}; });
+      // ATRT flat rows first, then roadmap rows grouped by month so each month's tasks cluster
+      // under one header the worker creates (e.g. new "August 2026" / "September 2026" sections).
+      byBrand[bn].sort(function(a,b){ return (a.roadmap?1:0)-(b.roadmap?1:0) || String(a.d||'').localeCompare(String(b.d||'')); });
+      var rows=byBrand[bn].map(function(t){ return {task:t.task,owner:t.owner==='—'?'':t.owner,status:t.s||'Open',due:t.due||'',month:t.roadmap?monthLabel(t.d):''}; });
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',rows:rows})})
         .then(function(r){return r.json();}).then(function(d){ done++;
           if(d && d.ok){ wrote+=d.appended||rows.length; byBrand[bn].forEach(function(t){ pushed[t.client+'|'+t.task]=1; }); } else { fail++; }
@@ -1177,6 +1180,8 @@ window.addEventListener('load',restore);
   // survives the write-back into the plan sheet. SVQ3-26 = Strategy Review, Q3 2026 (the YuMOVE
   // Q3/Q4 testing-matrix roadmap). Pattern SV<quarter>-<yy> for future Strategy-Review sources.
   var SVQ_PREFIX='SVQ3-26 - ';
+  var MONTH_NAMES=['','January','February','March','April','May','June','July','August','September','October','November','December'];
+  function monthLabel(iso){ var m=/^(\d{4})-(\d{2})/.exec(String(iso||'')); return m?(MONTH_NAMES[+m[2]]+' '+m[1]):''; }   // 2026-08-01 -> "August 2026"
   function roadmapTasks(){ var ov=statusOverlay(), owo=ownerOverlay(), ren=renameOverlay();
     // hide any that were pushed into the real plan already (matched by fuzzy task text)
     var idx={}; planTasks().forEach(function(p){ if(p.client==='YuMOVE')(idx[nrm(p.task)]=1); });
