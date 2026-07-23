@@ -125,6 +125,23 @@ window.addEventListener('load',restore);
   .comm:last-child{border-bottom:0}
   .comm .cw{font-size:12px;font-weight:900;color:var(--navy);flex:none;min-width:64px}
   .comm .cb{font-size:12.5px;color:var(--ink-2)}
+  /* lifecycle: stage-age chip on cards, activity timeline, delivery + next-action */
+  .age-chip{font-size:10px;font-weight:800;color:var(--ink-2);background:var(--wash);border:1px solid var(--line);border-radius:100px;padding:1px 7px}
+  .age-chip.stale{color:var(--risk);background:#FDEEE9;border-color:#F3C9BC}
+  .na-chip{font-size:10px;font-weight:800;color:var(--navy);background:#EAF0F7;border:1px solid #D3E0EE;border-radius:100px;padding:1px 7px}
+  .lg{display:flex;gap:9px;padding:7px 0;border-bottom:1px dashed var(--line)}
+  .lg:last-child{border-bottom:0}
+  .lg-i{flex:none;width:18px;text-align:center;font-size:13px;line-height:1.5}
+  .lg-b{display:flex;flex-direction:column;gap:1px}
+  .lg-b b{font-size:12.5px;font-weight:700;color:var(--ink)}
+  .lg-m{font-size:11px;color:var(--muted);font-weight:600}
+  .m-track{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 10px}
+  .m-track .tk{font-size:11.5px;font-weight:800;color:var(--ink-2);background:var(--wash);border:1px solid var(--line);border-radius:8px;padding:4px 9px}
+  .m-track .tk b{color:var(--ink)}
+  .m-track .tk.stale{color:var(--risk);background:#FDEEE9;border-color:#F3C9BC}
+  .deliv{font-size:12.5px;color:var(--ink-2);background:#F0FAF3;border:1px solid #CDE9D6;border-radius:8px;padding:8px 10px;margin-top:6px}
+  .deliv a{color:var(--navy);font-weight:800;word-break:break-all}
+  .lg-wrap{max-height:220px;overflow:auto}
   .comm .ck{font-size:10px;font-weight:800;color:var(--good);text-transform:uppercase;letter-spacing:.03em}
   .addc{display:grid;grid-template-columns:120px 1fr auto;gap:7px;margin-top:9px}
   .addc select,.addc input{font:inherit;font-size:12.5px;padding:7px 9px;border:1px solid var(--line);border-radius:8px}
@@ -506,8 +523,8 @@ window.addEventListener('load',restore);
     </tr></tfoot>
   </table></div>
 
-  <h2>Brief pipeline</h2>
-  <p class="sub">Every brief from send to sign-off. Drag a ticket between lanes; click it to log ASPL replies, run the completion scan, chase, and draft the client confirmation. Due badges flag what's approaching or overdue.</p>
+  <h2>Brief pipeline <button id="who-chip" class="na-chip" style="cursor:pointer;vertical-align:middle;font-size:11px;padding:3px 9px" title="Your name in the activity log — click to change">Set your name</button></h2>
+  <p class="sub">Every ticket from send to sign-off — the full journey is logged automatically. Drag a ticket between lanes; open it to log ASPL replies, capture delivery, and see the activity log. Stage-age chips flag what's stalling; badges flag what's approaching or overdue.</p>
   <div class="board" id="board"></div>
 
   <h2>ASPL SLA &amp; turnaround</h2>
@@ -650,6 +667,55 @@ window.addEventListener('load',restore);
   function delBrief(id){ delete BRIEFS[id]; try{localStorage.setItem('fcc-briefs',JSON.stringify(BRIEFS));}catch(e){}
     fetch('/api/briefs',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({__del:[id]})}).catch(function(){}); }
 
+  // ---- end-to-end lifecycle: audit log + monitored transitions + delivery capture --------
+  // Every ticket now carries an append-only log[] of what happened, who did it and when, and a
+  // stageAt timestamp so we can monitor time-in-stage. Status only ever changes via setStatus,
+  // which records the from→to transition — so the full journey (intake → briefed → progress →
+  // delivered → confirmed) is captured automatically, not reconstructed after the fact.
+  var WHO=(function(){ try{ return localStorage.getItem('fcc-who')||''; }catch(e){ return ''; } })();
+  function whoAmI(){ if(WHO) return WHO; var n=prompt('Your name (shown in the ticket activity log):','Ray'); WHO=(n&&n.trim())||'Ray'; try{localStorage.setItem('fcc-who',WHO);}catch(e){} setWhoChip(); return WHO; }
+  function setWhoChip(){ var el=document.getElementById('who-chip'); if(el) el.textContent=WHO?('You: '+WHO):'Set your name'; }
+  var STAGE_LABEL={intake:'Intake',briefed:'Briefed to ASPL',progress:'In progress',blocked:'Blocked',done:'Delivered — ASPL',confirmed:'Client confirmed'};
+  function logEvent(b,type,detail){ b.log=b.log||[]; b.log.push({ts:Date.now(),who:WHO||'—',type:type,detail:detail||''}); if(b.log.length>250)b.log=b.log.slice(-250); }
+  // Central transition — the single place a ticket's status changes. Records the move, stamps
+  // stage-entry + delivery/confirmation times, logs it, and persists.
+  function setStatus(b,to,detail){ if(!b||b.status===to) return false; whoAmI(); var from=b.status;
+    b.status=to; b.stageAt=Date.now(); b.updated=Date.now();
+    if(to==='done'&&!b.deliveredAt) b.deliveredAt=Date.now();
+    if(to==='confirmed'&&!b.confirmedAt) b.confirmedAt=Date.now();
+    logEvent(b,'stage',STAGE_LABEL[from]+' → '+STAGE_LABEL[to]+(detail?(' · '+detail):''));
+    persist(); return true; }
+  function daysInStage(b){ var t=b.stageAt||b.updated||b.created; return t?Math.floor((Date.now()-t)/86400000):null; }
+  function hoursInStage(b){ var t=b.stageAt||b.updated||b.created; return t?Math.round((Date.now()-t)/3600000):null; }
+  function stageAgeLbl(b){ var d=daysInStage(b); if(d==null)return ''; if(d<=0){ var h=hoursInStage(b); return h<=1?'just now':h+'h in stage'; } return d+'d in stage'; }
+  // A ticket is "stalled" if it's sat in an active (non-terminal) stage past the stall window.
+  function isStalled(b){ if(b.status==='confirmed'||b.status==='intake')return false; var d=daysInStage(b); return d!=null&&d>=STALL_DAYS; }
+  function nextAction(b){ switch(b.status){
+    case 'intake': return 'Brief to ASPL';
+    case 'briefed': return 'Await ASPL — chase if silent';
+    case 'progress': return 'In build — monitor';
+    case 'blocked': return 'Unblock / escalate';
+    case 'done': return 'Confirm delivery with client';
+    case 'confirmed': return 'Closed';
+    default: return ''; } }
+  function relTime(ts){ if(!ts)return ''; var s=Math.floor((Date.now()-ts)/1000);
+    if(s<60)return 'just now'; var m=Math.floor(s/60); if(m<60)return m+'m ago'; var h=Math.floor(m/60);
+    if(h<24)return h+'h ago'; var d=Math.floor(h/24); if(d<30)return d+'d ago';
+    return new Date(ts).toLocaleDateString('en-GB',{day:'numeric',month:'short'}); }
+  // Capture a delivery: record the deliverable link/notes, stamp who/when, move to Delivered.
+  function markDelivered(b){ whoAmI();
+    var link=prompt('Deliverable link (sheet / feed / doc URL) — blank to skip:', (b.delivery&&b.delivery.link)||'');
+    if(link===null) return; // cancelled
+    var note=prompt('What was delivered? (short summary)', (b.delivery&&b.delivery.note)||'')||'';
+    b.delivery={link:(link||'').trim(),note:note.trim(),at:Date.now(),by:WHO||'—'};
+    logEvent(b,'delivery','Delivered'+(b.delivery.link?(' · '+b.delivery.link):'')+(b.delivery.note?(' — '+b.delivery.note):''));
+    if(b.status!=='done'&&b.status!=='confirmed'){ var from=b.status; b.status='done'; b.stageAt=Date.now(); b.deliveredAt=b.deliveredAt||Date.now(); logEvent(b,'stage',STAGE_LABEL[from]+' → '+STAGE_LABEL.done); }
+    b.updated=Date.now(); persist(); renderAll(); openModal(b.id); toast('Delivery captured'); }
+  function iconFor(t){ return t==='created'?'🟢':t==='stage'?'↪':t==='delivery'?'📦':t==='owner'?'👤':t==='reply'?'💬':'•'; }
+  function renderLog(b){ if(!b.log||!b.log.length) return '<div class="sub" style="margin:0">No activity logged yet.</div>';
+    return b.log.slice().reverse().map(function(e){
+      return '<div class="lg"><span class="lg-i">'+iconFor(e.type)+'</span><span class="lg-b"><b>'+esc(e.detail||e.type)+'</b><span class="lg-m">'+esc(e.who||'—')+' · '+relTime(e.ts)+'</span></span></div>'; }).join(''); }
+
   // ---- brief building ----
   function code(client,market){ return slug(client)+'-'+(slug(market)||'gb'); }
   function newId(client){
@@ -731,10 +797,11 @@ window.addEventListener('load',restore);
   document.getElementById('bg-save').onclick=function(){
     var o=refreshPreview(); if(!o.f.task){ toast('Add a task first'); return; }
     var id=o.id, existing=BRIEFS[id];
-    var b=existing||{ created:Date.now(), status:'intake', comms:[] };
+    var b=existing||{ created:Date.now(), status:'intake', comms:[], log:[], stageAt:Date.now() };
     b.id=id; b.client=o.f.client; b.code=code(o.f.client,o.f.market); b.task=o.f.task; b.scope=o.f.scope;
     b.dod=o.f.dod; b.assets=o.f.assets; b.due=isoToDDMMYYYY(o.f.dueIso); b.source=o.f.source; b.priority=o.f.priority;
     b.subject=o.subj; b.body=o.body; b.updated=Date.now();
+    if(!existing) logEvent(b,'created','Ticket created — '+String(b.task||'').slice(0,60)); else logEvent(b,'edit','Brief details edited');
     BRIEFS[id]=b; window.__editId=null; persist(); renderAll();
     toast(existing?'Brief updated':'Brief saved to pipeline'); };
 
@@ -1209,9 +1276,9 @@ window.addEventListener('load',restore);
   function bulkSaveAll(){ var items=bulkList(); if(!items.length)return; var made=0;
     items.forEach(function(t){ var id=newId(t.client); var c=code(t.client,'gb'); var d=new Date(); d.setDate(d.getDate()+5);
       var tpl=TEMPLATES[t.cat]||TEMPLATES.opt;
-      BRIEFS[id]={id:id,created:Date.now(),updated:Date.now(),status:'intake',comms:[],client:t.client,code:c,task:t.task,
+      BRIEFS[id]={id:id,created:Date.now(),updated:Date.now(),stageAt:Date.now(),status:'intake',comms:[],log:[],client:t.client,code:c,task:t.task,
         scope:tpl.s+TWO_STREAMS,dod:tpl.d,assets:'—',due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
-        source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++; markBriefed(t); });
+        source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; logEvent(BRIEFS[id],'created','Auto-briefed from project plan'); made++; markBriefed(t); });
     itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline · marked Briefed'); }
   // SOURCE stays a compact chip bar (4 options): empty selection = all; the "All" chip clears the set
   function renderChipBar(id, opts, key){
@@ -1392,7 +1459,9 @@ window.addEventListener('load',restore);
         return '<div class="tik" draggable="true" data-id="'+esc(b.id)+'">'
           +'<div class="tk-c">'+esc(b.client)+' · '+esc(b.code)+'</div>'
           +'<div class="tk-t">'+esc(b.task)+'</div>'
-          +'<div class="tk-f">'+dueBadge(b)+lastWho(b)+(b.priority&&b.priority!=='Normal'?'<span class="due soon">'+esc(b.priority)+'</span>':'')+'</div></div>';
+          +'<div class="tk-f">'+dueBadge(b)+lastWho(b)+(b.priority&&b.priority!=='Normal'?'<span class="due soon">'+esc(b.priority)+'</span>':'')
+          +(b.status!=='intake'&&b.status!=='confirmed'&&stageAgeLbl(b)?'<span class="age-chip'+(isStalled(b)?' stale':'')+'">'+esc(stageAgeLbl(b))+'</span>':'')
+          +(b.delivery?'<span class="age-chip">📦</span>':'')+'</div></div>';
       }).join('') || '<div class="board-empty">—</div>';
       return '<div class="lane" data-stage="'+s[0]+'"><div class="lane-h"><span class="dot" style="background:'+s[2]+'"></span>'+s[1]+'<span class="ct">'+items.length+'</span></div>'+cards+'</div>';
     }).join('');
@@ -1410,7 +1479,7 @@ window.addEventListener('load',restore);
       l.addEventListener('dragover',function(e){ e.preventDefault(); l.classList.add('drop'); });
       l.addEventListener('dragleave',function(){ l.classList.remove('drop'); });
       l.addEventListener('drop',function(e){ e.preventDefault(); l.classList.remove('drop');
-        if(dragId&&BRIEFS[dragId]){ BRIEFS[dragId].status=l.getAttribute('data-stage'); BRIEFS[dragId].updated=Date.now(); persist(); renderAll(); } });
+        if(dragId&&BRIEFS[dragId]){ if(setStatus(BRIEFS[dragId], l.getAttribute('data-stage'), 'moved on board')) renderAll(); } });
     });
   }
 
@@ -1423,46 +1492,64 @@ window.addEventListener('load',restore);
     var comms=(b.comms||[]).map(function(c){ return '<div class="comm"><span class="cw">'+esc(c.from)+'</span><span class="cb">'+esc(c.note)+(c.done?' <span class="ck">✓ done signal</span>':'')+'</span></div>'; }).join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
     var stat=STAGES.map(function(s){ return '<button data-s="'+s[0]+'" class="'+(b.status===s[0]?'on':'')+'">'+s[1]+'</button>'; }).join('');
     var doneNote=lastDoneNote(b);
+    var age=stageAgeLbl(b), stale=isStalled(b), na=nextAction(b);
+    var track='<div class="m-track">'
+      +'<span class="tk'+(stale?' stale':'')+'">Stage <b>'+esc(STAGE_LABEL[b.status]||b.status)+'</b>'+(age?(' · '+esc(age)):'')+'</span>'
+      +(na?'<span class="tk">Next <b>'+esc(na)+'</b></span>':'')
+      +(b.deliveredAt?'<span class="tk">Delivered <b>'+esc(relTime(b.deliveredAt))+'</b></span>':'')
+      +(b.confirmedAt?'<span class="tk">Confirmed <b>'+esc(relTime(b.confirmedAt))+'</b></span>':'')
+      +'</div>';
+    var dLink=(b.delivery&&/^https?:\/\//i.test(b.delivery.link||''))?b.delivery.link:'';
+    var deliv=b.delivery?('<div class="deliv">📦 <b>Delivered</b> by '+esc(b.delivery.by||'—')+' · '+esc(relTime(b.delivery.at))
+      +(dLink?(' · <a href="'+esc(dLink)+'" target="_blank" rel="noopener">'+esc(dLink)+'</a>'):(b.delivery.link?(' · '+esc(b.delivery.link)):''))
+      +(b.delivery.note?('<br>'+esc(b.delivery.note)):'')+'</div>'):'';
     modalEl.innerHTML=''
       +'<div style="display:flex;align-items:flex-start"><div><h3>'+esc(b.task)+'</h3>'
         +'<div class="mc">'+esc(b.id)+' · '+esc(b.client)+' · ['+esc(b.code)+']</div></div><button class="x" id="m-x">×</button></div>'
       +'<div class="m-meta"><span class="m-pill">Due '+humanDD(b.due)+'</span><span class="m-pill">'+esc(b.priority||'Normal')+'</span>'
         +'<span class="m-pill">'+(b.source==='plan'?'Project plan':'Email')+'</span>'+(dueBadge(b))+'</div>'
-      +'<div class="m-sec"><h4>Stage</h4><div class="stat-seg" id="m-stat">'+stat+'</div></div>'
+      +track
+      +'<div class="m-sec"><h4>Stage</h4><div class="stat-seg" id="m-stat">'+stat+'</div>'+deliv+'</div>'
       +'<div class="m-sec"><h4>ASPL tracking <span class="m-owner">· Owner <select id="m-aspl">'+ASPL.map(function(n){return '<option'+(asplOf(b)===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select></span></h4><div id="m-comms">'+comms+'</div>'
         +'<div class="addc"><select id="m-from">'+ASPL.concat(['Client','Ray','Other']).map(function(n){return '<option>'+n+'</option>';}).join('')+'</select>'
         +'<input id="m-note" placeholder="Paste / summarise their reply…"><button class="btn" id="m-log">Log</button></div>'
         +'<div class="scan-hit" id="m-scan"></div></div>'
+      +'<div class="m-sec"><h4>Activity log</h4><div class="lg-wrap">'+renderLog(b)+'</div></div>'
       +'<div class="m-act">'
         +'<a class="btn pri" id="m-brief" target="_blank" rel="noopener">✉ Re-draft brief to ASPL</a>'
         +'<a class="btn" id="m-chase" target="_blank" rel="noopener">⏰ Chase ASPL</a>'
         +'<a class="btn" id="m-chasec" target="_blank" rel="noopener">⏰ Chase client</a>'
+        +'<button class="btn" id="m-deliver">📦 Mark delivered</button>'
         +'<a class="btn navy'+(doneNote?'':' ')+'" id="m-confirm" target="_blank" rel="noopener">✓ Draft client confirmation</a>'
         +'<span class="grow"></span><button class="btn" id="m-del" style="border-color:#F3C9BC;color:#C0392B">Delete</button></div>';
     scrim.classList.add('on');
     document.getElementById('m-x').onclick=closeModal;
+    document.getElementById('m-deliver').onclick=function(){ markDelivered(b); };
     document.getElementById('m-del').onclick=function(){ if(confirm('Delete brief '+b.id+'?')){ delBrief(b.id); renderAll(); closeModal(); } };
     document.querySelectorAll('#m-stat button').forEach(function(btn){ btn.onclick=function(){
-      b.status=btn.getAttribute('data-s'); b.updated=Date.now(); persist(); renderAll(); openModal(b.id); }; });
+      setStatus(b, btn.getAttribute('data-s'), 'set in ticket'); renderAll(); openModal(b.id); }; });
     // brief re-draft link
     document.getElementById('m-brief').href='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(b.subject||('[FS Brief] '+b.client))+'&body='+encodeURIComponent(b.body||'');
     // completion scan on new note
     var noteEl=document.getElementById('m-note'), scanEl=document.getElementById('m-scan');
     noteEl.addEventListener('input',function(){ if(DONE_RE.test(noteEl.value)){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this will suggest moving to “Done — ASPL”.'; } else scanEl.className='scan-hit'; });
     document.getElementById('m-log').onclick=function(){ var note=noteEl.value.trim(); if(!note)return;
-      var done=DONE_RE.test(note); b.comms=b.comms||[]; b.comms.push({from:document.getElementById('m-from').value,note:note,done:done,when:Date.now()});
-      // a completion signal from ASPL moves the brief to Done from any active stage (not once confirmed).
-      if(done && b.status!=='confirmed' && b.status!=='done') b.status='done';
-      b.updated=Date.now(); persist(); renderAll(); openModal(b.id); };
+      var from=document.getElementById('m-from').value;
+      var done=DONE_RE.test(note); b.comms=b.comms||[]; b.comms.push({from:from,note:note,done:done,when:Date.now()});
+      logEvent(b,'reply',from+': '+note.slice(0,80));
+      b.updated=Date.now(); persist();
+      // a completion signal from ASPL moves the ticket to Delivered from any active stage.
+      if(done && b.status!=='confirmed' && b.status!=='done') setStatus(b,'done','completion signal from '+from);
+      renderAll(); openModal(b.id); };
     // client confirmation draft
     var conf=document.getElementById('m-confirm');
     var cbody=clientConfirm(b,doneNote);
     conf.href='https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark · '+b.client+' — '+b.task+' completed')+'&body='+encodeURIComponent(cbody);
-    conf.addEventListener('click',function(){ if(b.status==='done'){ b.status='confirmed'; b.updated=Date.now(); persist(); setTimeout(function(){renderAll();},400); } });
+    conf.addEventListener('click',function(){ if(b.status==='done'){ setStatus(b,'confirmed','client confirmation drafted'); setTimeout(function(){renderAll();},400); } });
     // #4 chase drafts + ASPL owner reassign
     document.getElementById('m-chase').href=chaseAspl(b);
     document.getElementById('m-chasec').href=chaseClient(b);
-    var asplSel=document.getElementById('m-aspl'); if(asplSel)asplSel.onchange=function(){ b.aspl=asplSel.value; b.updated=Date.now(); persist(); renderSLA(); toast('Owner → '+b.aspl); };
+    var asplSel=document.getElementById('m-aspl'); if(asplSel)asplSel.onchange=function(){ whoAmI(); b.aspl=asplSel.value; logEvent(b,'owner','Owner → '+b.aspl); b.updated=Date.now(); persist(); renderSLA(); toast('Owner → '+b.aspl); };
   }
   function lastDoneNote(b){ if(!b.comms)return ''; for(var i=b.comms.length-1;i>=0;i--){ if(b.comms[i].done||DONE_RE.test(b.comms[i].note)) return b.comms[i].note; } return ''; }
   function clientConfirm(b,doneNote){
@@ -1679,9 +1766,14 @@ window.addEventListener('load',restore);
   refreshPreview();
   // Store revisions per collaborative board — the live-sync loop asks for deltas since these.
   var REV={briefs:0,tests:0,carryover:0};
+  // Backfill lifecycle fields on tickets created before this feature so stage-age + timeline
+  // work immediately (in-memory only — no write until the ticket next changes).
+  function hydrateBriefs(){ Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(!b)return; if(!b.stageAt)b.stageAt=b.updated||b.created||Date.now(); if(!b.log)b.log=[]; }); }
+  setWhoChip();
+  document.getElementById('who-chip').onclick=function(){ WHO=''; try{localStorage.removeItem('fcc-who');}catch(e){} whoAmI(); };
   fetch('/api/briefs').then(function(r){ var v=r.headers.get('X-Store-Rev'); if(v!=null)REV.briefs=+v||0; return r.json(); })
-    .then(function(d){ BRIEFS=d||{}; renderAll(); setTimeout(maybeNotify,800); startWfSync(); })
-    .catch(function(){ apiGet().then(function(d){ BRIEFS=d||{}; renderAll(); }); });
+    .then(function(d){ BRIEFS=d||{}; hydrateBriefs(); renderAll(); setTimeout(maybeNotify,800); startWfSync(); })
+    .catch(function(){ apiGet().then(function(d){ BRIEFS=d||{}; hydrateBriefs(); renderAll(); }); });
   // #10 load the test register (KV; seed from wins + plan test-tasks on first run)
   fetch('/api/tests').then(function(r){ var v=r.headers.get('X-Store-Rev'); if(v!=null)REV.tests=+v||0; return r.json(); }).then(function(d){ if(d&&d.length){TESTS=d;} else {TESTS=seedTests(); saveTests();} if(ensureTestIds())saveTests(); renderTests(); renderTimeline(); renderAlerts(); })
     .catch(function(){ try{TESTS=JSON.parse(localStorage.getItem('fcc-tests'));}catch(e){} if(!TESTS||!TESTS.length)TESTS=seedTests(); renderTests(); renderTimeline(); renderAlerts(); });
@@ -1705,7 +1797,7 @@ window.addEventListener('load',restore);
         if(!d||d.rev==null||d.rev===REV.briefs) return; REV.briefs=d.rev; var ch=false;
         if(d.set) Object.keys(d.set).forEach(function(k){ BRIEFS[k]=d.set[k]; ch=true; });
         if(d.del) d.del.forEach(function(k){ if(BRIEFS[k]){ delete BRIEFS[k]; ch=true; } });
-        if(ch){ try{localStorage.setItem('fcc-briefs',JSON.stringify(BRIEFS));}catch(e){} scheduleWfRender(); }
+        if(ch){ hydrateBriefs(); try{localStorage.setItem('fcc-briefs',JSON.stringify(BRIEFS));}catch(e){} scheduleWfRender(); }
       }).catch(function(){});
       fetch('/api/tests?since='+REV.tests).then(function(r){return r.json();}).then(function(d){
         if(!d||d.rev==null||d.rev===REV.tests) return; REV.tests=d.rev; var ch=false;
