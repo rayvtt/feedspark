@@ -285,6 +285,7 @@ window.addEventListener('load',restore);
   .it-multi-menu .it-multi-all{border-bottom:1px solid var(--line);margin-bottom:4px;padding-bottom:7px;font-weight:800}
   #it-status-menu{width:156px}
   #it-client-menu{width:184px}
+  #it-am-menu{width:150px}
   #it-views-menu{width:214px}
   .it-view-row{display:flex;align-items:center;gap:2px}
   .it-view-apply{flex:1;text-align:left;font:inherit;font-size:13px;font-weight:700;padding:6px 9px;border:none;background:none;color:var(--ink);cursor:pointer;border-radius:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -474,6 +475,10 @@ window.addEventListener('load',restore);
       <button type="button" class="it-multi-btn" id="it-client-btn" aria-haspopup="true" aria-expanded="false">All clients ▾</button>
       <div class="it-multi-menu" id="it-client-menu" role="group" aria-label="Filter by client (multi-select)" hidden></div>
     </div>
+    <div class="it-multi" id="it-am-wrap">
+      <button type="button" class="it-multi-btn" id="it-am-btn" aria-haspopup="true" aria-expanded="false" title="Filter by Account Manager">All AMs ▾</button>
+      <div class="it-multi-menu" id="it-am-menu" role="group" aria-label="Filter by account manager (multi-select)" hidden></div>
+    </div>
     <input id="it-search" type="search" placeholder="Search tasks, owners…" aria-label="Search intake">
     <span class="it-n" id="it-n"></span>
     <button type="button" class="it-hidden-tog" id="it-hidden-tog" hidden aria-pressed="false"></button>
@@ -576,6 +581,11 @@ window.addEventListener('load',restore);
     'Jo Malone':'1m99-z1R4FI4Iw86I6P8TyLY7G-Td9sh2vNjy-y95UMc',
     'House of Bruar':'1lgO-SrzWtHmsvKRXg2Xgzq3d7fCwv5V2Fauu6pJgYOA'
   };
+  // ---- Account Manager per client — the AM filter groups tasks by who runs the account ----
+  // Onboarding hook: give a newly-wired client its AM here; anything unset defaults to Ray.
+  var DEFAULT_AM='Ray';
+  var AM_OF={ 'Ryobi':'Steven' };
+  function amOf(c){ return AM_OF[c]||DEFAULT_AM; }
   var STALL_DAYS=3;                 // a brief with no ASPL reply for this long is "stalled"
   var LIVE={}, LIVE_AT=null, LIVE_CONN=false;   // live plan tasks per brand (from /api/plan/live)
 
@@ -909,7 +919,7 @@ window.addEventListener('load',restore);
         .catch(function(){ toast('Saved locally — sheet write failed (check the SA has Editor access)'); });
     } else toast('Added locally · no plan sheet linked for '+client);
   }
-  var itState={srcs:[],clients:[],q:'',statuses:['open','progress','briefed'],window:'2m',sort:'client',dir:1,showHidden:false};   // multi-select: empty array = all
+  var itState={srcs:[],clients:[],ams:[],q:'',statuses:['open','progress','briefed'],window:'2m',sort:'client',dir:1,showHidden:false};   // multi-select: empty array = all
   var itSel={};   // bulk selection: key -> task object
   // UK-first date parse (DD/MM/YYYY, "DD Mon YYYY"); swaps if it reads as MM/DD
   function parseUKDate(s){ s=String(s||'').trim(); if(!s)return null; var m;
@@ -986,7 +996,7 @@ window.addEventListener('load',restore);
       var S=itState;
       var st=!S.statuses.length||S.statuses.indexOf(r.b)>=0;   // empty = all statuses
       var win=true; if(allow && r.source==='plan'){ var pd=taskDate(r); if(pd) win=!!(allow[r.client]&&allow[r.client][monthKey(pd)]); }   // latest-N-months per brand; dateless plan rows always show
-      return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0)&&(!S.clients.length||S.clients.indexOf(r.client)>=0)
+      return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0)&&(!S.clients.length||S.clients.indexOf(r.client)>=0)&&(!S.ams.length||S.ams.indexOf(amOf(r.client))>=0)
         &&(!S.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(S.q)>=0); })
       .sort(function(a,b){ var k=itState.sort;
         if(k==='dsort'){ var da=taskDate(a), db=taskDate(b); return ((da?da.getTime():0)-(db?db.getTime():0))*itState.dir; }
@@ -1264,14 +1274,21 @@ window.addEventListener('load',restore);
     selected:function(){ return itState.clients; },
     toggle:function(v,on){ var i=itState.clients.indexOf(v); if(on){ if(i<0)itState.clients.push(v); } else if(i>=0)itState.clients.splice(i,1); },
     clear:function(){ itState.clients=[]; } });
-  function ensureClientFilter(){ buildStatusFilter(); buildClientFilter(); }   // rebuilt each render from renderIntake
-  buildStatusFilter(); buildClientFilter();
+  var buildAmFilter=setupMulti({ btn:'it-am-btn', menu:'it-am-menu', wrap:'it-am-wrap',
+    allLabel:'All AMs', noun:'AMs', one:function(v){ return v; },
+    options:function(){ var set={}; allIntake().forEach(function(r){ if(!DELETED[r.client+'|'+r.task]) set[amOf(r.client)]=1; });   // only AMs that still have live tasks
+      itState.ams=itState.ams.filter(function(a){ return set[a]; }); return Object.keys(set).sort().map(function(a){ return {v:a,l:a}; }); },
+    selected:function(){ return itState.ams; },
+    toggle:function(v,on){ var i=itState.ams.indexOf(v); if(on){ if(i<0)itState.ams.push(v); } else if(i>=0)itState.ams.splice(i,1); },
+    clear:function(){ itState.ams=[]; } });
+  function ensureClientFilter(){ buildStatusFilter(); buildClientFilter(); buildAmFilter(); }   // rebuilt each render from renderIntake
+  buildStatusFilter(); buildClientFilter(); buildAmFilter();
   // ---- saved filter views: name the current filter set, reapply or delete later (per device) ----
   function savedViews(){ try{return JSON.parse(localStorage.getItem('fcc-filters')||'{}');}catch(e){return {};} }
   function saveViews(v){ try{localStorage.setItem('fcc-filters',JSON.stringify(v));}catch(e){} }
-  function captureFilter(){ return {srcs:itState.srcs.slice(),statuses:itState.statuses.slice(),clients:itState.clients.slice(),window:itState.window,q:itState.q,showHidden:itState.showHidden}; }
+  function captureFilter(){ return {srcs:itState.srcs.slice(),statuses:itState.statuses.slice(),clients:itState.clients.slice(),ams:itState.ams.slice(),window:itState.window,q:itState.q,showHidden:itState.showHidden}; }
   function applyFilter(f){
-    itState.srcs=(f.srcs||[]).slice(); itState.statuses=(f.statuses||[]).slice(); itState.clients=(f.clients||[]).slice();
+    itState.srcs=(f.srcs||[]).slice(); itState.statuses=(f.statuses||[]).slice(); itState.clients=(f.clients||[]).slice(); itState.ams=(f.ams||[]).slice();
     itState.window=f.window||''; itState.q=f.q||''; itState.showHidden=!!f.showHidden;
     renderSrcChips(); buildStatusFilter(); buildClientFilter();                       // sync the controls to the view
     var w=document.getElementById('it-window'); if(w)w.value=itState.window;
