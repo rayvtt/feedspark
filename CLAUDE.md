@@ -175,6 +175,17 @@ GET|POST /api/claude            → Tachyon copilot proxy to Claude Messages API
   `rev` (`X-Store-Rev`); open tabs poll `GET ?since=<rev>` and merge others' changes in live. Stores
   seed from their old KV key once on first touch (zero-migration). Binding + `new_sqlite_classes`
   migration are in the repo-root `wrangler.toml`; KV `EDITS` stays bound as the seed source.
+- **Ticket lifecycle + inbox monitor** (Workflow page): every brief is a tracked ticket with an
+  append-only activity log (who/what/when), stage timing, and delivery capture. Briefs carry a
+  unique `[ibfref:<ticketId>]` token (plus `[ibfcode:client-market]` fallback). The **Inbox monitor**
+  scans `/api/gmail/intake`: ASPL replies are matched to their ticket and auto-logged with a
+  done/blocked/in-progress signal (heuristic, no API key); likely new-task emails are flagged for a
+  one-click brief (review queue, never auto-sent); noise (LinkedIn/job-alerts/newsletters) is
+  filtered. Delivered/blocked tickets surface in a "needs attention" tray for the London AM to
+  confirm with the client. Goes live when `GOOGLE_SA_JSON` + `GOOGLE_IMPERSONATE` (mailbox
+  `briefing@feedspark.com`) are set; until then a paste-to-test box validates the scanner. The
+  scanner (`classifyEmail`/`replySignal`) is pure/deterministic so it can move to a scheduled worker
+  job later.
 - **Pages = git**: `docs/FeedSpark_Command_Center.html` (`/`) and `docs/YuMOVE_Strategy_Review_Jul26.html`
   (`/deck/yumove`) are imported into the worker as Text modules (root `wrangler.toml` `rules`).
   **Add a page = add an import + one line in the worker's `PAGES` map.** Push to `main` → Cloudflare

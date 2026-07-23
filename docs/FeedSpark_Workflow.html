@@ -142,6 +142,22 @@ window.addEventListener('load',restore);
   .deliv{font-size:12.5px;color:var(--ink-2);background:#F0FAF3;border:1px solid #CDE9D6;border-radius:8px;padding:8px 10px;margin-top:6px}
   .deliv a{color:var(--navy);font-weight:800;word-break:break-all}
   .lg-wrap{max-height:220px;overflow:auto}
+  /* inbox monitor */
+  .ip-card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;box-shadow:var(--shadow)}
+  .ip-card h4{margin:0 0 8px;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .ip-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+  .ip-row:last-child{border-bottom:0}
+  .ip-tag{flex:none;font-size:10px;font-weight:900;letter-spacing:.03em;border-radius:6px;padding:3px 7px;border:1px solid}
+  .ip-tag.del{color:#15803D;background:#F0FAF3;border-color:#CDE9D6}
+  .ip-tag.blk{color:var(--risk);background:#FDEEE9;border-color:#F3C9BC}
+  .ip-tag.task{color:var(--orange-ink);background:#FEF6E4;border-color:#F0E0B0}
+  .ip-tag.amb{color:var(--navy);background:#EAF0F7;border-color:#D3E0EE}
+  .ip-main{flex:1;font-size:13px;color:var(--ink-2);min-width:0}
+  .ip-main b{color:var(--ink)}
+  .ip-sub{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-top:1px}
+  .ip-act{flex:none;display:flex;gap:6px}
+  .mini-btn.pri{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .mini-btn.pri:hover{opacity:.9;color:#fff}
   .comm .ck{font-size:10px;font-weight:800;color:var(--good);text-transform:uppercase;letter-spacing:.03em}
   .addc{display:grid;grid-template-columns:120px 1fr auto;gap:7px;margin-top:9px}
   .addc select,.addc input{font:inherit;font-size:12.5px;padding:7px 9px;border:1px solid var(--line);border-radius:8px}
@@ -527,6 +543,10 @@ window.addEventListener('load',restore);
   <p class="sub">Every ticket from send to sign-off — the full journey is logged automatically. Drag a ticket between lanes; open it to log ASPL replies, capture delivery, and see the activity log. Stage-age chips flag what's stalling; badges flag what's approaching or overdue.</p>
   <div class="board" id="board"></div>
 
+  <h2>Inbox monitor <span id="scan-badge" class="na-chip" style="font-size:11px;padding:3px 9px" title="Mailbox scan status">not connected</span></h2>
+  <p class="sub">Scans the briefing mailbox: ASPL replies are matched to their ticket by the <span style="color:var(--orange-ink);font-weight:800">[ibfref]</span> token and auto-logged (done / blocked / in-progress); likely new tasks are flagged for a one-click brief; everything else is filtered as noise. Delivered tickets awaiting client sign-off surface here so you never need the inbox. Paste an email below to test the scanner before the mailbox is connected.</p>
+  <div id="inbox-panel"></div>
+
   <h2>ASPL SLA &amp; turnaround</h2>
   <p class="sub">Load, delivery and average turnaround per ASPL owner. <b>Stalled</b> = a briefed / in-progress ticket with no reply for over 3 days — chase it in one click and rebalance who gets the next brief.</p>
   <div class="sla-grid" id="sla-grid"></div>
@@ -716,6 +736,154 @@ window.addEventListener('load',restore);
     return b.log.slice().reverse().map(function(e){
       return '<div class="lg"><span class="lg-i">'+iconFor(e.type)+'</span><span class="lg-b"><b>'+esc(e.detail||e.type)+'</b><span class="lg-m">'+esc(e.who||'—')+' · '+relTime(e.ts)+'</span></span></div>'; }).join(''); }
 
+  // ===== Inbox intelligence: scan the mailbox, match replies to tickets, flag task emails =====
+  // All heuristic + deterministic (no API key). The same pure functions run here over the live
+  // /api/gmail/intake feed (once the service account is connected) and can move server-side to a
+  // scheduled job later. The [ibfref:<ticketId>] token embedded in every brief is the join key
+  // that ties an ASPL reply back to its exact ticket; [ibfcode:client-market] is the fallback.
+  var CLIENT_HINTS=['schuh','estee','estée','elc','lauder','monsoon','accessorize','yumove','lintbells','reiss','superdry'];
+  // Hard "this is not a task" signals — grounded in the real inbox (LinkedIn, job alerts, GitHub
+  // bots, airline/bank statements, marketing subdomains). If any match, the email is noise.
+  var NOISE_FROM=/(no-?reply|do-?not-?reply|notifications?@|jobalerts|mailer-daemon|bounce|postmaster|@e\.|@mkt\.|@email\.|@news\.|updates-noreply|@linkedin\.com|@github\.com|@.*\.cathaypacific\.com)/i;
+  var NOISE_SUBJ=/(unsubscribe|newsletter|view in browser|posted:|\bposted\b|new role|recently posted|account summary|is hiring|job at|welcome \||your (statement|account)|out of office|automatic reply|delivery status)/i;
+  // Task-shaped signals.
+  var ASK_RE=/\b(can you|could you|would you|please|kindly|need(ed|s)?|require|request|action|update|add|remove|fix|amend|change|issue|disapprov|reject|error|when (can|will|are)|deadline|due|by (mon|tue|wed|thu|fri|sat|sun|next|eod|cob|end of|tomorrow|\d)|chase|urgent|asap|priority|brief|help|sort|look into|review)\b/i;
+  var FEED_RE=/\b(feed|title|attribute|gmc|merchant ?center|google shopping|shopping|custom label|product type|gtin|disapprov|roundel|catalog|catalogue|dpa|ppc|meta commerce|serving|impressions)\b/i;
+  // Reply status signals — order matters: an explicit blocker outranks a stray "done".
+  var BLOCKED_RE=/\b(blocked|blocker|stuck|can'?t proceed|cannot proceed|waiting on|need(s)? (the |more )?(info|information|clarification|access|assets|approval)|on hold|paused|held up|dependency|query|clarif)\b/i;
+  var PROGRESS_RE=/\b(in progress|working on( it)?|started|under ?way|wip|picked (this |it )?up|looking into|on it|will (do|action|complete|have|get)|mid-?way|by (eod|cob|tomorrow|end of))\b/i;
+  var NOTDONE_RE=/\b(not|isn'?t|aren'?t|can'?t|cannot|couldn'?t|won'?t|haven'?t|yet to)\b[\s\w]{0,12}\b(done|complete[d]?|finish[ed]?|deliver[ed]?)\b/i;
+  function parseIbf(s){ s=String(s||''); var ref=/\[ibfref:([A-Za-z0-9\-]+)\]/i.exec(s); var code=/\[ibfcode:([A-Za-z0-9\-]+)\]/i.exec(s);
+    return { ref: ref?ref[1]:'', code: code?code[1].toLowerCase():'' }; }
+  var FUTURE_DONE=/\b(will|'ll|going to|gonna|shall|to|once i|after i)\b[\s\w]{0,14}\b(complete|finish|deliver|done|action|sort|do it)\b/i;
+  var BY_DONE=/\b(complete|finish|deliver|done)\b[\s\w]{0,10}\bby\b/i;
+  var NO_BLOCK=/\b(no|not|without)\s+(blocker|blockers|issues?|problems?|dependenc)/i;
+  function replySignal(text){ text=String(text||'');
+    var notDone=NOTDONE_RE.test(text);
+    var future=FUTURE_DONE.test(text)||BY_DONE.test(text);
+    var blocked=BLOCKED_RE.test(text)&&!NO_BLOCK.test(text)&&!/\bnot blocked\b/i.test(text);
+    var doneHit=DONE_RE.test(text)&&!notDone&&!future;
+    if(blocked) return 'blocked';
+    if(doneHit) return 'done';
+    if(PROGRESS_RE.test(text)||future||notDone) return 'progress';
+    return 'ack'; }
+  function matchTicket(ibf, subject){
+    if(ibf.ref && BRIEFS[ibf.ref]) return BRIEFS[ibf.ref];
+    if(ibf.code){ var cands=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}).filter(function(b){return (b.code||'').toLowerCase()===ibf.code && b.status!=='confirmed';});
+      if(cands.length===1) return cands[0];
+      if(cands.length>1){ var subj=String(subject||'').toLowerCase(); var hit=cands.filter(function(b){ var t=String(b.task||'').toLowerCase().slice(0,24); return t&&subj.indexOf(t)>=0; });
+        if(hit.length) return hit.sort(function(a,b){return (b.updated||0)-(a.updated||0);})[0];
+        return cands.sort(function(a,b){return (b.updated||0)-(a.updated||0);})[0]; } }
+    return null; }
+  // Classify one email → {kind:'reply'|'task'|'noise', ...}. text = subject + snippet/body.
+  function classifyEmail(em){
+    var subject=em.subject||'', from=em.from||'', body=(em.snippet||em.body||''), text=(subject+' \n '+body);
+    var ibf=parseIbf(subject+' '+body);
+    if(ibf.ref || ibf.code){ var b=matchTicket(ibf,subject); return {kind:'reply',ibf:ibf,ticket:b?b.id:'',signal:replySignal(text),matched:!!b}; }
+    if(NOISE_FROM.test(from) || NOISE_SUBJ.test(subject)) return {kind:'noise',reason:'bulk/notification'};
+    var lc=(from+' '+text).toLowerCase();
+    var clientHit=CLIENT_HINTS.some(function(c){return lc.indexOf(c)>=0;});
+    var human=!!senderName(from) && !/@/.test(senderName(from));
+    var ask=ASK_RE.test(text)||/\?\s*$/.test(subject.trim())||/\?/.test(body);
+    var feed=FEED_RE.test(text);
+    var score=(clientHit?2:0)+(feed?2:0)+(ask?1:0)+(human?1:0);
+    if((clientHit||feed) && (ask||feed) && score>=3) return {kind:'task',client:clientHit?clientOf(lc):senderName(from),score:score};
+    if(score>=4) return {kind:'task',client:senderName(from),score:score};
+    return {kind:'noise',reason:'no task signal',score:score}; }
+  function clientOf(lc){ var map={schuh:'Schuh','estee':'ELC','estée':'ELC',elc:'ELC',lauder:'ELC',monsoon:'Monsoon',accessorize:'Accessorize',yumove:'YuMOVE',lintbells:'YuMOVE',reiss:'Reiss',superdry:'Superdry'};
+    for(var k in map){ if(lc.indexOf(k)>=0) return map[k]; } return ''; }
+  // Run a status mutation as a named actor (e.g. the auto-scan) without prompting for identity.
+  function withActor(name, fn){ var save=WHO; WHO=name; try{ return fn(); } finally { WHO=save; } }
+  function mailTime(d){ var t=Date.parse(d||''); return isNaN(t)?Date.now():t; }
+  // Ingest a batch of mailbox items: auto-log ASPL replies onto their tickets (deduped by
+  // message id), collect task candidates for the review lane, count the rest as noise.
+  var SCAN={replies:0,tasks:[],noise:0,unmatched:[],lastRun:0,connected:false};
+  function ingestMail(items,connected){ items=items||[]; SCAN={replies:0,tasks:[],noise:0,unmatched:[],lastRun:Date.now(),connected:!!connected};
+    var changed=false;
+    items.forEach(function(em){ var c=classifyEmail(em);
+      if(c.kind==='reply'){
+        if(!c.matched||!c.ticket||!BRIEFS[c.ticket]){ SCAN.unmatched.push({em:em,ibf:c.ibf,signal:c.signal}); return; }
+        var b=BRIEFS[c.ticket];
+        b.seenMail=b.seenMail||[]; if(em.id&&b.seenMail.indexOf(em.id)>=0) return; // already logged
+        withActor('FCC · inbox scan', function(){
+          if(em.id)b.seenMail.push(em.id);
+          var who=senderName(em.from)||'ASPL';
+          b.comms=b.comms||[]; b.comms.push({from:who,note:(em.subject||'').replace(/\[ibf[^\]]*\]/g,'').trim()+' — '+String(em.snippet||em.body||'').slice(0,140),done:c.signal==='done',when:mailTime(em.date),auto:true});
+          logEvent(b,'reply','📨 '+who+' ['+c.signal+']: '+String(em.snippet||em.subject||'').slice(0,70));
+          if(c.signal==='done' && b.status!=='confirmed' && b.status!=='done') setStatus(b,'done','auto: ASPL completion reply');
+          else if(c.signal==='blocked' && ['intake','briefed','progress'].indexOf(b.status)>=0) setStatus(b,'blocked','auto: ASPL blocker');
+          else if(c.signal==='progress' && ['intake','briefed'].indexOf(b.status)>=0) setStatus(b,'progress','auto: ASPL picked up');
+        });
+        SCAN.replies++; changed=true;
+      } else if(c.kind==='task'){ SCAN.tasks.push({em:em,client:c.client||senderName(em.from),score:c.score}); }
+      else { SCAN.noise++; }
+    });
+    if(changed) persist();
+    return SCAN; }
+  // 1-click brief from a detected task email: prefill the composer + jump to it (review, then send).
+  function briefFromEmail(em,client){
+    var subj=String(em.subject||'').replace(/^(re|fwd?):\s*/i,'').replace(/\[ibf[^\]]*\]/g,'').trim();
+    try{
+      var cl=document.getElementById('bg-client'); if(cl)cl.value=client||senderName(em.from)||'';
+      var tk=document.getElementById('bg-task'); if(tk)tk.value=subj.slice(0,120);
+      var sc=document.getElementById('bg-scope'); if(sc&&!sc.value)sc.value='From email — '+senderName(em.from)+': '+String(em.snippet||em.body||'').slice(0,300);
+      var so=document.getElementById('bg-source'); if(so)so.value='email';
+      refreshPreview();
+      var host=document.getElementById('bg-client'); if(host&&host.scrollIntoView)host.scrollIntoView({behavior:'smooth',block:'center'});
+      if(tk)tk.focus();
+      toast('Brief pre-filled — review and Save to pipeline');
+    }catch(e){ toast('Could not prefill'); } }
+  // Parse a pasted raw email (From:/Subject: headers + body) into a scannable item.
+  function parsePasted(raw){ raw=String(raw||''); var lines=raw.split(/\r?\n/); var from='',subject='',date='',bi=0;
+    for(var i=0;i<lines.length;i++){ var l=lines[i]; var mf=/^from:\s*(.+)$/i.exec(l), ms=/^subject:\s*(.+)$/i.exec(l), md=/^date:\s*(.+)$/i.exec(l);
+      if(mf){from=mf[1].trim();bi=i+1;} else if(ms){subject=ms[1].trim();bi=i+1;} else if(md){date=md[1].trim();bi=i+1;}
+      else if(l.trim()===''&&(from||subject)){ bi=i+1; break; } }
+    var body=lines.slice(bi).join('\n').trim(); if(!subject&&!from){ subject=lines[0]||''; body=raw; }
+    return {id:'',from:from,subject:subject,date:date,snippet:body.slice(0,200),body:body}; }
+  // Tickets that need the London AM: delivered (awaiting client sign-off) or blocked.
+  function needsAttention(){ return Object.keys(BRIEFS).map(function(k){return BRIEFS[k];})
+    .filter(function(b){ return b.status==='done' || b.status==='blocked'; })
+    .sort(function(a,b){ return ((a.status==='blocked')?0:1)-((b.status==='blocked')?0:1) || (b.updated||0)-(a.updated||0); }); }
+  function renderInbox(){ var host=document.getElementById('inbox-panel'); if(!host)return;
+    var badge=document.getElementById('scan-badge');
+    if(badge){ badge.textContent=SCAN.connected?('connected · scanned '+relTime(SCAN.lastRun)):'not connected — paste to test'; }
+    var att=needsAttention(); var H='';
+    H+='<div class="m-track" style="margin:0 0 12px">'
+      +'<span class="tk">Replies auto-logged <b>'+SCAN.replies+'</b></span>'
+      +'<span class="tk">Task candidates <b>'+SCAN.tasks.length+'</b></span>'
+      +'<span class="tk'+(att.length?' stale':'')+'">Needs attention <b>'+att.length+'</b></span>'
+      +'<span class="tk">Filtered noise <b>'+SCAN.noise+'</b></span>'
+      +(SCAN.unmatched.length?'<span class="tk stale">Unmatched replies <b>'+SCAN.unmatched.length+'</b></span>':'')+'</div>';
+    H+='<div class="ip-card"><h4>Needs your attention — delivered / blocked</h4>';
+    if(!att.length) H+='<div class="sub" style="margin:0">Nothing waiting. Delivered tickets (awaiting client sign-off) and blockers will surface here.</div>';
+    else H+=att.map(function(b){ var blk=b.status==='blocked';
+      return '<div class="ip-row"><span class="ip-tag '+(blk?'blk':'del')+'">'+(blk?'BLOCKED':'DELIVERED')+'</span>'
+        +'<span class="ip-main"><b>'+esc(b.client)+'</b> · '+esc(b.task)+'<span class="ip-sub">'+esc(b.id)+' · '+(blk?('blocked '+(stageAgeLbl(b)||'')):('delivered '+relTime(b.deliveredAt||b.updated)+' — awaiting client sign-off'))+'</span></span>'
+        +'<span class="ip-act">'+(blk?'<button class="mini-btn" data-open="'+esc(b.id)+'">Open</button>':'<button class="mini-btn pri" data-conf="'+esc(b.id)+'">✓ Confirm to client</button> <button class="mini-btn" data-open="'+esc(b.id)+'">Open</button>')+'</span></div>'; }).join('');
+    H+='</div>';
+    if(SCAN.tasks.length){ H+='<div class="ip-card"><h4>Looks like a task — review &amp; brief</h4>'
+      +SCAN.tasks.map(function(t,i){ return '<div class="ip-row"><span class="ip-tag task">TASK?</span><span class="ip-main"><b>'+esc(t.client||'—')+'</b> · '+esc(t.em.subject||'(no subject)')+'<span class="ip-sub">'+esc(senderName(t.em.from))+' · confidence '+t.score+'</span></span><span class="ip-act"><button class="mini-btn pri" data-brief="'+i+'">Brief this</button></span></div>'; }).join('')+'</div>'; }
+    if(SCAN.unmatched.length){ H+='<div class="ip-card"><h4>Replies we couldn’t match to a ticket</h4>'
+      +SCAN.unmatched.map(function(u){ return '<div class="ip-row"><span class="ip-tag amb">'+esc(String(u.signal||'').toUpperCase())+'</span><span class="ip-main">'+esc(u.em.subject||'')+'<span class="ip-sub">'+esc(senderName(u.em.from))+(u.ibf&&u.ibf.code?(' · ibfcode '+esc(u.ibf.code)):'')+'</span></span></div>'; }).join('')+'</div>'; }
+    H+='<div class="ip-card"><h4>Test the scanner</h4>'
+      +'<textarea id="scan-in" placeholder="Paste an email (include From: and Subject: lines to test task detection, or a brief reply carrying its [ibfref]/[ibfcode] token to test matching)…" style="width:100%;min-height:84px;font:inherit;font-size:12.5px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);box-sizing:border-box"></textarea>'
+      +'<div class="row" style="margin-top:8px"><button class="btn" id="scan-run">Scan this email</button> <button class="btn" id="scan-ingest" title="Also apply it — log the reply onto its ticket">Scan &amp; apply</button></div>'
+      +'<div id="scan-out" class="scan-hit" style="margin-top:8px"></div></div>';
+    host.innerHTML=H;
+    host.querySelectorAll('[data-open]').forEach(function(x){ x.onclick=function(){ openModal(x.getAttribute('data-open')); }; });
+    host.querySelectorAll('[data-conf]').forEach(function(x){ x.onclick=function(){ openModal(x.getAttribute('data-conf')); }; });
+    host.querySelectorAll('[data-brief]').forEach(function(x){ x.onclick=function(){ var t=SCAN.tasks[+x.getAttribute('data-brief')]; if(t)briefFromEmail(t.em,t.client); }; });
+    var run=document.getElementById('scan-run'), ing=document.getElementById('scan-ingest'), out=document.getElementById('scan-out'), inp=document.getElementById('scan-in');
+    function showScan(apply){ var raw=(inp.value||'').trim(); if(!raw){ out.className='scan-hit'; out.textContent=''; return; }
+      var em=parsePasted(raw); var c=classifyEmail(em); out.className='scan-hit on';
+      if(c.kind==='reply'){ var tk=c.ticket&&BRIEFS[c.ticket]; out.innerHTML='📨 <b>Reply</b> · signal <b>'+esc(c.signal)+'</b> · '+(c.matched?('matches ticket <b>'+esc(c.ticket)+'</b>'+(tk?(' ('+esc(tk.client)+' · '+esc(String(tk.task).slice(0,40))+')'):'')):'no matching ticket found');
+        if(apply&&c.matched){ ingestMail([em],true); renderAll(); toast('Reply applied to '+c.ticket); } else if(apply){ toast('No ticket to apply to'); } }
+      else if(c.kind==='task'){ out.innerHTML='🔎 <b>Task candidate</b> · client <b>'+esc(c.client||senderName(em.from))+'</b> · confidence '+c.score+' — would appear in the review lane.'; }
+      else out.innerHTML='🗑 <b>Noise</b> · filtered out ('+esc(c.reason||'no task signal')+').'; }
+    if(run)run.onclick=function(){ showScan(false); };
+    if(ing)ing.onclick=function(){ showScan(true); };
+  }
+
   // ---- brief building ----
   function code(client,market){ return slug(client)+'-'+(slug(market)||'gb'); }
   function newId(client){
@@ -735,11 +903,11 @@ window.addEventListener('load',restore);
       assets:document.getElementById('bg-assets').value.trim(), dueIso:document.getElementById('bg-due').value,
       priority:document.getElementById('bg-priority').value }; }
   function subjectOf(f,id){ var c=code(f.client,f.market), dd=isoToDDMMYYYY(f.dueIso);
-    return '[FS Brief] '+f.client+' · '+(f.task||'(task)')+' · [ibfcode:'+c+'] ibfdue:'+dd; }
+    return '[FS Brief] '+f.client+' · '+(f.task||'(task)')+' · [ibfcode:'+c+']'+(id?' [ibfref:'+id+']':'')+' ibfdue:'+dd; }
   function bodyOf(f,id){
     var c=code(f.client,f.market), dd=isoToDDMMYYYY(f.dueIso);
     var L=[];
-    L.push('[ibfcode:'+c+'] ibfdue:'+dd);
+    L.push('[ibfcode:'+c+']'+(id?' [ibfref:'+id+']':'')+' ibfdue:'+dd);
     L.push('');
     L.push('FEEDSPARK BRIEF — '+id);
     L.push('Client:    '+f.client+'  ['+c+']');
@@ -765,7 +933,7 @@ window.addEventListener('load',restore);
     L.push('FeedSpark · Private & Confidential');
     return L.join('\n');
   }
-  function highlightTokens(s){ return esc(s).replace(/(\[ibfcode:[^\]]+\]|ibfdue:\d{0,8})/g,'<span class="tok">$1</span>'); }
+  function highlightTokens(s){ return esc(s).replace(/(\[ibfcode:[^\]]+\]|\[ibfref:[^\]]+\]|ibfdue:\d{0,8})/g,'<span class="tok">$1</span>'); }
 
   // ---- live preview ----
   var pv={ subj:document.getElementById('prev-subj'), body:document.getElementById('prev-body'), gmail:document.getElementById('bg-gmail') };
@@ -1758,7 +1926,7 @@ window.addEventListener('load',restore);
   function maybeNotify(){ if(!('Notification' in window)||Notification.permission!=='granted')return; var a=computeAlerts(); if(!a.over.length)return;
     try{ new Notification('FeedSpark — '+a.over.length+' overdue', {body:a.over.slice(0,3).map(function(b){return (b.client||'')+' · '+b.task;}).join('\n')}); }catch(e){} }
 
-  function renderAll(){ _planCache=null; renderKPIs(); renderIntake(); renderBoard(); renderSLA(); renderTimeline(); renderTests(); renderWorkload(); renderAlerts(); }
+  function renderAll(){ _planCache=null; renderKPIs(); renderIntake(); renderBoard(); renderSLA(); renderTimeline(); renderTests(); renderWorkload(); renderAlerts(); renderInbox(); }
 
   // set a sensible default due date (today + 5 working-ish days) and boot
   (function(){ var d=new Date(); d.setDate(d.getDate()+5);
@@ -1817,7 +1985,8 @@ window.addEventListener('load',restore);
   (function(){ var dot=document.getElementById('gdot'), st=document.getElementById('gstate');
     fetch('/api/gmail/intake').then(function(r){return r.json();}).then(function(d){
       if(d && d.connected){ gmailItems=d.items||[]; if(dot)dot.classList.add('on');
-        if(st)st.textContent='Connected — '+gmailItems.length+' recent client email'+(gmailItems.length===1?'':'s')+' in the intake below.'; renderAll(); }
-    }).catch(function(){}); })();
+        if(st)st.textContent='Connected — '+gmailItems.length+' recent client email'+(gmailItems.length===1?'':'s')+' in the intake below.';
+        ingestMail(gmailItems, true); renderAll(); }
+    }).catch(function(){}); renderInbox(); })();
 })();
 </script>
