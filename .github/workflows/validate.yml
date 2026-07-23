@@ -1,0 +1,26 @@
+name: Validate
+
+# Pre-merge guard so a broken change can't reach main (and can't cause a broken or
+# stale deploy): prove the worker still bundles, and that the dashboard pages' inline
+# scripts still parse. Runs on PRs and on pushes to any branch except main (main is
+# covered by the deploy workflow).
+
+on:
+  pull_request: {}
+  push:
+    branches-ignore: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Dry-run build the worker (bundles worker.js + the HTML text modules)
+        run: npx --yes wrangler@4 deploy --dry-run --outdir /tmp/wr-out
+
+      - name: Syntax-check the dashboard pages' inline scripts
+        run: node tools/check_inline_scripts.js

@@ -1,0 +1,58 @@
+name: Deploy (Cloudflare Worker)
+
+# Deterministic deploy: every push to main ships the worker with `wrangler deploy`,
+# plus a manual "Run workflow" button for on-demand redeploys. This replaces
+# Cloudflare's git-integration auto-build, which stalled/served stale builds — the
+# reason for the old "chore: nudge Cloudflare rebuild" commits.
+#
+# One-time setup (repo → Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN   — token with the "Edit Cloudflare Workers" permission
+#   CLOUDFLARE_ACCOUNT_ID  — your account id
+# Then disconnect the Worker's git-integration build in the Cloudflare dashboard so
+# it doesn't double-deploy. Until the token is set, this job is a green no-op.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-feedspark
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Stamp build time
+        id: stamp
+        run: echo "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
+      # `wrangler deploy` publishes to the edge synchronously — its exit code is authoritative
+      # (green here == the new version is live), unlike CF's git-integration build/promote split
+      # that stalled. The --var flags stamp the live build so /api/version reports what's running.
+      - name: Deploy worker
+        if: ${{ env.CF_API_TOKEN != '' }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            deploy
+            --var GIT_SHA:${{ github.sha }}
+            --var GIT_REF:${{ github.ref_name }}
+            --var BUILT_AT:${{ steps.stamp.outputs.built_at }}
+
+      - name: Secrets not set — deploy skipped
+        if: ${{ env.CF_API_TOKEN == '' }}
+        run: |
+          echo "CLOUDFLARE_API_TOKEN is not set, so the deploy step was skipped."
+          echo "Add repo secrets CLOUDFLARE_API_TOKEN (Edit Workers) + CLOUDFLARE_ACCOUNT_ID,"
+          echo "then disconnect the CF git-integration build. This run is intentionally green."
