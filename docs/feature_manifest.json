@@ -1,0 +1,20 @@
+{
+  "_comment": "Shipped-feature tripwire. Each entry pins a live feature to a grep-able marker. tools/check_markers.js runs in presync + CI and FAILS if a marker regresses — catching one session's merge silently clobbering another session's shipped work. When you ship a feature that another session could plausibly overwrite (shared files!), ADD an entry. Never remove or weaken someone else's entry outside a PR that deliberately retires that feature. 'min' = minimum occurrences (default 1); 'forbidden': true asserts the pattern must be ABSENT (retired features).",
+  "markers": [
+    { "name": "worker: /api/version deploy marker", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "api/version", "pr": 54 },
+    { "name": "worker: Gmail intake endpoint", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "gmail/intake", "pr": 31 },
+    { "name": "worker: sheets task-rename endpoint", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "api/sheets/task", "pr": 44 },
+    { "name": "worker: Download HTML client exporter", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "Download HTML", "pr": 60 },
+    { "name": "worker: deck-only guard on BOTH download blocks", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "client decks only", "min": 2, "pr": 62 },
+    { "name": "wrangler: DO delete-class migration v2", "file": "wrangler.toml", "pattern": "tag = \"v2\"", "pr": 56 },
+    { "name": "deploy: GitHub Actions wrangler deploy", "file": ".github/workflows/deploy.yml", "pattern": "wrangler-action", "pr": 54 },
+    { "name": "CmdCenter: live plan-sync engine", "file": "docs/FeedSpark_Command_Center.html", "pattern": "function liveSync", "pr": 59 },
+    { "name": "CmdCenter: re-runnable Tests/Analysis sections", "file": "docs/FeedSpark_Command_Center.html", "pattern": "renderPTSections", "pr": 59 },
+    { "name": "CmdCenter: RYOBI dossier entry", "file": "docs/FeedSpark_Command_Center.html", "pattern": "\"Ryobi\"", "pr": 53 },
+    { "name": "Workflow: Account Manager filter", "file": "docs/FeedSpark_Workflow.html", "pattern": "it-am-btn", "pr": 53 },
+    { "name": "Workflow: frozen tracker header (viewport-bounded panel)", "file": "docs/FeedSpark_Workflow.html", "pattern": "max-height:72vh", "pr": 53 },
+    { "name": "Workflow: RYOBI in brand roster + plan sheets", "file": "docs/FeedSpark_Workflow.html", "pattern": "1WofQrZ6igucGIvGnUOLgBiXP7MqK-7ZtG8Xt4LLaA1E", "pr": 53 },
+    { "name": "Workflow: ATRT legacy source RETIRED (must stay gone)", "file": "docs/FeedSpark_Workflow.html", "pattern": "ATRT legacy", "forbidden": true, "pr": 53 },
+    { "name": "DeckBuilder: RYOBI plan sheet wired", "file": "docs/FeedSpark_DeckBuilder.html", "pattern": "1WofQrZ6igucGIvGnUOLgBiXP7MqK-7ZtG8Xt4LLaA1E", "pr": 53 }
+  ]
+}

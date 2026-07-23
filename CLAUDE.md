@@ -196,8 +196,13 @@ Trunk-based: each session = its **own short-lived branch** off latest `main` (`c
 small module-prefixed PRs (`[Workflow] …`), never a shared branch. Default one session per module
 (Workflow / Command Center / Deck Gen / Worker / other pages) as a **guideline**; crossing is fine if you
 check open PRs + `claude/*` branches first and **sequence** same-file edits. Before every PR:
-**`bash tools/presync.sh`** (merges latest main + re-validates). After merge: verify LIVE per the rule
-above, then restart the branch from latest main. Full protocol: [`docs/WAYS_OF_WORKING.md`](./docs/WAYS_OF_WORKING.md).
+**`bash tools/presync.sh`** (merges latest main + re-validates). Overlap safeguards, both inside presync:
+the **overwrite tripwire** (`docs/feature_manifest.json` checked by `tools/check_markers.js` — when you
+ship a feature into a shared file, add its marker in the same PR) and the **overlap detector**
+(`tools/overlap.sh` — also run it at task START; 🔥 hot-file overlap = sequence, don't parallel-edit).
+If presync's merge touched a file you're editing, re-run your QA — a clean git merge is not an intact
+feature. After merge: verify LIVE per the rule above, then restart the branch from latest main.
+Full protocol: [`docs/WAYS_OF_WORKING.md`](./docs/WAYS_OF_WORKING.md).
 
 ### Command center data — ATRT Tracker
 - The command center (`/`) shows **live workload**, **tests running** and **accounts & project plans**
