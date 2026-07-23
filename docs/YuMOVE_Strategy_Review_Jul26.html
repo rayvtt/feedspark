@@ -247,28 +247,6 @@ body.hide-checks .chk{display:none}
 @media(max-width:1000px){.stats{grid-template-columns:repeat(2,1fr)}.tiers,.road,.pipe,.flow,.grid-4{grid-template-columns:1fr 1fr}.agent{grid-template-columns:1fr}.agent-l{border-right:0;border-bottom:1px solid var(--line)}.agenda,.enrich{grid-template-columns:1fr}.hero h1{font-size:44px}.ch-num{font-size:120px;opacity:.5}.contacts{grid-template-columns:1fr}}
 @media(max-width:640px){.wrap,.topbar-in,.chapter-in{padding:0 22px}section{padding:64px 0}.stats,.tiers,.road,.grid-2,.grid-3,.pipe,.flow,.sc-grid{grid-template-columns:1fr}.hero h1{font-size:34px}.sec-title{font-size:26px}.chapter h2{font-size:30px}.tb-nav{display:none}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}html{scroll-behavior:auto}}
-
-/* ======== PDF export (window.print) ======== */
-@page{size:A4 landscape;margin:11mm 13mm}
-@media print{
-  html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;background:#fff}
-  .topbar,.footmark,.scrollcue,.progress,.de-bar,.de-handle,.de-panel,.de-props,.de-toast,.de-resize,[id^="tky-"]{display:none!important}
-  a{color:inherit;text-decoration:none}
-  .wrap{max-width:100%}
-  section{padding:34px 0}
-  .hero{min-height:auto;padding:56px 0 40px;break-after:page}
-  .chapter{padding:40px 0;break-before:page;break-inside:avoid}
-  .chapter+section{break-before:avoid}
-  .ch-num{font-size:120px}
-  .band,.band-warm{break-inside:avoid-page}
-  .rv{opacity:1!important;transform:none!important;transition:none!important}
-  .fill{transition:none!important}
-  .card,.stat,.tier,.proto,.pipe-card,.flow-step,.mo,.sc-cell,.ask,.ct,.en-card,table tr{break-inside:avoid}
-  .stats,.grid-2,.grid-3,.grid-4,.tiers,.road,.pipe,.flow,.sc-grid,.contacts{break-inside:avoid-page}
-  .qs,.agent-l>p{display:none}
-  .close{break-before:page}
-  .card,.proto,.pipe-card,.tier,.en-card{box-shadow:none}
-}
 </style>
 </head>
 <body class="">
@@ -286,7 +264,6 @@ body.hide-checks .chk{display:none}
       <a href="#c7" class="">07 Roadmap</a>
     </nav>
     <button class="flagbtn" id="flagbtn" aria-pressed="true" title="Toggle data-check markers">⚑ Data checks</button>
-    <button class="flagbtn" id="pdfBtn" style="margin-left:8px" title="Save this deck as a PDF to send to clients">⬇ Download PDF</button>
     <div class="progress" id="progress" style="width: 0%;"></div>
   </div>
 </div>
@@ -1051,18 +1028,6 @@ policy data become commercial controls"<br>Google&nbsp;</p>
     b.classList.add('active');render(b.getAttribute('data-k'));
   });
   render('qa');
-
-  /* ======== PDF export ======== */
-  function preparePrint(){
-    rv.forEach(function(el){ el.classList.add('in'); });
-    fills.forEach(function(el){ var w=el.getAttribute('data-w'); if(w) el.style.width=w+'%'; });
-  }
-  window.addEventListener('beforeprint', preparePrint);
-  var pdfBtn=document.getElementById('pdfBtn');
-  if(pdfBtn) pdfBtn.addEventListener('click', function(){
-    preparePrint();
-    setTimeout(function(){ window.print(); }, 60);
-  });
 
 })();
 </script>
