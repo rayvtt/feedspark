@@ -114,6 +114,16 @@ tbody tr:nth-child(even){background:var(--paper-2)}
 .p-open{background:#EEE;color:var(--muted)}
 .p-block{background:rgba(237,111,11,.10);color:var(--orange-deep);border:1px solid rgba(237,111,11,.28)}
 
+/* Compact market wall — 50+ markets as small status chips instead of one row each, so the
+   full footprint reads in one screen instead of a scroll. Reuses the .pill palette (green
+   live, solid orange = earlier wave, outlined orange = later wave) rather than introducing
+   new colours, per the design system's "orange accents only where purposeful" rule. */
+.mkt-wall{display:flex;flex-wrap:wrap;gap:6px;padding:16px;background:var(--paper-2);border:1px solid var(--line);border-radius:8px}
+.mkt-wall .pill{font-size:10.5px}
+.mkt-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--muted)}
+.mkt-legend span{display:inline-flex;align-items:center;gap:6px}
+.mkt-legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
 /* bars */
 .bars{display:flex;flex-direction:column;gap:16px}
 .bar-row .bl{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px}
@@ -334,8 +344,8 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         <div class="ag-row"><div class="ag-num">12</div><div><div class="ag-t">AI readiness</div><div class="ag-d">Tier 1 banked, the gap to Tier 2</div></div></div>
         <div class="ag-row"><div class="ag-num">13</div><div><div class="ag-t">Case studies / test wins</div><div class="ag-d">Reiss' own tests, plus comparable-brand proof</div></div></div>
         <div class="ag-row"><div class="ag-num">14</div><div><div class="ag-t">Roadmap / next quarter</div><div class="ag-d">Open tasks + what the feed audit surfaced</div></div></div>
-        <div class="ag-row"><div class="ag-num">15</div><div><div class="ag-t">20-market rollout — plan</div><div class="ag-d">20 markets, 3–4 hrs each, no Thu/Fri launches</div></div></div>
-        <div class="ag-row"><div class="ag-num">16</div><div><div class="ag-t">20-market rollout — schedule</div><div class="ag-d">10-week calendar, live by Oct 7, before Peak</div></div></div>
+        <div class="ag-row"><div class="ag-num">15</div><div><div class="ag-t">50-market rollout — plan</div><div class="ag-d">11 live + 42 new = 53 markets, no Thu/Fri launches</div></div></div>
+        <div class="ag-row"><div class="ag-num">16</div><div><div class="ag-t">50-market rollout — schedule</div><div class="ag-d">14-week calendar, live by Nov 4, before Peak</div></div></div>
         <div class="ag-row" style="border-bottom:0"><div class="ag-num">17</div><div><div class="ag-t">Tech fit</div><div class="ag-d">Why the stack fits Reiss specifically</div></div></div>
       </div>
     </div>
@@ -903,11 +913,11 @@ policy data become commercial controls"<br>Google&nbsp;</p>
 </section>
 
 <!-- ================= CH 15 — 20-MARKET ROLLOUT: PLAN & RESOURCING ================= -->
-<div class="chapter" id="c15"><div class="ch-num">15</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter fifteen</div><h2>20-Market Rollout — Plan &amp; Resourcing</h2><p>20 markets from the account's own onboarding matrix, sequenced to land before Peak — not during it.</p></div></div>
+<div class="chapter" id="c15"><div class="ch-num">15</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter fifteen</div><h2>50-Market Rollout — Plan &amp; Resourcing</h2><p>53 markets total — 11 live today, 42 more launching over 14 weeks, still sequenced to land before Peak.</p></div></div>
 
 <section class="band">
   <div class="wrap">
-    <div class="note rv in" style="margin-top:0"><b>Source:</b> both tables below come straight from the market rollout matrix already sitting in the Reiss Project Plan — the "Done" rows are live today, the "New market"/"New project" rows are the 20 to launch. Checked the matrix end-to-end (through the row Ray flagged, ~545) — there's no market beyond WO still marked "New market"; this is the complete list, not a partial read.</div>
+    <div class="note rv in" style="margin-top:0"><b>Source:</b> two lists combined. The original 20 come from the market rollout matrix in the Reiss Project Plan (checked end-to-end through the row Ray flagged, ~545 — nothing marked "New market" beyond WO). The other 22 (Malta, Japan, Bahrain, Hungary, Norway, Taiwan, Cyprus, New Zealand, Kazakhstan, Bulgaria, Iceland, Malaysia, Oman, Mexico, Ukraine, India, South Africa, South Korea, Thailand, Philippines, Serbia, Jordan) came directly from Ray — they don't appear in the matrix tab yet, so treat their language/setup detail as unconfirmed until the matrix is updated to include them.</div>
 
     <div class="eyebrow rv in">The full picture</div>
     <h2 class="sec-title rv in">Progress — from get-go to what to expect</h2>
@@ -921,76 +931,43 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         </ul>
       </div>
       <div class="mo">
-        <div class="mo-m">Weeks 1–5 · Aug</div><div class="mo-s s-build">Wave 1</div>
-        <h4>+10 markets</h4>
+        <div class="mo-m">Weeks 1–5 · Aug</div><div class="mo-s s-build">Wave 1 — 15 markets</div>
+        <h4>AU, NZ, CA, QA, HK</h4>
         <ul>
-          <li>GR, AU, CA, UAE, QA, HK — English-native / dual-language, lowest lift</li>
-          <li>DK, FI, EE, LT — Nordic/Baltic pairing begins</li>
+          <li>UAE, BH, OM, JO — Middle East cluster</li>
+          <li>DK, FI, NO, IS, EE, LT — Nordic/Baltic</li>
         </ul>
       </div>
       <div class="mo">
-        <div class="mo-m">Weeks 6–10 · Sep–Oct</div><div class="mo-s s-build">Wave 2</div>
-        <h4>+10 markets</h4>
+        <div class="mo-m">Weeks 6–10 · Sep–Oct</div><div class="mo-s s-build">Wave 2 — 15 markets</div>
+        <h4>LV, CZ, HR, RO, SI</h4>
         <ul>
-          <li>LV, CZ, HR, RO, SI, SK — Central/Eastern Europe</li>
-          <li>IL, LU, PT, WO — remaining markets, WO closes the list</li>
+          <li>SK, HU, BG, RS, UA — Central/Eastern Europe</li>
+          <li>GR, MT, CY, JP, TW — Mediterranean + start of APAC</li>
         </ul>
       </div>
       <div class="mo">
-        <div class="mo-m">What to expect</div><div class="mo-s s-close">Oct 7</div>
-        <h4>31 markets live</h4>
+        <div class="mo-m">Weeks 11–14 · Oct–Nov</div><div class="mo-s s-build">Wave 3 — 12 markets</div>
+        <h4>KR, MY, TH, PH, IN, MX</h4>
         <ul>
-          <li>11 existing + 20 new, fully rolled out</li>
-          <li>6+ weeks of stability before Black Friday / Peak</li>
+          <li>ZA, KZ, IL, LU, PT, WO — closes the rollout</li>
+          <li>Live by <b>Nov 4</b> — 3.5 weeks before Black Friday</li>
         </ul>
       </div>
     </div>
 
     <div class="stats rv in">
       <div class="stat"><div class="n">11</div><div class="l">Markets already live (get-go)</div></div>
-      <div class="stat"><div class="n">20</div><div class="l">Markets to launch</div></div>
-      <div class="stat"><div class="n">31</div><div class="l">Full footprint once the rollout completes</div></div>
-      <div class="stat"><div class="n">60–80<small>hrs</small></div><div class="l">Total estimated effort, all 20 new markets</div></div>
+      <div class="stat"><div class="n">42</div><div class="l">Markets to launch</div></div>
+      <div class="stat"><div class="n">53</div><div class="l">Full footprint once the rollout completes</div></div>
+      <div class="stat"><div class="n">14<small>wks</small></div><div class="l">Duration at 3 markets/week (Mon/Tue/Wed)</div></div>
     </div>
 
-    <div class="tbl-wrap rv in" style="margin-bottom:12px">
-      <table><thead><tr><th style="width:12%">Market</th><th>Status</th><th>Note</th></tr></thead>
-      <tbody>
-        <tr><td><b>GB</b></td><td><span class="pill p-done">Live</span></td><td>Home market</td></tr>
-        <tr><td><b>DE</b></td><td><span class="pill p-done">Live</span></td><td>Done — Shopping, Meta, translated file all live</td></tr>
-        <tr><td><b>FR</b></td><td><span class="pill p-done">Live</span></td><td>Done</td></tr>
-        <tr><td><b>NL</b></td><td><span class="pill p-done">Live</span></td><td>Done</td></tr>
-        <tr><td><b>ES</b></td><td><span class="pill p-done">Live</span></td><td>Done</td></tr>
-        <tr><td><b>CH</b></td><td><span class="pill p-done">Live</span></td><td>Done</td></tr>
-        <tr><td><b>PL</b></td><td><span class="pill p-done">Live</span></td><td>Done</td></tr>
-        <tr><td><b>AT</b></td><td><span class="pill p-done">Live</span></td><td>Done</td></tr>
-        <tr><td><b>IT</b></td><td><span class="pill p-done">Live</span></td><td>Done</td></tr>
-        <tr><td><b>BE</b></td><td><span class="pill p-done">Live</span></td><td>Done</td></tr>
-        <tr><td><b>SA</b></td><td><span class="pill p-done">Live</span></td><td>Done</td></tr>
-        <tr><td colspan="3" style="text-align:center;color:var(--muted);font-style:italic">— 11 live today — the 20 below are the rollout —</td></tr>
-        <tr><td><b>GR</b></td><td><span class="pill p-prog">Partial — Shopping live</span></td><td>Translated file already "Done"; Meta International Feed still flagged "New market" — furthest along of the 20, natural first launch</td></tr>
-        <tr><td><b>AU</b></td><td><span class="pill p-open">New market</span></td><td>English-native — low localisation lift</td></tr>
-        <tr><td><b>CA</b></td><td><span class="pill p-open">New project</span></td><td>FR &amp; EN dual-language</td></tr>
-        <tr><td><b>UAE</b></td><td><span class="pill p-open">New project</span></td><td>AR &amp; EN dual-language</td></tr>
-        <tr><td><b>QA</b></td><td><span class="pill p-open">New market</span></td><td>EN</td></tr>
-        <tr><td><b>HK</b></td><td><span class="pill p-open">New market</span></td><td>EN</td></tr>
-        <tr><td><b>DK</b></td><td><span class="pill p-open">New project</span></td><td>DA &amp; EN</td></tr>
-        <tr><td><b>FI</b></td><td><span class="pill p-open">New market</span></td><td>EN</td></tr>
-        <tr><td><b>EE</b></td><td><span class="pill p-open">New market</span></td><td>EN</td></tr>
-        <tr><td><b>LT</b></td><td><span class="pill p-open">New market</span></td><td>EN</td></tr>
-        <tr><td><b>LV</b></td><td><span class="pill p-open">New market</span></td><td>EN</td></tr>
-        <tr><td><b>CZ</b></td><td><span class="pill p-open">New market</span></td><td>CZ &amp; EN</td></tr>
-        <tr><td><b>HR</b></td><td><span class="pill p-open">New market</span></td><td>EN</td></tr>
-        <tr><td><b>RO</b></td><td><span class="pill p-open">New market</span></td><td>RO &amp; EN</td></tr>
-        <tr><td><b>SI</b></td><td><span class="pill p-open">New market</span></td><td>EN</td></tr>
-        <tr><td><b>SK</b></td><td><span class="pill p-open">New market</span></td><td>EN</td></tr>
-        <tr><td><b>IL</b></td><td><span class="pill p-open">New market</span></td><td>EN</td></tr>
-        <tr><td><b>LU</b></td><td><span class="pill p-open">New market</span></td><td>EN</td></tr>
-        <tr><td><b>PT</b></td><td><span class="pill p-open">New market</span></td><td>EN</td></tr>
-        <tr><td><b>WO</b></td><td><span class="pill p-open">New market</span></td><td>Rest-of-world catch-all feed, per the matrix — last row in the matrix, confirmed nothing follows it</td></tr>
-      </tbody></table>
+    <div class="mkt-wall rv in">
+      <span class="pill p-done">GB</span><span class="pill p-done">DE</span><span class="pill p-done">FR</span><span class="pill p-done">NL</span><span class="pill p-done">ES</span><span class="pill p-done">CH</span><span class="pill p-done">PL</span><span class="pill p-done">AT</span><span class="pill p-done">IT</span><span class="pill p-done">BE</span><span class="pill p-done">SA</span><span class="pill p-block">AU</span><span class="pill p-block">NZ</span><span class="pill p-block">CA</span><span class="pill p-block">QA</span><span class="pill p-block">HK</span><span class="pill p-block">UAE</span><span class="pill p-block">BH</span><span class="pill p-block">OM</span><span class="pill p-block">JO</span><span class="pill p-block">DK</span><span class="pill p-block">FI</span><span class="pill p-block">NO</span><span class="pill p-block">IS</span><span class="pill p-block">EE</span><span class="pill p-block">LT</span><span class="pill p-block">LV</span><span class="pill p-block">CZ</span><span class="pill p-block">HR</span><span class="pill p-block">RO</span><span class="pill p-block">SI</span><span class="pill p-block">SK</span><span class="pill p-block">HU</span><span class="pill p-block">BG</span><span class="pill p-block">RS</span><span class="pill p-block">UA</span><span class="pill p-block">GR</span><span class="pill p-block">MT</span><span class="pill p-block">CY</span><span class="pill p-block">JP</span><span class="pill p-block">TW</span><span class="pill p-block">KR</span><span class="pill p-block">MY</span><span class="pill p-block">TH</span><span class="pill p-block">PH</span><span class="pill p-block">IN</span><span class="pill p-block">MX</span><span class="pill p-block">ZA</span><span class="pill p-block">KZ</span><span class="pill p-block">IL</span><span class="pill p-block">LU</span><span class="pill p-block">PT</span><span class="pill p-block">WO</span>
+      <div class="mkt-legend"><span><i style="background:var(--green)"></i>Live today (11)</span><span><i style="background:var(--orange-deep)"></i>Rolling out — 3 waves (42)</span></div>
     </div>
-    <div class="note rv in"><b>31 vs. the account's "29 markets" figure (chapter 01):</b> the matrix's live+rollout count (11 + 20 = 31) runs slightly ahead of the account record's headline number. Worth reconciling with Ray — likely just a rounding/timing difference between when each figure was last updated, not a contradiction in the underlying data.</div>
+    <div class="note rv in"><b>53 vs. the account's "29 markets" figure (chapter 01):</b> the combined live+rollout count runs well ahead of the account record's headline number, mostly because this round adds 22 markets not yet reflected there. Worth a full refresh of chapter 01's "29 markets" stat once this rollout is confirmed — flagged rather than silently overwritten, since chapter 01 is sourced from the account record, not this matrix.</div>
 
     <div class="grid-3 rv in">
       <div class="card" style="border-left:3px solid var(--orange-deep)">
@@ -999,40 +976,44 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       </div>
       <div class="card">
         <h4>Additive, not instead of</h4>
-        <p style="font-size:13px">This sits alongside the existing optimisation retainer (chapters 03–14), not in place of it — the 60–80 hours here is new scope, resourced separately, so BAU keyword/title/highlights work keeps moving at its current pace throughout the rollout.</p>
+        <p style="font-size:13px">This sits alongside the existing optimisation retainer (chapters 03–14), not in place of it. Going from 2 to 3 markets/week to fit 42 markets in before Peak means roughly 9–12 hrs/week of new scope, resourced separately — BAU keyword/title/highlights work keeps moving at its current pace throughout.</p>
       </div>
-      <div class="card" style="border-left:3px solid var(--green)">
-        <h4>Before Peak, not during it</h4>
-        <p style="font-size:13px">At 2 markets/week starting the week of Aug 3, all 20 are live by <b>Oct 7</b> — over six weeks of stabilisation before Black Friday. New, unproven markets going live inside Peak itself is the riskier version of this plan; this schedule is built to avoid needing to.</p>
+      <div class="card" style="border-left:3px solid var(--orange)">
+        <h4>Before Peak — but tighter than before</h4>
+        <p style="font-size:13px">At 3 markets/week starting Aug 3, all 42 are live by <b>Nov 4</b> — roughly 3.5 weeks before Black Friday (Nov 27), down from the 6+ week buffer the 20-market version had. Real, not hidden: adding 22 markets to the same start date compresses the safety margin — worth Ray's explicit sign-off that 3/week and this margin are acceptable, or discussing whether some of Wave 3 should push into the new year instead.</p>
       </div>
     </div>
-    <div class="note rv in"><b>Assumptions flagged for Ray to confirm:</b> start date (proposed: week of Aug 3), pace (2/week — team capacity not yet confirmed against current retainer load), and GR's position at the front of the queue given its head start. Adjust the schedule in chapter 16 once these are locked.</div>
+    <div class="note rv in"><b>Assumptions flagged for Ray to confirm:</b> start date (proposed: week of Aug 3), the step-up to 3 markets/week (team capacity not yet confirmed against current retainer load), and whether the ~3.5-week pre-Peak buffer is tight enough to warrant trimming Wave 3 instead. Adjust the schedule in chapter 16 once these are locked.</div>
   </div>
 </section>
 
-<!-- ================= CH 16 — 20-MARKET ROLLOUT: WEEKLY SCHEDULE ================= -->
-<div class="chapter" id="c16"><div class="ch-num">16</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter sixteen</div><h2>20-Market Rollout — Weekly Schedule</h2><p>10 weeks, 2 markets/week, Monday and Wednesday only.</p></div></div>
+<!-- ================= CH 16 — 50-MARKET ROLLOUT: WEEKLY SCHEDULE ================= -->
+<div class="chapter" id="c16"><div class="ch-num">16</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter sixteen</div><h2>50-Market Rollout — Weekly Schedule</h2><p>14 weeks, 3 markets/week, Monday–Wednesday only.</p></div></div>
 
 <section>
   <div class="wrap">
     <div class="tbl-wrap rv in" style="margin-bottom:24px">
-      <table><thead><tr><th style="width:12%">Week</th><th style="width:20%">Monday launch</th><th style="width:20%">Wednesday launch</th><th>Sequencing logic</th></tr></thead>
+      <table><thead><tr><th style="width:14%">Week</th><th style="width:12%">Mon</th><th style="width:12%">Tue</th><th style="width:12%">Wed</th><th>Sequencing logic</th></tr></thead>
       <tbody>
-        <tr><td><b>1 — Aug 3</b></td><td>GR</td><td>AU</td><td>Furthest-along market first, paired with the simplest English-native market</td></tr>
-        <tr><td><b>2 — Aug 10</b></td><td>CA</td><td>UAE</td><td>Dual-language, lower-risk (FR/AR alongside EN, both already partly mapped elsewhere in the account)</td></tr>
-        <tr><td><b>3 — Aug 17</b></td><td>QA</td><td>HK</td><td>English-native</td></tr>
-        <tr><td><b>4 — Aug 24</b></td><td>DK</td><td>FI</td><td>Nordic pair — similar description/title patterns</td></tr>
-        <tr><td><b>5 — Aug 31</b></td><td>EE</td><td>LT</td><td>Baltic pair</td></tr>
-        <tr><td><b>6 — Sep 7</b></td><td>LV</td><td>CZ</td><td>Baltic close-out, into Central Europe</td></tr>
-        <tr><td><b>7 — Sep 14</b></td><td>HR</td><td>RO</td><td>Central/Eastern Europe</td></tr>
-        <tr><td><b>8 — Sep 21</b></td><td>SI</td><td>SK</td><td>Central/Eastern Europe close-out</td></tr>
-        <tr><td><b>9 — Sep 28</b></td><td>IL</td><td>LU</td><td>Remaining markets</td></tr>
-        <tr><td><b>10 — Oct 5</b></td><td>PT</td><td>WO</td><td>PT last of the named markets; WO (rest-of-world catch-all) closes the rollout</td></tr>
+        <tr><td><b>1 — Aug 3</b></td><td>AU</td><td>NZ</td><td>CA</td><td>English-native / dual-language, lowest lift</td></tr>
+        <tr><td><b>2 — Aug 10</b></td><td>QA</td><td>HK</td><td>UAE</td><td>English-native, into Middle East</td></tr>
+        <tr><td><b>3 — Aug 17</b></td><td>BH</td><td>OM</td><td>JO</td><td>Middle East cluster, pairs with UAE</td></tr>
+        <tr><td><b>4 — Aug 24</b></td><td>DK</td><td>FI</td><td>NO</td><td>Nordic cluster</td></tr>
+        <tr><td><b>5 — Aug 31</b></td><td>IS</td><td>EE</td><td>LT</td><td>Nordic close-out, into Baltic</td></tr>
+        <tr><td><b>6 — Sep 7</b></td><td>LV</td><td>CZ</td><td>HR</td><td>Baltic close-out, into Central Europe</td></tr>
+        <tr><td><b>7 — Sep 14</b></td><td>RO</td><td>SI</td><td>SK</td><td>Central/Eastern Europe</td></tr>
+        <tr><td><b>8 — Sep 21</b></td><td>HU</td><td>BG</td><td>RS</td><td>Central/Eastern Europe continued</td></tr>
+        <tr><td><b>9 — Sep 28</b></td><td>UA</td><td>GR</td><td>MT</td><td>Eastern Europe close-out, into Mediterranean</td></tr>
+        <tr><td><b>10 — Oct 5</b></td><td>CY</td><td>JP</td><td>TW</td><td>Mediterranean close-out, into APAC</td></tr>
+        <tr><td><b>11 — Oct 12</b></td><td>KR</td><td>MY</td><td>TH</td><td>APAC</td></tr>
+        <tr><td><b>12 — Oct 19</b></td><td>PH</td><td>IN</td><td>MX</td><td>APAC close-out, into Americas</td></tr>
+        <tr><td><b>13 — Oct 26</b></td><td>ZA</td><td>KZ</td><td>IL</td><td>Remaining markets</td></tr>
+        <tr><td><b>14 — Nov 2</b></td><td>LU</td><td>PT</td><td>WO</td><td>PT last named market; WO (rest-of-world catch-all) closes the rollout</td></tr>
       </tbody></table>
     </div>
     <div class="grid-2 rv in">
-      <div class="card"><h4>Per-market launch (3–4 hrs)</h4><p style="font-size:13px">Feed structure + language mapping from the matrix (title/description/colour per market) → GMC setup → Shopping Local Language mapping → QA pass against the live feed → go-live confirmation. Same checklist every time, which is what keeps a 3–4 hour estimate realistic across 20 different markets.</p></div>
-      <div class="card"><h4>What this schedule doesn't cover yet</h4><p style="font-size:13px">Meta International Feed setup is tracked separately per market in the matrix and isn't included in the 3–4 hour Shopping-launch estimate above — GR, for instance, needs that step regardless of its head start on Shopping. Worth a second pass once the Shopping rollout above is confirmed.</p></div>
+      <div class="card"><h4>Per-market launch (3–4 hrs)</h4><p style="font-size:13px">Feed structure + language mapping (title/description/colour per market) → GMC setup → Shopping Local Language mapping → QA pass against the live feed → go-live confirmation. Same checklist every time — the estimate for the 22 markets without matrix detail yet assumes the same shape of work; confirm once their language/setup rows exist.</p></div>
+      <div class="card"><h4>What this schedule doesn't cover yet</h4><p style="font-size:13px">Meta International Feed setup is tracked separately per market and isn't included in the 3–4 hour Shopping-launch estimate — same caveat as before, now across a bigger list. Worth a second pass once the Shopping rollout above is confirmed.</p></div>
     </div>
     <div class="note rv in"><b>This is a proposal, not a locked plan:</b> the market order groups by language/region similarity for a realistic operational flow — it's FeedSpark's sequencing logic, not something Reiss has signed off on yet. Swap any week's pairing freely once priorities (e.g. a specific market Reiss wants first) are confirmed.</div>
   </div>
