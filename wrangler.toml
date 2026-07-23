@@ -25,3 +25,13 @@ id = "d93b5ac576c74f0d8a315c5b92dc8e16"
 #   — or Cloudflare dashboard → Workers → feedspark → Settings → Variables → Add secret.
 # Until it's set, /api/claude returns a friendly "not connected yet" message and the
 # in-dashboard copilot stays usable (it shows the setup step instead of an answer).
+
+# One-time migration (must sit after all top-level keys like `rules`, or TOML folds them
+# into this table). The live worker carried an orphaned Durable Object class `Store` that
+# was never in this repo — the app is 100% KV-backed (see [[kv_namespaces]] above) — so
+# Cloudflare rejected every `wrangler deploy` with "does not export class 'Store'" (code
+# 10064). This deletes that unused class so deploys go through. It does NOT touch the EDITS
+# KV namespace (a separate store), where all real data lives.
+[[migrations]]
+tag = "v1"
+deleted_classes = ["Store"]
