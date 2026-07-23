@@ -1171,10 +1171,13 @@ window.addEventListener('load',restore);
     {id:'T13', task:'ChatGPT Merchant Program enrolment', metric:'ChatGPT visibility', month:'2026-10-01', prio:'Low'},
     {id:'T14', task:'AI visibility baseline + tracking', metric:'AI citations', month:'2026-10-01', prio:'Low'}
   ];
+  // Source prefix so every task shows where it came from. SVS = Strategy Review Session
+  // (the deck's testing matrix). Reuse the same 'SVS - ' prefix for future SRS-sourced tasks.
+  var SVS_PREFIX='SVS - ';
   function roadmapTasks(){ var ov=statusOverlay(), owo=ownerOverlay(), ren=renameOverlay();
     // hide any that were pushed into the real plan already (matched by fuzzy task text)
     var idx={}; planTasks().forEach(function(p){ if(p.client==='YuMOVE')(idx[nrm(p.task)]=1); });
-    return YUMOVE_ROADMAP.map(function(t){ var task=ren['YuMOVE|'+t.task]||t.task; var k='YuMOVE|'+task;
+    return YUMOVE_ROADMAP.map(function(t){ var base=SVS_PREFIX+t.task; var task=ren['YuMOVE|'+base]||base; var k='YuMOVE|'+task;
       if(CARRY_STAT[k]==='__deleted__'||DELETED[k])return null;
       var s=ov[k]!=null?ov[k]:(CARRY_STAT[k]!=null?CARRY_STAT[k]:'Open');
       return {client:'YuMOVE',task:task,cat:'test',owner:(owo[k]!=null?owo[k]:'Ray'),source:'atrt',
