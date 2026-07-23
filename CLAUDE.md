@@ -154,7 +154,9 @@ All HTML strategy decks include the inline edit + JSON patch sync system:
 ```
 GET  /                          → command center landing page (git-bundled + injected editor + Tachyon)
 GET  /workflow                  → Workflow control center (brief pipeline: Client→AM→ASPL)
-GET  /leadership /readiness /library /deck-builder /templates /roadmap → app modules
+GET  /leadership /readiness /library /deck-builder /templates /roadmap /buildlog → app modules
+GET  /api/buildlog              → Build Log feed (GitHub PRs/branches/overlap, KV-cached 10 min; optional GITHUB_TOKEN secret)
+GET|PUT /api/buildqueue         → Build Log "not built yet" queue (kvmerge-backed, concurrency-safe)
 GET  /deck/yumove               → YuMOVE strategy deck (git-bundled + injected editor)
 GET  /api/edits?page=<slug>     → return a page's saved edits as JSON
 PUT  /api/edits?page=<slug>     → save an edit patch (merges with existing)

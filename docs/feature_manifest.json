@@ -25,6 +25,9 @@
     { "name": "worker: per-key KV merge for clients/briefs (kvmerge)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "kvmerge", "pr": 68 },
     { "name": "worker: kvmerge module present", "file": "cloudflare/feedspark-deck/src/kvmerge.js", "pattern": "mergeIntoEnvelope", "pr": 68 },
     { "name": "CmdCenter: sync-base echo on dossier saves", "file": "docs/FeedSpark_Command_Center.html", "pattern": "X-Sync-Base", "pr": 68 },
-    { "name": "Workflow: sync-base echo on brief saves", "file": "docs/FeedSpark_Workflow.html", "pattern": "X-Sync-Base", "pr": 68 }
+    { "name": "Workflow: sync-base echo on brief saves", "file": "docs/FeedSpark_Workflow.html", "pattern": "X-Sync-Base", "pr": 68 },
+    { "name": "worker: Build Log page + feed registered", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "api/buildlog", "pr": 69 },
+    { "name": "BuildLog: page present (queue + derived board)", "file": "docs/FeedSpark_BuildLog.html", "pattern": "api/buildqueue", "pr": 69 },
+    { "name": "CmdCenter: Build Log in module nav", "file": "docs/FeedSpark_Command_Center.html", "pattern": "href=\"/buildlog\"", "pr": 69 }
   ]
 }
