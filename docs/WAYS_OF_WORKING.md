@@ -1,4 +1,88 @@
-# Ways of Working — Parallel Editing
+# Ways of Working
+
+Two parallel-work protocols in one doc:
+
+1. **[Multi-session development](#multi-session-claude-code-development)** — how 4–5 Claude Code
+   sessions build FCC features at the same time without clobbering each other.
+2. **[Parallel editing](#parallel-editing--ray--claude-on-one-deck)** — how Ray (content) and
+   Claude (template) edit the same deck at the same time.
+
+---
+
+# Multi-session Claude Code development
+
+Ray runs several Claude Code sessions in parallel (different features, different times). The deploy
+pipeline is deterministic (see [`DEPLOY_PROTOCOL.md`](./DEPLOY_PROTOCOL.md)), so the remaining risks
+are **branch drift** (main moves under a stale branch) and **two sessions editing the same file**.
+This protocol removes both.
+
+## The model — trunk-based, one short-lived branch per task
+
+- `main` is the single source of truth and always deployable (`validate.yml` gates every PR).
+- Each session works on its **own** branch off the **latest** main: `claude/<module>-<slug>`
+  (e.g. `claude/workflow-am-filter`, `claude/cmdcenter-ryobi`). **Never share a branch between
+  sessions.**
+- Small, single-purpose PRs, merged often, branch deleted after merge. After a session's PR merges,
+  the session **restarts its branch from latest main** for its next task — that restart *is* the
+  sync mechanism.
+
+## Module partitioning — guideline, not law
+
+Default each session to one module so parallel edits land in different files:
+
+| Session lane | Owns (default) |
+|---|---|
+| Workflow | `docs/FeedSpark_Workflow.html` |
+| Command Center | `docs/FeedSpark_Command_Center.html` (+ `atrt_data.json` via `sync_atrt.py`) |
+| Deck Generator | `docs/FeedSpark_DeckBuilder.html`, deck templates, the deck-generator skill |
+| Worker / API | `cloudflare/feedspark-deck/src/worker.js`, `wrangler.toml` |
+| Other modules | Readiness / Leadership / Task Library / Roadmap / Templates pages |
+
+Crossing lanes is allowed when the task needs it — the rule is only: **check what's in flight
+first, and sequence rather than parallel-edit the same file** (one session merges, the other syncs,
+then edits). Two sessions in different files ≈ zero conflicts.
+
+## Coordination — the open-PR list is the board
+
+Before starting work, a session checks **open PRs and remote `claude/*` branches** to see what's in
+flight (`list_pull_requests` + `git ls-remote --heads origin 'claude/*'`). Prefix PR titles with the
+module — `[Workflow] …`, `[CmdCenter] …`, `[Worker] …` — so the list is scannable at a glance.
+No separate board/issue tracker to maintain.
+
+## The session lifecycle (checklist)
+
+1. **Start** — `git fetch origin main` → branch `claude/<module>-<slug>` off `origin/main` → scan
+   open PRs/branches for overlap.
+2. **Work** — small in-module changes; validate locally as you go
+   (`npx wrangler@4 deploy --dry-run` + `node tools/check_inline_scripts.js`).
+3. **Pre-merge** — run **`bash tools/presync.sh`**: it fetches + merges latest `main` into the
+   branch and re-runs both validations. Resolve any conflict here, not in the PR.
+4. **Merge** — small squash PR (module-prefixed title). Delete the branch.
+5. **Verify LIVE** — per the CLAUDE.md rule: Deploy Action green → worker re-published →
+   `/api/version` sha is your commit **or a later one containing it** (another session may have
+   merged after you — fine) → the feature is actually present on the page.
+6. **Next task** — restart the branch from latest `main`.
+
+## Shared-file chokepoints (the few real ones)
+
+- **`wrangler.toml` + DO migrations** — migration tags are **append-only and incrementing**
+  (`v2` is taken). If two sessions need a migration, coordinate the tag; never reuse or reorder.
+- **`worker.js`** — one session at a time; it's one file serving every module. Sequence.
+- **`atrt_data.json` / Command Center ATRT regions** — regenerate via `tools/sync_atrt.py`, never
+  hand-edit the spliced regions; sequence with any other Command Center work.
+- **CLAUDE.md / this doc** — docs-only PRs, merge fast to minimise the window.
+
+## Anti-patterns
+
+- ❌ One branch shared across sessions (guaranteed force-push fights)
+- ❌ Mega-PRs mixing modules (hard to review, blocks other lanes)
+- ❌ Merging without `presync.sh` (drift lands as surprise conflicts or reverts)
+- ❌ Two sessions live-editing the same monolith file in parallel
+- ❌ Reporting "shipped" on a merge alone — always verify live (CLAUDE.md rule)
+
+---
+
+# Parallel Editing — Ray + Claude on one deck
 
 How Ray and Claude edit the same FeedSpark HTML deck **at the same time** without clobbering each
 other. The rule that makes it work: **separate the content layer from the template layer.**
