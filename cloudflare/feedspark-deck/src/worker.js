@@ -1415,5 +1415,51 @@ function getEditorScript(slug) {
   loadEdits();
   loadFeedback();
 })();
+</script>
+<!-- Universal PDF export — every deck gets this for free, no per-deck edits needed.
+     Injected here (not hardcoded per deck) so future decks pick it up automatically. -->
+<style>
+@page{size:A4 landscape;margin:11mm 13mm}
+@media print{
+  html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;background:#fff}
+  .topbar,.side-nav,.footmark,.scrollcue,.progress,.de-bar,.de-handle,.de-panel,.de-props,.de-toast,.de-resize,[id^="tky-"]{display:none!important}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:100%}
+  section{padding:34px 0}
+  .hero{min-height:auto;padding:56px 0 40px;break-after:page}
+  .chapter{padding:40px 0;break-before:page;break-inside:avoid}
+  .chapter+section{break-before:avoid}
+  .ch-num{font-size:120px}
+  .band,.band-warm{break-inside:avoid-page}
+  .rv{opacity:1!important;transform:none!important;transition:none!important}
+  .fill{transition:none!important}
+  .card,.stat,.tier,.proto,.pipe-card,.flow-step,.mo,.sc-cell,.ask,.ct,.en-card,table tr{break-inside:avoid}
+  .stats,.grid-2,.grid-3,.grid-4,.tiers,.road,.pipe,.flow,.sc-grid,.contacts{break-inside:avoid-page}
+  .qs,.agent-l>p{display:none}
+  .close{break-before:page}
+  .card,.proto,.pipe-card,.tier,.en-card{box-shadow:none}
+}
+</style>
+<script>
+(function(){
+  function preparePrint(){
+    document.querySelectorAll('.rv').forEach(function(el){ el.classList.add('in'); });
+    document.querySelectorAll('.fill[data-w]').forEach(function(el){ var w=el.getAttribute('data-w'); if(w) el.style.width=w+'%'; });
+  }
+  window.addEventListener('beforeprint', preparePrint);
+  function addBtn(){
+    if(document.getElementById('pdfBtn')) return;
+    var btn=document.createElement('button');
+    btn.id='pdfBtn'; btn.className='flagbtn'; btn.title='Save this deck as a PDF to send to clients';
+    btn.textContent='⬇ Download PDF'; btn.style.marginLeft='8px';
+    btn.addEventListener('click',function(){ preparePrint(); setTimeout(function(){ window.print(); },60); });
+    var flag=document.getElementById('flagbtn');
+    var host=document.querySelector('.topbar-in');
+    if(flag && flag.parentNode) flag.insertAdjacentElement('afterend', btn);
+    else if(host) host.appendChild(btn);
+    else { btn.style.cssText+=';position:fixed;top:14px;right:14px;z-index:99999;background:#fff'; document.body.appendChild(btn); }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', addBtn); else addBtn();
+})();
 </script>`;
 }
