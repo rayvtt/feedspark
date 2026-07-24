@@ -33,6 +33,7 @@ import ROADMAP from "../../../docs/FeedSpark_Roadmap.html";
 import READINESS from "../../../docs/FeedSpark_Readiness.html";
 import LEADERSHIP from "../../../docs/FeedSpark_Leadership.html";
 import DECKBUILDER from "../../../docs/FeedSpark_DeckBuilder.html";
+import BUILDLOG from "../../../docs/FeedSpark_BuildLog.html";
 import WORKFLOW from "../../../docs/FeedSpark_Workflow.html";
 import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html";
 import DECK_REISS from "../../../docs/Reiss_Strategy_Review_FY2526.html";
@@ -52,6 +53,7 @@ const PAGES = {
   '/readiness':   { html: READINESS,   slug: 'readiness' },
   '/leadership':  { html: LEADERSHIP,  slug: 'leadership' },
   '/deck-builder':{ html: DECKBUILDER, slug: 'deckbuilder' },
+  '/buildlog':    { html: BUILDLOG,    slug: 'buildlog' },
   '/workflow':    { html: WORKFLOW,    slug: 'workflow' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
@@ -127,6 +129,55 @@ export default {
       // brief pipeline: deletion = absence, disambiguated by the writer's X-Sync-Base read-stamp
       const r = await mapStoreRoute(env, request, 'briefs', {});
       if (r) return r;
+    }
+
+    // ---- Build Log queue: Ray's "not built yet" backlog (kvmerge-backed, concurrency-safe) ----
+    if (path === '/api/buildqueue') {
+      const r = await mapStoreRoute(env, request, 'buildqueue', {});
+      if (r) return r;
+    }
+
+    // ---- Build Log feed: PRs + active branches + per-branch changed files from the public
+    // GitHub API, cached in KV (10 min) to stay far under unauthenticated rate limits. The
+    // /buildlog page derives shipped / in-build / dropped / overlap from this — no manual log
+    // to go stale. Optional GITHUB_TOKEN secret raises the rate limit; not required.
+    if (path === '/api/buildlog' && request.method === 'GET') {
+      const force = url.searchParams.get('force') === '1';
+      const ck = 'buildlog:gh';
+      let data = force ? null : await env.EDITS.get(ck, 'json');
+      if (!data) {
+        const gh = async (p) => {
+          const r = await fetch('https://api.github.com/repos/rayvtt/feedspark' + p, {
+            headers: { accept: 'application/vnd.github+json', 'user-agent': 'feedspark-fcc',
+              ...(env.GITHUB_TOKEN ? { authorization: 'Bearer ' + env.GITHUB_TOKEN } : {}) } });
+          if (!r.ok) throw new Error('github ' + r.status);
+          return r.json();
+        };
+        try {
+          const pulls = await gh('/pulls?state=all&per_page=60&sort=updated&direction=desc');
+          const branches = await gh('/branches?per_page=100');
+          const active = branches.filter(b => b.name !== 'main' && /^claude\//.test(b.name));
+          const branchFiles = {};
+          for (const b of active.slice(0, 8)) {   // cap compares: 8 branches ≈ 10 API calls/refresh
+            try {
+              const cmp = await gh('/compare/main...' + encodeURIComponent(b.name));
+              const fs = (cmp.files || []).map(f => f.filename);
+              if (fs.length) branchFiles[b.name] = fs.slice(0, 40);
+            } catch (e) { /* branch may be identical to main or compare too large — skip */ }
+          }
+          data = { at: Date.now(),
+            pulls: pulls.map(p => ({ n: p.number, t: p.title, s: p.state, m: !!p.merged_at, ma: p.merged_at || '',
+              mc: p.merge_commit_sha || '', ca: p.created_at, ua: p.updated_at, b: (p.head && p.head.ref) || '', u: p.html_url })),
+            branchFiles };
+          await env.EDITS.put(ck, JSON.stringify(data), { expirationTtl: 600 });
+          await env.EDITS.put(ck + ':stale', JSON.stringify(data));
+        } catch (e) {
+          const stale = await env.EDITS.get(ck + ':stale', 'json');
+          return json({ ...(stale || { pulls: [], branchFiles: {} }), stale: true, error: String((e && e.message) || e),
+            live: { sha: env.GIT_SHA || '' } });
+        }
+      }
+      return json({ ...data, live: { sha: env.GIT_SHA || '' } });
     }
 
     // ---- test & experiment register (Workflow) — a single JSON array of test cards ----

@@ -1,0 +1,260 @@
+<meta charset="utf-8">
+<script>/* FCC-THEME */(function(){var d=document.documentElement;
+try{var t=localStorage.getItem('fcc-theme');if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light';}d.setAttribute('data-theme',t);}catch(e){d.setAttribute('data-theme','light');}
+var moon='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>';
+var sun='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+function ic(){return d.getAttribute('data-theme')==='dark'?sun:moon;}
+function mk(){ if(!document.getElementById('theme-tgl')){var tb=document.querySelector('.topbar-in');
+  var b=document.createElement('button');b.id='theme-tgl';b.type='button';b.setAttribute('aria-label','Toggle light or dark theme');b.title='Toggle light / dark';b.innerHTML=ic();
+  b.onclick=function(){var n=d.getAttribute('data-theme')==='dark'?'light':'dark';d.setAttribute('data-theme',n);try{localStorage.setItem('fcc-theme',n);}catch(e){}b.innerHTML=ic();};
+  if(tb)tb.appendChild(b);else{b.style.cssText+=';position:fixed;top:12px;right:14px;z-index:60';document.body.appendChild(b);}} }
+if(document.readyState!=='loading')mk();else document.addEventListener('DOMContentLoaded',mk);
+})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FeedSpark · Build Log</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
+  :root{--orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;--ink:#333;--ink-2:#4a4a4a;
+    --muted:#8a94a0;--line:#E6E6E6;--paper:#fff;--wash:#F7F7F5;--navy:#1A365D;--good:#15803D;--risk:#C0392B;--purple:#7A5AA8;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);--radius:14px}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Lato,system-ui,sans-serif;color:var(--ink);background:var(--wash);line-height:1.5}
+  .wrap{max-width:1150px;margin:0 auto;padding:0 28px}
+  a{color:var(--orange-deep)}
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1150px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:18px}
+  .brand{font-weight:900;font-size:18px}.brand span{color:var(--orange-deep)}
+  .tb-tag{font-size:12px;font-weight:800;color:var(--muted);border-left:1px solid var(--line);padding-left:16px}
+  .tb-nav{margin-left:auto;display:flex;gap:16px;flex-wrap:wrap}
+  .tb-nav a{font-size:13px;font-weight:700;color:var(--ink-2);text-decoration:none}
+  .tb-nav a:hover,.tb-nav a.on{color:var(--orange-deep)}
+  h1{font-size:26px;font-weight:900;margin:26px 0 4px}
+  .lede{color:var(--ink-2);margin:0 0 18px;max-width:860px}
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;margin:0 0 18px}
+  .panel h2{font-size:15px;font-weight:900;margin:0 0 4px}
+  .panel .sub{font-size:12px;color:var(--muted);font-weight:600;margin:0 0 12px}
+  .kpis{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 18px}
+  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:12px 18px;min-width:118px}
+  .kpi b{display:block;font-size:22px;font-weight:900}
+  .kpi span{font-size:11.5px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.03em}
+  .kpi.ship b{color:var(--good)} .kpi.build b{color:var(--orange-deep)} .kpi.q b{color:var(--navy)} .kpi.drop b{color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  .mod{display:inline-block;font-size:10.5px;font-weight:900;padding:2px 8px;border-radius:100px;border:1px solid var(--line);color:var(--ink-2);background:var(--wash);white-space:nowrap}
+  .st{display:inline-block;font-size:11px;font-weight:900;padding:2px 9px;border-radius:100px;white-space:nowrap}
+  .st-live{color:var(--good);background:rgba(21,128,61,.1);border:1px solid rgba(21,128,61,.3)}
+  .st-ship{color:var(--good);background:rgba(21,128,61,.07);border:1px solid rgba(21,128,61,.2)}
+  .st-dep{color:var(--orange-ink);background:rgba(245,166,35,.14);border:1px solid #F5D3A6}
+  .st-open{color:var(--orange-deep);background:rgba(237,111,11,.09);border:1px solid rgba(237,111,11,.3)}
+  .st-nopr{color:var(--purple);background:rgba(122,90,168,.1);border:1px solid rgba(122,90,168,.3)}
+  .st-q{color:var(--navy);background:rgba(26,54,93,.08);border:1px solid rgba(26,54,93,.25)}
+  .st-drop{color:var(--muted);background:var(--wash);border:1px solid var(--line)}
+  .hot{color:var(--risk);font-weight:900}
+  .ov-row{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;padding:7px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+  .ov-row:last-child{border-bottom:none}
+  .ov-b{font-weight:800;color:var(--ink-2)}
+  .ov-f{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--muted)}
+  .btn{font:inherit;font-size:12.5px;font-weight:800;padding:7px 14px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
+  .btn:hover{border-color:var(--orange-deep);color:var(--orange-deep)}
+  .btn.prime{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+  .btn.prime:hover{background:var(--orange)}
+  .qform{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .qform input,.qform select{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+  .qform input[type=text]{flex:1 1 260px}
+  .muted{color:var(--muted)} .tiny{font-size:11.5px}
+  .bar{display:flex;align-items:center;gap:12px;margin:0 0 14px;flex-wrap:wrap}
+  .stamp{font-size:11.5px;color:var(--muted);font-weight:700}
+  .empty{color:var(--muted);font-size:13px;padding:10px 4px}
+  .qact{font-size:11px;font-weight:800;cursor:pointer;color:var(--muted);border:none;background:none;padding:2px 5px}
+  .qact:hover{color:var(--orange-deep)}
+  [data-theme=dark] body{background:#14181d;color:#D7DCE2}
+  [data-theme=dark] .panel,[data-theme=dark] .kpi,[data-theme=dark] .topbar{background:#1b2027;border-color:#2a313a}
+  [data-theme=dark] .topbar{background:rgba(27,32,39,.92)}
+  [data-theme=dark] th,[data-theme=dark] td{border-color:#2a313a}
+  [data-theme=dark] .mod{background:#14181d;border-color:#2a313a;color:#aeb6c0}
+  [data-theme=dark] .qform input,[data-theme=dark] .qform select,[data-theme=dark] .btn{background:#14181d;border-color:#2a313a;color:#D7DCE2}
+  #theme-tgl{border:1px solid var(--line);background:var(--paper);color:var(--ink-2);border-radius:9px;padding:5px 8px;cursor:pointer;display:flex;align-items:center}
+  [data-theme=dark] #theme-tgl{background:#14181d;border-color:#2a313a;color:#D7DCE2}
+</style>
+
+<header class="topbar"><div class="topbar-in">
+  <div class="brand">Feed<span>Spark</span></div><div class="tb-tag">Build Log</div>
+  <nav class="tb-nav">
+    <a href="/">Command center</a><a href="/workflow">Workflow</a><a href="/deck-builder">Deck Generator</a>
+    <a href="/roadmap">Roadmap</a><a href="/buildlog" class="on">Build Log</a>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <h1>Build Log</h1>
+  <p class="lede">One control surface over every Claude Code session: what's <b>queued</b>, <b>in build</b>,
+  <b>shipped &amp; live</b>, <b>dropped</b> — and where sessions <b>overlap</b>. Shipped/in-build/dropped derive
+  automatically from the repo's PRs and branches (they can't go stale); only the queue is yours to curate.</p>
+
+  <div class="bar">
+    <button class="btn prime" id="bl-refresh">⟳ Refresh from GitHub</button>
+    <span class="stamp" id="bl-stamp">—</span>
+    <span class="stamp" id="bl-live"></span>
+  </div>
+
+  <div class="kpis" id="bl-kpis"></div>
+
+  <div class="panel">
+    <h2>Queue — not built yet</h2>
+    <div class="sub">Your backlog: add what you want built; a session picks it up and it moves right. Saved shared (concurrency-safe KV) — everyone sees one queue.</div>
+    <div id="q-list"></div>
+    <div class="qform">
+      <input type="text" id="q-title" placeholder="What should get built? (e.g. Steven read-only role on dossiers)">
+      <select id="q-mod"><option>Workflow</option><option>CmdCenter</option><option>Deck Generator</option><option>Worker</option><option>Docs</option><option>Other</option></select>
+      <button class="btn prime" id="q-add">＋ Queue it</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>In build — sessions working now</h2>
+    <div class="sub">Open PRs + active <code>claude/*</code> branches that haven't opened a PR yet.</div>
+    <div id="bl-inbuild"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Overlap radar</h2>
+    <div class="sub">Active branches touching the same files — 🔥 means a hot file (worker.js, wrangler.toml, CLAUDE.md, app-page monoliths): sequence, don't parallel-edit.</div>
+    <div id="bl-overlap"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Shipped</h2>
+    <div class="sub">Merged PRs, newest first. <span class="st st-live">LIVE</span> = at or before the build currently serving the FCC (<code>/api/version</code>).</div>
+    <div id="bl-shipped"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Not built — closed without merging / dropped from queue</h2>
+    <div class="sub">Explicit decisions, kept visible so they aren't re-litigated by accident.</div>
+    <div id="bl-dropped"></div>
+  </div>
+</main>
+
+<script>
+(function(){
+  var esc=function(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
+  var HOT=/^(cloudflare\/feedspark-deck\/src\/worker\.js|wrangler\.toml|CLAUDE\.md|docs\/FeedSpark_Command_Center\.html|docs\/FeedSpark_Workflow\.html|docs\/atrt_data\.json)$/;
+  var MODRE=/^\[([^\]]+)\]\s*/;
+  function modOf(t){ var m=MODRE.exec(t||''); return m?m[1]:''; }
+  function cleanTitle(t){ return (t||'').replace(MODRE,''); }
+  function ago(iso){ if(!iso)return ''; var s=(Date.now()-new Date(iso).getTime())/1000;
+    if(s<3600)return Math.max(1,Math.round(s/60))+'m ago'; if(s<86400)return Math.round(s/3600)+'h ago'; return Math.round(s/86400)+'d ago'; }
+
+  // ---- queue store (shared KV via /api/buildqueue, kvmerge-backed: concurrent edits merge) ----
+  var Q={}, Q_BASE=0;
+  function qGet(){ return fetch('/api/buildqueue').then(function(r){ Q_BASE=+r.headers.get('X-Sync-Base')||0; return r.json(); })
+    .then(function(m){ Q=(m&&typeof m==='object'&&!m.ok)?m:{}; renderQueue(); renderDropped(window.__bl||null); })
+    .catch(function(){ Q={}; renderQueue(); }); }
+  function qSave(){ fetch('/api/buildqueue',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(Q_BASE)},body:JSON.stringify(Q)})
+    .then(function(r){ Q_BASE=+r.headers.get('X-Sync-Base')||Q_BASE; return r.json(); })
+    .then(function(m){ if(m&&typeof m==='object'&&!m.ok){ Q=m; renderQueue(); renderDropped(window.__bl||null); } })
+    .catch(function(){}); }
+  function qAdd(){ var t=document.getElementById('q-title').value.trim(); if(!t)return;
+    var id='q'+Date.now().toString(36);
+    Q[id]={id:id,title:t,mod:document.getElementById('q-mod').value,status:'queued',at:new Date().toISOString()};
+    document.getElementById('q-title').value=''; qSave(); renderQueue(); }
+  function qSet(id,st){ if(Q[id]){ Q[id].status=st; Q[id].at2=new Date().toISOString(); qSave(); renderQueue(); renderDropped(window.__bl||null); } }
+  function qDel(id){ delete Q[id]; qSave(); renderQueue(); renderDropped(window.__bl||null); }
+  function renderQueue(){ var host=document.getElementById('q-list'); var items=Object.keys(Q).map(function(k){return Q[k];})
+      .filter(function(q){return q.status==='queued'||q.status==='building';})
+      .sort(function(a,b){return (a.at<b.at?-1:1);});
+    if(!items.length){ host.innerHTML='<div class="empty">Queue is clear — add the next thing below.</div>'; return; }
+    host.innerHTML='<table><thead><tr><th>Item</th><th>Module</th><th>Status</th><th>Added</th><th></th></tr></thead><tbody>'+items.map(function(q){
+      return '<tr><td>'+esc(q.title)+'</td><td><span class="mod">'+esc(q.mod||'—')+'</span></td>'
+        +'<td><span class="st '+(q.status==='building'?'st-open':'st-q')+'">'+(q.status==='building'?'in build':'queued')+'</span></td>'
+        +'<td class="tiny muted">'+ago(q.at)+'</td>'
+        +'<td style="white-space:nowrap">'
+        +(q.status==='queued'?'<button class="qact" data-a="building" data-id="'+q.id+'">▶ building</button>':'<button class="qact" data-a="queued" data-id="'+q.id+'">↩ queue</button>')
+        +'<button class="qact" data-a="shipped" data-id="'+q.id+'">✓ shipped</button>'
+        +'<button class="qact" data-a="dropped" data-id="'+q.id+'">✕ drop</button></td></tr>'; }).join('')+'</tbody></table>';
+    host.querySelectorAll('.qact').forEach(function(b){ b.onclick=function(){ var a=b.getAttribute('data-a');
+      if(a==='del')qDel(b.getAttribute('data-id')); else qSet(b.getAttribute('data-id'),a); }; });
+  }
+
+  // ---- derived board from /api/buildlog (GitHub PRs + branches + live sha, KV-cached) ----
+  function load(force){
+    var stamp=document.getElementById('bl-stamp'); stamp.textContent='loading…';
+    fetch('/api/buildlog'+(force?'?force=1':'')).then(function(r){return r.json();}).then(function(d){
+      window.__bl=d; render(d);
+    }).catch(function(){ stamp.textContent='offline — serve via the worker to see PR data'; });
+  }
+  function render(d){
+    var pulls=d.pulls||[]; var stamp=document.getElementById('bl-stamp');
+    stamp.textContent=(d.stale?'GitHub unreachable — showing last snapshot · ':'')+'synced '+(d.at?ago(new Date(d.at).toISOString()):'—');
+    var liveSha=(d.live&&d.live.sha)||'';
+    var merged=pulls.filter(function(p){return p.m;}).sort(function(a,b){return a.ma<b.ma?1:-1;});
+    var open=pulls.filter(function(p){return p.s==='open';});
+    var dropped=pulls.filter(function(p){return p.s==='closed'&&!p.m;});
+    // live cutoff: the merged PR whose merge commit is serving now; anything merged at/before is live
+    var liveAt=''; merged.forEach(function(p){ if(liveSha&&p.mc&&(p.mc.indexOf(liveSha)===0||liveSha.indexOf(p.mc.slice(0,9))===0)) liveAt=p.ma; });
+    document.getElementById('bl-live').textContent=liveSha?('live build: '+liveSha.slice(0,9)):'';
+    var qn=Object.keys(Q).filter(function(k){return Q[k].status==='queued'||Q[k].status==='building';}).length;
+    document.getElementById('bl-kpis').innerHTML=
+      '<div class="kpi ship"><b>'+merged.length+'</b><span>shipped</span></div>'
+      +'<div class="kpi build"><b>'+open.length+'</b><span>in build (PRs)</span></div>'
+      +'<div class="kpi q"><b>'+qn+'</b><span>queued</span></div>'
+      +'<div class="kpi drop"><b>'+dropped.length+'</b><span>not built</span></div>';
+
+    // in build: open PRs + branches with changes but no open PR
+    var prBranches={}; open.forEach(function(p){ if(p.b)prBranches[p.b]=1; });
+    var bf=d.branchFiles||{}; var lone=Object.keys(bf).filter(function(b){return !prBranches[b];});
+    var rows=open.map(function(p){
+      return '<tr><td><a href="'+esc(p.u)+'" target="_blank" rel="noopener">#'+p.n+'</a> '+esc(cleanTitle(p.t))+'</td>'
+        +'<td><span class="mod">'+esc(modOf(p.t)||'—')+'</span></td><td><span class="st st-open">PR open</span></td>'
+        +'<td class="tiny muted">'+ago(p.ua)+'</td></tr>'; })
+      .concat(lone.map(function(b){
+        return '<tr><td><code>'+esc(b)+'</code> <span class="tiny muted">('+(bf[b]||[]).length+' files changed)</span></td>'
+          +'<td><span class="mod">—</span></td><td><span class="st st-nopr">session active · no PR yet</span></td><td></td></tr>'; }));
+    document.getElementById('bl-inbuild').innerHTML=rows.length
+      ?'<table><thead><tr><th>Work</th><th>Module</th><th>State</th><th>Updated</th></tr></thead><tbody>'+rows.join('')+'</tbody></table>'
+      :'<div class="empty">Nothing in build right now.</div>';
+
+    // overlap radar: pairwise intersections
+    var names=Object.keys(bf), ov=[];
+    for(var i=0;i<names.length;i++)for(var j=i+1;j<names.length;j++){
+      var common=(bf[names[i]]||[]).filter(function(f){return (bf[names[j]]||[]).indexOf(f)>=0;});
+      if(common.length)ov.push({a:names[i],b:names[j],files:common});
+    }
+    document.getElementById('bl-overlap').innerHTML=ov.length
+      ?ov.map(function(o){ return '<div class="ov-row"><span class="ov-b">'+esc(o.a)+'</span><span class="muted">×</span><span class="ov-b">'+esc(o.b)+'</span>'
+          +o.files.map(function(f){ return '<span class="ov-f">'+(HOT.test(f)?'<span class="hot">🔥 '+esc(f)+'</span>':esc(f))+'</span>'; }).join('')+'</div>'; }).join('')
+      :'<div class="empty">No overlapping files between active branches. Clear runway.</div>';
+
+    // shipped
+    document.getElementById('bl-shipped').innerHTML=merged.length
+      ?'<table><thead><tr><th>PR</th><th>Module</th><th>State</th><th>Merged</th></tr></thead><tbody>'+merged.slice(0,40).map(function(p){
+        var isLive=liveAt?(p.ma<=liveAt):false;
+        return '<tr><td><a href="'+esc(p.u)+'" target="_blank" rel="noopener">#'+p.n+'</a> '+esc(cleanTitle(p.t))+'</td>'
+          +'<td><span class="mod">'+esc(modOf(p.t)||'—')+'</span></td>'
+          +'<td><span class="st '+(isLive?'st-live':'st-dep')+'">'+(isLive?'LIVE':'merged · deploying')+'</span></td>'
+          +'<td class="tiny muted">'+ago(p.ma)+'</td></tr>'; }).join('')+'</tbody></table>'
+      :'<div class="empty">No merged PRs found.</div>';
+    renderDropped(d);
+  }
+  function renderDropped(d){
+    var host=document.getElementById('bl-dropped'); if(!host)return;
+    var rows=[];
+    ((d&&d.pulls)||[]).filter(function(p){return p.s==='closed'&&!p.m;}).forEach(function(p){
+      rows.push('<tr><td><a href="'+esc(p.u)+'" target="_blank" rel="noopener">#'+p.n+'</a> '+esc(cleanTitle(p.t))+'</td><td><span class="mod">'+esc(modOf(p.t)||'—')+'</span></td><td><span class="st st-drop">PR closed</span></td><td class="tiny muted">'+ago(p.ua)+'</td></tr>'); });
+    Object.keys(Q).map(function(k){return Q[k];}).filter(function(q){return q.status==='dropped'||q.status==='shipped';})
+      .sort(function(a,b){return (a.at2||a.at)<(b.at2||b.at)?1:-1;}).slice(0,20).forEach(function(q){
+      rows.push('<tr><td>'+esc(q.title)+'</td><td><span class="mod">'+esc(q.mod||'—')+'</span></td><td><span class="st '+(q.status==='shipped'?'st-ship':'st-drop')+'">'+(q.status==='shipped'?'shipped (queue)':'dropped (queue)')+'</span></td><td class="tiny muted"><button class="qact" data-id="'+q.id+'">✕ remove</button></td></tr>'); });
+    host.innerHTML=rows.length
+      ?'<table><thead><tr><th>Item</th><th>Module</th><th>State</th><th></th></tr></thead><tbody>'+rows.join('')+'</tbody></table>'
+      :'<div class="empty">Nothing dropped — everything attempted has shipped.</div>';
+    host.querySelectorAll('.qact').forEach(function(b){ b.onclick=function(){ qDel(b.getAttribute('data-id')); }; });
+  }
+
+  document.getElementById('q-add').onclick=qAdd;
+  document.getElementById('q-title').addEventListener('keydown',function(e){ if(e.key==='Enter')qAdd(); });
+  document.getElementById('bl-refresh').onclick=function(){ load(true); };
+  qGet(); load(false);
+})();
+</script>
