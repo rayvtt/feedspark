@@ -1473,8 +1473,21 @@ function getEditorScript(slug) {
   function buildClientHtml(){
     if(window.__fsPreparePrint) window.__fsPreparePrint();
     var doc = document.cloneNode(true);
-    ['.de-bar','.de-handle','.de-panel','.de-props','.de-toast','.de-resize','#fs-editor-css','#htmlBtn'].forEach(function(sel){
-      Array.prototype.slice.call(doc.querySelectorAll(sel)).forEach(function(el){ el.remove(); });
+    // [class^="de-"] catches every editor-widget element by convention (.de-bar, .de-fbpanel,
+    // .de-fbmark, .de-fbnote, .de-rtbar, .de-toast, ... — confirmed nothing in the shared deck
+    // design system uses that prefix) instead of an enumerated list, which already proved easy
+    // to under-specify: the first version of this missed .de-fbpanel/.de-fbmark/.de-fbnote/
+    // .de-rtbar entirely, leaking a visible "Feedback" panel into exported client files.
+    // GUARD: <body> itself carries a de-* class whenever Edit/Design/Feedback mode is active
+    // (de-on/de-design/de-feedback) — exporting mid-session matched body against this same
+    // selector and deleted the entire <body>, producing a silently blank file. Never remove
+    // the document's own root containers, no matter what selector matched them; body's own
+    // de-* mode classes are stripped separately below (as classes, not as element removal).
+    ['[class^="de-"]','#fs-editor-css','#htmlBtn'].forEach(function(sel){
+      Array.prototype.slice.call(doc.querySelectorAll(sel)).forEach(function(el){
+        if(el===doc.body || el===doc.documentElement || el===doc.head) return;
+        el.remove();
+      });
     });
     Array.prototype.slice.call(doc.querySelectorAll('.chk')).forEach(function(el){ el.remove(); });
     // hide, don't remove: every deck's own template script unconditionally does
