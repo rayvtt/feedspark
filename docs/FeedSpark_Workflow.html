@@ -1540,7 +1540,7 @@ window.addEventListener('load',restore);
     var xl=[];
     if(b.taskKey) xl.push('<span class="xl" title="Linked plan-row task">⛓ '+esc((b.taskKey.split('|')[1]||'').slice(0,48))+'</span>');
     if(PLANSHEET[b.client]) xl.push('<a class="xl" target="_blank" rel="noopener" href="https://docs.google.com/spreadsheets/d/'+PLANSHEET[b.client]+'">📊 Open '+esc(b.client)+'’s plan sheet</a>');
-    if(b.code) xl.push('<a class="xl" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent('ibfcode:'+b.code)+'">✉ Find the email thread ('+esc(b.code)+')</a>');
+    if(b.code) xl.push('<a class="xl" id="m-thread" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent('"ibfcode:'+b.code+'"')+'">✉ Find the email thread ('+esc(b.code)+')</a>');
     modalEl.innerHTML=''
       +'<div style="display:flex;align-items:flex-start"><div><h3>'+esc(b.task)+'</h3>'
         +'<div class="mc">'+esc(b.id)+' · '+esc(b.client)+' · ['+esc(b.code)+']</div></div><button class="x" id="m-x">×</button></div>'
@@ -1584,6 +1584,16 @@ window.addEventListener('load',restore);
     document.getElementById('m-chase').href=chaseAspl(b);
     document.getElementById('m-chasec').href=chaseClient(b);
     var asplSel=document.getElementById('m-aspl'); if(asplSel)asplSel.onchange=function(){ b.aspl=asplSel.value; b.updated=Date.now(); persist(); renderSLA(); toast('Owner → '+b.aspl); };
+    // upgrade the thread link from a search to a DIRECT deep-link once the worker resolves the
+    // Gmail thread id (cached on the brief so later opens are instant). Falls back to the
+    // quoted-token search until Gmail creds are connected.
+    (function(){ var a=document.getElementById('m-thread'); if(!a||!b.code)return;
+      function apply(g){ if(!g||!g.id)return; a.href='https://mail.google.com/mail/u/'+encodeURIComponent(g.mb||'0')+'/#all/'+encodeURIComponent(g.id); a.innerHTML='✉ Open the email thread ('+esc(b.code)+')'; }
+      if(b.gthread){ apply(b.gthread); return; }
+      fetch('/api/gmail/thread?q='+encodeURIComponent('ibfcode:'+b.code)).then(function(r){return r.json();}).then(function(d){
+        if(d&&d.connected&&d.threadId){ b.gthread={id:d.threadId,mb:d.mailbox||'',t:Date.now()}; persist(); apply(b.gthread); }
+      }).catch(function(){});
+    })();
   }
   function lastDoneNote(b){ if(!b.comms)return ''; for(var i=b.comms.length-1;i>=0;i--){ if(b.comms[i].done||DONE_RE.test(b.comms[i].note)) return b.comms[i].note; } return ''; }
   function clientConfirm(b,doneNote){
