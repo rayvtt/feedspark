@@ -90,7 +90,8 @@ window.addEventListener('load',restore);
   .itk button:hover{background:var(--orange);color:#fff}
   .itk-more{font:inherit;font-size:12.5px;font-weight:800;color:var(--orange-ink);background:none;border:0;cursor:pointer;padding:8px 0}
   /* pipeline board */
-  .board{display:grid;grid-template-columns:repeat(6,minmax(170px,1fr));gap:9px;overflow-x:auto;padding-bottom:8px}
+  .board{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:9px;overflow-x:auto;padding-bottom:8px}
+  .tk-tst{font-size:9.5px;flex:none;line-height:1}
   .lane{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:7px;min-height:120px;max-height:64vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
   .lane.drop{outline:2px dashed var(--orange);outline-offset:-3px;background:#FFF9F0}
   .lane-h{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:900;color:var(--ink);padding:2px 3px;position:sticky;top:0;background:inherit;z-index:1}
@@ -613,7 +614,10 @@ window.addEventListener('load',restore);
   var ASPL=['Dinesh','Thia','Mariraj','Muji'];
   var BRIEF_TO='briefing@feedspark.com';
   var STAGES=[['intake','Intake','#8a94a0'],['briefed','Briefed to ASPL','#B1550A'],['progress','In progress','#2F6FB0'],
-    ['blocked','Blocked','#C0392B'],['done','Done — ASPL','#15803D'],['confirmed','Client confirmed','#15803D']];
+    ['blocked','Blocked','#C0392B'],['done','Done — ASPL','#15803D'],['analysis','Analysis 🧪','#7C3AED'],['confirmed','Client confirmed','#15803D']];
+  // A/B-test tickets (task contains “test”) get the extra Analysis step: ASPL done ≠ complete
+  // until the read-out is logged. Completion signals route them to Analysis instead of Done.
+  function isTest(b){ return /\btest/i.test((b&&b.task)||''); }
   var STAGE_LBL={},STAGE_COLOR={}; STAGES.forEach(function(s){STAGE_LBL[s[0]]=s[1];STAGE_COLOR[s[0]]=s[2];});
   // 3-letter brand abbreviations for the dense board cards (fallback: initials / first 3)
   var ABBR={'Reiss':'REI','AllSaints':'ALS','Schuh':'SCH','Superdry':'SUP','Accessorize':'ACC','Monsoon':'MON',
@@ -624,8 +628,8 @@ window.addEventListener('load',restore);
     return ((w.length>1?w.map(function(x){return x.charAt(0);}).join(''):String(c||'').slice(0,3)).toUpperCase().slice(0,3))||'—'; }
   var DONE_RE=/\b(done|finished|complete|completed|delivered|live|actioned|signed[\s-]?off)\b/i;
   // ---- the 3 courts: which team/domain holds the ball at each stage ----
-  var COURT={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',confirmed:''};
-  var SLA_STAGE={intake:2,blocked:1,done:3};   // max days sitting in a stage before it escalates (ASPL court uses the silence rule)
+  var COURT={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',analysis:'AM',confirmed:''};
+  var SLA_STAGE={intake:2,blocked:1,done:3,analysis:5};   // max days sitting in a stage before it escalates (ASPL court uses the silence rule)
   // every stage change goes through here so the handoff history (b.hist) stays complete
   function setStage(b,stage){ if(!b||b.status===stage)return;
     (b.hist=(b.hist&&b.hist.length)?b.hist:[{s:b.status||'intake',t:b.created||Date.now()}]).push({s:stage,t:Date.now()});
@@ -1481,7 +1485,7 @@ window.addEventListener('load',restore);
     var arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}).filter(function(b){return b.status!=='confirmed';});
     var C={AM:[],ASPL:[],Client:[]};
     arr.forEach(function(b){ var c=courtOf(b); if(C[c])C[c].push(b); });
-    var META={AM:['Ray — to brief / unblock','crt-am'],ASPL:['production — to deliver','crt-aspl'],Client:['awaiting sign-off','crt-client']};
+    var META={AM:['Ray — brief / unblock / analyse','crt-am'],ASPL:['production — to deliver','crt-aspl'],Client:['awaiting sign-off','crt-client']};
     host.innerHTML=Object.keys(C).map(function(c){ var L=C[c], oldest=0, br=0;
       L.forEach(function(b){ oldest=Math.max(oldest,daysInCourt(b)); if(stageBreached(b))br++; });
       return '<button type="button" class="court '+META[c][1]+(courtSel===c?' on':'')+'" data-c="'+c+'" title="'+(courtSel===c?'Clear the spotlight':'Spotlight '+c+'’s tickets on the board')+'">'
@@ -1502,9 +1506,10 @@ window.addEventListener('load',restore);
         var ageChip=crt?('<span class="tk-age'+(stageBreached(b)?' warn':'')+'" title="In '+crt+'’s court '+daysInCourt(b)+'d">'+daysInCourt(b)+'d</span>'):'';
         var mk=(b.code||'').split('-').pop(); mk=(mk&&mk!=='gb')?('<span class="tk-mk">'+esc(mk.toUpperCase())+'</span>'):'';
         var pri=(b.priority&&b.priority!=='Normal')?('<span class="tk-pri '+(b.priority==='Urgent'?'ur':'hi')+'" title="'+esc(b.priority)+'"></span>'):'';
+        var tst=isTest(b)?'<span class="tk-tst" title="A/B test — needs the Analysis step before completion">🧪</span>':'';
         var db=dueBadge(b); if(/no due/.test(db))db='';
         return '<div class="tik'+(courtSel&&crt!==courtSel?' dim':'')+'" draggable="true" data-id="'+esc(b.id)+'">'
-          +'<div class="tk-m"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+pri+'<span class="grow"></span>'+db+ageChip+'</div>'
+          +'<div class="tk-m"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+tst+pri+'<span class="grow"></span>'+db+ageChip+'</div>'
           +'<div class="tk-t" title="'+esc(b.task)+'">'+esc(b.task)+'</div></div>';
       }).join('') || '<div class="board-empty">—</div>';
       return '<div class="lane" data-stage="'+s[0]+'"><div class="lane-h"><span class="dot" style="background:'+s[2]+'"></span>'+s[1]+'<span class="ct">'+items.length+'</span></div>'+cards+'</div>';
@@ -1523,7 +1528,9 @@ window.addEventListener('load',restore);
       l.addEventListener('dragover',function(e){ e.preventDefault(); l.classList.add('drop'); });
       l.addEventListener('dragleave',function(){ l.classList.remove('drop'); });
       l.addEventListener('drop',function(e){ e.preventDefault(); l.classList.remove('drop');
-        if(dragId&&BRIEFS[dragId]){ setStage(BRIEFS[dragId],l.getAttribute('data-stage')); persist(); renderAll(); } });
+        if(dragId&&BRIEFS[dragId]){ var st=l.getAttribute('data-stage');
+          if(st==='analysis'&&!isTest(BRIEFS[dragId])){ toast('Analysis is the extra step for test tickets (task contains “test”)'); return; }
+          setStage(BRIEFS[dragId],st); persist(); renderAll(); } });
     });
   }
 
@@ -1534,7 +1541,8 @@ window.addEventListener('load',restore);
   function closeModal(){ scrim.classList.remove('on'); }
   function openModal(id){ var b=BRIEFS[id]; if(!b)return;
     var comms=(b.comms||[]).map(function(c){ return '<div class="comm"><span class="cw">'+esc(c.from)+'</span><span class="cb">'+esc(c.note)+(c.done?' <span class="ck">✓ done signal</span>':'')+'</span></div>'; }).join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
-    var stat=STAGES.map(function(s){ return '<button data-s="'+s[0]+'" class="'+(b.status===s[0]?'on':'')+'">'+s[1]+'</button>'; }).join('');
+    var stat=STAGES.filter(function(s){ return s[0]!=='analysis'||isTest(b); })
+      .map(function(s){ return '<button data-s="'+s[0]+'" class="'+(b.status===s[0]?'on':'')+'">'+s[1]+'</button>'; }).join('');
     var doneNote=lastDoneNote(b);
     var crt=courtOf(b);
     var xl=[];
@@ -1555,6 +1563,7 @@ window.addEventListener('load',restore);
         +'<input id="m-note" placeholder="Paste / summarise their reply…"><button class="btn" id="m-log">Log</button></div>'
         +'<div class="scan-hit" id="m-scan"></div></div>'
       +'<div class="m-act">'
+        +(isTest(b)&&(b.status==='analysis'||b.status==='done')?'<button class="btn" id="m-result" style="border-color:#D8CCF4;color:#7C3AED">🧪 Log result</button>':'')
         +'<a class="btn pri" id="m-brief" target="_blank" rel="noopener">✉ Re-draft brief to ASPL</a>'
         +'<a class="btn" id="m-chase" target="_blank" rel="noopener">⏰ Chase ASPL</a>'
         +'<a class="btn" id="m-chasec" target="_blank" rel="noopener">⏰ Chase client</a>'
@@ -1569,17 +1578,20 @@ window.addEventListener('load',restore);
     document.getElementById('m-brief').href='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(b.subject||('[FS Brief] '+b.client))+'&body='+encodeURIComponent(b.body||'');
     // completion scan on new note
     var noteEl=document.getElementById('m-note'), scanEl=document.getElementById('m-scan');
-    noteEl.addEventListener('input',function(){ if(DONE_RE.test(noteEl.value)){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this will suggest moving to “Done — ASPL”.'; } else scanEl.className='scan-hit'; });
+    noteEl.addEventListener('input',function(){ if(DONE_RE.test(noteEl.value)){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this moves the ticket to '+(isTest(b)?'“Analysis 🧪” (read-out still needed)':'“Done — ASPL”')+'.'; } else scanEl.className='scan-hit'; });
     document.getElementById('m-log').onclick=function(){ var note=noteEl.value.trim(); if(!note)return;
       var done=DONE_RE.test(note); b.comms=b.comms||[]; b.comms.push({from:document.getElementById('m-from').value,note:note,done:done,when:Date.now()});
-      // a completion signal from ASPL moves the brief to Done from any active stage (not once confirmed).
-      if(done && b.status!=='confirmed' && b.status!=='done') setStage(b,'done');
+      // a completion signal from ASPL moves the brief on — test tickets go to Analysis, not Done.
+      if(done && b.status!=='confirmed' && b.status!=='done' && b.status!=='analysis') setStage(b,isTest(b)?'analysis':'done');
       b.updated=Date.now(); persist(); renderAll(); openModal(b.id); };
     // client confirmation draft
     var conf=document.getElementById('m-confirm');
     var cbody=clientConfirm(b,doneNote);
     conf.href='https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark · '+b.client+' — '+b.task+' completed')+'&body='+encodeURIComponent(cbody);
-    conf.addEventListener('click',function(){ if(b.status==='done'){ setStage(b,'confirmed'); persist(); setTimeout(function(){renderAll();},400); } });
+    conf.addEventListener('click',function(ev){ if(b.status!=='done'&&b.status!=='analysis')return;
+      if(isTest(b)&&!hasResult(b)){ ev.preventDefault(); toast('Log the test result first — 🧪 Log result'); return; }
+      setStage(b,'confirmed'); persist(); setTimeout(function(){renderAll();},400); });
+    var resBtn=document.getElementById('m-result'); if(resBtn)resBtn.onclick=function(){ logResult(b); };
     // #4 chase drafts + ASPL owner reassign
     document.getElementById('m-chase').href=chaseAspl(b);
     document.getElementById('m-chasec').href=chaseClient(b);
@@ -1596,6 +1608,19 @@ window.addEventListener('load',restore);
     })();
   }
   function lastDoneNote(b){ if(!b.comms)return ''; for(var i=b.comms.length-1;i>=0;i--){ if(b.comms[i].done||DONE_RE.test(b.comms[i].note)) return b.comms[i].note; } return ''; }
+  function hasResult(b){ if(!b.comms)return false; for(var i=b.comms.length-1;i>=0;i--){ if(/^Result:/.test(b.comms[i].note))return true; } return false; }
+  // log the A/B read-out: writes the result into the Test register (deck ammo) and unlocks confirmation
+  function logResult(b){
+    var v=prompt('Test result — the read-out (e.g. “+24.7% CTR” or “no lift — rolled back”):',''); if(v===null)return; v=(''+v).trim(); if(!v)return;
+    b.comms=b.comms||[]; b.comms.push({from:'Ray',note:'Result: '+v,done:true,when:Date.now()});
+    var hit=null; TESTS.forEach(function(t){ if(!hit&&t.client===b.client&&sameTask(t.name,b.task))hit=t; });
+    var d=today(), iso=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    if(hit){ hit.result=v; hit.status='done'; if(!hit.readout)hit.readout=iso; }
+    else TESTS.push({client:b.client,name:b.task.slice(0,70),hypo:'',skus:'',start:'',readout:iso,status:'done',result:v});
+    saveTests();
+    if(b.status==='done')setStage(b,'analysis');   // a result logged from Done pulls the ticket into its Analysis step
+    b.updated=Date.now(); persist(); renderAll(); openModal(b.id);
+    toast('Result logged to the Test register — draft the client confirmation to close'); }
   function clientConfirm(b,doneNote){
     var L=[];
     L.push('Hi team,'); L.push('');
@@ -1663,7 +1688,7 @@ window.addEventListener('load',restore);
         prog=/\b(started|in progress|underway|working on|wip|eta|will complete|picking (this|it) up)\b/i.test(text);
     b.comms=b.comms||[]; b.comms.push({from:sender,note:text.slice(0,600),done:done,when:Date.now()});
     var moved='';
-    if(done&&b.status!=='confirmed'&&b.status!=='done'){ setStage(b,'done'); moved=STAGE_LBL.done; }
+    if(done&&b.status!=='confirmed'&&b.status!=='done'&&b.status!=='analysis'){ var ds2=isTest(b)?'analysis':'done'; setStage(b,ds2); moved=STAGE_LBL[ds2]; }
     else if(blocked&&(b.status==='briefed'||b.status==='progress')){ setStage(b,'blocked'); moved=STAGE_LBL.blocked; }
     else if(prog&&(b.status==='intake'||b.status==='briefed')){ setStage(b,'progress'); moved=STAGE_LBL.progress; }
     var dueTxt='', dd8='', dm=/ibfdue:(\d{8})/.exec(text);
@@ -1697,7 +1722,7 @@ window.addEventListener('load',restore);
     var mem={}; ASPL.forEach(function(a){mem[a]={open:0,done:0,ta:[],stall:0};});
     arr.forEach(function(b){ var a=asplOf(b); if(!mem[a])mem[a]={open:0,done:0,ta:[],stall:0};
       if(b.status==='briefed'||b.status==='progress'){ mem[a].open++; if(silentDays(b)>=STALL_DAYS)mem[a].stall++; }
-      if(b.status==='done'||b.status==='confirmed'){ mem[a].done++; var t=turnaroundDays(b); if(t!=null)mem[a].ta.push(t); } });
+      if(b.status==='done'||b.status==='confirmed'||b.status==='analysis'){ mem[a].done++; var t=turnaroundDays(b); if(t!=null)mem[a].ta.push(t); } });
     host.innerHTML=ASPL.map(function(a){ var m=mem[a]; var avg=m.ta.length?Math.round(m.ta.reduce(function(x,y){return x+y;},0)/m.ta.length):null;
       return '<div class="sla-card'+(m.stall?' warn':'')+'"><div class="sla-name">'+esc(a)+'</div>'
         +'<div class="sla-row"><span>Open</span><b>'+m.open+'</b></div>'
@@ -1712,6 +1737,7 @@ window.addEventListener('load',restore);
       else if(b.status==='blocked'&&ds>SLA_STAGE.blocked) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'blocked '+ds+'d — unblock / reassign',act:'chaseA',lbl:'Chase ASPL'});
       else if((b.status==='briefed'||b.status==='progress')&&silentDays(b)>=STALL_DAYS){ var lr=lastReplyDays(b);
         items.push({b:b,c:'ASPL',cls:'c-aspl',d:silentDays(b),why:(lr==null?('briefed '+briefAgeDays(b)+'d ago — no reply'):('silent '+lr+'d')),act:'chaseA',lbl:'Chase ASPL'}); }
+      else if(b.status==='analysis'&&ds>SLA_STAGE.analysis) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'awaiting test read-out '+ds+'d — analyse it',act:'open',lbl:'Analyse'});
       else if(b.status==='done'&&ds>SLA_STAGE.done) items.push({b:b,c:'Client',cls:'c-client',d:ds,why:'awaiting sign-off '+ds+'d',act:'chaseC',lbl:'Chase client'}); });
     items.sort(function(a,b2){return b2.d-a.d;});
     s.innerHTML = items.length? items.map(function(it){ var b=it.b;

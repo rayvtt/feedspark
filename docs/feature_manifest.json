@@ -34,6 +34,7 @@
     { "name": "Workflow: dense board cards (brand chip + age-in-court)", "file": "docs/FeedSpark_Workflow.html", "pattern": "tk-ab", "min": 2, "pr": 72 },
     { "name": "Workflow: mechanical brief self-learning store", "file": "docs/FeedSpark_Workflow.html", "pattern": "fcc-brief-learn", "pr": 74 },
     { "name": "worker: Gmail thread deep-link lookup", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "api/gmail/thread", "pr": 77 },
-    { "name": "Workflow: modal thread deep-link upgrade", "file": "docs/FeedSpark_Workflow.html", "pattern": "m-thread", "min": 2, "pr": 77 }
+    { "name": "Workflow: modal thread deep-link upgrade", "file": "docs/FeedSpark_Workflow.html", "pattern": "m-thread", "min": 2, "pr": 77 },
+    { "name": "Workflow: Analysis stage for test tickets", "file": "docs/FeedSpark_Workflow.html", "pattern": "function isTest", "pr": 78 }
   ]
 }
