@@ -709,9 +709,28 @@ window.addEventListener('load',restore);
     opt:{s:'Feed optimisation task — confirm exact scope, markets and rules with the AM before starting.',d:'Change live in FeedHero, QA’d against the feed, sample approved by AM.'},
     account:{s:'Account / strategy action — deck, proposal, call prep or commercial item. Confirm the deliverable and audience.',d:'Deliverable shared with the client / internal owner and signed off.'}
   };
-  function applyTemplate(cat){ var tpl=TEMPLATES[cat]||TEMPLATES.opt;
-    document.getElementById('bg-scope').value=tpl.s+TWO_STREAMS;
-    document.getElementById('bg-dod').value=tpl.d; }
+  // ---- mechanical self-learning: every brief Ray edits before saving teaches the generator.
+  // Keyed client|category with a *|category fallback — the next brief for that client/category
+  // pre-fills from the last edited version instead of the static template. Pure recall, no AI.
+  var LEARN={}; try{LEARN=JSON.parse(localStorage.getItem('fcc-brief-learn')||'{}');}catch(e){}
+  function saveLearn(){ try{localStorage.setItem('fcc-brief-learn',JSON.stringify(LEARN));}catch(e){} }
+  function learnKey(client,cat){ return client+'|'+(cat||'opt'); }
+  function learned(client,cat){ return LEARN[learnKey(client,cat)]||LEARN[learnKey('*',cat)]; }
+  function recordLearning(client,cat,f){
+    var tpl=TEMPLATES[cat]||TEMPLATES.opt, rec={t:Date.now()}, edited=false;
+    if(f.scope&&f.scope!==(tpl.s+TWO_STREAMS)){ rec.s=f.scope; edited=true; }
+    if(f.dod&&f.dod!==tpl.d){ rec.d=f.dod; edited=true; }
+    if(f.assets&&f.assets!=='—'){ rec.a=f.assets; edited=true; }
+    if(!edited)return;
+    rec.n=((LEARN[learnKey(client,cat)]||{}).n||0)+1;
+    LEARN[learnKey(client,cat)]=rec; LEARN[learnKey('*',cat)]=Object.assign({},rec); saveLearn(); }
+  function applyTemplate(cat,quiet){ var tpl=TEMPLATES[cat]||TEMPLATES.opt;
+    var client=document.getElementById('bg-client').value, ln=learned(client,cat);
+    document.getElementById('bg-scope').value=(ln&&ln.s)||(tpl.s+TWO_STREAMS);
+    document.getElementById('bg-dod').value=(ln&&ln.d)||tpl.d;
+    if(ln&&ln.a){ var as=document.getElementById('bg-assets'); if(as&&!as.value.trim())as.value=ln.a; }
+    if(ln&&!quiet)toast('Pre-filled from your last edited '+(CAT_LBL[cat]||'optimisation')+' brief'+(LEARN[learnKey(client,cat)]?(' · '+client):''));
+    return !!ln; }
 
   // ---- ASPL delegation ----
   function asplFor(seed){ return ASPL[Math.abs(hashStr(seed))%ASPL.length]; }   // stable per-task
@@ -828,6 +847,7 @@ window.addEventListener('load',restore);
     var lk=window.__linkKey; if(lk&&lk.split('|')[0]!==o.f.client)lk=null;
     if(!lk){ var cand=allIntake().filter(function(r){ return r.client===o.f.client&&sameTask(r.task,o.f.task); }); if(cand.length)lk=rowKey(cand[0]); }
     if(lk)b.taskKey=lk; window.__linkKey=null;
+    recordLearning(o.f.client,(document.getElementById('bg-cat').value)||classifyLite(o.f.task),o.f);   // edited briefs teach the generator
     BRIEFS[id]=b; window.__editId=null; persist(); renderAll();
     toast(existing?'Brief updated':'Brief saved to pipeline'); };
 
@@ -1253,11 +1273,13 @@ window.addEventListener('load',restore);
     L.push('Reply-all to update status. Keep the [ibfcode] + ibfdue tokens intact.');
     L.push('FeedSpark · Private & Confidential'); return L.join('\n'); }
   function bulkSaveAll(){ var items=bulkList(); if(!items.length)return; var made=0;
-    items.forEach(function(t){ var id=newId(t.client); var c=code(t.client,'gb'); var d=new Date(); d.setDate(d.getDate()+5);
-      var tpl=TEMPLATES[t.cat]||TEMPLATES.opt;
+    items.forEach(function(t){ var id=newId(t.client); var c=code(t.client,'gb');
+      var pd=taskDate(t), d=pd||new Date(); if(!pd){ d=new Date(); d.setDate(d.getDate()+5); }   // bulk briefs inherit the row's due date too
+      var tpl=TEMPLATES[t.cat]||TEMPLATES.opt, ln=learned(t.client,t.cat||'opt');
       BRIEFS[id]={id:id,created:Date.now(),updated:Date.now(),status:'intake',comms:[],hist:[{s:'intake',t:Date.now()}],
         taskKey:rowKey(t),client:t.client,code:c,task:t.task,
-        scope:tpl.s+TWO_STREAMS,dod:tpl.d,assets:'—',due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
+        scope:(ln&&ln.s)||(tpl.s+TWO_STREAMS),dod:(ln&&ln.d)||tpl.d,assets:(ln&&ln.a)||'—',
+        due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
         source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++; markBriefed(t); });
     itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline · marked Briefed'); }
   // SOURCE stays a compact chip bar (4 options): empty selection = all; the "All" chip clears the set
@@ -1411,10 +1433,12 @@ window.addEventListener('load',restore);
     document.getElementById('bg-source').value= t.source||'plan';
     document.getElementById('bg-task').value=t.task;
     var cat=t.cat||'opt', cs=document.getElementById('bg-cat'); if(cs)cs.value=(TEMPLATES[cat]?cat:'');
-    applyTemplate(cat);                 // #2 auto-fill scope + DoD + the two streams
+    var pd=taskDate(t); if(pd)document.getElementById('bg-due').value=pd.getFullYear()+'-'+pad(pd.getMonth()+1)+'-'+pad(pd.getDate());   // brief inherits the intake due date
+    var ln=applyTemplate(cat,true);     // #2 auto-fill scope + DoD (learned version when one exists)
     refreshPreview();
     window.scrollTo({top:0,behavior:'smooth'});
-    toast('Prefilled from the '+(CAT_LBL[cat]||'optimisation')+' template — set the due date and save');
+    toast('Prefilled from '+(ln?'your last edited '+(CAT_LBL[cat]||'optimisation')+' brief':'the '+(CAT_LBL[cat]||'optimisation')+' template')
+      +(pd?' · due pulled from the intake row':' — set the due date')+' and save');
   }
   // when a task is briefed, move its status to Briefed (2-way, quiet — the caller shows the summary)
   function markBriefed(t){
