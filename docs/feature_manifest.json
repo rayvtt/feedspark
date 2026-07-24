@@ -31,6 +31,7 @@
     { "name": "BuildLog: page present (queue + derived board)", "file": "docs/FeedSpark_BuildLog.html", "pattern": "api/buildqueue", "pr": 70 },
     { "name": "CmdCenter: Build Log in module nav", "file": "docs/FeedSpark_Command_Center.html", "pattern": "href=\"/buildlog\"", "pr": 70 },
     { "name": "Workflow: Build Log in module nav", "file": "docs/FeedSpark_Workflow.html", "pattern": "href=\"/buildlog\"", "pr": 73 },
-    { "name": "Workflow: dense board cards (brand chip + age-in-court)", "file": "docs/FeedSpark_Workflow.html", "pattern": "tk-ab", "min": 2, "pr": 72 }
+    { "name": "Workflow: dense board cards (brand chip + age-in-court)", "file": "docs/FeedSpark_Workflow.html", "pattern": "tk-ab", "min": 2, "pr": 72 },
+    { "name": "Workflow: mechanical brief self-learning store", "file": "docs/FeedSpark_Workflow.html", "pattern": "fcc-brief-learn", "pr": 74 }
   ]
 }
