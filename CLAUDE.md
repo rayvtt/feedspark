@@ -154,13 +154,15 @@ All HTML strategy decks include the inline edit + JSON patch sync system:
 ```
 GET  /                          → command center landing page (git-bundled + injected editor + Tachyon)
 GET  /workflow                  → Workflow control center (brief pipeline: Client→AM→ASPL)
-GET  /leadership /readiness /library /deck-builder /templates /roadmap → app modules
+GET  /leadership /readiness /library /deck-builder /templates /roadmap /buildlog → app modules
+GET  /api/buildlog              → Build Log feed (GitHub PRs/branches/overlap, KV-cached 10 min; optional GITHUB_TOKEN secret)
+GET|PUT /api/buildqueue         → Build Log "not built yet" queue (kvmerge-backed, concurrency-safe)
 GET  /deck/yumove               → YuMOVE strategy deck (git-bundled + injected editor)
 GET  /api/edits?page=<slug>     → return a page's saved edits as JSON
 PUT  /api/edits?page=<slug>     → save an edit patch (merges with existing)
 DELETE /api/edits?page=<slug>   → clear a page's saved edits
 GET  /api/template              → info only; pages are git-bundled (push to main to change them)
-GET|PUT /api/briefs             → Workflow brief pipeline store (KV `briefs`, whole-map PUT)
+GET|PUT /api/briefs             → Workflow brief pipeline store (KV `briefs`; per-key merged via kvmerge.js + X-Sync-Base — same for /api/clients)
 GET|POST /api/claude            → Tachyon copilot proxy to Claude Messages API (needs ANTHROPIC_API_KEY secret)
 ```
 - **Injected on app pages** (not client decks): the live editor widget + the **Tachyon copilot**
@@ -196,8 +198,13 @@ Trunk-based: each session = its **own short-lived branch** off latest `main` (`c
 small module-prefixed PRs (`[Workflow] …`), never a shared branch. Default one session per module
 (Workflow / Command Center / Deck Gen / Worker / other pages) as a **guideline**; crossing is fine if you
 check open PRs + `claude/*` branches first and **sequence** same-file edits. Before every PR:
-**`bash tools/presync.sh`** (merges latest main + re-validates). After merge: verify LIVE per the rule
-above, then restart the branch from latest main. Full protocol: [`docs/WAYS_OF_WORKING.md`](./docs/WAYS_OF_WORKING.md).
+**`bash tools/presync.sh`** (merges latest main + re-validates). Overlap safeguards, both inside presync:
+the **overwrite tripwire** (`docs/feature_manifest.json` checked by `tools/check_markers.js` — when you
+ship a feature into a shared file, add its marker in the same PR) and the **overlap detector**
+(`tools/overlap.sh` — also run it at task START; 🔥 hot-file overlap = sequence, don't parallel-edit).
+If presync's merge touched a file you're editing, re-run your QA — a clean git merge is not an intact
+feature. After merge: verify LIVE per the rule above, then restart the branch from latest main.
+Full protocol: [`docs/WAYS_OF_WORKING.md`](./docs/WAYS_OF_WORKING.md).
 
 ### Command center data — ATRT Tracker
 - The command center (`/`) shows **live workload**, **tests running** and **accounts & project plans**

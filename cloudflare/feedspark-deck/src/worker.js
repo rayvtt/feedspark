@@ -24,6 +24,7 @@
 // Pages are bundled from git at build time as Text modules. Editing structure/layout means
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
+import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
@@ -32,6 +33,7 @@ import ROADMAP from "../../../docs/FeedSpark_Roadmap.html";
 import READINESS from "../../../docs/FeedSpark_Readiness.html";
 import LEADERSHIP from "../../../docs/FeedSpark_Leadership.html";
 import DECKBUILDER from "../../../docs/FeedSpark_DeckBuilder.html";
+import BUILDLOG from "../../../docs/FeedSpark_BuildLog.html";
 import WORKFLOW from "../../../docs/FeedSpark_Workflow.html";
 import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html";
 import DECK_REISS from "../../../docs/Reiss_Strategy_Review_FY2526.html";
@@ -51,6 +53,7 @@ const PAGES = {
   '/readiness':   { html: READINESS,   slug: 'readiness' },
   '/leadership':  { html: LEADERSHIP,  slug: 'leadership' },
   '/deck-builder':{ html: DECKBUILDER, slug: 'deckbuilder' },
+  '/buildlog':    { html: BUILDLOG,    slug: 'buildlog' },
   '/workflow':    { html: WORKFLOW,    slug: 'workflow' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
@@ -123,14 +126,58 @@ export default {
     // A single JSON object keyed by brief id: {id: {client, code, task, due, status, comms, ...}}.
     // The board owns its state and PUTs the whole map; small N, no races worth the complexity.
     if (path === '/api/briefs') {
-      if (request.method === 'GET') {
-        return json((await env.EDITS.get('briefs', 'json')) || {});
+      // brief pipeline: deletion = absence, disambiguated by the writer's X-Sync-Base read-stamp
+      const r = await mapStoreRoute(env, request, 'briefs', {});
+      if (r) return r;
+    }
+
+    // ---- Build Log queue: Ray's "not built yet" backlog (kvmerge-backed, concurrency-safe) ----
+    if (path === '/api/buildqueue') {
+      const r = await mapStoreRoute(env, request, 'buildqueue', {});
+      if (r) return r;
+    }
+
+    // ---- Build Log feed: PRs + active branches + per-branch changed files from the public
+    // GitHub API, cached in KV (10 min) to stay far under unauthenticated rate limits. The
+    // /buildlog page derives shipped / in-build / dropped / overlap from this — no manual log
+    // to go stale. Optional GITHUB_TOKEN secret raises the rate limit; not required.
+    if (path === '/api/buildlog' && request.method === 'GET') {
+      const force = url.searchParams.get('force') === '1';
+      const ck = 'buildlog:gh';
+      let data = force ? null : await env.EDITS.get(ck, 'json');
+      if (!data) {
+        const gh = async (p) => {
+          const r = await fetch('https://api.github.com/repos/rayvtt/feedspark' + p, {
+            headers: { accept: 'application/vnd.github+json', 'user-agent': 'feedspark-fcc',
+              ...(env.GITHUB_TOKEN ? { authorization: 'Bearer ' + env.GITHUB_TOKEN } : {}) } });
+          if (!r.ok) throw new Error('github ' + r.status);
+          return r.json();
+        };
+        try {
+          const pulls = await gh('/pulls?state=all&per_page=60&sort=updated&direction=desc');
+          const branches = await gh('/branches?per_page=100');
+          const active = branches.filter(b => b.name !== 'main' && /^claude\//.test(b.name));
+          const branchFiles = {};
+          for (const b of active.slice(0, 8)) {   // cap compares: 8 branches ≈ 10 API calls/refresh
+            try {
+              const cmp = await gh('/compare/main...' + encodeURIComponent(b.name));
+              const fs = (cmp.files || []).map(f => f.filename);
+              if (fs.length) branchFiles[b.name] = fs.slice(0, 40);
+            } catch (e) { /* branch may be identical to main or compare too large — skip */ }
+          }
+          data = { at: Date.now(),
+            pulls: pulls.map(p => ({ n: p.number, t: p.title, s: p.state, m: !!p.merged_at, ma: p.merged_at || '',
+              mc: p.merge_commit_sha || '', ca: p.created_at, ua: p.updated_at, b: (p.head && p.head.ref) || '', u: p.html_url })),
+            branchFiles };
+          await env.EDITS.put(ck, JSON.stringify(data), { expirationTtl: 600 });
+          await env.EDITS.put(ck + ':stale', JSON.stringify(data));
+        } catch (e) {
+          const stale = await env.EDITS.get(ck + ':stale', 'json');
+          return json({ ...(stale || { pulls: [], branchFiles: {} }), stale: true, error: String((e && e.message) || e),
+            live: { sha: env.GIT_SHA || '' } });
+        }
       }
-      if (request.method === 'PUT') {
-        const body = await request.json();
-        await env.EDITS.put('briefs', JSON.stringify(body));
-        return json({ ok: true, count: Object.keys(body || {}).length });
-      }
+      return json({ ...data, live: { sha: env.GIT_SHA || '' } });
     }
 
     // ---- test & experiment register (Workflow) — a single JSON array of test cards ----
@@ -156,15 +203,9 @@ export default {
     // ---- client store (dossier data layer: add / delete / link-sheet / edit-text persist here) ----
     // A single JSON object: per-brand overrides/additions to the git profiles, plus a _deleted list.
     if (path === '/api/clients') {
-      if (request.method === 'GET') {
-        const store = await env.EDITS.get('clients', 'json');
-        return json(store || {});
-      }
-      if (request.method === 'PUT') {
-        const body = await request.json();
-        await env.EDITS.put('clients', JSON.stringify(body));
-        return json({ ok: true, count: Object.keys(body).length });
-      }
+      // dossier store: deletions travel in the explicit `_deleted` array, never by absence
+      const r = await mapStoreRoute(env, request, 'clients', { explicitTombstones: true });
+      if (r) return r;
     }
 
     // ---- template info (structure layer: bundled from git, not KV) ----
@@ -542,8 +583,29 @@ export default {
   },
 };
 
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS } });
+function json(data, status = 200, extraHeaders) {
+  return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS, ...(extraHeaders || {}) } });
+}
+
+// Concurrency-safe whole-map store (clients / briefs): per-key merge via kvmerge.js instead of
+// last-writer-wins overwrite. GET hands the client a read-stamp (X-Sync-Base); PUT echoes it so
+// "key absent" can be told apart from "key deleted", merges, and returns the MERGED map + a fresh
+// stamp for the client to adopt. Legacy pages that PUT plain maps without the header degrade to
+// union-only merges (nothing lost, absence never deletes).
+async function mapStoreRoute(env, request, kvKey, opts) {
+  if (request.method === 'GET') {
+    const lifted = liftEnvelope(await env.EDITS.get(kvKey, 'json'), Date.now());
+    return json(envelopeToClient(lifted, opts), 200, { 'X-Sync-Base': String(Date.now()) });
+  }
+  if (request.method === 'PUT') {
+    let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+    const base = Number(request.headers.get('X-Sync-Base') || 0) || 0;
+    const now = Date.now();
+    const envx = mergeIntoEnvelope(liftEnvelope(await env.EDITS.get(kvKey, 'json'), now), body, base, now, opts);
+    await env.EDITS.put(kvKey, JSON.stringify(envx));
+    return json(envelopeToClient(envx, opts), 200, { 'X-Sync-Base': String(Date.now()) });
+  }
+  return null;
 }
 
 // ---- Google service-account auth: sign a JWT with the SA private key, impersonate the
@@ -1451,6 +1513,8 @@ function getEditorScript(slug) {
 </style>
 <script>
 (function(){
+  // client decks only — the FCC app pages (/, /workflow, …) aren't a download deliverable
+  if(!/^\\/deck\\//.test(location.pathname)) return;
   function preparePrint(){
     document.querySelectorAll('.rv').forEach(function(el){ el.classList.add('in'); });
     document.querySelectorAll('.fill[data-w]').forEach(function(el){ var w=el.getAttribute('data-w'); if(w) el.style.width=w+'%'; });
@@ -1469,6 +1533,8 @@ function getEditorScript(slug) {
      to re-export a file they already have. -->
 <script>
 (function(){
+  // client decks only — the FCC app pages (/, /workflow, …) aren't a client deliverable
+  if(!/^\\/deck\\//.test(location.pathname)) return;
   function slug(s){ return (s||'strategy-review').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'strategy-review'; }
   function buildClientHtml(){
     if(window.__fsPreparePrint) window.__fsPreparePrint();

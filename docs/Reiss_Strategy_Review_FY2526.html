@@ -44,15 +44,17 @@ section{padding:104px 0}
 .progress{position:absolute;bottom:-1px;left:0;height:2px;background:var(--orange);width:0}
 
 /* Frozen agenda — a persistent left-side jump list once there's room beside the content
-   column; collapsed to numbers only so it never competes with the page, full labels slide
-   out on hover like a real agenda. Hidden below 1300px, same cutoff logic as .tb-nav's own
-   mobile hide, since there's no side margin left to put it in on narrower viewports. */
-.side-nav{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:59;display:none;flex-direction:column;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:10px;padding:8px 0;box-shadow:0 8px 28px rgba(0,0,0,.10);max-height:74vh;overflow-y:auto}
-.side-nav a{display:flex;align-items:center;padding:6px 14px;text-decoration:none;color:var(--muted);border-left:2px solid transparent;white-space:nowrap}
+   column. Every section name is always visible (not hover-gated) — it's a live table of
+   contents, not a collapsed icon rail — with the currently-active section picked out by a
+   filled background + orange rail rather than dimming or hiding the rest. Hidden below
+   1300px, same cutoff logic as .tb-nav's own mobile hide, since there's no side margin
+   left to put it in on narrower viewports. */
+.side-nav{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:59;display:none;flex-direction:column;width:196px;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:10px;padding:8px 0;box-shadow:0 8px 28px rgba(0,0,0,.10);max-height:74vh;overflow-y:auto}
+.side-nav a{display:flex;align-items:center;gap:9px;padding:7px 14px;text-decoration:none;color:var(--muted);border-left:2px solid transparent;white-space:nowrap;transition:background .2s,color .2s,border-color .2s}
 .side-nav a .num{font-size:10px;font-weight:800;letter-spacing:.06em;width:16px;flex-shrink:0}
-.side-nav a .lbl{opacity:0;max-width:0;overflow:hidden;transition:opacity .2s ease,max-width .25s ease;font-size:12px;font-weight:600}
-.side-nav:hover a .lbl{opacity:1;max-width:170px;margin-left:6px}
-.side-nav a:hover,.side-nav a.active{color:var(--ink);border-left-color:var(--orange)}
+.side-nav a .lbl{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.side-nav a:hover{color:var(--ink);border-left-color:rgba(237,111,11,.45)}
+.side-nav a.active{color:var(--ink);border-left-color:var(--orange);background:rgba(237,111,11,.09);font-weight:800}
 @media(min-width:1300px){.side-nav{display:flex}}
 
 /* hero */
@@ -111,6 +113,16 @@ tbody tr:nth-child(even){background:var(--paper-2)}
 .p-prog{background:rgba(245,166,35,.16);color:var(--orange-deep)}
 .p-open{background:#EEE;color:var(--muted)}
 .p-block{background:rgba(237,111,11,.10);color:var(--orange-deep);border:1px solid rgba(237,111,11,.28)}
+
+/* Compact market wall — 50+ markets as small status chips instead of one row each, so the
+   full footprint reads in one screen instead of a scroll. Reuses the .pill palette (green
+   live, solid orange = earlier wave, outlined orange = later wave) rather than introducing
+   new colours, per the design system's "orange accents only where purposeful" rule. */
+.mkt-wall{display:flex;flex-wrap:wrap;gap:6px;padding:16px;background:var(--paper-2);border:1px solid var(--line);border-radius:8px}
+.mkt-wall .pill{font-size:10.5px}
+.mkt-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--muted)}
+.mkt-legend span{display:inline-flex;align-items:center;gap:6px}
+.mkt-legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
 
 /* bars */
 .bars{display:flex;flex-direction:column;gap:16px}
@@ -261,7 +273,9 @@ body.hide-checks .chk{display:none}
       <a href="#c12" class="">12 AI ready</a>
       <a href="#c13" class="">13 Cases</a>
       <a href="#c14" class="">14 Roadmap</a>
-      <a href="#c15" class="">15 Fit</a>
+      <a href="#c15" class="">15 20mkt Plan</a>
+      <a href="#c16" class="">16 20mkt Sched</a>
+      <a href="#c17" class="">17 Fit</a>
     </nav>
     <button class="flagbtn" id="flagbtn" aria-pressed="true" title="Toggle data-check markers">⚑ Data checks</button>
     <div class="progress" id="progress" style="width: 0%;"></div>
@@ -282,7 +296,9 @@ body.hide-checks .chk{display:none}
   <a href="#c12"><span class="num">12</span><span class="lbl">AI ready</span></a>
   <a href="#c13"><span class="num">13</span><span class="lbl">Cases</span></a>
   <a href="#c14"><span class="num">14</span><span class="lbl">Roadmap</span></a>
-  <a href="#c15"><span class="num">15</span><span class="lbl">Fit</span></a>
+  <a href="#c15"><span class="num">15</span><span class="lbl">20mkt Plan</span></a>
+  <a href="#c16"><span class="num">16</span><span class="lbl">20mkt Sched</span></a>
+  <a href="#c17"><span class="num">17</span><span class="lbl">Fit</span></a>
 </nav>
 <div class="footmark">FeedSpark · Private &amp; Confidential</div>
 
@@ -309,7 +325,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
   <div class="wrap">
     <div class="eyebrow rv in">Agenda</div>
     <h2 class="sec-title rv in">What we'll cover</h2>
-    <p class="sec-sub rv in">Fifteen sections, three sources: the project plan (what shipped, what's next), a live 4,999-SKU feed export analysed directly, and FeedHero's own full-catalogue audit of GB/DE/FR. Where they disagree, the most direct measurement wins.</p>
+    <p class="sec-sub rv in">Seventeen sections, three sources: the project plan (what shipped, what's next), a live 4,999-SKU feed export analysed directly, and FeedHero's own full-catalogue audit of GB/DE/FR. Where they disagree, the most direct measurement wins.</p>
     <div class="agenda rv in">
       <div>
         <div class="ag-row"><div class="ag-num">01</div><div><div class="ag-t">Service scope &amp; scale</div><div class="ag-d">29 markets · 60 feeds · 179,646 confirmed SKUs in GB/DE/FR</div></div></div>
@@ -318,17 +334,19 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         <div class="ag-row"><div class="ag-num">04</div><div><div class="ag-t">Look-back period</div><div class="ag-d">Jul 2025 → Jun 2026, month by month</div></div></div>
         <div class="ag-row"><div class="ag-num">05</div><div><div class="ag-t">Number of wins / results</div><div class="ag-d">2-year A/B archive, 38 tests, honestly scored</div></div></div>
         <div class="ag-row"><div class="ag-num">06</div><div><div class="ag-t">Feed optimisation score</div><div class="ag-d">Measured live off the feed, by lane</div></div></div>
-        <div class="ag-row" style="border-bottom:0"><div class="ag-num">07</div><div><div class="ag-t">Automation &amp; pick readiness</div><div class="ag-d">What's automated, what's blocked on NEXT</div></div></div>
+        <div class="ag-row"><div class="ag-num">07</div><div><div class="ag-t">Automation &amp; pick readiness</div><div class="ag-d">What's automated, what's blocked on NEXT</div></div></div>
         <div class="ag-row" style="border-bottom:0"><div class="ag-num">08</div><div><div class="ag-t">Live FeedHero audit</div><div class="ag-d">179,646 SKUs, GB/DE/FR, no sampling</div></div></div>
+        <div class="ag-row" style="border-bottom:0"><div class="ag-num">09</div><div><div class="ag-t">The AI landscape</div><div class="ag-d">Why agentic commerce changes discovery</div></div></div>
       </div>
       <div>
-        <div class="ag-row"><div class="ag-num">09</div><div><div class="ag-t">The AI landscape</div><div class="ag-d">Why agentic commerce changes discovery</div></div></div>
         <div class="ag-row"><div class="ag-num">10</div><div><div class="ag-t">Spark AI engine (Tachyon)</div><div class="ag-d">Intent generation, enrichment, visual harvest</div></div></div>
         <div class="ag-row"><div class="ag-num">11</div><div><div class="ag-t">Google conversational attributes</div><div class="ag-d">Six attributes, current submission status</div></div></div>
         <div class="ag-row"><div class="ag-num">12</div><div><div class="ag-t">AI readiness</div><div class="ag-d">Tier 1 banked, the gap to Tier 2</div></div></div>
         <div class="ag-row"><div class="ag-num">13</div><div><div class="ag-t">Case studies / test wins</div><div class="ag-d">Reiss' own tests, plus comparable-brand proof</div></div></div>
         <div class="ag-row"><div class="ag-num">14</div><div><div class="ag-t">Roadmap / next quarter</div><div class="ag-d">Open tasks + what the feed audit surfaced</div></div></div>
-        <div class="ag-row" style="border-bottom:0"><div class="ag-num">15</div><div><div class="ag-t">Tech fit</div><div class="ag-d">Why the stack fits Reiss specifically</div></div></div>
+        <div class="ag-row"><div class="ag-num">15</div><div><div class="ag-t">50-market rollout — plan</div><div class="ag-d">11 live + 42 new = 53 markets, no Thu/Fri launches</div></div></div>
+        <div class="ag-row"><div class="ag-num">16</div><div><div class="ag-t">50-market rollout — schedule</div><div class="ag-d">14-week calendar, live by Nov 4, before Peak</div></div></div>
+        <div class="ag-row" style="border-bottom:0"><div class="ag-num">17</div><div><div class="ag-t">Tech fit</div><div class="ag-d">Why the stack fits Reiss specifically</div></div></div>
       </div>
     </div>
   </div>
@@ -344,7 +362,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       <div class="stat"><div class="n">60</div><div class="l">Feeds</div></div>
       <div class="stat"><div class="n">~5.0<small>k</small></div><div class="l">SKUs in this analysed sample<span class="chk">?</span></div></div>
       <div class="stat"><div class="n">2</div><div class="l">Active channels — Google Shopping, Meta</div></div>
-      <div class="stat"><div class="n">5+<small><span class="chk">?</span></small></div><div class="l">Brand lines seen in this sample<br><br><span style="font-size:11px">Scheduled/ad-hoc hours: <b>[confirm with Ray]</b></span></div></div>
+      <div class="stat"><div class="n">5+<small><span class="chk">?</span></small></div><div class="l">Brand lines seen in this sample<br><br><span style="font-size:11px">Delivered hours (GB/DE/FR/IE, 13mo log): <b>1,182.25</b></span></div></div>
     </div>
     <div class="grid-2 rv in">
       <div class="tbl-wrap">
@@ -372,7 +390,17 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         <tr><td colspan="3" style="text-align:center;color:var(--muted);font-style:italic">— remaining 26 markets not yet audited; see chapter 08 for the full breakdown —</td></tr>
       </tbody></table>
     </div>
-    <div class="note rv in"><b>Read the brand table above as a sample, the market table above as confirmed:</b> the brand-line breakdown still comes from one ~5,000-row export, not a confirmed count of Reiss' full catalogue — treat it as "what's visible in that sample" until it's checked against the full feed. The GB/DE/FR row is different: those are FeedHero's own live audit of the full catalogue in each market — <b>179,646 real SKUs</b>, not a sample — see chapter 08. The other 26 markets and their feeds still aren't confirmed either way. Hours needs Ray to confirm before this goes to Reiss.</div>
+    <div class="tbl-wrap rv in" style="margin-top:24px">
+      <table><thead><tr><th>Market</th><th style="width:14%">Tasks</th><th style="width:16%">Billable hrs</th><th style="width:18%">Non-billable hrs</th><th style="width:14%">Total hrs</th></tr></thead>
+      <tbody>
+        <tr><td><b>GB</b></td><td>637</td><td>569.25</td><td>499.00</td><td><b>1,068.25</b></td></tr>
+        <tr><td><b>DE</b></td><td>75</td><td>72.50</td><td>30.00</td><td><b>102.50</b></td></tr>
+        <tr><td><b>FR</b></td><td>14</td><td>6.25</td><td>2.00</td><td><b>8.25</b></td></tr>
+        <tr><td><b>IE</b></td><td>9</td><td>3.25</td><td>0.00</td><td><b>3.25</b></td></tr>
+        <tr><td>Total</td><td>735</td><td>651.25</td><td>531.00</td><td><b>1,182.25</b></td></tr>
+      </tbody></table>
+    </div>
+    <div class="note rv in"><b>Read the brand table above as a sample, the market tables below it as confirmed:</b> the brand-line breakdown still comes from one ~5,000-row export, not a confirmed count of Reiss' full catalogue — treat it as "what's visible in that sample" until it's checked against the full feed. The SKU-scale row is different: those are FeedHero's own live audit of the full catalogue in each market — <b>179,646 real SKUs</b>, not a sample — see chapter 08. The hours table is a third, separate source again: FeedHero's own per-task time log (735 completed tickets, Jun 2025–Jul 2026) — a more granular operational record than the Project Plan's 446 tracked initiatives (chapter 03), not a contradiction of it. GB accounts for 90% of logged hours (1,068 of 1,182); DE, FR and IE together are 9.7%, and DE/FR/IE combined average under 9 hours/month — worth flagging to Ray as either a real scope gap or simply lower-touch markets, not something this log alone can say which. The other 26 markets and their feeds still aren't confirmed either way.</div>
   </div>
 </section>
 
@@ -420,6 +448,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       <div class="card"><h4>The one that's actually verified</h4><p>39% of titles were flagged as duplicated across the catalogue. Checking the live feed directly: duplicates are now down to 0.1% (4 rows, 2 pairs). The fix didn't just ship — it worked.</p></div>
       <div class="card"><h4>What's moving right now</h4><p>The <b>[Search Intent] vs. none</b> title A/B is live and reading. Between that and the Local Language programme (chapter 13), FY26/27 opens with two structural tests already in flight rather than starting cold.</p></div>
     </div>
+    <div class="note rv in"><b>446 tasks is the plan's count of tracked initiatives — not the hours behind them.</b> FeedHero's own operational time log shows 735 completed tickets and 1,182.25 hours delivered across GB/DE/FR/IE over the same window (chapter 01) — a more granular, ticket-level record than the plan's initiative list, not a different number for the same thing. 90% of that time sits in GB.</div>
   </div>
 </section>
 
@@ -586,6 +615,26 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         <tr><td>Broken size runs (Item Group ID)</td><td><span class="pill p-block">43%</span></td><td><span class="pill p-block">44%</span></td><td><span class="pill p-block">43%</span></td><td>Ch.06 &amp; Ch.07 — the open Item Group ID → Item No. switchover</td></tr>
         <tr><td>Products missing highly desirable data fields</td><td><span class="pill p-block">44%</span></td><td><span class="pill p-block">44%</span></td><td><span class="pill p-block">44%</span></td><td>Identical rate in all three — one shared rule set, not three local issues</td></tr>
       </tbody></table>
+    </div>
+
+    <div class="grid-2 rv in" style="margin-bottom:32px">
+      <div class="card" style="border-left:3px solid var(--red)">
+        <h4>"No keywords" isn't only a Shopping problem</h4>
+        <p style="font-size:13px">The 89–97% keyword gap above is measured against Google Shopping's own search-term matching. Separately, the Project Plan's schema.org/JSON-LD structured-data readiness check — built for LLM/GAI summarisation (ChatGPT, Perplexity, <b>Gemini</b>) — flags <code>keywords</code> as one of only four components still <b>FALSE</b> for Reiss, alongside <code>aggregateRating &amp; review</code>, <code>material/color/size</code> and <code>category</code>. Same underlying gap, two separate systems penalised by it: Shopping ranking today, and AI-agent discovery (chapter 09) as that channel grows.</p>
+      </div>
+      <div class="card">
+        <h4>Structured-data readiness for GAI/Gemini summarisation</h4>
+        <div style="font-size:12.5px;margin-top:6px">
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>name, description, image</span><span class="pill p-done">TRUE</span></div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>brand, sku, gtin13, offers, price</span><span class="pill p-done">TRUE</span></div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>hasVariant</span><span class="pill p-done">TRUE</span></div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>keywords</span><span class="pill p-block">FALSE</span></div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>category</span><span class="pill p-block">FALSE</span></div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>material, color, size</span><span class="pill p-block">FALSE</span></div>
+          <div style="display:flex;justify-content:space-between;padding:3px 0"><span>aggregateRating &amp; review</span><span class="pill p-block">FALSE</span></div>
+        </div>
+        <p style="font-size:11.5px;color:var(--muted);margin-top:8px">Source: Project Plan's own AI-readiness component check, not this audit — included here because it's the same "keywords" gap seen from a third angle.</p>
+      </div>
     </div>
 
     <div class="grid-2 rv in" style="margin-bottom:32px">
@@ -863,8 +912,115 @@ policy data become commercial controls"<br>Google&nbsp;</p>
   </div>
 </section>
 
-<!-- ================= CH 14 — TECH FIT ================= -->
-<div class="chapter" id="c15"><div class="ch-num">15</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter fifteen</div><h2>Tech Fit</h2><p>Why the FeedSpark stack fits a 29-market, multi-brand fashion retailer — and where the feed shows the fit isn't finished yet.</p></div></div>
+<!-- ================= CH 15 — 20-MARKET ROLLOUT: PLAN & RESOURCING ================= -->
+<div class="chapter" id="c15"><div class="ch-num">15</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter fifteen</div><h2>50-Market Rollout — Plan &amp; Resourcing</h2><p>53 markets total — 11 live today, 42 more launching over 14 weeks, still sequenced to land before Peak.</p></div></div>
+
+<section class="band">
+  <div class="wrap">
+    <div class="note rv in" style="margin-top:0"><b>Source:</b> two lists combined. The original 20 come from the market rollout matrix in the Reiss Project Plan (checked end-to-end through the row Ray flagged, ~545 — nothing marked "New market" beyond WO). The other 22 (Malta, Japan, Bahrain, Hungary, Norway, Taiwan, Cyprus, New Zealand, Kazakhstan, Bulgaria, Iceland, Malaysia, Oman, Mexico, Ukraine, India, South Africa, South Korea, Thailand, Philippines, Serbia, Jordan) came directly from Ray — they don't appear in the matrix tab yet, so treat their language/setup detail as unconfirmed until the matrix is updated to include them.</div>
+
+    <div class="eyebrow rv in">The full picture</div>
+    <h2 class="sec-title rv in">Progress — from get-go to what to expect</h2>
+    <div class="road rv in" style="grid-template-columns:repeat(4,1fr)">
+      <div class="mo">
+        <div class="mo-m">Get-go</div><div class="mo-s s-close">Live today</div>
+        <h4>11 markets already live</h4>
+        <ul>
+          <li>GB (home) + DE, FR, NL, ES, CH, PL, AT, IT, BE, SA</li>
+          <li>All "Done" in the matrix — Shopping, translated files, Meta all live</li>
+        </ul>
+      </div>
+      <div class="mo">
+        <div class="mo-m">Weeks 1–5 · Aug</div><div class="mo-s s-build">Wave 1 — 15 markets</div>
+        <h4>AU, NZ, CA, QA, HK</h4>
+        <ul>
+          <li>UAE, BH, OM, JO — Middle East cluster</li>
+          <li>DK, FI, NO, IS, EE, LT — Nordic/Baltic</li>
+        </ul>
+      </div>
+      <div class="mo">
+        <div class="mo-m">Weeks 6–10 · Sep–Oct</div><div class="mo-s s-build">Wave 2 — 15 markets</div>
+        <h4>LV, CZ, HR, RO, SI</h4>
+        <ul>
+          <li>SK, HU, BG, RS, UA — Central/Eastern Europe</li>
+          <li>GR, MT, CY, JP, TW — Mediterranean + start of APAC</li>
+        </ul>
+      </div>
+      <div class="mo">
+        <div class="mo-m">Weeks 11–14 · Oct–Nov</div><div class="mo-s s-build">Wave 3 — 12 markets</div>
+        <h4>KR, MY, TH, PH, IN, MX</h4>
+        <ul>
+          <li>ZA, KZ, IL, LU, PT, WO — closes the rollout</li>
+          <li>Live by <b>Nov 4</b> — 3.5 weeks before Black Friday</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stats rv in">
+      <div class="stat"><div class="n">11</div><div class="l">Markets already live (get-go)</div></div>
+      <div class="stat"><div class="n">42</div><div class="l">Markets to launch</div></div>
+      <div class="stat"><div class="n">53</div><div class="l">Full footprint once the rollout completes</div></div>
+      <div class="stat"><div class="n">14<small>wks</small></div><div class="l">Duration at 3 markets/week (Mon/Tue/Wed)</div></div>
+    </div>
+
+    <div class="mkt-wall rv in">
+      <span class="pill p-done">GB</span><span class="pill p-done">DE</span><span class="pill p-done">FR</span><span class="pill p-done">NL</span><span class="pill p-done">ES</span><span class="pill p-done">CH</span><span class="pill p-done">PL</span><span class="pill p-done">AT</span><span class="pill p-done">IT</span><span class="pill p-done">BE</span><span class="pill p-done">SA</span><span class="pill p-block">AU</span><span class="pill p-block">NZ</span><span class="pill p-block">CA</span><span class="pill p-block">QA</span><span class="pill p-block">HK</span><span class="pill p-block">UAE</span><span class="pill p-block">BH</span><span class="pill p-block">OM</span><span class="pill p-block">JO</span><span class="pill p-block">DK</span><span class="pill p-block">FI</span><span class="pill p-block">NO</span><span class="pill p-block">IS</span><span class="pill p-block">EE</span><span class="pill p-block">LT</span><span class="pill p-block">LV</span><span class="pill p-block">CZ</span><span class="pill p-block">HR</span><span class="pill p-block">RO</span><span class="pill p-block">SI</span><span class="pill p-block">SK</span><span class="pill p-block">HU</span><span class="pill p-block">BG</span><span class="pill p-block">RS</span><span class="pill p-block">UA</span><span class="pill p-block">GR</span><span class="pill p-block">MT</span><span class="pill p-block">CY</span><span class="pill p-block">JP</span><span class="pill p-block">TW</span><span class="pill p-block">KR</span><span class="pill p-block">MY</span><span class="pill p-block">TH</span><span class="pill p-block">PH</span><span class="pill p-block">IN</span><span class="pill p-block">MX</span><span class="pill p-block">ZA</span><span class="pill p-block">KZ</span><span class="pill p-block">IL</span><span class="pill p-block">LU</span><span class="pill p-block">PT</span><span class="pill p-block">WO</span>
+      <div class="mkt-legend"><span><i style="background:var(--green)"></i>Live today (11)</span><span><i style="background:var(--orange-deep)"></i>Rolling out — 3 waves (42)</span></div>
+    </div>
+    <div class="note rv in"><b>53 vs. the account's "29 markets" figure (chapter 01):</b> the combined live+rollout count runs well ahead of the account record's headline number, mostly because this round adds 22 markets not yet reflected there. Worth a full refresh of chapter 01's "29 markets" stat once this rollout is confirmed — flagged rather than silently overwritten, since chapter 01 is sourced from the account record, not this matrix.</div>
+
+    <div class="grid-3 rv in">
+      <div class="card" style="border-left:3px solid var(--orange-deep)">
+        <h4>No Thursday or Friday launches</h4>
+        <p style="font-size:13px">Every launch lands Monday–Wednesday only. A market that launches Thursday or Friday hits its first real traffic right as the team's attention (and support cover) drops off into the weekend — Mon–Wed means any disapprovals, mapping issues or feed errors get caught and fixed same-week, not discovered Monday after two days live and unwatched.</p>
+      </div>
+      <div class="card">
+        <h4>Additive, not instead of</h4>
+        <p style="font-size:13px">This sits alongside the existing optimisation retainer (chapters 03–14), not in place of it. Going from 2 to 3 markets/week to fit 42 markets in before Peak means roughly 9–12 hrs/week of new scope, resourced separately — BAU keyword/title/highlights work keeps moving at its current pace throughout.</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--orange)">
+        <h4>Before Peak — but tighter than before</h4>
+        <p style="font-size:13px">At 3 markets/week starting Aug 3, all 42 are live by <b>Nov 4</b> — roughly 3.5 weeks before Black Friday (Nov 27), down from the 6+ week buffer the 20-market version had. Real, not hidden: adding 22 markets to the same start date compresses the safety margin — worth Ray's explicit sign-off that 3/week and this margin are acceptable, or discussing whether some of Wave 3 should push into the new year instead.</p>
+      </div>
+    </div>
+    <div class="note rv in"><b>Assumptions flagged for Ray to confirm:</b> start date (proposed: week of Aug 3), the step-up to 3 markets/week (team capacity not yet confirmed against current retainer load), and whether the ~3.5-week pre-Peak buffer is tight enough to warrant trimming Wave 3 instead. Adjust the schedule in chapter 16 once these are locked.</div>
+  </div>
+</section>
+
+<!-- ================= CH 16 — 50-MARKET ROLLOUT: WEEKLY SCHEDULE ================= -->
+<div class="chapter" id="c16"><div class="ch-num">16</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter sixteen</div><h2>50-Market Rollout — Weekly Schedule</h2><p>14 weeks, 3 markets/week, Monday–Wednesday only.</p></div></div>
+
+<section>
+  <div class="wrap">
+    <div class="tbl-wrap rv in" style="margin-bottom:24px">
+      <table><thead><tr><th style="width:14%">Week</th><th style="width:12%">Mon</th><th style="width:12%">Tue</th><th style="width:12%">Wed</th><th>Sequencing logic</th></tr></thead>
+      <tbody>
+        <tr><td><b>1 — Aug 3</b></td><td>AU</td><td>NZ</td><td>CA</td><td>English-native / dual-language, lowest lift</td></tr>
+        <tr><td><b>2 — Aug 10</b></td><td>QA</td><td>HK</td><td>UAE</td><td>English-native, into Middle East</td></tr>
+        <tr><td><b>3 — Aug 17</b></td><td>BH</td><td>OM</td><td>JO</td><td>Middle East cluster, pairs with UAE</td></tr>
+        <tr><td><b>4 — Aug 24</b></td><td>DK</td><td>FI</td><td>NO</td><td>Nordic cluster</td></tr>
+        <tr><td><b>5 — Aug 31</b></td><td>IS</td><td>EE</td><td>LT</td><td>Nordic close-out, into Baltic</td></tr>
+        <tr><td><b>6 — Sep 7</b></td><td>LV</td><td>CZ</td><td>HR</td><td>Baltic close-out, into Central Europe</td></tr>
+        <tr><td><b>7 — Sep 14</b></td><td>RO</td><td>SI</td><td>SK</td><td>Central/Eastern Europe</td></tr>
+        <tr><td><b>8 — Sep 21</b></td><td>HU</td><td>BG</td><td>RS</td><td>Central/Eastern Europe continued</td></tr>
+        <tr><td><b>9 — Sep 28</b></td><td>UA</td><td>GR</td><td>MT</td><td>Eastern Europe close-out, into Mediterranean</td></tr>
+        <tr><td><b>10 — Oct 5</b></td><td>CY</td><td>JP</td><td>TW</td><td>Mediterranean close-out, into APAC</td></tr>
+        <tr><td><b>11 — Oct 12</b></td><td>KR</td><td>MY</td><td>TH</td><td>APAC</td></tr>
+        <tr><td><b>12 — Oct 19</b></td><td>PH</td><td>IN</td><td>MX</td><td>APAC close-out, into Americas</td></tr>
+        <tr><td><b>13 — Oct 26</b></td><td>ZA</td><td>KZ</td><td>IL</td><td>Remaining markets</td></tr>
+        <tr><td><b>14 — Nov 2</b></td><td>LU</td><td>PT</td><td>WO</td><td>PT last named market; WO (rest-of-world catch-all) closes the rollout</td></tr>
+      </tbody></table>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="card"><h4>Per-market launch (3–4 hrs)</h4><p style="font-size:13px">Feed structure + language mapping (title/description/colour per market) → GMC setup → Shopping Local Language mapping → QA pass against the live feed → go-live confirmation. Same checklist every time — the estimate for the 22 markets without matrix detail yet assumes the same shape of work; confirm once their language/setup rows exist.</p></div>
+      <div class="card"><h4>What this schedule doesn't cover yet</h4><p style="font-size:13px">Meta International Feed setup is tracked separately per market and isn't included in the 3–4 hour Shopping-launch estimate — same caveat as before, now across a bigger list. Worth a second pass once the Shopping rollout above is confirmed.</p></div>
+    </div>
+    <div class="note rv in"><b>This is a proposal, not a locked plan:</b> the market order groups by language/region similarity for a realistic operational flow — it's FeedSpark's sequencing logic, not something Reiss has signed off on yet. Swap any week's pairing freely once priorities (e.g. a specific market Reiss wants first) are confirmed.</div>
+  </div>
+</section>
+
+<!-- ================= CH 17 — TECH FIT ================= -->
+<div class="chapter" id="c17"><div class="ch-num">17</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter seventeen</div><h2>Tech Fit</h2><p>Why the FeedSpark stack fits a 29-market, multi-brand fashion retailer — and where the feed shows the fit isn't finished yet.</p></div></div>
 
 <section class="band">
   <div class="wrap">
