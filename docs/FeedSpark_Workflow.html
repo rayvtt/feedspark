@@ -1548,7 +1548,7 @@ window.addEventListener('load',restore);
     var xl=[];
     if(b.taskKey) xl.push('<span class="xl" title="Linked plan-row task">⛓ '+esc((b.taskKey.split('|')[1]||'').slice(0,48))+'</span>');
     if(PLANSHEET[b.client]) xl.push('<a class="xl" target="_blank" rel="noopener" href="https://docs.google.com/spreadsheets/d/'+PLANSHEET[b.client]+'">📊 Open '+esc(b.client)+'’s plan sheet</a>');
-    if(b.code) xl.push('<a class="xl" id="m-thread" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent('"ibfcode:'+b.code+'"')+'">✉ Find the email thread ('+esc(b.code)+')</a>');
+    if(b.code) xl.push('<a class="xl" id="m-thread" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent('"'+b.id+'"')+'" title="Every FCC brief carries its ID in the body — this finds exactly that thread">✉ Find the email thread ('+esc(b.id)+')</a>');
     modalEl.innerHTML=''
       +'<div style="display:flex;align-items:flex-start"><div><h3>'+esc(b.task)+'</h3>'
         +'<div class="mc">'+esc(b.id)+' · '+esc(b.client)+' · ['+esc(b.code)+']</div></div><button class="x" id="m-x">×</button></div>'
@@ -1602,7 +1602,7 @@ window.addEventListener('load',restore);
     (function(){ var a=document.getElementById('m-thread'); if(!a||!b.code)return;
       function apply(g){ if(!g||!g.id)return; a.href='https://mail.google.com/mail/u/'+encodeURIComponent(g.mb||'0')+'/#all/'+encodeURIComponent(g.id); a.innerHTML='✉ Open the email thread ('+esc(b.code)+')'; }
       if(b.gthread){ apply(b.gthread); return; }
-      fetch('/api/gmail/thread?q='+encodeURIComponent('ibfcode:'+b.code)).then(function(r){return r.json();}).then(function(d){
+      fetch('/api/gmail/thread?q='+encodeURIComponent(b.id)+'&q='+encodeURIComponent('ibfcode:'+b.code)).then(function(r){return r.json();}).then(function(d){
         if(d&&d.connected&&d.threadId){ b.gthread={id:d.threadId,mb:d.mailbox||'',t:Date.now()}; persist(); apply(b.gthread); }
       }).catch(function(){});
     })();
@@ -1706,7 +1706,9 @@ window.addEventListener('load',restore);
   // ---- #4 chase drafts ----
   function chaseAspl(b){ var L=['Hi '+(asplOf(b)||'team')+',','','Chasing this brief — '+dueState(b)+':','',
     '• '+b.task+'  ['+b.code+']  ibfdue:'+(b.due||'TBC'),'','Could you confirm status / ETA? Reply-all keeps the portal in sync.','','Thanks,','Ray'];
-    return 'https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent('[FS Chase] '+b.client+' · '+b.task)+'&body='+encodeURIComponent(L.join('\n')); }
+    // "Re: <original subject>" so Gmail threads the chase into the brief's conversation instead of starting a new one
+    var su='Re: '+(b.subject||('[FS Brief] '+b.client+' · '+b.task+' · [ibfcode:'+b.code+'] ibfdue:'+(b.due||'')));
+    return 'https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(su)+'&body='+encodeURIComponent(L.join('\n')); }
   function chaseClient(b){ var L=['Hi team,','','Quick update on the below — checking you have everything you need from us to move it forward:','',
     '• '+b.task,'','Happy to jump on a quick call if easier.','','Best,','Ray','FeedSpark'];
     return 'https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark · '+b.client+' — '+b.task)+'&body='+encodeURIComponent(L.join('\n')); }
