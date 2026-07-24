@@ -292,6 +292,23 @@ export default {
       }
     }
 
+    // ---- Gmail thread lookup: deep-link a brief straight to its email thread ----
+    // GET /api/gmail/thread?q=<token> → {connected, threadId, mailbox} (newest matching thread
+    // in the impersonated mailbox). Degrades to {connected:false} until Gmail creds are set.
+    if (path === '/api/gmail/thread' && request.method === 'GET') {
+      if (!env.GOOGLE_SA_JSON || !env.GOOGLE_IMPERSONATE) return json({ connected: false });
+      try {
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/gmail.readonly', true);
+        const q = encodeURIComponent('"' + (url.searchParams.get('q') || '') + '"');
+        const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=1&q=' + q, { headers: { Authorization: 'Bearer ' + token } });
+        const d = await r.json();
+        const t = (d.threads || [])[0];
+        return json({ connected: true, threadId: (t && t.id) || null, mailbox: env.GOOGLE_IMPERSONATE });
+      } catch (e) {
+        return json({ connected: false, error: String((e && e.message) || e) });
+      }
+    }
+
     // ---- Sheets read (no admin needed: share the sheet with the service-account email) ----
     // GET /api/sheets/read?id=<spreadsheetId>&range=<A1 range>. The SA acts as itself, so any
     // sheet shared with its client_email is reachable without domain-wide delegation.
