@@ -293,17 +293,22 @@ export default {
     }
 
     // ---- Gmail thread lookup: deep-link a brief straight to its email thread ----
-    // GET /api/gmail/thread?q=<token> → {connected, threadId, mailbox} (newest matching thread
-    // in the impersonated mailbox). Degrades to {connected:false} until Gmail creds are set.
+    // GET /api/gmail/thread?q=<token>&q=<fallback> → {connected, threadId, mailbox}. Queries are
+    // tried in order (brief ID first = exact thread; ibfcode second = client fallback), each as a
+    // quoted phrase. Degrades to {connected:false} until Gmail creds are set.
     if (path === '/api/gmail/thread' && request.method === 'GET') {
       if (!env.GOOGLE_SA_JSON || !env.GOOGLE_IMPERSONATE) return json({ connected: false });
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/gmail.readonly', true);
-        const q = encodeURIComponent('"' + (url.searchParams.get('q') || '') + '"');
-        const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=1&q=' + q, { headers: { Authorization: 'Bearer ' + token } });
-        const d = await r.json();
-        const t = (d.threads || [])[0];
-        return json({ connected: true, threadId: (t && t.id) || null, mailbox: env.GOOGLE_IMPERSONATE });
+        for (const raw of url.searchParams.getAll('q')) {
+          if (!raw) continue;
+          const q = encodeURIComponent('"' + raw + '"');
+          const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=1&q=' + q, { headers: { Authorization: 'Bearer ' + token } });
+          const d = await r.json();
+          const t = (d.threads || [])[0];
+          if (t && t.id) return json({ connected: true, threadId: t.id, mailbox: env.GOOGLE_IMPERSONATE });
+        }
+        return json({ connected: true, threadId: null, mailbox: env.GOOGLE_IMPERSONATE });
       } catch (e) {
         return json({ connected: false, error: String((e && e.message) || e) });
       }
