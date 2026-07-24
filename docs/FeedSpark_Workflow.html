@@ -90,18 +90,26 @@ window.addEventListener('load',restore);
   .itk button:hover{background:var(--orange);color:#fff}
   .itk-more{font:inherit;font-size:12.5px;font-weight:800;color:var(--orange-ink);background:none;border:0;cursor:pointer;padding:8px 0}
   /* pipeline board */
-  .board{display:grid;grid-template-columns:repeat(6,minmax(190px,1fr));gap:11px;overflow-x:auto;padding-bottom:8px}
-  .lane{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:9px;min-height:120px;display:flex;flex-direction:column;gap:8px}
+  .board{display:grid;grid-template-columns:repeat(6,minmax(170px,1fr));gap:9px;overflow-x:auto;padding-bottom:8px}
+  .lane{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:7px;min-height:120px;max-height:64vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
   .lane.drop{outline:2px dashed var(--orange);outline-offset:-3px;background:#FFF9F0}
-  .lane-h{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:900;color:var(--ink);padding:2px 3px}
+  .lane-h{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:900;color:var(--ink);padding:2px 3px;position:sticky;top:0;background:inherit;z-index:1}
   .lane-h .dot{width:9px;height:9px;border-radius:50%;flex:none}
   .lane-h .ct{margin-left:auto;font-size:11px;font-weight:800;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:100px;padding:0 7px}
-  .tik{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 10px;box-shadow:var(--shadow);cursor:grab;display:flex;flex-direction:column;gap:5px}
+  .tik{background:#fff;border:1px solid var(--line);border-radius:9px;padding:6px 8px;box-shadow:var(--shadow);cursor:grab;display:flex;flex-direction:column;gap:3px}
   .tik:active{cursor:grabbing}
   .tik.drag{opacity:.4}
-  .tik .tk-c{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
-  .tik .tk-t{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.32}
-  .tik .tk-f{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:1px}
+  .tik .tk-m{display:flex;align-items:center;gap:5px;min-width:0}
+  .tik .tk-m .grow{flex:1}
+  .tk-ab{font-size:9.5px;font-weight:900;letter-spacing:.05em;background:var(--navy);color:#fff;border-radius:5px;padding:1px 5px;flex:none}
+  .tk-mk{font-size:9px;font-weight:900;color:var(--muted);flex:none}
+  .tk-pri{width:7px;height:7px;border-radius:50%;flex:none}
+  .tk-pri.hi{background:var(--orange-deep)}
+  .tk-pri.ur{background:#C0392B}
+  .tik .tk-age{font-size:9.5px;font-weight:900;padding:1px 6px;border-radius:100px;background:var(--wash);color:var(--muted);flex:none;white-space:nowrap}
+  .tik .tk-age.warn{background:rgba(192,57,43,.12);color:#C0392B}
+  .tik .tk-t{font-size:11.5px;font-weight:700;color:var(--ink);line-height:1.28;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .tik .due{font-size:9.5px;padding:0 6px;flex:none;white-space:nowrap}
   .due{font-size:10.5px;font-weight:800;border-radius:100px;padding:1px 7px;border:1px solid}
   .due.ok{color:var(--ink-2);background:var(--wash);border-color:var(--line)}
   .due.soon{color:var(--amber);background:#FEF6E4;border-color:#F0E0B0}
@@ -422,8 +430,6 @@ window.addEventListener('load',restore);
   .court .ct-m b{color:#C0392B}
   .crt-am .ct-c{color:var(--orange-deep)} .crt-aspl .ct-c{color:#2F6FB0} .crt-client .ct-c{color:#15803D}
   .tik.dim{opacity:.22}
-  .tik .crt{font-size:10px;font-weight:900;padding:1px 7px;border-radius:100px;background:var(--wash);color:var(--muted);white-space:nowrap}
-  .tik .crt.warn{background:rgba(192,57,43,.12);color:#C0392B}
   /* paste-an-update router */
   .lu{display:flex;gap:8px;align-items:stretch;margin:0 0 12px}
   .lu textarea{flex:1;font:inherit;font-size:12.5px;padding:8px 12px;border:1px dashed var(--line);border-radius:11px;background:var(--paper);color:var(--ink);resize:vertical;min-height:40px;max-height:140px}
@@ -558,7 +564,7 @@ window.addEventListener('load',restore);
   </table></div>
 
   <h2>Brief pipeline</h2>
-  <p class="sub">Every brief from send to sign-off. Drag a ticket between lanes; click it to log ASPL replies, run the completion scan, chase, and draft the client confirmation. The <b>court cards</b> show which of the three teams holds the ball on every ticket — click one to spotlight its tickets on the board. Paste any reply into the <b>router</b> and it finds the right ticket (by <code>[ibfcode]</code>, brief ID or task wording), logs it, and moves the stage.</p>
+  <p class="sub">Every brief from send to sign-off. Cards are compact so 20+ briefs stay visible: brand chip (+market if not GB), due, and days-in-court (red = over SLA — the lane tells you whose court). Hover for the full task; drag between lanes; click to open the ticket. The <b>court cards</b> show which of the three teams holds the ball — click one to spotlight its tickets. Paste any reply into the <b>router</b> and it finds the right ticket (by <code>[ibfcode]</code>, brief ID or task wording), logs it, and moves the stage.</p>
   <div class="courts" id="courts"></div>
   <div class="lu"><textarea id="lu-text" rows="2" placeholder="⚡ Paste an ASPL / client reply here — it routes to the right ticket, logs the comm, moves the stage and picks up any ETA. (Cmd/Ctrl+Enter to route)"></textarea><button class="btn navy" id="lu-go" type="button">Route update</button></div>
   <div class="lu-out" id="lu-out" hidden></div>
@@ -609,6 +615,13 @@ window.addEventListener('load',restore);
   var STAGES=[['intake','Intake','#8a94a0'],['briefed','Briefed to ASPL','#B1550A'],['progress','In progress','#2F6FB0'],
     ['blocked','Blocked','#C0392B'],['done','Done — ASPL','#15803D'],['confirmed','Client confirmed','#15803D']];
   var STAGE_LBL={},STAGE_COLOR={}; STAGES.forEach(function(s){STAGE_LBL[s[0]]=s[1];STAGE_COLOR[s[0]]=s[2];});
+  // 3-letter brand abbreviations for the dense board cards (fallback: initials / first 3)
+  var ABBR={'Reiss':'REI','AllSaints':'ALS','Schuh':'SCH','Superdry':'SUP','Accessorize':'ACC','Monsoon':'MON',
+    'Hobbycraft':'HBC','YuMOVE':'YUM','Estée Lauder':'ELC','Bobbi Brown':'BBR','Benefit':'BEN','Jo Malone':'JML',
+    'Clinique':'CLQ','MAC':'MAC','Craghoppers':'CRG','Regatta':'REG','Dare2b':'D2B','House of Bruar':'HOB',
+    'American Golf':'AMG','Ryobi':'RYO'};
+  function abbr(c){ if(ABBR[c])return ABBR[c]; var w=String(c||'').trim().split(/\s+/);
+    return ((w.length>1?w.map(function(x){return x.charAt(0);}).join(''):String(c||'').slice(0,3)).toUpperCase().slice(0,3))||'—'; }
   var DONE_RE=/\b(done|finished|complete|completed|delivered|live|actioned|signed[\s-]?off)\b/i;
   // ---- the 3 courts: which team/domain holds the ball at each stage ----
   var COURT={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',confirmed:''};
@@ -1438,8 +1451,6 @@ window.addEventListener('load',restore);
     var cls=days<0?'over':days<=2?'soon':'ok';
     var lbl=days<0?('overdue '+(-days)+'d'):days===0?'due today':days<=2?('due '+days+'d'):humanDD(b.due).replace(/,.*/,'');
     return '<span class="due '+cls+'">'+lbl+'</span>'; }
-  function lastWho(b){ if(!b.comms||!b.comms.length)return ''; var c=b.comms[b.comms.length-1];
-    return '<span class="who-chip">'+esc(c.from)+'</span>'; }
   // ---- courts strip: live count + oldest + SLA breaches per team; click to spotlight the board ----
   var courtSel='';
   function renderCourts(){ var host=document.getElementById('courts'); if(!host)return;
@@ -1461,11 +1472,16 @@ window.addEventListener('load',restore);
       var items=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}).filter(function(b){return b.status===s[0];})
         .sort(function(a,b){ var da=ddmmyyyyToDate(a.due),db=ddmmyyyyToDate(b.due); return (da?da:9e15)-(db?db:9e15); });
       var cards=items.map(function(b){
-        var crt=courtOf(b), crtChip=crt?('<span class="crt'+(stageBreached(b)?' warn':'')+'" title="Ball in '+crt+'’s court">'+crt+' '+daysInCourt(b)+'d</span>'):'';
+        // dense card: 3-letter brand chip (+market when ≠GB), priority dot, due, age-in-court.
+        // No client/code line (the chip is the client), no court name (the lane says it), no who-chip (modal has it).
+        var crt=courtOf(b);
+        var ageChip=crt?('<span class="tk-age'+(stageBreached(b)?' warn':'')+'" title="In '+crt+'’s court '+daysInCourt(b)+'d">'+daysInCourt(b)+'d</span>'):'';
+        var mk=(b.code||'').split('-').pop(); mk=(mk&&mk!=='gb')?('<span class="tk-mk">'+esc(mk.toUpperCase())+'</span>'):'';
+        var pri=(b.priority&&b.priority!=='Normal')?('<span class="tk-pri '+(b.priority==='Urgent'?'ur':'hi')+'" title="'+esc(b.priority)+'"></span>'):'';
+        var db=dueBadge(b); if(/no due/.test(db))db='';
         return '<div class="tik'+(courtSel&&crt!==courtSel?' dim':'')+'" draggable="true" data-id="'+esc(b.id)+'">'
-          +'<div class="tk-c">'+esc(b.client)+' · '+esc(b.code)+'</div>'
-          +'<div class="tk-t">'+esc(b.task)+'</div>'
-          +'<div class="tk-f">'+dueBadge(b)+lastWho(b)+(b.priority&&b.priority!=='Normal'?'<span class="due soon">'+esc(b.priority)+'</span>':'')+crtChip+'</div></div>';
+          +'<div class="tk-m"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+pri+'<span class="grow"></span>'+db+ageChip+'</div>'
+          +'<div class="tk-t" title="'+esc(b.task)+'">'+esc(b.task)+'</div></div>';
       }).join('') || '<div class="board-empty">—</div>';
       return '<div class="lane" data-stage="'+s[0]+'"><div class="lane-h"><span class="dot" style="background:'+s[2]+'"></span>'+s[1]+'<span class="ct">'+items.length+'</span></div>'+cards+'</div>';
     }).join('');
