@@ -379,24 +379,11 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       <div class="stat"><div class="n">60</div><div class="l">Feeds</div></div>
       <div class="stat"><div class="n">~5.0<small>k</small></div><div class="l">SKUs in this analysed sample<span class="chk">?</span></div></div>
       <div class="stat"><div class="n">2</div><div class="l">Active channels — Google Shopping, Meta</div></div>
-      <div class="stat"><div class="n">5+<small><span class="chk">?</span></small></div><div class="l">Brand lines seen in this sample<br><br><span style="font-size:11px">Delivered hours (GB/DE/FR/IE, 13mo log): <b>1,182.25</b></span></div></div>
+      <div class="stat"><div class="n">1,182<small>.25</small></div><div class="l">Hours delivered — GB/DE/FR/IE, 13mo log</div></div>
     </div>
-    <div class="grid-2 rv in">
-      <div class="tbl-wrap">
-        <table><thead><tr><th>Brand line</th><th>SKUs in this sample</th><th>Full catalogue?</th></tr></thead>
-        <tbody>
-          <tr><td><b>Reiss</b></td><td>4,673</td><td><span class="pill p-open">Unconfirmed</span></td></tr>
-          <tr><td>Reiss McLaren</td><td>113</td><td><span class="pill p-open">Unconfirmed</span></td></tr>
-          <tr><td>Atelier</td><td>51</td><td><span class="pill p-open">Unconfirmed</span></td></tr>
-          <tr><td>Good American</td><td>42</td><td><span class="pill p-open">Unconfirmed</span></td></tr>
-          <tr><td>PAIGE</td><td>34</td><td><span class="pill p-open">Unconfirmed</span></td></tr>
-        </tbody></table>
-      </div>
-      <div class="card">
-        <h4>What this means for the feed</h4>
-        <p>Reiss isn't a single-brand catalogue — collaboration and stocked third-party lines (McLaren, Atelier, Good American, PAIGE) sit inside the same feed. Every optimisation rule needs to hold across all of them, not just the core Reiss line.</p>
-        <p style="margin-top:12px;font-size:13px;color:var(--muted)">2,304 distinct product groups within this sample — an average of 2.2 SKUs (sizes/colours) per style.</p>
-      </div>
+    <div class="card rv in">
+      <h4>What this means for the feed</h4>
+      <p>2,304 distinct product groups within the ~5,000-row analysed sample — an average of 2.2 SKUs (sizes/colours) per style. Every optimisation rule needs to hold across the full Reiss catalogue, not just a subset.</p>
     </div>
     <div class="tbl-wrap rv in" style="margin-top:24px">
       <table><thead><tr><th>Market</th><th style="width:20%">Live SKUs (FeedHero audit)</th><th>Status</th></tr></thead>
@@ -417,7 +404,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         <tr><td>Total</td><td>735</td><td>651.25</td><td>531.00</td><td><b>1,182.25</b></td></tr>
       </tbody></table>
     </div>
-    <div class="note rv in"><b>Read the brand table above as a sample, the market tables below it as confirmed:</b> the brand-line breakdown still comes from one ~5,000-row export, not a confirmed count of Reiss' full catalogue — treat it as "what's visible in that sample" until it's checked against the full feed. The SKU-scale row is different: those are FeedHero's own live audit of the full catalogue in each market — <b>179,646 real SKUs</b>, not a sample — see chapter 08. The hours table is a third, separate source again: FeedHero's own per-task time log (735 completed tickets, Jun 2025–Jul 2026) — a more granular operational record than the Project Plan's 446 tracked initiatives (chapter 03), not a contradiction of it. GB accounts for 90% of logged hours (1,068 of 1,182); DE, FR and IE together are 9.7%, and DE/FR/IE combined average under 9 hours/month — worth flagging to Ray as either a real scope gap or simply lower-touch markets, not something this log alone can say which. The other 26 markets and their feeds still aren't confirmed either way.</div>
+    <div class="note rv in"><b>Two different sources, read separately:</b> the market-scale row is FeedHero's own live audit of the full catalogue in each market — <b>179,646 real SKUs</b>, not a sample — see chapter 08. The hours table is a second, separate source: FeedHero's own per-task time log (735 completed tickets, Jun 2025–Jul 2026) — a more granular operational record than the Project Plan's 446 tracked initiatives (chapter 03), not a contradiction of it. GB accounts for 90% of logged hours (1,068 of 1,182); DE, FR and IE together are 9.7%, and DE/FR/IE combined average under 9 hours/month — worth flagging to Ray as either a real scope gap or simply lower-touch markets, not something this log alone can say which. The other 26 markets and their feeds still aren't confirmed either way.</div>
   </div>
 </section>
 
@@ -808,8 +795,8 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         </div>
       </div>
       <div class="card">
-        <h4>Why this matters for a 4-brand, 29-market catalogue</h4>
-        <p>Manually writing intent-rich copy for ~5,000 SKUs across 6 brand lines and 29 markets isn't a resourcing question, it's a throughput question. Tachyon generates the long-tail language at catalogue scale from data that's already 100%-complete on the structural side (colour, material, size).</p>
+        <h4>Why this matters at 29-market scale</h4>
+        <p>Manually writing intent-rich copy for ~5,000 SKUs across 29 markets isn't a resourcing question, it's a throughput question. Tachyon generates the long-tail language at catalogue scale from data that's already 100%-complete on the structural side (colour, material, size).</p>
         <p style="margin-top:12px;font-size:13px;color:var(--muted)">The title-fix precedent (chapter 05) already proved the AOT pipeline can touch every SKU — Tachyon extends the same reach to descriptions and highlights.</p>
       </div>
     </div>
@@ -828,7 +815,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         <div class="qs" id="qs" role="tablist">
           <button class="q" role="tab" data-k="qa">"Does this run true to size?"</button>
           <button class="q" role="tab" data-k="variant">"Do you do the Stanton trousers in a size 6?"</button>
-          <button class="q" role="tab" data-k="group">"What's the difference between Reiss and Reiss McLaren?"</button>
+          <button class="q" role="tab" data-k="group">"What's the difference between the Stanton and the Stanton Petite?"</button>
           <button class="q active" role="tab" data-k="related">"What should I wear this with?"</button>
           <button class="q" role="tab" data-k="pop">"What's your best-selling trouser style?"</button>
           <button class="q" role="tab" data-k="doc">"What's the full fabric composition?"</button>
@@ -1091,13 +1078,13 @@ policy data become commercial controls"<br>Google&nbsp;</p>
 </section>
 
 <!-- ================= CH 17 — TECH FIT ================= -->
-<div class="chapter" id="c17"><div class="ch-num">17</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter seventeen</div><h2>Tech Fit</h2><p>Why the FeedSpark stack fits a 29-market, multi-brand fashion retailer — and where the feed shows the fit isn't finished yet.</p></div></div>
+<div class="chapter" id="c17"><div class="ch-num">17</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter seventeen</div><h2>Tech Fit</h2><p>Why the FeedSpark stack fits a 29-market fashion retailer — and where the feed shows the fit isn't finished yet.</p></div></div>
 
 <section class="band">
   <div class="wrap">
     <div class="grid-4 rv in">
-      <div class="card"><h4>One stack, six brand lines</h4><p>Reiss, Reiss McLaren, Atelier, Good American and PAIGE all run through the same FeedHero + Tachyon pipeline — proven on the core line's 100% AOT title coverage, not yet extended in depth to every collab line.</p></div>
-      <div class="card"><h4>Proven across fashion</h4><p>The same title-quality methodology behind the verified de-duplication fix is already proven across fashion, footwear, beauty and outdoor accounts.</p></div>
+      <div class="card"><h4>One stack, full catalogue</h4><p>FeedHero + Tachyon run the same pipeline across all 60 feeds and 29 markets — proven on GB/DE/FR's 100% AOT title coverage, extending next to the 26 markets not yet audited.</p></div>
+      <div class="card"><h4>Proven at scale</h4><p>The same title-quality methodology behind the verified de-duplication fix already took GB from 39% to 0.1% duplicate titles — the fix works, the remaining task is reaching every market (chapter 05).</p></div>
       <div class="card"><h4>Golden Record discipline</h4><p>99.9% attribute-completeness target — core structural fields are already at 100% in this export; the gap the feed shows is content depth (keywords, descriptions, highlights), not missing data.</p></div>
       <div class="card"><h4>One partner per channel</h4><p>Google Shopping and Meta run off the same optimisation engine today — LIA is live in IE, giving a template to extend Click &amp; Collect to other markets as the account grows.</p></div>
     </div>
@@ -1172,9 +1159,9 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       row:'<span class="c">// used with item_group_id + item_group_title</span>\n<span class="k">item_group_id</span>: SV142028\n<span class="k">variant_option</span>:\n  size: 4\n  colour: Cream\n  fit: Petite',
       note:'Structural only — no copy approval needed. Blocked on the item-group ID mapping in chapter 07.'},
     group:{name:'Item group title',code:'item_group_title',
-      why:'Gives the whole variant family — and each brand line — one clean parent name. It\'s how the agent tells a core Reiss style apart from a Reiss McLaren or Atelier line.',
+      why:'Gives the whole variant family one clean parent name. It\'s how the agent tells the Stanton apart from the Stanton Petite, even when titles look almost identical.',
       row:'<span class="k">item_group_id</span>: SV142028\n<span class="k">item_group_title</span>: Reiss Stanton Petite Cotton Corduroy Wide-Leg Trousers\n<span class="k">title</span>: Reiss Cream Stanton Petite Cotton Corduroy Wide-Leg Trousers, 4',
-      note:'Directly addresses telling brand lines apart across the 6-line portfolio.'},
+      note:'Directly addresses telling near-identical styles apart within the same catalogue.'},
     related:{name:'Related product',code:'related_product',
       why:'Declares relationships between SKUs — outfit-complete pairings, bundles, cross-sell.',
       row:'<span class="c">// relationship_type : identifier_type : identifier</span>\n<span class="k">related_product</span>:\n  often_bought_with:id:G76537\n  often_bought_with:id:Y25175',
