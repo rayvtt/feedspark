@@ -35,11 +35,11 @@ section{padding:104px 0}
 /* topbar */
 .topbar{position:fixed;top:0;left:0;right:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);transform:translateY(-100%);transition:transform .3s ease}
 .topbar.show{transform:translateY(0)}
-.topbar-in{max-width:var(--maxw);margin:0 auto;padding:0 40px;height:56px;display:flex;align-items:center;gap:22px}
+.topbar-in{max-width:var(--maxw);margin:0 auto;padding:10px 40px;min-height:56px;display:flex;align-items:center;gap:22px}
 .tb-brand{font-weight:900;font-size:13px;letter-spacing:.04em;color:var(--ink);white-space:nowrap}
 .tb-brand span{color:var(--orange-deep)}
-.tb-nav{display:flex;gap:14px;margin-left:auto;flex-wrap:wrap}
-.tb-nav a{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent;transition:.2s}
+.tb-nav{display:flex;gap:9px;margin-left:auto;flex-wrap:wrap;row-gap:2px}
+.tb-nav a{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
 .tb-nav a:hover,.tb-nav a.active{color:var(--ink);border-bottom-color:var(--orange)}
 .progress{position:absolute;bottom:-1px;left:0;height:2px;background:var(--orange);width:0}
 
@@ -273,8 +273,8 @@ body.hide-checks .chk{display:none}
       <a href="#c12" class="">12 AI ready</a>
       <a href="#c13" class="">13 Cases</a>
       <a href="#c14" class="">14 Roadmap</a>
-      <a href="#c15" class="">15 20mkt Plan</a>
-      <a href="#c16" class="">16 20mkt Sched</a>
+      <a href="#c15" class="">15 Rollout</a>
+      <a href="#c16" class="">16 Schedule</a>
       <a href="#c17" class="">17 Fit</a>
     </nav>
     <button class="flagbtn" id="flagbtn" aria-pressed="true" title="Toggle data-check markers">⚑ Data checks</button>
@@ -296,8 +296,8 @@ body.hide-checks .chk{display:none}
   <a href="#c12"><span class="num">12</span><span class="lbl">AI ready</span></a>
   <a href="#c13"><span class="num">13</span><span class="lbl">Cases</span></a>
   <a href="#c14"><span class="num">14</span><span class="lbl">Roadmap</span></a>
-  <a href="#c15"><span class="num">15</span><span class="lbl">20mkt Plan</span></a>
-  <a href="#c16"><span class="num">16</span><span class="lbl">20mkt Sched</span></a>
+  <a href="#c15"><span class="num">15</span><span class="lbl">Rollout</span></a>
+  <a href="#c16"><span class="num">16</span><span class="lbl">Schedule</span></a>
   <a href="#c17"><span class="num">17</span><span class="lbl">Fit</span></a>
 </nav>
 <div class="footmark">FeedSpark · Private &amp; Confidential</div>

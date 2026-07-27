@@ -90,18 +90,27 @@ window.addEventListener('load',restore);
   .itk button:hover{background:var(--orange);color:#fff}
   .itk-more{font:inherit;font-size:12.5px;font-weight:800;color:var(--orange-ink);background:none;border:0;cursor:pointer;padding:8px 0}
   /* pipeline board */
-  .board{display:grid;grid-template-columns:repeat(6,minmax(190px,1fr));gap:11px;overflow-x:auto;padding-bottom:8px}
-  .lane{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:9px;min-height:120px;display:flex;flex-direction:column;gap:8px}
+  .board{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:9px;overflow-x:auto;padding-bottom:8px}
+  .tk-tst{font-size:9.5px;flex:none;line-height:1}
+  .lane{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:7px;min-height:120px;max-height:64vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
   .lane.drop{outline:2px dashed var(--orange);outline-offset:-3px;background:#FFF9F0}
-  .lane-h{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:900;color:var(--ink);padding:2px 3px}
+  .lane-h{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:900;color:var(--ink);padding:2px 3px;position:sticky;top:0;background:inherit;z-index:1}
   .lane-h .dot{width:9px;height:9px;border-radius:50%;flex:none}
   .lane-h .ct{margin-left:auto;font-size:11px;font-weight:800;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:100px;padding:0 7px}
-  .tik{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 10px;box-shadow:var(--shadow);cursor:grab;display:flex;flex-direction:column;gap:5px}
+  .tik{background:#fff;border:1px solid var(--line);border-radius:9px;padding:6px 8px;box-shadow:var(--shadow);cursor:grab;display:flex;flex-direction:column;gap:3px}
   .tik:active{cursor:grabbing}
   .tik.drag{opacity:.4}
-  .tik .tk-c{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
-  .tik .tk-t{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.32}
-  .tik .tk-f{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:1px}
+  .tik .tk-m{display:flex;align-items:center;gap:5px;min-width:0}
+  .tik .tk-m .grow{flex:1}
+  .tk-ab{font-size:9.5px;font-weight:900;letter-spacing:.05em;background:var(--navy);color:#fff;border-radius:5px;padding:1px 5px;flex:none}
+  .tk-mk{font-size:9px;font-weight:900;color:var(--muted);flex:none}
+  .tk-pri{width:7px;height:7px;border-radius:50%;flex:none}
+  .tk-pri.hi{background:var(--orange-deep)}
+  .tk-pri.ur{background:#C0392B}
+  .tik .tk-age{font-size:9.5px;font-weight:900;padding:1px 6px;border-radius:100px;background:var(--wash);color:var(--muted);flex:none;white-space:nowrap}
+  .tik .tk-age.warn{background:rgba(192,57,43,.12);color:#C0392B}
+  .tik .tk-t{font-size:11.5px;font-weight:700;color:var(--ink);line-height:1.28;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .tik .due{font-size:9.5px;padding:0 6px;flex:none;white-space:nowrap}
   .due{font-size:10.5px;font-weight:800;border-radius:100px;padding:1px 7px;border:1px solid}
   .due.ok{color:var(--ink-2);background:var(--wash);border-color:var(--line)}
   .due.soon{color:var(--amber);background:#FEF6E4;border-color:#F0E0B0}
@@ -422,8 +431,6 @@ window.addEventListener('load',restore);
   .court .ct-m b{color:#C0392B}
   .crt-am .ct-c{color:var(--orange-deep)} .crt-aspl .ct-c{color:#2F6FB0} .crt-client .ct-c{color:#15803D}
   .tik.dim{opacity:.22}
-  .tik .crt{font-size:10px;font-weight:900;padding:1px 7px;border-radius:100px;background:var(--wash);color:var(--muted);white-space:nowrap}
-  .tik .crt.warn{background:rgba(192,57,43,.12);color:#C0392B}
   /* paste-an-update router */
   .lu{display:flex;gap:8px;align-items:stretch;margin:0 0 12px}
   .lu textarea{flex:1;font:inherit;font-size:12.5px;padding:8px 12px;border:1px dashed var(--line);border-radius:11px;background:var(--paper);color:var(--ink);resize:vertical;min-height:40px;max-height:140px}
@@ -558,7 +565,7 @@ window.addEventListener('load',restore);
   </table></div>
 
   <h2>Brief pipeline</h2>
-  <p class="sub">Every brief from send to sign-off. Drag a ticket between lanes; click it to log ASPL replies, run the completion scan, chase, and draft the client confirmation. The <b>court cards</b> show which of the three teams holds the ball on every ticket — click one to spotlight its tickets on the board. Paste any reply into the <b>router</b> and it finds the right ticket (by <code>[ibfcode]</code>, brief ID or task wording), logs it, and moves the stage.</p>
+  <p class="sub">Every brief from send to sign-off. Cards are compact so 20+ briefs stay visible: brand chip (+market if not GB), due, and days-in-court (red = over SLA — the lane tells you whose court). Hover for the full task; drag between lanes; click to open the ticket. The <b>court cards</b> show which of the three teams holds the ball — click one to spotlight its tickets. Paste any reply into the <b>router</b> and it finds the right ticket (by <code>[ibfcode]</code>, brief ID or task wording), logs it, and moves the stage.</p>
   <div class="courts" id="courts"></div>
   <div class="lu"><textarea id="lu-text" rows="2" placeholder="⚡ Paste an ASPL / client reply here — it routes to the right ticket, logs the comm, moves the stage and picks up any ETA. (Cmd/Ctrl+Enter to route)"></textarea><button class="btn navy" id="lu-go" type="button">Route update</button></div>
   <div class="lu-out" id="lu-out" hidden></div>
@@ -607,12 +614,22 @@ window.addEventListener('load',restore);
   var ASPL=['Dinesh','Thia','Mariraj','Muji'];
   var BRIEF_TO='briefing@feedspark.com';
   var STAGES=[['intake','Intake','#8a94a0'],['briefed','Briefed to ASPL','#B1550A'],['progress','In progress','#2F6FB0'],
-    ['blocked','Blocked','#C0392B'],['done','Done — ASPL','#15803D'],['confirmed','Client confirmed','#15803D']];
+    ['blocked','Blocked','#C0392B'],['done','Done — ASPL','#15803D'],['analysis','Analysis 🧪','#7C3AED'],['confirmed','Client confirmed','#15803D']];
+  // A/B-test tickets (task contains “test”) get the extra Analysis step: ASPL done ≠ complete
+  // until the read-out is logged. Completion signals route them to Analysis instead of Done.
+  function isTest(b){ return /\btest/i.test((b&&b.task)||''); }
   var STAGE_LBL={},STAGE_COLOR={}; STAGES.forEach(function(s){STAGE_LBL[s[0]]=s[1];STAGE_COLOR[s[0]]=s[2];});
+  // 3-letter brand abbreviations for the dense board cards (fallback: initials / first 3)
+  var ABBR={'Reiss':'REI','AllSaints':'ALS','Schuh':'SCH','Superdry':'SUP','Accessorize':'ACC','Monsoon':'MON',
+    'Hobbycraft':'HBC','YuMOVE':'YUM','Estée Lauder':'ELC','Bobbi Brown':'BBR','Benefit':'BEN','Jo Malone':'JML',
+    'Clinique':'CLQ','MAC':'MAC','Craghoppers':'CRG','Regatta':'REG','Dare2b':'D2B','House of Bruar':'HOB',
+    'American Golf':'AMG','Ryobi':'RYO'};
+  function abbr(c){ if(ABBR[c])return ABBR[c]; var w=String(c||'').trim().split(/\s+/);
+    return ((w.length>1?w.map(function(x){return x.charAt(0);}).join(''):String(c||'').slice(0,3)).toUpperCase().slice(0,3))||'—'; }
   var DONE_RE=/\b(done|finished|complete|completed|delivered|live|actioned|signed[\s-]?off)\b/i;
   // ---- the 3 courts: which team/domain holds the ball at each stage ----
-  var COURT={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',confirmed:''};
-  var SLA_STAGE={intake:2,blocked:1,done:3};   // max days sitting in a stage before it escalates (ASPL court uses the silence rule)
+  var COURT={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',analysis:'AM',confirmed:''};
+  var SLA_STAGE={intake:2,blocked:1,done:3,analysis:5};   // max days sitting in a stage before it escalates (ASPL court uses the silence rule)
   // every stage change goes through here so the handoff history (b.hist) stays complete
   function setStage(b,stage){ if(!b||b.status===stage)return;
     (b.hist=(b.hist&&b.hist.length)?b.hist:[{s:b.status||'intake',t:b.created||Date.now()}]).push({s:stage,t:Date.now()});
@@ -696,9 +713,28 @@ window.addEventListener('load',restore);
     opt:{s:'Feed optimisation task — confirm exact scope, markets and rules with the AM before starting.',d:'Change live in FeedHero, QA’d against the feed, sample approved by AM.'},
     account:{s:'Account / strategy action — deck, proposal, call prep or commercial item. Confirm the deliverable and audience.',d:'Deliverable shared with the client / internal owner and signed off.'}
   };
-  function applyTemplate(cat){ var tpl=TEMPLATES[cat]||TEMPLATES.opt;
-    document.getElementById('bg-scope').value=tpl.s+TWO_STREAMS;
-    document.getElementById('bg-dod').value=tpl.d; }
+  // ---- mechanical self-learning: every brief Ray edits before saving teaches the generator.
+  // Keyed client|category with a *|category fallback — the next brief for that client/category
+  // pre-fills from the last edited version instead of the static template. Pure recall, no AI.
+  var LEARN={}; try{LEARN=JSON.parse(localStorage.getItem('fcc-brief-learn')||'{}');}catch(e){}
+  function saveLearn(){ try{localStorage.setItem('fcc-brief-learn',JSON.stringify(LEARN));}catch(e){} }
+  function learnKey(client,cat){ return client+'|'+(cat||'opt'); }
+  function learned(client,cat){ return LEARN[learnKey(client,cat)]||LEARN[learnKey('*',cat)]; }
+  function recordLearning(client,cat,f){
+    var tpl=TEMPLATES[cat]||TEMPLATES.opt, rec={t:Date.now()}, edited=false;
+    if(f.scope&&f.scope!==(tpl.s+TWO_STREAMS)){ rec.s=f.scope; edited=true; }
+    if(f.dod&&f.dod!==tpl.d){ rec.d=f.dod; edited=true; }
+    if(f.assets&&f.assets!=='—'){ rec.a=f.assets; edited=true; }
+    if(!edited)return;
+    rec.n=((LEARN[learnKey(client,cat)]||{}).n||0)+1;
+    LEARN[learnKey(client,cat)]=rec; LEARN[learnKey('*',cat)]=Object.assign({},rec); saveLearn(); }
+  function applyTemplate(cat,quiet){ var tpl=TEMPLATES[cat]||TEMPLATES.opt;
+    var client=document.getElementById('bg-client').value, ln=learned(client,cat);
+    document.getElementById('bg-scope').value=(ln&&ln.s)||(tpl.s+TWO_STREAMS);
+    document.getElementById('bg-dod').value=(ln&&ln.d)||tpl.d;
+    if(ln&&ln.a){ var as=document.getElementById('bg-assets'); if(as&&!as.value.trim())as.value=ln.a; }
+    if(ln&&!quiet)toast('Pre-filled from your last edited '+(CAT_LBL[cat]||'optimisation')+' brief'+(LEARN[learnKey(client,cat)]?(' · '+client):''));
+    return !!ln; }
 
   // ---- ASPL delegation ----
   function asplFor(seed){ return ASPL[Math.abs(hashStr(seed))%ASPL.length]; }   // stable per-task
@@ -815,6 +851,7 @@ window.addEventListener('load',restore);
     var lk=window.__linkKey; if(lk&&lk.split('|')[0]!==o.f.client)lk=null;
     if(!lk){ var cand=allIntake().filter(function(r){ return r.client===o.f.client&&sameTask(r.task,o.f.task); }); if(cand.length)lk=rowKey(cand[0]); }
     if(lk)b.taskKey=lk; window.__linkKey=null;
+    recordLearning(o.f.client,(document.getElementById('bg-cat').value)||classifyLite(o.f.task),o.f);   // edited briefs teach the generator
     BRIEFS[id]=b; window.__editId=null; persist(); renderAll();
     toast(existing?'Brief updated':'Brief saved to pipeline'); };
 
@@ -1240,11 +1277,13 @@ window.addEventListener('load',restore);
     L.push('Reply-all to update status. Keep the [ibfcode] + ibfdue tokens intact.');
     L.push('FeedSpark · Private & Confidential'); return L.join('\n'); }
   function bulkSaveAll(){ var items=bulkList(); if(!items.length)return; var made=0;
-    items.forEach(function(t){ var id=newId(t.client); var c=code(t.client,'gb'); var d=new Date(); d.setDate(d.getDate()+5);
-      var tpl=TEMPLATES[t.cat]||TEMPLATES.opt;
+    items.forEach(function(t){ var id=newId(t.client); var c=code(t.client,'gb');
+      var pd=taskDate(t), d=pd||new Date(); if(!pd){ d=new Date(); d.setDate(d.getDate()+5); }   // bulk briefs inherit the row's due date too
+      var tpl=TEMPLATES[t.cat]||TEMPLATES.opt, ln=learned(t.client,t.cat||'opt');
       BRIEFS[id]={id:id,created:Date.now(),updated:Date.now(),status:'intake',comms:[],hist:[{s:'intake',t:Date.now()}],
         taskKey:rowKey(t),client:t.client,code:c,task:t.task,
-        scope:tpl.s+TWO_STREAMS,dod:tpl.d,assets:'—',due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
+        scope:(ln&&ln.s)||(tpl.s+TWO_STREAMS),dod:(ln&&ln.d)||tpl.d,assets:(ln&&ln.a)||'—',
+        due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
         source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++; markBriefed(t); });
     itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline · marked Briefed'); }
   // SOURCE stays a compact chip bar (4 options): empty selection = all; the "All" chip clears the set
@@ -1398,10 +1437,12 @@ window.addEventListener('load',restore);
     document.getElementById('bg-source').value= t.source||'plan';
     document.getElementById('bg-task').value=t.task;
     var cat=t.cat||'opt', cs=document.getElementById('bg-cat'); if(cs)cs.value=(TEMPLATES[cat]?cat:'');
-    applyTemplate(cat);                 // #2 auto-fill scope + DoD + the two streams
+    var pd=taskDate(t); if(pd)document.getElementById('bg-due').value=pd.getFullYear()+'-'+pad(pd.getMonth()+1)+'-'+pad(pd.getDate());   // brief inherits the intake due date
+    var ln=applyTemplate(cat,true);     // #2 auto-fill scope + DoD (learned version when one exists)
     refreshPreview();
     window.scrollTo({top:0,behavior:'smooth'});
-    toast('Prefilled from the '+(CAT_LBL[cat]||'optimisation')+' template — set the due date and save');
+    toast('Prefilled from '+(ln?'your last edited '+(CAT_LBL[cat]||'optimisation')+' brief':'the '+(CAT_LBL[cat]||'optimisation')+' template')
+      +(pd?' · due pulled from the intake row':' — set the due date')+' and save');
   }
   // when a task is briefed, move its status to Briefed (2-way, quiet — the caller shows the summary)
   function markBriefed(t){
@@ -1438,15 +1479,13 @@ window.addEventListener('load',restore);
     var cls=days<0?'over':days<=2?'soon':'ok';
     var lbl=days<0?('overdue '+(-days)+'d'):days===0?'due today':days<=2?('due '+days+'d'):humanDD(b.due).replace(/,.*/,'');
     return '<span class="due '+cls+'">'+lbl+'</span>'; }
-  function lastWho(b){ if(!b.comms||!b.comms.length)return ''; var c=b.comms[b.comms.length-1];
-    return '<span class="who-chip">'+esc(c.from)+'</span>'; }
   // ---- courts strip: live count + oldest + SLA breaches per team; click to spotlight the board ----
   var courtSel='';
   function renderCourts(){ var host=document.getElementById('courts'); if(!host)return;
     var arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}).filter(function(b){return b.status!=='confirmed';});
     var C={AM:[],ASPL:[],Client:[]};
     arr.forEach(function(b){ var c=courtOf(b); if(C[c])C[c].push(b); });
-    var META={AM:['Ray — to brief / unblock','crt-am'],ASPL:['production — to deliver','crt-aspl'],Client:['awaiting sign-off','crt-client']};
+    var META={AM:['Ray — brief / unblock / analyse','crt-am'],ASPL:['production — to deliver','crt-aspl'],Client:['awaiting sign-off','crt-client']};
     host.innerHTML=Object.keys(C).map(function(c){ var L=C[c], oldest=0, br=0;
       L.forEach(function(b){ oldest=Math.max(oldest,daysInCourt(b)); if(stageBreached(b))br++; });
       return '<button type="button" class="court '+META[c][1]+(courtSel===c?' on':'')+'" data-c="'+c+'" title="'+(courtSel===c?'Clear the spotlight':'Spotlight '+c+'’s tickets on the board')+'">'
@@ -1461,11 +1500,17 @@ window.addEventListener('load',restore);
       var items=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}).filter(function(b){return b.status===s[0];})
         .sort(function(a,b){ var da=ddmmyyyyToDate(a.due),db=ddmmyyyyToDate(b.due); return (da?da:9e15)-(db?db:9e15); });
       var cards=items.map(function(b){
-        var crt=courtOf(b), crtChip=crt?('<span class="crt'+(stageBreached(b)?' warn':'')+'" title="Ball in '+crt+'’s court">'+crt+' '+daysInCourt(b)+'d</span>'):'';
+        // dense card: 3-letter brand chip (+market when ≠GB), priority dot, due, age-in-court.
+        // No client/code line (the chip is the client), no court name (the lane says it), no who-chip (modal has it).
+        var crt=courtOf(b);
+        var ageChip=crt?('<span class="tk-age'+(stageBreached(b)?' warn':'')+'" title="In '+crt+'’s court '+daysInCourt(b)+'d">'+daysInCourt(b)+'d</span>'):'';
+        var mk=(b.code||'').split('-').pop(); mk=(mk&&mk!=='gb')?('<span class="tk-mk">'+esc(mk.toUpperCase())+'</span>'):'';
+        var pri=(b.priority&&b.priority!=='Normal')?('<span class="tk-pri '+(b.priority==='Urgent'?'ur':'hi')+'" title="'+esc(b.priority)+'"></span>'):'';
+        var tst=isTest(b)?'<span class="tk-tst" title="A/B test — needs the Analysis step before completion">🧪</span>':'';
+        var db=dueBadge(b); if(/no due/.test(db))db='';
         return '<div class="tik'+(courtSel&&crt!==courtSel?' dim':'')+'" draggable="true" data-id="'+esc(b.id)+'">'
-          +'<div class="tk-c">'+esc(b.client)+' · '+esc(b.code)+'</div>'
-          +'<div class="tk-t">'+esc(b.task)+'</div>'
-          +'<div class="tk-f">'+dueBadge(b)+lastWho(b)+(b.priority&&b.priority!=='Normal'?'<span class="due soon">'+esc(b.priority)+'</span>':'')+crtChip+'</div></div>';
+          +'<div class="tk-m"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+tst+pri+'<span class="grow"></span>'+db+ageChip+'</div>'
+          +'<div class="tk-t" title="'+esc(b.task)+'">'+esc(b.task)+'</div></div>';
       }).join('') || '<div class="board-empty">—</div>';
       return '<div class="lane" data-stage="'+s[0]+'"><div class="lane-h"><span class="dot" style="background:'+s[2]+'"></span>'+s[1]+'<span class="ct">'+items.length+'</span></div>'+cards+'</div>';
     }).join('');
@@ -1483,7 +1528,9 @@ window.addEventListener('load',restore);
       l.addEventListener('dragover',function(e){ e.preventDefault(); l.classList.add('drop'); });
       l.addEventListener('dragleave',function(){ l.classList.remove('drop'); });
       l.addEventListener('drop',function(e){ e.preventDefault(); l.classList.remove('drop');
-        if(dragId&&BRIEFS[dragId]){ setStage(BRIEFS[dragId],l.getAttribute('data-stage')); persist(); renderAll(); } });
+        if(dragId&&BRIEFS[dragId]){ var st=l.getAttribute('data-stage');
+          if(st==='analysis'&&!isTest(BRIEFS[dragId])){ toast('Analysis is the extra step for test tickets (task contains “test”)'); return; }
+          setStage(BRIEFS[dragId],st); persist(); renderAll(); } });
     });
   }
 
@@ -1494,13 +1541,14 @@ window.addEventListener('load',restore);
   function closeModal(){ scrim.classList.remove('on'); }
   function openModal(id){ var b=BRIEFS[id]; if(!b)return;
     var comms=(b.comms||[]).map(function(c){ return '<div class="comm"><span class="cw">'+esc(c.from)+'</span><span class="cb">'+esc(c.note)+(c.done?' <span class="ck">✓ done signal</span>':'')+'</span></div>'; }).join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
-    var stat=STAGES.map(function(s){ return '<button data-s="'+s[0]+'" class="'+(b.status===s[0]?'on':'')+'">'+s[1]+'</button>'; }).join('');
+    var stat=STAGES.filter(function(s){ return s[0]!=='analysis'||isTest(b); })
+      .map(function(s){ return '<button data-s="'+s[0]+'" class="'+(b.status===s[0]?'on':'')+'">'+s[1]+'</button>'; }).join('');
     var doneNote=lastDoneNote(b);
     var crt=courtOf(b);
     var xl=[];
     if(b.taskKey) xl.push('<span class="xl" title="Linked plan-row task">⛓ '+esc((b.taskKey.split('|')[1]||'').slice(0,48))+'</span>');
     if(PLANSHEET[b.client]) xl.push('<a class="xl" target="_blank" rel="noopener" href="https://docs.google.com/spreadsheets/d/'+PLANSHEET[b.client]+'">📊 Open '+esc(b.client)+'’s plan sheet</a>');
-    if(b.code) xl.push('<a class="xl" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent('ibfcode:'+b.code)+'">✉ Find the email thread ('+esc(b.code)+')</a>');
+    if(b.code) xl.push('<a class="xl" id="m-thread" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent('"'+b.id+'"')+'" title="Every FCC brief carries its ID in the body — this finds exactly that thread">✉ Find the email thread ('+esc(b.id)+')</a>');
     modalEl.innerHTML=''
       +'<div style="display:flex;align-items:flex-start"><div><h3>'+esc(b.task)+'</h3>'
         +'<div class="mc">'+esc(b.id)+' · '+esc(b.client)+' · ['+esc(b.code)+']</div></div><button class="x" id="m-x">×</button></div>'
@@ -1515,6 +1563,7 @@ window.addEventListener('load',restore);
         +'<input id="m-note" placeholder="Paste / summarise their reply…"><button class="btn" id="m-log">Log</button></div>'
         +'<div class="scan-hit" id="m-scan"></div></div>'
       +'<div class="m-act">'
+        +(isTest(b)&&(b.status==='analysis'||b.status==='done')?'<button class="btn" id="m-result" style="border-color:#D8CCF4;color:#7C3AED">🧪 Log result</button>':'')
         +'<a class="btn pri" id="m-brief" target="_blank" rel="noopener">✉ Re-draft brief to ASPL</a>'
         +'<a class="btn" id="m-chase" target="_blank" rel="noopener">⏰ Chase ASPL</a>'
         +'<a class="btn" id="m-chasec" target="_blank" rel="noopener">⏰ Chase client</a>'
@@ -1529,23 +1578,49 @@ window.addEventListener('load',restore);
     document.getElementById('m-brief').href='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(b.subject||('[FS Brief] '+b.client))+'&body='+encodeURIComponent(b.body||'');
     // completion scan on new note
     var noteEl=document.getElementById('m-note'), scanEl=document.getElementById('m-scan');
-    noteEl.addEventListener('input',function(){ if(DONE_RE.test(noteEl.value)){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this will suggest moving to “Done — ASPL”.'; } else scanEl.className='scan-hit'; });
+    noteEl.addEventListener('input',function(){ if(DONE_RE.test(noteEl.value)){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this moves the ticket to '+(isTest(b)?'“Analysis 🧪” (read-out still needed)':'“Done — ASPL”')+'.'; } else scanEl.className='scan-hit'; });
     document.getElementById('m-log').onclick=function(){ var note=noteEl.value.trim(); if(!note)return;
       var done=DONE_RE.test(note); b.comms=b.comms||[]; b.comms.push({from:document.getElementById('m-from').value,note:note,done:done,when:Date.now()});
-      // a completion signal from ASPL moves the brief to Done from any active stage (not once confirmed).
-      if(done && b.status!=='confirmed' && b.status!=='done') setStage(b,'done');
+      // a completion signal from ASPL moves the brief on — test tickets go to Analysis, not Done.
+      if(done && b.status!=='confirmed' && b.status!=='done' && b.status!=='analysis') setStage(b,isTest(b)?'analysis':'done');
       b.updated=Date.now(); persist(); renderAll(); openModal(b.id); };
     // client confirmation draft
     var conf=document.getElementById('m-confirm');
     var cbody=clientConfirm(b,doneNote);
     conf.href='https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark · '+b.client+' — '+b.task+' completed')+'&body='+encodeURIComponent(cbody);
-    conf.addEventListener('click',function(){ if(b.status==='done'){ setStage(b,'confirmed'); persist(); setTimeout(function(){renderAll();},400); } });
+    conf.addEventListener('click',function(ev){ if(b.status!=='done'&&b.status!=='analysis')return;
+      if(isTest(b)&&!hasResult(b)){ ev.preventDefault(); toast('Log the test result first — 🧪 Log result'); return; }
+      setStage(b,'confirmed'); persist(); setTimeout(function(){renderAll();},400); });
+    var resBtn=document.getElementById('m-result'); if(resBtn)resBtn.onclick=function(){ logResult(b); };
     // #4 chase drafts + ASPL owner reassign
     document.getElementById('m-chase').href=chaseAspl(b);
     document.getElementById('m-chasec').href=chaseClient(b);
     var asplSel=document.getElementById('m-aspl'); if(asplSel)asplSel.onchange=function(){ b.aspl=asplSel.value; b.updated=Date.now(); persist(); renderSLA(); toast('Owner → '+b.aspl); };
+    // upgrade the thread link from a search to a DIRECT deep-link once the worker resolves the
+    // Gmail thread id (cached on the brief so later opens are instant). Falls back to the
+    // quoted-token search until Gmail creds are connected.
+    (function(){ var a=document.getElementById('m-thread'); if(!a||!b.code)return;
+      function apply(g){ if(!g||!g.id)return; a.href='https://mail.google.com/mail/u/'+encodeURIComponent(g.mb||'0')+'/#all/'+encodeURIComponent(g.id); a.innerHTML='✉ Open the email thread ('+esc(b.code)+')'; }
+      if(b.gthread){ apply(b.gthread); return; }
+      fetch('/api/gmail/thread?q='+encodeURIComponent(b.id)+'&q='+encodeURIComponent('ibfcode:'+b.code)).then(function(r){return r.json();}).then(function(d){
+        if(d&&d.connected&&d.threadId){ b.gthread={id:d.threadId,mb:d.mailbox||'',t:Date.now()}; persist(); apply(b.gthread); }
+      }).catch(function(){});
+    })();
   }
   function lastDoneNote(b){ if(!b.comms)return ''; for(var i=b.comms.length-1;i>=0;i--){ if(b.comms[i].done||DONE_RE.test(b.comms[i].note)) return b.comms[i].note; } return ''; }
+  function hasResult(b){ if(!b.comms)return false; for(var i=b.comms.length-1;i>=0;i--){ if(/^Result:/.test(b.comms[i].note))return true; } return false; }
+  // log the A/B read-out: writes the result into the Test register (deck ammo) and unlocks confirmation
+  function logResult(b){
+    var v=prompt('Test result — the read-out (e.g. “+24.7% CTR” or “no lift — rolled back”):',''); if(v===null)return; v=(''+v).trim(); if(!v)return;
+    b.comms=b.comms||[]; b.comms.push({from:'Ray',note:'Result: '+v,done:true,when:Date.now()});
+    var hit=null; TESTS.forEach(function(t){ if(!hit&&t.client===b.client&&sameTask(t.name,b.task))hit=t; });
+    var d=today(), iso=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    if(hit){ hit.result=v; hit.status='done'; if(!hit.readout)hit.readout=iso; }
+    else TESTS.push({client:b.client,name:b.task.slice(0,70),hypo:'',skus:'',start:'',readout:iso,status:'done',result:v});
+    saveTests();
+    if(b.status==='done')setStage(b,'analysis');   // a result logged from Done pulls the ticket into its Analysis step
+    b.updated=Date.now(); persist(); renderAll(); openModal(b.id);
+    toast('Result logged to the Test register — draft the client confirmation to close'); }
   function clientConfirm(b,doneNote){
     var L=[];
     L.push('Hi team,'); L.push('');
@@ -1613,7 +1688,7 @@ window.addEventListener('load',restore);
         prog=/\b(started|in progress|underway|working on|wip|eta|will complete|picking (this|it) up)\b/i.test(text);
     b.comms=b.comms||[]; b.comms.push({from:sender,note:text.slice(0,600),done:done,when:Date.now()});
     var moved='';
-    if(done&&b.status!=='confirmed'&&b.status!=='done'){ setStage(b,'done'); moved=STAGE_LBL.done; }
+    if(done&&b.status!=='confirmed'&&b.status!=='done'&&b.status!=='analysis'){ var ds2=isTest(b)?'analysis':'done'; setStage(b,ds2); moved=STAGE_LBL[ds2]; }
     else if(blocked&&(b.status==='briefed'||b.status==='progress')){ setStage(b,'blocked'); moved=STAGE_LBL.blocked; }
     else if(prog&&(b.status==='intake'||b.status==='briefed')){ setStage(b,'progress'); moved=STAGE_LBL.progress; }
     var dueTxt='', dd8='', dm=/ibfdue:(\d{8})/.exec(text);
@@ -1631,7 +1706,9 @@ window.addEventListener('load',restore);
   // ---- #4 chase drafts ----
   function chaseAspl(b){ var L=['Hi '+(asplOf(b)||'team')+',','','Chasing this brief — '+dueState(b)+':','',
     '• '+b.task+'  ['+b.code+']  ibfdue:'+(b.due||'TBC'),'','Could you confirm status / ETA? Reply-all keeps the portal in sync.','','Thanks,','Ray'];
-    return 'https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent('[FS Chase] '+b.client+' · '+b.task)+'&body='+encodeURIComponent(L.join('\n')); }
+    // "Re: <original subject>" so Gmail threads the chase into the brief's conversation instead of starting a new one
+    var su='Re: '+(b.subject||('[FS Brief] '+b.client+' · '+b.task+' · [ibfcode:'+b.code+'] ibfdue:'+(b.due||'')));
+    return 'https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(su)+'&body='+encodeURIComponent(L.join('\n')); }
   function chaseClient(b){ var L=['Hi team,','','Quick update on the below — checking you have everything you need from us to move it forward:','',
     '• '+b.task,'','Happy to jump on a quick call if easier.','','Best,','Ray','FeedSpark'];
     return 'https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark · '+b.client+' — '+b.task)+'&body='+encodeURIComponent(L.join('\n')); }
@@ -1647,7 +1724,7 @@ window.addEventListener('load',restore);
     var mem={}; ASPL.forEach(function(a){mem[a]={open:0,done:0,ta:[],stall:0};});
     arr.forEach(function(b){ var a=asplOf(b); if(!mem[a])mem[a]={open:0,done:0,ta:[],stall:0};
       if(b.status==='briefed'||b.status==='progress'){ mem[a].open++; if(silentDays(b)>=STALL_DAYS)mem[a].stall++; }
-      if(b.status==='done'||b.status==='confirmed'){ mem[a].done++; var t=turnaroundDays(b); if(t!=null)mem[a].ta.push(t); } });
+      if(b.status==='done'||b.status==='confirmed'||b.status==='analysis'){ mem[a].done++; var t=turnaroundDays(b); if(t!=null)mem[a].ta.push(t); } });
     host.innerHTML=ASPL.map(function(a){ var m=mem[a]; var avg=m.ta.length?Math.round(m.ta.reduce(function(x,y){return x+y;},0)/m.ta.length):null;
       return '<div class="sla-card'+(m.stall?' warn':'')+'"><div class="sla-name">'+esc(a)+'</div>'
         +'<div class="sla-row"><span>Open</span><b>'+m.open+'</b></div>'
@@ -1662,6 +1739,7 @@ window.addEventListener('load',restore);
       else if(b.status==='blocked'&&ds>SLA_STAGE.blocked) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'blocked '+ds+'d — unblock / reassign',act:'chaseA',lbl:'Chase ASPL'});
       else if((b.status==='briefed'||b.status==='progress')&&silentDays(b)>=STALL_DAYS){ var lr=lastReplyDays(b);
         items.push({b:b,c:'ASPL',cls:'c-aspl',d:silentDays(b),why:(lr==null?('briefed '+briefAgeDays(b)+'d ago — no reply'):('silent '+lr+'d')),act:'chaseA',lbl:'Chase ASPL'}); }
+      else if(b.status==='analysis'&&ds>SLA_STAGE.analysis) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'awaiting test read-out '+ds+'d — analyse it',act:'open',lbl:'Analyse'});
       else if(b.status==='done'&&ds>SLA_STAGE.done) items.push({b:b,c:'Client',cls:'c-client',d:ds,why:'awaiting sign-off '+ds+'d',act:'chaseC',lbl:'Chase client'}); });
     items.sort(function(a,b2){return b2.d-a.d;});
     s.innerHTML = items.length? items.map(function(it){ var b=it.b;

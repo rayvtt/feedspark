@@ -332,6 +332,28 @@ export default {
       }
     }
 
+    // ---- Gmail thread lookup: deep-link a brief straight to its email thread ----
+    // GET /api/gmail/thread?q=<token>&q=<fallback> → {connected, threadId, mailbox}. Queries are
+    // tried in order (brief ID first = exact thread; ibfcode second = client fallback), each as a
+    // quoted phrase. Degrades to {connected:false} until Gmail creds are set.
+    if (path === '/api/gmail/thread' && request.method === 'GET') {
+      if (!env.GOOGLE_SA_JSON || !env.GOOGLE_IMPERSONATE) return json({ connected: false });
+      try {
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/gmail.readonly', true);
+        for (const raw of url.searchParams.getAll('q')) {
+          if (!raw) continue;
+          const q = encodeURIComponent('"' + raw + '"');
+          const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=1&q=' + q, { headers: { Authorization: 'Bearer ' + token } });
+          const d = await r.json();
+          const t = (d.threads || [])[0];
+          if (t && t.id) return json({ connected: true, threadId: t.id, mailbox: env.GOOGLE_IMPERSONATE });
+        }
+        return json({ connected: true, threadId: null, mailbox: env.GOOGLE_IMPERSONATE });
+      } catch (e) {
+        return json({ connected: false, error: String((e && e.message) || e) });
+      }
+    }
+
     // ---- Sheets read (no admin needed: share the sheet with the service-account email) ----
     // GET /api/sheets/read?id=<spreadsheetId>&range=<A1 range>. The SA acts as itself, so any
     // sheet shared with its client_email is reachable without domain-wide delegation.
@@ -1603,8 +1625,21 @@ function getEditorScript(slug) {
   function buildClientHtml(){
     if(window.__fsPreparePrint) window.__fsPreparePrint();
     var doc = document.cloneNode(true);
-    ['.de-bar','.de-handle','.de-panel','.de-props','.de-toast','.de-resize','#fs-editor-css','#htmlBtn'].forEach(function(sel){
-      Array.prototype.slice.call(doc.querySelectorAll(sel)).forEach(function(el){ el.remove(); });
+    // [class^="de-"] catches every editor-widget element by convention (.de-bar, .de-fbpanel,
+    // .de-fbmark, .de-fbnote, .de-rtbar, .de-toast, ... — confirmed nothing in the shared deck
+    // design system uses that prefix) instead of an enumerated list, which already proved easy
+    // to under-specify: the first version of this missed .de-fbpanel/.de-fbmark/.de-fbnote/
+    // .de-rtbar entirely, leaking a visible "Feedback" panel into exported client files.
+    // GUARD: <body> itself carries a de-* class whenever Edit/Design/Feedback mode is active
+    // (de-on/de-design/de-feedback) — exporting mid-session matched body against this same
+    // selector and deleted the entire <body>, producing a silently blank file. Never remove
+    // the document's own root containers, no matter what selector matched them; body's own
+    // de-* mode classes are stripped separately below (as classes, not as element removal).
+    ['[class^="de-"]','#fs-editor-css','#htmlBtn'].forEach(function(sel){
+      Array.prototype.slice.call(doc.querySelectorAll(sel)).forEach(function(el){
+        if(el===doc.body || el===doc.documentElement || el===doc.head) return;
+        el.remove();
+      });
     });
     Array.prototype.slice.call(doc.querySelectorAll('.chk')).forEach(function(el){ el.remove(); });
     // hide, don't remove: every deck's own template script unconditionally does
