@@ -25,6 +25,7 @@
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
+import { matchGmailToBriefs } from "./briefmatch.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
@@ -172,6 +173,33 @@ export default {
       // brief pipeline: deletion = absence, disambiguated by the writer's X-Sync-Base read-stamp
       const r = await mapStoreRoute(env, request, 'briefs', {});
       if (r) return r;
+    }
+
+    // ---- Gmail → briefs status sync (the NO-ADMIN path): a Google Apps Script running in the
+    // mailbox owner's own account (tools/gmail_push.gs, authorised by the user — no Workspace
+    // super-admin, no domain-wide delegation) POSTs recent brief-thread messages here on a
+    // 15-min trigger. briefmatch.js applies them to the Workflow tickets with the SAME rules
+    // as the page's paste-router (ibfcode/id/wording match; done→done|analysis, blocked,
+    // progress; ibfdue/eta → due; forward-only; deduped by message id).
+    // Auth: X-FCC-Push-Key must equal the GMAIL_PUSH_KEY secret, and this exact path needs a
+    // Cloudflare Access BYPASS policy (Apps Script can't pass Access) — docs/GOOGLE_SETUP.md §8.
+    if (path === '/api/gmail/push' && request.method === 'POST') {
+      if (!env.GMAIL_PUSH_KEY) return json({ ok: false, error: 'push key not configured — wrangler secret put GMAIL_PUSH_KEY' }, 503);
+      if (request.headers.get('X-FCC-Push-Key') !== env.GMAIL_PUSH_KEY) return json({ ok: false, error: 'unauthorized' }, 401);
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const messages = Array.isArray(body.messages) ? body.messages.slice(0, 200) : [];
+      if (!messages.length) return json({ ok: true, matched: 0, moved: [] });
+      const now = Date.now();
+      const envx = liftEnvelope(await env.EDITS.get('briefs', 'json'), now);
+      const briefs = envelopeToClient(envx, {});
+      const selfSrc = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
+      const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'] });
+      if (res.matched) {
+        mergeIntoEnvelope(envx, briefs, now, now, {});   // full map present → pure upserts, no deletions
+        await env.EDITS.put('briefs', JSON.stringify(envx));
+      }
+      logActivity(ctx, env, request, 'gmail-sync', res.matched + ' matched · ' + res.moved.length + ' moved', 'gmail-sync');
+      return json({ ok: true, matched: res.matched, skipped: res.skipped, moved: res.moved, tickets: res.loggedTo });
     }
 
     // ---- Build Log queue: Ray's "not built yet" backlog (kvmerge-backed, concurrency-safe) ----
@@ -666,11 +694,11 @@ function who(request) {
 function ownerEmail(env) { return String(env.OWNER_EMAIL || 'ray@feedspark.com').toLowerCase(); }
 // append an activity entry without blocking the response (per-entry key, 90-day TTL,
 // entry stored in key METADATA so reading the feed is one list() with no value gets)
-function logActivity(ctx, env, request, action, detail) {
+function logActivity(ctx, env, request, action, detail, userOverride) {
   try {
     const t = Date.now();
     const key = 'act:' + String(t).padStart(14, '0') + ':' + Math.random().toString(36).slice(2, 6);
-    const meta = { t, u: who(request), a: action, d: String(detail || '').slice(0, 80) };
+    const meta = { t, u: userOverride || who(request), a: action, d: String(detail || '').slice(0, 80) };
     const p = env.EDITS.put(key, '', { metadata: meta, expirationTtl: 60 * 60 * 24 * 90 });
     if (ctx && ctx.waitUntil) ctx.waitUntil(p);
   } catch (e) { /* logging must never break the request */ }
