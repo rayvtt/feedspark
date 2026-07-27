@@ -1548,7 +1548,7 @@ window.addEventListener('load',restore);
     var xl=[];
     if(b.taskKey) xl.push('<span class="xl" title="Linked plan-row task">⛓ '+esc((b.taskKey.split('|')[1]||'').slice(0,48))+'</span>');
     if(PLANSHEET[b.client]) xl.push('<a class="xl" target="_blank" rel="noopener" href="https://docs.google.com/spreadsheets/d/'+PLANSHEET[b.client]+'">📊 Open '+esc(b.client)+'’s plan sheet</a>');
-    if(b.code) xl.push('<a class="xl" id="m-thread" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent('"'+b.id+'"')+'" title="Every FCC brief carries its ID in the body — this finds exactly that thread">✉ Find the email thread ('+esc(b.id)+')</a>');
+    if(b.code) xl.push('<a class="xl" id="m-thread" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent(threadQuery(b))+'" title="Searches the brief’s subject (client + task words) — punctuation tokens like the ID search badly in Gmail">✉ Find the email thread</a>');
     modalEl.innerHTML=''
       +'<div style="display:flex;align-items:flex-start"><div><h3>'+esc(b.task)+'</h3>'
         +'<div class="mc">'+esc(b.id)+' · '+esc(b.client)+' · ['+esc(b.code)+']</div></div><button class="x" id="m-x">×</button></div>'
@@ -1602,11 +1602,16 @@ window.addEventListener('load',restore);
     (function(){ var a=document.getElementById('m-thread'); if(!a||!b.code)return;
       function apply(g){ if(!g||!g.id)return; a.href='https://mail.google.com/mail/u/'+encodeURIComponent(g.mb||'0')+'/#all/'+encodeURIComponent(g.id); a.innerHTML='✉ Open the email thread ('+esc(b.code)+')'; }
       if(b.gthread){ apply(b.gthread); return; }
-      fetch('/api/gmail/thread?q='+encodeURIComponent(b.id)+'&q='+encodeURIComponent('ibfcode:'+b.code)).then(function(r){return r.json();}).then(function(d){
+      fetch('/api/gmail/thread?q='+encodeURIComponent(threadQuery(b))+'&q='+encodeURIComponent('"'+b.id+'"')+'&q='+encodeURIComponent('"ibfcode:'+b.code+'"')).then(function(r){return r.json();}).then(function(d){
         if(d&&d.connected&&d.threadId){ b.gthread={id:d.threadId,mb:d.mailbox||'',t:Date.now()}; persist(); apply(b.gthread); }
       }).catch(function(){});
     })();
   }
+  // Gmail-proof thread query: Gmail tokenises away punctuation, so hyphenated tokens like the
+  // brief ID collapse to date-looking numbers. Real WORDS match reliably — search the sent
+  // brief's subject for the client + the task's words (punctuation stripped, first 8 words).
+  function threadQuery(b){ var w=String(b.task||'').replace(/[^a-z0-9À-ɏ]+/gi,' ').trim().split(/\s+/).slice(0,8).join(' ');
+    return w?('subject:("'+b.client+'" "'+w+'")'):('"'+b.id+'"'); }
   function lastDoneNote(b){ if(!b.comms)return ''; for(var i=b.comms.length-1;i>=0;i--){ if(b.comms[i].done||DONE_RE.test(b.comms[i].note)) return b.comms[i].note; } return ''; }
   function hasResult(b){ if(!b.comms)return false; for(var i=b.comms.length-1;i>=0;i--){ if(/^Result:/.test(b.comms[i].note))return true; } return false; }
   // log the A/B read-out: writes the result into the Test register (deck ammo) and unlocks confirmation
