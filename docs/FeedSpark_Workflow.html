@@ -2036,8 +2036,11 @@ window.addEventListener('load',restore);
     function byId(b){ var id=b.getAttribute('data-id'), hit=null;
       gmailItems.forEach(function(g){ if(String(g.id)===id)hit=g; }); return hit; }
     list.querySelectorAll('.em-go').forEach(function(b){ b.onclick=function(){ var g=byId(b); if(!g)return;
-      prefill({client:g.client||senderName(g.from),task:g.subject,source:'email',from:g.from});
-      window.__emailId=g.id; }; });   // after prefill — it resets __emailId for non-email openers
+      // client comes from detection only (domain/display-name/mention cues, server-side);
+      // the sender belongs in the TASK NAME, never in the Client field
+      prefill({client:g.client||'',task:g.subject+' — from '+senderName(g.from),source:'email',from:g.from});
+      window.__emailId=g.id;          // after prefill — it resets __emailId for non-email openers
+      if(!g.client)setTimeout(function(){toast('Client not recognised from this email — check the Client picker');},2000); }; });
     list.querySelectorAll('.em-no').forEach(function(b){ b.onclick=function(){ decideEmail(b.getAttribute('data-id'),false,'notask'); }; });
     list.querySelectorAll('.em-res').forEach(function(b){ b.onclick=function(){ decideEmail(b.getAttribute('data-id'),true); }; });
   }

@@ -25,7 +25,7 @@
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
-import { matchGmailToBriefs, classifyInbound } from "./briefmatch.js";
+import { matchGmailToBriefs, classifyInbound, detectClient } from "./briefmatch.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
@@ -404,6 +404,16 @@ export default {
       // pending vs already-triaged without a second call.
       const pushed = (await env.EDITS.get('gmailinbox', 'json')) || [];
       if (pushed.length) {
+        // back-fill client on stored emails the older/weaker detector missed — the current
+        // detectClient (domain label, display name, folded mentions) re-runs against the live
+        // dossier, so adding a brand or a dom mapping upgrades past captures too
+        try {
+          const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
+          const doms = {}; Object.keys(dossier).forEach((n) => { if (dossier[n] && dossier[n].dom) doms[n] = dossier[n].dom; });
+          let filled = 0;
+          for (const it of pushed) { if (!it.client) { const c = detectClient(it, doms, Object.keys(dossier)); if (c) { it.client = c; filled++; } } }
+          if (filled) ctx.waitUntil(env.EDITS.put('gmailinbox', JSON.stringify(pushed)));
+        } catch (e) {}
         const dis = (await env.EDITS.get('gmaildismissed', 'json')) || {};
         const items = pushed.slice(0, 60).map((it) => (dis[it.id] ? Object.assign({}, it, { dismissed: true, decidedAs: dis[it.id].r || 'notask' }) : it));
         return json({ connected: true, source: 'push', items });

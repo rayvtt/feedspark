@@ -411,6 +411,25 @@
       "pattern": "gmaildismissed",
       "min": 3,
       "pr": 102
+    },
+    {
+      "name": "worker: email client auto-detect (domain label + display name + folded mentions)",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "detectClient",
+      "min": 2,
+      "pr": 103
+    },
+    {
+      "name": "worker: intake back-fills client on stored emails",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "back-fill client",
+      "pr": 103
+    },
+    {
+      "name": "Workflow: sender into task name, never the Client field",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "never in the Client field",
+      "pr": 103
     }
   ]
 }

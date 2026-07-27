@@ -81,6 +81,50 @@ const NOISE_RE = /\b(no-?reply|noreply|newsletter|unsubscribe|notification|billi
 // capture what lands at ray@feedspark.com from OUTSIDE feedspark/aroxo/feedhero)
 const INTERNAL_RE = /@([a-z0-9.-]*\.)?(feedspark\.com|aroxo\.com|feedhero\.net)\b/i;
 
+// ---- client auto-detect: use every cue the email carries, most reliable first ----------
+//   1. dossier domain map (authoritative — covers brands whose company domain differs from
+//      the brand, e.g. YuMOVE mail arriving from @lintbells.com)
+//   2. the sender domain's own label vs the client roster (jane@reiss.com → Reiss, no
+//      dossier entry needed; freemail domains are skipped)
+//   3. the sender display name ("Jane from Reiss <jane@gmail.com>")
+//   4. a brand mention in subject/snippet (word-boundary, plus accent/space-folded)
+// Names are folded for comparison ("Estée Lauder" ↔ esteelauder.com); names shorter than
+// 4 chars (ELC) only ever match as exact words — never by containment.
+const FREEMAIL_RE = /^(gmail|googlemail|outlook|hotmail|live|yahoo|ymail|icloud|me|aol|protonmail|proton|msn|mail)$/;
+const fold = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '');
+function domainLabel(host) {
+  const parts = String(host || '').toLowerCase().split('.').filter(Boolean);
+  if (!parts.length) return '';
+  let cut = 1;   // drop the TLD; also drop a functional 2nd level before a short ccTLD (schuh.co.uk → schuh)
+  if (parts.length >= 3 && parts[parts.length - 1].length <= 3 && /^(co|com|org|net|ac|gov|ltd|plc|edu)$/.test(parts[parts.length - 2])) cut = 2;
+  return fold(parts.slice(0, parts.length - cut).pop() || '');
+}
+export function detectClient(msg, clientDoms, clientNames) {
+  const from = String(msg.from || '');
+  const emDom = ((/@([a-z0-9.-]+)/i.exec(from) || [])[1] || '').toLowerCase();
+  for (const name of Object.keys(clientDoms || {})) {
+    const d = String(clientDoms[name] || '').toLowerCase().replace(/^www\./, '');
+    if (d && emDom.endsWith(d)) return name;
+  }
+  const names = clientNames || Object.keys(clientDoms || {});
+  const label = domainLabel(emDom);
+  if (label && !FREEMAIL_RE.test(label)) {
+    for (const name of names) {
+      const nm = fold(name);
+      if (nm.length >= 4 && (label.includes(nm) || (label.length >= 4 && nm.includes(label)))) return name;
+    }
+  }
+  const disp = fold(from.split('<')[0]);
+  if (disp) for (const name of names) { const nm = fold(name); if (nm.length >= 4 && disp.includes(nm)) return name; }
+  const text = String(msg.subject || '') + ' ' + String(msg.snippet || ''), ftext = fold(text);
+  for (const name of names) {
+    if (new RegExp('\\b' + name.replace(/[.^$*+?()[\]{}|\\]/g, '\\$&') + '\\b', 'i').test(text)) return name;
+    const nm = fold(name);
+    if (nm.length >= 4 && ftext.includes(nm)) return name;
+  }
+  return '';
+}
+
 // msg: {from, subject, snippet}; clientDoms: {Brand: "domain.com"}; clientNames: [Brand,...]
 export function classifyInbound(msg, clientDoms, opts) {
   opts = opts || {};
@@ -88,17 +132,7 @@ export function classifyInbound(msg, clientDoms, opts) {
   if ((opts.selfRe && opts.selfRe.test(from)) || INTERNAL_RE.test(from) || NOISE_RE.test(from + ' ' + String(msg.subject || ''))) {
     return { client: '', briefable: false, score: 0, hints: ['noise/self'] };
   }
-  let client = '';
-  const emDom = (/@([a-z0-9.-]+)/i.exec(from) || [])[1] || '';
-  for (const name of Object.keys(clientDoms || {})) {
-    const d = String(clientDoms[name] || '').toLowerCase().replace(/^www\./, '');
-    if (d && emDom.toLowerCase().endsWith(d)) { client = name; break; }
-  }
-  if (!client) {
-    for (const name of (opts.clientNames || Object.keys(clientDoms || {}))) {
-      if (new RegExp('\\b' + name.replace(/[.^$*+?()[\]{}|\\]/g, '\\$&') + '\\b', 'i').test(text)) { client = name; break; }
-    }
-  }
+  const client = detectClient(msg, clientDoms, opts.clientNames || Object.keys(clientDoms || {}));
   const hints = [];
   let score = 0;
   for (const [re, label] of ACTION_RES) { if (re.test(text)) { score++; hints.push(label); } }
