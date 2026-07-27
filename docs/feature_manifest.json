@@ -45,14 +45,14 @@
     { "name": "worker: Gmail push endpoint (no-admin brief sync)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "api/gmail/push", "pr": 85 },
     { "name": "worker: briefmatch module (router-parity matcher)", "file": "cloudflare/feedspark-deck/src/briefmatch.js", "pattern": "matchGmailToBriefs", "pr": 85 },
     { "name": "tools: Apps Script Gmail pusher", "file": "tools/gmail_push.gs", "pattern": "pushBriefReplies", "pr": 85 },
-    { "name": "tools: pusher self-verdict (Access-login detection)", "file": "tools/gmail_push.gs", "pattern": "BLOCKED BY CLOUDFLARE ACCESS", "pr": 89 },
-    { "name": "worker: gmail push run-history endpoint", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "api/gmail/pushlog", "pr": 89 },
-    { "name": "Activity: gmail-sync side panel", "file": "docs/FeedSpark_Activity.html", "pattern": "gp-log", "pr": 89 },
+    { "name": "tools: pusher self-verdict (Access-login detection)", "file": "tools/gmail_push.gs", "pattern": "BLOCKED BY CLOUDFLARE ACCESS", "pr": 92 },
+    { "name": "worker: gmail push run-history endpoint", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "api/gmail/pushlog", "pr": 92 },
+    { "name": "Activity: gmail-sync side panel", "file": "docs/FeedSpark_Activity.html", "pattern": "gp-log", "pr": 92 },
     { "name": "worker: Design-mode block copy/paste (Alt-drag + Ctrl+C/V)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "pasteClipboard", "pr": 86 },
     { "name": "worker: Design-mode colour swatches (brand palette)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "SWATCHES", "pr": 86 },
     { "name": "worker: Design-mode right-click context menu", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "de-ctxmenu", "min": 2, "pr": 88 },
     { "name": "worker: Design-mode format painter (copy/paste style)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "applyPaintedStyle", "pr": 88 },
     { "name": "worker: Design-mode keyboard shortcuts (Delete/Escape/Arrow reorder)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "reorderBlock", "pr": 88 },
-    { "name": "Workflow: run-SLA read-out tracking (editable panel + automation)", "file": "docs/FeedSpark_Workflow.html", "pattern": "fcc-run-sla", "pr": 89 }
+    { "name": "Workflow: run-SLA read-out tracking (editable panel + automation)", "file": "docs/FeedSpark_Workflow.html", "pattern": "fcc-run-sla", "pr": 92 }
   ]
 }
