@@ -54,7 +54,7 @@ function pushBriefReplies() {
       });
     });
   });
-  if (!out.length) return;
+  if (!out.length) { console.log('FCC push: nothing to send (no brief-thread messages in the window)'); return; }
   var res = UrlFetchApp.fetch(ENDPOINT, {
     method: 'post',
     contentType: 'application/json',
@@ -62,5 +62,14 @@ function pushBriefReplies() {
     payload: JSON.stringify({ messages: out }),
     muteHttpExceptions: true
   });
-  console.log('FCC push: ' + res.getResponseCode() + ' ' + res.getContentText().slice(0, 300));
+  var code = res.getResponseCode(), body = res.getContentText();
+  var parsed = null; try { parsed = JSON.parse(body); } catch (e) {}
+  if (parsed && parsed.ok) {
+    console.log('✓ FCC push OK — sent ' + out.length + ' · matched ' + parsed.matched + ' · moved ' + ((parsed.moved || []).length) + ' ' + JSON.stringify(parsed.moved || []));
+  } else if (body.indexOf('Cloudflare Access') >= 0 || body.charAt(0) === '<') {
+    // a 200 here is the ACCESS LOGIN PAGE, not the worker — the push never arrived
+    console.error('✗ BLOCKED BY CLOUDFLARE ACCESS (HTTP ' + code + ' is the login page, NOT success). Fix the bypass: Zero Trust → Access → Applications → self-hosted app · domain feedspark.ray-vtt.workers.dev · path api/gmail/push (own path field, no leading slash) · policy Action=Bypass, Include=Everyone. See docs/GOOGLE_SETUP.md §8.');
+  } else {
+    console.error('✗ FCC push failed: HTTP ' + code + ' ' + body.slice(0, 300) + (code === 401 ? '  → KEY here does not match the GMAIL_PUSH_KEY secret' : code === 503 ? '  → GMAIL_PUSH_KEY secret not set on the worker yet' : ''));
+  }
 }
