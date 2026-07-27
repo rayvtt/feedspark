@@ -34,6 +34,7 @@ import READINESS from "../../../docs/FeedSpark_Readiness.html";
 import LEADERSHIP from "../../../docs/FeedSpark_Leadership.html";
 import DECKBUILDER from "../../../docs/FeedSpark_DeckBuilder.html";
 import BUILDLOG from "../../../docs/FeedSpark_BuildLog.html";
+import ACTIVITY from "../../../docs/FeedSpark_Activity.html";
 import WORKFLOW from "../../../docs/FeedSpark_Workflow.html";
 import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html";
 import DECK_REISS from "../../../docs/Reiss_Strategy_Review_FY2526.html";
@@ -54,6 +55,7 @@ const PAGES = {
   '/leadership':  { html: LEADERSHIP,  slug: 'leadership' },
   '/deck-builder':{ html: DECKBUILDER, slug: 'deckbuilder' },
   '/buildlog':    { html: BUILDLOG,    slug: 'buildlog' },
+  '/activity':    { html: ACTIVITY,    slug: 'activity' },   // owner-gated in fetch() before this map is consulted
   '/workflow':    { html: WORKFLOW,    slug: 'workflow' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
@@ -67,11 +69,49 @@ const CORS = {
 };
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
 
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+
+    // ---- user activity log (viewed at /activity, OWNER-only): who did what, when.
+    // Identity is free: the whole app sits behind Cloudflare Access, which injects the
+    // verified Cf-Access-Authenticated-User-Email on every request. Writes are logged
+    // non-blocking (ctx.waitUntil) into per-entry KV keys w/ 90-day TTL; the entry lives
+    // in the key's metadata so the feed is a single list() with zero value reads.
+    if (request.method === 'PUT' || request.method === 'POST') {
+      const ACT = { '/api/edits': 'edit', '/api/feedback': 'feedback', '/api/clients': 'dossier-save',
+        '/api/briefs': 'briefs-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync' };
+      if (ACT[path]) {
+        logActivity(ctx, env, request, ACT[path],
+          (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
+      } else if (path.startsWith('/api/sheets/') && request.method === 'POST') {
+        let d = ''; try { const b = await request.clone().json();
+          d = (String(b.match || (b.rows ? b.rows.length + ' rows' : '')) + (b.value != null ? ' → ' + b.value : '')).slice(0, 80); } catch (e) {}
+        logActivity(ctx, env, request, 'plan-' + path.slice('/api/sheets/'.length), d);
+      }
+    }
+
+    // the activity feed itself — restricted to the account owner, enforced server-side
+    if (path === '/api/activity' && request.method === 'GET') {
+      if (who(request) !== ownerEmail(env)) return json({ error: 'restricted to the account owner' }, 403);
+      const days = Math.min(90, Math.max(1, +(url.searchParams.get('days') || 14) || 14));
+      const cutoff = Date.now() - days * 86400000;
+      const entries = []; let cursor;
+      for (let i = 0; i < 5; i++) {
+        const page = await env.EDITS.list({ prefix: 'act:', cursor });
+        for (const k of page.keys) { const m = k.metadata; if (m && m.t >= cutoff) entries.push(m); }
+        if (page.list_complete) break; cursor = page.cursor;
+      }
+      entries.sort((a, b) => b.t - a.t);
+      return json({ owner: true, days, entries: entries.slice(0, 800) });
+    }
+
+    // the activity PAGE is owner-only too (the link is visible to everyone; the data is not)
+    if (path === '/activity' && who(request) !== ownerEmail(env)) {
+      return new Response('<!doctype html><meta charset="utf-8"><title>Restricted</title><body style="font-family:Lato,system-ui,sans-serif;padding:60px;color:#333"><h2>Restricted</h2><p>The user activity log is only available to the account owner.</p><p><a href="/" style="color:#ED6F0B;font-weight:700">← Back to the command center</a></p>', { status: 403, headers: { 'content-type': 'text/html;charset=utf-8' } });
+    }
 
     // ---- deploy version marker: confirm which git build is actually live (the deploy Action
     // stamps GIT_SHA / GIT_REF / BUILT_AT via `wrangler deploy --var`). Answers "is my push live?"
@@ -544,6 +584,7 @@ export default {
     // App pages (everything except client-facing /deck/* decks) also get the Tachyon copilot.
     const page = PAGES[path];
     if (page) {
+      logActivity(ctx, env, request, 'view', path);
       let html = page.html.replace('</body>', getEditorScript(page.slug) + '\n</body>');
       if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n</body>');
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
@@ -585,6 +626,29 @@ export default {
 
 function json(data, status = 200, extraHeaders) {
   return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json', ...CORS, ...(extraHeaders || {}) } });
+}
+
+// who is making this request? Cloudflare Access injects the verified email; service
+// tokens carry a client id instead; anything else (misconfig / no Access) is 'unknown'
+// and never matches the owner, so the restricted surfaces stay closed.
+function who(request) {
+  const e = request.headers.get('Cf-Access-Authenticated-User-Email');
+  if (e) return e.toLowerCase();
+  const svc = request.headers.get('Cf-Access-Client-Id');
+  if (svc) return 'service:' + svc.slice(0, 12);
+  return 'unknown';
+}
+function ownerEmail(env) { return String(env.OWNER_EMAIL || 'ray@feedspark.com').toLowerCase(); }
+// append an activity entry without blocking the response (per-entry key, 90-day TTL,
+// entry stored in key METADATA so reading the feed is one list() with no value gets)
+function logActivity(ctx, env, request, action, detail) {
+  try {
+    const t = Date.now();
+    const key = 'act:' + String(t).padStart(14, '0') + ':' + Math.random().toString(36).slice(2, 6);
+    const meta = { t, u: who(request), a: action, d: String(detail || '').slice(0, 80) };
+    const p = env.EDITS.put(key, '', { metadata: meta, expirationTtl: 60 * 60 * 24 * 90 });
+    if (ctx && ctx.waitUntil) ctx.waitUntil(p);
+  } catch (e) { /* logging must never break the request */ }
 }
 
 // Concurrency-safe whole-map store (clients / briefs): per-key merge via kvmerge.js instead of

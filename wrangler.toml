@@ -8,6 +8,11 @@ rules = [
   { type = "Text", globs = ["**/*.html"], fallthrough = true }
 ]
 
+# The account owner — the only identity allowed to open /activity and /api/activity
+# (matched against Cloudflare Access's verified Cf-Access-Authenticated-User-Email).
+[vars]
+OWNER_EMAIL = "ray@feedspark.com"
+
 # Cron: hourly warm of the live plan-sync cache (KV planlive:<id>) so the Workflow
 # dashboard opens instantly with current project-plan rows. The scheduled() handler in
 # the worker reads the brand->sheet map the dashboard posts (KV plansheets).
