@@ -2091,11 +2091,14 @@ window.addEventListener('load',restore);
   // Briefing happens later from Intake itself, same as any other task (Ray's explicit ask:
   // this button shouldn't jump into the brief composer the way project-plan rows' Brief does).
   function saveEmailAsTask(g){
-    MANUAL.push({client:g.client||senderName(g.from),task:g.subject,owner:senderName(g.from),status:'Open',due:''});
+    // client comes from detection only (domain / display-name / brand-mention cues, resolved
+    // server-side and back-filled) — the sender belongs in the TASK NAME, never in the Client field
+    MANUAL.push({client:g.client||'',task:g.subject+' — from '+senderName(g.from),owner:senderName(g.from),status:'Open',due:''});
     saveManual();
     decideEmail(g.id,false,'task');
     renderAll();
-    toast('Saved to Intake as a task — draft the brief from there when ready');
+    toast(g.client?'Saved to Intake as a '+g.client+' task — draft the brief from there when ready'
+      :'Saved to Intake — client not recognised, edit the row to assign one');
   }
   function updateGmailState(){ var st=document.getElementById('gstate'); if(!st||!gmailItems.length)return;
     var pend=gmailItems.filter(function(g){return !g.dismissed;}),
