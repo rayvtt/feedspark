@@ -54,6 +54,7 @@
     { "name": "worker: Design-mode format painter (copy/paste style)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "applyPaintedStyle", "pr": 88 },
     { "name": "worker: Design-mode keyboard shortcuts (Delete/Escape/Arrow reorder)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "reorderBlock", "pr": 88 },
     { "name": "Workflow: run-SLA read-out tracking (editable panel + automation)", "file": "docs/FeedSpark_Workflow.html", "pattern": "fcc-run-sla", "pr": 92 },
-    { "name": "Workflow: dotted-arrow flow cue on analysis-bound cards", "file": "docs/FeedSpark_Workflow.html", "pattern": "tk-flow", "min": 2, "pr": 95 }
+    { "name": "Workflow: dotted-arrow flow cue on analysis-bound cards", "file": "docs/FeedSpark_Workflow.html", "pattern": "tk-flow", "min": 2, "pr": 95 },
+    { "name": "worker: sheet-write tab resolver (non-standard plan tabs)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "resolveTab", "min": 4, "pr": 97 }
   ]
 }
