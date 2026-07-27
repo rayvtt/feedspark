@@ -372,19 +372,19 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "em-panel",
       "min": 2,
-      "pr": 99
+      "pr": 101
     },
     {
       "name": "worker: token-only unattended brief matching (no fuzzy)",
       "file": "cloudflare/feedspark-deck/src/briefmatch.js",
       "pattern": "never guess unattended",
-      "pr": 99
+      "pr": 101
     },
     {
       "name": "worker: internal-domain intake filter (feedspark/aroxo/feedhero)",
       "file": "cloudflare/feedspark-deck/src/briefmatch.js",
       "pattern": "feedhero\\.net",
-      "pr": 99
+      "pr": 101
     }
   ]
 }
