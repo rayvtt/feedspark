@@ -49,6 +49,7 @@
     { "name": "worker: Design-mode colour swatches (brand palette)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "SWATCHES", "pr": 86 },
     { "name": "worker: Design-mode right-click context menu", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "de-ctxmenu", "min": 2, "pr": 88 },
     { "name": "worker: Design-mode format painter (copy/paste style)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "applyPaintedStyle", "pr": 88 },
-    { "name": "worker: Design-mode keyboard shortcuts (Delete/Escape/Arrow reorder)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "reorderBlock", "pr": 88 }
+    { "name": "worker: Design-mode keyboard shortcuts (Delete/Escape/Arrow reorder)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "reorderBlock", "pr": 88 },
+    { "name": "Workflow: run-SLA read-out tracking (editable panel + automation)", "file": "docs/FeedSpark_Workflow.html", "pattern": "fcc-run-sla", "pr": 89 }
   ]
 }
