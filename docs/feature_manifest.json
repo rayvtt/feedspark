@@ -430,6 +430,20 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "never in the Client field",
       "pr": 103
+    },
+    {
+      "name": "Workflow: → Task triage semantics (email → Intake task, no composer jump)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "saveEmailAsTask",
+      "min": 2,
+      "pr": 103
+    },
+    {
+      "name": "worker: triage decision reasons preserved verbatim (task/briefed/notask)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "validReasons",
+      "min": 2,
+      "pr": 103
     }
   ]
 }

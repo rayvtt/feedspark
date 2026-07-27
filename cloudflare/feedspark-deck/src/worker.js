@@ -157,6 +157,11 @@ export default {
       }
       if (request.method === 'PUT') {
         const body = await request.json();
+        // Tag any note that doesn't already carry an author (i.e. new since the last save) with
+        // the verified Access identity of whoever is saving — lets a shared per-deck feedback
+        // list (Ray, Steven, anyone with access) show who left what, not just what was said.
+        const author = who(request);
+        for (const note of body || []) { if (note && !note.author) note.author = author; }
         await env.EDITS.put(key, JSON.stringify(body));
         return json({ ok: true, page: slug, count: (body || []).length });
       }
@@ -249,12 +254,13 @@ export default {
       const id = String(body.id || '').slice(0, 64);
       if (!id) return json({ ok: false, error: 'missing id' }, 400);
       const dis = (await env.EDITS.get('gmaildismissed', 'json')) || {};
+      const validReasons = ['briefed', 'task', 'notask'];
       if (body.undo) delete dis[id];
-      else dis[id] = { t: Date.now(), r: body.reason === 'briefed' ? 'briefed' : 'notask' };
+      else dis[id] = { t: Date.now(), r: validReasons.includes(body.reason) ? body.reason : 'notask' };
       const ids = Object.keys(dis);   // prune to the newest 400 decisions
       if (ids.length > 400) ids.sort((a, b) => (dis[a].t || 0) - (dis[b].t || 0)).slice(0, ids.length - 400).forEach((k) => delete dis[k]);
       await env.EDITS.put('gmaildismissed', JSON.stringify(dis));
-      logActivity(ctx, env, request, body.undo ? 'gmail-restore' : 'gmail-dismiss', (body.reason === 'briefed' ? 'briefed · ' : 'not a task · ') + id.slice(0, 24));
+      logActivity(ctx, env, request, body.undo ? 'gmail-restore' : 'gmail-dismiss', (dis[id] ? dis[id].r + ' · ' : 'not a task · ') + id.slice(0, 24));
       return json({ ok: true, dismissed: !body.undo });
     }
 
@@ -1147,6 +1153,7 @@ function getEditorScript(slug) {
     + '.de-fbitem{border:1px solid #E6E6E6;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:12.5px;position:relative}'
     + '.de-fbitem b{display:block;font-size:10.5px;color:#ED6F0B;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}'
     + '.de-fbitem .del{position:absolute;top:6px;right:8px;cursor:pointer;color:#999;font-size:14px;line-height:1}'
+    + '.de-fbitem .by{display:inline-block;font-size:10px;font-weight:800;color:#8a94a0;background:#F7F7F5;border-radius:100px;padding:1px 7px;margin:0 6px 5px 0}'
     + '.de-fbpanel .row{display:flex;gap:8px;margin-top:6px}'
     + '.de-fbpanel .row button{flex:1;border:0;border-radius:8px;padding:9px 12px;cursor:pointer;font:inherit;font-weight:700}'
     + '.de-fbpanel .gen{background:#ED6F0B;color:#fff}.de-fbpanel .clr{background:#EEE;color:#333}'
@@ -1817,7 +1824,8 @@ function getEditorScript(slug) {
   }
   function renderFeedbackPanel(){
     var body = FEEDBACK.length ? FEEDBACK.map(function(f){
-      return '<div class="de-fbitem"><span class="del" data-id="'+f.id+'">×</span><b>'+esc(f.label.split(' — ')[0])+'</b>'+esc(f.note)+'</div>';
+      var by = f.author ? '<span class="by">'+esc(f.author.split('@')[0])+'</span>' : '';
+      return '<div class="de-fbitem"><span class="del" data-id="'+f.id+'">×</span><b>'+esc(f.label.split(' — ')[0])+'</b>'+by+esc(f.note)+'</div>';
     }).join('') : '<div class="de-fbempty">No notes yet. Turn Feedback on, then click any card, table or chapter to leave one.</div>';
     fbPanel.innerHTML = '<h3>💬 Feedback ('+FEEDBACK.length+')</h3>'
       + '<div class="hint">Click a block or chapter while Feedback is on to leave a note there. When you\\'re done, generate a prompt to paste into a Claude Code session.</div>'
