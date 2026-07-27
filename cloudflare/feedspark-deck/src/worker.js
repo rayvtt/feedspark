@@ -240,6 +240,24 @@ export default {
       return json({ runs: ((await env.EDITS.get('gmailpushlog', 'json')) || []).slice(-60).reverse() });
     }
 
+    // ---- Gmail triage decision: every captured email is either a task or not a task ----
+    // The Workflow triage panel posts here. reason 'briefed' = it became a ticket; 'notask' =
+    // dismissed. Decisions are remembered server-side (KV gmaildismissed) so the email stays
+    // out of the pending queue on every later push; undo:true restores it.
+    if (path === '/api/gmail/dismiss' && request.method === 'POST') {
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const id = String(body.id || '').slice(0, 64);
+      if (!id) return json({ ok: false, error: 'missing id' }, 400);
+      const dis = (await env.EDITS.get('gmaildismissed', 'json')) || {};
+      if (body.undo) delete dis[id];
+      else dis[id] = { t: Date.now(), r: body.reason === 'briefed' ? 'briefed' : 'notask' };
+      const ids = Object.keys(dis);   // prune to the newest 400 decisions
+      if (ids.length > 400) ids.sort((a, b) => (dis[a].t || 0) - (dis[b].t || 0)).slice(0, ids.length - 400).forEach((k) => delete dis[k]);
+      await env.EDITS.put('gmaildismissed', JSON.stringify(dis));
+      logActivity(ctx, env, request, body.undo ? 'gmail-restore' : 'gmail-dismiss', (body.reason === 'briefed' ? 'briefed · ' : 'not a task · ') + id.slice(0, 24));
+      return json({ ok: true, dismissed: !body.undo });
+    }
+
     // ---- Build Log queue: Ray's "not built yet" backlog (kvmerge-backed, concurrency-safe) ----
     if (path === '/api/buildqueue') {
       const r = await mapStoreRoute(env, request, 'buildqueue', {});
@@ -381,9 +399,15 @@ export default {
     // Reads (readonly) the impersonated mailbox via the service account. Degrades to
     // {connected:false, items:[]} until GOOGLE_SA_JSON + GOOGLE_IMPERSONATE are set.
     if (path === '/api/gmail/intake' && request.method === 'GET') {
-      // primary source: the Apps Script inbox push (no-admin path) — classified + stored in KV
+      // primary source: the Apps Script inbox push (no-admin path) — classified + stored in KV.
+      // Each item carries its triage decision (dismissed + decidedAs) so the panel can split
+      // pending vs already-triaged without a second call.
       const pushed = (await env.EDITS.get('gmailinbox', 'json')) || [];
-      if (pushed.length) return json({ connected: true, source: 'push', items: pushed.slice(0, 40) });
+      if (pushed.length) {
+        const dis = (await env.EDITS.get('gmaildismissed', 'json')) || {};
+        const items = pushed.slice(0, 60).map((it) => (dis[it.id] ? Object.assign({}, it, { dismissed: true, decidedAs: dis[it.id].r || 'notask' }) : it));
+        return json({ connected: true, source: 'push', items });
+      }
       // fallback: the original DWD pull, if a super-admin ever authorises it
       if (!env.GOOGLE_SA_JSON || !env.GOOGLE_IMPERSONATE) return json({ connected: false, items: [] });
       try {
