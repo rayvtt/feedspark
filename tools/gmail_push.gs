@@ -44,7 +44,10 @@ function syncFCC() { pushBriefReplies(); pushInbox(); }
 // The worker classifies each message (which client, briefable/action-request vs FYI),
 // so send everything recent and let the server triage.
 function pushInbox() {
-  var threads = GmailApp.search('in:inbox newer_than:2d', 0, 40);
+  // Ray's rule: everything sent to ray@feedspark.com from OUTSIDE the team
+  // (not @feedspark.com / @aroxo.com / @feedhero.net). No in:inbox restriction —
+  // archived/filed mail is still captured; the worker filters noise + classifies.
+  var threads = GmailApp.search('newer_than:2d to:ray@feedspark.com -from:feedspark.com -from:aroxo.com -from:feedhero.net', 0, 40);
   var out = [];
   threads.forEach(function (t) {
     t.getMessages().forEach(function (m) {

@@ -54,6 +54,19 @@ window.addEventListener('load',restore);
   .glive .gt{font-size:13px;color:var(--ink-2)}.glive .gt b{color:var(--orange-ink)}
   .glive .gdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:5px;vertical-align:middle}
   .glive .gdot.on{background:var(--good)}
+  #em-panel{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
+  .em-head{font-weight:900;font-size:13px;margin-bottom:6px}
+  .em-n{color:var(--orange-deep);margin-left:4px}
+  .em-sub{font-weight:600;font-size:11.5px;color:var(--muted);margin-left:10px}
+  .em-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+  .em-row:last-child{border-bottom:none}
+  .em-brf{flex:none;font-size:10.5px;font-weight:900;color:#fff;background:var(--orange-deep);border-radius:100px;padding:1px 8px}
+  .em-from{flex:none;font-weight:800;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .em-cl{flex:none;font-size:10.5px;font-weight:900;color:var(--ink-2);border:1px solid var(--line);border-radius:100px;padding:1px 8px;background:var(--wash)}
+  .em-subj{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+  .em-ago{flex:none;font-size:11px;color:var(--muted);font-weight:700}
+  .em-go{flex:none;font:inherit;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
+  .em-go:hover{background:var(--orange);color:#fff}
   /* two-column generator */
   .gen{display:grid;grid-template-columns:1.05fr 1fr;gap:16px;align-items:start}
   @media(max-width:900px){.gen{grid-template-columns:1fr}}
@@ -231,8 +244,11 @@ window.addEventListener('load',restore);
   <div class="wf-alerts" id="wf-alerts" style="display:none"></div>
 
   <div class="glive"><div class="gi">✉</div><div class="gt">
-    <div><span class="gdot" id="gdot"></span><b>Gmail live sync</b> — hourly scan of client task emails and ASPL replies. <span id="gstate">Not connected — set a Gmail credential to switch it on.</span></div>
-    <div style="margin-top:4px;color:var(--muted)">Project-plan intake is live below now. Until the Gmail credential is set, add email tasks with <b>New brief</b> and log ASPL replies on each ticket — the completion scan and client-confirmation draft work either way.</div>
+    <div><span class="gdot" id="gdot"></span><b>Gmail live sync</b> — every 5 min the mailbox script pushes brief replies (they move tickets) and external client emails. <span id="gstate">Waiting for the first push — set up tools/gmail_push.gs (GOOGLE_SETUP.md §8).</span></div>
+    <div id="em-panel" hidden>
+      <div class="em-head">Incoming emails detected <span class="em-n" id="em-n"></span><span class="em-sub">to ray@feedspark.com from outside the team — ⚡ = reads as an action request. Brief straight from here.</span></div>
+      <div id="em-list"></div>
+    </div>
   </div></div>
 
   <h2>New brief</h2>
@@ -1949,10 +1965,29 @@ window.addEventListener('load',restore);
   // #1 pull live plan rows on load (falls back to the git snapshot until the SA is connected)
   fetchLive(false);
   // pull the live Gmail intake (client task emails) once the service account is connected
+  function renderEmailPanel(){
+    var panel=document.getElementById('em-panel'), list=document.getElementById('em-list'), n=document.getElementById('em-n');
+    if(!panel||!list)return;
+    if(!gmailItems.length){ panel.hidden=true; return; }
+    panel.hidden=false; if(n)n.textContent=gmailItems.length;
+    list.innerHTML=gmailItems.slice(0,12).map(function(g,i){
+      var ago=''; if(g.date){ var s=(Date.now()-(+g.date||new Date(g.date).getTime()))/1000;
+        ago=s<3600?Math.max(1,Math.round(s/60))+'m':s<86400?Math.round(s/3600)+'h':Math.round(s/86400)+'d'; }
+      return '<div class="em-row">'+(g.briefable?'<span class="em-brf" title="'+esc((g.hints||[]).join(' · '))+'">⚡ action</span>':'')
+        +'<span class="em-from" title="'+esc(g.from)+'">'+esc(senderName(g.from))+'</span>'
+        +(g.client?'<span class="em-cl">'+esc(g.client)+'</span>':'')
+        +'<span class="em-subj" title="'+esc(g.snippet||'')+'">'+esc(g.subject)+'</span>'
+        +'<span class="em-ago">'+ago+'</span>'
+        +'<button class="em-go" data-i="'+i+'" type="button">Brief</button></div>'; }).join('');
+    list.querySelectorAll('.em-go').forEach(function(b){ b.onclick=function(){ var g=gmailItems[+b.getAttribute('data-i')];
+      prefill({client:g.client||senderName(g.from),task:g.subject,source:'email',from:g.from}); }; });
+  }
   (function(){ var dot=document.getElementById('gdot'), st=document.getElementById('gstate');
     fetch('/api/gmail/intake').then(function(r){return r.json();}).then(function(d){
       if(d && d.connected){ gmailItems=d.items||[]; if(dot)dot.classList.add('on');
-        if(st)st.textContent='Connected — '+gmailItems.length+' recent client email'+(gmailItems.length===1?'':'s')+' in the intake below.'; renderAll(); }
+        var brf=gmailItems.filter(function(g){return g.briefable;}).length;
+        if(st)st.textContent='Connected — '+gmailItems.length+' external email'+(gmailItems.length===1?'':'s')+' captured'+(brf?(' · '+brf+' look like action requests ⚡'):'')+'.';
+        renderEmailPanel(); renderAll(); }
     }).catch(function(){}); })();
 })();
 </script>
