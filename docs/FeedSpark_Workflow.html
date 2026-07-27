@@ -339,6 +339,13 @@ window.addEventListener('load',restore);
   #it-am-menu{width:150px}
   .it-cl-rm{margin-left:auto;flex:none;border:0;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:900;line-height:1;padding:2px 5px;border-radius:5px;cursor:pointer;opacity:0}
   .it-multi-menu label:hover .it-cl-rm{opacity:.7}
+  /* active client-filter chips — quick removal without opening the dropdown */
+  .it-fchips{display:flex;flex-wrap:wrap;gap:6px;margin:-6px 0 12px}
+  .it-fchip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--navy);background:rgba(26,54,93,.08);border:1px solid rgba(26,54,93,.18);border-radius:100px;padding:3px 6px 3px 10px}
+  .it-fchip button{border:none;background:none;cursor:pointer;color:var(--navy);font-size:14px;line-height:1;padding:0 2px;display:inline-flex}
+  .it-fchip button:hover{color:#C0392B}
+  [data-theme=dark] .it-fchip{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.25);color:var(--orange-ink)}
+  [data-theme=dark] .it-fchip button{color:var(--orange-ink)}
   .cl-rm{margin-left:5px;border:0;background:none;color:var(--muted);font:inherit;font-size:10.5px;font-weight:900;line-height:1;padding:1px 4px;border-radius:5px;cursor:pointer;opacity:0;vertical-align:1px}
   .itbl tbody tr:hover .cl-rm{opacity:.55}
   .cl-rm:hover{opacity:1;color:#C0392B;background:rgba(192,57,43,.1)}
@@ -587,6 +594,7 @@ window.addEventListener('load',restore);
     <span class="it-n" id="it-n"></span>
     <button type="button" class="it-hidden-tog" id="it-hidden-tog" hidden aria-pressed="false"></button>
   </div>
+  <div class="it-fchips" id="it-client-chips" hidden></div>
   <div class="it-bulk" id="it-bulk" style="display:none">
     <span class="it-bulk-n" id="it-bulk-n">0 selected</span>
     <button class="btn sm" id="bulk-brief">✉ Batched brief</button>
@@ -1149,9 +1157,23 @@ window.addEventListener('load',restore);
       .sort(function(a,b){ var k=itState.sort;
         if(k==='dsort'){ var da=taskDate(a), db=taskDate(b); return ((da?da.getTime():0)-(db?db.getTime():0))*itState.dir; }
         return (((a[k]||'')+'').localeCompare((b[k]||'')+''))*itState.dir; }); }
+  // active client-filter chips, shown above the table so a selected client can be dropped
+  // without reopening the "N clients ▾" dropdown — Ray's ask, it's an "upper control" now.
+  function renderClientChips(){
+    var wrap=document.getElementById('it-client-chips'); if(!wrap)return;
+    var sel=itState.clients;
+    if(!sel.length){ wrap.hidden=true; wrap.innerHTML=''; return; }
+    wrap.hidden=false;
+    wrap.innerHTML=sel.map(function(c){ return '<span class="it-fchip">'+esc(c)
+      +'<button type="button" data-c="'+esc(c)+'" aria-label="Remove '+esc(c)+' from the client filter">×</button></span>'; }).join('');
+    wrap.querySelectorAll('button').forEach(function(b){ b.onclick=function(){
+      var c=b.getAttribute('data-c'), i=itState.clients.indexOf(c); if(i>=0)itState.clients.splice(i,1);
+      renderIntake(); }; });
+  }
   function renderIntake(){
     var body=document.getElementById('it-body'); if(!body)return;
     ensureClientFilter();
+    renderClientChips();
     var f=intakeFiltered();
     var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey)BK[b.taskKey]=b; });   // intake row -> its live ticket
     body.innerHTML = f.length ? f.map(function(t,i){
