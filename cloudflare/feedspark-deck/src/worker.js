@@ -1071,6 +1071,14 @@ function getEditorScript(slug) {
     + '.de-bar button{background:#1A365D;color:#fff;border:0;border-radius:8px;padding:9px 13px;cursor:pointer;font:inherit}'
     + '.de-bar button.on{background:#ED6F0B}'
     + '.de-bar span{color:#6b7a8d;min-width:60px}'
+    // Present mode: same chrome the print stylesheet already hides (topbar, side-nav, editor
+    // UI), but live on-screen and toggle-able — for screen-sharing the deck without Ray's own
+    // tooling in shot. .de-handle stays visible (very dim) so there's always a way back in.
+    + 'body.de-present .topbar,body.de-present .side-nav,body.de-present .footmark,body.de-present .scrollcue,body.de-present .progress,body.de-present .de-bar,body.de-present .de-panel,body.de-present .de-props,body.de-present .de-toast,body.de-present .de-resize,body.de-present [id^="tky-"]{display:none!important}'
+    // .de-bar.de-show + .de-handle{display:none} (above) would otherwise hide this escape
+    // hatch whenever Present was entered while the toolbar was already open — force it back.
+    + 'body.de-present .de-handle{display:block!important;opacity:.18}'
+    + 'body.de-present .de-handle:hover{opacity:1}'
     + '.de-panel{position:fixed;right:16px;bottom:66px;z-index:99999;width:380px;max-width:92vw;background:#fff;border:1px solid #E6E6E6;border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.18);padding:14px;display:none;font:14px/1.4 sans-serif;color:#333}'
     + '.de-panel.show{display:block}'
     + '.de-panel code{background:#F5F5F5;border-radius:4px;padding:1px 5px}'
@@ -1154,19 +1162,20 @@ function getEditorScript(slug) {
   var bEdit=document.createElement('button'); bEdit.textContent='✎ Edit';
   var bDesign=document.createElement('button'); bDesign.textContent='🎨 Design';
   var bFeedback=document.createElement('button'); bFeedback.textContent='💬 Feedback';
+  var bPresent=document.createElement('button'); bPresent.textContent='🖥 Present'; bPresent.title='Hide the topbar, side-nav and this editor — clean for screen-share (Ctrl/Cmd+Shift+P, or click the dim dot to exit)';
   var bUndo=document.createElement('button'); bUndo.textContent='↺ Undo'; bUndo.title='Undo the last change (Ctrl/Cmd+Z)';
   var bPick=document.createElement('button'); bPick.textContent='◎ Element'; bPick.style.display='none';
   var bExport=document.createElement('button'); bExport.textContent='⤴ Export edits'; bExport.style.display='none';
   var bReset=document.createElement('button'); bReset.textContent='🧹 Reset page'; bReset.title='Clear every saved edit on this page, back to the git template';
   var stat=document.createElement('span'); stat.textContent='';
-  bar.appendChild(bEdit); bar.appendChild(bDesign); bar.appendChild(bFeedback); bar.appendChild(bUndo); bar.appendChild(bPick); bar.appendChild(bExport); bar.appendChild(bReset); bar.appendChild(stat);
+  bar.appendChild(bEdit); bar.appendChild(bDesign); bar.appendChild(bFeedback); bar.appendChild(bPresent); bar.appendChild(bUndo); bar.appendChild(bPick); bar.appendChild(bExport); bar.appendChild(bReset); bar.appendChild(stat);
   document.body.appendChild(bar);
   // Always-visible, deliberately subtle — presentation mode hides the full bar, but there
   // must always be *something* on screen to click, or the toolbar is undiscoverable unless
   // you already know the ?edit param or the keyboard shortcut.
   var handle=document.createElement('button'); handle.className='de-handle'; handle.title='Open editor'; handle.textContent='✎';
   document.body.appendChild(handle);
-  handle.addEventListener('click',function(){ showBar(true); });
+  handle.addEventListener('click',function(){ if(document.body.classList.contains('de-present'))setPresent(false); showBar(true); });
 
   // Presentation mode: the editor bar is hidden by default (clean for client screen-share)
   // and only appears once revealed — via ?edit in the URL or the Ctrl/Cmd+Shift+E shortcut.
@@ -1177,7 +1186,8 @@ function getEditorScript(slug) {
   var remembered = null; try{ remembered = localStorage.getItem(LS_KEY); }catch(e){}
   showBar(wantsShown || remembered==='1');
   document.addEventListener('keydown',function(e){
-    if(e.key.toLowerCase()==='e' && (e.ctrlKey||e.metaKey) && e.shiftKey){ e.preventDefault(); showBar(!bar.classList.contains('de-show')); } });
+    if(e.key.toLowerCase()==='e' && (e.ctrlKey||e.metaKey) && e.shiftKey){ e.preventDefault(); showBar(!bar.classList.contains('de-show')); }
+    if(e.key.toLowerCase()==='p' && (e.ctrlKey||e.metaKey) && e.shiftKey){ e.preventDefault(); setPresent(!document.body.classList.contains('de-present')); } });
 
   var panel=document.createElement('div'); panel.className='de-panel';
   panel.innerHTML='<strong>Send an element to Claude Code</strong>'
@@ -1714,6 +1724,8 @@ function getEditorScript(slug) {
     if(!on) clearSelection();
   });
   bPick.addEventListener('click',function(){ panel.classList.toggle('show'); });
+  function setPresent(on){ document.body.classList.toggle('de-present',on); bPresent.classList.toggle('on',on); }
+  bPresent.addEventListener('click',function(){ setPresent(!document.body.classList.contains('de-present')); });
   bUndo.addEventListener('click',performUndo);
   bReset.addEventListener('click',function(){
     if(!confirm('Clear every saved edit on this page and reload from the git template? This affects the whole page, not just what you last changed, and cannot itself be undone.')) return;
