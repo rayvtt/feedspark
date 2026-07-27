@@ -33,7 +33,6 @@ import ROADMAP from "../../../docs/FeedSpark_Roadmap.html";
 import READINESS from "../../../docs/FeedSpark_Readiness.html";
 import LEADERSHIP from "../../../docs/FeedSpark_Leadership.html";
 import DECKBUILDER from "../../../docs/FeedSpark_DeckBuilder.html";
-import BUILDLOG from "../../../docs/FeedSpark_BuildLog.html";
 import ACTIVITY from "../../../docs/FeedSpark_Activity.html";
 import WORKFLOW from "../../../docs/FeedSpark_Workflow.html";
 import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html";
@@ -54,8 +53,7 @@ const PAGES = {
   '/readiness':   { html: READINESS,   slug: 'readiness' },
   '/leadership':  { html: LEADERSHIP,  slug: 'leadership' },
   '/deck-builder':{ html: DECKBUILDER, slug: 'deckbuilder' },
-  '/buildlog':    { html: BUILDLOG,    slug: 'buildlog' },
-  '/activity':    { html: ACTIVITY,    slug: 'activity' },   // owner-gated in fetch() before this map is consulted
+  '/activity':    { html: ACTIVITY,    slug: 'activity' },   // owner-gated in fetch() before this map is consulted; Build Log lives on its 🔨 tab
   '/workflow':    { html: WORKFLOW,    slug: 'workflow' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
@@ -106,6 +104,11 @@ export default {
       }
       entries.sort((a, b) => b.t - a.t);
       return json({ owner: true, days, entries: entries.slice(0, 800) });
+    }
+
+    // the Build Log merged into /activity's 🔨 tab — keep the old URL working
+    if (path === '/buildlog') {
+      return new Response(null, { status: 301, headers: { Location: '/activity#build', ...CORS } });
     }
 
     // the activity PAGE is owner-only too (the link is visible to everyone; the data is not)
@@ -333,16 +336,16 @@ export default {
     }
 
     // ---- Gmail thread lookup: deep-link a brief straight to its email thread ----
-    // GET /api/gmail/thread?q=<token>&q=<fallback> → {connected, threadId, mailbox}. Queries are
-    // tried in order (brief ID first = exact thread; ibfcode second = client fallback), each as a
-    // quoted phrase. Degrades to {connected:false} until Gmail creds are set.
+    // GET /api/gmail/thread?q=<query>&q=<fallback> → {connected, threadId, mailbox}. Queries are
+    // ready-made Gmail search strings (subject-phrase first, quoted ID / ibfcode fallbacks),
+    // tried in order. Degrades to {connected:false} until Gmail creds are set.
     if (path === '/api/gmail/thread' && request.method === 'GET') {
       if (!env.GOOGLE_SA_JSON || !env.GOOGLE_IMPERSONATE) return json({ connected: false });
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/gmail.readonly', true);
         for (const raw of url.searchParams.getAll('q')) {
           if (!raw) continue;
-          const q = encodeURIComponent('"' + raw + '"');
+          const q = encodeURIComponent(raw);
           const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=1&q=' + q, { headers: { Authorization: 'Bearer ' + token } });
           const d = await r.json();
           const t = (d.threads || [])[0];
