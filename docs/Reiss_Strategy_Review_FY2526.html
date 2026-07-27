@@ -54,6 +54,7 @@ section{padding:104px 0}
 .side-nav a .num{font-size:10px;font-weight:800;letter-spacing:.06em;width:16px;flex-shrink:0}
 .side-nav a .lbl{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis}
 .side-nav a:hover{color:var(--ink);border-left-color:rgba(237,111,11,.45)}
+.side-nav .side-grp{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.6;padding:10px 14px 3px;margin-top:2px;border-top:1px solid var(--line)}
 .side-nav a.active{color:var(--ink);border-left-color:var(--orange);background:rgba(237,111,11,.09);font-weight:800}
 @media(min-width:1300px){.side-nav{display:flex}}
 
@@ -298,6 +299,7 @@ body.hide-checks .chk{display:none}
   <a href="#c13"><span class="num">13</span><span class="lbl">AI ready</span></a>
   <a href="#c14"><span class="num">14</span><span class="lbl">Cases</span></a>
   <a href="#c15"><span class="num">15</span><span class="lbl">Roadmap</span></a>
+  <div class="side-grp">Market Rollout</div>
   <a href="#c16"><span class="num">16</span><span class="lbl">Rollout</span></a>
   <a href="#c17"><span class="num">17</span><span class="lbl">Schedule</span></a>
   <a href="#c18"><span class="num">18</span><span class="lbl">Fit</span></a>
@@ -1060,11 +1062,35 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         <tr><td><b>10 — Oct 5</b></td><td>IL</td><td>LU</td><td>WO</td><td>Closes remaining named markets; WO (rest-of-world catch-all) closes the rollout</td></tr>
       </tbody></table>
     </div>
-    <div class="grid-2 rv in">
-      <div class="card"><h4>Per-market launch (3–4 hrs)</h4><p style="font-size:13px">Feed structure + language mapping (title/description/colour per market) → GMC setup → Shopping Local Language mapping → QA pass against the live feed → go-live confirmation. Same checklist every time — the estimate for the 22 markets without matrix detail yet assumes the same shape of work; confirm once their language/setup rows exist.</p></div>
-      <div class="card"><h4>What this schedule doesn't cover yet</h4><p style="font-size:13px">Meta International Feed setup is tracked separately per market and isn't included in the 3–4 hour Shopping-launch estimate — same caveat as before. Worth a second pass once the Shopping rollout above is confirmed.</p></div>
+    <div class="eyebrow rv in">Resourcing</div>
+    <h2 class="sec-title rv in">What's in the 3–4 hours, per market</h2>
+    <p class="sec-sub rv in">Same checklist every time — the estimate for the 22 markets without matrix detail yet assumes the same shape of work; confirm once their language/setup rows exist.</p>
+    <div class="tbl-wrap rv in" style="margin-bottom:24px">
+      <table><thead><tr><th>Task</th><th style="width:14%">Time</th><th>What it covers</th></tr></thead>
+      <tbody>
+        <tr><td>Feed checks</td><td>20 min</td><td>Source feed integrity + current field coverage for the target market before work starts</td></tr>
+        <tr><td>Source validation</td><td>20 min</td><td>Confirm the underlying product, pricing and currency data for the market is accurate and complete</td></tr>
+        <tr><td>Translation mapping</td><td>40 min</td><td>Title / description / colour / size copy translated and mapped for the market's language</td></tr>
+        <tr><td>Dev work</td><td>30 min</td><td>Feed rule configuration and market-specific transformations in FeedHero</td></tr>
+        <tr><td>Fields population &amp; attribute mirroring</td><td>60 min</td><td>Custom labels, keyword injection, MASK-format titles, GPC and product_type mirrored from the reference market</td></tr>
+        <tr><td>GMC launch</td><td>20 min</td><td>Merchant Center registration, first submission, initial disapproval triage</td></tr>
+        <tr><td>Monitoring (first week)</td><td>20 min</td><td>Feed health check, disapproval sweep, early performance sanity check</td></tr>
+        <tr><td><b>Execution subtotal</b></td><td><b>3.5 hrs</b></td><td></td></tr>
+        <tr><td>AM review &amp; sign-off</td><td>30 min</td><td>Account Manager spot-check and client-ready sign-off before go-live</td></tr>
+        <tr><td><b>Total per market</b></td><td><b>~4 hrs</b></td><td></td></tr>
+      </tbody></table>
     </div>
-    <div class="note rv in"><b>This is a proposal, not a locked plan:</b> the market order groups by language/region similarity for a realistic operational flow — it's FeedSpark's sequencing logic, not something Reiss has signed off on yet. Swap any week's pairing freely once priorities (e.g. a specific market Reiss wants first) are confirmed.</div>
+    <div class="stats rv in">
+      <div class="stat"><div class="n">3.5<small>hrs</small></div><div class="l">Execution time per market</div></div>
+      <div class="stat"><div class="n">0.5<small>hrs</small></div><div class="l">AM review &amp; sign-off per market</div></div>
+      <div class="stat"><div class="n">~120<small>hrs</small></div><div class="l">Total project hours — 30 markets × ~4 hrs</div></div>
+      <div class="stat"><div class="n">One-off</div><div class="l">Proposed as project scope, separate from the retainer</div></div>
+    </div>
+    <div class="grid-2 rv in">
+      <div class="card" style="border-left:3px solid var(--orange-deep)"><h4>One-off, not retainer scope</h4><p style="font-size:13px">~120 hours across the remaining 30 markets is proposed as a one-off project fee, additive to the existing optimisation retainer (chapters 03–14) — not drawn from it. Rate and total cost need Ray to confirm; the hours above are the estimate, not a price.</p></div>
+      <div class="card"><h4>What this schedule doesn't cover yet</h4><p style="font-size:13px">Meta International Feed setup is tracked separately per market and isn't included in the hours above — same caveat as before. Worth a second pass once the Shopping rollout is confirmed.</p></div>
+    </div>
+    <div class="note rv in"><b>This is a proposal, not a locked plan:</b> the market order groups by language/region similarity for a realistic operational flow, and the hour breakdown is FeedSpark's estimate — neither is something Reiss has signed off on yet. Swap any week's pairing, or adjust the task allocation, freely once priorities and capacity are confirmed.</div>
   </div>
 </section>
 
