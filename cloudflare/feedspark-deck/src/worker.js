@@ -25,7 +25,7 @@
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
-import { matchGmailToBriefs } from "./briefmatch.js";
+import { matchGmailToBriefs, classifyInbound } from "./briefmatch.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
@@ -187,6 +187,32 @@ export default {
       if (!env.GMAIL_PUSH_KEY) return json({ ok: false, error: 'push key not configured — wrangler secret put GMAIL_PUSH_KEY' }, 503);
       if (request.headers.get('X-FCC-Push-Key') !== env.GMAIL_PUSH_KEY) return json({ ok: false, error: 'unauthorized' }, 401);
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+
+      // inbox feed: general incoming mail → classify (client + briefable) and store for the
+      // Workflow's "Incoming emails" stream. Same endpoint/key/bypass as the brief sync.
+      if (Array.isArray(body.inbox)) {
+        const inbox = body.inbox.slice(0, 150);
+        const selfSrc2 = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
+        const selfRe2 = new RegExp(selfSrc2, 'i');
+        const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
+        const clientDoms = {}; Object.keys(dossier).forEach((n) => { if (dossier[n] && dossier[n].dom) clientDoms[n] = dossier[n].dom; });
+        const stored = (await env.EDITS.get('gmailinbox', 'json')) || [];
+        const seen = {}; stored.forEach((it) => { if (it.id) seen[it.id] = 1; });
+        let added = 0, briefable = 0;
+        for (const m of inbox) {
+          if (!m || !m.id || seen[m.id]) continue;
+          const c = classifyInbound(m, clientDoms, { selfRe: selfRe2, clientNames: Object.keys(dossier) });
+          if (c.hints[0] === 'noise/self') continue;
+          stored.push({ id: m.id, from: String(m.from || '').slice(0, 120), subject: String(m.subject || '(no subject)').slice(0, 160),
+            snippet: String(m.snippet || '').slice(0, 220), date: m.date || Date.now(), client: c.client, briefable: c.briefable, hints: c.hints });
+          seen[m.id] = 1; added++; if (c.briefable) briefable++;
+        }
+        stored.sort((a, b) => (b.date || 0) - (a.date || 0));
+        await env.EDITS.put('gmailinbox', JSON.stringify(stored.slice(0, 120)));
+        logActivity(ctx, env, request, 'gmail-inbox', added + ' new · ' + briefable + ' briefable', 'gmail-sync');
+        return json({ ok: true, received: inbox.length, added, briefable });
+      }
+
       const messages = Array.isArray(body.messages) ? body.messages.slice(0, 200) : [];
       if (!messages.length) return json({ ok: true, matched: 0, moved: [] });
       const now = Date.now();
@@ -355,6 +381,10 @@ export default {
     // Reads (readonly) the impersonated mailbox via the service account. Degrades to
     // {connected:false, items:[]} until GOOGLE_SA_JSON + GOOGLE_IMPERSONATE are set.
     if (path === '/api/gmail/intake' && request.method === 'GET') {
+      // primary source: the Apps Script inbox push (no-admin path) — classified + stored in KV
+      const pushed = (await env.EDITS.get('gmailinbox', 'json')) || [];
+      if (pushed.length) return json({ connected: true, source: 'push', items: pushed.slice(0, 40) });
+      // fallback: the original DWD pull, if a super-admin ever authorises it
       if (!env.GOOGLE_SA_JSON || !env.GOOGLE_IMPERSONATE) return json({ connected: false, items: [] });
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/gmail.readonly', true);
