@@ -105,6 +105,39 @@ Workflow "Incoming emails" stream, plan live-sync and status write-back stay in 
 3. Calls the Gmail API (`users.messages.list/get`) on a schedule to pull client task emails, and
    the Sheets API (`values.get` / `values.update`) to read plans and write status back.
 
+## 8. Gmail WITHOUT any admin — the Apps Script push (brief status sync)
+
+Domain-wide delegation (§6) needs a super-admin. When that's not reachable, this path gets
+Gmail→FCC brief syncing live with **zero admin**: a small Google Apps Script runs *inside your
+own mailbox* (you authorise it yourself; the grant doesn't expire), finds replies on brief
+threads every 15 minutes, and pushes them to the worker, which moves the Workflow tickets using
+the same rules as the page's paste-router (done → Done/Analysis, blocked, progress, `ibfdue:`/ETA
+→ due date — deduped, forward-only, logged to each ticket's comms and to /activity).
+
+1. **Shared secret** (repo root):
+   ```bash
+   openssl rand -hex 24          # copy the value
+   wrangler secret put GMAIL_PUSH_KEY
+   ```
+   (Optional: `wrangler secret put GMAIL_SELF` — the sender address of outgoing briefs to skip;
+   defaults to ray@feedspark.com.)
+2. **Access bypass for the one path** — Apps Script can't log in through Cloudflare Access, so
+   the secret is the gate for exactly this endpoint: Zero Trust → Access → Applications →
+   **Add an application → Self-hosted** → domain `feedspark.ray-vtt.workers.dev`, path
+   `api/gmail/push` → policy **Action = Bypass, Include = Everyone** → save. Everything else
+   stays Access-gated; the worker 401s any push without the key (503 until the key is set).
+3. **Install the script**: <https://script.google.com> → New project → paste
+   [`tools/gmail_push.gs`](../tools/gmail_push.gs) → set `KEY` to the secret → **Run ▶
+   `pushBriefReplies` once** and approve the Gmail prompt (your own account, `gmail.readonly`-
+   equivalent scope via GmailApp).
+4. **Schedule it**: ⏰ Triggers → Add trigger → `pushBriefReplies` · time-driven · minutes
+   timer · **every 15 minutes**.
+
+Verify: reply to any brief email containing its `[ibfcode:…]` with "started" → within 15 min the
+ticket sits in **In progress** on /workflow, and /activity shows a `gmail-sync` entry. When a
+super-admin becomes reachable, §6 (DWD) can replace this with the fully server-side pull — the
+matcher is shared either way.
+
 ## Security notes
 - The JSON key lives **only** as a Worker secret. Rotate it (step 4 again, delete the old key) if
   it's ever exposed.
