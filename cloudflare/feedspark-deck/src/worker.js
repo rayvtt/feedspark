@@ -304,16 +304,21 @@ export default {
       const src = await feedSourceFor(client);
       if (!src) return json({ error: 'no feed sheet linked for this client - attach one in the brand dossier' }, 404);
       const up = await fetch('https://docs.google.com/spreadsheets/d/' + src.id + '/export?format=csv&gid=' + src.gid);
-      if (!up.ok || !up.body) return json({ error: 'feed sheet fetch failed (' + up.status + ') - is the sheet link-shared?' }, 502);
-      const h = { 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store' };
-      const len = up.headers.get('content-length'); if (len) h['content-length'] = len;
-      return new Response(up.body, { headers: h });
+      // a non-link-shared sheet 307s to Google's LOGIN PAGE with a 200 — final content-type is
+      // the only reliable tell. Never forward content-length: Google gzips, the header counts
+      // compressed bytes, and an explicit length would truncate the decompressed stream.
+      const ct = up.headers.get('content-type') || '';
+      if (!up.ok || !up.body || !/csv|text\/plain/i.test(ct)) {
+        return json({ error: 'feed sheet fetch failed (' + up.status + ', ' + (ct.split(';')[0] || 'no type') + ') - is the sheet link-shared?' }, 502);
+      }
+      return new Response(up.body, { headers: { 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store' } });
     }
 
     // cached audit JSON per client (+ a daily score history the page charts)
     if (path === '/api/feed/audit') {
       const client = (url.searchParams.get('client') || '').slice(0, 60);
-      if (!client) return json({ error: 'missing client' }, 400);
+      // ':' would let ?client=hist:Reiss alias another client's history key - reject outright
+      if (!client || client.indexOf(':') >= 0) return json({ error: 'bad client' }, 400);
       if (request.method === 'GET') {
         const a = await env.EDITS.get('feedaudit:' + client, 'json');
         if (url.searchParams.get('hist') === '1') {
@@ -323,7 +328,7 @@ export default {
       }
       if (request.method === 'PUT') {
         let a; try { a = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
-        if (!a || !a.score || !a.score.pillars) return json({ error: 'not an audit payload' }, 400);
+        if (!a || !a.score || !a.score.pillars || typeof a.score.total !== 'number') return json({ error: 'not an audit payload' }, 400);
         a.client = client; a.fetchedAt = Date.now();
         const body = JSON.stringify(a);
         if (body.length > 400000) return json({ error: 'audit too large' }, 413);
@@ -335,6 +340,7 @@ export default {
         } catch (e) {}
         return json({ ok: true, fetchedAt: a.fetchedAt });
       }
+      return json({ error: 'method not allowed' }, 405);   // a POST would otherwise log activity, then 404
     }
 
     // ---- Build Log queue: Ray's "not built yet" backlog (kvmerge-backed, concurrency-safe) ----

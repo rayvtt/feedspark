@@ -2039,8 +2039,11 @@ window.addEventListener('load',restore);
   (function(){ try{
     var m=/[?&]brief=([^&]+)/.exec(location.search); if(!m)return;
     var s=m[1].replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4)s+='=';
-    var j=JSON.parse(atob(s)); if(!j||!j.task)return;
-    history.replaceState(null,'',location.pathname);   // don't re-open on refresh
+    var raw=atob(s), bytes=new Uint8Array(raw.length);   // atob gives latin1 code units —
+    for(var i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);   // decode as UTF-8 or em-dashes mangle
+    var j=JSON.parse(new TextDecoder().decode(bytes)); if(!j||!j.task)return;
+    if(j.client&&CLIENTS.indexOf(j.client)<0){ CLIENTS.push(j.client); CLIENTS.sort(); saveBrands(); fillClientSelect(); }   // dossier-only client — never silently file under CLIENTS[0]
+    try{ history.replaceState(null,'',location.pathname); }catch(e2){}   // don't re-open on refresh
     setTimeout(function(){ prefill({client:j.client||'',task:String(j.task).slice(0,200),cat:j.cat||'',source:j.source||'plan'}); },450);
   }catch(e){} })();
   // pull the live Gmail intake (client task emails) once the service account is connected
