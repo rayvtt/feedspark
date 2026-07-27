@@ -42,8 +42,8 @@
     { "name": "Activity: page present (users + Claude tabs)", "file": "docs/FeedSpark_Activity.html", "pattern": "api/activity", "pr": 80 },
     { "name": "wrangler: OWNER_EMAIL var", "file": "wrangler.toml", "pattern": "OWNER_EMAIL", "pr": 80 },
     { "name": "Workflow: Activity in module nav", "file": "docs/FeedSpark_Workflow.html", "pattern": "href=\"/activity\"", "pr": 80 },
-    { "name": "worker: Gmail push endpoint (no-admin brief sync)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "api/gmail/push", "pr": 83 },
-    { "name": "worker: briefmatch module (router-parity matcher)", "file": "cloudflare/feedspark-deck/src/briefmatch.js", "pattern": "matchGmailToBriefs", "pr": 83 },
-    { "name": "tools: Apps Script Gmail pusher", "file": "tools/gmail_push.gs", "pattern": "pushBriefReplies", "pr": 83 }
+    { "name": "worker: Gmail push endpoint (no-admin brief sync)", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "api/gmail/push", "pr": 85 },
+    { "name": "worker: briefmatch module (router-parity matcher)", "file": "cloudflare/feedspark-deck/src/briefmatch.js", "pattern": "matchGmailToBriefs", "pr": 85 },
+    { "name": "tools: Apps Script Gmail pusher", "file": "tools/gmail_push.gs", "pattern": "pushBriefReplies", "pr": 85 }
   ]
 }
