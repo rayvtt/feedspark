@@ -57,6 +57,47 @@ function findBrief(briefs, text) {
   return bs >= 0.55 ? best : null;   // page uses 0.45; snippets are shorter, so be stricter
 }
 
+// ---- inbound triage: which client is an email about, and is it BRIEFABLE (an action
+// request that should become a Workflow ticket) vs FYI noise? Pure heuristics, unit-tested.
+const ACTION_RES = [
+  [/\b(can|could|would|will) you\b/i, 'asks you directly'],
+  [/\bplease\b/i, '"please"'],
+  [/\b(need|needs|needed|required|require|request(ing|ed)?)\b/i, 'need/request'],
+  [/\b(add|remove|update|fix|change|amend|swap|upload|implement|activate|pause|switch|set ?up|turn (on|off)|exclude|include)\b/i, 'action verb'],
+  [/\b(by (mon|tues|wednes|thurs|fri|satur|sun)day|by eod|eod\b|eow\b|asap\b|urgent(ly)?|deadline|today|tomorrow)\b/i, 'deadline pressure'],
+  [/\?/, 'question'],
+];
+const FEED_RE = /\b(feed|title|titles|description|image|label|labels|gtin|attribute|product type|campaign|shopping|merchant|gmc|dpa|meta|supplemental|disapprov|keyword)\b/i;
+const NOISE_RE = /\b(no-?reply|noreply|newsletter|unsubscribe|notification|billing|invoice paid|receipt|out of office|automatic reply)\b/i;
+
+// msg: {from, subject, snippet}; clientDoms: {Brand: "domain.com"}; clientNames: [Brand,...]
+export function classifyInbound(msg, clientDoms, opts) {
+  opts = opts || {};
+  const from = String(msg.from || ''), text = (String(msg.subject || '') + ' ' + String(msg.snippet || ''));
+  if ((opts.selfRe && opts.selfRe.test(from)) || NOISE_RE.test(from + ' ' + String(msg.subject || ''))) {
+    return { client: '', briefable: false, score: 0, hints: ['noise/self'] };
+  }
+  let client = '';
+  const emDom = (/@([a-z0-9.-]+)/i.exec(from) || [])[1] || '';
+  for (const name of Object.keys(clientDoms || {})) {
+    const d = String(clientDoms[name] || '').toLowerCase().replace(/^www\./, '');
+    if (d && emDom.toLowerCase().endsWith(d)) { client = name; break; }
+  }
+  if (!client) {
+    for (const name of (opts.clientNames || Object.keys(clientDoms || {}))) {
+      if (new RegExp('\\b' + name.replace(/[.^$*+?()[\]{}|\\]/g, '\\$&') + '\\b', 'i').test(text)) { client = name; break; }
+    }
+  }
+  const hints = [];
+  let score = 0;
+  for (const [re, label] of ACTION_RES) { if (re.test(text)) { score++; hints.push(label); } }
+  const feedy = FEED_RE.test(text);
+  if (feedy) { score++; hints.push('feed-related'); }
+  // briefable = a real ask: at least two action signals, or one + feed vocabulary + a known client
+  const briefable = score >= 3 || (score >= 2 && (feedy || !!client));
+  return { client, briefable, score, hints: hints.slice(0, 5) };
+}
+
 // briefs: the plain briefs map (will be mutated); messages: [{id, from, subject, snippet, date(ms)}]
 // opts: { selfRe?: RegExp (senders to skip, e.g. the account that SENDS the briefs), now?: ms, aspl?: [names] }
 export function matchGmailToBriefs(briefs, messages, opts) {

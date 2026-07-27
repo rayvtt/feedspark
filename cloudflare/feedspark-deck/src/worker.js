@@ -25,7 +25,7 @@
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
-import { matchGmailToBriefs } from "./briefmatch.js";
+import { matchGmailToBriefs, classifyInbound } from "./briefmatch.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
@@ -187,6 +187,32 @@ export default {
       if (!env.GMAIL_PUSH_KEY) return json({ ok: false, error: 'push key not configured — wrangler secret put GMAIL_PUSH_KEY' }, 503);
       if (request.headers.get('X-FCC-Push-Key') !== env.GMAIL_PUSH_KEY) return json({ ok: false, error: 'unauthorized' }, 401);
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+
+      // inbox feed: general incoming mail → classify (client + briefable) and store for the
+      // Workflow's "Incoming emails" stream. Same endpoint/key/bypass as the brief sync.
+      if (Array.isArray(body.inbox)) {
+        const inbox = body.inbox.slice(0, 150);
+        const selfSrc2 = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
+        const selfRe2 = new RegExp(selfSrc2, 'i');
+        const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
+        const clientDoms = {}; Object.keys(dossier).forEach((n) => { if (dossier[n] && dossier[n].dom) clientDoms[n] = dossier[n].dom; });
+        const stored = (await env.EDITS.get('gmailinbox', 'json')) || [];
+        const seen = {}; stored.forEach((it) => { if (it.id) seen[it.id] = 1; });
+        let added = 0, briefable = 0;
+        for (const m of inbox) {
+          if (!m || !m.id || seen[m.id]) continue;
+          const c = classifyInbound(m, clientDoms, { selfRe: selfRe2, clientNames: Object.keys(dossier) });
+          if (c.hints[0] === 'noise/self') continue;
+          stored.push({ id: m.id, from: String(m.from || '').slice(0, 120), subject: String(m.subject || '(no subject)').slice(0, 160),
+            snippet: String(m.snippet || '').slice(0, 220), date: m.date || Date.now(), client: c.client, briefable: c.briefable, hints: c.hints });
+          seen[m.id] = 1; added++; if (c.briefable) briefable++;
+        }
+        stored.sort((a, b) => (b.date || 0) - (a.date || 0));
+        await env.EDITS.put('gmailinbox', JSON.stringify(stored.slice(0, 120)));
+        logActivity(ctx, env, request, 'gmail-inbox', added + ' new · ' + briefable + ' briefable', 'gmail-sync');
+        return json({ ok: true, received: inbox.length, added, briefable });
+      }
+
       const messages = Array.isArray(body.messages) ? body.messages.slice(0, 200) : [];
       if (!messages.length) return json({ ok: true, matched: 0, moved: [] });
       const now = Date.now();
@@ -355,6 +381,10 @@ export default {
     // Reads (readonly) the impersonated mailbox via the service account. Degrades to
     // {connected:false, items:[]} until GOOGLE_SA_JSON + GOOGLE_IMPERSONATE are set.
     if (path === '/api/gmail/intake' && request.method === 'GET') {
+      // primary source: the Apps Script inbox push (no-admin path) — classified + stored in KV
+      const pushed = (await env.EDITS.get('gmailinbox', 'json')) || [];
+      if (pushed.length) return json({ connected: true, source: 'push', items: pushed.slice(0, 40) });
+      // fallback: the original DWD pull, if a super-admin ever authorises it
       if (!env.GOOGLE_SA_JSON || !env.GOOGLE_IMPERSONATE) return json({ connected: false, items: [] });
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/gmail.readonly', true);
@@ -420,10 +450,11 @@ export default {
     if (path === '/api/sheets/status' && request.method === 'POST') {
       if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' });
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
-      const id = body.id, tab = body.tab || 'Project Plan', match = String(body.match || '').trim(), value = body.value;
+      const id = body.id, match = String(body.match || '').trim(), value = body.value; let tab = body.tab || 'Project Plan';
       if (!id || !match || value == null) return json({ ok: false, error: 'missing id / match / value' }, 400);
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
+        tab = await resolveTab(id, tab, token);   // tab names vary per client (e.g. "Opitmisation Plan") — write where the reads come from
         const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
         const rd = await rr.json();
         if (rd.error) return json({ ok: false, error: rd.error.message });
@@ -461,7 +492,7 @@ export default {
           body: JSON.stringify({ values: [[value]] }),
         });
         const wd = await wr.json();
-        if (wd.error) return json({ ok: false, error: wd.error.message, cell });
+        if (wd.error) return json({ ok: false, error: permHint(wd.error.message), cell });
         return json({ ok: true, cell, updated: wd.updatedCells || 1 });
       } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
     }
@@ -501,10 +532,11 @@ export default {
     if (path === '/api/sheets/owner' && request.method === 'POST') {
       if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' });
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
-      const id = body.id, tab = body.tab || 'Project Plan', match = String(body.match || '').trim(), value = body.value;
+      const id = body.id, match = String(body.match || '').trim(), value = body.value; let tab = body.tab || 'Project Plan';
       if (!id || !match || value == null) return json({ ok: false, error: 'missing id / match / value' }, 400);
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
+        tab = await resolveTab(id, tab, token);   // tab names vary per client (e.g. "Opitmisation Plan") — write where the reads come from
         const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
         const rd = await rr.json(); if (rd.error) return json({ ok: false, error: rd.error.message });
         const rows = rd.values || [];
@@ -517,7 +549,7 @@ export default {
         const cell = tab + '!' + colLetter(writeCol) + (targetRow + 1);
         const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(cell) + '?valueInputOption=USER_ENTERED', {
           method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values: [[value]] }) });
-        const wd = await wr.json(); if (wd.error) return json({ ok: false, error: wd.error.message, cell });
+        const wd = await wr.json(); if (wd.error) return json({ ok: false, error: permHint(wd.error.message), cell });
         return json({ ok: true, cell, updated: wd.updatedCells || 1 });
       } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
     }
@@ -526,10 +558,11 @@ export default {
     if (path === '/api/sheets/due' && request.method === 'POST') {
       if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' });
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
-      const id = body.id, tab = body.tab || 'Project Plan', match = String(body.match || '').trim(), value = body.value;
+      const id = body.id, match = String(body.match || '').trim(), value = body.value; let tab = body.tab || 'Project Plan';
       if (!id || !match || value == null) return json({ ok: false, error: 'missing id / match / value' }, 400);
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
+        tab = await resolveTab(id, tab, token);   // tab names vary per client (e.g. "Opitmisation Plan") — write where the reads come from
         const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
         const rd = await rr.json(); if (rd.error) return json({ ok: false, error: rd.error.message });
         const rows = rd.values || [];
@@ -541,7 +574,7 @@ export default {
         const cell = tab + '!' + colLetter(c.dueCol) + (targetRow + 1);
         const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(cell) + '?valueInputOption=USER_ENTERED', {
           method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values: [[value]] }) });
-        const wd = await wr.json(); if (wd.error) return json({ ok: false, error: wd.error.message, cell });
+        const wd = await wr.json(); if (wd.error) return json({ ok: false, error: permHint(wd.error.message), cell });
         try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
         return json({ ok: true, cell, updated: wd.updatedCells || 1 });
       } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
@@ -551,10 +584,11 @@ export default {
     if (path === '/api/sheets/task' && request.method === 'POST') {
       if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' });
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
-      const id = body.id, tab = body.tab || 'Project Plan', match = String(body.match || '').trim(), value = body.value;
+      const id = body.id, match = String(body.match || '').trim(), value = body.value; let tab = body.tab || 'Project Plan';
       if (!id || !match || value == null || !String(value).trim()) return json({ ok: false, error: 'missing id / match / value' }, 400);
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
+        tab = await resolveTab(id, tab, token);   // tab names vary per client (e.g. "Opitmisation Plan") — write where the reads come from
         const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
         const rd = await rr.json(); if (rd.error) return json({ ok: false, error: rd.error.message });
         const rows = rd.values || [];
@@ -566,7 +600,7 @@ export default {
         const cell = tab + '!' + colLetter(tc) + (targetRow + 1);
         const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(cell) + '?valueInputOption=USER_ENTERED', {
           method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values: [[value]] }) });
-        const wd = await wr.json(); if (wd.error) return json({ ok: false, error: wd.error.message, cell });
+        const wd = await wr.json(); if (wd.error) return json({ ok: false, error: permHint(wd.error.message), cell });
         try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
         return json({ ok: true, cell, updated: wd.updatedCells || 1 });
       } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
@@ -582,8 +616,8 @@ export default {
       if (!id || !rows.length) return json({ ok: false, error: 'missing id / rows' }, 400);
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
-        let realTab = tab;
-        let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+        let realTab = await resolveTab(id, tab, token);
+        let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
         let rd = await rr.json();
         if (rd.error) { // tab name varies — fall back to the first sheet
           rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent('A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
@@ -604,7 +638,7 @@ export default {
         const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(range) + '?valueInputOption=USER_ENTERED', {
           method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values }) });
         const wd = await wr.json();
-        if (wd.error) return json({ ok: false, error: wd.error.message });
+        if (wd.error) return json({ ok: false, error: permHint(wd.error.message) });
         try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
         return json({ ok: true, appended: values.length, tab: realTab || '(first sheet)', atRow: startRow,
           cols: { task: colLetter(tc), owner: oc >= 0 ? colLetter(oc) : null, status: sc >= 0 ? colLetter(sc) : null, due: dc >= 0 ? colLetter(dc) : null } });
@@ -622,8 +656,8 @@ export default {
       if (!id || !tasks.length) return json({ ok: false, error: 'missing id / tasks' }, 400);
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
-        let realTab = tab;
-        let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+        let realTab = await resolveTab(id, tab, token);
+        let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
         let rd = await rr.json();
         if (rd.error) { rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent('A1:Z600'), { headers: { Authorization: 'Bearer ' + token } }); rd = await rr.json(); realTab = ''; }
         if (rd.error) return json({ ok: false, error: rd.error.message });
@@ -804,11 +838,25 @@ function monthOf(s) { // detect a "month separator" label like "July-26", "Jun 2
 // a non-white cell fill = a section separator (blue/grey header), NOT a task (Ray's rule)
 function isFilled(rgb) { return !!rgb && Math.min(rgb[0], rgb[1], rgb[2]) < 0.93; }
 // read a tab's values AND per-cell background colour (needed to tell separators from tasks)
+// Writes must land on the tab the reads came from: exact name -> case-insensitive ->
+// first tab containing "plan" -> the sheet's first tab (mirrors fetchGrid's read fallback).
+async function resolveTab(id, tab, token) {
+  try {
+    const d = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '?fields=sheets.properties.title', { headers: { Authorization: 'Bearer ' + token } })).json();
+    const titles = ((d && d.sheets) || []).map(x => x.properties.title);
+    if (!titles.length || titles.indexOf(tab) >= 0) return tab;
+    return titles.find(t => t.toLowerCase() === String(tab).toLowerCase())
+        || titles.find(t => /plan/i.test(t))
+        || titles[0];
+  } catch (e) { return tab; }
+}
+function permHint(m) { return /permission|forbidden/i.test(String(m)) ? (m + ' — the service account can read but not write: open the sheet\u2019s Share dialog and change its access from Viewer to Editor') : m; }
 async function fetchGrid(id, tab, token) {
   const fields = 'sheets(properties(title),data(rowData(values(formattedValue,effectiveFormat(backgroundColor)))))';
   const tryRange = async range => (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '?ranges=' + encodeURIComponent(range) + '&includeGridData=true&fields=' + encodeURIComponent(fields), { headers: { Authorization: 'Bearer ' + token } })).json();
   let d = await tryRange((tab ? tab + '!' : '') + 'A1:Z600');
-  if (d.error && tab) d = await tryRange('A1:Z600'); // tab name varies — fall back to the first sheet
+  if (d.error && tab) { const best = await resolveTab(id, tab, token); if (best && best !== tab) d = await tryRange(best + '!A1:Z600'); }
+  if (d.error && tab) d = await tryRange('A1:Z600'); // last resort — the first sheet
   if (d.error) return { error: d.error.message };
   const sheet = (d.sheets || [])[0];
   const rowData = (sheet && sheet.data && sheet.data[0] && sheet.data[0].rowData) || [];

@@ -37,6 +37,32 @@ var KEY = 'PASTE_THE_GMAIL_PUSH_KEY_VALUE_HERE';
 var QUERY = 'newer_than:7d ("ibfcode:" OR subject:"[FS Brief]")';
 var MAX_THREADS = 50, MAX_MESSAGES = 150, MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
+// Run BOTH feeds (point the 5-min trigger at THIS): brief-reply sync + inbox intake.
+function syncFCC() { pushBriefReplies(); pushInbox(); }
+
+// ---- inbox intake: recent incoming mail → the Workflow's "Incoming emails" stream.
+// The worker classifies each message (which client, briefable/action-request vs FYI),
+// so send everything recent and let the server triage.
+function pushInbox() {
+  var threads = GmailApp.search('in:inbox newer_than:2d', 0, 40);
+  var out = [];
+  threads.forEach(function (t) {
+    t.getMessages().forEach(function (m) {
+      if (out.length >= 80) return;
+      var when = m.getDate().getTime();
+      if (Date.now() - when > 2 * 24 * 60 * 60 * 1000) return;
+      out.push({ id: m.getId(), from: m.getFrom(), subject: m.getSubject(),
+        snippet: (m.getPlainBody() || '').slice(0, 500), date: when });
+    });
+  });
+  if (!out.length) { console.log('FCC inbox: nothing new'); return; }
+  var res = UrlFetchApp.fetch(ENDPOINT, { method: 'post', contentType: 'application/json',
+    headers: { 'X-FCC-Push-Key': KEY }, payload: JSON.stringify({ inbox: out }), muteHttpExceptions: true });
+  var body = res.getContentText(); var p = null; try { p = JSON.parse(body); } catch (e) {}
+  if (p && p.ok) console.log('✓ FCC inbox OK — sent ' + out.length + ' · new ' + p.added + ' · briefable ' + p.briefable);
+  else console.error('✗ FCC inbox push failed: HTTP ' + res.getResponseCode() + ' ' + body.slice(0, 200));
+}
+
 function pushBriefReplies() {
   var threads = GmailApp.search(QUERY, 0, MAX_THREADS);
   var out = [];
