@@ -199,7 +199,19 @@ export default {
         await env.EDITS.put('briefs', JSON.stringify(envx));
       }
       logActivity(ctx, env, request, 'gmail-sync', res.matched + ' matched · ' + res.moved.length + ' moved', 'gmail-sync');
+      // rolling run history for the Activity page's Gmail-sync panel (last 60 runs)
+      try {
+        const runlog = (await env.EDITS.get('gmailpushlog', 'json')) || [];
+        runlog.push({ t: now, n: messages.length, m: res.matched, s: res.skipped, moved: res.moved.slice(0, 12) });
+        await env.EDITS.put('gmailpushlog', JSON.stringify(runlog.slice(-60)));
+      } catch (e) {}
       return json({ ok: true, matched: res.matched, skipped: res.skipped, moved: res.moved, tickets: res.loggedTo });
+    }
+
+    // the Gmail-sync run history (owner-only, rendered beside the activity stream)
+    if (path === '/api/gmail/pushlog' && request.method === 'GET') {
+      if (who(request) !== ownerEmail(env)) return json({ error: 'restricted to the account owner' }, 403);
+      return json({ runs: ((await env.EDITS.get('gmailpushlog', 'json')) || []).slice(-60).reverse() });
     }
 
     // ---- Build Log queue: Ray's "not built yet" backlog (kvmerge-backed, concurrency-safe) ----
