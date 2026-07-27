@@ -862,6 +862,24 @@ function getEditorScript(slug) {
     + ',h1,h2,h3,h4,h5,p,li,blockquote,figcaption,img,table,code';
   var blockN={}, groupN={}, groupIds=new WeakMap(), rowN={};
   var FEEDBACK=[], fbN=0;
+  var SWATCHES=['#F5A623','#ED6F0B','#333333','#FFFFFF','#F7F7F5']; // FeedSpark brand palette (CLAUDE.md Design system)
+  function swatchRow(forCls){
+    return '<div class="de-swatches" data-for="'+forCls+'">'
+      + SWATCHES.map(function(c){ return '<button type="button" class="de-sw" style="background:'+c+'" data-c="'+c+'" title="'+c+'"></button>'; }).join('')
+      + '</div>';
+  }
+  function wireSwatches(root){
+    root.querySelectorAll('.de-swatches').forEach(function(row){
+      var forCls=row.getAttribute('data-for');
+      row.querySelectorAll('.de-sw').forEach(function(btn){
+        btn.addEventListener('click',function(){
+          var input=root.querySelector('.'+forCls); if(!input) return;
+          input.value=btn.getAttribute('data-c');
+          input.dispatchEvent(new Event('input',{bubbles:true}));
+        });
+      });
+    });
+  }
   function esc(s){ return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   // ---- Undo: snapshot the whole saved-edits object before any mutating action, so Ctrl/Cmd+Z
@@ -896,6 +914,20 @@ function getEditorScript(slug) {
     var typing = ae && (ae.isContentEditable || /^(INPUT|TEXTAREA)$/.test(ae.tagName));
     if(typing) return; // let the browser's own per-field undo handle in-progress typing
     e.preventDefault(); performUndo();
+  });
+  // Ctrl/Cmd+C copies the selected block(s) into an in-memory clipboard; Ctrl/Cmd+V pastes
+  // them right after whatever block is selected at paste time — so you can select a block
+  // near your target and paste there, complementing the Alt+drag copy in initBlockDrag().
+  var deClipboard=null;
+  document.addEventListener('keydown',function(e){
+    if(!document.body.classList.contains('de-design')) return;
+    var ae=document.activeElement;
+    if(ae && (ae.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))) return;
+    if(!(e.ctrlKey||e.metaKey) || e.shiftKey) return;
+    var k=e.key.toLowerCase();
+    if(k==='c'){ if(!selEls.size) return; deClipboard=Array.from(selEls).map(function(el){ return el.outerHTML; });
+      toast(deClipboard.length+' block'+(deClipboard.length>1?'s':'')+' copied'); }
+    else if(k==='v'){ if(!deClipboard||!deClipboard.length) return; e.preventDefault(); pasteClipboard(); }
   });
 
   var css = 'body.de-on [data-eid]{outline:1px dashed rgba(237,111,11,.55);outline-offset:2px}'
@@ -936,6 +968,9 @@ function getEditorScript(slug) {
     + '.de-props label{display:block;font-size:10.5px;color:#6b7a8d;margin-bottom:3px}'
     + '.de-props input[type=number],.de-props select{width:100%;font:inherit;padding:6px 8px;border:1px solid #E6E6E6;border-radius:6px;box-sizing:border-box}'
     + '.de-props input[type=color]{width:100%;height:30px;border:1px solid #E6E6E6;border-radius:6px;padding:2px;cursor:pointer;box-sizing:border-box}'
+    + '.de-props .de-swatches{display:flex;gap:5px;margin-top:6px}'
+    + '.de-props .de-sw{width:20px;height:20px;border-radius:5px;border:1px solid rgba(0,0,0,.15);cursor:pointer;padding:0;flex-shrink:0}'
+    + '.de-props .de-sw:hover{transform:scale(1.15);box-shadow:0 0 0 2px rgba(0,0,0,.08)}'
     + '.de-props input[type=range]{width:100%;margin-top:6px}'
     + '.de-props .btnrow{display:flex;gap:6px}'
     + '.de-props .btnrow button{flex:1;border:1px solid #E6E6E6;background:#fff;border-radius:6px;padding:7px;cursor:pointer;font:inherit}'
@@ -1173,13 +1208,36 @@ function getEditorScript(slug) {
       });
       el.addEventListener('dragstart',function(e){
         if(!document.body.classList.contains('de-design')){ e.preventDefault(); return; }
-        el.classList.add('de-bdrag'); e.dataTransfer.effectAllowed='move';
+        // Alt/Option+drag copies instead of moves: a stub clone is left behind holding the
+        // original's identity, while `el` itself (now carrying a fresh id) is the thing that
+        // travels to wherever the mouse releases — reuses the move machinery below as-is.
+        el.__copyDrag=e.altKey;
+        if(e.altKey){
+          var stub=el.cloneNode(true); stub.classList.remove('de-bsel');
+          el.parentElement.insertBefore(stub, el);
+        }
+        el.classList.add('de-bdrag'); e.dataTransfer.effectAllowed=e.altKey?'copy':'move';
         try{ e.dataTransfer.setData('text/plain', el.getAttribute('data-rid')||''); }catch(er){}
       });
       el.addEventListener('dragend',function(){
         el.classList.remove('de-bdrag'); el.removeAttribute('draggable');
         var parent=el.parentElement, tid=parent&&parent.getAttribute('data-tid');
-        if(tid) saveContainerOrder(parent,tid);
+        if(el.__copyDrag){
+          el.__copyDrag=false;
+          var newId='b'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+          el.setAttribute('data-eid',newId); el.classList.remove('de-bsel');
+          var newRid=tid+'-r'+(rowN[tid]=(rowN[tid]||0)+1);
+          el.setAttribute('data-rid',newRid);
+          initBlockDrag();
+          var afterRid=el.previousElementSibling&&el.previousElementSibling.getAttribute('data-rid')||null;
+          armUndo().then(function(ed){
+            ed=ed||{}; var key='__added:'+tid; var list=(ed[key]||[]).slice();
+            list.push({id:newId, after:afterRid, html:el.outerHTML});
+            var patch={}; patch[key]=list;
+            return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)});
+          }).then(function(){ if(tid) saveContainerOrder(parent,tid); toast('Block copied'); selectBlock(el); })
+            .catch(function(){ toast('Copy failed to save'); });
+        } else if(tid) saveContainerOrder(parent,tid);
         if(selEls.size===1 && selEls.has(el)) positionOverlay(el);
       });
     });
@@ -1293,6 +1351,35 @@ function getEditorScript(slug) {
     }).then(function(){ saveContainerOrder(parent,tid); toast('Block duplicated'); selectBlock(clone); })
       .catch(function(){ toast('Duplicate failed to save'); });
   }
+  function pasteClipboard(){
+    var target=selEls.size?Array.from(selEls)[selEls.size-1]:null;
+    var container=target?target.parentElement:null;
+    if(!container||!container.getAttribute('data-tid')){ toast('Select a block to paste near first'); return; }
+    var tid=container.getAttribute('data-tid'), afterEl=target, newEls=[];
+    deClipboard.forEach(function(html){
+      var tmp=document.createElement('div'); tmp.innerHTML=html;
+      var node=tmp.firstElementChild; if(!node) return;
+      var newId='b'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+      node.setAttribute('data-eid',newId); node.classList.remove('de-bsel');
+      var newRid=tid+'-r'+(rowN[tid]=(rowN[tid]||0)+1);
+      node.setAttribute('data-rid',newRid);
+      container.insertBefore(node, afterEl?afterEl.nextSibling:container.firstChild);
+      afterEl=node; newEls.push(node);
+    });
+    if(!newEls.length) return;
+    initBlockDrag(); clearSelection();
+    newEls.forEach(function(el){ selectBlock(el,true); });
+    armUndo().then(function(ed){
+      ed=ed||{}; var key='__added:'+tid; var list=(ed[key]||[]).slice();
+      newEls.forEach(function(node){
+        var prev=node.previousElementSibling;
+        list.push({id:node.getAttribute('data-eid'), after:prev&&prev.getAttribute('data-rid')||null, html:node.outerHTML});
+      });
+      var patch={}; patch[key]=list;
+      return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)});
+    }).then(function(){ saveContainerOrder(container,tid); toast(newEls.length+' block'+(newEls.length>1?'s':'')+' pasted'); })
+      .catch(function(){ toast('Paste failed to save'); });
+  }
 
   // ---- Properties panel: a persistent Canva/PowerPoint-style inspector for whatever's
   // selected — one place for text, fill/border and size, instead of scattered mini-popups.
@@ -1322,11 +1409,13 @@ function getEditorScript(slug) {
         + '<label style="margin-top:8px">Align</label><div class="btnrow p-align">'
           + '<button data-v="left">⟵</button><button data-v="center">•</button><button data-v="right">⟶</button></div>'
         + '<label style="margin-top:8px">Text colour</label><input type="color" class="p-color" value="'+st.color+'">'
+        + swatchRow('p-color')
       + '</section>'
       + '<section><h5>Fill &amp; border</h5>'
         + '<label>Background</label><input type="color" class="p-bg" value="'+st.bg+'">'
+        + swatchRow('p-bg')
         + '<div class="grid2" style="margin-top:8px">'
-          + '<div><label>Border colour</label><input type="color" class="p-bc" value="'+st.borderColor+'"></div>'
+          + '<div><label>Border colour</label><input type="color" class="p-bc" value="'+st.borderColor+'">'+swatchRow('p-bc')+'</div>'
           + '<div><label>Border width</label><input type="number" class="p-bw" min="0" max="12" value="'+st.borderWidth+'"></div>'
         + '</div>'
         + '<div class="grid2" style="margin-top:8px">'
@@ -1341,6 +1430,7 @@ function getEditorScript(slug) {
       + '<div class="actions"><button class="dup">⧉ Duplicate</button><button class="rst">↺ Reset</button><button class="del">🗑 Delete</button></div>';
 
     propsPanel.querySelector('.pclose').addEventListener('click',clearSelection);
+    wireSwatches(propsPanel);
     propsPanel.querySelectorAll('.p-align button').forEach(function(b){ b.classList.toggle('on',b.getAttribute('data-v')===st.textAlign); });
     propsPanel.querySelector('.p-align').addEventListener('click',function(e){
       var b=e.target.closest('button'); if(!b) return; el.style.textAlign=b.getAttribute('data-v'); queueStyleSave(el); renderPropsPanel(el); });
