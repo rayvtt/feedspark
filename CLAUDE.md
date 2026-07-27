@@ -154,8 +154,8 @@ All HTML strategy decks include the inline edit + JSON patch sync system:
 ```
 GET  /                          → command center landing page (git-bundled + injected editor + Tachyon)
 GET  /workflow                  → Workflow control center (brief pipeline: Client→AM→ASPL)
-GET  /leadership /readiness /library /deck-builder /templates /roadmap /buildlog → app modules
-GET  /activity                  → user activity log (OWNER-only: gated to OWNER_EMAIL via Cloudflare Access identity)
+GET  /leadership /readiness /library /deck-builder /templates /roadmap → app modules
+GET  /activity                  → user activity log + Build Log tab (OWNER-only: gated to OWNER_EMAIL via Cloudflare Access identity); /buildlog 301s here
 GET  /api/activity?days=N       → activity feed (owner-only 403 otherwise); all API mutations + page views are logged per Access user
 GET  /api/buildlog              → Build Log feed (GitHub PRs/branches/overlap, KV-cached 10 min; optional GITHUB_TOKEN secret)
 GET|PUT /api/buildqueue         → Build Log "not built yet" queue (kvmerge-backed, concurrency-safe)
