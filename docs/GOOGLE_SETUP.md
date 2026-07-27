@@ -131,7 +131,13 @@ the same rules as the page's paste-router (done → Done/Analysis, blocked, prog
    `pushBriefReplies` once** and approve the Gmail prompt (your own account, `gmail.readonly`-
    equivalent scope via GmailApp).
 4. **Schedule it**: ⏰ Triggers → Add trigger → `pushBriefReplies` · time-driven · minutes
-   timer · **every 15 minutes**.
+   timer · **every 5 minutes** (Apps Script's floor; ~3% of the daily trigger quota — 15/30 min
+   also fine; Run ▶ in the editor fires an instant sync any time).
+
+**Filing/archiving is safe**: the script searches All Mail, so archived or labelled-away brief
+threads are still picked up — only Trash/Spam are excluded (deletion reads as intent; the
+Workflow paste-router is the catch-all). The 7-day window + server-side message-id dedupe make
+re-scans idempotent, so the trigger can be down for days and replies still apply exactly once.
 
 Verify: reply to any brief email containing its `[ibfcode:…]` with "started" → within 15 min the
 ticket sits in **In progress** on /workflow, and /activity shows a `gmail-sync` entry. When a
