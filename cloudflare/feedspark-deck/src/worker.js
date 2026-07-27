@@ -1081,10 +1081,13 @@ function getEditorScript(slug) {
     + '.de-bar button{background:#1A365D;color:#fff;border:0;border-radius:8px;padding:9px 13px;cursor:pointer;font:inherit}'
     + '.de-bar button.on{background:#ED6F0B}'
     + '.de-bar span{color:#6b7a8d;min-width:60px}'
-    // Present mode: same chrome the print stylesheet already hides (topbar, side-nav, editor
-    // UI), but live on-screen and toggle-able — for screen-sharing the deck without Ray's own
-    // tooling in shot. .de-handle stays visible (very dim) so there's always a way back in.
-    + 'body.de-present .topbar,body.de-present .side-nav,body.de-present .footmark,body.de-present .scrollcue,body.de-present .progress,body.de-present .de-bar,body.de-present .de-panel,body.de-present .de-props,body.de-present .de-toast,body.de-present .de-resize,body.de-present [id^="tky-"]{display:none!important}'
+    // Present mode: mostly the chrome the print stylesheet already hides (topbar, editor UI),
+    // live on-screen and toggle-able — for screen-sharing the deck without Ray's own tooling in
+    // shot. .side-nav is the one exception: kept visible on purpose (Ray's ask) so viewers can
+    // still see which chapter they're on and jump around — it already highlights the current
+    // section on scroll on its own, no extra wiring needed here. .de-handle stays visible (very
+    // dim) so there's always a way back in.
+    + 'body.de-present .topbar,body.de-present .footmark,body.de-present .scrollcue,body.de-present .progress,body.de-present .de-bar,body.de-present .de-panel,body.de-present .de-props,body.de-present .de-toast,body.de-present .de-resize,body.de-present [id^="tky-"]{display:none!important}'
     // .de-bar.de-show + .de-handle{display:none} (above) would otherwise hide this escape
     // hatch whenever Present was entered while the toolbar was already open — force it back.
     + 'body.de-present .de-handle{display:block!important;opacity:.18}'
@@ -1172,7 +1175,7 @@ function getEditorScript(slug) {
   var bEdit=document.createElement('button'); bEdit.textContent='✎ Edit';
   var bDesign=document.createElement('button'); bDesign.textContent='🎨 Design';
   var bFeedback=document.createElement('button'); bFeedback.textContent='💬 Feedback';
-  var bPresent=document.createElement('button'); bPresent.textContent='🖥 Present'; bPresent.title='Hide the topbar, side-nav and this editor — clean for screen-share (Ctrl/Cmd+Shift+P, or click the dim dot to exit)';
+  var bPresent=document.createElement('button'); bPresent.textContent='🖥 Present'; bPresent.title='Hide the topbar and this editor — clean for screen-share, keeps the chapter side-nav (Ctrl/Cmd+Shift+P, or click the dim dot to exit)';
   var bUndo=document.createElement('button'); bUndo.textContent='↺ Undo'; bUndo.title='Undo the last change (Ctrl/Cmd+Z)';
   var bPick=document.createElement('button'); bPick.textContent='◎ Element'; bPick.style.display='none';
   var bExport=document.createElement('button'); bExport.textContent='⤴ Export edits'; bExport.style.display='none';
