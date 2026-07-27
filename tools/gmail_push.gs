@@ -19,15 +19,23 @@
  *     set KEY below to the secret from step 1 → Run ▶ pushBriefReplies once →
  *     approve the Gmail permission prompt (it's your own account).
  *  4. Left sidebar ⏰ Triggers → Add trigger:
- *       function pushBriefReplies · time-driven · minutes timer · every 15 minutes.
- *  Done. Replies now move tickets in /workflow within ~15 min; every sync shows in
- *  /activity as "gmail-sync".
+ *       function pushBriefReplies · time-driven · minutes timer · every 5 minutes
+ *       (5 min is Apps Script's floor and uses ~3% of the daily trigger quota — pick
+ *       15/30 min if you prefer; Run ▶ in the editor fires an instant sync any time).
+ *  Done. Replies now move tickets in /workflow; every sync shows in /activity as
+ *  "gmail-sync".
+ *
+ *  Filing/archiving is SAFE: GmailApp.search covers All Mail, so archived or
+ *  labelled-away threads are still picked up. Only Trash/Spam are excluded — if a
+ *  reply was deleted before a sync saw it, use the Workflow's paste-router as the
+ *  catch-all. The 7-day window + message-id dedupe (server-side) mean the trigger
+ *  can be down for days and replies are still applied exactly once when it returns.
  */
 
 var ENDPOINT = 'https://feedspark.ray-vtt.workers.dev/api/gmail/push';
 var KEY = 'PASTE_THE_GMAIL_PUSH_KEY_VALUE_HERE';
-var QUERY = 'newer_than:3d ("ibfcode:" OR subject:"[FS Brief]")';
-var MAX_THREADS = 30, MAX_MESSAGES = 150, MAX_AGE_MS = 3 * 24 * 60 * 60 * 1000;
+var QUERY = 'newer_than:7d ("ibfcode:" OR subject:"[FS Brief]")';
+var MAX_THREADS = 50, MAX_MESSAGES = 150, MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 function pushBriefReplies() {
   var threads = GmailApp.search(QUERY, 0, MAX_THREADS);
