@@ -67,6 +67,23 @@ window.addEventListener('load',restore);
   .em-ago{flex:none;font-size:11px;color:var(--muted);font-weight:700}
   .em-go{flex:none;font:inherit;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
   .em-go:hover{background:var(--orange);color:#fff}
+  .em-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px}
+  .em-tog{margin-left:auto;flex:none;font:inherit;font-size:11px;font-weight:800;padding:3px 10px;border-radius:100px;border:1px dashed var(--line);background:none;color:var(--muted);cursor:pointer;white-space:nowrap}
+  .em-tog:hover{border-color:var(--navy);color:var(--navy)}
+  .em-no{flex:none;font:inherit;font-size:11.5px;font-weight:800;padding:4px 9px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer}
+  .em-no:hover{border-color:#C0392B;color:#C0392B}
+  .em-res{flex:none;font:inherit;font-size:11px;font-weight:800;padding:3px 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--navy);cursor:pointer;white-space:nowrap}
+  .em-res:hover{border-color:var(--navy)}
+  .em-row.dis{opacity:.55}
+  .em-row.dis .em-subj{text-decoration:line-through}
+  .em-was{flex:none;font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);border:1px solid var(--line);border-radius:100px;padding:1px 7px;background:var(--wash)}
+  .em-was.brf{color:#7A5AA8;border-color:#D9CEEA}
+  .em-dis-h{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:9px 0 3px}
+  .em-zero{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 0}
+  /* new-brief popup (reuses .scrim/.modal, wider for the 2-col composer) */
+  .bg-modal{width:min(1080px,100%)}
+  .bg-mhead{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+  .bg-mhead .mc{margin-bottom:0}
   /* two-column generator */
   .gen{display:grid;grid-template-columns:1.05fr 1fr;gap:16px;align-items:start}
   @media(max-width:900px){.gen{grid-template-columns:1fr}}
@@ -235,7 +252,7 @@ window.addEventListener('load',restore);
 <header class="hero"><div class="wrap">
   <div class="eyebrow">Private &amp; Confidential · Client → London AM → ASPL Content</div>
   <h1>Workflow control center</h1>
-  <p>The briefing pipeline in one place. Two streams come in — monthly <b>project-plan</b> tasks and daily <b>client emails</b> — and go out as coded briefs to <b>briefing@feedspark.com</b>. Every brief is tracked from send to sign-off: ASPL replies, due-date alerts, completion scan, and the client confirmation drafted for you.</p>
+  <p>The briefing pipeline in one place. Two streams come in — monthly <b>project-plan</b> tasks and daily <b>client emails</b> (triaged separately: each is either a task or it isn't) — and go out as coded briefs to <b>briefing@feedspark.com</b>. Every brief is tracked from send to sign-off: ASPL replies, due-date alerts, completion scan, and the client confirmation drafted for you.</p>
   <div class="kpis" id="kpis"></div>
 </div></header>
 
@@ -244,15 +261,17 @@ window.addEventListener('load',restore);
   <div class="wf-alerts" id="wf-alerts" style="display:none"></div>
 
   <div class="glive"><div class="gi">✉</div><div class="gt">
-    <div><span class="gdot" id="gdot"></span><b>Gmail live sync</b> — every 5 min the mailbox script pushes brief replies (they move tickets) and external client emails. <span id="gstate">Waiting for the first push — set up tools/gmail_push.gs (GOOGLE_SETUP.md §8).</span></div>
+    <div><span class="gdot" id="gdot"></span><b>Gmail live sync</b> — every 5 min the mailbox script pushes brief replies (they move tickets) and captures external client emails into the triage queue below. <span id="gstate">Waiting for the first push — set up tools/gmail_push.gs (GOOGLE_SETUP.md §8).</span></div>
     <div id="em-panel" hidden>
-      <div class="em-head">Incoming emails detected <span class="em-n" id="em-n"></span><span class="em-sub">to ray@feedspark.com from outside the team — ⚡ = reads as an action request. Brief straight from here.</span></div>
+      <div class="em-head">Email triage <span class="em-n" id="em-n"></span><span class="em-sub">every external email to ray@feedspark.com, kept apart from the task tracker — each one is either a task or it isn't. <b>→ Brief</b> turns it into a ticket, <b>✕ Not a task</b> clears it (remembered, restorable). ⚡ = reads as an action request.</span><button class="em-tog" id="em-tog" type="button" hidden></button></div>
       <div id="em-list"></div>
     </div>
   </div></div>
 
-  <h2>New brief</h2>
-  <p class="sub">Compose a coded brief the ASPL portal can auto-scan. The <span style="color:var(--orange-ink);font-weight:800">[ibfcode:…]</span> and <span style="color:var(--orange-ink);font-weight:800">ibfdue:…</span> tokens are generated for you and embedded in the subject and body.</p>
+  <!-- New-brief composer — a popup window. Openers: ＋ New brief (intake bar), every Brief
+       button on tracker rows, and → Brief in the email triage panel (prefill() routes here). -->
+  <div class="scrim" id="bg-scrim"><div class="modal bg-modal" role="dialog" aria-modal="true" aria-label="New brief">
+  <div class="bg-mhead"><div><h3>New brief</h3><div class="mc">Compose a coded brief the ASPL portal can auto-scan — the <span style="color:var(--orange-ink);font-weight:800">[ibfcode:…]</span> and <span style="color:var(--orange-ink);font-weight:800">ibfdue:…</span> tokens are generated and embedded in the subject and body for you.</div></div><button class="x" id="bg-x" type="button" aria-label="Close">×</button></div>
   <div class="gen">
     <div class="panel">
       <h3>Brief details</h3>
@@ -292,6 +311,7 @@ window.addEventListener('load',restore);
       </div>
     </div>
   </div>
+  </div></div>
 
   <style>
   .it-ctl{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:2px 0 12px}
@@ -535,8 +555,8 @@ window.addEventListener('load',restore);
   [data-theme=dark] .it-bulk{background:rgba(245,166,35,.12)}
   </style>
   <h2>Intake — every task, live</h2>
-  <p class="sub">Two streams in one table — monthly <b>project-plan</b> tasks and daily <b>client emails</b>. Change a <b>status</b> inline and plan rows write back to the sheet. Stack filters — pick several <b>sources</b>, <b>statuses</b>, <b>clients</b> or <b>AMs</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator. Works like a spreadsheet — click a cell, arrow-key around, <b>Cmd/Ctrl+C</b> copy, <b>Ctrl+D</b> fill down, <b>Ctrl+V</b> paste, <b>Ctrl+Z</b> undo; <b>double-click</b> to edit; on a status cell just <b>type a letter</b> (O, B, I, H, W, D) to set it.</p>
-  <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="add-task-btn" type="button">＋ Add task</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
+  <p class="sub">Pure tasks only — monthly <b>project-plan</b> rows plus the <b>emails you briefed</b> from the triage queue (raw emails stay up there until you decide). Change a <b>status</b> inline and plan rows write back to the sheet. Stack filters — pick several <b>sources</b>, <b>statuses</b>, <b>clients</b> or <b>AMs</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator. Works like a spreadsheet — click a cell, arrow-key around, <b>Cmd/Ctrl+C</b> copy, <b>Ctrl+D</b> fill down, <b>Ctrl+V</b> paste, <b>Ctrl+Z</b> undo; <b>double-click</b> to edit; on a status cell just <b>type a letter</b> (O, B, I, H, W, D) to set it.</p>
+  <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="new-brief-btn" type="button" title="Open the brief composer">✉ New brief</button><button class="live-add" id="add-task-btn" type="button" style="margin-left:0">＋ Add task</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
   <div class="it-ctl">
     <div class="it-multi" id="it-views-wrap">
       <button type="button" class="it-multi-btn" id="it-views-btn" aria-haspopup="true" aria-expanded="false" title="Save & reapply filter views">★ Views ▾</button>
@@ -897,6 +917,9 @@ window.addEventListener('load',restore);
     if(lk)b.taskKey=lk; window.__linkKey=null;
     recordLearning(o.f.client,(document.getElementById('bg-cat').value)||classifyLite(o.f.task),o.f);   // edited briefs teach the generator
     BRIEFS[id]=b; window.__editId=null; persist(); renderAll();
+    // briefed straight from the email triage queue → that email's decision is "task": clear it
+    if(window.__emailId){ decideEmail(window.__emailId,false,'briefed'); window.__emailId=null; }
+    closeBrief();
     toast(existing?'Brief updated':'Brief saved to pipeline'); };
 
   // ---- intake table: project-plan + incoming-email streams (ATRT-style, filter + sort) ----
@@ -974,12 +997,12 @@ window.addEventListener('load',restore);
   var gmailItems=[]; // live client emails pulled from Gmail (once the service account is connected)
   function senderName(from){ var m=/^\s*"?([^"<]+?)"?\s*</.exec(from||''); if(m)return m[1].trim();
     var e=/([^@<\s]+)@/.exec(from||''); return e?e[1]:(from||'—'); }
-  function emailIntake(){ // email-sourced items awaiting a brief
-    var fromBriefs=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];})
+  function emailIntake(){ // email-sourced BRIEFS still at intake stage. Raw captured emails never
+    // enter the tracker — they wait in the triage panel until briefed or dismissed (Ray's rule:
+    // each email is either a task or not a task, so don't mix them with tasks).
+    return Object.keys(BRIEFS).map(function(k){return BRIEFS[k];})
       .filter(function(b){return b.source==='email'&&b.status==='intake';})
-      .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email',s:'',b:'open'};});
-    var fromGmail=gmailItems.map(function(g){return {client:g.client||senderName(g.from),task:g.subject,cat:'',owner:senderName(g.from),source:'email',from:g.from,s:'',b:'open',briefable:!!g.briefable,hints:g.hints||[]};});
-    return fromBriefs.concat(fromGmail); }
+      .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email',s:'',b:'open'};}); }
   // ---- manually-added tasks: written into the plan sheet, shown here until live sync pulls them back ----
   var MANUAL=[]; try{MANUAL=JSON.parse(localStorage.getItem('fcc-manual')||'[]');}catch(e){}
   function saveManual(){ try{localStorage.setItem('fcc-manual',JSON.stringify(MANUAL));}catch(e){} }
@@ -1342,7 +1365,7 @@ window.addEventListener('load',restore);
         else { var i=itState[key].indexOf(s[0]); if(i>=0)itState[key].splice(i,1); else itState[key].push(s[0]); }
         renderChipBar(id,opts,key); renderIntake(); };
       wrap.appendChild(b); }); }
-  var SRC_OPTS=[['','All'],['plan','Project plan'],['email','Incoming emails']];
+  var SRC_OPTS=[['','All'],['plan','Project plan'],['email','Email tasks']];
   function renderSrcChips(){ renderChipBar('it-src',SRC_OPTS,'srcs'); }
   renderSrcChips();
   // reusable multi-select DROPDOWN (status + client): compact button + checklist, keeps the bar tidy
@@ -1476,6 +1499,7 @@ window.addEventListener('load',restore);
   })();
   function prefill(t){
     window.__editId=null;
+    window.__emailId=null;        // the email-triage opener re-sets this after calling prefill
     window.__linkKey=rowKey(t);   // tie the brief being drafted back to this intake row
     document.getElementById('bg-client').value= CLIENTS.indexOf(t.client)>=0? t.client : CLIENTS[0];
     document.getElementById('bg-source').value= t.source||'plan';
@@ -1484,7 +1508,7 @@ window.addEventListener('load',restore);
     var pd=taskDate(t); if(pd)document.getElementById('bg-due').value=pd.getFullYear()+'-'+pad(pd.getMonth()+1)+'-'+pad(pd.getDate());   // brief inherits the intake due date
     var ln=applyTemplate(cat,true);     // #2 auto-fill scope + DoD (learned version when one exists)
     refreshPreview();
-    window.scrollTo({top:0,behavior:'smooth'});
+    openBrief();
     toast('Prefilled from '+(ln?'your last edited '+(CAT_LBL[cat]||'optimisation')+' brief':'the '+(CAT_LBL[cat]||'optimisation')+' template')
       +(pd?' · due pulled from the intake row':' — set the due date')+' and save');
   }
@@ -1589,8 +1613,17 @@ window.addEventListener('load',restore);
   // ---- modal ----
   var scrim=document.getElementById('scrim'), modalEl=document.getElementById('modal');
   scrim.addEventListener('click',function(e){ if(e.target===scrim) closeModal(); });
-  document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeModal(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeModal(); closeBrief(); } });
   function closeModal(){ scrim.classList.remove('on'); }
+  // ---- new-brief popup (the composer lives in #bg-scrim; prefill() + the openers route here) ----
+  var bgScrim=document.getElementById('bg-scrim');
+  function openBrief(){ if(!bgScrim)return; bgScrim.classList.add('on');
+    setTimeout(function(){ var t=document.getElementById('bg-task'); if(t)t.focus(); },60); }
+  function closeBrief(){ if(!bgScrim)return; bgScrim.classList.remove('on'); window.__emailId=null; }
+  if(bgScrim)bgScrim.addEventListener('click',function(e){ if(e.target===bgScrim) closeBrief(); });
+  (function(){ var x=document.getElementById('bg-x'); if(x)x.onclick=closeBrief;
+    var nb=document.getElementById('new-brief-btn'); if(nb)nb.onclick=function(){
+      window.__editId=null; window.__linkKey=null; window.__emailId=null; refreshPreview(); openBrief(); }; })();
   function openModal(id){ var b=BRIEFS[id]; if(!b)return;
     var comms=(b.comms||[]).map(function(c){ return '<div class="comm"><span class="cw">'+esc(c.from)+'</span><span class="cb">'+esc(c.note)+(c.done?' <span class="ck">✓ done signal</span>':'')+'</span></div>'; }).join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
     var stat=STAGES.filter(function(s){ return s[0]!=='analysis'||needsAnalysis(b); })
@@ -1965,29 +1998,69 @@ window.addEventListener('load',restore);
   // #1 pull live plan rows on load (falls back to the git snapshot until the SA is connected)
   fetchLive(false);
   // pull the live Gmail intake (client task emails) once the service account is connected
+  // Every pending email waits here (⚡ action requests first) until it's decided:
+  // → Brief makes it a ticket (and clears it once the brief is saved); ✕ Not a task clears it.
+  // Decisions are remembered by the worker (KV) so cleared emails never resurface on a push;
+  // the "Show triaged" toggle lists them greyed-out with a ↩ Restore.
+  var showDismissed=false;
+  function emailRow(g){
+    var ago=''; if(g.date){ var s=(Date.now()-(+g.date||new Date(g.date).getTime()))/1000;
+      ago=s<3600?Math.max(1,Math.round(s/60))+'m':s<86400?Math.round(s/3600)+'h':Math.round(s/86400)+'d'; }
+    var act=g.dismissed
+      ? (g.decidedAs==='briefed'?'<span class="em-was brf">briefed</span>':'<span class="em-was">not a task</span>')
+        +'<button class="em-res" data-id="'+esc(g.id)+'" type="button">↩ Restore</button>'
+      : '<button class="em-go" data-id="'+esc(g.id)+'" type="button">→ Brief</button>'
+        +'<button class="em-no" data-id="'+esc(g.id)+'" type="button" title="Not a task — clear it (restorable under Show triaged)">✕</button>';
+    return '<div class="em-row'+(g.dismissed?' dis':'')+'">'+(g.briefable?'<span class="em-brf" title="'+esc((g.hints||[]).join(' · '))+'">⚡ action</span>':'')
+      +'<span class="em-from" title="'+esc(g.from)+'">'+esc(senderName(g.from))+'</span>'
+      +(g.client?'<span class="em-cl">'+esc(g.client)+'</span>':'')
+      +'<span class="em-subj" title="'+esc(g.snippet||'')+'">'+esc(g.subject)+'</span>'
+      +'<span class="em-ago">'+ago+'</span>'+act+'</div>';
+  }
   function renderEmailPanel(){
-    var panel=document.getElementById('em-panel'), list=document.getElementById('em-list'), n=document.getElementById('em-n');
+    var panel=document.getElementById('em-panel'), list=document.getElementById('em-list'),
+        n=document.getElementById('em-n'), tog=document.getElementById('em-tog');
     if(!panel||!list)return;
     if(!gmailItems.length){ panel.hidden=true; return; }
-    panel.hidden=false; if(n)n.textContent=gmailItems.length;
-    list.innerHTML=gmailItems.slice(0,12).map(function(g,i){
-      var ago=''; if(g.date){ var s=(Date.now()-(+g.date||new Date(g.date).getTime()))/1000;
-        ago=s<3600?Math.max(1,Math.round(s/60))+'m':s<86400?Math.round(s/3600)+'h':Math.round(s/86400)+'d'; }
-      return '<div class="em-row">'+(g.briefable?'<span class="em-brf" title="'+esc((g.hints||[]).join(' · '))+'">⚡ action</span>':'')
-        +'<span class="em-from" title="'+esc(g.from)+'">'+esc(senderName(g.from))+'</span>'
-        +(g.client?'<span class="em-cl">'+esc(g.client)+'</span>':'')
-        +'<span class="em-subj" title="'+esc(g.snippet||'')+'">'+esc(g.subject)+'</span>'
-        +'<span class="em-ago">'+ago+'</span>'
-        +'<button class="em-go" data-i="'+i+'" type="button">Brief</button></div>'; }).join('');
-    list.querySelectorAll('.em-go').forEach(function(b){ b.onclick=function(){ var g=gmailItems[+b.getAttribute('data-i')];
-      prefill({client:g.client||senderName(g.from),task:g.subject,source:'email',from:g.from}); }; });
+    panel.hidden=false;
+    var pend=gmailItems.filter(function(g){return !g.dismissed;}),
+        done=gmailItems.filter(function(g){return g.dismissed;});
+    if(n)n.textContent=pend.length?(pend.length+' waiting'):'all triaged ✓';
+    if(tog){ tog.hidden=!done.length; tog.textContent=(showDismissed?'Hide':'Show')+' triaged ('+done.length+')';
+      tog.onclick=function(){ showDismissed=!showDismissed; renderEmailPanel(); }; }
+    pend.sort(function(a,b){ return (b.briefable?1:0)-(a.briefable?1:0) || (b.date||0)-(a.date||0); });
+    var html=pend.slice(0,25).map(emailRow).join('')
+      ||'<div class="em-zero">Nothing waiting — every captured email has been triaged.</div>';
+    if(showDismissed&&done.length) html+='<div class="em-dis-h">Triaged — briefed or not a task</div>'+done.slice(0,25).map(emailRow).join('');
+    list.innerHTML=html;
+    function byId(b){ var id=b.getAttribute('data-id'), hit=null;
+      gmailItems.forEach(function(g){ if(String(g.id)===id)hit=g; }); return hit; }
+    list.querySelectorAll('.em-go').forEach(function(b){ b.onclick=function(){ var g=byId(b); if(!g)return;
+      prefill({client:g.client||senderName(g.from),task:g.subject,source:'email',from:g.from});
+      window.__emailId=g.id; }; });   // after prefill — it resets __emailId for non-email openers
+    list.querySelectorAll('.em-no').forEach(function(b){ b.onclick=function(){ decideEmail(b.getAttribute('data-id'),false,'notask'); }; });
+    list.querySelectorAll('.em-res').forEach(function(b){ b.onclick=function(){ decideEmail(b.getAttribute('data-id'),true); }; });
   }
-  (function(){ var dot=document.getElementById('gdot'), st=document.getElementById('gstate');
+  // optimistic local flip + server-side memory, so the decision survives every future push
+  function decideEmail(id,undo,reason){
+    gmailItems.forEach(function(g){ if(String(g.id)===String(id)){
+      if(undo){ delete g.dismissed; delete g.decidedAs; } else { g.dismissed=true; g.decidedAs=reason||'notask'; } } });
+    renderEmailPanel(); updateGmailState();
+    fetch('/api/gmail/dismiss',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({id:id,undo:!!undo,reason:reason||'notask'})})
+      .catch(function(){ toast('Saving the triage decision failed — it may come back on refresh'); });
+    if(undo)toast('Restored to the triage queue');
+    else if(reason!=='briefed')toast('Cleared — not a task (find it under “Show triaged”)');
+  }
+  function updateGmailState(){ var st=document.getElementById('gstate'); if(!st||!gmailItems.length)return;
+    var pend=gmailItems.filter(function(g){return !g.dismissed;}),
+        brf=pend.filter(function(g){return g.briefable;}).length, done=gmailItems.length-pend.length;
+    st.textContent='Connected — '+pend.length+' email'+(pend.length===1?'':'s')+' waiting for triage'
+      +(brf?(' · '+brf+' look like action requests ⚡'):'')+(done?(' · '+done+' triaged'):'')+'.'; }
+  (function(){ var dot=document.getElementById('gdot');
     fetch('/api/gmail/intake').then(function(r){return r.json();}).then(function(d){
       if(d && d.connected){ gmailItems=d.items||[]; if(dot)dot.classList.add('on');
-        var brf=gmailItems.filter(function(g){return g.briefable;}).length;
-        if(st)st.textContent='Connected — '+gmailItems.length+' external email'+(gmailItems.length===1?'':'s')+' captured'+(brf?(' · '+brf+' look like action requests ⚡'):'')+'.';
-        renderEmailPanel(); renderAll(); }
+        updateGmailState(); renderEmailPanel(); }
     }).catch(function(){}); })();
 })();
 </script>

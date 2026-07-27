@@ -385,6 +385,32 @@
       "file": "cloudflare/feedspark-deck/src/briefmatch.js",
       "pattern": "feedhero\\.net",
       "pr": 101
+    },
+    {
+      "name": "Workflow: email triage panel — separate queue, task/not-task decisions",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "api/gmail/dismiss",
+      "pr": 102
+    },
+    {
+      "name": "Workflow: raw emails OUT of the task tracker (triage first)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "Raw captured emails never",
+      "pr": 102
+    },
+    {
+      "name": "Workflow: new-brief composer as popup window",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "bg-scrim",
+      "min": 2,
+      "pr": 102
+    },
+    {
+      "name": "worker: gmail triage dismiss memory (KV, restorable)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "gmaildismissed",
+      "min": 3,
+      "pr": 102
     }
   ]
 }
