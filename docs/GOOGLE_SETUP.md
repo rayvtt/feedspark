@@ -130,9 +130,13 @@ the same rules as the page's paste-router (done → Done/Analysis, blocked, prog
    [`tools/gmail_push.gs`](../tools/gmail_push.gs) → set `KEY` to the secret → **Run ▶
    `pushBriefReplies` once** and approve the Gmail prompt (your own account, `gmail.readonly`-
    equivalent scope via GmailApp).
-4. **Schedule it**: ⏰ Triggers → Add trigger → `pushBriefReplies` · time-driven · minutes
-   timer · **every 5 minutes** (Apps Script's floor; ~3% of the daily trigger quota — 15/30 min
-   also fine; Run ▶ in the editor fires an instant sync any time).
+4. **Schedule it**: ⏰ Triggers → Add trigger → **`syncFCC`** · time-driven · minutes timer ·
+   **every 5 minutes** (Apps Script's floor; ~3% of the daily trigger quota; Run ▶ fires an
+   instant sync any time). `syncFCC` runs BOTH feeds: the brief-reply sync **and** the inbox
+   intake — recent incoming mail lands in the Workflow's "Incoming emails" stream, classified
+   server-side (which client it's about + a ⚡ **action** badge when it reads as a briefable
+   request rather than FYI). If you already made a `pushBriefReplies` trigger, edit it to point
+   at `syncFCC` instead.
 
 **Filing/archiving is safe**: the script searches All Mail, so archived or labelled-away brief
 threads are still picked up — only Trash/Spam are excluded (deletion reads as intent; the

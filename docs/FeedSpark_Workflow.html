@@ -350,6 +350,7 @@ window.addEventListener('load',restore);
   .itbl .src-tag{font-size:10px;font-weight:800;border-radius:100px;padding:2px 9px;border:1px solid;white-space:nowrap}
   .itbl .src-plan{color:#5B82BE;background:rgba(91,130,190,.13);border-color:rgba(91,130,190,.32)}
   .itbl .src-email{color:var(--orange-ink);background:rgba(245,166,35,.13);border-color:rgba(245,166,35,.32)}
+  .itbl .src-brf{color:#fff;background:var(--orange-deep);border-color:var(--orange-deep);margin-left:4px;font-weight:900}
   .itbl .src-atrt{color:#7A5AA8;background:rgba(122,90,168,.13);border-color:rgba(122,90,168,.34)}
   .itbl .c-act{text-align:right;white-space:nowrap}
   .itbl .brief-btn{font:inherit;font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
@@ -959,7 +960,7 @@ window.addEventListener('load',restore);
     var fromBriefs=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];})
       .filter(function(b){return b.source==='email'&&b.status==='intake';})
       .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email',s:'',b:'open'};});
-    var fromGmail=gmailItems.map(function(g){return {client:senderName(g.from),task:g.subject,cat:'',owner:senderName(g.from),source:'email',from:g.from,s:'',b:'open'};});
+    var fromGmail=gmailItems.map(function(g){return {client:g.client||senderName(g.from),task:g.subject,cat:'',owner:senderName(g.from),source:'email',from:g.from,s:'',b:'open',briefable:!!g.briefable,hints:g.hints||[]};});
     return fromBriefs.concat(fromGmail); }
   // ---- manually-added tasks: written into the plan sheet, shown here until live sync pulls them back ----
   var MANUAL=[]; try{MANUAL=JSON.parse(localStorage.getItem('fcc-manual')||'[]');}catch(e){}
@@ -1100,7 +1101,7 @@ window.addEventListener('load',restore);
     var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey)BK[b.taskKey]=b; });   // intake row -> its live ticket
     body.innerHTML = f.length ? f.map(function(t,i){
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
-      var src=t.source==='email'?'<span class="src-tag src-email">Email</span>':t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':'<span class="src-tag src-plan">Plan</span>';
+      var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
       var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt');
       var bf=BK[k], bfChip=bf?('<span class="bf-chip" data-bid="'+esc(bf.id)+'" style="background:'+(STAGE_COLOR[bf.status]||'#8a94a0')+'" title="Ticket '+esc(bf.id)+' — '+esc(STAGE_LBL[bf.status]||bf.status)+(courtOf(bf)?(' · ball with '+courtOf(bf)):'')+'. Click to open">'+esc(STAGE_LBL[bf.status]||bf.status)+'</span>'):'';
