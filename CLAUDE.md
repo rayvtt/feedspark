@@ -157,6 +157,7 @@ GET  /workflow                  → Workflow control center (brief pipeline: Cli
 GET  /leadership /readiness /library /deck-builder /templates /roadmap → app modules
 GET  /activity                  → user activity log + Build Log tab (OWNER-only: gated to OWNER_EMAIL via Cloudflare Access identity); /buildlog 301s here
 GET  /api/activity?days=N       → activity feed (owner-only 403 otherwise); all API mutations + page views are logged per Access user
+POST /api/gmail/push            → Gmail→briefs status sync (no-admin path): Apps Script in Ray's mailbox pushes brief replies; briefmatch.js moves ticket stages. Auth = GMAIL_PUSH_KEY secret + Access bypass on this path (GOOGLE_SETUP.md §8)
 GET  /api/buildlog              → Build Log feed (GitHub PRs/branches/overlap, KV-cached 10 min; optional GITHUB_TOKEN secret)
 GET|PUT /api/buildqueue         → Build Log "not built yet" queue (kvmerge-backed, concurrency-safe)
 GET  /deck/yumove               → YuMOVE strategy deck (git-bundled + injected editor)
