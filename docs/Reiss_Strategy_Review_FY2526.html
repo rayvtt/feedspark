@@ -125,6 +125,21 @@ tbody tr:nth-child(even){background:var(--paper-2)}
 .mkt-legend span{display:inline-flex;align-items:center;gap:6px}
 .mkt-legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
 
+/* Country code checklist popup — chapter 17's schedule table is dense with 2-letter codes;
+   this is a lookup, not decoration, and doubles as Ray's own launch-tracking checklist
+   (checked state persists per-browser via localStorage, not shared/synced). */
+.cc-key{position:relative;margin-bottom:16px}
+.cc-toggle{font-size:12px;font-weight:700;letter-spacing:.02em;padding:8px 14px;border:1px solid var(--line);border-radius:20px;background:#fff;cursor:pointer;color:var(--ink-2)}
+.cc-toggle:hover{border-color:var(--orange)}
+.cc-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-lift);padding:8px;width:300px;max-height:340px;overflow-y:auto}
+.cc-panel[hidden]{display:none}
+.cc-row{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;font-size:13px;cursor:pointer}
+.cc-row:hover{background:var(--paper-2)}
+.cc-row input{margin:0;cursor:pointer}
+.cc-code{font-weight:800;font-size:11px;letter-spacing:.04em;color:var(--orange-deep);width:30px;flex-shrink:0}
+.cc-name{color:var(--ink-2)}
+.cc-row input:checked ~ .cc-name{text-decoration:line-through;color:var(--muted)}
+
 /* bars */
 .bars{display:flex;flex-direction:column;gap:16px}
 .bar-row .bl{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px}
@@ -1049,6 +1064,33 @@ policy data become commercial controls"<br>Google&nbsp;</p>
 
 <section>
   <div class="wrap">
+    <div class="cc-key rv in">
+      <button class="cc-toggle" type="button" aria-expanded="false">▾ Country code key (22)</button>
+      <div class="cc-panel" hidden>
+        <label class="cc-row"><input type="checkbox" data-code="NZ"><span class="cc-code">NZ</span><span class="cc-name">New Zealand</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="BH"><span class="cc-code">BH</span><span class="cc-name">Bahrain</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="OM"><span class="cc-code">OM</span><span class="cc-name">Oman</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="JO"><span class="cc-code">JO</span><span class="cc-name">Jordan</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="NO"><span class="cc-code">NO</span><span class="cc-name">Norway</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="IS"><span class="cc-code">IS</span><span class="cc-name">Iceland</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="HU"><span class="cc-code">HU</span><span class="cc-name">Hungary</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="BG"><span class="cc-code">BG</span><span class="cc-name">Bulgaria</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="RS"><span class="cc-code">RS</span><span class="cc-name">Serbia</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="UA"><span class="cc-code">UA</span><span class="cc-name">Ukraine</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="MT"><span class="cc-code">MT</span><span class="cc-name">Malta</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="CY"><span class="cc-code">CY</span><span class="cc-name">Cyprus</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="JP"><span class="cc-code">JP</span><span class="cc-name">Japan</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="TW"><span class="cc-code">TW</span><span class="cc-name">Taiwan</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="KR"><span class="cc-code">KR</span><span class="cc-name">South Korea</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="MY"><span class="cc-code">MY</span><span class="cc-name">Malaysia</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="TH"><span class="cc-code">TH</span><span class="cc-name">Thailand</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="PH"><span class="cc-code">PH</span><span class="cc-name">Philippines</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="IN"><span class="cc-code">IN</span><span class="cc-name">India</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="MX"><span class="cc-code">MX</span><span class="cc-name">Mexico</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="ZA"><span class="cc-code">ZA</span><span class="cc-name">South Africa</span></label>
+        <label class="cc-row"><input type="checkbox" data-code="KZ"><span class="cc-code">KZ</span><span class="cc-name">Kazakhstan</span></label>
+      </div>
+    </div>
     <div class="tbl-wrap rv in" style="margin-bottom:24px">
       <table><thead><tr><th style="width:14%">Week</th><th style="width:12%">Mon</th><th style="width:12%">Tue</th><th style="width:12%">Wed</th><th>Sequencing logic</th></tr></thead>
       <tbody>
@@ -1203,6 +1245,34 @@ policy data become commercial controls"<br>Google&nbsp;</p>
     b.classList.add('active');render(b.getAttribute('data-k'));
   });
   render('qa');
+
+  /* ======== country code checklist (chapter 17) ======== */
+  var ccBtn=document.querySelector('.cc-toggle'), ccPanel=document.querySelector('.cc-panel');
+  if(ccBtn && ccPanel){
+    var ccBase='▾ Country code key (22)';
+    var ccSaved={};
+    try{ ccSaved=JSON.parse(localStorage.getItem('reiss-rollout-checklist')||'{}'); }catch(e){}
+    function ccCount(){ return Object.keys(ccSaved).filter(function(k){return ccSaved[k];}).length; }
+    function ccLabel(){ var n=ccCount(); ccBtn.textContent=n?ccBase+' — '+n+' launched':ccBase; }
+    ccPanel.querySelectorAll('input[type=checkbox]').forEach(function(cb){
+      var code=cb.getAttribute('data-code');
+      cb.checked=!!ccSaved[code];
+      cb.addEventListener('change',function(){
+        ccSaved[code]=cb.checked;
+        try{ localStorage.setItem('reiss-rollout-checklist',JSON.stringify(ccSaved)); }catch(e){}
+        ccLabel();
+      });
+    });
+    ccLabel();
+    ccBtn.addEventListener('click',function(e){
+      e.stopPropagation();
+      ccPanel.hidden=!ccPanel.hidden;
+      ccBtn.setAttribute('aria-expanded',String(!ccPanel.hidden));
+    });
+    document.addEventListener('click',function(e){
+      if(!ccPanel.hidden && !ccPanel.contains(e.target) && e.target!==ccBtn) ccPanel.hidden=true;
+    });
+  }
 
 })();
 </script>
