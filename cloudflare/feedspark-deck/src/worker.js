@@ -33,7 +33,6 @@ import ROADMAP from "../../../docs/FeedSpark_Roadmap.html";
 import READINESS from "../../../docs/FeedSpark_Readiness.html";
 import LEADERSHIP from "../../../docs/FeedSpark_Leadership.html";
 import DECKBUILDER from "../../../docs/FeedSpark_DeckBuilder.html";
-import BUILDLOG from "../../../docs/FeedSpark_BuildLog.html";
 import ACTIVITY from "../../../docs/FeedSpark_Activity.html";
 import WORKFLOW from "../../../docs/FeedSpark_Workflow.html";
 import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html";
@@ -54,8 +53,7 @@ const PAGES = {
   '/readiness':   { html: READINESS,   slug: 'readiness' },
   '/leadership':  { html: LEADERSHIP,  slug: 'leadership' },
   '/deck-builder':{ html: DECKBUILDER, slug: 'deckbuilder' },
-  '/buildlog':    { html: BUILDLOG,    slug: 'buildlog' },
-  '/activity':    { html: ACTIVITY,    slug: 'activity' },   // owner-gated in fetch() before this map is consulted
+  '/activity':    { html: ACTIVITY,    slug: 'activity' },   // owner-gated in fetch() before this map is consulted; Build Log lives on its 🔨 tab
   '/workflow':    { html: WORKFLOW,    slug: 'workflow' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
@@ -106,6 +104,11 @@ export default {
       }
       entries.sort((a, b) => b.t - a.t);
       return json({ owner: true, days, entries: entries.slice(0, 800) });
+    }
+
+    // the Build Log merged into /activity's 🔨 tab — keep the old URL working
+    if (path === '/buildlog') {
+      return new Response(null, { status: 301, headers: { Location: '/activity#build', ...CORS } });
     }
 
     // the activity PAGE is owner-only too (the link is visible to everyone; the data is not)
