@@ -39,22 +39,30 @@ function validDD(dd8) {
   return d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 2020 && y <= 2100;
 }
 
-function findBrief(briefs, text) {
+// Automated matching is TOKEN-ONLY: [ibfcode:…] or a brief id, subject taking priority over
+// the body. No wording-similarity fallback here — unattended fuzzy matching mis-filed real
+// replies (the page's paste-router keeps its fuzzy match because a human confirms it there).
+// A body carrying several different codes with none in the subject (digests, forwards) is
+// ambiguous and is skipped rather than guessed.
+function codeIn(s) { const m = /ibfcode:([a-z0-9-]+)/i.exec(s || ''); return m ? m[1].toLowerCase() : ''; }
+function findBrief(briefs, subject, snippet) {
   const arr = Object.keys(briefs).map((k) => briefs[k]);
-  const cm = /ibfcode:([a-z0-9-]+)/i.exec(text);
-  if (cm) {
-    const c = cm[1].toLowerCase();
+  const byCode = (c) => {
     const hits = arr.filter((b) => (b.code || '').toLowerCase() === c);
-    if (hits.length) {
-      if (hits.length > 1) hits.sort((x, y) => taskDice(text, y.task) - taskDice(text, x.task));
-      return hits[0];
-    }
-  }
-  const im = ID_RE.exec(text);
-  if (im && briefs[im[1]]) return briefs[im[1]];
-  let best = null, bs = 0;
-  arr.forEach((b) => { if (b.status === 'confirmed') return; const s = taskDice(text, b.task); if (s > bs) { bs = s; best = b; } });
-  return bs >= 0.55 ? best : null;   // page uses 0.45; snippets are shorter, so be stricter
+    if (!hits.length) return null;
+    if (hits.length > 1) hits.sort((x, y) => taskDice(subject + ' ' + snippet, y.task) - taskDice(subject + ' ' + snippet, x.task));
+    return hits[0];
+  };
+  const subjCode = codeIn(subject);
+  if (subjCode) { const b = byCode(subjCode); if (b) return b; }
+  const subjId = ID_RE.exec(subject || '');
+  if (subjId && briefs[subjId[1]]) return briefs[subjId[1]];
+  const bodyCodes = Array.from(new Set((String(snippet || '').match(/ibfcode:([a-z0-9-]+)/gi) || []).map((s) => s.slice(8).toLowerCase())));
+  if (bodyCodes.length === 1) { const b = byCode(bodyCodes[0]); if (b) return b; }
+  if (bodyCodes.length > 1) return null;   // ambiguous — never guess unattended
+  const bodyId = ID_RE.exec(snippet || '');
+  if (bodyId && briefs[bodyId[1]]) return briefs[bodyId[1]];
+  return null;
 }
 
 // ---- inbound triage: which client is an email about, and is it BRIEFABLE (an action
@@ -69,12 +77,15 @@ const ACTION_RES = [
 ];
 const FEED_RE = /\b(feed|title|titles|description|image|label|labels|gtin|attribute|product type|campaign|shopping|merchant|gmc|dpa|meta|supplemental|disapprov|keyword)\b/i;
 const NOISE_RE = /\b(no-?reply|noreply|newsletter|unsubscribe|notification|billing|invoice paid|receipt|out of office|automatic reply)\b/i;
+// the team's own domains — mail FROM these is internal, never client intake (Ray's rule:
+// capture what lands at ray@feedspark.com from OUTSIDE feedspark/aroxo/feedhero)
+const INTERNAL_RE = /@([a-z0-9.-]*\.)?(feedspark\.com|aroxo\.com|feedhero\.net)\b/i;
 
 // msg: {from, subject, snippet}; clientDoms: {Brand: "domain.com"}; clientNames: [Brand,...]
 export function classifyInbound(msg, clientDoms, opts) {
   opts = opts || {};
   const from = String(msg.from || ''), text = (String(msg.subject || '') + ' ' + String(msg.snippet || ''));
-  if ((opts.selfRe && opts.selfRe.test(from)) || NOISE_RE.test(from + ' ' + String(msg.subject || ''))) {
+  if ((opts.selfRe && opts.selfRe.test(from)) || INTERNAL_RE.test(from) || NOISE_RE.test(from + ' ' + String(msg.subject || ''))) {
     return { client: '', briefable: false, score: 0, hints: ['noise/self'] };
   }
   let client = '';
@@ -112,7 +123,7 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     if (selfRe && selfRe.test(from)) { skipped++; continue; }        // our own outgoing brief
     const text = (String(msg.subject || '') + ' ' + String(msg.snippet || '')).trim();
     if (!text) { skipped++; continue; }
-    const b = findBrief(briefs, text);
+    const b = findBrief(briefs, msg.subject, msg.snippet);
     if (!b) { skipped++; continue; }
     b.comms = b.comms || [];
     if (msg.id && b.comms.some((c) => c.mid === msg.id)) { skipped++; continue; }   // already logged
