@@ -25,6 +25,7 @@
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
+import { matchGmailToBriefs } from "./briefmatch.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
@@ -172,6 +173,33 @@ export default {
       // brief pipeline: deletion = absence, disambiguated by the writer's X-Sync-Base read-stamp
       const r = await mapStoreRoute(env, request, 'briefs', {});
       if (r) return r;
+    }
+
+    // ---- Gmail → briefs status sync (the NO-ADMIN path): a Google Apps Script running in the
+    // mailbox owner's own account (tools/gmail_push.gs, authorised by the user — no Workspace
+    // super-admin, no domain-wide delegation) POSTs recent brief-thread messages here on a
+    // 15-min trigger. briefmatch.js applies them to the Workflow tickets with the SAME rules
+    // as the page's paste-router (ibfcode/id/wording match; done→done|analysis, blocked,
+    // progress; ibfdue/eta → due; forward-only; deduped by message id).
+    // Auth: X-FCC-Push-Key must equal the GMAIL_PUSH_KEY secret, and this exact path needs a
+    // Cloudflare Access BYPASS policy (Apps Script can't pass Access) — docs/GOOGLE_SETUP.md §8.
+    if (path === '/api/gmail/push' && request.method === 'POST') {
+      if (!env.GMAIL_PUSH_KEY) return json({ ok: false, error: 'push key not configured — wrangler secret put GMAIL_PUSH_KEY' }, 503);
+      if (request.headers.get('X-FCC-Push-Key') !== env.GMAIL_PUSH_KEY) return json({ ok: false, error: 'unauthorized' }, 401);
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const messages = Array.isArray(body.messages) ? body.messages.slice(0, 200) : [];
+      if (!messages.length) return json({ ok: true, matched: 0, moved: [] });
+      const now = Date.now();
+      const envx = liftEnvelope(await env.EDITS.get('briefs', 'json'), now);
+      const briefs = envelopeToClient(envx, {});
+      const selfSrc = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
+      const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'] });
+      if (res.matched) {
+        mergeIntoEnvelope(envx, briefs, now, now, {});   // full map present → pure upserts, no deletions
+        await env.EDITS.put('briefs', JSON.stringify(envx));
+      }
+      logActivity(ctx, env, request, 'gmail-sync', res.matched + ' matched · ' + res.moved.length + ' moved', 'gmail-sync');
+      return json({ ok: true, matched: res.matched, skipped: res.skipped, moved: res.moved, tickets: res.loggedTo });
     }
 
     // ---- Build Log queue: Ray's "not built yet" backlog (kvmerge-backed, concurrency-safe) ----
@@ -666,11 +694,11 @@ function who(request) {
 function ownerEmail(env) { return String(env.OWNER_EMAIL || 'ray@feedspark.com').toLowerCase(); }
 // append an activity entry without blocking the response (per-entry key, 90-day TTL,
 // entry stored in key METADATA so reading the feed is one list() with no value gets)
-function logActivity(ctx, env, request, action, detail) {
+function logActivity(ctx, env, request, action, detail, userOverride) {
   try {
     const t = Date.now();
     const key = 'act:' + String(t).padStart(14, '0') + ':' + Math.random().toString(36).slice(2, 6);
-    const meta = { t, u: who(request), a: action, d: String(detail || '').slice(0, 80) };
+    const meta = { t, u: userOverride || who(request), a: action, d: String(detail || '').slice(0, 80) };
     const p = env.EDITS.put(key, '', { metadata: meta, expirationTtl: 60 * 60 * 24 * 90 });
     if (ctx && ctx.waitUntil) ctx.waitUntil(p);
   } catch (e) { /* logging must never break the request */ }
@@ -862,6 +890,24 @@ function getEditorScript(slug) {
     + ',h1,h2,h3,h4,h5,p,li,blockquote,figcaption,img,table,code';
   var blockN={}, groupN={}, groupIds=new WeakMap(), rowN={};
   var FEEDBACK=[], fbN=0;
+  var SWATCHES=['#F5A623','#ED6F0B','#333333','#FFFFFF','#F7F7F5']; // FeedSpark brand palette (CLAUDE.md Design system)
+  function swatchRow(forCls){
+    return '<div class="de-swatches" data-for="'+forCls+'">'
+      + SWATCHES.map(function(c){ return '<button type="button" class="de-sw" style="background:'+c+'" data-c="'+c+'" title="'+c+'"></button>'; }).join('')
+      + '</div>';
+  }
+  function wireSwatches(root){
+    root.querySelectorAll('.de-swatches').forEach(function(row){
+      var forCls=row.getAttribute('data-for');
+      row.querySelectorAll('.de-sw').forEach(function(btn){
+        btn.addEventListener('click',function(){
+          var input=root.querySelector('.'+forCls); if(!input) return;
+          input.value=btn.getAttribute('data-c');
+          input.dispatchEvent(new Event('input',{bubbles:true}));
+        });
+      });
+    });
+  }
   function esc(s){ return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   // ---- Undo: snapshot the whole saved-edits object before any mutating action, so Ctrl/Cmd+Z
@@ -896,6 +942,32 @@ function getEditorScript(slug) {
     var typing = ae && (ae.isContentEditable || /^(INPUT|TEXTAREA)$/.test(ae.tagName));
     if(typing) return; // let the browser's own per-field undo handle in-progress typing
     e.preventDefault(); performUndo();
+  });
+  // PowerPoint/Canva-style block shortcuts, all design-mode-only and skipped while typing
+  // in a text field: Ctrl/Cmd+C copies the selected block(s) into an in-memory clipboard;
+  // Ctrl/Cmd+V pastes them right after whatever block is selected at paste time — so you can
+  // select a block near your target and paste there, complementing the Alt+drag copy in
+  // initBlockDrag(). Delete/Backspace deletes the selection, Escape clears it, and
+  // Up/Down reorders a single selected block among its siblings (the flow-layout analog of
+  // "bring forward/backward" — this deck doesn't use absolute z-index positioning).
+  var deClipboard=null;
+  document.addEventListener('keydown',function(e){
+    if(!document.body.classList.contains('de-design')) return;
+    var ae=document.activeElement;
+    if(ae && (ae.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))) return;
+    if((e.ctrlKey||e.metaKey) && !e.shiftKey){
+      var k=e.key.toLowerCase();
+      if(k==='c'){ if(!selEls.size) return; deClipboard=Array.from(selEls).map(function(el){ return el.outerHTML; });
+        toast(deClipboard.length+' block'+(deClipboard.length>1?'s':'')+' copied'); return; }
+      if(k==='v'){ if(!deClipboard||!deClipboard.length) return; e.preventDefault(); pasteClipboard(); return; }
+      return;
+    }
+    if(!selEls.size) return;
+    if(e.key==='Escape'){ clearSelection(); return; }
+    if(e.key==='Delete'||e.key==='Backspace'){ e.preventDefault(); deleteSelection(); return; }
+    if((e.key==='ArrowUp'||e.key==='ArrowDown') && selEls.size===1){
+      e.preventDefault(); reorderBlock(Array.from(selEls)[0], e.key==='ArrowUp'?-1:1); return;
+    }
   });
 
   var css = 'body.de-on [data-eid]{outline:1px dashed rgba(237,111,11,.55);outline-offset:2px}'
@@ -936,6 +1008,24 @@ function getEditorScript(slug) {
     + '.de-props label{display:block;font-size:10.5px;color:#6b7a8d;margin-bottom:3px}'
     + '.de-props input[type=number],.de-props select{width:100%;font:inherit;padding:6px 8px;border:1px solid #E6E6E6;border-radius:6px;box-sizing:border-box}'
     + '.de-props input[type=color]{width:100%;height:30px;border:1px solid #E6E6E6;border-radius:6px;padding:2px;cursor:pointer;box-sizing:border-box}'
+    + '.de-props .de-swatches{display:flex;gap:5px;margin-top:6px}'
+    + '.de-props .de-sw{width:20px;height:20px;border-radius:5px;border:1px solid rgba(0,0,0,.15);cursor:pointer;padding:0;flex-shrink:0}'
+    + '.de-props .de-sw:hover{transform:scale(1.15);box-shadow:0 0 0 2px rgba(0,0,0,.08)}'
+    + '.de-props .stepper{display:flex;align-items:stretch}'
+    + '.de-props .stepper input{border-radius:0;text-align:center;flex:1;min-width:0}'
+    + '.de-props .stepper button{width:26px;flex-shrink:0;border:1px solid #E6E6E6;background:#F7F7F5;cursor:pointer;font:inherit;font-weight:700;color:#333}'
+    + '.de-props .stepper .p-fs-dn{border-radius:6px 0 0 6px;border-right:0}'
+    + '.de-props .stepper .p-fs-up{border-radius:0 6px 6px 0;border-left:0}'
+    + '.de-props .chk-row{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2,#333);cursor:pointer}'
+    + '.de-props .chk-row input{margin:0;cursor:pointer}'
+    + '.de-props .actions .cpstyle,.de-props .actions .pstyle{background:#EEE;color:#333}'
+    + '.de-props .actions button[disabled]{opacity:.4;cursor:not-allowed}'
+    + '.de-ctxmenu{position:fixed;z-index:100000;background:#fff;border:1px solid #E6E6E6;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:4px;display:none;min-width:150px;font:13px/1.3 -apple-system,Segoe UI,Roboto,sans-serif}'
+    + '.de-ctxmenu.show{display:block}'
+    + '.de-ctxmenu button{display:flex;width:100%;text-align:left;padding:7px 10px;border:0;background:none;cursor:pointer;border-radius:5px;font:inherit;color:#333}'
+    + '.de-ctxmenu button:hover{background:#F7F7F5}'
+    + '.de-ctxmenu button[disabled]{opacity:.4;cursor:not-allowed}'
+    + '.de-ctxmenu hr{border:0;border-top:1px solid #F0F0F0;margin:4px 0}'
     + '.de-props input[type=range]{width:100%;margin-top:6px}'
     + '.de-props .btnrow{display:flex;gap:6px}'
     + '.de-props .btnrow button{flex:1;border:1px solid #E6E6E6;background:#fff;border-radius:6px;padding:7px;cursor:pointer;font:inherit}'
@@ -1011,6 +1101,30 @@ function getEditorScript(slug) {
 
   var propsPanel=document.createElement('div'); propsPanel.className='de-props';
   document.body.appendChild(propsPanel);
+
+  var ctxMenu=document.createElement('div'); ctxMenu.className='de-ctxmenu';
+  document.body.appendChild(ctxMenu);
+  function hideCtxMenu(){ ctxMenu.classList.remove('show'); }
+  document.addEventListener('click',hideCtxMenu);
+  document.addEventListener('scroll',hideCtxMenu,true);
+  function showCtxMenu(x,y,el){
+    var n=selEls.size;
+    ctxMenu.innerHTML =
+      '<button class="cm-copy">⧉ Copy'+(n>1?' ('+n+')':'')+'</button>'
+      + '<button class="cm-dup">⧉ Duplicate'+(n>1?' all':'')+'</button>'
+      + '<button class="cm-paste"'+(deClipboard&&deClipboard.length?'':' disabled')+'>📋 Paste</button>'
+      + '<hr>'
+      + '<button class="cm-del">🗑 Delete'+(n>1?' ('+n+')':'')+'</button>';
+    ctxMenu.style.left=x+'px'; ctxMenu.style.top=y+'px'; ctxMenu.classList.add('show');
+    ctxMenu.querySelector('.cm-copy').addEventListener('click',function(){
+      deClipboard=Array.from(selEls).map(function(e2){ return e2.outerHTML; });
+      toast(deClipboard.length+' block'+(deClipboard.length>1?'s':'')+' copied');
+    });
+    ctxMenu.querySelector('.cm-dup').addEventListener('click',function(){ n>1?duplicateSelection():duplicateBlock(el); });
+    var pasteBtn=ctxMenu.querySelector('.cm-paste');
+    if(!pasteBtn.disabled) pasteBtn.addEventListener('click',pasteClipboard);
+    ctxMenu.querySelector('.cm-del').addEventListener('click',function(){ n>1?deleteSelection():deleteBlock(el); });
+  }
 
   function toast(m){ var t=document.createElement('div'); t.className='de-toast'; t.textContent=m; document.body.appendChild(t);
     requestAnimationFrame(function(){ t.classList.add('show'); });
@@ -1163,6 +1277,13 @@ function getEditorScript(slug) {
       return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)});
     }).catch(function(){});
   }
+  function reorderBlock(el,dir){
+    var parent=el.parentElement, tid=parent&&parent.getAttribute('data-tid'); if(!tid) return;
+    var sib=dir<0?el.previousElementSibling:el.nextElementSibling; if(!sib) return;
+    if(dir<0) parent.insertBefore(el,sib); else parent.insertBefore(sib,el);
+    saveContainerOrder(parent,tid);
+    if(selEls.size===1 && selEls.has(el)) positionOverlay(el);
+  }
   function initBlockDrag(){
     document.querySelectorAll('[data-de-block]').forEach(function(el){
       if(el.__deWired) return; el.__deWired=true;
@@ -1173,13 +1294,36 @@ function getEditorScript(slug) {
       });
       el.addEventListener('dragstart',function(e){
         if(!document.body.classList.contains('de-design')){ e.preventDefault(); return; }
-        el.classList.add('de-bdrag'); e.dataTransfer.effectAllowed='move';
+        // Alt/Option+drag copies instead of moves: a stub clone is left behind holding the
+        // original's identity, while el itself (now carrying a fresh id) is the thing that
+        // travels to wherever the mouse releases — reuses the move machinery below as-is.
+        el.__copyDrag=e.altKey;
+        if(e.altKey){
+          var stub=el.cloneNode(true); stub.classList.remove('de-bsel');
+          el.parentElement.insertBefore(stub, el);
+        }
+        el.classList.add('de-bdrag'); e.dataTransfer.effectAllowed=e.altKey?'copy':'move';
         try{ e.dataTransfer.setData('text/plain', el.getAttribute('data-rid')||''); }catch(er){}
       });
       el.addEventListener('dragend',function(){
         el.classList.remove('de-bdrag'); el.removeAttribute('draggable');
         var parent=el.parentElement, tid=parent&&parent.getAttribute('data-tid');
-        if(tid) saveContainerOrder(parent,tid);
+        if(el.__copyDrag){
+          el.__copyDrag=false;
+          var newId='b'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+          el.setAttribute('data-eid',newId); el.classList.remove('de-bsel');
+          var newRid=tid+'-r'+(rowN[tid]=(rowN[tid]||0)+1);
+          el.setAttribute('data-rid',newRid);
+          initBlockDrag();
+          var afterRid=el.previousElementSibling&&el.previousElementSibling.getAttribute('data-rid')||null;
+          armUndo().then(function(ed){
+            ed=ed||{}; var key='__added:'+tid; var list=(ed[key]||[]).slice();
+            list.push({id:newId, after:afterRid, html:el.outerHTML});
+            var patch={}; patch[key]=list;
+            return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)});
+          }).then(function(){ if(tid) saveContainerOrder(parent,tid); toast('Block copied'); selectBlock(el); })
+            .catch(function(){ toast('Copy failed to save'); });
+        } else if(tid) saveContainerOrder(parent,tid);
         if(selEls.size===1 && selEls.has(el)) positionOverlay(el);
       });
     });
@@ -1188,6 +1332,11 @@ function getEditorScript(slug) {
       container.addEventListener('dragover',function(e){
         var dragging=container.querySelector('.de-bdrag'); if(!dragging) return;
         e.preventDefault();
+        // [data-tid] containers can nest (a card is both a row in its grid AND, via its own
+        // text children, a container in its own right) — stop here once the innermost one
+        // that actually holds the dragging block has handled it, or the event bubbles into
+        // an ancestor container's listener and gets re-parented somewhere it doesn't belong.
+        e.stopPropagation();
         var after=blockAfter(container,e.clientY);
         if(after==null) container.appendChild(dragging); else if(after!==dragging) container.insertBefore(dragging,after);
       });
@@ -1293,6 +1442,35 @@ function getEditorScript(slug) {
     }).then(function(){ saveContainerOrder(parent,tid); toast('Block duplicated'); selectBlock(clone); })
       .catch(function(){ toast('Duplicate failed to save'); });
   }
+  function pasteClipboard(){
+    var target=selEls.size?Array.from(selEls)[selEls.size-1]:null;
+    var container=target?target.parentElement:null;
+    if(!container||!container.getAttribute('data-tid')){ toast('Select a block to paste near first'); return; }
+    var tid=container.getAttribute('data-tid'), afterEl=target, newEls=[];
+    deClipboard.forEach(function(html){
+      var tmp=document.createElement('div'); tmp.innerHTML=html;
+      var node=tmp.firstElementChild; if(!node) return;
+      var newId='b'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+      node.setAttribute('data-eid',newId); node.classList.remove('de-bsel');
+      var newRid=tid+'-r'+(rowN[tid]=(rowN[tid]||0)+1);
+      node.setAttribute('data-rid',newRid);
+      container.insertBefore(node, afterEl?afterEl.nextSibling:container.firstChild);
+      afterEl=node; newEls.push(node);
+    });
+    if(!newEls.length) return;
+    initBlockDrag(); clearSelection();
+    newEls.forEach(function(el){ selectBlock(el,true); });
+    armUndo().then(function(ed){
+      ed=ed||{}; var key='__added:'+tid; var list=(ed[key]||[]).slice();
+      newEls.forEach(function(node){
+        var prev=node.previousElementSibling;
+        list.push({id:node.getAttribute('data-eid'), after:prev&&prev.getAttribute('data-rid')||null, html:node.outerHTML});
+      });
+      var patch={}; patch[key]=list;
+      return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)});
+    }).then(function(){ saveContainerOrder(container,tid); toast(newEls.length+' block'+(newEls.length>1?'s':'')+' pasted'); })
+      .catch(function(){ toast('Paste failed to save'); });
+  }
 
   // ---- Properties panel: a persistent Canva/PowerPoint-style inspector for whatever's
   // selected — one place for text, fill/border and size, instead of scattered mini-popups.
@@ -1300,13 +1478,38 @@ function getEditorScript(slug) {
     return (''+w).toLowerCase()==='bold' ? '700' : '400'; }
   function blockState(el){
     var cs=getComputedStyle(el), r=el.getBoundingClientRect();
+    var fs=parseFloat(cs.fontSize), lh=parseFloat(cs.lineHeight);
     return {
       bg: rgbToHex(cs.backgroundColor), color: rgbToHex(cs.color),
       borderColor: rgbToHex(cs.borderTopColor), borderWidth: parseInt(cs.borderTopWidth,10)||0,
       radius: parseInt(cs.borderRadius,10)||0, opacity: Math.round((parseFloat(cs.opacity)||1)*100),
       width: Math.round(r.width), height: Math.round(r.height),
-      fontSize: parseInt(cs.fontSize,10)||14, fontWeight: normWeight(cs.fontWeight), textAlign: cs.textAlign
+      fontSize: parseInt(cs.fontSize,10)||14, fontWeight: normWeight(cs.fontWeight), textAlign: cs.textAlign,
+      lineHeight: (fs&&lh) ? Math.round((lh/fs)*100)/100 : 1.4,
+      shadow: cs.boxShadow!=='none'
     };
+  }
+  // Format painter: capture a source block's look-and-feel (not size/position) and reapply
+  // it to any other block — the Canva/PowerPoint "paint format" tool.
+  var paintedStyle=null;
+  var STYLE_PROPS=['bg','color','borderColor','borderWidth','radius','opacity','fontFamily','fontSize','fontWeight','textAlign','lineHeight','shadow'];
+  function captureStyle(el){
+    var st=blockState(el);
+    paintedStyle={ bg:st.bg, color:st.color, borderColor:st.borderColor, borderWidth:st.borderWidth,
+      radius:st.radius, opacity:st.opacity, fontFamily:getComputedStyle(el).fontFamily,
+      fontSize:st.fontSize, fontWeight:st.fontWeight, textAlign:st.textAlign, lineHeight:st.lineHeight, shadow:st.shadow };
+    toast('Style copied — select a block, then Paste style');
+  }
+  function applyPaintedStyle(el){
+    if(!paintedStyle) return;
+    var p=paintedStyle;
+    el.style.background=p.bg; el.style.color=p.color;
+    el.style.borderColor=p.borderColor; el.style.borderWidth=p.borderWidth+'px'; el.style.borderStyle='solid';
+    el.style.borderRadius=p.radius+'px'; el.style.opacity=(p.opacity/100);
+    el.style.fontFamily=p.fontFamily; el.style.fontSize=p.fontSize+'px'; el.style.fontWeight=p.fontWeight;
+    el.style.textAlign=p.textAlign; el.style.lineHeight=p.lineHeight;
+    el.style.boxShadow=p.shadow?'var(--shadow-lift)':'none';
+    queueStyleSave(el); renderPropsPanel(el); positionOverlay(el); toast('Style applied');
   }
   function renderPropsPanel(el){
     var st=blockState(el);
@@ -1316,37 +1519,48 @@ function getEditorScript(slug) {
       + '<section><h5>Text</h5>'
         + '<label>Font</label><select class="p-ff">'+fontOpts+'</select>'
         + '<div class="grid2" style="margin-top:8px">'
-          + '<div><label>Size (px)</label><input type="number" class="p-fs" min="8" max="96" value="'+st.fontSize+'"></div>'
+          + '<div><label>Size (px)</label><div class="stepper"><button type="button" class="p-fs-dn">−</button><input type="number" class="p-fs" min="8" max="96" value="'+st.fontSize+'"><button type="button" class="p-fs-up">+</button></div></div>'
           + '<div><label>Weight</label><select class="p-fw"><option value="400">Regular</option><option value="700">Bold</option><option value="900">Black</option></select></div>'
         + '</div>'
-        + '<label style="margin-top:8px">Align</label><div class="btnrow p-align">'
-          + '<button data-v="left">⟵</button><button data-v="center">•</button><button data-v="right">⟶</button></div>'
+        + '<div class="grid2" style="margin-top:8px">'
+          + '<div><label>Align</label><div class="btnrow p-align">'
+            + '<button data-v="left">⟵</button><button data-v="center">•</button><button data-v="right">⟶</button></div></div>'
+          + '<div><label>Line height</label><input type="number" class="p-lh" min="1" max="2.5" step="0.1" value="'+st.lineHeight+'"></div>'
+        + '</div>'
         + '<label style="margin-top:8px">Text colour</label><input type="color" class="p-color" value="'+st.color+'">'
+        + swatchRow('p-color')
       + '</section>'
       + '<section><h5>Fill &amp; border</h5>'
         + '<label>Background</label><input type="color" class="p-bg" value="'+st.bg+'">'
+        + swatchRow('p-bg')
         + '<div class="grid2" style="margin-top:8px">'
-          + '<div><label>Border colour</label><input type="color" class="p-bc" value="'+st.borderColor+'"></div>'
+          + '<div><label>Border colour</label><input type="color" class="p-bc" value="'+st.borderColor+'">'+swatchRow('p-bc')+'</div>'
           + '<div><label>Border width</label><input type="number" class="p-bw" min="0" max="12" value="'+st.borderWidth+'"></div>'
         + '</div>'
         + '<div class="grid2" style="margin-top:8px">'
           + '<div><label>Corner radius</label><input type="number" class="p-radius" min="0" max="60" value="'+st.radius+'"></div>'
           + '<div><label>Opacity %</label><input type="range" class="p-opacity" min="10" max="100" value="'+st.opacity+'"></div>'
         + '</div>'
+        + '<label class="chk-row" style="margin-top:8px"><input type="checkbox" class="p-shadow"'+(st.shadow?' checked':'')+'> Drop shadow</label>'
       + '</section>'
       + '<section><h5>Size</h5><div class="grid2">'
         + '<div><label>Width (px)</label><input type="number" class="p-w" min="80" value="'+st.width+'"></div>'
         + '<div><label>Height (px)</label><input type="number" class="p-h" min="40" value="'+st.height+'"></div>'
       + '</div></section>'
-      + '<div class="actions"><button class="dup">⧉ Duplicate</button><button class="rst">↺ Reset</button><button class="del">🗑 Delete</button></div>';
+      + '<div class="actions"><button class="dup">⧉ Duplicate</button><button class="rst">↺ Reset</button><button class="del">🗑 Delete</button></div>'
+      + '<div class="actions"><button class="cpstyle">🖌 Copy style</button><button class="pstyle"'+(paintedStyle?'':' disabled')+'>🖌 Paste style</button></div>';
 
     propsPanel.querySelector('.pclose').addEventListener('click',clearSelection);
+    wireSwatches(propsPanel);
     propsPanel.querySelectorAll('.p-align button').forEach(function(b){ b.classList.toggle('on',b.getAttribute('data-v')===st.textAlign); });
     propsPanel.querySelector('.p-align').addEventListener('click',function(e){
       var b=e.target.closest('button'); if(!b) return; el.style.textAlign=b.getAttribute('data-v'); queueStyleSave(el); renderPropsPanel(el); });
     propsPanel.querySelector('.p-fw').value=st.fontWeight;
     propsPanel.querySelector('.p-ff').addEventListener('change',function(){ el.style.fontFamily=this.value; queueStyleSave(el); });
     propsPanel.querySelector('.p-fs').addEventListener('input',function(){ el.style.fontSize=this.value+'px'; queueStyleSave(el); positionOverlay(el); });
+    propsPanel.querySelector('.p-fs-up').addEventListener('click',function(){ var i=propsPanel.querySelector('.p-fs'); i.value=Math.min(96,(parseInt(i.value,10)||14)+1); i.dispatchEvent(new Event('input',{bubbles:true})); });
+    propsPanel.querySelector('.p-fs-dn').addEventListener('click',function(){ var i=propsPanel.querySelector('.p-fs'); i.value=Math.max(8,(parseInt(i.value,10)||14)-1); i.dispatchEvent(new Event('input',{bubbles:true})); });
+    propsPanel.querySelector('.p-lh').addEventListener('input',function(){ el.style.lineHeight=this.value; queueStyleSave(el); });
     propsPanel.querySelector('.p-fw').addEventListener('change',function(){ el.style.fontWeight=this.value; queueStyleSave(el); });
     propsPanel.querySelector('.p-color').addEventListener('input',function(){ el.style.color=this.value; queueStyleSave(el); });
     propsPanel.querySelector('.p-bg').addEventListener('input',function(){ el.style.background=this.value; queueStyleSave(el); });
@@ -1354,12 +1568,15 @@ function getEditorScript(slug) {
     propsPanel.querySelector('.p-bw').addEventListener('input',function(){ el.style.borderWidth=this.value+'px'; el.style.borderStyle='solid'; queueStyleSave(el); });
     propsPanel.querySelector('.p-radius').addEventListener('input',function(){ el.style.borderRadius=this.value+'px'; queueStyleSave(el); });
     propsPanel.querySelector('.p-opacity').addEventListener('input',function(){ el.style.opacity=(this.value/100); queueStyleSave(el); });
+    propsPanel.querySelector('.p-shadow').addEventListener('change',function(){ el.style.boxShadow=this.checked?'var(--shadow-lift)':'none'; queueStyleSave(el); });
     propsPanel.querySelector('.p-w').addEventListener('input',function(){ el.style.width=this.value+'px'; queueStyleSave(el); positionOverlay(el); });
     propsPanel.querySelector('.p-h').addEventListener('input',function(){ el.style.height=this.value+'px'; queueStyleSave(el); positionOverlay(el); });
     propsPanel.querySelector('.dup').addEventListener('click',function(){ duplicateBlock(el); });
     propsPanel.querySelector('.del').addEventListener('click',function(){ deleteBlock(el); });
     propsPanel.querySelector('.rst').addEventListener('click',function(){
       el.removeAttribute('style'); queueStyleSave(el); renderPropsPanel(el); positionOverlay(el); toast('Reset to default'); });
+    propsPanel.querySelector('.cpstyle').addEventListener('click',function(){ captureStyle(el); renderPropsPanel(el); });
+    propsPanel.querySelector('.pstyle').addEventListener('click',function(){ applyPaintedStyle(el); });
   }
   function selectBlock(el, additive){
     if(additive){
@@ -1374,10 +1591,17 @@ function getEditorScript(slug) {
   }
   document.addEventListener('click',function(e){
     if(!document.body.classList.contains('de-design')) return;
-    if(e.target.closest('.de-props,.de-resize,.de-bar,.de-panel')) return;
+    if(e.target.closest('.de-props,.de-resize,.de-bar,.de-panel,.de-ctxmenu')) return;
     var el=e.target.closest('[data-de-block]');
     if(el) selectBlock(el, e.shiftKey); else if(!e.shiftKey) clearSelection();
   }, true);
+  document.addEventListener('contextmenu',function(e){
+    if(!document.body.classList.contains('de-design')) return;
+    var el=e.target.closest('[data-de-block]'); if(!el) return;
+    e.preventDefault();
+    if(!selEls.has(el)) selectBlock(el, false);
+    showCtxMenu(e.clientX,e.clientY,el);
+  });
   window.addEventListener('scroll',function(){ if(selEls.size===1) positionOverlay(Array.from(selEls)[0]); },true);
   window.addEventListener('resize',function(){ if(selEls.size===1) positionOverlay(Array.from(selEls)[0]); });
   function flush(){ var keys=Object.keys(dirty); if(!keys.length) return; var patch=dirty; dirty={}; stat.textContent='saving…';
