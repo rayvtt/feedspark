@@ -1237,7 +1237,7 @@ function getEditorScript(slug) {
       el.addEventListener('dragstart',function(e){
         if(!document.body.classList.contains('de-design')){ e.preventDefault(); return; }
         // Alt/Option+drag copies instead of moves: a stub clone is left behind holding the
-        // original's identity, while `el` itself (now carrying a fresh id) is the thing that
+        // original's identity, while el itself (now carrying a fresh id) is the thing that
         // travels to wherever the mouse releases — reuses the move machinery below as-is.
         el.__copyDrag=e.altKey;
         if(e.altKey){
@@ -1274,6 +1274,11 @@ function getEditorScript(slug) {
       container.addEventListener('dragover',function(e){
         var dragging=container.querySelector('.de-bdrag'); if(!dragging) return;
         e.preventDefault();
+        // [data-tid] containers can nest (a card is both a row in its grid AND, via its own
+        // text children, a container in its own right) — stop here once the innermost one
+        // that actually holds the dragging block has handled it, or the event bubbles into
+        // an ancestor container's listener and gets re-parented somewhere it doesn't belong.
+        e.stopPropagation();
         var after=blockAfter(container,e.clientY);
         if(after==null) container.appendChild(dragging); else if(after!==dragging) container.insertBefore(dragging,after);
       });
