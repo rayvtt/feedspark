@@ -92,6 +92,8 @@ window.addEventListener('load',restore);
   /* pipeline board */
   .board{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:9px;overflow-x:auto;padding-bottom:8px}
   .tk-tst{font-size:9.5px;flex:none;line-height:1}
+  .tk-flow{display:flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;color:#7C3AED;border-top:1px dashed #C9B8F0;margin-top:2px;padding-top:3px;white-space:nowrap}
+  .tk-flow.now{color:#C0392B;border-top-color:rgba(192,57,43,.4)}
   .lane{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:7px;min-height:120px;max-height:64vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
   .lane.drop{outline:2px dashed var(--orange);outline-offset:-3px;background:#FFF9F0}
   .lane-h{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:900;color:var(--ink);padding:2px 3px;position:sticky;top:0;background:inherit;z-index:1}
@@ -580,20 +582,20 @@ window.addEventListener('load',restore);
   <div class="board" id="board"></div>
 
   <h2>ASPL SLA &amp; turnaround</h2>
-  <p class="sub">Load, delivery and average turnaround per ASPL owner. Escalations flag any ticket sitting too long in <em>any</em> court — unbriefed or blocked with the AM, silent 3+ days with ASPL, awaiting client sign-off 3+ days, or a <b>run window that's finished without a read-out</b> — with the right action one click away. The read-out SLAs below set how long each brief type runs before its analysis is triggered.</p>
+  <p class="sub">Load, delivery and average turnaround per ASPL owner. Escalations flag any ticket sitting too long in <em>any</em> court — unbriefed or blocked with the AM, silent 3+ days with ASPL, awaiting client sign-off 3+ days, or a <b>run window that's finished without its analysis</b> — with the right action one click away. The analysis SLAs below set how long each brief type runs before its analysis is triggered.</p>
   <div class="runsla-bar" id="runsla-bar"></div>
   <div class="sla-grid" id="sla-grid"></div>
   <div class="panel" style="margin-top:12px"><h3>Escalations — over-SLA in any court</h3><div id="sla-stalled" class="stall-list"></div></div>
 
   <h2>Timeline — next 6 weeks</h2>
-  <p class="sub">Every brief due date and test read-out on one axis. Overdue items sit in week 1. Click a brief to open it.</p>
+  <p class="sub">Every brief due date and test analysis on one axis. Overdue items sit in week 1. Click a brief to open it.</p>
   <div class="tl-wrap"><div class="tl-grid" id="tl-grid"></div></div>
 
   <h2>Test &amp; experiment register</h2>
-  <p class="sub">Every A/B in one place — hypothesis, cohort, read-out date and result. Read-out dates feed the timeline and alerts so no test dies un-analysed; the wins are your deck ammo.</p>
+  <p class="sub">Every A/B in one place — hypothesis, cohort, analysis date and result. Analysis dates feed the timeline and alerts so no test dies un-analysed; the wins are your deck ammo.</p>
   <div class="tst-head"><button class="btn sm navy" id="test-add">＋ Add test</button></div>
   <div class="it-scroll"><table class="itbl tstbl">
-    <thead><tr><th>Client</th><th>Test</th><th>Hypothesis</th><th>Cohort</th><th>Read-out</th><th>Status / result</th><th class="it-act">·</th></tr></thead>
+    <thead><tr><th>Client</th><th>Test</th><th>Hypothesis</th><th>Cohort</th><th>Analysis</th><th>Status / result</th><th class="it-act">·</th></tr></thead>
     <tbody id="tests-body"></tbody></table></div>
 
   <h2>Team workload</h2>
@@ -735,7 +737,7 @@ window.addEventListener('load',restore);
     data:{s:'Data-field back-fill / attribute enrichment — fill mandatory + AI-enriched fields. Confirm which fields and the source (master feed / Tachyon).',d:'Fields populated + validated on the feed, disapprovals cleared, sample QA’d by AM.'},
     technical:{s:'Feed / technical change — migration, refresh cadence, item-group/ID logic or rule change. Confirm the switch-over date and rollback.',d:'Change live in all target feeds, monitored for 48h, no campaign disruption, confirmed with the client.'},
     channel:{s:'Channel work — Meta/Social/LIA/PPC overlay or feed architecture. Confirm markets, creative/typography and identifiers.',d:'Live in the target channel, QA’d on sample, mockup/typography approved by client.'},
-    test:{s:'A/B test — define hypothesis, control vs variant, SKUs, market and duration. Ensure the cohort is excluded from AI enrichment so the read is clean.',d:'Test live, tracked in the Test register with a read-out date; result logged (uplift %); winner rolled out or parked.'},
+    test:{s:'A/B test — define hypothesis, control vs variant, SKUs, market and duration. Ensure the cohort is excluded from AI enrichment so the read is clean.',d:'Test live, tracked in the Test register with an analysis date; result logged (uplift %); winner rolled out or parked.'},
     opt:{s:'Feed optimisation task — confirm exact scope, markets and rules with the AM before starting.',d:'Change live in FeedHero, QA’d against the feed, sample approved by AM.'},
     account:{s:'Account / strategy action — deck, proposal, call prep or commercial item. Confirm the deliverable and audience.',d:'Deliverable shared with the client / internal owner and signed off.'}
   };
@@ -1531,14 +1533,20 @@ window.addEventListener('load',restore);
         var crt=courtOf(b);
         var ageChip=crt?('<span class="tk-age'+(stageBreached(b)?' warn':'')+'" title="In '+crt+'’s court '+daysInCourt(b)+'d">'+daysInCourt(b)+'d</span>'):'';
         if(b.status==='analysis'){ var rd0=readoutDue(b); if(rd0!=null){ var dl0=Math.ceil((rd0-Date.now())/86400000);
-          ageChip='<span class="tk-age'+(dl0<=0?' warn':'')+'" title="'+(dl0>0?('Read-out due in '+dl0+'d ('+runSlaDays(b)+'d run SLA)'):'Run complete — read-out due')+'">'+(dl0>0?('⏱ '+dl0+'d'):'read-out')+'</span>'; } }
+          ageChip='<span class="tk-age'+(dl0<=0?' warn':'')+'" title="'+(dl0>0?('Analysis due in '+dl0+'d ('+runSlaDays(b)+'d run SLA)'):'Run complete — analysis due')+'">'+(dl0>0?('⏱ '+dl0+'d'):'analyse')+'</span>'; } }
         var mk=(b.code||'').split('-').pop(); mk=(mk&&mk!=='gb')?('<span class="tk-mk">'+esc(mk.toUpperCase())+'</span>'):'';
         var pri=(b.priority&&b.priority!=='Normal')?('<span class="tk-pri '+(b.priority==='Urgent'?'ur':'hi')+'" title="'+esc(b.priority)+'"></span>'):'';
-        var tst=needsAnalysis(b)?'<span class="tk-tst" title="Needs the Analysis step — read-out due '+runSlaDays(b)+'d after the run starts">🧪</span>':'';
+        var tst=needsAnalysis(b)?'<span class="tk-tst" title="Needs the Analysis step — analysis due '+runSlaDays(b)+'d after the run starts">🧪</span>':'';
         var db=dueBadge(b); if(/no due/.test(db))db='';
+        // dotted-arrow cue on analysis-bound cards still in flight: where they flow next + in how many days
+        var flow='';
+        if(needsAnalysis(b)&&(b.status==='progress'||b.status==='done')){ var rdF=readoutDue(b);
+          if(rdF!=null){ var dlF=Math.ceil((rdF-Date.now())/86400000);
+            flow='<div class="tk-flow'+(dlF<=0?' now':'')+'" title="Auto-moves to Analysis when the '+runSlaDays(b)+'-day run completes">⇢ Analysis '+(dlF>0?('in '+dlF+'d'):'due now')+'</div>'; }
+          else flow='<div class="tk-flow" title="Runs '+runSlaDays(b)+' days once started, then Analysis">⇢ Analysis after '+runSlaDays(b)+'d run</div>'; }
         return '<div class="tik'+(courtSel&&crt!==courtSel?' dim':'')+'" draggable="true" data-id="'+esc(b.id)+'">'
           +'<div class="tk-m"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+tst+pri+'<span class="grow"></span>'+db+ageChip+'</div>'
-          +'<div class="tk-t" title="'+esc(b.task)+'">'+esc(b.task)+'</div></div>';
+          +'<div class="tk-t" title="'+esc(b.task)+'">'+esc(b.task)+'</div>'+flow+'</div>';
       }).join('') || '<div class="board-empty">—</div>';
       return '<div class="lane" data-stage="'+s[0]+'"><div class="lane-h"><span class="dot" style="background:'+s[2]+'"></span>'+s[1]+'<span class="ct">'+items.length+'</span></div>'+cards+'</div>';
     }).join('');
@@ -1584,7 +1592,7 @@ window.addEventListener('load',restore);
         +'<span class="m-pill">'+(b.source==='plan'?'Project plan':'Email')+'</span>'
         +'<span class="m-pill"'+(stageBreached(b)?' style="color:#C0392B;border-color:rgba(192,57,43,.4)"':'')+'>Ball: '+(crt?(crt+' · '+daysInCourt(b)+'d'):'—')+'</span>'
         +(function(){ var rd=readoutDue(b); if(rd==null||b.status==='confirmed')return ''; var dl=Math.ceil((rd-Date.now())/86400000);
-          return '<span class="m-pill"'+(dl<=0?' style="color:#C0392B;border-color:rgba(192,57,43,.4)"':'')+' title="'+runSlaDays(b)+'-day run SLA from when the brief starts running">Read-out '+(dl>0?('in '+dl+'d'):(dl===0?'due today':((-dl)+'d overdue')))+'</span>'; })()
+          return '<span class="m-pill"'+(dl<=0?' style="color:#C0392B;border-color:rgba(192,57,43,.4)"':'')+' title="'+runSlaDays(b)+'-day run SLA from when the brief starts running">Analysis '+(dl>0?('in '+dl+'d'):(dl===0?'due today':((-dl)+'d overdue')))+'</span>'; })()
         +(dueBadge(b))+'</div>'
       +'<div class="m-sec"><h4>Stage</h4><div class="stat-seg" id="m-stat">'+stat+'</div></div>'
       +'<div class="m-sec"><h4>Journey — handoffs across the three courts</h4><div class="jny">'+journeyHtml(b)+'</div>'
@@ -1609,7 +1617,7 @@ window.addEventListener('load',restore);
     document.getElementById('m-brief').href='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(b.subject||('[FS Brief] '+b.client))+'&body='+encodeURIComponent(b.body||'');
     // completion scan on new note
     var noteEl=document.getElementById('m-note'), scanEl=document.getElementById('m-scan');
-    noteEl.addEventListener('input',function(){ if(DONE_RE.test(noteEl.value)){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this moves the ticket to '+(needsAnalysis(b)?'“Analysis 🧪” (read-out still needed)':'“Done — ASPL”')+'.'; } else scanEl.className='scan-hit'; });
+    noteEl.addEventListener('input',function(){ if(DONE_RE.test(noteEl.value)){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this moves the ticket to '+(needsAnalysis(b)?'“Analysis 🧪” (analysis still needed)':'“Done — ASPL”')+'.'; } else scanEl.className='scan-hit'; });
     document.getElementById('m-log').onclick=function(){ var note=noteEl.value.trim(); if(!note)return;
       var done=DONE_RE.test(note); b.comms=b.comms||[]; b.comms.push({from:document.getElementById('m-from').value,note:note,done:done,when:Date.now()});
       // a completion signal from ASPL moves the brief on — test tickets go to Analysis, not Done.
@@ -1620,7 +1628,7 @@ window.addEventListener('load',restore);
     var cbody=clientConfirm(b,doneNote);
     conf.href='https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark · '+b.client+' — '+b.task+' completed')+'&body='+encodeURIComponent(cbody);
     conf.addEventListener('click',function(ev){ if(b.status!=='done'&&b.status!=='analysis')return;
-      if(needsAnalysis(b)&&!hasResult(b)){ ev.preventDefault(); toast('Log the read-out first — 🧪 Log result'); return; }
+      if(needsAnalysis(b)&&!hasResult(b)){ ev.preventDefault(); toast('Log the analysis result first — 🧪 Log result'); return; }
       setStage(b,'confirmed'); persist(); setTimeout(function(){renderAll();},400); });
     var resBtn=document.getElementById('m-result'); if(resBtn)resBtn.onclick=function(){ logResult(b); };
     // #4 chase drafts + ASPL owner reassign
@@ -1647,7 +1655,7 @@ window.addEventListener('load',restore);
   function hasResult(b){ if(!b.comms)return false; for(var i=b.comms.length-1;i>=0;i--){ if(/^Result:/.test(b.comms[i].note))return true; } return false; }
   // log the A/B read-out: writes the result into the Test register (deck ammo) and unlocks confirmation
   function logResult(b){
-    var v=prompt('Test result — the read-out (e.g. “+24.7% CTR” or “no lift — rolled back”):',''); if(v===null)return; v=(''+v).trim(); if(!v)return;
+    var v=prompt('Test result — the analysis (e.g. “+24.7% CTR” or “no lift — rolled back”):',''); if(v===null)return; v=(''+v).trim(); if(!v)return;
     b.comms=b.comms||[]; b.comms.push({from:'Ray',note:'Result: '+v,done:true,when:Date.now()});
     var hit=null; TESTS.forEach(function(t){ if(!hit&&t.client===b.client&&sameTask(t.name,b.task))hit=t; });
     var d=today(), iso=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
@@ -1777,8 +1785,8 @@ window.addEventListener('load',restore);
         items.push({b:b,c:'ASPL',cls:'c-aspl',d:silentDays(b),why:(lr==null?('briefed '+briefAgeDays(b)+'d ago — no reply'):('silent '+lr+'d')),act:'chaseA',lbl:'Chase ASPL'}); }
       else if(b.status==='analysis'&&!hasResult(b)){ var rd=readoutDue(b);
         if(rd!=null){ if(Date.now()>rd){ var ov=Math.floor((Date.now()-rd)/86400000);
-            items.push({b:b,c:'AM',cls:'c-am',d:ov,why:'run complete ('+runSlaDays(b)+'d SLA) — read-out '+(ov?ov+'d overdue':'due today'),act:'open',lbl:'Analyse'}); } }
-        else if(ds>SLA_STAGE.analysis) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'awaiting test read-out '+ds+'d — analyse it',act:'open',lbl:'Analyse'}); }
+            items.push({b:b,c:'AM',cls:'c-am',d:ov,why:'run complete ('+runSlaDays(b)+'d SLA) — analysis '+(ov?ov+'d overdue':'due today'),act:'open',lbl:'Analyse'}); } }
+        else if(ds>SLA_STAGE.analysis) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'awaiting analysis '+ds+'d — analyse it',act:'open',lbl:'Analyse'}); }
       else if(b.status==='done'&&ds>SLA_STAGE.done) items.push({b:b,c:'Client',cls:'c-client',d:ds,why:'awaiting sign-off '+ds+'d',act:'chaseC',lbl:'Chase client'}); });
     items.sort(function(a,b2){return b2.d-a.d;});
     s.innerHTML = items.length? items.map(function(it){ var b=it.b;
@@ -1799,9 +1807,9 @@ window.addEventListener('load',restore);
     Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed')return; var d=ddmmyyyyToDate(b.due); if(!d)return;
       evs.push({d:d,label:b.client+' · '+b.task,kind:'brief',id:b.id}); });
     Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed'||hasResult(b))return; var rd=readoutDue(b); if(rd==null)return;
-      evs.push({d:new Date(rd),label:b.client+' · '+b.task.slice(0,44)+' · read-out',kind:'test',id:b.id}); });
+      evs.push({d:new Date(rd),label:b.client+' · '+b.task.slice(0,44)+' · analysis',kind:'test',id:b.id}); });
     TESTS.forEach(function(t){ if(t.result||!t.readout)return; var d=isoDate(t.readout); if(!d)return;
-      evs.push({d:d,label:t.client+' · '+t.name+' · read-out',kind:'test'}); });
+      evs.push({d:d,label:t.client+' · '+t.name+' · analysis',kind:'test'}); });
     var html='';
     for(var w=0;w<WEEKS;w++){ var ws=new Date(t0); ws.setDate(ws.getDate()+w*7);
       var head='w'+(w+1)+' · '+ws.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
@@ -1841,7 +1849,7 @@ window.addEventListener('load',restore);
     var client=prompt('Client:',t.client)||t.client;
     var hypo=prompt('Hypothesis:',t.hypo)||'';
     var skus=prompt('SKUs / cohort:',t.skus)||'';
-    var readout=prompt('Read-out date (YYYY-MM-DD, blank if TBC):',t.readout)||'';
+    var readout=prompt('Analysis date (YYYY-MM-DD, blank if TBC):',t.readout)||'';
     var result=prompt('Result (blank if still running, e.g. +24.7%):',t.result)||'';
     var nt={client:client,name:name.trim(),hypo:hypo,skus:skus,start:t.start||'',readout:readout.trim(),status:result?'done':'running',result:result.trim()};
     if(i>=0)TESTS[i]=nt; else TESTS.push(nt); saveTests(); renderTests(); renderTimeline(); renderAlerts(); }
@@ -1871,9 +1879,9 @@ window.addEventListener('load',restore);
   function computeAlerts(){ var over=[], soon=[];
     Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed')return; var days=daysTo(b.due); if(days==null)return; if(days<0)over.push(b); else if(days<=2)soon.push(b); });
     Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed'||hasResult(b))return; var rd=readoutDue(b); if(rd==null)return;
-      var days=Math.round((rd-Date.now())/86400000); if(days<0)over.push({client:b.client,task:b.task+' · read-out'}); else if(days<=2)soon.push({client:b.client,task:b.task+' · read-out'}); });
+      var days=Math.round((rd-Date.now())/86400000); if(days<0)over.push({client:b.client,task:b.task+' · analysis'}); else if(days<=2)soon.push({client:b.client,task:b.task+' · analysis'}); });
     TESTS.forEach(function(t){ if(t.result||!t.readout)return; var d=isoDate(t.readout); if(!d)return; var days=Math.round((d-today())/86400000);
-      if(days<0)over.push({client:t.client,task:t.name+' · read-out'}); else if(days<=2)soon.push({client:t.client,task:t.name+' · read-out'}); });
+      if(days<0)over.push({client:t.client,task:t.name+' · analysis'}); else if(days<=2)soon.push({client:t.client,task:t.name+' · analysis'}); });
     return {over:over,soon:soon}; }
   function renderAlerts(){ var host=document.getElementById('wf-alerts'); if(!host)return; var a=computeAlerts();
     if(!a.over.length && !a.soon.length){ host.style.display='none'; return; } host.style.display='flex';
@@ -1898,7 +1906,7 @@ window.addEventListener('load',restore);
     L.push('DUE THIS WEEK ('+wk.length+')'); wk.length?wk.forEach(function(b){L.push(fmt(b));}):L.push('  • none'); L.push('');
     L.push('AWAITING CLIENT SIGN-OFF ('+withClient.length+')'); withClient.length?withClient.forEach(function(b){L.push('  • '+b.client+' · '+b.task);}):L.push('  • none'); L.push('');
     L.push('SHIPPED / CONFIRMED ('+shipped.length+')'); shipped.length?shipped.forEach(function(b){L.push('  • '+b.client+' · '+b.task);}):L.push('  • none'); L.push('');
-    L.push('TEST READ-OUTS DUE ('+tro.length+')'); tro.length?tro.forEach(function(t){L.push('  • '+t.client+' · '+t.name+'  ('+humanISO(t.readout)+')');}):L.push('  • none'); L.push('');
+    L.push('TEST ANALYSES DUE ('+tro.length+')'); tro.length?tro.forEach(function(t){L.push('  • '+t.client+' · '+t.name+'  ('+humanISO(t.readout)+')');}):L.push('  • none'); L.push('');
     L.push('FeedSpark · Private & Confidential'); return L.join('\n'); }
   function openDigest(){ var body=buildDigest();
     modalEl.innerHTML='<div style="display:flex;align-items:flex-start"><div><h3>Week-ahead digest</h3><div class="mc">Review, then copy or draft it</div></div><button class="x" id="dg-x">×</button></div>'
@@ -1916,12 +1924,12 @@ window.addEventListener('load',restore);
   // the editable read-out SLA panel — rendered once at boot (inputs keep focus), saved per device
   function renderRunSla(){ var host=document.getElementById('runsla-bar'); if(!host)return;
     var DEFS=[['keyword','Keywords optimisation'],['title_test','Title A/B tests'],['test','Other tests']];
-    host.innerHTML='<span class="rs-h">Read-out SLAs</span>'+DEFS.map(function(d){
+    host.innerHTML='<span class="rs-h">Analysis SLAs</span>'+DEFS.map(function(d){
       return '<label class="rs-item">'+d[1]+' <input type="number" min="1" max="90" data-k="'+d[0]+'" value="'+(+RUNSLA[d[0]]||RUNSLA_DEF[d[0]])+'"> days</label>'; }).join('')
       +'<span class="rs-note">run time before a brief’s analysis is triggered — edits save instantly</span>';
     host.querySelectorAll('input').forEach(function(inp){ inp.onchange=function(){ var v=+inp.value;
       if(!(v>0)){ inp.value=+RUNSLA[inp.getAttribute('data-k')]||14; return; }
-      RUNSLA[inp.getAttribute('data-k')]=v; saveRunSla(); toast('Read-out SLA saved — '+v+' days'); renderAll(); }; }); }
+      RUNSLA[inp.getAttribute('data-k')]=v; saveRunSla(); toast('Analysis SLA saved — '+v+' days'); renderAll(); }; }); }
   renderRunSla();
   // automation: a Done brief whose run window has elapsed is pulled into Analysis automatically
   function autoAdvanceReadouts(){ var moved=0;
