@@ -249,12 +249,13 @@ export default {
       const id = String(body.id || '').slice(0, 64);
       if (!id) return json({ ok: false, error: 'missing id' }, 400);
       const dis = (await env.EDITS.get('gmaildismissed', 'json')) || {};
+      const validReasons = ['briefed', 'task', 'notask'];
       if (body.undo) delete dis[id];
-      else dis[id] = { t: Date.now(), r: body.reason === 'briefed' ? 'briefed' : 'notask' };
+      else dis[id] = { t: Date.now(), r: validReasons.includes(body.reason) ? body.reason : 'notask' };
       const ids = Object.keys(dis);   // prune to the newest 400 decisions
       if (ids.length > 400) ids.sort((a, b) => (dis[a].t || 0) - (dis[b].t || 0)).slice(0, ids.length - 400).forEach((k) => delete dis[k]);
       await env.EDITS.put('gmaildismissed', JSON.stringify(dis));
-      logActivity(ctx, env, request, body.undo ? 'gmail-restore' : 'gmail-dismiss', (body.reason === 'briefed' ? 'briefed · ' : 'not a task · ') + id.slice(0, 24));
+      logActivity(ctx, env, request, body.undo ? 'gmail-restore' : 'gmail-dismiss', (dis[id] ? dis[id].r + ' · ' : 'not a task · ') + id.slice(0, 24));
       return json({ ok: true, dismissed: !body.undo });
     }
 
