@@ -92,6 +92,8 @@ window.addEventListener('load',restore);
   /* pipeline board */
   .board{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:9px;overflow-x:auto;padding-bottom:8px}
   .tk-tst{font-size:9.5px;flex:none;line-height:1}
+  .tk-flow{display:flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;color:#7C3AED;border-top:1px dashed #C9B8F0;margin-top:2px;padding-top:3px;white-space:nowrap}
+  .tk-flow.now{color:#C0392B;border-top-color:rgba(192,57,43,.4)}
   .lane{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:7px;min-height:120px;max-height:64vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
   .lane.drop{outline:2px dashed var(--orange);outline-offset:-3px;background:#FFF9F0}
   .lane-h{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:900;color:var(--ink);padding:2px 3px;position:sticky;top:0;background:inherit;z-index:1}
@@ -1535,9 +1537,15 @@ window.addEventListener('load',restore);
         var pri=(b.priority&&b.priority!=='Normal')?('<span class="tk-pri '+(b.priority==='Urgent'?'ur':'hi')+'" title="'+esc(b.priority)+'"></span>'):'';
         var tst=needsAnalysis(b)?'<span class="tk-tst" title="Needs the Analysis step — analysis due '+runSlaDays(b)+'d after the run starts">🧪</span>':'';
         var db=dueBadge(b); if(/no due/.test(db))db='';
+        // dotted-arrow cue on analysis-bound cards still in flight: where they flow next + in how many days
+        var flow='';
+        if(needsAnalysis(b)&&(b.status==='progress'||b.status==='done')){ var rdF=readoutDue(b);
+          if(rdF!=null){ var dlF=Math.ceil((rdF-Date.now())/86400000);
+            flow='<div class="tk-flow'+(dlF<=0?' now':'')+'" title="Auto-moves to Analysis when the '+runSlaDays(b)+'-day run completes">⇢ Analysis '+(dlF>0?('in '+dlF+'d'):'due now')+'</div>'; }
+          else flow='<div class="tk-flow" title="Runs '+runSlaDays(b)+' days once started, then Analysis">⇢ Analysis after '+runSlaDays(b)+'d run</div>'; }
         return '<div class="tik'+(courtSel&&crt!==courtSel?' dim':'')+'" draggable="true" data-id="'+esc(b.id)+'">'
           +'<div class="tk-m"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+tst+pri+'<span class="grow"></span>'+db+ageChip+'</div>'
-          +'<div class="tk-t" title="'+esc(b.task)+'">'+esc(b.task)+'</div></div>';
+          +'<div class="tk-t" title="'+esc(b.task)+'">'+esc(b.task)+'</div>'+flow+'</div>';
       }).join('') || '<div class="board-empty">—</div>';
       return '<div class="lane" data-stage="'+s[0]+'"><div class="lane-h"><span class="dot" style="background:'+s[2]+'"></span>'+s[1]+'<span class="ct">'+items.length+'</span></div>'+cards+'</div>';
     }).join('');
