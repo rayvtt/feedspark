@@ -943,19 +943,31 @@ function getEditorScript(slug) {
     if(typing) return; // let the browser's own per-field undo handle in-progress typing
     e.preventDefault(); performUndo();
   });
-  // Ctrl/Cmd+C copies the selected block(s) into an in-memory clipboard; Ctrl/Cmd+V pastes
-  // them right after whatever block is selected at paste time — so you can select a block
-  // near your target and paste there, complementing the Alt+drag copy in initBlockDrag().
+  // PowerPoint/Canva-style block shortcuts, all design-mode-only and skipped while typing
+  // in a text field: Ctrl/Cmd+C copies the selected block(s) into an in-memory clipboard;
+  // Ctrl/Cmd+V pastes them right after whatever block is selected at paste time — so you can
+  // select a block near your target and paste there, complementing the Alt+drag copy in
+  // initBlockDrag(). Delete/Backspace deletes the selection, Escape clears it, and
+  // Up/Down reorders a single selected block among its siblings (the flow-layout analog of
+  // "bring forward/backward" — this deck doesn't use absolute z-index positioning).
   var deClipboard=null;
   document.addEventListener('keydown',function(e){
     if(!document.body.classList.contains('de-design')) return;
     var ae=document.activeElement;
     if(ae && (ae.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))) return;
-    if(!(e.ctrlKey||e.metaKey) || e.shiftKey) return;
-    var k=e.key.toLowerCase();
-    if(k==='c'){ if(!selEls.size) return; deClipboard=Array.from(selEls).map(function(el){ return el.outerHTML; });
-      toast(deClipboard.length+' block'+(deClipboard.length>1?'s':'')+' copied'); }
-    else if(k==='v'){ if(!deClipboard||!deClipboard.length) return; e.preventDefault(); pasteClipboard(); }
+    if((e.ctrlKey||e.metaKey) && !e.shiftKey){
+      var k=e.key.toLowerCase();
+      if(k==='c'){ if(!selEls.size) return; deClipboard=Array.from(selEls).map(function(el){ return el.outerHTML; });
+        toast(deClipboard.length+' block'+(deClipboard.length>1?'s':'')+' copied'); return; }
+      if(k==='v'){ if(!deClipboard||!deClipboard.length) return; e.preventDefault(); pasteClipboard(); return; }
+      return;
+    }
+    if(!selEls.size) return;
+    if(e.key==='Escape'){ clearSelection(); return; }
+    if(e.key==='Delete'||e.key==='Backspace'){ e.preventDefault(); deleteSelection(); return; }
+    if((e.key==='ArrowUp'||e.key==='ArrowDown') && selEls.size===1){
+      e.preventDefault(); reorderBlock(Array.from(selEls)[0], e.key==='ArrowUp'?-1:1); return;
+    }
   });
 
   var css = 'body.de-on [data-eid]{outline:1px dashed rgba(237,111,11,.55);outline-offset:2px}'
@@ -999,6 +1011,21 @@ function getEditorScript(slug) {
     + '.de-props .de-swatches{display:flex;gap:5px;margin-top:6px}'
     + '.de-props .de-sw{width:20px;height:20px;border-radius:5px;border:1px solid rgba(0,0,0,.15);cursor:pointer;padding:0;flex-shrink:0}'
     + '.de-props .de-sw:hover{transform:scale(1.15);box-shadow:0 0 0 2px rgba(0,0,0,.08)}'
+    + '.de-props .stepper{display:flex;align-items:stretch}'
+    + '.de-props .stepper input{border-radius:0;text-align:center;flex:1;min-width:0}'
+    + '.de-props .stepper button{width:26px;flex-shrink:0;border:1px solid #E6E6E6;background:#F7F7F5;cursor:pointer;font:inherit;font-weight:700;color:#333}'
+    + '.de-props .stepper .p-fs-dn{border-radius:6px 0 0 6px;border-right:0}'
+    + '.de-props .stepper .p-fs-up{border-radius:0 6px 6px 0;border-left:0}'
+    + '.de-props .chk-row{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2,#333);cursor:pointer}'
+    + '.de-props .chk-row input{margin:0;cursor:pointer}'
+    + '.de-props .actions .cpstyle,.de-props .actions .pstyle{background:#EEE;color:#333}'
+    + '.de-props .actions button[disabled]{opacity:.4;cursor:not-allowed}'
+    + '.de-ctxmenu{position:fixed;z-index:100000;background:#fff;border:1px solid #E6E6E6;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:4px;display:none;min-width:150px;font:13px/1.3 -apple-system,Segoe UI,Roboto,sans-serif}'
+    + '.de-ctxmenu.show{display:block}'
+    + '.de-ctxmenu button{display:flex;width:100%;text-align:left;padding:7px 10px;border:0;background:none;cursor:pointer;border-radius:5px;font:inherit;color:#333}'
+    + '.de-ctxmenu button:hover{background:#F7F7F5}'
+    + '.de-ctxmenu button[disabled]{opacity:.4;cursor:not-allowed}'
+    + '.de-ctxmenu hr{border:0;border-top:1px solid #F0F0F0;margin:4px 0}'
     + '.de-props input[type=range]{width:100%;margin-top:6px}'
     + '.de-props .btnrow{display:flex;gap:6px}'
     + '.de-props .btnrow button{flex:1;border:1px solid #E6E6E6;background:#fff;border-radius:6px;padding:7px;cursor:pointer;font:inherit}'
@@ -1074,6 +1101,30 @@ function getEditorScript(slug) {
 
   var propsPanel=document.createElement('div'); propsPanel.className='de-props';
   document.body.appendChild(propsPanel);
+
+  var ctxMenu=document.createElement('div'); ctxMenu.className='de-ctxmenu';
+  document.body.appendChild(ctxMenu);
+  function hideCtxMenu(){ ctxMenu.classList.remove('show'); }
+  document.addEventListener('click',hideCtxMenu);
+  document.addEventListener('scroll',hideCtxMenu,true);
+  function showCtxMenu(x,y,el){
+    var n=selEls.size;
+    ctxMenu.innerHTML =
+      '<button class="cm-copy">⧉ Copy'+(n>1?' ('+n+')':'')+'</button>'
+      + '<button class="cm-dup">⧉ Duplicate'+(n>1?' all':'')+'</button>'
+      + '<button class="cm-paste"'+(deClipboard&&deClipboard.length?'':' disabled')+'>📋 Paste</button>'
+      + '<hr>'
+      + '<button class="cm-del">🗑 Delete'+(n>1?' ('+n+')':'')+'</button>';
+    ctxMenu.style.left=x+'px'; ctxMenu.style.top=y+'px'; ctxMenu.classList.add('show');
+    ctxMenu.querySelector('.cm-copy').addEventListener('click',function(){
+      deClipboard=Array.from(selEls).map(function(e2){ return e2.outerHTML; });
+      toast(deClipboard.length+' block'+(deClipboard.length>1?'s':'')+' copied');
+    });
+    ctxMenu.querySelector('.cm-dup').addEventListener('click',function(){ n>1?duplicateSelection():duplicateBlock(el); });
+    var pasteBtn=ctxMenu.querySelector('.cm-paste');
+    if(!pasteBtn.disabled) pasteBtn.addEventListener('click',pasteClipboard);
+    ctxMenu.querySelector('.cm-del').addEventListener('click',function(){ n>1?deleteSelection():deleteBlock(el); });
+  }
 
   function toast(m){ var t=document.createElement('div'); t.className='de-toast'; t.textContent=m; document.body.appendChild(t);
     requestAnimationFrame(function(){ t.classList.add('show'); });
@@ -1225,6 +1276,13 @@ function getEditorScript(slug) {
     armUndo().then(function(){
       return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)});
     }).catch(function(){});
+  }
+  function reorderBlock(el,dir){
+    var parent=el.parentElement, tid=parent&&parent.getAttribute('data-tid'); if(!tid) return;
+    var sib=dir<0?el.previousElementSibling:el.nextElementSibling; if(!sib) return;
+    if(dir<0) parent.insertBefore(el,sib); else parent.insertBefore(sib,el);
+    saveContainerOrder(parent,tid);
+    if(selEls.size===1 && selEls.has(el)) positionOverlay(el);
   }
   function initBlockDrag(){
     document.querySelectorAll('[data-de-block]').forEach(function(el){
@@ -1420,13 +1478,38 @@ function getEditorScript(slug) {
     return (''+w).toLowerCase()==='bold' ? '700' : '400'; }
   function blockState(el){
     var cs=getComputedStyle(el), r=el.getBoundingClientRect();
+    var fs=parseFloat(cs.fontSize), lh=parseFloat(cs.lineHeight);
     return {
       bg: rgbToHex(cs.backgroundColor), color: rgbToHex(cs.color),
       borderColor: rgbToHex(cs.borderTopColor), borderWidth: parseInt(cs.borderTopWidth,10)||0,
       radius: parseInt(cs.borderRadius,10)||0, opacity: Math.round((parseFloat(cs.opacity)||1)*100),
       width: Math.round(r.width), height: Math.round(r.height),
-      fontSize: parseInt(cs.fontSize,10)||14, fontWeight: normWeight(cs.fontWeight), textAlign: cs.textAlign
+      fontSize: parseInt(cs.fontSize,10)||14, fontWeight: normWeight(cs.fontWeight), textAlign: cs.textAlign,
+      lineHeight: (fs&&lh) ? Math.round((lh/fs)*100)/100 : 1.4,
+      shadow: cs.boxShadow!=='none'
     };
+  }
+  // Format painter: capture a source block's look-and-feel (not size/position) and reapply
+  // it to any other block — the Canva/PowerPoint "paint format" tool.
+  var paintedStyle=null;
+  var STYLE_PROPS=['bg','color','borderColor','borderWidth','radius','opacity','fontFamily','fontSize','fontWeight','textAlign','lineHeight','shadow'];
+  function captureStyle(el){
+    var st=blockState(el);
+    paintedStyle={ bg:st.bg, color:st.color, borderColor:st.borderColor, borderWidth:st.borderWidth,
+      radius:st.radius, opacity:st.opacity, fontFamily:getComputedStyle(el).fontFamily,
+      fontSize:st.fontSize, fontWeight:st.fontWeight, textAlign:st.textAlign, lineHeight:st.lineHeight, shadow:st.shadow };
+    toast('Style copied — select a block, then Paste style');
+  }
+  function applyPaintedStyle(el){
+    if(!paintedStyle) return;
+    var p=paintedStyle;
+    el.style.background=p.bg; el.style.color=p.color;
+    el.style.borderColor=p.borderColor; el.style.borderWidth=p.borderWidth+'px'; el.style.borderStyle='solid';
+    el.style.borderRadius=p.radius+'px'; el.style.opacity=(p.opacity/100);
+    el.style.fontFamily=p.fontFamily; el.style.fontSize=p.fontSize+'px'; el.style.fontWeight=p.fontWeight;
+    el.style.textAlign=p.textAlign; el.style.lineHeight=p.lineHeight;
+    el.style.boxShadow=p.shadow?'var(--shadow-lift)':'none';
+    queueStyleSave(el); renderPropsPanel(el); positionOverlay(el); toast('Style applied');
   }
   function renderPropsPanel(el){
     var st=blockState(el);
@@ -1436,11 +1519,14 @@ function getEditorScript(slug) {
       + '<section><h5>Text</h5>'
         + '<label>Font</label><select class="p-ff">'+fontOpts+'</select>'
         + '<div class="grid2" style="margin-top:8px">'
-          + '<div><label>Size (px)</label><input type="number" class="p-fs" min="8" max="96" value="'+st.fontSize+'"></div>'
+          + '<div><label>Size (px)</label><div class="stepper"><button type="button" class="p-fs-dn">−</button><input type="number" class="p-fs" min="8" max="96" value="'+st.fontSize+'"><button type="button" class="p-fs-up">+</button></div></div>'
           + '<div><label>Weight</label><select class="p-fw"><option value="400">Regular</option><option value="700">Bold</option><option value="900">Black</option></select></div>'
         + '</div>'
-        + '<label style="margin-top:8px">Align</label><div class="btnrow p-align">'
-          + '<button data-v="left">⟵</button><button data-v="center">•</button><button data-v="right">⟶</button></div>'
+        + '<div class="grid2" style="margin-top:8px">'
+          + '<div><label>Align</label><div class="btnrow p-align">'
+            + '<button data-v="left">⟵</button><button data-v="center">•</button><button data-v="right">⟶</button></div></div>'
+          + '<div><label>Line height</label><input type="number" class="p-lh" min="1" max="2.5" step="0.1" value="'+st.lineHeight+'"></div>'
+        + '</div>'
         + '<label style="margin-top:8px">Text colour</label><input type="color" class="p-color" value="'+st.color+'">'
         + swatchRow('p-color')
       + '</section>'
@@ -1455,12 +1541,14 @@ function getEditorScript(slug) {
           + '<div><label>Corner radius</label><input type="number" class="p-radius" min="0" max="60" value="'+st.radius+'"></div>'
           + '<div><label>Opacity %</label><input type="range" class="p-opacity" min="10" max="100" value="'+st.opacity+'"></div>'
         + '</div>'
+        + '<label class="chk-row" style="margin-top:8px"><input type="checkbox" class="p-shadow"'+(st.shadow?' checked':'')+'> Drop shadow</label>'
       + '</section>'
       + '<section><h5>Size</h5><div class="grid2">'
         + '<div><label>Width (px)</label><input type="number" class="p-w" min="80" value="'+st.width+'"></div>'
         + '<div><label>Height (px)</label><input type="number" class="p-h" min="40" value="'+st.height+'"></div>'
       + '</div></section>'
-      + '<div class="actions"><button class="dup">⧉ Duplicate</button><button class="rst">↺ Reset</button><button class="del">🗑 Delete</button></div>';
+      + '<div class="actions"><button class="dup">⧉ Duplicate</button><button class="rst">↺ Reset</button><button class="del">🗑 Delete</button></div>'
+      + '<div class="actions"><button class="cpstyle">🖌 Copy style</button><button class="pstyle"'+(paintedStyle?'':' disabled')+'>🖌 Paste style</button></div>';
 
     propsPanel.querySelector('.pclose').addEventListener('click',clearSelection);
     wireSwatches(propsPanel);
@@ -1470,6 +1558,9 @@ function getEditorScript(slug) {
     propsPanel.querySelector('.p-fw').value=st.fontWeight;
     propsPanel.querySelector('.p-ff').addEventListener('change',function(){ el.style.fontFamily=this.value; queueStyleSave(el); });
     propsPanel.querySelector('.p-fs').addEventListener('input',function(){ el.style.fontSize=this.value+'px'; queueStyleSave(el); positionOverlay(el); });
+    propsPanel.querySelector('.p-fs-up').addEventListener('click',function(){ var i=propsPanel.querySelector('.p-fs'); i.value=Math.min(96,(parseInt(i.value,10)||14)+1); i.dispatchEvent(new Event('input',{bubbles:true})); });
+    propsPanel.querySelector('.p-fs-dn').addEventListener('click',function(){ var i=propsPanel.querySelector('.p-fs'); i.value=Math.max(8,(parseInt(i.value,10)||14)-1); i.dispatchEvent(new Event('input',{bubbles:true})); });
+    propsPanel.querySelector('.p-lh').addEventListener('input',function(){ el.style.lineHeight=this.value; queueStyleSave(el); });
     propsPanel.querySelector('.p-fw').addEventListener('change',function(){ el.style.fontWeight=this.value; queueStyleSave(el); });
     propsPanel.querySelector('.p-color').addEventListener('input',function(){ el.style.color=this.value; queueStyleSave(el); });
     propsPanel.querySelector('.p-bg').addEventListener('input',function(){ el.style.background=this.value; queueStyleSave(el); });
@@ -1477,12 +1568,15 @@ function getEditorScript(slug) {
     propsPanel.querySelector('.p-bw').addEventListener('input',function(){ el.style.borderWidth=this.value+'px'; el.style.borderStyle='solid'; queueStyleSave(el); });
     propsPanel.querySelector('.p-radius').addEventListener('input',function(){ el.style.borderRadius=this.value+'px'; queueStyleSave(el); });
     propsPanel.querySelector('.p-opacity').addEventListener('input',function(){ el.style.opacity=(this.value/100); queueStyleSave(el); });
+    propsPanel.querySelector('.p-shadow').addEventListener('change',function(){ el.style.boxShadow=this.checked?'var(--shadow-lift)':'none'; queueStyleSave(el); });
     propsPanel.querySelector('.p-w').addEventListener('input',function(){ el.style.width=this.value+'px'; queueStyleSave(el); positionOverlay(el); });
     propsPanel.querySelector('.p-h').addEventListener('input',function(){ el.style.height=this.value+'px'; queueStyleSave(el); positionOverlay(el); });
     propsPanel.querySelector('.dup').addEventListener('click',function(){ duplicateBlock(el); });
     propsPanel.querySelector('.del').addEventListener('click',function(){ deleteBlock(el); });
     propsPanel.querySelector('.rst').addEventListener('click',function(){
       el.removeAttribute('style'); queueStyleSave(el); renderPropsPanel(el); positionOverlay(el); toast('Reset to default'); });
+    propsPanel.querySelector('.cpstyle').addEventListener('click',function(){ captureStyle(el); renderPropsPanel(el); });
+    propsPanel.querySelector('.pstyle').addEventListener('click',function(){ applyPaintedStyle(el); });
   }
   function selectBlock(el, additive){
     if(additive){
@@ -1497,10 +1591,17 @@ function getEditorScript(slug) {
   }
   document.addEventListener('click',function(e){
     if(!document.body.classList.contains('de-design')) return;
-    if(e.target.closest('.de-props,.de-resize,.de-bar,.de-panel')) return;
+    if(e.target.closest('.de-props,.de-resize,.de-bar,.de-panel,.de-ctxmenu')) return;
     var el=e.target.closest('[data-de-block]');
     if(el) selectBlock(el, e.shiftKey); else if(!e.shiftKey) clearSelection();
   }, true);
+  document.addEventListener('contextmenu',function(e){
+    if(!document.body.classList.contains('de-design')) return;
+    var el=e.target.closest('[data-de-block]'); if(!el) return;
+    e.preventDefault();
+    if(!selEls.has(el)) selectBlock(el, false);
+    showCtxMenu(e.clientX,e.clientY,el);
+  });
   window.addEventListener('scroll',function(){ if(selEls.size===1) positionOverlay(Array.from(selEls)[0]); },true);
   window.addEventListener('resize',function(){ if(selEls.size===1) positionOverlay(Array.from(selEls)[0]); });
   function flush(){ var keys=Object.keys(dirty); if(!keys.length) return; var patch=dirty; dirty={}; stat.textContent='saving…';
