@@ -457,6 +457,13 @@ window.addEventListener('load',restore);
   .crtchip.c-aspl{color:#2F6FB0;background:rgba(47,111,176,.1)}
   .crtchip.c-client{color:#15803D;background:rgba(21,128,61,.1)}
   .stall-row.esc{grid-template-columns:auto 1.1fr 3fr 1fr auto auto}
+  /* read-out (run) SLA editor */
+  .runsla-bar{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin:0 0 12px;padding:9px 14px;background:var(--paper);border:1px dashed var(--line);border-radius:11px;font-size:12.5px}
+  .runsla-bar .rs-h{font-weight:900;color:var(--ink);text-transform:uppercase;font-size:10.5px;letter-spacing:.04em}
+  .runsla-bar .rs-item{display:flex;align-items:center;gap:6px;font-weight:700;color:var(--ink-2);white-space:nowrap}
+  .runsla-bar input{width:52px;font:inherit;font-weight:800;text-align:center;padding:3px 4px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}
+  .runsla-bar input:focus{outline:none;border-color:var(--navy)}
+  .runsla-bar .rs-note{color:var(--muted);font-size:11.5px}
   /* SLA board */
   .sla-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
   .sla-card{background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:13px 15px}
@@ -572,7 +579,8 @@ window.addEventListener('load',restore);
   <div class="board" id="board"></div>
 
   <h2>ASPL SLA &amp; turnaround</h2>
-  <p class="sub">Load, delivery and average turnaround per ASPL owner. Escalations flag any ticket sitting too long in <em>any</em> court — unbriefed or blocked with the AM, silent 3+ days with ASPL, or awaiting client sign-off 3+ days — with the right chase one click away.</p>
+  <p class="sub">Load, delivery and average turnaround per ASPL owner. Escalations flag any ticket sitting too long in <em>any</em> court — unbriefed or blocked with the AM, silent 3+ days with ASPL, awaiting client sign-off 3+ days, or a <b>run window that's finished without a read-out</b> — with the right action one click away. The read-out SLAs below set how long each brief type runs before its analysis is triggered.</p>
+  <div class="runsla-bar" id="runsla-bar"></div>
   <div class="sla-grid" id="sla-grid"></div>
   <div class="panel" style="margin-top:12px"><h3>Escalations — over-SLA in any court</h3><div id="sla-stalled" class="stall-list"></div></div>
 
@@ -618,6 +626,23 @@ window.addEventListener('load',restore);
   // A/B-test tickets (task contains “test”) get the extra Analysis step: ASPL done ≠ complete
   // until the read-out is logged. Completion signals route them to Analysis instead of Done.
   function isTest(b){ return /\btest/i.test((b&&b.task)||''); }
+  // ---- read-out (run) SLAs: how long a brief runs before its analysis is triggered ----
+  // Keyword optimisation → 2 weeks; Title A/B tests → 3 weeks; other tests → 2 weeks.
+  // Values are editable in the SLA panel and saved (fcc-run-sla).
+  var RUNSLA_DEF={keyword:14,title_test:21,test:14};
+  var RUNSLA={}; try{RUNSLA=Object.assign({},RUNSLA_DEF,JSON.parse(localStorage.getItem('fcc-run-sla')||'{}'));}catch(e){RUNSLA=Object.assign({},RUNSLA_DEF);}
+  function saveRunSla(){ try{localStorage.setItem('fcc-run-sla',JSON.stringify(RUNSLA));}catch(e){} }
+  function analysisKind(b){ var t=(b&&b.task)||'';
+    if(/\btitle/i.test(t)&&/\btest/i.test(t))return 'title_test';
+    if(/\bkeyword/i.test(t))return 'keyword';
+    if(/\btest/i.test(t))return 'test';
+    return ''; }
+  function needsAnalysis(b){ return !!analysisKind(b); }
+  function runSlaDays(b){ var k=analysisKind(b); return k?(+RUNSLA[k]||RUNSLA_DEF[k]||14):null; }
+  function runStart(b){ var h=(b&&b.hist)||[], go={progress:1,done:1,analysis:1};
+    for(var i=0;i<h.length;i++){ if(go[h[i].s])return h[i].t; } return null; }
+  function readoutDue(b){ if(!needsAnalysis(b))return null; var s=runStart(b); if(s==null)return null;
+    return s+runSlaDays(b)*86400000; }
   var STAGE_LBL={},STAGE_COLOR={}; STAGES.forEach(function(s){STAGE_LBL[s[0]]=s[1];STAGE_COLOR[s[0]]=s[2];});
   // 3-letter brand abbreviations for the dense board cards (fallback: initials / first 3)
   var ABBR={'Reiss':'REI','AllSaints':'ALS','Schuh':'SCH','Superdry':'SUP','Accessorize':'ACC','Monsoon':'MON',
@@ -1504,9 +1529,11 @@ window.addEventListener('load',restore);
         // No client/code line (the chip is the client), no court name (the lane says it), no who-chip (modal has it).
         var crt=courtOf(b);
         var ageChip=crt?('<span class="tk-age'+(stageBreached(b)?' warn':'')+'" title="In '+crt+'’s court '+daysInCourt(b)+'d">'+daysInCourt(b)+'d</span>'):'';
+        if(b.status==='analysis'){ var rd0=readoutDue(b); if(rd0!=null){ var dl0=Math.ceil((rd0-Date.now())/86400000);
+          ageChip='<span class="tk-age'+(dl0<=0?' warn':'')+'" title="'+(dl0>0?('Read-out due in '+dl0+'d ('+runSlaDays(b)+'d run SLA)'):'Run complete — read-out due')+'">'+(dl0>0?('⏱ '+dl0+'d'):'read-out')+'</span>'; } }
         var mk=(b.code||'').split('-').pop(); mk=(mk&&mk!=='gb')?('<span class="tk-mk">'+esc(mk.toUpperCase())+'</span>'):'';
         var pri=(b.priority&&b.priority!=='Normal')?('<span class="tk-pri '+(b.priority==='Urgent'?'ur':'hi')+'" title="'+esc(b.priority)+'"></span>'):'';
-        var tst=isTest(b)?'<span class="tk-tst" title="A/B test — needs the Analysis step before completion">🧪</span>':'';
+        var tst=needsAnalysis(b)?'<span class="tk-tst" title="Needs the Analysis step — read-out due '+runSlaDays(b)+'d after the run starts">🧪</span>':'';
         var db=dueBadge(b); if(/no due/.test(db))db='';
         return '<div class="tik'+(courtSel&&crt!==courtSel?' dim':'')+'" draggable="true" data-id="'+esc(b.id)+'">'
           +'<div class="tk-m"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+tst+pri+'<span class="grow"></span>'+db+ageChip+'</div>'
@@ -1529,7 +1556,7 @@ window.addEventListener('load',restore);
       l.addEventListener('dragleave',function(){ l.classList.remove('drop'); });
       l.addEventListener('drop',function(e){ e.preventDefault(); l.classList.remove('drop');
         if(dragId&&BRIEFS[dragId]){ var st=l.getAttribute('data-stage');
-          if(st==='analysis'&&!isTest(BRIEFS[dragId])){ toast('Analysis is the extra step for test tickets (task contains “test”)'); return; }
+          if(st==='analysis'&&!needsAnalysis(BRIEFS[dragId])){ toast('Analysis is the extra step for test / keyword-optimisation briefs'); return; }
           setStage(BRIEFS[dragId],st); persist(); renderAll(); } });
     });
   }
@@ -1541,7 +1568,7 @@ window.addEventListener('load',restore);
   function closeModal(){ scrim.classList.remove('on'); }
   function openModal(id){ var b=BRIEFS[id]; if(!b)return;
     var comms=(b.comms||[]).map(function(c){ return '<div class="comm"><span class="cw">'+esc(c.from)+'</span><span class="cb">'+esc(c.note)+(c.done?' <span class="ck">✓ done signal</span>':'')+'</span></div>'; }).join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
-    var stat=STAGES.filter(function(s){ return s[0]!=='analysis'||isTest(b); })
+    var stat=STAGES.filter(function(s){ return s[0]!=='analysis'||needsAnalysis(b); })
       .map(function(s){ return '<button data-s="'+s[0]+'" class="'+(b.status===s[0]?'on':'')+'">'+s[1]+'</button>'; }).join('');
     var doneNote=lastDoneNote(b);
     var crt=courtOf(b);
@@ -1554,7 +1581,10 @@ window.addEventListener('load',restore);
         +'<div class="mc">'+esc(b.id)+' · '+esc(b.client)+' · ['+esc(b.code)+']</div></div><button class="x" id="m-x">×</button></div>'
       +'<div class="m-meta"><span class="m-pill">Due '+humanDD(b.due)+'</span><span class="m-pill">'+esc(b.priority||'Normal')+'</span>'
         +'<span class="m-pill">'+(b.source==='plan'?'Project plan':'Email')+'</span>'
-        +'<span class="m-pill"'+(stageBreached(b)?' style="color:#C0392B;border-color:rgba(192,57,43,.4)"':'')+'>Ball: '+(crt?(crt+' · '+daysInCourt(b)+'d'):'—')+'</span>'+(dueBadge(b))+'</div>'
+        +'<span class="m-pill"'+(stageBreached(b)?' style="color:#C0392B;border-color:rgba(192,57,43,.4)"':'')+'>Ball: '+(crt?(crt+' · '+daysInCourt(b)+'d'):'—')+'</span>'
+        +(function(){ var rd=readoutDue(b); if(rd==null||b.status==='confirmed')return ''; var dl=Math.ceil((rd-Date.now())/86400000);
+          return '<span class="m-pill"'+(dl<=0?' style="color:#C0392B;border-color:rgba(192,57,43,.4)"':'')+' title="'+runSlaDays(b)+'-day run SLA from when the brief starts running">Read-out '+(dl>0?('in '+dl+'d'):(dl===0?'due today':((-dl)+'d overdue')))+'</span>'; })()
+        +(dueBadge(b))+'</div>'
       +'<div class="m-sec"><h4>Stage</h4><div class="stat-seg" id="m-stat">'+stat+'</div></div>'
       +'<div class="m-sec"><h4>Journey — handoffs across the three courts</h4><div class="jny">'+journeyHtml(b)+'</div>'
         +(xl.length?('<div class="m-xl">'+xl.join('')+'</div>'):'')+'</div>'
@@ -1563,7 +1593,7 @@ window.addEventListener('load',restore);
         +'<input id="m-note" placeholder="Paste / summarise their reply…"><button class="btn" id="m-log">Log</button></div>'
         +'<div class="scan-hit" id="m-scan"></div></div>'
       +'<div class="m-act">'
-        +(isTest(b)&&(b.status==='analysis'||b.status==='done')?'<button class="btn" id="m-result" style="border-color:#D8CCF4;color:#7C3AED">🧪 Log result</button>':'')
+        +(needsAnalysis(b)&&(b.status==='analysis'||b.status==='done')?'<button class="btn" id="m-result" style="border-color:#D8CCF4;color:#7C3AED">🧪 Log result</button>':'')
         +'<a class="btn pri" id="m-brief" target="_blank" rel="noopener">✉ Re-draft brief to ASPL</a>'
         +'<a class="btn" id="m-chase" target="_blank" rel="noopener">⏰ Chase ASPL</a>'
         +'<a class="btn" id="m-chasec" target="_blank" rel="noopener">⏰ Chase client</a>'
@@ -1578,18 +1608,18 @@ window.addEventListener('load',restore);
     document.getElementById('m-brief').href='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(b.subject||('[FS Brief] '+b.client))+'&body='+encodeURIComponent(b.body||'');
     // completion scan on new note
     var noteEl=document.getElementById('m-note'), scanEl=document.getElementById('m-scan');
-    noteEl.addEventListener('input',function(){ if(DONE_RE.test(noteEl.value)){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this moves the ticket to '+(isTest(b)?'“Analysis 🧪” (read-out still needed)':'“Done — ASPL”')+'.'; } else scanEl.className='scan-hit'; });
+    noteEl.addEventListener('input',function(){ if(DONE_RE.test(noteEl.value)){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this moves the ticket to '+(needsAnalysis(b)?'“Analysis 🧪” (read-out still needed)':'“Done — ASPL”')+'.'; } else scanEl.className='scan-hit'; });
     document.getElementById('m-log').onclick=function(){ var note=noteEl.value.trim(); if(!note)return;
       var done=DONE_RE.test(note); b.comms=b.comms||[]; b.comms.push({from:document.getElementById('m-from').value,note:note,done:done,when:Date.now()});
       // a completion signal from ASPL moves the brief on — test tickets go to Analysis, not Done.
-      if(done && b.status!=='confirmed' && b.status!=='done' && b.status!=='analysis') setStage(b,isTest(b)?'analysis':'done');
+      if(done && b.status!=='confirmed' && b.status!=='done' && b.status!=='analysis') setStage(b,needsAnalysis(b)?'analysis':'done');
       b.updated=Date.now(); persist(); renderAll(); openModal(b.id); };
     // client confirmation draft
     var conf=document.getElementById('m-confirm');
     var cbody=clientConfirm(b,doneNote);
     conf.href='https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark · '+b.client+' — '+b.task+' completed')+'&body='+encodeURIComponent(cbody);
     conf.addEventListener('click',function(ev){ if(b.status!=='done'&&b.status!=='analysis')return;
-      if(isTest(b)&&!hasResult(b)){ ev.preventDefault(); toast('Log the test result first — 🧪 Log result'); return; }
+      if(needsAnalysis(b)&&!hasResult(b)){ ev.preventDefault(); toast('Log the read-out first — 🧪 Log result'); return; }
       setStage(b,'confirmed'); persist(); setTimeout(function(){renderAll();},400); });
     var resBtn=document.getElementById('m-result'); if(resBtn)resBtn.onclick=function(){ logResult(b); };
     // #4 chase drafts + ASPL owner reassign
@@ -1693,7 +1723,7 @@ window.addEventListener('load',restore);
         prog=/\b(started|in progress|underway|working on|wip|eta|will complete|picking (this|it) up)\b/i.test(text);
     b.comms=b.comms||[]; b.comms.push({from:sender,note:text.slice(0,600),done:done,when:Date.now()});
     var moved='';
-    if(done&&b.status!=='confirmed'&&b.status!=='done'&&b.status!=='analysis'){ var ds2=isTest(b)?'analysis':'done'; setStage(b,ds2); moved=STAGE_LBL[ds2]; }
+    if(done&&b.status!=='confirmed'&&b.status!=='done'&&b.status!=='analysis'){ var ds2=needsAnalysis(b)?'analysis':'done'; setStage(b,ds2); moved=STAGE_LBL[ds2]; }
     else if(blocked&&(b.status==='briefed'||b.status==='progress')){ setStage(b,'blocked'); moved=STAGE_LBL.blocked; }
     else if(prog&&(b.status==='intake'||b.status==='briefed')){ setStage(b,'progress'); moved=STAGE_LBL.progress; }
     var dueTxt='', dd8='', dm=/ibfdue:(\d{8})/.exec(text);
@@ -1744,7 +1774,10 @@ window.addEventListener('load',restore);
       else if(b.status==='blocked'&&ds>SLA_STAGE.blocked) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'blocked '+ds+'d — unblock / reassign',act:'chaseA',lbl:'Chase ASPL'});
       else if((b.status==='briefed'||b.status==='progress')&&silentDays(b)>=STALL_DAYS){ var lr=lastReplyDays(b);
         items.push({b:b,c:'ASPL',cls:'c-aspl',d:silentDays(b),why:(lr==null?('briefed '+briefAgeDays(b)+'d ago — no reply'):('silent '+lr+'d')),act:'chaseA',lbl:'Chase ASPL'}); }
-      else if(b.status==='analysis'&&ds>SLA_STAGE.analysis) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'awaiting test read-out '+ds+'d — analyse it',act:'open',lbl:'Analyse'});
+      else if(b.status==='analysis'&&!hasResult(b)){ var rd=readoutDue(b);
+        if(rd!=null){ if(Date.now()>rd){ var ov=Math.floor((Date.now()-rd)/86400000);
+            items.push({b:b,c:'AM',cls:'c-am',d:ov,why:'run complete ('+runSlaDays(b)+'d SLA) — read-out '+(ov?ov+'d overdue':'due today'),act:'open',lbl:'Analyse'}); } }
+        else if(ds>SLA_STAGE.analysis) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'awaiting test read-out '+ds+'d — analyse it',act:'open',lbl:'Analyse'}); }
       else if(b.status==='done'&&ds>SLA_STAGE.done) items.push({b:b,c:'Client',cls:'c-client',d:ds,why:'awaiting sign-off '+ds+'d',act:'chaseC',lbl:'Chase client'}); });
     items.sort(function(a,b2){return b2.d-a.d;});
     s.innerHTML = items.length? items.map(function(it){ var b=it.b;
@@ -1764,6 +1797,8 @@ window.addEventListener('load',restore);
     var t0=today(), WEEKS=6, evs=[];
     Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed')return; var d=ddmmyyyyToDate(b.due); if(!d)return;
       evs.push({d:d,label:b.client+' · '+b.task,kind:'brief',id:b.id}); });
+    Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed'||hasResult(b))return; var rd=readoutDue(b); if(rd==null)return;
+      evs.push({d:new Date(rd),label:b.client+' · '+b.task.slice(0,44)+' · read-out',kind:'test',id:b.id}); });
     TESTS.forEach(function(t){ if(t.result||!t.readout)return; var d=isoDate(t.readout); if(!d)return;
       evs.push({d:d,label:t.client+' · '+t.name+' · read-out',kind:'test'}); });
     var html='';
@@ -1834,6 +1869,8 @@ window.addEventListener('load',restore);
   // ---- #9 alerts + digest ----
   function computeAlerts(){ var over=[], soon=[];
     Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed')return; var days=daysTo(b.due); if(days==null)return; if(days<0)over.push(b); else if(days<=2)soon.push(b); });
+    Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed'||hasResult(b))return; var rd=readoutDue(b); if(rd==null)return;
+      var days=Math.round((rd-Date.now())/86400000); if(days<0)over.push({client:b.client,task:b.task+' · read-out'}); else if(days<=2)soon.push({client:b.client,task:b.task+' · read-out'}); });
     TESTS.forEach(function(t){ if(t.result||!t.readout)return; var d=isoDate(t.readout); if(!d)return; var days=Math.round((d-today())/86400000);
       if(days<0)over.push({client:t.client,task:t.name+' · read-out'}); else if(days<=2)soon.push({client:t.client,task:t.name+' · read-out'}); });
     return {over:over,soon:soon}; }
@@ -1875,7 +1912,22 @@ window.addEventListener('load',restore);
   function maybeNotify(){ if(!('Notification' in window)||Notification.permission!=='granted')return; var a=computeAlerts(); if(!a.over.length)return;
     try{ new Notification('FeedSpark — '+a.over.length+' overdue', {body:a.over.slice(0,3).map(function(b){return (b.client||'')+' · '+b.task;}).join('\n')}); }catch(e){} }
 
-  function renderAll(){ _planCache=null; renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTimeline(); renderTests(); renderWorkload(); renderAlerts(); }
+  // the editable read-out SLA panel — rendered once at boot (inputs keep focus), saved per device
+  function renderRunSla(){ var host=document.getElementById('runsla-bar'); if(!host)return;
+    var DEFS=[['keyword','Keywords optimisation'],['title_test','Title A/B tests'],['test','Other tests']];
+    host.innerHTML='<span class="rs-h">Read-out SLAs</span>'+DEFS.map(function(d){
+      return '<label class="rs-item">'+d[1]+' <input type="number" min="1" max="90" data-k="'+d[0]+'" value="'+(+RUNSLA[d[0]]||RUNSLA_DEF[d[0]])+'"> days</label>'; }).join('')
+      +'<span class="rs-note">run time before a brief’s analysis is triggered — edits save instantly</span>';
+    host.querySelectorAll('input').forEach(function(inp){ inp.onchange=function(){ var v=+inp.value;
+      if(!(v>0)){ inp.value=+RUNSLA[inp.getAttribute('data-k')]||14; return; }
+      RUNSLA[inp.getAttribute('data-k')]=v; saveRunSla(); toast('Read-out SLA saved — '+v+' days'); renderAll(); }; }); }
+  renderRunSla();
+  // automation: a Done brief whose run window has elapsed is pulled into Analysis automatically
+  function autoAdvanceReadouts(){ var moved=0;
+    Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k];
+      if(b&&b.status==='done'&&needsAnalysis(b)){ var rd=readoutDue(b); if(rd!=null&&Date.now()>rd){ setStage(b,'analysis'); moved++; } } });
+    if(moved){ persist(); toast(moved+' brief'+(moved===1?'':'s')+' finished the run window — moved to Analysis'); } }
+  function renderAll(){ _planCache=null; autoAdvanceReadouts(); renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTimeline(); renderTests(); renderWorkload(); renderAlerts(); }
 
   // set a sensible default due date (today + 5 working-ish days) and boot
   (function(){ var d=new Date(); d.setDate(d.getDate()+5);
