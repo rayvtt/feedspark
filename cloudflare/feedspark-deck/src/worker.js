@@ -161,21 +161,31 @@ export default {
         return json(edits || {});
       }
       if (request.method === 'PUT') {
-        const incoming = await request.json();
-        // ?replace=1 swaps the whole object in ONE put. Undo used to DELETE then PUT, so a
-        // failure between the two left the page with no edits at all — a real data-loss window.
-        const replace = url.searchParams.get('replace') === '1';
-        const current = (await env.EDITS.get(key, 'json')) || {};
-        // Same snapshot-before-overwrite the DELETE handler below does: a replace=1 PUT is just
-        // as capable of discarding a whole overlay as DELETE is (Reset now uses this path — see
-        // the client script), so it gets the same undo-a-Reset safety net.
-        if (replace && Object.keys(current).length) {
-          await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(), JSON.stringify(current));
+        // A bare `await request.json()` here — unlike every other POST/PUT route in this file —
+        // threw uncaught on a malformed/empty body, which Cloudflare turns into an opaque, empty
+        // 500 with no body: a real Reset attempt hit exactly this and the client had nothing to
+        // show but "http-500:". Wrapping the whole handler means whatever the underlying cause
+        // (bad body, a transient KV error, anything else) it comes back as a diagnosable error
+        // instead of a blank crash.
+        try {
+          let incoming; try { incoming = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+          // ?replace=1 swaps the whole object in ONE put. Undo used to DELETE then PUT, so a
+          // failure between the two left the page with no edits at all — a real data-loss window.
+          const replace = url.searchParams.get('replace') === '1';
+          const current = (await env.EDITS.get(key, 'json')) || {};
+          // Same snapshot-before-overwrite the DELETE handler below does: a replace=1 PUT is just
+          // as capable of discarding a whole overlay as DELETE is (Reset now uses this path — see
+          // the client script), so it gets the same undo-a-Reset safety net.
+          if (replace && Object.keys(current).length) {
+            await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(), JSON.stringify(current));
+          }
+          const existing = replace ? {} : current;
+          const merged = { ...existing, ...incoming };
+          await env.EDITS.put(key, JSON.stringify(merged));
+          return json({ ok: true, page: slug, count: Object.keys(merged).length });
+        } catch (e) {
+          return json({ ok: false, error: String((e && e.message) || e) }, 500);
         }
-        const existing = replace ? {} : current;
-        const merged = { ...existing, ...incoming };
-        await env.EDITS.put(key, JSON.stringify(merged));
-        return json({ ok: true, page: slug, count: Object.keys(merged).length });
       }
       if (request.method === 'DELETE') {
         // Logged explicitly: the activity feed only records PUT/POST, so a wipe used to leave
