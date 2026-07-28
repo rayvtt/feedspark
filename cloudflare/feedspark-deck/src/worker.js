@@ -72,6 +72,28 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
+// client -> Project Plan Google Sheet id. Mirrors FeedSpark_Workflow.html's client-side
+// PLANSHEET map (used there for the "+ Add task" row and status/owner/due write-back) —
+// duplicated rather than fetched at runtime so /api/tasks/ingest works with zero round trips
+// beyond the sheet write itself. Keep both in sync when a client is added or a sheet moves.
+const PLAN_SHEETS = {
+  'Reiss': '1hGcpxaTYVax4hB_nLYCMlol7sIi3qqF0xQgJGjIgZSg',
+  'Schuh': '1rbr8FwZagdZdctR_fNesixm4-uDWG1VJPnBCJBdjSxc',
+  'Superdry': '16Sn9HB56eaNytr7pM3sY0aJTRhK-I-RpNr84EQ36KMI',
+  'Accessorize': '1SM52DXN3ecY5EDCIIqlRPONSmxkFvOM1xaeDrMlJ79w',
+  'Monsoon': '1SM52DXN3ecY5EDCIIqlRPONSmxkFvOM1xaeDrMlJ79w',
+  'Hobbycraft': '1oHdoFO4gazfhQZM6rp1fl5pWlDRVzr8t_THquU861fg',
+  'YuMOVE': '1RMTN99Cw0J3l5mORwYPpITnoi5HCPt7tET4u8rQbsq0',
+  'Ryobi': '1WofQrZ6igucGIvGnUOLgBiXP7MqK-7ZtG8Xt4LLaA1E',
+  'Estée Lauder': '1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+  'Bobbi Brown': '1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+  'Benefit': '1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+  'Clinique': '1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+  'MAC': '1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+  'Jo Malone': '1m99-z1R4FI4Iw86I6P8TyLY7G-Td9sh2vNjy-y95UMc',
+  'House of Bruar': '1lgO-SrzWtHmsvKRXg2Xgzq3d7fCwv5V2Fauu6pJgYOA',
+};
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -139,22 +161,60 @@ export default {
         return json(edits || {});
       }
       if (request.method === 'PUT') {
-        const incoming = await request.json();
-        // ?replace=1 swaps the whole object in ONE put. Undo used to DELETE then PUT, so a
-        // failure between the two left the page with no edits at all — a real data-loss window.
-        const replace = url.searchParams.get('replace') === '1';
-        const existing = replace ? {} : ((await env.EDITS.get(key, 'json')) || {});
-        const merged = { ...existing, ...incoming };
-        await env.EDITS.put(key, JSON.stringify(merged));
-        return json({ ok: true, page: slug, count: Object.keys(merged).length });
+        // A bare `await request.json()` here — unlike every other POST/PUT route in this file —
+        // threw uncaught on a malformed/empty body, which Cloudflare turns into an opaque, empty
+        // 500 with no body: a real Reset attempt hit exactly this and the client had nothing to
+        // show but "http-500:". Wrapping the whole handler means whatever the underlying cause
+        // (bad body, a transient KV error, anything else) it comes back as a diagnosable error
+        // instead of a blank crash.
+        try {
+          let incoming; try { incoming = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+          // ?replace=1 swaps the whole object in ONE put. Undo used to DELETE then PUT, so a
+          // failure between the two left the page with no edits at all — a real data-loss window.
+          const replace = url.searchParams.get('replace') === '1';
+          const current = (await env.EDITS.get(key, 'json')) || {};
+          // Same snapshot-before-overwrite the DELETE handler below does: a replace=1 PUT is just
+          // as capable of discarding a whole overlay as DELETE is (Reset now uses this path — see
+          // the client script), so it gets the same undo-a-Reset safety net.
+          if (replace && Object.keys(current).length) {
+            await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(), JSON.stringify(current));
+          }
+          const existing = replace ? {} : current;
+          const merged = { ...existing, ...incoming };
+          await env.EDITS.put(key, JSON.stringify(merged));
+          return json({ ok: true, page: slug, count: Object.keys(merged).length });
+        } catch (e) {
+          return json({ ok: false, error: String((e && e.message) || e) }, 500);
+        }
       }
       if (request.method === 'DELETE') {
         // Logged explicitly: the activity feed only records PUT/POST, so a wipe used to leave
         // no trace at all — which made "where did my edits go?" unanswerable after the fact.
         logActivity(ctx, env, request, 'edits-cleared', slug);
+        // Snapshot before wiping. Reset is the correct fix when a stale overlay is mis-landing
+        // on a renumbered template, but it used to be irreversible — so the only safe advice
+        // was "don't press it", which left the bad overlay in place. Keeping a timestamped
+        // copy makes Reset a recoverable action: the overlay can always be read back out of
+        // edits-bak:<slug>:<ts> and cherry-picked.
+        const doomed = await env.EDITS.get(key);
+        if (doomed && doomed !== '{}') {
+          await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(), doomed);
+        }
         await env.EDITS.delete(key);
-        return json({ ok: true, page: slug, cleared: true });
+        return json({ ok: true, page: slug, cleared: true, backed_up: !!(doomed && doomed !== '{}') });
       }
+    }
+
+    // ---- edit-overlay backups (read-only): list or fetch a snapshot taken by a Reset ----
+    if (path === '/api/edits/backups') {
+      const slug = (url.searchParams.get('page') || 'home').replace(/[^a-z0-9_-]/gi, '');
+      const at = url.searchParams.get('at');
+      if (at) return json((await env.EDITS.get('edits-bak:' + slug + ':' + at.replace(/\D/g, ''), 'json')) || {});
+      const list = await env.EDITS.list({ prefix: 'edits-bak:' + slug + ':' });
+      return json(list.keys.map((k) => ({
+        at: k.name.split(':').pop(),
+        iso: new Date(+k.name.split(':').pop()).toISOString(),
+      })).sort((a, b) => b.at - a.at));
     }
 
     // ---- feedback store (per-deck review notes, namespaced per page like /api/edits) ----
@@ -748,26 +808,11 @@ export default {
     if (path === '/api/sheets/task' && request.method === 'POST') {
       if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' });
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
-      const id = body.id, match = String(body.match || '').trim(), value = body.value; let tab = body.tab || 'Project Plan';
+      const id = body.id, match = String(body.match || '').trim(), value = body.value, tab = body.tab || 'Project Plan';
       if (!id || !match || value == null || !String(value).trim()) return json({ ok: false, error: 'missing id / match / value' }, 400);
-      try {
-        const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
-        tab = await resolveTab(id, tab, token);   // tab names vary per client (e.g. "Opitmisation Plan") — write where the reads come from
-        const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
-        const rd = await rr.json(); if (rd.error) return json({ ok: false, error: rd.error.message });
-        const rows = rd.values || [];
-        const key = normCell(match).slice(0, 45); let targetRow = -1;
-        for (let r = 0; r < rows.length; r++) { if ((rows[r] || []).some(cc => { const cn = normCell(cc); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; } }
-        if (targetRow < 0) return json({ ok: false, error: 'task row not found in ' + tab, match });
-        const c = resolveCols(rows);
-        const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
-        const cell = tab + '!' + colLetter(tc) + (targetRow + 1);
-        const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(cell) + '?valueInputOption=USER_ENTERED', {
-          method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values: [[value]] }) });
-        const wd = await wr.json(); if (wd.error) return json({ ok: false, error: permHint(wd.error.message), cell });
-        try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
-        return json({ ok: true, cell, updated: wd.updatedCells || 1 });
-      } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
+      const r = await renamePlanTask(env, id, tab, match, value);
+      if (r.ok) { try { await env.EDITS.delete('planlive:' + id); } catch (e) {} }
+      return json(r);
     }
 
     // ---- append new task rows into a plan tab (ATRT uniques -> project plan) ----
@@ -778,35 +823,94 @@ export default {
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
       const id = body.id, tab = body.tab || 'Project Plan', rows = body.rows || [];
       if (!id || !rows.length) return json({ ok: false, error: 'missing id / rows' }, 400);
+      return json(await appendPlanRows(env, id, tab, rows));
+    }
+
+    // ---- task ingestion (no-admin path): lets a trusted automation — a Claude Code session
+    // with no browser, same problem the Gmail Apps Script has — push new Project-Plan tasks
+    // for a client without an Access login. Same shape as /api/gmail/push: a shared secret
+    // instead of a session, and this exact path needs its own Cloudflare Access BYPASS policy
+    // (docs/GOOGLE_SETUP.md). Delegates to appendPlanRows — the exact same write /api/sheets/
+    // append uses — so an ingested task lands identically to one typed into the Workflow's own
+    // "+ Add task" row; no separate write path to drift from that one.
+    // PLAN_SHEETS mirrors FeedSpark_Workflow.html's client-side PLANSHEET map — keep both in
+    // sync; a client missing here fails closed (400) rather than guessing a sheet id.
+    // GET verifies a push landed — same path (so it rides the same Access bypass with no new
+    // Zero Trust config), same key. A write endpoint with no way to check its own result meant
+    // "ok:true" had to be taken on faith; this closes that gap. ?range defaults to the columns
+    // appendPlanRows actually uses (A:H covers every client's Task/Owner/Status/Due layout seen
+    // so far), not the whole sheet.
+    if (path === '/api/tasks/ingest' && request.method === 'GET') {
+      if (!env.TASKS_INGEST_KEY) return json({ ok: false, error: 'ingest key not configured' }, 503);
+      if (request.headers.get('X-FCC-Ingest-Key') !== env.TASKS_INGEST_KEY) return json({ ok: false, error: 'unauthorized' }, 401);
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' }, 503);
+      const client = url.searchParams.get('client') || '';
+      const id = PLAN_SHEETS[client];
+      if (!id) return json({ ok: false, error: 'unknown client "' + client + '"' }, 400);
+      const range = url.searchParams.get('range') || 'A540:H575';
       try {
-        const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
-        let realTab = await resolveTab(id, tab, token);
-        let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
-        let rd = await rr.json();
-        if (rd.error) { // tab name varies — fall back to the first sheet
-          rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent('A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
-          rd = await rr.json(); realTab = '';
-        }
-        if (rd.error) return json({ ok: false, error: rd.error.message });
-        const grid = rd.values || [];
-        const c = resolveCols(grid);
-        const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
-        const oc = c.ownerCol, sc = c.statusCol, dc = c.dueCol;
-        const width = Math.max(tc, oc, sc, dc, 0) + 1;
-        const values = rows.map(r => { const a = new Array(width).fill(''); a[tc] = r.task || ''; if (oc >= 0) a[oc] = r.owner || ''; if (sc >= 0) a[sc] = r.status || 'Open'; if (dc >= 0 && r.due) a[dc] = r.due; return a; });
-        // find the LAST row that has any content and write directly below it — the values:append
-        // API mis-detects the table on multi-block plan layouts and drops rows at the top.
-        let lastRow = 0; for (let r = 0; r < grid.length; r++) { if ((grid[r] || []).some(x => String(x || '').trim() !== '')) lastRow = r; }
-        const startRow = lastRow + 2; // 1-based row just after the last content row
-        const range = (realTab ? realTab + '!' : '') + 'A' + startRow;
-        const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(range) + '?valueInputOption=USER_ENTERED', {
-          method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values }) });
-        const wd = await wr.json();
-        if (wd.error) return json({ ok: false, error: permHint(wd.error.message) });
-        try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
-        return json({ ok: true, appended: values.length, tab: realTab || '(first sheet)', atRow: startRow,
-          cols: { task: colLetter(tc), owner: oc >= 0 ? colLetter(oc) : null, status: sc >= 0 ? colLetter(sc) : null, due: dc >= 0 ? colLetter(dc) : null } });
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
+        const realTab = await resolveTab(id, 'Project Plan', token);
+        const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!' + range), { headers: { Authorization: 'Bearer ' + token } });
+        const d = await r.json();
+        if (d.error) return json({ ok: false, error: d.error.message });
+        return json({ ok: true, client, tab: realTab, range: d.range || range, values: d.values || [] });
       } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
+    }
+
+    if (path === '/api/tasks/ingest' && request.method === 'POST') {
+      if (!env.TASKS_INGEST_KEY) return json({ ok: false, error: 'ingest key not configured — wrangler secret put TASKS_INGEST_KEY' }, 503);
+      if (request.headers.get('X-FCC-Ingest-Key') !== env.TASKS_INGEST_KEY) return json({ ok: false, error: 'unauthorized' }, 401);
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' }, 503);
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const client = String(body.client || '');
+      const id = PLAN_SHEETS[client];
+      if (!id) return json({ ok: false, error: 'unknown client "' + client + '" — add it to PLAN_SHEETS in worker.js and PLANSHEET in FeedSpark_Workflow.html' }, 400);
+      const tasks = Array.isArray(body.tasks) ? body.tasks.slice(0, 100) : [];
+      if (!tasks.length) return json({ ok: false, error: 'missing tasks' }, 400);
+      // optional source tag, e.g. "SRS" for a strategy-review session — prefixed onto every
+      // task so a batch pushed here reads apart from a manually-typed row in the sheet at a
+      // glance, without needing a separate column no other write path fills in.
+      const tag = String(body.tag || '').trim().replace(/[[\]]/g, '').slice(0, 20);
+      const prefix = tag ? '[' + tag + '] ' : '';
+      const rows = tasks.map((t) => ({
+        task: prefix + String((t && t.task) || '').slice(0, 300),
+        owner: String((t && t.owner) || '').slice(0, 60),
+        status: String((t && t.status) || 'Open').slice(0, 30),
+        due: (t && t.due) ? String(t.due).slice(0, 20) : '',
+      })).filter((r) => r.task !== prefix);
+      if (!rows.length) return json({ ok: false, error: 'no task text on any row' }, 400);
+      const r = await appendPlanRows(env, id, 'Project Plan', rows);
+      logActivity(ctx, env, request, 'tasks-ingest', client + ': ' + rows.length + (r.ok ? ' added' : ' failed — ' + r.error));
+      return json({ ...r, client });
+    }
+
+    // PATCH: retag rows already ingested — e.g. a batch pushed before the `tag` option existed,
+    // or tasks a client wants relabelled after the fact. { client, updates:[{match, task}] }
+    // matches each `match` against the sheet exactly like /api/sheets/task's inline-edit does,
+    // then overwrites just that cell with `task` (call already includes any [TAG] prefix wanted
+    // — this endpoint does not add one, so a plain retag and a tagged retag are the same call).
+    // Same path/key as the POST above — no new Access bypass needed.
+    if (path === '/api/tasks/ingest' && request.method === 'PATCH') {
+      if (!env.TASKS_INGEST_KEY) return json({ ok: false, error: 'ingest key not configured' }, 503);
+      if (request.headers.get('X-FCC-Ingest-Key') !== env.TASKS_INGEST_KEY) return json({ ok: false, error: 'unauthorized' }, 401);
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' }, 503);
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const client = String(body.client || '');
+      const id = PLAN_SHEETS[client];
+      if (!id) return json({ ok: false, error: 'unknown client "' + client + '"' }, 400);
+      const updates = Array.isArray(body.updates) ? body.updates.slice(0, 100) : [];
+      if (!updates.length) return json({ ok: false, error: 'missing updates' }, 400);
+      const results = [];
+      for (const u of updates) {
+        const match = String((u && u.match) || '').trim(), task = String((u && u.task) || '').trim();
+        if (!match || !task) { results.push({ ok: false, error: 'missing match/task', match }); continue; }
+        results.push({ match, ...(await renamePlanTask(env, id, 'Project Plan', match, task)) });
+      }
+      const okCount = results.filter((r) => r.ok).length;
+      try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
+      logActivity(ctx, env, request, 'tasks-retag', client + ': ' + okCount + '/' + updates.length + ' retagged');
+      return json({ ok: okCount === updates.length, client, updated: okCount, total: updates.length, results });
     }
 
     // ---- undo an ATRT->plan write: delete the rows whose task matches a written task ----
@@ -1001,6 +1105,63 @@ function monthOf(s) { // detect a "month separator" label like "July-26", "Jun 2
 }
 // a non-white cell fill = a section separator (blue/grey header), NOT a task (Ray's rule)
 function isFilled(rgb) { return !!rgb && Math.min(rgb[0], rgb[1], rgb[2]) < 0.93; }
+// Shared by /api/sheets/task (human, via the Workflow grid's inline task-text edit) and
+// /api/tasks/ingest's PATCH (a trusted automation retagging rows it appended earlier) — same
+// row-match + column-resolution as every other 2-way writer in this file.
+async function renamePlanTask(env, id, tab, match, value) {
+  try {
+    const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
+    const realTab = await resolveTab(id, tab, token);
+    const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+    const rd = await rr.json(); if (rd.error) return { ok: false, error: rd.error.message };
+    const rows = rd.values || [];
+    const key = normCell(match).slice(0, 45); let targetRow = -1;
+    for (let r = 0; r < rows.length; r++) { if ((rows[r] || []).some(cc => { const cn = normCell(cc); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; } }
+    if (targetRow < 0) return { ok: false, error: 'task row not found in ' + realTab, match };
+    const c = resolveCols(rows);
+    const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
+    const cell = realTab + '!' + colLetter(tc) + (targetRow + 1);
+    const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(cell) + '?valueInputOption=USER_ENTERED', {
+      method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values: [[value]] }) });
+    const wd = await wr.json(); if (wd.error) return { ok: false, error: permHint(wd.error.message), cell };
+    return { ok: true, cell, updated: wd.updatedCells || 1 };
+  } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
+}
+// Shared by /api/sheets/append (human, via the Workflow's own "+ Add task" row) and
+// /api/tasks/ingest (a trusted automation, key-gated) — one write path so both land rows
+// identically instead of two implementations quietly drifting apart.
+async function appendPlanRows(env, id, tab, rows) {
+  try {
+    const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
+    let realTab = await resolveTab(id, tab, token);
+    let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+    let rd = await rr.json();
+    if (rd.error) { // tab name varies — fall back to the first sheet
+      rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent('A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+      rd = await rr.json(); realTab = '';
+    }
+    if (rd.error) return { ok: false, error: rd.error.message };
+    const grid = rd.values || [];
+    const c = resolveCols(grid);
+    const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
+    const oc = c.ownerCol, sc = c.statusCol, dc = c.dueCol;
+    const width = Math.max(tc, oc, sc, dc, 0) + 1;
+    const values = rows.map(r => { const a = new Array(width).fill(''); a[tc] = r.task || ''; if (oc >= 0) a[oc] = r.owner || ''; if (sc >= 0) a[sc] = r.status || 'Open'; if (dc >= 0 && r.due) a[dc] = r.due; return a; });
+    // find the LAST row that has any content and write directly below it — the values:append
+    // API mis-detects the table on multi-block plan layouts and drops rows at the top.
+    let lastRow = 0; for (let r = 0; r < grid.length; r++) { if ((grid[r] || []).some(x => String(x || '').trim() !== '')) lastRow = r; }
+    const startRow = lastRow + 2; // 1-based row just after the last content row
+    const range = (realTab ? realTab + '!' : '') + 'A' + startRow;
+    const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(range) + '?valueInputOption=USER_ENTERED', {
+      method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values }) });
+    const wd = await wr.json();
+    if (wd.error) return { ok: false, error: permHint(wd.error.message) };
+    try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
+    return { ok: true, appended: values.length, tab: realTab || '(first sheet)', atRow: startRow,
+      cols: { task: colLetter(tc), owner: oc >= 0 ? colLetter(oc) : null, status: sc >= 0 ? colLetter(sc) : null, due: dc >= 0 ? colLetter(dc) : null } };
+  } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
+}
+
 // read a tab's values AND per-cell background colour (needed to tell separators from tasks)
 // Writes must land on the tab the reads came from: exact name -> case-insensitive ->
 // first tab containing "plan" -> the sheet's first tab (mirrors fetchGrid's read fallback).
@@ -1161,7 +1322,13 @@ function getEditorScript(slug) {
 
   var warnEl=document.createElement('div'); warnEl.className='de-warn'; warnEl.hidden=true;
   document.body.appendChild(warnEl);
-  function showWarn(html){ warnEl.innerHTML=html; warnEl.hidden=false; }
+  // This banner sits at the highest z-index on the page (by design — a save failure has to be
+  // impossible to miss) and pins to top:0, exactly where .topbar slides in on scroll. Without an
+  // explicit close it had no way to end: e.g. a standalone offline export (no backend to fetch
+  // from) always fires the "could not load saved edits" message, permanently covering the topbar
+  // and blocking the very Download HTML button someone would use to save their work.
+  function showWarn(html){ warnEl.innerHTML=html+'<button class="de-w-x" title="Dismiss" aria-label="Dismiss">&#10005;</button>';
+    warnEl.hidden=false; warnEl.querySelector('.de-w-x').onclick=hideWarn; }
   function hideWarn(){ warnEl.hidden=true; }
   var NOT_SAVED='&#9888; <b>NOT SAVED</b> &mdash; the server rejected the save (you are probably signed out of Cloudflare Access). '
     + 'Your changes are kept locally &mdash; <b>sign in again and reload</b>, then click Restore. Do not close this tab.';
@@ -1244,6 +1411,7 @@ function getEditorScript(slug) {
     + '.de-warn{position:fixed;top:0;left:0;right:0;z-index:100000;background:#C0392B;color:#fff;font:13px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;padding:10px 16px;box-shadow:0 2px 12px rgba(0,0,0,.25);text-align:center}'
     + '.de-warn[hidden]{display:none}'
     + '.de-warn button{margin-left:8px;background:#fff;color:#C0392B;border:0;border-radius:6px;padding:5px 11px;font:inherit;font-weight:800;cursor:pointer}'
+    + '.de-w-x{position:absolute;right:10px;top:50%;transform:translateY(-50%);margin-left:0!important;padding:2px 9px!important;background:rgba(255,255,255,.25)!important;color:#fff!important}'
     + '.de-warn button:hover{background:#FFE9E5}'
     // Present mode: mostly the chrome the print stylesheet already hides (topbar, editor UI),
     // live on-screen and toggle-able — for screen-sharing the deck without Ray's own tooling in
@@ -1251,7 +1419,7 @@ function getEditorScript(slug) {
     // still see which chapter they're on and jump around — it already highlights the current
     // section on scroll on its own, no extra wiring needed here. .de-handle stays visible (very
     // dim) so there's always a way back in.
-    + 'body.de-present .topbar,body.de-present .footmark,body.de-present .scrollcue,body.de-present .progress,body.de-present .de-bar,body.de-present .de-panel,body.de-present .de-props,body.de-present .de-toast,body.de-present .de-resize,body.de-present [id^="tky-"]{display:none!important}'
+    + 'body.de-present .topbar,body.de-present .footmark,body.de-present .scrollcue,body.de-present .progress,body.de-present .de-bar,body.de-present .de-panel,body.de-present .de-props,body.de-present .de-toast,body.de-present .de-resize,body.de-present .de-warn,body.de-present [id^="tky-"]{display:none!important}'
     // .de-bar.de-show + .de-handle{display:none} (above) would otherwise hide this escape
     // hatch whenever Present was entered while the toolbar was already open — force it back.
     + 'body.de-present .de-handle{display:block!important;opacity:.18}'
@@ -1359,6 +1527,7 @@ function getEditorScript(slug) {
   // The reveal choice is remembered per-browser so Ray doesn't have to re-toggle every load.
   var LS_KEY='de-bar-shown';
   function showBar(on){ bar.classList.toggle('de-show',on); try{ localStorage.setItem(LS_KEY, on?'1':'0'); }catch(e){} if(!on && editing) setEditing(false); }
+  var RAW = /[?&]raw(=1)?(&|$)/.test(location.search);
   var wantsShown = /[?&]edit(=1)?(&|$)/.test(location.search);
   var remembered = null; try{ remembered = localStorage.getItem(LS_KEY); }catch(e){}
   showBar(wantsShown || remembered==='1');
@@ -1454,6 +1623,9 @@ function getEditorScript(slug) {
     };
     if(d) d.onclick=function(){ if(confirm('Discard '+n+' unsaved edit'+(n===1?'':'s')+'? This cannot be undone.')){ clearBackup(); hideWarn(); } };
   }
+  // Normalised text of an element — the signature a delete tombstone is validated against.
+  function sigOf(el){ return (el.textContent||'').replace(/\s+/g,' ').trim().slice(0,120); }
+  var skipped=0;
   function loadEdits(){ fetch(API+'/api/edits?page='+PAGE).then(deJSON).then(function(ed){
     offerRestore();
     if(!ed) return;
@@ -1479,15 +1651,34 @@ function getEditorScript(slug) {
       if(k.indexOf('__added:')===0) return;
       var el=document.querySelector('[data-eid="'+k+'"]'); if(!el) return;
       var v=ed[k];
-      if(v && typeof v==='object' && v.deleted){ el.remove(); return; }
+      if(v && typeof v==='object' && v.deleted){
+        // A tombstone is the only overlay type that DESTROYS content, and it is the one type
+        // you cannot eyeball afterwards — what it removed simply isn't on the page to notice.
+        // data-eid is positional, so once a template push renumbers chapters an old tombstone
+        // lands on an innocent element and silently deletes it. Every deletion now records a
+        // signature of what it removed; replay only when that still matches. Legacy tombstones
+        // carry no signature and are never replayed — a deletion that stops applying is a
+        // visible, fixable annoyance; one that removes the wrong thing is not.
+        if(v.sig && v.sig===sigOf(el)){ el.remove(); } else { skipped++; }
+        return;
+      }
       var h=(typeof v==='string')?v:v.html; if(h!=null) el.innerHTML=h;
-      if(v && typeof v==='object' && v.style!=null) el.style.cssText=v.style; }); })
-    .catch(function(){
+      if(v && typeof v==='object' && v.style!=null) el.style.cssText=v.style; });
+    if(skipped) showWarn('&#9888; <b>'+skipped+' saved deletion'+(skipped===1?' was':'s were')+' skipped</b> &mdash; '
+      + 'they no longer match the content they removed (the template changed underneath them), so they were NOT replayed. '
+      + 'Nothing has been deleted from your page. Use &#129529; Reset page to clear them for good.'); })
+    .catch(function(e){
       // Used to be a silent catch — a failed load rendered the clean git template, which is
       // visually identical to "all my work is gone". Say so instead, and warn before editing
-      // on top of a state that will not save.
-      showWarn('&#9888; <b>Could not load your saved edits</b> &mdash; you may be signed out of Cloudflare Access. '
-        + 'This page is showing the ORIGINAL template, not your version. <b>Sign in and reload before editing.</b>');
+      // on top of a state that will not save. But not every failure is Access: a standalone
+      // offline export (no backend at API at all, e.g. opened via file://) fails here on every
+      // load by design, and blaming a nonexistent login was just noise on a page where the
+      // "sign in and reload" instruction is impossible to follow.
+      var offline = !API && (location.protocol==='file:' || (e&&/fetch/i.test(e.message||'')));
+      showWarn(offline
+        ? '&#9888; <b>Working offline</b> &mdash; this standalone copy has no saved-edit server to load from, so it is showing the template as downloaded. Use &#8681; Download HTML to save a new checkpoint.'
+        : '&#9888; <b>Could not load your saved edits</b> &mdash; you may be signed out of Cloudflare Access. '
+          + 'This page is showing the ORIGINAL template, not your version. <b>Sign in and reload before editing.</b>');
     }); }
 
   // ---- row drag-and-drop reordering — works even in presentation mode (bar hidden),
@@ -1677,7 +1868,7 @@ function getEditorScript(slug) {
     var els=Array.from(selEls);
     if(!confirm('Delete '+els.length+' blocks? This removes them for everyone viewing this deck.')) return;
     var patch={};
-    els.forEach(function(el){ var eid=el.getAttribute('data-eid'); delete dirty[eid]; patch[eid]={deleted:true}; });
+    els.forEach(function(el){ var eid=el.getAttribute('data-eid'); delete dirty[eid]; patch[eid]={deleted:true, sig:sigOf(el)}; });
     clearSelection();
     els.forEach(function(el){ el.remove(); });
     armUndo().then(function(){
@@ -1718,9 +1909,9 @@ function getEditorScript(slug) {
   }
   function deleteBlock(el){
     if(!confirm('Delete this block? This removes it for everyone viewing this deck.')) return;
-    var eid=el.getAttribute('data-eid'); clearSelection(); delete dirty[eid]; el.remove();
+    var eid=el.getAttribute('data-eid'), sig=sigOf(el); clearSelection(); delete dirty[eid]; el.remove();
     armUndo().then(function(){
-      var patch={}; patch[eid]={deleted:true};
+      var patch={}; patch[eid]={deleted:true, sig:sig};
       return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)});
     }).then(function(){ toast('Block deleted'); }).catch(function(){ toast('Delete failed to save'); });
   }
@@ -1904,7 +2095,13 @@ function getEditorScript(slug) {
   });
   window.addEventListener('scroll',function(){ if(selEls.size===1) positionOverlay(Array.from(selEls)[0]); },true);
   window.addEventListener('resize',function(){ if(selEls.size===1) positionOverlay(Array.from(selEls)[0]); });
-  function flush(){ var keys=Object.keys(dirty); if(!keys.length) return; var patch=dirty; dirty={}; stat.textContent='saving…';
+  function flush(){ var keys=Object.keys(dirty); if(!keys.length) return;
+    // Raw view never writes: the overlay it is deliberately NOT showing is still in KV, so a
+    // save from here would merge new keys into a state the editor can't see and make the
+    // mis-landing worse. Keep the patch queued so nothing is lost if the tab is reloaded
+    // without ?raw=1.
+    if(RAW){ stat.textContent='raw view — not saved'; return; }
+    var patch=dirty; dirty={}; stat.textContent='saving…';
     backupLocal(patch);   // local copy first — survives even if the server never accepts it
     fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
       .then(deJSON).then(function(){ stat.textContent='✓ saved'; clearBackup(); hideWarn();
@@ -1935,7 +2132,25 @@ function getEditorScript(slug) {
   bUndo.addEventListener('click',performUndo);
   bReset.addEventListener('click',function(){
     if(!confirm('Clear every saved edit on this page and reload from the git template? This affects the whole page, not just what you last changed, and cannot itself be undone.')) return;
-    fetch(API+'/api/edits?page='+PAGE,{method:'DELETE'}).then(function(){ location.reload(); }).catch(function(){ toast('Reset failed'); });
+    // PUT ?replace=1 with an empty body, not DELETE. Undo already moved off DELETE for this same
+    // endpoint (see the PUT handler's comment) because a two-step delete-then-restore leaves a
+    // data-loss window if the second call fails — Reset only ever needed the "swap to {}" half of
+    // that, which a single atomic PUT does in one round trip, on the exact request shape every
+    // other save on this page already proves works.
+    fetch(API+'/api/edits?page='+PAGE+'&replace=1',{method:'PUT',headers:{'content-type':'application/json'},body:'{}'})
+      .then(function(res){
+        if(!res.ok) return res.text().then(function(t){ throw new Error('http-'+res.status+(t?': '+t.slice(0,140):'')); });
+        var ct=res.headers.get('content-type')||'';
+        if(ct.indexOf('application/json')<0) throw new Error('non-json response (likely an Access login page) — status '+res.status);
+        return res.json();
+      })
+      .then(function(){ location.reload(); })
+      .catch(function(err){
+        // Show what actually happened instead of guessing — a real status/body here is worth
+        // more than another round of "try signing in again".
+        showWarn('&#9888; <b>Reset did not go through</b> &mdash; '+(err&&err.message?err.message:'the request failed')
+          +'. Your saved edits are UNCHANGED.');
+      });
   });
 
   // ---- rich text: bold/italic/underline/link on a text selection while in Edit mode ----
@@ -2104,7 +2319,18 @@ function getEditorScript(slug) {
   assignBlockIds();
   initRowDrag();
   initBlockDrag();
-  loadEdits();
+  // ?raw=1 — render the git template with the saved overlay NOT applied. Diagnostic escape
+  // hatch: when a stale overlay mis-lands after a structural template change (renumbered
+  // chapters shift data-eid keys, so a saved delete tombstone can remove the wrong element),
+  // the only way to tell "the template is broken" from "the overlay is broken" used to be
+  // pressing Reset — which destroyed the overlay to find out. This answers the question
+  // without writing anything, and is safe to present from.
+  if (RAW) {
+    showWarn('&#9888; <b>Raw template view</b> &mdash; your saved edits are <b>not</b> applied on this URL. '
+      + 'Nothing has been deleted. Drop <code>?raw=1</code> to see your edited version again.');
+  } else {
+    loadEdits();
+  }
   loadFeedback();
 })();
 </script>
