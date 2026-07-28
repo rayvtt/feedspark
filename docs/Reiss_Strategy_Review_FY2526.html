@@ -535,8 +535,8 @@ policy data become commercial controls"<br/>Google </p>
 
 </div>
 </section>
-<!-- ================= CH 06 — AUTOMATION & PICK READINESS ================= -->
-<div class="chapter" id="c6"><div class="ch-num">06</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter six</div><h2>Automation &amp; Pick Readiness</h2><p>What's running itself, what still needs a hand, and what's blocked on NEXT.</p></div></div>
+<!-- ================= CH 06 — AUTOMATION & PEAK READINESS ================= -->
+<div class="chapter" id="c6"><div class="ch-num">06</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter six</div><h2>Automation &amp; Peak Readiness</h2><p>What's running itself, what still needs a hand, and what's blocked on NEXT.</p></div></div>
 <section class="band">
 <div class="wrap">
 <div class="tbl-wrap rv in">
@@ -544,10 +544,10 @@ policy data become commercial controls"<br/>Google </p>
 <tbody>
 <tr><td><b>Title de-duplication</b></td><td>Rule — auto-optimised-title</td><td>Detects and rewrites duplicate titles automatically. Verified working in GB: 0.1% duplicates remain — but FR's live audit (chapter 07) still shows 9% duplicate titles, so the fix hasn't fully reached every market yet.</td><td><span class="pill p-prog">GB done, FR open</span></td></tr>
 <tr><td><b>Custom labels</b></td><td>FeedHero</td><td>Bestseller and attribute labels, rule-driven; 3.5 of 6 slots filled on average.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
-<tr><td><b>Keyword targeting</b></td><td>Reiss Keyword Planner</td><td>Tool is live; rollout across the catalogue is the open item — 5.8% coverage today.</td><td><span class="pill p-prog">In progress</span></td></tr>
+<tr><td><b>Keyword targeting</b></td><td>Reiss Keyword Planner</td><td><a href="https://docs.google.com/spreadsheets/d/1jUMsRsfvb654kyI_rk8U1ACb4zFLm0nvx8aCT5li7FQ/edit?usp=sharing">Keyword Planner &times; Eliza doc</a> — process is set live.</td><td><span class="pill p-done">&#10003; Live</span></td></tr>
 <tr><td><b>Product type depth</b></td><td>Rule — FeedHero</td><td>Further categorisation breakdown in build — feed shows depth averaging 2.2 levels today.</td><td><span class="pill p-prog">In progress</span></td></tr>
-<tr><td><b>Stock availability accuracy</b></td><td>NEXT feed dependency</td><td>Stock_flag doesn't yet reflect actual availability.</td><td><span class="pill p-block">⚑ Awaiting NEXT</span></td></tr>
-<tr><td><b>Item Group ID → Item No.</b></td><td>NEXT feed dependency</td><td>Confirmed unmapped across the whole export — switchover date to be confirmed.</td><td><span class="pill p-open">Open</span></td></tr>
+<tr><td><b>Stock availability accuracy</b></td><td>NEXT feed dependency</td><td>Stock_flag doesn't yet reflect actual availability (NEXT's end) — increase refresh frequency (&rarr; 3&ndash;4&times;/day).</td><td><span class="pill p-block">⚑ Awaiting NEXT</span></td></tr>
+<tr><td><b>Item Group ID → Item No.</b></td><td>NEXT feed dependency</td><td>Item No. is mapped as Item Group ID across all Shopping feeds.</td><td><span class="pill p-done">&#10003; Done</span></td></tr>
 </tbody></table>
 </div>
 <div class="callout rv in"><h4>The pattern to watch</h4><p> Every open item in this table sits on the same fault line — a dependency on a NEXT-side feed fix. Closing that dependency, not adding more FeedSpark automation, is what unblocks the rest of the automation layer.</p></div>
@@ -658,7 +658,7 @@ policy data become commercial controls"<br/>Google </p>
 </div>
 </section>
 <!-- ================= CH 09 — THE AI LANDSCAPE ================= -->
-<div class="chapter" id="c9"><div class="ch-num">09</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter nine</div><h2>The AI Landscape</h2><p>Reiss shoppers don't only search anymore. Three pipelines decide whether Reiss is in the answer.</p></div></div>
+<div class="chapter" id="c9"><div class="ch-num">09</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter nine</div><h2>The AI Landscape</h2><p>Reiss shoppers don't only search anymore &mdash; they're using LLMs. Three pipelines decide whether Reiss is in the answer.</p></div></div>
 <section class="band-warm">
 <div class="wrap">
 <div class="eyebrow rv in">The shift</div>
@@ -729,8 +729,8 @@ policy data become commercial controls"<br/>Google </p>
 </div>
 </div>
 <div class="card">
-<h4>Why this matters at 29-market scale</h4>
-<p>Manually writing intent-rich copy for ~5,000 SKUs across 29 markets isn't a resourcing question, it's a throughput question. Tachyon generates the long-tail language at catalogue scale from data that's already 100%-complete on the structural side (colour, material, size).</p>
+<h4>Why this matters at 29-market scale (51 markets by Oct/26)</h4>
+<p>Manually writing intent-rich copy for ~20K SKUs across 29 markets isn't a resourcing question, it's a scaling question. Tachyon generates the long-tail language at catalogue scale from data that's already 100%-complete on the structural side (colour, material, size, product type, gender).</p>
 <p style="margin-top:12px;font-size:13px;color:var(--muted)">The title-fix precedent (chapter 05) already proved the AOT pipeline can touch every SKU — Tachyon extends the same reach to descriptions and highlights.</p>
 </div>
 </div>
