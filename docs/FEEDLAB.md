@@ -72,6 +72,22 @@ dossier (or `DEFAULT_FEEDS`) resolve. Audit PUTs are activity-logged (`feed-audi
 
 ---
 
+## 3b. Multi-market (the portal)
+
+A brand can carry one live feed **per market** — Superdry ~8, Reiss up to ~50:
+
+- **Attach**: CC dossier edit mode → ⚡ Feed markets → market code (`gb`, `de`, `fr`…) + sheet URL.
+  The legacy single `feed` field doubles as `gb`. Stored as `feeds:{mkt:url}` in the dossier.
+- **Portal** (renders whenever a brand has 2+ markets): league cards (score ring, tier, SKU count,
+  top gap — click to dissect that market below), estate insights (SKU-weighted estate score,
+  leader vs laggard, widest pillar drift, markets 15+ pts behind), and a markets × 8-pillars
+  heatmap. **⚡ Scan all** sweeps the estate sequentially, skipping audits fresher than 20h.
+- **API**: `/api/feed/proxy?client=X&market=de` · `/api/feed/audit?client=X&market=de` (GET/PUT)
+  → KV `feedaudit:<client>:<mkt>` (+ `:hist`); `GET /api/feed/markets?client=X` returns every
+  attached market with its cached summary from the compact index `feedmkt:<client>` — the portal
+  boots from ONE read however many markets exist. Pre-multi-market audits are served as `gb`.
+- Briefs drafted from a multi-market brand carry the market in the task name (`… · DE`).
+
 ## 4. Audit JSON + the engine
 
 **Engine:** `docs/feedlab_engine.js` — UMD, no imports; attaches `FeedAudit` to `globalThis` AND

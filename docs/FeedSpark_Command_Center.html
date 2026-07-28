@@ -812,11 +812,13 @@ window.addEventListener('load',restore);
     var deckCtl=editMode
       ?'<button class="lnk dz-gendeck">'+(b.deck?'↻ Regenerate deck link':'🎯 Generate deck')+'</button>'
       :(b.deck?'<a class="lnk primary" href="'+esc(b.deck)+'" target="_blank" rel="noopener">Strategy deck →</a>':'');
-    // live shopping-feed sheet (Google Sheet, daily-refreshed) -> the Feed Lab module dissects it
-    var hasFeed=!!(b.feed)||name==='Reiss';   // Reiss's live feed is wired in the worker by default
+    // live shopping-feed sheets (Google Sheets, daily-refreshed) -> the Feed Lab module dissects
+    // them. Multi-market: b.feeds = {gb:url,de:url,...}; the legacy single b.feed doubles as gb.
+    var mktN=(function(){ var ks={}; if(b.feed)ks.gb=1; Object.keys(b.feeds||{}).forEach(function(k){ks[String(k).toLowerCase()]=1;}); return Object.keys(ks).length; })();
+    var hasFeed=mktN>0||name==='Reiss';   // Reiss's gb live feed is wired in the worker by default
     var feedCtl=editMode
-      ?'<button class="lnk dz-linkfeed">'+(b.feed?'Change feed sheet':'⚡ Attach feed sheet')+'</button>'
-      :(hasFeed?'<a class="lnk primary" href="/feedlab?client='+encodeURIComponent(name)+'">Feed Lab ⚡</a>':'');
+      ?'<button class="lnk dz-linkfeed">'+(mktN?'⚡ Feed markets ('+mktN+') — add another':'⚡ Attach feed sheet')+'</button>'
+      :(hasFeed?'<a class="lnk primary" href="/feedlab?client='+encodeURIComponent(name)+'">Feed Lab ⚡'+(mktN>1?' · '+mktN+' markets':'')+'</a>':'');
     detail.innerHTML=
       '<div class="dz-head"><div class="dz-id">'+logo(b.dom,44)+'<div><h3>'+esc(name)+'</h3><div class="cat"><span'+edA('cat')+'>'+esc(b.cat||'')+'</span>'+((b.mk||editMode)?' · <span'+edA('mk')+'>'+esc(b.mk||'')+'</span>':'')+'</div></div></div>'
       +'<div class="dz-head-r">'+(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+delBtn+'</div></div>'
@@ -836,8 +838,16 @@ window.addEventListener('load',restore);
       var lp=detail.querySelector('.dz-linkplan');
       if(lp) lp.onclick=function(){ var u=prompt('Paste the project-plan URL (Google Sheet, etc.):',b.plan||''); if(u!==null){ setField(name,'plan',u.trim()); render(name); } };
       var lf=detail.querySelector('.dz-linkfeed');
-      if(lf) lf.onclick=function(){ var u=prompt('Paste the LIVE feed Google-Sheet URL (link-shared, daily-refreshed shopping feed):',b.feed||'');
-        if(u!==null){ setField(name,'feed',u.trim()); render(name); } };
+      if(lf) lf.onclick=function(){
+        var mk=prompt('Market code for this feed (gb, de, fr, us… — leave as gb for the main market):','gb');
+        if(mk===null)return; mk=(mk||'gb').toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,6)||'gb';
+        var cur=(mk==='gb'?(b.feed||(b.feeds||{}).gb):(b.feeds||{})[mk])||'';
+        var u=prompt('Paste the LIVE '+mk.toUpperCase()+' feed Google-Sheet URL (link-shared, daily-refreshed). Empty = remove this market.',cur);
+        if(u===null)return; u=u.trim();
+        var feeds={}; Object.keys(b.feeds||{}).forEach(function(k){feeds[k]=b.feeds[k];});
+        if(mk==='gb'){ setField(name,'feed',u); if(feeds.gb){delete feeds.gb; setField(name,'feeds',feeds);} }
+        else{ if(u)feeds[mk]=u; else delete feeds[mk]; setField(name,'feeds',feeds); }
+        render(name); };
       var gd=detail.querySelector('.dz-gendeck');
       if(gd) gd.onclick=function(){
         var slug=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
