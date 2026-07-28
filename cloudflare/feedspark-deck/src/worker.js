@@ -1437,6 +1437,9 @@ function getEditorScript(slug) {
     };
     if(d) d.onclick=function(){ if(confirm('Discard '+n+' unsaved edit'+(n===1?'':'s')+'? This cannot be undone.')){ clearBackup(); hideWarn(); } };
   }
+  // Normalised text of an element — the signature a delete tombstone is validated against.
+  function sigOf(el){ return (el.textContent||'').replace(/\s+/g,' ').trim().slice(0,120); }
+  var skipped=0;
   function loadEdits(){ fetch(API+'/api/edits?page='+PAGE).then(deJSON).then(function(ed){
     offerRestore();
     if(!ed) return;
@@ -1462,9 +1465,22 @@ function getEditorScript(slug) {
       if(k.indexOf('__added:')===0) return;
       var el=document.querySelector('[data-eid="'+k+'"]'); if(!el) return;
       var v=ed[k];
-      if(v && typeof v==='object' && v.deleted){ el.remove(); return; }
+      if(v && typeof v==='object' && v.deleted){
+        // A tombstone is the only overlay type that DESTROYS content, and it is the one type
+        // you cannot eyeball afterwards — what it removed simply isn't on the page to notice.
+        // data-eid is positional, so once a template push renumbers chapters an old tombstone
+        // lands on an innocent element and silently deletes it. Every deletion now records a
+        // signature of what it removed; replay only when that still matches. Legacy tombstones
+        // carry no signature and are never replayed — a deletion that stops applying is a
+        // visible, fixable annoyance; one that removes the wrong thing is not.
+        if(v.sig && v.sig===sigOf(el)){ el.remove(); } else { skipped++; }
+        return;
+      }
       var h=(typeof v==='string')?v:v.html; if(h!=null) el.innerHTML=h;
-      if(v && typeof v==='object' && v.style!=null) el.style.cssText=v.style; }); })
+      if(v && typeof v==='object' && v.style!=null) el.style.cssText=v.style; });
+    if(skipped) showWarn('&#9888; <b>'+skipped+' saved deletion'+(skipped===1?' was':'s were')+' skipped</b> &mdash; '
+      + 'they no longer match the content they removed (the template changed underneath them), so they were NOT replayed. '
+      + 'Nothing has been deleted from your page. Use &#129529; Reset page to clear them for good.'); })
     .catch(function(){
       // Used to be a silent catch — a failed load rendered the clean git template, which is
       // visually identical to "all my work is gone". Say so instead, and warn before editing
@@ -1660,7 +1676,7 @@ function getEditorScript(slug) {
     var els=Array.from(selEls);
     if(!confirm('Delete '+els.length+' blocks? This removes them for everyone viewing this deck.')) return;
     var patch={};
-    els.forEach(function(el){ var eid=el.getAttribute('data-eid'); delete dirty[eid]; patch[eid]={deleted:true}; });
+    els.forEach(function(el){ var eid=el.getAttribute('data-eid'); delete dirty[eid]; patch[eid]={deleted:true, sig:sigOf(el)}; });
     clearSelection();
     els.forEach(function(el){ el.remove(); });
     armUndo().then(function(){
@@ -1701,9 +1717,9 @@ function getEditorScript(slug) {
   }
   function deleteBlock(el){
     if(!confirm('Delete this block? This removes it for everyone viewing this deck.')) return;
-    var eid=el.getAttribute('data-eid'); clearSelection(); delete dirty[eid]; el.remove();
+    var eid=el.getAttribute('data-eid'), sig=sigOf(el); clearSelection(); delete dirty[eid]; el.remove();
     armUndo().then(function(){
-      var patch={}; patch[eid]={deleted:true};
+      var patch={}; patch[eid]={deleted:true, sig:sig};
       return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)});
     }).then(function(){ toast('Block deleted'); }).catch(function(){ toast('Delete failed to save'); });
   }
@@ -1924,7 +1940,12 @@ function getEditorScript(slug) {
   bUndo.addEventListener('click',performUndo);
   bReset.addEventListener('click',function(){
     if(!confirm('Clear every saved edit on this page and reload from the git template? This affects the whole page, not just what you last changed, and cannot itself be undone.')) return;
-    fetch(API+'/api/edits?page='+PAGE,{method:'DELETE'}).then(function(){ location.reload(); }).catch(function(){ toast('Reset failed'); });
+    // deJSON, not a bare .then: behind Access a signed-out DELETE comes back as the login page
+    // with HTTP 200, so this used to reload and look like a successful reset while the overlay
+    // was still sitting in KV — the page came back identically broken and there was no way to
+    // tell why.
+    fetch(API+'/api/edits?page='+PAGE,{method:'DELETE'}).then(deJSON).then(function(){ location.reload(); })
+      .catch(function(){ showWarn('&#9888; <b>Reset did not go through</b> &mdash; the server rejected it (usually a signed-out Cloudflare Access session). Your saved edits are UNCHANGED. Sign in and try again.'); });
   });
 
   // ---- rich text: bold/italic/underline/link on a text selection while in Edit mode ----
