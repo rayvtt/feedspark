@@ -146,10 +146,16 @@ window.addEventListener('load',restore);
     background:#FEF3E2;color:var(--orange-ink);border:1px solid rgba(237,111,11,.3);opacity:0;pointer-events:none;white-space:nowrap;will-change:transform}
   .achip.fly{animation:fl-fly .74s cubic-bezier(.25,.55,.35,1) forwards}
   @keyframes fl-fly{0%{transform:translate(0,0) scale(.55);opacity:0}14%{opacity:1}82%{opacity:1}100%{transform:translate(var(--dx,0px),var(--dy,70px)) scale(.95);opacity:0}}
-  .scan-bars{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(132px,100%),1fr));gap:8px 12px} /* 132px floor → all 8 bars sit on one desktop row */
-  .sbar .sl{display:flex;justify-content:space-between;gap:6px;font-size:10.5px;font-weight:800;color:var(--ink-2);margin-bottom:4px}
-  .sbar .sp{font-variant-numeric:tabular-nums;color:var(--muted)}
-  .sbar .st{height:9px;border-radius:100px;background:#EFEFEC;overflow:hidden;transition:box-shadow .25s}
+  /* narrow screens: auto-fit 2-up/4-up; ≥960px: EXACTLY 8 equal columns so no bar ever wraps
+     alone under the row (7+1 looked broken). Vertical rhythm 14px so a row's label never sits
+     inside the previous row's pill glow. */
+  .scan-bars{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(132px,100%),1fr));gap:14px 16px;margin-top:14px}
+  @media(min-width:960px){.scan-bars{grid-template-columns:repeat(8,minmax(0,1fr));gap:12px 14px}}
+  .sbar{min-width:0}
+  .sbar .sl{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:10.5px;font-weight:800;color:var(--ink-2);margin-bottom:4px}
+  .sbar .sn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sbar .sp{flex:none;font-variant-numeric:tabular-nums;color:var(--muted)}
+  .sbar .st{display:block;height:9px;border-radius:100px;background:#EFEFEC;overflow:hidden;transition:box-shadow .25s}   /* display:block is load-bearing: an inline span has no box height, so the pill spilled into the next grid row */
   .sbar .sf{display:block;height:100%;width:0;border-radius:100px;background:linear-gradient(90deg,var(--orange),var(--orange-deep));transition:width .35s ease-out}
   .sbar.hit .st{box-shadow:0 0 0 3px rgba(245,166,35,.3)}
   /* ---------------- score row ---------------- */
@@ -541,7 +547,7 @@ var SC_BARS=[];
   var host=$('#scan-bars');
   SC_TRACK.forEach(function(d){
     var c=document.createElement('div');c.className='sbar';
-    c.innerHTML='<span class="sl">'+esc(d.l)+'<span class="sp">0%</span></span><span class="st"><i class="sf"></i></span>';
+    c.innerHTML='<span class="sl"><b class="sn">'+esc(d.l)+'</b><span class="sp">0%</span></span><span class="st"><i class="sf"></i></span>';
     host.appendChild(c);
     SC_BARS.push({cell:c,fill:c.querySelector('.sf'),sp:c.querySelector('.sp'),shown:-1});
   });
@@ -681,7 +687,11 @@ function scanLive(){
       return;
     }
     total++;
+    // uniform reservoir sample (Algorithm R) — NEVER the first-CAP rows: this feed is
+    // front-loaded (descriptions 100% in the head, 9% in the tail), so a head sample
+    // inflates the audit and hides the missing-description issue entirely
     if(rows.length<CAP)rows.push(r);
+    else{var rk=Math.floor(Math.random()*total);if(rk<CAP)rows[rk]=r}
     scRows++;
     var c=0;for(var i2=0;i2<r.length;i2++)if(r[i2])c++;
     scCells+=c;
