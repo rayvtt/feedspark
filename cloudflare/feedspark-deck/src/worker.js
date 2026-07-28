@@ -152,9 +152,30 @@ export default {
         // Logged explicitly: the activity feed only records PUT/POST, so a wipe used to leave
         // no trace at all — which made "where did my edits go?" unanswerable after the fact.
         logActivity(ctx, env, request, 'edits-cleared', slug);
+        // Snapshot before wiping. Reset is the correct fix when a stale overlay is mis-landing
+        // on a renumbered template, but it used to be irreversible — so the only safe advice
+        // was "don't press it", which left the bad overlay in place. Keeping a timestamped
+        // copy makes Reset a recoverable action: the overlay can always be read back out of
+        // edits-bak:<slug>:<ts> and cherry-picked.
+        const doomed = await env.EDITS.get(key);
+        if (doomed && doomed !== '{}') {
+          await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(), doomed);
+        }
         await env.EDITS.delete(key);
-        return json({ ok: true, page: slug, cleared: true });
+        return json({ ok: true, page: slug, cleared: true, backed_up: !!(doomed && doomed !== '{}') });
       }
+    }
+
+    // ---- edit-overlay backups (read-only): list or fetch a snapshot taken by a Reset ----
+    if (path === '/api/edits/backups') {
+      const slug = (url.searchParams.get('page') || 'home').replace(/[^a-z0-9_-]/gi, '');
+      const at = url.searchParams.get('at');
+      if (at) return json((await env.EDITS.get('edits-bak:' + slug + ':' + at.replace(/\D/g, ''), 'json')) || {});
+      const list = await env.EDITS.list({ prefix: 'edits-bak:' + slug + ':' });
+      return json(list.keys.map((k) => ({
+        at: k.name.split(':').pop(),
+        iso: new Date(+k.name.split(':').pop()).toISOString(),
+      })).sort((a, b) => b.at - a.at));
     }
 
     // ---- feedback store (per-deck review notes, namespaced per page like /api/edits) ----
@@ -1212,7 +1233,7 @@ function getEditorScript(slug) {
     // still see which chapter they're on and jump around — it already highlights the current
     // section on scroll on its own, no extra wiring needed here. .de-handle stays visible (very
     // dim) so there's always a way back in.
-    + 'body.de-present .topbar,body.de-present .footmark,body.de-present .scrollcue,body.de-present .progress,body.de-present .de-bar,body.de-present .de-panel,body.de-present .de-props,body.de-present .de-toast,body.de-present .de-resize,body.de-present [id^="tky-"]{display:none!important}'
+    + 'body.de-present .topbar,body.de-present .footmark,body.de-present .scrollcue,body.de-present .progress,body.de-present .de-bar,body.de-present .de-panel,body.de-present .de-props,body.de-present .de-toast,body.de-present .de-resize,body.de-present .de-warn,body.de-present [id^="tky-"]{display:none!important}'
     // .de-bar.de-show + .de-handle{display:none} (above) would otherwise hide this escape
     // hatch whenever Present was entered while the toolbar was already open — force it back.
     + 'body.de-present .de-handle{display:block!important;opacity:.18}'
@@ -1320,6 +1341,7 @@ function getEditorScript(slug) {
   // The reveal choice is remembered per-browser so Ray doesn't have to re-toggle every load.
   var LS_KEY='de-bar-shown';
   function showBar(on){ bar.classList.toggle('de-show',on); try{ localStorage.setItem(LS_KEY, on?'1':'0'); }catch(e){} if(!on && editing) setEditing(false); }
+  var RAW = /[?&]raw(=1)?(&|$)/.test(location.search);
   var wantsShown = /[?&]edit(=1)?(&|$)/.test(location.search);
   var remembered = null; try{ remembered = localStorage.getItem(LS_KEY); }catch(e){}
   showBar(wantsShown || remembered==='1');
@@ -1865,7 +1887,13 @@ function getEditorScript(slug) {
   });
   window.addEventListener('scroll',function(){ if(selEls.size===1) positionOverlay(Array.from(selEls)[0]); },true);
   window.addEventListener('resize',function(){ if(selEls.size===1) positionOverlay(Array.from(selEls)[0]); });
-  function flush(){ var keys=Object.keys(dirty); if(!keys.length) return; var patch=dirty; dirty={}; stat.textContent='saving…';
+  function flush(){ var keys=Object.keys(dirty); if(!keys.length) return;
+    // Raw view never writes: the overlay it is deliberately NOT showing is still in KV, so a
+    // save from here would merge new keys into a state the editor can't see and make the
+    // mis-landing worse. Keep the patch queued so nothing is lost if the tab is reloaded
+    // without ?raw=1.
+    if(RAW){ stat.textContent='raw view — not saved'; return; }
+    var patch=dirty; dirty={}; stat.textContent='saving…';
     backupLocal(patch);   // local copy first — survives even if the server never accepts it
     fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
       .then(deJSON).then(function(){ stat.textContent='✓ saved'; clearBackup(); hideWarn();
@@ -2065,7 +2093,18 @@ function getEditorScript(slug) {
   assignBlockIds();
   initRowDrag();
   initBlockDrag();
-  loadEdits();
+  // ?raw=1 — render the git template with the saved overlay NOT applied. Diagnostic escape
+  // hatch: when a stale overlay mis-lands after a structural template change (renumbered
+  // chapters shift data-eid keys, so a saved delete tombstone can remove the wrong element),
+  // the only way to tell "the template is broken" from "the overlay is broken" used to be
+  // pressing Reset — which destroyed the overlay to find out. This answers the question
+  // without writing anything, and is safe to present from.
+  if (RAW) {
+    showWarn('&#9888; <b>Raw template view</b> &mdash; your saved edits are <b>not</b> applied on this URL. '
+      + 'Nothing has been deleted. Drop <code>?raw=1</code> to see your edited version again.');
+  } else {
+    loadEdits();
+  }
   loadFeedback();
 })();
 </script>
