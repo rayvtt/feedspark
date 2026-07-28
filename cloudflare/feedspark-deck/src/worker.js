@@ -801,6 +801,29 @@ export default {
     // "+ Add task" row; no separate write path to drift from that one.
     // PLAN_SHEETS mirrors FeedSpark_Workflow.html's client-side PLANSHEET map — keep both in
     // sync; a client missing here fails closed (400) rather than guessing a sheet id.
+    // GET verifies a push landed — same path (so it rides the same Access bypass with no new
+    // Zero Trust config), same key. A write endpoint with no way to check its own result meant
+    // "ok:true" had to be taken on faith; this closes that gap. ?range defaults to the columns
+    // appendPlanRows actually uses (A:H covers every client's Task/Owner/Status/Due layout seen
+    // so far), not the whole sheet.
+    if (path === '/api/tasks/ingest' && request.method === 'GET') {
+      if (!env.TASKS_INGEST_KEY) return json({ ok: false, error: 'ingest key not configured' }, 503);
+      if (request.headers.get('X-FCC-Ingest-Key') !== env.TASKS_INGEST_KEY) return json({ ok: false, error: 'unauthorized' }, 401);
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' }, 503);
+      const client = url.searchParams.get('client') || '';
+      const id = PLAN_SHEETS[client];
+      if (!id) return json({ ok: false, error: 'unknown client "' + client + '"' }, 400);
+      const range = url.searchParams.get('range') || 'A540:H575';
+      try {
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
+        const realTab = await resolveTab(id, 'Project Plan', token);
+        const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!' + range), { headers: { Authorization: 'Bearer ' + token } });
+        const d = await r.json();
+        if (d.error) return json({ ok: false, error: d.error.message });
+        return json({ ok: true, client, tab: realTab, range: d.range || range, values: d.values || [] });
+      } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
+    }
+
     if (path === '/api/tasks/ingest' && request.method === 'POST') {
       if (!env.TASKS_INGEST_KEY) return json({ ok: false, error: 'ingest key not configured — wrangler secret put TASKS_INGEST_KEY' }, 503);
       if (request.headers.get('X-FCC-Ingest-Key') !== env.TASKS_INGEST_KEY) return json({ ok: false, error: 'unauthorized' }, 401);
@@ -811,12 +834,17 @@ export default {
       if (!id) return json({ ok: false, error: 'unknown client "' + client + '" — add it to PLAN_SHEETS in worker.js and PLANSHEET in FeedSpark_Workflow.html' }, 400);
       const tasks = Array.isArray(body.tasks) ? body.tasks.slice(0, 100) : [];
       if (!tasks.length) return json({ ok: false, error: 'missing tasks' }, 400);
+      // optional source tag, e.g. "SRS" for a strategy-review session — prefixed onto every
+      // task so a batch pushed here reads apart from a manually-typed row in the sheet at a
+      // glance, without needing a separate column no other write path fills in.
+      const tag = String(body.tag || '').trim().replace(/[[\]]/g, '').slice(0, 20);
+      const prefix = tag ? '[' + tag + '] ' : '';
       const rows = tasks.map((t) => ({
-        task: String((t && t.task) || '').slice(0, 300),
+        task: prefix + String((t && t.task) || '').slice(0, 300),
         owner: String((t && t.owner) || '').slice(0, 60),
         status: String((t && t.status) || 'Open').slice(0, 30),
         due: (t && t.due) ? String(t.due).slice(0, 20) : '',
-      })).filter((r) => r.task);
+      })).filter((r) => r.task !== prefix);
       if (!rows.length) return json({ ok: false, error: 'no task text on any row' }, 400);
       const r = await appendPlanRows(env, id, 'Project Plan', rows);
       logActivity(ctx, env, request, 'tasks-ingest', client + ': ' + rows.length + (r.ok ? ' added' : ' failed — ' + r.error));
