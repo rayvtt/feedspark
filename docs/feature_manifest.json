@@ -501,6 +501,19 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "WF-MOBILE",
       "pr": 107
+    },
+    {
+      "name": "FeedLab: module page (scanner + score + recs + dissection)",
+      "file": "docs/FeedSpark_FeedLab.html",
+      "pattern": "Dissection theatre",
+      "pr": 107
+    },
+    {
+      "name": "FeedLab: audit engine (UMD, shared browser/node)",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "FeedAudit",
+      "min": 2,
+      "pr": 107
     }
   ]
 }

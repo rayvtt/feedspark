@@ -631,6 +631,9 @@ function scStop(){
   if(scMode==='replay'){ // land exactly on the audited numbers
     cRows.textContent=fmt(tRows);cCells.textContent=fmt(tCells);
     for(var i=0;i<SC_BARS.length;i++)paintBar(i,tBars[i]);
+  }else if(scMode==='live'){ // flush rows parsed after the last painted frame
+    cRows.textContent=fmt(scRows);cCells.textContent=fmt(scCells);
+    for(var j=0;j<SC_BARS.length;j++)paintBar(j,scRows?Math.round(scFilled[j]/scRows*100):0);
   }
   if(AUDIT)cIss.textContent=fmt((AUDIT.issues||[]).length);
   scMode='idle';
@@ -667,6 +670,7 @@ function scanLive(){
   if(ctrl){try{ctrl.abort()}catch(e){}}
   ctrl=window.AbortController?new AbortController():null;
   setBusy(true);setMsg('connecting to the live sheet…',true);
+  $('#scanstate').textContent='scanning the live feed…';
   var header=null,rows=[],total=0,bytes=0,clen=0,hIdx=null,doneOK=false;
   var parser=FeedAudit.createParser(function(r){
     if(!header){
