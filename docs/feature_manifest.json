@@ -521,6 +521,32 @@
       "pattern": "Algorithm R",
       "pr": 117
     },
+    {
+      "name": "worker: multi-market feed resolution + portal index",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "feedMarketsFor",
+      "min": 2,
+      "pr": 133
+    },
+    {
+      "name": "worker: /api/feed/markets one-call portal bootstrap",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "api/feed/markets",
+      "pr": 133
+    },
+    {
+      "name": "FeedLab: multi-market portal (league + heatmap + scan-all)",
+      "file": "docs/FeedSpark_FeedLab.html",
+      "pattern": "renderPortal",
+      "min": 2,
+      "pr": 133
+    },
+    {
+      "name": "CmdCenter: market-aware feed attach",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "Feed markets (",
+      "pr": 133
+    },
     { "name": "Workflow: email-task adoption into the plan (write-back)", "file": "docs/FeedSpark_Workflow.html", "pattern": "adoptIntoPlan", "min": 3, "pr": 132 }
   ]
 }

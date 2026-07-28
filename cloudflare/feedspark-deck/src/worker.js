@@ -343,20 +343,33 @@ export default {
     // small audit JSON back here for caching. Feeds refresh daily upstream; the page
     // re-scans when the cached audit is older than 20h.
 
-    // brands whose live feed is wired in code until the dossier carries a `feed` URL
-    const DEFAULT_FEEDS = { Reiss: { id: '1KTx9ONZSju_DD06V3F7p958LfzAL0ccJJFXPf5NpLCw', gid: '0' } };
-    const feedSourceFor = async (client) => {
-      if (!client) return null;
-      try {
+    // brands whose live feed is wired in code until the dossier carries feed URLs.
+    // MULTI-MARKET: a dossier record may carry `feeds` = { gb: url, de: url, ... } (managed
+    // from the Feed Lab portal or the CC dossier); the legacy single `feed` field doubles as
+    // the 'gb' market. Market codes are 2-6 chars, lowercased.
+    const DEFAULT_FEEDS = { Reiss: { gb: { id: '1KTx9ONZSju_DD06V3F7p958LfzAL0ccJJFXPf5NpLCw', gid: '0' } } };
+    const mktOf = (raw) => String(raw || 'gb').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 6) || 'gb';
+    const sheetRef = (u) => {
+      const m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(String(u || ''));
+      if (!m) return null;
+      const g = /[#?&]gid=(\d+)/.exec(String(u));
+      return { id: m[1], gid: (g && g[1]) || '0' };
+    };
+    const feedMarketsFor = async (client) => {   // { mkt: {id,gid} } for every attached market
+      const out = {};
+      const dft = DEFAULT_FEEDS[client] || {};
+      Object.keys(dft).forEach((k) => { out[k] = dft[k]; });
+      if (client) try {
         const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
-        const rec = dossier[client];
-        if (rec && rec.feed) {
-          const m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(String(rec.feed));
-          if (m) { const g = /[#?&]gid=(\d+)/.exec(String(rec.feed)); return { id: m[1], gid: (g && g[1]) || '0' }; }
+        const rec = dossier[client] || {};
+        if (rec.feed) { const r = sheetRef(rec.feed); if (r) out.gb = r; }   // legacy single feed = gb
+        if (rec.feeds && typeof rec.feeds === 'object') {
+          Object.keys(rec.feeds).forEach((mk) => { const r = sheetRef(rec.feeds[mk]); if (r) out[mktOf(mk)] = r; });
         }
       } catch (e) {}
-      return DEFAULT_FEEDS[client] || null;
+      return out;
     };
+    const feedSourceFor = async (client, market) => (await feedMarketsFor(client))[mktOf(market)] || null;
 
     // the engine, served verbatim so the page and node tests share one file
     if (path === '/feedlab/engine.js' && request.method === 'GET') {
@@ -367,8 +380,8 @@ export default {
     // is in the dossier or DEFAULT_FEEDS resolve; the sheet id itself never comes from the query)
     if (path === '/api/feed/proxy' && request.method === 'GET') {
       const client = url.searchParams.get('client') || '';
-      const src = await feedSourceFor(client);
-      if (!src) return json({ error: 'no feed sheet linked for this client - attach one in the brand dossier' }, 404);
+      const src = await feedSourceFor(client, url.searchParams.get('market'));
+      if (!src) return json({ error: 'no feed sheet linked for this client/market - attach one in Feed Lab or the brand dossier' }, 404);
       const up = await fetch('https://docs.google.com/spreadsheets/d/' + src.id + '/export?format=csv&gid=' + src.gid);
       // a non-link-shared sheet 307s to Google's LOGIN PAGE with a 200 — final content-type is
       // the only reliable tell. Never forward content-length: Google gzips, the header counts
@@ -380,31 +393,57 @@ export default {
       return new Response(up.body, { headers: { 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store' } });
     }
 
-    // cached audit JSON per client (+ a daily score history the page charts)
+    // the portal's one-call bootstrap: every attached market + its cached audit summary
+    if (path === '/api/feed/markets' && request.method === 'GET') {
+      const client = (url.searchParams.get('client') || '').slice(0, 60);
+      if (!client || client.indexOf(':') >= 0) return json({ error: 'bad client' }, 400);
+      const mkts = await feedMarketsFor(client);
+      const idx = (await env.EDITS.get('feedmkt:' + client, 'json')) || {};
+      const out = {};
+      Object.keys(mkts).forEach((mk) => { out[mk] = idx[mk] || null; });   // null = never scanned
+      Object.keys(idx).forEach((mk) => { if (!(mk in out)) out[mk] = Object.assign({}, idx[mk], { detached: true }); });
+      return json({ client, markets: out });
+    }
+
+    // cached audit JSON per client+market (+ a daily score history the page charts)
     if (path === '/api/feed/audit') {
       const client = (url.searchParams.get('client') || '').slice(0, 60);
       // ':' would let ?client=hist:Reiss alias another client's history key - reject outright
       if (!client || client.indexOf(':') >= 0) return json({ error: 'bad client' }, 400);
+      const mkt = mktOf(url.searchParams.get('market'));
+      const K = 'feedaudit:' + client + ':' + mkt;
       if (request.method === 'GET') {
-        const a = await env.EDITS.get('feedaudit:' + client, 'json');
+        // legacy fallback: pre-multi-market audits lived at feedaudit:<client> — serve them as gb
+        let a = await env.EDITS.get(K, 'json');
+        if (!a && mkt === 'gb') a = await env.EDITS.get('feedaudit:' + client, 'json');
         if (url.searchParams.get('hist') === '1') {
-          return json({ audit: a || null, hist: (await env.EDITS.get('feedaudit:hist:' + client, 'json')) || [] });
+          let h = (await env.EDITS.get(K.replace('feedaudit:', 'feedaudit:hist:'), 'json')) || null;
+          if (!h && mkt === 'gb') h = (await env.EDITS.get('feedaudit:hist:' + client, 'json')) || [];
+          return json({ audit: a || null, hist: h || [] });
         }
         return json(a || {});
       }
       if (request.method === 'PUT') {
         let a; try { a = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
         if (!a || !a.score || !a.score.pillars || typeof a.score.total !== 'number') return json({ error: 'not an audit payload' }, 400);
-        a.client = client; a.fetchedAt = Date.now();
+        a.client = client; a.market = mkt; a.fetchedAt = Date.now();
         const body = JSON.stringify(a);
         if (body.length > 400000) return json({ error: 'audit too large' }, 413);
-        await env.EDITS.put('feedaudit:' + client, body);
+        await env.EDITS.put(K, body);
         try {
-          const hist = (await env.EDITS.get('feedaudit:hist:' + client, 'json')) || [];
+          const HK = K.replace('feedaudit:', 'feedaudit:hist:');
+          const hist = (await env.EDITS.get(HK, 'json')) || [];
           hist.push({ t: a.fetchedAt, total: a.score.total, tier: a.score.tier, rows: a.rowCount || 0 });
-          await env.EDITS.put('feedaudit:hist:' + client, JSON.stringify(hist.slice(-90)));
+          await env.EDITS.put(HK, JSON.stringify(hist.slice(-90)));
+          // compact per-client market index — the portal reads ONE key for its whole grid
+          const idx = (await env.EDITS.get('feedmkt:' + client, 'json')) || {};
+          const pill = {}; (a.score.pillars || []).forEach((p) => { pill[p.key] = p.score; });
+          idx[mkt] = { t: a.fetchedAt, total: a.score.total, tier: a.score.tier, tierLabel: a.score.tierLabel || '',
+            rows: a.rowCount || 0, sampled: a.sampled || 0, pillars: pill,
+            topGap: (a.recs && a.recs[0] && a.recs[0].title) || '' };
+          await env.EDITS.put('feedmkt:' + client, JSON.stringify(idx));
         } catch (e) {}
-        return json({ ok: true, fetchedAt: a.fetchedAt });
+        return json({ ok: true, fetchedAt: a.fetchedAt, market: mkt });
       }
       return json({ error: 'method not allowed' }, 405);   // a POST would otherwise log activity, then 404
     }
