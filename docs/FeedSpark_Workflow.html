@@ -1083,17 +1083,17 @@ window.addEventListener('load',restore);
       .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email',s:'',b:'open'};}); }
   // adopt an email-sourced task into the brand's project plan — the SAME pipeline as ＋ Add task:
   // optimistic local row + /api/sheets/append write-back, duplicate-guarded against existing plan rows.
-  function adoptIntoPlan(client,task,status,dueDD){
+  function adoptIntoPlan(client,task,status,dueDD,owner){
     if(CLIENTS.indexOf(client)<0)return false;
     var exists=planTasks().some(function(p){ return p.client===client&&sameTask(p.task,task); })
       || MANUAL.some(function(m){ return m.client===client&&sameTask(m.task,task); });
     if(exists)return false;
     var due=(dueDD&&String(dueDD).length===8)?(dueDD.slice(0,2)+'/'+dueDD.slice(2,4)+'/'+dueDD.slice(4,8)):'';
-    MANUAL.push({client:client,task:task,owner:'',status:status||'Open',due:due}); saveManual(); _planCache=null;
+    MANUAL.push({client:client,task:task,owner:owner||'',status:status||'Open',due:due}); saveManual(); _planCache=null;
     var id=PLANSHEET[client];
     if(id){ toast('Adding to '+client+'’s plan…');
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
-          body:JSON.stringify({id:id,tab:'Project Plan',rows:[{task:task,owner:'',status:status||'Open',due:due}]})})
+          body:JSON.stringify({id:id,tab:'Project Plan',rows:[{task:task,owner:owner||'',status:status||'Open',due:due}]})})
         .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok&&LIVE[client])setTimeout(function(){fetchLive(true);},800); })
         .catch(function(){ toast('Saved locally — plan write failed (check the SA has Editor access)'); });
     } else toast('Added to '+client+' locally · no plan sheet linked to write back');
@@ -2179,13 +2179,15 @@ window.addEventListener('load',restore);
   // this button shouldn't jump into the brief composer the way project-plan rows' Brief does).
   function saveEmailAsTask(g){
     // client comes from detection only (domain / display-name / brand-mention cues, resolved
-    // server-side and back-filled) — the sender belongs in the TASK NAME, never in the Client field
-    MANUAL.push({client:g.client||'',task:g.subject+' — from '+senderName(g.from),owner:senderName(g.from),status:'Open',due:''});
-    saveManual();
+    // server-side and back-filled) — the sender belongs in the TASK NAME, never in the Client field.
+    // A recognised brand goes through adoptIntoPlan: the row reaches the brand's plan SHEET
+    // (append write-back + live re-pull), not just the local tracker.
+    var task=g.subject+' — from '+senderName(g.from);
+    if(g.client&&CLIENTS.indexOf(g.client)>=0){ adoptIntoPlan(g.client,task,'Open','',senderName(g.from)); }
+    else { MANUAL.push({client:g.client||'',task:task,owner:senderName(g.from),status:'Open',due:''}); saveManual();
+      toast('Saved to Intake — client not recognised, edit the row to assign one'); }
     decideEmail(g.id,false,'task');
     renderAll();
-    toast(g.client?'Saved to Intake as a '+g.client+' task — draft the brief from there when ready'
-      :'Saved to Intake — client not recognised, edit the row to assign one');
   }
   function updateGmailState(){ var st=document.getElementById('gstate'); if(!st||!gmailItems.length)return;
     var pend=gmailItems.filter(function(g){return !g.dismissed;}),
