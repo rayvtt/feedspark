@@ -4,8 +4,10 @@ compatibility_date = "2024-12-01"
 
 # Bundle the deck HTML as a Text module so `import DECK from "...html"` in the worker
 # inlines the deck at build time. Push to main -> Cloudflare rebuilds -> new deck live.
+# feedlab_engine.js is ALSO a Text module: the worker serves it verbatim at
+# /feedlab/engine.js (the Feed Lab page and its node tests share the same file).
 rules = [
-  { type = "Text", globs = ["**/*.html"], fallthrough = true }
+  { type = "Text", globs = ["**/*.html", "**/feedlab_engine.js"], fallthrough = true }
 ]
 
 # The account owner — the only identity allowed to open /activity and /api/activity

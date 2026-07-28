@@ -150,6 +150,19 @@ All HTML strategy decks include the inline edit + JSON patch sync system:
 - Worker: `feedspark` (dir `cloudflare/feedspark-deck/`) at `feedspark.ray-vtt.workers.dev` — the command center (landing hub at `/` + strategy decks at `/deck/<slug>`) with live-edit KV persistence
 - Requires Cloudflare Access gating for commercial data
 
+### ⚠️ Access architecture (Jul 2026 — affects EVERY session's live checks)
+- The Worker URL is **Public at the Workers layer** (Settings → Domains & Routes). Auth lives in
+  **Zero Trust**: a site-wide Access app (Allow) + ONE path-scoped **Bypass** app for
+  `/api/gmail/push` (key-gated — the Apps Script can't log in through Access).
+- **NEVER flip the Workers toggle back to "Restricted"** — it intercepts BEFORE Zero Trust, which
+  silently kills the Gmail-push bypass (the script then gets the login page as an HTTP 200).
+- Consequence for sessions/CI: **any unauthenticated HTTP request to ANY page/API returns the
+  Access LOGIN PAGE with HTTP 200 text/html.** A 200 — or scraped HTML — is NEVER proof a deploy
+  is live and never real page content. Verify-live = green Deploy Action + Cloudflare MCP
+  `workers_get_worker_code` bundle grep (+ `/api/version` by a logged-in human). Playwright/curl
+  against the live host from a session will hit the login page — test pages via `file://` with
+  stubbed fetches instead.
+
 ### Worker API (multi-page command center)
 ```
 GET  /                          → command center landing page (git-bundled + injected editor + Tachyon)
@@ -157,7 +170,10 @@ GET  /workflow                  → Workflow control center (brief pipeline: Cli
 GET  /leadership /readiness /library /deck-builder /templates /roadmap → app modules
 GET  /activity                  → user activity log + Build Log tab (OWNER-only: gated to OWNER_EMAIL via Cloudflare Access identity); /buildlog 301s here
 GET  /api/activity?days=N       → activity feed (owner-only 403 otherwise); all API mutations + page views are logged per Access user
-POST /api/gmail/push            → Gmail→briefs status sync (no-admin path): Apps Script in Ray's mailbox pushes brief replies; briefmatch.js moves ticket stages. Auth = GMAIL_PUSH_KEY secret + Access bypass on this path (GOOGLE_SETUP.md §8)
+POST /api/gmail/push            → Gmail→FCC sync (no-admin path): Apps Script in Ray's mailbox pushes (a) brief replies — briefmatch.js moves ticket stages, TOKEN-ONLY matching (ibfcode/brief-id, never fuzzy unattended) — and (b) the inbox capture: every email to ray@feedspark.com NOT from @feedspark.com/@aroxo.com/@feedhero.net, classified (client via detectClient cue ladder: dossier dom → sender-domain label → display name → brand mention; ⚡ briefable score). Auth = GMAIL_PUSH_KEY secret + Access bypass on this exact path (GOOGLE_SETUP.md §8)
+GET  /api/gmail/intake          → captured-email queue for the Workflow triage panel (KV gmailinbox; back-fills missing clients on read; each item carries its triage decision)
+POST /api/gmail/dismiss         → triage decision memory (KV gmaildismissed): reasons task/briefed/notask, undo:true restores; decided emails never re-enter the queue. Triage rule: emails are NEVER auto-tasks — → Task files to Intake (client = detected only, sender into the task name), ✕ Not a task clears
+GET  /feedlab (+/feedlab/engine.js) → Feed Lab module: animated live-feed dissection (audit, AI-readiness score, recs). Worker only STREAMS the sheet CSV (/api/feed/proxy?client=); the browser runs feedlab_engine.js and PUTs the audit to /api/feed/audit (KV feedaudit:<client> + :hist). Feeds attach per-brand in the CC dossier (⚡ Attach feed sheet, link-shared Google Sheet; Reiss wired via DEFAULT_FEEDS). Docs: docs/FEEDLAB.md
 GET  /api/buildlog              → Build Log feed (GitHub PRs/branches/overlap, KV-cached 10 min; optional GITHUB_TOKEN secret)
 GET|PUT /api/buildqueue         → Build Log "not built yet" queue (kvmerge-backed, concurrency-safe)
 GET  /deck/yumove               → YuMOVE strategy deck (git-bundled + injected editor)

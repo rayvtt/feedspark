@@ -42,6 +42,10 @@ import DECK_SUPERDRY from "../../../docs/Superdry_Strategy_Review_AllTime.html";
 // Tachyon copilot widget (style + script fragment). Injected on the app pages only —
 // never on client-facing decks. Reads window.PLANTASKS and calls /api/claude.
 import TACHYON from "../../../docs/tachyon_widget.html";
+import FEEDLAB from "../../../docs/FeedSpark_FeedLab.html";
+// the Feed Lab audit engine, bundled verbatim (wrangler Text rule) and served at
+// /feedlab/engine.js so the page and its node tests run the exact same code
+import FEEDLAB_ENGINE from "../../../docs/feedlab_engine.js";
 
 // path -> { html, slug }. slug namespaces each page's KV edit layer (KV key: edits:<slug>),
 // so edits on the landing page and each deck never collide. Add a page = add a line here.
@@ -56,6 +60,7 @@ const PAGES = {
   '/deck-builder':{ html: DECKBUILDER, slug: 'deckbuilder' },
   '/activity':    { html: ACTIVITY,    slug: 'activity' },   // owner-gated in fetch() before this map is consulted; Build Log lives on its 🔨 tab
   '/workflow':    { html: WORKFLOW,    slug: 'workflow' },
+  '/feedlab':     { html: FEEDLAB,     slug: 'feedlab' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
@@ -81,7 +86,8 @@ export default {
     // in the key's metadata so the feed is a single list() with zero value reads.
     if (request.method === 'PUT' || request.method === 'POST') {
       const ACT = { '/api/edits': 'edit', '/api/feedback': 'feedback', '/api/clients': 'dossier-save',
-        '/api/briefs': 'briefs-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync' };
+        '/api/briefs': 'briefs-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
+        '/api/feed/audit': 'feed-audit' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -262,6 +268,79 @@ export default {
       await env.EDITS.put('gmaildismissed', JSON.stringify(dis));
       logActivity(ctx, env, request, body.undo ? 'gmail-restore' : 'gmail-dismiss', (dis[id] ? dis[id].r + ' · ' : 'not a task · ') + id.slice(0, 24));
       return json({ ok: true, dismissed: !body.undo });
+    }
+
+    // ================= Feed Lab: live shopping-feed audit =================
+    // The heavy lifting happens IN THE BROWSER: the page streams the client's live
+    // Google-Sheet feed through the proxy below (the worker only pipes bytes - a 50MB
+    // CSV parse would blow the CPU budget), runs feedlab_engine.js on it, and PUTs the
+    // small audit JSON back here for caching. Feeds refresh daily upstream; the page
+    // re-scans when the cached audit is older than 20h.
+
+    // brands whose live feed is wired in code until the dossier carries a `feed` URL
+    const DEFAULT_FEEDS = { Reiss: { id: '1KTx9ONZSju_DD06V3F7p958LfzAL0ccJJFXPf5NpLCw', gid: '0' } };
+    const feedSourceFor = async (client) => {
+      if (!client) return null;
+      try {
+        const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
+        const rec = dossier[client];
+        if (rec && rec.feed) {
+          const m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(String(rec.feed));
+          if (m) { const g = /[#?&]gid=(\d+)/.exec(String(rec.feed)); return { id: m[1], gid: (g && g[1]) || '0' }; }
+        }
+      } catch (e) {}
+      return DEFAULT_FEEDS[client] || null;
+    };
+
+    // the engine, served verbatim so the page and node tests share one file
+    if (path === '/feedlab/engine.js' && request.method === 'GET') {
+      return new Response(FEEDLAB_ENGINE, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+
+    // stream the live feed CSV through untouched (no open proxy: only clients whose feed
+    // is in the dossier or DEFAULT_FEEDS resolve; the sheet id itself never comes from the query)
+    if (path === '/api/feed/proxy' && request.method === 'GET') {
+      const client = url.searchParams.get('client') || '';
+      const src = await feedSourceFor(client);
+      if (!src) return json({ error: 'no feed sheet linked for this client - attach one in the brand dossier' }, 404);
+      const up = await fetch('https://docs.google.com/spreadsheets/d/' + src.id + '/export?format=csv&gid=' + src.gid);
+      // a non-link-shared sheet 307s to Google's LOGIN PAGE with a 200 — final content-type is
+      // the only reliable tell. Never forward content-length: Google gzips, the header counts
+      // compressed bytes, and an explicit length would truncate the decompressed stream.
+      const ct = up.headers.get('content-type') || '';
+      if (!up.ok || !up.body || !/csv|text\/plain/i.test(ct)) {
+        return json({ error: 'feed sheet fetch failed (' + up.status + ', ' + (ct.split(';')[0] || 'no type') + ') - is the sheet link-shared?' }, 502);
+      }
+      return new Response(up.body, { headers: { 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store' } });
+    }
+
+    // cached audit JSON per client (+ a daily score history the page charts)
+    if (path === '/api/feed/audit') {
+      const client = (url.searchParams.get('client') || '').slice(0, 60);
+      // ':' would let ?client=hist:Reiss alias another client's history key - reject outright
+      if (!client || client.indexOf(':') >= 0) return json({ error: 'bad client' }, 400);
+      if (request.method === 'GET') {
+        const a = await env.EDITS.get('feedaudit:' + client, 'json');
+        if (url.searchParams.get('hist') === '1') {
+          return json({ audit: a || null, hist: (await env.EDITS.get('feedaudit:hist:' + client, 'json')) || [] });
+        }
+        return json(a || {});
+      }
+      if (request.method === 'PUT') {
+        let a; try { a = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+        if (!a || !a.score || !a.score.pillars || typeof a.score.total !== 'number') return json({ error: 'not an audit payload' }, 400);
+        a.client = client; a.fetchedAt = Date.now();
+        const body = JSON.stringify(a);
+        if (body.length > 400000) return json({ error: 'audit too large' }, 413);
+        await env.EDITS.put('feedaudit:' + client, body);
+        try {
+          const hist = (await env.EDITS.get('feedaudit:hist:' + client, 'json')) || [];
+          hist.push({ t: a.fetchedAt, total: a.score.total, tier: a.score.tier, rows: a.rowCount || 0 });
+          await env.EDITS.put('feedaudit:hist:' + client, JSON.stringify(hist.slice(-90)));
+        } catch (e) {}
+        return json({ ok: true, fetchedAt: a.fetchedAt });
+      }
+      return json({ error: 'method not allowed' }, 405);   // a POST would otherwise log activity, then 404
     }
 
     // ---- Build Log queue: Ray's "not built yet" backlog (kvmerge-backed, concurrency-safe) ----

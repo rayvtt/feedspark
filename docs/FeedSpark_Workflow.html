@@ -246,11 +246,12 @@ window.addEventListener('load',restore);
 [data-theme=dark] ::-webkit-scrollbar-thumb{background:#2C3039}
 </style>
 
+
 <div class="topbar"><div class="topbar-in">
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
   <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
   <div class="tb-tag">Workflow</div>
-  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm on" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/readiness" class="tbm" data-lbl="Readiness" title="Readiness" aria-label="Readiness"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16a8 8 0 0 1 16 0"/><path d="M12 16l4.5-4.5"/><path d="M4 16h.01M20 16h-.01"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/library" class="tbm" data-lbl="Task library" title="Task library" aria-label="Task library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5h10a2 2 0 0 1 2 2V21H7a2 2 0 0 1-2-2Z"/><path d="M17 6.5h2v12.8M9 8.5h4M9 12h4"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/templates" class="tbm" data-lbl="Templates" title="Templates" aria-label="Templates"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"/></svg></a><a href="/roadmap" class="tbm" data-lbl="Build roadmap" title="Build roadmap" aria-label="Build roadmap"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5 9 4l6 2.5L20 4v13.5L15 20l-6-2.5L4 20Z"/><path d="M9 4v13.5M15 6.5V20"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a></nav>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm on" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/readiness" class="tbm" data-lbl="Readiness" title="Readiness" aria-label="Readiness"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16a8 8 0 0 1 16 0"/><path d="M12 16l4.5-4.5"/><path d="M4 16h.01M20 16h-.01"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/library" class="tbm" data-lbl="Task library" title="Task library" aria-label="Task library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5h10a2 2 0 0 1 2 2V21H7a2 2 0 0 1-2-2Z"/><path d="M17 6.5h2v12.8M9 8.5h4M9 12h4"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/templates" class="tbm" data-lbl="Templates" title="Templates" aria-label="Templates"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"/></svg></a><a href="/roadmap" class="tbm" data-lbl="Build roadmap" title="Build roadmap" aria-label="Build roadmap"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5 9 4l6 2.5L20 4v13.5L15 20l-6-2.5L4 20Z"/><path d="M9 4v13.5M15 6.5V20"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a></nav>
 </div></div>
 
 <header class="hero"><div class="wrap">
@@ -565,6 +566,58 @@ window.addEventListener('load',restore);
   [data-theme=dark] .wf-alerts{background:rgba(192,57,43,.12)}
   [data-theme=dark] .it-bulk{background:rgba(245,166,35,.12)}
   </style>
+  <style>/* WF-MOBILE — seamless phone layout. Everything scoped to media queries: desktop untouched.
+   Strategy: the module nav becomes a swipeable strip; spreadsheet-grade tables KEEP their desktop
+   geometry and pan sideways inside .it-scroll (never crushed columns); stacked grids elsewhere;
+   16px inputs so iOS stops focus-zooming; the composer popup goes near-full-bleed. */
+@media(max-width:820px){
+  .tb-modules{flex:1 1 auto;min-width:0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-left:4px!important}
+  .tb-modules::-webkit-scrollbar{display:none}
+  .tb-modules a.tbm{width:34px;height:34px;flex:none}
+  .tb-modules a.tbm::after{display:none}   /* hover tooltips are noise on touch */
+  .topbar-in{gap:8px;padding:10px 14px}
+  .brand{flex:none}
+}
+@media(max-width:640px){
+  .wrap{padding:0 14px}
+  .tb-tag{display:none}
+  .hero{padding:18px 0 6px}
+  .hero h1{font-size:25px}
+  .hero p{font-size:13.5px}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(102px,1fr));gap:8px}
+  /* email triage: subject gets its own full-width line; decision buttons stay top-right */
+  .em-row{flex-wrap:wrap;row-gap:4px}
+  .em-subj{flex:1 1 100%;order:9;white-space:normal;line-height:1.35}
+  .em-from{max-width:34vw}
+  .courts{grid-template-columns:1fr;gap:8px}
+  .court{flex-direction:row;align-items:center;gap:10px}
+  .court .ct-n{font-size:19px}
+  .court .ct-s{display:none}
+  .court .ct-m{margin-top:0;margin-left:auto;text-align:right}
+  .stall-row,.stall-row.esc{grid-template-columns:1fr auto auto;row-gap:2px}
+  .stall-t{grid-column:1 / -1;white-space:normal}
+  .lu{flex-direction:column}
+  .it-ctl>input{flex:1 1 100%;min-width:0}
+  /* pan, don't crush: the tracker + tests tables keep desktop widths inside their scroll pane */
+  #itbl{min-width:880px}
+  .itbl.tstbl{min-width:740px}
+  .it-scroll{max-height:70vh}
+  /* pipeline board: near-full-width lanes, swipe between them */
+  .board{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:78vw}
+  /* composer popup: sheet-like on phones */
+  .scrim{padding:10px 8px}
+  .modal{padding:16px 14px;border-radius:14px}
+  .bg-mhead .mc{display:none}
+  .frow,.frow3{grid-template-columns:1fr}
+  .gen{gap:12px}
+  .gen-act .btn{flex:1 1 auto;text-align:center}
+  .wf-alerts{flex-wrap:wrap}
+  /* iOS zooms any focused control under 16px — lift page-level fields; in-table controls stay
+     compact (they live inside the panning pane where layout precision wins) */
+  input,select,textarea{font-size:16px!important}
+  .add-row input,.add-row select,.c-stat .stat-sel,.it-ctl>select{font-size:13px!important}
+}
+</style>
   <h2>Intake — every task, live</h2>
   <p class="sub">Pure tasks only — monthly <b>project-plan</b> rows plus the <b>emails you briefed</b> from the triage queue (raw emails stay up there until you decide). Change a <b>status</b> inline and plan rows write back to the sheet. Stack filters — pick several <b>sources</b>, <b>statuses</b>, <b>clients</b> or <b>AMs</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator. Works like a spreadsheet — click a cell, arrow-key around, <b>Cmd/Ctrl+C</b> copy, <b>Ctrl+D</b> fill down, <b>Ctrl+V</b> paste, <b>Ctrl+Z</b> undo; <b>double-click</b> to edit; on a status cell just <b>type a letter</b> (O, B, I, H, W, D) to set it.</p>
   <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="new-brief-btn" type="button" title="Open the brief composer">✉ New brief</button><button class="live-add" id="add-task-btn" type="button" style="margin-left:0">＋ Add task</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
@@ -2034,6 +2087,18 @@ window.addEventListener('load',restore);
     .catch(function(){ try{TESTS=JSON.parse(localStorage.getItem('fcc-tests'));}catch(e){} if(!TESTS||!TESTS.length)TESTS=seedTests(); renderTests(); renderTimeline(); renderAlerts(); });
   // #1 pull live plan rows on load (falls back to the git snapshot until the SA is connected)
   fetchLive(false);
+  // deep-link: /workflow?brief=<b64url JSON {client,task,cat,source}> opens the composer
+  // prefilled — Feed Lab's "→ Brief this" recommendation buttons land here
+  (function(){ try{
+    var m=/[?&]brief=([^&]+)/.exec(location.search); if(!m)return;
+    var s=m[1].replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4)s+='=';
+    var raw=atob(s), bytes=new Uint8Array(raw.length);   // atob gives latin1 code units —
+    for(var i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);   // decode as UTF-8 or em-dashes mangle
+    var j=JSON.parse(new TextDecoder().decode(bytes)); if(!j||!j.task)return;
+    if(j.client&&CLIENTS.indexOf(j.client)<0){ CLIENTS.push(j.client); CLIENTS.sort(); saveBrands(); fillClientSelect(); }   // dossier-only client — never silently file under CLIENTS[0]
+    try{ history.replaceState(null,'',location.pathname); }catch(e2){}   // don't re-open on refresh
+    setTimeout(function(){ prefill({client:j.client||'',task:String(j.task).slice(0,200),cat:j.cat||'',source:j.source||'plan'}); },450);
+  }catch(e){} })();
   // pull the live Gmail intake (client task emails) once the service account is connected
   // Every pending email waits here (⚡ action requests first) until it's decided:
   // → Brief makes it a ticket (and clears it once the brief is saved); ✕ Not a task clears it.
