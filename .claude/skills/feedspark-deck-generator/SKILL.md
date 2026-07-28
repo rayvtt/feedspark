@@ -274,6 +274,37 @@ After pushing, tell Ray the deck's live URL (`/deck/<slug>`) and flag anything y
 source real data for (Step 2's "never invent numbers" rule) so he knows what still needs a
 human answer before it goes in front of the client.
 
+## Step 6a — Before touching a live deck's structure or edit layer
+
+A single incident-heavy day (28 Jul 2026, documented in full in
+`references/live-editor-platform-notes.md`) produced a wave of platform-level fixes to the
+KV edit overlay, Reset, the Access-bypass pattern, and Design-mode reordering. Read that
+file before doing any of the following on a deck already in live use:
+
+- **Structural changes** (inserting/deleting/reordering chapters, adding/removing cards) —
+  ask first whether anyone might have the deck open and actively editing. A structural push
+  underneath an active edit session is the single worst failure mode observed: saved edits
+  (especially delete tombstones) can silently re-apply to the wrong element after
+  renumbering. If genuinely unsure, treat it as yes.
+- **Debugging "my edit didn't save" / a KV write failing** — don't reflexively blame
+  Cloudflare Access. Check whether a GET just succeeded in the same session (if so, the
+  session is fine); check for the exact error text (a real `500` body, a console line)
+  rather than guessing; and know that Cloudflare's KV free-tier write cap (1,000/day,
+  **account-wide**, not per-namespace) is a real, silent failure mode with its own exact
+  error string (`KV put() limit exceeded for the day`).
+- **A deck's content reads correctly but chapter dividers/headers look wrong or
+  displaced** — before assuming content was deleted, check the overlay
+  (`GET /api/edits?page=<slug>`) for an `__order:` key scoped to the whole page (its id
+  count ≈ chapter count + 1) rather than a specific card. That's a reorder side-effect, not
+  a deletion, and has a one-line surgical fix (see the reference doc) that doesn't require
+  a full Reset.
+- **Giving a non-browser caller (an automation, a Claude Code session) write access** —
+  never widen an existing Cloudflare Access Bypass app's path to something broader. Add a
+  new Bypass app scoped to one exact new path, plus a secret-header check in code, mirroring
+  `/api/gmail/push`. A bypass on `/api` (or on `/api/edits` specifically) removes
+  authentication from every client's live deck content, not just the one thing being
+  unblocked.
+
 ## Step 7 — Handling a feedback-loop prompt
 
 Every deck has a 💬 Feedback mode: Ray leaves notes anchored to specific chapters/blocks,
@@ -304,6 +335,19 @@ not just the deck rework:
    said "Fourteen sections" and was missing the new chapter). If a `.side-nav` exists, it also
    needs the same href/label updates as `.tb-nav` — the two are meant to mirror each other
    1:1.
+
+   **Deleting a chapter from an already-shipped deck** needs the same renumbering, in the
+   **opposite direction**: working from the deleted chapter's number **up** to the highest
+   (so each rename lands on a slot the previous rename just vacated, instead of colliding
+   with a chapter not yet renumbered). Same set of updates as insertion (id, ch-num,
+   eyebrow, both nav lists, agenda preview, prose cross-references) and the same
+   verification pass after. **Double-check for a double-shift**: if you also rewrite any
+   prose cross-references to use the *post-deletion* chapter numbers as part of the same
+   edit, do that rewrite *before* running the mechanical renumbering pass, not after — doing
+   it after means the renumbering pass shifts those already-corrected references a second
+   time, leaving them wrong (a real bug this caused: three chapters ended up citing
+   themselves). A case-sensitive grep for "chapter N" can also miss a capitalised "Chapter
+   N's" — check both cases.
 2. **Save the round as a markdown file**, so there's a durable record of what was asked for
    and what changed — feedback given verbally in a chat only exists in that chat's history,
    which isn't where anyone will look for it later. Append to (creating if absent)
