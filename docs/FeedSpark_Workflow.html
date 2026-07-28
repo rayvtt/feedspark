@@ -246,6 +246,7 @@ window.addEventListener('load',restore);
 [data-theme=dark] ::-webkit-scrollbar-thumb{background:#2C3039}
 </style>
 
+
 <div class="topbar"><div class="topbar-in">
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
   <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
@@ -565,6 +566,58 @@ window.addEventListener('load',restore);
   [data-theme=dark] .wf-alerts{background:rgba(192,57,43,.12)}
   [data-theme=dark] .it-bulk{background:rgba(245,166,35,.12)}
   </style>
+  <style>/* WF-MOBILE — seamless phone layout. Everything scoped to media queries: desktop untouched.
+   Strategy: the module nav becomes a swipeable strip; spreadsheet-grade tables KEEP their desktop
+   geometry and pan sideways inside .it-scroll (never crushed columns); stacked grids elsewhere;
+   16px inputs so iOS stops focus-zooming; the composer popup goes near-full-bleed. */
+@media(max-width:820px){
+  .tb-modules{flex:1 1 auto;min-width:0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-left:4px!important}
+  .tb-modules::-webkit-scrollbar{display:none}
+  .tb-modules a.tbm{width:34px;height:34px;flex:none}
+  .tb-modules a.tbm::after{display:none}   /* hover tooltips are noise on touch */
+  .topbar-in{gap:8px;padding:10px 14px}
+  .brand{flex:none}
+}
+@media(max-width:640px){
+  .wrap{padding:0 14px}
+  .tb-tag{display:none}
+  .hero{padding:18px 0 6px}
+  .hero h1{font-size:25px}
+  .hero p{font-size:13.5px}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(102px,1fr));gap:8px}
+  /* email triage: subject gets its own full-width line; decision buttons stay top-right */
+  .em-row{flex-wrap:wrap;row-gap:4px}
+  .em-subj{flex:1 1 100%;order:9;white-space:normal;line-height:1.35}
+  .em-from{max-width:34vw}
+  .courts{grid-template-columns:1fr;gap:8px}
+  .court{flex-direction:row;align-items:center;gap:10px}
+  .court .ct-n{font-size:19px}
+  .court .ct-s{display:none}
+  .court .ct-m{margin-top:0;margin-left:auto;text-align:right}
+  .stall-row,.stall-row.esc{grid-template-columns:1fr auto auto;row-gap:2px}
+  .stall-t{grid-column:1 / -1;white-space:normal}
+  .lu{flex-direction:column}
+  .it-ctl>input{flex:1 1 100%;min-width:0}
+  /* pan, don't crush: the tracker + tests tables keep desktop widths inside their scroll pane */
+  #itbl{min-width:880px}
+  .itbl.tstbl{min-width:740px}
+  .it-scroll{max-height:70vh}
+  /* pipeline board: near-full-width lanes, swipe between them */
+  .board{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:78vw}
+  /* composer popup: sheet-like on phones */
+  .scrim{padding:10px 8px}
+  .modal{padding:16px 14px;border-radius:14px}
+  .bg-mhead .mc{display:none}
+  .frow,.frow3{grid-template-columns:1fr}
+  .gen{gap:12px}
+  .gen-act .btn{flex:1 1 auto;text-align:center}
+  .wf-alerts{flex-wrap:wrap}
+  /* iOS zooms any focused control under 16px — lift page-level fields; in-table controls stay
+     compact (they live inside the panning pane where layout precision wins) */
+  input,select,textarea{font-size:16px!important}
+  .add-row input,.add-row select,.c-stat .stat-sel,.it-ctl>select{font-size:13px!important}
+}
+</style>
   <h2>Intake — every task, live</h2>
   <p class="sub">Pure tasks only — monthly <b>project-plan</b> rows plus the <b>emails you briefed</b> from the triage queue (raw emails stay up there until you decide). Change a <b>status</b> inline and plan rows write back to the sheet. Stack filters — pick several <b>sources</b>, <b>statuses</b>, <b>clients</b> or <b>AMs</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator. Works like a spreadsheet — click a cell, arrow-key around, <b>Cmd/Ctrl+C</b> copy, <b>Ctrl+D</b> fill down, <b>Ctrl+V</b> paste, <b>Ctrl+Z</b> undo; <b>double-click</b> to edit; on a status cell just <b>type a letter</b> (O, B, I, H, W, D) to set it.</p>
   <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="new-brief-btn" type="button" title="Open the brief composer">✉ New brief</button><button class="live-add" id="add-task-btn" type="button" style="margin-left:0">＋ Add task</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
