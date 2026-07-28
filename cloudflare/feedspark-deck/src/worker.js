@@ -1075,7 +1075,10 @@ function getEditorScript(slug) {
     + ',h1,h2,h3,h4,h5,p,li,blockquote,figcaption,img,table,code';
   var blockN={}, groupN={}, groupIds=new WeakMap(), rowN={};
   var FEEDBACK=[], fbN=0;
-  var SWATCHES=['#F5A623','#ED6F0B','#333333','#FFFFFF','#F7F7F5']; // FeedSpark brand palette (CLAUDE.md Design system)
+  // FeedSpark brand palette (CLAUDE.md Design system) + the decks' semantic green (--green,
+  // #2E7D32) — the colour the p-done "win" pills already use, so restyling a figure to read as
+  // positive matches the existing pills exactly instead of being eyeballed in the colour picker.
+  var SWATCHES=['#F5A623','#ED6F0B','#333333','#FFFFFF','#F7F7F5','#2E7D32'];
   function swatchRow(forCls){
     return '<div class="de-swatches" data-for="'+forCls+'">'
       + SWATCHES.map(function(c){ return '<button type="button" class="de-sw" style="background:'+c+'" data-c="'+c+'" title="'+c+'"></button>'; }).join('')
@@ -1241,7 +1244,7 @@ function getEditorScript(slug) {
     + '.de-props label{display:block;font-size:10.5px;color:#6b7a8d;margin-bottom:3px}'
     + '.de-props input[type=number],.de-props select{width:100%;font:inherit;padding:6px 8px;border:1px solid #E6E6E6;border-radius:6px;box-sizing:border-box}'
     + '.de-props input[type=color]{width:100%;height:30px;border:1px solid #E6E6E6;border-radius:6px;padding:2px;cursor:pointer;box-sizing:border-box}'
-    + '.de-props .de-swatches{display:flex;gap:5px;margin-top:6px}'
+    + '.de-props .de-swatches{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}'
     + '.de-props .de-sw{width:20px;height:20px;border-radius:5px;border:1px solid rgba(0,0,0,.15);cursor:pointer;padding:0;flex-shrink:0}'
     + '.de-props .de-sw:hover{transform:scale(1.15);box-shadow:0 0 0 2px rgba(0,0,0,.08)}'
     + '.de-props .stepper{display:flex;align-items:stretch}'
