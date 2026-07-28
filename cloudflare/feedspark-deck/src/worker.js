@@ -143,7 +143,14 @@ export default {
         // ?replace=1 swaps the whole object in ONE put. Undo used to DELETE then PUT, so a
         // failure between the two left the page with no edits at all — a real data-loss window.
         const replace = url.searchParams.get('replace') === '1';
-        const existing = replace ? {} : ((await env.EDITS.get(key, 'json')) || {});
+        const current = (await env.EDITS.get(key, 'json')) || {};
+        // Same snapshot-before-overwrite the DELETE handler below does: a replace=1 PUT is just
+        // as capable of discarding a whole overlay as DELETE is (Reset now uses this path — see
+        // the client script), so it gets the same undo-a-Reset safety net.
+        if (replace && Object.keys(current).length) {
+          await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(), JSON.stringify(current));
+        }
+        const existing = replace ? {} : current;
         const merged = { ...existing, ...incoming };
         await env.EDITS.put(key, JSON.stringify(merged));
         return json({ ok: true, page: slug, count: Object.keys(merged).length });
@@ -1953,12 +1960,25 @@ function getEditorScript(slug) {
   bUndo.addEventListener('click',performUndo);
   bReset.addEventListener('click',function(){
     if(!confirm('Clear every saved edit on this page and reload from the git template? This affects the whole page, not just what you last changed, and cannot itself be undone.')) return;
-    // deJSON, not a bare .then: behind Access a signed-out DELETE comes back as the login page
-    // with HTTP 200, so this used to reload and look like a successful reset while the overlay
-    // was still sitting in KV — the page came back identically broken and there was no way to
-    // tell why.
-    fetch(API+'/api/edits?page='+PAGE,{method:'DELETE'}).then(deJSON).then(function(){ location.reload(); })
-      .catch(function(){ showWarn('&#9888; <b>Reset did not go through</b> &mdash; the server rejected it (usually a signed-out Cloudflare Access session). Your saved edits are UNCHANGED. Sign in and try again.'); });
+    // PUT ?replace=1 with an empty body, not DELETE. Undo already moved off DELETE for this same
+    // endpoint (see the PUT handler's comment) because a two-step delete-then-restore leaves a
+    // data-loss window if the second call fails — Reset only ever needed the "swap to {}" half of
+    // that, which a single atomic PUT does in one round trip, on the exact request shape every
+    // other save on this page already proves works.
+    fetch(API+'/api/edits?page='+PAGE+'&replace=1',{method:'PUT',headers:{'content-type':'application/json'},body:'{}'})
+      .then(function(res){
+        if(!res.ok) return res.text().then(function(t){ throw new Error('http-'+res.status+(t?': '+t.slice(0,140):'')); });
+        var ct=res.headers.get('content-type')||'';
+        if(ct.indexOf('application/json')<0) throw new Error('non-json response (likely an Access login page) — status '+res.status);
+        return res.json();
+      })
+      .then(function(){ location.reload(); })
+      .catch(function(err){
+        // Show what actually happened instead of guessing — a real status/body here is worth
+        // more than another round of "try signing in again".
+        showWarn('&#9888; <b>Reset did not go through</b> &mdash; '+(err&&err.message?err.message:'the request failed')
+          +'. Your saved edits are UNCHANGED.');
+      });
   });
 
   // ---- rich text: bold/italic/underline/link on a text selection while in Edit mode ----
