@@ -71,6 +71,27 @@ live.**
 - **Pages are code.** `docs/*.html` app pages are bundled into the worker as Text modules, so a
   page change deploys the same way — the validation check covers their inline scripts.
 
+## 3b. Cloudflare Access architecture (Jul 2026) — read before ANY live check
+
+The Gmail-push bypass (GOOGLE_SETUP.md §8) changed how the whole site is gated:
+
+- The worker URL is **Public at the Workers layer** (Domains & Routes). ALL auth lives in
+  **Zero Trust**: a site-wide Access app (Allow) + one path-scoped **Bypass** app for
+  `/api/gmail/push` (shared-key gate inside the worker).
+- **Do NOT flip the Workers "Restricted" toggle back on** — it intercepts before Zero Trust,
+  which silently breaks the Gmail push (the mailbox script then receives the login page as a
+  200; its log prints `✗ BLOCKED BY CLOUDFLARE ACCESS`).
+- **Impact on every Claude Code session and CI job:** an unauthenticated request to any page or
+  API — curl, fetch, Playwright against the live host — now returns **Cloudflare's login page
+  with HTTP 200 text/html** (previously a 302 you could detect). An HTTP 200 is NEVER proof a
+  deploy is live, and scraped live-host HTML is NEVER real page content. If a session "verified"
+  something by curling the live site and saw a page full of `Sign in` markup — that was the
+  Access wall, not the app.
+- **How sessions verify instead** (unchanged, now mandatory): ① Deploy Action green for the
+  merge sha → ② Cloudflare MCP `workers_get_worker_code` and grep the bundle for your feature
+  markers (and/or `modified_on` via `workers_list`) → ③ `/api/version` checked by a logged-in
+  human. Test pages locally via `file://` with stubbed fetches — never against the live host.
+
 ## 4. If something still looks stale (runbook)
 1. Actions tab → is the latest **Deploy** green? If red → open the log, fix the error, re‑run.
 2. If green but the site looks old → hard‑refresh (the worker sends `no‑store`, but the browser/CDN
