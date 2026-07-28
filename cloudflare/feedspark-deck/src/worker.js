@@ -140,12 +140,18 @@ export default {
       }
       if (request.method === 'PUT') {
         const incoming = await request.json();
-        const existing = (await env.EDITS.get(key, 'json')) || {};
+        // ?replace=1 swaps the whole object in ONE put. Undo used to DELETE then PUT, so a
+        // failure between the two left the page with no edits at all — a real data-loss window.
+        const replace = url.searchParams.get('replace') === '1';
+        const existing = replace ? {} : ((await env.EDITS.get(key, 'json')) || {});
         const merged = { ...existing, ...incoming };
         await env.EDITS.put(key, JSON.stringify(merged));
         return json({ ok: true, page: slug, count: Object.keys(merged).length });
       }
       if (request.method === 'DELETE') {
+        // Logged explicitly: the activity feed only records PUT/POST, so a wipe used to leave
+        // no trace at all — which made "where did my edits go?" unanswerable after the fact.
+        logActivity(ctx, env, request, 'edits-cleared', slug);
         await env.EDITS.delete(key);
         return json({ ok: true, page: slug, cleared: true });
       }
@@ -1089,6 +1095,35 @@ function getEditorScript(slug) {
   }
   function esc(s){ return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+  // ---- Save/load integrity ------------------------------------------------------------
+  // Cloudflare Access does NOT 401 an unauthenticated request — it answers 200 with the
+  // sign-in HTML (the Workers "Restricted" toggle intercepts before Zero Trust; see
+  // docs/GOOGLE_SETUP.md). fetch() reports that as success, so without a content-type check
+  // a whole editing session can PUT into the void and report nothing wrong. Verify we really
+  // got JSON back, and treat anything else as "not saved".
+  function deJSON(res){
+    if(!res.ok) throw new Error('http-'+res.status);
+    var ct=res.headers.get('content-type')||'';
+    if(ct.indexOf('application/json')<0) throw new Error('not-json');
+    return res.json();
+  }
+  // Unsaved-work mirror. Every patch is written here BEFORE it goes to the server and only
+  // cleared once the server confirms with real JSON — so anything the server never accepted
+  // survives a reload and can be replayed instead of being lost.
+  var BK_KEY='de-unsaved-'+PAGE;
+  function backupLocal(patch){ try{ var cur=JSON.parse(localStorage.getItem(BK_KEY)||'{}');
+    Object.keys(patch).forEach(function(k){ cur[k]=patch[k]; });
+    localStorage.setItem(BK_KEY, JSON.stringify(cur)); }catch(e){} }
+  function clearBackup(){ try{ localStorage.removeItem(BK_KEY); }catch(e){} }
+  function readBackup(){ try{ return JSON.parse(localStorage.getItem(BK_KEY)||'{}'); }catch(e){ return {}; } }
+
+  var warnEl=document.createElement('div'); warnEl.className='de-warn'; warnEl.hidden=true;
+  document.body.appendChild(warnEl);
+  function showWarn(html){ warnEl.innerHTML=html; warnEl.hidden=false; }
+  function hideWarn(){ warnEl.hidden=true; }
+  var NOT_SAVED='&#9888; <b>NOT SAVED</b> &mdash; the server rejected the save (you are probably signed out of Cloudflare Access). '
+    + 'Your changes are kept locally &mdash; <b>sign in again and reload</b>, then click Restore. Do not close this tab.';
+
   // ---- Undo: snapshot the whole saved-edits object before any mutating action, so Ctrl/Cmd+Z
   // can restore exactly what was there before — covers text edits, style changes, deletes,
   // duplicates and both reorder systems (they all ultimately live in one KV object per page,
@@ -1110,8 +1145,9 @@ function getEditorScript(slug) {
     var st=loadUndoStack();
     if(!st.length){ toast('Nothing to undo'); return; }
     var snap=st.pop(); saveUndoStack(st); undoing=true; toast('Undoing…');
-    fetch(API+'/api/edits?page='+PAGE,{method:'DELETE'})
-      .then(function(){ return fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(snap)}); })
+    // Single atomic replace — the old DELETE-then-PUT could wipe everything if the PUT failed.
+    fetch(API+'/api/edits?page='+PAGE+'&replace=1',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(snap)})
+      .then(deJSON)
       .then(function(){ location.reload(); })
       .catch(function(){ undoing=false; toast('Undo failed — nothing was changed'); });
   }
@@ -1160,6 +1196,13 @@ function getEditorScript(slug) {
     + '.de-bar button{background:#1A365D;color:#fff;border:0;border-radius:8px;padding:9px 13px;cursor:pointer;font:inherit}'
     + '.de-bar button.on{background:#ED6F0B}'
     + '.de-bar span{color:#6b7a8d;min-width:60px}'
+    // Save/load failure banner. Deliberately NOT inside .de-bar and NOT hidden by Present mode:
+    // the old "save failed" text lived in the toolbar, so presenting hid the one signal that
+    // your edits were not reaching the server.
+    + '.de-warn{position:fixed;top:0;left:0;right:0;z-index:100000;background:#C0392B;color:#fff;font:13px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;padding:10px 16px;box-shadow:0 2px 12px rgba(0,0,0,.25);text-align:center}'
+    + '.de-warn[hidden]{display:none}'
+    + '.de-warn button{margin-left:8px;background:#fff;color:#C0392B;border:0;border-radius:6px;padding:5px 11px;font:inherit;font-weight:800;cursor:pointer}'
+    + '.de-warn button:hover{background:#FFE9E5}'
     // Present mode: mostly the chrome the print stylesheet already hides (topbar, editor UI),
     // live on-screen and toggle-able — for screen-sharing the deck without Ray's own tooling in
     // shot. .side-nav is the one exception: kept visible on purpose (Ray's ask) so viewers can
@@ -1355,7 +1398,22 @@ function getEditorScript(slug) {
     el.setAttribute('data-eid', k+'-e'+(eidN[k]++));
   }); }
 
-  function loadEdits(){ fetch(API+'/api/edits?page='+PAGE).then(function(r){ return r.json(); }).then(function(ed){
+  // Replay whatever the server never accepted (kept in localStorage by flush()). Offered on
+  // load rather than applied silently, so it can never fight a newer server-side state.
+  function offerRestore(){
+    var bk=readBackup(), n=Object.keys(bk).length; if(!n) return;
+    showWarn('&#9888; <b>'+n+' edit'+(n===1?'':'s')+' from an earlier session never reached the server.</b>'
+      + '<button class="de-w-restore">Restore &amp; save now</button><button class="de-w-drop">Discard</button>');
+    var r=warnEl.querySelector('.de-w-restore'), d=warnEl.querySelector('.de-w-drop');
+    if(r) r.onclick=function(){
+      fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(bk)})
+        .then(deJSON).then(function(){ clearBackup(); hideWarn(); toast('Restored — reloading'); setTimeout(function(){ location.reload(); },600); })
+        .catch(function(){ showWarn(NOT_SAVED); });
+    };
+    if(d) d.onclick=function(){ if(confirm('Discard '+n+' unsaved edit'+(n===1?'':'s')+'? This cannot be undone.')){ clearBackup(); hideWarn(); } };
+  }
+  function loadEdits(){ fetch(API+'/api/edits?page='+PAGE).then(deJSON).then(function(ed){
+    offerRestore();
     if(!ed) return;
     // Pass 1: replay any runtime-added blocks (duplicated in Design mode) before content/order
     // overlays run, so they exist in the DOM for those passes to find by data-eid/data-rid.
@@ -1381,7 +1439,14 @@ function getEditorScript(slug) {
       var v=ed[k];
       if(v && typeof v==='object' && v.deleted){ el.remove(); return; }
       var h=(typeof v==='string')?v:v.html; if(h!=null) el.innerHTML=h;
-      if(v && typeof v==='object' && v.style!=null) el.style.cssText=v.style; }); }).catch(function(){}); }
+      if(v && typeof v==='object' && v.style!=null) el.style.cssText=v.style; }); })
+    .catch(function(){
+      // Used to be a silent catch — a failed load rendered the clean git template, which is
+      // visually identical to "all my work is gone". Say so instead, and warn before editing
+      // on top of a state that will not save.
+      showWarn('&#9888; <b>Could not load your saved edits</b> &mdash; you may be signed out of Cloudflare Access. '
+        + 'This page is showing the ORIGINAL template, not your version. <b>Sign in and reload before editing.</b>');
+    }); }
 
   // ---- row drag-and-drop reordering — works even in presentation mode (bar hidden),
   // drag starts only from a row's first cell so text selection elsewhere is unaffected.
@@ -1798,9 +1863,16 @@ function getEditorScript(slug) {
   window.addEventListener('scroll',function(){ if(selEls.size===1) positionOverlay(Array.from(selEls)[0]); },true);
   window.addEventListener('resize',function(){ if(selEls.size===1) positionOverlay(Array.from(selEls)[0]); });
   function flush(){ var keys=Object.keys(dirty); if(!keys.length) return; var patch=dirty; dirty={}; stat.textContent='saving…';
+    backupLocal(patch);   // local copy first — survives even if the server never accepts it
     fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
-      .then(function(r){ return r.json(); }).then(function(){ stat.textContent='✓ saved'; setTimeout(function(){ stat.textContent=''; },1500); })
-      .catch(function(){ stat.textContent='save failed'; }); }
+      .then(deJSON).then(function(){ stat.textContent='✓ saved'; clearBackup(); hideWarn();
+        setTimeout(function(){ stat.textContent=''; },1500); })
+      .catch(function(){
+        // Put the patch BACK on the queue. It used to be dropped here, so every failed save
+        // silently discarded that batch of edits with no retry and no record.
+        Object.keys(patch).forEach(function(k){ if(!(k in dirty)) dirty[k]=patch[k]; });
+        stat.textContent='save failed'; showWarn(NOT_SAVED);
+      }); }
 
   function setEditing(on){ editing=on; document.body.classList.toggle('de-on',on);
     bEdit.classList.toggle('on',on); bEdit.textContent=on?'✓ Editing':'✎ Edit';
