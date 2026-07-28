@@ -769,26 +769,11 @@ export default {
     if (path === '/api/sheets/task' && request.method === 'POST') {
       if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' });
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
-      const id = body.id, match = String(body.match || '').trim(), value = body.value; let tab = body.tab || 'Project Plan';
+      const id = body.id, match = String(body.match || '').trim(), value = body.value, tab = body.tab || 'Project Plan';
       if (!id || !match || value == null || !String(value).trim()) return json({ ok: false, error: 'missing id / match / value' }, 400);
-      try {
-        const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
-        tab = await resolveTab(id, tab, token);   // tab names vary per client (e.g. "Opitmisation Plan") — write where the reads come from
-        const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
-        const rd = await rr.json(); if (rd.error) return json({ ok: false, error: rd.error.message });
-        const rows = rd.values || [];
-        const key = normCell(match).slice(0, 45); let targetRow = -1;
-        for (let r = 0; r < rows.length; r++) { if ((rows[r] || []).some(cc => { const cn = normCell(cc); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; } }
-        if (targetRow < 0) return json({ ok: false, error: 'task row not found in ' + tab, match });
-        const c = resolveCols(rows);
-        const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
-        const cell = tab + '!' + colLetter(tc) + (targetRow + 1);
-        const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(cell) + '?valueInputOption=USER_ENTERED', {
-          method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values: [[value]] }) });
-        const wd = await wr.json(); if (wd.error) return json({ ok: false, error: permHint(wd.error.message), cell });
-        try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
-        return json({ ok: true, cell, updated: wd.updatedCells || 1 });
-      } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
+      const r = await renamePlanTask(env, id, tab, match, value);
+      if (r.ok) { try { await env.EDITS.delete('planlive:' + id); } catch (e) {} }
+      return json(r);
     }
 
     // ---- append new task rows into a plan tab (ATRT uniques -> project plan) ----
@@ -859,6 +844,34 @@ export default {
       const r = await appendPlanRows(env, id, 'Project Plan', rows);
       logActivity(ctx, env, request, 'tasks-ingest', client + ': ' + rows.length + (r.ok ? ' added' : ' failed — ' + r.error));
       return json({ ...r, client });
+    }
+
+    // PATCH: retag rows already ingested — e.g. a batch pushed before the `tag` option existed,
+    // or tasks a client wants relabelled after the fact. { client, updates:[{match, task}] }
+    // matches each `match` against the sheet exactly like /api/sheets/task's inline-edit does,
+    // then overwrites just that cell with `task` (call already includes any [TAG] prefix wanted
+    // — this endpoint does not add one, so a plain retag and a tagged retag are the same call).
+    // Same path/key as the POST above — no new Access bypass needed.
+    if (path === '/api/tasks/ingest' && request.method === 'PATCH') {
+      if (!env.TASKS_INGEST_KEY) return json({ ok: false, error: 'ingest key not configured' }, 503);
+      if (request.headers.get('X-FCC-Ingest-Key') !== env.TASKS_INGEST_KEY) return json({ ok: false, error: 'unauthorized' }, 401);
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' }, 503);
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const client = String(body.client || '');
+      const id = PLAN_SHEETS[client];
+      if (!id) return json({ ok: false, error: 'unknown client "' + client + '"' }, 400);
+      const updates = Array.isArray(body.updates) ? body.updates.slice(0, 100) : [];
+      if (!updates.length) return json({ ok: false, error: 'missing updates' }, 400);
+      const results = [];
+      for (const u of updates) {
+        const match = String((u && u.match) || '').trim(), task = String((u && u.task) || '').trim();
+        if (!match || !task) { results.push({ ok: false, error: 'missing match/task', match }); continue; }
+        results.push({ match, ...(await renamePlanTask(env, id, 'Project Plan', match, task)) });
+      }
+      const okCount = results.filter((r) => r.ok).length;
+      try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
+      logActivity(ctx, env, request, 'tasks-retag', client + ': ' + okCount + '/' + updates.length + ' retagged');
+      return json({ ok: okCount === updates.length, client, updated: okCount, total: updates.length, results });
     }
 
     // ---- undo an ATRT->plan write: delete the rows whose task matches a written task ----
@@ -1053,6 +1066,28 @@ function monthOf(s) { // detect a "month separator" label like "July-26", "Jun 2
 }
 // a non-white cell fill = a section separator (blue/grey header), NOT a task (Ray's rule)
 function isFilled(rgb) { return !!rgb && Math.min(rgb[0], rgb[1], rgb[2]) < 0.93; }
+// Shared by /api/sheets/task (human, via the Workflow grid's inline task-text edit) and
+// /api/tasks/ingest's PATCH (a trusted automation retagging rows it appended earlier) — same
+// row-match + column-resolution as every other 2-way writer in this file.
+async function renamePlanTask(env, id, tab, match, value) {
+  try {
+    const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
+    const realTab = await resolveTab(id, tab, token);
+    const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+    const rd = await rr.json(); if (rd.error) return { ok: false, error: rd.error.message };
+    const rows = rd.values || [];
+    const key = normCell(match).slice(0, 45); let targetRow = -1;
+    for (let r = 0; r < rows.length; r++) { if ((rows[r] || []).some(cc => { const cn = normCell(cc); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; } }
+    if (targetRow < 0) return { ok: false, error: 'task row not found in ' + realTab, match };
+    const c = resolveCols(rows);
+    const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
+    const cell = realTab + '!' + colLetter(tc) + (targetRow + 1);
+    const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(cell) + '?valueInputOption=USER_ENTERED', {
+      method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values: [[value]] }) });
+    const wd = await wr.json(); if (wd.error) return { ok: false, error: permHint(wd.error.message), cell };
+    return { ok: true, cell, updated: wd.updatedCells || 1 };
+  } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
+}
 // Shared by /api/sheets/append (human, via the Workflow's own "+ Add task" row) and
 // /api/tasks/ingest (a trusted automation, key-gated) — one write path so both land rows
 // identically instead of two implementations quietly drifting apart.
