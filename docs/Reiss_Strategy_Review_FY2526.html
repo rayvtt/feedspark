@@ -39,8 +39,12 @@ section{padding:104px 0}
 .topbar-in{max-width:var(--maxw);margin:0 auto;padding:10px 40px;min-height:56px;display:flex;align-items:center;gap:22px}
 .tb-brand{font-weight:900;font-size:13px;letter-spacing:.04em;color:var(--ink);white-space:nowrap}
 .tb-brand span{color:var(--orange-deep)}
-.tb-nav{display:flex;gap:9px;margin-left:auto;flex-wrap:wrap;row-gap:2px}
-.tb-nav a{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
+/* 16 chapters no longer fit on one row beside the brand, so the nav wraps. Give the rows
+   real breathing room (row-gap) and right-align both so the second row hangs under the
+   first instead of colliding with it. Above 1300px the frozen .side-nav is on screen and
+   carries the full contents, so the topbar list is redundant — hide it there. */
+.tb-nav{display:flex;gap:9px 16px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.tb-nav a{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:2px 0;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
 .tb-nav a:hover,.tb-nav a.active{color:var(--ink);border-bottom-color:var(--orange)}
 .progress{position:absolute;bottom:-1px;left:0;height:2px;background:var(--orange);width:0}
 
@@ -57,7 +61,7 @@ section{padding:104px 0}
 .side-nav a:hover{color:var(--ink);border-left-color:rgba(237,111,11,.45)}
 .side-nav .side-grp{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.6;padding:10px 14px 3px;margin-top:2px;border-top:1px solid var(--line)}
 .side-nav a.active{color:var(--ink);border-left-color:var(--orange);background:rgba(237,111,11,.09);font-weight:800}
-@media(min-width:1300px){.side-nav{display:flex}}
+@media(min-width:1300px){.side-nav{display:flex}.tb-nav{display:none}}
 
 /* hero */
 .hero{background:var(--dark);color:#fff;min-height:88vh;display:flex;align-items:center;padding:120px 0 90px;position:relative;overflow:hidden}
