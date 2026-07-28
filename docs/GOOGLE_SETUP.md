@@ -122,21 +122,49 @@ the same rules as the page's paste-router (done → Done/Analysis, blocked, prog
    (Optional: `wrangler secret put GMAIL_SELF` — the sender address of outgoing briefs to skip;
    defaults to ray@feedspark.com.)
 2. **Access bypass for the one path** — Apps Script can't log in through Cloudflare Access, so
-   the secret is the gate for exactly this endpoint: Zero Trust → Access → Applications →
-   **Add an application → Self-hosted** → domain `feedspark.ray-vtt.workers.dev`, path
-   `api/gmail/push` → policy **Action = Bypass, Include = Everyone** → save. Everything else
-   stays Access-gated; the worker 401s any push without the key (503 until the key is set).
+   the secret is the gate for exactly this endpoint. TWO Zero Trust apps + one Workers setting
+   (this exact combination is live since Jul 2026):
+   - Zero Trust → Access → Applications → **Self-hosted** app covering the whole domain
+     `feedspark.ray-vtt.workers.dev` → policy **Allow** (your team) — the site-wide gate.
+   - A second **Self-hosted** app for domain + path `api/gmail/push` → policy **Action = Bypass,
+     Include = Everyone**.
+   - Workers → feedspark → Settings → **Domains & Routes → workers.dev = Public**.
+
+   > ⚠️ **The built-in Workers "Restricted" toggle intercepts BEFORE Zero Trust** — while it's on,
+   > the Bypass app never fires and the script receives Cloudflare's **login page as an HTTP 200**
+   > ("200 · Sign in" in the execution log — looks like success, is total failure; the script's
+   > self-verdict now prints `✗ BLOCKED BY CLOUDFLARE ACCESS` for exactly this). Never re-enable
+   > that toggle; site security lives in the Zero Trust Allow app instead. This also means ANY
+   > unauthenticated request to ANY page gets the login page as a 200 — sessions/CI must never
+   > read a 200 as deploy verification (see docs/DEPLOY_PROTOCOL.md).
+
+   Everything else stays Access-gated; the worker 401s any push without the key (503 until the
+   key is set).
 3. **Install the script**: <https://script.google.com> → New project → paste
    [`tools/gmail_push.gs`](../tools/gmail_push.gs) → set `KEY` to the secret → **Run ▶
    `pushBriefReplies` once** and approve the Gmail prompt (your own account, `gmail.readonly`-
    equivalent scope via GmailApp).
 4. **Schedule it**: ⏰ Triggers → Add trigger → **`syncFCC`** · time-driven · minutes timer ·
    **every 5 minutes** (Apps Script's floor; ~3% of the daily trigger quota; Run ▶ fires an
-   instant sync any time). `syncFCC` runs BOTH feeds: the brief-reply sync **and** the inbox
-   intake — recent incoming mail lands in the Workflow's "Incoming emails" stream, classified
-   server-side (which client it's about + a ⚡ **action** badge when it reads as a briefable
-   request rather than FYI). If you already made a `pushBriefReplies` trigger, edit it to point
-   at `syncFCC` instead.
+   instant sync any time). `syncFCC` runs BOTH feeds; if you already made a `pushBriefReplies`
+   trigger, edit it to point at `syncFCC` instead.
+   - **Brief-reply sync** — moves Workflow tickets. Matching is **token-only** (`[ibfcode:…]`
+     or the brief id, subject before body; several codes with none in the subject = ambiguous =
+     skipped). Unattended fuzzy matching mis-filed real replies once and is permanently out —
+     wording-similarity lives only in the page's paste-router, where a human confirms.
+   - **Inbox capture** — Ray's rule: every email **to ray@feedspark.com** NOT from
+     @feedspark.com/@aroxo.com/@feedhero.net (self excluded, All Mail searched so archiving is
+     safe). Each is classified server-side: **client auto-detect** via the cue ladder — dossier
+     `dom` map → sender-domain label vs the roster (jane@reiss.com → Reiss, freemail skipped) →
+     display name ("Jane from Reiss <…@gmail.com>") → brand mention, accent-folded, sub-4-char
+     names exact-word only — plus a ⚡ **action** badge when it reads as a briefable request.
+     Stored clients back-fill on read as the dossier grows.
+   - **Triage on /workflow** — captured emails are **never auto-tasks**. They wait in the Email
+     triage queue (⚡ first) until decided: **→ Task** files it into Intake (client = detected
+     only; the sender goes into the task NAME, never the Client field), **✕ Not a task** clears
+     it. Decisions persist server-side (KV `gmaildismissed`, reasons task/briefed/notask) so
+     cleared mail never resurfaces on later pushes; **Show triaged** lists decisions with
+     ↩ Restore.
 
 **Filing/archiving is safe**: the script searches All Mail, so archived or labelled-away brief
 threads are still picked up — only Trash/Spam are excluded (deletion reads as intent; the
@@ -144,9 +172,12 @@ Workflow paste-router is the catch-all). The 7-day window + server-side message-
 re-scans idempotent, so the trigger can be down for days and replies still apply exactly once.
 
 Verify: reply to any brief email containing its `[ibfcode:…]` with "started" → within 15 min the
-ticket sits in **In progress** on /workflow, and /activity shows a `gmail-sync` entry. When a
-super-admin becomes reachable, §6 (DWD) can replace this with the fully server-side pull — the
-matcher is shared either way.
+ticket sits in **In progress** on /workflow, and /activity shows a `gmail-sync` entry. The
+script's execution log prints a **self-verdict** per run — `✓ pushed · matched N · skipped M`
+means the worker really answered; `✗ BLOCKED BY CLOUDFLARE ACCESS` means it got the login page
+(re-check step 2, usually the Workers "Restricted" toggle crept back on). /activity's Gmail-sync
+panel shows the run history (`/api/gmail/pushlog`). When a super-admin becomes reachable, §6
+(DWD) can replace this with the fully server-side pull — the matcher is shared either way.
 
 ## Security notes
 - The JSON key lives **only** as a Worker secret. Rotate it (step 4 again, delete the old key) if
