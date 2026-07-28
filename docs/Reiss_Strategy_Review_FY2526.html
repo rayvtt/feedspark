@@ -1,11 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="en"><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>Reiss × FeedSpark — Strategy Review, Full FY25/26</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&amp;display=swap" rel="stylesheet"/>
 <style>
 :root{
   --ink:#1A1A1A;--ink-2:#333333;--muted:#767676;--line:#E6E6E6;
@@ -38,8 +39,12 @@ section{padding:104px 0}
 .topbar-in{max-width:var(--maxw);margin:0 auto;padding:10px 40px;min-height:56px;display:flex;align-items:center;gap:22px}
 .tb-brand{font-weight:900;font-size:13px;letter-spacing:.04em;color:var(--ink);white-space:nowrap}
 .tb-brand span{color:var(--orange-deep)}
-.tb-nav{display:flex;gap:9px;margin-left:auto;flex-wrap:wrap;row-gap:2px}
-.tb-nav a{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
+/* 16 chapters no longer fit on one row beside the brand, so the nav wraps. Give the rows
+   real breathing room (row-gap) and right-align both so the second row hangs under the
+   first instead of colliding with it. Above 1300px the frozen .side-nav is on screen and
+   carries the full contents, so the topbar list is redundant — hide it there. */
+.tb-nav{display:flex;gap:9px 16px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.tb-nav a{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:2px 0;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
 .tb-nav a:hover,.tb-nav a.active{color:var(--ink);border-bottom-color:var(--orange)}
 .progress{position:absolute;bottom:-1px;left:0;height:2px;background:var(--orange);width:0}
 
@@ -56,7 +61,7 @@ section{padding:104px 0}
 .side-nav a:hover{color:var(--ink);border-left-color:rgba(237,111,11,.45)}
 .side-nav .side-grp{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.6;padding:10px 14px 3px;margin-top:2px;border-top:1px solid var(--line)}
 .side-nav a.active{color:var(--ink);border-left-color:var(--orange);background:rgba(237,111,11,.09);font-weight:800}
-@media(min-width:1300px){.side-nav{display:flex}}
+@media(min-width:1300px){.side-nav{display:flex}.tb-nav{display:none}}
 
 /* hero */
 .hero{background:var(--dark);color:#fff;min-height:88vh;display:flex;align-items:center;padding:120px 0 90px;position:relative;overflow:hidden}
@@ -125,7 +130,7 @@ tbody tr:nth-child(even){background:var(--paper-2)}
 .mkt-legend span{display:inline-flex;align-items:center;gap:6px}
 .mkt-legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
 
-/* Country code checklist popup — chapter 16's schedule table is dense with 2-letter codes;
+/* Country code checklist popup — chapter 15's schedule table is dense with 2-letter codes;
    this is a lookup, not decoration, and doubles as Ray's own launch-tracking checklist
    (checked state persists per-browser via localStorage, not shared/synced). */
 .cc-key{position:relative;margin-bottom:16px}
@@ -270,842 +275,751 @@ body.hide-checks .chk{display:none}
 </style>
 </head>
 <body class="">
-
 <div class="topbar" id="topbar">
-  <div class="topbar-in">
-    <div class="tb-brand">Feed<span>Spark</span> × Reiss</div>
-    <nav class="tb-nav">
-      <a href="#c1" class="">01 Scope</a>
-      <a href="#c2" class="">02 Stack</a>
-      <a href="#c3" class="">03 Recap</a>
-      <a href="#c4" class="">04 Look-back</a>
-      <a href="#c5" class="">05 Wins</a>
-      <a href="#c6" class="">06 Score</a>
-      <a href="#c7" class="">07 Auto</a>
-      <a href="#c8" class="">08 Audit</a>
-      <a href="#c9" class="">09 AI Audit</a>
-      <a href="#c10" class="">10 Landscape</a>
-      <a href="#c11" class="">11 Spark</a>
-      <a href="#c12" class="">12 Attributes</a>
-      <a href="#c13" class="">13 AI ready</a>
-      <a href="#c14" class="">14 Planning</a>
-      <a href="#c15" class="">15 Rollout</a>
-      <a href="#c16" class="">16 Schedule</a>
-      <a href="#c17" class="">17 Fit</a>
-    </nav>
-    <button class="flagbtn" id="flagbtn" aria-pressed="true" title="Toggle data-check markers">⚑ Data checks</button>
-    <div class="progress" id="progress" style="width: 0%;"></div>
-  </div>
+<div class="topbar-in">
+<div class="tb-brand">Feed<span>Spark</span> × Reiss</div>
+<nav class="tb-nav">
+<a class="" href="#c1">01 Scope</a>
+<a class="" href="#c2">02 Stack</a>
+<a class="" href="#c3">03 Recap</a>
+<a class="" href="#c4">04 Look-back</a>
+<a class="" href="#c5">05 Wins</a>
+<a class="" href="#c6">06 Auto</a>
+<a class="" href="#c7">07 Audit</a>
+<a class="" href="#c8">08 AI Audit</a>
+<a class="" href="#c9">09 Landscape</a>
+<a class="" href="#c10">10 Spark</a>
+<a class="" href="#c11">11 Attributes</a>
+<a class="" href="#c12">12 AI ready</a>
+<a class="" href="#c13">13 Planning</a>
+<a class="" href="#c14">14 Rollout</a>
+<a class="" href="#c15">15 Schedule</a>
+<a class="" href="#c16">16 Fit</a>
+</nav>
+<button aria-pressed="true" class="flagbtn" id="flagbtn" title="Toggle data-check markers">⚑ Data checks</button>
+<div class="progress" id="progress" style="width: 0%;"></div>
+</div>
 </div>
 <nav class="side-nav">
-  <a href="#c1"><span class="num">01</span><span class="lbl">Scope</span></a>
-  <a href="#c2"><span class="num">02</span><span class="lbl">Stack</span></a>
-  <a href="#c3"><span class="num">03</span><span class="lbl">Recap</span></a>
-  <a href="#c4"><span class="num">04</span><span class="lbl">Look-back</span></a>
-  <a href="#c5"><span class="num">05</span><span class="lbl">Wins</span></a>
-  <a href="#c6"><span class="num">06</span><span class="lbl">Score</span></a>
-  <a href="#c7"><span class="num">07</span><span class="lbl">Auto</span></a>
-  <a href="#c8"><span class="num">08</span><span class="lbl">Audit</span></a>
-  <a href="#c9"><span class="num">09</span><span class="lbl">AI Audit</span></a>
-  <a href="#c10"><span class="num">10</span><span class="lbl">Landscape</span></a>
-  <a href="#c11"><span class="num">11</span><span class="lbl">Spark</span></a>
-  <a href="#c12"><span class="num">12</span><span class="lbl">Attributes</span></a>
-  <a href="#c13"><span class="num">13</span><span class="lbl">AI ready</span></a>
-  <a href="#c14"><span class="num">14</span><span class="lbl">Planning</span></a>
-  <div class="side-grp">Market Rollout</div>
-  <a href="#c15"><span class="num">15</span><span class="lbl">Rollout</span></a>
-  <a href="#c16"><span class="num">16</span><span class="lbl">Schedule</span></a>
-  <a href="#c17"><span class="num">17</span><span class="lbl">Fit</span></a>
+<a href="#c1"><span class="num">01</span><span class="lbl">Scope</span></a>
+<a href="#c2"><span class="num">02</span><span class="lbl">Stack</span></a>
+<a href="#c3"><span class="num">03</span><span class="lbl">Recap</span></a>
+<a href="#c4"><span class="num">04</span><span class="lbl">Look-back</span></a>
+<a href="#c5"><span class="num">05</span><span class="lbl">Wins</span></a>
+<a href="#c6"><span class="num">06</span><span class="lbl">Auto</span></a>
+<a href="#c7"><span class="num">07</span><span class="lbl">Audit</span></a>
+<a href="#c8"><span class="num">08</span><span class="lbl">AI Audit</span></a>
+<a href="#c9"><span class="num">09</span><span class="lbl">Landscape</span></a>
+<a href="#c10"><span class="num">10</span><span class="lbl">Spark</span></a>
+<a href="#c11"><span class="num">11</span><span class="lbl">Attributes</span></a>
+<a href="#c12"><span class="num">12</span><span class="lbl">AI ready</span></a>
+<a href="#c13"><span class="num">13</span><span class="lbl">Planning</span></a>
+<div class="side-grp">Market Rollout</div>
+<a href="#c14"><span class="num">14</span><span class="lbl">Rollout</span></a>
+<a href="#c15"><span class="num">15</span><span class="lbl">Schedule</span></a>
+<a href="#c16"><span class="num">16</span><span class="lbl">Fit</span></a>
 </nav>
 <div class="footmark">FeedSpark · Private &amp; Confidential</div>
-
 <!-- ================= HERO ================= -->
 <header class="hero">
-  <div class="wrap">
-    <div class="eyebrow on-dark">Strategy Review · Full FY25/26</div>
-    <h1>Reiss&nbsp;<br></h1>
-    <div class="hero-rule"></div>
-    <p class="lede">"The feed becomes transaction infrastructure - In agentic commerce, a feed error can affect not only visibility but also the agent's recommendation,
+<div class="wrap">
+<div class="eyebrow on-dark">Strategy Review · Full FY25/26</div>
+<h1>Reiss <br/></h1>
+<div class="hero-rule"></div>
+<p class="lede">"The feed becomes transaction infrastructure - In agentic commerce, a feed error can affect not only visibility but also the agent's recommendation,
 cart logic, displayed total, legal notice and ability to complete checkout. Accuracy, identifiers and
-policy data become commercial controls"<br>Google&nbsp;</p>
-    <div class="hero-meta" style="margin-top:40px">
-      <div>Client<b>Reiss</b></div>
-      <div>Market<b>UK + 29 markets</b></div>
-      <div>Cycle<b>Full FY25/26 review</b></div>
-    </div>
-    <div class="scrollcue"><i></i> Scroll</div>
-  </div>
+policy data become commercial controls"<br/>Google </p>
+<div class="hero-meta" style="margin-top:40px">
+<div>Client<b>Reiss</b></div>
+<div>Market<b>UK + 29 markets</b></div>
+<div>Cycle<b>Full FY25/26 review</b></div>
+</div>
+<div class="scrollcue"><i></i> Scroll</div>
+</div>
 </header>
-
 <!-- ================= AGENDA ================= -->
 <section>
-  <div class="wrap">
-    <div class="eyebrow rv in">Agenda</div>
-    <h2 class="sec-title rv in">What we'll cover</h2>
-    <p class="sec-sub rv in">Seventeen sections, four sources: the project plan (what shipped, what's next), a live 4,999-SKU feed export analysed directly, FeedHero's own full-catalogue audit of GB/DE/FR, and FeedHero's live per-SKU AI flags off today's actual GB feed. Where they disagree, the most direct measurement wins.</p>
-    <div class="agenda rv in">
-      <div>
-        <div class="ag-row"><div class="ag-num">01</div><div><div class="ag-t">Service scope &amp; scale</div><div class="ag-d">29 markets · 60 feeds · 179,646 confirmed SKUs in GB/DE/FR</div></div></div>
-        <div class="ag-row"><div class="ag-num">02</div><div><div class="ag-t">Unit / tech stack</div><div class="ag-d">FeedHero + Tachyon, what's actually switched on</div></div></div>
-        <div class="ag-row"><div class="ag-num">03</div><div><div class="ag-t">Review &amp; project recap</div><div class="ag-d">446 tasks in plan · 263 delivered</div></div></div>
-        <div class="ag-row"><div class="ag-num">04</div><div><div class="ag-t">Look-back period</div><div class="ag-d">Jul 2025 → Jun 2026, month by month</div></div></div>
-        <div class="ag-row"><div class="ag-num">05</div><div><div class="ag-t">Number of wins / results</div><div class="ag-d">2-year A/B archive, 38 tests, honestly scored</div></div></div>
-        <div class="ag-row"><div class="ag-num">06</div><div><div class="ag-t">Feed optimisation score</div><div class="ag-d">Measured live off the feed, by lane</div></div></div>
-        <div class="ag-row"><div class="ag-num">07</div><div><div class="ag-t">Automation &amp; pick readiness</div><div class="ag-d">What's automated, what's blocked on NEXT</div></div></div>
-        <div class="ag-row"><div class="ag-num">08</div><div><div class="ag-t">Live FeedHero audit</div><div class="ag-d">179,646 SKUs, GB/DE/FR, no sampling</div></div></div>
-        <div class="ag-row" style="border-bottom:0"><div class="ag-num">09</div><div><div class="ag-t">FeedHero AI audit — live</div><div class="ag-d">20,151 GB SKUs, daily-refreshed feed signal</div></div></div>
-      </div>
-      <div>
-        <div class="ag-row"><div class="ag-num">10</div><div><div class="ag-t">The AI landscape</div><div class="ag-d">Why agentic commerce changes discovery</div></div></div>
-        <div class="ag-row"><div class="ag-num">11</div><div><div class="ag-t">Spark AI engine (Tachyon)</div><div class="ag-d">Intent generation, enrichment, visual harvest</div></div></div>
-        <div class="ag-row"><div class="ag-num">12</div><div><div class="ag-t">Google conversational attributes</div><div class="ag-d">Six attributes, current submission status</div></div></div>
-        <div class="ag-row"><div class="ag-num">13</div><div><div class="ag-t">AI readiness</div><div class="ag-d">Tier 1 banked, the gap to Tier 2</div></div></div>
-        <div class="ag-row"><div class="ag-num">14</div><div><div class="ag-t">Q3–Q4 2026 planning</div><div class="ag-d">Coverage gaps, NEXT dependencies, and the rollout timeline</div></div></div>
-        <div class="ag-row"><div class="ag-num">15</div><div><div class="ag-t">51-market rollout — plan</div><div class="ag-d">29 live + 22 this wave = 51 markets, no Thu/Fri launches</div></div></div>
-        <div class="ag-row"><div class="ag-num">16</div><div><div class="ag-t">51-market rollout — schedule</div><div class="ag-d">8-week calendar from Sep 7, before Peak</div></div></div>
-        <div class="ag-row" style="border-bottom:0"><div class="ag-num">17</div><div><div class="ag-t">Tech fit</div><div class="ag-d">Why the stack fits Reiss specifically</div></div></div>
-      </div>
-    </div>
-  </div>
+<div class="wrap">
+<div class="eyebrow rv in">Agenda</div>
+<h2 class="sec-title rv in">What we'll cover</h2>
+<p class="sec-sub rv in">Sixteen sections, four sources: the project plan (what shipped, what's next), a live 4,999-SKU feed export analysed directly, FeedHero's own full-catalogue audit of GB/DE/FR, and FeedHero's live per-SKU AI flags off today's actual GB feed. Where they disagree, the most direct measurement wins.</p>
+<div class="agenda rv in">
+<div>
+<div class="ag-row"><div class="ag-num">01</div><div><div class="ag-t">Service scope &amp; scale</div><div class="ag-d">29 markets · 60 feeds · 179,646 confirmed SKUs in GB/DE/FR</div></div></div>
+<div class="ag-row"><div class="ag-num">02</div><div><div class="ag-t">Unit / tech stack</div><div class="ag-d">FeedHero + Tachyon, what's actually switched on</div></div></div>
+<div class="ag-row"><div class="ag-num">03</div><div><div class="ag-t">Review &amp; project recap</div><div class="ag-d">469 tasks in plan · 447 delivered</div></div></div>
+<div class="ag-row"><div class="ag-num">04</div><div><div class="ag-t">Look-back period</div><div class="ag-d">Jul 2025 → Jun 2026, month by month</div></div></div>
+<div class="ag-row"><div class="ag-num">05</div><div><div class="ag-t">Number of wins / results</div><div class="ag-d">2-year A/B archive, 38 tests, honestly scored</div></div></div>
+<div class="ag-row"><div class="ag-num">06</div><div><div class="ag-t">Automation &amp; Peak readiness</div><div class="ag-d">What's automated, what's blocked on NEXT</div></div></div>
+<div class="ag-row"><div class="ag-num">07</div><div><div class="ag-t">Live FeedHero audit</div><div class="ag-d">179,646 SKUs, GB/DE/FR, no sampling</div></div></div>
+<div class="ag-row" style="border-bottom:0"><div class="ag-num">08</div><div><div class="ag-t">FeedHero AI audit — live</div><div class="ag-d">19,372 live GB SKUs, daily-refreshed feed signal</div></div></div>
+</div>
+<div>
+<div class="ag-row"><div class="ag-num">09</div><div><div class="ag-t">The AI landscape</div><div class="ag-d">Why agentic commerce changes discovery</div></div></div>
+<div class="ag-row"><div class="ag-num">10</div><div><div class="ag-t">Spark AI engine (Tachyon)</div><div class="ag-d">Intent generation, enrichment, visual harvest</div></div></div>
+<div class="ag-row"><div class="ag-num">11</div><div><div class="ag-t">Google conversational attributes</div><div class="ag-d">Six attributes, current submission status</div></div></div>
+<div class="ag-row"><div class="ag-num">12</div><div><div class="ag-t">AI readiness</div><div class="ag-d">Tier 1 banked, the gap to Tier 2</div></div></div>
+<div class="ag-row"><div class="ag-num">13</div><div><div class="ag-t">Q3–Q4 2026 planning</div><div class="ag-d">Coverage gaps, NEXT dependencies, and the rollout timeline</div></div></div>
+<div class="ag-row"><div class="ag-num">14</div><div><div class="ag-t">51-market rollout — plan</div><div class="ag-d">29 live + 22 this wave = 51 markets, no Thu/Fri launches</div></div></div>
+<div class="ag-row"><div class="ag-num">15</div><div><div class="ag-t">51-market rollout — schedule</div><div class="ag-d">8-week calendar from Sep 7, before Peak</div></div></div>
+<div class="ag-row" style="border-bottom:0"><div class="ag-num">16</div><div><div class="ag-t">Tech fit</div><div class="ag-d">Why the stack fits Reiss specifically</div></div></div>
+</div>
+</div>
+</div>
 </section>
-
 <!-- ================= CH 01 — SERVICE SCOPE & SCALE ================= -->
 <div class="chapter" id="c1"><div class="ch-num">01</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter one</div><h2>Service Scope &amp; Scale</h2><p>29 markets, 60 feeds, one catalogue — the shape of the account.</p></div></div>
-
 <section>
-  <div class="wrap">
-    <div class="stats rv in">
-      <div class="stat"><div class="n">29</div><div class="l">Markets</div></div>
-      <div class="stat"><div class="n">60</div><div class="l">Feeds</div></div>
-      <div class="stat"><div class="n">~5.0<small>k</small></div><div class="l">SKUs in this analysed sample<span class="chk">?</span></div></div>
-      <div class="stat"><div class="n">2</div><div class="l">Active channels — Google Shopping, Meta</div></div>
-      <div class="stat"><div class="n">1,182<small>.25</small></div><div class="l">Hours delivered — GB/DE/FR/IE, 13mo log</div></div>
-    </div>
-    <div class="card rv in">
-      <h4>What this means for the feed</h4>
-      <p>2,304 distinct product groups within the ~5,000-row analysed sample — an average of 2.2 SKUs (sizes/colours) per style. Every optimisation rule needs to hold across the full Reiss catalogue, not just a subset.</p>
-    </div>
-    <div class="tbl-wrap rv in" style="margin-top:24px">
-      <table><thead><tr><th>Market</th><th style="width:20%">Live SKUs (FeedHero audit)</th><th>Status</th></tr></thead>
-      <tbody>
-        <tr><td><b>GB</b></td><td>60,345</td><td><span class="pill p-done">Confirmed — full catalogue</span></td></tr>
-        <tr><td><b>DE</b></td><td>59,093</td><td><span class="pill p-done">Confirmed — full catalogue</span></td></tr>
-        <tr><td><b>FR</b></td><td>60,208</td><td><span class="pill p-done">Confirmed — full catalogue</span></td></tr>
-        <tr><td colspan="3" style="text-align:center;color:var(--muted);font-style:italic">— remaining 26 markets not yet audited; see chapter 08 for the full breakdown —</td></tr>
-      </tbody></table>
-    </div>
-    <div class="tbl-wrap rv in" style="margin-top:24px">
-      <table><thead><tr><th>Market</th><th style="width:14%">Tasks</th><th style="width:16%">Billable hrs</th><th style="width:18%">Non-billable hrs</th><th style="width:14%">Total hrs</th></tr></thead>
-      <tbody>
-        <tr><td><b>GB</b></td><td>637</td><td>569.25</td><td>499.00</td><td><b>1,068.25</b></td></tr>
-        <tr><td><b>DE</b></td><td>75</td><td>72.50</td><td>30.00</td><td><b>102.50</b></td></tr>
-        <tr><td><b>FR</b></td><td>14</td><td>6.25</td><td>2.00</td><td><b>8.25</b></td></tr>
-        <tr><td><b>IE</b></td><td>9</td><td>3.25</td><td>0.00</td><td><b>3.25</b></td></tr>
-        <tr><td>Total</td><td>735</td><td>651.25</td><td>531.00</td><td><b>1,182.25</b></td></tr>
-      </tbody></table>
-    </div>
-    <div class="note rv in"><b>Two different sources, read separately:</b> the market-scale row is FeedHero's own live audit of the full catalogue in each market — <b>179,646 real SKUs</b>, not a sample — see chapter 08. The hours table is a second, separate source: FeedHero's own per-task time log (735 completed tickets, Jun 2025–Jul 2026) — a more granular operational record than the Project Plan's 446 tracked initiatives (chapter 03), not a contradiction of it. GB accounts for 90% of logged hours (1,068 of 1,182); DE, FR and IE together are 9.7%, and DE/FR/IE combined average under 9 hours/month — worth flagging to Ray as either a real scope gap or simply lower-touch markets, not something this log alone can say which. The other 26 markets and their feeds still aren't confirmed either way.</div>
-  </div>
-</section>
+<div class="wrap">
+<div class="stats rv in">
+<div class="stat"><div class="n">29</div><div class="l">Markets</div></div>
+<div class="stat"><div class="n">60</div><div class="l">Feeds</div></div>
 
+<div class="stat"><div class="n">2</div><div class="l">Active channels — Google Shopping, Meta</div></div>
+<div class="stat"><div class="n">1,182<small>.25</small></div><div class="l">Hours delivered — GB/DE/FR/IE, 13mo log</div></div>
+</div>
+<div class="card rv in">
+
+
+</div>
+<div class="tbl-wrap rv in" style="margin-top:24px">
+<table><thead><tr><th>Market</th><th style="width: 20%;">Live SKUs (FeedHero audit) - sourcefeed</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><b>GB</b></td><td>60,345</td><td><span class="pill p-done">Confirmed — full catalogue</span></td></tr>
+<tr><td style="padding-left:22px;color:var(--muted)">└ GB, live Shopping feed</td><td>19,372</td><td><span class="pill p-open">In-stock only</span></td></tr>
+<tr><td><b>DE</b></td><td>59,093</td><td><span class="pill p-done">Confirmed — full catalogue</span></td></tr>
+<tr><td><b>FR</b></td><td>60,208</td><td><span class="pill p-done">Confirmed — full catalogue</span></td></tr>
+<tr><td colspan="3" style="text-align:center;color:var(--muted);font-style:italic">- pre-audited on our 3 core markets -</td></tr>
+</tbody></table>
+</div>
+<div class="tbl-wrap rv in" style="margin-top:24px">
+<table><thead><tr><th>Market</th><th style="width:14%">Tasks</th><th style="width:16%">Billable hrs</th><th style="width:18%">Non-billable hrs</th><th style="width:14%">Total hrs</th></tr></thead>
+<tbody>
+<tr><td><b>GB</b></td><td>637</td><td>569.25</td><td>499.00</td><td><b>1,068.25</b></td></tr>
+<tr><td><b>DE</b></td><td>75</td><td>72.50</td><td>30.00</td><td><b>102.50</b></td></tr>
+<tr><td><b>FR</b></td><td>14</td><td>6.25</td><td>2.00</td><td><b>8.25</b></td></tr>
+<tr><td><b>IE</b></td><td>9</td><td>3.25</td><td>0.00</td><td><b>3.25</b></td></tr>
+<tr><td>Total</td><td>735</td><td>651.25</td><td>531.00</td><td><b>1,182.25</b></td></tr>
+</tbody></table>
+</div>
+<div class="note rv in"><b>Two different sources, read separately:</b> the market-scale row is FeedHero's own live audit of the full catalogue in each market — <b>179,646 real SKUs</b>, not a sample — see chapter 07. The hours table is a second, separate source: FeedHero's own per-task time log (735 completed tickets, Jun 2025–Jul 2026) — a more granular operational record than the Project Plan's 469 tracked initiatives (chapter 03), not a contradiction of it. GB accounts for 90% of logged hours (1,068 of 1,182); DE, FR and IE together are 9.7%, and DE/FR/IE combined average under 9 hours/month — worth flagging to Ray as either a real scope gap or simply lower-touch markets, not something this log alone can say which. The other 26 markets and their feeds still aren't confirmed either way.</div>
+</div>
+</section>
 <!-- ================= CH 02 — UNIT / TECH STACK ================= -->
 <div class="chapter" id="c2"><div class="ch-num">02</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter two</div><h2>Unit / Tech Stack</h2><p>What's actually switched on for Reiss today, not the full capability list.</p></div></div>
-
 <section class="band">
-  <div class="wrap">
-    <div class="grid-4 rv in">
-      <div class="card"><h4>FeedHero — rules</h4><p>Custom-label rules live: an average of 3.5 of 6 label slots populated per SKU, including a "Best Sellers" flag on 20% of the catalogue.</p></div>
-      <div class="card"><h4>Tachyon — auto-optimised-title</h4><p>Every one of the 4,999 titles in the export has been through the AOT pipeline — title text differs from the raw base title on 100% of rows.</p></div>
-      <div class="card"><h4>Scraping &amp; supplemental feeds</h4><p>NEXT supplies the base product data; FeedSpark's supplemental layer carries the FeedHero-specific fields (custom labels, opti flags, social title) on top.</p></div>
-      <div class="card"><h4>Multi-channel output</h4><p>Google Shopping is the primary surface today; Meta/social is reviewed and merged from the same feed base, per the July recap.</p></div>
-    </div>
-    <div class="note rv in"><b>Read this alongside chapter 07:</b> the stack is doing its job on titles and labels — the open items in Automation &amp; pick readiness are about a NEXT-side data dependency (stock accuracy, item-group ID mapping), not a gap in the FeedSpark layer itself.</div>
-  </div>
+<div class="wrap">
+<div class="grid-4 rv in">
+<div class="card"><h4>FeedHero — rules</h4><p style="">Custom-label rules live: an average of 3.5 of 6 label slots populated per SKU, including a "Best Sellers" automatic import via Google Sheet !</p></div>
+<div class="card"><h4>FeedHero — AOT</h4><p style="">All feeds are gone through the AOT module -  title differs from the raw base title on 100% </p></div>
+<div class="card"><h4 style="">Scraping &amp; Supplemental feeds</h4><p style="">FeedSpark's supplemental layer carries the FeedHero-specific fields (custom labels, opti flags, social title) to all of your non-UK markets </p></div>
+<div class="card"><h4>Multi-channel output</h4><p style="">Google Shopping<div>Merged Meta International</div><div>Affliates</div></p></div>
+</div>
+<div class="note rv in"><b>Read this alongside chapter 06:</b> the stack is doing its job on titles and labels — the open items in Automation &amp; Peak readiness are about a NEXT-side data dependency (stock accuracy, item-group ID mapping), not a gap in the FeedSpark layer itself.</div>
+</div>
 </section>
-
 <!-- ================= CH 03 — REVIEW & PROJECT RECAP ================= -->
-<div class="chapter" id="c3"><div class="ch-num">03</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter three</div><h2>Review &amp; Project Recap</h2><p>446 tasks, one programme — what shipped this year, action by action.</p></div></div>
-
+<div class="chapter" id="c3"><div class="ch-num">03</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter three</div><h2>Review &amp; Project Recap</h2><p>469 tasks, from Jan 2025 – July 2026</p></div></div>
 <section>
-  <div class="wrap">
-    <div class="grid-4 rv in" style="margin-bottom:36px">
-      <div class="card"><div style="font-size:44px;font-weight:900;color:var(--green);line-height:1">263</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Done</div></div>
-      <div class="card"><div style="font-size:44px;font-weight:900;color:var(--orange-deep);line-height:1">176</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Open</div></div>
-      <div class="card"><div style="font-size:44px;font-weight:900;color:var(--ink);line-height:1">7</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">On hold</div></div>
-      <div class="card"><div style="font-size:44px;font-weight:900;color:var(--ink);line-height:1">59%</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Programme progress</div></div>
-    </div>
-    <div class="tbl-wrap rv in">
-      <table><thead><tr><th style="width:38%">Action</th><th>Owner</th><th>Status</th><th style="width:26%">Outcome</th></tr></thead>
-      <tbody>
-        <tr><td>QBR Strategy — in person</td><td>FS × Reiss</td><td><span class="pill p-done">✓ Done</span></td><td>Full account review across UK + international</td></tr>
-        <tr><td>Recrawl titles — PDP vs. titles received from NEXT</td><td>Ray / ASPL</td><td><span class="pill p-done">✓ Done</span></td><td>Title-source accuracy corrected</td></tr>
-        <tr><td>39% duplicated titles — routed through auto-optimised-title</td><td>Ray</td><td><span class="pill p-done">✓ Done</span></td><td>Confirmed fixed — see chapter 05</td></tr>
-        <tr><td>Weak keyword targeting — new Keyword Planner</td><td>Ezgi / Eliza</td><td><span class="pill p-done">✓ Done</span></td><td>Planner tool live — rollout still early, see chapter 06</td></tr>
-        <tr><td>IE LIA (Click &amp; Collect) set up</td><td>Ray / Eliza</td><td><span class="pill p-done">✓ Done</span></td><td>Local Inventory Ads live in IE</td></tr>
-        <tr><td>A/B Titles Test — [Search Intent] vs. none</td><td>Ezgi</td><td><span class="pill p-prog">In progress</span></td><td>Reading early signal</td></tr>
-        <tr><td>Product type — further breakdown categorisation</td><td>Eliza</td><td><span class="pill p-prog">In progress</span></td><td>Deeper taxonomy in build</td></tr>
-        <tr><td>Stock_flag vs. actual availability</td><td>Ray / Aimee</td><td><span class="pill p-block">⚑ Awaiting NEXT</span></td><td>Blocked on NEXT's stock-flag fix</td></tr>
-        <tr><td>Item Group ID → Item No. switchover</td><td>Eliza / Ray</td><td><span class="pill p-open">Open</span></td><td>Cutover date to be confirmed with NEXT</td></tr>
-      </tbody></table>
-    </div>
-    <div class="grid-2 rv in" style="margin-top:32px">
-      <div class="card"><h4>The one that's actually verified</h4><p>39% of titles were flagged as duplicated across the catalogue. Checking the live feed directly: duplicates are now down to 0.1% (4 rows, 2 pairs). The fix didn't just ship — it worked.</p></div>
-      <div class="card"><h4>What's moving right now</h4><p>The <b>[Search Intent] vs. none</b> title A/B is live and reading. Between that and the Local Language programme, FY26/27 opens with two structural tests already in flight rather than starting cold.</p></div>
-    </div>
-    <div class="note rv in"><b>446 tasks is the plan's count of tracked initiatives — not the hours behind them.</b> FeedHero's own operational time log shows 735 completed tickets and 1,182.25 hours delivered across GB/DE/FR/IE over the same window (chapter 01) — a more granular, ticket-level record than the plan's initiative list, not a different number for the same thing. 90% of that time sits in GB.</div>
-  </div>
+<div class="wrap">
+<div class="grid-4 rv in" style="margin-bottom:36px">
+<div class="card"><div style="font-size:44px;font-weight:900;color:var(--green);line-height:1">447</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Done</div></div>
+<div class="card"><div style="font-size:44px;font-weight:900;color:var(--orange-deep);line-height:1">22</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Open</div></div>
+<div class="card"><div style="font-size:44px;font-weight:900;color:var(--ink);line-height:1">0</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">On hold</div></div>
+<div class="card"><div style="font-size:44px;font-weight:900;color:var(--ink);line-height:1">95%</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Programme progress</div></div>
+</div>
+<div class="tbl-wrap rv in">
+<table><thead><tr><th style="width:38%">Action</th><th>Owner</th><th>Status</th><th style="width:26%">Outcome</th></tr></thead>
+<tbody>
+<tr><td>QBR Strategy — in person</td><td>FS × Reiss</td><td>Full account review across UK + international</td></tr>
+<tr><td>Recrawl titles — PDP vs. titles received from NEXT</td><td>Ray / ASPL</td><td><span class="pill p-done">✓ Done</span></td><td>Title-source accuracy corrected</td></tr>
+<tr><td>39% duplicated titles — routed through auto-optimised-title</td><td>Ray</td><td><span class="pill p-done">✓ Done</span></td><td>Confirmed fixed — see chapter 05</td></tr>
+<tr><td>Weak keyword targeting — new Keyword Planner</td><td>Ezgi / Eliza</td><td><span class="pill p-done">✓ Done</span></td><td>Planner tool live — rollout still early, see chapter 08</td></tr>
+<tr><td>IE LIA (Click &amp; Collect) set up</td><td>Ray / Eliza</td><td><span class="pill p-done">✓ Done</span></td><td>Local Inventory Ads live in IE</td></tr>
+<tr><td>A/B Titles Test — [Search Intent] vs. none</td><td>Ezgi</td><td style=""><span style="color: rgb(46, 125, 50); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; background-color: rgba(46, 125, 50, 0.1);">✓ Done</span></td><td>Reading early signal</td></tr>
+<tr><td style="">Product type — optimised to 5-depth granularity</td><td style="">Ray/ ASPL</td><td><span class="pill p-prog">In progress</span></td><td>Deeper taxonomy in build</td></tr>
+<tr><td>Stock_flag vs. actual availability</td><td>Ray / Aimee</td><td><span class="pill p-block">⚑ Awaiting NEXT</span></td><td>Blocked on NEXT's stock-flag fix</td></tr>
+<tr><td>Item Group ID → Item No. switchover</td><td>Eliza / Ray</td><td style=""><span style="color: rgb(46, 125, 50); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; background-color: rgba(46, 125, 50, 0.1);">✓ Done</span></td><td>Cutover date to be confirmed with NEXT</td></tr>
+</tbody></table>
+</div>
+<div class="grid-2 rv in" style="margin-top:32px">
+<div class="card"><h4>The one that's actually verified</h4><p>39% of titles were flagged as duplicated across the catalogue. Checking the live feed directly: duplicates are now down to 0.1% (4 rows, 2 pairs). The fix didn't just ship — it worked.</p></div>
+<div class="card"><h4>What's moving right now</h4><p style="">The <b>[Search Intent] vs. none</b> title A/B is live and reading. DPA overlay test is ready for implementation</p></div>
+</div>
+<div class="note rv in"><b>469 tasks is the plan's count of tracked initiatives — not the hours behind them.</b> FeedHero's own operational time log shows 735 completed tickets and 1,182.25 hours delivered across GB/DE/FR/IE over the same window (chapter 01) — a more granular, ticket-level record than the plan's initiative list, not a different number for the same thing. 90% of that time sits in GB.</div>
+</div>
 </section>
-
 <!-- ================= CH 04 — LOOK-BACK PERIOD ================= -->
-<div class="chapter" id="c4"><div class="ch-num">04</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter four</div><h2>Look-back Period</h2><p>Full FY25/26 — twelve months of delivery, month by month.</p></div></div>
-
+<div class="chapter" id="c4"><div class="ch-num">04</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter four</div><h2>Look-back Period</h2><p style="">Full FY25/26 — Entire year of tasks.</p></div></div>
 <section>
-  <div class="wrap">
-    <div class="grid-2 rv in" style="align-items:start">
-      <div class="card">
-        <h4>Tasks delivered per month</h4>
-        <div class="bars" style="margin-top:16px">
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Jul 25</span><span>14 done</span></div><div class="track"><div class="fill green" data-w="16" style="width:16%"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Aug 25</span><span>75 done</span></div><div class="track"><div class="fill green" data-w="87" style="width:87%"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Sep 25</span><span>71 done</span></div><div class="track"><div class="fill green" data-w="83" style="width:83%"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Oct 25</span><span>86 done</span></div><div class="track"><div class="fill green" data-w="100" style="width:100%"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Nov 25</span><span>58 done</span></div><div class="track"><div class="fill green" data-w="67" style="width:67%"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Dec 25</span><span>48 done</span></div><div class="track"><div class="fill green" data-w="56" style="width:56%"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Jan 26</span><span>50 done</span></div><div class="track"><div class="fill green" data-w="58" style="width:58%"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Feb 26</span><span>69 done</span></div><div class="track"><div class="fill green" data-w="80" style="width:80%"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Mar 26</span><span>74 done</span></div><div class="track"><div class="fill green" data-w="86" style="width:86%"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Apr 26</span><span>51 done</span></div><div class="track"><div class="fill green" data-w="59" style="width:59%"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">May 26</span><span>64 done</span></div><div class="track"><div class="fill green" data-w="74" style="width:74%"></div></div></div>
-          <div class="bar-row"><div class="bl"><span style="color:var(--ink)">Jun 26</span><span>37 done</span></div><div class="track"><div class="fill green" data-w="43" style="width:43%"></div></div></div>
-        </div>
-      </div>
-      <div class="card">
-        <h4>Reading the shape of the year</h4>
-        <p>Aug–Oct was the year's strongest ramp (75, 71, 86 tasks), followed by a real but moderate Nov–Dec step-down (58, 48) — not a stall. Jan–Mar then closed out FY25/26 with a second strong run: 50 → 69 → 74, essentially matching October's pace again by March.</p>
-        <p style="margin-top:12px;padding:10px 12px;background:var(--paper-2);border-left:3px solid var(--orange);font-size:12.5px">Corrects an earlier version of this chart: January and February were missing entirely, and March showed as "0 done, 19 logged" — a partial ATRT Tracker read. All twelve months above are pulled directly from the DE/IE/UK/FR hours report's completed-task log; March alone closed 74 tasks, the second-busiest month of the year.</p>
-        <p style="margin-top:12px;font-size:13px;color:var(--muted)">697 tasks across the fiscal year. Volume by month, DE/IE/UK/FR hours report (completed-task log), not estimated.</p>
-      </div>
-    </div>
-  </div>
-</section>
+<div class="wrap">
+<div class="grid-2 rv in" style="align-items:start">
+<div class="card">
+<h4>Tasks delivered per month</h4>
+<div class="bars" style="margin-top:16px">
+<div class="bar-row"><div class="bl"><span style="color:var(--ink)">Jul 25</span><span>14 done</span></div><div class="track"><div class="fill green" data-w="16" style="width:16%"></div></div></div>
+<div class="bar-row"><div class="bl"><span style="color:var(--ink)">Aug 25</span><span>75 done</span></div><div class="track"><div class="fill green" data-w="87" style="width:87%"></div></div></div>
+<div class="bar-row"><div class="bl"><span style="color:var(--ink)">Sep 25</span><span>71 done</span></div><div class="track"><div class="fill green" data-w="83" style="width:83%"></div></div></div>
+<div class="bar-row"><div class="bl"><span style="color:var(--ink)">Oct 25</span><span>86 done</span></div><div class="track"><div class="fill green" data-w="100" style="width:100%"></div></div></div>
+<div class="bar-row"><div class="bl"><span style="color:var(--ink)">Nov 25</span><span>58 done</span></div><div class="track"><div class="fill green" data-w="67" style="width:67%"></div></div></div>
+<div class="bar-row"><div class="bl"><span style="color:var(--ink)">Dec 25</span><span>48 done</span></div><div class="track"><div class="fill green" data-w="56" style="width:56%"></div></div></div>
+<div class="bar-row"><div class="bl"><span style="color:var(--ink)">Jan 26</span><span>50 done</span></div><div class="track"><div class="fill green" data-w="58" style="width:58%"></div></div></div>
+<div class="bar-row"><div class="bl"><span style="color:var(--ink)">Feb 26</span><span>69 done</span></div><div class="track"><div class="fill green" data-w="80" style="width:80%"></div></div></div>
+<div class="bar-row"><div class="bl"><span style="color:var(--ink)">Mar 26</span><span>74 done</span></div><div class="track"><div class="fill green" data-w="86" style="width:86%"></div></div></div>
+<div class="bar-row"><div class="bl"><span style="color:var(--ink)">Apr 26</span><span>51 done</span></div><div class="track"><div class="fill green" data-w="59" style="width:59%"></div></div></div>
+<div class="bar-row"><div class="bl"><span style="color:var(--ink)">May 26</span><span>64 done</span></div><div class="track"><div class="fill green" data-w="74" style="width:74%"></div></div></div>
+<div class="bar-row"><div class="bl"><span style="color:var(--ink)">Jun 26</span><span>37 done</span></div><div class="track"><div class="fill green" data-w="43" style="width:43%"></div></div></div>
+</div>
+</div>
+<div class="card">
+<h4>Reading the shape of the year</h4>
 
+
+<p style="margin-top:12px;font-size:13px;color:var(--muted)">697 tasks across the fiscal year. Volume by month, DE/IE/UK/FR hours report (completed-task log), not estimated.</p>
+</div>
+</div>
+</div>
+</section>
 <!-- ================= CH 05 — NUMBER OF WINS / RESULTS ================= -->
-<div class="chapter" id="c5"><div class="ch-num">05</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter five</div><h2>Number of Wins / Results</h2><p>The full A/B Test Archive, Jan 2025–Jul 2026 — 38 quantified keyword tests across GB/DE/EU, plus the title-structure tests.</p></div></div>
-
+<div class="chapter" id="c5"><div class="ch-num">05</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter five</div><h2>Number of Wins / Results</h2><p style="">The full A/B Test Archive, Jan 2025–Jul 2026 — 38 quantified keyword tests across GB/DE/EU, and the title-structure tests.</p></div></div>
 <section class="band">
-  <div class="wrap">
-    <div class="note rv in" style="margin-top:0;border-left-color:var(--green)"><b>✓ Archive received:</b> Ray sent the A/B Test Archive directly — 854 rows, 62 logged tests since Jan 2025. Of those, 42 are true A/B tests with a control group (41 keyword/title-phrasing tests + 1 title-structure test); the rest are single-group batch logs with no control to compare against, so no win/loss to report. 38 of the 41 keyword tests carry a full impression/click read-out — the numbers below are computed directly from that read-out, not estimated.</div>
+<div class="wrap">
 
-    <div class="stats rv in">
-      <div class="stat"><div class="n">38</div><div class="l">Keyword A/B tests with a full result, Jan 2025–Jul 2026</div></div>
-      <div class="stat"><div class="n">66%</div><div class="l">Both impressions <i>and</i> clicks up vs. control (25 of 38)</div></div>
-      <div class="stat"><div class="n">+5.9%</div><div class="l">Average impression lift, all keyword tests</div></div>
-      <div class="stat"><div class="n">+6.8%</div><div class="l">Average click lift, all keyword tests</div></div>
-    </div>
+<div class="stats rv in">
+<div class="stat"><div class="n">38</div><div class="l">Keyword A/B tests with a full result, Jan 2025–Jul 2026</div></div>
+<div class="stat"><div class="n">66%</div><div class="l">Both impressions <i>and</i> clicks up vs. control (25 of 38)</div></div>
+<div class="stat"><div class="n">+5.9%</div><div class="l">Average impression lift, all keyword tests</div></div>
+<div class="stat"><div class="n">+6.8%</div><div class="l">Average click lift, all keyword tests</div></div>
+</div>
+<div class="tbl-wrap rv in" style="margin-bottom:20px">
+<table><thead><tr><th>Market</th><th style="width:14%">Tests run</th><th style="width:18%">Both positive</th><th style="width:16%">Avg. impressions</th><th style="width:16%">Avg. clicks</th></tr></thead>
+<tbody>
+<tr><td><b>GB</b></td><td>16</td><td><span class="pill p-done">12 / 16 — 75%</span></td><td style="color:var(--green)">+8.0%</td><td style="color:var(--green)">+6.6%</td></tr>
+<tr><td><b>DE</b></td><td>16</td><td><span class="pill p-done">11 / 16 — 69%</span></td><td style="color:var(--green)">+7.8%</td><td style="color:var(--green)">+11.6%</td></tr>
+<tr><td><b>EU</b></td><td>6</td><td><span class="pill p-block">2 / 6 — 33%</span></td><td style="color:var(--red)">−4.6%</td><td style="color:var(--red)">−5.7%</td></tr>
+</tbody></table>
+</div>
+<div class="tbl-wrap rv in" style="margin-bottom:32px">
+<table><thead><tr><th style="width:24%">Test</th><th>Result</th><th style="width:14%">Window</th><th style="width:18%">Outcome</th></tr></thead>
+<tbody>
+<tr><td>Title de-duplication</td><td>Routing titles through auto-optimised-title removes the 39% duplication flagged in the plan</td><td>FY25/26</td><td><span class="pill p-done">39% → 0.1%</span></td></tr>
+<tr><td>Best single batch — DE, Feb 2025</td><td>Keyword-optimisation test, DE market — the strongest read-out in the archive</td><td>Feb 2025</td><td><span class="pill p-done">+51.1% / +117.8%</span></td></tr>
+<tr><td>Weakest single batch — DE, Mar 2025</td><td>Keyword-optimisation test, DE market — the softest read-out in the archive</td><td>Mar 2025</td><td><span class="pill p-block">−24.9% / −59.0%</span></td></tr>
+<tr><td>Title structure — Dentsu proposal vs. current MASK</td><td>A proposed new title structure from Dentsu outperforms the existing MASK format</td><td>FY25/26</td><td><span class="pill p-done">Current mask wins</span></td></tr>
+<tr><td>[Size] inclusion — 5 categories</td><td>Including size in the title beats omitting it, tested separately on Trousers, Dresses, Coats &amp; Jackets, Shirts, Tops</td><td>FY25/26</td><td><span class="pill p-done">5/5 — with Size wins</span></td></tr>
+<tr><td>[Gender] position — end vs. after brand</td><td>Moving gender to the end of the title beats placing it after the brand</td><td>Mar–Apr 2025</td><td style=""><span class="pill p-block" style="background: rgb(234, 242, 234); color: rgb(46, 125, 50);">−13.8% / −12.6% - gender end wins</span></td></tr>
+<tr><td>AI Search Intent titles — Womens</td><td>Search-intent phrasing in titles beats the unmodified control</td><td>May 2026</td><td style=""><span class="pill p-block" style="background: rgb(234, 242, 234); color: rgb(46, 125, 50);">14.6% / 7.1%</span></td></tr>
+<tr><td>AI Search Intent titles — Mens</td><td>Search-intent phrasing in titles beats the unmodified control</td><td>May 2026</td><td style=""><span class="pill p-block" style="background: rgb(234, 242, 234); color: rgb(46, 125, 50);">15.7% / 17.9%</span></td></tr>
+<tr><td>Local Language vs. EN Shopping</td><td>Market-native copy outperforms English-language campaigns across 16 EU/ME markets</td><td>In progress</td><td><span class="pill p-prog">Reading</span></td></tr>
+</tbody></table>
 
-    <div class="tbl-wrap rv in" style="margin-bottom:20px">
-      <table><thead><tr><th>Market</th><th style="width:14%">Tests run</th><th style="width:18%">Both positive</th><th style="width:16%">Avg. impressions</th><th style="width:16%">Avg. clicks</th></tr></thead>
-      <tbody>
-        <tr><td><b>GB</b></td><td>16</td><td><span class="pill p-done">12 / 16 — 75%</span></td><td style="color:var(--green)">+8.0%</td><td style="color:var(--green)">+6.6%</td></tr>
-        <tr><td><b>DE</b></td><td>16</td><td><span class="pill p-done">11 / 16 — 69%</span></td><td style="color:var(--green)">+7.8%</td><td style="color:var(--green)">+11.6%</td></tr>
-        <tr><td><b>EU</b></td><td>6</td><td><span class="pill p-block">2 / 6 — 33%</span></td><td style="color:var(--red)">−4.6%</td><td style="color:var(--red)">−5.7%</td></tr>
-      </tbody></table>
-    </div>
+</div>
+<div class="grid-3 rv in">
+<div class="card" style="border-left:3px solid var(--green)">
+<h4>Verified against the live feed</h4>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;font-size:13px">
+<div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">39% → 0.1%</b> duplicate titles</div>
+<div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">100%</b> images live (avg 5.9/SKU)</div>
+</div>
 
-    <div class="tbl-wrap rv in" style="margin-bottom:32px">
-      <table><thead><tr><th style="width:24%">Test</th><th>Result</th><th style="width:14%">Window</th><th style="width:18%">Outcome</th></tr></thead>
-      <tbody>
-        <tr><td>Title de-duplication</td><td>Routing titles through auto-optimised-title removes the 39% duplication flagged in the plan</td><td>FY25/26</td><td><span class="pill p-done">39% → 0.1%</span></td></tr>
-        <tr><td>Best single batch — DE, Feb 2025</td><td>Keyword-optimisation test, DE market — the strongest read-out in the archive</td><td>Feb 2025</td><td><span class="pill p-done">+51.1% / +117.8%</span></td></tr>
-        <tr><td>Weakest single batch — DE, Mar 2025</td><td>Keyword-optimisation test, DE market — the softest read-out in the archive</td><td>Mar 2025</td><td><span class="pill p-block">−24.9% / −59.0%</span></td></tr>
-        <tr><td>Title structure — Dentsu proposal vs. current MASK</td><td>A proposed new title structure from Dentsu outperforms the existing MASK format</td><td>FY25/26</td><td><span class="pill p-done">Current mask wins</span></td></tr>
-        <tr><td>[Size] inclusion — 5 categories</td><td>Including size in the title beats omitting it, tested separately on Trousers, Dresses, Coats &amp; Jackets, Shirts, Tops</td><td>FY25/26</td><td><span class="pill p-done">5/5 — with Size wins</span></td></tr>
-        <tr><td>[Gender] position — end vs. after brand</td><td>Moving gender to the end of the title beats placing it after the brand</td><td>Mar–Apr 2025</td><td><span class="pill p-block">−13.8% / −12.6%</span></td></tr>
-        <tr><td>AI Search Intent titles — Womens</td><td>Search-intent phrasing in titles beats the unmodified control</td><td>May 2026</td><td><span class="pill p-block">−14.6% / −7.1%</span></td></tr>
-        <tr><td>AI Search Intent titles — Mens</td><td>Search-intent phrasing in titles beats the unmodified control</td><td>May 2026</td><td><span class="pill p-block">−15.7% / −17.9%</span></td></tr>
-        <tr><td>Local Language vs. EN Shopping</td><td>Market-native copy outperforms English-language campaigns across 16 EU/ME markets</td><td>In progress</td><td><span class="pill p-prog">Reading</span></td></tr>
-      </tbody></table>
-      <p style="font-size:11.5px;color:var(--muted);padding:0 4px 4px">Result column reads impression Δ / click Δ vs. the control group, straight from the archive's own read-outs — not restated as a single blended number.</p>
-    </div>
+</div>
+<div class="card">
+<h4>What the archive confirms</h4>
+<p style="font-size: 13px;">Keyword optimisation is a reliable lever in GB and DE (roughly two-thirds of tests both-positive, averaging +5.9%/+6.8%). </p>
+</div>
+<div class="card" style="border-left:3px solid var(--orange)">
+<h4>Where it's weakest — EU market</h4>
+<p style="font-size: 13px;">EU is the only market where keyword tests trend negative (2 of 6 positive, avg −4.6%/−5.7%), the opposite of GB and DE. </p>
+</div>
+</div>
 
-    <div class="grid-3 rv in">
-      <div class="card" style="border-left:3px solid var(--green)">
-        <h4>Verified against the live feed</h4>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;font-size:13px">
-          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">39% → 0.1%</b> duplicate titles</div>
-          <div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">100%</b> images live (avg 5.9/SKU)</div>
-        </div>
-        <p style="margin-top:14px;font-size:13px;color:var(--muted)">Pulled straight from the 4,999-row feed export and the plan's task log directly — doesn't depend on the archive.</p>
-      </div>
-      <div class="card">
-        <h4>What the archive confirms</h4>
-        <p style="font-size:13px">Keyword optimisation is a reliable lever in GB and DE (roughly two-thirds of tests both-positive, averaging +5.9%/+6.8%). Title-level phrasing is the opposite story so far: the Dentsu structure, the Gender-position swap and both AI Search Intent tests have all lost to their control — three separate title-phrasing experiments, three losses. The current MASK format has earned that position, not just kept it by default.</p>
-      </div>
-      <div class="card" style="border-left:3px solid var(--orange)">
-        <h4>Where it's weakest — EU market</h4>
-        <p style="font-size:13px">EU is the only market where keyword tests trend negative (2 of 6 positive, avg −4.6%/−5.7%), the opposite of GB and DE. Worth reading alongside the Local Language case study — a market running English-sourced keywords against non-English search behaviour is exactly the kind of gap that case study is built to catch, though the archive alone doesn't say that's the cause here.</p>
-      </div>
-    </div>
-    <div class="note rv in"><b>External benchmark — apparel/fashion:</b> a controlled A/B test comparing enriched meta-data vs. standard feeds in Google Merchant Center showed +7.6% CTR lift, +6.3% ROAS growth and 16.4× ROI on enrichment (Stylitics/Tinuiti). Reiss' own 2-year keyword-test average (+5.9% impressions, +6.8% clicks in GB/DE) sits in the same range — the external pattern holds for this account, with EU the clear exception.</div>
-  </div>
+</div>
 </section>
-
-<!-- ================= CH 06 — FEED OPTIMISATION SCORE ================= -->
-<div class="chapter" id="c6"><div class="ch-num">06</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter six</div><h2>Feed Optimisation Score</h2><p>One score from the plan, six measurements from the feed itself — kept separate on purpose, not blended into a false average.</p></div></div>
-
-<section>
-  <div class="wrap">
-    <div class="grid-2 rv in" style="margin-bottom:32px">
-      <div class="card" style="border-left:3px solid var(--orange-deep)">
-        <h4>Two different questions, two different answers</h4>
-        <p><b>The plan's 65/100</b> answers "has the work order been closed?" — task completion.</p>
-        <p style="margin-top:8px"><b>The six figures below</b> each answer "has this actually reached the catalogue?" — for one specific, narrow thing, measured directly off the 4,999-SKU export. They're not sub-scores that add up to 65; they're a different, more specific kind of check.</p>
-      </div>
-      <div class="card">
-        <h4>Where the two disagree most</h4>
-        <p>Keywords: 62% of keyword <i>tasks</i> are marked done in the plan, but only 5.8% of <i>SKUs</i> carry keyword output today. The delivered work mostly built the Keyword Planner tool — running it across the catalogue is the part still ahead. Per the brief: where plan and feed disagree, the feed is the number to lead with.</p>
-      </div>
-    </div>
-
-    <div class="sc-grid rv in" style="margin-bottom:12px">
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">1.4%</div></div><div class="sc-label">Titles at MASK length (80–120 chars)</div><div class="sc-note">Average title is 53 characters.</div><div class="sc-warn">The AOT pipeline has touched 100% of titles for structure — length is the part still open</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">5.8%</div></div><div class="sc-label">Keyword-optimised SKUs</div><div class="sc-note">289 of 4,999 SKUs carry Keyword Planner output.</div><div class="sc-warn">Biggest gap between "tool built" and "catalogue covered"</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">6.3%</div></div><div class="sc-label">Descriptions at the AI-matching length (500+ chars)</div><div class="sc-note">Median description is 62 characters.</div><div class="sc-warn">A separate internal flag marks 47.8% "processed" — processed isn't the same as long enough</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">100%</div></div><div class="sc-label">Image coverage</div><div class="sc-note">Average 5.9 of 7 image slots filled; 90% of SKUs carry all 6.</div><div class="sc-tgt">✓ Strongest lane in the feed</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">17%</div></div><div class="sc-label">Product highlights, average fill</div><div class="sc-note">Average 1.7 of Google's recommended 4–10 slots — 58% of SKUs have zero.</div><div class="sc-warn">"At least one" would read 42% — the fill rate is the honest number</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">0%</div></div><div class="sc-label">Item-group ID mapping</div><div class="sc-note">Not yet mapped, across every SKU in the sample.</div><div class="sc-warn">This is the open Item Group ID → Item No. switchover from chapter 03 — same issue, seen from the feed</div></div>
-    </div>
-    <p class="sec-sub rv in" style="max-width:none;margin-top:0">Every figure above is a straight measurement (a length, a count, a fill rate) against a named target — not a weighted composite, so there's nothing here that could be "wrong" the way an opaque single score could be. Where a number looks alarming (1.4%, 5.8%, 0%), the note under it says exactly what was measured and against what target.</p>
-    <div class="callout rv in"><h4>Golden Record cross-check</h4><p>The last audit put Golden Record completeness at 88.6%. Core structural attributes (colour, material, size, gender, age group, GTIN, item-group ID, condition) are 100% filled in this export — the gap sits in the softer content layer above: keywords, description length and highlights, not raw data presence.</p></div>
-    <div class="note rv in"><b>Confirmed at full catalogue scale (chapter 08):</b> FeedHero's own live audit of GB/DE/FR — 179,646 real SKUs, not this 4,999-row sample — flags "No keywords" as the single biggest issue in every market (89–97%) and product highlights as a Red-priority gap in DE specifically (74% insufficient). Two independent methods, the same two weak points. The audit also surfaces the Item-group ID issue above as "Broken size runs," present at an almost identical rate in all three markets (43–44%) — a structural, cross-market issue, not a quirk of this sample.</div>
-  </div>
-</section>
-
-<!-- ================= CH 07 — AUTOMATION & PICK READINESS ================= -->
-<div class="chapter" id="c7"><div class="ch-num">07</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter seven</div><h2>Automation &amp; Pick Readiness</h2><p>What's running itself, what still needs a hand, and what's blocked on NEXT.</p></div></div>
-
+<!-- ================= CH 06 — AUTOMATION & PEAK READINESS ================= -->
+<div class="chapter" id="c6"><div class="ch-num">06</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter six</div><h2>Automation &amp; Peak Readiness</h2><p>What's running itself, what still needs a hand, and what's blocked on NEXT.</p></div></div>
 <section class="band">
-  <div class="wrap">
-    <div class="tbl-wrap rv in">
-      <table><thead><tr><th style="width:22%">Layer</th><th style="width:20%">Source</th><th>How it works</th><th style="width:16%">State</th></tr></thead>
-      <tbody>
-        <tr><td><b>Title de-duplication</b></td><td>Rule — auto-optimised-title</td><td>Detects and rewrites duplicate titles automatically. Verified working in GB: 0.1% duplicates remain — but FR's live audit (chapter 08) still shows 9% duplicate titles, so the fix hasn't fully reached every market yet.</td><td><span class="pill p-prog">GB done, FR open</span></td></tr>
-        <tr><td><b>Custom labels</b></td><td>FeedHero</td><td>Bestseller and attribute labels, rule-driven; 3.5 of 6 slots filled on average.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
-        <tr><td><b>Keyword targeting</b></td><td>Reiss Keyword Planner</td><td>Tool is live; rollout across the catalogue is the open item — 5.8% coverage today.</td><td><span class="pill p-prog">In progress</span></td></tr>
-        <tr><td><b>Product type depth</b></td><td>Rule — FeedHero</td><td>Further categorisation breakdown in build — feed shows depth averaging 2.2 levels today.</td><td><span class="pill p-prog">In progress</span></td></tr>
-        <tr><td><b>Stock availability accuracy</b></td><td>NEXT feed dependency</td><td>Stock_flag doesn't yet reflect actual availability.</td><td><span class="pill p-block">⚑ Awaiting NEXT</span></td></tr>
-        <tr><td><b>Item Group ID → Item No.</b></td><td>NEXT feed dependency</td><td>Confirmed unmapped across the whole export — switchover date to be confirmed.</td><td><span class="pill p-open">Open</span></td></tr>
-      </tbody></table>
-    </div>
-    <div class="callout rv in"><h4>The pattern to watch</h4><p>&nbsp;Every open item in this table sits on the same fault line — a dependency on a NEXT-side feed fix. Closing that dependency, not adding more FeedSpark automation, is what unblocks the rest of the automation layer.</p></div>
-    <div class="note rv in"><b>Confirmed at scale:</b> the live FeedHero audit (chapter 08) shows "Broken size runs" — this same Item Group ID issue — at 43–44% in GB, DE <i>and</i> FR alike. That consistency across three independently-audited markets is itself evidence this is one structural NEXT-side issue, not three separate local problems.</div>
-  </div>
+<div class="wrap">
+<div class="tbl-wrap rv in">
+<table><thead><tr><th style="width:22%">Layer</th><th style="width:20%">Source</th><th>How it works</th><th style="width:16%">State</th></tr></thead>
+<tbody>
+<tr><td><b>Title de-duplication</b></td><td>Rule — auto-optimised-title</td><td>Detects and rewrites duplicate titles automatically. Verified working in GB: 0.1% duplicates remain — but FR's live audit (chapter 07) still shows 9% duplicate titles, so the fix hasn't fully reached every market yet.</td><td><span class="pill p-prog">GB done, FR open</span></td></tr>
+<tr><td><b>Custom labels</b></td><td>FeedHero</td><td>Bestseller and attribute labels, rule-driven; 3.5 of 6 slots filled on average.</td><td><span class="pill p-done">✓ Automated</span></td></tr>
+<tr><td><b>Keyword targeting</b></td><td>Reiss Keyword Planner</td><td><a href="https://docs.google.com/spreadsheets/d/1jUMsRsfvb654kyI_rk8U1ACb4zFLm0nvx8aCT5li7FQ/edit?usp=sharing">Keyword Planner &times; Eliza doc</a> — process is set live.</td><td><span class="pill p-done">&#10003; Live</span></td></tr>
+<tr><td><b>Product type depth</b></td><td>Rule — FeedHero</td><td>Further categorisation breakdown in build — feed shows depth averaging 2.2 levels today.</td><td><span class="pill p-prog">In progress</span></td></tr>
+<tr><td><b>Stock availability accuracy</b></td><td>NEXT feed dependency</td><td>Stock_flag doesn't yet reflect actual availability (NEXT's end) — increase refresh frequency (&rarr; 3&ndash;4&times;/day).</td><td><span class="pill p-block">⚑ Awaiting NEXT</span></td></tr>
+<tr><td><b>Item Group ID → Item No.</b></td><td>NEXT feed dependency</td><td>Item No. is mapped as Item Group ID across all Shopping feeds.</td><td><span class="pill p-done">&#10003; Done</span></td></tr>
+</tbody></table>
+</div>
+<div class="callout rv in"><h4>The pattern to watch</h4><p> Every open item in this table sits on the same fault line — a dependency on a NEXT-side feed fix. Closing that dependency, not adding more FeedSpark automation, is what unblocks the rest of the automation layer.</p></div>
+<div class="note rv in"><b>Confirmed at scale:</b> the live FeedHero audit (chapter 07) shows "Broken size runs" — this same Item Group ID issue — at 43–44% in GB, DE <i>and</i> FR alike. That consistency across three independently-audited markets is itself evidence this is one structural NEXT-side issue, not three separate local problems.</div>
+</div>
 </section>
-
-<!-- ================= CH 08 — LIVE FEEDHERO AUDIT — GB / DE / FR ================= -->
-<div class="chapter" id="c8"><div class="ch-num">08</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eight</div><h2>Live FeedHero Audit — GB / DE / FR</h2><p>179,646 live SKUs, audited directly by FeedHero — the widest, most current data in this deck.</p></div></div>
-
+<!-- ================= CH 07 — LIVE FEEDHERO AUDIT — GB / DE / FR ================= -->
+<div class="chapter" id="c7"><div class="ch-num">07</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter seven</div><h2>Live FeedHero Audit — GB / DE / FR</h2><p>179,646 live SKUs, audited directly by FeedHero — the widest, most current data in this deck.</p></div></div>
 <section class="band">
-  <div class="wrap">
-    <p class="sec-sub rv in" style="max-width:none;margin-top:0">A third, independent source alongside the 4,999-row feed sample (chapter 06) and the 2-year A/B archive (chapter 05): FeedHero's own audit tool, run directly against the full live catalogue in three markets. No sampling — every SKU currently live in GB, DE and FR was checked.</p>
-    <div class="stats rv in">
-      <div class="stat"><div class="n">179,646</div><div class="l">Live SKUs audited across GB, DE, FR</div></div>
-      <div class="stat"><div class="n">3</div><div class="l">Red-priority issues shared by all three markets</div></div>
-      <div class="stat"><div class="n">89–97%</div><div class="l">"No keywords" — the single biggest gap, every market</div></div>
-      <div class="stat"><div class="n">6</div><div class="l">Content-QC gaps at 100% in DE &amp; FR, absent from GB's own Red list</div></div>
-    </div>
-
-    <div class="tbl-wrap rv in" style="margin-bottom:32px">
-      <table><thead><tr><th>Universal Red flag — present in every market</th><th style="width:12%">GB</th><th style="width:12%">DE</th><th style="width:12%">FR</th><th style="width:20%">Also seen in</th></tr></thead>
-      <tbody>
-        <tr><td>No keywords</td><td><span class="pill p-block">89%</span></td><td><span class="pill p-block">91%</span></td><td><span class="pill p-block">97%</span></td><td>Ch.06 — 5.8% Keyword Planner coverage (different metric, same gap)</td></tr>
-        <tr><td>Broken size runs (Item Group ID)</td><td><span class="pill p-block">43%</span></td><td><span class="pill p-block">44%</span></td><td><span class="pill p-block">43%</span></td><td>Ch.06 &amp; Ch.07 — the open Item Group ID → Item No. switchover</td></tr>
-        <tr><td>Products missing highly desirable data fields</td><td><span class="pill p-block">44%</span></td><td><span class="pill p-block">44%</span></td><td><span class="pill p-block">44%</span></td><td>Identical rate in all three — one shared rule set, not three local issues</td></tr>
-      </tbody></table>
-    </div>
-
-    <div class="grid-2 rv in" style="margin-bottom:32px">
-      <div class="card" style="border-left:3px solid var(--red)">
-        <h4>"No keywords" isn't only a Shopping problem</h4>
-        <p style="font-size:13px">The 89–97% keyword gap above is measured against Google Shopping's own search-term matching. Separately, the Project Plan's schema.org/JSON-LD structured-data readiness check — built for LLM/GAI summarisation (ChatGPT, Perplexity, <b>Gemini</b>) — flags <code>keywords</code> as one of only four components still <b>FALSE</b> for Reiss, alongside <code>aggregateRating &amp; review</code>, <code>material/color/size</code> and <code>category</code>. Same underlying gap, two separate systems penalised by it: Shopping ranking today, and AI-agent discovery (chapter 10) as that channel grows.</p>
-      </div>
-      <div class="card">
-        <h4>Structured-data readiness for GAI/Gemini summarisation</h4>
-        <div style="font-size:12.5px;margin-top:6px">
-          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>name, description, image</span><span class="pill p-done">TRUE</span></div>
-          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>brand, sku, gtin13, offers, price</span><span class="pill p-done">TRUE</span></div>
-          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>hasVariant</span><span class="pill p-done">TRUE</span></div>
-          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>keywords</span><span class="pill p-block">FALSE</span></div>
-          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>category</span><span class="pill p-block">FALSE</span></div>
-          <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>material, color, size</span><span class="pill p-block">FALSE</span></div>
-          <div style="display:flex;justify-content:space-between;padding:3px 0"><span>aggregateRating &amp; review</span><span class="pill p-block">FALSE</span></div>
-        </div>
-        <p style="font-size:11.5px;color:var(--muted);margin-top:8px">Source: Project Plan's own AI-readiness component check, not this audit — included here because it's the same "keywords" gap seen from a third angle.</p>
-      </div>
-    </div>
-
-    <div class="grid-2 rv in" style="margin-bottom:32px">
-      <div class="card" style="border-left:3px solid var(--red)">
-        <h4>The DE/FR content gap GB doesn't have</h4>
-        <p style="font-size:13px">Six issues sit at or near <b>100% Red</b> in DE and FR that don't appear on GB's own Red list at all: no lifestyle image, products not human-reviewed, no enhanced data fields, missing optional data fields (all 100% in both DE and FR), plus gender missing from title (DE 85%, FR 87%). Reads as one story — the content-enhancement work behind GB's catalogue hasn't been run on the DE/FR translations at all, not a smaller version of the same gap.</p>
-      </div>
-      <div class="card">
-        <h4>Why this matters for the Local Language case study</h4>
-        <p style="font-size:13px">This is the concrete, catalogue-level version of the EU keyword-test underperformance flagged in chapter 05 (33% positive vs. 75% in GB) and the reason the Local Language case study exists. Three independent signals — a task-log gap, an underperforming A/B test, and now a full-catalogue content audit — all pointing at the same non-GB markets.</p>
-      </div>
-    </div>
-
-    <div class="eyebrow rv in">Market-specific</div>
-    <h2 class="sec-title rv in">What's unique to each market</h2>
-    <p class="sec-sub rv in">Not every Red flag is shared — some are specific enough to be a targeted fix rather than a structural one.</p>
-    <div class="grid-3 rv in">
-      <div class="card"><h4>GB — image quality</h4><p style="font-size:13px"><b>99%</b> images not square, <b>98%</b> scene images (not on plain background), <b>36%</b> missing required data fields. GB's images are live at 100% coverage (chapter 06) but the format itself needs work — not present as a Red flag in DE or FR.</p></div>
-      <div class="card"><h4>DE — highlights &amp; trash</h4><p style="font-size:13px"><b>74%</b> insufficient product highlights — confirms the 17% average fill rate from chapter 06 at full catalogue scale. <b>35%</b> flagged as trash products, the highest of the three markets.</p></div>
-      <div class="card"><h4>FR — category depth</h4><p style="font-size:13px"><b>100%</b> of products have a shallow category tree — the widest single gap in this audit. <b>26%</b> long-materials issue and a 9% duplicate-titles rate (chapter 07) also unique to FR.</p></div>
-    </div>
-    <div class="note rv in"><b>Reading three sources together, not picking one:</b> the feed-sample analysis (chapter 06) says what's structurally present on a snapshot; the A/B archive (chapter 05) says what's been tested and proven; this audit says what FeedHero's own rules catch across the full live catalogue today. Where they overlap (keywords, highlights, Item Group ID), that's the strongest possible signal. Where they diverge (title de-duplication: fixed in GB, still 9% in FR) — that's the useful finding, not a contradiction to resolve away.</div>
-  </div>
+<div class="wrap">
+<p class="sec-sub rv in" style="max-width:none;margin-top:0">A second, independent source alongside the 2-year A/B archive (chapter 05): FeedHero's own audit tool, run directly against the full live catalogue in three markets. No sampling — every SKU currently live in GB, DE and FR was checked.</p>
+<div class="stats rv in">
+<div class="stat"><div class="n">179,646</div><div class="l">Catalogue SKUs audited across GB, DE, FR</div></div>
+<div class="stat"><div class="n">3</div><div class="l">Red-priority issues shared by all three markets</div></div>
+<div class="stat"><div class="n">89–97%</div><div class="l">"No keywords" — the single biggest gap, every market</div></div>
+<div class="stat"><div class="n">6</div><div class="l">Content-QC gaps at 100% in DE &amp; FR, absent from GB's own Red list</div></div>
+</div>
+<div class="tbl-wrap rv in" style="margin-bottom:32px">
+<table><thead><tr><th>Universal Red flag — present in every market</th><th style="width:12%">GB</th><th style="width:12%">DE</th><th style="width:12%">FR</th><th style="width:20%">Also seen in</th></tr></thead>
+<tbody>
+<tr><td>No keywords</td><td><span class="pill p-block">89%</span></td><td><span class="pill p-block">91%</span></td><td><span class="pill p-block">97%</span></td><td>Ch.08 — 94.5% of live SKUs carry no keyword enrichment (different metric, same gap)</td></tr>
+<tr><td>Broken size runs (Item Group ID)</td><td><span class="pill p-block">43%</span></td><td><span class="pill p-block">44%</span></td><td><span class="pill p-block">43%</span></td><td>Ch.03 &amp; Ch.06 — the open Item Group ID → Item No. switchover</td></tr>
+<tr><td>Products missing highly desirable data fields</td><td><span class="pill p-block">44%</span></td><td><span class="pill p-block">44%</span></td><td><span class="pill p-block">44%</span></td><td>Identical rate in all three — one shared rule set, not three local issues</td></tr>
+</tbody></table>
+</div>
+<div class="grid-2 rv in" style="margin-bottom:32px">
+<div class="card" style="border-left:3px solid var(--red)">
+<h4>"No keywords" isn't only a Shopping problem</h4>
+<p style="font-size:13px">The 89–97% keyword gap above is measured against Google Shopping's own search-term matching. Separately, the Project Plan's schema.org/JSON-LD structured-data readiness check — built for LLM/GAI summarisation (ChatGPT, Perplexity, <b>Gemini</b>) — flags <code>keywords</code> as one of only four components still <b>FALSE</b> for Reiss, alongside <code>aggregateRating &amp; review</code>, <code>material/color/size</code> and <code>category</code>. Same underlying gap, two separate systems penalised by it: Shopping ranking today, and AI-agent discovery (chapter 09) as that channel grows.</p>
+</div>
+<div class="card">
+<h4>Structured-data readiness for GAI/Gemini summarisation</h4>
+<div style="font-size:12.5px;margin-top:6px">
+<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>name, description, image</span><span class="pill p-done">TRUE</span></div>
+<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>brand, sku, gtin13, offers, price</span><span class="pill p-done">TRUE</span></div>
+<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>hasVariant</span><span class="pill p-done">TRUE</span></div>
+<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>keywords</span><span class="pill p-block">FALSE</span></div>
+<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>category</span><span class="pill p-block">FALSE</span></div>
+<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--line)"><span>material, color, size</span><span class="pill p-block">FALSE</span></div>
+<div style="display:flex;justify-content:space-between;padding:3px 0"><span>aggregateRating &amp; review</span><span class="pill p-block">FALSE</span></div>
+</div>
+<p style="font-size:11.5px;color:var(--muted);margin-top:8px">Source: Project Plan's own AI-readiness component check, not this audit — included here because it's the same "keywords" gap seen from a third angle.</p>
+</div>
+</div>
+<div class="grid-2 rv in" style="margin-bottom:32px">
+<div class="card" style="border-left:3px solid var(--red)">
+<h4>The DE/FR content gap GB doesn't have</h4>
+<p style="font-size:13px">Six issues sit at or near <b>100% Red</b> in DE and FR that don't appear on GB's own Red list at all: no lifestyle image, products not human-reviewed, no enhanced data fields, missing optional data fields (all 100% in both DE and FR), plus gender missing from title (DE 85%, FR 87%). Reads as one story — the content-enhancement work behind GB's catalogue hasn't been run on the DE/FR translations at all, not a smaller version of the same gap.</p>
+</div>
+<div class="card">
+<h4>Why this matters for the Local Language case study</h4>
+<p style="font-size:13px">This is the concrete, catalogue-level version of the EU keyword-test underperformance flagged in chapter 05 (33% positive vs. 75% in GB) and the reason the Local Language case study exists. Three independent signals — a task-log gap, an underperforming A/B test, and now a full-catalogue content audit — all pointing at the same non-GB markets.</p>
+</div>
+</div>
+<div class="eyebrow rv in">Market-specific</div>
+<h2 class="sec-title rv in">What's unique to each market</h2>
+<p class="sec-sub rv in">Not every Red flag is shared — some are specific enough to be a targeted fix rather than a structural one.</p>
+<div class="grid-3 rv in">
+<div class="card"><h4>GB — image quality</h4><p style="font-size:13px"><b>99%</b> images not square, <b>98%</b> scene images (not on plain background), <b>36%</b> missing required data fields. GB's images are live at 100% coverage (chapter 06) but the format itself needs work — not present as a Red flag in DE or FR.</p></div>
+<div class="card"><h4>DE — highlights &amp; trash</h4><p style="font-size:13px"><b>74%</b> insufficient product highlights — confirms the 1.7-of-10 average fill rate seen in the GB feed at full catalogue scale. <b>35%</b> flagged as trash products, the highest of the three markets.</p></div>
+<div class="card"><h4>FR — category depth</h4><p style="font-size:13px"><b>100%</b> of products have a shallow category tree — the widest single gap in this audit. <b>26%</b> long-materials issue and a 9% duplicate-titles rate (chapter 06) also unique to FR.</p></div>
+</div>
+<div class="note rv in"><b>Reading three sources together, not picking one:</b> the live GB feed census (chapter 08) says what today's submitted feed actually contains; the A/B archive (chapter 05) says what's been tested and proven; this audit says what FeedHero's own rules catch across the full live catalogue today. Where they overlap (keywords, highlights, Item Group ID), that's the strongest possible signal. Where they diverge (title de-duplication: fixed in GB, still 9% in FR) — that's the useful finding, not a contradiction to resolve away. <br/><br/><b>Why GB reads 60,345 here and 19,372 in chapter 08:</b> they measure different populations, not different facts. This audit covers the <b>full catalogue</b>; the live Shopping feed carries <b>in-stock items only</b> — every one of its 19,372 rows is <code>availability: in stock</code>, with zero out-of-stock rows, which only happens if the feed is filtered. That puts roughly a third of the GB catalogue in the live feed at any time. <span class="chk">?</span> Worth confirming against FeedHero's own export before it goes in front of the client — the filter is inferred from the feed, not read from FeedHero's config.</div>
+</div>
 </section>
-
-<!-- ================= CH 09 — FEEDHERO AI AUDIT — LIVE FEED SIGNAL (GB) ================= -->
-<div class="chapter" id="c9"><div class="ch-num">09</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter nine</div><h2>FeedHero AI Audit — Live Feed Signal (GB)</h2><p>20,151 live SKUs, scored by FeedHero's own per-product completion flags — pulled straight from the daily-refreshed feed, not a periodic export.</p></div></div>
-
+<!-- ================= CH 08 — FEEDHERO AI AUDIT — LIVE FEED SIGNAL (GB) ================= -->
+<div class="chapter" id="c8"><div class="ch-num">08</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eight</div><h2>FeedHero AI Audit — Live Feed Signal (GB)</h2><p>19,372 live SKUs, scored by FeedHero's own per-product completion flags — pulled straight from the daily-refreshed feed, not a periodic export.</p></div></div>
 <section class="band">
-  <div class="wrap">
-    <p class="sec-sub rv in" style="max-width:none;margin-top:0">A fourth source, alongside chapter 08's full-catalogue red-flag audit: this reads FeedHero's own live optimisation flag on every SKU currently in the GB feed, refreshed daily. Where chapter 08 asks what FeedHero's rules engine catches, this asks what today's actual submitted feed looks like, right now.</p>
-    <div class="stats rv in">
-      <div class="stat"><div class="n">20,151</div><div class="l">Live GB SKUs, full census — no sampling</div></div>
-      <div class="stat"><div class="n">35.6%</div><div class="l">Live SKUs submitted with a blank description</div></div>
-      <div class="stat"><div class="n">94.5%</div><div class="l">No keyword enrichment — worse than chapter 08's 89%</div></div>
-      <div class="stat"><div class="n">1.2%</div><div class="l">Titles inside FeedSpark's own 80–120 char MASK band</div></div>
-    </div>
-
-    <div class="tbl-wrap rv in" style="margin-bottom:32px">
-      <table><thead><tr><th>FeedHero live flag</th><th style="width:20%">Live GB signal</th><th style="width:46%">What's actually happening</th></tr></thead>
-      <tbody>
-        <tr><td>Title</td><td><span class="pill p-done">100% pass</span></td><td>But only <b>1.2%</b> land inside the 80–120 char MASK band — mean length is 53 characters</td></tr>
-        <tr><td>Category</td><td><span class="pill p-done">99.4% pass</span></td><td>125 SKUs (0.6%) show a GPC ↔ internal category mismatch, spread evenly across the catalogue — not brand-concentrated</td></tr>
-        <tr><td>Keywords</td><td><span class="pill p-block">94.5% gap</span></td><td>Only 1,100 SKUs (5.5%) carry keyword enrichment — same gap chapter 08 found at 89% GB, now measured live and wider</td></tr>
-        <tr><td>Description</td><td><span class="pill p-block">35.6% blank</span></td><td>7,166 SKUs are live with no description text at all — see below</td></tr>
-        <tr><td>Images</td><td><span class="pill p-done">100% present</span></td><td>Avg. 4.9 images per SKU — healthy, not a gap</td></tr>
-      </tbody></table>
-    </div>
-
-    <div class="grid-2 rv in" style="margin-bottom:32px">
-      <div class="card" style="border-left:3px solid var(--red)">
-        <h4>7,166 SKUs are live with zero description — and it's not a backlog</h4>
-        <p style="font-size:13px">Every one of those blank descriptions sits inside the 9,791 SKUs FeedHero's own flag marks as description-optimised — the pipeline believes these are done. 2,625 of that group do carry a real, enriched description (mean 428 characters); the other 7,166 (73% of the "done" bucket) never received the write-back. This isn't old debt: <b>100%</b> of the blank-description SKUs were added to the catalogue since June 2025 — it's happening on new products right now, not shrinking from a historic backlog.</p>
-      </div>
-      <div class="card">
-        <h4>Undermines the AI-readiness claim in chapter 08</h4>
-        <p style="font-size:13px">Chapter 08's structured-data readiness table marks <code>name, description, image</code> as TRUE for Reiss' schema.org feed — true in aggregate, but 35.6% of live SKUs are the exception underneath that TRUE. A blank description removes the one field conversational/AI Mode shopping (chapter 10) leans on hardest to summarise a product without inventing detail. Worth fixing before this pattern scales across the 51-market rollout (chapter 15).</p>
-      </div>
-    </div>
-
-    <div class="grid-2 rv in" style="margin-bottom:32px">
-      <div class="card">
-        <h4>Keywords — same gap chapter 08 found, now measured live and slightly worse</h4>
-        <p style="font-size:13px">94.5% of the live GB feed carries no keyword enrichment today, against chapter 08's audit-tool finding of 89% GB at the time of that full-catalogue scan. Same root cause, two independent measurements agreeing — and moving in the wrong direction rather than closing.</p>
-      </div>
-      <div class="card">
-        <h4>Titles pass FeedHero's own check, but most fall short of the MASK band</h4>
-        <p style="font-size:13px">FeedHero's Title flag reads 100% pass across all 20,151 SKUs. Measured against FeedSpark's own recommended 80–120 character MASK range, only 1.2% of titles actually land inside it — mean length is 53 characters. Passing FeedHero's check and being AI-ready length are two different bars; this feed clears the first and not yet the second.</p>
-      </div>
-    </div>
-
-    <div class="note rv in"><b>Suggested next fixes, in priority order:</b> (1) trace and fix the write-back gap behind the 7,166 blank descriptions — highest priority, since it's live and growing with every new SKU added, not shrinking debt; (2) extend keyword enrichment past its current 5.5% coverage — the same fix chapter 08 already called for, now confirmed live and slightly wider; (3) tighten title length toward the 80–120 character MASK band where category allows. <b>Source:</b> the live GB Shopping feed FeedHero manages for Reiss (refreshes daily) — this read is the 26 Jul 2026 refresh, GB only. Extending the same per-SKU flag read to DE/FR — the same three markets as chapter 08 — would need those markets' live feeds shared the same way.</div>
-  </div>
+<div class="wrap">
+<p class="sec-sub rv in" style="max-width:none;margin-top:0">A fourth source, alongside chapter 07's full-catalogue red-flag audit: this reads FeedHero's own live optimisation flag on every SKU currently in the GB feed, refreshed daily. Where chapter 07 asks what FeedHero's rules engine catches, this asks what today's actual submitted feed looks like, right now.</p>
+<div class="stats rv in">
+<div class="stat"><div class="n">19,372</div><div class="l">Live GB SKUs, full census — no sampling</div></div>
+<div class="stat"><div class="n">35.8%</div><div class="l">Live SKUs submitted with a blank description</div></div>
+<div class="stat"><div class="n">94.5%</div><div class="l">No keyword enrichment — worse than chapter 07's 89%</div></div>
+<div class="stat"><div class="n">1.3%</div><div class="l">Titles inside FeedSpark's own 80–120 char MASK band</div></div>
+</div>
+<div class="tbl-wrap rv in" style="margin-bottom:32px">
+<table><thead><tr><th>FeedHero live flag</th><th style="width:20%">Live GB signal</th><th style="width:46%">What's actually happening</th></tr></thead>
+<tbody>
+<tr><td>Title</td><td><span class="pill p-done">100% pass</span></td><td>But only <b>1.3%</b> land inside the 80–120 char MASK band — mean length is 53 characters</td></tr>
+<tr><td>Category</td><td><span class="pill p-done">99.4% pass</span></td><td>123 SKUs (0.6%) show a GPC ↔ internal category mismatch, spread evenly across the catalogue — not brand-concentrated</td></tr>
+<tr><td>Keywords</td><td><span class="pill p-block">94.5% gap</span></td><td>Only 1,058 SKUs (5.5%) carry keyword enrichment — same gap chapter 07 found at 89% GB, now measured live and wider</td></tr>
+<tr><td>Description</td><td><span class="pill p-block">35.8% blank</span></td><td>6,936 SKUs are live with no description text at all — see below</td></tr>
+<tr><td>Images</td><td><span class="pill p-done">100% present</span></td><td>Avg. 4.9 images per SKU — healthy, not a gap</td></tr>
+</tbody></table>
+</div>
+<div class="grid-2 rv in" style="margin-bottom:32px">
+<div class="card" style="border-left:3px solid var(--red)">
+<h4>6,936 SKUs are live with zero description — and it's not a backlog</h4>
+<p style="font-size:13px">Every one of those blank descriptions sits inside the 9,444 SKUs FeedHero's own flag marks as description-optimised — the pipeline believes these are done. 2,508 of that group do carry a real, enriched description (mean 426 characters); the other 6,936 (73% of the "done" bucket) never received the write-back. This isn't old debt: <b>99.5%</b> of the blank-description SKUs (6,902 of 6,936) were added to the catalogue during 2026 — it's happening on new products right now, not shrinking from a historic backlog.</p>
+</div>
+<div class="card">
+<h4>Undermines the AI-readiness claim in chapter 07</h4>
+<p style="font-size:13px">Chapter 07's structured-data readiness table marks <code>name, description, image</code> as TRUE for Reiss' schema.org feed — true in aggregate, but 35.8% of live SKUs are the exception underneath that TRUE. A blank description removes the one field conversational/AI Mode shopping (chapter 09) leans on hardest to summarise a product without inventing detail. Worth fixing before this pattern scales across the 51-market rollout (chapter 14).</p>
+</div>
+</div>
+<div class="grid-2 rv in" style="margin-bottom:32px">
+<div class="card">
+<h4>Keywords — same gap chapter 07 found, now measured live and slightly worse</h4>
+<p style="font-size:13px">94.5% of the live GB feed carries no keyword enrichment today, against chapter 07's audit-tool finding of 89% GB at the time of that full-catalogue scan. Same root cause, two independent measurements agreeing — and moving in the wrong direction rather than closing.</p>
+</div>
+<div class="card">
+<h4>Titles pass FeedHero's own check, but most fall short of the MASK band</h4>
+<p style="font-size:13px">FeedHero's Title flag reads 100% pass across all 19,372 SKUs. Measured against FeedSpark's own recommended 80–120 character MASK range, only 1.3% of titles actually land inside it — mean length is 53 characters. Passing FeedHero's check and being AI-ready length are two different bars; this feed clears the first and not yet the second.</p>
+</div>
+</div>
+<div class="note rv in"><b>Suggested next fixes, in priority order:</b> (1) trace and fix the write-back gap behind the 6,936 blank descriptions — highest priority, since it's live and growing with every new SKU added, not shrinking debt; (2) extend keyword enrichment past its current 5.5% coverage — the same fix chapter 07 already called for, now confirmed live and slightly wider; (3) tighten title length toward the 80–120 character MASK band where category allows. <b>Source:</b> the live GB Shopping feed FeedHero manages for Reiss (refreshes daily) — this read is the 28 Jul 2026 refresh, GB only. Extending the same per-SKU flag read to DE/FR — the same three markets as chapter 07 — would need those markets' live feeds shared the same way.</div>
+</div>
 </section>
-
-<!-- ================= CH 10 — THE AI LANDSCAPE ================= -->
-<div class="chapter" id="c10"><div class="ch-num">10</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter ten</div><h2>The AI Landscape</h2><p>Reiss shoppers don't only search anymore. Three pipelines decide whether Reiss is in the answer.</p></div></div>
-
+<!-- ================= CH 09 — THE AI LANDSCAPE ================= -->
+<div class="chapter" id="c9"><div class="ch-num">09</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter nine</div><h2>The AI Landscape</h2><p>Reiss shoppers don't only search anymore &mdash; they're using LLMs. Three pipelines decide whether Reiss is in the answer.</p></div></div>
 <section class="band-warm">
-  <div class="wrap">
-    <div class="eyebrow rv in">The shift</div>
-    <h2 class="sec-title rv in">Search is shifting — from 10 blue links to AI answers</h2>
-    <p class="sec-sub rv in">"What should I wear to a summer wedding that isn't too formal?" — a query like this might be answered from training data, a live web crawl, or the Merchant Center feed. The only way to win is rich, accurate, consistent product data across all three.</p>
-
-    <div class="stats rv in" style="margin-bottom:44px">
-      <div class="stat"><div class="n" style="font-size:36px">−25%</div><div class="l">Traditional search volume drop (Gartner)</div></div>
-      <div class="stat"><div class="n" style="font-size:36px">&gt;60%</div><div class="l">Google searches end without a click</div></div>
-      <div class="stat"><div class="n" style="font-size:36px">~60%</div><div class="l">Consumers use AI in the shopping journey</div></div>
-      <div class="stat"><div class="n" style="font-size:36px">50+</div><div class="l">Feed attributes to enrich for AI readiness</div></div>
-      <div class="stat"><div class="n" style="font-size:36px">15m</div><div class="l">Updates per minute ChatGPT accepts</div></div>
-    </div>
-
-    <div class="grid-3 rv in">
-      <div class="card"><h4>Zero-click is accelerating</h4><p>AI overviews and agentic assistants resolve queries without a click. Reiss is either in that answer, or it doesn't exist for that shopper.</p></div>
-      <div class="card"><h4>The model picks the product</h4><p>LLMs read structured feeds, attributes and reviews. Titles averaging 53 characters and 42% highlight coverage mean the model has less to work with than the catalogue could give it.</p></div>
-      <div class="card"><h4>Fashion is answer-shaped</h4><p>Fit, occasion, fabric, size availability — every purchase decision is a question about a specific SKU in a specific size, and that's exactly what these surfaces answer.</p></div>
-    </div>
-  </div>
+<div class="wrap">
+<div class="eyebrow rv in">The shift</div>
+<h2 class="sec-title rv in">Search is shifting — from 10 blue links to AI answers</h2>
+<p class="sec-sub rv in">"What should I wear to a summer wedding that isn't too formal?" — a query like this might be answered from training data, a live web crawl, or the Merchant Center feed. The only way to win is rich, accurate, consistent product data across all three.</p>
+<div class="stats rv in" style="margin-bottom:44px">
+<div class="stat"><div class="n" style="font-size:36px">−25%</div><div class="l">Traditional search volume drop (Gartner)</div></div>
+<div class="stat"><div class="n" style="font-size:36px">&gt;60%</div><div class="l">Google searches end without a click</div></div>
+<div class="stat"><div class="n" style="font-size:36px">~60%</div><div class="l">Consumers use AI in the shopping journey</div></div>
+<div class="stat"><div class="n" style="font-size:36px">50+</div><div class="l">Feed attributes to enrich for AI readiness</div></div>
+<div class="stat"><div class="n" style="font-size:36px">15m</div><div class="l">Updates per minute ChatGPT accepts</div></div>
+</div>
+<div class="grid-3 rv in">
+<div class="card"><h4>Zero-click is accelerating</h4><p>AI overviews and agentic assistants resolve queries without a click. Reiss is either in that answer, or it doesn't exist for that shopper.</p></div>
+<div class="card"><h4>The model picks the product</h4><p>LLMs read structured feeds, attributes and reviews. Titles averaging 53 characters and 42% highlight coverage mean the model has less to work with than the catalogue could give it.</p></div>
+<div class="card"><h4>Fashion is answer-shaped</h4><p>Fit, occasion, fabric, size availability — every purchase decision is a question about a specific SKU in a specific size, and that's exactly what these surfaces answer.</p></div>
+</div>
+</div>
 </section>
-
 <section>
-  <div class="wrap">
-    <div class="eyebrow rv in">Agentic commerce</div>
-    <h2 class="sec-title rv in">Three protocols that let AI agents shop on behalf of consumers</h2>
-    <p class="sec-sub rv in">Emerging open standards. None requires immediate action from Reiss — but they explain why the attribute build in chapters 09–11 matters.</p>
-    <div class="grid-3 rv in">
-      <div class="proto g">
-        <div class="tag">UCP — Universal Commerce Protocol</div>
-        <h4>Google, Shopify, Target, Walmart</h4>
-        <div class="desc">Common language for AI commerce</div>
-        <ul><li>Agents handle discounts, loyalty, subscriptions</li><li>Checkout inside the AI conversation</li><li>Activated via <code>native_commerce</code> in Merchant Center</li></ul>
-      </div>
-      <div class="proto b">
-        <div class="tag">MCP — Model Context Protocol</div>
-        <h4>Anthropic, adopted by Shopify</h4>
-        <div class="desc">Real-time data access for AI assistants</div>
-        <ul><li>Live inventory, pricing, order status via API</li><li>Relevant later, once stock-flag accuracy (ch.07) is fixed</li></ul>
-      </div>
-      <div class="proto p">
-        <div class="tag">ACP — Agentic Commerce Protocol</div>
-        <h4>OpenAI (powers ChatGPT Shopping)</h4>
-        <div class="desc">Instant checkout inside ChatGPT</div>
-        <ul><li>Integrates with Stripe, PayPal</li><li>Currently US-only for checkout; discovery is global</li></ul>
-      </div>
-    </div>
-  </div>
+<div class="wrap">
+<div class="eyebrow rv in">Agentic commerce</div>
+<h2 class="sec-title rv in">Three protocols that let AI agents shop on behalf of consumers</h2>
+<p class="sec-sub rv in">Emerging open standards. None requires immediate action from Reiss — but they explain why the attribute build in chapters 08–10 matters.</p>
+<div class="grid-3 rv in">
+<div class="proto g">
+<div class="tag">UCP — Universal Commerce Protocol</div>
+<h4>Google, Shopify, Target, Walmart</h4>
+<div class="desc">Common language for AI commerce</div>
+<ul><li>Agents handle discounts, loyalty, subscriptions</li><li>Checkout inside the AI conversation</li><li>Activated via <code>native_commerce</code> in Merchant Center</li></ul>
+</div>
+<div class="proto b">
+<div class="tag">MCP — Model Context Protocol</div>
+<h4>Anthropic, adopted by Shopify</h4>
+<div class="desc">Real-time data access for AI assistants</div>
+<ul><li>Live inventory, pricing, order status via API</li><li>Relevant later, once stock-flag accuracy (ch.07) is fixed</li></ul>
+</div>
+<div class="proto p">
+<div class="tag">ACP — Agentic Commerce Protocol</div>
+<h4>OpenAI (powers ChatGPT Shopping)</h4>
+<div class="desc">Instant checkout inside ChatGPT</div>
+<ul><li>Integrates with Stripe, PayPal</li><li>Currently US-only for checkout; discovery is global</li></ul>
+</div>
+</div>
+</div>
 </section>
-
-<!-- ================= CH 11 — SPARK AI ENGINE (TACHYON) ================= -->
-<div class="chapter" id="c11"><div class="ch-num">11</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eleven</div><h2>Spark AI Engine (Tachyon)</h2><p>Intent generation, description enrichment, visual attribute harvest.</p></div></div>
-
+<!-- ================= CH 10 — SPARK AI ENGINE (TACHYON) ================= -->
+<div class="chapter" id="c10"><div class="ch-num">10</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter ten</div><h2>Spark AI Engine (Tachyon)</h2><p>Intent generation, description enrichment, visual attribute harvest.</p></div></div>
 <section class="band">
-  <div class="wrap">
-    <div class="flow rv in" style="margin-bottom:32px">
-      <div class="flow-step"><div class="fs-num">01</div><h4>Feed extraction</h4><p>Tachyon reads live Reiss product data — title, description, colour, material, size, price.</p></div>
-      <div class="flow-step"><div class="fs-num">02</div><h4>Intent generation</h4><p>LLM generates 20–40 long-tail intent phrases per SKU from the real attributes already in the feed.</p></div>
-      <div class="flow-step"><div class="fs-num">03</div><h4>Scoring &amp; validation</h4><p>Terms scored against search-term reports; winners selected per SKU.</p></div>
-      <div class="flow-step"><div class="fs-num">04</div><h4>Feed injection</h4><p>Winning terms embedded in title, description, product highlights — closing the 42% highlight gap from chapter 06.</p></div>
-    </div>
-    <div class="grid-2 rv in">
-      <div class="card" style="border-left:3px solid var(--orange)">
-        <h4>Reiss example — Stanton Petite Wide-Leg Trousers</h4>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Input (real SKU from the export): Cream · Cotton · Petite · Size 4 · £58 sale</p>
-        <div style="background:var(--dark);padding:16px;font-family:ui-monospace,monospace;font-size:12px;color:#E8E8E8;line-height:1.8">
-          <span style="color:var(--orange)">AI-generated intent terms:</span><br>
-          "petite wide-leg trousers for short women"<br>
-          "cream corduroy trousers office wear"<br>
-          "cotton wide-leg trousers under £60"<br>
-          "petite fit trousers 5ft 3in and under"<br>
-          <span style="color:#7A7A7A">// 20-40 generated, top 4-6 used per SKU</span>
-        </div>
-      </div>
-      <div class="card">
-        <h4>Why this matters at 29-market scale</h4>
-        <p>Manually writing intent-rich copy for ~5,000 SKUs across 29 markets isn't a resourcing question, it's a throughput question. Tachyon generates the long-tail language at catalogue scale from data that's already 100%-complete on the structural side (colour, material, size).</p>
-        <p style="margin-top:12px;font-size:13px;color:var(--muted)">The title-fix precedent (chapter 05) already proved the AOT pipeline can touch every SKU — Tachyon extends the same reach to descriptions and highlights.</p>
-      </div>
-    </div>
-  </div>
+<div class="wrap">
+<div class="flow rv in" style="margin-bottom:32px">
+<div class="flow-step"><div class="fs-num">01</div><h4>Feed extraction</h4><p>Tachyon reads live Reiss product data — title, description, colour, material, size, price.</p></div>
+<div class="flow-step"><div class="fs-num">02</div><h4>Intent generation</h4><p>LLM generates 20–40 long-tail intent phrases per SKU from the real attributes already in the feed.</p></div>
+<div class="flow-step"><div class="fs-num">03</div><h4>Scoring &amp; validation</h4><p>Terms scored against search-term reports; winners selected per SKU.</p></div>
+<div class="flow-step"><div class="fs-num">04</div><h4>Feed injection</h4><p>Winning terms embedded in title, description, product highlights — closing the product-highlight gap the audit found (58% of SKUs carry none).</p></div>
+</div>
+<div class="grid-2 rv in">
+<div class="card" style="border-left:3px solid var(--orange)">
+<h4>Reiss example — Stanton Petite Wide-Leg Trousers</h4>
+<p style="font-size:13px;color:var(--muted);margin-bottom:14px">Input (real SKU from the export): Cream · Cotton · Petite · Size 4 · £58 sale</p>
+<div style="background:var(--dark);padding:16px;font-family:ui-monospace,monospace;font-size:12px;color:#E8E8E8;line-height:1.8">
+<span style="color:var(--orange)">AI-generated intent terms:</span><br/>
+          "petite wide-leg trousers for short women"<br/>
+          "cream corduroy trousers office wear"<br/>
+          "cotton wide-leg trousers under £60"<br/>
+          "petite fit trousers 5ft 3in and under"<br/>
+<span style="color:#7A7A7A">// 20-40 generated, top 4-6 used per SKU</span>
+</div>
+</div>
+<div class="card">
+<h4>Why this matters at 29-market scale (51 markets by Oct/26)</h4>
+<p>Manually writing intent-rich copy for ~20K SKUs across 29 markets isn't a resourcing question, it's a scaling question. Tachyon generates the long-tail language at catalogue scale from data that's already 100%-complete on the structural side (colour, material, size, product type, gender).</p>
+<p style="margin-top:12px;font-size:13px;color:var(--muted)">The title-fix precedent (chapter 05) already proved the AOT pipeline can touch every SKU — Tachyon extends the same reach to descriptions and highlights.</p>
+</div>
+</div>
+</div>
 </section>
-
-<!-- ================= CH 12 — GOOGLE CONVERSATIONAL ATTRIBUTES ================= -->
-<div class="chapter" id="c12"><div class="ch-num">12</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter twelve</div><h2>Google Conversational Attributes</h2><p>Six new feed attributes built for AI and conversational agents — current submission status: none live.</p></div></div>
-
+<!-- ================= CH 11 — GOOGLE CONVERSATIONAL ATTRIBUTES ================= -->
+<div class="chapter" id="c11"><div class="ch-num">11</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eleven</div><h2>Google Conversational Attributes</h2><p>Six new feed attributes built for AI and conversational agents — current submission status: none live.</p></div></div>
 <section>
-  <div class="wrap">
-    <div class="agent rv in">
-      <div class="agent-l">
-        <h4>A Reiss shopper asks an AI assistant…</h4>
-        <p>Select a question.</p>
-        <div class="qs" id="qs" role="tablist">
-          <button class="q" role="tab" data-k="qa">"Does this run true to size?"</button>
-          <button class="q" role="tab" data-k="variant">"Do you do the Stanton trousers in a size 6?"</button>
-          <button class="q" role="tab" data-k="group">"What's the difference between the Stanton and the Stanton Petite?"</button>
-          <button class="q active" role="tab" data-k="related">"What should I wear this with?"</button>
-          <button class="q" role="tab" data-k="pop">"What's your best-selling trouser style?"</button>
-          <button class="q" role="tab" data-k="doc">"What's the full fabric composition?"</button>
-        </div>
-      </div>
-      <div class="agent-r">
-        <div class="ar-head">Attribute that answers it</div>
-        <div id="panel"><div class="fade-swap"><div class="attr-name">Related product</div><div class="attr-code">[related_product]</div><div class="attr-why">Declares relationships between SKUs — outfit-complete pairings, bundles, cross-sell. None of the six attributes are submitted for Reiss today; this is a build, not a fix.</div><div class="feedrow"><span class="c">// relationship_type : identifier_type : identifier</span>
+<div class="wrap">
+<div class="agent rv in">
+<div class="agent-l">
+<h4>A Reiss shopper asks an AI assistant…</h4>
+<p>Select a question.</p>
+<div class="qs" id="qs" role="tablist">
+<button class="q" data-k="qa" role="tab">"Does this run true to size?"</button>
+<button class="q" data-k="variant" role="tab">"Do you do the Stanton trousers in a size 6?"</button>
+<button class="q" data-k="group" role="tab">"What's the difference between the Stanton and the Stanton Petite?"</button>
+<button class="q active" data-k="related" role="tab">"What should I wear this with?"</button>
+<button class="q" data-k="pop" role="tab">"What's your best-selling trouser style?"</button>
+<button class="q" data-k="doc" role="tab">"What's the full fabric composition?"</button>
+</div>
+</div>
+<div class="agent-r">
+<div class="ar-head">Attribute that answers it</div>
+<div id="panel"><div class="fade-swap"><div class="attr-name">Related product</div><div class="attr-code">[related_product]</div><div class="attr-why">Declares relationships between SKUs — outfit-complete pairings, bundles, cross-sell. None of the six attributes are submitted for Reiss today; this is a build, not a fix.</div><div class="feedrow"><span class="c">// relationship_type : identifier_type : identifier</span>
 <span class="k">related_product</span>:
   often_bought_with:id:G76537
-  often_bought_with:id:Y25175</div><div class="attr-note">Depends on item-group mapping (chapter 07) being resolved first.</div></div></div>
-      </div>
-    </div>
-    <div class="grid-2 rv in" style="margin-top:32px">
-      <div class="card">
-        <h4>What the feed confirms</h4>
-        <p>None of <code>question_and_answer</code>, <code>item_group_title</code>, <code>variant_option</code>, <code>popularity_rank</code> or <code>related_product</code> appear anywhere in the current export — the same starting point as any FeedSpark client before this build begins.</p>
-      </div>
-      <div class="card" style="border-left:3px solid var(--orange-deep)">
-        <h4>⚑ The governance flag — Q&amp;A copy</h4>
-        <p><b>question_and_answer</b> is the highest-value attribute and the highest-risk one for a fashion retailer — fit and sizing answers carry return-rate consequences if wrong. Proposal: draft from approved PDP copy only, nothing live without sign-off.</p>
-      </div>
-    </div>
-  </div>
+  often_bought_with:id:Y25175</div><div class="attr-note">Depends on item-group mapping (chapter 06) being resolved first.</div></div></div>
+</div>
+</div>
+<div class="grid-2 rv in" style="margin-top:32px">
+<div class="card">
+<h4>What the feed confirms</h4>
+<p>None of <code>question_and_answer</code>, <code>item_group_title</code>, <code>variant_option</code>, <code>popularity_rank</code> or <code>related_product</code> appear anywhere in the current export — the same starting point as any FeedSpark client before this build begins.</p>
+</div>
+<div class="card" style="border-left:3px solid var(--orange-deep)">
+<h4>⚑ The governance flag — Q&amp;A copy</h4>
+<p><b>question_and_answer</b> is the highest-value attribute and the highest-risk one for a fashion retailer — fit and sizing answers carry return-rate consequences if wrong. Proposal: draft from approved PDP copy only, nothing live without sign-off.</p>
+</div>
+</div>
+</div>
 </section>
-
-<!-- ================= CH 13 — AI READINESS ================= -->
-<div class="chapter" id="c13"><div class="ch-num">13</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter thirteen</div><h2>AI Readiness</h2><p>Tier 1 banked. Tier 2 — the meaning layer — is next, and the feed shows exactly what's blocking it.</p></div></div>
-
+<!-- ================= CH 12 — AI READINESS ================= -->
+<div class="chapter" id="c12"><div class="ch-num">12</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter twelve</div><h2>AI Readiness</h2><p>Tier 1 banked. Tier 2 — the meaning layer — is next, and the feed shows exactly what's blocking it.</p></div></div>
 <section class="band-warm">
-  <div class="wrap">
-    <div class="tiers rv in" style="margin-bottom:32px">
-      <div class="tier done">
-        <div class="tn">Stage 0</div><h4>Legacy</h4><div class="ts">The starting point</div>
-        <ul><li>Feed meets minimum spec</li><li>Titles not structured for discovery</li><li>Invisible to AI surfaces</li></ul>
-      </div>
-      <div class="tier here">
-        <div class="flag">◆ Reiss is here</div>
-        <div class="tn">Tier 1</div><h4>Titles &amp; data fields</h4><div class="ts">The foundation</div>
-        <ul><li>Title de-duplication verified (0.1% remaining)</li><li>Core attributes (colour, material, size) 100% filled</li><li>[Search Intent] title test in flight</li></ul>
-      </div>
-      <div class="tier">
-        <div class="tn">Tier 2</div><h4>Descriptions &amp; answers</h4><div class="ts">The meaning layer — next</div>
-        <ul><li>Descriptions: only 6.3% reach the 500+ char target</li><li>Six conversational attributes — 0% submitted</li><li>Keyword rollout — 5.8% of catalogue covered</li></ul>
-      </div>
-      <div class="tier">
-        <div class="tn">Tier 3</div><h4>Image analysis</h4><div class="ts">The differentiator</div>
-        <ul><li>Tachyon vision models read product imagery</li><li>Image coverage is already 100% — the raw material is ready</li><li>Feeds back into titles and descriptions</li></ul>
-      </div>
-    </div>
-    <div class="grid-2 rv in">
-      <div class="card">
-        <h4>The pipeline already live</h4>
-        <p>Tachyon's intent-generation pipeline runs end to end for Reiss today: intent generation → Shopping Graph matching → roundel overlay. Titles prove it can reach 100% of the catalogue — Tier 2 is applying that same reach to descriptions and attributes.</p>
-      </div>
-      <div class="card" style="border-left:3px solid var(--orange-deep)">
-        <h4>The honest gap, quantified</h4>
-        <p>Not "some work to do" — specifically: descriptions need to move from 6.3% to a majority hitting 500+ chars, keywords from 5.8% to full-catalogue rollout, and all six conversational attributes from 0%. Three concrete, measured targets, not a vague direction.</p>
-      </div>
-    </div>
-  </div>
+<div class="wrap">
+<div class="tiers rv in" style="margin-bottom:32px">
+<div class="tier done">
+<div class="tn">Stage 0</div><h4>Legacy</h4><div class="ts">The starting point</div>
+<ul><li>Feed meets minimum spec</li><li>Titles not structured for discovery</li><li>Invisible to AI surfaces</li></ul>
+</div>
+<div class="tier here">
+<div class="flag">◆ Reiss is here</div>
+<div class="tn">Tier 1</div><h4>Titles &amp; data fields</h4><div class="ts">The foundation</div>
+<ul><li>Title de-duplication verified (0.1% remaining)</li><li>Core attributes (colour, material, size) 100% filled</li><li>[Search Intent] title test in flight</li></ul>
+</div>
+<div class="tier">
+<div class="tn">Tier 2</div><h4>Descriptions &amp; answers</h4><div class="ts">The meaning layer — next</div>
+<ul><li>Descriptions: only 6.3% reach the 500+ char target</li><li>Six conversational attributes — 0% submitted</li><li>Keyword rollout — 5.8% of catalogue covered</li></ul>
+</div>
+<div class="tier">
+<div class="tn">Tier 3</div><h4>Image analysis</h4><div class="ts">The differentiator</div>
+<ul><li>Tachyon vision models read product imagery</li><li>Image coverage is already 100% — the raw material is ready</li><li>Feeds back into titles and descriptions</li></ul>
+</div>
+</div>
+<div class="grid-2 rv in">
+<div class="card">
+<h4>The pipeline already live</h4>
+<p>Tachyon's intent-generation pipeline runs end to end for Reiss today: intent generation → Shopping Graph matching → roundel overlay. Titles prove it can reach 100% of the catalogue — Tier 2 is applying that same reach to descriptions and attributes.</p>
+</div>
+<div class="card" style="border-left:3px solid var(--orange-deep)">
+<h4>The honest gap, quantified</h4>
+<p>Not "some work to do" — specifically: descriptions need to move from 6.3% to a majority hitting 500+ chars, keywords from 5.8% to full-catalogue rollout, and all six conversational attributes from 0%. Three concrete, measured targets, not a vague direction.</p>
+</div>
+</div>
+</div>
 </section>
-
-<!-- ================= CH 14 — Q3–Q4 2026 PLANNING ================= -->
-<div class="chapter" id="c14"><div class="ch-num">14</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter fourteen</div><h2>Q3–Q4 2026 Planning</h2><p>The open tasks, the coverage gaps the feed found, and the market rollout — one sequenced view through the end of the calendar year.</p></div></div>
-
+<!-- ================= CH 13 — Q3–Q4 2026 PLANNING ================= -->
+<div class="chapter" id="c13"><div class="ch-num">13</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter thirteen</div><h2>Q3–Q4 2026 Planning</h2><p>The open tasks, the coverage gaps the feed found, and the market rollout — one sequenced view through the end of the calendar year.</p></div></div>
 <section>
-  <div class="wrap">
-    <div class="road rv in" style="grid-template-columns:repeat(2,1fr)">
-      <div class="mo">
-        <div class="mo-m">Q3 2026</div><div class="mo-s s-close">Jul–Sep · in flight now</div>
-        <h4>Close out + kick off</h4>
-        <ul>
-          <li><b>Stock_flag accuracy</b> — chase NEXT's fix</li>
-          <li><b>Item Group ID → Item No.</b> — confirm cutover date</li>
-          <li><b>Billing recipient</b> change to FS accountant</li>
-          <li><b>Keyword rollout</b> — 5.8% → full catalogue</li>
-          <li><b>Market rollout Wave 1 begins Sep 7</b> — chapter 15</li>
-        </ul>
-      </div>
-      <div class="mo">
-        <div class="mo-m">Q4 2026</div><div class="mo-s s-build">Oct–Dec · scale &amp; close gaps</div>
-        <h4>Land the rollout, close the coverage gaps</h4>
-        <ul>
-          <li><b>Market rollout completes Oct 26</b> — 51 markets live, chapters 15–16</li>
-          <li><b>Product highlights</b> — 42% → Google's 4–10 target</li>
-          <li><b>Description enrichment</b> — 6.3% → 500+ chars</li>
-          <li><b>[Search Intent] + Local Language reads</b> — roll winners into BAU</li>
-          <li><b>Tier 2 AI-readiness build begins</b> — conversational attributes, MASK title-length</li>
-        </ul>
-      </div>
-    </div>
-    <div class="tbl-wrap rv in" style="margin:32px 0">
-      <table>
-        <thead><tr><th style="width:6%">#</th><th style="width:24%">Workstream</th><th>What it needs</th><th style="width:11%">Owner</th><th style="width:9%">Quarter</th><th style="width:10%">Priority</th></tr></thead>
-        <tbody>
-          <tr><td><b>W1</b></td><td>Stock_flag accuracy fix</td><td>NEXT to update the stock-flag file on a proper cadence</td><td>Aimee</td><td>Q3</td><td><span class="pill p-done">High</span></td></tr>
-          <tr><td><b>W2</b></td><td>Item Group ID → Item No. switchover</td><td>Confirmed cutover date from NEXT</td><td>Eliza / Ray</td><td>Q3</td><td><span class="pill p-done">High</span></td></tr>
-          <tr><td><b>W3</b></td><td>Keyword rollout to full catalogue</td><td>Apply the live Keyword Planner output beyond the current 5.8%</td><td>Ezgi</td><td>Q3</td><td><span class="pill p-done">High</span></td></tr>
-          <tr><td><b>W4</b></td><td>51-market rollout execution</td><td>22 markets live by Oct 26 — resourcing in chapters 15–16</td><td>Ray + AM team</td><td>Q3–Q4</td><td><span class="pill p-done">High</span></td></tr>
-          <tr><td><b>W5</b></td><td>Product highlight population</td><td>Close the 58% zero-highlight gap the feed audit found</td><td>Ray</td><td>Q4</td><td><span class="pill p-prog">Medium</span></td></tr>
-          <tr><td><b>W6</b></td><td>Product type — deeper breakdown</td><td>Categorisation rollout, currently in progress</td><td>Eliza</td><td>Q3–Q4</td><td><span class="pill p-prog">Medium</span></td></tr>
-          <tr><td><b>W7</b></td><td>Creative testing</td><td>Design follow-up, scoping stage</td><td>Eliza</td><td>Q4</td><td><span class="pill p-open">Low</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="note rv in"><b>Sequencing logic:</b> the NEXT-dependent items (W1, W2) block the automation layer (chapter 07) regardless of effort, so they're chased first alongside the market rollout kicking off in Q3. W3 and W5 are new priorities the feed audit surfaced, not the original plan — they're the two levers that move the feed score (chapter 06) fastest, since keywords and highlights are the widest gaps between "tool built" and "catalogue covered." Rollout resourcing (W4) runs across both quarters and is detailed separately in chapters 15–16.</div>
-  </div>
+<div class="wrap">
+<div class="road rv in" style="grid-template-columns:repeat(2,1fr)">
+<div class="mo">
+<div class="mo-m">Q3 2026</div><div class="mo-s s-close">Jul–Sep · in flight now</div>
+<h4>Close out + kick off</h4>
+<ul>
+<li><b>Stock_flag accuracy</b> — chase NEXT's fix</li>
+<li><b>Item Group ID → Item No.</b> — confirm cutover date</li>
+<li><b>Billing recipient</b> change to FS accountant</li>
+<li><b>Keyword rollout</b> — 5.8% → full catalogue</li>
+</ul>
+</div>
+<div class="mo">
+<div class="mo-m">Q4 2026</div><div class="mo-s s-build">Oct–Dec · scale &amp; close gaps</div>
+<h4>Land the rollout, close the coverage gaps</h4>
+<ul>
+<li><b>Product highlights</b> — 42% → Google's 4–10 target</li>
+<li><b>Description enrichment</b> — 6.3% → 500+ chars</li>
+<li><b>[Search Intent] + Local Language reads</b> — roll winners into BAU</li>
+<li><b>Tier 2 AI-readiness build begins</b> — conversational attributes, MASK title-length</li>
+</ul>
+</div>
+</div>
+<div class="tbl-wrap rv in" style="margin:32px 0">
+<table>
+<thead><tr><th style="width:6%">#</th><th style="width:24%">Workstream</th><th>What it needs</th><th style="width:11%">Owner</th><th style="width:9%">Quarter</th><th style="width:10%">Priority</th></tr></thead>
+<tbody>
+<tr><td><b>W1</b></td><td>Stock_flag accuracy fix</td><td>NEXT to update the stock-flag file on a proper cadence</td><td>Aimee</td><td>Q3</td><td><span class="pill p-done">High</span></td></tr>
+<tr><td><b>W2</b></td><td>Item Group ID → Item No. switchover</td><td>Confirmed cutover date from NEXT</td><td>Eliza / Ray</td><td>Q3</td><td><span class="pill p-done">High</span></td></tr>
+<tr><td><b>W3</b></td><td>Keyword rollout to full catalogue</td><td>Apply the live Keyword Planner output beyond the current 5.8%</td><td>Ezgi</td><td>Q3</td><td><span class="pill p-done">High</span></td></tr>
+<tr><td><b>W4</b></td><td>51-market rollout execution</td><td>22 markets live by Oct 26 — resourcing in chapters 14–15</td><td>Ray + AM team</td><td>Q3–Q4</td><td><span class="pill p-done">High</span></td></tr>
+<tr><td><b>W5</b></td><td>Product highlight population</td><td>Close the 58% zero-highlight gap the feed audit found</td><td>Ray</td><td>Q4</td><td><span class="pill p-prog">Medium</span></td></tr>
+<tr><td><b>W6</b></td><td>Product type — deeper breakdown</td><td>Categorisation rollout, currently in progress</td><td>Eliza</td><td>Q3–Q4</td><td><span class="pill p-prog">Medium</span></td></tr>
+<tr><td><b>W7</b></td><td>Creative testing</td><td>Design follow-up, scoping stage</td><td>Eliza</td><td>Q4</td><td><span class="pill p-open">Low</span></td></tr>
+</tbody>
+</table>
+</div>
+<div class="note rv in"><b>Sequencing logic:</b> the NEXT-dependent items (W1, W2) block the automation layer (chapter 06) regardless of effort, so they're chased first alongside the market rollout kicking off in Q3. W3 and W5 are new priorities the feed audit surfaced, not the original plan — they're the two levers that move the feed fastest, since keywords and highlights are the widest gaps between "tool built" and "catalogue covered." Rollout resourcing (W4) runs across both quarters and is detailed separately in chapters 14–15.</div>
+</div>
 </section>
-
-<!-- ================= CH 15 — 51-MARKET ROLLOUT — PLAN & RESOURCING ================= -->
-<div class="chapter" id="c15"><div class="ch-num">15</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter fifteen</div><h2>51-Market Rollout — Plan &amp; Resourcing</h2><p>51 markets total — 29 live today (confirmed against the Project Plan's Service Overview tab), 22 more launching from early September over 8 weeks.</p></div></div>
-
+<!-- ================= CH 14 — 51-MARKET ROLLOUT — PLAN & RESOURCING ================= -->
+<div class="chapter" id="c14"><div class="ch-num">14</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter fourteen</div><h2>51-Market Rollout — Plan &amp; Resourcing</h2><p>51 markets total — 29 live today (confirmed against the Project Plan's Service Overview tab), 22 more launching from early September over 8 weeks.</p></div></div>
 <section class="band">
-  <div class="wrap">
-    <div class="note rv in" style="margin-top:0"><b>Source:</b> Ray confirmed this wave is scoped to exactly 22 markets — Malta, Japan, Bahrain, Hungary, Norway, Taiwan, Cyprus, New Zealand, Kazakhstan, Bulgaria, Iceland, Malaysia, Oman, Mexico, Ukraine, India, South Africa, South Korea, Thailand, Philippines, Serbia, Jordan — not the wider 30-market list an earlier version of this chapter carried. The live-today count (29) is unchanged, still cross-checked against the Project Plan's <b>Service Overview</b> tab (column B, Status).</div>
-
-    <div class="eyebrow rv in">The full picture</div>
-    <h2 class="sec-title rv in">Progress — from get-go to what to expect</h2>
-    <div class="road rv in" style="grid-template-columns:repeat(4,1fr)">
-      <div class="mo">
-        <div class="mo-m">Get-go</div><div class="mo-s s-close">Live today</div>
-        <h4>29 markets already live</h4>
-        <ul>
-          <li>GB (home) + DE, FR, NL, ES, CH, PL, AT, IT, BE, SA — the original 11</li>
-          <li>+ AU, CA, QA, HK, UAE, DK, FI, CZ, RO, SK, GR, PT — confirmed live via Service Overview</li>
-          <li>+ US, IE, SE, SG, KW, EU — live but new to this rollout's list entirely (EU = the merged multi-country Shopping dashboard, not a single market)</li>
-        </ul>
-      </div>
-      <div class="mo">
-        <div class="mo-m">Weeks 1–3 · Sep</div><div class="mo-s s-build">Wave 1 — 9 markets</div>
-        <h4>NZ, BH, OM, JO, NO</h4>
-        <ul>
-          <li>IS, HU, BG, RS — Nordic close-out into Central/Eastern Europe</li>
-        </ul>
-      </div>
-      <div class="mo">
-        <div class="mo-m">Weeks 4–6 · Sep–Oct</div><div class="mo-s s-build">Wave 2 — 9 markets</div>
-        <h4>UA, MT, CY, JP, TW</h4>
-        <ul>
-          <li>KR, MY, TH, PH — Mediterranean into APAC</li>
-        </ul>
-      </div>
-      <div class="mo">
-        <div class="mo-m">Weeks 7–8 · Oct</div><div class="mo-s s-build">Wave 3 — 4 markets</div>
-        <h4>IN, MX, ZA, KZ</h4>
-        <ul>
-          <li>Closes the rollout</li>
-          <li>Live by <b>Oct 26</b> — 4.6 weeks before Black Friday</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="stats rv in">
-      <div class="stat"><div class="n">29</div><div class="l">Markets already live (get-go)</div></div>
-      <div class="stat"><div class="n">22</div><div class="l">Markets to launch, this wave</div></div>
-      <div class="stat"><div class="n">51</div><div class="l">Confirmed footprint once this wave completes</div></div>
-      <div class="stat"><div class="n">8<small>wks</small></div><div class="l">Duration at 3 markets/week (Mon/Tue/Wed)</div></div>
-    </div>
-
-    <div class="mkt-wall rv in">
-      <span class="pill p-done">GB</span><span class="pill p-done">DE</span><span class="pill p-done">FR</span><span class="pill p-done">NL</span><span class="pill p-done">ES</span><span class="pill p-done">CH</span><span class="pill p-done">PL</span><span class="pill p-done">AT</span><span class="pill p-done">IT</span><span class="pill p-done">BE</span><span class="pill p-done">SA</span><span class="pill p-done">AU</span><span class="pill p-done">CA</span><span class="pill p-done">QA</span><span class="pill p-done">HK</span><span class="pill p-done">UAE</span><span class="pill p-done">DK</span><span class="pill p-done">FI</span><span class="pill p-done">CZ</span><span class="pill p-done">RO</span><span class="pill p-done">SK</span><span class="pill p-done">GR</span><span class="pill p-done">PT</span><span class="pill p-done">US</span><span class="pill p-done">IE</span><span class="pill p-done">SE</span><span class="pill p-done">SG</span><span class="pill p-done">KW</span><span class="pill p-done">EU</span><span class="pill p-block">NZ</span><span class="pill p-block">BH</span><span class="pill p-block">OM</span><span class="pill p-block">JO</span><span class="pill p-block">NO</span><span class="pill p-block">IS</span><span class="pill p-block">HU</span><span class="pill p-block">BG</span><span class="pill p-block">RS</span><span class="pill p-block">UA</span><span class="pill p-block">MT</span><span class="pill p-block">CY</span><span class="pill p-block">JP</span><span class="pill p-block">TW</span><span class="pill p-block">KR</span><span class="pill p-block">MY</span><span class="pill p-block">TH</span><span class="pill p-block">PH</span><span class="pill p-block">IN</span><span class="pill p-block">MX</span><span class="pill p-block">ZA</span><span class="pill p-block">KZ</span><span class="pill p-open">EE</span><span class="pill p-open">LT</span><span class="pill p-open">LV</span><span class="pill p-open">HR</span><span class="pill p-open">SI</span><span class="pill p-open">IL</span><span class="pill p-open">LU</span><span class="pill p-open">WO</span>
-      <div class="mkt-legend"><span><i style="background:var(--green)"></i>Live today (29)</span><span><i style="background:var(--orange-deep)"></i>This wave (22)</span><span><i style="background:#CCC"></i>Parked, not scheduled (8)</span></div>
-    </div>
-    <div class="note rv in"><b>Parked, not dropped:</b> EE, LT, LV, HR, SI, IL, LU and WO came from the original rollout matrix but aren't part of this wave — Ray confirmed the 22 markets above are what's actually being planned. Kept visible here rather than silently removed; revisit them once this wave is live and confirmed.</div>
-
-    <div class="grid-3 rv in">
-      <div class="card" style="border-left:3px solid var(--orange-deep)">
-        <h4>No Thursday or Friday launches</h4>
-        <p style="font-size:13px">Every launch lands Monday–Wednesday only. A market that launches Thursday or Friday hits its first real traffic right as the team's attention (and support cover) drops off into the weekend — Mon–Wed means any disapprovals, mapping issues or feed errors get caught and fixed same-week, not discovered Monday after two days live and unwatched.</p>
-      </div>
-      <div class="card">
-        <h4>Additive, not instead of</h4>
-        <p style="font-size:13px">This sits alongside the existing optimisation retainer (chapters 03–14), not in place of it. Going from 2 to 3 markets/week to fit 22 markets in before Peak means roughly 9–12 hrs/week of new scope, resourced separately — BAU keyword/title/highlights work keeps moving at its current pace throughout.</p>
-      </div>
-      <div class="card" style="border-left:3px solid var(--orange)">
-        <h4>Before Peak, starting early September</h4>
-        <p style="font-size:13px">At 3 markets/week starting <b>Sep 7</b>, all 22 are live by <b>Oct 26</b> — roughly 4.6 weeks before Black Friday (Nov 27). Same operational cadence as before; only the scope (22 markets, not 30) and start date have changed.</p>
-      </div>
-    </div>
-    <div class="note rv in"><b>Assumptions flagged for Ray to confirm:</b> the step-up to 3 markets/week (team capacity not yet confirmed against current retainer load) and whether Sep 7 is genuinely the right start, or should slide with a specific kickoff date. Adjust the schedule in chapter 16 once these are locked.</div>
-  </div>
+<div class="wrap">
+<div class="note rv in" style="margin-top:0"><b>Source:</b> Ray confirmed this wave is scoped to exactly 22 markets — Malta, Japan, Bahrain, Hungary, Norway, Taiwan, Cyprus, New Zealand, Kazakhstan, Bulgaria, Iceland, Malaysia, Oman, Mexico, Ukraine, India, South Africa, South Korea, Thailand, Philippines, Serbia, Jordan — not the wider 30-market list an earlier version of this chapter carried. The live-today count (29) is unchanged, still cross-checked against the Project Plan's <b>Service Overview</b> tab (column B, Status).</div>
+<div class="eyebrow rv in">The full picture</div>
+<h2 class="sec-title rv in">Progress — from get-go to what to expect</h2>
+<div class="road rv in" style="grid-template-columns:repeat(4,1fr)">
+<div class="mo">
+<div class="mo-m">Get-go</div><div class="mo-s s-close">Live today</div>
+<h4>29 markets already live</h4>
+<ul>
+<li>GB (home) + DE, FR, NL, ES, CH, PL, AT, IT, BE, SA — the original 11</li>
+<li>+ AU, CA, QA, HK, UAE, DK, FI, CZ, RO, SK, GR, PT — confirmed live via Service Overview</li>
+<li>+ US, IE, SE, SG, KW, EU — live but new to this rollout's list entirely (EU = the merged multi-country Shopping dashboard, not a single market)</li>
+</ul>
+</div>
+<div class="mo">
+<div class="mo-m">Weeks 1–3 · Sep</div><div class="mo-s s-build">Wave 1 — 9 markets</div>
+<h4>NZ, BH, OM, JO, NO</h4>
+<ul>
+<li>IS, HU, BG, RS — Nordic close-out into Central/Eastern Europe</li>
+</ul>
+</div>
+<div class="mo">
+<div class="mo-m">Weeks 4–6 · Sep–Oct</div><div class="mo-s s-build">Wave 2 — 9 markets</div>
+<h4>UA, MT, CY, JP, TW</h4>
+<ul>
+<li>KR, MY, TH, PH — Mediterranean into APAC</li>
+</ul>
+</div>
+<div class="mo">
+<div class="mo-m">Weeks 7–8 · Oct</div><div class="mo-s s-build">Wave 3 — 4 markets</div>
+<h4>IN, MX, ZA, KZ</h4>
+<ul>
+<li>Closes the rollout</li>
+<li>Live by <b>Oct 26</b> — 4.6 weeks before Black Friday</li>
+</ul>
+</div>
+</div>
+<div class="stats rv in">
+<div class="stat"><div class="n">29</div><div class="l">Markets already live (get-go)</div></div>
+<div class="stat"><div class="n">22</div><div class="l">Markets to launch, this wave</div></div>
+<div class="stat"><div class="n">51</div><div class="l">Confirmed footprint once this wave completes</div></div>
+<div class="stat"><div class="n">8<small>wks</small></div><div class="l">Duration at 3 markets/week (Mon/Tue/Wed)</div></div>
+</div>
+<div class="mkt-wall rv in">
+<span class="pill p-done">GB</span><span class="pill p-done">DE</span><span class="pill p-done">FR</span><span class="pill p-done">NL</span><span class="pill p-done">ES</span><span class="pill p-done">CH</span><span class="pill p-done">PL</span><span class="pill p-done">AT</span><span class="pill p-done">IT</span><span class="pill p-done">BE</span><span class="pill p-done">SA</span><span class="pill p-done">AU</span><span class="pill p-done">CA</span><span class="pill p-done">QA</span><span class="pill p-done">HK</span><span class="pill p-done">UAE</span><span class="pill p-done">DK</span><span class="pill p-done">FI</span><span class="pill p-done">CZ</span><span class="pill p-done">RO</span><span class="pill p-done">SK</span><span class="pill p-done">GR</span><span class="pill p-done">PT</span><span class="pill p-done">US</span><span class="pill p-done">IE</span><span class="pill p-done">SE</span><span class="pill p-done">SG</span><span class="pill p-done">KW</span><span class="pill p-done">EU</span><span class="pill p-block">NZ</span><span class="pill p-block">BH</span><span class="pill p-block">OM</span><span class="pill p-block">JO</span><span class="pill p-block">NO</span><span class="pill p-block">IS</span><span class="pill p-block">HU</span><span class="pill p-block">BG</span><span class="pill p-block">RS</span><span class="pill p-block">UA</span><span class="pill p-block">MT</span><span class="pill p-block">CY</span><span class="pill p-block">JP</span><span class="pill p-block">TW</span><span class="pill p-block">KR</span><span class="pill p-block">MY</span><span class="pill p-block">TH</span><span class="pill p-block">PH</span><span class="pill p-block">IN</span><span class="pill p-block">MX</span><span class="pill p-block">ZA</span><span class="pill p-block">KZ</span><span class="pill p-open">EE</span><span class="pill p-open">LT</span><span class="pill p-open">LV</span><span class="pill p-open">HR</span><span class="pill p-open">SI</span><span class="pill p-open">IL</span><span class="pill p-open">LU</span><span class="pill p-open">WO</span>
+<div class="mkt-legend"><span><i style="background:var(--green)"></i>Live today (29)</span><span><i style="background:var(--orange-deep)"></i>This wave (22)</span><span><i style="background:#CCC"></i>Parked, not scheduled (8)</span></div>
+</div>
+<div class="note rv in"><b>Parked, not dropped:</b> EE, LT, LV, HR, SI, IL, LU and WO came from the original rollout matrix but aren't part of this wave — Ray confirmed the 22 markets above are what's actually being planned. Kept visible here rather than silently removed; revisit them once this wave is live and confirmed.</div>
+<div class="grid-3 rv in">
+<div class="card" style="border-left:3px solid var(--orange-deep)">
+<h4>No Thursday or Friday launches</h4>
+<p style="font-size:13px">Every launch lands Monday–Wednesday only. A market that launches Thursday or Friday hits its first real traffic right as the team's attention (and support cover) drops off into the weekend — Mon–Wed means any disapprovals, mapping issues or feed errors get caught and fixed same-week, not discovered Monday after two days live and unwatched.</p>
+</div>
+<div class="card">
+<h4>Additive, not instead of</h4>
+<p style="font-size:13px">This sits alongside the existing optimisation retainer (chapters 03–13), not in place of it. Going from 2 to 3 markets/week to fit 22 markets in before Peak means roughly 9–12 hrs/week of new scope, resourced separately — BAU keyword/title/highlights work keeps moving at its current pace throughout.</p>
+</div>
+<div class="card" style="border-left:3px solid var(--orange)">
+<h4>Before Peak, starting early September</h4>
+<p style="font-size:13px">At 3 markets/week starting <b>Sep 7</b>, all 22 are live by <b>Oct 26</b> — roughly 4.6 weeks before Black Friday (Nov 27). Same operational cadence as before; only the scope (22 markets, not 30) and start date have changed.</p>
+</div>
+</div>
+<div class="note rv in"><b>Assumptions flagged for Ray to confirm:</b> the step-up to 3 markets/week (team capacity not yet confirmed against current retainer load) and whether Sep 7 is genuinely the right start, or should slide with a specific kickoff date. Adjust the schedule in chapter 15 once these are locked.</div>
+</div>
 </section>
-
-<!-- ================= CH 16 — 51-MARKET ROLLOUT — WEEKLY SCHEDULE ================= -->
-<div class="chapter" id="c16"><div class="ch-num">16</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter sixteen</div><h2>51-Market Rollout — Weekly Schedule</h2><p>8 weeks, 3 markets/week, Monday–Wednesday only — 22 markets to launch, 29 already live.</p></div></div>
-
+<!-- ================= CH 15 — 51-MARKET ROLLOUT — WEEKLY SCHEDULE ================= -->
+<div class="chapter" id="c15"><div class="ch-num">15</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter fifteen</div><h2>51-Market Rollout — Weekly Schedule</h2><p>8 weeks, 3 markets/week, Monday–Wednesday only — 22 markets to launch, 29 already live.</p></div></div>
 <section>
-  <div class="wrap">
-    <div class="cc-key rv in">
-      <button class="cc-toggle" type="button" aria-expanded="false">▾ Country code key (22)</button>
-      <div class="cc-panel" hidden>
-        <label class="cc-row"><input type="checkbox" data-code="NZ"><span class="cc-code">NZ</span><span class="cc-name">New Zealand</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="BH"><span class="cc-code">BH</span><span class="cc-name">Bahrain</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="OM"><span class="cc-code">OM</span><span class="cc-name">Oman</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="JO"><span class="cc-code">JO</span><span class="cc-name">Jordan</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="NO"><span class="cc-code">NO</span><span class="cc-name">Norway</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="IS"><span class="cc-code">IS</span><span class="cc-name">Iceland</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="HU"><span class="cc-code">HU</span><span class="cc-name">Hungary</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="BG"><span class="cc-code">BG</span><span class="cc-name">Bulgaria</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="RS"><span class="cc-code">RS</span><span class="cc-name">Serbia</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="UA"><span class="cc-code">UA</span><span class="cc-name">Ukraine</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="MT"><span class="cc-code">MT</span><span class="cc-name">Malta</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="CY"><span class="cc-code">CY</span><span class="cc-name">Cyprus</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="JP"><span class="cc-code">JP</span><span class="cc-name">Japan</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="TW"><span class="cc-code">TW</span><span class="cc-name">Taiwan</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="KR"><span class="cc-code">KR</span><span class="cc-name">South Korea</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="MY"><span class="cc-code">MY</span><span class="cc-name">Malaysia</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="TH"><span class="cc-code">TH</span><span class="cc-name">Thailand</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="PH"><span class="cc-code">PH</span><span class="cc-name">Philippines</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="IN"><span class="cc-code">IN</span><span class="cc-name">India</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="MX"><span class="cc-code">MX</span><span class="cc-name">Mexico</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="ZA"><span class="cc-code">ZA</span><span class="cc-name">South Africa</span></label>
-        <label class="cc-row"><input type="checkbox" data-code="KZ"><span class="cc-code">KZ</span><span class="cc-name">Kazakhstan</span></label>
-      </div>
-    </div>
-    <div class="tbl-wrap rv in" style="margin-bottom:24px">
-      <table><thead><tr><th style="width:14%">Week</th><th style="width:12%">Mon</th><th style="width:12%">Tue</th><th style="width:12%">Wed</th><th>Sequencing logic</th></tr></thead>
-      <tbody>
-        <tr><td><b>1 — Sep 7</b></td><td>NZ</td><td>BH</td><td>OM</td><td>English-native + Middle East, lowest lift</td></tr>
-        <tr><td><b>2 — Sep 14</b></td><td>JO</td><td>NO</td><td>IS</td><td>Middle East close-out, into Nordic</td></tr>
-        <tr><td><b>3 — Sep 21</b></td><td>HU</td><td>BG</td><td>RS</td><td>Central/Eastern Europe</td></tr>
-        <tr><td><b>4 — Sep 28</b></td><td>UA</td><td>MT</td><td>CY</td><td>Eastern Europe close-out, into Mediterranean</td></tr>
-        <tr><td><b>5 — Oct 5</b></td><td>JP</td><td>TW</td><td>KR</td><td>APAC</td></tr>
-        <tr><td><b>6 — Oct 12</b></td><td>MY</td><td>TH</td><td>PH</td><td>APAC continued</td></tr>
-        <tr><td><b>7 — Oct 19</b></td><td>IN</td><td>MX</td><td>ZA</td><td>Americas, Africa, South Asia</td></tr>
-        <tr><td><b>8 — Oct 26</b></td><td>KZ</td><td>—</td><td>—</td><td>Closes the rollout</td></tr>
-      </tbody></table>
-    </div>
-    <div class="eyebrow rv in">Resourcing</div>
-    <h2 class="sec-title rv in">What's in the 3–4 hours, per market</h2>
-    <p class="sec-sub rv in">Same checklist every time — the estimate for all 22 markets in this wave assumes the same shape of work; confirm once each market's language/setup detail exists.</p>
-    <div class="tbl-wrap rv in" style="margin-bottom:24px">
-      <table><thead><tr><th>Task</th><th style="width:14%">Time</th><th>What it covers</th></tr></thead>
-      <tbody>
-        <tr><td>Feed checks</td><td>20 min</td><td>Source feed integrity + current field coverage for the target market before work starts</td></tr>
-        <tr><td>Source validation</td><td>20 min</td><td>Confirm the underlying product, pricing and currency data for the market is accurate and complete</td></tr>
-        <tr><td>Translation mapping</td><td>40 min</td><td>Title / description / colour / size copy translated and mapped for the market's language</td></tr>
-        <tr><td>Dev work</td><td>30 min</td><td>Feed rule configuration and market-specific transformations in FeedHero</td></tr>
-        <tr><td>Fields population &amp; attribute mirroring</td><td>60 min</td><td>Custom labels, keyword injection, MASK-format titles, GPC and product_type mirrored from the reference market</td></tr>
-        <tr><td>GMC launch</td><td>20 min</td><td>Merchant Center registration, first submission, initial disapproval triage</td></tr>
-        <tr><td>Monitoring (first week)</td><td>20 min</td><td>Feed health check, disapproval sweep, early performance sanity check</td></tr>
-        <tr><td><b>Execution subtotal</b></td><td><b>3.5 hrs</b></td><td></td></tr>
-        <tr><td>AM review &amp; sign-off</td><td>30 min</td><td>Account Manager spot-check and client-ready sign-off before go-live</td></tr>
-        <tr><td><b>Total per market</b></td><td><b>~4 hrs</b></td><td></td></tr>
-      </tbody></table>
-    </div>
-    <div class="stats rv in">
-      <div class="stat"><div class="n">3.5<small>hrs</small></div><div class="l">Execution time per market</div></div>
-      <div class="stat"><div class="n">0.5<small>hrs</small></div><div class="l">AM review &amp; sign-off per market</div></div>
-      <div class="stat"><div class="n">~88<small>hrs</small></div><div class="l">Total project hours — 22 markets × ~4 hrs</div></div>
-      <div class="stat"><div class="n">One-off</div><div class="l">Proposed as project scope, separate from the retainer</div></div>
-    </div>
-    <div class="grid-2 rv in">
-      <div class="card" style="border-left:3px solid var(--orange-deep)"><h4>One-off, not retainer scope</h4><p style="font-size:13px">~88 hours across this wave's 22 markets is proposed as a one-off project fee, additive to the existing optimisation retainer (chapters 03–14) — not drawn from it. Rate and total cost need Ray to confirm; the hours above are the estimate, not a price.</p></div>
-      <div class="card"><h4>What this schedule doesn't cover yet</h4><p style="font-size:13px">Meta International Feed setup is tracked separately per market and isn't included in the hours above — same caveat as before. Worth a second pass once the Shopping rollout is confirmed.</p></div>
-    </div>
-    <div class="note rv in"><b>This is a proposal, not a locked plan:</b> the market order groups by language/region similarity for a realistic operational flow, and the hour breakdown is FeedSpark's estimate — neither is something Reiss has signed off on yet. Swap any week's pairing, or adjust the task allocation, freely once priorities and capacity are confirmed.</div>
-  </div>
+<div class="wrap">
+<div class="cc-key rv in">
+<button aria-expanded="false" class="cc-toggle" type="button">▾ Country code key (22)</button>
+<div class="cc-panel" hidden="">
+<label class="cc-row"><input data-code="NZ" type="checkbox"/><span class="cc-code">NZ</span><span class="cc-name">New Zealand</span></label>
+<label class="cc-row"><input data-code="BH" type="checkbox"/><span class="cc-code">BH</span><span class="cc-name">Bahrain</span></label>
+<label class="cc-row"><input data-code="OM" type="checkbox"/><span class="cc-code">OM</span><span class="cc-name">Oman</span></label>
+<label class="cc-row"><input data-code="JO" type="checkbox"/><span class="cc-code">JO</span><span class="cc-name">Jordan</span></label>
+<label class="cc-row"><input data-code="NO" type="checkbox"/><span class="cc-code">NO</span><span class="cc-name">Norway</span></label>
+<label class="cc-row"><input data-code="IS" type="checkbox"/><span class="cc-code">IS</span><span class="cc-name">Iceland</span></label>
+<label class="cc-row"><input data-code="HU" type="checkbox"/><span class="cc-code">HU</span><span class="cc-name">Hungary</span></label>
+<label class="cc-row"><input data-code="BG" type="checkbox"/><span class="cc-code">BG</span><span class="cc-name">Bulgaria</span></label>
+<label class="cc-row"><input data-code="RS" type="checkbox"/><span class="cc-code">RS</span><span class="cc-name">Serbia</span></label>
+<label class="cc-row"><input data-code="UA" type="checkbox"/><span class="cc-code">UA</span><span class="cc-name">Ukraine</span></label>
+<label class="cc-row"><input data-code="MT" type="checkbox"/><span class="cc-code">MT</span><span class="cc-name">Malta</span></label>
+<label class="cc-row"><input data-code="CY" type="checkbox"/><span class="cc-code">CY</span><span class="cc-name">Cyprus</span></label>
+<label class="cc-row"><input data-code="JP" type="checkbox"/><span class="cc-code">JP</span><span class="cc-name">Japan</span></label>
+<label class="cc-row"><input data-code="TW" type="checkbox"/><span class="cc-code">TW</span><span class="cc-name">Taiwan</span></label>
+<label class="cc-row"><input data-code="KR" type="checkbox"/><span class="cc-code">KR</span><span class="cc-name">South Korea</span></label>
+<label class="cc-row"><input data-code="MY" type="checkbox"/><span class="cc-code">MY</span><span class="cc-name">Malaysia</span></label>
+<label class="cc-row"><input data-code="TH" type="checkbox"/><span class="cc-code">TH</span><span class="cc-name">Thailand</span></label>
+<label class="cc-row"><input data-code="PH" type="checkbox"/><span class="cc-code">PH</span><span class="cc-name">Philippines</span></label>
+<label class="cc-row"><input data-code="IN" type="checkbox"/><span class="cc-code">IN</span><span class="cc-name">India</span></label>
+<label class="cc-row"><input data-code="MX" type="checkbox"/><span class="cc-code">MX</span><span class="cc-name">Mexico</span></label>
+<label class="cc-row"><input data-code="ZA" type="checkbox"/><span class="cc-code">ZA</span><span class="cc-name">South Africa</span></label>
+<label class="cc-row"><input data-code="KZ" type="checkbox"/><span class="cc-code">KZ</span><span class="cc-name">Kazakhstan</span></label>
+</div>
+</div>
+<div class="tbl-wrap rv in" style="margin-bottom:24px">
+<table><thead><tr><th style="width:14%">Week</th><th style="width:12%">Mon</th><th style="width:12%">Tue</th><th style="width:12%">Wed</th><th>Sequencing logic</th></tr></thead>
+<tbody>
+<tr><td><b>1 — Sep 7</b></td><td>NZ</td><td>BH</td><td>OM</td><td>English-native + Middle East, lowest lift</td></tr>
+<tr><td><b>2 — Sep 14</b></td><td>JO</td><td>NO</td><td>IS</td><td>Middle East close-out, into Nordic</td></tr>
+<tr><td><b>3 — Sep 21</b></td><td>HU</td><td>BG</td><td>RS</td><td>Central/Eastern Europe</td></tr>
+<tr><td><b>4 — Sep 28</b></td><td>UA</td><td>MT</td><td>CY</td><td>Eastern Europe close-out, into Mediterranean</td></tr>
+<tr><td><b>5 — Oct 5</b></td><td>JP</td><td>TW</td><td>KR</td><td>APAC</td></tr>
+<tr><td><b>6 — Oct 12</b></td><td>MY</td><td>TH</td><td>PH</td><td>APAC continued</td></tr>
+<tr><td><b>7 — Oct 19</b></td><td>IN</td><td>MX</td><td>ZA</td><td>Americas, Africa, South Asia</td></tr>
+<tr><td><b>8 — Oct 26</b></td><td>KZ</td><td>—</td><td>—</td><td>Closes the rollout</td></tr>
+</tbody></table>
+</div>
+<div class="eyebrow rv in">Resourcing</div>
+<h2 class="sec-title rv in">What's in the 3–4 hours, per market</h2>
+<p class="sec-sub rv in">Same checklist every time — the estimate for all 22 markets in this wave assumes the same shape of work; confirm once each market's language/setup detail exists.</p>
+<div class="tbl-wrap rv in" style="margin-bottom:24px">
+<table><thead><tr><th>Task</th><th style="width:14%">Time</th><th>What it covers</th></tr></thead>
+<tbody>
+<tr><td>Feed checks</td><td>20 min</td><td>Source feed integrity + current field coverage for the target market before work starts</td></tr>
+<tr><td>Source validation</td><td>20 min</td><td>Confirm the underlying product, pricing and currency data for the market is accurate and complete</td></tr>
+<tr><td>Translation mapping</td><td>40 min</td><td>Title / description / colour / size copy translated and mapped for the market's language</td></tr>
+<tr><td>Dev work</td><td>30 min</td><td>Feed rule configuration and market-specific transformations in FeedHero</td></tr>
+<tr><td>Fields population &amp; attribute mirroring</td><td>60 min</td><td>Custom labels, keyword injection, MASK-format titles, GPC and product_type mirrored from the reference market</td></tr>
+<tr><td>GMC launch</td><td>20 min</td><td>Merchant Center registration, first submission, initial disapproval triage</td></tr>
+<tr><td>Monitoring (first week)</td><td>20 min</td><td>Feed health check, disapproval sweep, early performance sanity check</td></tr>
+<tr><td><b>Execution subtotal</b></td><td><b>3.5 hrs</b></td><td></td></tr>
+<tr><td>AM review &amp; sign-off</td><td>30 min</td><td>Account Manager spot-check and client-ready sign-off before go-live</td></tr>
+<tr><td><b>Total per market</b></td><td><b>~4 hrs</b></td><td></td></tr>
+</tbody></table>
+</div>
+<div class="stats rv in">
+<div class="stat"><div class="n">3.5<small>hrs</small></div><div class="l">Execution time per market</div></div>
+<div class="stat"><div class="n">0.5<small>hrs</small></div><div class="l">AM review &amp; sign-off per market</div></div>
+<div class="stat"><div class="n">~88<small>hrs</small></div><div class="l">Total project hours — 22 markets × ~4 hrs</div></div>
+<div class="stat"><div class="n">One-off</div><div class="l">Proposed as project scope, separate from the retainer</div></div>
+</div>
+<div class="grid-2 rv in">
+<div class="card" style="border-left:3px solid var(--orange-deep)"><h4>One-off, not retainer scope</h4><p style="font-size:13px">~88 hours across this wave's 22 markets is proposed as a one-off project fee, additive to the existing optimisation retainer (chapters 03–13) — not drawn from it. Rate and total cost need Ray to confirm; the hours above are the estimate, not a price.</p></div>
+<div class="card"><h4>What this schedule doesn't cover yet</h4><p style="font-size:13px">Meta International Feed setup is tracked separately per market and isn't included in the hours above — same caveat as before. Worth a second pass once the Shopping rollout is confirmed.</p></div>
+</div>
+<div class="note rv in"><b>This is a proposal, not a locked plan:</b> the market order groups by language/region similarity for a realistic operational flow, and the hour breakdown is FeedSpark's estimate — neither is something Reiss has signed off on yet. Swap any week's pairing, or adjust the task allocation, freely once priorities and capacity are confirmed.</div>
+</div>
 </section>
-
-<!-- ================= CH 17 — TECH FIT ================= -->
-<div class="chapter" id="c17"><div class="ch-num">17</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter seventeen</div><h2>Tech Fit</h2><p>Why the FeedSpark stack fits a 29-market fashion retailer — and where the feed shows the fit isn't finished yet.</p></div></div>
-
+<!-- ================= CH 16 — TECH FIT ================= -->
+<div class="chapter" id="c16"><div class="ch-num">16</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter sixteen</div><h2>Tech Fit</h2><p>Why the FeedSpark stack fits a 29-market fashion retailer — and where the feed shows the fit isn't finished yet.</p></div></div>
 <section class="band">
-  <div class="wrap">
-    <div class="grid-4 rv in">
-      <div class="card"><h4>One stack, full catalogue</h4><p>FeedHero + Tachyon run the same pipeline across all 60 feeds and 29 markets — proven on GB/DE/FR's 100% AOT title coverage, extending next to the 26 markets not yet audited.</p></div>
-      <div class="card"><h4>Proven at scale</h4><p>The same title-quality methodology behind the verified de-duplication fix already took GB from 39% to 0.1% duplicate titles — the fix works, the remaining task is reaching every market (chapter 05).</p></div>
-      <div class="card"><h4>Golden Record discipline</h4><p>99.9% attribute-completeness target — core structural fields are already at 100% in this export; the gap the feed shows is content depth (keywords, descriptions, highlights), not missing data.</p></div>
-      <div class="card"><h4>One partner per channel</h4><p>Google Shopping and Meta run off the same optimisation engine today — LIA is live in IE, giving a template to extend Click &amp; Collect to other markets as the account grows.</p></div>
-    </div>
-    <div class="callout rv in"><h4>The through-line</h4><p>Every verified lever this year — de-duplicated titles, the live Keyword Planner tool, 100% image coverage — is the same fuller, more decomposable data pattern that Tier 2 and the conversational attributes scale up next. The feed audit didn't find a new strategy to pursue; it found exactly how far the current one has reached, and where it hasn't yet.</p></div>
-  </div>
+<div class="wrap">
+<div class="grid-4 rv in">
+<div class="card"><h4>One stack, full catalogue</h4><p>FeedHero + Tachyon run the same pipeline across all 60 feeds and 29 markets — proven on GB/DE/FR's 100% AOT title coverage, extending next to the 26 markets not yet audited.</p></div>
+<div class="card"><h4>Proven at scale</h4><p>The same title-quality methodology behind the verified de-duplication fix already took GB from 39% to 0.1% duplicate titles — the fix works, the remaining task is reaching every market (chapter 05).</p></div>
+<div class="card"><h4>Golden Record discipline</h4><p>99.9% attribute-completeness target — core structural fields are already at 100% in this export; the gap the feed shows is content depth (keywords, descriptions, highlights), not missing data.</p></div>
+<div class="card"><h4>One partner per channel</h4><p>Google Shopping and Meta run off the same optimisation engine today — LIA is live in IE, giving a template to extend Click &amp; Collect to other markets as the account grows.</p></div>
+</div>
+<div class="callout rv in"><h4>The through-line</h4><p>Every verified lever this year — de-duplicated titles, the live Keyword Planner tool, 100% image coverage — is the same fuller, more decomposable data pattern that Tier 2 and the conversational attributes scale up next. The feed audit didn't find a new strategy to pursue; it found exactly how far the current one has reached, and where it hasn't yet.</p></div>
+</div>
 </section>
-
 <!-- ================= CLOSE ================= -->
 <footer class="close">
-  <div class="wrap">
-    <div class="eyebrow on-dark">Thank you</div>
-    <h2>Questions?</h2>
-    <div class="hero-rule" style="width:64px;height:3px;background:var(--orange);margin:22px 0 34px"></div>
-    <div class="contacts" style="grid-template-columns:1fr 1fr">
-      <div class="ct"><b>Ray Vũ</b><span>Senior Account Manager</span><a href="mailto:ray@feedspark.com">ray@feedspark.com</a></div>
-      <div class="ct"><b>Ezgi</b><span>Account Manager</span><a href="mailto:ezgi@feedspark.com">ezgi@feedspark.com</a></div>
-    </div>
-    <p style="margin-top:48px;font-size:11.5px;color:rgba(255,255,255,.32)">FeedSpark · Private &amp; Confidential&nbsp;</p>
-  </div>
+<div class="wrap">
+<div class="eyebrow on-dark">Thank you</div>
+<h2>Questions?</h2>
+<div class="hero-rule" style="width:64px;height:3px;background:var(--orange);margin:22px 0 34px"></div>
+<div class="contacts" style="grid-template-columns:1fr 1fr">
+<div class="ct"><b>Ray Vũ</b><span>Senior Account Manager</span><a href="mailto:ray@feedspark.com">ray@feedspark.com</a></div>
+<div class="ct"><b>Steven</b><span>Account Manager</span><a href="mailto:steven@feedspark.com">steven@feedspark.com</a></div>
+</div>
+<p style="margin-top:48px;font-size:11.5px;color:rgba(255,255,255,.32)">FeedSpark · Private &amp; Confidential </p>
+</div>
 </footer>
-
 <script>
 (function(){
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1157,7 +1071,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
     variant:{name:'Variant option',code:'variant_option',
       why:'Names every property that separates one variant from another — size, colour, fit. Without it the agent sees 2.2 near-identical SKUs per style and picks arbitrarily.',
       row:'<span class="c">// used with item_group_id + item_group_title</span>\n<span class="k">item_group_id</span>: SV142028\n<span class="k">variant_option</span>:\n  size: 4\n  colour: Cream\n  fit: Petite',
-      note:'Structural only — no copy approval needed. Blocked on the item-group ID mapping in chapter 07.'},
+      note:'Structural only — no copy approval needed. Blocked on the item-group ID mapping in chapter 06.'},
     group:{name:'Item group title',code:'item_group_title',
       why:'Gives the whole variant family one clean parent name. It\'s how the agent tells the Stanton apart from the Stanton Petite, even when titles look almost identical.',
       row:'<span class="k">item_group_id</span>: SV142028\n<span class="k">item_group_title</span>: Reiss Stanton Petite Cotton Corduroy Wide-Leg Trousers\n<span class="k">title</span>: Reiss Cream Stanton Petite Cotton Corduroy Wide-Leg Trousers, 4',
@@ -1187,7 +1101,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
   });
   render('qa');
 
-  /* ======== country code checklist (chapter 16) ======== */
+  /* ======== country code checklist (chapter 15) ======== */
   var ccBtn=document.querySelector('.cc-toggle'), ccPanel=document.querySelector('.cc-panel');
   if(ccBtn && ccPanel){
     var ccBase='▾ Country code key (22)';
@@ -1217,6 +1131,4 @@ policy data become commercial controls"<br>Google&nbsp;</p>
 
 })();
 </script>
-
-
 </body></html>

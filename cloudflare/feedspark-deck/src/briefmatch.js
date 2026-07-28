@@ -39,22 +39,108 @@ function validDD(dd8) {
   return d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 2020 && y <= 2100;
 }
 
-function findBrief(briefs, text) {
+// Automated matching is TOKEN-ONLY: [ibfcode:…] or a brief id, subject taking priority over
+// the body. No wording-similarity fallback here — unattended fuzzy matching mis-filed real
+// replies (the page's paste-router keeps its fuzzy match because a human confirms it there).
+// A body carrying several different codes with none in the subject (digests, forwards) is
+// ambiguous and is skipped rather than guessed.
+function codeIn(s) { const m = /ibfcode:([a-z0-9-]+)/i.exec(s || ''); return m ? m[1].toLowerCase() : ''; }
+function findBrief(briefs, subject, snippet) {
   const arr = Object.keys(briefs).map((k) => briefs[k]);
-  const cm = /ibfcode:([a-z0-9-]+)/i.exec(text);
-  if (cm) {
-    const c = cm[1].toLowerCase();
+  const byCode = (c) => {
     const hits = arr.filter((b) => (b.code || '').toLowerCase() === c);
-    if (hits.length) {
-      if (hits.length > 1) hits.sort((x, y) => taskDice(text, y.task) - taskDice(text, x.task));
-      return hits[0];
+    if (!hits.length) return null;
+    if (hits.length > 1) hits.sort((x, y) => taskDice(subject + ' ' + snippet, y.task) - taskDice(subject + ' ' + snippet, x.task));
+    return hits[0];
+  };
+  const subjCode = codeIn(subject);
+  if (subjCode) { const b = byCode(subjCode); if (b) return b; }
+  const subjId = ID_RE.exec(subject || '');
+  if (subjId && briefs[subjId[1]]) return briefs[subjId[1]];
+  const bodyCodes = Array.from(new Set((String(snippet || '').match(/ibfcode:([a-z0-9-]+)/gi) || []).map((s) => s.slice(8).toLowerCase())));
+  if (bodyCodes.length === 1) { const b = byCode(bodyCodes[0]); if (b) return b; }
+  if (bodyCodes.length > 1) return null;   // ambiguous — never guess unattended
+  const bodyId = ID_RE.exec(snippet || '');
+  if (bodyId && briefs[bodyId[1]]) return briefs[bodyId[1]];
+  return null;
+}
+
+// ---- inbound triage: which client is an email about, and is it BRIEFABLE (an action
+// request that should become a Workflow ticket) vs FYI noise? Pure heuristics, unit-tested.
+const ACTION_RES = [
+  [/\b(can|could|would|will) you\b/i, 'asks you directly'],
+  [/\bplease\b/i, '"please"'],
+  [/\b(need|needs|needed|required|require|request(ing|ed)?)\b/i, 'need/request'],
+  [/\b(add|remove|update|fix|change|amend|swap|upload|implement|activate|pause|switch|set ?up|turn (on|off)|exclude|include)\b/i, 'action verb'],
+  [/\b(by (mon|tues|wednes|thurs|fri|satur|sun)day|by eod|eod\b|eow\b|asap\b|urgent(ly)?|deadline|today|tomorrow)\b/i, 'deadline pressure'],
+  [/\?/, 'question'],
+];
+const FEED_RE = /\b(feed|title|titles|description|image|label|labels|gtin|attribute|product type|campaign|shopping|merchant|gmc|dpa|meta|supplemental|disapprov|keyword)\b/i;
+const NOISE_RE = /\b(no-?reply|noreply|newsletter|unsubscribe|notification|billing|invoice paid|receipt|out of office|automatic reply)\b/i;
+// the team's own domains — mail FROM these is internal, never client intake (Ray's rule:
+// capture what lands at ray@feedspark.com from OUTSIDE feedspark/aroxo/feedhero)
+const INTERNAL_RE = /@([a-z0-9.-]*\.)?(feedspark\.com|aroxo\.com|feedhero\.net)\b/i;
+
+// ---- client auto-detect: use every cue the email carries, most reliable first ----------
+//   1. dossier domain map (authoritative — covers brands whose company domain differs from
+//      the brand, e.g. YuMOVE mail arriving from @lintbells.com)
+//   2. the sender domain's own label vs the client roster (jane@reiss.com → Reiss, no
+//      dossier entry needed; freemail domains are skipped)
+//   3. the sender display name ("Jane from Reiss <jane@gmail.com>")
+//   4. a brand mention in subject/snippet (word-boundary, plus accent/space-folded)
+// Names are folded for comparison ("Estée Lauder" ↔ esteelauder.com); names shorter than
+// 4 chars (ELC) only ever match as exact words — never by containment.
+const FREEMAIL_RE = /^(gmail|googlemail|outlook|hotmail|live|yahoo|ymail|icloud|me|aol|protonmail|proton|msn|mail)$/;
+const fold = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '');
+function domainLabel(host) {
+  const parts = String(host || '').toLowerCase().split('.').filter(Boolean);
+  if (!parts.length) return '';
+  let cut = 1;   // drop the TLD; also drop a functional 2nd level before a short ccTLD (schuh.co.uk → schuh)
+  if (parts.length >= 3 && parts[parts.length - 1].length <= 3 && /^(co|com|org|net|ac|gov|ltd|plc|edu)$/.test(parts[parts.length - 2])) cut = 2;
+  return fold(parts.slice(0, parts.length - cut).pop() || '');
+}
+export function detectClient(msg, clientDoms, clientNames) {
+  const from = String(msg.from || '');
+  const emDom = ((/@([a-z0-9.-]+)/i.exec(from) || [])[1] || '').toLowerCase();
+  for (const name of Object.keys(clientDoms || {})) {
+    const d = String(clientDoms[name] || '').toLowerCase().replace(/^www\./, '');
+    if (d && emDom.endsWith(d)) return name;
+  }
+  const names = clientNames || Object.keys(clientDoms || {});
+  const label = domainLabel(emDom);
+  if (label && !FREEMAIL_RE.test(label)) {
+    for (const name of names) {
+      const nm = fold(name);
+      if (nm.length >= 4 && (label.includes(nm) || (label.length >= 4 && nm.includes(label)))) return name;
     }
   }
-  const im = ID_RE.exec(text);
-  if (im && briefs[im[1]]) return briefs[im[1]];
-  let best = null, bs = 0;
-  arr.forEach((b) => { if (b.status === 'confirmed') return; const s = taskDice(text, b.task); if (s > bs) { bs = s; best = b; } });
-  return bs >= 0.55 ? best : null;   // page uses 0.45; snippets are shorter, so be stricter
+  const disp = fold(from.split('<')[0]);
+  if (disp) for (const name of names) { const nm = fold(name); if (nm.length >= 4 && disp.includes(nm)) return name; }
+  const text = String(msg.subject || '') + ' ' + String(msg.snippet || ''), ftext = fold(text);
+  for (const name of names) {
+    if (new RegExp('\\b' + name.replace(/[.^$*+?()[\]{}|\\]/g, '\\$&') + '\\b', 'i').test(text)) return name;
+    const nm = fold(name);
+    if (nm.length >= 4 && ftext.includes(nm)) return name;
+  }
+  return '';
+}
+
+// msg: {from, subject, snippet}; clientDoms: {Brand: "domain.com"}; clientNames: [Brand,...]
+export function classifyInbound(msg, clientDoms, opts) {
+  opts = opts || {};
+  const from = String(msg.from || ''), text = (String(msg.subject || '') + ' ' + String(msg.snippet || ''));
+  if ((opts.selfRe && opts.selfRe.test(from)) || INTERNAL_RE.test(from) || NOISE_RE.test(from + ' ' + String(msg.subject || ''))) {
+    return { client: '', briefable: false, score: 0, hints: ['noise/self'] };
+  }
+  const client = detectClient(msg, clientDoms, opts.clientNames || Object.keys(clientDoms || {}));
+  const hints = [];
+  let score = 0;
+  for (const [re, label] of ACTION_RES) { if (re.test(text)) { score++; hints.push(label); } }
+  const feedy = FEED_RE.test(text);
+  if (feedy) { score++; hints.push('feed-related'); }
+  // briefable = a real ask: at least two action signals, or one + feed vocabulary + a known client
+  const briefable = score >= 3 || (score >= 2 && (feedy || !!client));
+  return { client, briefable, score, hints: hints.slice(0, 5) };
 }
 
 // briefs: the plain briefs map (will be mutated); messages: [{id, from, subject, snippet, date(ms)}]
@@ -71,7 +157,7 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     if (selfRe && selfRe.test(from)) { skipped++; continue; }        // our own outgoing brief
     const text = (String(msg.subject || '') + ' ' + String(msg.snippet || '')).trim();
     if (!text) { skipped++; continue; }
-    const b = findBrief(briefs, text);
+    const b = findBrief(briefs, msg.subject, msg.snippet);
     if (!b) { skipped++; continue; }
     b.comms = b.comms || [];
     if (msg.id && b.comms.some((c) => c.mid === msg.id)) { skipped++; continue; }   // already logged
