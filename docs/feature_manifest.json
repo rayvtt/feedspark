@@ -546,6 +546,7 @@
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "Feed markets (",
       "pr": 133
-    }
+    },
+    { "name": "Workflow: email-task adoption into the plan (write-back)", "file": "docs/FeedSpark_Workflow.html", "pattern": "adoptIntoPlan", "min": 3, "pr": 132 }
   ]
 }

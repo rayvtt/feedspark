@@ -986,6 +986,8 @@ window.addEventListener('load',restore);
     b.id=id; b.client=o.f.client; b.code=code(o.f.client,o.f.market); b.task=o.f.task; b.scope=o.f.scope;
     b.dod=o.f.dod; b.assets=o.f.assets; b.due=isoToDDMMYYYY(o.f.dueIso); b.source=o.f.source; b.priority=o.f.priority;
     b.subject=o.subj; b.body=o.body; b.updated=Date.now();
+    // an email-sourced task briefed against a brand becomes a real plan row (write-back included)
+    if(o.f.source==='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due);
     // tie the ticket to its plan row: the prefill link if it still matches, else auto-match on task wording
     var lk=window.__linkKey; if(lk&&lk.split('|')[0]!==o.f.client)lk=null;
     if(!lk){ var cand=allIntake().filter(function(r){ return r.client===o.f.client&&sameTask(r.task,o.f.task); }); if(cand.length)lk=rowKey(cand[0]); }
@@ -1074,10 +1076,28 @@ window.addEventListener('load',restore);
     var e=/([^@<\s]+)@/.exec(from||''); return e?e[1]:(from||'—'); }
   function emailIntake(){ // email-sourced BRIEFS still at intake stage. Raw captured emails never
     // enter the tracker — they wait in the triage panel until briefed or dismissed (Ray's rule:
-    // each email is either a task or not a task, so don't mix them with tasks).
+    // each email is either a task or not a task, so don't mix them with tasks). Briefs adopted
+    // into a plan (taskKey set) drop out too — their plan row shows with the ticket chip instead.
     return Object.keys(BRIEFS).map(function(k){return BRIEFS[k];})
-      .filter(function(b){return b.source==='email'&&b.status==='intake';})
+      .filter(function(b){return b.source==='email'&&b.status==='intake'&&!b.taskKey;})
       .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email',s:'',b:'open'};}); }
+  // adopt an email-sourced task into the brand's project plan — the SAME pipeline as ＋ Add task:
+  // optimistic local row + /api/sheets/append write-back, duplicate-guarded against existing plan rows.
+  function adoptIntoPlan(client,task,status,dueDD,owner){
+    if(CLIENTS.indexOf(client)<0)return false;
+    var exists=planTasks().some(function(p){ return p.client===client&&sameTask(p.task,task); })
+      || MANUAL.some(function(m){ return m.client===client&&sameTask(m.task,task); });
+    if(exists)return false;
+    var due=(dueDD&&String(dueDD).length===8)?(dueDD.slice(0,2)+'/'+dueDD.slice(2,4)+'/'+dueDD.slice(4,8)):'';
+    MANUAL.push({client:client,task:task,owner:owner||'',status:status||'Open',due:due}); saveManual(); _planCache=null;
+    var id=PLANSHEET[client];
+    if(id){ toast('Adding to '+client+'’s plan…');
+      fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
+          body:JSON.stringify({id:id,tab:'Project Plan',rows:[{task:task,owner:owner||'',status:status||'Open',due:due}]})})
+        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok&&LIVE[client])setTimeout(function(){fetchLive(true);},800); })
+        .catch(function(){ toast('Saved locally — plan write failed (check the SA has Editor access)'); });
+    } else toast('Added to '+client+' locally · no plan sheet linked to write back');
+    return true; }
   // ---- manually-added tasks: written into the plan sheet, shown here until live sync pulls them back ----
   var MANUAL=[]; try{MANUAL=JSON.parse(localStorage.getItem('fcc-manual')||'[]');}catch(e){}
   function saveManual(){ try{localStorage.setItem('fcc-manual',JSON.stringify(MANUAL));}catch(e){} }
@@ -1440,7 +1460,9 @@ window.addEventListener('load',restore);
         taskKey:rowKey(t),client:t.client,code:c,task:t.task,
         scope:(ln&&ln.s)||(tpl.s+TWO_STREAMS),dod:(ln&&ln.d)||tpl.d,assets:(ln&&ln.a)||'—',
         due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
-        source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++; markBriefed(t); });
+        source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++;
+      if(t.source==='email') adoptIntoPlan(t.client,t.task,'Briefed',BRIEFS[id].due);   // bulk-briefed email tasks join the plan too
+      markBriefed(t); });
     itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline · marked Briefed'); }
   // SOURCE stays a compact chip bar (4 options): empty selection = all; the "All" chip clears the set
   function renderChipBar(id, opts, key){
@@ -2157,13 +2179,15 @@ window.addEventListener('load',restore);
   // this button shouldn't jump into the brief composer the way project-plan rows' Brief does).
   function saveEmailAsTask(g){
     // client comes from detection only (domain / display-name / brand-mention cues, resolved
-    // server-side and back-filled) — the sender belongs in the TASK NAME, never in the Client field
-    MANUAL.push({client:g.client||'',task:g.subject+' — from '+senderName(g.from),owner:senderName(g.from),status:'Open',due:''});
-    saveManual();
+    // server-side and back-filled) — the sender belongs in the TASK NAME, never in the Client field.
+    // A recognised brand goes through adoptIntoPlan: the row reaches the brand's plan SHEET
+    // (append write-back + live re-pull), not just the local tracker.
+    var task=g.subject+' — from '+senderName(g.from);
+    if(g.client&&CLIENTS.indexOf(g.client)>=0){ adoptIntoPlan(g.client,task,'Open','',senderName(g.from)); }
+    else { MANUAL.push({client:g.client||'',task:task,owner:senderName(g.from),status:'Open',due:''}); saveManual();
+      toast('Saved to Intake — client not recognised, edit the row to assign one'); }
     decideEmail(g.id,false,'task');
     renderAll();
-    toast(g.client?'Saved to Intake as a '+g.client+' task — draft the brief from there when ready'
-      :'Saved to Intake — client not recognised, edit the row to assign one');
   }
   function updateGmailState(){ var st=document.getElementById('gstate'); if(!st||!gmailItems.length)return;
     var pend=gmailItems.filter(function(g){return !g.dismissed;}),
