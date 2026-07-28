@@ -146,7 +146,7 @@ window.addEventListener('load',restore);
     background:#FEF3E2;color:var(--orange-ink);border:1px solid rgba(237,111,11,.3);opacity:0;pointer-events:none;white-space:nowrap;will-change:transform}
   .achip.fly{animation:fl-fly .74s cubic-bezier(.25,.55,.35,1) forwards}
   @keyframes fl-fly{0%{transform:translate(0,0) scale(.55);opacity:0}14%{opacity:1}82%{opacity:1}100%{transform:translate(var(--dx,0px),var(--dy,70px)) scale(.95);opacity:0}}
-  .scan-bars{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(148px,100%),1fr));gap:8px 12px}
+  .scan-bars{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(132px,100%),1fr));gap:8px 12px} /* 132px floor → all 8 bars sit on one desktop row */
   .sbar .sl{display:flex;justify-content:space-between;gap:6px;font-size:10.5px;font-weight:800;color:var(--ink-2);margin-bottom:4px}
   .sbar .sp{font-variant-numeric:tabular-nums;color:var(--muted)}
   .sbar .st{height:9px;border-radius:100px;background:#EFEFEC;overflow:hidden;transition:box-shadow .25s}
