@@ -519,7 +519,7 @@
       "name": "FeedLab: uniform reservoir sample (head-biased audits banned)",
       "file": "docs/FeedSpark_FeedLab.html",
       "pattern": "Algorithm R",
-      "pr": 111
+      "pr": 117
     }
   ]
 }
