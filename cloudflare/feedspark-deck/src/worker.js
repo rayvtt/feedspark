@@ -1143,7 +1143,13 @@ function getEditorScript(slug) {
 
   var warnEl=document.createElement('div'); warnEl.className='de-warn'; warnEl.hidden=true;
   document.body.appendChild(warnEl);
-  function showWarn(html){ warnEl.innerHTML=html; warnEl.hidden=false; }
+  // This banner sits at the highest z-index on the page (by design — a save failure has to be
+  // impossible to miss) and pins to top:0, exactly where .topbar slides in on scroll. Without an
+  // explicit close it had no way to end: e.g. a standalone offline export (no backend to fetch
+  // from) always fires the "could not load saved edits" message, permanently covering the topbar
+  // and blocking the very Download HTML button someone would use to save their work.
+  function showWarn(html){ warnEl.innerHTML=html+'<button class="de-w-x" title="Dismiss" aria-label="Dismiss">&#10005;</button>';
+    warnEl.hidden=false; warnEl.querySelector('.de-w-x').onclick=hideWarn; }
   function hideWarn(){ warnEl.hidden=true; }
   var NOT_SAVED='&#9888; <b>NOT SAVED</b> &mdash; the server rejected the save (you are probably signed out of Cloudflare Access). '
     + 'Your changes are kept locally &mdash; <b>sign in again and reload</b>, then click Restore. Do not close this tab.';
@@ -1226,6 +1232,7 @@ function getEditorScript(slug) {
     + '.de-warn{position:fixed;top:0;left:0;right:0;z-index:100000;background:#C0392B;color:#fff;font:13px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;padding:10px 16px;box-shadow:0 2px 12px rgba(0,0,0,.25);text-align:center}'
     + '.de-warn[hidden]{display:none}'
     + '.de-warn button{margin-left:8px;background:#fff;color:#C0392B;border:0;border-radius:6px;padding:5px 11px;font:inherit;font-weight:800;cursor:pointer}'
+    + '.de-w-x{position:absolute;right:10px;top:50%;transform:translateY(-50%);margin-left:0!important;padding:2px 9px!important;background:rgba(255,255,255,.25)!important;color:#fff!important}'
     + '.de-warn button:hover{background:#FFE9E5}'
     // Present mode: mostly the chrome the print stylesheet already hides (topbar, editor UI),
     // live on-screen and toggle-able — for screen-sharing the deck without Ray's own tooling in
@@ -1481,12 +1488,18 @@ function getEditorScript(slug) {
     if(skipped) showWarn('&#9888; <b>'+skipped+' saved deletion'+(skipped===1?' was':'s were')+' skipped</b> &mdash; '
       + 'they no longer match the content they removed (the template changed underneath them), so they were NOT replayed. '
       + 'Nothing has been deleted from your page. Use &#129529; Reset page to clear them for good.'); })
-    .catch(function(){
+    .catch(function(e){
       // Used to be a silent catch — a failed load rendered the clean git template, which is
       // visually identical to "all my work is gone". Say so instead, and warn before editing
-      // on top of a state that will not save.
-      showWarn('&#9888; <b>Could not load your saved edits</b> &mdash; you may be signed out of Cloudflare Access. '
-        + 'This page is showing the ORIGINAL template, not your version. <b>Sign in and reload before editing.</b>');
+      // on top of a state that will not save. But not every failure is Access: a standalone
+      // offline export (no backend at API at all, e.g. opened via file://) fails here on every
+      // load by design, and blaming a nonexistent login was just noise on a page where the
+      // "sign in and reload" instruction is impossible to follow.
+      var offline = !API && (location.protocol==='file:' || (e&&/fetch/i.test(e.message||'')));
+      showWarn(offline
+        ? '&#9888; <b>Working offline</b> &mdash; this standalone copy has no saved-edit server to load from, so it is showing the template as downloaded. Use &#8681; Download HTML to save a new checkpoint.'
+        : '&#9888; <b>Could not load your saved edits</b> &mdash; you may be signed out of Cloudflare Access. '
+          + 'This page is showing the ORIGINAL template, not your version. <b>Sign in and reload before editing.</b>');
     }); }
 
   // ---- row drag-and-drop reordering — works even in presentation mode (bar hidden),
