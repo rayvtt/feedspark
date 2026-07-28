@@ -72,6 +72,28 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
+// client -> Project Plan Google Sheet id. Mirrors FeedSpark_Workflow.html's client-side
+// PLANSHEET map (used there for the "+ Add task" row and status/owner/due write-back) —
+// duplicated rather than fetched at runtime so /api/tasks/ingest works with zero round trips
+// beyond the sheet write itself. Keep both in sync when a client is added or a sheet moves.
+const PLAN_SHEETS = {
+  'Reiss': '1hGcpxaTYVax4hB_nLYCMlol7sIi3qqF0xQgJGjIgZSg',
+  'Schuh': '1rbr8FwZagdZdctR_fNesixm4-uDWG1VJPnBCJBdjSxc',
+  'Superdry': '16Sn9HB56eaNytr7pM3sY0aJTRhK-I-RpNr84EQ36KMI',
+  'Accessorize': '1SM52DXN3ecY5EDCIIqlRPONSmxkFvOM1xaeDrMlJ79w',
+  'Monsoon': '1SM52DXN3ecY5EDCIIqlRPONSmxkFvOM1xaeDrMlJ79w',
+  'Hobbycraft': '1oHdoFO4gazfhQZM6rp1fl5pWlDRVzr8t_THquU861fg',
+  'YuMOVE': '1RMTN99Cw0J3l5mORwYPpITnoi5HCPt7tET4u8rQbsq0',
+  'Ryobi': '1WofQrZ6igucGIvGnUOLgBiXP7MqK-7ZtG8Xt4LLaA1E',
+  'Estée Lauder': '1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+  'Bobbi Brown': '1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+  'Benefit': '1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+  'Clinique': '1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+  'MAC': '1KWrB4IpHGRUnlhVjWP4hpyhpBGs5c-JM_cBa7mj6J0Y',
+  'Jo Malone': '1m99-z1R4FI4Iw86I6P8TyLY7G-Td9sh2vNjy-y95UMc',
+  'House of Bruar': '1lgO-SrzWtHmsvKRXg2Xgzq3d7fCwv5V2Fauu6pJgYOA',
+};
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -767,35 +789,38 @@ export default {
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
       const id = body.id, tab = body.tab || 'Project Plan', rows = body.rows || [];
       if (!id || !rows.length) return json({ ok: false, error: 'missing id / rows' }, 400);
-      try {
-        const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
-        let realTab = await resolveTab(id, tab, token);
-        let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
-        let rd = await rr.json();
-        if (rd.error) { // tab name varies — fall back to the first sheet
-          rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent('A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
-          rd = await rr.json(); realTab = '';
-        }
-        if (rd.error) return json({ ok: false, error: rd.error.message });
-        const grid = rd.values || [];
-        const c = resolveCols(grid);
-        const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
-        const oc = c.ownerCol, sc = c.statusCol, dc = c.dueCol;
-        const width = Math.max(tc, oc, sc, dc, 0) + 1;
-        const values = rows.map(r => { const a = new Array(width).fill(''); a[tc] = r.task || ''; if (oc >= 0) a[oc] = r.owner || ''; if (sc >= 0) a[sc] = r.status || 'Open'; if (dc >= 0 && r.due) a[dc] = r.due; return a; });
-        // find the LAST row that has any content and write directly below it — the values:append
-        // API mis-detects the table on multi-block plan layouts and drops rows at the top.
-        let lastRow = 0; for (let r = 0; r < grid.length; r++) { if ((grid[r] || []).some(x => String(x || '').trim() !== '')) lastRow = r; }
-        const startRow = lastRow + 2; // 1-based row just after the last content row
-        const range = (realTab ? realTab + '!' : '') + 'A' + startRow;
-        const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(range) + '?valueInputOption=USER_ENTERED', {
-          method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values }) });
-        const wd = await wr.json();
-        if (wd.error) return json({ ok: false, error: permHint(wd.error.message) });
-        try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
-        return json({ ok: true, appended: values.length, tab: realTab || '(first sheet)', atRow: startRow,
-          cols: { task: colLetter(tc), owner: oc >= 0 ? colLetter(oc) : null, status: sc >= 0 ? colLetter(sc) : null, due: dc >= 0 ? colLetter(dc) : null } });
-      } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
+      return json(await appendPlanRows(env, id, tab, rows));
+    }
+
+    // ---- task ingestion (no-admin path): lets a trusted automation — a Claude Code session
+    // with no browser, same problem the Gmail Apps Script has — push new Project-Plan tasks
+    // for a client without an Access login. Same shape as /api/gmail/push: a shared secret
+    // instead of a session, and this exact path needs its own Cloudflare Access BYPASS policy
+    // (docs/GOOGLE_SETUP.md). Delegates to appendPlanRows — the exact same write /api/sheets/
+    // append uses — so an ingested task lands identically to one typed into the Workflow's own
+    // "+ Add task" row; no separate write path to drift from that one.
+    // PLAN_SHEETS mirrors FeedSpark_Workflow.html's client-side PLANSHEET map — keep both in
+    // sync; a client missing here fails closed (400) rather than guessing a sheet id.
+    if (path === '/api/tasks/ingest' && request.method === 'POST') {
+      if (!env.TASKS_INGEST_KEY) return json({ ok: false, error: 'ingest key not configured — wrangler secret put TASKS_INGEST_KEY' }, 503);
+      if (request.headers.get('X-FCC-Ingest-Key') !== env.TASKS_INGEST_KEY) return json({ ok: false, error: 'unauthorized' }, 401);
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' }, 503);
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const client = String(body.client || '');
+      const id = PLAN_SHEETS[client];
+      if (!id) return json({ ok: false, error: 'unknown client "' + client + '" — add it to PLAN_SHEETS in worker.js and PLANSHEET in FeedSpark_Workflow.html' }, 400);
+      const tasks = Array.isArray(body.tasks) ? body.tasks.slice(0, 100) : [];
+      if (!tasks.length) return json({ ok: false, error: 'missing tasks' }, 400);
+      const rows = tasks.map((t) => ({
+        task: String((t && t.task) || '').slice(0, 300),
+        owner: String((t && t.owner) || '').slice(0, 60),
+        status: String((t && t.status) || 'Open').slice(0, 30),
+        due: (t && t.due) ? String(t.due).slice(0, 20) : '',
+      })).filter((r) => r.task);
+      if (!rows.length) return json({ ok: false, error: 'no task text on any row' }, 400);
+      const r = await appendPlanRows(env, id, 'Project Plan', rows);
+      logActivity(ctx, env, request, 'tasks-ingest', client + ': ' + rows.length + (r.ok ? ' added' : ' failed — ' + r.error));
+      return json({ ...r, client });
     }
 
     // ---- undo an ATRT->plan write: delete the rows whose task matches a written task ----
@@ -990,6 +1015,41 @@ function monthOf(s) { // detect a "month separator" label like "July-26", "Jun 2
 }
 // a non-white cell fill = a section separator (blue/grey header), NOT a task (Ray's rule)
 function isFilled(rgb) { return !!rgb && Math.min(rgb[0], rgb[1], rgb[2]) < 0.93; }
+// Shared by /api/sheets/append (human, via the Workflow's own "+ Add task" row) and
+// /api/tasks/ingest (a trusted automation, key-gated) — one write path so both land rows
+// identically instead of two implementations quietly drifting apart.
+async function appendPlanRows(env, id, tab, rows) {
+  try {
+    const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
+    let realTab = await resolveTab(id, tab, token);
+    let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+    let rd = await rr.json();
+    if (rd.error) { // tab name varies — fall back to the first sheet
+      rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent('A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+      rd = await rr.json(); realTab = '';
+    }
+    if (rd.error) return { ok: false, error: rd.error.message };
+    const grid = rd.values || [];
+    const c = resolveCols(grid);
+    const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
+    const oc = c.ownerCol, sc = c.statusCol, dc = c.dueCol;
+    const width = Math.max(tc, oc, sc, dc, 0) + 1;
+    const values = rows.map(r => { const a = new Array(width).fill(''); a[tc] = r.task || ''; if (oc >= 0) a[oc] = r.owner || ''; if (sc >= 0) a[sc] = r.status || 'Open'; if (dc >= 0 && r.due) a[dc] = r.due; return a; });
+    // find the LAST row that has any content and write directly below it — the values:append
+    // API mis-detects the table on multi-block plan layouts and drops rows at the top.
+    let lastRow = 0; for (let r = 0; r < grid.length; r++) { if ((grid[r] || []).some(x => String(x || '').trim() !== '')) lastRow = r; }
+    const startRow = lastRow + 2; // 1-based row just after the last content row
+    const range = (realTab ? realTab + '!' : '') + 'A' + startRow;
+    const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(range) + '?valueInputOption=USER_ENTERED', {
+      method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values }) });
+    const wd = await wr.json();
+    if (wd.error) return { ok: false, error: permHint(wd.error.message) };
+    try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
+    return { ok: true, appended: values.length, tab: realTab || '(first sheet)', atRow: startRow,
+      cols: { task: colLetter(tc), owner: oc >= 0 ? colLetter(oc) : null, status: sc >= 0 ? colLetter(sc) : null, due: dc >= 0 ? colLetter(dc) : null } };
+  } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
+}
+
 // read a tab's values AND per-cell background colour (needed to tell separators from tasks)
 // Writes must land on the tab the reads came from: exact name -> case-insensitive ->
 // first tab containing "plan" -> the sheet's first tab (mirrors fetchGrid's read fallback).
