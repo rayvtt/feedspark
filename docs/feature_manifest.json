@@ -818,26 +818,26 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "House of Bruar",
       "min": 2,
-      "pr": 160
+      "pr": 163
     },
     {
       "name": "worker: /api/feed/clients roster bootstrap",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "api/feed/clients",
-      "pr": 160
+      "pr": 163
     },
     {
       "name": "CmdCenter: dossier merges master-sheet wired feed markets (FEEDWIRED)",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "FEEDWIRED",
       "min": 5,
-      "pr": 160
+      "pr": 163
     },
     {
       "name": "FeedLab: selector bootstraps from /api/feed/clients",
       "file": "docs/FeedSpark_FeedLab.html",
       "pattern": "api/feed/clients",
-      "pr": 160
+      "pr": 163
     }
   ]
 }
