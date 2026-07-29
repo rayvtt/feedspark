@@ -1263,11 +1263,19 @@ async function resolveTab(id, tab, token) {
 function tabAmbiguous(id, tab) { return { ok: false, error: 'Could not find a single "' + tab + '"-like tab in this sheet (' + id + ') — it has several tabs and none match by name or contain "plan". Rename the intended tab to include "Plan", or the write risks landing on the wrong one.' }; }
 function permHint(m) { return /permission|forbidden/i.test(String(m)) ? (m + ' — the service account can read but not write: open the sheet\u2019s Share dialog and change its access from Viewer to Editor') : m; }
 async function fetchGrid(id, tab, token) {
+  // includeGridData returns a formatting object PER CELL (not sparse like values.get), so its
+  // column width must stay tight: parsePlanRows/resolveCols only ever look within the first ~14
+  // columns (Task/Owner/Prio/Status/Due). Widening this call's columns the way the write-path
+  // values.get calls safely were (A1:ZZ5000, 702 cols) blew the payload up ~27x on a client whose
+  // sheet genuinely has 100+ week-tracking columns (Reiss) — for zero functional benefit, since
+  // none of those columns are ever read — and is the likely reason its live sync stopped working
+  // right after that change. Rows still get a generous 5x bump (600 → 3000) for real depth.
+  const GRID_RANGE = 'A1:Z3000';
   const fields = 'sheets(properties(title),data(rowData(values(formattedValue,effectiveFormat(backgroundColor)))))';
   const tryRange = async range => (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '?ranges=' + encodeURIComponent(range) + '&includeGridData=true&fields=' + encodeURIComponent(fields), { headers: { Authorization: 'Bearer ' + token } })).json();
-  let d = await tryRange((tab ? tab + '!' : '') + 'A1:ZZ5000');
-  if (d.error && tab) { const best = await resolveTab(id, tab, token); if (best && best !== tab) d = await tryRange(best + '!A1:ZZ5000'); }
-  if (d.error && tab) d = await tryRange('A1:ZZ5000'); // last resort — the first sheet
+  let d = await tryRange((tab ? tab + '!' : '') + GRID_RANGE);
+  if (d.error && tab) { const best = await resolveTab(id, tab, token); if (best && best !== tab) d = await tryRange(best + '!' + GRID_RANGE); }
+  if (d.error && tab) d = await tryRange(GRID_RANGE); // last resort — the first sheet
   if (d.error) return { error: d.error.message };
   const sheet = (d.sheets || [])[0];
   const rowData = (sheet && sheet.data && sheet.data[0] && sheet.data[0].rowData) || [];
