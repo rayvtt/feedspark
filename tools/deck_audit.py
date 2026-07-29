@@ -57,6 +57,21 @@ METRIC_WORDS = {
     'feed': ['feed', 'feeds'],
 }
 
+# Copy that talks about building the deck, or to the FeedSpark side, instead of to the
+# client. The Reiss deck was PRESENTED carrying "worth flagging to Ray as either a real
+# scope gap...", "Ray confirmed this wave is scoped to...", "not the wider 30-market list an
+# earlier version of this chapter carried", "Assumptions flagged for Ray to confirm" and
+# "Rate and total cost need Ray to confirm". Every one of those is build-process talk that a
+# client should never read, and none of it is catchable by any structural or numeric check.
+INTERNAL_VOICE = [
+    r'\bflag(?:ged|ging)? (?:to|for) \w+ to confirm', r'\bworth flagging to\b',
+    r'\bneeds? \w+ to confirm\b', r'\b\w+ confirmed (?:this|that|the)\b',
+    r'earlier version of this (?:chapter|deck|slide)', r'\bthis chapter (?:carried|had)\b',
+    r'\bsilently (?:removed|dropped)\b', r'\bkept visible here\b',
+    r'\bplaceholder\b', r'\bTODO\b', r'\bFIXME\b', r'\blorem ipsum\b',
+    r'\bwe (?:should|need to|must) (?:add|check|confirm|verify)\b',
+]
+
 BACKREF_PATTERNS = [
     r'the audit found', r'the feed audit', r'as (?:shown|noted|set out) (?:above|below|in)',
     r'(?:detailed|covered|explained) (?:separately )?in', r'\bsee chapter\b',
@@ -92,8 +107,11 @@ def check_crossrefs(chapters, full_text):
     """Every 'chapter N' / 'chapters N-M' resolves, printed with the title it points at."""
     by_num = {c['num']: c for c in chapters}
     findings, resolved = [], []
-    singular = re.compile(r'\b[Cc]hapters?\s+0?(\d{1,2})\b')
-    plural = re.compile(r'\b[Cc]hapters\s+0?(\d{1,2})\s*[–-]\s*0?(\d{1,2})\b')
+    # the abbreviated forms matter: a "(ch.07)" in the Reiss deck pointed at a chapter that
+    # had been deleted, and survived every pass because the first version of this regex
+    # required whitespace after the word "chapter" and so never saw it at all
+    singular = re.compile(r'\b(?:[Cc]hapters?|[Cc]h\.?)\s*0?(\d{1,2})\b')
+    plural = re.compile(r'\b(?:[Cc]hapters|[Cc]h\.?)\s*0?(\d{1,2})\s*[–-]\s*0?(\d{1,2})\b')
 
     seen_spans = []
     for m in plural.finditer(full_text):
@@ -215,11 +233,20 @@ def check_crossref_aim(chapters, xref_ok):
     OTHER chapter's title strictly better than the one it names, say so.
     """
     titles = {c['num']: significant(c['title']) for c in chapters}
+    by_pos = {}
+    for c in chapters:
+        by_pos[c['num']] = c
     out = []
     for ref, _, ctx in xref_ok:
         nums = [int(n) for n in re.findall(r'\d{1,2}', ref)]
         if len(nums) == 2:
             nums = list(range(nums[0], nums[1] + 1))
+        # a range that swallows the chapter it is written in — "the attribute build in
+        # chapters 08-10", written inside chapter 8, which is not part of that build
+        host = next((c['num'] for c in chapters if ctx.strip()[:60] in c['text']), None)
+        if host is not None and host in nums and len(nums) > 1:
+            out.append(('RANGE INCLUDES ITS OWN CHAPTER?',
+                        '%s appears inside ch%d, which the range covers' % (ref, host), ctx))
         words = significant(ctx) - set()
         scores = {n: len(words & t) for n, t in titles.items()}
         named = max((scores.get(n, 0) for n in nums), default=0)
@@ -233,6 +260,20 @@ def check_crossref_aim(chapters, xref_ok):
                                 '; '.join(next(c['title'] for c in chapters if c['num'] == w)
                                           for w in winners)),
                             ctx))
+    return out
+
+
+def check_internal_voice(chapters):
+    """Build-process talk that reached client-facing copy. A HARD failure: unlike a number
+    a human might legitimately want to keep, there is no version of a client deck where
+    "Assumptions flagged for Ray to confirm" is correct."""
+    out = []
+    pat = re.compile('|'.join(INTERNAL_VOICE), re.I)
+    for ch in chapters:
+        for m in pat.finditer(ch['text']):
+            ctx = re.sub(r'\s+', ' ', ch['text'][max(0, m.start() - 90):m.end() + 110]).strip()
+            out.append(('INTERNAL COPY IN CLIENT DECK', 'ch%d: "%s"' % (ch['num'], m.group(0)),
+                        ctx))
     return out
 
 
@@ -281,6 +322,7 @@ def main():
     xref_bad, xref_ok = check_crossrefs(chapters, full_text)
     hard += xref_bad
     hard += check_anchors(soup, chapters)
+    hard += check_internal_voice(chapters)
 
     soft = (check_numbers(chapters) + check_crossref_aim(chapters, xref_ok)
             + check_backrefs(chapters) + check_orphan_figures(chapters))
