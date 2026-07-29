@@ -25,10 +25,9 @@
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
-import { matchGmailToBriefs, classifyInbound, detectClient } from "./briefmatch.js";
+import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx } from "./briefmatch.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
-import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
 import ROADMAP from "../../../docs/FeedSpark_Roadmap.html";
 import READINESS from "../../../docs/FeedSpark_Readiness.html";
@@ -42,7 +41,14 @@ import DECK_SUPERDRY from "../../../docs/Superdry_Strategy_Review_AllTime.html";
 // Tachyon copilot widget (style + script fragment). Injected on the app pages only —
 // never on client-facing decks. Reads window.PLANTASKS and calls /api/claude.
 import TACHYON from "../../../docs/tachyon_widget.html";
+// FCC-INSTR: collapsible-instructions widget — injected on app pages only (never decks),
+// so every module's explainer subtext folds behind a ⓘ by default
+import INSTR from "../../../docs/instr_collapse.html";
 import FEEDLAB from "../../../docs/FeedSpark_FeedLab.html";
+import PRICER from "../../../docs/FeedSpark_Pricer.html";
+// Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
+// node tests share the file, same pattern as the Feed Lab engine)
+import PRICER_ENGINE from "../../../docs/pricer_engine.js";
 // the Feed Lab audit engine, bundled verbatim (wrangler Text rule) and served at
 // /feedlab/engine.js so the page and its node tests run the exact same code
 import FEEDLAB_ENGINE from "../../../docs/feedlab_engine.js";
@@ -52,7 +58,6 @@ import FEEDLAB_ENGINE from "../../../docs/feedlab_engine.js";
 const PAGES = {
   '/':            { html: LANDING,     slug: 'home' },
   '/index.html':  { html: LANDING,     slug: 'home' },
-  '/templates':   { html: TEMPLATES,   slug: 'templates' },
   '/library':     { html: TASKLIB,     slug: 'library' },
   '/roadmap':     { html: ROADMAP,     slug: 'roadmap' },
   '/readiness':   { html: READINESS,   slug: 'readiness' },
@@ -61,6 +66,7 @@ const PAGES = {
   '/activity':    { html: ACTIVITY,    slug: 'activity' },   // owner-gated in fetch() before this map is consulted; Build Log lives on its 🔨 tab
   '/workflow':    { html: WORKFLOW,    slug: 'workflow' },
   '/feedlab':     { html: FEEDLAB,     slug: 'feedlab' },
+  '/pricer':      { html: PRICER,      slug: 'pricer' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
@@ -109,7 +115,7 @@ export default {
     if (request.method === 'PUT' || request.method === 'POST') {
       const ACT = { '/api/edits': 'edit', '/api/feedback': 'feedback', '/api/clients': 'dossier-save',
         '/api/briefs': 'briefs-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
-        '/api/feed/audit': 'feed-audit' };
+        '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -296,12 +302,12 @@ export default {
       const envx = liftEnvelope(await env.EDITS.get('briefs', 'json'), now);
       const briefs = envelopeToClient(envx, {});
       const selfSrc = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
-      const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'] });
-      if (res.matched) {
+      const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'], repair: true });   // ibfref repair self-heals mis-filed replies as the rolling window re-pushes
+      if (res.matched || (res.repaired && res.repaired.length)) {
         mergeIntoEnvelope(envx, briefs, now, now, {});   // full map present → pure upserts, no deletions
         await env.EDITS.put('briefs', JSON.stringify(envx));
       }
-      logActivity(ctx, env, request, 'gmail-sync', res.matched + ' matched · ' + res.moved.length + ' moved', 'gmail-sync');
+      logActivity(ctx, env, request, 'gmail-sync', res.matched + ' matched · ' + res.moved.length + ' moved' + ((res.repaired && res.repaired.length) ? (' · ' + res.repaired.length + ' repaired') : ''), 'gmail-sync');
       // rolling run history for the Activity page's Gmail-sync panel (last 60 runs)
       try {
         const runlog = (await env.EDITS.get('gmailpushlog', 'json')) || [];
@@ -343,20 +349,47 @@ export default {
     // small audit JSON back here for caching. Feeds refresh daily upstream; the page
     // re-scans when the cached audit is older than 20h.
 
-    // brands whose live feed is wired in code until the dossier carries a `feed` URL
-    const DEFAULT_FEEDS = { Reiss: { id: '1KTx9ONZSju_DD06V3F7p958LfzAL0ccJJFXPf5NpLCw', gid: '0' } };
-    const feedSourceFor = async (client) => {
-      if (!client) return null;
-      try {
+    // brands whose live feed is wired in code until the dossier carries feed URLs.
+    // MULTI-MARKET: a dossier record may carry `feeds` = { gb: url, de: url, ... } (managed
+    // from the Feed Lab portal or the CC dossier); the legacy single `feed` field doubles as
+    // the 'gb' market. Market codes are 2-6 chars, lowercased.
+    const DEFAULT_FEEDS = { Reiss: { gb: { id: '1KTx9ONZSju_DD06V3F7p958LfzAL0ccJJFXPf5NpLCw', gid: '0' } } };
+    const mktOf = (raw) => String(raw || 'gb').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 6) || 'gb';
+    const sheetRef = (u) => {
+      const m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(String(u || ''));
+      if (!m) return null;
+      const g = /[#?&]gid=(\d+)/.exec(String(u));
+      return { id: m[1], gid: (g && g[1]) || '0' };
+    };
+    const feedMarketsFor = async (client) => {   // { mkt: {id,gid} } for every attached market
+      const out = {};
+      const dft = DEFAULT_FEEDS[client] || {};
+      Object.keys(dft).forEach((k) => { out[k] = dft[k]; });
+      if (client) try {
         const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
-        const rec = dossier[client];
-        if (rec && rec.feed) {
-          const m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(String(rec.feed));
-          if (m) { const g = /[#?&]gid=(\d+)/.exec(String(rec.feed)); return { id: m[1], gid: (g && g[1]) || '0' }; }
+        const rec = dossier[client] || {};
+        if (rec.feed) { const r = sheetRef(rec.feed); if (r) out.gb = r; }   // legacy single feed = gb
+        if (rec.feeds && typeof rec.feeds === 'object') {
+          Object.keys(rec.feeds).forEach((mk) => { const r = sheetRef(rec.feeds[mk]); if (r) out[mktOf(mk)] = r; });
         }
       } catch (e) {}
-      return DEFAULT_FEEDS[client] || null;
+      return out;
     };
+    const feedSourceFor = async (client, market) => (await feedMarketsFor(client))[mktOf(market)] || null;
+
+    // ---- Tachyon Pricer: collaborative rate card + saved quotes (kvmerge = every team
+    // edits the same numbers concurrency-safe; edits are activity-logged per Access user) ----
+    if (path === '/api/tachyon/rates') {
+      const r = await mapStoreRoute(env, request, 'tachyonrates', {});
+      if (r) return r;
+    }
+    if (path === '/api/tachyon/quotes') {
+      const r = await mapStoreRoute(env, request, 'tachyonquotes', {});
+      if (r) return r;
+    }
+    if (path === '/pricer/engine.js' && request.method === 'GET') {
+      return new Response(PRICER_ENGINE, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
 
     // the engine, served verbatim so the page and node tests share one file
     if (path === '/feedlab/engine.js' && request.method === 'GET') {
@@ -367,8 +400,8 @@ export default {
     // is in the dossier or DEFAULT_FEEDS resolve; the sheet id itself never comes from the query)
     if (path === '/api/feed/proxy' && request.method === 'GET') {
       const client = url.searchParams.get('client') || '';
-      const src = await feedSourceFor(client);
-      if (!src) return json({ error: 'no feed sheet linked for this client - attach one in the brand dossier' }, 404);
+      const src = await feedSourceFor(client, url.searchParams.get('market'));
+      if (!src) return json({ error: 'no feed sheet linked for this client/market - attach one in Feed Lab or the brand dossier' }, 404);
       const up = await fetch('https://docs.google.com/spreadsheets/d/' + src.id + '/export?format=csv&gid=' + src.gid);
       // a non-link-shared sheet 307s to Google's LOGIN PAGE with a 200 — final content-type is
       // the only reliable tell. Never forward content-length: Google gzips, the header counts
@@ -380,31 +413,57 @@ export default {
       return new Response(up.body, { headers: { 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store' } });
     }
 
-    // cached audit JSON per client (+ a daily score history the page charts)
+    // the portal's one-call bootstrap: every attached market + its cached audit summary
+    if (path === '/api/feed/markets' && request.method === 'GET') {
+      const client = (url.searchParams.get('client') || '').slice(0, 60);
+      if (!client || client.indexOf(':') >= 0) return json({ error: 'bad client' }, 400);
+      const mkts = await feedMarketsFor(client);
+      const idx = (await env.EDITS.get('feedmkt:' + client, 'json')) || {};
+      const out = {};
+      Object.keys(mkts).forEach((mk) => { out[mk] = idx[mk] || null; });   // null = never scanned
+      Object.keys(idx).forEach((mk) => { if (!(mk in out)) out[mk] = Object.assign({}, idx[mk], { detached: true }); });
+      return json({ client, markets: out });
+    }
+
+    // cached audit JSON per client+market (+ a daily score history the page charts)
     if (path === '/api/feed/audit') {
       const client = (url.searchParams.get('client') || '').slice(0, 60);
       // ':' would let ?client=hist:Reiss alias another client's history key - reject outright
       if (!client || client.indexOf(':') >= 0) return json({ error: 'bad client' }, 400);
+      const mkt = mktOf(url.searchParams.get('market'));
+      const K = 'feedaudit:' + client + ':' + mkt;
       if (request.method === 'GET') {
-        const a = await env.EDITS.get('feedaudit:' + client, 'json');
+        // legacy fallback: pre-multi-market audits lived at feedaudit:<client> — serve them as gb
+        let a = await env.EDITS.get(K, 'json');
+        if (!a && mkt === 'gb') a = await env.EDITS.get('feedaudit:' + client, 'json');
         if (url.searchParams.get('hist') === '1') {
-          return json({ audit: a || null, hist: (await env.EDITS.get('feedaudit:hist:' + client, 'json')) || [] });
+          let h = (await env.EDITS.get(K.replace('feedaudit:', 'feedaudit:hist:'), 'json')) || null;
+          if (!h && mkt === 'gb') h = (await env.EDITS.get('feedaudit:hist:' + client, 'json')) || [];
+          return json({ audit: a || null, hist: h || [] });
         }
         return json(a || {});
       }
       if (request.method === 'PUT') {
         let a; try { a = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
         if (!a || !a.score || !a.score.pillars || typeof a.score.total !== 'number') return json({ error: 'not an audit payload' }, 400);
-        a.client = client; a.fetchedAt = Date.now();
+        a.client = client; a.market = mkt; a.fetchedAt = Date.now();
         const body = JSON.stringify(a);
         if (body.length > 400000) return json({ error: 'audit too large' }, 413);
-        await env.EDITS.put('feedaudit:' + client, body);
+        await env.EDITS.put(K, body);
         try {
-          const hist = (await env.EDITS.get('feedaudit:hist:' + client, 'json')) || [];
+          const HK = K.replace('feedaudit:', 'feedaudit:hist:');
+          const hist = (await env.EDITS.get(HK, 'json')) || [];
           hist.push({ t: a.fetchedAt, total: a.score.total, tier: a.score.tier, rows: a.rowCount || 0 });
-          await env.EDITS.put('feedaudit:hist:' + client, JSON.stringify(hist.slice(-90)));
+          await env.EDITS.put(HK, JSON.stringify(hist.slice(-90)));
+          // compact per-client market index — the portal reads ONE key for its whole grid
+          const idx = (await env.EDITS.get('feedmkt:' + client, 'json')) || {};
+          const pill = {}; (a.score.pillars || []).forEach((p) => { pill[p.key] = p.score; });
+          idx[mkt] = { t: a.fetchedAt, total: a.score.total, tier: a.score.tier, tierLabel: a.score.tierLabel || '',
+            rows: a.rowCount || 0, sampled: a.sampled || 0, pillars: pill,
+            topGap: (a.recs && a.recs[0] && a.recs[0].title) || '' };
+          await env.EDITS.put('feedmkt:' + client, JSON.stringify(idx));
         } catch (e) {}
-        return json({ ok: true, fetchedAt: a.fetchedAt });
+        return json({ ok: true, fetchedAt: a.fetchedAt, market: mkt });
       }
       return json({ error: 'method not allowed' }, 405);   // a POST would otherwise log activity, then 404
     }
@@ -562,7 +621,7 @@ export default {
           const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
           const doms = {}; Object.keys(dossier).forEach((n) => { if (dossier[n] && dossier[n].dom) doms[n] = dossier[n].dom; });
           let filled = 0;
-          for (const it of pushed) { if (!it.client) { const c = detectClient(it, doms, Object.keys(dossier)); if (c) { it.client = c; filled++; } } }
+          for (const it of pushed) { if (!it.client) { const ex = detectClientEx(it, doms, Object.keys(dossier)); if (ex.client) { it.client = ex.client; it.via = ex.via; filled++; } } }
           if (filled) ctx.waitUntil(env.EDITS.put('gmailinbox', JSON.stringify(pushed)));
         } catch (e) {}
         const dis = (await env.EDITS.get('gmaildismissed', 'json')) || {};
@@ -579,10 +638,10 @@ export default {
         const ids = (list.messages || []).slice(0, 15).map(m => m.id);
         const items = [];
         for (const id of ids) {
-          const mRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date', { headers: { Authorization: 'Bearer ' + token } });
+          const mRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=To&metadataHeaders=Cc', { headers: { Authorization: 'Bearer ' + token } });
           const m = await mRes.json();
           const h = {}; ((m.payload && m.payload.headers) || []).forEach(x => { h[x.name.toLowerCase()] = x.value; });
-          items.push({ id, from: h.from || '', subject: h.subject || '(no subject)', date: h.date || '', snippet: (m.snippet || '').slice(0, 160) });
+          items.push({ id, from: h.from || '', to: h.to || '', cc: h.cc || '', subject: h.subject || '(no subject)', date: h.date || '', snippet: (m.snippet || '').slice(0, 160) });
         }
         return json({ connected: true, items });
       } catch (e) {
@@ -610,6 +669,51 @@ export default {
       } catch (e) {
         return json({ connected: false, error: String((e && e.message) || e) });
       }
+    }
+
+    // ---- Gmail history re-scan: replay the mailbox through the ibfref-first matcher ----
+    // POST /api/gmail/rescan {days?} — searches the impersonated mailbox for brief traffic
+    // (ibfref/ibfcode/[FS Brief]) back N days (default 90, max 365), re-matches replies to
+    // tickets and REPAIRS comms that an ibfcode-era fuzzy match filed on the wrong ticket.
+    if (path === '/api/gmail/rescan' && request.method === 'POST') {
+      if (!env.GOOGLE_SA_JSON || !env.GOOGLE_IMPERSONATE) return json({ ok: false, error: 'gmail_not_connected' });
+      let body; try { body = await request.json(); } catch (e) { body = {}; }
+      const days = Math.min(365, Math.max(1, +((body && body.days) || 90)));
+      try {
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/gmail.readonly', true);
+        const q = encodeURIComponent('newer_than:' + days + 'd ("ibfref:" OR "ibfcode:" OR subject:"[FS Brief]")');
+        let ids = [], pageToken = '';
+        for (let page = 0; page < 3 && ids.length < 150; page++) {
+          const lr = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=100&q=' + q + (pageToken ? '&pageToken=' + pageToken : ''), { headers: { Authorization: 'Bearer ' + token } });
+          const ld = await lr.json();
+          if (ld.error) return json({ ok: false, error: ld.error.message });
+          ids = ids.concat((ld.messages || []).map((m) => m.id));
+          pageToken = ld.nextPageToken || '';
+          if (!pageToken) break;
+        }
+        ids = ids.slice(0, 150);
+        const messages = [];
+        for (let i = 0; i < ids.length; i += 10) {   // ten-wide batches keep wall-clock sane
+          const chunk = await Promise.all(ids.slice(i, i + 10).map(async (id) => {
+            const mr = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=metadata&metadataHeaders=From&metadataHeaders=Subject', { headers: { Authorization: 'Bearer ' + token } });
+            const m = await mr.json();
+            const h = {}; ((m.payload && m.payload.headers) || []).forEach((x) => { h[x.name.toLowerCase()] = x.value; });
+            return { id, from: h.from || '', subject: h.subject || '', snippet: m.snippet || '', date: +m.internalDate || Date.now() };
+          }));
+          messages.push.apply(messages, chunk);
+        }
+        const now = Date.now();
+        const envx = liftEnvelope(await env.EDITS.get('briefs', 'json'), now);
+        const briefs = envelopeToClient(envx, {});
+        const selfSrc = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
+        const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'], repair: true });
+        if (res.matched || (res.repaired && res.repaired.length)) {
+          mergeIntoEnvelope(envx, briefs, now, now, {});   // full map present → pure upserts
+          await env.EDITS.put('briefs', JSON.stringify(envx));
+        }
+        logActivity(ctx, env, request, 'gmail-rescan', messages.length + ' scanned · ' + res.matched + ' matched · ' + ((res.repaired || []).length) + ' repaired', 'gmail-sync');
+        return json({ ok: true, scanned: messages.length, matched: res.matched, moved: res.moved, repaired: res.repaired || [] });
+      } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
     }
 
     // ---- Sheets read (no admin needed: share the sheet with the service-account email) ----
@@ -914,7 +1018,7 @@ export default {
     if (page) {
       logActivity(ctx, env, request, 'view', path);
       let html = page.html.replace('</body>', getEditorScript(page.slug) + '\n</body>');
-      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n</body>');
+      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n' + INSTR + '\n</body>');
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 

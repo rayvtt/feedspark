@@ -1,0 +1,42 @@
+<!-- FCC-INSTR — collapsible module instructions, injected worker-side on APP pages only
+     (never client decks). Every instructional subtext across the FCC collapses to a small ⓘ
+     beside its heading: default hidden (Ray's rule — no walls of explainer text), expanded
+     blocks remembered per user in localStorage so Steven can keep guidance open while learning.
+     Selector-driven: p.sub, .psub, .prev-sub, .em-sub and hero intros — add data-no-collapse
+     to any element that must stay visible. Elements rendered dynamically AFTER load (empty-state
+     messages etc.) are never touched: the pass runs once at DOMContentLoaded. -->
+<style>
+.instr-tgl{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;margin-left:7px;padding:0;
+  border:1px solid var(--line,#E6E6E6);border-radius:100px;background:transparent;color:var(--muted,#8a94a0);
+  font:inherit;font-size:11.5px;font-weight:700;line-height:1;cursor:pointer;vertical-align:2px;flex:none}
+.instr-tgl:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
+.instr-tgl.on{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B);background:rgba(245,166,35,.12)}
+.instr-tgl.instr-solo{margin:0 0 8px}
+.instr-hide{display:none!important}
+[data-theme=dark] .instr-tgl{border-color:var(--line,#2C3039)}
+</style>
+<script>(function(){
+if(window.__fccInstr)return;window.__fccInstr=1;
+function hash(s){s=String(s||'');var h=5381,i;for(i=0;i<s.length&&i<80;i++)h=(h*33+s.charCodeAt(i))>>>0;return h.toString(36)}
+var KEY='fcc-instr-open',open={};
+try{JSON.parse(localStorage.getItem(KEY)||'[]').forEach(function(k){open[k]=1})}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(Object.keys(open)))}catch(e){}}
+function apply(){
+  var els=document.querySelectorAll('p.sub,.psub,.prev-sub,.em-sub,header.hero p,.hero>.wrap>p');
+  Array.prototype.forEach.call(els,function(el){
+    if(el.__instr||el.hasAttribute('data-no-collapse'))return;el.__instr=1;
+    var txt=(el.textContent||'').trim();if(txt.length<30)return;   // real instructions only, not short data lines
+    var id=hash(txt);
+    var b=document.createElement('button');b.type='button';b.className='instr-tgl';
+    b.title='Instructions';b.setAttribute('aria-label','Toggle instructions');b.textContent='ⓘ';
+    var prev=el.previousElementSibling;
+    if(prev&&/^H[1-4]$/.test(prev.tagName))prev.appendChild(b);
+    else{b.classList.add('instr-solo');el.parentNode.insertBefore(b,el);}
+    function set(on){el.classList.toggle('instr-hide',!on);b.classList.toggle('on',!!on);b.setAttribute('aria-expanded',on?'true':'false')}
+    set(!!open[id]);
+    b.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();
+      var on=el.classList.contains('instr-hide');set(on);if(on)open[id]=1;else delete open[id];save()});
+  });
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
+})();</script>

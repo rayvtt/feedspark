@@ -36,7 +36,7 @@ Default each session to one module so parallel edits land in different files:
 | Command Center | `docs/FeedSpark_Command_Center.html` (+ `atrt_data.json` via `sync_atrt.py`) |
 | Deck Generator | `docs/FeedSpark_DeckBuilder.html`, deck templates, the deck-generator skill |
 | Worker / API | `cloudflare/feedspark-deck/src/worker.js`, `wrangler.toml` |
-| Other modules | Readiness / Leadership / Task Library / Roadmap / Templates pages |
+| Other modules | Readiness / Leadership / Task Library / Roadmap pages |
 
 Crossing lanes is allowed when the task needs it — the rule is only: **check what's in flight
 first, and sequence rather than parallel-edit the same file** (one session merges, the other syncs,
