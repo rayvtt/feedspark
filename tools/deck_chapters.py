@@ -177,48 +177,77 @@ def rebuild(soup, chapters, deleted_id=None, moved=None):
     #    FEEDHERO AUDIT" sitting directly above what had become the new chapter 7 (a
     #    completely different chapter). BeautifulSoup's default find_all doesn't return
     #    Comment nodes from a plain string/tag search, so this needs its own walk.
+    #    Resolved by POSITION, not by the number already in the marker: a marker is a
+    #    preceding sibling that stays put while its chapter physically relocates, so on a
+    #    move the old number identifies the wrong chapter entirely. Each marker is rewritten
+    #    from whichever chapter it now precedes; unclaimed markers are dropped.
     from bs4 import Comment
-    marker_re = re.compile(r'^(\s*=+\s*CH\s+)(\d+)(\s*—.*=+\s*)$')
-    for c in soup.find_all(string=lambda s: isinstance(s, Comment)):
-        m = marker_re.match(str(c))
-        if not m:
+    marker_re = re.compile(r'^\s*=+\s*CH\s+\d+\s*—.*=+\s*$')
+    all_markers = [c for c in soup.find_all(string=lambda s: isinstance(s, Comment))
+                   if marker_re.match(str(c))]
+    claimed = set()
+    for new_i, ch in enumerate(chapters, start=1):
+        sib = ch['div'].previous_sibling
+        while sib is not None and not (isinstance(sib, Comment) and marker_re.match(str(sib))):
+            if getattr(sib, 'name', None) is not None or (isinstance(sib, NavigableString)
+                                                          and str(sib).strip()):
+                sib = None
+                break
+            sib = sib.previous_sibling
+        if sib is None:
             continue
-        old_n = int(m.group(2))
-        new_n = old_to_new.get(old_n)
-        if new_n is None:
-            # marks the deleted chapter itself. It's a PRECEDING sibling of that chapter's
-            # own div, so it's outside `content` (which only walks forward) and main()'s
-            # delete branch never reaches it — decompose it here instead of leaving a stale,
-            # orphaned comment behind (inert, but exactly the kind of thing this tool exists
-            # to stop from accumulating).
-            c.extract()
-            continue
-        # rebuild the whole marker from the chapter's ACTUAL current title, not just the
-        # number — a title can also be stale after a move, and only trusting the number
-        # would silently perpetuate that
-        ch = next((c2 for c2 in chapters if chapter_num(c2['new_id']) == new_n), None)
-        title = ch_title_text(ch['div']).upper() if ch else m.group(0)
+        title = ch_title_text(ch['div']).upper()
         # Comment is itself a NavigableString subclass — replace_with(plain_str) here would
         # silently drop the <!-- --> wrapper and turn the marker into VISIBLE PAGE TEXT (a
         # real bug caught in testing: "CH 01 — SERVICE SCOPE..." rendered as literal body
         # text). Must construct a new Comment, not a str, to replace a Comment with.
-        c.replace_with(Comment(' ================= CH %02d — %s ================= ' % (new_n, title)))
+        new_c = Comment(' ================= CH %02d — %s ================= ' % (new_i, title))
+        claimed.add(id(sib))
+        sib.replace_with(new_c)
+    for c in all_markers:
+        # marks the deleted chapter, or a move left it stranded with nothing after it
+        if id(c) not in claimed:
+            c.extract()
 
-    # 6. prose cross-references — "chapter N" / "Chapter N" anywhere in remaining text,
-    #    remapped via old_to_new. Anything referencing the deleted chapter's own number is
-    #    left untouched and reported, not guessed at.
-    pattern = re.compile(r'\b([Cc])hapter\s+0?(\d{1,2})\b')
+    # 6. prose cross-references — "chapter N" and the plural range form "chapters N-M"
+    #    (en-dash or hyphen), remapped via old_to_new. The plural form is easy to miss and
+    #    was: a Reiss ch7 deletion left "chapters 14-15" and "chapters 03-13" pointing at
+    #    the wrong chapters because only the singular form was handled here.
+    #    Anything referencing the deleted chapter's own number is left untouched and
+    #    reported, not guessed at.
+    singular = re.compile(r'\b([Cc])hapter\s+0?(\d{1,2})\b')
+    plural = re.compile(r'\b([Cc])hapters\s+(\d{1,2})\s*([–-])\s*(\d{1,2})\b')
     unresolved = []
-    for text_node in soup.find_all(string=pattern):
+
+    def remap(num, node, pad):
+        new_num = old_to_new.get(num)
+        if new_num is None:
+            unresolved.append((num, str(node)[:80]))
+            return None
+        return '%02d' % new_num if pad else '%d' % new_num
+
+    for text_node in soup.find_all(string=plural):
+        if isinstance(text_node, NavigableString):
+            def repl_range(m):
+                cap, lo, dash, hi = m.groups()
+                pad = lo.startswith('0') or hi.startswith('0')
+                new_lo, new_hi = remap(int(lo), text_node, pad), remap(int(hi), text_node, pad)
+                if new_lo is None or new_hi is None:
+                    return m.group(0)
+                return '%shapters %s%s%s' % (cap, new_lo, dash, new_hi)
+            new_text = plural.sub(repl_range, str(text_node))
+            if new_text != str(text_node):
+                text_node.replace_with(new_text)
+
+    for text_node in soup.find_all(string=singular):
         if isinstance(text_node, NavigableString):
             def repl(m):
                 cap, num = m.group(1), int(m.group(2))
-                new_num = old_to_new.get(num)
+                new_num = remap(num, text_node, False)
                 if new_num is None:
-                    unresolved.append((num, str(text_node)[:80]))
                     return m.group(0)
-                return '%shapter %d' % (cap, new_num)
-            new_text = pattern.sub(repl, str(text_node))
+                return '%shapter %s' % (cap, new_num)
+            new_text = singular.sub(repl, str(text_node))
             if new_text != str(text_node):
                 text_node.replace_with(new_text)
 
@@ -292,18 +321,19 @@ def main():
         reordered = chapters[:]
         reordered[idx], reordered[swap_with] = reordered[swap_with], reordered[idx]
         print('Swapping %s <-> %s' % (chapters[idx]['id'], chapters[swap_with]['id']))
-        # physically move the DOM nodes: reinsert in the new order right before the first
-        # chapter's original div position, then rebuild renumbers everything
-        anchor = chapters[min(idx, swap_with)]['div']
-        all_nodes = []
-        for ch in reordered:
-            all_nodes.append(ch['div'])
-            all_nodes.extend(ch['content'])
-        insert_point = anchor
-        for n in all_nodes:
+        # The two chapters are adjacent, so the swap is one relocation: lift the earlier
+        # block out and reinsert it after the later block's last node. That anchor is never
+        # extracted, so it keeps its parent — extracting the anchor first is what made an
+        # earlier version die with "Element has no parent".
+        lo, hi = min(idx, swap_with), max(idx, swap_with)
+        first, second = chapters[lo], chapters[hi]
+        anchor = second['content'][-1] if second['content'] else second['div']
+        moving = [first['div']] + list(first['content'])
+        for n in moving:
             n.extract()
-        for n in all_nodes:
-            insert_point.insert_before(n) if insert_point else None
+        for n in moving:
+            anchor.insert_after(n)
+            anchor = n
         report = rebuild(soup, reordered)
         expected_count = len(reordered)
 
