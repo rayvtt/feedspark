@@ -362,6 +362,7 @@ window.addEventListener('load',restore);
   .it-fchip button:hover{color:#C0392B}
   [data-theme=dark] .it-fchip{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.25);color:var(--orange-ink)}
   [data-theme=dark] .it-fchip button{color:var(--orange-ink)}
+  .cl-sel{font:inherit;font-size:12px;font-weight:800;max-width:100%;padding:2px 4px;border:1px solid var(--navy);border-radius:7px;background:var(--paper);color:var(--ink)}
   .cl-rm{margin-left:5px;border:0;background:none;color:var(--muted);font:inherit;font-size:10.5px;font-weight:900;line-height:1;padding:1px 4px;border-radius:5px;cursor:pointer;opacity:0;vertical-align:1px}
   .itbl tbody tr:hover .cl-rm{opacity:.55}
   .cl-rm:hover{opacity:1;color:#C0392B;background:rgba(192,57,43,.1)}
@@ -1002,7 +1003,7 @@ window.addEventListener('load',restore);
     b.dod=o.f.dod; b.assets=o.f.assets; b.due=isoToDDMMYYYY(o.f.dueIso); b.source=o.f.source; b.priority=o.f.priority;
     b.subject=o.subj; b.body=o.body; b.updated=Date.now();
     // an email-sourced task briefed against a brand becomes a real plan row (write-back included)
-    if(o.f.source==='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due);
+    if(o.f.source==='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',1);
     // tie the ticket to its plan row: the prefill link if it still matches, else auto-match on task wording
     var lk=window.__linkKey; if(lk&&lk.split('|')[0]!==o.f.client)lk=null;
     if(!lk){ var cand=allIntake().filter(function(r){ return r.client===o.f.client&&sameTask(r.task,o.f.task); }); if(cand.length)lk=rowKey(cand[0]); }
@@ -1098,13 +1099,13 @@ window.addEventListener('load',restore);
       .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email',s:'',b:'open'};}); }
   // adopt an email-sourced task into the brand's project plan — the SAME pipeline as ＋ Add task:
   // optimistic local row + /api/sheets/append write-back, duplicate-guarded against existing plan rows.
-  function adoptIntoPlan(client,task,status,dueDD,owner){
+  function adoptIntoPlan(client,task,status,dueDD,owner,esrc){
     if(CLIENTS.indexOf(client)<0)return false;
     var exists=planTasks().some(function(p){ return p.client===client&&sameTask(p.task,task); })
       || MANUAL.some(function(m){ return m.client===client&&sameTask(m.task,task); });
     if(exists)return false;
     var due=(dueDD&&String(dueDD).length===8)?(dueDD.slice(0,2)+'/'+dueDD.slice(2,4)+'/'+dueDD.slice(4,8)):'';
-    MANUAL.push({client:client,task:task,owner:owner||'',status:status||'Open',due:due}); saveManual(); _planCache=null;
+    MANUAL.push({client:client,task:task,owner:owner||'',status:status||'Open',due:due,esrc:esrc?1:0}); saveManual(); _planCache=null;
     var id=PLANSHEET[client];
     if(id){ toast('Adding to '+client+'’s plan…');
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
@@ -1126,7 +1127,7 @@ window.addEventListener('load',restore);
       .map(function(m){ var src=MANUAL.filter(function(x){return x.client===m.c&&x.task===m.orig;})[0]||{}; var k=m.c+'|'+m.task;
         var s=ov[k]!=null?ov[k]:(src.status||'Open');
         return {client:m.c,task:m.task,cat:classifyLite(m.task),owner:(owo[k]!=null?owo[k]:(src.owner||'—')),source:'plan',
-          s:s,b:bucketOf(s),live:false,manual:true,sheet:PLANSHEET[m.c]||'',d:(duo[k]||src.due||'')}; }); }
+          esrc:src.esrc?1:0,s:s,b:bucketOf(s),live:false,manual:true,sheet:PLANSHEET[m.c]||'',d:(duo[k]||src.due||'')}; }); }
   function allIntake(){ return planTasks().concat(manualTasks()).concat(emailIntake()).filter(function(r){ return !RMCL[r.client]; }); }
   // DDMM (or DDMMYYYY) -> ISO yyyy-mm-dd; a near-past DDMM rolls to next year
   function ddmmToIso(v){ v=String(v||'').replace(/\D/g,'');
@@ -1185,6 +1186,28 @@ window.addEventListener('load',restore);
   function renameOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskrename')||'{}');}catch(e){return {};} }
   function saveRename(c,oldT,newT){ try{var o=renameOverlay(); o[c+'|'+oldT]=newT; localStorage.setItem('fcc-taskrename',JSON.stringify(o));}catch(e){} }
   function editOwner(t){ var cur=(t.owner&&t.owner!=='—')?t.owner:''; var v=prompt('Task owner — who’s doing it (blank to clear):',cur); if(v===null)return; setOwner(t,(''+v).trim()); }
+  // reassign a task's CLIENT: local overlays + linked ticket follow the new key, and the row
+  // MOVES between project plans — deleted from the old client's sheet, appended to the new one's.
+  function setTaskClient(t,nc){ var oc=t.client; if(!nc||nc===oc)return;
+    var ok=oc+'|'+t.task, nk=nc+'|'+t.task;
+    ['fcc-taskstatus','fcc-taskdue','fcc-taskowner','fcc-taskrename'].forEach(function(store){
+      try{ var o=JSON.parse(localStorage.getItem(store)||'{}'); if(o[ok]!=null){ o[nk]=o[ok]; delete o[ok]; localStorage.setItem(store,JSON.stringify(o)); } }catch(e){} });
+    if(HIDDEN[ok]){ HIDDEN[nk]=HIDDEN[ok]; delete HIDDEN[ok]; saveHidden(); }
+    var chg=false; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey===ok){
+      b.taskKey=nk; b.client=nc; if(b.code)b.code=code(nc,(b.code.split('-').pop()||'gb')); chg=true; } }); if(chg)persist();
+    var owner=(t.owner&&t.owner!=='—')?t.owner:'', status=t.s||'Open';
+    var pd=taskDate(t), due=pd?(pad(pd.getDate())+'/'+pad(pd.getMonth()+1)+'/'+pd.getFullYear()):'';
+    var mi=-1; MANUAL.forEach(function(m,x){ if(mi<0&&m.client===oc&&sameTask(m.task,t.task))mi=x; });
+    if(mi>=0){ MANUAL[mi].client=nc; } else { MANUAL.push({client:nc,task:t.task,owner:owner,status:status,due:due,esrc:t.esrc?1:0}); }
+    saveManual(); markDel(oc,t.task); _planCache=null;   // suppress the old row locally
+    var oldId=PLANSHEET[oc], newId=PLANSHEET[nc];
+    if(oldId){ fetch('/api/sheets/unappend',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:oldId,tab:'Project Plan',tasks:[t.task]})})
+      .then(function(r){return r.json();}).then(function(d){ if(d&&d.ok&&d.deleted)toast('✓ Removed from '+oc+'’s plan'); }).catch(function(){}); }
+    if(newId){ fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:newId,tab:'Project Plan',rows:[{task:t.task,owner:owner,status:status,due:due}]})})
+      .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+nc+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Moved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok&&LIVE[nc])setTimeout(function(){fetchLive(true);},800); })
+      .catch(function(){ toast('Moved locally — plan write failed (check the SA has Editor access)'); }); }
+    else toast('Moved to '+nc+' · no plan sheet linked to write back');
+    renderAll(); }
   function setOwner(t,val){ recPush({client:t.client,task:t.task,source:t.source,key:'owner',prev:(t.owner==='—'?'':(t.owner||''))}); saveOwnerLocal(t.client,t.task,val);
     if(t.source==='plan' && PLANSHEET[t.client]) writeOwner(t.client,t.task,val);   // existing 2-way owner writer (sheet + refetch)
     else toast(val?'Owner updated':'Owner cleared');
@@ -1240,7 +1263,7 @@ window.addEventListener('load',restore);
       var S=itState;
       var st=!S.statuses.length||S.statuses.indexOf(r.b)>=0;   // empty = all statuses
       var win=true; if(allow && r.source==='plan'){ var pd=taskDate(r); if(pd) win=!!(allow[r.client]&&allow[r.client][monthKey(pd)]); }   // latest-N-months per brand; dateless plan rows always show
-      return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0)&&(!S.clients.length||S.clients.indexOf(r.client)>=0)&&(!S.ams.length||S.ams.indexOf(amOf(r.client))>=0)
+      return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0||(r.esrc&&S.srcs.indexOf('email')>=0))&&(!S.clients.length||S.clients.indexOf(r.client)>=0)&&(!S.ams.length||S.ams.indexOf(amOf(r.client))>=0)
         &&(!S.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(S.q)>=0); })
       .sort(function(a,b){ var k=itState.sort;
         if(k==='dsort'){ var da=taskDate(a), db=taskDate(b); return ((da?da.getTime():0)-(db?db.getTime():0))*itState.dir; }
@@ -1266,7 +1289,7 @@ window.addEventListener('load',restore);
     var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey)BK[b.taskKey]=b; });   // intake row -> its live ticket
     body.innerHTML = f.length ? f.map(function(t,i){
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
-      var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':'<span class="src-tag src-plan">Plan</span>';
+      var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':t.esrc?'<span class="src-tag src-email" title="Arrived by email — written into the plan">Email</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
       var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt');
       var bf=BK[k], bfChip=bf?('<span class="bf-chip" data-bid="'+esc(bf.id)+'" style="background:'+(STAGE_COLOR[bf.status]||'#8a94a0')+'" title="Ticket '+esc(bf.id)+' — '+esc(STAGE_LBL[bf.status]||bf.status)+(courtOf(bf)?(' · ball with '+courtOf(bf)):'')+'. Click to open">'+esc(STAGE_LBL[bf.status]||bf.status)+'</span>'):'';
@@ -1274,7 +1297,7 @@ window.addEventListener('load',restore);
         ?('<td class="c-stat" data-r="'+i+'" data-col="status" data-src="'+t.source+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
         :'<td class="c-stat" data-r="'+i+'" data-col="status"><span class="c-owner">—</span></td>';
       return '<tr data-k="'+esc(k)+'" data-r="'+i+'"'+(hid?' class="row-hidden"':'')+'><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
-        +'<td class="c-client" data-r="'+i+'" data-col="client">'+esc(t.client)+badge
+        +'<td class="c-client'+(ed?' c-client-ed" data-i="'+i+'" title="Double-click to reassign the client — the task moves between project plans':'')+'" data-r="'+i+'" data-col="client">'+esc(t.client)+badge
           +'<button class="cl-rm" data-c="'+esc(t.client)+'" title="Remove '+esc(t.client)+' from the intake and all filters — every task, reversible from the client-filter menu">✕</button></td><td data-r="'+i+'" data-col="feed">'+feed+'</td>'
         +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click to edit — writes back to the plan">'+esc(t.task)+bfChip+'</td>'
              :'<td class="c-task" data-r="'+i+'" data-col="task">'+esc(t.task)+bfChip+'</td>')
@@ -1291,6 +1314,15 @@ window.addEventListener('load',restore);
     body.querySelectorAll('.c-due-ed').forEach(function(td){ td.ondblclick=function(){ editDue(f[+td.getAttribute('data-i')]); }; });
     body.querySelectorAll('.c-task-ed').forEach(function(td){ td.ondblclick=function(){ editTaskText(f[+td.getAttribute('data-i')]); }; });
     body.querySelectorAll('.c-owner-ed').forEach(function(td){ td.ondblclick=function(){ editOwner(f[+td.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.c-client-ed').forEach(function(td){ td.ondblclick=function(){
+      var t=f[+td.getAttribute('data-i')]; if(!t)return;
+      var sel=document.createElement('select'); sel.className='cl-sel';
+      if(CLIENTS.indexOf(t.client)<0){ var o0=document.createElement('option'); o0.textContent=t.client||'(unassigned)'; o0.value=t.client||''; o0.selected=true; sel.appendChild(o0); }
+      CLIENTS.forEach(function(c){ var o=document.createElement('option'); o.textContent=c; o.value=c; if(c===t.client)o.selected=true; sel.appendChild(o); });
+      td.innerHTML=''; td.appendChild(sel); sel.focus(); try{ if(sel.showPicker)sel.showPicker(); }catch(e){}
+      sel.onchange=function(){ if(sel.value&&sel.value!==t.client)setTaskClient(t,sel.value); else renderIntake(); };
+      sel.onblur=function(){ setTimeout(renderIntake,120); };
+    }; });
     body.querySelectorAll('.bf-chip').forEach(function(ch){ ch.onclick=function(e){ e.stopPropagation(); openModal(ch.getAttribute('data-bid')); }; });
     body.querySelectorAll('.cl-rm').forEach(function(x){ x.onmousedown=function(e){ e.stopPropagation(); };   // don't grab the grid selection
       x.onclick=function(e){ e.stopPropagation(); var c=x.getAttribute('data-c');
@@ -1476,7 +1508,7 @@ window.addEventListener('load',restore);
         scope:(ln&&ln.s)||(tpl.s+TWO_STREAMS),dod:(ln&&ln.d)||tpl.d,assets:(ln&&ln.a)||'—',
         due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
         source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++;
-      if(t.source==='email') adoptIntoPlan(t.client,t.task,'Briefed',BRIEFS[id].due);   // bulk-briefed email tasks join the plan too
+      if(t.source==='email') adoptIntoPlan(t.client,t.task,'Briefed',BRIEFS[id].due,'',1);   // bulk-briefed email tasks join the plan too
       markBriefed(t); });
     itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline · marked Briefed'); }
   // SOURCE stays a compact chip bar (4 options): empty selection = all; the "All" chip clears the set
@@ -2201,9 +2233,9 @@ window.addEventListener('load',restore);
     // A recognised brand goes through adoptIntoPlan: the row reaches the brand's plan SHEET
     // (append write-back + live re-pull), not just the local tracker.
     var task=g.subject+' — from '+senderName(g.from);
-    if(g.client&&CLIENTS.indexOf(g.client)>=0){ adoptIntoPlan(g.client,task,'Open','',senderName(g.from)); }
-    else { MANUAL.push({client:g.client||'',task:task,owner:senderName(g.from),status:'Open',due:''}); saveManual();
-      toast('Saved to Intake — client not recognised, edit the row to assign one'); }
+    if(g.client&&CLIENTS.indexOf(g.client)>=0){ adoptIntoPlan(g.client,task,'Open','',senderName(g.from),1); }
+    else { MANUAL.push({client:g.client||'',task:task,owner:senderName(g.from),status:'Open',due:'',esrc:1}); saveManual();
+      toast('Saved to Intake — client not recognised: double-click its Client cell to assign one'); }
     decideEmail(g.id,false,'task');
     renderAll();
   }
