@@ -673,28 +673,28 @@
       "file": "docs/pricer_engine.js",
       "pattern": "actualsFromBriefs",
       "min": 2,
-      "pr": 142
+      "pr": 144
     },
     {
       "name": "Workflow: brief hours tagging + Tachyon tag (feeds Pricer averages)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "m-hours",
       "min": 2,
-      "pr": 142
+      "pr": 144
     },
     {
       "name": "Workflow: bg-tach optimisation tag in the composer",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "bg-tach",
       "min": 3,
-      "pr": 142
+      "pr": 144
     },
     {
       "name": "Pricer: actuals badges + evidence toggle",
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "act-tog",
       "min": 3,
-      "pr": 142
+      "pr": 144
     }
   ]
 }
