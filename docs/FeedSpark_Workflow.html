@@ -926,11 +926,11 @@ window.addEventListener('load',restore);
       assets:document.getElementById('bg-assets').value.trim(), dueIso:document.getElementById('bg-due').value,
       priority:document.getElementById('bg-priority').value }; }
   function subjectOf(f,id){ var c=code(f.client,f.market), dd=isoToDDMMYYYY(f.dueIso);
-    return '[FS Brief] '+f.client+' · '+(f.task||'(task)')+' · [ibfcode:'+c+'] ibfdue:'+dd; }
+    return '[FS Brief] '+f.client+' · '+(f.task||'(task)')+' · [ibfcode:'+c+'] ibfdue:'+dd+' [ibfref:'+id+']'; }
   function bodyOf(f,id){
     var c=code(f.client,f.market), dd=isoToDDMMYYYY(f.dueIso);
     var L=[];
-    L.push('[ibfcode:'+c+'] ibfdue:'+dd);
+    L.push('[ibfcode:'+c+'] ibfdue:'+dd+' [ibfref:'+id+']');
     L.push('');
     L.push('FEEDSPARK BRIEF — '+id);
     L.push('Client:    '+f.client+'  ['+c+']');
@@ -952,11 +952,11 @@ window.addEventListener('load',restore);
     L.push(f.assets||'—');
     L.push('──────────────────────────────');
     L.push('ASPL team — reply-all to this thread to update status.');
-    L.push('Keep the ['+'ibfcode] and ibfdue tokens intact so the portal tracks this brief.');
+    L.push('Keep the ['+'ibfcode], ibfdue and ['+'ibfref] tokens intact — ibfref is this ticket\u2019s unique tracking ref.');
     L.push('FeedSpark · Private & Confidential');
     return L.join('\n');
   }
-  function highlightTokens(s){ return esc(s).replace(/(\[ibfcode:[^\]]+\]|ibfdue:\d{0,8})/g,'<span class="tok">$1</span>'); }
+  function highlightTokens(s){ return esc(s).replace(/(\[ibfcode:[^\]]+\]|\[ibfref:[^\]]+\]|ibfdue:\d{0,8})/g,'<span class="tok">$1</span>'); }
 
   // ---- live preview ----
   var pv={ subj:document.getElementById('prev-subj'), body:document.getElementById('prev-body'), gmail:document.getElementById('bg-gmail') };
@@ -1925,6 +1925,8 @@ window.addEventListener('load',restore);
 
   // ---- paste-an-update router: any reply → the right ticket, logged + staged, no hunting ----
   function findBriefFor(text){ var arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];});
+    var rm=/ibfref:([a-z0-9-]+)/i.exec(text);
+    if(rm){ var rb=BRIEFS[rm[1]]||BRIEFS[rm[1].toUpperCase()]; if(rb)return rb; }
     var m=/ibfcode:([a-z0-9-]+)/i.exec(text);
     if(m){ var c=m[1].toLowerCase(), hits=arr.filter(function(b){return (b.code||'').toLowerCase()===c;});
       if(hits.length){ if(hits.length>1)hits.sort(function(a,b){return taskDice(text,b.task)-taskDice(text,a.task);}); return hits[0]; } }
@@ -1959,7 +1961,7 @@ window.addEventListener('load',restore);
   function chaseAspl(b){ var L=['Hi '+(asplOf(b)||'team')+',','','Chasing this brief — '+dueState(b)+':','',
     '• '+b.task+'  ['+b.code+']  ibfdue:'+(b.due||'TBC'),'','Could you confirm status / ETA? Reply-all keeps the portal in sync.','','Thanks,','Ray'];
     // "Re: <original subject>" so Gmail threads the chase into the brief's conversation instead of starting a new one
-    var su='Re: '+(b.subject||('[FS Brief] '+b.client+' · '+b.task+' · [ibfcode:'+b.code+'] ibfdue:'+(b.due||'')));
+    var su='Re: '+(b.subject||('[FS Brief] '+b.client+' · '+b.task+' · [ibfcode:'+b.code+'] ibfdue:'+(b.due||'')+' [ibfref:'+b.id+']'));
     return 'https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(su)+'&body='+encodeURIComponent(L.join('\n')); }
   function chaseClient(b){ var L=['Hi team,','','Quick update on the below — checking you have everything you need from us to move it forward:','',
     '• '+b.task,'','Happy to jump on a quick call if easier.','','Best,','Ray','FeedSpark'];

@@ -46,6 +46,11 @@ function validDD(dd8) {
 // ambiguous and is skipped rather than guessed.
 function codeIn(s) { const m = /ibfcode:([a-z0-9-]+)/i.exec(s || ''); return m ? m[1].toLowerCase() : ''; }
 function findBrief(briefs, subject, snippet) {
+  // ibfref = the ticket's UNIQUE ref, stamped into every brief's subject + body — always wins.
+  // ibfcode is per client+market (shared by every ticket for that client), so it only ever
+  // decides when no ibfref is present (legacy briefs sent before the ref existed).
+  const refM = /ibfref:([a-z0-9-]+)/i.exec(String(subject || '')) || /ibfref:([a-z0-9-]+)/i.exec(String(snippet || ''));
+  if (refM) { const rb = briefs[refM[1]] || briefs[refM[1].toUpperCase()]; if (rb) return rb; }
   const arr = Object.keys(briefs).map((k) => briefs[k]);
   const byCode = (c) => {
     const hits = arr.filter((b) => (b.code || '').toLowerCase() === c);
