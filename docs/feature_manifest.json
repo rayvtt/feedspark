@@ -572,14 +572,14 @@
       "file": "cloudflare/feedspark-deck/src/briefmatch.js",
       "pattern": "detectClientEx",
       "min": 2,
-      "pr": 139
+      "pr": 138
     },
     {
       "name": "Workflow: Gmail sync module UI (cue column)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "em-colhead",
       "min": 2,
-      "pr": 139
+      "pr": 138
     },
     {
       "name": "Workflow: reassignable client (cross-plan task move)",
