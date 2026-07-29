@@ -786,6 +786,18 @@
       "min": 3,
       "pr": 150
     },
-    { "name": "worker: rowCols self-corrects owner/due for shifted-column rows", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "function rowCols", "pr": 154 }
+    {
+      "name": "worker: rowCols self-corrects owner/due for shifted-column rows",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "function rowCols",
+      "pr": 154
+    },
+    {
+      "name": "worker: sheet row match refuses ambiguous shared-code rows",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "findTaskRow",
+      "min": 5,
+      "pr": 158
+    }
   ]
 }
