@@ -189,6 +189,17 @@ the full design system (CSS, topbar, hero, chapter divider, all component classe
 side: the template shows the placeholder shape, YuMOVE shows what a fully-populated example
 of the same component looks like in practice.
 
+Getting the right CSS class on a section isn't the same as sounding like a FeedSpark deck —
+read `references/voice-and-numbers-style.md` before drafting prose for any section. It's
+built from a verified (not just plausible-sounding) comparison of YuMOVE and Reiss: how a
+chapter subtitle states its claim, how a card headlines a finding, how two disagreeing
+numbers get reconciled instead of one being quietly picked, and — separately — a set of
+patterns Reiss's real client feedback rounds forced into that deck that YuMOVE's still-fresh
+copy doesn't yet demonstrate (e.g. headlining the stricter number over a lenient pass-flag,
+splitting a fix's status by market instead of an unqualified "Done"). Treat that last section
+as required on every new deck, not optional — those are fixes Ray already asked for once on
+Reiss and shouldn't have to ask for again on the next one.
+
 The template is a fixed 7-chapter Strategy Review. **A brief's outline can have a different
 number of sections in a different order** — don't force-fit it into the template's 7 slots.
 Instead:
