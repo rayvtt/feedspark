@@ -253,6 +253,32 @@ Follow the exact pattern already used for every other deck in
 
 ## Step 5 — QA before pushing
 
+- **Run `python3 tools/deck_audit.py <deck.html>` and work the whole list before you tell
+  Ray anything is final. This is not optional and it is not a formality.** `presync.sh`
+  runs it automatically on any changed deck, but running it yourself, earlier, is the point.
+  It audits the layer structural checks are blind to: the same metric quoted with two
+  different values in two chapters, a figure whose source chapter no longer exists, a
+  cross-reference that resolves but aims at the wrong chapter, a claim deferred to an
+  "audit" that isn't in the deck any more.
+  - Hard failures (dead cross-reference, dead anchor) fail the run. Fix them.
+  - Everything under REVIEW is a *candidate*, and the job is to adjudicate every one and be
+    able to say why each is fine — not to skim the list and move on. Roughly half will be
+    coincidence (a +6.6% click lift is not in conflict with 6.3% coverage); the other half
+    is the bug you were about to ship.
+  - **Why this step exists, stated plainly:** the Reiss deck passed every structural check
+    — 15 chapters, nav/side-nav/agenda/markers all in sync, tool printed "✓ verified" —
+    while quoting 5.8% and 5.5% for the same metric two chapters apart, citing a 6.3%
+    figure whose only source had just been deleted, saying "the audit found" about an audit
+    no longer in the deck, and pointing "chapters 14–15" at Weekly Schedule and Tech Fit
+    when it meant Plan & Resourcing. That shipped. Ray found it, not the tooling, and it
+    cost two days of round-trips on a deck that had already been presented.
+- **After a structural change (delete/move a chapter), re-read every chapter that survives,
+  not just the ones you edited.** A deleted chapter takes its numbers with it, and the
+  chapters that quoted those numbers are the ones that break — they are, by definition, not
+  the chapter you touched. Ask of every figure in the deck: *where in this deck does the
+  reader learn this?* If the answer is nowhere, either give it a source or say so to Ray —
+  never leave an unsourced number sitting in a client-facing deck, and never invent a
+  provenance for one.
 - `node --input-type=module --check < cloudflare/feedspark-deck/src/worker.js` — the worker
   is a shared file every deck depends on; a syntax error here breaks the whole site, not
   just the new deck.
