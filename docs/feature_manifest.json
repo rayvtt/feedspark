@@ -771,6 +771,20 @@
       "pattern": "A1:ZZ5000",
       "min": 5,
       "pr": 149
+    },
+    {
+      "name": "Pricer: seeded live AI briefs — Mon/Acc/Superdry × titles/desc/keywords",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "SEED_TRACK",
+      "min": 2,
+      "pr": 152
+    },
+    {
+      "name": "worker: fetchGrid keeps a tight column width (GRID_RANGE)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "GRID_RANGE",
+      "min": 3,
+      "pr": 150
     }
   ]
 }
