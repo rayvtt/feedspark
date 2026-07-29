@@ -743,6 +743,13 @@
       "pattern": "Animals & Pet Supplies",
       "min": 2,
       "pr": 147
+    },
+    {
+      "name": "Pricer: manual historic AI entries (pre-FCC work joins the averages)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "ai-add",
+      "min": 2,
+      "pr": 148
     }
   ]
 }
