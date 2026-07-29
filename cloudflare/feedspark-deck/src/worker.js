@@ -651,6 +651,51 @@ export default {
       }
     }
 
+    // ---- Gmail history re-scan: replay the mailbox through the ibfref-first matcher ----
+    // POST /api/gmail/rescan {days?} — searches the impersonated mailbox for brief traffic
+    // (ibfref/ibfcode/[FS Brief]) back N days (default 90, max 365), re-matches replies to
+    // tickets and REPAIRS comms that an ibfcode-era fuzzy match filed on the wrong ticket.
+    if (path === '/api/gmail/rescan' && request.method === 'POST') {
+      if (!env.GOOGLE_SA_JSON || !env.GOOGLE_IMPERSONATE) return json({ ok: false, error: 'gmail_not_connected' });
+      let body; try { body = await request.json(); } catch (e) { body = {}; }
+      const days = Math.min(365, Math.max(1, +((body && body.days) || 90)));
+      try {
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/gmail.readonly', true);
+        const q = encodeURIComponent('newer_than:' + days + 'd ("ibfref:" OR "ibfcode:" OR subject:"[FS Brief]")');
+        let ids = [], pageToken = '';
+        for (let page = 0; page < 3 && ids.length < 150; page++) {
+          const lr = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=100&q=' + q + (pageToken ? '&pageToken=' + pageToken : ''), { headers: { Authorization: 'Bearer ' + token } });
+          const ld = await lr.json();
+          if (ld.error) return json({ ok: false, error: ld.error.message });
+          ids = ids.concat((ld.messages || []).map((m) => m.id));
+          pageToken = ld.nextPageToken || '';
+          if (!pageToken) break;
+        }
+        ids = ids.slice(0, 150);
+        const messages = [];
+        for (let i = 0; i < ids.length; i += 10) {   // ten-wide batches keep wall-clock sane
+          const chunk = await Promise.all(ids.slice(i, i + 10).map(async (id) => {
+            const mr = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=metadata&metadataHeaders=From&metadataHeaders=Subject', { headers: { Authorization: 'Bearer ' + token } });
+            const m = await mr.json();
+            const h = {}; ((m.payload && m.payload.headers) || []).forEach((x) => { h[x.name.toLowerCase()] = x.value; });
+            return { id, from: h.from || '', subject: h.subject || '', snippet: m.snippet || '', date: +m.internalDate || Date.now() };
+          }));
+          messages.push.apply(messages, chunk);
+        }
+        const now = Date.now();
+        const envx = liftEnvelope(await env.EDITS.get('briefs', 'json'), now);
+        const briefs = envelopeToClient(envx, {});
+        const selfSrc = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
+        const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'], repair: true });
+        if (res.matched || (res.repaired && res.repaired.length)) {
+          mergeIntoEnvelope(envx, briefs, now, now, {});   // full map present → pure upserts
+          await env.EDITS.put('briefs', JSON.stringify(envx));
+        }
+        logActivity(ctx, env, request, 'gmail-rescan', messages.length + ' scanned · ' + res.matched + ' matched · ' + ((res.repaired || []).length) + ' repaired', 'gmail-sync');
+        return json({ ok: true, scanned: messages.length, matched: res.matched, moved: res.moved, repaired: res.repaired || [] });
+      } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
+    }
+
     // ---- Sheets read (no admin needed: share the sheet with the service-account email) ----
     // GET /api/sheets/read?id=<spreadsheetId>&range=<A1 range>. The SA acts as itself, so any
     // sheet shared with its client_email is reachable without domain-wide delegation.

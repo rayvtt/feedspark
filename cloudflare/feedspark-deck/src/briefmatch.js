@@ -46,6 +46,11 @@ function validDD(dd8) {
 // ambiguous and is skipped rather than guessed.
 function codeIn(s) { const m = /ibfcode:([a-z0-9-]+)/i.exec(s || ''); return m ? m[1].toLowerCase() : ''; }
 function findBrief(briefs, subject, snippet) {
+  // ibfref = the ticket's UNIQUE ref, stamped into every brief's subject + body — always wins.
+  // ibfcode is per client+market (shared by every ticket for that client), so it only ever
+  // decides when no ibfref is present (legacy briefs sent before the ref existed).
+  const refM = /ibfref:([a-z0-9-]+)/i.exec(String(subject || '')) || /ibfref:([a-z0-9-]+)/i.exec(String(snippet || ''));
+  if (refM) { const rb = briefs[refM[1]] || briefs[refM[1].toUpperCase()]; if (rb) return rb; }
   const arr = Object.keys(briefs).map((k) => briefs[k]);
   const byCode = (c) => {
     const hits = arr.filter((b) => (b.code || '').toLowerCase() === c);
@@ -172,7 +177,7 @@ export function matchGmailToBriefs(briefs, messages, opts) {
   opts = opts || {};
   const now = opts.now || 0;
   const selfRe = opts.selfRe || null;
-  const moved = [], loggedTo = [];
+  const moved = [], loggedTo = [], repaired = [];
   let matched = 0, skipped = 0;
 
   for (const msg of messages || []) {
@@ -183,6 +188,18 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     const b = findBrief(briefs, msg.subject, msg.snippet);
     if (!b) { skipped++; continue; }
     b.comms = b.comms || [];
+    // repair (rescan): an ibfref match is authoritative — pull this message's comm off any
+    // OTHER ticket it was fuzzy-filed onto in the ibfcode era, before the skip check runs.
+    if (opts.repair && msg.id) {
+      const rm = /ibfref:([a-z0-9-]+)/i.exec(String(msg.subject || '') + ' ' + String(msg.snippet || ''));
+      if (rm && ((briefs[rm[1]] || briefs[rm[1].toUpperCase()]) === b)) {
+        for (const k of Object.keys(briefs)) { const ob = briefs[k]; if (ob === b || !ob || !ob.comms || !ob.comms.length) continue;
+          const before = ob.comms.length;
+          ob.comms = ob.comms.filter((c) => c.mid !== msg.id);
+          if (ob.comms.length !== before) { ob.updated = now; repaired.push({ from: ob.id, to: b.id, mid: msg.id }); }
+        }
+      }
+    }
     if (msg.id && b.comms.some((c) => c.mid === msg.id)) { skipped++; continue; }   // already logged
 
     matched++;
@@ -214,5 +231,5 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     b.updated = now;
     if (loggedTo.indexOf(b.id) < 0) loggedTo.push(b.id);
   }
-  return { matched, skipped, moved, loggedTo };
+  return { matched, skipped, moved, loggedTo, repaired };
 }

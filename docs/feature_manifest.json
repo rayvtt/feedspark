@@ -547,9 +547,47 @@
       "pattern": "Feed markets (",
       "pr": 133
     },
-    { "name": "Workflow: email-task adoption into the plan (write-back)", "file": "docs/FeedSpark_Workflow.html", "pattern": "adoptIntoPlan", "min": 3, "pr": 132 },
-    { "name": "worker: recipient-cue brand detection (fb alias + client domain)", "file": "cloudflare/feedspark-deck/src/briefmatch.js", "pattern": "detectClientEx", "min": 2, "pr": 134 },
-    { "name": "Workflow: Gmail sync module UI (cue column)", "file": "docs/FeedSpark_Workflow.html", "pattern": "em-colhead", "min": 2, "pr": 134 },
-    { "name": "Workflow: reassignable client (cross-plan task move)", "file": "docs/FeedSpark_Workflow.html", "pattern": "setTaskClient", "min": 2, "pr": 135 }
+    {
+      "name": "Workflow: email-task adoption into the plan (write-back)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "adoptIntoPlan",
+      "min": 3,
+      "pr": 132
+    },
+    {
+      "name": "worker: recipient-cue brand detection (fb alias + client domain)",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "detectClientEx",
+      "min": 2,
+      "pr": 134
+    },
+    {
+      "name": "Workflow: Gmail sync module UI (cue column)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "em-colhead",
+      "min": 2,
+      "pr": 134
+    },
+    {
+      "name": "Workflow: reassignable client (cross-plan task move)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "setTaskClient",
+      "min": 2,
+      "pr": 135
+    },
+    {
+      "name": "Workflow+worker: ibfref unique per-ticket tracking ref",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "ibfref",
+      "min": 2,
+      "pr": 136
+    },
+    {
+      "name": "Workflow: briefs stamp the ibfref token",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "ibfref",
+      "min": 4,
+      "pr": 136
+    }
   ]
 }
