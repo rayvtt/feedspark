@@ -778,6 +778,13 @@
       "pattern": "SEED_TRACK",
       "min": 2,
       "pr": 150
+    },
+    {
+      "name": "worker: fetchGrid keeps a tight column width (GRID_RANGE)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "GRID_RANGE",
+      "min": 3,
+      "pr": 150
     }
   ]
 }
