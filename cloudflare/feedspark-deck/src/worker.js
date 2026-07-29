@@ -115,7 +115,7 @@ export default {
     if (request.method === 'PUT' || request.method === 'POST') {
       const ACT = { '/api/edits': 'edit', '/api/feedback': 'feedback', '/api/clients': 'dossier-save',
         '/api/briefs': 'briefs-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
-        '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save' };
+        '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -385,6 +385,12 @@ export default {
     }
     if (path === '/api/tachyon/quotes') {
       const r = await mapStoreRoute(env, request, 'tachyonquotes', {});
+      if (r) return r;
+    }
+    // per-brief AI delivery tracking (hours, Tachyon tokens, volume done, categories done) —
+    // the Pricer's collaborative table writes here, keyed by brief id; briefs stay untouched
+    if (path === '/api/tachyon/track') {
+      const r = await mapStoreRoute(env, request, 'tachyontrack', {});
       if (r) return r;
     }
     if (path === '/pricer/engine.js' && request.method === 'GET') {
