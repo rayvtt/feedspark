@@ -269,6 +269,24 @@ Follow the exact pattern already used for every other deck in
   never the other way round. This caught a real bug in the Reiss deck's Feed Optimisation
   Score chapter (round 1 feedback) and is worth checking on every scorecard-style section,
   not just when feedback flags it.
+- **This same headline-vs-note bug can also span chapters, not just one scorecard block.**
+  Grep every status-pill "✓ Done"/completion outcome in an early chapter (e.g. a recap or
+  scope-recap table) against later-chapter percentage findings on the *same task family* —
+  a "✓ Done, 112 mapping tasks closed" in chapter 3 next to a live-feed audit two chapters
+  later showing only 43% actually landed is the identical bug, just spread across chapters
+  instead of sitting in one block. If they disagree, cross-reference both directions (the
+  early chapter's outcome text notes the later chapter's stricter number; the later
+  chapter's finding names the earlier chapter's status pill by number) rather than leaving
+  the contradiction to sit silently in two unconnected places. Caught on the Superdry deck's
+  category-mapping row (round 1 feedback).
+- **Grep for the two required-but-easy-to-skip prose patterns before shipping any new
+  deck**, not just when reading the style guide reminds you: `transaction infrastructure`
+  (the shared Google hero epigraph) and the AI-landscape chapter's rhetorical shopper-quote
+  opener (a quoted query + em-dash + "might be answered from training data, a live web
+  crawl, or the Merchant Center feed"). Both are mechanical, low-risk, and both were missing
+  from Superdry's first build despite being in `references/voice-and-numbers-style.md` the
+  whole time — a style reference only helps if something actually checks the output against
+  it before push.
 - Preview if the tooling is available (`tools/preview_tmpl.py` / `tools/preview_simple.py`
   per `tools/README.md`) — Claude Code on the web usually doesn't have LibreOffice/
   `pdftoppm`, but the Pillow-based previewer works without them.

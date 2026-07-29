@@ -173,6 +173,16 @@ window.addEventListener('load',restore);
   .rc .r-note{min-width:140px;max-width:220px;font-size:11.5px;color:var(--muted)}
   .rc .r-draft{font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--amber);border:1px dashed rgba(183,121,31,.5);border-radius:100px;padding:1px 7px;white-space:nowrap}
   .rc .r-ok{font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--good);border:1px solid rgba(21,128,61,.3);border-radius:100px;padding:1px 7px;white-space:nowrap}
+  .ai-n{font-size:12px;font-weight:800;color:var(--muted);margin-left:6px}
+  .ai-track .a-task{font-weight:800;min-width:230px;max-width:320px}
+  .ai-track .a-cl{font-size:10px;color:var(--orange-ink);font-weight:900;display:block}
+  .ai-track .a-stage{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;border-radius:100px;padding:2px 8px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .ai-track .a-stage.done{color:var(--good);border-color:rgba(21,128,61,.35)}
+  .ai-track select.a-tach{font:inherit;font-size:11.5px;font-weight:700;max-width:180px;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}
+  .ai-track .r-ed{min-width:34px}
+  .ai-track .a-cats{min-width:130px;max-width:190px;font-size:11.5px}
+  .ai-empty{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 0}
+  .rc .r-act{font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);border:1px solid rgba(26,54,93,.35);background:rgba(26,54,93,.07);border-radius:100px;padding:1px 7px;white-space:nowrap;cursor:help}
   .rc-foot{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:11px;font-size:12px;color:var(--muted)}
   .rc-foot .blockfld{display:inline-flex;align-items:center;gap:6px;font-weight:800;color:var(--ink-2)}
   .rc-foot input{font:inherit;width:70px;font-weight:800;padding:4px 7px;border:1px solid var(--line);border-radius:7px;text-align:right}
@@ -272,6 +282,18 @@ window.addEventListener('load',restore);
 </div></section>
 
 <section><div class="wrap">
+  <h2>AI briefs — delivery tracking <span class="ai-n" id="ai-n"></span></h2>
+  <p class="sub">Every brief whose task title reads as AI work is pulled in here automatically — no tagging inside Workflow, no pipeline clutter. The teams track delivery on the brief itself: hours per role, <b>Tachyon tokens used</b>, <b>product volume done</b> and <b>categories done</b>. Averages (and tokens-per-SKU) feed the rate card's evidence pricing.</p>
+  <div class="pz-card">
+    <div class="rc-scroll"><table class="rc ai-track" id="ai-track">
+      <thead><tr><th>Client · brief</th><th>Stage</th><th>Tachyon task</th><th>ASPL h</th><th>QC h</th><th>PM h</th><th>Mon h</th><th>Tokens</th><th>Vol done</th><th>Categories done</th></tr></thead>
+      <tbody id="ai-body"></tbody>
+    </table></div>
+    <div class="rc-foot"><span id="ai-state"></span></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
   <h2>Rate card — hours &amp; unit prices, owned by the teams</h2>
   <p class="sub">This is the collaborative bit: ASPL tags the setup hours they really take, London tags QC / PM / monitoring, commercial sets the £ per SKU. Click any number to edit — saves instantly for everyone (concurrency-safe), and the row loses its DRAFT flag once a human has confirmed it. Every edit is attributed in the owner's Activity log.</p>
   <div class="pz-card">
@@ -282,6 +304,7 @@ window.addEventListener('load',restore);
     <div class="rc-foot">
       <span class="blockfld">Retainer block £ <input id="rc-block" type="number" min="1" step="1"> +VAT / 8h</span>
       <span class="tiers-line" id="tiers-line"></span>
+      <label class="pz-tog" id="act-tog-wrap" hidden><input type="checkbox" id="act-tog"> <span id="act-tog-lbl">Price from tagged-brief averages</span></label>
       <span id="rc-state"></span>
     </div>
   </div>
@@ -308,6 +331,9 @@ try{$('#eng-v').textContent='engine v'+E.VERSION}catch(e){}
 
 /* ---------------- state ---------------- */
 var RATES={},RATES_BASE=0;         // rate-card overrides map (kvmerge-backed)
+var BRIEFS={},ACTUALS={};          // Workflow briefs → tagged-hours averages per optimisation
+var TRACK={},TRACK_BASE=0;         // per-brief AI delivery tracking (KV tachyontrack, kvmerge)
+var USE_ACTUALS=(function(){try{return localStorage.getItem('fcc-pricer-actuals')!=='0'}catch(e){return true}})();
 var QUOTES={},QUOTES_BASE=0;       // saved quotes map
 var CLIENTS=['Schuh','Reiss','Monsoon','Accessorize','YuMOVE','Superdry','RYOBI','Estée Lauder'];
 var MKROWS={};                     // market -> rows for the selected client (from Feed Lab)
@@ -317,7 +343,8 @@ function b64url(o){var j=JSON.stringify(o),b=new TextEncoder().encode(j),s='';b.
 
 /* ---------------- rate card ---------------- */
 function blockGBP(){var g=RATES._globals||{};return isFinite(+g.blockGBP)&&+g.blockGBP>0?+g.blockGBP:E.DEFAULTS.blockGBP}
-function effRates(){return E.rates(RATES)}
+function effOverrides(){return (USE_ACTUALS&&Object.keys(ACTUALS).length)?E.overridesWithActuals(RATES,ACTUALS):RATES}
+function effRates(){return E.rates(effOverrides())}
 function saveRates(){
   fetch('/api/tachyon/rates',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(RATES_BASE)},body:JSON.stringify(RATES)})
     .then(function(r){RATES_BASE=+r.headers.get('X-Sync-Base')||RATES_BASE;return r.json()})
@@ -337,7 +364,10 @@ function renderRates(){
       +'<td class="r-name"><span class="r-grp">'+esc(r.grp)+'</span>'+esc(r.name)+'</td>'
       +cell('aspl',r.aspl)+cell('qc',r.qc)+cell('pm',r.pm)+cell('mon',r.mon)
       +cell('unit','£'+r.unit,0.01)+cell('lead',r.lead)
-      +'<td>'+(r.draft?'<span class="r-draft">draft</span>':'<span class="r-ok">confirmed</span>')+'</td>'
+      +'<td>'+(function(){var a=ACTUALS[r.id];
+          if(a&&USE_ACTUALS)return '<span class="r-act" title="ASPL '+a.aspl+' · QC '+a.qc+' · PM '+a.pm+(a.lead?(' · real lead '+a.lead+'d'):'')+(a.tokPerSku?(' · ≈'+a.tokPerSku+' tok/SKU over '+fmt(a.volDone)+' done'):'')+' — averaged from the AI-briefs tracking table">actuals ×'+a.n+'</span>';
+          if(a)return '<span class="r-ok" title="actuals available (×'+a.n+') but the toggle is off">confirmed</span>';
+          return r.draft?'<span class="r-draft">draft</span>':'<span class="r-ok">confirmed</span>'})()+'</td>'
       +'<td class="r-note"><span class="r-ed" data-id="'+r.id+'" data-f="note" data-txt="1">'+(esc(r.note)||'<span style="opacity:.4">add note…</span>')+'</span></td>'
       +'</tr>'}).join('');
   $('#rc-body').querySelectorAll('.r-ed').forEach(function(el){el.onclick=function(){editCell(el)}});
@@ -376,7 +406,7 @@ function renderCatalog(){
 
 /* ---------------- the quote ---------------- */
 function currentQuote(){
-  return E.quote(Object.keys(picks),{volume:+$('#pz-volume').value||0,rateOverrides:RATES,
+  return E.quote(Object.keys(picks),{volume:+$('#pz-volume').value||0,rateOverrides:effOverrides(),
     blockGBP:blockGBP(),absorbMonitoring:$('#pz-absorb').checked,refreshPct:+$('#pz-refresh').value||0,
     client:CLIENT,market:Object.keys(MKROWS).length>1?MARKET:''});
 }
@@ -399,7 +429,7 @@ function renderQuote(){
   if(q.draftRates)h+='<div class="q-draft">DRAFT RATES — confirm hours &amp; unit £ in the rate card before this goes near a client</div>';
   $('#q-body').innerHTML=h;
   $('#q-copy').disabled=false;$('#q-save').disabled=false;
-  var brief={client:CLIENT||'',task:'Tachyon setup — '+q.lines.map(function(l){return l.name}).join(' + ')+' ('+fmt(q.volume)+' SKUs'+(q.market?' · '+q.market.toUpperCase():'')+') · one-off '+F(q.oneOff.total)+' +VAT',cat:'opt',source:'plan'};
+  var brief={client:CLIENT||'',task:'Tachyon setup — '+q.lines.map(function(l){return l.name}).join(' + ')+' ('+fmt(q.volume)+' SKUs'+(q.market?' · '+q.market.toUpperCase():'')+') · one-off '+F(q.oneOff.total)+' +VAT',cat:'opt',source:'plan'};   // the tracking table finds it by TITLE scan — no tagging needed
   var a=$('#q-brief');a.hidden=false;a.href='/workflow?brief='+b64url(brief);
 }
 ['pz-volume','pz-refresh','pz-absorb'].forEach(function(id){var el=document.getElementById(id);
@@ -464,6 +494,65 @@ function renderScaffolds(){
   }});
 }
 
+/* ---------------- AI briefs: title-scanned delivery tracking ---------------- */
+function fmtTok(n){n=+n||0;return n>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'M':n>=1e3?(n/1e3).toFixed(0)+'k':String(n)}
+function saveTrack(){
+  fetch('/api/tachyon/track',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(TRACK_BASE)},body:JSON.stringify(TRACK)})
+    .then(function(r){TRACK_BASE=+r.headers.get('X-Sync-Base')||TRACK_BASE;return r.json()})
+    .then(function(m){if(m&&typeof m==='object'&&!m.ok){TRACK=m;refreshActuals()}})
+    .catch(function(){$('#ai-state').textContent='save failed — offline?'});
+}
+function setTrack(bid,field,val){
+  var t=TRACK[bid]||{};t[field]=val;t.t=Date.now();TRACK[bid]=t;
+  refreshActuals();saveTrack();
+  $('#ai-state').textContent='saved — shared with every team';setTimeout(function(){$('#ai-state').textContent=''},2500);
+}
+function refreshActuals(){
+  ACTUALS=E.actualsFromBriefs(BRIEFS,TRACK);
+  renderTrack();renderRates();renderCatalog();renderQuote();refreshActToggle();
+}
+function refreshActToggle(){
+  var n=Object.keys(ACTUALS).length,w=$('#act-tog-wrap');
+  if(!n){w.hidden=true;return}
+  w.hidden=false;$('#act-tog').checked=USE_ACTUALS;
+  var tot=0;Object.keys(ACTUALS).forEach(function(k){tot+=ACTUALS[k].n});
+  $('#act-tog-lbl').textContent='Price from tracked-brief averages ('+tot+' brief'+(tot===1?'':'s')+' across '+n+' task'+(n===1?'':'s')+')';
+}
+function renderTrack(){
+  var rows=E.aiBriefRows(BRIEFS,TRACK);
+  $('#ai-n').textContent=rows.length?rows.length+' found by title scan':'';
+  if(!rows.length){$('#ai-body').innerHTML='<tr><td colspan="10"><div class="ai-empty">No AI-related briefs found yet — the scan watches every Workflow brief title for AI / Tachyon wording.</div></td></tr>';return}
+  var opts=[['','— pick —']].concat(E.CATALOG.map(function(c){return [c.id,c.name]}));
+  $('#ai-body').innerHTML=rows.map(function(r){
+    function cell(f,v,step){return '<td><span class="r-ed" data-bid="'+esc(r.bid)+'" data-f="'+f+'" data-step="'+(step||0.5)+'" title="Click to edit">'+(v||'—')+'</span></td>'}
+    return '<tr>'
+      +'<td class="a-task"><span class="a-cl">'+esc(r.client||'—')+'</span>'+esc(r.task)+'</td>'
+      +'<td><span class="a-stage'+(r.done?' done':'')+'">'+esc(r.status)+'</span></td>'
+      +'<td><select class="a-tach" data-bid="'+esc(r.bid)+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(r.tach===o[0]?' selected':'')+'>'+esc(o[1])+'</option>'}).join('')+'</select></td>'
+      +cell('aspl',r.aspl)+cell('qc',r.qc)+cell('pm',r.pm)+cell('mon',r.mon)
+      +cell('tokens',r.tokens?fmtTok(r.tokens):'',1000)
+      +cell('volDone',r.volDone?fmt(r.volDone):'',100)
+      +'<td class="a-cats"><span class="r-ed" data-bid="'+esc(r.bid)+'" data-f="catsDone" data-txt="1">'+(esc(r.catsDone)||'<span style="opacity:.4">add…</span>')+'</span></td>'
+      +'</tr>'}).join('');
+  $('#ai-body').querySelectorAll('.r-ed').forEach(function(el){el.onclick=function(){editTrackCell(el)}});
+  $('#ai-body').querySelectorAll('.a-tach').forEach(function(sel){sel.onchange=function(){setTrack(sel.getAttribute('data-bid'),'tach',sel.value)}});
+}
+function editTrackCell(el){
+  if(el.__editing)return;el.__editing=1;
+  var bid=el.getAttribute('data-bid'),f=el.getAttribute('data-f'),isTxt=el.getAttribute('data-txt')==='1';
+  var cur=isTxt?((TRACK[bid]||{}).catsDone||''):String((TRACK[bid]||{})[f]||'');
+  var in_=document.createElement('input');in_.className='r-in';
+  if(isTxt){in_.type='text';in_.style.width='150px';in_.style.textAlign='left'}
+  else{in_.type='number';in_.step=el.getAttribute('data-step')||'1';in_.min='0';in_.style.width='84px'}
+  in_.value=cur;el.replaceWith(in_);in_.focus();in_.select();
+  function done(commit){
+    if(commit){var v=isTxt?in_.value.trim():+in_.value;
+      if(isTxt||isFinite(v))setTrack(bid,f,isTxt?v:Math.max(0,v));else renderTrack()}
+    else renderTrack()}
+  in_.addEventListener('keydown',function(e){if(e.key==='Enter')done(true);if(e.key==='Escape')done(false)});
+  in_.addEventListener('blur',function(){done(true)});
+}
+
 /* ---------------- client + volume (Feed Lab wired) ---------------- */
 function loadClientVolume(){
   CLIENT=$('#pz-client').value;MKROWS={};MARKET='';
@@ -499,6 +588,17 @@ function boot(){
     if(m&&typeof m==='object')RATES=m;renderRates();renderCatalog();renderQuote()});
   fetch('/api/tachyon/quotes').then(function(r){QUOTES_BASE=+r.headers.get('X-Sync-Base')||0;return r.json()}).catch(function(){return{}}).then(function(m){
     if(m&&typeof m==='object')QUOTES=m;renderSaved()});
+  // the evidence layer: title-scanned AI briefs + their tracking records → averages
+  $('#act-tog').onchange=function(){USE_ACTUALS=this.checked;
+    try{localStorage.setItem('fcc-pricer-actuals',USE_ACTUALS?'1':'0')}catch(e){}
+    renderRates();renderCatalog();renderQuote()};
+  Promise.all([
+    fetch('/api/briefs').then(function(r){return r.json()}).catch(function(){return{}}),
+    fetch('/api/tachyon/track').then(function(r){TRACK_BASE=+r.headers.get('X-Sync-Base')||0;return r.json()}).catch(function(){return{}})
+  ]).then(function(res){
+    BRIEFS=(res[0]&&typeof res[0]==='object')?res[0]:{};
+    TRACK=(res[1]&&typeof res[1]==='object')?res[1]:{};
+    refreshActuals()});
   renderRates();renderCatalog();renderQuote();renderSaved();renderScaffolds();
 }
 boot();

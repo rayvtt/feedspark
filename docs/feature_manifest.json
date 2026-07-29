@@ -667,6 +667,55 @@
       "pattern": "href=\"/pricer\"",
       "min": 2,
       "pr": 141
+    },
+    {
+      "name": "Pricer: actuals layer — tagged-brief averages price the quote",
+      "file": "docs/pricer_engine.js",
+      "pattern": "actualsFromBriefs",
+      "min": 2,
+      "pr": 144
+    },
+    {
+      "name": "Workflow: hours tagging RETIRED — lives in the Pricer now (must stay gone)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "m-hours",
+      "pr": 145,
+      "forbidden": true
+    },
+    {
+      "name": "Workflow: bg-tach RETIRED — title scan in the Pricer replaces it (must stay gone)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "bg-tach",
+      "pr": 145,
+      "forbidden": true
+    },
+    {
+      "name": "Pricer: actuals badges + evidence toggle",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "act-tog",
+      "min": 3,
+      "pr": 144
+    },
+    {
+      "name": "Pricer: AI-briefs delivery tracking table (title-scanned)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "ai-track",
+      "min": 2,
+      "pr": 145
+    },
+    {
+      "name": "Pricer engine: title scan + track join (aiBriefRows)",
+      "file": "docs/pricer_engine.js",
+      "pattern": "aiBriefRows",
+      "min": 2,
+      "pr": 145
+    },
+    {
+      "name": "worker: tachyon delivery-track store",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "api/tachyon/track",
+      "min": 2,
+      "pr": 145
     }
   ]
 }
