@@ -859,6 +859,13 @@
       "pattern": "timelineEvents",
       "min": 3,
       "pr": 166
+    },
+    {
+      "name": "workflow: timeline full-bleed + focus mode (AM productivity view)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "tl-focus",
+      "min": 4,
+      "pr": 167
     }
   ]
 }
