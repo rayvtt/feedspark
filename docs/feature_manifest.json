@@ -588,6 +588,13 @@
       "pattern": "ibfref",
       "min": 4,
       "pr": 136
+    },
+    {
+      "name": "Workflow: assignable brand in Gmail triage + sender memory",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "fcc-sender-brand",
+      "min": 2,
+      "pr": 138
     }
   ]
 }
