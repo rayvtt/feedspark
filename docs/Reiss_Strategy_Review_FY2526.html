@@ -656,7 +656,7 @@ policy data become commercial controls"<br/>Google </p>
 <div class="flow-step"><div class="fs-num">01</div><h4>Feed extraction</h4><p>Tachyon reads live Reiss product data — title, description, colour, material, size, price.</p></div>
 <div class="flow-step"><div class="fs-num">02</div><h4>Intent generation</h4><p>LLM generates 20–40 long-tail intent phrases per SKU from the real attributes already in the feed.</p></div>
 <div class="flow-step"><div class="fs-num">03</div><h4>Scoring &amp; validation</h4><p>Terms scored against search-term reports; winners selected per SKU.</p></div>
-<div class="flow-step"><div class="fs-num">04</div><h4>Feed injection</h4><p>Winning terms embedded in title, description, product highlights — closing the product-highlight gap the audit found (58% of SKUs carry none).</p></div>
+<div class="flow-step"><div class="fs-num">04</div><h4>Feed injection</h4><p>Winning terms embedded in title, description, product highlights — closing the product-highlight gap (58% of SKUs carry none).</p></div>
 </div>
 <div class="grid-2 rv in">
 <div class="card" style="border-left:3px solid var(--orange)">
@@ -732,7 +732,7 @@ policy data become commercial controls"<br/>Google </p>
 </div>
 <div class="tier">
 <div class="tn">Tier 2</div><h4>Descriptions &amp; answers</h4><div class="ts">The meaning layer — next</div>
-<ul><li>Descriptions: only 6.3% reach the 500+ char target</li><li>Six conversational attributes — 0% submitted</li><li>Keyword rollout — 5.8% of catalogue covered</li></ul>
+<ul><li>Descriptions: 35.8% of live GB SKUs are blank</li><li>Six conversational attributes — 0% submitted</li><li>Keyword enrichment — 5.5% of the live GB feed</li></ul>
 </div>
 <div class="tier">
 <div class="tn">Tier 3</div><h4>Image analysis</h4><div class="ts">The differentiator</div>
@@ -746,7 +746,7 @@ policy data become commercial controls"<br/>Google </p>
 </div>
 <div class="card" style="border-left:3px solid var(--orange-deep)">
 <h4>The honest gap, quantified</h4>
-<p>Not "some work to do" — specifically: descriptions need to move from 6.3% to a majority hitting 500+ chars, keywords from 5.8% to full-catalogue rollout, and all six conversational attributes from 0%. Three concrete, measured targets, not a vague direction.</p>
+<p>Not "some work to do" — specifically: 6,936 live SKUs need a description written back where there is none today, keyword enrichment needs to move from 5.5% to full-catalogue rollout, and all six conversational attributes from 0%. Three concrete, measured targets from the live feed read in chapter 7, not a vague direction.</p>
 </div>
 </div>
 </div>
@@ -763,7 +763,7 @@ policy data become commercial controls"<br/>Google </p>
 <li><b>Stock_flag accuracy</b> — chase NEXT's fix</li>
 <li><b>Item Group ID → Item No.</b> — confirm cutover date</li>
 <li><b>Billing recipient</b> change to FS accountant</li>
-<li><b>Keyword rollout</b> — 5.8% → full catalogue</li>
+<li><b>Keyword rollout</b> — 5.5% → full catalogue</li>
 </ul>
 </div>
 <div class="mo">
@@ -771,7 +771,7 @@ policy data become commercial controls"<br/>Google </p>
 <h4>Land the rollout, close the coverage gaps</h4>
 <ul>
 <li><b>Product highlights</b> — 42% → Google's 4–10 target</li>
-<li><b>Description enrichment</b> — 6.3% → 500+ chars</li>
+<li><b>Description enrichment</b> — close the 6,936 blank-description SKUs</li>
 <li><b>[Search Intent] + Local Language reads</b> — roll winners into BAU</li>
 <li><b>Tier 2 AI-readiness build begins</b> — conversational attributes, MASK title-length</li>
 </ul>
@@ -783,15 +783,15 @@ policy data become commercial controls"<br/>Google </p>
 <tbody>
 <tr><td><b>W1</b></td><td>Stock_flag accuracy fix</td><td>NEXT to update the stock-flag file on a proper cadence</td><td>Aimee</td><td>Q3</td><td><span class="pill p-done">High</span></td></tr>
 <tr><td><b>W2</b></td><td>Item Group ID → Item No. switchover</td><td>Confirmed cutover date from NEXT</td><td>Eliza / Ray</td><td>Q3</td><td><span class="pill p-done">High</span></td></tr>
-<tr><td><b>W3</b></td><td>Keyword rollout to full catalogue</td><td>Apply the live Keyword Planner output beyond the current 5.8%</td><td>Ezgi</td><td>Q3</td><td><span class="pill p-done">High</span></td></tr>
-<tr><td><b>W4</b></td><td>51-market rollout execution</td><td>22 markets live by Oct 26 — resourcing in chapters 14–15</td><td>Ray + AM team</td><td>Q3–Q4</td><td><span class="pill p-done">High</span></td></tr>
-<tr><td><b>W5</b></td><td>Product highlight population</td><td>Close the 58% zero-highlight gap the feed audit found</td><td>Ray</td><td>Q4</td><td><span class="pill p-prog">Medium</span></td></tr>
+<tr><td><b>W3</b></td><td>Keyword rollout to full catalogue</td><td>Apply the live Keyword Planner output beyond the current 5.5%</td><td>Ezgi</td><td>Q3</td><td><span class="pill p-done">High</span></td></tr>
+<tr><td><b>W4</b></td><td>51-market rollout execution</td><td>22 markets live by Oct 26 — resourcing in chapters 13–14</td><td>Ray + AM team</td><td>Q3–Q4</td><td><span class="pill p-done">High</span></td></tr>
+<tr><td><b>W5</b></td><td>Product highlight population</td><td>Close the 58% zero-highlight gap across the catalogue</td><td>Ray</td><td>Q4</td><td><span class="pill p-prog">Medium</span></td></tr>
 <tr><td><b>W6</b></td><td>Product type — deeper breakdown</td><td>Categorisation rollout, currently in progress</td><td>Eliza</td><td>Q3–Q4</td><td><span class="pill p-prog">Medium</span></td></tr>
 <tr><td><b>W7</b></td><td>Creative testing</td><td>Design follow-up, scoping stage</td><td>Eliza</td><td>Q4</td><td><span class="pill p-open">Low</span></td></tr>
 </tbody>
 </table>
 </div>
-<div class="note rv in"><b>Sequencing logic:</b> the NEXT-dependent items (W1, W2) block the automation layer (chapter 6) regardless of effort, so they're chased first alongside the market rollout kicking off in Q3. W3 and W5 are new priorities the feed audit surfaced, not the original plan — they're the two levers that move the feed fastest, since keywords and highlights are the widest gaps between "tool built" and "catalogue covered." Rollout resourcing (W4) runs across both quarters and is detailed separately in chapters 14–15.</div>
+<div class="note rv in"><b>Sequencing logic:</b> the NEXT-dependent items (W1, W2) block the automation layer (chapter 6) regardless of effort, so they're chased first alongside the market rollout kicking off in Q3. W3 and W5 are new priorities the feed audit surfaced, not the original plan — they're the two levers that move the feed fastest, since keywords and highlights are the widest gaps between "tool built" and "catalogue covered." Rollout resourcing (W4) runs across both quarters and is detailed separately in chapters 13–14.</div>
 </div>
 </section>
 <!-- ================= CH 13 — 51-MARKET ROLLOUT — PLAN & RESOURCING ================= -->
@@ -852,7 +852,7 @@ policy data become commercial controls"<br/>Google </p>
 </div>
 <div class="card">
 <h4>Additive, not instead of</h4>
-<p style="font-size:13px">This sits alongside the existing optimisation retainer (chapters 03–13), not in place of it. Going from 2 to 3 markets/week to fit 22 markets in before Peak means roughly 9–12 hrs/week of new scope, resourced separately — BAU keyword/title/highlights work keeps moving at its current pace throughout.</p>
+<p style="font-size:13px">This sits alongside the existing optimisation retainer (chapters 03–12), not in place of it. Going from 2 to 3 markets/week to fit 22 markets in before Peak means roughly 9–12 hrs/week of new scope, resourced separately — BAU keyword/title/highlights work keeps moving at its current pace throughout.</p>
 </div>
 <div class="card" style="border-left:3px solid var(--orange)">
 <h4>Before Peak, starting early September</h4>
@@ -931,7 +931,7 @@ policy data become commercial controls"<br/>Google </p>
 <div class="stat"><div class="n">One-off</div><div class="l">Proposed as project scope, separate from the retainer</div></div>
 </div>
 <div class="grid-2 rv in">
-<div class="card" style="border-left:3px solid var(--orange-deep)"><h4>One-off, not retainer scope</h4><p style="font-size:13px">~88 hours across this wave's 22 markets is proposed as a one-off project fee, additive to the existing optimisation retainer (chapters 03–13) — not drawn from it. Rate and total cost need Ray to confirm; the hours above are the estimate, not a price.</p></div>
+<div class="card" style="border-left:3px solid var(--orange-deep)"><h4>One-off, not retainer scope</h4><p style="font-size:13px">~88 hours across this wave's 22 markets is proposed as a one-off project fee, additive to the existing optimisation retainer (chapters 03–12) — not drawn from it. Rate and total cost need Ray to confirm; the hours above are the estimate, not a price.</p></div>
 <div class="card"><h4>What this schedule doesn't cover yet</h4><p style="font-size:13px">Meta International Feed setup is tracked separately per market and isn't included in the hours above — same caveat as before. Worth a second pass once the Shopping rollout is confirmed.</p></div>
 </div>
 <div class="note rv in"><b>This is a proposal, not a locked plan:</b> the market order groups by language/region similarity for a realistic operational flow, and the hour breakdown is FeedSpark's estimate — neither is something Reiss has signed off on yet. Swap any week's pairing, or adjust the task allocation, freely once priorities and capacity are confirmed.</div>
