@@ -23,7 +23,13 @@ daily upstream). The flow:
 cache is **older than 20h** — or Ray hits "↻ Re-scan live feed" — the page re-streams and recomputes.
 Feeds change daily upstream; the 20h window keeps the score at most one refresh behind.
 
-Reference feed wired out of the box: **Reiss UK** (19,447 rows, 105 cols) via `DEFAULT_FEEDS`.
+Wired out of the box via `DEFAULT_FEEDS` — the committed **master feed-market map**, imported from
+Ray's sheet (`1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak`, one row per client+country feed):
+**16 feeds × 9 brands** — Schuh gb/de/ie · YuMOVE · Monsoon · Accessorize · Superdry gb/ie/fr ·
+House of Bruar · American Golf (API-fed sheet) · Reiss gb/us/ie/de/nl. New rows in the sheet get
+re-imported into `DEFAULT_FEEDS` (ask a Code session); ad-hoc feeds attach from the CC dossier and
+**override** the wired entry per market. `/api/feed/clients` serves the roster (wired ∪ attached)
+to the Feed Lab selector and the CC dossier in one call.
 
 ---
 
@@ -67,8 +73,10 @@ dossier (or `DEFAULT_FEEDS`) resolve. Audit PUTs are activity-logged (`feed-audi
    no gid → tab 0. Stored as the dossier `feed` field.
 3. Open `/feedlab?client=<Brand>` (or the dossier's **Feed Lab ⚡** link in view mode) → first scan
    streams live, scores, and caches.
-4. No dossier entry needed only for Reiss — `DEFAULT_FEEDS` in the worker hardcodes its sheet as
-   the fallback until/unless a dossier `feed` overrides it. A dossier `feed` always wins.
+4. No dossier entry needed for the 9 master-map brands — `DEFAULT_FEEDS` in the worker wires their
+   sheets (see §1) until/unless a dossier `feed` overrides them. A dossier `feed` always wins per
+   market. For a **permanent** new feed, prefer adding the row to Ray's master sheet and re-importing
+   into `DEFAULT_FEEDS` so the wiring is committed, not KV-only.
 
 ---
 
