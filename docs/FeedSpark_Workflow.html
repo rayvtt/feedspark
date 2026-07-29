@@ -279,7 +279,6 @@ window.addEventListener('load',restore);
       <span class="em-n" id="em-n"></span>
       <span class="gm-stat" id="gstate">Waiting for the first push — set up tools/gmail_push.gs (GOOGLE_SETUP.md §8).</span>
       <span class="grow"></span>
-      <button class="em-tog" id="gm-rescan" type="button" title="Replay up to 90 days of brief traffic through the ibfref matcher — corrects statuses and replies filed on the wrong ticket">⟳ Re-scan history</button>
       <button class="em-tog" id="em-tog" type="button" hidden></button>
     </div>
     <div class="gm-sub">Every 5 min the mailbox script pushes brief replies (they move tickets) and captures external client emails into the triage queue — each one is either a task or it isn't. <b>→ Task</b> writes it into the detected brand's project plan; <b>✕ Not a task</b> clears it (restorable). ⚡ = reads as an action request. The <b>cue</b> column shows how the brand was detected — Facebook/Meta aliases and client email domains included.</div>
@@ -2242,18 +2241,6 @@ window.addEventListener('load',restore);
     decideEmail(g.id,false,'task');
     renderAll();
   }
-  // historic re-scan: replay the mailbox through the ibfref-first matcher (repairs included)
-  (function(){ var b=document.getElementById('gm-rescan'); if(!b)return; b.onclick=function(){
-    b.disabled=true; toast('Re-scanning the mailbox — up to 90 days of brief traffic…');
-    fetch('/api/gmail/rescan',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({days:90})})
-      .then(function(r){return r.json();}).then(function(d){ b.disabled=false;
-        if(!d||!d.ok){ toast(d&&d.error==='gmail_not_connected'?'Re-scan needs the Gmail service-account creds (GOOGLE_SETUP.md)':'Re-scan failed: '+((d&&d.error)||'server error')); return; }
-        toast('✓ Re-scan: '+d.scanned+' emails · '+d.matched+' matched'
-          +(((d.repaired&&d.repaired.length)||0)?(' · '+d.repaired.length+' repl'+(d.repaired.length===1?'y':'ies')+' moved to the right ticket'):'')
-          +((d.moved&&d.moved.length)?(' · '+d.moved.length+' stage move'+(d.moved.length===1?'':'s')):''));
-        apiGet().then(function(x){ BRIEFS=x||{}; renderAll(); });
-      }).catch(function(){ b.disabled=false; toast('Re-scan failed — network'); });
-  }; })();
   function updateGmailState(){ var st=document.getElementById('gstate'); if(!st||!gmailItems.length)return;
     var pend=gmailItems.filter(function(g){return !g.dismissed;}),
         brf=pend.filter(function(g){return g.briefable;}).length, done=gmailItems.length-pend.length;

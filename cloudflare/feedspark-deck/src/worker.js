@@ -296,12 +296,12 @@ export default {
       const envx = liftEnvelope(await env.EDITS.get('briefs', 'json'), now);
       const briefs = envelopeToClient(envx, {});
       const selfSrc = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
-      const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'] });
-      if (res.matched) {
+      const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'], repair: true });   // ibfref repair self-heals mis-filed replies as the rolling window re-pushes
+      if (res.matched || (res.repaired && res.repaired.length)) {
         mergeIntoEnvelope(envx, briefs, now, now, {});   // full map present → pure upserts, no deletions
         await env.EDITS.put('briefs', JSON.stringify(envx));
       }
-      logActivity(ctx, env, request, 'gmail-sync', res.matched + ' matched · ' + res.moved.length + ' moved', 'gmail-sync');
+      logActivity(ctx, env, request, 'gmail-sync', res.matched + ' matched · ' + res.moved.length + ' moved' + ((res.repaired && res.repaired.length) ? (' · ' + res.repaired.length + ' repaired') : ''), 'gmail-sync');
       // rolling run history for the Activity page's Gmail-sync panel (last 60 runs)
       try {
         const runlog = (await env.EDITS.get('gmailpushlog', 'json')) || [];
