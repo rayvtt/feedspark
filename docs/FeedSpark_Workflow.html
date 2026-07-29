@@ -46,15 +46,21 @@ window.addEventListener('load',restore);
   .kpi .n{font-size:27px;font-weight:900;line-height:1}
   .kpi .l{font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:5px}
   .kpi.good .n{color:var(--good)}.kpi.warn .n{color:var(--orange-deep)}.kpi.risk .n{color:var(--risk)}
-  h2{font-size:20px;font-weight:900;margin:30px 0 4px}
+  h2{font-size:20px;font-weight:900;margin:30px 0 4px;display:flex;align-items:center;gap:8px;position:relative}
   .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+  /* section-info: replaces the long instructional paragraphs that used to sit under every
+     h2 — an (i) icon that reveals the same copy on hover/focus, so the resting page shows
+     just headings and content, not a wall of italics under every section. */
+  .info-btn{width:17px;height:17px;border-radius:50%;border:1.5px solid var(--line);background:var(--paper);color:var(--muted);font:inherit;font-size:10.5px;font-style:italic;font-weight:900;line-height:1;cursor:help;display:inline-flex;align-items:center;justify-content:center;padding:0;flex:none}
+  .info-btn:hover,.info-btn:focus-visible{border-color:var(--navy);color:var(--navy);outline:none}
+  .info-btn + .info-pop{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:30;width:min(460px,86vw);background:var(--paper);border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);padding:12px 15px;font-size:12.5px;font-weight:600;color:var(--ink-2);line-height:1.55}
+  .info-btn:hover + .info-pop,.info-btn:focus-visible + .info-pop,.info-pop:hover{display:block}
   /* gmail live banner */
   .gmod{margin:20px 0 4px;padding:13px 16px}
   .gm-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .gm-head .grow{flex:1}
-  .gm-title{font-size:14px;font-weight:900;color:var(--ink);white-space:nowrap}
+  .gm-title{font-size:14px;font-weight:900;color:var(--ink);white-space:nowrap;position:relative;display:inline-flex;align-items:center;gap:7px}
   .gm-stat{font-size:12px;font-weight:600;color:var(--muted)}
-  .gm-sub{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.45}
   .gdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:7px;vertical-align:middle}
   .gdot.on{background:var(--good)}
   .em-cue{font-size:9.5px;font-weight:900;color:var(--navy);background:rgba(26,54,93,.08);border-radius:100px;padding:1px 8px;white-space:nowrap;justify-self:start}
@@ -277,13 +283,14 @@ window.addEventListener('load',restore);
 
   <div class="panel gmod">
     <div class="gm-head">
-      <span class="gm-title"><span class="gdot" id="gdot"></span>✉ Gmail live sync</span>
+      <span class="gm-title"><span class="gdot" id="gdot"></span>✉ Gmail live sync<button class="info-btn" type="button" aria-label="How Gmail live sync works">i</button>
+        <div class="info-pop">Every 5 min the mailbox script pushes brief replies (they move tickets) and captures external client emails into the triage queue — each one is either a task or it isn't. <b>→ Task</b> writes it into the detected brand's project plan; <b>✕ Not a task</b> clears it (restorable). ⚡ = reads as an action request. The <b>cue</b> column shows how the brand was detected — Facebook/Meta aliases and client email domains included.</div>
+      </span>
       <span class="em-n" id="em-n"></span>
       <span class="gm-stat" id="gstate">Waiting for the first push — set up tools/gmail_push.gs (GOOGLE_SETUP.md §8).</span>
       <span class="grow"></span>
       <button class="em-tog" id="em-tog" type="button" hidden></button>
     </div>
-    <div class="gm-sub">Every 5 min the mailbox script pushes brief replies (they move tickets) and captures external client emails into the triage queue — each one is either a task or it isn't. <b>→ Task</b> writes it into the detected brand's project plan; <b>✕ Not a task</b> clears it (restorable). ⚡ = reads as an action request. The <b>cue</b> column shows how the brand was detected — Facebook/Meta aliases and client email domains included.</div>
     <div id="em-panel" hidden>
       <div class="em-row em-colhead"><span>Brand</span><span>Cue</span><span>From</span><span>Subject</span><span>Age</span><span></span></div>
       <div id="em-list"></div>
@@ -636,8 +643,9 @@ window.addEventListener('load',restore);
   .add-row input,.add-row select,.c-stat .stat-sel,.it-ctl>select{font-size:13px!important}
 }
 </style>
-  <h2>Intake — every task, live</h2>
-  <p class="sub">Pure tasks only — monthly <b>project-plan</b> rows plus the <b>emails you briefed</b> from the triage queue (raw emails stay up there until you decide). Change a <b>status</b> inline and plan rows write back to the sheet. Stack filters — pick several <b>sources</b>, <b>statuses</b>, <b>clients</b> or <b>AMs</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator. Works like a spreadsheet — click a cell, arrow-key around, <b>Cmd/Ctrl+C</b> copy, <b>Ctrl+D</b> fill down, <b>Ctrl+V</b> paste, <b>Ctrl+Z</b> undo; <b>double-click</b> to edit; on a status cell just <b>type a letter</b> (O, B, I, H, W, D) to set it.</p>
+  <h2>Intake — every task, live<button class="info-btn" type="button" aria-label="How Intake works">i</button>
+    <div class="info-pop">Pure tasks only — monthly <b>project-plan</b> rows plus the <b>emails you briefed</b> from the triage queue (raw emails stay up there until you decide). Change a <b>status</b> inline and plan rows write back to the sheet. Stack filters — pick several <b>sources</b>, <b>statuses</b>, <b>clients</b> or <b>AMs</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator. Works like a spreadsheet — click a cell, arrow-key around, <b>Cmd/Ctrl+C</b> copy, <b>Ctrl+D</b> fill down, <b>Ctrl+V</b> paste, <b>Ctrl+Z</b> undo; <b>double-click</b> to edit; on a status cell just <b>type a letter</b> (O, B, I, H, W, D) to set it.</div>
+  </h2>
   <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="new-brief-btn" type="button" title="Open the brief composer">✉ New brief</button><button class="live-add" id="add-task-btn" type="button" style="margin-left:0">＋ Add task</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
   <div class="it-ctl">
     <div class="it-multi" id="it-views-wrap">
@@ -693,32 +701,37 @@ window.addEventListener('load',restore);
     </tr></tfoot>
   </table></div>
 
-  <h2>Brief pipeline</h2>
-  <p class="sub">Every brief from send to sign-off. Cards are compact so 20+ briefs stay visible: brand chip (+market if not GB), due, and days-in-court (red = over SLA — the lane tells you whose court). Hover for the full task; drag between lanes; click to open the ticket. The <b>court cards</b> show which of the three teams holds the ball — click one to spotlight its tickets. Paste any reply into the <b>router</b> and it finds the right ticket (by <code>[ibfcode]</code>, brief ID or task wording), logs it, and moves the stage.</p>
+  <h2>Brief pipeline<button class="info-btn" type="button" aria-label="How Brief pipeline works">i</button>
+    <div class="info-pop">Every brief from send to sign-off. Cards are compact so 20+ briefs stay visible: brand chip (+market if not GB), due, and days-in-court (red = over SLA — the lane tells you whose court). Hover for the full task; drag between lanes; click to open the ticket. The <b>court cards</b> show which of the three teams holds the ball — click one to spotlight its tickets. Paste any reply into the <b>router</b> and it finds the right ticket (by <code>[ibfcode]</code>, brief ID or task wording), logs it, and moves the stage.</div>
+  </h2>
   <div class="courts" id="courts"></div>
   <div class="lu"><textarea id="lu-text" rows="2" placeholder="⚡ Paste an ASPL / client reply here — it routes to the right ticket, logs the comm, moves the stage and picks up any ETA. (Cmd/Ctrl+Enter to route)"></textarea><button class="btn navy" id="lu-go" type="button">Route update</button></div>
   <div class="lu-out" id="lu-out" hidden></div>
   <div class="board" id="board"></div>
 
-  <h2>ASPL SLA &amp; turnaround</h2>
-  <p class="sub">Load, delivery and average turnaround per ASPL owner. Escalations flag any ticket sitting too long in <em>any</em> court — unbriefed or blocked with the AM, silent 3+ days with ASPL, awaiting client sign-off 3+ days, or a <b>run window that's finished without its analysis</b> — with the right action one click away. The analysis SLAs below set how long each brief type runs before its analysis is triggered.</p>
+  <h2>ASPL SLA &amp; turnaround<button class="info-btn" type="button" aria-label="How SLA &amp; turnaround works">i</button>
+    <div class="info-pop">Load, delivery and average turnaround per ASPL owner. Escalations flag any ticket sitting too long in <em>any</em> court — unbriefed or blocked with the AM, silent 3+ days with ASPL, awaiting client sign-off 3+ days, or a <b>run window that's finished without its analysis</b> — with the right action one click away. The analysis SLAs below set how long each brief type runs before its analysis is triggered.</div>
+  </h2>
   <div class="runsla-bar" id="runsla-bar"></div>
   <div class="sla-grid" id="sla-grid"></div>
   <div class="panel" style="margin-top:12px"><h3>Escalations — over-SLA in any court</h3><div id="sla-stalled" class="stall-list"></div></div>
 
-  <h2>Timeline — next 6 weeks</h2>
-  <p class="sub">Every brief due date and test analysis on one axis. Overdue items sit in week 1. Click a brief to open it.</p>
+  <h2>Timeline — next 6 weeks<button class="info-btn" type="button" aria-label="How Timeline works">i</button>
+    <div class="info-pop">Every brief due date and test analysis on one axis. Overdue items sit in week 1. Click a brief to open it.</div>
+  </h2>
   <div class="tl-wrap"><div class="tl-grid" id="tl-grid"></div></div>
 
-  <h2>Test &amp; experiment register</h2>
-  <p class="sub">Every A/B in one place — hypothesis, cohort, analysis date and result. Analysis dates feed the timeline and alerts so no test dies un-analysed; the wins are your deck ammo.</p>
+  <h2>Test &amp; experiment register<button class="info-btn" type="button" aria-label="How the test register works">i</button>
+    <div class="info-pop">Every A/B in one place — hypothesis, cohort, analysis date and result. Analysis dates feed the timeline and alerts so no test dies un-analysed; the wins are your deck ammo.</div>
+  </h2>
   <div class="tst-head"><button class="btn sm navy" id="test-add">＋ Add test</button></div>
   <div class="it-scroll"><table class="itbl tstbl">
     <thead><tr><th>Client</th><th>Test</th><th>Hypothesis</th><th>Cohort</th><th>Analysis</th><th>Status / result</th><th class="it-act">·</th></tr></thead>
     <tbody id="tests-body"></tbody></table></div>
 
-  <h2>Team workload</h2>
-  <p class="sub">Open + in-progress plan tasks by account executive. The longest bars are your bottlenecks — rebalance before they slip.</p>
+  <h2>Team workload<button class="info-btn" type="button" aria-label="How Team workload works">i</button>
+    <div class="info-pop">Open + in-progress plan tasks by account executive. The longest bars are your bottlenecks — rebalance before they slip.</div>
+  </h2>
   <div class="panel wk-panel"><div id="wk-grid"></div></div>
 
 </main>
@@ -1928,7 +1941,7 @@ window.addEventListener('load',restore);
   // ---- paste-an-update router: any reply → the right ticket, logged + staged, no hunting ----
   function findBriefFor(text){ var arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];});
     var rm=/ibfref:([a-z0-9-]+)/i.exec(text);
-    if(rm){ var rb=BRIEFS[rm[1]]||BRIEFS[rm[1].toUpperCase()]; if(rb)return rb; }
+    if(rm)return BRIEFS[rm[1]]||BRIEFS[rm[1].toUpperCase()]||null;   // a stamped ref is decisive — unknown ref = untracked brief, never guess
     var m=/ibfcode:([a-z0-9-]+)/i.exec(text);
     if(m){ var c=m[1].toLowerCase(), hits=arr.filter(function(b){return (b.code||'').toLowerCase()===c;});
       if(hits.length){ if(hits.length>1)hits.sort(function(a,b){return taskDice(text,b.task)-taskDice(text,a.task);}); return hits[0]; } }

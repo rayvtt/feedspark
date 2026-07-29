@@ -667,6 +667,110 @@
       "pattern": "href=\"/pricer\"",
       "min": 2,
       "pr": 141
+    },
+    {
+      "name": "Pricer: actuals layer — tagged-brief averages price the quote",
+      "file": "docs/pricer_engine.js",
+      "pattern": "actualsFromBriefs",
+      "min": 2,
+      "pr": 144
+    },
+    {
+      "name": "Workflow: hours tagging RETIRED — lives in the Pricer now (must stay gone)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "m-hours",
+      "pr": 145,
+      "forbidden": true
+    },
+    {
+      "name": "Workflow: bg-tach RETIRED — title scan in the Pricer replaces it (must stay gone)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "bg-tach",
+      "pr": 145,
+      "forbidden": true
+    },
+    {
+      "name": "Pricer: actuals badges + evidence toggle",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "act-tog",
+      "min": 3,
+      "pr": 144
+    },
+    {
+      "name": "Pricer: AI-briefs delivery tracking table (title-scanned)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "ai-track",
+      "min": 2,
+      "pr": 145
+    },
+    {
+      "name": "Pricer engine: title scan + track join (aiBriefRows)",
+      "file": "docs/pricer_engine.js",
+      "pattern": "aiBriefRows",
+      "min": 2,
+      "pr": 145
+    },
+    {
+      "name": "worker: tachyon delivery-track store",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "api/tachyon/track",
+      "min": 2,
+      "pr": 145
+    },
+    {
+      "name": "Pricer: floating field guide (tracking definitions)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "fg-panel",
+      "min": 2,
+      "pr": 147
+    },
+    {
+      "name": "Pricer: GPC categories picker (official 5,595-entry taxonomy)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "gpc-pop",
+      "min": 2,
+      "pr": 147
+    },
+    {
+      "name": "worker: GPC taxonomy served at /pricer/gpc.txt",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "pricer/gpc.txt",
+      "pr": 147
+    },
+    {
+      "name": "repo: official Google product taxonomy snapshot",
+      "file": "docs/gpc_taxonomy.txt",
+      "pattern": "Animals & Pet Supplies",
+      "min": 2,
+      "pr": 147
+    },
+    {
+      "name": "Pricer: manual historic AI entries (pre-FCC work joins the averages)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "ai-add",
+      "min": 2,
+      "pr": 149
+    },
+    {
+      "name": "Workflow: hover info icons replace section subtext",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "info-btn",
+      "min": 5,
+      "pr": 149
+    },
+    {
+      "name": "worker: sheet-write tab resolver stops guessing on ambiguity",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "tabAmbiguous",
+      "min": 5,
+      "pr": 149
+    },
+    {
+      "name": "worker: sheet reads widened past 600 rows / 26 cols",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "A1:ZZ5000",
+      "min": 5,
+      "pr": 149
     }
   ]
 }

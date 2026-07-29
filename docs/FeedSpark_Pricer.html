@@ -173,6 +173,49 @@ window.addEventListener('load',restore);
   .rc .r-note{min-width:140px;max-width:220px;font-size:11.5px;color:var(--muted)}
   .rc .r-draft{font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--amber);border:1px dashed rgba(183,121,31,.5);border-radius:100px;padding:1px 7px;white-space:nowrap}
   .rc .r-ok{font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--good);border:1px solid rgba(21,128,61,.3);border-radius:100px;padding:1px 7px;white-space:nowrap}
+  .ai-n{font-size:12px;font-weight:800;color:var(--muted);margin-left:6px}
+  /* floating field guide */
+  .fg{position:fixed;right:0;top:130px;z-index:120}
+  .fg-tab{position:absolute;right:0;top:0;writing-mode:vertical-rl;font:inherit;font-size:11px;font-weight:900;letter-spacing:.04em;padding:12px 7px;border:1px solid var(--line);border-right:0;border-radius:10px 0 0 10px;background:var(--paper);color:var(--muted);cursor:pointer;box-shadow:var(--shadow)}
+  .fg-tab:hover{color:var(--orange-deep);border-color:var(--orange)}
+  .fg.open .fg-tab{color:var(--orange-deep);border-color:var(--orange)}
+  .fg-panel{position:absolute;right:0;top:0;width:min(320px,92vw);max-height:min(74vh,640px);overflow:auto;background:var(--paper);border:1px solid var(--line);border-right:0;border-radius:12px 0 0 12px;box-shadow:0 12px 40px rgba(16,24,40,.18)}
+  .fg-h{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:900;padding:11px 14px;background:var(--paper);border-bottom:1px solid var(--line)}
+  .fg-x{border:0;background:none;font-size:19px;line-height:1;color:var(--muted);cursor:pointer}
+  .fg-b{padding:10px 14px 14px}
+  .fg-b dl{margin:0}
+  .fg-b dt{font-size:11px;font-weight:900;color:var(--orange-ink);margin-top:9px}
+  .fg-b dd{margin:2px 0 0;font-size:11.5px;color:var(--ink-2);line-height:1.45}
+  .fg-sec{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border-top:1px dashed var(--line);margin-top:12px;padding-top:9px}
+  /* GPC picker */
+  .gpc-pop{position:absolute;z-index:140;width:min(400px,94vw);background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 48px rgba(16,24,40,.22);padding:10px}
+  .gpc-pop input#gpc-q{width:100%;font:inherit;font-size:13px;font-weight:700;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+  .gpc-pop input#gpc-q:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
+  .gpc-sel{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0 4px;max-height:92px;overflow:auto}
+  .gpc-chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:100px;background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.35);color:var(--orange-ink);cursor:pointer}
+  .gpc-chip:hover{background:rgba(192,57,43,.1);border-color:rgba(192,57,43,.4);color:#C0392B}
+  .gpc-list{max-height:230px;overflow:auto;margin-top:5px;border-top:1px solid var(--line)}
+  .gpc-it{padding:6px 8px;font-size:11.5px;color:var(--ink-2);cursor:pointer;border-radius:7px;line-height:1.35}
+  .gpc-it:hover{background:var(--wash)}
+  .gpc-it.on{color:var(--orange-ink);font-weight:800;background:rgba(245,166,35,.08)}
+  .gpc-it b{color:var(--orange-deep)}
+  .gpc-empty{padding:10px 8px;font-size:11.5px;color:var(--muted);font-style:italic}
+  .gpc-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+  .gpc-foot #gpc-n{font-size:11px;font-weight:800;color:var(--muted)}
+  .a-cats .cat-count{font-size:10.5px;font-weight:900;color:var(--navy);background:rgba(26,54,93,.08);border:1px solid rgba(26,54,93,.25);border-radius:100px;padding:2px 9px;cursor:pointer;white-space:nowrap}
+  .a-cats .cat-count:hover{border-color:var(--navy)}
+  @media(max-width:640px){.fg{top:auto;bottom:14px}.fg-panel{max-height:60vh}}
+  .ai-track .a-task{font-weight:800;min-width:230px;max-width:320px}
+  .ai-track .a-cl{font-size:10px;color:var(--orange-ink);font-weight:900;display:block}
+  .ai-track .a-stage{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;border-radius:100px;padding:2px 8px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .ai-track .a-stage.done{color:var(--good);border-color:rgba(21,128,61,.35)}
+  .ai-track select.a-tach{font:inherit;font-size:11.5px;font-weight:700;max-width:180px;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}
+  .ai-track .r-ed{min-width:34px}
+  .ai-track .a-cats{min-width:130px;max-width:190px;font-size:11.5px}
+  .ai-empty{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 0}
+  .a-del{font:inherit;font-size:11px;font-weight:900;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--muted);cursor:pointer;padding:1px 7px;margin-left:4px}
+  .a-del:hover{border-color:#C0392B;color:#C0392B}
+  .rc .r-act{font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);border:1px solid rgba(26,54,93,.35);background:rgba(26,54,93,.07);border-radius:100px;padding:1px 7px;white-space:nowrap;cursor:help}
   .rc-foot{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:11px;font-size:12px;color:var(--muted)}
   .rc-foot .blockfld{display:inline-flex;align-items:center;gap:6px;font-weight:800;color:var(--ink-2)}
   .rc-foot input{font:inherit;width:70px;font-weight:800;padding:4px 7px;border:1px solid var(--line);border-radius:7px;text-align:right}
@@ -272,6 +315,20 @@ window.addEventListener('load',restore);
 </div></section>
 
 <section><div class="wrap">
+  <h2>AI briefs — delivery tracking <span class="ai-n" id="ai-n"></span></h2>
+  <p class="sub">Every brief whose task title reads as AI work is pulled in here automatically — no tagging inside Workflow, no pipeline clutter. The teams track delivery on the brief itself: hours per role, <b>Tachyon tokens used</b>, <b>product volume done</b> and <b>categories done</b>. Averages (and tokens-per-SKU) feed the rate card's evidence pricing.</p>
+  <div class="pz-card">
+    <div class="rc-scroll"><table class="rc ai-track" id="ai-track">
+      <thead><tr><th>Client · brief</th><th>Stage</th><th>Tachyon task</th><th>ASPL h</th><th>QC h</th><th>PM h</th><th>Mon h</th><th>Tokens</th><th>Vol done</th><th>Categories done</th></tr></thead>
+      <tbody id="ai-body"></tbody>
+    </table></div>
+    <div class="rc-foot"><button class="btn" id="ai-add" type="button">＋ Add historic AI task</button>
+      <span class="tiers-line">for AI work done before the FCC — it counts toward the averages like any brief</span>
+      <span id="ai-state"></span></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
   <h2>Rate card — hours &amp; unit prices, owned by the teams</h2>
   <p class="sub">This is the collaborative bit: ASPL tags the setup hours they really take, London tags QC / PM / monitoring, commercial sets the £ per SKU. Click any number to edit — saves instantly for everyone (concurrency-safe), and the row loses its DRAFT flag once a human has confirmed it. Every edit is attributed in the owner's Activity log.</p>
   <div class="pz-card">
@@ -282,6 +339,7 @@ window.addEventListener('load',restore);
     <div class="rc-foot">
       <span class="blockfld">Retainer block £ <input id="rc-block" type="number" min="1" step="1"> +VAT / 8h</span>
       <span class="tiers-line" id="tiers-line"></span>
+      <label class="pz-tog" id="act-tog-wrap" hidden><input type="checkbox" id="act-tog"> <span id="act-tog-lbl">Price from tagged-brief averages</span></label>
       <span id="rc-state"></span>
     </div>
   </div>
@@ -292,6 +350,40 @@ window.addEventListener('load',restore);
   <p class="sub">Every saved quote keeps its numbers as they were on the day — the paper trail for what was offered to whom.</p>
   <div class="sq" id="sq"></div>
 </div></section>
+
+<!-- floating field guide: definitions for every tracking column, so ASPL + London tag
+     to the SAME rules. Collapsible tab pinned right; open state remembered. -->
+<div class="fg" id="fg">
+  <button class="fg-tab" id="fg-tab" type="button" aria-expanded="false" title="Field guide — what each tracking column means">ⓘ Field guide</button>
+  <div class="fg-panel" id="fg-panel" hidden>
+    <div class="fg-h">Tracking field guide <button class="fg-x" id="fg-x" type="button" aria-label="Close">×</button></div>
+    <div class="fg-b">
+      <dl>
+        <dt>Tachyon task</dt><dd>Which catalogue optimisation this brief delivers. Auto-detected from the brief's task title — override it if the scan guessed wrong. One optimisation per brief; bundles can't attribute hours cleanly and are excluded from averages.</dd>
+        <dt>ASPL h</dt><dd>ASPL hands-on setup hours (Muji's side): prompt &amp; rule build, field mapping, sample generation, iteration until sign-off. Working time only — never waiting time.</dd>
+        <dt>QC h</dt><dd>London AM quality-control hours: sample reviews, brand-voice checks, feedback rounds until the output is approved.</dd>
+        <dt>PM h</dt><dd>Project-management hours: briefing, client comms, scheduling, chasing, status reporting for this brief.</dd>
+        <dt>Mon h</dt><dd>Ongoing monitoring hours <b>per month</b> after go-live: output QA, drift checks, exception handling. Monthly figure, not a running total.</dd>
+        <dt>Tokens</dt><dd>Total Tachyon tokens the run consumed (input + output, from the Tachyon run log). Divided by volume done, this becomes the <b>tok/SKU</b> marginal-cost signal on the rate card.</dd>
+        <dt>Vol done</dt><dd>SKUs actually processed and delivered — what shipped, not what the brief hoped for. Powers tok/SKU and the delivery record.</dd>
+        <dt>Categories done</dt><dd>The Google product categories covered, picked from the official 5,595-entry GPC taxonomy (searchable — type to filter, click to toggle).</dd>
+      </dl>
+      <div class="fg-sec">Derived on the rate card</div>
+      <dl>
+        <dt>actuals ×N</dt><dd>That optimisation's hours are the <b>average of N tracked briefs</b> — evidence has replaced the estimate. Hover the badge for the breakdown.</dd>
+        <dt>tok/SKU</dt><dd>Σ tokens ÷ Σ volume done across tracked briefs — the real marginal cost per SKU. Sanity-check the commercial £/SKU against it; the £ itself is never auto-set.</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+
+<!-- GPC picker popover (positioned next to the categories cell being edited) -->
+<div class="gpc-pop" id="gpc-pop" hidden>
+  <input id="gpc-q" type="text" placeholder="Search 5,595 Google categories…" autocomplete="off">
+  <div class="gpc-sel" id="gpc-sel"></div>
+  <div class="gpc-list" id="gpc-list"></div>
+  <div class="gpc-foot"><span id="gpc-n"></span><button class="btn" id="gpc-done" type="button">Done</button></div>
+</div>
 
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Tachyon Pricer<span class="fv" id="eng-v"></span></div></div>
 
@@ -308,6 +400,9 @@ try{$('#eng-v').textContent='engine v'+E.VERSION}catch(e){}
 
 /* ---------------- state ---------------- */
 var RATES={},RATES_BASE=0;         // rate-card overrides map (kvmerge-backed)
+var BRIEFS={},ACTUALS={};          // Workflow briefs → tagged-hours averages per optimisation
+var TRACK={},TRACK_BASE=0;         // per-brief AI delivery tracking (KV tachyontrack, kvmerge)
+var USE_ACTUALS=(function(){try{return localStorage.getItem('fcc-pricer-actuals')!=='0'}catch(e){return true}})();
 var QUOTES={},QUOTES_BASE=0;       // saved quotes map
 var CLIENTS=['Schuh','Reiss','Monsoon','Accessorize','YuMOVE','Superdry','RYOBI','Estée Lauder'];
 var MKROWS={};                     // market -> rows for the selected client (from Feed Lab)
@@ -317,7 +412,8 @@ function b64url(o){var j=JSON.stringify(o),b=new TextEncoder().encode(j),s='';b.
 
 /* ---------------- rate card ---------------- */
 function blockGBP(){var g=RATES._globals||{};return isFinite(+g.blockGBP)&&+g.blockGBP>0?+g.blockGBP:E.DEFAULTS.blockGBP}
-function effRates(){return E.rates(RATES)}
+function effOverrides(){return (USE_ACTUALS&&Object.keys(ACTUALS).length)?E.overridesWithActuals(RATES,ACTUALS):RATES}
+function effRates(){return E.rates(effOverrides())}
 function saveRates(){
   fetch('/api/tachyon/rates',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(RATES_BASE)},body:JSON.stringify(RATES)})
     .then(function(r){RATES_BASE=+r.headers.get('X-Sync-Base')||RATES_BASE;return r.json()})
@@ -337,7 +433,10 @@ function renderRates(){
       +'<td class="r-name"><span class="r-grp">'+esc(r.grp)+'</span>'+esc(r.name)+'</td>'
       +cell('aspl',r.aspl)+cell('qc',r.qc)+cell('pm',r.pm)+cell('mon',r.mon)
       +cell('unit','£'+r.unit,0.01)+cell('lead',r.lead)
-      +'<td>'+(r.draft?'<span class="r-draft">draft</span>':'<span class="r-ok">confirmed</span>')+'</td>'
+      +'<td>'+(function(){var a=ACTUALS[r.id];
+          if(a&&USE_ACTUALS)return '<span class="r-act" title="ASPL '+a.aspl+' · QC '+a.qc+' · PM '+a.pm+(a.lead?(' · real lead '+a.lead+'d'):'')+(a.tokPerSku?(' · ≈'+a.tokPerSku+' tok/SKU over '+fmt(a.volDone)+' done'):'')+' — averaged from the AI-briefs tracking table">actuals ×'+a.n+'</span>';
+          if(a)return '<span class="r-ok" title="actuals available (×'+a.n+') but the toggle is off">confirmed</span>';
+          return r.draft?'<span class="r-draft">draft</span>':'<span class="r-ok">confirmed</span>'})()+'</td>'
       +'<td class="r-note"><span class="r-ed" data-id="'+r.id+'" data-f="note" data-txt="1">'+(esc(r.note)||'<span style="opacity:.4">add note…</span>')+'</span></td>'
       +'</tr>'}).join('');
   $('#rc-body').querySelectorAll('.r-ed').forEach(function(el){el.onclick=function(){editCell(el)}});
@@ -376,7 +475,7 @@ function renderCatalog(){
 
 /* ---------------- the quote ---------------- */
 function currentQuote(){
-  return E.quote(Object.keys(picks),{volume:+$('#pz-volume').value||0,rateOverrides:RATES,
+  return E.quote(Object.keys(picks),{volume:+$('#pz-volume').value||0,rateOverrides:effOverrides(),
     blockGBP:blockGBP(),absorbMonitoring:$('#pz-absorb').checked,refreshPct:+$('#pz-refresh').value||0,
     client:CLIENT,market:Object.keys(MKROWS).length>1?MARKET:''});
 }
@@ -399,7 +498,7 @@ function renderQuote(){
   if(q.draftRates)h+='<div class="q-draft">DRAFT RATES — confirm hours &amp; unit £ in the rate card before this goes near a client</div>';
   $('#q-body').innerHTML=h;
   $('#q-copy').disabled=false;$('#q-save').disabled=false;
-  var brief={client:CLIENT||'',task:'Tachyon setup — '+q.lines.map(function(l){return l.name}).join(' + ')+' ('+fmt(q.volume)+' SKUs'+(q.market?' · '+q.market.toUpperCase():'')+') · one-off '+F(q.oneOff.total)+' +VAT',cat:'opt',source:'plan'};
+  var brief={client:CLIENT||'',task:'Tachyon setup — '+q.lines.map(function(l){return l.name}).join(' + ')+' ('+fmt(q.volume)+' SKUs'+(q.market?' · '+q.market.toUpperCase():'')+') · one-off '+F(q.oneOff.total)+' +VAT',cat:'opt',source:'plan'};   // the tracking table finds it by TITLE scan — no tagging needed
   var a=$('#q-brief');a.hidden=false;a.href='/workflow?brief='+b64url(brief);
 }
 ['pz-volume','pz-refresh','pz-absorb'].forEach(function(id){var el=document.getElementById(id);
@@ -464,6 +563,149 @@ function renderScaffolds(){
   }});
 }
 
+/* ---------------- AI briefs: title-scanned delivery tracking ---------------- */
+function fmtTok(n){n=+n||0;return n>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'M':n>=1e3?(n/1e3).toFixed(0)+'k':String(n)}
+function saveTrack(){
+  fetch('/api/tachyon/track',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(TRACK_BASE)},body:JSON.stringify(TRACK)})
+    .then(function(r){TRACK_BASE=+r.headers.get('X-Sync-Base')||TRACK_BASE;return r.json()})
+    .then(function(m){if(m&&typeof m==='object'&&!m.ok){TRACK=m;refreshActuals()}})
+    .catch(function(){$('#ai-state').textContent='save failed — offline?'});
+}
+function setTrack(bid,field,val){
+  var t=TRACK[bid]||{};t[field]=val;t.t=Date.now();TRACK[bid]=t;
+  refreshActuals();saveTrack();
+  $('#ai-state').textContent='saved — shared with every team';setTimeout(function(){$('#ai-state').textContent=''},2500);
+}
+function refreshActuals(){
+  ACTUALS=E.actualsFromBriefs(BRIEFS,TRACK);
+  renderTrack();renderRates();renderCatalog();renderQuote();refreshActToggle();
+}
+function refreshActToggle(){
+  var n=Object.keys(ACTUALS).length,w=$('#act-tog-wrap');
+  if(!n){w.hidden=true;return}
+  w.hidden=false;$('#act-tog').checked=USE_ACTUALS;
+  var tot=0;Object.keys(ACTUALS).forEach(function(k){tot+=ACTUALS[k].n});
+  $('#act-tog-lbl').textContent='Price from tracked-brief averages ('+tot+' brief'+(tot===1?'':'s')+' across '+n+' task'+(n===1?'':'s')+')';
+}
+function renderTrack(){
+  var rows=E.aiBriefRows(BRIEFS,TRACK);
+  $('#ai-n').textContent=rows.length?rows.length+' found by title scan':'';
+  if(!rows.length){$('#ai-body').innerHTML='<tr><td colspan="10"><div class="ai-empty">No AI-related briefs found yet — the scan watches every Workflow brief title for AI / Tachyon wording.</div></td></tr>';return}
+  var opts=[['','— pick —']].concat(E.CATALOG.map(function(c){return [c.id,c.name]}));
+  $('#ai-body').innerHTML=rows.map(function(r){
+    function cell(f,v,step){return '<td><span class="r-ed" data-bid="'+esc(r.bid)+'" data-f="'+f+'" data-step="'+(step||0.5)+'" title="Click to edit">'+(v||'—')+'</span></td>'}
+    var head=r.manual
+      ?'<td class="a-task"><span class="a-cl"><span class="r-ed" data-bid="'+esc(r.bid)+'" data-f="client" data-txt="1" title="Click to edit the client">'+(esc(r.client)||'<span style="opacity:.4">client…</span>')+'</span></span>'
+        +'<span class="r-ed" data-bid="'+esc(r.bid)+'" data-f="task" data-txt="1" title="Click to edit — AI wording auto-tags the Tachyon task">'+(esc(r.task)||'<span style="opacity:.4">task title…</span>')+'</span></td>'
+       +'<td><span class="a-stage done">historic</span> <button class="a-del" data-bid="'+esc(r.bid)+'" type="button" title="Remove this historic entry">✕</button></td>'
+      :'<td class="a-task"><span class="a-cl">'+esc(r.client||'—')+'</span>'+esc(r.task)+'</td>'
+       +'<td><span class="a-stage'+(r.done?' done':'')+'">'+esc(r.status)+'</span></td>';
+    return '<tr>'+head
+      +'<td><select class="a-tach" data-bid="'+esc(r.bid)+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(r.tach===o[0]?' selected':'')+'>'+esc(o[1])+'</option>'}).join('')+'</select></td>'
+      +cell('aspl',r.aspl)+cell('qc',r.qc)+cell('pm',r.pm)+cell('mon',r.mon)
+      +cell('tokens',r.tokens?fmtTok(r.tokens):'',1000)
+      +cell('volDone',r.volDone?fmt(r.volDone):'',100)
+      +'<td class="a-cats">'+(function(){var cs=(r.catsDone||'').split(' | ').filter(Boolean);
+          return '<span class="cat-count" data-bid="'+esc(r.bid)+'" title="'+esc(cs.join('\n')||'Pick from the 5,595 official Google product categories')+'">'
+            +(cs.length?cs.length+' cat'+(cs.length===1?'':'s')+' · '+esc(cs[cs.length-1].split(' > ').pop()):'+ pick')+'</span>'})()+'</td>'
+      +'</tr>'}).join('');
+  $('#ai-body').querySelectorAll('.r-ed').forEach(function(el){el.onclick=function(){editTrackCell(el)}});
+  $('#ai-body').querySelectorAll('.a-tach').forEach(function(sel){sel.onchange=function(){setTrack(sel.getAttribute('data-bid'),'tach',sel.value)}});
+  $('#ai-body').querySelectorAll('.cat-count').forEach(function(b){b.onclick=function(){gpcOpen(b.getAttribute('data-bid'),b)}});
+  $('#ai-body').querySelectorAll('.a-del').forEach(function(b){b.onclick=function(){
+    if(!confirm('Remove this historic entry? Its hours leave the averages.'))return;
+    delete TRACK[b.getAttribute('data-bid')];refreshActuals();saveTrack()}});
+}
+function editTrackCell(el){
+  if(el.__editing)return;el.__editing=1;
+  var bid=el.getAttribute('data-bid'),f=el.getAttribute('data-f'),isTxt=el.getAttribute('data-txt')==='1';
+  var cur=isTxt?String((TRACK[bid]||{})[f]||''):String((TRACK[bid]||{})[f]||'');
+  var in_=document.createElement('input');in_.className='r-in';
+  if(isTxt){in_.type='text';in_.style.width='150px';in_.style.textAlign='left'}
+  else{in_.type='number';in_.step=el.getAttribute('data-step')||'1';in_.min='0';in_.style.width='84px'}
+  in_.value=cur;el.replaceWith(in_);in_.focus();in_.select();
+  function done(commit){
+    if(commit){var v=isTxt?in_.value.trim():+in_.value;
+      if(isTxt||isFinite(v))setTrack(bid,f,isTxt?v:Math.max(0,v));else renderTrack()}
+    else renderTrack()}
+  in_.addEventListener('keydown',function(e){if(e.key==='Enter')done(true);if(e.key==='Escape')done(false)});
+  in_.addEventListener('blur',function(){done(true)});
+}
+
+/* manual/historic entries: AI work done before the FCC — track-only records */
+$('#ai-add').addEventListener('click',function(){
+  var id='hist_'+Date.now().toString(36);
+  TRACK[id]={manual:true,client:'',task:'',t:Date.now()};
+  refreshActuals();saveTrack();
+  setTimeout(function(){var el=$('#ai-body .r-ed[data-bid="'+id+'"][data-f="task"]');if(el)editTrackCell(el)},80);
+});
+
+/* ---------------- floating field guide ---------------- */
+(function(){
+  var fg=$('#fg'),tab=$('#fg-tab'),panel=$('#fg-panel');
+  var open=false;try{open=localStorage.getItem('fcc-pricer-fg')==='1'}catch(e){}
+  function set(o){open=o;panel.hidden=!o;fg.classList.toggle('open',o);tab.setAttribute('aria-expanded',o?'true':'false');
+    tab.style.visibility=o?'hidden':'visible';
+    try{localStorage.setItem('fcc-pricer-fg',o?'1':'0')}catch(e){}}
+  tab.onclick=function(){set(true)};$('#fg-x').onclick=function(){set(false)};
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&open)set(false)});
+  set(open);
+})();
+
+/* ---------------- GPC categories picker (official taxonomy, 5,595 entries) ---------------- */
+var GPC=null,GPC_LOADING=false;      // lazy: fetched once, on first open
+var gpcBid=null,gpcSel=[];
+function gpcLoad(){
+  if(GPC||GPC_LOADING)return Promise.resolve();
+  GPC_LOADING=true;
+  return fetch('/pricer/gpc.txt').then(function(r){return r.text()}).then(function(t){
+    GPC=t.split('\n').map(function(l){return l.trim()}).filter(function(l){return l&&l.charAt(0)!=='#'});
+  }).catch(function(){GPC=[]}).then(function(){GPC_LOADING=false});
+}
+function gpcOpen(bid,anchor){
+  gpcBid=bid;gpcSel=((TRACK[bid]||{}).catsDone||'').split(' | ').map(function(x){return x.trim()}).filter(Boolean);
+  var pop=$('#gpc-pop');pop.hidden=false;
+  var r=anchor.getBoundingClientRect();
+  var top=r.bottom+window.scrollY+6, left=Math.max(8,Math.min(r.left+window.scrollX,window.scrollX+document.documentElement.clientWidth-410));
+  pop.style.top=top+'px';pop.style.left=left+'px';
+  $('#gpc-q').value='';gpcRender();
+  gpcLoad().then(gpcRender);
+  setTimeout(function(){$('#gpc-q').focus()},40);
+}
+function gpcClose(save){
+  var pop=$('#gpc-pop');if(pop.hidden)return;pop.hidden=true;
+  if(save&&gpcBid)setTrack(gpcBid,'catsDone',gpcSel.join(' | '));
+  gpcBid=null;
+}
+function gpcRender(){
+  var q=$('#gpc-q').value.trim().toLowerCase();
+  $('#gpc-sel').innerHTML=gpcSel.map(function(c,i){
+    return '<span class="gpc-chip" data-i="'+i+'" title="'+esc(c)+' — click to remove">'+esc(c.split(' > ').pop())+' ✕</span>'}).join('');
+  $('#gpc-sel').querySelectorAll('.gpc-chip').forEach(function(ch){ch.onclick=function(){gpcSel.splice(+ch.getAttribute('data-i'),1);gpcRender()}});
+  $('#gpc-n').textContent=gpcSel.length?gpcSel.length+' selected':'';
+  var list=$('#gpc-list');
+  if(!GPC){list.innerHTML='<div class="gpc-empty">Loading the taxonomy…</div>';return}
+  var hits=[];
+  if(q){var terms=q.split(/\s+/);
+    for(var i=0;i<GPC.length&&hits.length<60;i++){var lc=GPC[i].toLowerCase(),ok=true;
+      for(var j2=0;j2<terms.length;j2++)if(lc.indexOf(terms[j2])<0){ok=false;break}
+      if(ok)hits.push(GPC[i])}}
+  else hits=gpcSel.length?[]:GPC.slice(0,30);
+  list.innerHTML=hits.length?hits.map(function(c){
+    var on=gpcSel.indexOf(c)>=0,parts=c.split(' > '),leaf=parts.pop();
+    return '<div class="gpc-it'+(on?' on':'')+'" data-c="'+esc(c)+'">'+(parts.length?esc(parts.join(' › '))+' › ':'')+'<b>'+esc(leaf)+'</b></div>'}).join('')
+    :(q?'<div class="gpc-empty">No category matches "'+esc(q)+'"</div>':'<div class="gpc-empty">Type to search all 5,595 categories.</div>');
+  list.querySelectorAll('.gpc-it').forEach(function(it){it.onclick=function(){
+    var c=it.getAttribute('data-c'),ix=gpcSel.indexOf(c);
+    if(ix>=0)gpcSel.splice(ix,1);else gpcSel.push(c);
+    gpcRender()}});
+}
+$('#gpc-q').addEventListener('input',gpcRender);
+$('#gpc-done').addEventListener('click',function(){gpcClose(true)});
+document.addEventListener('mousedown',function(e){var pop=$('#gpc-pop');
+  if(!pop.hidden&&!pop.contains(e.target)&&!(e.target.closest&&e.target.closest('.cat-count')))gpcClose(true)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')gpcClose(false)});
+
 /* ---------------- client + volume (Feed Lab wired) ---------------- */
 function loadClientVolume(){
   CLIENT=$('#pz-client').value;MKROWS={};MARKET='';
@@ -499,6 +741,17 @@ function boot(){
     if(m&&typeof m==='object')RATES=m;renderRates();renderCatalog();renderQuote()});
   fetch('/api/tachyon/quotes').then(function(r){QUOTES_BASE=+r.headers.get('X-Sync-Base')||0;return r.json()}).catch(function(){return{}}).then(function(m){
     if(m&&typeof m==='object')QUOTES=m;renderSaved()});
+  // the evidence layer: title-scanned AI briefs + their tracking records → averages
+  $('#act-tog').onchange=function(){USE_ACTUALS=this.checked;
+    try{localStorage.setItem('fcc-pricer-actuals',USE_ACTUALS?'1':'0')}catch(e){}
+    renderRates();renderCatalog();renderQuote()};
+  Promise.all([
+    fetch('/api/briefs').then(function(r){return r.json()}).catch(function(){return{}}),
+    fetch('/api/tachyon/track').then(function(r){TRACK_BASE=+r.headers.get('X-Sync-Base')||0;return r.json()}).catch(function(){return{}})
+  ]).then(function(res){
+    BRIEFS=(res[0]&&typeof res[0]==='object')?res[0]:{};
+    TRACK=(res[1]&&typeof res[1]==='object')?res[1]:{};
+    refreshActuals()});
   renderRates();renderCatalog();renderQuote();renderSaved();renderScaffolds();
 }
 boot();
