@@ -661,6 +661,14 @@ window.addEventListener('load',restore);
   if(!list||!detail) return;
   var API=window.DECK_EDITOR_API||'';
   var store={}, B={}, editMode=false, cur=null, saveT=null;
+  // live-feed markets wired in code from the master feed-market sheet (worker DEFAULT_FEEDS):
+  // {client:[mkt,...]} — merged into each dossier card's Feed Lab link + attach popup
+  var FEEDWIRED={};
+  fetch(API+'/api/feed/clients').then(function(r){return r.json()}).then(function(j){
+    var cs=(j&&j.clients)||{};
+    Object.keys(cs).forEach(function(k){ FEEDWIRED[k]=(cs[k]&&cs[k].wired)||[]; });
+    if(cur&&!editMode)render(cur);
+  }).catch(function(){});
   var PT=window.PLANTASKS||{};
   var PCAT={technical:'tech',test:'test',account:'account',image:'creative',custom_label:'creative',channel:'creative',title:'opt',keyword:'opt',data:'opt',product_type:'opt',opt:'opt'};
   var CLBL={title:'Titles',keyword:'Keywords',data:'Data fields',image:'Imagery',custom_label:'Custom labels',product_type:'Product type',technical:'Feed & technical',channel:'Channels',test:'Testing',account:'Account & strategy',opt:'Optimisation'};
@@ -815,11 +823,15 @@ window.addEventListener('load',restore);
       :(b.deck?'<a class="lnk primary" href="'+esc(b.deck)+'" target="_blank" rel="noopener">Strategy deck →</a>':'');
     // live shopping-feed sheets (Google Sheets, daily-refreshed) -> the Feed Lab module dissects
     // them. Multi-market: b.feeds = {gb:url,de:url,...}; the legacy single b.feed doubles as gb.
-    var mktN=(function(){ var ks={}; if(b.feed)ks.gb=1; Object.keys(b.feeds||{}).forEach(function(k){ks[String(k).toLowerCase()]=1;}); return Object.keys(ks).length; })();
-    var hasFeed=mktN>0||name==='Reiss';   // Reiss's gb live feed is wired in the worker by default
+    // Markets wired in code from the master feed-market sheet (FEEDWIRED) count too — a dossier
+    // attach on the same market overrides the wired sheet.
+    var mktKs=(function(){ var ks={}; if(b.feed)ks.gb=1; Object.keys(b.feeds||{}).forEach(function(k){ks[String(k).toLowerCase()]=1;});
+      (FEEDWIRED[name]||[]).forEach(function(k){ks[k]=1;}); return Object.keys(ks); })();
+    var mktN=mktKs.length, hasFeed=mktN>0;
+    var wiredTip=(FEEDWIRED[name]||[]).length?' title="Wired from the master feed sheet: '+esc((FEEDWIRED[name]||[]).join(', ').toUpperCase())+'"':'';
     var feedCtl=editMode
-      ?'<button class="lnk dz-linkfeed">'+(mktN?'⚡ Feed markets ('+mktN+') — add another':'⚡ Attach feed sheet')+'</button>'
-      :(hasFeed?'<a class="lnk primary" href="/feedlab?client='+encodeURIComponent(name)+'">Feed Lab ⚡'+(mktN>1?' · '+mktN+' markets':'')+'</a>':'');
+      ?'<button class="lnk dz-linkfeed"'+wiredTip+'>'+(mktN?'⚡ Feed markets ('+mktN+') — add another':'⚡ Attach feed sheet')+'</button>'
+      :(hasFeed?'<a class="lnk primary"'+wiredTip+' href="/feedlab?client='+encodeURIComponent(name)+'">Feed Lab ⚡'+(mktN>1?' · '+mktN+' markets':'')+'</a>':'');
     detail.innerHTML=
       '<div class="dz-head"><div class="dz-id">'+logo(b.dom,44)+'<div><h3>'+esc(name)+'</h3><div class="cat"><span'+edA('cat')+'>'+esc(b.cat||'')+'</span>'+((b.mk||editMode)?' · <span'+edA('mk')+'>'+esc(b.mk||'')+'</span>':'')+'</div></div></div>'
       +'<div class="dz-head-r">'+(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+delBtn+'</div></div>'
@@ -840,10 +852,14 @@ window.addEventListener('load',restore);
       if(lp) lp.onclick=function(){ var u=prompt('Paste the project-plan URL (Google Sheet, etc.):',b.plan||''); if(u!==null){ setField(name,'plan',u.trim()); render(name); } };
       var lf=detail.querySelector('.dz-linkfeed');
       if(lf) lf.onclick=function(){
-        var mk=prompt('Market code for this feed (gb, de, fr, us… — leave as gb for the main market):','gb');
+        var wired=FEEDWIRED[name]||[];
+        var mk=prompt('Market code for this feed (gb, de, fr, us… — leave as gb for the main market):'
+          +(wired.length?'\nAlready wired-in from the master feed sheet: '+wired.join(', ').toUpperCase():''),'gb');
         if(mk===null)return; mk=(mk||'gb').toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,6)||'gb';
         var cur=(mk==='gb'?(b.feed||(b.feeds||{}).gb):(b.feeds||{})[mk])||'';
-        var u=prompt('Paste the LIVE '+mk.toUpperCase()+' feed Google-Sheet URL (link-shared, daily-refreshed). Empty = remove this market.',cur);
+        var wiredHere=wired.indexOf(mk)>=0&&!cur;
+        var u=prompt('Paste the LIVE '+mk.toUpperCase()+' feed Google-Sheet URL (link-shared, daily-refreshed). '
+          +(wiredHere?'This market is already wired-in — a URL here OVERRIDES it; empty keeps the wired feed.':'Empty = remove this market.'),cur);
         if(u===null)return; u=u.trim();
         var feeds={}; Object.keys(b.feeds||{}).forEach(function(k){feeds[k]=b.feeds[k];});
         if(mk==='gb'){ setField(name,'feed',u); if(feeds.gb){delete feeds.gb; setField(name,'feeds',feeds);} }

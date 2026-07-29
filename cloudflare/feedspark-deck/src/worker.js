@@ -352,11 +352,37 @@ export default {
     // small audit JSON back here for caching. Feeds refresh daily upstream; the page
     // re-scans when the cached audit is older than 20h.
 
-    // brands whose live feed is wired in code until the dossier carries feed URLs.
+    // brands whose live feed is wired in code — imported from Ray's master feed-market sheet
+    // (1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak: one row per client+country feed). This map
+    // is the committed record; new rows in the sheet get re-imported here (or attached ad-hoc
+    // from the CC dossier / Feed Lab, which OVERRIDES the wired entry per market).
     // MULTI-MARKET: a dossier record may carry `feeds` = { gb: url, de: url, ... } (managed
     // from the Feed Lab portal or the CC dossier); the legacy single `feed` field doubles as
     // the 'gb' market. Market codes are 2-6 chars, lowercased.
-    const DEFAULT_FEEDS = { Reiss: { gb: { id: '1KTx9ONZSju_DD06V3F7p958LfzAL0ccJJFXPf5NpLCw', gid: '0' } } };
+    const DEFAULT_FEEDS = {
+      Schuh: {
+        gb: { id: '1uAM5I_KSsjucCr3GLXc2ekZeiMoAG6x8TIh5ZntwseA', gid: '0' },
+        de: { id: '1u-B6VECXLk1YefoED5FfjpnXw1uEwV8cE_f6t-ed12I', gid: '0' },
+        ie: { id: '1bawEQkhpl8GsSGVNkPnsi228TM_z1LXf1Dj35s-a9p4', gid: '0' },
+      },
+      YuMOVE: { gb: { id: '1PtsaNBd5NGimchw18YlBPCtOgl0HcgkWrKdhy4lfvzA', gid: '0' } },
+      Monsoon: { gb: { id: '1pW6CqyzM_1Rqr8O0basrxxuNAWG9sR2_OrjCIkE_8PU', gid: '0' } },
+      Accessorize: { gb: { id: '1_OkGi8ucOmJcdu5TBWm3vl5cK3bmmaimoMYvR03Z3Ic', gid: '0' } },
+      Superdry: {
+        gb: { id: '1PimExRPPqf1CknH3yLs_tUfJrr2HZgjpiMUDiOUDc3k', gid: '0' },
+        ie: { id: '1SjuQ0M-cangxVcNdlb72RQM0-ZTev7aE-R5v1iX9EGQ', gid: '0' },
+        fr: { id: '1FVthehZKfAiUIU0qCGrsdENMQW896o8S19C6fT0gkx4', gid: '0' },
+      },
+      'House of Bruar': { gb: { id: '16P8vLuLC4l4xkMh5w_BrCCGHzMYqi4eZec8Wezpg1bk', gid: '0' } },
+      'American Golf': { gb: { id: '1W4Tasbdi7jR7kmlIjYjrPtAb2BvW-AkQZBz9XW1aNHk', gid: '0' } },  // API-fed sheet
+      Reiss: {
+        gb: { id: '1KTx9ONZSju_DD06V3F7p958LfzAL0ccJJFXPf5NpLCw', gid: '0' },
+        us: { id: '1_-7yjB-hZfmk9VU_srfn6oZwFGTVzHWLtdOKJRmR-nA', gid: '0' },
+        ie: { id: '1BMUgdup13kqcubAA1AhLrw63_Stlr0SvXFRh4PxQ7YA', gid: '0' },
+        de: { id: '13C8ECyr6lYlkI2PmMfEp_XYKTcjUivy8BpCb-dWC2OY', gid: '0' },
+        nl: { id: '17a8RKY01vcmbmwHBw-kigGBo5N-PY6cSNj-SM5IOGzE', gid: '0' },
+      },
+    };
     const mktOf = (raw) => String(raw || 'gb').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 6) || 'gb';
     const sheetRef = (u) => {
       const m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(String(u || ''));
@@ -423,6 +449,27 @@ export default {
         return json({ error: 'feed sheet fetch failed (' + up.status + ', ' + (ct.split(';')[0] || 'no type') + ') - is the sheet link-shared?' }, 502);
       }
       return new Response(up.body, { headers: { 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store' } });
+    }
+
+    // roster bootstrap: every client with a live feed (code-wired from the master sheet
+    // and/or dossier-attached) + its market codes — the Feed Lab selector and the CC
+    // dossier read this ONE call instead of re-deriving feeds from the clients store
+    if (path === '/api/feed/clients' && request.method === 'GET') {
+      const out = {};
+      Object.keys(DEFAULT_FEEDS).forEach((c) => { out[c] = { wired: Object.keys(DEFAULT_FEEDS[c]), attached: [] }; });
+      try {
+        const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
+        Object.keys(dossier).forEach((c) => {
+          const rec = dossier[c] || {}; const mks = {};
+          if (rec.feed && sheetRef(rec.feed)) mks.gb = 1;
+          if (rec.feeds && typeof rec.feeds === 'object') {
+            Object.keys(rec.feeds).forEach((mk) => { if (sheetRef(rec.feeds[mk])) mks[mktOf(mk)] = 1; });
+          }
+          const list = Object.keys(mks);
+          if (list.length) { out[c] = out[c] || { wired: [], attached: [] }; out[c].attached = list; }
+        });
+      } catch (e) {}
+      return json({ clients: out });
     }
 
     // the portal's one-call bootstrap: every attached market + its cached audit summary
