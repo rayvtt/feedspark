@@ -146,35 +146,86 @@
     return L.join('\n');
   }
 
+  // ---- AI-brief detection: the Pricer finds AI work by SCANNING TASK TITLES ------------
+  // (Ray: tracking lives here, not in the Workflow pipeline). classifyTach maps wording to a
+  // catalogue id; aiBriefRows joins every scanned-or-tracked brief with its tracking record.
+  function classifyTach(t) {
+    t = String(t || '').toLowerCase();
+    if (!/\bai\b|tachyon/.test(t)) return '';
+    if (/short title/.test(t)) return 'title_short';
+    if (/search intent/.test(t)) return 'title_intent';
+    if (/pre.?desc/.test(t)) return /attribute/.test(t) ? 'predesc_attr' : 'predesc';
+    if (/description pro|q\/?a|compare/.test(t)) return 'desc_pro';
+    if (/desc/.test(t)) return 'desc_gen';
+    if (/highlight/.test(t)) return 'highlights';
+    if (/product detail/.test(t)) return 'details';
+    if (/keyword/.test(t)) return 'keywords';
+    if (/visual|image attr/.test(t)) return 'visual_attr';
+    if (/gpc/.test(t)) return 'gpc';
+    if (/product type|classif/.test(t)) return 'pt_class';
+    if (/title/.test(t)) return 'title_gen';
+    return '';
+  }
+  // briefs = the Workflow briefs map; track = KV `tachyontrack` (briefId -> {tach, aspl, qc,
+  // pm, mon, tokens, volDone, catsDone, t}). A brief joins the table when its TITLE scans as
+  // AI work or a track record exists; the track's explicit tach overrides the scan.
+  function aiBriefRows(briefs, track) {
+    track = track || {};
+    var rows = [];
+    Object.keys(briefs || {}).forEach(function (k) {
+      var b = briefs[k]; if (!b) return;
+      var scanned = classifyTach(b.task);
+      var tr = track[k] || {};
+      if (!scanned && !tr.tach && !Object.keys(tr).length) return;
+      var done = b.status === 'done' || b.status === 'confirmed' || b.status === 'analysis';
+      rows.push({ bid: k, client: b.client || '', task: b.task || '', status: b.status || 'intake', done: done,
+        created: +b.created || 0, tach: tr.tach || scanned || '',
+        aspl: +tr.aspl || 0, qc: +tr.qc || 0, pm: +tr.pm || 0, mon: +tr.mon || 0,
+        tokens: +tr.tokens || 0, volDone: +tr.volDone || 0, catsDone: String(tr.catsDone || '') });
+    });
+    rows.sort(function (a, b2) { return (b2.created || 0) - (a.created || 0); });
+    return rows;
+  }
+
   // ---- actuals: learn the real hours from tagged Workflow briefs -----------------------
   // Each brief may carry b.tach (one optimisation id) + b.hours {aspl,qc,pm,mon} tagged by the
   // teams as the work happens. The average across every tagged brief per optimisation becomes
   // the evidence-based rate ("price = the average of all the briefs done", Ray). Bundles
   // (multi-optimisation briefs) are excluded — their hours can't be attributed cleanly.
   // Actual lead time comes from the ticket history (briefed → done days) when present.
-  function actualsFromBriefs(briefs) {
+  function actualsFromBriefs(briefs, track) {
     var acc = {};
     Object.keys(briefs || {}).forEach(function (k) {
-      var b = briefs[k]; if (!b || !b.tach || typeof b.tach !== 'string') return;
-      var h = b.hours || {};
-      var any = ['aspl', 'qc', 'pm', 'mon'].some(function (f) { return isFinite(+h[f]) && +h[f] > 0; });
-      if (!any) return;
-      var a = acc[b.tach] = acc[b.tach] || { n: 0, aspl: 0, qc: 0, pm: 0, mon: 0, leadN: 0, lead: 0 };
-      a.n++;
-      ['aspl', 'qc', 'pm', 'mon'].forEach(function (f) { a[f] += Math.max(0, +h[f] || 0); });
+      var b = briefs[k]; if (!b) return;
+      var tr = (track || {})[k] || {};
+      // track record wins; a brief-embedded tag (the retired Workflow tagging) still counts;
+      // otherwise the TITLE SCAN decides — same rule that builds the tracking table
+      var tach = (typeof tr.tach === 'string' && tr.tach) || (typeof b.tach === 'string' && b.tach) || classifyTach(b.task);
+      if (!tach) return;
+      var h = { aspl: +tr.aspl || +(b.hours || {}).aspl || 0, qc: +tr.qc || +(b.hours || {}).qc || 0,
+        pm: +tr.pm || +(b.hours || {}).pm || 0, mon: +tr.mon || +(b.hours || {}).mon || 0 };
+      var any = h.aspl > 0 || h.qc > 0 || h.pm > 0 || h.mon > 0;
+      var tokens = +tr.tokens || 0, volDone = +tr.volDone || 0;
+      if (!any && !(tokens > 0 && volDone > 0)) return;
+      var a = acc[tach] = acc[tach] || { n: 0, aspl: 0, qc: 0, pm: 0, mon: 0, leadN: 0, lead: 0, tok: 0, vol: 0 };
+      if (any) { a.n++; ['aspl', 'qc', 'pm', 'mon'].forEach(function (f) { a[f] += Math.max(0, h[f]); }); }
+      if (tokens > 0 && volDone > 0) { a.tok += tokens; a.vol += volDone; }
       var t0 = 0, t1 = 0;
       (b.hist || []).forEach(function (e) {
         if (e.s === 'briefed' && !t0) t0 = +e.t || 0;
         if ((e.s === 'done' || e.s === 'confirmed' || e.s === 'analysis') && !t1) t1 = +e.t || 0;
       });
-      if (t0 && t1 && t1 > t0) { a.leadN++; a.lead += (t1 - t0) / 86400000; }
+      if (any && t0 && t1 && t1 > t0) { a.leadN++; a.lead += (t1 - t0) / 86400000; }
     });
     var out = {};
     Object.keys(acc).forEach(function (id) {
       var a = acc[id];
+      if (!a.n && !a.vol) return;
       out[id] = { n: a.n,
-        aspl: round2(a.aspl / a.n), qc: round2(a.qc / a.n), pm: round2(a.pm / a.n), mon: round2(a.mon / a.n),
-        lead: a.leadN ? Math.max(1, Math.round(a.lead / a.leadN)) : null };
+        aspl: a.n ? round2(a.aspl / a.n) : 0, qc: a.n ? round2(a.qc / a.n) : 0,
+        pm: a.n ? round2(a.pm / a.n) : 0, mon: a.n ? round2(a.mon / a.n) : 0,
+        lead: a.leadN ? Math.max(1, Math.round(a.lead / a.leadN)) : null,
+        tokPerSku: a.vol > 0 ? round2(a.tok / a.vol) : null, volDone: a.vol };
     });
     return out;
   }
@@ -185,7 +236,7 @@
     var out = {};
     Object.keys(rateOverrides || {}).forEach(function (k) { out[k] = rateOverrides[k]; });
     Object.keys(actuals || {}).forEach(function (id) {
-      var a = actuals[id]; if (!a || a.n < minN) return;
+      var a = actuals[id]; if (!a || !a.n || a.n < minN) return;
       var base = {}; Object.keys(out[id] || {}).forEach(function (k) { base[k] = out[id][k]; });
       base.aspl = a.aspl; base.qc = a.qc; base.pm = a.pm;
       if (a.mon > 0) base.mon = a.mon;
@@ -196,8 +247,9 @@
     return out;
   }
 
-  var PricerEngine = { VERSION: '1.1.0', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
+  var PricerEngine = { VERSION: '1.2.0', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
     rates: rates, tieredUnits: tieredUnits, quote: quote, quoteText: quoteText, fmtGBP: fmtGBP,
+    classifyTach: classifyTach, aiBriefRows: aiBriefRows,
     actualsFromBriefs: actualsFromBriefs, overridesWithActuals: overridesWithActuals };
   g.PricerEngine = PricerEngine;
   if (typeof module !== 'undefined' && module.exports) module.exports = PricerEngine;
