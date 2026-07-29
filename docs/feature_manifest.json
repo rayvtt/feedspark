@@ -588,6 +588,12 @@
       "pattern": "ibfref",
       "min": 4,
       "pr": 136
+    },
+    {
+      "name": "worker: Templates module RETIRED (menu cleanup, must stay gone)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/templates'",
+      "forbidden": true
     }
   ]
 }
