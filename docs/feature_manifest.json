@@ -546,6 +546,19 @@
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "Feed markets (",
       "pr": 133
+    },
+    {
+      "name": "FCC: collapsible instructions widget (app pages, default folded)",
+      "file": "docs/instr_collapse.html",
+      "pattern": "FCC-INSTR",
+      "pr": 134
+    },
+    {
+      "name": "worker: instr widget injected on app pages (never decks)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "INSTR",
+      "min": 3,
+      "pr": 134
     }
   ]
 }

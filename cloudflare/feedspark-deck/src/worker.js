@@ -42,6 +42,9 @@ import DECK_SUPERDRY from "../../../docs/Superdry_Strategy_Review_AllTime.html";
 // Tachyon copilot widget (style + script fragment). Injected on the app pages only —
 // never on client-facing decks. Reads window.PLANTASKS and calls /api/claude.
 import TACHYON from "../../../docs/tachyon_widget.html";
+// FCC-INSTR: collapsible-instructions widget — injected on app pages only (never decks),
+// so every module's explainer subtext folds behind a ⓘ by default
+import INSTR from "../../../docs/instr_collapse.html";
 import FEEDLAB from "../../../docs/FeedSpark_FeedLab.html";
 // the Feed Lab audit engine, bundled verbatim (wrangler Text rule) and served at
 // /feedlab/engine.js so the page and its node tests run the exact same code
@@ -953,7 +956,7 @@ export default {
     if (page) {
       logActivity(ctx, env, request, 'view', path);
       let html = page.html.replace('</body>', getEditorScript(page.slug) + '\n</body>');
-      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n</body>');
+      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n' + INSTR + '\n</body>');
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
