@@ -177,7 +177,7 @@ export function matchGmailToBriefs(briefs, messages, opts) {
   opts = opts || {};
   const now = opts.now || 0;
   const selfRe = opts.selfRe || null;
-  const moved = [], loggedTo = [];
+  const moved = [], loggedTo = [], repaired = [];
   let matched = 0, skipped = 0;
 
   for (const msg of messages || []) {
@@ -188,6 +188,18 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     const b = findBrief(briefs, msg.subject, msg.snippet);
     if (!b) { skipped++; continue; }
     b.comms = b.comms || [];
+    // repair (rescan): an ibfref match is authoritative — pull this message's comm off any
+    // OTHER ticket it was fuzzy-filed onto in the ibfcode era, before the skip check runs.
+    if (opts.repair && msg.id) {
+      const rm = /ibfref:([a-z0-9-]+)/i.exec(String(msg.subject || '') + ' ' + String(msg.snippet || ''));
+      if (rm && ((briefs[rm[1]] || briefs[rm[1].toUpperCase()]) === b)) {
+        for (const k of Object.keys(briefs)) { const ob = briefs[k]; if (ob === b || !ob || !ob.comms || !ob.comms.length) continue;
+          const before = ob.comms.length;
+          ob.comms = ob.comms.filter((c) => c.mid !== msg.id);
+          if (ob.comms.length !== before) { ob.updated = now; repaired.push({ from: ob.id, to: b.id, mid: msg.id }); }
+        }
+      }
+    }
     if (msg.id && b.comms.some((c) => c.mid === msg.id)) { skipped++; continue; }   // already logged
 
     matched++;
@@ -219,5 +231,5 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     b.updated = now;
     if (loggedTo.indexOf(b.id) < 0) loggedTo.push(b.id);
   }
-  return { matched, skipped, moved, loggedTo };
+  return { matched, skipped, moved, loggedTo, repaired };
 }
