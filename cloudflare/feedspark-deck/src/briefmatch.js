@@ -45,17 +45,27 @@ function validDD(dd8) {
 // A body carrying several different codes with none in the subject (digests, forwards) is
 // ambiguous and is skipped rather than guessed.
 function codeIn(s) { const m = /ibfcode:([a-z0-9-]+)/i.exec(s || ''); return m ? m[1].toLowerCase() : ''; }
+function refsIn(s) { return Array.from(new Set((String(s || '').match(/ibfref:([a-z0-9-]+)/gi) || []).map((x) => x.slice(7)))); }
 function findBrief(briefs, subject, snippet) {
-  // ibfref = the ticket's UNIQUE ref, stamped into every brief's subject + body — always wins.
-  // ibfcode is per client+market (shared by every ticket for that client), so it only ever
-  // decides when no ibfref is present (legacy briefs sent before the ref existed).
-  const refM = /ibfref:([a-z0-9-]+)/i.exec(String(subject || '')) || /ibfref:([a-z0-9-]+)/i.exec(String(snippet || ''));
-  if (refM) { const rb = briefs[refM[1]] || briefs[refM[1].toUpperCase()]; if (rb) return rb; }
+  // ibfref = the ticket's UNIQUE ref, stamped into every brief's subject + body — always wins,
+  // and it is DECISIVE: a message stamped with a ref that resolves to no tracked ticket belongs
+  // to a brief FCC never saved (Gmail-drafted, never ＋Saved) — it must be SKIPPED, never
+  // fuzzy-filed onto a sibling ticket via the shared ibfcode (the Superdry Dress mis-track).
+  const resolveRef = (r) => briefs[r] || briefs[r.toUpperCase()] || null;
+  const sRefs = refsIn(subject);
+  if (sRefs.length) return sRefs.length === 1 ? resolveRef(sRefs[0]) : null;
+  const bRefs = refsIn(snippet);
+  if (bRefs.length) return bRefs.length === 1 ? resolveRef(bRefs[0]) : null;   // several refs = digest/forward — ambiguous
   const arr = Object.keys(briefs).map((k) => briefs[k]);
   const byCode = (c) => {
     const hits = arr.filter((b) => (b.code || '').toLowerCase() === c);
     if (!hits.length) return null;
-    if (hits.length > 1) hits.sort((x, y) => taskDice(subject + ' ' + snippet, y.task) - taskDice(subject + ' ' + snippet, x.task));
+    if (hits.length > 1) {
+      hits.sort((x, y) => taskDice(subject + ' ' + snippet, y.task) - taskDice(subject + ' ' + snippet, x.task));
+      // similarity floor: with several tickets sharing the code, an unrelated forward
+      // ("Fwd: Back To School…" carrying only ibfcode) must not attach to the closest-sounding one
+      if (taskDice(subject + ' ' + snippet, hits[0].task) < 0.35) return null;
+    }
     return hits[0];
   };
   const subjCode = codeIn(subject);
@@ -186,7 +196,19 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     const text = (String(msg.subject || '') + ' ' + String(msg.snippet || '')).trim();
     if (!text) { skipped++; continue; }
     const b = findBrief(briefs, msg.subject, msg.snippet);
-    if (!b) { skipped++; continue; }
+    if (!b) {
+      // repair (rolling re-push): a message the strict matcher now rejects — unknown/ambiguous
+      // ibfref, or under the similarity floor — never belonged on any ticket; strip any comm a
+      // laxer era filed for it (mid-tagged comms only ever come from this matcher).
+      if (opts.repair && msg.id) {
+        for (const k of Object.keys(briefs)) { const ob = briefs[k]; if (!ob || !ob.comms || !ob.comms.length) continue;
+          const before = ob.comms.length;
+          ob.comms = ob.comms.filter((c) => c.mid !== msg.id);
+          if (ob.comms.length !== before) { ob.updated = now; repaired.push({ from: ob.id, to: '', mid: msg.id }); }
+        }
+      }
+      skipped++; continue;
+    }
     b.comms = b.comms || [];
     // repair (rescan): an ibfref match is authoritative — pull this message's comm off any
     // OTHER ticket it was fuzzy-filed onto in the ibfcode era, before the skip check runs.
