@@ -58,6 +58,8 @@ window.addEventListener('load',restore);
   .gdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:7px;vertical-align:middle}
   .gdot.on{background:var(--good)}
   .em-cue{font-size:9.5px;font-weight:900;color:var(--navy);background:rgba(26,54,93,.08);border-radius:100px;padding:1px 8px;white-space:nowrap;justify-self:start}
+  .em-cl-sel{font:inherit;font-size:11px;font-weight:800;max-width:118px;padding:2px 4px;border:1px dashed var(--orange);border-radius:7px;background:var(--paper);color:var(--orange-ink);cursor:pointer}
+  .em-cl-sel:focus{outline:none;border-style:solid;border-color:var(--navy)}
   .em-cue.none{color:var(--muted);background:var(--wash)}
   .em-colhead{font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)!important;padding:7px 0!important}
   #em-panel{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
@@ -2185,7 +2187,9 @@ window.addEventListener('load',restore);
       : '<button class="em-go" data-id="'+esc(g.id)+'" type="button" title="Save as a task in Intake — draft the brief from there when ready">→ Task</button>'
         +'<button class="em-no" data-id="'+esc(g.id)+'" type="button" title="Not a task — clear it (restorable under Show triaged)">✕</button>';
     return '<div class="em-row'+(g.dismissed?' dis':'')+'">'
-      +'<span class="em-cell-brand">'+(g.client?'<span class="em-cl">'+esc(g.client)+'</span>':'<span class="em-cue none">—</span>')
+      +'<span class="em-cell-brand">'+(g.client?'<span class="em-cl">'+esc(g.client)+'</span>'
+        :(g.dismissed?'<span class="em-cue none">—</span>'
+          :'<select class="em-cl-sel" data-id="'+esc(g.id)+'" title="Detection found no brand — assign one and → Task writes straight into that brand’s plan (the sender is remembered for next time)"><option value="">— brand</option>'+CLIENTS.map(function(c){return '<option>'+esc(c)+'</option>';}).join('')+'</select>'))
         +(g.briefable?'<span class="em-brf" title="'+esc((g.hints||[]).join(' · '))+'">⚡</span>':'')+'</span>'
       +(g.via?'<span class="em-cue" title="How the brand was detected">'+esc(g.via)+'</span>':'<span class="em-cue none">—</span>')
       +'<span class="em-from" title="'+esc(g.from)+'">'+esc(senderName(g.from))+'</span>'
@@ -2212,6 +2216,10 @@ window.addEventListener('load',restore);
     function byId(b){ var id=b.getAttribute('data-id'), hit=null;
       gmailItems.forEach(function(g){ if(String(g.id)===id)hit=g; }); return hit; }
     list.querySelectorAll('.em-go').forEach(function(b){ b.onclick=function(){ var g=byId(b); if(!g)return; saveEmailAsTask(g); }; });
+    list.querySelectorAll('.em-cl-sel').forEach(function(sel){ sel.onchange=function(){ var g=byId(sel); if(!g||!sel.value)return;
+      g.client=sel.value; g.via='assigned'; teachSender(g.from,sel.value);
+      renderEmailPanel(); updateGmailState();
+      toast(sel.value+' assigned — future emails from this sender will auto-detect'); }; });
     list.querySelectorAll('.em-no').forEach(function(b){ b.onclick=function(){ decideEmail(b.getAttribute('data-id'),false,'notask'); }; });
     list.querySelectorAll('.em-res').forEach(function(b){ b.onclick=function(){ decideEmail(b.getAttribute('data-id'),true); }; });
   }
@@ -2241,6 +2249,11 @@ window.addEventListener('load',restore);
     decideEmail(g.id,false,'task');
     renderAll();
   }
+  // sender→brand memory: a manual assignment teaches detection — same sender auto-fills next time
+  var TAUGHT={}; try{TAUGHT=JSON.parse(localStorage.getItem('fcc-sender-brand')||'{}');}catch(e){}
+  function senderEmail(from){ var m=/<([^>]+)>/.exec(from||''); return (m?m[1]:String(from||'')).toLowerCase().trim(); }
+  function teachSender(from,brand){ var e=senderEmail(from); if(!e)return; TAUGHT[e]=brand; try{localStorage.setItem('fcc-sender-brand',JSON.stringify(TAUGHT));}catch(x){} }
+  function applyTaught(items){ (items||[]).forEach(function(g){ if(!g.client){ var b=TAUGHT[senderEmail(g.from)]; if(b){ g.client=b; g.via='remembered'; } } }); }
   function updateGmailState(){ var st=document.getElementById('gstate'); if(!st||!gmailItems.length)return;
     var pend=gmailItems.filter(function(g){return !g.dismissed;}),
         brf=pend.filter(function(g){return g.briefable;}).length, done=gmailItems.length-pend.length;
@@ -2248,7 +2261,7 @@ window.addEventListener('load',restore);
       +(brf?(' · '+brf+' look like action requests ⚡'):'')+(done?(' · '+done+' triaged'):'')+'.'; }
   (function(){ var dot=document.getElementById('gdot');
     fetch('/api/gmail/intake').then(function(r){return r.json();}).then(function(d){
-      if(d && d.connected){ gmailItems=d.items||[]; if(dot)dot.classList.add('on');
+      if(d && d.connected){ gmailItems=d.items||[]; applyTaught(gmailItems); if(dot)dot.classList.add('on');
         updateGmailState(); renderEmailPanel(); }
     }).catch(function(){}); })();
 })();
