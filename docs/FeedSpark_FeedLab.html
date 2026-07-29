@@ -369,11 +369,59 @@ window.addEventListener('load',restore);
     .hb .hw{display:none}
     .dflip{height:200px}
   }
+  /* ============ FL-SHOW — demo-grade animation layer (live client calls) ============
+     Armed only when JS adds .rv-armed on <html> (skipped for reduced motion / no IO),
+     so the page is fully readable with zero scripting. */
+  .rv-armed .hero .eyebrow,.rv-armed .hero h1,.rv-armed .hero .wrap>p,.rv-armed .lab-ctl{animation:fl-up .65s cubic-bezier(.22,.75,.3,1) both}
+  .rv-armed .hero h1{animation-delay:.07s}
+  .rv-armed .hero .wrap>p{animation-delay:.14s}
+  .rv-armed .lab-ctl{animation-delay:.22s}
+  @keyframes fl-up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+  /* scroll reveals: each section rises in as it enters the viewport */
+  .rv-armed section.rv{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s cubic-bezier(.22,.75,.3,1)}
+  .rv-armed section.rv.in{opacity:1;transform:none}
+  /* the scanner shell glows while a scan is running — the "we're live" cue */
+  .scan-shell{transition:box-shadow .45s ease}
+  .scan-shell.live{box-shadow:0 0 0 2px rgba(245,166,35,.35),0 18px 44px rgba(245,166,35,.16)}
+  /* score landing: ring pulse + tier stamp once the count-up lands */
+  .big-ring.landed{animation:fl-ringpulse .95s ease-out 1}
+  @keyframes fl-ringpulse{0%{box-shadow:0 0 0 0 rgba(245,166,35,.5)}100%{box-shadow:0 0 0 30px rgba(245,166,35,0)}}
+  .tier-pill.stamp{animation:fl-stamp .55s cubic-bezier(.2,1.6,.4,1) 1}
+  @keyframes fl-stamp{0%{transform:scale(1.55) rotate(-4deg);opacity:0}62%{transform:scale(.94) rotate(0)}100%{transform:scale(1);opacity:1}}
+  /* pillar bars: staggered fill + a single shimmer sweep as each lands */
+  .pfill{position:relative;overflow:hidden}
+  .pfill::after{content:"";position:absolute;inset:0;transform:translateX(-120%);background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.6) 50%,transparent 70%)}
+  .pillar.shine .pfill::after{animation:fl-shine .9s ease 1}
+  @keyframes fl-shine{to{transform:translateX(120%)}}
+  /* heatmap wave: cells pop in reading order on the first paint; the estate's single
+     weakest pillar cell gets a radar ping so the gap finds the eye on a call */
+  .mk-heat.wv .hm{opacity:0;animation:fl-cell .42s cubic-bezier(.3,1.5,.4,1) forwards;animation-delay:var(--d,0s)}
+  @keyframes fl-cell{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:scale(1)}}
+  .hm.worst{position:relative}
+  .hm.worst::after{content:"";position:absolute;inset:-4px;border-radius:11px;border:2px solid #D9534F;opacity:0}
+  .mk-heat.wv .hm.worst::after{animation:fl-ping 1.5s ease-out 3;animation-delay:1s}
+  @keyframes fl-ping{0%{transform:scale(.72);opacity:.95}100%{transform:scale(1.55);opacity:0}}
+  /* league card flash when its fresh audit lands mid estate-scan */
+  .mkcard.flash{animation:fl-cardflash 1.05s ease 1}
+  @keyframes fl-cardflash{0%{box-shadow:0 0 0 3px rgba(245,166,35,.55)}100%{box-shadow:0 0 0 0 rgba(245,166,35,0)}}
+  /* dissection theatre: the auto-dissect spotlight */
+  .dflip{transition:transform .3s ease,box-shadow .3s ease}
+  .dflip.spot{transform:translateY(-5px);box-shadow:0 0 0 3px var(--orange),0 16px 36px rgba(245,166,35,.24);border-radius:14px}
+  .dbtn{font-size:12px;padding:6px 12px;vertical-align:3px;margin-left:10px}
+  /* demo mode chrome */
+  #demo.on{background:var(--orange);border-color:var(--orange);color:#fff}
+  .demo-chip{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;background:#1A1C22;color:#fff;
+    font:800 12.5px/1 Lato,sans-serif;letter-spacing:.03em;padding:10px 18px;border-radius:100px;box-shadow:0 12px 32px rgba(0,0,0,.35);
+    animation:fl-up .4s ease both}
+  .demo-chip b{color:var(--orange)}
+  [data-theme=dark] .demo-chip{background:#F5F6F8;color:#14161C}
   /* reduced motion: no conveyor traffic, no keyframes, instant fills — counts still land */
   @media(prefers-reduced-motion:reduce){
     .pchip,.achip{display:none!important}
     .belt,.beam,.ldot.on{animation:none!important}
-    .pfill,.afill,.sbar .sf,.mseg .mf,.hb .hbar,.dcard{transition:none!important}
+    .pfill,.afill,.sbar .sf,.mseg .mf,.hb .hbar,.dcard,.dflip,.scan-shell{transition:none!important}
+    .big-ring.landed,.tier-pill.stamp,.pillar.shine .pfill::after,.mk-heat.wv .hm,.mk-heat.wv .hm.worst::after,.mkcard.flash,
+    .rv-armed .hero .eyebrow,.rv-armed .hero h1,.rv-armed .hero .wrap>p,.rv-armed .lab-ctl{animation:none!important;opacity:1}
   }
   /* FL-DARK — dark-theme surfaces for the module's own classes */
   :root[data-theme=dark]{--ringrest:#20242E}
@@ -424,6 +472,7 @@ window.addEventListener('load',restore);
     <label class="lab-lbl" for="brand">Brand</label>
     <select id="brand" aria-label="Choose a brand"></select>
     <button class="btn pri" id="rescan" type="button">↻ Re-scan live feed</button>
+    <button class="btn" id="demo" type="button" hidden title="Cinematic walk-through of the whole audit at narration pace — built for live client calls. Esc exits.">🎬 Demo</button>
     <span class="scanstate" id="scanstate">checking cached audit…</span>
   </div>
   <div class="mkt-row" id="mkt-row" hidden>
@@ -435,7 +484,7 @@ window.addEventListener('load',restore);
   <div class="err-strip" id="lab-error" role="alert"><span class="ei">!</span><span id="lab-error-msg"></span></div>
 </div></header>
 
-<section id="scanner"><div class="wrap">
+<section id="scanner" class="rv"><div class="wrap">
   <h2>The scanner</h2>
   <p class="sub">Products stream off the live sheet and under the beam — attributes fly into the completeness bars as they're read.</p>
   <div class="fl-card scan-shell" id="scan-shell">
@@ -457,7 +506,7 @@ window.addEventListener('load',restore);
 </div></section>
 
 <!-- ============ multi-market portal: the whole estate on one board ============ -->
-<section id="portal" hidden><div class="wrap">
+<section id="portal" class="rv" hidden><div class="wrap">
   <h2>Markets — the whole estate</h2>
   <p class="sub">Every market feed side by side — click a card to dissect that market below. The breakdown weighs the <b>multi-market picture</b>: league, pillar heatmap, and where markets drift apart.</p>
   <div class="mk-insights" id="mk-insights"></div>
@@ -470,7 +519,7 @@ window.addEventListener('load',restore);
 
 <div id="results" hidden>
 
-<section id="score"><div class="wrap">
+<section id="score" class="rv"><div class="wrap">
   <h2>AI-Readiness score</h2>
   <p class="sub">Weighted across 8 pillars — the same FeedSpark AI-Readiness ladder the Readiness module and client decks speak.</p>
   <div class="fl-card">
@@ -487,7 +536,7 @@ window.addEventListener('load',restore);
   <div class="pillars" id="pillars"></div>
 </div></section>
 
-<section id="titles"><div class="wrap">
+<section id="titles" class="rv"><div class="wrap">
   <h2>Title anatomy</h2>
   <p class="sub">MASK structure — Brand + Material + Fit + Colour + Use-case in an 80–120 character window.</p>
   <div class="fl-card">
@@ -508,7 +557,7 @@ window.addEventListener('load',restore);
   </div>
 </div></section>
 
-<section id="attrs"><div class="wrap">
+<section id="attrs" class="rv"><div class="wrap">
   <h2>Attribute matrix</h2>
   <p class="sub">Coverage across every attribute that matters — gaps first, solid rows collapsed.</p>
   <div class="attr-list" id="attr-list"></div>
@@ -518,25 +567,27 @@ window.addEventListener('load',restore);
   </details>
 </div></section>
 
-<section id="issues"><div class="wrap">
+<section id="issues" class="rv"><div class="wrap">
   <h2>Issues</h2>
   <p class="sub">What the scan flagged, in plain English.</p>
   <div id="iss-list"></div>
 </div></section>
 
-<section id="recs"><div class="wrap">
+<section id="recs" class="rv"><div class="wrap">
   <h2>Recommendations</h2>
   <p class="sub">Impact-sorted and mapped to FeedSpark services — send any of them into the Workflow pipeline with one click.</p>
   <div class="recs" id="rec-list"></div>
 </div></section>
 
-<section id="dissect"><div class="wrap">
-  <h2>Dissection theatre</h2>
+<section id="dissect" class="rv"><div class="wrap">
+  <h2>Dissection theatre <button class="btn dbtn" id="adissect" type="button" hidden title="Flip through every sample product with a moving spotlight">▶ Auto-dissect</button></h2>
   <p class="sub">Real products straight off the feed — hover or tap a card to flip it and see what's missing.</p>
   <div class="theatre" id="theatre"></div>
 </div></section>
 
 </div><!-- /results -->
+
+<div class="demo-chip" id="demo-chip" hidden>🎬 Demo mode — <b>Esc</b> to exit</div>
 
 <div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span class="fv" id="eng-v"></span></div></div>
 
@@ -550,6 +601,16 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function fmt(n){n=+n;return isFinite(n)?n.toLocaleString('en-GB'):'0'}
 var RM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 
+/* FL-SHOW: scroll-triggered section reveals — armed only with motion + IO support, so the
+   static page (print, reduced motion, ancient browser) renders everything immediately. */
+if(!RM&&'IntersectionObserver' in window){
+  document.documentElement.classList.add('rv-armed');
+  var RVIO=new IntersectionObserver(function(es){es.forEach(function(e){
+    if(e.isIntersecting){e.target.classList.add('in');RVIO.unobserve(e.target)}
+  })},{threshold:.1,rootMargin:'0px 0px -5% 0px'});
+  document.querySelectorAll('section.rv').forEach(function(sec){RVIO.observe(sec)});
+}
+
 /* UTF-8-safe base64url — MUST mirror the Workflow page's decoder (atob→bytes→TextDecoder).
    btoa(JSON.stringify(x)) THROWS on the em-dashes rec briefs carry, so encode bytes first. */
 function b64url(o){
@@ -562,6 +623,7 @@ function b64url(o){
 var REISS_FEED={id:'1KTx9ONZSju_DD06V3F7p958LfzAL0ccJJFXPf5NpLCw',gid:'0'}; // built-in fallback (worker DEFAULT_FEEDS mirrors it)
 var FRESH_MS=20*3600*1000, CAP=8000;
 var CLIENT='', MARKET='gb', MKTS={}, META={'Reiss':REISS_FEED}, AUDIT=null, SCANID=0, ctrl=null, SCANALL=false;
+var HEATWAVE=false; // one-shot: next renderPortal animates the heatmap in (set on load / estate-scan done / demo)
 
 /* display-only lexicons for per-token MASK highlighting in samples/dissect cards —
    scoring lives in the engine; these just paint the tokens the same language. */
@@ -684,12 +746,12 @@ function paintBar(i,pct){
 }
 function scStart(mode){
   scMode=mode;scActive=true;laneW();
-  conv.classList.add('scanning');
+  conv.classList.add('scanning');shell.classList.add('live');
   if(!RM&&!scSpawnT)scSpawnT=setInterval(spawnProduct,340);
   cancelAnimationFrame(scRaf);scRaf=requestAnimationFrame(scFrame);
 }
 function scStop(){
-  scActive=false;conv.classList.remove('scanning');
+  scActive=false;conv.classList.remove('scanning');shell.classList.remove('live');
   if(scSpawnT){clearInterval(scSpawnT);scSpawnT=0}
   cancelAnimationFrame(scRaf);
   if(scMode==='replay'){ // land exactly on the audited numbers
@@ -821,11 +883,16 @@ function renderScore(a){
   var s=a.score||{},total=Math.round(+s.total||0),tier=+s.tier||1;
   var ring=$('#ring'),n=$('#score-total'),col=scoreColor(total);
   ring.style.setProperty('--c',col);n.style.color=col;
+  ring.classList.remove('landed');$('#tier-pill').classList.remove('stamp');
   var t0=performance.now(),dur=RM?0:1300;
   (function tw(){
     var p=dur?Math.min(1,(performance.now()-t0)/dur):1,e=1-Math.pow(1-p,3),v=Math.round(total*e);
     n.textContent=v;ring.style.setProperty('--p',v);
     if(p<1)requestAnimationFrame(tw);
+    else if(!RM){ // the landing moment: ring pulse, then the tier stamps itself on
+      void ring.offsetWidth;ring.classList.add('landed');
+      setTimeout(function(){$('#tier-pill').classList.add('stamp')},180);
+    }
   })();
   $('#tier-pill').textContent='Tier '+tier+' · '+(s.tierLabel||'');
   var next=tier<4?[40,60,80][tier-1]-total:0;
@@ -844,8 +911,14 @@ function renderScore(a){
       +'<div class="pf2"><span class="wdots" title="pillar weight ×'+w+'">'+dh+'</span><span class="psum">'+esc(p.summary||'')+'</span></div></div>';
   }).join('');
   requestAnimationFrame(function(){requestAnimationFrame(function(){
-    host.querySelectorAll('.pfill').forEach(function(f){f.style.width=f.getAttribute('data-w')+'%'});
+    host.querySelectorAll('.pfill').forEach(function(f,i){
+      f.style.transitionDelay=(RM?0:i*90)+'ms';   // cascade: bars land one after another
+      f.style.width=f.getAttribute('data-w')+'%';
+    });
   })});
+  if(!RM)host.querySelectorAll('.pillar').forEach(function(pl,i){ // shimmer as each bar lands
+    setTimeout(function(){pl.classList.add('shine')},520+i*90);
+  });
 }
 function renderTitles(a){
   var t=a.titles||{},mask=t.mask||{},rc=+a.rowCount||0;
@@ -956,11 +1029,86 @@ $('#theatre').addEventListener('keydown',function(e){
   if(e.key!=='Enter'&&e.key!==' ')return;
   var c=e.target.closest('.dflip');if(c){e.preventDefault();c.classList.toggle('flip')}
 });
+
+/* ============================ FL-SHOW: auto-dissect + 🎬 demo tour ============================
+   Both built for live client calls: auto-dissect walks a spotlight through the sample products,
+   flipping each in turn; the demo tour chains scanner replay → (estate) → score → titles →
+   attributes → issues → recs → auto-dissect at narration pace. Esc or a scroll exits. */
+var ADIS={on:false,t:0};
+function adStop(){
+  ADIS.on=false;clearTimeout(ADIS.t);
+  $('#adissect').textContent='▶ Auto-dissect';
+  document.querySelectorAll('#theatre .dflip.spot').forEach(function(c){c.classList.remove('spot')});
+}
+function autoDissect(){
+  if(ADIS.on){adStop();return}
+  var cards=[].slice.call(document.querySelectorAll('#theatre .dflip'));
+  if(!cards.length)return;
+  ADIS.on=true;$('#adissect').textContent='■ Stop';
+  cards.forEach(function(c){c.classList.remove('flip','spot')});
+  var i=0;
+  (function step(){
+    if(!ADIS.on)return;
+    cards.forEach(function(c){c.classList.remove('spot')});
+    if(i>=cards.length){adStop();return}
+    var c=cards[i++];
+    c.classList.add('spot');
+    setTimeout(function(){if(ADIS.on)c.classList.add('flip')},420); // spotlight lands, then the flip
+    if(!DEMO.on)try{c.scrollIntoView({behavior:'smooth',block:'nearest'})}catch(e){}
+    ADIS.t=setTimeout(step,1750);
+  })();
+}
+$('#adissect').addEventListener('click',autoDissect);
+
+var DEMO={on:false,t:0};
+function demoStop(){
+  if(!DEMO.on)return;
+  DEMO.on=false;clearTimeout(DEMO.t);
+  $('#demo-chip').hidden=true;$('#demo').classList.remove('on');
+}
+function demoTour(){
+  if(DEMO.on){demoStop();adStop();return}
+  if(!AUDIT)return;
+  DEMO.on=true;$('#demo-chip').hidden=false;$('#demo').classList.add('on');
+  document.querySelectorAll('section.rv').forEach(function(s){s.classList.add('in')}); // nothing half-revealed mid-tour
+  var steps=[{el:'#scanner',run:function(){scReplay(AUDIT)},dwell:3600}];
+  if(!$('#portal').hidden)steps.push({el:'#portal',run:function(){HEATWAVE=true;renderPortal()},dwell:4200});
+  steps.push(
+    {el:'#score',run:function(){renderScore(AUDIT)},dwell:4200},
+    {el:'#titles',run:function(){renderTitles(AUDIT)},dwell:3800},
+    {el:'#attrs',run:function(){renderAttrs(AUDIT)},dwell:3400},
+    {el:'#issues',run:null,dwell:3000},
+    {el:'#recs',run:null,dwell:3200},
+    {el:'#dissect',run:function(){if(!ADIS.on)autoDissect()},dwell:0}
+  );
+  var i=0;
+  (function next(){
+    if(!DEMO.on)return;
+    if(i>=steps.length){demoStop();return}
+    var s=steps[i++],el=$(s.el);
+    if(el&&!el.hidden){
+      try{el.scrollIntoView({behavior:'smooth',block:'start'})}catch(e){}
+      try{if(s.run)s.run()}catch(e){}
+    }
+    if(s.dwell)DEMO.t=setTimeout(next,s.dwell);
+    else DEMO.t=setTimeout(function poll(){ // final act: wait for auto-dissect to take its bow
+      if(!DEMO.on)return;
+      if(!ADIS.on)demoStop();else DEMO.t=setTimeout(poll,400);
+    },800);
+  })();
+}
+$('#demo').addEventListener('click',demoTour);
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){demoStop();adStop()}});
+// Ray grabbing the wheel mid-tour means he wants the controls back — hand them over cleanly
+window.addEventListener('wheel',function(){if(DEMO.on)demoStop()},{passive:true});
+window.addEventListener('touchmove',function(){if(DEMO.on)demoStop()},{passive:true});
+
 function renderAll(a,replay){
   $('#results').hidden=false;
   stateLine(a);
   renderScore(a);renderTitles(a);renderAttrs(a);renderIssues(a);renderRecs(a);renderDissect(a);
   if(replay)scReplay(a);else{cIss.textContent=fmt((a.issues||[]).length)}
+  if(!RM){$('#demo').hidden=false;$('#adissect').hidden=!(a.dissect||[]).length}
   try{if(window.FeedAudit&&FeedAudit.VERSION)$('#eng-v').textContent='engine v'+FeedAudit.VERSION}catch(e){}
 }
 
@@ -973,6 +1121,10 @@ function mkUpdateFromAudit(mkt,a){
   MKTS[mkt]={t:a.fetchedAt,total:a.score.total,tier:a.score.tier,tierLabel:a.score.tierLabel||'',rows:a.rowCount||0,
     sampled:a.sampled||0,pillars:pill,topGap:(a.recs&&a.recs[0]&&a.recs[0].title)||''};
   renderPortal();
+  if(!RM){ // flash the league card whose fresh audit just landed
+    var el=document.querySelector('.mkcard[data-mkt="'+mkt+'"]');
+    if(el){el.classList.add('flash');setTimeout(function(){el.classList.remove('flash')},1150)}
+  }
 }
 function mkScanning(mkt,on){
   var el=document.querySelector('.mkcard[data-mkt="'+mkt+'"]');if(el)el.classList.toggle('scanning',!!on);
@@ -1020,14 +1172,21 @@ function renderPortal(){
       +(m&&m.topGap?'<span class="mc-gap">Top gap: '+esc(m.topGap)+'</span>':'')
       +'</button>'}).join('');
   document.querySelectorAll('.mkcard').forEach(function(b){b.onclick=function(){if(!SCANALL)loadMarket(b.getAttribute('data-mkt'))}});
-  // heatmap
+  // heatmap — on wave passes (first paint per client / estate-scan finish / demo) cells pop in
+  // reading order and the estate's single weakest pillar cell gets a radar ping
+  var worst=null;
+  keys.forEach(function(k){var m=MKTS[k];if(!m)return;PILL_COLS.forEach(function(pc){
+    var v=(m.pillars||{})[pc[0]];if(v!=null&&(!worst||v<worst.v))worst={k:k,p:pc[0],v:v}})});
+  var wave=HEATWAVE&&!RM;HEATWAVE=false;
   var head='<tr><th>Market</th>'+PILL_COLS.map(function(pc){return '<th>'+esc(pc[1])+'</th>'}).join('')+'<th>Total</th></tr>';
-  var body=keys.map(function(k){var m=MKTS[k];
+  var body=keys.map(function(k,r){var m=MKTS[k];
     return '<tr'+(k===MARKET?' class="on"':'')+'><td class="hmk">'+esc(k.toUpperCase())+'</td>'
-      +PILL_COLS.map(function(pc){var v=m?(m.pillars||{})[pc[0]]:null;
-        return '<td><span class="hm" style="background:'+mkColor(v)+(v==null?';color:var(--muted)':'')+'">'+(v==null?'—':v)+'</span></td>'}).join('')
-      +'<td><span class="hm" style="background:'+(m?mkColor(m.total):'#C9CDD4')+'">'+(m?m.total:'—')+'</span></td></tr>'}).join('');
-  $('#mk-heat').innerHTML=head+body;
+      +PILL_COLS.map(function(pc,c){var v=m?(m.pillars||{})[pc[0]]:null;
+        var isW=worst&&worst.k===k&&worst.p===pc[0];
+        return '<td><span class="hm'+(isW?' worst':'')+'"'+(wave?' style="--d:'+((r*(PILL_COLS.length+1)+c)*26)+'ms;background:'+mkColor(v)+(v==null?';color:var(--muted)':'')+'"':' style="background:'+mkColor(v)+(v==null?';color:var(--muted)':'')+'"')
+          +(isW?' title="Weakest pillar cell across the estate">':'>')+(v==null?'—':v)+'</span></td>'}).join('')
+      +'<td><span class="hm"'+(wave?' style="--d:'+((r*(PILL_COLS.length+1)+PILL_COLS.length)*26)+'ms;background:'+(m?mkColor(m.total):'#C9CDD4')+'"':' style="background:'+(m?mkColor(m.total):'#C9CDD4')+'"')+'>'+(m?m.total:'—')+'</span></td></tr>'}).join('');
+  var heat=$('#mk-heat');heat.classList.toggle('wv',!!wave);heat.innerHTML=head+body;
 }
 /* scan the whole estate, one market at a time (fresh audits are skipped) */
 function scanAll(){
@@ -1041,7 +1200,7 @@ function scanAll(){
   function next(){
     if(i>=work.length){SCANALL=false;$('#scan-all').disabled=false;
       st.textContent='estate scan done — '+work.length+' market'+(work.length===1?'':'s')+' audited';
-      setTimeout(function(){st.textContent=''},6000);renderPortal();return}
+      setTimeout(function(){st.textContent=''},6000);HEATWAVE=true;renderPortal();return}
     var mk=work[i++];
     st.textContent='estate scan '+i+'/'+work.length+' · '+mk.toUpperCase()+'…';
     MARKET=mk;syncUrl();renderPortal();
@@ -1062,7 +1221,7 @@ function load(client,mkt){
     MKTS=(d&&d.markets)||{};
     if(!Object.keys(MKTS).length)MKTS={gb:null};
     MARKET=(mkt&&MKTS[mkt]!==undefined)?mkt:(MKTS.gb!==undefined?'gb':Object.keys(MKTS).sort()[0]);
-    renderPortal();
+    HEATWAVE=true;               // loadMarket renders the portal straight away — that paint waves
     loadMarket(MARKET,true);
   });
 }

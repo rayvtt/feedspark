@@ -838,6 +838,20 @@
       "file": "docs/FeedSpark_FeedLab.html",
       "pattern": "api/feed/clients",
       "pr": 163
+    },
+    {
+      "name": "FeedLab: FL-SHOW demo animation layer (reveals, score pulse, heat wave)",
+      "file": "docs/FeedSpark_FeedLab.html",
+      "pattern": "rv-armed",
+      "min": 3,
+      "pr": 164
+    },
+    {
+      "name": "FeedLab: 🎬 demo tour + auto-dissect spotlight",
+      "file": "docs/FeedSpark_FeedLab.html",
+      "pattern": "demoTour",
+      "min": 2,
+      "pr": 164
     }
   ]
 }
