@@ -846,13 +846,14 @@ export default {
         const key = normCell(match).slice(0, 45); let targetRow = -1;
         for (let r = 0; r < rows.length; r++) { if ((rows[r] || []).some(cc => { const cn = normCell(cc); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; } }
         if (targetRow < 0) return json({ ok: false, error: 'task row not found in ' + tab, match });
-        const c = resolveCols(rows);
+        const c = rowCols(rows[targetRow], resolveCols(rows));
         let writeCol = c.ownerCol;
         if (writeCol < 0) return json({ ok: false, error: 'could not resolve the Owner column' });
         const cell = tab + '!' + colLetter(writeCol) + (targetRow + 1);
         const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(cell) + '?valueInputOption=USER_ENTERED', {
           method: 'PUT', headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ values: [[value]] }) });
         const wd = await wr.json(); if (wd.error) return json({ ok: false, error: permHint(wd.error.message), cell });
+        try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
         return json({ ok: true, cell, updated: wd.updatedCells || 1 });
       } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
     }
@@ -873,7 +874,7 @@ export default {
         const key = normCell(match).slice(0, 45); let targetRow = -1;
         for (let r = 0; r < rows.length; r++) { if ((rows[r] || []).some(cc => { const cn = normCell(cc); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; } }
         if (targetRow < 0) return json({ ok: false, error: 'task row not found in ' + tab, match });
-        const c = resolveCols(rows);
+        const c = rowCols(rows[targetRow], resolveCols(rows));
         if (c.dueCol < 0) return json({ ok: false, error: 'no Due column in this plan — add a "Due Date" header' });
         const cell = tab + '!' + colLetter(c.dueCol) + (targetRow + 1);
         const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(cell) + '?valueInputOption=USER_ENTERED', {
@@ -1176,6 +1177,28 @@ function resolveCols(rows) {
     ownerCol: colFor(/owner|\bae\b|assignee|responsib|fs\b/i),
     dueCol: colFor(/due|deadline|target date|completion date|^date$/i) };
 }
+// resolveCols() computes ONE offset from the rows right after the header. Some sheets (Reiss:
+// the header + its earliest rows are a 2020-era layout; task rows added since have 2 extra
+// leading columns never backfilled onto the old ones) have EARLIER and LATER rows at different
+// absolute alignments — a single sheet-wide offset fits one era and silently misses the other,
+// so an owner/due write on a newer row lands on a blank or unrelated cell instead of erroring.
+// Task/Owner/Due sit at a STABLE offset from Status even when a row's absolute position shifts
+// (a uniform rightward insert moves the whole row together) — anchor on this row's own Status
+// cell (found the same way /api/sheets/status already self-corrects) and re-derive from there.
+function rowCols(row, c) {
+  if (c.statusCol < 0 || isStatusTok(row[c.statusCol])) return c;
+  let found = -1;
+  for (let d = 1; d <= 8 && found < 0; d++) {
+    if (isStatusTok(row[c.statusCol + d])) found = c.statusCol + d;
+    else if (c.statusCol - d >= 0 && isStatusTok(row[c.statusCol - d])) found = c.statusCol - d;
+  }
+  if (found < 0) return c;
+  const delta = found - c.statusCol;
+  return { headerRow: c.headerRow, offset: c.offset, statusCol: found,
+    taskCol: c.taskCol >= 0 ? c.taskCol + delta : c.taskCol,
+    ownerCol: c.ownerCol >= 0 ? c.ownerCol + delta : c.ownerCol,
+    dueCol: c.dueCol >= 0 ? c.dueCol + delta : c.dueCol };
+}
 // Parse a plan tab's rows into clean task objects for the dashboard.
 function monthOf(s) { // detect a "month separator" label like "July-26", "Jun 2026", "Mar 26"
   const m = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*['\s\-\/,.]*((?:20)?\d{2})\b/i.exec(String(s || ''));
@@ -1200,7 +1223,7 @@ async function renamePlanTask(env, id, tab, match, value) {
     const key = normCell(match).slice(0, 45); let targetRow = -1;
     for (let r = 0; r < rows.length; r++) { if ((rows[r] || []).some(cc => { const cn = normCell(cc); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; } }
     if (targetRow < 0) return { ok: false, error: 'task row not found in ' + realTab, match };
-    const c = resolveCols(rows);
+    const c = rowCols(rows[targetRow], resolveCols(rows));
     const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
     const cell = realTab + '!' + colLetter(tc) + (targetRow + 1);
     const wr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(cell) + '?valueInputOption=USER_ENTERED', {
@@ -1290,26 +1313,29 @@ async function fetchGrid(id, tab, token) {
 function parsePlanRows(values, bg) {
   const c = resolveCols(values), out = [];
   const start = c.headerRow >= 0 ? c.headerRow + 1 : 0;
-  const tcol = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
   const haveBg = Array.isArray(bg) && bg.length > 0;
   let curMonth = ''; // ISO first-of-month of the current month section
   for (let r = start; r < values.length; r++) {
     const row = values[r] || [];
+    // some rows sit at a different absolute column alignment than the header (see rowCols) —
+    // re-anchor per row so a shifted row's owner/due aren't read from an unrelated cell
+    const rc = rowCols(row, c);
+    const tcol = rc.taskCol >= 0 ? rc.taskCol : (rc.offset || 0);
     let monthHere = ''; for (let k = 0; k < Math.min(row.length, 6); k++) { monthHere = monthOf(row[k]); if (monthHere) break; }
     // separator = a filled task cell (with formatting), else fall back to a month-labelled statusless row
     const isSep = haveBg ? isFilled(((bg[r]) || [])[tcol]) : (!!monthHere && !row.some(v => isStatusTok(v)));
     if (isSep) { if (monthHere) curMonth = monthHere; continue; }
     // task text: resolved column, else first long non-status/non-date cell
-    let task = c.taskCol >= 0 ? row[c.taskCol] : '';
+    let task = rc.taskCol >= 0 ? row[rc.taskCol] : '';
     if (!task || String(task).trim().length < 3) {
       for (let k = 0; k < Math.min(row.length, 4); k++) { const v = String(row[k] || '').trim();
         if (v.length > 6 && !isStatusTok(v) && !/^\d/.test(v)) { task = v; break; } }
     }
     task = String(task || '').trim(); if (task.length < 3) continue;
-    let status = c.statusCol >= 0 ? String(row[c.statusCol] || '').trim() : '';
+    let status = rc.statusCol >= 0 ? String(row[rc.statusCol] || '').trim() : '';
     if (!isStatusTok(status)) { for (let k = 1; k < Math.min(row.length, 14); k++) { if (isStatusTok(row[k])) { status = String(row[k]).trim(); break; } } }
-    const owner = c.ownerCol >= 0 ? String(row[c.ownerCol] || '').trim() : '';
-    const rawDue = c.dueCol >= 0 ? String(row[c.dueCol] || '').trim() : '';
+    const owner = rc.ownerCol >= 0 ? String(row[rc.ownerCol] || '').trim() : '';
+    const rawDue = rc.dueCol >= 0 ? String(row[rc.dueCol] || '').trim() : '';
     // date = the row's Due column if the plan has one, else the current month-section
     out.push({ t: task, o: owner, s: status, b: planBucket(status), c: classifyCat(task), d: rawDue || curMonth, row: r + 1 });
   }
