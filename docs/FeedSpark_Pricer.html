@@ -613,8 +613,10 @@ function renderTrack(){
   $('#ai-body').querySelectorAll('.a-tach').forEach(function(sel){sel.onchange=function(){setTrack(sel.getAttribute('data-bid'),'tach',sel.value)}});
   $('#ai-body').querySelectorAll('.cat-count').forEach(function(b){b.onclick=function(){gpcOpen(b.getAttribute('data-bid'),b)}});
   $('#ai-body').querySelectorAll('.a-del').forEach(function(b){b.onclick=function(){
-    if(!confirm('Remove this historic entry? Its hours leave the averages.'))return;
-    delete TRACK[b.getAttribute('data-bid')];refreshActuals();saveTrack()}});
+    if(!confirm('Remove this entry? Its hours leave the averages.'))return;
+    var bid=b.getAttribute('data-bid');
+    TRACK[bid]={manual:true,deleted:true,t:Date.now()};   // tombstone — seeds must stay gone
+    refreshActuals();saveTrack()}});
 }
 function editTrackCell(el){
   if(el.__editing)return;el.__editing=1;
@@ -630,6 +632,27 @@ function editTrackCell(el){
     else renderTrack()}
   in_.addEventListener('keydown',function(e){if(e.key==='Enter')done(true);if(e.key==='Escape')done(false)});
   in_.addEventListener('blur',function(){done(true)});
+}
+
+/* seeded rows: the live AI briefs Ray named (Jul 2026) — present for every user from code,
+   whatever stage the tickets are in. Fixed ids so KV edits overlay them and a ✕ tombstones
+   them permanently. If the real Workflow brief later scans in by title, ✕ the seed. */
+var SEED_TRACK=[
+  {id:'seed_mon_title', client:'Monsoon',    task:'AI Product Title Generation — Monsoon live brief (12,314 SKUs)'},
+  {id:'seed_mon_desc',  client:'Monsoon',    task:'AI Product Description Generation — Monsoon live brief (12,314 SKUs)'},
+  {id:'seed_mon_kw',    client:'Monsoon',    task:'AI Keyword Generation — Monsoon live brief'},
+  {id:'seed_acc_title', client:'Accessorize',task:'AI Product Title Generation — Accessorize live brief (5,414 SKUs)'},
+  {id:'seed_acc_desc',  client:'Accessorize',task:'AI Product Description Generation — Accessorize live brief (5,414 SKUs)'},
+  {id:'seed_acc_kw',    client:'Accessorize',task:'AI Keyword Generation — Accessorize live brief'},
+  {id:'seed_sup_title', client:'Superdry',   task:'AI Product Title Generation — Superdry live brief'},
+  {id:'seed_sup_desc',  client:'Superdry',   task:'AI Product Description Generation — Superdry live brief'},
+  {id:'seed_sup_kw',    client:'Superdry',   task:'AI Keyword Generation — Superdry live brief'}
+];
+function applySeeds(){
+  SEED_TRACK.forEach(function(sd){
+    if(TRACK[sd.id])return;   // KV already carries it (edited or tombstoned) — KV wins
+    TRACK[sd.id]={manual:true,seed:true,client:sd.client,task:sd.task,t:1};   // local until first edit
+  });
 }
 
 /* manual/historic entries: AI work done before the FCC — track-only records */
@@ -751,6 +774,7 @@ function boot(){
   ]).then(function(res){
     BRIEFS=(res[0]&&typeof res[0]==='object')?res[0]:{};
     TRACK=(res[1]&&typeof res[1]==='object')?res[1]:{};
+    applySeeds();
     refreshActuals()});
   renderRates();renderCatalog();renderQuote();renderSaved();renderScaffolds();
 }

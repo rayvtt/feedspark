@@ -187,7 +187,7 @@
     // done before the FCC existed). They carry their own client + task and count toward
     // the averages exactly like scanned briefs — minus lead time (no ticket history).
     Object.keys(track).forEach(function (k) {
-      if ((briefs || {})[k] || !track[k] || !track[k].manual) return;
+      if ((briefs || {})[k] || !track[k] || !track[k].manual || track[k].deleted) return;
       var tr = track[k];
       rows.push({ bid: k, client: String(tr.client || ''), task: String(tr.task || ''), status: 'historic',
         done: true, manual: true, created: +tr.t || 0, tach: tr.tach || classifyTach(tr.task) || '',
@@ -231,7 +231,7 @@
     // manual/historic records join the averages too (no lead — nothing to measure)
     Object.keys(track || {}).forEach(function (k) {
       if ((briefs || {})[k]) return;
-      var tr = track[k]; if (!tr || !tr.manual) return;
+      var tr = track[k]; if (!tr || !tr.manual || tr.deleted) return;
       var tach = (typeof tr.tach === 'string' && tr.tach) || classifyTach(tr.task);
       if (!tach) return;
       var h = { aspl: +tr.aspl || 0, qc: +tr.qc || 0, pm: +tr.pm || 0, mon: +tr.mon || 0 };
@@ -272,7 +272,7 @@
     return out;
   }
 
-  var PricerEngine = { VERSION: '1.3.0', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
+  var PricerEngine = { VERSION: '1.3.1', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
     rates: rates, tieredUnits: tieredUnits, quote: quote, quoteText: quoteText, fmtGBP: fmtGBP,
     classifyTach: classifyTach, aiBriefRows: aiBriefRows,
     actualsFromBriefs: actualsFromBriefs, overridesWithActuals: overridesWithActuals };
