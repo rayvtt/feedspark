@@ -28,7 +28,6 @@ import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js"
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx } from "./briefmatch.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
-import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
 import ROADMAP from "../../../docs/FeedSpark_Roadmap.html";
 import READINESS from "../../../docs/FeedSpark_Readiness.html";
@@ -55,7 +54,6 @@ import FEEDLAB_ENGINE from "../../../docs/feedlab_engine.js";
 const PAGES = {
   '/':            { html: LANDING,     slug: 'home' },
   '/index.html':  { html: LANDING,     slug: 'home' },
-  '/templates':   { html: TEMPLATES,   slug: 'templates' },
   '/library':     { html: TASKLIB,     slug: 'library' },
   '/roadmap':     { html: ROADMAP,     slug: 'roadmap' },
   '/readiness':   { html: READINESS,   slug: 'readiness' },
