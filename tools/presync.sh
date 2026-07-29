@@ -36,6 +36,28 @@ echo "── validating: shipped-feature markers (overwrite tripwire)"
 node tools/check_markers.js >/dev/null
 echo "   ✓ no shipped feature regressed"
 
+echo "── auditing: deck content consistency (changed decks only)"
+# Structural validation is not enough. The Reiss deck once passed every structural check
+# while quoting two different values for the same metric, citing a figure whose source
+# chapter had just been deleted, and pointing "chapters 14-15" at the wrong chapters. That
+# shipped, and the client-facing reader found it. Any deck touched on this branch gets
+# content-audited here, before the PR, not after someone spots it.
+# working tree vs origin/main, NOT origin/main...HEAD — the three-dot form ignores
+# uncommitted edits, which is exactly the state a deck is in when you most want the audit
+DECKS_CHANGED=$(git diff --name-only origin/main -- 'docs/*.html' | grep -v '^docs/archive/' || true)
+if [ -n "$DECKS_CHANGED" ]; then
+  DECK_FAIL=0
+  for d in $DECKS_CHANGED; do
+    [ -f "$d" ] || continue
+    grep -q 'class="chapter" id="c' "$d" || continue
+    python3 tools/deck_audit.py "$d" --quiet || DECK_FAIL=1
+  done
+  [ "$DECK_FAIL" = 0 ] || { echo "✗ deck audit found hard failures — fix before opening the PR"; exit 1; }
+  echo "   ✓ decks audited (read the REVIEW list above before you confirm anything as final)"
+else
+  echo "   · no deck changed on this branch"
+fi
+
 echo "── checking overlap with other active claude/* branches"
 bash tools/overlap.sh || true
 
