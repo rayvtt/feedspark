@@ -49,16 +49,24 @@ window.addEventListener('load',restore);
   h2{font-size:20px;font-weight:900;margin:30px 0 4px}
   .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
   /* gmail live banner */
-  .glive{display:flex;align-items:flex-start;gap:12px;background:linear-gradient(180deg,#FFF7EC,#fff);border:1px solid #F5D9A8;border-radius:12px;padding:13px 15px;margin:20px 0 4px}
-  .glive .gi{width:30px;height:30px;border-radius:8px;background:#FEF3E2;display:grid;place-items:center;flex:none;font-size:15px}
-  .glive .gt{font-size:13px;color:var(--ink-2)}.glive .gt b{color:var(--orange-ink)}
-  .glive .gdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:5px;vertical-align:middle}
-  .glive .gdot.on{background:var(--good)}
+  .gmod{margin:20px 0 4px;padding:13px 16px}
+  .gm-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .gm-head .grow{flex:1}
+  .gm-title{font-size:14px;font-weight:900;color:var(--ink);white-space:nowrap}
+  .gm-stat{font-size:12px;font-weight:600;color:var(--muted)}
+  .gm-sub{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.45}
+  .gdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:7px;vertical-align:middle}
+  .gdot.on{background:var(--good)}
+  .em-cue{font-size:9.5px;font-weight:900;color:var(--navy);background:rgba(26,54,93,.08);border-radius:100px;padding:1px 8px;white-space:nowrap;justify-self:start}
+  .em-cue.none{color:var(--muted);background:var(--wash)}
+  .em-colhead{font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)!important;padding:7px 0!important}
   #em-panel{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
   .em-head{font-weight:900;font-size:13px;margin-bottom:6px}
   .em-n{color:var(--orange-deep);margin-left:4px}
   .em-sub{font-weight:600;font-size:11.5px;color:var(--muted);margin-left:10px}
-  .em-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+  .em-row{display:grid;grid-template-columns:130px 108px 150px 1fr 40px auto;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+  .em-cell-brand{display:flex;align-items:center;gap:5px;min-width:0}
+  .em-act{display:flex;align-items:center;gap:6px;justify-content:flex-end}
   .em-row:last-child{border-bottom:none}
   .em-brf{flex:none;font-size:10.5px;font-weight:900;color:#fff;background:var(--orange-deep);border-radius:100px;padding:1px 8px}
   .em-from{flex:none;font-weight:800;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -227,7 +235,7 @@ window.addEventListener('load',restore);
 [data-theme=dark] .fchip,[data-theme=dark] .fsel,[data-theme=dark] .btn,[data-theme=dark] .ghost,[data-theme=dark] .btn-ghost,[data-theme=dark] .cm-rep,[data-theme=dark] .sent-seg,[data-theme=dark] .stat-seg button,[data-theme=dark] .itk-more,[data-theme=dark] .lc-star{background:#20242E;color:var(--ink-2);border-color:var(--line)}
 [data-theme=dark] .btn.pri,[data-theme=dark] .btn.navy,[data-theme=dark] .btn-primary,[data-theme=dark] .fchip.on,[data-theme=dark] .stat-seg button.on{color:#fff}
 /* gradients / hero washes back to flat dark */
-[data-theme=dark] .hero,[data-theme=dark] .glive,[data-theme=dark] .wf-cta,[data-theme=dark] .toolbar{background:transparent}
+[data-theme=dark] .hero,[data-theme=dark] .wf-cta,[data-theme=dark] .toolbar{background:transparent}
 [data-theme=dark] .glive,[data-theme=dark] .wf-cta{background:rgba(245,166,35,.09);border-color:rgba(245,166,35,.28)}
 /* semantic tint pills — green */
 [data-theme=dark] .built,[data-theme=dark] .atrt-badge,[data-theme=dark] .cm-pill.ok,[data-theme=dark] .rd-band.b0,[data-theme=dark] .scan-hit,[data-theme=dark] .tag-open,[data-theme=dark] .card.on,[data-theme=dark] .card.shipped,[data-theme=dark] .wl-test{background:rgba(72,208,126,.14)!important;border-color:rgba(72,208,126,.3)!important;color:#6FE0A0!important}
@@ -265,13 +273,20 @@ window.addEventListener('load',restore);
 
   <div class="wf-alerts" id="wf-alerts" style="display:none"></div>
 
-  <div class="glive"><div class="gi">✉</div><div class="gt">
-    <div><span class="gdot" id="gdot"></span><b>Gmail live sync</b> — every 5 min the mailbox script pushes brief replies (they move tickets) and captures external client emails into the triage queue below. <span id="gstate">Waiting for the first push — set up tools/gmail_push.gs (GOOGLE_SETUP.md §8).</span></div>
+  <div class="panel gmod">
+    <div class="gm-head">
+      <span class="gm-title"><span class="gdot" id="gdot"></span>✉ Gmail live sync</span>
+      <span class="em-n" id="em-n"></span>
+      <span class="gm-stat" id="gstate">Waiting for the first push — set up tools/gmail_push.gs (GOOGLE_SETUP.md §8).</span>
+      <span class="grow"></span>
+      <button class="em-tog" id="em-tog" type="button" hidden></button>
+    </div>
+    <div class="gm-sub">Every 5 min the mailbox script pushes brief replies (they move tickets) and captures external client emails into the triage queue — each one is either a task or it isn't. <b>→ Task</b> writes it into the detected brand's project plan; <b>✕ Not a task</b> clears it (restorable). ⚡ = reads as an action request. The <b>cue</b> column shows how the brand was detected — Facebook/Meta aliases and client email domains included.</div>
     <div id="em-panel" hidden>
-      <div class="em-head">Email triage <span class="em-n" id="em-n"></span><span class="em-sub">every external email to ray@feedspark.com, kept apart from the task tracker — each one is either a task or it isn't. <b>→ Task</b> saves it to Intake as a task (brief it from there when ready), <b>✕ Not a task</b> clears it (remembered, restorable). ⚡ = reads as an action request.</span><button class="em-tog" id="em-tog" type="button" hidden></button></div>
+      <div class="em-row em-colhead"><span>Brand</span><span>Cue</span><span>From</span><span>Subject</span><span>Age</span><span></span></div>
       <div id="em-list"></div>
     </div>
-  </div></div>
+  </div>
 
   <!-- New-brief composer — a popup window. Openers: ＋ New brief (intake bar), every Brief
        button on tracker rows, and → Brief in the email triage panel (prefill() routes here). -->
@@ -2135,11 +2150,14 @@ window.addEventListener('load',restore);
         +'<button class="em-res" data-id="'+esc(g.id)+'" type="button">↩ Restore</button>'
       : '<button class="em-go" data-id="'+esc(g.id)+'" type="button" title="Save as a task in Intake — draft the brief from there when ready">→ Task</button>'
         +'<button class="em-no" data-id="'+esc(g.id)+'" type="button" title="Not a task — clear it (restorable under Show triaged)">✕</button>';
-    return '<div class="em-row'+(g.dismissed?' dis':'')+'">'+(g.briefable?'<span class="em-brf" title="'+esc((g.hints||[]).join(' · '))+'">⚡ action</span>':'')
+    return '<div class="em-row'+(g.dismissed?' dis':'')+'">'
+      +'<span class="em-cell-brand">'+(g.client?'<span class="em-cl">'+esc(g.client)+'</span>':'<span class="em-cue none">—</span>')
+        +(g.briefable?'<span class="em-brf" title="'+esc((g.hints||[]).join(' · '))+'">⚡</span>':'')+'</span>'
+      +(g.via?'<span class="em-cue" title="How the brand was detected">'+esc(g.via)+'</span>':'<span class="em-cue none">—</span>')
       +'<span class="em-from" title="'+esc(g.from)+'">'+esc(senderName(g.from))+'</span>'
-      +(g.client?'<span class="em-cl">'+esc(g.client)+'</span>':'')
       +'<span class="em-subj" title="'+esc(g.snippet||'')+'">'+esc(g.subject)+'</span>'
-      +'<span class="em-ago">'+ago+'</span>'+act+'</div>';
+      +'<span class="em-ago">'+ago+'</span>'
+      +'<span class="em-act">'+act+'</span></div>';
   }
   function renderEmailPanel(){
     var panel=document.getElementById('em-panel'), list=document.getElementById('em-list'),

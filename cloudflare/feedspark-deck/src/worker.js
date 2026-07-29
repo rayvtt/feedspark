@@ -25,7 +25,7 @@
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
-import { matchGmailToBriefs, classifyInbound, detectClient } from "./briefmatch.js";
+import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx } from "./briefmatch.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
@@ -601,7 +601,7 @@ export default {
           const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
           const doms = {}; Object.keys(dossier).forEach((n) => { if (dossier[n] && dossier[n].dom) doms[n] = dossier[n].dom; });
           let filled = 0;
-          for (const it of pushed) { if (!it.client) { const c = detectClient(it, doms, Object.keys(dossier)); if (c) { it.client = c; filled++; } } }
+          for (const it of pushed) { if (!it.client) { const ex = detectClientEx(it, doms, Object.keys(dossier)); if (ex.client) { it.client = ex.client; it.via = ex.via; filled++; } } }
           if (filled) ctx.waitUntil(env.EDITS.put('gmailinbox', JSON.stringify(pushed)));
         } catch (e) {}
         const dis = (await env.EDITS.get('gmaildismissed', 'json')) || {};
@@ -618,10 +618,10 @@ export default {
         const ids = (list.messages || []).slice(0, 15).map(m => m.id);
         const items = [];
         for (const id of ids) {
-          const mRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date', { headers: { Authorization: 'Bearer ' + token } });
+          const mRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/' + id + '?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date&metadataHeaders=To&metadataHeaders=Cc', { headers: { Authorization: 'Bearer ' + token } });
           const m = await mRes.json();
           const h = {}; ((m.payload && m.payload.headers) || []).forEach(x => { h[x.name.toLowerCase()] = x.value; });
-          items.push({ id, from: h.from || '', subject: h.subject || '(no subject)', date: h.date || '', snippet: (m.snippet || '').slice(0, 160) });
+          items.push({ id, from: h.from || '', to: h.to || '', cc: h.cc || '', subject: h.subject || '(no subject)', date: h.date || '', snippet: (m.snippet || '').slice(0, 160) });
         }
         return json({ connected: true, items });
       } catch (e) {

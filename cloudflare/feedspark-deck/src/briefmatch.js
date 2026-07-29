@@ -99,40 +99,63 @@ function domainLabel(host) {
   if (parts.length >= 3 && parts[parts.length - 1].length <= 3 && /^(co|com|org|net|ac|gov|ltd|plc|edu)$/.test(parts[parts.length - 2])) cut = 2;
   return fold(parts.slice(0, parts.length - cut).pop() || '');
 }
-export function detectClient(msg, clientDoms, clientNames) {
+export function detectClientEx(msg, clientDoms, clientNames) {
   const from = String(msg.from || '');
   const emDom = ((/@([a-z0-9.-]+)/i.exec(from) || [])[1] || '').toLowerCase();
+  const names = clientNames || Object.keys(clientDoms || {});
+  const nameByFold = (tok) => { if (!tok || tok.length < 3) return '';
+    for (const name of names) { const nm = fold(name); if (nm.length >= 4 && (tok.includes(nm) || (tok.length >= 4 && nm.includes(tok)))) return name; } return ''; };
+  // 1. dossier domain on the SENDER (authoritative)
   for (const name of Object.keys(clientDoms || {})) {
     const d = String(clientDoms[name] || '').toLowerCase().replace(/^www\./, '');
-    if (d && emDom.endsWith(d)) return name;
+    if (d && emDom.endsWith(d)) return { client: name, via: 'sender domain' };
   }
-  const names = clientNames || Object.keys(clientDoms || {});
-  const label = domainLabel(emDom);
-  if (label && !FREEMAIL_RE.test(label)) {
-    for (const name of names) {
-      const nm = fold(name);
-      if (nm.length >= 4 && (label.includes(nm) || (label.length >= 4 && nm.includes(label)))) return name;
+  // 2. Facebook/Meta alias in the recipients — mail to Facebook always carries the brand
+  //    in the alias local part (case++reissuk@facebook.com, monsoon@pages.fb.com)
+  const rcpts = (String(msg.to || '') + ',' + String(msg.cc || '')).toLowerCase();
+  for (const m of rcpts.matchAll(/([a-z0-9._+\-]+)@([a-z0-9.-]*(?:facebook|fb|meta)\.com)\b/g)) {
+    for (const piece of m[1].split(/[+._\-]+/)) { const hit = nameByFold(fold(piece)); if (hit) return { client: hit, via: 'facebook alias' }; }
+    const hitWhole = nameByFold(fold(m[1])); if (hitWhole) return { client: hitWhole, via: 'facebook alias' };
+  }
+  // 3. a recipient on a client's own domain (dossier map first, then the domain label)
+  for (const m of rcpts.matchAll(/@([a-z0-9.-]+)/g)) {
+    const dom = m[1].replace(/[>,;\s].*$/, '');
+    for (const name of Object.keys(clientDoms || {})) {
+      const d = String(clientDoms[name] || '').toLowerCase().replace(/^www\./, '');
+      if (d && dom.endsWith(d)) return { client: name, via: 'recipient domain' };
     }
+    const rl = domainLabel(dom);
+    if (rl && !FREEMAIL_RE.test(rl)) { const hit = nameByFold(rl); if (hit) return { client: hit, via: 'recipient domain' }; }
   }
+  // 4. the sender domain's own label (jane@reiss.com — no dossier entry needed)
+  const label = domainLabel(emDom);
+  if (label && !FREEMAIL_RE.test(label)) { const hit = nameByFold(label); if (hit) return { client: hit, via: 'sender domain' }; }
+  // 5. the sender display name ("Jane from Reiss <jane@gmail.com>")
   const disp = fold(from.split('<')[0]);
-  if (disp) for (const name of names) { const nm = fold(name); if (nm.length >= 4 && disp.includes(nm)) return name; }
+  if (disp) for (const name of names) { const nm = fold(name); if (nm.length >= 4 && disp.includes(nm)) return { client: name, via: 'sender name' }; }
+  // 6. a brand mention in subject/snippet
   const text = String(msg.subject || '') + ' ' + String(msg.snippet || ''), ftext = fold(text);
   for (const name of names) {
-    if (new RegExp('\\b' + name.replace(/[.^$*+?()[\]{}|\\]/g, '\\$&') + '\\b', 'i').test(text)) return name;
+    if (new RegExp('\\b' + name.replace(/[.^$*+?()[\]{}|\\]/g, '\\$&') + '\\b', 'i').test(text)) return { client: name, via: 'brand mention' };
     const nm = fold(name);
-    if (nm.length >= 4 && ftext.includes(nm)) return name;
+    if (nm.length >= 4 && ftext.includes(nm)) return { client: name, via: 'brand mention' };
   }
-  return '';
+  return { client: '', via: '' };
 }
+export function detectClient(msg, clientDoms, clientNames) { return detectClientEx(msg, clientDoms, clientNames).client; }
 
 // msg: {from, subject, snippet}; clientDoms: {Brand: "domain.com"}; clientNames: [Brand,...]
 export function classifyInbound(msg, clientDoms, opts) {
   opts = opts || {};
   const from = String(msg.from || ''), text = (String(msg.subject || '') + ' ' + String(msg.snippet || ''));
-  if ((opts.selfRe && opts.selfRe.test(from)) || INTERNAL_RE.test(from) || NOISE_RE.test(from + ' ' + String(msg.subject || ''))) {
+  const ex = detectClientEx(msg, clientDoms, opts.clientNames || Object.keys(clientDoms || {}));
+  const client = ex.client;
+  // platform notifications addressed to a brand's Facebook/Meta alias are client work
+  // (Commerce Manager feed rejections, case updates) — only THAT cue overrides the noise gate
+  const noisy = (opts.selfRe && opts.selfRe.test(from)) || INTERNAL_RE.test(from) || NOISE_RE.test(from + ' ' + String(msg.subject || ''));
+  if (noisy && !(client && ex.via === 'facebook alias')) {
     return { client: '', briefable: false, score: 0, hints: ['noise/self'] };
   }
-  const client = detectClient(msg, clientDoms, opts.clientNames || Object.keys(clientDoms || {}));
   const hints = [];
   let score = 0;
   for (const [re, label] of ACTION_RES) { if (re.test(text)) { score++; hints.push(label); } }
@@ -140,7 +163,7 @@ export function classifyInbound(msg, clientDoms, opts) {
   if (feedy) { score++; hints.push('feed-related'); }
   // briefable = a real ask: at least two action signals, or one + feed vocabulary + a known client
   const briefable = score >= 3 || (score >= 2 && (feedy || !!client));
-  return { client, briefable, score, hints: hints.slice(0, 5) };
+  return { client, via: ex.via, briefable, score, hints: hints.slice(0, 5) };
 }
 
 // briefs: the plain briefs map (will be mutated); messages: [{id, from, subject, snippet, date(ms)}]
