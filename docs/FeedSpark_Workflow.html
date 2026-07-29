@@ -556,9 +556,21 @@ window.addEventListener('load',restore);
   .stall-t{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .stall-a{color:var(--muted);font-weight:700;white-space:nowrap}
   .stall-d{color:#C0392B;font-weight:800;font-size:12px;white-space:nowrap}
-  /* timeline */
+  /* timeline — full-bleed out of .wrap's 1240px cap so an AM can work a whole book on one screen.
+     --sbw is the scrollbar width, measured in JS: plain 100vw includes it and would overflow. */
+  .tl-sec{width:calc(100vw - var(--sbw,0px));margin-left:calc(50% - 50vw + var(--sbw,0px)/2);padding:0 22px}
+  .tl-focus-btn{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  .tl-focus-btn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .tl-focus-btn[aria-pressed=true]{background:var(--navy);border-color:var(--navy);color:#fff}
+  #tl-search{font:inherit;font-size:12px;font-weight:600;padding:6px 10px;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--ink);min-width:190px}
+  body.tl-focus{overflow:hidden}
+  body.tl-focus .tl-sec{position:fixed;inset:0;z-index:9000;margin:0;width:100vw;padding:14px 18px;background:var(--wash);overflow-y:auto;display:flex;flex-direction:column}
+  body.tl-focus .tl-sec .it-ctl{position:sticky;top:0;z-index:2;background:var(--wash);padding:6px 0;margin-bottom:8px}
+  body.tl-focus .tl-wrap{flex:1;min-height:0;display:flex}
+  body.tl-focus .tl-grid{flex:1}
+  body.tl-focus .tl-week{max-height:calc(100vh - 175px)}
   .tl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:var(--shadow);padding:12px}
-  .tl-grid{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(160px,1fr);gap:10px;min-width:760px}
+  .tl-grid{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(190px,1fr);gap:10px;min-width:760px}
   .tl-week{border-left:2px solid var(--line);padding:0 8px}
   .tl-wh{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:8px}
   .tl-wh.now{color:var(--orange-deep)}
@@ -568,6 +580,12 @@ window.addEventListener('load',restore);
      exactly 3 * line-height and the cut is clean. Full text is in the card's title tooltip. */
   .tl-ev{font-size:11.5px;font-weight:700;line-height:15px;padding:6px 8px;border-radius:8px;margin-bottom:6px;background:var(--wash);border-left:3px solid var(--navy);cursor:pointer;overflow:hidden}
   .tl-t{display:block;max-height:45px;overflow:hidden}
+  /* owner + day: an AM reads the axis for "who holds this, and when", not just the task text */
+  .tl-meta{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:4px;font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.01em}
+  /* min-width:0 lets the owner ellipsis instead of forcing the date onto a second line */
+  .tl-meta b{min-width:0;font-weight:900;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tl-meta span{flex:none;white-space:nowrap}
+  .tl-ev.over .tl-meta span{color:#C0392B}
   .tl-ev.test{border-left-color:var(--orange)}
   .tl-ev.carry{border-left-color:#7A5AA8}
   .tl-ev.over{border-left-color:#C0392B;background:rgba(192,57,43,.07)}
@@ -730,8 +748,9 @@ window.addEventListener('load',restore);
   <div class="panel" style="margin-top:12px"><h3>Escalations — over-SLA in any court</h3><div id="sla-stalled" class="stall-list"></div></div>
 
   <h2>Timeline — every dated task<button class="info-btn" type="button" aria-label="How Timeline works">i</button>
-    <div class="info-pop">Every task carrying a due date — the whole Intake, across all brands, not just the briefed ones — plus each test's analysis date, on one axis. Due dates are the ones you set in <b>Intake</b>, so they're the same dates as the project plans. Overdue items sit in week 1 and anything past the horizon collects in <b>Later</b>. Filter by <b>brand</b> or <b>AM</b>; <b>Scope</b> narrows to briefed or un-briefed work. Briefed items carry their stage colour and open the ticket; un-briefed ones jump to the Intake row.</div>
+    <div class="info-pop">Every task carrying a due date — the whole Intake, across all brands, not just the briefed ones — plus each test's analysis date, on one axis. Due dates are the ones you set in <b>Intake</b>, so they're the same dates as the project plans. <b>Overdue</b> gets its own column and anything past the horizon collects in <b>Later</b> — nothing is dropped. Filter by <b>brand</b> or <b>AM</b>; <b>Scope</b> narrows to briefed or un-briefed work. Briefed items carry their stage colour and open the ticket; un-briefed ones jump to the Intake row. <b>⛶ Focus</b> (or <b>F</b>) fills the screen for working a book of accounts; <b>Esc</b> leaves.</div>
   </h2>
+  <section class="tl-sec" id="tl-sec">
   <div class="it-ctl">
     <div class="it-grp"><span class="it-lbl">Scope</span><div class="it-src" id="tl-scope" role="group" aria-label="Filter the timeline by brief scope"></div></div>
     <div class="it-multi" id="tl-client-wrap">
@@ -745,9 +764,12 @@ window.addEventListener('load',restore);
     <select id="tl-weeks" aria-label="Timeline horizon" title="How far ahead the columns run — anything beyond lands in Later">
       <option value="6">6 weeks</option><option value="8">8 weeks</option><option value="12">12 weeks</option>
     </select>
+    <input id="tl-search" type="search" placeholder="Search tasks, owners…" aria-label="Search the timeline">
+    <button type="button" class="tl-focus-btn" id="tl-focus" aria-pressed="false" title="Fill the screen (F) — Esc leaves">⛶ Focus</button>
     <span class="it-n" id="tl-n"></span>
   </div>
   <div class="tl-wrap"><div class="tl-grid" id="tl-grid"></div></div>
+  </section>
 
   <h2>Test &amp; experiment register<button class="info-btn" type="button" aria-label="How the test register works">i</button>
     <div class="info-pop">Every A/B in one place — hypothesis, cohort, analysis date and result. Analysis dates feed the timeline and alerts so no test dies un-analysed; the wins are your deck ammo.</div>
@@ -1667,6 +1689,28 @@ window.addEventListener('load',restore);
     clear:function(){ tlState.ams=[]; } });
   (function(){ var w=document.getElementById('tl-weeks'); if(!w)return;
     w.value=String(tlState.weeks); w.onchange=function(){ tlState.weeks=+w.value||6; renderTimeline(); }; })();
+  (function(){ var s=document.getElementById('tl-search'); if(!s)return;
+    s.oninput=function(){ tlState.q=s.value.trim(); renderTimeline(); }; })();
+  // Focus mode: the axis fills the screen so a whole book of accounts is workable at once.
+  // The full-bleed width is calc(100vw - scrollbar); measure it rather than assume 0.
+  function tlScrollbar(){ var w=window.innerWidth-document.documentElement.clientWidth;
+    document.documentElement.style.setProperty('--sbw',(w>0?w:0)+'px'); }
+  function tlFocus(on){ var b=document.getElementById('tl-focus'); if(!b)return;
+    document.body.classList.toggle('tl-focus',on);
+    b.setAttribute('aria-pressed',on?'true':'false'); b.textContent=on?'✕ Exit':'⛶ Focus';
+    if(on)document.getElementById('tl-sec').scrollTop=0; else tlScrollbar();
+    renderTimeline(); }
+  (function(){ var b=document.getElementById('tl-focus'); if(!b)return;
+    tlScrollbar(); window.addEventListener('resize',tlScrollbar);
+    b.onclick=function(){ tlFocus(!document.body.classList.contains('tl-focus')); };
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape'&&document.body.classList.contains('tl-focus')){ tlFocus(false); return; }
+      // F toggles focus, but never while typing into a field or editing a grid cell
+      if((e.key==='f'||e.key==='F')&&!e.metaKey&&!e.ctrlKey&&!e.altKey){
+        var t=e.target, tag=(t&&t.tagName||'').toLowerCase();
+        if(tag==='input'||tag==='textarea'||tag==='select'||(t&&t.isContentEditable))return;
+        e.preventDefault(); tlFocus(!document.body.classList.contains('tl-focus'));
+      } }); })();
   // ---- saved filter views: name the current filter set, reapply or delete later (per device) ----
   function savedViews(){ try{return JSON.parse(localStorage.getItem('fcc-filters')||'{}');}catch(e){return {};} }
   function saveViews(v){ try{localStorage.setItem('fcc-filters',JSON.stringify(v));}catch(e){} }
@@ -2098,7 +2142,7 @@ window.addEventListener('load',restore);
       var d=taskDate(t); if(!d)return;                           // no due date set = not on the axis
       seen[k]=1;
       var bf=BK[k];
-      evs.push({d:d,client:t.client,task:t.task,am:amOf(t.client),brief:bf||null,
+      evs.push({d:d,client:t.client,task:t.task,am:amOf(t.client),owner:t.owner||'',brief:bf||null,
         id:bf?bf.id:'',key:k,kind:bf?'brief':'task'});
     });
     // tickets whose intake row has since gone (deleted/hidden) still need their date on the axis
@@ -2106,20 +2150,21 @@ window.addEventListener('load',restore);
       if(!b||b.status==='confirmed')return;
       var k=b.taskKey||(b.client+'|'+b.task); if(seen[k])return;
       var d=ddmmyyyyToDate(b.due); if(!d)return; seen[k]=1;
-      evs.push({d:d,client:b.client,task:b.task,am:amOf(b.client),brief:b,id:b.id,key:k,kind:'brief'});
+      evs.push({d:d,client:b.client,task:b.task,am:amOf(b.client),owner:b.aspl||'',brief:b,id:b.id,key:k,kind:'brief'});
     });
     Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b||b.status==='confirmed'||hasResult(b))return;
       var rd=readoutDue(b); if(rd==null)return;
-      evs.push({d:new Date(rd),client:b.client,task:b.task.slice(0,44)+' · analysis',am:amOf(b.client),brief:b,id:b.id,key:'ro|'+id,kind:'test'}); });
+      evs.push({d:new Date(rd),client:b.client,task:b.task.slice(0,44)+' · analysis',am:amOf(b.client),owner:b.aspl||'',brief:b,id:b.id,key:'ro|'+id,kind:'test'}); });
     TESTS.forEach(function(t,i){ if(t.result||!t.readout)return; var d=isoDate(t.readout); if(!d)return;
-      evs.push({d:d,client:t.client,task:t.name+' · analysis',am:amOf(t.client),brief:null,id:'',key:'ts|'+i,kind:'test'}); });
+      evs.push({d:d,client:t.client,task:t.name+' · analysis',am:amOf(t.client),owner:'',brief:null,id:'',key:'ts|'+i,kind:'test'}); });
     return evs;
   }
-  function timelineFiltered(){ var S=tlState;
+  function timelineFiltered(){ var S=tlState, q=(S.q||'').toLowerCase();
     return timelineEvents().filter(function(e){
       if(S.clients.length&&S.clients.indexOf(e.client)<0)return false;
       if(S.ams.length&&S.ams.indexOf(e.am)<0)return false;
       if(S.scope.length){ var isB=!!e.brief; if(S.scope.indexOf(isB?'brief':'open')<0)return false; }
+      if(q&&(e.task+' '+e.client+' '+(e.owner||'')+' '+e.am).toLowerCase().indexOf(q)<0)return false;
       return true; }).sort(function(a,b){ return a.d-b.d; });
   }
   function renderTimeline(){ var host=document.getElementById('tl-grid'); if(!host)return;
@@ -2130,8 +2175,11 @@ window.addEventListener('load',restore);
       var tip=e.client+' · '+e.task+'\n'+e.d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' · AM '+e.am
         +(e.brief?('\nTicket '+e.brief.id+' — '+(STAGE_LBL[e.brief.status]||e.brief.status)):'\nNot briefed yet');
       var style=e.brief&&e.kind==='brief'?(' style="border-left-color:'+(STAGE_COLOR[e.brief.status]||'#8a94a0')+'"'):'';
+      var day=off<0?(Math.abs(off)+'d late'):e.d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+      var who=e.owner&&e.owner!=='—'?e.owner:e.am;
       return '<div class="tl-ev '+e.kind+(off<0?' over':'')+'"'+style+' data-k="'+esc(e.key)+'"'+(e.id?' data-id="'+esc(e.id)+'"':'')
-        +' data-c="'+esc(e.client)+'" title="'+esc(tip)+'"><span class="tl-t">'+esc(lab)+'</span></div>'; }
+        +' data-c="'+esc(e.client)+'" title="'+esc(tip)+'"><span class="tl-t">'+esc(lab)+'</span>'
+        +'<span class="tl-meta"><b>'+esc(who)+'</b><span>'+esc(day)+'</span></span></div>'; }
     // overdue gets its OWN column rather than being folded into week 1 — across every brand that's
     // the bulk of the axis, and burying it in "this week" hides both the backlog and the week itself
     var off=function(e){ return Math.round((e.d-t0)/86400000); };
