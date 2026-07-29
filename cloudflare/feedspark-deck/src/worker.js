@@ -744,7 +744,8 @@ export default {
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
         tab = await resolveTab(id, tab, token);   // tab names vary per client (e.g. "Opitmisation Plan") — write where the reads come from
-        const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+        if (!tab) return json(tabAmbiguous(id, body.tab || 'Project Plan'));
+        const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:ZZ5000'), { headers: { Authorization: 'Bearer ' + token } });
         const rd = await rr.json();
         if (rd.error) return json({ ok: false, error: rd.error.message });
         const rows = rd.values || [];
@@ -826,7 +827,8 @@ export default {
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
         tab = await resolveTab(id, tab, token);   // tab names vary per client (e.g. "Opitmisation Plan") — write where the reads come from
-        const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+        if (!tab) return json(tabAmbiguous(id, body.tab || 'Project Plan'));
+        const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:ZZ5000'), { headers: { Authorization: 'Bearer ' + token } });
         const rd = await rr.json(); if (rd.error) return json({ ok: false, error: rd.error.message });
         const rows = rd.values || [];
         const key = normCell(match).slice(0, 45); let targetRow = -1;
@@ -852,7 +854,8 @@ export default {
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
         tab = await resolveTab(id, tab, token);   // tab names vary per client (e.g. "Opitmisation Plan") — write where the reads come from
-        const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+        if (!tab) return json(tabAmbiguous(id, body.tab || 'Project Plan'));
+        const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:ZZ5000'), { headers: { Authorization: 'Bearer ' + token } });
         const rd = await rr.json(); if (rd.error) return json({ ok: false, error: rd.error.message });
         const rows = rd.values || [];
         const key = normCell(match).slice(0, 45); let targetRow = -1;
@@ -916,6 +919,7 @@ export default {
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
         const realTab = await resolveTab(id, 'Project Plan', token);
+        if (!realTab) return json(tabAmbiguous(id, 'Project Plan'));
         const r = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!' + range), { headers: { Authorization: 'Bearer ' + token } });
         const d = await r.json();
         if (d.error) return json({ ok: false, error: d.error.message });
@@ -990,9 +994,9 @@ export default {
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
         let realTab = await resolveTab(id, tab, token);
-        let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+        if (!realTab) return json(tabAmbiguous(id, tab));
+        let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:ZZ5000'), { headers: { Authorization: 'Bearer ' + token } });
         let rd = await rr.json();
-        if (rd.error) { rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent('A1:Z600'), { headers: { Authorization: 'Bearer ' + token } }); rd = await rr.json(); realTab = ''; }
         if (rd.error) return json({ ok: false, error: rd.error.message });
         const grid = rd.values || [], c = resolveCols(grid), tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
         const del = [];
@@ -1177,7 +1181,8 @@ async function renamePlanTask(env, id, tab, match, value) {
   try {
     const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
     const realTab = await resolveTab(id, tab, token);
-    const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+    if (!realTab) return tabAmbiguous(id, tab);
+    const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:ZZ5000'), { headers: { Authorization: 'Bearer ' + token } });
     const rd = await rr.json(); if (rd.error) return { ok: false, error: rd.error.message };
     const rows = rd.values || [];
     const key = normCell(match).slice(0, 45); let targetRow = -1;
@@ -1199,12 +1204,9 @@ async function appendPlanRows(env, id, tab, rows) {
   try {
     const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets', false);
     let realTab = await resolveTab(id, tab, token);
-    let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
+    if (!realTab) return tabAmbiguous(id, tab);
+    let rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:ZZ5000'), { headers: { Authorization: 'Bearer ' + token } });
     let rd = await rr.json();
-    if (rd.error) { // tab name varies — fall back to the first sheet
-      rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent('A1:Z600'), { headers: { Authorization: 'Bearer ' + token } });
-      rd = await rr.json(); realTab = '';
-    }
     if (rd.error) return { ok: false, error: rd.error.message };
     const grid = rd.values || [];
     const c = resolveCols(grid);
@@ -1235,18 +1237,25 @@ async function resolveTab(id, tab, token) {
     const d = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '?fields=sheets.properties.title', { headers: { Authorization: 'Bearer ' + token } })).json();
     const titles = ((d && d.sheets) || []).map(x => x.properties.title);
     if (!titles.length || titles.indexOf(tab) >= 0) return tab;
-    return titles.find(t => t.toLowerCase() === String(tab).toLowerCase())
-        || titles.find(t => /plan/i.test(t))
-        || titles[0];
+    const ci = titles.find(t => t.toLowerCase() === String(tab).toLowerCase());
+    if (ci) return ci;
+    const byPlan = titles.find(t => /plan/i.test(t));
+    if (byPlan) return byPlan;
+    // Several tabs, none named/keyworded like the one asked for: guessing tab #1 here is how a
+    // write can silently land on an unrelated tab nobody looks at (Reiss: a briefed task never
+    // appeared in Project Plan because the workbook has more than one plan-shaped tab and this
+    // fallback picked blind). Only auto-pick when there is truly no ambiguity — a single tab.
+    return titles.length === 1 ? titles[0] : null;
   } catch (e) { return tab; }
 }
+function tabAmbiguous(id, tab) { return { ok: false, error: 'Could not find a single "' + tab + '"-like tab in this sheet (' + id + ') — it has several tabs and none match by name or contain "plan". Rename the intended tab to include "Plan", or the write risks landing on the wrong one.' }; }
 function permHint(m) { return /permission|forbidden/i.test(String(m)) ? (m + ' — the service account can read but not write: open the sheet\u2019s Share dialog and change its access from Viewer to Editor') : m; }
 async function fetchGrid(id, tab, token) {
   const fields = 'sheets(properties(title),data(rowData(values(formattedValue,effectiveFormat(backgroundColor)))))';
   const tryRange = async range => (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '?ranges=' + encodeURIComponent(range) + '&includeGridData=true&fields=' + encodeURIComponent(fields), { headers: { Authorization: 'Bearer ' + token } })).json();
-  let d = await tryRange((tab ? tab + '!' : '') + 'A1:Z600');
-  if (d.error && tab) { const best = await resolveTab(id, tab, token); if (best && best !== tab) d = await tryRange(best + '!A1:Z600'); }
-  if (d.error && tab) d = await tryRange('A1:Z600'); // last resort — the first sheet
+  let d = await tryRange((tab ? tab + '!' : '') + 'A1:ZZ5000');
+  if (d.error && tab) { const best = await resolveTab(id, tab, token); if (best && best !== tab) d = await tryRange(best + '!A1:ZZ5000'); }
+  if (d.error && tab) d = await tryRange('A1:ZZ5000'); // last resort — the first sheet
   if (d.error) return { error: d.error.message };
   const sheet = (d.sheets || [])[0];
   const rowData = (sheet && sheet.data && sheet.data[0] && sheet.data[0].rowData) || [];
