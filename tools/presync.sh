@@ -32,6 +32,14 @@ echo "── validating: dashboard inline scripts"
 node tools/check_inline_scripts.js >/dev/null
 echo "   ✓ inline scripts parse"
 
+echo "── validating: live deck editor (real browser)"
+if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
+  NODE_PATH=$(npm root -g) node tools/test_editor.mjs || {
+    echo "✗ editor tests failed — the save/load guards are what stop edits landing on the wrong element"; exit 1; }
+else
+  echo "   · playwright unavailable, skipped (run tools/test_editor.mjs before shipping editor changes)"
+fi
+
 echo "── validating: shipped-feature markers (overwrite tripwire)"
 node tools/check_markers.js >/dev/null
 echo "   ✓ no shipped feature regressed"
