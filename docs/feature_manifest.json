@@ -797,14 +797,14 @@
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "wb-pop",
       "min": 2,
-      "pr": 157
+      "pr": 159
     },
     {
       "name": "Pricer: attached-brief 🔗 icon marker + detach control",
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "a-link",
       "min": 2,
-      "pr": 157
+      "pr": 159
     },
     {
       "name": "worker: sheet row match refuses ambiguous shared-code rows",
