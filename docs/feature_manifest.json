@@ -785,6 +785,7 @@
       "pattern": "GRID_RANGE",
       "min": 3,
       "pr": 150
-    }
+    },
+    { "name": "worker: rowCols self-corrects owner/due for shifted-column rows", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "function rowCols", "pr": 154 }
   ]
 }
