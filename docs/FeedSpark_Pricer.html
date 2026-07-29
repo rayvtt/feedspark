@@ -222,6 +222,8 @@ window.addEventListener('load',restore);
   .ai-track tbody tr:nth-child(even) td{background:rgba(0,0,0,.012)}
   [data-theme=dark] .ai-track tbody tr:nth-child(even) td{background:rgba(255,255,255,.02)}
   .ai-empty{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 0}
+  .ai-ic{font-size:15px;padding:7px 13px;line-height:1}
+  .a-link{font-size:11px;margin-left:5px;cursor:help;opacity:.75}
   .a-actcell{width:36px;text-align:right;white-space:nowrap}
   .a-del{font:inherit;font-size:11px;font-weight:900;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--muted);cursor:pointer;padding:2px 8px;opacity:0;transition:opacity .12s}
   .ai-track tbody tr:hover .a-del,.a-del:focus-visible{opacity:1}
@@ -333,8 +335,9 @@ window.addEventListener('load',restore);
       <thead><tr><th>Client · brief</th><th>Stage</th><th>Tachyon task</th><th>ASPL h</th><th>QC h</th><th>PM h</th><th>Mon h</th><th>Tokens</th><th>Vol done</th><th>Categories done</th><th></th></tr></thead>
       <tbody id="ai-body"></tbody>
     </table></div>
-    <div class="rc-foot"><button class="btn" id="ai-add" type="button">＋ Add historic AI task</button>
-      <span class="tiers-line">for AI work done before the FCC — it counts toward the averages like any brief</span>
+    <div class="rc-foot">
+      <button class="btn ai-ic" id="ai-add" type="button" title="Add historic AI task — pre-FCC work counts toward the averages like any brief" aria-label="Add historic AI task">＋</button>
+      <button class="btn ai-ic" id="ai-attach" type="button" title="Attach a Workflow brief the title scan can't see — then set its Tachyon task" aria-label="Attach Workflow brief">🔗</button>
       <span id="ai-state"></span></div>
   </div>
 </div></section>
@@ -377,6 +380,8 @@ window.addEventListener('load',restore);
         <dt>Mon h</dt><dd>Ongoing monitoring hours <b>per month</b> after go-live: output QA, drift checks, exception handling. Monthly figure, not a running total.</dd>
         <dt>Tokens</dt><dd>Total Tachyon tokens the run consumed (input + output, from the Tachyon run log). Divided by volume done, this becomes the <b>tok/SKU</b> marginal-cost signal on the rate card.</dd>
         <dt>Vol done</dt><dd>SKUs actually processed and delivered — what shipped, not what the brief hoped for. Powers tok/SKU and the delivery record.</dd>
+        <dt>＋ Add historic AI task</dt><dd>A track-only row for AI work delivered before the FCC existed — client and task editable inline, counted in the averages like any brief (no lead time: nothing to measure).</dd>
+        <dt>🔗 Attach Workflow brief</dt><dd>Pulls in a brief the title scan can't see (no AI wording in its task name). Once attached, set its Tachyon task and track as normal; ✕ detaches it again.</dd>
         <dt>Categories done</dt><dd>The Google product categories covered, picked from the official 5,595-entry GPC taxonomy (searchable — type to filter, click to toggle).</dd>
       </dl>
       <div class="fg-sec">Derived on the rate card</div>
@@ -386,6 +391,13 @@ window.addEventListener('load',restore);
       </dl>
     </div>
   </div>
+</div>
+
+<!-- Workflow-brief attach popover: for briefs the title scan can't see -->
+<div class="gpc-pop" id="wb-pop" hidden>
+  <input id="wb-q" type="text" placeholder="Search Workflow briefs (client, task)…" autocomplete="off">
+  <div class="gpc-list" id="wb-list"></div>
+  <div class="gpc-foot"><span class="tiers-line">briefs the title scan didn't pick up — attach, then set its Tachyon task</span></div>
 </div>
 
 <!-- GPC picker popover (positioned next to the categories cell being edited) -->
@@ -611,6 +623,8 @@ function renderTrack(){
        +'<td><span class="a-stage done">historic</span></td>'
       :'<td class="a-task"><span class="a-cl">'+esc(r.client||'—')+'</span>'+esc(r.task)+'</td>'
        +'<td><span class="a-stage'+(r.done?' done':'')+'">'+esc(r.status)+'</span></td>';
+    var attachedOnly=!r.manual&&TRACK[r.bid]&&!E.classifyTach(r.task);   // in the table only via 🔗 attach
+    if(attachedOnly)head=head.replace('</td>','<span class="a-link" title="Manually attached — the title scan can\'t see this brief">🔗</span></td>');   // icon, not words
     return '<tr>'+head
       +'<td><select class="a-tach" data-bid="'+esc(r.bid)+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(r.tach===o[0]?' selected':'')+'>'+esc(o[1])+'</option>'}).join('')+'</select></td>'
       +cell('aspl',r.aspl)+cell('qc',r.qc)+cell('pm',r.pm)+cell('mon',r.mon)
@@ -619,7 +633,8 @@ function renderTrack(){
       +'<td class="a-cats">'+(function(){var cs=(r.catsDone||'').split(' | ').filter(Boolean);
           return '<span class="cat-count" data-bid="'+esc(r.bid)+'" title="'+esc(cs.join('\n')||'Pick from the 5,595 official Google product categories')+'">'
             +(cs.length?cs.length+' cat'+(cs.length===1?'':'s')+' · '+esc(cs[cs.length-1].split(' > ').pop()):'+ pick')+'</span>'})()+'</td>'
-      +'<td class="a-actcell">'+(r.manual?'<button class="a-del" data-bid="'+esc(r.bid)+'" type="button" title="Remove this entry">✕</button>':'')+'</td>'
+      +'<td class="a-actcell">'+(r.manual?'<button class="a-del" data-bid="'+esc(r.bid)+'" type="button" title="Remove this entry">✕</button>'
+          :attachedOnly?'<button class="a-del a-detach" data-bid="'+esc(r.bid)+'" type="button" title="Detach — remove this brief from tracking">✕</button>':'')+'</td>'
       +'</tr>'}).join('');
   $('#ai-body').querySelectorAll('.r-ed').forEach(function(el){el.onclick=function(){editTrackCell(el)}});
   $('#ai-body').querySelectorAll('.a-tach').forEach(function(sel){
@@ -627,9 +642,10 @@ function renderTrack(){
     sel.onchange=function(){sel.title=sel.options[sel.selectedIndex].text;setTrack(sel.getAttribute('data-bid'),'tach',sel.value)}});
   $('#ai-body').querySelectorAll('.cat-count').forEach(function(b){b.onclick=function(){gpcOpen(b.getAttribute('data-bid'),b)}});
   $('#ai-body').querySelectorAll('.a-del').forEach(function(b){b.onclick=function(){
-    if(!confirm('Remove this entry? Its hours leave the averages.'))return;
-    var bid=b.getAttribute('data-bid');
-    TRACK[bid]={manual:true,deleted:true,t:Date.now()};   // tombstone — seeds must stay gone
+    var bid=b.getAttribute('data-bid'),detach=b.classList.contains('a-detach');
+    if(!confirm(detach?'Detach this brief from tracking? Its tracked numbers are removed.':'Remove this entry? Its hours leave the averages.'))return;
+    if(detach)delete TRACK[bid];                          // detach = the record WAS the attachment
+    else TRACK[bid]={manual:true,deleted:true,t:Date.now()};   // tombstone — seeds must stay gone
     refreshActuals();saveTrack()}});
 }
 function editTrackCell(el){
@@ -668,6 +684,36 @@ function applySeeds(){
     TRACK[sd.id]={manual:true,seed:true,client:sd.client,task:sd.task,t:1};   // local until first edit
   });
 }
+
+/* 🔗 attach: pull in a Workflow brief the title scan can't see (no AI wording in the task) */
+function wbCandidates(){
+  return Object.keys(BRIEFS).filter(function(k){
+    var b=BRIEFS[k];return b&&b.task&&!E.classifyTach(b.task)&&!TRACK[k];
+  }).sort(function(a,b){return (+BRIEFS[b].created||0)-(+BRIEFS[a].created||0)});
+}
+function wbRender(){
+  var q=$('#wb-q').value.trim().toLowerCase();
+  var cands=wbCandidates().filter(function(k){var b=BRIEFS[k];
+    return !q||((b.client||'')+' '+(b.task||'')).toLowerCase().indexOf(q)>=0});
+  $('#wb-list').innerHTML=cands.length?cands.slice(0,40).map(function(k){var b=BRIEFS[k];
+    return '<div class="gpc-it" data-bid="'+esc(k)+'"><b>'+esc(b.client||'—')+'</b> · '+esc(b.task)+' <span style="opacity:.6">('+esc(b.status||'intake')+')</span></div>'}).join('')
+    :'<div class="gpc-empty">'+(q?'No brief matches "'+esc(q)+'"':'Every Workflow brief is either AI-scanned already or attached.')+'</div>';
+  $('#wb-list').querySelectorAll('.gpc-it').forEach(function(it){it.onclick=function(){
+    var bid=it.getAttribute('data-bid');
+    TRACK[bid]={attached:true,t:Date.now()};
+    $('#wb-pop').hidden=true;
+    refreshActuals();saveTrack();
+    $('#ai-state').textContent='attached — now set its Tachyon task';setTimeout(function(){$('#ai-state').textContent=''},3500)}});
+}
+$('#ai-attach').addEventListener('click',function(){
+  var pop=$('#wb-pop'),r=this.getBoundingClientRect();
+  pop.hidden=false;pop.style.top=(r.bottom+window.scrollY+6)+'px';
+  pop.style.left=Math.max(8,Math.min(r.left+window.scrollX,window.scrollX+document.documentElement.clientWidth-410))+'px';
+  $('#wb-q').value='';wbRender();setTimeout(function(){$('#wb-q').focus()},40);
+});
+$('#wb-q').addEventListener('input',wbRender);
+document.addEventListener('mousedown',function(e){var pop=$('#wb-pop');
+  if(!pop.hidden&&!pop.contains(e.target)&&e.target.id!=='ai-attach')pop.hidden=true});
 
 /* manual/historic entries: AI work done before the FCC — track-only records */
 $('#ai-add').addEventListener('click',function(){

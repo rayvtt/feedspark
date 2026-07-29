@@ -786,6 +786,20 @@
       "min": 3,
       "pr": 150
     },
-    { "name": "worker: rowCols self-corrects owner/due for shifted-column rows", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "function rowCols", "pr": 154 }
+    { "name": "worker: rowCols self-corrects owner/due for shifted-column rows", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "function rowCols", "pr": 154 },
+    {
+      "name": "Pricer: attach Workflow brief picker (wb-pop) for briefs the title scan misses",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "wb-pop",
+      "min": 2,
+      "pr": 157
+    },
+    {
+      "name": "Pricer: attached-brief 🔗 icon marker + detach control",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "a-link",
+      "min": 2,
+      "pr": 157
+    }
   ]
 }
