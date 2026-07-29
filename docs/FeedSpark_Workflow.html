@@ -562,11 +562,24 @@ window.addEventListener('load',restore);
   .tl-week{border-left:2px solid var(--line);padding:0 8px}
   .tl-wh{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:8px}
   .tl-wh.now{color:var(--orange-deep)}
-  .tl-ev{font-size:11.5px;font-weight:700;line-height:1.3;padding:6px 8px;border-radius:8px;margin-bottom:6px;background:var(--wash);border-left:3px solid var(--navy);cursor:pointer;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  /* Truncation lives on the INNER span, not the card: overflow on a padded box clips at the padding
+     edge, so a 4th line paints into the bottom padding — and -webkit-line-clamp can't be relied on
+     (Chromium computes the -webkit-box display away here). The span has no padding, so max-height is
+     exactly 3 * line-height and the cut is clean. Full text is in the card's title tooltip. */
+  .tl-ev{font-size:11.5px;font-weight:700;line-height:15px;padding:6px 8px;border-radius:8px;margin-bottom:6px;background:var(--wash);border-left:3px solid var(--navy);cursor:pointer;overflow:hidden}
+  .tl-t{display:block;max-height:45px;overflow:hidden}
   .tl-ev.test{border-left-color:var(--orange)}
   .tl-ev.carry{border-left-color:#7A5AA8}
   .tl-ev.over{border-left-color:#C0392B;background:rgba(192,57,43,.07)}
+  .tl-ev.task{border-left-color:#B8BFC7}
   .tl-empty{color:var(--muted);font-size:12px;padding:4px}
+  .tl-wn{float:right;font-size:10px;font-weight:900;color:var(--muted);background:var(--wash);border-radius:100px;padding:1px 7px}
+  .tl-later{border-left-style:dashed}
+  .tl-over{border-left-color:#C0392B}
+  .tl-wh.late{color:#C0392B}
+  .tl-week{max-height:60vh;overflow-y:auto}
+  @keyframes itflash{0%,100%{background:transparent}25%,75%{background:rgba(245,166,35,.22)}}
+  .it-flash td{animation:itflash 1.6s ease}
   /* tests register */
   .tst-head{display:flex;justify-content:flex-end;margin-bottom:8px}
   .tstbl td{font-size:12.5px}
@@ -716,9 +729,24 @@ window.addEventListener('load',restore);
   <div class="sla-grid" id="sla-grid"></div>
   <div class="panel" style="margin-top:12px"><h3>Escalations — over-SLA in any court</h3><div id="sla-stalled" class="stall-list"></div></div>
 
-  <h2>Timeline — next 6 weeks<button class="info-btn" type="button" aria-label="How Timeline works">i</button>
-    <div class="info-pop">Every brief due date and test analysis on one axis. Overdue items sit in week 1. Click a brief to open it.</div>
+  <h2>Timeline — every dated task<button class="info-btn" type="button" aria-label="How Timeline works">i</button>
+    <div class="info-pop">Every task carrying a due date — the whole Intake, across all brands, not just the briefed ones — plus each test's analysis date, on one axis. Due dates are the ones you set in <b>Intake</b>, so they're the same dates as the project plans. Overdue items sit in week 1 and anything past the horizon collects in <b>Later</b>. Filter by <b>brand</b> or <b>AM</b>; <b>Scope</b> narrows to briefed or un-briefed work. Briefed items carry their stage colour and open the ticket; un-briefed ones jump to the Intake row.</div>
   </h2>
+  <div class="it-ctl">
+    <div class="it-grp"><span class="it-lbl">Scope</span><div class="it-src" id="tl-scope" role="group" aria-label="Filter the timeline by brief scope"></div></div>
+    <div class="it-multi" id="tl-client-wrap">
+      <button type="button" class="it-multi-btn" id="tl-client-btn" aria-haspopup="true" aria-expanded="false" title="Filter by brand">All brands ▾</button>
+      <div class="it-multi-menu" id="tl-client-menu" role="group" aria-label="Filter the timeline by brand (multi-select)" hidden></div>
+    </div>
+    <div class="it-multi" id="tl-am-wrap">
+      <button type="button" class="it-multi-btn" id="tl-am-btn" aria-haspopup="true" aria-expanded="false" title="Filter by Account Manager">All AMs ▾</button>
+      <div class="it-multi-menu" id="tl-am-menu" role="group" aria-label="Filter the timeline by account manager (multi-select)" hidden></div>
+    </div>
+    <select id="tl-weeks" aria-label="Timeline horizon" title="How far ahead the columns run — anything beyond lands in Later">
+      <option value="6">6 weeks</option><option value="8">8 weeks</option><option value="12">12 weeks</option>
+    </select>
+    <span class="it-n" id="tl-n"></span>
+  </div>
   <div class="tl-wrap"><div class="tl-grid" id="tl-grid"></div></div>
 
   <h2>Test &amp; experiment register<button class="info-btn" type="button" aria-label="How the test register works">i</button>
@@ -1180,6 +1208,7 @@ window.addEventListener('load',restore);
     } else toast('Added locally · no plan sheet linked for '+client);
   }
   var itState={srcs:[],clients:[],ams:[],q:'',statuses:['open','progress','briefed'],window:'2m',sort:'client',dir:1,showHidden:false};   // multi-select: empty array = all
+  var tlState={clients:[],ams:[],scope:[],weeks:6};   // the timeline's own filters (declared here — its controls are wired below)
   var itSel={};   // bulk selection: key -> task object
   // UK-first date parse (DD/MM/YYYY, "DD Mon YYYY"); swaps if it reads as MM/DD
   function parseUKDate(s){ s=String(s||'').trim(); if(!s)return null; var m;
@@ -1526,42 +1555,50 @@ window.addEventListener('load',restore);
       if(t.source==='email') adoptIntoPlan(t.client,t.task,'Briefed',BRIEFS[id].due,'',1);   // bulk-briefed email tasks join the plan too
       markBriefed(t); });
     itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline · marked Briefed'); }
-  // SOURCE stays a compact chip bar (4 options): empty selection = all; the "All" chip clears the set
-  function renderChipBar(id, opts, key){
+  // SOURCE stays a compact chip bar (4 options): empty selection = all; the "All" chip clears the set.
+  // state/after default to the intake's — the timeline passes its own so it can reuse the widget.
+  function renderChipBar(id, opts, key, state, after){
+    var st=state||itState, done=after||renderIntake;
     var wrap=document.getElementById(id); if(!wrap)return; wrap.innerHTML='';
     opts.forEach(function(s){
       var b=document.createElement('button'); b.textContent=s[1];
-      var on = s[0]==='' ? itState[key].length===0 : itState[key].indexOf(s[0])>=0;
+      var on = s[0]==='' ? st[key].length===0 : st[key].indexOf(s[0])>=0;
       if(on)b.className='on';
       b.onclick=function(){
-        if(s[0]===''){ itState[key]=[]; }
-        else { var i=itState[key].indexOf(s[0]); if(i>=0)itState[key].splice(i,1); else itState[key].push(s[0]); }
-        renderChipBar(id,opts,key); renderIntake(); };
+        if(s[0]===''){ st[key]=[]; }
+        else { var i=st[key].indexOf(s[0]); if(i>=0)st[key].splice(i,1); else st[key].push(s[0]); }
+        renderChipBar(id,opts,key,st,done); done(); };
       wrap.appendChild(b); }); }
   var SRC_OPTS=[['','All'],['plan','Project plan'],['email','Email tasks']];
   function renderSrcChips(){ renderChipBar('it-src',SRC_OPTS,'srcs'); }
   renderSrcChips();
-  // reusable multi-select DROPDOWN (status + client): compact button + checklist, keeps the bar tidy
+  // reusable multi-select DROPDOWN (status + client + the timeline's brand/AM): compact button +
+  // checklist, keeps the bar tidy. cfg.onChange is what re-renders — the intake table by default.
   function setupMulti(cfg){
     var btn=document.getElementById(cfg.btn), menu=document.getElementById(cfg.menu), wrap=document.getElementById(cfg.wrap);
     if(!btn||!menu||!wrap)return function(){};
+    var onChange=cfg.onChange||function(){ renderIntake(); };
     function label(){ var sel=cfg.selected(), n=sel.length; return (n===0?cfg.allLabel:(n===1?cfg.one(sel[0]):n+' '+cfg.noun))+' ▾'; }
     function updateBtn(){ btn.textContent=label(); btn.classList.toggle('on',cfg.selected().length>0); }
-    var sig='';
+    var sig='', boxes=[];
+    function syncBoxes(){ var sel=cfg.selected();          // state can change from outside (timeline click-through)
+      boxes.forEach(function(b){ b.cb.checked = b.v==null ? sel.length===0 : sel.indexOf(b.v)>=0; }); }
     function build(){
       var opts=cfg.options(), s=opts.map(function(o){return o.v;}).join('|')+(cfg.sigExtra?'§'+cfg.sigExtra():'');
-      if(s===sig){ updateBtn(); return; }                 // option set unchanged — just refresh the label
-      sig=s; menu.innerHTML='';
+      if(s===sig){ updateBtn(); syncBoxes(); return; }     // option set unchanged — refresh the label + ticks
+      sig=s; menu.innerHTML=''; boxes=[];
       var allRow=document.createElement('label'); allRow.className='it-multi-all';
       var allCb=document.createElement('input'); allCb.type='checkbox'; allCb.checked=cfg.selected().length===0;
       allCb.onchange=function(){ if(allCb.checked){ cfg.clear(); menu.querySelectorAll('input').forEach(function(x){ if(x!==allCb)x.checked=false; }); }
         else { allCb.checked=true; }                       // "All" can't be switched off directly — tick an option instead
-        updateBtn(); renderIntake(); };
+        updateBtn(); onChange(); };
       allRow.appendChild(allCb); allRow.appendChild(document.createTextNode(cfg.allLabel)); menu.appendChild(allRow);
+      boxes.push({v:null,cb:allCb});
       opts.forEach(function(o){
         var row=document.createElement('label');
         var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=cfg.selected().indexOf(o.v)>=0;
-        cb.onchange=function(){ cfg.toggle(o.v,cb.checked); allCb.checked=cfg.selected().length===0; updateBtn(); renderIntake(); };
+        cb.onchange=function(){ cfg.toggle(o.v,cb.checked); allCb.checked=cfg.selected().length===0; updateBtn(); onChange(); };
+        boxes.push({v:o.v,cb:cb});
         row.appendChild(cb); row.appendChild(document.createTextNode(o.l));
         if(cfg.rowAction){ var act=cfg.rowAction(o.v); if(act)row.appendChild(act); }
         menu.appendChild(row); });
@@ -1612,6 +1649,24 @@ window.addEventListener('load',restore);
     clear:function(){ itState.ams=[]; } });
   function ensureClientFilter(){ buildStatusFilter(); buildClientFilter(); buildAmFilter(); }   // rebuilt each render from renderIntake
   buildStatusFilter(); buildClientFilter(); buildAmFilter();
+  // the timeline's own brand + AM filters — same widget, its own state, re-renders the timeline only.
+  // Options come from what's actually ON the axis, so a brand with no dated task never appears.
+  var buildTlClientFilter=setupMulti({ btn:'tl-client-btn', menu:'tl-client-menu', wrap:'tl-client-wrap',
+    allLabel:'All brands', noun:'brands', one:function(v){ return v; }, onChange:function(){ renderTimeline(); },
+    options:function(){ var set={}; timelineEvents().forEach(function(e){ set[e.client]=1; });
+      tlState.clients=tlState.clients.filter(function(c){ return set[c]; }); return Object.keys(set).sort().map(function(c){ return {v:c,l:c}; }); },
+    selected:function(){ return tlState.clients; },
+    toggle:function(v,on){ var i=tlState.clients.indexOf(v); if(on){ if(i<0)tlState.clients.push(v); } else if(i>=0)tlState.clients.splice(i,1); },
+    clear:function(){ tlState.clients=[]; } });
+  var buildTlAmFilter=setupMulti({ btn:'tl-am-btn', menu:'tl-am-menu', wrap:'tl-am-wrap',
+    allLabel:'All AMs', noun:'AMs', one:function(v){ return v; }, onChange:function(){ renderTimeline(); },
+    options:function(){ var set={}; timelineEvents().forEach(function(e){ set[e.am]=1; });
+      tlState.ams=tlState.ams.filter(function(a){ return set[a]; }); return Object.keys(set).sort().map(function(a){ return {v:a,l:a}; }); },
+    selected:function(){ return tlState.ams; },
+    toggle:function(v,on){ var i=tlState.ams.indexOf(v); if(on){ if(i<0)tlState.ams.push(v); } else if(i>=0)tlState.ams.splice(i,1); },
+    clear:function(){ tlState.ams=[]; } });
+  (function(){ var w=document.getElementById('tl-weeks'); if(!w)return;
+    w.value=String(tlState.weeks); w.onchange=function(){ tlState.weeks=+w.value||6; renderTimeline(); }; })();
   // ---- saved filter views: name the current filter set, reapply or delete later (per device) ----
   function savedViews(){ try{return JSON.parse(localStorage.getItem('fcc-filters')||'{}');}catch(e){return {};} }
   function saveViews(v){ try{localStorage.setItem('fcc-filters',JSON.stringify(v));}catch(e){} }
@@ -2027,24 +2082,89 @@ window.addEventListener('load',restore);
   }
 
   // ---- #8 timeline ----
+  // Everything with a due date, not just what's been briefed: the axis is fed from allIntake() —
+  // the same rows (and the same dates, written back to the project plans) you see in Intake —
+  // joined to their ticket where one exists, plus the test-analysis dates. Its own brand/AM/scope
+  // filters so it can be read per account without touching the Intake filters above.
+  var TL_SCOPE=[['','All tasks'],['brief','Briefed'],['open','Not briefed']];   // tlState is declared with itState
+  // one row per dated task; a task that's been briefed carries its ticket (stage colour + opens it)
+  function timelineEvents(){
+    var evs=[], seen={};
+    var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey)BK[b.taskKey]=b; });
+    allIntake().forEach(function(t){
+      var k=t.client+'|'+t.task;
+      if(DELETED[k]||HIDDEN[k]||seen[k])return;
+      if(t.b==='done')return;                                    // finished work isn't a deadline
+      var d=taskDate(t); if(!d)return;                           // no due date set = not on the axis
+      seen[k]=1;
+      var bf=BK[k];
+      evs.push({d:d,client:t.client,task:t.task,am:amOf(t.client),brief:bf||null,
+        id:bf?bf.id:'',key:k,kind:bf?'brief':'task'});
+    });
+    // tickets whose intake row has since gone (deleted/hidden) still need their date on the axis
+    Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id];
+      if(!b||b.status==='confirmed')return;
+      var k=b.taskKey||(b.client+'|'+b.task); if(seen[k])return;
+      var d=ddmmyyyyToDate(b.due); if(!d)return; seen[k]=1;
+      evs.push({d:d,client:b.client,task:b.task,am:amOf(b.client),brief:b,id:b.id,key:k,kind:'brief'});
+    });
+    Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b||b.status==='confirmed'||hasResult(b))return;
+      var rd=readoutDue(b); if(rd==null)return;
+      evs.push({d:new Date(rd),client:b.client,task:b.task.slice(0,44)+' · analysis',am:amOf(b.client),brief:b,id:b.id,key:'ro|'+id,kind:'test'}); });
+    TESTS.forEach(function(t,i){ if(t.result||!t.readout)return; var d=isoDate(t.readout); if(!d)return;
+      evs.push({d:d,client:t.client,task:t.name+' · analysis',am:amOf(t.client),brief:null,id:'',key:'ts|'+i,kind:'test'}); });
+    return evs;
+  }
+  function timelineFiltered(){ var S=tlState;
+    return timelineEvents().filter(function(e){
+      if(S.clients.length&&S.clients.indexOf(e.client)<0)return false;
+      if(S.ams.length&&S.ams.indexOf(e.am)<0)return false;
+      if(S.scope.length){ var isB=!!e.brief; if(S.scope.indexOf(isB?'brief':'open')<0)return false; }
+      return true; }).sort(function(a,b){ return a.d-b.d; });
+  }
   function renderTimeline(){ var host=document.getElementById('tl-grid'); if(!host)return;
-    var t0=today(), WEEKS=6, evs=[];
-    Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed')return; var d=ddmmyyyyToDate(b.due); if(!d)return;
-      evs.push({d:d,label:b.client+' · '+b.task,kind:'brief',id:b.id}); });
-    Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed'||hasResult(b))return; var rd=readoutDue(b); if(rd==null)return;
-      evs.push({d:new Date(rd),label:b.client+' · '+b.task.slice(0,44)+' · analysis',kind:'test',id:b.id}); });
-    TESTS.forEach(function(t){ if(t.result||!t.readout)return; var d=isoDate(t.readout); if(!d)return;
-      evs.push({d:d,label:t.client+' · '+t.name+' · analysis',kind:'test'}); });
-    var html='';
+    buildTlClientFilter(); buildTlAmFilter(); renderChipBar('tl-scope',TL_SCOPE,'scope',tlState,renderTimeline);
+    var t0=today(), WEEKS=tlState.weeks, evs=timelineFiltered(), html='', shown=0;
+    function card(e){ var off=Math.round((e.d-t0)/86400000);
+      var lab=abbr(e.client)+' · '+e.task;
+      var tip=e.client+' · '+e.task+'\n'+e.d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' · AM '+e.am
+        +(e.brief?('\nTicket '+e.brief.id+' — '+(STAGE_LBL[e.brief.status]||e.brief.status)):'\nNot briefed yet');
+      var style=e.brief&&e.kind==='brief'?(' style="border-left-color:'+(STAGE_COLOR[e.brief.status]||'#8a94a0')+'"'):'';
+      return '<div class="tl-ev '+e.kind+(off<0?' over':'')+'"'+style+' data-k="'+esc(e.key)+'"'+(e.id?' data-id="'+esc(e.id)+'"':'')
+        +' data-c="'+esc(e.client)+'" title="'+esc(tip)+'"><span class="tl-t">'+esc(lab)+'</span></div>'; }
+    // overdue gets its OWN column rather than being folded into week 1 — across every brand that's
+    // the bulk of the axis, and burying it in "this week" hides both the backlog and the week itself
+    var off=function(e){ return Math.round((e.d-t0)/86400000); };
+    var over=evs.filter(function(e){ return off(e)<0; });
+    if(over.length) html+='<div class="tl-week tl-over"><div class="tl-wh late">Overdue <span class="tl-wn">'+over.length+'</span></div>'+over.map(card).join('')+'</div>';
     for(var w=0;w<WEEKS;w++){ var ws=new Date(t0); ws.setDate(ws.getDate()+w*7);
       var head='w'+(w+1)+' · '+ws.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-      var inWk=evs.filter(function(e){ var off=Math.round((e.d-t0)/86400000); return off<(w+1)*7 && (w===0?true:off>=w*7); }).sort(function(a,b){return a.d-b.d;});
-      html+='<div class="tl-week"><div class="tl-wh'+(w===0?' now':'')+'">'+head+'</div>'+
-        (inWk.length? inWk.map(function(e){ var off=Math.round((e.d-t0)/86400000);
-          return '<div class="tl-ev '+e.kind+(off<0?' over':'')+'"'+(e.id?' data-id="'+esc(e.id)+'"':'')+' title="'+esc(e.label)+'">'+esc(e.label)+'</div>'; }).join('') : '<div class="tl-empty">—</div>')+'</div>';
+      var inWk=evs.filter(function(e){ var o=off(e); return o>=w*7 && o<(w+1)*7; });
+      shown+=inWk.length;
+      html+='<div class="tl-week"><div class="tl-wh'+(w===0?' now':'')+'">'+head+' <span class="tl-wn">'+inWk.length+'</span></div>'+
+        (inWk.length? inWk.map(card).join('') : '<div class="tl-empty">—</div>')+'</div>';
     }
+    // never drop the tail silently — anything past the horizon collects in its own column
+    var later=evs.filter(function(e){ return off(e)>=WEEKS*7; });
+    html+='<div class="tl-week tl-later"><div class="tl-wh">Later <span class="tl-wn">'+later.length+'</span></div>'+
+      (later.length? later.slice(0,40).map(card).join('')+(later.length>40?'<div class="tl-empty">+'+(later.length-40)+' more — widen the horizon</div>':'') : '<div class="tl-empty">—</div>')+'</div>';
     host.innerHTML=html;
-    host.querySelectorAll('.tl-ev[data-id]').forEach(function(el){ el.onclick=function(){ openModal(el.getAttribute('data-id')); }; });
+    var n=document.getElementById('tl-n');
+    if(n)n.textContent=evs.length+' dated task'+(evs.length===1?'':'s')+(over.length?' · '+over.length+' overdue':'')+' · '+shown+' in '+WEEKS+'w'+(later.length?' · '+later.length+' later':'');
+    // briefed → open the ticket; un-briefed → jump to its Intake row so the date can be edited there
+    host.querySelectorAll('.tl-ev').forEach(function(el){ el.onclick=function(){
+      var id=el.getAttribute('data-id'); if(id){ openModal(id); return; }
+      revealInIntake(el.getAttribute('data-c'), el.getAttribute('data-k')); }; });
+  }
+  // focus the Intake on one brand and scroll its row into view (the un-briefed timeline click-through)
+  function revealInIntake(client, key){
+    if(client){ itState.clients=[client]; itState.q=''; var s=document.getElementById('it-search'); if(s)s.value=''; }
+    itState.statuses=[]; itState.window='';                        // don't let the default windows hide the row
+    var w=document.getElementById('it-window'); if(w)w.value='';
+    renderIntake();
+    var row=document.querySelector('#it-body tr[data-k="'+(window.CSS&&CSS.escape?CSS.escape(key):key)+'"]');
+    if(row){ row.scrollIntoView({block:'center',behavior:'smooth'}); row.classList.add('it-flash'); setTimeout(function(){ row.classList.remove('it-flash'); },1600); }
+    else { var host=document.getElementById('it-body'); if(host)host.scrollIntoView({block:'center',behavior:'smooth'}); }
   }
 
   // ---- #10 test & experiment register ----

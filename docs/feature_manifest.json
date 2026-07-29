@@ -852,6 +852,13 @@
       "pattern": "demoTour",
       "min": 2,
       "pr": 164
+    },
+    {
+      "name": "workflow: timeline covers every dated task + brand/AM filters",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "timelineEvents",
+      "min": 3,
+      "pr": 159
     }
   ]
 }
