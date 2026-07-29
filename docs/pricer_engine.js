@@ -146,8 +146,59 @@
     return L.join('\n');
   }
 
-  var PricerEngine = { VERSION: '1.0.0', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
-    rates: rates, tieredUnits: tieredUnits, quote: quote, quoteText: quoteText, fmtGBP: fmtGBP };
+  // ---- actuals: learn the real hours from tagged Workflow briefs -----------------------
+  // Each brief may carry b.tach (one optimisation id) + b.hours {aspl,qc,pm,mon} tagged by the
+  // teams as the work happens. The average across every tagged brief per optimisation becomes
+  // the evidence-based rate ("price = the average of all the briefs done", Ray). Bundles
+  // (multi-optimisation briefs) are excluded — their hours can't be attributed cleanly.
+  // Actual lead time comes from the ticket history (briefed → done days) when present.
+  function actualsFromBriefs(briefs) {
+    var acc = {};
+    Object.keys(briefs || {}).forEach(function (k) {
+      var b = briefs[k]; if (!b || !b.tach || typeof b.tach !== 'string') return;
+      var h = b.hours || {};
+      var any = ['aspl', 'qc', 'pm', 'mon'].some(function (f) { return isFinite(+h[f]) && +h[f] > 0; });
+      if (!any) return;
+      var a = acc[b.tach] = acc[b.tach] || { n: 0, aspl: 0, qc: 0, pm: 0, mon: 0, leadN: 0, lead: 0 };
+      a.n++;
+      ['aspl', 'qc', 'pm', 'mon'].forEach(function (f) { a[f] += Math.max(0, +h[f] || 0); });
+      var t0 = 0, t1 = 0;
+      (b.hist || []).forEach(function (e) {
+        if (e.s === 'briefed' && !t0) t0 = +e.t || 0;
+        if ((e.s === 'done' || e.s === 'confirmed' || e.s === 'analysis') && !t1) t1 = +e.t || 0;
+      });
+      if (t0 && t1 && t1 > t0) { a.leadN++; a.lead += (t1 - t0) / 86400000; }
+    });
+    var out = {};
+    Object.keys(acc).forEach(function (id) {
+      var a = acc[id];
+      out[id] = { n: a.n,
+        aspl: round2(a.aspl / a.n), qc: round2(a.qc / a.n), pm: round2(a.pm / a.n), mon: round2(a.mon / a.n),
+        lead: a.leadN ? Math.max(1, Math.round(a.lead / a.leadN)) : null };
+    });
+    return out;
+  }
+  // rate-card overrides with actuals layered on top (unit £ stays commercial — actuals only
+  // ever replace HOURS + lead, never the per-SKU price)
+  function overridesWithActuals(rateOverrides, actuals, minN) {
+    minN = minN || 1;
+    var out = {};
+    Object.keys(rateOverrides || {}).forEach(function (k) { out[k] = rateOverrides[k]; });
+    Object.keys(actuals || {}).forEach(function (id) {
+      var a = actuals[id]; if (!a || a.n < minN) return;
+      var base = {}; Object.keys(out[id] || {}).forEach(function (k) { base[k] = out[id][k]; });
+      base.aspl = a.aspl; base.qc = a.qc; base.pm = a.pm;
+      if (a.mon > 0) base.mon = a.mon;
+      if (a.lead) base.lead = a.lead;
+      base.t = base.t || 1;   // actuals count as confirmation — no draft flag
+      out[id] = base;
+    });
+    return out;
+  }
+
+  var PricerEngine = { VERSION: '1.1.0', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
+    rates: rates, tieredUnits: tieredUnits, quote: quote, quoteText: quoteText, fmtGBP: fmtGBP,
+    actualsFromBriefs: actualsFromBriefs, overridesWithActuals: overridesWithActuals };
   g.PricerEngine = PricerEngine;
   if (typeof module !== 'undefined' && module.exports) module.exports = PricerEngine;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -185,6 +185,11 @@ window.addEventListener('load',restore);
   .addc select,.addc input{font:inherit;font-size:12.5px;padding:7px 9px;border:1px solid var(--line);border-radius:8px}
   .scan-hit{background:#EBF7EF;border:1px solid #CDE9D8;color:var(--good);font-size:12px;font-weight:700;border-radius:8px;padding:8px 10px;margin-top:9px;display:none}
   .scan-hit.on{display:block}
+  .m-hours{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .m-hours label{display:flex;flex-direction:column;gap:3px;font-size:10.5px;font-weight:800;color:var(--muted)}
+  .m-hours input{font:inherit;font-size:13px;font-weight:700;width:74px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+  .m-hours select{font:inherit;font-size:12px;font-weight:700;max-width:230px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+  .m-hours input:focus,.m-hours select:focus{outline:none;border-color:var(--orange)}
   .m-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
   .m-act .grow{flex:1}
   .x{margin-left:auto;background:none;border:0;font-size:22px;line-height:1;color:var(--muted);cursor:pointer}
@@ -313,6 +318,8 @@ window.addEventListener('load',restore);
           <option value="technical">Feed &amp; technical</option><option value="channel">Channels</option>
           <option value="test">Testing</option><option value="opt">Optimisation</option><option value="account">Account</option>
         </select></div>
+      <div class="fld"><label>Tachyon optimisation <span class="tpl-hint">— tag AI tasks so tagged hours feed the Pricer's averages</span></label>
+        <select id="bg-tach"></select></div>
       <div class="fld"><label>Scope / detail</label><textarea id="bg-scope" placeholder="Markets, categories, rules, constraints…"></textarea></div>
       <div class="fld"><label>Definition of done</label><textarea id="bg-dod" placeholder="What ‘finished’ looks like — live in FeedHero, QA'd, sample approved…"></textarea></div>
       <div class="fld"><label>Assets / links</label><textarea id="bg-assets" placeholder="Sheet, feed, brand guide, examples…"></textarea></div>
@@ -926,7 +933,8 @@ window.addEventListener('load',restore);
       source:document.getElementById('bg-source').value, task:document.getElementById('bg-task').value.trim(),
       scope:document.getElementById('bg-scope').value.trim(), dod:document.getElementById('bg-dod').value.trim(),
       assets:document.getElementById('bg-assets').value.trim(), dueIso:document.getElementById('bg-due').value,
-      priority:document.getElementById('bg-priority').value }; }
+      priority:document.getElementById('bg-priority').value,
+      tach:(document.getElementById('bg-tach')||{}).value||'' }; }
   function subjectOf(f,id){ var c=code(f.client,f.market), dd=isoToDDMMYYYY(f.dueIso);
     return '[FS Brief] '+f.client+' · '+(f.task||'(task)')+' · [ibfcode:'+c+'] ibfdue:'+dd+' [ibfref:'+id+']'; }
   function bodyOf(f,id){
@@ -960,6 +968,24 @@ window.addEventListener('load',restore);
   }
   function highlightTokens(s){ return esc(s).replace(/(\[ibfcode:[^\]]+\]|\[ibfref:[^\]]+\]|ibfdue:\d{0,8})/g,'<span class="tok">$1</span>'); }
 
+  // ---- Tachyon optimisation tagging (ids mirror pricer_engine.js CATALOG — keep in sync).
+  // A brief tagged with ONE optimisation + actual hours feeds the Pricer's evidence-based
+  // averages ("price = the average of all the briefs done").
+  var TACH_OPTS=[['','— not a Tachyon task —'],
+    ['title_gen','AI Product Title Generation'],['title_short','AI Short Title Generation'],
+    ['title_intent','Title with AI Search Intent'],['desc_gen','AI Product Description Generation'],
+    ['desc_pro','AI Description Pro (Compare & Q/A)'],['predesc_attr','AI Pre-Description (Highlighting Attributes)'],
+    ['predesc','AI Pre-Description'],['highlights','AI Product Highlights'],['details','AI Product Details'],
+    ['keywords','AI Keyword Generation'],['visual_attr','AI Visual Attribute Extraction'],
+    ['gpc','AI GPC Mapping'],['pt_class','AI Product Type Classification']];
+  function classifyTach(t){ t=(t||'').toLowerCase(); if(!/\bai\b|tachyon/.test(t))return '';
+    if(/short title/.test(t))return 'title_short'; if(/search intent/.test(t))return 'title_intent';
+    if(/pre.?desc/.test(t))return /attribute/.test(t)?'predesc_attr':'predesc';
+    if(/description pro|q\/?a|compare/.test(t))return 'desc_pro'; if(/desc/.test(t))return 'desc_gen';
+    if(/highlight/.test(t))return 'highlights'; if(/product detail/.test(t))return 'details';
+    if(/keyword/.test(t))return 'keywords'; if(/visual|image attr/.test(t))return 'visual_attr';
+    if(/gpc/.test(t))return 'gpc'; if(/product type|classif/.test(t))return 'pt_class';
+    if(/title/.test(t))return 'title_gen'; return ''; }
   // ---- live preview ----
   var pv={ subj:document.getElementById('prev-subj'), body:document.getElementById('prev-body'), gmail:document.getElementById('bg-gmail') };
   // once the user edits the preview body directly, auto-regeneration stops touching it until
@@ -986,6 +1012,7 @@ window.addEventListener('load',restore);
     sel.innerHTML=CLIENTS.map(function(c){return '<option>'+esc(c)+'</option>';}).join('');
     if(CLIENTS.indexOf(cur)>=0) sel.value=cur; }
   fillClientSelect();   // CLIENTS still drives the brief generator + intake; the brand-book panel was removed
+  (function(){ var ts=document.getElementById('bg-tach'); if(ts)ts.innerHTML=TACH_OPTS.map(function(o){return '<option value="'+o[0]+'">'+esc(o[1])+'</option>';}).join(''); })();
   ['bg-client','bg-market','bg-source','bg-task','bg-scope','bg-dod','bg-assets','bg-due','bg-priority'].forEach(function(id){
     var el=document.getElementById(id); el.addEventListener('input',refreshPreview); el.addEventListener('change',refreshPreview); });
   (function(){ var cs=document.getElementById('bg-cat'); if(cs)cs.addEventListener('change',function(){ resetBodyOverride(); if(cs.value){ applyTemplate(cs.value); } refreshPreview(); }); })();
@@ -1003,7 +1030,7 @@ window.addEventListener('load',restore);
     var b=existing||{ created:Date.now(), status:'intake', comms:[], hist:[{s:'intake',t:Date.now()}] };
     b.id=id; b.client=o.f.client; b.code=code(o.f.client,o.f.market); b.task=o.f.task; b.scope=o.f.scope;
     b.dod=o.f.dod; b.assets=o.f.assets; b.due=isoToDDMMYYYY(o.f.dueIso); b.source=o.f.source; b.priority=o.f.priority;
-    b.subject=o.subj; b.body=o.body; b.updated=Date.now();
+    b.subject=o.subj; b.body=o.body; b.tach=o.f.tach||b.tach||''; b.updated=Date.now();
     // an email-sourced task briefed against a brand becomes a real plan row (write-back included)
     if(o.f.source==='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',1);
     // tie the ticket to its plan row: the prefill link if it still matches, else auto-match on task wording
@@ -1666,6 +1693,7 @@ window.addEventListener('load',restore);
     document.getElementById('bg-source').value= t.source||'plan';
     document.getElementById('bg-task').value=t.task;
     var cat=t.cat||'opt', cs=document.getElementById('bg-cat'); if(cs)cs.value=(TEMPLATES[cat]?cat:'');
+    var ts=document.getElementById('bg-tach'); if(ts)ts.value=t.tach||classifyTach(t.task)||'';
     var pd=taskDate(t); if(pd)document.getElementById('bg-due').value=pd.getFullYear()+'-'+pad(pd.getMonth()+1)+'-'+pad(pd.getDate());   // brief inherits the intake due date
     var ln=applyTemplate(cat,true);     // #2 auto-fill scope + DoD (learned version when one exists)
     refreshPreview();
@@ -1807,6 +1835,10 @@ window.addEventListener('load',restore);
       +'<div class="m-sec"><h4>Stage</h4><div class="stat-seg" id="m-stat">'+stat+'</div></div>'
       +'<div class="m-sec"><h4>Journey — handoffs across the three courts</h4><div class="jny">'+journeyHtml(b)+'</div>'
         +(xl.length?('<div class="m-xl">'+xl.join('')+'</div>'):'')+'</div>'
+      +'<div class="m-sec"><h4>Hours — actuals for the Pricer <span class="tpl-hint" style="text-transform:none;letter-spacing:0">tag what this REALLY took; averages become the evidence-based rate</span></h4>'
+        +'<div class="m-hours"><label>Tachyon task <select id="m-tach">'+TACH_OPTS.map(function(o){return '<option value="'+o[0]+'"'+((b.tach||'')===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select></label>'
+        +[['aspl','ASPL setup'],['qc','AM QC'],['pm','PM'],['mon','Monitor /mo']].map(function(f){
+          return '<label>'+f[1]+' <input type="number" min="0" step="0.5" id="m-h-'+f[0]+'" value="'+esc((b.hours||{})[f[0]]!=null?(b.hours||{})[f[0]]:'')+'" placeholder="h"></label>';}).join('')+'</div></div>'
       +'<div class="m-sec"><h4>ASPL tracking <span class="m-owner">· Owner <select id="m-aspl">'+ASPL.map(function(n){return '<option'+(asplOf(b)===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select></span></h4><div id="m-comms">'+comms+'</div>'
         +'<div class="addc"><select id="m-from">'+ASPL.concat(['Client','Ray','Other']).map(function(n){return '<option>'+n+'</option>';}).join('')+'</select>'
         +'<input id="m-note" placeholder="Paste / summarise their reply…"><button class="btn" id="m-log">Log</button></div>'
@@ -1821,6 +1853,13 @@ window.addEventListener('load',restore);
     scrim.classList.add('on');
     document.getElementById('m-x').onclick=closeModal;
     document.getElementById('m-del').onclick=function(){ if(confirm('Delete brief '+b.id+'?')){ delete BRIEFS[b.id]; persist(); renderAll(); closeModal(); } };
+    // hours tagging: saves on change, quietly — the Pricer averages these across every brief
+    (function(){ var mt=document.getElementById('m-tach');
+      if(mt)mt.onchange=function(){ b.tach=mt.value; b.updated=Date.now(); persist(); };
+      ['aspl','qc','pm','mon'].forEach(function(f){ var el=document.getElementById('m-h-'+f); if(!el)return;
+        el.onchange=function(){ var v=+el.value;
+          b.hours=b.hours||{}; if(isFinite(v)&&v>0)b.hours[f]=v; else delete b.hours[f];
+          b.updated=Date.now(); persist(); }; }); })();
     document.querySelectorAll('#m-stat button').forEach(function(btn){ btn.onclick=function(){
       setStage(b,btn.getAttribute('data-s')); persist(); renderAll(); openModal(b.id); }; });
     // brief re-draft link
@@ -2170,7 +2209,7 @@ window.addEventListener('load',restore);
     var j=JSON.parse(new TextDecoder().decode(bytes)); if(!j||!j.task)return;
     if(j.client&&CLIENTS.indexOf(j.client)<0){ CLIENTS.push(j.client); CLIENTS.sort(); saveBrands(); fillClientSelect(); }   // dossier-only client — never silently file under CLIENTS[0]
     try{ history.replaceState(null,'',location.pathname); }catch(e2){}   // don't re-open on refresh
-    setTimeout(function(){ prefill({client:j.client||'',task:String(j.task).slice(0,200),cat:j.cat||'',source:j.source||'plan'}); },450);
+    setTimeout(function(){ prefill({client:j.client||'',task:String(j.task).slice(0,200),cat:j.cat||'',source:j.source||'plan',tach:j.tach||''}); },450);
   }catch(e){} })();
   // pull the live Gmail intake (client task emails) once the service account is connected
   // Every pending email waits here (⚡ action requests first) until it's decided:
