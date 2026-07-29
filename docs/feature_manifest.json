@@ -717,6 +717,33 @@
       "min": 2,
       "pr": 145
     },
+    {
+      "name": "Pricer: floating field guide (tracking definitions)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "fg-panel",
+      "min": 2,
+      "pr": 147
+    },
+    {
+      "name": "Pricer: GPC categories picker (official 5,595-entry taxonomy)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "gpc-pop",
+      "min": 2,
+      "pr": 147
+    },
+    {
+      "name": "worker: GPC taxonomy served at /pricer/gpc.txt",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "pricer/gpc.txt",
+      "pr": 147
+    },
+    {
+      "name": "repo: official Google product taxonomy snapshot",
+      "file": "docs/gpc_taxonomy.txt",
+      "pattern": "Animals & Pet Supplies",
+      "min": 2,
+      "pr": 147
+    },
     { "name": "Workflow: hover info icons replace section subtext", "file": "docs/FeedSpark_Workflow.html", "pattern": "info-btn", "min": 5, "pr": 148 },
     { "name": "worker: sheet-write tab resolver stops guessing on ambiguity", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "tabAmbiguous", "min": 5, "pr": 148 },
     { "name": "worker: sheet reads widened past 600 rows / 26 cols", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "A1:ZZ5000", "min": 5, "pr": 148 }

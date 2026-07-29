@@ -7,7 +7,7 @@ compatibility_date = "2024-12-01"
 # feedlab_engine.js is ALSO a Text module: the worker serves it verbatim at
 # /feedlab/engine.js (the Feed Lab page and its node tests share the same file).
 rules = [
-  { type = "Text", globs = ["**/*.html", "**/feedlab_engine.js", "**/pricer_engine.js"], fallthrough = true }
+  { type = "Text", globs = ["**/*.html", "**/feedlab_engine.js", "**/pricer_engine.js", "**/gpc_taxonomy.txt"], fallthrough = true }
 ]
 
 # The account owner — the only identity allowed to open /activity and /api/activity

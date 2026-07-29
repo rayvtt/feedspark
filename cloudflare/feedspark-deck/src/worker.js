@@ -49,6 +49,9 @@ import PRICER from "../../../docs/FeedSpark_Pricer.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
 // node tests share the file, same pattern as the Feed Lab engine)
 import PRICER_ENGINE from "../../../docs/pricer_engine.js";
+// the official Google Product Taxonomy (5,595 categories) — the Pricer's categories-done
+// picker searches it; served verbatim, cached a day (Google revises it ~yearly)
+import GPC_TAXONOMY from "../../../docs/gpc_taxonomy.txt";
 // the Feed Lab audit engine, bundled verbatim (wrangler Text rule) and served at
 // /feedlab/engine.js so the page and its node tests run the exact same code
 import FEEDLAB_ENGINE from "../../../docs/feedlab_engine.js";
@@ -392,6 +395,9 @@ export default {
     if (path === '/api/tachyon/track') {
       const r = await mapStoreRoute(env, request, 'tachyontrack', {});
       if (r) return r;
+    }
+    if (path === '/pricer/gpc.txt' && request.method === 'GET') {
+      return new Response(GPC_TAXONOMY, { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=86400' } });
     }
     if (path === '/pricer/engine.js' && request.method === 'GET') {
       return new Response(PRICER_ENGINE, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
