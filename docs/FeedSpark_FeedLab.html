@@ -1082,19 +1082,12 @@ function loadMarket(mkt,allowScan){
 function boot(){
   var q=/[?&]client=([^&]+)/.exec(location.search),pre=q?decodeURIComponent(q[1].replace(/\+/g,' ')):'';
   var qm=/[?&]market=([^&]+)/.exec(location.search),preM=qm?decodeURIComponent(qm[1]).toLowerCase():'';
-  fetch('/api/clients').then(function(r){return r.json()}).catch(function(){return{}}).then(function(store){
-    store=store||{};
-    var dead=store._deleted||[];
-    Object.keys(store).forEach(function(k){
-      if(k.charAt(0)==='_'||dead.indexOf(k)>=0)return;
-      var rec=store[k];
-      var anyFeed=rec&&(rec.feed||(rec.feeds&&Object.keys(rec.feeds).length));
-      if(anyFeed){ // dossier brands carrying live feed URLs (any market) join the selector
-        var u=(rec.feed||rec.feeds[Object.keys(rec.feeds||{})[0]])||'';
-        var m=/\/d\/([A-Za-z0-9_-]{20,})/.exec(String(u)),g=/[#?&]gid=(\d+)/.exec(String(u));
-        META[k]={id:m?m[1]:'',gid:(g&&g[1])||'0'};
-      }
-    });
+  // one bootstrap call: every client with a live feed — code-wired from the master
+  // feed-market sheet (worker DEFAULT_FEEDS) and/or dossier-attached — joins the selector.
+  // The proxy resolves sheet ids server-side, so META only needs the names.
+  fetch('/api/feed/clients').then(function(r){return r.json()}).catch(function(){return{}}).then(function(j){
+    var cs=(j&&j.clients)||{};
+    Object.keys(cs).forEach(function(k){ if(!META[k])META[k]={id:'',gid:'0'}; });
     if(pre&&!META[pre])META[pre]={id:'',gid:'0'}; // trust deep-links — the worker may resolve via DEFAULT_FEEDS
     var names=Object.keys(META).sort();
     $('#brand').innerHTML=names.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>'}).join('');
