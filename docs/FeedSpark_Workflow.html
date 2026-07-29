@@ -1967,7 +1967,7 @@ window.addEventListener('load',restore);
   // ---- paste-an-update router: any reply → the right ticket, logged + staged, no hunting ----
   function findBriefFor(text){ var arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];});
     var rm=/ibfref:([a-z0-9-]+)/i.exec(text);
-    if(rm){ var rb=BRIEFS[rm[1]]||BRIEFS[rm[1].toUpperCase()]; if(rb)return rb; }
+    if(rm)return BRIEFS[rm[1]]||BRIEFS[rm[1].toUpperCase()]||null;   // a stamped ref is decisive — unknown ref = untracked brief, never guess
     var m=/ibfcode:([a-z0-9-]+)/i.exec(text);
     if(m){ var c=m[1].toLowerCase(), hits=arr.filter(function(b){return (b.code||'').toLowerCase()===c;});
       if(hits.length){ if(hits.length>1)hits.sort(function(a,b){return taskDice(text,b.task)-taskDice(text,a.task);}); return hits[0]; } }
