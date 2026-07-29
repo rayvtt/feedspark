@@ -213,6 +213,8 @@ window.addEventListener('load',restore);
   .ai-track .r-ed{min-width:34px}
   .ai-track .a-cats{min-width:130px;max-width:190px;font-size:11.5px}
   .ai-empty{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 0}
+  .a-del{font:inherit;font-size:11px;font-weight:900;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--muted);cursor:pointer;padding:1px 7px;margin-left:4px}
+  .a-del:hover{border-color:#C0392B;color:#C0392B}
   .rc .r-act{font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);border:1px solid rgba(26,54,93,.35);background:rgba(26,54,93,.07);border-radius:100px;padding:1px 7px;white-space:nowrap;cursor:help}
   .rc-foot{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:11px;font-size:12px;color:var(--muted)}
   .rc-foot .blockfld{display:inline-flex;align-items:center;gap:6px;font-weight:800;color:var(--ink-2)}
@@ -320,7 +322,9 @@ window.addEventListener('load',restore);
       <thead><tr><th>Client · brief</th><th>Stage</th><th>Tachyon task</th><th>ASPL h</th><th>QC h</th><th>PM h</th><th>Mon h</th><th>Tokens</th><th>Vol done</th><th>Categories done</th></tr></thead>
       <tbody id="ai-body"></tbody>
     </table></div>
-    <div class="rc-foot"><span id="ai-state"></span></div>
+    <div class="rc-foot"><button class="btn" id="ai-add" type="button">＋ Add historic AI task</button>
+      <span class="tiers-line">for AI work done before the FCC — it counts toward the averages like any brief</span>
+      <span id="ai-state"></span></div>
   </div>
 </div></section>
 
@@ -590,9 +594,13 @@ function renderTrack(){
   var opts=[['','— pick —']].concat(E.CATALOG.map(function(c){return [c.id,c.name]}));
   $('#ai-body').innerHTML=rows.map(function(r){
     function cell(f,v,step){return '<td><span class="r-ed" data-bid="'+esc(r.bid)+'" data-f="'+f+'" data-step="'+(step||0.5)+'" title="Click to edit">'+(v||'—')+'</span></td>'}
-    return '<tr>'
-      +'<td class="a-task"><span class="a-cl">'+esc(r.client||'—')+'</span>'+esc(r.task)+'</td>'
-      +'<td><span class="a-stage'+(r.done?' done':'')+'">'+esc(r.status)+'</span></td>'
+    var head=r.manual
+      ?'<td class="a-task"><span class="a-cl"><span class="r-ed" data-bid="'+esc(r.bid)+'" data-f="client" data-txt="1" title="Click to edit the client">'+(esc(r.client)||'<span style="opacity:.4">client…</span>')+'</span></span>'
+        +'<span class="r-ed" data-bid="'+esc(r.bid)+'" data-f="task" data-txt="1" title="Click to edit — AI wording auto-tags the Tachyon task">'+(esc(r.task)||'<span style="opacity:.4">task title…</span>')+'</span></td>'
+       +'<td><span class="a-stage done">historic</span> <button class="a-del" data-bid="'+esc(r.bid)+'" type="button" title="Remove this historic entry">✕</button></td>'
+      :'<td class="a-task"><span class="a-cl">'+esc(r.client||'—')+'</span>'+esc(r.task)+'</td>'
+       +'<td><span class="a-stage'+(r.done?' done':'')+'">'+esc(r.status)+'</span></td>';
+    return '<tr>'+head
       +'<td><select class="a-tach" data-bid="'+esc(r.bid)+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(r.tach===o[0]?' selected':'')+'>'+esc(o[1])+'</option>'}).join('')+'</select></td>'
       +cell('aspl',r.aspl)+cell('qc',r.qc)+cell('pm',r.pm)+cell('mon',r.mon)
       +cell('tokens',r.tokens?fmtTok(r.tokens):'',1000)
@@ -604,11 +612,14 @@ function renderTrack(){
   $('#ai-body').querySelectorAll('.r-ed').forEach(function(el){el.onclick=function(){editTrackCell(el)}});
   $('#ai-body').querySelectorAll('.a-tach').forEach(function(sel){sel.onchange=function(){setTrack(sel.getAttribute('data-bid'),'tach',sel.value)}});
   $('#ai-body').querySelectorAll('.cat-count').forEach(function(b){b.onclick=function(){gpcOpen(b.getAttribute('data-bid'),b)}});
+  $('#ai-body').querySelectorAll('.a-del').forEach(function(b){b.onclick=function(){
+    if(!confirm('Remove this historic entry? Its hours leave the averages.'))return;
+    delete TRACK[b.getAttribute('data-bid')];refreshActuals();saveTrack()}});
 }
 function editTrackCell(el){
   if(el.__editing)return;el.__editing=1;
   var bid=el.getAttribute('data-bid'),f=el.getAttribute('data-f'),isTxt=el.getAttribute('data-txt')==='1';
-  var cur=isTxt?((TRACK[bid]||{}).catsDone||''):String((TRACK[bid]||{})[f]||'');
+  var cur=isTxt?String((TRACK[bid]||{})[f]||''):String((TRACK[bid]||{})[f]||'');
   var in_=document.createElement('input');in_.className='r-in';
   if(isTxt){in_.type='text';in_.style.width='150px';in_.style.textAlign='left'}
   else{in_.type='number';in_.step=el.getAttribute('data-step')||'1';in_.min='0';in_.style.width='84px'}
@@ -620,6 +631,14 @@ function editTrackCell(el){
   in_.addEventListener('keydown',function(e){if(e.key==='Enter')done(true);if(e.key==='Escape')done(false)});
   in_.addEventListener('blur',function(){done(true)});
 }
+
+/* manual/historic entries: AI work done before the FCC — track-only records */
+$('#ai-add').addEventListener('click',function(){
+  var id='hist_'+Date.now().toString(36);
+  TRACK[id]={manual:true,client:'',task:'',t:Date.now()};
+  refreshActuals();saveTrack();
+  setTimeout(function(){var el=$('#ai-body .r-ed[data-bid="'+id+'"][data-f="task"]');if(el)editTrackCell(el)},80);
+});
 
 /* ---------------- floating field guide ---------------- */
 (function(){

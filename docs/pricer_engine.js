@@ -183,6 +183,17 @@
         aspl: +tr.aspl || 0, qc: +tr.qc || 0, pm: +tr.pm || 0, mon: +tr.mon || 0,
         tokens: +tr.tokens || 0, volDone: +tr.volDone || 0, catsDone: String(tr.catsDone || '') });
     });
+    // manual/historic entries: track records with no Workflow brief behind them (AI work
+    // done before the FCC existed). They carry their own client + task and count toward
+    // the averages exactly like scanned briefs — minus lead time (no ticket history).
+    Object.keys(track).forEach(function (k) {
+      if ((briefs || {})[k] || !track[k] || !track[k].manual) return;
+      var tr = track[k];
+      rows.push({ bid: k, client: String(tr.client || ''), task: String(tr.task || ''), status: 'historic',
+        done: true, manual: true, created: +tr.t || 0, tach: tr.tach || classifyTach(tr.task) || '',
+        aspl: +tr.aspl || 0, qc: +tr.qc || 0, pm: +tr.pm || 0, mon: +tr.mon || 0,
+        tokens: +tr.tokens || 0, volDone: +tr.volDone || 0, catsDone: String(tr.catsDone || '') });
+    });
     rows.sort(function (a, b2) { return (b2.created || 0) - (a.created || 0); });
     return rows;
   }
@@ -217,6 +228,20 @@
       });
       if (any && t0 && t1 && t1 > t0) { a.leadN++; a.lead += (t1 - t0) / 86400000; }
     });
+    // manual/historic records join the averages too (no lead — nothing to measure)
+    Object.keys(track || {}).forEach(function (k) {
+      if ((briefs || {})[k]) return;
+      var tr = track[k]; if (!tr || !tr.manual) return;
+      var tach = (typeof tr.tach === 'string' && tr.tach) || classifyTach(tr.task);
+      if (!tach) return;
+      var h = { aspl: +tr.aspl || 0, qc: +tr.qc || 0, pm: +tr.pm || 0, mon: +tr.mon || 0 };
+      var any = h.aspl > 0 || h.qc > 0 || h.pm > 0 || h.mon > 0;
+      var tokens = +tr.tokens || 0, volDone = +tr.volDone || 0;
+      if (!any && !(tokens > 0 && volDone > 0)) return;
+      var a = acc[tach] = acc[tach] || { n: 0, aspl: 0, qc: 0, pm: 0, mon: 0, leadN: 0, lead: 0, tok: 0, vol: 0 };
+      if (any) { a.n++; ['aspl', 'qc', 'pm', 'mon'].forEach(function (f) { a[f] += Math.max(0, h[f]); }); }
+      if (tokens > 0 && volDone > 0) { a.tok += tokens; a.vol += volDone; }
+    });
     var out = {};
     Object.keys(acc).forEach(function (id) {
       var a = acc[id];
@@ -247,7 +272,7 @@
     return out;
   }
 
-  var PricerEngine = { VERSION: '1.2.0', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
+  var PricerEngine = { VERSION: '1.3.0', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
     rates: rates, tieredUnits: tieredUnits, quote: quote, quoteText: quoteText, fmtGBP: fmtGBP,
     classifyTach: classifyTach, aiBriefRows: aiBriefRows,
     actualsFromBriefs: actualsFromBriefs, overridesWithActuals: overridesWithActuals };
