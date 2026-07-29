@@ -205,15 +205,26 @@ window.addEventListener('load',restore);
   .a-cats .cat-count{font-size:10.5px;font-weight:900;color:var(--navy);background:rgba(26,54,93,.08);border:1px solid rgba(26,54,93,.25);border-radius:100px;padding:2px 9px;cursor:pointer;white-space:nowrap}
   .a-cats .cat-count:hover{border-color:var(--navy)}
   @media(max-width:640px){.fg{top:auto;bottom:14px}.fg-panel{max-height:60vh}}
-  .ai-track .a-task{font-weight:800;min-width:230px;max-width:320px}
-  .ai-track .a-cl{font-size:10px;color:var(--orange-ink);font-weight:900;display:block}
-  .ai-track .a-stage{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;border-radius:100px;padding:2px 8px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  /* the tracking table gets real room: wide brief column, generous cell padding, nothing
+     cropped — the whole thing pans inside .rc-scroll on smaller screens */
+  .ai-track{min-width:1380px}
+  .ai-track th{padding:9px 10px}
+  .ai-track td{padding:10px;vertical-align:top}
+  .ai-track .a-task{font-weight:800;min-width:300px;max-width:430px;line-height:1.45;white-space:normal;overflow-wrap:anywhere}   /* two-line wrap is fine (Ray) — width goes to the columns that must not crop */
+  .ai-track .a-cl{font-size:10px;color:var(--orange-ink);font-weight:900;display:block;letter-spacing:.03em;text-transform:uppercase;margin-bottom:2px}
+  .ai-track .a-stage{display:inline-block;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;border-radius:100px;padding:3px 9px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;margin-top:2px}
   .ai-track .a-stage.done{color:var(--good);border-color:rgba(21,128,61,.35)}
-  .ai-track select.a-tach{font:inherit;font-size:11.5px;font-weight:700;max-width:180px;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}
-  .ai-track .r-ed{min-width:34px}
-  .ai-track .a-cats{min-width:130px;max-width:190px;font-size:11.5px}
+  .ai-track select.a-tach{font:inherit;font-size:11.5px;font-weight:700;width:auto;min-width:210px;max-width:none;padding:5px 7px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}   /* intrinsic width: the full optimisation name always shows, NEVER cropped */
+  .ai-track .r-ed{min-width:44px;padding:4px 8px}
+  .ai-track .a-cats{min-width:210px;max-width:320px;font-size:11.5px}
+  .ai-track .a-task .r-ed{display:block;text-align:left;min-width:0;padding:2px 4px}   /* task/client are TEXT — the rate card's number-cell right-align must not leak in */
+  .a-cats .cat-count{max-width:300px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:middle}
+  .ai-track tbody tr:nth-child(even) td{background:rgba(0,0,0,.012)}
+  [data-theme=dark] .ai-track tbody tr:nth-child(even) td{background:rgba(255,255,255,.02)}
   .ai-empty{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 0}
-  .a-del{font:inherit;font-size:11px;font-weight:900;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--muted);cursor:pointer;padding:1px 7px;margin-left:4px}
+  .a-actcell{width:36px;text-align:right;white-space:nowrap}
+  .a-del{font:inherit;font-size:11px;font-weight:900;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--muted);cursor:pointer;padding:2px 8px;opacity:0;transition:opacity .12s}
+  .ai-track tbody tr:hover .a-del,.a-del:focus-visible{opacity:1}
   .a-del:hover{border-color:#C0392B;color:#C0392B}
   .rc .r-act{font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--navy);border:1px solid rgba(26,54,93,.35);background:rgba(26,54,93,.07);border-radius:100px;padding:1px 7px;white-space:nowrap;cursor:help}
   .rc-foot{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:11px;font-size:12px;color:var(--muted)}
@@ -319,7 +330,7 @@ window.addEventListener('load',restore);
   <p class="sub">Every brief whose task title reads as AI work is pulled in here automatically — no tagging inside Workflow, no pipeline clutter. The teams track delivery on the brief itself: hours per role, <b>Tachyon tokens used</b>, <b>product volume done</b> and <b>categories done</b>. Averages (and tokens-per-SKU) feed the rate card's evidence pricing.</p>
   <div class="pz-card">
     <div class="rc-scroll"><table class="rc ai-track" id="ai-track">
-      <thead><tr><th>Client · brief</th><th>Stage</th><th>Tachyon task</th><th>ASPL h</th><th>QC h</th><th>PM h</th><th>Mon h</th><th>Tokens</th><th>Vol done</th><th>Categories done</th></tr></thead>
+      <thead><tr><th>Client · brief</th><th>Stage</th><th>Tachyon task</th><th>ASPL h</th><th>QC h</th><th>PM h</th><th>Mon h</th><th>Tokens</th><th>Vol done</th><th>Categories done</th><th></th></tr></thead>
       <tbody id="ai-body"></tbody>
     </table></div>
     <div class="rc-foot"><button class="btn" id="ai-add" type="button">＋ Add historic AI task</button>
@@ -597,7 +608,7 @@ function renderTrack(){
     var head=r.manual
       ?'<td class="a-task"><span class="a-cl"><span class="r-ed" data-bid="'+esc(r.bid)+'" data-f="client" data-txt="1" title="Click to edit the client">'+(esc(r.client)||'<span style="opacity:.4">client…</span>')+'</span></span>'
         +'<span class="r-ed" data-bid="'+esc(r.bid)+'" data-f="task" data-txt="1" title="Click to edit — AI wording auto-tags the Tachyon task">'+(esc(r.task)||'<span style="opacity:.4">task title…</span>')+'</span></td>'
-       +'<td><span class="a-stage done">historic</span> <button class="a-del" data-bid="'+esc(r.bid)+'" type="button" title="Remove this historic entry">✕</button></td>'
+       +'<td><span class="a-stage done">historic</span></td>'
       :'<td class="a-task"><span class="a-cl">'+esc(r.client||'—')+'</span>'+esc(r.task)+'</td>'
        +'<td><span class="a-stage'+(r.done?' done':'')+'">'+esc(r.status)+'</span></td>';
     return '<tr>'+head
@@ -608,9 +619,12 @@ function renderTrack(){
       +'<td class="a-cats">'+(function(){var cs=(r.catsDone||'').split(' | ').filter(Boolean);
           return '<span class="cat-count" data-bid="'+esc(r.bid)+'" title="'+esc(cs.join('\n')||'Pick from the 5,595 official Google product categories')+'">'
             +(cs.length?cs.length+' cat'+(cs.length===1?'':'s')+' · '+esc(cs[cs.length-1].split(' > ').pop()):'+ pick')+'</span>'})()+'</td>'
+      +'<td class="a-actcell">'+(r.manual?'<button class="a-del" data-bid="'+esc(r.bid)+'" type="button" title="Remove this entry">✕</button>':'')+'</td>'
       +'</tr>'}).join('');
   $('#ai-body').querySelectorAll('.r-ed').forEach(function(el){el.onclick=function(){editTrackCell(el)}});
-  $('#ai-body').querySelectorAll('.a-tach').forEach(function(sel){sel.onchange=function(){setTrack(sel.getAttribute('data-bid'),'tach',sel.value)}});
+  $('#ai-body').querySelectorAll('.a-tach').forEach(function(sel){
+    sel.title=sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].text:'';   // full name on hover — never cropped silently
+    sel.onchange=function(){sel.title=sel.options[sel.selectedIndex].text;setTrack(sel.getAttribute('data-bid'),'tach',sel.value)}});
   $('#ai-body').querySelectorAll('.cat-count').forEach(function(b){b.onclick=function(){gpcOpen(b.getAttribute('data-bid'),b)}});
   $('#ai-body').querySelectorAll('.a-del').forEach(function(b){b.onclick=function(){
     if(!confirm('Remove this entry? Its hours leave the averages.'))return;
@@ -623,7 +637,7 @@ function editTrackCell(el){
   var bid=el.getAttribute('data-bid'),f=el.getAttribute('data-f'),isTxt=el.getAttribute('data-txt')==='1';
   var cur=isTxt?String((TRACK[bid]||{})[f]||''):String((TRACK[bid]||{})[f]||'');
   var in_=document.createElement('input');in_.className='r-in';
-  if(isTxt){in_.type='text';in_.style.width='150px';in_.style.textAlign='left'}
+  if(isTxt){in_.type='text';in_.style.width=(f==='task'?'300px':f==='client'?'130px':'160px');in_.style.textAlign='left'}
   else{in_.type='number';in_.step=el.getAttribute('data-step')||'1';in_.min='0';in_.style.width='84px'}
   in_.value=cur;el.replaceWith(in_);in_.focus();in_.select();
   function done(commit){
