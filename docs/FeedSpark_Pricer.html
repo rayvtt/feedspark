@@ -205,13 +205,22 @@ window.addEventListener('load',restore);
   .a-cats .cat-count{font-size:10.5px;font-weight:900;color:var(--navy);background:rgba(26,54,93,.08);border:1px solid rgba(26,54,93,.25);border-radius:100px;padding:2px 9px;cursor:pointer;white-space:nowrap}
   .a-cats .cat-count:hover{border-color:var(--navy)}
   @media(max-width:640px){.fg{top:auto;bottom:14px}.fg-panel{max-height:60vh}}
-  .ai-track .a-task{font-weight:800;min-width:230px;max-width:320px}
-  .ai-track .a-cl{font-size:10px;color:var(--orange-ink);font-weight:900;display:block}
-  .ai-track .a-stage{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;border-radius:100px;padding:2px 8px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  /* the tracking table gets real room: wide brief column, generous cell padding, nothing
+     cropped — the whole thing pans inside .rc-scroll on smaller screens */
+  .ai-track{min-width:1120px}
+  .ai-track th{padding:9px 10px}
+  .ai-track td{padding:10px;vertical-align:top}
+  .ai-track .a-task{font-weight:800;min-width:320px;max-width:460px;line-height:1.45;white-space:normal;overflow-wrap:anywhere}
+  .ai-track .a-cl{font-size:10px;color:var(--orange-ink);font-weight:900;display:block;letter-spacing:.03em;text-transform:uppercase;margin-bottom:2px}
+  .ai-track .a-stage{display:inline-block;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;border-radius:100px;padding:3px 9px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;margin-top:2px}
   .ai-track .a-stage.done{color:var(--good);border-color:rgba(21,128,61,.35)}
-  .ai-track select.a-tach{font:inherit;font-size:11.5px;font-weight:700;max-width:180px;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}
-  .ai-track .r-ed{min-width:34px}
-  .ai-track .a-cats{min-width:130px;max-width:190px;font-size:11.5px}
+  .ai-track select.a-tach{font:inherit;font-size:11.5px;font-weight:700;width:100%;min-width:170px;max-width:215px;padding:5px 7px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}
+  .ai-track .r-ed{min-width:44px;padding:4px 8px}
+  .ai-track .a-cats{min-width:150px;max-width:210px;font-size:11.5px}
+  .ai-track .a-task .r-ed{display:block;text-align:left;min-width:0;padding:2px 4px}   /* task/client are TEXT — the rate card's number-cell right-align must not leak in */
+  .a-cats .cat-count{max-width:190px;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:middle}
+  .ai-track tbody tr:nth-child(even) td{background:rgba(0,0,0,.012)}
+  [data-theme=dark] .ai-track tbody tr:nth-child(even) td{background:rgba(255,255,255,.02)}
   .ai-empty{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 0}
   .a-del{font:inherit;font-size:11px;font-weight:900;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--muted);cursor:pointer;padding:1px 7px;margin-left:4px}
   .a-del:hover{border-color:#C0392B;color:#C0392B}
@@ -610,7 +619,9 @@ function renderTrack(){
             +(cs.length?cs.length+' cat'+(cs.length===1?'':'s')+' · '+esc(cs[cs.length-1].split(' > ').pop()):'+ pick')+'</span>'})()+'</td>'
       +'</tr>'}).join('');
   $('#ai-body').querySelectorAll('.r-ed').forEach(function(el){el.onclick=function(){editTrackCell(el)}});
-  $('#ai-body').querySelectorAll('.a-tach').forEach(function(sel){sel.onchange=function(){setTrack(sel.getAttribute('data-bid'),'tach',sel.value)}});
+  $('#ai-body').querySelectorAll('.a-tach').forEach(function(sel){
+    sel.title=sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].text:'';   // full name on hover — never cropped silently
+    sel.onchange=function(){sel.title=sel.options[sel.selectedIndex].text;setTrack(sel.getAttribute('data-bid'),'tach',sel.value)}});
   $('#ai-body').querySelectorAll('.cat-count').forEach(function(b){b.onclick=function(){gpcOpen(b.getAttribute('data-bid'),b)}});
   $('#ai-body').querySelectorAll('.a-del').forEach(function(b){b.onclick=function(){
     if(!confirm('Remove this entry? Its hours leave the averages.'))return;
@@ -623,7 +634,7 @@ function editTrackCell(el){
   var bid=el.getAttribute('data-bid'),f=el.getAttribute('data-f'),isTxt=el.getAttribute('data-txt')==='1';
   var cur=isTxt?String((TRACK[bid]||{})[f]||''):String((TRACK[bid]||{})[f]||'');
   var in_=document.createElement('input');in_.className='r-in';
-  if(isTxt){in_.type='text';in_.style.width='150px';in_.style.textAlign='left'}
+  if(isTxt){in_.type='text';in_.style.width=(f==='task'?'300px':f==='client'?'130px':'160px');in_.style.textAlign='left'}
   else{in_.type='number';in_.step=el.getAttribute('data-step')||'1';in_.min='0';in_.style.width='84px'}
   in_.value=cur;el.replaceWith(in_);in_.focus();in_.select();
   function done(commit){
