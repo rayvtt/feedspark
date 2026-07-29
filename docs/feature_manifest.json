@@ -594,6 +594,13 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "'/templates'",
       "forbidden": true
+    },
+    {
+      "name": "Workflow: assignable brand in Gmail triage + sender memory",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "fcc-sender-brand",
+      "min": 2,
+      "pr": 138
     }
   ]
 }
