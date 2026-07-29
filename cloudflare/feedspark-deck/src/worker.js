@@ -761,15 +761,14 @@ export default {
         const rd = await rr.json();
         if (rd.error) return json({ ok: false, error: rd.error.message });
         const rows = rd.values || [];
-        const norm = s => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        const norm = normCell;
         const TOK = ['open', 'done', 'on hold', 'on-hold', 'onhold', 'in progress', 'in-progress', 'wip', 'with client', 'parked', 'completed', 'complete', 'live', 'not started', 'to do', 'todo', 'blocked'];
         const isTok = v => TOK.indexOf(norm(v)) >= 0;
         // find the row whose description matches the FCC task text
-        const key = norm(match).slice(0, 45); let targetRow = -1;
-        for (let r = 0; r < rows.length; r++) {
-          if ((rows[r] || []).some(c => { const cn = norm(c); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; }
-        }
-        if (targetRow < 0) return json({ ok: false, error: 'task row not found in ' + tab, match });
+        const tr = findTaskRow(rows, match);
+        if (tr.row < 0) return json({ ok: false, error: 'task row not found in ' + tab, match });
+        if (tr.ambiguous) return json(ambiguousRow(tab, match, tr.count));
+        const targetRow = tr.row;
         // Status column: header cell named "Status", re-aligned to the data (the header can sit
         // one column left of the values when there's a leading number column), then confirmed
         // against the actual target row — handles stacked sub-tables with their own layout.
@@ -843,9 +842,10 @@ export default {
         const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:ZZ5000'), { headers: { Authorization: 'Bearer ' + token } });
         const rd = await rr.json(); if (rd.error) return json({ ok: false, error: rd.error.message });
         const rows = rd.values || [];
-        const key = normCell(match).slice(0, 45); let targetRow = -1;
-        for (let r = 0; r < rows.length; r++) { if ((rows[r] || []).some(cc => { const cn = normCell(cc); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; } }
-        if (targetRow < 0) return json({ ok: false, error: 'task row not found in ' + tab, match });
+        const tr = findTaskRow(rows, match);
+        if (tr.row < 0) return json({ ok: false, error: 'task row not found in ' + tab, match });
+        if (tr.ambiguous) return json(ambiguousRow(tab, match, tr.count));
+        const targetRow = tr.row;
         const c = rowCols(rows[targetRow], resolveCols(rows));
         let writeCol = c.ownerCol;
         if (writeCol < 0) return json({ ok: false, error: 'could not resolve the Owner column' });
@@ -871,9 +871,10 @@ export default {
         const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(tab + '!A1:ZZ5000'), { headers: { Authorization: 'Bearer ' + token } });
         const rd = await rr.json(); if (rd.error) return json({ ok: false, error: rd.error.message });
         const rows = rd.values || [];
-        const key = normCell(match).slice(0, 45); let targetRow = -1;
-        for (let r = 0; r < rows.length; r++) { if ((rows[r] || []).some(cc => { const cn = normCell(cc); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; } }
-        if (targetRow < 0) return json({ ok: false, error: 'task row not found in ' + tab, match });
+        const tr = findTaskRow(rows, match);
+        if (tr.row < 0) return json({ ok: false, error: 'task row not found in ' + tab, match });
+        if (tr.ambiguous) return json(ambiguousRow(tab, match, tr.count));
+        const targetRow = tr.row;
         const c = rowCols(rows[targetRow], resolveCols(rows));
         if (c.dueCol < 0) return json({ ok: false, error: 'no Due column in this plan — add a "Due Date" header' });
         const cell = tab + '!' + colLetter(c.dueCol) + (targetRow + 1);
@@ -1139,6 +1140,39 @@ function colLetter(n) { let s = ''; n = n + 1; while (n > 0) { const r = (n - 1)
 // EVERY column (the whole data row is shifted uniformly), so owner/task columns realign too.
 const STATUS_TOK = ['open', 'done', 'on hold', 'on-hold', 'onhold', 'in progress', 'in-progress', 'wip', 'with client', 'parked', 'completed', 'complete', 'live', 'not started', 'to do', 'todo', 'blocked', 'ongoing', 'in review'];
 function normCell(s) { return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+// Every 2-way sheet-cell endpoint (status/owner/due/task-rename) finds its row the same way:
+// substring-match the FCC task text against every cell, first hit wins. A short value shared
+// across many rows (a project code like "SVS-Q3/26" tagging a dozen different tasks on the
+// same sheet) satisfies that predicate on ALL of them — taking the first uncritically writes
+// to the wrong task (Reiss: a due-date edit for row 544 landed on row 538, the first row
+// carrying the same shared code). The culprit is the reverse half of the predicate (cell
+// contained IN the task text), so a row whose cell actually CONTAINS the task text wins
+// outright; only if that still leaves several do we fall back to an exact cell match, and
+// failing that report the ambiguity rather than guess — the same "never guess" rule already
+// applied to tab resolution.
+function findTaskRow(rows, match) {
+  const key = normCell(match).slice(0, 45);
+  if (key.length < 4) return { row: -1, ambiguous: false, count: 0 };
+  const strong = [], weak = [];
+  for (let r = 0; r < rows.length; r++) {
+    let s = false, w = false;
+    for (const c of rows[r] || []) {
+      const cn = normCell(c);
+      if (cn.length <= 8) continue;
+      if (cn.indexOf(key) >= 0) { s = true; break; }
+      if (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0) w = true;
+    }
+    if (s) strong.push(r); else if (w) weak.push(r);
+  }
+  const hits = strong.length ? strong : weak;
+  if (!hits.length) return { row: -1, ambiguous: false, count: 0 };
+  if (hits.length === 1) return { row: hits[0], ambiguous: false, count: 1 };
+  const mkey = normCell(match);
+  const exact = hits.filter(r => (rows[r] || []).some(c => normCell(c) === mkey));
+  if (exact.length === 1) return { row: exact[0], ambiguous: false, count: hits.length };
+  return { row: hits[0], ambiguous: true, count: hits.length };
+}
+function ambiguousRow(tab, match, count) { return { ok: false, error: count + ' rows in "' + tab + '" all match "' + String(match).slice(0, 55) + '" — too ambiguous to edit safely (likely a shared code/prefix). Give the task more unique wording, or edit that row directly in the sheet.' }; }
 function isStatusTok(v) { return STATUS_TOK.indexOf(normCell(v)) >= 0; }
 function planBucket(s) { s = normCell(s);
   if (/(done|complete|finish|live|delivered|actioned|signed)/.test(s)) return 'done';
@@ -1220,9 +1254,10 @@ async function renamePlanTask(env, id, tab, match, value) {
     const rr = await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/' + encodeURIComponent(realTab + '!A1:ZZ5000'), { headers: { Authorization: 'Bearer ' + token } });
     const rd = await rr.json(); if (rd.error) return { ok: false, error: rd.error.message };
     const rows = rd.values || [];
-    const key = normCell(match).slice(0, 45); let targetRow = -1;
-    for (let r = 0; r < rows.length; r++) { if ((rows[r] || []).some(cc => { const cn = normCell(cc); return cn.length > 8 && (cn.indexOf(key) >= 0 || (key.length > 12 && key.indexOf(cn.slice(0, 45)) >= 0)); })) { targetRow = r; break; } }
-    if (targetRow < 0) return { ok: false, error: 'task row not found in ' + realTab, match };
+    const tr = findTaskRow(rows, match);
+    if (tr.row < 0) return { ok: false, error: 'task row not found in ' + realTab, match };
+    if (tr.ambiguous) return ambiguousRow(realTab, match, tr.count);
+    const targetRow = tr.row;
     const c = rowCols(rows[targetRow], resolveCols(rows));
     const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
     const cell = realTab + '!' + colLetter(tc) + (targetRow + 1);
