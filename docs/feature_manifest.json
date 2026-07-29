@@ -559,6 +559,8 @@
       "pattern": "INSTR",
       "min": 3,
       "pr": 134
+    },
+    {
       "name": "Workflow: email-task adoption into the plan (write-back)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "adoptIntoPlan",
