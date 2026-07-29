@@ -57,7 +57,7 @@ function composePage(slug) {
 const results = [];
 function record(name, ok, detail) { results.push({ name, ok, detail }); }
 
-async function withPage(fn, { initialEdits = {}, version = null, headed = false } = {}) {
+async function withPage(fn, { initialEdits = {}, deriveEdits = null, version = null, headed = false } = {}) {
   const browser = await chromium.launch({
     headless: !headed,
     executablePath: '/opt/pw-browsers/chromium/chrome-linux/chrome',
@@ -106,6 +106,15 @@ async function withPage(fn, { initialEdits = {}, version = null, headed = false 
   page.on('pageerror', (e) => errors.push(String(e.message || e)));
   await page.goto('https://deck.test/deck/reiss', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(400);
+  // Two-pass fixtures: some cases can only be built from the real rendered deck (a genuine
+  // content key from one element paired with a positional key that points at another). Load
+  // once to read those out, install the overlay, reload against it.
+  if (deriveEdits) {
+    kv.store = await deriveEdits(page);
+    errors.length = 0;
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(500);
+  }
   try {
     const out = await fn(page, kv);
     if (errors.length) throw new Error('page errors: ' + errors.slice(0, 2).join(' | '));
@@ -259,6 +268,58 @@ test('C13: a stale patch offers a Clear button that drops only those keys', asyn
   initialEdits: {
     'c1-e1': { html: 'WRONG', sig: 'does not match' },
     'c2-e1': { html: 'ALSO WRONG', sig: 'nor does this' },
+  },
+});
+
+test('C2: an edit follows its content when a chapter deletion shifts every key', async (page) => {
+  // The overlay below was authored against the PRE-deletion deck: its positional key names
+  // chapter 9's third element, but the text it carries belongs to a paragraph that a chapter
+  // deletion has since shifted elsewhere. Without the content index this either lands on a
+  // stranger or is skipped; with it, the edit finds its paragraph.
+  const landed = await page.evaluate(() => {
+    const el = document.querySelector('[data-ck]');
+    return document.body.textContent.includes('RELOCATED EDIT LANDED');
+  });
+  if (!landed) throw new Error('edit was not recovered to its content in the new position');
+  const onRightElement = await page.evaluate(() => {
+    // innerHTML, not textContent — an ANCESTOR with a data-eid also contains the text, so
+    // counting by textContent would report the same single landing as several.
+    const hits = Array.prototype.filter.call(document.querySelectorAll('[data-eid]'),
+      (e) => e.innerHTML === 'RELOCATED EDIT LANDED');
+    return hits.length === 1;
+  });
+  if (!onRightElement) throw new Error('recovered edit landed on more than one element');
+  return 'recovered onto its content';
+}, {
+  deriveEdits: async (page) => page.evaluate(() => {
+    // Take a real element deep in the deck, and file its edit under a DIFFERENT positional
+    // key — exactly what a chapter deletion does to every key after the deleted chapter.
+    const els = Array.prototype.slice.call(document.querySelectorAll('[data-ck]'));
+    const target = els[Math.floor(els.length / 2)];
+    const sig = (target.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+    const wrongKey = 'c1-e0';
+    const out = {};
+    out[wrongKey] = { html: 'RELOCATED EDIT LANDED', sig: sig,
+                      ck: target.getAttribute('data-ck') };
+    return out;
+  }),
+});
+
+test('C2: a saved edit whose content no longer exists is reported, not applied blind', async (page) => {
+  const stray = await page.evaluate(() => document.body.textContent.includes('GHOST EDIT'));
+  if (stray) throw new Error('an edit whose content is gone was applied to some other element');
+  const warned = await page.evaluate(() => {
+    const w = document.querySelector('.de-warn');
+    return w && !w.hidden ? w.textContent : '';
+  });
+  if (!/content is gone|could not be replayed/i.test(warned)) {
+    throw new Error('no report for an edit whose content is gone: ' + warned.slice(0, 120));
+  }
+  return 'reported';
+}, {
+  initialEdits: {
+    'c9-e99': { html: 'GHOST EDIT', sig: 'text that is not in this deck anywhere',
+                ck: 'knosuchkey' },
   },
 });
 

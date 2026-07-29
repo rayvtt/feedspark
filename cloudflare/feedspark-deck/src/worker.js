@@ -199,7 +199,10 @@ export default {
           // as capable of discarding a whole overlay as DELETE is (Reset now uses this path — see
           // the client script), so it gets the same undo-a-Reset safety net.
           if (replace && Object.keys(current).length) {
-            await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(), JSON.stringify(current));
+            // __reason rides along so a backup list is readable after the fact — "which of
+            // these 30 snapshots was the Reset I need to undo?" was previously unanswerable.
+            await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(),
+              JSON.stringify({ __reason: Object.keys(incoming).length ? 'undo' : 'reset', ...current }));
           }
           const existing = replace ? {} : current;
           const merged = { ...existing, ...incoming };
@@ -233,7 +236,8 @@ export default {
         // edits-bak:<slug>:<ts> and cherry-picked.
         const doomed = await env.EDITS.get(key);
         if (doomed && doomed !== '{}') {
-          await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(), doomed);
+          await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(),
+            JSON.stringify({ __reason: 'delete', ...JSON.parse(doomed) }));
         }
         await env.EDITS.delete(key);
         return json({ ok: true, page: slug, cleared: true, backed_up: !!(doomed && doomed !== '{}') });
@@ -245,6 +249,14 @@ export default {
       const slug = (url.searchParams.get('page') || 'home').replace(/[^a-z0-9_-]/gi, '');
       const at = url.searchParams.get('at');
       if (at) return json((await env.EDITS.get('edits-bak:' + slug + ':' + at.replace(/\D/g, ''), 'json')) || {});
+      // Prune while we're here: backups were written on every Reset/replace/drop and never
+      // removed, so the list grew without bound and every entry looked identical from the
+      // outside (no record of what caused it). Newest 50 kept.
+      {
+        const all = await env.EDITS.list({ prefix: 'edits-bak:' + slug + ':' });
+        const stale = all.keys.map((k) => k.name).sort().slice(0, Math.max(0, all.keys.length - 50));
+        for (const name of stale) await env.EDITS.delete(name);
+      }
       const list = await env.EDITS.list({ prefix: 'edits-bak:' + slug + ':' });
       return json(list.keys.map((k) => ({
         at: k.name.split(':').pop(),
@@ -1578,21 +1590,35 @@ function getEditorScript(slug) {
   // so "undo" is just "restore the previous version of that object"), not a per-field diff
   // that would need separate logic for every action type.
   var UNDO_KEY='de-undo-'+PAGE, undoing=false;
-  function loadUndoStack(){ try{ return JSON.parse(sessionStorage.getItem(UNDO_KEY)||'[]'); }catch(e){ return []; } }
-  function saveUndoStack(st){ try{ sessionStorage.setItem(UNDO_KEY, JSON.stringify(st.slice(-20))); }catch(e){} }
+  // localStorage, not sessionStorage: undo history used to be destroyed by closing the tab,
+  // which is precisely when you most want it back. Each snapshot records the template shape
+  // it was taken against, so undo can refuse to restore an overlay authored against a
+  // different template instead of quietly reintroducing keys that no longer mean anything.
+  function loadUndoStack(){ try{ return JSON.parse(localStorage.getItem(UNDO_KEY)||'[]'); }catch(e){ return []; } }
+  function saveUndoStack(st){ try{ localStorage.setItem(UNDO_KEY, JSON.stringify(st.slice(-20))); }catch(e){} }
   // Returns the pre-change state it captured, so a call site that needs to read-then-write
   // (duplicateBlock) can reuse it instead of fetching twice. Callers that only mutate via a
   // fresh PUT (saveOrder, deleteBlock, ...) just chain .then() and ignore the value.
   function armUndo(){
     if(undoing) return Promise.resolve(null);
     return fetch(API+'/api/edits?page='+PAGE).then(function(r){ return r.json(); }).then(function(cur){
-      cur=cur||{}; var st=loadUndoStack(); st.push(cur); saveUndoStack(st); return cur;
+      cur=cur||{}; var st=loadUndoStack(); st.push({__shape:SHAPE, snap:cur}); saveUndoStack(st); return cur;
     }).catch(function(){ return null; });
   }
   function performUndo(){
     var st=loadUndoStack();
     if(!st.length){ toast('Nothing to undo'); return; }
-    var snap=st.pop(); saveUndoStack(st); undoing=true; toast('Undoing…');
+    var top=st.pop(); saveUndoStack(st);
+    // Older entries were bare snapshots; newer ones are {__shape, snap}.
+    var snap = (top && top.snap!==undefined) ? top.snap : top;
+    if(top && top.__shape && SHAPE && top.__shape!==SHAPE){
+      toast('Undo skipped — the template changed since that step');
+      showWarn('&#9888; <b>Undo stopped.</b> That step was recorded against a different version of '
+        + 'the deck template, so replaying it could put your edits back on the wrong elements. '
+        + 'The step was discarded; nothing was changed.');
+      return;
+    }
+    undoing=true; toast('Undoing…');
     // Single atomic replace — the old DELETE-then-PUT could wipe everything if the PUT failed.
     fetch(API+'/api/edits?page='+PAGE+'&replace=1',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(snap)})
       .then(deJSON)
@@ -1878,16 +1904,37 @@ function getEditorScript(slug) {
   //     chapter). Changes exactly when eid assignment would change, and never otherwise —
   //     unlike a git sha, which moves on every unrelated commit and would cry wolf. Lets the
   //     page say "the template changed under your saved edits" up front, not per element.
-  var baseSig={};
-  function captureBaseSigs(){ editable().forEach(function(el){
-    var id=el.getAttribute('data-eid'); if(id) baseSig[id]=sigOf(el); }); }
+  //  3. ckey — a CONTENT key: hash of tag + the element's template text, plus an occurrence
+  //     index only among elements that are byte-identical. Deliberately does NOT include the
+  //     chapter, so renumbering chapters doesn't move it. This is a recovery index, not a
+  //     replacement for data-eid: positional keys still address everything, and Ray's existing
+  //     saved edits keep working untouched. When a positional key goes stale, the content key
+  //     finds where that element actually went and the edit follows it, instead of being
+  //     skipped and reported as a loss. That turns the Reiss failure into a self-healing case.
+  var baseSig={}, ckeyOf={}, byCkey={};
+  function captureBaseSigs(){
+    var seen={};
+    editable().forEach(function(el){
+      var id=el.getAttribute('data-eid'); if(!id) return;
+      var s=sigOf(el); baseSig[id]=s;
+      var base='k'+hashStr(el.tagName+'|'+s);
+      seen[base]=(seen[base]||0); var ck=base+(seen[base]?'.'+seen[base]:''); seen[base]++;
+      ckeyOf[id]=ck; byCkey[ck]=el; el.setAttribute('data-ck',ck);
+    });
+  }
   function hashStr(s){ var h=5381; for(var i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))>>>0; } return h.toString(36); }
   function shapeOf(){
     var counts={}; editable().forEach(function(el){ var k=chapterKeyFor(el); counts[k]=(counts[k]||0)+1; });
     return hashStr(Object.keys(counts).sort().map(function(k){ return k+':'+counts[k]; }).join('|'));
   }
   var SHAPE=null;
-  var skipped=0, mismatched=0, orderSkipped=0, staleKeys=[];
+  // Per-tab id. /api/edits is a shallow last-writer-wins merge with no optimistic
+  // concurrency (unlike /api/briefs and /api/clients, which use kvmerge + X-Sync-Base), so
+  // two tabs editing the same deck silently overwrite each other key by key. Full merge
+  // semantics are a bigger change; knowing it happened is most of the value, and costs
+  // nothing per save.
+  var TABID = (function(){ try{ return Math.random().toString(36).slice(2,10); }catch(e){ return 'tab'; } })();
+  var skipped=0, mismatched=0, orderSkipped=0, recovered=0, unresolved=0, staleKeys=[];
 
   // One banner for every kind of staleness, with a button that drops EXACTLY the keys that
   // went stale. Reset was previously the only way to clear them, and Reset destroys the whole
@@ -1895,16 +1942,33 @@ function getEditorScript(slug) {
   // kept coming back: the safe action was too expensive to take.
   function reportStale(ed){
     var meta = ed && ed.__meta, shapeChanged = !!(meta && meta.shape && SHAPE && meta.shape!==SHAPE);
-    var n = skipped + mismatched + orderSkipped;
-    if(!n && !shapeChanged) return;
+    // Another tab/browser wrote this overlay recently. Not an error — but if you now edit the
+    // same elements, one of you silently loses, and previously nothing said so at all.
+    if(meta && meta.writer && meta.writer!==TABID && meta.ts && (Date.now()-meta.ts) < 30*60*1000){
+      showWarn('&#9888; <b>Another session edited this deck '
+        + Math.max(1,Math.round((Date.now()-meta.ts)/60000)) + ' min ago.</b> Your edits merge per element, '
+        + 'so if you both change the same text one of you will overwrite the other. Reload before editing '
+        + 'if someone else is working on it right now.');
+    }
+    var n = skipped + mismatched + orderSkipped + unresolved;
+    if(!n && !recovered && !shapeChanged) return;
+    if(!n && recovered){
+      showWarn('&#10003; <b>The deck template changed</b> &mdash; <b>'+recovered+'</b> of your saved edit'
+        + (recovered===1?' was':'s were')+' matched to their content in its new position and applied normally. '
+        + 'Nothing was lost.');
+      return;
+    }
     var bits=[];
     if(skipped) bits.push('<b>'+skipped+'</b> deletion'+(skipped===1?'':'s'));
     if(mismatched) bits.push('<b>'+mismatched+'</b> text/style edit'+(mismatched===1?'':'s'));
     if(orderSkipped) bits.push('<b>'+orderSkipped+'</b> reorder'+(orderSkipped===1?'':'s'));
+    if(unresolved) bits.push('<b>'+unresolved+'</b> edit'+(unresolved===1?'':'s')+' whose content is gone from the deck');
     var msg;
     if(n){
       msg = '&#9888; '+bits.join(', ')+' could not be replayed &mdash; the template changed underneath them, '
         + 'so they were <b>skipped, not applied</b>. Nothing on this page has been deleted or overwritten by them.';
+      if(recovered) msg += ' <b>'+recovered+'</b> other edit'+(recovered===1?' was':'s were')
+        + ' matched to their content in its new position and applied normally.';
     } else {
       msg = '&#9888; <b>The deck template has changed</b> since your saved edits were made. '
         + 'They all still matched their content, so everything was applied &mdash; but keep an eye out.';
@@ -1934,7 +1998,11 @@ function getEditorScript(slug) {
     // overlays run, so they exist in the DOM for those passes to find by data-eid/data-rid.
     Object.keys(ed).forEach(function(k){
       if(k.indexOf('__added:')!==0) return;
-      var parent=document.querySelector('[data-tid="'+k.slice(8)+'"]'); if(!parent) return;
+      var parent=document.querySelector('[data-tid="'+k.slice(8)+'"]');
+      // The group this block was added into no longer exists (its chapter was deleted, or the
+      // group ids shifted). Previously a silent early return — the block just wasn't there,
+      // with nothing to say why.
+      if(!parent){ unresolved+=(ed[k]||[]).length; staleKeys.push(k); return; }
       (ed[k]||[]).forEach(function(a){
         if(document.querySelector('[data-eid="'+a.id+'"]')) return; // already present
         var tmp=document.createElement('div'); tmp.innerHTML=a.html; var node=tmp.firstElementChild; if(!node) return;
@@ -1961,8 +2029,21 @@ function getEditorScript(slug) {
         return;
       }
       if(k.indexOf('__added:')===0) return;
-      var el=document.querySelector('[data-eid="'+k+'"]'); if(!el) return;
+      var el=document.querySelector('[data-eid="'+k+'"]');
       var v=ed[k];
+      // Recovery: if the positional key is gone, or still resolves but to an element whose
+      // template text is no longer what this patch was written against, follow the CONTENT
+      // key instead. This is what makes a chapter insert/delete/move a non-event — the edit
+      // travels with its paragraph instead of being skipped or landing on a stranger.
+      var relocated=false;
+      if(v && typeof v==='object' && v.ck){
+        var stale = !el || (v.sig!=null && baseSig[k]!=null && v.sig!==baseSig[k]);
+        if(stale){
+          var alt=byCkey[v.ck];
+          if(alt && alt!==el){ el=alt; relocated=true; recovered++; }
+        }
+      }
+      if(!el){ if(v && typeof v==='object' && v.ck){ unresolved++; staleKeys.push(k); } return; }
       if(v && typeof v==='object' && v.deleted){
         // A tombstone is the only overlay type that DESTROYS content, and it is the one type
         // you cannot eyeball afterwards — what it removed simply isn't on the page to notice.
@@ -1980,7 +2061,9 @@ function getEditorScript(slug) {
       // Patches written before this shipped carry no sig and are still applied — refusing
       // them would discard every edit made to date, which is a worse failure than the one
       // being guarded against.
-      if(v && typeof v==='object' && v.sig && baseSig[k]!=null && v.sig!==baseSig[k]){
+      // relocated means the content key already proved this is the right element, so the
+      // positional signature check has nothing left to say.
+      if(!relocated && v && typeof v==='object' && v.sig && baseSig[k]!=null && v.sig!==baseSig[k]){
         mismatched++; staleKeys.push(k); return;
       }
       var h=(typeof v==='string')?v:v.html; if(h!=null) el.innerHTML=h;
@@ -2049,7 +2132,8 @@ function getEditorScript(slug) {
   function entry(el){ var id=el.getAttribute('data-eid');
     return { html: el.innerHTML, style: el.getAttribute('style')||'',
              preview: el.textContent.trim().slice(0,80),
-             sig: (id!=null && baseSig[id]!=null) ? baseSig[id] : sigOf(el) }; }
+             sig: (id!=null && baseSig[id]!=null) ? baseSig[id] : sigOf(el),
+             ck: (id!=null ? ckeyOf[id] : null) || el.getAttribute('data-ck') || null }; }
   // Snapshot for undo only at the *start* of a dirty batch (dirty was empty), not on every
   // keystroke/drag tick — one Ctrl+Z should undo "that edit", not one character of it. The
   // debounce window (600-1200ms) comfortably outlasts the snapshot fetch, so no explicit
@@ -2069,7 +2153,7 @@ function getEditorScript(slug) {
   function queueStyleSave(el){ var id=el.getAttribute('data-eid'); if(!id) return;
     if(!Object.keys(dirty).length) armUndo();
     dirty[id]=Object.assign({},dirty[id]||{},{style:el.getAttribute('style')||'',
-      sig:(baseSig[id]!=null?baseSig[id]:sigOf(el))});
+      sig:(baseSig[id]!=null?baseSig[id]:sigOf(el)), ck:ckeyOf[id]||null});
     backupLocal(dirty);
     if(saveTimer) clearTimeout(saveTimer); saveTimer=setTimeout(flush,600); }
 
@@ -2438,7 +2522,7 @@ function getEditorScript(slug) {
     backupLocal(patch);   // local copy first — survives even if the server never accepts it
     // Stamp the shape this overlay was authored against, so the next load can tell whether
     // the template moved underneath it instead of silently trusting positional keys.
-    var wire=Object.assign({},patch,{__meta:{shape:SHAPE, ts:Date.now()}});
+    var wire=Object.assign({},patch,{__meta:{shape:SHAPE, ts:Date.now(), writer:TABID}});
     fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(wire)})
       .then(deJSON).then(function(){ stat.textContent='✓ saved'; clearBackup(patch); hideWarn();
         setTimeout(function(){ stat.textContent=''; },1500); })
@@ -2657,7 +2741,7 @@ function getEditorScript(slug) {
   // these are the signatures of the template as shipped — the thing saved patches are
   // validated against.
   captureBaseSigs();
-  SHAPE=shapeOf();
+  SHAPE=shapeOf(); try{ window.__fsShape=SHAPE; }catch(e){}
   initRowDrag();
   initBlockDrag();
 
@@ -2669,7 +2753,7 @@ function getEditorScript(slug) {
     if(RAW) return;
     var keys=Object.keys(dirty); if(!keys.length) return;
     backupLocal(dirty);
-    var wire=Object.assign({},dirty,{__meta:{shape:SHAPE, ts:Date.now()}});
+    var wire=Object.assign({},dirty,{__meta:{shape:SHAPE, ts:Date.now(), writer:TABID}});
     try{
       if(navigator.sendBeacon){
         var ok=navigator.sendBeacon(API+'/api/edits?page='+PAGE+'&beacon=1',
@@ -2777,6 +2861,18 @@ function getEditorScript(slug) {
     // left to toggle anyway once .chk markers are stripped below, so hiding is equivalent.
     var flag = doc.getElementById('flagbtn'); if(flag){ flag.style.display='none'; flag.removeAttribute('aria-pressed'); }
     Array.prototype.slice.call(doc.querySelectorAll('[data-eid]')).forEach(function(el){ el.removeAttribute('data-eid'); });
+    Array.prototype.slice.call(doc.querySelectorAll('[data-ck]')).forEach(function(el){ el.removeAttribute('data-ck'); });
+    // Provenance. A downloaded file is a THIRD source of truth alongside the template and the
+    // overlay, and until now it carried nothing to say which version it forked from — so a
+    // file handed back weeks later could not be diffed against anything. A meta tag survives
+    // the comment strip below and tells you exactly what this copy is.
+    try{
+      var m=doc.createElement('meta'); m.setAttribute('name','fs-export');
+      m.setAttribute('content', (location.pathname||'').replace(/^\\//,'')
+        + ' · exported ' + new Date().toISOString().slice(0,16).replace('T',' ') + 'Z'
+        + (window.__fsShape ? ' · shape ' + window.__fsShape : ''));
+      if(doc.head) doc.head.appendChild(m);
+    }catch(e){}
     Array.prototype.slice.call(doc.querySelectorAll('[data-de-block]')).forEach(function(el){ el.removeAttribute('data-de-block'); });
     Array.prototype.slice.call(doc.querySelectorAll('[contenteditable]')).forEach(function(el){ el.removeAttribute('contenteditable'); });
     Array.prototype.slice.call(doc.querySelectorAll('[spellcheck]')).forEach(function(el){ el.removeAttribute('spellcheck'); });
@@ -2801,7 +2897,10 @@ function getEditorScript(slug) {
     var blob = new Blob([html], {type:'text/html'});
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    a.href = url; a.download = slug(document.title) + '.html';
+    // Date-stamped: successive downloads used to share one filename, so the browser either
+    // overwrote the previous export or silently appended (1), (2) — leaving no way to tell
+    // which file was presented from.
+    a.href = url; a.download = slug(document.title) + '-' + new Date().toISOString().slice(0,10) + '.html';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
   }

@@ -135,105 +135,56 @@ The one class that shouts is the one that was already safe.
 
 ---
 
-## Complication register — to fix one by one
+## Complication register — status
 
-Ordered by how much damage each one has actually caused.
+All sixteen addressed. `tools/test_editor.mjs` runs the editor in a real Chromium against the
+real deck with a stubbed KV; every guard below has a test that fails without the fix. It runs
+in `presync.sh`.
 
-### C5 · Overlay carries no template-version stamp — *root cause*
-`edits:<slug>` records no indication of which template revision its keys were computed
-against, so nothing can detect that an overlay has gone stale. Every other complication
-here is a symptom of this one.
-**Fix:** stamp each overlay write with the template's build sha (already exposed at
-`/api/version`). On load, compare; if they differ, don't blind-apply — verify per key.
+| # | Complication | Status |
+|---|---|---|
+| C1 | Edits typed in the last 0.6–1.2s died with the tab | **fixed** — mirrored to localStorage at `queueSave`, `sendBeacon` on `pagehide`/`visibilitychange` |
+| C2 | `data-eid` is positional, so structural pushes re-map keys | **fixed** — content index (`data-ck`); an edit follows its content instead of being skipped |
+| C3 | No concurrency control on `/api/edits` | **detected** — per-tab writer id; "another session edited this deck N min ago" |
+| C5 | Overlay had no template-version stamp | **fixed** — shape fingerprint on every write, compared on load |
+| C6 | Only deletions were signature-guarded | **fixed** — every patch carries and validates a signature |
+| C7 | `__order:` replayed without validating the sibling set | **fixed** — replayed only when the list is exactly the current set |
+| C8 | `__added:` blocks vanished silently when their group went | **fixed** — counted and reported |
+| C9 | Live edits never flowed back to git | **covered** — Download HTML → `tools/apply_edits.py` splices edits into the template |
+| C10 | Deploy replaced the template with no coordination | **fixed** — presync diffs the editable-element shape against main and prints which chapters shift |
+| C11 | Undo stack died with the tab | **fixed** — `localStorage`, and refuses to restore across a shape change |
+| C12 | Backups unbounded and unlabelled | **fixed** — `__reason` recorded, pruned to the newest 50 |
+| C13 | Reset was all-or-nothing | **fixed** — banner button drops exactly the stale keys (`?drop=`), backed up first |
+| C14 | Two sessions on one deck file | **fixed** — hard presync failure (`ALLOW_DECK_OVERLAP=1` to override deliberately) |
+| C16 | `top` namespace mixes hero content with the chapter group | **mitigated, not renamed** — C7's validation removes the failure this caused; renaming the namespace would invalidate live keys for no further gain |
+| C17 | The audit checked the template, not what the client sees | **fixed** — run `deck_audit.py` on a Download-HTML export; that file *is* the composite |
+| C18 | A downloaded file was a fork with no path back | **fixed** — `<meta name="fs-export">` provenance + date-stamped filename |
 
-### C2 · `data-eid` is positional, so any structural push re-maps keys
-Insert, delete, reorder, or fill a previously-empty element inside a chapter and every
-later key in that chapter points at a different element.
-**Fix:** move to content-derived keys (a hash of the element's normalised text + tag +
-chapter), with the positional key kept as a fallback for one migration cycle. Content keys
-survive insertion and reordering, which is exactly what positional keys can't do.
+### What C17 found on the deck that was actually presented
 
-### C6 · Only deletions are signature-guarded; text and style edits apply blind
-`sig` is written on tombstones (:2026, :2067) and nowhere else, so a mis-mapped text patch
-silently overwrites the wrong paragraph — the failure mode with no banner.
-**Fix:** write `sig` on every patch, validate on replay, report mismatches in the same
-banner the tombstone guard already uses.
+Running the audit against `docs/archive/Reiss_Strategy_Review_AS_PRESENTED_2026-07-28.html`:
 
-### C1 · Edits typed in the last 0.6–1.2s die with the tab
-`backupLocal()` is called inside `flush()`, not inside `queueSave()`, and there is **no**
-`beforeunload`/`pagehide` handler anywhere in the file.
-**Fix:** two lines, independently valuable — mirror to localStorage at `queueSave` time,
-and flush on `pagehide` (`visibilitychange` → hidden, which fires reliably on mobile too).
+```
+✗ 10 hard failures
+  [DEAD ANCHOR] #c7, #c10, #c11  (×2 each — topbar and side-nav)
+  [DEAD CROSS-REFERENCE] chapter 7 does not exist  (×2, one written "ch.07")
+  [DEAD RANGE ENDPOINT] chapter 10 does not exist
+  [INTERNAL COPY IN CLIENT DECK] "need Ray to confirm"
+```
 
-### C9 · Live edits never flow back to git
-The template and the overlay diverge permanently, so every Code push is authored against a
-version of the deck nobody is actually looking at. "Download HTML" is a manual, lossy
-bridge that only goes one way.
-**Fix:** a `tools/pull_overlay.py` that fetches `edits:<slug>`, applies it to the template,
-and writes the result back to `docs/`, so a structural change can start from what Ray sees.
-
-### C10 · Deploy replaces the template with zero coordination
-Nothing checks whether an overlay exists, nothing warns the open tab, nothing pauses editing.
-**Fix:** deploy-time check — if `edits:<slug>` is non-empty and the deck file changed in
-this push, fail the run unless the commit says the overlay was considered.
-
-### C3 · No optimistic concurrency on `/api/edits`
-Shallow last-writer-wins. Two tabs, or Ray plus a restore script, silently clobber.
-**Fix:** the `X-Sync-Base` pattern already used by `/api/briefs` and `/api/clients`.
-
-### C13 · Reset is all-or-nothing
-Clearing 14 stale tombstones means destroying 122 good edits. That's why the banner keeps
-coming back — the safe action is too expensive to take.
-**Fix:** "clear just the skipped keys" button next to the banner, which already knows
-exactly which keys were skipped.
-
-### C7 · `__order:` replayed without validating the sibling set
-A stale `__order:top-g0` re-appends every listed chapter to the end of `<body>`, which is
-what stacked all the chapter dividers at the bottom of the page.
-**Fix:** replay only when the listed rids are exactly the current sibling set; otherwise
-skip and report, same as tombstones.
-
-### C17 · The audit checks the template, not what the client sees
-`deck_audit.py` reads `docs/<Deck>.html`. The presented deck is template **+ overlay**. So
-the audit does not currently cover the artefact that actually goes in front of a client.
-**Fix:** `--overlay <slug>` mode that fetches the overlay, applies it, and audits the
-composite. Depends on C9's puller.
-
-### C11 · Undo stack is `sessionStorage`, tab-scoped
-Closing the tab discards every undo step. Undo after a template push also restores an
-overlay authored against the old shape.
-**Fix:** stack in KV alongside the backups; refuse to restore across a version-stamp change.
-
-### C8 · `__added:` blocks replayed by parent `tid` with no signature
-If the parent tid moves or disappears, the block lands wrong or vanishes silently.
-**Fix:** same signature treatment as C6.
-
-### C12 · `edits-bak:` grows unbounded and unlabelled
-No reason recorded, no pruning, no retention policy.
-**Fix:** store `{reason, sha, ts}`; prune beyond ~50 per slug.
-
-### C18 · A downloaded HTML file is a fork with no path back
-**Fix:** stamp the export with slug + sha + timestamp so a returned file can be diffed
-against the version it came from.
-
-### C14 · Multiple Code sessions on one deck file
-`overlap.sh` warns, doesn't block; this already caused a mid-operation rebase collision.
-**Fix:** make hot-file overlap on a deck a hard presync failure, not a warning.
-
-### C16 · `top` namespace mixes hero content with chapter-level block groups
-Everything before chapter 1 shares the `top-*` namespace with the body-level draggable
-group that contains the chapter divs.
-**Fix:** separate the structural group namespace from the content namespace.
+Six of those are nav links that did nothing when clicked, in front of the client. That is the
+class of defect none of the previous checks could see, and it is now a one-command check on
+any exported file.
 
 ---
 
-## Suggested order
+## Working rules that follow
 
-1. **C1** — smallest change, stops silent loss today, no dependencies.
-2. **C5 + C6** — the version stamp and universal signatures. Together these turn every
-   silent mis-landing into a reported one. This is the fix that would have prevented the
-   Reiss episode.
-3. **C13** — makes the reported state cheap to clear, so the banner stops being noise.
-4. **C9 → C17** — pull the overlay back to git, then audit what the client actually sees.
-5. **C10, C3, C7, C14** — coordination and concurrency hardening.
-6. The rest as they surface.
+1. **Before a structural push:** run presync, read the shape diff, and say so to whoever is
+   editing. The editor now recovers what it can and reports the rest, but the courtesy is the
+   point.
+2. **Before calling any deck final:** `deck_audit.py` on the template *and* on a fresh
+   Download-HTML export. The export is what the client gets.
+3. **Never two sessions on one deck file.** Presync enforces it.
+4. **A red banner is information, not damage.** Every guard skips and reports; none of them
+   destroys anything. The Clear button removes only what it names, after a backup.
