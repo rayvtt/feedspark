@@ -608,6 +608,59 @@
       "pattern": "fcc-sender-brand",
       "min": 2,
       "pr": 138
+    },
+    {
+      "name": "Pricer: module page (quote builder + collaborative rate card)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "Tachyon Pricer",
+      "min": 2,
+      "pr": 140
+    },
+    {
+      "name": "Pricer: quote engine (UMD, tiered volume + block maths)",
+      "file": "docs/pricer_engine.js",
+      "pattern": "PricerEngine",
+      "min": 2,
+      "pr": 140
+    },
+    {
+      "name": "Pricer: live-AI-brief scaffolds (Monsoon/Accessorize/Hobbycraft/Superdry)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "pz-scaf",
+      "min": 2,
+      "pr": 140
+    },
+    {
+      "name": "worker: tachyon rates+quotes kvmerge routes",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "api/tachyon/rates",
+      "min": 2,
+      "pr": 140
+    },
+    {
+      "name": "worker: pricer engine served verbatim",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "pricer/engine.js",
+      "pr": 140
+    },
+    {
+      "name": "wrangler: pricer engine bundled as Text",
+      "file": "wrangler.toml",
+      "pattern": "pricer_engine.js",
+      "pr": 140
+    },
+    {
+      "name": "Workflow: Pricer in module nav",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "href=\"/pricer\"",
+      "pr": 140
+    },
+    {
+      "name": "CmdCenter: Pricer in module nav + sidenav",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "href=\"/pricer\"",
+      "min": 2,
+      "pr": 140
     }
   ]
 }
