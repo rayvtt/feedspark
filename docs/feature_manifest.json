@@ -716,6 +716,9 @@
       "pattern": "api/tachyon/track",
       "min": 2,
       "pr": 145
-    }
+    },
+    { "name": "Workflow: hover info icons replace section subtext", "file": "docs/FeedSpark_Workflow.html", "pattern": "info-btn", "min": 5, "pr": 148 },
+    { "name": "worker: sheet-write tab resolver stops guessing on ambiguity", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "tabAmbiguous", "min": 5, "pr": 148 },
+    { "name": "worker: sheet reads widened past 600 rows / 26 cols", "file": "cloudflare/feedspark-deck/src/worker.js", "pattern": "A1:ZZ5000", "min": 5, "pr": 148 }
   ]
 }
