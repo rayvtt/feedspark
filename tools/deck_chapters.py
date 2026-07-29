@@ -171,7 +171,40 @@ def rebuild(soup, chapters, deleted_id=None, moved=None):
             agenda.append(r)
             agenda.append('\n')
 
-    # 5. prose cross-references — "chapter N" / "Chapter N" anywhere in remaining text,
+    # 5. `<!-- ===== CH NN — TITLE ===== -->` boundary comments — cosmetic (don't affect
+    #    rendering) but a real source of confusion if left stale: caught on the Reiss deck
+    #    right after a chapter-7 deletion, where the marker still read "CH 07 — LIVE
+    #    FEEDHERO AUDIT" sitting directly above what had become the new chapter 7 (a
+    #    completely different chapter). BeautifulSoup's default find_all doesn't return
+    #    Comment nodes from a plain string/tag search, so this needs its own walk.
+    from bs4 import Comment
+    marker_re = re.compile(r'^(\s*=+\s*CH\s+)(\d+)(\s*—.*=+\s*)$')
+    for c in soup.find_all(string=lambda s: isinstance(s, Comment)):
+        m = marker_re.match(str(c))
+        if not m:
+            continue
+        old_n = int(m.group(2))
+        new_n = old_to_new.get(old_n)
+        if new_n is None:
+            # marks the deleted chapter itself. It's a PRECEDING sibling of that chapter's
+            # own div, so it's outside `content` (which only walks forward) and main()'s
+            # delete branch never reaches it — decompose it here instead of leaving a stale,
+            # orphaned comment behind (inert, but exactly the kind of thing this tool exists
+            # to stop from accumulating).
+            c.extract()
+            continue
+        # rebuild the whole marker from the chapter's ACTUAL current title, not just the
+        # number — a title can also be stale after a move, and only trusting the number
+        # would silently perpetuate that
+        ch = next((c2 for c2 in chapters if chapter_num(c2['new_id']) == new_n), None)
+        title = ch_title_text(ch['div']).upper() if ch else m.group(0)
+        # Comment is itself a NavigableString subclass — replace_with(plain_str) here would
+        # silently drop the <!-- --> wrapper and turn the marker into VISIBLE PAGE TEXT (a
+        # real bug caught in testing: "CH 01 — SERVICE SCOPE..." rendered as literal body
+        # text). Must construct a new Comment, not a str, to replace a Comment with.
+        c.replace_with(Comment(' ================= CH %02d — %s ================= ' % (new_n, title)))
+
+    # 6. prose cross-references — "chapter N" / "Chapter N" anywhere in remaining text,
     #    remapped via old_to_new. Anything referencing the deleted chapter's own number is
     #    left untouched and reported, not guessed at.
     pattern = re.compile(r'\b([Cc])hapter\s+0?(\d{1,2})\b')
