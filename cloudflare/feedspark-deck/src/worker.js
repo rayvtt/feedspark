@@ -28,7 +28,6 @@ import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js"
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx } from "./briefmatch.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
-import TEMPLATES from "../../../docs/FeedSpark_Templates.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
 import ROADMAP from "../../../docs/FeedSpark_Roadmap.html";
 import READINESS from "../../../docs/FeedSpark_Readiness.html";
@@ -42,7 +41,14 @@ import DECK_SUPERDRY from "../../../docs/Superdry_Strategy_Review_AllTime.html";
 // Tachyon copilot widget (style + script fragment). Injected on the app pages only —
 // never on client-facing decks. Reads window.PLANTASKS and calls /api/claude.
 import TACHYON from "../../../docs/tachyon_widget.html";
+// FCC-INSTR: collapsible-instructions widget — injected on app pages only (never decks),
+// so every module's explainer subtext folds behind a ⓘ by default
+import INSTR from "../../../docs/instr_collapse.html";
 import FEEDLAB from "../../../docs/FeedSpark_FeedLab.html";
+import PRICER from "../../../docs/FeedSpark_Pricer.html";
+// Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
+// node tests share the file, same pattern as the Feed Lab engine)
+import PRICER_ENGINE from "../../../docs/pricer_engine.js";
 // the Feed Lab audit engine, bundled verbatim (wrangler Text rule) and served at
 // /feedlab/engine.js so the page and its node tests run the exact same code
 import FEEDLAB_ENGINE from "../../../docs/feedlab_engine.js";
@@ -52,7 +58,6 @@ import FEEDLAB_ENGINE from "../../../docs/feedlab_engine.js";
 const PAGES = {
   '/':            { html: LANDING,     slug: 'home' },
   '/index.html':  { html: LANDING,     slug: 'home' },
-  '/templates':   { html: TEMPLATES,   slug: 'templates' },
   '/library':     { html: TASKLIB,     slug: 'library' },
   '/roadmap':     { html: ROADMAP,     slug: 'roadmap' },
   '/readiness':   { html: READINESS,   slug: 'readiness' },
@@ -61,6 +66,7 @@ const PAGES = {
   '/activity':    { html: ACTIVITY,    slug: 'activity' },   // owner-gated in fetch() before this map is consulted; Build Log lives on its 🔨 tab
   '/workflow':    { html: WORKFLOW,    slug: 'workflow' },
   '/feedlab':     { html: FEEDLAB,     slug: 'feedlab' },
+  '/pricer':      { html: PRICER,      slug: 'pricer' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
@@ -109,7 +115,7 @@ export default {
     if (request.method === 'PUT' || request.method === 'POST') {
       const ACT = { '/api/edits': 'edit', '/api/feedback': 'feedback', '/api/clients': 'dossier-save',
         '/api/briefs': 'briefs-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
-        '/api/feed/audit': 'feed-audit' };
+        '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -370,6 +376,20 @@ export default {
       return out;
     };
     const feedSourceFor = async (client, market) => (await feedMarketsFor(client))[mktOf(market)] || null;
+
+    // ---- Tachyon Pricer: collaborative rate card + saved quotes (kvmerge = every team
+    // edits the same numbers concurrency-safe; edits are activity-logged per Access user) ----
+    if (path === '/api/tachyon/rates') {
+      const r = await mapStoreRoute(env, request, 'tachyonrates', {});
+      if (r) return r;
+    }
+    if (path === '/api/tachyon/quotes') {
+      const r = await mapStoreRoute(env, request, 'tachyonquotes', {});
+      if (r) return r;
+    }
+    if (path === '/pricer/engine.js' && request.method === 'GET') {
+      return new Response(PRICER_ENGINE, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
 
     // the engine, served verbatim so the page and node tests share one file
     if (path === '/feedlab/engine.js' && request.method === 'GET') {
@@ -998,7 +1018,7 @@ export default {
     if (page) {
       logActivity(ctx, env, request, 'view', path);
       let html = page.html.replace('</body>', getEditorScript(page.slug) + '\n</body>');
-      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n</body>');
+      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n' + INSTR + '\n</body>');
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 

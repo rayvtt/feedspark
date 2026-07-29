@@ -548,6 +548,19 @@
       "pr": 133
     },
     {
+      "name": "FCC: collapsible instructions widget (app pages, default folded)",
+      "file": "docs/instr_collapse.html",
+      "pattern": "FCC-INSTR",
+      "pr": 139
+    },
+    {
+      "name": "worker: instr widget injected on app pages (never decks)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "INSTR",
+      "min": 3,
+      "pr": 139
+    },
+    {
       "name": "Workflow: email-task adoption into the plan (write-back)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "adoptIntoPlan",
@@ -559,14 +572,14 @@
       "file": "cloudflare/feedspark-deck/src/briefmatch.js",
       "pattern": "detectClientEx",
       "min": 2,
-      "pr": 134
+      "pr": 138
     },
     {
       "name": "Workflow: Gmail sync module UI (cue column)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "em-colhead",
       "min": 2,
-      "pr": 134
+      "pr": 138
     },
     {
       "name": "Workflow: reassignable client (cross-plan task move)",
@@ -590,11 +603,70 @@
       "pr": 136
     },
     {
+      "name": "worker: Templates module RETIRED (menu cleanup, must stay gone)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/templates'",
+      "forbidden": true
+    },
+    {
       "name": "Workflow: assignable brand in Gmail triage + sender memory",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "fcc-sender-brand",
       "min": 2,
       "pr": 138
+    },
+    {
+      "name": "Pricer: module page (quote builder + collaborative rate card)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "Tachyon Pricer",
+      "min": 2,
+      "pr": 141
+    },
+    {
+      "name": "Pricer: quote engine (UMD, tiered volume + block maths)",
+      "file": "docs/pricer_engine.js",
+      "pattern": "PricerEngine",
+      "min": 2,
+      "pr": 141
+    },
+    {
+      "name": "Pricer: live-AI-brief scaffolds (Monsoon/Accessorize/Hobbycraft/Superdry)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "pz-scaf",
+      "min": 2,
+      "pr": 141
+    },
+    {
+      "name": "worker: tachyon rates+quotes kvmerge routes",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "api/tachyon/rates",
+      "min": 2,
+      "pr": 141
+    },
+    {
+      "name": "worker: pricer engine served verbatim",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "pricer/engine.js",
+      "pr": 141
+    },
+    {
+      "name": "wrangler: pricer engine bundled as Text",
+      "file": "wrangler.toml",
+      "pattern": "pricer_engine.js",
+      "pr": 141
+    },
+    {
+      "name": "Workflow: Pricer in module nav",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "href=\"/pricer\"",
+      "pr": 141
+    },
+    {
+      "name": "CmdCenter: Pricer in module nav + sidenav",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "href=\"/pricer\"",
+      "min": 2,
+      "pr": 141
     }
   ]
 }
