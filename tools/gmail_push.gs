@@ -54,7 +54,7 @@ function pushInbox() {
       if (out.length >= 80) return;
       var when = m.getDate().getTime();
       if (Date.now() - when > 2 * 24 * 60 * 60 * 1000) return;
-      out.push({ id: m.getId(), from: m.getFrom(), subject: m.getSubject(),
+      out.push({ id: m.getId(), from: m.getFrom(), to: m.getTo(), cc: m.getCc(), subject: m.getSubject(),
         snippet: (m.getPlainBody() || '').slice(0, 500), date: when });
     });
   });
