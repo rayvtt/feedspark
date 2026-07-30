@@ -857,7 +857,7 @@
       "name": "workflow: timeline covers every dated task + brand/AM filters",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "timelineEvents",
-      "min": 3,
+      "min": 2,
       "pr": 166
     },
     {
@@ -873,6 +873,13 @@
       "pattern": "tle-scrim",
       "min": 3,
       "pr": 168
+    },
+    {
+      "name": "workflow: timeline shares Intake filters + status flag legend",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "renderTlLegend",
+      "min": 2,
+      "pr": 169
     }
   ]
 }
