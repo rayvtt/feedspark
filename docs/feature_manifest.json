@@ -880,6 +880,12 @@
       "pattern": "renderTlLegend",
       "min": 2,
       "pr": 169
+    },
+    {
+      "name": "workflow: chronological due sort — dateless sink, year-less dates get the current year",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "dateless rows sink to the bottom",
+      "pr": 170
     }
   ]
 }
