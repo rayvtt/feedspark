@@ -569,10 +569,26 @@ window.addEventListener('load',restore);
   body.tl-focus .tl-wrap{flex:1;min-height:0;display:flex}
   body.tl-focus .tl-grid{flex:1}
   body.tl-focus .tl-week{max-height:calc(100vh - 175px)}
+  /* any modal opened from inside focus mode must clear the focus overlay's z-index:9000 */
+  body.tl-focus .scrim{z-index:9500}
+  .tle-scrim{z-index:9500}
+  .tle-modal{width:min(460px,100%)}
+  .tle-brand{font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+  .tle-row{margin-top:10px}
+  .tle-row label{display:block;font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .tle-row textarea,.tle-row input,.tle-row select{width:100%;box-sizing:border-box;font:inherit;font-size:13px;font-weight:600;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+  .tle-row textarea{resize:vertical;min-height:56px}
+  .tle-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .tle-foot{display:flex;align-items:center;gap:8px;margin-top:14px}
+  .tle-open{margin-right:auto;font-size:12px;font-weight:800;background:none;border:0;color:var(--orange-deep);cursor:pointer;padding:0}
+  .tle-open:hover{text-decoration:underline}
   .tl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:var(--shadow);padding:12px}
   .tl-grid{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(190px,1fr);gap:10px;min-width:760px}
   .tl-week{border-left:2px solid var(--line);padding:0 8px}
-  .tl-wh{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:8px}
+  /* Each column is its own scroll container (.tl-week overflow-y), so the week header pins inside
+     that column rather than to the page — scroll a long column and its date stays on screen.
+     Needs a solid background and a z-index above the cards passing under it. */
+  .tl-wh{position:sticky;top:0;z-index:2;background:var(--paper);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);padding:2px 0 7px;margin-bottom:2px;box-shadow:0 1px 0 var(--line)}
   .tl-wh.now{color:var(--orange-deep)}
   /* Truncation lives on the INNER span, not the card: overflow on a padded box clips at the padding
      edge, so a 4th line paints into the bottom padding — and -webkit-line-clamp can't be relied on
@@ -748,7 +764,7 @@ window.addEventListener('load',restore);
   <div class="panel" style="margin-top:12px"><h3>Escalations — over-SLA in any court</h3><div id="sla-stalled" class="stall-list"></div></div>
 
   <h2>Timeline — every dated task<button class="info-btn" type="button" aria-label="How Timeline works">i</button>
-    <div class="info-pop">Every task carrying a due date — the whole Intake, across all brands, not just the briefed ones — plus each test's analysis date, on one axis. Due dates are the ones you set in <b>Intake</b>, so they're the same dates as the project plans. <b>Overdue</b> gets its own column and anything past the horizon collects in <b>Later</b> — nothing is dropped. Filter by <b>brand</b> or <b>AM</b>; <b>Scope</b> narrows to briefed or un-briefed work. Briefed items carry their stage colour and open the ticket; un-briefed ones jump to the Intake row. <b>⛶ Focus</b> (or <b>F</b>) fills the screen for working a book of accounts; <b>Esc</b> leaves.</div>
+    <div class="info-pop">Every task carrying a due date — the whole Intake, across all brands, not just the briefed ones — plus each test's analysis date, on one axis. Due dates are the ones you set in <b>Intake</b>, so they're the same dates as the project plans. <b>Overdue</b> gets its own column and anything past the horizon collects in <b>Later</b> — nothing is dropped. Filter by <b>brand</b> or <b>AM</b>; <b>Scope</b> narrows to briefed or un-briefed work. Briefed items carry their stage colour and open the ticket; clicking an un-briefed one opens the row as an <b>edit pop-up</b> — task, owner, status, due — saving through the same 2-way write-back to the project plan, with the page staying put. <b>⛶ Focus</b> (or <b>F</b>) fills the screen for working a book of accounts; <b>Esc</b> leaves.</div>
   </h2>
   <section class="tl-sec" id="tl-sec">
   <div class="it-ctl">
@@ -787,6 +803,7 @@ window.addEventListener('load',restore);
 </main>
 
 <div class="scrim" id="scrim"><div class="modal" id="modal"></div></div>
+<div class="scrim tle-scrim" id="tle-scrim"><div class="modal tle-modal" id="tle-modal" role="dialog" aria-modal="true" aria-label="Edit task"></div></div>
 
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Workflow control center · live from the project plans</div></div>
 
@@ -1704,7 +1721,7 @@ window.addEventListener('load',restore);
     tlScrollbar(); window.addEventListener('resize',tlScrollbar);
     b.onclick=function(){ tlFocus(!document.body.classList.contains('tl-focus')); };
     document.addEventListener('keydown',function(e){
-      if(e.key==='Escape'&&document.body.classList.contains('tl-focus')){ tlFocus(false); return; }
+      if(e.key==='Escape'&&document.body.classList.contains('tl-focus')){ if(tleClose())return; tlFocus(false); return; }
       // F toggles focus, but never while typing into a field or editing a grid cell
       if((e.key==='f'||e.key==='F')&&!e.metaKey&&!e.ctrlKey&&!e.altKey){
         var t=e.target, tag=(t&&t.tagName||'').toLowerCase();
@@ -1886,7 +1903,7 @@ window.addEventListener('load',restore);
   // ---- modal ----
   var scrim=document.getElementById('scrim'), modalEl=document.getElementById('modal');
   scrim.addEventListener('click',function(e){ if(e.target===scrim) closeModal(); });
-  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeModal(); closeBrief(); } });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ if(typeof tleClose==='function'&&tleClose())return; closeModal(); closeBrief(); } });
   function closeModal(){ scrim.classList.remove('on'); }
   // ---- new-brief popup (the composer lives in #bg-scrim; prefill() + the openers route here) ----
   var bgScrim=document.getElementById('bg-scrim');
@@ -2199,10 +2216,53 @@ window.addEventListener('load',restore);
     host.innerHTML=html;
     var n=document.getElementById('tl-n');
     if(n)n.textContent=evs.length+' dated task'+(evs.length===1?'':'s')+(over.length?' · '+over.length+' overdue':'')+' · '+shown+' in '+WEEKS+'w'+(later.length?' · '+later.length+' later':'');
-    // briefed → open the ticket; un-briefed → jump to its Intake row so the date can be edited there
+    // briefed → open the ticket; un-briefed → edit the Intake row in a pop-up, in place.
+    // No scroll-jump: the page stays exactly where it is (Ray's ask) — "Open in Intake ↗"
+    // inside the pop-up is the one deliberate way down to the grid.
     host.querySelectorAll('.tl-ev').forEach(function(el){ el.onclick=function(){
       var id=el.getAttribute('data-id'); if(id){ openModal(id); return; }
-      revealInIntake(el.getAttribute('data-c'), el.getAttribute('data-k')); }; });
+      var k=el.getAttribute('data-k');
+      if(k.slice(0,3)==='ts|'){ editTest(+k.slice(3)); return; }   // test-register analysis card → its own editor
+      tlRowEdit(k, el.getAttribute('data-c')); }; });
+  }
+  // ---- timeline row editor: the Intake row as a pop-up. Saves go through the SAME 2-way
+  // writers the grid uses (writeStatus / setOwner / setDue / setTaskText), so every change
+  // lands in the localStorage overlays AND writes back to the client's project-plan sheet.
+  var tleScrim=document.getElementById('tle-scrim'), tleModal=document.getElementById('tle-modal');
+  function tleClose(){ if(!tleScrim.classList.contains('on'))return false; tleScrim.classList.remove('on'); return true; }
+  if(tleScrim)tleScrim.addEventListener('click',function(e){ if(e.target===tleScrim)tleClose(); });
+  function tlRowEdit(key, client){
+    var t=allIntake().filter(function(r){ return (r.client+'|'+r.task)===key; })[0];
+    if(!t){ revealInIntake(client,key); return; }   // row no longer in the intake — fall back to the grid
+    var pd=taskDate(t), iso=pd?(pd.getFullYear()+'-'+pad(pd.getMonth()+1)+'-'+pad(pd.getDate())):'';
+    var cur=String(t.s||(t.b==='done'?'Done':'Open')), found=false;
+    var opts=STATUS_OPTS.map(function(o){ var sel=o.toLowerCase()===cur.toLowerCase(); if(sel)found=true;
+      return '<option'+(sel?' selected':'')+'>'+esc(o)+'</option>'; }).join('');
+    if(!found)opts='<option selected>'+esc(cur)+'</option>'+opts;
+    tleModal.innerHTML='<div class="tle-brand">'+esc(t.client)+' · edit task'+(t.source==='plan'?' — writes back to the plan':'')+'</div>'
+      +'<div class="tle-row"><label for="tle-task">Task</label><textarea id="tle-task">'+esc(t.task)+'</textarea></div>'
+      +'<div class="tle-grid2"><div class="tle-row"><label for="tle-owner">Owner</label><input id="tle-owner" value="'+esc(t.owner==='—'?'':(t.owner||''))+'" placeholder="Who’s doing it"></div>'
+      +'<div class="tle-row"><label for="tle-status">Status</label><select id="tle-status">'+opts+'</select></div></div>'
+      +'<div class="tle-row"><label for="tle-due">Due</label><input id="tle-due" type="date" value="'+esc(iso)+'"></div>'
+      +'<div class="tle-foot"><button type="button" class="tle-open" id="tle-open">Open in Intake ↗</button>'
+      +'<button type="button" class="btn sm" id="tle-cancel">Cancel</button>'
+      +'<button type="button" class="btn sm navy" id="tle-save">Save</button></div>';
+    tleScrim.classList.add('on');
+    document.getElementById('tle-cancel').onclick=tleClose;
+    document.getElementById('tle-open').onclick=function(){ tleClose(); if(document.body.classList.contains('tl-focus'))tlFocus(false); revealInIntake(t.client,key); };
+    document.getElementById('tle-save').onclick=function(){
+      var nt=document.getElementById('tle-task').value.trim(),
+          no=document.getElementById('tle-owner').value.trim(),
+          ns=document.getElementById('tle-status').value,
+          nd=document.getElementById('tle-due').value;   // ISO or ''
+      tleClose();
+      if(ns!==cur){ recPush({client:t.client,task:t.task,source:t.source,key:'status',prev:cur}); writeStatus(t.client,t.task,ns); }
+      if(no!==(t.owner==='—'?'':(t.owner||'')))setOwner(t,no);
+      if(nd!==iso)setDue(t,nd);
+      if(nt&&nt!==t.task)setTaskText(t,nt);   // LAST — renaming migrates the row's key
+      renderAll();
+    };
+    setTimeout(function(){ var f=document.getElementById('tle-task'); if(f)f.focus(); },60);
   }
   // focus the Intake on one brand and scroll its row into view (the un-briefed timeline click-through)
   function revealInIntake(client, key){
