@@ -2277,15 +2277,20 @@ window.addEventListener('load',restore);
     var off=function(e){ return Math.round((e.d-t0)/86400000); };
     var over=evs.filter(function(e){ return off(e)<0; });
     if(over.length) html+='<div class="tl-week tl-over"><div class="tl-wh late">Overdue <span class="tl-wn">'+over.length+'</span></div>'+over.map(card).join('')+'</div>';
-    for(var w=0;w<WEEKS;w++){ var ws=new Date(t0); ws.setDate(ws.getDate()+w*7);
+    // Weeks are CALENDAR weeks, Monday-aligned (Ray's ask): w1 is the week containing today,
+    // headed by its Monday, so w2 is next Monday — not a rolling 7-day window from today.
+    // Overdue stays relative to TODAY: earlier days of the current week are late, not "w1".
+    var mon=new Date(t0); mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+    var wk=function(e){ return Math.floor(Math.round((e.d-mon)/86400000)/7); };
+    for(var w=0;w<WEEKS;w++){ var ws=new Date(mon); ws.setDate(ws.getDate()+w*7);
       var head='w'+(w+1)+' · '+ws.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-      var inWk=evs.filter(function(e){ var o=off(e); return o>=w*7 && o<(w+1)*7; });
+      var inWk=evs.filter(function(e){ return off(e)>=0 && wk(e)===w; });
       shown+=inWk.length;
       html+='<div class="tl-week"><div class="tl-wh'+(w===0?' now':'')+'">'+head+' <span class="tl-wn">'+inWk.length+'</span></div>'+
         (inWk.length? inWk.map(card).join('') : '<div class="tl-empty">—</div>')+'</div>';
     }
     // never drop the tail silently — anything past the horizon collects in its own column
-    var later=evs.filter(function(e){ return off(e)>=WEEKS*7; });
+    var later=evs.filter(function(e){ return off(e)>=0 && wk(e)>=WEEKS; });
     html+='<div class="tl-week tl-later"><div class="tl-wh">Later <span class="tl-wn">'+later.length+'</span></div>'+
       (later.length? later.slice(0,40).map(card).join('')+(later.length>40?'<div class="tl-empty">+'+(later.length-40)+' more — widen the horizon</div>':'') : '<div class="tl-empty">—</div>')+'</div>';
     host.innerHTML=html;
