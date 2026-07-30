@@ -1265,7 +1265,14 @@ window.addEventListener('load',restore);
   // UK-first date parse (DD/MM/YYYY, "DD Mon YYYY"); swaps if it reads as MM/DD
   function parseUKDate(s){ s=String(s||'').trim(); if(!s)return null; var m;
     if(m=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/.exec(s)){ var y=+m[3]; if(y<100)y+=2000; var mo=+m[2]-1, da=+m[1]; if(mo>11){ var t=da-1; da=mo+1; mo=t; } var d=new Date(y,mo,da); return isNaN(d)?null:d; }
-    var d2=new Date(s); return isNaN(d2)?null:d2; }
+    if(m=/^(\d{1,2})[\/\-.](\d{1,2})$/.exec(s)){ var mo1=+m[2]-1, da1=+m[1]; if(mo1>11){ var t1=da1-1; da1=mo1+1; mo1=t1; }   // "21/8" — day/month, no year
+      var dn=new Date(new Date().getFullYear(),mo1,da1); return isNaN(dn)?null:dn; }
+    var d2=new Date(s); if(isNaN(d2))return null;
+    // Year-less strings ("21 Aug", "Aug 21") — V8 fills in year 2001, which threw every such row
+    // ~25 years into the past: sorted above everything, flagged ~9000d late on the timeline, and
+    // dropped from the plan month-window. Sheets write these; assume the current year instead.
+    if(d2.getFullYear()<2015 && !/\d{4}/.test(s)) d2.setFullYear(new Date().getFullYear());
+    return d2; }
   function monthKey(d){ return d ? d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2) : ''; }
   // per-brand set of the latest N months present in the plan — "latest 2 months for each brand"
   function allowedMonths(){ var n={'2m':2,'3m':3,'4m':4,'6m':6}[itState.window]; if(!n)return null;
@@ -1362,7 +1369,11 @@ window.addEventListener('load',restore);
       return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0||(r.esrc&&S.srcs.indexOf('email')>=0))&&(!S.clients.length||S.clients.indexOf(r.client)>=0)&&(!S.ams.length||S.ams.indexOf(amOf(r.client))>=0)
         &&(!S.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(S.q)>=0); })
       .sort(function(a,b){ var k=itState.sort;
-        if(k==='dsort'){ var da=taskDate(a), db=taskDate(b); return ((da?da.getTime():0)-(db?db.getTime():0))*itState.dir; }
+        if(k==='dsort'){ var da=taskDate(a), db=taskDate(b);
+          if(!da&&!db)return 0; if(!da)return 1; if(!db)return -1;   // dateless rows sink to the bottom in BOTH directions (they used to sort as 1970 and top the ascending list)
+          return (da-db)*itState.dir; }
+        if(k==='b'){ var R={open:0,briefed:1,progress:2,hold:3,client:4,done:5};   // lifecycle order, not alphabetical bucket names
+          return ((R[a.b]!=null?R[a.b]:9)-(R[b.b]!=null?R[b.b]:9))*itState.dir; }
         return (((a[k]||'')+'').localeCompare((b[k]||'')+''))*itState.dir; }); }
   // active client-filter chips, shown above the table so a selected client can be dropped
   // without reopening the "N clients ▾" dropdown — Ray's ask, it's an "upper control" now.
