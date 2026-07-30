@@ -596,11 +596,21 @@ window.addEventListener('load',restore);
      exactly 3 * line-height and the cut is clean. Full text is in the card's title tooltip. */
   .tl-ev{font-size:11.5px;font-weight:700;line-height:15px;padding:6px 8px;border-radius:8px;margin-bottom:6px;background:var(--wash);border-left:3px solid var(--navy);cursor:pointer;overflow:hidden}
   .tl-t{display:block;max-height:45px;overflow:hidden}
-  /* owner + day: an AM reads the axis for "who holds this, and when", not just the task text */
-  .tl-meta{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:4px;font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.01em}
-  /* min-width:0 lets the owner ellipsis instead of forcing the date onto a second line */
-  .tl-meta b{min-width:0;font-weight:900;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* flag + owner + day: an AM reads the axis for "what state, who holds it, when" at a glance */
+  .tl-meta{display:flex;align-items:baseline;gap:6px;margin-top:4px;font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.01em}
+  /* min-width:0 + flex:1 lets the owner ellipsis instead of forcing the date onto a second line */
+  .tl-meta b{min-width:0;flex:1;font-weight:900;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .tl-meta span{flex:none;white-space:nowrap}
+  .tl-flag{flex:none;font-size:8.5px;font-weight:900;letter-spacing:.04em;color:#fff;border-radius:4px;padding:1px 5px;line-height:1.5;align-self:center}
+  /* the status legend: one chip per status present on the axis, click = filter to it */
+  .tl-legend{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+  .tl-lg{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:11px;font-weight:800;color:var(--ink-2);border:1px solid var(--line);border-radius:100px;padding:3px 10px;background:var(--paper);cursor:pointer}
+  .tl-lg .dot{width:9px;height:9px;border-radius:3px}
+  .tl-lg .n{color:var(--muted);font-weight:900;font-size:10px}
+  .tl-lg:hover{border-color:var(--orange)}
+  .tl-lg.on{border-color:var(--navy);background:var(--navy);color:#fff}
+  .tl-lg.on .n{color:#D8DEE8}
+  body.tl-focus .tl-sec .tl-legend{position:sticky;top:44px;z-index:2;background:var(--wash);padding-bottom:4px}
   .tl-ev.over .tl-meta span{color:#C0392B}
   .tl-ev.test{border-left-color:var(--orange)}
   .tl-ev.carry{border-left-color:#7A5AA8}
@@ -748,6 +758,31 @@ window.addEventListener('load',restore);
     </tr></tfoot>
   </table></div>
 
+  <h2>Timeline — every dated task<button class="info-btn" type="button" aria-label="How Timeline works">i</button>
+    <div class="info-pop">The Intake above, re-plotted by date — plus each test's analysis date. It runs on the <b>same filters as Intake</b>: source, status, brand, AM, search and plan window all apply here too (the brand / AM / search controls in this bar are those same filters, kept in reach for Focus mode — change them in either place). Every card carries a colour-coded <b>status flag</b> — ticket stages for briefed work, plan status for the rest — and the <b>legend</b> filters by one click (click again to clear). <b>Overdue</b> gets its own column and anything past the horizon collects in <b>Later</b> — nothing is dropped. Briefed cards open the ticket; un-briefed ones open the row as an <b>edit pop-up</b> writing back to the project plan. <b>⛶ Focus</b> (or <b>F</b>) fills the screen; <b>Esc</b> leaves.</div>
+  </h2>
+  <section class="tl-sec" id="tl-sec">
+  <div class="it-ctl">
+    <div class="it-grp"><span class="it-lbl">Scope</span><div class="it-src" id="tl-scope" role="group" aria-label="Filter the timeline by brief scope"></div></div>
+    <div class="it-multi" id="tl-client-wrap">
+      <button type="button" class="it-multi-btn" id="tl-client-btn" aria-haspopup="true" aria-expanded="false" title="Filter by brand — the same filter as the Intake grid's">All brands ▾</button>
+      <div class="it-multi-menu" id="tl-client-menu" role="group" aria-label="Filter by brand (shared with Intake)" hidden></div>
+    </div>
+    <div class="it-multi" id="tl-am-wrap">
+      <button type="button" class="it-multi-btn" id="tl-am-btn" aria-haspopup="true" aria-expanded="false" title="Filter by Account Manager — the same filter as the Intake grid's">All AMs ▾</button>
+      <div class="it-multi-menu" id="tl-am-menu" role="group" aria-label="Filter by account manager (shared with Intake)" hidden></div>
+    </div>
+    <select id="tl-weeks" aria-label="Timeline horizon" title="How far ahead the columns run — anything beyond lands in Later">
+      <option value="6">6 weeks</option><option value="8">8 weeks</option><option value="12">12 weeks</option>
+    </select>
+    <input id="tl-search" type="search" placeholder="Search tasks, owners…" aria-label="Search (shared with Intake)">
+    <button type="button" class="tl-focus-btn" id="tl-focus" aria-pressed="false" title="Fill the screen (F) — Esc leaves">⛶ Focus</button>
+    <span class="it-n" id="tl-n"></span>
+  </div>
+  <div class="tl-legend" id="tl-legend"></div>
+  <div class="tl-wrap"><div class="tl-grid" id="tl-grid"></div></div>
+  </section>
+
   <h2>Brief pipeline<button class="info-btn" type="button" aria-label="How Brief pipeline works">i</button>
     <div class="info-pop">Every brief from send to sign-off. Cards are compact so 20+ briefs stay visible: brand chip (+market if not GB), due, and days-in-court (red = over SLA — the lane tells you whose court). Hover for the full task; drag between lanes; click to open the ticket. The <b>court cards</b> show which of the three teams holds the ball — click one to spotlight its tickets. Paste any reply into the <b>router</b> and it finds the right ticket (by <code>[ibfcode]</code>, brief ID or task wording), logs it, and moves the stage.</div>
   </h2>
@@ -762,30 +797,6 @@ window.addEventListener('load',restore);
   <div class="runsla-bar" id="runsla-bar"></div>
   <div class="sla-grid" id="sla-grid"></div>
   <div class="panel" style="margin-top:12px"><h3>Escalations — over-SLA in any court</h3><div id="sla-stalled" class="stall-list"></div></div>
-
-  <h2>Timeline — every dated task<button class="info-btn" type="button" aria-label="How Timeline works">i</button>
-    <div class="info-pop">Every task carrying a due date — the whole Intake, across all brands, not just the briefed ones — plus each test's analysis date, on one axis. Due dates are the ones you set in <b>Intake</b>, so they're the same dates as the project plans. <b>Overdue</b> gets its own column and anything past the horizon collects in <b>Later</b> — nothing is dropped. Filter by <b>brand</b> or <b>AM</b>; <b>Scope</b> narrows to briefed or un-briefed work. Briefed items carry their stage colour and open the ticket; clicking an un-briefed one opens the row as an <b>edit pop-up</b> — task, owner, status, due — saving through the same 2-way write-back to the project plan, with the page staying put. <b>⛶ Focus</b> (or <b>F</b>) fills the screen for working a book of accounts; <b>Esc</b> leaves.</div>
-  </h2>
-  <section class="tl-sec" id="tl-sec">
-  <div class="it-ctl">
-    <div class="it-grp"><span class="it-lbl">Scope</span><div class="it-src" id="tl-scope" role="group" aria-label="Filter the timeline by brief scope"></div></div>
-    <div class="it-multi" id="tl-client-wrap">
-      <button type="button" class="it-multi-btn" id="tl-client-btn" aria-haspopup="true" aria-expanded="false" title="Filter by brand">All brands ▾</button>
-      <div class="it-multi-menu" id="tl-client-menu" role="group" aria-label="Filter the timeline by brand (multi-select)" hidden></div>
-    </div>
-    <div class="it-multi" id="tl-am-wrap">
-      <button type="button" class="it-multi-btn" id="tl-am-btn" aria-haspopup="true" aria-expanded="false" title="Filter by Account Manager">All AMs ▾</button>
-      <div class="it-multi-menu" id="tl-am-menu" role="group" aria-label="Filter the timeline by account manager (multi-select)" hidden></div>
-    </div>
-    <select id="tl-weeks" aria-label="Timeline horizon" title="How far ahead the columns run — anything beyond lands in Later">
-      <option value="6">6 weeks</option><option value="8">8 weeks</option><option value="12">12 weeks</option>
-    </select>
-    <input id="tl-search" type="search" placeholder="Search tasks, owners…" aria-label="Search the timeline">
-    <button type="button" class="tl-focus-btn" id="tl-focus" aria-pressed="false" title="Fill the screen (F) — Esc leaves">⛶ Focus</button>
-    <span class="it-n" id="tl-n"></span>
-  </div>
-  <div class="tl-wrap"><div class="tl-grid" id="tl-grid"></div></div>
-  </section>
 
   <h2>Test &amp; experiment register<button class="info-btn" type="button" aria-label="How the test register works">i</button>
     <div class="info-pop">Every A/B in one place — hypothesis, cohort, analysis date and result. Analysis dates feed the timeline and alerts so no test dies un-analysed; the wins are your deck ammo.</div>
@@ -1247,7 +1258,9 @@ window.addEventListener('load',restore);
     } else toast('Added locally · no plan sheet linked for '+client);
   }
   var itState={srcs:[],clients:[],ams:[],q:'',statuses:['open','progress','briefed'],window:'2m',sort:'client',dir:1,showHidden:false};   // multi-select: empty array = all
-  var tlState={clients:[],ams:[],scope:[],weeks:6};   // the timeline's own filters (declared here — its controls are wired below)
+  // Timeline-ONLY state is scope / flags / horizon. Brand, AM and search are NOT here — the
+  // timeline reads them straight from itState, because it's the Intake re-plotted by date.
+  var tlState={scope:[],flags:[],weeks:6};
   var itSel={};   // bulk selection: key -> task object
   // UK-first date parse (DD/MM/YYYY, "DD Mon YYYY"); swaps if it reads as MM/DD
   function parseUKDate(s){ s=String(s||'').trim(); if(!s)return null; var m;
@@ -1433,6 +1446,10 @@ window.addEventListener('load',restore);
         ht.textContent=itState.showHidden?('Hide '+hc+' note'+(hc===1?'':'s')):('Show '+hc+' hidden');
         ht.setAttribute('aria-pressed',itState.showHidden?'true':'false'); } }
     renderBulk();
+    // the timeline is this grid re-plotted by date, on the SAME filters — every path that
+    // changes an Intake filter ends here, so cascading keeps the two views in step without
+    // wiring every control twice. (renderAll relies on this and doesn't call it separately.)
+    renderTimeline();
   }
   // ---- spreadsheet grid: cell select, keyboard nav, copy/paste (TSV), fill-down (Excel-style) ----
   var COLS=['client','feed','task','owner','due','status','source'];
@@ -1688,26 +1705,31 @@ window.addEventListener('load',restore);
     clear:function(){ itState.ams=[]; } });
   function ensureClientFilter(){ buildStatusFilter(); buildClientFilter(); buildAmFilter(); }   // rebuilt each render from renderIntake
   buildStatusFilter(); buildClientFilter(); buildAmFilter();
-  // the timeline's own brand + AM filters — same widget, its own state, re-renders the timeline only.
-  // Options come from what's actually ON the axis, so a brand with no dated task never appears.
+  // The timeline's brand / AM buttons are MIRRORS of the Intake filters — same itState, same
+  // option list, so a brand ticked here narrows the Intake grid too (and vice versa). They exist
+  // as separate buttons only so filtering stays in reach in Focus mode, where the Intake bar is
+  // off-screen. Changing one re-renders Intake, which cascades into the timeline.
   var buildTlClientFilter=setupMulti({ btn:'tl-client-btn', menu:'tl-client-menu', wrap:'tl-client-wrap',
-    allLabel:'All brands', noun:'brands', one:function(v){ return v; }, onChange:function(){ renderTimeline(); },
-    options:function(){ var set={}; timelineEvents().forEach(function(e){ set[e.client]=1; });
-      tlState.clients=tlState.clients.filter(function(c){ return set[c]; }); return Object.keys(set).sort().map(function(c){ return {v:c,l:c}; }); },
-    selected:function(){ return tlState.clients; },
-    toggle:function(v,on){ var i=tlState.clients.indexOf(v); if(on){ if(i<0)tlState.clients.push(v); } else if(i>=0)tlState.clients.splice(i,1); },
-    clear:function(){ tlState.clients=[]; } });
+    allLabel:'All brands', noun:'brands', one:function(v){ return v; }, onChange:function(){ renderIntake(); },
+    options:function(){ var set={}; allIntake().forEach(function(r){ if(!DELETED[r.client+'|'+r.task]) set[r.client]=1; });
+      return Object.keys(set).sort().map(function(c){ return {v:c,l:c}; }); },
+    selected:function(){ return itState.clients; },
+    toggle:function(v,on){ var i=itState.clients.indexOf(v); if(on){ if(i<0)itState.clients.push(v); } else if(i>=0)itState.clients.splice(i,1); },
+    clear:function(){ itState.clients=[]; } });
   var buildTlAmFilter=setupMulti({ btn:'tl-am-btn', menu:'tl-am-menu', wrap:'tl-am-wrap',
-    allLabel:'All AMs', noun:'AMs', one:function(v){ return v; }, onChange:function(){ renderTimeline(); },
-    options:function(){ var set={}; timelineEvents().forEach(function(e){ set[e.am]=1; });
-      tlState.ams=tlState.ams.filter(function(a){ return set[a]; }); return Object.keys(set).sort().map(function(a){ return {v:a,l:a}; }); },
-    selected:function(){ return tlState.ams; },
-    toggle:function(v,on){ var i=tlState.ams.indexOf(v); if(on){ if(i<0)tlState.ams.push(v); } else if(i>=0)tlState.ams.splice(i,1); },
-    clear:function(){ tlState.ams=[]; } });
+    allLabel:'All AMs', noun:'AMs', one:function(v){ return v; }, onChange:function(){ renderIntake(); },
+    options:function(){ var set={}; allIntake().forEach(function(r){ if(!DELETED[r.client+'|'+r.task]) set[amOf(r.client)]=1; });
+      return Object.keys(set).sort().map(function(a){ return {v:a,l:a}; }); },
+    selected:function(){ return itState.ams; },
+    toggle:function(v,on){ var i=itState.ams.indexOf(v); if(on){ if(i<0)itState.ams.push(v); } else if(i>=0)itState.ams.splice(i,1); },
+    clear:function(){ itState.ams=[]; } });
   (function(){ var w=document.getElementById('tl-weeks'); if(!w)return;
     w.value=String(tlState.weeks); w.onchange=function(){ tlState.weeks=+w.value||6; renderTimeline(); }; })();
+  // shared search: this box IS the Intake search (same itState.q), mirrored both ways
   (function(){ var s=document.getElementById('tl-search'); if(!s)return;
-    s.oninput=function(){ tlState.q=s.value.trim(); renderTimeline(); }; })();
+    s.oninput=function(){ itState.q=s.value.trim().toLowerCase();
+      var m=document.getElementById('it-search'); if(m&&m!==document.activeElement)m.value=s.value;
+      renderIntake(); }; })();
   // Focus mode: the axis fills the screen so a whole book of accounts is workable at once.
   // The full-bleed width is calc(100vw - scrollbar); measure it rather than assume 0.
   function tlScrollbar(){ var w=window.innerWidth-document.documentElement.clientWidth;
@@ -2148,55 +2170,97 @@ window.addEventListener('load',restore);
   // joined to their ticket where one exists, plus the test-analysis dates. Its own brand/AM/scope
   // filters so it can be read per account without touching the Intake filters above.
   var TL_SCOPE=[['','All tasks'],['brief','Briefed'],['open','Not briefed']];   // tlState is declared with itState
+  // ---- status flags: every card carries a compact colour-coded code so the mix of statuses on
+  // a column reads at a glance, and the legend under the bar filters by one (click again to
+  // clear). Two vocabularies, deliberately distinct: briefed work flags its TICKET STAGE
+  // (s:...) in the stage colour; un-briefed work flags its PLAN STATUS bucket (b:...).
+  var FLAG_CODE={'s:intake':'NEW','s:briefed':'ASPL','s:progress':'RUN','s:blocked':'BLK','s:done':'A✓',
+    's:analysis':'LAB','s:confirmed':'✓✓','b:open':'OPEN','b:briefed':'BRF','b:progress':'WIP',
+    'b:hold':'HOLD','b:client':'W/CL','b:done':'DONE'};
+  var BUCKET_COLOR={open:'#8a94a0',briefed:'#B1550A',progress:'#C96A12',hold:'#98A0A8',client:'#3D5A80',done:'#15803D'};
+  function flagKey(e){ if(e.kind==='test')return 's:analysis';
+    return e.brief?('s:'+e.brief.status):('b:'+(e.b||'open')); }
+  function flagColor(k){ return k.slice(0,2)==='s:'?(STAGE_COLOR[k.slice(2)]||'#8a94a0'):(BUCKET_COLOR[k.slice(2)]||'#8a94a0'); }
+  function flagLabel(k){ return k.slice(0,2)==='s:'?('Ticket · '+(STAGE_LBL[k.slice(2)]||k.slice(2))):('Plan · '+(STAT_LBL[k.slice(2)]||k.slice(2))); }
+  function renderTlLegend(evs){ var host=document.getElementById('tl-legend'); if(!host)return;
+    var counts={}; evs.forEach(function(e){ var k=flagKey(e); counts[k]=(counts[k]||0)+1; });
+    tlState.flags=tlState.flags.filter(function(k){ return counts[k]; });   // a flag with nothing behind it can't stay stuck on
+    var order=['s:intake','s:briefed','s:progress','s:blocked','s:analysis','s:done','s:confirmed',
+      'b:open','b:briefed','b:progress','b:hold','b:client','b:done'];
+    host.innerHTML=order.filter(function(k){ return counts[k]; }).map(function(k){
+      return '<button type="button" class="tl-lg'+(tlState.flags.indexOf(k)>=0?' on':'')+'" data-f="'+k+'" title="'
+        +esc(flagLabel(k))+' — click to show only these">'
+        +'<span class="dot" style="background:'+flagColor(k)+'"></span>'+esc(FLAG_CODE[k]||k)
+        +'<span class="n">'+counts[k]+'</span></button>'; }).join('');
+    host.querySelectorAll('.tl-lg').forEach(function(b){ b.onclick=function(){
+      var k=b.getAttribute('data-f'), i=tlState.flags.indexOf(k);
+      if(i>=0)tlState.flags.splice(i,1); else tlState.flags.push(k);
+      renderTimeline(); }; });
+  }
   // one row per dated task; a task that's been briefed carries its ticket (stage colour + opens it)
   function timelineEvents(){
-    var evs=[], seen={};
+    var evs=[], seen={}, S=itState, q=(S.q||'').toLowerCase();
     var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey)BK[b.taskKey]=b; });
-    allIntake().forEach(function(t){
+    // The axis is fed from intakeFiltered() — the SAME rows through the SAME filters (source,
+    // status, brand, AM, search, plan window) as the Intake grid above. The timeline is that
+    // grid re-plotted by date, not a second list with its own rules.
+    intakeFiltered().forEach(function(t){
       var k=t.client+'|'+t.task;
-      if(DELETED[k]||HIDDEN[k]||seen[k])return;
-      if(t.b==='done')return;                                    // finished work isn't a deadline
+      if(seen[k])return;
       var d=taskDate(t); if(!d)return;                           // no due date set = not on the axis
       seen[k]=1;
       var bf=BK[k];
       evs.push({d:d,client:t.client,task:t.task,am:amOf(t.client),owner:t.owner||'',brief:bf||null,
-        id:bf?bf.id:'',key:k,kind:bf?'brief':'task'});
+        id:bf?bf.id:'',key:k,kind:bf?'brief':'task',b:t.b||bucketOf(t.s)});
     });
-    // tickets whose intake row has since gone (deleted/hidden) still need their date on the axis
+    // events that don't come from the grid still honour the shared brand/AM/search filters
+    function ok(client,task,owner){ if(S.clients.length&&S.clients.indexOf(client)<0)return false;
+      if(S.ams.length&&S.ams.indexOf(amOf(client))<0)return false;
+      return !q||((task+' '+client+' '+(owner||'')).toLowerCase().indexOf(q)>=0); }
+    // live tickets whose intake row is gone (deleted/hidden) or filtered out by status/window —
+    // an active ticket shouldn't vanish from the axis because its plan row did
     Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id];
       if(!b||b.status==='confirmed')return;
-      var k=b.taskKey||(b.client+'|'+b.task); if(seen[k])return;
+      var k=b.taskKey||(b.client+'|'+b.task); if(seen[k]||!ok(b.client,b.task,b.aspl))return;
       var d=ddmmyyyyToDate(b.due); if(!d)return; seen[k]=1;
-      evs.push({d:d,client:b.client,task:b.task,am:amOf(b.client),owner:b.aspl||'',brief:b,id:b.id,key:k,kind:'brief'});
+      evs.push({d:d,client:b.client,task:b.task,am:amOf(b.client),owner:b.aspl||'',brief:b,id:b.id,key:k,kind:'brief',b:''});
     });
     Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b||b.status==='confirmed'||hasResult(b))return;
+      if(!ok(b.client,b.task,b.aspl))return;
       var rd=readoutDue(b); if(rd==null)return;
-      evs.push({d:new Date(rd),client:b.client,task:b.task.slice(0,44)+' · analysis',am:amOf(b.client),owner:b.aspl||'',brief:b,id:b.id,key:'ro|'+id,kind:'test'}); });
-    TESTS.forEach(function(t,i){ if(t.result||!t.readout)return; var d=isoDate(t.readout); if(!d)return;
-      evs.push({d:d,client:t.client,task:t.name+' · analysis',am:amOf(t.client),owner:'',brief:null,id:'',key:'ts|'+i,kind:'test'}); });
+      evs.push({d:new Date(rd),client:b.client,task:b.task.slice(0,44)+' · analysis',am:amOf(b.client),owner:b.aspl||'',brief:b,id:b.id,key:'ro|'+id,kind:'test',b:''}); });
+    TESTS.forEach(function(t,i){ if(t.result||!t.readout)return; if(!ok(t.client,t.name,''))return;
+      var d=isoDate(t.readout); if(!d)return;
+      evs.push({d:d,client:t.client,task:t.name+' · analysis',am:amOf(t.client),owner:'',brief:null,id:'',key:'ts|'+i,kind:'test',b:''}); });
     return evs;
   }
-  function timelineFiltered(){ var S=tlState, q=(S.q||'').toLowerCase();
+  // brand/AM/search/status/source/window are already applied upstream (they're the Intake's own
+  // filters); here only the timeline-local scope chips apply. Flags filter separately in
+  // renderTimeline so the legend can count what each flag WOULD show.
+  function timelineFiltered(){ var S=tlState;
     return timelineEvents().filter(function(e){
-      if(S.clients.length&&S.clients.indexOf(e.client)<0)return false;
-      if(S.ams.length&&S.ams.indexOf(e.am)<0)return false;
       if(S.scope.length){ var isB=!!e.brief; if(S.scope.indexOf(isB?'brief':'open')<0)return false; }
-      if(q&&(e.task+' '+e.client+' '+(e.owner||'')+' '+e.am).toLowerCase().indexOf(q)<0)return false;
       return true; }).sort(function(a,b){ return a.d-b.d; });
   }
   function renderTimeline(){ var host=document.getElementById('tl-grid'); if(!host)return;
     buildTlClientFilter(); buildTlAmFilter(); renderChipBar('tl-scope',TL_SCOPE,'scope',tlState,renderTimeline);
-    var t0=today(), WEEKS=tlState.weeks, evs=timelineFiltered(), html='', shown=0;
+    // mirror the shared search into this bar (typing in either box drives the same itState.q)
+    var ts=document.getElementById('tl-search'); if(ts&&ts!==document.activeElement)ts.value=itState.q||'';
+    var scoped=timelineFiltered();
+    renderTlLegend(scoped);   // legend counts BEFORE the flag filter, so every flag shows what it would reveal
+    var evs=tlState.flags.length?scoped.filter(function(e){ return tlState.flags.indexOf(flagKey(e))>=0; }):scoped;
+    var t0=today(), WEEKS=tlState.weeks, html='', shown=0;
     function card(e){ var off=Math.round((e.d-t0)/86400000);
       var lab=abbr(e.client)+' · '+e.task;
+      var fk=flagKey(e);
       var tip=e.client+' · '+e.task+'\n'+e.d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' · AM '+e.am
-        +(e.brief?('\nTicket '+e.brief.id+' — '+(STAGE_LBL[e.brief.status]||e.brief.status)):'\nNot briefed yet');
+        +(e.brief?('\nTicket '+e.brief.id+' — '+(STAGE_LBL[e.brief.status]||e.brief.status)):'\n'+flagLabel(fk)+' · not briefed yet');
       var style=e.brief&&e.kind==='brief'?(' style="border-left-color:'+(STAGE_COLOR[e.brief.status]||'#8a94a0')+'"'):'';
       var day=off<0?(Math.abs(off)+'d late'):e.d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
       var who=e.owner&&e.owner!=='—'?e.owner:e.am;
       return '<div class="tl-ev '+e.kind+(off<0?' over':'')+'"'+style+' data-k="'+esc(e.key)+'"'+(e.id?' data-id="'+esc(e.id)+'"':'')
         +' data-c="'+esc(e.client)+'" title="'+esc(tip)+'"><span class="tl-t">'+esc(lab)+'</span>'
-        +'<span class="tl-meta"><b>'+esc(who)+'</b><span>'+esc(day)+'</span></span></div>'; }
+        +'<span class="tl-meta"><span class="tl-flag" style="background:'+flagColor(fk)+'" title="'+esc(flagLabel(fk))+'">'+esc(FLAG_CODE[fk]||'')+'</span><b>'+esc(who)+'</b><span>'+esc(day)+'</span></span></div>'; }
     // overdue gets its OWN column rather than being folded into week 1 — across every brand that's
     // the bulk of the axis, and burying it in "this week" hides both the backlog and the week itself
     var off=function(e){ return Math.round((e.d-t0)/86400000); };
@@ -2215,7 +2279,7 @@ window.addEventListener('load',restore);
       (later.length? later.slice(0,40).map(card).join('')+(later.length>40?'<div class="tl-empty">+'+(later.length-40)+' more — widen the horizon</div>':'') : '<div class="tl-empty">—</div>')+'</div>';
     host.innerHTML=html;
     var n=document.getElementById('tl-n');
-    if(n)n.textContent=evs.length+' dated task'+(evs.length===1?'':'s')+(over.length?' · '+over.length+' overdue':'')+' · '+shown+' in '+WEEKS+'w'+(later.length?' · '+later.length+' later':'');
+    if(n)n.textContent=(tlState.flags.length?evs.length+' of '+scoped.length+' (flag-filtered)':evs.length+' dated task'+(evs.length===1?'':'s'))+(over.length?' · '+over.length+' overdue':'')+' · '+shown+' in '+WEEKS+'w'+(later.length?' · '+later.length+' later':'');
     // briefed → open the ticket; un-briefed → edit the Intake row in a pop-up, in place.
     // No scroll-jump: the page stays exactly where it is (Ray's ask) — "Open in Intake ↗"
     // inside the pop-up is the one deliberate way down to the grid.
@@ -2389,7 +2453,7 @@ window.addEventListener('load',restore);
     Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k];
       if(b&&b.status==='done'&&needsAnalysis(b)){ var rd=readoutDue(b); if(rd!=null&&Date.now()>rd){ setStage(b,'analysis'); moved++; } } });
     if(moved){ persist(); toast(moved+' brief'+(moved===1?'':'s')+' finished the run window — moved to Analysis'); } }
-  function renderAll(){ _planCache=null; autoAdvanceReadouts(); renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTimeline(); renderTests(); renderWorkload(); renderAlerts(); }
+  function renderAll(){ _planCache=null; autoAdvanceReadouts(); renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTests(); renderWorkload(); renderAlerts(); }   // renderIntake cascades into renderTimeline
 
   // set a sensible default due date (today + 5 working-ish days) and boot
   (function(){ var d=new Date(); d.setDate(d.getDate()+5);
