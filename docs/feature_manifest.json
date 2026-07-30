@@ -866,6 +866,13 @@
       "pattern": "tl-focus",
       "min": 4,
       "pr": 167
+    },
+    {
+      "name": "workflow: timeline sticky week headers + row-edit pop-up (tle)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "tle-scrim",
+      "min": 3,
+      "pr": 168
     }
   ]
 }
