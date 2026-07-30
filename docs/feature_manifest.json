@@ -886,6 +886,13 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "dateless rows sink to the bottom",
       "pr": 170
+    },
+    {
+      "name": "workflow: gmail triage groups conversation threads (one decision per thread)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "groupThreads",
+      "min": 3,
+      "pr": 172
     }
   ]
 }

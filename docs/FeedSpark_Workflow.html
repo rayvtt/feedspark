@@ -81,6 +81,12 @@ window.addEventListener('load',restore);
   .em-cl{flex:none;font-size:10.5px;font-weight:900;color:var(--ink-2);border:1px solid var(--line);border-radius:100px;padding:1px 8px;background:var(--wash)}
   .em-subj{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
   .em-ago{flex:none;font-size:11px;color:var(--muted);font-weight:700}
+  /* thread grouping: the count chip on a conversation row + the expanded per-email preview rows */
+  .em-thn{font:inherit;font-size:10px;font-weight:900;margin-left:8px;padding:1px 8px;border-radius:100px;border:1px solid var(--orange);background:rgba(245,166,35,.12);color:var(--orange-ink);cursor:pointer;white-space:nowrap}
+  .em-thn:hover,.em-thn.on{background:var(--orange);color:#fff}
+  .em-sub{display:grid;grid-template-columns:130px 1fr 40px;gap:10px;align-items:center;padding:3px 0 3px 248px;font-size:11.5px;color:var(--muted);border-bottom:1px dashed var(--line)}
+  .em-sub-from{font-weight:800;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .em-sub-snip{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .em-go{flex:none;font:inherit;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
   .em-go:hover{background:var(--orange);color:#fff}
   .em-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px}
@@ -2499,6 +2505,21 @@ window.addEventListener('load',restore);
   // Decisions are remembered by the worker (KV) so cleared emails never resurface on a push;
   // the "Show triaged" toggle lists them greyed-out with a ↩ Restore.
   var showDismissed=false;
+  // ---- thread grouping: replies share a subject, so "Re: Re: X" x4 used to sit as four rows
+  // needing four decisions. Pending emails now group by normalised subject (re:/fw:/fwd: prefixes
+  // stripped) — one row per conversation, newest message on top, "N ✉" expands the rest, and
+  // → Task / ✕ decide the WHOLE thread at once (task = newest message; every member's decision
+  // is remembered server-side so none of them resurface).
+  var openThreads={};
+  function threadKey(g){ return String(g.subject||'').toLowerCase()
+    .replace(/^\s*((re|fw|fwd|aw|sv)\s*:\s*)+/i,'').replace(/\s+/g,' ').trim()||('one|'+g.id); }
+  function groupThreads(items){ var by={}, order=[];
+    items.forEach(function(g){ var k=threadKey(g); if(!by[k]){ by[k]=[]; order.push(k); } by[k].push(g); });
+    return order.map(function(k){ var ms=by[k].slice().sort(function(a,b){ return (b.date||0)-(a.date||0); });
+      var rep=ms[0], cl=null, via=null, brf=false;
+      ms.forEach(function(m){ if(!cl&&m.client){ cl=m.client; via=m.via; } if(m.briefable)brf=true; });
+      return { key:k, rep:rep, all:ms, client:rep.client||cl||'', via:rep.via||via||'', briefable:brf }; });
+  }
   function emailRow(g){
     var ago=''; if(g.date){ var s=(Date.now()-(+g.date||new Date(g.date).getTime()))/1000;
       ago=s<3600?Math.max(1,Math.round(s/60))+'m':s<86400?Math.round(s/3600)+'h':Math.round(s/86400)+'d'; }
@@ -2526,23 +2547,64 @@ window.addEventListener('load',restore);
     panel.hidden=false;
     var pend=gmailItems.filter(function(g){return !g.dismissed;}),
         done=gmailItems.filter(function(g){return g.dismissed;});
-    if(n)n.textContent=pend.length?(pend.length+' waiting'):'all triaged ✓';
+    pend.sort(function(a,b){ return (b.briefable?1:0)-(a.briefable?1:0) || (b.date||0)-(a.date||0); });
+    var threads=groupThreads(pend);
+    if(n)n.textContent=threads.length?(threads.length+' waiting'):'all triaged ✓';   // decisions needed = threads, not raw emails
     if(tog){ tog.hidden=!done.length; tog.textContent=(showDismissed?'Hide':'Show')+' triaged ('+done.length+')';
       tog.onclick=function(){ showDismissed=!showDismissed; renderEmailPanel(); }; }
-    pend.sort(function(a,b){ return (b.briefable?1:0)-(a.briefable?1:0) || (b.date||0)-(a.date||0); });
-    var html=pend.slice(0,25).map(emailRow).join('')
+    var html=threads.slice(0,25).map(threadRow).join('')
       ||'<div class="em-zero">Nothing waiting — every captured email has been triaged.</div>';
     if(showDismissed&&done.length) html+='<div class="em-dis-h">Triaged — saved as a task or not a task</div>'+done.slice(0,25).map(emailRow).join('');
     list.innerHTML=html;
+    var TH={}; threads.forEach(function(th){ TH[th.key]=th; });
     function byId(b){ var id=b.getAttribute('data-id'), hit=null;
       gmailItems.forEach(function(g){ if(String(g.id)===id)hit=g; }); return hit; }
-    list.querySelectorAll('.em-go').forEach(function(b){ b.onclick=function(){ var g=byId(b); if(!g)return; saveEmailAsTask(g); }; });
-    list.querySelectorAll('.em-cl-sel').forEach(function(sel){ sel.onchange=function(){ var g=byId(sel); if(!g||!sel.value)return;
-      g.client=sel.value; g.via='assigned'; teachSender(g.from,sel.value);
+    function thOf(b){ return TH[b.getAttribute('data-th')]; }
+    list.querySelectorAll('.em-go').forEach(function(b){ b.onclick=function(){ var th=thOf(b); if(!th)return; saveEmailAsTask(th.rep, th.all); }; });
+    list.querySelectorAll('.em-no').forEach(function(b){ b.onclick=function(){ var th=thOf(b); if(!th)return; decideThread(th,'notask'); }; });
+    list.querySelectorAll('.em-thn').forEach(function(b){ b.onclick=function(){ var k=b.getAttribute('data-th');
+      if(openThreads[k])delete openThreads[k]; else openThreads[k]=1; renderEmailPanel(); }; });
+    list.querySelectorAll('.em-cl-sel').forEach(function(sel){ sel.onchange=function(){ var th=thOf(sel); if(!th||!sel.value)return;
+      th.all.forEach(function(m){ m.client=sel.value; m.via='assigned'; });   // the whole conversation is that brand's
+      teachSender(th.rep.from,sel.value);
       renderEmailPanel(); updateGmailState();
       toast(sel.value+' assigned — future emails from this sender will auto-detect'); }; });
-    list.querySelectorAll('.em-no').forEach(function(b){ b.onclick=function(){ decideEmail(b.getAttribute('data-id'),false,'notask'); }; });
     list.querySelectorAll('.em-res').forEach(function(b){ b.onclick=function(){ decideEmail(b.getAttribute('data-id'),true); }; });
+  }
+  // one row per conversation: the newest message fronts it, the count chip expands the rest
+  function threadRow(th){
+    var g=th.rep, n=th.all.length;
+    var ago=''; if(g.date){ var s=(Date.now()-(+g.date||new Date(g.date).getTime()))/1000;
+      ago=s<3600?Math.max(1,Math.round(s/60))+'m':s<86400?Math.round(s/3600)+'h':Math.round(s/86400)+'d'; }
+    var senders=[]; th.all.forEach(function(m){ var nm=senderName(m.from); if(senders.indexOf(nm)<0)senders.push(nm); });
+    var open=!!openThreads[th.key];
+    var row='<div class="em-row">'
+      +'<span class="em-cell-brand">'+(th.client?'<span class="em-cl">'+esc(th.client)+'</span>'
+        :'<select class="em-cl-sel" data-th="'+esc(th.key)+'" title="Detection found no brand — assign one and → Task writes straight into that brand’s plan (the sender is remembered for next time)"><option value="">— brand</option>'+CLIENTS.map(function(c){return '<option>'+esc(c)+'</option>';}).join('')+'</select>')
+        +(th.briefable?'<span class="em-brf" title="Action request detected in this thread">⚡</span>':'')+'</span>'
+      +(th.via?'<span class="em-cue" title="How the brand was detected">'+esc(th.via)+'</span>':'<span class="em-cue none">—</span>')
+      +'<span class="em-from" title="'+esc(senders.join(', '))+'">'+esc(senders[0])+(senders.length>1?' +'+(senders.length-1):'')+'</span>'
+      +'<span class="em-subj" title="'+esc(g.snippet||'')+'">'+esc(g.subject)
+        +(n>1?'<button class="em-thn'+(open?' on':'')+'" data-th="'+esc(th.key)+'" type="button" title="'+n+' emails in this conversation — click to '+(open?'collapse':'review each')+'">'+n+' ✉</button>':'')+'</span>'
+      +'<span class="em-ago">'+ago+'</span>'
+      +'<span class="em-act"><button class="em-go" data-th="'+esc(th.key)+'" type="button" title="Save as ONE task in Intake (from the newest email) — the whole thread is marked triaged">→ Task</button>'
+        +'<button class="em-no" data-th="'+esc(th.key)+'" type="button" title="Not a task — clears the whole thread (restorable under Show triaged)">✕</button></span></div>';
+    if(open&&n>1) row+=th.all.map(function(m){ var a=''; if(m.date){ var s2=(Date.now()-(+m.date||0))/1000;
+        a=s2<3600?Math.max(1,Math.round(s2/60))+'m':s2<86400?Math.round(s2/3600)+'h':Math.round(s2/86400)+'d'; }
+      return '<div class="em-sub"><span class="em-sub-from">'+esc(senderName(m.from))+'</span>'
+        +'<span class="em-sub-snip">'+esc((m.snippet||m.subject||'').slice(0,160))+'</span>'
+        +'<span class="em-ago">'+a+'</span></div>'; }).join('');
+    return row;
+  }
+  // decide a whole conversation in one click — every member's decision is stored, so no
+  // part of the thread ever re-enters the queue on a later push
+  function decideThread(th,reason){
+    th.all.forEach(function(m){ m.dismissed=true; m.decidedAs=reason||'notask';
+      fetch('/api/gmail/dismiss',{method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify({id:m.id,undo:false,reason:reason||'notask'})})
+        .catch(function(){ toast('Saving a triage decision failed — it may come back on refresh'); }); });
+    renderEmailPanel(); updateGmailState();
+    if(reason==='notask')toast(th.all.length>1?('Thread cleared — '+th.all.length+' emails, not a task'):'Cleared — not a task (find it under “Show triaged”)');
   }
   // optimistic local flip + server-side memory, so the decision survives every future push
   function decideEmail(id,undo,reason){
@@ -2558,7 +2620,7 @@ window.addEventListener('load',restore);
   // -> Task: saves the email straight into Intake as a plain task — no brief drafted yet.
   // Briefing happens later from Intake itself, same as any other task (Ray's explicit ask:
   // this button shouldn't jump into the brief composer the way project-plan rows' Brief does).
-  function saveEmailAsTask(g){
+  function saveEmailAsTask(g,thread){
     // client comes from detection only (domain / display-name / brand-mention cues, resolved
     // server-side and back-filled) — the sender belongs in the TASK NAME, never in the Client field.
     // A recognised brand goes through adoptIntoPlan: the row reaches the brand's plan SHEET
@@ -2568,6 +2630,9 @@ window.addEventListener('load',restore);
     else { MANUAL.push({client:g.client||'',task:task,owner:senderName(g.from),status:'Open',due:'',esrc:1}); saveManual();
       toast('Saved to Intake — client not recognised: double-click its Client cell to assign one'); }
     decideEmail(g.id,false,'task');
+    // the rest of the conversation is covered by that one task — mark every sibling decided
+    // too (reason "task"), so no part of the thread comes back on a later push
+    (thread||[]).forEach(function(m){ if(String(m.id)!==String(g.id))decideEmail(m.id,false,'task'); });
     renderAll();
   }
   // sender→brand memory: a manual assignment teaches detection — same sender auto-fills next time
@@ -2577,8 +2642,10 @@ window.addEventListener('load',restore);
   function applyTaught(items){ (items||[]).forEach(function(g){ if(!g.client){ var b=TAUGHT[senderEmail(g.from)]; if(b){ g.client=b; g.via='remembered'; } } }); }
   function updateGmailState(){ var st=document.getElementById('gstate'); if(!st||!gmailItems.length)return;
     var pend=gmailItems.filter(function(g){return !g.dismissed;}),
+        th=groupThreads(pend).length,
         brf=pend.filter(function(g){return g.briefable;}).length, done=gmailItems.length-pend.length;
-    st.textContent='Connected — '+pend.length+' email'+(pend.length===1?'':'s')+' waiting for triage'
+    st.textContent='Connected — '+pend.length+' email'+(pend.length===1?'':'s')
+      +(th<pend.length?(' in '+th+' thread'+(th===1?'':'s')):'')+' waiting for triage'
       +(brf?(' · '+brf+' look like action requests ⚡'):'')+(done?(' · '+done+' triaged'):'')+'.'; }
   (function(){ var dot=document.getElementById('gdot');
     fetch('/api/gmail/intake').then(function(r){return r.json();}).then(function(d){
