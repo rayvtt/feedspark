@@ -850,6 +850,48 @@ function applySeeds(){
   });
 }
 
+/* Ray (Aug 2026): tasks tracked BEFORE the ASPL handback batch describe the SAME briefs as
+   the handback rows — the selected attribute matches. So on boot, any older manual row whose
+   (client, Tachyon attribute) matches a handback seed folds INTO that seed: its tracked
+   numbers fill the seed's empty fields (hours especially — the handback carries none),
+   categories union, and the duplicate is tombstoned so each brief shows exactly once.
+   Runs every boot; once KV carries the fold it is a no-op. Scanned Workflow briefs are
+   never folded — a live ticket must not vanish from the table. */
+var OLD_SEEDS=['seed_mon_title','seed_mon_desc','seed_mon_kw','seed_acc_title','seed_acc_desc','seed_acc_kw','seed_sup_title','seed_sup_desc','seed_sup_kw'];
+function hasTrackData(tr){
+  return ['aspl','qc','pm','mon','tokens','billTok','runOne','runPar','volDone'].some(function(f){return +tr[f]>0})||!!tr.catsDone;
+}
+function mergeLegacyIntoSeeds(){
+  var byKey={};SEED_TRACK.forEach(function(sd){byKey[(sd.client+'|'+sd.tach).toLowerCase()]=sd.id});
+  var changed=false;
+  Object.keys(TRACK).forEach(function(k){
+    var tr=TRACK[k];
+    if(!tr||!tr.manual||tr.deleted||tr.clientMeta)return;
+    var tach=tr.tach||E.classifyTach(tr.task||'');if(!tach)return;
+    var sid=byKey[(String(tr.client||'').trim()+'|'+tach).toLowerCase()];
+    if(!sid||sid===k)return;                       // no handback twin, or it IS the seed
+    var seed=TRACK[sid];if(!seed||seed.deleted)return;   // a ✕'d seed must stay gone
+    ['aspl','qc','pm','mon','tokens','billTok','runOne','runPar','volDone'].forEach(function(f){
+      if(+tr[f]>0&&!(+seed[f]>0)){seed[f]=+tr[f];changed=true}});
+    if(tr.catsDone){var cs=String(seed.catsDone||'').split(' | ').filter(Boolean);
+      String(tr.catsDone).split(' | ').filter(Boolean).forEach(function(c){if(cs.indexOf(c)<0)cs.push(c)});
+      var j=cs.join(' | ');if(j!==seed.catsDone){seed.catsDone=j;changed=true}}
+    seed.t=Date.now();
+    TRACK[k]={manual:true,deleted:true,t:Date.now()};
+    changed=true;
+  });
+  // the Jul-26 placeholder seeds are superseded by the handback batch outright: if one is
+  // still in KV carrying no tracked numbers (whatever attribute it ended up on), retire it.
+  // One WITH data and no attribute twin stays visible — data is never silently dropped.
+  OLD_SEEDS.forEach(function(k){
+    var tr=TRACK[k];
+    if(!tr||tr.deleted||!tr.manual)return;
+    if(hasTrackData(tr))return;
+    TRACK[k]={manual:true,deleted:true,t:Date.now()};changed=true;
+  });
+  if(changed)saveTrack();
+}
+
 /* 🔗 attach: pull in a Workflow brief the title scan can't see (no AI wording in the task) */
 function wbCandidates(){
   return Object.keys(BRIEFS).filter(function(k){
@@ -1000,6 +1042,7 @@ function boot(){
     BRIEFS=(res[0]&&typeof res[0]==='object')?res[0]:{};
     TRACK=(res[1]&&typeof res[1]==='object')?res[1]:{};
     applySeeds();
+    mergeLegacyIntoSeeds();
     refreshActuals()});
   renderRates();renderCatalog();renderQuote();renderSaved();renderScaffolds();
 }

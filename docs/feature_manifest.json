@@ -928,6 +928,13 @@
       "pattern": "tok-pop",
       "min": 2,
       "pr": 174
+    },
+    {
+      "name": "Pricer: pre-batch rows fold into handback seeds by (client, attribute) on boot",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "mergeLegacyIntoSeeds",
+      "min": 2,
+      "pr": 175
     }
   ]
 }
