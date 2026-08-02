@@ -921,6 +921,13 @@
       "pattern": "text_attr",
       "min": 2,
       "pr": 173
+    },
+    {
+      "name": "Pricer: compact token column — single Bill units cell + token-economics pop-up",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "tok-pop",
+      "min": 2,
+      "pr": 174
     }
   ]
 }

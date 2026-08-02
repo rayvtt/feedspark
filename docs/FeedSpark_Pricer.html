@@ -207,7 +207,7 @@ window.addEventListener('load',restore);
   @media(max-width:640px){.fg{top:auto;bottom:14px}.fg-panel{max-height:60vh}}
   /* the tracking table gets real room: wide brief column, generous cell padding, nothing
      cropped — the whole thing pans inside .rc-scroll on smaller screens */
-  .ai-track{min-width:1720px}
+  .ai-track{min-width:1440px}
   .ai-track th{padding:9px 10px}
   .ai-track td{padding:10px;vertical-align:top}
   .ai-track .a-task{font-weight:800;min-width:300px;max-width:430px;line-height:1.45;white-space:normal;overflow-wrap:anywhere}   /* two-line wrap is fine (Ray) — width goes to the columns that must not crop */
@@ -226,6 +226,13 @@ window.addEventListener('load',restore);
      the note itself is the native title pop-up, same idiom as the rest of the FCC */
   .ai-track th[title],.ai-sum th[title]{cursor:help;text-decoration:underline dotted;text-underline-offset:3px;text-decoration-color:var(--muted)}
   .t-note{cursor:help;font-variant-numeric:tabular-nums;font-weight:700;border-bottom:1px dotted var(--muted);padding-bottom:1px}
+  .tok-cell{cursor:pointer;border-radius:6px;padding:3px 7px;display:inline-block}
+  .tok-cell:hover{background:rgba(245,166,35,.12);color:var(--orange-deep)}
+  /* token-economics pop-up form */
+  .tok-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:2px 0 4px}
+  .tok-grid label{display:flex;flex-direction:column;gap:3px;font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .tok-grid input{font:inherit;font-size:13px;font-weight:700;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+  .tok-grid input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
   /* per-brand summary table */
   .ai-sum-h{font-size:14px;font-weight:900;margin:22px 0 2px}
   .ai-sum{min-width:980px}
@@ -340,7 +347,7 @@ window.addEventListener('load',restore);
 
 <section><div class="wrap">
   <h2>AI briefs — delivery tracking <span class="ai-n" id="ai-n"></span></h2>
-  <p class="sub">Every brief whose task title reads as AI work is pulled in here automatically — no tagging inside Workflow, no pipeline clutter. The teams track delivery on the brief itself: hours per role and the token economics from the ASPL run log — <b>actual tokens</b>, <b>billing tokens</b> (billing units derive automatically), <b>AI running time</b> single-request and 25-parallel, plus <b>volume done</b> and <b>categories done</b>. Hover any column header — or a billing-units value — for what the number means. Averages (and tokens-per-SKU) feed the rate card's evidence pricing.</p>
+  <p class="sub">Every brief whose task title reads as AI work is pulled in here automatically — no tagging inside Workflow, no pipeline clutter. The teams track delivery on the brief itself: hours per role and the brief's token economics in a single <b>Bill units</b> column — hover a value for the <b>actual tokens</b> and <b>billing tokens</b> behind it, click it to edit them (run times live in the same pop-up). Run-time and token totals per brand are summarised below the table. Averages (and tokens-per-SKU) feed the rate card's evidence pricing.</p>
   <div class="pz-card">
     <div class="rc-scroll"><table class="rc ai-track" id="ai-track">
       <thead><tr><th>Client · brief</th><th>Stage</th><th>Tachyon task</th>
@@ -348,11 +355,7 @@ window.addEventListener('load',restore);
         <th title="London AM quality-control hours">QC h</th>
         <th title="Project-management hours">PM h</th>
         <th title="Ongoing monitoring hours per month">Mon h</th>
-        <th title="Actual tokens the AI run consumed — input + output, straight from the run log">Actual tok</th>
-        <th title="Billing tokens = actual tokens × the model's cost multiplier — what the provider actually charges for">Billing tok</th>
-        <th title="Billing units = billing tokens ÷ 1M. Derived automatically from billing tokens — hover a value for its breakdown">Bill units</th>
-        <th title="AI running time, one request at a time — enter minutes, shown as h m">Run 1 req</th>
-        <th title="AI running time at 25 parallel requests — enter minutes, shown as h m">Run 25 req</th>
+        <th title="Billing units = billing tokens ÷ 1M, the unit AI processing is billed in. Hover a value for the actual + billing tokens behind it; click to edit tokens and run times.">Bill units</th>
         <th>Vol done</th><th>Categories done</th><th></th></tr></thead>
       <tbody id="ai-body"></tbody>
     </table></div>
@@ -412,10 +415,9 @@ window.addEventListener('load',restore);
         <dt>QC h</dt><dd>London AM quality-control hours: sample reviews, brand-voice checks, feedback rounds until the output is approved.</dd>
         <dt>PM h</dt><dd>Project-management hours: briefing, client comms, scheduling, chasing, status reporting for this brief.</dd>
         <dt>Mon h</dt><dd>Ongoing monitoring hours <b>per month</b> after go-live: output QA, drift checks, exception handling. Monthly figure, not a running total.</dd>
-        <dt>Actual tok</dt><dd>Actual tokens the AI run consumed (input + output, from the Tachyon run log). Divided by volume done, this becomes the <b>tok/SKU</b> marginal-cost signal on the rate card.</dd>
-        <dt>Billing tok</dt><dd>Billing tokens = actual tokens × the model's <b>cost multiplier</b> — what the provider actually charges for. Visual work carries a much higher multiplier than text (image tokens are dearer), so track both numbers, never just one.</dd>
-        <dt>Bill units</dt><dd>Billing tokens ÷ 1M — the unit AI processing is billed in. <b>Derived automatically</b>, never entered: hover any value for its breakdown with that row's real numbers.</dd>
-        <dt>Run 1 req / 25 req</dt><dd>AI running time end-to-end: one request at a time, and with 25 requests in parallel. <b>Enter minutes</b> — displayed as h m, totalled per brand in the summary below the table.</dd>
+        <dt>Bill units</dt><dd>Billing tokens ÷ 1M — the unit AI processing is billed in, and the one token number shown per brief. <b>Derived automatically</b>, never entered. Hover a value for the actual + billing tokens behind it; click to edit them in the pop-up.</dd>
+        <dt>Actual / billing tok (in the pop-up)</dt><dd><b>Actual tokens</b> = what the run consumed (input + output, from the Tachyon run log); ÷ volume done it becomes the <b>tok/SKU</b> signal on the rate card. <b>Billing tokens</b> = actual × the model's cost multiplier — what the provider actually charges for. Visual work carries a much higher multiplier than text (image tokens are dearer), so both are tracked, never just one.</dd>
+        <dt>Run 1 req / 25 req (in the pop-up)</dt><dd>AI running time end-to-end: one request at a time, and with 25 requests in parallel. <b>Enter minutes</b> — totalled per brand (shown as h m) in the summary below the table.</dd>
         <dt>Man time (ASPL h)</dt><dd>The brand's <b>total man time</b> across its AI briefs, assigned to ASPL hours. The dev handback reports it per brand, so it lives on the per-brand summary row — splitting it per brief would be invented data.</dd>
         <dt>Vol done</dt><dd>SKUs actually processed and delivered — what shipped, not what the brief hoped for. Variant-level count. Powers tok/SKU and the delivery record.</dd>
         <dt>＋ Add historic AI task</dt><dd>A track-only row for AI work delivered before the FCC existed — client and task editable inline, counted in the averages like any brief (no lead time: nothing to measure).</dd>
@@ -436,6 +438,18 @@ window.addEventListener('load',restore);
   <input id="wb-q" type="text" placeholder="Search Workflow briefs (client, task)…" autocomplete="off">
   <div class="gpc-list" id="wb-list"></div>
   <div class="gpc-foot"><span class="tiers-line">briefs the title scan didn't pick up — attach, then set its Tachyon task</span></div>
+</div>
+
+<!-- token-economics popover: the numbers behind a row's Bill units — actual + billing
+     tokens and the two run times, edited together (the column itself stays derived) -->
+<div class="gpc-pop" id="tok-pop" hidden>
+  <div class="tok-grid">
+    <label>Actual tokens <input id="tp-tokens" type="number" min="0" step="1000" placeholder="e.g. 1910000"></label>
+    <label>Billing tokens <input id="tp-bill" type="number" min="0" step="1000" placeholder="actual × cost multiplier"></label>
+    <label>Run 1 req (min) <input id="tp-one" type="number" min="0" step="5" placeholder="minutes"></label>
+    <label>Run 25 req (min) <input id="tp-par" type="number" min="0" step="5" placeholder="minutes"></label>
+  </div>
+  <div class="gpc-foot"><span class="tiers-line" id="tp-units"></span><button class="btn" id="tp-save" type="button">Save</button></div>
 </div>
 
 <!-- GPC picker popover (positioned next to the categories cell being edited) -->
@@ -626,12 +640,16 @@ function renderScaffolds(){
 
 /* ---------------- AI briefs: title-scanned delivery tracking ---------------- */
 function fmtTok(n){n=+n||0;return n>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'M':n>=1e3?(n/1e3).toFixed(0)+'k':String(n)}
-/* the billing-units hover note: the derivation with this row's real numbers, so the
-   pop-up answers "where did this come from" without opening the field guide */
-function unitsNote(r){
-  var s=(r.billTok/1e6).toFixed(2)+' billing units = '+fmtTok(r.billTok)+' billing tok ÷ 1M';
-  if(r.tokens>0)s+='  ·  billing tok = '+fmtTok(r.tokens)+' actual tok × ≈'+(r.billTok/r.tokens).toFixed(1)+' model cost multiplier';
-  return s;
+/* the billing-units hover note: the actual + billing tokens behind the number and its
+   derivation (plus run times, which have no column of their own), so the pop-up answers
+   "where did this come from" without opening the field guide */
+function tokNote(r){
+  if(!r.billTok&&!r.tokens)return 'No token record yet — click to enter actual + billing tokens and run times';
+  var s='Actual tok '+fmtTok(r.tokens)+'  ·  billing tok '+fmtTok(r.billTok);
+  if(r.tokens>0&&r.billTok>0)s+=' (× ≈'+(r.billTok/r.tokens).toFixed(1)+' model cost multiplier)';
+  if(r.billTok>0)s+='  ·  '+(r.billTok/1e6).toFixed(2)+' units = billing tok ÷ 1M';
+  if(r.runOne||r.runPar)s+='  ·  run '+E.fmtMin(r.runOne)+' / '+E.fmtMin(r.runPar)+' at ×25';
+  return s+'  —  click to edit';
 }
 function saveTrack(){
   fetch('/api/tachyon/track',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(TRACK_BASE)},body:JSON.stringify(TRACK)})
@@ -659,7 +677,7 @@ function renderTrack(){
   var rows=E.aiBriefRows(BRIEFS,TRACK);
   $('#ai-n').textContent=rows.length?rows.length+' found by title scan':'';
   renderSummary(rows);
-  if(!rows.length){$('#ai-body').innerHTML='<tr><td colspan="15"><div class="ai-empty">No AI-related briefs found yet — the scan watches every Workflow brief title for AI / Tachyon wording.</div></td></tr>';return}
+  if(!rows.length){$('#ai-body').innerHTML='<tr><td colspan="11"><div class="ai-empty">No AI-related briefs found yet — the scan watches every Workflow brief title for AI / Tachyon wording.</div></td></tr>';return}
   var opts=[['','— pick —']].concat(E.CATALOG.map(function(c){return [c.id,c.name]}));
   $('#ai-body').innerHTML=rows.map(function(r){
     function cell(f,v,step){return '<td><span class="r-ed" data-bid="'+esc(r.bid)+'" data-f="'+f+'" data-step="'+(step||0.5)+'" title="Click to edit">'+(v||'—')+'</span></td>'}
@@ -674,11 +692,7 @@ function renderTrack(){
     return '<tr>'+head
       +'<td><select class="a-tach" data-bid="'+esc(r.bid)+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(r.tach===o[0]?' selected':'')+'>'+esc(o[1])+'</option>'}).join('')+'</select></td>'
       +cell('aspl',r.aspl)+cell('qc',r.qc)+cell('pm',r.pm)+cell('mon',r.mon)
-      +cell('tokens',r.tokens?fmtTok(r.tokens):'',1000)
-      +cell('billTok',r.billTok?fmtTok(r.billTok):'',1000)
-      +'<td>'+(r.billTok?'<span class="t-note" title="'+esc(unitsNote(r))+'">'+(r.billTok/1e6).toFixed(2)+'</span>':'—')+'</td>'
-      +cell('runOne',r.runOne?E.fmtMin(r.runOne):'',5)
-      +cell('runPar',r.runPar?E.fmtMin(r.runPar):'',5)
+      +'<td><span class="t-note tok-cell" data-bid="'+esc(r.bid)+'" title="'+esc(tokNote(r))+'">'+(r.billTok?(r.billTok/1e6).toFixed(2):'＋ track')+'</span></td>'
       +cell('volDone',r.volDone?fmt(r.volDone):'',100)
       +'<td class="a-cats">'+(function(){var cs=(r.catsDone||'').split(' | ').filter(Boolean);
           return '<span class="cat-count" data-bid="'+esc(r.bid)+'" title="'+esc(cs.join('\n')||'Pick from the 5,595 official Google product categories')+'">'
@@ -687,6 +701,7 @@ function renderTrack(){
           :attachedOnly?'<button class="a-del a-detach" data-bid="'+esc(r.bid)+'" type="button" title="Detach — remove this brief from tracking">✕</button>':'')+'</td>'
       +'</tr>'}).join('');
   $('#ai-body').querySelectorAll('.r-ed').forEach(function(el){el.onclick=function(){editTrackCell(el)}});
+  $('#ai-body').querySelectorAll('.tok-cell').forEach(function(el){el.onclick=function(){tokPopOpen(el.getAttribute('data-bid'),el)}});
   $('#ai-body').querySelectorAll('.a-tach').forEach(function(sel){
     sel.title=sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].text:'';   // full name on hover — never cropped silently
     sel.onchange=function(){sel.title=sel.options[sel.selectedIndex].text;setTrack(sel.getAttribute('data-bid'),'tach',sel.value)}});
@@ -753,6 +768,42 @@ function editManCell(el){
   in_.addEventListener('keydown',function(e){if(e.key==='Enter')done(true);if(e.key==='Escape')done(false)});
   in_.addEventListener('blur',function(){done(true)});
 }
+
+/* token-economics pop-up: one place to edit the numbers behind the Bill units column.
+   Explicit Save commits; Escape or clicking away closes without writing (an accidental
+   open must never stamp a zero record onto a brief). */
+var tokBid=null;
+function tokPopOpen(bid,anchor){
+  tokBid=bid;var t=TRACK[bid]||{};
+  $('#tp-tokens').value=t.tokens||'';$('#tp-bill').value=t.billTok||'';
+  $('#tp-one').value=t.runOne||'';$('#tp-par').value=t.runPar||'';
+  var pop=$('#tok-pop'),r=anchor.getBoundingClientRect();
+  pop.hidden=false;
+  pop.style.top=(r.bottom+window.scrollY+6)+'px';
+  pop.style.left=Math.max(8,Math.min(r.left+window.scrollX,window.scrollX+document.documentElement.clientWidth-410))+'px';
+  tokPopUnits();setTimeout(function(){$('#tp-tokens').focus()},40);
+}
+function tokPopUnits(){
+  var b=+$('#tp-bill').value||0;
+  $('#tp-units').textContent=b>0?((b/1e6).toFixed(2)+' billing units (÷ 1M)'):'billing units derive automatically (÷ 1M)';
+}
+function tokPopSave(){
+  if(!tokBid)return;
+  var t=TRACK[tokBid]||{};
+  t.tokens=Math.max(0,+$('#tp-tokens').value||0);
+  t.billTok=Math.max(0,+$('#tp-bill').value||0);
+  t.runOne=Math.max(0,+$('#tp-one').value||0);
+  t.runPar=Math.max(0,+$('#tp-par').value||0);
+  t.t=Date.now();TRACK[tokBid]=t;
+  tokBid=null;$('#tok-pop').hidden=true;
+  refreshActuals();saveTrack();
+  $('#ai-state').textContent='saved — shared with every team';setTimeout(function(){$('#ai-state').textContent=''},2500);
+}
+$('#tp-save').addEventListener('click',tokPopSave);
+$('#tp-bill').addEventListener('input',tokPopUnits);
+$('#tok-pop').addEventListener('keydown',function(e){if(e.key==='Enter')tokPopSave();if(e.key==='Escape'){tokBid=null;$('#tok-pop').hidden=true}});
+document.addEventListener('mousedown',function(e){var pop=$('#tok-pop');
+  if(!pop.hidden&&!pop.contains(e.target)&&!(e.target.closest&&e.target.closest('.tok-cell'))){tokBid=null;pop.hidden=true}});
 
 /* seeded rows: the ASPL dev handback (Aug 2026) — the delivered AI briefs per brand with the
    run log's real numbers: actual tokens, billing tokens (units derive ÷1M), run time in
