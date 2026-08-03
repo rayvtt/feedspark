@@ -25,8 +25,9 @@ Feeds change daily upstream; the 20h window keeps the score at most one refresh 
 
 Wired out of the box via `DEFAULT_FEEDS` — the committed **master feed-market map**, imported from
 Ray's sheet (`1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak`, one row per client+country feed):
-**16 feeds × 9 brands** — Schuh gb/de/ie · YuMOVE · Monsoon · Accessorize · Superdry gb/ie/fr ·
-House of Bruar · American Golf (API-fed sheet) · Reiss gb/us/ie/de/nl. New rows in the sheet get
+**22 feeds × 8 brands** — Schuh gb/de/ie · YuMOVE · Monsoon · Accessorize · Superdry gb/ie/de/fr/nl ·
+House of Bruar gb/us/eu · American Golf (API-fed sheet) · Reiss gb/us/ie/de/nl/au/ca (the sheet's
+Reiss EU row carries a truncated URL — not wired until fixed). New rows in the sheet get
 re-imported into `DEFAULT_FEEDS` (ask a Code session); ad-hoc feeds attach from the CC dossier and
 **override** the wired entry per market. `/api/feed/clients` serves the roster (wired ∪ attached)
 to the Feed Lab selector and the CC dossier in one call.
@@ -73,7 +74,7 @@ dossier (or `DEFAULT_FEEDS`) resolve. Audit PUTs are activity-logged (`feed-audi
    no gid → tab 0. Stored as the dossier `feed` field.
 3. Open `/feedlab?client=<Brand>` (or the dossier's **Feed Lab ⚡** link in view mode) → first scan
    streams live, scores, and caches.
-4. No dossier entry needed for the 9 master-map brands — `DEFAULT_FEEDS` in the worker wires their
+4. No dossier entry needed for the 8 master-map brands — `DEFAULT_FEEDS` in the worker wires their
    sheets (see §1) until/unless a dossier `feed` overrides them. A dossier `feed` always wins per
    market. For a **permanent** new feed, prefer adding the row to Ray's master sheet and re-importing
    into `DEFAULT_FEEDS` so the wiring is committed, not KV-only.
