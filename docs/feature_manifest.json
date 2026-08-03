@@ -893,6 +893,13 @@
       "pattern": "groupThreads",
       "min": 3,
       "pr": 172
+    },
+    {
+      "name": "workflow: email-origin memory — Gmail tasks stay labelled Email after sheet round-trip",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "markEsrc",
+      "min": 4,
+      "pr": 173
     }
   ]
 }
