@@ -207,7 +207,7 @@ window.addEventListener('load',restore);
   @media(max-width:640px){.fg{top:auto;bottom:14px}.fg-panel{max-height:60vh}}
   /* the tracking table gets real room: wide brief column, generous cell padding, nothing
      cropped — the whole thing pans inside .rc-scroll on smaller screens */
-  .ai-track{min-width:1380px}
+  .ai-track{min-width:1440px}
   .ai-track th{padding:9px 10px}
   .ai-track td{padding:10px;vertical-align:top}
   .ai-track .a-task{font-weight:800;min-width:300px;max-width:430px;line-height:1.45;white-space:normal;overflow-wrap:anywhere}   /* two-line wrap is fine (Ray) — width goes to the columns that must not crop */
@@ -222,6 +222,24 @@ window.addEventListener('load',restore);
   .ai-track tbody tr:nth-child(even) td{background:rgba(0,0,0,.012)}
   [data-theme=dark] .ai-track tbody tr:nth-child(even) td{background:rgba(255,255,255,.02)}
   .ai-empty{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 0}
+  /* hover notes: any header (or derived value) carrying a note gets the help affordance —
+     the note itself is the native title pop-up, same idiom as the rest of the FCC */
+  .ai-track th[title],.ai-sum th[title]{cursor:help;text-decoration:underline dotted;text-underline-offset:3px;text-decoration-color:var(--muted)}
+  .t-note{cursor:help;font-variant-numeric:tabular-nums;font-weight:700;border-bottom:1px dotted var(--muted);padding-bottom:1px}
+  .tok-cell{cursor:pointer;border-radius:6px;padding:3px 7px;display:inline-block}
+  .tok-cell:hover{background:rgba(245,166,35,.12);color:var(--orange-deep)}
+  /* token-economics pop-up form */
+  .tok-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:2px 0 4px}
+  .tok-grid label{display:flex;flex-direction:column;gap:3px;font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .tok-grid input{font:inherit;font-size:13px;font-weight:700;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+  .tok-grid input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
+  /* per-brand summary table */
+  .ai-sum-h{font-size:14px;font-weight:900;margin:22px 0 2px}
+  .ai-sum{min-width:980px}
+  .ai-sum td{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .ai-sum .s-brand{font-weight:900}
+  .ai-sum tr.s-total td{border-top:2px solid var(--line);font-weight:900;background:var(--wash)}
+  [data-theme=dark] .ai-sum tr.s-total td{background:#191C24}
   .ai-ic{font-size:15px;padding:7px 13px;line-height:1}
   .a-link{font-size:11px;margin-left:5px;cursor:help;opacity:.75}
   .a-actcell{width:36px;text-align:right;white-space:nowrap}
@@ -329,16 +347,35 @@ window.addEventListener('load',restore);
 
 <section><div class="wrap">
   <h2>AI briefs — delivery tracking <span class="ai-n" id="ai-n"></span></h2>
-  <p class="sub">Every brief whose task title reads as AI work is pulled in here automatically — no tagging inside Workflow, no pipeline clutter. The teams track delivery on the brief itself: hours per role, <b>Tachyon tokens used</b>, <b>product volume done</b> and <b>categories done</b>. Averages (and tokens-per-SKU) feed the rate card's evidence pricing.</p>
+  <p class="sub">Every brief whose task title reads as AI work is pulled in here automatically — no tagging inside Workflow, no pipeline clutter. The teams track delivery on the brief itself: hours per role and the brief's token economics in a single <b>Bill units</b> column — hover a value for the <b>actual tokens</b> and <b>billing tokens</b> behind it, click it to edit them (run times live in the same pop-up). Run-time and token totals per brand are summarised below the table. Averages (and tokens-per-SKU) feed the rate card's evidence pricing.</p>
   <div class="pz-card">
     <div class="rc-scroll"><table class="rc ai-track" id="ai-track">
-      <thead><tr><th>Client · brief</th><th>Stage</th><th>Tachyon task</th><th>ASPL h</th><th>QC h</th><th>PM h</th><th>Mon h</th><th>Tokens</th><th>Vol done</th><th>Categories done</th><th></th></tr></thead>
+      <thead><tr><th>Client · brief</th><th>Stage</th><th>Tachyon task</th>
+        <th title="ASPL hands-on hours for this brief. Brand-level TOTAL MAN TIME from the dev handback lives in the per-brand summary below — it can't be split per brief without inventing numbers.">ASPL h</th>
+        <th title="London AM quality-control hours">QC h</th>
+        <th title="Project-management hours">PM h</th>
+        <th title="Ongoing monitoring hours per month">Mon h</th>
+        <th title="Billing units = billing tokens ÷ 1M, the unit AI processing is billed in. Hover a value for the actual + billing tokens behind it; click to edit tokens and run times.">Bill units</th>
+        <th>Vol done</th><th>Categories done</th><th></th></tr></thead>
       <tbody id="ai-body"></tbody>
     </table></div>
     <div class="rc-foot">
       <button class="btn ai-ic" id="ai-add" type="button" title="Add historic AI task — pre-FCC work counts toward the averages like any brief" aria-label="Add historic AI task">＋</button>
       <button class="btn ai-ic" id="ai-attach" type="button" title="Attach a Workflow brief the title scan can't see — then set its Tachyon task" aria-label="Attach Workflow brief">🔗</button>
       <span id="ai-state"></span></div>
+    <h3 class="ai-sum-h">Per-brand totals — tokens, run time, man time</h3>
+    <p class="sub">One line per brand, straight from the rows above: token totals, billing units and the two run-time totals are calculated live. <b>Man time is the brand's total ASPL hours</b> for its AI briefs — the dev handback reports it per brand, so it sits here rather than being split per brief. Click it to edit.</p>
+    <div class="rc-scroll"><table class="rc ai-sum" id="ai-sum-t">
+      <thead><tr><th>Brand</th><th>Briefs</th>
+        <th title="Σ actual tokens across the brand's tracked briefs">Actual tok</th>
+        <th title="Σ billing tokens (actual × model cost multiplier)">Billing tok</th>
+        <th title="Σ billing tokens ÷ 1M">Bill units</th>
+        <th title="Total AI running time, single-request, across the brand's briefs">Run 1 req</th>
+        <th title="Total AI running time at 25 parallel requests">Run 25 req</th>
+        <th title="TOTAL MAN TIME for the brand's AI briefs, assigned to ASPL hours — click to edit">Man time (ASPL h)</th>
+        <th title="Products covered by the runs — variant level (grouping count in brackets). Vol-done column above tracks per brief">Products</th></tr></thead>
+      <tbody id="ai-sum"></tbody>
+    </table></div>
   </div>
 </div></section>
 
@@ -378,8 +415,11 @@ window.addEventListener('load',restore);
         <dt>QC h</dt><dd>London AM quality-control hours: sample reviews, brand-voice checks, feedback rounds until the output is approved.</dd>
         <dt>PM h</dt><dd>Project-management hours: briefing, client comms, scheduling, chasing, status reporting for this brief.</dd>
         <dt>Mon h</dt><dd>Ongoing monitoring hours <b>per month</b> after go-live: output QA, drift checks, exception handling. Monthly figure, not a running total.</dd>
-        <dt>Tokens</dt><dd>Total Tachyon tokens the run consumed (input + output, from the Tachyon run log). Divided by volume done, this becomes the <b>tok/SKU</b> marginal-cost signal on the rate card.</dd>
-        <dt>Vol done</dt><dd>SKUs actually processed and delivered — what shipped, not what the brief hoped for. Powers tok/SKU and the delivery record.</dd>
+        <dt>Bill units</dt><dd>Billing tokens ÷ 1M — the unit AI processing is billed in, and the one token number shown per brief. <b>Derived automatically</b>, never entered. Hover a value for the actual + billing tokens behind it; click to edit them in the pop-up.</dd>
+        <dt>Actual / billing tok (in the pop-up)</dt><dd><b>Actual tokens</b> = what the run consumed (input + output, from the Tachyon run log); ÷ volume done it becomes the <b>tok/SKU</b> signal on the rate card. <b>Billing tokens</b> = actual × the model's cost multiplier — what the provider actually charges for. Visual work carries a much higher multiplier than text (image tokens are dearer), so both are tracked, never just one.</dd>
+        <dt>Run 1 req / 25 req (in the pop-up)</dt><dd>AI running time end-to-end: one request at a time, and with 25 requests in parallel. <b>Enter minutes</b> — totalled per brand (shown as h m) in the summary below the table.</dd>
+        <dt>Man time (ASPL h)</dt><dd>The brand's <b>total man time</b> across its AI briefs, assigned to ASPL hours. The dev handback reports it per brand, so it lives on the per-brand summary row — splitting it per brief would be invented data.</dd>
+        <dt>Vol done</dt><dd>SKUs actually processed and delivered — what shipped, not what the brief hoped for. Variant-level count. Powers tok/SKU and the delivery record.</dd>
         <dt>＋ Add historic AI task</dt><dd>A track-only row for AI work delivered before the FCC existed — client and task editable inline, counted in the averages like any brief (no lead time: nothing to measure).</dd>
         <dt>🔗 Attach Workflow brief</dt><dd>Pulls in a brief the title scan can't see (no AI wording in its task name). Once attached, set its Tachyon task and track as normal; ✕ detaches it again.</dd>
         <dt>Categories done</dt><dd>The Google product categories covered, picked from the official 5,595-entry GPC taxonomy (searchable — type to filter, click to toggle).</dd>
@@ -398,6 +438,18 @@ window.addEventListener('load',restore);
   <input id="wb-q" type="text" placeholder="Search Workflow briefs (client, task)…" autocomplete="off">
   <div class="gpc-list" id="wb-list"></div>
   <div class="gpc-foot"><span class="tiers-line">briefs the title scan didn't pick up — attach, then set its Tachyon task</span></div>
+</div>
+
+<!-- token-economics popover: the numbers behind a row's Bill units — actual + billing
+     tokens and the two run times, edited together (the column itself stays derived) -->
+<div class="gpc-pop" id="tok-pop" hidden>
+  <div class="tok-grid">
+    <label>Actual tokens <input id="tp-tokens" type="number" min="0" step="1000" placeholder="e.g. 1910000"></label>
+    <label>Billing tokens <input id="tp-bill" type="number" min="0" step="1000" placeholder="actual × cost multiplier"></label>
+    <label>Run 1 req (min) <input id="tp-one" type="number" min="0" step="5" placeholder="minutes"></label>
+    <label>Run 25 req (min) <input id="tp-par" type="number" min="0" step="5" placeholder="minutes"></label>
+  </div>
+  <div class="gpc-foot"><span class="tiers-line" id="tp-units"></span><button class="btn" id="tp-save" type="button">Save</button></div>
 </div>
 
 <!-- GPC picker popover (positioned next to the categories cell being edited) -->
@@ -457,7 +509,7 @@ function renderRates(){
       +cell('aspl',r.aspl)+cell('qc',r.qc)+cell('pm',r.pm)+cell('mon',r.mon)
       +cell('unit','£'+r.unit,0.01)+cell('lead',r.lead)
       +'<td>'+(function(){var a=ACTUALS[r.id];
-          if(a&&USE_ACTUALS)return '<span class="r-act" title="ASPL '+a.aspl+' · QC '+a.qc+' · PM '+a.pm+(a.lead?(' · real lead '+a.lead+'d'):'')+(a.tokPerSku?(' · ≈'+a.tokPerSku+' tok/SKU over '+fmt(a.volDone)+' done'):'')+' — averaged from the AI-briefs tracking table">actuals ×'+a.n+'</span>';
+          if(a&&USE_ACTUALS)return '<span class="r-act" title="ASPL '+a.aspl+' · QC '+a.qc+' · PM '+a.pm+(a.lead?(' · real lead '+a.lead+'d'):'')+(a.tokPerSku?(' · ≈'+a.tokPerSku+' actual tok/SKU over '+fmt(a.volDone)+' done'):'')+(a.billPerSku?(' · ≈'+a.billPerSku+' billing tok/SKU'):'')+' — averaged from the AI-briefs tracking table">actuals ×'+a.n+'</span>';
           if(a)return '<span class="r-ok" title="actuals available (×'+a.n+') but the toggle is off">confirmed</span>';
           return r.draft?'<span class="r-draft">draft</span>':'<span class="r-ok">confirmed</span>'})()+'</td>'
       +'<td class="r-note"><span class="r-ed" data-id="'+r.id+'" data-f="note" data-txt="1">'+(esc(r.note)||'<span style="opacity:.4">add note…</span>')+'</span></td>'
@@ -588,6 +640,17 @@ function renderScaffolds(){
 
 /* ---------------- AI briefs: title-scanned delivery tracking ---------------- */
 function fmtTok(n){n=+n||0;return n>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'M':n>=1e3?(n/1e3).toFixed(0)+'k':String(n)}
+/* the billing-units hover note: the actual + billing tokens behind the number and its
+   derivation (plus run times, which have no column of their own), so the pop-up answers
+   "where did this come from" without opening the field guide */
+function tokNote(r){
+  if(!r.billTok&&!r.tokens)return 'No token record yet — click to enter actual + billing tokens and run times';
+  var s='Actual tok '+fmtTok(r.tokens)+'  ·  billing tok '+fmtTok(r.billTok);
+  if(r.tokens>0&&r.billTok>0)s+=' (× ≈'+(r.billTok/r.tokens).toFixed(1)+' model cost multiplier)';
+  if(r.billTok>0)s+='  ·  '+(r.billTok/1e6).toFixed(2)+' units = billing tok ÷ 1M';
+  if(r.runOne||r.runPar)s+='  ·  run '+E.fmtMin(r.runOne)+' / '+E.fmtMin(r.runPar)+' at ×25';
+  return s+'  —  click to edit';
+}
 function saveTrack(){
   fetch('/api/tachyon/track',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(TRACK_BASE)},body:JSON.stringify(TRACK)})
     .then(function(r){TRACK_BASE=+r.headers.get('X-Sync-Base')||TRACK_BASE;return r.json()})
@@ -613,7 +676,8 @@ function refreshActToggle(){
 function renderTrack(){
   var rows=E.aiBriefRows(BRIEFS,TRACK);
   $('#ai-n').textContent=rows.length?rows.length+' found by title scan':'';
-  if(!rows.length){$('#ai-body').innerHTML='<tr><td colspan="10"><div class="ai-empty">No AI-related briefs found yet — the scan watches every Workflow brief title for AI / Tachyon wording.</div></td></tr>';return}
+  renderSummary(rows);
+  if(!rows.length){$('#ai-body').innerHTML='<tr><td colspan="11"><div class="ai-empty">No AI-related briefs found yet — the scan watches every Workflow brief title for AI / Tachyon wording.</div></td></tr>';return}
   var opts=[['','— pick —']].concat(E.CATALOG.map(function(c){return [c.id,c.name]}));
   $('#ai-body').innerHTML=rows.map(function(r){
     function cell(f,v,step){return '<td><span class="r-ed" data-bid="'+esc(r.bid)+'" data-f="'+f+'" data-step="'+(step||0.5)+'" title="Click to edit">'+(v||'—')+'</span></td>'}
@@ -628,7 +692,7 @@ function renderTrack(){
     return '<tr>'+head
       +'<td><select class="a-tach" data-bid="'+esc(r.bid)+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(r.tach===o[0]?' selected':'')+'>'+esc(o[1])+'</option>'}).join('')+'</select></td>'
       +cell('aspl',r.aspl)+cell('qc',r.qc)+cell('pm',r.pm)+cell('mon',r.mon)
-      +cell('tokens',r.tokens?fmtTok(r.tokens):'',1000)
+      +'<td><span class="t-note tok-cell" data-bid="'+esc(r.bid)+'" title="'+esc(tokNote(r))+'">'+(r.billTok?(r.billTok/1e6).toFixed(2):'＋ track')+'</span></td>'
       +cell('volDone',r.volDone?fmt(r.volDone):'',100)
       +'<td class="a-cats">'+(function(){var cs=(r.catsDone||'').split(' | ').filter(Boolean);
           return '<span class="cat-count" data-bid="'+esc(r.bid)+'" title="'+esc(cs.join('\n')||'Pick from the 5,595 official Google product categories')+'">'
@@ -637,6 +701,7 @@ function renderTrack(){
           :attachedOnly?'<button class="a-del a-detach" data-bid="'+esc(r.bid)+'" type="button" title="Detach — remove this brief from tracking">✕</button>':'')+'</td>'
       +'</tr>'}).join('');
   $('#ai-body').querySelectorAll('.r-ed').forEach(function(el){el.onclick=function(){editTrackCell(el)}});
+  $('#ai-body').querySelectorAll('.tok-cell').forEach(function(el){el.onclick=function(){tokPopOpen(el.getAttribute('data-bid'),el)}});
   $('#ai-body').querySelectorAll('.a-tach').forEach(function(sel){
     sel.title=sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].text:'';   // full name on hover — never cropped silently
     sel.onchange=function(){sel.title=sel.options[sel.selectedIndex].text;setTrack(sel.getAttribute('data-bid'),'tach',sel.value)}});
@@ -664,25 +729,167 @@ function editTrackCell(el){
   in_.addEventListener('blur',function(){done(true)});
 }
 
-/* seeded rows: the live AI briefs Ray named (Jul 2026) — present for every user from code,
-   whatever stage the tickets are in. Fixed ids so KV edits overlay them and a ✕ tombstones
-   them permanently. If the real Workflow brief later scans in by title, ✕ the seed. */
+/* per-brand totals: mirrors the ASPL dev handback sheet — token totals + billing units +
+   the two run-time totals calculated live from the rows above; MAN TIME (brand-level ASPL
+   hours) tracked here because the handback reports it per brand, not per brief */
+function renderSummary(rows){
+  var sums=E.clientSummary(rows,TRACK);
+  if(!sums.length){$('#ai-sum').innerHTML='<tr><td colspan="9"><div class="ai-empty">Totals appear once a brief above carries tracked numbers.</div></td></tr>';return}
+  var tot={n:0,tokens:0,billTok:0,runOne:0,runPar:0,manh:0,anyMan:false};
+  $('#ai-sum').innerHTML=sums.map(function(s){
+    tot.n+=s.n;tot.tokens+=s.tokens;tot.billTok+=s.billTok;tot.runOne+=s.runOne;tot.runPar+=s.runPar;
+    if(s.manh!=null){tot.manh+=s.manh;tot.anyMan=true}
+    var prod=s.prodVariants?fmt(s.prodVariants)+(s.prodGroups?' ('+fmt(s.prodGroups)+' groups)':''):(s.volDone?fmt(s.volDone):'—');
+    return '<tr><td class="s-brand">'+esc(s.client)+'</td><td>'+s.n+'</td>'
+      +'<td>'+(s.tokens?fmtTok(s.tokens):'—')+'</td><td>'+(s.billTok?fmtTok(s.billTok):'—')+'</td>'
+      +'<td>'+(s.billTok?'<span class="t-note" title="'+esc(s.billUnits.toFixed(2)+' billing units = '+fmtTok(s.billTok)+' billing tok ÷ 1M')+'">'+s.billUnits.toFixed(2)+'</span>':'—')+'</td>'
+      +'<td>'+E.fmtMin(s.runOne)+'</td><td>'+E.fmtMin(s.runPar)+'</td>'
+      +'<td><span class="r-ed" data-man="'+esc(s.client)+'" data-key="'+esc(s.metaKey)+'" title="Total man time for '+esc(s.client)+' AI briefs — brand-level ASPL hours. Click to edit">'+(s.manh!=null?s.manh+'h':'—')+'</span></td>'
+      +'<td>'+prod+'</td></tr>'}).join('')
+   +(sums.length>1?'<tr class="s-total"><td>All brands</td><td>'+tot.n+'</td><td>'+fmtTok(tot.tokens)+'</td><td>'+fmtTok(tot.billTok)+'</td><td>'+(tot.billTok?(tot.billTok/1e6).toFixed(2):'—')+'</td><td>'+E.fmtMin(tot.runOne)+'</td><td>'+E.fmtMin(tot.runPar)+'</td><td>'+(tot.anyMan?tot.manh+'h':'—')+'</td><td></td></tr>':'');
+  $('#ai-sum').querySelectorAll('[data-man]').forEach(function(el){el.onclick=function(){editManCell(el)}});
+}
+function editManCell(el){
+  if(el.__editing)return;el.__editing=1;
+  var client=el.getAttribute('data-man');
+  var key=el.getAttribute('data-key')||('meta_'+client.toLowerCase().replace(/[^a-z0-9]+/g,''));
+  var t=TRACK[key]||{};
+  var in_=document.createElement('input');in_.className='r-in';in_.type='number';in_.step='0.5';in_.min='0';in_.style.width='64px';
+  in_.value=t.manh!=null?t.manh:'';
+  el.replaceWith(in_);in_.focus();in_.select();
+  function done(commit){
+    if(commit&&in_.value!==''&&isFinite(+in_.value)){
+      var rec=TRACK[key]||{};
+      rec.clientMeta=true;rec.client=rec.client||client;rec.manh=Math.max(0,+in_.value);rec.t=Date.now();
+      TRACK[key]=rec;refreshActuals();saveTrack();
+      $('#ai-state').textContent='saved — shared with every team';setTimeout(function(){$('#ai-state').textContent=''},2500);
+    }else refreshActuals();
+  }
+  in_.addEventListener('keydown',function(e){if(e.key==='Enter')done(true);if(e.key==='Escape')done(false)});
+  in_.addEventListener('blur',function(){done(true)});
+}
+
+/* token-economics pop-up: one place to edit the numbers behind the Bill units column.
+   Explicit Save commits; Escape or clicking away closes without writing (an accidental
+   open must never stamp a zero record onto a brief). */
+var tokBid=null;
+function tokPopOpen(bid,anchor){
+  tokBid=bid;var t=TRACK[bid]||{};
+  $('#tp-tokens').value=t.tokens||'';$('#tp-bill').value=t.billTok||'';
+  $('#tp-one').value=t.runOne||'';$('#tp-par').value=t.runPar||'';
+  var pop=$('#tok-pop'),r=anchor.getBoundingClientRect();
+  pop.hidden=false;
+  pop.style.top=(r.bottom+window.scrollY+6)+'px';
+  pop.style.left=Math.max(8,Math.min(r.left+window.scrollX,window.scrollX+document.documentElement.clientWidth-410))+'px';
+  tokPopUnits();setTimeout(function(){$('#tp-tokens').focus()},40);
+}
+function tokPopUnits(){
+  var b=+$('#tp-bill').value||0;
+  $('#tp-units').textContent=b>0?((b/1e6).toFixed(2)+' billing units (÷ 1M)'):'billing units derive automatically (÷ 1M)';
+}
+function tokPopSave(){
+  if(!tokBid)return;
+  var t=TRACK[tokBid]||{};
+  t.tokens=Math.max(0,+$('#tp-tokens').value||0);
+  t.billTok=Math.max(0,+$('#tp-bill').value||0);
+  t.runOne=Math.max(0,+$('#tp-one').value||0);
+  t.runPar=Math.max(0,+$('#tp-par').value||0);
+  t.t=Date.now();TRACK[tokBid]=t;
+  tokBid=null;$('#tok-pop').hidden=true;
+  refreshActuals();saveTrack();
+  $('#ai-state').textContent='saved — shared with every team';setTimeout(function(){$('#ai-state').textContent=''},2500);
+}
+$('#tp-save').addEventListener('click',tokPopSave);
+$('#tp-bill').addEventListener('input',tokPopUnits);
+$('#tok-pop').addEventListener('keydown',function(e){if(e.key==='Enter')tokPopSave();if(e.key==='Escape'){tokBid=null;$('#tok-pop').hidden=true}});
+document.addEventListener('mousedown',function(e){var pop=$('#tok-pop');
+  if(!pop.hidden&&!pop.contains(e.target)&&!(e.target.closest&&e.target.closest('.tok-cell'))){tokBid=null;pop.hidden=true}});
+
+/* seeded rows: the ASPL dev handback (Aug 2026) — the delivered AI briefs per brand with the
+   run log's real numbers: actual tokens, billing tokens (units derive ÷1M), run time in
+   minutes single-request / 25-parallel, and volume done at VARIANT level. One row = one
+   individual brief. Fixed ids so KV edits overlay them and a ✕ tombstones them permanently.
+   If the real Workflow brief later scans in by title, ✕ the seed. */
 var SEED_TRACK=[
-  {id:'seed_mon_title', client:'Monsoon',    task:'AI Product Title Generation — Monsoon live brief (12,314 SKUs)'},
-  {id:'seed_mon_desc',  client:'Monsoon',    task:'AI Product Description Generation — Monsoon live brief (12,314 SKUs)'},
-  {id:'seed_mon_kw',    client:'Monsoon',    task:'AI Keyword Generation — Monsoon live brief'},
-  {id:'seed_acc_title', client:'Accessorize',task:'AI Product Title Generation — Accessorize live brief (5,414 SKUs)'},
-  {id:'seed_acc_desc',  client:'Accessorize',task:'AI Product Description Generation — Accessorize live brief (5,414 SKUs)'},
-  {id:'seed_acc_kw',    client:'Accessorize',task:'AI Keyword Generation — Accessorize live brief'},
-  {id:'seed_sup_title', client:'Superdry',   task:'AI Product Title Generation — Superdry live brief'},
-  {id:'seed_sup_desc',  client:'Superdry',   task:'AI Product Description Generation — Superdry live brief'},
-  {id:'seed_sup_kw',    client:'Superdry',   task:'AI Keyword Generation — Superdry live brief'}
+  {id:'seed_mon_text', client:'Monsoon',    task:'AI Text Attribute — Monsoon',      tach:'text_attr',   tokens:1910000, billTok:3780000,  runOne:180,  runPar:15, volDone:500},
+  {id:'seed_mon_vis',  client:'Monsoon',    task:'AI Visual Attribute — Monsoon',    tach:'visual_attr', tokens:6350000, billTok:39000000, runOne:1140, runPar:55, volDone:500},
+  {id:'seed_mon_pre',  client:'Monsoon',    task:'AI Pre-Description — Monsoon',     tach:'predesc',     tokens:429610,  billTok:843660,   runOne:38,   runPar:5,  volDone:500},
+  {id:'seed_mon_det',  client:'Monsoon',    task:'AI Product Details — Monsoon',     tach:'details',     tokens:1020000, billTok:2360000,  runOne:329,  runPar:20, volDone:500},
+  {id:'seed_acc_text', client:'Accessorize',task:'AI Text Attribute — Accessorize',  tach:'text_attr',   tokens:2720000, billTok:5420000,  runOne:165,  runPar:13, volDone:280},
+  {id:'seed_acc_vis',  client:'Accessorize',task:'AI Visual Attribute — Accessorize',tach:'visual_attr', tokens:5860000, billTok:47470000, runOne:1660, runPar:80, volDone:280},
+  {id:'seed_acc_pre',  client:'Accessorize',task:'AI Pre-Description — Accessorize', tach:'predesc',     tokens:621930,  billTok:1230000,  runOne:70,   runPar:9,  volDone:280},
+  {id:'seed_acc_det',  client:'Accessorize',task:'AI Product Details — Accessorize', tach:'details',     tokens:1450000, billTok:3370000,  runOne:390,  runPar:28, volDone:280},
+  {id:'seed_hob_text', client:'Hobbycraft', task:'AI Text Attribute — Hobbycraft',   tach:'text_attr',   tokens:1430000, billTok:2860000,  runOne:220,  runPar:15, volDone:113},
+  {id:'seed_hob_vis',  client:'Hobbycraft', task:'AI Visual Attribute — Hobbycraft', tach:'visual_attr', tokens:2860000, billTok:22530000, runOne:620,  runPar:25, volDone:113},
+  {id:'seed_hob_int',  client:'Hobbycraft', task:'AI Search Intent — Hobbycraft',    tach:'title_intent',tokens:157130,  billTok:268680,   runOne:51,   runPar:5,  volDone:113},
+  {id:'seed_hob_pre',  client:'Hobbycraft', task:'AI Pre-Description — Hobbycraft',  tach:'predesc',     tokens:270620,  billTok:511480,   runOne:70,   runPar:7,  volDone:113},
+  {id:'seed_hob_det',  client:'Hobbycraft', task:'AI Product Details — Hobbycraft',  tach:'details',     tokens:730660,  billTok:1710000,  runOne:210,  runPar:15, volDone:113},
+  {id:'seed_sup_qa',   client:'Superdry',   task:'AI Question & Answer — Superdry',  tach:'desc_pro',    tokens:135450,  billTok:290960,   runOne:10,   runPar:0,  volDone:100}
+];
+/* brand-level facts from the same handback: TOTAL MAN TIME (assigned to ASPL hours) and the
+   products covered — grouping vs variant level. These can't be split per brief honestly, so
+   they live on the per-brand summary as clientMeta records. */
+var SEED_META=[
+  {id:'meta_monsoon',    client:'Monsoon',    manh:8, prodGroups:157, prodVariants:500},
+  {id:'meta_accessorize',client:'Accessorize',manh:6, prodGroups:226, prodVariants:280},
+  {id:'meta_hobbycraft', client:'Hobbycraft', manh:6, prodGroups:108, prodVariants:113},
+  {id:'meta_superdry',   client:'Superdry',   manh:2, prodGroups:63,  prodVariants:100}
 ];
 function applySeeds(){
   SEED_TRACK.forEach(function(sd){
     if(TRACK[sd.id])return;   // KV already carries it (edited or tombstoned) — KV wins
-    TRACK[sd.id]={manual:true,seed:true,client:sd.client,task:sd.task,t:1};   // local until first edit
+    var rec={manual:true,seed:true,t:1};   // local until first edit
+    Object.keys(sd).forEach(function(k){if(k!=='id')rec[k]=sd[k]});
+    TRACK[sd.id]=rec;
   });
+  SEED_META.forEach(function(sd){
+    if(TRACK[sd.id])return;   // KV wins here too — an edited man time must never be reseeded
+    var rec={clientMeta:true,seed:true,t:1};
+    Object.keys(sd).forEach(function(k){if(k!=='id')rec[k]=sd[k]});
+    TRACK[sd.id]=rec;
+  });
+}
+
+/* Ray (Aug 2026): tasks tracked BEFORE the ASPL handback batch describe the SAME briefs as
+   the handback rows — the selected attribute matches. So on boot, any older manual row whose
+   (client, Tachyon attribute) matches a handback seed folds INTO that seed: its tracked
+   numbers fill the seed's empty fields (hours especially — the handback carries none),
+   categories union, and the duplicate is tombstoned so each brief shows exactly once.
+   Runs every boot; once KV carries the fold it is a no-op. Scanned Workflow briefs are
+   never folded — a live ticket must not vanish from the table. */
+var OLD_SEEDS=['seed_mon_title','seed_mon_desc','seed_mon_kw','seed_acc_title','seed_acc_desc','seed_acc_kw','seed_sup_title','seed_sup_desc','seed_sup_kw'];
+function hasTrackData(tr){
+  return ['aspl','qc','pm','mon','tokens','billTok','runOne','runPar','volDone'].some(function(f){return +tr[f]>0})||!!tr.catsDone;
+}
+function mergeLegacyIntoSeeds(){
+  var byKey={};SEED_TRACK.forEach(function(sd){byKey[(sd.client+'|'+sd.tach).toLowerCase()]=sd.id});
+  var changed=false;
+  Object.keys(TRACK).forEach(function(k){
+    var tr=TRACK[k];
+    if(!tr||!tr.manual||tr.deleted||tr.clientMeta)return;
+    var tach=tr.tach||E.classifyTach(tr.task||'');if(!tach)return;
+    var sid=byKey[(String(tr.client||'').trim()+'|'+tach).toLowerCase()];
+    if(!sid||sid===k)return;                       // no handback twin, or it IS the seed
+    var seed=TRACK[sid];if(!seed||seed.deleted)return;   // a ✕'d seed must stay gone
+    ['aspl','qc','pm','mon','tokens','billTok','runOne','runPar','volDone'].forEach(function(f){
+      if(+tr[f]>0&&!(+seed[f]>0)){seed[f]=+tr[f];changed=true}});
+    if(tr.catsDone){var cs=String(seed.catsDone||'').split(' | ').filter(Boolean);
+      String(tr.catsDone).split(' | ').filter(Boolean).forEach(function(c){if(cs.indexOf(c)<0)cs.push(c)});
+      var j=cs.join(' | ');if(j!==seed.catsDone){seed.catsDone=j;changed=true}}
+    seed.t=Date.now();
+    TRACK[k]={manual:true,deleted:true,t:Date.now()};
+    changed=true;
+  });
+  // the Jul-26 placeholder seeds are superseded by the handback batch outright: if one is
+  // still in KV carrying no tracked numbers (whatever attribute it ended up on), retire it.
+  // One WITH data and no attribute twin stays visible — data is never silently dropped.
+  OLD_SEEDS.forEach(function(k){
+    var tr=TRACK[k];
+    if(!tr||tr.deleted||!tr.manual)return;
+    if(hasTrackData(tr))return;
+    TRACK[k]={manual:true,deleted:true,t:Date.now()};changed=true;
+  });
+  if(changed)saveTrack();
 }
 
 /* 🔗 attach: pull in a Workflow brief the title scan can't see (no AI wording in the task) */
@@ -835,6 +1042,7 @@ function boot(){
     BRIEFS=(res[0]&&typeof res[0]==='object')?res[0]:{};
     TRACK=(res[1]&&typeof res[1]==='object')?res[1]:{};
     applySeeds();
+    mergeLegacyIntoSeeds();
     refreshActuals()});
   renderRates();renderCatalog();renderQuote();renderSaved();renderScaffolds();
 }

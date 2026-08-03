@@ -773,11 +773,11 @@
       "pr": 149
     },
     {
-      "name": "Pricer: seeded live AI briefs — Mon/Acc/Superdry × titles/desc/keywords",
+      "name": "Pricer: seeded AI briefs — ASPL dev handback per-brief token data (Mon/Acc/Hobbycraft/Superdry)",
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "SEED_TRACK",
       "min": 2,
-      "pr": 152
+      "pr": 173
     },
     {
       "name": "worker: fetchGrid keeps a tight column width (GRID_RANGE)",
@@ -893,6 +893,55 @@
       "pattern": "groupThreads",
       "min": 3,
       "pr": 172
+    },
+    {
+      "name": "Pricer: token economics tracking — actual/billing tok, derived bill units, run times",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "billTok",
+      "min": 3,
+      "pr": 173
+    },
+    {
+      "name": "Pricer: per-brand totals summary + brand-level man time (ASPL h) via clientMeta",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "ai-sum",
+      "min": 2,
+      "pr": 173
+    },
+    {
+      "name": "Pricer engine: clientSummary/fmtMin + billTok-runOne-runPar track fields",
+      "file": "docs/pricer_engine.js",
+      "pattern": "clientSummary",
+      "min": 2,
+      "pr": 173
+    },
+    {
+      "name": "Pricer engine: AI Text Attribute catalogue entry + title-scan patterns",
+      "file": "docs/pricer_engine.js",
+      "pattern": "text_attr",
+      "min": 2,
+      "pr": 173
+    },
+    {
+      "name": "Pricer: compact token column — single Bill units cell + token-economics pop-up",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "tok-pop",
+      "min": 2,
+      "pr": 174
+    },
+    {
+      "name": "Pricer: pre-batch rows fold into handback seeds by (client, attribute) on boot",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "mergeLegacyIntoSeeds",
+      "min": 2,
+      "pr": 175
+    },
+    {
+      "name": "Pricer: seeded live AI briefs — Mon/Acc/Superdry × titles/desc/keywords",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "SEED_TRACK",
+      "min": 2,
+      "pr": 152
     },
     {
       "name": "workflow: email-origin memory — Gmail tasks stay labelled Email after sheet round-trip",

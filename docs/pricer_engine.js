@@ -28,6 +28,7 @@
     { id: 'highlights',     grp: 'Product Highlights & Details', name: 'AI Product Highlights',                  aspl: 6,  qc: 3, pm: 2, mon: 2, unit: 0.10, lead: 10 },
     { id: 'details',        grp: 'Product Highlights & Details', name: 'AI Product Details',                     aspl: 6,  qc: 3, pm: 2, mon: 2, unit: 0.10, lead: 10 },
     { id: 'keywords',       grp: 'AI Keywords',                  name: 'AI Keyword Generation',                  aspl: 5,  qc: 3, pm: 2, mon: 2, unit: 0.06, lead: 8 },
+    { id: 'text_attr',      grp: 'AI Text Attributes',           name: 'AI Text Attribute Extraction',           aspl: 6,  qc: 3, pm: 2, mon: 2, unit: 0.10, lead: 10 },
     { id: 'visual_attr',    grp: 'AI Visual Attributes',         name: 'AI Visual Attribute Extraction',         aspl: 10, qc: 5, pm: 3, mon: 3, unit: 0.20, lead: 15 },
     { id: 'gpc',            grp: 'GPC Mapping & PT',             name: 'AI GPC Mapping',                         aspl: 6,  qc: 3, pm: 2, mon: 1, unit: 0.05, lead: 8 },
     { id: 'pt_class',       grp: 'GPC Mapping & PT',             name: 'AI Product Type Classification',         aspl: 6,  qc: 3, pm: 2, mon: 1, unit: 0.05, lead: 8 }
@@ -155,11 +156,12 @@
     if (/short title/.test(t)) return 'title_short';
     if (/search intent/.test(t)) return 'title_intent';
     if (/pre.?desc/.test(t)) return /attribute/.test(t) ? 'predesc_attr' : 'predesc';
-    if (/description pro|q\/?a|compare/.test(t)) return 'desc_pro';
+    if (/description pro|q\/?a|q\s*&\s*a|question.{0,12}answer|compare/.test(t)) return 'desc_pro';
     if (/desc/.test(t)) return 'desc_gen';
     if (/highlight/.test(t)) return 'highlights';
     if (/product detail/.test(t)) return 'details';
     if (/keyword/.test(t)) return 'keywords';
+    if (/text attr/.test(t)) return 'text_attr';
     if (/visual|image attr/.test(t)) return 'visual_attr';
     if (/gpc/.test(t)) return 'gpc';
     if (/product type|classif/.test(t)) return 'pt_class';
@@ -167,8 +169,17 @@
     return '';
   }
   // briefs = the Workflow briefs map; track = KV `tachyontrack` (briefId -> {tach, aspl, qc,
-  // pm, mon, tokens, volDone, catsDone, t}). A brief joins the table when its TITLE scans as
+  // pm, mon, tokens, billTok, runOne, runPar, volDone, catsDone, t}). tokens = ACTUAL tokens
+  // consumed; billTok = billing tokens (actual × model cost multiplier); billing units are
+  // always derived (billTok ÷ 1M), never stored. runOne/runPar = AI running time in MINUTES
+  // (single request / 25 parallel requests). A brief joins the table when its TITLE scans as
   // AI work or a track record exists; the track's explicit tach overrides the scan.
+  function trackNums(tr) {
+    return { aspl: +tr.aspl || 0, qc: +tr.qc || 0, pm: +tr.pm || 0, mon: +tr.mon || 0,
+      tokens: +tr.tokens || 0, billTok: +tr.billTok || 0,
+      runOne: +tr.runOne || 0, runPar: +tr.runPar || 0,
+      volDone: +tr.volDone || 0, catsDone: String(tr.catsDone || '') };
+  }
   function aiBriefRows(briefs, track) {
     track = track || {};
     var rows = [];
@@ -178,21 +189,23 @@
       var tr = track[k] || {};
       if (!scanned && !tr.tach && !Object.keys(tr).length) return;
       var done = b.status === 'done' || b.status === 'confirmed' || b.status === 'analysis';
-      rows.push({ bid: k, client: b.client || '', task: b.task || '', status: b.status || 'intake', done: done,
-        created: +b.created || 0, tach: tr.tach || scanned || '',
-        aspl: +tr.aspl || 0, qc: +tr.qc || 0, pm: +tr.pm || 0, mon: +tr.mon || 0,
-        tokens: +tr.tokens || 0, volDone: +tr.volDone || 0, catsDone: String(tr.catsDone || '') });
+      var row = trackNums(tr);
+      row.bid = k; row.client = b.client || ''; row.task = b.task || ''; row.status = b.status || 'intake';
+      row.done = done; row.created = +b.created || 0; row.tach = tr.tach || scanned || '';
+      rows.push(row);
     });
     // manual/historic entries: track records with no Workflow brief behind them (AI work
-    // done before the FCC existed). They carry their own client + task and count toward
-    // the averages exactly like scanned briefs — minus lead time (no ticket history).
+    // done before the FCC existed, or delivered runs handed back by ASPL). They carry their
+    // own client + task and count toward the averages exactly like scanned briefs — minus
+    // lead time (no ticket history).
     Object.keys(track).forEach(function (k) {
       if ((briefs || {})[k] || !track[k] || !track[k].manual || track[k].deleted) return;
       var tr = track[k];
-      rows.push({ bid: k, client: String(tr.client || ''), task: String(tr.task || ''), status: 'historic',
-        done: true, manual: true, created: +tr.t || 0, tach: tr.tach || classifyTach(tr.task) || '',
-        aspl: +tr.aspl || 0, qc: +tr.qc || 0, pm: +tr.pm || 0, mon: +tr.mon || 0,
-        tokens: +tr.tokens || 0, volDone: +tr.volDone || 0, catsDone: String(tr.catsDone || '') });
+      var row = trackNums(tr);
+      row.bid = k; row.client = String(tr.client || ''); row.task = String(tr.task || '');
+      row.status = 'historic'; row.done = true; row.manual = true; row.created = +tr.t || 0;
+      row.tach = tr.tach || classifyTach(tr.task) || '';
+      rows.push(row);
     });
     rows.sort(function (a, b2) { return (b2.created || 0) - (a.created || 0); });
     return rows;
@@ -218,9 +231,9 @@
       var any = h.aspl > 0 || h.qc > 0 || h.pm > 0 || h.mon > 0;
       var tokens = +tr.tokens || 0, volDone = +tr.volDone || 0;
       if (!any && !(tokens > 0 && volDone > 0)) return;
-      var a = acc[tach] = acc[tach] || { n: 0, aspl: 0, qc: 0, pm: 0, mon: 0, leadN: 0, lead: 0, tok: 0, vol: 0 };
+      var a = acc[tach] = acc[tach] || { n: 0, aspl: 0, qc: 0, pm: 0, mon: 0, leadN: 0, lead: 0, tok: 0, bill: 0, vol: 0 };
       if (any) { a.n++; ['aspl', 'qc', 'pm', 'mon'].forEach(function (f) { a[f] += Math.max(0, h[f]); }); }
-      if (tokens > 0 && volDone > 0) { a.tok += tokens; a.vol += volDone; }
+      if (tokens > 0 && volDone > 0) { a.tok += tokens; a.bill += (+tr.billTok || 0); a.vol += volDone; }
       var t0 = 0, t1 = 0;
       (b.hist || []).forEach(function (e) {
         if (e.s === 'briefed' && !t0) t0 = +e.t || 0;
@@ -238,9 +251,9 @@
       var any = h.aspl > 0 || h.qc > 0 || h.pm > 0 || h.mon > 0;
       var tokens = +tr.tokens || 0, volDone = +tr.volDone || 0;
       if (!any && !(tokens > 0 && volDone > 0)) return;
-      var a = acc[tach] = acc[tach] || { n: 0, aspl: 0, qc: 0, pm: 0, mon: 0, leadN: 0, lead: 0, tok: 0, vol: 0 };
+      var a = acc[tach] = acc[tach] || { n: 0, aspl: 0, qc: 0, pm: 0, mon: 0, leadN: 0, lead: 0, tok: 0, bill: 0, vol: 0 };
       if (any) { a.n++; ['aspl', 'qc', 'pm', 'mon'].forEach(function (f) { a[f] += Math.max(0, h[f]); }); }
-      if (tokens > 0 && volDone > 0) { a.tok += tokens; a.vol += volDone; }
+      if (tokens > 0 && volDone > 0) { a.tok += tokens; a.bill += (+tr.billTok || 0); a.vol += volDone; }
     });
     var out = {};
     Object.keys(acc).forEach(function (id) {
@@ -250,9 +263,48 @@
         aspl: a.n ? round2(a.aspl / a.n) : 0, qc: a.n ? round2(a.qc / a.n) : 0,
         pm: a.n ? round2(a.pm / a.n) : 0, mon: a.n ? round2(a.mon / a.n) : 0,
         lead: a.leadN ? Math.max(1, Math.round(a.lead / a.leadN)) : null,
-        tokPerSku: a.vol > 0 ? round2(a.tok / a.vol) : null, volDone: a.vol };
+        tokPerSku: a.vol > 0 ? round2(a.tok / a.vol) : null,
+        billPerSku: a.vol > 0 && a.bill > 0 ? round2(a.bill / a.vol) : null, volDone: a.vol };
     });
     return out;
+  }
+  // ---- per-brand token & runtime summary (mirrors the ASPL dev handback sheet) ----------
+  // Sums the tracking table per client: actual tokens, billing tokens (units derived ÷1M) and
+  // the two running-time totals. volDone is the MAX across the brand's briefs, not the sum —
+  // every optimisation runs over the same catalogue, so summing would double-count products.
+  // Brand-level facts that can't be split per brief live in `clientMeta` track records
+  // (key -> {clientMeta:true, client, manh, prodGroups, prodVariants}): manh = TOTAL MAN TIME
+  // for the brand's AI briefs, assigned to ASPL hours (Ray, Aug 2026 — the dev handback
+  // reports it per brand, so a per-brief split would be invented data).
+  function clientSummary(rows, track) {
+    var by = {}, order = [];
+    function slot(c) {
+      var key = String(c || '').trim() || '—';
+      if (!by[key]) { by[key] = { client: key, n: 0, tokens: 0, billTok: 0, runOne: 0, runPar: 0, volDone: 0, manh: null, metaKey: '' }; order.push(key); }
+      return by[key];
+    }
+    (rows || []).forEach(function (r) {
+      var s = slot(r.client);
+      s.n++; s.tokens += (+r.tokens || 0); s.billTok += (+r.billTok || 0);
+      s.runOne += (+r.runOne || 0); s.runPar += (+r.runPar || 0);
+      s.volDone = Math.max(s.volDone, +r.volDone || 0);
+    });
+    Object.keys(track || {}).forEach(function (k) {
+      var tr = track[k]; if (!tr || !tr.clientMeta || tr.deleted || !tr.client) return;
+      var s = slot(tr.client); s.metaKey = k;
+      if (tr.manh != null && isFinite(+tr.manh)) s.manh = +tr.manh;
+      if (+tr.prodGroups > 0) s.prodGroups = +tr.prodGroups;
+      if (+tr.prodVariants > 0) s.prodVariants = +tr.prodVariants;
+    });
+    return order.map(function (k) { var s = by[k]; s.billUnits = round2(s.billTok / 1e6); return s; })
+      .filter(function (s) { return s.n > 0; })
+      .sort(function (a, b) { return b.billTok - a.billTok; });
+  }
+  // minutes -> "28h 7m" (the tracking cells store run time as plain minutes)
+  function fmtMin(min) {
+    min = Math.round(+min || 0); if (min <= 0) return '—';
+    var h = Math.floor(min / 60), m = min % 60;
+    return h ? (h + 'h' + (m ? ' ' + m + 'm' : '')) : (m + 'm');
   }
   // rate-card overrides with actuals layered on top (unit £ stays commercial — actuals only
   // ever replace HOURS + lead, never the per-SKU price)
@@ -272,9 +324,9 @@
     return out;
   }
 
-  var PricerEngine = { VERSION: '1.3.1', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
+  var PricerEngine = { VERSION: '1.4.0', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
     rates: rates, tieredUnits: tieredUnits, quote: quote, quoteText: quoteText, fmtGBP: fmtGBP,
-    classifyTach: classifyTach, aiBriefRows: aiBriefRows,
+    fmtMin: fmtMin, classifyTach: classifyTach, aiBriefRows: aiBriefRows, clientSummary: clientSummary,
     actualsFromBriefs: actualsFromBriefs, overridesWithActuals: overridesWithActuals };
   g.PricerEngine = PricerEngine;
   if (typeof module !== 'undefined' && module.exports) module.exports = PricerEngine;
