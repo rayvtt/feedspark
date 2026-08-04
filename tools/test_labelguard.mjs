@@ -279,6 +279,55 @@ const codes = (alerts) => alerts.map((a) => a.sev + ':' + a.code).sort();
   eq('digest with no fires -> no messages', LG.alertDigest(rule, [], {}), []);
 }
 
+/* ---------- isImplausible (the impossible-answer guard) ---------- */
+{
+  const xr = { vs: 'custom_label_2', ref: [['a', 10], ['b', 5]] };
+  ok('cross: segment>0 + empty pivot = implausible', LG.isImplausible(xr, { segment: 9178, values: [] }));
+  ok('cross: segment=0 + empty pivot = coherent (segment-gone path)', !LG.isImplausible(xr, { segment: 0, values: [] }));
+  ok('cross: data present = plausible', !LG.isImplausible(xr, { segment: 9178, values: [['a', 9]] }));
+  const pr = { vs: null, ref: [['a', 10]] };
+  ok('plain: empty values = implausible (sweep owns real wipes)', LG.isImplausible(pr, { present: true, values: [] }));
+  ok('plain: column-missing reading also unprovable', LG.isImplausible(pr, { present: false, values: [] }));
+  ok('plain: data present = plausible', !LG.isImplausible(pr, { present: true, values: [['a', 4]] }));
+  ok('no ref = nothing to contradict', !LG.isImplausible({ vs: null, ref: [] }, { present: true, values: [] }));
+}
+
+/* ---------- buildReport (the emailed status summary) ---------- */
+{
+  const T0 = 1754280000000; // fixed clock
+  const rep = LG.buildReport({
+    now: T0, link: 'https://x/labels',
+    rules: {
+      'Reiss|gb|w_1': { client: 'Reiss', mkt: 'gb', label: 'custom_label_0', value: 'Best Sellers', vs: 'custom_label_2',
+        ref: [['a', 1], ['b', 2]], dropPct: 20, sched: 'twice', enabled: true, dests: ['d1'],
+        state: { 'women - fp': { st: 'fired', t: T0, n: 0 } } },
+      'Reiss|gb|w_2': { client: 'Reiss', mkt: 'gb', label: 'custom_label_1', value: null, vs: null,
+        ref: [['aw25', 9]], dropPct: 0, enabled: true, dests: ['d1'],
+        state: { aw25: { st: 'suspect', t: T0, n: 0 } } },
+      'YuMOVE|gb|w_3': { client: 'YuMOVE', mkt: 'gb', label: 'custom_label_0', value: null, vs: null,
+        ref: [['x', 5]], dropPct: 50, enabled: true, dests: ['d1'], state: {} },
+    },
+    dests: { d1: { name: 'Reiss-alerts', type: 'gchat' } },
+    idx: {
+      'Reiss|gb': { status: 'crit', rows: 22496, nCrit: 1, nWarn: 0, cov: { custom_label_0: 83.3, custom_label_1: 100, custom_label_2: null, custom_label_3: null, custom_label_4: null } },
+      'Schuh|gb': { status: 'ok', rows: 41000, nCrit: 0, nWarn: 0, cov: {} },
+    },
+    alerts: { 'Reiss|gb': { alerts: [
+      { sev: 'crit', msg: 'CL0 value "clearance" GONE - was on 900 SKUs' },
+      { sev: 'info', msg: 'noise that must not appear' } ] } },
+  });
+  ok('report: rule counts line', rep.indexOf('WATCH RULES (3) — 1 down · 1 suspect · 1 ok') >= 0, rep);
+  ok('report: DOWN rule first with broken value', rep.indexOf('[DOWN] Reiss · GB') >= 0 &&
+    rep.indexOf('broken: `women - fp`') >= 0 && rep.indexOf('[DOWN]') < rep.indexOf('[SUSPECT]'), rep);
+  ok('report: suspect note', rep.indexOf('confirms or clears next check') >= 0, rep);
+  ok('report: schedule + threshold shown', rep.indexOf('07:00 & 17:00 GMT') >= 0 && rep.indexOf('gone or -20%') >= 0, rep);
+  ok('report: estate crit first with coverage', rep.indexOf('[CRIT] REISS · GB — 22496 rows · CL0 83.3% · CL1 100%') >= 0 &&
+    rep.indexOf('[CRIT]') < rep.indexOf('[ok] SCHUH'), rep);
+  ok('report: baseline alerts, info excluded', rep.indexOf('ACTIVE BASELINE ALERTS (1)') >= 0 &&
+    rep.indexOf('"clearance" GONE') >= 0 && rep.indexOf('noise that must not appear') < 0, rep);
+  ok('report: link', rep.indexOf('https://x/labels') >= 0, rep);
+}
+
 /* ---------- summarize ---------- */
 {
   const s = mkSnap(1000, { custom_label_0: { values: [['a', 900]] } });

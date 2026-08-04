@@ -274,6 +274,27 @@ export async function labelPivot(fetchFn, src, key) {
   return { values, present: true };
 }
 
+// An answer that CONTRADICTS ITSELF must never drive an alert. Twice now Google served
+// the worker "segment counts 9,000+ SKUs" and, seconds later in the same run, "that same
+// segment has zero cross values" — for feeds whose sheets were verifiably fine (the
+// two-strike guard was defeated because the bad reads recurred across consecutive checks;
+// throttling of Cloudflare's shared egress IPs fits the signature). No genuine feed state
+// is provable from such a response, so the watch runner re-queries once after a pause and,
+// if still implausible, SKIPS the check with a diagnostic instead of evaluating. A real
+// full-label wipe is still caught by the baseline sweep's cov-zero CRIT (different query,
+// different schedule) — the watch just refuses to confirm from garbage.
+export function isImplausible(rule, live) {
+  if (!live || !(rule.ref || []).length) return false;
+  const empty = !(live.values || []).length;
+  // cross: segment=0 + empty pivot is COHERENT (the whole segment vanished — evaluated
+  // normally as segment-gone with two-strike); segment>0 + empty pivot contradicts itself.
+  if (rule.vs) return empty && (live.segment || 0) > 0;
+  // plain label: an all-values-empty reading (column "missing" or "blank") is exactly what
+  // a garbled header probe produces too — never confirmable from here. The baseline sweep's
+  // label-gone / cov-zero CRIT owns genuine column wipes.
+  return empty;
+}
+
 // pure state machine: reference vs live -> fires + next state. No fetching, no clock reads.
 // TWO-STRIKE CONFIRMATION: the first sighting of a drop-off marks the value 'suspect' and
 // stays SILENT; only a second consecutive bad check fires the ping. Feed sheets are
@@ -364,6 +385,82 @@ export function alertDigest(rule, fires, opts) {
       (opts.link ? '\n' + opts.link : ''));
   }
   return out;   // 0-2 messages: an alert digest and/or a recovery digest
+}
+
+/* ---------------- the emailed status report -------------------------------------------- */
+// Plain-text summary of the whole Label Guard estate — sent to Ray's inbox by the Gmail
+// bridge (daily after the 07:00 GMT watch pass, optionally 17:00, or on demand). Pure
+// function over the KV stores so it's unit-testable; the worker assembles the inputs.
+export function buildReport(inp) {
+  const { rules, dests, idx, alerts, now, link } = inp;
+  const CL = (k) => 'CL' + String(k).slice(-1);
+  const L = [];
+  const d = new Date(now);
+  L.push('FEEDSPARK LABEL GUARD — STATUS REPORT');
+  L.push(d.toUTCString().replace(' GMT', ' GMT') + '');
+  L.push('');
+
+  // watch rules, broken first
+  const rKeys = Object.keys(rules || {}).sort();
+  const down = [], sus = [], ok = [];
+  for (const k of rKeys) {
+    const r = rules[k]; if (!r) continue;
+    const st = r.state || {};
+    const downVals = Object.keys(st).filter((v) => st[v] && st[v].st === 'fired');
+    const susVals = Object.keys(st).filter((v) => st[v] && st[v].st === 'suspect');
+    const scope = r.vs ? CL(r.label) + ' "' + r.value + '" → ' + CL(r.vs) + ' (' + (r.ref || []).length + ' values)'
+      : CL(r.label) + (r.value ? ' "' + r.value + '"' : ' (' + (r.ref || []).length + ' values)');
+    const who = (r.dests || []).map((id) => ((dests || {})[id] || {}).name || '?').join(', ');
+    const head = r.client + ' · ' + String(r.mkt).toUpperCase() + ' — ' + scope +
+      ' · ' + (r.dropPct ? 'gone or -' + r.dropPct + '%' : 'gone only') +
+      ' · ' + ((r.sched || 'hourly') === 'twice' ? '07:00 & 17:00 GMT' : 'hourly') +
+      (r.enabled ? '' : ' · PAUSED') + ' → ' + who;
+    if (!r.enabled) { ok.push('[PAUSED] ' + head); continue; }
+    if (downVals.length) {
+      down.push('[DOWN] ' + head + '\n        broken: ' + downVals.map((v) => (v === '__seg' ? '(whole segment)' : '`' + v + '`')).join(', '));
+    } else if (susVals.length) {
+      sus.push('[SUSPECT] ' + head + '\n        first sighting on: ' + susVals.map((v) => (v === '__seg' ? '(whole segment)' : '`' + v + '`')).join(', ') + ' — confirms or clears next check');
+    } else {
+      ok.push('[OK] ' + head);
+    }
+  }
+  L.push('WATCH RULES (' + rKeys.length + ') — ' + down.length + ' down · ' + sus.length + ' suspect · ' + (rKeys.length - down.length - sus.length) + ' ok');
+  for (const s of down.concat(sus, ok)) L.push('  ' + s);
+  if (!rKeys.length) L.push('  (no watch rules configured)');
+  L.push('');
+
+  // estate board, worst first
+  const fKeys = Object.keys(idx || {}).sort((a, b) => {
+    const rank = (e) => (e.status === 'crit' ? 0 : e.status === 'warn' ? 1 : e.status === 'unreachable' ? 2 : 3);
+    return rank(idx[a] || {}) - rank(idx[b] || {}) || a.localeCompare(b);
+  });
+  const badge = (e) => (e.status === 'crit' ? '[CRIT]' : e.status === 'warn' ? '[WARN]' : e.status === 'unreachable' ? '[UNREACHABLE]' : '[ok]');
+  L.push('ESTATE (' + fKeys.length + ' scanned feeds)');
+  for (const k of fKeys) {
+    const e = idx[k] || {};
+    const cov = LABEL_KEYS.map((lk, i) => (e.cov && e.cov[lk] != null ? 'CL' + i + ' ' + e.cov[lk] + '%' : null)).filter(Boolean).join(' · ');
+    L.push('  ' + badge(e) + ' ' + k.replace('|', ' · ').toUpperCase() + ' — ' + (e.rows != null ? e.rows + ' rows' : 'no scan') +
+      (cov ? ' · ' + cov : '') + ((e.nCrit || e.nWarn) ? ' · ' + (e.nCrit || 0) + ' crit / ' + (e.nWarn || 0) + ' warn' : ''));
+  }
+  L.push('');
+
+  // active baseline alerts
+  const aKeys = Object.keys(alerts || {});
+  let aN = 0;
+  const aLines = [];
+  for (const k of aKeys) {
+    for (const a of ((alerts[k] || {}).alerts || [])) {
+      if (a.sev === 'info') continue;
+      aN++;
+      if (aLines.length < 15) aLines.push('  [' + String(a.sev).toUpperCase() + '] ' + k.replace('|', ' · ').toUpperCase() + ' — ' + a.msg);
+    }
+  }
+  L.push('ACTIVE BASELINE ALERTS (' + aN + ')');
+  if (aLines.length) { for (const s of aLines) L.push(s); if (aN > aLines.length) L.push('  … +' + (aN - aLines.length) + ' more on the board'); }
+  else L.push('  none — every scanned feed matches its baseline');
+  L.push('');
+  if (link) L.push('Live board: ' + link);
+  return L.join('\n');
 }
 
 /* ---------------- baseline diff -> alerts ---------------------------------------------- */

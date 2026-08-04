@@ -291,6 +291,18 @@ window.addEventListener('load',restore);
       </div>
       <p class="hint" style="margin:10px 0 0">Google Chat: space → Apps &amp; integrations → Webhooks. Slack: workspace → Incoming Webhooks.
       Email sends from Ray's mailbox via the Gmail bridge (gmail_push.gs — re-paste the latest script once; §8 of GOOGLE_SETUP).</p>
+      <div style="border-top:1px solid var(--line);margin-top:12px;padding-top:12px">
+        <h3 class="rt-h">📧 Status report by email</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12.5px;font-weight:800">
+          <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="rp-on"> daily at 07:00 GMT</label>
+          <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="rp-pm"> + 17:00</label>
+          <input id="rp-to" placeholder="ray@feedspark.com" style="font:inherit;font-size:12px;font-weight:400;padding:7px 9px;border:1px solid var(--line);border-radius:8px;flex:1 1 170px;min-width:0">
+          <button class="btn" id="rp-save">Save</button>
+          <button class="btn pri" id="rp-send">Send now</button>
+        </div>
+        <p class="hint" style="margin:8px 0 0">All watch rules (down / suspect / ok), estate health, and active baseline alerts in one plain-text email.
+        Sent after the scheduled check, so it always reflects fresh data. Delivery via the Gmail bridge (~5 min).</p>
+      </div>
     </div>
     <div class="panel"><h3 class="rt-h">🔔 Watch rules</h3>
       <div id="rule-list"><span class="muted">Loading…</span></div>
@@ -546,6 +558,7 @@ window.addEventListener('load',restore);
         var L = s.labels[key]; if (!L || !L.present) return;
         var floor = Math.max(10, Math.ceil((s.rows || 0) * 0.005));
         var ref = (L.values || []).filter(function (pr) { return pr[1] >= floor; });
+        if (!ref.length) { wtMsg('✗ no significant values on this label right now — nothing to arm'); return; }
         openBuilder({ client: p2.client, mkt: p2.mkt, label: key, value: null, vs: null, ref: ref, refSeg: 0,
           title: p2.client + ' · ' + p2.mkt.toUpperCase() + ' — CL' + key.slice(-1) + ' (' + ref.length + ' significant values)' });
       };
@@ -644,6 +657,7 @@ window.addEventListener('load',restore);
     if (xw) xw.onclick = function () {
       var xd = XCACHE[crossKeyStr()];
       if (!xd || xd.error) { wtMsg('✗ wait for the live breakdown to load first'); return; }
+      if (!(xd.rows || []).length) { wtMsg('✗ this breakdown is empty right now — refresh it before arming a watch'); return; }
       var p2 = parts(CROSS.k), byN = 'CL' + CROSS.by.slice(-1), vsN2 = 'CL' + CROSS.vs.slice(-1);
       openBuilder({ client: p2.client, mkt: p2.mkt, label: CROSS.by, value: CROSS.value, vs: CROSS.vs,
         ref: xd.rows || [], refSeg: xd.segment || 0,
@@ -876,6 +890,27 @@ window.addEventListener('load',restore);
     }
   }
 
+  /* ---------------- emailed status report settings ---------------- */
+  function loadReportCfg() {
+    fetch(API + '/api/labels/report').then(function (r) { return r.json(); }).then(function (c) {
+      $('rp-on').checked = !!c.on; $('rp-pm').checked = !!c.pm; $('rp-to').value = c.to || 'ray@feedspark.com';
+    }).catch(function () {});
+  }
+  $('rp-save').onclick = function () {
+    fetch(API + '/api/labels/report', { method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ on: $('rp-on').checked, pm: $('rp-pm').checked, to: $('rp-to').value.trim() }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { wtMsg(d.ok ? ('✓ report ' + (d.on ? 'ON — daily 07:00' + (d.pm ? ' & 17:00' : '') + ' GMT → ' + d.to : 'off')) : ('✗ ' + (d.error || 'failed'))); })
+      .catch(function () { wtMsg('✗ network'); });
+  };
+  $('rp-send').onclick = function () {
+    var btn = $('rp-send'); btn.disabled = true;
+    fetch(API + '/api/labels/report/send', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { btn.disabled = false; wtMsg(d.ok ? ('✓ ' + (d.note || 'report queued') + ' → ' + d.to) : ('✗ ' + (d.error || 'failed'))); })
+      .catch(function () { btn.disabled = false; wtMsg('✗ network'); });
+  };
+
   $('wt-runall').onclick = function () {
     var btn = $('wt-runall'); btn.disabled = true;
     fetch(API + '/api/labels/watch/run', { method: 'POST' })
@@ -991,6 +1026,7 @@ window.addEventListener('load',restore);
   };
 
   loadRouting();
+  loadReportCfg();
   refreshEstate().then(function () {
     var k = null;
     try { k = decodeURIComponent((location.hash || '').slice(1)) || null; } catch (e) {}
