@@ -104,25 +104,35 @@ window.addEventListener('load',restore);
   .em-dis-h{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:9px 0 3px}
   .em-zero{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 0}
   /* new-brief popup (reuses .scrim/.modal, wider for the 2-col composer) */
-  .bg-modal{width:min(1320px,100%)}
-  /* Briefing Studio: context rail + workload scheduler + completeness checklist around the composer */
-  .bg-modal .gen{grid-template-columns:250px 1.05fr 1fr}
-  @media(max-width:1150px){.bg-modal .gen{grid-template-columns:1.05fr 1fr}.bs-ctx{display:none}}
+  .modal.bg-modal{width:min(1460px,96vw)}   /* must out-rank the generic .modal width cap, which comes later in the sheet */
+  /* Briefing Studio: context rail + workload scheduler + completeness checklist around the composer.
+     minmax(0,·) matters: without it the preview pre forces the column wide and the grid overflows,
+     squeezing the others until the preview wraps one word per line. */
+  .bg-modal .gen{grid-template-columns:240px minmax(0,1.02fr) minmax(0,1fr);gap:14px}
+  .bg-modal .gen>.panel{min-width:0}
+  .bg-modal .fld textarea{min-height:76px}
+  #bg-scope{min-height:120px}
+  @media(max-width:1150px){.bg-modal .gen{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}.bs-ctx{display:none}}
   .bs-ctx{font-size:12px;line-height:1.45;max-height:76vh;overflow-y:auto}
   .bs-ctx h4{margin:12px 0 4px;font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
   .bs-ctx h4:first-child{margin-top:0}
   .bs-line{padding:4px 0;border-bottom:1px dashed var(--line);color:var(--ink-2);overflow-wrap:break-word}
   .bs-mut{color:var(--muted);font-size:11px;font-weight:700}
   .bs-win{color:var(--good)}
-  .bs-sched{display:flex;gap:5px;align-items:flex-end}
-  .bs-wk{flex:1;cursor:pointer;text-align:center;font-size:9.5px;font-weight:800;color:var(--muted)}
-  .bs-wk .bar{height:34px;display:flex;align-items:flex-end;background:var(--wash);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:2px}
-  .bs-wk .fill{width:100%;background:#5B82BE;min-height:1px}
+  /* the workload strip lives OUTSIDE .fld on purpose: .fld input{width:100%} was inflating the
+     little capacity box into a full-width field */
+  .bs-wl{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+  .bs-wl-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .bs-sched{display:flex;gap:6px;align-items:flex-end}
+  .bs-wk{flex:1;cursor:pointer;text-align:center;font-size:10px;font-weight:800;color:var(--muted);line-height:1.3}
+  .bs-wk b{color:var(--ink-2)}
+  .bs-wk .bar{height:42px;display:flex;align-items:flex-end;background:var(--wash);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-bottom:3px}
+  .bs-wk .fill{width:100%;background:#5B82BE;min-height:2px}
   .bs-wk.full .fill{background:#C0392B}
   .bs-wk:hover .bar{border-color:var(--orange)}
   .bs-wk.sel .bar{border-color:var(--navy);box-shadow:0 0 0 1.5px var(--navy)}
-  .bs-note{font-size:11px;color:var(--muted);font-weight:700;margin-top:4px;min-height:14px}
-  .bs-cap{width:44px;font:inherit;font-size:11px;font-weight:800;padding:1px 4px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+  .bs-note{font-size:11px;color:var(--muted);font-weight:700;margin-top:5px;min-height:14px}
+  .bs-cap{width:46px;font:inherit;font-size:11px;font-weight:800;padding:2px 5px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);text-transform:none}
   .bs-check{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 9px}
   .bs-ck{font-size:10.5px;font-weight:800;border-radius:100px;padding:2px 9px;border:1px solid var(--line)}
   .bs-ck.ok{color:var(--good);border-color:#CDE9D8;background:rgba(72,208,126,.1)}
@@ -360,7 +370,7 @@ window.addEventListener('load',restore);
         <div class="fld"><label>Due date</label><input id="bg-due" type="date"></div>
         <div class="fld"><label>Priority</label><select id="bg-priority"><option>Normal</option><option>High</option><option>Urgent</option></select></div>
       </div>
-      <div class="fld"><label class="bs-lab" id="bs-cap-lbl">Workload</label>
+      <div class="bs-wl"><div class="bs-wl-h" id="bs-cap-lbl">Workload</div>
         <div class="bs-sched" id="bs-sched"></div><div class="bs-note" id="bs-note"></div></div>
     </div>
     <div class="panel prev-wrap">
@@ -1168,7 +1178,7 @@ window.addEventListener('load',restore);
     host.innerHTML=load.map(function(n,i){
       var ws=new Date(mon); ws.setDate(ws.getDate()+i*7);
       return '<div class="bs-wk'+(n>=BCAP?' full':'')+(i===sel?' sel':'')+'" data-w="'+i+'" title="w'+(i+1)+' · Mon '+ws.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' · '+n+' of '+BCAP+' for '+esc(am)+(n>=BCAP?' — FULL':'')+' — click to schedule here">'
-        +'<div class="bar"><div class="fill" style="height:'+Math.round(Math.min(1,n/max)*100)+'%"></div></div>w'+(i+1)+'·'+n+'</div>'; }).join('');
+        +'<div class="bar"><div class="fill" style="height:'+Math.round(Math.min(1,n/max)*100)+'%"></div></div>w'+(i+1)+'·<b>'+n+'</b></div>'; }).join('');
     var lbl=document.getElementById('bs-cap-lbl');
     if(lbl){ lbl.innerHTML='Workload — '+esc(am)+'’s next '+BS_WEEKS+' weeks · cap <input class="bs-cap" id="bs-cap" type="number" min="1" max="30" value="'+BCAP+'" title="Tasks per week per AM before new briefs roll to the next week">/wk';
       var ci=document.getElementById('bs-cap'); if(ci)ci.onchange=function(){ bsSaveCap(ci.value); renderSched(); }; }
