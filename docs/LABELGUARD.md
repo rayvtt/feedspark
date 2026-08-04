@@ -132,9 +132,12 @@ and route a **high-priority ping** the moment one drops off a live check:
   `/api/gmail/push {outboxPoll:1}`, sends via GmailApp, acks with `{outboxAck:[ids]}`;
   re-paste the latest script once). The `@all` option prepends `<!channel>` / `<users/all>`
   on non-recovery pings.
-- **Cadence:** a second cron firing (`30 * * * *`) runs the watch pass hourly with its own
-  subrequest budget (~2–3 gviz fetches per rule; >10 rules rotate across firings).
-  "Check now" / "Run all checks now" fire on demand.
+- **Cadence — per rule:** `hourly` (the `30 * * * *` cron) or `twice daily` at **07:00 &
+  17:00 GMT** (its own `0 7,17 * * *` cron firing) — pick in the builder, or toggle on the
+  rule row ("hourly ⏱" ↔ "07:00 & 17:00 GMT ⏱"). Each firing has its own subrequest budget
+  (~2–3 gviz fetches per rule; >10 rules rotate). "Check now" / "Run all checks now" fire
+  on demand regardless of schedule. Note: twice-daily rules confirm a two-strike drop-off
+  on the NEXT scheduled check — detection latency up to ~10h vs ~1h on hourly.
 - **Thresholds:** per rule — GONE only, −10/−20/−30/−50/−75%, or a **custom 1–99%**; the
   threshold on an existing rule is click-to-edit (the "gone or −X% ✎" text on its row).
 - **Fire semantics — two-strike confirmation:** the FIRST sighting of a drop-off marks the

@@ -1224,9 +1224,10 @@ export default {
   // Reads the brand->sheet map the dashboard last posted (KV `plansheets`) and re-parses
   // each Project-Plan tab into KV (planlive:<id>). Registered in wrangler.toml [triggers].
   async scheduled(event, env, ctx) {
-    // :30 firing = the custom-watch pass (Ray's alert builder) with its OWN subrequest
-    // budget — watched values get a live check every hour, independent of the sweep.
-    if (event && event.cron === '30 * * * *') { await labelWatchRun(env, null); return; }
+    // Custom-watch passes (Ray's alert builder) with their OWN subrequest budget: the :30
+    // firing checks hourly-schedule rules; 07:00/17:00 GMT checks twice-daily rules.
+    if (event && event.cron === '30 * * * *') { await labelWatchRun(env, null, 'hourly'); return; }
+    if (event && event.cron === '0 7,17 * * *') { await labelWatchRun(env, null, 'twice'); return; }
     // Label Guard sweep runs FIRST and unconditionally — the plan warm below early-returns
     // without GOOGLE_SA_JSON, and label drop-off monitoring must never hinge on that credential.
     await labelCronSweep(env);
@@ -1502,16 +1503,21 @@ async function logAlertActivity(env, detail) {
   } catch (e) {}
 }
 
-// evaluate watch rules against the LIVE feeds. ~2-3 gviz fetches per rule; the :30 cron
-// firing gives this its own subrequest budget, and >MAXRULES estates rotate via cursor.
-async function labelWatchRun(env, onlyFeedKey) {
+// evaluate watch rules against the LIVE feeds. ~2-3 gviz fetches per rule; each cron
+// firing gets its own subrequest budget, and >MAXRULES estates rotate via cursor.
+// mode: 'hourly' | 'twice' filters rules by their per-rule schedule (r.sched, default
+// 'hourly'); null (manual Check now / Run all) checks every enabled rule regardless.
+async function labelWatchRun(env, onlyFeedKey, mode) {
   const now = Date.now();
   const envx = liftEnvelope(await env.EDITS.get('labelwatch', 'json'), now);
   const rules = envx.data;
   const dests = liftEnvelope(await env.EDITS.get('labeldest', 'json'), now).data;
   const keys = Object.keys(rules).filter((k) => {
     const r = rules[k];
-    return r && r.enabled && (!onlyFeedKey || lgKey(r.client, r.mkt) === onlyFeedKey);
+    if (!r || !r.enabled) return false;
+    if (onlyFeedKey && lgKey(r.client, r.mkt) !== onlyFeedKey) return false;
+    if (mode && (r.sched || 'hourly') !== mode) return false;
+    return true;
   }).sort();
   if (!keys.length) return { ok: true, checked: 0, fired: 0, suspects: 0, results: [] };
   const MAXRULES = 10;

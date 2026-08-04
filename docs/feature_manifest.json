@@ -1151,6 +1151,18 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "Array.isArray(body.ids)",
       "pr": 189
+    },
+    {
+      "name": "worker: twice-daily watch cron (07:00/17:00 GMT, per-rule sched)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "0 7,17 * * *",
+      "pr": 190
+    },
+    {
+      "name": "wrangler: 07:00/17:00 GMT watch cron registered",
+      "file": "wrangler.toml",
+      "pattern": "0 7,17 * * *",
+      "pr": 190
     }
   ]
 }
