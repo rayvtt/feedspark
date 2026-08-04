@@ -935,6 +935,20 @@
       "pattern": "mergeLegacyIntoSeeds",
       "min": 2,
       "pr": 175
+    },
+    {
+      "name": "Pricer: seeded live AI briefs — Mon/Acc/Superdry × titles/desc/keywords",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "SEED_TRACK",
+      "min": 2,
+      "pr": 152
+    },
+    {
+      "name": "workflow: email-origin memory — Gmail tasks stay labelled Email after sheet round-trip",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "markEsrc",
+      "min": 4,
+      "pr": 176
     }
   ]
 }
