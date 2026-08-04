@@ -306,12 +306,68 @@ def check_orphan_figures(chapters):
     return out
 
 
+# Mirrors SEL in worker.js getEditorScript. Kept in step by hand; the shape check below is
+# only meaningful while it matches.
+EDITOR_SEL = ('h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.lede,.sec-sub,.stat,.callout,'
+              '.card h4,.card p,.note,.pill,.q')
+
+
+def shape_fingerprint(soup):
+    """How many editable elements sit under each chapter — an APPROXIMATION of the input to
+    the browser's data-eid assignment.
+
+    Deliberately not claimed to be identical: this counts 627 elements on the Reiss deck where
+    the browser assigns 759, because the live DOM includes runtime-added nodes and soupsieve
+    resolves a couple of selectors differently. That does not matter for what this is used
+    for. It is compared PYTHON-TO-PYTHON, between two revisions of the same file, and it is
+    sensitive to exactly the changes that move eids: adding, removing or re-chaptering an
+    editable element. The browser's own fingerprint (worker.js shapeOf) is likewise only ever
+    compared browser-to-browser. Neither needs to agree with the other in absolute terms.
+
+    The point is that a structural change is SEEN BEFORE IT SHIPS, instead of being discovered
+    by whoever next opens the deck with a live overlay."""
+    chapters = soup.find_all('div', class_='chapter', id=re.compile(r'^c\d+$'))
+    positions = {}
+    for i, c in enumerate(chapters):
+        positions[id(c)] = c
+    order = [c.get('id') for c in chapters]
+    counts = defaultdict(int)
+    for el in soup.select(EDITOR_SEL):
+        if not el.get_text(strip=True):
+            continue
+        if el.find_parent(class_=re.compile(r'^de-')):
+            continue
+        key = 'top'
+        for c in chapters:
+            # document order: a chapter div that appears before this element owns it
+            if c is el or _precedes(c, el):
+                key = c.get('id')
+            else:
+                break
+        counts[key] += 1
+    return counts, order
+
+
+def _precedes(a, b):
+    """True when tag a appears strictly before tag b in document order."""
+    return a.sourceline is not None and b.sourceline is not None and (
+        (a.sourceline, a.sourcepos or 0) < (b.sourceline, b.sourcepos or 0))
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
         sys.exit(1)
     path = sys.argv[1]
     quiet = '--quiet' in sys.argv
+
+    if '--shape' in sys.argv:
+        soup = BeautifulSoup(open(path, encoding='utf-8').read(), 'html.parser')
+        counts, order = shape_fingerprint(soup)
+        for k in ['top'] + order:
+            if k in counts:
+                print('%s\t%d' % (k, counts[k]))
+        return
     soup = BeautifulSoup(open(path, encoding='utf-8').read(), 'html.parser')
     chapters = chapter_index(soup)
     full_text = ' '.join(c['text'] for c in chapters)

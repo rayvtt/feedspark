@@ -876,6 +876,188 @@
       "file": "tools/qa_gate.sh",
       "pattern": "qa-gate CLEAN",
       "pr": 165
+    },
+    {
+      "name": "workflow: timeline covers every dated task + brand/AM filters",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "timelineEvents",
+      "min": 2,
+      "pr": 166
+    },
+    {
+      "name": "workflow: timeline full-bleed + focus mode (AM productivity view)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "tl-focus",
+      "min": 4,
+      "pr": 167
+    },
+    {
+      "name": "workflow: timeline sticky week headers + row-edit pop-up (tle)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "tle-scrim",
+      "min": 3,
+      "pr": 168
+    },
+    {
+      "name": "workflow: timeline shares Intake filters + status flag legend",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "renderTlLegend",
+      "min": 2,
+      "pr": 169
+    },
+    {
+      "name": "workflow: chronological due sort — dateless sink, year-less dates get the current year",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "dateless rows sink to the bottom",
+      "pr": 170
+    },
+    {
+      "name": "workflow: gmail triage groups conversation threads (one decision per thread)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "groupThreads",
+      "min": 3,
+      "pr": 172
+    },
+    {
+      "name": "Pricer: token economics tracking — actual/billing tok, derived bill units, run times",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "billTok",
+      "min": 3,
+      "pr": 173
+    },
+    {
+      "name": "Pricer: per-brand totals summary + brand-level man time (ASPL h) via clientMeta",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "ai-sum",
+      "min": 2,
+      "pr": 173
+    },
+    {
+      "name": "Pricer engine: clientSummary/fmtMin + billTok-runOne-runPar track fields",
+      "file": "docs/pricer_engine.js",
+      "pattern": "clientSummary",
+      "min": 2,
+      "pr": 173
+    },
+    {
+      "name": "Pricer engine: AI Text Attribute catalogue entry + title-scan patterns",
+      "file": "docs/pricer_engine.js",
+      "pattern": "text_attr",
+      "min": 2,
+      "pr": 173
+    },
+    {
+      "name": "Pricer: compact token column — single Bill units cell + token-economics pop-up",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "tok-pop",
+      "min": 2,
+      "pr": 174
+    },
+    {
+      "name": "Pricer: pre-batch rows fold into handback seeds by (client, attribute) on boot",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "mergeLegacyIntoSeeds",
+      "min": 2,
+      "pr": 175
+    },
+    {
+      "name": "workflow: email-origin memory — Gmail tasks stay labelled Email after sheet round-trip",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "markEsrc",
+      "min": 4,
+      "pr": 176
+    },
+    {
+      "name": "worker: Label Guard /api/labels routes",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "api/labels/",
+      "min": 8,
+      "pr": 179
+    },
+    {
+      "name": "worker: Label Guard cron sweep wired into scheduled()",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "labelCronSweep",
+      "min": 2,
+      "pr": 179
+    },
+    {
+      "name": "labelguard engine: baseline diff -> alerts",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "diffSnapshots",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Activity",
+      "file": "docs/FeedSpark_Activity.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Command_Center",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on DeckBuilder",
+      "file": "docs/FeedSpark_DeckBuilder.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on FeedLab",
+      "file": "docs/FeedSpark_FeedLab.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Leadership",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Pricer",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Readiness",
+      "file": "docs/FeedSpark_Readiness.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Roadmap",
+      "file": "docs/FeedSpark_Roadmap.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Task_Library",
+      "file": "docs/FeedSpark_Task_Library.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Templates",
+      "file": "docs/FeedSpark_Templates.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Workflow",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on LabelGuard",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
     }
   ]
 }

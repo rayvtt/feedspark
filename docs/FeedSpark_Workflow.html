@@ -81,6 +81,12 @@ window.addEventListener('load',restore);
   .em-cl{flex:none;font-size:10.5px;font-weight:900;color:var(--ink-2);border:1px solid var(--line);border-radius:100px;padding:1px 8px;background:var(--wash)}
   .em-subj{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
   .em-ago{flex:none;font-size:11px;color:var(--muted);font-weight:700}
+  /* thread grouping: the count chip on a conversation row + the expanded per-email preview rows */
+  .em-thn{font:inherit;font-size:10px;font-weight:900;margin-left:8px;padding:1px 8px;border-radius:100px;border:1px solid var(--orange);background:rgba(245,166,35,.12);color:var(--orange-ink);cursor:pointer;white-space:nowrap}
+  .em-thn:hover,.em-thn.on{background:var(--orange);color:#fff}
+  .em-sub{display:grid;grid-template-columns:130px 1fr 40px;gap:10px;align-items:center;padding:3px 0 3px 248px;font-size:11.5px;color:var(--muted);border-bottom:1px dashed var(--line)}
+  .em-sub-from{font-weight:800;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .em-sub-snip{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .em-go{flex:none;font:inherit;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
   .em-go:hover{background:var(--orange);color:#fff}
   .em-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px}
@@ -267,7 +273,7 @@ window.addEventListener('load',restore);
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
   <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
   <div class="tb-tag">Workflow</div>
-  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm on" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/readiness" class="tbm" data-lbl="Readiness" title="Readiness" aria-label="Readiness"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16a8 8 0 0 1 16 0"/><path d="M12 16l4.5-4.5"/><path d="M4 16h.01M20 16h-.01"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/library" class="tbm" data-lbl="Task library" title="Task library" aria-label="Task library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5h10a2 2 0 0 1 2 2V21H7a2 2 0 0 1-2-2Z"/><path d="M17 6.5h2v12.8M9 8.5h4M9 12h4"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/roadmap" class="tbm" data-lbl="Build roadmap" title="Build roadmap" aria-label="Build roadmap"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5 9 4l6 2.5L20 4v13.5L15 20l-6-2.5L4 20Z"/><path d="M9 4v13.5M15 6.5V20"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a></nav>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm on" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/readiness" class="tbm" data-lbl="Readiness" title="Readiness" aria-label="Readiness"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16a8 8 0 0 1 16 0"/><path d="M12 16l4.5-4.5"/><path d="M4 16h.01M20 16h-.01"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/library" class="tbm" data-lbl="Task library" title="Task library" aria-label="Task library"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5h10a2 2 0 0 1 2 2V21H7a2 2 0 0 1-2-2Z"/><path d="M17 6.5h2v12.8M9 8.5h4M9 12h4"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/roadmap" class="tbm" data-lbl="Build roadmap" title="Build roadmap" aria-label="Build roadmap"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5 9 4l6 2.5L20 4v13.5L15 20l-6-2.5L4 20Z"/><path d="M9 4v13.5M15 6.5V20"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a></nav>
 </div></div>
 
 <header class="hero"><div class="wrap">
@@ -556,17 +562,74 @@ window.addEventListener('load',restore);
   .stall-t{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .stall-a{color:var(--muted);font-weight:700;white-space:nowrap}
   .stall-d{color:#C0392B;font-weight:800;font-size:12px;white-space:nowrap}
-  /* timeline */
+  /* timeline — full-bleed out of .wrap's 1240px cap so an AM can work a whole book on one screen.
+     --sbw is the scrollbar width, measured in JS: plain 100vw includes it and would overflow. */
+  .tl-sec{width:calc(100vw - var(--sbw,0px));margin-left:calc(50% - 50vw + var(--sbw,0px)/2);padding:0 22px}
+  .tl-focus-btn{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  .tl-focus-btn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .tl-focus-btn[aria-pressed=true]{background:var(--navy);border-color:var(--navy);color:#fff}
+  #tl-search{font:inherit;font-size:12px;font-weight:600;padding:6px 10px;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--ink);min-width:190px}
+  body.tl-focus{overflow:hidden}
+  body.tl-focus .tl-sec{position:fixed;inset:0;z-index:9000;margin:0;width:100vw;padding:14px 18px;background:var(--wash);overflow-y:auto;display:flex;flex-direction:column}
+  body.tl-focus .tl-sec .it-ctl{position:sticky;top:0;z-index:2;background:var(--wash);padding:6px 0;margin-bottom:8px}
+  body.tl-focus .tl-wrap{flex:1;min-height:0;display:flex}
+  body.tl-focus .tl-grid{flex:1}
+  body.tl-focus .tl-week{max-height:calc(100vh - 175px)}
+  /* any modal opened from inside focus mode must clear the focus overlay's z-index:9000 */
+  body.tl-focus .scrim{z-index:9500}
+  .tle-scrim{z-index:9500}
+  .tle-modal{width:min(460px,100%)}
+  .tle-brand{font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+  .tle-row{margin-top:10px}
+  .tle-row label{display:block;font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .tle-row textarea,.tle-row input,.tle-row select{width:100%;box-sizing:border-box;font:inherit;font-size:13px;font-weight:600;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+  .tle-row textarea{resize:vertical;min-height:56px}
+  .tle-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .tle-foot{display:flex;align-items:center;gap:8px;margin-top:14px}
+  .tle-open{margin-right:auto;font-size:12px;font-weight:800;background:none;border:0;color:var(--orange-deep);cursor:pointer;padding:0}
+  .tle-open:hover{text-decoration:underline}
   .tl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:var(--shadow);padding:12px}
-  .tl-grid{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(160px,1fr);gap:10px;min-width:760px}
+  .tl-grid{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(190px,1fr);gap:10px;min-width:760px}
   .tl-week{border-left:2px solid var(--line);padding:0 8px}
-  .tl-wh{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);margin-bottom:8px}
+  /* Each column is its own scroll container (.tl-week overflow-y), so the week header pins inside
+     that column rather than to the page — scroll a long column and its date stays on screen.
+     Needs a solid background and a z-index above the cards passing under it. */
+  .tl-wh{position:sticky;top:0;z-index:2;background:var(--paper);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);padding:2px 0 7px;margin-bottom:2px;box-shadow:0 1px 0 var(--line)}
   .tl-wh.now{color:var(--orange-deep)}
-  .tl-ev{font-size:11.5px;font-weight:700;line-height:1.3;padding:6px 8px;border-radius:8px;margin-bottom:6px;background:var(--wash);border-left:3px solid var(--navy);cursor:pointer;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  /* Truncation lives on the INNER span, not the card: overflow on a padded box clips at the padding
+     edge, so a 4th line paints into the bottom padding — and -webkit-line-clamp can't be relied on
+     (Chromium computes the -webkit-box display away here). The span has no padding, so max-height is
+     exactly 3 * line-height and the cut is clean. Full text is in the card's title tooltip. */
+  .tl-ev{font-size:11.5px;font-weight:700;line-height:15px;padding:6px 8px;border-radius:8px;margin-bottom:6px;background:var(--wash);border-left:3px solid var(--navy);cursor:pointer;overflow:hidden}
+  .tl-t{display:block;max-height:45px;overflow:hidden}
+  /* flag + owner + day: an AM reads the axis for "what state, who holds it, when" at a glance */
+  .tl-meta{display:flex;align-items:baseline;gap:6px;margin-top:4px;font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.01em}
+  /* min-width:0 + flex:1 lets the owner ellipsis instead of forcing the date onto a second line */
+  .tl-meta b{min-width:0;flex:1;font-weight:900;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tl-meta span{flex:none;white-space:nowrap}
+  .tl-flag{flex:none;font-size:8.5px;font-weight:900;letter-spacing:.04em;color:#fff;border-radius:4px;padding:1px 5px;line-height:1.5;align-self:center}
+  /* the status legend: one chip per status present on the axis, click = filter to it */
+  .tl-legend{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+  .tl-lg{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:11px;font-weight:800;color:var(--ink-2);border:1px solid var(--line);border-radius:100px;padding:3px 10px;background:var(--paper);cursor:pointer}
+  .tl-lg .dot{width:9px;height:9px;border-radius:3px}
+  .tl-lg .n{color:var(--muted);font-weight:900;font-size:10px}
+  .tl-lg:hover{border-color:var(--orange)}
+  .tl-lg.on{border-color:var(--navy);background:var(--navy);color:#fff}
+  .tl-lg.on .n{color:#D8DEE8}
+  body.tl-focus .tl-sec .tl-legend{position:sticky;top:44px;z-index:2;background:var(--wash);padding-bottom:4px}
+  .tl-ev.over .tl-meta span{color:#C0392B}
   .tl-ev.test{border-left-color:var(--orange)}
   .tl-ev.carry{border-left-color:#7A5AA8}
   .tl-ev.over{border-left-color:#C0392B;background:rgba(192,57,43,.07)}
+  .tl-ev.task{border-left-color:#B8BFC7}
   .tl-empty{color:var(--muted);font-size:12px;padding:4px}
+  .tl-wn{float:right;font-size:10px;font-weight:900;color:var(--muted);background:var(--wash);border-radius:100px;padding:1px 7px}
+  .tl-later{border-left-style:dashed}
+  .tl-over{border-left-color:#C0392B}
+  .tl-wh.late{color:#C0392B}
+  .tl-week{max-height:60vh;overflow-y:auto}
+  @keyframes itflash{0%,100%{background:transparent}25%,75%{background:rgba(245,166,35,.22)}}
+  .it-flash td{animation:itflash 1.6s ease}
   /* tests register */
   .tst-head{display:flex;justify-content:flex-end;margin-bottom:8px}
   .tstbl td{font-size:12.5px}
@@ -701,6 +764,31 @@ window.addEventListener('load',restore);
     </tr></tfoot>
   </table></div>
 
+  <h2>Timeline — every dated task<button class="info-btn" type="button" aria-label="How Timeline works">i</button>
+    <div class="info-pop">The Intake above, re-plotted by date — plus each test's analysis date. It runs on the <b>same filters as Intake</b>: source, status, brand, AM, search and plan window all apply here too (the brand / AM / search controls in this bar are those same filters, kept in reach for Focus mode — change them in either place). Every card carries a colour-coded <b>status flag</b> — ticket stages for briefed work, plan status for the rest — and the <b>legend</b> filters by one click (click again to clear). <b>Overdue</b> gets its own column and anything past the horizon collects in <b>Later</b> — nothing is dropped. Briefed cards open the ticket; un-briefed ones open the row as an <b>edit pop-up</b> writing back to the project plan. <b>⛶ Focus</b> (or <b>F</b>) fills the screen; <b>Esc</b> leaves.</div>
+  </h2>
+  <section class="tl-sec" id="tl-sec">
+  <div class="it-ctl">
+    <div class="it-grp"><span class="it-lbl">Scope</span><div class="it-src" id="tl-scope" role="group" aria-label="Filter the timeline by brief scope"></div></div>
+    <div class="it-multi" id="tl-client-wrap">
+      <button type="button" class="it-multi-btn" id="tl-client-btn" aria-haspopup="true" aria-expanded="false" title="Filter by brand — the same filter as the Intake grid's">All brands ▾</button>
+      <div class="it-multi-menu" id="tl-client-menu" role="group" aria-label="Filter by brand (shared with Intake)" hidden></div>
+    </div>
+    <div class="it-multi" id="tl-am-wrap">
+      <button type="button" class="it-multi-btn" id="tl-am-btn" aria-haspopup="true" aria-expanded="false" title="Filter by Account Manager — the same filter as the Intake grid's">All AMs ▾</button>
+      <div class="it-multi-menu" id="tl-am-menu" role="group" aria-label="Filter by account manager (shared with Intake)" hidden></div>
+    </div>
+    <select id="tl-weeks" aria-label="Timeline horizon" title="How far ahead the columns run — anything beyond lands in Later">
+      <option value="6">6 weeks</option><option value="8">8 weeks</option><option value="12">12 weeks</option>
+    </select>
+    <input id="tl-search" type="search" placeholder="Search tasks, owners…" aria-label="Search (shared with Intake)">
+    <button type="button" class="tl-focus-btn" id="tl-focus" aria-pressed="false" title="Fill the screen (F) — Esc leaves">⛶ Focus</button>
+    <span class="it-n" id="tl-n"></span>
+  </div>
+  <div class="tl-legend" id="tl-legend"></div>
+  <div class="tl-wrap"><div class="tl-grid" id="tl-grid"></div></div>
+  </section>
+
   <h2>Brief pipeline<button class="info-btn" type="button" aria-label="How Brief pipeline works">i</button>
     <div class="info-pop">Every brief from send to sign-off. Cards are compact so 20+ briefs stay visible: brand chip (+market if not GB), due, and days-in-court (red = over SLA — the lane tells you whose court). Hover for the full task; drag between lanes; click to open the ticket. The <b>court cards</b> show which of the three teams holds the ball — click one to spotlight its tickets. Paste any reply into the <b>router</b> and it finds the right ticket (by <code>[ibfcode]</code>, brief ID or task wording), logs it, and moves the stage.</div>
   </h2>
@@ -715,11 +803,6 @@ window.addEventListener('load',restore);
   <div class="runsla-bar" id="runsla-bar"></div>
   <div class="sla-grid" id="sla-grid"></div>
   <div class="panel" style="margin-top:12px"><h3>Escalations — over-SLA in any court</h3><div id="sla-stalled" class="stall-list"></div></div>
-
-  <h2>Timeline — next 6 weeks<button class="info-btn" type="button" aria-label="How Timeline works">i</button>
-    <div class="info-pop">Every brief due date and test analysis on one axis. Overdue items sit in week 1. Click a brief to open it.</div>
-  </h2>
-  <div class="tl-wrap"><div class="tl-grid" id="tl-grid"></div></div>
 
   <h2>Test &amp; experiment register<button class="info-btn" type="button" aria-label="How the test register works">i</button>
     <div class="info-pop">Every A/B in one place — hypothesis, cohort, analysis date and result. Analysis dates feed the timeline and alerts so no test dies un-analysed; the wins are your deck ammo.</div>
@@ -737,6 +820,7 @@ window.addEventListener('load',restore);
 </main>
 
 <div class="scrim" id="scrim"><div class="modal" id="modal"></div></div>
+<div class="scrim tle-scrim" id="tle-scrim"><div class="modal tle-modal" id="tle-modal" role="dialog" aria-modal="true" aria-label="Edit task"></div></div>
 
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Workflow control center · live from the project plans</div></div>
 
@@ -1046,7 +1130,7 @@ window.addEventListener('load',restore);
         var s=ovv!=null?ovv:t.s, b=ovv!=null?bucketOf(ovv):(t.b||bucketOf(s));
         var dd=(duo[k]!=null?duo[k]:(t.d||'')); if(!dd && /\d{1,2}[\/-]\d{1,2}|\d{1,2}\s+[a-z]{3}/i.test(String(t.s||''))) dd=t.s;   // due override, else live due col / snapshot-status date
         var ow=owo[k]!=null?owo[k]:(t.o||'—');
-        out.push({client:c,task:task,cat:t.c,owner:ow,source:'plan',s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||'',d:dd}); });
+        out.push({client:c,task:task,cat:t.c,owner:ow,source:'plan',esrc:isEsrc(k,task),s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||'',d:dd}); });
     });
     _planCache=out; return out; }
 
@@ -1121,6 +1205,7 @@ window.addEventListener('load',restore);
     if(exists)return false;
     var due=(dueDD&&String(dueDD).length===8)?(dueDD.slice(0,2)+'/'+dueDD.slice(2,4)+'/'+dueDD.slice(4,8)):'';
     MANUAL.push({client:client,task:task,owner:owner||'',status:status||'Open',due:due,esrc:esrc?1:0}); saveManual(); _planCache=null;
+    if(esrc)markEsrc(client,task);   // survives the live-pull replacing the MANUAL row
     var id=PLANSHEET[client];
     if(id){ toast('Adding to '+client+'’s plan…');
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
@@ -1132,6 +1217,14 @@ window.addEventListener('load',restore);
   // ---- manually-added tasks: written into the plan sheet, shown here until live sync pulls them back ----
   var MANUAL=[]; try{MANUAL=JSON.parse(localStorage.getItem('fcc-manual')||'[]');}catch(e){}
   function saveManual(){ try{localStorage.setItem('fcc-manual',JSON.stringify(MANUAL));}catch(e){} }
+  // ---- email-origin memory: a task filed from Gmail sync stays labelled "Email" even after the
+  // sheet round-trip replaces its local MANUAL row with the live plan row — the sheet has no
+  // source column, so without this the label silently flipped to "Plan" and the "Email tasks"
+  // filter lost it (Ray's report). Tasks filed from email always read "<subject> — from <sender>";
+  // recognising that suffix also back-labels tasks adopted before this memory existed.
+  var ESRC={}; try{ESRC=JSON.parse(localStorage.getItem('fcc-esrc')||'{}');}catch(e){}
+  function markEsrc(c,task){ ESRC[c+'|'+task]=1; try{localStorage.setItem('fcc-esrc',JSON.stringify(ESRC));}catch(e){} }
+  function isEsrc(k,task){ return (ESRC[k]||/ — from .+$/.test(task||''))?1:0; }
   function manualTasks(){
     var idx={}; planTasks().forEach(function(p){ (idx[p.client]=idx[p.client]||[]).push(p.task); });
     var ov=statusOverlay(), duo=dueOverlay(), owo=ownerOverlay(), ren=renameOverlay();
@@ -1142,7 +1235,7 @@ window.addEventListener('load',restore);
       .map(function(m){ var src=MANUAL.filter(function(x){return x.client===m.c&&x.task===m.orig;})[0]||{}; var k=m.c+'|'+m.task;
         var s=ov[k]!=null?ov[k]:(src.status||'Open');
         return {client:m.c,task:m.task,cat:classifyLite(m.task),owner:(owo[k]!=null?owo[k]:(src.owner||'—')),source:'plan',
-          esrc:src.esrc?1:0,s:s,b:bucketOf(s),live:false,manual:true,sheet:PLANSHEET[m.c]||'',d:(duo[k]||src.due||'')}; }); }
+          esrc:(src.esrc||isEsrc(k,m.task))?1:0,s:s,b:bucketOf(s),live:false,manual:true,sheet:PLANSHEET[m.c]||'',d:(duo[k]||src.due||'')}; }); }
   function allIntake(){ return planTasks().concat(manualTasks()).concat(emailIntake()).filter(function(r){ return !RMCL[r.client]; }); }
   // DDMM (or DDMMYYYY) -> ISO yyyy-mm-dd; a near-past DDMM rolls to next year
   function ddmmToIso(v){ v=String(v||'').replace(/\D/g,'');
@@ -1180,11 +1273,21 @@ window.addEventListener('load',restore);
     } else toast('Added locally · no plan sheet linked for '+client);
   }
   var itState={srcs:[],clients:[],ams:[],q:'',statuses:['open','progress','briefed'],window:'2m',sort:'client',dir:1,showHidden:false};   // multi-select: empty array = all
+  // Timeline-ONLY state is scope / flags / horizon. Brand, AM and search are NOT here — the
+  // timeline reads them straight from itState, because it's the Intake re-plotted by date.
+  var tlState={scope:[],flags:[],weeks:6};
   var itSel={};   // bulk selection: key -> task object
   // UK-first date parse (DD/MM/YYYY, "DD Mon YYYY"); swaps if it reads as MM/DD
   function parseUKDate(s){ s=String(s||'').trim(); if(!s)return null; var m;
     if(m=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/.exec(s)){ var y=+m[3]; if(y<100)y+=2000; var mo=+m[2]-1, da=+m[1]; if(mo>11){ var t=da-1; da=mo+1; mo=t; } var d=new Date(y,mo,da); return isNaN(d)?null:d; }
-    var d2=new Date(s); return isNaN(d2)?null:d2; }
+    if(m=/^(\d{1,2})[\/\-.](\d{1,2})$/.exec(s)){ var mo1=+m[2]-1, da1=+m[1]; if(mo1>11){ var t1=da1-1; da1=mo1+1; mo1=t1; }   // "21/8" — day/month, no year
+      var dn=new Date(new Date().getFullYear(),mo1,da1); return isNaN(dn)?null:dn; }
+    var d2=new Date(s); if(isNaN(d2))return null;
+    // Year-less strings ("21 Aug", "Aug 21") — V8 fills in year 2001, which threw every such row
+    // ~25 years into the past: sorted above everything, flagged ~9000d late on the timeline, and
+    // dropped from the plan month-window. Sheets write these; assume the current year instead.
+    if(d2.getFullYear()<2015 && !/\d{4}/.test(s)) d2.setFullYear(new Date().getFullYear());
+    return d2; }
   function monthKey(d){ return d ? d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2) : ''; }
   // per-brand set of the latest N months present in the plan — "latest 2 months for each brand"
   function allowedMonths(){ var n={'2m':2,'3m':3,'4m':4,'6m':6}[itState.window]; if(!n)return null;
@@ -1199,14 +1302,16 @@ window.addEventListener('load',restore);
   function ownerOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskowner')||'{}');}catch(e){return {};} }
   function saveOwnerLocal(c,t,v){ try{var o=ownerOverlay(); if(v)o[c+'|'+t]=v; else delete o[c+'|'+t]; localStorage.setItem('fcc-taskowner',JSON.stringify(o));}catch(e){} }
   function renameOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskrename')||'{}');}catch(e){return {};} }
-  function saveRename(c,oldT,newT){ try{var o=renameOverlay(); o[c+'|'+oldT]=newT; localStorage.setItem('fcc-taskrename',JSON.stringify(o));}catch(e){} }
+  function saveRename(c,oldT,newT){ try{var o=renameOverlay(); o[c+'|'+oldT]=newT; localStorage.setItem('fcc-taskrename',JSON.stringify(o));}catch(e){}
+    if(ESRC[c+'|'+oldT])markEsrc(c,newT); }   // a renamed email task keeps its Email label
   function editOwner(t){ var cur=(t.owner&&t.owner!=='—')?t.owner:''; var v=prompt('Task owner — who’s doing it (blank to clear):',cur); if(v===null)return; setOwner(t,(''+v).trim()); }
   // reassign a task's CLIENT: local overlays + linked ticket follow the new key, and the row
   // MOVES between project plans — deleted from the old client's sheet, appended to the new one's.
   function setTaskClient(t,nc){ var oc=t.client; if(!nc||nc===oc)return;
     var ok=oc+'|'+t.task, nk=nc+'|'+t.task;
-    ['fcc-taskstatus','fcc-taskdue','fcc-taskowner','fcc-taskrename'].forEach(function(store){
+    ['fcc-taskstatus','fcc-taskdue','fcc-taskowner','fcc-taskrename','fcc-esrc'].forEach(function(store){
       try{ var o=JSON.parse(localStorage.getItem(store)||'{}'); if(o[ok]!=null){ o[nk]=o[ok]; delete o[ok]; localStorage.setItem(store,JSON.stringify(o)); } }catch(e){} });
+    if(ESRC[ok]){ delete ESRC[ok]; ESRC[nk]=1; }   // keep the in-memory copy in step, or the next markEsrc would clobber the migrated store
     if(HIDDEN[ok]){ HIDDEN[nk]=HIDDEN[ok]; delete HIDDEN[ok]; saveHidden(); }
     var chg=false; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey===ok){
       b.taskKey=nk; b.client=nc; if(b.code)b.code=code(nc,(b.code.split('-').pop()||'gb')); chg=true; } }); if(chg)persist();
@@ -1281,7 +1386,11 @@ window.addEventListener('load',restore);
       return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0||(r.esrc&&S.srcs.indexOf('email')>=0))&&(!S.clients.length||S.clients.indexOf(r.client)>=0)&&(!S.ams.length||S.ams.indexOf(amOf(r.client))>=0)
         &&(!S.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(S.q)>=0); })
       .sort(function(a,b){ var k=itState.sort;
-        if(k==='dsort'){ var da=taskDate(a), db=taskDate(b); return ((da?da.getTime():0)-(db?db.getTime():0))*itState.dir; }
+        if(k==='dsort'){ var da=taskDate(a), db=taskDate(b);
+          if(!da&&!db)return 0; if(!da)return 1; if(!db)return -1;   // dateless rows sink to the bottom in BOTH directions (they used to sort as 1970 and top the ascending list)
+          return (da-db)*itState.dir; }
+        if(k==='b'){ var R={open:0,briefed:1,progress:2,hold:3,client:4,done:5};   // lifecycle order, not alphabetical bucket names
+          return ((R[a.b]!=null?R[a.b]:9)-(R[b.b]!=null?R[b.b]:9))*itState.dir; }
         return (((a[k]||'')+'').localeCompare((b[k]||'')+''))*itState.dir; }); }
   // active client-filter chips, shown above the table so a selected client can be dropped
   // without reopening the "N clients ▾" dropdown — Ray's ask, it's an "upper control" now.
@@ -1365,6 +1474,10 @@ window.addEventListener('load',restore);
         ht.textContent=itState.showHidden?('Hide '+hc+' note'+(hc===1?'':'s')):('Show '+hc+' hidden');
         ht.setAttribute('aria-pressed',itState.showHidden?'true':'false'); } }
     renderBulk();
+    // the timeline is this grid re-plotted by date, on the SAME filters — every path that
+    // changes an Intake filter ends here, so cascading keeps the two views in step without
+    // wiring every control twice. (renderAll relies on this and doesn't call it separately.)
+    renderTimeline();
   }
   // ---- spreadsheet grid: cell select, keyboard nav, copy/paste (TSV), fill-down (Excel-style) ----
   var COLS=['client','feed','task','owner','due','status','source'];
@@ -1526,42 +1639,50 @@ window.addEventListener('load',restore);
       if(t.source==='email') adoptIntoPlan(t.client,t.task,'Briefed',BRIEFS[id].due,'',1);   // bulk-briefed email tasks join the plan too
       markBriefed(t); });
     itSel={}; persist(); renderAll(); toast(made+' brief'+(made===1?'':'s')+' saved to the pipeline · marked Briefed'); }
-  // SOURCE stays a compact chip bar (4 options): empty selection = all; the "All" chip clears the set
-  function renderChipBar(id, opts, key){
+  // SOURCE stays a compact chip bar (4 options): empty selection = all; the "All" chip clears the set.
+  // state/after default to the intake's — the timeline passes its own so it can reuse the widget.
+  function renderChipBar(id, opts, key, state, after){
+    var st=state||itState, done=after||renderIntake;
     var wrap=document.getElementById(id); if(!wrap)return; wrap.innerHTML='';
     opts.forEach(function(s){
       var b=document.createElement('button'); b.textContent=s[1];
-      var on = s[0]==='' ? itState[key].length===0 : itState[key].indexOf(s[0])>=0;
+      var on = s[0]==='' ? st[key].length===0 : st[key].indexOf(s[0])>=0;
       if(on)b.className='on';
       b.onclick=function(){
-        if(s[0]===''){ itState[key]=[]; }
-        else { var i=itState[key].indexOf(s[0]); if(i>=0)itState[key].splice(i,1); else itState[key].push(s[0]); }
-        renderChipBar(id,opts,key); renderIntake(); };
+        if(s[0]===''){ st[key]=[]; }
+        else { var i=st[key].indexOf(s[0]); if(i>=0)st[key].splice(i,1); else st[key].push(s[0]); }
+        renderChipBar(id,opts,key,st,done); done(); };
       wrap.appendChild(b); }); }
   var SRC_OPTS=[['','All'],['plan','Project plan'],['email','Email tasks']];
   function renderSrcChips(){ renderChipBar('it-src',SRC_OPTS,'srcs'); }
   renderSrcChips();
-  // reusable multi-select DROPDOWN (status + client): compact button + checklist, keeps the bar tidy
+  // reusable multi-select DROPDOWN (status + client + the timeline's brand/AM): compact button +
+  // checklist, keeps the bar tidy. cfg.onChange is what re-renders — the intake table by default.
   function setupMulti(cfg){
     var btn=document.getElementById(cfg.btn), menu=document.getElementById(cfg.menu), wrap=document.getElementById(cfg.wrap);
     if(!btn||!menu||!wrap)return function(){};
+    var onChange=cfg.onChange||function(){ renderIntake(); };
     function label(){ var sel=cfg.selected(), n=sel.length; return (n===0?cfg.allLabel:(n===1?cfg.one(sel[0]):n+' '+cfg.noun))+' ▾'; }
     function updateBtn(){ btn.textContent=label(); btn.classList.toggle('on',cfg.selected().length>0); }
-    var sig='';
+    var sig='', boxes=[];
+    function syncBoxes(){ var sel=cfg.selected();          // state can change from outside (timeline click-through)
+      boxes.forEach(function(b){ b.cb.checked = b.v==null ? sel.length===0 : sel.indexOf(b.v)>=0; }); }
     function build(){
       var opts=cfg.options(), s=opts.map(function(o){return o.v;}).join('|')+(cfg.sigExtra?'§'+cfg.sigExtra():'');
-      if(s===sig){ updateBtn(); return; }                 // option set unchanged — just refresh the label
-      sig=s; menu.innerHTML='';
+      if(s===sig){ updateBtn(); syncBoxes(); return; }     // option set unchanged — refresh the label + ticks
+      sig=s; menu.innerHTML=''; boxes=[];
       var allRow=document.createElement('label'); allRow.className='it-multi-all';
       var allCb=document.createElement('input'); allCb.type='checkbox'; allCb.checked=cfg.selected().length===0;
       allCb.onchange=function(){ if(allCb.checked){ cfg.clear(); menu.querySelectorAll('input').forEach(function(x){ if(x!==allCb)x.checked=false; }); }
         else { allCb.checked=true; }                       // "All" can't be switched off directly — tick an option instead
-        updateBtn(); renderIntake(); };
+        updateBtn(); onChange(); };
       allRow.appendChild(allCb); allRow.appendChild(document.createTextNode(cfg.allLabel)); menu.appendChild(allRow);
+      boxes.push({v:null,cb:allCb});
       opts.forEach(function(o){
         var row=document.createElement('label');
         var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=cfg.selected().indexOf(o.v)>=0;
-        cb.onchange=function(){ cfg.toggle(o.v,cb.checked); allCb.checked=cfg.selected().length===0; updateBtn(); renderIntake(); };
+        cb.onchange=function(){ cfg.toggle(o.v,cb.checked); allCb.checked=cfg.selected().length===0; updateBtn(); onChange(); };
+        boxes.push({v:o.v,cb:cb});
         row.appendChild(cb); row.appendChild(document.createTextNode(o.l));
         if(cfg.rowAction){ var act=cfg.rowAction(o.v); if(act)row.appendChild(act); }
         menu.appendChild(row); });
@@ -1612,6 +1733,51 @@ window.addEventListener('load',restore);
     clear:function(){ itState.ams=[]; } });
   function ensureClientFilter(){ buildStatusFilter(); buildClientFilter(); buildAmFilter(); }   // rebuilt each render from renderIntake
   buildStatusFilter(); buildClientFilter(); buildAmFilter();
+  // The timeline's brand / AM buttons are MIRRORS of the Intake filters — same itState, same
+  // option list, so a brand ticked here narrows the Intake grid too (and vice versa). They exist
+  // as separate buttons only so filtering stays in reach in Focus mode, where the Intake bar is
+  // off-screen. Changing one re-renders Intake, which cascades into the timeline.
+  var buildTlClientFilter=setupMulti({ btn:'tl-client-btn', menu:'tl-client-menu', wrap:'tl-client-wrap',
+    allLabel:'All brands', noun:'brands', one:function(v){ return v; }, onChange:function(){ renderIntake(); },
+    options:function(){ var set={}; allIntake().forEach(function(r){ if(!DELETED[r.client+'|'+r.task]) set[r.client]=1; });
+      return Object.keys(set).sort().map(function(c){ return {v:c,l:c}; }); },
+    selected:function(){ return itState.clients; },
+    toggle:function(v,on){ var i=itState.clients.indexOf(v); if(on){ if(i<0)itState.clients.push(v); } else if(i>=0)itState.clients.splice(i,1); },
+    clear:function(){ itState.clients=[]; } });
+  var buildTlAmFilter=setupMulti({ btn:'tl-am-btn', menu:'tl-am-menu', wrap:'tl-am-wrap',
+    allLabel:'All AMs', noun:'AMs', one:function(v){ return v; }, onChange:function(){ renderIntake(); },
+    options:function(){ var set={}; allIntake().forEach(function(r){ if(!DELETED[r.client+'|'+r.task]) set[amOf(r.client)]=1; });
+      return Object.keys(set).sort().map(function(a){ return {v:a,l:a}; }); },
+    selected:function(){ return itState.ams; },
+    toggle:function(v,on){ var i=itState.ams.indexOf(v); if(on){ if(i<0)itState.ams.push(v); } else if(i>=0)itState.ams.splice(i,1); },
+    clear:function(){ itState.ams=[]; } });
+  (function(){ var w=document.getElementById('tl-weeks'); if(!w)return;
+    w.value=String(tlState.weeks); w.onchange=function(){ tlState.weeks=+w.value||6; renderTimeline(); }; })();
+  // shared search: this box IS the Intake search (same itState.q), mirrored both ways
+  (function(){ var s=document.getElementById('tl-search'); if(!s)return;
+    s.oninput=function(){ itState.q=s.value.trim().toLowerCase();
+      var m=document.getElementById('it-search'); if(m&&m!==document.activeElement)m.value=s.value;
+      renderIntake(); }; })();
+  // Focus mode: the axis fills the screen so a whole book of accounts is workable at once.
+  // The full-bleed width is calc(100vw - scrollbar); measure it rather than assume 0.
+  function tlScrollbar(){ var w=window.innerWidth-document.documentElement.clientWidth;
+    document.documentElement.style.setProperty('--sbw',(w>0?w:0)+'px'); }
+  function tlFocus(on){ var b=document.getElementById('tl-focus'); if(!b)return;
+    document.body.classList.toggle('tl-focus',on);
+    b.setAttribute('aria-pressed',on?'true':'false'); b.textContent=on?'✕ Exit':'⛶ Focus';
+    if(on)document.getElementById('tl-sec').scrollTop=0; else tlScrollbar();
+    renderTimeline(); }
+  (function(){ var b=document.getElementById('tl-focus'); if(!b)return;
+    tlScrollbar(); window.addEventListener('resize',tlScrollbar);
+    b.onclick=function(){ tlFocus(!document.body.classList.contains('tl-focus')); };
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape'&&document.body.classList.contains('tl-focus')){ if(tleClose())return; tlFocus(false); return; }
+      // F toggles focus, but never while typing into a field or editing a grid cell
+      if((e.key==='f'||e.key==='F')&&!e.metaKey&&!e.ctrlKey&&!e.altKey){
+        var t=e.target, tag=(t&&t.tagName||'').toLowerCase();
+        if(tag==='input'||tag==='textarea'||tag==='select'||(t&&t.isContentEditable))return;
+        e.preventDefault(); tlFocus(!document.body.classList.contains('tl-focus'));
+      } }); })();
   // ---- saved filter views: name the current filter set, reapply or delete later (per device) ----
   function savedViews(){ try{return JSON.parse(localStorage.getItem('fcc-filters')||'{}');}catch(e){return {};} }
   function saveViews(v){ try{localStorage.setItem('fcc-filters',JSON.stringify(v));}catch(e){} }
@@ -1787,7 +1953,7 @@ window.addEventListener('load',restore);
   // ---- modal ----
   var scrim=document.getElementById('scrim'), modalEl=document.getElementById('modal');
   scrim.addEventListener('click',function(e){ if(e.target===scrim) closeModal(); });
-  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeModal(); closeBrief(); } });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ if(typeof tleClose==='function'&&tleClose())return; closeModal(); closeBrief(); } });
   function closeModal(){ scrim.classList.remove('on'); }
   // ---- new-brief popup (the composer lives in #bg-scrim; prefill() + the openers route here) ----
   var bgScrim=document.getElementById('bg-scrim');
@@ -2027,24 +2193,183 @@ window.addEventListener('load',restore);
   }
 
   // ---- #8 timeline ----
+  // Everything with a due date, not just what's been briefed: the axis is fed from allIntake() —
+  // the same rows (and the same dates, written back to the project plans) you see in Intake —
+  // joined to their ticket where one exists, plus the test-analysis dates. Its own brand/AM/scope
+  // filters so it can be read per account without touching the Intake filters above.
+  var TL_SCOPE=[['','All tasks'],['brief','Briefed'],['open','Not briefed']];   // tlState is declared with itState
+  // ---- status flags: every card carries a compact colour-coded code so the mix of statuses on
+  // a column reads at a glance, and the legend under the bar filters by one (click again to
+  // clear). Two vocabularies, deliberately distinct: briefed work flags its TICKET STAGE
+  // (s:...) in the stage colour; un-briefed work flags its PLAN STATUS bucket (b:...).
+  var FLAG_CODE={'s:intake':'NEW','s:briefed':'ASPL','s:progress':'RUN','s:blocked':'BLK','s:done':'A✓',
+    's:analysis':'LAB','s:confirmed':'✓✓','b:open':'OPEN','b:briefed':'BRF','b:progress':'WIP',
+    'b:hold':'HOLD','b:client':'W/CL','b:done':'DONE'};
+  var BUCKET_COLOR={open:'#8a94a0',briefed:'#B1550A',progress:'#C96A12',hold:'#98A0A8',client:'#3D5A80',done:'#15803D'};
+  function flagKey(e){ if(e.kind==='test')return 's:analysis';
+    return e.brief?('s:'+e.brief.status):('b:'+(e.b||'open')); }
+  function flagColor(k){ return k.slice(0,2)==='s:'?(STAGE_COLOR[k.slice(2)]||'#8a94a0'):(BUCKET_COLOR[k.slice(2)]||'#8a94a0'); }
+  function flagLabel(k){ return k.slice(0,2)==='s:'?('Ticket · '+(STAGE_LBL[k.slice(2)]||k.slice(2))):('Plan · '+(STAT_LBL[k.slice(2)]||k.slice(2))); }
+  function renderTlLegend(evs){ var host=document.getElementById('tl-legend'); if(!host)return;
+    var counts={}; evs.forEach(function(e){ var k=flagKey(e); counts[k]=(counts[k]||0)+1; });
+    tlState.flags=tlState.flags.filter(function(k){ return counts[k]; });   // a flag with nothing behind it can't stay stuck on
+    var order=['s:intake','s:briefed','s:progress','s:blocked','s:analysis','s:done','s:confirmed',
+      'b:open','b:briefed','b:progress','b:hold','b:client','b:done'];
+    host.innerHTML=order.filter(function(k){ return counts[k]; }).map(function(k){
+      return '<button type="button" class="tl-lg'+(tlState.flags.indexOf(k)>=0?' on':'')+'" data-f="'+k+'" title="'
+        +esc(flagLabel(k))+' — click to show only these">'
+        +'<span class="dot" style="background:'+flagColor(k)+'"></span>'+esc(FLAG_CODE[k]||k)
+        +'<span class="n">'+counts[k]+'</span></button>'; }).join('');
+    host.querySelectorAll('.tl-lg').forEach(function(b){ b.onclick=function(){
+      var k=b.getAttribute('data-f'), i=tlState.flags.indexOf(k);
+      if(i>=0)tlState.flags.splice(i,1); else tlState.flags.push(k);
+      renderTimeline(); }; });
+  }
+  // one row per dated task; a task that's been briefed carries its ticket (stage colour + opens it)
+  function timelineEvents(){
+    var evs=[], seen={}, S=itState, q=(S.q||'').toLowerCase();
+    var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey)BK[b.taskKey]=b; });
+    // The axis is fed from intakeFiltered() — the SAME rows through the SAME filters (source,
+    // status, brand, AM, search, plan window) as the Intake grid above. The timeline is that
+    // grid re-plotted by date, not a second list with its own rules.
+    intakeFiltered().forEach(function(t){
+      var k=t.client+'|'+t.task;
+      if(seen[k])return;
+      var d=taskDate(t); if(!d)return;                           // no due date set = not on the axis
+      seen[k]=1;
+      var bf=BK[k];
+      evs.push({d:d,client:t.client,task:t.task,am:amOf(t.client),owner:t.owner||'',brief:bf||null,
+        id:bf?bf.id:'',key:k,kind:bf?'brief':'task',b:t.b||bucketOf(t.s)});
+    });
+    // events that don't come from the grid still honour the shared brand/AM/search filters
+    function ok(client,task,owner){ if(S.clients.length&&S.clients.indexOf(client)<0)return false;
+      if(S.ams.length&&S.ams.indexOf(amOf(client))<0)return false;
+      return !q||((task+' '+client+' '+(owner||'')).toLowerCase().indexOf(q)>=0); }
+    // live tickets whose intake row is gone (deleted/hidden) or filtered out by status/window —
+    // an active ticket shouldn't vanish from the axis because its plan row did
+    Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id];
+      if(!b||b.status==='confirmed')return;
+      var k=b.taskKey||(b.client+'|'+b.task); if(seen[k]||!ok(b.client,b.task,b.aspl))return;
+      var d=ddmmyyyyToDate(b.due); if(!d)return; seen[k]=1;
+      evs.push({d:d,client:b.client,task:b.task,am:amOf(b.client),owner:b.aspl||'',brief:b,id:b.id,key:k,kind:'brief',b:''});
+    });
+    Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b||b.status==='confirmed'||hasResult(b))return;
+      if(!ok(b.client,b.task,b.aspl))return;
+      var rd=readoutDue(b); if(rd==null)return;
+      evs.push({d:new Date(rd),client:b.client,task:b.task.slice(0,44)+' · analysis',am:amOf(b.client),owner:b.aspl||'',brief:b,id:b.id,key:'ro|'+id,kind:'test',b:''}); });
+    TESTS.forEach(function(t,i){ if(t.result||!t.readout)return; if(!ok(t.client,t.name,''))return;
+      var d=isoDate(t.readout); if(!d)return;
+      evs.push({d:d,client:t.client,task:t.name+' · analysis',am:amOf(t.client),owner:'',brief:null,id:'',key:'ts|'+i,kind:'test',b:''}); });
+    return evs;
+  }
+  // brand/AM/search/status/source/window are already applied upstream (they're the Intake's own
+  // filters); here only the timeline-local scope chips apply. Flags filter separately in
+  // renderTimeline so the legend can count what each flag WOULD show.
+  function timelineFiltered(){ var S=tlState;
+    return timelineEvents().filter(function(e){
+      if(S.scope.length){ var isB=!!e.brief; if(S.scope.indexOf(isB?'brief':'open')<0)return false; }
+      return true; }).sort(function(a,b){ return a.d-b.d; });
+  }
   function renderTimeline(){ var host=document.getElementById('tl-grid'); if(!host)return;
-    var t0=today(), WEEKS=6, evs=[];
-    Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed')return; var d=ddmmyyyyToDate(b.due); if(!d)return;
-      evs.push({d:d,label:b.client+' · '+b.task,kind:'brief',id:b.id}); });
-    Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed'||hasResult(b))return; var rd=readoutDue(b); if(rd==null)return;
-      evs.push({d:new Date(rd),label:b.client+' · '+b.task.slice(0,44)+' · analysis',kind:'test',id:b.id}); });
-    TESTS.forEach(function(t){ if(t.result||!t.readout)return; var d=isoDate(t.readout); if(!d)return;
-      evs.push({d:d,label:t.client+' · '+t.name+' · analysis',kind:'test'}); });
-    var html='';
-    for(var w=0;w<WEEKS;w++){ var ws=new Date(t0); ws.setDate(ws.getDate()+w*7);
+    buildTlClientFilter(); buildTlAmFilter(); renderChipBar('tl-scope',TL_SCOPE,'scope',tlState,renderTimeline);
+    // mirror the shared search into this bar (typing in either box drives the same itState.q)
+    var ts=document.getElementById('tl-search'); if(ts&&ts!==document.activeElement)ts.value=itState.q||'';
+    var scoped=timelineFiltered();
+    renderTlLegend(scoped);   // legend counts BEFORE the flag filter, so every flag shows what it would reveal
+    var evs=tlState.flags.length?scoped.filter(function(e){ return tlState.flags.indexOf(flagKey(e))>=0; }):scoped;
+    var t0=today(), WEEKS=tlState.weeks, html='', shown=0;
+    function card(e){ var off=Math.round((e.d-t0)/86400000);
+      var lab=abbr(e.client)+' · '+e.task;
+      var fk=flagKey(e);
+      var tip=e.client+' · '+e.task+'\n'+e.d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' · AM '+e.am
+        +(e.brief?('\nTicket '+e.brief.id+' — '+(STAGE_LBL[e.brief.status]||e.brief.status)):'\n'+flagLabel(fk)+' · not briefed yet');
+      var style=e.brief&&e.kind==='brief'?(' style="border-left-color:'+(STAGE_COLOR[e.brief.status]||'#8a94a0')+'"'):'';
+      var day=off<0?(Math.abs(off)+'d late'):e.d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+      var who=e.owner&&e.owner!=='—'?e.owner:e.am;
+      return '<div class="tl-ev '+e.kind+(off<0?' over':'')+'"'+style+' data-k="'+esc(e.key)+'"'+(e.id?' data-id="'+esc(e.id)+'"':'')
+        +' data-c="'+esc(e.client)+'" title="'+esc(tip)+'"><span class="tl-t">'+esc(lab)+'</span>'
+        +'<span class="tl-meta"><span class="tl-flag" style="background:'+flagColor(fk)+'" title="'+esc(flagLabel(fk))+'">'+esc(FLAG_CODE[fk]||'')+'</span><b>'+esc(who)+'</b><span>'+esc(day)+'</span></span></div>'; }
+    // overdue gets its OWN column rather than being folded into week 1 — across every brand that's
+    // the bulk of the axis, and burying it in "this week" hides both the backlog and the week itself
+    var off=function(e){ return Math.round((e.d-t0)/86400000); };
+    var over=evs.filter(function(e){ return off(e)<0; });
+    if(over.length) html+='<div class="tl-week tl-over"><div class="tl-wh late">Overdue <span class="tl-wn">'+over.length+'</span></div>'+over.map(card).join('')+'</div>';
+    // Weeks are CALENDAR weeks, Monday-aligned (Ray's ask): w1 is the week containing today,
+    // headed by its Monday, so w2 is next Monday — not a rolling 7-day window from today.
+    // Overdue stays relative to TODAY: earlier days of the current week are late, not "w1".
+    var mon=new Date(t0); mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+    var wk=function(e){ return Math.floor(Math.round((e.d-mon)/86400000)/7); };
+    for(var w=0;w<WEEKS;w++){ var ws=new Date(mon); ws.setDate(ws.getDate()+w*7);
       var head='w'+(w+1)+' · '+ws.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-      var inWk=evs.filter(function(e){ var off=Math.round((e.d-t0)/86400000); return off<(w+1)*7 && (w===0?true:off>=w*7); }).sort(function(a,b){return a.d-b.d;});
-      html+='<div class="tl-week"><div class="tl-wh'+(w===0?' now':'')+'">'+head+'</div>'+
-        (inWk.length? inWk.map(function(e){ var off=Math.round((e.d-t0)/86400000);
-          return '<div class="tl-ev '+e.kind+(off<0?' over':'')+'"'+(e.id?' data-id="'+esc(e.id)+'"':'')+' title="'+esc(e.label)+'">'+esc(e.label)+'</div>'; }).join('') : '<div class="tl-empty">—</div>')+'</div>';
+      var inWk=evs.filter(function(e){ return off(e)>=0 && wk(e)===w; });
+      shown+=inWk.length;
+      html+='<div class="tl-week"><div class="tl-wh'+(w===0?' now':'')+'">'+head+' <span class="tl-wn">'+inWk.length+'</span></div>'+
+        (inWk.length? inWk.map(card).join('') : '<div class="tl-empty">—</div>')+'</div>';
     }
+    // never drop the tail silently — anything past the horizon collects in its own column
+    var later=evs.filter(function(e){ return off(e)>=0 && wk(e)>=WEEKS; });
+    html+='<div class="tl-week tl-later"><div class="tl-wh">Later <span class="tl-wn">'+later.length+'</span></div>'+
+      (later.length? later.slice(0,40).map(card).join('')+(later.length>40?'<div class="tl-empty">+'+(later.length-40)+' more — widen the horizon</div>':'') : '<div class="tl-empty">—</div>')+'</div>';
     host.innerHTML=html;
-    host.querySelectorAll('.tl-ev[data-id]').forEach(function(el){ el.onclick=function(){ openModal(el.getAttribute('data-id')); }; });
+    var n=document.getElementById('tl-n');
+    if(n)n.textContent=(tlState.flags.length?evs.length+' of '+scoped.length+' (flag-filtered)':evs.length+' dated task'+(evs.length===1?'':'s'))+(over.length?' · '+over.length+' overdue':'')+' · '+shown+' in '+WEEKS+'w'+(later.length?' · '+later.length+' later':'');
+    // briefed → open the ticket; un-briefed → edit the Intake row in a pop-up, in place.
+    // No scroll-jump: the page stays exactly where it is (Ray's ask) — "Open in Intake ↗"
+    // inside the pop-up is the one deliberate way down to the grid.
+    host.querySelectorAll('.tl-ev').forEach(function(el){ el.onclick=function(){
+      var id=el.getAttribute('data-id'); if(id){ openModal(id); return; }
+      var k=el.getAttribute('data-k');
+      if(k.slice(0,3)==='ts|'){ editTest(+k.slice(3)); return; }   // test-register analysis card → its own editor
+      tlRowEdit(k, el.getAttribute('data-c')); }; });
+  }
+  // ---- timeline row editor: the Intake row as a pop-up. Saves go through the SAME 2-way
+  // writers the grid uses (writeStatus / setOwner / setDue / setTaskText), so every change
+  // lands in the localStorage overlays AND writes back to the client's project-plan sheet.
+  var tleScrim=document.getElementById('tle-scrim'), tleModal=document.getElementById('tle-modal');
+  function tleClose(){ if(!tleScrim.classList.contains('on'))return false; tleScrim.classList.remove('on'); return true; }
+  if(tleScrim)tleScrim.addEventListener('click',function(e){ if(e.target===tleScrim)tleClose(); });
+  function tlRowEdit(key, client){
+    var t=allIntake().filter(function(r){ return (r.client+'|'+r.task)===key; })[0];
+    if(!t){ revealInIntake(client,key); return; }   // row no longer in the intake — fall back to the grid
+    var pd=taskDate(t), iso=pd?(pd.getFullYear()+'-'+pad(pd.getMonth()+1)+'-'+pad(pd.getDate())):'';
+    var cur=String(t.s||(t.b==='done'?'Done':'Open')), found=false;
+    var opts=STATUS_OPTS.map(function(o){ var sel=o.toLowerCase()===cur.toLowerCase(); if(sel)found=true;
+      return '<option'+(sel?' selected':'')+'>'+esc(o)+'</option>'; }).join('');
+    if(!found)opts='<option selected>'+esc(cur)+'</option>'+opts;
+    tleModal.innerHTML='<div class="tle-brand">'+esc(t.client)+' · edit task'+(t.source==='plan'?' — writes back to the plan':'')+'</div>'
+      +'<div class="tle-row"><label for="tle-task">Task</label><textarea id="tle-task">'+esc(t.task)+'</textarea></div>'
+      +'<div class="tle-grid2"><div class="tle-row"><label for="tle-owner">Owner</label><input id="tle-owner" value="'+esc(t.owner==='—'?'':(t.owner||''))+'" placeholder="Who’s doing it"></div>'
+      +'<div class="tle-row"><label for="tle-status">Status</label><select id="tle-status">'+opts+'</select></div></div>'
+      +'<div class="tle-row"><label for="tle-due">Due</label><input id="tle-due" type="date" value="'+esc(iso)+'"></div>'
+      +'<div class="tle-foot"><button type="button" class="tle-open" id="tle-open">Open in Intake ↗</button>'
+      +'<button type="button" class="btn sm" id="tle-cancel">Cancel</button>'
+      +'<button type="button" class="btn sm navy" id="tle-save">Save</button></div>';
+    tleScrim.classList.add('on');
+    document.getElementById('tle-cancel').onclick=tleClose;
+    document.getElementById('tle-open').onclick=function(){ tleClose(); if(document.body.classList.contains('tl-focus'))tlFocus(false); revealInIntake(t.client,key); };
+    document.getElementById('tle-save').onclick=function(){
+      var nt=document.getElementById('tle-task').value.trim(),
+          no=document.getElementById('tle-owner').value.trim(),
+          ns=document.getElementById('tle-status').value,
+          nd=document.getElementById('tle-due').value;   // ISO or ''
+      tleClose();
+      if(ns!==cur){ recPush({client:t.client,task:t.task,source:t.source,key:'status',prev:cur}); writeStatus(t.client,t.task,ns); }
+      if(no!==(t.owner==='—'?'':(t.owner||'')))setOwner(t,no);
+      if(nd!==iso)setDue(t,nd);
+      if(nt&&nt!==t.task)setTaskText(t,nt);   // LAST — renaming migrates the row's key
+      renderAll();
+    };
+    setTimeout(function(){ var f=document.getElementById('tle-task'); if(f)f.focus(); },60);
+  }
+  // focus the Intake on one brand and scroll its row into view (the un-briefed timeline click-through)
+  function revealInIntake(client, key){
+    if(client){ itState.clients=[client]; itState.q=''; var s=document.getElementById('it-search'); if(s)s.value=''; }
+    itState.statuses=[]; itState.window='';                        // don't let the default windows hide the row
+    var w=document.getElementById('it-window'); if(w)w.value='';
+    renderIntake();
+    var row=document.querySelector('#it-body tr[data-k="'+(window.CSS&&CSS.escape?CSS.escape(key):key)+'"]');
+    if(row){ row.scrollIntoView({block:'center',behavior:'smooth'}); row.classList.add('it-flash'); setTimeout(function(){ row.classList.remove('it-flash'); },1600); }
+    else { var host=document.getElementById('it-body'); if(host)host.scrollIntoView({block:'center',behavior:'smooth'}); }
   }
 
   // ---- #10 test & experiment register ----
@@ -2161,7 +2486,7 @@ window.addEventListener('load',restore);
     Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k];
       if(b&&b.status==='done'&&needsAnalysis(b)){ var rd=readoutDue(b); if(rd!=null&&Date.now()>rd){ setStage(b,'analysis'); moved++; } } });
     if(moved){ persist(); toast(moved+' brief'+(moved===1?'':'s')+' finished the run window — moved to Analysis'); } }
-  function renderAll(){ _planCache=null; autoAdvanceReadouts(); renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTimeline(); renderTests(); renderWorkload(); renderAlerts(); }
+  function renderAll(){ _planCache=null; autoAdvanceReadouts(); renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTests(); renderWorkload(); renderAlerts(); }   // renderIntake cascades into renderTimeline
 
   // set a sensible default due date (today + 5 working-ish days) and boot
   (function(){ var d=new Date(); d.setDate(d.getDate()+5);
@@ -2191,6 +2516,21 @@ window.addEventListener('load',restore);
   // Decisions are remembered by the worker (KV) so cleared emails never resurface on a push;
   // the "Show triaged" toggle lists them greyed-out with a ↩ Restore.
   var showDismissed=false;
+  // ---- thread grouping: replies share a subject, so "Re: Re: X" x4 used to sit as four rows
+  // needing four decisions. Pending emails now group by normalised subject (re:/fw:/fwd: prefixes
+  // stripped) — one row per conversation, newest message on top, "N ✉" expands the rest, and
+  // → Task / ✕ decide the WHOLE thread at once (task = newest message; every member's decision
+  // is remembered server-side so none of them resurface).
+  var openThreads={};
+  function threadKey(g){ return String(g.subject||'').toLowerCase()
+    .replace(/^\s*((re|fw|fwd|aw|sv)\s*:\s*)+/i,'').replace(/\s+/g,' ').trim()||('one|'+g.id); }
+  function groupThreads(items){ var by={}, order=[];
+    items.forEach(function(g){ var k=threadKey(g); if(!by[k]){ by[k]=[]; order.push(k); } by[k].push(g); });
+    return order.map(function(k){ var ms=by[k].slice().sort(function(a,b){ return (b.date||0)-(a.date||0); });
+      var rep=ms[0], cl=null, via=null, brf=false;
+      ms.forEach(function(m){ if(!cl&&m.client){ cl=m.client; via=m.via; } if(m.briefable)brf=true; });
+      return { key:k, rep:rep, all:ms, client:rep.client||cl||'', via:rep.via||via||'', briefable:brf }; });
+  }
   function emailRow(g){
     var ago=''; if(g.date){ var s=(Date.now()-(+g.date||new Date(g.date).getTime()))/1000;
       ago=s<3600?Math.max(1,Math.round(s/60))+'m':s<86400?Math.round(s/3600)+'h':Math.round(s/86400)+'d'; }
@@ -2218,23 +2558,64 @@ window.addEventListener('load',restore);
     panel.hidden=false;
     var pend=gmailItems.filter(function(g){return !g.dismissed;}),
         done=gmailItems.filter(function(g){return g.dismissed;});
-    if(n)n.textContent=pend.length?(pend.length+' waiting'):'all triaged ✓';
+    pend.sort(function(a,b){ return (b.briefable?1:0)-(a.briefable?1:0) || (b.date||0)-(a.date||0); });
+    var threads=groupThreads(pend);
+    if(n)n.textContent=threads.length?(threads.length+' waiting'):'all triaged ✓';   // decisions needed = threads, not raw emails
     if(tog){ tog.hidden=!done.length; tog.textContent=(showDismissed?'Hide':'Show')+' triaged ('+done.length+')';
       tog.onclick=function(){ showDismissed=!showDismissed; renderEmailPanel(); }; }
-    pend.sort(function(a,b){ return (b.briefable?1:0)-(a.briefable?1:0) || (b.date||0)-(a.date||0); });
-    var html=pend.slice(0,25).map(emailRow).join('')
+    var html=threads.slice(0,25).map(threadRow).join('')
       ||'<div class="em-zero">Nothing waiting — every captured email has been triaged.</div>';
     if(showDismissed&&done.length) html+='<div class="em-dis-h">Triaged — saved as a task or not a task</div>'+done.slice(0,25).map(emailRow).join('');
     list.innerHTML=html;
+    var TH={}; threads.forEach(function(th){ TH[th.key]=th; });
     function byId(b){ var id=b.getAttribute('data-id'), hit=null;
       gmailItems.forEach(function(g){ if(String(g.id)===id)hit=g; }); return hit; }
-    list.querySelectorAll('.em-go').forEach(function(b){ b.onclick=function(){ var g=byId(b); if(!g)return; saveEmailAsTask(g); }; });
-    list.querySelectorAll('.em-cl-sel').forEach(function(sel){ sel.onchange=function(){ var g=byId(sel); if(!g||!sel.value)return;
-      g.client=sel.value; g.via='assigned'; teachSender(g.from,sel.value);
+    function thOf(b){ return TH[b.getAttribute('data-th')]; }
+    list.querySelectorAll('.em-go').forEach(function(b){ b.onclick=function(){ var th=thOf(b); if(!th)return; saveEmailAsTask(th.rep, th.all); }; });
+    list.querySelectorAll('.em-no').forEach(function(b){ b.onclick=function(){ var th=thOf(b); if(!th)return; decideThread(th,'notask'); }; });
+    list.querySelectorAll('.em-thn').forEach(function(b){ b.onclick=function(){ var k=b.getAttribute('data-th');
+      if(openThreads[k])delete openThreads[k]; else openThreads[k]=1; renderEmailPanel(); }; });
+    list.querySelectorAll('.em-cl-sel').forEach(function(sel){ sel.onchange=function(){ var th=thOf(sel); if(!th||!sel.value)return;
+      th.all.forEach(function(m){ m.client=sel.value; m.via='assigned'; });   // the whole conversation is that brand's
+      teachSender(th.rep.from,sel.value);
       renderEmailPanel(); updateGmailState();
       toast(sel.value+' assigned — future emails from this sender will auto-detect'); }; });
-    list.querySelectorAll('.em-no').forEach(function(b){ b.onclick=function(){ decideEmail(b.getAttribute('data-id'),false,'notask'); }; });
     list.querySelectorAll('.em-res').forEach(function(b){ b.onclick=function(){ decideEmail(b.getAttribute('data-id'),true); }; });
+  }
+  // one row per conversation: the newest message fronts it, the count chip expands the rest
+  function threadRow(th){
+    var g=th.rep, n=th.all.length;
+    var ago=''; if(g.date){ var s=(Date.now()-(+g.date||new Date(g.date).getTime()))/1000;
+      ago=s<3600?Math.max(1,Math.round(s/60))+'m':s<86400?Math.round(s/3600)+'h':Math.round(s/86400)+'d'; }
+    var senders=[]; th.all.forEach(function(m){ var nm=senderName(m.from); if(senders.indexOf(nm)<0)senders.push(nm); });
+    var open=!!openThreads[th.key];
+    var row='<div class="em-row">'
+      +'<span class="em-cell-brand">'+(th.client?'<span class="em-cl">'+esc(th.client)+'</span>'
+        :'<select class="em-cl-sel" data-th="'+esc(th.key)+'" title="Detection found no brand — assign one and → Task writes straight into that brand’s plan (the sender is remembered for next time)"><option value="">— brand</option>'+CLIENTS.map(function(c){return '<option>'+esc(c)+'</option>';}).join('')+'</select>')
+        +(th.briefable?'<span class="em-brf" title="Action request detected in this thread">⚡</span>':'')+'</span>'
+      +(th.via?'<span class="em-cue" title="How the brand was detected">'+esc(th.via)+'</span>':'<span class="em-cue none">—</span>')
+      +'<span class="em-from" title="'+esc(senders.join(', '))+'">'+esc(senders[0])+(senders.length>1?' +'+(senders.length-1):'')+'</span>'
+      +'<span class="em-subj" title="'+esc(g.snippet||'')+'">'+esc(g.subject)
+        +(n>1?'<button class="em-thn'+(open?' on':'')+'" data-th="'+esc(th.key)+'" type="button" title="'+n+' emails in this conversation — click to '+(open?'collapse':'review each')+'">'+n+' ✉</button>':'')+'</span>'
+      +'<span class="em-ago">'+ago+'</span>'
+      +'<span class="em-act"><button class="em-go" data-th="'+esc(th.key)+'" type="button" title="Save as ONE task in Intake (from the newest email) — the whole thread is marked triaged">→ Task</button>'
+        +'<button class="em-no" data-th="'+esc(th.key)+'" type="button" title="Not a task — clears the whole thread (restorable under Show triaged)">✕</button></span></div>';
+    if(open&&n>1) row+=th.all.map(function(m){ var a=''; if(m.date){ var s2=(Date.now()-(+m.date||0))/1000;
+        a=s2<3600?Math.max(1,Math.round(s2/60))+'m':s2<86400?Math.round(s2/3600)+'h':Math.round(s2/86400)+'d'; }
+      return '<div class="em-sub"><span class="em-sub-from">'+esc(senderName(m.from))+'</span>'
+        +'<span class="em-sub-snip">'+esc((m.snippet||m.subject||'').slice(0,160))+'</span>'
+        +'<span class="em-ago">'+a+'</span></div>'; }).join('');
+    return row;
+  }
+  // decide a whole conversation in one click — every member's decision is stored, so no
+  // part of the thread ever re-enters the queue on a later push
+  function decideThread(th,reason){
+    th.all.forEach(function(m){ m.dismissed=true; m.decidedAs=reason||'notask';
+      fetch('/api/gmail/dismiss',{method:'POST',headers:{'content-type':'application/json'},
+        body:JSON.stringify({id:m.id,undo:false,reason:reason||'notask'})})
+        .catch(function(){ toast('Saving a triage decision failed — it may come back on refresh'); }); });
+    renderEmailPanel(); updateGmailState();
+    if(reason==='notask')toast(th.all.length>1?('Thread cleared — '+th.all.length+' emails, not a task'):'Cleared — not a task (find it under “Show triaged”)');
   }
   // optimistic local flip + server-side memory, so the decision survives every future push
   function decideEmail(id,undo,reason){
@@ -2250,16 +2631,19 @@ window.addEventListener('load',restore);
   // -> Task: saves the email straight into Intake as a plain task — no brief drafted yet.
   // Briefing happens later from Intake itself, same as any other task (Ray's explicit ask:
   // this button shouldn't jump into the brief composer the way project-plan rows' Brief does).
-  function saveEmailAsTask(g){
+  function saveEmailAsTask(g,thread){
     // client comes from detection only (domain / display-name / brand-mention cues, resolved
     // server-side and back-filled) — the sender belongs in the TASK NAME, never in the Client field.
     // A recognised brand goes through adoptIntoPlan: the row reaches the brand's plan SHEET
     // (append write-back + live re-pull), not just the local tracker.
     var task=g.subject+' — from '+senderName(g.from);
     if(g.client&&CLIENTS.indexOf(g.client)>=0){ adoptIntoPlan(g.client,task,'Open','',senderName(g.from),1); }
-    else { MANUAL.push({client:g.client||'',task:task,owner:senderName(g.from),status:'Open',due:'',esrc:1}); saveManual();
+    else { MANUAL.push({client:g.client||'',task:task,owner:senderName(g.from),status:'Open',due:'',esrc:1}); saveManual(); markEsrc(g.client||'',task);
       toast('Saved to Intake — client not recognised: double-click its Client cell to assign one'); }
     decideEmail(g.id,false,'task');
+    // the rest of the conversation is covered by that one task — mark every sibling decided
+    // too (reason "task"), so no part of the thread comes back on a later push
+    (thread||[]).forEach(function(m){ if(String(m.id)!==String(g.id))decideEmail(m.id,false,'task'); });
     renderAll();
   }
   // sender→brand memory: a manual assignment teaches detection — same sender auto-fills next time
@@ -2269,8 +2653,10 @@ window.addEventListener('load',restore);
   function applyTaught(items){ (items||[]).forEach(function(g){ if(!g.client){ var b=TAUGHT[senderEmail(g.from)]; if(b){ g.client=b; g.via='remembered'; } } }); }
   function updateGmailState(){ var st=document.getElementById('gstate'); if(!st||!gmailItems.length)return;
     var pend=gmailItems.filter(function(g){return !g.dismissed;}),
+        th=groupThreads(pend).length,
         brf=pend.filter(function(g){return g.briefable;}).length, done=gmailItems.length-pend.length;
-    st.textContent='Connected — '+pend.length+' email'+(pend.length===1?'':'s')+' waiting for triage'
+    st.textContent='Connected — '+pend.length+' email'+(pend.length===1?'':'s')
+      +(th<pend.length?(' in '+th+' thread'+(th===1?'':'s')):'')+' waiting for triage'
       +(brf?(' · '+brf+' look like action requests ⚡'):'')+(done?(' · '+done+' triaged'):'')+'.'; }
   (function(){ var dot=document.getElementById('gdot');
     fetch('/api/gmail/intake').then(function(r){return r.json();}).then(function(d){

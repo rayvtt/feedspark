@@ -26,6 +26,8 @@
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx } from "./briefmatch.js";
+// Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
+import { LABEL_KEYS, scanFeed, diffSnapshots, summarize } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -46,6 +48,8 @@ import TACHYON from "../../../docs/tachyon_widget.html";
 import INSTR from "../../../docs/instr_collapse.html";
 import FEEDLAB from "../../../docs/FeedSpark_FeedLab.html";
 import PRICER from "../../../docs/FeedSpark_Pricer.html";
+// Label Guard — custom-label capture + drop-off monitoring module (page at /labels)
+import LABELGUARD_PAGE from "../../../docs/FeedSpark_LabelGuard.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
 // node tests share the file, same pattern as the Feed Lab engine)
 import PRICER_ENGINE from "../../../docs/pricer_engine.js";
@@ -69,6 +73,7 @@ const PAGES = {
   '/activity':    { html: ACTIVITY,    slug: 'activity' },   // owner-gated in fetch() before this map is consulted; Build Log lives on its 🔨 tab
   '/workflow':    { html: WORKFLOW,    slug: 'workflow' },
   '/feedlab':     { html: FEEDLAB,     slug: 'feedlab' },
+  '/labels':      { html: LABELGUARD_PAGE, slug: 'labels' },
   '/pricer':      { html: PRICER,      slug: 'pricer' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
@@ -80,6 +85,11 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
+
+// Label Guard nav badge — injected on app pages only (never client decks): dots the /labels
+// nav icon with the number of feeds carrying active drop-off alerts, red when any is critical.
+const LGBADGE = `<style>.lg-dot{position:absolute;top:1px;right:1px;min-width:14px;height:14px;padding:0 3px;border-radius:100px;background:#ED6F0B;color:#fff;font-size:9.5px;font-weight:900;line-height:14px;text-align:center;pointer-events:none}.lg-dot.crit{background:#C0392B}</style>
+<script>/* FCC-LABELGUARD badge */(function(){try{fetch('/api/labels/alerts').then(function(r){return r.json();}).then(function(d){var c=(d&&d.counts)||{};var n=(c.crit||0)+(c.warn||0);if(!n)return;var a=document.querySelector('#tb-modules a[href="/labels"]');if(!a)return;var b=document.createElement('span');b.className='lg-dot'+(c.crit?' crit':'');b.textContent=n>9?'9+':String(n);a.appendChild(b);}).catch(function(){});}catch(e){}})();</script>`;
 
 // client -> Project Plan Google Sheet id. Mirrors FeedSpark_Workflow.html's client-side
 // PLANSHEET map (used there for the "+ Add task" row and status/owner/due write-back) —
@@ -103,6 +113,89 @@ const PLAN_SHEETS = {
   'House of Bruar': '1lgO-SrzWtHmsvKRXg2Xgzq3d7fCwv5V2Fauu6pJgYOA',
 };
 
+// brands whose live feed is wired in code — imported from Ray's master feed-market sheet
+// (1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak: one row per client+country feed). This map
+// is the committed record; new rows in the sheet get re-imported here (or attached ad-hoc
+// from the CC dossier / Feed Lab, which OVERRIDES the wired entry per market).
+// MULTI-MARKET: a dossier record may carry `feeds` = { gb: url, de: url, ... } (managed
+// from the Feed Lab portal or the CC dossier); the legacy single `feed` field doubles as
+// the 'gb' market. Market codes are 2-6 chars, lowercased.
+// Module scope (not inside fetch): the Label Guard cron sweep resolves feeds from scheduled().
+const DEFAULT_FEEDS = {
+  Schuh: {
+    gb: { id: '1uAM5I_KSsjucCr3GLXc2ekZeiMoAG6x8TIh5ZntwseA', gid: '0' },
+    de: { id: '1u-B6VECXLk1YefoED5FfjpnXw1uEwV8cE_f6t-ed12I', gid: '0' },
+    ie: { id: '1bawEQkhpl8GsSGVNkPnsi228TM_z1LXf1Dj35s-a9p4', gid: '0' },
+  },
+  YuMOVE: { gb: { id: '1PtsaNBd5NGimchw18YlBPCtOgl0HcgkWrKdhy4lfvzA', gid: '0' } },
+  Monsoon: { gb: { id: '1pW6CqyzM_1Rqr8O0basrxxuNAWG9sR2_OrjCIkE_8PU', gid: '0' } },
+  Accessorize: { gb: { id: '1_OkGi8ucOmJcdu5TBWm3vl5cK3bmmaimoMYvR03Z3Ic', gid: '0' } },
+  Superdry: {
+    gb: { id: '1PimExRPPqf1CknH3yLs_tUfJrr2HZgjpiMUDiOUDc3k', gid: '0' },
+    ie: { id: '1SjuQ0M-cangxVcNdlb72RQM0-ZTev7aE-R5v1iX9EGQ', gid: '0' },
+    de: { id: '1y0phqG10OH55u6s6w8xpsVfZe2LohwlpelWPvb0QM3k', gid: '0' },
+    fr: { id: '1FVthehZKfAiUIU0qCGrsdENMQW896o8S19C6fT0gkx4', gid: '0' },
+    nl: { id: '1f4tL0BPNrVFC7Lj0az4LLs9NvIvf3YiFRBXXPafU1t0', gid: '0' },
+  },
+  'House of Bruar': {
+    gb: { id: '16P8vLuLC4l4xkMh5w_BrCCGHzMYqi4eZec8Wezpg1bk', gid: '0' },
+    us: { id: '1Wa5FQgn3mX_iMMG2nT85gmnR28hgVFPkbY1qlV0lJZM', gid: '0' },
+    eu: { id: '1e3tETDX_0oGTgPXr5weI-h1DjwRoVDPJikqW9vvyTJQ', gid: '0' },
+  },
+  'American Golf': { gb: { id: '1W4Tasbdi7jR7kmlIjYjrPtAb2BvW-AkQZBz9XW1aNHk', gid: '0' } },  // API-fed sheet
+  Reiss: {
+    gb: { id: '1KTx9ONZSju_DD06V3F7p958LfzAL0ccJJFXPf5NpLCw', gid: '0' },
+    us: { id: '1_-7yjB-hZfmk9VU_srfn6oZwFGTVzHWLtdOKJRmR-nA', gid: '0' },
+    ie: { id: '1BMUgdup13kqcubAA1AhLrw63_Stlr0SvXFRh4PxQ7YA', gid: '0' },
+    de: { id: '13C8ECyr6lYlkI2PmMfEp_XYKTcjUivy8BpCb-dWC2OY', gid: '0' },
+    nl: { id: '17a8RKY01vcmbmwHBw-kigGBo5N-PY6cSNj-SM5IOGzE', gid: '0' },
+    au: { id: '1VTE5MkGw3XSacA6w5YAciwBIl0yBLt2KlKAQbXmCYyI', gid: '0' },
+    ca: { id: '1pG9dzcKnGRx-r56eNISksUeeyNovJbF4tkVUBtYs25U', gid: '0' },
+    // Reiss EU exists in the master sheet but its URL is truncated there (/d/1LaOCzKf…) —
+    // fix the row in the sheet, then re-import.
+  },
+};
+const mktOf = (raw) => String(raw || 'gb').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 6) || 'gb';
+const sheetRef = (u) => {
+  const m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(String(u || ''));
+  if (!m) return null;
+  const g = /[#?&]gid=(\d+)/.exec(String(u));
+  return { id: m[1], gid: (g && g[1]) || '0' };
+};
+const feedMarketsFor = async (env, client) => {   // { mkt: {id,gid} } for every attached market
+  const out = {};
+  const dft = DEFAULT_FEEDS[client] || {};
+  Object.keys(dft).forEach((k) => { out[k] = dft[k]; });
+  if (client) try {
+    const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
+    const rec = dossier[client] || {};
+    if (rec.feed) { const r = sheetRef(rec.feed); if (r) out.gb = r; }   // legacy single feed = gb
+    if (rec.feeds && typeof rec.feeds === 'object') {
+      Object.keys(rec.feeds).forEach((mk) => { const r = sheetRef(rec.feeds[mk]); if (r) out[mktOf(mk)] = r; });
+    }
+  } catch (e) {}
+  return out;
+};
+const feedSourceFor = async (env, client, market) => (await feedMarketsFor(env, client))[mktOf(market)] || null;
+// every client+market with a live feed (wired ∪ dossier-attached) — the Label Guard roster
+async function feedRoster(env) {
+  const clients = {};
+  Object.keys(DEFAULT_FEEDS).forEach((c) => { clients[c] = 1; });
+  try {
+    const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
+    Object.keys(dossier).forEach((c) => {
+      const rec = dossier[c] || {};
+      if ((rec.feed && sheetRef(rec.feed)) || (rec.feeds && Object.keys(rec.feeds).some((mk) => sheetRef(rec.feeds[mk])))) clients[c] = 1;
+    });
+  } catch (e) {}
+  const out = [];
+  for (const c of Object.keys(clients).sort()) {
+    const mkts = await feedMarketsFor(env, c);
+    for (const mk of Object.keys(mkts).sort()) out.push({ client: c, mkt: mk, src: mkts[mk] });
+  }
+  return out;
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -118,7 +211,8 @@ export default {
     if (request.method === 'PUT' || request.method === 'POST') {
       const ACT = { '/api/edits': 'edit', '/api/feedback': 'feedback', '/api/clients': 'dossier-save',
         '/api/briefs': 'briefs-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
-        '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save' };
+        '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save',
+        '/api/labels/scan': 'label-scan', '/api/labels/ack': 'label-rebase' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -169,6 +263,19 @@ export default {
         const edits = await env.EDITS.get(key, 'json');
         return json(edits || {});
       }
+      // sendBeacon can only issue a POST, and a beacon is the only save that reliably
+      // survives the document going away (a normal fetch is cancelled at exactly that
+      // moment). Treated as a merge PUT — same body, same semantics.
+      if (request.method === 'POST' && url.searchParams.get('beacon') === '1') {
+        try {
+          const incoming = await request.json();
+          const current = (await env.EDITS.get(key, 'json')) || {};
+          await env.EDITS.put(key, JSON.stringify({ ...current, ...incoming }));
+          return json({ ok: true, page: slug, beacon: true });
+        } catch (e) {
+          return json({ ok: false, error: String((e && e.message) || e) }, 500);
+        }
+      }
       if (request.method === 'PUT') {
         // A bare `await request.json()` here — unlike every other POST/PUT route in this file —
         // threw uncaught on a malformed/empty body, which Cloudflare turns into an opaque, empty
@@ -186,12 +293,28 @@ export default {
           // as capable of discarding a whole overlay as DELETE is (Reset now uses this path — see
           // the client script), so it gets the same undo-a-Reset safety net.
           if (replace && Object.keys(current).length) {
-            await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(), JSON.stringify(current));
+            // __reason rides along so a backup list is readable after the fact — "which of
+            // these 30 snapshots was the Reset I need to undo?" was previously unanswerable.
+            await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(),
+              JSON.stringify({ __reason: Object.keys(incoming).length ? 'undo' : 'reset', ...current }));
           }
           const existing = replace ? {} : current;
           const merged = { ...existing, ...incoming };
+          // ?drop=k1,k2 removes exactly those keys and nothing else. Before this, the only
+          // way to clear a handful of stale entries was Reset, which wipes the whole overlay
+          // — so clearing 14 dead tombstones cost 122 good edits, and the rational move was
+          // to leave the bad state in place and live with the banner.
+          const drop = (url.searchParams.get('drop') || '').split(',').map((s) => s.trim()).filter(Boolean);
+          let dropped = 0;
+          if (drop.length) {
+            if (Object.keys(current).length) {
+              await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(),
+                JSON.stringify({ __reason: 'drop', __keys: drop, ...current }));
+            }
+            for (const k of drop) if (k in merged) { delete merged[k]; dropped++; }
+          }
           await env.EDITS.put(key, JSON.stringify(merged));
-          return json({ ok: true, page: slug, count: Object.keys(merged).length });
+          return json({ ok: true, page: slug, count: Object.keys(merged).length, dropped });
         } catch (e) {
           return json({ ok: false, error: String((e && e.message) || e) }, 500);
         }
@@ -207,7 +330,8 @@ export default {
         // edits-bak:<slug>:<ts> and cherry-picked.
         const doomed = await env.EDITS.get(key);
         if (doomed && doomed !== '{}') {
-          await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(), doomed);
+          await env.EDITS.put('edits-bak:' + slug + ':' + Date.now(),
+            JSON.stringify({ __reason: 'delete', ...JSON.parse(doomed) }));
         }
         await env.EDITS.delete(key);
         return json({ ok: true, page: slug, cleared: true, backed_up: !!(doomed && doomed !== '{}') });
@@ -219,6 +343,14 @@ export default {
       const slug = (url.searchParams.get('page') || 'home').replace(/[^a-z0-9_-]/gi, '');
       const at = url.searchParams.get('at');
       if (at) return json((await env.EDITS.get('edits-bak:' + slug + ':' + at.replace(/\D/g, ''), 'json')) || {});
+      // Prune while we're here: backups were written on every Reset/replace/drop and never
+      // removed, so the list grew without bound and every entry looked identical from the
+      // outside (no record of what caused it). Newest 50 kept.
+      {
+        const all = await env.EDITS.list({ prefix: 'edits-bak:' + slug + ':' });
+        const stale = all.keys.map((k) => k.name).sort().slice(0, Math.max(0, all.keys.length - 50));
+        for (const name of stale) await env.EDITS.delete(name);
+      }
       const list = await env.EDITS.list({ prefix: 'edits-bak:' + slug + ':' });
       return json(list.keys.map((k) => ({
         at: k.name.split(':').pop(),
@@ -352,59 +484,8 @@ export default {
     // small audit JSON back here for caching. Feeds refresh daily upstream; the page
     // re-scans when the cached audit is older than 20h.
 
-    // brands whose live feed is wired in code — imported from Ray's master feed-market sheet
-    // (1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak: one row per client+country feed). This map
-    // is the committed record; new rows in the sheet get re-imported here (or attached ad-hoc
-    // from the CC dossier / Feed Lab, which OVERRIDES the wired entry per market).
-    // MULTI-MARKET: a dossier record may carry `feeds` = { gb: url, de: url, ... } (managed
-    // from the Feed Lab portal or the CC dossier); the legacy single `feed` field doubles as
-    // the 'gb' market. Market codes are 2-6 chars, lowercased.
-    const DEFAULT_FEEDS = {
-      Schuh: {
-        gb: { id: '1uAM5I_KSsjucCr3GLXc2ekZeiMoAG6x8TIh5ZntwseA', gid: '0' },
-        de: { id: '1u-B6VECXLk1YefoED5FfjpnXw1uEwV8cE_f6t-ed12I', gid: '0' },
-        ie: { id: '1bawEQkhpl8GsSGVNkPnsi228TM_z1LXf1Dj35s-a9p4', gid: '0' },
-      },
-      YuMOVE: { gb: { id: '1PtsaNBd5NGimchw18YlBPCtOgl0HcgkWrKdhy4lfvzA', gid: '0' } },
-      Monsoon: { gb: { id: '1pW6CqyzM_1Rqr8O0basrxxuNAWG9sR2_OrjCIkE_8PU', gid: '0' } },
-      Accessorize: { gb: { id: '1_OkGi8ucOmJcdu5TBWm3vl5cK3bmmaimoMYvR03Z3Ic', gid: '0' } },
-      Superdry: {
-        gb: { id: '1PimExRPPqf1CknH3yLs_tUfJrr2HZgjpiMUDiOUDc3k', gid: '0' },
-        ie: { id: '1SjuQ0M-cangxVcNdlb72RQM0-ZTev7aE-R5v1iX9EGQ', gid: '0' },
-        fr: { id: '1FVthehZKfAiUIU0qCGrsdENMQW896o8S19C6fT0gkx4', gid: '0' },
-      },
-      'House of Bruar': { gb: { id: '16P8vLuLC4l4xkMh5w_BrCCGHzMYqi4eZec8Wezpg1bk', gid: '0' } },
-      'American Golf': { gb: { id: '1W4Tasbdi7jR7kmlIjYjrPtAb2BvW-AkQZBz9XW1aNHk', gid: '0' } },  // API-fed sheet
-      Reiss: {
-        gb: { id: '1KTx9ONZSju_DD06V3F7p958LfzAL0ccJJFXPf5NpLCw', gid: '0' },
-        us: { id: '1_-7yjB-hZfmk9VU_srfn6oZwFGTVzHWLtdOKJRmR-nA', gid: '0' },
-        ie: { id: '1BMUgdup13kqcubAA1AhLrw63_Stlr0SvXFRh4PxQ7YA', gid: '0' },
-        de: { id: '13C8ECyr6lYlkI2PmMfEp_XYKTcjUivy8BpCb-dWC2OY', gid: '0' },
-        nl: { id: '17a8RKY01vcmbmwHBw-kigGBo5N-PY6cSNj-SM5IOGzE', gid: '0' },
-      },
-    };
-    const mktOf = (raw) => String(raw || 'gb').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 6) || 'gb';
-    const sheetRef = (u) => {
-      const m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(String(u || ''));
-      if (!m) return null;
-      const g = /[#?&]gid=(\d+)/.exec(String(u));
-      return { id: m[1], gid: (g && g[1]) || '0' };
-    };
-    const feedMarketsFor = async (client) => {   // { mkt: {id,gid} } for every attached market
-      const out = {};
-      const dft = DEFAULT_FEEDS[client] || {};
-      Object.keys(dft).forEach((k) => { out[k] = dft[k]; });
-      if (client) try {
-        const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
-        const rec = dossier[client] || {};
-        if (rec.feed) { const r = sheetRef(rec.feed); if (r) out.gb = r; }   // legacy single feed = gb
-        if (rec.feeds && typeof rec.feeds === 'object') {
-          Object.keys(rec.feeds).forEach((mk) => { const r = sheetRef(rec.feeds[mk]); if (r) out[mktOf(mk)] = r; });
-        }
-      } catch (e) {}
-      return out;
-    };
-    const feedSourceFor = async (client, market) => (await feedMarketsFor(client))[mktOf(market)] || null;
+    // Feed wiring (DEFAULT_FEEDS + feedMarketsFor/feedSourceFor) lives at MODULE scope now —
+    // the Label Guard cron sweep in scheduled() resolves feeds too, not just fetch() routes.
 
     // ---- Tachyon Pricer: collaborative rate card + saved quotes (kvmerge = every team
     // edits the same numbers concurrency-safe; edits are activity-logged per Access user) ----
@@ -438,7 +519,7 @@ export default {
     // is in the dossier or DEFAULT_FEEDS resolve; the sheet id itself never comes from the query)
     if (path === '/api/feed/proxy' && request.method === 'GET') {
       const client = url.searchParams.get('client') || '';
-      const src = await feedSourceFor(client, url.searchParams.get('market'));
+      const src = await feedSourceFor(env, client, url.searchParams.get('market'));
       if (!src) return json({ error: 'no feed sheet linked for this client/market - attach one in Feed Lab or the brand dossier' }, 404);
       const up = await fetch('https://docs.google.com/spreadsheets/d/' + src.id + '/export?format=csv&gid=' + src.gid);
       // a non-link-shared sheet 307s to Google's LOGIN PAGE with a 200 — final content-type is
@@ -476,11 +557,14 @@ export default {
     if (path === '/api/feed/markets' && request.method === 'GET') {
       const client = (url.searchParams.get('client') || '').slice(0, 60);
       if (!client || client.indexOf(':') >= 0) return json({ error: 'bad client' }, 400);
-      const mkts = await feedMarketsFor(client);
+      const mkts = await feedMarketsFor(env, client);
       const idx = (await env.EDITS.get('feedmkt:' + client, 'json')) || {};
       const out = {};
       Object.keys(mkts).forEach((mk) => { out[mk] = idx[mk] || null; });   // null = never scanned
-      Object.keys(idx).forEach((mk) => { if (!(mk in out)) out[mk] = Object.assign({}, idx[mk], { detached: true }); });
+      // markets = wired ∪ attached ONLY. The scan index is a summary cache, never a market
+      // source — stale idx entries (markets scanned once, since detached) used to be merged
+      // back in as `detached:true` and the page rendered them as real markets (phantom chips
+      // on brands like Monsoon that only have gb).
       return json({ client, markets: out });
     }
 
@@ -505,6 +589,9 @@ export default {
       if (request.method === 'PUT') {
         let a; try { a = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
         if (!a || !a.score || !a.score.pillars || typeof a.score.total !== 'number') return json({ error: 'not an audit payload' }, 400);
+        // only markets actually attached to this client may be written — an audit PUT for
+        // anything else would seed the feedmkt: index with a market the brand doesn't have
+        if (!(await feedSourceFor(client, mkt))) return json({ error: 'market not attached for this client' }, 400);
         a.client = client; a.market = mkt; a.fetchedAt = Date.now();
         const body = JSON.stringify(a);
         if (body.length > 400000) return json({ error: 'audit too large' }, 413);
@@ -525,6 +612,14 @@ export default {
         return json({ ok: true, fetchedAt: a.fetchedAt, market: mkt });
       }
       return json({ error: 'method not allowed' }, 405);   // a POST would otherwise log activity, then 404
+    }
+
+    // ---- Label Guard: custom_label_0..4 capture + drop-off monitoring across every wired
+    // feed (page at /labels; full spec docs/LABELGUARD.md). Google's gviz endpoint does the
+    // pivots server-side, so the worker never parses a raw feed CSV (CPU budget rule).
+    if (path.startsWith('/api/labels/')) {
+      const r = await labelGuardRoutes(env, request, url);
+      if (r) return r;
     }
 
     // ---- Build Log queue: Ray's "not built yet" backlog (kvmerge-backed, concurrency-safe) ----
@@ -1083,7 +1178,7 @@ export default {
     if (page) {
       logActivity(ctx, env, request, 'view', path);
       let html = page.html.replace('</body>', getEditorScript(page.slug) + '\n</body>');
-      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n' + INSTR + '\n</body>');
+      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n</body>');
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
@@ -1104,6 +1199,9 @@ export default {
   // Reads the brand->sheet map the dashboard last posted (KV `plansheets`) and re-parses
   // each Project-Plan tab into KV (planlive:<id>). Registered in wrangler.toml [triggers].
   async scheduled(event, env, ctx) {
+    // Label Guard sweep runs FIRST and unconditionally — the plan warm below early-returns
+    // without GOOGLE_SA_JSON, and label drop-off monitoring must never hinge on that credential.
+    await labelCronSweep(env);
     if (!env.GOOGLE_SA_JSON) return;
     try {
       const sheets = (await env.EDITS.get('plansheets', 'json')) || {};
@@ -1167,6 +1265,153 @@ async function mapStoreRoute(env, request, kvKey, opts) {
     return json(envelopeToClient(envx, opts), 200, { 'X-Sync-Base': String(Date.now()) });
   }
   return null;
+}
+
+/* ================= Label Guard: custom-label monitoring (docs/LABELGUARD.md) =================
+   Engine (gviz pivots, baseline diff, thresholds): src/labelguard.js. KV keys:
+     labels:<client>:<mkt>     latest snapshot (per-label value/volume pivot)
+     labelbase:<client>:<mkt>  the BASELINE — last known-good snapshot alerts diff against
+     labelhist:<client>:<mkt>  scan history [{t,rows,cov,crit,warn}] (cap 120)
+     labelidx                  estate index: "<client>|<mkt>" -> summary (one read boots /labels)
+     labelalerts               active alerts by "<client>|<mkt>" (cleared on recovery/rebaseline)
+     labelcron                 sweep rotation cursor
+   Alerts stay active until the feed RECOVERS or Ray rebaselines ("expected change") — a
+   broken feed that stays broken keeps flagging; it does not fade after one scan. */
+
+const lgKey = (c, m) => c + '|' + m;
+
+async function runLabelScan(env, client, mkt) {
+  const src = await feedSourceFor(env, client, mkt);
+  if (!src) return { error: 'no feed sheet linked for this client/market - attach one in Feed Lab or the brand dossier', status: 404 };
+  let snap;
+  try {
+    snap = await scanFeed(fetch, src, { client, market: mkt });
+  } catch (e) {
+    const msg = String((e && e.message) || e).slice(0, 140);
+    // index + alert maps are re-read right before each write to keep the clobber window
+    // (cron sweep vs a page-triggered scan) down to milliseconds; a lost entry self-heals
+    // on the feed's next scan
+    const idx = (await env.EDITS.get('labelidx', 'json')) || {};
+    idx[lgKey(client, mkt)] = Object.assign({}, idx[lgKey(client, mkt)] || {}, { client, mkt, status: 'unreachable', err: msg, tErr: Date.now() });
+    await env.EDITS.put('labelidx', JSON.stringify(idx));
+    const alertsMap = (await env.EDITS.get('labelalerts', 'json')) || {};
+    alertsMap[lgKey(client, mkt)] = { t: Date.now(), client, mkt,
+      alerts: [{ sev: 'warn', code: 'fetch-fail', msg: 'feed unreachable: ' + msg }] };
+    await env.EDITS.put('labelalerts', JSON.stringify(alertsMap));
+    return { error: msg, status: 502 };
+  }
+  const BK = 'labelbase:' + client + ':' + mkt;
+  let base = await env.EDITS.get(BK, 'json');
+  if (!base) { base = snap; await env.EDITS.put(BK, JSON.stringify(snap)); }   // first scan seeds the baseline
+  const alerts = diffSnapshots(base, snap);
+  const active = alerts.filter((a) => a.sev !== 'info');
+  if (!active.length && base.t !== snap.t) {
+    base = snap; await env.EDITS.put(BK, JSON.stringify(snap));   // clean scan rolls the baseline forward
+  }
+  await env.EDITS.put('labels:' + client + ':' + mkt, JSON.stringify(snap));
+  try {
+    const HK = 'labelhist:' + client + ':' + mkt;
+    const hist = (await env.EDITS.get(HK, 'json')) || [];
+    const cov = {}; LABEL_KEYS.forEach((k) => { const L = snap.labels[k]; cov[k] = L && L.present ? L.cov : null; });
+    hist.push({ t: snap.t, rows: snap.rows, cov,
+      crit: active.filter((a) => a.sev === 'crit').length, warn: active.filter((a) => a.sev === 'warn').length });
+    await env.EDITS.put(HK, JSON.stringify(hist.slice(-120)));
+  } catch (e) {}
+  const idx = (await env.EDITS.get('labelidx', 'json')) || {};
+  idx[lgKey(client, mkt)] = Object.assign({ client, mkt }, summarize(snap, alerts, base.t));
+  await env.EDITS.put('labelidx', JSON.stringify(idx));
+  const alertsMap = (await env.EDITS.get('labelalerts', 'json')) || {};
+  if (active.length) alertsMap[lgKey(client, mkt)] = { t: snap.t, client, mkt, alerts };
+  else delete alertsMap[lgKey(client, mkt)];
+  await env.EDITS.put('labelalerts', JSON.stringify(alertsMap));
+  return { snapshot: snap, alerts, baseT: base.t };
+}
+
+async function labelGuardRoutes(env, request, url) {
+  const path = url.pathname;
+  const client = (url.searchParams.get('client') || '').slice(0, 60);
+  const mkt = mktOf(url.searchParams.get('market'));
+  // ':' aliases other KV keys, '|' aliases other estate-index entries — reject both outright
+  const badClient = !client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0;
+
+  // estate board bootstrap: full roster (wired ∪ dossier-attached) ∪ scanned index + active
+  // alerts in ONE call — never-scanned feeds surface as status 'never', not silently absent
+  if (path === '/api/labels/estate' && request.method === 'GET') {
+    const roster = await feedRoster(env);
+    const idx = (await env.EDITS.get('labelidx', 'json')) || {};
+    const alerts = (await env.EDITS.get('labelalerts', 'json')) || {};
+    const feeds = {};
+    for (const f of roster) {
+      feeds[lgKey(f.client, f.mkt)] = Object.assign({ client: f.client, mkt: f.mkt, status: 'never' }, idx[lgKey(f.client, f.mkt)] || {});
+    }
+    // scanned-but-detached feeds stay visible (with their history) rather than vanishing
+    Object.keys(idx).forEach((k) => {
+      if (!feeds[k]) feeds[k] = Object.assign({ client: k.split('|')[0], mkt: k.split('|')[1] || 'gb', detached: true }, idx[k]);
+    });
+    return json({ feeds, alerts });
+  }
+
+  // badge feed for every app page: just the active alert counts
+  if (path === '/api/labels/alerts' && request.method === 'GET') {
+    const alerts = (await env.EDITS.get('labelalerts', 'json')) || {};
+    let crit = 0, warn = 0;
+    Object.keys(alerts).forEach((k) => (alerts[k].alerts || []).forEach((a) => {
+      if (a.sev === 'crit') crit++; else if (a.sev === 'warn') warn++;
+    }));
+    return json({ counts: { crit, warn, feeds: Object.keys(alerts).length } });
+  }
+
+  if (path === '/api/labels/snapshot' && request.method === 'GET') {
+    if (badClient) return json({ error: 'bad client' }, 400);
+    const snap = await env.EDITS.get('labels:' + client + ':' + mkt, 'json');
+    const base = await env.EDITS.get('labelbase:' + client + ':' + mkt, 'json');
+    const out = { snapshot: snap || null, baseline: base || null };
+    if (url.searchParams.get('hist') === '1') out.hist = (await env.EDITS.get('labelhist:' + client + ':' + mkt, 'json')) || [];
+    return json(out);
+  }
+
+  if (path === '/api/labels/scan' && request.method === 'POST') {
+    if (badClient) return json({ error: 'bad client' }, 400);
+    const r = await runLabelScan(env, client, mkt);
+    if (r.error) return json({ error: r.error }, r.status || 502);
+    return json(r);
+  }
+
+  // "expected change" — adopt the current snapshot as the new baseline and clear the flags
+  if (path === '/api/labels/ack' && request.method === 'POST') {
+    if (badClient) return json({ error: 'bad client' }, 400);
+    const snap = await env.EDITS.get('labels:' + client + ':' + mkt, 'json');
+    if (!snap) return json({ error: 'no snapshot to adopt as baseline - scan first' }, 404);
+    await env.EDITS.put('labelbase:' + client + ':' + mkt, JSON.stringify(snap));
+    const idx = (await env.EDITS.get('labelidx', 'json')) || {};
+    idx[lgKey(client, mkt)] = Object.assign({ client, mkt }, summarize(snap, [], snap.t));
+    await env.EDITS.put('labelidx', JSON.stringify(idx));
+    const alertsMap = (await env.EDITS.get('labelalerts', 'json')) || {};
+    delete alertsMap[lgKey(client, mkt)];
+    await env.EDITS.put('labelalerts', JSON.stringify(alertsMap));
+    return json({ ok: true, baseT: snap.t });
+  }
+
+  return null;
+}
+
+// hourly rotation: BATCH feeds per firing keeps the combined cron (plan warm + this sweep)
+// far under the free-plan 50-subrequest budget (each feed scan ≤7 gviz fetches); the 22-feed
+// estate is re-checked every ~6 hours, hours ahead of a PMAX crater
+async function labelCronSweep(env) {
+  try {
+    const roster = await feedRoster(env);
+    if (!roster.length) return;
+    const BATCH = 4;
+    const st = (await env.EDITS.get('labelcron', 'json')) || { i: 0 };
+    const start = (((st.i | 0) % roster.length) + roster.length) % roster.length;
+    for (let k = 0; k < BATCH && k < roster.length; k++) {
+      const f = roster[(start + k) % roster.length];
+      try { await runLabelScan(env, f.client, f.mkt); } catch (e) {}
+    }
+    st.i = (start + Math.min(BATCH, roster.length)) % roster.length;
+    await env.EDITS.put('labelcron', JSON.stringify(st));
+  } catch (e) {}
 }
 
 // ---- Google service-account auth: sign a JWT with the SA private key, impersonate the
@@ -1519,7 +1764,18 @@ function getEditorScript(slug) {
   function backupLocal(patch){ try{ var cur=JSON.parse(localStorage.getItem(BK_KEY)||'{}');
     Object.keys(patch).forEach(function(k){ cur[k]=patch[k]; });
     localStorage.setItem(BK_KEY, JSON.stringify(cur)); }catch(e){} }
-  function clearBackup(){ try{ localStorage.removeItem(BK_KEY); }catch(e){} }
+  // Pass the patch that was actually confirmed saved and only those keys are dropped. Clearing
+  // the whole mirror on every success loses anything typed WHILE the request was in flight:
+  // queueSave has already mirrored it, dirty still holds it, but the mirror gets wiped — so a
+  // tab closed in that window loses it with nothing to restore from. No argument = clear all,
+  // which is what the explicit Discard button means.
+  function clearBackup(patch){ try{
+    if(!patch){ localStorage.removeItem(BK_KEY); return; }
+    var cur=JSON.parse(localStorage.getItem(BK_KEY)||'{}');
+    Object.keys(patch).forEach(function(k){ delete cur[k]; });
+    if(Object.keys(cur).length) localStorage.setItem(BK_KEY, JSON.stringify(cur));
+    else localStorage.removeItem(BK_KEY);
+  }catch(e){} }
   function readBackup(){ try{ return JSON.parse(localStorage.getItem(BK_KEY)||'{}'); }catch(e){ return {}; } }
 
   var warnEl=document.createElement('div'); warnEl.className='de-warn'; warnEl.hidden=true;
@@ -1541,21 +1797,35 @@ function getEditorScript(slug) {
   // so "undo" is just "restore the previous version of that object"), not a per-field diff
   // that would need separate logic for every action type.
   var UNDO_KEY='de-undo-'+PAGE, undoing=false;
-  function loadUndoStack(){ try{ return JSON.parse(sessionStorage.getItem(UNDO_KEY)||'[]'); }catch(e){ return []; } }
-  function saveUndoStack(st){ try{ sessionStorage.setItem(UNDO_KEY, JSON.stringify(st.slice(-20))); }catch(e){} }
+  // localStorage, not sessionStorage: undo history used to be destroyed by closing the tab,
+  // which is precisely when you most want it back. Each snapshot records the template shape
+  // it was taken against, so undo can refuse to restore an overlay authored against a
+  // different template instead of quietly reintroducing keys that no longer mean anything.
+  function loadUndoStack(){ try{ return JSON.parse(localStorage.getItem(UNDO_KEY)||'[]'); }catch(e){ return []; } }
+  function saveUndoStack(st){ try{ localStorage.setItem(UNDO_KEY, JSON.stringify(st.slice(-20))); }catch(e){} }
   // Returns the pre-change state it captured, so a call site that needs to read-then-write
   // (duplicateBlock) can reuse it instead of fetching twice. Callers that only mutate via a
   // fresh PUT (saveOrder, deleteBlock, ...) just chain .then() and ignore the value.
   function armUndo(){
     if(undoing) return Promise.resolve(null);
     return fetch(API+'/api/edits?page='+PAGE).then(function(r){ return r.json(); }).then(function(cur){
-      cur=cur||{}; var st=loadUndoStack(); st.push(cur); saveUndoStack(st); return cur;
+      cur=cur||{}; var st=loadUndoStack(); st.push({__shape:SHAPE, snap:cur}); saveUndoStack(st); return cur;
     }).catch(function(){ return null; });
   }
   function performUndo(){
     var st=loadUndoStack();
     if(!st.length){ toast('Nothing to undo'); return; }
-    var snap=st.pop(); saveUndoStack(st); undoing=true; toast('Undoing…');
+    var top=st.pop(); saveUndoStack(st);
+    // Older entries were bare snapshots; newer ones are {__shape, snap}.
+    var snap = (top && top.snap!==undefined) ? top.snap : top;
+    if(top && top.__shape && SHAPE && top.__shape!==SHAPE){
+      toast('Undo skipped — the template changed since that step');
+      showWarn('&#9888; <b>Undo stopped.</b> That step was recorded against a different version of '
+        + 'the deck template, so replaying it could put your edits back on the wrong elements. '
+        + 'The step was discarded; nothing was changed.');
+      return;
+    }
+    undoing=true; toast('Undoing…');
     // Single atomic replace — the old DELETE-then-PUT could wipe everything if the PUT failed.
     fetch(API+'/api/edits?page='+PAGE+'&replace=1',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(snap)})
       .then(deJSON)
@@ -1825,9 +2095,109 @@ function getEditorScript(slug) {
     };
     if(d) d.onclick=function(){ if(confirm('Discard '+n+' unsaved edit'+(n===1?'':'s')+'? This cannot be undone.')){ clearBackup(); hideWarn(); } };
   }
-  // Normalised text of an element — the signature a delete tombstone is validated against.
+  // Normalised text of an element — the signature every patch is validated against.
   function sigOf(el){ return (el.textContent||'').replace(/\s+/g,' ').trim().slice(0,120); }
-  var skipped=0;
+
+  // ---- Staleness detection ------------------------------------------------------------
+  // data-eid is POSITIONAL (chapter + index), so any template push that changes how many
+  // editable elements a chapter has silently re-points every later key in that chapter at a
+  // different element. Two independent guards, because they fail differently:
+  //
+  //  1. baseSig — the signature of each element AS THE TEMPLATE RENDERS IT, captured at boot
+  //     before loadEdits() applies anything. Every patch records the baseSig of the element
+  //     it was authored against; on replay we only apply it if that still matches. This is
+  //     per-key and exact.
+  //  2. shape — a fingerprint of the whole eid-assignment input (editable elements per
+  //     chapter). Changes exactly when eid assignment would change, and never otherwise —
+  //     unlike a git sha, which moves on every unrelated commit and would cry wolf. Lets the
+  //     page say "the template changed under your saved edits" up front, not per element.
+  //  3. ckey — a CONTENT key: hash of tag + the element's template text, plus an occurrence
+  //     index only among elements that are byte-identical. Deliberately does NOT include the
+  //     chapter, so renumbering chapters doesn't move it. This is a recovery index, not a
+  //     replacement for data-eid: positional keys still address everything, and Ray's existing
+  //     saved edits keep working untouched. When a positional key goes stale, the content key
+  //     finds where that element actually went and the edit follows it, instead of being
+  //     skipped and reported as a loss. That turns the Reiss failure into a self-healing case.
+  var baseSig={}, ckeyOf={}, byCkey={};
+  function captureBaseSigs(){
+    var seen={};
+    editable().forEach(function(el){
+      var id=el.getAttribute('data-eid'); if(!id) return;
+      var s=sigOf(el); baseSig[id]=s;
+      var base='k'+hashStr(el.tagName+'|'+s);
+      seen[base]=(seen[base]||0); var ck=base+(seen[base]?'.'+seen[base]:''); seen[base]++;
+      ckeyOf[id]=ck; byCkey[ck]=el; el.setAttribute('data-ck',ck);
+    });
+  }
+  function hashStr(s){ var h=5381; for(var i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))>>>0; } return h.toString(36); }
+  function shapeOf(){
+    var counts={}; editable().forEach(function(el){ var k=chapterKeyFor(el); counts[k]=(counts[k]||0)+1; });
+    return hashStr(Object.keys(counts).sort().map(function(k){ return k+':'+counts[k]; }).join('|'));
+  }
+  var SHAPE=null;
+  // Per-tab id. /api/edits is a shallow last-writer-wins merge with no optimistic
+  // concurrency (unlike /api/briefs and /api/clients, which use kvmerge + X-Sync-Base), so
+  // two tabs editing the same deck silently overwrite each other key by key. Full merge
+  // semantics are a bigger change; knowing it happened is most of the value, and costs
+  // nothing per save.
+  var TABID = (function(){ try{ return Math.random().toString(36).slice(2,10); }catch(e){ return 'tab'; } })();
+  var skipped=0, mismatched=0, orderSkipped=0, recovered=0, unresolved=0, staleKeys=[];
+
+  // One banner for every kind of staleness, with a button that drops EXACTLY the keys that
+  // went stale. Reset was previously the only way to clear them, and Reset destroys the whole
+  // overlay — so clearing 14 dead tombstones cost 122 good edits, which is why the banner
+  // kept coming back: the safe action was too expensive to take.
+  function reportStale(ed){
+    var meta = ed && ed.__meta, shapeChanged = !!(meta && meta.shape && SHAPE && meta.shape!==SHAPE);
+    // Another tab/browser wrote this overlay recently. Not an error — but if you now edit the
+    // same elements, one of you silently loses, and previously nothing said so at all.
+    if(meta && meta.writer && meta.writer!==TABID && meta.ts && (Date.now()-meta.ts) < 30*60*1000){
+      showWarn('&#9888; <b>Another session edited this deck '
+        + Math.max(1,Math.round((Date.now()-meta.ts)/60000)) + ' min ago.</b> Your edits merge per element, '
+        + 'so if you both change the same text one of you will overwrite the other. Reload before editing '
+        + 'if someone else is working on it right now.');
+    }
+    var n = skipped + mismatched + orderSkipped + unresolved;
+    if(!n && !recovered && !shapeChanged) return;
+    if(!n && recovered){
+      showWarn('&#10003; <b>The deck template changed</b> &mdash; <b>'+recovered+'</b> of your saved edit'
+        + (recovered===1?' was':'s were')+' matched to their content in its new position and applied normally. '
+        + 'Nothing was lost.');
+      return;
+    }
+    var bits=[];
+    if(skipped) bits.push('<b>'+skipped+'</b> deletion'+(skipped===1?'':'s'));
+    if(mismatched) bits.push('<b>'+mismatched+'</b> text/style edit'+(mismatched===1?'':'s'));
+    if(orderSkipped) bits.push('<b>'+orderSkipped+'</b> reorder'+(orderSkipped===1?'':'s'));
+    if(unresolved) bits.push('<b>'+unresolved+'</b> edit'+(unresolved===1?'':'s')+' whose content is gone from the deck');
+    var msg;
+    if(n){
+      msg = '&#9888; '+bits.join(', ')+' could not be replayed &mdash; the template changed underneath them, '
+        + 'so they were <b>skipped, not applied</b>. Nothing on this page has been deleted or overwritten by them.';
+      if(recovered) msg += ' <b>'+recovered+'</b> other edit'+(recovered===1?' was':'s were')
+        + ' matched to their content in its new position and applied normally.';
+    } else {
+      msg = '&#9888; <b>The deck template has changed</b> since your saved edits were made. '
+        + 'They all still matched their content, so everything was applied &mdash; but keep an eye out.';
+    }
+    if(staleKeys.length) msg += '<button class="de-w-drop-stale">Clear the '+staleKeys.length+' stale entr'
+      +(staleKeys.length===1?'y':'ies')+'</button>';
+    showWarn(msg);
+    var b=warnEl.querySelector('.de-w-drop-stale');
+    if(b) b.onclick=function(){
+      // Double-escaped newline on purpose: this string lives inside getEditorScript's own
+      // template literal, which eats a single escape and emits a raw newline, breaking the
+      // quoted string in the served script ("Invalid or unexpected token"). Applies to
+      // comments here too — an escape sequence written in a comment breaks the comment.
+      if(!confirm('Remove '+staleKeys.length+' stale entr'+(staleKeys.length===1?'y':'ies')+' from your saved edits?\\n\\n'
+        + 'Only these are removed — every edit that still applies is kept. A backup is taken first.')) return;
+      b.disabled=true; b.textContent='Clearing…';
+      fetch(API+'/api/edits?page='+PAGE+'&drop='+encodeURIComponent(staleKeys.join(',')),{method:'PUT',
+        headers:{'content-type':'application/json'},body:'{}'})
+        .then(deJSON).then(function(){ toast('Cleared — reloading'); setTimeout(function(){ location.reload(); },500); })
+        .catch(function(e){ b.disabled=false; b.textContent='Clear failed — retry'; });
+    };
+  }
   function loadEdits(){ fetch(API+'/api/edits?page='+PAGE).then(deJSON).then(function(ed){
     offerRestore();
     if(!ed) return;
@@ -1835,7 +2205,11 @@ function getEditorScript(slug) {
     // overlays run, so they exist in the DOM for those passes to find by data-eid/data-rid.
     Object.keys(ed).forEach(function(k){
       if(k.indexOf('__added:')!==0) return;
-      var parent=document.querySelector('[data-tid="'+k.slice(8)+'"]'); if(!parent) return;
+      var parent=document.querySelector('[data-tid="'+k.slice(8)+'"]');
+      // The group this block was added into no longer exists (its chapter was deleted, or the
+      // group ids shifted). Previously a silent early return — the block just wasn't there,
+      // with nothing to say why.
+      if(!parent){ unresolved+=(ed[k]||[]).length; staleKeys.push(k); return; }
       (ed[k]||[]).forEach(function(a){
         if(document.querySelector('[data-eid="'+a.id+'"]')) return; // already present
         var tmp=document.createElement('div'); tmp.innerHTML=a.html; var node=tmp.firstElementChild; if(!node) return;
@@ -1844,15 +2218,39 @@ function getEditorScript(slug) {
       });
     });
     Object.keys(ed).forEach(function(k){
+      if(k==='__meta') return;
       if(k.indexOf('__order:')===0){
         var container=document.querySelector('[data-tid="'+k.slice(8)+'"]'); if(!container) return;
         var scope=container.tagName==='TABLE'?container.querySelector('tbody'):container; if(!scope) return;
-        ed[k].forEach(function(rid){ var el=scope.querySelector('[data-rid="'+rid+'"]'); if(el) scope.appendChild(el); });
+        // Replay ONLY when the saved list is exactly the current set of reorderable children.
+        // A partial list is not a no-op: appendChild() moves each listed element to the END,
+        // so an out-of-date list silently shunts everything it names to the bottom and leaves
+        // everything it doesn't in place. That is precisely how a stale __order:top-g0 stacked
+        // every chapter divider at the foot of the Reiss deck while the text still read fine.
+        var listed=ed[k]||[];
+        var kids=Array.prototype.filter.call(scope.children, function(c){ return c.getAttribute && c.getAttribute('data-rid'); })
+          .map(function(c){ return c.getAttribute('data-rid'); });
+        var sameSet = listed.length===kids.length && listed.every(function(r){ return kids.indexOf(r)>=0; });
+        if(!sameSet){ orderSkipped++; staleKeys.push(k); return; }
+        listed.forEach(function(rid){ var el=scope.querySelector('[data-rid="'+rid+'"]'); if(el) scope.appendChild(el); });
         return;
       }
       if(k.indexOf('__added:')===0) return;
-      var el=document.querySelector('[data-eid="'+k+'"]'); if(!el) return;
+      var el=document.querySelector('[data-eid="'+k+'"]');
       var v=ed[k];
+      // Recovery: if the positional key is gone, or still resolves but to an element whose
+      // template text is no longer what this patch was written against, follow the CONTENT
+      // key instead. This is what makes a chapter insert/delete/move a non-event — the edit
+      // travels with its paragraph instead of being skipped or landing on a stranger.
+      var relocated=false;
+      if(v && typeof v==='object' && v.ck){
+        var stale = !el || (v.sig!=null && baseSig[k]!=null && v.sig!==baseSig[k]);
+        if(stale){
+          var alt=byCkey[v.ck];
+          if(alt && alt!==el){ el=alt; relocated=true; recovered++; }
+        }
+      }
+      if(!el){ if(v && typeof v==='object' && v.ck){ unresolved++; staleKeys.push(k); } return; }
       if(v && typeof v==='object' && v.deleted){
         // A tombstone is the only overlay type that DESTROYS content, and it is the one type
         // you cannot eyeball afterwards — what it removed simply isn't on the page to notice.
@@ -1861,14 +2259,23 @@ function getEditorScript(slug) {
         // signature of what it removed; replay only when that still matches. Legacy tombstones
         // carry no signature and are never replayed — a deletion that stops applying is a
         // visible, fixable annoyance; one that removes the wrong thing is not.
-        if(v.sig && v.sig===sigOf(el)){ el.remove(); } else { skipped++; }
+        if(v.sig && v.sig===sigOf(el)){ el.remove(); } else { skipped++; staleKeys.push(k); }
         return;
+      }
+      // Same guard, now for CONTENT and STYLE patches. It used to apply only to deletions,
+      // which is backwards: a skipped deletion is visible and shouts at you, while a text
+      // patch landing on the wrong element rewrites a paragraph silently and looks fine.
+      // Patches written before this shipped carry no sig and are still applied — refusing
+      // them would discard every edit made to date, which is a worse failure than the one
+      // being guarded against.
+      // relocated means the content key already proved this is the right element, so the
+      // positional signature check has nothing left to say.
+      if(!relocated && v && typeof v==='object' && v.sig && baseSig[k]!=null && v.sig!==baseSig[k]){
+        mismatched++; staleKeys.push(k); return;
       }
       var h=(typeof v==='string')?v:v.html; if(h!=null) el.innerHTML=h;
       if(v && typeof v==='object' && v.style!=null) el.style.cssText=v.style; });
-    if(skipped) showWarn('&#9888; <b>'+skipped+' saved deletion'+(skipped===1?' was':'s were')+' skipped</b> &mdash; '
-      + 'they no longer match the content they removed (the template changed underneath them), so they were NOT replayed. '
-      + 'Nothing has been deleted from your page. Use &#129529; Reset page to clear them for good.'); })
+    reportStale(ed); })
     .catch(function(e){
       // Used to be a silent catch — a failed load rendered the clean git template, which is
       // visually identical to "all my work is gone". Say so instead, and warn before editing
@@ -1926,7 +2333,14 @@ function getEditorScript(slug) {
     }).then(function(r){ return r.json(); }).then(function(){ toast('Row order saved'); }).catch(function(){ toast('Order save failed'); });
   }
 
-  function entry(el){ return { html: el.innerHTML, style: el.getAttribute('style')||'', preview: el.textContent.trim().slice(0,80) }; }
+  // sig is the element's TEMPLATE-state signature (captured at boot, before any overlay was
+  // applied), not its current edited text — so it stays stable however many times the same
+  // element is edited, and identifies which template element this patch was authored against.
+  function entry(el){ var id=el.getAttribute('data-eid');
+    return { html: el.innerHTML, style: el.getAttribute('style')||'',
+             preview: el.textContent.trim().slice(0,80),
+             sig: (id!=null && baseSig[id]!=null) ? baseSig[id] : sigOf(el),
+             ck: (id!=null ? ckeyOf[id] : null) || el.getAttribute('data-ck') || null }; }
   // Snapshot for undo only at the *start* of a dirty batch (dirty was empty), not on every
   // keystroke/drag tick — one Ctrl+Z should undo "that edit", not one character of it. The
   // debounce window (600-1200ms) comfortably outlasts the snapshot fetch, so no explicit
@@ -1934,12 +2348,20 @@ function getEditorScript(slug) {
   function queueSave(el){ var id=el.getAttribute('data-eid'); if(!id) return;
     if(!Object.keys(dirty).length) armUndo();
     dirty[id]=entry(el);
+    // Mirror to localStorage the moment it is queued, not only once flush() runs. backupLocal
+    // used to live inside flush(), so anything typed in the last 1.2s existed ONLY in this
+    // tab's memory: closing the tab, navigating away or a crash lost it with no trace and no
+    // prompt on the next load. A failed save was recoverable; an unsaved one was not, which
+    // is exactly backwards.
+    backupLocal(dirty);
     if(saveTimer) clearTimeout(saveTimer); saveTimer=setTimeout(flush,1200); }
   // Style-only save (resize/recolour/refont) — deliberately omits the html field so it can
   // never clobber a separate, later text edit to the same element's children on load.
   function queueStyleSave(el){ var id=el.getAttribute('data-eid'); if(!id) return;
     if(!Object.keys(dirty).length) armUndo();
-    dirty[id]=Object.assign({},dirty[id]||{},{style:el.getAttribute('style')||''});
+    dirty[id]=Object.assign({},dirty[id]||{},{style:el.getAttribute('style')||'',
+      sig:(baseSig[id]!=null?baseSig[id]:sigOf(el)), ck:ckeyOf[id]||null});
+    backupLocal(dirty);
     if(saveTimer) clearTimeout(saveTimer); saveTimer=setTimeout(flush,600); }
 
   // ---- Design mode: select / move / resize / recolour / refont / duplicate / delete
@@ -2305,8 +2727,11 @@ function getEditorScript(slug) {
     if(RAW){ stat.textContent='raw view — not saved'; return; }
     var patch=dirty; dirty={}; stat.textContent='saving…';
     backupLocal(patch);   // local copy first — survives even if the server never accepts it
-    fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(patch)})
-      .then(deJSON).then(function(){ stat.textContent='✓ saved'; clearBackup(); hideWarn();
+    // Stamp the shape this overlay was authored against, so the next load can tell whether
+    // the template moved underneath it instead of silently trusting positional keys.
+    var wire=Object.assign({},patch,{__meta:{shape:SHAPE, ts:Date.now(), writer:TABID}});
+    fetch(API+'/api/edits?page='+PAGE,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(wire)})
+      .then(deJSON).then(function(){ stat.textContent='✓ saved'; clearBackup(patch); hideWarn();
         setTimeout(function(){ stat.textContent=''; },1500); })
       .catch(function(){
         // Put the patch BACK on the queue. It used to be dropped here, so every failed save
@@ -2519,8 +2944,37 @@ function getEditorScript(slug) {
   // who opens the link read-only (e.g. a client on the call).
   assignEids();
   assignBlockIds();
+  // Must run AFTER assignEids (keys exist) and BEFORE loadEdits (nothing applied yet), so
+  // these are the signatures of the template as shipped — the thing saved patches are
+  // validated against.
+  captureBaseSigs();
+  SHAPE=shapeOf(); try{ window.__fsShape=SHAPE; }catch(e){}
   initRowDrag();
   initBlockDrag();
+
+  // Last-chance save. pagehide fires on close/navigate/back-forward-cache on desktop AND
+  // mobile; visibilitychange->hidden covers tab-switch and app-backgrounding. sendBeacon is
+  // used because a normal fetch is cancelled the moment the document goes away, which is the
+  // exact moment this needs to work.
+  function lastChanceSave(){
+    if(RAW) return;
+    var keys=Object.keys(dirty); if(!keys.length) return;
+    backupLocal(dirty);
+    var wire=Object.assign({},dirty,{__meta:{shape:SHAPE, ts:Date.now(), writer:TABID}});
+    try{
+      if(navigator.sendBeacon){
+        var ok=navigator.sendBeacon(API+'/api/edits?page='+PAGE+'&beacon=1',
+          new Blob([JSON.stringify(wire)],{type:'application/json'}));
+        if(ok){ dirty={}; return; }
+      }
+    }catch(e){}
+    // No beacon (or it refused): a keepalive fetch still usually outlives the document.
+    try{ fetch(API+'/api/edits?page='+PAGE,{method:'PUT',keepalive:true,
+      headers:{'content-type':'application/json'},body:JSON.stringify(wire)}); dirty={}; }catch(e){}
+  }
+  window.addEventListener('pagehide', lastChanceSave);
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState==='hidden') lastChanceSave(); });
   // ?raw=1 — render the git template with the saved overlay NOT applied. Diagnostic escape
   // hatch: when a stale overlay mis-lands after a structural template change (renumbered
   // chapters shift data-eid keys, so a saved delete tombstone can remove the wrong element),
@@ -2614,6 +3068,18 @@ function getEditorScript(slug) {
     // left to toggle anyway once .chk markers are stripped below, so hiding is equivalent.
     var flag = doc.getElementById('flagbtn'); if(flag){ flag.style.display='none'; flag.removeAttribute('aria-pressed'); }
     Array.prototype.slice.call(doc.querySelectorAll('[data-eid]')).forEach(function(el){ el.removeAttribute('data-eid'); });
+    Array.prototype.slice.call(doc.querySelectorAll('[data-ck]')).forEach(function(el){ el.removeAttribute('data-ck'); });
+    // Provenance. A downloaded file is a THIRD source of truth alongside the template and the
+    // overlay, and until now it carried nothing to say which version it forked from — so a
+    // file handed back weeks later could not be diffed against anything. A meta tag survives
+    // the comment strip below and tells you exactly what this copy is.
+    try{
+      var m=doc.createElement('meta'); m.setAttribute('name','fs-export');
+      m.setAttribute('content', (location.pathname||'').replace(/^\\//,'')
+        + ' · exported ' + new Date().toISOString().slice(0,16).replace('T',' ') + 'Z'
+        + (window.__fsShape ? ' · shape ' + window.__fsShape : ''));
+      if(doc.head) doc.head.appendChild(m);
+    }catch(e){}
     Array.prototype.slice.call(doc.querySelectorAll('[data-de-block]')).forEach(function(el){ el.removeAttribute('data-de-block'); });
     Array.prototype.slice.call(doc.querySelectorAll('[contenteditable]')).forEach(function(el){ el.removeAttribute('contenteditable'); });
     Array.prototype.slice.call(doc.querySelectorAll('[spellcheck]')).forEach(function(el){ el.removeAttribute('spellcheck'); });
@@ -2638,7 +3104,10 @@ function getEditorScript(slug) {
     var blob = new Blob([html], {type:'text/html'});
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
-    a.href = url; a.download = slug(document.title) + '.html';
+    // Date-stamped: successive downloads used to share one filename, so the browser either
+    // overwrote the previous export or silently appended (1), (2) — leaving no way to tell
+    // which file was presented from.
+    a.href = url; a.download = slug(document.title) + '-' + new Date().toISOString().slice(0,10) + '.html';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
   }

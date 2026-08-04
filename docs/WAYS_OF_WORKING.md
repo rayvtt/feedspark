@@ -57,7 +57,10 @@ No separate board/issue tracker to maintain.
    (`npx wrangler@4 deploy --dry-run` + `node tools/check_inline_scripts.js`).
 3. **Pre-merge** — run **`bash tools/presync.sh`**: it fetches + merges latest `main` into the
    branch and re-runs both validations. Resolve any conflict here, not in the PR.
-4. **Merge** — small squash PR (module-prefixed title). Delete the branch.
+4. **Merge** — small squash PR (module-prefixed title), **merged by the session itself the moment
+   `validate.yml` is green** — never parked waiting for Ray (his standing instruction, Aug 2026:
+   "never wait for me to merge, just do it"). Human approval is not a gate; the only reason to
+   hold is 🔥 overlap sequencing with another active session. Delete the branch.
 5. **Verify LIVE** — per the CLAUDE.md rule: Deploy Action green → worker re-published →
    `/api/version` sha is your commit **or a later one containing it** (another session may have
    merged after you — fine) → the feature is actually present on the page.
@@ -79,6 +82,8 @@ No separate board/issue tracker to maintain.
 - ❌ Merging without `presync.sh` (drift lands as surprise conflicts or reverts)
 - ❌ Two sessions live-editing the same monolith file in parallel
 - ❌ Reporting "shipped" on a merge alone — always verify live (CLAUDE.md rule)
+- ❌ Leaving a green PR unmerged "for Ray to review" — sessions merge their own PRs and drive the
+  deploy to live; Ray reads the merged result, not the queue
 
 ## Overlap safeguards — tooling + protocol (added after the 2026‑07‑23 near-misses)
 
