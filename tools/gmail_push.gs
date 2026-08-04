@@ -37,8 +37,33 @@ var KEY = 'PASTE_THE_GMAIL_PUSH_KEY_VALUE_HERE';
 var QUERY = 'newer_than:7d ("ibfcode:" OR subject:"[FS Brief]")';
 var MAX_THREADS = 50, MAX_MESSAGES = 150, MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-// Run BOTH feeds (point the 5-min trigger at THIS): brief-reply sync + inbox intake.
-function syncFCC() { pushBriefReplies(); pushInbox(); }
+// Run ALL feeds (point the 5-min trigger at THIS): brief-reply sync + inbox intake
+// + Label Guard alert-email drain.
+function syncFCC() { pushBriefReplies(); pushInbox(); drainAlertOutbox(); }
+
+// ---- Label Guard email alerts: the worker can't send mail, so it queues alert emails
+// in KV (labeloutbox) and THIS drains the queue through your own mailbox. Poll → send
+// via GmailApp → ack exactly what was sent (so a failed send is retried next cycle).
+// Zero extra setup: same endpoint, same key, same Access bypass as the pushes above.
+function drainAlertOutbox() {
+  var res = UrlFetchApp.fetch(ENDPOINT, { method: 'post', contentType: 'application/json',
+    headers: { 'X-FCC-Push-Key': KEY }, payload: JSON.stringify({ outboxPoll: 1 }), muteHttpExceptions: true });
+  var p = null; try { p = JSON.parse(res.getContentText()); } catch (e) {}
+  if (!p || !p.ok) { if (res.getResponseCode() !== 200) console.error('✗ FCC outbox poll failed: HTTP ' + res.getResponseCode()); return; }
+  var queue = p.outbox || [];
+  if (!queue.length) return;
+  var sent = [];
+  queue.forEach(function (m) {
+    try {
+      GmailApp.sendEmail(m.to, m.subject, m.body + '\n\n— FeedSpark Label Guard (automated alert)');
+      sent.push(m.id);
+    } catch (e) { console.error('✗ alert email to ' + m.to + ' failed: ' + e); }
+  });
+  if (!sent.length) return;
+  UrlFetchApp.fetch(ENDPOINT, { method: 'post', contentType: 'application/json',
+    headers: { 'X-FCC-Push-Key': KEY }, payload: JSON.stringify({ outboxAck: sent }), muteHttpExceptions: true });
+  console.log('✓ Label Guard alert emails sent: ' + sent.length);
+}
 
 // ---- inbox intake: recent incoming mail → the Workflow's "Incoming emails" stream.
 // The worker classifies each message (which client, briefable/action-request vs FYI),

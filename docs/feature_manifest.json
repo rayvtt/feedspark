@@ -1098,6 +1098,40 @@
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
       "pattern": "crossFeed",
       "pr": 183
+    },
+    {
+      "name": "worker: Label Guard custom-watch pass (alert builder cron)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "labelWatchRun",
+      "min": 3,
+      "pr": 184
+    },
+    {
+      "name": "worker: alert-email outbox (Gmail bridge drain)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "labeloutbox",
+      "min": 3,
+      "pr": 184
+    },
+    {
+      "name": "labelguard engine: evalWatch fire/re-ping/recovery state machine",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "evalWatch",
+      "pr": 184
+    },
+    {
+      "name": "LabelGuard page: watch builder + alert routing section",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "wt-form",
+      "min": 2,
+      "pr": 184
+    },
+    {
+      "name": "gmail bridge: Label Guard outbox drain",
+      "file": "tools/gmail_push.gs",
+      "pattern": "drainAlertOutbox",
+      "min": 2,
+      "pr": 184
     }
   ]
 }

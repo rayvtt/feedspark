@@ -137,6 +137,29 @@ window.addEventListener('load',restore);
   table.xv tr.xrem td{color:var(--muted);font-style:italic}
   .xbar{height:8px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden;min-width:120px}
   .xbar i{display:block;height:100%;background:var(--orange-deep);border-radius:100px}
+  /* alert routing (destinations + watch rules) */
+  .rt-grid{display:grid;grid-template-columns:1fr 1.45fr;gap:14px}
+  @media(max-width:980px){.rt-grid{grid-template-columns:1fr}}
+  .rt-h{margin:0 0 8px;font-size:15px;font-weight:900}
+  .dest-row,.rule-row{display:flex;align-items:center;gap:9px;padding:9px 0;border-top:1px dashed var(--line);flex-wrap:wrap;font-size:12.5px}
+  .dest-row:first-child,.rule-row:first-child{border-top:none}
+  .d-ic{width:26px;height:26px;border-radius:8px;background:var(--wash);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex:none}
+  .d-nm{font-weight:900}
+  .d-tg{color:var(--muted);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dest-add{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .dest-add input,.dest-add select,.wt-form select{font:inherit;font-size:12px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;min-width:0;background:#fff;color:var(--ink)}
+  #da-name{flex:1 1 120px}#da-target{flex:2 1 190px}
+  .d-mini{font-size:10.5px;font-weight:800;color:var(--muted)}
+  .r-dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .r-ok{background:var(--good)}.r-fired{background:var(--risk)}.r-off{background:var(--muted);opacity:.5}.r-never{background:var(--line)}
+  .rule-scope{font-weight:800}
+  .rule-sub{font-size:11px;color:var(--muted);font-weight:700;width:100%;padding-left:18px}
+  .rule-row .btn,.dest-row .btn{padding:4px 9px;font-size:11px}
+  .wt-form{background:var(--wash);border:1px dashed var(--orange);border-radius:12px;padding:12px 14px;margin-top:10px;font-size:12.5px}
+  .wt-form .wt-t{font-weight:900;margin-bottom:8px}
+  .wt-form label{display:inline-flex;align-items:center;gap:5px;margin:0 14px 8px 0;font-weight:800;cursor:pointer}
+  .lbl-h .lbell{border:none;background:none;cursor:pointer;color:var(--muted);padding:2px;font-size:13px;line-height:1}
+  .lbl-h .lbell:hover{color:var(--orange-deep)}
   .spark-wrap{margin-top:6px}
   .spark-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:10.5px;font-weight:800;color:var(--muted);margin-top:5px}
   .spark-legend i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:4px;vertical-align:2px}
@@ -200,6 +223,9 @@ window.addEventListener('load',restore);
 [data-theme=dark] .xchip.on{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
 [data-theme=dark] tr.rowv:hover td{background:rgba(245,166,35,.09)}
 [data-theme=dark] tr.rowv.xsel td{background:rgba(245,166,35,.16)}
+[data-theme=dark] .dest-add input,[data-theme=dark] .dest-add select,[data-theme=dark] .wt-form select{background:#161922;color:var(--ink);border-color:var(--line)}
+[data-theme=dark] .d-ic{background:#20242E;border-color:var(--line)}
+[data-theme=dark] .wt-form{background:#181B22;border-color:rgba(245,166,35,.4)}
 [data-theme=dark] ::-webkit-scrollbar-thumb{background:#2C3039}
 </style>
 
@@ -245,6 +271,34 @@ window.addEventListener('load',restore);
   <div class="panel" id="det-panel"><span class="muted">Pick a feed above.</span></div>
 </div></section>
 
+<section class="cat"><div class="wrap wide">
+  <div class="cat-h"><span class="k">04</span><h2>Alert routing — custom watches</h2>
+    <span class="scanmsg" id="wt-msg"></span>
+    <span style="margin-left:auto"><button class="btn" id="wt-runall">▶ Run all checks now</button></span></div>
+  <p class="cat-sub">Pin the exact label values PMAX depends on and pick who gets pinged. The worker re-checks every
+  watch <b>live each hour</b> (on the half-hour) — a watched value dropping off fires a <b>high-priority ping</b> to
+  Google Chat, Slack, or email the moment it's seen, re-pings daily while broken, and sends a ✅ when it recovers.
+  Create watches with the <b>🔔 buttons</b> in the dissection above — on a label card (all its values) or on the
+  cross panel (a breakdown like CL0&nbsp;“Best Sellers”&nbsp;→&nbsp;CL2).</p>
+  <div class="rt-grid">
+    <div class="panel"><h3 class="rt-h">📡 Ping destinations</h3>
+      <div id="dest-list"><span class="muted">Loading…</span></div>
+      <div class="dest-add">
+        <input id="da-name" placeholder="Name (e.g. ASPL space, Venki)">
+        <select id="da-type"><option value="gchat">Google Chat</option><option value="slack">Slack</option><option value="email">Email</option></select>
+        <input id="da-target" placeholder="Webhook URL">
+        <label class="d-mini" title="Prepend an @-everyone mention on high-priority pings"><input type="checkbox" id="da-mention"> @all</label>
+        <button class="btn pri" id="da-add">+ Add</button>
+      </div>
+      <p class="hint" style="margin:10px 0 0">Google Chat: space → Apps &amp; integrations → Webhooks. Slack: workspace → Incoming Webhooks.
+      Email sends from Ray's mailbox via the Gmail bridge (gmail_push.gs — re-paste the latest script once; §8 of GOOGLE_SETUP).</p>
+    </div>
+    <div class="panel"><h3 class="rt-h">🔔 Watch rules</h3>
+      <div id="rule-list"><span class="muted">Loading…</span></div>
+    </div>
+  </div>
+</div></section>
+
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential — Label Guard</div></div>
 
 <script>
@@ -261,6 +315,9 @@ window.addEventListener('load',restore);
   var CROSS = null;              // {k, by, value, vs} — live cross-label dissection state
   var XCACHE = {};               // cross-query results per k||by||value||vs
   var XMORE = false;             // cross table expanded past 15 rows
+  var DESTS = {};                // ping destinations (KV labeldest)
+  var WATCHES = {};              // watch rules (KV labelwatch, key "client|mkt|id")
+  var BUILDER = null;            // open watch-builder config
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -456,6 +513,7 @@ window.addEventListener('load',restore);
       }
       var dcov = (B && B.present) ? Math.round((L.cov - B.cov) * 10) / 10 : null;
       h += '<div class="lbl-card"><div class="lbl-h"><span class="nm">CL' + i + '</span>' +
+        (L.values && L.values.length ? '<button class="lbell" data-wl="' + esc(key) + '" title="Watch this label’s values — ping a destination on drop-off">🔔</button>' : '') +
         '<span class="cov">' + L.cov + '%</span>' +
         '<span class="sub">' + fmt(L.filled) + ' SKUs · ' + L.distinct + (L.truncated ? '+' : '') + ' values</span>' +
         (dcov != null && dcov !== 0 ? '<span class="delta ' + (dcov > 0 ? 'up' : 'down') + '">' + (dcov > 0 ? '▲ +' : '▼ ') + dcov + 'pp vs base</span>' : '') +
@@ -505,7 +563,19 @@ window.addEventListener('load',restore);
     Array.prototype.forEach.call(document.querySelectorAll('tr.rowv'), function (el) {
       el.onclick = function () { openCross(k, el.getAttribute('data-xby'), el.getAttribute('data-xv')); };
     });
+    Array.prototype.forEach.call(document.querySelectorAll('.lbell'), function (el) {
+      el.onclick = function (ev) {
+        ev.stopPropagation();
+        var key = el.getAttribute('data-wl'), p2 = parts(k);
+        var L = s.labels[key]; if (!L || !L.present) return;
+        var floor = Math.max(10, Math.ceil((s.rows || 0) * 0.005));
+        var ref = (L.values || []).filter(function (pr) { return pr[1] >= floor; });
+        openBuilder({ client: p2.client, mkt: p2.mkt, label: key, value: null, vs: null, ref: ref, refSeg: 0,
+          title: p2.client + ' · ' + p2.mkt.toUpperCase() + ' — CL' + key.slice(-1) + ' (' + ref.length + ' significant values)' });
+      };
+    });
     if (CROSS && CROSS.k === k) { renderCross(); markSel(); }
+    else if (BUILDER) slotSync();
   }
 
   /* ---------------- live cross-label dissection (CL0 value -> breakdown by CL2 etc.) ----- */
@@ -557,7 +627,8 @@ window.addEventListener('load',restore);
       h += '<button class="xchip' + (K2 === CROSS.vs ? ' on' : '') + '" data-vs="' + K2 + '"' +
         ((K2 === CROSS.by || !present) ? ' disabled' : '') + '>CL' + i + '</button>';
     });
-    h += '<button class="btn" id="x-csv" style="margin-left:8px">⤓ CSV</button><button class="btn" id="x-close" title="Close">✕</button></span></div>';
+    h += '<button class="btn" id="x-watch" style="margin-left:8px" title="Ping a destination the moment any of these values drops off">🔔 Watch this breakdown</button>' +
+      '<button class="btn" id="x-csv">⤓ CSV</button><button class="btn" id="x-close" title="Close">✕</button></span></div>';
     if (!x) h += '<span class="muted"><span class="spin"></span>Live query — Google is aggregating “' + esc(CROSS.value) + '” by ' + vsN + '…</span>';
     else if (x.error) h += '<span class="muted">Cross query failed: ' + esc(x.error) + '</span>';
     else {
@@ -588,11 +659,21 @@ window.addEventListener('load',restore);
       };
     });
     var xc = document.getElementById('x-close');
-    if (xc) xc.onclick = function () { CROSS = null; renderCross(); markSel(); };
+    if (xc) xc.onclick = function () { CROSS = null; slotSync(); markSel(); };
     var xm = document.getElementById('x-more');
     if (xm) xm.onclick = function () { XMORE = true; renderCross(); };
     var xcsv = document.getElementById('x-csv');
     if (xcsv) xcsv.onclick = exportCrossCsv;
+    var xw = document.getElementById('x-watch');
+    if (xw) xw.onclick = function () {
+      var xd = XCACHE[crossKeyStr()];
+      if (!xd || xd.error) { wtMsg('✗ wait for the live breakdown to load first'); return; }
+      var p2 = parts(CROSS.k), byN = 'CL' + CROSS.by.slice(-1), vsN2 = 'CL' + CROSS.vs.slice(-1);
+      openBuilder({ client: p2.client, mkt: p2.mkt, label: CROSS.by, value: CROSS.value, vs: CROSS.vs,
+        ref: xd.rows || [], refSeg: xd.segment || 0,
+        title: p2.client + ' · ' + p2.mkt.toUpperCase() + ' — ' + byN + ' “' + CROSS.value + '” → ' + vsN2 + ' (' + (xd.rows || []).length + ' values)' });
+    };
+    if (BUILDER) appendBuilder(slot);
   }
 
   function exportCrossCsv() {
@@ -635,6 +716,229 @@ window.addEventListener('load',restore);
     a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
   }
 
+  /* ---------------- alert routing: destinations + watch rules ---------------- */
+  var TYPE_IC = { gchat: '💬', slack: '📣', email: '✉️' };
+  var MENTION = { gchat: '<users/all>', slack: '<!channel>', email: '' };
+
+  function loadRouting() {
+    return Promise.all([
+      fetch(API + '/api/labels/dest').then(function (r) { return r.json(); }),
+      fetch(API + '/api/labels/watch').then(function (r) { return r.json(); }),
+    ]).then(function (rs) {
+      DESTS = rs[0] || {}; delete DESTS._deleted;
+      WATCHES = rs[1] || {}; delete WATCHES._deleted;
+      renderDests(); renderRules();
+    }).catch(function () {});
+  }
+  function putStore(pathname, delta) {
+    return fetch(API + pathname, { method: 'PUT', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(delta) }).then(function (r) { return r.json(); });
+  }
+  function wtMsg(t) { $('wt-msg').textContent = t || ''; if (t) setTimeout(function () { if ($('wt-msg').textContent === t) $('wt-msg').textContent = ''; }, 6000); }
+
+  function renderDests() {
+    var ids = Object.keys(DESTS).sort();
+    if (!ids.length) { $('dest-list').innerHTML = '<span class="muted">No destinations yet — add the Google Chat space / Slack channel / inbox that should be pinged.</span>'; return; }
+    var h = '';
+    ids.forEach(function (id) {
+      var d = DESTS[id] || {};
+      h += '<div class="dest-row"><span class="d-ic">' + (TYPE_IC[d.type] || '❓') + '</span>' +
+        '<span class="d-nm">' + esc(d.name || id) + '</span>' +
+        (d.mention ? '<span class="d-mini" title="high-priority pings mention everyone">@all</span>' : '') +
+        '<span class="d-tg">' + esc(d.type === 'email' ? (d.to || '') : String(d.url || '').replace(/^https:\/\//, '').slice(0, 46)) + '</span>' +
+        '<span style="margin-left:auto;display:flex;gap:6px">' +
+        '<button class="btn" data-dtest="' + esc(id) + '">Test</button>' +
+        '<button class="btn" data-ddel="' + esc(id) + '" title="Remove destination">✕</button></span></div>';
+    });
+    $('dest-list').innerHTML = h;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-dtest]'), function (el) {
+      el.onclick = function () {
+        el.disabled = true; el.textContent = '…';
+        fetch(API + '/api/labels/dest/test', { method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ id: el.getAttribute('data-dtest') }) })
+          .then(function (r) { return r.json(); })
+          .then(function (d) { el.disabled = false; el.textContent = 'Test'; wtMsg(d.ok ? ('✓ test ping ' + (d.queued ? 'queued (email sends ≤5 min)' : 'sent')) : ('✗ ' + (d.error || 'failed'))); })
+          .catch(function () { el.disabled = false; el.textContent = 'Test'; wtMsg('✗ network'); });
+      };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ddel]'), function (el) {
+      el.onclick = function () {
+        var id = el.getAttribute('data-ddel');
+        var used = Object.keys(WATCHES).filter(function (k) { return ((WATCHES[k] || {}).dests || []).indexOf(id) >= 0; });
+        if (used.length && !confirm('This destination is used by ' + used.length + ' watch rule(s). Remove anyway?')) return;
+        putStore('/api/labels/dest', { _deleted: [id] }).then(loadRouting);
+      };
+    });
+  }
+
+  $('da-type').onchange = function () {
+    $('da-target').placeholder = $('da-type').value === 'email' ? 'name@company.com' : 'Webhook URL';
+    $('da-mention').parentNode.style.display = $('da-type').value === 'email' ? 'none' : '';
+  };
+  $('da-add').onclick = function () {
+    var name = $('da-name').value.trim(), type = $('da-type').value, tgt = $('da-target').value.trim();
+    if (!name || !tgt) { wtMsg('✗ name + ' + (type === 'email' ? 'address' : 'webhook URL') + ' required'); return; }
+    if (type !== 'email' && !/^https:\/\//.test(tgt)) { wtMsg('✗ webhook URL must be https://'); return; }
+    if (type === 'email' && tgt.indexOf('@') < 0) { wtMsg('✗ that is not an email address'); return; }
+    var id = 'd_' + Date.now().toString(36);
+    var d = { name: name, type: type, mention: ($('da-mention').checked && type !== 'email') ? MENTION[type] : '' };
+    if (type === 'email') d.to = tgt; else d.url = tgt;
+    var o = {}; o[id] = d;
+    putStore('/api/labels/dest', o).then(function () {
+      $('da-name').value = ''; $('da-target').value = ''; $('da-mention').checked = false;
+      wtMsg('✓ destination added — hit Test to prove the pipe'); loadRouting();
+    });
+  };
+
+  function ruleScopeText(r) {
+    var CL = function (k) { return 'CL' + String(k).slice(-1); };
+    if (r.vs) return CL(r.label) + ' “' + r.value + '” → ' + CL(r.vs) + ' (' + (r.ref || []).length + ' values)';
+    if (r.value) return CL(r.label) + ' “' + r.value + '”';
+    return CL(r.label) + ' — ' + (r.ref || []).length + ' values';
+  }
+  function ruleFiredCount(r) {
+    var st = r.state || {}, n = 0;
+    Object.keys(st).forEach(function (v) { if (st[v] && st[v].st === 'fired') n++; });
+    return n;
+  }
+  function renderRules() {
+    var keys = Object.keys(WATCHES).sort();
+    if (!keys.length) { $('rule-list').innerHTML = '<span class="muted">No watches yet. Open a feed above and hit 🔔 on a label card or on a cross breakdown — e.g. Reiss · GB CL0 “Best Sellers” → CL2.</span>'; return; }
+    var h = '';
+    keys.forEach(function (k) {
+      var r = WATCHES[k] || {}; var fired = ruleFiredCount(r);
+      var dot = !r.enabled ? 'r-off' : (fired ? 'r-fired' : (r.lastRun ? 'r-ok' : 'r-never'));
+      var dnames = (r.dests || []).map(function (id) { return (DESTS[id] || {}).name || '?'; }).join(', ');
+      h += '<div class="rule-row"><span class="r-dot ' + dot + '" title="' + (fired ? fired + ' watched value(s) currently DOWN' : (r.enabled ? 'healthy' : 'paused')) + '"></span>' +
+        '<span class="rule-scope">' + esc(r.client) + ' · ' + esc(String(r.mkt).toUpperCase()) + ' — ' + esc(ruleScopeText(r)) + '</span>' +
+        '<span style="margin-left:auto;display:flex;gap:6px">' +
+        '<button class="btn" data-rtog="' + esc(k) + '">' + (r.enabled ? '⏸ Pause' : '▶ Enable') + '</button>' +
+        '<button class="btn" data-rrun="' + esc(k) + '" title="Live-check this feed’s watches now">Check now</button>' +
+        '<button class="btn" data-rarm="' + esc(k) + '" title="Re-capture the reference set from the live feed">↻ Re-arm</button>' +
+        '<button class="btn" data-rdel="' + esc(k) + '">✕</button></span>' +
+        '<span class="rule-sub">' + (fired ? '<b style="color:var(--risk)">' + fired + ' DOWN</b> · ' : '') +
+        (r.dropPct ? 'gone or −' + r.dropPct + '%' : 'gone only') + ' → ' + esc(dnames || 'no destinations!') +
+        ' · checked ' + (r.lastRun ? ago(r.lastRun) : 'never') + (r.lastErr ? ' · <span style="color:var(--risk)">' + esc(r.lastErr) + '</span>' : '') + '</span></div>';
+    });
+    $('rule-list').innerHTML = h;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-rtog]'), function (el) {
+      el.onclick = function () {
+        var k = el.getAttribute('data-rtog'); var r = WATCHES[k]; if (!r) return;
+        r.enabled = !r.enabled;
+        var o = {}; o[k] = r; putStore('/api/labels/watch', o).then(loadRouting);
+      };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-rdel]'), function (el) {
+      el.onclick = function () { putStore('/api/labels/watch', { _deleted: [el.getAttribute('data-rdel')] }).then(loadRouting); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-rrun]'), function (el) {
+      el.onclick = function () {
+        var r = WATCHES[el.getAttribute('data-rrun')]; if (!r) return;
+        el.disabled = true; el.textContent = '…';
+        fetch(API + '/api/labels/watch/run?client=' + encodeURIComponent(r.client) + '&market=' + encodeURIComponent(r.mkt), { method: 'POST' })
+          .then(function (x) { return x.json(); })
+          .then(function (d) { el.disabled = false; el.textContent = 'Check now';
+            wtMsg(d.ok ? ('✓ checked ' + d.checked + ' rule(s) · ' + d.fired + ' ping(s) fired') : ('✗ ' + (d.error || 'failed'))); loadRouting(); })
+          .catch(function () { el.disabled = false; el.textContent = 'Check now'; wtMsg('✗ network'); });
+      };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-rarm]'), function (el) {
+      el.onclick = function () { rearmRule(el.getAttribute('data-rarm'), el); };
+    });
+  }
+
+  function rearmRule(k, btn) {
+    var r = WATCHES[k]; if (!r) return;
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+    var done = function (ref, refSeg) {
+      r.ref = ref; if (refSeg != null) r.refSeg = refSeg;
+      r.state = {};
+      var o = {}; o[k] = r;
+      putStore('/api/labels/watch', o).then(function () { wtMsg('✓ re-armed from the live feed'); loadRouting(); });
+    };
+    if (r.vs) {
+      fetch(API + '/api/labels/cross?client=' + encodeURIComponent(r.client) + '&market=' + encodeURIComponent(r.mkt) +
+        '&by=' + encodeURIComponent(r.label) + '&vs=' + encodeURIComponent(r.vs) + '&value=' + encodeURIComponent(r.value))
+        .then(function (x) { return x.json(); })
+        .then(function (x) { if (x.error) { wtMsg('✗ ' + x.error); loadRouting(); } else done(x.rows || [], x.segment); });
+    } else {
+      fetch(API + '/api/labels/snapshot?client=' + encodeURIComponent(r.client) + '&market=' + encodeURIComponent(r.mkt))
+        .then(function (x) { return x.json(); })
+        .then(function (d) {
+          var L = d.snapshot && d.snapshot.labels && d.snapshot.labels[r.label];
+          if (!L || !L.present) { wtMsg('✗ label not in the latest snapshot — scan the feed first'); loadRouting(); return; }
+          var floor = Math.max(10, Math.ceil((d.snapshot.rows || 0) * 0.005));
+          done(r.value ? (L.values || []).filter(function (p) { return p[0] === r.value; })
+                       : (L.values || []).filter(function (p) { return p[1] >= floor; }));
+        });
+    }
+  }
+
+  $('wt-runall').onclick = function () {
+    var btn = $('wt-runall'); btn.disabled = true;
+    fetch(API + '/api/labels/watch/run', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { btn.disabled = false;
+        wtMsg(d.ok ? ('✓ checked ' + d.checked + ' rule(s) · ' + d.fired + ' ping(s) fired') : ('✗ ' + (d.error || 'failed'))); loadRouting(); })
+      .catch(function () { btn.disabled = false; wtMsg('✗ network'); });
+  };
+
+  /* ---------------- the watch builder (🔔) ---------------- */
+  function builderHtml() {
+    var b = BUILDER;
+    var destIds = Object.keys(DESTS).sort();
+    var h = '<div class="wt-form" id="wt-form"><div class="wt-t">🔔 New watch — ' + esc(b.title) + '</div>';
+    if (!destIds.length) {
+      h += '<span class="muted">No ping destinations configured yet — add your Google Chat space / Slack channel / email in <b>04 · Alert routing</b> below, then come back.</span>' +
+        '<div style="margin-top:8px"><button class="btn" id="wb-cancel">Close</button></div></div>';
+      return h;
+    }
+    h += '<div style="margin-bottom:6px">Fire when a watched value is ' +
+      '<select id="wb-cond"><option value="0">GONE only</option><option value="50" selected>gone or −50%</option><option value="30">gone or −30%</option></select>' +
+      ' on the hourly live check. Ping:</div><div>';
+    destIds.forEach(function (id) {
+      h += '<label><input type="checkbox" class="wb-d" value="' + esc(id) + '"> ' + (TYPE_IC[(DESTS[id] || {}).type] || '') + ' ' + esc((DESTS[id] || {}).name || id) + '</label>';
+    });
+    h += '</div><div style="margin-top:8px;display:flex;gap:8px">' +
+      '<button class="btn pri" id="wb-save">Create watch</button>' +
+      '<button class="btn" id="wb-cancel">Cancel</button></div></div>';
+    return h;
+  }
+  function appendBuilder(slot) {
+    var div = document.createElement('div');
+    div.innerHTML = builderHtml();
+    while (div.firstChild) slot.appendChild(div.firstChild);
+    var cancel = document.getElementById('wb-cancel');
+    if (cancel) cancel.onclick = function () { BUILDER = null; slotSync(); };
+    var save = document.getElementById('wb-save');
+    if (save) save.onclick = function () {
+      var dests = Array.prototype.map.call(document.querySelectorAll('.wb-d:checked'), function (el) { return el.value; });
+      if (!dests.length) { wtMsg('✗ pick at least one destination'); return; }
+      var b = BUILDER;
+      var id = 'w_' + Date.now().toString(36);
+      var rule = { id: id, client: b.client, mkt: b.mkt, label: b.label, value: b.value || null, vs: b.vs || null,
+        ref: b.ref || [], refSeg: b.refSeg || 0, dropPct: +(document.getElementById('wb-cond').value) || 0,
+        dests: dests, enabled: true, repingH: 24, state: {}, created: Date.now() };
+      var o = {}; o[b.client + '|' + b.mkt + '|' + id] = rule;
+      putStore('/api/labels/watch', o).then(function () {
+        BUILDER = null; slotSync();
+        wtMsg('✓ watch armed — live-checked hourly at :30 (' + rule.ref.length + ' value' + (rule.ref.length === 1 ? '' : 's') + ')');
+        loadRouting();
+      });
+    };
+  }
+  function slotSync() {
+    var slot = $('cross-slot'); if (!slot) return;
+    if (CROSS) { renderCross(); return; }   // renderCross appends the builder itself
+    slot.innerHTML = '';
+    if (BUILDER) appendBuilder(slot);
+  }
+  function openBuilder(cfg) {
+    BUILDER = cfg; slotSync();
+    var f = document.getElementById('wt-form');
+    if (f && f.scrollIntoView) f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
   /* ---------------- scan-all + boot ---------------- */
   function refreshEstate() {
     return fetch(API + '/api/labels/estate').then(function (r) { return r.json(); }).then(function (d) {
@@ -662,6 +966,7 @@ window.addEventListener('load',restore);
     step();
   };
 
+  loadRouting();
   refreshEstate().then(function () {
     var k = null;
     try { k = decodeURIComponent((location.hash || '').slice(1)) || null; } catch (e) {}

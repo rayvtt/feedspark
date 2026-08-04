@@ -116,7 +116,36 @@ proxy: sheet ids never come from the query — only roster clients resolve, exac
   row and its own CSV export. Every click is a fresh gviz query — never cached.
 - Opening a feed auto-rescans when its snapshot is older than 20h (Feed Lab's refresh model).
 
-## 6. Runbook
+## 6. Custom alerts — the watch builder (§04 on the page)
+
+Beyond the estate-wide baseline monitoring, Ray can pin the **exact values PMAX depends on**
+and route a **high-priority ping** the moment one drops off a live check:
+
+- **Create a watch** with the 🔔 buttons in the dissection: on a **label card** (watches all
+  the label's significant values) or on the **cross panel** (watches a breakdown — e.g.
+  Reiss GB CL0 "Best Sellers" → all 8 CL2 values, *and* the segment itself vanishing).
+  The rule pins the values on screen as its **reference set**; "↻ Re-arm" re-captures it.
+- **Destinations** (§04 left panel): Google Chat webhook (space → Apps & integrations →
+  Webhooks), Slack Incoming Webhook, or an email address. Chat/Slack are pinged straight
+  from the worker; **email** is queued to KV `labeloutbox` and sent from Ray's own mailbox
+  by the Gmail bridge (`tools/gmail_push.gs` — its 5-min trigger polls
+  `/api/gmail/push {outboxPoll:1}`, sends via GmailApp, acks with `{outboxAck:[ids]}`;
+  re-paste the latest script once). The `@all` option prepends `<!channel>` / `<users/all>`
+  on non-recovery pings.
+- **Cadence:** a second cron firing (`30 * * * *`) runs the watch pass hourly with its own
+  subrequest budget (~2–3 gviz fetches per rule; >10 rules rotate across firings).
+  "Check now" / "Run all checks now" fire on demand.
+- **Fire semantics:** ping on the ok→broken **transition** (value GONE, or below the rule's
+  −30%/−50% threshold), **re-ping every 24h while still broken**, and send a ✅ recovery
+  notice when it comes back. A cross watch whose whole segment vanishes sends ONE
+  `segment-gone` ping, not N per-value echoes.
+- Every fired ping is activity-logged (`label-alert`, user `label-guard`).
+
+KV: rules `labelwatch` ("client|mkt|ruleId" → rule), destinations `labeldest`, email queue
+`labeloutbox`, rotation cursor `labelwatchcur`. Rule + destination stores are kvmerge maps
+(explicit tombstones) — concurrent edits from two tabs don't clobber.
+
+## 7. Runbook
 
 | Symptom | Cause | Fix |
 |---|---|---|
@@ -126,6 +155,9 @@ proxy: sheet ids never come from the query — only roster clients resolve, exac
 | Wrong tab scanned | `gid` missing from an attached sheet URL | Re-attach with `#gid=<n>` (wired feeds carry gid in `DEFAULT_FEEDS`) |
 | CL shows `distinct 250+` | >250 distinct values (per-SKU labels) | Expected — coverage alerts still work; value-level watch covers the top 250 |
 | Nav badge shows a count | ≥1 feed has active warn/crit alerts | Open `/labels`, triage, fix upstream or rebaseline |
+| Watch pings but the change was planned | New season/segmentation shipped on purpose | "↻ Re-arm" the rule (re-captures the reference set) |
+| Email alerts never arrive | Gmail bridge not updated / not set up | Re-paste latest `tools/gmail_push.gs` (needs `drainAlertOutbox`), GOOGLE_SETUP §8; Chat/Slack need no setup |
+| Watch shows an error in §04 | Sheet unshared or label column renamed | Fix the sheet, then "Check now"; "Re-arm" if columns legitimately changed |
 | Someone "optimises" scanning into full CSV parsing | — | **Never.** The gviz aggregate approach exists because a raw parse blows the worker CPU budget |
 
 Engine unit tests: `node tools/test_labelguard.mjs` (runs in `validate.yml` on every PR).
