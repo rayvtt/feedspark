@@ -1,58 +1,49 @@
 #!/usr/bin/env python3
 """Convert a FeedSpark HTML deck into a themed, editable 16:9 PowerPoint deck.
 
+This does NOT draw slides. It *populates a PowerPoint template*
+(tools/templates/feedspark_deck.pptx), and that distinction is the whole point.
+
+Every visual element -- card panels, accent bars, the decorative circles, the
+gradient footer bar, the wordmark -- lives on that template's 18 named layouts.
+Slides carry text in placeholders and nothing else. The result is a real
+PowerPoint deck the client can restyle, re-theme, re-order or drop onto a
+different layout and have it re-flow, rather than a picture of a deck welded
+out of absolutely-positioned rectangles.
+
 The HTML decks are continuous-scroll documents with variable-height sections;
-PPTX is a fixed 13.333in x 7.5in canvas with no reflow. A direct DOM->slide
-mapping therefore runs tall sections off the slide edge (the "crop" problem).
+PPTX is a fixed 13.333in x 7.5in canvas with no reflow. So the tool re-flows
+semantically: it parses the deck's own component vocabulary (.stats/.card/
+.tbl-wrap/.bars/.sc-grid/.tiers/.road/.callout/.note/.agenda/.contacts), maps
+each onto the layout that fits it, and splits across as many slides as the copy
+needs. Because every FeedSpark deck is built from the same component library,
+this works on any of them (Superdry, Reiss, YuMOVE, Monsoon, ...).
 
-This tool instead re-flows semantically: it parses the deck's own component
-vocabulary (.stats/.card/.tbl-wrap/.bars/.sc-grid/.tiers/.road/.callout/.note/
-.agenda/.contacts), turns each into a measured renderable, then flows those
-renderables onto as many slides as they need -- splitting card grids, table
-rows and bar lists across slides rather than overflowing them.
-
-Because every FeedSpark deck is built from the same component library, this
-works on any of them (Superdry, Reiss, YuMOVE, Monsoon, ...), not just one.
+Two rules keep the output client-ready:
+  * Never add a shape. If something has no layout, add a layout to the template.
+  * Never shrink text below MIN_OK to make it fit -- re-lay it out instead
+    (fewer cards per slide, more slides). 7pt type is not a fit.
 
     pip install python-pptx pillow lxml
-    python tools/deck_to_pptx.py docs/Superdry_Strategy_Review_AllTime.html out.pptx
-    python tools/preview_tmpl.py out.pptx /tmp/qa      # -> overflow warnings
+    python tools/deck_to_pptx.py docs/Superdry_Strategy_Review_AllTime.html out.pptx --audit
 
-QA loop: generate -> preview -> fix overflow -> repeat until the previewer
-prints "no overflow warnings".
+--audit is the QA loop: it reports the layouts used, anything shrunk, and
+anything still over capacity. Ship when "still over capacity: 0".
 """
 import re, sys, os, argparse
 from lxml import html as LH
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
-from pptx.enum.shapes import MSO_SHAPE
 from PIL import ImageFont
 
-# ---------------------------------------------------------------- design system
-INK        = RGBColor(0x1A, 0x1A, 0x1A)
-INK2       = RGBColor(0x33, 0x33, 0x33)
+# ------------------------------------------------------------------ status ink
+# Colour is inherited from the template theme for everything except short
+# status-pill cells in tables, where the pill's meaning IS the colour.
 MUTED      = RGBColor(0x76, 0x76, 0x76)
-LINE       = RGBColor(0xE6, 0xE6, 0xE6)
-PAPER      = RGBColor(0xFF, 0xFF, 0xFF)
-PAPER2     = RGBColor(0xF7, 0xF7, 0xF5)
-ORANGE     = RGBColor(0xF5, 0xA6, 0x23)
 ORANGE_DP  = RGBColor(0xED, 0x6F, 0x0B)
-DARK       = RGBColor(0x1C, 0x1C, 0x1C)
 GREEN      = RGBColor(0x2E, 0x7D, 0x32)
-RED        = RGBColor(0xC6, 0x28, 0x28)
 WHITE      = RGBColor(0xFF, 0xFF, 0xFF)
-FONT       = "Lato"
-
-SLIDE_W, SLIDE_H = 13.333, 7.5
-MARGIN     = 0.62
-CONTENT_W  = SLIDE_W - 2 * MARGIN
-FOOT_Y     = SLIDE_H - 0.42
-BODY_TOP   = 1.62          # first content y when a section head is present
-BODY_TOP_C = 0.78          # first content y on a "continued" slide
-BODY_BOT   = SLIDE_H - 0.62
-GAP        = 0.17
 
 # Pillow metrics mirror preview_tmpl.py (Liberation Sans ~ Arial metrics), so
 # heights measured here match what the QA previewer will measure.
@@ -90,15 +81,6 @@ def wrap_lines(text, pt_size, width_in, bold=False):
                 out.append(cur); cur = w
         if cur: out.append(cur)
     return out
-
-def text_h(text, pt_size, width_in, bold=False, leading=1.30, caps=False):
-    """Height in inches that `text` needs when wrapped to `width_in`.
-
-    `caps` must mirror the textbox() call: uppercase is measurably wider, so
-    measuring the un-uppercased string silently under-counts lines."""
-    t = (text or "").upper() if caps else text
-    n = max(1, len(wrap_lines(t, pt_size, width_in, bold)))
-    return n * pt_size * leading / 72.0
 
 # ---------------------------------------------------------------- html parsing
 # Liberation Sans (and Lato) carry none of these; PowerPoint would have to
@@ -380,499 +362,465 @@ def status_col(t):
     for rx, c in _STATUS:
         if re.search(rx, v): return c
     return None
+# ---------------------------------------------------------------- the template
+# Every visual element -- card panels, accent bars, decorative circles, the
+# gradient footer bar, the wordmark -- lives on the LAYOUTS in this template,
+# not on the slides. Slides carry text only. That is what makes the output a
+# real, editable PowerPoint deck rather than a picture of one: the client can
+# restyle globally, re-run the theme, or drop a slide onto another layout and
+# it re-flows. Never draw a rectangle here; pick a layout instead.
+TPL = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates", "feedspark_deck.pptx")
 
-# ---------------------------------------------------------------- pptx helpers
-def add_slide(prs):
-    s = prs.slides.add_slide(prs.slide_layouts[6])   # blank
-    return s
+A   = "{http://schemas.openxmlformats.org/drawingml/2006/main}"
+# The template's own table style, so native tables inherit its banding.
+TBL_STYLE = "{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}"
 
-def rect(slide, x, y, w, h, fill=None, line=None, lw=0.75):
-    sh = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(x), Inches(y), Inches(w), Inches(h))
-    sh.shadow.inherit = False
-    if fill is None:
-        sh.fill.background()
-    else:
-        sh.fill.solid(); sh.fill.fore_color.rgb = fill
-    if line is None:
-        sh.line.fill.background()
-    else:
-        sh.line.color.rgb = line; sh.line.width = Pt(lw)
-    sh.text_frame.word_wrap = True
-    return sh
+GRID  = {2: "Two-Card Grid", 3: "Three-Card Grid", 4: "Four-Card Grid",
+         5: "Five-Card Grid", 6: "Six-Card Grid"}
+MAXCARDS = 6
 
-def textbox(slide, x, y, w, h, text, size=11, color=INK2, bold=False, align=PP_ALIGN.LEFT,
-            leading=1.30, caps=False, space_after=0):
-    tb = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
-    tf = tb.text_frame
-    tf.word_wrap = True
-    tf.margin_left = tf.margin_right = tf.margin_top = tf.margin_bottom = 0
-    lines = (text or "").split("\n")
-    for i, ln in enumerate(lines):
-        p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-        p.alignment = align
-        p.line_spacing = leading
-        if space_after: p.space_after = Pt(space_after)
-        r = p.add_run(); r.text = ln.upper() if caps else ln
-        r.font.size = Pt(size); r.font.bold = bold; r.font.name = FONT
-        r.font.color.rgb = color
-    return tb
+# Table body geometry, mirroring the reference deck.
+TB_L, TB_W, TB_T = 0.67, 12.00, 2.02
+TB_BOT   = 6.17           # must clear the Key Message strip at 6.34
+HDR_H    = 0.42
+ROW_MIN  = 0.42
 
-def footer(slide, page):
-    textbox(slide, MARGIN, FOOT_Y, 6.0, 0.24, "FeedSpark · Private & Confidential",
-            size=8, color=MUTED, bold=True, caps=True)
-    textbox(slide, SLIDE_W - MARGIN - 1.2, FOOT_Y, 1.2, 0.24, str(page),
-            size=8, color=MUTED, bold=True, align=PP_ALIGN.RIGHT)
+def ph_style(layout, name):
+    """(width_in, height_in, pt, bold) of a layout placeholder, read from its
+    own lstStyle -- so capacity is measured against the real rendered size."""
+    for p in layout.placeholders:
+        if p.name != name: continue
+        sz, bold = 12.0, False
+        ls = p._element.find(".//" + A + "lstStyle")
+        if ls is not None:
+            d = ls.find(A + "lvl1pPr/" + A + "defRPr")
+            if d is not None:
+                if d.get("sz"): sz = int(d.get("sz")) / 100.0
+                bold = d.get("b") == "1"
+        return Emu(p.width).inches, Emu(p.height).inches, sz, bold
+    return None
 
-# ---------------------------------------------------------------- renderables
-# Each renderable = (height_inches, draw(slide, y)) so the flow engine can
-# measure before it commits, and split instead of overflowing.
+# Shrink steps tried before any text is dropped.
+SCALES = (1.0, 0.94, 0.88, 0.82, 0.76, 0.70, 0.64, 0.58)
+# We measure in Liberation Sans but the deck renders in Inter, so demand a
+# little more room than measured rather than landing exactly on the boundary.
+SAFETY = 0.96
 
-def r_stats(cells):
-    n = max(1, len(cells))
-    per_row = 5 if n >= 5 else n
-    rows = [cells[i:i + per_row] for i in range(0, n, per_row)]
-    cw = (CONTENT_W - (per_row - 1) * 0.10) / per_row
-    lab_h = max(text_h(c[1], 8.5, cw - 0.34, bold=True, caps=True, leading=1.22) for c in cells)
-    num_h = text_h("0", 25, cw - 0.34, bold=True)
-    h_row = 0.16 + num_h + 0.12 + lab_h + 0.20
-    def draw(slide, y):
-        yy = y
-        for row in rows:
-            for i, (num, lab) in enumerate(row):
-                x = MARGIN + i * (cw + 0.10)
-                rect(slide, x, yy, cw, h_row, fill=PAPER, line=LINE)
-                textbox(slide, x + 0.17, yy + 0.16, cw - 0.34, num_h, num, size=25, color=INK, bold=True)
-                textbox(slide, x + 0.17, yy + 0.16 + num_h + 0.12, cw - 0.34, lab_h, lab,
-                        size=8.5, color=MUTED, bold=True, caps=True, leading=1.22)
-            yy += h_row + 0.10
-        return yy - y
-    return (len(rows) * (h_row + 0.10) - 0.10, draw)
+def fit(text, geom):
+    """Fit `text` to a placeholder. Returns (scale, dropped_lines, text).
 
-def r_cards_row(cards, cols):
-    cw = (CONTENT_W - (cols - 1) * 0.22) / cols
-    inner = cw - 0.44
-    hs = []
-    for t, b in cards:
-        h = 0.30
-        if t: h += text_h(t, 12, inner, bold=True) + 0.10
-        if b: h += text_h(b, 10, inner, leading=1.34)
-        hs.append(h + 0.30)
-    H = max(hs)
-    def draw(slide, y):
-        for i, (t, b) in enumerate(cards):
-            x = MARGIN + i * (cw + 0.22)
-            rect(slide, x, y, cw, H, fill=PAPER, line=LINE)
-            rect(slide, x, y, 0.035, H, fill=ORANGE, line=None)
-            yy = y + 0.22
-            if t:
-                th = text_h(t, 12, inner, bold=True)
-                textbox(slide, x + 0.22, yy, inner, th, t, size=12, color=INK, bold=True, leading=1.24)
-                yy += th + 0.10
-            if b:
-                textbox(slide, x + 0.22, yy, inner, text_h(b, 10, inner, leading=1.34), b,
-                        size=10, color=INK2, leading=1.34)
-        return H
-    return (H, draw)
+    PPTX does NOT clip an over-long text frame -- it spills the text outside the
+    shape, straight over the neighbouring card panel. So the failure mode to
+    design against is overlap, not truncation, and the fix is to shrink rather
+    than to cut: every word survives, just smaller. Only if the copy still will
+    not fit at the smallest step do we drop lines, and --audit reports it."""
+    if not text or geom is None: return 1.0, 0, text
+    w, h, sz, bold = geom
+    for s in SCALES:
+        pt = sz * s
+        cap = max(1, int(h / (pt * 1.28 / 72.0)))
+        if len(wrap_lines(text, pt, w * SAFETY, bold)) <= cap:
+            return s, 0, text
+    pt = sz * SCALES[-1]
+    cap = max(1, int(h / (pt * 1.28 / 72.0)))
+    lines = wrap_lines(text, pt, w * SAFETY, bold)
+    kept = " ".join(lines[:cap]).rstrip()
+    if len(kept) > 3: kept = kept[:-1].rstrip(" ,;:.") + "…"
+    return SCALES[-1], len(lines) - cap, kept
 
-def r_table_rows(heads, rows, widths):
-    """Header + data rows as separate renderables so a long table can split."""
-    out = []
-    cw = [w * CONTENT_W for w in widths]
-    def mk_head():
-        h = max(0.34, max((text_h(x, 8.5, c - 0.24, bold=True, caps=True, leading=1.18) for x, c in zip(heads, cw)), default=0.2) + 0.20)
-        def draw(slide, y):
-            x = MARGIN
-            for i, hd in enumerate(heads):
-                rect(slide, x, y, cw[i], h, fill=DARK, line=DARK)
-                textbox(slide, x + 0.12, y + 0.10, cw[i] - 0.24, h - 0.16, hd,
-                        size=8.5, color=WHITE, bold=True, caps=True, leading=1.18)
-                x += cw[i]
-            return h
-        return (h, draw)
-    if heads: out.append(mk_head())
-    for ri, row in enumerate(rows):
-        cells = list(row) + [""] * (len(cw) - len(row))
-        h = max(0.30, max((text_h(c, 9.5, w - 0.24, leading=1.26) for c, w in zip(cells, cw)), default=0.2) + 0.22)
-        def draw(slide, y, cells=cells, h=h, ri=ri):
-            x = MARGIN
-            bg = PAPER2 if ri % 2 else PAPER
-            for i, c in enumerate(cells):
-                rect(slide, x, y, cw[i], h, fill=bg, line=LINE, lw=0.5)
-                sc_ = status_col(c)
-                textbox(slide, x + 0.12, y + 0.11, cw[i] - 0.24, h - 0.22, c,
-                        size=9.5, color=sc_ or INK2, bold=bool(sc_), leading=1.26)
-                x += cw[i]
-            return h
-        out.append((h, draw))
-    return out, mk_head if heads else None
+# Below this the type is too small to read on a projector; shrinking further is
+# not a fit, it is a hidden failure. Content is re-laid out instead.
+MIN_OK = 0.82
 
-def r_bars(rows):
-    out = []
-    for lab, val, w, green, grey in rows:
-        lw = CONTENT_W * 0.62
-        lh = max(text_h(lab, 10, lw, bold=True), 0.18)
-        h = lh + 0.26
-        def draw(slide, y, lab=lab, val=val, w=w, green=green, grey=grey, lh=lh):
-            textbox(slide, MARGIN, y, CONTENT_W * 0.62, lh, lab, size=10, color=INK, bold=True)
-            textbox(slide, MARGIN + CONTENT_W * 0.63, y, CONTENT_W * 0.37, lh, val,
-                    size=10, color=MUTED, align=PP_ALIGN.RIGHT)
-            ty = y + lh + 0.06
-            rect(slide, MARGIN, ty, CONTENT_W, 0.11, fill=PAPER2, line=LINE, lw=0.5)
-            fw = max(0.02, CONTENT_W * (w / 100.0))
-            col = GREEN if green else (RGBColor(0xC9, 0xC9, 0xC9) if grey else ORANGE)
-            rect(slide, MARGIN, ty, fw, 0.11, fill=col, line=None)
-            return lh + 0.26
-        out.append((h, draw))
+# Strips designed for exactly one punchy line. A paragraph poured into one of
+# these shrinks to ~7pt; better to carry the lead sentence at full size.
+ONE_LINERS = {"Subtitle", "Key Message", "Section Subtitle", "Attribution",
+              "Date / Prepared by", "Role / Title"}
+
+def first_sentence(t, maxlen=150):
+    parts = re.split(r"(?<=[.!?])\s+", (t or "").strip())
+    out = parts[0]
+    for p in parts[1:]:
+        if len(out) + len(p) + 1 > maxlen: break
+        out += " " + p
     return out
 
-def r_scorecard_row(cells):
-    cols = len(cells)
-    cw = (CONTENT_W - (cols - 1) * 0.10) / cols
-    inner = cw - 0.36
-    hs = []
-    for c in cells:
-        h = 0.42 + text_h(c["label"], 11, inner, bold=True) + 0.06 + text_h(c["note"], 9, inner, leading=1.30)
-        if c["foot"]: h += 0.06 + text_h(c["foot"], 8.5, inner, bold=True, leading=1.26)
-        hs.append(h + 0.44)
-    H = max(hs)
-    def draw(slide, y):
-        for i, c in enumerate(cells):
-            x = MARGIN + i * (cw + 0.10)
-            rect(slide, x, y, cw, H, fill=PAPER, line=LINE)
-            yy = y + 0.20
-            pc = c["pct"]
-            col = GREEN if pc.rstrip("%").isdigit() and int(pc.rstrip("%") or 0) >= 85 else (
-                RED if pc.rstrip("%").isdigit() and int(pc.rstrip("%") or 0) <= 25 else ORANGE_DP)
-            textbox(slide, x + 0.18, yy, inner, 0.40, pc, size=22, color=col, bold=True)
-            yy += 0.46
-            lh = text_h(c["label"], 11, inner, bold=True)
-            textbox(slide, x + 0.18, yy, inner, lh, c["label"], size=11, color=INK, bold=True)
-            yy += lh + 0.06
-            nh = text_h(c["note"], 9, inner, leading=1.30)
-            textbox(slide, x + 0.18, yy, inner, nh, c["note"], size=9, color=MUTED, leading=1.30)
-            yy += nh + 0.06
-            if c["foot"]:
-                textbox(slide, x + 0.18, yy, inner, text_h(c["foot"], 8.5, inner, bold=True, leading=1.26),
-                        c["foot"], size=8.5, color=RED if c["bad"] else GREEN, bold=True, leading=1.26)
-        return H
-    return (H, draw)
+def pick_grid(em, cards):
+    """Largest card count whose panels still hold this copy at a readable size.
 
-def r_coldcards(items, kind):
-    """tiers / roadmap columns -- same visual family, different labels."""
-    cols = len(items)
-    cw = (CONTENT_W - (cols - 1) * 0.18) / cols
-    inner = cw - 0.36
-    hs = []
-    for it in items:
-        h = 0.24
-        h += text_h(it.get("tn") or it.get("month", ""), 8.5, inner, bold=True, caps=True) + 0.08
-        if kind == "roadmap" and it.get("state"):
-            h += text_h(it["state"], 8, inner - 0.12, bold=True, caps=True) + 0.30
-        h += text_h(it.get("title", ""), 12, inner, bold=True) + 0.06
-        if it.get("sub"): h += text_h(it["sub"], 9, inner) + 0.08
-        for li in it.get("items", []):
-            h += text_h("• " + li, 9.5, inner - 0.10, leading=1.30) + 0.06
-        hs.append(h + 0.28)
-    H = max(hs)
-    def draw(slide, y):
-        for i, it in enumerate(items):
-            x = MARGIN + i * (cw + 0.18)
-            hi = it.get("here") or it.get("peak")
-            rect(slide, x, y, cw, H, fill=PAPER, line=ORANGE if hi else LINE, lw=1.6 if hi else 0.75)
-            yy = y + 0.20
-            tn = it.get("tn") or it.get("month", "")
-            if tn:
-                th = text_h(tn, 8.5, inner, bold=True, caps=True)
-                textbox(slide, x + 0.18, yy, inner, th, tn, size=8.5, color=ORANGE_DP, bold=True, caps=True)
-                yy += th + 0.08
-            if kind == "roadmap" and it.get("state"):
-                sh = text_h(it["state"], 8, inner - 0.12, bold=True, caps=True)
-                rect(slide, x + 0.18, yy - 0.03, inner, sh + 0.12,
-                     fill=ORANGE if it.get("peak") else PAPER2, line=None)
-                textbox(slide, x + 0.24, yy + 0.02, inner - 0.12, sh, it["state"],
-                        size=8, color=WHITE if it.get("peak") else MUTED, bold=True, caps=True)
-                yy += sh + 0.20
-            ti = it.get("title", "")
-            if ti:
-                th = text_h(ti, 12, inner, bold=True)
-                textbox(slide, x + 0.18, yy, inner, th, ti, size=12, color=INK, bold=True, leading=1.22)
-                yy += th + 0.06
-            if it.get("sub"):
-                sh = text_h(it["sub"], 9, inner)
-                textbox(slide, x + 0.18, yy, inner, sh, it["sub"], size=9, color=MUTED)
-                yy += sh + 0.08
-            for li in it.get("items", []):
-                lh = text_h("• " + li, 9.5, inner - 0.10, leading=1.30)
-                textbox(slide, x + 0.18, yy, inner - 0.10, lh, "• " + li, size=9.5, color=INK2, leading=1.30)
-                yy += lh + 0.06
-        return H
-    return (H, draw)
+    Card panels are layout shapes, so a six-card layout gives six small panels
+    -- pouring long copy into them is what forces 60% type. Stepping down to a
+    three-card layout costs an extra slide and buys back the point size, which
+    is the right trade for a client-facing deck."""
+    for n in range(min(len(cards), MAXCARDS), 1, -1):
+        lay = em.lay[GRID[n]]
+        if all(fit(h, ph_style(lay, "Card %d Heading" % j))[0] >= MIN_OK
+               and fit(b, ph_style(lay, "Card %d Body" % j))[0] >= MIN_OK
+               for chunk in chunks(cards, n)
+               for j, (h, b) in enumerate(chunk, start=1)):
+            return n
+    return 2
 
-def r_callout(c):
-    inner = CONTENT_W - 0.60
-    h = 0.34 + (text_h(c["title"], 12.5, inner, bold=True) + 0.08 if c["title"] else 0) \
-        + text_h(c["body"], 10.5, inner, leading=1.34) + 0.34
-    def draw(slide, y):
-        rect(slide, MARGIN, y, CONTENT_W, h, fill=ORANGE, line=None)
-        yy = y + 0.26
-        if c["title"]:
-            th = text_h(c["title"], 12.5, inner, bold=True)
-            textbox(slide, MARGIN + 0.30, yy, inner, th, c["title"], size=12.5, color=WHITE, bold=True)
-            yy += th + 0.08
-        textbox(slide, MARGIN + 0.30, yy, inner, text_h(c["body"], 10.5, inner, leading=1.34),
-                c["body"], size=10.5, color=WHITE, leading=1.34)
-        return h
-    return (h, draw)
+class Emitter:
+    """Builds a deck by *populating layouts*, never by drawing shapes."""
 
-def r_subhead(t):
-    h = text_h(t, 13, CONTENT_W, bold=True) + 0.10
-    def draw(slide, y):
-        textbox(slide, MARGIN, y, CONTENT_W, h - 0.10, t, size=13, color=INK, bold=True)
-        return h
-    return (h, draw)
+    def __init__(self, tpl=TPL):
+        if not os.path.exists(tpl):
+            sys.exit("missing template: %s" % tpl)
+        self.prs = Presentation(tpl)
+        self.lay = {l.name: l for l in self.prs.slide_masters[0].slide_layouts}
+        # Slides rename their placeholders on clone ("Text Placeholder 4"), so a
+        # slide-side name lookup fails; idx survives. Map layout name -> idx here.
+        self.idx = {n: {p.name: p.placeholder_format.idx for p in l.placeholders}
+                    for n, l in self.lay.items()}
+        self.audit = []
 
-def r_note(t):
-    inner = CONTENT_W - 0.54
-    h = text_h(t, 10, inner, leading=1.34) + 0.42
-    def draw(slide, y):
-        rect(slide, MARGIN, y, CONTENT_W, h, fill=PAPER2, line=LINE, lw=0.5)
-        rect(slide, MARGIN, y, 0.035, h, fill=ORANGE, line=None)
-        textbox(slide, MARGIN + 0.28, y + 0.21, inner, h - 0.42, t, size=10, color=INK2, leading=1.34)
-        return h
-    return (h, draw)
+    def slide(self, layout):
+        return self.prs.slides.add_slide(self.lay[layout])
 
-def r_agenda_row(num, title, desc):
-    tw = CONTENT_W - 0.75
-    h = max(text_h(title, 11.5, tw, bold=True) + text_h(desc, 9.5, tw) + 0.06, 0.34) + 0.20
-    def draw(slide, y):
-        textbox(slide, MARGIN, y + 0.02, 0.55, 0.24, num, size=10, color=ORANGE, bold=True)
-        th = text_h(title, 11.5, tw, bold=True)
-        textbox(slide, MARGIN + 0.62, y, tw, th, title, size=11.5, color=INK, bold=True)
-        textbox(slide, MARGIN + 0.62, y + th + 0.04, tw, text_h(desc, 9.5, tw), desc, size=9.5, color=MUTED)
-        rect(slide, MARGIN, y + h - 0.06, CONTENT_W, 0.012, fill=LINE, line=None)
-        return h
-    return (h, draw)
+    def put(self, slide, name, text):
+        """Fill a placeholder by layout-side name. Empty -> delete the shape, so
+        PowerPoint shows no 'Click to edit' prompt."""
+        lname = slide.slide_layout.name
+        i = self.idx[lname].get(name)
+        if i is None: return
+        try: shape = slide.placeholders[i]
+        except KeyError: return
+        lines = [l for l in str(text or "").split("\n") if l.strip()]
+        if not lines:
+            shape._element.getparent().remove(shape._element)
+            return
+        geom = ph_style(self.lay[lname], name)
+        src = "\n".join(lines)
+        scale, dropped, body = fit(src, geom)
+        if scale < MIN_OK and name in ONE_LINERS:
+            scale, dropped, body = fit(first_sentence(src), geom)
+        lines = [l for l in body.split("\n") if l.strip()]
+        if dropped or scale < 1.0:
+            self.audit.append((len(self.prs.slides._sldIdLst), lname, name, scale, dropped))
+        tf = shape.text_frame
+        tf.word_wrap = True
+        tf.text = lines[0]
+        for l in lines[1:]:
+            tf.add_paragraph().text = l
+        if scale < 1.0 and geom:
+            # Set the size explicitly rather than trusting normAutofit: PowerPoint
+            # recomputes fontScale on open, but LibreOffice and Google Slides do
+            # not, and a deck that only fits in one renderer is not shippable.
+            # Size is the sole override -- family and colour stay inherited, so
+            # the layout still drives a global restyle.
+            pt = Pt(round(geom[2] * scale, 1))
+            for p_ in tf.paragraphs:
+                for r_ in p_.runs:
+                    r_.font.size = pt
 
-# ---------------------------------------------------------------- flow engine
-class Deck:
-    def __init__(self, prs):
-        self.prs = prs
-        self.page = 0
-        self.slide = None
-        self.y = 0.0
-        self.head = None          # (eyebrow, title) reprinted on continuation
+    def finish(self, slide, keymsg=None):
+        """Fill the Key Message strip, then drop any placeholder still empty.
 
-    def new_slide(self, head=None, cont=False):
-        self.slide = add_slide(self.prs)
-        self.page += 1
-        footer(self.slide, self.page)
-        self.y = BODY_TOP_C
-        if head and (head[0] or head[1]):
-            eb, ti, sub = head
-            y = 0.60
-            if eb:
-                ebt = eb + (" (cont.)" if cont else "")
-                ebh = text_h(ebt, 9.5, CONTENT_W, bold=True, caps=True)
-                textbox(self.slide, MARGIN, y, CONTENT_W, ebh, ebt,
-                        size=9.5, color=ORANGE_DP, bold=True, caps=True)
-                y += ebh + 0.10
-            if ti:
-                th = text_h(ti, 24, CONTENT_W, bold=True)
-                textbox(self.slide, MARGIN, y, CONTENT_W, th, ti, size=24, color=INK, bold=True, leading=1.16)
-                y += th + 0.10
-            if sub and not cont:
-                sh = text_h(sub, 11, CONTENT_W * 0.82, leading=1.34)
-                textbox(self.slide, MARGIN, y, CONTENT_W * 0.82, sh, sub, size=11, color=MUTED, leading=1.34)
-                y += sh + 0.10
-            self.y = y + 0.16
-        return self.slide
+        The strip's coloured panel lives on the layout, so leaving it unfilled
+        renders an empty orange bar -- it must always carry text or nothing at
+        all is better than a stray bar, hence the explicit delete below."""
+        self.put(slide, "Key Message", keymsg or "")
+        for shape in list(slide.placeholders):
+            if not shape.text_frame.text.strip():
+                shape._element.getparent().remove(shape._element)
 
-    def place(self, item, head=None):
-        """Place one renderable, starting a fresh slide if it will not fit."""
-        h, draw = item
-        if self.slide is None:
-            self.new_slide(head)
-        if self.y + h > BODY_BOT:
-            avail = BODY_BOT - BODY_TOP_C
-            self.new_slide(head, cont=True)
-            if h > avail:
-                # single renderable taller than a whole slide: place it and let the
-                # QA previewer flag it rather than silently cropping mid-content.
-                pass
-        used = draw(self.slide, self.y)
-        self.y += (used or h) + GAP
+    # ------------------------------------------------------------ native table
+    def table(self, slide, heads, rows):
+        rows = rows[:]
+        ncol = max(len(heads), max((len(r) for r in rows), default=0))
+        heads = (list(heads) + [""] * ncol)[:ncol]
+        rows  = [(r + [""] * ncol)[:ncol] for r in rows]
+        # A bar list has labels and values but no column names. Styling row 0 as
+        # a header then leaves an empty coloured band that reads as a bug, so a
+        # headerless table is built instead.
+        hdr = any((h or "").strip() for h in heads)
 
-def chapter_slide(prs, deck, ch):
-    s = add_slide(prs)
-    deck.page += 1
-    deck.slide = None
-    bg = rect(s, 0, 0, SLIDE_W, SLIDE_H, fill=DARK, line=None)
-    rect(s, 0, 0, 1.15, 0.10, fill=ORANGE, line=None)
-    num = ch["num"] or ""
-    if num:
-        tb = textbox(s, SLIDE_W - 3.6, 1.35, 3.2, 4.4, num, size=150,
-                     color=RGBColor(0x33, 0x2A, 0x1A), bold=True, align=PP_ALIGN.RIGHT)
-    rect(s, MARGIN, 2.55, 0.50, 0.035, fill=ORANGE, line=None)
-    y = 2.80
-    if ch["eyebrow"]:
-        textbox(s, MARGIN, y, 6.0, 0.24, ch["eyebrow"], size=10, color=ORANGE, bold=True, caps=True)
-        y += 0.34
-    th = text_h(ch["title"], 34, 8.6, bold=True)
-    textbox(s, MARGIN, y, 8.6, th, ch["title"], size=34, color=WHITE, bold=True, leading=1.14)
-    y += th + 0.16
-    if ch["sub"]:
-        textbox(s, MARGIN, y, 7.6, text_h(ch["sub"], 12, 7.6, leading=1.36), ch["sub"],
-                size=12, color=RGBColor(0xB8, 0xB8, 0xB8), leading=1.36)
-    textbox(s, MARGIN, FOOT_Y, 6.0, 0.24, "FeedSpark · Private & Confidential",
-            size=8, color=RGBColor(0x8A, 0x8A, 0x8A), bold=True, caps=True)
-    textbox(s, SLIDE_W - MARGIN - 1.2, FOOT_Y, 1.2, 0.24, str(deck.page),
-            size=8, color=RGBColor(0x8A, 0x8A, 0x8A), bold=True, align=PP_ALIGN.RIGHT)
+        avail = TB_BOT - TB_T - (HDR_H if hdr else 0)
+        body_h = min(0.75, max(ROW_MIN, avail / max(1, len(rows))))
+        h = (HDR_H if hdr else 0) + body_h * len(rows)
+        gf = slide.shapes.add_table(len(rows) + (1 if hdr else 0), ncol,
+                                    Inches(TB_L), Inches(TB_T), Inches(TB_W), Inches(h))
+        tbl = gf.table
+        pr = tbl._tbl.find(A + "tblPr")
+        pr.set("firstRow", "1" if hdr else "0"); pr.set("bandRow", "1")
+        for e in pr.findall(A + "tableStyleId"): pr.remove(e)
+        sid = pr.makeelement(A + "tableStyleId", {}); sid.text = TBL_STYLE
+        pr.append(sid)
 
-def hero_slide(prs, deck, hero):
-    s = add_slide(prs)
-    deck.page += 1
-    rect(s, 0, 0, SLIDE_W, SLIDE_H, fill=DARK, line=None)
-    rect(s, 0, 0, 1.55, 0.12, fill=ORANGE, line=None)
-    y = 1.35
-    if hero["eyebrow"]:
-        textbox(s, MARGIN, y, 9.0, 0.26, hero["eyebrow"], size=10.5, color=ORANGE, bold=True, caps=True)
-        y += 0.42
-    th = text_h(hero["title"], 52, 9.0, bold=True)
-    textbox(s, MARGIN, y, 9.0, th, hero["title"], size=52, color=WHITE, bold=True, leading=1.10)
-    y += th + 0.24
-    rect(s, MARGIN, y, 0.66, 0.035, fill=ORANGE, line=None)
-    y += 0.30
-    if hero["lede"]:
-        lh = text_h(hero["lede"], 11.5, 8.4, leading=1.42)
-        textbox(s, MARGIN, y, 8.4, lh, hero["lede"], size=11.5,
-                color=RGBColor(0xC4, 0xC4, 0xC4), leading=1.42)
-        y += lh + 0.34
-    x = MARGIN
-    for lab, val in hero["meta"]:
-        textbox(s, x, y, 3.0, 0.20, lab, size=8.5, color=RGBColor(0x9A, 0x9A, 0x9A), bold=True, caps=True)
-        textbox(s, x, y + 0.24, 3.0, 0.26, val, size=12, color=WHITE, bold=True)
-        x += 3.3
-    textbox(s, MARGIN, FOOT_Y, 6.0, 0.24, "FeedSpark · Private & Confidential",
-            size=8, color=RGBColor(0x8A, 0x8A, 0x8A), bold=True, caps=True)
+        # Columns sized by the widest cell they must carry, not evenly: a
+        # "Status" column beside a prose column otherwise wraps to four lines.
+        want = []
+        for c in range(ncol):
+            longest = max([len(heads[c])] + [len(r[c]) for r in rows] or [1])
+            want.append(max(6, min(longest, 90)))
+        tot = float(sum(want))
+        widths = [max(0.9, TB_W * w / tot) for w in want]
+        scale = TB_W / sum(widths)
+        for c, w in enumerate(widths):
+            tbl.columns[c].width = Emu(int(Inches(w * scale)))
 
-def close_slide(prs, deck, close):
-    s = add_slide(prs)
-    deck.page += 1
-    rect(s, 0, 0, SLIDE_W, SLIDE_H, fill=DARK, line=None)
-    rect(s, 0, 0, 1.15, 0.10, fill=ORANGE, line=None)
-    textbox(s, MARGIN, 2.05, 6.0, 0.26, close["eyebrow"] or "Thank you",
-            size=10.5, color=ORANGE, bold=True, caps=True)
-    textbox(s, MARGIN, 2.45, 9.0, 0.80, close["title"] or "Questions?",
-            size=40, color=WHITE, bold=True)
-    rect(s, MARGIN, 3.45, 0.66, 0.035, fill=ORANGE, line=None)
-    x = MARGIN
-    cw = (CONTENT_W - 2 * 0.30) / max(1, len(close["contacts"]))
-    for name, role, mail in close["contacts"]:
-        rect(s, x, 3.95, min(cw, 3.4), 0.035, fill=ORANGE, line=None)
-        textbox(s, x, 4.12, min(cw, 3.4), 0.28, name, size=13, color=WHITE, bold=True)
-        textbox(s, x, 4.42, min(cw, 3.4), 0.24, role, size=9.5, color=RGBColor(0x9A, 0x9A, 0x9A))
-        textbox(s, x, 4.70, min(cw, 3.4), 0.24, mail, size=10, color=ORANGE)
-        x += cw + 0.30
-    textbox(s, MARGIN, FOOT_Y, 6.0, 0.24, "FeedSpark · Private & Confidential",
-            size=8, color=RGBColor(0x8A, 0x8A, 0x8A), bold=True, caps=True)
+        if hdr:
+            tbl.rows[0].height = Inches(HDR_H)
+            for i, txt_ in enumerate(heads):
+                cell = tbl.cell(0, i); cell.text = txt_ or ""
+                for p_ in cell.text_frame.paragraphs:
+                    for r_ in p_.runs:
+                        r_.font.size = Pt(13); r_.font.bold = True; r_.font.color.rgb = WHITE
+        for ri, row in enumerate(rows, start=1 if hdr else 0):
+            tbl.rows[ri].height = Inches(body_h)
+            for ci, val in enumerate(row):
+                cell = tbl.cell(ri, ci); cell.text = val or ""
+                col = status_col(val)
+                for p_ in cell.text_frame.paragraphs:
+                    for r_ in p_.runs:
+                        r_.font.size = Pt(11)
+                        if col is not None:
+                            r_.font.bold = True; r_.font.color.rgb = col
+        return gf
 
-# ---------------------------------------------------------------- table widths
-def table_widths(heads, rows):
-    n = len(heads) if heads else max(len(r) for r in rows)
-    scores = []
-    for i in range(n):
-        vals = [len(heads[i]) if heads and i < len(heads) else 0]
-        vals += [len(r[i]) for r in rows if i < len(r)]
-        scores.append(max(6, sum(vals) / max(1, len(vals))))
-    tot = sum(scores)
-    w = [max(0.07, s / tot) for s in scores]
-    tot = sum(w)
-    return [x / tot for x in w]
+# ---------------------------------------------------------------- block -> slide
+def chunks(seq, n):
+    for i in range(0, len(seq), n):
+        yield seq[i:i + n]
 
-# ---------------------------------------------------------------- main render
-def build(blocks, out, title="FeedSpark deck"):
-    prs = Presentation()
-    prs.slide_width, prs.slide_height = Inches(SLIDE_W), Inches(SLIDE_H)
-    deck = Deck(prs)
+def balanced(seq, n):
+    """Split into slides of at most n, evenly. Plain chunking turns 4 cards at
+    n=3 into a 3+1 split -- a full slide followed by a near-empty one; 2+2 uses
+    the same slide count and looks deliberate."""
+    if len(seq) <= n: return [list(seq)]
+    slides = -(-len(seq) // n)
+    return list(chunks(seq, -(-len(seq) // slides)))
 
-    if blocks.hero:
-        hero_slide(prs, deck, blocks.hero)
+def grid_slide(em, title, sub, cards, key=None):
+    """cards: [(heading, body)] -- laid onto the matching N-Card Grid layout.
 
-    for kind, payload in blocks.items:
-        if kind == "chapter":
-            chapter_slide(prs, deck, payload)
+    The card panels are layout shapes, so the layout must match the card count
+    exactly or empty panels show; that is why 2..6 all exist as layouts and why
+    anything longer is split rather than squeezed."""
+    n = len(cards)
+    if n == 1:
+        s = em.slide("Title and Content")
+        em.put(s, "Title", title); em.put(s, "Subtitle", sub)
+        head, body = cards[0]
+        em.put(s, "Content", (head + "\n" if head else "") + body)
+        em.finish(s, key); return s
+    s = em.slide(GRID[min(max(n, 2), MAXCARDS)])
+    em.put(s, "Title", title); em.put(s, "Subtitle", sub)
+    for i, (head, body) in enumerate(cards, start=1):
+        em.put(s, "Card %d Heading" % i, head)
+        em.put(s, "Card %d Body" % i, body)
+    em.finish(s, key)
+    return s
+
+def emit_cards(em, base_title, t, sub, cards, key):
+    """Emit a card list across as many slides as readability needs."""
+    n = pick_grid(em, cards)
+    for part in balanced(cards, n):
+        grid_slide(em, t, sub, part, key)
+        t, sub = (base_title + " (cont.)") if base_title else "", ""
+
+def emit_blocks(em, head, blocks, fallback=""):
+    """Flow one parsed <section> onto as many slides as its content needs."""
+    # Not every <section> carries its own .sec-title -- some sit directly under a
+    # chapter divider and inherit it. Without this the slide title renders as a
+    # bare " (cont.)".
+    title = head.get("title") or fallback or ""
+    sub = head.get("sub") or ""
+    first_done = False
+    pending_sub = None           # a ("subhead") becomes the next slide's title
+    i = 0
+    while i < len(blocks):
+        kind, payload = blocks[i]
+        i += 1
+        # A trailing note is the slide's Key Message, not a slide of its own.
+        key = None
+        if i < len(blocks) and blocks[i][0] == "note":
+            key = blocks[i][1]; i += 1
+
+        cont = (title + " (cont.)") if title else ""
+        t = pending_sub or (title if not first_done else cont)
+        s_ = sub if not first_done else ""
+        pending_sub = None
+
+        if kind == "subhead":
+            pending_sub = payload
             continue
-        head = (payload["head"]["eyebrow"], payload["head"]["title"], payload["head"]["sub"])
-        deck.slide = None
-        first = True
-        for bkind, bp in payload["blocks"]:
-            h = head if first else head
-            if bkind == "stats":
-                deck.place(r_stats(bp), h)
-            elif bkind == "cards":
-                cols, cards = bp["cols"], bp["cards"]
-                for i in range(0, len(cards), cols):
-                    deck.place(r_cards_row(cards[i:i + cols], min(cols, len(cards) - i)), h)
-            elif bkind == "table":
-                widths = table_widths(bp["heads"], bp["rows"])
-                items, mkhead = r_table_rows(bp["heads"], bp["rows"], widths)
-                head_item = items[0] if bp["heads"] else None
-                body_items = items[1:] if bp["heads"] else items
-                # widow control: never strand a header (or a single row) at the foot
-                # of a slide -- start the table on a fresh one instead.
-                need = (head_item[0] if head_item else 0) + sum(r[0] for r in body_items[:2])
-                if deck.slide is not None and deck.y + need > BODY_BOT:
-                    deck.new_slide(h, cont=True)
-                if head_item:
-                    deck.place(head_item, h)
-                for it in body_items:
-                    if deck.slide is not None and deck.y + it[0] > BODY_BOT:
-                        deck.new_slide(h, cont=True)
-                        if mkhead: deck.place(mkhead(), h)
-                    deck.place(it, h)
-            elif bkind == "bars":
-                for it in r_bars(bp):
-                    deck.place(it, h)
-            elif bkind == "scorecard":
-                per = 3
-                for i in range(0, len(bp), per):
-                    deck.place(r_scorecard_row(bp[i:i + per]), h)
-            elif bkind == "tiers":
-                deck.place(r_coldcards(bp, "tiers"), h)
-            elif bkind == "roadmap":
-                grp = bp if len(bp) <= 5 else bp[:5]
-                deck.place(r_coldcards(grp, "roadmap"), h)
-                if len(bp) > 5:
-                    deck.place(r_coldcards(bp[5:], "roadmap"), h)
-            elif bkind == "callout":
-                deck.place(r_callout(bp), h)
-            elif bkind == "note":
-                deck.place(r_note(bp), h)
-            elif bkind == "subhead":
-                deck.place(r_subhead(bp), h)
-            elif bkind == "agenda":
-                for num, t, d in bp:
-                    deck.place(r_agenda_row(num, t, d), h)
-            first = False
 
-    if blocks.close:
-        close_slide(prs, deck, blocks.close)
+        if kind == "note":
+            s = em.slide("Quote / Statement")
+            em.put(s, "Quote", payload); em.put(s, "Attribution", title)
+            em.finish(s); first_done = True; continue
 
-    prs.save(out)
-    return deck.page
+        if kind == "callout":
+            s = em.slide("Quote / Statement")
+            em.put(s, "Quote", payload.get("body") or payload.get("title"))
+            em.put(s, "Attribution", payload.get("title") or title)
+            em.finish(s); first_done = True; continue
+
+        if kind == "stats":
+            cells = payload
+            if len(cells) == 3:
+                s = em.slide("Big Stats")
+                em.put(s, "Title", t); em.put(s, "Subtitle", s_)
+                for j, (n_, l_) in enumerate(cells, start=1):
+                    em.put(s, "Stat %d Number" % j, n_)
+                    em.put(s, "Stat %d Label" % j, l_)
+                em.finish(s, key)
+            else:
+                emit_cards(em, title, t, s_, [(n_, l_) for n_, l_ in cells], key)
+            first_done = True; continue
+
+        if kind == "tiers" and len(payload) == 3:
+            s = em.slide("Pricing / Tiers")
+            em.put(s, "Title", t); em.put(s, "Subtitle", s_)
+            for j, tr in enumerate(payload, start=1):
+                em.put(s, "Tier %d Name" % j, tr.get("title") or tr.get("tn"))
+                em.put(s, "Tier %d Price" % j, tr.get("tn") or "")
+                em.put(s, "Tier %d Features" % j,
+                       "\n".join(([tr["sub"]] if tr.get("sub") else []) + tr.get("items", [])))
+            em.finish(s, key); first_done = True; continue
+
+        if kind == "roadmap" and len(payload) == 3:
+            s = em.slide("Numbered Steps")
+            em.put(s, "Title", t); em.put(s, "Subtitle", s_)
+            for j, m in enumerate(payload, start=1):
+                em.put(s, "Step %d Number" % j, str(j))
+                em.put(s, "Step %d Heading" % j, m.get("title") or m.get("month"))
+                em.put(s, "Step %d Detail" % j,
+                       "\n".join(([m["month"]] if m.get("month") else []) + m.get("items", [])))
+            em.finish(s, key); first_done = True; continue
+
+        if kind in ("tiers", "roadmap"):
+            cards = []
+            for x in payload:
+                head_ = x.get("title") or x.get("month") or x.get("tn") or ""
+                body_ = "\n".join(([x.get("sub") or x.get("month") or ""] if (x.get("sub") or x.get("month")) else [])
+                                  + x.get("items", []))
+                cards.append((head_, body_))
+            emit_cards(em, title, t, s_, cards, key)
+            first_done = True; continue
+
+        if kind == "scorecard":
+            cards = [((c["pct"] + "  " + c["label"]).strip(),
+                      "\n".join([x for x in (c.get("note"), c.get("foot")) if x]))
+                     for c in payload]
+            emit_cards(em, title, t, s_, cards, key)
+            first_done = True; continue
+
+        if kind == "cards":
+            cards = [(h or "", b or "") for h, b in payload["cards"]]
+            emit_cards(em, title, t, s_, cards, key)
+            first_done = True; continue
+
+        if kind == "agenda":
+            rows = ["%s  %s — %s" % (n_, ti, de) for n_, ti, de in payload]
+            half = (len(rows) + 1) // 2
+            s = em.slide("Two Content")
+            em.put(s, "Title", t); em.put(s, "Subtitle", s_)
+            em.put(s, "Left Content", "\n".join(rows[:half]))
+            em.put(s, "Right Content", "\n".join(rows[half:]))
+            em.finish(s, key); first_done = True; continue
+
+        if kind == "bars":
+            heads = ["", ""]
+            rws = [[lab, val] for lab, val, _w, _g, _y in payload]
+            for part in chunks(rws, 8):
+                s = em.slide("Table")
+                em.put(s, "Title", t); em.put(s, "Subtitle", s_)
+                em.table(s, heads, part); em.finish(s, key)
+                t, s_ = cont, ""
+            first_done = True; continue
+
+        if kind == "table":
+            heads, rws = payload["heads"], payload["rows"]
+            per = max(1, int((TB_BOT - TB_T - HDR_H) / ROW_MIN))
+            for part in chunks(rws, per):
+                s = em.slide("Table")
+                em.put(s, "Title", t); em.put(s, "Subtitle", s_)
+                em.table(s, heads, part); em.finish(s, key)
+                t, s_ = cont, ""
+            first_done = True; continue
+
+def build(src, out, tpl=TPL, keep_checks=False):
+    B = parse_deck(src, keep_checks)
+    em = Emitter(tpl)
+
+    if B.hero:
+        s = em.slide("Title Slide")
+        em.put(s, "Title", B.hero["title"])
+        lede = B.hero.get("lede") or ""
+        pull = len(lede) > 90
+        # A short lede is a subtitle. A long one is a pull-quote, and squeezing it
+        # into a one-line strip shrinks it to ~7pt -- it earns its own slide.
+        em.put(s, "Subtitle", B.hero["eyebrow"] if pull else (lede or B.hero["eyebrow"]))
+        em.put(s, "Date / Prepared by",
+               "  ·  ".join("%s %s" % (l, v) for l, v in B.hero["meta"] if v))
+        em.finish(s)
+        if pull:
+            q = em.slide("Quote / Statement")
+            em.put(q, "Quote", lede)
+            em.finish(q)          # no attribution invented for an unsourced lede
+
+    last_ch = ""
+    for kind, payload in B.items:
+        if kind == "chapter":
+            last_ch = payload["title"]
+            s = em.slide("Section Marker")
+            em.put(s, "Section Label", payload.get("eyebrow") or payload.get("num"))
+            em.put(s, "Section Title", payload["title"])
+            em.put(s, "Section Subtitle", payload.get("sub"))
+            em.finish(s)
+        else:
+            emit_blocks(em, payload["head"], payload["blocks"], last_ch)
+
+    if B.close:
+        s = em.slide("Closing")
+        em.put(s, "Title", B.close.get("title") or "Questions?")
+        cts = B.close.get("contacts") or []
+        if cts:
+            n_, r_, a_ = cts[0]
+            em.put(s, "Name", n_); em.put(s, "Role / Title", r_); em.put(s, "Contact details", a_)
+        if len(cts) > 1:
+            em.put(s, "Second-Column Heading", "Also on the account")
+            em.put(s, "Second-Column Content",
+                   "\n".join("%s — %s" % (n_, a_ or r_) for n_, r_, a_ in cts[1:]))
+        em.finish(s)
+
+    em.prs.save(out)
+    return em
 
 def main():
-    ap = argparse.ArgumentParser(description="FeedSpark HTML deck -> themed 16:9 PPTX")
-    ap.add_argument("html")
-    ap.add_argument("out")
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("src"); ap.add_argument("out")
+    ap.add_argument("--template", default=TPL)
     ap.add_argument("--keep-checks", action="store_true",
-                    help="keep the '?' data-check badges (stripped by default: the "
-                         "PPTX has no toggle to hide them like the web deck does)")
+                    help="keep the `?` data-check badges (dropped by default: the web "
+                         "deck has a toggle to hide them, a .pptx does not)")
+    ap.add_argument("--audit", action="store_true",
+                    help="report layout usage and any text trimmed to fit")
     a = ap.parse_args()
-    blocks = parse_deck(a.html, keep_checks=a.keep_checks)
-    n = build(blocks, a.out)
-    print(f"{a.html} -> {a.out}")
-    print(f"  {len(blocks.items)} top-level blocks -> {n} slides")
+    em = build(a.src, a.out, a.template, a.keep_checks)
+    n = len(em.prs.slides._sldIdLst)
+    print("wrote %s -- %d slides" % (a.out, n))
+    if a.audit:
+        used = {}
+        for s in em.prs.slides:
+            used[s.slide_layout.name] = used.get(s.slide_layout.name, 0) + 1
+        print("\nlayouts used:")
+        for k, v in sorted(used.items(), key=lambda x: -x[1]):
+            print("  %-26s %d" % (k, v))
+        shrunk = [a for a in em.audit if a[4] == 0]
+        cut    = [a for a in em.audit if a[4] > 0]
+        print("\nshrunk to fit: %d   |   still over capacity: %d" % (len(shrunk), len(cut)))
+        for sn, lay, name, scale, dropped in cut:
+            print("  DROPPED slide %-3d %-20s %-22s -%d line(s)" % (sn, lay, name, dropped))
+        tight = sorted(shrunk, key=lambda a: a[3])[:8]
+        if tight:
+            print("\n  tightest fits:")
+            for sn, lay, name, scale, _d in tight:
+                print("    slide %-3d %-20s %-22s %d%%" % (sn, lay, name, round(scale * 100)))
 
 if __name__ == "__main__":
     main()
