@@ -1145,6 +1145,12 @@
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
       "pattern": "alertDigest",
       "pr": 187
+    },
+    {
+      "name": "worker+workflow: thread dismiss is ONE batched KV write (no lost decisions)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "Array.isArray(body.ids)",
+      "pr": 188
     }
   ]
 }

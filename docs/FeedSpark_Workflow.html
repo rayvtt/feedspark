@@ -2792,14 +2792,19 @@ window.addEventListener('load',restore);
         +'<span class="em-ago">'+a+'</span></div>'; }).join('');
     return row;
   }
-  // decide a whole conversation in one click — every member's decision is stored, so no
-  // part of the thread ever re-enters the queue on a later push
-  function decideThread(th,reason){
-    th.all.forEach(function(m){ m.dismissed=true; m.decidedAs=reason||'notask';
-      fetch('/api/gmail/dismiss',{method:'POST',headers:{'content-type':'application/json'},
-        body:JSON.stringify({id:m.id,undo:false,reason:reason||'notask'})})
-        .catch(function(){ toast('Saving a triage decision failed — it may come back on refresh'); }); });
+  // decide a whole conversation in one click. ONE batched request on purpose: a POST per email
+  // meant N concurrent get->put writes to the same KV key on the worker — they clobbered each
+  // other, most decisions were lost, and "cleared" threads resurfaced on the next refresh.
+  function decideMany(ids,reason){
+    gmailItems.forEach(function(g){ if(ids.indexOf(String(g.id))>=0){ g.dismissed=true; g.decidedAs=reason; } });
     renderEmailPanel(); updateGmailState();
+    fetch('/api/gmail/dismiss',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({ids:ids,undo:false,reason:reason})})
+      .then(function(r){ return r.json(); }).then(function(d){ if(!d||!d.ok)toast('Saving the triage decision failed — it may come back on refresh'); })
+      .catch(function(){ toast('Saving the triage decision failed — it may come back on refresh'); });
+  }
+  function decideThread(th,reason){
+    decideMany(th.all.map(function(m){ return String(m.id); }),reason||'notask');
     if(reason==='notask')toast(th.all.length>1?('Thread cleared — '+th.all.length+' emails, not a task'):'Cleared — not a task (find it under “Show triaged”)');
   }
   // optimistic local flip + server-side memory, so the decision survives every future push
@@ -2825,10 +2830,10 @@ window.addEventListener('load',restore);
     if(g.client&&CLIENTS.indexOf(g.client)>=0){ adoptIntoPlan(g.client,task,'Open','',senderName(g.from),1); }
     else { MANUAL.push({client:g.client||'',task:task,owner:senderName(g.from),status:'Open',due:'',esrc:1}); saveManual(); markEsrc(g.client||'',task);
       toast('Saved to Intake — client not recognised: double-click its Client cell to assign one'); }
-    decideEmail(g.id,false,'task');
-    // the rest of the conversation is covered by that one task — mark every sibling decided
-    // too (reason "task"), so no part of the thread comes back on a later push
-    (thread||[]).forEach(function(m){ if(String(m.id)!==String(g.id))decideEmail(m.id,false,'task'); });
+    // the whole conversation is covered by that one task — one BATCHED decision for every
+    // member (parallel per-email posts raced on the worker's KV key and lost decisions)
+    var ids=[String(g.id)]; (thread||[]).forEach(function(m){ if(ids.indexOf(String(m.id))<0)ids.push(String(m.id)); });
+    decideMany(ids,'task');
     renderAll();
   }
   // sender→brand memory: a manual assignment teaches detection — same sender auto-fills next time

@@ -481,17 +481,23 @@ export default {
     // out of the pending queue on every later push; undo:true restores it.
     if (path === '/api/gmail/dismiss' && request.method === 'POST') {
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
-      const id = String(body.id || '').slice(0, 64);
-      if (!id) return json({ ok: false, error: 'missing id' }, 400);
+      // Accept ONE id or a whole thread's ids in one call. The page used to fire a POST per
+      // email when clearing a thread; each request did get->mutate->put on the SAME KV key, so
+      // the concurrent writes clobbered each other and all but one decision were lost —
+      // dismissed threads resurfaced on the next refresh (Ray's report). One request, one write.
+      const ids = (Array.isArray(body.ids) ? body.ids : [body.id])
+        .map((x) => String(x || '').slice(0, 64)).filter(Boolean).slice(0, 50);
+      if (!ids.length) return json({ ok: false, error: 'missing id' }, 400);
       const dis = (await env.EDITS.get('gmaildismissed', 'json')) || {};
       const validReasons = ['briefed', 'task', 'notask'];
-      if (body.undo) delete dis[id];
-      else dis[id] = { t: Date.now(), r: validReasons.includes(body.reason) ? body.reason : 'notask' };
-      const ids = Object.keys(dis);   // prune to the newest 400 decisions
-      if (ids.length > 400) ids.sort((a, b) => (dis[a].t || 0) - (dis[b].t || 0)).slice(0, ids.length - 400).forEach((k) => delete dis[k]);
+      const reason = validReasons.includes(body.reason) ? body.reason : 'notask';
+      ids.forEach((id) => { if (body.undo) delete dis[id]; else dis[id] = { t: Date.now(), r: reason }; });
+      const keys = Object.keys(dis);   // prune to the newest 400 decisions
+      if (keys.length > 400) keys.sort((a, b) => (dis[a].t || 0) - (dis[b].t || 0)).slice(0, keys.length - 400).forEach((k) => delete dis[k]);
       await env.EDITS.put('gmaildismissed', JSON.stringify(dis));
-      logActivity(ctx, env, request, body.undo ? 'gmail-restore' : 'gmail-dismiss', (dis[id] ? dis[id].r + ' · ' : 'not a task · ') + id.slice(0, 24));
-      return json({ ok: true, dismissed: !body.undo });
+      logActivity(ctx, env, request, body.undo ? 'gmail-restore' : 'gmail-dismiss',
+        (body.undo ? '' : reason + ' · ') + (ids.length > 1 ? ids.length + ' emails · ' : '') + ids[0].slice(0, 24));
+      return json({ ok: true, dismissed: !body.undo, n: ids.length });
     }
 
     // ================= Feed Lab: live shopping-feed audit =================
