@@ -60,7 +60,9 @@ window.addEventListener('load',restore);
   .est-mkt{display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px dashed var(--line);cursor:pointer}
   .est-mkt:hover .mkt-code{color:var(--orange-deep)}
   .est-mkt.sel{background:rgba(245,166,35,.08);border-radius:8px;margin:0 -8px;padding:7px 8px}
-  .mkt-code{font-size:12px;font-weight:900;text-transform:uppercase;width:30px;flex:none}
+  .mkt-code{font-size:12px;font-weight:900;text-transform:uppercase;min-width:30px;flex:none;display:inline-flex;align-items:center;gap:5px}
+  .chip-ch{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;border-radius:5px;color:#fff;font-size:9.5px;font-weight:900;padding:0 4px;flex:none;line-height:1}
+  .chip-g{background:#34A853}.chip-fb{background:#1877F2}
   .st-pill{font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;border-radius:100px;padding:3px 9px;flex:none}
   .st-ok{background:#EBF7EF;color:var(--good)}
   .st-warn{background:#FCF1E3;color:var(--orange-ink)}
@@ -257,8 +259,10 @@ window.addEventListener('load',restore);
   <div class="cat-h"><span class="k">02</span><h2>Estate health</h2>
     <span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="scanmsg" id="scan-all-msg"></span>
     <button class="btn pri" id="scan-all">⚡ Scan whole estate</button></span></div>
-  <p class="cat-sub">Every wired feed (master map ∪ dossier-attached), per market. Bars = CL0–4 coverage.
-  Click a market to dissect it below. The cron re-scans ~4 feeds an hour on rotation.</p>
+  <p class="cat-sub">Every wired feed (master map ∪ dossier-attached), per market — two channel sets:
+  <span class="chip-ch chip-g">G</span> <b>Google Shopping</b> and <span class="chip-ch chip-fb">f</span> <b>Facebook</b>
+  (a Facebook catalogue attaches under the market code with the <b>-fb</b> suffix, e.g. <b>gb-fb</b>).
+  Bars = CL0–4 coverage. Click a market to dissect it below. The cron re-scans ~4 feeds an hour on rotation.</p>
   <div class="est-grid" id="est-grid"><div class="panel"><span class="muted">Loading…</span></div></div>
 </div></section>
 
@@ -343,6 +347,13 @@ window.addEventListener('load',restore);
   }
   function keyOf(c, m) { return c + '|' + m; }
   function parts(k) { var i = k.indexOf('|'); return { client: k.slice(0, i), mkt: k.slice(i + 1) }; }
+  // channels: market suffix -fb = Facebook catalogue feed (blue set); everything else = Google Shopping (green set)
+  function chOf(m) { return /-fb$/.test(String(m || '')) ? 'fb' : 'g'; }
+  function mktBase(m) { return String(m || '').replace(/-fb$/, ''); }
+  function chChip(m) { return chOf(m) === 'fb'
+    ? '<span class="chip-ch chip-fb" title="Facebook catalogue feed">f</span>'
+    : '<span class="chip-ch chip-g" title="Google Shopping feed">G</span>'; }
+  function mktDisp(m) { return mktBase(m).toUpperCase() + (chOf(m) === 'fb' ? ' · FB' : ''); }
   function feedList() {
     return Object.keys(ESTATE.feeds).sort().map(function (k) { return ESTATE.feeds[k]; });
   }
@@ -367,6 +378,11 @@ window.addEventListener('load',restore);
   function renderEstate() {
     var byClient = {};
     feedList().forEach(function (f) { (byClient[f.client] = byClient[f.client] || []).push(f); });
+    Object.keys(byClient).forEach(function (c) {
+      byClient[c].sort(function (a, b) {
+        return (chOf(a.mkt) === 'fb' ? 1 : 0) - (chOf(b.mkt) === 'fb' ? 1 : 0) || mktBase(a.mkt).localeCompare(mktBase(b.mkt));
+      });
+    });
     var clients = Object.keys(byClient).sort();
     if (!clients.length) { $('est-grid').innerHTML = '<div class="panel"><span class="muted">No feeds wired yet — attach one in Feed Lab or the brand dossier.</span></div>'; return; }
     var h = '';
@@ -375,7 +391,7 @@ window.addEventListener('load',restore);
       byClient[c].forEach(function (f) {
         var k = keyOf(f.client, f.mkt), st = statusOf(f);
         h += '<div class="est-mkt' + (SEL === k ? ' sel' : '') + '" data-k="' + esc(k) + '">' +
-          '<span class="mkt-code">' + esc(f.mkt.toUpperCase()) + '</span>' +
+          '<span class="mkt-code">' + chChip(f.mkt) + esc(mktBase(f.mkt).toUpperCase()) + '</span>' +
           '<span class="st-pill st-' + st + '">' + (st === 'never' ? 'not scanned' : st) + '</span>' +
           covBars(f) +
           '<span class="est-meta">' + (f.t ? fmt(f.rows) + ' rows · ' + ago(f.t) : (f.err ? esc(f.err).slice(0, 40) : '—')) +
@@ -413,7 +429,7 @@ window.addEventListener('load',restore);
     var h = '';
     rows.forEach(function (r) {
       h += '<div class="al-row"><span class="al-sev ' + r.a.sev + '">' + r.a.sev + '</span>' +
-        '<span class="al-feed" data-k="' + esc(r.k) + '">' + esc(r.client) + ' · ' + esc(r.mkt.toUpperCase()) + '</span>' +
+        '<span class="al-feed" data-k="' + esc(r.k) + '">' + esc(r.client) + ' · ' + esc(mktBase(r.mkt).toUpperCase()) + '</span> ' + chChip(r.mkt) +
         '<span class="al-msg">' + esc(r.a.msg) + '</span>' +
         '<span class="al-t">' + ago(r.t) + '</span>' +
         '<button class="btn" data-ack="' + esc(r.k) + '" title="Accept the current feed as the new baseline and clear this feed’s flags">✓ Expected — rebaseline</button></div>';
@@ -482,7 +498,7 @@ window.addEventListener('load',restore);
     var d = CACHE[k];
     if (!d || !d.snapshot) { $('det-panel').innerHTML = '<span class="muted">No snapshot yet.</span>'; return; }
     var s = d.snapshot, b = d.baseline, p = parts(k);
-    var h = '<div class="det-head"><h3>' + esc(s.client) + ' · ' + esc((s.market || p.mkt).toUpperCase()) + '</h3>' +
+    var h = '<div class="det-head"><h3>' + esc(s.client) + ' · ' + esc(mktBase(s.market || p.mkt).toUpperCase()) + '</h3>' + chChip(s.market || p.mkt) +
       '<span class="det-stats"><span><b>' + fmt(s.rows) + '</b> rows</span>' +
       '<span>scanned <b>' + ago(s.t) + '</b></span>' +
       (b ? '<span>baseline <b>' + new Date(b.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + '</b>' +
@@ -560,7 +576,7 @@ window.addEventListener('load',restore);
         var ref = (L.values || []).filter(function (pr) { return pr[1] >= floor; });
         if (!ref.length) { wtMsg('✗ no significant values on this label right now — nothing to arm'); return; }
         openBuilder({ client: p2.client, mkt: p2.mkt, label: key, value: null, vs: null, ref: ref, refSeg: 0,
-          title: p2.client + ' · ' + p2.mkt.toUpperCase() + ' — CL' + key.slice(-1) + ' (' + ref.length + ' significant values)' });
+          title: p2.client + ' · ' + mktDisp(p2.mkt) + ' — CL' + key.slice(-1) + ' (' + ref.length + ' significant values)' });
       };
     });
     if (CROSS && CROSS.k === k) { renderCross(); markSel(); }
@@ -661,7 +677,7 @@ window.addEventListener('load',restore);
       var p2 = parts(CROSS.k), byN = 'CL' + CROSS.by.slice(-1), vsN2 = 'CL' + CROSS.vs.slice(-1);
       openBuilder({ client: p2.client, mkt: p2.mkt, label: CROSS.by, value: CROSS.value, vs: CROSS.vs,
         ref: xd.rows || [], refSeg: xd.segment || 0,
-        title: p2.client + ' · ' + p2.mkt.toUpperCase() + ' — ' + byN + ' “' + CROSS.value + '” → ' + vsN2 + ' (' + (xd.rows || []).length + ' values)' });
+        title: p2.client + ' · ' + mktDisp(p2.mkt) + ' — ' + byN + ' “' + CROSS.value + '” → ' + vsN2 + ' (' + (xd.rows || []).length + ' values)' });
     };
     if (BUILDER) appendBuilder(slot);
   }
@@ -800,7 +816,7 @@ window.addEventListener('load',restore);
       var dot = !r.enabled ? 'r-off' : (fired ? 'r-fired' : (sus ? 'r-sus' : (r.lastRun ? 'r-ok' : 'r-never')));
       var dnames = (r.dests || []).map(function (id) { return (DESTS[id] || {}).name || '?'; }).join(', ');
       h += '<div class="rule-row"><span class="r-dot ' + dot + '" title="' + (fired ? fired + ' watched value(s) currently DOWN' : (sus ? sus + ' suspect — confirming next check' : (r.enabled ? 'healthy' : 'paused'))) + '"></span>' +
-        '<span class="rule-scope">' + esc(r.client) + ' · ' + esc(String(r.mkt).toUpperCase()) + ' — ' + esc(ruleScopeText(r)) + '</span>' +
+        '<span class="rule-scope">' + chChip(r.mkt) + ' ' + esc(r.client) + ' · ' + esc(mktBase(r.mkt).toUpperCase()) + ' — ' + esc(ruleScopeText(r)) + '</span>' +
         '<span style="margin-left:auto;display:flex;gap:6px">' +
         '<button class="btn" data-rtog="' + esc(k) + '">' + (r.enabled ? '⏸ Pause' : '▶ Enable') + '</button>' +
         '<button class="btn" data-rrun="' + esc(k) + '" title="Live-check this feed’s watches now">Check now</button>' +
@@ -851,7 +867,7 @@ window.addEventListener('load',restore);
     Array.prototype.forEach.call(document.querySelectorAll('[data-redit]'), function (el) {
       el.onclick = function () {
         var k = el.getAttribute('data-redit'); var r = WATCHES[k]; if (!r) return;
-        var v = prompt('Fire threshold for ' + r.client + ' · ' + String(r.mkt).toUpperCase() + ' — ' + ruleScopeText(r) +
+        var v = prompt('Fire threshold for ' + r.client + ' · ' + mktDisp(r.mkt) + ' — ' + ruleScopeText(r) +
           '\n\n0  = fire only when a watched value is GONE\n1–99 = also fire when it drops by that % or more', String(r.dropPct || 0));
         if (v == null) return;
         var n = Math.round(+v);

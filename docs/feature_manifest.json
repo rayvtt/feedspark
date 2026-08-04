@@ -1182,6 +1182,20 @@
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
       "pattern": "isImplausible",
       "pr": 192
+    },
+    {
+      "name": "LabelGuard: Facebook channel set (-fb markets, blue chips)",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "chip-fb",
+      "min": 3,
+      "pr": 194
+    },
+    {
+      "name": "labelguard engine: channel-aware feed naming",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "dispFeed",
+      "min": 4,
+      "pr": 194
     }
   ]
 }

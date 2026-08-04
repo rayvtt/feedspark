@@ -26,6 +26,19 @@ export const VERSION = '1.0.0';
 
 export const LABEL_KEYS = ['custom_label_0', 'custom_label_1', 'custom_label_2', 'custom_label_3', 'custom_label_4'];
 
+/* ---------------- channels: Google Shopping vs Facebook/Meta ---------------------------
+ * A Facebook catalogue feed rides the SAME rails as everything else (Meta feeds carry
+ * custom_label_0..4 too) — it is simply attached under a market code with the `-fb`
+ * suffix: `gb` = Google Shopping GB, `gb-fb` = Facebook GB. Every KV key, sweep, watch,
+ * cross query and report flows through unchanged; only display splits the two sets
+ * (Google green vs Facebook blue on the page). */
+export function chOf(mkt) { return /-fb$/.test(String(mkt || '')) ? 'facebook' : 'google'; }
+export function dispFeed(client, mkt) {
+  const m = String(mkt || 'gb');
+  const base = m.replace(/-fb$/, '').toUpperCase();
+  return (client || '') + ' · ' + base + (chOf(m) === 'facebook' ? ' · Facebook' : '');
+}
+
 // Alert thresholds. cov* are percentage POINTS of coverage; *Drop fractions.
 export const TH = {
   rowDropCrit: 0.30,   // feed lost ≥30% of rows -> crit
@@ -357,7 +370,7 @@ export function evalWatch(rule, live, now) {
 export function alertDigest(rule, fires, opts) {
   opts = opts || {};
   const CL = (k) => 'CL' + String(k).slice(-1);
-  const feed = (rule.client || '') + ' · ' + String(rule.mkt || 'gb').toUpperCase();
+  const feed = dispFeed(rule.client, rule.mkt);
   const scope = rule.vs
     ? CL(rule.label) + ' "' + rule.value + '" → ' + CL(rule.vs)
     : CL(rule.label) + (rule.value ? ' "' + rule.value + '"' : '');
@@ -411,7 +424,7 @@ export function buildReport(inp) {
     const scope = r.vs ? CL(r.label) + ' "' + r.value + '" → ' + CL(r.vs) + ' (' + (r.ref || []).length + ' values)'
       : CL(r.label) + (r.value ? ' "' + r.value + '"' : ' (' + (r.ref || []).length + ' values)');
     const who = (r.dests || []).map((id) => ((dests || {})[id] || {}).name || '?').join(', ');
-    const head = r.client + ' · ' + String(r.mkt).toUpperCase() + ' — ' + scope +
+    const head = dispFeed(r.client, r.mkt) + ' — ' + scope +
       ' · ' + (r.dropPct ? 'gone or -' + r.dropPct + '%' : 'gone only') +
       ' · ' + ((r.sched || 'hourly') === 'twice' ? '07:00 & 17:00 GMT' : 'hourly') +
       (r.enabled ? '' : ' · PAUSED') + ' → ' + who;
@@ -439,7 +452,7 @@ export function buildReport(inp) {
   for (const k of fKeys) {
     const e = idx[k] || {};
     const cov = LABEL_KEYS.map((lk, i) => (e.cov && e.cov[lk] != null ? 'CL' + i + ' ' + e.cov[lk] + '%' : null)).filter(Boolean).join(' · ');
-    L.push('  ' + badge(e) + ' ' + k.replace('|', ' · ').toUpperCase() + ' — ' + (e.rows != null ? e.rows + ' rows' : 'no scan') +
+    L.push('  ' + badge(e) + ' ' + dispFeed(k.split('|')[0], k.split('|')[1]) + ' — ' + (e.rows != null ? e.rows + ' rows' : 'no scan') +
       (cov ? ' · ' + cov : '') + ((e.nCrit || e.nWarn) ? ' · ' + (e.nCrit || 0) + ' crit / ' + (e.nWarn || 0) + ' warn' : ''));
   }
   L.push('');
@@ -452,7 +465,7 @@ export function buildReport(inp) {
     for (const a of ((alerts[k] || {}).alerts || [])) {
       if (a.sev === 'info') continue;
       aN++;
-      if (aLines.length < 15) aLines.push('  [' + String(a.sev).toUpperCase() + '] ' + k.replace('|', ' · ').toUpperCase() + ' — ' + a.msg);
+      if (aLines.length < 15) aLines.push('  [' + String(a.sev).toUpperCase() + '] ' + dispFeed(k.split('|')[0], k.split('|')[1]) + ' — ' + a.msg);
     }
   }
   L.push('ACTIVE BASELINE ALERTS (' + aN + ')');

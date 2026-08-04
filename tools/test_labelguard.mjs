@@ -279,6 +279,17 @@ const codes = (alerts) => alerts.map((a) => a.sev + ':' + a.code).sort();
   eq('digest with no fires -> no messages', LG.alertDigest(rule, [], {}), []);
 }
 
+/* ---------- channels: -fb market suffix ---------- */
+eq('chOf google', LG.chOf('gb'), 'google');
+eq('chOf facebook', LG.chOf('gb-fb'), 'facebook');
+eq('dispFeed google', LG.dispFeed('Reiss', 'gb'), 'Reiss · GB');
+eq('dispFeed facebook', LG.dispFeed('Visual K', 'gb-fb'), 'Visual K · GB · Facebook');
+{
+  const fbRule = { client: 'Visual K', mkt: 'gb-fb', label: 'custom_label_0', value: 'Best Sellers', vs: 'custom_label_2', ref: [['x', 5]] };
+  const msg = LG.alertDigest(fbRule, [{ kind: 'gone', value: 'x', was: 5, now: 0 }], {})[0];
+  ok('digest names the Facebook channel', msg.indexOf('Visual K · GB · Facebook') >= 0, msg);
+}
+
 /* ---------- isImplausible (the impossible-answer guard) ---------- */
 {
   const xr = { vs: 'custom_label_2', ref: [['a', 10], ['b', 5]] };
@@ -321,8 +332,8 @@ const codes = (alerts) => alerts.map((a) => a.sev + ':' + a.code).sort();
     rep.indexOf('broken: `women - fp`') >= 0 && rep.indexOf('[DOWN]') < rep.indexOf('[SUSPECT]'), rep);
   ok('report: suspect note', rep.indexOf('confirms or clears next check') >= 0, rep);
   ok('report: schedule + threshold shown', rep.indexOf('07:00 & 17:00 GMT') >= 0 && rep.indexOf('gone or -20%') >= 0, rep);
-  ok('report: estate crit first with coverage', rep.indexOf('[CRIT] REISS · GB — 22496 rows · CL0 83.3% · CL1 100%') >= 0 &&
-    rep.indexOf('[CRIT]') < rep.indexOf('[ok] SCHUH'), rep);
+  ok('report: estate crit first with coverage', rep.indexOf('[CRIT] Reiss · GB — 22496 rows · CL0 83.3% · CL1 100%') >= 0 &&
+    rep.indexOf('[CRIT]') < rep.indexOf('[ok] Schuh'), rep);
   ok('report: baseline alerts, info excluded', rep.indexOf('ACTIVE BASELINE ALERTS (1)') >= 0 &&
     rep.indexOf('"clearance" GONE') >= 0 && rep.indexOf('noise that must not appear') < 0, rep);
   ok('report: link', rep.indexOf('https://x/labels') >= 0, rep);
