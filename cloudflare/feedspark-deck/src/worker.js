@@ -27,7 +27,7 @@
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx } from "./briefmatch.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { LABEL_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertText } from "./labelguard.js";
+import { LABEL_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -1507,7 +1507,7 @@ async function labelWatchRun(env, onlyFeedKey) {
     const r = rules[k];
     return r && r.enabled && (!onlyFeedKey || lgKey(r.client, r.mkt) === onlyFeedKey);
   }).sort();
-  if (!keys.length) return { ok: true, checked: 0, fired: 0, results: [] };
+  if (!keys.length) return { ok: true, checked: 0, fired: 0, suspects: 0, results: [] };
   const MAXRULES = 10;
   let start = 0;
   if (keys.length > MAXRULES && !onlyFeedKey) {
@@ -1515,7 +1515,7 @@ async function labelWatchRun(env, onlyFeedKey) {
     start = (((cur.i | 0) % keys.length) + keys.length) % keys.length;
     await env.EDITS.put('labelwatchcur', JSON.stringify({ i: (start + MAXRULES) % keys.length }));
   }
-  let checked = 0, fired = 0;
+  let checked = 0, fired = 0, suspects = 0;
   const results = [], srcCache = {};
   for (let i = 0; i < Math.min(MAXRULES, keys.length); i++) {
     const key = keys[(start + i) % keys.length];
@@ -1530,19 +1530,24 @@ async function labelWatchRun(env, onlyFeedKey) {
         : await labelPivot(fetch, src, rule.label);
       const ev = evalWatch(rule, live, now);
       rule.state = ev.state; rule.lastRun = now; rule.lastErr = '';
-      checked++;
-      for (const fire of ev.fires) {
-        fired++;
+      checked++; suspects += ev.suspects || 0;
+      if (ev.fires.length) {
+        fired += ev.fires.filter((f) => f.kind !== 'recovered').length;
         const link = 'https://feedspark.ray-vtt.workers.dev/labels#' + encodeURIComponent(fk);
+        // ONE digest per rule per check (alert + recovery messages at most), never per value
+        const msgs = alertDigest(rule, ev.fires, { link });
         for (const dId of (rule.dests || [])) {
           const dest = dests[dId]; if (!dest) continue;
-          let text = alertText(rule, fire, { link });
-          if (dest.mention && fire.kind !== 'recovered') text = dest.mention + ' ' + text;
-          await sendPing(env, dest, text);
+          for (const m of msgs) {
+            const isAlert = m.indexOf('HIGH PRIORITY') >= 0;
+            await sendPing(env, dest, (isAlert && dest.mention) ? dest.mention + ' ' + m : m);
+          }
         }
-        await logAlertActivity(env, rule.client + ' ' + rule.mkt + ' · ' + fire.kind + ' · ' + String(fire.value).slice(0, 40));
-        results.push({ key, fire: fire.kind, value: fire.value, was: fire.was, now: fire.now });
+        await logAlertActivity(env, rule.client + ' ' + rule.mkt + ' · ' +
+          ev.fires.map((f) => f.kind + ':' + String(f.value).slice(0, 20)).join(', ').slice(0, 70));
+        ev.fires.forEach((f) => results.push({ key, fire: f.kind, value: f.value, was: f.was, now: f.now }));
       }
+      if (ev.suspects) results.push({ key, suspect: ev.suspects, note: 'first sighting — confirms or clears on the next check' });
       envx.meta[key] = { t: now };
     } catch (e) {
       rule.lastRun = now; rule.lastErr = String((e && e.message) || e).slice(0, 120);
@@ -1551,7 +1556,7 @@ async function labelWatchRun(env, onlyFeedKey) {
     }
   }
   await env.EDITS.put('labelwatch', JSON.stringify(envx));
-  return { ok: true, checked, fired, results: results.slice(0, 30) };
+  return { ok: true, checked, fired, suspects, results: results.slice(0, 30) };
 }
 
 // hourly rotation: BATCH feeds per firing keeps the combined cron (plan warm + this sweep)

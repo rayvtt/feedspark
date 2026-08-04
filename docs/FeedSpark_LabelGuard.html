@@ -151,9 +151,11 @@ window.addEventListener('load',restore);
   #da-name{flex:1 1 120px}#da-target{flex:2 1 190px}
   .d-mini{font-size:10.5px;font-weight:800;color:var(--muted)}
   .r-dot{width:9px;height:9px;border-radius:50%;flex:none}
-  .r-ok{background:var(--good)}.r-fired{background:var(--risk)}.r-off{background:var(--muted);opacity:.5}.r-never{background:var(--line)}
+  .r-ok{background:var(--good)}.r-fired{background:var(--risk)}.r-sus{background:var(--orange)}.r-off{background:var(--muted);opacity:.5}.r-never{background:var(--line)}
   .rule-scope{font-weight:800}
   .rule-sub{font-size:11px;color:var(--muted);font-weight:700;width:100%;padding-left:18px}
+  .r-edit{cursor:pointer;border-bottom:1px dashed var(--line)}
+  .r-edit:hover{color:var(--orange-deep);border-bottom-color:var(--orange)}
   .rule-row .btn,.dest-row .btn{padding:4px 9px;font-size:11px}
   .wt-form{background:var(--wash);border:1px dashed var(--orange);border-radius:12px;padding:12px 14px;margin-top:10px;font-size:12.5px}
   .wt-form .wt-t{font-weight:900;margin-bottom:8px}
@@ -220,7 +222,7 @@ window.addEventListener('load',restore);
 [data-theme=dark] .xchip.on{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
 [data-theme=dark] tr.rowv:hover td{background:rgba(245,166,35,.09)}
 [data-theme=dark] tr.rowv.xsel td{background:rgba(245,166,35,.16)}
-[data-theme=dark] .dest-add input,[data-theme=dark] .dest-add select,[data-theme=dark] .wt-form select{background:#161922;color:var(--ink);border-color:var(--line)}
+[data-theme=dark] .dest-add input,[data-theme=dark] .dest-add select,[data-theme=dark] .wt-form select,[data-theme=dark] .wt-form input{background:#161922;color:var(--ink);border-color:var(--line)}
 [data-theme=dark] .d-ic{background:#20242E;border-color:var(--line)}
 [data-theme=dark] .wt-form{background:#181B22;border-color:rgba(245,166,35,.4)}
 [data-theme=dark] ::-webkit-scrollbar-thumb{background:#2C3039}
@@ -770,9 +772,9 @@ window.addEventListener('load',restore);
     if (r.value) return CL(r.label) + ' “' + r.value + '”';
     return CL(r.label) + ' — ' + (r.ref || []).length + ' values';
   }
-  function ruleFiredCount(r) {
+  function ruleStCount(r, which) {
     var st = r.state || {}, n = 0;
-    Object.keys(st).forEach(function (v) { if (st[v] && st[v].st === 'fired') n++; });
+    Object.keys(st).forEach(function (v) { if (st[v] && st[v].st === which) n++; });
     return n;
   }
   function renderRules() {
@@ -780,18 +782,19 @@ window.addEventListener('load',restore);
     if (!keys.length) { $('rule-list').innerHTML = '<span class="muted">No watches yet. Open a feed above and hit 🔔 on a label card or on a cross breakdown — e.g. Reiss · GB CL0 “Best Sellers” → CL2.</span>'; return; }
     var h = '';
     keys.forEach(function (k) {
-      var r = WATCHES[k] || {}; var fired = ruleFiredCount(r);
-      var dot = !r.enabled ? 'r-off' : (fired ? 'r-fired' : (r.lastRun ? 'r-ok' : 'r-never'));
+      var r = WATCHES[k] || {}; var fired = ruleStCount(r, 'fired'), sus = ruleStCount(r, 'suspect');
+      var dot = !r.enabled ? 'r-off' : (fired ? 'r-fired' : (sus ? 'r-sus' : (r.lastRun ? 'r-ok' : 'r-never')));
       var dnames = (r.dests || []).map(function (id) { return (DESTS[id] || {}).name || '?'; }).join(', ');
-      h += '<div class="rule-row"><span class="r-dot ' + dot + '" title="' + (fired ? fired + ' watched value(s) currently DOWN' : (r.enabled ? 'healthy' : 'paused')) + '"></span>' +
+      h += '<div class="rule-row"><span class="r-dot ' + dot + '" title="' + (fired ? fired + ' watched value(s) currently DOWN' : (sus ? sus + ' suspect — confirming next check' : (r.enabled ? 'healthy' : 'paused'))) + '"></span>' +
         '<span class="rule-scope">' + esc(r.client) + ' · ' + esc(String(r.mkt).toUpperCase()) + ' — ' + esc(ruleScopeText(r)) + '</span>' +
         '<span style="margin-left:auto;display:flex;gap:6px">' +
         '<button class="btn" data-rtog="' + esc(k) + '">' + (r.enabled ? '⏸ Pause' : '▶ Enable') + '</button>' +
         '<button class="btn" data-rrun="' + esc(k) + '" title="Live-check this feed’s watches now">Check now</button>' +
         '<button class="btn" data-rarm="' + esc(k) + '" title="Re-capture the reference set from the live feed">↻ Re-arm</button>' +
         '<button class="btn" data-rdel="' + esc(k) + '">✕</button></span>' +
-        '<span class="rule-sub">' + (fired ? '<b style="color:var(--risk)">' + fired + ' DOWN</b> · ' : '') +
-        (r.dropPct ? 'gone or −' + r.dropPct + '%' : 'gone only') + ' → ' + esc(dnames || 'no destinations!') +
+        '<span class="rule-sub">' + (fired ? '<b style="color:var(--risk)">' + fired + ' DOWN</b> · ' : '') + (sus ? '<b style="color:var(--orange-ink)">' + sus + ' suspect</b> · ' : '') +
+        '<span class="r-edit" data-redit="' + esc(k) + '" title="Change when this rule fires (0 = only when GONE, 1–99 = also on a −% drop)">' +
+        (r.dropPct ? 'gone or −' + r.dropPct + '%' : 'gone only') + ' ✎</span> → ' + esc(dnames || 'no destinations!') +
         ' · checked ' + (r.lastRun ? ago(r.lastRun) : 'never') + (r.lastErr ? ' · <span style="color:var(--risk)">' + esc(r.lastErr) + '</span>' : '') + '</span></div>';
     });
     $('rule-list').innerHTML = h;
@@ -812,12 +815,25 @@ window.addEventListener('load',restore);
         fetch(API + '/api/labels/watch/run?client=' + encodeURIComponent(r.client) + '&market=' + encodeURIComponent(r.mkt), { method: 'POST' })
           .then(function (x) { return x.json(); })
           .then(function (d) { el.disabled = false; el.textContent = 'Check now';
-            wtMsg(d.ok ? ('✓ checked ' + d.checked + ' rule(s) · ' + d.fired + ' ping(s) fired') : ('✗ ' + (d.error || 'failed'))); loadRouting(); })
+            wtMsg(d.ok ? ('✓ checked ' + d.checked + ' rule(s) · ' + d.fired + ' ping(s) fired' + (d.suspects ? ' · ' + d.suspects + ' suspect — confirms or clears next check' : '')) : ('✗ ' + (d.error || 'failed'))); loadRouting(); })
           .catch(function () { el.disabled = false; el.textContent = 'Check now'; wtMsg('✗ network'); });
       };
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-rarm]'), function (el) {
       el.onclick = function () { rearmRule(el.getAttribute('data-rarm'), el); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-redit]'), function (el) {
+      el.onclick = function () {
+        var k = el.getAttribute('data-redit'); var r = WATCHES[k]; if (!r) return;
+        var v = prompt('Fire threshold for ' + r.client + ' · ' + String(r.mkt).toUpperCase() + ' — ' + ruleScopeText(r) +
+          '\n\n0  = fire only when a watched value is GONE\n1–99 = also fire when it drops by that % or more', String(r.dropPct || 0));
+        if (v == null) return;
+        var n = Math.round(+v);
+        if (!(n >= 0 && n <= 99)) { wtMsg('✗ threshold must be 0–99'); return; }
+        r.dropPct = n;
+        var o = {}; o[k] = r;
+        putStore('/api/labels/watch', o).then(function () { wtMsg('✓ threshold now ' + (n ? 'gone or −' + n + '%' : 'gone only')); loadRouting(); });
+      };
     });
   }
 
@@ -853,7 +869,7 @@ window.addEventListener('load',restore);
     fetch(API + '/api/labels/watch/run', { method: 'POST' })
       .then(function (r) { return r.json(); })
       .then(function (d) { btn.disabled = false;
-        wtMsg(d.ok ? ('✓ checked ' + d.checked + ' rule(s) · ' + d.fired + ' ping(s) fired') : ('✗ ' + (d.error || 'failed'))); loadRouting(); })
+        wtMsg(d.ok ? ('✓ checked ' + d.checked + ' rule(s) · ' + d.fired + ' ping(s) fired' + (d.suspects ? ' · ' + d.suspects + ' suspect — confirms or clears next check' : '')) : ('✗ ' + (d.error || 'failed'))); loadRouting(); })
       .catch(function () { btn.disabled = false; wtMsg('✗ network'); });
   };
 
@@ -868,7 +884,16 @@ window.addEventListener('load',restore);
       return h;
     }
     h += '<div style="margin-bottom:6px">Fire when a watched value is ' +
-      '<select id="wb-cond"><option value="0">GONE only</option><option value="50" selected>gone or −50%</option><option value="30">gone or −30%</option></select>' +
+      '<select id="wb-cond">' +
+        '<option value="0">GONE only</option>' +
+        '<option value="10">gone or −10%</option>' +
+        '<option value="20">gone or −20%</option>' +
+        '<option value="30">gone or −30%</option>' +
+        '<option value="50" selected>gone or −50%</option>' +
+        '<option value="75">gone or −75%</option>' +
+        '<option value="custom">custom %…</option>' +
+      '</select>' +
+      '<span id="wb-custom-wrap" style="display:none"> gone or −<input type="number" id="wb-custom" min="1" max="99" step="1" value="40" style="width:58px;font:inherit;font-size:12px;padding:6px 7px;border:1px solid var(--line);border-radius:8px">%</span>' +
       ' on the hourly live check. Ping:</div><div>';
     destIds.forEach(function (id) {
       h += '<label><input type="checkbox" class="wb-d" value="' + esc(id) + '"> ' + (TYPE_IC[(DESTS[id] || {}).type] || '') + ' ' + esc((DESTS[id] || {}).name || id) + '</label>';
@@ -884,14 +909,23 @@ window.addEventListener('load',restore);
     while (div.firstChild) slot.appendChild(div.firstChild);
     var cancel = document.getElementById('wb-cancel');
     if (cancel) cancel.onclick = function () { BUILDER = null; slotSync(); };
+    var condSel = document.getElementById('wb-cond');
+    if (condSel) condSel.onchange = function () {
+      document.getElementById('wb-custom-wrap').style.display = condSel.value === 'custom' ? '' : 'none';
+    };
     var save = document.getElementById('wb-save');
     if (save) save.onclick = function () {
       var dests = Array.prototype.map.call(document.querySelectorAll('.wb-d:checked'), function (el) { return el.value; });
       if (!dests.length) { wtMsg('✗ pick at least one destination'); return; }
+      var condV = document.getElementById('wb-cond').value, dropPct;
+      if (condV === 'custom') {
+        dropPct = Math.round(+(document.getElementById('wb-custom').value));
+        if (!(dropPct >= 1 && dropPct <= 99)) { wtMsg('✗ custom threshold must be 1–99%'); return; }
+      } else dropPct = +condV || 0;
       var b = BUILDER;
       var id = 'w_' + Date.now().toString(36);
       var rule = { id: id, client: b.client, mkt: b.mkt, label: b.label, value: b.value || null, vs: b.vs || null,
-        ref: b.ref || [], refSeg: b.refSeg || 0, dropPct: +(document.getElementById('wb-cond').value) || 0,
+        ref: b.ref || [], refSeg: b.refSeg || 0, dropPct: dropPct,
         dests: dests, enabled: true, repingH: 24, state: {}, created: Date.now() };
       var o = {}; o[b.client + '|' + b.mkt + '|' + id] = rule;
       putStore('/api/labels/watch', o).then(function () {

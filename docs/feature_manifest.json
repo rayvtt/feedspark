@@ -1132,6 +1132,19 @@
       "pattern": "drainAlertOutbox",
       "min": 2,
       "pr": 184
+    },
+    {
+      "name": "labelguard engine: two-strike suspect confirmation (mid-refresh false-positive guard)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "suspect",
+      "min": 4,
+      "pr": 187
+    },
+    {
+      "name": "labelguard engine: per-rule digest pings with highlighted value rows",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "alertDigest",
+      "pr": 187
     }
   ]
 }

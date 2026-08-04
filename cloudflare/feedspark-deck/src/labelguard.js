@@ -275,27 +275,41 @@ export async function labelPivot(fetchFn, src, key) {
 }
 
 // pure state machine: reference vs live -> fires + next state. No fetching, no clock reads.
+// TWO-STRIKE CONFIRMATION: the first sighting of a drop-off marks the value 'suspect' and
+// stays SILENT; only a second consecutive bad check fires the ping. Feed sheets are
+// rewritten in place upstream (cleared + repopulated) — a check landing mid-refresh sees
+// columns momentarily empty and, without this, pings 8 false "GONE"s that self-heal
+// minutes later (happened live on Reiss GB day one). A real wipe persists and still
+// pings, one check later.
 export function evalWatch(rule, live, now) {
   const fires = [];
   const state = Object.assign({}, rule.state || {});
   const repingMs = Math.max(1, rule.repingH || 24) * 3600 * 1000;
   const dropPct = Math.max(0, Math.min(99, rule.dropPct == null ? 50 : rule.dropPct));
   const cur = new Map(live.values || []);
+  let suspects = 0;
 
   const step = (key, refN, curN, kindGone, kindDrop) => {
     const st = state[key] || { st: 'ok', t: 0, n: refN };
     const broken = curN === 0 ? kindGone : (dropPct > 0 && refN > 0 && curN <= refN * (1 - dropPct / 100) ? kindDrop : null);
     if (broken) {
-      const again = st.st === 'fired';
-      if (!again || now - (st.t || 0) >= repingMs) {
-        fires.push({ kind: broken, value: key, was: refN, now: curN, again });
+      if (st.st === 'fired') {
+        if (now - (st.t || 0) >= repingMs) {
+          fires.push({ kind: broken, value: key, was: refN, now: curN, again: true });
+          state[key] = { st: 'fired', t: now, n: curN };
+        } else {
+          state[key] = { st: 'fired', t: st.t, n: curN };   // still broken, inside the re-ping window
+        }
+      } else if (st.st === 'suspect') {
+        fires.push({ kind: broken, value: key, was: refN, now: curN, again: false });   // confirmed on the 2nd check
         state[key] = { st: 'fired', t: now, n: curN };
       } else {
-        state[key] = { st: 'fired', t: st.t, n: curN };   // still broken, inside the re-ping window
+        state[key] = { st: 'suspect', t: now, n: curN };    // first sighting — silent
+        suspects++;
       }
     } else {
       if (st.st === 'fired') fires.push({ kind: 'recovered', value: key, was: refN, now: curN });
-      state[key] = { st: 'ok', t: now, n: curN };
+      state[key] = { st: 'ok', t: now, n: curN };           // suspect that recovered = transient, stays silent
     }
   };
 
@@ -305,39 +319,51 @@ export function evalWatch(rule, live, now) {
     const segRef = rule.refSeg || 0;
     if (live.segment === 0 && segRef > 0) {
       step('__seg', segRef, 0, 'segment-gone', 'segment-gone');
-      return { fires, state };
+      return { fires, state, suspects };
     }
     step('__seg', segRef, live.segment, 'segment-gone', dropPct > 0 ? 'segment-drop' : 'segment-gone');
   }
 
   for (const [v, n] of (rule.ref || [])) step(v, n, cur.get(v) || 0, 'gone', 'drop');
-  return { fires, state };
+  return { fires, state, suspects };
 }
 
-// one ping message — plain text with light markup; the same body works for a Google
-// Chat webhook, a Slack webhook, and the email bridge.
-export function alertText(rule, fire, opts) {
+// ONE digest message per rule per check — not one ping per value (a mid-refresh or real
+// wipe of an 8-value breakdown must not fire 8 separate messages). Each value sits on its
+// OWN row wrapped in `code` markup, which renders as a visually distinct highlighted token
+// in both Slack (red monospace chip) and Google Chat (boxed monospace) — instantly
+// recognisable. Same body works for the email bridge.
+export function alertDigest(rule, fires, opts) {
   opts = opts || {};
   const CL = (k) => 'CL' + String(k).slice(-1);
   const feed = (rule.client || '') + ' · ' + String(rule.mkt || 'gb').toUpperCase();
   const scope = rule.vs
     ? CL(rule.label) + ' "' + rule.value + '" → ' + CL(rule.vs)
     : CL(rule.label) + (rule.value ? ' "' + rule.value + '"' : '');
-  let head, body;
-  if (fire.kind === 'recovered') {
-    head = '✅ RECOVERED — Label Guard | ' + feed;
-    body = scope + (fire.value !== '__seg' ? ' "' + fire.value + '"' : '') + ' is back on the feed - ' + fire.now + ' SKUs (was ' + fire.was + ' at reference).';
-  } else {
-    head = '🔴 HIGH PRIORITY — Label Guard | ' + feed;
-    const what = fire.value === '__seg'
-      ? scope.split(' → ')[0] + ' — the whole segment'
-      : scope + ' "' + fire.value + '"';
-    body = (fire.kind === 'gone' || fire.kind === 'segment-gone')
-      ? what + ' DROPPED OFF the live feed. Was ' + fire.was + ' SKUs, now 0 — PMAX listing groups keyed on this value are dark.'
-      : what + ' collapsed: ' + fire.was + ' → ' + fire.now + ' SKUs (-' + Math.round(((fire.was - fire.now) / Math.max(1, fire.was)) * 100) + '%).';
-    if (fire.again) body += ' (re-ping: still broken)';
+  const alerts = fires.filter((f) => f.kind !== 'recovered');
+  const recovered = fires.filter((f) => f.kind === 'recovered');
+  const row = (f) => {
+    const name = f.value === '__seg' ? 'the whole "' + rule.value + '" segment' : '`' + f.value + '`';
+    if (f.kind === 'recovered') return '• ' + name + ' — back with ' + f.now + ' SKUs (ref ' + f.was + ')';
+    if (f.now === 0) return '• ' + name + ' — was ' + f.was + ' SKUs → now 0 (GONE)' + (f.again ? ' · re-ping, still broken' : '');
+    return '• ' + name + ' — ' + f.was + ' → ' + f.now + ' SKUs (−' + Math.round(((f.was - f.now) / Math.max(1, f.was)) * 100) + '%)' + (f.again ? ' · re-ping, still broken' : '');
+  };
+  const out = [];
+  if (alerts.length) {
+    out.push('🔴 HIGH PRIORITY — Label Guard | ' + feed + '\n' +
+      scope + ' — CONFIRMED drop-off on ' + alerts.length + ' watched value' + (alerts.length === 1 ? '' : 's') +
+      ' (seen on two consecutive live checks):\n' +
+      alerts.map(row).join('\n') +
+      '\nPMAX listing groups keyed on these values are dark.' +
+      (opts.link ? '\n' + opts.link : ''));
   }
-  return head + '\n' + body + (opts.link ? '\n' + opts.link : '');
+  if (recovered.length) {
+    out.push('✅ RECOVERED — Label Guard | ' + feed + '\n' +
+      scope + ' — back on the live feed:\n' +
+      recovered.map(row).join('\n') +
+      (opts.link ? '\n' + opts.link : ''));
+  }
+  return out;   // 0-2 messages: an alert digest and/or a recovery digest
 }
 
 /* ---------------- baseline diff -> alerts ---------------------------------------------- */

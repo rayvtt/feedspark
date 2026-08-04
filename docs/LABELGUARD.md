@@ -135,10 +135,18 @@ and route a **high-priority ping** the moment one drops off a live check:
 - **Cadence:** a second cron firing (`30 * * * *`) runs the watch pass hourly with its own
   subrequest budget (~2–3 gviz fetches per rule; >10 rules rotate across firings).
   "Check now" / "Run all checks now" fire on demand.
-- **Fire semantics:** ping on the ok→broken **transition** (value GONE, or below the rule's
-  −30%/−50% threshold), **re-ping every 24h while still broken**, and send a ✅ recovery
-  notice when it comes back. A cross watch whose whole segment vanishes sends ONE
-  `segment-gone` ping, not N per-value echoes.
+- **Thresholds:** per rule — GONE only, −10/−20/−30/−50/−75%, or a **custom 1–99%**; the
+  threshold on an existing rule is click-to-edit (the "gone or −X% ✎" text on its row).
+- **Fire semantics — two-strike confirmation:** the FIRST sighting of a drop-off marks the
+  value **suspect** (amber, silent); only a **second consecutive** bad check fires the ping.
+  Feed sheets are rewritten in place upstream — a check landing mid-refresh sees columns
+  momentarily empty, and without the confirmation step that pinged 8 false "GONE"s on Reiss
+  GB day one. A transient gap self-clears silently; a real wipe pings one check later.
+  Confirmed values **re-ping every 24h while still broken** and send a ✅ recovery notice
+  when back. A cross watch whose whole segment vanishes sends ONE `segment-gone` ping.
+- **Digest format:** one message per rule per check — never one ping per value. Each value
+  sits on its own row wrapped in `` `code` `` markup, which renders as a highlighted token
+  in both Slack and Google Chat, so the broken value is recognisable at a glance.
 - Every fired ping is activity-logged (`label-alert`, user `label-guard`).
 
 KV: rules `labelwatch` ("client|mkt|ruleId" → rule), destinations `labeldest`, email queue
