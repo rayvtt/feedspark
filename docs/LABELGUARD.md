@@ -67,6 +67,21 @@ the baseline forward automatically. A flagged change that was *intentional* (new
 re-segmentation) is cleared by **"✓ Expected — rebaseline"** on the page, which adopts the
 current snapshot as the new baseline.
 
+## 2b. Channels — Google Shopping vs Facebook/Meta
+
+A Facebook catalogue feed rides the SAME rails (Meta feeds carry `custom_label_0..4` too):
+attach it under the market code with the **`-fb` suffix** — `gb` = Google Shopping GB,
+`gb-fb` = Facebook GB — either in `DEFAULT_FEEDS` or via the dossier's feeds map. Every KV
+key, sweep, watch, cross query and report flows through unchanged. The page splits the two
+sets visually: **Google green** `#34A853` chips (G) vs **Facebook blue** `#1877F2` chips (f),
+Google rows first within each client card; digests and the report name the channel
+("Visual K · GB · Facebook"). Note: `-fb` markets also appear in Feed Lab's selector (shared
+roster) — harmless, its audit simply scores the Meta feed against Google heuristics.
+**Sheet-backed `-fb` feeds only:** a FeedHero-hosted **XML** source (`{xml}` in DEFAULT_FEEDS,
+e.g. Reiss gb-fb) is Feed Lab-only — gviz cannot query XML, so Label Guard skips it with a
+clear diagnostic. To label-monitor a Facebook feed, attach it as a link-shared Google Sheet
+export under `<mkt>-fb`.
+
 ## 3. What raises an alert (thresholds in `labelguard.js` `TH`)
 
 | Signal | warn | crit |
