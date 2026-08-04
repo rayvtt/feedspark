@@ -15,12 +15,12 @@ rules = [
 [vars]
 OWNER_EMAIL = "ray@feedspark.com"
 
-# Crons: :00 = Label Guard estate sweep + hourly warm of the live plan-sync cache
-# (KV planlive:<id>); :30 = Label Guard custom-watch pass (the alert builder's hourly
-# live check, routed by event.cron in scheduled()) — separate firings so each gets its
-# own subrequest budget.
+# Crons (routed by event.cron in scheduled(); separate firings = separate subrequest
+# budgets): :00 = Label Guard estate sweep + hourly warm of the live plan-sync cache
+# (KV planlive:<id>); :30 = custom-watch pass for HOURLY-schedule rules; 07:00 & 17:00
+# UTC/GMT = custom-watch pass for TWICE-DAILY rules (Ray's morning / end-of-day checks).
 [triggers]
-crons = ["0 * * * *", "30 * * * *"]
+crons = ["0 * * * *", "30 * * * *", "0 7,17 * * *"]
 
 # Ray's in-browser copy edits (data-eid patches) live here; they re-overlay client-side.
 [[kv_namespaces]]

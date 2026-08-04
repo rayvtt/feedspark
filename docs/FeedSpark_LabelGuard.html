@@ -794,7 +794,9 @@ window.addEventListener('load',restore);
         '<button class="btn" data-rdel="' + esc(k) + '">✕</button></span>' +
         '<span class="rule-sub">' + (fired ? '<b style="color:var(--risk)">' + fired + ' DOWN</b> · ' : '') + (sus ? '<b style="color:var(--orange-ink)">' + sus + ' suspect</b> · ' : '') +
         '<span class="r-edit" data-redit="' + esc(k) + '" title="Change when this rule fires (0 = only when GONE, 1–99 = also on a −% drop)">' +
-        (r.dropPct ? 'gone or −' + r.dropPct + '%' : 'gone only') + ' ✎</span> → ' + esc(dnames || 'no destinations!') +
+        (r.dropPct ? 'gone or −' + r.dropPct + '%' : 'gone only') + ' ✎</span> · ' +
+        '<span class="r-edit" data-rsched="' + esc(k) + '" title="Toggle the check schedule">' +
+        ((r.sched || 'hourly') === 'twice' ? '07:00 & 17:00 GMT' : 'hourly') + ' ⏱</span> → ' + esc(dnames || 'no destinations!') +
         ' · checked ' + (r.lastRun ? ago(r.lastRun) : 'never') + (r.lastErr ? ' · <span style="color:var(--risk)">' + esc(r.lastErr) + '</span>' : '') + '</span></div>';
     });
     $('rule-list').innerHTML = h;
@@ -821,6 +823,16 @@ window.addEventListener('load',restore);
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-rarm]'), function (el) {
       el.onclick = function () { rearmRule(el.getAttribute('data-rarm'), el); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-rsched]'), function (el) {
+      el.onclick = function () {
+        var k = el.getAttribute('data-rsched'); var r = WATCHES[k]; if (!r) return;
+        r.sched = (r.sched || 'hourly') === 'twice' ? 'hourly' : 'twice';
+        var o = {}; o[k] = r;
+        putStore('/api/labels/watch', o).then(function () {
+          wtMsg('✓ now checked ' + (r.sched === 'twice' ? 'twice daily at 07:00 & 17:00 GMT' : 'every hour at :30')); loadRouting();
+        });
+      };
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-redit]'), function (el) {
       el.onclick = function () {
@@ -894,7 +906,10 @@ window.addEventListener('load',restore);
         '<option value="custom">custom %…</option>' +
       '</select>' +
       '<span id="wb-custom-wrap" style="display:none"> gone or −<input type="number" id="wb-custom" min="1" max="99" step="1" value="40" style="width:58px;font:inherit;font-size:12px;padding:6px 7px;border:1px solid var(--line);border-radius:8px">%</span>' +
-      ' on the hourly live check. Ping:</div><div>';
+      '. Check schedule: <select id="wb-sched">' +
+        '<option value="hourly">every hour (:30)</option>' +
+        '<option value="twice">twice daily — 07:00 &amp; 17:00 GMT</option>' +
+      '</select>. Ping:</div><div>';
     destIds.forEach(function (id) {
       h += '<label><input type="checkbox" class="wb-d" value="' + esc(id) + '"> ' + (TYPE_IC[(DESTS[id] || {}).type] || '') + ' ' + esc((DESTS[id] || {}).name || id) + '</label>';
     });
@@ -926,6 +941,7 @@ window.addEventListener('load',restore);
       var id = 'w_' + Date.now().toString(36);
       var rule = { id: id, client: b.client, mkt: b.mkt, label: b.label, value: b.value || null, vs: b.vs || null,
         ref: b.ref || [], refSeg: b.refSeg || 0, dropPct: dropPct,
+        sched: document.getElementById('wb-sched').value === 'twice' ? 'twice' : 'hourly',
         dests: dests, enabled: true, repingH: 24, state: {}, created: Date.now() };
       var o = {}; o[b.client + '|' + b.mkt + '|' + id] = rule;
       putStore('/api/labels/watch', o).then(function () {
