@@ -773,11 +773,11 @@
       "pr": 149
     },
     {
-      "name": "Pricer: seeded AI briefs — ASPL dev handback per-brief token data (Mon/Acc/Hobbycraft/Superdry)",
+      "name": "Pricer: seeded live AI briefs — Mon/Acc/Superdry × titles/desc/keywords",
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "SEED_TRACK",
       "min": 2,
-      "pr": 173
+      "pr": 152
     },
     {
       "name": "worker: fetchGrid keeps a tight column width (GRID_RANGE)",
@@ -852,6 +852,30 @@
       "pattern": "demoTour",
       "min": 2,
       "pr": 164
+    },
+    {
+      "name": "claude: SessionStart auto-sync hook registered",
+      "file": ".claude/settings.json",
+      "pattern": "session_sync.sh",
+      "pr": 180
+    },
+    {
+      "name": "claude: PR auto-watch hook on create_pull_request",
+      "file": ".claude/settings.json",
+      "pattern": "pr_watch_reminder.sh",
+      "pr": 180
+    },
+    {
+      "name": "claude: /presync skill pre-approved (allowed-tools)",
+      "file": ".claude/skills/presync/SKILL.md",
+      "pattern": "allowed-tools",
+      "pr": 180
+    },
+    {
+      "name": "tools: qa_gate.sh unattended-build stop condition",
+      "file": "tools/qa_gate.sh",
+      "pattern": "qa-gate CLEAN",
+      "pr": 180
     },
     {
       "name": "workflow: timeline covers every dated task + brand/AM filters",
@@ -937,18 +961,124 @@
       "pr": 175
     },
     {
-      "name": "Pricer: seeded live AI briefs — Mon/Acc/Superdry × titles/desc/keywords",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "SEED_TRACK",
-      "min": 2,
-      "pr": 152
-    },
-    {
       "name": "workflow: email-origin memory — Gmail tasks stay labelled Email after sheet round-trip",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "markEsrc",
       "min": 4,
       "pr": 176
+    },
+    {
+      "name": "worker: Label Guard /api/labels routes",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "api/labels/",
+      "min": 8,
+      "pr": 179
+    },
+    {
+      "name": "worker: Label Guard cron sweep wired into scheduled()",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "labelCronSweep",
+      "min": 2,
+      "pr": 179
+    },
+    {
+      "name": "labelguard engine: baseline diff -> alerts",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "diffSnapshots",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Activity",
+      "file": "docs/FeedSpark_Activity.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Command_Center",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on DeckBuilder",
+      "file": "docs/FeedSpark_DeckBuilder.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on FeedLab",
+      "file": "docs/FeedSpark_FeedLab.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Leadership",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Pricer",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Readiness",
+      "file": "docs/FeedSpark_Readiness.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Roadmap",
+      "file": "docs/FeedSpark_Roadmap.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Task_Library",
+      "file": "docs/FeedSpark_Task_Library.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Templates",
+      "file": "docs/FeedSpark_Templates.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on Workflow",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "nav: Label Guard link on LabelGuard",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "href=\"/labels\"",
+      "pr": 179
+    },
+    {
+      "name": "worker: feed resolvers take env — bare feedSourceFor(client…) must never return",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "feedSourceFor(client",
+      "forbidden": true,
+      "pr": 180
+    },
+    {
+      "name": "worker: feed resolvers take env — bare feedMarketsFor(client…) must never return",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "feedMarketsFor(client",
+      "forbidden": true,
+      "pr": 180
+    },
+    {
+      "name": "Pricer: seeded AI briefs — ASPL dev handback per-brief token data (Mon/Acc/Hobbycraft/Superdry)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "SEED_TRACK",
+      "min": 2,
+      "pr": 173
     },
     {
       "name": "workflow: Briefing Studio — context rail, workload scheduling, checklist, Tachyon draft",

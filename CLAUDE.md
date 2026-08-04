@@ -173,7 +173,8 @@ GET  /api/activity?days=N       → activity feed (owner-only 403 otherwise); al
 POST /api/gmail/push            → Gmail→FCC sync (no-admin path): Apps Script in Ray's mailbox pushes (a) brief replies — briefmatch.js moves ticket stages, TOKEN-ONLY matching (ibfcode/brief-id, never fuzzy unattended) — and (b) the inbox capture: every email to ray@feedspark.com NOT from @feedspark.com/@aroxo.com/@feedhero.net, classified (client via detectClient cue ladder: dossier dom → sender-domain label → display name → brand mention; ⚡ briefable score). Auth = GMAIL_PUSH_KEY secret + Access bypass on this exact path (GOOGLE_SETUP.md §8)
 GET  /api/gmail/intake          → captured-email queue for the Workflow triage panel (KV gmailinbox; back-fills missing clients on read; each item carries its triage decision)
 POST /api/gmail/dismiss         → triage decision memory (KV gmaildismissed): reasons task/briefed/notask, undo:true restores; decided emails never re-enter the queue. Triage rule: emails are NEVER auto-tasks — → Task files to Intake (client = detected only, sender into the task name), ✕ Not a task clears
-GET  /feedlab (+/feedlab/engine.js) → Feed Lab module: animated live-feed dissection (audit, AI-readiness score, recs). Worker only STREAMS the sheet CSV (/api/feed/proxy?client=); the browser runs feedlab_engine.js and PUTs the audit to /api/feed/audit (KV feedaudit:<client> + :hist). Feed wiring: worker `DEFAULT_FEEDS` = the committed master feed-market map (imported from Ray's sheet `1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak` — 16 feeds × 9 brands: Schuh gb/de/ie, YuMOVE, Monsoon, Accessorize, Superdry gb/ie/fr, House of Bruar, American Golf, Reiss gb/us/ie/de/nl); `/api/feed/clients` bootstraps the Feed Lab selector + CC dossier (FEEDWIRED counts); ad-hoc attach in the CC dossier (⚡, link-shared Google Sheet) OVERRIDES the wired entry per market. New sheet rows → re-import into DEFAULT_FEEDS. Docs: docs/FEEDLAB.md
+GET  /feedlab (+/feedlab/engine.js) → Feed Lab module: animated live-feed dissection (audit, AI-readiness score, recs). Worker only STREAMS the sheet CSV (/api/feed/proxy?client=); the browser runs feedlab_engine.js and PUTs the audit to /api/feed/audit (KV feedaudit:<client> + :hist). Feed wiring: worker `DEFAULT_FEEDS` = the committed master feed-market map (imported from Ray's sheet `1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak` — 22 feeds × 8 brands: Schuh gb/de/ie, YuMOVE, Monsoon, Accessorize, Superdry gb/ie/de/fr/nl, House of Bruar gb/us/eu, American Golf, Reiss gb/us/ie/de/nl/au/ca); `/api/feed/clients` bootstraps the Feed Lab selector + CC dossier (FEEDWIRED counts); ad-hoc attach in the CC dossier (⚡, link-shared Google Sheet) OVERRIDES the wired entry per market. New sheet rows → re-import into DEFAULT_FEEDS. Docs: docs/FEEDLAB.md
+GET  /labels (+/api/labels/*)   → Label Guard module: g:custom_label_0..4 capture (value/volume pivots per client×market) + drop-off monitoring vs a known-good BASELINE — PMAX listing groups key on these exact values, so drops are flagged (crit/warn) on /labels AND as a badge on every app page's nav; hourly cron sweeps ~4 feeds in rotation (22-feed estate ≈6h) via Google gviz group-by queries (the worker never parses raw feed CSVs); "Expected — rebaseline" (POST /api/labels/ack) accepts intentional changes. Docs: docs/LABELGUARD.md
 GET  /api/buildlog              → Build Log feed (GitHub PRs/branches/overlap, KV-cached 10 min; optional GITHUB_TOKEN secret)
 GET|PUT /api/buildqueue         → Build Log "not built yet" queue (kvmerge-backed, concurrency-safe)
 GET  /deck/yumove               → YuMOVE strategy deck (git-bundled + injected editor)
@@ -216,13 +217,21 @@ root-cause history, protocol + runbook: [`docs/DEPLOY_PROTOCOL.md`](./docs/DEPLO
 Trunk-based: each session = its **own short-lived branch** off latest `main` (`claude/<module>-<slug>`),
 small module-prefixed PRs (`[Workflow] …`), never a shared branch. Default one session per module
 (Workflow / Command Center / Deck Gen / Worker / other pages) as a **guideline**; crossing is fine if you
-check open PRs + `claude/*` branches first and **sequence** same-file edits. Before every PR:
-**`bash tools/presync.sh`** (merges latest main + re-validates). Overlap safeguards, both inside presync:
+check open PRs + `claude/*` branches first and **sequence** same-file edits. A `SessionStart` hook
+(`.claude/settings.json`) auto-fetches main + reports in-flight `claude/*` branches + overlap at
+session start. Before every PR: **`/presync`** (pre-approved skill) or
+**`bash tools/presync.sh`** (merges latest main + re-validates); unattended builds gate on
+**`bash tools/qa_gate.sh`** (validation-only, exit 0 = shippable — use as the `/goal` stop
+condition). Every `create_pull_request` triggers a hook nudging `subscribe_pr_activity` (PR
+babysitting by default). Overlap safeguards, both inside presync:
 the **overwrite tripwire** (`docs/feature_manifest.json` checked by `tools/check_markers.js` — when you
 ship a feature into a shared file, add its marker in the same PR) and the **overlap detector**
 (`tools/overlap.sh` — also run it at task START; 🔥 hot-file overlap = sequence, don't parallel-edit).
 If presync's merge touched a file you're editing, re-run your QA — a clean git merge is not an intact
-feature. After merge: verify LIVE per the rule above, then restart the branch from latest main.
+feature. **Merge autonomy (Ray's standing rule): NEVER wait for Ray to merge.** Once presync +
+`validate.yml` are green, the session opens **and merges** its own PR (squash) immediately — human
+approval is not a gate; the only reason to hold a merge is 🔥 overlap sequencing with another session.
+After merge: verify LIVE per the rule above, then restart the branch from latest main.
 Full protocol: [`docs/WAYS_OF_WORKING.md`](./docs/WAYS_OF_WORKING.md).
 
 ### Command center data — ATRT Tracker

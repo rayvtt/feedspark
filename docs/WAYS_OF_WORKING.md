@@ -57,7 +57,10 @@ No separate board/issue tracker to maintain.
    (`npx wrangler@4 deploy --dry-run` + `node tools/check_inline_scripts.js`).
 3. **Pre-merge** — run **`bash tools/presync.sh`**: it fetches + merges latest `main` into the
    branch and re-runs both validations. Resolve any conflict here, not in the PR.
-4. **Merge** — small squash PR (module-prefixed title). Delete the branch.
+4. **Merge** — small squash PR (module-prefixed title), **merged by the session itself the moment
+   `validate.yml` is green** — never parked waiting for Ray (his standing instruction, Aug 2026:
+   "never wait for me to merge, just do it"). Human approval is not a gate; the only reason to
+   hold is 🔥 overlap sequencing with another active session. Delete the branch.
 5. **Verify LIVE** — per the CLAUDE.md rule: Deploy Action green → worker re-published →
    `/api/version` sha is your commit **or a later one containing it** (another session may have
    merged after you — fine) → the feature is actually present on the page.
@@ -79,6 +82,8 @@ No separate board/issue tracker to maintain.
 - ❌ Merging without `presync.sh` (drift lands as surprise conflicts or reverts)
 - ❌ Two sessions live-editing the same monolith file in parallel
 - ❌ Reporting "shipped" on a merge alone — always verify live (CLAUDE.md rule)
+- ❌ Leaving a green PR unmerged "for Ray to review" — sessions merge their own PRs and drive the
+  deploy to live; Ray reads the merged result, not the queue
 
 ## Overlap safeguards — tooling + protocol (added after the 2026‑07‑23 near-misses)
 
@@ -134,6 +139,42 @@ two-stale-tabs clobber, tombstone-vs-stale-writer, un-delete, and the v1→v2 en
 Residual (accepted): two PUTs inside the same few **milliseconds** can still interleave — KV has
 no transactions; the minutes-long stale-tab window was the real failure mode. `/api/edits`
 already merged per-key and is untouched.
+
+## Session tooling defaults (shipped 2026-08 — hooks + skills, nothing left to memory)
+
+Four protocol steps that used to rely on every session remembering them are now **defaults**
+wired into `.claude/` (checked in, so every session gets them):
+
+### 1. Session-start auto-sync (`.claude/hooks/session_sync.sh`)
+A `SessionStart` hook fetches `origin/main`, lists every **in-flight** `claude/*` branch with its
+last commit, and runs `tools/overlap.sh` in warn mode — the report lands in the session's context
+before any work starts. "Run overlap at task START" and "check what's in flight" are no longer
+steps anyone has to remember. Degrades to a note (never blocks a session) when offline.
+
+### 2. `/presync` — the pre-PR gauntlet as a pre-approved skill
+`.claude/skills/presync/SKILL.md` wraps `tools/presync.sh` with `allowed-tools` pre-approval, so
+it runs without permission prompts (and therefore also unattended). It stays model-invocable —
+Claude suggests it before opening a PR instead of counting on the session to remember. The skill
+body carries the two hard-won rules: the **log-file pattern** (never pipe presync through `tail`
+in a `&&` chain — exit-masking once shipped conflict markers) and the **manifest union-merge**
+recipe for `feature_manifest.json` conflicts.
+
+### 3. `tools/qa_gate.sh` — the /goal stop condition for unattended builds
+The validation half of presync (no merge): worker dry-run build, inline-script parse, marker
+tripwire, **bracket-placeholder sweep** over changed pages (`[TBC]`/`[TODO]`/`[XXX]`/`[INSERT …]`),
+and the deck content audit for changed decks. Exit 0 = genuinely shippable. Kick off any
+auto-mode session with:
+
+```
+/goal Done when `bash tools/qa_gate.sh` exits 0 and the work is committed & pushed.
+```
+
+A session that believes it's finished has to prove it against the same checks CI runs.
+
+### 4. PR auto-watch (`.claude/hooks/pr_watch_reminder.sh`)
+A `PostToolUse` hook on `mcp__github__create_pull_request` injects an instruction to call
+`subscribe_pr_activity` for the PR that was just opened — CI failures and review comments then
+arrive as webhook events. Nobody asks for babysitting; no session polls.
 
 ---
 
