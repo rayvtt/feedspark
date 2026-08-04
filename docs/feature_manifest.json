@@ -1077,13 +1077,13 @@
       "name": "worker: Label Guard live cross-label dissection route",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "labels/cross",
-      "pr": 182
+      "pr": 183
     },
     {
       "name": "labelguard engine: crossFeed live segment pivot",
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
       "pattern": "crossFeed",
-      "pr": 182
+      "pr": 183
     }
   ]
 }
