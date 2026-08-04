@@ -1,0 +1,37 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session_sync.sh",
+            "timeout": 90,
+            "statusMessage": "FCC sync: fetching main + scanning branch overlap…"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__github__create_pull_request",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pr_watch_reminder.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(bash tools/presync.sh*)",
+      "Bash(bash tools/overlap.sh*)",
+      "Bash(bash tools/qa_gate.sh*)",
+      "Bash(node tools/check_markers.js*)",
+      "Bash(node tools/check_inline_scripts.js*)"
+    ]
+  }
+}

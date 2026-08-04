@@ -15,11 +15,12 @@ rules = [
 [vars]
 OWNER_EMAIL = "ray@feedspark.com"
 
-# Cron: hourly warm of the live plan-sync cache (KV planlive:<id>) so the Workflow
-# dashboard opens instantly with current project-plan rows. The scheduled() handler in
-# the worker reads the brand->sheet map the dashboard posts (KV plansheets).
+# Crons (routed by event.cron in scheduled(); separate firings = separate subrequest
+# budgets): :00 = Label Guard estate sweep + hourly warm of the live plan-sync cache
+# (KV planlive:<id>); :30 = custom-watch pass for HOURLY-schedule rules; 07:00 & 17:00
+# UTC/GMT = custom-watch pass for TWICE-DAILY rules (Ray's morning / end-of-day checks).
 [triggers]
-crons = ["0 * * * *"]
+crons = ["0 * * * *", "30 * * * *", "0 7,17 * * *"]
 
 # Ray's in-browser copy edits (data-eid patches) live here; they re-overlay client-side.
 [[kv_namespaces]]

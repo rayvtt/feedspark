@@ -174,6 +174,7 @@ POST /api/gmail/push            → Gmail→FCC sync (no-admin path): Apps Scrip
 GET  /api/gmail/intake          → captured-email queue for the Workflow triage panel (KV gmailinbox; back-fills missing clients on read; each item carries its triage decision)
 POST /api/gmail/dismiss         → triage decision memory (KV gmaildismissed): reasons task/briefed/notask, undo:true restores; decided emails never re-enter the queue. Triage rule: emails are NEVER auto-tasks — → Task files to Intake (client = detected only, sender into the task name), ✕ Not a task clears
 GET  /feedlab (+/feedlab/engine.js) → Feed Lab module: animated live-feed dissection (audit, AI-readiness score, recs). Worker only STREAMS the sheet CSV (/api/feed/proxy?client=); the browser runs feedlab_engine.js and PUTs the audit to /api/feed/audit (KV feedaudit:<client> + :hist). Feed wiring: worker `DEFAULT_FEEDS` = the committed master feed-market map (imported from Ray's sheet `1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak` — 24 feeds × 8 brands: Schuh gb/de/ie, YuMOVE, Monsoon, Accessorize, Superdry gb/ie/de/fr/nl, House of Bruar gb/us/eu, American Golf, Reiss gb/us/ie/de/nl/au/ca/eu/fr); `/api/feed/clients` bootstraps the Feed Lab selector + CC dossier (FEEDWIRED counts); ad-hoc attach in the CC dossier (⚡, link-shared Google Sheet) OVERRIDES the wired entry per market. New sheet rows → re-import into DEFAULT_FEEDS. Docs: docs/FEEDLAB.md
+GET  /labels (+/api/labels/*)   → Label Guard module: g:custom_label_0..4 capture (value/volume pivots per client×market) + drop-off monitoring vs a known-good BASELINE — PMAX listing groups key on these exact values, so drops are flagged (crit/warn) on /labels AND as a badge on every app page's nav; hourly cron sweeps ~4 feeds in rotation (24-feed estate ≈6h) via Google gviz group-by queries (the worker never parses raw feed CSVs); "Expected — rebaseline" (POST /api/labels/ack) accepts intentional changes; click any pivot value → LIVE cross-label dissection (GET /api/labels/cross: CL0 "Best Sellers" → CL2 women-fp/women-sale volumes), CL0–4 panes on one seamless row; CUSTOM WATCHES (🔔 alert builder, /api/labels/watch|dest kvmerge stores): pin exact values/cross breakdowns per feed → per-rule schedule: cron (:30) live-checks hourly or 0 7,17 * * * checks twice daily (07:00/17:00 GMT) and fires HIGH-PRIO pings to Google Chat/Slack webhooks direct or email via the Gmail bridge (KV labeloutbox drained by gmail_push.gs drainAlertOutbox); fire on transition, re-ping 24h while broken, ✅ on recovery, "Re-arm" accepts planned changes; daily 07:00 GMT status-report email (labelreportcfg, /api/labels/report[/send]). Docs: docs/LABELGUARD.md
 GET  /api/buildlog              → Build Log feed (GitHub PRs/branches/overlap, KV-cached 10 min; optional GITHUB_TOKEN secret)
 GET|PUT /api/buildqueue         → Build Log "not built yet" queue (kvmerge-backed, concurrency-safe)
 GET  /deck/yumove               → YuMOVE strategy deck (git-bundled + injected editor)
@@ -216,8 +217,13 @@ root-cause history, protocol + runbook: [`docs/DEPLOY_PROTOCOL.md`](./docs/DEPLO
 Trunk-based: each session = its **own short-lived branch** off latest `main` (`claude/<module>-<slug>`),
 small module-prefixed PRs (`[Workflow] …`), never a shared branch. Default one session per module
 (Workflow / Command Center / Deck Gen / Worker / other pages) as a **guideline**; crossing is fine if you
-check open PRs + `claude/*` branches first and **sequence** same-file edits. Before every PR:
-**`bash tools/presync.sh`** (merges latest main + re-validates). Overlap safeguards, both inside presync:
+check open PRs + `claude/*` branches first and **sequence** same-file edits. A `SessionStart` hook
+(`.claude/settings.json`) auto-fetches main + reports in-flight `claude/*` branches + overlap at
+session start. Before every PR: **`/presync`** (pre-approved skill) or
+**`bash tools/presync.sh`** (merges latest main + re-validates); unattended builds gate on
+**`bash tools/qa_gate.sh`** (validation-only, exit 0 = shippable — use as the `/goal` stop
+condition). Every `create_pull_request` triggers a hook nudging `subscribe_pr_activity` (PR
+babysitting by default). Overlap safeguards, both inside presync:
 the **overwrite tripwire** (`docs/feature_manifest.json` checked by `tools/check_markers.js` — when you
 ship a feature into a shared file, add its marker in the same PR) and the **overlap detector**
 (`tools/overlap.sh` — also run it at task START; 🔥 hot-file overlap = sequence, don't parallel-edit).
