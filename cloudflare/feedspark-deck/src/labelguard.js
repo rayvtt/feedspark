@@ -366,6 +366,82 @@ export function alertDigest(rule, fires, opts) {
   return out;   // 0-2 messages: an alert digest and/or a recovery digest
 }
 
+/* ---------------- the emailed status report -------------------------------------------- */
+// Plain-text summary of the whole Label Guard estate — sent to Ray's inbox by the Gmail
+// bridge (daily after the 07:00 GMT watch pass, optionally 17:00, or on demand). Pure
+// function over the KV stores so it's unit-testable; the worker assembles the inputs.
+export function buildReport(inp) {
+  const { rules, dests, idx, alerts, now, link } = inp;
+  const CL = (k) => 'CL' + String(k).slice(-1);
+  const L = [];
+  const d = new Date(now);
+  L.push('FEEDSPARK LABEL GUARD — STATUS REPORT');
+  L.push(d.toUTCString().replace(' GMT', ' GMT') + '');
+  L.push('');
+
+  // watch rules, broken first
+  const rKeys = Object.keys(rules || {}).sort();
+  const down = [], sus = [], ok = [];
+  for (const k of rKeys) {
+    const r = rules[k]; if (!r) continue;
+    const st = r.state || {};
+    const downVals = Object.keys(st).filter((v) => st[v] && st[v].st === 'fired');
+    const susVals = Object.keys(st).filter((v) => st[v] && st[v].st === 'suspect');
+    const scope = r.vs ? CL(r.label) + ' "' + r.value + '" → ' + CL(r.vs) + ' (' + (r.ref || []).length + ' values)'
+      : CL(r.label) + (r.value ? ' "' + r.value + '"' : ' (' + (r.ref || []).length + ' values)');
+    const who = (r.dests || []).map((id) => ((dests || {})[id] || {}).name || '?').join(', ');
+    const head = r.client + ' · ' + String(r.mkt).toUpperCase() + ' — ' + scope +
+      ' · ' + (r.dropPct ? 'gone or -' + r.dropPct + '%' : 'gone only') +
+      ' · ' + ((r.sched || 'hourly') === 'twice' ? '07:00 & 17:00 GMT' : 'hourly') +
+      (r.enabled ? '' : ' · PAUSED') + ' → ' + who;
+    if (!r.enabled) { ok.push('[PAUSED] ' + head); continue; }
+    if (downVals.length) {
+      down.push('[DOWN] ' + head + '\n        broken: ' + downVals.map((v) => (v === '__seg' ? '(whole segment)' : '`' + v + '`')).join(', '));
+    } else if (susVals.length) {
+      sus.push('[SUSPECT] ' + head + '\n        first sighting on: ' + susVals.map((v) => (v === '__seg' ? '(whole segment)' : '`' + v + '`')).join(', ') + ' — confirms or clears next check');
+    } else {
+      ok.push('[OK] ' + head);
+    }
+  }
+  L.push('WATCH RULES (' + rKeys.length + ') — ' + down.length + ' down · ' + sus.length + ' suspect · ' + (rKeys.length - down.length - sus.length) + ' ok');
+  for (const s of down.concat(sus, ok)) L.push('  ' + s);
+  if (!rKeys.length) L.push('  (no watch rules configured)');
+  L.push('');
+
+  // estate board, worst first
+  const fKeys = Object.keys(idx || {}).sort((a, b) => {
+    const rank = (e) => (e.status === 'crit' ? 0 : e.status === 'warn' ? 1 : e.status === 'unreachable' ? 2 : 3);
+    return rank(idx[a] || {}) - rank(idx[b] || {}) || a.localeCompare(b);
+  });
+  const badge = (e) => (e.status === 'crit' ? '[CRIT]' : e.status === 'warn' ? '[WARN]' : e.status === 'unreachable' ? '[UNREACHABLE]' : '[ok]');
+  L.push('ESTATE (' + fKeys.length + ' scanned feeds)');
+  for (const k of fKeys) {
+    const e = idx[k] || {};
+    const cov = LABEL_KEYS.map((lk, i) => (e.cov && e.cov[lk] != null ? 'CL' + i + ' ' + e.cov[lk] + '%' : null)).filter(Boolean).join(' · ');
+    L.push('  ' + badge(e) + ' ' + k.replace('|', ' · ').toUpperCase() + ' — ' + (e.rows != null ? e.rows + ' rows' : 'no scan') +
+      (cov ? ' · ' + cov : '') + ((e.nCrit || e.nWarn) ? ' · ' + (e.nCrit || 0) + ' crit / ' + (e.nWarn || 0) + ' warn' : ''));
+  }
+  L.push('');
+
+  // active baseline alerts
+  const aKeys = Object.keys(alerts || {});
+  let aN = 0;
+  const aLines = [];
+  for (const k of aKeys) {
+    for (const a of ((alerts[k] || {}).alerts || [])) {
+      if (a.sev === 'info') continue;
+      aN++;
+      if (aLines.length < 15) aLines.push('  [' + String(a.sev).toUpperCase() + '] ' + k.replace('|', ' · ').toUpperCase() + ' — ' + a.msg);
+    }
+  }
+  L.push('ACTIVE BASELINE ALERTS (' + aN + ')');
+  if (aLines.length) { for (const s of aLines) L.push(s); if (aN > aLines.length) L.push('  … +' + (aN - aLines.length) + ' more on the board'); }
+  else L.push('  none — every scanned feed matches its baseline');
+  L.push('');
+  if (link) L.push('Live board: ' + link);
+  return L.join('\n');
+}
+
 /* ---------------- baseline diff -> alerts ---------------------------------------------- */
 // [{ sev: 'crit'|'warn'|'info', code, label?, value?, msg, was?, now? }]
 export function diffSnapshots(base, cur, th) {

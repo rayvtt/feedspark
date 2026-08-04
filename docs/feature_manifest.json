@@ -1163,6 +1163,19 @@
       "file": "wrangler.toml",
       "pattern": "0 7,17 * * *",
       "pr": 190
+    },
+    {
+      "name": "labelguard engine: emailed status report builder",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "buildReport",
+      "pr": 192
+    },
+    {
+      "name": "worker: report settings + send + 07:00 cron hook",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "labelreportcfg",
+      "min": 4,
+      "pr": 192
     }
   ]
 }

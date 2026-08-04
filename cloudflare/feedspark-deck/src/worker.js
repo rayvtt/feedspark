@@ -27,7 +27,7 @@
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx } from "./briefmatch.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { LABEL_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest } from "./labelguard.js";
+import { LABEL_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -214,7 +214,8 @@ export default {
         '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save',
         '/api/labels/scan': 'label-scan', '/api/labels/ack': 'label-rebase',
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
-        '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run' };
+        '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
+        '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -1227,7 +1228,17 @@ export default {
     // Custom-watch passes (Ray's alert builder) with their OWN subrequest budget: the :30
     // firing checks hourly-schedule rules; 07:00/17:00 GMT checks twice-daily rules.
     if (event && event.cron === '30 * * * *') { await labelWatchRun(env, null, 'hourly'); return; }
-    if (event && event.cron === '0 7,17 * * *') { await labelWatchRun(env, null, 'twice'); return; }
+    if (event && event.cron === '0 7,17 * * *') {
+      await labelWatchRun(env, null, 'twice');
+      // the emailed status report rides the same firings so it reflects a fresh check:
+      // daily at 07:00 GMT when enabled, 17:00 too if cfg.pm
+      try {
+        const cfg = (await env.EDITS.get('labelreportcfg', 'json')) || {};
+        const hour = new Date().getUTCHours();
+        if (cfg.on && (hour === 7 || (hour === 17 && cfg.pm))) await queueLabelReport(env, hour + ':00 schedule');
+      } catch (e) {}
+      return;
+    }
     // Label Guard sweep runs FIRST and unconditionally — the plan warm below early-returns
     // without GOOGLE_SA_JSON, and label drop-off monitoring must never hinge on that credential.
     await labelCronSweep(env);
@@ -1450,6 +1461,25 @@ async function labelGuardRoutes(env, request, url) {
     return json(await labelWatchRun(env, only));
   }
 
+  // ---- the emailed status report: settings + send-now (delivered via the Gmail bridge) ----
+  if (path === '/api/labels/report') {
+    if (request.method === 'GET') {
+      return json((await env.EDITS.get('labelreportcfg', 'json')) || { on: false, pm: false, to: String(env.OWNER_EMAIL || 'ray@feedspark.com') });
+    }
+    if (request.method === 'PUT') {
+      let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+      const to = String(b.to || '').slice(0, 120);
+      if (to.indexOf('@') < 1) return json({ error: 'not an email address' }, 400);
+      const cfg = { on: !!b.on, pm: !!b.pm, to };
+      await env.EDITS.put('labelreportcfg', JSON.stringify(cfg));
+      return json(Object.assign({ ok: true }, cfg));
+    }
+  }
+  if (path === '/api/labels/report/send' && request.method === 'POST') {
+    const r = await queueLabelReport(env, 'on-demand');
+    return json(r, r.ok ? 200 : 502);
+  }
+
   // "expected change" — adopt the current snapshot as the new baseline and clear the flags
   if (path === '/api/labels/ack' && request.method === 'POST') {
     if (badClient) return json({ error: 'bad client' }, 400);
@@ -1569,6 +1599,32 @@ async function labelWatchRun(env, onlyFeedKey, mode) {
   }
   await env.EDITS.put('labelwatch', JSON.stringify(envx));
   return { ok: true, checked, fired, suspects, results: results.slice(0, 30) };
+}
+
+// assemble the status report from the KV stores and queue it as an email through the
+// Gmail bridge outbox. Scheduled daily after the 07:00 GMT watch pass (17:00 optional,
+// KV labelreportcfg) — so the report always reflects a fresh check — or on demand.
+async function queueLabelReport(env, why) {
+  try {
+    const now = Date.now();
+    const cfg = (await env.EDITS.get('labelreportcfg', 'json')) || {};
+    const to = String(cfg.to || env.OWNER_EMAIL || 'ray@feedspark.com');
+    const rules = liftEnvelope(await env.EDITS.get('labelwatch', 'json'), now).data;
+    const dests = liftEnvelope(await env.EDITS.get('labeldest', 'json'), now).data;
+    const idx = (await env.EDITS.get('labelidx', 'json')) || {};
+    const alerts = (await env.EDITS.get('labelalerts', 'json')) || {};
+    const body = buildReport({ rules, dests, idx, alerts, now, link: 'https://feedspark.ray-vtt.workers.dev/labels' });
+    let downN = 0;
+    Object.keys(rules).forEach((k) => { const st = (rules[k] || {}).state || {};
+      Object.keys(st).forEach((v) => { if (st[v] && st[v].st === 'fired') downN++; }); });
+    const subject = 'Label Guard report — ' + (downN ? '🔴 ' + downN + ' watched value(s) DOWN' : '✅ all watches OK') +
+      ' · ' + new Date(now).toUTCString().slice(0, 16);
+    const ob = (await env.EDITS.get('labeloutbox', 'json')) || [];
+    ob.push({ id: 'ob_' + now.toString(36) + Math.random().toString(36).slice(2, 6), to, subject, body, t: now });
+    await env.EDITS.put('labeloutbox', JSON.stringify(ob.slice(-50)));
+    await logAlertActivity(env, 'report queued (' + why + ') → ' + to);
+    return { ok: true, queued: true, to, note: 'report queued — the Gmail bridge sends within ~5 min' + (env.GMAIL_PUSH_KEY ? '' : ' (GMAIL_PUSH_KEY not set: bridge inactive)') };
+  } catch (e) { return { ok: false, error: String((e && e.message) || e).slice(0, 140) }; }
 }
 
 // hourly rotation: BATCH feeds per firing keeps the combined cron (plan warm + this sweep)

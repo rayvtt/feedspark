@@ -151,6 +151,12 @@ and route a **high-priority ping** the moment one drops off a live check:
   sits on its own row wrapped in `` `code` `` markup, which renders as a highlighted token
   in both Slack and Google Chat, so the broken value is recognisable at a glance.
 - Every fired ping is activity-logged (`label-alert`, user `label-guard`).
+- **Emailed status report** (§04, under destinations): one plain-text email — all watch rules
+  (down / suspect / ok, worst first), estate health, active baseline alerts, board link —
+  to any address (default ray@feedspark.com). Daily after the **07:00 GMT** check (17:00
+  optional) so it always reflects fresh data, or **Send now**. Delivery rides the same
+  Gmail-bridge outbox as alert emails. Settings: KV `labelreportcfg`;
+  API `GET/PUT /api/labels/report` + `POST /api/labels/report/send`.
 
 KV: rules `labelwatch` ("client|mkt|ruleId" → rule), destinations `labeldest`, email queue
 `labeloutbox`, rotation cursor `labelwatchcur`. Rule + destination stores are kvmerge maps
