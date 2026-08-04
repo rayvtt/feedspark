@@ -217,8 +217,13 @@ root-cause history, protocol + runbook: [`docs/DEPLOY_PROTOCOL.md`](./docs/DEPLO
 Trunk-based: each session = its **own short-lived branch** off latest `main` (`claude/<module>-<slug>`),
 small module-prefixed PRs (`[Workflow] …`), never a shared branch. Default one session per module
 (Workflow / Command Center / Deck Gen / Worker / other pages) as a **guideline**; crossing is fine if you
-check open PRs + `claude/*` branches first and **sequence** same-file edits. Before every PR:
-**`bash tools/presync.sh`** (merges latest main + re-validates). Overlap safeguards, both inside presync:
+check open PRs + `claude/*` branches first and **sequence** same-file edits. A `SessionStart` hook
+(`.claude/settings.json`) auto-fetches main + reports in-flight `claude/*` branches + overlap at
+session start. Before every PR: **`/presync`** (pre-approved skill) or
+**`bash tools/presync.sh`** (merges latest main + re-validates); unattended builds gate on
+**`bash tools/qa_gate.sh`** (validation-only, exit 0 = shippable — use as the `/goal` stop
+condition). Every `create_pull_request` triggers a hook nudging `subscribe_pr_activity` (PR
+babysitting by default). Overlap safeguards, both inside presync:
 the **overwrite tripwire** (`docs/feature_manifest.json` checked by `tools/check_markers.js` — when you
 ship a feature into a shared file, add its marker in the same PR) and the **overlap detector**
 (`tools/overlap.sh` — also run it at task START; 🔥 hot-file overlap = sequence, don't parallel-edit).

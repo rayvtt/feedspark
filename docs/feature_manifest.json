@@ -773,11 +773,11 @@
       "pr": 149
     },
     {
-      "name": "Pricer: seeded AI briefs — ASPL dev handback per-brief token data (Mon/Acc/Hobbycraft/Superdry)",
+      "name": "Pricer: seeded live AI briefs — Mon/Acc/Superdry × titles/desc/keywords",
       "file": "docs/FeedSpark_Pricer.html",
       "pattern": "SEED_TRACK",
       "min": 2,
-      "pr": 173
+      "pr": 152
     },
     {
       "name": "worker: fetchGrid keeps a tight column width (GRID_RANGE)",
@@ -852,6 +852,30 @@
       "pattern": "demoTour",
       "min": 2,
       "pr": 164
+    },
+    {
+      "name": "claude: SessionStart auto-sync hook registered",
+      "file": ".claude/settings.json",
+      "pattern": "session_sync.sh",
+      "pr": 180
+    },
+    {
+      "name": "claude: PR auto-watch hook on create_pull_request",
+      "file": ".claude/settings.json",
+      "pattern": "pr_watch_reminder.sh",
+      "pr": 180
+    },
+    {
+      "name": "claude: /presync skill pre-approved (allowed-tools)",
+      "file": ".claude/skills/presync/SKILL.md",
+      "pattern": "allowed-tools",
+      "pr": 180
+    },
+    {
+      "name": "tools: qa_gate.sh unattended-build stop condition",
+      "file": "tools/qa_gate.sh",
+      "pattern": "qa-gate CLEAN",
+      "pr": 180
     },
     {
       "name": "workflow: timeline covers every dated task + brand/AM filters",
@@ -935,13 +959,6 @@
       "pattern": "mergeLegacyIntoSeeds",
       "min": 2,
       "pr": 175
-    },
-    {
-      "name": "Pricer: seeded live AI briefs — Mon/Acc/Superdry × titles/desc/keywords",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "SEED_TRACK",
-      "min": 2,
-      "pr": 152
     },
     {
       "name": "workflow: email-origin memory — Gmail tasks stay labelled Email after sheet round-trip",

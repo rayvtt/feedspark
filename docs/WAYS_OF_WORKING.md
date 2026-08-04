@@ -140,6 +140,42 @@ Residual (accepted): two PUTs inside the same few **milliseconds** can still int
 no transactions; the minutes-long stale-tab window was the real failure mode. `/api/edits`
 already merged per-key and is untouched.
 
+## Session tooling defaults (shipped 2026-08 — hooks + skills, nothing left to memory)
+
+Four protocol steps that used to rely on every session remembering them are now **defaults**
+wired into `.claude/` (checked in, so every session gets them):
+
+### 1. Session-start auto-sync (`.claude/hooks/session_sync.sh`)
+A `SessionStart` hook fetches `origin/main`, lists every **in-flight** `claude/*` branch with its
+last commit, and runs `tools/overlap.sh` in warn mode — the report lands in the session's context
+before any work starts. "Run overlap at task START" and "check what's in flight" are no longer
+steps anyone has to remember. Degrades to a note (never blocks a session) when offline.
+
+### 2. `/presync` — the pre-PR gauntlet as a pre-approved skill
+`.claude/skills/presync/SKILL.md` wraps `tools/presync.sh` with `allowed-tools` pre-approval, so
+it runs without permission prompts (and therefore also unattended). It stays model-invocable —
+Claude suggests it before opening a PR instead of counting on the session to remember. The skill
+body carries the two hard-won rules: the **log-file pattern** (never pipe presync through `tail`
+in a `&&` chain — exit-masking once shipped conflict markers) and the **manifest union-merge**
+recipe for `feature_manifest.json` conflicts.
+
+### 3. `tools/qa_gate.sh` — the /goal stop condition for unattended builds
+The validation half of presync (no merge): worker dry-run build, inline-script parse, marker
+tripwire, **bracket-placeholder sweep** over changed pages (`[TBC]`/`[TODO]`/`[XXX]`/`[INSERT …]`),
+and the deck content audit for changed decks. Exit 0 = genuinely shippable. Kick off any
+auto-mode session with:
+
+```
+/goal Done when `bash tools/qa_gate.sh` exits 0 and the work is committed & pushed.
+```
+
+A session that believes it's finished has to prove it against the same checks CI runs.
+
+### 4. PR auto-watch (`.claude/hooks/pr_watch_reminder.sh`)
+A `PostToolUse` hook on `mcp__github__create_pull_request` injects an instruction to call
+`subscribe_pr_activity` for the PR that was just opened — CI failures and review comments then
+arrive as webhook events. Nobody asks for babysitting; no session polls.
+
 ---
 
 # Parallel Editing — Ray + Claude on one deck
