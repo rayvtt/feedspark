@@ -68,6 +68,9 @@ live.**
   related changes into one PR / one merge where you can — fewer builds, fewer surprises.
 - **A red deploy is a stop.** If the Deploy action fails, read its log (it's the real error now, not
   a black box) and fix forward; don't merge more on top.
+- **Sessions merge their own PRs.** A green `validate.yml` is the merge gate — never park a PR
+  waiting for Ray's approval (his standing instruction). Merge (squash), watch Deploy go green,
+  verify live, delete the branch.
 - **Pages are code.** `docs/*.html` app pages are bundled into the worker as Text modules, so a
   page change deploys the same way — the validation check covers their inline scripts.
 

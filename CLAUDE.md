@@ -173,7 +173,7 @@ GET  /api/activity?days=N       → activity feed (owner-only 403 otherwise); al
 POST /api/gmail/push            → Gmail→FCC sync (no-admin path): Apps Script in Ray's mailbox pushes (a) brief replies — briefmatch.js moves ticket stages, TOKEN-ONLY matching (ibfcode/brief-id, never fuzzy unattended) — and (b) the inbox capture: every email to ray@feedspark.com NOT from @feedspark.com/@aroxo.com/@feedhero.net, classified (client via detectClient cue ladder: dossier dom → sender-domain label → display name → brand mention; ⚡ briefable score). Auth = GMAIL_PUSH_KEY secret + Access bypass on this exact path (GOOGLE_SETUP.md §8)
 GET  /api/gmail/intake          → captured-email queue for the Workflow triage panel (KV gmailinbox; back-fills missing clients on read; each item carries its triage decision)
 POST /api/gmail/dismiss         → triage decision memory (KV gmaildismissed): reasons task/briefed/notask, undo:true restores; decided emails never re-enter the queue. Triage rule: emails are NEVER auto-tasks — → Task files to Intake (client = detected only, sender into the task name), ✕ Not a task clears
-GET  /feedlab (+/feedlab/engine.js) → Feed Lab module: animated live-feed dissection (audit, AI-readiness score, recs). Worker only STREAMS the sheet CSV (/api/feed/proxy?client=); the browser runs feedlab_engine.js and PUTs the audit to /api/feed/audit (KV feedaudit:<client> + :hist). Feed wiring: worker `DEFAULT_FEEDS` = the committed master feed-market map (imported from Ray's sheet `1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak` — 16 feeds × 9 brands: Schuh gb/de/ie, YuMOVE, Monsoon, Accessorize, Superdry gb/ie/fr, House of Bruar, American Golf, Reiss gb/us/ie/de/nl); `/api/feed/clients` bootstraps the Feed Lab selector + CC dossier (FEEDWIRED counts); ad-hoc attach in the CC dossier (⚡, link-shared Google Sheet) OVERRIDES the wired entry per market. New sheet rows → re-import into DEFAULT_FEEDS. Docs: docs/FEEDLAB.md
+GET  /feedlab (+/feedlab/engine.js) → Feed Lab module: animated live-feed dissection (audit, AI-readiness score, recs). Worker only STREAMS the sheet CSV (/api/feed/proxy?client=); the browser runs feedlab_engine.js and PUTs the audit to /api/feed/audit (KV feedaudit:<client> + :hist). Feed wiring: worker `DEFAULT_FEEDS` = the committed master feed-market map (imported from Ray's sheet `1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak` — 22 feeds × 8 brands: Schuh gb/de/ie, YuMOVE, Monsoon, Accessorize, Superdry gb/ie/de/fr/nl, House of Bruar gb/us/eu, American Golf, Reiss gb/us/ie/de/nl/au/ca); `/api/feed/clients` bootstraps the Feed Lab selector + CC dossier (FEEDWIRED counts); ad-hoc attach in the CC dossier (⚡, link-shared Google Sheet) OVERRIDES the wired entry per market. New sheet rows → re-import into DEFAULT_FEEDS. Docs: docs/FEEDLAB.md
 GET  /api/buildlog              → Build Log feed (GitHub PRs/branches/overlap, KV-cached 10 min; optional GITHUB_TOKEN secret)
 GET|PUT /api/buildqueue         → Build Log "not built yet" queue (kvmerge-backed, concurrency-safe)
 GET  /deck/yumove               → YuMOVE strategy deck (git-bundled + injected editor)
@@ -222,7 +222,10 @@ the **overwrite tripwire** (`docs/feature_manifest.json` checked by `tools/check
 ship a feature into a shared file, add its marker in the same PR) and the **overlap detector**
 (`tools/overlap.sh` — also run it at task START; 🔥 hot-file overlap = sequence, don't parallel-edit).
 If presync's merge touched a file you're editing, re-run your QA — a clean git merge is not an intact
-feature. After merge: verify LIVE per the rule above, then restart the branch from latest main.
+feature. **Merge autonomy (Ray's standing rule): NEVER wait for Ray to merge.** Once presync +
+`validate.yml` are green, the session opens **and merges** its own PR (squash) immediately — human
+approval is not a gate; the only reason to hold a merge is 🔥 overlap sequencing with another session.
+After merge: verify LIVE per the rule above, then restart the branch from latest main.
 Full protocol: [`docs/WAYS_OF_WORKING.md`](./docs/WAYS_OF_WORKING.md).
 
 ### Command center data — ATRT Tracker
