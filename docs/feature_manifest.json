@@ -955,26 +955,26 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "api/labels/",
       "min": 8,
-      "pr": 177
+      "pr": 178
     },
     {
       "name": "worker: Label Guard cron sweep wired into scheduled()",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "labelCronSweep",
       "min": 2,
-      "pr": 177
+      "pr": 178
     },
     {
       "name": "labelguard engine: baseline diff -> alerts",
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
       "pattern": "diffSnapshots",
-      "pr": 177
+      "pr": 178
     },
     {
       "name": "CmdCenter: Label Guard nav link",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "href=\"/labels\"",
-      "pr": 177
+      "pr": 178
     }
   ]
 }

@@ -57,8 +57,8 @@ cheap enough for the hourly cron and any manual "scan whole estate" click.
 
 **Scheduling:** the existing hourly cron (`wrangler.toml [triggers]`) now runs
 `labelCronSweep(env)` before the plan-cache warm — **unconditionally** (no `GOOGLE_SA_JSON`
-needed; the sheets are link-shared). Each firing scans 4 feeds in rotation → the 16-feed estate
-is re-checked every ~4 hours, staying far under the 50-subrequest free-plan budget even with the
+needed; the sheets are link-shared). Each firing scans 4 feeds in rotation → the 22-feed estate
+is re-checked every ~6 hours, staying far under the 50-subrequest free-plan budget even with the
 plan warm in the same invocation.
 
 **Baseline semantics (the important bit):** alerts are not "vs the previous scan" — they're vs
@@ -112,7 +112,7 @@ proxy: sheet ids never come from the query — only roster clients resolve, exac
 | Symptom | Cause | Fix |
 |---|---|---|
 | Feed shows **unreachable** | Sheet not link-shared (Google serves a login page) | Share → "Anyone with the link → Viewer", then Scan |
-| Feed shows **not scanned** | New roster entry the cron hasn't reached yet | Click it (auto-scans) or wait ≤4h |
+| Feed shows **not scanned** | New roster entry the cron hasn't reached yet | Click it (auto-scans) or wait ≤6h |
 | Alert for an intentional change | Labels re-segmented on purpose | "✓ Expected — rebaseline" on the alert or the feed detail |
 | Wrong tab scanned | `gid` missing from an attached sheet URL | Re-attach with `#gid=<n>` (wired feeds carry gid in `DEFAULT_FEEDS`) |
 | CL shows `distinct 250+` | >250 distinct values (per-SKU labels) | Expected — coverage alerts still work; value-level watch covers the top 250 |
