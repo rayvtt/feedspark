@@ -25,8 +25,9 @@ Feeds change daily upstream; the 20h window keeps the score at most one refresh 
 
 Wired out of the box via `DEFAULT_FEEDS` — the committed **master feed-market map**, imported from
 Ray's sheet (`1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak`, one row per client+country feed):
-**24 feeds × 8 brands** — Schuh gb/de/ie · YuMOVE · Monsoon · Accessorize · Superdry gb/ie/de/fr/nl ·
-House of Bruar gb/us/eu · American Golf (API-fed sheet) · Reiss gb/us/ie/de/nl/au/ca/eu/fr
+**25 feeds × 8 brands (24 sheets + 1 Meta XML)** — Schuh gb/de/ie · YuMOVE · Monsoon · Accessorize ·
+Superdry gb/ie/de/fr/nl · House of Bruar gb/us/eu · American Golf (API-fed sheet) ·
+Reiss gb/us/ie/de/nl/au/ca/eu/fr **+ gb-fb (Meta channel)**
 (FR isn't in the master sheet yet — add its row so the sheet stays the source of truth;
 the sheet's EU row still shows a truncated URL). New rows in the sheet get
 re-imported into `DEFAULT_FEEDS` (ask a Code session); ad-hoc feeds attach from the CC dossier and
@@ -79,6 +80,24 @@ dossier (or `DEFAULT_FEEDS`) resolve. Audit PUTs are activity-logged (`feed-audi
    sheets (see §1) until/unless a dossier `feed` overrides them. A dossier `feed` always wins per
    market. For a **permanent** new feed, prefer adding the row to Ray's master sheet and re-importing
    into `DEFAULT_FEEDS` so the wiring is committed, not KV-only.
+
+### 3a. XML feeds (Meta/Facebook channel — FeedHero-hosted)
+
+A feed source can also be a **FeedHero-hosted XML product feed** (RSS 2.0, `g:` namespace — the
+Meta channel export), e.g. Reiss `gb-fb`. How it differs from a sheet:
+
+- **Source shape**: `{ xml: 'https://s2.feedhero.net/…/latest.xml' }` instead of `{ id, gid }`.
+  The proxy only accepts `https://*.feedhero.net/**.xml` (host allowlist — never an open relay).
+  Pasting a FeedHero XML URL into the dossier's ⚡ attach works too (`feedRef()` resolves both).
+- **Realtime**: FeedHero URLs serve the live output — every re-scan audits the current state
+  (sheets refresh daily upstream; XML is always current, so it doubles as the source of truth).
+- **Parsing**: the browser engine sniffs the first streamed bytes — `<` → `createXmlParser`
+  (streaming `<item>` extraction; repeated tags like `additional_image_link` become `(2)`, `(3)`…
+  matching the sheets' `|||N` columns), anything else → the CSV parser. Same audit either way.
+- **Channel-as-market**: wired under a `<mkt>-fb` market code (e.g. `gb-fb`) so it gets its own
+  chip, league card and heatmap row next to the Google feed for the same country.
+- **Label Guard skips XML feeds** — its pivots run on Google's gviz endpoint, which only exists
+  for sheets. XML feeds don't appear on `/labels` and cron rotation slots are not spent on them.
 
 ---
 

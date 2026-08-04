@@ -799,7 +799,7 @@ function scanLive(){
   $('#scanstate').textContent='scanning the '+mkt.toUpperCase()+' live feed…';
   mkScanning(mkt,true);
   var header=null,rows=[],total=0,bytes=0,clen=0,hIdx=null,doneOK=false;
-  var parser=FeedAudit.createParser(function(r){
+  var onFeedRow=(function(r){
     if(!header){
       header=r;
       var m={};for(var i=0;i<r.length;i++){var nk=FeedAudit.normKey(r[i]);if(m[nk]==null)m[nk]=i}
@@ -819,6 +819,16 @@ function scanLive(){
     for(var j=0;j<hIdx.length;j++){var ix=hIdx[j];if(ix>=0&&r[ix])scFilled[j]++}
     if(total%23===0&&hIdx[0]>=0&&r[hIdx[0]]){titleQ.push(String(r[hIdx[0]]).slice(0,64));if(titleQ.length>40)titleQ.shift()}
   });
+  // parser is chosen from the FIRST streamed bytes: '<' = XML (Meta/FB channel, FeedHero-hosted),
+  // anything else = CSV (Google Sheet export). Both parsers share the onFeedRow contract.
+  var parser=null;
+  function mkParser(t){
+    if(/^\s*</.test(t)){
+      if(!FeedAudit.createXmlParser)throw new Error('this is an XML (Meta) feed but the cached engine predates XML support — hard-refresh so the page and /feedlab/engine.js come from the same deploy');
+      return FeedAudit.createXmlParser(onFeedRow);
+    }
+    return FeedAudit.createParser(onFeedRow);
+  }
   function finish(){
     if(!header||!total)throw new Error('the feed stream came back empty — is the sheet link-shared?');
     doneOK=true;
@@ -841,9 +851,11 @@ function scanLive(){
     function step(){
       return reader.read().then(function(x){
         if(my!==SCANID){try{reader.cancel()}catch(e){}return}
-        if(x.done){parser.push(dec.decode());parser.end();return finish()}
+        if(x.done){var tl=dec.decode();if(!parser)parser=mkParser(tl);parser.push(tl);parser.end();return finish()}
         bytes+=x.value.byteLength||x.value.length||0;
-        parser.push(dec.decode(x.value,{stream:true}));
+        var t=dec.decode(x.value,{stream:true});
+        if(!parser&&t)parser=mkParser(t);
+        if(parser)parser.push(t);
         var lbl='streaming… '+fmt(total)+' products';
         if(clen&&bytes)lbl+=' of ~'+fmt(Math.max(total,Math.round(total*(clen/bytes)))); // fallback estimate label only
         else if(bytes)lbl+=' · '+(bytes/1048576).toFixed(1)+' MB';

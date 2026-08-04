@@ -1184,6 +1184,19 @@
       "pr": 192
     },
     {
+      "name": "worker: XML (Meta/FeedHero) feed source support — xmlRef/feedRef",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const feedRef = (u) => sheetRef(u) || xmlRef(u)"
+    },
+    {
+      "name": "engine: XML feed parser (Meta channel)",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "createXmlParser"
+    },
+    {
+      "name": "feedlab page: XML-vs-CSV parser sniff",
+      "file": "docs/FeedSpark_FeedLab.html",
+      "pattern": "FeedAudit.createXmlParser",
       "name": "LabelGuard: Facebook channel set (-fb markets, blue chips)",
       "file": "docs/FeedSpark_LabelGuard.html",
       "pattern": "chip-fb",

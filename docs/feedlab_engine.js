@@ -5,6 +5,8 @@
  *
  * API (contract v1 — see docs/FEEDLAB.md + scratchpad feedlab_contract.md):
  *   FeedAudit.createParser(onRow) -> {push(chunk), end()}   incremental RFC-4180 CSV
+ *   FeedAudit.createXmlParser(onRow) -> {push(chunk), end()}   incremental RSS 2.0 XML
+ *                                       (Meta/FB product feeds) — same onRow contract
  *   FeedAudit.normKey(rawHeader)  -> canonical column key
  *   FeedAudit.audit(header, rows, opts) -> audit JSON (opts: client, sheetId, gid,
  *                                          rowTotalEstimate, fetchedAt)
@@ -22,7 +24,7 @@
   (typeof self !== 'undefined' ? self : this), function () {
   'use strict';
 
-  var VERSION = '1.0.0';
+  var VERSION = '1.1.0';
 
   /* ================================================================
    * 1. Incremental RFC-4180 CSV parser
@@ -90,6 +92,66 @@
       if (field !== '' || row.length > 0) { endField(); endRow(); }
     }
 
+    return { push: push, end: end };
+  }
+
+  /* ================================================================
+   * 1b. Incremental XML feed parser (RSS 2.0 product feeds — Meta/FB
+   *     channel exports, e.g. FeedHero-hosted latest.xml)
+   * ----------------------------------------------------------------
+   * Same contract as createParser: push(chunk)/end(), first onRow()
+   * is the header, then one row per <item>. The header is derived
+   * from the FIRST item's child tags in document order; repeated
+   * tags within an item (additional_image_link…) get (2), (3)…
+   * suffixes so normKey lands on the same canonical names as the
+   * sheet exports' |||N columns. Items are flat key→text by spec;
+   * CDATA is unwrapped and entities decoded. Chunk-safe: an <item>
+   * split anywhere across push() boundaries is buffered until its
+   * </item> arrives; complete items are released from the buffer
+   * immediately so memory stays bounded by one item, not the feed.
+   * ================================================================ */
+  function createXmlParser(onRow) {
+    var buf = '', header = null, ix = null, done = false;
+    function decode(s) {
+      s = s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
+      return s.replace(/&#x([0-9a-fA-F]+);/g, function (_, h) { return String.fromCodePoint(parseInt(h, 16)); })
+        .replace(/&#(\d+);/g, function (_, d) { return String.fromCodePoint(+d); })
+        .replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+        .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').trim();
+    }
+    function fieldsOf(item) {   // ordered [key,value] pairs; nth repeat of a tag -> key(n)
+      var out = [], seen = {}, m,
+        re = /<([A-Za-z0-9_.:-]+)(?:\s[^>]*)?>([\s\S]*?)<\/\1\s*>|<([A-Za-z0-9_.:-]+)(?:\s[^>]*)?\/>/g;
+      while ((m = re.exec(item))) {
+        var k = m[1] || m[3], v = m[1] ? decode(m[2]) : '';
+        var n = (seen[k] = (seen[k] || 0) + 1);
+        out.push([n > 1 ? k + '(' + n + ')' : k, v]);
+      }
+      return out;
+    }
+    function push(chunk) {
+      if (done) return;
+      buf += chunk;
+      var lo;
+      while ((lo = buf.search(/<item[\s>]/)) >= 0) {   // NOT indexOf('<item') — <item_group_id> must not match
+        var hi = buf.indexOf('</item>', lo);
+        if (hi < 0) { if (lo > 0) buf = buf.slice(lo); break; }   // partial item — wait for more chunks
+        var body = buf.slice(buf.indexOf('>', lo) + 1, hi);
+        buf = buf.slice(hi + 7);
+        var fs = fieldsOf(body);
+        if (!fs.length) continue;
+        if (!header) {
+          header = fs.map(function (f) { return f[0]; });
+          ix = {}; header.forEach(function (k, i) { ix[k] = i; });
+          onRow(header.slice());
+        }
+        var row = header.map(function () { return ''; });
+        for (var i = 0; i < fs.length; i++) if (fs[i][0] in ix) row[ix[fs[i][0]]] = fs[i][1];
+        onRow(row);
+      }
+      if (!header && buf.length > 4194304) buf = buf.slice(-65536);   // no <item> in 4MB — not a feed; keep a tail, stay bounded
+    }
+    function end() { done = true; buf = ''; }
     return { push: push, end: end };
   }
 
@@ -705,5 +767,5 @@
     };
   }
 
-  return { VERSION: VERSION, createParser: createParser, normKey: normKey, audit: audit };
+  return { VERSION: VERSION, createParser: createParser, createXmlParser: createXmlParser, normKey: normKey, audit: audit };
 }));

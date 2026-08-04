@@ -77,6 +77,10 @@ sets visually: **Google green** `#34A853` chips (G) vs **Facebook blue** `#1877F
 Google rows first within each client card; digests and the report name the channel
 ("Visual K · GB · Facebook"). Note: `-fb` markets also appear in Feed Lab's selector (shared
 roster) — harmless, its audit simply scores the Meta feed against Google heuristics.
+**Sheet-backed `-fb` feeds only:** a FeedHero-hosted **XML** source (`{xml}` in DEFAULT_FEEDS,
+e.g. Reiss gb-fb) is Feed Lab-only — gviz cannot query XML, so Label Guard skips it with a
+clear diagnostic. To label-monitor a Facebook feed, attach it as a link-shared Google Sheet
+export under `<mkt>-fb`.
 
 ## 3. What raises an alert (thresholds in `labelguard.js` `TH`)
 
