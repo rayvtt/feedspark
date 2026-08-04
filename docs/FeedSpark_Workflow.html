@@ -605,6 +605,11 @@ window.addEventListener('load',restore);
   /* timeline — full-bleed out of .wrap's 1240px cap so an AM can work a whole book on one screen.
      --sbw is the scrollbar width, measured in JS: plain 100vw includes it and would overflow. */
   .tl-sec{width:calc(100vw - var(--sbw,0px));margin-left:calc(50% - 50vw + var(--sbw,0px)/2);padding:0 22px}
+  /* collapsible-section chip (Brief pipeline): the timeline shows the same briefs by date,
+     so the lanes fold away until they're wanted */
+  .sec-tog{font:inherit;font-size:11px;font-weight:800;margin-left:10px;padding:4px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap;vertical-align:middle;text-transform:none;letter-spacing:0}
+  .sec-tog:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .sec-tog[aria-expanded=true]{background:var(--navy);border-color:var(--navy);color:#fff}
   .tl-focus-btn{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap}
   .tl-focus-btn:hover{border-color:var(--orange);color:var(--orange-deep)}
   .tl-focus-btn[aria-pressed=true]{background:var(--navy);border-color:var(--navy);color:#fff}
@@ -830,12 +835,15 @@ window.addEventListener('load',restore);
   </section>
 
   <h2>Brief pipeline<button class="info-btn" type="button" aria-label="How Brief pipeline works">i</button>
-    <div class="info-pop">Every brief from send to sign-off. Cards are compact so 20+ briefs stay visible: brand chip (+market if not GB), due, and days-in-court (red = over SLA — the lane tells you whose court). Hover for the full task; drag between lanes; click to open the ticket. The <b>court cards</b> show which of the three teams holds the ball — click one to spotlight its tickets. Paste any reply into the <b>router</b> and it finds the right ticket (by <code>[ibfcode]</code>, brief ID or task wording), logs it, and moves the stage.</div>
+    <div class="info-pop">Every brief from send to sign-off. <b>Collapsed by default</b> — the Timeline above already shows these briefs by date; expand for what it doesn't have: the <b>court cards</b> (which of the three teams holds the ball — click one to spotlight its tickets), the drag-between-lanes board, and the <b>paste router</b> (drop any reply in and it finds the right ticket by <code>[ibfcode]</code>, brief ID or task wording, logs it, and moves the stage).</div>
+    <button type="button" class="sec-tog" id="bp-tog" aria-expanded="false" aria-controls="bp-body">▸ Show</button>
   </h2>
+  <div id="bp-body" hidden>
   <div class="courts" id="courts"></div>
   <div class="lu"><textarea id="lu-text" rows="2" placeholder="⚡ Paste an ASPL / client reply here — it routes to the right ticket, logs the comm, moves the stage and picks up any ETA. (Cmd/Ctrl+Enter to route)"></textarea><button class="btn navy" id="lu-go" type="button">Route update</button></div>
   <div class="lu-out" id="lu-out" hidden></div>
   <div class="board" id="board"></div>
+  </div>
 
   <h2>ASPL SLA &amp; turnaround<button class="info-btn" type="button" aria-label="How SLA &amp; turnaround works">i</button>
     <div class="info-pop">Load, delivery and average turnaround per ASPL owner. Escalations flag any ticket sitting too long in <em>any</em> court — unbriefed or blocked with the AM, silent 3+ days with ASPL, awaiting client sign-off 3+ days, or a <b>run window that's finished without its analysis</b> — with the right action one click away. The analysis SLAs below set how long each brief type runs before its analysis is triggered.</div>
@@ -2671,7 +2679,18 @@ window.addEventListener('load',restore);
     Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k];
       if(b&&b.status==='done'&&needsAnalysis(b)){ var rd=readoutDue(b); if(rd!=null&&Date.now()>rd){ setStage(b,'analysis'); moved++; } } });
     if(moved){ persist(); toast(moved+' brief'+(moved===1?'':'s')+' finished the run window — moved to Analysis'); } }
-  function renderAll(){ _planCache=null; autoAdvanceReadouts(); renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTests(); renderWorkload(); renderAlerts(); }   // renderIntake cascades into renderTimeline
+  // ---- Brief pipeline fold: the Timeline above shows the same briefs by date (Ray's call),
+  // so the lanes collapse away by default. The chip carries the live in-motion count so the
+  // folded section still says whether there's anything behind it; state sticks per device.
+  var BP_OPEN=false; try{ BP_OPEN=localStorage.getItem('fcc-bp-open')==='1'; }catch(e){}
+  function renderBpTog(){ var b=document.getElementById('bp-tog'), body=document.getElementById('bp-body'); if(!b||!body)return;
+    body.hidden=!BP_OPEN;
+    var n=Object.keys(BRIEFS).filter(function(k){ return BRIEFS[k]&&BRIEFS[k].status!=='confirmed'; }).length;
+    b.textContent=BP_OPEN?'▾ Hide':('▸ Show'+(n?' — '+n+' brief'+(n===1?'':'s')+' in motion':''));
+    b.setAttribute('aria-expanded',BP_OPEN?'true':'false'); }
+  (function(){ var b=document.getElementById('bp-tog'); if(!b)return;
+    b.onclick=function(){ BP_OPEN=!BP_OPEN; try{localStorage.setItem('fcc-bp-open',BP_OPEN?'1':'0');}catch(e){} renderBpTog(); }; })();
+  function renderAll(){ _planCache=null; autoAdvanceReadouts(); renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTests(); renderWorkload(); renderAlerts(); renderBpTog(); }   // renderIntake cascades into renderTimeline
 
   // set a sensible default due date (today + 5 working-ish days) and boot
   (function(){ var d=new Date(); d.setDate(d.getDate()+5);
