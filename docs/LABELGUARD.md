@@ -90,6 +90,10 @@ GET  /api/labels/alerts                    → { counts: {crit, warn, feeds} } (
 GET  /api/labels/snapshot?client&market[&hist=1] → { snapshot, baseline, hist? }
 POST /api/labels/scan?client&market        → scan now; returns { snapshot, alerts, baseT }
 POST /api/labels/ack?client&market         → rebaseline ("expected change"), clears the feed's flags
+GET  /api/labels/cross?client&market&by&value&vs → LIVE cross-label dissection: within by=<value>
+     (CL0 = "Best Sellers") pivot the segment by another label (CL2 → women - fp / women - sale…).
+     Returns { segment, labelled, unlabelled, rows: [[v,n]…], truncated }. Nothing cached —
+     3 tiny gviz fetches per call (header probe, segment count, cross group-by).
 ```
 
 Scans and acks are activity-logged (`label-scan` / `label-rebase`) per Access user. No open
@@ -103,8 +107,13 @@ proxy: sheet ids never come from the query — only roster clients resolve, exac
 - **02 Estate health** — client cards × market rows: status pill (ok / warn / crit / stale /
   not scanned / unreachable), CL0–4 coverage bars, rows, last scan. **⚡ Scan whole estate**
   sweeps sequentially, skipping feeds fresher than 20h.
-- **03 Feed dissection** — the pivot per label: value · SKUs · share · Δ vs baseline, struck-out
-  red rows for values that are GONE, coverage history sparkline, CSV export.
+- **03 Feed dissection** — CL0–4 pivots on **one seamless row** (equal widths): value · SKUs ·
+  share · Δ vs baseline, struck-out red rows for values that are GONE, coverage history
+  sparkline, CSV export.
+- **Cross dissection** — click any value in any pivot → a full-width panel breaks that segment
+  down **live** by another label (chips flip CL1↔CL4): Reiss GB CL0 "Best Sellers" → CL2
+  women - fp 3,166 · men - fp 2,542 · women - sale 2,081… plus a "(no CLx value)" remainder
+  row and its own CSV export. Every click is a fresh gviz query — never cached.
 - Opening a feed auto-rescans when its snapshot is older than 20h (Feed Lab's refresh model).
 
 ## 6. Runbook
