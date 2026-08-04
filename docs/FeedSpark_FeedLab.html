@@ -1196,8 +1196,9 @@ function scanAll(){
   var st=$('#scanall-state');
   if(!work.length){st.textContent='everything is fresh (scanned <20h ago)';setTimeout(function(){st.textContent=''},4000);return}
   SCANALL=true;$('#scan-all').disabled=true;
-  var i=0;
+  var i=0,cl=CLIENT; // the brand dropdown stays live during an estate scan — if it changes, stop
   function next(){
+    if(CLIENT!==cl){SCANALL=false;$('#scan-all').disabled=false;st.textContent='';return}
     if(i>=work.length){SCANALL=false;$('#scan-all').disabled=false;
       st.textContent='estate scan done — '+work.length+' market'+(work.length===1?'':'s')+' audited';
       setTimeout(function(){st.textContent=''},6000);HEATWAVE=true;renderPortal();return}
@@ -1219,6 +1220,9 @@ function load(client,mkt){
   fetch('/api/feed/markets?client='+encodeURIComponent(client)).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
     if(my!==SCANID)return;
     MKTS=(d&&d.markets)||{};
+    // deploy-skew guard: an older worker may still merge scanned-but-detached markets into
+    // the response — those are not real markets for this brand, drop them
+    Object.keys(MKTS).forEach(function(k){if(MKTS[k]&&MKTS[k].detached)delete MKTS[k]});
     if(!Object.keys(MKTS).length)MKTS={gb:null};
     MARKET=(mkt&&MKTS[mkt]!==undefined)?mkt:(MKTS.gb!==undefined?'gb':Object.keys(MKTS).sort()[0]);
     HEATWAVE=true;               // loadMarket renders the portal straight away — that paint waves

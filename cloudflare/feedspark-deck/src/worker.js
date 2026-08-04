@@ -561,7 +561,10 @@ export default {
       const idx = (await env.EDITS.get('feedmkt:' + client, 'json')) || {};
       const out = {};
       Object.keys(mkts).forEach((mk) => { out[mk] = idx[mk] || null; });   // null = never scanned
-      Object.keys(idx).forEach((mk) => { if (!(mk in out)) out[mk] = Object.assign({}, idx[mk], { detached: true }); });
+      // markets = wired ∪ attached ONLY. The scan index is a summary cache, never a market
+      // source — stale idx entries (markets scanned once, since detached) used to be merged
+      // back in as `detached:true` and the page rendered them as real markets (phantom chips
+      // on brands like Monsoon that only have gb).
       return json({ client, markets: out });
     }
 
@@ -586,6 +589,9 @@ export default {
       if (request.method === 'PUT') {
         let a; try { a = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
         if (!a || !a.score || !a.score.pillars || typeof a.score.total !== 'number') return json({ error: 'not an audit payload' }, 400);
+        // only markets actually attached to this client may be written — an audit PUT for
+        // anything else would seed the feedmkt: index with a market the brand doesn't have
+        if (!(await feedSourceFor(client, mkt))) return json({ error: 'market not attached for this client' }, 400);
         a.client = client; a.market = mkt; a.fetchedAt = Date.now();
         const body = JSON.stringify(a);
         if (body.length > 400000) return json({ error: 'audit too large' }, 413);
