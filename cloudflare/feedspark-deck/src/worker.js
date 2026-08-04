@@ -591,7 +591,9 @@ export default {
         if (!a || !a.score || !a.score.pillars || typeof a.score.total !== 'number') return json({ error: 'not an audit payload' }, 400);
         // only markets actually attached to this client may be written — an audit PUT for
         // anything else would seed the feedmkt: index with a market the brand doesn't have
-        if (!(await feedSourceFor(client, mkt))) return json({ error: 'market not attached for this client' }, 400);
+        // (env is the first arg since the resolvers moved to module scope for the Label Guard
+        // cron — without it this guard resolved null for EVERY feed and 400'd all audit PUTs)
+        if (!(await feedSourceFor(env, client, mkt))) return json({ error: 'market not attached for this client' }, 400);
         a.client = client; a.market = mkt; a.fetchedAt = Date.now();
         const body = JSON.stringify(a);
         if (body.length > 400000) return json({ error: 'audit too large' }, 413);

@@ -1041,6 +1041,20 @@
       "file": "docs/FeedSpark_LabelGuard.html",
       "pattern": "href=\"/labels\"",
       "pr": 179
+    },
+    {
+      "name": "worker: feed resolvers take env — bare feedSourceFor(client…) must never return",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "feedSourceFor(client",
+      "forbidden": true,
+      "pr": 180
+    },
+    {
+      "name": "worker: feed resolvers take env — bare feedMarketsFor(client…) must never return",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "feedMarketsFor(client",
+      "forbidden": true,
+      "pr": 180
     }
   ]
 }
