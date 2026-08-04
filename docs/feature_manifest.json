@@ -1150,7 +1150,7 @@
       "name": "worker+workflow: thread dismiss is ONE batched KV write (no lost decisions)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "Array.isArray(body.ids)",
-      "pr": 188
+      "pr": 189
     }
   ]
 }
