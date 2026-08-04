@@ -196,6 +196,64 @@ const codes = (alerts) => alerts.map((a) => a.sev + ':' + a.code).sort();
   eq('additions are info-only', A.map((a) => a.sev), ['info', 'info']);
 }
 
+/* ---------- watch rules: labelPivot / evalWatch / alertText ---------- */
+{
+  const proutes = [
+    ['select * limit 1', HEADER],
+    ['select C, count(A)', '"cl0","count id"\n"bestseller","600"\n"new in","250"'],
+  ];
+  const pv = await LG.labelPivot(gvizMock(proutes), { id: 'X', gid: '0' }, 'custom_label_0');
+  eq('labelPivot values', pv.values, [['bestseller', 600], ['new in', 250]]);
+  const pv2 = await LG.labelPivot(gvizMock(proutes), { id: 'X', gid: '0' }, 'custom_label_2');
+  eq('labelPivot absent column -> present:false', pv2.present, false);
+}
+{
+  const H = 3600 * 1000, T0 = 1000000000000;
+  const rule = { client: 'Reiss', mkt: 'gb', label: 'custom_label_0', value: 'Best Sellers', vs: 'custom_label_2',
+    ref: [['women - fp', 3166], ['men - fp', 2542]], refSeg: 9596, dropPct: 50, repingH: 24, state: {} };
+
+  // healthy: everything at reference -> silence
+  let ev = LG.evalWatch(rule, { segment: 9596, values: [['women - fp', 3166], ['men - fp', 2542]] }, T0);
+  eq('watch healthy -> no fires', ev.fires, []);
+
+  // a watched cross value drops off -> ONE gone fire, state -> fired
+  ev = LG.evalWatch(rule, { segment: 9500, values: [['men - fp', 2542]] }, T0);
+  eq('watch value gone -> gone fire', ev.fires.map((f) => f.kind + ':' + f.value), ['gone:women - fp']);
+  rule.state = ev.state;
+
+  // still gone 2h later -> inside the re-ping window, no duplicate ping
+  ev = LG.evalWatch(rule, { segment: 9500, values: [['men - fp', 2542]] }, T0 + 2 * H);
+  eq('still broken inside window -> silent', ev.fires, []);
+  rule.state = ev.state;
+
+  // still gone 25h later -> re-ping (again:true)
+  ev = LG.evalWatch(rule, { segment: 9500, values: [['men - fp', 2542]] }, T0 + 25 * H);
+  ok('re-ping after repingH', ev.fires.length === 1 && ev.fires[0].again === true, JSON.stringify(ev.fires));
+  rule.state = ev.state;
+
+  // value comes back -> recovery notice, state resets
+  ev = LG.evalWatch(rule, { segment: 9596, values: [['women - fp', 3100], ['men - fp', 2542]] }, T0 + 26 * H);
+  eq('recovery fire', ev.fires.map((f) => f.kind + ':' + f.value), ['recovered:women - fp']);
+  rule.state = ev.state;
+
+  // -60% collapse -> drop fire; with dropPct 0 the same data is silent
+  ev = LG.evalWatch(rule, { segment: 9596, values: [['women - fp', 1200], ['men - fp', 2542]] }, T0 + 27 * H);
+  ok('-60%% -> drop fire', ev.fires.some((f) => f.kind === 'drop' && f.value === 'women - fp'), JSON.stringify(ev.fires));
+  const gonly = LG.evalWatch({ ...rule, dropPct: 0, state: {} }, { segment: 9596, values: [['women - fp', 1200], ['men - fp', 2542]] }, T0);
+  eq('dropPct 0 -> gone only, silent on -60%', gonly.fires, []);
+
+  // whole segment vanishes -> one loud segment-gone, no per-value echo spam
+  const seg = LG.evalWatch({ ...rule, dropPct: 0, state: {} }, { segment: 0, values: [] }, T0);
+  eq('segment gone -> single fire', seg.fires.map((f) => f.kind), ['segment-gone']);
+
+  // messages
+  const gone = LG.alertText(rule, { kind: 'gone', value: 'women - fp', was: 3166, now: 0 }, { link: 'https://x/labels' });
+  ok('alertText high prio + scope', gone.indexOf('HIGH PRIORITY') >= 0 && gone.indexOf('Reiss · GB') >= 0 &&
+    gone.indexOf('women - fp') >= 0 && gone.indexOf('3166') >= 0 && gone.indexOf('https://x/labels') >= 0, gone);
+  const rec = LG.alertText(rule, { kind: 'recovered', value: 'women - fp', was: 3166, now: 3100 }, {});
+  ok('alertText recovery', rec.indexOf('RECOVERED') >= 0 && rec.indexOf('3100') >= 0, rec);
+}
+
 /* ---------- summarize ---------- */
 {
   const s = mkSnap(1000, { custom_label_0: { values: [['a', 900]] } });

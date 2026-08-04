@@ -233,6 +233,113 @@ export async function crossFeed(fetchFn, src, byKey, value, vsKey) {
     truncated: g.length - 1 >= TH.maxValues, t: Date.now() };
 }
 
+/* ---------------- custom watch rules (the alert builder) -------------------------------
+ * A watch rule pins a REFERENCE set of values (captured from the live pivot the moment
+ * Ray creates it — e.g. Reiss GB CL0 "Best Sellers" -> the 8 CL2 cross values) and every
+ * periodic live check compares the feed against it. A watched value going to zero (or
+ * dropping past the rule's threshold) fires a HIGH-PRIORITY ping to the rule's
+ * destinations (Google Chat / Slack webhook, email via the Gmail bridge).
+ *
+ * Rule shape (KV `labelwatch`, key "<client>|<mkt>|<id>"):
+ *   { id, client, mkt, label, value|null, vs|null, ref: [[v,n],...], refSeg,
+ *     dropPct (0 = only fire on GONE), dests: [destId,...], enabled, repingH,
+ *     state: { "<value>": {st:'ok'|'fired', t, n} }, lastRun, note }
+ * Fire semantics: fire on the ok->broken TRANSITION; while broken, re-ping every
+ * repingH (default 24h); send a ✅ recovery notice when it comes back. */
+
+// current values of ONE label — the cheap live check for non-cross rules (2 fetches)
+export async function labelPivot(fetchFn, src, key) {
+  if (LABEL_KEYS.indexOf(key) < 0) throw new Error('bad-watch: ' + key + ' is not a custom label');
+  const get = async (tq) => {
+    const r = await fetchFn(gvizUrl(src.id, src.gid, tq));
+    const ct = (r.headers && r.headers.get && r.headers.get('content-type')) || '';
+    if (!r.ok || !/csv|text\/plain/i.test(ct)) {
+      throw new Error('fetch-fail: gviz ' + r.status + ' (' + (String(ct).split(';')[0] || 'no type') + ') - is the sheet link-shared?');
+    }
+    return parseCsv(await r.text());
+  };
+  const head = await get('select * limit 1');
+  if (!head.length) throw new Error('fetch-fail: empty gviz response');
+  const cols = findCols(head[0]);
+  if (cols.labels[key] < 0) return { values: [], present: false };
+  const L = colLetter(cols.labels[key]), A = colLetter(cols.id);
+  const g = await get('select ' + L + ', count(' + A + ') where ' + L + " is not null and " + L + " != '' group by " + L +
+    ' order by count(' + A + ') desc limit ' + TH.maxValues);
+  const values = [];
+  for (const r of g.slice(1)) {
+    const v = String(r[0] == null ? '' : r[0]).trim();
+    const n = Math.max(0, Math.round(parseFloat(r[1]) || 0));
+    if (v && n) values.push([v, n]);
+  }
+  return { values, present: true };
+}
+
+// pure state machine: reference vs live -> fires + next state. No fetching, no clock reads.
+export function evalWatch(rule, live, now) {
+  const fires = [];
+  const state = Object.assign({}, rule.state || {});
+  const repingMs = Math.max(1, rule.repingH || 24) * 3600 * 1000;
+  const dropPct = Math.max(0, Math.min(99, rule.dropPct == null ? 50 : rule.dropPct));
+  const cur = new Map(live.values || []);
+
+  const step = (key, refN, curN, kindGone, kindDrop) => {
+    const st = state[key] || { st: 'ok', t: 0, n: refN };
+    const broken = curN === 0 ? kindGone : (dropPct > 0 && refN > 0 && curN <= refN * (1 - dropPct / 100) ? kindDrop : null);
+    if (broken) {
+      const again = st.st === 'fired';
+      if (!again || now - (st.t || 0) >= repingMs) {
+        fires.push({ kind: broken, value: key, was: refN, now: curN, again });
+        state[key] = { st: 'fired', t: now, n: curN };
+      } else {
+        state[key] = { st: 'fired', t: st.t, n: curN };   // still broken, inside the re-ping window
+      }
+    } else {
+      if (st.st === 'fired') fires.push({ kind: 'recovered', value: key, was: refN, now: curN });
+      state[key] = { st: 'ok', t: now, n: curN };
+    }
+  };
+
+  // cross rules also watch the SEGMENT itself (the by-value vanishing entirely). When
+  // the segment is gone, per-value checks are suppressed — one loud fire, not N echoes.
+  if (rule.vs && live.segment != null) {
+    const segRef = rule.refSeg || 0;
+    if (live.segment === 0 && segRef > 0) {
+      step('__seg', segRef, 0, 'segment-gone', 'segment-gone');
+      return { fires, state };
+    }
+    step('__seg', segRef, live.segment, 'segment-gone', dropPct > 0 ? 'segment-drop' : 'segment-gone');
+  }
+
+  for (const [v, n] of (rule.ref || [])) step(v, n, cur.get(v) || 0, 'gone', 'drop');
+  return { fires, state };
+}
+
+// one ping message — plain text with light markup; the same body works for a Google
+// Chat webhook, a Slack webhook, and the email bridge.
+export function alertText(rule, fire, opts) {
+  opts = opts || {};
+  const CL = (k) => 'CL' + String(k).slice(-1);
+  const feed = (rule.client || '') + ' · ' + String(rule.mkt || 'gb').toUpperCase();
+  const scope = rule.vs
+    ? CL(rule.label) + ' "' + rule.value + '" → ' + CL(rule.vs)
+    : CL(rule.label) + (rule.value ? ' "' + rule.value + '"' : '');
+  let head, body;
+  if (fire.kind === 'recovered') {
+    head = '✅ RECOVERED — Label Guard | ' + feed;
+    body = scope + (fire.value !== '__seg' ? ' "' + fire.value + '"' : '') + ' is back on the feed - ' + fire.now + ' SKUs (was ' + fire.was + ' at reference).';
+  } else {
+    head = '🔴 HIGH PRIORITY — Label Guard | ' + feed;
+    const what = fire.value === '__seg'
+      ? scope.split(' → ')[0] + ' — the whole segment'
+      : scope + ' "' + fire.value + '"';
+    body = (fire.kind === 'gone' || fire.kind === 'segment-gone')
+      ? what + ' DROPPED OFF the live feed. Was ' + fire.was + ' SKUs, now 0 — PMAX listing groups keyed on this value are dark.'
+      : what + ' collapsed: ' + fire.was + ' → ' + fire.now + ' SKUs (-' + Math.round(((fire.was - fire.now) / Math.max(1, fire.was)) * 100) + '%).';
+    if (fire.again) body += ' (re-ping: still broken)';
+  }
+  return head + '\n' + body + (opts.link ? '\n' + opts.link : '');
+}
+
 /* ---------------- baseline diff -> alerts ---------------------------------------------- */
 // [{ sev: 'crit'|'warn'|'info', code, label?, value?, msg, was?, now? }]
 export function diffSnapshots(base, cur, th) {

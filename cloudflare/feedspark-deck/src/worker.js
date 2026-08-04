@@ -27,7 +27,7 @@
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx } from "./briefmatch.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { LABEL_KEYS, scanFeed, diffSnapshots, summarize, crossFeed } from "./labelguard.js";
+import { LABEL_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertText } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -212,7 +212,9 @@ export default {
       const ACT = { '/api/edits': 'edit', '/api/feedback': 'feedback', '/api/clients': 'dossier-save',
         '/api/briefs': 'briefs-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
         '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save',
-        '/api/labels/scan': 'label-scan', '/api/labels/ack': 'label-rebase' };
+        '/api/labels/scan': 'label-scan', '/api/labels/ack': 'label-rebase',
+        '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
+        '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -405,6 +407,21 @@ export default {
       if (!env.GMAIL_PUSH_KEY) return json({ ok: false, error: 'push key not configured — wrangler secret put GMAIL_PUSH_KEY' }, 503);
       if (request.headers.get('X-FCC-Push-Key') !== env.GMAIL_PUSH_KEY) return json({ ok: false, error: 'unauthorized' }, 401);
       let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+
+      // Label Guard email bridge: the SAME key-gated Apps Script drains queued alert emails
+      // (KV labeloutbox) and sends them from Ray's own mailbox — a worker can't send mail
+      // itself. Poll returns the queue; ack clears exactly what was sent (see gmail_push.gs).
+      if (body.outboxPoll) {
+        return json({ ok: true, outbox: ((await env.EDITS.get('labeloutbox', 'json')) || []).slice(0, 20) });
+      }
+      if (Array.isArray(body.outboxAck)) {
+        const ob = (await env.EDITS.get('labeloutbox', 'json')) || [];
+        const drop = {}; body.outboxAck.forEach((id) => { drop[String(id)] = 1; });
+        const left = ob.filter((e) => !drop[e.id]);
+        await env.EDITS.put('labeloutbox', JSON.stringify(left));
+        logActivity(ctx, env, request, 'label-alert', 'alert email sent ×' + (ob.length - left.length), 'gmail-bridge');
+        return json({ ok: true, cleared: ob.length - left.length, left: left.length });
+      }
 
       // inbox feed: general incoming mail → classify (client + briefable) and store for the
       // Workflow's "Incoming emails" stream. Same endpoint/key/bypass as the brief sync.
@@ -1201,6 +1218,9 @@ export default {
   // Reads the brand->sheet map the dashboard last posted (KV `plansheets`) and re-parses
   // each Project-Plan tab into KV (planlive:<id>). Registered in wrangler.toml [triggers].
   async scheduled(event, env, ctx) {
+    // :30 firing = the custom-watch pass (Ray's alert builder) with its OWN subrequest
+    // budget — watched values get a live check every hour, independent of the sweep.
+    if (event && event.cron === '30 * * * *') { await labelWatchRun(env, null); return; }
     // Label Guard sweep runs FIRST and unconditionally — the plan warm below early-returns
     // without GOOGLE_SA_JSON, and label drop-off monitoring must never hinge on that credential.
     await labelCronSweep(env);
@@ -1400,6 +1420,29 @@ async function labelGuardRoutes(env, request, url) {
     }
   }
 
+  // ---- custom alert builder: watch rules + ping destinations (docs/LABELGUARD.md §7) ----
+  // Both stores are kvmerge maps with explicit tombstones (delete = PUT {_deleted:[key]}).
+  // labelwatch keys: "<client>|<mkt>|<ruleId>"; labeldest keys: destination ids.
+  if (path === '/api/labels/watch' && (request.method === 'GET' || request.method === 'PUT')) {
+    return await mapStoreRoute(env, request, 'labelwatch', { explicitTombstones: true });
+  }
+  if (path === '/api/labels/dest' && (request.method === 'GET' || request.method === 'PUT')) {
+    return await mapStoreRoute(env, request, 'labeldest', { explicitTombstones: true });
+  }
+  if (path === '/api/labels/dest/test' && request.method === 'POST') {
+    let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+    const dests = liftEnvelope(await env.EDITS.get('labeldest', 'json'), Date.now()).data;
+    const dest = dests[String(b.id || '')];
+    if (!dest) return json({ error: 'unknown destination' }, 404);
+    const r = await sendPing(env, dest, '🟠 Test ping — FeedSpark Label Guard\nThis destination is wired up. Watch rules that route here will ping the moment a watched custom-label value drops off a live feed.');
+    return json(r, r.ok ? 200 : 502);
+  }
+  // evaluate now — all rules, or just one feed's (?client&market)
+  if (path === '/api/labels/watch/run' && request.method === 'POST') {
+    const only = url.searchParams.get('client') ? lgKey(client, mkt) : null;
+    return json(await labelWatchRun(env, only));
+  }
+
   // "expected change" — adopt the current snapshot as the new baseline and clear the flags
   if (path === '/api/labels/ack' && request.method === 'POST') {
     if (badClient) return json({ error: 'bad client' }, 400);
@@ -1416,6 +1459,99 @@ async function labelGuardRoutes(env, request, url) {
   }
 
   return null;
+}
+
+/* ---- custom alert delivery + watch evaluation (docs/LABELGUARD.md §7) ----
+   Destinations (KV labeldest): { id: { name, type: 'gchat'|'slack'|'email', url?, to?,
+   mention? } }. gchat/slack = incoming-webhook URL, pinged straight from the worker
+   ({"text": ...} works for both). email = queued to KV labeloutbox; the key-gated Gmail
+   Apps Script (tools/gmail_push.gs, 5-min trigger) polls /api/gmail/push {outboxPoll:1},
+   sends from Ray's mailbox, then acks {outboxAck:[ids]}. `mention` (e.g. "<!channel>" for
+   Slack, "<users/all>" for Google Chat) is prepended on non-recovery pings. */
+async function sendPing(env, dest, text) {
+  try {
+    if (dest.type === 'slack' || dest.type === 'gchat') {
+      if (!/^https:\/\//.test(String(dest.url || ''))) return { ok: false, error: 'destination has no webhook url' };
+      const r = await fetch(dest.url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text }) });
+      return r.ok ? { ok: true, sent: dest.type } : { ok: false, error: dest.type + ' webhook HTTP ' + r.status };
+    }
+    if (dest.type === 'email') {
+      if (!dest.to) return { ok: false, error: 'destination has no email address' };
+      const ob = (await env.EDITS.get('labeloutbox', 'json')) || [];
+      ob.push({ id: 'ob_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        to: String(dest.to).slice(0, 120), subject: text.split('\n')[0].slice(0, 140), body: text, t: Date.now() });
+      await env.EDITS.put('labeloutbox', JSON.stringify(ob.slice(-50)));
+      return { ok: true, queued: true, note: 'email queued — the Gmail bridge sends within ~5 min' + (env.GMAIL_PUSH_KEY ? '' : ' (GMAIL_PUSH_KEY not set: bridge inactive until GOOGLE_SETUP.md §8 is done)') };
+    }
+    return { ok: false, error: 'unknown destination type "' + dest.type + '"' };
+  } catch (e) { return { ok: false, error: String((e && e.message) || e).slice(0, 140) }; }
+}
+
+// activity entry that works from cron (no request/ctx) — same key/metadata shape as logActivity
+async function logAlertActivity(env, detail) {
+  try {
+    const t = Date.now();
+    await env.EDITS.put('act:' + String(t).padStart(14, '0') + ':' + Math.random().toString(36).slice(2, 6), '',
+      { metadata: { t, u: 'label-guard', a: 'label-alert', d: String(detail || '').slice(0, 80) }, expirationTtl: 60 * 60 * 24 * 90 });
+  } catch (e) {}
+}
+
+// evaluate watch rules against the LIVE feeds. ~2-3 gviz fetches per rule; the :30 cron
+// firing gives this its own subrequest budget, and >MAXRULES estates rotate via cursor.
+async function labelWatchRun(env, onlyFeedKey) {
+  const now = Date.now();
+  const envx = liftEnvelope(await env.EDITS.get('labelwatch', 'json'), now);
+  const rules = envx.data;
+  const dests = liftEnvelope(await env.EDITS.get('labeldest', 'json'), now).data;
+  const keys = Object.keys(rules).filter((k) => {
+    const r = rules[k];
+    return r && r.enabled && (!onlyFeedKey || lgKey(r.client, r.mkt) === onlyFeedKey);
+  }).sort();
+  if (!keys.length) return { ok: true, checked: 0, fired: 0, results: [] };
+  const MAXRULES = 10;
+  let start = 0;
+  if (keys.length > MAXRULES && !onlyFeedKey) {
+    const cur = (await env.EDITS.get('labelwatchcur', 'json')) || { i: 0 };
+    start = (((cur.i | 0) % keys.length) + keys.length) % keys.length;
+    await env.EDITS.put('labelwatchcur', JSON.stringify({ i: (start + MAXRULES) % keys.length }));
+  }
+  let checked = 0, fired = 0;
+  const results = [], srcCache = {};
+  for (let i = 0; i < Math.min(MAXRULES, keys.length); i++) {
+    const key = keys[(start + i) % keys.length];
+    const rule = rules[key];
+    try {
+      const fk = lgKey(rule.client, rule.mkt);
+      if (!(fk in srcCache)) srcCache[fk] = await feedSourceFor(env, rule.client, rule.mkt);
+      const src = srcCache[fk];
+      if (!src) { rule.lastRun = now; rule.lastErr = 'no feed wired'; results.push({ key, error: 'no feed wired' }); continue; }
+      const live = rule.vs
+        ? await crossFeed(fetch, src, rule.label, rule.value, rule.vs)
+        : await labelPivot(fetch, src, rule.label);
+      const ev = evalWatch(rule, live, now);
+      rule.state = ev.state; rule.lastRun = now; rule.lastErr = '';
+      checked++;
+      for (const fire of ev.fires) {
+        fired++;
+        const link = 'https://feedspark.ray-vtt.workers.dev/labels#' + encodeURIComponent(fk);
+        for (const dId of (rule.dests || [])) {
+          const dest = dests[dId]; if (!dest) continue;
+          let text = alertText(rule, fire, { link });
+          if (dest.mention && fire.kind !== 'recovered') text = dest.mention + ' ' + text;
+          await sendPing(env, dest, text);
+        }
+        await logAlertActivity(env, rule.client + ' ' + rule.mkt + ' · ' + fire.kind + ' · ' + String(fire.value).slice(0, 40));
+        results.push({ key, fire: fire.kind, value: fire.value, was: fire.was, now: fire.now });
+      }
+      envx.meta[key] = { t: now };
+    } catch (e) {
+      rule.lastRun = now; rule.lastErr = String((e && e.message) || e).slice(0, 120);
+      envx.meta[key] = { t: now };
+      results.push({ key, error: rule.lastErr });
+    }
+  }
+  await env.EDITS.put('labelwatch', JSON.stringify(envx));
+  return { ok: true, checked, fired, results: results.slice(0, 30) };
 }
 
 // hourly rotation: BATCH feeds per firing keeps the combined cron (plan warm + this sweep)
