@@ -151,8 +151,8 @@ const DEFAULT_FEEDS = {
     nl: { id: '17a8RKY01vcmbmwHBw-kigGBo5N-PY6cSNj-SM5IOGzE', gid: '0' },
     au: { id: '1VTE5MkGw3XSacA6w5YAciwBIl0yBLt2KlKAQbXmCYyI', gid: '0' },
     ca: { id: '1pG9dzcKnGRx-r56eNISksUeeyNovJbF4tkVUBtYs25U', gid: '0' },
-    // Reiss EU exists in the master sheet but its URL is truncated there (/d/1LaOCzKf…) —
-    // fix the row in the sheet, then re-import.
+    eu: { id: '1LaOCzKf_zxRpSBobb-iwgYGAgggwWqB8XMjQRtbr6mM', gid: '0' },
+    fr: { id: '1eb1-NHas0oDVozjQ7-gbZfvfUdM0iJTwtTTovy7pLuc', gid: '0' },  // not in the master sheet yet — supplied by Ray direct
   },
 };
 const mktOf = (raw) => String(raw || 'gb').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 6) || 'gb';

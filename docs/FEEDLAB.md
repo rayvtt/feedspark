@@ -25,9 +25,10 @@ Feeds change daily upstream; the 20h window keeps the score at most one refresh 
 
 Wired out of the box via `DEFAULT_FEEDS` — the committed **master feed-market map**, imported from
 Ray's sheet (`1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak`, one row per client+country feed):
-**22 feeds × 8 brands** — Schuh gb/de/ie · YuMOVE · Monsoon · Accessorize · Superdry gb/ie/de/fr/nl ·
-House of Bruar gb/us/eu · American Golf (API-fed sheet) · Reiss gb/us/ie/de/nl/au/ca (the sheet's
-Reiss EU row carries a truncated URL — not wired until fixed). New rows in the sheet get
+**24 feeds × 8 brands** — Schuh gb/de/ie · YuMOVE · Monsoon · Accessorize · Superdry gb/ie/de/fr/nl ·
+House of Bruar gb/us/eu · American Golf (API-fed sheet) · Reiss gb/us/ie/de/nl/au/ca/eu/fr
+(FR isn't in the master sheet yet — add its row so the sheet stays the source of truth;
+the sheet's EU row still shows a truncated URL). New rows in the sheet get
 re-imported into `DEFAULT_FEEDS` (ask a Code session); ad-hoc feeds attach from the CC dossier and
 **override** the wired entry per market. `/api/feed/clients` serves the roster (wired ∪ attached)
 to the Feed Lab selector and the CC dossier in one call.
