@@ -108,8 +108,8 @@ proxy: sheet ids never come from the query — only roster clients resolve, exac
   not scanned / unreachable), CL0–4 coverage bars, rows, last scan. **⚡ Scan whole estate**
   sweeps sequentially, skipping feeds fresher than 20h.
 - **03 Feed dissection** — CL0–4 pivots on **one seamless row** (equal widths): value · SKUs ·
-  share · Δ vs baseline, struck-out red rows for values that are GONE, coverage history
-  sparkline, CSV export.
+  share · Δ vs baseline, struck-out red rows for values that are GONE, CSV export. (No
+  history chart by Ray's call — the scan history still accumulates in KV `labelhist:*`.)
 - **Cross dissection** — click any value in any pivot → a full-width panel breaks that segment
   down **live** by another label (chips flip CL1↔CL4): Reiss GB CL0 "Best Sellers" → CL2
   women - fp 3,166 · men - fp 2,542 · women - sale 2,081… plus a "(no CLx value)" remainder
