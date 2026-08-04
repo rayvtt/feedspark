@@ -128,10 +128,8 @@ window.addEventListener('load',restore);
   .bs-ck.ok{color:var(--good);border-color:#CDE9D8;background:rgba(72,208,126,.1)}
   .bs-ck.no{color:#C0392B;border-color:#EED4D0;background:rgba(192,57,43,.06)}
   .bs-ai-row{display:flex;gap:8px;align-items:center;margin:2px 0 10px}
-  .bs-ai{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid #7C3AED;background:rgba(124,58,237,.08);color:#5B21B6;cursor:pointer}
-  .bs-ai:hover{background:rgba(124,58,237,.16)}
-  .bs-ai:disabled{opacity:.5;cursor:wait}
-  .bs-ai-st{font-size:11px;color:var(--muted);font-weight:700}
+  .bs-ai{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--orange);background:rgba(245,166,35,.1);color:var(--orange-ink);cursor:pointer}
+  .bs-ai:hover{background:rgba(245,166,35,.2)}
   .bg-mhead{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
   .bg-mhead .mc{margin-bottom:0}
   /* two-column generator */
@@ -354,7 +352,7 @@ window.addEventListener('load',restore);
           <option value="technical">Feed &amp; technical</option><option value="channel">Channels</option>
           <option value="test">Testing</option><option value="opt">Optimisation</option><option value="account">Account</option>
         </select></div>
-      <div class="bs-ai-row"><button type="button" class="bs-ai" id="bs-ai" title="Compress the context rail into an executable scope + DoD — template and your learned edits stay the fallback">✦ Draft with Tachyon</button><span class="bs-ai-st" id="bs-ai-st"></span></div>
+      <div class="bs-ai-row"><button type="button" class="bs-ai" id="bs-ai" title="Fold the gathered context into the draft — email-thread lines into the scope, real links into assets. Local and instant, no AI involved.">⚡ Compose from context</button></div>
       <div class="fld"><label>Scope / detail</label><textarea id="bg-scope" placeholder="Markets, categories, rules, constraints…"></textarea></div>
       <div class="fld"><label>Definition of done</label><textarea id="bg-dod" placeholder="What ‘finished’ looks like — live in FeedHero, QA'd, sample approved…"></textarea></div>
       <div class="fld"><label>Assets / links</label><textarea id="bg-assets" placeholder="Sheet, feed, brand guide, examples…"></textarea></div>
@@ -1238,29 +1236,31 @@ window.addEventListener('load',restore);
     }).catch(function(){});
   }
   (function(){ var cs=document.getElementById('bg-client'); if(cs)cs.addEventListener('change',function(){ window.__bsRow=null; renderCtx(null); }); })();
-  // ✦ Tachyon: compress the rail + current draft into an executable scope/DoD. Degrades to
-  // template + learned edits when the API key isn't configured — the button says so.
-  (function(){ var btn=document.getElementById('bs-ai'), st=document.getElementById('bs-ai-st'); if(!btn)return;
-    fetch('/api/claude').then(function(r){ return r.json(); }).then(function(d){
-      if(!(d&&d.configured)&&st)st.textContent='not connected — drafts fall back to templates + your learned edits'; }).catch(function(){});
+  // ⚡ Compose from context — LOCAL and deterministic, no API (Ray's call): fold what the rail
+  // gathered into the draft. Email-thread lines land under a "Context:" block in the scope,
+  // any real links found in the source are captured into assets (never invented), and the
+  // template + learned-edit prefill stays the base. Instant, free, works offline.
+  (function(){ var btn=document.getElementById('bs-ai'); if(!btn)return;
     btn.onclick=function(){
-      var f=fields(); btn.disabled=true; if(st)st.textContent='drafting…';
-      var ctx=document.getElementById('bs-ctx'), ctxText=ctx?ctx.innerText.slice(0,2500):'';
-      fetch('/api/claude',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
-        system:'You draft feed-optimisation briefs for FeedSpark AMs to send to the ASPL production team. Reply with STRICT JSON only: {"scope":"...","dod":"...","assets":"..."}. Compact and executable: scope = the exact work, markets, cohort/SKU counts, rules and constraints; dod = verifiable finish conditions; assets = only links/files named in the context (never invent URLs). Keep scope+dod under 1200 characters total. If the current scope contains a "Run TWO streams" block, preserve it verbatim at the end of scope.',
-        prompt:'CLIENT: '+f.client+' ('+f.market+')\nTASK: '+f.task+'\n\nCONTEXT:\n'+ctxText+'\n\nCURRENT DRAFT (improve it; keep anything specific):\nSCOPE:\n'+f.scope+'\n\nDOD:\n'+f.dod+'\n\nASSETS:\n'+f.assets,
-        max_tokens:1200})})
-      .then(function(r){ return r.json(); }).then(function(d){
-        btn.disabled=false;
-        if(!d||d.error||!d.text){ if(st)st.textContent=(d&&d.message)||'draft failed'; return; }
-        var j=null; try{ j=JSON.parse(String(d.text).replace(/^```json?\s*/i,'').replace(/```\s*$/,'')); }catch(e){}
-        if(!j){ if(st)st.textContent='draft came back malformed — kept your text'; return; }
-        if(j.scope)document.getElementById('bg-scope').value=String(j.scope);
-        if(j.dod)document.getElementById('bg-dod').value=String(j.dod);
-        if(j.assets)document.getElementById('bg-assets').value=String(j.assets);
-        if(st)st.textContent='drafted ✓ — review and adjust';
-        resetBodyOverride(); refreshPreview(); toast('Tachyon drafted scope + DoD from the context');
-      }).catch(function(){ btn.disabled=false; if(st)st.textContent='draft failed — network'; });
+      var f=fields(), t=window.__bsRow||null, add=[], links=[];
+      function grab(s){ (String(s||'').match(/https?:\/\/[^\s"'<>)]+/g)||[]).forEach(function(u){ if(links.indexOf(u)<0)links.push(u); }); }
+      if(t&&t.esrc){
+        var base=String(t.task||'').replace(/ — from .+$/,''), tk=threadKey({subject:base,id:''});
+        (gmailItems||[]).filter(function(g){ return threadKey(g)===tk; })
+          .sort(function(a,b){ return (b.date||0)-(a.date||0); }).slice(0,3).forEach(function(m){
+            add.push('• '+senderName(m.from)+': '+String(m.snippet||'').slice(0,160)); grab(m.snippet); });
+      } else if(t){
+        add.push('• Plan row: '+(t.s||'Open')+(t.owner&&t.owner!=='—'?' · owner '+t.owner:'')+(t.d?' · due '+t.d:''));
+      }
+      grab(f.assets); grab(f.scope);
+      var scope=f.scope;
+      if(add.length&&scope.indexOf('Context:')<0) scope=scope.replace(/\s*$/,'')+'\n\nContext:\n'+add.join('\n');
+      document.getElementById('bg-scope').value=scope;
+      if(links.length){ var as=document.getElementById('bg-assets'), cur=as.value.trim();
+        links.forEach(function(u){ if(cur.indexOf(u)<0)cur=(cur?cur+'\n':'')+u; }); as.value=cur; }
+      resetBodyOverride(); refreshPreview();
+      toast(add.length?('Context folded into the scope'+(links.length?' · '+links.length+' link'+(links.length===1?'':'s')+' captured':''))
+        :'No extra context found — the template + your learned edits are already applied');
     }; })();
 
   document.getElementById('bg-copy').onclick=function(){ var o=refreshPreview(); copy(o.subj+'\n\n'+o.body,'Brief copied'); };
