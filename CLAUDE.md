@@ -222,7 +222,10 @@ the **overwrite tripwire** (`docs/feature_manifest.json` checked by `tools/check
 ship a feature into a shared file, add its marker in the same PR) and the **overlap detector**
 (`tools/overlap.sh` — also run it at task START; 🔥 hot-file overlap = sequence, don't parallel-edit).
 If presync's merge touched a file you're editing, re-run your QA — a clean git merge is not an intact
-feature. After merge: verify LIVE per the rule above, then restart the branch from latest main.
+feature. **Merge autonomy (Ray's standing rule): NEVER wait for Ray to merge.** Once presync +
+`validate.yml` are green, the session opens **and merges** its own PR (squash) immediately — human
+approval is not a gate; the only reason to hold a merge is 🔥 overlap sequencing with another session.
+After merge: verify LIVE per the rule above, then restart the branch from latest main.
 Full protocol: [`docs/WAYS_OF_WORKING.md`](./docs/WAYS_OF_WORKING.md).
 
 ### Command center data — ATRT Tracker
