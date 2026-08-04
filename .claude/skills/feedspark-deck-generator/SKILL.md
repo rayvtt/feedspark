@@ -305,6 +305,19 @@ Follow the exact pattern already used for every other deck in
   chapter's finding names the earlier chapter's status pill by number) rather than leaving
   the contradiction to sit silently in two unconnected places. Caught on the Superdry deck's
   category-mapping row (round 1 feedback).
+- **A corrected headline count is never a one-line edit.** The same task/SKU count is
+  typically restated in: an agenda row, a reconciliation note, per-lane scorecard cells,
+  a *computed* score, and individual table outcome cells ("16 of 18 closed"). After
+  changing any headline figure, grep the whole deck for the old number **and** for its
+  derived per-lane figures, and recompute any score with the real scoring function
+  (`tools/build_plan_tasks.py`'s `score_of()`) rather than adjusting it by eye. Caught on
+  Superdry round 2, where correcting 169/86 → 251/4 silently invalidated six scorecard
+  cells, an "other lanes" card, two table cells and the 70/100 headline score — the same
+  cross-chapter contradiction round 1 had just fixed, arriving from the opposite direction.
+  If the corrected totals don't decompose into per-lane figures you can actually source,
+  say so and mark the inferred split with the `?` chk badge rather than inventing a
+  distribution that looks authoritative.
+
 - **Grep for the two required-but-easy-to-skip prose patterns before shipping any new
   deck**, not just when reading the style guide reminds you: `transaction infrastructure`
   (the shared Google hero epigraph) and the AI-landscape chapter's rhetorical shopper-quote
