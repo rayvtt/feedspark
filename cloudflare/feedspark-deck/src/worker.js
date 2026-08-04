@@ -153,6 +153,7 @@ const DEFAULT_FEEDS = {
     ca: { id: '1pG9dzcKnGRx-r56eNISksUeeyNovJbF4tkVUBtYs25U', gid: '0' },
     eu: { id: '1LaOCzKf_zxRpSBobb-iwgYGAgggwWqB8XMjQRtbr6mM', gid: '0' },
     fr: { id: '1eb1-NHas0oDVozjQ7-gbZfvfUdM0iJTwtTTovy7pLuc', gid: '0' },  // not in the master sheet yet — supplied by Ray direct
+    'gb-fb': { xml: 'https://s2.feedhero.net/output_feeds/fb/reiss_gb/a57b35eff04c8fc0eb8128aac5df23d4/latest.xml' },  // Meta (Facebook) channel — FeedHero-hosted realtime XML
   },
 };
 const mktOf = (raw) => String(raw || 'gb').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 6) || 'gb';
@@ -162,6 +163,12 @@ const sheetRef = (u) => {
   const g = /[#?&]gid=(\d+)/.exec(String(u));
   return { id: m[1], gid: (g && g[1]) || '0' };
 };
+// FeedHero-hosted XML product feeds (Meta/FB channel) — realtime company-public data. The
+// host is allowlisted so the feed proxy can never be pointed at arbitrary URLs; a source is
+// either a sheet {id,gid} or an {xml} URL, and feedRef() resolves a pasted URL to whichever.
+const xmlRef = (u) => (/^https:\/\/[a-z0-9-]+\.feedhero\.net\/[^\s"'<>]+\.xml$/i.test(String(u || '').trim())
+  ? { xml: String(u).trim() } : null);
+const feedRef = (u) => sheetRef(u) || xmlRef(u);
 const feedMarketsFor = async (env, client) => {   // { mkt: {id,gid} } for every attached market
   const out = {};
   const dft = DEFAULT_FEEDS[client] || {};
@@ -169,9 +176,9 @@ const feedMarketsFor = async (env, client) => {   // { mkt: {id,gid} } for every
   if (client) try {
     const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
     const rec = dossier[client] || {};
-    if (rec.feed) { const r = sheetRef(rec.feed); if (r) out.gb = r; }   // legacy single feed = gb
+    if (rec.feed) { const r = feedRef(rec.feed); if (r) out.gb = r; }   // legacy single feed = gb
     if (rec.feeds && typeof rec.feeds === 'object') {
-      Object.keys(rec.feeds).forEach((mk) => { const r = sheetRef(rec.feeds[mk]); if (r) out[mktOf(mk)] = r; });
+      Object.keys(rec.feeds).forEach((mk) => { const r = feedRef(rec.feeds[mk]); if (r) out[mktOf(mk)] = r; });
     }
   } catch (e) {}
   return out;
@@ -185,7 +192,7 @@ async function feedRoster(env) {
     const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
     Object.keys(dossier).forEach((c) => {
       const rec = dossier[c] || {};
-      if ((rec.feed && sheetRef(rec.feed)) || (rec.feeds && Object.keys(rec.feeds).some((mk) => sheetRef(rec.feeds[mk])))) clients[c] = 1;
+      if ((rec.feed && feedRef(rec.feed)) || (rec.feeds && Object.keys(rec.feeds).some((mk) => feedRef(rec.feeds[mk])))) clients[c] = 1;
     });
   } catch (e) {}
   const out = [];
@@ -545,6 +552,16 @@ export default {
       const client = url.searchParams.get('client') || '';
       const src = await feedSourceFor(env, client, url.searchParams.get('market'));
       if (!src) return json({ error: 'no feed sheet linked for this client/market - attach one in Feed Lab or the brand dossier' }, 404);
+      if (src.xml) {
+        // FeedHero-hosted XML (Meta/FB channel) — realtime upstream, streamed through untouched;
+        // the page's engine sniffs XML vs CSV from the first bytes, so one proxy serves both
+        const upx = await fetch(src.xml);
+        const ctx2 = upx.headers.get('content-type') || '';
+        if (!upx.ok || !upx.body || !/xml|rss|octet-stream/i.test(ctx2)) {
+          return json({ error: 'feed XML fetch failed (' + upx.status + ', ' + (ctx2.split(';')[0] || 'no type') + ')' }, 502);
+        }
+        return new Response(upx.body, { headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'no-store' } });
+      }
       const up = await fetch('https://docs.google.com/spreadsheets/d/' + src.id + '/export?format=csv&gid=' + src.gid);
       // a non-link-shared sheet 307s to Google's LOGIN PAGE with a 200 — final content-type is
       // the only reliable tell. Never forward content-length: Google gzips, the header counts
@@ -566,9 +583,9 @@ export default {
         const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
         Object.keys(dossier).forEach((c) => {
           const rec = dossier[c] || {}; const mks = {};
-          if (rec.feed && sheetRef(rec.feed)) mks.gb = 1;
+          if (rec.feed && feedRef(rec.feed)) mks.gb = 1;
           if (rec.feeds && typeof rec.feeds === 'object') {
-            Object.keys(rec.feeds).forEach((mk) => { if (sheetRef(rec.feeds[mk])) mks[mktOf(mk)] = 1; });
+            Object.keys(rec.feeds).forEach((mk) => { if (feedRef(rec.feeds[mk])) mks[mktOf(mk)] = 1; });
           }
           const list = Object.keys(mks);
           if (list.length) { out[c] = out[c] || { wired: [], attached: [] }; out[c].attached = list; }
@@ -1323,6 +1340,7 @@ const lgKey = (c, m) => c + '|' + m;
 async function runLabelScan(env, client, mkt) {
   const src = await feedSourceFor(env, client, mkt);
   if (!src) return { error: 'no feed sheet linked for this client/market - attach one in Feed Lab or the brand dossier', status: 404 };
+  if (src.xml) return { error: 'XML feed (Meta channel) - Label Guard monitors sheet-backed feeds only (gviz cannot query XML)', status: 400 };
   let snap;
   try {
     snap = await scanFeed(fetch, src, { client, market: mkt });
@@ -1382,6 +1400,7 @@ async function labelGuardRoutes(env, request, url) {
     const alerts = (await env.EDITS.get('labelalerts', 'json')) || {};
     const feeds = {};
     for (const f of roster) {
+      if (f.src && f.src.xml) continue;   // XML (Meta) feeds aren't label-monitorable — keep them off the estate grid
       feeds[lgKey(f.client, f.mkt)] = Object.assign({ client: f.client, mkt: f.mkt, status: 'never' }, idx[lgKey(f.client, f.mkt)] || {});
     }
     // scanned-but-detached feeds stay visible (with their history) rather than vanishing
@@ -1430,6 +1449,7 @@ async function labelGuardRoutes(env, request, url) {
     }
     const src = await feedSourceFor(env, client, mkt);
     if (!src) return json({ error: 'no feed sheet linked for this client/market' }, 404);
+    if (src.xml) return json({ error: 'XML feed (Meta channel) - cross-label dissection needs a sheet-backed feed (gviz)' }, 400);
     try {
       return json(await crossFeed(fetch, src, by, value, vs));
     } catch (e) {
@@ -1567,7 +1587,7 @@ async function labelWatchRun(env, onlyFeedKey, mode) {
       const fk = lgKey(rule.client, rule.mkt);
       if (!(fk in srcCache)) srcCache[fk] = await feedSourceFor(env, rule.client, rule.mkt);
       const src = srcCache[fk];
-      if (!src) { rule.lastRun = now; rule.lastErr = 'no feed wired'; results.push({ key, error: 'no feed wired' }); continue; }
+      if (!src || src.xml) { rule.lastRun = now; rule.lastErr = src ? 'XML feed - not gviz-queryable' : 'no feed wired'; results.push({ key, error: rule.lastErr }); continue; }
       if (i > 0) await sleep(500);   // stagger — burst-querying gviz is what draws throttled garbage
       const fetchLive = () => rule.vs
         ? crossFeed(fetch, src, rule.label, rule.value, rule.vs)
@@ -1650,7 +1670,9 @@ async function queueLabelReport(env, why) {
 // estate is re-checked every ~6 hours, hours ahead of a PMAX crater
 async function labelCronSweep(env) {
   try {
-    const roster = await feedRoster(env);
+    // sheet-backed feeds only — XML (Meta) feeds can't be gviz-queried, and a rotation
+    // slot spent erroring on one would starve a real sheet's check
+    const roster = (await feedRoster(env)).filter((f) => f.src && f.src.id);
     if (!roster.length) return;
     const BATCH = 4;
     const st = (await env.EDITS.get('labelcron', 'json')) || { i: 0 };
