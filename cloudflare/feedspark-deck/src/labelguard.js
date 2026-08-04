@@ -274,6 +274,27 @@ export async function labelPivot(fetchFn, src, key) {
   return { values, present: true };
 }
 
+// An answer that CONTRADICTS ITSELF must never drive an alert. Twice now Google served
+// the worker "segment counts 9,000+ SKUs" and, seconds later in the same run, "that same
+// segment has zero cross values" — for feeds whose sheets were verifiably fine (the
+// two-strike guard was defeated because the bad reads recurred across consecutive checks;
+// throttling of Cloudflare's shared egress IPs fits the signature). No genuine feed state
+// is provable from such a response, so the watch runner re-queries once after a pause and,
+// if still implausible, SKIPS the check with a diagnostic instead of evaluating. A real
+// full-label wipe is still caught by the baseline sweep's cov-zero CRIT (different query,
+// different schedule) — the watch just refuses to confirm from garbage.
+export function isImplausible(rule, live) {
+  if (!live || !(rule.ref || []).length) return false;
+  const empty = !(live.values || []).length;
+  // cross: segment=0 + empty pivot is COHERENT (the whole segment vanished — evaluated
+  // normally as segment-gone with two-strike); segment>0 + empty pivot contradicts itself.
+  if (rule.vs) return empty && (live.segment || 0) > 0;
+  // plain label: an all-values-empty reading (column "missing" or "blank") is exactly what
+  // a garbled header probe produces too — never confirmable from here. The baseline sweep's
+  // label-gone / cov-zero CRIT owns genuine column wipes.
+  return empty;
+}
+
 // pure state machine: reference vs live -> fires + next state. No fetching, no clock reads.
 // TWO-STRIKE CONFIRMATION: the first sighting of a drop-off marks the value 'suspect' and
 // stays SILENT; only a second consecutive bad check fires the ping. Feed sheets are

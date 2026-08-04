@@ -558,6 +558,7 @@ window.addEventListener('load',restore);
         var L = s.labels[key]; if (!L || !L.present) return;
         var floor = Math.max(10, Math.ceil((s.rows || 0) * 0.005));
         var ref = (L.values || []).filter(function (pr) { return pr[1] >= floor; });
+        if (!ref.length) { wtMsg('✗ no significant values on this label right now — nothing to arm'); return; }
         openBuilder({ client: p2.client, mkt: p2.mkt, label: key, value: null, vs: null, ref: ref, refSeg: 0,
           title: p2.client + ' · ' + p2.mkt.toUpperCase() + ' — CL' + key.slice(-1) + ' (' + ref.length + ' significant values)' });
       };
@@ -656,6 +657,7 @@ window.addEventListener('load',restore);
     if (xw) xw.onclick = function () {
       var xd = XCACHE[crossKeyStr()];
       if (!xd || xd.error) { wtMsg('✗ wait for the live breakdown to load first'); return; }
+      if (!(xd.rows || []).length) { wtMsg('✗ this breakdown is empty right now — refresh it before arming a watch'); return; }
       var p2 = parts(CROSS.k), byN = 'CL' + CROSS.by.slice(-1), vsN2 = 'CL' + CROSS.vs.slice(-1);
       openBuilder({ client: p2.client, mkt: p2.mkt, label: CROSS.by, value: CROSS.value, vs: CROSS.vs,
         ref: xd.rows || [], refSeg: xd.segment || 0,

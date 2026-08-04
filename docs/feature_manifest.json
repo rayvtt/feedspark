@@ -1176,6 +1176,12 @@
       "pattern": "labelreportcfg",
       "min": 4,
       "pr": 192
+    },
+    {
+      "name": "labelguard engine: impossible-answer guard (throttled-garbage never confirms an alert)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "isImplausible",
+      "pr": 192
     }
   ]
 }

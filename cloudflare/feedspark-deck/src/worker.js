@@ -27,7 +27,7 @@
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx } from "./briefmatch.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { LABEL_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport } from "./labelguard.js";
+import { LABEL_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -1559,6 +1559,7 @@ async function labelWatchRun(env, onlyFeedKey, mode) {
   }
   let checked = 0, fired = 0, suspects = 0;
   const results = [], srcCache = {};
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   for (let i = 0; i < Math.min(MAXRULES, keys.length); i++) {
     const key = keys[(start + i) % keys.length];
     const rule = rules[key];
@@ -1567,9 +1568,26 @@ async function labelWatchRun(env, onlyFeedKey, mode) {
       if (!(fk in srcCache)) srcCache[fk] = await feedSourceFor(env, rule.client, rule.mkt);
       const src = srcCache[fk];
       if (!src) { rule.lastRun = now; rule.lastErr = 'no feed wired'; results.push({ key, error: 'no feed wired' }); continue; }
-      const live = rule.vs
-        ? await crossFeed(fetch, src, rule.label, rule.value, rule.vs)
-        : await labelPivot(fetch, src, rule.label);
+      if (i > 0) await sleep(500);   // stagger — burst-querying gviz is what draws throttled garbage
+      const fetchLive = () => rule.vs
+        ? crossFeed(fetch, src, rule.label, rule.value, rule.vs)
+        : labelPivot(fetch, src, rule.label);
+      let live = await fetchLive();
+      // impossible-answer guard: "the segment counts thousands of SKUs but has zero values"
+      // is self-contradictory — re-query once after a pause; still contradictory = SKIP the
+      // check with a diagnostic rather than let garbage confirm an alert (see labelguard.js)
+      if (isImplausible(rule, live)) {
+        await sleep(10000);
+        live = await fetchLive();
+        if (isImplausible(rule, live)) {
+          rule.lastRun = now;
+          rule.lastErr = 'gviz answered segment>0 with an empty pivot twice — check skipped (likely throttling)';
+          envx.meta[key] = { t: now };
+          await logAlertActivity(env, rule.client + ' ' + rule.mkt + ' · check skipped: implausible gviz response');
+          results.push({ key, skipped: 'implausible gviz response — not evaluated' });
+          continue;
+        }
+      }
       const ev = evalWatch(rule, live, now);
       rule.state = ev.state; rule.lastRun = now; rule.lastErr = '';
       checked++; suspects += ev.suspects || 0;

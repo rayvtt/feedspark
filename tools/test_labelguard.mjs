@@ -279,6 +279,19 @@ const codes = (alerts) => alerts.map((a) => a.sev + ':' + a.code).sort();
   eq('digest with no fires -> no messages', LG.alertDigest(rule, [], {}), []);
 }
 
+/* ---------- isImplausible (the impossible-answer guard) ---------- */
+{
+  const xr = { vs: 'custom_label_2', ref: [['a', 10], ['b', 5]] };
+  ok('cross: segment>0 + empty pivot = implausible', LG.isImplausible(xr, { segment: 9178, values: [] }));
+  ok('cross: segment=0 + empty pivot = coherent (segment-gone path)', !LG.isImplausible(xr, { segment: 0, values: [] }));
+  ok('cross: data present = plausible', !LG.isImplausible(xr, { segment: 9178, values: [['a', 9]] }));
+  const pr = { vs: null, ref: [['a', 10]] };
+  ok('plain: empty values = implausible (sweep owns real wipes)', LG.isImplausible(pr, { present: true, values: [] }));
+  ok('plain: column-missing reading also unprovable', LG.isImplausible(pr, { present: false, values: [] }));
+  ok('plain: data present = plausible', !LG.isImplausible(pr, { present: true, values: [['a', 4]] }));
+  ok('no ref = nothing to contradict', !LG.isImplausible({ vs: null, ref: [] }, { present: true, values: [] }));
+}
+
 /* ---------- buildReport (the emailed status summary) ---------- */
 {
   const T0 = 1754280000000; // fixed clock
