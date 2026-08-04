@@ -1074,6 +1074,20 @@
       "pr": 180
     },
     {
+      "name": "Pricer: seeded AI briefs — ASPL dev handback per-brief token data (Mon/Acc/Hobbycraft/Superdry)",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "SEED_TRACK",
+      "min": 2,
+      "pr": 173
+    },
+    {
+      "name": "workflow: Briefing Studio — context rail, workload scheduling, checklist, Tachyon draft",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "bsPropose",
+      "min": 3,
+      "pr": 182
+    },
+    {
       "name": "worker: Label Guard live cross-label dissection route",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "labels/cross",
