@@ -26,6 +26,8 @@
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx } from "./briefmatch.js";
+// Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
+import { LABEL_KEYS, scanFeed, diffSnapshots, summarize } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -46,6 +48,8 @@ import TACHYON from "../../../docs/tachyon_widget.html";
 import INSTR from "../../../docs/instr_collapse.html";
 import FEEDLAB from "../../../docs/FeedSpark_FeedLab.html";
 import PRICER from "../../../docs/FeedSpark_Pricer.html";
+// Label Guard — custom-label capture + drop-off monitoring module (page at /labels)
+import LABELGUARD_PAGE from "../../../docs/FeedSpark_LabelGuard.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
 // node tests share the file, same pattern as the Feed Lab engine)
 import PRICER_ENGINE from "../../../docs/pricer_engine.js";
@@ -69,6 +73,7 @@ const PAGES = {
   '/activity':    { html: ACTIVITY,    slug: 'activity' },   // owner-gated in fetch() before this map is consulted; Build Log lives on its 🔨 tab
   '/workflow':    { html: WORKFLOW,    slug: 'workflow' },
   '/feedlab':     { html: FEEDLAB,     slug: 'feedlab' },
+  '/labels':      { html: LABELGUARD_PAGE, slug: 'labels' },
   '/pricer':      { html: PRICER,      slug: 'pricer' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
@@ -80,6 +85,11 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
+
+// Label Guard nav badge — injected on app pages only (never client decks): dots the /labels
+// nav icon with the number of feeds carrying active drop-off alerts, red when any is critical.
+const LGBADGE = `<style>.lg-dot{position:absolute;top:1px;right:1px;min-width:14px;height:14px;padding:0 3px;border-radius:100px;background:#ED6F0B;color:#fff;font-size:9.5px;font-weight:900;line-height:14px;text-align:center;pointer-events:none}.lg-dot.crit{background:#C0392B}</style>
+<script>/* FCC-LABELGUARD badge */(function(){try{fetch('/api/labels/alerts').then(function(r){return r.json();}).then(function(d){var c=(d&&d.counts)||{};var n=(c.crit||0)+(c.warn||0);if(!n)return;var a=document.querySelector('#tb-modules a[href="/labels"]');if(!a)return;var b=document.createElement('span');b.className='lg-dot'+(c.crit?' crit':'');b.textContent=n>9?'9+':String(n);a.appendChild(b);}).catch(function(){});}catch(e){}})();</script>`;
 
 // client -> Project Plan Google Sheet id. Mirrors FeedSpark_Workflow.html's client-side
 // PLANSHEET map (used there for the "+ Add task" row and status/owner/due write-back) —
@@ -103,6 +113,89 @@ const PLAN_SHEETS = {
   'House of Bruar': '1lgO-SrzWtHmsvKRXg2Xgzq3d7fCwv5V2Fauu6pJgYOA',
 };
 
+// brands whose live feed is wired in code — imported from Ray's master feed-market sheet
+// (1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak: one row per client+country feed). This map
+// is the committed record; new rows in the sheet get re-imported here (or attached ad-hoc
+// from the CC dossier / Feed Lab, which OVERRIDES the wired entry per market).
+// MULTI-MARKET: a dossier record may carry `feeds` = { gb: url, de: url, ... } (managed
+// from the Feed Lab portal or the CC dossier); the legacy single `feed` field doubles as
+// the 'gb' market. Market codes are 2-6 chars, lowercased.
+// Module scope (not inside fetch): the Label Guard cron sweep resolves feeds from scheduled().
+const DEFAULT_FEEDS = {
+  Schuh: {
+    gb: { id: '1uAM5I_KSsjucCr3GLXc2ekZeiMoAG6x8TIh5ZntwseA', gid: '0' },
+    de: { id: '1u-B6VECXLk1YefoED5FfjpnXw1uEwV8cE_f6t-ed12I', gid: '0' },
+    ie: { id: '1bawEQkhpl8GsSGVNkPnsi228TM_z1LXf1Dj35s-a9p4', gid: '0' },
+  },
+  YuMOVE: { gb: { id: '1PtsaNBd5NGimchw18YlBPCtOgl0HcgkWrKdhy4lfvzA', gid: '0' } },
+  Monsoon: { gb: { id: '1pW6CqyzM_1Rqr8O0basrxxuNAWG9sR2_OrjCIkE_8PU', gid: '0' } },
+  Accessorize: { gb: { id: '1_OkGi8ucOmJcdu5TBWm3vl5cK3bmmaimoMYvR03Z3Ic', gid: '0' } },
+  Superdry: {
+    gb: { id: '1PimExRPPqf1CknH3yLs_tUfJrr2HZgjpiMUDiOUDc3k', gid: '0' },
+    ie: { id: '1SjuQ0M-cangxVcNdlb72RQM0-ZTev7aE-R5v1iX9EGQ', gid: '0' },
+    de: { id: '1y0phqG10OH55u6s6w8xpsVfZe2LohwlpelWPvb0QM3k', gid: '0' },
+    fr: { id: '1FVthehZKfAiUIU0qCGrsdENMQW896o8S19C6fT0gkx4', gid: '0' },
+    nl: { id: '1f4tL0BPNrVFC7Lj0az4LLs9NvIvf3YiFRBXXPafU1t0', gid: '0' },
+  },
+  'House of Bruar': {
+    gb: { id: '16P8vLuLC4l4xkMh5w_BrCCGHzMYqi4eZec8Wezpg1bk', gid: '0' },
+    us: { id: '1Wa5FQgn3mX_iMMG2nT85gmnR28hgVFPkbY1qlV0lJZM', gid: '0' },
+    eu: { id: '1e3tETDX_0oGTgPXr5weI-h1DjwRoVDPJikqW9vvyTJQ', gid: '0' },
+  },
+  'American Golf': { gb: { id: '1W4Tasbdi7jR7kmlIjYjrPtAb2BvW-AkQZBz9XW1aNHk', gid: '0' } },  // API-fed sheet
+  Reiss: {
+    gb: { id: '1KTx9ONZSju_DD06V3F7p958LfzAL0ccJJFXPf5NpLCw', gid: '0' },
+    us: { id: '1_-7yjB-hZfmk9VU_srfn6oZwFGTVzHWLtdOKJRmR-nA', gid: '0' },
+    ie: { id: '1BMUgdup13kqcubAA1AhLrw63_Stlr0SvXFRh4PxQ7YA', gid: '0' },
+    de: { id: '13C8ECyr6lYlkI2PmMfEp_XYKTcjUivy8BpCb-dWC2OY', gid: '0' },
+    nl: { id: '17a8RKY01vcmbmwHBw-kigGBo5N-PY6cSNj-SM5IOGzE', gid: '0' },
+    au: { id: '1VTE5MkGw3XSacA6w5YAciwBIl0yBLt2KlKAQbXmCYyI', gid: '0' },
+    ca: { id: '1pG9dzcKnGRx-r56eNISksUeeyNovJbF4tkVUBtYs25U', gid: '0' },
+    // Reiss EU exists in the master sheet but its URL is truncated there (/d/1LaOCzKf…) —
+    // fix the row in the sheet, then re-import.
+  },
+};
+const mktOf = (raw) => String(raw || 'gb').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 6) || 'gb';
+const sheetRef = (u) => {
+  const m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(String(u || ''));
+  if (!m) return null;
+  const g = /[#?&]gid=(\d+)/.exec(String(u));
+  return { id: m[1], gid: (g && g[1]) || '0' };
+};
+const feedMarketsFor = async (env, client) => {   // { mkt: {id,gid} } for every attached market
+  const out = {};
+  const dft = DEFAULT_FEEDS[client] || {};
+  Object.keys(dft).forEach((k) => { out[k] = dft[k]; });
+  if (client) try {
+    const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
+    const rec = dossier[client] || {};
+    if (rec.feed) { const r = sheetRef(rec.feed); if (r) out.gb = r; }   // legacy single feed = gb
+    if (rec.feeds && typeof rec.feeds === 'object') {
+      Object.keys(rec.feeds).forEach((mk) => { const r = sheetRef(rec.feeds[mk]); if (r) out[mktOf(mk)] = r; });
+    }
+  } catch (e) {}
+  return out;
+};
+const feedSourceFor = async (env, client, market) => (await feedMarketsFor(env, client))[mktOf(market)] || null;
+// every client+market with a live feed (wired ∪ dossier-attached) — the Label Guard roster
+async function feedRoster(env) {
+  const clients = {};
+  Object.keys(DEFAULT_FEEDS).forEach((c) => { clients[c] = 1; });
+  try {
+    const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
+    Object.keys(dossier).forEach((c) => {
+      const rec = dossier[c] || {};
+      if ((rec.feed && sheetRef(rec.feed)) || (rec.feeds && Object.keys(rec.feeds).some((mk) => sheetRef(rec.feeds[mk])))) clients[c] = 1;
+    });
+  } catch (e) {}
+  const out = [];
+  for (const c of Object.keys(clients).sort()) {
+    const mkts = await feedMarketsFor(env, c);
+    for (const mk of Object.keys(mkts).sort()) out.push({ client: c, mkt: mk, src: mkts[mk] });
+  }
+  return out;
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -118,7 +211,8 @@ export default {
     if (request.method === 'PUT' || request.method === 'POST') {
       const ACT = { '/api/edits': 'edit', '/api/feedback': 'feedback', '/api/clients': 'dossier-save',
         '/api/briefs': 'briefs-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
-        '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save' };
+        '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save',
+        '/api/labels/scan': 'label-scan', '/api/labels/ack': 'label-rebase' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -390,69 +484,8 @@ export default {
     // small audit JSON back here for caching. Feeds refresh daily upstream; the page
     // re-scans when the cached audit is older than 20h.
 
-    // brands whose live feed is wired in code — imported from Ray's master feed-market sheet
-    // (1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak: one row per client+country feed). This map
-    // is the committed record; new rows in the sheet get re-imported here (or attached ad-hoc
-    // from the CC dossier / Feed Lab, which OVERRIDES the wired entry per market).
-    // MULTI-MARKET: a dossier record may carry `feeds` = { gb: url, de: url, ... } (managed
-    // from the Feed Lab portal or the CC dossier); the legacy single `feed` field doubles as
-    // the 'gb' market. Market codes are 2-6 chars, lowercased.
-    const DEFAULT_FEEDS = {
-      Schuh: {
-        gb: { id: '1uAM5I_KSsjucCr3GLXc2ekZeiMoAG6x8TIh5ZntwseA', gid: '0' },
-        de: { id: '1u-B6VECXLk1YefoED5FfjpnXw1uEwV8cE_f6t-ed12I', gid: '0' },
-        ie: { id: '1bawEQkhpl8GsSGVNkPnsi228TM_z1LXf1Dj35s-a9p4', gid: '0' },
-      },
-      YuMOVE: { gb: { id: '1PtsaNBd5NGimchw18YlBPCtOgl0HcgkWrKdhy4lfvzA', gid: '0' } },
-      Monsoon: { gb: { id: '1pW6CqyzM_1Rqr8O0basrxxuNAWG9sR2_OrjCIkE_8PU', gid: '0' } },
-      Accessorize: { gb: { id: '1_OkGi8ucOmJcdu5TBWm3vl5cK3bmmaimoMYvR03Z3Ic', gid: '0' } },
-      Superdry: {
-        gb: { id: '1PimExRPPqf1CknH3yLs_tUfJrr2HZgjpiMUDiOUDc3k', gid: '0' },
-        ie: { id: '1SjuQ0M-cangxVcNdlb72RQM0-ZTev7aE-R5v1iX9EGQ', gid: '0' },
-        de: { id: '1y0phqG10OH55u6s6w8xpsVfZe2LohwlpelWPvb0QM3k', gid: '0' },
-        fr: { id: '1FVthehZKfAiUIU0qCGrsdENMQW896o8S19C6fT0gkx4', gid: '0' },
-        nl: { id: '1f4tL0BPNrVFC7Lj0az4LLs9NvIvf3YiFRBXXPafU1t0', gid: '0' },
-      },
-      'House of Bruar': {
-        gb: { id: '16P8vLuLC4l4xkMh5w_BrCCGHzMYqi4eZec8Wezpg1bk', gid: '0' },
-        us: { id: '1Wa5FQgn3mX_iMMG2nT85gmnR28hgVFPkbY1qlV0lJZM', gid: '0' },
-        eu: { id: '1e3tETDX_0oGTgPXr5weI-h1DjwRoVDPJikqW9vvyTJQ', gid: '0' },
-      },
-      'American Golf': { gb: { id: '1W4Tasbdi7jR7kmlIjYjrPtAb2BvW-AkQZBz9XW1aNHk', gid: '0' } },  // API-fed sheet
-      Reiss: {
-        gb: { id: '1KTx9ONZSju_DD06V3F7p958LfzAL0ccJJFXPf5NpLCw', gid: '0' },
-        us: { id: '1_-7yjB-hZfmk9VU_srfn6oZwFGTVzHWLtdOKJRmR-nA', gid: '0' },
-        ie: { id: '1BMUgdup13kqcubAA1AhLrw63_Stlr0SvXFRh4PxQ7YA', gid: '0' },
-        de: { id: '13C8ECyr6lYlkI2PmMfEp_XYKTcjUivy8BpCb-dWC2OY', gid: '0' },
-        nl: { id: '17a8RKY01vcmbmwHBw-kigGBo5N-PY6cSNj-SM5IOGzE', gid: '0' },
-        au: { id: '1VTE5MkGw3XSacA6w5YAciwBIl0yBLt2KlKAQbXmCYyI', gid: '0' },
-        ca: { id: '1pG9dzcKnGRx-r56eNISksUeeyNovJbF4tkVUBtYs25U', gid: '0' },
-        // Reiss EU exists in the master sheet but its URL is truncated there (/d/1LaOCzKf…) —
-        // fix the row in the sheet, then re-import.
-      },
-    };
-    const mktOf = (raw) => String(raw || 'gb').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 6) || 'gb';
-    const sheetRef = (u) => {
-      const m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(String(u || ''));
-      if (!m) return null;
-      const g = /[#?&]gid=(\d+)/.exec(String(u));
-      return { id: m[1], gid: (g && g[1]) || '0' };
-    };
-    const feedMarketsFor = async (client) => {   // { mkt: {id,gid} } for every attached market
-      const out = {};
-      const dft = DEFAULT_FEEDS[client] || {};
-      Object.keys(dft).forEach((k) => { out[k] = dft[k]; });
-      if (client) try {
-        const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
-        const rec = dossier[client] || {};
-        if (rec.feed) { const r = sheetRef(rec.feed); if (r) out.gb = r; }   // legacy single feed = gb
-        if (rec.feeds && typeof rec.feeds === 'object') {
-          Object.keys(rec.feeds).forEach((mk) => { const r = sheetRef(rec.feeds[mk]); if (r) out[mktOf(mk)] = r; });
-        }
-      } catch (e) {}
-      return out;
-    };
-    const feedSourceFor = async (client, market) => (await feedMarketsFor(client))[mktOf(market)] || null;
+    // Feed wiring (DEFAULT_FEEDS + feedMarketsFor/feedSourceFor) lives at MODULE scope now —
+    // the Label Guard cron sweep in scheduled() resolves feeds too, not just fetch() routes.
 
     // ---- Tachyon Pricer: collaborative rate card + saved quotes (kvmerge = every team
     // edits the same numbers concurrency-safe; edits are activity-logged per Access user) ----
@@ -486,7 +519,7 @@ export default {
     // is in the dossier or DEFAULT_FEEDS resolve; the sheet id itself never comes from the query)
     if (path === '/api/feed/proxy' && request.method === 'GET') {
       const client = url.searchParams.get('client') || '';
-      const src = await feedSourceFor(client, url.searchParams.get('market'));
+      const src = await feedSourceFor(env, client, url.searchParams.get('market'));
       if (!src) return json({ error: 'no feed sheet linked for this client/market - attach one in Feed Lab or the brand dossier' }, 404);
       const up = await fetch('https://docs.google.com/spreadsheets/d/' + src.id + '/export?format=csv&gid=' + src.gid);
       // a non-link-shared sheet 307s to Google's LOGIN PAGE with a 200 — final content-type is
@@ -524,7 +557,7 @@ export default {
     if (path === '/api/feed/markets' && request.method === 'GET') {
       const client = (url.searchParams.get('client') || '').slice(0, 60);
       if (!client || client.indexOf(':') >= 0) return json({ error: 'bad client' }, 400);
-      const mkts = await feedMarketsFor(client);
+      const mkts = await feedMarketsFor(env, client);
       const idx = (await env.EDITS.get('feedmkt:' + client, 'json')) || {};
       const out = {};
       Object.keys(mkts).forEach((mk) => { out[mk] = idx[mk] || null; });   // null = never scanned
@@ -579,6 +612,14 @@ export default {
         return json({ ok: true, fetchedAt: a.fetchedAt, market: mkt });
       }
       return json({ error: 'method not allowed' }, 405);   // a POST would otherwise log activity, then 404
+    }
+
+    // ---- Label Guard: custom_label_0..4 capture + drop-off monitoring across every wired
+    // feed (page at /labels; full spec docs/LABELGUARD.md). Google's gviz endpoint does the
+    // pivots server-side, so the worker never parses a raw feed CSV (CPU budget rule).
+    if (path.startsWith('/api/labels/')) {
+      const r = await labelGuardRoutes(env, request, url);
+      if (r) return r;
     }
 
     // ---- Build Log queue: Ray's "not built yet" backlog (kvmerge-backed, concurrency-safe) ----
@@ -1137,7 +1178,7 @@ export default {
     if (page) {
       logActivity(ctx, env, request, 'view', path);
       let html = page.html.replace('</body>', getEditorScript(page.slug) + '\n</body>');
-      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n' + INSTR + '\n</body>');
+      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n</body>');
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
@@ -1158,6 +1199,9 @@ export default {
   // Reads the brand->sheet map the dashboard last posted (KV `plansheets`) and re-parses
   // each Project-Plan tab into KV (planlive:<id>). Registered in wrangler.toml [triggers].
   async scheduled(event, env, ctx) {
+    // Label Guard sweep runs FIRST and unconditionally — the plan warm below early-returns
+    // without GOOGLE_SA_JSON, and label drop-off monitoring must never hinge on that credential.
+    await labelCronSweep(env);
     if (!env.GOOGLE_SA_JSON) return;
     try {
       const sheets = (await env.EDITS.get('plansheets', 'json')) || {};
@@ -1221,6 +1265,153 @@ async function mapStoreRoute(env, request, kvKey, opts) {
     return json(envelopeToClient(envx, opts), 200, { 'X-Sync-Base': String(Date.now()) });
   }
   return null;
+}
+
+/* ================= Label Guard: custom-label monitoring (docs/LABELGUARD.md) =================
+   Engine (gviz pivots, baseline diff, thresholds): src/labelguard.js. KV keys:
+     labels:<client>:<mkt>     latest snapshot (per-label value/volume pivot)
+     labelbase:<client>:<mkt>  the BASELINE — last known-good snapshot alerts diff against
+     labelhist:<client>:<mkt>  scan history [{t,rows,cov,crit,warn}] (cap 120)
+     labelidx                  estate index: "<client>|<mkt>" -> summary (one read boots /labels)
+     labelalerts               active alerts by "<client>|<mkt>" (cleared on recovery/rebaseline)
+     labelcron                 sweep rotation cursor
+   Alerts stay active until the feed RECOVERS or Ray rebaselines ("expected change") — a
+   broken feed that stays broken keeps flagging; it does not fade after one scan. */
+
+const lgKey = (c, m) => c + '|' + m;
+
+async function runLabelScan(env, client, mkt) {
+  const src = await feedSourceFor(env, client, mkt);
+  if (!src) return { error: 'no feed sheet linked for this client/market - attach one in Feed Lab or the brand dossier', status: 404 };
+  let snap;
+  try {
+    snap = await scanFeed(fetch, src, { client, market: mkt });
+  } catch (e) {
+    const msg = String((e && e.message) || e).slice(0, 140);
+    // index + alert maps are re-read right before each write to keep the clobber window
+    // (cron sweep vs a page-triggered scan) down to milliseconds; a lost entry self-heals
+    // on the feed's next scan
+    const idx = (await env.EDITS.get('labelidx', 'json')) || {};
+    idx[lgKey(client, mkt)] = Object.assign({}, idx[lgKey(client, mkt)] || {}, { client, mkt, status: 'unreachable', err: msg, tErr: Date.now() });
+    await env.EDITS.put('labelidx', JSON.stringify(idx));
+    const alertsMap = (await env.EDITS.get('labelalerts', 'json')) || {};
+    alertsMap[lgKey(client, mkt)] = { t: Date.now(), client, mkt,
+      alerts: [{ sev: 'warn', code: 'fetch-fail', msg: 'feed unreachable: ' + msg }] };
+    await env.EDITS.put('labelalerts', JSON.stringify(alertsMap));
+    return { error: msg, status: 502 };
+  }
+  const BK = 'labelbase:' + client + ':' + mkt;
+  let base = await env.EDITS.get(BK, 'json');
+  if (!base) { base = snap; await env.EDITS.put(BK, JSON.stringify(snap)); }   // first scan seeds the baseline
+  const alerts = diffSnapshots(base, snap);
+  const active = alerts.filter((a) => a.sev !== 'info');
+  if (!active.length && base.t !== snap.t) {
+    base = snap; await env.EDITS.put(BK, JSON.stringify(snap));   // clean scan rolls the baseline forward
+  }
+  await env.EDITS.put('labels:' + client + ':' + mkt, JSON.stringify(snap));
+  try {
+    const HK = 'labelhist:' + client + ':' + mkt;
+    const hist = (await env.EDITS.get(HK, 'json')) || [];
+    const cov = {}; LABEL_KEYS.forEach((k) => { const L = snap.labels[k]; cov[k] = L && L.present ? L.cov : null; });
+    hist.push({ t: snap.t, rows: snap.rows, cov,
+      crit: active.filter((a) => a.sev === 'crit').length, warn: active.filter((a) => a.sev === 'warn').length });
+    await env.EDITS.put(HK, JSON.stringify(hist.slice(-120)));
+  } catch (e) {}
+  const idx = (await env.EDITS.get('labelidx', 'json')) || {};
+  idx[lgKey(client, mkt)] = Object.assign({ client, mkt }, summarize(snap, alerts, base.t));
+  await env.EDITS.put('labelidx', JSON.stringify(idx));
+  const alertsMap = (await env.EDITS.get('labelalerts', 'json')) || {};
+  if (active.length) alertsMap[lgKey(client, mkt)] = { t: snap.t, client, mkt, alerts };
+  else delete alertsMap[lgKey(client, mkt)];
+  await env.EDITS.put('labelalerts', JSON.stringify(alertsMap));
+  return { snapshot: snap, alerts, baseT: base.t };
+}
+
+async function labelGuardRoutes(env, request, url) {
+  const path = url.pathname;
+  const client = (url.searchParams.get('client') || '').slice(0, 60);
+  const mkt = mktOf(url.searchParams.get('market'));
+  // ':' aliases other KV keys, '|' aliases other estate-index entries — reject both outright
+  const badClient = !client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0;
+
+  // estate board bootstrap: full roster (wired ∪ dossier-attached) ∪ scanned index + active
+  // alerts in ONE call — never-scanned feeds surface as status 'never', not silently absent
+  if (path === '/api/labels/estate' && request.method === 'GET') {
+    const roster = await feedRoster(env);
+    const idx = (await env.EDITS.get('labelidx', 'json')) || {};
+    const alerts = (await env.EDITS.get('labelalerts', 'json')) || {};
+    const feeds = {};
+    for (const f of roster) {
+      feeds[lgKey(f.client, f.mkt)] = Object.assign({ client: f.client, mkt: f.mkt, status: 'never' }, idx[lgKey(f.client, f.mkt)] || {});
+    }
+    // scanned-but-detached feeds stay visible (with their history) rather than vanishing
+    Object.keys(idx).forEach((k) => {
+      if (!feeds[k]) feeds[k] = Object.assign({ client: k.split('|')[0], mkt: k.split('|')[1] || 'gb', detached: true }, idx[k]);
+    });
+    return json({ feeds, alerts });
+  }
+
+  // badge feed for every app page: just the active alert counts
+  if (path === '/api/labels/alerts' && request.method === 'GET') {
+    const alerts = (await env.EDITS.get('labelalerts', 'json')) || {};
+    let crit = 0, warn = 0;
+    Object.keys(alerts).forEach((k) => (alerts[k].alerts || []).forEach((a) => {
+      if (a.sev === 'crit') crit++; else if (a.sev === 'warn') warn++;
+    }));
+    return json({ counts: { crit, warn, feeds: Object.keys(alerts).length } });
+  }
+
+  if (path === '/api/labels/snapshot' && request.method === 'GET') {
+    if (badClient) return json({ error: 'bad client' }, 400);
+    const snap = await env.EDITS.get('labels:' + client + ':' + mkt, 'json');
+    const base = await env.EDITS.get('labelbase:' + client + ':' + mkt, 'json');
+    const out = { snapshot: snap || null, baseline: base || null };
+    if (url.searchParams.get('hist') === '1') out.hist = (await env.EDITS.get('labelhist:' + client + ':' + mkt, 'json')) || [];
+    return json(out);
+  }
+
+  if (path === '/api/labels/scan' && request.method === 'POST') {
+    if (badClient) return json({ error: 'bad client' }, 400);
+    const r = await runLabelScan(env, client, mkt);
+    if (r.error) return json({ error: r.error }, r.status || 502);
+    return json(r);
+  }
+
+  // "expected change" — adopt the current snapshot as the new baseline and clear the flags
+  if (path === '/api/labels/ack' && request.method === 'POST') {
+    if (badClient) return json({ error: 'bad client' }, 400);
+    const snap = await env.EDITS.get('labels:' + client + ':' + mkt, 'json');
+    if (!snap) return json({ error: 'no snapshot to adopt as baseline - scan first' }, 404);
+    await env.EDITS.put('labelbase:' + client + ':' + mkt, JSON.stringify(snap));
+    const idx = (await env.EDITS.get('labelidx', 'json')) || {};
+    idx[lgKey(client, mkt)] = Object.assign({ client, mkt }, summarize(snap, [], snap.t));
+    await env.EDITS.put('labelidx', JSON.stringify(idx));
+    const alertsMap = (await env.EDITS.get('labelalerts', 'json')) || {};
+    delete alertsMap[lgKey(client, mkt)];
+    await env.EDITS.put('labelalerts', JSON.stringify(alertsMap));
+    return json({ ok: true, baseT: snap.t });
+  }
+
+  return null;
+}
+
+// hourly rotation: BATCH feeds per firing keeps the combined cron (plan warm + this sweep)
+// far under the free-plan 50-subrequest budget (each feed scan ≤7 gviz fetches); the 22-feed
+// estate is re-checked every ~6 hours, hours ahead of a PMAX crater
+async function labelCronSweep(env) {
+  try {
+    const roster = await feedRoster(env);
+    if (!roster.length) return;
+    const BATCH = 4;
+    const st = (await env.EDITS.get('labelcron', 'json')) || { i: 0 };
+    const start = (((st.i | 0) % roster.length) + roster.length) % roster.length;
+    for (let k = 0; k < BATCH && k < roster.length; k++) {
+      const f = roster[(start + k) % roster.length];
+      try { await runLabelScan(env, f.client, f.mkt); } catch (e) {}
+    }
+    st.i = (start + Math.min(BATCH, roster.length)) % roster.length;
+    await env.EDITS.put('labelcron', JSON.stringify(st));
+  } catch (e) {}
 }
 
 // ---- Google service-account auth: sign a JWT with the SA private key, impersonate the
