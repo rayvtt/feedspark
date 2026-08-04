@@ -211,47 +211,72 @@ const codes = (alerts) => alerts.map((a) => a.sev + ':' + a.code).sort();
   const H = 3600 * 1000, T0 = 1000000000000;
   const rule = { client: 'Reiss', mkt: 'gb', label: 'custom_label_0', value: 'Best Sellers', vs: 'custom_label_2',
     ref: [['women - fp', 3166], ['men - fp', 2542]], refSeg: 9596, dropPct: 50, repingH: 24, state: {} };
+  const GONE_LIVE = { segment: 9500, values: [['men - fp', 2542]] };
 
   // healthy: everything at reference -> silence
   let ev = LG.evalWatch(rule, { segment: 9596, values: [['women - fp', 3166], ['men - fp', 2542]] }, T0);
   eq('watch healthy -> no fires', ev.fires, []);
 
-  // a watched cross value drops off -> ONE gone fire, state -> fired
-  ev = LG.evalWatch(rule, { segment: 9500, values: [['men - fp', 2542]] }, T0);
-  eq('watch value gone -> gone fire', ev.fires.map((f) => f.kind + ':' + f.value), ['gone:women - fp']);
+  // TWO-STRIKE: first bad sighting is a silent 'suspect' (mid-refresh false-positive guard)…
+  ev = LG.evalWatch(rule, GONE_LIVE, T0);
+  ok('first sighting -> silent suspect', ev.fires.length === 0 && ev.suspects === 1 &&
+    ev.state['women - fp'].st === 'suspect', JSON.stringify(ev));
+  rule.state = ev.state;
+
+  // …a transient gap that self-heals never pings at all…
+  ev = LG.evalWatch(rule, { segment: 9596, values: [['women - fp', 3166], ['men - fp', 2542]] }, T0 + H);
+  ok('suspect that recovers -> fully silent', ev.fires.length === 0 && ev.state['women - fp'].st === 'ok', JSON.stringify(ev));
+
+  // …but a persistent wipe confirms on the SECOND consecutive check
+  rule.state = {};
+  rule.state = LG.evalWatch(rule, GONE_LIVE, T0).state;   // strike one: suspect
+  ev = LG.evalWatch(rule, GONE_LIVE, T0 + H);             // strike two: fire
+  eq('second sighting -> confirmed gone fire', ev.fires.map((f) => f.kind + ':' + f.value), ['gone:women - fp']);
   rule.state = ev.state;
 
   // still gone 2h later -> inside the re-ping window, no duplicate ping
-  ev = LG.evalWatch(rule, { segment: 9500, values: [['men - fp', 2542]] }, T0 + 2 * H);
+  ev = LG.evalWatch(rule, GONE_LIVE, T0 + 3 * H);
   eq('still broken inside window -> silent', ev.fires, []);
   rule.state = ev.state;
 
-  // still gone 25h later -> re-ping (again:true)
-  ev = LG.evalWatch(rule, { segment: 9500, values: [['men - fp', 2542]] }, T0 + 25 * H);
+  // still gone 25h after confirmation -> re-ping (again:true)
+  ev = LG.evalWatch(rule, GONE_LIVE, T0 + 26 * H);
   ok('re-ping after repingH', ev.fires.length === 1 && ev.fires[0].again === true, JSON.stringify(ev.fires));
   rule.state = ev.state;
 
   // value comes back -> recovery notice, state resets
-  ev = LG.evalWatch(rule, { segment: 9596, values: [['women - fp', 3100], ['men - fp', 2542]] }, T0 + 26 * H);
+  ev = LG.evalWatch(rule, { segment: 9596, values: [['women - fp', 3100], ['men - fp', 2542]] }, T0 + 27 * H);
   eq('recovery fire', ev.fires.map((f) => f.kind + ':' + f.value), ['recovered:women - fp']);
   rule.state = ev.state;
 
-  // -60% collapse -> drop fire; with dropPct 0 the same data is silent
-  ev = LG.evalWatch(rule, { segment: 9596, values: [['women - fp', 1200], ['men - fp', 2542]] }, T0 + 27 * H);
-  ok('-60%% -> drop fire', ev.fires.some((f) => f.kind === 'drop' && f.value === 'women - fp'), JSON.stringify(ev.fires));
-  const gonly = LG.evalWatch({ ...rule, dropPct: 0, state: {} }, { segment: 9596, values: [['women - fp', 1200], ['men - fp', 2542]] }, T0);
-  eq('dropPct 0 -> gone only, silent on -60%', gonly.fires, []);
+  // thresholds (two evals = confirmed): -60% fires at 50; silent at dropPct 0
+  const conf = (r, live) => { const s1 = LG.evalWatch(r, live, T0); return LG.evalWatch({ ...r, state: s1.state }, live, T0 + H); };
+  const live60 = { segment: 9596, values: [['women - fp', 1200], ['men - fp', 2542]] };
+  ok('-60%% -> confirmed drop fire', conf({ ...rule, state: {} }, live60).fires.some((f) => f.kind === 'drop' && f.value === 'women - fp'), 'no drop fire');
+  eq('dropPct 0 -> gone only, silent on -60%', conf({ ...rule, dropPct: 0, state: {} }, live60).fires, []);
 
-  // whole segment vanishes -> one loud segment-gone, no per-value echo spam
-  const seg = LG.evalWatch({ ...rule, dropPct: 0, state: {} }, { segment: 0, values: [] }, T0);
-  eq('segment gone -> single fire', seg.fires.map((f) => f.kind), ['segment-gone']);
+  // custom fine-grained threshold: -15% fires at dropPct 10, stays silent at dropPct 20
+  const live15 = { segment: 9596, values: [['women - fp', 2691], ['men - fp', 2542]] };  // 3166 -> 2691 = -15%
+  ok('custom 10%% catches a -15%% drift', conf({ ...rule, dropPct: 10, state: {} }, live15).fires.some((f) => f.kind === 'drop'), 'expected drop fire at 10%');
+  eq('custom 20%% ignores a -15%% drift', conf({ ...rule, dropPct: 20, state: {} }, live15).fires, []);
 
-  // messages
-  const gone = LG.alertText(rule, { kind: 'gone', value: 'women - fp', was: 3166, now: 0 }, { link: 'https://x/labels' });
-  ok('alertText high prio + scope', gone.indexOf('HIGH PRIORITY') >= 0 && gone.indexOf('Reiss · GB') >= 0 &&
-    gone.indexOf('women - fp') >= 0 && gone.indexOf('3166') >= 0 && gone.indexOf('https://x/labels') >= 0, gone);
-  const rec = LG.alertText(rule, { kind: 'recovered', value: 'women - fp', was: 3166, now: 3100 }, {});
-  ok('alertText recovery', rec.indexOf('RECOVERED') >= 0 && rec.indexOf('3100') >= 0, rec);
+  // whole segment vanishes -> one loud confirmed segment-gone, no per-value echo spam
+  eq('segment gone -> single confirmed fire', conf({ ...rule, dropPct: 0, state: {} }, { segment: 0, values: [] }).fires.map((f) => f.kind), ['segment-gone']);
+
+  // digest: ONE alert message with each value on its own `highlighted` row + one recovery message
+  const msgs = LG.alertDigest(rule, [
+    { kind: 'gone', value: 'women - fp', was: 3166, now: 0 },
+    { kind: 'drop', value: 'men - fp', was: 2542, now: 1100 },
+    { kind: 'recovered', value: 'women - sale', was: 2081, now: 2050 },
+  ], { link: 'https://x/labels' });
+  eq('digest -> exactly 2 messages (alert + recovery)', msgs.length, 2);
+  ok('alert digest: one message, own rows, code-highlighted values',
+    msgs[0].indexOf('HIGH PRIORITY') >= 0 && msgs[0].indexOf('CONFIRMED') >= 0 &&
+    msgs[0].indexOf('\n• `women - fp` — was 3166 SKUs → now 0 (GONE)') >= 0 &&
+    msgs[0].indexOf('\n• `men - fp` — 2542 → 1100 SKUs (−57%)') >= 0 &&
+    msgs[0].indexOf('https://x/labels') >= 0, msgs[0]);
+  ok('recovery digest separate', msgs[1].indexOf('RECOVERED') >= 0 && msgs[1].indexOf('`women - sale`') >= 0, msgs[1]);
+  eq('digest with no fires -> no messages', LG.alertDigest(rule, [], {}), []);
 }
 
 /* ---------- summarize ---------- */
