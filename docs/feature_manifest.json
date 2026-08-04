@@ -949,6 +949,13 @@
       "pattern": "markEsrc",
       "min": 4,
       "pr": 176
+    },
+    {
+      "name": "workflow: Briefing Studio — context rail, workload scheduling, checklist, Tachyon draft",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "bsPropose",
+      "min": 3,
+      "pr": 177
     }
   ]
 }
