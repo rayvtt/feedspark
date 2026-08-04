@@ -160,9 +160,6 @@ window.addEventListener('load',restore);
   .wt-form label{display:inline-flex;align-items:center;gap:5px;margin:0 14px 8px 0;font-weight:800;cursor:pointer}
   .lbl-h .lbell{border:none;background:none;cursor:pointer;color:var(--muted);padding:2px;font-size:13px;line-height:1}
   .lbl-h .lbell:hover{color:var(--orange-deep)}
-  .spark-wrap{margin-top:6px}
-  .spark-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:10.5px;font-weight:800;color:var(--muted);margin-top:5px}
-  .spark-legend i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:4px;vertical-align:2px}
   .footmark{padding:34px 0;color:var(--muted);font-size:12px;font-weight:700;border-top:1px solid var(--line);margin-top:26px}
   .scanmsg{font-size:12px;font-weight:800;color:var(--orange-deep)}
   @keyframes lgspin{to{transform:rotate(360deg)}}
@@ -306,10 +303,9 @@ window.addEventListener('load',restore);
   'use strict';
   var API = '';
   var LK = ['custom_label_0', 'custom_label_1', 'custom_label_2', 'custom_label_3', 'custom_label_4'];
-  var SPARKC = ['#ED6F0B', '#F5A623', '#1A365D', '#15803D', '#8a94a0'];
   var ESTATE = { feeds: {}, alerts: {} };
   var SEL = null;                // "client|mkt"
-  var CACHE = {};                // key -> {snapshot, baseline, hist}
+  var CACHE = {};                // key -> {snapshot, baseline}
   var SHOW_ALL = {};             // key+label -> true (pivot rows expanded)
   var STALE_MS = 20 * 3600 * 1000;
   var CROSS = null;              // {k, by, value, vs} — live cross-label dissection state
@@ -425,7 +421,7 @@ window.addEventListener('load',restore);
     renderEstate();
     var p = parts(k);
     $('det-panel').innerHTML = '<span class="muted"><span class="spin"></span>Loading ' + esc(p.client) + ' · ' + esc(p.mkt.toUpperCase()) + '…</span>';
-    fetch(API + '/api/labels/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt) + '&hist=1')
+    fetch(API + '/api/labels/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
       .then(function (r) { return r.json(); })
       .then(function (d) {
         CACHE[k] = d;
@@ -444,8 +440,7 @@ window.addEventListener('load',restore);
         if (d.error) { $('det-panel').innerHTML = '<span class="muted">Scan failed: ' + esc(d.error) + '</span>'; return refreshEstate(); }
         var c = CACHE[k] = CACHE[k] || {};
         c.snapshot = d.snapshot;
-        (c.hist = c.hist || []).push({ t: d.snapshot.t, rows: d.snapshot.rows });
-        return fetch(API + '/api/labels/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt) + '&hist=1')
+        return fetch(API + '/api/labels/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
           .then(function (r) { return r.json(); })
           .then(function (full) { CACHE[k] = full; if (thenRender !== false) renderDetail(k); return refreshEstate(); });
       })
@@ -469,26 +464,6 @@ window.addEventListener('load',restore);
     return m;
   }
 
-  function sparkline(hist) {
-    if (!hist || hist.length < 2) return '';
-    var W = 560, H = 74, PAD = 4;
-    var t0 = hist[0].t, t1 = hist[hist.length - 1].t || 1;
-    function X(t) { return PAD + (W - 2 * PAD) * (t1 === t0 ? 1 : (t - t0) / (t1 - t0)); }
-    function Y(v) { return H - PAD - (H - 2 * PAD) * (Math.max(0, Math.min(100, v)) / 100); }
-    var lines = '', legend = '';
-    LK.forEach(function (k, i) {
-      var pts = hist.filter(function (e) { return e.cov && e.cov[k] != null; })
-        .map(function (e) { return X(e.t).toFixed(1) + ',' + Y(e.cov[k]).toFixed(1); });
-      if (pts.length < 2) return;
-      lines += '<polyline fill="none" stroke="' + SPARKC[i] + '" stroke-width="2" points="' + pts.join(' ') + '"/>';
-      legend += '<span><i style="background:' + SPARKC[i] + '"></i>CL' + i + '</span>';
-    });
-    if (!lines) return '';
-    return '<div class="spark-wrap"><svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" preserveAspectRatio="none" aria-label="Coverage history">' +
-      '<line x1="0" y1="' + Y(0) + '" x2="' + W + '" y2="' + Y(0) + '" stroke="var(--line,#E6E6E6)" stroke-width="1"/>' + lines + '</svg>' +
-      '<div class="spark-legend">' + legend + '<span class="muted">coverage % over the last ' + hist.length + ' scans</span></div></div>';
-  }
-
   function renderDetail(k) {
     var d = CACHE[k];
     if (!d || !d.snapshot) { $('det-panel').innerHTML = '<span class="muted">No snapshot yet.</span>'; return; }
@@ -502,7 +477,6 @@ window.addEventListener('load',restore);
       '<button class="btn" id="det-csv">⤓ CSV</button>' +
       '<button class="btn" id="det-ack" title="Accept the current feed as the new baseline">✓ Rebaseline</button>' +
       '<button class="btn pri" id="det-scan">↻ Scan live feed</button></span></div>';
-    h += sparkline(d.hist);
     h += '<div class="lbl-grid">';
     LK.forEach(function (key, i) {
       var L = s.labels && s.labels[key], B = (b && b.labels && b.labels[key]) || null;
