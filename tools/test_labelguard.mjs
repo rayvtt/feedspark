@@ -97,6 +97,33 @@ try {
 } catch (e) { threw = String(e.message); }
 ok('non-CSV response throws fetch-fail', threw && threw.startsWith('fetch-fail'), threw);
 
+/* ---------- gvizLiteral + crossFeed (live cross-label dissection) ---------- */
+eq('gvizLiteral plain', LG.gvizLiteral('Best Sellers'), "'Best Sellers'");
+eq('gvizLiteral apostrophe -> double-quoted', LG.gvizLiteral("Men's"), '"Men\'s"');
+eq('gvizLiteral both quotes -> null', LG.gvizLiteral('a\'b"c'), null);
+
+{
+  const xroutes = [
+    ['select * limit 1', HEADER],
+    ["select count(A) where C = 'bestseller'", '"count id"\n"600"'],
+    ["select D, count(A) where C = 'bestseller' and D is not null", '"cl1","count id"\n"aw25","400"\n"ss26","150"'],
+  ];
+  const x = await LG.crossFeed(gvizMock(xroutes), { id: 'X', gid: '0' }, 'custom_label_0', 'bestseller', 'custom_label_1');
+  eq('cross segment', x.segment, 600);
+  eq('cross rows sorted', x.rows, [['aw25', 400], ['ss26', 150]]);
+  eq('cross labelled/unlabelled', [x.labelled, x.unlabelled], [550, 50]);
+  ok('cross not truncated', !x.truncated);
+
+  let err = null;
+  try { await LG.crossFeed(gvizMock(xroutes), { id: 'X', gid: '0' }, 'custom_label_0', 'x', 'custom_label_0'); }
+  catch (e) { err = String(e.message); }
+  ok('same by/vs rejected', err && err.startsWith('bad-cross'), err);
+  err = null;
+  try { await LG.crossFeed(gvizMock(xroutes), { id: 'X', gid: '0' }, 'custom_label_0', 'x', 'custom_label_2'); }
+  catch (e) { err = String(e.message); }
+  ok('vs column absent rejected', err && err.indexOf('custom_label_2') >= 0, err);
+}
+
 /* ---------- diffSnapshots scenarios ---------- */
 function mkSnap(rows, labels) {
   const L = {};

@@ -30,6 +30,7 @@ window.addEventListener('load',restore);
   *{box-sizing:border-box}
   body{margin:0;font-family:Lato,system-ui,sans-serif;color:var(--ink);background:var(--wash);line-height:1.5}
   .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+  .wrap.wide{max-width:1720px}
   .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
   .topbar-in{max-width:1180px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:18px}
   .brand{font-weight:900;font-size:18px}.brand span{color:var(--orange-deep)}
@@ -89,26 +90,53 @@ window.addEventListener('load',restore);
   .det-stats{display:flex;gap:8px;flex-wrap:wrap;font-size:11.5px;font-weight:800;color:var(--muted)}
   .det-stats b{color:var(--ink)}
   .det-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
-  .lbl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px;margin-top:14px}
-  .lbl-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
+  /* CL0–4 merged onto ONE seamless row (Ray's rule) — equal widths, compressed tables */
+  .lbl-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:14px}
+  @media(max-width:1150px){.lbl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:640px){.lbl-grid{grid-template-columns:1fr}}
+  .lbl-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 12px;min-width:0}
   .lbl-card.absent{opacity:.62}
-  .lbl-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
-  .lbl-h .nm{font-size:15px;font-weight:900}
-  .lbl-h .cov{font-size:13px;font-weight:900;color:var(--orange-deep)}
-  .lbl-h .sub{font-size:11px;color:var(--muted);font-weight:700}
-  .lbl-h .delta{font-size:11px;font-weight:900;margin-left:auto}
+  .lbl-h{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-bottom:7px}
+  .lbl-h .nm{font-size:14px;font-weight:900}
+  .lbl-h .cov{font-size:12.5px;font-weight:900;color:var(--orange-deep)}
+  .lbl-h .sub{font-size:10.5px;color:var(--muted);font-weight:700}
+  .lbl-h .delta{font-size:10.5px;font-weight:900;margin-left:auto}
   .up{color:var(--good)}.down{color:var(--risk)}
-  table.pv{width:100%;border-collapse:collapse;font-size:12.5px}
-  table.pv th{text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:5px 6px;border-bottom:1px solid var(--line)}
+  table.pv{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed}
+  table.pv th{text-align:left;font-size:9.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);padding:4px 4px;border-bottom:1px solid var(--line)}
   table.pv th.r,table.pv td.r{text-align:right}
-  table.pv td{padding:5px 6px;border-bottom:1px dashed var(--line);vertical-align:middle}
+  table.pv td{padding:4px 4px;border-bottom:1px dashed var(--line);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   table.pv tr:last-child td{border-bottom:none}
-  table.pv td.v{font-weight:700;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  table.pv td.v{font-weight:700}
+  table.pv th:nth-child(2){width:56px}table.pv th:nth-child(3){width:46px}table.pv th:nth-child(4){width:46px}table.pv th:nth-child(5){width:30px}
+  tr.rowv{cursor:pointer}
+  tr.rowv:hover td{background:rgba(245,166,35,.07)}
+  tr.rowv.xsel td{background:rgba(245,166,35,.14)}
   tr.gone td{color:var(--risk)}
   tr.gone td.v{text-decoration:line-through}
-  .shbar{height:6px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden;min-width:54px}
+  .shbar{height:6px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden;min-width:26px}
   .shbar i{display:block;height:100%;background:var(--orange);border-radius:100px}
-  .pv-more{font-size:11.5px;font-weight:800;color:var(--orange-deep);cursor:pointer;padding:7px 6px 1px;display:inline-block}
+  .pv-more{font-size:11px;font-weight:800;color:var(--orange-deep);cursor:pointer;padding:6px 4px 1px;display:inline-block}
+  /* cross-label dissection panel (full width under the label row) */
+  .xpanel{background:#fff;border:1px solid var(--orange);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-top:12px}
+  .xhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .xhead .xt{font-size:14px;font-weight:900}
+  .xhead .xt b{color:var(--orange-deep)}
+  .xhead .xseg{font-size:11px;color:var(--muted);font-weight:800}
+  .xchips{display:flex;gap:5px;margin-left:auto;align-items:center}
+  .xchips .xl{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-right:3px}
+  .xchip{border:1px solid var(--line);background:var(--wash);color:var(--ink-2);font:inherit;font-size:11px;font-weight:900;border-radius:100px;padding:4px 11px;cursor:pointer}
+  .xchip.on{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+  .xchip[disabled]{opacity:.35;cursor:default}
+  table.xv{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.xv th{text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:5px 8px;border-bottom:1px solid var(--line)}
+  table.xv th.r,table.xv td.r{text-align:right}
+  table.xv td{padding:5px 8px;border-bottom:1px dashed var(--line)}
+  table.xv tr:last-child td{border-bottom:none}
+  table.xv td.v{font-weight:700}
+  table.xv tr.xrem td{color:var(--muted);font-style:italic}
+  .xbar{height:8px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden;min-width:120px}
+  .xbar i{display:block;height:100%;background:var(--orange-deep);border-radius:100px}
   .spark-wrap{margin-top:6px}
   .spark-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:10.5px;font-weight:800;color:var(--muted);margin-top:5px}
   .spark-legend i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:4px;vertical-align:2px}
@@ -166,7 +194,12 @@ window.addEventListener('load',restore);
 [data-theme=dark] .al-sev.crit{background:rgba(241,112,122,.13);color:#F3868F}
 [data-theme=dark] .al-sev.warn{background:rgba(245,166,35,.15);color:#F0A44E}
 [data-theme=dark] .al-sev.info{background:rgba(91,130,190,.18);color:#93B4E0}
-[data-theme=dark] .covbars .cb,[data-theme=dark] .shbar{background:#191C24;border-color:var(--line)}
+[data-theme=dark] .covbars .cb,[data-theme=dark] .shbar,[data-theme=dark] .xbar{background:#191C24;border-color:var(--line)}
+[data-theme=dark] .xpanel{background:var(--paper);border-color:rgba(245,166,35,.5)}
+[data-theme=dark] .xchip{background:#20242E;border-color:var(--line);color:var(--ink-2)}
+[data-theme=dark] .xchip.on{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+[data-theme=dark] tr.rowv:hover td{background:rgba(245,166,35,.09)}
+[data-theme=dark] tr.rowv.xsel td{background:rgba(245,166,35,.16)}
 [data-theme=dark] ::-webkit-scrollbar-thumb{background:#2C3039}
 </style>
 
@@ -204,10 +237,11 @@ window.addEventListener('load',restore);
   <div class="est-grid" id="est-grid"><div class="panel"><span class="muted">Loading…</span></div></div>
 </div></section>
 
-<section class="cat"><div class="wrap">
+<section class="cat"><div class="wrap wide">
   <div class="cat-h"><span class="k">03</span><h2>Feed dissection</h2></div>
   <p class="cat-sub">The pivot: every value on every custom label, SKU volumes and share, delta vs the baseline.
-  Struck-through red rows are values that existed at baseline and are <b>gone from the live feed now</b>.</p>
+  Struck-through red rows are values that existed at baseline and are <b>gone from the live feed now</b>.
+  <b>Click any value</b> to cross-dissect it live by another label (CL0 “Best Sellers” → how many are CL2 women&nbsp;-&nbsp;fp, women&nbsp;-&nbsp;sale…).</p>
   <div class="panel" id="det-panel"><span class="muted">Pick a feed above.</span></div>
 </div></section>
 
@@ -224,6 +258,9 @@ window.addEventListener('load',restore);
   var CACHE = {};                // key -> {snapshot, baseline, hist}
   var SHOW_ALL = {};             // key+label -> true (pivot rows expanded)
   var STALE_MS = 20 * 3600 * 1000;
+  var CROSS = null;              // {k, by, value, vs} — live cross-label dissection state
+  var XCACHE = {};               // cross-query results per k||by||value||vs
+  var XMORE = false;             // cross table expanded past 15 rows
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -326,6 +363,7 @@ window.addEventListener('load',restore);
   /* ---------------- detail (the pivot) ---------------- */
   function select(k) {
     SEL = k;
+    if (CROSS && CROSS.k !== k) CROSS = null;   // cross panel belongs to one feed
     try { history.replaceState(null, '', '#' + encodeURIComponent(k)); } catch (e) {}
     renderEstate();
     var p = parts(k);
@@ -434,7 +472,7 @@ window.addEventListener('load',restore);
       rows.sort(function (a, x) { return (x.n - a.n) || ((x.was || 0) - (a.was || 0)); });
       var maxN = rows.length ? Math.max.apply(null, rows.map(function (r) { return Math.max(r.n, r.was || 0); })) : 1;
       var lim = SHOW_ALL[k + ':' + key] ? rows.length : 12;
-      h += '<table class="pv"><thead><tr><th>value</th><th class="r">skus</th><th class="r">share</th><th class="r">Δ base</th><th style="width:60px"></th></tr></thead><tbody>';
+      h += '<table class="pv"><thead><tr><th>value</th><th class="r">skus</th><th class="r">share</th><th class="r">Δ</th><th></th></tr></thead><tbody>';
       rows.slice(0, lim).forEach(function (r) {
         var share = s.rows ? Math.round((r.n / s.rows) * 1000) / 10 : 0;
         var delta = '';
@@ -443,8 +481,11 @@ window.addEventListener('load',restore);
           delta = dn === 0 ? '<span class="muted">=</span>' :
             '<span class="' + (dn > 0 ? 'up' : 'down') + '">' + (dn > 0 ? '+' : '') + fmt(dn) + '</span>';
         } else if (b) delta = '<span class="up">new</span>';
-        h += '<tr' + (r.gone ? ' class="gone"' : '') + '><td class="v" title="' + esc(r.v) + '">' + esc(r.v) + '</td>' +
-          '<td class="r">' + (r.gone ? '<b>GONE</b> <span class="muted">(was ' + fmt(r.was) + ')</span>' : fmt(r.n)) + '</td>' +
+        // live values are click-to-cross-dissect; GONE rows stay inert
+        var xattr = r.gone ? ' class="gone"' :
+          ' class="rowv" data-xby="' + esc(key) + '" data-xv="' + esc(r.v) + '" title="Cross-dissect “' + esc(r.v) + '” by another label"';
+        h += '<tr' + xattr + '><td class="v"' + (r.gone ? ' title="' + esc(r.v) + ' — GONE, was on ' + fmt(r.was) + ' SKUs at baseline"' : '') + '>' + esc(r.v) + '</td>' +
+          '<td class="r">' + (r.gone ? '<b>GONE</b>' : fmt(r.n)) + '</td>' +
           '<td class="r">' + (r.gone ? '—' : share + '%') + '</td>' +
           '<td class="r">' + (r.gone ? '<span class="down">−100%</span>' : delta) + '</td>' +
           '<td><span class="shbar"><i style="width:' + Math.max(2, Math.round((Math.max(r.n, r.was || 0) / maxN) * 100)) + '%' + (r.gone ? ';background:var(--risk)' : '') + '"></i></span></td></tr>';
@@ -453,7 +494,7 @@ window.addEventListener('load',restore);
       if (rows.length > lim) h += '<span class="pv-more" data-more="' + esc(k + ':' + key) + '">show all ' + rows.length + ' values ▾</span>';
       h += '</div>';
     });
-    h += '</div>';
+    h += '</div><div id="cross-slot"></div>';
     $('det-panel').innerHTML = h;
     $('det-scan').onclick = function () { scan(k); };
     $('det-ack').onclick = function () { ack(k, $('det-ack')); };
@@ -461,6 +502,113 @@ window.addEventListener('load',restore);
     Array.prototype.forEach.call(document.querySelectorAll('[data-more]'), function (el) {
       el.onclick = function () { SHOW_ALL[el.getAttribute('data-more')] = true; renderDetail(k); };
     });
+    Array.prototype.forEach.call(document.querySelectorAll('tr.rowv'), function (el) {
+      el.onclick = function () { openCross(k, el.getAttribute('data-xby'), el.getAttribute('data-xv')); };
+    });
+    if (CROSS && CROSS.k === k) { renderCross(); markSel(); }
+  }
+
+  /* ---------------- live cross-label dissection (CL0 value -> breakdown by CL2 etc.) ----- */
+  function crossKeyStr() { return CROSS ? [CROSS.k, CROSS.by, CROSS.value, CROSS.vs].join('||') : ''; }
+
+  function markSel() {
+    Array.prototype.forEach.call(document.querySelectorAll('tr.rowv.xsel'), function (el) { el.classList.remove('xsel'); });
+    if (!CROSS) return;
+    Array.prototype.forEach.call(document.querySelectorAll('tr.rowv'), function (el) {
+      if (el.getAttribute('data-xby') === CROSS.by && el.getAttribute('data-xv') === CROSS.value) el.classList.add('xsel');
+    });
+  }
+
+  function openCross(k, by, value) {
+    var d = CACHE[k]; if (!d || !d.snapshot) return;
+    var vs = (CROSS && CROSS.k === k && CROSS.vs !== by) ? CROSS.vs : null;
+    if (!vs) for (var i = 0; i < LK.length; i++) {
+      if (LK[i] !== by && d.snapshot.labels[LK[i]] && d.snapshot.labels[LK[i]].present) { vs = LK[i]; break; }
+    }
+    if (!vs) return;   // only one label in this feed — nothing to cross against
+    CROSS = { k: k, by: by, value: value, vs: vs }; XMORE = false;
+    renderCross(); markSel(); fetchCross();
+    var slot = $('cross-slot'); if (slot && slot.scrollIntoView) slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function fetchCross() {
+    var key = crossKeyStr();
+    if (XCACHE[key]) { renderCross(); return; }
+    var p = parts(CROSS.k);
+    fetch(API + '/api/labels/cross?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt) +
+      '&by=' + encodeURIComponent(CROSS.by) + '&vs=' + encodeURIComponent(CROSS.vs) + '&value=' + encodeURIComponent(CROSS.value))
+      .then(function (r) { return r.json(); })
+      .then(function (x) { XCACHE[key] = x || { error: 'empty response' }; if (crossKeyStr() === key) renderCross(); })
+      .catch(function () { XCACHE[key] = { error: 'network' }; if (crossKeyStr() === key) renderCross(); });
+  }
+
+  function renderCross() {
+    var slot = $('cross-slot'); if (!slot) return;
+    if (!CROSS) { slot.innerHTML = ''; return; }
+    var d = CACHE[CROSS.k], s = d && d.snapshot; if (!s) return;
+    var x = XCACHE[crossKeyStr()];
+    var byN = 'CL' + CROSS.by.slice(-1), vsN = 'CL' + CROSS.vs.slice(-1);
+    var h = '<div class="xpanel"><div class="xhead">' +
+      '<span class="xt">⤯ ' + byN + ' · <b>“' + esc(CROSS.value) + '”</b> → breakdown</span>' +
+      (x && !x.error ? '<span class="xseg">' + fmt(x.segment) + ' SKUs in segment · queried live just now</span>' : '') +
+      '<span class="xchips"><span class="xl">by</span>';
+    LK.forEach(function (K2, i) {
+      var present = s.labels[K2] && s.labels[K2].present;
+      h += '<button class="xchip' + (K2 === CROSS.vs ? ' on' : '') + '" data-vs="' + K2 + '"' +
+        ((K2 === CROSS.by || !present) ? ' disabled' : '') + '>CL' + i + '</button>';
+    });
+    h += '<button class="btn" id="x-csv" style="margin-left:8px">⤓ CSV</button><button class="btn" id="x-close" title="Close">✕</button></span></div>';
+    if (!x) h += '<span class="muted"><span class="spin"></span>Live query — Google is aggregating “' + esc(CROSS.value) + '” by ' + vsN + '…</span>';
+    else if (x.error) h += '<span class="muted">Cross query failed: ' + esc(x.error) + '</span>';
+    else {
+      var rows = x.rows || [];
+      var lim = XMORE ? rows.length : 15;
+      h += '<table class="xv"><thead><tr><th>' + vsN + ' value within “' + esc(CROSS.value) + '”</th><th class="r">skus</th><th class="r">% of segment</th><th style="width:26%"></th></tr></thead><tbody>';
+      rows.slice(0, lim).forEach(function (pr) {
+        var pct = x.segment ? Math.round((pr[1] / x.segment) * 1000) / 10 : 0;
+        h += '<tr><td class="v">' + esc(pr[0]) + '</td><td class="r">' + fmt(pr[1]) + '</td><td class="r">' + pct + '%</td>' +
+          '<td><span class="xbar"><i style="width:' + Math.max(2, Math.round(pct)) + '%"></i></span></td></tr>';
+      });
+      if (x.unlabelled > 0) {
+        var upct = x.segment ? Math.round((x.unlabelled / x.segment) * 1000) / 10 : 0;
+        h += '<tr class="xrem"><td>(no ' + vsN + ' value)</td><td class="r">' + fmt(x.unlabelled) + '</td><td class="r">' + upct + '%</td>' +
+          '<td><span class="xbar"><i style="width:' + Math.max(2, Math.round(upct)) + '%;background:var(--muted)"></i></span></td></tr>';
+      }
+      h += '</tbody></table>';
+      if (rows.length > lim) h += '<span class="pv-more" id="x-more">show all ' + rows.length + ' values ▾</span>';
+      if (x.truncated) h += '<div class="muted" style="font-size:11px;font-weight:700;margin-top:6px">top 250 combinations shown — the long tail is aggregated upstream</div>';
+    }
+    h += '</div>';
+    slot.innerHTML = h;
+    Array.prototype.forEach.call(slot.querySelectorAll('.xchip'), function (el) {
+      el.onclick = function () {
+        if (el.disabled) return;
+        CROSS.vs = el.getAttribute('data-vs'); XMORE = false;
+        renderCross(); fetchCross();
+      };
+    });
+    var xc = document.getElementById('x-close');
+    if (xc) xc.onclick = function () { CROSS = null; renderCross(); markSel(); };
+    var xm = document.getElementById('x-more');
+    if (xm) xm.onclick = function () { XMORE = true; renderCross(); };
+    var xcsv = document.getElementById('x-csv');
+    if (xcsv) xcsv.onclick = exportCrossCsv;
+  }
+
+  function exportCrossCsv() {
+    var x = XCACHE[crossKeyStr()]; if (!CROSS || !x || x.error) return;
+    var out = [CROSS.by + '_value,' + CROSS.vs + '_value,skus,pct_of_segment'];
+    var q = function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; };
+    (x.rows || []).forEach(function (pr) {
+      out.push([q(CROSS.value), q(pr[0]), pr[1], x.segment ? Math.round((pr[1] / x.segment) * 1000) / 10 : 0].join(','));
+    });
+    if (x.unlabelled > 0) out.push([q(CROSS.value), '(none)', x.unlabelled, x.segment ? Math.round((x.unlabelled / x.segment) * 1000) / 10 : 0].join(','));
+    var p = parts(CROSS.k);
+    var blob = new Blob([out.join('\n')], { type: 'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'labelguard_cross_' + p.client.replace(/\W+/g, '') + '_' + p.mkt + '_' + CROSS.by.slice(-1) + 'x' + CROSS.vs.slice(-1) + '.csv';
+    a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
   }
 
   function exportCsv(k) {

@@ -27,7 +27,7 @@
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx } from "./briefmatch.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { LABEL_KEYS, scanFeed, diffSnapshots, summarize } from "./labelguard.js";
+import { LABEL_KEYS, scanFeed, diffSnapshots, summarize, crossFeed } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -1377,6 +1377,27 @@ async function labelGuardRoutes(env, request, url) {
     const r = await runLabelScan(env, client, mkt);
     if (r.error) return json({ error: r.error }, r.status || 502);
     return json(r);
+  }
+
+  // live cross-label dissection: within by=<value> (CL0 = "Best Sellers"), pivot the
+  // segment by another label (CL2 -> women - fp / women - sale / ...). Nothing cached —
+  // 3 tiny gviz fetches per click, Google aggregates (labels/cross)
+  if (path === '/api/labels/cross' && request.method === 'GET') {
+    if (badClient) return json({ error: 'bad client' }, 400);
+    const by = String(url.searchParams.get('by') || '');
+    const vs = String(url.searchParams.get('vs') || '');
+    const value = String(url.searchParams.get('value') || '').slice(0, 200);
+    if (LABEL_KEYS.indexOf(by) < 0 || LABEL_KEYS.indexOf(vs) < 0 || by === vs || !value) {
+      return json({ error: 'bad cross params: need by+vs = two different custom_label_0..4 and a value' }, 400);
+    }
+    const src = await feedSourceFor(env, client, mkt);
+    if (!src) return json({ error: 'no feed sheet linked for this client/market' }, 404);
+    try {
+      return json(await crossFeed(fetch, src, by, value, vs));
+    } catch (e) {
+      const msg = String((e && e.message) || e);
+      return json({ error: msg }, msg.indexOf('bad-cross') === 0 ? 400 : 502);
+    }
   }
 
   // "expected change" — adopt the current snapshot as the new baseline and clear the flags

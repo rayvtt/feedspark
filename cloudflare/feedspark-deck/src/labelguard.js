@@ -178,6 +178,61 @@ export async function scanFeed(fetchFn, src, meta) {
   return snapshotFromParts(meta, cols, countsRow, groupRowsByKey);
 }
 
+/* ---------------- live cross-label dissection ------------------------------------------ */
+// a gviz string literal for the where clause: single-quoted unless the value itself
+// carries a single quote (then double-quoted). Both quote kinds in one value can't be
+// expressed as a gviz literal — reject rather than mangle.
+export function gvizLiteral(v) {
+  const s = String(v == null ? '' : v);
+  if (s.indexOf("'") < 0) return "'" + s + "'";
+  if (s.indexOf('"') < 0) return '"' + s + '"';
+  return null;
+}
+
+// Within by=<value> (e.g. CL0 = "Best Sellers"), pivot the segment by another label
+// (e.g. CL2 -> women - fp / women - sale / ...). Fully LIVE — 3 tiny gviz fetches
+// (header probe, segment count, cross group-by); Google does the aggregation.
+export async function crossFeed(fetchFn, src, byKey, value, vsKey) {
+  if (LABEL_KEYS.indexOf(byKey) < 0 || LABEL_KEYS.indexOf(vsKey) < 0 || byKey === vsKey) {
+    throw new Error('bad-cross: by/vs must be two different custom_label_0..4 keys');
+  }
+  const lit = gvizLiteral(value);
+  if (!lit) throw new Error('bad-cross: value mixes both quote characters - cannot query it');
+  const get = async (tq) => {
+    const r = await fetchFn(gvizUrl(src.id, src.gid, tq));
+    const ct = (r.headers && r.headers.get && r.headers.get('content-type')) || '';
+    if (!r.ok || !/csv|text\/plain/i.test(ct)) {
+      throw new Error('fetch-fail: gviz ' + r.status + ' (' + (String(ct).split(';')[0] || 'no type') + ') - is the sheet link-shared?');
+    }
+    return parseCsv(await r.text());
+  };
+  const head = await get('select * limit 1');
+  if (!head.length) throw new Error('fetch-fail: empty gviz response');
+  const cols = findCols(head[0]);
+  if (cols.labels[byKey] < 0) throw new Error('bad-cross: ' + byKey + ' is not in this feed');
+  if (cols.labels[vsKey] < 0) throw new Error('bad-cross: ' + vsKey + ' is not in this feed');
+  const A = colLetter(cols.id), U = colLetter(cols.labels[byKey]), W = colLetter(cols.labels[vsKey]);
+
+  const seg = await get('select count(' + A + ') where ' + U + ' = ' + lit);
+  const segment = Math.max(0, Math.round(parseFloat((seg[seg.length - 1] || [])[0]) || 0));
+
+  const g = await get('select ' + W + ', count(' + A + ') where ' + U + ' = ' + lit +
+    ' and ' + W + " is not null and " + W + " != '' group by " + W +
+    ' order by count(' + A + ') desc limit ' + TH.maxValues);
+  const rows = [];
+  let labelled = 0;
+  for (const r of g.slice(1)) {
+    const v = String(r[0] == null ? '' : r[0]).trim();
+    const n = Math.max(0, Math.round(parseFloat(r[1]) || 0));
+    if (!v || !n) continue;
+    rows.push([v, n]); labelled += n;
+  }
+  rows.sort((a, b) => b[1] - a[1]);
+  return { by: byKey, value: String(value), vs: vsKey, segment, labelled,
+    unlabelled: Math.max(0, segment - labelled), rows,
+    truncated: g.length - 1 >= TH.maxValues, t: Date.now() };
+}
+
 /* ---------------- baseline diff -> alerts ---------------------------------------------- */
 // [{ sev: 'crit'|'warn'|'info', code, label?, value?, msg, was?, now? }]
 export function diffSnapshots(base, cur, th) {
