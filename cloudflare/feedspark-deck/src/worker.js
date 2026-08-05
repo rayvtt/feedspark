@@ -60,8 +60,23 @@ import GPC_TAXONOMY from "../../../docs/gpc_taxonomy.txt";
 // /feedlab/engine.js so the page and its node tests run the exact same code
 import FEEDLAB_ENGINE from "../../../docs/feedlab_engine.js";
 
+// Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
+import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
+
 // path -> { html, slug }. slug namespaces each page's KV edit layer (KV key: edits:<slug>),
 // so edits on the landing page and each deck never collide. Add a page = add a line here.
+/* Git-bundled materials. Adding one costs its full size on every deploy, so this list
+   stays short: flagship, client-facing pieces only. Everything else is uploaded to KV
+   through the dossier's Materials panel. */
+const SEED_MATERIALS = [
+  { id: 'superdry-sr-2024-2026', client: 'Superdry',
+    title: 'Superdry \u00d7 FeedSpark \u2014 Strategy Review 2024\u20132026',
+    cat: 'marketing', occasion: 'Account Review Aug-26',
+    file: 'Superdry_FeedSpark_Strategy_Review_2024-2026.pptx',
+    mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    at: '2026-08-05', body: MAT_SUPERDRY_SR2426 },
+];
+
 const PAGES = {
   '/':            { html: LANDING,     slug: 'home' },
   '/index.html':  { html: LANDING,     slug: 'home' },
@@ -217,6 +232,7 @@ export default {
     // in the key's metadata so the feed is a single list() with zero value reads.
     if (request.method === 'PUT' || request.method === 'POST') {
       const ACT = { '/api/edits': 'edit', '/api/feedback': 'feedback', '/api/clients': 'dossier-save',
+        '/api/materials': 'material-save',
         '/api/briefs': 'briefs-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
         '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save',
         '/api/labels/scan': 'label-scan', '/api/labels/ack': 'label-rebase',
@@ -740,6 +756,89 @@ export default {
       // dossier store: deletions travel in the explicit `_deleted` array, never by absence
       const r = await mapStoreRoute(env, request, 'clients', { explicitTombstones: true });
       if (r) return r;
+    }
+
+    // ---- client materials bank (docs/MATERIALS.md) ----
+    // A per-client bank of finished collateral -- strategy decks, review packs, one-pagers --
+    // surfaced in the Brand dossier, so an account review carries its own history on the brand
+    // instead of living in somebody's SharePoint folder.
+    //
+    // Two tiers, deliberately:
+    //   SEEDS  git-bundled binaries (docs/materials/*, imported as Data modules). Live the
+    //          moment they merge and versioned in git -- the only way to publish a blob from a
+    //          session, since Access blocks HTTP writes and there is no key-level KV API here.
+    //          Flagship pieces ONLY: each seed adds its full size to every worker deploy.
+    //   KV     everything uploaded through the dossier afterwards. Blob at matblob:<id>, meta
+    //          in the `materials` index. Keeps the bundle flat as the bank grows.
+    if (path === '/api/materials/file') {
+      const id = url.searchParams.get('id') || '';
+      const seed = SEED_MATERIALS.find((m) => m.id === id);
+      const dl = url.searchParams.get('dl') === '1';
+      if (seed) {
+        return new Response(seed.body, { headers: { ...CORS, 'content-type': seed.mime,
+          'content-disposition': (dl ? 'attachment' : 'inline') + '; filename="' + seed.file + '"',
+          'cache-control': 'private, max-age=3600' } });
+      }
+      const idx = (await env.EDITS.get('materials', 'json')) || {};
+      const meta = idx[id];
+      if (!meta) return json({ error: 'not_found' }, 404);
+      const blob = await env.EDITS.get('matblob:' + id, 'arrayBuffer');
+      if (!blob) return json({ error: 'blob_missing' }, 404);
+      return new Response(blob, { headers: { ...CORS, 'content-type': meta.mime || 'application/octet-stream',
+        'content-disposition': (dl ? 'attachment' : 'inline') + '; filename="' + (meta.file || id) + '"',
+        'cache-control': 'private, max-age=3600' } });
+    }
+
+    if (path === '/api/materials') {
+      const idx = (await env.EDITS.get('materials', 'json')) || {};
+      const gone = idx._deleted || [];
+      if (request.method === 'GET') {
+        const want = (url.searchParams.get('client') || '').trim();
+        const items = [];
+        SEED_MATERIALS.forEach((m) => { if (gone.indexOf(m.id) < 0)
+          items.push({ id: m.id, client: m.client, title: m.title, cat: m.cat, occasion: m.occasion,
+                       file: m.file, mime: m.mime, size: (m.body && m.body.byteLength) || 0, at: m.at, seed: true }); });
+        Object.keys(idx).forEach((k) => { if (k !== '_deleted' && gone.indexOf(k) < 0)
+          items.push({ id: k, ...idx[k] }); });
+        const out = items
+          .filter((m) => !want || (m.client || '').toLowerCase() === want.toLowerCase())
+          .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+        return json({ items: out, count: out.length });
+      }
+      if (request.method === 'POST') {
+        let form; try { form = await request.formData(); } catch (e) { return json({ ok: false, error: 'bad_form' }, 400); }
+        const file = form.get('file');
+        if (!file || typeof file === 'string') return json({ ok: false, error: 'no_file' }, 400);
+        const buf = await file.arrayBuffer();
+        // KV caps a value at 25 MB; refuse loudly rather than storing a truncated deck.
+        if (buf.byteLength > 24 * 1024 * 1024) return json({ ok: false, error: 'too_large', size: buf.byteLength }, 413);
+        const client = String(form.get('client') || '').trim();
+        if (!client) return json({ ok: false, error: 'no_client' }, 400);
+        const name = String(file.name || 'material');
+        const id = (client + '-' + name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 70)
+                 + '-' + Date.now().toString(36);
+        const meta = { client, title: String(form.get('title') || name).trim(),
+          cat: String(form.get('cat') || 'marketing').trim(),
+          occasion: String(form.get('occasion') || '').trim(),
+          file: name, mime: file.type || 'application/octet-stream', size: buf.byteLength,
+          at: new Date().toISOString().slice(0, 10),
+          by: request.headers.get('Cf-Access-Authenticated-User-Email') || '' };
+        await env.EDITS.put('matblob:' + id, buf);
+        const cur = (await env.EDITS.get('materials', 'json')) || {};
+        cur[id] = meta;
+        await env.EDITS.put('materials', JSON.stringify(cur));
+        return json({ ok: true, id, ...meta });
+      }
+      if (request.method === 'DELETE') {
+        const id = url.searchParams.get('id') || '';
+        if (!id) return json({ ok: false, error: 'no_id' }, 400);
+        const cur = (await env.EDITS.get('materials', 'json')) || {};
+        if (cur[id]) { delete cur[id]; await env.EDITS.delete('matblob:' + id); }
+        else { // a seed is code, not data -- it can only be tombstoned
+          cur._deleted = cur._deleted || []; if (cur._deleted.indexOf(id) < 0) cur._deleted.push(id); }
+        await env.EDITS.put('materials', JSON.stringify(cur));
+        return json({ ok: true, id });
+      }
     }
 
     // ---- template info (structure layer: bundled from git, not KV) ----

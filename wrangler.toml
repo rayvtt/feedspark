@@ -7,7 +7,12 @@ compatibility_date = "2024-12-01"
 # feedlab_engine.js is ALSO a Text module: the worker serves it verbatim at
 # /feedlab/engine.js (the Feed Lab page and its node tests share the same file).
 rules = [
-  { type = "Text", globs = ["**/*.html", "**/feedlab_engine.js", "**/pricer_engine.js", "**/gpc_taxonomy.txt"], fallthrough = true }
+  { type = "Text", globs = ["**/*.html", "**/feedlab_engine.js", "**/pricer_engine.js", "**/gpc_taxonomy.txt"], fallthrough = true },
+  # Client materials bank (docs/materials/): flagship decks/one-pagers are git-bundled as
+  # binary Data modules so they are live the moment they merge -- a session cannot write a
+  # blob into KV (Access blocks HTTP writes and there is no key-level API here). Everything
+  # uploaded later goes to KV instead; see docs/MATERIALS.md for the boundary.
+  { type = "Data", globs = ["**/materials/*.pptx", "**/materials/*.pdf", "**/materials/*.xlsx"], fallthrough = true }
 ]
 
 # The account owner — the only identity allowed to open /activity and /api/activity

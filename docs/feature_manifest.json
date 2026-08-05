@@ -1220,6 +1220,24 @@
       "pattern": "demo-banner",
       "min": 2,
       "pr": 197
+    },
+    {
+      "name": "Materials bank: per-client collateral API (seeds + KV uploads)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "/api/materials",
+      "min": 2
+    },
+    {
+      "name": "Materials bank: git-bundled seed manifest",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "SEED_MATERIALS",
+      "min": 3
+    },
+    {
+      "name": "Materials bank: Brand dossier panel",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "dz-mat",
+      "min": 6
     }
   ]
 }

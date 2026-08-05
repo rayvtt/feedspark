@@ -153,6 +153,23 @@ window.addEventListener('load',restore);
   .dz-empty{font-size:13px;color:var(--muted);font-style:italic;margin:4px 0 0}
   .dz-foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px;border-top:1px solid var(--line);margin-top:20px;padding-top:16px}
   .dz-con{font-size:12.5px;color:var(--muted);font-weight:700;margin-left:auto;text-align:right;max-width:52%}
+  /* materials bank: finished collateral filed against the brand */
+  .dz-mat{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+  .dz-mat-h{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+  .dz-mat-h b{font-size:13px;letter-spacing:.02em}
+  .dz-mat-h .n{font-size:11.5px;font-weight:800;color:var(--muted)}
+  .dz-mat-h .dz-matadd{margin-left:auto;font:inherit;font-size:12px;font-weight:800;padding:5px 11px;border-radius:100px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer}
+  .dz-mat-h .dz-matadd:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .dz-mat-g{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 0 5px}
+  .dz-mat-i{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:#fff;margin-bottom:6px}
+  .dz-mat-i:hover{border-color:var(--orange)}
+  .dz-mat-i .ic{font-size:15px;flex:none}
+  .dz-mat-i .tx{min-width:0;flex:1}
+  .dz-mat-i .tt{font-size:13px;font-weight:800;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dz-mat-i .mt{font-size:11.5px;color:var(--muted);font-weight:700}
+  .dz-mat-i a{font-size:12px;font-weight:800;color:var(--orange-deep);text-decoration:none;flex:none}
+  .dz-mat-i .dz-matx{font:inherit;font-size:12px;font-weight:800;border:0;background:none;color:var(--muted);cursor:pointer;flex:none}
+  .dz-mat-e{font-size:12.5px;color:var(--muted)}
   @media(max-width:860px){.dossier{grid-template-columns:1fr}.dz-list{flex-direction:row;overflow-x:auto;max-height:none}.dz-item{min-width:190px;flex:none}.dz-cols{grid-template-columns:1fr}.dz-con{margin-left:0;max-width:100%;text-align:left}}
   /* ---- two-column blocks ---- */
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -841,8 +858,10 @@ window.addEventListener('load',restore);
         +(od?'<span class="chip atrt-badge danger"><b>'+od+'</b> overdue</span>':'')
         +'<span class="chip"><b>'+((p&&p.cats&&p.cats.test)?p.cats.test.total:tst.length)+'</b> tests</span></div>'
       +testsHtml
+      +'<div class="dz-mat" id="dz-mat"></div>'
       +'<div class="dz-foot">'+planCtl+deckCtl+feedCtl
         +(editMode?'<span class="dz-con"'+edA('con')+' data-ph="contacts…">'+esc(b.con||'')+'</span>':(b.con?'<span class="dz-con">'+esc(b.con)+'</span>':''))+'</div>';
+    loadMats(name);
     if(editMode){
       var del=detail.querySelector('.dz-x');
       if(del) del.onclick=function(){ if(confirm('Delete "'+name+'" from the dossier? It will be hidden from the command center (activity stays in the tracker).')){
@@ -900,6 +919,67 @@ window.addEventListener('load',restore);
       });
     });
     Array.prototype.forEach.call(list.children,function(x){x.classList.toggle('on',x.getAttribute('data-b')===name);});
+  }
+  // ---- materials bank: finished collateral filed against the brand ----
+  // Fetched per brand rather than baked into PLANTASKS: the bank grows by upload, and a
+  // dossier render must not go stale the moment something new is filed.
+  var MAT_ICON={pptx:'◧',pdf:'▤',xlsx:'▦',docx:'▥'};
+  function matSize(n){ n=+n||0; return n>=1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB'; }
+  function matExt(f){ var m=/\.([a-z0-9]+)$/i.exec(f||''); return m?m[1].toLowerCase():''; }
+  function loadMats(name){
+    var box=document.getElementById('dz-mat'); if(!box) return;
+    box.innerHTML='<div class="dz-mat-h"><b>Materials</b><span class="n">loading…</span></div>';
+    fetch('/api/materials?client='+encodeURIComponent(name)).then(function(r){return r.json();}).then(function(d){
+      if(document.getElementById('dz-mat')!==box) return;   // brand switched mid-flight
+      var items=(d&&d.items)||[];
+      var head='<div class="dz-mat-h"><b>Materials</b><span class="n">'+(items.length||'none')+(items.length?' saved':'')+'</span>'
+        +(editMode?'<button class="dz-matadd">+ Add material</button>':'')+'</div>';
+      var body='';
+      if(!items.length){ body='<div class="dz-mat-e">Nothing filed yet'+(editMode?' — add a deck, review pack or one-pager.':'. Turn on “Edit dossier” to file one.')+'</div>'; }
+      else{
+        var groups={},order=[];
+        items.forEach(function(m){ var g=m.occasion||'Unfiled'; if(!groups[g]){groups[g]=[];order.push(g);} groups[g].push(m); });
+        order.forEach(function(g){
+          body+='<div class="dz-mat-g">'+esc(g)+'</div>';
+          groups[g].forEach(function(m){
+            var ex=matExt(m.file);
+            body+='<div class="dz-mat-i"><span class="ic">'+(MAT_ICON[ex]||'□')+'</span>'
+              +'<span class="tx"><span class="tt">'+esc(m.title||m.file)+'</span>'
+              +'<span class="mt">'+esc((ex||'file').toUpperCase())+' · '+matSize(m.size)+' · '+esc(m.at||'')
+              +(m.cat?' · '+esc(m.cat):'')+(m.seed?' · in git':'')+'</span></span>'
+              +'<a href="/api/materials/file?id='+encodeURIComponent(m.id)+'&dl=1">Download</a>'
+              +(editMode?'<button class="dz-matx" data-id="'+esc(m.id)+'" title="Remove">×</button>':'')+'</div>';
+          });
+        });
+      }
+      box.innerHTML=head+body;
+      var add=box.querySelector('.dz-matadd');
+      if(add) add.onclick=function(){
+        var inp=document.createElement('input'); inp.type='file';
+        inp.accept='.pptx,.pdf,.xlsx,.docx,.png,.jpg';
+        inp.onchange=function(){
+          var f=inp.files&&inp.files[0]; if(!f) return;
+          if(f.size>24*1024*1024){ alert('That file is '+matSize(f.size)+' — the 24 MB limit is the KV value cap. Trim it or link it instead.'); return; }
+          var title=prompt('Title for this material:',f.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ')); if(title===null)return;
+          var occ=prompt('What is it for? (e.g. "Account Review Aug-26") — groups it in the bank:',''); if(occ===null)return;
+          var cat=prompt('Category (marketing, commercial, technical…):','marketing'); if(cat===null)return;
+          var fd=new FormData(); fd.append('file',f); fd.append('client',name);
+          fd.append('title',title.trim()||f.name); fd.append('occasion',occ.trim()); fd.append('cat',cat.trim()||'marketing');
+          tzt('Uploading '+f.name+'…');
+          fetch('/api/materials',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(d){
+            if(d&&d.ok){ tzt('✓ Filed to '+name+'’s materials'); loadMats(name); }
+            else tzt('Upload failed'+(d&&d.error?': '+d.error:''));
+          }).catch(function(){ tzt('Upload failed — network'); });
+        };
+        inp.click();
+      };
+      Array.prototype.forEach.call(box.querySelectorAll('.dz-matx'),function(b){ b.onclick=function(){
+        var id=b.getAttribute('data-id');
+        if(!confirm('Remove this material from '+name+'’s bank?')) return;
+        fetch('/api/materials?id='+encodeURIComponent(id),{method:'DELETE'})
+          .then(function(){ tzt('Removed'); loadMats(name); });
+      }; });
+    }).catch(function(){ box.innerHTML='<div class="dz-mat-h"><b>Materials</b></div><div class="dz-mat-e">Could not load the bank.</div>'; });
   }
   function buildList(){
     list.innerHTML='';
