@@ -291,11 +291,8 @@ window.addEventListener('load',restore);
   <div class="cat-h"><span class="k">04</span><h2>Alert routing — custom watches</h2>
     <span class="scanmsg" id="wt-msg"></span>
     <span style="margin-left:auto"><button class="btn" id="wt-runall">▶ Run all checks now</button></span></div>
-  <p class="cat-sub">Pin the exact label values PMAX depends on and pick who gets pinged. The worker re-checks every
-  watch <b>live each hour</b> (on the half-hour) — a watched value dropping off fires a <b>high-priority ping</b> to
-  Google Chat, Slack, or email the moment it's seen, re-pings daily while broken, and sends a ✅ when it recovers.
-  Create watches with the <b>🔔 buttons</b> in the dissection above — on a label card (all its values) or on the
-  cross panel (a breakdown like CL0&nbsp;“Best Sellers”&nbsp;→&nbsp;CL2).</p>
+  <p class="cat-sub">Pin the values PMAX depends on, pick who gets pinged. Live-checked hourly (or 07:00 &amp; 17:00 GMT) —
+  <b>high-priority ping on drop-off</b>, ✅ on recovery. Create watches with the <b>🔔 buttons</b> above.</p>
   <div class="rt-grid">
     <div class="panel"><h3 class="rt-h">📡 Ping destinations</h3>
       <div id="dest-list"><span class="muted">Loading…</span></div>
@@ -306,8 +303,7 @@ window.addEventListener('load',restore);
         <label class="d-mini" title="Prepend an @-everyone mention on high-priority pings"><input type="checkbox" id="da-mention"> @all</label>
         <button class="btn pri" id="da-add">+ Add</button>
       </div>
-      <p class="hint" style="margin:10px 0 0">Google Chat: space → Apps &amp; integrations → Webhooks. Slack: workspace → Incoming Webhooks.
-      Email sends from Ray's mailbox via the Gmail bridge (gmail_push.gs — re-paste the latest script once; §8 of GOOGLE_SETUP).</p>
+      <p class="hint" style="margin:10px 0 0">Chat/Slack: paste an incoming-webhook URL. Email: sends via the Gmail bridge.</p>
       <div style="border-top:1px solid var(--line);margin-top:12px;padding-top:12px">
         <h3 class="rt-h">📧 Status report by email</h3>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12.5px;font-weight:800">
@@ -317,8 +313,7 @@ window.addEventListener('load',restore);
           <button class="btn" id="rp-save">Save</button>
           <button class="btn pri" id="rp-send">Send now</button>
         </div>
-        <p class="hint" style="margin:8px 0 0">All watch rules (down / suspect / ok), estate health, and active baseline alerts in one plain-text email.
-        Sent after the scheduled check, so it always reflects fresh data. Delivery via the Gmail bridge (~5 min).</p>
+        <p class="hint" style="margin:8px 0 0">Watches + estate + alerts in one email, sent right after the scheduled check.</p>
       </div>
     </div>
     <div class="panel"><h3 class="rt-h">🔔 Watch rules</h3>
