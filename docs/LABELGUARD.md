@@ -136,6 +136,19 @@ proxy: sheet ids never come from the query — only roster clients resolve, exac
   row and its own CSV export. Every click is a fresh gviz query — never cached.
 - Opening a feed auto-rescans when its snapshot is older than 20h (Feed Lab's refresh model).
 
+## 5b. Demo mode — the anonymised client-facing view
+
+**🎭 Demo mode** (toggle in §02, sticky sessionStorage) turns `/labels` into a screen-shareable
+demo: every client identity becomes an **industry alias** ("Fashion B", "Footwear A" — letters
+stable by sorted name within industry, map in the page's `INDUSTRY`), client-name traces are
+scrubbed from displayed label values, alert text and tooltips, and the **alert-routing section
+(webhooks/emails) hides entirely**. A banner marks the state, with an **industry filter** so a
+fashion client sees fashion peers, and Exit demo restores everything. Display-layer only —
+keys, API calls and data untouched; volumes stay real (that's the demo). New clients default
+to industry "Retail" until added to the map. NOTE: this anonymises Ray's own logged-in view
+for live demos — it is NOT a client-accessible URL; that would need its own Cloudflare Access
+policy and a server-side masking layer (deliberately out of scope).
+
 ## 6. Custom alerts — the watch builder (§04 on the page)
 
 Beyond the estate-wide baseline monitoring, Ray can pin the **exact values PMAX depends on**

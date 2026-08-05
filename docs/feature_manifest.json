@@ -1213,6 +1213,13 @@
       "pattern": "labelday",
       "min": 3,
       "pr": 196
+    },
+    {
+      "name": "LabelGuard: demo mode (industry-alias anonymised view)",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "demo-banner",
+      "min": 2,
+      "pr": 197
     }
   ]
 }
