@@ -1651,7 +1651,7 @@ window.addEventListener('load',restore);
         recPush({client:cl,task:tk,source:td.getAttribute('data-src'),key:'status',prev:prev});
         sel.className='stat-sel tag-'+bucketOf(sel.value);
         writeStatus(cl,tk,sel.value);
-        sel.dataset.prev=sel.value; setTimeout(renderAll,650); }
+        sel.dataset.prev=sel.value; gridDefer(); }
       sel.onchange=commit; sel.addEventListener('focusout',commit);
       sel.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); sel.blur(); }
         else if(e.key==='Escape'){ var i=0; for(;i<sel.options.length;i++){ if(sel.options[i].value===sel.dataset.prev){ sel.selectedIndex=i; break; } } sel.blur(); }
@@ -1664,6 +1664,7 @@ window.addEventListener('load',restore);
           e.preventDefault(); e.stopPropagation(); var dc=(e.key==='ArrowLeft')?-1:1; sel.blur();
           if(gridSel){ var nc=gclamp(gridSel.c0+dc,0,6); gridSel={r0:gridSel.r0,c0:nc,r1:gridSel.r0,c1:nc}; gridFocus=true; highlightGrid();
             var a=cellAt(gridSel.r0,gridSel.c0); if(a&&a.scrollIntoView)a.scrollIntoView({block:'nearest'}); }
+          gridSettle();
         } });
     });
     var n=document.getElementById('it-n'); if(n)n.textContent=f.length+' task'+(f.length===1?'':'s');
@@ -1689,6 +1690,24 @@ window.addEventListener('load',restore);
     a.cells.forEach(function(c){ gridWrite({client:c.client,task:c.task,source:c.source}, c.key, c.prev); }); _rec=save;
     toast('Undid '+a.cells.length+' change'+(a.cells.length===1?'':'s')); setTimeout(renderAll,60); }
   function gclamp(v,a,b){ return v<a?a:(v>b?b:v); }
+  // ---- deferred re-sort/filter: an inline edit must NOT re-order or filter the row away while
+  // it's still the active cell (Ray's ask) — the new value registers with sort/filter only when
+  // the selection MOVES. gridDefer marks the pending re-render; gridSettle runs it on the next
+  // navigation and re-anchors the selection to wherever its row landed (or the nearest row if
+  // the edit filtered it out of view).
+  var GDEF=false;
+  function gridDefer(){ GDEF=true; }
+  function gridSettle(){ if(!GDEF)return; GDEF=false;
+    var k=null,c=0,idx=0;
+    if(gridSel&&gridRows[gridSel.r0]){ k=rowKey(gridRows[gridSel.r0]); c=gridSel.c0; idx=gridSel.r0; }
+    renderAll();
+    if(k==null)return;
+    var nr=-1; for(var i=0;i<gridRows.length;i++){ if(rowKey(gridRows[i])===k){ nr=i; break; } }
+    if(nr<0)nr=gridRows.length?gclamp(idx,0,gridRows.length-1):-1;
+    if(nr<0){ gridSel=null; highlightGrid(); return; }
+    gridSel={r0:nr,c0:c,r1:nr,c1:c}; highlightGrid();
+    var a=cellAt(nr,c); if(a&&a.scrollIntoView)a.scrollIntoView({block:'nearest'});
+  }
   function gnorm(){ return {r0:Math.min(gridSel.r0,gridSel.r1),r1:Math.max(gridSel.r0,gridSel.r1),c0:Math.min(gridSel.c0,gridSel.c1),c1:Math.max(gridSel.c0,gridSel.c1)}; }
   function cellAt(r,c){ return gridBody?gridBody.querySelector('td[data-r="'+r+'"][data-col="'+COLS[c]+'"]'):null; }
   function cellText(r,c){ var td=cellAt(r,c); if(!td)return ''; var s=td.querySelector('select'); if(s)return s.value; var v=(td.textContent||'').replace(/\s+/g,' ').trim(); return v==='—'?'':v; }
@@ -1754,8 +1773,9 @@ window.addEventListener('load',restore);
   function wireGrid(body,f){ gridBody=body; gridRows=f;
     body.querySelectorAll('td[data-col]').forEach(function(td){
       td.addEventListener('mousedown',function(ev){ var r=+td.getAttribute('data-r'), c=COLS.indexOf(td.getAttribute('data-col')); if(c<0||isNaN(r))return; gridFocus=true;
+        var same=gridSel&&gridSel.r0===r&&gridSel.c0===c;   // re-clicking the just-edited cell must not settle mid-click — it would rebuild the DOM under the pointer
         if(ev.shiftKey&&gridSel){ gridSel.r1=r; gridSel.c1=c; if(td.querySelector('select'))ev.preventDefault(); } else { gridSel={r0:r,c0:c,r1:r,c1:c}; }
-        highlightGrid(); }); });
+        highlightGrid(); if(!same)gridSettle(); }); });
     if(gridSel){ if(gridSel.r0>f.length-1||gridSel.r1>f.length-1)gridSel=null; highlightGrid(); } }
   (function(){
     document.addEventListener('keydown',function(e){ if(!gridSel||!gridFocus)return; var ae=document.activeElement, tag=ae?ae.tagName:'', mod=e.ctrlKey||e.metaKey;
@@ -1763,7 +1783,7 @@ window.addEventListener('load',restore);
       // copy (Ctrl+C) and paste (Ctrl+V) are handled by the native copy/paste events below — do NOT preventDefault them here or the events never fire
       if(mod&&(e.key==='z'||e.key==='Z')){ undoLast(); e.preventDefault(); return; }
       if(mod&&(e.key==='d'||e.key==='D')){ fillDownGrid(); e.preventDefault(); return; }
-      if(e.key==='Escape'){ gridSel=null; highlightGrid(); return; }
+      if(e.key==='Escape'){ gridSel=null; highlightGrid(); gridSettle(); return; }
       if(e.key==='Enter'){ editActiveCell(); e.preventDefault(); return; }
       // type-ahead on the active Status cell: a letter opens its picker at the first matching option (then arrow/Enter is native)
       if(!mod && e.key && e.key.length===1 && /[a-z0-9]/i.test(e.key) && COLS[gridSel.c0]==='status'){
@@ -1782,9 +1802,10 @@ window.addEventListener('load',restore);
       e.preventDefault(); var maxR=gridRows.length-1;
       if(e.shiftKey){ gridSel.r1=gclamp(gridSel.r1+dr,0,maxR); gridSel.c1=gclamp(gridSel.c1+dc,0,6); }
       else { var nr=gclamp(gridSel.r0+dr,0,maxR), nc=gclamp(gridSel.c0+dc,0,6); gridSel={r0:nr,c0:nc,r1:nr,c1:nc}; }
-      highlightGrid(); var a=cellAt(gridSel.r0,gridSel.c0); if(a&&a.scrollIntoView)a.scrollIntoView({block:'nearest'}); });
+      highlightGrid(); var a=cellAt(gridSel.r0,gridSel.c0); if(a&&a.scrollIntoView)a.scrollIntoView({block:'nearest'});
+      gridSettle(); });
     document.addEventListener('mousedown',function(e){ var t=e.target, td=t.closest?t.closest('td[data-col]'):null, inScroll=t.closest?t.closest('.it-scroll'):null;
-      if(td&&inScroll)gridFocus=true; else if(!inScroll){ gridFocus=false; if(gridSel){ gridSel=null; highlightGrid(); } } });
+      if(td&&inScroll)gridFocus=true; else if(!inScroll){ gridFocus=false; if(gridSel){ gridSel=null; highlightGrid(); } gridSettle(); } });
     // native copy/paste — reliable (no clipboard permission) and delivers the whole multi-cell TSV block
     function gridBusy(){ var tag=document.activeElement?document.activeElement.tagName:''; return tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'; }
     document.addEventListener('copy',function(e){ if(!gridSel||!gridFocus||gridBusy())return; var tsv=buildTSV(); if(tsv==null)return;
