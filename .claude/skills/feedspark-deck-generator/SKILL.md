@@ -305,6 +305,19 @@ Follow the exact pattern already used for every other deck in
   chapter's finding names the earlier chapter's status pill by number) rather than leaving
   the contradiction to sit silently in two unconnected places. Caught on the Superdry deck's
   category-mapping row (round 1 feedback).
+- **A corrected headline count is never a one-line edit.** The same task/SKU count is
+  typically restated in: an agenda row, a reconciliation note, per-lane scorecard cells,
+  a *computed* score, and individual table outcome cells ("16 of 18 closed"). After
+  changing any headline figure, grep the whole deck for the old number **and** for its
+  derived per-lane figures, and recompute any score with the real scoring function
+  (`tools/build_plan_tasks.py`'s `score_of()`) rather than adjusting it by eye. Caught on
+  Superdry round 2, where correcting 169/86 → 251/4 silently invalidated six scorecard
+  cells, an "other lanes" card, two table cells and the 70/100 headline score — the same
+  cross-chapter contradiction round 1 had just fixed, arriving from the opposite direction.
+  If the corrected totals don't decompose into per-lane figures you can actually source,
+  say so and mark the inferred split with the `?` chk badge rather than inventing a
+  distribution that looks authoritative.
+
 - **Grep for the two required-but-easy-to-skip prose patterns before shipping any new
   deck**, not just when reading the style guide reminds you: `transaction infrastructure`
   (the shared Google hero epigraph) and the AI-landscape chapter's rhetorical shopper-quote
@@ -359,6 +372,44 @@ file before doing any of the following on a deck already in live use:
   `/api/gmail/push`. A bypass on `/api` (or on `/api/edits` specifically) removes
   authentication from every client's live deck content, not just the one thing being
   unblocked.
+
+## Step 6b — Exporting a deck to PowerPoint
+
+When Ray asks for a `.pptx` (a "download", "the deck as slides", something to send a client or
+put in SharePoint), use the exporter — **never hand-build a deck with `python-pptx` shapes**:
+
+```bash
+python tools/deck_to_pptx.py docs/<Client>_<Deck>.html <client>.pptx --audit
+```
+
+The one thing to understand before touching this: **it populates a template, it does not draw
+slides.** `tools/templates/feedspark_deck.pptx` carries the theme, the master and 18 named
+layouts, and *every* visual element — card panels, accent bars, gradient bar, wordmark — lives
+on those layouts. Slides carry text in placeholders and nothing else. That is what makes the
+file editable in the way a client means it: restyle globally, swap the theme, re-order, or drop
+a slide onto another layout and it re-flows.
+
+The failure mode this replaced is worth naming, because it looked fine: a renderer that painted
+`add_shape` rectangles and `add_textbox` calls at absolute inch coordinates onto the **blank**
+layout. Visually close, but a picture of a deck — no layouts, no placeholders, no theme, no
+native tables, nothing that survives a client's edit. If you find yourself computing an `x, y`
+for a rectangle, stop: that is the wrong tool.
+
+Rules when extending it:
+
+- **Never add a shape.** If a component has nowhere to go, add a *layout* to the template and a
+  branch in `emit_blocks()` — don't special-case it with drawn shapes.
+- **Never shrink text below `MIN_OK` (82%) to make it fit.** PPTX doesn't clip overflow, it
+  spills text over the neighbouring card, so the temptation is to shrink until it fits — at 60%
+  that's ~7pt and unreadable. Re-lay it out instead: fewer, bigger card panels across more
+  slides. `pick_grid()` and `balanced()` already do this; keep them in the path.
+- **`--audit` is the gate.** It reports layouts used, everything shrunk, and anything still over
+  capacity. Ship only on `still over capacity: 0`. There is no visual QA here — LibreOffice and
+  `pdftoppm` are absent in Code, and `preview_tmpl.py` cannot see layout-inherited chrome, so it
+  will render these slides as near-empty. That is a limitation of the previewer, not a bug in
+  the export; trust `--audit`, not the PNGs.
+
+Full behaviour, the layout list and the fitting cascade: [`tools/README.md`](../../../tools/README.md).
 
 ## Step 7 — Handling a feedback-loop prompt
 
