@@ -1222,6 +1222,18 @@
       "pr": 197
     },
     {
+      "name": "LabelGuard: compact Δ-reference toggle (yesterday ↔ known-good)",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "refseg",
+      "min": 3
+    },
+    {
+      "name": "labelguard engine: reference terminology (last known-good / pinned reference)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "last known-good",
+      "min": 2
+    },
+    {
       "name": "Materials bank: per-client collateral API (seeds + KV uploads)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "/api/materials",

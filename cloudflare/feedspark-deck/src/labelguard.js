@@ -386,7 +386,8 @@ export function alertDigest(rule, fires, opts) {
   if (alerts.length) {
     out.push('🔴 HIGH PRIORITY — Label Guard | ' + feed + '\n' +
       scope + ' — CONFIRMED drop-off on ' + alerts.length + ' watched value' + (alerts.length === 1 ? '' : 's') +
-      ' (seen on two consecutive live checks):\n' +
+      ' vs the pinned reference' + (rule.created ? ' (armed ' + new Date(rule.created).toUTCString().slice(5, 16) + ')' : '') +
+      ', seen on two consecutive live checks:\n' +
       alerts.map(row).join('\n') +
       '\nPMAX listing groups keyed on these values are dark.' +
       (opts.link ? '\n' + opts.link : ''));
@@ -468,9 +469,9 @@ export function buildReport(inp) {
       if (aLines.length < 15) aLines.push('  [' + String(a.sev).toUpperCase() + '] ' + dispFeed(k.split('|')[0], k.split('|')[1]) + ' — ' + a.msg);
     }
   }
-  L.push('ACTIVE BASELINE ALERTS (' + aN + ')');
+  L.push('ACTIVE ALERTS — vs last known-good (' + aN + ')');
   if (aLines.length) { for (const s of aLines) L.push(s); if (aN > aLines.length) L.push('  … +' + (aN - aLines.length) + ' more on the board'); }
-  else L.push('  none — every scanned feed matches its baseline');
+  else L.push('  none — every scanned feed matches its last known-good state');
   L.push('');
   if (link) L.push('Live board: ' + link);
   return L.join('\n');
