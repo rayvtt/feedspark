@@ -1250,6 +1250,13 @@
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "dz-mat",
       "min": 6
+    },
+    {
+      "name": "worker: triage decisions inherit down a conversation (new replies stay triaged)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "mailThreadKey",
+      "min": 4,
+      "pr": 200
     }
   ]
 }
