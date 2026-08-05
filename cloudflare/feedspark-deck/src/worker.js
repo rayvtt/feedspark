@@ -1358,6 +1358,17 @@ async function runLabelScan(env, client, mkt) {
     await env.EDITS.put('labelalerts', JSON.stringify(alertsMap));
     return { error: msg, status: 502 };
   }
+  // DAILY reference (Ray's rule): the pivot's Δ columns read "vs yesterday" — automatically,
+  // every day, every account, every label. The first scan of each UTC day promotes the
+  // outgoing snapshot to labelday:<client>:<mkt>, freezing yesterday's closing state for
+  // the whole day. The ALERT baseline below stays separate (last known-good) so alarms
+  // never fade just because a day ticked over.
+  try {
+    const prev = await env.EDITS.get('labels:' + client + ':' + mkt, 'json');
+    if (prev && prev.t && new Date(prev.t).toISOString().slice(0, 10) !== new Date(snap.t).toISOString().slice(0, 10)) {
+      await env.EDITS.put('labelday:' + client + ':' + mkt, JSON.stringify(prev));
+    }
+  } catch (e) {}
   const BK = 'labelbase:' + client + ':' + mkt;
   let base = await env.EDITS.get(BK, 'json');
   if (!base) { base = snap; await env.EDITS.put(BK, JSON.stringify(snap)); }   // first scan seeds the baseline
@@ -1424,7 +1435,8 @@ async function labelGuardRoutes(env, request, url) {
     if (badClient) return json({ error: 'bad client' }, 400);
     const snap = await env.EDITS.get('labels:' + client + ':' + mkt, 'json');
     const base = await env.EDITS.get('labelbase:' + client + ':' + mkt, 'json');
-    const out = { snapshot: snap || null, baseline: base || null };
+    const daily = await env.EDITS.get('labelday:' + client + ':' + mkt, 'json');
+    const out = { snapshot: snap || null, baseline: base || null, daily: daily || null };
     if (url.searchParams.get('hist') === '1') out.hist = (await env.EDITS.get('labelhist:' + client + ':' + mkt, 'json')) || [];
     return json(out);
   }

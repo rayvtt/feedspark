@@ -1194,9 +1194,6 @@
       "pattern": "createXmlParser"
     },
     {
-      "name": "feedlab page: XML-vs-CSV parser sniff",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "FeedAudit.createXmlParser",
       "name": "LabelGuard: Facebook channel set (-fb markets, blue chips)",
       "file": "docs/FeedSpark_LabelGuard.html",
       "pattern": "chip-fb",
@@ -1209,6 +1206,13 @@
       "pattern": "dispFeed",
       "min": 4,
       "pr": 194
+    },
+    {
+      "name": "worker: daily Δ reference (labelday auto-promote, pivots read vs yesterday)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "labelday",
+      "min": 3,
+      "pr": 196
     }
   ]
 }

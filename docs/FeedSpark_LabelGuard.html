@@ -498,18 +498,21 @@ window.addEventListener('load',restore);
     var d = CACHE[k];
     if (!d || !d.snapshot) { $('det-panel').innerHTML = '<span class="muted">No snapshot yet.</span>'; return; }
     var s = d.snapshot, b = d.baseline, p = parts(k);
+    var ref = d.daily || d.baseline;                 // Δ columns read vs YESTERDAY (daily auto-capture); day one falls back to the alert baseline
+    var refLbl = d.daily ? 'yday' : 'base';
     var h = '<div class="det-head"><h3>' + esc(s.client) + ' · ' + esc(mktBase(s.market || p.mkt).toUpperCase()) + '</h3>' + chChip(s.market || p.mkt) +
       '<span class="det-stats"><span><b>' + fmt(s.rows) + '</b> rows</span>' +
       '<span>scanned <b>' + ago(s.t) + '</b></span>' +
-      (b ? '<span>baseline <b>' + new Date(b.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + '</b>' +
-        (b.rows !== s.rows ? ' (' + fmt(b.rows) + ' rows)' : '') + '</span>' : '') + '</span>' +
+      (ref ? '<span>Δ vs <b>' + (d.daily ? 'yesterday' : 'baseline') + '</b> (' + new Date(ref.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) +
+        (ref.rows !== s.rows ? ', ' + fmt(ref.rows) + ' rows' : '') + ')</span>' : '') +
+      (b ? '<span>alert baseline <b>' + new Date(b.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + '</b></span>' : '') + '</span>' +
       '<span class="det-actions">' +
       '<button class="btn" id="det-csv">⤓ CSV</button>' +
       '<button class="btn" id="det-ack" title="Accept the current feed as the new baseline">✓ Rebaseline</button>' +
       '<button class="btn pri" id="det-scan">↻ Scan live feed</button></span></div>';
     h += '<div class="lbl-grid">';
     LK.forEach(function (key, i) {
-      var L = s.labels && s.labels[key], B = (b && b.labels && b.labels[key]) || null;
+      var L = s.labels && s.labels[key], B = (ref && ref.labels && ref.labels[key]) || null;
       if (!L || !L.present) {
         h += '<div class="lbl-card absent"><div class="lbl-h"><span class="nm">CL' + i + '</span>' +
           '<span class="sub">' + (B && B.present ? '<b style="color:var(--risk)">column vanished — was ' + B.cov + '% filled</b>' : 'not in this feed') + '</span></div></div>';
@@ -520,10 +523,10 @@ window.addEventListener('load',restore);
         (L.values && L.values.length ? '<button class="lbell" data-wl="' + esc(key) + '" title="Watch this label’s values — ping a destination on drop-off">🔔</button>' : '') +
         '<span class="cov">' + L.cov + '%</span>' +
         '<span class="sub">' + fmt(L.filled) + ' SKUs · ' + L.distinct + (L.truncated ? '+' : '') + ' values</span>' +
-        (dcov != null && dcov !== 0 ? '<span class="delta ' + (dcov > 0 ? 'up' : 'down') + '">' + (dcov > 0 ? '▲ +' : '▼ ') + dcov + 'pp vs base</span>' : '') +
+        (dcov != null && dcov !== 0 ? '<span class="delta ' + (dcov > 0 ? 'up' : 'down') + '">' + (dcov > 0 ? '▲ +' : '▼ ') + dcov + 'pp vs ' + refLbl + '</span>' : '') +
         '</div>';
       // union pivot: live values + baseline values that disappeared
-      var bm = baseMap(b, key), seen = {};
+      var bm = baseMap(ref, key), seen = {};
       var rows = (L.values || []).map(function (pr) {
         seen[pr[0]] = 1;
         return { v: pr[0], n: pr[1], was: bm[pr[0]] != null ? bm[pr[0]] : null, gone: false };
@@ -542,7 +545,7 @@ window.addEventListener('load',restore);
           var dn = r.n - r.was;
           delta = dn === 0 ? '<span class="muted">=</span>' :
             '<span class="' + (dn > 0 ? 'up' : 'down') + '">' + (dn > 0 ? '+' : '') + fmt(dn) + '</span>';
-        } else if (b) delta = '<span class="up">new</span>';
+        } else if (ref) delta = '<span class="up">new</span>';
         // live values are click-to-cross-dissect; GONE rows stay inert
         var xattr = r.gone ? ' class="gone"' :
           ' class="rowv" data-xby="' + esc(key) + '" data-xv="' + esc(r.v) + '" title="Cross-dissect “' + esc(r.v) + '” by another label"';
@@ -700,11 +703,11 @@ window.addEventListener('load',restore);
 
   function exportCsv(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
-    var s = d.snapshot, b = d.baseline;
-    var out = ['label,value,skus,share_pct,baseline_skus,delta'];
+    var s = d.snapshot, ref = d.daily || d.baseline;
+    var out = ['label,value,skus,share_pct,' + (d.daily ? 'yesterday_skus' : 'baseline_skus') + ',delta'];
     LK.forEach(function (key) {
       var L = s.labels[key]; if (!L || !L.present) return;
-      var bm = baseMap(b, key), seen = {};
+      var bm = baseMap(ref, key), seen = {};
       (L.values || []).forEach(function (p) {
         seen[p[0]] = 1;
         var was = bm[p[0]] != null ? bm[p[0]] : '';
