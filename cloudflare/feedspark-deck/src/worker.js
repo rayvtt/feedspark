@@ -25,7 +25,7 @@
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
-import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx } from "./briefmatch.js";
+import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey } from "./briefmatch.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
 import { LABEL_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
@@ -515,9 +515,20 @@ export default {
       const dis = (await env.EDITS.get('gmaildismissed', 'json')) || {};
       const validReasons = ['briefed', 'task', 'notask'];
       const reason = validReasons.includes(body.reason) ? body.reason : 'notask';
-      ids.forEach((id) => { if (body.undo) delete dis[id]; else dis[id] = { t: Date.now(), r: reason }; });
-      const keys = Object.keys(dis);   // prune to the newest 400 decisions
-      if (keys.length > 400) keys.sort((a, b) => (dis[a].t || 0) - (dis[b].t || 0)).slice(0, keys.length - 400).forEach((k) => delete dis[k]);
+      let target = ids;
+      if (body.undo) {
+        // restoring un-decides the WHOLE conversation, not just the clicked email — decisions
+        // inherit down a thread (see the intake read), so a sibling still carrying one would
+        // re-dismiss the restored email on the very next refresh
+        const inboxItems = (await env.EDITS.get('gmailinbox', 'json')) || [];
+        const tkeys = {}; inboxItems.forEach((it) => { if (ids.indexOf(String(it.id)) >= 0) { const k = mailThreadKey(it.subject); if (k) tkeys[k] = 1; } });
+        target = ids.slice();
+        inboxItems.forEach((it) => { const k = mailThreadKey(it.subject);
+          if (k && tkeys[k] && target.indexOf(String(it.id)) < 0) target.push(String(it.id)); });
+      }
+      target.forEach((id) => { if (body.undo) delete dis[id]; else dis[id] = { t: Date.now(), r: reason }; });
+      const keys = Object.keys(dis);   // prune to the newest 800 decisions
+      if (keys.length > 800) keys.sort((a, b) => (dis[a].t || 0) - (dis[b].t || 0)).slice(0, keys.length - 800).forEach((k) => delete dis[k]);
       await env.EDITS.put('gmaildismissed', JSON.stringify(dis));
       logActivity(ctx, env, request, body.undo ? 'gmail-restore' : 'gmail-dismiss',
         (body.undo ? '' : reason + ' · ') + (ids.length > 1 ? ids.length + ' emails · ' : '') + ids[0].slice(0, 24));
@@ -921,6 +932,21 @@ export default {
           if (filled) ctx.waitUntil(env.EDITS.put('gmailinbox', JSON.stringify(pushed)));
         } catch (e) {}
         const dis = (await env.EDITS.get('gmaildismissed', 'json')) || {};
+        // Conversation-level inheritance: decisions are stored per message id, so a NEW reply in
+        // an already-decided thread used to re-open the whole conversation in the triage queue
+        // (Ray: "triaged emails keep coming back"). A message whose subject-thread already
+        // carries a decision now INHERITS it — persisted as a real per-id decision so it's
+        // individually restorable and the work isn't repeated on every read. The undo path
+        // clears the whole conversation, keeping decide/restore symmetric.
+        const byKey = {};
+        for (const it of pushed) { const d = dis[it.id]; if (!d) continue;
+          const k = mailThreadKey(it.subject); if (!k) continue;
+          if (!byKey[k] || (d.t || 0) > (byKey[k].t || 0)) byKey[k] = d; }
+        let inherited = 0;
+        for (const it of pushed) { if (dis[it.id]) continue;
+          const k = mailThreadKey(it.subject); const d = k && byKey[k]; if (!d) continue;
+          dis[it.id] = { t: Date.now(), r: d.r || 'notask', inh: 1 }; inherited++; }
+        if (inherited) ctx.waitUntil(env.EDITS.put('gmaildismissed', JSON.stringify(dis)));
         const items = pushed.slice(0, 60).map((it) => (dis[it.id] ? Object.assign({}, it, { dismissed: true, decidedAs: dis[it.id].r || 'notask' }) : it));
         return json({ connected: true, source: 'push', items });
       }

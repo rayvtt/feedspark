@@ -80,6 +80,14 @@ function findBrief(briefs, subject, snippet) {
   return null;
 }
 
+// Conversations share a subject once the reply prefixes are stripped — the SAME normalisation
+// the Workflow page uses to group its triage queue into threads. Server-side it lets a triage
+// decision made on a conversation be inherited by replies that arrive later.
+export function mailThreadKey(subject) {
+  return String(subject || '').toLowerCase()
+    .replace(/^\s*((re|fw|fwd|aw|sv)\s*:\s*)+/i, '').replace(/\s+/g, ' ').trim();
+}
+
 // ---- inbound triage: which client is an email about, and is it BRIEFABLE (an action
 // request that should become a Workflow ticket) vs FYI noise? Pure heuristics, unit-tested.
 const ACTION_RES = [
