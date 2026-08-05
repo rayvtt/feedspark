@@ -123,8 +123,13 @@ proxy: sheet ids never come from the query — only roster clients resolve, exac
   not scanned / unreachable), CL0–4 coverage bars, rows, last scan. **⚡ Scan whole estate**
   sweeps sequentially, skipping feeds fresher than 20h.
 - **03 Feed dissection** — CL0–4 pivots on **one seamless row** (equal widths): value · SKUs ·
-  share · Δ vs baseline, struck-out red rows for values that are GONE, CSV export. (No
-  history chart by Ray's call — the scan history still accumulates in KV `labelhist:*`.)
+  share · **Δ vs YESTERDAY**, struck-out red rows for values that are GONE, CSV export.
+  The daily reference is automatic for every account and every label: the first scan of
+  each UTC day promotes the outgoing snapshot to KV `labelday:<client>:<mkt>`, freezing
+  yesterday's closing state for the whole day (day one falls back to the alert baseline —
+  the header names which reference is in play). The ALERT baseline stays separate (last
+  known-good), so alarms never fade just because a day ticked over. (No history chart by
+  Ray's call — scan history still accumulates in KV `labelhist:*`.)
 - **Cross dissection** — click any value in any pivot → a full-width panel breaks that segment
   down **live** by another label (chips flip CL1↔CL4): Reiss GB CL0 "Best Sellers" → CL2
   women - fp 3,166 · men - fp 2,542 · women - sale 2,081… plus a "(no CLx value)" remainder
