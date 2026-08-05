@@ -1257,6 +1257,45 @@
       "pattern": "mailThreadKey",
       "min": 4,
       "pr": 202
+    },
+    {
+      "name": "worker: Leadership owner gate covers /leadership + /leadership/*",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "startsWith('/leadership/')",
+      "pr": 203
+    },
+    {
+      "name": "worker: legacy /readiness /library /roadmap 301 into /leadership/*",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "Location: '/leadership' + path",
+      "pr": 203
+    },
+    {
+      "name": "worker: folded module routes in PAGES",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "'/leadership/readiness'",
+      "pr": 203
+    },
+    {
+      "name": "Leadership: hub cards for the folded modules",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "lead-hub",
+      "min": 2,
+      "pr": 203
+    },
+    {
+      "name": "CmdCenter: standalone Readiness nav RETIRED (folded under Leadership)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "href=\"/readiness\"",
+      "forbidden": true,
+      "pr": 203
+    },
+    {
+      "name": "Workflow: standalone Readiness nav RETIRED (folded under Leadership)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "href=\"/readiness\"",
+      "forbidden": true,
+      "pr": 203
     }
   ]
 }

@@ -167,7 +167,8 @@ All HTML strategy decks include the inline edit + JSON patch sync system:
 ```
 GET  /                          → command center landing page (git-bundled + injected editor + Tachyon)
 GET  /workflow                  → Workflow control center (brief pipeline: Client→AM→ASPL)
-GET  /leadership /readiness /library /deck-builder /roadmap → app modules
+GET  /leadership                → Ray-only dashboard (OWNER_EMAIL-gated like /activity): book health, commercial burn-down, retention radar + hub for the modules folded under it — /leadership/readiness, /leadership/library, /leadership/roadmap (same gate; legacy /readiness /library /roadmap 301 here)
+GET  /deck-builder              → app module
 GET  /activity                  → user activity log + Build Log tab (OWNER-only: gated to OWNER_EMAIL via Cloudflare Access identity); /buildlog 301s here
 GET  /api/activity?days=N       → activity feed (owner-only 403 otherwise); all API mutations + page views are logged per Access user
 POST /api/gmail/push            → Gmail→FCC sync (no-admin path): Apps Script in Ray's mailbox pushes (a) brief replies — briefmatch.js moves ticket stages, TOKEN-ONLY matching (ibfcode/brief-id, never fuzzy unattended) — and (b) the inbox capture: every email to ray@feedspark.com NOT from @feedspark.com/@aroxo.com/@feedhero.net, classified (client via detectClient cue ladder: dossier dom → sender-domain label → display name → brand mention; ⚡ briefable score). Auth = GMAIL_PUSH_KEY secret + Access bypass on this exact path (GOOGLE_SETUP.md §8)

@@ -80,9 +80,12 @@ const SEED_MATERIALS = [
 const PAGES = {
   '/':            { html: LANDING,     slug: 'home' },
   '/index.html':  { html: LANDING,     slug: 'home' },
-  '/library':     { html: TASKLIB,     slug: 'library' },
-  '/roadmap':     { html: ROADMAP,     slug: 'roadmap' },
-  '/readiness':   { html: READINESS,   slug: 'readiness' },
+  // Readiness / Task library / Build roadmap live UNDER Leadership (owner-gated in fetch()
+  // before this map is consulted; legacy /readiness /library /roadmap 301 here). Slugs are
+  // unchanged so each page's saved KV edits (edits:<slug>) survive the move.
+  '/leadership/library':   { html: TASKLIB,   slug: 'library' },
+  '/leadership/roadmap':   { html: ROADMAP,   slug: 'roadmap' },
+  '/leadership/readiness': { html: READINESS, slug: 'readiness' },
   '/leadership':  { html: LEADERSHIP,  slug: 'leadership' },
   '/deck-builder':{ html: DECKBUILDER, slug: 'deckbuilder' },
   '/activity':    { html: ACTIVITY,    slug: 'activity' },   // owner-gated in fetch() before this map is consulted; Build Log lives on its 🔨 tab
@@ -272,6 +275,18 @@ export default {
     // the activity PAGE is owner-only too (the link is visible to everyone; the data is not)
     if (path === '/activity' && who(request) !== ownerEmail(env)) {
       return new Response('<!doctype html><meta charset="utf-8"><title>Restricted</title><body style="font-family:Lato,system-ui,sans-serif;padding:60px;color:#333"><h2>Restricted</h2><p>The user activity log is only available to the account owner.</p><p><a href="/" style="color:#ED6F0B;font-weight:700">← Back to the command center</a></p>', { status: 403, headers: { 'content-type': 'text/html;charset=utf-8' } });
+    }
+
+    // ---- Leadership = the owner's dashboard. The landing (book health, commercial burn-down,
+    // retention radar) AND the modules folded under it — Readiness, Task library, Build roadmap —
+    // are all gated to OWNER_EMAIL via the verified Access identity. The old standalone URLs
+    // 301 into their /leadership/* homes so bookmarks and deep links keep working.
+    if ((path === '/leadership' || path.startsWith('/leadership/')) && who(request) !== ownerEmail(env)) {
+      logActivity(ctx, env, request, 'view-denied', path);
+      return new Response('<!doctype html><meta charset="utf-8"><title>Restricted</title><body style="font-family:Lato,system-ui,sans-serif;padding:60px;color:#333"><h2>Restricted</h2><p>The leadership dashboard is only available to the account owner.</p><p><a href="/" style="color:#ED6F0B;font-weight:700">← Back to the command center</a></p>', { status: 403, headers: { 'content-type': 'text/html;charset=utf-8' } });
+    }
+    if (path === '/readiness' || path === '/library' || path === '/roadmap') {
+      return new Response(null, { status: 301, headers: { Location: '/leadership' + path, ...CORS } });
     }
 
     // ---- deploy version marker: confirm which git build is actually live (the deploy Action
