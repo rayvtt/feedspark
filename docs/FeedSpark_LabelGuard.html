@@ -89,8 +89,12 @@ window.addEventListener('load',restore);
   /* detail */
   .det-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:4px}
   .det-head h3{margin:0;font-size:19px;font-weight:900}
-  .det-stats{display:flex;gap:8px;flex-wrap:wrap;font-size:11.5px;font-weight:800;color:var(--muted)}
+  .det-stats{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11.5px;font-weight:800;color:var(--muted)}
   .det-stats b{color:var(--ink)}
+  .refseg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .refseg button{border:0;background:#fff;color:var(--muted);font:inherit;font-size:10.5px;font-weight:800;padding:3px 8px;cursor:pointer}
+  .refseg button.on{background:var(--orange-deep);color:#fff;cursor:default}
+  .refseg button[disabled]{opacity:.45;cursor:default}
   .det-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
   /* CL0–4 merged onto ONE seamless row (Ray's rule) — equal widths, compressed tables */
   .lbl-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:14px}
@@ -218,6 +222,8 @@ window.addEventListener('load',restore);
 [data-theme=dark] .panel,[data-theme=dark] .est-card,[data-theme=dark] .lbl-card,[data-theme=dark] .note{background:var(--paper);border-color:var(--line)}
 [data-theme=dark] .btn{background:#20242E;color:var(--ink-2);border-color:var(--line)}
 [data-theme=dark] .btn.pri{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+[data-theme=dark] .refseg button{background:#20242E;color:var(--muted)}
+[data-theme=dark] .refseg button.on{background:var(--orange-deep);color:#fff}
 [data-theme=dark] .hero{background:transparent}
 [data-theme=dark] .est-mkt.sel{background:rgba(245,166,35,.1)}
 [data-theme=dark] .st-ok{background:rgba(72,208,126,.14);color:#6FE0A0}
@@ -253,17 +259,17 @@ window.addEventListener('load',restore);
   <div class="eyebrow">Private &amp; Confidential · Label Guard</div>
   <h1>Custom-label monitoring — every Shopping feed</h1>
   <p>Live capture of <b>g:custom_label_0–4</b> across every wired client feed, per market: which values exist,
-  how many SKUs each carries, and how that compares to the last known-good baseline. PMAX listing groups are keyed
-  on these exact values — when a label silently drops out of a feed, six-figure campaigns break with no warning.
+  how many SKUs each carries, and how that compares to yesterday and to the last known-good state. PMAX listing groups
+  are keyed on these exact values — when a label silently drops out of a feed, six-figure campaigns break with no warning.
   The hourly sweep re-checks the whole estate and <b>flags any drop-off here and on every FCC page</b> before it
-  reaches campaign performance. A flagged change that was intentional? Open the feed and hit <b>“Expected — rebaseline”.</b></p>
+  reaches campaign performance. A flagged change that was intentional? Open the feed and hit <b>“Expected — accept as known-good”.</b></p>
 </div></header>
 
 <section class="cat"><div class="wrap">
   <div class="cat-h"><span class="k">01</span><h2>Active alerts</h2>
     <span class="scanmsg" id="al-count"></span></div>
-  <p class="cat-sub">Every unresolved drop-off vs baseline, worst first. Alerts stay live until the feed recovers
-  or the change is accepted as the new baseline — they do not fade on their own.</p>
+  <p class="cat-sub">Every unresolved drop-off vs the last known-good state, worst first. Alerts stay live until the
+  feed recovers or the change is accepted as the new known-good — they do not fade on their own.</p>
   <div class="panel" id="alerts-panel"><span class="muted">Loading…</span></div>
 </div></section>
 
@@ -281,8 +287,9 @@ window.addEventListener('load',restore);
 
 <section class="cat"><div class="wrap wide">
   <div class="cat-h"><span class="k">03</span><h2>Feed dissection</h2></div>
-  <p class="cat-sub">The pivot: every value on every custom label, SKU volumes and share, delta vs the baseline.
-  Struck-through red rows are values that existed at baseline and are <b>gone from the live feed now</b>.
+  <p class="cat-sub">The pivot: every value on every custom label, SKU volumes and share, Δ vs yesterday
+  (or vs last known-good — flip the toggle). Struck-through red rows are values on the reference that are
+  <b>gone from the live feed now</b>.
   <b>Click any value</b> to cross-dissect it live by another label (CL0 “Best Sellers” → how many are CL2 women&nbsp;-&nbsp;fp, women&nbsp;-&nbsp;sale…).</p>
   <div class="panel" id="det-panel"><span class="muted">Pick a feed above.</span></div>
 </div></section>
@@ -364,6 +371,9 @@ window.addEventListener('load',restore);
     'American Golf': 'Sporting Goods', 'Hobbycraft': 'Arts & Crafts', 'Ryobi': 'Tools & DIY',
     'Estée Lauder': 'Beauty', 'Bobbi Brown': 'Beauty', 'Benefit': 'Beauty', 'Clinique': 'Beauty', 'MAC': 'Beauty', 'Jo Malone': 'Beauty' };
   var DEMO = false; try { DEMO = sessionStorage.getItem('lg-demo') === '1'; } catch (e) {}
+  // Δ-reference for the dissection tables: 'yday' = yesterday's auto-capture (default), 'base' = last known-good.
+  // Estate alerts ALWAYS fire vs last known-good regardless of this display toggle.
+  var REFMODE = 'yday'; try { if (sessionStorage.getItem('lg-ref') === 'base') REFMODE = 'base'; } catch (e) {}
   var ALIAS = {};                // client -> "Fashion B" (stable: letters by sorted name within industry)
   function industryOf(c) { return INDUSTRY[c] || 'Retail'; }
   function buildAliases() {
@@ -481,7 +491,7 @@ window.addEventListener('load',restore);
     var nc = rows.filter(function (r) { return r.a.sev === 'crit'; }).length;
     $('al-count').textContent = rows.length ? (rows.length + ' active' + (nc ? ' · ' + nc + ' critical' : '')) : '';
     if (!rows.length) {
-      $('alerts-panel').innerHTML = '<div class="al-empty">✓ No active drop-offs — every scanned feed matches its baseline.</div>';
+      $('alerts-panel').innerHTML = '<div class="al-empty">✓ No active drop-offs — every scanned feed matches its last known-good state.</div>';
       return;
     }
     var h = '';
@@ -490,7 +500,7 @@ window.addEventListener('load',restore);
         '<span class="al-feed" data-k="' + esc(r.k) + '">' + esc(dispClient(r.client)) + ' · ' + esc(mktBase(r.mkt).toUpperCase()) + '</span> ' + chChip(r.mkt) +
         '<span class="al-msg">' + esc(maskText(r.a.msg)) + '</span>' +
         '<span class="al-t">' + ago(r.t) + '</span>' +
-        '<button class="btn" data-ack="' + esc(r.k) + '" title="Accept the current feed as the new baseline and clear this feed’s flags">✓ Expected — rebaseline</button></div>';
+        '<button class="btn" data-ack="' + esc(r.k) + '" title="Accept the current feed as the new known-good reference and clear this feed’s flags">✓ Expected — accept as known-good</button></div>';
     });
     $('alerts-panel').innerHTML = h;
     Array.prototype.forEach.call(document.querySelectorAll('.al-feed'), function (el) {
@@ -537,11 +547,17 @@ window.addEventListener('load',restore);
 
   function ack(k, btn) {
     var p = parts(k);
-    if (btn) { btn.disabled = true; btn.textContent = 'Rebaselining…'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Accepting…'; }
     fetch(API + '/api/labels/ack?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt), { method: 'POST' })
       .then(function (r) { return r.json(); })
       .then(function () { delete CACHE[k]; return refreshEstate(); })
       .then(function () { if (SEL === k) select(k); });
+  }
+
+  // Which reference the Δ columns read: yesterday's auto-capture (default) or last known-good (toggle).
+  function refFor(d) {
+    var daily = (REFMODE !== 'base' && d.daily) ? d.daily : null;
+    return { ref: daily || d.baseline, isDaily: !!daily };
   }
 
   function baseMap(base, key) {
@@ -556,17 +572,23 @@ window.addEventListener('load',restore);
     var d = CACHE[k];
     if (!d || !d.snapshot) { $('det-panel').innerHTML = '<span class="muted">No snapshot yet.</span>'; return; }
     var s = d.snapshot, b = d.baseline, p = parts(k);
-    var ref = d.daily || d.baseline;                 // Δ columns read vs YESTERDAY (daily auto-capture); day one falls back to the alert baseline
-    var refLbl = d.daily ? 'yday' : 'base';
+    var rf = refFor(d);                              // yesterday's capture by default; falls back to last known-good on day one
+    var ref = rf.ref, refLbl = rf.isDaily ? 'yday' : 'known-good';
     var h = '<div class="det-head"><h3>' + esc(dispClient(s.client)) + ' · ' + esc(mktBase(s.market || p.mkt).toUpperCase()) + '</h3>' + chChip(s.market || p.mkt) +
       '<span class="det-stats"><span><b>' + fmt(s.rows) + '</b> rows</span>' +
       '<span>scanned <b>' + ago(s.t) + '</b></span>' +
-      (ref ? '<span>Δ vs <b>' + (d.daily ? 'yesterday' : 'baseline') + '</b> (' + new Date(ref.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) +
+      (ref ? '<span class="refseg">' +
+        '<button id="ref-yday"' + (rf.isDaily ? ' class="on"' : (d.daily ? '' : ' disabled')) +
+        ' title="' + (d.daily ? 'Compare against the auto-capture from the first scan of yesterday (UTC)' : 'No capture from yesterday yet — the first scan of each day seeds it') + '">Δ vs yesterday</button>' +
+        '<button id="ref-base"' + (rf.isDaily ? '' : ' class="on"') +
+        ' title="Compare against the last known-good state — the reference alerts fire against">Δ vs known-good</button></span>' +
+        '<span>(' + new Date(ref.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) +
         (ref.rows !== s.rows ? ', ' + fmt(ref.rows) + ' rows' : '') + ')</span>' : '') +
-      (b ? '<span>alert baseline <b>' + new Date(b.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + '</b></span>' : '') + '</span>' +
+      (b && rf.isDaily ? '<span title="Estate alerts always fire vs the last known-good state, not the daily capture">alerts vs known-good <b>' +
+        new Date(b.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + '</b></span>' : '') + '</span>' +
       '<span class="det-actions">' +
       '<button class="btn" id="det-csv">⤓ CSV</button>' +
-      '<button class="btn" id="det-ack" title="Accept the current feed as the new baseline">✓ Rebaseline</button>' +
+      '<button class="btn" id="det-ack" title="Accept the current feed as the new known-good reference and clear this feed’s flags">✓ Accept as known-good</button>' +
       '<button class="btn pri" id="det-scan">↻ Scan live feed</button></span></div>';
     h += '<div class="lbl-grid">';
     LK.forEach(function (key, i) {
@@ -607,7 +629,7 @@ window.addEventListener('load',restore);
         // live values are click-to-cross-dissect; GONE rows stay inert
         var xattr = r.gone ? ' class="gone"' :
           ' class="rowv" data-xby="' + esc(key) + '" data-xv="' + esc(r.v) + '" title="Cross-dissect “' + esc(maskText(r.v)) + '” by another label"';
-        h += '<tr' + xattr + '><td class="v"' + (r.gone ? ' title="' + esc(maskText(r.v)) + ' — GONE, was on ' + fmt(r.was) + ' SKUs at baseline"' : '') + '>' + esc(maskText(r.v)) + '</td>' +
+        h += '<tr' + xattr + '><td class="v"' + (r.gone ? ' title="' + esc(maskText(r.v)) + ' — GONE, was on ' + fmt(r.was) + ' SKUs ' + (rf.isDaily ? 'yesterday' : 'at last known-good') + '"' : '') + '>' + esc(maskText(r.v)) + '</td>' +
           '<td class="r">' + (r.gone ? '<b>GONE</b>' : fmt(r.n)) + '</td>' +
           '<td class="r">' + (r.gone ? '—' : share + '%') + '</td>' +
           '<td class="r">' + (r.gone ? '<span class="down">−100%</span>' : delta) + '</td>' +
@@ -622,6 +644,15 @@ window.addEventListener('load',restore);
     $('det-scan').onclick = function () { scan(k); };
     $('det-ack').onclick = function () { ack(k, $('det-ack')); };
     $('det-csv').onclick = function () { exportCsv(k); };
+    var rq = $('ref-yday'), rb = $('ref-base');
+    if (rq) rq.onclick = function () {
+      if (rq.disabled || REFMODE === 'yday') return;
+      REFMODE = 'yday'; try { sessionStorage.setItem('lg-ref', 'yday'); } catch (e) {} renderDetail(k);
+    };
+    if (rb) rb.onclick = function () {
+      if (REFMODE === 'base') return;
+      REFMODE = 'base'; try { sessionStorage.setItem('lg-ref', 'base'); } catch (e) {} renderDetail(k);
+    };
     Array.prototype.forEach.call(document.querySelectorAll('[data-more]'), function (el) {
       el.onclick = function () { SHOW_ALL[el.getAttribute('data-more')] = true; renderDetail(k); };
     });
@@ -761,8 +792,8 @@ window.addEventListener('load',restore);
 
   function exportCsv(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
-    var s = d.snapshot, ref = d.daily || d.baseline;
-    var out = ['label,value,skus,share_pct,' + (d.daily ? 'yesterday_skus' : 'baseline_skus') + ',delta'];
+    var rf = refFor(d), s = d.snapshot, ref = rf.ref;
+    var out = ['label,value,skus,share_pct,' + (rf.isDaily ? 'yesterday_skus' : 'known_good_skus') + ',delta'];
     LK.forEach(function (key) {
       var L = s.labels[key]; if (!L || !L.present) return;
       var bm = baseMap(ref, key), seen = {};

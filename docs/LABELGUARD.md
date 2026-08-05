@@ -61,11 +61,19 @@ needed; the sheets are link-shared). Each firing scans 4 feeds in rotation → t
 is re-checked every ~6 hours, staying far under the 50-subrequest free-plan budget even with the
 plan warm in the same invocation.
 
-**Baseline semantics (the important bit):** alerts are not "vs the previous scan" — they're vs
-the **baseline**, so a feed that broke on Friday is still flagged on Monday. A clean scan rolls
-the baseline forward automatically. A flagged change that was *intentional* (new season labels,
-re-segmentation) is cleared by **"✓ Expected — rebaseline"** on the page, which adopts the
-current snapshot as the new baseline.
+**The three references (canonical terminology — the important bit):**
+
+| Reference | Stored at | Moves when | Used for |
+|---|---|---|---|
+| **Yesterday** | `labelday:` | First scan of each UTC day promotes the outgoing snapshot | Δ columns on the dissection tables (display default) |
+| **Last known-good** | `labelbase:` | Rolls forward on every clean scan; freezes while broken; "✓ Expected — accept as known-good" adopts the current state | Estate alerts (§01, badge, report) |
+| **Pinned watch reference** | `rule.ref` | Only when the rule is armed or **Re-arm**ed | Custom watch rules (§06) |
+
+Estate alerts are not "vs the previous scan" — they fire vs **last known-good**, so a feed that
+broke on Friday is still flagged on Monday and a slow decay can't hide behind a daily reset. A
+flagged change that was *intentional* (new season labels, re-segmentation) is cleared by
+**"✓ Expected — accept as known-good"** on the page, which adopts the current snapshot as the
+new known-good state.
 
 ## 2b. Channels — Google Shopping vs Facebook/Meta
 
@@ -87,12 +95,12 @@ export under `<mkt>-fb`.
 | Signal | warn | crit |
 |---|---|---|
 | Label column vanished from the sheet | — | always |
-| Label coverage fell (pp vs baseline) | ≥8pp | ≥25pp, or → 0% (from ≥5%) |
+| Label coverage fell (pp vs last known-good) | ≥8pp | ≥25pp, or → 0% (from ≥5%) |
 | A tracked value's SKU count fell | ≥50% | gone entirely |
 | Feed row count fell | ≥12% | ≥30% |
 | Sheet unreachable / not link-shared | always | — |
 
-A value is *tracked* when it covers ≥0.5% of the feed (min 10 SKUs) at baseline — one-SKU values
+A value is *tracked* when it covers ≥0.5% of the feed (min 10 SKUs) at the last known-good state — one-SKU values
 churn daily and would be pure noise. New values / new labels are **info** (shown, never badged).
 If a label carries >250 distinct values the pivot is truncated at 250 (flagged `+`), and a
 disappeared tracked value downgrades to warn (it may just have slipped out of the top 250).
@@ -104,7 +112,7 @@ GET  /api/labels/estate                    → { feeds: {"client|mkt": summary},
 GET  /api/labels/alerts                    → { counts: {crit, warn, feeds} } (nav badge feed)
 GET  /api/labels/snapshot?client&market[&hist=1] → { snapshot, baseline, hist? }
 POST /api/labels/scan?client&market        → scan now; returns { snapshot, alerts, baseT }
-POST /api/labels/ack?client&market         → rebaseline ("expected change"), clears the feed's flags
+POST /api/labels/ack?client&market         → accept as known-good ("expected change"), clears the feed's flags
 GET  /api/labels/cross?client&market&by&value&vs → LIVE cross-label dissection: within by=<value>
      (CL0 = "Best Sellers") pivot the segment by another label (CL2 → women - fp / women - sale…).
      Returns { segment, labelled, unlabelled, rows: [[v,n]…], truncated }. Nothing cached —
@@ -117,19 +125,23 @@ proxy: sheet ids never come from the query — only roster clients resolve, exac
 
 ## 5. The page (`/labels`)
 
-- **01 Active alerts** — every unresolved drop-off, crit first, with per-feed
-  "✓ Expected — rebaseline".
+- **01 Active alerts** — every unresolved drop-off vs last known-good, crit first, with per-feed
+  "✓ Expected — accept as known-good".
 - **02 Estate health** — client cards × market rows: status pill (ok / warn / crit / stale /
   not scanned / unreachable), CL0–4 coverage bars, rows, last scan. **⚡ Scan whole estate**
   sweeps sequentially, skipping feeds fresher than 20h.
 - **03 Feed dissection** — CL0–4 pivots on **one seamless row** (equal widths): value · SKUs ·
-  share · **Δ vs YESTERDAY**, struck-out red rows for values that are GONE, CSV export.
-  The daily reference is automatic for every account and every label: the first scan of
-  each UTC day promotes the outgoing snapshot to KV `labelday:<client>:<mkt>`, freezing
-  yesterday's closing state for the whole day (day one falls back to the alert baseline —
-  the header names which reference is in play). The ALERT baseline stays separate (last
-  known-good), so alarms never fade just because a day ticked over. (No history chart by
-  Ray's call — scan history still accumulates in KV `labelhist:*`.)
+  share · **Δ vs yesterday** by default, with a compact segmented toggle in the header to flip
+  the Δ columns to **vs known-good** (persisted per tab, `sessionStorage lg-ref`; the yesterday
+  chip is disabled until the first daily capture exists). Struck-out red rows are values on the
+  active reference that are GONE from the live feed; CSV export names its reference column
+  (`yesterday_skus` / `known_good_skus`). The daily reference is automatic for every account and
+  every label: the first scan of each UTC day promotes the outgoing snapshot to KV
+  `labelday:<client>:<mkt>`, freezing yesterday's closing state for the whole day (day one falls
+  back to last known-good). Estate alerts always fire vs last known-good regardless of the
+  toggle — the header notes this whenever the Δ columns read vs yesterday — so alarms never fade
+  just because a day ticked over. (No history chart by Ray's call — scan history still
+  accumulates in KV `labelhist:*`.)
 - **Cross dissection** — click any value in any pivot → a full-width panel breaks that segment
   down **live** by another label (chips flip CL1↔CL4): Reiss GB CL0 "Best Sellers" → CL2
   women - fp 3,166 · men - fp 2,542 · women - sale 2,081… plus a "(no CLx value)" remainder
@@ -209,10 +221,10 @@ KV: rules `labelwatch` ("client|mkt|ruleId" → rule), destinations `labeldest`,
 |---|---|---|
 | Feed shows **unreachable** | Sheet not link-shared (Google serves a login page) | Share → "Anyone with the link → Viewer", then Scan |
 | Feed shows **not scanned** | New roster entry the cron hasn't reached yet | Click it (auto-scans) or wait ≤6h |
-| Alert for an intentional change | Labels re-segmented on purpose | "✓ Expected — rebaseline" on the alert or the feed detail |
+| Alert for an intentional change | Labels re-segmented on purpose | "✓ Expected — accept as known-good" on the alert or the feed detail |
 | Wrong tab scanned | `gid` missing from an attached sheet URL | Re-attach with `#gid=<n>` (wired feeds carry gid in `DEFAULT_FEEDS`) |
 | CL shows `distinct 250+` | >250 distinct values (per-SKU labels) | Expected — coverage alerts still work; value-level watch covers the top 250 |
-| Nav badge shows a count | ≥1 feed has active warn/crit alerts | Open `/labels`, triage, fix upstream or rebaseline |
+| Nav badge shows a count | ≥1 feed has active warn/crit alerts | Open `/labels`, triage, fix upstream or accept as known-good |
 | Watch pings but the change was planned | New season/segmentation shipped on purpose | "↻ Re-arm" the rule (re-captures the reference set) |
 | Email alerts never arrive | Gmail bridge not updated / not set up | Re-paste latest `tools/gmail_push.gs` (needs `drainAlertOutbox`), GOOGLE_SETUP §8; Chat/Slack need no setup |
 | Watch shows an error in §04 | Sheet unshared or label column renamed | Fix the sheet, then "Check now"; "Re-arm" if columns legitimately changed |

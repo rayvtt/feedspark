@@ -272,10 +272,13 @@ const codes = (alerts) => alerts.map((a) => a.sev + ':' + a.code).sort();
   eq('digest -> exactly 2 messages (alert + recovery)', msgs.length, 2);
   ok('alert digest: one message, own rows, code-highlighted values',
     msgs[0].indexOf('HIGH PRIORITY') >= 0 && msgs[0].indexOf('CONFIRMED') >= 0 &&
+    msgs[0].indexOf('vs the pinned reference') >= 0 &&
     msgs[0].indexOf('\n• `women - fp` — was 3166 SKUs → now 0 (GONE)') >= 0 &&
     msgs[0].indexOf('\n• `men - fp` — 2542 → 1100 SKUs (−57%)') >= 0 &&
     msgs[0].indexOf('https://x/labels') >= 0, msgs[0]);
   ok('recovery digest separate', msgs[1].indexOf('RECOVERED') >= 0 && msgs[1].indexOf('`women - sale`') >= 0, msgs[1]);
+  const armed = LG.alertDigest({ ...rule, created: 1753600000000 }, [{ kind: 'gone', value: 'women - fp', was: 3166, now: 0 }], {})[0];
+  ok('alert digest dates the pinned reference', armed.indexOf('vs the pinned reference (armed 27 Jul 2025)') >= 0, armed);
   eq('digest with no fires -> no messages', LG.alertDigest(rule, [], {}), []);
 }
 
@@ -334,7 +337,7 @@ eq('dispFeed facebook', LG.dispFeed('Visual K', 'gb-fb'), 'Visual K · GB · Fac
   ok('report: schedule + threshold shown', rep.indexOf('07:00 & 17:00 GMT') >= 0 && rep.indexOf('gone or -20%') >= 0, rep);
   ok('report: estate crit first with coverage', rep.indexOf('[CRIT] Reiss · GB — 22496 rows · CL0 83.3% · CL1 100%') >= 0 &&
     rep.indexOf('[CRIT]') < rep.indexOf('[ok] Schuh'), rep);
-  ok('report: baseline alerts, info excluded', rep.indexOf('ACTIVE BASELINE ALERTS (1)') >= 0 &&
+  ok('report: known-good alerts, info excluded', rep.indexOf('ACTIVE ALERTS — vs last known-good (1)') >= 0 &&
     rep.indexOf('"clearance" GONE') >= 0 && rep.indexOf('noise that must not appear') < 0, rep);
   ok('report: link', rep.indexOf('https://x/labels') >= 0, rep);
 }
