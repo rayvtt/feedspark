@@ -1653,7 +1653,18 @@ window.addEventListener('load',restore);
         writeStatus(cl,tk,sel.value);
         sel.dataset.prev=sel.value; setTimeout(renderAll,650); }
       sel.onchange=commit; sel.addEventListener('focusout',commit);
-      sel.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); sel.blur(); } else if(e.key==='Escape'){ var i=0; for(;i<sel.options.length;i++){ if(sel.options[i].value===sel.dataset.prev){ sel.selectedIndex=i; break; } } sel.blur(); } });
+      sel.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); sel.blur(); }
+        else if(e.key==='Escape'){ var i=0; for(;i<sel.options.length;i++){ if(sel.options[i].value===sel.dataset.prev){ sel.selectedIndex=i; break; } } sel.blur(); }
+        else if(e.key==='ArrowLeft'||e.key==='ArrowRight'){
+          // ←/→ NAVIGATE, they never change the status (Ray's ask) — the native select would
+          // otherwise cycle its value on these keys, same as ↑/↓. Commit whatever's selected
+          // (blur triggers the focusout commit) and move the cell cursor instead.
+          // stopPropagation matters: after blur() the document grid handler would see the select
+          // as no longer focused and move the cursor a SECOND time when this key bubbles up
+          e.preventDefault(); e.stopPropagation(); var dc=(e.key==='ArrowLeft')?-1:1; sel.blur();
+          if(gridSel){ var nc=gclamp(gridSel.c0+dc,0,6); gridSel={r0:gridSel.r0,c0:nc,r1:gridSel.r0,c1:nc}; gridFocus=true; highlightGrid();
+            var a=cellAt(gridSel.r0,gridSel.c0); if(a&&a.scrollIntoView)a.scrollIntoView({block:'nearest'}); }
+        } });
     });
     var n=document.getElementById('it-n'); if(n)n.textContent=f.length+' task'+(f.length===1?'':'s');
     var ht=document.getElementById('it-hidden-tog'); if(ht){ var hc=hiddenInView();
