@@ -41,9 +41,9 @@ in the FCC and it writes straight back to this cell.
 
 ## 4. Due Date is the one that matters
 
-The **calendar-month window** (Plan: Aug 2026 / Sep 2026 / … / all time) and the tidy-away of
-historic tasks key **entirely off the Due Date column**. A task with no due date can't be filed
-into a month, so it shows regardless of the filter. **Every task needs a `DD/MM/YYYY` date.** (In the FCC you can type
+The **"latest 2 months per brand"** view and the tidy-away of historic tasks key **entirely
+off the Due Date column**. A task with no due date can't be filed into a month, so it shows
+regardless of the filter. **Every task needs a `DD/MM/YYYY` date.** (In the FCC you can type
 `DDMM` and it writes `DD/MM/YYYY` back here.)
 
 ---

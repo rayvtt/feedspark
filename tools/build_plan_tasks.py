@@ -75,7 +75,7 @@ def brand_payload(tasks, updated):
         for k in pks[-9:]:
             ts=byp[k]; done=sum(1 for t in ts if t["bk"]=="done")
             vol.append({"l":pk_label(k),"d":done,"o":len(ts)-done})
-        top=set(pks[-4:])   # carry ~4 recent months so the calendar-month window has history to pick from
+        top=set(pks[-4:])   # carry ~4 recent months so the "latest 2 months" filter has history to expand into
         latest=[compact(t) for t in tasks if t.get("pk") in top and not is_hdr(t)][:140]
     else:
         volkind="lane"

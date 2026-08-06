@@ -1298,13 +1298,6 @@
    "pr": 203
   },
   {
-   "name": "Workflow: calendar-month plan window (Aug 2026 / ... / all time)",
-   "file": "docs/FeedSpark_Workflow.html",
-   "pattern": "buildWindowOptions",
-   "min": 2,
-   "pr": 205
-  },
-  {
    "name": "Workflow: recurring tasks \u2014 \u27f3 weekly/monthly/quarterly, next occurrence on Done",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "recSpawn",
