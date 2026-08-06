@@ -447,7 +447,7 @@ window.addEventListener('load',restore);
   #itbl{table-layout:fixed}
   #itbl col.cw-cb{width:30px}#itbl col.cw-client{width:9.5%}#itbl col.cw-feed{width:8.5%}
   #itbl col.cw-task{width:auto}#itbl col.cw-owner{width:8.5%}#itbl col.cw-due{width:56px}
-  #itbl col.cw-status{width:104px}#itbl col.cw-source{width:70px}#itbl col.cw-act{width:122px}
+  #itbl col.cw-status{width:104px}#itbl col.cw-source{width:70px}#itbl col.cw-act{width:166px}   /* four controls now — ⟳ 👁 ✕ Brief; 122px clipped the Brief pill */
   .itbl thead th{position:sticky;top:0;background:var(--paper);z-index:2;text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);padding:9px 8px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;box-shadow:inset 0 -1px 0 var(--line);overflow:hidden;text-overflow:ellipsis}
   .itbl thead th.it-act{text-align:right;cursor:default}
   .itbl thead th[data-k]:hover{color:var(--orange-deep)}
@@ -474,6 +474,7 @@ window.addEventListener('load',restore);
   .itbl .src-brf{color:#fff;background:var(--orange-deep);border-color:var(--orange-deep);margin-left:4px;font-weight:900}
   .itbl .src-atrt{color:#7A5AA8;background:rgba(122,90,168,.13);border-color:rgba(122,90,168,.34)}
   .itbl .c-act{text-align:right;white-space:nowrap}
+  .itbl .c-act button{height:26px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}   /* one height + centre line for ⟳ 👁 ✕ Brief — they each carried their own padding maths */
   .itbl .brief-btn{font:inherit;font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
   .itbl .del-btn{font:inherit;font-size:12px;font-weight:800;padding:4px 7px;margin-right:4px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer}
   .itbl .del-btn:hover{border-color:#C0392B;color:#C0392B}
@@ -773,8 +774,9 @@ window.addEventListener('load',restore);
       <button type="button" class="it-multi-btn" id="it-status-btn" aria-haspopup="true" aria-expanded="false">All statuses ▾</button>
       <div class="it-multi-menu" id="it-status-menu" role="group" aria-label="Filter by status (multi-select)" hidden></div>
     </div>
-    <select id="it-window" aria-label="Plan month window" title="Show one calendar month of the plan — or all time (email unaffected)">
-      <option value="">Plan: all time</option>
+    <select id="it-window" aria-label="Plan date window" title="Show only the latest N months of each brand's plan (email unaffected)">
+      <option value="2m">Plan: latest 2 months</option><option value="3m">Plan: latest 3 months</option>
+      <option value="4m">Plan: latest 4 months</option><option value="">Plan: all history</option>
     </select>
     <div class="it-multi" id="it-client-wrap">
       <button type="button" class="it-multi-btn" id="it-client-btn" aria-haspopup="true" aria-expanded="false">All clients ▾</button>
@@ -1513,7 +1515,7 @@ window.addEventListener('load',restore);
         .catch(function(){ toast('Saved locally — sheet write failed (check the SA has Editor access)'); });
     } else toast('Added locally · no plan sheet linked for '+client);
   }
-  var itState={srcs:[],clients:[],ams:[],q:'',statuses:['open','progress','briefed'],window:monthKey(new Date()),sort:'client',dir:1,showHidden:false};   // multi-select: empty array = all; window defaults to the current calendar month
+  var itState={srcs:[],clients:[],ams:[],q:'',statuses:['open','progress','briefed'],window:'2m',sort:'client',dir:1,showHidden:false};   // multi-select: empty array = all
   // Timeline-ONLY state is scope / flags / horizon. Brand, AM and search are NOT here — the
   // timeline reads them straight from itState, because it's the Intake re-plotted by date.
   var tlState={scope:[],flags:[],weeks:6};
@@ -1530,22 +1532,11 @@ window.addEventListener('load',restore);
     if(d2.getFullYear()<2015 && !/\d{4}/.test(s)) d2.setFullYear(new Date().getFullYear());
     return d2; }
   function monthKey(d){ return d ? d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2) : ''; }
-  // calendar-month plan window (replaced the latest-N relative windows): '' = all time, else one
-  // 'YYYY-MM'. Options are rebuilt from the months actually present in the plan + the current
-  // month; legacy stored values ('2m'…, from old saved views) degrade to all time.
-  var _winSig='';
-  function buildWindowOptions(){ var sel=document.getElementById('it-window'); if(!sel)return;
-    if(itState.window && !/^\d{4}-\d{2}$/.test(itState.window)) itState.window='';
-    var set={}; set[monthKey(new Date())]=1;
-    allIntake().forEach(function(t){ if(t.source!=='plan')return; var d=taskDate(t); if(d)set[monthKey(d)]=1; });
-    if(itState.window) set[itState.window]=1;                     // never orphan the active choice
-    var ms=Object.keys(set).sort(), sig=ms.join(',');
-    if(sig!==_winSig){ _winSig=sig;
-      sel.innerHTML = ms.map(function(m){ var d=new Date(+m.slice(0,4),+m.slice(5,7)-1,1);
-        return '<option value="'+m+'">Plan: '+d.toLocaleDateString('en-GB',{month:'short',year:'numeric'})+'</option>'; }).join('')
-        +'<option value="">Plan: all time</option>'; }
-    if(sel.value!==itState.window) sel.value=itState.window;
-  }
+  // per-brand set of the latest N months present in the plan — "latest 2 months for each brand"
+  function allowedMonths(){ var n={'2m':2,'3m':3,'4m':4,'6m':6}[itState.window]; if(!n)return null;
+    var by={}; planTasks().forEach(function(t){ var d=taskDate(t); if(!d)return; (by[t.client]=by[t.client]||{})[monthKey(d)]=1; });
+    var map={}; Object.keys(by).forEach(function(b){ var ms=Object.keys(by[b]).sort().reverse().slice(0,n); map[b]={}; ms.forEach(function(m){ map[b][m]=1; }); });
+    return map; }
   function taskDate(t){ if(t&&t.d){ var p=parseUKDate(t.d); if(p)return p; } if(t&&t.dk)return new Date(t.dk[0],t.dk[1]-1,t.dk[2]); return null; }
   function dkIso(dk){ return dk ? (dk[0]+'-'+pad(dk[1])+'-'+pad(dk[2])) : ''; }
   function dueOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskdue')||'{}');}catch(e){return {};} }
@@ -1632,11 +1623,11 @@ window.addEventListener('load',restore);
     return d.getDate()===1 ? d.toLocaleDateString('en-GB',{month:'short',year:'2-digit'})   // month-section
                            : d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}); }  // specific date
   function rowKey(t){ return t.client+'|'+t.task; }
-  function intakeFiltered(){ var mw=/^\d{4}-\d{2}$/.test(itState.window)?itState.window:null;
+  function intakeFiltered(){ var allow=allowedMonths();
     return allIntake().filter(function(r){
       var S=itState;
       var st=!S.statuses.length||S.statuses.indexOf(r.b)>=0;   // empty = all statuses
-      var win=true; if(mw && r.source==='plan'){ var pd=taskDate(r); if(pd) win=(monthKey(pd)===mw); }   // one calendar month of the plan; dateless plan rows always show
+      var win=true; if(allow && r.source==='plan'){ var pd=taskDate(r); if(pd) win=!!(allow[r.client]&&allow[r.client][monthKey(pd)]); }   // latest-N-months per brand; dateless plan rows always show
       return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0||(r.esrc&&S.srcs.indexOf('email')>=0))&&(!S.clients.length||S.clients.indexOf(r.client)>=0)&&(!S.ams.length||S.ams.indexOf(amOf(r.client))>=0)
         &&(!S.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(S.q)>=0); })
       .sort(function(a,b){ var k=itState.sort;
@@ -1662,7 +1653,6 @@ window.addEventListener('load',restore);
   function renderIntake(){
     var body=document.getElementById('it-body'); if(!body)return;
     ensureClientFilter();
-    buildWindowOptions();
     renderClientChips();
     var f=intakeFiltered();
     var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey)BK[b.taskKey]=b; });   // intake row -> its live ticket
