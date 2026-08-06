@@ -1303,6 +1303,13 @@
    "pattern": "recSpawn",
    "min": 2,
    "pr": 206
+  },
+  {
+   "name": "Workflow: attach an intake task to an existing ticket (taskKeys)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "fillAttach",
+   "min": 3,
+   "pr": 208
   }
  ]
 }
