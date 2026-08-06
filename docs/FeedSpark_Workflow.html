@@ -141,6 +141,10 @@ window.addEventListener('load',restore);
   .bs-ai{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--orange);background:rgba(245,166,35,.1);color:var(--orange-ink);cursor:pointer}
   .bs-ai:hover{background:rgba(245,166,35,.2)}
   .bg-mhead{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+  .bg-attach{background:var(--wash);border:1px dashed var(--line);border-radius:10px;padding:8px 10px}
+  .bg-attach-row{display:flex;gap:8px;align-items:center}
+  .bg-attach-row select{flex:1;min-width:0}
+  .bg-attach-note{font-size:11px;color:var(--muted);font-weight:600;margin-top:5px}
   .bg-mhead .mc{margin-bottom:0}
   /* two-column generator */
   .gen{display:grid;grid-template-columns:1.05fr 1fr;gap:16px;align-items:start}
@@ -347,6 +351,10 @@ window.addEventListener('load',restore);
     <div class="panel">
       <h3>Brief details</h3>
       <p class="psub">Fill the task and due date. Client sets the code; market defaults to GB.</p>
+      <div class="fld bg-attach" id="bg-attach" hidden><label>Already covered by a ticket?</label>
+        <div class="bg-attach-row"><select id="bg-attach-sel" aria-label="Existing ticket to attach this task to"></select>
+          <button class="btn sm" id="bg-attach-go" type="button">⛓ Attach task</button></div>
+        <div class="bg-attach-note">Links this Intake row to the chosen ticket instead of creating a new brief — the row takes the ticket’s chip and moves to Briefed.</div></div>
       <div class="frow3">
         <div class="fld"><label>Client</label><select id="bg-client"></select></div>
         <div class="fld"><label>Market</label><input id="bg-market" value="gb" maxlength="6"></div>
@@ -1558,8 +1566,9 @@ window.addEventListener('load',restore);
     if(ESRC[ok]){ delete ESRC[ok]; ESRC[nk]=1; }   // keep the in-memory copy in step, or the next markEsrc would clobber the migrated store
     if(RECUR[ok]){ RECUR[nk]=RECUR[ok]; delete RECUR[ok]; }   // same for the repeat marker
     if(HIDDEN[ok]){ HIDDEN[nk]=HIDDEN[ok]; delete HIDDEN[ok]; saveHidden(); }
-    var chg=false; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey===ok){
-      b.taskKey=nk; b.client=nc; if(b.code)b.code=code(nc,(b.code.split('-').pop()||'gb')); chg=true; } }); if(chg)persist();
+    var chg=false; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return; if(b.taskKey===ok){
+      b.taskKey=nk; b.client=nc; if(b.code)b.code=code(nc,(b.code.split('-').pop()||'gb')); chg=true; }
+      var ti=(b.taskKeys||[]).indexOf(ok); if(ti>=0){ b.taskKeys[ti]=nk; chg=true; } }); if(chg)persist();
     var owner=(t.owner&&t.owner!=='—')?t.owner:'', status=t.s||'Open';
     var pd=taskDate(t), due=pd?(pad(pd.getDate())+'/'+pad(pd.getMonth()+1)+'/'+pd.getFullYear()):'';
     var mi=-1; MANUAL.forEach(function(m,x){ if(mi<0&&m.client===oc&&sameTask(m.task,t.task))mi=x; });
@@ -1584,7 +1593,9 @@ window.addEventListener('load',restore);
       try{ var o=JSON.parse(localStorage.getItem(store)||'{}'); if(o[ok]!=null){ o[nk]=o[ok]; delete o[ok]; localStorage.setItem(store,JSON.stringify(o)); } }catch(e){} });
     if(HIDDEN[ok]){ HIDDEN[nk]=HIDDEN[ok]; delete HIDDEN[ok]; saveHidden(); }
     if(DELETED[ok]){ DELETED[nk]=DELETED[ok]; delete DELETED[ok]; try{localStorage.setItem('fcc-deleted',JSON.stringify(DELETED));}catch(e){} }
-    var relinked=false; Object.keys(BRIEFS).forEach(function(id){ if(BRIEFS[id]&&BRIEFS[id].taskKey===ok){ BRIEFS[id].taskKey=nk; relinked=true; } }); if(relinked)persist(); }
+    var relinked=false; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return;
+      if(b.taskKey===ok){ b.taskKey=nk; relinked=true; }
+      var ti=(b.taskKeys||[]).indexOf(ok); if(ti>=0){ b.taskKeys[ti]=nk; relinked=true; } }); if(relinked)persist(); }
   function setTaskText(t,val){ recPush({client:t.client,task:val,source:t.source,key:'task',prev:t.task}); migrateKey(t.client,t.task,val); saveRename(t.client,t.task,val);
     if(t.source==='plan'){ var id=PLANSHEET[t.client];
       if(id){ toast('Renaming task in '+t.client+'’s plan…');
@@ -1655,7 +1666,7 @@ window.addEventListener('load',restore);
     ensureClientFilter();
     renderClientChips();
     var f=intakeFiltered();
-    var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey)BK[b.taskKey]=b; });   // intake row -> its live ticket
+    var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return; if(b.taskKey)BK[b.taskKey]=b; (b.taskKeys||[]).forEach(function(k){ if(!BK[k])BK[k]=b; }); });   // intake row -> its live ticket (primary + attached)
     body.innerHTML = f.length ? f.map(function(t,i){
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
       var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':t.esrc?'<span class="src-tag src-email" title="Arrived by email — written into the plan">Email</span>':'<span class="src-tag src-plan">Plan</span>';
@@ -2130,6 +2141,7 @@ window.addEventListener('load',restore);
     if(pd){ document.getElementById('bg-due').value=pd.getFullYear()+'-'+pad(pd.getMonth()+1)+'-'+pad(pd.getDate());   // brief inherits the intake due date
       window.__bsAuto='from the intake row — your date, kept'; }
     else bsPropose();                   // no AM date -> propose the first week with free capacity
+    fillAttach(t);
     renderCtx(t);
     var ln=applyTemplate(cat,true);     // #2 auto-fill scope + DoD (learned version when one exists)
     refreshPreview();
@@ -2137,6 +2149,27 @@ window.addEventListener('load',restore);
     toast('Prefilled from '+(ln?'your last edited '+(CAT_LBL[cat]||'optimisation')+' brief':'the '+(CAT_LBL[cat]||'optimisation')+' template')
       +(pd?' · due pulled from the intake row':' — set the due date')+' and save');
   }
+  // ---- attach an intake row to an EXISTING ticket instead of drafting a new brief ----
+  // The ticket keeps its primary taskKey and gains the row's key in taskKeys[], so several
+  // intake rows can wear one ticket's chip; the row flips to Briefed like the normal flow.
+  var ATT_ROW=null;
+  function fillAttach(t){ ATT_ROW=t||null;
+    var box=document.getElementById('bg-attach'), sel=document.getElementById('bg-attach-sel'); if(!box||!sel)return;
+    if(!t){ box.hidden=true; sel.innerHTML=''; return; }
+    var k=rowKey(t), cand=Object.keys(BRIEFS).map(function(id){return BRIEFS[id];})
+      .filter(function(b){ return b && b.id && b.status!=='confirmed' && b.taskKey!==k && (b.taskKeys||[]).indexOf(k)<0; })
+      .sort(function(a,b){ var sc=(b.client===t.client)-(a.client===t.client); return sc||((b.updated||0)-(a.updated||0)); });
+    if(!cand.length){ box.hidden=true; sel.innerHTML=''; return; }
+    sel.innerHTML=cand.map(function(b){ return '<option value="'+esc(b.id)+'">'+esc(b.id+' · '+b.client+' — '+String(b.task||'').slice(0,58)+' ('+(STAGE_LBL[b.status]||b.status)+')')+'</option>'; }).join('');
+    box.hidden=false; }
+  (function(){ var go=document.getElementById('bg-attach-go'); if(!go)return;
+    go.onclick=function(){ var sel=document.getElementById('bg-attach-sel'), id=sel&&sel.value, b=id&&BRIEFS[id];
+      if(!b||!ATT_ROW){ toast('Pick a ticket first'); return; }
+      var k=rowKey(ATT_ROW);
+      if(b.taskKey!==k){ b.taskKeys=b.taskKeys||[]; if(b.taskKeys.indexOf(k)<0)b.taskKeys.push(k); }
+      b.updated=Date.now(); persist();
+      markBriefed(ATT_ROW);
+      closeBrief(); toast('⛓ Attached to '+id+' — the row wears its ticket now'); renderAll(); }; })();
   // when a task is briefed, move its status to Briefed (2-way, quiet — the caller shows the summary)
   function markBriefed(t){
     if(!t||t.source!=='plan')return false;   // only rows that carry a status
@@ -2249,7 +2282,7 @@ window.addEventListener('load',restore);
   (function(){ var x=document.getElementById('bg-x'); if(x)x.onclick=closeBrief;
     var nb=document.getElementById('new-brief-btn'); if(nb)nb.onclick=function(){
       window.__editId=null; window.__linkKey=null; window.__emailId=null; window.__bsRow=null; resetBodyOverride();
-      bsPropose(); renderCtx(null); refreshPreview(); openBrief(); }; })();
+      fillAttach(null); bsPropose(); renderCtx(null); refreshPreview(); openBrief(); }; })();
   function openModal(id){ var b=BRIEFS[id]; if(!b)return;
     var comms=(b.comms||[]).map(function(c){ return '<div class="comm"><span class="cw">'+esc(c.from)+'</span><span class="cb">'+esc(c.note)+(c.done?' <span class="ck">✓ done signal</span>':'')+'</span></div>'; }).join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
     var stat=STAGES.filter(function(s){ return s[0]!=='analysis'||needsAnalysis(b); })
@@ -2258,6 +2291,7 @@ window.addEventListener('load',restore);
     var crt=courtOf(b);
     var xl=[];
     if(b.taskKey) xl.push('<span class="xl" title="Linked plan-row task">⛓ '+esc((b.taskKey.split('|')[1]||'').slice(0,48))+'</span>');
+    (b.taskKeys||[]).forEach(function(k){ xl.push('<span class="xl" title="Attached intake task">⛓ '+esc((k.split('|')[1]||'').slice(0,48))+'</span>'); });
     if(PLANSHEET[b.client]) xl.push('<a class="xl" target="_blank" rel="noopener" href="https://docs.google.com/spreadsheets/d/'+PLANSHEET[b.client]+'">📊 Open '+esc(b.client)+'’s plan sheet</a>');
     if(b.code) xl.push('<a class="xl" id="m-thread" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent(threadQuery(b))+'" title="Searches the brief’s subject (client + task words) — punctuation tokens like the ID search badly in Gmail">✉ Find the email thread</a>');
     modalEl.innerHTML=''
@@ -2514,7 +2548,7 @@ window.addEventListener('load',restore);
   // one row per dated task; a task that's been briefed carries its ticket (stage colour + opens it)
   function timelineEvents(){
     var evs=[], seen={}, S=itState, q=(S.q||'').toLowerCase();
-    var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey)BK[b.taskKey]=b; });
+    var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return; if(b.taskKey)BK[b.taskKey]=b; (b.taskKeys||[]).forEach(function(k){ if(!BK[k])BK[k]=b; }); });
     // The axis is fed from intakeFiltered() — the SAME rows through the SAME filters (source,
     // status, brand, AM, search, plan window) as the Intake grid above. The timeline is that
     // grid re-plotted by date, not a second list with its own rules.
