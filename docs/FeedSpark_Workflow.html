@@ -2335,7 +2335,7 @@ window.addEventListener('load',restore);
     // client confirmation draft
     var conf=document.getElementById('m-confirm');
     var cbody=clientConfirm(b,doneNote);
-    conf.href='https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark · '+b.client+' — '+b.task+' completed')+'&body='+encodeURIComponent(cbody);
+    conf.href='https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent(b.client+': '+String(b.task||'').trim().slice(0,70)+' — done')+'&body='+encodeURIComponent(cbody);   // subject in Ray's own "Client: thing" style, not the old system banner
     conf.addEventListener('click',function(ev){ if(b.status!=='done'&&b.status!=='analysis')return;
       if(needsAnalysis(b)&&!hasResult(b)){ ev.preventDefault(); toast('Log the analysis result first — 🧪 Log result'); return; }
       setStage(b,'confirmed'); persist(); setTimeout(function(){renderAll();},400); });
@@ -2374,14 +2374,22 @@ window.addEventListener('load',restore);
     if(b.status==='done')setStage(b,'analysis');   // a result logged from Done pulls the ticket into its Analysis step
     b.updated=Date.now(); persist(); renderAll(); openModal(b.id);
     toast('Result logged to the Test register — draft the client confirmation to close'); }
+  // Written in Ray's own client voice (modelled on his real sent mail — warm opener + 😊, plain
+  // words, a collaborative close, "Cheers, Ray"). No internal codes, no system phrasing: the
+  // ibf token stays in ASPL briefs only — a client email must never read machine-generated.
   function clientConfirm(b,doneNote){
+    var task=String(b.task||'').trim();
+    var result=''; if(b.comms){ for(var i=b.comms.length-1;i>=0;i--){ var n=b.comms[i].note||''; if(/^Result:/.test(n)){ result=n.replace(/^Result:\s*/,'').trim(); break; } } }
+    var who=(b.aspl&&b.aspl!=='—')?b.aspl:'the team';
     var L=[];
     L.push('Hi team,'); L.push('');
-    L.push('Good news — the following is now complete:'); L.push('');
-    L.push('• '+b.task+(b.code?('  ['+b.code+']'):'')); L.push('');
-    if(doneNote){ L.push('From our production team:'); L.push('“'+doneNote+'”'); L.push(''); }
-    L.push('It’s live and QA’d our side. Anything you’d like tweaked, just reply and we’ll turn it around.'); L.push('');
-    L.push('Best,'); L.push('Ray'); L.push('FeedSpark');
+    L.push('Hope the week’s going well 😊'); L.push('');
+    L.push('Quick update — '+task+' is all done.'); L.push('');
+    if(result){ L.push('The read-out: '+result+'. Happy to walk you through it and what we’d roll out off the back of it.'); L.push(''); }
+    else if(doneNote){ L.push('A quick note from '+who+' who worked on it: “'+doneNote+'”'); L.push(''); }
+    L.push('Have a look when you get a chance — if anything needs tweaking, tell us and we’ll turn it around quickly.'); L.push('');
+    L.push('Anything else you’d like us to pick up next, just shout.'); L.push('');
+    L.push('Cheers,'); L.push('Ray');
     return L.join('\n');
   }
 
