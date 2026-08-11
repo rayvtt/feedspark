@@ -1344,6 +1344,32 @@
    "pattern": "LIVE_RE",
    "min": 2,
    "pr": 0
+  },
+  {
+   "name": "KWCal: all-brands overview + Brief/Chase/Ask-client popover",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "renderOverview",
+   "min": 3,
+   "pr": 214
+  },
+  {
+   "name": "KWCal: Workflow live-stage auto-badge (wfFor)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function wfFor",
+   "pr": 214
+  },
+  {
+   "name": "KWCal: FS-standard roadmap + PT scope picker (searchable multiselect)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function ptOpen",
+   "pr": 215
+  },
+  {
+   "name": "KWCal: side-by-side client calendar cross-check",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "renderClical",
+   "min": 3,
+   "pr": 215
   }
  ]
 }
