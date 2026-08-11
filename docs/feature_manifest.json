@@ -1,1335 +1,1349 @@
 {
-  "_comment": "Shipped-feature tripwire. Each entry pins a live feature to a grep-able marker. tools/check_markers.js runs in presync + CI and FAILS if a marker regresses — catching one session's merge silently clobbering another session's shipped work. When you ship a feature that another session could plausibly overwrite (shared files!), ADD an entry. Never remove or weaken someone else's entry outside a PR that deliberately retires that feature. 'min' = minimum occurrences (default 1); 'forbidden': true asserts the pattern must be ABSENT (retired features).",
-  "markers": [
-    {
-      "name": "worker: /api/version deploy marker",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "api/version",
-      "pr": 54
-    },
-    {
-      "name": "worker: Gmail intake endpoint",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "gmail/intake",
-      "pr": 31
-    },
-    {
-      "name": "worker: sheets task-rename endpoint",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "api/sheets/task",
-      "pr": 44
-    },
-    {
-      "name": "worker: Download HTML client exporter",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "Download HTML",
-      "pr": 60
-    },
-    {
-      "name": "worker: deck-only guard on BOTH download blocks",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "client decks only",
-      "min": 2,
-      "pr": 62
-    },
-    {
-      "name": "wrangler: DO delete-class migration v2",
-      "file": "wrangler.toml",
-      "pattern": "tag = \"v2\"",
-      "pr": 56
-    },
-    {
-      "name": "deploy: GitHub Actions wrangler deploy",
-      "file": ".github/workflows/deploy.yml",
-      "pattern": "wrangler-action",
-      "pr": 54
-    },
-    {
-      "name": "CmdCenter: live plan-sync engine",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "function liveSync",
-      "pr": 59
-    },
-    {
-      "name": "CmdCenter: re-runnable Tests/Analysis sections",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "renderPTSections",
-      "pr": 59
-    },
-    {
-      "name": "CmdCenter: RYOBI dossier entry",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "\"Ryobi\"",
-      "pr": 53
-    },
-    {
-      "name": "Workflow: Account Manager filter",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "it-am-btn",
-      "pr": 53
-    },
-    {
-      "name": "Workflow: frozen tracker header (viewport-bounded panel)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "max-height:72vh",
-      "pr": 53
-    },
-    {
-      "name": "Workflow: RYOBI in brand roster + plan sheets",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "1WofQrZ6igucGIvGnUOLgBiXP7MqK-7ZtG8Xt4LLaA1E",
-      "pr": 53
-    },
-    {
-      "name": "Workflow: ATRT legacy source RETIRED (must stay gone)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "ATRT legacy",
-      "forbidden": true,
-      "pr": 53
-    },
-    {
-      "name": "DeckBuilder: RYOBI plan sheet wired",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "1WofQrZ6igucGIvGnUOLgBiXP7MqK-7ZtG8Xt4LLaA1E",
-      "pr": 53
-    },
-    {
-      "name": "Workflow: client-level remove from intake (reversible)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "fcc-wf-removed",
-      "pr": 66
-    },
-    {
-      "name": "Workflow: courts strip — 3-team ball tracking",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "renderCourts",
-      "pr": 66
-    },
-    {
-      "name": "Workflow: stage-change handoff history",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "function setStage",
-      "pr": 66
-    },
-    {
-      "name": "Workflow: brief-to-intake taskKey tie",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "taskKey",
-      "min": 5,
-      "pr": 66
-    },
-    {
-      "name": "Workflow: paste-an-update reply router",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "function routeUpdate",
-      "pr": 66
-    },
-    {
-      "name": "Workflow: court-aware SLA escalations",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "SLA_STAGE",
-      "pr": 66
-    },
-    {
-      "name": "worker: per-key KV merge for clients/briefs (kvmerge)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "kvmerge",
-      "pr": 68
-    },
-    {
-      "name": "worker: kvmerge module present",
-      "file": "cloudflare/feedspark-deck/src/kvmerge.js",
-      "pattern": "mergeIntoEnvelope",
-      "pr": 68
-    },
-    {
-      "name": "CmdCenter: sync-base echo on dossier saves",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "X-Sync-Base",
-      "pr": 68
-    },
-    {
-      "name": "Workflow: sync-base echo on brief saves",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "X-Sync-Base",
-      "pr": 68
-    },
-    {
-      "name": "Workflow: client-removal button on intake rows",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "class=\"cl-rm\"",
-      "pr": 69
-    },
-    {
-      "name": "worker: Build Log feed + /buildlog redirect",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "api/buildlog",
-      "pr": 70
-    },
-    {
-      "name": "worker: /buildlog 301 → /activity#build",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "activity#build",
-      "pr": 82
-    },
-    {
-      "name": "Activity: Build Log tab (queue + derived board, was /buildlog)",
-      "file": "docs/FeedSpark_Activity.html",
-      "pattern": "api/buildqueue",
-      "pr": 82
-    },
-    {
-      "name": "CmdCenter: standalone Build Log nav RETIRED (merged into /activity)",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "href=\"/buildlog\"",
-      "forbidden": true,
-      "pr": 82
-    },
-    {
-      "name": "Workflow: standalone Build Log nav RETIRED (merged into /activity)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "href=\"/buildlog\"",
-      "forbidden": true,
-      "pr": 82
-    },
-    {
-      "name": "Workflow: dense board cards (brand chip + age-in-court)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "tk-ab",
-      "min": 2,
-      "pr": 72
-    },
-    {
-      "name": "Workflow: mechanical brief self-learning store",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "fcc-brief-learn",
-      "pr": 74
-    },
-    {
-      "name": "worker: Gmail thread deep-link lookup",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "api/gmail/thread",
-      "pr": 77
-    },
-    {
-      "name": "Workflow: modal thread deep-link upgrade",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "m-thread",
-      "min": 2,
-      "pr": 77
-    },
-    {
-      "name": "Workflow: Analysis stage for test tickets",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "function isTest",
-      "pr": 78
-    },
-    {
-      "name": "worker: user activity log (owner-gated feed + page gate)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "api/activity",
-      "pr": 80
-    },
-    {
-      "name": "worker: activity logger helper",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "function logActivity",
-      "pr": 80
-    },
-    {
-      "name": "Activity: page present (users + Claude tabs)",
-      "file": "docs/FeedSpark_Activity.html",
-      "pattern": "api/activity",
-      "pr": 80
-    },
-    {
-      "name": "wrangler: OWNER_EMAIL var",
-      "file": "wrangler.toml",
-      "pattern": "OWNER_EMAIL",
-      "pr": 80
-    },
-    {
-      "name": "Workflow: Activity in module nav",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "href=\"/activity\"",
-      "pr": 80
-    },
-    {
-      "name": "worker: Gmail push endpoint (no-admin brief sync)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "api/gmail/push",
-      "pr": 85
-    },
-    {
-      "name": "worker: briefmatch module (router-parity matcher)",
-      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
-      "pattern": "matchGmailToBriefs",
-      "pr": 85
-    },
-    {
-      "name": "tools: Apps Script Gmail pusher",
-      "file": "tools/gmail_push.gs",
-      "pattern": "pushBriefReplies",
-      "pr": 85
-    },
-    {
-      "name": "tools: pusher self-verdict (Access-login detection)",
-      "file": "tools/gmail_push.gs",
-      "pattern": "BLOCKED BY CLOUDFLARE ACCESS",
-      "pr": 92
-    },
-    {
-      "name": "tools: inbox intake pusher (syncFCC wrapper)",
-      "file": "tools/gmail_push.gs",
-      "pattern": "function pushInbox",
-      "pr": 98
-    },
-    {
-      "name": "worker: inbound email classifier (briefable triage)",
-      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
-      "pattern": "classifyInbound",
-      "pr": 98
-    },
-    {
-      "name": "worker: gmail intake served from push store",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "gmailinbox",
-      "min": 2,
-      "pr": 98
-    },
-    {
-      "name": "Workflow: briefable ⚡ badge on email intake rows",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "src-brf",
-      "min": 2,
-      "pr": 98
-    },
-    {
-      "name": "worker: gmail push run-history endpoint",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "api/gmail/pushlog",
-      "pr": 92
-    },
-    {
-      "name": "Activity: gmail-sync side panel",
-      "file": "docs/FeedSpark_Activity.html",
-      "pattern": "gp-log",
-      "pr": 92
-    },
-    {
-      "name": "worker: Design-mode block copy/paste (Alt-drag + Ctrl+C/V)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "pasteClipboard",
-      "pr": 86
-    },
-    {
-      "name": "worker: Design-mode colour swatches (brand palette)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "SWATCHES",
-      "pr": 86
-    },
-    {
-      "name": "worker: Design-mode right-click context menu",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "de-ctxmenu",
-      "min": 2,
-      "pr": 88
-    },
-    {
-      "name": "worker: Design-mode format painter (copy/paste style)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "applyPaintedStyle",
-      "pr": 88
-    },
-    {
-      "name": "worker: Design-mode keyboard shortcuts (Delete/Escape/Arrow reorder)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "reorderBlock",
-      "pr": 88
-    },
-    {
-      "name": "Workflow: run-SLA read-out tracking (editable panel + automation)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "fcc-run-sla",
-      "pr": 92
-    },
-    {
-      "name": "Workflow: dotted-arrow flow cue on analysis-bound cards",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "tk-flow",
-      "min": 2,
-      "pr": 95
-    },
-    {
-      "name": "worker: sheet-write tab resolver (non-standard plan tabs)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "resolveTab",
-      "min": 4,
-      "pr": 97
-    },
-    {
-      "name": "Workflow: Incoming-emails panel (detected + brief-from-here)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "em-panel",
-      "min": 2,
-      "pr": 101
-    },
-    {
-      "name": "worker: token-only unattended brief matching (no fuzzy)",
-      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
-      "pattern": "never guess unattended",
-      "pr": 101
-    },
-    {
-      "name": "worker: internal-domain intake filter (feedspark/aroxo/feedhero)",
-      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
-      "pattern": "feedhero\\.net",
-      "pr": 101
-    },
-    {
-      "name": "Workflow: email triage panel — separate queue, task/not-task decisions",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "api/gmail/dismiss",
-      "pr": 102
-    },
-    {
-      "name": "Workflow: raw emails OUT of the task tracker (triage first)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "Raw captured emails never",
-      "pr": 102
-    },
-    {
-      "name": "Workflow: new-brief composer as popup window",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "bg-scrim",
-      "min": 2,
-      "pr": 102
-    },
-    {
-      "name": "worker: gmail triage dismiss memory (KV, restorable)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "gmaildismissed",
-      "min": 3,
-      "pr": 102
-    },
-    {
-      "name": "worker: email client auto-detect (domain label + display name + folded mentions)",
-      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
-      "pattern": "detectClient",
-      "min": 2,
-      "pr": 106
-    },
-    {
-      "name": "worker: intake back-fills client on stored emails",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "back-fill client",
-      "pr": 106
-    },
-    {
-      "name": "Workflow: sender into task name, never the Client field",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "never in the Client field",
-      "pr": 106
-    },
-    {
-      "name": "Workflow: → Task triage semantics (email → Intake task, no composer jump)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "saveEmailAsTask",
-      "min": 2,
-      "pr": 103
-    },
-    {
-      "name": "worker: triage decision reasons preserved verbatim (task/briefed/notask)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "validReasons",
-      "min": 2,
-      "pr": 103
-    },
-    {
-      "name": "worker: Feed Lab live-feed streaming proxy (no CPU parse)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "api/feed/proxy",
-      "pr": 109
-    },
-    {
-      "name": "worker: feed audit KV cache + score history",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "feedaudit:",
-      "min": 3,
-      "pr": 109
-    },
-    {
-      "name": "worker: engine served verbatim at /feedlab/engine.js",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "feedlab/engine.js",
-      "pr": 109
-    },
-    {
-      "name": "wrangler: feedlab engine bundled as Text module",
-      "file": "wrangler.toml",
-      "pattern": "feedlab_engine.js",
-      "pr": 109
-    },
-    {
-      "name": "CmdCenter: dossier feed-sheet attach (dz-linkfeed)",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "dz-linkfeed",
-      "min": 2,
-      "pr": 109
-    },
-    {
-      "name": "Workflow: ?brief= deep-link (UTF-8-safe b64url)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "[?&]brief=",
-      "pr": 109
-    },
-    {
-      "name": "Workflow: Feed Lab in module nav",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "href=\"/feedlab\"",
-      "pr": 109
-    },
-    {
-      "name": "CmdCenter: Feed Lab in module nav + sidenav",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "href=\"/feedlab\"",
-      "min": 2,
-      "pr": 109
-    },
-    {
-      "name": "Workflow: WF-MOBILE phone layout layer (must stay the LAST style block)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "WF-MOBILE",
-      "pr": 109
-    },
-    {
-      "name": "FeedLab: module page (scanner + score + recs + dissection)",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "Dissection theatre",
-      "pr": 109
-    },
-    {
-      "name": "FeedLab: audit engine (UMD, shared browser/node)",
-      "file": "docs/feedlab_engine.js",
-      "pattern": "FeedAudit",
-      "min": 2,
-      "pr": 109
-    },
-    {
-      "name": "FeedLab: uniform reservoir sample (head-biased audits banned)",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "Algorithm R",
-      "pr": 117
-    },
-    {
-      "name": "worker: multi-market feed resolution + portal index",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "feedMarketsFor",
-      "min": 2,
-      "pr": 133
-    },
-    {
-      "name": "worker: /api/feed/markets one-call portal bootstrap",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "api/feed/markets",
-      "pr": 133
-    },
-    {
-      "name": "FeedLab: multi-market portal (league + heatmap + scan-all)",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "renderPortal",
-      "min": 2,
-      "pr": 133
-    },
-    {
-      "name": "CmdCenter: market-aware feed attach",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "Feed markets (",
-      "pr": 133
-    },
-    {
-      "name": "FCC: collapsible instructions widget (app pages, default folded)",
-      "file": "docs/instr_collapse.html",
-      "pattern": "FCC-INSTR",
-      "pr": 139
-    },
-    {
-      "name": "worker: instr widget injected on app pages (never decks)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "INSTR",
-      "min": 3,
-      "pr": 139
-    },
-    {
-      "name": "Workflow: email-task adoption into the plan (write-back)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "adoptIntoPlan",
-      "min": 3,
-      "pr": 132
-    },
-    {
-      "name": "worker: recipient-cue brand detection (fb alias + client domain)",
-      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
-      "pattern": "detectClientEx",
-      "min": 2,
-      "pr": 138
-    },
-    {
-      "name": "Workflow: Gmail sync module UI (cue column)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "em-colhead",
-      "min": 2,
-      "pr": 138
-    },
-    {
-      "name": "Workflow: reassignable client (cross-plan task move)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "setTaskClient",
-      "min": 2,
-      "pr": 135
-    },
-    {
-      "name": "Workflow+worker: ibfref unique per-ticket tracking ref",
-      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
-      "pattern": "ibfref",
-      "min": 2,
-      "pr": 136
-    },
-    {
-      "name": "Workflow: briefs stamp the ibfref token",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "ibfref",
-      "min": 4,
-      "pr": 136
-    },
-    {
-      "name": "worker: Templates module RETIRED (menu cleanup, must stay gone)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "'/templates'",
-      "forbidden": true
-    },
-    {
-      "name": "Workflow: assignable brand in Gmail triage + sender memory",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "fcc-sender-brand",
-      "min": 2,
-      "pr": 138
-    },
-    {
-      "name": "Pricer: module page (quote builder + collaborative rate card)",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "Tachyon Pricer",
-      "min": 2,
-      "pr": 141
-    },
-    {
-      "name": "Pricer: quote engine (UMD, tiered volume + block maths)",
-      "file": "docs/pricer_engine.js",
-      "pattern": "PricerEngine",
-      "min": 2,
-      "pr": 141
-    },
-    {
-      "name": "Pricer: live-AI-brief scaffolds (Monsoon/Accessorize/Hobbycraft/Superdry)",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "pz-scaf",
-      "min": 2,
-      "pr": 141
-    },
-    {
-      "name": "worker: tachyon rates+quotes kvmerge routes",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "api/tachyon/rates",
-      "min": 2,
-      "pr": 141
-    },
-    {
-      "name": "worker: pricer engine served verbatim",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "pricer/engine.js",
-      "pr": 141
-    },
-    {
-      "name": "wrangler: pricer engine bundled as Text",
-      "file": "wrangler.toml",
-      "pattern": "pricer_engine.js",
-      "pr": 141
-    },
-    {
-      "name": "Workflow: Pricer in module nav",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "href=\"/pricer\"",
-      "pr": 141
-    },
-    {
-      "name": "CmdCenter: Pricer in module nav + sidenav",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "href=\"/pricer\"",
-      "min": 2,
-      "pr": 141
-    },
-    {
-      "name": "Pricer: actuals layer — tagged-brief averages price the quote",
-      "file": "docs/pricer_engine.js",
-      "pattern": "actualsFromBriefs",
-      "min": 2,
-      "pr": 144
-    },
-    {
-      "name": "Workflow: hours tagging RETIRED — lives in the Pricer now (must stay gone)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "m-hours",
-      "pr": 145,
-      "forbidden": true
-    },
-    {
-      "name": "Workflow: bg-tach RETIRED — title scan in the Pricer replaces it (must stay gone)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "bg-tach",
-      "pr": 145,
-      "forbidden": true
-    },
-    {
-      "name": "Pricer: actuals badges + evidence toggle",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "act-tog",
-      "min": 3,
-      "pr": 144
-    },
-    {
-      "name": "Pricer: AI-briefs delivery tracking table (title-scanned)",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "ai-track",
-      "min": 2,
-      "pr": 145
-    },
-    {
-      "name": "Pricer engine: title scan + track join (aiBriefRows)",
-      "file": "docs/pricer_engine.js",
-      "pattern": "aiBriefRows",
-      "min": 2,
-      "pr": 145
-    },
-    {
-      "name": "worker: tachyon delivery-track store",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "api/tachyon/track",
-      "min": 2,
-      "pr": 145
-    },
-    {
-      "name": "Pricer: floating field guide (tracking definitions)",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "fg-panel",
-      "min": 2,
-      "pr": 147
-    },
-    {
-      "name": "Pricer: GPC categories picker (official 5,595-entry taxonomy)",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "gpc-pop",
-      "min": 2,
-      "pr": 147
-    },
-    {
-      "name": "worker: GPC taxonomy served at /pricer/gpc.txt",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "pricer/gpc.txt",
-      "pr": 147
-    },
-    {
-      "name": "repo: official Google product taxonomy snapshot",
-      "file": "docs/gpc_taxonomy.txt",
-      "pattern": "Animals & Pet Supplies",
-      "min": 2,
-      "pr": 147
-    },
-    {
-      "name": "Pricer: manual historic AI entries (pre-FCC work joins the averages)",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "ai-add",
-      "min": 2,
-      "pr": 149
-    },
-    {
-      "name": "Workflow: hover info icons replace section subtext",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "info-btn",
-      "min": 5,
-      "pr": 149
-    },
-    {
-      "name": "worker: sheet-write tab resolver stops guessing on ambiguity",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "tabAmbiguous",
-      "min": 5,
-      "pr": 149
-    },
-    {
-      "name": "worker: sheet reads widened past 600 rows / 26 cols",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "A1:ZZ5000",
-      "min": 5,
-      "pr": 149
-    },
-    {
-      "name": "Pricer: seeded live AI briefs — Mon/Acc/Superdry × titles/desc/keywords",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "SEED_TRACK",
-      "min": 2,
-      "pr": 152
-    },
-    {
-      "name": "worker: fetchGrid keeps a tight column width (GRID_RANGE)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "GRID_RANGE",
-      "min": 3,
-      "pr": 150
-    },
-    {
-      "name": "worker: rowCols self-corrects owner/due for shifted-column rows",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "function rowCols",
-      "pr": 154
-    },
-    {
-      "name": "Pricer: attach Workflow brief picker (wb-pop) for briefs the title scan misses",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "wb-pop",
-      "min": 2,
-      "pr": 159
-    },
-    {
-      "name": "Pricer: attached-brief 🔗 icon marker + detach control",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "a-link",
-      "min": 2,
-      "pr": 159
-    },
-    {
-      "name": "worker: sheet row match refuses ambiguous shared-code rows",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "findTaskRow",
-      "min": 5,
-      "pr": 158
-    },
-    {
-      "name": "worker: master feed-market map imported (16 feeds x 9 brands)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "House of Bruar",
-      "min": 2,
-      "pr": 163
-    },
-    {
-      "name": "worker: /api/feed/clients roster bootstrap",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "api/feed/clients",
-      "pr": 163
-    },
-    {
-      "name": "CmdCenter: dossier merges master-sheet wired feed markets (FEEDWIRED)",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "FEEDWIRED",
-      "min": 5,
-      "pr": 163
-    },
-    {
-      "name": "FeedLab: selector bootstraps from /api/feed/clients",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "api/feed/clients",
-      "pr": 163
-    },
-    {
-      "name": "FeedLab: FL-SHOW demo animation layer (reveals, score pulse, heat wave)",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "rv-armed",
-      "min": 3,
-      "pr": 164
-    },
-    {
-      "name": "FeedLab: 🎬 demo tour + auto-dissect spotlight",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "demoTour",
-      "min": 2,
-      "pr": 164
-    },
-    {
-      "name": "claude: SessionStart auto-sync hook registered",
-      "file": ".claude/settings.json",
-      "pattern": "session_sync.sh",
-      "pr": 180
-    },
-    {
-      "name": "claude: PR auto-watch hook on create_pull_request",
-      "file": ".claude/settings.json",
-      "pattern": "pr_watch_reminder.sh",
-      "pr": 180
-    },
-    {
-      "name": "claude: /presync skill pre-approved (allowed-tools)",
-      "file": ".claude/skills/presync/SKILL.md",
-      "pattern": "allowed-tools",
-      "pr": 180
-    },
-    {
-      "name": "tools: qa_gate.sh unattended-build stop condition",
-      "file": "tools/qa_gate.sh",
-      "pattern": "qa-gate CLEAN",
-      "pr": 180
-    },
-    {
-      "name": "workflow: timeline covers every dated task + brand/AM filters",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "timelineEvents",
-      "min": 2,
-      "pr": 166
-    },
-    {
-      "name": "workflow: timeline full-bleed + focus mode (AM productivity view)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "tl-focus",
-      "min": 4,
-      "pr": 167
-    },
-    {
-      "name": "workflow: timeline sticky week headers + row-edit pop-up (tle)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "tle-scrim",
-      "min": 3,
-      "pr": 168
-    },
-    {
-      "name": "workflow: timeline shares Intake filters + status flag legend",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "renderTlLegend",
-      "min": 2,
-      "pr": 169
-    },
-    {
-      "name": "workflow: chronological due sort — dateless sink, year-less dates get the current year",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "dateless rows sink to the bottom",
-      "pr": 170
-    },
-    {
-      "name": "workflow: gmail triage groups conversation threads (one decision per thread)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "groupThreads",
-      "min": 3,
-      "pr": 172
-    },
-    {
-      "name": "Pricer: token economics tracking — actual/billing tok, derived bill units, run times",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "billTok",
-      "min": 3,
-      "pr": 173
-    },
-    {
-      "name": "Pricer: per-brand totals summary + brand-level man time (ASPL h) via clientMeta",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "ai-sum",
-      "min": 2,
-      "pr": 173
-    },
-    {
-      "name": "Pricer engine: clientSummary/fmtMin + billTok-runOne-runPar track fields",
-      "file": "docs/pricer_engine.js",
-      "pattern": "clientSummary",
-      "min": 2,
-      "pr": 173
-    },
-    {
-      "name": "Pricer engine: AI Text Attribute catalogue entry + title-scan patterns",
-      "file": "docs/pricer_engine.js",
-      "pattern": "text_attr",
-      "min": 2,
-      "pr": 173
-    },
-    {
-      "name": "Pricer: compact token column — single Bill units cell + token-economics pop-up",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "tok-pop",
-      "min": 2,
-      "pr": 174
-    },
-    {
-      "name": "Pricer: pre-batch rows fold into handback seeds by (client, attribute) on boot",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "mergeLegacyIntoSeeds",
-      "min": 2,
-      "pr": 175
-    },
-    {
-      "name": "workflow: email-origin memory — Gmail tasks stay labelled Email after sheet round-trip",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "markEsrc",
-      "min": 4,
-      "pr": 176
-    },
-    {
-      "name": "worker: Label Guard /api/labels routes",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "api/labels/",
-      "min": 8,
-      "pr": 179
-    },
-    {
-      "name": "worker: Label Guard cron sweep wired into scheduled()",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "labelCronSweep",
-      "min": 2,
-      "pr": 179
-    },
-    {
-      "name": "labelguard engine: baseline diff -> alerts",
-      "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "diffSnapshots",
-      "pr": 179
-    },
-    {
-      "name": "nav: Label Guard link on Activity",
-      "file": "docs/FeedSpark_Activity.html",
-      "pattern": "href=\"/labels\"",
-      "pr": 179
-    },
-    {
-      "name": "nav: Label Guard link on Command_Center",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "href=\"/labels\"",
-      "pr": 179
-    },
-    {
-      "name": "nav: Label Guard link on DeckBuilder",
-      "file": "docs/FeedSpark_DeckBuilder.html",
-      "pattern": "href=\"/labels\"",
-      "pr": 179
-    },
-    {
-      "name": "nav: Label Guard link on FeedLab",
-      "file": "docs/FeedSpark_FeedLab.html",
-      "pattern": "href=\"/labels\"",
-      "pr": 179
-    },
-    {
-      "name": "nav: Label Guard link on Leadership",
-      "file": "docs/FeedSpark_Leadership.html",
-      "pattern": "href=\"/labels\"",
-      "pr": 179
-    },
-    {
-      "name": "nav: Label Guard link on Pricer",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "href=\"/labels\"",
-      "pr": 179
-    },
-    {
-      "name": "nav: Label Guard link on Readiness",
-      "file": "docs/FeedSpark_Readiness.html",
-      "pattern": "href=\"/labels\"",
-      "pr": 179
-    },
-    {
-      "name": "nav: Label Guard link on Roadmap",
-      "file": "docs/FeedSpark_Roadmap.html",
-      "pattern": "href=\"/labels\"",
-      "pr": 179
-    },
-    {
-      "name": "nav: Label Guard link on Task_Library",
-      "file": "docs/FeedSpark_Task_Library.html",
-      "pattern": "href=\"/labels\"",
-      "pr": 179
-    },
-    {
-      "name": "nav: Label Guard link on Templates",
-      "file": "docs/FeedSpark_Templates.html",
-      "pattern": "href=\"/labels\"",
-      "pr": 179
-    },
-    {
-      "name": "nav: Label Guard link on Workflow",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "href=\"/labels\"",
-      "pr": 179
-    },
-    {
-      "name": "nav: Label Guard link on LabelGuard",
-      "file": "docs/FeedSpark_LabelGuard.html",
-      "pattern": "href=\"/labels\"",
-      "pr": 179
-    },
-    {
-      "name": "worker: feed resolvers take env — bare feedSourceFor(client…) must never return",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "feedSourceFor(client",
-      "forbidden": true,
-      "pr": 180
-    },
-    {
-      "name": "worker: feed resolvers take env — bare feedMarketsFor(client…) must never return",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "feedMarketsFor(client",
-      "forbidden": true,
-      "pr": 180
-    },
-    {
-      "name": "workflow: Briefing Studio — context rail, workload scheduling, checklist, Tachyon draft",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "bsPropose",
-      "min": 3,
-      "pr": 182
-    },
-    {
-      "name": "worker: Label Guard live cross-label dissection route",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "labels/cross",
-      "pr": 183
-    },
-    {
-      "name": "labelguard engine: crossFeed live segment pivot",
-      "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "crossFeed",
-      "pr": 183
-    },
-    {
-      "name": "worker: Label Guard custom-watch pass (alert builder cron)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "labelWatchRun",
-      "min": 3,
-      "pr": 184
-    },
-    {
-      "name": "worker: alert-email outbox (Gmail bridge drain)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "labeloutbox",
-      "min": 3,
-      "pr": 184
-    },
-    {
-      "name": "labelguard engine: evalWatch fire/re-ping/recovery state machine",
-      "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "evalWatch",
-      "pr": 184
-    },
-    {
-      "name": "LabelGuard page: watch builder + alert routing section",
-      "file": "docs/FeedSpark_LabelGuard.html",
-      "pattern": "wt-form",
-      "min": 2,
-      "pr": 184
-    },
-    {
-      "name": "gmail bridge: Label Guard outbox drain",
-      "file": "tools/gmail_push.gs",
-      "pattern": "drainAlertOutbox",
-      "min": 2,
-      "pr": 184
-    },
-    {
-      "name": "labelguard engine: two-strike suspect confirmation (mid-refresh false-positive guard)",
-      "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "suspect",
-      "min": 4,
-      "pr": 187
-    },
-    {
-      "name": "labelguard engine: per-rule digest pings with highlighted value rows",
-      "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "alertDigest",
-      "pr": 187
-    },
-    {
-      "name": "worker+workflow: thread dismiss is ONE batched KV write (no lost decisions)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "Array.isArray(body.ids)",
-      "pr": 189
-    },
-    {
-      "name": "worker: twice-daily watch cron (07:00/17:00 GMT, per-rule sched)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "0 7,17 * * *",
-      "pr": 190
-    },
-    {
-      "name": "wrangler: 07:00/17:00 GMT watch cron registered",
-      "file": "wrangler.toml",
-      "pattern": "0 7,17 * * *",
-      "pr": 190
-    },
-    {
-      "name": "labelguard engine: emailed status report builder",
-      "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "buildReport",
-      "pr": 192
-    },
-    {
-      "name": "worker: report settings + send + 07:00 cron hook",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "labelreportcfg",
-      "min": 4,
-      "pr": 192
-    },
-    {
-      "name": "labelguard engine: impossible-answer guard (throttled-garbage never confirms an alert)",
-      "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "isImplausible",
-      "pr": 192
-    },
-    {
-      "name": "worker: XML (Meta/FeedHero) feed source support — xmlRef/feedRef",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "const feedRef = (u) => sheetRef(u) || xmlRef(u)"
-    },
-    {
-      "name": "engine: XML feed parser (Meta channel)",
-      "file": "docs/feedlab_engine.js",
-      "pattern": "createXmlParser"
-    },
-    {
-      "name": "LabelGuard: Facebook channel set (-fb markets, blue chips)",
-      "file": "docs/FeedSpark_LabelGuard.html",
-      "pattern": "chip-fb",
-      "min": 3,
-      "pr": 194
-    },
-    {
-      "name": "labelguard engine: channel-aware feed naming",
-      "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "dispFeed",
-      "min": 4,
-      "pr": 194
-    },
-    {
-      "name": "worker: daily Δ reference (labelday auto-promote, pivots read vs yesterday)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "labelday",
-      "min": 3,
-      "pr": 196
-    },
-    {
-      "name": "LabelGuard: demo mode (industry-alias anonymised view)",
-      "file": "docs/FeedSpark_LabelGuard.html",
-      "pattern": "demo-banner",
-      "min": 2,
-      "pr": 197
-    },
-    {
-      "name": "LabelGuard: compact Δ-reference toggle (yesterday ↔ known-good)",
-      "file": "docs/FeedSpark_LabelGuard.html",
-      "pattern": "refseg",
-      "min": 3
-    },
-    {
-      "name": "labelguard engine: reference terminology (last known-good / pinned reference)",
-      "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "last known-good",
-      "min": 2
-    },
-    {
-      "name": "Materials bank: per-client collateral API (seeds + KV uploads)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "/api/materials",
-      "min": 2
-    },
-    {
-      "name": "Materials bank: git-bundled seed manifest",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "SEED_MATERIALS",
-      "min": 3
-    },
-    {
-      "name": "Materials bank: Brand dossier panel",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "dz-mat",
-      "min": 6
-    },
-    {
-      "name": "worker: triage decisions inherit down a conversation (new replies stay triaged)",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "mailThreadKey",
-      "min": 4,
-      "pr": 202
-    },
-    {
-      "name": "worker: Leadership owner gate covers /leadership + /leadership/*",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "startsWith('/leadership/')",
-      "pr": 203
-    },
-    {
-      "name": "worker: legacy /readiness /library /roadmap 301 into /leadership/*",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "Location: '/leadership' + path",
-      "pr": 203
-    },
-    {
-      "name": "worker: folded module routes in PAGES",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "'/leadership/readiness'",
-      "pr": 203
-    },
-    {
-      "name": "Leadership: hub cards for the folded modules",
-      "file": "docs/FeedSpark_Leadership.html",
-      "pattern": "lead-hub",
-      "min": 2,
-      "pr": 203
-    },
-    {
-      "name": "CmdCenter: standalone Readiness nav RETIRED (folded under Leadership)",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "href=\"/readiness\"",
-      "forbidden": true,
-      "pr": 203
-    },
-    {
-      "name": "Workflow: standalone Readiness nav RETIRED (folded under Leadership)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "href=\"/readiness\"",
-      "forbidden": true,
-      "pr": 203
-    },
-    {
-      "name": "worker: /api/kwcal store + kwcal-save activity",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "api/kwcal",
-      "min": 2,
-      "pr": 213
-    },
-    {
-      "name": "KWCal: lead-time keyword schedule derived from marketing moments",
-      "file": "docs/FeedSpark_KWCal.html",
-      "pattern": "schedDate",
-      "min": 3,
-      "pr": 213
-    },
-    {
-      "name": "CmdCenter: Keyword calendar nav item",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "href=\"/kwcal\"",
-      "pr": 213
-    },
-    {
-      "name": "Workflow: recurring tasks — ⟳ weekly/monthly/quarterly, next occurrence on Done",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "recSpawn",
-      "min": 2,
-      "pr": 206
-    },
-    {
-      "name": "Workflow: attach an intake task to an existing ticket (taskKeys)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "fillAttach",
-      "min": 3,
-      "pr": 208
-    },
-    {
-      "name": "Workflow: client confirmation drafted in Ray's own voice (no codes, no system phrasing)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "Hope the week’s going well",
-      "min": 1,
-      "pr": 209
-    }
-  ]
+ "_comment": "Shipped-feature tripwire. Each entry pins a live feature to a grep-able marker. tools/check_markers.js runs in presync + CI and FAILS if a marker regresses \u2014 catching one session's merge silently clobbering another session's shipped work. When you ship a feature that another session could plausibly overwrite (shared files!), ADD an entry. Never remove or weaken someone else's entry outside a PR that deliberately retires that feature. 'min' = minimum occurrences (default 1); 'forbidden': true asserts the pattern must be ABSENT (retired features).",
+ "markers": [
+  {
+   "name": "worker: /api/version deploy marker",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "api/version",
+   "pr": 54
+  },
+  {
+   "name": "worker: Gmail intake endpoint",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "gmail/intake",
+   "pr": 31
+  },
+  {
+   "name": "worker: sheets task-rename endpoint",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "api/sheets/task",
+   "pr": 44
+  },
+  {
+   "name": "worker: Download HTML client exporter",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "Download HTML",
+   "pr": 60
+  },
+  {
+   "name": "worker: deck-only guard on BOTH download blocks",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "client decks only",
+   "min": 2,
+   "pr": 62
+  },
+  {
+   "name": "wrangler: DO delete-class migration v2",
+   "file": "wrangler.toml",
+   "pattern": "tag = \"v2\"",
+   "pr": 56
+  },
+  {
+   "name": "deploy: GitHub Actions wrangler deploy",
+   "file": ".github/workflows/deploy.yml",
+   "pattern": "wrangler-action",
+   "pr": 54
+  },
+  {
+   "name": "CmdCenter: live plan-sync engine",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "function liveSync",
+   "pr": 59
+  },
+  {
+   "name": "CmdCenter: re-runnable Tests/Analysis sections",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "renderPTSections",
+   "pr": 59
+  },
+  {
+   "name": "CmdCenter: RYOBI dossier entry",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "\"Ryobi\"",
+   "pr": 53
+  },
+  {
+   "name": "Workflow: Account Manager filter",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "it-am-btn",
+   "pr": 53
+  },
+  {
+   "name": "Workflow: frozen tracker header (viewport-bounded panel)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "max-height:72vh",
+   "pr": 53
+  },
+  {
+   "name": "Workflow: RYOBI in brand roster + plan sheets",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "1WofQrZ6igucGIvGnUOLgBiXP7MqK-7ZtG8Xt4LLaA1E",
+   "pr": 53
+  },
+  {
+   "name": "Workflow: ATRT legacy source RETIRED (must stay gone)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "ATRT legacy",
+   "forbidden": true,
+   "pr": 53
+  },
+  {
+   "name": "DeckBuilder: RYOBI plan sheet wired",
+   "file": "docs/FeedSpark_DeckBuilder.html",
+   "pattern": "1WofQrZ6igucGIvGnUOLgBiXP7MqK-7ZtG8Xt4LLaA1E",
+   "pr": 53
+  },
+  {
+   "name": "Workflow: client-level remove from intake (reversible)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "fcc-wf-removed",
+   "pr": 66
+  },
+  {
+   "name": "Workflow: courts strip \u2014 3-team ball tracking",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "renderCourts",
+   "pr": 66
+  },
+  {
+   "name": "Workflow: stage-change handoff history",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function setStage",
+   "pr": 66
+  },
+  {
+   "name": "Workflow: brief-to-intake taskKey tie",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "taskKey",
+   "min": 5,
+   "pr": 66
+  },
+  {
+   "name": "Workflow: paste-an-update reply router",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function routeUpdate",
+   "pr": 66
+  },
+  {
+   "name": "Workflow: court-aware SLA escalations",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "SLA_STAGE",
+   "pr": 66
+  },
+  {
+   "name": "worker: per-key KV merge for clients/briefs (kvmerge)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "kvmerge",
+   "pr": 68
+  },
+  {
+   "name": "worker: kvmerge module present",
+   "file": "cloudflare/feedspark-deck/src/kvmerge.js",
+   "pattern": "mergeIntoEnvelope",
+   "pr": 68
+  },
+  {
+   "name": "CmdCenter: sync-base echo on dossier saves",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "X-Sync-Base",
+   "pr": 68
+  },
+  {
+   "name": "Workflow: sync-base echo on brief saves",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "X-Sync-Base",
+   "pr": 68
+  },
+  {
+   "name": "Workflow: client-removal button on intake rows",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "class=\"cl-rm\"",
+   "pr": 69
+  },
+  {
+   "name": "worker: Build Log feed + /buildlog redirect",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "api/buildlog",
+   "pr": 70
+  },
+  {
+   "name": "worker: /buildlog 301 \u2192 /activity#build",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "activity#build",
+   "pr": 82
+  },
+  {
+   "name": "Activity: Build Log tab (queue + derived board, was /buildlog)",
+   "file": "docs/FeedSpark_Activity.html",
+   "pattern": "api/buildqueue",
+   "pr": 82
+  },
+  {
+   "name": "CmdCenter: standalone Build Log nav RETIRED (merged into /activity)",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "href=\"/buildlog\"",
+   "forbidden": true,
+   "pr": 82
+  },
+  {
+   "name": "Workflow: standalone Build Log nav RETIRED (merged into /activity)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "href=\"/buildlog\"",
+   "forbidden": true,
+   "pr": 82
+  },
+  {
+   "name": "Workflow: dense board cards (brand chip + age-in-court)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "tk-ab",
+   "min": 2,
+   "pr": 72
+  },
+  {
+   "name": "Workflow: mechanical brief self-learning store",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "fcc-brief-learn",
+   "pr": 74
+  },
+  {
+   "name": "worker: Gmail thread deep-link lookup",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "api/gmail/thread",
+   "pr": 77
+  },
+  {
+   "name": "Workflow: modal thread deep-link upgrade",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "m-thread",
+   "min": 2,
+   "pr": 77
+  },
+  {
+   "name": "Workflow: Analysis stage for test tickets",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function isTest",
+   "pr": 78
+  },
+  {
+   "name": "worker: user activity log (owner-gated feed + page gate)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "api/activity",
+   "pr": 80
+  },
+  {
+   "name": "worker: activity logger helper",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "function logActivity",
+   "pr": 80
+  },
+  {
+   "name": "Activity: page present (users + Claude tabs)",
+   "file": "docs/FeedSpark_Activity.html",
+   "pattern": "api/activity",
+   "pr": 80
+  },
+  {
+   "name": "wrangler: OWNER_EMAIL var",
+   "file": "wrangler.toml",
+   "pattern": "OWNER_EMAIL",
+   "pr": 80
+  },
+  {
+   "name": "Workflow: Activity in module nav",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "href=\"/activity\"",
+   "pr": 80
+  },
+  {
+   "name": "worker: Gmail push endpoint (no-admin brief sync)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "api/gmail/push",
+   "pr": 85
+  },
+  {
+   "name": "worker: briefmatch module (router-parity matcher)",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "matchGmailToBriefs",
+   "pr": 85
+  },
+  {
+   "name": "tools: Apps Script Gmail pusher",
+   "file": "tools/gmail_push.gs",
+   "pattern": "pushBriefReplies",
+   "pr": 85
+  },
+  {
+   "name": "tools: pusher self-verdict (Access-login detection)",
+   "file": "tools/gmail_push.gs",
+   "pattern": "BLOCKED BY CLOUDFLARE ACCESS",
+   "pr": 92
+  },
+  {
+   "name": "tools: inbox intake pusher (syncFCC wrapper)",
+   "file": "tools/gmail_push.gs",
+   "pattern": "function pushInbox",
+   "pr": 98
+  },
+  {
+   "name": "worker: inbound email classifier (briefable triage)",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "classifyInbound",
+   "pr": 98
+  },
+  {
+   "name": "worker: gmail intake served from push store",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "gmailinbox",
+   "min": 2,
+   "pr": 98
+  },
+  {
+   "name": "Workflow: briefable \u26a1 badge on email intake rows",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "src-brf",
+   "min": 2,
+   "pr": 98
+  },
+  {
+   "name": "worker: gmail push run-history endpoint",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "api/gmail/pushlog",
+   "pr": 92
+  },
+  {
+   "name": "Activity: gmail-sync side panel",
+   "file": "docs/FeedSpark_Activity.html",
+   "pattern": "gp-log",
+   "pr": 92
+  },
+  {
+   "name": "worker: Design-mode block copy/paste (Alt-drag + Ctrl+C/V)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "pasteClipboard",
+   "pr": 86
+  },
+  {
+   "name": "worker: Design-mode colour swatches (brand palette)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "SWATCHES",
+   "pr": 86
+  },
+  {
+   "name": "worker: Design-mode right-click context menu",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "de-ctxmenu",
+   "min": 2,
+   "pr": 88
+  },
+  {
+   "name": "worker: Design-mode format painter (copy/paste style)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "applyPaintedStyle",
+   "pr": 88
+  },
+  {
+   "name": "worker: Design-mode keyboard shortcuts (Delete/Escape/Arrow reorder)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "reorderBlock",
+   "pr": 88
+  },
+  {
+   "name": "Workflow: run-SLA read-out tracking (editable panel + automation)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "fcc-run-sla",
+   "pr": 92
+  },
+  {
+   "name": "Workflow: dotted-arrow flow cue on analysis-bound cards",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "tk-flow",
+   "min": 2,
+   "pr": 95
+  },
+  {
+   "name": "worker: sheet-write tab resolver (non-standard plan tabs)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "resolveTab",
+   "min": 4,
+   "pr": 97
+  },
+  {
+   "name": "Workflow: Incoming-emails panel (detected + brief-from-here)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "em-panel",
+   "min": 2,
+   "pr": 101
+  },
+  {
+   "name": "worker: token-only unattended brief matching (no fuzzy)",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "never guess unattended",
+   "pr": 101
+  },
+  {
+   "name": "worker: internal-domain intake filter (feedspark/aroxo/feedhero)",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "feedhero\\.net",
+   "pr": 101
+  },
+  {
+   "name": "Workflow: email triage panel \u2014 separate queue, task/not-task decisions",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "api/gmail/dismiss",
+   "pr": 102
+  },
+  {
+   "name": "Workflow: raw emails OUT of the task tracker (triage first)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "Raw captured emails never",
+   "pr": 102
+  },
+  {
+   "name": "Workflow: new-brief composer as popup window",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "bg-scrim",
+   "min": 2,
+   "pr": 102
+  },
+  {
+   "name": "worker: gmail triage dismiss memory (KV, restorable)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "gmaildismissed",
+   "min": 3,
+   "pr": 102
+  },
+  {
+   "name": "worker: email client auto-detect (domain label + display name + folded mentions)",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "detectClient",
+   "min": 2,
+   "pr": 106
+  },
+  {
+   "name": "worker: intake back-fills client on stored emails",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "back-fill client",
+   "pr": 106
+  },
+  {
+   "name": "Workflow: sender into task name, never the Client field",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "never in the Client field",
+   "pr": 106
+  },
+  {
+   "name": "Workflow: \u2192 Task triage semantics (email \u2192 Intake task, no composer jump)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "saveEmailAsTask",
+   "min": 2,
+   "pr": 103
+  },
+  {
+   "name": "worker: triage decision reasons preserved verbatim (task/briefed/notask)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "validReasons",
+   "min": 2,
+   "pr": 103
+  },
+  {
+   "name": "worker: Feed Lab live-feed streaming proxy (no CPU parse)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "api/feed/proxy",
+   "pr": 109
+  },
+  {
+   "name": "worker: feed audit KV cache + score history",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "feedaudit:",
+   "min": 3,
+   "pr": 109
+  },
+  {
+   "name": "worker: engine served verbatim at /feedlab/engine.js",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "feedlab/engine.js",
+   "pr": 109
+  },
+  {
+   "name": "wrangler: feedlab engine bundled as Text module",
+   "file": "wrangler.toml",
+   "pattern": "feedlab_engine.js",
+   "pr": 109
+  },
+  {
+   "name": "CmdCenter: dossier feed-sheet attach (dz-linkfeed)",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "dz-linkfeed",
+   "min": 2,
+   "pr": 109
+  },
+  {
+   "name": "Workflow: ?brief= deep-link (UTF-8-safe b64url)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "[?&]brief=",
+   "pr": 109
+  },
+  {
+   "name": "Workflow: Feed Lab in module nav",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "href=\"/feedlab\"",
+   "pr": 109
+  },
+  {
+   "name": "CmdCenter: Feed Lab in module nav + sidenav",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "href=\"/feedlab\"",
+   "min": 2,
+   "pr": 109
+  },
+  {
+   "name": "Workflow: WF-MOBILE phone layout layer (must stay the LAST style block)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "WF-MOBILE",
+   "pr": 109
+  },
+  {
+   "name": "FeedLab: module page (scanner + score + recs + dissection)",
+   "file": "docs/FeedSpark_FeedLab.html",
+   "pattern": "Dissection theatre",
+   "pr": 109
+  },
+  {
+   "name": "FeedLab: audit engine (UMD, shared browser/node)",
+   "file": "docs/feedlab_engine.js",
+   "pattern": "FeedAudit",
+   "min": 2,
+   "pr": 109
+  },
+  {
+   "name": "FeedLab: uniform reservoir sample (head-biased audits banned)",
+   "file": "docs/FeedSpark_FeedLab.html",
+   "pattern": "Algorithm R",
+   "pr": 117
+  },
+  {
+   "name": "worker: multi-market feed resolution + portal index",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "feedMarketsFor",
+   "min": 2,
+   "pr": 133
+  },
+  {
+   "name": "worker: /api/feed/markets one-call portal bootstrap",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "api/feed/markets",
+   "pr": 133
+  },
+  {
+   "name": "FeedLab: multi-market portal (league + heatmap + scan-all)",
+   "file": "docs/FeedSpark_FeedLab.html",
+   "pattern": "renderPortal",
+   "min": 2,
+   "pr": 133
+  },
+  {
+   "name": "CmdCenter: market-aware feed attach",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "Feed markets (",
+   "pr": 133
+  },
+  {
+   "name": "FCC: collapsible instructions widget (app pages, default folded)",
+   "file": "docs/instr_collapse.html",
+   "pattern": "FCC-INSTR",
+   "pr": 139
+  },
+  {
+   "name": "worker: instr widget injected on app pages (never decks)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "INSTR",
+   "min": 3,
+   "pr": 139
+  },
+  {
+   "name": "Workflow: email-task adoption into the plan (write-back)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "adoptIntoPlan",
+   "min": 3,
+   "pr": 132
+  },
+  {
+   "name": "worker: recipient-cue brand detection (fb alias + client domain)",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "detectClientEx",
+   "min": 2,
+   "pr": 138
+  },
+  {
+   "name": "Workflow: Gmail sync module UI (cue column)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "em-colhead",
+   "min": 2,
+   "pr": 138
+  },
+  {
+   "name": "Workflow: reassignable client (cross-plan task move)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "setTaskClient",
+   "min": 2,
+   "pr": 135
+  },
+  {
+   "name": "Workflow+worker: ibfref unique per-ticket tracking ref",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "ibfref",
+   "min": 2,
+   "pr": 136
+  },
+  {
+   "name": "Workflow: briefs stamp the ibfref token",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "ibfref",
+   "min": 4,
+   "pr": 136
+  },
+  {
+   "name": "worker: Templates module RETIRED (menu cleanup, must stay gone)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "'/templates'",
+   "forbidden": true
+  },
+  {
+   "name": "Workflow: assignable brand in Gmail triage + sender memory",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "fcc-sender-brand",
+   "min": 2,
+   "pr": 138
+  },
+  {
+   "name": "Pricer: module page (quote builder + collaborative rate card)",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "Tachyon Pricer",
+   "min": 2,
+   "pr": 141
+  },
+  {
+   "name": "Pricer: quote engine (UMD, tiered volume + block maths)",
+   "file": "docs/pricer_engine.js",
+   "pattern": "PricerEngine",
+   "min": 2,
+   "pr": 141
+  },
+  {
+   "name": "Pricer: live-AI-brief scaffolds (Monsoon/Accessorize/Hobbycraft/Superdry)",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "pz-scaf",
+   "min": 2,
+   "pr": 141
+  },
+  {
+   "name": "worker: tachyon rates+quotes kvmerge routes",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "api/tachyon/rates",
+   "min": 2,
+   "pr": 141
+  },
+  {
+   "name": "worker: pricer engine served verbatim",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "pricer/engine.js",
+   "pr": 141
+  },
+  {
+   "name": "wrangler: pricer engine bundled as Text",
+   "file": "wrangler.toml",
+   "pattern": "pricer_engine.js",
+   "pr": 141
+  },
+  {
+   "name": "Workflow: Pricer in module nav",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "href=\"/pricer\"",
+   "pr": 141
+  },
+  {
+   "name": "CmdCenter: Pricer in module nav + sidenav",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "href=\"/pricer\"",
+   "min": 2,
+   "pr": 141
+  },
+  {
+   "name": "Pricer: actuals layer \u2014 tagged-brief averages price the quote",
+   "file": "docs/pricer_engine.js",
+   "pattern": "actualsFromBriefs",
+   "min": 2,
+   "pr": 144
+  },
+  {
+   "name": "Workflow: hours tagging RETIRED \u2014 lives in the Pricer now (must stay gone)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "m-hours",
+   "pr": 145,
+   "forbidden": true
+  },
+  {
+   "name": "Workflow: bg-tach RETIRED \u2014 title scan in the Pricer replaces it (must stay gone)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "bg-tach",
+   "pr": 145,
+   "forbidden": true
+  },
+  {
+   "name": "Pricer: actuals badges + evidence toggle",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "act-tog",
+   "min": 3,
+   "pr": 144
+  },
+  {
+   "name": "Pricer: AI-briefs delivery tracking table (title-scanned)",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "ai-track",
+   "min": 2,
+   "pr": 145
+  },
+  {
+   "name": "Pricer engine: title scan + track join (aiBriefRows)",
+   "file": "docs/pricer_engine.js",
+   "pattern": "aiBriefRows",
+   "min": 2,
+   "pr": 145
+  },
+  {
+   "name": "worker: tachyon delivery-track store",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "api/tachyon/track",
+   "min": 2,
+   "pr": 145
+  },
+  {
+   "name": "Pricer: floating field guide (tracking definitions)",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "fg-panel",
+   "min": 2,
+   "pr": 147
+  },
+  {
+   "name": "Pricer: GPC categories picker (official 5,595-entry taxonomy)",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "gpc-pop",
+   "min": 2,
+   "pr": 147
+  },
+  {
+   "name": "worker: GPC taxonomy served at /pricer/gpc.txt",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "pricer/gpc.txt",
+   "pr": 147
+  },
+  {
+   "name": "repo: official Google product taxonomy snapshot",
+   "file": "docs/gpc_taxonomy.txt",
+   "pattern": "Animals & Pet Supplies",
+   "min": 2,
+   "pr": 147
+  },
+  {
+   "name": "Pricer: manual historic AI entries (pre-FCC work joins the averages)",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "ai-add",
+   "min": 2,
+   "pr": 149
+  },
+  {
+   "name": "Workflow: hover info icons replace section subtext",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "info-btn",
+   "min": 5,
+   "pr": 149
+  },
+  {
+   "name": "worker: sheet-write tab resolver stops guessing on ambiguity",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "tabAmbiguous",
+   "min": 5,
+   "pr": 149
+  },
+  {
+   "name": "worker: sheet reads widened past 600 rows / 26 cols",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "A1:ZZ5000",
+   "min": 5,
+   "pr": 149
+  },
+  {
+   "name": "Pricer: seeded live AI briefs \u2014 Mon/Acc/Superdry \u00d7 titles/desc/keywords",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "SEED_TRACK",
+   "min": 2,
+   "pr": 152
+  },
+  {
+   "name": "worker: fetchGrid keeps a tight column width (GRID_RANGE)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "GRID_RANGE",
+   "min": 3,
+   "pr": 150
+  },
+  {
+   "name": "worker: rowCols self-corrects owner/due for shifted-column rows",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "function rowCols",
+   "pr": 154
+  },
+  {
+   "name": "Pricer: attach Workflow brief picker (wb-pop) for briefs the title scan misses",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "wb-pop",
+   "min": 2,
+   "pr": 159
+  },
+  {
+   "name": "Pricer: attached-brief \ud83d\udd17 icon marker + detach control",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "a-link",
+   "min": 2,
+   "pr": 159
+  },
+  {
+   "name": "worker: sheet row match refuses ambiguous shared-code rows",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "findTaskRow",
+   "min": 5,
+   "pr": 158
+  },
+  {
+   "name": "worker: master feed-market map imported (16 feeds x 9 brands)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "House of Bruar",
+   "min": 2,
+   "pr": 163
+  },
+  {
+   "name": "worker: /api/feed/clients roster bootstrap",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "api/feed/clients",
+   "pr": 163
+  },
+  {
+   "name": "CmdCenter: dossier merges master-sheet wired feed markets (FEEDWIRED)",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "FEEDWIRED",
+   "min": 5,
+   "pr": 163
+  },
+  {
+   "name": "FeedLab: selector bootstraps from /api/feed/clients",
+   "file": "docs/FeedSpark_FeedLab.html",
+   "pattern": "api/feed/clients",
+   "pr": 163
+  },
+  {
+   "name": "FeedLab: FL-SHOW demo animation layer (reveals, score pulse, heat wave)",
+   "file": "docs/FeedSpark_FeedLab.html",
+   "pattern": "rv-armed",
+   "min": 3,
+   "pr": 164
+  },
+  {
+   "name": "FeedLab: \ud83c\udfac demo tour + auto-dissect spotlight",
+   "file": "docs/FeedSpark_FeedLab.html",
+   "pattern": "demoTour",
+   "min": 2,
+   "pr": 164
+  },
+  {
+   "name": "claude: SessionStart auto-sync hook registered",
+   "file": ".claude/settings.json",
+   "pattern": "session_sync.sh",
+   "pr": 180
+  },
+  {
+   "name": "claude: PR auto-watch hook on create_pull_request",
+   "file": ".claude/settings.json",
+   "pattern": "pr_watch_reminder.sh",
+   "pr": 180
+  },
+  {
+   "name": "claude: /presync skill pre-approved (allowed-tools)",
+   "file": ".claude/skills/presync/SKILL.md",
+   "pattern": "allowed-tools",
+   "pr": 180
+  },
+  {
+   "name": "tools: qa_gate.sh unattended-build stop condition",
+   "file": "tools/qa_gate.sh",
+   "pattern": "qa-gate CLEAN",
+   "pr": 180
+  },
+  {
+   "name": "workflow: timeline covers every dated task + brand/AM filters",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "timelineEvents",
+   "min": 2,
+   "pr": 166
+  },
+  {
+   "name": "workflow: timeline full-bleed + focus mode (AM productivity view)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "tl-focus",
+   "min": 4,
+   "pr": 167
+  },
+  {
+   "name": "workflow: timeline sticky week headers + row-edit pop-up (tle)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "tle-scrim",
+   "min": 3,
+   "pr": 168
+  },
+  {
+   "name": "workflow: timeline shares Intake filters + status flag legend",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "renderTlLegend",
+   "min": 2,
+   "pr": 169
+  },
+  {
+   "name": "workflow: chronological due sort \u2014 dateless sink, year-less dates get the current year",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "dateless rows sink to the bottom",
+   "pr": 170
+  },
+  {
+   "name": "workflow: gmail triage groups conversation threads (one decision per thread)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "groupThreads",
+   "min": 3,
+   "pr": 172
+  },
+  {
+   "name": "Pricer: token economics tracking \u2014 actual/billing tok, derived bill units, run times",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "billTok",
+   "min": 3,
+   "pr": 173
+  },
+  {
+   "name": "Pricer: per-brand totals summary + brand-level man time (ASPL h) via clientMeta",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "ai-sum",
+   "min": 2,
+   "pr": 173
+  },
+  {
+   "name": "Pricer engine: clientSummary/fmtMin + billTok-runOne-runPar track fields",
+   "file": "docs/pricer_engine.js",
+   "pattern": "clientSummary",
+   "min": 2,
+   "pr": 173
+  },
+  {
+   "name": "Pricer engine: AI Text Attribute catalogue entry + title-scan patterns",
+   "file": "docs/pricer_engine.js",
+   "pattern": "text_attr",
+   "min": 2,
+   "pr": 173
+  },
+  {
+   "name": "Pricer: compact token column \u2014 single Bill units cell + token-economics pop-up",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "tok-pop",
+   "min": 2,
+   "pr": 174
+  },
+  {
+   "name": "Pricer: pre-batch rows fold into handback seeds by (client, attribute) on boot",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "mergeLegacyIntoSeeds",
+   "min": 2,
+   "pr": 175
+  },
+  {
+   "name": "workflow: email-origin memory \u2014 Gmail tasks stay labelled Email after sheet round-trip",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "markEsrc",
+   "min": 4,
+   "pr": 176
+  },
+  {
+   "name": "worker: Label Guard /api/labels routes",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "api/labels/",
+   "min": 8,
+   "pr": 179
+  },
+  {
+   "name": "worker: Label Guard cron sweep wired into scheduled()",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "labelCronSweep",
+   "min": 2,
+   "pr": 179
+  },
+  {
+   "name": "labelguard engine: baseline diff -> alerts",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "diffSnapshots",
+   "pr": 179
+  },
+  {
+   "name": "nav: Label Guard link on Activity",
+   "file": "docs/FeedSpark_Activity.html",
+   "pattern": "href=\"/labels\"",
+   "pr": 179
+  },
+  {
+   "name": "nav: Label Guard link on Command_Center",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "href=\"/labels\"",
+   "pr": 179
+  },
+  {
+   "name": "nav: Label Guard link on DeckBuilder",
+   "file": "docs/FeedSpark_DeckBuilder.html",
+   "pattern": "href=\"/labels\"",
+   "pr": 179
+  },
+  {
+   "name": "nav: Label Guard link on FeedLab",
+   "file": "docs/FeedSpark_FeedLab.html",
+   "pattern": "href=\"/labels\"",
+   "pr": 179
+  },
+  {
+   "name": "nav: Label Guard link on Leadership",
+   "file": "docs/FeedSpark_Leadership.html",
+   "pattern": "href=\"/labels\"",
+   "pr": 179
+  },
+  {
+   "name": "nav: Label Guard link on Pricer",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "href=\"/labels\"",
+   "pr": 179
+  },
+  {
+   "name": "nav: Label Guard link on Readiness",
+   "file": "docs/FeedSpark_Readiness.html",
+   "pattern": "href=\"/labels\"",
+   "pr": 179
+  },
+  {
+   "name": "nav: Label Guard link on Roadmap",
+   "file": "docs/FeedSpark_Roadmap.html",
+   "pattern": "href=\"/labels\"",
+   "pr": 179
+  },
+  {
+   "name": "nav: Label Guard link on Task_Library",
+   "file": "docs/FeedSpark_Task_Library.html",
+   "pattern": "href=\"/labels\"",
+   "pr": 179
+  },
+  {
+   "name": "nav: Label Guard link on Templates",
+   "file": "docs/FeedSpark_Templates.html",
+   "pattern": "href=\"/labels\"",
+   "pr": 179
+  },
+  {
+   "name": "nav: Label Guard link on Workflow",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "href=\"/labels\"",
+   "pr": 179
+  },
+  {
+   "name": "nav: Label Guard link on LabelGuard",
+   "file": "docs/FeedSpark_LabelGuard.html",
+   "pattern": "href=\"/labels\"",
+   "pr": 179
+  },
+  {
+   "name": "worker: feed resolvers take env \u2014 bare feedSourceFor(client\u2026) must never return",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "feedSourceFor(client",
+   "forbidden": true,
+   "pr": 180
+  },
+  {
+   "name": "worker: feed resolvers take env \u2014 bare feedMarketsFor(client\u2026) must never return",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "feedMarketsFor(client",
+   "forbidden": true,
+   "pr": 180
+  },
+  {
+   "name": "workflow: Briefing Studio \u2014 context rail, workload scheduling, checklist, Tachyon draft",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "bsPropose",
+   "min": 3,
+   "pr": 182
+  },
+  {
+   "name": "worker: Label Guard live cross-label dissection route",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "labels/cross",
+   "pr": 183
+  },
+  {
+   "name": "labelguard engine: crossFeed live segment pivot",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "crossFeed",
+   "pr": 183
+  },
+  {
+   "name": "worker: Label Guard custom-watch pass (alert builder cron)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "labelWatchRun",
+   "min": 3,
+   "pr": 184
+  },
+  {
+   "name": "worker: alert-email outbox (Gmail bridge drain)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "labeloutbox",
+   "min": 3,
+   "pr": 184
+  },
+  {
+   "name": "labelguard engine: evalWatch fire/re-ping/recovery state machine",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "evalWatch",
+   "pr": 184
+  },
+  {
+   "name": "LabelGuard page: watch builder + alert routing section",
+   "file": "docs/FeedSpark_LabelGuard.html",
+   "pattern": "wt-form",
+   "min": 2,
+   "pr": 184
+  },
+  {
+   "name": "gmail bridge: Label Guard outbox drain",
+   "file": "tools/gmail_push.gs",
+   "pattern": "drainAlertOutbox",
+   "min": 2,
+   "pr": 184
+  },
+  {
+   "name": "labelguard engine: two-strike suspect confirmation (mid-refresh false-positive guard)",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "suspect",
+   "min": 4,
+   "pr": 187
+  },
+  {
+   "name": "labelguard engine: per-rule digest pings with highlighted value rows",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "alertDigest",
+   "pr": 187
+  },
+  {
+   "name": "worker+workflow: thread dismiss is ONE batched KV write (no lost decisions)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "Array.isArray(body.ids)",
+   "pr": 189
+  },
+  {
+   "name": "worker: twice-daily watch cron (07:00/17:00 GMT, per-rule sched)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "0 7,17 * * *",
+   "pr": 190
+  },
+  {
+   "name": "wrangler: 07:00/17:00 GMT watch cron registered",
+   "file": "wrangler.toml",
+   "pattern": "0 7,17 * * *",
+   "pr": 190
+  },
+  {
+   "name": "labelguard engine: emailed status report builder",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "buildReport",
+   "pr": 192
+  },
+  {
+   "name": "worker: report settings + send + 07:00 cron hook",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "labelreportcfg",
+   "min": 4,
+   "pr": 192
+  },
+  {
+   "name": "labelguard engine: impossible-answer guard (throttled-garbage never confirms an alert)",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "isImplausible",
+   "pr": 192
+  },
+  {
+   "name": "worker: XML (Meta/FeedHero) feed source support \u2014 xmlRef/feedRef",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "const feedRef = (u) => sheetRef(u) || xmlRef(u)"
+  },
+  {
+   "name": "engine: XML feed parser (Meta channel)",
+   "file": "docs/feedlab_engine.js",
+   "pattern": "createXmlParser"
+  },
+  {
+   "name": "LabelGuard: Facebook channel set (-fb markets, blue chips)",
+   "file": "docs/FeedSpark_LabelGuard.html",
+   "pattern": "chip-fb",
+   "min": 3,
+   "pr": 194
+  },
+  {
+   "name": "labelguard engine: channel-aware feed naming",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "dispFeed",
+   "min": 4,
+   "pr": 194
+  },
+  {
+   "name": "worker: daily \u0394 reference (labelday auto-promote, pivots read vs yesterday)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "labelday",
+   "min": 3,
+   "pr": 196
+  },
+  {
+   "name": "LabelGuard: demo mode (industry-alias anonymised view)",
+   "file": "docs/FeedSpark_LabelGuard.html",
+   "pattern": "demo-banner",
+   "min": 2,
+   "pr": 197
+  },
+  {
+   "name": "LabelGuard: compact \u0394-reference toggle (yesterday \u2194 known-good)",
+   "file": "docs/FeedSpark_LabelGuard.html",
+   "pattern": "refseg",
+   "min": 3
+  },
+  {
+   "name": "labelguard engine: reference terminology (last known-good / pinned reference)",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "last known-good",
+   "min": 2
+  },
+  {
+   "name": "Materials bank: per-client collateral API (seeds + KV uploads)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "/api/materials",
+   "min": 2
+  },
+  {
+   "name": "Materials bank: git-bundled seed manifest",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "SEED_MATERIALS",
+   "min": 3
+  },
+  {
+   "name": "Materials bank: Brand dossier panel",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "dz-mat",
+   "min": 6
+  },
+  {
+   "name": "worker: triage decisions inherit down a conversation (new replies stay triaged)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "mailThreadKey",
+   "min": 4,
+   "pr": 202
+  },
+  {
+   "name": "worker: Leadership owner gate covers /leadership + /leadership/*",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "startsWith('/leadership/')",
+   "pr": 203
+  },
+  {
+   "name": "worker: legacy /readiness /library /roadmap 301 into /leadership/*",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "Location: '/leadership' + path",
+   "pr": 203
+  },
+  {
+   "name": "worker: folded module routes in PAGES",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "'/leadership/readiness'",
+   "pr": 203
+  },
+  {
+   "name": "Leadership: hub cards for the folded modules",
+   "file": "docs/FeedSpark_Leadership.html",
+   "pattern": "lead-hub",
+   "min": 2,
+   "pr": 203
+  },
+  {
+   "name": "CmdCenter: standalone Readiness nav RETIRED (folded under Leadership)",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "href=\"/readiness\"",
+   "forbidden": true,
+   "pr": 203
+  },
+  {
+   "name": "Workflow: standalone Readiness nav RETIRED (folded under Leadership)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "href=\"/readiness\"",
+   "forbidden": true,
+   "pr": 203
+  },
+  {
+   "name": "worker: /api/kwcal store + kwcal-save activity",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "api/kwcal",
+   "min": 2,
+   "pr": 213
+  },
+  {
+   "name": "KWCal: lead-time keyword schedule derived from marketing moments",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "schedDate",
+   "min": 3,
+   "pr": 213
+  },
+  {
+   "name": "CmdCenter: Keyword calendar nav item",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "href=\"/kwcal\"",
+   "pr": 213
+  },
+  {
+   "name": "Workflow: recurring tasks \u2014 \u27f3 weekly/monthly/quarterly, next occurrence on Done",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "recSpawn",
+   "min": 2,
+   "pr": 206
+  },
+  {
+   "name": "Workflow: attach an intake task to an existing ticket (taskKeys)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "fillAttach",
+   "min": 3,
+   "pr": 208
+  },
+  {
+   "name": "Workflow: client confirmation drafted in Ray's own voice (no codes, no system phrasing)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "Hope the week\u2019s going well",
+   "min": 1,
+   "pr": 209
+  },
+  {
+   "name": "Workflow: go-live starts the test run \u2014 due -> +run-SLA, stage -> analysis, card jumps",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function goLive",
+   "min": 1,
+   "pr": 0
+  },
+  {
+   "name": "worker: LIVE_RE go-live on brief replies (incl Ray's own 'please live it')",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "LIVE_RE",
+   "min": 2,
+   "pr": 0
+  }
+ ]
 }
