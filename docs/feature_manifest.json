@@ -1295,20 +1295,20 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "api/kwcal",
       "min": 2,
-      "pr": 204
+      "pr": 213
     },
     {
       "name": "KWCal: lead-time keyword schedule derived from marketing moments",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "schedDate",
       "min": 3,
-      "pr": 204
+      "pr": 213
     },
     {
       "name": "CmdCenter: Keyword calendar nav item",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "href=\"/kwcal\"",
-      "pr": 204
+      "pr": 213
     },
     {
       "name": "Workflow: recurring tasks — ⟳ weekly/monthly/quarterly, next occurrence on Done",
