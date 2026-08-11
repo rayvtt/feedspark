@@ -95,6 +95,33 @@ window.addEventListener('load',restore);
   .err-strip.on{display:block}
   .footmark{padding:34px 0;color:var(--muted);font-size:12px;font-weight:700;border-top:1px solid var(--line);margin-top:30px}
   .footmark .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  /* ============ kw-overview — every brand on one view ============ */
+  .ov-row{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:12px}
+  .ov-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:9px}
+  .ov-h b{font-size:16.5px;font-weight:900}
+  .ov-h .om{font-size:12px;color:var(--muted);font-weight:700}
+  .ov-h a.ob{margin-left:auto;font-size:12px;font-weight:900;color:var(--orange-deep);text-decoration:none}
+  .ov-h a.ob:hover{text-decoration:underline}
+  .ov-mons{display:grid;gap:8px}
+  .ov-mon .oml{font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px}
+  .ov-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .ovc{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;border:1px solid var(--line);background:#fff;border-radius:100px;padding:4px 11px;cursor:pointer}
+  .ovc:hover{border-color:var(--orange);box-shadow:0 3px 10px rgba(245,166,35,.14)}
+  .ovc .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .ovc .dot.planned{background:#C9CDD4}.ovc .dot.intake{background:var(--navy)}.ovc .dot.briefed{background:var(--orange)}
+  .ovc .dot.live,.ovc .dot.progress{background:var(--orange-deep)}.ovc .dot.done,.ovc .dot.confirmed{background:var(--good)}.ovc .dot.blocked{background:var(--risk)}
+  .ovc .ov-vol{font-size:10.5px;color:var(--muted);font-weight:700}
+  .ovc .wfb{font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;background:rgba(26,54,93,.08);border:1px solid rgba(26,54,93,.25);color:var(--navy);border-radius:100px;padding:1px 7px}
+  .pop{position:absolute;z-index:80;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 40px rgba(16,24,40,.18);padding:12px 13px;min-width:250px;max-width:320px}
+  .pop b{display:block;font-size:13.5px;font-weight:900;margin-bottom:2px}
+  .pop .pm{font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:9px}
+  .pop .pa{display:flex;flex-direction:column;gap:6px}
+  .pop .pa a,.pop .pa button{display:block;width:100%;text-align:left;font:inherit;font-size:12.5px;font-weight:800;padding:7px 10px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--ink-2);text-decoration:none;cursor:pointer}
+  .pop .pa a:hover,.pop .pa button:hover{border-color:var(--orange);color:var(--orange-deep)}
+  [data-theme=dark] .ov-row,[data-theme=dark] .pop{background:var(--paper);border-color:var(--line)}
+  [data-theme=dark] .ovc{background:#20242E;border-color:var(--line);color:var(--ink-2)}
+  [data-theme=dark] .ovc .wfb{background:rgba(91,130,190,.18);border-color:rgba(91,130,190,.36);color:#93B4E0}
+  [data-theme=dark] .pop .pa a,[data-theme=dark] .pop .pa button{background:#20242E;border-color:var(--line);color:var(--ink-2)}
   @media(max-width:820px){
     .tb-modules{flex:1 1 auto;min-width:0;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-left:4px!important}
     .tb-modules::-webkit-scrollbar{display:none}
@@ -194,7 +221,8 @@ window.addEventListener('load',restore);
 <main class="wrap">
   <h2 id="cal-title">Calendar</h2>
   <p class="sub">Marketing moments by lane (as the brand shared them) with the <b>keyword optimisation schedule</b> underneath — each optimisation lands ahead of its moment. Click a status chip to advance it; <b>→ Brief</b> drops the task into the Workflow composer prefilled.</p>
-  <div class="cal-card"><div class="cal" id="cal"></div></div>
+  <div class="cal-card" id="cal-wrap"><div class="cal" id="cal"></div></div>
+  <div id="ov" hidden></div>
 </main>
 
 <div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span id="syncstate"></span></div></div>
@@ -238,6 +266,7 @@ var SEED={Reiss:{events:[
 ]}};
 
 var CLIENT='Reiss', STORE={}, BASE=0, editMode=false, saveT=null, MEASURING=false;
+var BRIEFS={}; // Workflow pipeline (read-only) — live stages auto-badge matching KW tasks
 
 function rec(){ if(!STORE[CLIENT])STORE[CLIENT]={events:[]}; if(!STORE[CLIENT].measured)STORE[CLIENT].measured={}; return STORE[CLIENT]; }
 function evs(){ return (rec().events||[]).slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date))}); }
@@ -278,11 +307,94 @@ function volBadge(e){
   if(e.brandwide)return '<span class="vol wide" title="Sale window — the whole '+(e.mkt||'gb').toUpperCase()+' catalogue is in scope">'+fmt(m.vol)+' SKUs · brand-wide</span>';
   return '<span class="vol'+(m.vol?'':' zero')+'" title="'+m.pct+'% of the live '+(e.mkt||'gb').toUpperCase()+' feed matches this moment’s terms">'+fmt(m.vol)+' SKUs · '+m.pct+'%</span>';
 }
-function briefLink(e){
+function briefLink(e){ return briefLinkFor(CLIENT,e); }
+function wfFor(brand,e){ // the seamless Workflow link: a brief whose task carries the KW-task name
+  var ks=Object.keys(BRIEFS||{});
+  for(var i=0;i<ks.length;i++){ var b=BRIEFS[ks[i]]||{};
+    if(b&&b.client===brand&&String(b.task||'').indexOf('AI Keyword Optimisation — '+e.name)>=0) return b; }
+  return null;
+}
+function evsOf(brand){ var r=STORE[brand]||{}; return (r.events||[]).slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date))}); }
+function ovBrands(){ return Object.keys(STORE).filter(function(k){return k.charAt(0)!=='_'&&(STORE[k]&&(STORE[k].events||[]).length)}).sort(); }
+function renderOverview(){
+  $('#cal-wrap').hidden=true; $('#ov').hidden=false;
+  $('#cal-title').textContent='All brands — keyword optimisation overview';
+  var brands=ovBrands(), tot=0, inflight=0, done=0, vol=0;
+  var h='';
+  brands.forEach(function(brand){
+    var E=evsOf(brand), m=(STORE[brand]||{}).measured||{};
+    var byMon={};
+    E.forEach(function(e){ var sd=schedDate(e), k=sd.getUTCFullYear()*12+sd.getUTCMonth();
+      (byMon[k]=byMon[k]||[]).push(e); });
+    var next=null;
+    E.forEach(function(e){ var wf=wfFor(brand,e), st=wf?wf.st:(e.st||'planned');
+      tot++;
+      if(st==='intake'||st==='briefed'||st==='progress'||st==='live')inflight++;
+      if(st==='done'||st==='confirmed')done++;
+      if(m[e.id]&&!e.brandwide)vol+=m[e.id].vol||0;
+      if(st==='planned'&&!next)next=e; });
+    var mons=Object.keys(byMon).map(Number).sort(function(a,b){return a-b});
+    h+='<div class="ov-row" data-brand="'+esc(brand)+'"><div class="ov-h"><b>'+esc(brand)+'</b>'
+      +'<span class="om">'+E.length+' optimisations'+(next?' · next brief: '+esc(next.name)+' by '+schedDate(next).getUTCDate()+' '+MON[schedDate(next).getUTCMonth()]:'')+'</span>'
+      +'<a class="ob" href="/kwcal?client='+encodeURIComponent(brand)+'" data-open="'+esc(brand)+'">Open board →</a></div>'
+      +'<div class="ov-mons">'+mons.map(function(k){
+        return '<div class="ov-mon"><div class="oml">'+MON[k%12]+' ’'+String(Math.floor(k/12)).slice(2)+'</div><div class="ov-chips">'
+          +byMon[k].map(function(e){ var wf=wfFor(brand,e), st=wf?wf.st:(e.st||'planned'), mm=m[e.id];
+            return '<button type="button" class="ovc" data-pop="'+esc(brand)+'|'+esc(e.id)+'"><span class="dot '+esc(st)+'"></span>'+esc(e.name)
+              +(mm&&typeof mm.vol==='number'?'<span class="ov-vol">'+fmt(mm.vol)+(e.brandwide?' · all':'')+'</span>':'')
+              +(wf?'<span class="wfb" title="Live from the Workflow pipeline">WF · '+esc(st)+'</span>':'')+'</button>';
+          }).join('')+'</div></div>';
+      }).join('')+'</div></div>';
+  });
+  $('#ov').innerHTML=h||'<p class="sub">No brand calendars yet — pick a brand and add its marketing moments.</p>';
+  $('#kpis').innerHTML=
+    '<div class="kpi"><div class="n">'+brands.length+'</div><div class="l">Brands scheduled</div></div>'
+    +'<div class="kpi"><div class="n">'+tot+'</div><div class="l">KW optimisations</div></div>'
+    +'<div class="kpi warn"><div class="n">'+inflight+'</div><div class="l">In flight (incl. Workflow)</div></div>'
+    +'<div class="kpi good"><div class="n">'+done+'</div><div class="l">Done</div></div>'
+    +'<div class="kpi"><div class="n">'+(vol?fmt(vol):'—')+'</div><div class="l">Category SKUs impacted</div></div>';
+}
+function popClose(){ var p=$('#kw-pop'); if(p)p.remove(); }
+function popOpen(btn,brand,e){
+  popClose();
+  var wf=wfFor(brand,e), st=wf?wf.st:(e.st||'planned');
+  var chase={client:brand,task:'CHASE — AI Keyword Optimisation "'+e.name+'" — brief due '+schedDate(e).getUTCDate()+' '+MON[schedDate(e).getUTCMonth()]+' (status: '+st+')',cat:'account'};
+  var mail='mailto:?subject='+encodeURIComponent('Keyword optimisation — '+e.name+' · '+brand)
+    +'&body='+encodeURIComponent('Hi,\n\nAhead of "'+e.name+'" ('+dLbl(e)+') we’re lining up the keyword optimisation for: '+(e.terms||[]).join(', ')+'.\n\nCould you confirm the categories in scope and any changes to the marketing calendar?\n\nThanks,\nFeedSpark');
+  var d=document.createElement('div'); d.className='pop'; d.id='kw-pop';
+  d.innerHTML='<b>'+esc(e.name)+' · '+esc(brand)+'</b><div class="pm">lands '+dLbl(e)+' · status '+esc(st)+(wf?' (live from Workflow)':'')+'</div>'
+    +'<div class="pa">'
+    +'<a href="'+briefLinkFor(brand,e)+'">→ Brief it · into the Workflow pipeline</a>'
+    +'<a href="/workflow?brief='+b64url(chase)+'">⏰ Chase · nudge the owner via Workflow</a>'
+    +'<a href="'+mail+'">✉ Ask client · drafted email</a>'
+    +'<button type="button" data-adv="'+esc(brand)+'|'+esc(e.id)+'">↻ Advance status ('+esc(st)+' →)</button>'
+    +'</div>';
+  document.body.appendChild(d);
+  var r=btn.getBoundingClientRect();
+  d.style.left=Math.min(window.scrollX+r.left,window.scrollX+document.documentElement.clientWidth-d.offsetWidth-14)+'px';
+  d.style.top=(window.scrollY+r.bottom+8)+'px';
+}
+document.addEventListener('click',function(ev){
+  var b=ev.target.closest('[data-pop]');
+  if(b){ var pr=b.getAttribute('data-pop').split('|'); var e=findEvIn(pr[0],pr[1]); if(e)popOpen(b,pr[0],e); ev.stopPropagation(); return; }
+  var adv=ev.target.closest('[data-adv]');
+  if(adv){ var pa=adv.getAttribute('data-adv').split('|'); var e2=findEvIn(pa[0],pa[1]); if(e2){
+    e2.st=STATES[(STATES.indexOf(e2.st||'planned')+1)%STATES.length]; save(); renderOverview(); } popClose(); return; }
+  var op=ev.target.closest('[data-open]');
+  if(op){ ev.preventDefault(); CLIENT=op.getAttribute('data-open'); $('#brand').value=CLIENT; render();
+    try{history.replaceState(null,'',location.pathname+'?client='+encodeURIComponent(CLIENT))}catch(err){} return; }
+  if(!ev.target.closest('#kw-pop'))popClose();
+});
+document.addEventListener('keydown',function(ev){ if(ev.key==='Escape')popClose(); });
+function findEvIn(brand,id){ var E=(STORE[brand]||{}).events||[]; for(var i=0;i<E.length;i++)if(E[i].id===id)return E[i]; return null; }
+function briefLinkFor(brand,e){
   var task='AI Keyword Optimisation — '+e.name+' ['+(e.terms||[]).join(', ')+'] — ahead of '+dLbl(e)+((e.mkt&&e.mkt!=='gb')?' · '+e.mkt.toUpperCase():'');
-  return '/workflow?brief='+b64url({client:CLIENT,task:task,cat:'keyword'});
+  return '/workflow?brief='+b64url({client:brand,task:task,cat:'keyword'});
 }
 function render(){
+  popClose();
+  if(CLIENT==='*'){ renderOverview(); return; }
+  $('#cal-wrap').hidden=false; $('#ov').hidden=true;
   kpis();
   $('#cal-title').textContent=CLIENT+' — calendar';
   var R=monthRange(), months=[]; for(var k=R[0];k<=R[1];k++)months.push(k);
@@ -360,6 +472,7 @@ $('#add').addEventListener('click',function(){
   save(); render();
 });
 $('#edit').addEventListener('click',function(){
+  if(CLIENT==='*'){err('Open a brand\u2019s board to edit its calendar.');return;}
   editMode=!editMode;
   this.textContent=editMode?'✓ Done editing':'✎ Edit calendar';
   this.classList.toggle('on',editMode);
@@ -428,22 +541,24 @@ function measure(){
   }
   nextMkt();
 }
-$('#measure').addEventListener('click',measure);
+$('#measure').addEventListener('click',function(){ if(CLIENT==='*'){err('Pick a brand to measure its live feed — the overview reads every brand\u2019s stored volumes.');return;} measure(); });
 
 /* ---------------- boot ---------------- */
 function boot(){
   var q=/[?&]client=([^&]+)/.exec(location.search),pre=q?decodeURIComponent(q[1].replace(/\+/g,' ')):'';
   Promise.all([
     fetch('/api/kwcal').then(function(r){ BASE=+r.headers.get('X-Sync-Base')||0; return r.json(); }).catch(function(){return {}}),
-    fetch('/api/feed/clients').then(function(r){return r.json()}).catch(function(){return {}})
+    fetch('/api/feed/clients').then(function(r){return r.json()}).catch(function(){return {}}),
+    fetch('/api/briefs').then(function(r){return r.json()}).catch(function(){return {}})
   ]).then(function(res){
+    BRIEFS=(res[2]&&typeof res[2]==='object'&&!res[2].error)?res[2]:{};
     STORE=res[0]&&typeof res[0]==='object'?res[0]:{};
     applySeeds();
     var roster={}; Object.keys((res[1]&&res[1].clients)||{}).forEach(function(k){roster[k]=1});
     Object.keys(STORE).forEach(function(k){ if(k.charAt(0)!=='_')roster[k]=1; });
     var names=Object.keys(roster).sort();
-    $('#brand').innerHTML=names.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>'}).join('');
-    CLIENT=(pre&&roster[pre])?pre:(roster.Reiss?'Reiss':names[0]||'Reiss');
+    $('#brand').innerHTML='<option value="*">\u25a6 All brands</option>'+names.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>'}).join('');
+    CLIENT=(pre==='*')?'*':(pre&&roster[pre])?pre:(roster.Reiss?'Reiss':names[0]||'Reiss');
     $('#brand').value=CLIENT;
     syncNote(); render();
   });
