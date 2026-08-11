@@ -1362,6 +1362,20 @@
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "grid-auto-flow:column",
       "pr": 216
+    },
+    {
+      "name": "Workflow: go-live starts the test run — due -> +run-SLA, stage -> analysis, card jumps",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function goLive",
+      "min": 1,
+      "pr": 216
+    },
+    {
+      "name": "worker: LIVE_RE go-live on brief replies (incl Ray's own 'please live it')",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "LIVE_RE",
+      "min": 2,
+      "pr": 216
     }
   ]
 }

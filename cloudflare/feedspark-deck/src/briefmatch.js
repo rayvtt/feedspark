@@ -5,6 +5,10 @@
  *   - find the ticket by [ibfcode:…] token, by brief id (XX-12345678-01), or (last resort)
  *     by task-wording similarity (Sørensen–Dice, stricter server-side than the page)
  *   - "done/delivered/completed…"  → done (or analysis when the task is a test)
+ *   - "is now live / please live it" on a TEST brief → run starts: due → +run-SLA
+ *     (keyword 14d / title test 21d / other tests 14d) and stage → analysis; once live,
+ *     stale ibfdue tokens quoted in later replies can no longer move the due
+ *   - Ray's own reply saying "please live it" counts too (the only self-mail not skipped)
  *   - "blocked/waiting on/stuck…"  → blocked (from briefed|progress)
  *   - "started/in progress/eta…"   → progress (from intake|briefed)
  *   - ibfdue:DDMMYYYY (or an "eta 12/8" mention) → updates the due date
@@ -18,6 +22,23 @@ const DONE_RE = /\b(done|finished|complete|completed|delivered|live|actioned|sig
 const BLOCK_RE = /\b(blocked|blocker|waiting on|on hold|stuck|dependency)\b/i;
 const PROG_RE = /\b(started|in progress|underway|working on|wip|eta|will complete|picking (this|it) up)\b/i;
 const ID_RE = /\b([A-Z]{2,4}-\d{8}-\d{2})\b/;
+// go-live signal for TEST briefs — mirrors the page's LIVE_RE. Going live starts the run:
+// due re-dates to +run-SLA (the analysis date) and the ticket moves to analysis.
+const LIVE_RE = /\b(is (now )?live|now live|gone live|went live|going live|set (it )?live|pushed (it )?live|please live it|live it please|test (is )?(now )?running)\b/i;
+// run SLAs (days) by brief kind — the worker uses the page's defaults (the page panel's
+// per-device overrides live in localStorage and can't reach here)
+const RUNSLA_DEF = { keyword: 14, title_test: 21, test: 14 };
+function analysisKind(b) {
+  const t = (b && b.task) || '';
+  if (/\btitle/i.test(t) && /\btest/i.test(t)) return 'title_test';
+  if (/\bkeyword/i.test(t)) return 'keyword';
+  if (/\btest/i.test(t)) return 'test';
+  return '';
+}
+function dd8Of(ms) {
+  const d = new Date(ms);
+  return ('0' + d.getDate()).slice(-2) + ('0' + (d.getMonth() + 1)).slice(-2) + d.getFullYear();
+}
 
 function bigrams(s) {
   s = String(s || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -200,8 +221,13 @@ export function matchGmailToBriefs(briefs, messages, opts) {
 
   for (const msg of messages || []) {
     const from = String(msg.from || '');
-    if (selfRe && selfRe.test(from)) { skipped++; continue; }        // our own outgoing brief
     const text = (String(msg.subject || '') + ' ' + String(msg.snippet || '')).trim();
+    // our own outgoing mail is skipped — EXCEPT a reply where Ray himself gives the go-live
+    // ("please live it"): that instruction is authoritative for starting a test's run
+    if (selfRe && selfRe.test(from)) {
+      const selfGoLive = /^\s*re:/i.test(String(msg.subject || '')) && LIVE_RE.test(text);
+      if (!selfGoLive) { skipped++; continue; }
+    }
     if (!text) { skipped++; continue; }
     const b = findBrief(briefs, msg.subject, msg.snippet);
     if (!b) {
@@ -236,10 +262,18 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     let sender = from.replace(/<[^>]*>/, '').trim() || from;
     (opts.aspl || []).forEach((n) => { if (new RegExp('\\b' + n + '\\b', 'i').test(text)) sender = n; });
     const done = DONE_RE.test(text), blocked = BLOCK_RE.test(text), prog = PROG_RE.test(text);
+    const golive = LIVE_RE.test(text) && !!analysisKind(b);
     b.comms.push({ from: sender.slice(0, 60), note: String(msg.snippet || msg.subject || '').slice(0, 600), done, when: msg.date || now, mid: msg.id || '' });
 
     let to = '';
-    if (done && b.status !== 'confirmed' && b.status !== 'done' && b.status !== 'analysis') to = isTest(b) ? 'analysis' : 'done';
+    if (golive && b.status !== 'confirmed' && !b.liveAt) {
+      // the test just went live: record it, start the run clock, re-date the due to the
+      // analysis date (+run-SLA) and move the ticket to analysis
+      b.liveAt = msg.date || now;
+      b.due = dd8Of(b.liveAt + (RUNSLA_DEF[analysisKind(b)] || 14) * 86400000);
+      if (b.status !== 'analysis') to = 'analysis';
+    }
+    else if (done && b.status !== 'confirmed' && b.status !== 'done' && b.status !== 'analysis') to = isTest(b) ? 'analysis' : 'done';
     else if (blocked && (b.status === 'briefed' || b.status === 'progress')) to = 'blocked';
     else if (prog && (b.status === 'intake' || b.status === 'briefed')) to = 'progress';
     if (to) {
@@ -257,7 +291,9 @@ export function matchGmailToBriefs(briefs, messages, opts) {
         dd8 = ('0' + em[1]).slice(-2) + ('0' + em[2]).slice(-2) + y;
       }
     }
-    if (dd8 && validDD(dd8) && dd8 !== b.due) b.due = dd8;
+    // once live, the analysis date owns the due — replies quote the original brief, whose
+    // subject still carries the OLD ibfdue token, and that must never claw the date back
+    if (!b.liveAt && dd8 && validDD(dd8) && dd8 !== b.due) b.due = dd8;
     b.updated = now;
     if (loggedTo.indexOf(b.id) < 0) loggedTo.push(b.id);
   }
