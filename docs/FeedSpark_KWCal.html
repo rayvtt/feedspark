@@ -117,6 +117,10 @@ window.addEventListener('load',restore);
   .rc .rt .mtag{margin-left:auto;font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
   .rc .rd{font-size:11.5px;color:var(--muted);font-weight:700;margin:3px 0 8px}
   .rc .ra{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .mkc{font:inherit;font-size:11.5px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;padding:5px 12px;border-radius:100px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer}
+  .mkc.on{background:var(--orange);border-color:var(--orange);color:#fff}
+  [data-theme=dark] .mkc{background:#20242E;border-color:var(--line);color:var(--ink-2)}
+  [data-theme=dark] .mkc.on{background:var(--orange);color:#14161C}
   /* chip system — four distinct silhouettes so a glance separates data / meta / state / action:
      scope = square DATA badge · themes = bare ghost text · status = dot pill · → Brief = solid button */
   .scope{font:inherit;font-size:11px;font-weight:900;border-radius:7px;padding:3px 9px;border:1.5px solid;cursor:pointer;background:#fff}
@@ -268,6 +272,10 @@ window.addEventListener('load',restore);
     <button class="btn" id="add" type="button" hidden>＋ Add event</button>
     <span class="mstate" id="mstate"></span>
   </div>
+  <div class="ctl" id="mkt-row" style="margin-top:10px" hidden>
+    <label>Markets</label>
+    <div id="mkt-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+  </div>
   <div class="err-strip" id="kw-error" role="alert"><span id="kw-error-msg"></span></div>
   <div class="kpis" id="kpis"></div>
 </div></header>
@@ -323,7 +331,8 @@ var SEED={Reiss:{events:[
 ]}};
 
 var CLIENT='Reiss', STORE={}, BASE=0, editMode=false, saveT=null, MEASURING=false;
-var BRIEFS={}; // Workflow pipeline (read-only) — live stages auto-badge matching KW tasks
+var BRIEFS={};
+var MKT='gb', MKTLIST=['gb']; // board market — scopes, volumes, sync and briefs follow it (events may pin their own) // Workflow pipeline (read-only) — live stages auto-badge matching KW tasks
 
 function rec(){ if(!STORE[CLIENT])STORE[CLIENT]={events:[]}; if(!STORE[CLIENT].measured)STORE[CLIENT].measured={}; return STORE[CLIENT]; }
 function evs(){ return (rec().events||[]).slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date))}); }
@@ -444,20 +453,38 @@ document.addEventListener('click',function(ev){
 document.addEventListener('keydown',function(ev){ if(ev.key==='Escape')popClose(); });
 function findEvIn(brand,id){ var E=(STORE[brand]||{}).events||[]; for(var i=0;i<E.length;i++)if(E[i].id===id)return E[i]; return null; }
 function ptidx(){ var r=rec(); return (r.ptidx&&r.ptidx[curMkt()])||null; }
-function curMkt(){ return 'gb'; }
+function curMkt(){ return MKT; }
 function ptidxFor(brand,mkt){ var r=STORE[brand]||{}; return (r.ptidx&&r.ptidx[mkt||'gb'])||null; }
-function volOf(brand,e){ // exact PT counts (the picker's selections), brand-wide for sale windows
-  var idx=ptidxFor(brand,e.mkt||'gb'); if(!idx)return null;
+function evMkt(brand,e){ return e.mkt||(brand===CLIENT?MKT:'gb'); } // pinned market wins; else the board's
+function ptsOf(e,mkt){ if(e.ptsm&&e.ptsm[mkt])return e.ptsm[mkt]; if(mkt==='gb')return e.pts||[]; return []; } // legacy pts = gb
+function volOf(brand,e){ // exact PT counts per market, brand-wide for sale windows
+  var mkt=evMkt(brand,e);
+  var idx=ptidxFor(brand,mkt); if(!idx)return null;
   if(e.brandwide)return {vol:idx.__total||0,pct:100,wide:1};
-  var ps=e.pts||[]; if(!ps.length)return {unset:1};
+  var ps=ptsOf(e,mkt); if(!ps.length)return {unset:1};
   var v=0; ps.forEach(function(pt){ v+=idx.map[pt]||0; });
   return {vol:v,pct:idx.__total?Math.round(v/idx.__total*1000)/10:0};
 }
 function scopeBtn(brand,e){
   var v=volOf(brand,e);
   if(v&&v.wide)return '<button type="button" class="scope wide" data-scope="'+esc(e.id)+'" title="Sale window — whole catalogue in scope">'+fmt(v.vol)+' SKUs · all</button>';
-  if(v&&!v.unset)return '<button type="button" class="scope set" data-scope="'+esc(e.id)+'" title="'+esc((e.pts||[]).join(' · '))+'">'+(e.pts||[]).length+' PTs · '+fmt(v.vol)+' SKUs · '+v.pct+'%</button>';
-  return '<button type="button" class="scope unset" data-scope="'+esc(e.id)+'">⚙ Set scope'+((e.pts||[]).length?' ('+(e.pts||[]).length+' PTs)':'')+'</button>';
+  var psb=ptsOf(e,evMkt(brand,e));
+  if(v&&!v.unset)return '<button type="button" class="scope set" data-scope="'+esc(e.id)+'" title="'+esc(psb.join(' · '))+'">'+psb.length+' PTs · '+fmt(v.vol)+' SKUs · '+v.pct+'%</button>';
+  return '<button type="button" class="scope unset" data-scope="'+esc(e.id)+'">⚙ Set scope'+(psb.length?' ('+psb.length+' PTs)':'')+'</button>';
+}
+function renderMkts(){
+  var row=$('#mkt-row');
+  row.hidden=MKTLIST.length<2;
+  $('#mkt-chips').innerHTML=MKTLIST.map(function(m){
+    return '<button type="button" class="mkc'+(m===MKT?' on':'')+'" data-mkc="'+esc(m)+'">'+esc(m.toUpperCase())+'</button>';}).join('');
+}
+function loadMkts(){
+  MKT='gb'; MKTLIST=['gb'];
+  fetch('/api/feed/markets?client='+encodeURIComponent(CLIENT)).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
+    var ks=Object.keys((d&&d.markets)||{});
+    if(ks.length){ MKTLIST=ks.sort(function(a,b){return a==='gb'?-1:b==='gb'?1:a.localeCompare(b)}); if(MKTLIST.indexOf(MKT)<0)MKT=MKTLIST[0]; }
+    if(CLIENT!=='*')render();
+  });
 }
 function renderClical(){
   var r=rec(), box=$('#clical'), on=!!window.__sbs;
@@ -473,11 +500,12 @@ function renderClical(){
   if(lk)lk.onclick=function(){ var u=prompt('Image URL of the client’s shared calendar (link-viewable):',r.calImg||''); if(u===null)return; r.calImg=u.trim(); save(); renderClical(); };
 }
 function briefLinkFor(brand,e){
-  var v=volOf(brand,e)||{}, ps=e.pts||[];
+  var v=volOf(brand,e)||{}, ps=ptsOf(e,evMkt(brand,e));
   var scope=e.brandwide?('brand-wide ('+(v.vol?fmt(v.vol)+' SKUs':'whole catalogue')+')')
     :(ps.length?(ps.slice(0,6).join(' | ')+(ps.length>6?' +'+(ps.length-6)+' more':'')+(v.vol!=null?' = '+fmt(v.vol)+' SKUs ('+v.pct+'% of feed)':'')):'scope TBC');
+  var bmkt=evMkt(brand,e);
   var task='AI Keyword Optimisation — '+e.name
-    +' · lands '+dLbl(e)+((e.mkt&&e.mkt!=='gb')?' · '+e.mkt.toUpperCase():'')
+    +' · lands '+dLbl(e)+(bmkt!=='gb'?' · '+bmkt.toUpperCase():'')
     +' · brief by '+schedDate(e).getUTCDate()+' '+MON[schedDate(e).getUTCMonth()]
     +' · themes: '+(e.terms||[]).join(', ')
     +' · categories: '+scope;
@@ -488,7 +516,8 @@ function render(){
   if(CLIENT==='*'){ $('#split').hidden=true; renderOverview(); return; }
   $('#split').hidden=false; $('#cal-wrap').hidden=false; $('#ov').hidden=true;
   kpis();
-  $('#cal-title').textContent=CLIENT+' — FeedSpark keyword roadmap';
+  $('#cal-title').textContent=CLIENT+' — FeedSpark keyword roadmap'+(MKT!=='gb'?' · '+MKT.toUpperCase():'');
+  renderMkts();
   renderClical();
   var E=evs(), byMon={};
   E.forEach(function(e){ var sd=schedDate(e), k=sd.getUTCFullYear()*12+sd.getUTCMonth(); (byMon[k]=byMon[k]||[]).push(e); });
@@ -513,7 +542,8 @@ function render(){
 function ptClose(){ var x=$('#ptp'); if(x)x.remove(); }
 function ptOpen(e){
   ptClose();
-  var idx=ptidxFor(CLIENT,e.mkt||'gb');
+  var pmkt=evMkt(CLIENT,e);
+  var idx=ptidxFor(CLIENT,pmkt);
   var d=document.createElement('div'); d.className='ptp'; d.id='ptp';
   if(!idx){
     d.innerHTML='<b class="pt-t">'+esc(e.name)+' — scope</b><div class="pt-sub">Product types not synced yet for this brand.</div>'
@@ -522,12 +552,12 @@ function ptOpen(e){
     d.querySelector('#pt-sync').onclick=function(){ ptClose(); syncPT(); };
     return;
   }
-  var sel=(e.pts||[]).slice();
-  d.innerHTML='<b class="pt-t">'+esc(e.name)+' — category scope</b>'
+  var sel=ptsOf(e,pmkt).slice();
+  d.innerHTML='<b class="pt-t">'+esc(e.name)+' — category scope · '+esc(pmkt.toUpperCase())+'</b>'
     +'<div class="pt-sub">'+fmt(Object.keys(idx.map).length)+' unique product types off the live feed — word-search, tick to add, × to remove.</div>'
     +'<input class="pt-q" id="pt-q" type="search" placeholder="Search product types… (e.g. coat, tailoring)">'
     +'<div class="pt-sel" id="pt-sel"></div><div class="pt-list" id="pt-list"></div>'
-    +'<div class="pt-foot"><span class="pt-tot" id="pt-tot"></span><button class="btn" id="pt-sug" title="Preselect product types containing any keyword theme">✨ Suggest from themes</button><button class="btn pri" id="pt-done">Done</button></div>';
+    +'<div class="pt-foot"><span class="pt-tot" id="pt-tot"></span><button class="btn" id="pt-sug" title="Preselect product types whose NAME or crawled product titles/descriptions carry any keyword theme">✨ Suggest from themes</button><button class="btn pri" id="pt-done">Done</button></div>';
   document.body.appendChild(d); ptPlace(d);
   var keys=Object.keys(idx.map).sort(function(a,b){return idx.map[b]-idx.map[a]});
   function tot(){ var v=0; sel.forEach(function(pt){v+=idx.map[pt]||0}); return v; }
@@ -549,8 +579,11 @@ function ptOpen(e){
     if(row){ var k=row.getAttribute('data-pt'), i=sel.indexOf(k); if(i>=0)sel.splice(i,1); else sel.push(k); paint(); return; }
     var rm=ev.target.closest('[data-rm]');
     if(rm){ var j=sel.indexOf(rm.getAttribute('data-rm')); if(j>=0)sel.splice(j,1); paint(); return; }
-    if(ev.target.id==='pt-sug'){ (e.terms||[]).forEach(function(t){ keys.forEach(function(k){ if(k.toLowerCase().indexOf(String(t).toLowerCase())>=0&&sel.indexOf(k)<0)sel.push(k); }); }); paint(); return; }
-    if(ev.target.id==='pt-done'){ e.pts=sel.slice(); save(); ptClose(); render(); return; }
+    if(ev.target.id==='pt-sug'){ var bgs=idx.bags||{};
+      (e.terms||[]).forEach(function(t){ var lt=String(t).toLowerCase();
+        keys.forEach(function(k){ if(sel.indexOf(k)>=0)return;
+          if(k.toLowerCase().indexOf(lt)>=0||String(bgs[k]||'').indexOf(lt)>=0)sel.push(k); }); }); paint(); return; }
+    if(ev.target.id==='pt-done'){ e.ptsm=e.ptsm||{}; e.ptsm[pmkt]=sel.slice(); if(pmkt==='gb')e.pts=sel.slice(); save(); ptClose(); render(); return; }
   });
   d.querySelector('#pt-q').addEventListener('input',paint);
   paint();
@@ -558,6 +591,9 @@ function ptOpen(e){
 }
 function ptPlace(d){ d.style.left='50%';d.style.top='90px';d.style.transform='translateX(-50%)'; }
 document.addEventListener('click',function(ev){
+  var mc=ev.target.closest('[data-mkc]');
+  if(mc){ MKT=mc.getAttribute('data-mkc'); ptClose(); render();
+    try{history.replaceState(null,'',location.pathname+'?client='+encodeURIComponent(CLIENT)+(MKT!=='gb'?'&market='+encodeURIComponent(MKT):''))}catch(e2){} return; }
   var sc=ev.target.closest('[data-scope]');
   if(sc){ var e=findEv(sc.getAttribute('data-scope'))||findEvIn(CLIENT,sc.getAttribute('data-scope')); if(e&&!e.brandwide)ptOpen(e); ev.stopPropagation(); return; }
   if(!ev.target.closest('#ptp')&&!ev.target.closest('[data-scope]'))ptClose();
@@ -569,13 +605,14 @@ function syncPT(){
   if(MEASURING)return;
   hideErr();
   if(window.__engineFail||!window.FeedAudit||!FeedAudit.createParser){ err('The feed parser is unavailable (engine failed to load) — syncing needs the live worker.'); return; }
-  var E=evs(); var mkts={gb:1}; E.forEach(function(e){ mkts[e.mkt||'gb']=1; });
+  var E=evs(); var mkts={}; mkts[MKT]=1; E.forEach(function(e){ if(e.mkt)mkts[e.mkt]=1; });
   var list=Object.keys(mkts), mi=0;
   MEASURING=true; $('#measure').disabled=true;
   function nextMkt(){
     if(mi>=list.length){ MEASURING=false; $('#measure').disabled=false; $('#mstate').textContent='product types synced — scopes are live'; save(); render(); return; }
     var mkt=list[mi++];
-    var rows=0, header=null, cands=[], cmaps=[];
+    var rows=0, header=null, cands=[], cmaps=[], bags={}, tCol=-1, dCol=-1;
+    var STOP={the:1,and:1,for:1,with:1,from:1,this:1,that:1,are:1,our:1,its:1,has:1,было:1};
     var parser=FeedAudit.createParser(function(r){
       if(!header){ header=r;
         // real sheets name this many ways (g:product_type, product_type|||1, "Product Type",
@@ -583,11 +620,22 @@ function syncPT(){
         // collect every candidate column and let the values decide which one is live
         cands=[]; 
         for(var i=0;i<r.length;i++){ var k=FeedAudit.normKey(r[i]);
-          if(k==='product_type'||k.indexOf('product_type')===0||k.replace(/[^a-z]/g,'')==='producttype')cands.push(i); }
+          if(k==='product_type'||k.indexOf('product_type')===0||k.replace(/[^a-z]/g,'')==='producttype')cands.push(i);
+          if(k==='title'&&tCol<0)tCol=i; if(k==='description'&&dCol<0)dCol=i; }
         cmaps=cands.map(function(){return {}});
         return; }
       rows++;
-      for(var ci=0;ci<cands.length;ci++){ var v=String(r[cands[ci]]||'').trim(); if(v)cmaps[ci][v]=(cmaps[ci][v]||0)+1; }
+      var rowTxt=null;
+      for(var ci=0;ci<cands.length;ci++){ var v=String(r[cands[ci]]||'').trim(); if(!v)continue;
+        cmaps[ci][v]=(cmaps[ci][v]||0)+1;
+        // crawl a compact word-bag per PT from titles + descriptions — ✨ Suggest reads it
+        var bag=bags[v]||(bags[v]={n:0,w:{}});
+        if(bag.n<30){
+          if(rowTxt===null)rowTxt=((tCol>=0?r[tCol]:'')+' '+(dCol>=0?String(r[dCol]||'').slice(0,160):'')).toLowerCase();
+          var words=rowTxt.split(/[^a-z0-9-]+/);
+          for(var wi=0;wi<words.length&&bag.n<30;wi++){ var w=words[wi]; if(w.length>=3&&!STOP[w]&&!bag.w[w]){bag.w[w]=1;bag.n++;} }
+        }
+      }
       if(rows%2000===0)$('#mstate').textContent='syncing '+mkt.toUpperCase()+'… '+fmt(rows)+' products';
     });
     $('#mstate').textContent='streaming the live '+mkt.toUpperCase()+' feed…';
@@ -598,7 +646,8 @@ function syncPT(){
         if(x.done){ parser.push(dec.decode()); parser.end();
           var map={}, best=-1; // the populated candidate wins (FeedHero empty-input columns lose)
           cmaps.forEach(function(m2,ci){ var n=0,k2; for(k2 in m2)n+=m2[k2]; if(n>best){best=n;map=m2} });
-          var r=rec(); r.ptidx=r.ptidx||{}; r.ptidx[mkt]={__total:rows,map:map,t:Date.now()};
+          var sb={}, kb; for(kb in bags){ if(map[kb])sb[kb]=Object.keys(bags[kb].w).join(' '); } // keep bags for the winning column only
+          var r=rec(); r.ptidx=r.ptidx||{}; r.ptidx[mkt]={__total:rows,map:map,bags:sb,t:Date.now()};
           if(!Object.keys(map).length){ // zero uniques = the column wasn't matched; name the suspects
             var suspects=(header||[]).map(function(h){return FeedAudit.normKey(h)}).filter(function(k){return k.indexOf('type')>=0||k.indexOf('categor')>=0});
             err('Synced '+fmt(rows)+' '+mkt.toUpperCase()+' products but no product_type column matched. Type-ish headers seen: '+(suspects.join(', ')||'(none)')+' — tell Claude and it will map this client.'); }
@@ -687,10 +736,11 @@ function boot(){
     $('#brand').innerHTML='<option value="*">\u25a6 All brands</option>'+names.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>'}).join('');
     CLIENT=(pre==='*')?'*':(pre&&roster[pre])?pre:(roster.Reiss?'Reiss':names[0]||'Reiss');
     $('#brand').value=CLIENT;
-    syncNote(); render();
+    var qm=/[?&]market=([^&]+)/.exec(location.search); if(qm)MKT=decodeURIComponent(qm[1]).toLowerCase();
+    syncNote(); if(CLIENT!=='*')loadMkts(); render();
   });
 }
-$('#brand').addEventListener('change',function(){ CLIENT=this.value; hideErr(); $('#mstate').textContent=''; render();
+$('#brand').addEventListener('change',function(){ CLIENT=this.value; hideErr(); $('#mstate').textContent=''; if(CLIENT!=='*')loadMkts(); render();
   try{history.replaceState(null,'',location.pathname+'?client='+encodeURIComponent(CLIENT))}catch(e){} });
 boot();
 })();

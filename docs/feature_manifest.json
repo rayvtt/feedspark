@@ -1376,6 +1376,13 @@
       "pattern": "LIVE_RE",
       "min": 2,
       "pr": 216
+    },
+    {
+      "name": "KWCal: market-based board (chips, per-market ptsm scopes) + crawl-suggest word bags",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "ptsm",
+      "min": 4,
+      "pr": 218
     }
   ]
 }
