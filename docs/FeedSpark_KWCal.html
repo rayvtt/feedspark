@@ -575,14 +575,19 @@ function syncPT(){
   function nextMkt(){
     if(mi>=list.length){ MEASURING=false; $('#measure').disabled=false; $('#mstate').textContent='product types synced — scopes are live'; save(); render(); return; }
     var mkt=list[mi++];
-    var map={}, rows=0, ptIdxCol=-1, header=null;
+    var rows=0, header=null, cands=[], cmaps=[];
     var parser=FeedAudit.createParser(function(r){
       if(!header){ header=r;
-        for(var i=0;i<r.length;i++){ if(FeedAudit.normKey(r[i])==='product_type'&&ptIdxCol<0)ptIdxCol=i; }
+        // real sheets name this many ways (g:product_type, product_type|||1, "Product Type",
+        // FeedHero working copies with an EMPTY input column beside the populated output) —
+        // collect every candidate column and let the values decide which one is live
+        cands=[]; 
+        for(var i=0;i<r.length;i++){ var k=FeedAudit.normKey(r[i]);
+          if(k==='product_type'||k.indexOf('product_type')===0||k.replace(/[^a-z]/g,'')==='producttype')cands.push(i); }
+        cmaps=cands.map(function(){return {}});
         return; }
       rows++;
-      var v=ptIdxCol>=0?String(r[ptIdxCol]||'').trim():'';
-      if(v)map[v]=(map[v]||0)+1;
+      for(var ci=0;ci<cands.length;ci++){ var v=String(r[cands[ci]]||'').trim(); if(v)cmaps[ci][v]=(cmaps[ci][v]||0)+1; }
       if(rows%2000===0)$('#mstate').textContent='syncing '+mkt.toUpperCase()+'… '+fmt(rows)+' products';
     });
     $('#mstate').textContent='streaming the live '+mkt.toUpperCase()+' feed…';
@@ -591,7 +596,12 @@ function syncPT(){
       var reader=res.body.getReader(),dec=new TextDecoder();
       function step(){ return reader.read().then(function(x){
         if(x.done){ parser.push(dec.decode()); parser.end();
+          var map={}, best=-1; // the populated candidate wins (FeedHero empty-input columns lose)
+          cmaps.forEach(function(m2,ci){ var n=0,k2; for(k2 in m2)n+=m2[k2]; if(n>best){best=n;map=m2} });
           var r=rec(); r.ptidx=r.ptidx||{}; r.ptidx[mkt]={__total:rows,map:map,t:Date.now()};
+          if(!Object.keys(map).length){ // zero uniques = the column wasn't matched; name the suspects
+            var suspects=(header||[]).map(function(h){return FeedAudit.normKey(h)}).filter(function(k){return k.indexOf('type')>=0||k.indexOf('categor')>=0});
+            err('Synced '+fmt(rows)+' '+mkt.toUpperCase()+' products but no product_type column matched. Type-ish headers seen: '+(suspects.join(', ')||'(none)')+' — tell Claude and it will map this client.'); }
           nextMkt(); return; }
         parser.push(dec.decode(x.value,{stream:true})); return step();
       }); }
