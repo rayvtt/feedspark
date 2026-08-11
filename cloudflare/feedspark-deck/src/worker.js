@@ -50,6 +50,8 @@ import FEEDLAB from "../../../docs/FeedSpark_FeedLab.html";
 import PRICER from "../../../docs/FeedSpark_Pricer.html";
 // Label Guard — custom-label capture + drop-off monitoring module (page at /labels)
 import LABELGUARD_PAGE from "../../../docs/FeedSpark_LabelGuard.html";
+// Keyword optimisation calendar — marketing moments drive the KW schedule (docs/FeedSpark_KWCal.html)
+import KWCAL from "../../../docs/FeedSpark_KWCal.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
 // node tests share the file, same pattern as the Feed Lab engine)
 import PRICER_ENGINE from "../../../docs/pricer_engine.js";
@@ -93,6 +95,7 @@ const PAGES = {
   '/feedlab':     { html: FEEDLAB,     slug: 'feedlab' },
   '/labels':      { html: LABELGUARD_PAGE, slug: 'labels' },
   '/pricer':      { html: PRICER,      slug: 'pricer' },
+  '/kwcal':       { html: KWCAL,       slug: 'kwcal' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
@@ -241,7 +244,8 @@ export default {
         '/api/labels/scan': 'label-scan', '/api/labels/ack': 'label-rebase',
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
-        '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send' };
+        '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send',
+        '/api/kwcal': 'kwcal-save' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -562,6 +566,11 @@ export default {
 
     // ---- Tachyon Pricer: collaborative rate card + saved quotes (kvmerge = every team
     // edits the same numbers concurrency-safe; edits are activity-logged per Access user) ----
+    // Keyword calendar store — per-client marketing moments + measured feed impact (kvmerge)
+    if (path === '/api/kwcal') {
+      const r = await mapStoreRoute(env, request, 'kwcal', {});
+      if (r) return r;
+    }
     if (path === '/api/tachyon/rates') {
       const r = await mapStoreRoute(env, request, 'tachyonrates', {});
       if (r) return r;
