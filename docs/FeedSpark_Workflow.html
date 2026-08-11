@@ -940,6 +940,22 @@ window.addEventListener('load',restore);
   function abbr(c){ if(ABBR[c])return ABBR[c]; var w=String(c||'').trim().split(/\s+/);
     return ((w.length>1?w.map(function(x){return x.charAt(0);}).join(''):String(c||'').slice(0,3)).toUpperCase().slice(0,3))||'—'; }
   var DONE_RE=/\b(done|finished|complete|completed|delivered|live|actioned|signed[\s-]?off)\b/i;
+  // go-live signal for TEST briefs (keywords / A/B / title tests): ASPL saying it's live, or
+  // Ray's own "please live it". Distinct from DONE_RE — going live starts the RUN, it doesn't
+  // finish the work: the due re-dates to +SLA (the analysis date) and the stage flips to 🧪.
+  var LIVE_RE=/\b(is (now )?live|now live|gone live|went live|going live|set (it )?live|pushed (it )?live|please live it|live it please|test (is )?(now )?running)\b/i;
+  function goLive(b,ts){ if(!b||!needsAnalysis(b)||b.status==='confirmed')return false;
+    ts=ts||Date.now(); var sla=runSlaDays(b)||14, nd=new Date(ts+sla*86400000);
+    b.liveAt=ts; b.due=pad(nd.getDate())+pad(nd.getMonth()+1)+nd.getFullYear();
+    if(b.status!=='analysis')setStage(b,'analysis'); else b.updated=Date.now();
+    persist();
+    // the timeline plots the INTAKE ROW's date — re-date the linked row too (plan write-back
+    // included), so the card jumps to the analysis week and the grid shows the same date
+    var iso=nd.getFullYear()+'-'+pad(nd.getMonth()+1)+'-'+pad(nd.getDate()), row=null;
+    if(b.taskKey)allIntake().forEach(function(x){ if(!row&&(x.client+'|'+x.task)===b.taskKey)row=x; });
+    if(row)setDue(row,iso); else renderAll();
+    toast('🚀 Live — '+sla+'d run · analysis due '+humanDD(b.due));
+    return true; }
   // ---- the 3 courts: which team/domain holds the ball at each stage ----
   var COURT={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',analysis:'AM',confirmed:''};
   var SLA_STAGE={intake:2,blocked:1,done:3,analysis:5};   // max days sitting in a stage before it escalates (ASPL court uses the silence rule)
@@ -2315,6 +2331,7 @@ window.addEventListener('load',restore);
         +'<input id="m-note" placeholder="Paste / summarise their reply…"><button class="btn" id="m-log">Log</button></div>'
         +'<div class="scan-hit" id="m-scan"></div></div>'
       +'<div class="m-act">'
+        +(needsAnalysis(b)&&b.status!=='confirmed'&&b.status!=='analysis'?'<button class="btn" id="m-live" style="border-color:#BFE3C8;color:#15803D" title="The test is live: due re-dates to +'+(runSlaDays(b)||14)+'d (the analysis date), the card jumps to that week, stage → Analysis 🧪">🚀 Test live</button>':'')
         +(needsAnalysis(b)&&(b.status==='analysis'||b.status==='done')?'<button class="btn" id="m-result" style="border-color:#D8CCF4;color:#7C3AED">🧪 Log result</button>':'')
         +'<a class="btn pri" id="m-brief" target="_blank" rel="noopener">✉ Re-draft brief to ASPL</a>'
         +'<a class="btn" id="m-chase" target="_blank" rel="noopener">⏰ Chase ASPL</a>'
@@ -2330,11 +2347,15 @@ window.addEventListener('load',restore);
     document.getElementById('m-brief').href='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(b.subject||('[FS Brief] '+b.client))+'&body='+encodeURIComponent(b.body||'');
     // completion scan on new note
     var noteEl=document.getElementById('m-note'), scanEl=document.getElementById('m-scan');
-    noteEl.addEventListener('input',function(){ if(DONE_RE.test(noteEl.value)){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this moves the ticket to '+(needsAnalysis(b)?'“Analysis 🧪” (analysis still needed)':'“Done — ASPL”')+'.'; } else scanEl.className='scan-hit'; });
+    noteEl.addEventListener('input',function(){
+      if(LIVE_RE.test(noteEl.value)&&needsAnalysis(b)){ scanEl.className='scan-hit on'; scanEl.textContent='🚀 Go-live signal — logging this re-dates the due to +'+(runSlaDays(b)||14)+'d for analysis and moves the ticket to “Analysis 🧪”.'; }
+      else if(DONE_RE.test(noteEl.value)){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this moves the ticket to '+(needsAnalysis(b)?'“Analysis 🧪” (analysis still needed)':'“Done — ASPL”')+'.'; } else scanEl.className='scan-hit'; });
     document.getElementById('m-log').onclick=function(){ var note=noteEl.value.trim(); if(!note)return;
-      var done=DONE_RE.test(note); b.comms=b.comms||[]; b.comms.push({from:document.getElementById('m-from').value,note:note,done:done,when:Date.now()});
-      // a completion signal from ASPL moves the brief on — test tickets go to Analysis, not Done.
-      if(done && b.status!=='confirmed' && b.status!=='done' && b.status!=='analysis') setStage(b,needsAnalysis(b)?'analysis':'done');
+      var done=DONE_RE.test(note), golive=LIVE_RE.test(note)&&needsAnalysis(b); b.comms=b.comms||[]; b.comms.push({from:document.getElementById('m-from').value,note:note,done:done,when:Date.now()});
+      // a go-live signal starts the RUN (due → +SLA, stage → analysis); a completion signal
+      // moves the brief on — test tickets go to Analysis, not Done.
+      if(golive && b.status!=='confirmed') goLive(b);
+      else if(done && b.status!=='confirmed' && b.status!=='done' && b.status!=='analysis') setStage(b,needsAnalysis(b)?'analysis':'done');
       b.updated=Date.now(); persist(); renderAll(); openModal(b.id); };
     // client confirmation draft
     var conf=document.getElementById('m-confirm');
@@ -2344,6 +2365,7 @@ window.addEventListener('load',restore);
       if(needsAnalysis(b)&&!hasResult(b)){ ev.preventDefault(); toast('Log the analysis result first — 🧪 Log result'); return; }
       setStage(b,'confirmed'); persist(); setTimeout(function(){renderAll();},400); });
     var resBtn=document.getElementById('m-result'); if(resBtn)resBtn.onclick=function(){ logResult(b); };
+    var liveBtn=document.getElementById('m-live'); if(liveBtn)liveBtn.onclick=function(){ goLive(b); openModal(b.id); };
     // #4 chase drafts + ASPL owner reassign
     document.getElementById('m-chase').href=chaseAspl(b);
     document.getElementById('m-chasec').href=chaseClient(b);
@@ -2452,17 +2474,21 @@ window.addEventListener('load',restore);
     if(!b){ out.className='lu-out miss'; out.textContent='No ticket matched — include the [ibfcode:…] token, the brief ID, or more of the task wording.'; return; }
     var sender='ASPL'; ASPL.forEach(function(n){ if(new RegExp('\\b'+n+'\\b','i').test(text))sender=n; });
     var done=DONE_RE.test(text), blocked=/\b(blocked|blocker|waiting on|on hold|stuck|dependency)\b/i.test(text),
-        prog=/\b(started|in progress|underway|working on|wip|eta|will complete|picking (this|it) up)\b/i.test(text);
+        prog=/\b(started|in progress|underway|working on|wip|eta|will complete|picking (this|it) up)\b/i.test(text),
+        golive=LIVE_RE.test(text)&&needsAnalysis(b);
     b.comms=b.comms||[]; b.comms.push({from:sender,note:text.slice(0,600),done:done,when:Date.now()});
-    var moved='';
-    if(done&&b.status!=='confirmed'&&b.status!=='done'&&b.status!=='analysis'){ var ds2=needsAnalysis(b)?'analysis':'done'; setStage(b,ds2); moved=STAGE_LBL[ds2]; }
+    var moved='', dueTxt='';
+    if(golive&&b.status!=='confirmed'){ goLive(b); moved=STAGE_LBL.analysis; dueTxt=' · 🚀 live, '+(runSlaDays(b)||14)+'d run → analysis due '+humanDD(b.due); }
+    else if(done&&b.status!=='confirmed'&&b.status!=='done'&&b.status!=='analysis'){ var ds2=needsAnalysis(b)?'analysis':'done'; setStage(b,ds2); moved=STAGE_LBL[ds2]; }
     else if(blocked&&(b.status==='briefed'||b.status==='progress')){ setStage(b,'blocked'); moved=STAGE_LBL.blocked; }
     else if(prog&&(b.status==='intake'||b.status==='briefed')){ setStage(b,'progress'); moved=STAGE_LBL.progress; }
-    var dueTxt='', dd8='', dm=/ibfdue:(\d{8})/.exec(text);
+    // pasted replies quote the ORIGINAL brief, whose subject carries the old ibfdue token —
+    // once a ticket is live, the analysis date owns the due; stale tokens must not claw it back
+    var dd8='', dm=/ibfdue:(\d{8})/.exec(text);
     if(dm)dd8=dm[1];
     else { var em2=/\beta\b[^\d]{0,8}(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?/i.exec(text);
       if(em2){ var y1=em2[3]?((''+em2[3]).length===2?('20'+em2[3]):(''+em2[3])):(''+today().getFullYear()); dd8=pad(+em2[1])+pad(+em2[2])+y1; } }
-    if(dd8&&dd8.length===8&&dd8!==b.due&&ddmmyyyyToDate(dd8)){ b.due=dd8; dueTxt=' · due → '+humanDD(dd8); }
+    if(!golive&&!b.liveAt&&dd8&&dd8.length===8&&dd8!==b.due&&ddmmyyyyToDate(dd8)){ b.due=dd8; dueTxt=' · due → '+humanDD(dd8); }
     b.updated=Date.now(); persist(); renderAll(); ta.value='';
     out.className='lu-out hit';
     out.innerHTML='✓ Logged to <b>'+esc(b.id)+'</b> — '+esc(b.client)+' · '+esc(b.task.slice(0,60))+(moved?' · moved → <b>'+esc(moved)+'</b>':'')+esc(dueTxt)+' · from '+esc(sender)+'.';
