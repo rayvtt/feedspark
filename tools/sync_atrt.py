@@ -115,6 +115,11 @@ def find_status(cells):
 
 def find_action(cells):
     j = " ".join(cells).lower()
+    # ACS is matched case-SENSITIVELY on the raw cells, and word-bounded: lower-cased "acs"
+    # sits inside ordinary words (tracks, packs, backs, feedbacks) and would otherwise
+    # re-source unrelated rows on every sync. Checked first because an explicit source tag
+    # beats an incidental "monthly call"/"import" mention elsewhere in the row.
+    if re.search(r"\bACS\b", " ".join(cells)): return "acs"
     if "monthly call" in j: return "monthly call"
     if "import" in j: return "import"
     if "[atrt]" in j or "atrt]" in j: return "email"
@@ -225,7 +230,8 @@ def render_log(tasks):
             f'<td><span class="tag tag-{STATUS_CLASS.get(t["status"],"hold")}">{esc(t["status"])}</span></td></tr>')
     ae = Counter(t["ae"] for t in active)
     src = Counter(t["action"] for t in active)
-    src_lbl = {"import": "AM project plan", "monthly call": "Monthly call", "email": "Email / ad-hoc", "other": "Other"}
+    src_lbl = {"import": "AM project plan", "monthly call": "Monthly call", "email": "Email / ad-hoc",
+               "acs": "ACS", "other": "Other"}
     ae_rows = "".join(f'<div class="planrow"><span class="nm">{esc(k)}</span><span class="tag">{v} active</span></div>'
                       for k, v in ae.most_common(8))
     src_rows = "".join(f'<div class="planrow"><span class="nm">{esc(src_lbl.get(k,k))}</span><span class="tag">{v}</span></div>'

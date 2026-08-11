@@ -1074,13 +1074,6 @@
       "pr": 180
     },
     {
-      "name": "Pricer: seeded AI briefs — ASPL dev handback per-brief token data (Mon/Acc/Hobbycraft/Superdry)",
-      "file": "docs/FeedSpark_Pricer.html",
-      "pattern": "SEED_TRACK",
-      "min": 2,
-      "pr": 173
-    },
-    {
       "name": "workflow: Briefing Studio — context rail, workload scheduling, checklist, Tachyon draft",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "bsPropose",
@@ -1316,6 +1309,27 @@
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "href=\"/kwcal\"",
       "pr": 204
+    },
+    {
+      "name": "Workflow: recurring tasks — ⟳ weekly/monthly/quarterly, next occurrence on Done",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "recSpawn",
+      "min": 2,
+      "pr": 206
+    },
+    {
+      "name": "Workflow: attach an intake task to an existing ticket (taskKeys)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "fillAttach",
+      "min": 3,
+      "pr": 208
+    },
+    {
+      "name": "Workflow: client confirmation drafted in Ray's own voice (no codes, no system phrasing)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "Hope the week’s going well",
+      "min": 1,
+      "pr": 209
     }
   ]
 }

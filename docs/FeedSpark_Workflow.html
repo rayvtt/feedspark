@@ -141,6 +141,10 @@ window.addEventListener('load',restore);
   .bs-ai{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--orange);background:rgba(245,166,35,.1);color:var(--orange-ink);cursor:pointer}
   .bs-ai:hover{background:rgba(245,166,35,.2)}
   .bg-mhead{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+  .bg-attach{background:var(--wash);border:1px dashed var(--line);border-radius:10px;padding:8px 10px}
+  .bg-attach-row{display:flex;gap:8px;align-items:center}
+  .bg-attach-row select{flex:1;min-width:0}
+  .bg-attach-note{font-size:11px;color:var(--muted);font-weight:600;margin-top:5px}
   .bg-mhead .mc{margin-bottom:0}
   /* two-column generator */
   .gen{display:grid;grid-template-columns:1.05fr 1fr;gap:16px;align-items:start}
@@ -347,6 +351,10 @@ window.addEventListener('load',restore);
     <div class="panel">
       <h3>Brief details</h3>
       <p class="psub">Fill the task and due date. Client sets the code; market defaults to GB.</p>
+      <div class="fld bg-attach" id="bg-attach" hidden><label>Already covered by a ticket?</label>
+        <div class="bg-attach-row"><select id="bg-attach-sel" aria-label="Existing ticket to attach this task to"></select>
+          <button class="btn sm" id="bg-attach-go" type="button">⛓ Attach task</button></div>
+        <div class="bg-attach-note">Links this Intake row to the chosen ticket instead of creating a new brief — the row takes the ticket’s chip and moves to Briefed.</div></div>
       <div class="frow3">
         <div class="fld"><label>Client</label><select id="bg-client"></select></div>
         <div class="fld"><label>Market</label><input id="bg-market" value="gb" maxlength="6"></div>
@@ -447,12 +455,12 @@ window.addEventListener('load',restore);
   #itbl{table-layout:fixed}
   #itbl col.cw-cb{width:30px}#itbl col.cw-client{width:9.5%}#itbl col.cw-feed{width:8.5%}
   #itbl col.cw-task{width:auto}#itbl col.cw-owner{width:8.5%}#itbl col.cw-due{width:56px}
-  #itbl col.cw-status{width:104px}#itbl col.cw-source{width:70px}#itbl col.cw-act{width:122px}
+  #itbl col.cw-status{width:104px}#itbl col.cw-source{width:70px}#itbl col.cw-act{width:166px}   /* four controls now — ⟳ 👁 ✕ Brief; 122px clipped the Brief pill */
   .itbl thead th{position:sticky;top:0;background:var(--paper);z-index:2;text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);padding:9px 8px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;box-shadow:inset 0 -1px 0 var(--line);overflow:hidden;text-overflow:ellipsis}
   .itbl thead th.it-act{text-align:right;cursor:default}
   .itbl thead th[data-k]:hover{color:var(--orange-deep)}
   .itbl thead th .ar{font-size:9px;color:var(--orange-deep)}
-  .itbl tbody td{padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:top;overflow:hidden}
+  .itbl tbody td{padding:8px 8px;border-bottom:1px solid var(--line);vertical-align:middle;overflow:hidden}   /* middle, not top — small chips (Source/Feed) sat high in wrapped rows while selects/buttons read centred */
   .itbl tbody tr:last-child td{border-bottom:0}
   .itbl tbody tr:hover{background:var(--wash)}
   .itbl .c-client{font-weight:800;white-space:nowrap;text-overflow:ellipsis}
@@ -474,6 +482,7 @@ window.addEventListener('load',restore);
   .itbl .src-brf{color:#fff;background:var(--orange-deep);border-color:var(--orange-deep);margin-left:4px;font-weight:900}
   .itbl .src-atrt{color:#7A5AA8;background:rgba(122,90,168,.13);border-color:rgba(122,90,168,.34)}
   .itbl .c-act{text-align:right;white-space:nowrap}
+  .itbl .c-act button{height:26px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}   /* one height + centre line for ⟳ 👁 ✕ Brief — they each carried their own padding maths */
   .itbl .brief-btn{font:inherit;font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
   .itbl .del-btn{font:inherit;font-size:12px;font-weight:800;padding:4px 7px;margin-right:4px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer}
   .itbl .del-btn:hover{border-color:#C0392B;color:#C0392B}
@@ -481,6 +490,14 @@ window.addEventListener('load',restore);
   .itbl .hide-btn{display:inline-flex;align-items:center;justify-content:center;padding:4px 6px;margin-right:4px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer;vertical-align:middle}
   .itbl .hide-btn:hover{border-color:var(--navy);color:var(--navy)}
   .itbl .hide-btn.on{border-color:var(--navy);color:var(--navy);background:rgba(26,54,93,.08)}
+  .itbl .rec-btn{font:inherit;font-size:12px;font-weight:800;padding:4px 7px;margin-right:4px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer}
+  .itbl .rec-btn:hover{border-color:var(--orange-ink);color:var(--orange-ink)}
+  .itbl .rec-btn.on{border-color:var(--orange);color:var(--orange-ink);background:rgba(245,166,35,.14)}
+  .rec-menu{position:absolute;z-index:260;background:var(--paper);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 26px rgba(0,0,0,.16);padding:6px;min-width:200px}
+  .rec-menu .rec-note{font-size:11px;color:var(--muted);font-weight:600;padding:4px 10px 6px;max-width:230px}
+  .rec-menu button{display:block;width:100%;text-align:left;font:inherit;font-size:12.5px;font-weight:700;padding:7px 10px;border:0;background:none;border-radius:7px;cursor:pointer;color:var(--ink)}
+  .rec-menu button:hover{background:var(--wash)}
+  .rec-menu button.cur{color:var(--orange-ink)}
   .itbl tr.row-hidden{opacity:.5}
   .itbl tr.row-hidden .c-task{font-style:italic}
   .it-hidden-tog{font:inherit;font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:100px;border:1px dashed var(--line);background:var(--paper);color:var(--muted);cursor:pointer;white-space:nowrap;margin-left:8px}
@@ -574,11 +591,14 @@ window.addEventListener('load',restore);
   /* linked-brief chip on intake rows */
   .bf-chip{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:100px;font-size:9.5px;font-weight:900;color:#fff;cursor:pointer;vertical-align:1px;white-space:nowrap}
   /* escalation court chips */
-  .crtchip{font-size:9.5px;font-weight:900;padding:2px 8px;border-radius:100px;background:var(--wash);white-space:nowrap;text-transform:uppercase;letter-spacing:.03em}
-  .crtchip.c-am{color:var(--orange-deep);background:rgba(237,111,11,.1)}
-  .crtchip.c-aspl{color:#2F6FB0;background:rgba(47,111,176,.1)}
-  .crtchip.c-client{color:#15803D;background:rgba(21,128,61,.1)}
-  .stall-row.esc{grid-template-columns:auto 1.1fr 3fr 1fr auto auto}
+  /* court chips wear the same pill as the Intake/Timeline source tags — 10px/800, bordered */
+  .crtchip{font-size:10px;font-weight:800;padding:2px 9px;border-radius:100px;border:1px solid;white-space:nowrap;text-transform:uppercase;letter-spacing:.03em;justify-self:start}
+  .crtchip.c-am{color:var(--orange-ink);background:rgba(237,111,11,.12);border-color:rgba(237,111,11,.32)}
+  .crtchip.c-aspl{color:#2F6FB0;background:rgba(47,111,176,.13);border-color:rgba(47,111,176,.32)}
+  .crtchip.c-client{color:#15803D;background:rgba(21,128,61,.13);border-color:rgba(21,128,61,.32)}
+  /* no auto/content-sized columns: each row is its own grid, so content-driven widths made the
+     columns wander row to row (the circled misalignment). Fixed px + minmax(0,fr) only. */
+  .stall-row.esc{grid-template-columns:64px minmax(0,1.1fr) minmax(0,2.6fr) minmax(0,.9fr) minmax(0,2.2fr) 108px}
   /* read-out (run) SLA editor */
   .runsla-bar{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin:0 0 12px;padding:9px 14px;background:var(--paper);border:1px dashed var(--line);border-radius:11px;font-size:12.5px}
   .runsla-bar .rs-h{font-weight:900;color:var(--ink);text-transform:uppercase;font-size:10.5px;letter-spacing:.04em}
@@ -595,13 +615,14 @@ window.addEventListener('load',restore);
   .sla-row b{color:var(--ink);font-size:14px}
   .sla-row b.bad{color:#C0392B}
   .stall-list{display:flex;flex-direction:column;gap:2px}
-  .stall-row{display:grid;grid-template-columns:1.1fr 3fr 1fr auto auto;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px}
+  .stall-row{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,3fr) minmax(0,.9fr) minmax(0,2.2fr) 108px;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px}
   .stall-row:last-child{border-bottom:0}
   .stall-row:hover{background:var(--wash)}
-  .stall-c{font-weight:800;white-space:nowrap}
+  .stall-c{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .stall-t{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .stall-a{color:var(--muted);font-weight:700;white-space:nowrap}
-  .stall-d{color:#C0392B;font-weight:800;font-size:12px;white-space:nowrap}
+  .stall-a{color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stall-d{color:#C0392B;font-weight:800;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+  .stall-row .mini-btn{justify-self:end}
   /* timeline — full-bleed out of .wrap's 1240px cap so an AM can work a whole book on one screen.
      --sbw is the scrollbar width, measured in JS: plain 100vw includes it and would overflow. */
   .tl-sec{width:calc(100vw - var(--sbw,0px));margin-left:calc(50% - 50vw + var(--sbw,0px)/2);padding:0 22px}
@@ -982,6 +1003,7 @@ window.addEventListener('load',restore);
   function saveStatus(client,task,val){ try{var o=statusOverlay(); o[client+'|'+task]=val; localStorage.setItem('fcc-taskstatus',JSON.stringify(o));}catch(e){} }
   function writeStatus(client,task,val){                 // 2-way write to the brand's plan sheet
     saveStatus(client,task,val);
+    if(bucketOf(val)==='done')recSpawn(client,task);     // a recurring row completing spawns its next occurrence
     var id=PLANSHEET[client]; if(!id){ toast('Status saved · link '+client+'’s plan sheet to write it back'); return; }
     toast('Writing status to '+client+'’s plan…');
     fetch('/api/sheets/status',{method:'POST',headers:{'content-type':'application/json'},
@@ -1342,6 +1364,49 @@ window.addEventListener('load',restore);
   function hideTask(t){ HIDDEN[t.client+'|'+t.task]=1; saveHidden(); toast('Hidden as a note — still in '+(t.source==='plan'?(t.client+'’s plan'):'the record')); renderAll(); }
   function unhideTask(t){ delete HIDDEN[t.client+'|'+t.task]; saveHidden(); toast('Restored to the task list'); renderAll(); }
   function hiddenInView(){ var n=0; allIntake().forEach(function(r){ if(HIDDEN[r.client+'|'+r.task])n++; }); return n; }
+  // ---- recurring tasks (⟳): weekly / monthly / every 3 months per row. The marker sits on the
+  // LATEST occurrence only; when that row reaches a done-bucket status, the next occurrence is
+  // created through the same MANUAL + sheet-append path as Add task and the marker moves onto
+  // it — so re-marking an old occurrence Done can never spawn a duplicate.
+  var RECUR={}; try{RECUR=JSON.parse(localStorage.getItem('fcc-recur')||'{}');}catch(e){}
+  function saveRecur(){ try{localStorage.setItem('fcc-recur',JSON.stringify(RECUR));}catch(e){} }
+  var REC_LBL={'1w':'Weekly','1m':'Monthly','3m':'Every 3 months'};
+  function recAdvance(d,every){ var n=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+    if(every==='1w'){ n.setDate(n.getDate()+7); return n; }
+    var mo=n.getMonth()+(every==='3m'?3:1), day=n.getDate();
+    var last=new Date(n.getFullYear(),mo+1,0).getDate();     // clamp: 31 Jan +1m = 28 Feb, never 3 Mar
+    return new Date(n.getFullYear(),mo,Math.min(day,last)); }
+  function setRecur(t,every){ var k=t.client+'|'+t.task;
+    if(!every){ delete RECUR[k]; saveRecur(); toast('Repeat off'); renderIntake(); return; }
+    // keep the ORIGINAL name as the chain's base so occurrence suffixes never stack up
+    var base=(RECUR[k]&&RECUR[k].base)||t.task.replace(/ · \d{1,2} [A-Za-z]{3,4}\.?$/,'');
+    RECUR[k]={every:every,base:base}; saveRecur();
+    toast('↻ '+REC_LBL[every]+' — the next occurrence is created when this one is marked Done'); renderIntake(); }
+  function recSpawn(client,task){ var k=client+'|'+task, r=RECUR[k]; if(!r)return;
+    var row=null; allIntake().forEach(function(x){ if(!row&&x.client===client&&x.task===task)row=x; });
+    var from=(row&&taskDate(row))||new Date(), nd=recAdvance(from,r.every);
+    var base=r.base||task, name=base+' · '+nd.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    var due=('0'+nd.getDate()).slice(-2)+'/'+('0'+(nd.getMonth()+1)).slice(-2)+'/'+nd.getFullYear();
+    var owner=(row&&row.owner&&row.owner!=='—')?row.owner:'';
+    delete RECUR[k]; RECUR[client+'|'+name]={every:r.every,base:base}; saveRecur();   // the marker rides the chain
+    MANUAL.push({client:client,task:name,owner:owner,status:'Open',due:due}); saveManual();
+    toast('↻ '+REC_LBL[r.every]+' — next occurrence created, due '+due);
+    var id=PLANSHEET[client];
+    if(id){ fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',rows:[{task:name,owner:owner,status:'Open',due:due}]})})
+      .then(function(x){return x.json();}).then(function(d){ if(d&&d.ok&&LIVE[client])setTimeout(function(){fetchLive(true);},800); }).catch(function(){}); } }
+  function recMenu(btn,t){
+    var old=document.getElementById('rec-menu'); if(old)old.remove();
+    var cur=(RECUR[t.client+'|'+t.task]||{}).every||'';
+    var m=document.createElement('div'); m.className='rec-menu'; m.id='rec-menu';
+    m.innerHTML='<div class="rec-note">Repeat — the next occurrence is created (and written to the plan) when this one is marked Done.</div>'
+      +[['1w','Weekly'],['1m','Monthly'],['3m','Every 3 months'],['','No repeat']].map(function(o){
+        return '<button type="button" data-v="'+o[0]+'" class="'+(cur===o[0]?'cur':'')+'">'+(o[0]?'⟳ ':'✕ ')+o[1]+(cur===o[0]&&o[0]?' ✓':'')+'</button>'; }).join('');
+    document.body.appendChild(m);
+    var rc=btn.getBoundingClientRect();
+    m.style.left=Math.max(8,Math.min(window.innerWidth-m.offsetWidth-8,rc.right+window.scrollX-m.offsetWidth))+'px';
+    m.style.top=(rc.bottom+window.scrollY+6)+'px';
+    m.querySelectorAll('button').forEach(function(b){ b.onclick=function(){ setRecur(t,b.getAttribute('data-v')); m.remove(); }; });
+    setTimeout(function(){ document.addEventListener('mousedown',function h(e){ if(!m.contains(e.target)){ m.remove(); document.removeEventListener('mousedown',h); } }); },0); }
   // REMOVE CLIENT — drop a whole client out of the intake and every filter (local, reversible).
   // Plan sheets are untouched; restore any time from the bottom of the client-filter menu.
   var RMCL={}; try{RMCL=JSON.parse(localStorage.getItem('fcc-wf-removed')||'{}');}catch(e){}
@@ -1356,6 +1421,7 @@ window.addEventListener('load',restore);
                               :('Remove this task from the inbox?\n\n'+t.task);
     if(!confirm(msg))return;
     markDel(t.client,t.task);
+    if(RECUR[t.client+'|'+t.task]){ delete RECUR[t.client+'|'+t.task]; saveRecur(); }   // a deleted row must not keep spawning
     if(t.source==='plan'){ var id=PLANSHEET[t.client];
       if(id){ toast('Deleting from '+t.client+'’s plan…');
         fetch('/api/sheets/unappend',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',tasks:[t.task]})})
@@ -1418,7 +1484,8 @@ window.addEventListener('load',restore);
     var ov=statusOverlay(), duo=dueOverlay(), owo=ownerOverlay(), ren=renameOverlay();
     return MANUAL.map(function(m){ var task=ren[m.client+'|'+m.task]||m.task; return {c:m.client,orig:m.task,task:task}; })
       .filter(function(m){ var plan=idx[m.c]||[];                          // suppress once the real plan contains it
-        for(var i=0;i<plan.length;i++){ if(sameTask(m.task,plan[i]))return false; }
+        var rec=!!RECUR[m.c+'|'+m.task];                                   // a spawned occurrence ("task · 12 Sep") fuzzy-matches its own base row — exact match only, or it vanishes until the sheet round-trip
+        for(var i=0;i<plan.length;i++){ if(rec?normTask(m.task)===normTask(plan[i]):sameTask(m.task,plan[i]))return false; }
         return !DELETED[m.c+'|'+m.task]; })
       .map(function(m){ var src=MANUAL.filter(function(x){return x.client===m.c&&x.task===m.orig;})[0]||{}; var k=m.c+'|'+m.task;
         var s=ov[k]!=null?ov[k]:(src.status||'Open');
@@ -1491,18 +1558,21 @@ window.addEventListener('load',restore);
   function saveOwnerLocal(c,t,v){ try{var o=ownerOverlay(); if(v)o[c+'|'+t]=v; else delete o[c+'|'+t]; localStorage.setItem('fcc-taskowner',JSON.stringify(o));}catch(e){} }
   function renameOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskrename')||'{}');}catch(e){return {};} }
   function saveRename(c,oldT,newT){ try{var o=renameOverlay(); o[c+'|'+oldT]=newT; localStorage.setItem('fcc-taskrename',JSON.stringify(o));}catch(e){}
-    if(ESRC[c+'|'+oldT])markEsrc(c,newT); }   // a renamed email task keeps its Email label
+    if(ESRC[c+'|'+oldT])markEsrc(c,newT);   // a renamed email task keeps its Email label
+    if(RECUR[c+'|'+oldT]){ RECUR[c+'|'+newT]=RECUR[c+'|'+oldT]; delete RECUR[c+'|'+oldT]; saveRecur(); } }   // …and a renamed recurring task keeps its repeat
   function editOwner(t){ var cur=(t.owner&&t.owner!=='—')?t.owner:''; var v=prompt('Task owner — who’s doing it (blank to clear):',cur); if(v===null)return; setOwner(t,(''+v).trim()); }
   // reassign a task's CLIENT: local overlays + linked ticket follow the new key, and the row
   // MOVES between project plans — deleted from the old client's sheet, appended to the new one's.
   function setTaskClient(t,nc){ var oc=t.client; if(!nc||nc===oc)return;
     var ok=oc+'|'+t.task, nk=nc+'|'+t.task;
-    ['fcc-taskstatus','fcc-taskdue','fcc-taskowner','fcc-taskrename','fcc-esrc'].forEach(function(store){
+    ['fcc-taskstatus','fcc-taskdue','fcc-taskowner','fcc-taskrename','fcc-esrc','fcc-recur'].forEach(function(store){
       try{ var o=JSON.parse(localStorage.getItem(store)||'{}'); if(o[ok]!=null){ o[nk]=o[ok]; delete o[ok]; localStorage.setItem(store,JSON.stringify(o)); } }catch(e){} });
     if(ESRC[ok]){ delete ESRC[ok]; ESRC[nk]=1; }   // keep the in-memory copy in step, or the next markEsrc would clobber the migrated store
+    if(RECUR[ok]){ RECUR[nk]=RECUR[ok]; delete RECUR[ok]; }   // same for the repeat marker
     if(HIDDEN[ok]){ HIDDEN[nk]=HIDDEN[ok]; delete HIDDEN[ok]; saveHidden(); }
-    var chg=false; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey===ok){
-      b.taskKey=nk; b.client=nc; if(b.code)b.code=code(nc,(b.code.split('-').pop()||'gb')); chg=true; } }); if(chg)persist();
+    var chg=false; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return; if(b.taskKey===ok){
+      b.taskKey=nk; b.client=nc; if(b.code)b.code=code(nc,(b.code.split('-').pop()||'gb')); chg=true; }
+      var ti=(b.taskKeys||[]).indexOf(ok); if(ti>=0){ b.taskKeys[ti]=nk; chg=true; } }); if(chg)persist();
     var owner=(t.owner&&t.owner!=='—')?t.owner:'', status=t.s||'Open';
     var pd=taskDate(t), due=pd?(pad(pd.getDate())+'/'+pad(pd.getMonth()+1)+'/'+pd.getFullYear()):'';
     var mi=-1; MANUAL.forEach(function(m,x){ if(mi<0&&m.client===oc&&sameTask(m.task,t.task))mi=x; });
@@ -1527,7 +1597,9 @@ window.addEventListener('load',restore);
       try{ var o=JSON.parse(localStorage.getItem(store)||'{}'); if(o[ok]!=null){ o[nk]=o[ok]; delete o[ok]; localStorage.setItem(store,JSON.stringify(o)); } }catch(e){} });
     if(HIDDEN[ok]){ HIDDEN[nk]=HIDDEN[ok]; delete HIDDEN[ok]; saveHidden(); }
     if(DELETED[ok]){ DELETED[nk]=DELETED[ok]; delete DELETED[ok]; try{localStorage.setItem('fcc-deleted',JSON.stringify(DELETED));}catch(e){} }
-    var relinked=false; Object.keys(BRIEFS).forEach(function(id){ if(BRIEFS[id]&&BRIEFS[id].taskKey===ok){ BRIEFS[id].taskKey=nk; relinked=true; } }); if(relinked)persist(); }
+    var relinked=false; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return;
+      if(b.taskKey===ok){ b.taskKey=nk; relinked=true; }
+      var ti=(b.taskKeys||[]).indexOf(ok); if(ti>=0){ b.taskKeys[ti]=nk; relinked=true; } }); if(relinked)persist(); }
   function setTaskText(t,val){ recPush({client:t.client,task:val,source:t.source,key:'task',prev:t.task}); migrateKey(t.client,t.task,val); saveRename(t.client,t.task,val);
     if(t.source==='plan'){ var id=PLANSHEET[t.client];
       if(id){ toast('Renaming task in '+t.client+'’s plan…');
@@ -1598,12 +1670,12 @@ window.addEventListener('load',restore);
     ensureClientFilter();
     renderClientChips();
     var f=intakeFiltered();
-    var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey)BK[b.taskKey]=b; });   // intake row -> its live ticket
+    var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return; if(b.taskKey)BK[b.taskKey]=b; (b.taskKeys||[]).forEach(function(k){ if(!BK[k])BK[k]=b; }); });   // intake row -> its live ticket (primary + attached)
     body.innerHTML = f.length ? f.map(function(t,i){
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
       var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':t.esrc?'<span class="src-tag src-email" title="Arrived by email — written into the plan">Email</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
-      var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt');
+      var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt'), rec=RECUR[k];
       var bf=BK[k], bfChip=bf?('<span class="bf-chip" data-bid="'+esc(bf.id)+'" style="background:'+(STAGE_COLOR[bf.status]||'#8a94a0')+'" title="Ticket '+esc(bf.id)+' — '+esc(STAGE_LBL[bf.status]||bf.status)+(courtOf(bf)?(' · ball with '+courtOf(bf)):'')+'. Click to open">'+esc(STAGE_LBL[bf.status]||bf.status)+'</span>'):'';
       var stat=(t.source==='plan'||t.source==='atrt')
         ?('<td class="c-stat" data-r="'+i+'" data-col="status" data-src="'+t.source+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
@@ -1618,11 +1690,15 @@ window.addEventListener('load',restore);
         +((t.source==='plan'||t.source==='atrt')
            ?'<td class="c-due c-due-ed" data-r="'+i+'" data-col="due" data-i="'+i+'" title="Double-click to set due date (DDMM)">'+esc(dueDisplay(t))+'</td>'
            :'<td class="c-due" data-r="'+i+'" data-col="due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>')
-        +stat+'<td data-r="'+i+'" data-col="source">'+src+'</td><td class="c-act"><button class="hide-btn'+(hid?' on':'')+'" data-i="'+i+'" title="'+(hid?'Restore to the task list':'Hide — it’s just a note (stays in the plan)')+'">'+(hid?EYEON:EYEOFF)+'</button><button class="del-btn" data-i="'+i+'" title="Delete task">✕</button><button class="brief-btn" data-i="'+i+'">Brief</button></td></tr>';
+        +stat+'<td data-r="'+i+'" data-col="source">'+src+'</td><td class="c-act">'
+        +(t.source!=='email'?'<button class="rec-btn'+(rec?' on':'')+'" data-i="'+i+'" title="'+(rec?('Repeats — '+REC_LBL[rec.every].toLowerCase()+'. The next occurrence is created when this one is marked Done'):'Repeat this task — weekly / monthly / every 3 months')+'">⟳</button>':'')
+        +'<button class="hide-btn'+(hid?' on':'')+'" data-i="'+i+'" title="'+(hid?'Restore to the task list':'Hide — it’s just a note (stays in the plan)')+'">'+(hid?EYEON:EYEOFF)+'</button><button class="del-btn" data-i="'+i+'" title="Delete task">✕</button><button class="brief-btn" data-i="'+i+'">Brief</button></td></tr>';
     }).join('') : '<tr><td colspan="9" class="it-empty">'+((itState.srcs.length===1&&itState.srcs[0]==='email')?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
     body.querySelectorAll('.brief-btn').forEach(function(btn){ btn.onclick=function(){ var t=f[+btn.getAttribute('data-i')]; markBriefed(t); prefill(t); renderAll(); }; });
     body.querySelectorAll('.del-btn').forEach(function(btn){ btn.onclick=function(){ deleteTask(f[+btn.getAttribute('data-i')]); }; });
     body.querySelectorAll('.hide-btn').forEach(function(btn){ btn.onclick=function(){ var t=f[+btn.getAttribute('data-i')]; if(isHidden(t))unhideTask(t); else hideTask(t); }; });
+    body.querySelectorAll('.rec-btn').forEach(function(btn){ btn.onmousedown=function(e){ e.stopPropagation(); };
+      btn.onclick=function(e){ e.stopPropagation(); recMenu(btn,f[+btn.getAttribute('data-i')]); }; });
     body.querySelectorAll('.c-due-ed').forEach(function(td){ td.ondblclick=function(){ editDue(f[+td.getAttribute('data-i')]); }; });
     body.querySelectorAll('.c-task-ed').forEach(function(td){ td.ondblclick=function(){ editTaskText(f[+td.getAttribute('data-i')]); }; });
     body.querySelectorAll('.c-owner-ed').forEach(function(td){ td.ondblclick=function(){ editOwner(f[+td.getAttribute('data-i')]); }; });
@@ -2069,6 +2145,7 @@ window.addEventListener('load',restore);
     if(pd){ document.getElementById('bg-due').value=pd.getFullYear()+'-'+pad(pd.getMonth()+1)+'-'+pad(pd.getDate());   // brief inherits the intake due date
       window.__bsAuto='from the intake row — your date, kept'; }
     else bsPropose();                   // no AM date -> propose the first week with free capacity
+    fillAttach(t);
     renderCtx(t);
     var ln=applyTemplate(cat,true);     // #2 auto-fill scope + DoD (learned version when one exists)
     refreshPreview();
@@ -2076,6 +2153,27 @@ window.addEventListener('load',restore);
     toast('Prefilled from '+(ln?'your last edited '+(CAT_LBL[cat]||'optimisation')+' brief':'the '+(CAT_LBL[cat]||'optimisation')+' template')
       +(pd?' · due pulled from the intake row':' — set the due date')+' and save');
   }
+  // ---- attach an intake row to an EXISTING ticket instead of drafting a new brief ----
+  // The ticket keeps its primary taskKey and gains the row's key in taskKeys[], so several
+  // intake rows can wear one ticket's chip; the row flips to Briefed like the normal flow.
+  var ATT_ROW=null;
+  function fillAttach(t){ ATT_ROW=t||null;
+    var box=document.getElementById('bg-attach'), sel=document.getElementById('bg-attach-sel'); if(!box||!sel)return;
+    if(!t){ box.hidden=true; sel.innerHTML=''; return; }
+    var k=rowKey(t), cand=Object.keys(BRIEFS).map(function(id){return BRIEFS[id];})
+      .filter(function(b){ return b && b.id && b.status!=='confirmed' && b.taskKey!==k && (b.taskKeys||[]).indexOf(k)<0; })
+      .sort(function(a,b){ var sc=(b.client===t.client)-(a.client===t.client); return sc||((b.updated||0)-(a.updated||0)); });
+    if(!cand.length){ box.hidden=true; sel.innerHTML=''; return; }
+    sel.innerHTML=cand.map(function(b){ return '<option value="'+esc(b.id)+'">'+esc(b.id+' · '+b.client+' — '+String(b.task||'').slice(0,58)+' ('+(STAGE_LBL[b.status]||b.status)+')')+'</option>'; }).join('');
+    box.hidden=false; }
+  (function(){ var go=document.getElementById('bg-attach-go'); if(!go)return;
+    go.onclick=function(){ var sel=document.getElementById('bg-attach-sel'), id=sel&&sel.value, b=id&&BRIEFS[id];
+      if(!b||!ATT_ROW){ toast('Pick a ticket first'); return; }
+      var k=rowKey(ATT_ROW);
+      if(b.taskKey!==k){ b.taskKeys=b.taskKeys||[]; if(b.taskKeys.indexOf(k)<0)b.taskKeys.push(k); }
+      b.updated=Date.now(); persist();
+      markBriefed(ATT_ROW);
+      closeBrief(); toast('⛓ Attached to '+id+' — the row wears its ticket now'); renderAll(); }; })();
   // when a task is briefed, move its status to Briefed (2-way, quiet — the caller shows the summary)
   function markBriefed(t){
     if(!t||t.source!=='plan')return false;   // only rows that carry a status
@@ -2188,7 +2286,7 @@ window.addEventListener('load',restore);
   (function(){ var x=document.getElementById('bg-x'); if(x)x.onclick=closeBrief;
     var nb=document.getElementById('new-brief-btn'); if(nb)nb.onclick=function(){
       window.__editId=null; window.__linkKey=null; window.__emailId=null; window.__bsRow=null; resetBodyOverride();
-      bsPropose(); renderCtx(null); refreshPreview(); openBrief(); }; })();
+      fillAttach(null); bsPropose(); renderCtx(null); refreshPreview(); openBrief(); }; })();
   function openModal(id){ var b=BRIEFS[id]; if(!b)return;
     var comms=(b.comms||[]).map(function(c){ return '<div class="comm"><span class="cw">'+esc(c.from)+'</span><span class="cb">'+esc(c.note)+(c.done?' <span class="ck">✓ done signal</span>':'')+'</span></div>'; }).join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
     var stat=STAGES.filter(function(s){ return s[0]!=='analysis'||needsAnalysis(b); })
@@ -2197,6 +2295,7 @@ window.addEventListener('load',restore);
     var crt=courtOf(b);
     var xl=[];
     if(b.taskKey) xl.push('<span class="xl" title="Linked plan-row task">⛓ '+esc((b.taskKey.split('|')[1]||'').slice(0,48))+'</span>');
+    (b.taskKeys||[]).forEach(function(k){ xl.push('<span class="xl" title="Attached intake task">⛓ '+esc((k.split('|')[1]||'').slice(0,48))+'</span>'); });
     if(PLANSHEET[b.client]) xl.push('<a class="xl" target="_blank" rel="noopener" href="https://docs.google.com/spreadsheets/d/'+PLANSHEET[b.client]+'">📊 Open '+esc(b.client)+'’s plan sheet</a>');
     if(b.code) xl.push('<a class="xl" id="m-thread" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent(threadQuery(b))+'" title="Searches the brief’s subject (client + task words) — punctuation tokens like the ID search badly in Gmail">✉ Find the email thread</a>');
     modalEl.innerHTML=''
@@ -2240,7 +2339,7 @@ window.addEventListener('load',restore);
     // client confirmation draft
     var conf=document.getElementById('m-confirm');
     var cbody=clientConfirm(b,doneNote);
-    conf.href='https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark · '+b.client+' — '+b.task+' completed')+'&body='+encodeURIComponent(cbody);
+    conf.href='https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent(b.client+': '+String(b.task||'').trim().slice(0,70)+' — done')+'&body='+encodeURIComponent(cbody);   // subject in Ray's own "Client: thing" style, not the old system banner
     conf.addEventListener('click',function(ev){ if(b.status!=='done'&&b.status!=='analysis')return;
       if(needsAnalysis(b)&&!hasResult(b)){ ev.preventDefault(); toast('Log the analysis result first — 🧪 Log result'); return; }
       setStage(b,'confirmed'); persist(); setTimeout(function(){renderAll();},400); });
@@ -2279,14 +2378,22 @@ window.addEventListener('load',restore);
     if(b.status==='done')setStage(b,'analysis');   // a result logged from Done pulls the ticket into its Analysis step
     b.updated=Date.now(); persist(); renderAll(); openModal(b.id);
     toast('Result logged to the Test register — draft the client confirmation to close'); }
+  // Written in Ray's own client voice (modelled on his real sent mail — warm opener + 😊, plain
+  // words, a collaborative close, "Cheers, Ray"). No internal codes, no system phrasing: the
+  // ibf token stays in ASPL briefs only — a client email must never read machine-generated.
   function clientConfirm(b,doneNote){
+    var task=String(b.task||'').trim();
+    var result=''; if(b.comms){ for(var i=b.comms.length-1;i>=0;i--){ var n=b.comms[i].note||''; if(/^Result:/.test(n)){ result=n.replace(/^Result:\s*/,'').trim(); break; } } }
+    var who=(b.aspl&&b.aspl!=='—')?b.aspl:'the team';
     var L=[];
     L.push('Hi team,'); L.push('');
-    L.push('Good news — the following is now complete:'); L.push('');
-    L.push('• '+b.task+(b.code?('  ['+b.code+']'):'')); L.push('');
-    if(doneNote){ L.push('From our production team:'); L.push('“'+doneNote+'”'); L.push(''); }
-    L.push('It’s live and QA’d our side. Anything you’d like tweaked, just reply and we’ll turn it around.'); L.push('');
-    L.push('Best,'); L.push('Ray'); L.push('FeedSpark');
+    L.push('Hope the week’s going well 😊'); L.push('');
+    L.push('Quick update — '+task+' is all done.'); L.push('');
+    if(result){ L.push('The read-out: '+result+'. Happy to walk you through it and what we’d roll out off the back of it.'); L.push(''); }
+    else if(doneNote){ L.push('A quick note from '+who+' who worked on it: “'+doneNote+'”'); L.push(''); }
+    L.push('Have a look when you get a chance — if anything needs tweaking, tell us and we’ll turn it around quickly.'); L.push('');
+    L.push('Anything else you’d like us to pick up next, just shout.'); L.push('');
+    L.push('Cheers,'); L.push('Ray');
     return L.join('\n');
   }
 
@@ -2407,8 +2514,8 @@ window.addEventListener('load',restore);
     items.sort(function(a,b2){return b2.d-a.d;});
     s.innerHTML = items.length? items.map(function(it){ var b=it.b;
       return '<div class="stall-row esc" data-id="'+esc(b.id)+'"><span class="crtchip '+it.cls+'">'+it.c+'</span>'
-        +'<span class="stall-c">'+esc(b.client)+'</span><span class="stall-t">'+esc(b.task)+'</span>'
-        +'<span class="stall-a">'+esc(asplOf(b))+'</span><span class="stall-d">'+esc(it.why)+'</span>'
+        +'<span class="stall-c">'+esc(b.client)+'</span><span class="stall-t" title="'+esc(b.task)+'">'+esc(b.task)+'</span>'
+        +'<span class="stall-a">'+esc(asplOf(b))+'</span><span class="stall-d" title="'+esc(it.why)+'">'+esc(it.why)+'</span>'
         +'<button class="mini-btn" data-act="'+it.act+'" data-b="'+esc(b.id)+'">'+it.lbl+'</button></div>'; }).join('')
       : '<div class="sub" style="margin:0">Nothing over SLA in any court — every ticket is moving. 👌</div>';
     s.querySelectorAll('[data-act]').forEach(function(btn){ btn.onclick=function(e){ e.stopPropagation(); var b=BRIEFS[btn.getAttribute('data-b')]; if(!b)return;
@@ -2453,7 +2560,7 @@ window.addEventListener('load',restore);
   // one row per dated task; a task that's been briefed carries its ticket (stage colour + opens it)
   function timelineEvents(){
     var evs=[], seen={}, S=itState, q=(S.q||'').toLowerCase();
-    var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(b&&b.taskKey)BK[b.taskKey]=b; });
+    var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return; if(b.taskKey)BK[b.taskKey]=b; (b.taskKeys||[]).forEach(function(k){ if(!BK[k])BK[k]=b; }); });
     // The axis is fed from intakeFiltered() — the SAME rows through the SAME filters (source,
     // status, brand, AM, search, plan window) as the Intake grid above. The timeline is that
     // grid re-plotted by date, not a second list with its own rules.

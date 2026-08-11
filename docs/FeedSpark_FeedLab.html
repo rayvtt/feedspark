@@ -159,6 +159,10 @@ window.addEventListener('load',restore);
   .sbar .sf{display:block;height:100%;width:0;border-radius:100px;background:linear-gradient(90deg,var(--orange),var(--orange-deep));transition:width .35s ease-out}
   .sbar.hit .st{box-shadow:0 0 0 3px rgba(245,166,35,.3)}
   /* ---------------- multi-market portal ---------------- */
+  /* the hidden ATTRIBUTE must always win: author display rules (.mkt-row flex, .btn inline-flex…)
+     otherwise override the UA's [hidden]{display:none} — which kept the previous brand's market
+     chips painted when toggling to a single-market brand (YuMOVE showing Reiss's chips) */
+  [hidden]{display:none!important}
   .mkt-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
   .mkt-chips{display:flex;gap:6px;flex-wrap:wrap}
   .mkc{font:inherit;font-size:11.5px;font-weight:900;letter-spacing:.03em;padding:5px 11px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
@@ -1147,6 +1151,7 @@ function renderPortal(){
   // hero chips (every market, league order)
   var row=$('#mkt-row'),chips=$('#mkt-chips');
   row.hidden=!multi;$('#scan-all').hidden=!multi;
+  if(!multi)chips.innerHTML='';   // stale chips must not survive a brand toggle, even unpainted
   if(multi)chips.innerHTML=keys.map(function(k){var m=MKTS[k];
     return '<button type="button" class="mkc'+(k===MARKET?' on':'')+(m?'':' never')+'" data-mkt="'+esc(k)+'">'+esc(k.toUpperCase())
       +'<span class="ms">'+(m?m.total:'—')+'</span></button>'}).join('');
