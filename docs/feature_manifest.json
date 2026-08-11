@@ -1330,6 +1330,19 @@
       "pattern": "Hope the week’s going well",
       "min": 1,
       "pr": 209
+    },
+    {
+      "name": "KWCal: all-brands overview + Brief/Chase/Ask-client popover",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "renderOverview",
+      "min": 3,
+      "pr": 214
+    },
+    {
+      "name": "KWCal: Workflow live-stage auto-badge (wfFor)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function wfFor",
+      "pr": 214
     }
   ]
 }
