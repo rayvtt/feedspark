@@ -2176,6 +2176,7 @@ window.addEventListener('load',restore);
     fillAttach(t);
     renderCtx(t);
     var ln=applyTemplate(cat,true);     // #2 auto-fill scope + DoD (learned version when one exists)
+    if(t.scope)document.getElementById('bg-scope').value=t.scope;   // module deep-links ship a ready-made scope — it beats the template
     refreshPreview();
     openBrief();
     toast('Prefilled from '+(ln?'your last edited '+(CAT_LBL[cat]||'optimisation')+' brief':'the '+(CAT_LBL[cat]||'optimisation')+' template')
@@ -2890,7 +2891,7 @@ window.addEventListener('load',restore);
     if(j.client&&CLIENTS.indexOf(j.client)<0){ CLIENTS.push(j.client); CLIENTS.sort(); saveBrands(); fillClientSelect(); }   // dossier-only client — never silently file under CLIENTS[0]
     try{ history.replaceState(null,'',location.pathname); }catch(e2){}   // don't re-open on refresh
     window.__fromLink=1;   // module deep-link: the tie to plan rows must be EXACT, never fuzzy
-    setTimeout(function(){ prefill({client:j.client||'',task:String(j.task).slice(0,200),cat:j.cat||'',source:j.source||'plan'});
+    setTimeout(function(){ prefill({client:j.client||'',task:String(j.task).slice(0,200),cat:j.cat||'',source:j.source||'plan',scope:j.scope?String(j.scope).slice(0,2000):''});
       window.__linkKey=null;   // prefill assumes an intake-row opener — a deep link has NO row yet; a phantom tie here blocked row-creation on save
     },450);
   }catch(e){} })();

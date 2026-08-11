@@ -1404,6 +1404,19 @@
       "pattern": "cc-up",
       "min": 2,
       "pr": 219
+    },
+    {
+      "name": "KWCal: house task-name format + rich scope payload",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Marketing Planner",
+      "min": 1,
+      "pr": 220
+    },
+    {
+      "name": "Workflow: deep-link scope passthrough into the composer",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "ready-made scope",
+      "pr": 220
     }
   ]
 }
