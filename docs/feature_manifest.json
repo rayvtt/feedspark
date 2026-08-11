@@ -1343,6 +1343,19 @@
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "function wfFor",
       "pr": 214
+    },
+    {
+      "name": "KWCal: FS-standard roadmap + PT scope picker (searchable multiselect)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function ptOpen",
+      "pr": 215
+    },
+    {
+      "name": "KWCal: side-by-side client calendar cross-check",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "renderClical",
+      "min": 3,
+      "pr": 215
     }
   ]
 }

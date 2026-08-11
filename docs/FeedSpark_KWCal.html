@@ -95,6 +95,49 @@ window.addEventListener('load',restore);
   .err-strip.on{display:block}
   .footmark{padding:34px 0;color:var(--muted);font-size:12px;font-weight:700;border-top:1px solid var(--line);margin-top:30px}
   .footmark .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  /* ============ FS-standard roadmap (one FeedSpark format for every client) ============ */
+  .split{display:grid;grid-template-columns:1fr;gap:14px}
+  .split.side{grid-template-columns:minmax(0,1fr) minmax(280px,540px)}
+  .clical{position:sticky;top:74px;align-self:start;background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px}
+  .clical .ch{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:900;color:var(--muted);margin-bottom:8px}
+  .clical img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+  .clical .cc-none{font-size:12.5px;color:var(--muted);font-weight:700;padding:14px 6px}
+  .road{display:flex;flex-direction:column;gap:14px}
+  .mo-sec{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:13px 15px}
+  .mo-h{font-size:13px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--orange-deep);margin-bottom:10px;display:flex;gap:10px;align-items:baseline}
+  .mo-h .mn{color:var(--muted);font-weight:700;text-transform:none;letter-spacing:0;font-size:12px}
+  .mo-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+  .rc{border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:var(--wash)}
+  .rc .rt{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:900}
+  .rc .rt .lens{color:var(--orange-deep)}
+  .rc .rt .mtag{margin-left:auto;font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .rc .rd{font-size:11.5px;color:var(--muted);font-weight:700;margin:3px 0 8px}
+  .rc .ra{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .scope{font:inherit;font-size:11px;font-weight:900;border-radius:100px;padding:3px 10px;border:1px solid;cursor:pointer;background:#fff}
+  .scope.unset{color:var(--orange-deep);border-color:rgba(237,111,11,.5);background:rgba(245,166,35,.07)}
+  .scope.set{color:var(--good);border-color:rgba(21,128,61,.4);background:#EBF7EF}
+  .scope.wide{color:var(--navy);border-color:rgba(26,54,93,.3);background:rgba(26,54,93,.06)}
+  .themes{font-size:11px;font-weight:900;color:var(--orange-ink);background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.3);border-radius:100px;padding:3px 10px;cursor:pointer}
+  /* PT scope picker — searchable multiselect over the feed's real product_type values */
+  .ptp{position:fixed;z-index:90;inset:auto;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 54px rgba(16,24,40,.24);width:min(560px,94vw);max-height:min(560px,84vh);display:flex;flex-direction:column;padding:14px}
+  .ptp b.pt-t{font-size:14px;font-weight:900}
+  .ptp .pt-sub{font-size:11.5px;color:var(--muted);font-weight:700;margin:2px 0 9px}
+  .ptp input.pt-q{font:inherit;font-size:13px;font-weight:700;padding:9px 12px;border:1px solid var(--line);border-radius:10px;width:100%}
+  .ptp .pt-sel{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 6px;max-height:92px;overflow-y:auto}
+  .ptp .pt-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.35);color:var(--orange-ink);border-radius:100px;padding:2px 9px}
+  .ptp .pt-chip button{border:none;background:none;font-weight:900;cursor:pointer;color:inherit;padding:0 1px}
+  .ptp .pt-list{flex:1;overflow-y:auto;border:1px solid var(--line);border-radius:10px;margin-top:4px}
+  .ptp .pt-row{display:flex;gap:9px;align-items:center;padding:7px 11px;font-size:12.5px;font-weight:700;cursor:pointer;border-bottom:1px solid var(--wash)}
+  .ptp .pt-row:hover{background:rgba(245,166,35,.06)}
+  .ptp .pt-row.on{background:rgba(245,166,35,.1)}
+  .ptp .pt-row .n{margin-left:auto;color:var(--muted);font-size:11px;font-weight:800}
+  .ptp .pt-foot{display:flex;gap:8px;align-items:center;margin-top:10px}
+  .ptp .pt-tot{font-size:12px;font-weight:900;color:var(--good)}
+  .ptp .pt-foot .btn{margin-left:auto}
+  [data-theme=dark] .mo-sec,[data-theme=dark] .clical,[data-theme=dark] .ptp{background:var(--paper);border-color:var(--line)}
+  [data-theme=dark] .rc{background:#181B22;border-color:var(--line)}
+  [data-theme=dark] .ptp input.pt-q{background:#161922;color:var(--ink);border-color:var(--line)}
+  [data-theme=dark] .scope.unset{background:rgba(245,166,35,.12)}
   /* ============ kw-overview — every brand on one view ============ */
   .ov-row{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:12px}
   .ov-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:9px}
@@ -209,7 +252,8 @@ window.addEventListener('load',restore);
   <div class="ctl">
     <label for="brand">Brand</label>
     <select id="brand" aria-label="Choose a brand"></select>
-    <button class="btn pri" id="measure" type="button">⚡ Measure impact from live feed</button>
+    <button class="btn pri" id="measure" type="button">⟳ Sync product types (live feed)</button>
+    <button class="btn" id="sbs" type="button">🗂 Client calendar</button>
     <button class="btn" id="edit" type="button">✎ Edit calendar</button>
     <button class="btn" id="add" type="button" hidden>＋ Add event</button>
     <span class="mstate" id="mstate"></span>
@@ -221,7 +265,10 @@ window.addEventListener('load',restore);
 <main class="wrap">
   <h2 id="cal-title">Calendar</h2>
   <p class="sub">Marketing moments by lane (as the brand shared them) with the <b>keyword optimisation schedule</b> underneath — each optimisation lands ahead of its moment. Click a status chip to advance it; <b>→ Brief</b> drops the task into the Workflow composer prefilled.</p>
-  <div class="cal-card" id="cal-wrap"><div class="cal" id="cal"></div></div>
+  <div class="split" id="split">
+    <div id="cal-wrap"><div class="road" id="road"></div></div>
+    <div class="clical" id="clical" hidden></div>
+  </div>
   <div id="ov" hidden></div>
 </main>
 
@@ -280,18 +327,17 @@ function dLbl(e){ var d=new Date(e.date+'T12:00:00Z'); return (e.wc?'w/c ':'')+d
 
 /* ---------------- KPIs + calendar render ---------------- */
 function kpis(){
-  var E=evs(), m=rec().measured||{};
-  var st={planned:0,intake:0,briefed:0,live:0,done:0}, vol=0, measured=0;
-  E.forEach(function(e){ st[e.st||'planned']=(st[e.st||'planned']||0)+1;
-    if(m[e.id]&&typeof m[e.id].vol==='number'){ measured++; if(!e.brandwide)vol+=m[e.id].vol; } });
-  var wideRows=0; E.forEach(function(e){ if(e.brandwide&&m[e.id])wideRows=Math.max(wideRows,m[e.id].vol||0); });
+  var E=evs();
+  var st={planned:0,intake:0,briefed:0,live:0,done:0}, vol=0, scoped=0, unset=0;
+  E.forEach(function(e){ var wf=wfFor(CLIENT,e); st[(wf?wf.st:e.st)||'planned']=(st[(wf?wf.st:e.st)||'planned']||0)+1;
+    var v=volOf(CLIENT,e);
+    if(v&&!v.unset&&!v.wide){vol+=v.vol;scoped++} else if(!e.brandwide&&(!v||v.unset))unset++; });
   $('#kpis').innerHTML=
-    '<div class="kpi"><div class="n">'+E.length+'</div><div class="l">Marketing moments</div></div>'
-    +'<div class="kpi"><div class="n">'+E.length+'</div><div class="l">KW optimisations scheduled</div></div>'
-    +'<div class="kpi warn"><div class="n">'+(st.intake+st.briefed)+'</div><div class="l">In intake / briefed</div></div>'
-    +'<div class="kpi good"><div class="n">'+(st.live+st.done)+'</div><div class="l">Live / done</div></div>'
-    +'<div class="kpi"><div class="n">'+(measured?fmt(vol):'—')+'</div><div class="l">Category SKUs impacted</div></div>'
-    +(wideRows?'<div class="kpi"><div class="n">'+fmt(wideRows)+'</div><div class="l">Brand-wide (sale) SKUs</div></div>':'');
+    '<div class="kpi"><div class="n">'+E.length+'</div><div class="l">Optimisations scheduled</div></div>'
+    +'<div class="kpi warn"><div class="n">'+((st.intake||0)+(st.briefed||0)+(st.progress||0))+'</div><div class="l">In intake / briefed</div></div>'
+    +'<div class="kpi good"><div class="n">'+((st.live||0)+(st.done||0)+(st.confirmed||0))+'</div><div class="l">Live / done</div></div>'
+    +'<div class="kpi"><div class="n">'+(scoped?fmt(vol):'—')+'</div><div class="l">SKUs in scope</div></div>'
+    +(unset?'<div class="kpi warn"><div class="n">'+unset+'</div><div class="l">Scopes to set</div></div>':'');
 }
 function monthRange(){
   var E=evs(); if(!E.length){var n=new Date();return [n.getUTCFullYear()*12+n.getUTCMonth(), n.getUTCFullYear()*12+n.getUTCMonth()+5];}
@@ -322,7 +368,7 @@ function renderOverview(){
   var brands=ovBrands(), tot=0, inflight=0, done=0, vol=0;
   var h='';
   brands.forEach(function(brand){
-    var E=evsOf(brand), m=(STORE[brand]||{}).measured||{};
+    var E=evsOf(brand);
     var byMon={};
     E.forEach(function(e){ var sd=schedDate(e), k=sd.getUTCFullYear()*12+sd.getUTCMonth();
       (byMon[k]=byMon[k]||[]).push(e); });
@@ -331,7 +377,7 @@ function renderOverview(){
       tot++;
       if(st==='intake'||st==='briefed'||st==='progress'||st==='live')inflight++;
       if(st==='done'||st==='confirmed')done++;
-      if(m[e.id]&&!e.brandwide)vol+=m[e.id].vol||0;
+      var vv=volOf(brand,e); if(vv&&!vv.unset&&!vv.wide)vol+=vv.vol;
       if(st==='planned'&&!next)next=e; });
     var mons=Object.keys(byMon).map(Number).sort(function(a,b){return a-b});
     h+='<div class="ov-row" data-brand="'+esc(brand)+'"><div class="ov-h"><b>'+esc(brand)+'</b>'
@@ -339,9 +385,9 @@ function renderOverview(){
       +'<a class="ob" href="/kwcal?client='+encodeURIComponent(brand)+'" data-open="'+esc(brand)+'">Open board →</a></div>'
       +'<div class="ov-mons">'+mons.map(function(k){
         return '<div class="ov-mon"><div class="oml">'+MON[k%12]+' ’'+String(Math.floor(k/12)).slice(2)+'</div><div class="ov-chips">'
-          +byMon[k].map(function(e){ var wf=wfFor(brand,e), st=wf?wf.st:(e.st||'planned'), mm=m[e.id];
+          +byMon[k].map(function(e){ var wf=wfFor(brand,e), st=wf?wf.st:(e.st||'planned'), mm=volOf(brand,e);
             return '<button type="button" class="ovc" data-pop="'+esc(brand)+'|'+esc(e.id)+'"><span class="dot '+esc(st)+'"></span>'+esc(e.name)
-              +(mm&&typeof mm.vol==='number'?'<span class="ov-vol">'+fmt(mm.vol)+(e.brandwide?' · all':'')+'</span>':'')
+              +(mm&&!mm.unset?'<span class="ov-vol">'+fmt(mm.vol)+(mm.wide?' · all':'')+'</span>':'')
               +(wf?'<span class="wfb" title="Live from the Workflow pipeline">WF · '+esc(st)+'</span>':'')+'</button>';
           }).join('')+'</div></div>';
       }).join('')+'</div></div>';
@@ -387,56 +433,166 @@ document.addEventListener('click',function(ev){
 });
 document.addEventListener('keydown',function(ev){ if(ev.key==='Escape')popClose(); });
 function findEvIn(brand,id){ var E=(STORE[brand]||{}).events||[]; for(var i=0;i<E.length;i++)if(E[i].id===id)return E[i]; return null; }
+function ptidx(){ var r=rec(); return (r.ptidx&&r.ptidx[curMkt()])||null; }
+function curMkt(){ return 'gb'; }
+function ptidxFor(brand,mkt){ var r=STORE[brand]||{}; return (r.ptidx&&r.ptidx[mkt||'gb'])||null; }
+function volOf(brand,e){ // exact PT counts (the picker's selections), brand-wide for sale windows
+  var idx=ptidxFor(brand,e.mkt||'gb'); if(!idx)return null;
+  if(e.brandwide)return {vol:idx.__total||0,pct:100,wide:1};
+  var ps=e.pts||[]; if(!ps.length)return {unset:1};
+  var v=0; ps.forEach(function(pt){ v+=idx.map[pt]||0; });
+  return {vol:v,pct:idx.__total?Math.round(v/idx.__total*1000)/10:0};
+}
+function scopeBtn(brand,e){
+  var v=volOf(brand,e);
+  if(v&&v.wide)return '<button type="button" class="scope wide" data-scope="'+esc(e.id)+'" title="Sale window — whole catalogue in scope">'+fmt(v.vol)+' SKUs · all</button>';
+  if(v&&!v.unset)return '<button type="button" class="scope set" data-scope="'+esc(e.id)+'" title="'+esc((e.pts||[]).join(' · '))+'">'+(e.pts||[]).length+' PTs · '+fmt(v.vol)+' SKUs · '+v.pct+'%</button>';
+  return '<button type="button" class="scope unset" data-scope="'+esc(e.id)+'">⚙ Set scope'+((e.pts||[]).length?' ('+(e.pts||[]).length+' PTs)':'')+'</button>';
+}
+function renderClical(){
+  var r=rec(), box=$('#clical'), on=!!window.__sbs;
+  $('#split').classList.toggle('side',on);
+  box.hidden=!on;
+  $('#sbs').classList.toggle('on',on);
+  if(!on)return;
+  box.innerHTML='<div class="ch"><span>'+esc(CLIENT)+' — their calendar (cross-check)</span>'
+    +(editMode?'<button class="btn" style="padding:4px 10px;font-size:11px" id="cc-link">🖼 Link</button>':'')+'</div>'
+    +(r.calImg?'<a href="'+esc(r.calImg)+'" target="_blank" rel="noopener"><img src="'+esc(r.calImg)+'" alt="Client calendar"></a>'
+      :'<div class="cc-none">No client calendar linked yet — ✎ Edit calendar → 🗂 → 🖼 Link, paste an image URL (the brand’s shared slide). It opens side-by-side for transcribing moments into the FeedSpark roadmap.</div>');
+  var lk=box.querySelector('#cc-link');
+  if(lk)lk.onclick=function(){ var u=prompt('Image URL of the client’s shared calendar (link-viewable):',r.calImg||''); if(u===null)return; r.calImg=u.trim(); save(); renderClical(); };
+}
 function briefLinkFor(brand,e){
-  var task='AI Keyword Optimisation — '+e.name+' ['+(e.terms||[]).join(', ')+'] — ahead of '+dLbl(e)+((e.mkt&&e.mkt!=='gb')?' · '+e.mkt.toUpperCase():'');
+  var v=volOf(brand,e)||{}, ps=e.pts||[];
+  var scope=e.brandwide?('brand-wide ('+(v.vol?fmt(v.vol)+' SKUs':'whole catalogue')+')')
+    :(ps.length?(ps.slice(0,6).join(' | ')+(ps.length>6?' +'+(ps.length-6)+' more':'')+(v.vol!=null?' = '+fmt(v.vol)+' SKUs ('+v.pct+'% of feed)':'')):'scope TBC');
+  var task='AI Keyword Optimisation — '+e.name
+    +' · lands '+dLbl(e)+((e.mkt&&e.mkt!=='gb')?' · '+e.mkt.toUpperCase():'')
+    +' · brief by '+schedDate(e).getUTCDate()+' '+MON[schedDate(e).getUTCMonth()]
+    +' · themes: '+(e.terms||[]).join(', ')
+    +' · categories: '+scope;
   return '/workflow?brief='+b64url({client:brand,task:task,cat:'keyword'});
 }
 function render(){
   popClose();
-  if(CLIENT==='*'){ renderOverview(); return; }
-  $('#cal-wrap').hidden=false; $('#ov').hidden=true;
+  if(CLIENT==='*'){ $('#split').hidden=true; renderOverview(); return; }
+  $('#split').hidden=false; $('#cal-wrap').hidden=false; $('#ov').hidden=true;
   kpis();
-  $('#cal-title').textContent=CLIENT+' — calendar';
-  var R=monthRange(), months=[]; for(var k=R[0];k<=R[1];k++)months.push(k);
-  var cal=$('#cal');
-  cal.style.gridTemplateColumns='26px repeat('+months.length+',minmax(128px,1fr))';
-  var h='<div class="mh"></div>'+months.map(function(k){return '<div class="mh">'+MON[k%12]+((k%12===0||k===R[0])?' ’'+String(Math.floor(k/12)).slice(2):'')+'</div>'}).join('');
-  var E=evs();
-  LANES.forEach(function(L,li){
-    h+='<div class="lh'+(li===LANES.length-1?' lane-end':'')+'" style="grid-row:span 1">'+esc(L[1])+'</div>';
-    months.forEach(function(k){
-      var here=E.filter(function(e){var d=new Date(e.date+'T12:00:00Z');return e.lane===L[0]&&d.getUTCFullYear()*12+d.getUTCMonth()===k});
-      h+='<div class="cell'+(li===LANES.length-1?' lane-end':'')+'">'+here.map(function(e){
-        return '<div class="ev'+(editMode?' editable':'')+'" data-ev="'+esc(e.id)+'">'
-          +(editMode?'<button class="del" data-del="'+esc(e.id)+'" title="Remove this moment">×</button>':'')
-          +'<b>'+esc(e.name)+'</b><span class="ed">'+dLbl(e)+(e.mkt&&e.mkt!=='gb'?' · '+e.mkt.toUpperCase():'')+'</span>'
-          +(e.note?'<span class="ed">'+esc(e.note)+'</span>':'')+'</div>';
-      }).join('')+'</div>';
+  $('#cal-title').textContent=CLIENT+' — FeedSpark keyword roadmap';
+  renderClical();
+  var E=evs(), byMon={};
+  E.forEach(function(e){ var sd=schedDate(e), k=sd.getUTCFullYear()*12+sd.getUTCMonth(); (byMon[k]=byMon[k]||[]).push(e); });
+  var mons=Object.keys(byMon).map(Number).sort(function(a,b){return a-b});
+  $('#road').innerHTML=mons.map(function(k){
+    return '<section class="mo-sec"><div class="mo-h">'+MON[k%12]+' ’'+String(Math.floor(k/12)).slice(2)
+      +'<span class="mn">'+byMon[k].length+' optimisation'+(byMon[k].length===1?'':'s')+' to brief</span></div>'
+      +'<div class="mo-cards">'+byMon[k].map(function(e){
+        var wf=wfFor(CLIENT,e), st=wf?wf.st:(e.st||'planned');
+        return '<div class="rc" data-kw="'+esc(e.id)+'"><div class="rt"><span class="lens">✦</span>'+esc(e.name)
+          +'<span class="mtag">'+esc(e.lane||'moment')+(editMode?' <button class="del" style="position:static;opacity:1" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</span></div>'
+          +'<div class="rd">lands '+dLbl(e)+((e.mkt&&e.mkt!=='gb')?' · '+e.mkt.toUpperCase():'')+' · brief by '+schedDate(e).getUTCDate()+' '+MON[schedDate(e).getUTCMonth()]+'</div>'
+          +'<div class="ra">'+scopeBtn(CLIENT,e)
+          +'<span class="themes" data-terms="'+esc(e.id)+'" title="'+esc((e.terms||[]).join(', '))+'">✦ '+(e.terms||[]).length+' themes</span>'
+          +'<button type="button" class="stx '+esc(st)+'" data-st="'+esc(e.id)+'"'+(wf?' title="Live from the Workflow pipeline"':'')+'>'+(wf?'WF · ':'')+esc(st)+'</button>'
+          +'<a class="bgo" href="'+briefLink(e)+'" title="Auto-generated brief — moment, dates, scope PTs + SKUs, themes">→ Brief</a></div></div>';
+      }).join('')+'</div></section>';
+  }).join('')||'<p class="sub">No moments yet — ✒ Edit calendar → ＋ Add event, with the client’s calendar side-by-side.</p>';
+}
+
+/* ---------------- PT scope picker (searchable multiselect over real product_type values) ---------------- */
+function ptClose(){ var x=$('#ptp'); if(x)x.remove(); }
+function ptOpen(e){
+  ptClose();
+  var idx=ptidxFor(CLIENT,e.mkt||'gb');
+  var d=document.createElement('div'); d.className='ptp'; d.id='ptp';
+  if(!idx){
+    d.innerHTML='<b class="pt-t">'+esc(e.name)+' — scope</b><div class="pt-sub">Product types not synced yet for this brand.</div>'
+      +'<div class="pt-foot"><span class="pt-sub">⟳ Sync product types streams the live feed once — then every scope is instant.</span><button class="btn pri" id="pt-sync">⟳ Sync now</button></div>';
+    document.body.appendChild(d); ptPlace(d);
+    d.querySelector('#pt-sync').onclick=function(){ ptClose(); syncPT(); };
+    return;
+  }
+  var sel=(e.pts||[]).slice();
+  d.innerHTML='<b class="pt-t">'+esc(e.name)+' — category scope</b>'
+    +'<div class="pt-sub">'+fmt(Object.keys(idx.map).length)+' unique product types off the live feed — word-search, tick to add, × to remove.</div>'
+    +'<input class="pt-q" id="pt-q" type="search" placeholder="Search product types… (e.g. coat, tailoring)">'
+    +'<div class="pt-sel" id="pt-sel"></div><div class="pt-list" id="pt-list"></div>'
+    +'<div class="pt-foot"><span class="pt-tot" id="pt-tot"></span><button class="btn" id="pt-sug" title="Preselect product types containing any keyword theme">✨ Suggest from themes</button><button class="btn pri" id="pt-done">Done</button></div>';
+  document.body.appendChild(d); ptPlace(d);
+  var keys=Object.keys(idx.map).sort(function(a,b){return idx.map[b]-idx.map[a]});
+  function tot(){ var v=0; sel.forEach(function(pt){v+=idx.map[pt]||0}); return v; }
+  function paint(){
+    var q=(d.querySelector('#pt-q').value||'').toLowerCase().split(/\s+/).filter(Boolean);
+    var hits=keys.filter(function(k){ var lk=k.toLowerCase(); return q.every(function(w){return lk.indexOf(w)>=0}) });
+    d.querySelector('#pt-list').innerHTML=hits.slice(0,120).map(function(k){
+      return '<div class="pt-row'+(sel.indexOf(k)>=0?' on':'')+'" data-pt="'+esc(k)+'">'+(sel.indexOf(k)>=0?'☑':'☐')+' '+esc(k)+'<span class="n">'+fmt(idx.map[k])+'</span></div>';
+    }).join('')+(hits.length>120?'<div class="pt-row" style="cursor:default;color:var(--muted)">… '+(hits.length-120)+' more — keep typing</div>':'')
+      +(!hits.length?'<div class="pt-row" style="cursor:default;color:var(--muted)">no matches</div>':'');
+    d.querySelector('#pt-sel').innerHTML=sel.map(function(k){
+      return '<span class="pt-chip">'+esc(k)+'<button type="button" data-rm="'+esc(k)+'">×</button></span>'; }).join('')
+      ||'<span class="pt-sub">nothing selected yet</span>';
+    d.querySelector('#pt-tot').textContent=sel.length?(sel.length+' PTs · '+fmt(tot())+' SKUs in scope'):'';
+  }
+  d.addEventListener('click',function(ev){
+    ev.stopPropagation(); // paint() re-renders rows — a detached target must never read as an outside click
+    var row=ev.target.closest('[data-pt]');
+    if(row){ var k=row.getAttribute('data-pt'), i=sel.indexOf(k); if(i>=0)sel.splice(i,1); else sel.push(k); paint(); return; }
+    var rm=ev.target.closest('[data-rm]');
+    if(rm){ var j=sel.indexOf(rm.getAttribute('data-rm')); if(j>=0)sel.splice(j,1); paint(); return; }
+    if(ev.target.id==='pt-sug'){ (e.terms||[]).forEach(function(t){ keys.forEach(function(k){ if(k.toLowerCase().indexOf(String(t).toLowerCase())>=0&&sel.indexOf(k)<0)sel.push(k); }); }); paint(); return; }
+    if(ev.target.id==='pt-done'){ e.pts=sel.slice(); save(); ptClose(); render(); return; }
+  });
+  d.querySelector('#pt-q').addEventListener('input',paint);
+  paint();
+  d.querySelector('#pt-q').focus();
+}
+function ptPlace(d){ d.style.left='50%';d.style.top='90px';d.style.transform='translateX(-50%)'; }
+document.addEventListener('click',function(ev){
+  var sc=ev.target.closest('[data-scope]');
+  if(sc){ var e=findEv(sc.getAttribute('data-scope'))||findEvIn(CLIENT,sc.getAttribute('data-scope')); if(e&&!e.brandwide)ptOpen(e); ev.stopPropagation(); return; }
+  if(!ev.target.closest('#ptp')&&!ev.target.closest('[data-scope]'))ptClose();
+});
+$('#sbs').addEventListener('click',function(){ if(CLIENT==='*')return; window.__sbs=!window.__sbs; renderClical(); });
+
+/* ---------------- PT sync — one stream builds the product-type index; volumes are instant after ---------------- */
+function syncPT(){
+  if(MEASURING)return;
+  hideErr();
+  if(window.__engineFail||!window.FeedAudit||!FeedAudit.createParser){ err('The feed parser is unavailable (engine failed to load) — syncing needs the live worker.'); return; }
+  var E=evs(); var mkts={gb:1}; E.forEach(function(e){ mkts[e.mkt||'gb']=1; });
+  var list=Object.keys(mkts), mi=0;
+  MEASURING=true; $('#measure').disabled=true;
+  function nextMkt(){
+    if(mi>=list.length){ MEASURING=false; $('#measure').disabled=false; $('#mstate').textContent='product types synced — scopes are live'; save(); render(); return; }
+    var mkt=list[mi++];
+    var map={}, rows=0, ptIdxCol=-1, header=null;
+    var parser=FeedAudit.createParser(function(r){
+      if(!header){ header=r;
+        for(var i=0;i<r.length;i++){ if(FeedAudit.normKey(r[i])==='product_type'&&ptIdxCol<0)ptIdxCol=i; }
+        return; }
+      rows++;
+      var v=ptIdxCol>=0?String(r[ptIdxCol]||'').trim():'';
+      if(v)map[v]=(map[v]||0)+1;
+      if(rows%2000===0)$('#mstate').textContent='syncing '+mkt.toUpperCase()+'… '+fmt(rows)+' products';
     });
-  });
-  // the keyword optimisation schedule band — each moment's task in its lead month
-  h+='<div class="lh" style="color:var(--orange-deep)">Keyword optimisation</div>';
-  months.forEach(function(k){
-    var here=E.filter(function(e){var s=schedDate(e);return s.getUTCFullYear()*12+s.getUTCMonth()===k});
-    h+='<div class="cell">'+here.map(function(e){
-      var st=e.st||'planned';
-      var terms=(e.terms||[]);
-      var tchips=terms.slice(0,4).map(function(t){return '<span class="term">'+esc(t)+'</span>'}).join('')
-        +(terms.length>4?'<span class="term more" title="'+esc(terms.join(', '))+'">+'+(terms.length-4)+'</span>':'')
-        +(editMode?'<span class="term more" data-terms="'+esc(e.id)+'" title="Edit the keyword themes">✎</span>':'');
-      return '<div class="kw" data-kw="'+esc(e.id)+'"><div class="kt"><span class="lens">✦</span>'+esc(e.name)+'</div>'
-        +'<div class="terms">'+tchips+'</div>'
-        +'<div class="kfoot">'+volBadge(e)
-        +'<button type="button" class="stx '+st+'" data-st="'+esc(e.id)+'" title="Click to advance: planned → intake → briefed → live → done">'+st+'</button>'
-        +'<a class="bgo" href="'+briefLink(e)+'" title="Open the Workflow composer prefilled with this optimisation">→ Brief</a></div>'
-        +'<div class="lead">lands '+dLbl(e)+' · brief by '+schedDate(e).getUTCDate()+' '+MON[schedDate(e).getUTCMonth()]+'</div></div>';
-    }).join('')+'</div>';
-  });
-  cal.innerHTML=h;
+    $('#mstate').textContent='streaming the live '+mkt.toUpperCase()+' feed…';
+    fetch('/api/feed/proxy?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(mkt)).then(function(res){
+      if(!res.ok)return res.json().catch(function(){return{}}).then(function(j){throw new Error(j.error||('feed proxy said '+res.status))});
+      var reader=res.body.getReader(),dec=new TextDecoder();
+      function step(){ return reader.read().then(function(x){
+        if(x.done){ parser.push(dec.decode()); parser.end();
+          var r=rec(); r.ptidx=r.ptidx||{}; r.ptidx[mkt]={__total:rows,map:map,t:Date.now()};
+          nextMkt(); return; }
+        parser.push(dec.decode(x.value,{stream:true})); return step();
+      }); }
+      return step();
+    }).catch(function(e2){ err(String(e2&&e2.message||e2)); MEASURING=false; $('#measure').disabled=false; $('#mstate').textContent=''; });
+  }
+  nextMkt();
 }
 
 /* ---------------- edit interactions ---------------- */
-$('#cal').addEventListener('click',function(ev){
+$('#road').addEventListener('click',function(ev){
   var t=ev.target;
   var stBtn=t.closest('[data-st]');
   if(stBtn){ var e=findEv(stBtn.getAttribute('data-st')); if(!e)return;
@@ -492,56 +648,7 @@ function syncNote(){ $('#syncstate').textContent='shared board · saves sync to 
 /* ---------------- live-feed impact measuring (streams the proxy through the Feed Lab parser) ---------------- */
 function err(m){ $('#kw-error-msg').textContent=m; $('#kw-error').classList.add('on'); }
 function hideErr(){ $('#kw-error').classList.remove('on'); }
-function measure(){
-  if(MEASURING)return;
-  hideErr();
-  if(window.__engineFail||!window.FeedAudit||!FeedAudit.createParser){ err('The feed parser is unavailable (engine failed to load) — measuring needs the live worker.'); return; }
-  var E=evs(); if(!E.length)return;
-  var mkts={}; E.forEach(function(e){ mkts[e.mkt||'gb']=1; });
-  var list=Object.keys(mkts), mi=0;
-  MEASURING=true; $('#measure').disabled=true;
-  function nextMkt(){
-    if(mi>=list.length){ MEASURING=false; $('#measure').disabled=false; $('#mstate').textContent='impact measured against the live feed'; save(); render(); return; }
-    var mkt=list[mi++];
-    var mine=E.filter(function(e){return (e.mkt||'gb')===mkt});
-    var counts={}, rows=0, tIdx=-1, ptIdx=-1, header=null;
-    mine.forEach(function(e){counts[e.id]=0});
-    var parser=FeedAudit.createParser(function(r){
-      if(!header){ header=r;
-        for(var i=0;i<r.length;i++){ var k=FeedAudit.normKey(r[i]);
-          if(k==='title'&&tIdx<0)tIdx=i; if(k==='product_type'&&ptIdx<0)ptIdx=i; }
-        return; }
-      rows++;
-      var hay=((tIdx>=0?r[tIdx]:'')+' '+(ptIdx>=0?r[ptIdx]:'')).toLowerCase();
-      mine.forEach(function(e){
-        if(e.brandwide)return;
-        var ts=e.terms||[];
-        for(var i=0;i<ts.length;i++){ if(ts[i]&&hay.indexOf(String(ts[i]).toLowerCase())>=0){ counts[e.id]++; return; } }
-      });
-      if(rows%2000===0)$('#mstate').textContent='measuring '+mkt.toUpperCase()+'… '+fmt(rows)+' products';
-    });
-    $('#mstate').textContent='streaming the live '+mkt.toUpperCase()+' feed…';
-    fetch('/api/feed/proxy?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(mkt)).then(function(res){
-      if(!res.ok)return res.json().catch(function(){return{}}).then(function(j){throw new Error(j.error||('feed proxy said '+res.status))});
-      var reader=res.body.getReader(),dec=new TextDecoder();
-      function step(){ return reader.read().then(function(x){
-        if(x.done){ parser.push(dec.decode()); parser.end(); finishMkt(); return; }
-        parser.push(dec.decode(x.value,{stream:true})); return step();
-      }); }
-      return step();
-    }).catch(function(e2){ err(String(e2&&e2.message||e2)); MEASURING=false; $('#measure').disabled=false; $('#mstate').textContent=''; });
-    function finishMkt(){
-      var m=rec().measured;
-      mine.forEach(function(e){
-        var v=e.brandwide?rows:counts[e.id];
-        m[e.id]={vol:v,pct:rows?Math.round(v/rows*1000)/10:0,t:Date.now()};
-      });
-      nextMkt();
-    }
-  }
-  nextMkt();
-}
-$('#measure').addEventListener('click',function(){ if(CLIENT==='*'){err('Pick a brand to measure its live feed — the overview reads every brand\u2019s stored volumes.');return;} measure(); });
+$('#measure').addEventListener('click',function(){ if(CLIENT==='*'){err('Pick a brand to sync its live feed — the overview reads every brand\u2019s stored scopes.');return;} syncPT(); });
 
 /* ---------------- boot ---------------- */
 function boot(){
