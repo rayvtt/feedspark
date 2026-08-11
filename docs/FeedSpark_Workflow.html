@@ -1331,8 +1331,17 @@ window.addEventListener('load',restore);
     if(o.f.source==='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',1);
     // tie the ticket to its plan row: the prefill link if it still matches, else auto-match on task wording
     var lk=window.__linkKey; if(lk&&lk.split('|')[0]!==o.f.client)lk=null;
-    if(!lk){ var cand=allIntake().filter(function(r){ return r.client===o.f.client&&sameTask(r.task,o.f.task); }); if(cand.length)lk=rowKey(cand[0]); }
+    // module deep-links (KWCal/Feed Lab/Pricer) generate task families sharing a prefix ('AI
+    // Keyword Optimisation — …') — fuzzy containment would tie every new one to the first old
+    // row and nothing would ever be created. Deep-link briefs therefore tie on EXACT wording only.
+    var strictTie=!!window.__fromLink; window.__fromLink=null;
+    if(!lk){ var cand=allIntake().filter(function(r){ return r.client===o.f.client&&(strictTie?normTask(r.task)===normTask(o.f.task):sameTask(r.task,o.f.task)); }); if(cand.length)lk=rowKey(cand[0]); }
     if(lk)b.taskKey=lk; window.__linkKey=null;
+    // module-originated briefs (KWCal / Feed Lab / Pricer deep-links) that matched NO existing
+    // plan row: the brief IS the task's birth — create the Intake row + Project-Plan write-back,
+    // exactly like the email path. adoptIntoPlan self-guards against duplicates, so a brief
+    // raised FROM an intake row (lk found) or an edit of an existing brief never double-writes.
+    if(!lk && !existing && o.f.source!=='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',0,strictTie);
     recordLearning(o.f.client,(document.getElementById('bg-cat').value)||classifyLite(o.f.task),o.f);   // edited briefs teach the generator
     BRIEFS[id]=b; window.__editId=null; persist(); renderAll();
     // briefed straight from the email triage queue → that email's decision is "task": clear it
@@ -1468,10 +1477,13 @@ window.addEventListener('load',restore);
       .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email',s:'',b:'open'};}); }
   // adopt an email-sourced task into the brand's project plan — the SAME pipeline as ＋ Add task:
   // optimistic local row + /api/sheets/append write-back, duplicate-guarded against existing plan rows.
-  function adoptIntoPlan(client,task,status,dueDD,owner,esrc){
+  function adoptIntoPlan(client,task,status,dueDD,owner,esrc,strict){
+    // strict: module-generated task families share a prefix ('AI Keyword Optimisation — …') —
+    // fuzzy dup-detection would swallow every new one after the first. Exact wording only.
+    var same=strict?function(a,b2){return normTask(a)===normTask(b2);}:sameTask;
     if(CLIENTS.indexOf(client)<0)return false;
-    var exists=planTasks().some(function(p){ return p.client===client&&sameTask(p.task,task); })
-      || MANUAL.some(function(m){ return m.client===client&&sameTask(m.task,task); });
+    var exists=planTasks().some(function(p){ return p.client===client&&same(p.task,task); })
+      || MANUAL.some(function(m){ return m.client===client&&same(m.task,task); });
     if(exists)return false;
     var due=(dueDD&&String(dueDD).length===8)?(dueDD.slice(0,2)+'/'+dueDD.slice(2,4)+'/'+dueDD.slice(4,8)):'';
     MANUAL.push({client:client,task:task,owner:owner||'',status:status||'Open',due:due,esrc:esrc?1:0}); saveManual(); _planCache=null;
@@ -2877,7 +2889,10 @@ window.addEventListener('load',restore);
     var j=JSON.parse(new TextDecoder().decode(bytes)); if(!j||!j.task)return;
     if(j.client&&CLIENTS.indexOf(j.client)<0){ CLIENTS.push(j.client); CLIENTS.sort(); saveBrands(); fillClientSelect(); }   // dossier-only client — never silently file under CLIENTS[0]
     try{ history.replaceState(null,'',location.pathname); }catch(e2){}   // don't re-open on refresh
-    setTimeout(function(){ prefill({client:j.client||'',task:String(j.task).slice(0,200),cat:j.cat||'',source:j.source||'plan'}); },450);
+    window.__fromLink=1;   // module deep-link: the tie to plan rows must be EXACT, never fuzzy
+    setTimeout(function(){ prefill({client:j.client||'',task:String(j.task).slice(0,200),cat:j.cat||'',source:j.source||'plan'});
+      window.__linkKey=null;   // prefill assumes an intake-row opener — a deep link has NO row yet; a phantom tie here blocked row-creation on save
+    },450);
   }catch(e){} })();
   // pull the live Gmail intake (client task emails) once the service account is connected
   // Every pending email waits here (⚡ action requests first) until it's decided:

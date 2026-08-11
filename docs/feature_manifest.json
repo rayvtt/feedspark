@@ -1383,6 +1383,27 @@
       "pattern": "ptsm",
       "min": 4,
       "pr": 218
+    },
+    {
+      "name": "Workflow: deep-link briefs create Intake row + PP write-back (strict tie)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "strictTie",
+      "min": 2,
+      "pr": 219
+    },
+    {
+      "name": "Workflow: deep-link phantom linkKey cleared",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "__fromLink",
+      "min": 2,
+      "pr": 219
+    },
+    {
+      "name": "KWCal: client calendar image upload (downscaled data-URL)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "cc-up",
+      "min": 2,
+      "pr": 219
     }
   ]
 }
