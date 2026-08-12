@@ -65,6 +65,14 @@ import FEEDLAB_ENGINE from "../../../docs/feedlab_engine.js";
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
 
+// KWCal client-calendar seeds (docs/calseed/) -- each brand's shared marketing-planner slide,
+// bundled as a Data module and served at /kwcal/cal/<file>. The KWCal page falls back to these
+// when KV holds no calImg for the brand (a URL/upload set in-page still wins).
+import CALSEED_REISS from "../../../docs/calseed/reiss_marketing_planner.webp";
+const CAL_SEED_FILES = {
+  'reiss_marketing_planner.webp': { body: CALSEED_REISS, mime: 'image/webp' },
+};
+
 // path -> { html, slug }. slug namespaces each page's KV edit layer (KV key: edits:<slug>),
 // so edits on the landing page and each deck never collide. Add a page = add a line here.
 /* Git-bundled materials. Adding one costs its full size on every deploy, so this list
@@ -595,6 +603,13 @@ export default {
     // the engine, served verbatim so the page and node tests share one file
     if (path === '/feedlab/engine.js' && request.method === 'GET') {
       return new Response(FEEDLAB_ENGINE, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+
+    // KWCal calendar seeds: brand planner slides bundled in git (see CAL_SEED_FILES above)
+    if (path.startsWith('/kwcal/cal/') && request.method === 'GET') {
+      const f = CAL_SEED_FILES[path.slice('/kwcal/cal/'.length)];
+      if (!f) return json({ error: 'not_found' }, 404);
+      return new Response(f.body, { headers: { 'content-type': f.mime, 'cache-control': 'public, max-age=86400' } });
     }
 
     // stream the live feed CSV through untouched (no open proxy: only clients whose feed
