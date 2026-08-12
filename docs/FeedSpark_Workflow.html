@@ -1019,7 +1019,13 @@ window.addEventListener('load',restore);
   function saveStatus(client,task,val){ try{var o=statusOverlay(); o[client+'|'+task]=val; localStorage.setItem('fcc-taskstatus',JSON.stringify(o));}catch(e){} }
   function writeStatus(client,task,val){                 // 2-way write to the brand's plan sheet
     saveStatus(client,task,val);
-    if(bucketOf(val)==='done')recSpawn(client,task);     // a recurring row completing spawns its next occurrence
+    if(bucketOf(val)==='done'){ recSpawn(client,task);   // a recurring row completing spawns its next occurrence
+      // marking a TEST row Done/Live in the grid IS the go-live signal — same run-start as the
+      // Gmail scan: ticket → Analysis 🧪, due → +run-SLA, the card jumps to the analysis week
+      var k=client+'|'+task, tb=null;
+      Object.keys(BRIEFS).forEach(function(id){ var x=BRIEFS[id]; if(!tb&&x&&(x.taskKey===k||(x.taskKeys||[]).indexOf(k)>=0))tb=x; });
+      if(tb&&needsAnalysis(tb)&&!tb.liveAt&&tb.status!=='confirmed'&&tb.status!=='analysis')goLive(tb);
+    }
     var id=PLANSHEET[client]; if(!id){ toast('Status saved · link '+client+'’s plan sheet to write it back'); return; }
     toast('Writing status to '+client+'’s plan…');
     fetch('/api/sheets/status',{method:'POST',headers:{'content-type':'application/json'},
@@ -2401,18 +2407,31 @@ window.addEventListener('load',restore);
     return w?('subject:("'+b.client+'" "'+w+'")'):('"'+b.id+'"'); }
   function lastDoneNote(b){ if(!b.comms)return ''; for(var i=b.comms.length-1;i>=0;i--){ if(b.comms[i].done||DONE_RE.test(b.comms[i].note)) return b.comms[i].note; } return ''; }
   function hasResult(b){ if(!b.comms)return false; for(var i=b.comms.length-1;i>=0;i--){ if(/^Result:/.test(b.comms[i].note))return true; } return false; }
-  // log the A/B read-out: writes the result into the Test register (deck ammo) and unlocks confirmation
-  function logResult(b){
-    var v=prompt('Test result — the analysis (e.g. “+24.7% CTR” or “no lift — rolled back”):',''); if(v===null)return; v=(''+v).trim(); if(!v)return;
-    b.comms=b.comms||[]; b.comms.push({from:'Ray',note:'Result: '+v,done:true,when:Date.now()});
-    var hit=null; TESTS.forEach(function(t){ if(!hit&&t.client===b.client&&sameTask(t.name,b.task))hit=t; });
+  // file a read-out into the Test register (deck ammo) — shared by the manual 🧪 prompt and
+  // the Gmail scan's unattended Result: comms
+  function regResult(b,v){ var hit=null; TESTS.forEach(function(t){ if(!hit&&t.client===b.client&&sameTask(t.name,b.task))hit=t; });
     var d=today(), iso=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
     if(hit){ hit.result=v; hit.status='done'; if(!hit.readout)hit.readout=iso; }
     else TESTS.push({client:b.client,name:b.task.slice(0,70),hypo:'',skus:'',start:'',readout:iso,status:'done',result:v});
-    saveTests();
+    saveTests(); }
+  // log the A/B read-out: writes the result into the Test register and unlocks confirmation
+  function logResult(b){
+    var v=prompt('Test result — the analysis (e.g. “+24.7% CTR” or “no lift — rolled back”):',''); if(v===null)return; v=(''+v).trim(); if(!v)return;
+    b.comms=b.comms||[]; b.comms.push({from:'Ray',note:'Result: '+v,done:true,when:Date.now()});
+    regResult(b,v);
     if(b.status==='done')setStage(b,'analysis');   // a result logged from Done pulls the ticket into its Analysis step
     b.updated=Date.now(); persist(); renderAll(); openModal(b.id);
     toast('Result logged to the Test register — draft the client confirmation to close'); }
+  // the Gmail scan logs ASPL's "Result: …" reply onto the ticket unattended — fold any such
+  // scanned read-outs into the Test register at load, so the deck-ammo record stays complete
+  function syncScannedResults(){ var n=0;
+    Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b||!needsAnalysis(b)||!b.comms)return;
+      var v=''; for(var i=b.comms.length-1;i>=0;i--){ var m=/^Result:\s*(.+)$/.exec(b.comms[i].note||''); if(m){ v=m[1].trim(); break; } }
+      if(!v)return;
+      var hit=null; TESTS.forEach(function(t){ if(!hit&&t.client===b.client&&sameTask(t.name,b.task))hit=t; });
+      if(hit&&hit.result)return;                                  // already in the register
+      regResult(b,v); n++; });
+    if(n)toast('🧪 '+n+' scanned test result'+(n===1?'':'s')+' filed to the Test register'); }
   // Written in Ray's own client voice (modelled on his real sent mail — warm opener + 😊, plain
   // words, a collaborative close, "Cheers, Ray"). No internal codes, no system phrasing: the
   // ibf token stays in ASPL briefs only — a client email must never read machine-generated.
@@ -2874,10 +2893,12 @@ window.addEventListener('load',restore);
   (function(){ var d=new Date(); d.setDate(d.getDate()+5);
     document.getElementById('bg-due').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); })();
   refreshPreview();
-  apiGet().then(function(d){ BRIEFS=d||{}; renderAll(); setTimeout(maybeNotify,800); });
+  // scanned read-outs need BOTH stores in hand before they can be folded into the register
+  var _srB=false,_srT=false; function _srTry(){ if(_srB&&_srT)syncScannedResults(); }
+  apiGet().then(function(d){ BRIEFS=d||{}; _srB=true; _srTry(); renderAll(); setTimeout(maybeNotify,800); });
   // #10 load the test register (KV; seed from wins + plan test-tasks on first run)
-  fetch('/api/tests').then(function(r){return r.json();}).then(function(d){ if(d&&d.length){TESTS=d;} else {TESTS=seedTests(); saveTests();} renderTests(); renderTimeline(); renderAlerts(); })
-    .catch(function(){ try{TESTS=JSON.parse(localStorage.getItem('fcc-tests'));}catch(e){} if(!TESTS||!TESTS.length)TESTS=seedTests(); renderTests(); renderTimeline(); renderAlerts(); });
+  fetch('/api/tests').then(function(r){return r.json();}).then(function(d){ if(d&&d.length){TESTS=d;} else {TESTS=seedTests(); saveTests();} _srT=true; _srTry(); renderTests(); renderTimeline(); renderAlerts(); })
+    .catch(function(){ try{TESTS=JSON.parse(localStorage.getItem('fcc-tests'));}catch(e){} if(!TESTS||!TESTS.length)TESTS=seedTests(); _srT=true; _srTry(); renderTests(); renderTimeline(); renderAlerts(); });
   // #1 pull live plan rows on load (falls back to the git snapshot until the SA is connected)
   fetchLive(false);
   // deep-link: /workflow?brief=<b64url JSON {client,task,cat,source}> opens the composer
