@@ -1480,6 +1480,27 @@
    "pattern": "syncScannedResults",
    "min": 2,
    "pr": 0
+  },
+  {
+   "name": "KWCal: keyword-column detection (numbered product_type 2..10, excluded from scope candidates)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "producttype([0-9]",
+   "min": 2,
+   "pr": 224
+  },
+  {
+   "name": "KWCal: saturation audit \u2014 always-on KPI + brief lift lines",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "Keyword saturation",
+   "min": 2,
+   "pr": 224
+  },
+  {
+   "name": "KWCal: per-event saturation lift store (satm)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "satm",
+   "min": 3,
+   "pr": 224
   }
  ]
 }
