@@ -134,7 +134,10 @@ window.addEventListener('load',restore);
   .ptp b.pt-t{font-size:14px;font-weight:900}
   .ptp .pt-sub{font-size:11.5px;color:var(--muted);font-weight:700;margin:2px 0 9px}
   .ptp input.pt-q{font:inherit;font-size:13px;font-weight:700;padding:9px 12px;border:1px solid var(--line);border-radius:10px;width:100%}
-  .ptp .pt-sel{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 6px;max-height:92px;overflow-y:auto}
+  /* selections are full-width rows: NEVER let the greedy list below flex-squeeze them away */
+  .ptp .pt-sel{flex:none;display:flex;flex-direction:column;gap:4px;margin:8px 0 6px;max-height:138px;overflow-y:auto}
+  .ptp .pt-selh{flex:none;font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:7px}
+  .ptp b.pt-t{cursor:move;user-select:none}
   .ptp .pt-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.35);color:var(--orange-ink);border-radius:100px;padding:2px 9px}
   .ptp .pt-chip button{border:none;background:none;font-weight:900;cursor:pointer;color:inherit;padding:0 1px}
   .ptp .pt-list{flex:1;overflow-y:auto;border:1px solid var(--line);border-radius:10px;margin-top:4px}
@@ -557,8 +560,8 @@ function render(){
       +'<div class="mo-cards">'+byMon[k].map(function(e){
         var wf=wfFor(CLIENT,e), st=wf?wf.st:(e.st||'planned');
         return '<div class="rc" data-kw="'+esc(e.id)+'"><div class="rt"><span class="lens">✦</span>'+esc(e.name)
-          +'<span class="mtag">'+esc(e.lane||'moment')+(editMode?' <button class="del" style="position:static;opacity:1" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</span></div>'
-          +'<div class="rd">lands '+dLbl(e)+((e.mkt&&e.mkt!=='gb')?' · '+e.mkt.toUpperCase():'')+' · brief by '+schedDate(e).getUTCDate()+' '+MON[schedDate(e).getUTCMonth()]+'</div>'
+          +(editMode?'<button class="del" style="position:static;opacity:1;margin-left:auto" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</div>'
+          +'<div class="rd">lands '+dLbl(e)+((e.mkt&&e.mkt!=='gb')?' · '+e.mkt.toUpperCase():'')+'</div>'
           +'<div class="ra">'+scopeBtn(CLIENT,e)
           +'<span class="themes" data-terms="'+esc(e.id)+'" title="'+esc((e.terms||[]).join(', '))+'">✦ '+(e.terms||[]).length+' themes</span>'
           +'<button type="button" class="stx '+esc(st)+'" data-st="'+esc(e.id)+'"'+(wf?' title="Live from the Workflow pipeline"':'')+'>'+(wf?'WF · ':'')+esc(st)+'</button>'
@@ -582,10 +585,10 @@ function ptOpen(e){
     return;
   }
   var sel=ptsOf(e,pmkt).slice();
-  d.innerHTML='<b class="pt-t">'+esc(e.name)+' — category scope · '+esc(pmkt.toUpperCase())+'</b>'
+  d.innerHTML='<b class="pt-t">'+esc(e.name)+' — category scope · '+esc(pmkt.toUpperCase())+' <span style="font-weight:700;color:var(--muted);font-size:10.5px">(drag to move)</span></b>'
     +'<div class="pt-sub">'+fmt(Object.keys(idx.map).length)+' unique product types off the live feed — word-search, tick to add, × to remove.</div>'
     +'<input class="pt-q" id="pt-q" type="search" placeholder="Search product types… (e.g. coat, tailoring)">'
-    +'<div class="pt-sel" id="pt-sel"></div><div class="pt-list" id="pt-list"></div>'
+    +'<div class="pt-selh" id="pt-selh"></div><div class="pt-sel" id="pt-sel"></div><div class="pt-list" id="pt-list"></div>'
     +'<div class="pt-foot"><span class="pt-tot" id="pt-tot"></span><button class="btn" id="pt-sug" title="Preselect product types whose NAME or crawled product titles/descriptions carry any keyword theme">✨ Suggest from themes</button><button class="btn pri" id="pt-done">Done</button></div>';
   document.body.appendChild(d); ptPlace(d);
   var keys=Object.keys(idx.map).sort(function(a,b){return idx.map[b]-idx.map[a]});
@@ -602,6 +605,7 @@ function ptOpen(e){
         +'<span style="flex:none;display:inline-flex;gap:7px;align-items:center"><b>'+fmt(idx.map[k]||0)+' SKUs</b><button type="button" data-rm="'+esc(k)+'">×</button></span></span>'; }).join('')
       ||'<span class="pt-sub">nothing selected yet</span>';
     d.querySelector('#pt-tot').textContent=sel.length?(sel.length+' PTs · '+fmt(tot())+' SKUs in scope'):'';
+    d.querySelector('#pt-selh').textContent=sel.length?('Selected — '+sel.length):'';
   }
   d.addEventListener('click',function(ev){
     ev.stopPropagation(); // paint() re-renders rows — a detached target must never read as an outside click
@@ -615,6 +619,18 @@ function ptOpen(e){
           if(k.toLowerCase().indexOf(lt)>=0||String(bgs[k]||'').indexOf(lt)>=0)sel.push(k); }); }); paint(); return; }
     if(ev.target.id==='pt-done'){ e.ptsm=e.ptsm||{}; e.ptsm[pmkt]=sel.slice(); if(pmkt==='gb')e.pts=sel.slice(); save(); ptClose(); render(); return; }
   });
+  (function(){ // drag the picker by its title — Ray wants the board visible behind it
+    var t=d.querySelector('b.pt-t'), sx=0, sy=0, ox=0, oy=0, moving=false;
+    t.addEventListener('pointerdown',function(ev){
+      moving=true; sx=ev.clientX; sy=ev.clientY;
+      var r=d.getBoundingClientRect(); ox=r.left; oy=r.top;
+      d.style.transform='none'; d.style.left=ox+'px'; d.style.top=oy+'px';
+      t.setPointerCapture(ev.pointerId); ev.preventDefault();
+    });
+    t.addEventListener('pointermove',function(ev){ if(!moving)return;
+      d.style.left=(ox+ev.clientX-sx)+'px'; d.style.top=Math.max(8,oy+ev.clientY-sy)+'px'; });
+    t.addEventListener('pointerup',function(){ moving=false; });
+  })();
   d.querySelector('#pt-q').addEventListener('input',paint);
   paint();
   d.querySelector('#pt-q').focus();
