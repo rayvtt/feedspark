@@ -357,11 +357,17 @@ function kpis(){
   E.forEach(function(e){ var wf=wfFor(CLIENT,e); st[(wf?wf.st:e.st)||'planned']=(st[(wf?wf.st:e.st)||'planned']||0)+1;
     var v=volOf(CLIENT,e);
     if(v&&!v.unset&&!v.wide){vol+=v.vol;scoped++} else if(!e.brandwide&&(!v||v.unset))unset++; });
+  // the live saturation audit — keywords land in g:product_type2..10, and every brand/market
+  // board always shows how much of the feed already carries them (each event lifts it toward 100%)
+  var idxS=ptidxFor(CLIENT,MKT), satK='';
+  if(idxS&&idxS.sat&&idxS.__total){ var sp=Math.round(idxS.sat.n/idxS.__total*1000)/10;
+    satK='<div class="kpi '+(sp>=85?'good':(sp<60?'warn':''))+'" title="'+fmt(idxS.sat.n)+' of '+fmt(idxS.__total)+' live '+MKT.toUpperCase()+' SKUs carry keywords in g:product_type2–10'+(idxS.sat.cols?'':' — no keyword fields found in this feed yet')+'"><div class="n">'+sp+'%</div><div class="l">Keyword saturation · '+MKT.toUpperCase()+'</div></div>'; }
   $('#kpis').innerHTML=
     '<div class="kpi"><div class="n">'+E.length+'</div><div class="l">Optimisations scheduled</div></div>'
     +'<div class="kpi warn"><div class="n">'+((st.intake||0)+(st.briefed||0)+(st.progress||0))+'</div><div class="l">In intake / briefed</div></div>'
     +'<div class="kpi good"><div class="n">'+((st.live||0)+(st.done||0)+(st.confirmed||0))+'</div><div class="l">Live / done</div></div>'
     +'<div class="kpi"><div class="n">'+(scoped?fmt(vol):'—')+'</div><div class="l">SKUs in scope</div></div>'
+    +satK
     +(unset?'<div class="kpi warn"><div class="n">'+unset+'</div><div class="l">Scopes to set</div></div>':'');
 }
 function monthRange(){
@@ -406,8 +412,9 @@ function renderOverview(){
       var vv=volOf(brand,e); if(vv&&!vv.unset&&!vv.wide)vol+=vv.vol;
       if(st==='planned'&&!next)next=e; });
     var mons=Object.keys(byMon).map(Number).sort(function(a,b){return a-b});
+    var oi=ptidxFor(brand,'gb'), osp=(oi&&oi.sat&&oi.__total)?Math.round(oi.sat.n/oi.__total*1000)/10:null;
     h+='<div class="ov-row" data-brand="'+esc(brand)+'"><div class="ov-h"><b>'+esc(brand)+'</b>'
-      +'<span class="om">'+E.length+' optimisations'+(next?' · next brief: '+esc(next.name)+' by '+schedDate(next).getUTCDate()+' '+MON[schedDate(next).getUTCMonth()]:'')+'</span>'
+      +'<span class="om">'+E.length+' optimisations'+(osp!=null?' · '+osp+'% keyworded':'')+(next?' · next brief: '+esc(next.name)+' by '+schedDate(next).getUTCDate()+' '+MON[schedDate(next).getUTCMonth()]:'')+'</span>'
       +'<a class="ob" href="/kwcal?client='+encodeURIComponent(brand)+'" data-open="'+esc(brand)+'">Open board →</a></div>'
       +'<div class="ov-mons">'+mons.map(function(k){
         return '<div class="ov-mon"><div class="oml">'+MON[k%12]+' ’'+String(Math.floor(k/12)).slice(2)+'</div><div class="ov-chips">'
@@ -474,28 +481,32 @@ function txOf(e,mkt){ var t=e.txsm&&e.txsm[mkt]; return (t&&t.qs&&t.qs.length)?t
 function txWords(q){ return String(q).toLowerCase().split(/\s+/).filter(Boolean); }
 function txHit(x,ws){ for(var i=0;i<ws.length;i++)if(x.indexOf(ws[i])<0)return false; return true; }
 function skuCache(brand,mkt){ var c=SKUC[brand+'|'+mkt]; return c&&c.rows?c.rows:null; }
-function txCount(brand,mkt,pts,qs){ // one pass over the cache: per-term counts + unique union with the PT selection
+function txCount(brand,mkt,pts,qs){ // one pass over the cache: per-term counts + unique union with the PT selection + saturation lift
   var rows=skuCache(brand,mkt); if(!rows)return null;
   var sset={}; (pts||[]).forEach(function(p){sset[p]=1});
-  var wss=(qs||[]).map(txWords), ns=(qs||[]).map(function(){return 0}), uni=0;
+  var wss=(qs||[]).map(txWords), ns=(qs||[]).map(function(){return 0}), uni=0, unsat=0;
   for(var i=0;i<rows.length;i++){ var hit=sset[rows[i][0]]?1:0;
     for(var t=0;t<wss.length;t++){ if(txHit(rows[i][1],wss[t])){ns[t]++;hit=1;} }
-    if(hit)uni++; }
-  return {ns:ns,uni:uni};
+    if(hit){ uni++; if(!rows[i][2])unsat++; } }
+  return {ns:ns,uni:uni,unsat:unsat};
 }
 function ensureCache(brand,mkt,cb){ // stream the live feed once to warm the SKU cache (text counts need per-SKU text)
   if(skuCache(brand,mkt))return cb(true);
   if(window.__engineFail||!window.FeedAudit||!FeedAudit.createParser)return cb(false);
   var key=brand+'|'+mkt; if(CACHING[key]){CACHING[key].push(cb);return;} CACHING[key]=[cb];
-  var header=null,cands=[],tCol=-1,dCol=-1,buf=[];
+  var header=null,cands=[],tCol=-1,dCol=-1,buf=[],kwc=[],satN=0;
   var parser=FeedAudit.createParser(function(r){
-    if(!header){ header=r; // same candidate-column rules as syncPT (the populated column wins at end)
+    if(!header){ header=r; // same candidate/keyword-column rules as syncPT (the populated column wins at end)
       for(var i=0;i<r.length;i++){ var k=FeedAudit.normKey(r[i]);
-        if(k==='product_type'||k.indexOf('product_type')===0||k.replace(/[^a-z]/g,'')==='producttype')cands.push(i);
+        var kd=k.replace(/[^a-z0-9]/g,'').match(/^producttype([0-9]{1,2})$/);
+        if(kd&&+kd[1]>=2){ kwc.push(i); }
+        else if(k==='product_type'||k.indexOf('product_type')===0||k.replace(/[^a-z]/g,'')==='producttype')cands.push(i);
         if(k==='title'&&tCol<0)tCol=i; if(k==='description'&&dCol<0)dCol=i; }
       return; }
+    var sflag=0; for(var ki=0;ki<kwc.length;ki++){ if(String(r[kwc[ki]]||'').trim()){sflag=1;break;} }
+    satN+=sflag;
     buf.push([cands.map(function(i2){return String(r[i2]||'').trim()}),
-      ((tCol>=0?String(r[tCol]||''):'')+' '+(dCol>=0?String(r[dCol]||'').slice(0,800):'')).toLowerCase()]);
+      ((tCol>=0?String(r[tCol]||''):'')+' '+(dCol>=0?String(r[dCol]||'').slice(0,800):'')).toLowerCase(),sflag]);
   });
   fetch('/api/feed/proxy?client='+encodeURIComponent(brand)+'&market='+encodeURIComponent(mkt)).then(function(res){
     if(!res.ok)throw new Error('feed proxy said '+res.status);
@@ -503,7 +514,9 @@ function ensureCache(brand,mkt,cb){ // stream the live feed once to warm the SKU
     function step(){ return reader.read().then(function(x){
       if(x.done){ parser.push(dec.decode()); parser.end();
         var best=-1,wci=0; cands.forEach(function(ci,j){ var n=0; buf.forEach(function(b){ if(b[0][j])n++; }); if(n>best){best=n;wci=j} });
-        SKUC[key]={t:Date.now(),rows:buf.map(function(b){return [b[0][wci]||'',b[1]]})};
+        SKUC[key]={t:Date.now(),rows:buf.map(function(b){return [b[0][wci]||'',b[1],b[2]]})};
+        // keep the always-shown saturation KPI live: refresh the stored audit off this stream
+        var rr=STORE[brand]; if(rr&&rr.ptidx&&rr.ptidx[mkt]){ rr.ptidx[mkt].sat={n:satN,cols:kwc.length}; rr.ptidx[mkt].__total=buf.length; save(); }
         (CACHING[key]||[]).forEach(function(f){f(true)}); delete CACHING[key]; return; }
       parser.push(dec.decode(x.value,{stream:true})); return step(); }); }
     return step();
@@ -603,6 +616,16 @@ function briefLinkFor(brand,e){
       tx.qs.forEach(function(q){ lines.push('  • “'+q.q+'” — '+(q.n!=null?fmt(q.n)+' SKUs':'count pending sync')); }); }
     if(v&&v.vol!=null)lines.push('Total: '+fmt(v.vol)+' SKUs'+(ps.length&&tx?' unique':'')+' ('+v.pct+'% of the live feed)');
   } else lines.push('Categories: TBC — set the scope on the Keyword Calendar');
+  var sat=idx&&idx.sat, sm=e.satm&&e.satm[bmkt];
+  if(sat&&idx.__total){
+    var cur=Math.round(sat.n/idx.__total*1000)/10;
+    var sl='Keyword saturation ('+bmkt.toUpperCase()+'): '+cur+'% of the live feed already keyworded (g:product_type2–10)';
+    if(e.brandwide){ var rem=idx.__total-sat.n; if(rem>0)sl+=' — brand-wide window: '+fmt(rem)+' SKUs to take the brand to 100%'; }
+    else if(sm&&sm.unsat!=null){
+      if(!sm.unsat)sl+=' — every in-scope SKU already carries keywords';
+      else sl+=' — '+fmt(sm.unsat)+' in-scope SKUs still to keyword; landing this brief lifts the brand to ~'+(Math.round((sat.n+sm.unsat)/idx.__total*1000)/10)+'%'; }
+    lines.push(sl);
+  }
   return '/workflow?brief='+b64url({client:brand,task:task,cat:'keyword',scope:lines.join('\n')});
 }
 function render(){
@@ -647,7 +670,7 @@ function ptOpen(e){
     return;
   }
   var sel=ptsOf(e,pmkt).slice();
-  var txs=(txOf(e,pmkt)?txOf(e,pmkt).qs.map(function(q){return q.q}):[]), txn={}, uniN=null;
+  var txs=(txOf(e,pmkt)?txOf(e,pmkt).qs.map(function(q){return q.q}):[]), txn={}, uniN=null, unsatN=null;
   d.innerHTML='<b class="pt-t">'+esc(e.name)+' — product scope · '+esc(pmkt.toUpperCase())+' <span style="font-weight:700;color:var(--muted);font-size:10.5px">(drag to move)</span></b>'
     +'<div class="pt-sub">'+fmt(Object.keys(idx.map).length)+' unique product types off the live feed — word-search, tick to add, × to remove. Or filter free-text below; both methods combine, counted unique.</div>'
     +'<input class="pt-q" id="pt-q" type="search" placeholder="Search product types… (e.g. coat, tailoring)">'
@@ -681,12 +704,13 @@ function ptOpen(e){
     if(sel.length&&txs.length)lbl=sel.length+' PTs + '+txs.length+' txt · '+(uniN!=null?fmt(uniN)+' SKUs unique':'counting…')+' in scope';
     else if(sel.length)lbl=sel.length+' PTs · '+fmt(tot())+' SKUs in scope';
     else if(txs.length)lbl=txs.length+' txt · '+(uniN!=null?fmt(uniN)+' SKUs':'counting…')+' in scope';
+    if(lbl&&unsatN!=null)lbl+=' · '+fmt(unsatN)+' not yet keyworded';
     d.querySelector('#pt-tot').textContent=lbl;
     d.querySelector('#pt-selh').textContent=sel.length?('Selected — '+sel.length):'';
   }
-  function recount(){ txn={}; uniN=null;
-    if(txs.length){ var tc=txCount(CLIENT,pmkt,sel,txs);
-      if(tc){ txs.forEach(function(q,i){txn[q]=tc.ns[i]}); uniN=tc.uni; } } }
+  function recount(){ txn={}; uniN=null; unsatN=null;
+    if(txs.length||sel.length){ var tc=txCount(CLIENT,pmkt,sel,txs);
+      if(tc){ txs.forEach(function(q,i){txn[q]=tc.ns[i]}); if(txs.length)uniN=tc.uni; unsatN=tc.unsat; } } }
   var warming=false;
   function warm(){ // text counts need the per-SKU cache — stream the feed once, then everything is live
     if(skuCache(CLIENT,pmkt)||warming)return; warming=true;
@@ -715,12 +739,16 @@ function ptOpen(e){
           if(k.toLowerCase().indexOf(lt)>=0||String(bgs[k]||'').indexOf(lt)>=0)sel.push(k); }); }); recount(); paint(); return; }
     if(ev.target.id==='pt-done'){ e.ptsm=e.ptsm||{}; e.ptsm[pmkt]=sel.slice(); if(pmkt==='gb')e.pts=sel.slice();
       var old=(e.txsm&&e.txsm[pmkt])||{}, oldn={}; (old.qs||[]).forEach(function(x){oldn[x.q]=x.n});
+      var hasC=!!skuCache(CLIENT,pmkt); recount();
       if(!txs.length){ if(e.txsm)delete e.txsm[pmkt]; }
-      else{ var hasC=!!skuCache(CLIENT,pmkt); recount();
+      else{
         e.txsm=e.txsm||{};
         // no cache yet (stream still running / worker unreachable): keep the previous numbers rather than write zeros
         e.txsm[pmkt]={qs:txs.map(function(q){return {q:q,n:hasC?(txn[q]||0):(oldn[q]!=null?oldn[q]:null)}}),
           uni:hasC?uniN:(old.uni!=null?old.uni:null)}; }
+      // saturation lift for this scope (how many in-scope SKUs still lack g:product_type2+ keywords)
+      if(hasC&&unsatN!=null){ e.satm=e.satm||{}; e.satm[pmkt]={unsat:unsatN}; }
+      else if(!sel.length&&!txs.length&&e.satm)delete e.satm[pmkt];
       save(); ptClose(); render(); return; }
   });
   (function(){ // drag the picker by its title — Ray wants the board visible behind it
@@ -739,7 +767,7 @@ function ptOpen(e){
   d.querySelector('#tx-q').addEventListener('keydown',function(ev){
     if(ev.key==='Enter'){ ev.preventDefault(); addTerm(this.value); this.value=''; } });
   d.querySelector('#tx-q').addEventListener('focus',function(){ warm(); });
-  if(txs.length)warm();
+  warm(); // one stream per market per page-load — text counts + saturation lifts are live by Done
   recount(); paint();
   d.querySelector('#pt-q').focus();
 }
@@ -765,24 +793,31 @@ function syncPT(){
   function nextMkt(){
     if(mi>=list.length){ MEASURING=false; $('#measure').disabled=false; $('#mstate').textContent='product types synced — scopes are live'; save(); render(); return; }
     var mkt=list[mi++];
-    var rows=0, header=null, cands=[], cmaps=[], bags={}, tCol=-1, dCol=-1, cache=[];
+    var rows=0, header=null, cands=[], cmaps=[], bags={}, tCol=-1, dCol=-1, cache=[], kwc=[], satN=0;
     var STOP={the:1,and:1,for:1,with:1,from:1,this:1,that:1,are:1,our:1,its:1,has:1,было:1};
     var parser=FeedAudit.createParser(function(r){
       if(!header){ header=r;
         // real sheets name this many ways (g:product_type, product_type|||1, "Product Type",
         // FeedHero working copies with an EMPTY input column beside the populated output) —
         // collect every candidate column and let the values decide which one is live
-        cands=[]; 
+        cands=[];
         for(var i=0;i<r.length;i++){ var k=FeedAudit.normKey(r[i]);
-          if(k==='product_type'||k.indexOf('product_type')===0||k.replace(/[^a-z]/g,'')==='producttype')cands.push(i);
+          // numbered product_type 2..10 (g:product_type2, product_type_3, |||N working copies…)
+          // are the KEYWORD fields — FeedSpark's optimised keywords land there, never the
+          // category tree — so they feed the saturation audit and NEVER the scope candidates
+          var kd=k.replace(/[^a-z0-9]/g,'').match(/^producttype([0-9]{1,2})$/);
+          if(kd&&+kd[1]>=2){ kwc.push(i); }
+          else if(k==='product_type'||k.indexOf('product_type')===0||k.replace(/[^a-z]/g,'')==='producttype')cands.push(i);
           if(k==='title'&&tCol<0)tCol=i; if(k==='description'&&dCol<0)dCol=i; }
         cmaps=cands.map(function(){return {}});
         return; }
       rows++;
-      // per-SKU cache (in-memory only): candidate PT values + searchable text — free-text
-      // scope filters count against this without another stream
+      var sflag=0; for(var ki=0;ki<kwc.length;ki++){ if(String(r[kwc[ki]]||'').trim()){sflag=1;break;} }
+      satN+=sflag;
+      // per-SKU cache (in-memory only): candidate PT values + searchable text + keyworded flag —
+      // free-text scope filters and saturation lifts count against this without another stream
       cache.push([cands.map(function(i2){return String(r[i2]||'').trim()}),
-        ((tCol>=0?String(r[tCol]||''):'')+' '+(dCol>=0?String(r[dCol]||'').slice(0,800):'')).toLowerCase()]);
+        ((tCol>=0?String(r[tCol]||''):'')+' '+(dCol>=0?String(r[dCol]||'').slice(0,800):'')).toLowerCase(),sflag]);
       var rowTxt=null;
       for(var ci=0;ci<cands.length;ci++){ var v=String(r[cands[ci]]||'').trim(); if(!v)continue;
         cmaps[ci][v]=(cmaps[ci][v]||0)+1;
@@ -805,8 +840,8 @@ function syncPT(){
           var map={}, best=-1, wci=0; // the populated candidate wins (FeedHero empty-input columns lose)
           cmaps.forEach(function(m2,ci){ var n=0,k2; for(k2 in m2)n+=m2[k2]; if(n>best){best=n;map=m2;wci=ci} });
           var sb={}, kb; for(kb in bags){ if(map[kb])sb[kb]=Object.keys(bags[kb].w).join(' '); } // keep bags for the winning column only
-          SKUC[CLIENT+'|'+mkt]={t:Date.now(),rows:cache.map(function(c){return [c[0][wci]||'',c[1]]})};
-          var r=rec(); r.ptidx=r.ptidx||{}; r.ptidx[mkt]={__total:rows,map:map,bags:sb,t:Date.now()};
+          SKUC[CLIENT+'|'+mkt]={t:Date.now(),rows:cache.map(function(c){return [c[0][wci]||'',c[1],c[2]]})};
+          var r=rec(); r.ptidx=r.ptidx||{}; r.ptidx[mkt]={__total:rows,map:map,bags:sb,t:Date.now(),sat:{n:satN,cols:kwc.length}};
           if(!Object.keys(map).length){ // zero uniques = the column wasn't matched; name the suspects
             var suspects=(header||[]).map(function(h){return FeedAudit.normKey(h)}).filter(function(k){return k.indexOf('type')>=0||k.indexOf('categor')>=0});
             err('Synced '+fmt(rows)+' '+mkt.toUpperCase()+' products but no product_type column matched. Type-ish headers seen: '+(suspects.join(', ')||'(none)')+' — tell Claude and it will map this client.'); }
