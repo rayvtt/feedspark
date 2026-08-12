@@ -557,8 +557,8 @@ function render(){
       +'<div class="mo-cards">'+byMon[k].map(function(e){
         var wf=wfFor(CLIENT,e), st=wf?wf.st:(e.st||'planned');
         return '<div class="rc" data-kw="'+esc(e.id)+'"><div class="rt"><span class="lens">✦</span>'+esc(e.name)
-          +'<span class="mtag">'+esc(e.lane||'moment')+(editMode?' <button class="del" style="position:static;opacity:1" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</span></div>'
-          +'<div class="rd">lands '+dLbl(e)+((e.mkt&&e.mkt!=='gb')?' · '+e.mkt.toUpperCase():'')+' · brief by '+schedDate(e).getUTCDate()+' '+MON[schedDate(e).getUTCMonth()]+'</div>'
+          +(editMode?'<button class="del" style="position:static;opacity:1;margin-left:auto" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</div>'
+          +'<div class="rd">lands '+dLbl(e)+((e.mkt&&e.mkt!=='gb')?' · '+e.mkt.toUpperCase():'')+'</div>'
           +'<div class="ra">'+scopeBtn(CLIENT,e)
           +'<span class="themes" data-terms="'+esc(e.id)+'" title="'+esc((e.terms||[]).join(', '))+'">✦ '+(e.terms||[]).length+' themes</span>'
           +'<button type="button" class="stx '+esc(st)+'" data-st="'+esc(e.id)+'"'+(wf?' title="Live from the Workflow pipeline"':'')+'>'+(wf?'WF · ':'')+esc(st)+'</button>'
