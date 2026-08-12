@@ -304,6 +304,9 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function fmt(n){n=+n;return isFinite(n)?n.toLocaleString('en-GB'):'0'}
 function b64url(o){var b=new TextEncoder().encode(JSON.stringify(o)),s='';b.forEach(function(c){s+=String.fromCharCode(c)});return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+// Bundled client-calendar slides (served by the worker from docs/calseed/) — the 🗂 side-by-side
+// default when the brand has no calImg in KV; a URL/upload set in-page always overrides.
+var CALSEED={Reiss:'/kwcal/cal/reiss_marketing_planner.webp'};
 var LANES=[['campaign','Campaign'],['location','Moments · Location'],['studio','Moments · Studio'],['sale','Sale']];
 var STATES=['planned','intake','briefed','live','done'];
 var LEAD_DAYS=21; // keyword optimisation lands ~3 weeks before the moment
@@ -493,6 +496,7 @@ function loadMkts(){
 }
 function renderClical(){
   var r=rec(), box=$('#clical'), on=!!window.__sbs;
+  var ci=r.calImg||CALSEED[CLIENT]||'';
   $('#split').classList.toggle('side',on);
   box.hidden=!on;
   $('#sbs').classList.toggle('on',on);
@@ -501,7 +505,7 @@ function renderClical(){
     +(editMode?'<span style="display:flex;gap:6px"><button class="btn" style="padding:4px 10px;font-size:11px" id="cc-link">🖼 URL</button>'
       +'<button class="btn" style="padding:4px 10px;font-size:11px" id="cc-up">⬆ Upload</button>'
       +'<input type="file" id="cc-file" accept="image/*" hidden></span>':'')+'</div>'
-    +(r.calImg?'<a href="'+esc(r.calImg)+'" target="_blank" rel="noopener"><img src="'+esc(r.calImg)+'" alt="Client calendar"></a>'
+    +(ci?'<a href="'+esc(ci)+'" target="_blank" rel="noopener"><img src="'+esc(ci)+'" alt="Client calendar"></a>'
       :'<div class="cc-none">No client calendar linked yet — ✎ Edit calendar → 🗂 → 🖼 Link, paste an image URL (the brand’s shared slide). It opens side-by-side for transcribing moments into the FeedSpark roadmap.</div>');
   var lk=box.querySelector('#cc-link');
   if(lk)lk.onclick=function(){ var u=prompt('Image URL of the client’s shared calendar (link-viewable):',r.calImg||''); if(u===null)return; r.calImg=u.trim(); save(); renderClical(); };

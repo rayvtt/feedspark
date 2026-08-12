@@ -1417,6 +1417,27 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "ready-made scope",
       "pr": 220
+    },
+    {
+      "name": "KWCal: bundled client-calendar seed fallback (Reiss planner)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "CALSEED",
+      "min": 2,
+      "pr": 222
+    },
+    {
+      "name": "Worker: /kwcal/cal/ calendar-seed asset route",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "/kwcal/cal/",
+      "min": 3,
+      "pr": 222
+    },
+    {
+      "name": "Wrangler: calseed Data-module rule",
+      "file": "wrangler.toml",
+      "pattern": "calseed/",
+      "min": 2,
+      "pr": 222
     }
   ]
 }
