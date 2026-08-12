@@ -1438,6 +1438,27 @@
       "pattern": "calseed/",
       "min": 2,
       "pr": 222
+    },
+    {
+      "name": "KWCal: free-text scope filters combinable with PT selection (txsm + unique union)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "txsm",
+      "min": 5,
+      "pr": 223
+    },
+    {
+      "name": "KWCal: in-memory SKU cache streamed on demand for text counts",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "ensureCache",
+      "min": 2,
+      "pr": 223
+    },
+    {
+      "name": "KWCal: text-filter section in the scope picker + brief payload",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Text filters",
+      "min": 2,
+      "pr": 223
     }
   ]
 }
