@@ -464,20 +464,74 @@ function curMkt(){ return MKT; }
 function ptidxFor(brand,mkt){ var r=STORE[brand]||{}; return (r.ptidx&&r.ptidx[mkt||'gb'])||null; }
 function evMkt(brand,e){ return e.mkt||(brand===CLIENT?MKT:'gb'); } // pinned market wins; else the board's
 function ptsOf(e,mkt){ if(e.ptsm&&e.ptsm[mkt])return e.ptsm[mkt]; if(mkt==='gb')return e.pts||[]; return []; } // legacy pts = gb
-function volOf(brand,e){ // exact PT counts per market, brand-wide for sale windows
+
+/* ---- free-text scope filters (title + description) — combinable with PT selection ---- */
+// per event per market: e.txsm[mkt]={qs:[{q,n}],uni} — n = SKUs matching the term,
+// uni = UNIQUE SKUs matching (selected PTs ∪ terms), so combined totals never double-count.
+var SKUC=window.__skucache=window.__skucache||{}; // in-memory per-SKU [pt, searchable text] per brand|mkt
+var CACHING={};
+function txOf(e,mkt){ var t=e.txsm&&e.txsm[mkt]; return (t&&t.qs&&t.qs.length)?t:null; }
+function txWords(q){ return String(q).toLowerCase().split(/\s+/).filter(Boolean); }
+function txHit(x,ws){ for(var i=0;i<ws.length;i++)if(x.indexOf(ws[i])<0)return false; return true; }
+function skuCache(brand,mkt){ var c=SKUC[brand+'|'+mkt]; return c&&c.rows?c.rows:null; }
+function txCount(brand,mkt,pts,qs){ // one pass over the cache: per-term counts + unique union with the PT selection
+  var rows=skuCache(brand,mkt); if(!rows)return null;
+  var sset={}; (pts||[]).forEach(function(p){sset[p]=1});
+  var wss=(qs||[]).map(txWords), ns=(qs||[]).map(function(){return 0}), uni=0;
+  for(var i=0;i<rows.length;i++){ var hit=sset[rows[i][0]]?1:0;
+    for(var t=0;t<wss.length;t++){ if(txHit(rows[i][1],wss[t])){ns[t]++;hit=1;} }
+    if(hit)uni++; }
+  return {ns:ns,uni:uni};
+}
+function ensureCache(brand,mkt,cb){ // stream the live feed once to warm the SKU cache (text counts need per-SKU text)
+  if(skuCache(brand,mkt))return cb(true);
+  if(window.__engineFail||!window.FeedAudit||!FeedAudit.createParser)return cb(false);
+  var key=brand+'|'+mkt; if(CACHING[key]){CACHING[key].push(cb);return;} CACHING[key]=[cb];
+  var header=null,cands=[],tCol=-1,dCol=-1,buf=[];
+  var parser=FeedAudit.createParser(function(r){
+    if(!header){ header=r; // same candidate-column rules as syncPT (the populated column wins at end)
+      for(var i=0;i<r.length;i++){ var k=FeedAudit.normKey(r[i]);
+        if(k==='product_type'||k.indexOf('product_type')===0||k.replace(/[^a-z]/g,'')==='producttype')cands.push(i);
+        if(k==='title'&&tCol<0)tCol=i; if(k==='description'&&dCol<0)dCol=i; }
+      return; }
+    buf.push([cands.map(function(i2){return String(r[i2]||'').trim()}),
+      ((tCol>=0?String(r[tCol]||''):'')+' '+(dCol>=0?String(r[dCol]||'').slice(0,800):'')).toLowerCase()]);
+  });
+  fetch('/api/feed/proxy?client='+encodeURIComponent(brand)+'&market='+encodeURIComponent(mkt)).then(function(res){
+    if(!res.ok)throw new Error('feed proxy said '+res.status);
+    var reader=res.body.getReader(),dec=new TextDecoder();
+    function step(){ return reader.read().then(function(x){
+      if(x.done){ parser.push(dec.decode()); parser.end();
+        var best=-1,wci=0; cands.forEach(function(ci,j){ var n=0; buf.forEach(function(b){ if(b[0][j])n++; }); if(n>best){best=n;wci=j} });
+        SKUC[key]={t:Date.now(),rows:buf.map(function(b){return [b[0][wci]||'',b[1]]})};
+        (CACHING[key]||[]).forEach(function(f){f(true)}); delete CACHING[key]; return; }
+      parser.push(dec.decode(x.value,{stream:true})); return step(); }); }
+    return step();
+  }).catch(function(){ (CACHING[key]||[]).forEach(function(f){f(false)}); delete CACHING[key]; });
+}
+function volOf(brand,e){ // exact PT counts per market (+ text-filter union), brand-wide for sale windows
   var mkt=evMkt(brand,e);
   var idx=ptidxFor(brand,mkt); if(!idx)return null;
   if(e.brandwide)return {vol:idx.__total||0,pct:100,wide:1};
-  var ps=ptsOf(e,mkt); if(!ps.length)return {unset:1};
+  var ps=ptsOf(e,mkt), tx=txOf(e,mkt);
+  if(!ps.length&&!tx)return {unset:1};
   var v=0; ps.forEach(function(pt){ v+=idx.map[pt]||0; });
-  return {vol:v,pct:idx.__total?Math.round(v/idx.__total*1000)/10:0};
+  if(tx)v=(tx.uni!=null)?tx.uni:v+tx.qs.reduce(function(s,q){return s+(q.n||0)},0);
+  var o={vol:v,pct:idx.__total?Math.round(v/idx.__total*1000)/10:0};
+  if(tx){o.tx=tx.qs.length;o.npts=ps.length;}
+  return o;
 }
 function scopeBtn(brand,e){
   var v=volOf(brand,e);
   if(v&&v.wide)return '<button type="button" class="scope wide" data-scope="'+esc(e.id)+'" title="Sale window — whole catalogue in scope">'+fmt(v.vol)+' SKUs · all</button>';
-  var psb=ptsOf(e,evMkt(brand,e));
+  var psb=ptsOf(e,evMkt(brand,e)), txb=txOf(e,evMkt(brand,e));
   var idxT=ptidxFor(brand,evMkt(brand,e));
-  if(v&&!v.unset)return '<button type="button" class="scope set" data-scope="'+esc(e.id)+'" title="'+esc(psb.map(function(pt){return pt+(idxT?' ('+fmt(idxT.map[pt]||0)+')':'')}).join(' · '))+'">'+psb.length+' PTs · '+fmt(v.vol)+' SKUs · '+v.pct+'%</button>';
+  if(v&&!v.unset){
+    var tip=psb.map(function(pt){return pt+(idxT?' ('+fmt(idxT.map[pt]||0)+')':'')})
+      .concat((txb?txb.qs:[]).map(function(q){return 'txt “'+q.q+'” ('+(q.n!=null?fmt(q.n):'?')+')'})).join(' · ');
+    var lbl=(psb.length?psb.length+' PTs':'')+(txb?((psb.length?' +':'')+txb.qs.length+' txt'):'');
+    return '<button type="button" class="scope set" data-scope="'+esc(e.id)+'" title="'+esc(tip)+'">'+lbl+' · '+fmt(v.vol)+' SKUs · '+v.pct+'%</button>';
+  }
   return '<button type="button" class="scope unset" data-scope="'+esc(e.id)+'">⚙ Set scope'+(psb.length?' ('+psb.length+' PTs)':'')+'</button>';
 }
 function renderMkts(){
@@ -540,10 +594,14 @@ function briefLinkFor(brand,e){
   var task='Keywords Optimisation - '+e.name+' - Marketing Planner - '+mmyy+(bmkt!=='gb'?' - '+bmkt.toUpperCase():'');
   var lines=['Moment: '+e.name+' — lands '+dLbl(e)+' ('+bmkt.toUpperCase()+') · brief by '+schedDate(e).getUTCDate()+' '+MON[schedDate(e).getUTCMonth()],
     'Keyword themes: '+((e.terms||[]).join(', ')||'TBC')];
+  var tx=txOf(e,bmkt);
   if(e.brandwide){ lines.push('Categories: brand-wide — whole '+bmkt.toUpperCase()+' catalogue'+(v.vol?' ('+fmt(v.vol)+' SKUs)':'')); }
-  else if(ps.length){ lines.push('Categories in scope:');
-    ps.forEach(function(pt){ lines.push('  • '+pt+(idx?' — '+fmt(idx.map[pt]||0)+' SKUs':'')); });
-    if(v.vol!=null)lines.push('Total: '+fmt(v.vol)+' SKUs ('+v.pct+'% of the live feed)');
+  else if(ps.length||tx){
+    if(ps.length){ lines.push('Categories in scope:');
+      ps.forEach(function(pt){ lines.push('  • '+pt+(idx?' — '+fmt(idx.map[pt]||0)+' SKUs':'')); }); }
+    if(tx){ lines.push('Text filters (title/description contains):');
+      tx.qs.forEach(function(q){ lines.push('  • “'+q.q+'” — '+(q.n!=null?fmt(q.n)+' SKUs':'count pending sync')); }); }
+    if(v&&v.vol!=null)lines.push('Total: '+fmt(v.vol)+' SKUs'+(ps.length&&tx?' unique':'')+' ('+v.pct+'% of the live feed)');
   } else lines.push('Categories: TBC — set the scope on the Keyword Calendar');
   return '/workflow?brief='+b64url({client:brand,task:task,cat:'keyword',scope:lines.join('\n')});
 }
@@ -589,10 +647,15 @@ function ptOpen(e){
     return;
   }
   var sel=ptsOf(e,pmkt).slice();
-  d.innerHTML='<b class="pt-t">'+esc(e.name)+' — category scope · '+esc(pmkt.toUpperCase())+' <span style="font-weight:700;color:var(--muted);font-size:10.5px">(drag to move)</span></b>'
-    +'<div class="pt-sub">'+fmt(Object.keys(idx.map).length)+' unique product types off the live feed — word-search, tick to add, × to remove.</div>'
+  var txs=(txOf(e,pmkt)?txOf(e,pmkt).qs.map(function(q){return q.q}):[]), txn={}, uniN=null;
+  d.innerHTML='<b class="pt-t">'+esc(e.name)+' — product scope · '+esc(pmkt.toUpperCase())+' <span style="font-weight:700;color:var(--muted);font-size:10.5px">(drag to move)</span></b>'
+    +'<div class="pt-sub">'+fmt(Object.keys(idx.map).length)+' unique product types off the live feed — word-search, tick to add, × to remove. Or filter free-text below; both methods combine, counted unique.</div>'
     +'<input class="pt-q" id="pt-q" type="search" placeholder="Search product types… (e.g. coat, tailoring)">'
     +'<div class="pt-selh" id="pt-selh"></div><div class="pt-sel" id="pt-sel"></div><div class="pt-list" id="pt-list"></div>'
+    +'<div class="pt-selh" style="margin-top:9px">Text filters — title + description contains</div>'
+    +'<input class="pt-q" id="tx-q" type="search" placeholder="Free-text filter… (e.g. denim) — Enter adds it">'
+    +'<div id="tx-quick" style="display:flex;flex-wrap:wrap;gap:5px"></div>'
+    +'<div class="pt-sel" id="tx-sel"></div><div class="pt-sub" id="tx-state" hidden></div>'
     +'<div class="pt-foot"><span class="pt-tot" id="pt-tot"></span><button class="btn" id="pt-sug" title="Preselect product types whose NAME or crawled product titles/descriptions carry any keyword theme">✨ Suggest from themes</button><button class="btn pri" id="pt-done">Done</button></div>';
   document.body.appendChild(d); ptPlace(d);
   var keys=Object.keys(idx.map).sort(function(a,b){return idx.map[b]-idx.map[a]});
@@ -608,20 +671,57 @@ function ptOpen(e){
       return '<span class="pt-chip" style="width:100%;justify-content:space-between"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(k)+'</span>'
         +'<span style="flex:none;display:inline-flex;gap:7px;align-items:center"><b>'+fmt(idx.map[k]||0)+' SKUs</b><button type="button" data-rm="'+esc(k)+'">×</button></span></span>'; }).join('')
       ||'<span class="pt-sub">nothing selected yet</span>';
-    d.querySelector('#pt-tot').textContent=sel.length?(sel.length+' PTs · '+fmt(tot())+' SKUs in scope'):'';
+    d.querySelector('#tx-sel').innerHTML=txs.map(function(q){
+      return '<span class="pt-chip" style="width:100%;justify-content:space-between"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">“'+esc(q)+'”</span>'
+        +'<span style="flex:none;display:inline-flex;gap:7px;align-items:center"><b>'+(txn[q]!=null?fmt(txn[q])+' SKUs':'…')+'</b><button type="button" data-txrm="'+esc(q)+'">×</button></span></span>'; }).join('')
+      ||'<span class="pt-sub">no text filters yet — type above, Enter adds one</span>';
+    var quick=(e.terms||[]).filter(function(t){ var lt=String(t).toLowerCase(); return !txs.some(function(x){return x.toLowerCase()===lt}); });
+    d.querySelector('#tx-quick').innerHTML=quick.map(function(t){return '<button type="button" class="btn" style="padding:3px 9px;font-size:11px" data-txq="'+esc(t)+'" title="Add this keyword theme as a text filter">+ '+esc(t)+'</button>'}).join('');
+    var lbl='';
+    if(sel.length&&txs.length)lbl=sel.length+' PTs + '+txs.length+' txt · '+(uniN!=null?fmt(uniN)+' SKUs unique':'counting…')+' in scope';
+    else if(sel.length)lbl=sel.length+' PTs · '+fmt(tot())+' SKUs in scope';
+    else if(txs.length)lbl=txs.length+' txt · '+(uniN!=null?fmt(uniN)+' SKUs':'counting…')+' in scope';
+    d.querySelector('#pt-tot').textContent=lbl;
     d.querySelector('#pt-selh').textContent=sel.length?('Selected — '+sel.length):'';
   }
+  function recount(){ txn={}; uniN=null;
+    if(txs.length){ var tc=txCount(CLIENT,pmkt,sel,txs);
+      if(tc){ txs.forEach(function(q,i){txn[q]=tc.ns[i]}); uniN=tc.uni; } } }
+  var warming=false;
+  function warm(){ // text counts need the per-SKU cache — stream the feed once, then everything is live
+    if(skuCache(CLIENT,pmkt)||warming)return; warming=true;
+    var st=d.querySelector('#tx-state'); st.hidden=false; st.textContent='streaming the live '+pmkt.toUpperCase()+' feed once — text counts land in a moment…';
+    ensureCache(CLIENT,pmkt,function(okc){ warming=false;
+      if(!d.isConnected)return;
+      if(okc){st.hidden=true;} else {st.textContent='could not stream the feed — text filters will save without counts (⟳ Sync when the worker is reachable)';}
+      recount(); paint(); });
+  }
+  function addTerm(q){ q=String(q||'').trim(); if(!q)return;
+    var lq=q.toLowerCase(); if(txs.some(function(x){return x.toLowerCase()===lq}))return;
+    txs.push(q); warm(); recount(); paint(); }
   d.addEventListener('click',function(ev){
     ev.stopPropagation(); // paint() re-renders rows — a detached target must never read as an outside click
     var row=ev.target.closest('[data-pt]');
-    if(row){ var k=row.getAttribute('data-pt'), i=sel.indexOf(k); if(i>=0)sel.splice(i,1); else sel.push(k); paint(); return; }
+    if(row){ var k=row.getAttribute('data-pt'), i=sel.indexOf(k); if(i>=0)sel.splice(i,1); else sel.push(k); recount(); paint(); return; }
     var rm=ev.target.closest('[data-rm]');
-    if(rm){ var j=sel.indexOf(rm.getAttribute('data-rm')); if(j>=0)sel.splice(j,1); paint(); return; }
+    if(rm){ var j=sel.indexOf(rm.getAttribute('data-rm')); if(j>=0)sel.splice(j,1); recount(); paint(); return; }
+    var trm=ev.target.closest('[data-txrm]');
+    if(trm){ var ti=txs.indexOf(trm.getAttribute('data-txrm')); if(ti>=0)txs.splice(ti,1); recount(); paint(); return; }
+    var tq=ev.target.closest('[data-txq]');
+    if(tq){ addTerm(tq.getAttribute('data-txq')); return; }
     if(ev.target.id==='pt-sug'){ var bgs=idx.bags||{};
       (e.terms||[]).forEach(function(t){ var lt=String(t).toLowerCase();
         keys.forEach(function(k){ if(sel.indexOf(k)>=0)return;
-          if(k.toLowerCase().indexOf(lt)>=0||String(bgs[k]||'').indexOf(lt)>=0)sel.push(k); }); }); paint(); return; }
-    if(ev.target.id==='pt-done'){ e.ptsm=e.ptsm||{}; e.ptsm[pmkt]=sel.slice(); if(pmkt==='gb')e.pts=sel.slice(); save(); ptClose(); render(); return; }
+          if(k.toLowerCase().indexOf(lt)>=0||String(bgs[k]||'').indexOf(lt)>=0)sel.push(k); }); }); recount(); paint(); return; }
+    if(ev.target.id==='pt-done'){ e.ptsm=e.ptsm||{}; e.ptsm[pmkt]=sel.slice(); if(pmkt==='gb')e.pts=sel.slice();
+      var old=(e.txsm&&e.txsm[pmkt])||{}, oldn={}; (old.qs||[]).forEach(function(x){oldn[x.q]=x.n});
+      if(!txs.length){ if(e.txsm)delete e.txsm[pmkt]; }
+      else{ var hasC=!!skuCache(CLIENT,pmkt); recount();
+        e.txsm=e.txsm||{};
+        // no cache yet (stream still running / worker unreachable): keep the previous numbers rather than write zeros
+        e.txsm[pmkt]={qs:txs.map(function(q){return {q:q,n:hasC?(txn[q]||0):(oldn[q]!=null?oldn[q]:null)}}),
+          uni:hasC?uniN:(old.uni!=null?old.uni:null)}; }
+      save(); ptClose(); render(); return; }
   });
   (function(){ // drag the picker by its title — Ray wants the board visible behind it
     var t=d.querySelector('b.pt-t'), sx=0, sy=0, ox=0, oy=0, moving=false;
@@ -636,7 +736,11 @@ function ptOpen(e){
     t.addEventListener('pointerup',function(){ moving=false; });
   })();
   d.querySelector('#pt-q').addEventListener('input',paint);
-  paint();
+  d.querySelector('#tx-q').addEventListener('keydown',function(ev){
+    if(ev.key==='Enter'){ ev.preventDefault(); addTerm(this.value); this.value=''; } });
+  d.querySelector('#tx-q').addEventListener('focus',function(){ warm(); });
+  if(txs.length)warm();
+  recount(); paint();
   d.querySelector('#pt-q').focus();
 }
 function ptPlace(d){ d.style.left='50%';d.style.top='90px';d.style.transform='translateX(-50%)'; }
@@ -661,7 +765,7 @@ function syncPT(){
   function nextMkt(){
     if(mi>=list.length){ MEASURING=false; $('#measure').disabled=false; $('#mstate').textContent='product types synced — scopes are live'; save(); render(); return; }
     var mkt=list[mi++];
-    var rows=0, header=null, cands=[], cmaps=[], bags={}, tCol=-1, dCol=-1;
+    var rows=0, header=null, cands=[], cmaps=[], bags={}, tCol=-1, dCol=-1, cache=[];
     var STOP={the:1,and:1,for:1,with:1,from:1,this:1,that:1,are:1,our:1,its:1,has:1,было:1};
     var parser=FeedAudit.createParser(function(r){
       if(!header){ header=r;
@@ -675,6 +779,10 @@ function syncPT(){
         cmaps=cands.map(function(){return {}});
         return; }
       rows++;
+      // per-SKU cache (in-memory only): candidate PT values + searchable text — free-text
+      // scope filters count against this without another stream
+      cache.push([cands.map(function(i2){return String(r[i2]||'').trim()}),
+        ((tCol>=0?String(r[tCol]||''):'')+' '+(dCol>=0?String(r[dCol]||'').slice(0,800):'')).toLowerCase()]);
       var rowTxt=null;
       for(var ci=0;ci<cands.length;ci++){ var v=String(r[cands[ci]]||'').trim(); if(!v)continue;
         cmaps[ci][v]=(cmaps[ci][v]||0)+1;
@@ -694,9 +802,10 @@ function syncPT(){
       var reader=res.body.getReader(),dec=new TextDecoder();
       function step(){ return reader.read().then(function(x){
         if(x.done){ parser.push(dec.decode()); parser.end();
-          var map={}, best=-1; // the populated candidate wins (FeedHero empty-input columns lose)
-          cmaps.forEach(function(m2,ci){ var n=0,k2; for(k2 in m2)n+=m2[k2]; if(n>best){best=n;map=m2} });
+          var map={}, best=-1, wci=0; // the populated candidate wins (FeedHero empty-input columns lose)
+          cmaps.forEach(function(m2,ci){ var n=0,k2; for(k2 in m2)n+=m2[k2]; if(n>best){best=n;map=m2;wci=ci} });
           var sb={}, kb; for(kb in bags){ if(map[kb])sb[kb]=Object.keys(bags[kb].w).join(' '); } // keep bags for the winning column only
+          SKUC[CLIENT+'|'+mkt]={t:Date.now(),rows:cache.map(function(c){return [c[0][wci]||'',c[1]]})};
           var r=rec(); r.ptidx=r.ptidx||{}; r.ptidx[mkt]={__total:rows,map:map,bags:sb,t:Date.now()};
           if(!Object.keys(map).length){ // zero uniques = the column wasn't matched; name the suspects
             var suspects=(header||[]).map(function(h){return FeedAudit.normKey(h)}).filter(function(k){return k.indexOf('type')>=0||k.indexOf('categor')>=0});
