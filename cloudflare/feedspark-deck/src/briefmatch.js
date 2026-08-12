@@ -9,6 +9,9 @@
  *     (keyword 14d / title test 21d / other tests 14d) and stage → analysis; once live,
  *     stale ibfdue tokens quoted in later replies can no longer move the due
  *   - Ray's own reply saying "please live it" counts too (the only self-mail not skipped)
+ *   - a read-out reply on a live/analysis test ("Result: …", a signed %-figure, "no lift")
+ *     files as a Result: comm — the page folds it into the Test register and it unlocks the
+ *     client confirmation; first result only, and never from the go-live message itself
  *   - "blocked/waiting on/stuck…"  → blocked (from briefed|progress)
  *   - "started/in progress/eta…"   → progress (from intake|briefed)
  *   - ibfdue:DDMMYYYY (or an "eta 12/8" mention) → updates the due date
@@ -25,6 +28,18 @@ const ID_RE = /\b([A-Z]{2,4}-\d{8}-\d{2})\b/;
 // go-live signal for TEST briefs — mirrors the page's LIVE_RE. Going live starts the run:
 // due re-dates to +run-SLA (the analysis date) and the ticket moves to analysis.
 const LIVE_RE = /\b(is (now )?live|now live|gone live|went live|going live|set (it )?live|pushed (it )?live|please live it|live it please|test (is )?(now )?running)\b/i;
+// a read-out reply on a live/analysis test ticket. Never guessed: an explicit "result: …",
+// a signed %-figure (optionally near a metric word), or an explicit no-lift call.
+const RESULT_RE = /\bresults?\s*[:\-–]\s*([^\n]{3,140})/i;
+const UPLIFT_RE = /([+-]\s?\d+(?:\.\d+)?\s?%[^.;\n]{0,60})/;
+const NOLIFT_RE = /\b(no (?:up)?lift|flat result|no significant (?:change|difference|impact))\b[^.;\n]{0,60}/i;
+function extractResult(text) {
+  text = String(text || '');
+  let m = RESULT_RE.exec(text); if (m) return m[1].trim();
+  m = UPLIFT_RE.exec(text); if (m) return m[1].replace(/\s+/g, ' ').trim();
+  m = NOLIFT_RE.exec(text); if (m) return m[0].trim();
+  return '';
+}
 // run SLAs (days) by brief kind — the worker uses the page's defaults (the page panel's
 // per-device overrides live in localStorage and can't reach here)
 const RUNSLA_DEF = { keyword: 14, title_test: 21, test: 14 };
@@ -216,7 +231,7 @@ export function matchGmailToBriefs(briefs, messages, opts) {
   opts = opts || {};
   const now = opts.now || 0;
   const selfRe = opts.selfRe || null;
-  const moved = [], loggedTo = [], repaired = [];
+  const moved = [], loggedTo = [], repaired = [], results = [];
   let matched = 0, skipped = 0;
 
   for (const msg of messages || []) {
@@ -263,7 +278,15 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     (opts.aspl || []).forEach((n) => { if (new RegExp('\\b' + n + '\\b', 'i').test(text)) sender = n; });
     const done = DONE_RE.test(text), blocked = BLOCK_RE.test(text), prog = PROG_RE.test(text);
     const golive = LIVE_RE.test(text) && !!analysisKind(b);
-    b.comms.push({ from: sender.slice(0, 60), note: String(msg.snippet || msg.subject || '').slice(0, 600), done, when: msg.date || now, mid: msg.id || '' });
+    // an ASPL read-out reply on a live/analysis test ticket files as a Result: comm — the page
+    // then treats it exactly like a manually logged result (register back-fill, confirmation
+    // unlock, chase-analysis escalation cleared). First result only; never on the go-live msg.
+    let rv = '';
+    if (!golive && analysisKind(b) && (b.liveAt || b.status === 'analysis' || b.status === 'done')
+        && !(b.comms || []).some((c) => /^Result:/.test(c.note || ''))) {
+      rv = extractResult(String(msg.snippet || ''));
+    }
+    b.comms.push({ from: sender.slice(0, 60), note: rv ? ('Result: ' + rv.slice(0, 140)) : String(msg.snippet || msg.subject || '').slice(0, 600), done: done || !!rv, when: msg.date || now, mid: msg.id || '' });
 
     let to = '';
     if (golive && b.status !== 'confirmed' && !b.liveAt) {
@@ -281,6 +304,14 @@ export function matchGmailToBriefs(briefs, messages, opts) {
       b.status = to;
       moved.push({ id: b.id, stage: to });
     }
+    if (rv) {
+      results.push({ id: b.id, result: rv.slice(0, 140) });
+      if (b.status === 'done') {   // a result on a Done test pulls it into its Analysis step (page parity)
+        (b.hist = (b.hist && b.hist.length) ? b.hist : [{ s: 'done', t: b.created || now }]).push({ s: 'analysis', t: now });
+        b.status = 'analysis';
+        moved.push({ id: b.id, stage: 'analysis' });
+      }
+    }
     let dd8 = '';
     const dm = /ibfdue:(\d{8})/.exec(text);
     if (dm) dd8 = dm[1];
@@ -297,5 +328,5 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     b.updated = now;
     if (loggedTo.indexOf(b.id) < 0) loggedTo.push(b.id);
   }
-  return { matched, skipped, moved, loggedTo, repaired };
+  return { matched, skipped, moved, loggedTo, repaired, results };
 }
