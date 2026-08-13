@@ -33,9 +33,24 @@ const LIVE_RE = /\b(is (now )?live|now live|gone live|went live|going live|set (
 const RESULT_RE = /\bresults?\s*[:\-–]\s*([^\n]{3,140})/i;
 const UPLIFT_RE = /([+-]\s?\d+(?:\.\d+)?\s?%[^.;\n]{0,60})/;
 const NOLIFT_RE = /\b(no (?:up)?lift|flat result|no significant (?:change|difference|impact))\b[^.;\n]{0,60}/i;
+// the ASPL result-email house style writes UNSIGNED prose figures — "a 9.55% uplift in
+// impressions and a 2.76% uplift in clicks" — so collect every %-plus-direction-word mention
+// (both "9.55% uplift in X" and "uplift of 9.55% in X") and compose one compact read-out.
+// A bare % with no direction word ("50% tested") never counts.
+const UPLIFT_ALL_RE = /(\d+(?:\.\d+)?)\s*%\s*(?:up-?lift|lift|increase|improvement|growth|gain|drop|decrease|decline)(?:\s+in\s+([a-z]{2,20}(?:\s+rate)?))?/gi;
+const UPLIFT_OF_RE = /(?:up-?lift|lift|increase|improvement|gain|drop|decrease|decline)\s+of\s+(\d+(?:\.\d+)?)\s*%(?:\s+in\s+([a-z]{2,20}(?:\s+rate)?))?/gi;
 function extractResult(text) {
   text = String(text || '');
   let m = RESULT_RE.exec(text); if (m) return m[1].trim();
+  const parts = [];
+  for (const re of [UPLIFT_ALL_RE, UPLIFT_OF_RE]) {
+    re.lastIndex = 0; let u;
+    while ((u = re.exec(text)) && parts.length < 4) {
+      const sign = /(drop|decrease|decline)/i.test(u[0]) ? '-' : '+';
+      parts.push(sign + u[1] + '%' + (u[2] ? (' ' + u[2].trim()) : ''));
+    }
+  }
+  if (parts.length) return parts.join(' · ');
   m = UPLIFT_RE.exec(text); if (m) return m[1].replace(/\s+/g, ' ').trim();
   m = NOLIFT_RE.exec(text); if (m) return m[0].trim();
   return '';

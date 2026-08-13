@@ -2407,6 +2407,21 @@ window.addEventListener('load',restore);
     return w?('subject:("'+b.client+'" "'+w+'")'):('"'+b.id+'"'); }
   function lastDoneNote(b){ if(!b.comms)return ''; for(var i=b.comms.length-1;i>=0;i--){ if(b.comms[i].done||DONE_RE.test(b.comms[i].note)) return b.comms[i].note; } return ''; }
   function hasResult(b){ if(!b.comms)return false; for(var i=b.comms.length-1;i>=0;i--){ if(/^Result:/.test(b.comms[i].note))return true; } return false; }
+  // read-out extraction — the page mirror of the worker's extractResult, so pasting ASPL's
+  // result email into the update router files it exactly like the Gmail scan would. Handles
+  // the house style's UNSIGNED prose figures ("a 9.55% uplift in impressions and a 2.76%
+  // uplift in clicks" → "+9.55% impressions · +2.76% clicks"); a bare % never counts.
+  function extractResultTxt(text){ text=String(text||'');
+    var m=/\bresults?\s*[:\-–]\s*([^\n]{3,140})/i.exec(text); if(m)return m[1].trim();
+    var parts=[], res=[/(\d+(?:\.\d+)?)\s*%\s*(?:up-?lift|lift|increase|improvement|growth|gain|drop|decrease|decline)(?:\s+in\s+([a-z]{2,20}(?:\s+rate)?))?/gi,
+      /(?:up-?lift|lift|increase|improvement|gain|drop|decrease|decline)\s+of\s+(\d+(?:\.\d+)?)\s*%(?:\s+in\s+([a-z]{2,20}(?:\s+rate)?))?/gi];
+    res.forEach(function(re){ re.lastIndex=0; var u;
+      while((u=re.exec(text))&&parts.length<4){ var sign=/(drop|decrease|decline)/i.test(u[0])?'-':'+';
+        parts.push(sign+u[1]+'%'+(u[2]?(' '+u[2].trim()):'')); } });
+    if(parts.length)return parts.join(' · ');
+    m=/([+-]\s?\d+(?:\.\d+)?\s?%[^.;\n]{0,60})/.exec(text); if(m)return m[1].replace(/\s+/g,' ').trim();
+    m=/\b(no (?:up)?lift|flat result|no significant (?:change|difference|impact))\b[^.;\n]{0,60}/i.exec(text); if(m)return m[0].trim();
+    return ''; }
   // file a read-out into the Test register (deck ammo) — shared by the manual 🧪 prompt and
   // the Gmail scan's unattended Result: comms
   function regResult(b,v){ var hit=null; TESTS.forEach(function(t){ if(!hit&&t.client===b.client&&sameTask(t.name,b.task))hit=t; });
@@ -2508,9 +2523,12 @@ window.addEventListener('load',restore);
     var done=DONE_RE.test(text), blocked=/\b(blocked|blocker|waiting on|on hold|stuck|dependency)\b/i.test(text),
         prog=/\b(started|in progress|underway|working on|wip|eta|will complete|picking (this|it) up)\b/i.test(text),
         golive=LIVE_RE.test(text)&&needsAnalysis(b);
-    b.comms=b.comms||[]; b.comms.push({from:sender,note:text.slice(0,600),done:done,when:Date.now()});
+    // a pasted read-out on a live/analysis test files as its Result — same rules as the scan
+    var rvv=(!golive&&needsAnalysis(b)&&(b.liveAt||b.status==='analysis'||b.status==='done')&&!hasResult(b))?extractResultTxt(text):'';
+    b.comms=b.comms||[]; b.comms.push({from:sender,note:rvv?('Result: '+rvv.slice(0,140)):text.slice(0,600),done:done||!!rvv,when:Date.now()});
     var moved='', dueTxt='';
     if(golive&&b.status!=='confirmed'){ goLive(b); moved=STAGE_LBL.analysis; dueTxt=' · 🚀 live, '+(runSlaDays(b)||14)+'d run → analysis due '+humanDD(b.due); }
+    else if(rvv){ regResult(b,rvv.slice(0,140)); if(b.status==='done'){ setStage(b,'analysis'); moved=STAGE_LBL.analysis; } dueTxt=' · 🧪 result logged — '+rvv.slice(0,80)+' (filed to the Test register)'; }
     else if(done&&b.status!=='confirmed'&&b.status!=='done'&&b.status!=='analysis'){ var ds2=needsAnalysis(b)?'analysis':'done'; setStage(b,ds2); moved=STAGE_LBL[ds2]; }
     else if(blocked&&(b.status==='briefed'||b.status==='progress')){ setStage(b,'blocked'); moved=STAGE_LBL.blocked; }
     else if(prog&&(b.status==='intake'||b.status==='briefed')){ setStage(b,'progress'); moved=STAGE_LBL.progress; }
