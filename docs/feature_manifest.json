@@ -1515,6 +1515,20 @@
    "pattern": "extractResultTxt",
    "min": 2,
    "pr": 226
+  },
+  {
+   "name": "Workflow: one record per real task everywhere \u2014 duplicate tickets collapse (refreshDupMap)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "refreshDupMap",
+   "min": 2,
+   "pr": 0
+  },
+  {
+   "name": "Workflow: separate '\u00b7 analysis' timeline milestone cards RETIRED (chip on the task's own card)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "slice(0,44)+' \u00b7 analysis'",
+   "forbidden": true,
+   "pr": 0
   }
  ]
 }
