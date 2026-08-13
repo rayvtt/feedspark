@@ -1501,6 +1501,20 @@
    "pattern": "satm",
    "min": 3,
    "pr": 224
+  },
+  {
+   "name": "worker+page: unsigned prose read-outs parse (real ASPL result-email format)",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "UPLIFT_ALL_RE",
+   "min": 2,
+   "pr": 0
+  },
+  {
+   "name": "Workflow: paste-router files read-outs (extractResultTxt)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "extractResultTxt",
+   "min": 2,
+   "pr": 0
   }
  ]
 }
