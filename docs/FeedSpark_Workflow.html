@@ -1704,7 +1704,8 @@ window.addEventListener('load',restore);
     ensureClientFilter();
     renderClientChips();
     var f=intakeFiltered();
-    var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return; if(b.taskKey)BK[b.taskKey]=b; (b.taskKeys||[]).forEach(function(k){ if(!BK[k])BK[k]=b; }); });   // intake row -> its live ticket (primary + attached)
+    var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return; if(b.taskKey)BK[b.taskKey]=b; (b.taskKeys||[]).forEach(function(k){ if(!BK[k])BK[k]=b; }); });
+    Object.keys(BRIEF_ANCHOR).forEach(function(id){ var b=BRIEFS[id]; if(!b||BRIEF_DUP[id])return; var ak=BRIEF_ANCHOR[id]; if(!BK[ak])BK[ak]=b; });   // fuzzy-anchored tickets dress their row too   // intake row -> its live ticket (primary + attached)
     body.innerHTML = f.length ? f.map(function(t,i){
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
       var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':t.esrc?'<span class="src-tag src-email" title="Arrived by email — written into the plan">Email</span>':'<span class="src-tag src-plan">Plan</span>';
@@ -2219,9 +2220,41 @@ window.addEventListener('load',restore);
     return true;
   }
 
+  // ---- one record per real task, EVERYWHERE (Ray's rule) ----
+  // Duplicate tickets — several tickets that are really the same Intake task under different
+  // wordings — collapse onto ONE primary across the whole workflow: KPIs, courts, board, SLA,
+  // escalations, alerts, digest and the timeline. Tickets anchor to their nearest Intake row
+  // (exact key, else wording similarity ≥.45); tickets sharing an anchor are one group, and
+  // anchorless tickets group by mutual similarity ≥.6. Primary = row-linked first, then the
+  // most recently updated. Duplicates stay in the store — the primary's pop-up lists them for
+  // one-click open/delete — but they never render as their own record anywhere.
+  var BRIEF_DUP={}, BRIEF_ANCHOR={};
+  function refreshDupMap(){
+    var rowSet={}, rows={}; allIntake().forEach(function(r){ var k=r.client+'|'+r.task; rowSet[k]=1; (rows[r.client]=rows[r.client]||[]).push({k:k,task:r.task}); });
+    var groups={}, loose=[], anchors={};
+    Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b||b.status==='confirmed')return;
+      var an=null;
+      if(b.taskKey&&rowSet[b.taskKey])an=b.taskKey;
+      else { var bs=0; (rows[b.client]||[]).forEach(function(r){ var s=taskDice(r.task,b.task); if(s>bs){bs=s;an=r.k;} }); if(bs<0.45)an=null; }
+      if(an){ anchors[id]=an; (groups[an]=groups[an]||[]).push(id); } else loose.push(id);
+    });
+    var lg=[];
+    loose.forEach(function(id){ var b=BRIEFS[id], hit=null;
+      for(var i=0;i<lg.length&&!hit;i++){ var p=BRIEFS[lg[i][0]]; if(p.client===b.client&&taskDice(p.task,b.task)>=0.6)hit=lg[i]; }
+      if(hit)hit.push(id); else lg.push([id]); });
+    lg.forEach(function(g,i){ groups['loose|'+i]=g; });
+    var dup={};
+    Object.keys(groups).forEach(function(k){ var g=groups[k]; if(g.length<2)return;
+      var best=null,bs=-1; g.forEach(function(id){ var b=BRIEFS[id];
+        var s=(b.taskKey&&rowSet[b.taskKey]?2:0)+(b.updated||0)/1e15; if(s>bs){bs=s;best=id;} });
+      g.forEach(function(id){ if(id!==best)dup[id]=best; }); });
+    BRIEF_DUP=dup; BRIEF_ANCHOR=anchors;
+  }
+  function isDup(b){ return !!(b&&b.id&&BRIEF_DUP[b.id]); }
+  function dupsOf(id){ return Object.keys(BRIEF_DUP).filter(function(d){ return BRIEF_DUP[d]===id; }); }
   // ---- KPIs ----
   function renderKPIs(){
-    var arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];});
+    var arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}).filter(function(b){return !isDup(b);});
     var openN=arr.filter(function(b){return b.status!=='confirmed';}).length;
     var t0=today(), soon=0, over=0;
     arr.forEach(function(b){ if(b.status==='confirmed'||b.status==='done')return; var d=ddmmyyyyToDate(b.due); if(!d)return;
@@ -2247,7 +2280,7 @@ window.addEventListener('load',restore);
   // ---- courts strip: live count + oldest + SLA breaches per team; click to spotlight the board ----
   var courtSel='';
   function renderCourts(){ var host=document.getElementById('courts'); if(!host)return;
-    var arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}).filter(function(b){return b.status!=='confirmed';});
+    var arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}).filter(function(b){return b.status!=='confirmed'&&!isDup(b);});
     var C={AM:[],ASPL:[],Client:[]};
     arr.forEach(function(b){ var c=courtOf(b); if(C[c])C[c].push(b); });
     var META={AM:['Ray — brief / unblock / analyse','crt-am'],ASPL:['production — to deliver','crt-aspl'],Client:['awaiting sign-off','crt-client']};
@@ -2262,7 +2295,7 @@ window.addEventListener('load',restore);
   function renderBoard(){
     var board=document.getElementById('board');
     board.innerHTML=STAGES.map(function(s){
-      var items=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}).filter(function(b){return b.status===s[0];})
+      var items=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}).filter(function(b){return b.status===s[0]&&!isDup(b);})
         .sort(function(a,b){ var da=ddmmyyyyToDate(a.due),db=ddmmyyyyToDate(b.due); return (da?da:9e15)-(db?db:9e15); });
       var cards=items.map(function(b){
         // dense card: 3-letter brand chip (+market when ≠GB), priority dot, due, age-in-court.
@@ -2331,6 +2364,9 @@ window.addEventListener('load',restore);
     var xl=[];
     if(b.taskKey) xl.push('<span class="xl" title="Linked plan-row task">⛓ '+esc((b.taskKey.split('|')[1]||'').slice(0,48))+'</span>');
     (b.taskKeys||[]).forEach(function(k){ xl.push('<span class="xl" title="Attached intake task">⛓ '+esc((k.split('|')[1]||'').slice(0,48))+'</span>'); });
+    // one record per task: collapsed duplicates are reachable (and deletable) from here only
+    dupsOf(b.id).forEach(function(d){ xl.push('<span class="xl xl-dup" data-dup="'+esc(d)+'" style="cursor:pointer" title="Duplicate ticket collapsed onto this one — click to open it (delete it there if it holds nothing you need)">👥 duplicate: '+esc(d)+'</span>'); });
+    if(BRIEF_DUP[b.id]) xl.push('<span class="xl xl-dup" data-dup="'+esc(BRIEF_DUP[b.id])+'" style="cursor:pointer;color:var(--orange-ink)" title="This ticket is collapsed as a duplicate — the task shows everywhere under the primary. Click to open the primary">👥 duplicate of '+esc(BRIEF_DUP[b.id])+' — click to open</span>');
     if(PLANSHEET[b.client]) xl.push('<a class="xl" target="_blank" rel="noopener" href="https://docs.google.com/spreadsheets/d/'+PLANSHEET[b.client]+'">📊 Open '+esc(b.client)+'’s plan sheet</a>');
     if(b.code) xl.push('<a class="xl" id="m-thread" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent(threadQuery(b))+'" title="Searches the brief’s subject (client + task words) — punctuation tokens like the ID search badly in Gmail">✉ Find the email thread</a>');
     modalEl.innerHTML=''
@@ -2360,6 +2396,7 @@ window.addEventListener('load',restore);
     scrim.classList.add('on');
     document.getElementById('m-x').onclick=closeModal;
     document.getElementById('m-del').onclick=function(){ if(confirm('Delete brief '+b.id+'?')){ delete BRIEFS[b.id]; persist(); renderAll(); closeModal(); } };
+    modalEl.querySelectorAll('.xl-dup').forEach(function(x){ x.onclick=function(){ openModal(x.getAttribute('data-dup')); }; });
     document.querySelectorAll('#m-stat button').forEach(function(btn){ btn.onclick=function(){
       setStage(b,btn.getAttribute('data-s')); persist(); renderAll(); openModal(b.id); }; });
     // brief re-draft link
@@ -2563,7 +2600,7 @@ window.addEventListener('load',restore);
   function silentDays(b){ var lr=lastReplyDays(b); return lr==null?briefAgeDays(b):lr; }
   function turnaroundDays(b){ if(!b.comms)return null; for(var i=0;i<b.comms.length;i++){ if(b.comms[i].done) return Math.max(0,Math.round((b.comms[i].when-(b.created||b.comms[i].when))/86400000)); } return null; }
   function renderSLA(){ var host=document.getElementById('sla-grid'); if(!host)return;
-    var arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];});
+    var arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}).filter(function(b){return !isDup(b);});
     var mem={}; ASPL.forEach(function(a){mem[a]={open:0,done:0,ta:[],stall:0};});
     arr.forEach(function(b){ var a=asplOf(b); if(!mem[a])mem[a]={open:0,done:0,ta:[],stall:0};
       if(b.status==='briefed'||b.status==='progress'){ mem[a].open++; if(silentDays(b)>=STALL_DAYS)mem[a].stall++; }
@@ -2614,8 +2651,7 @@ window.addEventListener('load',restore);
     's:analysis':'LAB','s:confirmed':'✓✓','b:open':'OPEN','b:briefed':'BRF','b:progress':'WIP',
     'b:hold':'HOLD','b:client':'W/CL','b:done':'DONE'};
   var BUCKET_COLOR={open:'#8a94a0',briefed:'#B1550A',progress:'#C96A12',hold:'#98A0A8',client:'#3D5A80',done:'#15803D'};
-  function flagKey(e){ if(e.kind==='test')return 's:analysis';
-    return e.brief?('s:'+e.brief.status):('b:'+(e.b||'open')); }
+  function flagKey(e){ return e.brief?('s:'+e.brief.status):('b:'+(e.b||'open')); }
   function flagColor(k){ return k.slice(0,2)==='s:'?(STAGE_COLOR[k.slice(2)]||'#8a94a0'):(BUCKET_COLOR[k.slice(2)]||'#8a94a0'); }
   function flagLabel(k){ return k.slice(0,2)==='s:'?('Ticket · '+(STAGE_LBL[k.slice(2)]||k.slice(2))):('Plan · '+(STAT_LBL[k.slice(2)]||k.slice(2))); }
   function renderTlLegend(evs){ var host=document.getElementById('tl-legend'); if(!host)return;
@@ -2637,6 +2673,7 @@ window.addEventListener('load',restore);
   function timelineEvents(){
     var evs=[], seen={}, S=itState, q=(S.q||'').toLowerCase();
     var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return; if(b.taskKey)BK[b.taskKey]=b; (b.taskKeys||[]).forEach(function(k){ if(!BK[k])BK[k]=b; }); });
+    Object.keys(BRIEF_ANCHOR).forEach(function(id){ var b=BRIEFS[id]; if(!b||BRIEF_DUP[id])return; var ak=BRIEF_ANCHOR[id]; if(!BK[ak])BK[ak]=b; });   // fuzzy-anchored tickets dress their row too
     // The axis is fed from intakeFiltered() — the SAME rows through the SAME filters (source,
     // status, brand, AM, search, plan window) as the Intake grid above. The timeline is that
     // grid re-plotted by date, not a second list with its own rules.
@@ -2653,21 +2690,21 @@ window.addEventListener('load',restore);
     function ok(client,task,owner){ if(S.clients.length&&S.clients.indexOf(client)<0)return false;
       if(S.ams.length&&S.ams.indexOf(amOf(client))<0)return false;
       return !q||((task+' '+client+' '+(owner||'')).toLowerCase().indexOf(q)>=0); }
-    // live tickets whose intake row is gone (deleted/hidden) or filtered out by status/window —
-    // an active ticket shouldn't vanish from the axis because its plan row did
+    // ONE card per real task — Ray's rule: a status change flips the chip on the SAME card,
+    // it never adds a card; only a repeat-scheduled task (distinct dated occurrences in the
+    // plan) may appear more than once. So: no separate "· analysis" milestone cards (the
+    // stage flag says LAB on the task's own card, and go-live re-dates it to the analysis
+    // week), and a ticket whose WORDING near-matches an already-plotted task of the same
+    // client MERGES onto that card instead of ghosting the axis from its stale due date.
     Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id];
-      if(!b||b.status==='confirmed')return;
+      if(!b||b.status==='confirmed'||isDup(b))return;
       var k=b.taskKey||(b.client+'|'+b.task); if(seen[k]||!ok(b.client,b.task,b.aspl))return;
+      var best=null,bs=0;
+      evs.forEach(function(e){ if(e.client!==b.client)return; var s2=taskDice(e.task,b.task); if(s2>bs){bs=s2;best=e;} });
+      if(best&&bs>=0.45){ seen[k]=1; if(!best.brief){ best.brief=b; best.id=b.id; best.kind='brief'; } return; }
       var d=ddmmyyyyToDate(b.due); if(!d)return; seen[k]=1;
       evs.push({d:d,client:b.client,task:b.task,am:amOf(b.client),owner:b.aspl||'',brief:b,id:b.id,key:k,kind:'brief',b:''});
     });
-    Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b||b.status==='confirmed'||hasResult(b))return;
-      if(!ok(b.client,b.task,b.aspl))return;
-      var rd=readoutDue(b); if(rd==null)return;
-      evs.push({d:new Date(rd),client:b.client,task:b.task.slice(0,44)+' · analysis',am:amOf(b.client),owner:b.aspl||'',brief:b,id:b.id,key:'ro|'+id,kind:'test',b:''}); });
-    TESTS.forEach(function(t,i){ if(t.result||!t.readout)return; if(!ok(t.client,t.name,''))return;
-      var d=isoDate(t.readout); if(!d)return;
-      evs.push({d:d,client:t.client,task:t.name+' · analysis',am:amOf(t.client),owner:'',brief:null,id:'',key:'ts|'+i,kind:'test',b:''}); });
     return evs;
   }
   // brand/AM/search/status/source/window are already applied upstream (they're the Intake's own
@@ -2835,8 +2872,8 @@ window.addEventListener('load',restore);
 
   // ---- #9 alerts + digest ----
   function computeAlerts(){ var over=[], soon=[];
-    Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed')return; var days=daysTo(b.due); if(days==null)return; if(days<0)over.push(b); else if(days<=2)soon.push(b); });
-    Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed'||hasResult(b))return; var rd=readoutDue(b); if(rd==null)return;
+    Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed'||isDup(b))return; var days=daysTo(b.due); if(days==null)return; if(days<0)over.push(b); else if(days<=2)soon.push(b); });
+    Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k]; if(b.status==='confirmed'||hasResult(b)||isDup(b))return; var rd=readoutDue(b); if(rd==null)return;
       var days=Math.round((rd-Date.now())/86400000); if(days<0)over.push({client:b.client,task:b.task+' · analysis'}); else if(days<=2)soon.push({client:b.client,task:b.task+' · analysis'}); });
     TESTS.forEach(function(t){ if(t.result||!t.readout)return; var d=isoDate(t.readout); if(!d)return; var days=Math.round((d-today())/86400000);
       if(days<0)over.push({client:t.client,task:t.name+' · analysis'}); else if(days<=2)soon.push({client:t.client,task:t.name+' · analysis'}); });
@@ -2852,7 +2889,7 @@ window.addEventListener('load',restore);
     document.getElementById('al-x').onclick=function(){ host.style.display='none'; };
     document.getElementById('al-digest').onclick=openDigest;
   }
-  function buildDigest(){ var t0=today(), arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}), L=[];
+  function buildDigest(){ var t0=today(), arr=Object.keys(BRIEFS).map(function(k){return BRIEFS[k];}).filter(function(b){return !isDup(b);}), L=[];
     function fmt(b){ return '  • '+b.client+' · '+b.task+'  ('+dueState(b)+')'; }
     var over=arr.filter(function(b){return b.status!=='confirmed'&&daysTo(b.due)!=null&&daysTo(b.due)<0;});
     var wk=arr.filter(function(b){var d=daysTo(b.due);return b.status!=='confirmed'&&d!=null&&d>=0&&d<=7;});
@@ -2905,7 +2942,7 @@ window.addEventListener('load',restore);
     b.setAttribute('aria-expanded',BP_OPEN?'true':'false'); }
   (function(){ var b=document.getElementById('bp-tog'); if(!b)return;
     b.onclick=function(){ BP_OPEN=!BP_OPEN; try{localStorage.setItem('fcc-bp-open',BP_OPEN?'1':'0');}catch(e){} renderBpTog(); }; })();
-  function renderAll(){ _planCache=null; autoAdvanceReadouts(); renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTests(); renderWorkload(); renderAlerts(); renderBpTog(); }   // renderIntake cascades into renderTimeline
+  function renderAll(){ _planCache=null; autoAdvanceReadouts(); refreshDupMap(); renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTests(); renderWorkload(); renderAlerts(); renderBpTog(); }   // duplicate tickets collapse before anything renders; renderIntake cascades into renderTimeline
 
   // set a sensible default due date (today + 5 working-ish days) and boot
   (function(){ var d=new Date(); d.setDate(d.getDate()+5);
