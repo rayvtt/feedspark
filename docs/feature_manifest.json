@@ -1182,7 +1182,7 @@
    "pattern": "const feedRef = (u) => sheetRef(u) || xmlRef(u)"
   },
   {
-   "name": "worker: Meta-tab mass import — 18 sheet-backed -fb feeds wired",
+   "name": "worker: Meta-tab mass import \u2014 18 sheet-backed -fb feeds wired",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "-fb': { id:",
    "min": 18
@@ -1568,6 +1568,13 @@
    "pattern": "Restored \u2014 this sent brief",
    "min": 1,
    "pr": 229
+  },
+  {
+   "name": "Workflow: pasted read-outs update the recorded result (manual authoritative)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "Already recorded on",
+   "min": 1,
+   "pr": 232
   }
  ]
 }
