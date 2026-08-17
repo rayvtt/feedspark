@@ -47,6 +47,7 @@ import TACHYON from "../../../docs/tachyon_widget.html";
 // so every module's explainer subtext folds behind a ⓘ by default
 import INSTR from "../../../docs/instr_collapse.html";
 import FEEDLAB from "../../../docs/FeedSpark_FeedLab.html";
+import FEEDCHAT from "../../../docs/FeedSpark_FeedChat.html";
 import PRICER from "../../../docs/FeedSpark_Pricer.html";
 // Label Guard — custom-label capture + drop-off monitoring module (page at /labels)
 import LABELGUARD_PAGE from "../../../docs/FeedSpark_LabelGuard.html";
@@ -101,6 +102,7 @@ const PAGES = {
   '/activity':    { html: ACTIVITY,    slug: 'activity' },   // owner-gated in fetch() before this map is consulted; Build Log lives on its 🔨 tab
   '/workflow':    { html: WORKFLOW,    slug: 'workflow' },
   '/feedlab':     { html: FEEDLAB,     slug: 'feedlab' },
+  '/feedchat':    { html: FEEDCHAT,    slug: 'feedchat' },
   '/labels':      { html: LABELGUARD_PAGE, slug: 'labels' },
   '/pricer':      { html: PRICER,      slug: 'pricer' },
   '/kwcal':       { html: KWCAL,       slug: 'kwcal' },
