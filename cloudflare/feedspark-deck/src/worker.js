@@ -150,26 +150,46 @@ const PLAN_SHEETS = {
 // from the Feed Lab portal or the CC dossier); the legacy single `feed` field doubles as
 // the 'gb' market. Market codes are 2-6 chars, lowercased.
 // Module scope (not inside fetch): the Label Guard cron sweep resolves feeds from scheduled().
+// `<mkt>-fb` = Meta (Facebook) catalogue channel. Mass-imported from the master sheet's
+// "Meta" tab (gid 908873996, URLs in col B) Aug 2026 — every Meta feed arrived as a
+// link-shared Google Sheet, so they ride the full rails (Feed Lab AND Label Guard).
 const DEFAULT_FEEDS = {
   Schuh: {
     gb: { id: '1uAM5I_KSsjucCr3GLXc2ekZeiMoAG6x8TIh5ZntwseA', gid: '0' },
     de: { id: '1u-B6VECXLk1YefoED5FfjpnXw1uEwV8cE_f6t-ed12I', gid: '0' },
     ie: { id: '1bawEQkhpl8GsSGVNkPnsi228TM_z1LXf1Dj35s-a9p4', gid: '0' },
+    'gb-fb': { id: '13AyrXlP0se24SJS8O_aZFAi51rdTrhnxVe_h4sdKn1w', gid: '0' },
+    'de-fb': { id: '1xmvblk89mmxgtFuXEYFC8towiKPsN8ILmLCfPX911H8', gid: '0' },
+    'ie-fb': { id: '1hxBYKvl6trfaieFJaKbii2QyoUXuGdjdZqFpsGoiiHo', gid: '0' },
   },
   YuMOVE: { gb: { id: '1PtsaNBd5NGimchw18YlBPCtOgl0HcgkWrKdhy4lfvzA', gid: '0' } },
-  Monsoon: { gb: { id: '1pW6CqyzM_1Rqr8O0basrxxuNAWG9sR2_OrjCIkE_8PU', gid: '0' } },
-  Accessorize: { gb: { id: '1_OkGi8ucOmJcdu5TBWm3vl5cK3bmmaimoMYvR03Z3Ic', gid: '0' } },
+  Monsoon: {
+    gb: { id: '1pW6CqyzM_1Rqr8O0basrxxuNAWG9sR2_OrjCIkE_8PU', gid: '0' },
+    'gb-fb': { id: '1p-nudKJ_67OVqsrmEgjut1KeZu_2g_aactQShz-mp1Q', gid: '0' },
+  },
+  Accessorize: {
+    gb: { id: '1_OkGi8ucOmJcdu5TBWm3vl5cK3bmmaimoMYvR03Z3Ic', gid: '0' },
+    'gb-fb': { id: '1RQLrwFPdW_Svu7ZPzuB1YJztDV12tzpQm0Fr_Fnrc0k', gid: '0' },
+  },
+  Hobbycraft: { 'gb-fb': { id: '1R1ES_XtA1r6NAqROkyr_lWb3cuy3_AQDJ4b5MTJ_2A8', gid: '0' } },  // Meta only — no Google feed wired yet
   Superdry: {
     gb: { id: '1PimExRPPqf1CknH3yLs_tUfJrr2HZgjpiMUDiOUDc3k', gid: '0' },
     ie: { id: '1SjuQ0M-cangxVcNdlb72RQM0-ZTev7aE-R5v1iX9EGQ', gid: '0' },
     de: { id: '1y0phqG10OH55u6s6w8xpsVfZe2LohwlpelWPvb0QM3k', gid: '0' },
     fr: { id: '1FVthehZKfAiUIU0qCGrsdENMQW896o8S19C6fT0gkx4', gid: '0' },
     nl: { id: '1f4tL0BPNrVFC7Lj0az4LLs9NvIvf3YiFRBXXPafU1t0', gid: '0' },
+    'gb-fb': { id: '1SmpIXWedrLlbO-NcfSmYakyxoXJr8C2fxxSkWSeaJZ0', gid: '0' },
+    'ie-fb': { id: '1TmZknTdwYUkw7gbpLzfUNEUC66GS4cwOoGlB4M4aBgM', gid: '0' },
+    'de-fb': { id: '1yWEyXdDWkJh1723db9QeAixrLmBDHAqhFvGupWYeEwk', gid: '0' },
+    'fr-fb': { id: '1gd8SZxhDdQhTBDawtZCymKIZ8GnuVcMsVua6GawUulk', gid: '0' },
+    'nl-fb': { id: '1uNKYA9hhKwPyh_V6vBsOb7yCo-DOaQxrvvOexv7-Yqw', gid: '0' },
   },
   'House of Bruar': {
     gb: { id: '16P8vLuLC4l4xkMh5w_BrCCGHzMYqi4eZec8Wezpg1bk', gid: '0' },
     us: { id: '1Wa5FQgn3mX_iMMG2nT85gmnR28hgVFPkbY1qlV0lJZM', gid: '0' },
     eu: { id: '1e3tETDX_0oGTgPXr5weI-h1DjwRoVDPJikqW9vvyTJQ', gid: '0' },
+    'gb-fb': { id: '1XSH6lWe2qiG-58GUKHOw4CQQCzkPF_kv2tKQwIyrU1k', gid: '0' },
+    'us-fb': { id: '1smKCDoMZnC1tvffeaCAHymfvEhFvPsFuvyhZxxgpV7Y', gid: '0' },  // no CL3 column in the Meta feed
   },
   'American Golf': { gb: { id: '1W4Tasbdi7jR7kmlIjYjrPtAb2BvW-AkQZBz9XW1aNHk', gid: '0' } },  // API-fed sheet
   Reiss: {
@@ -182,7 +202,11 @@ const DEFAULT_FEEDS = {
     ca: { id: '1pG9dzcKnGRx-r56eNISksUeeyNovJbF4tkVUBtYs25U', gid: '0' },
     eu: { id: '1LaOCzKf_zxRpSBobb-iwgYGAgggwWqB8XMjQRtbr6mM', gid: '0' },
     fr: { id: '1eb1-NHas0oDVozjQ7-gbZfvfUdM0iJTwtTTovy7pLuc', gid: '0' },  // not in the master sheet yet — supplied by Ray direct
-    'gb-fb': { xml: 'https://s2.feedhero.net/output_feeds/fb/reiss_gb/a57b35eff04c8fc0eb8128aac5df23d4/latest.xml' },  // Meta (Facebook) channel — FeedHero-hosted realtime XML
+    'gb-fb': { id: '1i5EKldXa_d8VsKbMfsixWPY_Tr0j7GyAWYSxr0xDAN4', gid: '0' },  // was FeedHero XML — Meta tab now supplies a sheet, so Label Guard covers it too
+    'ca-fb': { id: '1YRWfLwevu_MnLnxMmPe41LRD6NWxYoi89QqvZtLW4LQ', gid: '0' },
+    'de-fb': { id: '1fMmv_DjOFKWZAAOTOW_3hRfXxzTCwl0iyP4N7EeaUdg', gid: '0' },
+    'ie-fb': { id: '1sG2buKIZsxRWyFSiAfZWW9UCd-EDy129JFGlKLDvo0c', gid: '0' },
+    'us-fb': { id: '1YFPSkfKOKxvbpUcF_0bBhvTvZvmtybLI80sWctDt8ak', gid: '0' },
   },
 };
 const mktOf = (raw) => String(raw || 'gb').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 6) || 'gb';
@@ -1408,7 +1432,15 @@ export default {
   async scheduled(event, env, ctx) {
     // Custom-watch passes (Ray's alert builder) with their OWN subrequest budget: the :30
     // firing checks hourly-schedule rules; 07:00/17:00 GMT checks twice-daily rules.
-    if (event && event.cron === '30 * * * *') { await labelWatchRun(env, null, 'hourly'); return; }
+    if (event && event.cron === '30 * * * *') {
+      const w = await labelWatchRun(env, null, 'hourly');
+      // second sweep batch: the Meta import roughly doubled the estate (42 sheet feeds), so
+      // the :30 firing also advances the rotation — but only when its subrequest budget
+      // allows (watch checks ~4 fetches/rule + a 4-feed batch ~28 must stay under the
+      // 50/invocation free-plan cap). Watches always take precedence over the sweep.
+      if (!w || (w.checked | 0) <= 4) await labelCronSweep(env);
+      return;
+    }
     if (event && event.cron === '0 7,17 * * *') {
       await labelWatchRun(env, null, 'twice');
       // the emailed status report rides the same firings so it reflects a fresh check:
