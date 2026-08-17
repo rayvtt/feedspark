@@ -29,7 +29,7 @@ window.addEventListener('load',restore);
     --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);--radius:14px}
   *{box-sizing:border-box}
   body{margin:0;font-family:Lato,system-ui,sans-serif;color:var(--ink);background:var(--wash);line-height:1.5}
-  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 22px}
   .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
   .topbar-in{max-width:1280px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px}
   .brand{font-weight:900;font-size:18px}.brand span{color:var(--orange-deep)}
@@ -46,10 +46,22 @@ window.addEventListener('load',restore);
   .tstate{font-size:12.5px;font-weight:700;color:var(--muted)}
   .tstate .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:5px;vertical-align:1px}
   .tstate.on .dot{background:var(--good)}
+  .ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .ctl label{font-size:12px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  select#brand{font:inherit;font-weight:800;font-size:14px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;min-width:200px;color:var(--ink)}
+  .mkc{font:inherit;font-size:11.5px;font-weight:900;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer;text-transform:uppercase;letter-spacing:.04em}
+  .mkc.on{background:var(--orange);border-color:var(--orange);color:#fff}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:11px;margin:18px 0 4px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
+  .kpi .n{font-size:26px;font-weight:900;line-height:1}
+  .kpi .l{font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:5px}
+  .kpi.good .n{color:var(--good)}.kpi.warn .n{color:var(--orange-deep)}
+  h2{font-size:20px;font-weight:900;margin:26px 0 4px}
+  p.sub{color:var(--muted);font-size:13px;margin:0 0 14px}
   /* ============ chat ============ */
   .chat-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:460px;margin-bottom:26px}
   .chat-log{flex:1;padding:20px 20px 8px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;max-height:62vh}
-  .msg{max-width:86%;border-radius:14px;padding:11px 15px;font-size:13.8px;line-height:1.5;position:relative}
+  .msg{max-width:min(86%,760px);border-radius:14px;padding:11px 15px;font-size:13.8px;line-height:1.5;position:relative}
   .msg.user{align-self:flex-end;background:var(--orange);color:#fff;font-weight:700;border-bottom-right-radius:5px}
   .msg.bot{align-self:flex-start;background:var(--wash);border:1px solid var(--line);border-bottom-left-radius:5px}
   .msg.bot .who{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-deep);margin-bottom:4px}
@@ -97,6 +109,8 @@ window.addEventListener('load',restore);
   [data-theme=dark] .msg.bot.err{background:#241a17;border-color:#5a3128}
   [data-theme=dark] .msg.user{color:#14161C}
   [data-theme=dark] .stat,[data-theme=dark] .bd-wrap,[data-theme=dark] #q,[data-theme=dark] .btn{background:var(--paper);border-color:var(--line);color:var(--ink-2)}
+  [data-theme=dark] .kpi,[data-theme=dark] select#brand,[data-theme=dark] .mkc{background:var(--paper);border-color:var(--line);color:var(--ink-2)}
+  [data-theme=dark] .mkc.on{background:var(--orange);border-color:var(--orange);color:#14161C}
   [data-theme=dark] table.bd th{background:#181B22}
   [data-theme=dark] table.bd td{border-bottom-color:#181B22}
   [data-theme=dark] .chip{background:#1d1a12}
@@ -114,9 +128,17 @@ window.addEventListener('load',restore);
   <h1>Feed Chat</h1>
   <p class="sub">Ask a question about any <b>live Google Shopping feed</b> in plain English — <i>“is there duplicated title in the Reiss UK Shopping feed?”</i> — and get a real breakdown. Tachyon reads the question, the feed streams straight from the source sheet, and every number is <b>computed, never guessed</b>. Export the offenders or drop a fix brief into the Workflow in one click.</p>
   <div class="tstate" id="tstate"><span class="dot"></span>checking Tachyon…</div>
+  <div class="ctl">
+    <label for="brand">Brand context</label>
+    <select id="brand" aria-label="Optional brand context for questions"><option value="">Auto — name it in the question</option></select>
+    <span id="mkt-chips" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+  </div>
+  <div class="kpis" id="kpis"></div>
 </div></header>
 
 <main class="wrap">
+  <h2>Ask the feed</h2>
+  <p class="sub">Plain-English questions, computed answers — duplicates, missing fields, title lengths, keyword saturation, or a full audit. Every breakdown exports its offenders and briefs its fix straight into the <b>Workflow</b>.</p>
   <div class="chat-card">
     <div class="chat-log" id="log"></div>
     <div class="chips" id="chips"></div>
@@ -127,7 +149,7 @@ window.addEventListener('load',restore);
   </div>
 </main>
 
-<div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span>Feed Chat · answers computed off the live feed</span></div></div>
+<div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span id="syncstate">Feed Chat · answers computed off the live feed</span></div></div>
 
 <script src="/feedlab/engine.js" onerror="window.__engineFail=1"></script>
 <script>
@@ -139,8 +161,27 @@ function fmt(n){n=+n;return isFinite(n)?n.toLocaleString('en-GB'):'0'}
 function b64url(o){var b=new TextEncoder().encode(JSON.stringify(o)),s='';b.forEach(function(c){s+=String.fromCharCode(c)});return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function pc(n,t){return t?Math.round(n/t*1000)/10:0}
 
-var ROSTER={}, TACH=false, BUSY=false, LAST={client:'',market:''};
+var ROSTER={}, TACH=false, BUSY=false, LAST={client:'',market:''}, QCOUNT=0;
 var CACHE=window.__feedchatcache=window.__feedchatcache||{}; // brand|mkt -> {rows,n,kwcols,t}
+
+/* ---------------- FCC-standard hero: KPI strip + brand/market context ---------------- */
+function wiredOf(b){ var r=ROSTER[b]||{}; var m=(r.wired||[]).concat(r.attached||[]); return m.filter(function(x,i){return m.indexOf(x)===i}); }
+function renderKpis(){
+  var brands=Object.keys(ROSTER).length, feeds=0, streamed=0, k;
+  Object.keys(ROSTER).forEach(function(b){ feeds+=wiredOf(b).length; });
+  for(k in CACHE)streamed+=CACHE[k].n||0;
+  $('#kpis').innerHTML=
+    '<div class="kpi"><div class="n">'+fmt(brands)+'</div><div class="l">Brands wired</div></div>'
+    +'<div class="kpi"><div class="n">'+fmt(feeds)+'</div><div class="l">Live feeds</div></div>'
+    +'<div class="kpi'+(streamed?' good':'')+'"><div class="n">'+(streamed?fmt(streamed):'—')+'</div><div class="l">Products streamed</div></div>'
+    +'<div class="kpi'+(QCOUNT?' warn':'')+'"><div class="n">'+(QCOUNT||'—')+'</div><div class="l">Questions answered</div></div>';
+}
+function renderCtx(){
+  var sel=$('#brand'); if(sel.value!==LAST.client)sel.value=ROSTER[LAST.client]?LAST.client:'';
+  var b=sel.value, ms=b?wiredOf(b):[];
+  $('#mkt-chips').innerHTML=ms.map(function(m){
+    return '<button type="button" class="mkc'+(m===(LAST.market||'gb')&&b===LAST.client?' on':'')+'" data-mkc="'+esc(m)+'">'+esc(m.toUpperCase())+'</button>';}).join('');
+}
 
 /* ---------------- check catalogue ---------------- */
 var FIELDS={title:'ti',description:'de',image_link:'im',price:'pr',sale_price:'sp',brand:'br',gtin:'gt',product_type:'pt',availability:'av'};
@@ -360,7 +401,7 @@ function renderResult(brand,mkt,r,into){
   }
   h+='<div class="act-row">'
     +(r.csv&&r.csv.lines.length?'<a class="btn" download="'+esc(r.csv.name)+'" data-csv href="'+csvBlobUrl(r.csv)+'">⬇ Offenders CSV ('+fmt(r.csv.lines.length)+')</a>':'')
-    +(r.s!=='good'?'<a class="btn brf" href="'+briefHref(brand,mkt,r)+'">→ Brief this fix</a>':'')
+    +(r.s!=='good'?'<a class="btn brf" href="'+briefHref(brand,mkt,r)+'" target="_blank" rel="noopener" title="Opens the Workflow composer in a new tab, prefilled with this fix">→ Brief this fix</a>':'')
     +'</div>';
   into.innerHTML+='<div style="margin-top:8px"><b><span class="sev '+r.s+'"></span>'+esc(r.label)+'</b><div style="margin:3px 0 8px">'+esc(r.headline)+'</div>'+h+'</div>';
 }
@@ -412,6 +453,7 @@ function ask(q,structured){
         var r=runCheck(id,feed,brand,mkt); if(r){ results.push(r); renderResult(brand,mkt,r,bub); }
       });
       $('#log').scrollTop=$('#log').scrollHeight;
+      QCOUNT++; renderKpis(); renderCtx();
       compose(q||'',brand,mkt,results).then(function(v){
         if(v){ var vd=bub.querySelector('[data-verdict]'); if(vd)vd.textContent=v; }
         BUSY=false; $('#ask').disabled=false;
@@ -445,10 +487,20 @@ function boot(){
     var ts=$('#tstate');
     ts.classList.toggle('on',TACH);
     ts.innerHTML='<span class="dot"></span>'+(TACH?'Tachyon connected — questions understood and answered by Claude; every number computed off the live feed.':'Tachyon offline — keyword matching only (answers stay fully computed). Set ANTHROPIC_API_KEY to switch on natural language.');
+    $('#brand').innerHTML='<option value="">Auto — name it in the question</option>'+Object.keys(ROSTER).sort().map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>'}).join('');
+    renderKpis(); renderCtx();
     chips();
     say('Ask me about any live feed — duplicates, missing fields, title lengths, keyword saturation, or a full audit. Name the brand and market in the question (e.g. <b>“is there duplicated title in Reiss UK Shopping feed?”</b>) and I will stream the live sheet and give you the breakdown.');
   });
 }
+$('#brand').addEventListener('change',function(){
+  LAST={client:this.value,market:this.value?(wiredOf(this.value).indexOf('gb')>=0?'gb':wiredOf(this.value)[0]||'gb'):''};
+  renderCtx();
+});
+$('#mkt-chips').addEventListener('click',function(ev){
+  var c=ev.target.closest('[data-mkc]'); if(!c)return;
+  LAST.market=c.getAttribute('data-mkc'); LAST.client=$('#brand').value||LAST.client; renderCtx();
+});
 $('#ask').addEventListener('click',function(){ var q=$('#q').value.trim(); if(!q)return; $('#q').value=''; ask(q); });
 $('#q').addEventListener('keydown',function(ev){ if(ev.key==='Enter'){ ev.preventDefault(); var q=this.value.trim(); if(!q)return; this.value=''; ask(q); } });
 boot();
