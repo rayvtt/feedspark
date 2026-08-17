@@ -1605,6 +1605,20 @@
    "pr": 234
   },
   {
+   "name": "FeedChat: FCC-standard chrome (KPI strip + brand context row)",
+   "file": "docs/FeedSpark_FeedChat.html",
+   "pattern": "renderKpis",
+   "min": 3,
+   "pr": 236
+  },
+  {
+   "name": "FeedChat: → Brief opens the Workflow in a new tab",
+   "file": "docs/FeedSpark_FeedChat.html",
+   "pattern": "target=\"_blank\"",
+   "min": 1,
+   "pr": 236
+  },
+  {
    "name": "Workflow: pasted read-outs update the recorded result (manual authoritative)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "Already recorded on",
