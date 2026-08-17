@@ -141,6 +141,8 @@ window.addEventListener('load',restore);
   .bs-ai{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--orange);background:rgba(245,166,35,.1);color:var(--orange-ink);cursor:pointer}
   .bs-ai:hover{background:rgba(245,166,35,.2)}
   .bg-mhead{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+  .bl-bar{display:flex;gap:10px;align-items:center;margin:10px 0}
+  .bl-bar input{font:inherit;font-size:13px;padding:7px 12px;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--ink);width:320px}
   .bg-attach{background:var(--wash);border:1px dashed var(--line);border-radius:10px;padding:8px 10px}
   .bg-attach-row{display:flex;gap:8px;align-items:center}
   .bg-attach-row select{flex:1;min-width:0}
@@ -864,6 +866,18 @@ window.addEventListener('load',restore);
   <div class="lu"><textarea id="lu-text" rows="2" placeholder="⚡ Paste an ASPL / client reply here — it routes to the right ticket, logs the comm, moves the stage and picks up any ETA. (Cmd/Ctrl+Enter to route)"></textarea><button class="btn navy" id="lu-go" type="button">Route update</button></div>
   <div class="lu-out" id="lu-out" hidden></div>
   <div class="board" id="board"></div>
+  </div>
+
+  <h2>Brief ledger<button class="info-btn" type="button" aria-label="How the Brief ledger works">i</button>
+    <div class="info-pop">Every brief ever sent from the Workflow — including confirmed (closed) ones and collapsed duplicates — newest first. The 🧪 read-out travels with each brief's title once its result is recorded. Click a row to open the ticket.</div>
+    <button type="button" class="sec-tog" id="bl-tog" aria-expanded="false" aria-controls="bl-body">▸ Show</button>
+  </h2>
+  <div id="bl-body" hidden>
+    <div class="bl-bar"><input id="bl-search" type="search" placeholder="Search briefs — id, client, task, ASPL…" aria-label="Search the brief ledger"><span class="it-n" id="bl-n"></span></div>
+    <div class="it-scroll" style="max-height:56vh"><table class="itbl" id="bltbl">
+      <colgroup><col style="width:118px"><col style="width:11%"><col><col style="width:9%"><col style="width:84px"><col style="width:84px"><col style="width:120px"></colgroup>
+      <thead><tr><th data-k="id">Brief</th><th data-k="client">Client</th><th data-k="task">Task &amp; read-out</th><th data-k="aspl">ASPL</th><th data-k="created">Sent</th><th data-k="due">Due</th><th data-k="status">Stage</th></tr></thead>
+      <tbody id="bl-rows"></tbody></table></div>
   </div>
 
   <h2>ASPL SLA &amp; turnaround<button class="info-btn" type="button" aria-label="How SLA &amp; turnaround works">i</button>
@@ -2373,6 +2387,7 @@ window.addEventListener('load',restore);
       +'<div style="display:flex;align-items:flex-start"><div><h3>'+esc(b.task)+'</h3>'
         +'<div class="mc">'+esc(b.id)+' · '+esc(b.client)+' · ['+esc(b.code)+']</div></div><button class="x" id="m-x">×</button></div>'
       +'<div class="m-meta"><span class="m-pill">Due '+humanDD(b.due)+'</span><span class="m-pill">'+esc(b.priority||'Normal')+'</span>'
+        +(lastResultTxt(b)?('<span class="m-pill" style="color:#15803D;border-color:rgba(21,128,61,.35)" title="The recorded read-out — travels with the brief">🧪 '+esc(lastResultTxt(b).slice(0,60))+'</span>'):'')
         +'<span class="m-pill">'+(b.source==='plan'?'Project plan':'Email')+'</span>'
         +'<span class="m-pill"'+(stageBreached(b)?' style="color:#C0392B;border-color:rgba(192,57,43,.4)"':'')+'>Ball: '+(crt?(crt+' · '+daysInCourt(b)+'d'):'—')+'</span>'
         +(function(){ var rd=readoutDue(b); if(rd==null||b.status==='confirmed')return ''; var dl=Math.ceil((rd-Date.now())/86400000);
@@ -2448,6 +2463,11 @@ window.addEventListener('load',restore);
   // result email into the update router files it exactly like the Gmail scan would. Handles
   // the house style's UNSIGNED prose figures ("a 9.55% uplift in impressions and a 2.76%
   // uplift in clicks" → "+9.55% impressions · +2.76% clicks"); a bare % never counts.
+  // result-context cue: lets a FORMAL read-out reply ("Please find below the results…") file
+  // even when the ticket never got its go-live (historic briefs sat in briefed/progress), while
+  // projection talk without the cue ("aiming for a 5% uplift") still never counts.
+  var RESULT_CTX_RE=/\b(results?|read-?out|came out|we saw)\b/i;
+  function lastResultTxt(b){ if(!b||!b.comms)return ''; for(var i=b.comms.length-1;i>=0;i--){ var m=/^Result:\s*(.+)$/.exec(b.comms[i].note||''); if(m)return m[1].trim(); } return ''; }
   function extractResultTxt(text){ text=String(text||'');
     var m=/\bresults?\s*[:\-–]\s*([^\n]{3,140})/i.exec(text); if(m)return m[1].trim();
     var parts=[], res=[/(\d+(?:\.\d+)?)\s*%\s*(?:up-?lift|lift|increase|improvement|growth|gain|drop|decrease|decline)(?:\s+in\s+([a-z]{2,20}(?:\s+rate)?))?/gi,
@@ -2476,6 +2496,22 @@ window.addEventListener('load',restore);
     toast('Result logged to the Test register — draft the client confirmation to close'); }
   // the Gmail scan logs ASPL's "Result: …" reply onto the ticket unattended — fold any such
   // scanned read-outs into the Test register at load, so the deck-ammo record stays complete
+  // Dinesh replied the read-outs into the historic brief threads before the scanner existed —
+  // or while the tickets still sat in briefed/progress, which the old gate skipped — so those
+  // replies live on the tickets as PLAIN comms. Recover them at load: rewrite the matched comm
+  // to a Result:, file the Test register, and pull the ticket into Analysis. A confirmed
+  // (closed) ticket keeps its status — the read-out is still recorded as deck ammo.
+  function rescanComms(){ var n=0;
+    Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b||!needsAnalysis(b)||hasResult(b)||!b.comms||!b.comms.length)return;
+      for(var i=b.comms.length-1;i>=0;i--){ var c=b.comms[i], txt=String(c.note||'');
+        if(!(RESULT_CTX_RE.test(txt)||b.liveAt||b.status==='analysis'||b.status==='done'))continue;
+        var rv=extractResultTxt(txt); if(!rv)continue;
+        c.note='Result: '+rv.slice(0,140); c.done=true;
+        regResult(b,rv.slice(0,140));
+        if(b.status==='briefed'||b.status==='progress'||b.status==='done')setStage(b,'analysis');
+        b.updated=Date.now(); n++; break; } });
+    if(n){ persist(); toast('🧪 '+n+' historic read-out'+(n===1?'':'s')+' recovered from the brief threads'); }
+    return n; }
   function syncScannedResults(){ var n=0;
     Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b||!needsAnalysis(b)||!b.comms)return;
       var v=''; for(var i=b.comms.length-1;i>=0;i--){ var m=/^Result:\s*(.+)$/.exec(b.comms[i].note||''); if(m){ v=m[1].trim(); break; } }
@@ -2561,11 +2597,11 @@ window.addEventListener('load',restore);
         prog=/\b(started|in progress|underway|working on|wip|eta|will complete|picking (this|it) up)\b/i.test(text),
         golive=LIVE_RE.test(text)&&needsAnalysis(b);
     // a pasted read-out on a live/analysis test files as its Result — same rules as the scan
-    var rvv=(!golive&&needsAnalysis(b)&&(b.liveAt||b.status==='analysis'||b.status==='done')&&!hasResult(b))?extractResultTxt(text):'';
+    var rvv=(!golive&&needsAnalysis(b)&&!hasResult(b)&&(b.liveAt||b.status==='analysis'||b.status==='done'||RESULT_CTX_RE.test(text)))?extractResultTxt(text):'';
     b.comms=b.comms||[]; b.comms.push({from:sender,note:rvv?('Result: '+rvv.slice(0,140)):text.slice(0,600),done:done||!!rvv,when:Date.now()});
     var moved='', dueTxt='';
     if(golive&&b.status!=='confirmed'){ goLive(b); moved=STAGE_LBL.analysis; dueTxt=' · 🚀 live, '+(runSlaDays(b)||14)+'d run → analysis due '+humanDD(b.due); }
-    else if(rvv){ regResult(b,rvv.slice(0,140)); if(b.status==='done'){ setStage(b,'analysis'); moved=STAGE_LBL.analysis; } dueTxt=' · 🧪 result logged — '+rvv.slice(0,80)+' (filed to the Test register)'; }
+    else if(rvv){ regResult(b,rvv.slice(0,140)); if(b.status==='briefed'||b.status==='progress'||b.status==='done'){ setStage(b,'analysis'); moved=STAGE_LBL.analysis; } dueTxt=' · 🧪 result logged — '+rvv.slice(0,80)+' (filed to the Test register)'; }
     else if(done&&b.status!=='confirmed'&&b.status!=='done'&&b.status!=='analysis'){ var ds2=needsAnalysis(b)?'analysis':'done'; setStage(b,ds2); moved=STAGE_LBL[ds2]; }
     else if(blocked&&(b.status==='briefed'||b.status==='progress')){ setStage(b,'blocked'); moved=STAGE_LBL.blocked; }
     else if(prog&&(b.status==='intake'||b.status==='briefed')){ setStage(b,'progress'); moved=STAGE_LBL.progress; }
@@ -2934,6 +2970,37 @@ window.addEventListener('load',restore);
   // ---- Brief pipeline fold: the Timeline above shows the same briefs by date (Ray's call),
   // so the lanes collapse away by default. The chip carries the live in-motion count so the
   // folded section still says whether there's anything behind it; state sticks per device.
+  // ---- Brief ledger: the flat register of every brief ever sent (closed + duplicates included) ----
+  var blState={q:'',sort:'created',dir:-1};
+  var BL_OPEN=false; try{ BL_OPEN=localStorage.getItem('fcc-bl-open')==='1'; }catch(e){}
+  function renderLedger(){ var body=document.getElementById('bl-rows'), tog=document.getElementById('bl-tog'); if(!body||!tog)return;
+    var all=Object.keys(BRIEFS).map(function(id){return BRIEFS[id];}).filter(function(b){return b&&b.id;});
+    document.getElementById('bl-body').hidden=!BL_OPEN;
+    tog.textContent=BL_OPEN?'▾ Hide':('▸ Show — '+all.length+' brief'+(all.length===1?'':'s')+' ever sent');
+    tog.setAttribute('aria-expanded',BL_OPEN?'true':'false');
+    if(!BL_OPEN)return;
+    var q=blState.q, rows=!q?all:all.filter(function(b){ return (b.id+' '+b.client+' '+b.task+' '+(b.aspl||'')).toLowerCase().indexOf(q)>=0; });
+    rows.sort(function(a,b2){ var k=blState.sort, va=a[k], vb=b2[k];
+      if(k==='due'){ va=(ddmmyyyyToDate(a.due)||0)-0; vb=(ddmmyyyyToDate(b2.due)||0)-0; }
+      if(k==='created'){ va=a.created||0; vb=b2.created||0; }
+      if(typeof va==='string')return String(va||'').localeCompare(String(vb||''))*blState.dir;
+      return ((va||0)-(vb||0))*blState.dir; });
+    var n=document.getElementById('bl-n'); if(n)n.textContent=rows.length+(rows.length===1?' brief':' briefs');
+    body.innerHTML=rows.length?rows.map(function(b){ var res=lastResultTxt(b);
+      return '<tr data-bid="'+esc(b.id)+'" style="cursor:pointer"><td class="c-owner" style="white-space:nowrap">'+esc(b.id)+(isDup(b)?' <span title="Collapsed duplicate of '+esc(BRIEF_DUP[b.id])+'">👥</span>':'')+'</td>'
+        +'<td class="c-client">'+esc(b.client||'—')+'</td>'
+        +'<td class="c-task">'+esc(b.task||'—')+(res?' <span class="src-tag" style="color:#15803D;background:rgba(21,128,61,.1);border-color:rgba(21,128,61,.3)" title="Recorded read-out">🧪 '+esc(res.slice(0,48))+'</span>':'')+'</td>'
+        +'<td class="c-owner">'+esc(b.aspl||asplOf(b)||'—')+'</td>'
+        +'<td class="c-due">'+(b.created?new Date(b.created).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}):'—')+'</td>'
+        +'<td class="c-due">'+humanDD(b.due)+'</td>'
+        +'<td><span class="bf-chip" style="background:'+(STAGE_COLOR[b.status]||'#8a94a0')+'">'+esc(STAGE_LBL[b.status]||b.status||'—')+'</span></td></tr>'; }).join('')
+      :'<tr><td colspan="7" class="it-empty">No briefs match.</td></tr>';
+    body.querySelectorAll('tr[data-bid]').forEach(function(r){ r.onclick=function(){ openModal(r.getAttribute('data-bid')); }; });
+  }
+  (function(){ var tog=document.getElementById('bl-tog'); if(tog)tog.onclick=function(){ BL_OPEN=!BL_OPEN; try{localStorage.setItem('fcc-bl-open',BL_OPEN?'1':'0');}catch(e){} renderLedger(); };
+    var s=document.getElementById('bl-search'); if(s)s.addEventListener('input',function(){ blState.q=this.value.trim().toLowerCase(); renderLedger(); });
+    document.querySelectorAll('#bltbl thead th[data-k]').forEach(function(th){ th.onclick=function(){
+      var k=th.getAttribute('data-k'); if(blState.sort===k)blState.dir*=-1; else {blState.sort=k;blState.dir=(k==='created'?-1:1);} renderLedger(); }; }); })();
   var BP_OPEN=false; try{ BP_OPEN=localStorage.getItem('fcc-bp-open')==='1'; }catch(e){}
   function renderBpTog(){ var b=document.getElementById('bp-tog'), body=document.getElementById('bp-body'); if(!b||!body)return;
     body.hidden=!BP_OPEN;
@@ -2942,14 +3009,14 @@ window.addEventListener('load',restore);
     b.setAttribute('aria-expanded',BP_OPEN?'true':'false'); }
   (function(){ var b=document.getElementById('bp-tog'); if(!b)return;
     b.onclick=function(){ BP_OPEN=!BP_OPEN; try{localStorage.setItem('fcc-bp-open',BP_OPEN?'1':'0');}catch(e){} renderBpTog(); }; })();
-  function renderAll(){ _planCache=null; autoAdvanceReadouts(); refreshDupMap(); renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTests(); renderWorkload(); renderAlerts(); renderBpTog(); }   // duplicate tickets collapse before anything renders; renderIntake cascades into renderTimeline
+  function renderAll(){ _planCache=null; autoAdvanceReadouts(); refreshDupMap(); renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTests(); renderWorkload(); renderAlerts(); renderBpTog(); renderLedger(); }   // duplicate tickets collapse before anything renders; renderIntake cascades into renderTimeline
 
   // set a sensible default due date (today + 5 working-ish days) and boot
   (function(){ var d=new Date(); d.setDate(d.getDate()+5);
     document.getElementById('bg-due').value=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); })();
   refreshPreview();
   // scanned read-outs need BOTH stores in hand before they can be folded into the register
-  var _srB=false,_srT=false; function _srTry(){ if(_srB&&_srT)syncScannedResults(); }
+  var _srB=false,_srT=false; function _srTry(){ if(_srB&&_srT){ var n=rescanComms(); syncScannedResults(); if(n)renderAll(); } }
   apiGet().then(function(d){ BRIEFS=d||{}; _srB=true; _srTry(); renderAll(); setTimeout(maybeNotify,800); });
   // #10 load the test register (KV; seed from wins + plan test-tasks on first run)
   fetch('/api/tests').then(function(r){return r.json();}).then(function(d){ if(d&&d.length){TESTS=d;} else {TESTS=seedTests(); saveTests();} _srT=true; _srTry(); renderTests(); renderTimeline(); renderAlerts(); })
