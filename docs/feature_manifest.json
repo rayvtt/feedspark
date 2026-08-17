@@ -1626,6 +1626,27 @@
    "pr": 237
   },
   {
+   "name": "FeedChat: AM-editable question bank persists (KV qbank)",
+   "file": "docs/FeedSpark_FeedChat.html",
+   "pattern": "qbank",
+   "min": 3,
+   "pr": 238
+  },
+  {
+   "name": "FeedChat: key-free bank routing (token-scored, £0 default path)",
+   "file": "docs/FeedSpark_FeedChat.html",
+   "pattern": "bankRoute",
+   "min": 2,
+   "pr": 238
+  },
+  {
+   "name": "worker: /api/feedchat question-bank store",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "'/api/feedchat'",
+   "min": 2,
+   "pr": 238
+  },
+  {
    "name": "Workflow: pasted read-outs update the recorded result (manual authoritative)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "Already recorded on",

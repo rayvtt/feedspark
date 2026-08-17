@@ -279,7 +279,7 @@ export default {
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send',
-        '/api/kwcal': 'kwcal-save' };
+        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -603,6 +603,12 @@ export default {
     // Keyword calendar store — per-client marketing moments + measured feed impact (kvmerge)
     if (path === '/api/kwcal') {
       const r = await mapStoreRoute(env, request, 'kwcal', {});
+      if (r) return r;
+    }
+    // Feed Chat question bank — the AM-editable question stack (kvmerge; git QSTACK is the seed).
+    // Routing runs off this bank in-page, so answers never require the Anthropic key.
+    if (path === '/api/feedchat') {
+      const r = await mapStoreRoute(env, request, 'feedchat', {});
       if (r) return r;
     }
     if (path === '/api/tachyon/rates') {

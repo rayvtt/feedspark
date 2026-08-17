@@ -96,6 +96,8 @@ window.addEventListener('load',restore);
   .qs-g{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 5px}
   .qs-row{display:flex;gap:6px;flex-wrap:wrap}
   .qs-row .chip{font-size:11.5px;padding:5px 10px}
+  .qed{border:none;background:none;color:var(--muted);font-size:12px;font-weight:900;cursor:pointer;padding:1px 3px;border-radius:5px}
+  .qed:hover{color:var(--orange-deep)}
   .ask-row{display:flex;gap:9px;padding:12px 16px 16px;border-top:1px solid var(--line)}
   #q{flex:1;font:inherit;font-size:14px;font-weight:700;padding:11px 14px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink)}
   #q:focus{outline:2px solid var(--orange);border-color:var(--orange)}
@@ -135,6 +137,8 @@ window.addEventListener('load',restore);
     <label for="brand">Brand context</label>
     <select id="brand" aria-label="Optional brand context for questions"><option value="">Auto — name it in the question</option></select>
     <span id="mkt-chips" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+    <button class="btn" id="qstackb" type="button" title="Post the full question stack into the chat">❓ Question stack</button>
+    <button class="btn" id="qeditb" type="button" title="Rename questions, add the phrasings your team types, add or hide questions — shared with everyone, and typed questions route against it with no AI cost">✎ Edit questions</button>
   </div>
   <div class="kpis" id="kpis"></div>
 </div></header>
@@ -164,8 +168,21 @@ function fmt(n){n=+n;return isFinite(n)?n.toLocaleString('en-GB'):'0'}
 function b64url(o){var b=new TextEncoder().encode(JSON.stringify(o)),s='';b.forEach(function(c){s+=String.fromCharCode(c)});return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function pc(n,t){return t?Math.round(n/t*1000)/10:0}
 
-var ROSTER={}, TACH=false, BUSY=false, LAST={client:'',market:''}, QCOUNT=0;
+var ROSTER={}, TACH=false, BUSY=false, LAST={client:'',market:''}, QCOUNT=0, BASE=0, BANK=null, editQ=false;
 var CACHE=window.__feedchatcache=window.__feedchatcache||{}; // brand|mkt -> {rows,n,kwcols,t}
+var MKT_ALIAS={' uk ':'gb',' gb ':'gb',' britain ':'gb',' de ':'de',' germany ':'de',' german ':'de',' ie ':'ie',' ireland ':'ie',' irish ':'ie',' us ':'us',' usa ':'us',' fr ':'fr',' france ':'fr',' french ':'fr',' nl ':'nl',' netherlands ':'nl',' dutch ':'nl',' au ':'au',' australia ':'au',' ca ':'ca',' canada ':'ca',' eu ':'eu'};
+
+/* ---------------- the editable question bank (KV via /api/feedchat, git QSTACK = seed) ----------------
+   The AMs own the stack: rename wording, add the phrasings their team actually types, add new
+   questions onto existing checks, hide ones they never use. Routing matches typed questions
+   against THIS bank in-page — so day-to-day answers never call the Claude API and cost nothing. */
+function seedBank(){ var items=[]; QSTACK.forEach(function(g){ g.items.forEach(function(it){ items.push({id:it[0],q:it[1],alts:[],g:g.g}); }); }); return {items:items}; }
+function bankItems(){ return ((BANK&&BANK.items)||[]).filter(function(it){return !it.off}); }
+function saveBank(){
+  fetch('/api/feedchat',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(BASE)},body:JSON.stringify({qbank:BANK})})
+    .then(function(r){ BASE=+r.headers.get('X-Sync-Base')||BASE; return r.json(); })
+    .then(function(m){ if(m&&typeof m==='object'&&!m.ok&&m.qbank)BANK=m.qbank; }).catch(function(){});
+}
 
 /* ---------------- FCC-standard hero: KPI strip + brand/market context ---------------- */
 function wiredOf(b){ var r=ROSTER[b]||{}; var m=(r.wired||[]).concat(r.attached||[]); return m.filter(function(x,i){return m.indexOf(x)===i}); }
@@ -221,14 +238,43 @@ var QSTACK=[
 ];
 function stackChips(brand,mkt,skip){
   var m=mkt?' '+mkt.toUpperCase():'';
-  return QSTACK.map(function(g){
-    var its=g.items.filter(function(it){return it[0]!==skip});
-    if(!its.length)return '';
-    return '<div class="qs-g">'+esc(g.g)+'</div><div class="qs-row">'+its.map(function(it){
-      var qtxt=it[1].replace('{B}',brand||'…').replace('{M}',m);
-      return '<button type="button" class="chip" data-ask="'+esc(it[0])+'" data-q="'+esc(qtxt)+'" data-b="'+esc(brand||'')+'" data-m="'+esc(mkt||'')+'">'+esc(qtxt)+'</button>';
-    }).join('')+'</div>';
+  var items=(BANK&&BANK.items)||[], gs=[], by={};
+  items.forEach(function(it,i){ if(it.id===skip)return; if(it.off&&!editQ)return;
+    if(!by[it.g]){by[it.g]=[];gs.push(it.g);} by[it.g].push([it,i]); });
+  return gs.map(function(g){
+    return '<div class="qs-g">'+esc(g)+'</div><div class="qs-row">'+by[g].map(function(p){
+      var it=p[0],i=p[1];
+      var qtxt=String(it.q).replace('{B}',brand||'…').replace('{M}',m);
+      return '<span style="display:inline-flex;align-items:center;gap:2px'+(it.off?';opacity:.45':'')+'">'
+        +'<button type="button" class="chip" data-ask="'+esc(it.id)+'" data-q="'+esc(qtxt)+'" data-b="'+esc(brand||'')+'" data-m="'+esc(mkt||'')+'">'+esc(qtxt)+'</button>'
+        +(editQ?'<button type="button" class="qed" data-qedit="'+i+'" title="Edit the wording + the phrasings AMs type">✎</button>'
+          +'<button type="button" class="qed" data-qtog="'+i+'" title="'+(it.off?'Show this question again':'Hide from the stack')+'">'+(it.off?'👁':'✕')+'</button>':'')
+        +'</span>';
+    }).join('')+(editQ?'<button type="button" class="chip" style="border-style:solid;opacity:.85" data-qadd="'+esc(g)+'">＋ Add</button>':'')+'</div>';
   }).join('');
+}
+/* ---- key-free routing: score a typed question against the bank (wording + alt phrasings) ---- */
+var QSTOP={the:1,and:1,any:1,are:1,is:1,there:1,how:1,many:1,much:1,what:1,whats:1,'for':1,feed:1,feeds:1,shopping:1,catalogue:1,catalog:1,does:1,'do':1,with:1,can:1,you:1,our:1,their:1,its:1,'in':1,show:1,'me':1,run:1,check:1,checks:1,please:1,pls:1,about:1,got:1,have:1,has:1};
+function qTokens(s){ return String(s).toLowerCase().replace(/\{[bm]\}/g,' ').replace(/[^a-z0-9]+/g,' ').split(/\s+/).filter(function(w){return w.length>2&&!QSTOP[w]}); }
+function bankRoute(q){
+  var items=bankItems(); if(!items.length)return null;
+  var lq=' '+String(q).toLowerCase()+' ';
+  Object.keys(ROSTER).forEach(function(n){ lq=lq.split(n.toLowerCase()).join(' '); }); // brand routes separately
+  Object.keys(MKT_ALIAS).forEach(function(k){ lq=lq.split(k).join(' '); });            // so do markets
+  var qt=qTokens(lq); if(!qt.length)return null;
+  var df={}; items.forEach(function(it){ var seen={}; qTokens(it.q+' '+(it.alts||[]).join(' ')).forEach(function(w){ if(!seen[w]){seen[w]=1;df[w]=(df[w]||0)+1;} }); });
+  var best=null, second=0;
+  items.forEach(function(it){
+    var tw=0, mw=0, seen={};
+    qTokens(it.q+' '+(it.alts||[]).join(' ')).forEach(function(w){ if(seen[w])return; seen[w]=1;
+      var wgt=1/(df[w]||1); tw+=wgt; if(qt.indexOf(w)>=0)mw+=wgt; });
+    var sc=tw?mw/tw:0;
+    if(!best||sc>best.sc){ second=best?best.sc:0; best={it:it,sc:sc}; }
+    else if(sc>second)second=sc;
+  });
+  // accept only a clear winner — rare-token weighting means shared words like 'title' barely count
+  if(best&&best.sc>=0.5&&best.sc>=second+0.1)return {client:'',market:'',checks:[best.it.id],src:'bank'};
+  return null;
 }
 function helpHtml(brand,mkt){
   return '<div class="verdict">'+(brand?'Everything you can ask about <b>'+esc(brand)+'</b> — click a question to run it now:'
@@ -264,7 +310,15 @@ function heurParse(q){
   var names=Object.keys(ROSTER), best='';
   names.forEach(function(n){ if(lq.indexOf(n.toLowerCase())>=0&&n.length>best.length)best=n; });
   out.client=best;
-  var MKT_ALIAS={' uk ':'gb',' gb ':'gb',' britain ':'gb',' de ':'de',' germany ':'de',' german ':'de',' ie ':'ie',' ireland ':'ie',' irish ':'ie',' us ':'us',' usa ':'us',' fr ':'fr',' france ':'fr',' french ':'fr',' nl ':'nl',' netherlands ':'nl',' dutch ':'nl',' au ':'au',' australia ':'au',' ca ':'ca',' canada ':'ca',' eu ':'eu'};
+  if(!out.client){ // "… in the <X> feed" naming a brand we do NOT serve must nudge, never
+    // silently answer for the context brand — wrong-brand numbers are worse than no answer
+    var um=lq.match(/\b(?:in|for|on)\s+(?:the\s+)?([a-z0-9&'’ -]{2,30}?)\s+(?:shopping\s+|google\s+|meta\s+)?feeds?\b/);
+    if(um){ var cand=' '+um[1].trim()+' ';
+      Object.keys(MKT_ALIAS).forEach(function(k2){ cand=cand.split(k2).join(' '); });
+      cand=cand.trim();
+      var rn={}; Object.keys(ROSTER).forEach(function(n){rn[n.toLowerCase()]=1});
+      if(cand&&!rn[cand])out.unknown=cand; }
+  }
   var k; for(k in MKT_ALIAS){ if(lq.indexOf(k)>=0){out.market=MKT_ALIAS[k];break;} }
   if(/(meta|facebook|catalogue manager|commerce manager)/.test(lq))out.market=(out.market||'gb')+'-fb';
   if(/\bhelp\b|what can (you|u|i)\b|which questions|what (do|can) you (check|answer|do)|list (the )?(checks|questions)/.test(lq)){ out.checks=['help']; return out; }
@@ -273,6 +327,7 @@ function heurParse(q){
   var id; for(id in CHECKS){ CHECKS[id].kw.some(function(w){ if(lq.indexOf(w)>=0){out.checks.push(id);return true;} return false; }); }
   out.checks=out.checks.filter(function(c,i,a){return a.indexOf(c)===i});
   if(out.checks.indexOf('audit')>=0)out.checks=['audit'];
+  out.src='heur';
   return out;
 }
 function llmParse(q){
@@ -290,7 +345,7 @@ function llmParse(q){
       if(!j||!j.text)throw new Error('no text');
       var mm=j.text.match(/\{[\s\S]*\}/); if(!mm)throw new Error('no json');
       var p=JSON.parse(mm[0]);
-      return {client:String(p.client||''),market:String(p.market||'').toLowerCase(),checks:Array.isArray(p.checks)?p.checks.filter(function(c){return c==='help'||CHECKS[c]||c.indexOf('missing_')===0}):[]};
+      return {client:String(p.client||''),market:String(p.market||'').toLowerCase(),checks:Array.isArray(p.checks)?p.checks.filter(function(c){return c==='help'||CHECKS[c]||c.indexOf('missing_')===0}):[],src:'llm'};
     });
 }
 
@@ -476,9 +531,22 @@ function ask(q,structured){
   BUSY=true; $('#ask').disabled=true;
   msg('user',esc(q||(structured.label||'')));
   var tp=typing();
-  var pP=structured?Promise.resolve(structured):(TACH?llmParse(q).catch(function(){return heurParse(q)}):Promise.resolve(heurParse(q)));
+  // £0-first routing: precise keyword rules, then the editable bank — both free and instant.
+  // Tachyon is only consulted for phrasing neither understands (and only when a key exists).
+  var pP;
+  if(structured){ structured.src=structured.src||'chip'; pP=Promise.resolve(structured); }
+  else{
+    var h=heurParse(q);
+    if(h.checks.length)pP=Promise.resolve(h);
+    else{
+      var b=bankRoute(q);
+      if(b){ b.client=h.client; b.market=h.market; pP=Promise.resolve(b); }
+      else if(TACH)pP=llmParse(q).catch(function(){return h});
+      else pP=Promise.resolve(h);
+    }
+  }
   pP.then(function(p){
-    var brand=p.client||LAST.client, mkt=(p.market||'').toLowerCase();
+    var brand=(p.unknown&&!p.client)?p.unknown:(p.client||LAST.client), mkt=(p.market||'').toLowerCase();
     if((p.checks||[])[0]==='help'){
       tp.remove(); BUSY=false; $('#ask').disabled=false;
       say(helpHtml(ROSTER[brand]?brand:'',(ROSTER[brand]&&mkt)?mkt:''));
@@ -509,7 +577,8 @@ function ask(q,structured){
       });
       $('#log').scrollTop=$('#log').scrollHeight;
       QCOUNT++; renderKpis(); renderCtx();
-      compose(q||'',brand,mkt,results).then(function(v){
+      // free routes stay free: only LLM-parsed questions get an LLM-composed verdict
+      (p.src==='llm'?compose(q||'',brand,mkt,results):Promise.resolve(null)).then(function(v){
         if(v){ var vd=bub.querySelector('[data-verdict]'); if(vd)vd.textContent=v; }
         BUSY=false; $('#ask').disabled=false;
       });
@@ -535,13 +604,17 @@ function chips(){
 function boot(){
   Promise.all([
     fetch('/api/feed/clients').then(function(r){return r.json()}).catch(function(){return {}}),
-    fetch('/api/claude').then(function(r){return r.json()}).catch(function(){return {}})
+    fetch('/api/claude').then(function(r){return r.json()}).catch(function(){return {}}),
+    fetch('/api/feedchat').then(function(r){ BASE=+r.headers.get('X-Sync-Base')||0; return r.json(); }).catch(function(){return {}})
   ]).then(function(res){
     ROSTER=(res[0]&&res[0].clients)||{};
     TACH=!!(res[1]&&res[1].configured);
+    BANK=(res[2]&&res[2].qbank&&Array.isArray(res[2].qbank.items)&&res[2].qbank.items.length)?res[2].qbank:seedBank();
     var ts=$('#tstate');
     ts.classList.toggle('on',TACH);
-    ts.innerHTML='<span class="dot"></span>'+(TACH?'Tachyon connected — questions understood and answered by Claude; every number computed off the live feed.':'Tachyon offline — keyword matching only (answers stay fully computed). Set ANTHROPIC_API_KEY to switch on natural language.');
+    ts.innerHTML='<span class="dot"></span>'+(TACH
+      ?'Routing runs off the editable question bank — £0 per question, every number computed off the live feed. Tachyon (connected) is only consulted for phrasing the bank does not recognise.'
+      :'Tachyon offline — routing runs off the editable question bank + keyword rules, answers stay fully computed at £0. A key would only add fallback parsing for unmatched phrasing.');
     $('#brand').innerHTML='<option value="">Auto — name it in the question</option>'+Object.keys(ROSTER).sort().map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>'}).join('');
     renderKpis(); renderCtx();
     chips();
@@ -550,7 +623,38 @@ function boot(){
       +'<div class="qs-g">Brands I can check</div><div style="font-size:12.5px;font-weight:700">'+Object.keys(ROSTER).sort().map(function(n){return esc(n)}).join(' · ')+'</div>');
   });
 }
+var CHECK_IDS=Object.keys(CHECKS).concat(Object.keys(FIELDS).map(function(f){return 'missing_'+f}));
+var stackBub=null;
+function postStack(){
+  var html='<div class="verdict">'+(editQ?'Editing the question stack — shared with the whole team. ✎ rewords a question and its typed phrasings, ✕ hides, ＋ Add creates one on any existing check.':'The question stack — click to run:')+'</div>'+stackChips('','',null);
+  if(stackBub&&stackBub.isConnected){ stackBub.innerHTML='<div class="who">Tachyon · Feed Chat</div>'+html; }
+  else stackBub=say(html);
+  $('#log').scrollTop=$('#log').scrollHeight;
+}
+$('#qstackb').addEventListener('click',function(){ stackBub=null; postStack(); });
+$('#qeditb').addEventListener('click',function(){
+  editQ=!editQ;
+  this.textContent=editQ?'✓ Done editing':'✎ Edit questions';
+  this.classList.toggle('on',editQ);
+  postStack();
+});
 $('#log').addEventListener('click',function(ev){
+  var qe=ev.target.closest('[data-qedit]');
+  if(qe){ var i=+qe.getAttribute('data-qedit'), it=BANK.items[i]; if(!it)return;
+    var nq=prompt('Question wording ({B} = brand, {M} = market):',it.q); if(nq===null)return;
+    var na=prompt('Phrasings your AMs actually type (comma-separated — typed questions match these too, no AI needed):',(it.alts||[]).join(', ')); if(na===null)return;
+    it.q=nq.trim()||it.q; it.alts=na.split(',').map(function(x){return x.trim()}).filter(Boolean);
+    saveBank(); postStack(); return; }
+  var qt2=ev.target.closest('[data-qtog]');
+  if(qt2){ var i2=+qt2.getAttribute('data-qtog'); if(BANK.items[i2]){ BANK.items[i2].off=BANK.items[i2].off?0:1; saveBank(); postStack(); } return; }
+  var qa=ev.target.closest('[data-qadd]');
+  if(qa){ var g=qa.getAttribute('data-qadd');
+    var cid=prompt('Which check should it run? One of:\n'+CHECK_IDS.join(', '),'dup_title'); if(cid===null)return;
+    cid=cid.trim(); if(CHECK_IDS.indexOf(cid)<0){ say('No check called “'+esc(cid)+'” — pick one of: '+CHECK_IDS.join(', '),'err'); return; }
+    var qq=prompt('Question wording ({B} = brand, {M} = market):','… in {B}{M}?'); if(qq===null||!qq.trim())return;
+    var aa=prompt('Alternate phrasings (comma-separated, optional):','')||'';
+    BANK.items.push({id:cid,q:qq.trim(),alts:aa.split(',').map(function(x){return x.trim()}).filter(Boolean),g:g});
+    saveBank(); postStack(); return; }
   var c=ev.target.closest('[data-ask]'); if(!c)return;
   var id=c.getAttribute('data-ask'), q=c.getAttribute('data-q');
   var b=c.getAttribute('data-b')||LAST.client||$('#brand').value||'';
