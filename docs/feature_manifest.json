@@ -1568,6 +1568,13 @@
    "pattern": "Restored \u2014 this sent brief",
    "min": 1,
    "pr": 229
+  },
+  {
+   "name": "Workflow: briefed task click-through + inline task rename",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "startTaskEdit",
+   "min": 3,
+   "pr": 0
   }
  ]
 }

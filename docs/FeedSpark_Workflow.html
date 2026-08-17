@@ -473,6 +473,12 @@ window.addEventListener('load',restore);
   .itbl .c-due-ed:hover{color:var(--orange-deep);text-decoration:underline}
   .itbl .c-task-ed,.itbl .c-owner-ed{cursor:pointer}
   .itbl .c-task-ed:hover,.itbl .c-owner-ed:hover{text-decoration:underline dotted;text-underline-offset:2px;text-decoration-color:var(--orange)}
+  .itbl .tk-open{cursor:pointer}
+  .itbl .tk-open:hover{color:var(--orange-ink)}
+  .itbl .tk-ed{margin-left:5px;border:0;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:700;line-height:1;padding:1px 4px;border-radius:5px;cursor:pointer;opacity:0;vertical-align:1px}
+  .itbl tbody tr:hover .tk-ed{opacity:.55}
+  .itbl .tk-ed:hover{opacity:1;color:var(--orange-ink);background:rgba(245,166,35,.14)}
+  .itbl .tk-in{font:inherit;font-size:12px;width:100%;min-width:150px;box-sizing:border-box;padding:3px 6px;border:1px solid var(--orange);border-radius:6px;background:var(--paper);color:var(--ink);outline:none}
   .itbl td.g-sel{background:rgba(245,166,35,.14)}
   .itbl td.g-active{outline:2px solid var(--orange);outline-offset:-2px;background:rgba(245,166,35,.2)}
   [data-theme=dark] .itbl td.g-sel{background:rgba(245,166,35,.16)}
@@ -1638,7 +1644,27 @@ window.addEventListener('load',restore);
     if(t.source==='plan' && PLANSHEET[t.client]) writeOwner(t.client,t.task,val);   // existing 2-way owner writer (sheet + refetch)
     else toast(val?'Owner updated':'Owner cleared');
     renderAll(); }
-  function editTaskText(t){ var v=prompt('Edit the task — writes back to the plan:',t.task); if(v===null)return; v=(''+v).trim(); if(!v||v===t.task)return; setTaskText(t,v); }
+  // ---- inline task-name editor (replaces the old prompt()) — commits through the SAME
+  // setTaskText pipeline (rename overlay + key migration + sheet write), it only swaps the UX ----
+  function taskTdFor(t){ var td=null,k=rowKey(t); if(gridBody)gridBody.querySelectorAll('td.c-task-ed').forEach(function(x){ var r=gridRows[+x.getAttribute('data-i')]; if(!td&&r&&rowKey(r)===k)td=x; }); return td; }
+  function startTaskEdit(td,t){ if(!td||!t)return; if(td.querySelector('.tk-in'))return;
+    var open=gridBody&&gridBody.querySelector('.tk-in');
+    if(open&&open.__cancel){ open.__cancel(); td=taskTdFor(t); if(!td)return; }   // one editor at a time — cancelling re-renders, so re-find our cell
+    var inp=document.createElement('input'); inp.type='text'; inp.className='tk-in'; inp.value=t.task; inp.setAttribute('aria-label','Edit the task name');
+    td.innerHTML=''; td.appendChild(inp); inp.focus(); inp.select();
+    var done=false;
+    function close(commit){ if(done)return; done=true;
+      var v=(''+inp.value).trim();
+      if(commit&&v&&v!==t.task)setTaskText(t,v);   // the one true rename pipeline — overlay + ESRC/RECUR migration + plan write-back (re-renders)
+      else renderIntake(); }   // cancel: put the cell back
+    inp.__cancel=function(){ close(false); };
+    inp.onmousedown=function(e){ e.stopPropagation(); };   // clicks inside the box must not move the grid selection
+    inp.onkeydown=function(e){ e.stopPropagation();
+      if(e.key==='Enter'){ e.preventDefault(); close(true); }
+      else if(e.key==='Escape'){ e.preventDefault(); close(false); } };
+    inp.onblur=function(){ setTimeout(function(){ close(false); },140); }; }   // blur cancels after a beat (Enter/Escape win)
+  function editTaskText(t){ var td=taskTdFor(t); if(td){ startTaskEdit(td,t); return; }
+    var v=prompt('Edit the task — writes back to the plan:',t.task); if(v===null)return; v=(''+v).trim(); if(!v||v===t.task)return; setTaskText(t,v); }   // keyboard path off-grid keeps the old prompt as a fallback
   // renaming changes a task's identity — carry its status/due/owner/hidden/deleted state to the new key
   function migrateKey(c,oldT,newT){ var ok=c+'|'+oldT, nk=c+'|'+newT;
     ['fcc-taskstatus','fcc-taskdue','fcc-taskowner'].forEach(function(store){
@@ -1726,14 +1752,16 @@ window.addEventListener('load',restore);
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
       var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt'), rec=RECUR[k];
       var bf=BK[k], bfChip=bf?('<span class="bf-chip" data-bid="'+esc(bf.id)+'" style="background:'+(STAGE_COLOR[bf.status]||'#8a94a0')+'" title="Ticket '+esc(bf.id)+' — '+esc(STAGE_LBL[bf.status]||bf.status)+(courtOf(bf)?(' · ball with '+courtOf(bf)):'')+'. Click to open">'+esc(STAGE_LBL[bf.status]||bf.status)+'</span>'):'';
+      // a briefed row's task text is a click-through to its ticket (Ray's ask) — same target as the chip
+      var tkTxt=bf?('<span class="tk-open" data-bid="'+esc(bf.id)+'" title="Click to open ticket '+esc(bf.id)+'">'+esc(t.task)+'</span>'):esc(t.task);
       var stat=(t.source==='plan'||t.source==='atrt')
         ?('<td class="c-stat" data-r="'+i+'" data-col="status" data-src="'+t.source+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
         :'<td class="c-stat" data-r="'+i+'" data-col="status"><span class="c-owner">—</span></td>';
       return '<tr data-k="'+esc(k)+'" data-r="'+i+'"'+(hid?' class="row-hidden"':'')+'><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
         +'<td class="c-client'+(ed?' c-client-ed" data-i="'+i+'" title="Double-click to reassign the client — the task moves between project plans':'')+'" data-r="'+i+'" data-col="client">'+esc(t.client)+badge
           +'<button class="cl-rm" data-c="'+esc(t.client)+'" title="Remove '+esc(t.client)+' from the intake and all filters — every task, reversible from the client-filter menu">✕</button></td><td data-r="'+i+'" data-col="feed">'+feed+'</td>'
-        +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click to edit — writes back to the plan">'+esc(t.task)+bfChip+'</td>'
-             :'<td class="c-task" data-r="'+i+'" data-col="task">'+esc(t.task)+bfChip+'</td>')
+        +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click or ✎ to edit — writes back to the plan">'+tkTxt+bfChip+'<button class="tk-ed" data-i="'+i+'" title="Edit the task name — writes back to the plan">✎</button></td>'
+             :'<td class="c-task" data-r="'+i+'" data-col="task">'+tkTxt+bfChip+'</td>')
         +(ed?'<td class="c-owner c-owner-ed" data-r="'+i+'" data-col="owner" data-i="'+i+'" title="Double-click to set owner — writes back to the plan">'+esc(t.owner||'—')+'</td>'
              :'<td class="c-owner" data-r="'+i+'" data-col="owner">'+esc(t.owner||'—')+'</td>')
         +((t.source==='plan'||t.source==='atrt')
@@ -1749,7 +1777,20 @@ window.addEventListener('load',restore);
     body.querySelectorAll('.rec-btn').forEach(function(btn){ btn.onmousedown=function(e){ e.stopPropagation(); };
       btn.onclick=function(e){ e.stopPropagation(); recMenu(btn,f[+btn.getAttribute('data-i')]); }; });
     body.querySelectorAll('.c-due-ed').forEach(function(td){ td.ondblclick=function(){ editDue(f[+td.getAttribute('data-i')]); }; });
-    body.querySelectorAll('.c-task-ed').forEach(function(td){ td.ondblclick=function(){ editTaskText(f[+td.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.c-task-ed').forEach(function(td){ td.ondblclick=function(){
+      var sp=td.querySelector('.tk-open'); if(sp&&sp.__t){ clearTimeout(sp.__t); sp.__t=null; }   // a double-click is the editor's — cancel the pending ticket-open
+      startTaskEdit(td, f[+td.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.tk-ed').forEach(function(btn){ btn.onmousedown=function(e){ e.stopPropagation(); };   // don't grab the grid selection
+      btn.onclick=function(e){ e.stopPropagation(); startTaskEdit(btn.closest('td'), f[+btn.getAttribute('data-i')]); }; });
+    body.querySelectorAll('.tk-open').forEach(function(sp){
+      sp.onmousedown=function(e){ e.stopPropagation(); sp.__x=e.clientX; sp.__y=e.clientY; };   // don't grab the grid selection
+      sp.onclick=function(e){ e.stopPropagation();
+        if(sp.__t){ clearTimeout(sp.__t); sp.__t=null; }
+        if(e.detail>1)return;   // second click of a double-click — the inline editor owns that path
+        if(sp.__x!=null&&(Math.abs(e.clientX-sp.__x)>4||Math.abs(e.clientY-sp.__y)>4))return;   // a text-selection drag isn't a click
+        if(window.getSelection&&(''+window.getSelection()).length)return;   // …nor is selecting the task text
+        var bid=sp.getAttribute('data-bid');
+        sp.__t=setTimeout(function(){ sp.__t=null; openModal(bid); },300); }; });   // small beat so a double-click can still reach the editor
     body.querySelectorAll('.c-owner-ed').forEach(function(td){ td.ondblclick=function(){ editOwner(f[+td.getAttribute('data-i')]); }; });
     body.querySelectorAll('.c-client-ed').forEach(function(td){ td.ondblclick=function(){
       var t=f[+td.getAttribute('data-i')]; if(!t)return;
@@ -1835,7 +1876,9 @@ window.addEventListener('load',restore);
   }
   function gnorm(){ return {r0:Math.min(gridSel.r0,gridSel.r1),r1:Math.max(gridSel.r0,gridSel.r1),c0:Math.min(gridSel.c0,gridSel.c1),c1:Math.max(gridSel.c0,gridSel.c1)}; }
   function cellAt(r,c){ return gridBody?gridBody.querySelector('td[data-r="'+r+'"][data-col="'+COLS[c]+'"]'):null; }
-  function cellText(r,c){ var td=cellAt(r,c); if(!td)return ''; var s=td.querySelector('select'); if(s)return s.value; var v=(td.textContent||'').replace(/\s+/g,' ').trim(); return v==='—'?'':v; }
+  function cellText(r,c){ var td=cellAt(r,c); if(!td)return ''; var s=td.querySelector('select'); if(s)return s.value;
+    if(COLS[c]==='task'&&gridRows[r])return gridRows[r].task;   // the cell also carries the ✎ edit button + ticket chip — copy the task name only
+    var v=(td.textContent||'').replace(/\s+/g,' ').trim(); return v==='—'?'':v; }
   function highlightGrid(){ if(!gridBody)return;
     gridBody.querySelectorAll('td.g-sel,td.g-active').forEach(function(td){ td.classList.remove('g-sel','g-active'); });
     if(!gridSel)return; var R=gnorm();
