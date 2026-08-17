@@ -2598,8 +2598,12 @@ window.addEventListener('load',restore);
       var fb=/\[FS Brief\]\s*([^·]+?)\s*·\s*(.+)\s*·\s*\[ibfcode:([a-z0-9-]+)\]/i.exec(text);
       if(fb){ var rClient=fb[1].trim(), rTask=fb[2].trim(), rCode=fb[3].toLowerCase();
         var rdm=/ibfdue:(\d{8})/.exec(text), rDue=(rdm&&ddmmyyyyToDate(rdm[1]))?rdm[1]:'';
-        var rid=newId(rClient);
-        BRIEFS[rid]={id:rid,created:Date.now(),updated:Date.now(),status:'briefed',client:rClient,task:rTask,code:rCode,due:rDue,
+        // the brief body names its ORIGINAL id (FEEDSPARK BRIEF — XXXX-yyyymmdd-nn): keep it —
+        // old replies quoting the id route correctly, and the yyyymmdd is the TRUE sent date
+        var idm=/FEEDSPARK BRIEF\s*[—–-]+\s*([A-Z]{2,4}-\d{8}-\d{2})\b/.exec(text);
+        var rid=(idm&&!BRIEFS[idm[1]])?idm[1]:newId(rClient), rCreated=Date.now();
+        if(idm&&rid===idm[1]){ var ds0=idm[1].split('-')[1], cd0=new Date(+ds0.slice(0,4),+ds0.slice(4,6)-1,+ds0.slice(6,8)); if(!isNaN(cd0))rCreated=cd0.getTime(); }
+        BRIEFS[rid]={id:rid,created:rCreated,updated:Date.now(),status:'briefed',client:rClient,task:rTask,code:rCode,due:rDue,
           subject:'[FS Brief] '+rClient+' · '+rTask+' · [ibfcode:'+rCode+'] ibfdue:'+(rDue||''),
           aspl:asplFor(rClient+rTask),comms:[],hist:[{s:'briefed',t:Date.now()}]};
         persist(); renderAll();
