@@ -1550,6 +1550,13 @@
    "pattern": "renderLedger",
    "min": 3,
    "pr": 228
+  },
+  {
+   "name": "Workflow: paste-router restores a sent brief the store never kept",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "Restored \u2014 this sent brief",
+   "min": 1,
+   "pr": 0
   }
  ]
 }

@@ -2591,7 +2591,22 @@ window.addEventListener('load',restore);
   function routeUpdate(){ var ta=document.getElementById('lu-text'), out=document.getElementById('lu-out'); if(!ta||!out)return;
     var text=ta.value.trim(); if(!text){ toast('Paste a reply first'); return; }
     var b=findBriefFor(text); out.hidden=false;
-    if(!b){ out.className='lu-out miss'; out.textContent='No ticket matched — include the [ibfcode:…] token, the brief ID, or more of the task wording.'; return; }
+    if(!b){
+      // an original FS brief with NO ticket behind it = a sent brief the store never kept
+      // (sent without saving, or lost to a pre-kvmerge tab clobber — they exist: no [ibfref]
+      // in the subject is the tell). Re-file it so the ledger, board and Gmail scan know it.
+      var fb=/\[FS Brief\]\s*([^·]+?)\s*·\s*(.+)\s*·\s*\[ibfcode:([a-z0-9-]+)\]/i.exec(text);
+      if(fb){ var rClient=fb[1].trim(), rTask=fb[2].trim(), rCode=fb[3].toLowerCase();
+        var rdm=/ibfdue:(\d{8})/.exec(text), rDue=(rdm&&ddmmyyyyToDate(rdm[1]))?rdm[1]:'';
+        var rid=newId(rClient);
+        BRIEFS[rid]={id:rid,created:Date.now(),updated:Date.now(),status:'briefed',client:rClient,task:rTask,code:rCode,due:rDue,
+          subject:'[FS Brief] '+rClient+' · '+rTask+' · [ibfcode:'+rCode+'] ibfdue:'+(rDue||''),
+          aspl:asplFor(rClient+rTask),comms:[],hist:[{s:'briefed',t:Date.now()}]};
+        persist(); renderAll();
+        out.hidden=false; out.className='lu-out hit';
+        out.innerHTML='↩ Restored — this sent brief had no ticket in the store. Filed as <b>'+esc(rid)+'</b> — '+esc(rClient)+' · '+esc(rTask.slice(0,60))+' · Briefed, due '+humanDD(rDue)+'. It’s in the ledger now; paste its replies (or Dinesh’s result email) and they’ll route to it.';
+        ta.value=''; return; }
+      out.className='lu-out miss'; out.textContent='No ticket matched — include the [ibfcode:…] token, the brief ID, or more of the task wording.'; return; }
     var sender='ASPL'; ASPL.forEach(function(n){ if(new RegExp('\\b'+n+'\\b','i').test(text))sender=n; });
     var done=DONE_RE.test(text), blocked=/\b(blocked|blocker|waiting on|on hold|stuck|dependency)\b/i.test(text),
         prog=/\b(started|in progress|underway|working on|wip|eta|will complete|picking (this|it) up)\b/i.test(text),
