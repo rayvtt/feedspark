@@ -1529,6 +1529,27 @@
    "pattern": "slice(0,44)+' \u00b7 analysis'",
    "forbidden": true,
    "pr": 227
+  },
+  {
+   "name": "Workflow+worker: historic read-outs recovered (rescanComms + truncated-comm upgrade)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "rescanComms",
+   "min": 2,
+   "pr": 0
+  },
+  {
+   "name": "worker: result-context gate + re-push comm upgrade",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "RESULT_CTX_RE",
+   "min": 3,
+   "pr": 0
+  },
+  {
+   "name": "Workflow: Brief ledger \u2014 every brief ever sent (renderLedger)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "renderLedger",
+   "min": 3,
+   "pr": 0
   }
  ]
 }

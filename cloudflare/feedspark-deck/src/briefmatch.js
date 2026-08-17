@@ -33,6 +33,10 @@ const LIVE_RE = /\b(is (now )?live|now live|gone live|went live|going live|set (
 const RESULT_RE = /\bresults?\s*[:\-–]\s*([^\n]{3,140})/i;
 const UPLIFT_RE = /([+-]\s?\d+(?:\.\d+)?\s?%[^.;\n]{0,60})/;
 const NOLIFT_RE = /\b(no (?:up)?lift|flat result|no significant (?:change|difference|impact))\b[^.;\n]{0,60}/i;
+// result-context cue: a FORMAL read-out ("Please find below the results…") files even on a
+// ticket that never got its go-live (historic briefs sat in briefed/progress); projection talk
+// without the cue never counts on a not-yet-live ticket.
+const RESULT_CTX_RE = /\b(results?|read-?out|came out|we saw)\b/i;
 // the ASPL result-email house style writes UNSIGNED prose figures — "a 9.55% uplift in
 // impressions and a 2.76% uplift in clicks" — so collect every %-plus-direction-word mention
 // (both "9.55% uplift in X" and "uplift of 9.55% in X") and compose one compact read-out.
@@ -286,7 +290,29 @@ export function matchGmailToBriefs(briefs, messages, opts) {
         }
       }
     }
-    if (msg.id && b.comms.some((c) => c.mid === msg.id)) { skipped++; continue; }   // already logged
+    if (msg.id && b.comms.some((c) => c.mid === msg.id)) {   // already logged…
+      // …but stored comms are cut at 600 chars and the formal read-out template puts its
+      // figures just past that, so a rolling re-push (full 1200-char snippet) is the second
+      // chance: if the ticket still lacks a Result:, scan the fresh text and UPGRADE the comm.
+      if (analysisKind(b) && !(b.comms || []).some((c) => /^Result:/.test(c.note || ''))
+          && !(LIVE_RE.test(text) && !b.liveAt)
+          && (b.liveAt || b.status === 'analysis' || b.status === 'done' || RESULT_CTX_RE.test(String(msg.snippet || '')))) {
+        const rvU = extractResult(String(msg.snippet || ''));
+        if (rvU) {
+          const c0 = b.comms.find((c) => c.mid === msg.id);
+          c0.note = 'Result: ' + rvU.slice(0, 140); c0.done = true;
+          results.push({ id: b.id, result: rvU.slice(0, 140) });
+          if (b.status === 'briefed' || b.status === 'progress' || b.status === 'done') {
+            (b.hist = (b.hist && b.hist.length) ? b.hist : [{ s: b.status, t: b.created || now }]).push({ s: 'analysis', t: now });
+            b.status = 'analysis';
+            moved.push({ id: b.id, stage: 'analysis' });
+          }
+          b.updated = now;
+          if (loggedTo.indexOf(b.id) < 0) loggedTo.push(b.id);
+        }
+      }
+      skipped++; continue;
+    }
 
     matched++;
     let sender = from.replace(/<[^>]*>/, '').trim() || from;
@@ -297,7 +323,8 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     // then treats it exactly like a manually logged result (register back-fill, confirmation
     // unlock, chase-analysis escalation cleared). First result only; never on the go-live msg.
     let rv = '';
-    if (!golive && analysisKind(b) && (b.liveAt || b.status === 'analysis' || b.status === 'done')
+    if (!golive && analysisKind(b)
+        && (b.liveAt || b.status === 'analysis' || b.status === 'done' || RESULT_CTX_RE.test(String(msg.snippet || '')))
         && !(b.comms || []).some((c) => /^Result:/.test(c.note || ''))) {
       rv = extractResult(String(msg.snippet || ''));
     }
@@ -321,8 +348,9 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     }
     if (rv) {
       results.push({ id: b.id, result: rv.slice(0, 140) });
-      if (b.status === 'done') {   // a result on a Done test pulls it into its Analysis step (page parity)
-        (b.hist = (b.hist && b.hist.length) ? b.hist : [{ s: 'done', t: b.created || now }]).push({ s: 'analysis', t: now });
+      // a result pulls an in-flight test into its Analysis step (page parity); confirmed stays closed
+      if (b.status === 'briefed' || b.status === 'progress' || b.status === 'done') {
+        (b.hist = (b.hist && b.hist.length) ? b.hist : [{ s: b.status, t: b.created || now }]).push({ s: 'analysis', t: now });
         b.status = 'analysis';
         moved.push({ id: b.id, stage: 'analysis' });
       }
