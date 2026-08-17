@@ -93,6 +93,9 @@ window.addEventListener('load',restore);
   .chips{display:flex;gap:7px;flex-wrap:wrap;padding:6px 20px 12px}
   .chip{font:inherit;font-size:12px;font-weight:800;padding:6px 11px;border-radius:999px;border:1px dashed var(--orange);background:#FFFDF9;color:var(--orange-ink);cursor:pointer}
   .chip:hover{background:var(--orange);color:#fff;border-style:solid}
+  .qs-g{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 5px}
+  .qs-row{display:flex;gap:6px;flex-wrap:wrap}
+  .qs-row .chip{font-size:11.5px;padding:5px 10px}
   .ask-row{display:flex;gap:9px;padding:12px 16px 16px;border-top:1px solid var(--line)}
   #q{flex:1;font:inherit;font-size:14px;font-weight:700;padding:11px 14px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink)}
   #q:focus{outline:2px solid var(--orange);border-color:var(--orange)}
@@ -191,6 +194,48 @@ var FIELD_ALIAS={gtin:'gtin',gtins:'gtin',barcode:'gtin',barcodes:'gtin',ean:'gt
   description:'description',descriptions:'description',title:'title',titles:'title',
   brand:'brand',brands:'brand','product type':'product_type','product types':'product_type',
   availability:'availability',stock:'availability'};
+/* The question stack — the FULL list of what the bot can answer, one entry per check.
+   Rendered as clickable questions (welcome + 'help' + under every default audit), so the
+   check library is never a guessing game for the AMs. */
+var QSTACK=[
+  {g:'Duplicates',items:[
+    ['dup_title','Is there duplicated title in the {B}{M} feed?'],
+    ['dup_id','Any duplicated IDs in {B}{M}?'],
+    ['dup_image','Are images shared between products in {B}{M}?']]},
+  {g:'Missing fields',items:[
+    ['missing_gtin','How many products are missing GTINs in {B}{M}?'],
+    ['missing_description','Any products without descriptions in {B}{M}?'],
+    ['missing_image_link','Any products missing images in {B}{M}?'],
+    ['missing_price','Any products missing a price in {B}{M}?'],
+    ['missing_product_type','How many are missing a product type in {B}{M}?'],
+    ['missing_brand','Any missing brand values in {B}{M}?']]},
+  {g:'Title & content quality',items:[
+    ['title_len','How are title lengths in {B}{M}? (MASK 80–120)'],
+    ['caps','Any ALL-CAPS titles in {B}{M}?'],
+    ['html_desc','Any HTML tags in {B}{M} descriptions?']]},
+  {g:'Keywords & pricing',items:[
+    ['kw_sat','What is the keyword saturation in {B}{M}?'],
+    ['price_zero','Any zero or missing prices in {B}{M}?']]},
+  {g:'Everything at once',items:[
+    ['audit','Run a full audit on {B}{M}']]}
+];
+function stackChips(brand,mkt,skip){
+  var m=mkt?' '+mkt.toUpperCase():'';
+  return QSTACK.map(function(g){
+    var its=g.items.filter(function(it){return it[0]!==skip});
+    if(!its.length)return '';
+    return '<div class="qs-g">'+esc(g.g)+'</div><div class="qs-row">'+its.map(function(it){
+      var qtxt=it[1].replace('{B}',brand||'…').replace('{M}',m);
+      return '<button type="button" class="chip" data-ask="'+esc(it[0])+'" data-q="'+esc(qtxt)+'" data-b="'+esc(brand||'')+'" data-m="'+esc(mkt||'')+'">'+esc(qtxt)+'</button>';
+    }).join('')+'</div>';
+  }).join('');
+}
+function helpHtml(brand,mkt){
+  return '<div class="verdict">'+(brand?'Everything you can ask about <b>'+esc(brand)+'</b> — click a question to run it now:'
+    :'I answer from a fixed check library — every number computed off the live feed, nothing free-form. Click a question below, or type it with a brand name:')+'</div>'
+    +stackChips(brand,mkt,null)
+    +(brand?'':'<div class="qs-g">Brands I can check</div><div style="font-size:12.5px;font-weight:700">'+Object.keys(ROSTER).sort().map(function(n){return esc(n)}).join(' · ')+'</div>');
+}
 var CHECKS={
   dup_title:{label:'Duplicated titles',kw:['duplicate title','duplicated title','duplicate titles','duplicated titles','same title','title duplicate','dupe title','dup title']},
   dup_id:{label:'Duplicated IDs',kw:['duplicate id','duplicated id','duplicate ids','duplicated ids','same id','dupe id','duplicate sku']},
@@ -222,6 +267,7 @@ function heurParse(q){
   var MKT_ALIAS={' uk ':'gb',' gb ':'gb',' britain ':'gb',' de ':'de',' germany ':'de',' german ':'de',' ie ':'ie',' ireland ':'ie',' irish ':'ie',' us ':'us',' usa ':'us',' fr ':'fr',' france ':'fr',' french ':'fr',' nl ':'nl',' netherlands ':'nl',' dutch ':'nl',' au ':'au',' australia ':'au',' ca ':'ca',' canada ':'ca',' eu ':'eu'};
   var k; for(k in MKT_ALIAS){ if(lq.indexOf(k)>=0){out.market=MKT_ALIAS[k];break;} }
   if(/(meta|facebook|catalogue manager|commerce manager)/.test(lq))out.market=(out.market||'gb')+'-fb';
+  if(/\bhelp\b|what can (you|u|i)\b|which questions|what (do|can) you (check|answer|do)|list (the )?(checks|questions)/.test(lq)){ out.checks=['help']; return out; }
   var m=lq.match(/(?:missing|no|without|empty|blank)\s+([a-z_ ]{2,18}?)(?:s\b|\b)/);
   if(m){ var f=FIELD_ALIAS[m[1].trim()]||FIELD_ALIAS[m[1].trim()+'s']; if(f)out.checks.push('missing_'+f); }
   var id; for(id in CHECKS){ CHECKS[id].kw.some(function(w){ if(lq.indexOf(w)>=0){out.checks.push(id);return true;} return false; }); }
@@ -234,7 +280,8 @@ function llmParse(q){
   var sys='You route feed-QA questions for FeedSpark to deterministic checks. Reply with ONLY a JSON object, no prose: {"client":"<name or empty>","market":"<code or empty>","checks":["<id>",...]}. '
     +'Clients [wired markets]: '+names+'. Market codes: gb de ie us fr nl au ca eu; a "-fb" suffix means the Meta catalogue feed (facebook/meta questions). UK means gb. '
     +'Check ids: dup_title (duplicated titles), dup_id, dup_image, missing_title, missing_description, missing_image_link, missing_price, missing_sale_price, missing_gtin, missing_brand, missing_product_type, missing_availability, title_len (length distribution), caps (all-caps titles), html_desc (HTML tags in descriptions), kw_sat (keyword saturation in product_type2..10), price_zero, audit (full audit). '
-    +'If the question names no brand, use "" — do not invent one. If it names a brand that is NOT in the client list, return that name verbatim anyway. If unsure of the check, use ["audit"]. '
+    +'Extra id: help (the user asks what you can do / which questions you answer — also use it when the question is unrelated to feed checks). '
+    +'If the question names no brand, use "" — do not invent one. If it names a brand that is NOT in the client list, return that name verbatim anyway. If a brand is named but the check is unclear or vague, use ["audit"]. '
     +(LAST.client?('Previous turn context: client='+LAST.client+' market='+(LAST.market||'gb')+' — reuse it when the question omits brand or market (e.g. "and in DE?").'):'');
   return fetch('/api/claude',{method:'POST',headers:{'content-type':'application/json'},
     body:JSON.stringify({system:sys,prompt:q,max_tokens:220})})
@@ -243,7 +290,7 @@ function llmParse(q){
       if(!j||!j.text)throw new Error('no text');
       var mm=j.text.match(/\{[\s\S]*\}/); if(!mm)throw new Error('no json');
       var p=JSON.parse(mm[0]);
-      return {client:String(p.client||''),market:String(p.market||'').toLowerCase(),checks:Array.isArray(p.checks)?p.checks.filter(function(c){return CHECKS[c]||c.indexOf('missing_')===0}):[]};
+      return {client:String(p.client||''),market:String(p.market||'').toLowerCase(),checks:Array.isArray(p.checks)?p.checks.filter(function(c){return c==='help'||CHECKS[c]||c.indexOf('missing_')===0}):[]};
     });
 }
 
@@ -432,6 +479,11 @@ function ask(q,structured){
   var pP=structured?Promise.resolve(structured):(TACH?llmParse(q).catch(function(){return heurParse(q)}):Promise.resolve(heurParse(q)));
   pP.then(function(p){
     var brand=p.client||LAST.client, mkt=(p.market||'').toLowerCase();
+    if((p.checks||[])[0]==='help'){
+      tp.remove(); BUSY=false; $('#ask').disabled=false;
+      say(helpHtml(ROSTER[brand]?brand:'',(ROSTER[brand]&&mkt)?mkt:''));
+      return;
+    }
     if(brand&&!ROSTER[brand]){ var names=Object.keys(ROSTER),hit=''; names.forEach(function(n){ if(n.toLowerCase()===brand.toLowerCase())hit=n; }); brand=hit||brand; }
     if(!brand||!ROSTER[brand]){
       tp.remove(); BUSY=false; $('#ask').disabled=false;
@@ -449,7 +501,10 @@ function ask(q,structured){
       var bub=say('<div class="verdict" data-verdict>'+esc(checks[0]==='audit'?('Here is the full health picture for '+brand+' '+mkt.toUpperCase()+' — '+fmt(feed.n)+' products, streamed live.'):'Computed off the live feed — '+fmt(feed.n)+' products streamed just now.')+'</div>');
       var results=[];
       checks.forEach(function(id){
-        if(id==='audit'){ renderAudit(brand,mkt,feed,bub); AUDIT_SET.forEach(function(a){results.push(runCheck(a,feed,brand,mkt))}); return; }
+        if(id==='audit'){ renderAudit(brand,mkt,feed,bub); AUDIT_SET.forEach(function(a){results.push(runCheck(a,feed,brand,mkt))});
+          // the default answer for a vague brand question — so always show the rest of the stack
+          bub.innerHTML+='<div style="margin-top:10px"><b>More you can ask about '+esc(brand)+'</b></div>'+stackChips(brand,mkt,'audit');
+          return; }
         var r=runCheck(id,feed,brand,mkt); if(r){ results.push(r); renderResult(brand,mkt,r,bub); }
       });
       $('#log').scrollTop=$('#log').scrollHeight;
@@ -490,9 +545,18 @@ function boot(){
     $('#brand').innerHTML='<option value="">Auto — name it in the question</option>'+Object.keys(ROSTER).sort().map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>'}).join('');
     renderKpis(); renderCtx();
     chips();
-    say('Ask me about any live feed — duplicates, missing fields, title lengths, keyword saturation, or a full audit. Name the brand and market in the question (e.g. <b>“is there duplicated title in Reiss UK Shopping feed?”</b>) and I will stream the live sheet and give you the breakdown.');
+    say('Ask me about any live feed — name the brand and market in the question (e.g. <b>“is there duplicated title in Reiss UK Shopping feed?”</b>) and I will stream the live sheet and give you the breakdown. Mention a brand with a vague question and you get the full audit by default. This is the complete question stack:'
+      +stackChips('','',null)
+      +'<div class="qs-g">Brands I can check</div><div style="font-size:12.5px;font-weight:700">'+Object.keys(ROSTER).sort().map(function(n){return esc(n)}).join(' · ')+'</div>');
   });
 }
+$('#log').addEventListener('click',function(ev){
+  var c=ev.target.closest('[data-ask]'); if(!c)return;
+  var id=c.getAttribute('data-ask'), q=c.getAttribute('data-q');
+  var b=c.getAttribute('data-b')||LAST.client||$('#brand').value||'';
+  var m=c.getAttribute('data-m')||'';
+  ask(q,{client:b,market:m,checks:[id],label:q});
+});
 $('#brand').addEventListener('change',function(){
   LAST={client:this.value,market:this.value?(wiredOf(this.value).indexOf('gb')>=0?'gb':wiredOf(this.value)[0]||'gb'):''};
   renderCtx();
