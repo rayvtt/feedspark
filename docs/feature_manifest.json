@@ -1619,6 +1619,13 @@
    "pr": 236
   },
   {
+   "name": "FeedChat: visible question stack (welcome + help + default-audit append)",
+   "file": "docs/FeedSpark_FeedChat.html",
+   "pattern": "stackChips",
+   "min": 4,
+   "pr": 237
+  },
+  {
    "name": "Workflow: pasted read-outs update the recorded result (manual authoritative)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "Already recorded on",
