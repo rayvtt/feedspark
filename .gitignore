@@ -7,3 +7,6 @@ node_modules/
 # Python
 __pycache__/
 *.pyc
+
+# agent worktrees (harness-managed, never repo content)
+.claude/worktrees/

@@ -2659,11 +2659,15 @@ window.addEventListener('load',restore);
         prog=/\b(started|in progress|underway|working on|wip|eta|will complete|picking (this|it) up)\b/i.test(text),
         golive=LIVE_RE.test(text)&&needsAnalysis(b);
     // a pasted read-out on a live/analysis test files as its Result — same rules as the scan
-    var rvv=(!golive&&needsAnalysis(b)&&!hasResult(b)&&(b.liveAt||b.status==='analysis'||b.status==='done'||RESULT_CTX_RE.test(text)))?extractResultTxt(text):'';
+    // manual paste is authoritative: unlike the unattended scan (first result wins), pasting a
+    // NEWER read-out here UPDATES the recorded one — same figures twice is a no-op
+    var rvv=(!golive&&needsAnalysis(b)&&(b.liveAt||b.status==='analysis'||b.status==='done'||RESULT_CTX_RE.test(text)))?extractResultTxt(text):'';
+    var rvOld=lastResultTxt(b); if(rvv&&rvOld&&rvv.slice(0,140)===rvOld){ out.hidden=false; out.className='lu-out hit';
+      out.innerHTML='✓ Already recorded on <b>'+esc(b.id)+'</b> — the read-out is unchanged ('+esc(rvOld.slice(0,60))+').'; ta.value=''; return; }
     b.comms=b.comms||[]; b.comms.push({from:sender,note:rvv?('Result: '+rvv.slice(0,140)):text.slice(0,600),done:done||!!rvv,when:Date.now()});
     var moved='', dueTxt='';
     if(golive&&b.status!=='confirmed'){ goLive(b); moved=STAGE_LBL.analysis; dueTxt=' · 🚀 live, '+(runSlaDays(b)||14)+'d run → analysis due '+humanDD(b.due); }
-    else if(rvv){ regResult(b,rvv.slice(0,140)); if(b.status==='briefed'||b.status==='progress'||b.status==='done'){ setStage(b,'analysis'); moved=STAGE_LBL.analysis; } dueTxt=' · 🧪 result logged — '+rvv.slice(0,80)+' (filed to the Test register)'; }
+    else if(rvv){ regResult(b,rvv.slice(0,140)); if(b.status==='briefed'||b.status==='progress'||b.status==='done'){ setStage(b,'analysis'); moved=STAGE_LBL.analysis; } dueTxt=' · 🧪 result '+(rvOld?'UPDATED — '+rvOld.slice(0,40)+' → ':'logged — ')+rvv.slice(0,80)+' (filed to the Test register)'; }
     else if(done&&b.status!=='confirmed'&&b.status!=='done'&&b.status!=='analysis'){ var ds2=needsAnalysis(b)?'analysis':'done'; setStage(b,ds2); moved=STAGE_LBL[ds2]; }
     else if(blocked&&(b.status==='briefed'||b.status==='progress')){ setStage(b,'blocked'); moved=STAGE_LBL.blocked; }
     else if(prog&&(b.status==='intake'||b.status==='briefed')){ setStage(b,'progress'); moved=STAGE_LBL.progress; }
