@@ -57,8 +57,10 @@ cheap enough for the hourly cron and any manual "scan whole estate" click.
 
 **Scheduling:** the existing hourly cron (`wrangler.toml [triggers]`) now runs
 `labelCronSweep(env)` before the plan-cache warm — **unconditionally** (no `GOOGLE_SA_JSON`
-needed; the sheets are link-shared). Each firing scans 4 feeds in rotation → the 22-feed estate
-is re-checked every ~6 hours, staying far under the 50-subrequest free-plan budget even with the
+needed; the sheets are link-shared). The :00 firing scans 4 feeds in rotation, and since the Meta
+import (42 sheet feeds) the :30 firing advances the same rotation by another 4 whenever its watch
+pass leaves budget (≤4 hourly rules checked) → the estate is re-checked every **~5–6 hours**,
+staying under the 50-subrequest free-plan budget even with the
 plan warm in the same invocation.
 
 **The three references (canonical terminology — the important bit):**
@@ -85,8 +87,8 @@ sets visually: **Google green** `#34A853` chips (G) vs **Facebook blue** `#1877F
 Google rows first within each client card; digests and the report name the channel
 ("Visual K · GB · Facebook"). Note: `-fb` markets also appear in Feed Lab's selector (shared
 roster) — harmless, its audit simply scores the Meta feed against Google heuristics.
-**Sheet-backed `-fb` feeds only:** a FeedHero-hosted **XML** source (`{xml}` in DEFAULT_FEEDS,
-e.g. Reiss gb-fb) is Feed Lab-only — gviz cannot query XML, so Label Guard skips it with a
+**Sheet-backed `-fb` feeds only:** a FeedHero-hosted **XML** source (`{xml}`, ad-hoc attach) is
+Feed Lab-only — gviz cannot query XML, so Label Guard skips it with a
 clear diagnostic. To label-monitor a Facebook feed, attach it as a link-shared Google Sheet
 export under `<mkt>-fb`.
 

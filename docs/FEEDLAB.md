@@ -25,11 +25,15 @@ Feeds change daily upstream; the 20h window keeps the score at most one refresh 
 
 Wired out of the box via `DEFAULT_FEEDS` — the committed **master feed-market map**, imported from
 Ray's sheet (`1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak`, one row per client+country feed):
-**25 feeds × 8 brands (24 sheets + 1 Meta XML)** — Schuh gb/de/ie · YuMOVE · Monsoon · Accessorize ·
+**42 feeds × 9 brands (all sheets)** — Google channel: Schuh gb/de/ie · YuMOVE · Monsoon · Accessorize ·
 Superdry gb/ie/de/fr/nl · House of Bruar gb/us/eu · American Golf (API-fed sheet) ·
-Reiss gb/us/ie/de/nl/au/ca/eu/fr **+ gb-fb (Meta channel)**
-(FR isn't in the master sheet yet — add its row so the sheet stays the source of truth;
-the sheet's EU row still shows a truncated URL). New rows in the sheet get
+Reiss gb/us/ie/de/nl/au/ca/eu/fr. **Meta channel (`<mkt>-fb`, imported from the sheet's "Meta" tab
+gid 908873996, col B):** Schuh gb/de/ie · Monsoon gb · Accessorize gb · Hobbycraft gb (Meta-only client) ·
+Superdry gb/ie/de/fr/nl · House of Bruar gb/us · Reiss gb/ca/de/ie/us — every Meta feed is a
+link-shared Google Sheet, so Label Guard monitors them too (Reiss gb-fb was FeedHero XML; the
+sheet from the Meta tab replaced it).
+(Reiss FR isn't in the master sheet's Google tab yet — add its row so the sheet stays the source
+of truth; the sheet's EU row still shows a truncated URL). New rows in the sheet get
 re-imported into `DEFAULT_FEEDS` (ask a Code session); ad-hoc feeds attach from the CC dossier and
 **override** the wired entry per market. `/api/feed/clients` serves the roster (wired ∪ attached)
 to the Feed Lab selector and the CC dossier in one call.
@@ -84,7 +88,9 @@ dossier (or `DEFAULT_FEEDS`) resolve. Audit PUTs are activity-logged (`feed-audi
 ### 3a. XML feeds (Meta/Facebook channel — FeedHero-hosted)
 
 A feed source can also be a **FeedHero-hosted XML product feed** (RSS 2.0, `g:` namespace — the
-Meta channel export), e.g. Reiss `gb-fb`. How it differs from a sheet:
+Meta channel export). No wired feed uses this any more — the Aug 2026 Meta-tab import supplied
+sheets for every Meta feed, replacing Reiss `gb-fb`'s XML source — but ad-hoc ⚡ attaches still
+resolve XML URLs. How an XML source differs from a sheet:
 
 - **Source shape**: `{ xml: 'https://s2.feedhero.net/…/latest.xml' }` instead of `{ id, gid }`.
   The proxy only accepts `https://*.feedhero.net/**.xml` (host allowlist — never an open relay).

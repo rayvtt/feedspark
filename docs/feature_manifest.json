@@ -1182,6 +1182,17 @@
    "pattern": "const feedRef = (u) => sheetRef(u) || xmlRef(u)"
   },
   {
+   "name": "worker: Meta-tab mass import — 18 sheet-backed -fb feeds wired",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "-fb': { id:",
+   "min": 18
+  },
+  {
+   "name": "worker: :30 cron advances the sweep rotation (budget-guarded second batch)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "second sweep batch"
+  },
+  {
    "name": "engine: XML feed parser (Meta channel)",
    "file": "docs/feedlab_engine.js",
    "pattern": "createXmlParser"
