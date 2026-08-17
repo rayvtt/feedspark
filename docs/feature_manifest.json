@@ -1610,6 +1610,13 @@
    "pattern": "Already recorded on",
    "min": 1,
    "pr": 232
+  },
+  {
+   "name": "Workflow: briefed task click-through + inline task rename",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "startTaskEdit",
+   "min": 3,
+   "pr": 235
   }
  ]
 }
