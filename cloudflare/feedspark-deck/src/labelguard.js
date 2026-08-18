@@ -115,6 +115,11 @@ export function gvizUrl(id, gid, tq) {
 // header row -> { id: colIndex, labels: { custom_label_0: colIndex|-1, ... } }
 // keys defaults to the custom labels; pass e.g. LABEL_KEYS.concat(PT_KEYS) to also
 // resolve product_type in the same probe.
+// The primary product_type ships under TWO header conventions across the estate:
+// bare `g:product_type` (YuMOVE, HoB) or slot 1 of the numbered family —
+// `g:product_type(1)` (Reiss/Superdry/Schuh/American Golf). Keyword slots start
+// at 2, so slot 1 is always the real category tree; it aliases onto the same key.
+const KEY_ALIASES = { product_type: ['product_type(1)'] };
 export function findCols(headerRow, keys) {
   const norm = (headerRow || []).map(normHeader);
   let id = norm.indexOf('id');
@@ -122,7 +127,13 @@ export function findCols(headerRow, keys) {
   if (id < 0) id = norm.indexOf('offer_id');
   if (id < 0) id = 0; // no id header — count the first column instead
   const labels = {};
-  for (const k of (keys || LABEL_KEYS)) labels[k] = norm.indexOf(k);
+  for (const k of (keys || LABEL_KEYS)) {
+    let i = norm.indexOf(k);
+    if (i < 0 && KEY_ALIASES[k]) {
+      for (const a of KEY_ALIASES[k]) { i = norm.indexOf(a); if (i >= 0) break; }
+    }
+    labels[k] = i;
+  }
   return { id, labels, headerCount: norm.length };
 }
 
