@@ -197,7 +197,7 @@ window.addEventListener('load',restore);
   <div class="eyebrow">Private &amp; Confidential · Deck generator</div>
   <h1>Compose a custom deck</h1>
   <p>Pick the deck type, the client and the look-back window, then drag the sections you want into the outline (or click to add).
-  Choosing a type pre-loads a sensible section set — reorder or swap anything. <b>Generate build brief</b> produces a detailed, printable prompt for a Claude Code <b>/deck-generator</b> session that runs two streams — review the project-plan worksheet and analyse the client's full product feed (~5,000 rows, the source of truth) — then builds the full deck in the YuMOVE format. <b>Preview sections</b> renders a quick in-browser look.</p>
+  Choosing a type pre-loads a sensible section set — reorder or swap anything. <b>Generate build brief</b> produces a detailed, printable prompt for a Claude Code <b>/deck-generator</b> session that runs two streams — review the project-plan worksheet and analyse the client's full product feed (~5,000 rows, the source of truth) — then builds the full deck as a <b>PowerPoint file (.pptx)</b> on the FeedSpark core deck template below. Output is always .pptx — HTML decks are no longer produced. <b>Preview sections</b> renders a quick in-browser look.</p>
   <div class="cfg">
     <div class="fld"><label>Deck type</label><div class="chips" id="types"></div></div>
     <div class="fld"><label>Client</label><select id="client"></select></div>
@@ -214,6 +214,39 @@ window.addEventListener('load',restore);
     <div class="col"><h3>Deck outline <span id="ocount" style="color:var(--muted);font-weight:700"></span></h3>
       <p class="cs">Drag to reorder · × to remove</p><ul class="out" id="out"></ul></div>
   </div>
+
+  <!-- TEMPLATES:START -->
+  <div class="col" style="margin-top:16px;min-height:0">
+    <h3>Core deck template &amp; reference library</h3>
+    <p class="cs">Every deck ships as <b>PowerPoint (.pptx)</b> — HTML output is retired. Builds reference the files below (repo: <code>reference-files/deck-templates/</code>).</p>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:stretch">
+      <div style="flex:1.4;min-width:280px;border:1px solid var(--line);border-radius:11px;padding:14px 16px;background:var(--wash)">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-deep)">Core template</span>
+          <span style="font-size:11px;font-weight:800;color:#fff;background:var(--good);border-radius:100px;padding:2px 9px">governing reference</span>
+        </div>
+        <div style="font-weight:900;font-size:15px;margin:7px 0 2px">FeedSpark_Core_Deck_Template.pptx</div>
+        <div style="font-size:12.5px;color:var(--muted);font-weight:700">Superdry Strategy Review 2024–2026 · 46 slides · Ray-approved Aug 2026. Governs design, elements, colour, text and voice on every new deck.</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center">
+          <span title="Ink #0F172A" style="width:18px;height:18px;border-radius:5px;background:#0F172A;border:1px solid var(--line)"></span>
+          <span title="Accent #F7941E" style="width:18px;height:18px;border-radius:5px;background:#F7941E"></span>
+          <span title="Wash #F8FAFC" style="width:18px;height:18px;border-radius:5px;background:#F8FAFC;border:1px solid var(--line)"></span>
+          <span title="Chart blue #3B82F6" style="width:18px;height:18px;border-radius:5px;background:#3B82F6"></span>
+          <span title="Chart green #10B981" style="width:18px;height:18px;border-radius:5px;background:#10B981"></span>
+          <span title="Chart violet #8B5CF6" style="width:18px;height:18px;border-radius:5px;background:#8B5CF6"></span>
+          <span style="font-size:12px;font-weight:800;color:var(--ink-2);margin-left:4px">Inter · 18 named layouts · footer “Private &amp; Confidential”</span>
+        </div>
+      </div>
+      <div style="flex:1;min-width:250px;border:1px solid var(--line);border-radius:11px;padding:14px 16px">
+        <div style="font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-deep)">Deposit a reference</div>
+        <div style="font-size:12.5px;color:var(--ink-2);margin-top:7px;line-height:1.55">Attach a .pptx in any Claude Code session and say it’s a deck reference — it’s committed to <code>reference-files/deck-templates/</code> and listed here. Deck builds pick the closest match (deck type first, then client) on top of the core template.</div>
+        <div style="font-size:12px;color:var(--muted);font-weight:700;margin-top:8px">Naming: <code>&lt;DeckType&gt;_Reference.pptx</code> · <code>&lt;Client&gt;_&lt;DeckType&gt;_&lt;Period&gt;.pptx</code></div>
+      </div>
+    </div>
+    <!-- TEMPLATES:ROWS — one line per deposited reference; keep in sync with reference-files/deck-templates/ -->
+    <div style="margin-top:12px;font-size:12.5px;color:var(--muted);font-weight:700">Deposited references: <span style="color:var(--ink-2)">core template only, so far</span> — new deposits appear here with what they teach.</div>
+  </div>
+  <!-- TEMPLATES:END -->
 </main>
 
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Deck Generator · your composition saves on this device</div></div>
@@ -236,7 +269,7 @@ window.addEventListener('load',restore);
 <div class="modal" id="modal" hidden><div class="modal-bg"></div><div class="modal-card">
   <button class="modal-x" id="mx">×</button>
   <h2 style="margin:0 0 4px" id="mtitle">Build brief</h2>
-  <p style="color:var(--muted);font-size:13px;margin:0 0 12px">A detailed, printable prompt for a Claude Code <b>/deck-generator</b> session. It runs two streams — review the project-plan worksheet and analyse the client's full product feed (~5,000 rows, the source of truth) — then builds the deck in the YuMOVE format. Paste it into Claude Code and attach the feed, or print it.</p>
+  <p style="color:var(--muted);font-size:13px;margin:0 0 12px">A detailed, printable prompt for a Claude Code <b>/deck-generator</b> session. It runs two streams — review the project-plan worksheet and analyse the client's full product feed (~5,000 rows, the source of truth) — then builds the deck as a <b>.pptx</b> on the FeedSpark core deck template. Paste it into Claude Code and attach the feed, or print it.</p>
   <textarea id="out-spec" readonly></textarea>
   <div class="mrow"><button class="btn btn-primary" id="copy">Copy for Claude Code</button>
     <button class="btn" id="print-brief" style="background:#fff;border:1px solid var(--line);color:var(--ink-2)">Print</button>
@@ -401,8 +434,9 @@ window.addEventListener('load',restore);
     L.push("**Stream B — product data feed (the source of truth).** Attach "+client+"'s current product feed — an up-to-date export (~5,000 rows). Analyse and SCORE it: MASK title structure (Brand + Material + Fit + Colour + Use-case, 80–120 chars), attribute completeness (Golden Record 99.9% target), GPC / product-type depth, imagery, custom labels, and conversational-attribute coverage (question_and_answer, item_group_title, variant_option, popularity_rank, related_product). Populate and update every data-driven section from the feed — the numbers come from the feed, not from memory. Where the feed and the plan diverge, lead with the feed.");
     L.push("");
     L.push("## Build notes");
-    L.push("- Build a real HTML deck from docs/FeedSpark_Strategy_Review_Template.html, matching docs/YuMOVE_Strategy_Review_Jul26.html (/deck/yumove) and the FeedSpark design system exactly (Lato; orange #F5A623 / #ED6F0B; charcoal #333; white / #F7F7F5 cards; #E6E6E6 borders; footer 'FeedSpark · Private & Confidential' + page number; no logo, no page-number circles, no decorative lines).");
-    L.push("- Wire the new deck into the worker at /deck/"+(slug||"<slug>")+". Leave no [bracket] placeholders.");
+    L.push("- OUTPUT IS A .PPTX — always. HTML decks are no longer an output option. Build on the FeedSpark core deck template: reference-files/deck-templates/FeedSpark_Core_Deck_Template.pptx governs design, elements, colour, text and voice (Inter; slate #0F172A; orange #F7941E; 18 named layouts; footer 'Private & Confidential'). Check reference-files/deck-templates/ for a closer deck-type or client reference deposited by Ray.");
+    L.push("- Author sections with the proven component library, then export via tools/deck_to_pptx.py with --audit (ship only on 'still over capacity: 0'). Do NOT wire a /deck/ page in the worker. Leave no [bracket] placeholders.");
+    L.push("- Send the finished .pptx back in the session and commit it to docs/materials/.");
     L.push("- Flag any commercial figure (pricing, hours) for Ray to confirm — never invent client numbers or results.");
     L.push("");
     L.push("_Generated by the FeedSpark Deck Generator. Run with the /deck-generator skill to build the full deck._");

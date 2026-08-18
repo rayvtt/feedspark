@@ -1797,6 +1797,18 @@
    "name": "nav: PT Guard link on Workflow",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "href=\"/ptypes\""
+  },
+  {
+   "name": "DeckBuilder: pptx-only output + core template library panel",
+   "file": "docs/FeedSpark_DeckBuilder.html",
+   "pattern": "TEMPLATES:START",
+   "pr": 243
+  },
+  {
+   "name": "DeckBuilder: brief mandates .pptx output",
+   "file": "docs/FeedSpark_DeckBuilder.html",
+   "pattern": "OUTPUT IS A .PPTX",
+   "pr": 243
   }
  ]
 }

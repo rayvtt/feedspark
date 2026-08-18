@@ -3,6 +3,14 @@
 Authoritative source PDFs and templates that govern FeedSpark deliverables. These are inputs,
 not generated outputs — drop the real source files here.
 
+## deck-templates/ — the deck template library
+
+**All deck output is `.pptx` (HTML decks are no longer an output option — Ray, Aug 2026).**
+`deck-templates/FeedSpark_Core_Deck_Template.pptx` is the governing reference for design,
+elements, colour, text and voice on every new deck; Ray deposits further reference decks
+(per deck type or per client) into the same folder. See `deck-templates/README.md` for the
+convention and how the `/deck-generator` skill consumes them.
+
 ## Add these (referenced by CLAUDE.md but not included in the migration)
 
 - **Reiss–Dentsu introduction PDF (Mar 2026)** — the *governing* design system: colours
