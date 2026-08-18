@@ -1709,6 +1709,21 @@
    "min": 3
   },
   {
+   "name": "PTGuard: ⚡ estate catch-up button force-rescans (no freshness skip)",
+   "file": "docs/FeedSpark_ProductTypeGuard.html",
+   "pattern": "no freshness skip"
+  },
+  {
+   "name": "ops: estate-rescan parallel agent (workflow_dispatch + service-token script)",
+   "file": ".github/workflows/estate-rescan.yml",
+   "pattern": "estate_rescan.mjs"
+  },
+  {
+   "name": "ops: estate-rescan script JSON-verifies (Access login page is HTTP 200 html)",
+   "file": "tools/estate_rescan.mjs",
+   "pattern": "non-JSON response"
+  },
+  {
    "name": "nav: PT Guard link on Activity",
    "file": "docs/FeedSpark_Activity.html",
    "pattern": "href=\"/ptypes\""

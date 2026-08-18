@@ -233,6 +233,7 @@ KV: rules `labelwatch` ("client|mkt|ruleId" → rule), destinations `labeldest`,
 | Watch pings but the change was planned | New season/segmentation shipped on purpose | "↻ Re-arm" the rule (re-captures the reference set) |
 | Email alerts never arrive | Gmail bridge not updated / not set up | Re-paste latest `tools/gmail_push.gs` (needs `drainAlertOutbox`), GOOGLE_SETUP §8; Chat/Slack need no setup |
 | Watch shows an error in §04 | Sheet unshared or label column renamed | Fix the sheet, then "Check now"; "Re-arm" if columns legitimately changed |
+| Whole estate needs a rescan NOW (fix shipped, re-segmentation landed) | Rotation would take ~5–6h to cover everything | `/ptypes` ⚡ **Scan whole estate** force-rescans all 42 feeds (labels + PT in one pass, ~3 min; the `/labels` button skips feeds fresher than 20h). Hands-free: the **Estate rescan** GitHub Action (workflow_dispatch) — needs a Cloudflare Access service token in repo secrets `FCC_ACCESS_CLIENT_ID`/`_SECRET` |
 | Someone "optimises" scanning into full CSV parsing | — | **Never.** The gviz aggregate approach exists because a raw parse blows the worker CPU budget |
 
 ## 8. Product Type Guard (`/ptypes`) — sibling module, same rails

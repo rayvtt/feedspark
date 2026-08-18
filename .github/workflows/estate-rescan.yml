@@ -1,0 +1,33 @@
+# Estate rescan — the on-demand "parallel agent": force-rescans every sheet-backed feed
+# through the live worker (custom labels + product types in one pass per feed), fanned out
+# in parallel. Fire it from the Actions tab (workflow_dispatch) or via the API.
+#
+# Auth: the FCC is Cloudflare Access-gated, so this needs an Access SERVICE TOKEN stored as
+# repo secrets FCC_ACCESS_CLIENT_ID / FCC_ACCESS_CLIENT_SECRET (Zero Trust -> Access ->
+# Service Auth; allow the token in the site-wide Access app policy). Until those secrets
+# exist the job fails fast with instructions — the in-page fallback is the ⚡ Scan whole
+# estate button on /ptypes (force) or /labels (skips feeds fresher than 20h).
+name: Estate rescan
+on:
+  workflow_dispatch:
+    inputs:
+      concurrency:
+        description: Parallel scans (each is its own worker invocation)
+        required: false
+        default: '5'
+
+jobs:
+  rescan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Force-rescan every feed via the live worker
+        env:
+          FCC_ACCESS_CLIENT_ID: ${{ secrets.FCC_ACCESS_CLIENT_ID }}
+          FCC_ACCESS_CLIENT_SECRET: ${{ secrets.FCC_ACCESS_CLIENT_SECRET }}
+          RESCAN_CONCURRENCY: ${{ inputs.concurrency }}
+        run: node tools/estate_rescan.mjs

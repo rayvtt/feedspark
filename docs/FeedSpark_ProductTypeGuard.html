@@ -288,10 +288,11 @@ window.addEventListener('load',restore);
 <section class="cat"><div class="wrap">
   <div class="cat-h"><span class="k">02</span><h2>Estate health</h2>
     <span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="scanmsg" id="scan-all-msg"></span>
-    <button class="btn pri" id="scan-all">⚡ Scan whole estate</button></span></div>
+    <button class="btn pri" id="scan-all" title="Force-rescans every feed now (no freshness skip) — labels and product types land in the same pass">⚡ Scan whole estate</button></span></div>
   <p class="cat-sub"><span class="chip-ch chip-g">G</span> <b>Google Shopping feeds only</b> — Meta catalogues
   segment differently, so they stay on <a href="/labels">Label Guard</a>. Bar = product_type coverage.
-  Click a market to dissect it below. Product types ride the same scan rotation as the custom labels.</p>
+  Click a market to dissect it below. Product types ride the same scan rotation as the custom labels;
+  ⚡ force-rescans the whole estate now (one pass refreshes labels <b>and</b> product types).</p>
   <div class="est-grid" id="est-grid"><div class="panel"><span class="muted">Loading…</span></div></div>
 </div></section>
 
@@ -736,7 +737,8 @@ window.addEventListener('load',restore);
         return refreshEstate().then(function () { if (SEL) select(SEL); });
       }
       var f = feeds[i++];
-      if (f.t && (Date.now() - f.t) < STALE_MS && f.status !== 'unreachable') { skipped++; return step(); } // fresh enough
+      // no freshness skip here — this button is the estate CATCH-UP: it force-rescans
+      // every feed so a fix or re-segmentation lands everywhere at once, ~42 × a few s
       $('scan-all-msg').innerHTML = '<span class="spin"></span>' + esc(f.client) + ' · ' + esc(String(f.mkt).toUpperCase()) + ' (' + i + '/' + feeds.length + ')';
       return fetch(API + '/api/ptypes/scan?client=' + encodeURIComponent(f.client) + '&market=' + encodeURIComponent(f.mkt), { method: 'POST' })
         .then(function (r) { return r.json(); }).catch(function () {}).then(step);
