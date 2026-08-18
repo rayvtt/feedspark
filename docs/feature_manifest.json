@@ -1802,13 +1802,13 @@
    "name": "DeckBuilder: pptx-only output + core template library panel",
    "file": "docs/FeedSpark_DeckBuilder.html",
    "pattern": "TEMPLATES:START",
-   "pr": 0
+   "pr": 243
   },
   {
    "name": "DeckBuilder: brief mandates .pptx output",
    "file": "docs/FeedSpark_DeckBuilder.html",
    "pattern": "OUTPUT IS A .PPTX",
-   "pr": 0
+   "pr": 243
   }
  ]
 }
