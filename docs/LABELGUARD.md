@@ -242,9 +242,11 @@ Differences from Label Guard, everything else identical:
   default 30 rows with show-all). Cross-dissection goes PT value → CL0–4 breakdown
   (`/api/ptypes/cross`, one side must be `product_type`).
 - **Google Shopping channel only** — `-fb` markets are excluded from the PT estate.
-- **Numbered keyword slots excluded by design**: `product_type2`/`_2`/`|||N` are AI keyword
-  fields, not the category tree; `normHeader` keeps them distinct so only the primary column
-  can match.
+- **Numbered keyword slots excluded by design**: keyword fields live in slots 2+ —
+  `product_type(2)`/`_2`/`|||2` and up — and `normHeader` keeps them distinct so they can
+  never match. The **primary** column resolves under both estate conventions: bare
+  `g:product_type` (YuMOVE, HoB) or **slot 1** `g:product_type(1)` (Reiss, Superdry, Schuh,
+  American Golf) via a key alias in `findCols`; bare wins if both exist.
 - **Zero extra scan slots**: `runLabelScan` captures PT during the same pass (shared header
   probe + counts query, one extra group-by ≈ +1 subrequest per Google feed) into its own
   stores — `ptype:` / `ptypebase:` (last known-good) / `ptypeday:` (yesterday) / `ptypeidx` /

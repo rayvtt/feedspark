@@ -387,6 +387,27 @@ eq('PT_KEYS', LG.PT_KEYS, ['product_type']);
 }
 
 {
+  // slot-1 convention (Reiss/Superdry/Schuh/American Golf): g:product_type(1) IS the
+  // primary category tree — keyword slots start at (2). The (1) header aliases onto
+  // the product_type key; bare g:product_type wins when both somehow exist.
+  const keys = LG.LABEL_KEYS.concat(LG.PT_KEYS);
+  const SLOT1 = '"id","g:product_type(1)","g:product_type(2)","g:product_type(10)"\n"sku-1","Mens > Jackets","kw","kw"';
+  const s1 = await LG.scanFeed(gvizMock([
+    ['select * limit 1', SLOT1],
+    ['select count(A), count(B)', '"c","c"\n"500","480"'],
+    ['select B, count(A)', '"pt","count id"\n"Mens > Jackets","480"'],
+  ]), { id: 'X', gid: '0' }, { client: 'Reiss', market: 'gb' }, keys);
+  eq('g:product_type(1) resolves as the primary PT', s1.labels.product_type.values, [['Mens > Jackets', 480]]);
+
+  const both = LG.findCols(['id', 'g:product_type(1)', 'g:product_type'], keys);
+  eq('bare product_type preferred over slot 1 when both exist', both.labels.product_type, 2);
+  const only2plus = LG.findCols(['id', 'g:product_type(2)', 'g:product_type_3', 'product_type2'], keys);
+  eq('keyword slots alone never resolve the primary PT', only2plus.labels.product_type, -1);
+  const yumove = LG.findCols(['id', 'g:product_type', 'g:product_type_2'], keys);
+  eq('bare form (YuMOVE) resolves', yumove.labels.product_type, 1);
+}
+
+{
   // PT-keyed diff: PT drop flags with the PT prefix; custom-label noise is out of scope
   const mkPT = (vals, cl0) => ({ v: 1, t: 1, rows: 1000, labels: {
     product_type: { present: true, filled: vals.reduce((a, [, n]) => a + n, 0), cov: 98, distinct: vals.length, truncated: false, values: vals },
