@@ -25,6 +25,16 @@
 export const VERSION = '1.0.0';
 
 export const LABEL_KEYS = ['custom_label_0', 'custom_label_1', 'custom_label_2', 'custom_label_3', 'custom_label_4'];
+// Product Type Guard (/ptypes) tracks the PRIMARY g:product_type only — the numbered
+// keyword slots (product_type2 / _2 / |||N) are AI keyword fields, not the category tree,
+// and normHeader keeps them distinct ('product_type2' / 'product_type(2)') so they can
+// never be picked up by accident. Google Shopping channel only (no -fb markets).
+export const PT_KEYS = ['product_type'];
+// display name for a monitored field: CL0..CL4 for custom labels, PT for product_type
+export function dispKey(k) {
+  const m = /^custom_label_([0-4])$/.exec(String(k || ''));
+  return m ? 'CL' + m[1] : (k === 'product_type' ? 'PT' : String(k || ''));
+}
 
 /* ---------------- channels: Google Shopping vs Facebook/Meta ---------------------------
  * A Facebook catalogue feed rides the SAME rails as everything else (Meta feeds carry
@@ -103,14 +113,16 @@ export function gvizUrl(id, gid, tq) {
 }
 
 // header row -> { id: colIndex, labels: { custom_label_0: colIndex|-1, ... } }
-export function findCols(headerRow) {
+// keys defaults to the custom labels; pass e.g. LABEL_KEYS.concat(PT_KEYS) to also
+// resolve product_type in the same probe.
+export function findCols(headerRow, keys) {
   const norm = (headerRow || []).map(normHeader);
   let id = norm.indexOf('id');
   if (id < 0) id = norm.indexOf('item_id');
   if (id < 0) id = norm.indexOf('offer_id');
   if (id < 0) id = 0; // no id header — count the first column instead
   const labels = {};
-  for (const k of LABEL_KEYS) labels[k] = norm.indexOf(k);
+  for (const k of (keys || LABEL_KEYS)) labels[k] = norm.indexOf(k);
   return { id, labels, headerCount: norm.length };
 }
 
@@ -119,13 +131,13 @@ export function findCols(headerRow) {
 // { v:1, t, client, market, rows,
 //   labels: { custom_label_0: { present, filled, cov, distinct, truncated, values: [[v,n],...] }
 //             custom_label_1: { present:false }, ... } }
-export function snapshotFromParts(meta, cols, countsRow, groupRowsByKey) {
+export function snapshotFromParts(meta, cols, countsRow, groupRowsByKey, keys) {
   const t = meta.fetchedAt || Date.now();
-  // countsRow order: [count(id), count(label) for each present label in LABEL_KEYS order]
+  // countsRow order: [count(id), count(label) for each present label in key order]
   const rows = Math.max(0, Math.round(parseFloat(countsRow && countsRow[0]) || 0));
   const labels = {};
   let ci = 1;
-  for (const k of LABEL_KEYS) {
+  for (const k of (keys || LABEL_KEYS)) {
     if (cols.labels[k] < 0) { labels[k] = { present: false }; continue; }
     const colFilled = Math.max(0, Math.round(parseFloat(countsRow && countsRow[ci]) || 0)); ci++;
     const groups = groupRowsByKey[k] || [];
@@ -156,7 +168,8 @@ export function snapshotFromParts(meta, cols, countsRow, groupRowsByKey) {
 
 // fetch + assemble one feed's snapshot. fetchFn injectable for tests.
 // Throws Error('fetch-fail: ...') when the sheet is unreachable / not link-shared.
-export async function scanFeed(fetchFn, src, meta) {
+export async function scanFeed(fetchFn, src, meta, keys) {
+  keys = keys || LABEL_KEYS;
   const get = async (tq) => {
     const r = await fetchFn(gvizUrl(src.id, src.gid, tq));
     const ct = (r.headers && r.headers.get && r.headers.get('content-type')) || '';
@@ -169,17 +182,17 @@ export async function scanFeed(fetchFn, src, meta) {
   // 1. header probe — one data row so out:csv always emits the label row first
   const head = await get('select * limit 1');
   if (!head.length) throw new Error('fetch-fail: empty gviz response');
-  const cols = findCols(head[0]);
+  const cols = findCols(head[0], keys);
 
-  // 2. one multi-count query: total rows (count id) + per-label filled counts
+  // 2. one multi-count query: total rows (count id) + per-key filled counts
   const sel = ['count(' + colLetter(cols.id) + ')'];
-  for (const k of LABEL_KEYS) if (cols.labels[k] >= 0) sel.push('count(' + colLetter(cols.labels[k]) + ')');
+  for (const k of keys) if (cols.labels[k] >= 0) sel.push('count(' + colLetter(cols.labels[k]) + ')');
   const counts = await get('select ' + sel.join(', '));
   const countsRow = counts.length > 1 ? counts[counts.length - 1] : [];
 
-  // 3. one group-by pivot per present label (Google aggregates; we parse ≤250 rows)
+  // 3. one group-by pivot per present key (Google aggregates; we parse ≤250 rows)
   const groupRowsByKey = {};
-  for (const k of LABEL_KEYS) {
+  for (const k of keys) {
     const ci = cols.labels[k];
     if (ci < 0) continue;
     const L = colLetter(ci), A = colLetter(cols.id);
@@ -188,7 +201,7 @@ export async function scanFeed(fetchFn, src, meta) {
     groupRowsByKey[k] = g.slice(1); // drop the gviz header row
   }
 
-  return snapshotFromParts(meta, cols, countsRow, groupRowsByKey);
+  return snapshotFromParts(meta, cols, countsRow, groupRowsByKey, keys);
 }
 
 /* ---------------- live cross-label dissection ------------------------------------------ */
@@ -206,8 +219,9 @@ export function gvizLiteral(v) {
 // (e.g. CL2 -> women - fp / women - sale / ...). Fully LIVE — 3 tiny gviz fetches
 // (header probe, segment count, cross group-by); Google does the aggregation.
 export async function crossFeed(fetchFn, src, byKey, value, vsKey) {
-  if (LABEL_KEYS.indexOf(byKey) < 0 || LABEL_KEYS.indexOf(vsKey) < 0 || byKey === vsKey) {
-    throw new Error('bad-cross: by/vs must be two different custom_label_0..4 keys');
+  const pool = LABEL_KEYS.concat(PT_KEYS);   // PT Guard crosses product_type <-> custom labels
+  if (pool.indexOf(byKey) < 0 || pool.indexOf(vsKey) < 0 || byKey === vsKey) {
+    throw new Error('bad-cross: by/vs must be two different keys from custom_label_0..4 / product_type');
   }
   const lit = gvizLiteral(value);
   if (!lit) throw new Error('bad-cross: value mixes both quote characters - cannot query it');
@@ -221,7 +235,7 @@ export async function crossFeed(fetchFn, src, byKey, value, vsKey) {
   };
   const head = await get('select * limit 1');
   if (!head.length) throw new Error('fetch-fail: empty gviz response');
-  const cols = findCols(head[0]);
+  const cols = findCols(head[0], pool);
   if (cols.labels[byKey] < 0) throw new Error('bad-cross: ' + byKey + ' is not in this feed');
   if (cols.labels[vsKey] < 0) throw new Error('bad-cross: ' + vsKey + ' is not in this feed');
   const A = colLetter(cols.id), U = colLetter(cols.labels[byKey]), W = colLetter(cols.labels[vsKey]);
@@ -479,7 +493,7 @@ export function buildReport(inp) {
 
 /* ---------------- baseline diff -> alerts ---------------------------------------------- */
 // [{ sev: 'crit'|'warn'|'info', code, label?, value?, msg, was?, now? }]
-export function diffSnapshots(base, cur, th) {
+export function diffSnapshots(base, cur, th, keys) {
   th = th || TH;
   const A = [];
   if (!base || !cur) return A;
@@ -493,9 +507,9 @@ export function diffSnapshots(base, cur, th) {
     }
   }
 
-  for (const k of LABEL_KEYS) {
+  for (const k of (keys || LABEL_KEYS)) {
     const b = (base.labels || {})[k], c = (cur.labels || {})[k];
-    const CL = 'CL' + k.slice(-1);
+    const CL = dispKey(k);
     if (b && b.present) {
       if (!c || !c.present) {
         A.push({ sev: 'crit', code: 'label-gone', label: k,
@@ -545,9 +559,9 @@ export function diffSnapshots(base, cur, th) {
 }
 
 /* ---------------- estate index entry --------------------------------------------------- */
-export function summarize(snap, alerts, baseT) {
+export function summarize(snap, alerts, baseT, keys) {
   const cov = {}; let present = 0;
-  for (const k of LABEL_KEYS) {
+  for (const k of (keys || LABEL_KEYS)) {
     const L = (snap.labels || {})[k];
     if (L && L.present) { cov[k] = L.cov; present++; } else cov[k] = null;
   }

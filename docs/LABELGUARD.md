@@ -232,4 +232,27 @@ KV: rules `labelwatch` ("client|mkt|ruleId" → rule), destinations `labeldest`,
 | Watch shows an error in §04 | Sheet unshared or label column renamed | Fix the sheet, then "Check now"; "Re-arm" if columns legitimately changed |
 | Someone "optimises" scanning into full CSV parsing | — | **Never.** The gviz aggregate approach exists because a raw parse blows the worker CPU budget |
 
+## 8. Product Type Guard (`/ptypes`) — sibling module, same rails
+
+Monitors the **primary `g:product_type`** (the category tree) the exact same way the custom
+labels are monitored — PMAX listing-group splits and the keyword programme hang off it.
+Differences from Label Guard, everything else identical:
+
+- **One field, one wide pivot** (top 250 category paths by volume, `+`-flagged when truncated;
+  default 30 rows with show-all). Cross-dissection goes PT value → CL0–4 breakdown
+  (`/api/ptypes/cross`, one side must be `product_type`).
+- **Google Shopping channel only** — `-fb` markets are excluded from the PT estate.
+- **Numbered keyword slots excluded by design**: `product_type2`/`_2`/`|||N` are AI keyword
+  fields, not the category tree; `normHeader` keeps them distinct so only the primary column
+  can match.
+- **Zero extra scan slots**: `runLabelScan` captures PT during the same pass (shared header
+  probe + counts query, one extra group-by ≈ +1 subrequest per Google feed) into its own
+  stores — `ptype:` / `ptypebase:` (last known-good) / `ptypeday:` (yesterday) / `ptypeidx` /
+  `ptypealerts` — so PT alerts, ack ("✓ Expected — accept as known-good" on `/ptypes`,
+  `POST /api/ptypes/ack`) and the Δ-reference toggle behave exactly like §2/§5, without
+  mixing streams: `/labels` stays label-pure, `/ptypes` PT-pure, and the injected nav badge
+  dots each page from the one `/api/labels/alerts` call (its `pt` counts field).
+- No custom watches / emailed report v1 — estate alerts + badge cover the drop-off case;
+  watches can be extended to PT later on the same `labelwatch` rails.
+
 Engine unit tests: `node tools/test_labelguard.mjs` (runs in `validate.yml` on every PR).
