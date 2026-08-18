@@ -1,0 +1,534 @@
+
+=== PAGE 1 ===
+Title TestingGoogle Overlays
+Dynamic Overlays
++20%+310%
++77%
+Conv. RateClicks
+ROAS
+House of Bruar * FeedSpark
+Supercharging Channel & Brand Performance
+Google ShoppingGoogle Overlays META Overlays
++230%+100k+93%
+ROASImpressionsRevenue
+
+=== PAGE 2 ===
+Product Data Is Limiting Discovery & Revenue Growth
+Unstructured, incomplete and inconsistent data limits how Google matches, prioritises and serves products.
+100% Product Types Require Optimisation
+100% Titles Require Optimisation
+100% Products Missing Pattern & Product Highlights
+100% Custom Labels Require Strategic Implementation
+F
+98% Products Missing Exact Match Keywords
+Audit
+Gaps in your feed limit visibility, reduce efficiency and restrict revenue growth.
+
+=== PAGE 3 ===
+Turning Audit Insights into an Optimisation Plan
+How we move from feed gaps to measurable improvement.
+OpportunityPerformance BoosterFeed Evolution
+Fix data foundations: clean up data
+Test, segment and scale: improve
+Enrich and expand: provide the data
+signals, titles and categories.
+efficiency and drive sustained growth
+needed to prioritise/match products.
+*Duplicate/unoptimised titles limit matching
+*Embed high-intent keywords across the feed
+*Optimise Product Types to align with intent
+*Missing attributes across SKUs reduces CTR
+*Introduce image testing and optimisation
+*Optimise titles with key attributes & hierarchy
+*Products not differentiated at the SKU level
+*Implement CLs for segmentation and control
+*Enrich data to improve matching and visibility
+*Incomplete variant coverage limits visibility
+*Drive ongoing growth through A/B test
+*Strengthen core product signals for Google
+A structured, scalable approach to improve data quality, matching and performance.
+
+=== PAGE 4 ===
+The Performance Growth Opportunity
+Fixing feed gaps directly impacts discovery, traffic and efficiency.
+123
+Category OptimisationData EnrichmentTitle Optimisation
++ 15 - 20%+ 10 - 20%+10 - 25%
+Increased ImpressionsCTR ImprovementROAS Uplift
+Improved GPC + Category alignment Enriching missing attributes improves Cleaner, consistent titles improve
+strengthens intent matching, helping filters/refinements, matching relevance and CTR, especially when
+the right products win more auctions.confidence and AI readiness. titles focus on shopper-first features.
+These are proven results from similar retailers - the same uplift potential exists for HOB.
+
+=== PAGE 5 ===
+Key Feed Strategy Insights
+How product eligibility, signals and coverage combine to impact performance.
+1.Weak signals limit eligibility and visibility
+2.Incomplete data reduces matching accuracy
+3.Missing enrichment reduces engagement and CTR
+4.Feed and landing page mismatch reduces trust
+5.Poor structure limits control and efficiency
+Clear levers to improve visibility, control and performance at scale.
+
+=== PAGE 6 ===
+Feed Data Also Impacts Organic Shopping Visibility
+Not just Google Ads - product data influences free product listings and discovery.
+**********************
+*Incomplete and inconsistent data limit eligibility
+*Products are not uniquely differentiated at SKU level
+*Missing variants reduce visibility
+Why it matters
+*Fewer products are eligible in free listings
+*Lower visibility for high-intent searches
+*Missed incremental traffic
+*Weak signals limit visibility in AI-driven Shopping
+Stronger product data improves visibility across paid and free results.
+
+=== PAGE 7 ===
+Performance Insights: Category Efficiency
+Brand performance highlights where revenue is concentrated and where product activation opportunities exist.
+*House of Bruar accounts for ~53% of SKUs and delivers £524k+ *Opportunity: Despite strong revenue, 33.6% of own-brand SKUs
+revenue, making it the primary performance driverare not contributing, representing a large untapped opportunity.
+*Third-Party brands such as Vilagallo, Hunter and Pomodoro deliver *40% - 47% zombie SKUs across brands, indicating large portions
+ROAS 1,100% - 1,300%+ but operate at significantly lower scale.of the catalogue are not active in driving revenue.
+Data insights guide where to optimise first for maximum performance gain.
+
+=== PAGE 8 ===
+What Good Looks Like (Categories)
+Restructuring Product Types to align with real search behaviour and Shopping/PMax discovery.
+X Current
+* Optimised
+Google
+Clothing & Accessories > Clothing > Outerwear >
+Clothing & Accessories
+Category
+Coats & Jackets
+Clothing & Accessories >
+Google
+Clothing & Accessories > Shoes
+Clothing > Shirts & Tops
+Category
+Your
+***************
+Ladies' Knitwear
+Category
+Knitted> Jumpers
+Your ****************
+Men's Trousers
+Category****
+Accurate categories help Google understand products and match them to search intent.
+
+=== PAGE 9 ===
+What Good Looks Like (Titles)
+Structured, search-aligned titles improve visibility, CTR and conversion performance
+X Current
+* Optimised
+House of Bruar Ladies Bruar Shirt
+House of Bruar *************
+House of Bruar Ladies Bruar Shirt
+Long Sleeve Cotton Shirt, Size: 14
+X  *******Bruar*
+  Includes high-*intent product features & size
+X  Lack of product details or highlights
+  Structured around user search terms *
+*************
+Ladies Barbour Aubrey Check Shirt
+*Tailored Shirt, Size: 12
+X ********
+  Includes size, colour and search-aligned terminology
+X *No Size, No Material*******
+Titles must reflect how users search, not how products are internally named.
+**************************************
+
+=== PAGE 10 ===
+Keyword Gaps = Visibility, Traffic & Lost Revenue
+Search demand exists, but your product data is not optimised or structured to capture it.
+98% Exact Keywords
+(Missing)
+A large share of
+queries are missing.
+Title, description and category mismatches weaken auction and data signals.
+
+=== PAGE 11 ===
+Feed Imagery: Building Trust, Boosting Performance
+Improve visibility & CTR across Shopping & PMax through image cycling strategy.
+Constraints:
+*Images are portrait and being cropped by Google
+*Products with repetitive image types
+*Missing Product only, On Model or Additional Images
+Opportunity:
+*Support algorithm learning: ************************
+Pmax) requires visual variety to optimise.
+*Unlock A/B Testing: Increase image variations to test
+which image improves CTR.
+Image structure and variety directly impact CTR, engagement and algorithm performance.
+
+=== PAGE 12 ===
+Image Overlays: Stand Out & Boost Performance
+Turning product images into conversion-driving assets
+What dynamic overlays unlock:
+*Surface finance messaging (policy-aware)
+*Highlight guarantee / key features
+*Clarify delivery tier (where compliant)
+*Enable controlled creative testing + rollback
+More qualified clicks. Higher engagement. Stronger intent.
+
+=== PAGE 13 ===
+Meta DPA Overlays: Stop the Scroll. Drive Revenue.
+Turning static product ads into dynamic, feed-powered creative.
+*Turn your feed into dynamic creatives
+*Turn images into performance drivers
+*Turn scaling Meta into an advantage
+Stronger visibility. Higher engagement. More revenue from the same spend.
+
+=== PAGE 14 ===
+Custom Labels * Our Strategy Recommendations
+Current custom labels lack structure and overlap, limiting budget control/performance optimisation.
+To unlock control, efficiency and scalable performance, CLs must be structured around clear strategies.
+New-in, Bestseller,
+Focus on product freshness and stock movement without
+Lifecycle
+Clearance
+mixing with category or promotions.
+Delivery Tier
+Margin Tier
+Low, Mid, High
+Enable bid control based on profitability rather than just price.
+Full Price, On Sale,
+Segment products based on promotional intensity to support
+Discount /
+Promo
+better budget allocation and visibility control.
+Promotion
+Align campaigns with demand cycles instead of generic
+Seasonal
+A/W, S/S, All-Year
+categories.
+Hero Products, Support
+Differentiate key revenue drivers from supporting and
+Product Priority
+Products, Long Tail
+low-volume items.
+See Appendix for current CL structure
+
+=== PAGE 15 ===
+GMC Audit - Key Issues Identified (UK, US, AUS, NZ, CA, DE)
+Attribute gaps combined with variant resolution driving GMC disapprovals & inconsistencies
+Missing Colour: Indicates incomplete attribute coverage.
+Policy Flags: Includes Prescription Drugs and Guns & Parts.
+Price Mismatch: Inconsistencies between website & feed pricing.
+Images: Promotional overlays impacting image approval.
+Product Page: Unavailable pages that cannot be crawled.
+Content: Product highlights exceeding character limits.
+Many issues are structural rather than isolated, requiring a scalable feed-level solution.
+
+=== PAGE 16 ===
+Product Variant Structure Limits Matching & Performance
+************************
+*******
+*Multiple variants (size/colour) share the same URL
+*Product URLs do not carry variant-level signals
+*Titles are duplicated across SKUs
+*Not all variants are included in the feed
+Impact
+*Google cannot differentiate between products
+*Reduced visibility for size and colour-specific searches
+*Lower relevance between search, product and PLP
+*Increased risk of drop-off and lost conversion
+Without clear variant signals, Google cannot match or prioritise the correct product.
+
+=== PAGE 17 ===
+US Feed Not Consistently Localised
+Mixed UK and US terminology weakens product signals and search relevance
+Issue Identified
+*Product data uses mixed UK/US terminology
+*Localisation applied inconsistently across feed
+*Categories not aligned to US search behaviour
+Impact
+*Reduced relevance for US search queries
+*Lower visibility in high-intent Shopping results
+*****************
+Pants Vs Trousers  Pajamas Vs PyjamasSneakers Vs Trainers Sweatshirt Vs Jumper
+Localisation is inconsistent - limiting relevance, visibility and US performance.
+
+=== PAGE 18 ===
+International Localisation Is Not Fully Implemented
+Feeds are live across multiple markets, but localisation is not consistently applied at a language or market level.
+*****
+*6 active markets in GMC: UK, US, CA, NZ, AU, DE
+*English-speaking markets show partial localisation
+*German (DE) feed is entirely in English
+*No clear market-specific structuring of product data
+Impact
+*Products not aligned to local language search behaviour
+*Reduced visibility in non-English markets
+*Limits performance as international expansion scales
+*Creates inconsistency across global feeds
+Global expansion is in place, but feeds are not yet localised to compete in each market.
+
+=== PAGE 19 ===
+Our Approach to Data Enrichment Optimisation
+A scalable approach to optimise, validate and localise product data across global markets
+AI Setup & Data Structuring AI-Driven Optimisation Human Validation Global Localisation
+(UK Foundation)(Controlled Volumes)& Iteration(Scaling Layer)
+*Review and validate AI *Reuse AI-optimised data
+*Define AI inputs (product data,
+*Apply AI optimisation across
+outputs (quality & accuracy)across all markets
+attributes, structure)
+defined product volumes
+*Prevent inconsistencies and *Apply rules for localisation
+*Configure logic for titles,
+*Generate enriched titles,
+data hallucinations(terminology + formatting)
+enrichment/formatting
+attributes and product details
+*Refine logic/continuously *Align to local search
+*Establish consistent rules for
+*Prioritise high-impact products
+improve outputsbehaviour
+how data is generated
+to maximise performance
+Ensures accuracy, consistency Enables efficient SKU and global
+Ensures AI outputs are
+Drives high-impact optimisation
+and continuous improvementrollout
+structured and scalable
+across priority products
+AI drives optimisation. Human validation ensures quality. Scalable performance across SKUs and markets.
+
+=== PAGE 20 ===
+Feed Management & Optimisation Costs
+Monthly ServiceMonthly Cost
+Enterprise Management & Data Optimisation Platforms *
+£
+(inc. ? Feeds)
+? Days x Managed Service Days (strategy, testing, optimisation, monitoring)
+£
+£
+Monthly Total
+* There is a set up cost of £498 for Account Configuration (Set-up, Testing & Deployment)
+Optional One-Off Services (Recommended)
+? x Days Performance Booster: Enrich x, y & z)
+£
+(Aid Issue Resolution, Deploy Quick Wins and Drive Performance)
+
+=== PAGE 21 ===
+Summary
+A Structured Approach to Unlock Scalable Growth
+*The data foundation is limiting performance today
+Inconsistent structure, attributes and weak signals are reducing visibility and efficiency
+*Significant opportunity to improve visibility and revenue
+Enriched data and aligned signals will increase relevance and unlock demand
+*AI enables efficient, scalable optimisation
+A structured AI-led approach allows optimisation at scale without compromising quality
+*Continuous optimisation drives sustained growth
+Ongoing refinement, testing and localisation ensure performance continues to improve
+Structure first. Enrichment next. Continuous optimisation ongoing.
+
+=== PAGE 22 ===
+What to Expect From FeedSpark
+Bespoke
+UK Account Multi-Territory
+Same Day
+Channel Feeds
+ManagersSupport
+SLA
+Expert Industry Leading Performance
+Aligned With
+GuidanceSoftwareFocussed
+Marketing Strategy
+Seamless Service. Strategically Aligned. Driving Performance
+
+=== PAGE 23 ===
+Our Feed Optimisation Playbook
+We have a range of services aligned to driving KPIs
+Ad CTR
+Impressions
+Image testing
+Search terms
+Promotions & pricing
+Product types
+ImpressionsCTR
+Overlays & badges
+Titles & attributes
+Brand selection
+Structured data
+Local inventory
+Product highlight
+Efficiency
+Conversion
+Custom labels
+Custom labels
+ConversionEfficiency
+Product reporting
+Product reporting
+Spend vs stock
+Spend vs stock
+Margin optimisation
+Margin optimisation
+LIA strategy
+LIA strategy
+Strategy flexes depending on budget constraints.  Unlocking reach or maximising efficiency
+
+=== PAGE 24 ===
+Solutions Beyond Feed Management
+Designed To Scale Channel Performance
+Weekly Product Reporting
+Dynamic Image Overlays
+Landing Page Optimisation
++77% ROAS+20%+TBD%
+Conversion Rate(ROAS + CPC + Conversion)
++93% Revenue
+Scalable solutions designed to improve visibility, engagement and revenue performance.
+
+=== PAGE 25 ===
+Success Stories: UK + International Retailers
+Google Overlays
+Title Testing
+DPA Overlays
++20%
++98%+77%
+CR
+CTRROAS
+*FeedSpark is an exceptional partner for AllSaints - a true extension of our team.
+Their deep understanding of our brand and expertise in feed management and
+******
+
+=== PAGE 26 ===
+About Us
+*20 years expertise in retail feed management &
+optimisation.
+*Long-term, strategic brand and agency
+partnerships.
+*Fully managed services driving performance.
+*Proprietary platform transforming data into
+bespoke feeds.
+*Global, multilingual feed execution across 2,500+
+channels.
+Supercharging Channel Performance
++65% Revenue, +230% AOV, +20% CVR
+
+=== PAGE 27 ===
+Next Steps
+Turning these insights into measurable performance
+123
+Scope the EngagementTechnical OnboardingOptimise and Measure
+Align on priority feed areas, timelines Connect feed sources, map data fields Roll out attribute enrichment and
+and KPIs based on today's audit and begin enrichment within custom label optimisations. Track
+findings.FeedHero.performance across Google.
+This weekWeeks 1-2Weeks 3-12
+Ready to get started?
+
+=== PAGE 28 ===
+Appendix
+
+=== PAGE 29 ===
+Your Products Are Losing Visibility
+Split Categories
+Shallow Categories
+Inconsistent Categorisation
+Categories
+Product Highlights (100%)
+Incorrect Colours
+Pattern (98%)
+Attributes
+Incorrect Materials
+Duplicate MPNs (97%)
+No GTIN (98%)
+Incorrect Gender/Age Group
+Un-Optimised Titles (99%)Duplicate Titles (93%)
+Product Titles
+Size not in Title (65%)
+Colour not in Title (72%)
+No Exact Terms (88%) Exact Not In Title (86%) Zero Hits (53%)
+Keywords
+Missing Lifestyle ImagesPortrait Images (Cropping)
+Images
+Missing Alt. Images
+Strategy Required (100%)
+Custom Labels
+
+=== PAGE 30 ===
+Missing Data Foundations
+Pattern & product highlight improve feed
+quality, optimisation and performance.
+The Impact?
+*Poor attribute data = lower eligibility,
+     mis-categorisation and missed visibility.
+****************
+without enriched data.
+*Google can't match products effectively -
+you pay more to be less visible.
+
+=== PAGE 31 ===
+Attribute Mismatch - Age Group & Gender
+Incorrect age group and gender values are causing misclassification of products.
+Key Issue Identified
+* **************
+* Female-**************
+What Needs to Be Fixed
+*Align age_group values with audience (Kids vs Adults).
+*Ensure gender reflects the correct target.
+Standardise attribute logic to avoid misclassification.
+
+=== PAGE 32 ===
+AttributeNormalisation -Colour, Material& Size
+Inconsistent and non-standard attributes reduce data quality.
+Colour: Non-standard/inconsistent (Apple, Summer Blooms, Black Leather)
+Material: Inconsistent/overly descriptive (e.g. Organic, 100% Linen Fit: Slim)
+Size: ***used despite specific dimensions being available on-site.
+How to Fix
+*Standardise colour values to search-friendly terms
+    *****************colour).
+*Clean and map material attributes to clear, consistent values
+     *****************
+*Replace generic size values with actual product dimensions
+(e.g. 25L, 18.5 inches, 9x10.5x8.5cm).
+x
+
+=== PAGE 33 ===
+Custom Labels Drive Smarter Spend & Stronger ROI
+Custom labels are essential to maximise efficiency and ROI through strategic segmentation.
+Current Setup
+Ladies - Ladieswear, Mens - Menswear,
+Mixes multiple category types (gender, offers, gifts) creating
+Special Offer, Gifts - Home, Gifts - Ladies
+Custom label 0
+inconsistent and overlapping segmentation.
+Accessories, Gifts - Jewellery
+Delivery Tier
+Gender segmentation is basic and already covered by
+Custom label 1
+Unisex, Female, Male
+standard attributes, adding limited strategic value.
+Product type overlaps with existing product_type attribute,
+Shoes, Jewellery, Accessories, Knitwear,
+Custom label 2
+reducing uniqueness and usefulness.
+Trousers, Shirts, Dress, Coats & Jackets
+Low AOV, Low AOV - £40 to £60, Key Category
+Inconsistent and unclear value bucketing (AOV + category
+Custom label 3
+High Value Items, Key Category High Value
+mix) limits effective bid or budget control.
+Items (Trousers)
+Binary brand vs non-brand is too simplistic and does not
+Custom label 4
+Brand, Non-Brand
+support meaningful campaign segmentation.
+
+=== PAGE 34 ===
+Product Identifier: GTIN & MPN Setup
+Missing GTINs and duplicated MPNs limit accurate product identification.
+*GTIN values not provided, despite selling third-party brands
+*MPN values are duplicated across product variants
+*Identifier setup relies on brand + MPN + identifier_exists =
+yes, without unique variant-level identifiers.
+How to Fix
+*Add GTINs for third-party branded products wherever
+available to strengthen product identification.
+*Ensure MPN values are unique per variant (e.g. differentiate
+by size/colour).
+*Maintain accurate brand mapping aligned with the actual
+manufacturer for third-party items.
