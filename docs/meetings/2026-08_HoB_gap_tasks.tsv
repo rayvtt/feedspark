@@ -1,0 +1,38 @@
+Area	Task	TASK OWNER	Hours	PRIORITY	STATUS	DUE DATE
+Product Type	Product Type restructure - remap to search-aligned taxonomy (100% of PTs flagged; split/shallow/inconsistent)			High		
+Product Type	GPC re-mapping + alignment check across all markets			High		
+Tech	GTIN population for third-party branded products (98% missing)			High		
+Tech	MPN uniqueness per variant - de-duplicate (97% duplicated)			High		
+Tech	Brand mapping to actual manufacturer for third-party items			Medium		
+Content	Product highlights enrichment (100% missing)			High		
+Content	Pattern attribute enrichment (98% missing)			High		
+Content	Colour normalisation - standardise to search-friendly values (also root cause of GMC missing-colour disapprovals)			High		
+Content	Material normalisation - map to clean consistent values			Medium		
+Content	Size values - replace generic sizes with actual dimensions (25L, 18.5in, 9x10.5x8.5cm)			Medium		
+Content	age_group / gender correction - align values to actual audience			High		
+Tech	Variant-level URL signals - variants currently share one URL			High		
+Tech	Feed variant coverage audit - identify variants missing from the feed			High		
+Title	Duplicate title verification post-MASK (93% duplicated at audit)			Medium		
+Tech	Item Group ID rollout beyond Footwear (currently Open, footwear only)			High		
+Custom Label	CL restructure - Lifecycle (New-in / Bestseller / Clearance)			High		
+Custom Label	CL restructure - Margin Tier (Low / Mid / High)			High		
+Custom Label	CL restructure - Promo (Full Price / On Sale / Discount)			High		
+Custom Label	CL restructure - Seasonal (A/W, S/S, All-Year)			Medium		
+Custom Label	CL restructure - Product Priority (Hero / Support / Long Tail)			High		
+Custom Label	CL restructure - Delivery Tier			Medium		
+Image	Image cycling strategy - fix portrait cropping, add product-only / on-model / additional images			High		
+Image AB Test	HoB image A/B test programme (existing Image Testing tab holds schuh results, not HoB)			Medium		
+Image	Google dynamic image overlays - scope and deploy			Medium		
+Image	Meta DPA overlays - scope and deploy			Medium		
+Localisation	US feed localisation - replace UK terminology (trousers/pants, trainers/sneakers, pyjamas/pajamas)			High		
+Localisation	DE feed localisation - feed currently entirely in English			High		
+AM	Reconcile market list - audit names UK/US/CA/NZ/AU/DE; plan lists UK/US/AU/CA/EU			High		
+Tech	GMC policy flags - resolve Prescription Drugs and Guns & Parts classifications			High		
+Tech	Price mismatch - reconcile website vs feed pricing			High		
+Tech	Product page crawlability - fix unavailable product pages			High		
+Tech	Product highlights exceeding character limits - truncate to spec			Medium		
+Content	Zombie SKU activation - 33.6% own-brand SKUs non-contributing, 40-47% zombie across brands			High		
+Content	Free/organic listings + AI Shopping readiness review			Medium		
+AM	Weekly product reporting - set up			Medium		
+Content	Landing page optimisation - scope			Medium		
+Content	AI enrichment pipeline (Tachyon) - setup, controlled-volume run, human validation, global rollout			High		
