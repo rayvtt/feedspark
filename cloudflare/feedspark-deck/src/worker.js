@@ -27,7 +27,7 @@
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey } from "./briefmatch.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { LABEL_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible } from "./labelguard.js";
+import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -51,6 +51,8 @@ import FEEDCHAT from "../../../docs/FeedSpark_FeedChat.html";
 import PRICER from "../../../docs/FeedSpark_Pricer.html";
 // Label Guard — custom-label capture + drop-off monitoring module (page at /labels)
 import LABELGUARD_PAGE from "../../../docs/FeedSpark_LabelGuard.html";
+// Product Type Guard — primary g:product_type monitoring, Google channel (page at /ptypes)
+import PTGUARD_PAGE from "../../../docs/FeedSpark_ProductTypeGuard.html";
 // Keyword optimisation calendar — marketing moments drive the KW schedule (docs/FeedSpark_KWCal.html)
 import KWCAL from "../../../docs/FeedSpark_KWCal.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
@@ -104,6 +106,7 @@ const PAGES = {
   '/feedlab':     { html: FEEDLAB,     slug: 'feedlab' },
   '/feedchat':    { html: FEEDCHAT,    slug: 'feedchat' },
   '/labels':      { html: LABELGUARD_PAGE, slug: 'labels' },
+  '/ptypes':      { html: PTGUARD_PAGE, slug: 'ptypes' },
   '/pricer':      { html: PRICER,      slug: 'pricer' },
   '/kwcal':       { html: KWCAL,       slug: 'kwcal' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
@@ -120,7 +123,7 @@ const CORS = {
 // Label Guard nav badge — injected on app pages only (never client decks): dots the /labels
 // nav icon with the number of feeds carrying active drop-off alerts, red when any is critical.
 const LGBADGE = `<style>.lg-dot{position:absolute;top:1px;right:1px;min-width:14px;height:14px;padding:0 3px;border-radius:100px;background:#ED6F0B;color:#fff;font-size:9.5px;font-weight:900;line-height:14px;text-align:center;pointer-events:none}.lg-dot.crit{background:#C0392B}</style>
-<script>/* FCC-LABELGUARD badge */(function(){try{fetch('/api/labels/alerts').then(function(r){return r.json();}).then(function(d){var c=(d&&d.counts)||{};var n=(c.crit||0)+(c.warn||0);if(!n)return;var a=document.querySelector('#tb-modules a[href="/labels"]');if(!a)return;var b=document.createElement('span');b.className='lg-dot'+(c.crit?' crit':'');b.textContent=n>9?'9+':String(n);a.appendChild(b);}).catch(function(){});}catch(e){}})();</script>`;
+<script>/* FCC-LABELGUARD badge */(function(){function dot(href,c){var n=(c.crit||0)+(c.warn||0);if(!n)return;var a=document.querySelector('#tb-modules a[href="'+href+'"]');if(!a)return;var b=document.createElement('span');b.className='lg-dot'+(c.crit?' crit':'');b.textContent=n>9?'9+':String(n);a.appendChild(b);}try{fetch('/api/labels/alerts').then(function(r){return r.json();}).then(function(d){dot('/labels',(d&&d.counts)||{});if(d&&d.pt)dot('/ptypes',d.pt);}).catch(function(){});}catch(e){}})();</script>`;
 
 // client -> Project Plan Google Sheet id. Mirrors FeedSpark_Workflow.html's client-side
 // PLANSHEET map (used there for the "+ Add task" row and status/owner/due write-back) —
@@ -760,6 +763,14 @@ export default {
     // pivots server-side, so the worker never parses a raw feed CSV (CPU budget rule).
     if (path.startsWith('/api/labels/')) {
       const r = await labelGuardRoutes(env, request, url);
+      if (r) return r;
+    }
+
+    // ---- Product Type Guard: primary g:product_type capture + drop-off monitoring,
+    // Google Shopping channel only (page at /ptypes). Rides the same scan pass as Label
+    // Guard — runLabelScan captures PT into its own ptype* stores on every Google-feed scan.
+    if (path.startsWith('/api/ptypes/')) {
+      const r = await productTypeRoutes(env, request, url);
       if (r) return r;
     }
 
@@ -1444,9 +1455,10 @@ export default {
       const w = await labelWatchRun(env, null, 'hourly');
       // second sweep batch: the Meta import roughly doubled the estate (42 sheet feeds), so
       // the :30 firing also advances the rotation — but only when its subrequest budget
-      // allows (watch checks ~4 fetches/rule + a 4-feed batch ~28 must stay under the
-      // 50/invocation free-plan cap). Watches always take precedence over the sweep.
-      if (!w || (w.checked | 0) <= 4) await labelCronSweep(env);
+      // allows (watch checks ~4 fetches/rule + a 4-feed batch ~32 now that Google scans
+      // also capture product_type, under the 50/invocation free-plan cap). Watches always
+      // take precedence over the sweep.
+      if (!w || (w.checked | 0) <= 3) await labelCronSweep(env);
       return;
     }
     if (event && event.cron === '0 7,17 * * *') {
@@ -1545,9 +1557,13 @@ async function runLabelScan(env, client, mkt) {
   const src = await feedSourceFor(env, client, mkt);
   if (!src) return { error: 'no feed sheet linked for this client/market - attach one in Feed Lab or the brand dossier', status: 404 };
   if (src.xml) return { error: 'XML feed (Meta channel) - Label Guard monitors sheet-backed feeds only (gviz cannot query XML)', status: 400 };
+  // Google-channel feeds also capture the primary g:product_type in the SAME pass
+  // (shared header probe + counts query, one extra group-by ≈ +1 subrequest) — the
+  // Product Type Guard (/ptypes) reads its own ptype* stores written below.
+  const wantPT = !/-fb$/.test(String(mkt || ''));
   let snap;
   try {
-    snap = await scanFeed(fetch, src, { client, market: mkt });
+    snap = await scanFeed(fetch, src, { client, market: mkt }, wantPT ? LABEL_KEYS.concat(PT_KEYS) : LABEL_KEYS);
   } catch (e) {
     const msg = String((e && e.message) || e).slice(0, 140);
     // index + alert maps are re-read right before each write to keep the clobber window
@@ -1560,7 +1576,20 @@ async function runLabelScan(env, client, mkt) {
     alertsMap[lgKey(client, mkt)] = { t: Date.now(), client, mkt,
       alerts: [{ sev: 'warn', code: 'fetch-fail', msg: 'feed unreachable: ' + msg }] };
     await env.EDITS.put('labelalerts', JSON.stringify(alertsMap));
+    if (wantPT) try {
+      const pidx = (await env.EDITS.get('ptypeidx', 'json')) || {};
+      pidx[lgKey(client, mkt)] = Object.assign({}, pidx[lgKey(client, mkt)] || {}, { client, mkt, status: 'unreachable', err: msg, tErr: Date.now() });
+      await env.EDITS.put('ptypeidx', JSON.stringify(pidx));
+    } catch (e2) {}
     return { error: msg, status: 502 };
+  }
+  // split: PT goes to its own stores; the label stores keep their exact historical shape
+  let ptSnap = null;
+  if (wantPT) {
+    ptSnap = Object.assign({}, snap, { labels: { product_type: (snap.labels || {}).product_type || { present: false } } });
+    const lblOnly = {};
+    LABEL_KEYS.forEach((k) => { lblOnly[k] = (snap.labels || {})[k]; });
+    snap = Object.assign({}, snap, { labels: lblOnly });
   }
   // DAILY reference (Ray's rule): the pivot's Δ columns read "vs yesterday" — automatically,
   // every day, every account, every label. The first scan of each UTC day promotes the
@@ -1597,7 +1626,38 @@ async function runLabelScan(env, client, mkt) {
   if (active.length) alertsMap[lgKey(client, mkt)] = { t: snap.t, client, mkt, alerts };
   else delete alertsMap[lgKey(client, mkt)];
   await env.EDITS.put('labelalerts', JSON.stringify(alertsMap));
-  return { snapshot: snap, alerts, baseT: base.t };
+
+  // ---- Product Type Guard stores (Google feeds only) — same three-reference model:
+  // ptypeday: = yesterday's closing state, ptypebase: = last known-good (rolls forward on
+  // clean scans, frozen while broken, moved by /api/ptypes/ack), ptype: = latest snapshot.
+  let pt = null;
+  if (ptSnap) try {
+    const PK = ':' + client + ':' + mkt;
+    try {
+      const pPrev = await env.EDITS.get('ptype' + PK, 'json');
+      if (pPrev && pPrev.t && new Date(pPrev.t).toISOString().slice(0, 10) !== new Date(ptSnap.t).toISOString().slice(0, 10)) {
+        await env.EDITS.put('ptypeday' + PK, JSON.stringify(pPrev));
+      }
+    } catch (e) {}
+    let pBase = await env.EDITS.get('ptypebase' + PK, 'json');
+    if (!pBase) { pBase = ptSnap; await env.EDITS.put('ptypebase' + PK, JSON.stringify(ptSnap)); }
+    const pAlerts = diffSnapshots(pBase, ptSnap, null, PT_KEYS);
+    const pActive = pAlerts.filter((a) => a.sev !== 'info');
+    if (!pActive.length && pBase.t !== ptSnap.t) {
+      pBase = ptSnap; await env.EDITS.put('ptypebase' + PK, JSON.stringify(ptSnap));
+    }
+    await env.EDITS.put('ptype' + PK, JSON.stringify(ptSnap));
+    const pidx = (await env.EDITS.get('ptypeidx', 'json')) || {};
+    pidx[lgKey(client, mkt)] = Object.assign({ client, mkt }, summarize(ptSnap, pAlerts, pBase.t, PT_KEYS));
+    await env.EDITS.put('ptypeidx', JSON.stringify(pidx));
+    const pMap = (await env.EDITS.get('ptypealerts', 'json')) || {};
+    if (pActive.length) pMap[lgKey(client, mkt)] = { t: ptSnap.t, client, mkt, alerts: pAlerts };
+    else delete pMap[lgKey(client, mkt)];
+    await env.EDITS.put('ptypealerts', JSON.stringify(pMap));
+    pt = { snapshot: ptSnap, alerts: pAlerts, baseT: pBase.t };
+  } catch (e) {}
+
+  return { snapshot: snap, alerts, baseT: base.t, pt };
 }
 
 async function labelGuardRoutes(env, request, url) {
@@ -1625,14 +1685,21 @@ async function labelGuardRoutes(env, request, url) {
     return json({ feeds, alerts });
   }
 
-  // badge feed for every app page: just the active alert counts
+  // badge feed for every app page: active alert counts for BOTH guards in one call
+  // (counts = Label Guard; pt = Product Type Guard — the injected badge dots each nav link)
   if (path === '/api/labels/alerts' && request.method === 'GET') {
     const alerts = (await env.EDITS.get('labelalerts', 'json')) || {};
     let crit = 0, warn = 0;
     Object.keys(alerts).forEach((k) => (alerts[k].alerts || []).forEach((a) => {
       if (a.sev === 'crit') crit++; else if (a.sev === 'warn') warn++;
     }));
-    return json({ counts: { crit, warn, feeds: Object.keys(alerts).length } });
+    const pAlerts = (await env.EDITS.get('ptypealerts', 'json')) || {};
+    let pc = 0, pw = 0;
+    Object.keys(pAlerts).forEach((k) => (pAlerts[k].alerts || []).forEach((a) => {
+      if (a.sev === 'crit') pc++; else if (a.sev === 'warn') pw++;
+    }));
+    return json({ counts: { crit, warn, feeds: Object.keys(alerts).length },
+      pt: { crit: pc, warn: pw, feeds: Object.keys(pAlerts).length } });
   }
 
   if (path === '/api/labels/snapshot' && request.method === 'GET') {
@@ -1728,6 +1795,100 @@ async function labelGuardRoutes(env, request, url) {
     const alertsMap = (await env.EDITS.get('labelalerts', 'json')) || {};
     delete alertsMap[lgKey(client, mkt)];
     await env.EDITS.put('labelalerts', JSON.stringify(alertsMap));
+    return json({ ok: true, baseT: snap.t });
+  }
+
+  return null;
+}
+
+/* ---- Product Type Guard routes (/ptypes page) — mirrors Label Guard's shape for ONE
+   field (primary g:product_type), Google Shopping channel only. Data is captured by
+   runLabelScan on every Google-feed scan (same rotation, same freshness); these routes
+   just read/ack the ptype* stores, plus a live PT<->CL cross dissection. */
+async function productTypeRoutes(env, request, url) {
+  const path = url.pathname;
+  const client = (url.searchParams.get('client') || '').slice(0, 60);
+  const mkt = mktOf(url.searchParams.get('market'));
+  const badClient = !client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0;
+  const isFb = /-fb$/.test(mkt);
+
+  if (path === '/api/ptypes/estate' && request.method === 'GET') {
+    const roster = await feedRoster(env);
+    const idx = (await env.EDITS.get('ptypeidx', 'json')) || {};
+    const alerts = (await env.EDITS.get('ptypealerts', 'json')) || {};
+    const feeds = {};
+    for (const f of roster) {
+      if (!f.src || !f.src.id) continue;                 // sheet-backed only
+      if (/-fb$/.test(String(f.mkt || ''))) continue;    // Google Shopping channel only
+      feeds[lgKey(f.client, f.mkt)] = Object.assign({ client: f.client, mkt: f.mkt, status: 'never' }, idx[lgKey(f.client, f.mkt)] || {});
+    }
+    Object.keys(idx).forEach((k) => {
+      if (!feeds[k] && !/-fb$/.test(k.split('|')[1] || '')) {
+        feeds[k] = Object.assign({ client: k.split('|')[0], mkt: k.split('|')[1] || 'gb', detached: true }, idx[k]);
+      }
+    });
+    return json({ feeds, alerts });
+  }
+
+  if (path === '/api/ptypes/alerts' && request.method === 'GET') {
+    const alerts = (await env.EDITS.get('ptypealerts', 'json')) || {};
+    let crit = 0, warn = 0;
+    Object.keys(alerts).forEach((k) => (alerts[k].alerts || []).forEach((a) => {
+      if (a.sev === 'crit') crit++; else if (a.sev === 'warn') warn++;
+    }));
+    return json({ counts: { crit, warn, feeds: Object.keys(alerts).length } });
+  }
+
+  if (path === '/api/ptypes/snapshot' && request.method === 'GET') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    const snap = await env.EDITS.get('ptype:' + client + ':' + mkt, 'json');
+    const base = await env.EDITS.get('ptypebase:' + client + ':' + mkt, 'json');
+    const daily = await env.EDITS.get('ptypeday:' + client + ':' + mkt, 'json');
+    return json({ snapshot: snap || null, baseline: base || null, daily: daily || null });
+  }
+
+  if (path === '/api/ptypes/scan' && request.method === 'POST') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    const r = await runLabelScan(env, client, mkt);   // one pass writes labels AND ptype stores
+    if (r.error) return json({ error: r.error }, r.status || 502);
+    if (!r.pt) return json({ error: 'scan succeeded but captured no product_type view' }, 502);
+    return json(r.pt);
+  }
+
+  // live cross dissection: PT value -> custom-label breakdown (or CL value -> PT)
+  if (path === '/api/ptypes/cross' && request.method === 'GET') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    const by = String(url.searchParams.get('by') || '');
+    const vs = String(url.searchParams.get('vs') || '');
+    const value = String(url.searchParams.get('value') || '').slice(0, 200);
+    const pool = LABEL_KEYS.concat(PT_KEYS);
+    if (pool.indexOf(by) < 0 || pool.indexOf(vs) < 0 || by === vs || !value ||
+        (by !== 'product_type' && vs !== 'product_type')) {
+      return json({ error: 'bad cross params: one of by/vs must be product_type, the other a custom_label_0..4' }, 400);
+    }
+    const src = await feedSourceFor(env, client, mkt);
+    if (!src) return json({ error: 'no feed sheet linked for this client/market' }, 404);
+    if (src.xml) return json({ error: 'XML feed - cross dissection needs a sheet-backed feed (gviz)' }, 400);
+    try {
+      return json(await crossFeed(fetch, src, by, value, vs));
+    } catch (e) {
+      const msg = String((e && e.message) || e);
+      return json({ error: msg }, msg.indexOf('bad-cross') === 0 ? 400 : 502);
+    }
+  }
+
+  // "expected change" — adopt the current PT snapshot as the new known-good, clear flags
+  if (path === '/api/ptypes/ack' && request.method === 'POST') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    const snap = await env.EDITS.get('ptype:' + client + ':' + mkt, 'json');
+    if (!snap) return json({ error: 'no snapshot to adopt as known-good - scan first' }, 404);
+    await env.EDITS.put('ptypebase:' + client + ':' + mkt, JSON.stringify(snap));
+    const idx = (await env.EDITS.get('ptypeidx', 'json')) || {};
+    idx[lgKey(client, mkt)] = Object.assign({ client, mkt }, summarize(snap, [], snap.t, PT_KEYS));
+    await env.EDITS.put('ptypeidx', JSON.stringify(idx));
+    const alertsMap = (await env.EDITS.get('ptypealerts', 'json')) || {};
+    delete alertsMap[lgKey(client, mkt)];
+    await env.EDITS.put('ptypealerts', JSON.stringify(alertsMap));
     return json({ ok: true, baseT: snap.t });
   }
 

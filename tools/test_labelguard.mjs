@@ -354,5 +354,70 @@ eq('dispFeed facebook', LG.dispFeed('Visual K', 'gb-fb'), 'Visual K · GB · Fac
   eq('summarize clean ok', clean.status, 'ok');
 }
 
+/* ---------- Product Type Guard: parameterised key set ---------- */
+eq('dispKey CL', LG.dispKey('custom_label_3'), 'CL3');
+eq('dispKey PT', LG.dispKey('product_type'), 'PT');
+eq('dispKey passthrough', LG.dispKey('brand'), 'brand');
+eq('PT_KEYS', LG.PT_KEYS, ['product_type']);
+
+{
+  // primary g:product_type only — numbered keyword slots (product_type2 / |||3) must be ignored
+  const PTHEAD = '"id","g:product_type","product_type2","g:product_type|||3","custom_label_0"\n"sku-1","Womens > Dresses","kw","kw","bestseller"';
+  const keys = LG.LABEL_KEYS.concat(LG.PT_KEYS);
+  const routes = [
+    ['select * limit 1', PTHEAD],
+    // count(A)=rows, then per present key in KEY order: cl0 (E) then product_type (B)
+    ['select count(A), count(E), count(B)', '"c","c","c"\n"1000","900","980"'],
+    ['select E, count(A)', '"cl0","count id"\n"bestseller","900"'],
+    ['select B, count(A)', '"pt","count id"\n"Womens > Dresses","600"\n"Mens > Boots","380"'],
+  ];
+  const s = await LG.scanFeed(gvizMock(routes), { id: 'X', gid: '0' }, { client: 'Reiss', market: 'gb' }, keys);
+  eq('PT scan rows', s.rows, 1000);
+  eq('PT picked the primary column only', s.labels.product_type.values, [['Womens > Dresses', 600], ['Mens > Boots', 380]]);
+  eq('PT filled = group sum', s.labels.product_type.filled, 980);
+  eq('labels still scanned alongside PT', s.labels.custom_label_0.values, [['bestseller', 900]]);
+
+  // default key set stays label-only — no product_type key appears
+  const dflt = await LG.scanFeed(gvizMock([
+    ['select * limit 1', PTHEAD],
+    ['select count(A), count(E)', '"c","c"\n"1000","900"'],
+    ['select E, count(A)', '"cl0","count id"\n"bestseller","900"'],
+  ]), { id: 'X', gid: '0' }, {});
+  ok('default scan has no product_type', dflt.labels.product_type === undefined);
+}
+
+{
+  // PT-keyed diff: PT drop flags with the PT prefix; custom-label noise is out of scope
+  const mkPT = (vals, cl0) => ({ v: 1, t: 1, rows: 1000, labels: {
+    product_type: { present: true, filled: vals.reduce((a, [, n]) => a + n, 0), cov: 98, distinct: vals.length, truncated: false, values: vals },
+    custom_label_0: { present: true, filled: 900, cov: 90, distinct: 1, truncated: false, values: cl0 },
+  } });
+  const base = mkPT([['Womens > Dresses', 600], ['Mens > Boots', 380]], [['bestseller', 900]]);
+  const cur = mkPT([['Womens > Dresses', 598]], [['SOMETHING ELSE', 900]]);
+  const A = LG.diffSnapshots(base, cur, null, LG.PT_KEYS);
+  ok('PT value gone -> crit with PT prefix', A.some((a) => a.sev === 'crit' && a.code === 'value-gone' && a.msg.indexOf('PT value "Mens > Boots" GONE') === 0), JSON.stringify(A));
+  ok('custom-label churn ignored under PT keys', !A.some((a) => String(a.msg).indexOf('CL0') >= 0), JSON.stringify(A));
+  const sum = LG.summarize(cur, A, 5, LG.PT_KEYS);
+  eq('PT summarize cov shape', Object.keys(sum.cov), ['product_type']);
+  eq('PT summarize status', sum.status, 'crit');
+}
+
+{
+  // cross dissection accepts product_type on either side
+  const PTHEAD = '"id","g:product_type","custom_label_0"\n"sku-1","Womens > Dresses","bestseller"';
+  const xroutes = [
+    ['select * limit 1', PTHEAD],
+    ["select count(A) where B = 'Womens > Dresses'", '"count id"\n"600"'],
+    ["select C, count(A) where B = 'Womens > Dresses' and C is not null", '"cl0","count id"\n"bestseller","410"\n"sale","120"'],
+  ];
+  const x = await LG.crossFeed(gvizMock(xroutes), { id: 'X', gid: '0' }, 'product_type', 'Womens > Dresses', 'custom_label_0');
+  eq('PT cross segment', x.segment, 600);
+  eq('PT cross rows', x.rows, [['bestseller', 410], ['sale', 120]]);
+  let err = null;
+  try { await LG.crossFeed(gvizMock(xroutes), { id: 'X', gid: '0' }, 'product_type', 'x', 'brand'); }
+  catch (e) { err = String(e.message); }
+  ok('cross still rejects unknown keys', err && err.indexOf('bad-cross') === 0, err);
+}
+
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
