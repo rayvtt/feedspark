@@ -91,6 +91,10 @@ window.addEventListener('load',restore);
   .det-head h3{margin:0;font-size:19px;font-weight:900}
   .det-stats{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11.5px;font-weight:800;color:var(--muted)}
   .det-stats b{color:var(--ink)}
+  table.pv th.s,table.xv th.s{cursor:pointer;user-select:none;white-space:nowrap}
+  table.pv th.s:hover,table.xv th.s:hover{color:var(--orange-deep)}
+  .q-in{font:inherit;font-size:11.5px;font-weight:700;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:170px}
+  .q-in:focus{outline:none;border-color:var(--orange)}
   .refseg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
   .refseg button{border:0;background:#fff;color:var(--muted);font:inherit;font-size:10.5px;font-weight:800;padding:3px 8px;cursor:pointer}
   .refseg button.on{background:var(--orange-deep);color:#fff;cursor:default}
@@ -222,6 +226,7 @@ window.addEventListener('load',restore);
 [data-theme=dark] .panel,[data-theme=dark] .est-card,[data-theme=dark] .lbl-card,[data-theme=dark] .note{background:var(--paper);border-color:var(--line)}
 [data-theme=dark] .btn{background:#20242E;color:var(--ink-2);border-color:var(--line)}
 [data-theme=dark] .btn.pri{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+[data-theme=dark] .q-in{background:#161922;border-color:var(--line);color:var(--ink)}
 [data-theme=dark] .refseg button{background:#20242E;color:var(--muted)}
 [data-theme=dark] .refseg button.on{background:var(--orange-deep);color:#fff}
 [data-theme=dark] .hero{background:transparent}
@@ -319,6 +324,23 @@ window.addEventListener('load',restore);
   // Δ-reference: 'yday' = yesterday's auto-capture (default), 'base' = last known-good.
   // Estate alerts ALWAYS fire vs last known-good regardless of this display toggle.
   var REFMODE = 'yday'; try { if (sessionStorage.getItem('pt-ref') === 'base') REFMODE = 'base'; } catch (e) {}
+  // pivot sort + search: SORTS per feed ({col:'v'|'n'|'d', dir:1|-1}, default skus desc);
+  // QUERY filters the category paths and lifts the 30-row cap while active
+  var SORTS = {};
+  var QUERY = '';
+  function sortState(id) { return SORTS[id] || { col: 'n', dir: -1 }; }
+  function sArr(st, col) { return st.col === col ? (st.dir < 0 ? ' ▼' : ' ▲') : ''; }
+  function dKey(r) { if (r.gone) return -(r.was || 0); if (r.was == null) return r.n; return r.n - r.was; }
+  function rowCmp(st) {
+    return function (a, b) {
+      var d;
+      if (st.col === 'v') d = String(a.v).toLowerCase().localeCompare(String(b.v).toLowerCase());
+      else if (st.col === 'd') d = dKey(a) - dKey(b);
+      else d = a.n - b.n;
+      return (d * st.dir) || (b.n - a.n) || ((b.was || 0) - (a.was || 0));
+    };
+  }
+  function qMatch(v) { return !QUERY || String(v).toLowerCase().indexOf(QUERY.toLowerCase()) >= 0; }
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -413,6 +435,7 @@ window.addEventListener('load',restore);
 
   /* ---------------- detail (the pivot) ---------------- */
   function select(k) {
+    if (SEL !== k) QUERY = '';   // the filter belongs to one feed's dissection
     SEL = k;
     if (CROSS && CROSS.k !== k) CROSS = null;
     try { history.replaceState(null, '', '#' + encodeURIComponent(k)); } catch (e) {}
@@ -485,6 +508,7 @@ window.addEventListener('load',restore);
       (b && rf.isDaily ? '<span title="Estate alerts always fire vs the last known-good state, not the daily capture">alerts vs known-good <b>' +
         new Date(b.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + '</b></span>' : '') + '</span>' +
       '<span class="det-actions">' +
+      '<input class="q-in" id="pt-q" placeholder="🔍 filter product types" value="' + esc(QUERY) + '">' +
       '<button class="btn" id="det-csv">⤓ CSV</button>' +
       '<button class="btn" id="det-ack" title="Accept the current feed as the new known-good reference and clear this feed’s flags">✓ Accept as known-good</button>' +
       '<button class="btn pri" id="det-scan">↻ Scan live feed</button></span></div>';
@@ -513,10 +537,18 @@ window.addEventListener('load',restore);
       return { v: pr[0], n: pr[1], was: bm[pr[0]] != null ? bm[pr[0]] : null, gone: false };
     });
     Object.keys(bm).forEach(function (v) { if (!seen[v]) rows.push({ v: v, n: 0, was: bm[v], gone: true }); });
-    rows.sort(function (a, x) { return (x.n - a.n) || ((x.was || 0) - (a.was || 0)); });
+    if (QUERY) rows = rows.filter(function (r) { return qMatch(r.v); });
+    var st = sortState(k);
+    rows.sort(rowCmp(st));
     var maxN = rows.length ? Math.max.apply(null, rows.map(function (r) { return Math.max(r.n, r.was || 0); })) : 1;
-    var lim = SHOW_ALL[k] ? rows.length : 30;
-    h += '<table class="pv"><thead><tr><th>product type</th><th class="r">skus</th><th class="r">share</th><th class="r">Δ</th><th></th></tr></thead><tbody>';
+    var lim = (QUERY || SHOW_ALL[k]) ? rows.length : 30;
+    h += '<table class="pv"><thead><tr>' +
+      '<th class="s" data-s="v">product type' + sArr(st, 'v') + '</th>' +
+      '<th class="r s" data-s="n">skus' + sArr(st, 'n') + '</th>' +
+      '<th class="r">share</th>' +
+      '<th class="r s" data-s="d">Δ' + sArr(st, 'd') + '</th>' +
+      '<th></th></tr></thead><tbody>';
+    if (!rows.length) h += '<tr><td colspan="5" class="muted">' + (QUERY ? 'no product types match “' + esc(QUERY) + '”' : 'no values') + '</td></tr>';
     rows.slice(0, lim).forEach(function (r) {
       var share = s.rows ? Math.round((r.n / s.rows) * 1000) / 10 : 0;
       var delta = '';
@@ -555,6 +587,27 @@ window.addEventListener('load',restore);
       REFMODE = 'base'; try { sessionStorage.setItem('pt-ref', 'base'); } catch (e) {} renderDetail(k);
     };
     if ($('pv-more')) $('pv-more').onclick = function () { SHOW_ALL[k] = true; renderDetail(k); };
+    // column sorting (product type A-Z / skus / Δ, click again to flip)
+    Array.prototype.forEach.call(document.querySelectorAll('table.pv th.s[data-s]'), function (el) {
+      el.onclick = function () {
+        var col = el.getAttribute('data-s'), st = sortState(k);
+        SORTS[k] = st.col === col ? { col: col, dir: -st.dir } : { col: col, dir: col === 'v' ? 1 : -1 };
+        renderDetail(k);
+      };
+    });
+    // live search over the category paths (lifts the 30-row cap while active)
+    var q = $('pt-q');
+    if (q) {
+      q.oninput = function () {
+        var val = q.value;
+        clearTimeout(q.__t);
+        q.__t = setTimeout(function () {
+          QUERY = val; renderDetail(k);
+          var q2 = $('pt-q');
+          if (q2) { q2.focus(); try { q2.setSelectionRange(q2.value.length, q2.value.length); } catch (e) {} }
+        }, 140);
+      };
+    }
     Array.prototype.forEach.call(document.querySelectorAll('tr.rowv'), function (el) {
       el.onclick = function () { openCross(k, el.getAttribute('data-xv')); };
     });
@@ -601,10 +654,18 @@ window.addEventListener('load',restore);
     if (!x) h += '<p class="muted" style="margin:8px 0 4px"><span class="spin"></span>Google is aggregating the cross pivot…</p>';
     else if (x.error) h += '<p class="muted" style="margin:8px 0 4px">Cross dissection failed: <b>' + esc(x.error) + '</b></p>';
     else {
-      var rows = x.rows || [];
+      var rows = (x.rows || []).slice();
+      var xs = CROSS.sc || { col: 'n', dir: -1 };
+      rows.sort(function (a, b) {
+        var d = xs.col === 'v' ? String(a[0]).toLowerCase().localeCompare(String(b[0]).toLowerCase()) : a[1] - b[1];
+        return (d * xs.dir) || (b[1] - a[1]);
+      });
       var lim = XMORE ? rows.length : 15;
-      var maxN = rows.length ? rows[0][1] : 1;
-      h += '<table class="xv"><thead><tr><th>CL' + CROSS.vs.slice(-1) + ' value</th><th class="r">skus</th><th class="r">share of segment</th><th></th></tr></thead><tbody>';
+      var maxN = rows.length ? Math.max.apply(null, rows.map(function (r) { return r[1]; })) : 1;
+      h += '<table class="xv"><thead><tr>' +
+        '<th class="s" data-xs="v">CL' + CROSS.vs.slice(-1) + ' value' + sArr(xs, 'v') + '</th>' +
+        '<th class="r s" data-xs="n">skus' + sArr(xs, 'n') + '</th>' +
+        '<th class="r">share of segment</th><th></th></tr></thead><tbody>';
       rows.slice(0, lim).forEach(function (r) {
         var share = x.segment ? Math.round((r[1] / x.segment) * 1000) / 10 : 0;
         h += '<tr><td class="v">' + esc(r[0]) + '</td><td class="r">' + fmt(r[1]) + '</td><td class="r">' + share + '%</td>' +
@@ -624,6 +685,13 @@ window.addEventListener('load',restore);
     });
     if ($('x-close')) $('x-close').onclick = function () { CROSS = null; renderCross(); markSel(); };
     if ($('x-more')) $('x-more').onclick = function () { XMORE = true; renderCross(); };
+    Array.prototype.forEach.call(slot.querySelectorAll('th.s[data-xs]'), function (el) {
+      el.onclick = function () {
+        var col = el.getAttribute('data-xs'), cur = CROSS.sc || { col: 'n', dir: -1 };
+        CROSS.sc = cur.col === col ? { col: col, dir: -cur.dir } : { col: col, dir: col === 'v' ? 1 : -1 };
+        renderCross();
+      };
+    });
   }
 
   /* ---------------- CSV export ---------------- */

@@ -143,7 +143,10 @@ proxy: sheet ids never come from the query — only roster clients resolve, exac
   back to last known-good). Estate alerts always fire vs last known-good regardless of the
   toggle — the header notes this whenever the Δ columns read vs yesterday — so alarms never fade
   just because a day ticked over. (No history chart by Ray's call — scan history still
-  accumulates in KV `labelhist:*`.)
+  accumulates in KV `labelhist:*`.) Every breakdown table sorts by clicking its column headers
+  (value A–Z / SKUs / Δ, click again to flip; cross tables too), and the 🔍 filter input in the
+  detail header searches values across all panes at once, lifting the row caps while active.
+  Same controls on `/ptypes` (§8).
 - **Cross dissection** — click any value in any pivot → a full-width panel breaks that segment
   down **live** by another label (chips flip CL1↔CL4): Reiss GB CL0 "Best Sellers" → CL2
   women - fp 3,166 · men - fp 2,542 · women - sale 2,081… plus a "(no CLx value)" remainder

@@ -1697,6 +1697,18 @@
    "min": 3
   },
   {
+   "name": "LabelGuard: breakdown sort + search (filter input, sortable headers)",
+   "file": "docs/FeedSpark_LabelGuard.html",
+   "pattern": "lg-q",
+   "min": 3
+  },
+  {
+   "name": "PTGuard: breakdown sort + search (filter input, sortable headers)",
+   "file": "docs/FeedSpark_ProductTypeGuard.html",
+   "pattern": "pt-q",
+   "min": 3
+  },
+  {
    "name": "nav: PT Guard link on Activity",
    "file": "docs/FeedSpark_Activity.html",
    "pattern": "href=\"/ptypes\""
