@@ -1,13 +1,35 @@
 ---
 name: feedspark-deck-generator
-description: Builds a full, on-brand FeedSpark client deck (Strategy Review, Onboarding, Intro, etc.) from a brief produced by the FCC Deck Generator (/deck-builder), or from plain-English instructions naming a client and a set of sections. Turns a bullet-point outline into real, polished HTML — the same chapter/card/tier/table components already used in the YuMOVE deck — wired into the live worker and populated with the client's actual numbers from the ATRT plan data AND, when attached, a live product-feed export analysed directly (title/attribute/taxonomy/image scoring), not placeholder copy. Use this whenever Ray pastes a "Deck brief" or "Deck Build Brief" block (starts with "# [Client] — [Deck type] deck" or "FEEDSPARK — DECK BUILD BRIEF", has an outline/section list), attaches a feed export (.xlsx/.csv) alongside a deck request, or asks to "build/generate/create the deck for [client]", "turn this brief into a deck", "make the Strategy Review for [client]", or similar — even if he doesn't say the word "skill". The Deck Generator module only produces a rough in-browser mockup and the brief text; this skill produces the real, client-ready, fully-editable deck file.
+description: Builds a full, on-brand FeedSpark client deck (Strategy Review, Onboarding, Intro, etc.) from a brief produced by the FCC Deck Generator (/deck-builder), or from plain-English instructions naming a client and a set of sections (e.g. "intro for Hobbycraft new agency", "Q2–Q3 review for House of Bruar"). The deliverable is ALWAYS a PowerPoint file (.pptx) built on the FeedSpark core deck template (reference-files/deck-templates/FeedSpark_Core_Deck_Template.pptx — design/element/colour/text/voice) — HTML decks are no longer an output option. Sections are authored with the proven chapter/card/tier/table component library as an internal intermediate, populated with the client's actual numbers from the ATRT plan data AND, when attached, a live product-feed export analysed directly (title/attribute/taxonomy/image scoring), not placeholder copy, then exported to the templated .pptx. Use this whenever Ray pastes a "Deck brief" or "Deck Build Brief" block (starts with "# [Client] — [Deck type] deck" or "FEEDSPARK — DECK BUILD BRIEF", has an outline/section list), attaches a feed export (.xlsx/.csv) alongside a deck request, or asks to "build/generate/create the deck for [client]", "turn this brief into a deck", "make the Strategy Review for [client]", or similar — even if he doesn't say the word "skill". The Deck Generator module only produces a rough in-browser mockup and the brief text; this skill produces the real, client-ready, fully-editable .pptx.
 ---
 
 # FeedSpark Deck Generator
 
-Turns a deck brief into a real deck: a new HTML file in `docs/`, built from the same
-component library as `docs/YuMOVE_Strategy_Review_Jul26.html`, wired into the Cloudflare
-Worker so it's live and editable (text edit + Design mode) exactly like every other deck.
+Turns a deck brief into a real deck: a **PowerPoint file (`.pptx`)** built on the FeedSpark
+core deck template. **The output is always `.pptx` — HTML decks are no longer an output
+option** (Ray's standing rule, Aug 2026). The content is authored with the proven
+chapter/card/tier/table component library (an internal HTML intermediate in `docs/`,
+same components as `docs/YuMOVE_Strategy_Review_Jul26.html`) and then exported through
+`tools/deck_to_pptx.py` onto the machine template — the intermediate is a build artifact,
+never the deliverable, and new decks are **not** wired into the worker's `/deck/` pages.
+
+## The template library — read it before building
+
+`reference-files/deck-templates/` is where Ray deposits reference `.pptx` files that govern
+what decks look and sound like. List the folder at the start of every build:
+
+- **`FeedSpark_Core_Deck_Template.pptx`** — the governing reference for design, elements,
+  colour, text and voice on every deck (the Ray-approved Superdry Strategy Review
+  2024–2026, 46 slides). Consult it for how each layout looks fully populated and how
+  FeedSpark copy sounds. Its theme (Inter; slate `#0F172A`; orange `#F7941E`; 18 named
+  layouts) is carried by the machine template `tools/templates/feedspark_deck.pptx`,
+  which the exporter populates — the two must be treated as one design system.
+- **Any other deposit** — a deck-type reference (`Intro_Reference.pptx`) or client exemplar
+  (`<Client>_<DeckType>_<Period>.pptx`). Use the closest match (deck type first, then
+  client) for structure and emphasis on top of the core template. Read a reference with
+  `markitdown <file>.pptx` for text/voice and the pptx skill's tooling for structure.
+
+See `reference-files/deck-templates/README.md` for the deposit convention.
 
 ## Why this exists
 
@@ -15,9 +37,8 @@ Worker so it's live and editable (text edit + Design mode) exactly like every ot
 pick a client, a deck type, drag sections into order — and either preview a rough mockup
 in the browser (generic bullet content, not on-brand) or copy a **brief**: a short markdown
 spec naming the client, deck type, look-back window, ordered section list, and (if the
-client has a linked plan) live score/task numbers. The brief ends with an explicit handoff
-line: *"Send back to draft each section with Tachyon."* That handoff is this skill — take
-the brief, and build the actual deck the DeckBuilder only sketches.
+client has a linked plan) live score/task numbers. That handoff is this skill — take
+the brief, and build the actual `.pptx` the DeckBuilder only sketches.
 
 ## Step 1 — Read the brief
 
@@ -54,11 +75,10 @@ Some briefs ("FEEDSPARK — DECK BUILD BRIEF" format) explicitly name **two data
 and attach a live product-feed export (`.xlsx`/`.csv`, ~thousands of SKUs) alongside the
 project-plan snapshot. Treat any attached feed export as **Stream B** and analyse it for
 real — see Step 2a below — it's not optional colour, it's usually the more current and
-more precise source for every feed-quality claim in the deck. A brief mentioning
-"python-pptx" or "the previewer" is reusing generic boilerplate from CLAUDE.md's general
-build-pipeline section — it doesn't mean switch output formats. The explicit goal line
-("matching the deck... live at /deck/yumove") is the actual instruction: build the same
-live, worker-hosted HTML system every other deck uses, not a PPTX file.
+more precise source for every feed-quality claim in the deck. If an older brief still says
+"build the deck live at /deck/<slug>" or otherwise implies an HTML deliverable, that
+boilerplate predates the pptx-only rule — the deliverable is the `.pptx`; don't wire a new
+`/deck/` page because a stale brief mentions one.
 
 ## Step 2 — Resolve the client's real data
 
@@ -181,7 +201,12 @@ few sample rows from memory:
 - Pull a **real SKU** from the export for any illustrative example (Tachyon output, an
   attribute code sample) instead of inventing one — it reads as authentic because it is.
 
-## Step 3 — Build the deck
+## Step 3 — Author the sections (internal HTML intermediate)
+
+The deck's content is authored as an HTML file first — not because HTML is the deliverable
+(it isn't, ever), but because the component library, the deck-audit tooling and the
+`deck_to_pptx.py` exporter all operate on it. The `.pptx` in Step 6 is generated from this
+file; keep the intermediate committed so feedback rounds can rework it and re-export.
 
 Use `docs/FeedSpark_Strategy_Review_Template.html` as the structural base — it already has
 the full design system (CSS, topbar, hero, chapter divider, all component classes) with
@@ -228,28 +253,16 @@ Save the file as `docs/<Client>_Strategy_Review_<Period>.html` (mirror the exist
 `docs/YuMOVE_Strategy_Review_Jul26.html`). Use the actual look-back/period label from the
 brief for `<Period>`.
 
-## Step 4 — Wire it into the worker
+## Step 4 — Do NOT wire new decks into the worker
 
-Follow the exact pattern already used for every other deck in
-`cloudflare/feedspark-deck/src/worker.js`:
+**New decks are not added to the worker's `PAGES` map and get no `/deck/<slug>` page** —
+the `.pptx` is the deliverable (pptx-only rule, Aug 2026). Do not add a worker import, a
+`PAGES` entry, or anything else in `cloudflare/feedspark-deck/src/worker.js` for a new deck.
 
-1. Add an `import DECK_<CLIENT> from "../../../docs/<filename>";` alongside the existing
-   deck imports.
-2. Add a `'/deck/<slug>': { html: DECK_<CLIENT>, slug: '<slug>' },` entry to the `PAGES`
-   map, where `<slug>` is the lowercase-hyphenated client name — the same slugify logic the
-   dossier's "Generate deck" button already uses (`name.toLowerCase().replace(/[^a-z0-9]+/g,'-')`).
-   If the dossier already generated a `/deck/<slug>` link for this client via the dynamic
-   template fallback, use that exact slug so the existing link keeps working.
-3. Leave `getEditorScript()` and everything else in the worker untouched — every page it
-   serves already gets the full text-edit + Design-mode widget **and** a "Download PDF"
-   button for free; you don't need to do anything extra to make the new deck editable or
-   printable. **Never add a print/PDF button, print stylesheet, or `window.print()` call to
-   an individual deck's HTML** — it already exists once, universally, injected via
-   `getEditorScript()` (client-side `window.print()` with a print stylesheet that forces
-   `.rv`/`.fill` reveal animations to their final state, keeps dark sections via
-   `print-color-adjust:exact`, and paginates one chapter per page). A per-deck copy would
-   duplicate and drift from the shared one — this was tried once on YuMOVE and reverted in
-   favour of the universal version the same session.
+Decks that were already live before the rule (e.g. `/deck/yumove`) stay wired and keep
+their live-edit layer — see Step 6a before touching one of those. If Ray asks for a new
+deck to be browsable in the FCC anyway, that's an explicit exception for him to state, not
+a default to fall back into.
 
 ## Step 5 — QA before pushing
 
@@ -279,9 +292,10 @@ Follow the exact pattern already used for every other deck in
   reader learn this?* If the answer is nowhere, either give it a source or say so to Ray —
   never leave an unsourced number sitting in a client-facing deck, and never invent a
   provenance for one.
-- `node --input-type=module --check < cloudflare/feedspark-deck/src/worker.js` — the worker
-  is a shared file every deck depends on; a syntax error here breaks the whole site, not
-  just the new deck.
+- If (and only if) the session touched `cloudflare/feedspark-deck/src/worker.js` for some
+  other reason: `node --input-type=module --check < cloudflare/feedspark-deck/src/worker.js`
+  — a syntax error there breaks the whole site. A normal pptx-only deck build doesn't touch
+  the worker at all (Step 4).
 - Sanity-check the new HTML: no stray `[bracket]` placeholders, no leftover mentions of a
   different client (e.g. grep for "YuMOVE" if you built the file by adapting YuMOVE's
   markup), topbar nav count matches chapter count, chapter numbers are sequential.
@@ -330,17 +344,33 @@ Follow the exact pattern already used for every other deck in
   per `tools/README.md`) — Claude Code on the web usually doesn't have LibreOffice/
   `pdftoppm`, but the Pillow-based previewer works without them.
 
-## Step 6 — Ship it
+## Step 6 — Export the .pptx and ship it
+
+Every deck build ends here — the export is not an on-request extra, it IS the deliverable.
+
+```bash
+python tools/deck_to_pptx.py docs/<Client>_<Deck>.html <Client>_<Deck>.pptx --audit
+```
+
+- **`--audit` is the gate.** Ship only on `still over capacity: 0` — re-lay out (fewer,
+  bigger panels across more slides), never shrink below `MIN_OK`. See Step 6b for the
+  exporter's rules before extending it.
+- **Send the `.pptx` to Ray in the session** (it's the deliverable — don't just name a path),
+  and commit it to `docs/materials/<Client>_<Deck>.pptx` so it survives the ephemeral
+  container and lands in the client's Materials bank tier. Do **not** add a
+  `SEED_MATERIALS` entry unless Ray asks for it to be live in the dossier — each seed adds
+  its full size to every worker deploy (`docs/MATERIALS.md`).
+- Commit the HTML intermediate alongside it (same commit is fine) so feedback rounds have
+  something to rework.
 
 This repo has multiple sessions/agents pushing to `main` concurrently — `git fetch origin
 main` and rebase immediately before every commit, and again immediately before every push,
 not just once at the start. See `docs/WAYS_OF_WORKING.md` for the fuller git-conventions
-context. Small, scoped commits (the new deck file; the worker.js wiring can be the same
-commit or a separate one) make a late-breaking conflict a clean rebase instead of a mess.
+context.
 
-After pushing, tell Ray the deck's live URL (`/deck/<slug>`) and flag anything you couldn't
-source real data for (Step 2's "never invent numbers" rule) so he knows what still needs a
-human answer before it goes in front of the client.
+After pushing, flag anything you couldn't source real data for (Step 2's "never invent
+numbers" rule) so Ray knows what still needs a human answer before it goes in front of
+the client.
 
 ## Step 6a — Before touching a live deck's structure or edit layer
 
@@ -373,10 +403,10 @@ file before doing any of the following on a deck already in live use:
   authentication from every client's live deck content, not just the one thing being
   unblocked.
 
-## Step 6b — Exporting a deck to PowerPoint
+## Step 6b — How the PowerPoint exporter works (read before extending it)
 
-When Ray asks for a `.pptx` (a "download", "the deck as slides", something to send a client or
-put in SharePoint), use the exporter — **never hand-build a deck with `python-pptx` shapes**:
+Step 6's export runs through `tools/deck_to_pptx.py` — **never hand-build a deck with
+`python-pptx` shapes**:
 
 ```bash
 python tools/deck_to_pptx.py docs/<Client>_<Deck>.html <client>.pptx --audit
@@ -413,11 +443,14 @@ Full behaviour, the layout list and the fitting cascade: [`tools/README.md`](../
 
 ## Step 7 — Handling a feedback-loop prompt
 
-Every deck has a 💬 Feedback mode: Ray leaves notes anchored to specific chapters/blocks,
-then "Generate rework prompt" compiles them into a markdown block starting `# <slug> deck —
-feedback round, <date>`, with a `## <chapter title>` heading per chapter and his notes as
-bullets underneath. When a prompt in that shape lands in a session, do all three of these —
-not just the deck rework:
+Legacy live decks have a 💬 Feedback mode: Ray leaves notes anchored to specific
+chapters/blocks, then "Generate rework prompt" compiles them into a markdown block starting
+`# <slug> deck — feedback round, <date>`, with a `## <chapter title>` heading per chapter and
+his notes as bullets underneath. For pptx-only decks the same feedback arrives as chat notes
+or an annotated/revised `.pptx` — treat either shape the same way. When a feedback round
+lands in a session, do all three of these — not just the deck rework (and for a pptx deck,
+**re-run the Step 6 export after the rework** — the round isn't done until a fresh `.pptx`
+has gone back to Ray):
 
 1. **Rework the deck.** Open `docs/<Client>_...html`, find each chapter the feedback names,
    apply the change. Same QA pass as Step 5 (bracket check, nav-count check, worker syntax

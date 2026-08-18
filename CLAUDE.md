@@ -80,6 +80,9 @@ Source: Reiss–Dentsu introduction PDF (Mar 2026). This is the governing design
 - **Cards:** White with `#E6E6E6` borders and drop shadows
 - **Footer:** "FeedSpark · Private & Confidential" left-aligned, page number right-aligned
 - **Prohibited:** No FeedSpark logo, no page number circles, no random decorative lines in slide bodies. Orange accents only where purposeful. Clean white backgrounds throughout.
+- **Client decks (.pptx)** follow the **core deck template** instead:
+  `reference-files/deck-templates/FeedSpark_Core_Deck_Template.pptx` (Inter; slate `#0F172A`;
+  orange `#F7941E`; 18 named layouts) — see "Client decks" below.
 
 ---
 
@@ -120,8 +123,21 @@ python pack.py unpacked/ output.pptx
 - Inserting a slide requires: new XML + `[Content_Types].xml` Override + `ppt/_rels/presentation.xml.rels` Relationship + `<p:sldId>` entry
 - Source files with `.pdf` extension may be zip-packaged exports — use `unzip` not PDF parsers
 
-### HTML decks
-All HTML strategy decks include the inline edit + JSON patch sync system:
+### Client decks — .pptx ONLY (Aug 2026)
+**Every new client deck ships as PowerPoint (`.pptx`) — HTML is no longer an output option**
+(Ray's standing rule). Builds run through the `/deck-generator` skill: sections are authored
+with the HTML component library as an internal intermediate, then exported via
+`tools/deck_to_pptx.py --audit` onto the machine template `tools/templates/feedspark_deck.pptx`.
+Design/element/colour/text/voice are governed by the **core deck template**
+`reference-files/deck-templates/FeedSpark_Core_Deck_Template.pptx` (the Ray-approved Superdry
+Strategy Review 2024–2026); Ray deposits further reference `.pptx` files (per deck type or per
+client) into `reference-files/deck-templates/` — read that folder before any deck build, and
+mirror new deposits into the Deck Generator module's `TEMPLATES` panel
+(`docs/FeedSpark_DeckBuilder.html`). New decks are NOT wired into the worker's `/deck/` pages.
+
+### HTML decks (legacy live decks only — no new ones)
+Decks already live before the pptx-only rule (e.g. `/deck/yumove`) keep the inline edit +
+JSON patch sync system:
 - Edit mode toggle, export/import edits, download clean HTML, data-check flags
 - See `docs/FeedSpark_Deck_LiveEdit_Feature.md` for full spec
 - **Parallel editing** (Ray edits copy live; Claude Code edits structure): `docs/WAYS_OF_WORKING.md`.
@@ -168,7 +184,7 @@ All HTML strategy decks include the inline edit + JSON patch sync system:
 GET  /                          → command center landing page (git-bundled + injected editor + Tachyon)
 GET  /workflow                  → Workflow control center (brief pipeline: Client→AM→ASPL)
 GET  /leadership                → Ray-only dashboard (OWNER_EMAIL-gated like /activity): book health, commercial burn-down, retention radar + hub for the modules folded under it — /leadership/readiness, /leadership/library, /leadership/roadmap (same gate; legacy /readiness /library /roadmap 301 here)
-GET  /deck-builder              → app module
+GET  /deck-builder              → Deck Generator module (brief output = .pptx build on the core deck template; shows the reference-files/deck-templates/ library)
 GET  /activity                  → user activity log + Build Log tab (OWNER-only: gated to OWNER_EMAIL via Cloudflare Access identity); /buildlog 301s here
 GET  /api/activity?days=N       → activity feed (owner-only 403 otherwise); all API mutations + page views are logged per Access user
 POST /api/gmail/push            → Gmail→FCC sync (no-admin path): Apps Script in Ray's mailbox pushes (a) brief replies — briefmatch.js moves ticket stages, TOKEN-ONLY matching (ibfcode/brief-id, never fuzzy unattended) — and (b) the inbox capture: every email to ray@feedspark.com NOT from @feedspark.com/@aroxo.com/@feedhero.net, classified (client via detectClient cue ladder: dossier dom → sender-domain label → display name → brand mention; ⚡ briefable score). Auth = GMAIL_PUSH_KEY secret + Access bypass on this exact path (GOOGLE_SETUP.md §8)
