@@ -260,7 +260,9 @@ KV: rules `labelwatch` ("client|mkt|ruleId" → rule), destinations `labeldest`,
 
 Monitors the **primary `g:product_type`** (the category tree) the exact same way the custom
 labels are monitored — PMAX listing-group splits and the keyword programme hang off it.
-Differences from Label Guard, everything else identical:
+Its Active-alerts rows are **clickable** exactly like Label Guard's (§5 01): inline
+Known-good · Yesterday · Now diff with the fired path pinned, biggest movers next, fed by
+the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything else identical:
 
 - **One field, one wide pivot** (top 250 category paths by volume, `+`-flagged when truncated;
   default 30 rows with show-all). Cross-dissection goes PT value → CL0–4 breakdown

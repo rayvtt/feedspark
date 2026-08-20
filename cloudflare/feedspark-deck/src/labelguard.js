@@ -572,7 +572,7 @@ export function diffSnapshots(base, cur, th, keys) {
           }
           if (c.truncated) {
             A.push({ sev: n >= big ? 'warn' : 'info', code: 'value-drop', label: k, value: v,
-              msg: CL + ' "' + v + '" fell out of the top ' + th.maxValues + ' (was ' + n + ' SKUs)', was: n, now: 0 });
+              msg: CL + ' "' + v + '" (was ' + n + ' SKUs) slipped below the guard’s tracking cut-off — this feed has more distinct values than the ' + th.maxValues + ' biggest ones the guard watches, so the value shrank sharply, was renamed, or left the feed. Open the dissection to check', was: n, now: 0 });
           } else {
             A.push({ sev: n >= big ? 'crit' : 'warn', code: 'value-gone', label: k, value: v,
               msg: CL + ' value "' + v + '" GONE - was on ' + n + ' SKUs', was: n, now: 0 });
