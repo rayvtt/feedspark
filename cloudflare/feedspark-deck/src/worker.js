@@ -1645,13 +1645,17 @@ async function runLabelScan(env, client, mkt) {
     return { error: msg, status: 502 };
   }
   // split: PT goes to its own stores; the label stores keep their exact historical shape
-  let ptSnap = null;
-  if (wantPT) {
-    ptSnap = Object.assign({}, snap, { labels: { product_type: (snap.labels || {}).product_type || { present: false } } });
+  const splitRaw = (raw) => {
+    if (!wantPT) return { lbl: raw, pt: null };
     const lblOnly = {};
-    LABEL_KEYS.forEach((k) => { lblOnly[k] = (snap.labels || {})[k]; });
-    snap = Object.assign({}, snap, { labels: lblOnly });
-  }
+    LABEL_KEYS.forEach((k) => { lblOnly[k] = (raw.labels || {})[k]; });
+    return {
+      lbl: Object.assign({}, raw, { labels: lblOnly }),
+      pt: Object.assign({}, raw, { labels: { product_type: (raw.labels || {}).product_type || { present: false } } }),
+    };
+  };
+  let { lbl: snapL, pt: ptSnap } = splitRaw(snap);
+  snap = snapL;
   // DAILY reference (Ray's rule): the pivot's Δ columns read "vs yesterday" — automatically,
   // every day, every account, every label. The first scan of each UTC day promotes the
   // outgoing snapshot to labelday:<client>:<mkt>, freezing yesterday's closing state for
@@ -1666,7 +1670,23 @@ async function runLabelScan(env, client, mkt) {
   const BK = 'labelbase:' + client + ':' + mkt;
   let base = await env.EDITS.get(BK, 'json');
   if (!base) { base = snap; await env.EDITS.put(BK, JSON.stringify(snap)); }   // first scan seeds the baseline
-  const alerts = diffSnapshots(base, snap);
+  let alerts = diffSnapshots(base, snap);
+  // a CATASTROPHIC reading (feed lost ≥30% rows, or a pile of crits at once) must survive an
+  // immediate re-read before it may land: a throttled/partial gviz answer looks exactly like
+  // a crater for one scan, and one bad read used to poison the alert board until the next
+  // rotation. Real damage is still there seconds later; garbage isn't. (Custom watches have
+  // their own two-strike — this is the estate sweep's equivalent.)
+  if (alerts.some((a) => a.code === 'rows-drop' && a.sev === 'crit') || alerts.filter((a) => a.sev === 'crit').length >= 6) {
+    let raw2 = null;
+    try { raw2 = await scanFeed(fetch, src, { client, market: mkt }, wantPT ? LABEL_KEYS.concat(PT_KEYS) : LABEL_KEYS); } catch (e) {}
+    if (!raw2 || Math.abs((raw2.rows || 0) - (snap.rows || 0)) > Math.max(1, snap.rows || 0) * 0.15) {
+      try { await logAlertActivity(env, client + ' ' + mkt + ' · catastrophic reading NOT confirmed by re-read — scan skipped (gviz instability)'); } catch (e) {}
+      return { skipped: 'unstable read — catastrophic diff not confirmed by immediate re-read', status: 202 };
+    }
+    const again = splitRaw(raw2);   // both reads agree — adopt the fresher snapshot
+    snap = again.lbl; ptSnap = again.pt;
+    alerts = diffSnapshots(base, snap);
+  }
   const active = alerts.filter((a) => a.sev !== 'info');
   if (!active.length && base.t !== snap.t) {
     base = snap; await env.EDITS.put(BK, JSON.stringify(snap));   // clean scan rolls the baseline forward
