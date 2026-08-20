@@ -1926,6 +1926,24 @@
       "file": "docs/FeedSpark_ProductTypeGuard.html",
       "pattern": "paintAlertDiff",
       "pr": 254
+    },
+    {
+      "name": "labelguard: ask-the-client compose (alerts → Gmail draft)",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "askCompose",
+      "min": 2
+    },
+    {
+      "name": "labelguard: breakdown card renderer",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "alertCardPng",
+      "min": 2
+    },
+    {
+      "name": "worker: /api/labels/askdraft route + drafts bridge",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "labeldrafts",
+      "min": 4
     }
   ]
 }
