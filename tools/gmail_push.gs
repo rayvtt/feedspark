@@ -73,16 +73,25 @@ function pushInbox() {
   // (not @feedspark.com / @aroxo.com / @feedhero.net). No in:inbox restriction —
   // archived/filed mail is still captured; the worker filters noise + classifies.
   var threads = GmailApp.search('newer_than:2d to:ray@feedspark.com -from:feedspark.com -from:aroxo.com -from:feedhero.net', 0, 40);
-  var out = [];
-  threads.forEach(function (t) {
+  // Gemini/Meet call-notes emails are FROM google.com noreply addresses and can reach you
+  // via a calendar alias rather than to:ray@ — a second targeted search catches them. The
+  // worker parses their action items into Workflow Intake rows (📞 Call source), which
+  // needs the FULL notes body, so these push a much longer snippet than ordinary mail.
+  var notes = GmailApp.search('newer_than:2d from:google.com (subject:"notes by gemini" OR subject:"meeting notes" OR subject:"meeting summary" OR subject:transcript)', 0, 10);
+  var out = [], seen = {};
+  var collect = function (t) {
     t.getMessages().forEach(function (m) {
-      if (out.length >= 80) return;
+      if (out.length >= 90) return;
+      var id = m.getId(); if (seen[id]) return; seen[id] = 1;
       var when = m.getDate().getTime();
       if (Date.now() - when > 2 * 24 * 60 * 60 * 1000) return;
-      out.push({ id: m.getId(), from: m.getFrom(), to: m.getTo(), cc: m.getCc(), subject: m.getSubject(),
-        snippet: (m.getPlainBody() || '').slice(0, 500), date: when });
+      var subj = m.getSubject() || '', from = m.getFrom() || '';
+      var isNotes = /notes by gemini|meeting (notes|summary|recap)|transcript/i.test(subj) || /(gemini|meet)[a-z.\-]*noreply@google\.com/i.test(from);
+      out.push({ id: id, from: from, to: m.getTo(), cc: m.getCc(), subject: subj,
+        snippet: (m.getPlainBody() || '').slice(0, isNotes ? 9000 : 500), date: when });
     });
-  });
+  };
+  threads.forEach(collect); notes.forEach(collect);
   if (!out.length) { console.log('FCC inbox: nothing new'); return; }
   var res = UrlFetchApp.fetch(ENDPOINT, { method: 'post', contentType: 'application/json',
     headers: { 'X-FCC-Push-Key': KEY }, payload: JSON.stringify({ inbox: out }), muteHttpExceptions: true });

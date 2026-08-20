@@ -244,6 +244,86 @@ export function classifyInbound(msg, clientDoms, opts) {
   return { client, via: ex.via, briefable, score, hints: hints.slice(0, 5) };
 }
 
+// ---- Gemini / Meet call-notes parser: the automatic "Notes by Gemini" (and Meet transcript)
+// emails that land after a client call carry the meeting's action items — parse them into
+// {call, when, actions:[{owner, task}]} so the Workflow can file each action as an Intake row
+// with a 📞 Call source (Ray's ask). Built WITHOUT a real specimen (the work mailbox is not
+// reachable from here), so detection + extraction are deliberately defensive: known subject
+// decorations, a Suggested-next-steps section when one exists, and an owner-pattern sweep
+// ("Ray to share…", "Dinesh will update…") as the fallback. A forwarded real notes email
+// would let these regexes be tightened the way the HoB result specimen tightened extractResult.
+const GEM_FROM_RE = /(gemini|meet|docs|drive|calendar|workspace)[a-z.-]*noreply@google\.com/i;
+const GEM_SUBJ_RE = /(notes by gemini|gemini notes|meeting (notes|summary|recap)|\btranscript\b)/i;
+const GEM_SEC_RE = /\b(suggested next steps|next steps|action items|actions to take|follow[- ]?ups?)\b/i;
+const GEM_ENDSEC_RE = /^(summary|details|attendees|resources|you should|please review|transcript)\b/i;
+const GEM_BULLET_RE = /^\s*(?:[-*•▪◦●∙·➤>]|\d{1,2}[.)])\s+/;
+// "<Name> to <verb>…" / "<Name> will …" — the classic minuted-action shape
+const GEM_OWNER_RE = /^([A-Z][\w'’-]+(?:\s+[A-Z][\w'’-]+)?)\s+(?:to|will|should|is to|are to|needs? to|has to)\s+(.+)$/;
+const GEM_NOT_OWNER_RE = /^(the|this|that|they|we|it|all|please|google|gemini|team|next|action|client|everyone|you|he|she|i|someone|anybody|anyone)$/i;
+function gemCallTitle(subject) {
+  let s = String(subject || '').replace(/^\s*((re|fw|fwd)\s*:\s*)+/i, '').trim();
+  const q = /[“"]([^”"]{3,120})[”"]/.exec(s);          // Gemini quotes the meeting title
+  if (q) s = q[1];
+  else s = s.replace(/^\s*(meeting\s+)?(notes|summary|recap|transcript)\s*[:\-–—]\s*/i, '');
+  return s.replace(/\s*[-–—]\s*(notes by gemini|gemini notes|notes|transcript|meeting (notes|summary|recap))\s*$/i, '')
+    .replace(/\s*[-–—]\s*\d{4}[/.-]\d{1,2}[/.-]\d{1,2}.*$/, '')   // trailing "- 2026/08/12 …" chunk
+    .trim().slice(0, 90);
+}
+function gemAction(line) {
+  let t = line.replace(GEM_BULLET_RE, '').replace(/^\[[ x]?\]\s*/i, '').replace(/\*\*/g, '').trim();
+  const m = GEM_OWNER_RE.exec(t);
+  let owner = '';
+  if (m && !GEM_NOT_OWNER_RE.test(m[1])) { owner = m[1]; t = m[2]; }
+  t = t.replace(/\s+/g, ' ').replace(/[.;\s]+$/, '').trim();
+  if (t) t = t.charAt(0).toUpperCase() + t.slice(1);
+  return { owner, task: t.slice(0, 160) };
+}
+// msg: {from, subject, snippet(plain body), date(ms)} → null when not a call-notes email
+export function parseGeminiNotes(msg) {
+  const subj = String((msg && msg.subject) || ''), from = String((msg && msg.from) || '');
+  const isNotes = /notes by gemini/i.test(subj) || (GEM_FROM_RE.test(from) && GEM_SUBJ_RE.test(subj));
+  if (!isNotes) return null;
+  const lines = String((msg && msg.snippet) || '').split(/\r?\n/);
+  const actions = [];
+  const push = (line) => {
+    const a = gemAction(line);
+    if (!a.task || a.task.length < 8 || actions.length >= 12) return;
+    if (actions.some((x) => x.task.toLowerCase() === a.task.toLowerCase())) return;
+    actions.push(a);
+  };
+  // pass 1 — an explicit next-steps/action-items section: take its bullet + owner-pattern lines
+  let secAt = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const ln = lines[i].trim();
+    if (ln.length <= 48 && GEM_SEC_RE.test(ln) && !GEM_BULLET_RE.test(lines[i]) && !/[.?!]$/.test(ln.replace(/:$/, ''))) { secAt = i; break; }
+  }
+  if (secAt >= 0) {
+    let blanks = 0;
+    for (let i = secAt + 1; i < lines.length; i++) {
+      const ln = lines[i].trim();
+      if (!ln) { if (++blanks > 2) break; continue; }
+      blanks = 0;
+      if (ln.length <= 60 && GEM_ENDSEC_RE.test(ln) && !GEM_BULLET_RE.test(lines[i])) break;   // the next section starts
+      const om = GEM_OWNER_RE.exec(ln);   // a plain line only counts as an action when a REAL name owns it
+      if (GEM_BULLET_RE.test(lines[i]) || (om && !GEM_NOT_OWNER_RE.test(om[1]))) push(lines[i]);
+      else if (actions.length && /^[a-z(]/.test(ln)) {   // a wrapped continuation of the previous item
+        const prev = actions[actions.length - 1];
+        prev.task = (prev.task + ' ' + ln.replace(/[.;\s]+$/, '')).slice(0, 160);
+      }
+    }
+  }
+  // pass 2 — no section (or an empty one): sweep the whole body for owner-pattern lines
+  if (!actions.length) {
+    for (const raw of lines) {
+      const ln = raw.trim();
+      if (!ln) continue;
+      const core = ln.replace(GEM_BULLET_RE, '').replace(/^\[[ x]?\]\s*/i, '');
+      if (GEM_OWNER_RE.test(core) && !GEM_NOT_OWNER_RE.test((GEM_OWNER_RE.exec(core) || ['', ''])[1])) push(raw);
+    }
+  }
+  return { call: gemCallTitle(subj) || 'Call', when: (msg && msg.date) || null, actions };
+}
+
 // briefs: the plain briefs map (will be mutated); messages: [{id, from, subject, snippet, date(ms)}]
 // opts: { selfRe?: RegExp (senders to skip, e.g. the account that SENDS the briefs), now?: ms, aspl?: [names] }
 export function matchGmailToBriefs(briefs, messages, opts) {

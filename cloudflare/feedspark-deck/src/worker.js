@@ -25,7 +25,7 @@
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
-import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey } from "./briefmatch.js";
+import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes } from "./briefmatch.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
 import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
@@ -516,19 +516,47 @@ export default {
         const clientDoms = {}; Object.keys(dossier).forEach((n) => { if (dossier[n] && dossier[n].dom) clientDoms[n] = dossier[n].dom; });
         const stored = (await env.EDITS.get('gmailinbox', 'json')) || [];
         const seen = {}; stored.forEach((it) => { if (it.id) seen[it.id] = 1; });
-        let added = 0, briefable = 0;
+        // Gemini/Meet call-notes emails are CALL RECORDS, not triage items: their action items
+        // are parsed into KV callactions (→ Intake rows with a 📞 Call source, Ray's ask) and the
+        // email never enters the triage queue — the noreply noise gate would eat it there anyway.
+        // Dedupe is by message id, so the 2-day rolling re-push files each call exactly once.
+        const calls = (await env.EDITS.get('callactions', 'json')) || [];
+        const haveCall = {}; calls.forEach((a) => { if (a.mid) haveCall[a.mid] = 1; });
+        let added = 0, briefable = 0, callsAdded = 0;
+        const names = Object.keys(dossier);
         for (const m of inbox) {
           if (!m || !m.id || seen[m.id]) continue;
-          const c = classifyInbound(m, clientDoms, { selfRe: selfRe2, clientNames: Object.keys(dossier) });
+          const g = parseGeminiNotes(m);
+          if (g) {
+            if (!haveCall[m.id] && g.actions.length) {
+              // client cue ladder: the meeting title alone first (a body mention could be any
+              // brand discussed), then title+body head; a brand named IN the action line wins.
+              const ex0 = detectClientEx({ subject: g.call, snippet: '' }, clientDoms, names);
+              const ex = ex0.client ? ex0 : detectClientEx({ subject: g.call, snippet: String(m.snippet || '').slice(0, 600) }, clientDoms, names);
+              g.actions.forEach((a, i) => {
+                const exA = detectClientEx({ subject: a.task, snippet: '' }, clientDoms, names);
+                calls.push({ id: m.id + '#' + i, mid: m.id, call: g.call, client: exA.client || ex.client || '',
+                  via: exA.client ? exA.via : (ex.via || ''), when: g.when || m.date || Date.now(), owner: a.owner || '', task: a.task });
+                callsAdded++;
+              });
+              haveCall[m.id] = 1;
+            }
+            continue;
+          }
+          const c = classifyInbound(m, clientDoms, { selfRe: selfRe2, clientNames: names });
           if (c.hints[0] === 'noise/self') continue;
           stored.push({ id: m.id, from: String(m.from || '').slice(0, 120), subject: String(m.subject || '(no subject)').slice(0, 160),
             snippet: String(m.snippet || '').slice(0, 220), date: m.date || Date.now(), client: c.client, briefable: c.briefable, hints: c.hints });
           seen[m.id] = 1; added++; if (c.briefable) briefable++;
         }
+        if (callsAdded) {
+          calls.sort((a, b) => (b.when || 0) - (a.when || 0));
+          await env.EDITS.put('callactions', JSON.stringify(calls.slice(0, 300)));
+        }
         stored.sort((a, b) => (b.date || 0) - (a.date || 0));
         await env.EDITS.put('gmailinbox', JSON.stringify(stored.slice(0, 120)));
-        logActivity(ctx, env, request, 'gmail-inbox', added + ' new · ' + briefable + ' briefable', 'gmail-sync');
-        return json({ ok: true, received: inbox.length, added, briefable });
+        logActivity(ctx, env, request, 'gmail-inbox', added + ' new · ' + briefable + ' briefable' + (callsAdded ? (' · ' + callsAdded + ' call actions') : ''), 'gmail-sync');
+        return json({ ok: true, received: inbox.length, added, briefable, callActions: callsAdded });
       }
 
       const messages = Array.isArray(body.messages) ? body.messages.slice(0, 200) : [];
@@ -1021,6 +1049,9 @@ export default {
       // Each item carries its triage decision (dismissed + decidedAs) so the panel can split
       // pending vs already-triaged without a second call.
       const pushed = (await env.EDITS.get('gmailinbox', 'json')) || [];
+      // call actions parsed from Gemini/Meet notes emails ride the same response — the page
+      // files them as Intake rows (📞 Call source) regardless of the triage queue's state
+      const calls = ((await env.EDITS.get('callactions', 'json')) || []).slice(0, 120);
       if (pushed.length) {
         // back-fill client on stored emails the older/weaker detector missed — the current
         // detectClient (domain label, display name, folded mentions) re-runs against the live
@@ -1049,10 +1080,10 @@ export default {
           dis[it.id] = { t: Date.now(), r: d.r || 'notask', inh: 1 }; inherited++; }
         if (inherited) ctx.waitUntil(env.EDITS.put('gmaildismissed', JSON.stringify(dis)));
         const items = pushed.slice(0, 60).map((it) => (dis[it.id] ? Object.assign({}, it, { dismissed: true, decidedAs: dis[it.id].r || 'notask' }) : it));
-        return json({ connected: true, source: 'push', items });
+        return json({ connected: true, source: 'push', items, calls });
       }
       // fallback: the original DWD pull, if a super-admin ever authorises it
-      if (!env.GOOGLE_SA_JSON || !env.GOOGLE_IMPERSONATE) return json({ connected: false, items: [] });
+      if (!env.GOOGLE_SA_JSON || !env.GOOGLE_IMPERSONATE) return json({ connected: false, items: [], calls });
       try {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/gmail.readonly', true);
         const q = encodeURIComponent('newer_than:30d -in:sent -in:chats');
@@ -1066,9 +1097,9 @@ export default {
           const h = {}; ((m.payload && m.payload.headers) || []).forEach(x => { h[x.name.toLowerCase()] = x.value; });
           items.push({ id, from: h.from || '', to: h.to || '', cc: h.cc || '', subject: h.subject || '(no subject)', date: h.date || '', snippet: (m.snippet || '').slice(0, 160) });
         }
-        return json({ connected: true, items });
+        return json({ connected: true, items, calls });
       } catch (e) {
-        return json({ connected: false, error: String((e && e.message) || e), items: [] });
+        return json({ connected: false, error: String((e && e.message) || e), items: [], calls });
       }
     }
 
