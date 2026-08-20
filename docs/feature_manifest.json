@@ -1815,7 +1815,7 @@
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "amOptionSet",
    "min": 3,
-   "pr": 0
+   "pr": 246
   },
   {
    "name": "tools: nav-parity tripwire present (identical menu on every page)",
