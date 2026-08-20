@@ -26,6 +26,7 @@
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes } from "./briefmatch.js";
+import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
 import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
@@ -589,6 +590,21 @@ export default {
         await env.EDITS.put('gmailpushlog', JSON.stringify(runlog.slice(-60)));
       } catch (e) {}
       return json({ ok: true, matched: res.matched, skipped: res.skipped, moved: res.moved, tickets: res.loggedTo });
+    }
+
+    // ---- due-today task reminders: preview + manual fire (owner-only) ----
+    // GET = dry preview of what the 12:00 GMT cron would send right now (never writes);
+    // POST = queue the reminders immediately ({force:true} re-runs after today's cron pass —
+    // the day-scoped outbox ids still make a double-send impossible).
+    if (path === '/api/tasks/remind') {
+      if (who(request) !== ownerEmail(env)) return json({ error: 'restricted to the account owner' }, 403);
+      if (request.method === 'GET') return json(await queueDueReminders(env, { dry: true }));
+      if (request.method === 'POST') {
+        let body; try { body = await request.json(); } catch (e) { body = {}; }
+        const r = await queueDueReminders(env, { force: !!body.force });
+        logActivity(ctx, env, request, 'task-remind', (r.queued || 0) + ' reminder(s) queued');
+        return json(r);
+      }
     }
 
     // the Gmail-sync run history (owner-only, rendered beside the activity stream)
@@ -1537,6 +1553,7 @@ export default {
     // without GOOGLE_SA_JSON, and label drop-off monitoring must never hinge on that credential.
     await labelCronSweep(env);
     if (!env.GOOGLE_SA_JSON) return;
+    const warmed = {};   // sheet id → freshly parsed tasks (feeds the 12:00 reminder for free)
     try {
       const sheets = (await env.EDITS.get('plansheets', 'json')) || {};
       const ids = Array.from(new Set(Object.keys(sheets).map(b => sheets[b]).filter(Boolean)));
@@ -1546,9 +1563,17 @@ export default {
         try {
           const g = await fetchGrid(id, 'Project Plan', token);
           if (g.error) continue;
-          await env.EDITS.put('planlive:' + id, JSON.stringify({ tasks: parsePlanRows(g.values, g.bg), updated: Date.now() }), { expirationTtl: 5400 });
+          const tasks = parsePlanRows(g.values, g.bg);
+          warmed[id] = tasks;
+          await env.EDITS.put('planlive:' + id, JSON.stringify({ tasks, updated: Date.now() }), { expirationTtl: 5400 });
         } catch (e) {}
       }
+    } catch (e) {}
+    // 12:00 GMT: owners get nudged about tasks due TODAY but still Open (Ray's rule). Runs off
+    // the tasks the warm loop just parsed — zero extra sheet reads at this firing.
+    try {
+      const hour = new Date(event && event.scheduledTime ? event.scheduledTime : Date.now()).getUTCHours();
+      if (hour === 12) await queueDueReminders(env, { tasksById: warmed });
     } catch (e) {}
   },
 };
@@ -2101,6 +2126,44 @@ async function queueLabelReport(env, why) {
     await logAlertActivity(env, 'report queued (' + why + ') → ' + to);
     return { ok: true, queued: true, to, note: 'report queued — the Gmail bridge sends within ~5 min' + (env.GMAIL_PUSH_KEY ? '' : ' (GMAIL_PUSH_KEY not set: bridge inactive)') };
   } catch (e) { return { ok: false, error: String((e && e.message) || e).slice(0, 140) }; }
+}
+
+// ---- due-today task reminders (12:00 GMT cron + /api/tasks/remind) ----------------------
+// Builds one email per owner (ray/steven — OWNER_EMAILS in taskremind.js) listing plan tasks
+// due TODAY whose status is still in the Open bucket, and queues them into the SAME Gmail
+// outbox Label Guard uses (the Apps Script bridge sends from Ray's own mailbox). Once per
+// UTC day (KV taskremday); outbox ids are day-scoped so a re-queue can never double-send.
+async function queueDueReminders(env, opts) {
+  opts = opts || {};
+  const now = Date.now();
+  const day = remDay(now);
+  if (!opts.force && !opts.dry) {
+    const done = await env.EDITS.get('taskremday');
+    if (done === day) return { ok: true, skipped: 'already ran today' };
+  }
+  const sheets = (await env.EDITS.get('plansheets', 'json')) || {};
+  const byId = {};   // brands sharing a sheet share its rows — group per sheet so nothing mails twice
+  Object.keys(sheets).forEach((b) => { const id = sheets[b]; if (id) (byId[id] = byId[id] || []).push(b); });
+  const groups = [];
+  for (const id of Object.keys(byId)) {
+    let tasks = opts.tasksById && opts.tasksById[id];
+    if (!tasks) { const cached = await env.EDITS.get('planlive:' + id, 'json'); tasks = (cached && cached.tasks) || null; }
+    if (!tasks) continue;
+    const bs = byId[id];
+    groups.push({ brands: bs.slice(0, 2).join(' / ') + (bs.length > 2 ? ' +' + (bs.length - 2) : ''), tasks });
+  }
+  const mails = buildDueReminders(groups, { now });
+  if (opts.dry) return { ok: true, dry: true, day, groups: groups.length, mails };
+  let queued = 0;
+  if (mails.length) {
+    const ob = (await env.EDITS.get('labeloutbox', 'json')) || [];
+    const have = {}; ob.forEach((e) => { if (e && e.id) have[e.id] = 1; });
+    mails.forEach((m) => { if (!have[m.id]) { ob.push({ id: m.id, to: m.to, subject: m.subject, body: m.body, t: now, sig: '— FeedSpark Workflow (automated 12:00 GMT task reminder)' }); queued++; } });
+    if (queued) await env.EDITS.put('labeloutbox', JSON.stringify(ob.slice(-50)));
+  }
+  await env.EDITS.put('taskremday', day);
+  await logAlertActivity(env, 'due-today reminders: ' + (mails.length ? mails.map((m) => m.owner + '×' + m.n).join(' · ') : 'none due'));
+  return { ok: true, day, queued, mails: mails.map((m) => ({ to: m.to, n: m.n })) };
 }
 
 // hourly rotation: BATCH feeds per firing keeps the combined cron (plan warm + this sweep)

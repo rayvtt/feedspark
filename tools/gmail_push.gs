@@ -55,7 +55,9 @@ function drainAlertOutbox() {
   var sent = [];
   queue.forEach(function (m) {
     try {
-      GmailApp.sendEmail(m.to, m.subject, m.body + '\n\n— FeedSpark Label Guard (automated alert)');
+      // sig: the queueing module signs its own mail (task reminders, reports); Label Guard
+      // alerts predate the field and keep the classic footer
+      GmailApp.sendEmail(m.to, m.subject, m.body + '\n\n' + (m.sig || '— FeedSpark Label Guard (automated alert)'));
       sent.push(m.id);
     } catch (e) { console.error('✗ alert email to ' + m.to + ' failed: ' + e); }
   });

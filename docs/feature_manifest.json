@@ -1893,6 +1893,24 @@
       "pattern": "'/api/presence'",
       "min": 1,
       "pr": 247
+    },
+    {
+      "name": "taskremind: due-today reminder builder",
+      "file": "cloudflare/feedspark-deck/src/taskremind.js",
+      "pattern": "buildDueReminders",
+      "min": 1
+    },
+    {
+      "name": "worker: 12:00 GMT due-today reminder queue",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "queueDueReminders",
+      "min": 3
+    },
+    {
+      "name": "worker: /api/tasks/remind route",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "api/tasks/remind",
+      "min": 1
     }
   ]
 }
