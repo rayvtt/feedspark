@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Reiss × FeedSpark — Account Introduction, Aug 2026</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&amp;display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ink:#1A1A1A;--ink-2:#333333;--muted:#767676;--line:#E6E6E6;
+  --paper:#FFFFFF;--paper-2:#F7F7F5;--paper-warm:#FEF9F2;
+  --orange:#F5A623;--orange-deep:#ED6F0B;--dark:#1C1C1C;
+  --green:#2E7D32;--red:#C62828;--blue:#1565C0;--purple:#6A1B9A;
+  --shadow:0 2px 10px rgba(0,0,0,.06);--shadow-lift:0 8px 24px rgba(0,0,0,.10);
+  --maxw:1180px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Lato',-apple-system,sans-serif;color:var(--ink-2);background:var(--paper);-webkit-font-smoothing:antialiased;line-height:1.55}
+h1,h2,h3,h4{color:var(--ink);font-weight:700;line-height:1.15;letter-spacing:-.01em}
+a{color:var(--orange-deep)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--orange-deep)}
+
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 40px}
+section{padding:104px 0}
+.band{background:var(--paper-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.band-warm{background:var(--paper-warm);border-top:1px solid #EDE3D3;border-bottom:1px solid #EDE3D3}
+
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--orange-deep);margin-bottom:14px}
+.eyebrow.on-dark{color:var(--orange)}
+.sec-title{font-size:34px;margin-bottom:6px}
+.sec-sub{font-size:15.5px;color:var(--muted);margin-bottom:44px;max-width:760px}
+
+/* topbar */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:60;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);transform:translateY(-100%);transition:transform .3s ease}
+.topbar.show{transform:translateY(0)}
+.topbar-in{max-width:var(--maxw);margin:0 auto;padding:10px 40px;min-height:56px;display:flex;align-items:center;gap:22px}
+.tb-brand{font-weight:900;font-size:13px;letter-spacing:.04em;color:var(--ink);white-space:nowrap}
+.tb-brand span{color:var(--orange-deep)}
+/* 16 chapters no longer fit on one row beside the brand, so the nav wraps. Give the rows
+   real breathing room (row-gap) and right-align both so the second row hangs under the
+   first instead of colliding with it. Above 1300px the frozen .side-nav is on screen and
+   carries the full contents, so the topbar list is redundant — hide it there. */
+.tb-nav{display:flex;gap:9px 16px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.tb-nav a{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-decoration:none;padding:2px 0;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap}
+.tb-nav a:hover,.tb-nav a.active{color:var(--ink);border-bottom-color:var(--orange)}
+.progress{position:absolute;bottom:-1px;left:0;height:2px;background:var(--orange);width:0}
+
+/* Frozen agenda — a persistent left-side jump list once there's room beside the content
+   column. Every section name is always visible (not hover-gated) — it's a live table of
+   contents, not a collapsed icon rail — with the currently-active section picked out by a
+   filled background + orange rail rather than dimming or hiding the rest. Hidden below
+   1300px, same cutoff logic as .tb-nav's own mobile hide, since there's no side margin
+   left to put it in on narrower viewports. */
+.side-nav{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:59;display:none;flex-direction:column;width:196px;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:10px;padding:8px 0;box-shadow:0 8px 28px rgba(0,0,0,.10);max-height:74vh;overflow-y:auto}
+.side-nav a{display:flex;align-items:center;gap:9px;padding:7px 14px;text-decoration:none;color:var(--muted);border-left:2px solid transparent;white-space:nowrap;transition:background .2s,color .2s,border-color .2s}
+.side-nav a .num{font-size:10px;font-weight:800;letter-spacing:.06em;width:16px;flex-shrink:0}
+.side-nav a .lbl{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.side-nav a:hover{color:var(--ink);border-left-color:rgba(237,111,11,.45)}
+.side-nav .side-grp{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.6;padding:10px 14px 3px;margin-top:2px;border-top:1px solid var(--line)}
+.side-nav a.active{color:var(--ink);border-left-color:var(--orange);background:rgba(237,111,11,.09);font-weight:800}
+@media(min-width:1300px){.side-nav{display:flex}.tb-nav{display:none}}
+
+/* hero */
+.hero{background:var(--dark);color:#fff;min-height:88vh;display:flex;align-items:center;padding:120px 0 90px;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;top:0;left:0;width:112px;height:9px;background:var(--orange)}
+.hero:after{content:"";position:absolute;top:9px;left:0;right:0;height:1px;background:rgba(255,255,255,.16)}
+.hero h1{color:#fff;font-size:64px;font-weight:900;letter-spacing:-.025em;margin:18px 0 22px}
+.hero h1 em{font-style:normal;color:var(--orange)}
+.hero .lede{font-size:19px;color:rgba(255,255,255,.72);max-width:620px;font-weight:300}
+.hero-rule{width:64px;height:3px;background:var(--orange);margin:34px 0 26px}
+.hero-meta{display:flex;gap:36px;flex-wrap:wrap;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:700}
+.hero-meta b{display:block;color:#fff;font-size:15px;letter-spacing:0;text-transform:none;font-weight:700;margin-top:5px}
+.scrollcue{margin-top:56px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:700;display:flex;align-items:center;gap:10px}
+.scrollcue i{display:block;width:26px;height:1px;background:var(--orange);animation:cue 1.8s ease-in-out infinite}
+@keyframes cue{0%,100%{transform:scaleX(1)}50%{transform:scaleX(1.7)}}
+
+/* chapter divider */
+.chapter{background:var(--dark);color:#fff;padding:88px 0;position:relative;overflow:hidden}
+.chapter-in{max-width:var(--maxw);margin:0 auto;padding:0 40px;position:relative;z-index:2}
+.ch-num{position:absolute;right:40px;top:50%;transform:translateY(-50%);font-size:190px;font-weight:900;line-height:1;color:transparent;-webkit-text-stroke:1.5px rgba(245,166,35,.42);letter-spacing:-.04em;user-select:none;z-index:1}
+.chapter h2{color:#fff;font-size:42px;font-weight:900;letter-spacing:-.025em;margin-bottom:12px}
+.chapter p{color:rgba(255,255,255,.6);font-size:15.5px;max-width:640px}
+.ch-rule{width:48px;height:3px;background:var(--orange);margin-bottom:24px}
+
+/* agenda */
+.agenda{display:grid;grid-template-columns:1fr 1fr;gap:0 60px}
+.ag-row{display:grid;grid-template-columns:44px 1fr;gap:18px;padding:16px 0;border-bottom:1px solid var(--line)}
+.ag-num{font-size:13px;font-weight:900;color:var(--orange);letter-spacing:.06em;padding-top:2px}
+.ag-t{font-size:15.5px;font-weight:700;color:var(--ink);margin-bottom:3px}
+.ag-d{font-size:12.5px;color:var(--muted)}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:40px}
+.stat{background:var(--paper);padding:26px 22px}
+.stat .n{font-size:40px;font-weight:900;color:var(--ink);letter-spacing:-.03em;line-height:1}
+.stat .n small{font-size:19px;font-weight:700;color:var(--muted)}
+.stat .l{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:9px}
+
+/* cards */
+.card{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:28px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.card h4{font-size:15px;margin-bottom:12px}
+.card p{font-size:14px;color:var(--ink-2)}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+thead th{background:var(--dark);color:#fff;text-align:left;padding:11px 14px;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even){background:var(--paper-2)}
+.tbl-wrap{border:1px solid var(--line);box-shadow:var(--shadow);background:var(--paper);overflow-x:auto}
+
+.pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:2px;white-space:nowrap}
+.p-done{background:rgba(46,125,50,.10);color:var(--green)}
+.p-prog{background:rgba(245,166,35,.16);color:var(--orange-deep)}
+.p-open{background:#EEE;color:var(--muted)}
+.p-block{background:rgba(237,111,11,.10);color:var(--orange-deep);border:1px solid rgba(237,111,11,.28)}
+
+/* Compact market wall — 50+ markets as small status chips instead of one row each, so the
+   full footprint reads in one screen instead of a scroll. Reuses the .pill palette (green
+   live, solid orange = earlier wave, outlined orange = later wave) rather than introducing
+   new colours, per the design system's "orange accents only where purposeful" rule. */
+.mkt-wall{display:flex;flex-wrap:wrap;gap:6px;padding:16px;background:var(--paper-2);border:1px solid var(--line);border-radius:8px}
+.mkt-wall .pill{font-size:10.5px}
+.mkt-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--muted)}
+.mkt-legend span{display:inline-flex;align-items:center;gap:6px}
+.mkt-legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+/* Country code checklist popup — chapter 14's schedule table is dense with 2-letter codes;
+   this is a lookup, not decoration, and doubles as Ray's own launch-tracking checklist
+   (checked state persists per-browser via localStorage, not shared/synced). */
+.cc-key{position:relative;margin-bottom:16px}
+.cc-toggle{font-size:12px;font-weight:700;letter-spacing:.02em;padding:8px 14px;border:1px solid var(--line);border-radius:20px;background:#fff;cursor:pointer;color:var(--ink-2)}
+.cc-toggle:hover{border-color:var(--orange)}
+.cc-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-lift);padding:8px;width:300px;max-height:340px;overflow-y:auto}
+.cc-panel[hidden]{display:none}
+.cc-row{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;font-size:13px;cursor:pointer}
+.cc-row:hover{background:var(--paper-2)}
+.cc-row input{margin:0;cursor:pointer}
+.cc-code{font-weight:800;font-size:11px;letter-spacing:.04em;color:var(--orange-deep);width:30px;flex-shrink:0}
+.cc-name{color:var(--ink-2)}
+.cc-row input:checked ~ .cc-name{text-decoration:line-through;color:var(--muted)}
+
+/* bars */
+.bars{display:flex;flex-direction:column;gap:16px}
+.bar-row .bl{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.bar-row .bl span{color:var(--muted);font-weight:400}
+.track{height:7px;background:var(--paper-2);border:1px solid var(--line)}
+.fill{height:100%;width:0;background:var(--orange);transition:width 1.1s cubic-bezier(.22,.61,.36,1)}
+.fill.green{background:var(--green)}
+.fill.grey{background:#C9C9C9}
+.fill.red{background:var(--red)}
+
+/* protocol cards */
+.proto{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px;position:relative;overflow:hidden}
+.proto:before{content:"";position:absolute;top:0;left:0;right:0;height:4px}
+.proto.g:before{background:var(--green)}
+.proto.b:before{background:var(--blue)}
+.proto.p:before{background:var(--purple)}
+.proto .tag{font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px}
+.proto.g .tag{color:var(--green)}
+.proto.b .tag{color:var(--blue)}
+.proto.p .tag{color:var(--purple)}
+.proto h4{font-size:17px;margin-bottom:4px}
+.proto .desc{font-size:12px;font-style:italic;color:var(--muted);margin-bottom:14px}
+.proto ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.proto li{padding-left:14px;position:relative;margin-bottom:8px}
+.proto li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%}
+.proto.g li:before{background:var(--green)}
+.proto.b li:before{background:var(--blue)}
+.proto.p li:before{background:var(--purple)}
+
+/* tachyon flow */
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--line);border:1px solid var(--line)}
+.flow-step{background:var(--paper);padding:24px 20px;position:relative}
+.flow-step:not(:last-child):after{content:"→";position:absolute;right:-7px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--orange);font-weight:900;z-index:2}
+.fs-num{font-size:11px;font-weight:900;letter-spacing:.2em;color:var(--orange);margin-bottom:10px}
+.flow-step h4{font-size:14px;margin-bottom:6px}
+.flow-step p{font-size:12.5px;color:var(--muted)}
+
+/* maturity tiers */
+.tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.tier{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:24px 20px;position:relative}
+.tier.here{border-color:var(--orange);border-width:2px;box-shadow:var(--shadow-lift)}
+.tier .flag{position:absolute;top:-11px;left:20px;background:var(--orange);color:#fff;font-size:9.5px;font-weight:900;letter-spacing:.13em;text-transform:uppercase;padding:4px 9px}
+.tier .tn{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:var(--orange-deep);margin-bottom:8px}
+.tier h4{font-size:17px;margin-bottom:3px}
+.tier .ts{font-size:12px;color:var(--muted);font-style:italic;margin-bottom:14px}
+.tier ul{list-style:none;font-size:13px;color:var(--ink-2)}
+.tier li{padding-left:14px;position:relative;margin-bottom:9px}
+.tier li:before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;background:var(--orange);border-radius:50%}
+.tier.done h4:after{content:" ✓";color:var(--green)}
+
+/* interactive panel */
+.agent{display:grid;grid-template-columns:1fr 1.15fr;gap:0;border:1px solid var(--line);box-shadow:var(--shadow-lift);background:var(--paper)}
+.agent-l{padding:32px;border-right:1px solid var(--line);background:var(--paper-2)}
+.agent-l h4{font-size:14px;margin-bottom:6px}
+.agent-l>p{font-size:13px;color:var(--muted);margin-bottom:20px}
+.qs{display:flex;flex-direction:column;gap:9px}
+.q{text-align:left;font-family:inherit;font-size:13.5px;color:var(--ink-2);background:var(--paper);border:1px solid var(--line);padding:12px 14px;cursor:pointer;transition:.18s;line-height:1.4}
+.q:hover{border-color:var(--orange);transform:translateX(3px)}
+.q.active{border-color:var(--orange);border-left:3px solid var(--orange);background:#fff;box-shadow:var(--shadow);font-weight:700;color:var(--ink)}
+.q:focus-visible{outline:2px solid var(--orange-deep);outline-offset:2px}
+.agent-r{padding:32px;min-height:340px}
+.ar-head{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:16px}
+.attr-name{font-size:22px;font-weight:900;color:var(--ink);letter-spacing:-.02em;margin-bottom:4px}
+.attr-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--orange-deep);margin-bottom:18px}
+.attr-why{font-size:14px;color:var(--ink-2);margin-bottom:20px}
+.feedrow{background:var(--dark);padding:16px 18px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#E8E8E8;line-height:1.65;overflow-x:auto}
+.feedrow .k{color:var(--orange)}
+.feedrow .c{color:#7A7A7A}
+.attr-note{font-size:12.5px;color:var(--muted);margin-top:16px;padding-left:12px;border-left:2px solid var(--orange)}
+.fade-swap{animation:sw .34s ease}
+@keyframes sw{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* scorecard */
+.sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.sc-cell{background:var(--paper);padding:22px}
+.sc-cell .sc-bar{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.sc-cell .sc-pct{font-size:32px;font-weight:900;letter-spacing:-.03em;line-height:1}
+.sc-cell .sc-label{font-size:14px;font-weight:700;color:var(--ink)}
+.sc-cell .sc-note{font-size:12.5px;color:var(--muted);margin-top:6px}
+.sc-cell .sc-tgt{font-size:11.5px;color:var(--green);margin-top:4px;font-weight:700}
+.sc-cell .sc-warn{font-size:11.5px;color:var(--red);margin-top:4px;font-weight:700}
+
+/* roadmap */
+.road{display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
+.mo{background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);padding:22px 18px;display:flex;flex-direction:column}
+.mo.peak{border-color:var(--orange);border-width:2px}
+.mo-m{font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:900;color:var(--ink);margin-bottom:12px}
+.mo-s{font-size:9.5px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;align-self:flex-start;margin-bottom:14px}
+.s-close{background:rgba(46,125,50,.10);color:var(--green)}
+.s-build{background:rgba(245,166,35,.18);color:var(--orange-deep)}
+.s-next{background:#EEE;color:var(--muted)}
+.s-peak{background:var(--orange);color:#fff}
+.mo h4{font-size:14px;margin-bottom:8px}
+.mo ul{list-style:none;font-size:12.5px;color:var(--ink-2);margin-top:auto}
+.mo li{padding-left:13px;position:relative;margin-bottom:9px;line-height:1.45}
+.mo li:before{content:"";position:absolute;left:0;top:7px;width:4px;height:4px;background:var(--orange);border-radius:50%}
+.mo li b{color:var(--ink)}
+
+/* callout + note */
+.callout{background:var(--orange);color:#fff;padding:24px 28px;margin-top:32px}
+.callout h4{color:#fff;font-size:15px;margin-bottom:6px}
+.callout p{font-size:14px;color:rgba(255,255,255,.95)}
+.note{background:var(--paper-2);border:1px solid var(--line);border-left:3px solid var(--orange);padding:18px 22px;font-size:13.5px;color:var(--ink-2);margin-top:28px}
+.note b{color:var(--ink)}
+
+.chk{display:inline-block;font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--orange-deep);border:1px solid var(--orange);border-radius:2px;padding:0 4px;margin-left:5px;vertical-align:super;cursor:help}
+body.hide-checks .chk{display:none}
+.flagbtn{margin-left:auto;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:transparent;border:1px solid var(--line);color:var(--muted);padding:5px 10px;cursor:pointer;transition:.2s;white-space:nowrap}
+.flagbtn[aria-pressed="true"]{border-color:var(--orange);color:var(--orange-deep);background:rgba(245,166,35,.08)}
+
+/* close */
+.close{background:var(--dark);color:#fff;padding:96px 0}
+.close h2{color:#fff;font-size:44px;font-weight:900;margin-bottom:10px}
+.contacts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:8px}
+.ct{border-top:2px solid var(--orange);padding-top:16px}
+.ct b{display:block;color:#fff;font-size:16px;font-weight:700}
+.ct span{display:block;font-size:12.5px;color:rgba(255,255,255,.5);margin-top:2px}
+.ct a{display:block;font-size:13px;color:var(--orange);text-decoration:none;margin-top:8px}
+.footmark{position:fixed;left:0;bottom:0;z-index:55;background:rgba(255,255,255,.9);border-top:1px solid var(--line);border-right:1px solid var(--line);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:7px 16px;backdrop-filter:blur(6px)}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s cubic-bezier(.22,.61,.36,1)}
+.rv.in{opacity:1;transform:none}
+
+@media(max-width:1000px){.stats{grid-template-columns:repeat(2,1fr)}.tiers,.road,.pipe,.flow,.grid-4{grid-template-columns:1fr 1fr}.agent{grid-template-columns:1fr}.agent-l{border-right:0;border-bottom:1px solid var(--line)}.agenda{grid-template-columns:1fr}.hero h1{font-size:44px}.ch-num{font-size:120px;opacity:.5}.contacts{grid-template-columns:1fr}}
+@media(max-width:640px){.wrap,.topbar-in,.chapter-in{padding:0 22px}section{padding:64px 0}.stats,.tiers,.road,.grid-2,.grid-3,.pipe,.flow,.sc-grid{grid-template-columns:1fr}.hero h1{font-size:34px}.sec-title{font-size:26px}.chapter h2{font-size:30px}.tb-nav{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}html{scroll-behavior:auto}}
+</style>
+</head>
+<body class="">
+<div class="topbar" id="topbar">
+<div class="topbar-in">
+<div class="tb-brand">Feed<span>Spark</span> × Reiss</div>
+<nav class="tb-nav"><a class="" href="#c1">01 Scope</a>
+<a class="" href="#c2">02 Landscape</a>
+<a class="" href="#c3">03 Spark</a>
+<a class="" href="#c4">04 Fit</a>
+<a class="" href="#c5">05 Cases</a>
+<a class="" href="#c6">06 Recap</a>
+<a class="" href="#c7">07 Value</a>
+<a class="" href="#c8">08 Wins</a>
+<a class="" href="#c9">09 Team</a>
+</nav>
+<div class="progress" id="progress" style="width: 0%;"></div>
+</div>
+</div>
+<nav class="side-nav"><a href="#c1"><span class="num">01</span><span class="lbl">Scope</span></a>
+<a href="#c2"><span class="num">02</span><span class="lbl">Landscape</span></a>
+<a href="#c3"><span class="num">03</span><span class="lbl">Spark</span></a>
+<a href="#c4"><span class="num">04</span><span class="lbl">Fit</span></a>
+<a href="#c5"><span class="num">05</span><span class="lbl">Cases</span></a>
+<a href="#c6"><span class="num">06</span><span class="lbl">Recap</span></a>
+<a href="#c7"><span class="num">07</span><span class="lbl">Value</span></a>
+<a href="#c8"><span class="num">08</span><span class="lbl">Wins</span></a>
+<a href="#c9"><span class="num">09</span><span class="lbl">Team</span></a>
+</nav>
+<div class="footmark">FeedSpark · Private &amp; Confidential</div>
+<!-- ================= HERO ================= -->
+<header class="hero">
+<div class="wrap">
+<div class="eyebrow on-dark">Account Introduction · Aug 2026</div>
+<h1>Reiss <br/></h1>
+<div class="hero-rule"></div>
+<p class="lede">"The feed becomes transaction infrastructure - In agentic commerce, a feed error can affect not only visibility but also the agent's recommendation,
+cart logic, displayed total, legal notice and ability to complete checkout. Accuracy, identifiers and
+policy data become commercial controls"<br/>Google </p>
+<div class="hero-meta" style="margin-top:40px">
+<div>Client<b>Reiss</b></div>
+<div>Market<b>UK + 29 markets</b></div>
+<div>Cycle<b>Account introduction · Aug 2026</b></div>
+</div>
+<div class="scrollcue"><i></i> Scroll</div>
+</div>
+</header>
+<!-- ================= AGENDA ================= -->
+<section>
+<div class="wrap">
+<div class="eyebrow rv in">Agenda</div>
+<h2 class="sec-title rv in">What we'll cover</h2>
+<p class="sec-sub rv in">Nine sections, three sources — all verified. The live Project Plan (469 tracked initiatives), FeedHero's full-catalogue audit and per-ticket time log, and the two-year A/B test archive: the same numbers behind the FY25/26 Strategy Review. Where sources disagree, the most direct measurement wins.</p>
+<div class="agenda rv in">
+<div></div>
+<div></div>
+<div class="ag-row"><div class="ag-num">01</div><div><div class="ag-t">Service scope &amp; scale</div><div class="ag-d">29 markets · 60 feeds · 179,646 confirmed SKUs in GB/DE/FR</div></div></div>
+<div class="ag-row"><div class="ag-num">02</div><div><div class="ag-t">The AI landscape</div><div class="ag-d">Why agentic commerce changes discovery for fashion</div></div></div>
+<div class="ag-row"><div class="ag-num">03</div><div><div class="ag-t">Spark AI engine (Tachyon)</div><div class="ag-d">Intent generation, enrichment, visual harvest</div></div></div>
+<div class="ag-row"><div class="ag-num">04</div><div><div class="ag-t">Tech fit</div><div class="ag-d">Why the stack fits Reiss specifically</div></div></div>
+<div class="ag-row" style="border-bottom:0"><div class="ag-num">05</div><div><div class="ag-t">Case studies / test wins</div><div class="ag-d">Proof from this account, then the wider FeedSpark book</div></div></div>
+<div class="ag-row"><div class="ag-num">06</div><div><div class="ag-t">Review &amp; project recap</div><div class="ag-d">469 tasks in plan · 447 delivered</div></div></div>
+<div class="ag-row"><div class="ag-num">07</div><div><div class="ag-t">The value delivered</div><div class="ag-d">1,182.25 hours logged — 45% of them non-billable</div></div></div>
+<div class="ag-row"><div class="ag-num">08</div><div><div class="ag-t">Number of wins / results</div><div class="ag-d">2-year A/B archive, 38 tests, honestly scored</div></div></div>
+<div class="ag-row" style="border-bottom:0"><div class="ag-num">09</div><div><div class="ag-t">Team &amp; ways of working</div><div class="ag-d">Who runs what, and how work moves</div></div></div>
+</div>
+</div>
+</section>
+<div class="chapter" id="c1"><div class="ch-num">01</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter one</div><h2>Service Scope &amp; Scale</h2><p>29 markets, 60 feeds, one catalogue — the shape of the account.</p></div></div>
+<section>
+<div class="wrap">
+<div class="stats rv in">
+<div class="stat"><div class="n">29</div><div class="l">Markets</div></div>
+<div class="stat"><div class="n">60</div><div class="l">Feeds</div></div>
+<div class="stat"><div class="n">2</div><div class="l">Active channels — Google Shopping, Meta</div></div>
+<div class="stat"><div class="n">1,182<small>.25</small></div><div class="l">Hours delivered — GB/DE/FR/IE, 13mo log</div></div>
+</div>
+<div class="tbl-wrap rv in" style="margin-top:24px">
+<table><thead><tr><th>Market</th><th style="width: 20%;">Live SKUs (FeedHero audit) - sourcefeed</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><b>GB</b></td><td>60,345</td><td><span class="pill p-done">Confirmed — full catalogue</span></td></tr>
+<tr><td style="padding-left:22px;color:var(--muted)">└ GB, live Shopping feed</td><td>19,372</td><td><span class="pill p-open">In-stock only</span></td></tr>
+<tr><td><b>DE</b></td><td>59,093</td><td><span class="pill p-done">Confirmed — full catalogue</span></td></tr>
+<tr><td><b>FR</b></td><td>60,208</td><td><span class="pill p-done">Confirmed — full catalogue</span></td></tr>
+<tr><td colspan="3" style="text-align:center;color:var(--muted);font-style:italic">- pre-audited on our 3 core markets -</td></tr>
+</tbody></table>
+</div>
+<div class="note rv in"><b>The SKU numbers are audited, not estimated.</b> The market rows are FeedHero's own live audit of the full catalogue in each market — <b>179,646 real SKUs</b>, not a sample, audited directly across GB/DE/FR. The hours tile is a second, separate source — FeedHero's per-task time log, broken down fully in chapter 7. The other 26 markets and their feeds aren't audit-confirmed either way yet.</div>
+</div>
+</section>
+<!-- ================= CH 02 — UNIT / TECH STACK ================= -->
+<div class="chapter" id="c2"><div class="ch-num">02</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter two</div><h2>The AI Landscape</h2><p>Reiss shoppers don't only search anymore — they're using LLMs. Three pipelines decide whether Reiss is in the answer.</p></div></div>
+<section class="band-warm">
+<div class="wrap">
+<div class="eyebrow rv in">The shift</div>
+<h2 class="sec-title rv in">Search is shifting to AI answers</h2>
+<p class="sec-sub rv in">"What should I wear to a summer wedding?" — it might be answered from training data, a live web crawl, or the Merchant Center feed. The only way to win is rich, accurate, consistent product data across all three.</p>
+<div class="stats rv in" style="margin-bottom:44px">
+<div class="stat"><div class="n" style="font-size:36px">−25%</div><div class="l">Traditional search volume drop (Gartner)</div></div>
+<div class="stat"><div class="n" style="font-size:36px">&gt;60%</div><div class="l">Google searches end without a click</div></div>
+<div class="stat"><div class="n" style="font-size:36px">~60%</div><div class="l">Consumers use AI in the shopping journey</div></div>
+<div class="stat"><div class="n" style="font-size:36px">50+</div><div class="l">Feed attributes to enrich for AI readiness</div></div>
+<div class="stat"><div class="n" style="font-size:36px">15m</div><div class="l">Updates per minute ChatGPT accepts</div></div>
+</div>
+<div class="grid-3 rv in">
+<div class="card"><h4>Zero-click is accelerating</h4><p>AI overviews and agentic assistants resolve queries without a click. Reiss is either in that answer, or it doesn't exist for that shopper.</p></div>
+<div class="card"><h4>The model picks the product</h4><p>LLMs read structured feeds, attributes and reviews. The FY25/26 live-feed audit read titles averaging 53 characters and 42% product-highlight coverage — the model gets less than the catalogue could give it.</p></div>
+<div class="card"><h4>Fashion is answer-shaped</h4><p>Fit, occasion, fabric, size availability — every purchase decision is a question about a specific SKU in a specific size, and that's exactly what these surfaces answer.</p></div>
+</div>
+</div>
+</section>
+<section>
+<div class="wrap">
+<div class="eyebrow rv in">Agentic commerce</div>
+<h2 class="sec-title rv in">Three protocols for agent-led shopping</h2>
+<p class="sec-sub rv in">Emerging open standards — they explain why the enrichment work in chapter 3 matters.</p>
+<div class="grid-3 rv in">
+<div class="proto g">
+<div class="tag">UCP — Universal Commerce Protocol</div>
+<h4>Google, Shopify, Target, Walmart</h4>
+<div class="desc">Common language for AI commerce</div>
+<ul><li>Agents handle discounts, loyalty, subscriptions</li><li>Checkout inside the AI conversation</li><li>Activated via <code>native_commerce</code> in Merchant Center</li></ul>
+</div>
+<div class="proto b">
+<div class="tag">MCP — Model Context Protocol</div>
+<h4>Anthropic, adopted by Shopify</h4>
+<div class="desc">Real-time data access for AI assistants</div>
+<ul><li>Live inventory, pricing, order status via API</li><li>Relevant later, once stock-flag accuracy (chapter 6) is fixed</li></ul>
+</div>
+<div class="proto p">
+<div class="tag">ACP — Agentic Commerce Protocol</div>
+<h4>OpenAI (powers ChatGPT Shopping)</h4>
+<div class="desc">Instant checkout inside ChatGPT</div>
+<ul><li>Integrates with Stripe, PayPal</li><li>Currently US-only for checkout; discovery is global</li></ul>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= CH 09 — SPARK AI ENGINE (TACHYON) ================= -->
+<div class="chapter" id="c3"><div class="ch-num">03</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter three</div><h2>Spark AI Engine (Tachyon)</h2><p>Intent generation, description enrichment, visual attribute harvest.</p></div></div>
+<section class="band">
+<div class="wrap">
+<div class="flow rv in" style="margin-bottom:32px">
+<div class="flow-step"><div class="fs-num">01</div><h4>Feed extraction</h4><p>Tachyon reads live Reiss product data — title, description, colour, material, size, price.</p></div>
+<div class="flow-step"><div class="fs-num">02</div><h4>Intent generation</h4><p>LLM generates 20–40 long-tail intent phrases per SKU from the real attributes already in the feed.</p></div>
+<div class="flow-step"><div class="fs-num">03</div><h4>Scoring &amp; validation</h4><p>Terms scored against search-term reports; winners selected per SKU.</p></div>
+<div class="flow-step"><div class="fs-num">04</div><h4>Feed injection</h4><p>Winning terms embedded in title, description, product highlights — closing the product-highlight gap (the FY25/26 audit read 58% of SKUs with none).</p></div>
+</div>
+<div class="grid-2 rv in">
+<div class="card" style="border-left:3px solid var(--orange)">
+<h4>Reiss example — Stanton Petite trousers</h4>
+<p style="font-size:13px;color:var(--muted);margin-bottom:14px">Input (real SKU from the export): Cream · Cotton · Petite · Size 4 · £58 sale</p>
+<div style="background:var(--dark);padding:16px;font-family:ui-monospace,monospace;font-size:12px;color:#E8E8E8;line-height:1.8">
+<span style="color:var(--orange)">AI-generated intent terms:</span><br/>
+          "petite wide-leg trousers for short women"<br/>
+          "cream corduroy trousers office wear"<br/>
+          "cotton wide-leg trousers under £60"<br/>
+          "petite fit trousers 5ft 3in and under"<br/>
+<span style="color:#7A7A7A">// 20-40 generated, top 4-6 used per SKU</span>
+</div>
+</div>
+<div class="card">
+<h4>Why this matters at 29-market scale</h4>
+<p>Manually writing intent-rich copy for ~20K SKUs across 29 markets isn't a resourcing question, it's a scaling question. Tachyon generates the long-tail language at catalogue scale from data that's already 100%-complete on the structural side (colour, material, size, product type, gender).</p>
+<p style="margin-top:12px;font-size:13px;color:var(--muted)">The title-fix precedent (chapter 8) already proved the AOT pipeline can touch every SKU — Tachyon extends the same reach to descriptions and highlights.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= CH 10 — GOOGLE CONVERSATIONAL ATTRIBUTES ================= -->
+<div class="chapter" id="c4"><div class="ch-num">04</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter four</div><h2>Tech Fit</h2><p>Why the FeedSpark stack fits a 29-market fashion retailer — and where the fit isn't finished yet.</p></div></div>
+<section class="band">
+<div class="wrap">
+<div class="grid-4 rv in">
+<div class="card"><h4>One stack, full catalogue</h4><p>FeedHero + Tachyon run the same pipeline across all 60 feeds and 29 markets — proven on GB/DE/FR's 100% AOT title coverage, extending next to the 26 markets not yet audited.</p></div>
+<div class="card"><h4>Proven at scale</h4><p>The same title-quality methodology behind the verified de-duplication fix already took GB from 39% to 0.1% duplicate titles — the fix works, the remaining task is reaching every market (chapter 8).</p></div>
+<div class="card"><h4>Golden Record discipline</h4><p>99.9% attribute-completeness target — core structural fields read 100% in the FY25/26 feed export; the gap the feed shows is content depth (keywords, descriptions, highlights), not missing data.</p></div>
+<div class="card"><h4>One partner per channel</h4><p>Google Shopping and Meta run off the same optimisation engine today — LIA is live in IE, giving a template to extend Click &amp; Collect to other markets as the account grows.</p></div>
+</div>
+</div>
+</section>
+<!-- ================= CLOSE ================= -->
+<!-- ================= CH 05 — CASE STUDIES / TEST WINS ================= -->
+<div class="chapter" id="c5"><div class="ch-num">05</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter five</div><h2>Case Studies / Test Wins</h2><p>Proof from this account first, then the wider FeedSpark book — every figure from a delivered test, not a benchmark deck.</p></div></div>
+<section>
+<div class="wrap">
+<div class="eyebrow rv in">On this account</div>
+<h2 class="sec-title rv in">Reiss's own verified proof</h2>
+<p class="sec-sub rv in">Three results from this account's archive — the full 38-test record is in chapter 8.</p>
+<div class="grid-3 rv in" style="margin-bottom:44px">
+<div class="card" style="border-left:3px solid var(--green)"><h4>Title de-duplication — verified in the live feed</h4><p>39% of titles were flagged as duplicated across the catalogue. Routed through auto-optimised-title and re-checked directly in the live feed: down to 0.1% (4 rows, 2 pairs). The fix didn't just ship — it worked.</p></div>
+<div class="card"><h4>AI Search Intent titles beat the control twice</h4><p>Search-intent phrasing in titles outperformed the unmodified control in May 2026: Mens +15.7% impressions / +17.9% clicks, Womens +14.6% / +7.1%.</p></div>
+<div class="card"><h4>Local Language vs. EN — 16 markets, reading now</h4><p>Market-native copy against English-language Shopping campaigns across 16 EU/ME markets. In progress — the read lands with the next review cycle.</p></div>
+</div>
+<div class="eyebrow rv in">Across the FeedSpark book</div>
+<h2 class="sec-title rv in">The same levers, proven on other accounts</h2>
+<p class="sec-sub rv in">Delivered results from YuMOVE (pet supplements, UK) — a different category, the same feed-optimisation playbook. Client-specific numbers stay with their client; these are cited as YuMOVE's results, not Reiss projections.</p>
+<div class="grid-3 rv in">
+<div class="card"><h4>Benefit copy in titles: +24.7%</h4><p>Rewriting titles to lead with the product's benefit lifted performance +24.7% vs. control — YuMOVE, completed test.</p></div>
+<div class="card"><h4>"Multivitamins" keyword: +126.62%</h4><p>A single category-keyword injection more than doubled impressions on the affected range — YuMOVE, completed test.</p></div>
+<div class="card"><h4>Health-condition keywords: +30%</h4><p>Naming the health condition the product addresses in the feed copy delivered a +30% lift — YuMOVE, completed test.</p></div>
+</div>
+</div>
+</section>
+<div class="chapter" id="c6"><div class="ch-num">06</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter six</div><h2>Review &amp; Project Recap</h2><p>469 tasks, from Jan 2025 – July 2026</p></div></div>
+<section>
+<div class="wrap">
+<div class="grid-4 rv in" style="margin-bottom:36px">
+<div class="card"><div style="font-size:44px;font-weight:900;color:var(--green);line-height:1">447</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Done</div></div>
+<div class="card"><div style="font-size:44px;font-weight:900;color:var(--orange-deep);line-height:1">22</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Open</div></div>
+<div class="card"><div style="font-size:44px;font-weight:900;color:var(--ink);line-height:1">0</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">On hold</div></div>
+<div class="card"><div style="font-size:44px;font-weight:900;color:var(--ink);line-height:1">95%</div><div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:8px">Programme progress</div></div>
+</div>
+<div class="tbl-wrap rv in">
+<table><thead><tr><th style="width:38%">Action</th><th>Owner</th><th>Status</th><th style="width:26%">Outcome</th></tr></thead>
+<tbody>
+<tr><td>QBR Strategy — in person</td><td>FS × Reiss</td><td>Full account review across UK + international</td></tr>
+<tr><td>Recrawl titles — PDP vs. titles received from NEXT</td><td>Ray / ASPL</td><td><span class="pill p-done">✓ Done</span></td><td>Title-source accuracy corrected</td></tr>
+<tr><td>39% duplicated titles — routed through auto-optimised-title</td><td>Ray</td><td><span class="pill p-done">✓ Done</span></td><td>Confirmed fixed — see chapter 8</td></tr>
+<tr><td>Weak keyword targeting — new Keyword Planner</td><td>Ezgi / Eliza</td><td><span class="pill p-done">✓ Done</span></td><td>Planner tool live — rollout still early</td></tr>
+<tr><td>IE LIA (Click &amp; Collect) set up</td><td>Ray / Eliza</td><td><span class="pill p-done">✓ Done</span></td><td>Local Inventory Ads live in IE</td></tr>
+<tr><td>A/B Titles Test — [Search Intent] vs. none</td><td>Ezgi</td><td style=""><span style="color: rgb(46, 125, 50); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; background-color: rgba(46, 125, 50, 0.1);">✓ Done</span></td><td>Reading early signal</td></tr>
+<tr><td style="">Product type — optimised to 5-depth granularity</td><td style="">Ray/ ASPL</td><td><span class="pill p-prog">In progress</span></td><td>Deeper taxonomy in build</td></tr>
+<tr><td>Stock_flag vs. actual availability</td><td>Ray / Aimee</td><td><span class="pill p-block">⚑ Awaiting NEXT</span></td><td>Blocked on NEXT's stock-flag fix</td></tr>
+<tr><td>Item Group ID → Item No. switchover</td><td>Eliza / Ray</td><td style=""><span style="color: rgb(46, 125, 50); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; background-color: rgba(46, 125, 50, 0.1);">✓ Done</span></td><td>Cutover date to be confirmed with NEXT</td></tr>
+</tbody></table>
+</div>
+<div class="grid-2 rv in" style="margin-top:32px">
+<div class="card"><h4>The one that's actually verified</h4><p>39% of titles were flagged as duplicated across the catalogue. Checking the live feed directly: duplicates are now down to 0.1% (4 rows, 2 pairs). The fix didn't just ship — it worked.</p></div>
+<div class="card"><h4>What's moving right now</h4><p style="">The <b>[Search Intent] vs. none</b> title A/B is live and reading. DPA overlay test is ready for implementation</p></div>
+</div>
+<div class="note rv in"><b>469 tasks is the plan's count of tracked initiatives — not the hours behind them.</b> FeedHero's own operational time log shows 735 completed tickets and 1,182.25 hours delivered across GB/DE/FR/IE over the same window (chapter 7) — a more granular, ticket-level record than the plan's initiative list, not a different number for the same thing. 90% of that time sits in GB.</div>
+</div>
+</section>
+<!-- ================= CH 04 — LOOK-BACK PERIOD ================= -->
+<!-- ================= CH 07 — THE VALUE DELIVERED ================= -->
+<div class="chapter" id="c7"><div class="ch-num">07</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter seven</div><h2>The Value Delivered</h2><p>Not just hours booked — 45% of the logged time was delivered without charge.</p></div></div>
+<section class="band">
+<div class="wrap">
+<div class="stats rv in">
+<div class="stat"><div class="n">1,182<small>.25</small></div><div class="l">Total hours delivered — 13-month log</div></div>
+<div class="stat"><div class="n">651<small>.25</small></div><div class="l">Billable hours</div></div>
+<div class="stat"><div class="n">531<small>.00</small></div><div class="l">Non-billable hours</div></div>
+<div class="stat"><div class="n">45%</div><div class="l">Share of logged time delivered without charge</div></div>
+<div class="stat"><div class="n">735</div><div class="l">Completed tickets, Jun 2025–Jul 2026</div></div>
+</div>
+<div class="tbl-wrap rv in" style="margin-top:24px">
+<table><thead><tr><th>Market</th><th style="width:14%">Tasks</th><th style="width:16%">Billable hrs</th><th style="width:18%">Non-billable hrs</th><th style="width:14%">Total hrs</th></tr></thead>
+<tbody>
+<tr><td><b>GB</b></td><td>637</td><td>569.25</td><td>499.00</td><td><b>1,068.25</b></td></tr>
+<tr><td><b>DE</b></td><td>75</td><td>72.50</td><td>30.00</td><td><b>102.50</b></td></tr>
+<tr><td><b>FR</b></td><td>14</td><td>6.25</td><td>2.00</td><td><b>8.25</b></td></tr>
+<tr><td><b>IE</b></td><td>9</td><td>3.25</td><td>0.00</td><td><b>3.25</b></td></tr>
+<tr><td>Total</td><td>735</td><td>651.25</td><td>531.00</td><td><b>1,182.25</b></td></tr>
+</tbody></table>
+</div>
+<div class="grid-2 rv in" style="margin-top:32px">
+<div class="card"><h4>Nearly half the hours were invested, not billed</h4><p>531.00 of 1,182.25 logged hours (44.9%) were non-billable — title-source recrawls, tooling builds like the Keyword Planner, and audit work that keeps the billable hours effective. That ratio is the partnership story: the account gets the work it needs, not only the work on the invoice.</p></div>
+<div class="card"><h4>Where the hours went</h4><p>GB carries 90% of logged time (1,068.25 of 1,182.25 hours). DE, FR and IE together average under 9 hours a month — flagged in the FY25/26 review as either a real scope gap or simply lower-touch markets; the time log alone can't settle which.</p></div>
+</div>
+<div class="note rv in"><b>Source: FeedHero's own per-task time log (735 tickets, Jun 2025–Jul 2026).</b> A ticket-level record, separate from the Project Plan's 469 tracked initiatives (chapter 6). No monetary valuation is placed on the non-billable hours here — rate and any £ figure are Ray's to confirm, not the deck's to assume.</div>
+</div>
+</section>
+<div class="chapter" id="c8"><div class="ch-num">08</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter eight</div><h2>Number of Wins / Results</h2><p style="">The full A/B Test Archive, Jan 2025–Jul 2026 — 38 quantified keyword tests across GB/DE/EU, and the title-structure tests.</p></div></div>
+<section class="band">
+<div class="wrap">
+<div class="stats rv in">
+<div class="stat"><div class="n">38</div><div class="l">Keyword A/B tests with a full result, Jan 2025–Jul 2026</div></div>
+<div class="stat"><div class="n">66%</div><div class="l">Both impressions <i>and</i> clicks up vs. control (25 of 38)</div></div>
+<div class="stat"><div class="n">+5.9%</div><div class="l">Average impression lift, all keyword tests</div></div>
+<div class="stat"><div class="n">+6.8%</div><div class="l">Average click lift, all keyword tests</div></div>
+</div>
+<div class="tbl-wrap rv in" style="margin-bottom:20px">
+<table><thead><tr><th>Market</th><th style="width:14%">Tests run</th><th style="width:18%">Both positive</th><th style="width:16%">Avg. impressions</th><th style="width:16%">Avg. clicks</th></tr></thead>
+<tbody>
+<tr><td><b>GB</b></td><td>16</td><td><span class="pill p-done">12 / 16 — 75%</span></td><td style="color:var(--green)">+8.0%</td><td style="color:var(--green)">+6.6%</td></tr>
+<tr><td><b>DE</b></td><td>16</td><td><span class="pill p-done">11 / 16 — 69%</span></td><td style="color:var(--green)">+7.8%</td><td style="color:var(--green)">+11.6%</td></tr>
+<tr><td><b>EU</b></td><td>6</td><td><span class="pill p-block">2 / 6 — 33%</span></td><td style="color:var(--red)">−4.6%</td><td style="color:var(--red)">−5.7%</td></tr>
+</tbody></table>
+</div>
+<div class="tbl-wrap rv in" style="margin-bottom:32px">
+<table><thead><tr><th style="width:24%">Test</th><th>Result</th><th style="width:14%">Window</th><th style="width:18%">Outcome</th></tr></thead>
+<tbody>
+<tr><td>Title de-duplication</td><td>Routing titles through auto-optimised-title removes the 39% duplication flagged in the plan</td><td>FY25/26</td><td><span class="pill p-done">39% → 0.1%</span></td></tr>
+<tr><td>Best single batch — DE, Feb 2025</td><td>Keyword-optimisation test, DE market — the strongest read-out in the archive</td><td>Feb 2025</td><td><span class="pill p-done">+51.1% / +117.8%</span></td></tr>
+<tr><td>Weakest single batch — DE, Mar 2025</td><td>Keyword-optimisation test, DE market — the softest read-out in the archive</td><td>Mar 2025</td><td><span class="pill p-block">−24.9% / −59.0%</span></td></tr>
+<tr><td>Title structure — Dentsu proposal vs. current MASK</td><td>A proposed new title structure from Dentsu outperforms the existing MASK format</td><td>FY25/26</td><td><span class="pill p-done">Current mask wins</span></td></tr>
+<tr><td>[Size] inclusion — 5 categories</td><td>Including size in the title beats omitting it, tested separately on Trousers, Dresses, Coats &amp; Jackets, Shirts, Tops</td><td>FY25/26</td><td><span class="pill p-done">5/5 — with Size wins</span></td></tr>
+<tr><td>[Gender] position — end vs. after brand</td><td>Moving gender to the end of the title beats placing it after the brand</td><td>Mar–Apr 2025</td><td style=""><span class="pill p-block" style="background: rgb(234, 242, 234); color: rgb(46, 125, 50);">−13.8% / −12.6% - gender end wins</span></td></tr>
+<tr><td>AI Search Intent titles — Womens</td><td>Search-intent phrasing in titles beats the unmodified control</td><td>May 2026</td><td style=""><span class="pill p-block" style="background: rgb(234, 242, 234); color: rgb(46, 125, 50);">14.6% / 7.1%</span></td></tr>
+<tr><td>AI Search Intent titles — Mens</td><td>Search-intent phrasing in titles beats the unmodified control</td><td>May 2026</td><td style=""><span class="pill p-block" style="background: rgb(234, 242, 234); color: rgb(46, 125, 50);">15.7% / 17.9%</span></td></tr>
+<tr><td>Local Language vs. EN Shopping</td><td>Market-native copy outperforms English-language campaigns across 16 EU/ME markets</td><td>In progress</td><td><span class="pill p-prog">Reading</span></td></tr>
+</tbody></table>
+</div>
+<div class="grid-3 rv in">
+<div class="card" style="border-left:3px solid var(--green)">
+<h4>Verified against the live feed</h4>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;font-size:13px">
+<div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">39% → 0.1%</b> duplicate titles</div>
+<div style="background:var(--paper-2);padding:10px;border:1px solid var(--line)"><b style="color:var(--green)">100%</b> images live (avg 5.9/SKU)</div>
+</div>
+</div>
+<div class="card">
+<h4>What the archive confirms</h4>
+<p style="font-size: 13px;">Keyword optimisation is a reliable lever in GB and DE (roughly two-thirds of tests both-positive, averaging +5.9%/+6.8%). </p>
+</div>
+<div class="card" style="border-left:3px solid var(--orange)">
+<h4>Where it's weakest — EU market</h4>
+<p style="font-size: 13px;">EU is the only market where keyword tests trend negative (2 of 6 positive, avg −4.6%/−5.7%), the opposite of GB and DE. </p>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= CH 06 — AUTOMATION & PEAK READINESS ================= -->
+<!-- ================= CH 09 — TEAM & WAYS OF WORKING ================= -->
+<div class="chapter" id="c9"><div class="ch-num">09</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter nine</div><h2>Team &amp; Ways of Working</h2><p>Who runs what, and how work moves between the London account team and the delivery pod.</p></div></div>
+<section>
+<div class="wrap">
+<div class="grid-4 rv in">
+<div class="card"><h4>Ray Vũ — Senior Account Manager</h4><p>Leads the account: strategy, commercial, and the direct client relationship. Owner on the plan for the title de-duplication fix, IE LIA launch and the product-type build.</p></div>
+<div class="card"><h4>Steven — Account Manager</h4><p>Day-to-day account management alongside Ray — the second named contact on every review cycle.</p></div>
+<div class="card"><h4>Ezgi &amp; Eliza — keywords &amp; testing</h4><p>Named owners on the plan for the Keyword Planner build and the A/B title tests — the pair behind the 38-test archive in chapter 8.</p></div>
+<div class="card"><h4>ASPL — delivery pod</h4><p>Executes the feed work at catalogue scale — titles, attributes, labels and QA — with visible hand-offs back to the London team.</p></div>
+</div>
+<div class="grid-2 rv in" style="margin-top:32px">
+<div class="card"><h4>How work moves</h4><p>Every workstream is a tracked initiative on the live Project Plan (469 to date, chapter 6); execution is logged per-ticket in FeedHero (735 tickets, chapter 7). Reviews run on a quarterly cadence — the last QBR was held in person — and monthly task delivery runs continuously underneath.</p></div>
+<div class="card"><h4>Blockers get named, not absorbed</h4><p>Where a workstream depends on a third party, the plan says so with a named owner — stock-flag accuracy and the item-group ID cutover both sit with NEXT today (⚑ Awaiting NEXT), so the status you read is the real one, not a softened one.</p></div>
+</div>
+<div class="callout rv in"><h4>The through-line</h4><p>Every verified lever here — de-duplicated titles, the live Keyword Planner, 100% image coverage — is one pattern: fuller, more decomposable data. Tachyon and the conversational attributes scale that up next; the receipts are in chapters 5–8.</p></div>
+</div>
+</section>
+<footer class="close">
+<div class="wrap">
+<div class="eyebrow on-dark">Thank you</div>
+<h2>Questions?</h2>
+<div class="hero-rule" style="width:64px;height:3px;background:var(--orange);margin:22px 0 34px"></div>
+<div class="contacts" style="grid-template-columns:1fr 1fr">
+<div class="ct"><b>Ray Vũ</b><span>Senior Account Manager</span><a href="mailto:ray@feedspark.com">ray@feedspark.com</a></div>
+<div class="ct"><b>Steven</b><span>Account Manager</span><a href="mailto:steven@feedspark.com">steven@feedspark.com</a></div>
+</div>
+<p style="margin-top:48px;font-size:11.5px;color:rgba(255,255,255,.32)">FeedSpark · Private &amp; Confidential </p>
+</div>
+</footer>
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ======== reveal ======== */
+  var rv = document.querySelectorAll('.rv');
+  if(!reduce && 'IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+    rv.forEach(function(el){io.observe(el)});
+  } else rv.forEach(function(el){el.classList.add('in')});
+
+  /* ======== bars ======== */
+  var fills = document.querySelectorAll('.fill');
+  if('IntersectionObserver' in window){
+    var io3 = new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.style.width=e.target.getAttribute('data-w')+'%';io3.unobserve(e.target)}})},{threshold:.4});
+    fills.forEach(function(el){io3.observe(el)});
+  } else fills.forEach(function(el){el.style.width=el.getAttribute('data-w')+'%'});
+
+  /* ======== topbar + progress ======== */
+  var tb=document.getElementById('topbar'),pg=document.getElementById('progress');
+  var links=Array.prototype.slice.call(document.querySelectorAll('.tb-nav a'));
+  var sideLinks=Array.prototype.slice.call(document.querySelectorAll('.side-nav a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))});
+  function onScroll(){
+    var y=window.scrollY||document.documentElement.scrollTop;
+    tb.classList.toggle('show',y>420);
+    var h=document.documentElement.scrollHeight-window.innerHeight;
+    pg.style.width=(h>0?(y/h)*100:0)+'%';
+    var idx=-1;
+    secs.forEach(function(s,i){if(s&&s.getBoundingClientRect().top<=120)idx=i});
+    links.forEach(function(a,i){a.classList.toggle('active',i===idx)});
+    sideLinks.forEach(function(a,i){a.classList.toggle('active',i===idx)});
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body></html>

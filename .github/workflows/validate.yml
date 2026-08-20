@@ -30,3 +30,6 @@ jobs:
 
       - name: Shipped-feature markers (multi-session overwrite tripwire)
         run: node tools/check_markers.js
+
+      - name: Module-nav parity (the menu stays identical on every app page)
+        run: node tools/check_nav.js
