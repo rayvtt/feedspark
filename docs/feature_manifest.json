@@ -1931,19 +1931,22 @@
       "name": "labelguard: ask-the-client compose (alerts → Gmail draft)",
       "file": "docs/FeedSpark_LabelGuard.html",
       "pattern": "askCompose",
-      "min": 2
+      "min": 2,
+      "pr": 255
     },
     {
       "name": "labelguard: breakdown card renderer",
       "file": "docs/FeedSpark_LabelGuard.html",
       "pattern": "alertCardPng",
-      "min": 2
+      "min": 2,
+      "pr": 255
     },
     {
       "name": "worker: /api/labels/askdraft route + drafts bridge",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "labeldrafts",
-      "min": 4
+      "min": 4,
+      "pr": 255
     }
   ]
 }
