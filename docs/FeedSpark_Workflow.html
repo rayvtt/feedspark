@@ -1017,6 +1017,28 @@ window.addEventListener('load',restore);
   var DEFAULT_AM='Ray';
   var AM_OF={ 'Ryobi':'Steven' };
   function amOf(c){ return AM_OF[c]||DEFAULT_AM; }
+  // atomic people names from an Owner cell — 'Ray/ Chelsea', 'Chris x Ray', 'Matt, Andy' all
+  // split into individuals; 'Tech AM' stays whole (only a spaced ' x ' splits). The AM dropdown
+  // self-populates from these, so a NEW name appearing in the Owner column becomes a filter
+  // option on the next render — no roster edit needed.
+  function ownerNames(o){ return String(o||'').split(/\s*(?:\/|,|&|\+)\s*|\s+x\s+/i)
+    .map(function(s){return s.trim();}).filter(function(s){return s.length>=2&&s!=='—';}); }
+  // real plan Owner columns also hold notes ("remove from July"), markets ("Denmark", "DE") and
+  // client names — only PERSON-shaped values may become dropdown options, or the menu drowns
+  var AM_STOP={de:1,fr:1,nl:1,gb:1,ie:1,us:1,eu:1,au:1,ca:1,uk:1,en:1,denmark:1,norway:1,sweden:1,spain:1,italy:1,poland:1,france:1,germany:1,netherlands:1,switzerland:1,canada:1,market:1,team:1,social:1,assembly:1,fs:1,bfbc:1};
+  function personish(s){ if(!s)return ''; s=s.replace(/\s*\(fs\)\s*$/i,'').trim();
+    if(s.length<2||s.length>20)return '';
+    if(s.split(/\s+/).length>2)return '';                    // sentences are notes, not people
+    if(AM_STOP[s.toLowerCase()]||CLIENTS.indexOf(s)>=0)return '';
+    if(!/^[A-ZÀ-Þ]/.test(s))return '';                       // people get typed capitalised
+    if(/^[A-Z]{2}$/.test(s))return '';                       // bare market codes (DE, FR)
+    if(/[^A-Za-zÀ-ɏ' .\-]/.test(s))return '';                // digits/punct = notes
+    return s; }
+  function amOptionSet(){ var set={}; allIntake().forEach(function(r){ if(DELETED[r.client+'|'+r.task])return;
+    set[amOf(r.client)]=1; ownerNames(r.owner).forEach(function(n){ var pn=personish(n); if(pn)set[pn]=1; }); }); return set; }
+  function amMatch(r,sel){ if(!sel.length)return true; if(sel.indexOf(amOf(r.client))>=0)return true;
+    var ns=ownerNames(r.owner); for(var i=0;i<ns.length;i++){ var n=ns[i].replace(/\s*\(fs\)\s*$/i,'').trim();
+      if(sel.indexOf(n)>=0||sel.indexOf(ns[i])>=0)return true; } return false; }
   var STALL_DAYS=3;                 // a brief with no ASPL reply for this long is "stalled"
   var LIVE={}, LIVE_AT=null, LIVE_CONN=false;   // live plan tasks per brand (from /api/plan/live)
 
@@ -1717,7 +1739,7 @@ window.addEventListener('load',restore);
       var S=itState;
       var st=!S.statuses.length||S.statuses.indexOf(r.b)>=0;   // empty = all statuses
       var win=true; if(allow && r.source==='plan'){ var pd=taskDate(r); if(pd) win=!!(allow[r.client]&&allow[r.client][monthKey(pd)]); }   // latest-N-months per brand; dateless plan rows always show
-      return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0||(r.esrc&&S.srcs.indexOf('email')>=0))&&(!S.clients.length||S.clients.indexOf(r.client)>=0)&&(!S.ams.length||S.ams.indexOf(amOf(r.client))>=0)
+      return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0||(r.esrc&&S.srcs.indexOf('email')>=0))&&(!S.clients.length||S.clients.indexOf(r.client)>=0)&&amMatch(r,S.ams)
         &&(!S.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(S.q)>=0); })
       .sort(function(a,b){ var k=itState.sort;
         if(k==='dsort'){ var da=taskDate(a), db=taskDate(b);
@@ -2114,7 +2136,7 @@ window.addEventListener('load',restore);
     sigExtra:function(){ return Object.keys(RMCL).sort().join('|'); } });
   var buildAmFilter=setupMulti({ btn:'it-am-btn', menu:'it-am-menu', wrap:'it-am-wrap',
     allLabel:'All AMs', noun:'AMs', one:function(v){ return v; },
-    options:function(){ var set={}; allIntake().forEach(function(r){ if(!DELETED[r.client+'|'+r.task]) set[amOf(r.client)]=1; });   // only AMs that still have live tasks
+    options:function(){ var set=amOptionSet();   // client AMs + every name seen in the Owner column
       itState.ams=itState.ams.filter(function(a){ return set[a]; }); return Object.keys(set).sort().map(function(a){ return {v:a,l:a}; }); },
     selected:function(){ return itState.ams; },
     toggle:function(v,on){ var i=itState.ams.indexOf(v); if(on){ if(i<0)itState.ams.push(v); } else if(i>=0)itState.ams.splice(i,1); },
@@ -2134,7 +2156,7 @@ window.addEventListener('load',restore);
     clear:function(){ itState.clients=[]; } });
   var buildTlAmFilter=setupMulti({ btn:'tl-am-btn', menu:'tl-am-menu', wrap:'tl-am-wrap',
     allLabel:'All AMs', noun:'AMs', one:function(v){ return v; }, onChange:function(){ renderIntake(); },
-    options:function(){ var set={}; allIntake().forEach(function(r){ if(!DELETED[r.client+'|'+r.task]) set[amOf(r.client)]=1; });
+    options:function(){ var set=amOptionSet();
       return Object.keys(set).sort().map(function(a){ return {v:a,l:a}; }); },
     selected:function(){ return itState.ams; },
     toggle:function(v,on){ var i=itState.ams.indexOf(v); if(on){ if(i<0)itState.ams.push(v); } else if(i>=0)itState.ams.splice(i,1); },
@@ -2790,7 +2812,7 @@ window.addEventListener('load',restore);
     });
     // events that don't come from the grid still honour the shared brand/AM/search filters
     function ok(client,task,owner){ if(S.clients.length&&S.clients.indexOf(client)<0)return false;
-      if(S.ams.length&&S.ams.indexOf(amOf(client))<0)return false;
+      if(S.ams.length&&!amMatch({client:client,owner:owner},S.ams))return false;
       return !q||((task+' '+client+' '+(owner||'')).toLowerCase().indexOf(q)>=0); }
     // ONE card per real task — Ray's rule: a status change flips the chip on the SAME card,
     // it never adds a card; only a repeat-scheduled task (distinct dated occurrences in the
