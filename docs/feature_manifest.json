@@ -1961,6 +1961,41 @@
       "pattern": "view=cm",
       "min": 1,
       "pr": 258
+    },
+    {
+      "name": "CC dossier: portfolio band (Activity · Health · Audit + suggestions)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "dz-port",
+      "min": 3,
+      "pr": 257
+    },
+    {
+      "name": "CC dossier: async portfolio fill (cross-module fetches)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "portFill",
+      "min": 2,
+      "pr": 257
+    },
+    {
+      "name": "worker: per-client guard-alert splits (?by=client)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "ptClients",
+      "min": 1,
+      "pr": 257
+    },
+    {
+      "name": "CC dossier: 🎬 cinematic brand showcase (luxury-intro overlay)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "dz-show",
+      "min": 3,
+      "pr": 257
+    },
+    {
+      "name": "CC dossier: showcase player over the portfolio model",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "showOpen",
+      "min": 2,
+      "pr": 257
     }
   ]
 }
