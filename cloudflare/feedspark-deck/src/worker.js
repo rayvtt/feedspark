@@ -1816,8 +1816,17 @@ async function labelGuardRoutes(env, request, url) {
     Object.keys(pAlerts).forEach((k) => (pAlerts[k].alerts || []).forEach((a) => {
       if (a.sev === 'crit') pc++; else if (a.sev === 'warn') pw++;
     }));
-    return json({ counts: { crit, warn, feeds: Object.keys(alerts).length },
-      pt: { crit: pc, warn: pw, feeds: Object.keys(pAlerts).length } });
+    const out = { counts: { crit, warn, feeds: Object.keys(alerts).length },
+      pt: { crit: pc, warn: pw, feeds: Object.keys(pAlerts).length } };
+    // ?by=client — per-brand splits for the dossier portfolio view (keys are "<client>|<mkt>")
+    if (url.searchParams.get('by') === 'client') {
+      const split = (m) => { const per = {}; Object.keys(m).forEach((k) => {
+        const c = k.split('|')[0]; const e = per[c] = per[c] || { crit: 0, warn: 0 };
+        (m[k].alerts || []).forEach((a) => { if (a.sev === 'crit') e.crit++; else if (a.sev === 'warn') e.warn++; }); });
+        return per; };
+      out.clients = split(alerts); out.ptClients = split(pAlerts);
+    }
+    return json(out);
   }
 
   if (path === '/api/labels/snapshot' && request.method === 'GET') {
