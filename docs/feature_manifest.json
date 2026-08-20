@@ -1911,6 +1911,12 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "api/tasks/remind",
       "min": 1
+    },
+    {
+      "name": "labelguard page: clickable alert diff (known-good/yesterday/now)",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "paintAlertDiff",
+      "pr": 251
     }
   ]
 }
