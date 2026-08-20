@@ -1,5 +1,5 @@
 {
- "_comment": "Shipped-feature tripwire. Each entry pins a live feature to a grep-able marker. tools/check_markers.js runs in presync + CI and FAILS if a marker regresses — catching one session's merge silently clobbering another session's shipped work. When you ship a feature that another session could plausibly overwrite (shared files!), ADD an entry. Never remove or weaken someone else's entry outside a PR that deliberately retires that feature. 'min' = minimum occurrences (default 1); 'forbidden': true asserts the pattern must be ABSENT (retired features).",
+ "_comment": "Shipped-feature tripwire. Each entry pins a live feature to a grep-able marker. tools/check_markers.js runs in presync + CI and FAILS if a marker regresses \u2014 catching one session's merge silently clobbering another session's shipped work. When you ship a feature that another session could plausibly overwrite (shared files!), ADD an entry. Never remove or weaken someone else's entry outside a PR that deliberately retires that feature. 'min' = minimum occurrences (default 1); 'forbidden': true asserts the pattern must be ABSENT (retired features).",
  "markers": [
   {
    "name": "worker: /api/version deploy marker",
@@ -100,7 +100,7 @@
    "pr": 66
   },
   {
-   "name": "Workflow: courts strip — 3-team ball tracking",
+   "name": "Workflow: courts strip \u2014 3-team ball tracking",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "renderCourts",
    "pr": 66
@@ -167,7 +167,7 @@
    "pr": 70
   },
   {
-   "name": "worker: /buildlog 301 → /activity#build",
+   "name": "worker: /buildlog 301 \u2192 /activity#build",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "activity#build",
    "pr": 82
@@ -298,7 +298,7 @@
    "pr": 98
   },
   {
-   "name": "Workflow: briefable ⚡ badge on email intake rows",
+   "name": "Workflow: briefable \u26a1 badge on email intake rows",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "src-brf",
    "min": 2,
@@ -387,7 +387,7 @@
    "pr": 101
   },
   {
-   "name": "Workflow: email triage panel — separate queue, task/not-task decisions",
+   "name": "Workflow: email triage panel \u2014 separate queue, task/not-task decisions",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "api/gmail/dismiss",
    "pr": 102
@@ -432,7 +432,7 @@
    "pr": 106
   },
   {
-   "name": "Workflow: → Task triage semantics (email → Intake task, no composer jump)",
+   "name": "Workflow: \u2192 Task triage semantics (email \u2192 Intake task, no composer jump)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "saveEmailAsTask",
    "min": 2,
@@ -669,21 +669,21 @@
    "pr": 141
   },
   {
-   "name": "Pricer: actuals layer — tagged-brief averages price the quote",
+   "name": "Pricer: actuals layer \u2014 tagged-brief averages price the quote",
    "file": "docs/pricer_engine.js",
    "pattern": "actualsFromBriefs",
    "min": 2,
    "pr": 144
   },
   {
-   "name": "Workflow: hours tagging RETIRED — lives in the Pricer now (must stay gone)",
+   "name": "Workflow: hours tagging RETIRED \u2014 lives in the Pricer now (must stay gone)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "m-hours",
    "pr": 145,
    "forbidden": true
   },
   {
-   "name": "Workflow: bg-tach RETIRED — title scan in the Pricer replaces it (must stay gone)",
+   "name": "Workflow: bg-tach RETIRED \u2014 title scan in the Pricer replaces it (must stay gone)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "bg-tach",
    "pr": 145,
@@ -773,7 +773,7 @@
    "pr": 149
   },
   {
-   "name": "Pricer: seeded live AI briefs — Mon/Acc/Superdry × titles/desc/keywords",
+   "name": "Pricer: seeded live AI briefs \u2014 Mon/Acc/Superdry \u00d7 titles/desc/keywords",
    "file": "docs/FeedSpark_Pricer.html",
    "pattern": "SEED_TRACK",
    "min": 2,
@@ -800,7 +800,7 @@
    "pr": 159
   },
   {
-   "name": "Pricer: attached-brief 🔗 icon marker + detach control",
+   "name": "Pricer: attached-brief \ud83d\udd17 icon marker + detach control",
    "file": "docs/FeedSpark_Pricer.html",
    "pattern": "a-link",
    "min": 2,
@@ -847,7 +847,7 @@
    "pr": 164
   },
   {
-   "name": "FeedLab: 🎬 demo tour + auto-dissect spotlight",
+   "name": "FeedLab: \ud83c\udfac demo tour + auto-dissect spotlight",
    "file": "docs/FeedSpark_FeedLab.html",
    "pattern": "demoTour",
    "min": 2,
@@ -906,7 +906,7 @@
    "pr": 169
   },
   {
-   "name": "workflow: chronological due sort — dateless sink, year-less dates get the current year",
+   "name": "workflow: chronological due sort \u2014 dateless sink, year-less dates get the current year",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "dateless rows sink to the bottom",
    "pr": 170
@@ -919,7 +919,7 @@
    "pr": 172
   },
   {
-   "name": "Pricer: token economics tracking — actual/billing tok, derived bill units, run times",
+   "name": "Pricer: token economics tracking \u2014 actual/billing tok, derived bill units, run times",
    "file": "docs/FeedSpark_Pricer.html",
    "pattern": "billTok",
    "min": 3,
@@ -947,7 +947,7 @@
    "pr": 173
   },
   {
-   "name": "Pricer: compact token column — single Bill units cell + token-economics pop-up",
+   "name": "Pricer: compact token column \u2014 single Bill units cell + token-economics pop-up",
    "file": "docs/FeedSpark_Pricer.html",
    "pattern": "tok-pop",
    "min": 2,
@@ -961,7 +961,7 @@
    "pr": 175
   },
   {
-   "name": "workflow: email-origin memory — Gmail tasks stay labelled Email after sheet round-trip",
+   "name": "workflow: email-origin memory \u2014 Gmail tasks stay labelled Email after sheet round-trip",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "markEsrc",
    "min": 4,
@@ -1060,21 +1060,21 @@
    "pr": 179
   },
   {
-   "name": "worker: feed resolvers take env — bare feedSourceFor(client…) must never return",
+   "name": "worker: feed resolvers take env \u2014 bare feedSourceFor(client\u2026) must never return",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "feedSourceFor(client",
    "forbidden": true,
    "pr": 180
   },
   {
-   "name": "worker: feed resolvers take env — bare feedMarketsFor(client…) must never return",
+   "name": "worker: feed resolvers take env \u2014 bare feedMarketsFor(client\u2026) must never return",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "feedMarketsFor(client",
    "forbidden": true,
    "pr": 180
   },
   {
-   "name": "workflow: Briefing Studio — context rail, workload scheduling, checklist, Tachyon draft",
+   "name": "workflow: Briefing Studio \u2014 context rail, workload scheduling, checklist, Tachyon draft",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "bsPropose",
    "min": 3,
@@ -1177,12 +1177,12 @@
    "pr": 192
   },
   {
-   "name": "worker: XML (Meta/FeedHero) feed source support — xmlRef/feedRef",
+   "name": "worker: XML (Meta/FeedHero) feed source support \u2014 xmlRef/feedRef",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "const feedRef = (u) => sheetRef(u) || xmlRef(u)"
   },
   {
-   "name": "worker: Meta-tab mass import — 18 sheet-backed -fb feeds wired",
+   "name": "worker: Meta-tab mass import \u2014 18 sheet-backed -fb feeds wired",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "-fb': { id:",
    "min": 18
@@ -1212,7 +1212,7 @@
    "pr": 194
   },
   {
-   "name": "worker: daily Δ reference (labelday auto-promote, pivots read vs yesterday)",
+   "name": "worker: daily \u0394 reference (labelday auto-promote, pivots read vs yesterday)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "labelday",
    "min": 3,
@@ -1226,7 +1226,7 @@
    "pr": 197
   },
   {
-   "name": "LabelGuard: compact Δ-reference toggle (yesterday ↔ known-good)",
+   "name": "LabelGuard: compact \u0394-reference toggle (yesterday \u2194 known-good)",
    "file": "docs/FeedSpark_LabelGuard.html",
    "pattern": "refseg",
    "min": 3
@@ -1322,7 +1322,7 @@
    "pr": 213
   },
   {
-   "name": "Workflow: recurring tasks — ⟳ weekly/monthly/quarterly, next occurrence on Done",
+   "name": "Workflow: recurring tasks \u2014 \u27f3 weekly/monthly/quarterly, next occurrence on Done",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "recSpawn",
    "min": 2,
@@ -1338,7 +1338,7 @@
   {
    "name": "Workflow: client confirmation drafted in Ray's own voice (no codes, no system phrasing)",
    "file": "docs/FeedSpark_Workflow.html",
-   "pattern": "Hope the week’s going well",
+   "pattern": "Hope the week\u2019s going well",
    "min": 1,
    "pr": 209
   },
@@ -1375,7 +1375,7 @@
    "pr": 217
   },
   {
-   "name": "Workflow: go-live starts the test run — due -> +run-SLA, stage -> analysis, card jumps",
+   "name": "Workflow: go-live starts the test run \u2014 due -> +run-SLA, stage -> analysis, card jumps",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "function goLive",
    "min": 1,
@@ -1500,7 +1500,7 @@
    "pr": 224
   },
   {
-   "name": "KWCal: saturation audit — always-on KPI + brief lift lines",
+   "name": "KWCal: saturation audit \u2014 always-on KPI + brief lift lines",
    "file": "docs/FeedSpark_KWCal.html",
    "pattern": "Keyword saturation",
    "min": 2,
@@ -1528,16 +1528,16 @@
    "pr": 226
   },
   {
-   "name": "Workflow: one record per real task everywhere — duplicate tickets collapse (refreshDupMap)",
+   "name": "Workflow: one record per real task everywhere \u2014 duplicate tickets collapse (refreshDupMap)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "refreshDupMap",
    "min": 2,
    "pr": 227
   },
   {
-   "name": "Workflow: separate '· analysis' timeline milestone cards RETIRED (chip on the task's own card)",
+   "name": "Workflow: separate '\u00b7 analysis' timeline milestone cards RETIRED (chip on the task's own card)",
    "file": "docs/FeedSpark_Workflow.html",
-   "pattern": "slice(0,44)+' · analysis'",
+   "pattern": "slice(0,44)+' \u00b7 analysis'",
    "forbidden": true,
    "pr": 227
   },
@@ -1556,7 +1556,7 @@
    "pr": 228
   },
   {
-   "name": "Workflow: Brief ledger — every brief ever sent (renderLedger)",
+   "name": "Workflow: Brief ledger \u2014 every brief ever sent (renderLedger)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "renderLedger",
    "min": 3,
@@ -1565,7 +1565,7 @@
   {
    "name": "Workflow: paste-router restores a sent brief the store never kept",
    "file": "docs/FeedSpark_Workflow.html",
-   "pattern": "Restored — this sent brief",
+   "pattern": "Restored \u2014 this sent brief",
    "min": 1,
    "pr": 229
   },
@@ -1612,7 +1612,7 @@
    "pr": 236
   },
   {
-   "name": "FeedChat: → Brief opens the Workflow in a new tab",
+   "name": "FeedChat: \u2192 Brief opens the Workflow in a new tab",
    "file": "docs/FeedSpark_FeedChat.html",
    "pattern": "target=\"_blank\"",
    "min": 1,
@@ -1633,7 +1633,7 @@
    "pr": 238
   },
   {
-   "name": "FeedChat: key-free bank routing (token-scored, £0 default path)",
+   "name": "FeedChat: key-free bank routing (token-scored, \u00a30 default path)",
    "file": "docs/FeedSpark_FeedChat.html",
    "pattern": "bankRoute",
    "min": 2,
@@ -1709,7 +1709,7 @@
    "min": 3
   },
   {
-   "name": "PTGuard: ⚡ estate catch-up button force-rescans (no freshness skip)",
+   "name": "PTGuard: \u26a1 estate catch-up button force-rescans (no freshness skip)",
    "file": "docs/FeedSpark_ProductTypeGuard.html",
    "pattern": "no freshness skip"
   },
@@ -1809,6 +1809,13 @@
    "file": "docs/FeedSpark_DeckBuilder.html",
    "pattern": "OUTPUT IS A .PPTX",
    "pr": 243
+  },
+  {
+   "name": "Workflow: AM filter self-populates from Owner-column names (person-shaped only)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "amOptionSet",
+   "min": 3,
+   "pr": 0
   }
  ]
 }
