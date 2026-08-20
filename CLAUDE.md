@@ -205,7 +205,12 @@ GET  /api/template              → info only; pages are git-bundled (push to ma
 GET|PUT /api/briefs             → Workflow brief pipeline store (KV `briefs`; per-key merged via kvmerge.js + X-Sync-Base — same for /api/clients)
 GET|POST /api/claude            → Tachyon copilot proxy to Claude Messages API (needs ANTHROPIC_API_KEY secret)
 ```
-- **Injected on app pages** (not client decks): the live editor widget + the **Tachyon copilot**
+- **Injected on app pages** (not client decks): the live editor widget, **FCC-PRESENCE**
+  (`docs/presence_widget.html` — Google-Docs-style live avatars in the topbar: each open page
+  heartbeats `POST /api/presence` per minute while visible, worker stamps the Access identity
+  into KV `presence`, avatars = active ≤3min with green dot + name·page·ago tooltip; popover
+  ALWAYS lists the adoption watchlist Stephen + Matt with last-seen; heartbeats deliberately
+  NOT in the activity log) + the **Tachyon copilot**
   (`docs/tachyon_widget.html`, reads `window.PLANTASKS`, calls `/api/claude`).
 - **Secrets**: `ANTHROPIC_API_KEY` powers Tachyon (`wrangler secret put ANTHROPIC_API_KEY`); both
   the copilot and Gmail/plan live-sync degrade gracefully until their credential is set.

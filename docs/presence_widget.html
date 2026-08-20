@@ -1,0 +1,108 @@
+<!-- FCC-PRESENCE: Google-Docs-style live avatars in the topbar (injected on app pages only).
+     Every open app page heartbeats POST /api/presence once a minute while visible; the worker
+     stamps the Cloudflare Access identity into a tiny KV map and returns it. Avatars show who
+     is on the FCC right now (green dot, initials circle, tooltip = name · page · ago); the
+     popover also ALWAYS lists the adoption watchlist (Stephen, Matt) with their last-seen —
+     so Ray can see at a glance whether the team is actually in the dashboards. -->
+<style>
+#fcc-presence{display:flex;align-items:center;margin-left:4px;position:relative}
+#fcc-presence .pz-av{width:28px;height:28px;border-radius:50%;font:800 11px/24px Lato,system-ui,sans-serif;text-align:center;color:#fff;border:2px solid #fff;margin-left:-7px;position:relative;cursor:pointer;box-shadow:0 1px 3px rgba(16,24,40,.22);user-select:none}
+#fcc-presence .pz-av:first-child{margin-left:0}
+#fcc-presence .pz-av::after{content:'';position:absolute;bottom:-2px;right:-2px;width:9px;height:9px;border-radius:50%;background:#15803D;border:2px solid #fff}
+#fcc-presence .pz-more{background:#8a94a0}
+.pz-pop{position:fixed;top:58px;right:16px;z-index:70;background:#fff;border:1px solid #E6E6E6;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 10px 30px rgba(16,24,40,.14);padding:12px 14px;min-width:250px;font-family:Lato,system-ui,sans-serif}
+.pz-pop h4{margin:0 0 8px;font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#8a94a0}
+.pz-row{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:13px;color:#333}
+.pz-row .pz-mini{width:22px;height:22px;border-radius:50%;font:800 9.5px/20px Lato,system-ui,sans-serif;text-align:center;color:#fff;flex:none;border:1px solid #fff}
+.pz-row b{font-weight:900}
+.pz-row .pz-sub{color:#8a94a0;font-size:11.5px;font-weight:700;margin-left:auto;text-align:right}
+.pz-row .pz-dot{width:8px;height:8px;border-radius:50%;flex:none}
+.pz-row .pz-dot.on{background:#15803D}
+.pz-row .pz-dot.off{background:#C7CCD4}
+[data-theme=dark] #fcc-presence .pz-av{border-color:#14161C}
+[data-theme=dark] #fcc-presence .pz-av::after{border-color:#14161C}
+[data-theme=dark] .pz-pop{background:#14161C;border-color:#2A2F3A;box-shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.55)}
+[data-theme=dark] .pz-row{color:#E8EAEE}
+[data-theme=dark] .pz-row .pz-mini{border-color:#14161C}
+</style>
+<script>
+(function(){
+'use strict';
+if(window.__fccPresence)return; window.__fccPresence=1;
+var ACTIVE_MS=3*60*1000, BEAT_MS=60*1000, MAXAV=6;
+var WATCH=['stephen','matt']; // the adoption watchlist — always visible in the popover
+var FIXED={ray:'#ED6F0B',stephen:'#1A365D',matt:'#15803D'};
+var PALETTE=['#7C3AED','#0E7490','#B45309','#BE185D','#4D7C0F','#6D28D9','#0F766E'];
+var ME='',USERS=[],NOW=0,pop=null;
+function nameOf(e){ var lp=String(e).split('@')[0].split(/[._-]/)[0]; return lp?lp.charAt(0).toUpperCase()+lp.slice(1):e; }
+function colOf(e){ var n=nameOf(e).toLowerCase(); if(FIXED[n])return FIXED[n];
+  var h=0,i; for(i=0;i<e.length;i++)h=(h*31+e.charCodeAt(i))>>>0; return PALETTE[h%PALETTE.length]; }
+function ago(t){ var s=Math.max(0,Math.round((NOW-t)/1000));
+  if(s<75)return s+'s ago'; if(s<5400)return Math.round(s/60)+'m ago';
+  if(s<129600)return Math.round(s/3600)+'h ago'; return Math.round(s/86400)+'d ago'; }
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function host(){ return document.getElementById('fcc-presence'); }
+function ensureHost(){
+  if(host())return host();
+  var tb=document.querySelector('.topbar-in'); if(!tb)return null;
+  var d=document.createElement('div'); d.id='fcc-presence';
+  var tgl=document.getElementById('theme-tgl');
+  if(tgl)tb.insertBefore(d,tgl); else tb.appendChild(d);
+  return d;
+}
+function render(){
+  var d=ensureHost(); if(!d)return;
+  var act=USERS.filter(function(u){return NOW-u.t<=ACTIVE_MS});
+  act.sort(function(a,b){ var aw=WATCH.indexOf(nameOf(a.e).toLowerCase())>=0?0:1, bw=WATCH.indexOf(nameOf(b.e).toLowerCase())>=0?0:1;
+    return aw-bw||b.t-a.t; });
+  var h='';
+  act.slice(0,MAXAV).forEach(function(u){
+    var n=nameOf(u.e), me=u.e===ME?' (you)':'';
+    h+='<span class="pz-av" data-pz style="background:'+colOf(u.e)+'" title="'+esc(n+me+' · '+(u.page||'/')+' · '+ago(u.t))+'">'+esc(n.charAt(0))+'</span>';
+  });
+  if(act.length>MAXAV)h+='<span class="pz-av pz-more" data-pz title="'+(act.length-MAXAV)+' more online">+'+(act.length-MAXAV)+'</span>';
+  d.innerHTML=h;
+  if(pop)paintPop();
+}
+function rowFor(u,on){
+  var n=nameOf(u.e), me=u.e===ME?' (you)':'';
+  return '<div class="pz-row"><span class="pz-dot '+(on?'on':'off')+'"></span>'
+    +'<span class="pz-mini" style="background:'+colOf(u.e)+'">'+esc(n.charAt(0))+'</span>'
+    +'<b>'+esc(n)+esc(me)+'</b><span class="pz-sub">'+(on?esc((u.page||'/')+' · '+ago(u.t)):(u.t?esc('last seen '+ago(u.t)):'not seen yet'))+'</span></div>';
+}
+function paintPop(){
+  var act=USERS.filter(function(u){return NOW-u.t<=ACTIVE_MS});
+  var actKeys={}; act.forEach(function(u){actKeys[nameOf(u.e).toLowerCase()]=1});
+  var h='<h4>Live on the FCC</h4>';
+  if(!act.length)h+='<div class="pz-row"><span class="pz-dot off"></span><span style="font-size:12.5px;color:#8a94a0;font-weight:700">nobody active right now</span></div>';
+  act.forEach(function(u){ h+=rowFor(u,true); });
+  var watchRows='';
+  WATCH.forEach(function(w){
+    if(actKeys[w])return;
+    var u=null; USERS.forEach(function(x){ if(nameOf(x.e).toLowerCase()===w)u=x; });
+    watchRows+=rowFor(u||{e:w+'@feedspark.com',t:0,page:''},false);
+  });
+  if(watchRows)h+='<h4 style="margin-top:10px">Watchlist</h4>'+watchRows;
+  pop.innerHTML=h;
+}
+function togglePop(){
+  if(pop){ pop.remove(); pop=null; return; }
+  pop=document.createElement('div'); pop.className='pz-pop'; document.body.appendChild(pop); paintPop();
+}
+document.addEventListener('click',function(ev){
+  if(ev.target.closest&&ev.target.closest('[data-pz]')){ togglePop(); return; }
+  if(pop&&!(ev.target.closest&&ev.target.closest('.pz-pop')))togglePop();
+});
+function beat(){
+  if(document.visibilityState==='hidden')return;
+  fetch('/api/presence',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({page:location.pathname})})
+    .then(function(r){return r.json()})
+    .then(function(j){ if(!j||!j.ok)return; ME=j.me||''; NOW=j.now||Date.now(); USERS=j.users||[]; render(); })
+    .catch(function(){});
+}
+function start(){ ensureHost(); beat(); setInterval(beat,BEAT_MS);
+  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible')beat(); }); }
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(start,0)});
+else setTimeout(start,0);
+})();
+</script>

@@ -43,6 +43,9 @@ import DECK_SUPERDRY from "../../../docs/Superdry_Strategy_Review_AllTime.html";
 // Tachyon copilot widget (style + script fragment). Injected on the app pages only —
 // never on client-facing decks. Reads window.PLANTASKS and calls /api/claude.
 import TACHYON from "../../../docs/tachyon_widget.html";
+// FCC-PRESENCE: Google-Docs-style live avatars in the topbar — injected on app pages only.
+// Identity comes from Cloudflare Access (who()); heartbeats live in the KV `presence` map.
+import PRESENCEW from "../../../docs/presence_widget.html";
 // FCC-INSTR: collapsible-instructions widget — injected on app pages only (never decks),
 // so every module's explainer subtext folds behind a ⓘ by default
 import INSTR from "../../../docs/instr_collapse.html";
@@ -641,6 +644,22 @@ export default {
     if (path === '/api/feedchat') {
       const r = await mapStoreRoute(env, request, 'feedchat', {});
       if (r) return r;
+    }
+    // FCC-PRESENCE heartbeat: stamp the caller's Access identity into the `presence` map and
+    // return everyone's last-seen. One beat per open page per minute — deliberately NOT in the
+    // ACT activity log (heartbeats would drown the real usage trail /api/activity keeps).
+    if (path === '/api/presence' && request.method === 'POST') {
+      const me = who(request);
+      let body = {}; try { body = await request.json(); } catch (e) { body = {}; }
+      const now = Date.now();
+      const map = (await env.EDITS.get('presence', 'json')) || {};
+      if (me !== 'unknown' && !me.startsWith('service:')) {
+        map[me] = { t: now, page: String(body.page || '').slice(0, 40) };
+      }
+      for (const k of Object.keys(map)) { if (now - (map[k].t || 0) > 30 * 86400000) delete map[k]; }
+      ctx.waitUntil(env.EDITS.put('presence', JSON.stringify(map)));
+      const users = Object.keys(map).map((e) => ({ e, t: map[e].t || 0, page: map[e].page || '' }));
+      return json({ ok: true, me, now, users });
     }
     if (path === '/api/tachyon/rates') {
       const r = await mapStoreRoute(env, request, 'tachyonrates', {});
@@ -1459,7 +1478,7 @@ export default {
     if (page) {
       logActivity(ctx, env, request, 'view', path);
       let html = page.html.replace('</body>', getEditorScript(page.slug) + '\n</body>');
-      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n</body>');
+      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n</body>');
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
