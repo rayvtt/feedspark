@@ -1844,6 +1844,27 @@
    "pattern": "check_nav",
    "min": 1,
    "pr": 244
+  },
+  {
+   "name": "Presence: live-avatars widget present",
+   "file": "docs/presence_widget.html",
+   "pattern": "FCC-PRESENCE",
+   "min": 1,
+   "pr": 247
+  },
+  {
+   "name": "worker: presence widget injected on app pages",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "PRESENCEW",
+   "min": 2,
+   "pr": 247
+  },
+  {
+   "name": "worker: /api/presence heartbeat route",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "'/api/presence'",
+   "min": 1,
+   "pr": 247
   }
  ]
 }
