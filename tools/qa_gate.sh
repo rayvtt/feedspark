@@ -11,34 +11,42 @@
 #   1. worker dry-run build bundles
 #   2. dashboard inline scripts parse           (tools/check_inline_scripts.js)
 #   3. shipped-feature markers intact           (tools/check_markers.js)
-#   4. no bracket placeholders in changed pages ([TBC] / [TODO] / [XXX] / [INSERT …] …)
-#   5. changed decks pass the content audit     (tools/deck_audit.py)
+#   4. module-nav parity across app pages       (tools/check_nav.js)
+#   5. no bracket placeholders in changed pages ([TBC] / [TODO] / [XXX] / [INSERT …] …)
+#   6. changed decks pass the content audit     (tools/deck_audit.py)
 set -uo pipefail
 cd "$(git rev-parse --show-toplevel)"
 FAIL=0
 
-echo "── qa-gate 1/5: worker dry-run build"
+echo "── qa-gate 1/6: worker dry-run build"
 if npx --yes wrangler@4 deploy --dry-run --outdir "${TMPDIR:-/tmp}/fcc-qagate-out" >/dev/null 2>&1; then
   echo "   ✓ worker bundles"
 else
   echo "   ✗ worker dry-run build FAILED (re-run without redirects to see why)"; FAIL=1
 fi
 
-echo "── qa-gate 2/5: dashboard inline scripts"
+echo "── qa-gate 2/6: dashboard inline scripts"
 if node tools/check_inline_scripts.js >/dev/null 2>&1; then
   echo "   ✓ inline scripts parse"
 else
   echo "   ✗ inline-script check FAILED"; FAIL=1
 fi
 
-echo "── qa-gate 3/5: shipped-feature markers"
+echo "── qa-gate 3/6: shipped-feature markers"
 if node tools/check_markers.js >/dev/null 2>&1; then
   echo "   ✓ no shipped feature regressed"
 else
   echo "   ✗ marker tripwire FAILED (a shipped feature is missing — see node tools/check_markers.js)"; FAIL=1
 fi
 
-echo "── qa-gate 4/5: bracket placeholders in changed pages"
+echo "── qa-gate 4/6: module-nav parity (identical menu on every page)"
+if node tools/check_nav.js >/dev/null 2>&1; then
+  echo "   ✓ nav identical across all app pages"
+else
+  echo "   ✗ nav parity FAILED (the module menu drifted — see node tools/check_nav.js)"; FAIL=1
+fi
+
+echo "── qa-gate 5/6: bracket placeholders in changed pages"
 git fetch origin main --quiet 2>/dev/null || true
 CHANGED=$(git diff --name-only origin/main -- 'docs/*.html' 2>/dev/null | grep -v '^docs/archive/' || true)
 PLACE=0
@@ -51,7 +59,7 @@ if [ -n "$CHANGED" ]; then
 fi
 if [ "$PLACE" = 0 ]; then echo "   ✓ no bracket placeholders"; else FAIL=1; fi
 
-echo "── qa-gate 5/5: deck content audit (changed decks only)"
+echo "── qa-gate 6/6: deck content audit (changed decks only)"
 DECK_FAIL=0; AUDITED=0
 if [ -n "$CHANGED" ]; then
   for d in $CHANGED; do
