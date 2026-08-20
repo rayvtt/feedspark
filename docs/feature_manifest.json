@@ -1945,13 +1945,15 @@
       "name": "workflow: Owner filter (FS roster from the Owner column)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "ownerOptionSet",
-      "min": 3
+      "min": 3,
+      "pr": 256
     },
     {
       "name": "workflow: FS roster owner normaliser (ASPL fold)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "fsOwnerOf",
-      "min": 3
+      "min": 3,
+      "pr": 256
     }
   ]
 }
