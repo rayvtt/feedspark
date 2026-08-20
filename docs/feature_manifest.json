@@ -1893,6 +1893,12 @@
       "pattern": "'/api/presence'",
       "min": 1,
       "pr": 247
+    },
+    {
+      "name": "labelguard page: clickable alert diff (known-good/yesterday/now)",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "paintAlertDiff",
+      "pr": 251
     }
   ]
 }

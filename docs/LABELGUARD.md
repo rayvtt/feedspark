@@ -128,7 +128,12 @@ proxy: sheet ids never come from the query — only roster clients resolve, exac
 ## 5. The page (`/labels`)
 
 - **01 Active alerts** — every unresolved drop-off vs last known-good, crit first, with per-feed
-  "✓ Expected — accept as known-good".
+  "✓ Expected — accept as known-good". **Every alert row is clickable** → an inline before/after
+  diff of exactly what fired: the affected measure and the label's values as a
+  **Known-good · Yesterday · Now** table (Δ vs known-good badges, the alert's own value pinned
+  and highlighted, biggest movers next, new values shown with a "—" known-good column). Data
+  comes from the one `/api/labels/snapshot` call (it returns all three states); the feed name
+  still opens the full dissection, ✓ still accepts.
 - **02 Estate health** — client cards × market rows: status pill (ok / warn / crit / stale /
   not scanned / unreachable), CL0–4 coverage bars, rows, last scan. **⚡ Scan whole estate**
   sweeps sequentially, skipping feeds fresher than 20h.
