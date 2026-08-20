@@ -360,7 +360,7 @@ window.addEventListener('load',restore);
       <div class="frow3">
         <div class="fld"><label>Client</label><select id="bg-client"></select></div>
         <div class="fld"><label>Market</label><input id="bg-market" value="gb" maxlength="6"></div>
-        <div class="fld"><label>Source</label><select id="bg-source"><option value="email">Email</option><option value="plan">Project plan</option></select></div>
+        <div class="fld"><label>Source</label><select id="bg-source"><option value="email">Email</option><option value="plan">Project plan</option><option value="call">📞 Call</option></select></div>
       </div>
       <div class="fld"><label>Task</label><input id="bg-task" placeholder="e.g. Rewrite 200 MASK titles — SS26 sandals"></div>
       <div class="fld"><label>Category <span class="tpl-hint">— auto-fills scope, definition of done &amp; the two streams</span></label>
@@ -489,6 +489,7 @@ window.addEventListener('load',restore);
   .itbl .src-email{color:var(--orange-ink);background:rgba(245,166,35,.13);border-color:rgba(245,166,35,.32)}
   .itbl .src-brf{color:#fff;background:var(--orange-deep);border-color:var(--orange-deep);margin-left:4px;font-weight:900}
   .itbl .src-atrt{color:#7A5AA8;background:rgba(122,90,168,.13);border-color:rgba(122,90,168,.34)}
+  .itbl .src-call{color:#0E8A6D;background:rgba(14,138,109,.12);border-color:rgba(14,138,109,.32)}
   .itbl .c-act{text-align:right;white-space:nowrap}
   .itbl .c-act button{height:26px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}   /* one height + centre line for ⟳ 👁 ✕ Brief — they each carried their own padding maths */
   .itbl .brief-btn{font:inherit;font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:100px;border:1px solid var(--orange);background:var(--paper);color:var(--orange-ink);cursor:pointer}
@@ -1523,6 +1524,26 @@ window.addEventListener('load',restore);
     return Object.keys(BRIEFS).map(function(k){return BRIEFS[k];})
       .filter(function(b){return b.source==='email'&&b.status==='intake'&&!b.taskKey;})
       .map(function(b){return {client:b.client,task:b.task,cat:'',owner:'—',source:'email',s:'',b:'open'};}); }
+  // ---- Gemini/Meet call notes → Intake rows (Ray's carve-out from the emails-are-never-auto-tasks
+  // rule: a monthly/strategy call's minuted actions ARE tasks). The worker parses the automatic
+  // "Notes by Gemini" email at push time and stores each action in KV callactions; here they file
+  // straight into the Intake grid with a 📞 Call source chip naming the meeting. The rows live in
+  // KV only — nothing is written to a plan sheet unattended; delete/hide stick via DELETED/HIDDEN.
+  var CALLS=[];
+  function callDate(w){ if(!w)return ''; var d=new Date(w); return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}); }
+  function callTasks(){
+    var idx={}; planTasks().forEach(function(p){ (idx[p.client]=idx[p.client]||[]).push(p.task); });
+    var out=[], seenK={};
+    CALLS.forEach(function(a){ if(!a||!a.task)return;
+      var client=a.client||'—', k=client+'|'+normTask(a.task);
+      if(seenK[k])return;                                             // the same action minuted on two calls files once
+      var plan=idx[client]||[];                                       // suppressed once the plan carries it (mirror manualTasks)
+      for(var i=0;i<plan.length;i++){ if(sameTask(a.task,plan[i]))return; }
+      if(MANUAL.some(function(m2){ return m2.client===client&&sameTask(m2.task,a.task); }))return;
+      seenK[k]=1;
+      out.push({client:client,task:a.task,cat:classifyLite(a.task),owner:a.owner||'—',
+        source:'call',call:a.call||'Call',cwhen:a.when||0,s:'Open',b:'open',d:''}); });
+    return out; }
   // adopt an email-sourced task into the brand's project plan — the SAME pipeline as ＋ Add task:
   // optimistic local row + /api/sheets/append write-back, duplicate-guarded against existing plan rows.
   function adoptIntoPlan(client,task,status,dueDD,owner,esrc,strict){
@@ -1567,7 +1588,7 @@ window.addEventListener('load',restore);
         var s=ov[k]!=null?ov[k]:(src.status||'Open');
         return {client:m.c,task:m.task,cat:classifyLite(m.task),owner:(owo[k]!=null?owo[k]:(src.owner||'—')),source:'plan',
           esrc:(src.esrc||isEsrc(k,m.task))?1:0,s:s,b:bucketOf(s),live:false,manual:true,sheet:PLANSHEET[m.c]||'',d:(duo[k]||src.due||'')}; }); }
-  function allIntake(){ return planTasks().concat(manualTasks()).concat(emailIntake()).filter(function(r){ return !RMCL[r.client]; }); }
+  function allIntake(){ return planTasks().concat(manualTasks()).concat(emailIntake()).concat(callTasks()).filter(function(r){ return !RMCL[r.client]; }); }
   // DDMM (or DDMMYYYY) -> ISO yyyy-mm-dd; a near-past DDMM rolls to next year
   function ddmmToIso(v){ v=String(v||'').replace(/\D/g,'');
     if(v.length===4){ var dd=+v.slice(0,2), mm=+v.slice(2,4); if(dd<1||dd>31||mm<1||mm>12)return '';
@@ -1770,7 +1791,7 @@ window.addEventListener('load',restore);
     Object.keys(BRIEF_ANCHOR).forEach(function(id){ var b=BRIEFS[id]; if(!b||BRIEF_DUP[id])return; var ak=BRIEF_ANCHOR[id]; if(!BK[ak])BK[ak]=b; });   // fuzzy-anchored tickets dress their row too   // intake row -> its live ticket (primary + attached)
     body.innerHTML = f.length ? f.map(function(t,i){
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
-      var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':t.esrc?'<span class="src-tag src-email" title="Arrived by email — written into the plan">Email</span>':'<span class="src-tag src-plan">Plan</span>';
+      var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':t.source==='call'?('<span class="src-tag src-call" title="Action item parsed from the call — '+esc(t.call||'Call')+(t.cwhen?(' · '+callDate(t.cwhen)):'')+'">📞 '+esc(String(t.call||'Call').slice(0,26))+'</span>'):t.esrc?'<span class="src-tag src-email" title="Arrived by email — written into the plan">Email</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
       var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt'), rec=RECUR[k];
       var bf=BK[k], bfChip=bf?('<span class="bf-chip" data-bid="'+esc(bf.id)+'" style="background:'+(STAGE_COLOR[bf.status]||'#8a94a0')+'" title="Ticket '+esc(bf.id)+' — '+esc(STAGE_LBL[bf.status]||bf.status)+(courtOf(bf)?(' · ball with '+courtOf(bf)):'')+'. Click to open">'+esc(STAGE_LBL[bf.status]||bf.status)+'</span>'):'';
@@ -1790,7 +1811,7 @@ window.addEventListener('load',restore);
            ?'<td class="c-due c-due-ed" data-r="'+i+'" data-col="due" data-i="'+i+'" title="Double-click to set due date (DDMM)">'+esc(dueDisplay(t))+'</td>'
            :'<td class="c-due" data-r="'+i+'" data-col="due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>')
         +stat+'<td data-r="'+i+'" data-col="source">'+src+'</td><td class="c-act">'
-        +(t.source!=='email'?'<button class="rec-btn'+(rec?' on':'')+'" data-i="'+i+'" title="'+(rec?('Repeats — '+REC_LBL[rec.every].toLowerCase()+'. The next occurrence is created when this one is marked Done'):'Repeat this task — weekly / monthly / every 3 months')+'">⟳</button>':'')
+        +(t.source!=='email'&&t.source!=='call'?'<button class="rec-btn'+(rec?' on':'')+'" data-i="'+i+'" title="'+(rec?('Repeats — '+REC_LBL[rec.every].toLowerCase()+'. The next occurrence is created when this one is marked Done'):'Repeat this task — weekly / monthly / every 3 months')+'">⟳</button>':'')
         +'<button class="hide-btn'+(hid?' on':'')+'" data-i="'+i+'" title="'+(hid?'Restore to the task list':'Hide — it’s just a note (stays in the plan)')+'">'+(hid?EYEON:EYEOFF)+'</button><button class="del-btn" data-i="'+i+'" title="Delete task">✕</button><button class="brief-btn" data-i="'+i+'">Brief</button></td></tr>';
     }).join('') : '<tr><td colspan="9" class="it-empty">'+((itState.srcs.length===1&&itState.srcs[0]==='email')?'No incoming-email tasks yet — these appear here once the Gmail sync is connected.':'No tasks match this filter.')+'</td></tr>';
     body.querySelectorAll('.brief-btn').forEach(function(btn){ btn.onclick=function(){ var t=f[+btn.getAttribute('data-i')]; markBriefed(t); prefill(t); renderAll(); }; });
@@ -2063,7 +2084,7 @@ window.addEventListener('load',restore);
         else { var i=st[key].indexOf(s[0]); if(i>=0)st[key].splice(i,1); else st[key].push(s[0]); }
         renderChipBar(id,opts,key,st,done); done(); };
       wrap.appendChild(b); }); }
-  var SRC_OPTS=[['','All'],['plan','Project plan'],['email','Email tasks']];
+  var SRC_OPTS=[['','All'],['plan','Project plan'],['email','Email tasks'],['call','📞 Calls']];
   function renderSrcChips(){ renderChipBar('it-src',SRC_OPTS,'srcs'); }
   renderSrcChips();
   // reusable multi-select DROPDOWN (status + client + the timeline's brand/AM): compact button +
@@ -3283,6 +3304,8 @@ window.addEventListener('load',restore);
     fetch('/api/gmail/intake').then(function(r){return r.json();}).then(function(d){
       if(d && d.connected){ gmailItems=d.items||[]; applyTaught(gmailItems); if(dot)dot.classList.add('on');
         updateGmailState(); renderEmailPanel(); }
+      // call actions ride the same response even when the triage queue is empty — file them
+      if(d && d.calls && d.calls.length){ CALLS=d.calls; renderAll(); }
     }).catch(function(){}); })();
 })();
 </script>
