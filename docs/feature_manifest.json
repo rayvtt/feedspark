@@ -1811,13 +1811,6 @@
       "pr": 243
     },
     {
-      "name": "Workflow: AM filter self-populates from Owner-column names (person-shaped only)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "amOptionSet",
-      "min": 3,
-      "pr": 246
-    },
-    {
       "name": "tools: nav-parity tripwire present (identical menu on every page)",
       "file": "tools/check_nav.js",
       "pattern": "tb-modules",
@@ -1947,6 +1940,20 @@
       "pattern": "labeldrafts",
       "min": 4,
       "pr": 255
+    },
+    {
+      "name": "workflow: Owner filter (FS roster from the Owner column)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "ownerOptionSet",
+      "min": 3,
+      "pr": 256
+    },
+    {
+      "name": "workflow: FS roster owner normaliser (ASPL fold)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "fsOwnerOf",
+      "min": 3,
+      "pr": 256
     }
   ]
 }
