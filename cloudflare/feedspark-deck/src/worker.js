@@ -70,6 +70,7 @@ import FEEDLAB_ENGINE from "../../../docs/feedlab_engine.js";
 
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
+import MAT_REISS_INTRO_AUG26 from "../../../docs/materials/Reiss_Introduction_Aug26.pptx";
 
 // KWCal client-calendar seeds (docs/calseed/) -- each brand's shared marketing-planner slide,
 // bundled as a Data module and served at /kwcal/cal/<file>. The KWCal page falls back to these
@@ -91,6 +92,12 @@ const SEED_MATERIALS = [
     file: 'Superdry_FeedSpark_Strategy_Review_2024-2026.pptx',
     mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     at: '2026-08-05', body: MAT_SUPERDRY_SR2426 },
+  { id: 'reiss-intro-aug26', client: 'Reiss',
+    title: 'Reiss \u00d7 FeedSpark \u2014 Account Introduction, Aug 2026',
+    cat: 'marketing', occasion: 'Account Introduction Aug-26',
+    file: 'Reiss_Introduction_Aug26.pptx',
+    mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    at: '2026-08-20', body: MAT_REISS_INTRO_AUG26 },
 ];
 
 const PAGES = {

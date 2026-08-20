@@ -356,10 +356,15 @@ python tools/deck_to_pptx.py docs/<Client>_<Deck>.html <Client>_<Deck>.pptx --au
   bigger panels across more slides), never shrink below `MIN_OK`. See Step 6b for the
   exporter's rules before extending it.
 - **Send the `.pptx` to Ray in the session** (it's the deliverable — don't just name a path),
-  and commit it to `docs/materials/<Client>_<Deck>.pptx` so it survives the ephemeral
-  container and lands in the client's Materials bank tier. Do **not** add a
-  `SEED_MATERIALS` entry unless Ray asks for it to be live in the dossier — each seed adds
-  its full size to every worker deploy (`docs/MATERIALS.md`).
+  commit it to `docs/materials/<Client>_<Deck>.pptx`, **and file it into the client's Brand
+  dossier by default**: add the Data-module import + `SEED_MATERIALS` entry in
+  `cloudflare/feedspark-deck/src/worker.js` (Ray's standing rule, Aug 2026 — a generated
+  deck should sit in the dossier, not just in git). Template-only exports are small
+  (~90 KB), so the per-deploy cost is fine; only pause and ask if a deck carries embedded
+  media that pushes it into the multi-MB range (`docs/MATERIALS.md` has the budget math).
+  Since this touches the worker, run
+  `node --input-type=module --check < cloudflare/feedspark-deck/src/worker.js` before
+  pushing, and verify live per the deploy protocol after merge.
 - Commit the HTML intermediate alongside it (same commit is fine) so feedback rounds have
   something to rework.
 
