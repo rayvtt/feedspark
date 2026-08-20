@@ -364,14 +364,15 @@ window.addEventListener('load',restore);
 
 <div class="ask-scrim" id="ask-scrim"><div class="ask-modal">
   <h3 id="ask-title">✉ Ask the client — is this change expected?</h3>
-  <p class="hint" style="margin:0">Review and edit freely — nothing sends itself. <b>Create Gmail draft</b> files this (breakdown images attached) into the Drafts folder of ray@feedspark.com for a final look before sending.</p>
+  <p class="hint" style="margin:0">Review and edit freely — nothing sends itself. <b>Create Gmail draft</b> files this into the ray@feedspark.com Drafts folder with the breakdown images already attached (via the sync script, ~5 min); <b>Open in Gmail now</b> composes it in the inbox instantly — Gmail can’t accept attachments by URL, so the images download alongside for a drag-in.</p>
   <div class="ask-f"><label>To</label><input id="ask-to" placeholder="client contact email — remembered per client"></div>
   <div class="ask-f"><label>Subject</label><input id="ask-subject"></div>
   <textarea class="ask-body" id="ask-body" aria-label="Email body"></textarea>
   <div class="ask-atts" id="ask-atts"></div>
   <div class="ask-actions">
     <button class="btn pri" id="ask-draft">Create Gmail draft</button>
-    <button class="btn" id="ask-mailto" title="Open your mail app instead — the breakdown images download so you can attach them by hand">Open in mail app</button>
+    <button class="btn" id="ask-gmail" title="Compose this right now in the ray@feedspark.com Gmail inbox — a compose URL can’t carry attachments, so the breakdown images download alongside for a quick drag-in">Open in Gmail now</button>
+    <button class="btn" id="ask-mailto" title="Open your default mail app instead — the breakdown images download so you can attach them by hand">Mail app</button>
     <button class="btn" id="ask-dl">⤓ Breakdown image(s)</button>
     <button class="btn" id="ask-x">Cancel</button>
     <span class="ask-msg" id="ask-msg"></span>
@@ -858,6 +859,25 @@ window.addEventListener('load',restore);
   $('ask-x').onclick = function () { $('ask-scrim').classList.remove('on'); };
   $('ask-scrim').onclick = function (e) { if (e.target === $('ask-scrim')) $('ask-scrim').classList.remove('on'); };
   $('ask-dl').onclick = askDownload;
+  // Ray's ask: compose straight in the ray@feedspark.com WEB inbox. Gmail's compose deep-link
+  // (view=cm) opens a real compose window under authuser=ray@feedspark.com with To/Subject/Body
+  // pre-filled — instantly, no bridge wait. A URL cannot carry attachments (Gmail forbids it),
+  // so the breakdown images download alongside for a drag-in; the queued-draft path stays the
+  // one that attaches them automatically.
+  $('ask-gmail').onclick = function () {
+    if (!ASKSEL) return;
+    askDownload();
+    window.open('https://mail.google.com/mail/?view=cm&fs=1&authuser=ray%40feedspark.com'
+      + '&to=' + encodeURIComponent($('ask-to').value.trim())
+      + '&su=' + encodeURIComponent($('ask-subject').value)
+      + '&body=' + encodeURIComponent($('ask-body').value), '_blank');
+    var now = Date.now(), to = $('ask-to').value.trim();
+    ASKSEL.keys.forEach(function (k) { ASKED[k] = { t: now, to: to }; });
+    fetch(API + '/api/labels/askdraft', { method: 'POST', headers: { 'content-type': 'application/json' },   // composed = asked, persisted for the whole team
+      body: JSON.stringify({ markOnly: true, to: to, client: ASKSEL.client, keys: ASKSEL.keys }) }).catch(function () {});
+    ASKCFG.to = ASKCFG.to || {}; ASKCFG.to[ASKSEL.client] = to;
+    $('ask-scrim').classList.remove('on'); renderAlerts();
+  };
   $('ask-mailto').onclick = function () {
     if (!ASKSEL) return;
     askDownload();   // mailto can't attach — hand over the images for a manual attach

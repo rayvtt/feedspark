@@ -1954,6 +1954,12 @@
       "pattern": "fsOwnerOf",
       "min": 3,
       "pr": 256
+    },
+    {
+      "name": "labelguard: Open-in-Gmail compose deep-link",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "view=cm",
+      "min": 1
     }
   ]
 }

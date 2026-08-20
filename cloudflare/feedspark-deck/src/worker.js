@@ -1938,6 +1938,19 @@ async function labelGuardRoutes(env, request, url) {
       let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
       const to = String(b.to || '').slice(0, 160).trim();
       if (to.indexOf('@') < 1) return json({ error: 'not an email address' }, 400);
+      // markOnly: the email was composed directly (Gmail deep-link / mail app) — persist the
+      // "✉ asked" stamps and the remembered contact, but queue nothing for the bridge.
+      if (b.markOnly) {
+        const asked0 = (await env.EDITS.get('labelasked', 'json')) || {};
+        (Array.isArray(b.keys) ? b.keys : []).slice(0, 40).forEach((k) => { asked0[String(k).slice(0, 300)] = { t: Date.now(), to }; });
+        await env.EDITS.put('labelasked', JSON.stringify(asked0));
+        if (b.client) {
+          const cfg0 = (await env.EDITS.get('labelaskcfg', 'json')) || { to: {} };
+          cfg0.to = cfg0.to || {}; cfg0.to[String(b.client).slice(0, 60)] = to;
+          await env.EDITS.put('labelaskcfg', JSON.stringify(cfg0));
+        }
+        return json({ ok: true, marked: (Array.isArray(b.keys) ? b.keys : []).length });
+      }
       const subject = String(b.subject || '').slice(0, 200).trim();
       const text = String(b.text || '').slice(0, 8000);
       if (!subject || !text) return json({ error: 'missing subject / body' }, 400);
