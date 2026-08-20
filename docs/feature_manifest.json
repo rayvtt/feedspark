@@ -1849,25 +1849,29 @@
       "name": "briefmatch: Gemini call-notes parser",
       "file": "cloudflare/feedspark-deck/src/briefmatch.js",
       "pattern": "parseGeminiNotes",
-      "min": 1
+      "min": 1,
+      "pr": 248
     },
     {
       "name": "worker: call actions store (Gemini notes → Intake rows)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "callactions",
-      "min": 3
+      "min": 3,
+      "pr": 248
     },
     {
       "name": "workflow: call actions file as Intake rows",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "callTasks",
-      "min": 2
+      "min": 2,
+      "pr": 248
     },
     {
       "name": "workflow: 📞 Call source chip",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "src-call",
-      "min": 2
+      "min": 2,
+      "pr": 248
     },
     {
       "name": "Presence: live-avatars widget present",
