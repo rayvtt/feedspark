@@ -264,6 +264,17 @@ approval is not a gate; the only reason to hold a merge is 🔥 overlap sequenci
 After merge: verify LIVE per the rule above, then restart the branch from latest main.
 Full protocol: [`docs/WAYS_OF_WORKING.md`](./docs/WAYS_OF_WORKING.md).
 
+### Brand dossier — portfolio band (Aug 2026)
+Each dossier card opens with an async **portfolio band** (`dz-port`, filled by `portFill`):
+**Activity** (PLANTASKS record — total/open/done-30d/overdue + briefs in flight from `/api/briefs`
++ kw moments from `/api/kwcal`), **Health** (composite 0–100, transparent named deductions:
+overdue, guard alerts via `/api/labels/alerts?by=client` — worker splits `labelalerts`/`ptypealerts`
+keys per client — audit avg, keyword saturation, plan score), **Feed audit** (per wired market:
+Feed Lab score via `/api/feed/audit` + % keyworded, honest "not scanned"), and **Suggested next
+moves** — ranked P1–P3 deterministic rules deep-linking /labels /ptypes /workflow /feedlab /kwcal.
+All computed, £0, cached per session; existing dossier blocks (score panel, tests, materials,
+attach flows) unchanged.
+
 ### Command center data — ATRT Tracker
 - The command center (`/`) shows **live workload**, **tests running** and **accounts & project plans**
   sourced from the **ATRT Tracker** (Google Sheet `1p_cPSRjmK16CDpLryoOBaOUjG3ZvnL-k4ORHhaHI5AE`):

@@ -262,6 +262,38 @@ window.addEventListener('load',restore);
   .tag-progress,.tag-client{background:#EAEFF6;color:var(--navy);border-color:#CFDBEA}
   .tag-test,.tag-done{background:#EBF7EF;color:var(--good);border-color:#CDE9D8}
   .tag-hold{background:#F4F4F2;color:var(--muted);border-color:var(--line)}
+  /* dossier: portfolio band — Activity · Health · Audit + suggestions (async, cross-module) */
+  .dz-port{margin:16px 0 4px}
+  .dzp-load{font-size:12.5px;font-weight:700;color:var(--muted);padding:8px 2px}
+  .dzp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .dzp-card{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+  .dzp-card h5{margin:0 0 8px;font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .dzp-tiles{display:flex;gap:14px;flex-wrap:wrap}
+  .dzp-t .n{font-size:21px;font-weight:900;line-height:1.1}
+  .dzp-t .l{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+  .dzp-t.bad .n{color:var(--risk)}.dzp-t.good .n{color:var(--good)}.dzp-t.warn .n{color:var(--orange-deep)}
+  .dzp-health{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+  .dzp-hn{font-size:24px;font-weight:900}
+  .dzp-band{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;padding:3px 10px;border-radius:999px;color:#fff}
+  .dzp-band.good{background:var(--good)}.dzp-band.watch{background:var(--orange-deep)}.dzp-band.risk{background:var(--risk)}
+  .dzp-f{font-size:11.5px;color:var(--ink-2);font-weight:700;padding:1.5px 0;display:flex;gap:6px}
+  .dzp-f b{color:var(--risk);font-weight:900;flex:none}
+  .dzp-f b.up{color:var(--good)}
+  .dzp-arow{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;padding:3px 0;color:var(--ink-2)}
+  .dzp-arow .mk{font-weight:900;text-transform:uppercase;font-size:10.5px;color:var(--muted);width:26px;flex:none}
+  .dzp-as{font-weight:900}
+  .dzp-as.good{color:var(--good)}.dzp-as.warn{color:var(--orange-deep)}.dzp-as.bad{color:var(--risk)}
+  .dzp-al{font-size:10.5px;font-weight:900;border-radius:6px;padding:1px 6px;background:#FDF6F4;color:var(--risk);border:1px solid #EFC7BF}
+  .dzp-sug{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px 15px;background:#fff}
+  .dzp-sug h5{margin:0 0 7px;font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-deep)}
+  .dzp-s{display:flex;gap:9px;align-items:baseline;font-size:13px;padding:4px 0;color:var(--ink)}
+  .dzp-s .pri{flex:none;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px;text-transform:uppercase;letter-spacing:.04em}
+  .dzp-s .pri.p1{background:var(--risk);color:#fff}.dzp-s .pri.p2{background:var(--orange);color:#fff}.dzp-s .pri.p3{background:var(--wash);color:var(--ink-2);border:1px solid var(--line)}
+  .dzp-s a{font-weight:900;color:var(--orange-deep);text-decoration:none;white-space:nowrap}
+  .dzp-s a:hover{text-decoration:underline}
+  [data-theme=dark] .dzp-card{background:#181B22;border-color:var(--line)}
+  [data-theme=dark] .dzp-sug{background:var(--paper);border-color:var(--line)}
+  [data-theme=dark] .dzp-al{background:#241a17;border-color:#5a3128}
   /* dossier: active-work filter + volume chart */
   .dz-work-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:8px}
   .dz-work-head>h4{margin:0}
@@ -687,6 +719,120 @@ window.addEventListener('load',restore);
     if(cur&&!editMode)render(cur);
   }).catch(function(){});
   var PT=window.PLANTASKS||{};
+  /* ---- portfolio band: Activity · Health · Audit + suggestions ----------------------------
+     Cross-module, per-brand view assembled async from the stores every module already keeps:
+     the 2,000+ plan records (PLANTASKS), briefs in flight (/api/briefs), Feed Lab audits
+     (/api/feed/audit per wired market), Label+PT Guard alerts (/api/labels/alerts?by=client)
+     and Keyword Calendar saturation (/api/kwcal). All numbers computed, all £0. */
+  var BRIEFSC=null,ALERTC=null,KWC=null,AUDC={},PORTREQ=0;
+  function portShell(){ return '<div class="dz-port" id="dz-port"><div class="dzp-load">assembling live portfolio — briefs · audits · guards · keywords…</div></div>'; }
+  function portData(cb){
+    var need=1; function done(){ if(--need<=0)cb(); }
+    if(BRIEFSC===null){ need++; fetch(API+'/api/briefs').then(function(r){return r.json()})
+      .then(function(j){BRIEFSC=(j&&typeof j==='object'&&!j.error)?j:{}; done();},function(){BRIEFSC={}; done();}); }
+    if(ALERTC===null){ need++; fetch(API+'/api/labels/alerts?by=client').then(function(r){return r.json()})
+      .then(function(j){ALERTC=j||{}; done();},function(){ALERTC={}; done();}); }
+    if(KWC===null){ need++; fetch(API+'/api/kwcal').then(function(r){return r.json()})
+      .then(function(j){KWC=(j&&typeof j==='object'&&!j.error)?j:{}; done();},function(){KWC={}; done();}); }
+    done();
+  }
+  function portMkts(name){ var b=B[name]||{}, ks={};
+    if(b.feed)ks.gb=1; Object.keys(b.feeds||{}).forEach(function(k){ks[String(k).toLowerCase()]=1;});
+    (FEEDWIRED[name]||[]).forEach(function(k){ks[k]=1;});
+    return Object.keys(ks).filter(function(m){return m.indexOf('-fb')<0}).slice(0,8); }
+  function portFill(name){
+    var host=detail.querySelector('#dz-port'); if(!host)return;
+    var token=++PORTREQ;
+    portData(function(){
+      if(token!==PORTREQ||cur!==name)return;
+      var mkts=portMkts(name), pend=mkts.length;
+      function paint(){ if(token!==PORTREQ||cur!==name)return; var h2=detail.querySelector('#dz-port'); if(h2)h2.innerHTML=portHtml(name,mkts); }
+      if(!pend)return paint();
+      mkts.forEach(function(m){ var key=name+'|'+m;
+        if(AUDC[key]!==undefined){ if(--pend<=0)paint(); return; }
+        fetch(API+'/api/feed/audit?client='+encodeURIComponent(name)+'&market='+encodeURIComponent(m))
+          .then(function(r){return r.json()})
+          .then(function(j){AUDC[key]=(j&&j.score&&typeof j.score.total==='number')?j:null;},function(){AUDC[key]=null;})
+          .then(function(){ if(--pend<=0)paint(); });
+      });
+    });
+  }
+  function portHtml(name,mkts){
+    var p=PT[name]||null, od=(A.overdue&&A.overdue[name])||0;
+    var inflight=0,briefN=0;
+    Object.keys(BRIEFSC||{}).forEach(function(k){ var x=BRIEFSC[k];
+      if(x&&x.client===name){ briefN++; if(['done','confirmed','dead','closed'].indexOf(String(x.st||'').toLowerCase())<0)inflight++; } });
+    var done1=0; if(p&&p.catsw&&p.catsw['1']){ Object.keys(p.catsw['1']).forEach(function(c){done1+=(p.catsw['1'][c].done||0);}); }
+    var kw=(KWC&&KWC[name])||{}, kev=(kw.events||[]).length;
+    var satL=[]; mkts.forEach(function(m){ var ix=kw.ptidx&&kw.ptidx[m];
+      if(ix&&ix.sat&&ix.__total)satL.push({m:m,pct:Math.round(ix.sat.n/ix.__total*1000)/10}); });
+    var al=(ALERTC&&ALERTC.clients&&ALERTC.clients[name])||{crit:0,warn:0};
+    var pal=(ALERTC&&ALERTC.ptClients&&ALERTC.ptClients[name])||{crit:0,warn:0};
+    var crit=(al.crit||0)+(pal.crit||0), warn=(al.warn||0)+(pal.warn||0);
+    var audL=mkts.map(function(m){ var a=AUDC[name+'|'+m];
+      return {m:m,score:(a&&a.score)?Math.round(a.score.total):null}; });
+    var scored=audL.filter(function(a){return a.score!=null});
+    var avgA=scored.length?Math.round(scored.reduce(function(s,a){return s+a.score},0)/scored.length):null;
+    /* health: start at 100, dock transparent, named amounts */
+    var h=100,fac=[];
+    function hit(pts,txt){ h-=pts; fac.push('<span class="dzp-f"><b>−'+pts+'</b>'+esc(txt)+'</span>'); }
+    if(od)hit(Math.min(20,od*2),od+' overdue task'+(od===1?'':'s'));
+    var openPct=(p&&p.total)?Math.round(p.open/p.total*100):0;
+    if(p&&openPct>40)hit(10,openPct+'% of the plan still open');
+    if(crit)hit(Math.min(20,crit*10),crit+' critical guard alert'+(crit===1?'':'s'));
+    else if(warn)hit(Math.min(9,warn*3),warn+' guard warning'+(warn===1?'':'s'));
+    if(avgA!=null){ if(avgA<70)hit(Math.min(15,Math.round((70-avgA)/2)),'feed audit avg '+avgA+'/100'); }
+    else if(mkts.length)hit(5,'no Feed Lab audit stored yet');
+    if(satL.length){ var smin=Math.min.apply(null,satL.map(function(x){return x.pct}));
+      if(smin<60)hit(8,'keyword saturation at '+smin+'%'); else if(smin<85)hit(4,'keyword saturation at '+smin+'%'); }
+    if(p&&p.score<40)hit(10,'plan score '+p.score+'/100'); else if(p&&p.score<66)hit(5,'plan score '+p.score+'/100');
+    if(!inflight&&p&&p.open>10)hit(4,p.open+' open tasks with no briefs in flight');
+    h=Math.max(0,Math.round(h));
+    var band=h>=80?'good':h>=60?'watch':'risk', bandL=h>=80?'Good':h>=60?'Watch':'At risk';
+    if(!fac.length)fac.push('<span class="dzp-f"><b class="up">✓</b>no health deductions — clean board</span>');
+    /* suggestions: ranked, deterministic, each deep-links the module that fixes it */
+    var sug=[],FL='/feedlab?client='+encodeURIComponent(name),KWL='/kwcal?client='+encodeURIComponent(name);
+    if(crit)sug.push({p:1,t:'Resolve '+crit+' critical guard alert'+(crit===1?'':'s')+' — PMAX listing groups key on these exact values.',l:(al.crit?'/labels':'/ptypes'),ll:al.crit?'Label Guard':'PT Guard'});
+    if(od)sug.push({p:od>5?1:2,t:'Chase or reschedule the '+od+' overdue task'+(od===1?'':'s')+'.',l:'/workflow',ll:'Workflow'});
+    var worstA=null; scored.forEach(function(a){ if(!worstA||a.score<worstA.score)worstA=a; });
+    if(worstA&&worstA.score<70)sug.push({p:2,t:worstA.m.toUpperCase()+' feed audit at '+worstA.score+'/100 — dissect the weak pillars.',l:FL,ll:'Feed Lab'});
+    var unscanned=audL.filter(function(a){return a.score==null}).length;
+    if(unscanned)sug.push({p:3,t:unscanned+' wired market'+(unscanned===1?'':'s')+' never scanned — run Feed Lab once for a baseline.',l:FL,ll:'Feed Lab'});
+    var worstS=null; satL.forEach(function(x){ if(!worstS||x.pct<worstS.pct)worstS=x; });
+    if(worstS&&worstS.pct<85)sug.push({p:2,t:'Keyword saturation ('+worstS.m.toUpperCase()+') at '+worstS.pct+'% — every calendar moment is a step toward 100%.',l:KWL,ll:'Keyword Calendar'});
+    if(!kev)sug.push({p:3,t:'No marketing calendar seeded — transcribe the client planner and schedule keyword moments.',l:KWL,ll:'Keyword Calendar'});
+    if(!inflight&&p&&p.open>10)sug.push({p:2,t:p.open+' open tasks but no briefs in flight — brief the next batch.',l:'/workflow',ll:'Workflow'});
+    if(warn&&!crit)sug.push({p:3,t:'Review '+warn+' guard warning'+(warn===1?'':'s')+' before they turn critical.',l:'/labels',ll:'Label Guard'});
+    if(p){ var worstL=null;
+      CORDER.forEach(function(c){ var cc=p.cats&&p.cats[c]; if(!cc||cc.total<2)return;
+        var pct=Math.round(cc.done/cc.total*100); if(pct<100&&(!worstL||pct<worstL.pct))worstL={c:c,pct:pct,left:cc.total-cc.done}; });
+      if(worstL)sug.push({p:3,t:'Weakest lane: '+(CLBL[worstL.c]||worstL.c)+' at '+worstL.pct+'% — '+worstL.left+' task'+(worstL.left===1?'':'s')+' to close.',l:'/workflow',ll:'Workflow'}); }
+    sug.sort(function(a,b){return a.p-b.p}); sug=sug.slice(0,5);
+    /* assemble */
+    var act='<div class="dzp-card"><h5>Activity — '+(p?fmtN(p.total)+' tracked tasks':'no plan records')+'</h5><div class="dzp-tiles">'
+      +'<span class="dzp-t"><span class="n">'+(p?fmtN(p.open):'—')+'</span><span class="l">open</span></span>'
+      +'<span class="dzp-t good"><span class="n">'+(p?fmtN(done1):'—')+'</span><span class="l">done · 30d</span></span>'
+      +'<span class="dzp-t'+(od?' bad':'')+'"><span class="n">'+od+'</span><span class="l">overdue</span></span>'
+      +'<span class="dzp-t'+(inflight?' warn':'')+'"><span class="n">'+inflight+'</span><span class="l">briefs live</span></span>'
+      +'<span class="dzp-t"><span class="n">'+kev+'</span><span class="l">kw moments</span></span>'
+      +'</div></div>';
+    var hl='<div class="dzp-card"><h5>Health</h5><div class="dzp-health"><span class="dzp-hn">'+h+'</span><span class="dzp-band '+band+'">'+bandL+'</span></div>'+fac.slice(0,4).join('')+'</div>';
+    var arows=audL.map(function(a){
+      var sat=null; satL.forEach(function(x){ if(x.m===a.m)sat=x.pct; });
+      var sc=a.score==null?'<span class="dzp-as" style="color:var(--muted)">not scanned</span>'
+        :'<span class="dzp-as '+(a.score>=80?'good':a.score>=65?'warn':'bad')+'">'+a.score+'/100</span>';
+      return '<div class="dzp-arow"><span class="mk">'+esc(a.m.toUpperCase())+'</span>'+sc
+        +(sat!=null?'<span style="color:var(--muted)">·</span><span>'+sat+'% keyworded</span>':'')+'</div>'; }).join('');
+    var aud='<div class="dzp-card"><h5>Feed audit'+(avgA!=null?' — avg '+avgA+'/100':'')+'</h5>'
+      +(arows||'<div class="dzp-arow" style="color:var(--muted)">no feed markets wired</div>')
+      +((crit||warn)?'<div style="margin-top:6px"><span class="dzp-al">'+(crit?crit+' crit':'')+(crit&&warn?' · ':'')+(warn?warn+' warn':'')+' guard alerts</span></div>':'')
+      +'</div>';
+    var sh=sug.length?('<div class="dzp-sug"><h5>Suggested next moves</h5>'+sug.map(function(s){
+        return '<div class="dzp-s"><span class="pri p'+s.p+'">P'+s.p+'</span><span>'+esc(s.t)+'</span><a href="'+esc(s.l)+'">→ '+esc(s.ll)+'</a></div>'; }).join('')+'</div>')
+      :'<div class="dzp-sug"><h5>Suggested next moves</h5><div class="dzp-s"><span class="pri p3">✓</span><span>Nothing urgent — board is clean. Keep the testing cadence going.</span><a href="/workflow">→ Workflow</a></div></div>';
+    return '<div class="dzp-grid">'+act+hl+aud+'</div>'+sh;
+  }
+  function fmtN(n){ n=+n; return isFinite(n)?n.toLocaleString('en-GB'):'0'; }
   var PCAT={technical:'tech',test:'test',account:'account',image:'creative',custom_label:'creative',channel:'creative',title:'opt',keyword:'opt',data:'opt',product_type:'opt',opt:'opt'};
   var CLBL={title:'Titles',keyword:'Keywords',data:'Data fields',image:'Imagery',custom_label:'Custom labels',product_type:'Product type',technical:'Feed & technical',channel:'Channels',test:'Testing',account:'Account & strategy',opt:'Optimisation'};
   var CORDER=['title','keyword','data','image','custom_label','product_type','technical','channel','test','account'];
@@ -853,6 +999,7 @@ window.addEventListener('load',restore);
       '<div class="dz-head"><div class="dz-id">'+logo(b.dom,44)+'<div><h3>'+esc(name)+'</h3><div class="cat"><span'+edA('cat')+'>'+esc(b.cat||'')+'</span>'+((b.mk||editMode)?' · <span'+edA('mk')+'>'+esc(b.mk||'')+'</span>':'')+'</div></div></div>'
       +'<div class="dz-head-r">'+(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+delBtn+'</div></div>'
       +scorePanel(name)
+      +portShell()
       +'<div class="dz-metrics"><span class="chip"><b>'+(p?p.open:tasks.length)+'</b> active</span>'
         +(p?'<span class="chip done"><b>'+p.done+'</b> done</span>':'')
         +(od?'<span class="chip atrt-badge danger"><b>'+od+'</b> overdue</span>':'')
@@ -862,6 +1009,7 @@ window.addEventListener('load',restore);
       +'<div class="dz-foot">'+planCtl+deckCtl+feedCtl
         +(editMode?'<span class="dz-con"'+edA('con')+' data-ph="contacts…">'+esc(b.con||'')+'</span>':(b.con?'<span class="dz-con">'+esc(b.con)+'</span>':''))+'</div>';
     loadMats(name);
+    portFill(name);
     if(editMode){
       var del=detail.querySelector('.dz-x');
       if(del) del.onclick=function(){ if(confirm('Delete "'+name+'" from the dossier? It will be hidden from the command center (activity stays in the tracker).')){
