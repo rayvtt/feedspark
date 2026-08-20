@@ -88,6 +88,21 @@ window.addEventListener('load',restore);
   .al-diff .refT{font-weight:400;text-transform:none;letter-spacing:0}
   .al-diff .dhint{font-size:11px;color:var(--muted);margin:6px 0 0}
   .al-row:first-child{border-top:none}
+  /* ask-the-client: alert → pre-filled Gmail draft with the breakdown attached */
+  .al-asked{font-size:10.5px;font-weight:800;color:var(--good);background:rgba(21,128,61,.08);border:1px solid rgba(21,128,61,.3);border-radius:100px;padding:2px 8px;white-space:nowrap;margin-top:3px}
+  .ask-bar{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 6px}
+  .ask-scrim{position:fixed;inset:0;background:rgba(26,32,44,.45);z-index:60;display:none;align-items:flex-start;justify-content:center;padding:5vh 16px}
+  .ask-scrim.on{display:flex}
+  .ask-modal{background:#fff;border:1px solid var(--line);border-radius:14px;max-width:760px;width:100%;max-height:90vh;overflow:auto;padding:18px 20px;box-shadow:0 18px 50px rgba(0,0,0,.18)}
+  .ask-modal h3{margin:0 0 4px;font-size:16px}
+  .ask-f{display:flex;gap:8px;align-items:center;margin:10px 0}
+  .ask-f label{font-size:11px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);width:64px;flex:none}
+  .ask-f input{flex:1;font:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;min-width:0}
+  .ask-body{width:100%;font:inherit;font-size:13px;line-height:1.5;padding:10px 12px;border:1px solid var(--line);border-radius:9px;min-height:230px;box-sizing:border-box}
+  .ask-atts{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+  .ask-atts img{height:84px;border:1px solid var(--line);border-radius:8px}
+  .ask-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+  .ask-msg{font-size:12px;font-weight:700;color:var(--risk)}
   .al-sev{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;border-radius:6px;padding:3px 8px;flex:none;margin-top:2px}
   .al-sev.crit{background:#FDECEC;color:var(--risk)}
   .al-sev.warn{background:#FCF1E3;color:var(--orange-ink)}
@@ -347,6 +362,22 @@ window.addEventListener('load',restore);
 
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential — Label Guard</div></div>
 
+<div class="ask-scrim" id="ask-scrim"><div class="ask-modal">
+  <h3 id="ask-title">✉ Ask the client — is this change expected?</h3>
+  <p class="hint" style="margin:0">Review and edit freely — nothing sends itself. <b>Create Gmail draft</b> files this (breakdown images attached) into the Drafts folder of ray@feedspark.com for a final look before sending.</p>
+  <div class="ask-f"><label>To</label><input id="ask-to" placeholder="client contact email — remembered per client"></div>
+  <div class="ask-f"><label>Subject</label><input id="ask-subject"></div>
+  <textarea class="ask-body" id="ask-body" aria-label="Email body"></textarea>
+  <div class="ask-atts" id="ask-atts"></div>
+  <div class="ask-actions">
+    <button class="btn pri" id="ask-draft">Create Gmail draft</button>
+    <button class="btn" id="ask-mailto" title="Open your mail app instead — the breakdown images download so you can attach them by hand">Open in mail app</button>
+    <button class="btn" id="ask-dl">⤓ Breakdown image(s)</button>
+    <button class="btn" id="ask-x">Cancel</button>
+    <span class="ask-msg" id="ask-msg"></span>
+  </div>
+</div></div>
+
 <script>
 (function () {
   'use strict';
@@ -530,18 +561,34 @@ window.addEventListener('load',restore);
       $('alerts-panel').innerHTML = '<div class="al-empty">✓ No active drop-offs — every scanned feed matches its last known-good state.</div>';
       return;
     }
+    ALROWS = rows;
     var h = '';
+    // bundle: a client carrying several active alerts gets a one-click "ask about all" draft
+    var perC = {}; rows.forEach(function (r) { (perC[r.client] = perC[r.client] || []).push(r); });
+    var bar = Object.keys(perC).sort().filter(function (c) { return perC[c].length > 1; }).map(function (c) {
+      return '<button class="btn" data-askall="' + esc(c) + '" title="One client email covering every active alert on ' + esc(dispClient(c)) + ' — breakdown image per alert attached">✉ Ask ' + esc(dispClient(c)) + ' about all ' + perC[c].length + '</button>';
+    }).join('');
+    if (bar) h += '<div class="ask-bar">' + bar + '</div>';
     rows.forEach(function (r, i) {
-      var open = alKey(r) === ALOPEN;
+      var open = alKey(r) === ALOPEN, akd = ASKED[alKey(r)];
       h += '<div class="al-row" data-i="' + i + '" title="Click to see the exact change — now vs yesterday vs last known-good"><span class="al-sev ' + r.a.sev + '">' + r.a.sev + '</span>' +
         '<span class="al-feed" data-k="' + esc(r.k) + '">' + esc(dispClient(r.client)) + ' · ' + esc(mktBase(r.mkt).toUpperCase()) + '</span> ' + chChip(r.mkt) +
         '<span class="al-msg">' + esc(maskText(r.a.msg)) + '</span>' +
         '<span class="al-t">' + ago(r.t) + '</span>' +
+        (akd ? '<span class="al-asked" title="Client already asked — draft to ' + esc(akd.to || '') + '. Accepting the change (or recovery) clears this.">✉ asked ' + ago(akd.t) + '</span>' : '') +
+        '<button class="btn" data-ask="' + i + '" title="Draft a client email asking whether this change is expected — professional wording, before/after breakdown image attached. Creates a Gmail draft for review, never auto-sends.">✉ Ask client' + (akd ? ' again' : '') + '</button>' +
         '<button class="btn" data-ack="' + esc(r.k) + '" title="Accept the current feed as the new known-good reference and clear this feed’s flags">✓ Expected — accept as known-good</button>' +
         (open ? '<div class="al-diff" id="al-diff"><span class="muted"><span class="spin"></span>Loading references…</span></div>' : '') +
         '</div>';
     });
     $('alerts-panel').innerHTML = h;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ask]'), function (el) {
+      el.onclick = function (ev) { ev.stopPropagation(); openAsk([ALROWS[+el.getAttribute('data-ask')]]); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-askall]'), function (el) {
+      el.onclick = function (ev) { ev.stopPropagation(); var c = el.getAttribute('data-askall');
+        openAsk(ALROWS.filter(function (r) { return r.client === c; })); };
+    });
     Array.prototype.forEach.call(document.querySelectorAll('.al-feed'), function (el) {
       el.onclick = function (ev) { ev.stopPropagation(); select(el.getAttribute('data-k')); };
     });
@@ -657,9 +704,187 @@ window.addEventListener('load',restore);
     if (btn) { btn.disabled = true; btn.textContent = 'Accepting…'; }
     fetch(API + '/api/labels/ack?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt), { method: 'POST' })
       .then(function (r) { return r.json(); })
-      .then(function () { delete CACHE[k]; return refreshEstate(); })
+      .then(function () { delete CACHE[k];
+        Object.keys(ASKED).forEach(function (ak) { if (ak.indexOf(k + '§') === 0) delete ASKED[ak]; });   // accepted = question answered
+        return refreshEstate(); })
       .then(function () { if (SEL === k) select(k); });
   }
+
+  /* ---------------- ask-the-client: alert → pre-filled Gmail draft (Ray's rule:
+     confirm a drop is expected BEFORE acting). The compose is fully editable; "Create
+     Gmail draft" queues it for the Gmail bridge, which files a DRAFT — with a rendered
+     before/after breakdown image per alert attached — into the owner's mailbox for a
+     final review. Never auto-sends. Emails always carry REAL names and values (they go
+     to the client), regardless of the page's demo masking. ---------------- */
+  var ASKED = {}, ASKCFG = { to: {} }, ALROWS = [], ASKSEL = null;
+  function loadAskState() {
+    fetch(API + '/api/labels/askdraft').then(function (r) { return r.json(); })
+      .then(function (d) { ASKED = (d && d.asked) || {}; ASKCFG = (d && d.cfg) || { to: {} }; renderAlerts(); })
+      .catch(function () {});
+  }
+  function labHuman(l) { return String(l || '').replace(/^custom_label_?/i, 'custom label '); }
+  function chHuman(m) { return chOf(m) === 'fb' ? 'Meta catalogue' : 'Google Shopping'; }
+  function pctD(was, now) {
+    if (was == null || now == null || !was || was === now) return '';
+    var pc = Math.round(((now - was) / was) * 100);
+    return ' (' + (pc > 0 ? '+' : '') + pc + '%)';
+  }
+  // the numbers behind an alert, read from the cached snapshot triplet (same source as the inline diff)
+  function alertFacts(r, d) {
+    var a = r.a, B = d && d.baseline, N = d && d.snapshot;
+    function lab(s) { return (s && s.labels && a.label && s.labels[a.label]) || null; }
+    function cnt(s, v) { var L = lab(s); if (!L) return null; var hit = (L.values || []).filter(function (x) { return x[0] === v; })[0]; return hit ? hit[1] : 0; }
+    var f = { mkt: mktBase(r.mkt).toUpperCase(), ch: chHuman(r.mkt) };
+    if (a.code === 'rows-drop' || !a.label) { f.kind = 'rows'; f.was = B && B.rows; f.now = N && N.rows; }
+    else if (a.value != null) { f.kind = 'value'; f.value = a.value; f.label = a.label; f.was = cnt(B, a.value); f.now = cnt(N, a.value); }
+    else { f.kind = 'cov'; f.label = a.label; f.was = lab(B) ? lab(B).cov : null; f.now = lab(N) ? lab(N).cov : 0; }
+    return f;
+  }
+  function askBullet(r, f) {
+    var loc = f.mkt + ' ' + f.ch + ' feed';
+    if (f.kind === 'value') return '• "' + f.value + '" (' + labHuman(f.label) + ') — ' + loc + ': ' + fmt(f.was) + ' products at our last healthy reference, ' + fmt(f.now) + ' now' + pctD(f.was, f.now) + '.';
+    if (f.kind === 'cov') return '• ' + labHuman(f.label) + ' coverage — ' + loc + ': ' + (f.was != null ? f.was + '%' : '—') + ' of products at our last healthy reference, ' + (f.now != null ? f.now + '%' : '0%') + ' now.';
+    if (f.kind === 'rows') return '• Overall feed size — ' + loc + ': ' + fmt(f.was) + ' products at our last healthy reference, ' + fmt(f.now) + ' now' + pctD(f.was, f.now) + '.';
+    return '• ' + r.a.msg;
+  }
+  function askCompose(client, items) {
+    var n = items.length;
+    var subject = n === 1
+      ? client + ' product feed — change spotted' + (items[0].f.kind === 'value' ? ' in "' + String(items[0].f.value).slice(0, 40) + '"' : '') + ' — expected?'
+      : client + ' product feeds — ' + n + ' changes spotted — expected?';
+    var body = 'Hi team,\n\n'
+      + 'Our feed monitoring picked up ' + (n === 1 ? 'a change' : n + ' changes') + ' in the ' + client + ' product feed' + (n === 1 ? '' : 's') + ' and I wanted to check ' + (n === 1 ? 'it' : 'them') + ' with you before we act.\n\n'
+      + 'What we’re seeing:\n' + items.map(function (x) { return askBullet(x.r, x.f); }).join('\n') + '\n\n'
+      + (n === 1 ? 'This grouping feeds' : 'These groupings feed') + ' directly into how the Shopping campaigns are structured, so if this is an intentional change on your side — a re-tag, a range update or a feed rework — that’s absolutely fine: just confirm and we’ll align our setup to match. If it isn’t expected, we’ll investigate straight away.\n\n'
+      + 'I’ve attached a short before/after breakdown for your team.\n\n'
+      + 'Best regards,\nRay';
+    return { subject: subject, body: body };
+  }
+  // the "screenshot": a clean branded card of the alert's before/after, drawn to canvas.
+  // REAL values only — never maskText here, the image is for the client's team.
+  function alertCardPng(r, d) {
+    var a = r.a, B = d && d.baseline, Y = d && d.daily, N = d && d.snapshot;
+    function lab(s) { return (s && s.labels && a.label && s.labels[a.label]) || null; }
+    function cnt(s, v) { var L = lab(s); if (!L) return null; var hit = (L.values || []).filter(function (x) { return x[0] === v; })[0]; return hit ? hit[1] : 0; }
+    var rows = [];
+    if (a.code === 'rows-drop' || !a.label) rows.push(['Feed rows', B && B.rows, Y && Y.rows, N && N.rows]);
+    else {
+      var lb = lab(B), ln = lab(N), seen = {}, list = [];
+      if (a.value != null) { list.push(a.value); seen[a.value] = 1; }
+      ((lb && lb.values) || []).concat((ln && ln.values) || []).forEach(function (x) { if (!seen[x[0]]) { list.push(x[0]); seen[x[0]] = 1; } });
+      list.map(function (v) { var b = cnt(B, v), n2 = cnt(N, v);
+        return { v: v, b: b, y: cnt(Y, v), n: n2, mv: (a.value === v ? -1e9 : -Math.abs((n2 || 0) - (b || 0))) }; })
+        .sort(function (x, y) { return x.mv - y.mv; }).slice(0, 8)
+        .forEach(function (x) { rows.push([x.v, x.b, x.y, x.n]); });
+      if (!rows.length) rows.push([labHuman(a.label) + ' coverage', lb ? lb.cov : null, lab(Y) ? lab(Y).cov : null, ln ? ln.cov : 0]);
+    }
+    var W = 940, rh = 30, top = 96, H = top + 20 + rows.length * rh + 46;
+    var c = document.createElement('canvas'); c.width = W * 2; c.height = H * 2;
+    var g = c.getContext('2d'); g.scale(2, 2);
+    g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#ED6F0B'; g.fillRect(0, 0, W, 5);
+    g.fillStyle = '#333'; g.font = '800 17px Lato, Arial, sans-serif'; g.textAlign = 'left';
+    g.fillText(r.client + ' · ' + mktBase(r.mkt).toUpperCase() + ' (' + chHuman(r.mkt) + ')', 28, 38);
+    g.font = '400 12.5px Lato, Arial, sans-serif'; g.fillStyle = '#8a94a0';
+    g.fillText((a.label ? labHuman(a.label) + (a.value != null ? ' — "' + String(a.value).slice(0, 60) + '"' : ' coverage') : 'Feed size')
+      + ' · flagged ' + new Date(r.t).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }), 28, 58);
+    var cols = [
+      { x: 28, w: 430, t: a.value != null ? 'Value' : 'Measure', al: 'left' },
+      { x: 470, w: 132, t: 'Last healthy' + (B && B.t ? ' (' + new Date(B.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ')' : ''), al: 'right' },
+      { x: 612, w: 108, t: 'Yesterday', al: 'right' },
+      { x: 730, w: 90, t: 'Now', al: 'right' },
+      { x: 830, w: 84, t: 'Change', al: 'right' }];
+    g.font = '800 10.5px Lato, Arial, sans-serif';
+    cols.forEach(function (col) { g.textAlign = col.al; g.fillText(col.t.toUpperCase(), col.al === 'right' ? col.x + col.w : col.x, top); });
+    g.strokeStyle = '#E6E6E6'; g.beginPath(); g.moveTo(28, top + 8); g.lineTo(W - 28, top + 8); g.stroke();
+    var y = top + 8;
+    rows.forEach(function (row, i) {
+      y += rh;
+      var focus = (a.value != null && row[0] === a.value) || (a.value == null && i === 0);
+      if (focus) { g.fillStyle = 'rgba(245,166,35,.09)'; g.fillRect(20, y - 20, W - 40, rh - 2); }
+      g.textAlign = 'left'; g.fillStyle = '#333'; g.font = (focus ? '800' : '400') + ' 13px Lato, Arial, sans-serif';
+      var v = String(row[0]); if (v.length > 56) v = v.slice(0, 55) + '…';
+      g.fillText(v, 28, y);
+      g.font = '400 13px Lato, Arial, sans-serif';
+      [1, 2, 3].forEach(function (ci) { g.textAlign = 'right'; g.fillStyle = '#333'; g.fillText(row[ci] == null ? '—' : fmt(row[ci]), cols[ci].x + cols[ci].w, y); });
+      var was = row[1], now = row[3], dtxt = '—', dcol = '#8a94a0';
+      if (was != null && now != null) {
+        if (was === now) dtxt = '=';
+        else if (!was) { dtxt = 'new'; dcol = '#15803D'; }
+        else { var pc = Math.round(((now - was) / was) * 100); dtxt = pc < 0 ? '▼ ' + pc + '%' : '▲ +' + pc + '%'; dcol = pc < 0 ? '#C0392B' : '#15803D'; }
+      }
+      g.textAlign = 'right'; g.fillStyle = dcol; g.font = '800 13px Lato, Arial, sans-serif'; g.fillText(dtxt, cols[4].x + cols[4].w, y);
+      g.strokeStyle = '#F0F0EE'; g.beginPath(); g.moveTo(28, y + 8); g.lineTo(W - 28, y + 8); g.stroke();
+    });
+    g.textAlign = 'left'; g.fillStyle = '#8a94a0'; g.font = '400 11px Lato, Arial, sans-serif';
+    g.fillText('FeedSpark · feed monitoring — SKU counts per reference', 28, H - 16);
+    return c.toDataURL('image/png');
+  }
+  function openAsk(sel) {
+    sel = (sel || []).filter(Boolean);
+    if (!sel.length) return;
+    var client = sel[0].client;
+    var needs = {};
+    sel.forEach(function (r) { if (!(CACHE[r.k] && ('baseline' in CACHE[r.k]))) needs[r.k] = 1; });
+    Promise.all(Object.keys(needs).map(function (k) {
+      var p = parts(k);
+      return fetch(API + '/api/labels/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
+        .then(function (x) { return x.json(); }).then(function (full) { CACHE[k] = full; }).catch(function () {});
+    })).then(function () {
+      var items = sel.map(function (r) { return { r: r, f: alertFacts(r, CACHE[r.k] || {}) }; });
+      var t = askCompose(client, items);
+      var atts = sel.map(function (r, i) {
+        return { name: (client + '-' + mktBase(r.mkt) + '-breakdown-' + (i + 1) + '.png').replace(/\s+/g, '-').toLowerCase(),
+          dataUrl: alertCardPng(r, CACHE[r.k] || {}) };
+      });
+      ASKSEL = { client: client, keys: sel.map(alKey), atts: atts };
+      $('ask-title').textContent = '✉ Ask ' + client + ' — ' + (sel.length === 1 ? 'is this change expected?' : 'are these ' + sel.length + ' changes expected?');
+      $('ask-to').value = (ASKCFG.to && ASKCFG.to[client]) || '';
+      $('ask-subject').value = t.subject;
+      $('ask-body').value = t.body;
+      $('ask-atts').innerHTML = atts.map(function (a) { return '<img src="' + a.dataUrl + '" title="' + esc(a.name) + '" alt="breakdown">'; }).join('');
+      $('ask-msg').textContent = '';
+      $('ask-scrim').classList.add('on');
+      $('ask-to').focus();
+    });
+  }
+  function askDownload() {
+    if (!ASKSEL) return;
+    ASKSEL.atts.forEach(function (a) {
+      var l = document.createElement('a'); l.href = a.dataUrl; l.download = a.name;
+      document.body.appendChild(l); l.click(); l.remove();
+    });
+  }
+  $('ask-x').onclick = function () { $('ask-scrim').classList.remove('on'); };
+  $('ask-scrim').onclick = function (e) { if (e.target === $('ask-scrim')) $('ask-scrim').classList.remove('on'); };
+  $('ask-dl').onclick = askDownload;
+  $('ask-mailto').onclick = function () {
+    if (!ASKSEL) return;
+    askDownload();   // mailto can't attach — hand over the images for a manual attach
+    location.href = 'mailto:' + encodeURIComponent($('ask-to').value.trim()) +
+      '?subject=' + encodeURIComponent($('ask-subject').value) + '&body=' + encodeURIComponent($('ask-body').value);
+  };
+  $('ask-draft').onclick = function () {
+    if (!ASKSEL) return;
+    var to = $('ask-to').value.trim();
+    if (to.indexOf('@') < 1) { $('ask-msg').textContent = 'Add the client contact email first.'; return; }
+    var btn = $('ask-draft'); btn.disabled = true; btn.textContent = 'Queuing…';
+    fetch(API + '/api/labels/askdraft', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ to: to, subject: $('ask-subject').value, text: $('ask-body').value,
+        client: ASKSEL.client, keys: ASKSEL.keys,
+        atts: ASKSEL.atts.map(function (a) { return { name: a.name, b64: a.dataUrl.split(',')[1] || '' }; }) }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        btn.disabled = false; btn.textContent = 'Create Gmail draft';
+        if (!d || !d.ok) { $('ask-msg').textContent = (d && d.error) || 'Failed — try again.'; return; }
+        var now = Date.now();
+        ASKSEL.keys.forEach(function (k) { ASKED[k] = { t: now, to: to }; });
+        ASKCFG.to = ASKCFG.to || {}; ASKCFG.to[ASKSEL.client] = to;
+        $('ask-scrim').classList.remove('on');
+        renderAlerts();
+      })
+      .catch(function () { btn.disabled = false; btn.textContent = 'Create Gmail draft'; $('ask-msg').textContent = 'Network error — try again.'; });
+  };
 
   // Which reference the Δ columns read: yesterday's auto-capture (default) or last known-good (toggle).
   function refFor(d) {
@@ -1293,6 +1518,7 @@ window.addEventListener('load',restore);
   if (DEMO) { document.body.classList.add('demo'); $('demo-tgl').classList.add('demo-on'); }
   loadRouting();
   loadReportCfg();
+  loadAskState();
   refreshEstate().then(function () {
     var k = null;
     try { k = decodeURIComponent((location.hash || '').slice(1)) || null; } catch (e) {}
