@@ -1809,6 +1809,34 @@
    "file": "docs/FeedSpark_DeckBuilder.html",
    "pattern": "OUTPUT IS A .PPTX",
    "pr": 243
+  },
+  {
+   "name": "tools: nav-parity tripwire present (identical menu on every page)",
+   "file": "tools/check_nav.js",
+   "pattern": "tb-modules",
+   "min": 1,
+   "pr": 244
+  },
+  {
+   "name": "qa_gate: nav-parity step wired",
+   "file": "tools/qa_gate.sh",
+   "pattern": "check_nav",
+   "min": 2,
+   "pr": 244
+  },
+  {
+   "name": "presync: nav-parity step wired",
+   "file": "tools/presync.sh",
+   "pattern": "check_nav",
+   "min": 1,
+   "pr": 244
+  },
+  {
+   "name": "CI: nav-parity step wired",
+   "file": ".github/workflows/validate.yml",
+   "pattern": "check_nav",
+   "min": 1,
+   "pr": 244
   }
  ]
 }

@@ -44,6 +44,10 @@ echo "── validating: shipped-feature markers (overwrite tripwire)"
 node tools/check_markers.js >/dev/null
 echo "   ✓ no shipped feature regressed"
 
+echo "── validating: module-nav parity (the menu stays identical on every page)"
+node tools/check_nav.js >/dev/null
+echo "   ✓ nav identical across all app pages"
+
 echo "── auditing: deck content consistency (changed decks only)"
 # Structural validation is not enough. The Reiss deck once passed every structural check
 # while quoting two different values for the same metric, citing a figure whose source

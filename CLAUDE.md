@@ -247,6 +247,10 @@ babysitting by default). Overlap safeguards, both inside presync:
 the **overwrite tripwire** (`docs/feature_manifest.json` checked by `tools/check_markers.js` — when you
 ship a feature into a shared file, add its marker in the same PR) and the **overlap detector**
 (`tools/overlap.sh` — also run it at task START; 🔥 hot-file overlap = sequence, don't parallel-edit).
+**Nav-parity tripwire (Ray's standing rule): the module menu stays IDENTICAL on every app page** —
+`tools/check_nav.js` (in presync + qa_gate + validate.yml) fails the build if any page's `.tb-modules`
+nav drifts from `docs/FeedSpark_Workflow.html` (the canonical). Adding a module = add its link to
+EVERY nav-bearing page in the same PR, `.on` only on the page's own link.
 If presync's merge touched a file you're editing, re-run your QA — a clean git merge is not an intact
 feature. **Merge autonomy (Ray's standing rule): NEVER wait for Ray to merge.** Once presync +
 `validate.yml` are green, the session opens **and merges** its own PR (squash) immediately — human
