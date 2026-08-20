@@ -1898,19 +1898,22 @@
       "name": "taskremind: due-today reminder builder",
       "file": "cloudflare/feedspark-deck/src/taskremind.js",
       "pattern": "buildDueReminders",
-      "min": 1
+      "min": 1,
+      "pr": 252
     },
     {
       "name": "worker: 12:00 GMT due-today reminder queue",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "queueDueReminders",
-      "min": 3
+      "min": 3,
+      "pr": 252
     },
     {
       "name": "worker: /api/tasks/remind route",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "api/tasks/remind",
-      "min": 1
+      "min": 1,
+      "pr": 252
     },
     {
       "name": "labelguard page: clickable alert diff (known-good/yesterday/now)",
