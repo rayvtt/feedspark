@@ -440,5 +440,54 @@ eq('PT_KEYS', LG.PT_KEYS, ['product_type']);
   ok('cross still rejects unknown keys', err && err.indexOf('bad-cross') === 0, err);
 }
 
+/* ---------- materiality + rename scenarios (Aug 2026 noise pass) ---------- */
+// tiny value vanishing entirely -> warn, not crit (a 30-SKU niche label is churn)
+{
+  const base = mkSnap(4000, { custom_label_0: { values: [['niche', 30], ['big', 3000]] } });
+  const cur = mkSnap(4000, { custom_label_0: { values: [['big', 3000]] } });
+  eq('small value-gone -> warn not crit', codes(LG.diffSnapshots(base, cur)), ['warn:value-gone']);
+}
+// big value vanishing stays crit
+{
+  const base = mkSnap(4000, { custom_label_0: { values: [['hero', 400], ['big', 3000]] } });
+  const cur = mkSnap(4000, { custom_label_0: { values: [['big', 3000]] } });
+  eq('big value-gone -> crit (+the 10pp cov-drop it causes)', codes(LG.diffSnapshots(base, cur)), ['crit:value-gone', 'warn:cov-drop']);
+}
+// 50%+ relative drop but only a handful of SKUs lost -> silent (not worth warning)
+{
+  const base = mkSnap(4000, { custom_label_0: { values: [['niche', 24], ['big', 3000]] } });
+  const cur = mkSnap(4000, { custom_label_0: { values: [['niche', 11], ['big', 3000]] } });
+  eq('immaterial 54% drop (13 SKUs) -> silent', LG.diffSnapshots(base, cur), []);
+}
+// same ratio with material SKU loss still warns
+{
+  const base = mkSnap(4000, { custom_label_0: { values: [['seg', 200], ['big', 3000]] } });
+  const cur = mkSnap(4000, { custom_label_0: { values: [['seg', 90], ['big', 3000]] } });
+  eq('material 55% drop (110 SKUs) -> warn', codes(LG.diffSnapshots(base, cur)), ['warn:value-drop']);
+}
+// case/whitespace regen artefact -> value-renamed info, never a crit + no "new value" echo
+{
+  const base = mkSnap(4000, { custom_label_0: { values: [['Best Sellers ', 500], ['big', 3000]] } });
+  const cur = mkSnap(4000, { custom_label_0: { values: [['best sellers', 490], ['big', 3000]] } });
+  eq('regen rename -> info only', codes(LG.diffSnapshots(base, cur)), ['info:value-renamed']);
+}
+// a rename twin with a wildly different count is NOT a rename — the value really went
+{
+  const base = mkSnap(4000, { custom_label_0: { values: [['Hero Seg', 400], ['big', 3000]] } });
+  const cur = mkSnap(4000, { custom_label_0: { values: [['hero seg', 40], ['big', 3000]] } });
+  const A = LG.diffSnapshots(base, cur);
+  ok('twin with -90% count is not a rename', A.some((a) => a.code === 'value-gone'), JSON.stringify(A));
+}
+// small value slipping below a truncated top-250 -> info, big one -> warn, never crit
+// (rows=4000: sigFloor 20, bigVal 40 — 'tail' sits between them, 'seg' is far above)
+{
+  const base = mkSnap(4000, { custom_label_0: { values: [['tail', 30], ['seg', 800], ['big', 3000]] } });
+  const cur = mkSnap(4000, { custom_label_0: { values: [['big', 3000]], truncated: true } });
+  const A = LG.diffSnapshots(base, cur);
+  ok('truncation fallout: 30-SKU -> info, 800-SKU -> warn, no crit',
+    A.some((a) => a.sev === 'info' && a.value === 'tail') && A.some((a) => a.sev === 'warn' && a.value === 'seg') && !A.some((a) => a.sev === 'crit'),
+    JSON.stringify(A));
+}
+
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

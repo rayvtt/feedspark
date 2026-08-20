@@ -57,11 +57,23 @@ export const TH = {
   covDropWarn: 8,      // ≥8pp -> warn
   covZeroFloor: 5,     // baseline coverage ≥5% emptying to 0 -> crit
   valDropWarn: 0.5,    // a tracked value losing ≥50% of its SKUs -> warn (100% -> crit)
+  // materiality floors (Aug 2026 noise pass): relative drops alone over-fire on small
+  // values — a 12->5 niche label is churn, not a PMAX event. bigVal() gates crit,
+  // minLost() gates warn by ABSOLUTE SKUs lost; both scale with feed size below.
   maxValues: 250,      // per-label distinct values kept (gviz `limit`)
 };
 
 // a value is significant enough to track when it covers ≥0.5% of the feed (min 10 SKUs)
 export function sigFloor(rows) { return Math.max(10, Math.ceil((rows || 0) * 0.005)); }
+// a value a campaign would actually FEEL losing: crit territory. Scales with feed size but
+// CAPPED — SKU counts carry absolute meaning for PMAX listing groups, so a 200+-SKU value
+// is always big news even inside a 100k-row feed.
+export function bigVal(rows) { return Math.max(25, Math.min(200, Math.ceil((rows || 0) * 0.01))); }
+// minimum absolute SKUs lost before a partial value-drop is worth a warn (same cap logic)
+export function minLost(rows) { return Math.max(15, Math.min(75, Math.ceil((rows || 0) * 0.0025))); }
+// case/whitespace-insensitive form — a feed regen that reflows "Best Sellers " into
+// "best sellers" must read as a RENAME, not a value-gone crit plus a value-new info
+export function normVal(v) { return String(v == null ? '' : v).trim().replace(/\s+/g, ' ').toLowerCase(); }
 
 /* ---------------- header canonicalisation (same cleaning as FeedAudit.normKey) -------- */
 export function normHeader(k) {
@@ -535,28 +547,44 @@ export function diffSnapshots(base, cur, th, keys) {
         A.push({ sev: drop >= th.covDropCrit ? 'crit' : 'warn', code: 'cov-drop', label: k,
           msg: CL + ' coverage ' + b.cov + '% -> ' + c.cov + '% (-' + (Math.round(drop * 10) / 10) + 'pp)', was: b.cov, now: c.cov });
       }
-      // value-level watch — the PMAX listing groups key on these exact strings
+      // value-level watch — the PMAX listing groups key on these exact strings.
+      // Materiality: severity scales with what the campaign would feel. bigVal gates
+      // crit; a partial drop needs minLost absolute SKUs gone, not just a big ratio.
       const floor = sigFloor(bRows);
+      const big = bigVal(bRows), lostFloor = minLost(bRows);
       const cv = new Map((c.values || []));
+      const bv = new Map((b.values || []));
+      const twins = new Map();
+      (c.values || []).forEach(([v2, n2]) => { const t = normVal(v2); if (!twins.has(t)) twins.set(t, [v2, n2]); });
+      const renamed = new Set();   // normVal of rename TARGETS — kept out of the "new values" list
       for (const [v, n] of (b.values || [])) {
         if (n < floor) continue;
         const now = cv.get(v) || 0;
         if (now === 0) {
+          // exact string gone, but a case/whitespace twin with a similar count exists and
+          // wasn't already a distinct base value -> the feed regen renamed it, nothing lost
+          const tw = twins.get(normVal(v));
+          if (tw && !bv.has(tw[0]) && Math.abs(tw[1] - n) / n <= 0.4) {
+            renamed.add(normVal(tw[0]));
+            A.push({ sev: 'info', code: 'value-renamed', label: k, value: v,
+              msg: CL + ' "' + v + '" -> "' + tw[0] + '" (' + n + ' -> ' + tw[1] + ' SKUs) — same value modulo case/whitespace; PMAX listing groups keyed on the OLD string still need the rename', was: n, now: tw[1] });
+            continue;
+          }
           if (c.truncated) {
-            A.push({ sev: 'warn', code: 'value-drop', label: k, value: v,
+            A.push({ sev: n >= big ? 'warn' : 'info', code: 'value-drop', label: k, value: v,
               msg: CL + ' "' + v + '" fell out of the top ' + th.maxValues + ' (was ' + n + ' SKUs)', was: n, now: 0 });
           } else {
-            A.push({ sev: 'crit', code: 'value-gone', label: k, value: v,
+            A.push({ sev: n >= big ? 'crit' : 'warn', code: 'value-gone', label: k, value: v,
               msg: CL + ' value "' + v + '" GONE - was on ' + n + ' SKUs', was: n, now: 0 });
           }
-        } else if ((n - now) / n >= th.valDropWarn) {
+        } else if ((n - now) / n >= th.valDropWarn && (n - now) >= lostFloor) {
           A.push({ sev: 'warn', code: 'value-drop', label: k, value: v,
             msg: CL + ' "' + v + '" ' + n + ' -> ' + now + ' SKUs (-' + Math.round(((n - now) / n) * 100) + '%)', was: n, now });
         }
       }
-      // new significant values — informational (someone shipped a new segmentation)
-      const bv = new Map((b.values || []));
-      const fresh = (c.values || []).filter(([v, n]) => !bv.has(v) && n >= sigFloor(cRows)).slice(0, 5);
+      // new significant values — informational (someone shipped a new segmentation);
+      // renamed twins are already reported above, keep them out of the "new" list
+      const fresh = (c.values || []).filter(([v, n]) => !bv.has(v) && n >= sigFloor(cRows) && !renamed.has(normVal(v))).slice(0, 5);
       if (fresh.length) {
         A.push({ sev: 'info', code: 'value-new', label: k,
           msg: CL + ' new value' + (fresh.length > 1 ? 's' : '') + ': ' + fresh.map(([v, n]) => '"' + v + '" (' + n + ')').join(', ') });

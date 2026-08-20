@@ -98,14 +98,29 @@ export under `<mkt>-fb`.
 |---|---|---|
 | Label column vanished from the sheet | — | always |
 | Label coverage fell (pp vs last known-good) | ≥8pp | ≥25pp, or → 0% (from ≥5%) |
-| A tracked value's SKU count fell | ≥50% | gone entirely |
+| A tracked value's SKU count fell | ≥50% **and** ≥`minLost` SKUs lost | — |
+| A tracked value gone entirely | below `bigVal` | at/above `bigVal` |
 | Feed row count fell | ≥12% | ≥30% |
 | Sheet unreachable / not link-shared | always | — |
 
 A value is *tracked* when it covers ≥0.5% of the feed (min 10 SKUs) at the last known-good state — one-SKU values
-churn daily and would be pure noise. New values / new labels are **info** (shown, never badged).
-If a label carries >250 distinct values the pivot is truncated at 250 (flagged `+`), and a
-disappeared tracked value downgrades to warn (it may just have slipped out of the top 250).
+churn daily and would be pure noise. **Materiality floors (Aug 2026 noise pass):** severity
+scales with what a campaign would feel — `bigVal` = 1% of rows clamped to [25, 200] SKUs gates
+crit on disappearances; a partial drop additionally needs `minLost` = 0.25% of rows clamped to
+[15, 75] **absolute** SKUs lost before it warns (a 12→5 niche value is churn, not an event).
+New values / new labels are **info** (shown, never badged). A value that "vanishes" while a
+case/whitespace twin with a similar count appears is a **feed-regen rename** → `value-renamed`
+info (the message reminds that PMAX listing groups keyed on the old string still need updating),
+not a crit. If a label carries >250 distinct values the pivot is truncated at 250 (flagged `+`),
+and a disappeared tracked value downgrades to warn at/above `bigVal`, info below (it may just
+have slipped out of the top 250).
+
+**Unstable-read guard:** a catastrophic reading on the estate sweep (rows-drop crit, or ≥6
+crits at once) must be confirmed by an immediate same-invocation re-read; if the second read
+disagrees on row count by >15% the scan is SKIPPED (activity-logged, previous state kept) —
+a throttled/partial gviz answer can no longer poison the alert board until the next rotation.
+Custom watches keep their own two-strike + implausibility guards; this is the sweep's equivalent.
+The same differ serves the Product Type Guard, so `/ptypes` alerts get every floor above too.
 
 ## 4. API
 
