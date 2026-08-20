@@ -1959,7 +1959,8 @@
       "name": "labelguard: Open-in-Gmail compose deep-link",
       "file": "docs/FeedSpark_LabelGuard.html",
       "pattern": "view=cm",
-      "min": 1
+      "min": 1,
+      "pr": 258
     }
   ]
 }
