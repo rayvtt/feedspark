@@ -25,10 +25,10 @@ Feeds change daily upstream; the 20h window keeps the score at most one refresh 
 
 Wired out of the box via `DEFAULT_FEEDS` — the committed **master feed-market map**, imported from
 Ray's sheet (`1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak`, one row per client+country feed):
-**42 feeds × 9 brands (all sheets)** — Google channel: Schuh gb/de/ie · YuMOVE · Monsoon · Accessorize ·
-Superdry gb/ie/de/fr/nl · House of Bruar gb/us/eu · American Golf (API-fed sheet) ·
-Reiss gb/us/ie/de/nl/au/ca/eu/fr. **Meta channel (`<mkt>-fb`, imported from the sheet's "Meta" tab
-gid 908873996, col B):** Schuh gb/de/ie · Monsoon gb · Accessorize gb · Hobbycraft gb (Meta-only client) ·
+**44 feeds × 9 brands (all sheets)** — Google channel: Schuh gb/de/ie · YuMOVE · Monsoon · Accessorize ·
+Hobbycraft gb · Superdry gb/ie/de/fr/nl · House of Bruar gb/us/eu · American Golf (API-fed sheet) ·
+Reiss gb/us/ie/de/nl/au/ca/eu/fr/uae. **Meta channel (`<mkt>-fb`, imported from the sheet's "Meta" tab
+gid 908873996, col B):** Schuh gb/de/ie · Monsoon gb · Accessorize gb · Hobbycraft gb ·
 Superdry gb/ie/de/fr/nl · House of Bruar gb/us · Reiss gb/ca/de/ie/us — every Meta feed is a
 link-shared Google Sheet, so Label Guard monitors them too (Reiss gb-fb was FeedHero XML; the
 sheet from the Meta tab replaced it).

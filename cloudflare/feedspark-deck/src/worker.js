@@ -186,7 +186,10 @@ const DEFAULT_FEEDS = {
     gb: { id: '1_OkGi8ucOmJcdu5TBWm3vl5cK3bmmaimoMYvR03Z3Ic', gid: '0' },
     'gb-fb': { id: '1RQLrwFPdW_Svu7ZPzuB1YJztDV12tzpQm0Fr_Fnrc0k', gid: '0' },
   },
-  Hobbycraft: { 'gb-fb': { id: '1R1ES_XtA1r6NAqROkyr_lWb3cuy3_AQDJ4b5MTJ_2A8', gid: '0' } },  // Meta only — no Google feed wired yet
+  Hobbycraft: {
+    gb: { id: '1rlQ7H3LYeN1hbyQ9uUG-DszgpGVxuUdiQTOaFWjEL7Q', gid: '0' },
+    'gb-fb': { id: '1R1ES_XtA1r6NAqROkyr_lWb3cuy3_AQDJ4b5MTJ_2A8', gid: '0' },
+  },
   Superdry: {
     gb: { id: '1PimExRPPqf1CknH3yLs_tUfJrr2HZgjpiMUDiOUDc3k', gid: '0' },
     ie: { id: '1SjuQ0M-cangxVcNdlb72RQM0-ZTev7aE-R5v1iX9EGQ', gid: '0' },
@@ -216,7 +219,8 @@ const DEFAULT_FEEDS = {
     au: { id: '1VTE5MkGw3XSacA6w5YAciwBIl0yBLt2KlKAQbXmCYyI', gid: '0' },
     ca: { id: '1pG9dzcKnGRx-r56eNISksUeeyNovJbF4tkVUBtYs25U', gid: '0' },
     eu: { id: '1LaOCzKf_zxRpSBobb-iwgYGAgggwWqB8XMjQRtbr6mM', gid: '0' },
-    fr: { id: '1eb1-NHas0oDVozjQ7-gbZfvfUdM0iJTwtTTovy7pLuc', gid: '0' },  // not in the master sheet yet — supplied by Ray direct
+    fr: { id: '1eb1-NHas0oDVozjQ7-gbZfvfUdM0iJTwtTTovy7pLuc', gid: '0' },
+    uae: { id: '14iybEDaewEqlnsG4lMtYFwBU4s4iwqJNFma_-8VOmIY', gid: '0' },
     'gb-fb': { id: '1i5EKldXa_d8VsKbMfsixWPY_Tr0j7GyAWYSxr0xDAN4', gid: '0' },  // was FeedHero XML — Meta tab now supplies a sheet, so Label Guard covers it too
     'ca-fb': { id: '1YRWfLwevu_MnLnxMmPe41LRD6NWxYoi89QqvZtLW4LQ', gid: '0' },
     'de-fb': { id: '1fMmv_DjOFKWZAAOTOW_3hRfXxzTCwl0iyP4N7EeaUdg', gid: '0' },
