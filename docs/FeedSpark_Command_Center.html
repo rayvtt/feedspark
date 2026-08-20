@@ -294,6 +294,50 @@ window.addEventListener('load',restore);
   [data-theme=dark] .dzp-card{background:#181B22;border-color:var(--line)}
   [data-theme=dark] .dzp-sug{background:var(--paper);border-color:var(--line)}
   [data-theme=dark] .dzp-al{background:#241a17;border-color:#5a3128}
+  /* dossier: 🎬 brand showcase — cinematic full-screen intro (luxury-listing pacing) */
+  #dz-show{position:fixed;inset:0;z-index:9998;background:radial-gradient(120% 120% at 20% 0%,#22314e 0%,#101828 45%,#0a0f1a 100%);color:#fff;overflow:hidden;font-family:Lato,system-ui,sans-serif}
+  #dz-show::after{content:'';position:absolute;inset:-40%;background:linear-gradient(115deg,transparent 42%,rgba(245,166,35,.06) 50%,transparent 58%);animation:dzsheen 7s linear infinite}
+  @keyframes dzsheen{from{transform:translateX(-30%)}to{transform:translateX(30%)}}
+  .dzs-x{position:absolute;top:18px;right:22px;z-index:3;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:#fff;font:800 13px Lato;border-radius:999px;padding:7px 14px;cursor:pointer}
+  .dzs-x:hover{background:rgba(255,255,255,.15)}
+  .dzs-skip{position:absolute;bottom:18px;right:22px;z-index:3;color:rgba(255,255,255,.45);font:700 11.5px Lato;letter-spacing:.06em}
+  .dzs-scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:0;pointer-events:none;transition:opacity .9s ease;padding:40px}
+  .dzs-scene.on{opacity:1;pointer-events:auto}
+  .dzs-eyebrow{font-size:12px;font-weight:900;letter-spacing:.34em;text-transform:uppercase;color:#F5A623;opacity:0;transform:translateY(14px)}
+  .dzs-title{font-size:min(9vw,84px);font-weight:900;letter-spacing:.02em;line-height:1.04;margin:14px 0 10px;opacity:0;transform:translateY(18px)}
+  .dzs-sub{font-size:16px;font-weight:700;color:rgba(255,255,255,.72);opacity:0;transform:translateY(12px)}
+  .dzs-logo{width:74px;height:74px;border-radius:18px;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:18px;opacity:0;transform:scale(.7);box-shadow:0 18px 60px rgba(0,0,0,.5)}
+  .dzs-logo img{width:46px;height:46px}
+  .on .dzs-rise{animation:dzrise 1.1s cubic-bezier(.16,.8,.3,1) forwards}
+  .on .dzs-rise2{animation:dzrise 1.1s .35s cubic-bezier(.16,.8,.3,1) forwards}
+  .on .dzs-rise3{animation:dzrise 1.1s .7s cubic-bezier(.16,.8,.3,1) forwards}
+  @keyframes dzrise{to{opacity:1;transform:translateY(0) scale(1)}}
+  .dzs-stats{display:flex;gap:min(6vw,64px);flex-wrap:wrap;justify-content:center}
+  .dzs-st{opacity:0;transform:translateY(16px)}
+  .on .dzs-st{animation:dzrise .9s cubic-bezier(.16,.8,.3,1) forwards}
+  .on .dzs-st:nth-child(2){animation-delay:.3s}.on .dzs-st:nth-child(3){animation-delay:.6s}.on .dzs-st:nth-child(4){animation-delay:.9s}
+  .dzs-st .n{font-size:min(10vw,74px);font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+  .dzs-st .l{font-size:12px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:8px}
+  .dzs-health .n{font-size:min(22vw,150px)}
+  .dzs-stamp{display:inline-block;margin-top:16px;font-size:20px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;padding:10px 30px;border-radius:14px;border:3px solid;opacity:0;transform:scale(2.4) rotate(-7deg)}
+  .on .dzs-stamp{animation:dzstamp .55s .9s cubic-bezier(.2,1.4,.4,1) forwards}
+  @keyframes dzstamp{to{opacity:1;transform:scale(1) rotate(-3deg)}}
+  .dzs-stamp.good{color:#4ade80;border-color:#4ade80}.dzs-stamp.watch{color:#F5A623;border-color:#F5A623}.dzs-stamp.risk{color:#f87171;border-color:#f87171}
+  .dzs-rows{min-width:min(560px,88vw)}
+  .dzs-row{display:flex;align-items:center;gap:16px;padding:10px 0;opacity:0;transform:translateX(-26px)}
+  .on .dzs-row{animation:dzslide .8s cubic-bezier(.16,.8,.3,1) forwards}
+  .on .dzs-row:nth-child(2){animation-delay:.25s}.on .dzs-row:nth-child(3){animation-delay:.5s}.on .dzs-row:nth-child(4){animation-delay:.75s}.on .dzs-row:nth-child(5){animation-delay:1s}
+  @keyframes dzslide{to{opacity:1;transform:translateX(0)}}
+  .dzs-row .mk{font-weight:900;letter-spacing:.1em;width:44px;text-align:left;color:rgba(255,255,255,.6)}
+  .dzs-bar{flex:1;height:10px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
+  .dzs-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#F5A623,#ED6F0B);width:0;transition:width 1.4s cubic-bezier(.16,.8,.3,1)}
+  .dzs-row .v{font-weight:900;width:74px;text-align:right;font-variant-numeric:tabular-nums}
+  .dzs-moves{max-width:720px;text-align:left}
+  .dzs-mv{font-size:min(4.2vw,22px);font-weight:800;line-height:1.5;padding:10px 0;opacity:0;transform:translateY(14px);display:flex;gap:14px;align-items:baseline}
+  .on .dzs-mv{animation:dzrise .9s cubic-bezier(.16,.8,.3,1) forwards}
+  .on .dzs-mv:nth-child(2){animation-delay:.55s}.on .dzs-mv:nth-child(3){animation-delay:1.1s}
+  .dzs-mv .k{color:#F5A623;font-weight:900;flex:none}
+  @media (prefers-reduced-motion:reduce){#dz-show *{animation:none!important;transition:none!important}#dz-show .dzs-scene{position:static;opacity:1;pointer-events:auto;padding:20px}#dz-show{overflow:auto}}
   /* dossier: active-work filter + volume chart */
   .dz-work-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:8px}
   .dz-work-head>h4{margin:0}
@@ -740,24 +784,28 @@ window.addEventListener('load',restore);
     if(b.feed)ks.gb=1; Object.keys(b.feeds||{}).forEach(function(k){ks[String(k).toLowerCase()]=1;});
     (FEEDWIRED[name]||[]).forEach(function(k){ks[k]=1;});
     return Object.keys(ks).filter(function(m){return m.indexOf('-fb')<0}).slice(0,8); }
-  function portFill(name){
-    var host=detail.querySelector('#dz-port'); if(!host)return;
-    var token=++PORTREQ;
+  function portLoad(name,cb){
     portData(function(){
-      if(token!==PORTREQ||cur!==name)return;
       var mkts=portMkts(name), pend=mkts.length;
-      function paint(){ if(token!==PORTREQ||cur!==name)return; var h2=detail.querySelector('#dz-port'); if(h2)h2.innerHTML=portHtml(name,mkts); }
-      if(!pend)return paint();
+      if(!pend)return cb(mkts);
       mkts.forEach(function(m){ var key=name+'|'+m;
-        if(AUDC[key]!==undefined){ if(--pend<=0)paint(); return; }
+        if(AUDC[key]!==undefined){ if(--pend<=0)cb(mkts); return; }
         fetch(API+'/api/feed/audit?client='+encodeURIComponent(name)+'&market='+encodeURIComponent(m))
           .then(function(r){return r.json()})
           .then(function(j){AUDC[key]=(j&&j.score&&typeof j.score.total==='number')?j:null;},function(){AUDC[key]=null;})
-          .then(function(){ if(--pend<=0)paint(); });
+          .then(function(){ if(--pend<=0)cb(mkts); });
       });
     });
   }
-  function portHtml(name,mkts){
+  function portFill(name){
+    var host=detail.querySelector('#dz-port'); if(!host)return;
+    var token=++PORTREQ;
+    portLoad(name,function(mkts){
+      if(token!==PORTREQ||cur!==name)return;
+      var h2=detail.querySelector('#dz-port'); if(h2)h2.innerHTML=portHtml(name,mkts);
+    });
+  }
+  function portModel(name,mkts){
     var p=PT[name]||null, od=(A.overdue&&A.overdue[name])||0;
     var inflight=0,briefN=0;
     Object.keys(BRIEFSC||{}).forEach(function(k){ var x=BRIEFSC[k];
@@ -774,8 +822,8 @@ window.addEventListener('load',restore);
     var scored=audL.filter(function(a){return a.score!=null});
     var avgA=scored.length?Math.round(scored.reduce(function(s,a){return s+a.score},0)/scored.length):null;
     /* health: start at 100, dock transparent, named amounts */
-    var h=100,fac=[];
-    function hit(pts,txt){ h-=pts; fac.push('<span class="dzp-f"><b>−'+pts+'</b>'+esc(txt)+'</span>'); }
+    var h=100,fac=[],facR=[];
+    function hit(pts,txt){ h-=pts; facR.push({pts:pts,txt:txt}); fac.push('<span class="dzp-f"><b>−'+pts+'</b>'+esc(txt)+'</span>'); }
     if(od)hit(Math.min(20,od*2),od+' overdue task'+(od===1?'':'s'));
     var openPct=(p&&p.total)?Math.round(p.open/p.total*100):0;
     if(p&&openPct>40)hit(10,openPct+'% of the plan still open');
@@ -808,6 +856,13 @@ window.addEventListener('load',restore);
         var pct=Math.round(cc.done/cc.total*100); if(pct<100&&(!worstL||pct<worstL.pct))worstL={c:c,pct:pct,left:cc.total-cc.done}; });
       if(worstL)sug.push({p:3,t:'Weakest lane: '+(CLBL[worstL.c]||worstL.c)+' at '+worstL.pct+'% — '+worstL.left+' task'+(worstL.left===1?'':'s')+' to close.',l:'/workflow',ll:'Workflow'}); }
     sug.sort(function(a,b){return a.p-b.p}); sug=sug.slice(0,5);
+    return {p:p,od:od,inflight:inflight,done1:done1,kev:kev,satL:satL,crit:crit,warn:warn,
+      audL:audL,scored:scored,avgA:avgA,h:h,band:band,bandL:bandL,fac:fac,facR:facR,sug:sug};
+  }
+  function portHtml(name,mkts){
+    var M=portModel(name,mkts);
+    var p=M.p,od=M.od,inflight=M.inflight,done1=M.done1,kev=M.kev,satL=M.satL,crit=M.crit,warn=M.warn,
+      audL=M.audL,avgA=M.avgA,h=M.h,band=M.band,bandL=M.bandL,fac=M.fac,sug=M.sug;
     /* assemble */
     var act='<div class="dzp-card"><h5>Activity — '+(p?fmtN(p.total)+' tracked tasks':'no plan records')+'</h5><div class="dzp-tiles">'
       +'<span class="dzp-t"><span class="n">'+(p?fmtN(p.open):'—')+'</span><span class="l">open</span></span>'
@@ -833,6 +888,86 @@ window.addEventListener('load',restore);
     return '<div class="dzp-grid">'+act+hl+aud+'</div>'+sh;
   }
   function fmtN(n){ n=+n; return isFinite(n)?n.toLocaleString('en-GB'):'0'; }
+  /* ---- 🎬 brand showcase: cinematic full-screen intro over the live portfolio model ----
+     Luxury-listing pacing: title reveal → numbers counting up → health stamp → market audit
+     sweep → the next moves. Same computed data as the band, staged for a client call.
+     Esc / ✕ / backdrop click exits; prefers-reduced-motion shows the whole story statically. */
+  var SHOWT=[];
+  function showClose(){ var el=document.getElementById('dz-show'); if(el)el.remove();
+    SHOWT.forEach(clearTimeout); SHOWT=[]; document.removeEventListener('keydown',showKey); }
+  function showKey(ev){ if(ev.key==='Escape')showClose(); }
+  function countUp(el,target,ms){
+    var t0=null; target=+target||0;
+    function step(ts){ if(t0===null)t0=ts; var k=Math.min(1,(ts-t0)/ms);
+      el.textContent=fmtN(Math.round(target*(1-Math.pow(1-k,3))));
+      if(k<1)requestAnimationFrame(step); }
+    requestAnimationFrame(step);
+  }
+  function showOpen(name){
+    showClose();
+    portLoad(name,function(mkts){
+      if(cur!==name||document.getElementById('dz-show'))return;
+      var M=portModel(name,mkts), b=B[name]||{}, p=M.p;
+      var d=document.createElement('div'); d.id='dz-show';
+      var lg=b.dom?'<div class="dzs-logo dzs-rise"><img alt="" src="https://www.google.com/s2/favicons?domain='+esc(b.dom)+'&sz=128"></div>':'';
+      var mkLine=(mkts.length?mkts.length+' live market'+(mkts.length===1?'':'s'):'')+(b.cat?(mkts.length?' · ':'')+b.cat:'');
+      var scenes=[
+        '<div class="dzs-scene" data-sc="1">'+lg+'<div class="dzs-eyebrow dzs-rise">FeedSpark · Brand portfolio</div>'
+          +'<div class="dzs-title dzs-rise2">'+esc(name)+'</div>'
+          +'<div class="dzs-sub dzs-rise3">'+esc(mkLine||'the live picture, assembled from every module')+'</div></div>',
+        '<div class="dzs-scene" data-sc="2"><div class="dzs-eyebrow dzs-rise">The work, to date</div><div class="dzs-stats" style="margin-top:26px">'
+          +'<div class="dzs-st"><div class="n" data-ct="'+(p?p.total:0)+'">0</div><div class="l">tasks tracked</div></div>'
+          +'<div class="dzs-st"><div class="n" data-ct="'+(p?p.done:0)+'">0</div><div class="l">delivered</div></div>'
+          +'<div class="dzs-st"><div class="n" data-ct="'+(p?p.open:0)+'">0</div><div class="l">in motion</div></div>'
+          +'<div class="dzs-st"><div class="n" data-ct="'+(M.inflight||0)+'">0</div><div class="l">briefs live</div></div>'
+          +'</div></div>',
+        '<div class="dzs-scene dzs-health" data-sc="3"><div class="dzs-eyebrow dzs-rise">Account health</div>'
+          +'<div class="dzs-st on" style="opacity:1;transform:none;margin-top:10px"><div class="n" data-ct="'+M.h+'">0</div></div>'
+          +'<span class="dzs-stamp '+M.band+'">'+esc(M.bandL)+'</span>'
+          +(M.facR.length?'<div class="dzs-sub dzs-rise3" style="margin-top:22px">'+esc(M.facR.slice(0,2).map(function(f){return '−'+f.pts+' '+f.txt}).join('  ·  '))+'</div>':'')
+          +'</div>',
+        '<div class="dzs-scene" data-sc="4"><div class="dzs-eyebrow dzs-rise">Feed estate</div><div class="dzs-rows" style="margin-top:26px">'
+          +M.audL.slice(0,5).map(function(a){ var sat=null; M.satL.forEach(function(x){if(x.m===a.m)sat=x.pct;});
+            return '<div class="dzs-row"><span class="mk">'+esc(a.m.toUpperCase())+'</span>'
+              +'<span class="dzs-bar"><span class="dzs-fill" data-w="'+(a.score||0)+'"></span></span>'
+              +'<span class="v">'+(a.score!=null?a.score+'/100':'—')+'</span>'
+              +(sat!=null?'<span class="v" style="width:96px;color:rgba(255,255,255,.6)">'+sat+'% kw</span>':'')+'</div>'; }).join('')
+          +'</div></div>',
+        '<div class="dzs-scene" data-sc="5"><div class="dzs-eyebrow dzs-rise">The next moves</div><div class="dzs-moves" style="margin-top:22px">'
+          +(M.sug.length?M.sug.slice(0,3).map(function(s,i){return '<div class="dzs-mv"><span class="k">0'+(i+1)+'</span><span>'+esc(s.t)+'</span></div>';}).join('')
+            :'<div class="dzs-mv"><span class="k">✓</span><span>Clean board — keep the testing cadence going.</span></div>')
+          +'</div><div class="dzs-sub dzs-rise3" style="margin-top:26px">FeedSpark · Private &amp; Confidential</div></div>'
+      ];
+      d.innerHTML=scenes.join('')+'<button class="dzs-x" type="button">✕ Close</button><span class="dzs-skip">Esc to exit · click to skip</span>';
+      document.body.appendChild(d);
+      document.addEventListener('keydown',showKey);
+      d.querySelector('.dzs-x').onclick=showClose;
+      var reduced=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var els=d.querySelectorAll('.dzs-scene'), idx=0;
+      function fills(sc){ Array.prototype.forEach.call(sc.querySelectorAll('.dzs-fill'),function(f){ f.style.width=(+f.getAttribute('data-w'))+'%'; }); }
+      function counts(sc){ Array.prototype.forEach.call(sc.querySelectorAll('[data-ct]'),function(n){ countUp(n,+n.getAttribute('data-ct'),1400); }); }
+      if(reduced){
+        Array.prototype.forEach.call(els,function(sc){ sc.classList.add('on');
+          Array.prototype.forEach.call(sc.querySelectorAll('[data-ct]'),function(n){ n.textContent=fmtN(+n.getAttribute('data-ct')); });
+          fills(sc); });
+        return;
+      }
+      function play(i){
+        idx=i;
+        Array.prototype.forEach.call(els,function(s){s.classList.remove('on');});
+        if(i>=els.length){ SHOWT.push(setTimeout(showClose,600)); return; }
+        els[i].classList.add('on'); counts(els[i]); SHOWT.push(setTimeout(function(){fills(els[i]);},350));
+        SHOWT.push(setTimeout(function(){play(i+1);},i===0?3400:3800));
+      }
+      d.addEventListener('click',function(ev){
+        if(ev.target.closest('.dzs-x'))return;
+        SHOWT.forEach(clearTimeout); SHOWT=[];
+        if(idx+1>=els.length){ showClose(); return; }
+        play(idx+1);
+      });
+      play(0);
+    });
+  }
   var PCAT={technical:'tech',test:'test',account:'account',image:'creative',custom_label:'creative',channel:'creative',title:'opt',keyword:'opt',data:'opt',product_type:'opt',opt:'opt'};
   var CLBL={title:'Titles',keyword:'Keywords',data:'Data fields',image:'Imagery',custom_label:'Custom labels',product_type:'Product type',technical:'Feed & technical',channel:'Channels',test:'Testing',account:'Account & strategy',opt:'Optimisation'};
   var CORDER=['title','keyword','data','image','custom_label','product_type','technical','channel','test','account'];
@@ -997,7 +1132,7 @@ window.addEventListener('load',restore);
       :(hasFeed?'<a class="lnk primary"'+wiredTip+' href="/feedlab?client='+encodeURIComponent(name)+'">Feed Lab ⚡'+(mktN>1?' · '+mktN+' markets':'')+'</a>':'');
     detail.innerHTML=
       '<div class="dz-head"><div class="dz-id">'+logo(b.dom,44)+'<div><h3>'+esc(name)+'</h3><div class="cat"><span'+edA('cat')+'>'+esc(b.cat||'')+'</span>'+((b.mk||editMode)?' · <span'+edA('mk')+'>'+esc(b.mk||'')+'</span>':'')+'</div></div></div>'
-      +'<div class="dz-head-r">'+(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+delBtn+'</div></div>'
+      +'<div class="dz-head-r"><button class="lnk dz-showb" type="button" title="Play the cinematic brand intro — the live portfolio staged for a client call">🎬 Intro</button>'+(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+delBtn+'</div></div>'
       +scorePanel(name)
       +portShell()
       +'<div class="dz-metrics"><span class="chip"><b>'+(p?p.open:tasks.length)+'</b> active</span>'
@@ -1010,6 +1145,8 @@ window.addEventListener('load',restore);
         +(editMode?'<span class="dz-con"'+edA('con')+' data-ph="contacts…">'+esc(b.con||'')+'</span>':(b.con?'<span class="dz-con">'+esc(b.con)+'</span>':''))+'</div>';
     loadMats(name);
     portFill(name);
+    var shb=detail.querySelector('.dz-showb');
+    if(shb)shb.onclick=function(){ showOpen(name); };
     if(editMode){
       var del=detail.querySelector('.dz-x');
       if(del) del.onclick=function(){ if(confirm('Delete "'+name+'" from the dossier? It will be hidden from the command center (activity stays in the tracker).')){
