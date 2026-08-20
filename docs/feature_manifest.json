@@ -1920,6 +1920,12 @@
       "file": "docs/FeedSpark_LabelGuard.html",
       "pattern": "paintAlertDiff",
       "pr": 251
+    },
+    {
+      "name": "ptguard page: clickable alert diff (known-good/yesterday/now)",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "paintAlertDiff",
+      "pr": 254
     }
   ]
 }

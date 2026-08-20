@@ -75,8 +75,18 @@ window.addEventListener('load',restore);
   .covbars .cb.na{opacity:.35}
   .est-meta{font-size:11px;color:var(--muted);font-weight:700;margin-left:auto;text-align:right;line-height:1.35}
   /* alerts */
-  .al-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-top:1px dashed var(--line);flex-wrap:wrap}
+  .al-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-top:1px dashed var(--line);flex-wrap:wrap;cursor:pointer}
   .al-row:first-child{border-top:none}
+  /* click-to-open before/after diff (same pattern as Label Guard #251) */
+  .al-diff{flex-basis:100%;background:#FBFBFA;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:2px 0 6px;cursor:default}
+  .al-diff table{width:100%;border-collapse:collapse;font-size:12px}
+  .al-diff th{text-align:right;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:4px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .al-diff th:first-child,.al-diff td:first-child{text-align:left}
+  .al-diff td{padding:4px 8px;border-bottom:1px dashed var(--line);text-align:right;font-variant-numeric:tabular-nums}
+  .al-diff tr:last-child td{border-bottom:0}
+  .al-diff tr.focus td{background:#FDECEC;font-weight:800}
+  .al-diff .refT{font-weight:400;text-transform:none;letter-spacing:0}
+  .al-diff .dhint{font-size:11px;color:var(--muted);margin:6px 0 0}
   .al-sev{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;border-radius:6px;padding:3px 8px;flex:none;margin-top:2px}
   .al-sev.crit{background:#FDECEC;color:var(--risk)}
   .al-sev.warn{background:#FCF1E3;color:var(--orange-ink)}
@@ -317,6 +327,7 @@ window.addEventListener('load',restore);
   var ESTATE = { feeds: {}, alerts: {} };
   var SEL = null;                // "client|mkt"
   var CACHE = {};                // key -> {snapshot, baseline, daily}
+  var ALOPEN = '';               // alKey of the alert whose before/after diff is open
   var SHOW_ALL = {};             // key -> true (pivot expanded past 30 rows)
   var STALE_MS = 20 * 3600 * 1000;
   var CROSS = null;              // {k, value, vs} — live PT -> custom-label dissection
@@ -418,20 +429,86 @@ window.addEventListener('load',restore);
       return;
     }
     var h = '';
-    rows.forEach(function (r) {
-      h += '<div class="al-row"><span class="al-sev ' + r.a.sev + '">' + r.a.sev + '</span>' +
+    rows.forEach(function (r, i) {
+      var open = alKey(r) === ALOPEN;
+      h += '<div class="al-row" data-i="' + i + '" title="Click to see the exact change — now vs yesterday vs last known-good"><span class="al-sev ' + r.a.sev + '">' + r.a.sev + '</span>' +
         '<span class="al-feed" data-k="' + esc(r.k) + '">' + esc(r.client) + ' · ' + esc(String(r.mkt).toUpperCase()) + '</span> ' + chChip() +
         '<span class="al-msg">' + esc(r.a.msg) + '</span>' +
         '<span class="al-t">' + ago(r.t) + '</span>' +
-        '<button class="btn" data-ack="' + esc(r.k) + '" title="Accept the current feed as the new known-good reference and clear this feed’s flags">✓ Expected — accept as known-good</button></div>';
+        '<button class="btn" data-ack="' + esc(r.k) + '" title="Accept the current feed as the new known-good reference and clear this feed’s flags">✓ Expected — accept as known-good</button>' +
+        (open ? '<div class="al-diff" id="al-diff"><span class="muted"><span class="spin"></span>Loading references…</span></div>' : '') +
+        '</div>';
     });
     $('alerts-panel').innerHTML = h;
     Array.prototype.forEach.call(document.querySelectorAll('.al-feed'), function (el) {
-      el.onclick = function () { select(el.getAttribute('data-k')); };
+      el.onclick = function (ev) { ev.stopPropagation(); select(el.getAttribute('data-k')); };
     });
+    Array.prototype.forEach.call(document.querySelectorAll('.al-row'), function (el) {
+      el.onclick = function () {
+        var r = rows[+el.getAttribute('data-i')];
+        ALOPEN = alKey(r) === ALOPEN ? '' : alKey(r);
+        renderAlerts();
+        if (ALOPEN) fillAlertDiff(r);
+      };
+    });
+    if (ALOPEN) { var cur = rows.filter(function (r) { return alKey(r) === ALOPEN; })[0]; if (cur) fillAlertDiff(cur); }
     Array.prototype.forEach.call(document.querySelectorAll('[data-ack]'), function (el) {
-      el.onclick = function () { ack(el.getAttribute('data-ack'), el); };
+      el.onclick = function (ev) { ev.stopPropagation(); ack(el.getAttribute('data-ack'), el); };
     });
+  }
+
+  /* ---------------- clickable alert diff: now vs yesterday vs known-good ---------------- */
+  function alKey(r) { return r.k + '§' + (r.a.code || '') + '§' + (r.a.label || '') + '§' + (r.a.value == null ? '' : r.a.value); }
+  function fillAlertDiff(r) {
+    var d = CACHE[r.k];
+    if (d && d.snapshot && ('baseline' in d)) { paintAlertDiff(r, d); return; }
+    var p = parts(r.k);
+    fetch(API + '/api/ptypes/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
+      .then(function (x) { return x.json(); })
+      .then(function (full) { CACHE[r.k] = full; paintAlertDiff(r, full); })
+      .catch(function () { var el = $('al-diff'); if (el) el.innerHTML = '<span class="muted">Could not load the reference snapshots.</span>'; });
+  }
+  function paintAlertDiff(r, d) {
+    var el = $('al-diff'); if (!el) return;
+    var a = r.a, B = d.baseline, Y = d.daily, N = d.snapshot;
+    function th(name, s) { return '<th>' + name + (s && s.t ? ' <span class="refT">· ' + ago(s.t) + '</span>' : (s ? '' : ' <span class="refT">· none</span>')) + '</th>'; }
+    function lab(s) { return (s && s.labels && a.label && s.labels[a.label]) || null; }
+    function cnt(s, v) { var L = lab(s); if (!L) return null; var hit = (L.values || []).filter(function (x) { return x[0] === v; })[0]; return hit ? hit[1] : 0; }
+    function fmtN(n) { return n == null ? '<span class="muted">—</span>' : String(n); }
+    function dBadge(was, now) {
+      if (was == null || now == null) return '<span class="muted">—</span>';
+      if (was === now) return '<span class="muted">=</span>';
+      if (now === 0) return '<span class="down">−100%</span>';
+      var pc = Math.round(((now - was) / (was || 1)) * 100);
+      return pc < 0 ? '<span class="down">▼ ' + pc + '%</span>' : '<span class="up">▲ +' + pc + '%</span>';
+    }
+    var head = '<tr><th>' + (a.value != null ? 'Product type path' : 'Measure') + '</th>' + th('Known-good', B) + th('Yesterday', Y) + th('Now', N) + '<th>Δ vs known-good</th></tr>';
+    var body = '';
+    if (a.code === 'rows-drop' || !a.label) {
+      body += '<tr class="focus"><td>Feed rows</td><td>' + fmtN(B && B.rows) + '</td><td>' + fmtN(Y && Y.rows) + '</td><td>' + fmtN(N && N.rows) + '</td><td>' + dBadge(B && B.rows, N && N.rows) + '</td></tr>';
+    } else {
+      var lb = lab(B), ln = lab(N);
+      body += '<tr' + (a.value == null ? ' class="focus"' : '') + '><td>product_type coverage</td>' +
+        '<td>' + (lb ? lb.cov + '%' : fmtN(null)) + '</td><td>' + (lab(Y) ? lab(Y).cov + '%' : fmtN(null)) + '</td><td>' + (ln ? ln.cov + '%' : '0%') + '</td>' +
+        '<td>' + dBadge(lb && lb.cov, ln ? ln.cov : 0) + '</td></tr>';
+      // path rows: the alert's own path pinned + the biggest movers vs known-good
+      var seen = {}, list = [];
+      if (a.value != null) { list.push(a.value); seen[a.value] = 1; }
+      ((lb && lb.values) || []).forEach(function (x) { if (!seen[x[0]]) { list.push(x[0]); seen[x[0]] = 1; } });
+      ((ln && ln.values) || []).forEach(function (x) { if (!seen[x[0]]) { list.push(x[0]); seen[x[0]] = 1; } });   // new paths — known-good shows "—"
+      var scored = list.map(function (v) {
+        var b = cnt(B, v), n = cnt(N, v);
+        return { v: v, b: b, y: cnt(Y, v), n: n, move: (a.value === v ? -1e9 : -Math.abs((n || 0) - (b || 0))) };
+      });
+      scored.sort(function (x, y) { return x.move - y.move; });
+      scored.slice(0, 14).forEach(function (x) {
+        body += '<tr' + (a.value === x.v ? ' class="focus"' : '') + '><td>' + esc(x.v) + '</td>' +
+          '<td>' + fmtN(x.b) + '</td><td>' + fmtN(x.y) + '</td><td>' + fmtN(x.n) + '</td><td>' + dBadge(x.b, x.n) + '</td></tr>';
+      });
+      if (scored.length > 14) body += '<tr><td colspan="5" class="muted">+ ' + (scored.length - 14) + ' more paths unchanged or minor — open the feed’s dissection for the full pivot</td></tr>';
+    }
+    el.innerHTML = '<table>' + head + body + '</table>' +
+      '<p class="dhint">SKU counts per reference. The alert fired vs <b>last known-good</b>' + (B && B.t ? ' (' + ago(B.t) + ')' : '') + '; the Yesterday column is the daily capture. Click the feed name for the full dissection, or ✓ accept if this change is intentional.</p>';
   }
 
   /* ---------------- detail (the pivot) ---------------- */
