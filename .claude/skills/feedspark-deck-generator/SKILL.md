@@ -253,6 +253,49 @@ Save the file as `docs/<Client>_Strategy_Review_<Period>.html` (mirror the exist
 `docs/YuMOVE_Strategy_Review_Jul26.html`). Use the actual look-back/period label from the
 brief for `<Period>`.
 
+## Step 3a — Client-facing vs internal: the boundary, and how to mark it
+
+**A deck is written to the client. It is not a report to Ray.** Ray's words on the Monsoon
+intro deck: *"it sounds like it's being presented to me rather than to the client. Anything
+that says, for example, 'no task [or] reference anywhere in the project plan' does not need
+to be shown to the client; I should see that... If you need to make a note, make it more
+apparent so I can delete it properly."*
+
+### Client-facing — the default for every word in the deck
+
+- What the numbers **are**, what they **mean**, and what happens next.
+- A reconciliation between two figures **about the client's own data** — stated as a fact
+  about the data ("8,948 live SKUs, against a catalogue of 12,314 — the feed filters
+  out-of-stock"), never as a fact about the deck ("why this deck says 8,948").
+- Status, owners, and asks **of the client**.
+- An honest weakness in the client's feed. That belongs in front of them; it is the point.
+
+### Internal — never in body copy, always in an `.int-note`
+
+- Anything about **how the deck was built**: "in this deck", "the next version of this
+  deck", "no time log was available", "this page uses X, chapter 05 counts Y".
+- Anything asking Ray to **confirm, supply, or strike** something.
+- **Provenance of a figure** — "from the account record, not an hours log".
+- **Evidence-strength caveats** — "absence of a task is weaker evidence than a live feed".
+- Any **commercial figure** (pricing, hours, rate) that is not yet confirmed.
+
+### The `.int-note` component
+
+```html
+<div class="int-note rv in"><b>Retainer hours come from the account record, not an hours
+log.</b> Confirm both before this goes to the agency.</div>
+```
+
+Renders as a red dashed panel headed **⚠ INTERNAL — NOT FOR CLIENT**, so it is impossible
+to mistake for deck copy and obvious to delete. It is stripped automatically from every
+client-bound output — `tools/deck_to_pptx.py` drops it before parsing, and the
+Download-HTML builder in `worker.js` removes it — and the topbar's **⚑ Data checks** toggle
+hides it for presenting. `deck_audit.py` exempts its contents from the internal-voice rules
+(that is what it is for) and flags that same language anywhere else as a **hard failure**.
+
+The `?` `chk` badge is a different tool and still applies: use it for a number that is real
+but unverified. Use `.int-note` for a note addressed to FeedSpark.
+
 ## Step 4 — Do NOT wire new decks into the worker
 
 **New decks are not added to the worker's `PAGES` map and get no `/deck/<slug>` page** —
