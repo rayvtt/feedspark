@@ -1996,6 +1996,37 @@
       "pattern": "showOpen",
       "min": 2,
       "pr": 257
+    },
+    {
+      "name": "briefmatch: real Gemini notes shapes (bracketed owners, gemini-notes sender)",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "GEM_BRACKET_RE",
+      "min": 3,
+      "pr": 260
+    },
+    {
+      "name": "briefmatch: client abbreviation ladder (HoB/ELC)",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "CLIENT_ABBREV",
+      "min": 2,
+      "pr": 260
+    },
+    {
+      "name": "engine: estate mail plan (two-strike email-on-warning, once per incident)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "estateMailPlan"
+    },
+    {
+      "name": "worker: PT email-on-warning cfg + queue (ptypealertcfg)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "ptypealertcfg",
+      "min": 3
+    },
+    {
+      "name": "PTGuard: email-on-confirmed-warning settings row",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "ml-on",
+      "min": 2
     }
   ]
 }

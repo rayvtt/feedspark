@@ -1041,6 +1041,9 @@ window.addEventListener('load',restore);
   function fsOwnerOf(n){ n=String(n||'').replace(/\s*\(fs\)\s*$/i,'').trim(); var l=n.toLowerCase();
     if(ASPL_NAMES[l])return 'ASPL';
     for(var i=0;i<FS_PEOPLE.length;i++){ if(FS_PEOPLE[i].toLowerCase()===l)return FS_PEOPLE[i]; }
+    var first=l.split(/\s+/)[0];   // call transcripts carry FULL names ('[Ray Vu]') — first name still files them
+    if(ASPL_NAMES[first])return 'ASPL';
+    for(var j=0;j<FS_PEOPLE.length;j++){ if(FS_PEOPLE[j].toLowerCase()===first)return FS_PEOPLE[j]; }
     return ''; }
   function ownerOptionSet(){ var set={}; allIntake().forEach(function(r){ if(DELETED[r.client+'|'+r.task])return;
     ownerNames(r.owner).forEach(function(n){ var p=fsOwnerOf(n); if(p)set[p]=1; }); }); return set; }

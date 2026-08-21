@@ -28,7 +28,7 @@ import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js"
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes } from "./briefmatch.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible } from "./labelguard.js";
+import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -1776,9 +1776,25 @@ async function runLabelScan(env, client, mkt) {
     pidx[lgKey(client, mkt)] = Object.assign({ client, mkt }, summarize(ptSnap, pAlerts, pBase.t, PT_KEYS));
     await env.EDITS.put('ptypeidx', JSON.stringify(pidx));
     const pMap = (await env.EDITS.get('ptypealerts', 'json')) || {};
-    if (pActive.length) pMap[lgKey(client, mkt)] = { t: ptSnap.t, client, mkt, alerts: pAlerts };
+    // email-on-warning (Ray, "similar to Custom label"): two-strike by construction —
+    // an alert emails only on its SECOND consecutive sighting, once per incident, with a
+    // ✅ when the feed clears. Recipient/off-switch live in KV ptypealertcfg (/ptypes §01).
+    const mailPlan = estateMailPlan(pMap[lgKey(client, mkt)], pActive);
+    if (pActive.length) pMap[lgKey(client, mkt)] = { t: ptSnap.t, client, mkt, alerts: pAlerts, mailed: mailPlan.mailed };
     else delete pMap[lgKey(client, mkt)];
     await env.EDITS.put('ptypealerts', JSON.stringify(pMap));
+    if (mailPlan.mail.length || mailPlan.recovered) try {
+      const mcfg = (await env.EDITS.get('ptypealertcfg', 'json')) || {};
+      if (mcfg.on !== false) {
+        const to = String(mcfg.to || env.OWNER_EMAIL || 'ray@feedspark.com');
+        const name = dispFeed(client, mkt);
+        const link = 'https://feedspark.ray-vtt.workers.dev/ptypes';
+        await sendPing(env, { type: 'email', to }, mailPlan.mail.length
+          ? estateAlertEmail(name, mailPlan.mail, link)
+          : estateRecoveryEmail(name, link));
+        await logAlertActivity(env, 'PT ' + (mailPlan.mail.length ? 'alert email (' + mailPlan.mail.length + ' confirmed)' : 'recovery email') + ' → ' + to + ' · ' + name);
+      }
+    } catch (e) {}
     pt = { snapshot: ptSnap, alerts: pAlerts, baseT: pBase.t };
   } catch (e) {}
 
@@ -2032,6 +2048,21 @@ async function productTypeRoutes(env, request, url) {
     return json({ counts: { crit, warn, feeds: Object.keys(alerts).length } });
   }
 
+  // email-on-warning settings (recipient + on/off) — mirrors labelreportcfg's shape
+  if (path === '/api/ptypes/alertcfg') {
+    if (request.method === 'GET') {
+      return json((await env.EDITS.get('ptypealertcfg', 'json')) || { on: true, to: String(env.OWNER_EMAIL || 'ray@feedspark.com') });
+    }
+    if (request.method === 'PUT') {
+      let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+      const to = String(b.to || '').slice(0, 120);
+      if (to.indexOf('@') < 1) return json({ error: 'not an email address' }, 400);
+      const cfg = { on: !!b.on, to };
+      await env.EDITS.put('ptypealertcfg', JSON.stringify(cfg));
+      return json(Object.assign({ ok: true }, cfg));
+    }
+  }
+
   if (path === '/api/ptypes/snapshot' && request.method === 'GET') {
     if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
     const snap = await env.EDITS.get('ptype:' + client + ':' + mkt, 'json');
@@ -2221,7 +2252,8 @@ async function queueLabelReport(env, why) {
     const dests = liftEnvelope(await env.EDITS.get('labeldest', 'json'), now).data;
     const idx = (await env.EDITS.get('labelidx', 'json')) || {};
     const alerts = (await env.EDITS.get('labelalerts', 'json')) || {};
-    const body = buildReport({ rules, dests, idx, alerts, now, link: 'https://feedspark.ray-vtt.workers.dev/labels' });
+    const ptAlerts = (await env.EDITS.get('ptypealerts', 'json')) || {};
+    const body = buildReport({ rules, dests, idx, alerts, ptAlerts, now, link: 'https://feedspark.ray-vtt.workers.dev/labels' });
     let downN = 0;
     Object.keys(rules).forEach((k) => { const st = (rules[k] || {}).state || {};
       Object.keys(st).forEach((v) => { if (st[v] && st[v].st === 'fired') downN++; }); });
