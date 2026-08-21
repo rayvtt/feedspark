@@ -241,6 +241,20 @@ tbody tr:nth-child(even){background:var(--paper-2)}
 
 .chk{display:inline-block;font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--orange-deep);border:1px solid var(--orange);border-radius:2px;padding:0 4px;margin-left:5px;vertical-align:super;cursor:help}
 body.hide-checks .chk{display:none}
+/* ---- INTERNAL-ONLY note -------------------------------------------------------------
+   A deck is written to the CLIENT. Anything written to FeedSpark — a figure Ray still has
+   to confirm, where a number came from, why a source is weak, what this deck could not
+   reach — belongs in one of these, never in body copy. Ray flagged exactly this on the
+   Monsoon intro deck: "it sounds like it's being presented to me rather than to the
+   client... if you need to make a note, make it more apparent so I can delete it properly."
+   Deliberately loud, so it can never be mistaken for deck copy, and stripped automatically
+   from every client-bound output: tools/deck_to_pptx.py skips it, and the Download-HTML
+   builder in worker.js removes it. The topbar's "Data checks" toggle hides it for
+   presenting. */
+.int-note{border:2px dashed var(--red);background:#FFF5F3;padding:14px 16px;margin:22px 0;font-size:13px;line-height:1.55;color:var(--ink)}
+.int-note::before{content:"\26A0  INTERNAL \2014 NOT FOR CLIENT";display:block;font-size:9.5px;font-weight:900;letter-spacing:.16em;color:var(--red);margin-bottom:9px}
+.int-note b{color:var(--red)}
+body.hide-checks .int-note{display:none}
 .flagbtn{margin-left:auto;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:transparent;border:1px solid var(--line);color:var(--muted);padding:5px 10px;cursor:pointer;transition:.2s;white-space:nowrap}
 .flagbtn[aria-pressed="true"]{border-color:var(--orange);color:var(--orange-deep);background:rgba(245,166,35,.08)}
 

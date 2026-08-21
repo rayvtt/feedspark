@@ -72,6 +72,7 @@ import FEEDLAB_ENGINE from "../../../docs/feedlab_engine.js";
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
 import MAT_REISS_INTRO_AUG26 from "../../../docs/materials/Reiss_Introduction_Aug26.pptx";
+import MAT_MONSOON_INTRO_AUG26 from "../../../docs/materials/Monsoon_Introduction_Aug26.pptx";
 
 // KWCal client-calendar seeds (docs/calseed/) -- each brand's shared marketing-planner slide,
 // bundled as a Data module and served at /kwcal/cal/<file>. The KWCal page falls back to these
@@ -99,6 +100,12 @@ const SEED_MATERIALS = [
     file: 'Reiss_Introduction_Aug26.pptx',
     mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     at: '2026-08-20', body: MAT_REISS_INTRO_AUG26 },
+  { id: 'monsoon-intro-aug26', client: 'Monsoon',
+    title: 'Monsoon \u00d7 FeedSpark \u2014 Account Introduction, Aug 2026',
+    cat: 'marketing', occasion: 'Account Introduction Aug-26',
+    file: 'Monsoon_Introduction_Aug26.pptx',
+    mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    at: '2026-08-21', body: MAT_MONSOON_INTRO_AUG26 },
 ];
 
 const PAGES = {
@@ -3976,6 +3983,10 @@ function getEditorScript(slug) {
       });
     });
     Array.prototype.slice.call(doc.querySelectorAll('.chk')).forEach(function(el){ el.remove(); });
+    // .int-note carries notes written to FeedSpark, never to the client — a figure still to
+    // be confirmed, a source that was not reachable, a decision Ray has to make. Stripped
+    // here as well as in tools/deck_to_pptx.py, so neither client-bound output can leak one.
+    Array.prototype.slice.call(doc.querySelectorAll('.int-note')).forEach(function(el){ el.remove(); });
     // hide, don't remove: every deck's own template script unconditionally does
     // document.getElementById('flagbtn').addEventListener(...) — removing the element makes
     // that call throw on the exported file's own load and can abort the rest of that script

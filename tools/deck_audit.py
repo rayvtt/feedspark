@@ -70,6 +70,21 @@ INTERNAL_VOICE = [
     r'\bsilently (?:removed|dropped)\b', r'\bkept visible here\b',
     r'\bplaceholder\b', r'\bTODO\b', r'\bFIXME\b', r'\blorem ipsum\b',
     r'\bwe (?:should|need to|must) (?:add|check|confirm|verify)\b',
+    # --- register, not just phrasing. Ray on the Monsoon intro deck: "it sounds like it's
+    # being presented to me rather than to the client... anything that says e.g. 'no task or
+    # reference anywhere in the project plan' does not need to be shown to the client."
+    # Copy that talks ABOUT the deck, its sources or its gaps is addressed to FeedSpark.
+    r'\b(?:in|for|from) this deck\b', r'\bthis deck (?:says|does|deliberately|shows)\b',
+    r'\bnext version of this deck\b', r'\bwas (?:not )?available for this deck\b',
+    # NOT a bare "in the project plan" — the plan is a document the client shares and can be
+    # referred to freely. What is internal is evidence-of-ABSENCE reasoning about it.
+    r'\b(?:no|zero) [a-z ]{0,24}(?:anywhere )?in the (?:whole )?project plan\b',
+    r'\banywhere in the project plan\b', r'\bacross the whole project plan\b',
+    r'\breturn zero hits\b',
+    r'\bthe account record\b', r'\bno source\b', r'\bnot reachable\b',
+    r'\bweaker evidence\b', r'\bwe could not\b', r'\bcould not be sourced\b',
+    r'\bthis (?:page|chapter|section) (?:uses|counts|shows) \b',
+    r'\bnot from an (?:hours log|org chart)\b', r'\binferred from the plan\b',
 ]
 
 BACKREF_PATTERNS = [
@@ -80,7 +95,13 @@ BACKREF_PATTERNS = [
 
 
 def chapter_index(soup):
-    """[(num, id, title, text)] in document order, text = the chapter's own content block."""
+    """[(num, id, title, text)] in document order, text = the chapter's own content block.
+
+    `.int-note` blocks are dropped first. They are deliberately addressed to FeedSpark rather
+    than the client, are stripped from every client-bound export, and would otherwise trip
+    every internal-voice rule below by design."""
+    for n in soup.select('.int-note'):
+        n.decompose()
     divs = soup.find_all('div', class_='chapter', id=re.compile(r'^c\d+$'))
     out = []
     for i, div in enumerate(divs):
