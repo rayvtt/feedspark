@@ -1424,7 +1424,7 @@ window.addEventListener('load',restore);
         var s=ovv!=null?ovv:t.s, b=ovv!=null?bucketOf(ovv):(t.b||bucketOf(s));
         var dd=(duo[k]!=null?duo[k]:(t.d||'')); if(!dd && /\d{1,2}[\/-]\d{1,2}|\d{1,2}\s+[a-z]{3}/i.test(String(t.s||''))) dd=t.s;   // due override, else live due col / snapshot-status date
         var ow=owo[k]!=null?owo[k]:(t.o||'—');
-        out.push({client:c,task:task,cat:t.c,owner:ow,source:'plan',esrc:isEsrc(k,task),s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||'',d:dd}); });
+        out.push({client:c,task:task,cat:t.c,owner:ow,source:'plan',esrc:isEsrc(k,task),csrc:CSRC[k]||null,s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||'',d:dd}); });
     });
     _planCache=out; return out; }
 
@@ -1554,6 +1554,24 @@ window.addEventListener('load',restore);
       out.push({client:client,task:a.task,cat:classifyLite(a.task),owner:a.owner||'—',
         source:'call',call:a.call||'Call',cwhen:a.when||0,s:'Open',b:'open',d:''}); });
     return out; }
+  // Ray's rule (21 Aug): parsed call actions are REAL tasks — write them into the client's
+  // Project Plan sheet like ＋ Add task does (adoptIntoPlan: optimistic MANUAL row + sheet
+  // append, dup-guarded), so they carry a status dropdown and an editable due date. The 📞
+  // origin is remembered (fcc-csrc) so the chip survives the live-sheet round-trip. Rows with
+  // no detected client (or a client with no plan sheet) stay KV-only; deleted/hidden ones
+  // never resurrect; CSRC doubles as the once-only guard against re-adopting every load.
+  function adoptCalls(){
+    var n=0;
+    CALLS.forEach(function(a){ if(!a||!a.task||!a.client)return;
+      if(CLIENTS.indexOf(a.client)<0)return;
+      var k=a.client+'|'+a.task;
+      if(CSRC[k]||DELETED[k]||HIDDEN[k])return;
+      var ok=adoptIntoPlan(a.client,a.task,'Open','',a.owner||'',false,false);
+      markCsrc(a.client,a.task,a.call,a.when);   // adopted OR already in the plan — either way the origin is known
+      if(ok)n++;
+    });
+    if(n)toast('📞 '+n+' call action'+(n===1?'':'s')+' written into the plan');
+  }
   // adopt an email-sourced task into the brand's project plan — the SAME pipeline as ＋ Add task:
   // optimistic local row + /api/sheets/append write-back, duplicate-guarded against existing plan rows.
   function adoptIntoPlan(client,task,status,dueDD,owner,esrc,strict){
@@ -1586,6 +1604,11 @@ window.addEventListener('load',restore);
   var ESRC={}; try{ESRC=JSON.parse(localStorage.getItem('fcc-esrc')||'{}');}catch(e){}
   function markEsrc(c,task){ ESRC[c+'|'+task]=1; try{localStorage.setItem('fcc-esrc',JSON.stringify(ESRC));}catch(e){} }
   function isEsrc(k,task){ return (ESRC[k]||/ — from .+$/.test(task||''))?1:0; }
+  // ---- call-origin memory: a task filed from a Gemini call note keeps its 📞 Call chip even
+  // after the sheet round-trip replaces the local MANUAL row with the live plan row (the same
+  // mechanism as the email-origin memory above). Value = {call, when} for the chip tooltip.
+  var CSRC={}; try{CSRC=JSON.parse(localStorage.getItem('fcc-csrc')||'{}');}catch(e){}
+  function markCsrc(c,task,call,when){ CSRC[c+'|'+task]={call:String(call||'Call').slice(0,90),when:when||0}; try{localStorage.setItem('fcc-csrc',JSON.stringify(CSRC));}catch(e){} }
   function manualTasks(){
     var idx={}; planTasks().forEach(function(p){ (idx[p.client]=idx[p.client]||[]).push(p.task); });
     var ov=statusOverlay(), duo=dueOverlay(), owo=ownerOverlay(), ren=renameOverlay();
@@ -1597,7 +1620,7 @@ window.addEventListener('load',restore);
       .map(function(m){ var src=MANUAL.filter(function(x){return x.client===m.c&&x.task===m.orig;})[0]||{}; var k=m.c+'|'+m.task;
         var s=ov[k]!=null?ov[k]:(src.status||'Open');
         return {client:m.c,task:m.task,cat:classifyLite(m.task),owner:(owo[k]!=null?owo[k]:(src.owner||'—')),source:'plan',
-          esrc:(src.esrc||isEsrc(k,m.task))?1:0,s:s,b:bucketOf(s),live:false,manual:true,sheet:PLANSHEET[m.c]||'',d:(duo[k]||src.due||'')}; }); }
+          esrc:(src.esrc||isEsrc(k,m.task))?1:0,csrc:CSRC[k]||null,s:s,b:bucketOf(s),live:false,manual:true,sheet:PLANSHEET[m.c]||'',d:(duo[k]||src.due||'')}; }); }
   function allIntake(){ return planTasks().concat(manualTasks()).concat(emailIntake()).concat(callTasks()).filter(function(r){ return !RMCL[r.client]; }); }
   // DDMM (or DDMMYYYY) -> ISO yyyy-mm-dd; a near-past DDMM rolls to next year
   function ddmmToIso(v){ v=String(v||'').replace(/\D/g,'');
@@ -1770,7 +1793,7 @@ window.addEventListener('load',restore);
       var S=itState;
       var st=!S.statuses.length||S.statuses.indexOf(r.b)>=0;   // empty = all statuses
       var win=true; if(allow && r.source==='plan'){ var pd=taskDate(r); if(pd) win=!!(allow[r.client]&&allow[r.client][monthKey(pd)]); }   // latest-N-months per brand; dateless plan rows always show
-      return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0||(r.esrc&&S.srcs.indexOf('email')>=0))&&(!S.clients.length||S.clients.indexOf(r.client)>=0)&&amMatch(r,S.ams)&&ownMatch(r,S.owners||[])
+      return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0||(r.esrc&&S.srcs.indexOf('email')>=0)||(r.csrc&&S.srcs.indexOf('call')>=0))&&(!S.clients.length||S.clients.indexOf(r.client)>=0)&&amMatch(r,S.ams)&&ownMatch(r,S.owners||[])
         &&(!S.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(S.q)>=0); })
       .sort(function(a,b){ var k=itState.sort;
         if(k==='dsort'){ var da=taskDate(a), db=taskDate(b);
@@ -1801,7 +1824,7 @@ window.addEventListener('load',restore);
     Object.keys(BRIEF_ANCHOR).forEach(function(id){ var b=BRIEFS[id]; if(!b||BRIEF_DUP[id])return; var ak=BRIEF_ANCHOR[id]; if(!BK[ak])BK[ak]=b; });   // fuzzy-anchored tickets dress their row too   // intake row -> its live ticket (primary + attached)
     body.innerHTML = f.length ? f.map(function(t,i){
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
-      var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':t.source==='call'?('<span class="src-tag src-call" title="Action item parsed from the call — '+esc(t.call||'Call')+(t.cwhen?(' · '+callDate(t.cwhen)):'')+'">📞 '+esc(String(t.call||'Call').slice(0,26))+'</span>'):t.esrc?'<span class="src-tag src-email" title="Arrived by email — written into the plan">Email</span>':'<span class="src-tag src-plan">Plan</span>';
+      var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':t.source==='call'?('<span class="src-tag src-call" title="Action item parsed from the call — '+esc(t.call||'Call')+(t.cwhen?(' · '+callDate(t.cwhen)):'')+'. No client detected yet, so it isn’t written to a plan sheet">📞 Call</span>'):t.csrc?('<span class="src-tag src-call" title="Parsed from the call — '+esc(t.csrc.call||'Call')+(t.csrc.when?(' · '+callDate(t.csrc.when)):'')+' — written into the plan">📞 Call</span>'):t.esrc?'<span class="src-tag src-email" title="Arrived by email — written into the plan">Email</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
       var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt'), rec=RECUR[k];
       var bf=BK[k], bfChip=bf?('<span class="bf-chip" data-bid="'+esc(bf.id)+'" style="background:'+(STAGE_COLOR[bf.status]||'#8a94a0')+'" title="Ticket '+esc(bf.id)+' — '+esc(STAGE_LBL[bf.status]||bf.status)+(courtOf(bf)?(' · ball with '+courtOf(bf)):'')+'. Click to open">'+esc(STAGE_LBL[bf.status]||bf.status)+'</span>'):'';
@@ -3328,8 +3351,9 @@ window.addEventListener('load',restore);
     fetch('/api/gmail/intake').then(function(r){return r.json();}).then(function(d){
       if(d && d.connected){ gmailItems=d.items||[]; applyTaught(gmailItems); if(dot)dot.classList.add('on');
         updateGmailState(); renderEmailPanel(); }
-      // call actions ride the same response even when the triage queue is empty — file them
-      if(d && d.calls && d.calls.length){ CALLS=d.calls; renderAll(); }
+      // call actions ride the same response even when the triage queue is empty — file them,
+      // then write the client-attributed ones through to their plan sheets (Ray's rule)
+      if(d && d.calls && d.calls.length){ CALLS=d.calls; adoptCalls(); renderAll(); }
     }).catch(function(){}); })();
 })();
 </script>
