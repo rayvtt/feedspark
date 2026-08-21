@@ -24,7 +24,7 @@
   (typeof self !== 'undefined' ? self : this), function () {
   'use strict';
 
-  var VERSION = '1.1.0';
+  var VERSION = '1.2.0';
 
   /* ================================================================
    * 1. Incremental RFC-4180 CSV parser
@@ -259,6 +259,12 @@
 
   function audit(header, rows, opts) {
     opts = opts || {};
+    // CHANNEL-AWARE title norms (opts.channel: 'google' default | 'meta'). Google Shopping
+    // rewards the 80–120 MASK window; Meta/Facebook TRUNCATES catalogue titles at ~65 chars,
+    // so a concise ≤65 title is correct there — never a gap. Bands: [thin, half, full, over].
+    var META = opts.channel === 'meta';
+    var LB = META ? [25, 40, 66, 91] : [50, 80, 120, 151];   // band edges: b0 <LB[0] | b1 <LB[1] | b2 <LB[2] | b3 <LB[3] | b4 rest
+    // full-credit bands: google b2+b3 (80–150) half b1 (50–79); meta b1+b2 (25–65) half b3 (66–90)
     var n = rows.length;
     var rowCount = (opts.rowTotalEstimate > 0 ? Math.round(opts.rowTotalEstimate) : n) || n;
     if (rowCount < n) rowCount = n;
@@ -344,8 +350,8 @@
         len = t.length; lower = t.toLowerCase();
         tl.n++; tl.sum += len;
         if (len < tl.min) tl.min = len; if (len > tl.max) tl.max = len;
-        if (len < 50) tl.b[0]++; else if (len < 80) tl.b[1]++; else if (len < 120) tl.b[2]++;
-        else if (len <= 150) tl.b[3]++; else tl.b[4]++;
+        if (len < LB[0]) tl.b[0]++; else if (len < LB[1]) tl.b[1]++; else if (len < LB[2]) tl.b[2]++;
+        else if (len < LB[3]) tl.b[3]++; else tl.b[4]++;
         if (/[A-Za-z]/.test(t) && t === t.toUpperCase()) tl.caps++;
         if (tl.seen[t]) tl.dup++; else tl.seen[t] = 1;
         var colV = val(r, 'color'), matV = val(r, 'material'), tk, a;
@@ -405,7 +411,8 @@
       }
 
       // per-row digest (samples + dissection theatre)
-      var q = maskArr.length + (len >= 80 && len <= 150 ? 2 : (len >= 50 ? 1 : 0)) +
+      var q = maskArr.length + (META ? (len >= 25 && len <= 65 ? 2 : (len >= 20 && len <= 90 ? 1 : 0))
+        : (len >= 80 && len <= 150 ? 2 : (len >= 50 ? 1 : 0))) +
         (d ? (d.length >= 300 ? 2 : 1) : 0) + (addl >= 3 ? 1 : 0) + (hlc >= 3 ? 1 : 0);
       perRow.push({ i: i, t: t, len: len, mask: maskArr, q: q, desc: d ? d.length : 0,
         addl: addl, hl: hlc, pt: ptc, pat: val(r, 'pattern') !== '', mFit: t ? maskArr.indexOf('fit') >= 0 : false,
@@ -426,8 +433,8 @@
       min: tl.n ? tl.min : 0, max: tl.max,
       dup: C(tl.dup), allCaps: C(tl.caps),
       buckets: [
-        { b: '<50', n: C(tl.b[0]) }, { b: '50–79', n: C(tl.b[1]) }, { b: '80–119', n: C(tl.b[2]) },
-        { b: '120–150', n: C(tl.b[3]) }, { b: '>150', n: C(tl.b[4]) }],
+        { b: '<' + LB[0], n: C(tl.b[0]) }, { b: LB[0] + '–' + (LB[1] - 1), n: C(tl.b[1]) }, { b: LB[1] + '–' + (LB[2] - 1), n: C(tl.b[2]) },
+        { b: LB[2] + '–' + (LB[3] - 1), n: C(tl.b[3]) }, { b: '>' + (LB[3] - 1), n: C(tl.b[4]) }],
       mask: { brand: titledPct(tl.mask.brand), material: titledPct(tl.mask.material),
         colour: titledPct(tl.mask.colour), fit: titledPct(tl.mask.fit), use: titledPct(tl.mask.use) },
       samples: []
@@ -489,6 +496,8 @@
     /* ---- pillar scores (0–100) — FeedSpark AI-Readiness ladder ------------
      * titles       = .40 length (full credit 80–150, half 50–79) + .40 MASK
      *                (fit .25, material .2, colour .2, use .2, brand .15) + .20 hygiene
+     *                META channel: .50 length (full 25–65, half 66–90 — FB truncates ~65)
+     *                + .30 MASK + .20 hygiene
      * descriptions = .5 coverage + .3 depth (share ≥300 chars) + .2 uniqueness
      * attributes   = weighted coverage (color/size/item_group ×1.2, material/
      *                gender/age_group ×1, pattern ×.8)
@@ -499,11 +508,14 @@
      * ai           = .30 conversational + .25 desc depth + .20 structured richness
      *                + .15 identity + .10 MASK   — the headline gap pillar
      * -------------------------------------------------------------------- */
-    var lenScore = tl.n ? 100 * (tl.b[2] + tl.b[3] + 0.5 * tl.b[1]) / tl.n : 0;
+    var lenScore = tl.n ? (META ? 100 * (tl.b[1] + tl.b[2] + 0.5 * tl.b[3]) / tl.n
+      : 100 * (tl.b[2] + tl.b[3] + 0.5 * tl.b[1]) / tl.n) : 0;
     var maskScore = 0.25 * titles.mask.fit + 0.2 * titles.mask.material +
       0.2 * titles.mask.colour + 0.2 * titles.mask.use + 0.15 * titles.mask.brand;
     var hygiene = tl.n ? Math.max(0, 100 - 100 * tl.dup / tl.n - 100 * tl.caps / tl.n) : 0;
-    var sTitles = 0.4 * lenScore + 0.4 * maskScore + 0.2 * hygiene;
+    // Meta: a ≤65-char title cannot carry all five MASK slots — length + hygiene matter more
+    var sTitles = META ? (0.5 * lenScore + 0.3 * maskScore + 0.2 * hygiene)
+      : (0.4 * lenScore + 0.4 * maskScore + 0.2 * hygiene);
 
     var covD = n ? 100 * de.filled / n : 0;
     var depthD = n ? 100 * de.deep / n : 0;
@@ -558,7 +570,7 @@
       { key: 'identity', label: 'Identity & trust', score: clamp(sIdentity), weight: 1.2,
         summary: idGaps().length ? 'gaps: ' + idGaps().join(', ') : 'GTIN, brand, price, availability all present' },
       { key: 'titles', label: 'Title anatomy', score: clamp(sTitles), weight: 1.6,
-        summary: 'avg ' + titles.avg + ' chars — MASK window is 80–120' },
+        summary: 'avg ' + titles.avg + ' chars — ' + (META ? 'Meta window is 25–65 (truncates ~65)' : 'MASK window is 80–120') },
       { key: 'descriptions', label: 'Descriptions', score: clamp(sDesc), weight: 1.3,
         summary: descriptions.pct + '% coverage, avg ' + descriptions.avg + ' chars' },
       { key: 'attributes', label: 'Attribute completeness', score: clamp(sAttrs), weight: 1.5,
@@ -596,12 +608,18 @@
         detail: 'Thin copy caps relevance matching and gives AI surfaces too little to answer from — 300+ chars is the working floor for enriched descriptions.',
         count: C(de.short) });
     }
-    var outsideWin = tl.b[0] + tl.b[1] + tl.b[4];
-    if (tl.n && (tl.b[2] + tl.b[3]) / tl.n < 0.3) {
-      issues.push({ sev: 'warn', code: 'title-window',
-        title: fmtN(C(outsideWin)) + ' titles outside the 80–150 character window',
-        detail: 'Short titles waste indexable slots — the MASK window (80–120 chars) carries brand, material, fit, colour and use-case into matching.',
-        count: C(outsideWin) });
+    var outsideWin = META ? (tl.b[0] + tl.b[3] + tl.b[4]) : (tl.b[0] + tl.b[1] + tl.b[4]);
+    var winShare = tl.n ? (META ? (tl.b[1] + tl.b[2]) : (tl.b[2] + tl.b[3])) / tl.n : 0;
+    if (tl.n && winShare < 0.3) {
+      issues.push(META
+        ? { sev: 'warn', code: 'title-window',
+          title: fmtN(C(outsideWin)) + ' titles outside the 25–65 character Meta window',
+          detail: 'Meta truncates catalogue titles at ~65 characters in most placements — titles past the cut lose their tail; very short ones waste the slot entirely.',
+          count: C(outsideWin) }
+        : { sev: 'warn', code: 'title-window',
+          title: fmtN(C(outsideWin)) + ' titles outside the 80–150 character window',
+          detail: 'Short titles waste indexable slots — the MASK window (80–120 chars) carries brand, material, fit, colour and use-case into matching.',
+          count: C(outsideWin) });
     }
     if (tl.n && tl.dup / tl.n > 0.01) {
       issues.push({ sev: 'warn', code: 'title-dup',
@@ -663,13 +681,19 @@
     var titleDetailFH = pipeline.feedhero
       ? ' FeedHero pipeline is live — stage rewrites in c:base_title → c:auto_optimised_title and A/B the before/after columns before rollout.'
       : '';
-    if (tl.n && ((tl.b[2] + tl.b[3]) / tl.n < 0.5 || maskScore < 60)) {
-      recs.push({ impact: 3, effort: 'M', service: 'Tachyon title rebuild', tachyon: true,
-        title: 'Rebuild ' + fmtN(C(outsideWin)) + ' titles into the 80–120 MASK window',
-        detail: 'Tachyon regenerates titles to MASK structure — Brand + Material + Fit + Colour + Use-case — lifting matchable intent per impression.' + titleDetailFH,
-        evidence: 'avg ' + titles.avg + ' chars · ' + titledPct(tl.b[0] + tl.b[1]) + '% under 80 · fit in ' +
-          titles.mask.fit + '% / use-case in ' + titles.mask.use + '% of titles',
-        brief: { client: client, task: 'Tachyon title rebuild — ' + fmtK(C(outsideWin)) + ' SKUs into the MASK window', cat: 'title' } });
+    if (tl.n && (winShare < 0.5 || (!META && maskScore < 60))) {
+      recs.push(META
+        ? { impact: 3, effort: 'M', service: 'Tachyon title rebuild', tachyon: true,
+          title: 'Recompose ' + fmtN(C(outsideWin)) + ' titles for the ≤65-char Meta window',
+          detail: 'Tachyon compresses titles to lead with the strongest hooks — brand or category + colour — inside Meta’s ~65-character truncation point, keeping every displayed word matchable.' + titleDetailFH,
+          evidence: 'avg ' + titles.avg + ' chars · ' + titledPct(tl.b[3] + tl.b[4]) + '% past the 65-char cut · ' + titledPct(tl.b[0]) + '% under 25',
+          brief: { client: client, task: 'Tachyon Meta title recompose — ' + fmtK(C(outsideWin)) + ' SKUs into the ≤65-char window', cat: 'title' } }
+        : { impact: 3, effort: 'M', service: 'Tachyon title rebuild', tachyon: true,
+          title: 'Rebuild ' + fmtN(C(outsideWin)) + ' titles into the 80–120 MASK window',
+          detail: 'Tachyon regenerates titles to MASK structure — Brand + Material + Fit + Colour + Use-case — lifting matchable intent per impression.' + titleDetailFH,
+          evidence: 'avg ' + titles.avg + ' chars · ' + titledPct(tl.b[0] + tl.b[1]) + '% under 80 · fit in ' +
+            titles.mask.fit + '% / use-case in ' + titles.mask.use + '% of titles',
+          brief: { client: client, task: 'Tachyon title rebuild — ' + fmtK(C(outsideWin)) + ' SKUs into the MASK window', cat: 'title' } });
     }
     if (n && (covD < 80 || descriptions.avg < 250 || de.deep / n < 0.3)) {
       var thin = C(missD + de.short);

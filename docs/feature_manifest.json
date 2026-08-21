@@ -1921,6 +1921,14 @@
       "pr": 254
     },
     {
+      "name": "engine: channel-aware Meta title scoring (25-65 window)",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "Meta window is 25–65"
+    },
+    {
+      "name": "feedlab page: -fb markets audit as channel meta",
+      "file": "docs/FeedSpark_FeedLab.html",
+      "pattern": "channel:/-fb$/.test(mkt)?'meta':'google'",
       "name": "labelguard: ask-the-client compose (alerts → Gmail draft)",
       "file": "docs/FeedSpark_LabelGuard.html",
       "pattern": "askCompose",
