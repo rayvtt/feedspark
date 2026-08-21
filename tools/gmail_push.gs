@@ -99,7 +99,9 @@ function pushInbox() {
   // via a calendar alias rather than to:ray@ — a second targeted search catches them. The
   // worker parses their action items into Workflow Intake rows (📞 Call source), which
   // needs the FULL notes body, so these push a much longer snippet than ordinary mail.
-  var notes = GmailApp.search('newer_than:2d from:google.com (subject:"notes by gemini" OR subject:"meeting notes" OR subject:"meeting summary" OR subject:transcript)', 0, 10);
+  // (the REAL sender is gemini-notes@google.com with subject 'Notes: “<title>” Mon DD, YYYY' —
+  // subject:notes catches that shape; the worker's parser is the precise gate)
+  var notes = GmailApp.search('newer_than:2d from:google.com (subject:notes OR subject:"meeting summary" OR subject:transcript)', 0, 10);
   var out = [], seen = {};
   var collect = function (t) {
     t.getMessages().forEach(function (m) {
@@ -108,7 +110,7 @@ function pushInbox() {
       var when = m.getDate().getTime();
       if (Date.now() - when > 2 * 24 * 60 * 60 * 1000) return;
       var subj = m.getSubject() || '', from = m.getFrom() || '';
-      var isNotes = /notes by gemini|meeting (notes|summary|recap)|transcript/i.test(subj) || /(gemini|meet)[a-z.\-]*noreply@google\.com/i.test(from);
+      var isNotes = /notes by gemini|meeting (notes|summary|recap)|transcript|notes(\s+from)?\s*[::]?\s*[“"]/i.test(subj) || /(gemini|meet)[a-z.\-]*@google\.com/i.test(from);
       out.push({ id: id, from: from, to: m.getTo(), cc: m.getCc(), subject: subj,
         snippet: (m.getPlainBody() || '').slice(0, isNotes ? 9000 : 500), date: when });
     });

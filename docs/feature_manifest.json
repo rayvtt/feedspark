@@ -1996,6 +1996,18 @@
       "pattern": "showOpen",
       "min": 2,
       "pr": 257
+    },
+    {
+      "name": "briefmatch: real Gemini notes shapes (bracketed owners, gemini-notes sender)",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "GEM_BRACKET_RE",
+      "min": 3
+    },
+    {
+      "name": "briefmatch: client abbreviation ladder (HoB/ELC)",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "CLIENT_ABBREV",
+      "min": 2
     }
   ]
 }
