@@ -3973,6 +3973,10 @@ function getEditorScript(slug) {
       });
     });
     Array.prototype.slice.call(doc.querySelectorAll('.chk')).forEach(function(el){ el.remove(); });
+    // .int-note carries notes written to FeedSpark, never to the client — a figure still to
+    // be confirmed, a source that was not reachable, a decision Ray has to make. Stripped
+    // here as well as in tools/deck_to_pptx.py, so neither client-bound output can leak one.
+    Array.prototype.slice.call(doc.querySelectorAll('.int-note')).forEach(function(el){ el.remove(); });
     // hide, don't remove: every deck's own template script unconditionally does
     // document.getElementById('flagbtn').addEventListener(...) — removing the element makes
     // that call throw on the exported file's own load and can abort the rest of that script

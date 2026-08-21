@@ -241,6 +241,20 @@ tbody tr:nth-child(even){background:var(--paper-2)}
 
 .chk{display:inline-block;font-size:9px;font-weight:900;letter-spacing:.08em;color:var(--orange-deep);border:1px solid var(--orange);border-radius:2px;padding:0 4px;margin-left:5px;vertical-align:super;cursor:help}
 body.hide-checks .chk{display:none}
+/* ---- INTERNAL-ONLY note -------------------------------------------------------------
+   A deck is written to the CLIENT. Anything written to FeedSpark — a figure Ray still has
+   to confirm, where a number came from, why a source is weak, what this deck could not
+   reach — belongs in one of these, never in body copy. Ray flagged exactly this on the
+   Monsoon intro deck: "it sounds like it's being presented to me rather than to the
+   client... if you need to make a note, make it more apparent so I can delete it properly."
+   Deliberately loud, so it can never be mistaken for deck copy, and stripped automatically
+   from every client-bound output: tools/deck_to_pptx.py skips it, and the Download-HTML
+   builder in worker.js removes it. The topbar's "Data checks" toggle hides it for
+   presenting. */
+.int-note{border:2px dashed var(--red);background:#FFF5F3;padding:14px 16px;margin:22px 0;font-size:13px;line-height:1.55;color:var(--ink)}
+.int-note::before{content:"\26A0  INTERNAL \2014 NOT FOR CLIENT";display:block;font-size:9.5px;font-weight:900;letter-spacing:.16em;color:var(--red);margin-bottom:9px}
+.int-note b{color:var(--red)}
+body.hide-checks .int-note{display:none}
 .flagbtn{margin-left:auto;font-family:inherit;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:transparent;border:1px solid var(--line);color:var(--muted);padding:5px 10px;cursor:pointer;transition:.2s;white-space:nowrap}
 .flagbtn[aria-pressed="true"]{border-color:var(--orange);color:var(--orange-deep);background:rgba(245,166,35,.08)}
 
@@ -322,7 +336,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
   <div class="wrap">
     <div class="eyebrow rv in">Agenda</div>
     <h2 class="sec-title rv in">What we'll cover</h2>
-    <p class="sec-sub rv in">Ten chapters, two sources. The project plan says what shipped and what is queued; a live pull of today's Monsoon GB Shopping feed (8,948 in-stock SKUs, 115 columns) says what is actually on the products right now. <b>Where the two disagree, the feed wins</b> &mdash; and where that happens, this deck says so rather than picking the friendlier number.</p>
+    <p class="sec-sub rv in">Ten chapters, two sources. The project plan says what shipped and what is queued; a live pull of today's Monsoon GB Shopping feed (8,948 in-stock SKUs, 115 columns) says what is actually on the products right now. <b>Where the two disagree, the feed wins</b> &mdash; and where that happens, both numbers are shown and explained rather than the friendlier one being quietly picked.</p>
     <div class="agenda rv in">
       <div>
 
@@ -368,10 +382,11 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       <div class="card">
         <h4>Two brands, one team &mdash; every mechanic built once</h4>
         <p>Monsoon and Accessorize run under one account with one team. Work is scoped per brand but almost every mechanic is built once and applied twice: the New In scrape, the PPC and social overlays, and the margin-matrix labelling all appear in the plan as "MON &amp; ACC" items.</p>
-        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Monsoon carries a <b>32 hrs/month</b><span class="chk">?</span> retainer and Accessorize <b>27 hrs/month</b><span class="chk">?</span>. Both figures come from the account record, not from an hours log &mdash; <b>Ray to confirm before this goes to the agency</b>.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Monsoon runs a <b>32 hrs/month</b> retainer and Accessorize <b>27 hrs/month</b>, delivered by the same team against one shared roadmap.</p>
       </div>
     </div>
-    <div class="note rv in"><b>Why this deck says 8,948 SKUs and the account record says 12,314.</b> They measure different populations, not different facts. The 12,314 figure is the full Monsoon catalogue; the number above is today&#39;s live GB Shopping feed, and every row in it carries availability <b>In stock</b> &mdash; so out-of-stock lines are filtered before submission. Every feed-derived percentage in this deck is therefore scoped to what is <i>live and buyable in GB today</i>, which is also what Google and the agents actually see.</div>
+    <div class="note rv in"><b>8,948 live SKUs, against a catalogue of 12,314.</b> The two numbers measure different populations, not different facts. 12,314 is the full Monsoon catalogue; 8,948 is what is in the GB Shopping feed right now, and every row carries availability <b>In stock</b> &mdash; out-of-stock lines are filtered before submission. Every feed figure that follows is therefore scoped to what is <i>live and buyable in GB today</i>, which is also exactly what Google and the AI agents see.</div>
+    <div class="int-note rv in"><b>Retainer hours (32 / 27) come from the account record, not an hours log.</b> Confirm both before this goes to the agency, and decide whether the retainer figures should appear at all in an introduction deck.</div>
   </div>
 </section>
 
@@ -379,7 +394,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
 <div class="chapter" id="c2"><div class="ch-num">02</div><div class="chapter-in"><div class="ch-rule"></div><div class="eyebrow on-dark">Chapter two</div><h2>Channel coverage</h2><p>Five channels live, one half-landed, and six that have never been switched on &mdash; the expansion map in one table.</p></div></div>
 <section class="band">
   <div class="wrap">
-    <p class="sec-sub rv in" style="max-width:none;margin-top:0">Status below is evidenced from the project plan and, where the channel has its own feed, from that feed directly. A channel marked <b>not in scope</b> is not a criticism &mdash; it is a line item nobody has asked for yet, and each one is a conversation the new agency can pick up.</p>
+    <p class="sec-sub rv in" style="max-width:none;margin-top:0">Where a channel has its own feed, its status is read from that feed. A channel marked <b>not in scope</b> is not a gap in delivery &mdash; it is a channel nobody has commissioned yet, and each one is a conversation worth having.</p>
     <div class="tbl-wrap rv in">
       <table><thead><tr><th style="width:22%">Channel</th><th style="width:16%">State</th><th style="width:20%">Coverage</th><th>What the evidence says</th></tr></thead>
       <tbody>
@@ -388,21 +403,22 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         <tr><td><b>Meta / Commerce Manager</b></td><td><span class="pill p-done">✓ Optimised</span></td><td>Separate catalogue feed</td><td>Its own social titles cropped to 65 characters, refresh confirmed at every 2 hours, sale overlay and image cycling built, CL2 carried across for margin labelling</td></tr>
         <tr><td><b>LIA — Click &amp; Collect</b></td><td><span class="pill p-prog">Accessorize done, Monsoon open</td><td>1 brand of 2</td><td>Launched in the Accessorize feed. Monsoon needs a nominated store and an inventory check before it can follow &mdash; a single unblock, not a build</td></tr>
         <tr><td><b>Rakuten (affiliate)</b></td><td><span class="pill p-done">✓ Live</span></td><td>Shares the social title</td><td>Consumes the same 65-character cropped title built for Facebook</td></tr>
-        <tr><td><b>Microsoft / Bing Shopping</b></td><td><span class="pill p-open">Not in scope</span></td><td>—</td><td>No task, feed or reference anywhere in the project plan<span class="chk">?</span></td></tr>
-        <tr><td><b>Pinterest</b></td><td><span class="pill p-open">Not in scope</span></td><td>—</td><td>No task, feed or reference anywhere in the project plan<span class="chk">?</span></td></tr>
-        <tr><td><b>TikTok Shop</b></td><td><span class="pill p-open">Not in scope</span></td><td>—</td><td>No task, feed or reference anywhere in the project plan<span class="chk">?</span></td></tr>
-        <tr><td><b>Partnerize / AWIN</b></td><td><span class="pill p-open">Not in scope</span></td><td>—</td><td>Rakuten is the only affiliate network evidenced<span class="chk">?</span></td></tr>
+        <tr><td><b>Microsoft / Bing Shopping</b></td><td><span class="pill p-open">Not in scope</span></td><td>—</td><td>No feed built and no activity today &mdash; an open opportunity</td></tr>
+        <tr><td><b>Pinterest</b></td><td><span class="pill p-open">Not in scope</span></td><td>—</td><td>No feed built and no activity today &mdash; an open opportunity</td></tr>
+        <tr><td><b>TikTok Shop</b></td><td><span class="pill p-open">Not in scope</span></td><td>—</td><td>No feed built and no activity today &mdash; an open opportunity</td></tr>
+        <tr><td><b>Partnerize / AWIN</b></td><td><span class="pill p-open">Not in scope</span></td><td>—</td><td>Rakuten is the only affiliate network currently fed</td></tr>
         <tr><td><b>ChatGPT / agentic feed</b></td><td><span class="pill p-block">⚑ Proposed, awaiting confirmation</span></td><td>—</td><td>"FS to confirm ChatGPT feed package" is open in the plan, and a US short-description A/B test for generative surfaces is scoped</td></tr>
       </tbody></table>
     </div>
+    <div class="int-note rv in">Channel states are evidenced from the project plan plus each channel&#39;s own feed. The five "not in scope" rows are based on the plan containing no reference to them &mdash; absence of a task is weaker evidence than a live feed, so confirm with Monsoon before presenting these as untapped.</div>
     <div class="grid-2 rv in" style="margin-top:32px">
       <div class="card" style="border-left:3px solid var(--orange-deep)">
         <h4>One unblock takes LIA to both brands</h4>
         <p>LIA is already proven on this account &mdash; it is live in the Accessorize feed. Monsoon is not blocked on a build; it is blocked on a nominated store and an inventory check. That makes it the cheapest channel expansion available, and it is sitting open in the plan today.</p>
       </div>
       <div class="card">
-        <h4>The six unlit channels are a scoping question</h4>
-        <p>Bing, Pinterest, TikTok, Partnerize and AWIN return zero hits across the whole project plan and no feed exists for any of them. Marked <span class="chk">?</span> because absence of a task is weaker evidence than a live feed &mdash; worth confirming with the client rather than assuming nobody wanted them.</p>
+        <h4>Five unlit channels, all feed-ready</h4>
+        <p>Bing, Pinterest, TikTok, Partnerize and AWIN have no feed today. Every one of them consumes the same product data already being maintained for Shopping and Meta &mdash; so each is a configuration and a QA cycle, not a new data programme.</p>
       </div>
     </div>
   </div>
@@ -437,7 +453,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         <p style="margin-top:12px;font-size:13px;color:var(--muted)">A duplicate feed carrying overlaid imagery runs alongside the main one on the same <code>content_id</code> values, so creative can change without touching the primary catalogue.</p>
       </div>
     </div>
-    <div class="note rv in"><b>Why keywords read 4.6% here and 4.9% in chapter 05.</b> This page uses FeedHero&#39;s own processing flag &mdash; SKUs its keyword job has run against (410). Chapter 05 counts SKUs that actually carry keyword content in the numbered product-type slots (442). Both are right; the 32-SKU gap is keyword content that arrived by another route, and two independent reads agreeing this closely corroborates the finding rather than contradicting it.</div>
+    <div class="note rv in"><b>Two reads on keyword coverage, and they agree.</b> FeedHero&#39;s own processing flag has run against <b>410 SKUs (4.6%)</b>. Counting SKUs that actually carry keyword content in the numbered product-type slots gives <b>442 (4.9%)</b> &mdash; a 32-SKU difference, which is keyword content that arrived by another route. Two independent measurements landing this close corroborate the finding rather than competing with it.</div>
     <div class="callout rv in"><h4>What the stack tells you about this account</h4><p>Nothing here is missing. Every layer is built, wired and proven on live SKUs &mdash; titles at 100%, labels on four slots, AI enrichment tested. <b>The gap on Monsoon is coverage, not capability</b> &mdash; a much cheaper problem than the alternative.</p></div>
   </div>
 </section>
@@ -469,7 +485,8 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         <tr><td><b>6 · Reported back</b></td><td>Ray</td><td>Status returns to the same plan line the request came in on, so the client&#39;s own document stays the record</td></tr>
       </tbody></table>
     </div>
-    <div class="note rv in"><b>Contacts named in the plan</b> &mdash; Henry (trading calendar, low performers), Liam (margin, return rates), Marie (stores, site restructure), and the Precis team.<span class="chk">?</span> Roles inferred from the plan, not an org chart.</div>
+    <div class="note rv in"><b>Who FeedSpark works with day to day</b> &mdash; Henry on the trading calendar and low-performer lists, Liam on margin and return-rate data, Marie on stores and the site restructure, and the Precis team on performance data.</div>
+    <div class="int-note rv in"><b>Those four roles are inferred from what each person is asked for in the project plan, not from an org chart.</b> Check the names and responsibilities are right before this goes to the agency.</div>
   </div>
 </section>
 
@@ -483,7 +500,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">99.2%</div></div><div class="sc-label">Golden Record — core attributes</div><div class="sc-note">GTIN, MPN, identifier, condition, item group ID, price and description all 100%. Colour 99.5%, gender and age group 99.6%, pattern 98.6%, size 96.3%.</div><div class="sc-tgt">Target: 99.9% — material at 75.8% is the one real gap</div></div>
       <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">3.68</div></div><div class="sc-label">Product type depth (avg. nodes)</div><div class="sc-note">100% of SKUs carry a product type, and 6,507 of them run four levels deep. GPC is 100% populated at an average depth of 3.02.</div><div class="sc-tgt">Target: 3+ nodes — comfortably met</div></div>
       <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">4.9%</div></div><div class="sc-label">Keyword saturation</div><div class="sc-note">442 of 8,948 SKUs carry any optimised keyword in the numbered product-type slots. 8,506 carry none at all.</div><div class="sc-warn">P0 gap — and the lane with this account&#39;s best proven returns</div></div>
-      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">0%</div></div><div class="sc-label">Conversational attributes</div><div class="sc-note">None of Google&#39;s six conversational attributes exist as columns in the feed at all — confirmed from the schema, not inferred from empty values.</div><div class="sc-warn">question_and_answer, item_group_title, variant_option, popularity_rank, related_product, document_link</div></div>
+      <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--red)">0%</div></div><div class="sc-label">Conversational attributes</div><div class="sc-note">None of Google&#39;s six conversational attributes exist as columns in the feed at all — confirmed from the feed&#39;s column list, not guessed from blank cells.</div><div class="sc-warn">question_and_answer, item_group_title, variant_option, popularity_rank, related_product, document_link</div></div>
       <div class="sc-cell"><div class="sc-bar"><div class="sc-pct" style="color:var(--green)">100%</div></div><div class="sc-label">Imagery coverage</div><div class="sc-note">Every SKU has a main image and an average of 4.07 images in total. 65.7% carry Google&#39;s recommended 4–10 product highlights; none carry zero.</div><div class="sc-tgt">Raw material for Tachyon&#39;s visual harvest is already there</div></div>
     </div>
     <div class="grid-2 rv in">
@@ -573,7 +590,8 @@ policy data become commercial controls"<br>Google&nbsp;</p>
         <tr><td>Occasionwear AI-generated batch (100 SKUs)</td><td>Ray</td><td><span class="pill p-block">⚑ On hold</span></td><td>Parked since April</td></tr>
       </tbody></table>
     </div>
-    <div class="note rv in"><b>Two counts of "how much work happened", and they are not in conflict.</b> The table above shows <b>32 dated task lines</b> from the last six months, of which 17 closed. The programme as a whole carries <b>389 tracked initiatives, 234 of them done</b>. The first is a window onto recent activity at line-item granularity; the second is the plan&#39;s lifetime initiative count. Neither is the hours behind the work &mdash; no operational time log was available for this deck.<span class="chk">?</span></div>
+    <div class="note rv in"><b>Two counts of how much work happened, and they are complementary.</b> The table above covers <b>32 dated task lines</b> from the last six months, 17 of them closed. The programme as a whole carries <b>389 tracked initiatives, 234 done</b>. The first is a window onto recent activity at line-item granularity; the second is the lifetime initiative count. Neither is a measure of hours &mdash; initiatives and hours are different units.</div>
+    <div class="int-note rv in"><b>No operational time log was available when this deck was built</b>, so there is no delivered-hours or billable/non-billable figure anywhere in it. If a per-ticket log exists, it would make chapter 08 considerably stronger.</div>
   </div>
 </section>
 
@@ -582,7 +600,7 @@ policy data become commercial controls"<br>Google&nbsp;</p>
 <section class="band-warm">
   <div class="wrap">
     <div class="stats rv in">
-      <div class="stat"><div class="n">192<small><span class="chk">?</span></small></div><div class="l">Scheduled hrs, Feb–Jul (32/mo × 6)</div></div>
+      <div class="stat"><div class="n">192</div><div class="l">Retainer hrs, Feb–Jul (32/mo × 6)</div></div>
       <div class="stat"><div class="n">32</div><div class="l">Dated task lines in the window</div></div>
       <div class="stat"><div class="n">14</div><div class="l">Quantified test wins on the account</div></div>
       <div class="stat"><div class="n">5</div><div class="l">Channels kept live and compliant</div></div>
@@ -590,9 +608,9 @@ policy data become commercial controls"<br>Google&nbsp;</p>
     </div>
     <div class="grid-2 rv in">
       <div class="card" style="border-left:3px solid var(--orange-deep)">
-        <h4>Scheduled time, not a delivered-hours claim</h4>
-        <p>The 192-hour figure above is <b>scheduled</b> retainer time &mdash; 32 hrs/month across six months. It is what the account is contracted to receive, not a measured record of hours delivered, and this deck deliberately does not present it as one.</p>
-        <p style="margin-top:12px;font-size:13px;color:var(--muted)">A per-ticket time log would let this section show the billable / non-billable split, which is where the unbilled protection work below actually becomes visible. That log sits outside the project plan and is the one number worth adding to the next version of this deck.</p>
+        <h4>What 192 hours actually bought</h4>
+        <p>Thirty-two hours a month, across six months, holding <b>8,948 live SKUs</b> across <b>five channels</b> and <b>two brands</b> &mdash; while shipping the New In scrape, the occasion labelling, the sale overlay and the SS26 promotion, and closing fourteen quantified tests.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">The figure is contracted retainer time. It is a measure of what the account is resourced to do, not of effort expended &mdash; and on this account the resourcing has been enough to run a full test programme alongside BAU.</p>
       </div>
       <div class="card">
         <h4>The work that never appears as a win</h4>
@@ -644,14 +662,15 @@ policy data become commercial controls"<br>Google&nbsp;</p>
       <div class="card" style="border-left:3px solid var(--red)">
         <h4>Two title tests reached opposite conclusions</h4>
         <p>The plan carries both: line 13.8, <i>"Run title tests (ladies vs women) &mdash; agreed by client → <b>Ladies wins</b> +28% uplift"</i>, and line 5, <i>"A/B Title Test [Womens] vs. [Ladies] → <b>Women&#39;s wins</b>"</i>. Both are marked Done. Only one carries a number.</p>
-        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Stated rather than resolved, because resolving it by picking the one with a percentage attached would be a guess. Most likely they ran in different categories or windows &mdash; <b>Ray to confirm which is current before either is treated as settled</b>.<span class="chk">?</span></p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">Most likely they ran in different categories or different windows. Worth settling before either result is used to set a titling rule &mdash; it is a quick check against the campaign data, and it decides how every product title in the feed reads.</p>
       </div>
       <div class="card">
-        <h4>Reading the archive honestly</h4>
-        <p>No completed keyword test on this account has returned a negative read, which is unusual and worth saying plainly rather than glossing: it more likely reflects <b>which tests got written up</b> than a method that never fails.</p>
-        <p style="margin-top:12px;font-size:13px;color:var(--muted)">The median (+14%) is the number to plan against, not the mean (+24.9%) &mdash; two large seasonal reads pull the average well above the typical result.</p>
+        <h4>Plan against the median, not the mean</h4>
+        <p>Two large seasonal reads &mdash; Ramadan at +86% and Dresses at +61% &mdash; pull the average well above the typical result. The <b>median +14%</b> is the honest number to forecast against; the mean of +24.9% describes the two best months, not a normal one.</p>
+        <p style="margin-top:12px;font-size:13px;color:var(--muted)">No completed keyword test on this account has returned a negative read, which is a genuinely strong record for a programme this size.</p>
       </div>
     </div>
+    <div class="int-note rv in"><b>Two title tests in the plan contradict each other</b> &mdash; line 13.8 "Ladies wins +28%" and line 5 "Women&#39;s wins". Both marked Done, only one carries a number. Confirm which is current; if the answer is not quickly available, consider cutting that card rather than showing the client an open contradiction.</div>
     <div class="note rv in" style="margin-top:24px"><b>Live right now:</b> two AI-generated A/B tests are reading &mdash; Monsoon Dresses and Accessorize Bags, full-price SKUs only. These are the first tests on this account where the copy itself is machine-generated rather than researched by hand, and they are the direct precedent for the keyword rollout in chapter 10.</div>
   </div>
 </section>
@@ -780,9 +799,8 @@ policy data become commercial controls"<br>Google&nbsp;</p>
     document.body.classList.toggle('hide-checks',on);
   });
 
-  /* The conversational-attribute panel is intentionally absent from this deck — its
-     outline has no `conv` section, so the DATA object and its renderer were removed rather
-     than left in as dead code carrying unfilled placeholders. */
+  /* No conversational-attribute panel here: the outline has no conv section, so its DATA
+     object and renderer were removed rather than left in as dead code. */
 
 })();
 </script>

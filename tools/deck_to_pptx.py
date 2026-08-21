@@ -132,6 +132,15 @@ class Blocks:
 def parse_deck(path, keep_checks=False):
     doc = LH.parse(path).getroot()
     body = doc.body
+    # .int-note blocks are notes written to FeedSpark, not to the client -- a figure still
+    # to be confirmed, where a number came from, what this deck could not reach. They are
+    # dropped BEFORE anything is parsed, so there is no path by which one reaches a slide.
+    # Ray asked for this after the Monsoon intro deck read as though it were addressed to
+    # him rather than to the client.
+    for n in body.xpath("//*[contains(concat(' ', normalize-space(@class), ' '), ' int-note ')]"):
+        par = n.getparent()
+        if par is not None:
+            par.remove(n)
     B = Blocks()
     sc = (lambda e: txt(e, not keep_checks))
 
