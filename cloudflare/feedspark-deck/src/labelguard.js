@@ -510,8 +510,53 @@ export function buildReport(inp) {
   if (aLines.length) { for (const s of aLines) L.push(s); if (aN > aLines.length) L.push('  … +' + (aN - aLines.length) + ' more on the board'); }
   else L.push('  none — every scanned feed matches its last known-good state');
   L.push('');
+
+  // Product Type Guard section (only when the caller supplies its alert map)
+  if (inp.ptAlerts) {
+    let pN = 0;
+    const pLines = [];
+    for (const k of Object.keys(inp.ptAlerts)) {
+      for (const a of ((inp.ptAlerts[k] || {}).alerts || [])) {
+        if (a.sev === 'info') continue;
+        pN++;
+        if (pLines.length < 15) pLines.push('  [' + String(a.sev).toUpperCase() + '] ' + dispFeed(k.split('|')[0], k.split('|')[1]) + ' — ' + a.msg);
+      }
+    }
+    L.push('PRODUCT TYPE ALERTS — vs last known-good (' + pN + ')');
+    if (pLines.length) { for (const s of pLines) L.push(s); if (pN > pLines.length) L.push('  … +' + (pN - pLines.length) + ' more on /ptypes'); }
+    else L.push('  none — every scanned feed matches its last known-good category tree');
+    L.push('');
+  }
+
   if (link) L.push('Live board: ' + link);
   return L.join('\n');
+}
+
+/* ---------------- estate alert emails (PT Guard "email on warning") -------------------- */
+// Which estate alerts to EMAIL on this scan. Two-strike by construction: an alert is
+// mailed only when it was already present on the previous scan's stored entry AND is
+// still active now — a single garbage read (mid-refresh sheet, gviz throttling) never
+// emails — and only once per continuous incident (the entry's `mailed` keys persist
+// while the feed stays broken; recovery emails once everything clears).
+export function alertKey(a) { return a.code + '|' + (a.label || '') + '|' + normVal(a.value); }
+export function estateMailPlan(prevEntry, active) {
+  const prev = new Set(((prevEntry && prevEntry.alerts) || []).filter((a) => a.sev !== 'info').map(alertKey));
+  const mailedPrev = (prevEntry && prevEntry.mailed) || [];
+  const activeKeys = new Set(active.map(alertKey));
+  const mailedSet = new Set(mailedPrev);
+  const mail = active.filter((a) => prev.has(alertKey(a)) && !mailedSet.has(alertKey(a)));
+  const mailed = mailedPrev.filter((k) => activeKeys.has(k)).concat(mail.map(alertKey));
+  return { mail, mailed, recovered: active.length === 0 && mailedPrev.length > 0 };
+}
+export function estateAlertEmail(feedName, alerts, link) {
+  return '🔴 PT Guard — ' + feedName + ': ' + alerts.length + ' confirmed product-type alert' + (alerts.length === 1 ? '' : 's') + '\n' +
+    'Seen on two consecutive scans vs last known-good — PMAX listing groups split on these category paths.\n' +
+    alerts.map((a) => '• [' + String(a.sev).toUpperCase() + '] ' + a.msg).join('\n') +
+    '\nIntentional change? Open /ptypes and hit "Expected — accept as known-good".' +
+    (link ? '\n' + link : '');
+}
+export function estateRecoveryEmail(feedName, link) {
+  return '✅ PT Guard — ' + feedName + ' recovered\nEvery flagged product-type alert has cleared vs last known-good.' + (link ? '\n' + link : '');
 }
 
 /* ---------------- baseline diff -> alerts ---------------------------------------------- */
