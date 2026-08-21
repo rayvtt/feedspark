@@ -28,7 +28,7 @@ import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js"
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes } from "./briefmatch.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible } from "./labelguard.js";
+import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -296,7 +296,7 @@ export default {
         '/api/labels/scan': 'label-scan', '/api/labels/ack': 'label-rebase',
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
-        '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send',
+        '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask',
         '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
@@ -507,7 +507,19 @@ export default {
       // (KV labeloutbox) and sends them from Ray's own mailbox — a worker can't send mail
       // itself. Poll returns the queue; ack clears exactly what was sent (see gmail_push.gs).
       if (body.outboxPoll) {
-        return json({ ok: true, outbox: ((await env.EDITS.get('labeloutbox', 'json')) || []).slice(0, 20) });
+        // drafts: client-ask emails composed on /labels — the script CREATES GMAIL DRAFTS
+        // (with the breakdown images attached) rather than sending; capped per poll to keep
+        // the payload sane. Older script versions simply ignore the field.
+        return json({ ok: true, outbox: ((await env.EDITS.get('labeloutbox', 'json')) || []).slice(0, 20),
+          drafts: ((await env.EDITS.get('labeldrafts', 'json')) || []).slice(0, 3) });
+      }
+      if (Array.isArray(body.draftsAck)) {
+        const dq = (await env.EDITS.get('labeldrafts', 'json')) || [];
+        const drop = {}; body.draftsAck.forEach((id) => { drop[String(id)] = 1; });
+        const left = dq.filter((e) => !drop[e.id]);
+        await env.EDITS.put('labeldrafts', JSON.stringify(left));
+        logActivity(ctx, env, request, 'label-ask', 'client-ask Gmail draft created ×' + (dq.length - left.length), 'gmail-bridge');
+        return json({ ok: true, cleared: dq.length - left.length, left: left.length });
       }
       if (Array.isArray(body.outboxAck)) {
         const ob = (await env.EDITS.get('labeloutbox', 'json')) || [];
@@ -1757,9 +1769,25 @@ async function runLabelScan(env, client, mkt) {
     pidx[lgKey(client, mkt)] = Object.assign({ client, mkt }, summarize(ptSnap, pAlerts, pBase.t, PT_KEYS));
     await env.EDITS.put('ptypeidx', JSON.stringify(pidx));
     const pMap = (await env.EDITS.get('ptypealerts', 'json')) || {};
-    if (pActive.length) pMap[lgKey(client, mkt)] = { t: ptSnap.t, client, mkt, alerts: pAlerts };
+    // email-on-warning (Ray, "similar to Custom label"): two-strike by construction —
+    // an alert emails only on its SECOND consecutive sighting, once per incident, with a
+    // ✅ when the feed clears. Recipient/off-switch live in KV ptypealertcfg (/ptypes §01).
+    const mailPlan = estateMailPlan(pMap[lgKey(client, mkt)], pActive);
+    if (pActive.length) pMap[lgKey(client, mkt)] = { t: ptSnap.t, client, mkt, alerts: pAlerts, mailed: mailPlan.mailed };
     else delete pMap[lgKey(client, mkt)];
     await env.EDITS.put('ptypealerts', JSON.stringify(pMap));
+    if (mailPlan.mail.length || mailPlan.recovered) try {
+      const mcfg = (await env.EDITS.get('ptypealertcfg', 'json')) || {};
+      if (mcfg.on !== false) {
+        const to = String(mcfg.to || env.OWNER_EMAIL || 'ray@feedspark.com');
+        const name = dispFeed(client, mkt);
+        const link = 'https://feedspark.ray-vtt.workers.dev/ptypes';
+        await sendPing(env, { type: 'email', to }, mailPlan.mail.length
+          ? estateAlertEmail(name, mailPlan.mail, link)
+          : estateRecoveryEmail(name, link));
+        await logAlertActivity(env, 'PT ' + (mailPlan.mail.length ? 'alert email (' + mailPlan.mail.length + ' confirmed)' : 'recovery email') + ' → ' + to + ' · ' + name);
+      }
+    } catch (e) {}
     pt = { snapshot: ptSnap, alerts: pAlerts, baseT: pBase.t };
   } catch (e) {}
 
@@ -1804,8 +1832,17 @@ async function labelGuardRoutes(env, request, url) {
     Object.keys(pAlerts).forEach((k) => (pAlerts[k].alerts || []).forEach((a) => {
       if (a.sev === 'crit') pc++; else if (a.sev === 'warn') pw++;
     }));
-    return json({ counts: { crit, warn, feeds: Object.keys(alerts).length },
-      pt: { crit: pc, warn: pw, feeds: Object.keys(pAlerts).length } });
+    const out = { counts: { crit, warn, feeds: Object.keys(alerts).length },
+      pt: { crit: pc, warn: pw, feeds: Object.keys(pAlerts).length } };
+    // ?by=client — per-brand splits for the dossier portfolio view (keys are "<client>|<mkt>")
+    if (url.searchParams.get('by') === 'client') {
+      const split = (m) => { const per = {}; Object.keys(m).forEach((k) => {
+        const c = k.split('|')[0]; const e = per[c] = per[c] || { crit: 0, warn: 0 };
+        (m[k].alerts || []).forEach((a) => { if (a.sev === 'crit') e.crit++; else if (a.sev === 'warn') e.warn++; }); });
+        return per; };
+      out.clients = split(alerts); out.ptClients = split(pAlerts);
+    }
+    return json(out);
   }
 
   if (path === '/api/labels/snapshot' && request.method === 'GET') {
@@ -1901,7 +1938,66 @@ async function labelGuardRoutes(env, request, url) {
     const alertsMap = (await env.EDITS.get('labelalerts', 'json')) || {};
     delete alertsMap[lgKey(client, mkt)];
     await env.EDITS.put('labelalerts', JSON.stringify(alertsMap));
+    // acceptance answers the question — the feed's "✉ asked" markers are done with
+    const asked0 = (await env.EDITS.get('labelasked', 'json')) || {};
+    const pre = lgKey(client, mkt) + '§'; let cleared = 0;
+    Object.keys(asked0).forEach((k) => { if (k.indexOf(pre) === 0) { delete asked0[k]; cleared++; } });
+    if (cleared) await env.EDITS.put('labelasked', JSON.stringify(asked0));
     return json({ ok: true, baseT: snap.t });
+  }
+
+  // ---- "Ask the client — is this drop expected?" (Ray's rule: confirm before acting) ----
+  // POST queues a pre-filled Gmail DRAFT — never an auto-send to a client: the Gmail bridge
+  // running in the owner's own mailbox creates the draft (breakdown images attached) for
+  // review + send. Each covered alert is stamped "✉ asked" until the feed recovers or the
+  // change is accepted as known-good, so the panel shows who has already been chased.
+  if (path === '/api/labels/askdraft') {
+    if (request.method === 'GET') {
+      return json({
+        cfg: (await env.EDITS.get('labelaskcfg', 'json')) || { to: {} },
+        asked: (await env.EDITS.get('labelasked', 'json')) || {},
+        pending: ((await env.EDITS.get('labeldrafts', 'json')) || []).length,
+      });
+    }
+    if (request.method === 'POST') {
+      let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+      const to = String(b.to || '').slice(0, 160).trim();
+      if (to.indexOf('@') < 1) return json({ error: 'not an email address' }, 400);
+      // markOnly: the email was composed directly (Gmail deep-link / mail app) — persist the
+      // "✉ asked" stamps and the remembered contact, but queue nothing for the bridge.
+      if (b.markOnly) {
+        const asked0 = (await env.EDITS.get('labelasked', 'json')) || {};
+        (Array.isArray(b.keys) ? b.keys : []).slice(0, 40).forEach((k) => { asked0[String(k).slice(0, 300)] = { t: Date.now(), to }; });
+        await env.EDITS.put('labelasked', JSON.stringify(asked0));
+        if (b.client) {
+          const cfg0 = (await env.EDITS.get('labelaskcfg', 'json')) || { to: {} };
+          cfg0.to = cfg0.to || {}; cfg0.to[String(b.client).slice(0, 60)] = to;
+          await env.EDITS.put('labelaskcfg', JSON.stringify(cfg0));
+        }
+        return json({ ok: true, marked: (Array.isArray(b.keys) ? b.keys : []).length });
+      }
+      const subject = String(b.subject || '').slice(0, 200).trim();
+      const text = String(b.text || '').slice(0, 8000);
+      if (!subject || !text) return json({ error: 'missing subject / body' }, 400);
+      const atts = (Array.isArray(b.atts) ? b.atts : []).slice(0, 6)
+        .map((a) => ({ name: String((a && a.name) || 'breakdown.png').slice(0, 60), mime: 'image/png', b64: String((a && a.b64) || '') }))
+        .filter((a) => a.b64);
+      let total = 0; atts.forEach((a) => { total += a.b64.length; });
+      if (total > 1500000) return json({ error: 'attachments too large - keep the breakdown images under ~1MB total' }, 413);
+      const q = (await env.EDITS.get('labeldrafts', 'json')) || [];
+      const id = 'ad_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      q.push({ id, to, subject, text, atts, t: Date.now() });
+      await env.EDITS.put('labeldrafts', JSON.stringify(q.slice(-12)));
+      const asked = (await env.EDITS.get('labelasked', 'json')) || {};
+      (Array.isArray(b.keys) ? b.keys : []).slice(0, 40).forEach((k) => { asked[String(k).slice(0, 300)] = { t: Date.now(), to }; });
+      await env.EDITS.put('labelasked', JSON.stringify(asked));
+      if (b.client) {   // remember the contact per client — the next compose pre-fills it
+        const cfg = (await env.EDITS.get('labelaskcfg', 'json')) || { to: {} };
+        cfg.to = cfg.to || {}; cfg.to[String(b.client).slice(0, 60)] = to;
+        await env.EDITS.put('labelaskcfg', JSON.stringify(cfg));
+      }
+      return json({ ok: true, id, note: 'draft queued - it appears in the Gmail Drafts folder within ~5 min of the next sync (needs the updated gmail_push.gs)' });
+    }
   }
 
   return null;
@@ -1943,6 +2039,21 @@ async function productTypeRoutes(env, request, url) {
       if (a.sev === 'crit') crit++; else if (a.sev === 'warn') warn++;
     }));
     return json({ counts: { crit, warn, feeds: Object.keys(alerts).length } });
+  }
+
+  // email-on-warning settings (recipient + on/off) — mirrors labelreportcfg's shape
+  if (path === '/api/ptypes/alertcfg') {
+    if (request.method === 'GET') {
+      return json((await env.EDITS.get('ptypealertcfg', 'json')) || { on: true, to: String(env.OWNER_EMAIL || 'ray@feedspark.com') });
+    }
+    if (request.method === 'PUT') {
+      let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+      const to = String(b.to || '').slice(0, 120);
+      if (to.indexOf('@') < 1) return json({ error: 'not an email address' }, 400);
+      const cfg = { on: !!b.on, to };
+      await env.EDITS.put('ptypealertcfg', JSON.stringify(cfg));
+      return json(Object.assign({ ok: true }, cfg));
+    }
   }
 
   if (path === '/api/ptypes/snapshot' && request.method === 'GET') {
@@ -2134,7 +2245,8 @@ async function queueLabelReport(env, why) {
     const dests = liftEnvelope(await env.EDITS.get('labeldest', 'json'), now).data;
     const idx = (await env.EDITS.get('labelidx', 'json')) || {};
     const alerts = (await env.EDITS.get('labelalerts', 'json')) || {};
-    const body = buildReport({ rules, dests, idx, alerts, now, link: 'https://feedspark.ray-vtt.workers.dev/labels' });
+    const ptAlerts = (await env.EDITS.get('ptypealerts', 'json')) || {};
+    const body = buildReport({ rules, dests, idx, alerts, ptAlerts, now, link: 'https://feedspark.ray-vtt.workers.dev/labels' });
     let downN = 0;
     Object.keys(rules).forEach((k) => { const st = (rules[k] || {}).state || {};
       Object.keys(st).forEach((v) => { if (st[v] && st[v].st === 'fired') downN++; }); });

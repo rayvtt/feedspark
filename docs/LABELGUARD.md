@@ -280,7 +280,13 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   `POST /api/ptypes/ack`) and the Δ-reference toggle behave exactly like §2/§5, without
   mixing streams: `/labels` stays label-pure, `/ptypes` PT-pure, and the injected nav badge
   dots each page from the one `/api/labels/alerts` call (its `pt` counts field).
-- No custom watches / emailed report v1 — estate alerts + badge cover the drop-off case;
+- **Email on confirmed warning** (✉ toggle + recipient in `/ptypes` §01, KV `ptypealertcfg`,
+  default on → `OWNER_EMAIL`): an estate warn/crit emails a per-feed digest via the same Gmail
+  bridge outbox Label Guard uses — but only on its **second consecutive sighting**
+  (`estateMailPlan`: one garbage read — mid-refresh sheet, gviz throttling — never emails),
+  once per continuous incident, with a ✅ when the feed clears. The daily 07:00 report also
+  gains a PRODUCT TYPE ALERTS section (`buildReport` `ptAlerts` input).
+- No custom watch rules for PT v1 — estate alerts + badge + emails cover the drop-off case;
   watches can be extended to PT later on the same `labelwatch` rails.
 
 Engine unit tests: `node tools/test_labelguard.mjs` (runs in `validate.yml` on every PR).

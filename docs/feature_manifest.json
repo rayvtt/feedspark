@@ -1811,13 +1811,6 @@
       "pr": 243
     },
     {
-      "name": "Workflow: AM filter self-populates from Owner-column names (person-shaped only)",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "amOptionSet",
-      "min": 3,
-      "pr": 246
-    },
-    {
       "name": "tools: nav-parity tripwire present (identical menu on every page)",
       "file": "tools/check_nav.js",
       "pattern": "tb-modules",
@@ -1936,6 +1929,97 @@
       "name": "feedlab page: -fb markets audit as channel meta",
       "file": "docs/FeedSpark_FeedLab.html",
       "pattern": "channel:/-fb$/.test(mkt)?'meta':'google'",
+      "name": "labelguard: ask-the-client compose (alerts → Gmail draft)",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "askCompose",
+      "min": 2,
+      "pr": 255
+    },
+    {
+      "name": "labelguard: breakdown card renderer",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "alertCardPng",
+      "min": 2,
+      "pr": 255
+    },
+    {
+      "name": "worker: /api/labels/askdraft route + drafts bridge",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "labeldrafts",
+      "min": 4,
+      "pr": 255
+    },
+    {
+      "name": "workflow: Owner filter (FS roster from the Owner column)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "ownerOptionSet",
+      "min": 3,
+      "pr": 256
+    },
+    {
+      "name": "workflow: FS roster owner normaliser (ASPL fold)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "fsOwnerOf",
+      "min": 3,
+      "pr": 256
+    },
+    {
+      "name": "labelguard: Open-in-Gmail compose deep-link",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "view=cm",
+      "min": 1,
+      "pr": 258
+    },
+    {
+      "name": "CC dossier: portfolio band (Activity · Health · Audit + suggestions)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "dz-port",
+      "min": 3,
+      "pr": 257
+    },
+    {
+      "name": "CC dossier: async portfolio fill (cross-module fetches)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "portFill",
+      "min": 2,
+      "pr": 257
+    },
+    {
+      "name": "worker: per-client guard-alert splits (?by=client)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "ptClients",
+      "min": 1,
+      "pr": 257
+    },
+    {
+      "name": "CC dossier: 🎬 cinematic brand showcase (luxury-intro overlay)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "dz-show",
+      "min": 3,
+      "pr": 257
+    },
+    {
+      "name": "CC dossier: showcase player over the portfolio model",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "showOpen",
+      "min": 2,
+      "pr": 257
+    },
+    {
+      "name": "engine: estate mail plan (two-strike email-on-warning, once per incident)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "estateMailPlan"
+    },
+    {
+      "name": "worker: PT email-on-warning cfg + queue (ptypealertcfg)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "ptypealertcfg",
+      "min": 3
+    },
+    {
+      "name": "PTGuard: email-on-confirmed-warning settings row",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "ml-on",
       "min": 2
     }
   ]

@@ -50,6 +50,26 @@ function drainAlertOutbox() {
     headers: { 'X-FCC-Push-Key': KEY }, payload: JSON.stringify({ outboxPoll: 1 }), muteHttpExceptions: true });
   var p = null; try { p = JSON.parse(res.getContentText()); } catch (e) {}
   if (!p || !p.ok) { if (res.getResponseCode() !== 200) console.error('✗ FCC outbox poll failed: HTTP ' + res.getResponseCode()); return; }
+  // client-ask drafts (Label Guard "is this drop expected?"): create GMAIL DRAFTS — never
+  // auto-send to a client — with the breakdown images attached, then ack what was created.
+  var drafts = p.drafts || [];
+  if (drafts.length) {
+    var made = [];
+    drafts.forEach(function (d) {
+      try {
+        var opts = {};
+        if (d.atts && d.atts.length) opts.attachments = d.atts.map(function (a) {
+          return Utilities.newBlob(Utilities.base64Decode(a.b64), a.mime || 'image/png', a.name || 'breakdown.png'); });
+        GmailApp.createDraft(d.to, d.subject, d.text || '', opts);
+        made.push(d.id);
+      } catch (e) { console.error('✗ client-ask draft ' + d.id + ' failed: ' + e); }
+    });
+    if (made.length) {
+      UrlFetchApp.fetch(ENDPOINT, { method: 'post', contentType: 'application/json',
+        headers: { 'X-FCC-Push-Key': KEY }, payload: JSON.stringify({ draftsAck: made }), muteHttpExceptions: true });
+      console.log('✓ client-ask Gmail drafts created: ' + made.length);
+    }
+  }
   var queue = p.outbox || [];
   if (!queue.length) return;
   var sent = [];
