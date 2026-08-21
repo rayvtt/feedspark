@@ -102,6 +102,11 @@ resolve XML URLs. How an XML source differs from a sheet:
   matching the sheets' `|||N` columns), anything else → the CSV parser. Same audit either way.
 - **Channel-as-market**: wired under a `<mkt>-fb` market code (e.g. `gb-fb`) so it gets its own
   chip, league card and heatmap row next to the Google feed for the same country.
+- **Channel-aware title scoring** (engine v1.2.0): `-fb` markets audit with `channel:'meta'` —
+  full length credit at **25–65 chars** (Meta truncates ~65; over the cut = half credit), title
+  weights .5 length / .3 MASK / .2 hygiene (five MASK slots can't fit in 65 chars), and the
+  title issue/rec copy speaks Meta ("recompose into the ≤65 window"), never the 80–120 MASK
+  window. Google feeds are scored exactly as before — the bands/buckets labels follow the channel.
 - **Label Guard skips XML feeds** — its pivots run on Google's gviz endpoint, which only exists
   for sheets. XML feeds don't appear on `/labels` and cron rotation slots are not spent on them.
 
