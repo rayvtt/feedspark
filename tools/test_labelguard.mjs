@@ -489,5 +489,60 @@ eq('PT_KEYS', LG.PT_KEYS, ['product_type']);
     JSON.stringify(A));
 }
 
+/* ---------- estate mail plan (PT Guard email-on-confirmed-warning) ---------- */
+{
+  const A1 = { sev: 'crit', code: 'value-gone', label: 'product_type', value: 'Womens > Skirts', msg: 'PT value "Womens > Skirts" GONE' };
+  const A2 = { sev: 'warn', code: 'cov-drop', label: 'product_type', msg: 'PT coverage 98% -> 60%' };
+  const key = LG.alertKey;
+  eq('alertKey normalises value case/space', key({ code: 'value-gone', label: 'product_type', value: ' Womens >  Skirts ' }),
+    key(A1));
+
+  // scan 1: alert appears -> record only, never mail (one bad read never emails)
+  const p1 = LG.estateMailPlan(undefined, [A1]);
+  eq('first sighting mails nothing', [p1.mail.length, p1.mailed, p1.recovered], [0, [], false]);
+  const entry1 = { alerts: [A1], mailed: p1.mailed };
+
+  // scan 2: still there -> confirmed, mail once
+  const p2 = LG.estateMailPlan(entry1, [A1]);
+  eq('second consecutive sighting mails once', [p2.mail.length, p2.mailed.length, p2.recovered], [1, 1, false]);
+  const entry2 = { alerts: [A1], mailed: p2.mailed };
+
+  // scan 3: unchanged -> silent (already mailed this incident)
+  const p3 = LG.estateMailPlan(entry2, [A1]);
+  eq('third sighting stays silent', [p3.mail.length, p3.mailed.length], [0, 1]);
+
+  // scan 4: a SECOND alert joins -> only the newcomer waits for its own confirmation
+  const p4 = LG.estateMailPlan({ alerts: [A1], mailed: p3.mailed }, [A1, A2]);
+  eq('new alert not mailed on its first sighting', p4.mail.length, 0);
+  const p5 = LG.estateMailPlan({ alerts: [A1, A2], mailed: p4.mailed }, [A1, A2]);
+  eq('new alert mails after its own second sighting', p5.mail.map((a) => a.code), ['cov-drop']);
+  eq('mailed set now carries both incidents', p5.mailed.length, 2);
+
+  // recovery: everything clears after a mailed incident -> one ✅
+  const p6 = LG.estateMailPlan({ alerts: [A1, A2], mailed: p5.mailed }, []);
+  eq('recovery flagged once everything clears', [p6.mail.length, p6.mailed, p6.recovered], [0, [], true]);
+  // nothing was ever mailed -> a self-healing blip recovers silently
+  eq('unmailed blip recovers silently', LG.estateMailPlan({ alerts: [A1], mailed: [] }, []).recovered, false);
+
+  const mail = LG.estateAlertEmail('Reiss · GB', [A1, A2], 'https://x/ptypes');
+  ok('alert email: subject line + both rows + link', mail.indexOf('🔴 PT Guard — Reiss · GB: 2 confirmed') === 0 &&
+    mail.indexOf('[CRIT] PT value "Womens > Skirts" GONE') > 0 && mail.indexOf('two consecutive scans') > 0 &&
+    mail.indexOf('https://x/ptypes') > 0, mail);
+  ok('recovery email', LG.estateRecoveryEmail('Reiss · GB', 'https://x/ptypes').indexOf('✅ PT Guard — Reiss · GB recovered') === 0);
+}
+
+/* ---------- buildReport: PT section rides along when ptAlerts is supplied ---------- */
+{
+  const base = { now: 1754280000000, link: 'https://x/labels', rules: {}, dests: {}, idx: {}, alerts: {} };
+  const rep = LG.buildReport(Object.assign({}, base, { ptAlerts: { 'Reiss|gb': { alerts: [
+    { sev: 'crit', msg: 'PT value "Womens > Skirts" GONE - was on 700 SKUs' },
+    { sev: 'info', msg: 'must not appear' } ] } } }));
+  ok('report PT section header + crit line, info excluded', rep.indexOf('PRODUCT TYPE ALERTS — vs last known-good (1)') > 0 &&
+    rep.indexOf('"Womens > Skirts" GONE') > 0 && rep.indexOf('must not appear') < 0, rep);
+  ok('report PT empty state', LG.buildReport(Object.assign({}, base, { ptAlerts: {} }))
+    .indexOf('last known-good category tree') > 0);
+  ok('report without ptAlerts input has no PT section', LG.buildReport(base).indexOf('PRODUCT TYPE ALERTS') < 0);
+}
+
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

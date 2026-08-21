@@ -289,9 +289,16 @@ window.addEventListener('load',restore);
 
 <section class="cat"><div class="wrap">
   <div class="cat-h"><span class="k">01</span><h2>Active alerts</h2>
-    <span class="scanmsg" id="al-count"></span></div>
+    <span class="scanmsg" id="al-count"></span>
+    <span style="margin-left:auto;display:flex;gap:7px;align-items:center;flex-wrap:wrap;font-size:12px;font-weight:800">
+      <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer" title="One digest per feed when a warning is CONFIRMED on two consecutive scans, ✅ on recovery — sent via the Gmail bridge"><input type="checkbox" id="ml-on"> ✉ email on confirmed warning</label>
+      <input class="q-in" id="ml-to" placeholder="ray@feedspark.com" style="width:190px">
+      <button class="btn" id="ml-save">Save</button>
+      <span class="scanmsg" id="ml-msg"></span></span></div>
   <p class="cat-sub">Every unresolved product-type drop-off vs the last known-good state, worst first. Alerts stay
-  live until the feed recovers or the change is accepted as the new known-good — they do not fade on their own.</p>
+  live until the feed recovers or the change is accepted as the new known-good — they do not fade on their own.
+  With ✉ on, a confirmed warning (seen on <b>two consecutive scans</b> — one bad read never emails) sends a digest
+  to the address above, and a ✅ follows when the feed clears.</p>
   <div class="panel" id="alerts-panel"><span class="muted">Loading…</span></div>
 </div></section>
 
@@ -821,6 +828,20 @@ window.addEventListener('load',restore);
         .then(function (r) { return r.json(); }).catch(function () {}).then(step);
     }
     step();
+  };
+
+  // email-on-confirmed-warning settings (KV ptypealertcfg via the worker)
+  fetch(API + '/api/ptypes/alertcfg').then(function (r) { return r.json(); }).then(function (c) {
+    if ($('ml-on')) $('ml-on').checked = c.on !== false;
+    if ($('ml-to')) $('ml-to').value = c.to || '';
+  }).catch(function () {});
+  if ($('ml-save')) $('ml-save').onclick = function () {
+    var body = { on: $('ml-on').checked, to: $('ml-to').value.trim() };
+    $('ml-msg').textContent = 'saving…';
+    fetch(API + '/api/ptypes/alertcfg', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { $('ml-msg').textContent = d.error ? '✗ ' + d.error : '✓ saved'; setTimeout(function () { $('ml-msg').textContent = ''; }, 2500); })
+      .catch(function () { $('ml-msg').textContent = '✗ network'; });
   };
 
   refreshEstate().then(function () {
