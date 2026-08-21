@@ -549,10 +549,19 @@ export default {
         let added = 0, briefable = 0, callsAdded = 0;
         const names = Object.keys(dossier);
         for (const m of inbox) {
-          if (!m || !m.id || seen[m.id]) continue;
+          if (!m || !m.id) continue;
+          // The call-notes check runs BEFORE the stored-id dedupe: a notes email captured as a
+          // plain triage item before detection learned its shape (the real gemini-notes@
+          // specimen sat in gmailinbox for half an hour) must still become call actions once a
+          // smarter parser ships — and its mis-filed triage entry is lifted out below.
           const g = parseGeminiNotes(m);
           if (g) {
             if (!haveCall[m.id] && g.actions.length) {
+              if (seen[m.id]) {   // remove the pre-detection triage capture — the actions ARE the record
+                const j = stored.findIndex((it) => it && it.id === m.id);
+                if (j >= 0) stored.splice(j, 1);
+                delete seen[m.id];
+              }
               // client cue ladder: the meeting title alone first (a body mention could be any
               // brand discussed), then title+body head; a brand named IN the action line wins.
               const ex0 = detectClientEx({ subject: g.call, snippet: '' }, clientDoms, names);
@@ -567,6 +576,7 @@ export default {
             }
             continue;
           }
+          if (seen[m.id]) continue;   // ordinary mail: already captured on an earlier push
           const c = classifyInbound(m, clientDoms, { selfRe: selfRe2, clientNames: names });
           if (c.hints[0] === 'noise/self') continue;
           stored.push({ id: m.id, from: String(m.from || '').slice(0, 120), subject: String(m.subject || '(no subject)').slice(0, 160),
