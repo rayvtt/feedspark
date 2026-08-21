@@ -2037,13 +2037,15 @@
       "name": "workflow: call actions write through to the plan sheet",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "adoptCalls",
-      "min": 2
+      "min": 2,
+      "pr": 263
     },
     {
       "name": "workflow: call-origin memory (chip survives sheet round-trip)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "markCsrc",
-      "min": 2
+      "min": 2,
+      "pr": 263
     }
   ]
 }
