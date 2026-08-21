@@ -839,7 +839,8 @@ function scanLive(){
     // we streamed the whole file, so the row total is exact; Content-Length is only a
     // mid-scan label fallback (the proxy usually omits it — Google gzips the export)
     var meta=META[client]||{};
-    var a=FeedAudit.audit(header,rows,{client:client,sheetId:meta.id||'',gid:meta.gid||'0',rowTotalEstimate:total});
+    // -fb markets are Meta catalogue feeds — titles score against Meta's ~65-char truncation, not the Google MASK window
+    var a=FeedAudit.audit(header,rows,{client:client,sheetId:meta.id||'',gid:meta.gid||'0',rowTotalEstimate:total,channel:/-fb$/.test(mkt)?'meta':'google'});
     a.fetchedAt=Date.now();
     AUDIT=a;scStop();
     renderAll(a,false);
@@ -875,7 +876,7 @@ function scanLive(){
       try{
         var est=(clen&&bytes)?Math.max(total,Math.round(total*(clen/bytes))):total;
         var meta=META[client]||{};
-        var a=FeedAudit.audit(header,rows,{client:client,sheetId:meta.id||'',gid:meta.gid||'0',rowTotalEstimate:est});
+        var a=FeedAudit.audit(header,rows,{client:client,sheetId:meta.id||'',gid:meta.gid||'0',rowTotalEstimate:est,channel:/-fb$/.test(mkt)?'meta':'google'});
         a.fetchedAt=Date.now();AUDIT=a;scStop();renderAll(a,false);
         setMsg('partial scan — stream ended early at '+fmt(total)+' products',false);
         mkUpdateFromAudit(mkt,a);
