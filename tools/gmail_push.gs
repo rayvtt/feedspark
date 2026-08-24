@@ -70,6 +70,21 @@ function drainAlertOutbox() {
       console.log('✓ client-ask Gmail drafts created: ' + made.length);
     }
   }
+  // TechAM delegation: FORWARD the original email (full body + attachments) from this mailbox
+  // to the TechAM team, then ack. The plan record + triage decision are the worker's job.
+  var taq = p.techam || [];
+  if (taq.length) {
+    var fwd = [];
+    taq.forEach(function (f) {
+      try { GmailApp.getMessageById(f.id).forward(f.to); fwd.push(f.qid); }
+      catch (e) { console.error('✗ TechAM forward ' + f.qid + ' failed: ' + e); }
+    });
+    if (fwd.length) {
+      UrlFetchApp.fetch(ENDPOINT, { method: 'post', contentType: 'application/json',
+        headers: { 'X-FCC-Push-Key': KEY }, payload: JSON.stringify({ techamAck: fwd }), muteHttpExceptions: true });
+      console.log('✓ forwarded to TechAM: ' + fwd.length);
+    }
+  }
   var queue = p.outbox || [];
   if (!queue.length) return;
   var sent = [];

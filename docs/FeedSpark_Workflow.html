@@ -94,6 +94,8 @@ window.addEventListener('load',restore);
   .em-tog:hover{border-color:var(--navy);color:var(--navy)}
   .em-no{flex:none;font:inherit;font-size:11.5px;font-weight:800;padding:4px 9px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer}
   .em-no:hover{border-color:#C0392B;color:#C0392B}
+  .em-ta{flex:none;font:inherit;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:100px;border:1px solid #0E8A6D;background:var(--paper);color:#0E8A6D;cursor:pointer}
+  .em-ta:hover{background:#0E8A6D;color:#fff}
   .em-res{flex:none;font:inherit;font-size:11px;font-weight:800;padding:3px 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--navy);cursor:pointer;white-space:nowrap}
   .em-res:hover{border-color:var(--navy)}
   .em-row.dis{opacity:.55}
@@ -101,6 +103,7 @@ window.addEventListener('load',restore);
   .em-was{flex:none;font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);border:1px solid var(--line);border-radius:100px;padding:1px 7px;background:var(--wash)}
   .em-was.brf{color:#7A5AA8;border-color:#D9CEEA}
   .em-was.tsk{color:var(--navy);border-color:#C7D2E0}
+  .em-was.ta{color:#0E8A6D;border-color:rgba(14,138,109,.35)}
   .em-dis-h{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:9px 0 3px}
   .em-zero{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 0}
   /* new-brief popup (reuses .scrim/.modal, wider for the 2-col composer) */
@@ -331,7 +334,7 @@ window.addEventListener('load',restore);
   <div class="panel gmod">
     <div class="gm-head">
       <span class="gm-title"><span class="gdot" id="gdot"></span>✉ Gmail live sync<button class="info-btn" type="button" aria-label="How Gmail live sync works">i</button>
-        <div class="info-pop">Every 5 min the mailbox script pushes brief replies (they move tickets) and captures external client emails into the triage queue — each one is either a task or it isn't. <b>→ Task</b> writes it into the detected brand's project plan; <b>✕ Not a task</b> clears it (restorable). ⚡ = reads as an action request. The <b>cue</b> column shows how the brand was detected — Facebook/Meta aliases and client email domains included.</div>
+        <div class="info-pop">Every 5 min the mailbox script pushes brief replies (they move tickets) and captures external client emails into the triage queue — each one is either a task or it isn't. <b>→ Task</b> writes it into the detected brand's project plan; <b>→ TechAM</b> delegates a common request to the TechAM team (forwards the email from your mailbox + records it in the plan as Done, owner TechAM — their A2Z lane isn't tracked); <b>✕ Not a task</b> clears it (restorable). ⚡ = reads as an action request. The <b>cue</b> column shows how the brand was detected — Facebook/Meta aliases and client email domains included.</div>
       </span>
       <span class="em-n" id="em-n"></span>
       <span class="gm-stat" id="gstate">Waiting for the first push — set up tools/gmail_push.gs (GOOGLE_SETUP.md §8).</span>
@@ -1031,7 +1034,7 @@ window.addEventListener('load',restore);
   // filterable owners; everything else an Owner cell holds (client contacts, markets, notes)
   // stays out of the menu.
   var FS_AMS=['Ray','Steven'];
-  var FS_PEOPLE=['ASPL','Matt','Radostina','Ray','Steven'];
+  var FS_PEOPLE=['ASPL','Matt','Radostina','Ray','Steven','TechAM'];
   // the offshore studio's individuals fold under the ASPL entry
   var ASPL_NAMES={aspl:1,assembly:1,dinesh:1,thia:1,mariraj:1,muji:1};
   // atomic people names from an Owner cell — 'Ray/ Chelsea', 'Chris x Ray', 'Matt, Andy' all
@@ -3237,7 +3240,7 @@ window.addEventListener('load',restore);
     var ago=''; if(g.date){ var s=(Date.now()-(+g.date||new Date(g.date).getTime()))/1000;
       ago=s<3600?Math.max(1,Math.round(s/60))+'m':s<86400?Math.round(s/3600)+'h':Math.round(s/86400)+'d'; }
     var act=g.dismissed
-      ? (g.decidedAs==='task'?'<span class="em-was tsk">saved as task</span>':g.decidedAs==='briefed'?'<span class="em-was brf">briefed</span>':'<span class="em-was">not a task</span>')
+      ? (g.decidedAs==='task'?'<span class="em-was tsk">saved as task</span>':g.decidedAs==='briefed'?'<span class="em-was brf">briefed</span>':g.decidedAs==='techam'?'<span class="em-was ta">→ TechAM</span>':'<span class="em-was">not a task</span>')
         +'<button class="em-res" data-id="'+esc(g.id)+'" type="button">↩ Restore</button>'
       : '<button class="em-go" data-id="'+esc(g.id)+'" type="button" title="Save as a task in Intake — draft the brief from there when ready">→ Task</button>'
         +'<button class="em-no" data-id="'+esc(g.id)+'" type="button" title="Not a task — clear it (restorable under Show triaged)">✕</button>';
@@ -3275,6 +3278,7 @@ window.addEventListener('load',restore);
     function thOf(b){ return TH[b.getAttribute('data-th')]; }
     list.querySelectorAll('.em-go').forEach(function(b){ b.onclick=function(){ var th=thOf(b); if(!th)return; saveEmailAsTask(th.rep, th.all); }; });
     list.querySelectorAll('.em-no').forEach(function(b){ b.onclick=function(){ var th=thOf(b); if(!th)return; decideThread(th,'notask'); }; });
+    list.querySelectorAll('.em-ta').forEach(function(b){ b.onclick=function(){ var th=thOf(b); if(!th)return; sendToTechAM(th); }; });
     list.querySelectorAll('.em-thn').forEach(function(b){ b.onclick=function(){ var k=b.getAttribute('data-th');
       if(openThreads[k])delete openThreads[k]; else openThreads[k]=1; renderEmailPanel(); }; });
     list.querySelectorAll('.em-cl-sel').forEach(function(sel){ sel.onchange=function(){ var th=thOf(sel); if(!th||!sel.value)return;
@@ -3301,6 +3305,7 @@ window.addEventListener('load',restore);
         +(n>1?'<button class="em-thn'+(open?' on':'')+'" data-th="'+esc(th.key)+'" type="button" title="'+n+' emails in this conversation — click to '+(open?'collapse':'review each')+'">'+n+' ✉</button>':'')+'</span>'
       +'<span class="em-ago">'+ago+'</span>'
       +'<span class="em-act"><button class="em-go" data-th="'+esc(th.key)+'" type="button" title="Save as ONE task in Intake (from the newest email) — the whole thread is marked triaged">→ Task</button>'
+        +'<button class="em-ta" data-th="'+esc(th.key)+'" type="button" title="Delegate to TechAM — forwards the newest email to the TechAM team from your mailbox, records the task in the brand’s plan as Done (owner TechAM, their A2Z lane isn’t tracked), and marks the thread triaged">→ TechAM</button>'
         +'<button class="em-no" data-th="'+esc(th.key)+'" type="button" title="Not a task — clears the whole thread (restorable under Show triaged)">✕</button></span></div>';
     if(open&&n>1) row+=th.all.map(function(m){ var a=''; if(m.date){ var s2=(Date.now()-(+m.date||0))/1000;
         a=s2<3600?Math.max(1,Math.round(s2/60))+'m':s2<86400?Math.round(s2/3600)+'h':Math.round(s2/86400)+'d'; }
@@ -3351,6 +3356,31 @@ window.addEventListener('load',restore);
     // member (parallel per-email posts raced on the worker's KV key and lost decisions)
     var ids=[String(g.id)]; (thread||[]).forEach(function(m){ if(ids.indexOf(String(m.id))<0)ids.push(String(m.id)); });
     decideMany(ids,'task');
+    renderAll();
+  }
+  // ---- TechAM delegation (Ray's new way of working): the TechAM team answers common client
+  // requests A2Z, so a triaged email can be handed straight to them. The button forwards the
+  // NEWEST email to TechAM from Ray's own mailbox (bridge queue — full body + attachments),
+  // records the task in the brand's plan exactly like → Task but BORN DONE with owner TechAM
+  // (their lane isn't progress-tracked), and marks the whole thread triaged. The TechAM
+  // address is asked once and remembered server-side (KV techamcfg) for the whole team.
+  var TECHAM={to:''};
+  fetch('/api/gmail/techam').then(function(r){return r.json();}).then(function(d){ if(d&&d.to)TECHAM.to=d.to; }).catch(function(){});
+  function sendToTechAM(th){
+    var g=th.rep, to=(TECHAM.to||'').trim();
+    if(to.indexOf('@')<1){ to=(prompt('TechAM email address — asked once, remembered for the whole team:','')||'').trim();
+      if(to.indexOf('@')<1){ toast('Need the TechAM address to delegate'); return; } }
+    TECHAM.to=to;
+    fetch('/api/gmail/techam',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:String(g.id),to:to})})
+      .then(function(r){return r.json();}).then(function(d){ if(d&&d.ok)toast('→ TechAM — the email forwards from your mailbox within ~5 min');
+        else toast('TechAM hand-off failed: '+((d&&d.error)||'try again')); })
+      .catch(function(){ toast('TechAM hand-off failed — network; try again'); });
+    var task=g.subject+' — from '+senderName(g.from);
+    if(g.client&&CLIENTS.indexOf(g.client)>=0){ adoptIntoPlan(g.client,task,'Done','','TechAM',1); }
+    else { MANUAL.push({client:g.client||'',task:task,owner:'TechAM',status:'Done',due:'',esrc:1}); saveManual(); markEsrc(g.client||'',task);
+      toast('Recorded as Done — client not recognised: double-click its Client cell to assign one'); }
+    var ids=[String(g.id)]; th.all.forEach(function(m){ if(ids.indexOf(String(m.id))<0)ids.push(String(m.id)); });
+    decideMany(ids,'techam');
     renderAll();
   }
   // sender→brand memory: a manual assignment teaches detection — same sender auto-fills next time
