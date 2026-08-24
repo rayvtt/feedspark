@@ -2046,6 +2046,18 @@
       "pattern": "markCsrc",
       "min": 2,
       "pr": 263
+    },
+    {
+      "name": "worker+workflow: call-action edits (status/due/client on KV)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "api/gmail/calls",
+      "min": 1
+    },
+    {
+      "name": "workflow: call rows editable (KV write-through)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "callPatch",
+      "min": 3
     }
   ]
 }

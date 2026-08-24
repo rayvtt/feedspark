@@ -1551,9 +1551,20 @@ window.addEventListener('load',restore);
       for(var i=0;i<plan.length;i++){ if(sameTask(a.task,plan[i]))return; }
       if(MANUAL.some(function(m2){ return m2.client===client&&sameTask(m2.task,a.task); }))return;
       seenK[k]=1;
-      out.push({client:client,task:a.task,cat:classifyLite(a.task),owner:a.owner||'—',
-        source:'call',call:a.call||'Call',cwhen:a.when||0,s:'Open',b:'open',d:''}); });
+      var st=a.s||'Open';   // status/due live on the KV entry (PUT /api/gmail/calls) — team-shared
+      out.push({client:client,task:a.task,cat:classifyLite(a.task),owner:a.owner||'—',callid:a.id,
+        source:'call',call:a.call||'Call',cwhen:a.when||0,s:st,b:bucketOf(st),d:a.due||''}); });
     return out; }
+  // patch one call action in place — optimistic local mutation + KV write-through
+  function callPatch(id,patch){ if(!id)return;
+    CALLS.forEach(function(a){ if(a&&a.id===id)Object.assign(a,patch); });
+    fetch('/api/gmail/calls',{method:'PUT',headers:{'content-type':'application/json'},
+      body:JSON.stringify(Object.assign({id:id},patch))}).catch(function(){}); }
+  function callWriteStatus(t,val){ callPatch(t.callid,{s:val});
+    if(bucketOf(val)==='done'){ var k=rowKey(t), tb=null;   // Done on a briefed call row is a go-live signal too
+      Object.keys(BRIEFS).forEach(function(id){ var x=BRIEFS[id]; if(!tb&&x&&(x.taskKey===k||(x.taskKeys||[]).indexOf(k)>=0))tb=x; });
+      if(tb&&needsAnalysis(tb)&&!tb.liveAt&&tb.status!=='confirmed'&&tb.status!=='analysis')goLive(tb); }
+    toast('Status saved'); }
   // Ray's rule (21 Aug): parsed call actions are REAL tasks — write them into the client's
   // Project Plan sheet like ＋ Add task does (adoptIntoPlan: optimistic MANUAL row + sheet
   // append, dup-guarded), so they carry a status dropdown and an editable due date. The 📞
@@ -1566,7 +1577,8 @@ window.addEventListener('load',restore);
       if(CLIENTS.indexOf(a.client)<0)return;
       var k=a.client+'|'+a.task;
       if(CSRC[k]||DELETED[k]||HIDDEN[k])return;
-      var ok=adoptIntoPlan(a.client,a.task,'Open','',a.owner||'',false,false);
+      var dd=(a.due&&a.due.length===10)?(a.due.slice(8,10)+a.due.slice(5,7)+a.due.slice(0,4)):'';   // status/due set while unattributed carry into the plan
+      var ok=adoptIntoPlan(a.client,a.task,a.s||'Open',dd,a.owner||'',false,false);
       markCsrc(a.client,a.task,a.call,a.when);   // adopted OR already in the plan — either way the origin is known
       if(ok)n++;
     });
@@ -1715,6 +1727,7 @@ window.addEventListener('load',restore);
       .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+nc+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Moved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok&&LIVE[nc])setTimeout(function(){fetchLive(true);},800); })
       .catch(function(){ toast('Moved locally — plan write failed (check the SA has Editor access)'); }); }
     else toast('Moved to '+nc+' · no plan sheet linked to write back');
+    if(t.source==='call'){ callPatch(t.callid,{client:nc}); markCsrc(nc,t.task,t.call,t.cwhen); }   // assignment persists to KV; the 📞 origin rides onto the plan row
     renderAll(); }
   function setOwner(t,val){ recPush({client:t.client,task:t.task,source:t.source,key:'owner',prev:(t.owner==='—'?'':(t.owner||''))}); saveOwnerLocal(t.client,t.task,val);
     if(t.source==='plan' && PLANSHEET[t.client]) writeOwner(t.client,t.task,val);   // existing 2-way owner writer (sheet + refetch)
@@ -1776,6 +1789,7 @@ window.addEventListener('load',restore);
     recPush({client:t.client,task:t.task,source:t.source,key:'due',prev:(t.d||'')});
     saveDueLocal(t.client, t.task, iso);
     var ddmy = iso ? (iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4)) : '';   // DD/MM/YYYY for the sheet
+    if(t.source==='call'){ callPatch(t.callid,{due:iso}); toast(iso?'Due updated':'Due cleared'); renderAll(); return; }   // the KV entry is the store
     if(t.source==='plan'){ var id=PLANSHEET[t.client];
       if(id){ toast('Writing due date to '+t.client+'’s plan…');
         fetch('/api/sheets/due',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',match:t.task,value:ddmy})})
@@ -1824,23 +1838,23 @@ window.addEventListener('load',restore);
     Object.keys(BRIEF_ANCHOR).forEach(function(id){ var b=BRIEFS[id]; if(!b||BRIEF_DUP[id])return; var ak=BRIEF_ANCHOR[id]; if(!BK[ak])BK[ak]=b; });   // fuzzy-anchored tickets dress their row too   // intake row -> its live ticket (primary + attached)
     body.innerHTML = f.length ? f.map(function(t,i){
       var feed=t.cat?('<span class="feed-tag">'+esc(CAT_LBL[t.cat]||t.cat)+'</span>'):'<span class="c-owner">—</span>';
-      var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':t.source==='call'?('<span class="src-tag src-call" title="Action item parsed from the call — '+esc(t.call||'Call')+(t.cwhen?(' · '+callDate(t.cwhen)):'')+'. No client detected yet, so it isn’t written to a plan sheet">📞 Call</span>'):t.csrc?('<span class="src-tag src-call" title="Parsed from the call — '+esc(t.csrc.call||'Call')+(t.csrc.when?(' · '+callDate(t.csrc.when)):'')+' — written into the plan">📞 Call</span>'):t.esrc?'<span class="src-tag src-email" title="Arrived by email — written into the plan">Email</span>':'<span class="src-tag src-plan">Plan</span>';
+      var src=t.source==='email'?('<span class="src-tag src-email">Email</span>'+(t.briefable?'<span class="src-tag src-brf" title="Action request detected: '+esc((t.hints||[]).join(' · '))+'">⚡ action</span>':'')):t.source==='atrt'?'<span class="src-tag src-atrt" title="Imported from the retired ATRT tracker">ATRT</span>':t.source==='call'?('<span class="src-tag src-call" title="Action item parsed from the call — '+esc(t.call||'Call')+(t.cwhen?(' · '+callDate(t.cwhen)):'')+'.'+(t.client==='—'?' No client detected — double-click the client cell to file it into a plan':'')+'">📞 Call</span>'):t.csrc?('<span class="src-tag src-call" title="Parsed from the call — '+esc(t.csrc.call||'Call')+(t.csrc.when?(' · '+callDate(t.csrc.when)):'')+' — written into the plan">📞 Call</span>'):t.esrc?'<span class="src-tag src-email" title="Arrived by email — written into the plan">Email</span>':'<span class="src-tag src-plan">Plan</span>';
       var badge=t.isNew?' <span class="new-tag" title="New since the last snapshot">NEW</span>':(t.live?' <span class="live-dot" title="Live from the sheet"></span>':'');
-      var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt'), rec=RECUR[k];
+      var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt'), edc=ed||t.source==='call', rec=RECUR[k];
       var bf=BK[k], bfChip=bf?('<span class="bf-chip" data-bid="'+esc(bf.id)+'" style="background:'+(STAGE_COLOR[bf.status]||'#8a94a0')+'" title="Ticket '+esc(bf.id)+' — '+esc(STAGE_LBL[bf.status]||bf.status)+(courtOf(bf)?(' · ball with '+courtOf(bf)):'')+'. Click to open">'+esc(STAGE_LBL[bf.status]||bf.status)+'</span>'):'';
       // a briefed row's task text is a click-through to its ticket (Ray's ask) — same target as the chip
       var tkTxt=bf?('<span class="tk-open" data-bid="'+esc(bf.id)+'" title="Click to open ticket '+esc(bf.id)+'">'+esc(t.task)+'</span>'):esc(t.task);
-      var stat=(t.source==='plan'||t.source==='atrt')
-        ?('<td class="c-stat" data-r="'+i+'" data-col="status" data-src="'+t.source+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
+      var stat=(t.source==='plan'||t.source==='atrt'||t.source==='call')
+        ?('<td class="c-stat" data-r="'+i+'" data-col="status" data-src="'+t.source+'" data-callid="'+esc(t.callid||'')+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
         :'<td class="c-stat" data-r="'+i+'" data-col="status"><span class="c-owner">—</span></td>';
       return '<tr data-k="'+esc(k)+'" data-r="'+i+'"'+(hid?' class="row-hidden"':'')+'><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
-        +'<td class="c-client'+(ed?' c-client-ed" data-i="'+i+'" title="Double-click to reassign the client — the task moves between project plans':'')+'" data-r="'+i+'" data-col="client">'+esc(t.client)+badge
+        +'<td class="c-client'+(edc?' c-client-ed" data-i="'+i+'" title="'+(t.source==='call'?'Double-click to assign the client — the action files into their project plan':'Double-click to reassign the client — the task moves between project plans')+'':'')+'" data-r="'+i+'" data-col="client">'+esc(t.client)+badge
           +'<button class="cl-rm" data-c="'+esc(t.client)+'" title="Remove '+esc(t.client)+' from the intake and all filters — every task, reversible from the client-filter menu">✕</button></td><td data-r="'+i+'" data-col="feed">'+feed+'</td>'
         +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click or ✎ to edit — writes back to the plan">'+tkTxt+bfChip+'<button class="tk-ed" data-i="'+i+'" title="Edit the task name — writes back to the plan">✎</button></td>'
              :'<td class="c-task" data-r="'+i+'" data-col="task">'+tkTxt+bfChip+'</td>')
         +(ed?'<td class="c-owner c-owner-ed" data-r="'+i+'" data-col="owner" data-i="'+i+'" title="Double-click to set owner — writes back to the plan">'+esc(t.owner||'—')+'</td>'
              :'<td class="c-owner" data-r="'+i+'" data-col="owner">'+esc(t.owner||'—')+'</td>')
-        +((t.source==='plan'||t.source==='atrt')
+        +((t.source==='plan'||t.source==='atrt'||t.source==='call')
            ?'<td class="c-due c-due-ed" data-r="'+i+'" data-col="due" data-i="'+i+'" title="Double-click to set due date (DDMM)">'+esc(dueDisplay(t))+'</td>'
            :'<td class="c-due" data-r="'+i+'" data-col="due" title="'+esc(dueDisplay(t))+'">'+esc(dueDisplay(t))+'</td>')
         +stat+'<td data-r="'+i+'" data-col="source">'+src+'</td><td class="c-act">'
@@ -1892,7 +1906,8 @@ window.addEventListener('load',restore);
         var td=sel.closest('.c-stat'), cl=td.getAttribute('data-client'), tk=td.getAttribute('data-task');
         recPush({client:cl,task:tk,source:td.getAttribute('data-src'),key:'status',prev:prev});
         sel.className='stat-sel tag-'+bucketOf(sel.value);
-        writeStatus(cl,tk,sel.value);
+        if(td.getAttribute('data-src')==='call')callWriteStatus({callid:td.getAttribute('data-callid'),client:cl,task:tk},sel.value);   // KV entry, not a sheet
+        else writeStatus(cl,tk,sel.value);
         sel.dataset.prev=sel.value; gridDefer(); }
       sel.onchange=commit; sel.addEventListener('focusout',commit);
       sel.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); sel.blur(); }

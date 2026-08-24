@@ -636,6 +636,24 @@ export default {
       }
     }
 
+    // ---- call-action edits: unattributed 📞 rows have no plan sheet to write to, so their
+    // status / due / client live on the KV entry itself — shared by the whole team, and the
+    // client assignment is what lets the page adopt the row into a real plan sheet.
+    if (path === '/api/gmail/calls' && request.method === 'PUT') {
+      let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+      const cid = String(b.id || '');
+      if (!cid) return json({ error: 'missing id' }, 400);
+      const calls2 = (await env.EDITS.get('callactions', 'json')) || [];
+      const hit = calls2.filter((a) => a && a.id === cid)[0];
+      if (!hit) return json({ error: 'unknown call action' }, 404);
+      if (b.s != null) hit.s = String(b.s).slice(0, 24);
+      if (b.due != null) hit.due = String(b.due).slice(0, 10);        // ISO yyyy-mm-dd, '' clears
+      if (b.client != null) hit.client = String(b.client).slice(0, 60);
+      await env.EDITS.put('callactions', JSON.stringify(calls2));
+      logActivity(ctx, env, request, 'call-edit', (hit.task || '').slice(0, 60));
+      return json({ ok: true });
+    }
+
     // the Gmail-sync run history (owner-only, rendered beside the activity stream)
     if (path === '/api/gmail/pushlog' && request.method === 'GET') {
       if (who(request) !== ownerEmail(env)) return json({ error: 'restricted to the account owner' }, 403);
