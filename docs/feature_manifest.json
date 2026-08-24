@@ -2147,6 +2147,36 @@
       "pattern": "de-collapse",
       "min": 1,
       "pr": 271
+    },
+    {
+      "name": "engine: 5-depth standard verdict (DEPTH_STD / depthStandard)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "depthStandard",
+      "min": 1
+    },
+    {
+      "name": "engine: client depth-optimisation proposal email (depthAskEmail)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "depthAskEmail",
+      "min": 1
+    },
+    {
+      "name": "worker: PT depth plan-task route (files into the client Project Plan)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "/api/ptypes/plantask",
+      "min": 2
+    },
+    {
+      "name": "PTGuard: depth-standard verdict pill + ✉ Propose depth optimisation",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "std-ask",
+      "min": 2
+    },
+    {
+      "name": "PTGuard: client-ask composer on the shared askdraft rails",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "askp-slot",
+      "min": 2
     }
   ]
 }

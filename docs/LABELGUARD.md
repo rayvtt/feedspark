@@ -293,6 +293,22 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   (`estateMailPlan`: one garbage read — mid-refresh sheet, gviz throttling — never emails),
   once per continuous incident, with a ✅ when the feed clears. The daily 07:00 report also
   gains a PRODUCT TYPE ALERTS section (`buildReport` `ptAlerts` input).
+- **5-depth standard + the client ask** (Ray's rule: the industry standard is **30–40% of
+  product volume at 5-level paths** — accounts sitting too shallow get a proposal, not silence):
+  `depthStandard` (engine, `DEPTH_STD`) grades each profile — `ok` (5-level ≥30%), `below`
+  (5-level <30%) or `shallow` (>50% of volume at 1–2 levels) — rendered as a verdict pill next
+  to the depth chips (`✓ 5-depth std` / `⚠ below 5-depth std` / `🔻 shallow tree`) and as a
+  footer line on every depth hover card. Below-standard feeds get **✉ Propose depth
+  optimisation**: an in-page composer pre-filled by `depthAskEmail` (consultative client email
+  quoting the feed's 1–2/3/4/5-level split vs the benchmark, shallow vs below variants) riding
+  Label Guard's shared ask rails — "Create Gmail draft" queues via `POST /api/labels/askdraft`
+  (KV `labeldrafts` → Gmail bridge → Drafts, never auto-sends; contact remembered per client in
+  `labelaskcfg`, stamp `✉ asked` in `labelasked` keyed `ptdepth|client|mkt`), "Open in Gmail
+  now" deep-links compose + `markOnly` stamps. The default-on checkbox also files the task —
+  `POST /api/ptypes/plantask` (worker-side `PLAN_SHEETS` lookup → `appendPlanRows`) appends
+  "PT Depth Optimisation (3-4-5 level granularity) - Client MKT - Mon YYYY" into the client's
+  Project Plan sheet, so the proposal rides Intake → Project Plan → pipeline like the Gmail
+  triage.
 - No custom watch rules for PT v1 — estate alerts + badge + emails cover the drop-off case;
   watches can be extended to PT later on the same `labelwatch` rails.
 

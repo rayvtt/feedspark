@@ -306,7 +306,7 @@ export default {
         '/api/labels/scan': 'label-scan', '/api/labels/ack': 'label-rebase',
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
-        '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/gmail/techam': 'techam-send',
+        '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send',
         '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
@@ -2170,6 +2170,21 @@ async function productTypeRoutes(env, request, url) {
       const msg = String((e && e.message) || e);
       return json({ error: msg }, msg.indexOf('bad-cross') === 0 ? 400 : 502);
     }
+  }
+
+  // file the depth-optimisation proposal into the brand's Project Plan — the same
+  // appendPlanRows write the Workflow "+ Add task" and the Gmail-triage adoption use, so
+  // the task lands in Intake > Project Plan > pipeline identically (status dropdown, due).
+  if (path === '/api/ptypes/plantask' && request.method === 'POST') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' }, 503);
+    const sheetId = PLAN_SHEETS[client];
+    if (!sheetId) return json({ ok: false, error: 'no Project Plan sheet wired for "' + client + '" — add it to PLAN_SHEETS' }, 400);
+    const mon = new Date().toLocaleDateString('en-GB', { month: 'short' }) + String(new Date().getUTCFullYear()).slice(2);
+    const task = 'PT Depth Optimisation (3-4-5 level granularity) - ' + client + ' ' + mkt.toUpperCase() + ' - ' + mon;
+    const r = await appendPlanRows(env, sheetId, 'Project Plan', [{ task, owner: '', status: 'Open', due: '' }]);
+    if (r && r.ok) { try { await env.EDITS.delete('planlive:' + sheetId); } catch (e) {} }
+    return json(Object.assign({ task }, r));
   }
 
   // "expected change" — adopt the current PT snapshot as the new known-good, clear flags
