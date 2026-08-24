@@ -544,5 +544,29 @@ eq('PT_KEYS', LG.PT_KEYS, ['product_type']);
   ok('report without ptAlerts input has no PT section', LG.buildReport(base).indexOf('PRODUCT TYPE ALERTS') < 0);
 }
 
+/* ---------- depth granularity KPI (3/4/5-depth population %) ---------- */
+eq('pathDepth chevrons', LG.pathDepth('Womenswear > Clothing > Dresses > Midi Dresses'), 4);
+eq('pathDepth single level', LG.pathDepth('Dresses'), 1);
+eq('pathDepth slash fallback', LG.pathDepth('Home/Kitchen/Kettles'), 3);
+eq('pathDepth empty', LG.pathDepth('  '), 0);
+eq('pathDepth trailing chevron ignored', LG.pathDepth('A > B > '), 2);
+{
+  const dp = LG.depthProfile([
+    ['Womenswear > Clothing > Dresses > Midi', 5000],       // 4
+    ['Mens > Footwear > Boots', 3000],                      // 3
+    ['Womens > Clothing > Knitwear > Jumpers > Wool', 2000], // 5
+  ]);
+  eq('depthProfile SKU-weighted pcts', [dp.pct['3'], dp.pct['4'], dp.pct['5']], [30, 50, 20]);
+  eq('depthProfile untouched buckets zero', [dp.pct['1'], dp.pct['2'], dp.pct['6+']], [0, 0, 0]);
+  eq('depthProfile avg levels', dp.avg, 3.9);
+  eq('depthProfile counted skus', dp.skus, 10000);
+}
+{
+  const dp = LG.depthProfile([['A > B > C > D > E > F > G', 10], ['solo', 10]]);
+  eq('depthProfile 6+ bucket + single-level', [dp.pct['6+'], dp.pct['1']], [50, 50]);
+}
+eq('depthProfile empty -> null', LG.depthProfile([]), null);
+eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null);
+
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

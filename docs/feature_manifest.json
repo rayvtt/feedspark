@@ -2074,6 +2074,24 @@
       "pattern": "techamq",
       "min": 3,
       "pr": 266
+    },
+    {
+      "name": "engine: PT depth granularity KPI (pathDepth/depthProfile)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "depthProfile",
+      "min": 1
+    },
+    {
+      "name": "worker: depth profile attached to ptypeidx entries",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "depthProfile",
+      "min": 2
+    },
+    {
+      "name": "PTGuard: depth strip + chevron hover breakdowns (3/4/5-depth)",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "depthTitle",
+      "min": 3
     }
   ]
 }

@@ -361,6 +361,39 @@ window.addEventListener('load',restore);
   }
   function qMatch(v) { return !QUERY || String(v).toLowerCase().indexOf(QUERY.toLowerCase()) >= 0; }
 
+  // ---- depth granularity (the "how granular" KPI Google reads off the category tree) ----
+  // mirrors the engine's pathDepth/depthProfile: SKU-weighted % per chevron depth
+  function pathDepth(v) {
+    var s = String(v == null ? '' : v).trim();
+    if (!s) return 0;
+    var sep = s.indexOf('>') >= 0 ? '>' : (s.indexOf('/') >= 0 ? '/' : null);
+    if (!sep) return 1;
+    return s.split(sep).filter(function (p) { return p.trim(); }).length;
+  }
+  function depthProfile(values) {
+    var counts = {}, total = 0, wsum = 0;
+    (values || []).forEach(function (pr) {
+      var d = pathDepth(pr[0]), n = pr[1] || 0;
+      if (!d || !n) return;
+      var b = d >= 6 ? '6+' : String(d);
+      counts[b] = (counts[b] || 0) + n;
+      total += n; wsum += d * n;
+    });
+    if (!total) return null;
+    var pct = {};
+    ['1', '2', '3', '4', '5', '6+'].forEach(function (b) { pct[b] = counts[b] ? Math.round((counts[b] / total) * 1000) / 10 : 0; });
+    return { pct: pct, avg: Math.round((wsum / total) * 10) / 10, skus: total };
+  }
+  function depthLine(dp) {
+    return dp ? 'depth 3: ' + dp.pct['3'] + '% › 4: ' + dp.pct['4'] + '% › 5: ' + dp.pct['5'] + '%' : '';
+  }
+  function depthTitle(dp, truncated) {
+    if (!dp) return 'No product-type depth data yet — scan the feed';
+    return 'PT depth granularity, SKU-weighted' + (truncated ? ' (top 250 paths)' : '') + ': ' +
+      '1-depth ' + dp.pct['1'] + '% › 2-depth ' + dp.pct['2'] + '% › 3-depth ' + dp.pct['3'] + '% › 4-depth ' + dp.pct['4'] +
+      '% › 5-depth ' + dp.pct['5'] + '% › 6+-depth ' + dp.pct['6+'] + '% · avg ' + dp.avg + ' levels';
+  }
+
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -400,7 +433,8 @@ window.addEventListener('load',restore);
       byClient[c].forEach(function (f) {
         var k = keyOf(f.client, f.mkt), st = statusOf(f);
         var cov = f.cov ? f.cov[PT] : null;
-        h += '<div class="est-mkt' + (SEL === k ? ' sel' : '') + '" data-k="' + esc(k) + '">' +
+        h += '<div class="est-mkt' + (SEL === k ? ' sel' : '') + '" data-k="' + esc(k) + '"' +
+          (f.depth ? ' title="' + esc(depthTitle(f.depth)) + '"' : '') + '>' +
           '<span class="mkt-code">' + chChip() + esc(String(f.mkt).toUpperCase()) + '</span>' +
           '<span class="st-pill st-' + st + '">' + (st === 'never' ? 'not scanned' : st) + '</span>' +
           '<span class="covbars ptcb" title="product_type coverage">' +
@@ -580,9 +614,11 @@ window.addEventListener('load',restore);
     var rf = refFor(d);
     var ref = rf.ref, refLbl = rf.isDaily ? 'yday' : 'known-good';
     var L = s.labels && s.labels[PT];
-    var h = '<div class="det-head"><h3>' + esc(s.client) + ' · ' + esc((s.market || p.mkt).toUpperCase()) + '</h3>' + chChip() +
+    var dp = L && L.present ? depthProfile(L.values) : null;
+    var dT = esc(depthTitle(dp, L && L.truncated));
+    var h = '<div class="det-head"><h3 title="' + dT + '">' + esc(s.client) + ' · ' + esc((s.market || p.mkt).toUpperCase()) + '</h3>' + chChip() +
       '<span class="det-stats"><span><b>' + fmt(s.rows) + '</b> rows</span>' +
-      '<span>scanned <b>' + ago(s.t) + '</b></span>' +
+      '<span title="' + dT + '">scanned <b>' + ago(s.t) + '</b></span>' +
       (ref ? '<span class="refseg">' +
         '<button id="ref-yday"' + (rf.isDaily ? ' class="on"' : (d.daily ? '' : ' disabled')) +
         ' title="' + (d.daily ? 'Compare against the auto-capture from the first scan of yesterday (UTC)' : 'No capture from yesterday yet — the first scan of each day seeds it') + '">Δ vs yesterday</button>' +
@@ -610,9 +646,10 @@ window.addEventListener('load',restore);
 
     var B = (ref && ref.labels && ref.labels[PT]) || null;
     var dcov = (B && B.present) ? Math.round((L.cov - B.cov) * 10) / 10 : null;
-    h += '<div class="lbl-h" style="margin:12px 0 4px"><span class="nm">product_type</span>' +
+    h += '<div class="lbl-h" style="margin:12px 0 4px"><span class="nm" title="' + dT + '">product_type</span>' +
       '<span class="cov">' + L.cov + '%</span>' +
       '<span class="sub">' + fmt(L.filled) + ' SKUs · ' + L.distinct + (L.truncated ? '+' : '') + ' category paths</span>' +
+      (dp ? '<span class="sub" title="' + dT + '">· ' + depthLine(dp) + '</span>' : '') +
       (dcov != null && dcov !== 0 ? '<span class="delta ' + (dcov > 0 ? 'up' : 'down') + '">' + (dcov > 0 ? '▲ +' : '▼ ') + dcov + 'pp vs ' + refLbl + '</span>' : '') +
       '</div>';
 
