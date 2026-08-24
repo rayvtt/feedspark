@@ -1588,8 +1588,13 @@ export default {
     const page = PAGES[path];
     if (page) {
       logActivity(ctx, env, request, 'view', path);
-      let html = page.html.replace('</body>', getEditorScript(page.slug) + '\n</body>');
-      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n</body>');
+      // Most module pages are fragment-style (no <body> tags), so replace('</body>') silently
+      // no-oped there — which kept every injected widget (editor, Tachyon, presence avatars,
+      // guard badges, the Feed Chat bubble) HOMEPAGE-ONLY. Inject = replace when the tag
+      // exists, append to the end otherwise (trailing <style>/<script> parse into body fine).
+      const inject = (html, extra) => (html.indexOf('</body>') >= 0 ? html.replace('</body>', extra + '\n</body>') : html + '\n' + extra);
+      let html = inject(page.html, getEditorScript(page.slug));
+      if (!path.startsWith('/deck/')) html = inject(html, TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW);
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
