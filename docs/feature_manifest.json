@@ -2060,6 +2060,18 @@
       "pattern": "callPatch",
       "min": 3,
       "pr": 264
+    },
+    {
+      "name": "workflow: TechAM delegation button (triage → forward + Done plan record)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "sendToTechAM",
+      "min": 2
+    },
+    {
+      "name": "worker: TechAM forward queue + cfg",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "techamq",
+      "min": 3
     }
   ]
 }

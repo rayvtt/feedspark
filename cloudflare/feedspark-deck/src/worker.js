@@ -303,7 +303,7 @@ export default {
         '/api/labels/scan': 'label-scan', '/api/labels/ack': 'label-rebase',
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
-        '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask',
+        '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/gmail/techam': 'techam-send',
         '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
@@ -515,10 +515,20 @@ export default {
       // itself. Poll returns the queue; ack clears exactly what was sent (see gmail_push.gs).
       if (body.outboxPoll) {
         // drafts: client-ask emails composed on /labels — the script CREATES GMAIL DRAFTS
-        // (with the breakdown images attached) rather than sending; capped per poll to keep
-        // the payload sane. Older script versions simply ignore the field.
+        // (with the breakdown images attached) rather than sending; techam: message ids the
+        // script FORWARDS to the TechAM team from the owner's mailbox. Capped per poll to
+        // keep the payload sane; older script versions simply ignore the extra fields.
         return json({ ok: true, outbox: ((await env.EDITS.get('labeloutbox', 'json')) || []).slice(0, 20),
-          drafts: ((await env.EDITS.get('labeldrafts', 'json')) || []).slice(0, 3) });
+          drafts: ((await env.EDITS.get('labeldrafts', 'json')) || []).slice(0, 3),
+          techam: ((await env.EDITS.get('techamq', 'json')) || []).slice(0, 10) });
+      }
+      if (Array.isArray(body.techamAck)) {
+        const tq = (await env.EDITS.get('techamq', 'json')) || [];
+        const drop = {}; body.techamAck.forEach((id) => { drop[String(id)] = 1; });
+        const left = tq.filter((e) => !drop[e.qid]);
+        await env.EDITS.put('techamq', JSON.stringify(left));
+        logActivity(ctx, env, request, 'techam-send', 'forwarded to TechAM ×' + (tq.length - left.length), 'gmail-bridge');
+        return json({ ok: true, cleared: tq.length - left.length, left: left.length });
       }
       if (Array.isArray(body.draftsAck)) {
         const dq = (await env.EDITS.get('labeldrafts', 'json')) || [];
@@ -636,6 +646,30 @@ export default {
       }
     }
 
+    // ---- TechAM delegation: the TechAM team answers common client-email requests A2Z, so a
+    // triaged email can be handed straight to them. POST queues the ORIGINAL message for a real
+    // Gmail FORWARD from the owner's mailbox (the bridge script does message.forward — full
+    // body + attachments); the address is remembered (KV techamcfg). The page files the plan
+    // record (born Done, owner TechAM) and the triage decision separately.
+    if (path === '/api/gmail/techam') {
+      if (request.method === 'GET') {
+        const cfg = (await env.EDITS.get('techamcfg', 'json')) || {};
+        return json({ to: cfg.to || '' });
+      }
+      if (request.method === 'POST') {
+        let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+        const mid = String(b.id || '').slice(0, 64);
+        const to = String(b.to || '').slice(0, 160).trim();
+        if (!mid) return json({ error: 'missing id' }, 400);
+        if (to.indexOf('@') < 1) return json({ error: 'not an email address' }, 400);
+        await env.EDITS.put('techamcfg', JSON.stringify({ to }));
+        const q = (await env.EDITS.get('techamq', 'json')) || [];
+        if (!q.some((e) => e && e.id === mid)) q.push({ qid: 'ta_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), id: mid, to, t: Date.now() });
+        await env.EDITS.put('techamq', JSON.stringify(q.slice(-50)));
+        return json({ ok: true, queued: q.length });
+      }
+    }
+
     // ---- call-action edits: unattributed 📞 rows have no plan sheet to write to, so their
     // status / due / client live on the KV entry itself — shared by the whole team, and the
     // client assignment is what lets the page adopt the row into a real plan sheet.
@@ -674,7 +708,7 @@ export default {
         .map((x) => String(x || '').slice(0, 64)).filter(Boolean).slice(0, 50);
       if (!ids.length) return json({ ok: false, error: 'missing id' }, 400);
       const dis = (await env.EDITS.get('gmaildismissed', 'json')) || {};
-      const validReasons = ['briefed', 'task', 'notask'];
+      const validReasons = ['briefed', 'task', 'notask', 'techam'];
       const reason = validReasons.includes(body.reason) ? body.reason : 'notask';
       let target = ids;
       if (body.undo) {
