@@ -2409,6 +2409,7 @@ function isStatusTok(v) { return STATUS_TOK.indexOf(normCell(v)) >= 0; }
 function planBucket(s) { s = normCell(s);
   if (/(done|complete|finish|live|delivered|actioned|signed)/.test(s)) return 'done';
   if (/(hold|park)/.test(s)) return 'hold';
+  if (/brief/.test(s)) return 'briefed';   // mirror the page's bucketOf — Briefed is its own bucket (purple), never open/gray
   if (/(progress|wip|ongoing|review)/.test(s)) return 'progress';
   if (/client/.test(s)) return 'client';
   if (!s) return 'open'; return 'open'; }

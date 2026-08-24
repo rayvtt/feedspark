@@ -1421,7 +1421,10 @@ window.addEventListener('load',restore);
       var isLive=!!(live&&live.length), list=isLive?live:snap;
       var newSet=(isLive&&LIVE[c].newSet)||{};
       list.forEach(function(t){ var orig=t.t, task=ren[c+'|'+orig]||orig, k=c+'|'+task, ovv=ov[k];   // apply any local rename first
-        var s=ovv!=null?ovv:t.s, b=ovv!=null?bucketOf(ovv):(t.b||bucketOf(s));
+        // the STATUS STRING is authoritative for the bucket — a pre-computed b from an older
+        // worker/snapshot filed 'Briefed' under open, painting the chip gray on live rows
+        // while locally-edited ones went purple (Ray's report). Only trust t.b when s is empty.
+        var s=ovv!=null?ovv:t.s, b=ovv!=null?bucketOf(ovv):(s?bucketOf(s):(t.b||'open'));
         var dd=(duo[k]!=null?duo[k]:(t.d||'')); if(!dd && /\d{1,2}[\/-]\d{1,2}|\d{1,2}\s+[a-z]{3}/i.test(String(t.s||''))) dd=t.s;   // due override, else live due col / snapshot-status date
         var ow=owo[k]!=null?owo[k]:(t.o||'—');
         out.push({client:c,task:task,cat:t.c,owner:ow,source:'plan',esrc:isEsrc(k,task),csrc:CSRC[k]||null,s:s,b:b,live:isLive,isNew:isLive&&!!newSet[nrm(task)],sheet:PLANSHEET[c]||'',d:dd}); });
