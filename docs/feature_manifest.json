@@ -2088,9 +2088,15 @@
       "min": 2
     },
     {
-      "name": "PTGuard: depth strip + chevron hover breakdowns (3/4/5-depth)",
+      "name": "PTGuard: depth KPI presentation (stacked bars + styled hover card)",
       "file": "docs/FeedSpark_ProductTypeGuard.html",
-      "pattern": "depthTitle",
+      "pattern": "dptip",
+      "min": 2
+    },
+    {
+      "name": "PTGuard: depth stacked bar renderer",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "dpBar",
       "min": 3
     }
   ]
