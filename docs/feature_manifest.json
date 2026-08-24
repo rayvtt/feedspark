@@ -2139,6 +2139,13 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "it-over-tog",
       "min": 4
+    },
+    {
+      "name": "editor: visible ⌄ collapse on the toolbar + stack clear of the chat-bubble corner",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "de-collapse",
+      "min": 1,
+      "pr": 271
     }
   ]
 }
