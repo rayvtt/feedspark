@@ -282,9 +282,11 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   dots each page from the one `/api/labels/alerts` call (its `pt` counts field).
 - **Depth granularity KPI** (the "how granular is the taxonomy" number for Google): SKU-weighted
   % of the catalogue at **3-, 4- and 5-level** chevron paths (`depthProfile` — `>` split, `/`
-  fallback, avg levels; computed at scan time onto `ptypeidx`). Visible as a compact strip on the
-  PT card (`depth 3: x% › 4: y% › 5: z%`); the full 1→6+ breakdown rides as a chevron-separated
-  tooltip on estate market rows, the scanned date, the brand heading and the PT name.
+  fallback, avg levels; computed at scan time onto `ptypeidx`). Presented as a colour-ramped
+  **stacked depth bar** (darker = deeper) + chevron chips on the PT card, **mini stacked bars on
+  every estate market row**, and a styled hover card (per-depth bars, 3/4/5 emphasised, avg +
+  SKUs profiled) on the market rows, the scanned date, the brand heading and the PT name —
+  aria-labels keep the chevron-separated text form.
 - **Email on confirmed warning** (✉ toggle + recipient in `/ptypes` §01, KV `ptypealertcfg`,
   default on → `OWNER_EMAIL`): an estate warn/crit emails a per-feed digest via the same Gmail
   bridge outbox Label Guard uses — but only on its **second consecutive sighting**

@@ -2088,12 +2088,6 @@
    "min": 2
   },
   {
-   "name": "PTGuard: depth strip + chevron hover breakdowns (3/4/5-depth)",
-   "file": "docs/FeedSpark_ProductTypeGuard.html",
-   "pattern": "depthTitle",
-   "min": 3
-  },
-  {
    "name": "FeedChat bubble: floating-chat widget present",
    "file": "docs/feedchat_widget.html",
    "pattern": "FCC-FEEDCHAT-BUBBLE",
@@ -2120,6 +2114,18 @@
    "pattern": "data-embed",
    "min": 5,
    "pr": 268
+  },
+  {
+   "name": "PTGuard: depth KPI presentation (stacked bars + styled hover card)",
+   "file": "docs/FeedSpark_ProductTypeGuard.html",
+   "pattern": "dptip",
+   "min": 2
+  },
+  {
+   "name": "PTGuard: depth stacked bar renderer",
+   "file": "docs/FeedSpark_ProductTypeGuard.html",
+   "pattern": "dpBar",
+   "min": 3
   },
   {
    "name": "worker: widget injection appends on fragment pages (no </body> = no longer homepage-only)",

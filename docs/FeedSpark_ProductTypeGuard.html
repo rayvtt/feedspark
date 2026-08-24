@@ -267,6 +267,23 @@ window.addEventListener('load',restore);
 </div></div>
 
 <style>
+  /* depth granularity: colour-ramped stacked bar (darker = deeper tree) + styled hover card */
+  .dpbar{display:inline-flex;height:10px;border-radius:100px;overflow:hidden;border:1px solid var(--line);vertical-align:middle;width:190px;flex:none;cursor:default}
+  .dpbar i{display:block;height:100%}
+  .dpbar.mini{width:36px;height:8px}
+  .dpchips{font-size:11px;font-weight:800;color:var(--ink-2);cursor:default}
+  .dpchips b{color:var(--orange-ink)}
+  .dptip{position:fixed;z-index:90;background:#171A21;color:#E8EAEF;border:1px solid #2C3039;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.35);padding:10px 12px;font-size:11.5px;font-weight:700;pointer-events:none;min-width:230px;display:none}
+  .dptip h4{margin:0 0 7px;font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:#9AA3B2}
+  .dptip .dr{display:flex;align-items:center;gap:8px;padding:2px 0}
+  .dptip .dr .dl{width:54px;flex:none;color:#8F98A8}
+  .dptip .dr.hi .dl{color:#fff;font-weight:900}
+  .dptip .dr .db{flex:1;height:7px;border-radius:100px;background:#242833;overflow:hidden}
+  .dptip .dr .db i{display:block;height:100%;border-radius:100px}
+  .dptip .dr .dv{width:46px;text-align:right;flex:none;color:#B9C0CC}
+  .dptip .dr.hi .dv{color:#fff}
+  .dptip .df{margin-top:7px;color:#9AA3B2;font-size:10.5px;font-weight:700}
+  [data-theme=dark] .dpbar{border-color:#2C3039}
   /* PT Guard: one wide pivot pane — relax the compressed 5-across column widths */
   .ptwrap table.pv{table-layout:fixed;font-size:12.5px}
   .ptwrap table.pv th:nth-child(2){width:90px}.ptwrap table.pv th:nth-child(3){width:70px}
@@ -384,15 +401,68 @@ window.addEventListener('load',restore);
     ['1', '2', '3', '4', '5', '6+'].forEach(function (b) { pct[b] = counts[b] ? Math.round((counts[b] / total) * 1000) / 10 : 0; });
     return { pct: pct, avg: Math.round((wsum / total) * 10) / 10, skus: total };
   }
-  function depthLine(dp) {
-    return dp ? 'depth 3: ' + dp.pct['3'] + '% › 4: ' + dp.pct['4'] + '% › 5: ' + dp.pct['5'] + '%' : '';
-  }
   function depthTitle(dp, truncated) {
     if (!dp) return 'No product-type depth data yet — scan the feed';
     return 'PT depth granularity, SKU-weighted' + (truncated ? ' (top 250 paths)' : '') + ': ' +
       '1-depth ' + dp.pct['1'] + '% › 2-depth ' + dp.pct['2'] + '% › 3-depth ' + dp.pct['3'] + '% › 4-depth ' + dp.pct['4'] +
       '% › 5-depth ' + dp.pct['5'] + '% › 6+-depth ' + dp.pct['6+'] + '% · avg ' + dp.avg + ' levels';
   }
+  // colour ramp: darker orange = deeper tree (the KPI reads "more dark = more granular")
+  var DCOL = { '1': '#E3E6EB', '2': '#F2D9AE', '3': '#F5A623', '4': '#ED6F0B', '5': '#B1550A', '6+': '#6E3405' };
+  var DKEYS = ['1', '2', '3', '4', '5', '6+'];
+  // data-dp carries the profile for the styled hover card; aria-label keeps the chevron text form
+  function dpAttr(dp, truncated) {
+    if (!dp) return '';
+    return ' data-dp="' + esc(JSON.stringify({ p: dp, tr: truncated ? 1 : 0 })) + '"' +
+      ' aria-label="' + esc(depthTitle(dp, truncated)) + '"';
+  }
+  function dpBar(dp, mini, truncated) {
+    if (!dp) return '';
+    var h = '<span class="dpbar' + (mini ? ' mini' : '') + '"' + dpAttr(dp, truncated) + '>';
+    DKEYS.forEach(function (b) {
+      if (dp.pct[b] > 0) h += '<i style="width:' + dp.pct[b] + '%;background:' + DCOL[b] + '"></i>';
+    });
+    return h + '</span>';
+  }
+  function dpChips(dp, truncated) {
+    if (!dp) return '';
+    return '<span class="dpchips"' + dpAttr(dp, truncated) + '>3-depth <b>' + dp.pct['3'] + '%</b> › 4-depth <b>' +
+      dp.pct['4'] + '%</b> › 5-depth <b>' + dp.pct['5'] + '%</b> <span class="muted">· avg ' + dp.avg + '</span></span>';
+  }
+  // one shared hover card, positioned under whichever [data-dp] element the pointer is on
+  var TIPEL = null, TIPSRC = null;
+  function tipHtml(d) {
+    var dp = d.p;
+    var h = '<h4>PT depth granularity · SKU-weighted' + (d.tr ? ' · top 250 paths' : '') + '</h4>';
+    DKEYS.forEach(function (b) {
+      var hi = b === '3' || b === '4' || b === '5';
+      h += '<div class="dr' + (hi ? ' hi' : '') + '"><span class="dl">' + b + '-depth</span>' +
+        '<span class="db"><i style="width:' + Math.min(100, dp.pct[b]) + '%;background:' + DCOL[b] + '"></i></span>' +
+        '<span class="dv">' + dp.pct[b] + '%</span></div>';
+    });
+    h += '<div class="df">avg <b>' + dp.avg + '</b> levels · ' + fmt(dp.skus) + ' SKUs profiled</div>';
+    return h;
+  }
+  function tipShow(el) {
+    var d; try { d = JSON.parse(el.getAttribute('data-dp')); } catch (e) { return; }
+    if (!d || !d.p) return;
+    if (!TIPEL) { TIPEL = document.createElement('div'); TIPEL.className = 'dptip'; document.body.appendChild(TIPEL); }
+    TIPEL.innerHTML = tipHtml(d);
+    TIPEL.style.display = 'block';
+    var r = el.getBoundingClientRect(), w = TIPEL.offsetWidth, hh = TIPEL.offsetHeight;
+    var x = Math.max(8, Math.min(r.left, window.innerWidth - w - 8));
+    var y = r.bottom + 8;
+    if (y + hh > window.innerHeight - 8) y = Math.max(8, r.top - hh - 8);
+    TIPEL.style.left = x + 'px'; TIPEL.style.top = y + 'px';
+    TIPSRC = el;
+  }
+  function tipHide() { if (TIPEL) TIPEL.style.display = 'none'; TIPSRC = null; }
+  document.addEventListener('mouseover', function (e) {
+    var el = e.target && e.target.closest ? e.target.closest('[data-dp]') : null;
+    if (el === TIPSRC) return;
+    if (el) tipShow(el); else if (TIPSRC) tipHide();
+  });
+  document.addEventListener('scroll', tipHide, { passive: true });
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -433,13 +503,13 @@ window.addEventListener('load',restore);
       byClient[c].forEach(function (f) {
         var k = keyOf(f.client, f.mkt), st = statusOf(f);
         var cov = f.cov ? f.cov[PT] : null;
-        h += '<div class="est-mkt' + (SEL === k ? ' sel' : '') + '" data-k="' + esc(k) + '"' +
-          (f.depth ? ' title="' + esc(depthTitle(f.depth)) + '"' : '') + '>' +
+        h += '<div class="est-mkt' + (SEL === k ? ' sel' : '') + '" data-k="' + esc(k) + '"' + dpAttr(f.depth) + '>' +
           '<span class="mkt-code">' + chChip() + esc(String(f.mkt).toUpperCase()) + '</span>' +
           '<span class="st-pill st-' + st + '">' + (st === 'never' ? 'not scanned' : st) + '</span>' +
           '<span class="covbars ptcb" title="product_type coverage">' +
           (cov == null ? '<span class="cb na" title="product_type not in feed"></span>'
             : '<span class="cb" title="product_type ' + cov + '%"><i style="height:' + Math.max(4, Math.min(100, cov)) + '%"></i></span>') + '</span>' +
+          (f.depth ? dpBar(f.depth, true) : '') +
           '<span class="est-meta">' + (f.t ? fmt(f.rows) + ' rows · ' + ago(f.t) : (f.err ? esc(f.err).slice(0, 40) : '—')) +
           ((f.nCrit || f.nWarn) ? '<br>' + (f.nCrit ? f.nCrit + ' crit ' : '') + (f.nWarn ? f.nWarn + ' warn' : '') : '') + '</span>' +
           '</div>';
@@ -615,10 +685,10 @@ window.addEventListener('load',restore);
     var ref = rf.ref, refLbl = rf.isDaily ? 'yday' : 'known-good';
     var L = s.labels && s.labels[PT];
     var dp = L && L.present ? depthProfile(L.values) : null;
-    var dT = esc(depthTitle(dp, L && L.truncated));
-    var h = '<div class="det-head"><h3 title="' + dT + '">' + esc(s.client) + ' · ' + esc((s.market || p.mkt).toUpperCase()) + '</h3>' + chChip() +
+    var dA = dpAttr(dp, L && L.truncated);
+    var h = '<div class="det-head"><h3' + dA + '>' + esc(s.client) + ' · ' + esc((s.market || p.mkt).toUpperCase()) + '</h3>' + chChip() +
       '<span class="det-stats"><span><b>' + fmt(s.rows) + '</b> rows</span>' +
-      '<span title="' + dT + '">scanned <b>' + ago(s.t) + '</b></span>' +
+      '<span' + dA + '>scanned <b>' + ago(s.t) + '</b></span>' +
       (ref ? '<span class="refseg">' +
         '<button id="ref-yday"' + (rf.isDaily ? ' class="on"' : (d.daily ? '' : ' disabled')) +
         ' title="' + (d.daily ? 'Compare against the auto-capture from the first scan of yesterday (UTC)' : 'No capture from yesterday yet — the first scan of each day seeds it') + '">Δ vs yesterday</button>' +
@@ -646,10 +716,10 @@ window.addEventListener('load',restore);
 
     var B = (ref && ref.labels && ref.labels[PT]) || null;
     var dcov = (B && B.present) ? Math.round((L.cov - B.cov) * 10) / 10 : null;
-    h += '<div class="lbl-h" style="margin:12px 0 4px"><span class="nm" title="' + dT + '">product_type</span>' +
+    h += '<div class="lbl-h" style="margin:12px 0 4px"><span class="nm"' + dA + '>product_type</span>' +
       '<span class="cov">' + L.cov + '%</span>' +
       '<span class="sub">' + fmt(L.filled) + ' SKUs · ' + L.distinct + (L.truncated ? '+' : '') + ' category paths</span>' +
-      (dp ? '<span class="sub" title="' + dT + '">· ' + depthLine(dp) + '</span>' : '') +
+      (dp ? dpBar(dp, false, L.truncated) + dpChips(dp, L.truncated) : '') +
       (dcov != null && dcov !== 0 ? '<span class="delta ' + (dcov > 0 ? 'up' : 'down') + '">' + (dcov > 0 ? '▲ +' : '▼ ') + dcov + 'pp vs ' + refLbl + '</span>' : '') +
       '</div>';
 
