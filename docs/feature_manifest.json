@@ -2120,6 +2120,13 @@
    "pattern": "data-embed",
    "min": 5,
    "pr": 268
+  },
+  {
+   "name": "worker: widget injection appends on fragment pages (no </body> = no longer homepage-only)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "const inject = (html, extra)",
+   "min": 1,
+   "pr": 269
   }
  ]
 }
