@@ -47,6 +47,9 @@ import TACHYON from "../../../docs/tachyon_widget.html";
 // FCC-PRESENCE: Google-Docs-style live avatars in the topbar — injected on app pages only.
 // Identity comes from Cloudflare Access (who()); heartbeats live in the KV `presence` map.
 import PRESENCEW from "../../../docs/presence_widget.html";
+// FCC-FEEDCHAT-BUBBLE: Feed Chat as an ambient chatbot — floating bubble bottom-right on every
+// app page; the panel hovers over the current page (embedded /feedchat?embed=1, URL unchanged).
+import FEEDCHATW from "../../../docs/feedchat_widget.html";
 // FCC-INSTR: collapsible-instructions widget — injected on app pages only (never decks),
 // so every module's explainer subtext folds behind a ⓘ by default
 import INSTR from "../../../docs/instr_collapse.html";
@@ -1586,7 +1589,7 @@ export default {
     if (page) {
       logActivity(ctx, env, request, 'view', path);
       let html = page.html.replace('</body>', getEditorScript(page.slug) + '\n</body>');
-      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n</body>');
+      if (!path.startsWith('/deck/')) html = html.replace('</body>', TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n</body>');
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
