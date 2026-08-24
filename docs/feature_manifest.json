@@ -1591,18 +1591,18 @@
       "pr": 234
     },
     {
-      "name": "CmdCenter: Feed Chat in module nav",
+      "name": "CmdCenter: Feed Chat RETIRED from module nav (floating bubble now — must stay gone)",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "href=\"/feedchat\"",
-      "min": 1,
-      "pr": 234
+      "pr": 268,
+      "forbidden": true
     },
     {
-      "name": "Workflow: Feed Chat in module nav",
+      "name": "Workflow: Feed Chat RETIRED from module nav (floating bubble now — must stay gone)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "href=\"/feedchat\"",
-      "min": 1,
-      "pr": 234
+      "pr": 268,
+      "forbidden": true
     },
     {
       "name": "FeedChat: FCC-standard chrome (KPI strip + brand context row)",
@@ -2086,6 +2086,34 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "depthProfile",
       "min": 2
+    },
+    {
+      "name": "FeedChat bubble: floating-chat widget present",
+      "file": "docs/feedchat_widget.html",
+      "pattern": "FCC-FEEDCHAT-BUBBLE",
+      "min": 1,
+      "pr": 268
+    },
+    {
+      "name": "FeedChat bubble: 3 window sizes (S/M/L)",
+      "file": "docs/feedchat_widget.html",
+      "pattern": "fcp-sz",
+      "min": 4,
+      "pr": 268
+    },
+    {
+      "name": "worker: feedchat bubble injected on app pages",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "FEEDCHATW",
+      "min": 2,
+      "pr": 268
+    },
+    {
+      "name": "FeedChat page: chrome-less ?embed=1 mode for the bubble",
+      "file": "docs/FeedSpark_FeedChat.html",
+      "pattern": "data-embed",
+      "min": 5,
+      "pr": 268
     },
     {
       "name": "PTGuard: depth KPI presentation (stacked bars + styled hover card)",
