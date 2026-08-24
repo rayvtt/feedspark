@@ -284,6 +284,16 @@ window.addEventListener('load',restore);
   .dptip .dr.hi .dv{color:#fff}
   .dptip .df{margin-top:7px;color:#9AA3B2;font-size:10.5px;font-weight:700}
   [data-theme=dark] .dpbar{border-color:#2C3039}
+  /* the depth-optimisation client ask (composer panel + asked stamp) */
+  .askp{background:var(--wash);border:1px solid var(--orange);border-radius:12px;padding:12px 14px;margin:10px 0}
+  .askp .af{display:flex;gap:8px;align-items:center;margin-bottom:7px;font-size:12px;font-weight:800}
+  .askp .af label{width:56px;flex:none;color:var(--muted)}
+  .askp input{font:inherit;font-size:12px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);flex:1;min-width:0}
+  .askp textarea{font:inherit;font-size:12px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:100%;min-height:190px;resize:vertical;line-height:1.45;box-sizing:border-box}
+  .askp .ab{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:12px;font-weight:800}
+  .askstamp{font-size:10.5px;font-weight:800;color:var(--good)}
+  [data-theme=dark] .askp{background:#181B22;border-color:rgba(245,166,35,.4)}
+  [data-theme=dark] .askp input,[data-theme=dark] .askp textarea{background:#161922;color:var(--ink);border-color:var(--line)}
   /* PT Guard: one wide pivot pane — relax the compressed 5-across column widths */
   .ptwrap table.pv{table-layout:fixed;font-size:12.5px}
   .ptwrap table.pv th:nth-child(2){width:90px}.ptwrap table.pv th:nth-child(3){width:70px}
@@ -407,6 +417,34 @@ window.addEventListener('load',restore);
       '1-depth ' + dp.pct['1'] + '% › 2-depth ' + dp.pct['2'] + '% › 3-depth ' + dp.pct['3'] + '% › 4-depth ' + dp.pct['4'] +
       '% › 5-depth ' + dp.pct['5'] + '% › 6+-depth ' + dp.pct['6+'] + '% · avg ' + dp.avg + ' levels';
   }
+  // the industry standard Ray reports against: 30–40% of product volume at 5-level paths
+  function depthStandard(dp) {
+    if (!dp || !dp.pct) return null;
+    var shallow = Math.round(((dp.pct['1'] || 0) + (dp.pct['2'] || 0)) * 10) / 10;
+    var pct5 = dp.pct['5'] || 0;
+    return { level: shallow > 50 ? 'shallow' : (pct5 < 30 ? 'below' : 'ok'), shallow: shallow, pct5: pct5, target: 30 };
+  }
+  function depthAskEmail(client, mkt, dp, std) {
+    var loc = client + ' ' + String(mkt || '').toUpperCase();
+    return {
+      subject: loc + ' — product type depth: proposal to deepen the category tree',
+      body: 'Hi team,\n\n'
+        + 'A quick recommendation from our feed monitoring. Google increasingly rewards granular product_type category trees — the standard we now work to across accounts is 30–40% of product volume sitting at 5-level paths (e.g. Womenswear > Clothing > Dresses > Midi Dresses > Wrap), with the bulk of the catalogue at 3–4 levels or deeper.\n\n'
+        + 'Where the ' + loc + ' feed sits today (share of product volume by category-path depth):\n'
+        + '• 1–2 levels: ' + std.shallow + '%\n'
+        + '• 3 levels: ' + (dp.pct['3'] || 0) + '%\n'
+        + '• 4 levels: ' + (dp.pct['4'] || 0) + '%\n'
+        + '• 5 levels: ' + (dp.pct['5'] || 0) + '%\n\n'
+        + (std.level === 'shallow'
+          ? 'Most of the catalogue currently sits at 1–2 levels, which limits how precisely the Shopping campaigns can segment and how well the newer AI shopping surfaces read the range. We would propose restructuring the tree to 3–4 levels as a first step, then extending the highest-volume categories to 5.'
+          : 'The tree is in reasonable shape at 3–4 levels; the opportunity is extending the highest-volume categories to 5-level paths to reach the 30–40% benchmark.')
+        + '\n\nWe can run this as a structured optimisation from our side — happy to share a short plan of the proposed hierarchy for sign-off before anything changes in the live feed.\n\n'
+        + 'Best regards,\nRay'
+    };
+  }
+  function askKey(client, mkt) { return 'ptdepth|' + client + '|' + mkt; }
+  var ASK = { cfg: { to: {} }, asked: {} };   // shared with Label Guard's ask rails (labelaskcfg/labelasked)
+
   // colour ramp: darker orange = deeper tree (the KPI reads "more dark = more granular")
   var DCOL = { '1': '#E3E6EB', '2': '#F2D9AE', '3': '#F5A623', '4': '#ED6F0B', '5': '#B1550A', '6+': '#6E3405' };
   var DKEYS = ['1', '2', '3', '4', '5', '6+'];
@@ -441,6 +479,9 @@ window.addEventListener('load',restore);
         '<span class="dv">' + dp.pct[b] + '%</span></div>';
     });
     h += '<div class="df">avg <b>' + dp.avg + '</b> levels · ' + fmt(dp.skus) + ' SKUs profiled</div>';
+    var std = depthStandard(dp);
+    if (std) h += '<div class="df">' + (std.level === 'ok' ? '✓ meets' : (std.level === 'below' ? '⚠ below' : '🔻 well below')) +
+      ' the 5-depth standard (30–40% of volume) — this feed: ' + std.pct5 + '%</div>';
     return h;
   }
   function tipShow(el) {
@@ -664,6 +705,76 @@ window.addEventListener('load',restore);
       .then(function () { if (SEL === k) select(k); });
   }
 
+  // verdict pill vs the 5-depth standard + the client-ask entry point (Ray: propose 3/4/5-
+  // depth optimisation to accounts sitting too shallow — then it files into the pipeline)
+  function stdBadge(p, dp) {
+    var std = depthStandard(dp);
+    if (!std) return '';
+    var pill = std.level === 'ok' ? '<span class="st-pill st-ok" title="30–40% of volume at 5-level paths — this feed: ' + std.pct5 + '%">✓ 5-depth std</span>'
+      : std.level === 'below' ? '<span class="st-pill st-warn" title="Standard: 30–40% of volume at 5-level paths — this feed: ' + std.pct5 + '%">⚠ below 5-depth std</span>'
+      : '<span class="st-pill st-crit" title="' + std.shallow + '% of volume sits at 1–2 levels — the tree is too shallow for PMAX/AI surfaces">🔻 shallow tree</span>';
+    var stamp = ASK.asked[askKey(p.client, p.mkt)];
+    return pill +
+      (std.level !== 'ok' ? '<button class="btn" id="std-ask" style="padding:4px 10px;font-size:11px" title="Compose the client proposal to deepen the category tree — and file it into the Project Plan">✉ Propose depth optimisation</button>' : '') +
+      (stamp ? '<span class="askstamp" title="Proposal composed ' + new Date(stamp.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' → ' + esc(stamp.to) + '">✉ asked ' + new Date(stamp.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + '</span>' : '');
+  }
+  function openAsk(k) {
+    var d = CACHE[k]; if (!d || !d.snapshot) return;
+    var p = parts(k), L = d.snapshot.labels[PT];
+    var dp = depthProfile(L.values), std = depthStandard(dp);
+    if (!dp || !std) return;
+    var t = depthAskEmail(p.client, p.mkt, dp, std);
+    var slot = $('askp-slot'); if (!slot) return;
+    slot.innerHTML = '<div class="askp">' +
+      '<div class="af"><label>To</label><input id="ask-to" value="' + esc(ASK.cfg.to[p.client] || '') + '" placeholder="client contact email"></div>' +
+      '<div class="af"><label>Subject</label><input id="ask-subject" value="' + esc(t.subject) + '"></div>' +
+      '<textarea id="ask-body">' + esc(t.body) + '</textarea>' +
+      '<div class="ab">' +
+      '<button class="btn pri" id="ask-draft">✉ Create Gmail draft</button>' +
+      '<button class="btn" id="ask-gmail" title="Compose right now in the ray@feedspark.com inbox">Open in Gmail now</button>' +
+      '<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ask-task" checked> file task in the Project Plan</label>' +
+      '<button class="btn" id="ask-cancel">✕</button>' +
+      '<span class="scanmsg" id="ask-msg"></span></div>' +
+      '<p class="hint" style="margin:8px 0 0">Review and edit freely — nothing sends itself. The draft lands in the ray@feedspark.com Drafts folder via the Gmail bridge (~5 min); the plan task files as "PT Depth Optimisation" so it rides Intake → Project Plan → pipeline like the Gmail triage.</p></div>';
+    slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    function fileTask(then) {
+      if (!$('ask-task').checked) { then('' ); return; }
+      fetch(API + '/api/ptypes/plantask?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt), { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (r) { then(r.ok ? ' + plan task filed' : ' (plan task failed: ' + (r.error || '?') + ')'); })
+        .catch(function () { then(' (plan task failed: network)'); });
+    }
+    function markAsked(to, viaDraft) {
+      ASK.asked[askKey(p.client, p.mkt)] = { t: Date.now(), to: to };
+      ASK.cfg.to[p.client] = to;
+    }
+    $('ask-cancel').onclick = function () { slot.innerHTML = ''; };
+    $('ask-draft').onclick = function () {
+      var to = $('ask-to').value.trim();
+      if (to.indexOf('@') < 1) { $('ask-msg').textContent = '✗ add the client contact email'; return; }
+      $('ask-msg').textContent = 'queueing…';
+      fetch(API + '/api/labels/askdraft', { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ to: to, subject: $('ask-subject').value, text: $('ask-body').value, keys: [askKey(p.client, p.mkt)], client: p.client }) })
+        .then(function (r) { return r.json(); })
+        .then(function (r) {
+          if (r.error) { $('ask-msg').textContent = '✗ ' + r.error; return; }
+          markAsked(to);
+          fileTask(function (extra) { $('ask-msg').textContent = '✓ draft queued' + extra; setTimeout(function () { renderDetail(k); }, 1600); });
+        })
+        .catch(function () { $('ask-msg').textContent = '✗ network'; });
+    };
+    $('ask-gmail').onclick = function () {
+      var to = $('ask-to').value.trim();
+      if (to.indexOf('@') < 1) { $('ask-msg').textContent = '✗ add the client contact email'; return; }
+      window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(to) +
+        '&su=' + encodeURIComponent($('ask-subject').value) + '&body=' + encodeURIComponent($('ask-body').value), '_blank');
+      fetch(API + '/api/labels/askdraft', { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ markOnly: true, to: to, keys: [askKey(p.client, p.mkt)], client: p.client }) }).catch(function () {});
+      markAsked(to);
+      fileTask(function (extra) { $('ask-msg').textContent = '✓ composed in Gmail' + extra; setTimeout(function () { renderDetail(k); }, 1600); });
+    };
+  }
+
   // Which reference the Δ column reads: yesterday's auto-capture (default) or last known-good (toggle).
   function refFor(d) {
     var daily = (REFMODE !== 'base' && d.daily) ? d.daily : null;
@@ -719,9 +830,10 @@ window.addEventListener('load',restore);
     h += '<div class="lbl-h" style="margin:12px 0 4px"><span class="nm"' + dA + '>product_type</span>' +
       '<span class="cov">' + L.cov + '%</span>' +
       '<span class="sub">' + fmt(L.filled) + ' SKUs · ' + L.distinct + (L.truncated ? '+' : '') + ' category paths</span>' +
-      (dp ? dpBar(dp, false, L.truncated) + dpChips(dp, L.truncated) : '') +
+      (dp ? dpBar(dp, false, L.truncated) + dpChips(dp, L.truncated) + stdBadge(p, dp) : '') +
       (dcov != null && dcov !== 0 ? '<span class="delta ' + (dcov > 0 ? 'up' : 'down') + '">' + (dcov > 0 ? '▲ +' : '▼ ') + dcov + 'pp vs ' + refLbl + '</span>' : '') +
       '</div>';
+    h += '<div id="askp-slot"></div>';
 
     var bm = refMap(ref), seen = {};
     var rows = (L.values || []).map(function (pr) {
@@ -766,6 +878,7 @@ window.addEventListener('load',restore);
   }
 
   function wire(k, s) {
+    if ($('std-ask')) $('std-ask').onclick = function () { openAsk(k); };
     if ($('det-scan')) $('det-scan').onclick = function () { scan(k); };
     if ($('det-ack')) $('det-ack').onclick = function () { ack(k, $('det-ack')); };
     if ($('det-csv')) $('det-csv').onclick = function () { exportCsv(k); };
@@ -936,6 +1049,13 @@ window.addEventListener('load',restore);
     }
     step();
   };
+
+  // ask-the-client state (contact memory + ✉ asked stamps — Label Guard's shared rails)
+  fetch(API + '/api/labels/askdraft').then(function (r) { return r.json(); }).then(function (d) {
+    ASK.cfg = (d && d.cfg) || { to: {} }; ASK.cfg.to = ASK.cfg.to || {};
+    ASK.asked = (d && d.asked) || {};
+    if (SEL) renderDetail(SEL);
+  }).catch(function () {});
 
   // email-on-confirmed-warning settings (KV ptypealertcfg via the worker)
   fetch(API + '/api/ptypes/alertcfg').then(function (r) { return r.json(); }).then(function (c) {

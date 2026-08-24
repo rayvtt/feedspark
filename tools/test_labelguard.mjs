@@ -568,5 +568,27 @@ eq('pathDepth trailing chevron ignored', LG.pathDepth('A > B > '), 2);
 eq('depthProfile empty -> null', LG.depthProfile([]), null);
 eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null);
 
+/* ---------- depth standard + the client ask ---------- */
+{
+  const mk = (p1, p2, p3, p4, p5) => ({ pct: { 1: p1, 2: p2, 3: p3, 4: p4, 5: p5, '6+': 0 }, avg: 4, skus: 1000 });
+  eq('standard met (Reiss-style, 35% at 5-depth)', LG.depthStandard(mk(0, 5, 25, 35, 35)).level, 'ok');
+  const below = LG.depthStandard(mk(0, 10, 30, 40, 20));
+  eq('below the 5-depth benchmark', [below.level, below.pct5, below.target], ['below', 20, 30]);
+  const shal = LG.depthStandard(mk(30, 31, 20, 15, 4));
+  eq('too shallow (majority at 1-2 levels)', [shal.level, shal.shallow], ['shallow', 61]);
+  eq('no profile -> null', LG.depthStandard(null), null);
+
+  const dpB = mk(0, 10, 30, 40, 20);
+  const mB = LG.depthAskEmail('Schuh', 'gb', dpB, LG.depthStandard(dpB));
+  ok('ask email (below): subject + numbers + extend-to-5 variant',
+    mB.subject.indexOf('Schuh GB') === 0 && mB.body.indexOf('• 5 levels: 20%') > 0 &&
+    mB.body.indexOf('30–40% of product volume') > 0 && mB.body.indexOf('extending the highest-volume categories to 5-level paths') > 0 &&
+    mB.body.indexOf('Best regards,\nRay') > 0, mB.body);
+  const dpS = mk(30, 31, 20, 15, 4);
+  const mS = LG.depthAskEmail('Schuh', 'gb', dpS, LG.depthStandard(dpS));
+  ok('ask email (shallow): restructure-first variant + 1-2 share',
+    mS.body.indexOf('restructuring the tree to 3–4 levels') > 0 && mS.body.indexOf('• 1–2 levels: 61%') > 0, mS.body);
+}
+
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

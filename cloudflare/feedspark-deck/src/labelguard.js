@@ -572,6 +572,35 @@ export function pathDepth(v) {
   if (!sep) return 1;
   return s.split(sep).filter((p) => p.trim()).length;
 }
+// The benchmark Ray reports against (Aug 2026, the new industry standard across the
+// board): 30–40% of product VOLUME at 5-level paths — Reiss sits there. A tree with the
+// majority of volume at 1–2 levels is "too shallow" and PMAX/AI surfaces read it blind.
+export const DEPTH_STD = { pct5: 30, shallow: 50 };
+export function depthStandard(dp) {
+  if (!dp || !dp.pct) return null;
+  const shallow = Math.round(((dp.pct['1'] || 0) + (dp.pct['2'] || 0)) * 10) / 10;
+  const pct5 = dp.pct['5'] || 0;
+  const level = shallow > DEPTH_STD.shallow ? 'shallow' : (pct5 < DEPTH_STD.pct5 ? 'below' : 'ok');
+  return { level, shallow, pct5, target: DEPTH_STD.pct5 };
+}
+// the client ask — same consultative voice as Label Guard's askCompose, proposal not alarm
+export function depthAskEmail(client, mkt, dp, std) {
+  const loc = client + ' ' + String(mkt || '').toUpperCase();
+  const subject = loc + ' — product type depth: proposal to deepen the category tree';
+  const body = 'Hi team,\n\n'
+    + 'A quick recommendation from our feed monitoring. Google increasingly rewards granular product_type category trees — the standard we now work to across accounts is 30–40% of product volume sitting at 5-level paths (e.g. Womenswear > Clothing > Dresses > Midi Dresses > Wrap), with the bulk of the catalogue at 3–4 levels or deeper.\n\n'
+    + 'Where the ' + loc + ' feed sits today (share of product volume by category-path depth):\n'
+    + '• 1–2 levels: ' + std.shallow + '%\n'
+    + '• 3 levels: ' + (dp.pct['3'] || 0) + '%\n'
+    + '• 4 levels: ' + (dp.pct['4'] || 0) + '%\n'
+    + '• 5 levels: ' + (dp.pct['5'] || 0) + '%\n\n'
+    + (std.level === 'shallow'
+      ? 'Most of the catalogue currently sits at 1–2 levels, which limits how precisely the Shopping campaigns can segment and how well the newer AI shopping surfaces read the range. We would propose restructuring the tree to 3–4 levels as a first step, then extending the highest-volume categories to 5.'
+      : 'The tree is in reasonable shape at 3–4 levels; the opportunity is extending the highest-volume categories to 5-level paths to reach the 30–40% benchmark.')
+    + '\n\nWe can run this as a structured optimisation from our side — happy to share a short plan of the proposed hierarchy for sign-off before anything changes in the live feed.\n\n'
+    + 'Best regards,\nRay';
+  return { subject, body };
+}
 export function depthProfile(values) {
   const counts = {};
   let total = 0, wsum = 0;
