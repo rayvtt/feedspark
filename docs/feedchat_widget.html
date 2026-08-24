@@ -1,0 +1,88 @@
+<!-- FCC-FEEDCHAT-BUBBLE: the Feed Chat module as an ambient chatbot (injected on app pages).
+     A floating bubble sits bottom-right on every module; click → a chat window HOVERS over the
+     current page (an embedded /feedchat?embed=1 frame — same engine, same KV question bank, the
+     URL bar never changes). Three window sizes (S/M/L, remembered), Esc/✕ close, full-screen on
+     phones. Skips /feedchat itself and never appears on client decks (app-page injection only). -->
+<style>
+#fcc-fcb{position:fixed;right:18px;bottom:18px;z-index:64;width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#F5A623,#ED6F0B);color:#fff;box-shadow:0 4px 14px rgba(237,111,11,.35),0 2px 4px rgba(16,24,40,.18);
+  display:flex;align-items:center;justify-content:center;transition:transform .15s ease}
+#fcc-fcb:hover{transform:scale(1.07)}
+#fcc-fcb svg{width:26px;height:26px}
+#fcc-fcb .fcb-tip{position:absolute;right:64px;top:50%;transform:translateY(-50%);background:#1A365D;color:#fff;font:800 11.5px/1 Lato,system-ui,sans-serif;
+  padding:7px 11px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}
+#fcc-fcb:hover .fcb-tip{opacity:1}
+#fcc-fcp{position:fixed;right:18px;bottom:84px;z-index:65;background:#fff;border:1px solid #E6E6E6;border-radius:16px;overflow:hidden;
+  box-shadow:0 2px 6px rgba(16,24,40,.08),0 18px 50px rgba(16,24,40,.22);display:flex;flex-direction:column}
+#fcc-fcp[data-sz="s"]{width:380px;height:min(540px,calc(100vh - 110px))}
+#fcc-fcp[data-sz="m"]{width:470px;height:min(720px,calc(100vh - 110px))}
+#fcc-fcp[data-sz="l"]{width:min(1080px,calc(100vw - 36px));height:calc(100vh - 110px)}
+.fcp-head{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid #E6E6E6;background:#F7F7F5;font-family:Lato,system-ui,sans-serif}
+.fcp-head b{font-size:13px;font-weight:900;color:#333}
+.fcp-head .fcp-sub{font-size:10.5px;font-weight:800;color:#8a94a0;text-transform:uppercase;letter-spacing:.05em}
+.fcp-szs{margin-left:auto;display:flex;gap:4px}
+.fcp-sz{border:1px solid #E6E6E6;background:#fff;color:#4a4a4a;font:900 10px/1 Lato,system-ui,sans-serif;border-radius:7px;padding:5px 8px;cursor:pointer}
+.fcp-sz.on{background:#F5A623;border-color:#F5A623;color:#fff}
+.fcp-x{border:none;background:none;color:#8a94a0;font:900 15px/1 Lato,system-ui,sans-serif;cursor:pointer;padding:4px 6px;border-radius:7px}
+.fcp-x:hover{color:#C0392B}
+#fcc-fcp iframe{border:none;width:100%;flex:1;background:#fff}
+.fcp-load{position:absolute;inset:42px 0 0;display:flex;align-items:center;justify-content:center;font:700 12.5px Lato,system-ui,sans-serif;color:#8a94a0;background:#fff}
+@media (max-width:640px){
+  #fcc-fcp[data-sz]{right:0;bottom:0;width:100vw;height:100vh;border-radius:0}
+  .fcp-szs{display:none}
+}
+[data-theme=dark] #fcc-fcp{background:#14161C;border-color:#2A2F3A;box-shadow:0 2px 6px rgba(0,0,0,.4),0 18px 50px rgba(0,0,0,.6)}
+[data-theme=dark] .fcp-head{background:#181B22;border-color:#2A2F3A}
+[data-theme=dark] .fcp-head b{color:#E8EAEE}
+[data-theme=dark] .fcp-sz{background:#14161C;border-color:#2A2F3A;color:#C7CCD4}
+[data-theme=dark] .fcp-sz.on{background:#F5A623;border-color:#F5A623;color:#14161C}
+[data-theme=dark] #fcc-fcp iframe,[data-theme=dark] .fcp-load{background:#0F1116}
+@media (prefers-reduced-motion: reduce){ #fcc-fcb{transition:none} }
+</style>
+<script>
+(function(){
+'use strict';
+if(window.__fccFcb)return; window.__fccFcb=1;
+if(location.pathname==='/feedchat')return;             // the engine page itself never gets the bubble
+var panel=null,frame=null;
+function szGet(){ try{var s=localStorage.getItem('fcc-feedchat-size'); return (s==='s'||s==='m'||s==='l')?s:'m';}catch(e){return 'm';} }
+function szSet(s){ try{localStorage.setItem('fcc-feedchat-size',s);}catch(e){} }
+function paintSz(){ if(!panel)return; Array.prototype.forEach.call(panel.querySelectorAll('.fcp-sz'),function(b){
+  b.classList.toggle('on',b.getAttribute('data-sz')===panel.getAttribute('data-sz')); }); }
+function open(){
+  if(panel){ panel.style.display='flex'; return; }
+  panel=document.createElement('div'); panel.id='fcc-fcp'; panel.setAttribute('data-sz',szGet());
+  panel.innerHTML='<div class="fcp-head"><b>Feed Chat</b><span class="fcp-sub">ask the live feed</span>'
+    +'<span class="fcp-szs">'
+    +'<button type="button" class="fcp-sz" data-sz="s" title="Compact window">S</button>'
+    +'<button type="button" class="fcp-sz" data-sz="m" title="Standard window">M</button>'
+    +'<button type="button" class="fcp-sz" data-sz="l" title="Large window">L</button>'
+    +'</span><button type="button" class="fcp-x" title="Close (Esc)">✕</button>'
+    +'</div><div class="fcp-load">streaming Feed Chat…</div>';
+  document.body.appendChild(panel);
+  frame=document.createElement('iframe');
+  frame.src='/feedchat?embed=1'; frame.title='Feed Chat';
+  frame.addEventListener('load',function(){ var l=panel&&panel.querySelector('.fcp-load'); if(l)l.remove(); });
+  panel.appendChild(frame);
+  panel.addEventListener('click',function(ev){
+    var s=ev.target.closest&&ev.target.closest('.fcp-sz');
+    if(s){ panel.setAttribute('data-sz',s.getAttribute('data-sz')); szSet(s.getAttribute('data-sz')); paintSz(); return; }
+    if(ev.target.closest&&ev.target.closest('.fcp-x'))close();
+  });
+  paintSz();
+}
+function close(){ if(panel)panel.style.display='none'; }
+function toggle(){ (panel&&panel.style.display!=='none')?close():open(); }
+document.addEventListener('keydown',function(ev){ if(ev.key==='Escape'&&panel&&panel.style.display!=='none')close(); });
+function boot(){
+  if(document.getElementById('fcc-fcb'))return;
+  var b=document.createElement('button'); b.id='fcc-fcb'; b.type='button';
+  b.setAttribute('aria-label','Open Feed Chat — ask the live feed');
+  b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5c0 4.4-4 8-9 8-1.2 0-2.4-.2-3.4-.6L3.5 20l1.2-3.6C3.6 15.1 3 13.4 3 11.5 3 7.1 7 3.5 12 3.5s9 3.6 9 8Z"/><path d="M8 10.5h8M8 13.5h5"/></svg>'
+    +'<span class="fcb-tip">Feed Chat — ask the live feed</span>';
+  b.addEventListener('click',toggle);
+  document.body.appendChild(b);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot); else boot();
+})();
+</script>
