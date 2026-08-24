@@ -2853,9 +2853,9 @@ function getEditorScript(slug) {
   var css = 'body.de-on [data-eid]{outline:1px dashed rgba(237,111,11,.55);outline-offset:2px}'
     + 'body.de-on [data-eid]:focus{outline:2px solid #ED6F0B;outline-offset:2px}'
     + 'body.de-on [data-eid].de-pick{outline:2px solid #1A365D;outline-offset:2px}'
-    + '.de-bar{position:fixed;right:16px;bottom:16px;z-index:99999;display:none;gap:8px;align-items:center;font:14px/1.2 -apple-system,Segoe UI,Roboto,sans-serif}'
+    + '.de-bar{position:fixed;right:16px;bottom:84px;z-index:99999;display:none;gap:8px;align-items:center;font:14px/1.2 -apple-system,Segoe UI,Roboto,sans-serif}'
     + '.de-bar.de-show{display:flex}'
-    + '.de-handle{position:fixed;right:16px;bottom:16px;z-index:99998;width:34px;height:34px;border-radius:50%;background:rgba(26,54,93,.35);color:#fff;border:0;cursor:pointer;font-size:15px;opacity:.55;transition:opacity .2s,background .2s}'
+    + '.de-handle{position:fixed;right:16px;bottom:84px;z-index:99998;width:34px;height:34px;border-radius:50%;background:rgba(26,54,93,.35);color:#fff;border:0;cursor:pointer;font-size:15px;opacity:.55;transition:opacity .2s,background .2s}'
     + '.de-handle:hover{opacity:1;background:#1A365D}'
     + '.de-bar.de-show + .de-handle{display:none}'
     + '.de-bar button{background:#1A365D;color:#fff;border:0;border-radius:8px;padding:9px 13px;cursor:pointer;font:inherit}'
@@ -2945,7 +2945,7 @@ function getEditorScript(slug) {
     + '.de-fbnote .row{display:flex;gap:6px;margin-top:8px}'
     + '.de-fbnote .row button{flex:1;border:0;border-radius:6px;padding:7px;cursor:pointer;font:inherit}'
     + '.de-fbnote .save{background:#ED6F0B;color:#fff}.de-fbnote .cancel{background:#EEE;color:#333}'
-    + '.de-fbpanel{position:fixed;right:16px;bottom:66px;z-index:99999;width:360px;max-width:92vw;max-height:66vh;overflow-y:auto;background:#fff;border:1px solid #E6E6E6;border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.18);padding:14px;display:none;font:13px/1.4 sans-serif;color:#333}'
+    + '.de-fbpanel{position:fixed;right:16px;bottom:136px;z-index:99999;width:360px;max-width:92vw;max-height:66vh;overflow-y:auto;background:#fff;border:1px solid #E6E6E6;border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.18);padding:14px;display:none;font:13px/1.4 sans-serif;color:#333}'
     + '.de-fbpanel.show{display:block}'
     + '.de-fbpanel h3{font-size:13px;margin-bottom:4px}'
     + '.de-fbpanel .hint{font-size:11.5px;color:#6b7a8d;margin-bottom:10px}'
@@ -2970,6 +2970,10 @@ function getEditorScript(slug) {
   var bReset=document.createElement('button'); bReset.textContent='🧹 Reset page'; bReset.title='Clear every saved edit on this page, back to the git template';
   var stat=document.createElement('span'); stat.textContent='';
   bar.appendChild(bEdit); bar.appendChild(bDesign); bar.appendChild(bFeedback); bar.appendChild(bPresent); bar.appendChild(bUndo); bar.appendChild(bPick); bar.appendChild(bExport); bar.appendChild(bReset); bar.appendChild(stat);
+  // Ray: the toolbar reads as permanent clutter once revealed — give it a visible way DOWN.
+  var bHide=document.createElement('button'); bHide.className='de-collapse'; bHide.textContent='⌄'; bHide.title='Collapse the editor toolbar — the ✎ dot brings it back (Ctrl/Cmd+Shift+E)'; bHide.style.padding='9px 11px';
+  bar.appendChild(bHide);
+  bHide.addEventListener('click',function(){ showBar(false); });
   document.body.appendChild(bar);
   // Always-visible, deliberately subtle — presentation mode hides the full bar, but there
   // must always be *something* on screen to click, or the toolbar is undiscoverable unless

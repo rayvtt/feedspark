@@ -2133,6 +2133,13 @@
    "pattern": "const inject = (html, extra)",
    "min": 1,
    "pr": 269
+  },
+  {
+   "name": "editor: visible ⌄ collapse on the toolbar + stack clear of the chat-bubble corner",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "de-collapse",
+   "min": 1,
+   "pr": 271
   }
  ]
 }

@@ -271,6 +271,31 @@ test('C13: a stale patch offers a Clear button that drops only those keys', asyn
   },
 });
 
+test('the toolbar has a visible collapse — and lives above the Feed Chat corner', async (page) => {
+  // Once revealed, the bar used to be permanent (only Ctrl+Shift+E hid it) — Ray read it as
+  // clutter. ⌄ collapses back to the subtle ✎ dot and the choice is remembered; the whole
+  // editor stack also sits above bottom:70px so the Feed Chat bubble keeps its corner.
+  await page.evaluate(() => { localStorage.setItem('de-bar-shown', '1'); });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(500);
+  const shown = await page.evaluate(() => document.querySelector('.de-bar').classList.contains('de-show'));
+  if (!shown) throw new Error('bar should start shown (remembered = 1)');
+  await page.click('.de-collapse');
+  await page.waitForTimeout(150);
+  const after = await page.evaluate(() => ({
+    shown: document.querySelector('.de-bar').classList.contains('de-show'),
+    handle: getComputedStyle(document.querySelector('.de-handle')).display !== 'none',
+    remembered: localStorage.getItem('de-bar-shown'),
+    barBottom: parseInt(getComputedStyle(document.querySelector('.de-bar')).bottom, 10),
+    handleBottom: parseInt(getComputedStyle(document.querySelector('.de-handle')).bottom, 10),
+  }));
+  if (after.shown) throw new Error('bar still shown after ⌄');
+  if (!after.handle) throw new Error('✎ handle missing after collapse');
+  if (after.remembered !== '0') throw new Error('collapse not remembered (got ' + after.remembered + ')');
+  if (after.barBottom < 70 || after.handleBottom < 70) throw new Error('editor still parked on the Feed Chat corner (' + after.barBottom + '/' + after.handleBottom + ')');
+  return 'collapses to ✎, remembered, clear of the bubble';
+});
+
 test('C2: an edit follows its content when a chapter deletion shifts every key', async (page) => {
   // The overlay below was authored against the PRE-deletion deck: its positional key names
   // chapter 9's third element, but the text it carries belongs to a paragraph that a chapter
