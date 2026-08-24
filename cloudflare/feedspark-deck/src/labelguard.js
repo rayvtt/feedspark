@@ -559,6 +559,36 @@ export function estateRecoveryEmail(feedName, link) {
   return '✅ PT Guard — ' + feedName + ' recovered\nEvery flagged product-type alert has cleared vs last known-good.' + (link ? '\n' + link : '');
 }
 
+/* ---------------- PT depth granularity (the "how granular" KPI for Google) ------------- */
+// SKU-weighted share of the catalogue at each category-path depth — the taxonomy
+// granularity number Google reads off g:product_type ("Womenswear > Clothing > Dresses >
+// Midi Dresses" = depth 4). Chevron-separated paths; feeds without ">" fall back to "/".
+// Computed over the pivot's value list, so a truncated (250+) feed profiles its top 250
+// paths — the overwhelming SKU majority.
+export function pathDepth(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s) return 0;
+  const sep = s.indexOf('>') >= 0 ? '>' : (s.indexOf('/') >= 0 ? '/' : null);
+  if (!sep) return 1;
+  return s.split(sep).filter((p) => p.trim()).length;
+}
+export function depthProfile(values) {
+  const counts = {};
+  let total = 0, wsum = 0;
+  for (const pr of (values || [])) {
+    const d = pathDepth(pr[0]);
+    const n = pr[1] || 0;
+    if (!d || !n) continue;
+    const b = d >= 6 ? '6+' : String(d);
+    counts[b] = (counts[b] || 0) + n;
+    total += n; wsum += d * n;
+  }
+  if (!total) return null;
+  const pct = {};
+  for (const b of ['1', '2', '3', '4', '5', '6+']) pct[b] = counts[b] ? Math.round((counts[b] / total) * 1000) / 10 : 0;
+  return { pct, avg: Math.round((wsum / total) * 10) / 10, skus: total };
+}
+
 /* ---------------- baseline diff -> alerts ---------------------------------------------- */
 // [{ sev: 'crit'|'warn'|'info', code, label?, value?, msg, was?, now? }]
 export function diffSnapshots(base, cur, th, keys) {

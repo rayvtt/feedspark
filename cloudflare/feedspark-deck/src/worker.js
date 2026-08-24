@@ -28,7 +28,7 @@ import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js"
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes } from "./briefmatch.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail } from "./labelguard.js";
+import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -1801,7 +1801,8 @@ async function runLabelScan(env, client, mkt) {
     }
     await env.EDITS.put('ptype' + PK, JSON.stringify(ptSnap));
     const pidx = (await env.EDITS.get('ptypeidx', 'json')) || {};
-    pidx[lgKey(client, mkt)] = Object.assign({ client, mkt }, summarize(ptSnap, pAlerts, pBase.t, PT_KEYS));
+    pidx[lgKey(client, mkt)] = Object.assign({ client, mkt }, summarize(ptSnap, pAlerts, pBase.t, PT_KEYS),
+      { depth: depthProfile(((ptSnap.labels || {}).product_type || {}).values) });   // 3/4/5-depth granularity KPI for the estate hovers
     await env.EDITS.put('ptypeidx', JSON.stringify(pidx));
     const pMap = (await env.EDITS.get('ptypealerts', 'json')) || {};
     // email-on-warning (Ray, "similar to Custom label"): two-strike by construction —

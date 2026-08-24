@@ -280,6 +280,11 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   `POST /api/ptypes/ack`) and the Δ-reference toggle behave exactly like §2/§5, without
   mixing streams: `/labels` stays label-pure, `/ptypes` PT-pure, and the injected nav badge
   dots each page from the one `/api/labels/alerts` call (its `pt` counts field).
+- **Depth granularity KPI** (the "how granular is the taxonomy" number for Google): SKU-weighted
+  % of the catalogue at **3-, 4- and 5-level** chevron paths (`depthProfile` — `>` split, `/`
+  fallback, avg levels; computed at scan time onto `ptypeidx`). Visible as a compact strip on the
+  PT card (`depth 3: x% › 4: y% › 5: z%`); the full 1→6+ breakdown rides as a chevron-separated
+  tooltip on estate market rows, the scanned date, the brand heading and the PT name.
 - **Email on confirmed warning** (✉ toggle + recipient in `/ptypes` §01, KV `ptypealertcfg`,
   default on → `OWNER_EMAIL`): an estate warn/crit emails a per-feed digest via the same Gmail
   bridge outbox Label Guard uses — but only on its **second consecutive sighting**
