@@ -421,6 +421,9 @@ window.addEventListener('load',restore);
   #it-status-menu{width:156px}
   #it-client-menu{width:208px}
   #it-am-menu,#it-owner-menu,#tl-owner-menu{width:150px}
+  .it-over-tog{flex:none;font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer;white-space:nowrap}
+  .it-over-tog:hover{border-color:#C0392B;color:#C0392B}
+  .it-over-tog.on{background:#C0392B;border-color:#C0392B;color:#fff}
   .it-cl-rm{margin-left:auto;flex:none;border:0;background:none;color:var(--muted);font:inherit;font-size:11px;font-weight:900;line-height:1;padding:2px 5px;border-radius:5px;cursor:pointer;opacity:0}
   .it-multi-menu label:hover .it-cl-rm{opacity:.7}
   /* active client-filter chips — quick removal without opening the dropdown */
@@ -814,6 +817,7 @@ window.addEventListener('load',restore);
       <button type="button" class="it-multi-btn" id="it-owner-btn" aria-haspopup="true" aria-expanded="false" title="Filter by task owner (the plan’s Owner column — FeedSpark people only)">All owners ▾</button>
       <div class="it-multi-menu" id="it-owner-menu" role="group" aria-label="Filter by owner (multi-select)" hidden></div>
     </div>
+    <button type="button" class="it-over-tog" id="it-over-tog" aria-pressed="false" title="Show only tasks past their due date and not yet Done — the plan-month window is ignored so older overdue work can’t hide">⏰ Overdue</button>
     <input id="it-search" type="search" placeholder="Search tasks, owners…" aria-label="Search intake">
     <span class="it-n" id="it-n"></span>
     <button type="button" class="it-hidden-tog" id="it-hidden-tog" hidden aria-pressed="false"></button>
@@ -1675,7 +1679,7 @@ window.addEventListener('load',restore);
         .catch(function(){ toast('Saved locally — sheet write failed (check the SA has Editor access)'); });
     } else toast('Added locally · no plan sheet linked for '+client);
   }
-  var itState={srcs:[],clients:[],ams:[],owners:[],q:'',statuses:['open','progress','briefed'],window:'2m',sort:'client',dir:1,showHidden:false};   // multi-select: empty array = all
+  var itState={srcs:[],clients:[],ams:[],owners:[],q:'',statuses:['open','progress','briefed'],window:'2m',sort:'client',dir:1,showHidden:false,overdue:false};   // multi-select: empty array = all
   // Timeline-ONLY state is scope / flags / horizon. Brand, AM and search are NOT here — the
   // timeline reads them straight from itState, because it's the Intake re-plotted by date.
   var tlState={scope:[],flags:[],weeks:6};
@@ -1812,7 +1816,8 @@ window.addEventListener('load',restore);
     return allIntake().filter(function(r){
       var S=itState;
       var st=!S.statuses.length||S.statuses.indexOf(r.b)>=0;   // empty = all statuses
-      var win=true; if(allow && r.source==='plan'){ var pd=taskDate(r); if(pd) win=!!(allow[r.client]&&allow[r.client][monthKey(pd)]); }   // latest-N-months per brand; dateless plan rows always show
+      if(S.overdue){ var od=taskDate(r); if(!od||od>=today()||r.b==='done')return false; }   // ⏰ quick-filter: past due, not Done
+      var win=true; if(!S.overdue && allow && r.source==='plan'){ var pd=taskDate(r); if(pd) win=!!(allow[r.client]&&allow[r.client][monthKey(pd)]); }   // latest-N-months per brand (overdue mode looks at ALL history); dateless plan rows always show
       return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0||(r.esrc&&S.srcs.indexOf('email')>=0)||(r.csrc&&S.srcs.indexOf('call')>=0))&&(!S.clients.length||S.clients.indexOf(r.client)>=0)&&amMatch(r,S.ams)&&ownMatch(r,S.owners||[])
         &&(!S.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(S.q)>=0); })
       .sort(function(a,b){ var k=itState.sort;
@@ -1839,6 +1844,12 @@ window.addEventListener('load',restore);
     var body=document.getElementById('it-body'); if(!body)return;
     ensureClientFilter();
     renderClientChips();
+    // ⏰ Overdue toggle: the badge previews exactly what clicking shows (current filters, window bypassed)
+    (function(){ var tog=document.getElementById('it-over-tog'); if(!tog)return;
+      var was=itState.overdue; itState.overdue=true; var n=intakeFiltered().length; itState.overdue=was;
+      tog.textContent='⏰ Overdue'+(n?(' '+n):'');
+      tog.classList.toggle('on',!!itState.overdue);
+      tog.setAttribute('aria-pressed',itState.overdue?'true':'false'); })();
     var f=intakeFiltered();
     var BK={}; Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b)return; if(b.taskKey)BK[b.taskKey]=b; (b.taskKeys||[]).forEach(function(k){ if(!BK[k])BK[k]=b; }); });
     Object.keys(BRIEF_ANCHOR).forEach(function(id){ var b=BRIEFS[id]; if(!b||BRIEF_DUP[id])return; var ak=BRIEF_ANCHOR[id]; if(!BK[ak])BK[ak]=b; });   // fuzzy-anchored tickets dress their row too   // intake row -> its live ticket (primary + attached)
@@ -2279,10 +2290,10 @@ window.addEventListener('load',restore);
   // ---- saved filter views: name the current filter set, reapply or delete later (per device) ----
   function savedViews(){ try{return JSON.parse(localStorage.getItem('fcc-filters')||'{}');}catch(e){return {};} }
   function saveViews(v){ try{localStorage.setItem('fcc-filters',JSON.stringify(v));}catch(e){} }
-  function captureFilter(){ return {srcs:itState.srcs.slice(),statuses:itState.statuses.slice(),clients:itState.clients.slice(),ams:itState.ams.slice(),owners:itState.owners.slice(),window:itState.window,q:itState.q,showHidden:itState.showHidden}; }
+  function captureFilter(){ return {srcs:itState.srcs.slice(),statuses:itState.statuses.slice(),clients:itState.clients.slice(),ams:itState.ams.slice(),owners:itState.owners.slice(),window:itState.window,q:itState.q,showHidden:itState.showHidden,overdue:!!itState.overdue}; }
   function applyFilter(f){
     itState.srcs=(f.srcs||[]).slice(); itState.statuses=(f.statuses||[]).slice(); itState.clients=(f.clients||[]).slice(); itState.ams=(f.ams||[]).slice(); itState.owners=(f.owners||[]).slice();
-    itState.window=f.window||''; itState.q=f.q||''; itState.showHidden=!!f.showHidden;
+    itState.window=f.window||''; itState.q=f.q||''; itState.showHidden=!!f.showHidden; itState.overdue=!!f.overdue;
     renderSrcChips(); buildStatusFilter(); buildClientFilter();                       // sync the controls to the view
     var w=document.getElementById('it-window'); if(w)w.value=itState.window;
     var s=document.getElementById('it-search'); if(s)s.value=itState.q;
@@ -2313,6 +2324,7 @@ window.addEventListener('load',restore);
   })();
   document.getElementById('it-search').addEventListener('input',function(){ itState.q=this.value.trim().toLowerCase(); renderIntake(); });
   (function(){ var ht=document.getElementById('it-hidden-tog'); if(ht)ht.onclick=function(){ itState.showHidden=!itState.showHidden; renderIntake(); }; })();
+  (function(){ var ot=document.getElementById('it-over-tog'); if(ot)ot.onclick=function(){ itState.overdue=!itState.overdue; renderIntake(); }; })();
   document.querySelectorAll('#itbl thead th[data-k]').forEach(function(th){ th.onclick=function(){
     var k=th.getAttribute('data-k'); if(itState.sort===k) itState.dir*=-1; else {itState.sort=k;itState.dir=1;}
     document.querySelectorAll('#itbl thead th .ar').forEach(function(a){a.remove();});
