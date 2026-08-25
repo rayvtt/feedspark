@@ -129,6 +129,21 @@ window.addEventListener('load',restore);
   .askp input{font:inherit;font-size:12px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);flex:1;min-width:0}
   .askp textarea{font:inherit;font-size:12px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:100%;min-height:180px;resize:vertical;line-height:1.45;box-sizing:border-box}
   .askp .ab{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:12px;font-weight:800}
+  /* industry best-practice layer: ★ scored attrs, waived rows, bar ticks, profile editor */
+  .bpstar{color:var(--orange-deep);font-size:10px;cursor:default}
+  .at-row.waived{opacity:.5}
+  .wv{font-size:9px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--line);border-radius:100px;padding:1px 6px;margin-left:4px}
+  .at-bar{position:relative}
+  .bp-tick{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--navy);opacity:.65;border-radius:2px;pointer-events:none}
+  .prof-chip{font-size:10.5px;font-weight:900;color:var(--navy);background:#EEF2F7;border-radius:100px;padding:3px 10px;cursor:default}
+  .pchip{border:1px solid var(--line);background:#fff;color:var(--ink-2);font:inherit;font-size:11px;font-weight:800;border-radius:100px;padding:4px 11px;cursor:pointer;margin:0 5px 6px 0}
+  .pchip.exp{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+  .pchip.wav{background:var(--wash);color:var(--muted);text-decoration:line-through}
+  .pgrp{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:8px 0 5px}
+  .pseg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-left:8px}
+  .pseg button{border:0;background:#fff;color:var(--muted);font:inherit;font-size:11px;font-weight:800;padding:4px 10px;cursor:pointer}
+  .pseg button.on{background:var(--navy);color:#fff;cursor:default}
+  body.demo #prof-edit,body.demo .profp{display:none!important}
   .at-nm{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .at-nm i{font-style:normal;color:var(--muted);font-weight:700}
   .at-bar{height:9px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden}
@@ -163,7 +178,7 @@ window.addEventListener('load',restore);
     @page{margin:14mm 12mm}
     body{background:#fff!important;color:#333!important}
     .topbar,.demo-banner,.hero,.cat:not(#sec-detail),.footmark,#theme-tgl,
-    .det-actions,.at-act,#askp-slot,.refseg,#sec-detail .cat-h,#sec-detail .cat-sub{display:none!important}
+    .det-actions,.at-act,#askp-slot,#profp-slot,.refseg,#sec-detail .cat-h,#sec-detail .cat-sub{display:none!important}
     #sec-detail{border-top:none;padding:0}
     #sec-detail .wrap{max-width:none;padding:0}
     .panel,.tier{box-shadow:none!important;border:1px solid #E6E6E6!important;background:#fff!important}
@@ -241,6 +256,12 @@ window.addEventListener('load',restore);
 [data-theme=dark] .abtn{background:#20242E;color:var(--ink-2);border-color:var(--line)}
 [data-theme=dark] .askp{background:#181B22;border-color:rgba(245,166,35,.4)}
 [data-theme=dark] .askp input,[data-theme=dark] .askp textarea{background:#161922;color:var(--ink);border-color:var(--line)}
+[data-theme=dark] .prof-chip{background:rgba(91,130,190,.18);color:#93B4E0}
+[data-theme=dark] .pchip{background:#20242E;border-color:var(--line);color:var(--ink-2)}
+[data-theme=dark] .pchip.exp{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+[data-theme=dark] .pchip.wav{background:#161922;color:var(--muted)}
+[data-theme=dark] .pseg button{background:#20242E;color:var(--muted)}
+[data-theme=dark] .pseg button.on{background:var(--navy);color:#fff}
 [data-theme=dark] .at-bar{background:#191C24;border-color:var(--line)}
 [data-theme=dark] .dial .dial-bg{stroke:#191C24}
 [data-theme=dark] .dial .dial-n{fill:var(--ink)}
@@ -363,19 +384,44 @@ window.addEventListener('load',restore);
   ];
   // mirrors the engine's goldenScore: required ×3 (missing = 0), gtin+mpn merge into one
   // identifier component ×2 (best of the two), other cond ×2 only when present, rec ×1
-  function goldenScore(attrs) {
+  function goldenScore(attrs, prof) {
     if (!attrs) return null;
+    var exp = (prof && prof.expected) || [], wav = (prof && prof.waived) || [];
     var ws = 0, sum = 0, idBest = null;
     SPEC.forEach(function (s) {
       var a = attrs[s.k] || { present: false };
-      if (s.t === 'ai') return;   // the conversational six: an AI-readiness KPI, never score input
       if (s.k === 'gtin' || s.k === 'mpn') { if (a.present && (idBest == null || a.cov > idBest)) idBest = a.cov; return; }
+      if (s.t !== 'req' && wav.indexOf(s.k) >= 0) return;
+      var bp = exp.indexOf(s.k) >= 0;
+      if (s.t === 'ai') { if (bp) { ws += 1; sum += 1 * (a.present ? a.cov : 0); } return; }
       if (s.t === 'req') { ws += 3; sum += 3 * (a.present ? a.cov : 0); }
-      else if (s.t === 'cond') { if (a.present) { ws += 2; sum += 2 * a.cov; } }
+      else if (s.t === 'cond') {
+        if (a.present) { ws += 2; sum += 2 * a.cov; }
+        else if (bp) { ws += 2; }
+      }
       else { ws += 1; sum += 1 * (a.present ? a.cov : 0); }
     });
     ws += 2; sum += 2 * (idBest == null ? 0 : idBest);
     return ws ? Math.round((sum / ws) * 10) / 10 : 0;
+  }
+  // industry benchmark from the estate index: peers = scanned feeds in the same industry
+  function indBench(ind) {
+    var peers = feedList().filter(function (f) {
+      return f.score != null && (f.ind ? f.ind === ind : industryOfC(f.client) === ind);
+    });
+    if (peers.length < 2) return null;
+    var best = peers[0], sum2 = 0;
+    peers.forEach(function (f) { sum2 += f.score; if (f.score > best.score) best = f; });
+    return { n: peers.length, avg: Math.round((sum2 / peers.length) * 10) / 10, best: best };
+  }
+  function indBestCov(ind, attr) {
+    var best = null;
+    feedList().forEach(function (f) {
+      if (!f.cov || (f.ind ? f.ind !== ind : industryOfC(f.client) !== ind)) return;
+      var c = f.cov[attr];
+      if (c != null && (best == null || c > best)) best = c;
+    });
+    return best;
   }
   function aiCount(attrs) {
     var n = 0, of = 0;
@@ -417,6 +463,26 @@ window.addEventListener('load',restore);
   }
   function askKey(client, mkt, attr) { return 'grattr|' + client + '|' + mkt + '|' + attr; }
   var ASK = { cfg: { to: {} }, asked: {} };   // shared with Label Guard's ask rails (labelaskcfg/labelasked)
+  // industry scoring profiles: defaults + KV overrides from /api/golden/profile (the
+  // engine's INDUSTRY_PROFILES/profileFor mirrored — expected counts-when-absent, waived
+  // drops out; required + gtin/mpn untouchable). The profile IS the industry best practice.
+  var PROF = { defaults: {}, overrides: {}, industryMap: {} };
+  function industryOfC(c) { return PROF.industryMap[c] || INDUSTRY[c] || 'Retail'; }
+  function profOk(k) {
+    var x = SPEC.filter(function (sp) { return sp.k === k; })[0];
+    return !!x && x.t !== 'req' && k !== 'gtin' && k !== 'mpn';
+  }
+  function profileForC(client) {
+    var ind = industryOfC(client);
+    var base = (PROF.overrides.industries || {})[ind] || PROF.defaults[ind] || { expected: [], waived: [] };
+    var cl = (PROF.overrides.clients || {})[client];
+    function pick(src, k2) { return src && Object.prototype.toString.call(src[k2]) === '[object Array]' ? src[k2] : null; }
+    var expected = pick(cl, 'expected') || pick(base, 'expected') || [];
+    var waived = pick(cl, 'waived') || pick(base, 'waived') || [];
+    expected = expected.filter(profOk);
+    waived = waived.filter(function (k2) { return profOk(k2) && expected.indexOf(k2) < 0; });
+    return { industry: ind, expected: expected, waived: waived };
+  }
   function b64url(o) { var b = new TextEncoder().encode(JSON.stringify(o)), s = ''; b.forEach(function (c) { s += String.fromCharCode(c); }); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
   function scoreCol(s) {
     if (s == null) return 'var(--muted)';
@@ -634,7 +700,9 @@ window.addEventListener('load',restore);
       h += '<p class="muted">No snapshot yet — rescan.</p>';
       $('det-panel').innerHTML = h; wire(k); return;
     }
-    var score = goldenScore(s.attrs);
+    var prof = profileForC(p.client);
+    var score = goldenScore(s.attrs, prof);
+    var bench = indBench(prof.industry);
     var reqMiss = SPEC.filter(function (x) { return x.t === 'req' && !(s.attrs[x.k] || {}).present; });
     var condMiss = SPEC.filter(function (x) { return x.t === 'cond' && !(s.attrs[x.k] || {}).present; });
     var apMiss = condMiss.filter(function (x) { return x.a; });
@@ -644,7 +712,9 @@ window.addEventListener('load',restore);
       '<span class="refseg" title="Which reference the Δ column reads — estate alerts always fire vs last known-good">' +
       '<button id="ref-yday"' + (rf.isDaily ? ' class="on"' : '') + (d.daily ? '' : ' disabled title="No yesterday capture yet — it lands automatically on the first scan of each day"') + '>Δ vs yesterday</button>' +
       '<button id="ref-base"' + (!rf.isDaily ? ' class="on"' : '') + '>Δ vs known-good</button></span>' +
-      (d.baseline && d.baseline.t ? '<span>known-good set ' + ago(d.baseline.t) + '</span>' : '') + '</div>' +
+      (d.baseline && d.baseline.t ? '<span>known-good set ' + ago(d.baseline.t) + '</span>' : '') +
+      '<span class="prof-chip" title="Attributes marked ★ are scored for this brand — the ' + esc(prof.industry) + ' best-practice profile (industry defaults + any brand override)">⚖ ' + esc(prof.industry) + ' best practice</span>' +
+      '<button class="btn" id="prof-edit" style="padding:3px 9px;font-size:10.5px" title="Edit which attributes count in this brand\'s / industry\'s score">⚙</button></div>' +
       '<p class="gr-verdict">' +
       (reqMiss.length
         ? '<b>' + reqMiss.length + ' required attribute' + (reqMiss.length === 1 ? '' : 's') + ' missing from the feed</b> (' + esc(reqMiss.map(function (x) { return x.k; }).join(', ')) + ') — products cannot serve without them. '
@@ -653,9 +723,10 @@ window.addEventListener('load',restore);
         ? '<b>' + apMiss.length + ' apparel attribute' + (apMiss.length === 1 ? '' : 's') + ' not in the feed</b> (' + esc(apMiss.map(function (x) { return x.k; }).join(', ')) + ') — required for apparel in UK/DE/FR/US. '
         : '') +
       'Weighted completeness <b style="color:' + scoreCol(score) + '">' + (score == null ? '—' : score + '%') + '</b> vs the FeedSpark Golden Record target of <b>99.9%</b>. ' +
-      (function () { var ai = aiCount(s.attrs); return '<b>' + ai.n + ' of ' + ai.of + '</b> conversational AI attributes live.'; })() + '</p>' +
+      (function () { var ai = aiCount(s.attrs); return '<b>' + ai.n + ' of ' + ai.of + '</b> conversational AI attributes live.'; })() +
+      (bench ? ' Industry benchmark — <b>' + esc(prof.industry) + '</b> (' + bench.n + ' estate feeds): avg <b>' + bench.avg + '</b> · best <b>' + bench.best.score + '</b> (' + esc(dispClient(bench.best.client)) + ').' : '') + '</p>' +
       '</div></div>';
-    h += '<div id="askp-slot"></div>';
+    h += '<div id="profp-slot"></div><div id="askp-slot"></div>';
 
     TIERS.forEach(function (T) {
       var list = SPEC.filter(function (x) { return x.t === T.t; });
@@ -668,8 +739,11 @@ window.addEventListener('load',restore);
       list.forEach(function (x) {
         var a = s.attrs[x.k] || { present: false };
         var refA = ref && ref.attrs ? (ref.attrs[x.k] || { present: false }) : null;
-        var row = '<div class="at-row' + (a.present ? '' : ' missing') + '">' +
-          '<span class="at-nm" title="g:' + esc(x.k) + '"><i>g:</i>' + esc(x.k) + '</span>';
+        var isExp = prof.expected.indexOf(x.k) >= 0, isWav = prof.waived.indexOf(x.k) >= 0;
+        var row = '<div class="at-row' + (a.present ? '' : ' missing') + (isWav ? ' waived' : '') + '">' +
+          '<span class="at-nm" title="g:' + esc(x.k) + '"><i>g:</i>' + esc(x.k) +
+          (isExp ? ' <span class="bpstar" title="Scored for this brand — ' + esc(prof.industry) + ' best practice">★</span>' : '') +
+          (isWav ? '<span class="wv" title="Excluded from this brand\'s score — ' + esc(prof.industry) + ' profile">waived</span>' : '') + '</span>';
         if (a.present) {
           var cls = a.cov >= 99.5 ? ' class="full"' : (a.cov < 50 ? ' class="low"' : '');
           var delta = '';
@@ -678,12 +752,15 @@ window.addEventListener('load',restore);
             delta = dn === 0 ? '<span class="muted">=</span>'
               : '<span class="' + (dn > 0 ? 'up' : 'down') + '">' + (dn > 0 ? '▲ +' + dn : '▼ ' + (-dn)) + 'pp</span>';
           } else if (refA) delta = '<span class="up">new</span>';
-          row += '<span class="at-bar" title="' + a.cov + '% of ' + fmt(s.rows) + ' rows filled"><i' + cls + ' style="width:' + Math.max(1.5, Math.min(100, a.cov)) + '%"></i></span>' +
+          var ib = indBestCov(prof.industry, x.k);
+          row += '<span class="at-bar" title="' + a.cov + '% of ' + fmt(s.rows) + ' rows filled' + (ib != null ? ' · industry best ' + ib + '%' : '') + '">' +
+            '<i' + cls + ' style="width:' + Math.max(1.5, Math.min(100, a.cov)) + '%"></i>' +
+            (ib != null && ib > 0 ? '<i class="bp-tick" style="left:' + Math.min(99, ib) + '%"></i>' : '') + '</span>' +
             '<span class="at-cov">' + a.cov + '%</span>' +
             '<span class="at-delta" title="vs ' + refLbl + '">' + delta + '</span>' +
             '<span class="at-note" title="' + esc(x.n) + '">' + esc(x.n) + '</span>';
         } else {
-          var hard = x.t === 'req' || x.a;
+          var hard = x.t === 'req' || isExp;
           row += '<span class="at-miss' + (hard ? ' hard' : '') + '">not in feed</span>' +
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
             '<span class="at-note" title="' + esc(x.n) + '">' + esc(x.n) + '</span>';
@@ -764,6 +841,72 @@ window.addEventListener('load',restore);
       maybeTask(function (extra) { $('ask-msg').textContent = '✓ composed in Gmail' + extra; setTimeout(function () { renderDetail(k); }, 1600); });
     };
   }
+  /* ---- the profile editor: which attributes count for this brand / this industry ---- */
+  function openProf(k) {
+    var pPar = parts(k);
+    var ind = industryOfC(pPar.client);
+    var slot = $('profp-slot'); if (!slot) return;
+    var scope = slot.__scope || 'client';
+    // chip states seed from the layer being edited: brand scope = the merged effective
+    // profile; industry scope = the industry layer (override or committed default)
+    var seed = scope === 'client' ? profileForC(pPar.client)
+      : ((PROF.overrides.industries || {})[ind] || PROF.defaults[ind] || { expected: [], waived: [] });
+    var st = slot.__st && slot.__scopeDrawn === scope ? slot.__st : (function () {
+      var m = {};
+      (seed.expected || []).filter(profOk).forEach(function (k2) { m[k2] = 'exp'; });
+      (seed.waived || []).filter(profOk).forEach(function (k2) { if (!m[k2]) m[k2] = 'wav'; });
+      return m;
+    })();
+    slot.__st = st; slot.__scopeDrawn = scope;
+    var groups = [['cond', 'Required in cases'], ['rec', 'Recommended'], ['ai', 'Conversational AI']];
+    var h = '<div class="askp profp"><div style="font-size:13px;font-weight:900">⚖ Scoring profile — which attributes count' +
+      '<span class="pseg"><button data-ps="client"' + (scope === 'client' ? ' class="on"' : '') + '>This brand</button>' +
+      '<button data-ps="industry"' + (scope === 'industry' ? ' class="on"' : '') + '>All ' + esc(ind) + ' brands</button></span></div>' +
+      '<p class="hint muted" style="margin:6px 0 4px;font-size:11.5px">Click an attribute to cycle: <b>default</b> → <b style="color:var(--orange-deep)">★ scored</b> (counts even when absent — the best-practice bar) → <span style="text-decoration:line-through">waived</span> (excluded from the score). The required seven and gtin/mpn always score. Saving re-scores this view instantly; estate cards refresh as each feed rescans (⚡ applies it now).</p>';
+    groups.forEach(function (g) {
+      h += '<div class="pgrp">' + g[1] + '</div>';
+      SPEC.filter(function (x) { return x.t === g[0] && profOk(x.k); }).forEach(function (x) {
+        var m = st[x.k] || '';
+        h += '<button class="pchip' + (m === 'exp' ? ' exp' : (m === 'wav' ? ' wav' : '')) + '" data-pk="' + esc(x.k) + '">' +
+          (m === 'exp' ? '★ ' : '') + esc(x.k) + '</button>';
+      });
+    });
+    h += '<div class="ab"><button class="btn pri" id="prof-save">Save profile</button>' +
+      '<button class="btn" id="prof-reset" title="Drop the override on this scope and fall back to the layer below">↺ Reset to default</button>' +
+      '<button class="btn" id="prof-cancel">✕</button><span class="scanmsg" id="prof-msg"></span></div></div>';
+    slot.innerHTML = h;
+    slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    Array.prototype.forEach.call(slot.querySelectorAll('[data-ps]'), function (el) {
+      el.onclick = function () { if (slot.__scope === el.getAttribute('data-ps')) return; slot.__scope = el.getAttribute('data-ps'); slot.__st = null; openProf(k); };
+    });
+    Array.prototype.forEach.call(slot.querySelectorAll('[data-pk]'), function (el) {
+      el.onclick = function () {
+        var k2 = el.getAttribute('data-pk'), cur = st[k2] || '';
+        st[k2] = cur === '' ? 'exp' : (cur === 'exp' ? 'wav' : '');
+        openProf(k);
+      };
+    });
+    function put(body) {
+      $('prof-msg').textContent = 'saving…';
+      fetch(API + '/api/golden/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        .then(function (r) { return r.json(); })
+        .then(function (d2) {
+          if (d2.error) { $('prof-msg').textContent = '✗ ' + d2.error; return; }
+          PROF.overrides = d2.overrides || PROF.overrides;
+          slot.innerHTML = ''; slot.__st = null;
+          renderDetail(k);
+        })
+        .catch(function () { $('prof-msg').textContent = '✗ network'; });
+    }
+    $('prof-save').onclick = function () {
+      var expected = [], waived = [];
+      Object.keys(st).forEach(function (k2) { if (st[k2] === 'exp') expected.push(k2); else if (st[k2] === 'wav') waived.push(k2); });
+      put({ scope: scope, name: scope === 'client' ? pPar.client : ind, expected: expected, waived: waived });
+    };
+    $('prof-reset').onclick = function () { put({ scope: scope, name: scope === 'client' ? pPar.client : ind, reset: true }); };
+    $('prof-cancel').onclick = function () { slot.innerHTML = ''; slot.__st = null; };
+  }
+
   function briefAttr(k, attr) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var p = parts(k), s = d.snapshot;
@@ -786,6 +929,7 @@ window.addEventListener('load',restore);
   }
 
   function wire(k, s) {
+    if ($('prof-edit')) $('prof-edit').onclick = function () { openProf(k); };
     Array.prototype.forEach.call(document.querySelectorAll('[data-ask]'), function (el) {
       el.onclick = function () { openAsk(k, el.getAttribute('data-ask')); };
     });
@@ -812,7 +956,7 @@ window.addEventListener('load',restore);
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var p = parts(k), s = d.snapshot;
     var when = new Date(s.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-    var score = goldenScore(s.attrs);
+    var score = goldenScore(s.attrs, profileForC(p.client));
     $('print-head').innerHTML =
       '<div class="ph-brand">Feed<span>Spark</span></div>' +
       '<div class="ph-title">Golden Record scorecard — ' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + ' (Google Shopping)</div>' +
@@ -875,6 +1019,15 @@ window.addEventListener('load',restore);
     step();
   };
 
+  // industry scoring profiles (defaults + overrides + client->industry map) — the boot
+  // select() waits on this so the first render is already scored to the right profile
+  var PROFREADY = fetch(API + '/api/golden/profile').then(function (r) { return r.json(); }).then(function (d) {
+    PROF.defaults = (d && d.defaults) || {};
+    PROF.overrides = (d && d.overrides) || {};
+    PROF.industryMap = (d && d.industryMap) || {};
+    if (SEL) renderDetail(SEL);
+  }).catch(function () {});
+
   // ask-the-client state (contact memory + ✉ asked stamps — Label Guard's shared rails)
   fetch(API + '/api/labels/askdraft').then(function (r) { return r.json(); }).then(function (d) {
     ASK.cfg = (d && d.cfg) || { to: {} }; ASK.cfg.to = ASK.cfg.to || {};
@@ -896,7 +1049,7 @@ window.addEventListener('load',restore);
       .catch(function () { $('ml-msg').textContent = '✗ network'; });
   };
 
-  refreshEstate().then(function () {
+  Promise.all([refreshEstate(), PROFREADY]).then(function () {
     var k = null;
     try { k = decodeURIComponent((location.hash || '').slice(1)) || null; } catch (e) {}
     if (!k || !ESTATE.feeds[k]) {

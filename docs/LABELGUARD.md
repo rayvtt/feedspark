@@ -309,6 +309,23 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   "PT Depth Optimisation (3-4-5 level granularity) - Client MKT - Mon YYYY" into the client's
   Project Plan sheet, so the proposal rides Intake → Project Plan → pipeline like the Gmail
   triage.
+- **Industry scoring profiles + benchmarks** (Ray, Aug 2026: "allow certain attributes …
+  incorporated into scoring per brand / per industry and then use that as industry best
+  practices"): `INDUSTRY` (client → industry) + `INDUSTRY_PROFILES` defaults in the engine —
+  per industry, `expected` attrs count toward the score **even when absent** (the apparel
+  five for Fashion/Footwear — exactly Google's apparel conditions), `waived` attrs drop out
+  entirely (size systems on Pet Care). `profileFor(client, overrides)` merges committed
+  defaults ← KV industry override ← KV brand override (`goldenprofiles`, GET/PUT
+  `/api/golden/profile`); the required seven and the gtin/mpn pair can never be profiled.
+  `goldenScore(attrs, profile)` scores to that profile — an expected conversational AI attr
+  joins at ×1, so a brand can opt the AI six into its number. The scan stores the industry +
+  a per-attribute coverage map on `goldenidx`, so the page computes **industry benchmarks
+  from the estate itself**: an "Industry benchmark — Fashion (N estate feeds): avg X ·
+  best Y (Brand)" line on the verdict and a best-practice tick on every fill bar at the
+  industry's best observed coverage. Page: ⚖ "<Industry> best practice" chip + ⚙ editor
+  (tri-state chips default → ★ scored → waived, brand vs whole-industry scope, reset to
+  defaults), ★ marks scored attrs, waived rows grey out, hard "not in feed" flags follow
+  the profile. Estate card scores refresh as each feed rescans (⚡ applies immediately).
 - No custom watch rules for PT v1 — estate alerts + badge + emails cover the drop-off case;
   watches can be extended to PT later on the same `labelwatch` rails.
 

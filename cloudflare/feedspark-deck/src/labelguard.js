@@ -736,26 +736,77 @@ export function attrsFromCounts(attrCols, attrPos, countsRow, rows) {
   return attrs;
 }
 
+/* ---- industry scoring profiles (Ray, Aug 2026): certain attributes are incorporated
+   into the score per brand / per industry — that profile IS the industry best practice.
+   `expected` attrs count toward the score even when absent from the feed (an apparel
+   brand without g:color is incomplete, not exempt); `waived` attrs are excluded from
+   the score entirely (size systems on a pet-supplement feed are noise, not a gap).
+   The always-required seven and the gtin/mpn identifier pair can never be profiled —
+   Google requires them everywhere. Defaults below mirror Google's own spec conditions;
+   per-industry and per-brand overrides live in KV `goldenprofiles`. */
+export const INDUSTRY = { 'Reiss': 'Fashion', 'Superdry': 'Fashion', 'Monsoon': 'Fashion',
+  'Accessorize': 'Fashion', 'House of Bruar': 'Fashion', 'Visual K': 'Fashion',
+  'Schuh': 'Footwear', 'YuMOVE': 'Pet Care', 'American Golf': 'Sporting Goods',
+  'Hobbycraft': 'Arts & Crafts', 'Ryobi': 'Tools & DIY',
+  'Estée Lauder': 'Beauty', 'Bobbi Brown': 'Beauty', 'Benefit': 'Beauty', 'Clinique': 'Beauty', 'MAC': 'Beauty', 'Jo Malone': 'Beauty' };
+export const INDUSTRY_PROFILES = {
+  // the apparel five — exactly Google's apparel-market conditions — score even when absent
+  'Fashion':        { expected: ['color', 'size', 'gender', 'age_group', 'item_group_id'], waived: [] },
+  'Footwear':       { expected: ['color', 'size', 'gender', 'age_group', 'item_group_id'], waived: [] },
+  'Beauty':         { expected: ['color', 'item_group_id'], waived: ['size_type', 'size_system'] },
+  'Pet Care':       { expected: [], waived: ['size_type', 'size_system', 'pattern'] },
+  'Sporting Goods': { expected: ['item_group_id'], waived: [] },
+  'Arts & Crafts':  { expected: [], waived: ['size_type', 'size_system'] },
+  'Tools & DIY':    { expected: [], waived: ['size_type', 'size_system', 'pattern'] },
+};
+export function industryOf(client) { return INDUSTRY[client] || 'Retail'; }
+// merged profile for one brand: industry defaults <- KV industry override <- KV brand
+// override. `overrides` = the KV `goldenprofiles` value { industries: {..}, clients: {..} }.
+export function profileFor(client, overrides) {
+  const ind = industryOf(client);
+  const o = overrides || {};
+  const base = ((o.industries || {})[ind]) || INDUSTRY_PROFILES[ind] || { expected: [], waived: [] };
+  const cl = (o.clients || {})[client];
+  const pick = (src, k) => Array.isArray(src && src[k]) ? src[k] : null;
+  const expected = pick(cl, 'expected') || pick(base, 'expected') || [];
+  const waived = pick(cl, 'waived') || pick(base, 'waived') || [];
+  const ok = (k) => ATTR_SPEC.some((s) => s.key === k && s.req !== 'required' && k !== 'gtin' && k !== 'mpn');
+  return { industry: ind, expected: expected.filter(ok), waived: waived.filter((k) => ok(k) && expected.indexOf(k) < 0) };
+}
+
 // The Golden Record score — one weighted completeness number per feed, transparent parts.
 // required: weight 3, a missing column counts as 0%. gtin+mpn merge into ONE identifier
 // component (weight 2, best of the two — the spec accepts either; both absent = 0).
 // Other cond attrs: present → weight 2; absent → excluded from the score (a pet-supplement
 // feed without `color` is not incomplete) but surfaced as a flag on the page.
 // rec: weight 1, absent counts as 0 — that IS the optimisation surface.
-export function goldenScore(attrs) {
+// With a profile (profileFor): `expected` attrs count-when-absent at their tier weight
+// (ai joins at weight 1 only when expected), `waived` attrs drop out of the score.
+export function goldenScore(attrs, profile) {
   if (!attrs) return null;
+  const exp = new Set((profile && profile.expected) || []);
+  const wav = new Set((profile && profile.waived) || []);
   const parts = [];
   let idBest = null;
   for (const s of ATTR_SPEC) {
     const a = attrs[s.key] || { present: false };
-    if (s.req === 'ai') continue;   // the conversational six are an AI-readiness KPI, not score input
     if (s.key === 'gtin' || s.key === 'mpn') {
       if (a.present && (idBest == null || a.cov > idBest)) idBest = a.cov;
       continue;
     }
+    if (s.req !== 'required' && wav.has(s.key)) continue;
+    const bp = exp.has(s.key);
+    if (s.req === 'ai') {
+      // the conversational six stay out of the score unless a profile pulls one in
+      if (bp) parts.push({ key: s.key, tier: s.req, cov: a.present ? a.cov : 0, w: 1, missing: !a.present, bp: true });
+      continue;
+    }
     if (s.req === 'required') parts.push({ key: s.key, tier: s.req, cov: a.present ? a.cov : 0, w: 3, missing: !a.present });
-    else if (s.req === 'cond') { if (a.present) parts.push({ key: s.key, tier: s.req, cov: a.cov, w: 2, missing: false }); }
-    else parts.push({ key: s.key, tier: s.req, cov: a.present ? a.cov : 0, w: 1, missing: !a.present });
+    else if (s.req === 'cond') {
+      if (a.present) parts.push({ key: s.key, tier: s.req, cov: a.cov, w: 2, missing: false, bp: bp || undefined });
+      else if (bp) parts.push({ key: s.key, tier: s.req, cov: 0, w: 2, missing: true, bp: true });
+    }
+    else parts.push({ key: s.key, tier: s.req, cov: a.present ? a.cov : 0, w: 1, missing: !a.present, bp: bp || undefined });
   }
   parts.push({ key: 'gtin/mpn', tier: 'cond', cov: idBest == null ? 0 : idBest, w: 2, missing: idBest == null });
   let ws = 0, sum = 0;
@@ -767,7 +818,8 @@ export function goldenScore(attrs) {
   const aiSpec = ATTR_SPEC.filter((s) => s.req === 'ai');
   const aiMissing = aiSpec.filter((s) => !(attrs[s.key] || {}).present).map((s) => s.key);
   const ai = { n: aiSpec.length - aiMissing.length, of: aiSpec.length, missing: aiMissing };
-  return { score, parts, reqMissing, condMissing, recMissing, ai };
+  return { score, parts, reqMissing, condMissing, recMissing, ai,
+    profile: profile ? { industry: profile.industry || null, expected: (profile.expected || []).slice(), waived: (profile.waived || []).slice() } : null };
 }
 
 // coverage drop-off -> alerts, same shape as diffSnapshots so the shared mail rails

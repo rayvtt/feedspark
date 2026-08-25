@@ -678,6 +678,50 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   ok('diffCoverage: required column vanished -> crit attr-gone', gone.length === 1 && gone[0].sev === 'crit' && gone[0].code === 'attr-gone');
   eq('diffCoverage: no refs -> empty', LG.diffCoverage(null, cur), []);
 }
+/* ---------- industry scoring profiles (the best-practice layer) ---------- */
+{
+  const pR = LG.profileFor('Reiss', null);
+  eq('profileFor: Fashion defaults = the apparel five', [pR.industry, pR.expected],
+    ['Fashion', ['color', 'size', 'gender', 'age_group', 'item_group_id']]);
+  const pY = LG.profileFor('YuMOVE', null);
+  eq('profileFor: Pet Care waives apparel-only recs', [pY.industry, pY.waived], ['Pet Care', ['size_type', 'size_system', 'pattern']]);
+  eq('profileFor: unknown brand -> Retail, empty profile', LG.profileFor('Acme', null), { industry: 'Retail', expected: [], waived: [] });
+  const ov = { industries: { Fashion: { expected: ['color'], waived: ['pattern'] } },
+    clients: { Reiss: { expected: ['color', 'question_and_answer'] } } };
+  eq('profileFor: brand override beats industry override beats default',
+    LG.profileFor('Reiss', ov).expected, ['color', 'question_and_answer']);
+  eq('profileFor: industry override applies to sibling brands', LG.profileFor('Superdry', ov),
+    { industry: 'Fashion', expected: ['color'], waived: ['pattern'] });
+  eq('profileFor: required + identifier attrs can never be profiled',
+    LG.profileFor('Reiss', { clients: { Reiss: { expected: ['title', 'gtin', 'color'], waived: [] } } }).expected, ['color']);
+  eq('profileFor: expected beats waived on a clash',
+    LG.profileFor('Reiss', { clients: { Reiss: { expected: ['color'], waived: ['color', 'material'] } } }).waived, ['material']);
+}
+{
+  // fixture attrs from the scan test above: gender/age_group absent, color 85 / size 90 present
+  const HEADER2 = '"id","g:title","description","link","image link","availability","price","brand","gtin","item_group_id","color","size","g:product_type(1)","sale_price","custom_label_0"\n"x","B","d","u","i","in_stock","10","R","1","g","black","M","W > B","8","b"';
+  const routes2 = [
+    ['select * limit 1', HEADER2],
+    ['select count(A), count(O), count(M), count(B), count(C), count(D), count(E), count(F), count(G), count(H), count(I), count(J), count(K), count(L), count(N)',
+      '"h"\n"1000","950","980","1000","990","1000","1000","1000","1000","940","700","1000","850","900","240"'],
+    ['select O, count(A)', '"cl0","c"\n"b","950"'],
+    ['select M, count(A)', '"pt","c"\n"W > B","980"'],
+  ];
+  const s = await LG.scanFeed(gvizMock(routes2), { id: 'X', gid: '0' },
+    { client: 'Reiss', market: 'gb' }, LG.LABEL_KEYS.concat(LG.PT_KEYS), { attrs: true });
+  const apparel = LG.profileFor('Reiss', null);
+  const gs = LG.goldenScore(s.attrs, apparel);
+  eq('goldenScore + apparel profile: absent gender/age_group now count', gs.score, 68.8);
+  ok('profiled parts carry the best-practice flag', gs.parts.some((p) => p.key === 'gender' && p.bp && p.missing && p.w === 2));
+  eq('profile echoed on the result', gs.profile.industry, 'Fashion');
+  const waivedGs = LG.goldenScore(s.attrs, { industry: 'Pet Care', expected: [], waived: ['size_type', 'size_system', 'pattern'] });
+  eq('goldenScore + waivers: irrelevant recs drop out and lift the score', waivedGs.score, 81.5);
+  const aiIn = LG.goldenScore(Object.assign({}, s.attrs, { question_and_answer: { present: true, filled: 500, cov: 50 } }),
+    { industry: 'Fashion', expected: ['question_and_answer'], waived: [] });
+  ok('goldenScore: an expected AI attr joins the score at weight 1',
+    aiIn.parts.some((p) => p.key === 'question_and_answer' && p.w === 1 && p.bp) && aiIn.score !== LG.goldenScore(s.attrs).score);
+  eq('goldenScore without profile unchanged', LG.goldenScore(s.attrs).score, 75.5);
+}
 {
   const mail = LG.goldenAlertEmail('Reiss · GB', [{ sev: 'crit', msg: 'availability coverage dropped 12pp' }], 'https://x/golden');
   ok('golden alert email', mail.indexOf('🔴 Golden Record — Reiss · GB: 1 confirmed attribute alert') === 0 &&
