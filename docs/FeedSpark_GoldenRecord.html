@@ -114,13 +114,13 @@ window.addEventListener('load',restore);
   .tbadge.cond{background:#FCF1E3;color:var(--orange-ink)}
   .tbadge.rec{background:#EEF2F7;color:var(--navy)}
   .tbadge.ai{background:#F1EBFD;color:#6D28D9}
-  .at-row{display:grid;grid-template-columns:200px minmax(120px,1fr) 62px 74px minmax(150px,.85fr) 122px;gap:10px;align-items:center;padding:7px 0;border-top:1px dashed var(--line);font-size:12.5px}
+  .at-row{display:grid;grid-template-columns:200px minmax(120px,1fr) 62px 74px minmax(140px,.85fr) 152px;gap:10px;align-items:center;padding:5px 0;border-top:1px dashed var(--line);font-size:12.5px}
   .at-row:first-of-type{border-top:none}
   @media(max-width:900px){.at-row{grid-template-columns:150px 1fr 56px 64px;}.at-note,.at-act{display:none}}
-  .at-act{display:flex;gap:5px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+  .at-act{display:flex;gap:5px;align-items:center;justify-content:flex-end;flex-wrap:nowrap}
   .abtn{border:1px solid var(--line);background:#fff;color:var(--ink-2);font:inherit;font-size:10.5px;font-weight:800;border-radius:7px;padding:3px 8px;cursor:pointer;white-space:nowrap}
   .abtn:hover{border-color:var(--orange);color:var(--orange-deep)}
-  .askstamp{font-size:10px;font-weight:800;color:var(--good);white-space:nowrap}
+  .abtn.asked{border-color:var(--good);color:var(--good)}
   body.demo .at-act,body.demo .askp{display:none!important}
   /* the per-attribute client-ask composer (shared askdraft rails) */
   .askp{background:var(--wash);border:1px solid var(--orange);border-radius:12px;padding:12px 14px;margin:10px 0}
@@ -138,7 +138,7 @@ window.addEventListener('load',restore);
   .at-cov{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}
   .at-delta{text-align:right;font-weight:900;font-size:11px;font-variant-numeric:tabular-nums}
   .up{color:var(--good)}.down{color:var(--risk)}
-  .at-note{font-size:11px;color:var(--muted);font-weight:700}
+  .at-note{font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .at-miss{font-size:10px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--line);border-radius:100px;padding:2px 9px;justify-self:start}
   .at-miss.hard{color:var(--risk);border-color:var(--risk)}
   .at-row.missing .at-nm,.at-row.missing .at-note{opacity:.6}
@@ -681,17 +681,19 @@ window.addEventListener('load',restore);
           row += '<span class="at-bar" title="' + a.cov + '% of ' + fmt(s.rows) + ' rows filled"><i' + cls + ' style="width:' + Math.max(1.5, Math.min(100, a.cov)) + '%"></i></span>' +
             '<span class="at-cov">' + a.cov + '%</span>' +
             '<span class="at-delta" title="vs ' + refLbl + '">' + delta + '</span>' +
-            '<span class="at-note">' + esc(x.n) + '</span>';
+            '<span class="at-note" title="' + esc(x.n) + '">' + esc(x.n) + '</span>';
         } else {
           var hard = x.t === 'req' || x.a;
           row += '<span class="at-miss' + (hard ? ' hard' : '') + '">not in feed</span>' +
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
-            '<span class="at-note">' + esc(x.n) + '</span>';
+            '<span class="at-note" title="' + esc(x.n) + '">' + esc(x.n) + '</span>';
         }
         var stamp = ASK.asked[askKey(p.client, p.mkt, x.k)];
         row += '<span class="at-act">' +
-          (stamp ? '<span class="askstamp" title="Proposal composed ' + new Date(stamp.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' → ' + esc(stamp.to) + '">✉ asked</span>' : '') +
-          '<button class="abtn" data-ask="' + esc(x.k) + '" title="Compose the client proposal for this attribute — and file it into the Project Plan">✉ Ask client</button>' +
+          '<button class="abtn' + (stamp ? ' asked' : '') + '" data-ask="' + esc(x.k) + '" title="' +
+          (stamp ? 'Proposal composed ' + new Date(stamp.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' → ' + esc(stamp.to) + ' — click to compose again'
+            : 'Compose the client proposal for this attribute — and file it into the Project Plan') + '">' +
+          (stamp ? '✓ asked' : '✉ Ask client') + '</button>' +
           '<button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled brief in Workflow — the fix also files as an Intake task">→ Brief</button></span>';
         h += row + '</div>';
       });
