@@ -28,7 +28,7 @@ import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js"
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes } from "./briefmatch.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail } from "./labelguard.js";
+import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -310,7 +310,7 @@ export default {
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send',
-        '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase',
+        '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task',
         '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
@@ -1913,7 +1913,7 @@ async function runLabelScan(env, client, mkt) {
     const gs = goldenScore(grSnap.attrs);
     const gidx = (await env.EDITS.get('goldenidx', 'json')) || {};
     gidx[lgKey(client, mkt)] = { client, mkt, t: grSnap.t, rows: grSnap.rows, baseT: gBase.t,
-      score: gs ? gs.score : null,
+      score: gs ? gs.score : null, ai: gs ? gs.ai : null,
       reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
       status: gActive.some((a) => a.sev === 'crit') ? 'crit' : (gActive.length ? 'warn' : 'ok'),
       nCrit: gActive.filter((a) => a.sev === 'crit').length, nWarn: gActive.filter((a) => a.sev === 'warn').length };
@@ -2340,6 +2340,23 @@ async function goldenRoutes(env, request, url) {
     return json(r.gr);
   }
 
+  // file an attribute fix into the brand's Project Plan — the same appendPlanRows write
+  // the Workflow "+ Add task" and the Gmail-triage adoption use, so the task rides
+  // Intake > Project Plan > pipeline identically (status dropdown, editable due).
+  if (path === '/api/golden/plantask' && request.method === 'POST') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' }, 503);
+    const attr = String(url.searchParams.get('attr') || '');
+    if (!ATTR_SPEC.some((s) => s.key === attr)) return json({ ok: false, error: 'unknown attribute' }, 400);
+    const sheetId = PLAN_SHEETS[client];
+    if (!sheetId) return json({ ok: false, error: 'no Project Plan sheet wired for "' + client + '" — add it to PLAN_SHEETS' }, 400);
+    const mon = new Date().toLocaleDateString('en-GB', { month: 'short' }) + String(new Date().getUTCFullYear()).slice(2);
+    const task = 'Golden Record Fix - g:' + attr + ' - ' + client + ' ' + mkt.toUpperCase() + ' - ' + mon;
+    const r = await appendPlanRows(env, sheetId, 'Project Plan', [{ task, owner: '', status: 'Open', due: '' }]);
+    if (r && r.ok) { try { await env.EDITS.delete('planlive:' + sheetId); } catch (e) {} }
+    return json(Object.assign({ task }, r));
+  }
+
   // "expected change" — adopt the current coverage snapshot as the new known-good
   if (path === '/api/golden/ack' && request.method === 'POST') {
     if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
@@ -2349,7 +2366,7 @@ async function goldenRoutes(env, request, url) {
     const gs = goldenScore(snap.attrs);
     const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
     idx[lgKey(client, mkt)] = { client, mkt, t: snap.t, rows: snap.rows, baseT: snap.t,
-      score: gs ? gs.score : null,
+      score: gs ? gs.score : null, ai: gs ? gs.ai : null,
       reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
       status: 'ok', nCrit: 0, nWarn: 0 };
     await env.EDITS.put('goldenidx', JSON.stringify(idx));

@@ -348,11 +348,34 @@ prep for client demo").
   `estateMailPlan` (KV `goldenalertcfg`, default on → `OWNER_EMAIL`), the daily report
   gains a GOLDEN RECORD ALERTS section, and the nav badge dots `/golden` from the same
   `/api/labels/alerts` call (`gr` counts, `grClients` split for the dossier).
-- **The page** (`/golden`): score dial + plain-English verdict per feed, the three tier
+- **The conversational AI six** (Ray, Aug 2026: "add 6 conversational attributes that
+  Google asked for"): question_and_answer, document_link, related_product,
+  item_group_title, variant_option, popularity_rank — all Optional on the same spec page,
+  read by Google's AI Mode / agentic shopping surfaces, usually submitted via a
+  SUPPLEMENTAL data source (absence from the primary feed is the expected start state).
+  Tracked as a fourth tier (`req: 'ai'`): their own **AI-readiness KPI** ("N of 6 live" on
+  the verdict, the tier header and `goldenidx.ai`) that is **never counted into
+  goldenScore** — the Golden Record number stays the classic spec, the six are the
+  frontier story. Coverage drops on them alert warn-only, like recommended.
+- **Per-attribute actions** (every row, all four tiers): **✉ Ask client** opens a
+  composer prefilled by `attrAskEmail` (missing vs low-coverage variants, tier-aware
+  benefit line, consultative voice) on Label Guard's shared ask rails — Create Gmail draft
+  via `POST /api/labels/askdraft` (contact memory `labelaskcfg`, `✉ asked` stamps keyed
+  `grattr|client|mkt|attr`) or Open-in-Gmail + markOnly; the default-on checkbox files
+  "Golden Record Fix - g:&lt;attr&gt;" into the client's Project Plan via
+  `POST /api/golden/plantask` (worker-side `PLAN_SHEETS` → `appendPlanRows`). **→ Brief**
+  deep-links `/workflow?brief=` prefilled (cat technical, scope = current fill / tier /
+  target) AND fires the same plan-task write (keepalive — it survives the navigation), so
+  both paths land the fix in Intake → Project Plan → pipeline like the Gmail triage.
+  Action buttons and the composer hide in demo mode.
+- **The page** (`/golden`): score dial + plain-English verdict per feed, the four tier
   sections with spec badges and per-attribute fill bars / Δ vs yesterday ↔ known-good /
   spec-condition notes, "not in feed" flags (hard red-dashed on required + apparel attrs,
   soft on genuinely conditional ones), estate scorecard with per-market scores and
-  "N req missing" pills, ⚡ whole-estate rescan, CSV export, and the same 🎭 demo mode as
+  "N req missing" pills, ⚡ whole-estate rescan, ⬇ CSV export + ⬇ PDF (a branded,
+  print-optimised client presentation of the scorecard — FeedSpark header, dial + verdict,
+  the four tier sections, confidentiality footer; browser print-to-PDF, aliases apply when
+  demo mode is on), and the same 🎭 demo mode as
   §5b (industry aliases, gr-demo sessionStorage key) for client-facing screen shares. The
   policy page is cited in the hero and footer.
 

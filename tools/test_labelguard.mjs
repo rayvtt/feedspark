@@ -593,7 +593,9 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
 /* ---------- Golden Record: attribute coverage vs Google's product data spec ---------- */
 {
   ok('ATTR_SPEC: 7 always-required attributes', LG.ATTR_SPEC.filter((s) => s.req === 'required').length === 7);
-  ok('ATTR_SPEC: three tiers only', LG.ATTR_SPEC.every((s) => ['required', 'cond', 'rec'].includes(s.req)));
+  ok('ATTR_SPEC: four tiers only', LG.ATTR_SPEC.every((s) => ['required', 'cond', 'rec', 'ai'].includes(s.req)));
+  eq('ATTR_SPEC: the conversational AI six', LG.ATTR_SPEC.filter((s) => s.req === 'ai').map((s) => s.key),
+    ['question_and_answer', 'document_link', 'related_product', 'item_group_title', 'variant_option', 'popularity_rank']);
 
   const cols = LG.findAttrCols(['id', 'g:title', 'description', 'link', 'image link', 'availability', 'price',
     'brand', 'gtin', 'item_group_id', 'color', 'size', 'g:product_type(1)', 'sale_price', 'custom_label_0']);
@@ -630,6 +632,36 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   ok('goldenScore: identifier pair merges into one part', gs.parts.filter((p) => p.key === 'gtin/mpn').length === 1 &&
     gs.parts.every((p) => p.key !== 'gtin' && p.key !== 'mpn'));
   ok('goldenScore: null on no attrs', LG.goldenScore(null) === null);
+  // the conversational six: an AI-readiness KPI, never score input
+  eq('goldenScore: ai KPI counts the six', gs.ai, { n: 0, of: 6,
+    missing: ['question_and_answer', 'document_link', 'related_product', 'item_group_title', 'variant_option', 'popularity_rank'] });
+  const withAi = Object.assign({}, s.attrs, { question_and_answer: { present: true, filled: 500, cov: 50 } });
+  const gs2 = LG.goldenScore(withAi);
+  ok('goldenScore: ai attrs never move the score', gs2.score === gs.score && gs2.ai.n === 1 &&
+    gs2.parts.every((p) => p.key !== 'question_and_answer'));
+}
+{
+  // ai tier alerts: warn-only, exactly like recommended
+  const A = (cov) => ({ present: true, filled: 100, cov });
+  const al = LG.diffCoverage(
+    { attrs: { question_and_answer: A(60), popularity_rank: A(90) } },
+    { attrs: { question_and_answer: A(40) } });
+  ok('diffCoverage: ai drop + ai column gone are warn-only',
+    al.length === 2 && al.every((a) => a.sev === 'warn'), JSON.stringify(al));
+}
+{
+  const spec = (k) => LG.ATTR_SPEC.filter((s) => s.key === k)[0];
+  const miss = LG.attrAskEmail('Schuh', 'gb', spec('color'), null);
+  ok('attrAskEmail missing: subject + condition + PIM offer', miss.subject === 'Schuh GB — feed data: proposal to add g:color' &&
+    miss.body.indexOf('does not currently carry g:color') > 0 &&
+    miss.body.indexOf('required by Google in specific cases') > 0 &&
+    miss.body.indexOf('PIM or product export') > 0 && miss.body.indexOf('Best regards,\nRay') > 0, miss.body);
+  const low = LG.attrAskEmail('Reiss', 'gb', spec('sale_price'), 27);
+  ok('attrAskEmail low-coverage: quotes fill % + structured pass', low.subject.indexOf('proposal to lift g:sale_price coverage') > 0 &&
+    low.body.indexOf('filled on 27% of products') > 0 && low.body.indexOf('structured pass') > 0, low.body);
+  const ai = LG.attrAskEmail('Reiss', 'gb', spec('question_and_answer'), null);
+  ok('attrAskEmail ai: conversational framing', ai.body.indexOf('six conversational AI attributes') > 0 &&
+    ai.body.indexOf('visibility advantage') > 0, ai.body);
 }
 {
   const A = (cov) => ({ present: true, filled: Math.round(cov * 10), cov });

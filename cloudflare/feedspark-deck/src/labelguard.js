@@ -688,6 +688,16 @@ export const ATTR_SPEC = [
   { key: 'pattern',       req: 'rec', note: 'required only when it distinguishes variants' },
   { key: 'size_type',     req: 'rec', note: 'apparel: regular / petite / plus / tall…' },
   { key: 'size_system',   req: 'rec', note: 'apparel: UK / EU / US…' },
+  // the six conversational AI attributes (Google 2026) — optional per the same spec page,
+  // read by Google's conversational / agentic shopping surfaces; usually submitted via a
+  // SUPPLEMENTAL data source, so absence from the primary feed is the expected start state.
+  // Tracked as their own tier ('ai'): counted as an AI-readiness KPI, NOT in goldenScore.
+  { key: 'question_and_answer', req: 'ai', note: 'up to 30 Q&A pairs per product' },
+  { key: 'document_link',       req: 'ai', note: 'PDF manuals / spec sheets, up to 5' },
+  { key: 'related_product',     req: 'ai', note: 'part_of_set / often_bought_with / accessory…' },
+  { key: 'item_group_title',    req: 'ai', note: 'names the variant family (with item_group_id)' },
+  { key: 'variant_option',      req: 'ai', note: 'name–value pairs defining variant differences' },
+  { key: 'popularity_rank',     req: 'ai', note: '0–100 rank — powers "bestseller" answers' },
 ];
 // repeatable fields often ship numbered from feed tools — slot 1 aliases onto the bare key
 const ATTR_ALIASES = {
@@ -695,6 +705,10 @@ const ATTR_ALIASES = {
   additional_image_link: ['additional_image_link(1)'],
   product_highlight: ['product_highlight(1)'],
   product_detail: ['product_detail(1)'],
+  question_and_answer: ['question_and_answer(1)'],
+  document_link: ['document_link(1)'],
+  related_product: ['related_product(1)'],
+  variant_option: ['variant_option(1)'],
 };
 export function findAttrCols(headerRow) {
   const norm = (headerRow || []).map(normHeader);
@@ -734,6 +748,7 @@ export function goldenScore(attrs) {
   let idBest = null;
   for (const s of ATTR_SPEC) {
     const a = attrs[s.key] || { present: false };
+    if (s.req === 'ai') continue;   // the conversational six are an AI-readiness KPI, not score input
     if (s.key === 'gtin' || s.key === 'mpn') {
       if (a.present && (idBest == null || a.cov > idBest)) idBest = a.cov;
       continue;
@@ -749,7 +764,10 @@ export function goldenScore(attrs) {
   const reqMissing = ATTR_SPEC.filter((s) => s.req === 'required' && !(attrs[s.key] || {}).present).map((s) => s.key);
   const condMissing = ATTR_SPEC.filter((s) => s.req === 'cond' && !(attrs[s.key] || {}).present).map((s) => s.key);
   const recMissing = ATTR_SPEC.filter((s) => s.req === 'rec' && !(attrs[s.key] || {}).present).map((s) => s.key);
-  return { score, parts, reqMissing, condMissing, recMissing };
+  const aiSpec = ATTR_SPEC.filter((s) => s.req === 'ai');
+  const aiMissing = aiSpec.filter((s) => !(attrs[s.key] || {}).present).map((s) => s.key);
+  const ai = { n: aiSpec.length - aiMissing.length, of: aiSpec.length, missing: aiMissing };
+  return { score, parts, reqMissing, condMissing, recMissing, ai };
 }
 
 // coverage drop-off -> alerts, same shape as diffSnapshots so the shared mail rails
@@ -764,8 +782,9 @@ export function diffCoverage(base, cur, th) {
     const b = base.attrs[s.key] || { present: false };
     const c = cur.attrs[s.key] || { present: false };
     const disp = s.key;
+    const soft = s.req === 'rec' || s.req === 'ai';   // recommended + conversational AI never crit
     if (b.present && !c.present) {
-      A.push({ sev: s.req === 'rec' ? 'warn' : 'crit', code: 'attr-gone', label: s.key,
+      A.push({ sev: soft ? 'warn' : 'crit', code: 'attr-gone', label: s.key,
         msg: disp + ' column VANISHED from the feed — was ' + b.cov + '% filled', was: b.cov, now: 0 });
       continue;
     }
@@ -776,7 +795,7 @@ export function diffCoverage(base, cur, th) {
     if (!b.present || !c.present) continue;
     const d = Math.round((b.cov - c.cov) * 10) / 10;
     if (d <= 0) continue;
-    if (s.req === 'rec') {
+    if (soft) {
       if (d >= th.recWarn) A.push({ sev: 'warn', code: 'attr-drop', label: s.key,
         msg: disp + ' coverage dropped ' + d + 'pp (was ' + b.cov + '%, now ' + c.cov + '%)', was: b.cov, now: c.cov });
     } else if (d >= th.reqCrit) {
@@ -799,6 +818,40 @@ export function goldenAlertEmail(feedName, alerts, link) {
 }
 export function goldenRecoveryEmail(feedName, link) {
   return '✅ Golden Record — ' + feedName + ' recovered\nEvery flagged attribute-coverage alert has cleared vs last known-good.' + (link ? '\n' + link : '');
+}
+
+// The per-attribute client ask — same consultative voice as depthAskEmail: a proposal,
+// not an alarm. cov = current fill % when the column exists, null when it's not in the feed.
+export function attrAskEmail(client, mkt, spec, cov) {
+  const loc = client + ' ' + String(mkt || '').toUpperCase();
+  const disp = 'g:' + spec.key;
+  const missing = cov == null;
+  const tierLine = spec.req === 'required'
+    ? 'a required attribute in Google’s product data specification — every product must carry it'
+    : spec.req === 'cond'
+      ? 'required by Google in specific cases (' + spec.note + ')'
+      : spec.req === 'ai'
+        ? 'one of the six conversational AI attributes Google reads for its AI and agentic shopping surfaces (' + spec.note + ')'
+        : 'a recommended attribute in Google’s product data specification (' + spec.note + ')';
+  const benefit = spec.req === 'required'
+    ? 'Products missing it are at risk of disapproval, so closing the gap protects live coverage directly.'
+    : spec.req === 'cond'
+      ? 'Where the condition applies, items without it can be limited or disapproved — completing it protects eligibility and improves how precisely the campaigns can segment.'
+      : spec.req === 'ai'
+        ? 'These attributes feed Google’s conversational shopping experiences (AI Mode, agentic surfaces) — completing them early is a visibility advantage over competitors whose feeds stop at the classic spec.'
+        : 'Filling it improves product matching and gives the Shopping campaigns more surface to segment and optimise against.';
+  const subject = loc + ' — feed data: ' + (missing ? 'proposal to add ' + disp : 'proposal to lift ' + disp + ' coverage');
+  const body = 'Hi team,\n\n'
+    + 'A quick recommendation from our feed monitoring. '
+    + (missing
+      ? 'The ' + loc + ' feed does not currently carry ' + disp + '.'
+      : 'In the ' + loc + ' feed, ' + disp + ' is filled on ' + cov + '% of products.')
+    + ' It is ' + tierLine + '. ' + benefit + '\n\n'
+    + (missing
+      ? 'If the data exists in your PIM or product export, we can map and structure it into the feed from our side — happy to share the exact field format and a worked example for sign-off before anything changes in the live feed.'
+      : 'We would propose a structured pass to close the gap — we can share the affected product set and the proposed values for sign-off before anything changes in the live feed.')
+    + '\n\nBest regards,\nRay';
+  return { subject, body };
 }
 
 /* ---------------- baseline diff -> alerts ---------------------------------------------- */

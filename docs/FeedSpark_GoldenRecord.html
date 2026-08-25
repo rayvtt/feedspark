@@ -113,9 +113,22 @@ window.addEventListener('load',restore);
   .tbadge.req{background:#FDECEC;color:var(--risk)}
   .tbadge.cond{background:#FCF1E3;color:var(--orange-ink)}
   .tbadge.rec{background:#EEF2F7;color:var(--navy)}
-  .at-row{display:grid;grid-template-columns:200px minmax(120px,1fr) 62px 74px minmax(170px,.95fr);gap:10px;align-items:center;padding:7px 0;border-top:1px dashed var(--line);font-size:12.5px}
+  .tbadge.ai{background:#F1EBFD;color:#6D28D9}
+  .at-row{display:grid;grid-template-columns:200px minmax(120px,1fr) 62px 74px minmax(150px,.85fr) 122px;gap:10px;align-items:center;padding:7px 0;border-top:1px dashed var(--line);font-size:12.5px}
   .at-row:first-of-type{border-top:none}
-  @media(max-width:900px){.at-row{grid-template-columns:150px 1fr 56px 64px;}.at-note{display:none}}
+  @media(max-width:900px){.at-row{grid-template-columns:150px 1fr 56px 64px;}.at-note,.at-act{display:none}}
+  .at-act{display:flex;gap:5px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+  .abtn{border:1px solid var(--line);background:#fff;color:var(--ink-2);font:inherit;font-size:10.5px;font-weight:800;border-radius:7px;padding:3px 8px;cursor:pointer;white-space:nowrap}
+  .abtn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .askstamp{font-size:10px;font-weight:800;color:var(--good);white-space:nowrap}
+  body.demo .at-act,body.demo .askp{display:none!important}
+  /* the per-attribute client-ask composer (shared askdraft rails) */
+  .askp{background:var(--wash);border:1px solid var(--orange);border-radius:12px;padding:12px 14px;margin:10px 0}
+  .askp .af{display:flex;gap:8px;align-items:center;margin-bottom:7px;font-size:12px;font-weight:800}
+  .askp .af label{width:56px;flex:none;color:var(--muted)}
+  .askp input{font:inherit;font-size:12px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);flex:1;min-width:0}
+  .askp textarea{font:inherit;font-size:12px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:100%;min-height:180px;resize:vertical;line-height:1.45;box-sizing:border-box}
+  .askp .ab{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:12px;font-weight:800}
   .at-nm{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .at-nm i{font-style:normal;color:var(--muted);font-weight:700}
   .at-bar{height:9px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden}
@@ -143,6 +156,31 @@ window.addEventListener('load',restore);
   .q-in:focus{outline:none;border-color:var(--orange)}
   @keyframes lgspin{to{transform:rotate(360deg)}}
   .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--orange);border-top-color:transparent;border-radius:50%;animation:lgspin .7s linear infinite;vertical-align:-1px;margin-right:5px}
+  /* ⬇ PDF: the feed scorecard prints as a clean client-ready document (browser print-to-PDF).
+     Everything except section 03's panel hides; a branded header + footer frame the scorecard. */
+  #print-head{display:none}
+  @media print{
+    @page{margin:14mm 12mm}
+    body{background:#fff!important;color:#333!important}
+    .topbar,.demo-banner,.hero,.cat:not(#sec-detail),.footmark,#theme-tgl,
+    .det-actions,.at-act,#askp-slot,.refseg,#sec-detail .cat-h,#sec-detail .cat-sub{display:none!important}
+    #sec-detail{border-top:none;padding:0}
+    #sec-detail .wrap{max-width:none;padding:0}
+    .panel,.tier{box-shadow:none!important;border:1px solid #E6E6E6!important;background:#fff!important}
+    .tier{page-break-inside:avoid}
+    .gr-top{page-break-after:avoid}
+    #print-head{display:block;margin:0 0 14px;border-bottom:3px solid #ED6F0B;padding-bottom:10px}
+    #print-head .ph-brand{font-size:19px;font-weight:900}
+    #print-head .ph-brand span{color:#ED6F0B}
+    #print-head .ph-title{font-size:13px;font-weight:800;color:#4a4a4a;margin-top:2px}
+    #print-head .ph-meta{font-size:11px;font-weight:700;color:#8a94a0;margin-top:2px}
+    #print-foot{display:block!important;margin-top:16px;padding-top:8px;border-top:1px solid #E6E6E6;font-size:10px;font-weight:700;color:#8a94a0}
+    .at-row{grid-template-columns:230px 1fr 62px 54px!important}
+    .at-bar{border-color:#E6E6E6!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .dial .dial-bg{stroke:#F0F0EE!important}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+  #print-foot{display:none}
   /* rocket logo + module nav (shared) */
   .nav-toggle{border:none;background:none;cursor:pointer;padding:1px;border-radius:10px;flex:none;transition:transform .22s ease;display:inline-flex;text-decoration:none}
   .nav-toggle svg{width:26px;height:26px;display:block;overflow:visible}
@@ -199,6 +237,10 @@ window.addEventListener('load',restore);
 [data-theme=dark] .tbadge.req{background:rgba(241,112,122,.13);color:#F3868F}
 [data-theme=dark] .tbadge.cond{background:rgba(245,166,35,.15);color:#F0A44E}
 [data-theme=dark] .tbadge.rec{background:rgba(91,130,190,.18);color:#93B4E0}
+[data-theme=dark] .tbadge.ai{background:rgba(154,120,255,.18);color:#B9A3F5}
+[data-theme=dark] .abtn{background:#20242E;color:var(--ink-2);border-color:var(--line)}
+[data-theme=dark] .askp{background:#181B22;border-color:rgba(245,166,35,.4)}
+[data-theme=dark] .askp input,[data-theme=dark] .askp textarea{background:#161922;color:var(--ink);border-color:var(--line)}
 [data-theme=dark] .at-bar{background:#191C24;border-color:var(--line)}
 [data-theme=dark] .dial .dial-bg{stroke:#191C24}
 [data-theme=dark] .dial .dial-n{fill:var(--ink)}
@@ -255,13 +297,17 @@ window.addEventListener('load',restore);
   <div class="est-grid" id="est-grid"><div class="panel"><span class="muted">Loading…</span></div></div>
 </div></section>
 
-<section class="cat"><div class="wrap">
+<section class="cat" id="sec-detail"><div class="wrap">
+  <div id="print-head"></div>
   <div class="cat-h"><span class="k">03</span><h2>Feed scorecard</h2></div>
   <p class="cat-sub">The full attribute-by-attribute read: fill bars per attribute, Δ vs yesterday (or vs last
   known-good — flip the toggle), and the spec condition each requirement comes from. “Not in feed” on a
   conditional attribute is a flag to review, not an automatic fault — a pet-supplement feed has no
-  <b>color</b> to fill.</p>
+  <b>color</b> to fill. Every attribute carries <b>✉ Ask client</b> (a prefilled proposal on the shared
+  Gmail-draft rails) and <b>→ Brief</b> (opens a prefilled Workflow brief) — both also file the fix as a
+  task into Intake → Project Plan, like the Gmail triage.</p>
   <div class="panel" id="det-panel"><span class="muted">Pick a feed above.</span></div>
+  <div id="print-foot">FeedSpark · Private &amp; Confidential — Golden Record scorecard · attribute roster vetted against Google’s product data specification (support.google.com/google-ads/answer/7052112)</div>
 </div></section>
 
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential — Golden Record · attribute roster vetted against
@@ -307,7 +353,13 @@ window.addEventListener('load',restore);
     { k: 'material', t: 'rec', n: 'required only when it distinguishes variants' },
     { k: 'pattern', t: 'rec', n: 'required only when it distinguishes variants' },
     { k: 'size_type', t: 'rec', n: 'apparel: regular / petite / plus / tall…' },
-    { k: 'size_system', t: 'rec', n: 'apparel: UK / EU / US…' }
+    { k: 'size_system', t: 'rec', n: 'apparel: UK / EU / US…' },
+    { k: 'question_and_answer', t: 'ai', n: 'up to 30 Q&A pairs per product' },
+    { k: 'document_link', t: 'ai', n: 'PDF manuals / spec sheets, up to 5' },
+    { k: 'related_product', t: 'ai', n: 'part_of_set / often_bought_with / accessory…' },
+    { k: 'item_group_title', t: 'ai', n: 'names the variant family (with item_group_id)' },
+    { k: 'variant_option', t: 'ai', n: 'name–value pairs defining variant differences' },
+    { k: 'popularity_rank', t: 'ai', n: '0–100 rank — powers "bestseller" answers' }
   ];
   // mirrors the engine's goldenScore: required ×3 (missing = 0), gtin+mpn merge into one
   // identifier component ×2 (best of the two), other cond ×2 only when present, rec ×1
@@ -316,6 +368,7 @@ window.addEventListener('load',restore);
     var ws = 0, sum = 0, idBest = null;
     SPEC.forEach(function (s) {
       var a = attrs[s.k] || { present: false };
+      if (s.t === 'ai') return;   // the conversational six: an AI-readiness KPI, never score input
       if (s.k === 'gtin' || s.k === 'mpn') { if (a.present && (idBest == null || a.cov > idBest)) idBest = a.cov; return; }
       if (s.t === 'req') { ws += 3; sum += 3 * (a.present ? a.cov : 0); }
       else if (s.t === 'cond') { if (a.present) { ws += 2; sum += 2 * a.cov; } }
@@ -324,6 +377,47 @@ window.addEventListener('load',restore);
     ws += 2; sum += 2 * (idBest == null ? 0 : idBest);
     return ws ? Math.round((sum / ws) * 10) / 10 : 0;
   }
+  function aiCount(attrs) {
+    var n = 0, of = 0;
+    SPEC.forEach(function (s) { if (s.t === 'ai') { of++; if (attrs && (attrs[s.k] || {}).present) n++; } });
+    return { n: n, of: of };
+  }
+  // mirrors the engine's attrAskEmail — the per-attribute client ask (proposal, not alarm)
+  function attrAskEmail(client, mkt, s, cov) {
+    var loc = client + ' ' + String(mkt || '').toUpperCase();
+    var disp = 'g:' + s.k;
+    var missing = cov == null;
+    var tierLine = s.t === 'req'
+      ? 'a required attribute in Google’s product data specification — every product must carry it'
+      : s.t === 'cond'
+        ? 'required by Google in specific cases (' + s.n + ')'
+        : s.t === 'ai'
+          ? 'one of the six conversational AI attributes Google reads for its AI and agentic shopping surfaces (' + s.n + ')'
+          : 'a recommended attribute in Google’s product data specification (' + s.n + ')';
+    var benefit = s.t === 'req'
+      ? 'Products missing it are at risk of disapproval, so closing the gap protects live coverage directly.'
+      : s.t === 'cond'
+        ? 'Where the condition applies, items without it can be limited or disapproved — completing it protects eligibility and improves how precisely the campaigns can segment.'
+        : s.t === 'ai'
+          ? 'These attributes feed Google’s conversational shopping experiences (AI Mode, agentic surfaces) — completing them early is a visibility advantage over competitors whose feeds stop at the classic spec.'
+          : 'Filling it improves product matching and gives the Shopping campaigns more surface to segment and optimise against.';
+    return {
+      subject: loc + ' — feed data: ' + (missing ? 'proposal to add ' + disp : 'proposal to lift ' + disp + ' coverage'),
+      body: 'Hi team,\n\n'
+        + 'A quick recommendation from our feed monitoring. '
+        + (missing
+          ? 'The ' + loc + ' feed does not currently carry ' + disp + '.'
+          : 'In the ' + loc + ' feed, ' + disp + ' is filled on ' + cov + '% of products.')
+        + ' It is ' + tierLine + '. ' + benefit + '\n\n'
+        + (missing
+          ? 'If the data exists in your PIM or product export, we can map and structure it into the feed from our side — happy to share the exact field format and a worked example for sign-off before anything changes in the live feed.'
+          : 'We would propose a structured pass to close the gap — we can share the affected product set and the proposed values for sign-off before anything changes in the live feed.')
+        + '\n\nBest regards,\nRay'
+    };
+  }
+  function askKey(client, mkt, attr) { return 'grattr|' + client + '|' + mkt + '|' + attr; }
+  var ASK = { cfg: { to: {} }, asked: {} };   // shared with Label Guard's ask rails (labelaskcfg/labelasked)
+  function b64url(o) { var b = new TextEncoder().encode(JSON.stringify(o)), s = ''; b.forEach(function (c) { s += String.fromCharCode(c); }); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
   function scoreCol(s) {
     if (s == null) return 'var(--muted)';
     return s >= 95 ? 'var(--good)' : (s >= 85 ? '#F5A623' : (s >= 70 ? '#ED6F0B' : 'var(--risk)'));
@@ -520,7 +614,9 @@ window.addEventListener('load',restore);
     { t: 'cond', badge: '<span class="tbadge cond">Required in cases</span>', title: 'Required in specific cases',
       sub: 'Required when the condition applies — apparel markets, variants, identifiers. “Not in feed” is a review flag, not an automatic fault.' },
     { t: 'rec', badge: '<span class="tbadge rec">Recommended</span>', title: 'Recommended — the optimisation surface',
-      sub: 'Optional per the spec but they drive performance: matching, PMAX segmentation, AI shopping surfaces. This is where FeedSpark lifts the score.' }
+      sub: 'Optional per the spec but they drive performance: matching, PMAX segmentation, AI shopping surfaces. This is where FeedSpark lifts the score.' },
+    { t: 'ai', badge: '<span class="tbadge ai">AI · conversational</span>', title: 'Conversational AI — the six Google asked for',
+      sub: 'The conversational attributes Google reads for AI Mode and agentic shopping (2026). Usually submitted via a supplemental data source, so “not in feed” is the expected start state — this tier is the AI-readiness frontier, tracked as its own KPI and never counted against the Golden Record score.' }
   ];
 
   function renderDetail(k) {
@@ -531,6 +627,7 @@ window.addEventListener('load',restore);
     var h = '<div class="det-head"><h3>' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + '</h3>' + chChip() +
       '<span class="det-actions" style="margin-left:auto">' +
       '<button class="btn" id="det-csv" title="Download this scorecard as CSV">⬇ CSV</button>' +
+      '<button class="btn" id="det-pdf" title="Print-ready client presentation of this scorecard — save as PDF from the print dialog">⬇ PDF</button>' +
       '<button class="btn" id="det-ack" title="Adopt the current coverage as the new known-good">✓ Accept as known-good</button>' +
       '<button class="btn pri" id="det-scan">⟳ Rescan now</button></span></div>';
     if (!s) {
@@ -555,15 +652,18 @@ window.addEventListener('load',restore);
       (apMiss.length
         ? '<b>' + apMiss.length + ' apparel attribute' + (apMiss.length === 1 ? '' : 's') + ' not in the feed</b> (' + esc(apMiss.map(function (x) { return x.k; }).join(', ')) + ') — required for apparel in UK/DE/FR/US. '
         : '') +
-      'Weighted completeness <b style="color:' + scoreCol(score) + '">' + (score == null ? '—' : score + '%') + '</b> vs the FeedSpark Golden Record target of <b>99.9%</b>.</p>' +
+      'Weighted completeness <b style="color:' + scoreCol(score) + '">' + (score == null ? '—' : score + '%') + '</b> vs the FeedSpark Golden Record target of <b>99.9%</b>. ' +
+      (function () { var ai = aiCount(s.attrs); return '<b>' + ai.n + ' of ' + ai.of + '</b> conversational AI attributes live.'; })() + '</p>' +
       '</div></div>';
+    h += '<div id="askp-slot"></div>';
 
     TIERS.forEach(function (T) {
       var list = SPEC.filter(function (x) { return x.t === T.t; });
       var present = list.filter(function (x) { return (s.attrs[x.k] || {}).present; });
       var avg = present.length ? Math.round(present.reduce(function (a, x) { return a + s.attrs[x.k].cov; }, 0) / present.length * 10) / 10 : null;
       h += '<div class="tier"><div class="tier-h">' + T.badge + '<h4>' + T.title + '</h4>' +
-        '<span class="tavg">' + (avg == null ? 'none in feed' : 'avg fill ' + avg + '%') + '</span></div>' +
+        '<span class="tavg">' + (T.t === 'ai' ? present.length + ' of ' + list.length + ' live'
+          : (avg == null ? 'none in feed' : 'avg fill ' + avg + '%')) + '</span></div>' +
         '<p class="tier-sub">' + T.sub + '</p>';
       list.forEach(function (x) {
         var a = s.attrs[x.k] || { present: false };
@@ -588,6 +688,11 @@ window.addEventListener('load',restore);
             '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
             '<span class="at-note">' + esc(x.n) + '</span>';
         }
+        var stamp = ASK.asked[askKey(p.client, p.mkt, x.k)];
+        row += '<span class="at-act">' +
+          (stamp ? '<span class="askstamp" title="Proposal composed ' + new Date(stamp.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' → ' + esc(stamp.to) + '">✉ asked</span>' : '') +
+          '<button class="abtn" data-ask="' + esc(x.k) + '" title="Compose the client proposal for this attribute — and file it into the Project Plan">✉ Ask client</button>' +
+          '<button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled brief in Workflow — the fix also files as an Intake task">→ Brief</button></span>';
         h += row + '</div>';
       });
       h += '</div>';
@@ -596,10 +701,99 @@ window.addEventListener('load',restore);
     wire(k, s);
   }
 
+  /* ---- per-attribute actions: the client ask (shared askdraft rails) + the brief ---- */
+  function fileTask(p, attr, then) {
+    fetch(API + '/api/golden/plantask?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt) +
+      '&attr=' + encodeURIComponent(attr), { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (r) { then(r.ok ? ' + plan task filed' : ' (plan task failed: ' + (r.error || '?') + ')'); })
+      .catch(function () { then(' (plan task failed: network)'); });
+  }
+  function openAsk(k, attr) {
+    var d = CACHE[k]; if (!d || !d.snapshot) return;
+    var p = parts(k);
+    var x = SPEC.filter(function (s) { return s.k === attr; })[0]; if (!x) return;
+    var a = d.snapshot.attrs[attr] || { present: false };
+    var t = attrAskEmail(p.client, p.mkt, x, a.present ? a.cov : null);
+    var slot = $('askp-slot'); if (!slot) return;
+    slot.innerHTML = '<div class="askp">' +
+      '<div class="af"><label>To</label><input id="ask-to" value="' + esc(ASK.cfg.to[p.client] || '') + '" placeholder="client contact email"></div>' +
+      '<div class="af"><label>Subject</label><input id="ask-subject" value="' + esc(t.subject) + '"></div>' +
+      '<textarea id="ask-body">' + esc(t.body) + '</textarea>' +
+      '<div class="ab">' +
+      '<button class="btn pri" id="ask-draft">✉ Create Gmail draft</button>' +
+      '<button class="btn" id="ask-gmail" title="Compose right now in the ray@feedspark.com inbox">Open in Gmail now</button>' +
+      '<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ask-task" checked> file task in the Project Plan</label>' +
+      '<button class="btn" id="ask-cancel">✕</button>' +
+      '<span class="scanmsg" id="ask-msg"></span></div>' +
+      '<p class="hint muted" style="margin:8px 0 0;font-size:11.5px">Review and edit freely — nothing sends itself. The draft lands in the ray@feedspark.com Drafts folder via the Gmail bridge (~5 min); the plan task files as "Golden Record Fix - g:' + esc(attr) + '" so it rides Intake → Project Plan → pipeline like the Gmail triage.</p></div>';
+    slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    function maybeTask(then) {
+      if (!$('ask-task').checked) { then(''); return; }
+      fileTask(p, attr, then);
+    }
+    function markAsked(to) {
+      ASK.asked[askKey(p.client, p.mkt, attr)] = { t: Date.now(), to: to };
+      ASK.cfg.to[p.client] = to;
+    }
+    $('ask-cancel').onclick = function () { slot.innerHTML = ''; };
+    $('ask-draft').onclick = function () {
+      var to = $('ask-to').value.trim();
+      if (to.indexOf('@') < 1) { $('ask-msg').textContent = '✗ add the client contact email'; return; }
+      $('ask-msg').textContent = 'queueing…';
+      fetch(API + '/api/labels/askdraft', { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ to: to, subject: $('ask-subject').value, text: $('ask-body').value, keys: [askKey(p.client, p.mkt, attr)], client: p.client }) })
+        .then(function (r) { return r.json(); })
+        .then(function (r) {
+          if (r.error) { $('ask-msg').textContent = '✗ ' + r.error; return; }
+          markAsked(to);
+          maybeTask(function (extra) { $('ask-msg').textContent = '✓ draft queued' + extra; setTimeout(function () { renderDetail(k); }, 1600); });
+        })
+        .catch(function () { $('ask-msg').textContent = '✗ network'; });
+    };
+    $('ask-gmail').onclick = function () {
+      var to = $('ask-to').value.trim();
+      if (to.indexOf('@') < 1) { $('ask-msg').textContent = '✗ add the client contact email'; return; }
+      window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(to) +
+        '&su=' + encodeURIComponent($('ask-subject').value) + '&body=' + encodeURIComponent($('ask-body').value), '_blank');
+      fetch(API + '/api/labels/askdraft', { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ markOnly: true, to: to, keys: [askKey(p.client, p.mkt, attr)], client: p.client }) }).catch(function () {});
+      markAsked(to);
+      maybeTask(function (extra) { $('ask-msg').textContent = '✓ composed in Gmail' + extra; setTimeout(function () { renderDetail(k); }, 1600); });
+    };
+  }
+  function briefAttr(k, attr) {
+    var d = CACHE[k]; if (!d || !d.snapshot) return;
+    var p = parts(k), s = d.snapshot;
+    var x = SPEC.filter(function (sp) { return sp.k === attr; })[0]; if (!x) return;
+    var a = s.attrs[attr] || { present: false };
+    var dt = new Date(), mmyy = ('0' + (dt.getMonth() + 1)).slice(-2) + String(dt.getFullYear()).slice(2);
+    var tierName = x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required in specific cases' : (x.t === 'ai' ? 'conversational AI' : 'recommended'));
+    var lines = [
+      'Attribute: g:' + attr + ' (' + tierName + ' — ' + x.n + ')',
+      'Current: ' + (a.present ? 'filled on ' + a.cov + '% of ' + fmt(s.rows) + ' rows' : 'not in the feed'),
+      'Target: ' + (a.present ? 'lift coverage toward 100%' : 'add the attribute to the feed' + (x.t === 'ai' ? ' (supplemental data source)' : '')),
+      'Source: Golden Record scorecard (/golden)',
+    ];
+    // the fix ALSO files into Intake > Project Plan (keepalive: the write survives navigation)
+    try { fetch(API + '/api/golden/plantask?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt) +
+      '&attr=' + encodeURIComponent(attr), { method: 'POST', keepalive: true }).catch(function () {}); } catch (e) {}
+    location.href = '/workflow?brief=' + b64url({ client: p.client,
+      task: 'Golden Record Fix - g:' + attr + ' - ' + p.client + ' ' + p.mkt.toUpperCase() + ' - ' + mmyy,
+      cat: 'technical', scope: lines.join('\n') });
+  }
+
   function wire(k, s) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ask]'), function (el) {
+      el.onclick = function () { openAsk(k, el.getAttribute('data-ask')); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-brief]'), function (el) {
+      el.onclick = function () { briefAttr(k, el.getAttribute('data-brief')); };
+    });
     if ($('det-scan')) $('det-scan').onclick = function () { scan(k); };
     if ($('det-ack')) $('det-ack').onclick = function () { ack(k, $('det-ack')); };
     if ($('det-csv')) $('det-csv').onclick = function () { exportCsv(k); };
+    if ($('det-pdf')) $('det-pdf').onclick = function () { exportPdf(k); };
     var rq = $('ref-yday'), rb = $('ref-base');
     if (rq) rq.onclick = function () {
       if (rq.disabled || REFMODE === 'yday') return;
@@ -609,6 +803,24 @@ window.addEventListener('load',restore);
       if (REFMODE === 'base') return;
       REFMODE = 'base'; try { sessionStorage.setItem('gr-ref', 'base'); } catch (e) {} renderDetail(k);
     };
+  }
+
+  /* ---------------- PDF export (print-to-PDF: branded header, scorecard only) -------- */
+  function exportPdf(k) {
+    var d = CACHE[k]; if (!d || !d.snapshot) return;
+    var p = parts(k), s = d.snapshot;
+    var when = new Date(s.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    var score = goldenScore(s.attrs);
+    $('print-head').innerHTML =
+      '<div class="ph-brand">Feed<span>Spark</span></div>' +
+      '<div class="ph-title">Golden Record scorecard — ' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + ' (Google Shopping)</div>' +
+      '<div class="ph-meta">Attribute completeness vs Google’s product data specification · ' + fmt(s.rows) + ' products · scanned ' + esc(when) +
+      (score != null ? ' · Golden Record score ' + score + '%' : '') + '</div>';
+    var t0 = document.title;
+    document.title = 'FeedSpark Golden Record — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase() + ' — ' + new Date(s.t).toISOString().slice(0, 10);
+    var done = function () { document.title = t0; window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    window.print();
   }
 
   /* ---------------- CSV export ---------------- */
@@ -660,6 +872,13 @@ window.addEventListener('load',restore);
     }
     step();
   };
+
+  // ask-the-client state (contact memory + ✉ asked stamps — Label Guard's shared rails)
+  fetch(API + '/api/labels/askdraft').then(function (r) { return r.json(); }).then(function (d) {
+    ASK.cfg = (d && d.cfg) || { to: {} }; ASK.cfg.to = ASK.cfg.to || {};
+    ASK.asked = (d && d.asked) || {};
+    if (SEL) renderDetail(SEL);
+  }).catch(function () {});
 
   // email-on-confirmed-warning settings (KV goldenalertcfg via the worker)
   fetch(API + '/api/golden/alertcfg').then(function (r) { return r.json(); }).then(function (c) {
