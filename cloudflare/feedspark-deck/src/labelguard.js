@@ -191,7 +191,7 @@ export function snapshotFromParts(meta, cols, countsRow, groupRowsByKey, keys) {
 
 // fetch + assemble one feed's snapshot. fetchFn injectable for tests.
 // Throws Error('fetch-fail: ...') when the sheet is unreachable / not link-shared.
-export async function scanFeed(fetchFn, src, meta, keys) {
+export async function scanFeed(fetchFn, src, meta, keys, opts) {
   keys = keys || LABEL_KEYS;
   const get = async (tq) => {
     const r = await fetchFn(gvizUrl(src.id, src.gid, tq));
@@ -207,9 +207,23 @@ export async function scanFeed(fetchFn, src, meta, keys) {
   if (!head.length) throw new Error('fetch-fail: empty gviz response');
   const cols = findCols(head[0], keys);
 
-  // 2. one multi-count query: total rows (count id) + per-key filled counts
+  // 2. one multi-count query: total rows (count id) + per-key filled counts. With
+  // opts.attrs the Golden Record roster rides the SAME query (extra count() aggregates,
+  // columns already counted are reused) — attribute coverage costs zero extra subrequests.
   const sel = ['count(' + colLetter(cols.id) + ')'];
   for (const k of keys) if (cols.labels[k] >= 0) sel.push('count(' + colLetter(cols.labels[k]) + ')');
+  let attrCols = null; const attrPos = {};
+  if (opts && opts.attrs) {
+    attrCols = findAttrCols(head[0]);
+    const posOf = {}; posOf[cols.id] = 0;
+    { let ci = 1; for (const k of keys) if (cols.labels[k] >= 0) { posOf[cols.labels[k]] = ci; ci++; } }
+    for (const s of ATTR_SPEC) {
+      const c = attrCols[s.key];
+      if (c == null || c < 0) continue;
+      if (posOf[c] != null) attrPos[s.key] = posOf[c];
+      else { posOf[c] = sel.length; attrPos[s.key] = sel.length; sel.push('count(' + colLetter(c) + ')'); }
+    }
+  }
   const counts = await get('select ' + sel.join(', '));
   const countsRow = counts.length > 1 ? counts[counts.length - 1] : [];
 
@@ -224,7 +238,9 @@ export async function scanFeed(fetchFn, src, meta, keys) {
     groupRowsByKey[k] = g.slice(1); // drop the gviz header row
   }
 
-  return snapshotFromParts(meta, cols, countsRow, groupRowsByKey, keys);
+  const snap = snapshotFromParts(meta, cols, countsRow, groupRowsByKey, keys);
+  if (attrCols) snap.attrs = attrsFromCounts(attrCols, attrPos, countsRow, snap.rows);
+  return snap;
 }
 
 /* ---------------- live cross-label dissection ------------------------------------------ */
@@ -528,6 +544,23 @@ export function buildReport(inp) {
     L.push('');
   }
 
+  // Golden Record section (attribute coverage vs Google's product data spec)
+  if (inp.grAlerts) {
+    let gN = 0;
+    const gLines = [];
+    for (const k of Object.keys(inp.grAlerts)) {
+      for (const a of ((inp.grAlerts[k] || {}).alerts || [])) {
+        if (a.sev === 'info') continue;
+        gN++;
+        if (gLines.length < 15) gLines.push('  [' + String(a.sev).toUpperCase() + '] ' + dispFeed(k.split('|')[0], k.split('|')[1]) + ' — ' + a.msg);
+      }
+    }
+    L.push('GOLDEN RECORD ALERTS — attribute coverage vs last known-good (' + gN + ')');
+    if (gLines.length) { for (const s of gLines) L.push(s); if (gN > gLines.length) L.push('  … +' + (gN - gLines.length) + ' more on /golden'); }
+    else L.push('  none — attribute coverage holds on every scanned feed');
+    L.push('');
+  }
+
   if (link) L.push('Live board: ' + link);
   return L.join('\n');
 }
@@ -616,6 +649,156 @@ export function depthProfile(values) {
   const pct = {};
   for (const b of ['1', '2', '3', '4', '5', '6+']) pct[b] = counts[b] ? Math.round((counts[b] / total) * 1000) / 10 : 0;
   return { pct, avg: Math.round((wsum / total) * 10) / 10, skus: total };
+}
+
+/* ---------------- Golden Record: attribute coverage (module /golden) ------------------- */
+// The attribute roster, vetted against Google's product data specification
+// (support.google.com/google-ads/answer/7052112 — checked Aug 2026). Three tiers:
+//   required — required for every product (feed-carried)
+//   cond     — required in specific cases; `note` quotes the condition. For FeedSpark's
+//              apparel/footwear estate the apparel five (color/size/gender/age_group +
+//              item_group_id) are effectively required — the page flags them hard.
+//   rec      — optional/recommended per the spec: the optimisation surface.
+// Account-level attributes (shipping, tax) live in Merchant Center settings, not the
+// feed — deliberately absent so a healthy feed never flags on them.
+export const ATTR_SPEC = [
+  { key: 'id',            req: 'required', note: 'unique identifier — use the SKU' },
+  { key: 'title',         req: 'required', note: 'max 150 chars' },
+  { key: 'description',   req: 'required', note: 'max 5000 chars' },
+  { key: 'link',          req: 'required', note: 'product landing page' },
+  { key: 'image_link',    req: 'required', note: 'min 500×500px enforced from Jan 2027' },
+  { key: 'availability',  req: 'required', note: 'in_stock / out_of_stock / preorder / backorder' },
+  { key: 'price',         req: 'required', note: 'must match the landing page' },
+  { key: 'brand',         req: 'cond', note: 'required for all new products' },
+  { key: 'gtin',          req: 'cond', note: 'strongly recommended — drives Shopping Graph matching; MPN accepted instead' },
+  { key: 'mpn',           req: 'cond', note: 'required when no GTIN is available' },
+  { key: 'condition',     req: 'cond', note: 'required if used / refurbished' },
+  { key: 'item_group_id', req: 'cond', note: 'required for variants + all free listings' },
+  { key: 'color',         req: 'cond', apparel: true, note: 'required — apparel in UK/DE/FR/US/JP/BR + variants' },
+  { key: 'size',          req: 'cond', apparel: true, note: 'required — apparel Clothing & Shoes + variants' },
+  { key: 'gender',        req: 'cond', apparel: true, note: 'required — apparel in UK/DE/FR/US/JP/BR + variants' },
+  { key: 'age_group',     req: 'cond', apparel: true, note: 'required — apparel in UK/DE/FR/US/JP/BR + variants' },
+  { key: 'google_product_category', req: 'rec', note: 'Google auto-assigns; submit to override' },
+  { key: 'product_type',  req: 'rec', note: 'drives PMAX listing groups — monitored in depth on PT Guard' },
+  { key: 'sale_price',    req: 'rec', note: 'with sale_price_effective_date for promos' },
+  { key: 'additional_image_link', req: 'rec', note: 'up to 10 — fuels image cycling' },
+  { key: 'product_highlight', req: 'rec', note: '2–100 highlights — AI-surfaces read these' },
+  { key: 'product_detail',    req: 'rec', note: 'structured tech specs' },
+  { key: 'material',      req: 'rec', note: 'required only when it distinguishes variants' },
+  { key: 'pattern',       req: 'rec', note: 'required only when it distinguishes variants' },
+  { key: 'size_type',     req: 'rec', note: 'apparel: regular / petite / plus / tall…' },
+  { key: 'size_system',   req: 'rec', note: 'apparel: UK / EU / US…' },
+];
+// repeatable fields often ship numbered from feed tools — slot 1 aliases onto the bare key
+const ATTR_ALIASES = {
+  product_type: ['product_type(1)'],
+  additional_image_link: ['additional_image_link(1)'],
+  product_highlight: ['product_highlight(1)'],
+  product_detail: ['product_detail(1)'],
+};
+export function findAttrCols(headerRow) {
+  const norm = (headerRow || []).map(normHeader);
+  const out = {};
+  for (const s of ATTR_SPEC) {
+    let i = norm.indexOf(s.key);
+    if (i < 0 && ATTR_ALIASES[s.key]) {
+      for (const a of ATTR_ALIASES[s.key]) { i = norm.indexOf(a); if (i >= 0) break; }
+    }
+    out[s.key] = i;
+  }
+  return out;
+}
+// Coverage caveat (same as the raw count() column in the label scan): gviz count()
+// includes formula-blank "" cells, so a column of ='' formulas reads as filled. The
+// per-value group-sum correction isn't affordable across 26 attributes — accepted.
+export function attrsFromCounts(attrCols, attrPos, countsRow, rows) {
+  const attrs = {};
+  for (const s of ATTR_SPEC) {
+    const c = attrCols[s.key];
+    if (c == null || c < 0) { attrs[s.key] = { present: false }; continue; }
+    const filled = Math.max(0, Math.round(parseFloat(countsRow && countsRow[attrPos[s.key]]) || 0));
+    attrs[s.key] = { present: true, filled, cov: rows ? Math.min(100, Math.round((filled / rows) * 1000) / 10) : 0 };
+  }
+  return attrs;
+}
+
+// The Golden Record score — one weighted completeness number per feed, transparent parts.
+// required: weight 3, a missing column counts as 0%. gtin+mpn merge into ONE identifier
+// component (weight 2, best of the two — the spec accepts either; both absent = 0).
+// Other cond attrs: present → weight 2; absent → excluded from the score (a pet-supplement
+// feed without `color` is not incomplete) but surfaced as a flag on the page.
+// rec: weight 1, absent counts as 0 — that IS the optimisation surface.
+export function goldenScore(attrs) {
+  if (!attrs) return null;
+  const parts = [];
+  let idBest = null;
+  for (const s of ATTR_SPEC) {
+    const a = attrs[s.key] || { present: false };
+    if (s.key === 'gtin' || s.key === 'mpn') {
+      if (a.present && (idBest == null || a.cov > idBest)) idBest = a.cov;
+      continue;
+    }
+    if (s.req === 'required') parts.push({ key: s.key, tier: s.req, cov: a.present ? a.cov : 0, w: 3, missing: !a.present });
+    else if (s.req === 'cond') { if (a.present) parts.push({ key: s.key, tier: s.req, cov: a.cov, w: 2, missing: false }); }
+    else parts.push({ key: s.key, tier: s.req, cov: a.present ? a.cov : 0, w: 1, missing: !a.present });
+  }
+  parts.push({ key: 'gtin/mpn', tier: 'cond', cov: idBest == null ? 0 : idBest, w: 2, missing: idBest == null });
+  let ws = 0, sum = 0;
+  for (const p of parts) { ws += p.w; sum += p.w * p.cov; }
+  const score = ws ? Math.round((sum / ws) * 10) / 10 : 0;
+  const reqMissing = ATTR_SPEC.filter((s) => s.req === 'required' && !(attrs[s.key] || {}).present).map((s) => s.key);
+  const condMissing = ATTR_SPEC.filter((s) => s.req === 'cond' && !(attrs[s.key] || {}).present).map((s) => s.key);
+  const recMissing = ATTR_SPEC.filter((s) => s.req === 'rec' && !(attrs[s.key] || {}).present).map((s) => s.key);
+  return { score, parts, reqMissing, condMissing, recMissing };
+}
+
+// coverage drop-off -> alerts, same shape as diffSnapshots so the shared mail rails
+// (estateMailPlan / alertKey) work unchanged. required + cond tiers can go critical
+// (products disapprove); recommended never crits — it can't take a product down.
+export const ATTR_TH = { reqWarn: 3, reqCrit: 10, recWarn: 10 };
+export function diffCoverage(base, cur, th) {
+  th = th || ATTR_TH;
+  const A = [];
+  if (!base || !cur || !base.attrs || !cur.attrs) return A;
+  for (const s of ATTR_SPEC) {
+    const b = base.attrs[s.key] || { present: false };
+    const c = cur.attrs[s.key] || { present: false };
+    const disp = s.key;
+    if (b.present && !c.present) {
+      A.push({ sev: s.req === 'rec' ? 'warn' : 'crit', code: 'attr-gone', label: s.key,
+        msg: disp + ' column VANISHED from the feed — was ' + b.cov + '% filled', was: b.cov, now: 0 });
+      continue;
+    }
+    if (!b.present && c.present) {
+      A.push({ sev: 'info', code: 'attr-new', label: s.key, msg: disp + ' column appeared — ' + c.cov + '% filled', now: c.cov });
+      continue;
+    }
+    if (!b.present || !c.present) continue;
+    const d = Math.round((b.cov - c.cov) * 10) / 10;
+    if (d <= 0) continue;
+    if (s.req === 'rec') {
+      if (d >= th.recWarn) A.push({ sev: 'warn', code: 'attr-drop', label: s.key,
+        msg: disp + ' coverage dropped ' + d + 'pp (was ' + b.cov + '%, now ' + c.cov + '%)', was: b.cov, now: c.cov });
+    } else if (d >= th.reqCrit) {
+      A.push({ sev: 'crit', code: 'attr-drop', label: s.key,
+        msg: disp + ' coverage dropped ' + d + 'pp (was ' + b.cov + '%, now ' + c.cov + '%) — ' +
+          (s.req === 'required' ? 'REQUIRED attribute: products will disapprove' : 'required in specific cases'), was: b.cov, now: c.cov });
+    } else if (d >= th.reqWarn) {
+      A.push({ sev: 'warn', code: 'attr-drop', label: s.key,
+        msg: disp + ' coverage dropped ' + d + 'pp (was ' + b.cov + '%, now ' + c.cov + '%)', was: b.cov, now: c.cov });
+    }
+  }
+  return A;
+}
+export function goldenAlertEmail(feedName, alerts, link) {
+  return '🔴 Golden Record — ' + feedName + ': ' + alerts.length + ' confirmed attribute alert' + (alerts.length === 1 ? '' : 's') + '\n' +
+    'Seen on two consecutive scans vs last known-good — attribute coverage per Google’s product data specification.\n' +
+    alerts.map((a) => '• [' + String(a.sev).toUpperCase() + '] ' + a.msg).join('\n') +
+    '\nIntentional change? Open /golden and hit "Expected — accept as known-good".' +
+    (link ? '\n' + link : '');
+}
+export function goldenRecoveryEmail(feedName, link) {
+  return '✅ Golden Record — ' + feedName + ' recovered\nEvery flagged attribute-coverage alert has cleared vs last known-good.' + (link ? '\n' + link : '');
 }
 
 /* ---------------- baseline diff -> alerts ---------------------------------------------- */

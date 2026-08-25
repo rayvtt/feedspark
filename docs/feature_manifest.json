@@ -2177,6 +2177,128 @@
       "file": "docs/FeedSpark_ProductTypeGuard.html",
       "pattern": "askp-slot",
       "min": 2
+    },
+    {
+      "name": "nav: Golden Record link on Activity",
+      "file": "docs/FeedSpark_Activity.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on Command_Center",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on DeckBuilder",
+      "file": "docs/FeedSpark_DeckBuilder.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on FeedChat",
+      "file": "docs/FeedSpark_FeedChat.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on FeedLab",
+      "file": "docs/FeedSpark_FeedLab.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on GoldenRecord",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on KWCal",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on LabelGuard",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on Leadership",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on Pricer",
+      "file": "docs/FeedSpark_Pricer.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on ProductTypeGuard",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on Readiness",
+      "file": "docs/FeedSpark_Readiness.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on Roadmap",
+      "file": "docs/FeedSpark_Roadmap.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on Task_Library",
+      "file": "docs/FeedSpark_Task_Library.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on Templates",
+      "file": "docs/FeedSpark_Templates.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "nav: Golden Record link on Workflow",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "href=\"/golden\""
+    },
+    {
+      "name": "engine: Golden Record attribute roster vetted vs Google spec (ATTR_SPEC)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "ATTR_SPEC",
+      "min": 3
+    },
+    {
+      "name": "engine: weighted Golden Record score (goldenScore)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "goldenScore",
+      "min": 1
+    },
+    {
+      "name": "engine: attribute-coverage drop alerts (diffCoverage)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "diffCoverage",
+      "min": 1
+    },
+    {
+      "name": "worker: Golden Record routes + scan-pass capture",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "/api/golden/",
+      "min": 4
+    },
+    {
+      "name": "worker: golden alert stores + badge counts",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "goldenalerts",
+      "min": 3
+    },
+    {
+      "name": "GoldenRecord: score dial + verdict",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "gr-verdict",
+      "min": 2
+    },
+    {
+      "name": "GoldenRecord: required/cond/rec tier badges",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "tbadge",
+      "min": 4
     }
   ]
 }

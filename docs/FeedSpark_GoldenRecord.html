@@ -1,0 +1,688 @@
+<meta charset="utf-8">
+<script>/* FCC-THEME */(function(){var d=document.documentElement;
+try{var t=localStorage.getItem('fcc-theme');if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light';}d.setAttribute('data-theme',t);}catch(e){d.setAttribute('data-theme','light');}
+try{if(localStorage.getItem('fcc-nav-collapsed')==='1')d.classList.add('nav-collapsed');}catch(e){}
+var moon='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>';
+var sun='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+var SK='fcc-scroll:'+location.pathname;
+function restore(){try{var y=sessionStorage.getItem(SK);if(y!=null)window.scrollTo(0,parseInt(y,10)||0);}catch(e){}}
+function ic(){return d.getAttribute('data-theme')==='dark'?sun:moon;}
+function mk(){
+  if(!document.getElementById('theme-tgl')){var tb=document.querySelector('.topbar-in');
+    var b=document.createElement('button');b.id='theme-tgl';b.type='button';b.setAttribute('aria-label','Toggle light or dark theme');b.title='Toggle light / dark';b.innerHTML=ic();
+    b.onclick=function(){var n=d.getAttribute('data-theme')==='dark'?'light':'dark';d.setAttribute('data-theme',n);try{localStorage.setItem('fcc-theme',n);}catch(e){}b.innerHTML=ic();};
+    if(tb)tb.appendChild(b);else{b.style.cssText+=';position:fixed;top:12px;right:14px;z-index:60';document.body.appendChild(b);}}
+  var cc=document.getElementById('nav-collapse');
+  if(cc&&!cc.__w){cc.__w=1;cc.onclick=function(){var c=d.classList.toggle('nav-collapsed');try{localStorage.setItem('fcc-nav-collapsed',c?'1':'0');}catch(e){}};}
+  restore();
+}
+var _st;window.addEventListener('scroll',function(){if(_st)cancelAnimationFrame(_st);_st=requestAnimationFrame(function(){try{sessionStorage.setItem(SK,window.scrollY);}catch(e){}});},{passive:true});
+if(document.readyState!=='loading')mk();else document.addEventListener('DOMContentLoaded',mk);
+window.addEventListener('load',restore);
+})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FeedSpark · Golden Record</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
+  :root{--orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;--ink:#333;--ink-2:#4a4a4a;
+    --muted:#8a94a0;--line:#E6E6E6;--paper:#fff;--wash:#F7F7F5;--navy:#1A365D;--good:#15803D;--risk:#C0392B;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);--radius:14px}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Lato,system-ui,sans-serif;color:var(--ink);background:var(--wash);line-height:1.5}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1180px;margin:0 auto;padding:12px 28px;display:flex;align-items:center;gap:18px}
+  .brand{font-weight:900;font-size:18px}.brand span{color:var(--orange-deep)}
+  .tb-tag{font-size:12px;font-weight:800;color:var(--muted);border-left:1px solid var(--line);padding-left:16px}
+  .tb-nav{margin-left:auto;display:flex;gap:16px;flex-wrap:wrap}
+  .tb-nav a{font-size:13px;font-weight:700;color:var(--ink-2);text-decoration:none}.tb-nav a:hover{color:var(--orange-deep)}
+  .hero{padding:38px 0 22px;background:linear-gradient(180deg,#fff,var(--wash));border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--orange-deep)}
+  h1{font-size:32px;font-weight:900;margin:8px 0 10px;letter-spacing:-.01em}
+  .hero p{color:var(--ink-2);font-size:15px;max-width:900px;margin:0}
+  .hero a{color:var(--orange-deep);font-weight:700}
+  .cat{padding:34px 0 6px;border-top:1px solid var(--line)}
+  .cat-h{display:flex;align-items:baseline;gap:12px;margin-bottom:4px;flex-wrap:wrap}
+  .cat-h .k{font-size:12px;font-weight:900;color:#fff;background:var(--orange-deep);border-radius:7px;padding:3px 9px}
+  .cat-h h2{font-size:22px;font-weight:900;margin:0}
+  .cat-sub{color:var(--muted);font-size:13.5px;margin:0 0 18px;max-width:860px}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px}
+  .btn{border:1px solid var(--line);background:#fff;color:var(--ink-2);font:inherit;font-size:12px;font-weight:800;border-radius:9px;padding:7px 12px;cursor:pointer}
+  .btn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .btn.pri{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+  .btn.pri:hover{background:var(--orange-ink)}
+  .btn[disabled]{opacity:.5;cursor:default}
+  .muted{color:var(--muted)}
+  /* estate grid */
+  .est-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+  .est-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
+  .est-card h3{margin:0 0 8px;font-size:16px;font-weight:900}
+  .est-mkt{display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px dashed var(--line);cursor:pointer}
+  .est-mkt:hover .mkt-code{color:var(--orange-deep)}
+  .est-mkt.sel{background:rgba(245,166,35,.08);border-radius:8px;margin:0 -8px;padding:7px 8px}
+  .mkt-code{font-size:12px;font-weight:900;text-transform:uppercase;min-width:30px;flex:none;display:inline-flex;align-items:center;gap:5px}
+  .chip-ch{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;border-radius:5px;color:#fff;font-size:9.5px;font-weight:900;padding:0 4px;flex:none;line-height:1}
+  .chip-g{background:#34A853}
+  .st-pill{font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;border-radius:100px;padding:3px 9px;flex:none}
+  .st-ok{background:#EBF7EF;color:var(--good)}
+  .st-warn{background:#FCF1E3;color:var(--orange-ink)}
+  .st-crit{background:#FDECEC;color:var(--risk)}
+  .st-never,.st-stale{background:var(--wash);color:var(--muted);border:1px solid var(--line)}
+  .st-unreachable{background:#FDECEC;color:var(--risk);border:1px dashed var(--risk)}
+  .est-score{font-size:15px;font-weight:900;flex:none;min-width:44px;text-align:right;font-variant-numeric:tabular-nums}
+  .est-meta{font-size:11px;color:var(--muted);font-weight:700;margin-left:auto;text-align:right;line-height:1.35}
+  /* alerts */
+  .al-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-top:1px dashed var(--line);flex-wrap:wrap}
+  .al-row:first-child{border-top:none}
+  .al-sev{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;border-radius:6px;padding:3px 8px;flex:none;margin-top:2px}
+  .al-sev.crit{background:#FDECEC;color:var(--risk)}
+  .al-sev.warn{background:#FCF1E3;color:var(--orange-ink)}
+  .al-sev.info{background:#EEF2F7;color:var(--navy)}
+  .al-feed{font-size:12.5px;font-weight:900;flex:none;margin-top:2px;cursor:pointer}
+  .al-feed:hover{color:var(--orange-deep)}
+  .al-msg{font-size:13px;color:var(--ink-2);flex:1;min-width:220px}
+  .al-t{font-size:11px;color:var(--muted);font-weight:700;flex:none;margin-top:3px}
+  .al-empty{color:var(--good);font-weight:800;font-size:13.5px;padding:6px 0}
+  /* detail: score dial + tiered attribute scorecard */
+  .gr-top{display:flex;gap:26px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+  .dial{width:150px;height:150px;flex:none}
+  .dial .dial-bg{fill:none;stroke:var(--wash);stroke-width:11}
+  .dial .dial-fg{fill:none;stroke-width:11;stroke-linecap:round;transform:rotate(-90deg);transform-origin:60px 60px;transition:stroke-dasharray .5s}
+  .dial text{font-family:inherit}
+  .dial .dial-n{font-size:30px;font-weight:900;fill:var(--ink)}
+  .dial .dial-s{font-size:8.5px;font-weight:900;letter-spacing:.12em;fill:var(--muted)}
+  .gr-info{flex:1;min-width:280px}
+  .det-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:4px}
+  .det-head h3{margin:0;font-size:19px;font-weight:900}
+  .det-stats{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11.5px;font-weight:800;color:var(--muted)}
+  .det-stats b{color:var(--ink)}
+  .gr-verdict{font-size:13px;color:var(--ink-2);margin:8px 0 10px;max-width:640px}
+  .gr-verdict b{color:var(--ink)}
+  .det-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .refseg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .refseg button{border:0;background:#fff;color:var(--muted);font:inherit;font-size:10.5px;font-weight:800;padding:3px 8px;cursor:pointer}
+  .refseg button.on{background:var(--orange-deep);color:#fff;cursor:default}
+  .refseg button[disabled]{opacity:.45;cursor:default}
+  /* tier sections */
+  .tier{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 18px;margin-top:14px}
+  .tier-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .tier-h h4{margin:0;font-size:15px;font-weight:900}
+  .tier-h .tavg{margin-left:auto;font-size:12px;font-weight:900;color:var(--orange-deep)}
+  .tier-sub{font-size:12px;color:var(--muted);margin:0 0 8px}
+  .tbadge{font-size:9.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;border-radius:6px;padding:3px 8px;flex:none}
+  .tbadge.req{background:#FDECEC;color:var(--risk)}
+  .tbadge.cond{background:#FCF1E3;color:var(--orange-ink)}
+  .tbadge.rec{background:#EEF2F7;color:var(--navy)}
+  .at-row{display:grid;grid-template-columns:200px minmax(120px,1fr) 62px 74px minmax(170px,.95fr);gap:10px;align-items:center;padding:7px 0;border-top:1px dashed var(--line);font-size:12.5px}
+  .at-row:first-of-type{border-top:none}
+  @media(max-width:900px){.at-row{grid-template-columns:150px 1fr 56px 64px;}.at-note{display:none}}
+  .at-nm{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .at-nm i{font-style:normal;color:var(--muted);font-weight:700}
+  .at-bar{height:9px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden}
+  .at-bar i{display:block;height:100%;border-radius:100px;background:var(--orange)}
+  .at-bar i.full{background:var(--good)}
+  .at-bar i.low{background:var(--risk)}
+  .at-cov{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}
+  .at-delta{text-align:right;font-weight:900;font-size:11px;font-variant-numeric:tabular-nums}
+  .up{color:var(--good)}.down{color:var(--risk)}
+  .at-note{font-size:11px;color:var(--muted);font-weight:700}
+  .at-miss{font-size:10px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--line);border-radius:100px;padding:2px 9px;justify-self:start}
+  .at-miss.hard{color:var(--risk);border-color:var(--risk)}
+  .at-row.missing .at-nm,.at-row.missing .at-note{opacity:.6}
+  /* demo mode (client-facing screen shares): identities masked */
+  .demo-banner{position:sticky;top:62px;z-index:45;background:#1A365D;color:#fff;font-size:12.5px;font-weight:800;padding:8px 0;display:none}
+  body.demo .demo-banner{display:block}
+  .demo-banner .wrap{display:flex;align-items:center;gap:12px}
+  .demo-banner button{margin-left:auto;border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;font:inherit;font-size:11.5px;font-weight:800;border-radius:8px;padding:4px 11px;cursor:pointer}
+  body.demo #ml-row{display:none!important}
+  .btn.demo-on{background:#1A365D;border-color:#1A365D;color:#fff}
+  .footmark{padding:34px 0;color:var(--muted);font-size:12px;font-weight:700;border-top:1px solid var(--line);margin-top:26px}
+  .footmark a{color:var(--muted)}
+  .scanmsg{font-size:12px;font-weight:800;color:var(--orange-deep)}
+  .q-in{font:inherit;font-size:11.5px;font-weight:700;padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:170px}
+  .q-in:focus{outline:none;border-color:var(--orange)}
+  @keyframes lgspin{to{transform:rotate(360deg)}}
+  .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--orange);border-top-color:transparent;border-radius:50%;animation:lgspin .7s linear infinite;vertical-align:-1px;margin-right:5px}
+  /* rocket logo + module nav (shared) */
+  .nav-toggle{border:none;background:none;cursor:pointer;padding:1px;border-radius:10px;flex:none;transition:transform .22s ease;display:inline-flex;text-decoration:none}
+  .nav-toggle svg{width:26px;height:26px;display:block;overflow:visible}
+  .rk-lift{animation:rkbob 2.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+  .rk-body{fill:var(--ink-2);transition:fill .2s}.rk-win{fill:#fff}.rk-fin{fill:var(--orange-deep)}
+  .rk-flame{fill:var(--orange);transform-box:fill-box;transform-origin:center top;animation:rkflame .42s ease-in-out infinite alternate}
+  .nav-toggle:hover{transform:translateY(-3px)}.nav-toggle:hover .rk-body{fill:var(--orange-ink)}
+  @keyframes rkbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}
+  @keyframes rkflame{from{transform:scaleY(.6) scaleX(.82);opacity:.7}to{transform:scaleY(1.15) scaleX(1);opacity:1}}
+  .spk-flame{width:11px;height:15px;margin-left:2px;fill:var(--orange);transform-box:fill-box;transform-origin:center bottom;animation:rkflame .55s ease-in-out infinite alternate}
+  .tb-modules a.on{color:var(--orange-deep)}
+  @media(prefers-reduced-motion:reduce){.rk-lift,.rk-flame,.spk-flame{animation:none}}
+  @media(max-width:820px){ .tb-modules{display:none} }
+</style>
+<style>/* FCC-THEME */
+#theme-tgl{margin-left:10px;flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line,#E6E6E6);background:transparent;color:var(--ink-2,#4a4a4a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s}
+#theme-tgl:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
+/* icon module nav + collapse */
+.nav-collapse{border:none;background:none;cursor:pointer;color:var(--muted,#8a94a0);padding:5px;border-radius:8px;display:inline-flex;align-items:center;flex:none;margin-left:auto}
+.nav-collapse:hover{color:var(--orange-deep,#ED6F0B)}
+.tb-modules{margin-left:8px!important;display:flex;gap:3px;align-items:center;flex-wrap:wrap}
+.tb-modules a.tbm{position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;color:var(--ink-2,#4a4a4a);text-decoration:none;transition:background .15s,color .15s}
+.tb-modules a.tbm:hover{background:var(--wash,#F7F7F5);color:var(--orange-deep,#ED6F0B)}
+.tb-modules a.tbm.on{background:rgba(245,166,35,.14);color:var(--orange-deep,#ED6F0B)}
+.tb-modules a.tbm::after{content:attr(data-lbl);position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#1A365D;color:#fff;font-size:11px;font-weight:800;letter-spacing:.02em;white-space:nowrap;padding:4px 8px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .15s;z-index:70}
+.tb-modules a.tbm:hover::after{opacity:1}
+.nav-collapsed .tb-modules{display:none}
+[data-theme=dark] .tb-modules a.tbm:hover{background:#20242E}
+[data-theme=dark] .tb-modules a.tbm.on{background:rgba(245,166,35,.16)}
+[data-theme=dark] .tb-modules a.tbm::after{background:#0B0D12}
+[data-theme=dark] .nav-collapse:hover{color:var(--orange-ink)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark;
+  --ink:#E7E9ED;--ink-2:#B9BEC7;--muted:#828D9C;--line:#2C3039;--paper:#1C1F27;--wash:#101218;
+  --navy:#5B82BE;--orange-ink:#F0A44E;--good:#48D07E;--risk:#F1707A;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.42)}
+[data-theme=dark] body{background:var(--wash);color:var(--ink)}
+[data-theme=dark] .topbar{background:rgba(18,20,26,.9)}
+[data-theme=dark] a{color:var(--orange-ink)}
+[data-theme=dark] .panel,[data-theme=dark] .est-card,[data-theme=dark] .tier{background:var(--paper);border-color:var(--line)}
+[data-theme=dark] .btn{background:#20242E;color:var(--ink-2);border-color:var(--line)}
+[data-theme=dark] .btn.pri{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+[data-theme=dark] .q-in{background:#161922;border-color:var(--line);color:var(--ink)}
+[data-theme=dark] .refseg button{background:#20242E;color:var(--muted)}
+[data-theme=dark] .refseg button.on{background:var(--orange-deep);color:#fff}
+[data-theme=dark] .hero{background:transparent}
+[data-theme=dark] .est-mkt.sel{background:rgba(245,166,35,.1)}
+[data-theme=dark] .st-ok{background:rgba(72,208,126,.14);color:#6FE0A0}
+[data-theme=dark] .st-warn{background:rgba(245,166,35,.15);color:#F0A44E}
+[data-theme=dark] .st-crit,[data-theme=dark] .st-unreachable{background:rgba(241,112,122,.13);color:#F3868F}
+[data-theme=dark] .al-sev.crit{background:rgba(241,112,122,.13);color:#F3868F}
+[data-theme=dark] .al-sev.warn{background:rgba(245,166,35,.15);color:#F0A44E}
+[data-theme=dark] .al-sev.info{background:rgba(91,130,190,.18);color:#93B4E0}
+[data-theme=dark] .tbadge.req{background:rgba(241,112,122,.13);color:#F3868F}
+[data-theme=dark] .tbadge.cond{background:rgba(245,166,35,.15);color:#F0A44E}
+[data-theme=dark] .tbadge.rec{background:rgba(91,130,190,.18);color:#93B4E0}
+[data-theme=dark] .at-bar{background:#191C24;border-color:var(--line)}
+[data-theme=dark] .dial .dial-bg{stroke:#191C24}
+[data-theme=dark] .dial .dial-n{fill:var(--ink)}
+[data-theme=dark] ::-webkit-scrollbar-thumb{background:#2C3039}
+</style>
+
+<div class="topbar"><div class="topbar-in">
+  <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
+  <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
+  <div class="tb-tag">Golden Record</div>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm on" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a></nav>
+</div></div>
+
+<div class="demo-banner"><div class="wrap">🎭 DEMO MODE — client identities masked (industry aliases)
+  <button id="demo-off" type="button">Exit demo</button></div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Private &amp; Confidential · Golden Record</div>
+  <h1>The Golden Record — live attribute completeness</h1>
+  <p>Every wired Google Shopping feed, scored live against
+  <a href="https://support.google.com/google-ads/answer/7052112" target="_blank" rel="noopener">Google’s product
+  data specification</a>: which attributes are <b>required</b> for every product, which are <b>required in
+  specific cases</b> (apparel, variants, identifiers), and which are <b>recommended</b> — the optimisation
+  surface where FeedSpark does its work. Coverage is captured on every estate scan at zero extra cost, the
+  Golden Record score trends per feed, and a coverage drop on a required attribute flags here and badges every
+  FCC page — before products start disapproving. An intentional change? <b>“Expected — accept as
+  known-good”.</b></p>
+</div></header>
+
+<section class="cat"><div class="wrap">
+  <div class="cat-h"><span class="k">01</span><h2>Active alerts</h2>
+    <span class="scanmsg" id="al-count"></span>
+    <span id="ml-row" style="margin-left:auto;display:flex;gap:7px;align-items:center;flex-wrap:wrap;font-size:12px;font-weight:800">
+      <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer" title="One digest per feed when a warning is CONFIRMED on two consecutive scans, ✅ on recovery — sent via the Gmail bridge"><input type="checkbox" id="ml-on"> ✉ email on confirmed warning</label>
+      <input class="q-in" id="ml-to" placeholder="ray@feedspark.com" style="width:190px">
+      <button class="btn" id="ml-save">Save</button>
+      <span class="scanmsg" id="ml-msg"></span></span></div>
+  <p class="cat-sub">Attribute-coverage drop-offs vs the last known-good state, worst first. <b>Required</b> and
+  required-in-cases attributes can go critical — coverage lost there disapproves products; <b>recommended</b>
+  attributes warn only. With ✉ on, a warning confirmed on <b>two consecutive scans</b> emails a digest, and a ✅
+  follows when the feed clears.</p>
+  <div class="panel" id="alerts-panel"><span class="muted">Loading…</span></div>
+</div></section>
+
+<section class="cat"><div class="wrap">
+  <div class="cat-h"><span class="k">02</span><h2>Estate scorecard</h2>
+    <span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="scanmsg" id="scan-all-msg"></span>
+    <button class="btn" id="demo-tgl" title="Mask every client identity for a client-facing screen share">🎭 Demo mode</button>
+    <button class="btn pri" id="scan-all" title="Force-rescans every feed now (no freshness skip) — labels, product types and attribute coverage land in the same pass">⚡ Scan whole estate</button></span></div>
+  <p class="cat-sub"><span class="chip-ch chip-g">G</span> <b>Google Shopping feeds only</b> — the score is each
+  feed’s weighted attribute completeness (required ×3 · conditional ×2 · recommended ×1). FeedSpark’s Golden
+  Record target: <b>99.9%</b>. Click a market for the full scorecard below. Coverage rides the same scan
+  rotation as Label&nbsp;Guard and PT&nbsp;Guard — one pass captures all three.</p>
+  <div class="est-grid" id="est-grid"><div class="panel"><span class="muted">Loading…</span></div></div>
+</div></section>
+
+<section class="cat"><div class="wrap">
+  <div class="cat-h"><span class="k">03</span><h2>Feed scorecard</h2></div>
+  <p class="cat-sub">The full attribute-by-attribute read: fill bars per attribute, Δ vs yesterday (or vs last
+  known-good — flip the toggle), and the spec condition each requirement comes from. “Not in feed” on a
+  conditional attribute is a flag to review, not an automatic fault — a pet-supplement feed has no
+  <b>color</b> to fill.</p>
+  <div class="panel" id="det-panel"><span class="muted">Pick a feed above.</span></div>
+</div></section>
+
+<div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential — Golden Record · attribute roster vetted against
+<a href="https://support.google.com/google-ads/answer/7052112" target="_blank" rel="noopener">Google’s product data specification</a> (Aug 2026)</div></div>
+
+<script>
+(function () {
+  'use strict';
+  var API = '';
+  var ESTATE = { feeds: {}, alerts: {} };
+  var SEL = null;                // "client|mkt"
+  var CACHE = {};                // key -> {snapshot, baseline, daily}
+  var STALE_MS = 20 * 3600 * 1000;
+  // Δ-reference: 'yday' = yesterday's auto-capture (default), 'base' = last known-good.
+  // Estate alerts ALWAYS fire vs last known-good regardless of this display toggle.
+  var REFMODE = 'yday'; try { if (sessionStorage.getItem('gr-ref') === 'base') REFMODE = 'base'; } catch (e) {}
+
+  // ---- the attribute roster (mirrors the engine's ATTR_SPEC — vetted against Google's
+  // product data specification, support.google.com/google-ads/answer/7052112, Aug 2026)
+  var SPEC = [
+    { k: 'id', t: 'req', n: 'unique identifier — use the SKU' },
+    { k: 'title', t: 'req', n: 'max 150 chars' },
+    { k: 'description', t: 'req', n: 'max 5000 chars' },
+    { k: 'link', t: 'req', n: 'product landing page' },
+    { k: 'image_link', t: 'req', n: 'min 500×500px enforced from Jan 2027' },
+    { k: 'availability', t: 'req', n: 'in_stock / out_of_stock / preorder / backorder' },
+    { k: 'price', t: 'req', n: 'must match the landing page' },
+    { k: 'brand', t: 'cond', n: 'required for all new products' },
+    { k: 'gtin', t: 'cond', n: 'strongly recommended — drives Shopping Graph matching; MPN accepted instead' },
+    { k: 'mpn', t: 'cond', n: 'required when no GTIN is available' },
+    { k: 'condition', t: 'cond', n: 'required if used / refurbished' },
+    { k: 'item_group_id', t: 'cond', n: 'required for variants + all free listings' },
+    { k: 'color', t: 'cond', a: 1, n: 'required — apparel in UK/DE/FR/US/JP/BR + variants' },
+    { k: 'size', t: 'cond', a: 1, n: 'required — apparel Clothing & Shoes + variants' },
+    { k: 'gender', t: 'cond', a: 1, n: 'required — apparel in UK/DE/FR/US/JP/BR + variants' },
+    { k: 'age_group', t: 'cond', a: 1, n: 'required — apparel in UK/DE/FR/US/JP/BR + variants' },
+    { k: 'google_product_category', t: 'rec', n: 'Google auto-assigns; submit to override' },
+    { k: 'product_type', t: 'rec', n: 'drives PMAX listing groups — monitored in depth on PT Guard' },
+    { k: 'sale_price', t: 'rec', n: 'with sale_price_effective_date for promos' },
+    { k: 'additional_image_link', t: 'rec', n: 'up to 10 — fuels image cycling' },
+    { k: 'product_highlight', t: 'rec', n: '2–100 highlights — AI surfaces read these' },
+    { k: 'product_detail', t: 'rec', n: 'structured tech specs' },
+    { k: 'material', t: 'rec', n: 'required only when it distinguishes variants' },
+    { k: 'pattern', t: 'rec', n: 'required only when it distinguishes variants' },
+    { k: 'size_type', t: 'rec', n: 'apparel: regular / petite / plus / tall…' },
+    { k: 'size_system', t: 'rec', n: 'apparel: UK / EU / US…' }
+  ];
+  // mirrors the engine's goldenScore: required ×3 (missing = 0), gtin+mpn merge into one
+  // identifier component ×2 (best of the two), other cond ×2 only when present, rec ×1
+  function goldenScore(attrs) {
+    if (!attrs) return null;
+    var ws = 0, sum = 0, idBest = null;
+    SPEC.forEach(function (s) {
+      var a = attrs[s.k] || { present: false };
+      if (s.k === 'gtin' || s.k === 'mpn') { if (a.present && (idBest == null || a.cov > idBest)) idBest = a.cov; return; }
+      if (s.t === 'req') { ws += 3; sum += 3 * (a.present ? a.cov : 0); }
+      else if (s.t === 'cond') { if (a.present) { ws += 2; sum += 2 * a.cov; } }
+      else { ws += 1; sum += 1 * (a.present ? a.cov : 0); }
+    });
+    ws += 2; sum += 2 * (idBest == null ? 0 : idBest);
+    return ws ? Math.round((sum / ws) * 10) / 10 : 0;
+  }
+  function scoreCol(s) {
+    if (s == null) return 'var(--muted)';
+    return s >= 95 ? 'var(--good)' : (s >= 85 ? '#F5A623' : (s >= 70 ? '#ED6F0B' : 'var(--risk)'));
+  }
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function fmt(n) { return (n == null || isNaN(n)) ? '—' : Number(n).toLocaleString('en-GB'); }
+  function ago(t) {
+    if (!t) return 'never';
+    var s = (Date.now() - t) / 1000;
+    if (s < 90) return 'just now';
+    if (s < 5400) return Math.round(s / 60) + 'm ago';
+    if (s < 129600) return Math.round(s / 3600) + 'h ago';
+    return Math.round(s / 86400) + 'd ago';
+  }
+  function keyOf(c, m) { return c + '|' + m; }
+  function parts(k) { var i = k.indexOf('|'); return { client: k.slice(0, i), mkt: k.slice(i + 1) }; }
+  function chChip() { return '<span class="chip-ch chip-g" title="Google Shopping feed">G</span>'; }
+  function feedList() { return Object.keys(ESTATE.feeds).sort().map(function (k) { return ESTATE.feeds[k]; }); }
+
+  /* ---- demo mode (client-facing screen shares): every client identity becomes an
+     industry alias — purely display-layer, keys and API calls stay untouched ---- */
+  var INDUSTRY = { 'Reiss': 'Fashion', 'Superdry': 'Fashion', 'Monsoon': 'Fashion', 'Accessorize': 'Fashion',
+    'House of Bruar': 'Fashion', 'Visual K': 'Fashion', 'Schuh': 'Footwear', 'YuMOVE': 'Pet Care',
+    'American Golf': 'Sporting Goods', 'Hobbycraft': 'Arts & Crafts', 'Ryobi': 'Tools & DIY',
+    'Estée Lauder': 'Beauty', 'Bobbi Brown': 'Beauty', 'Benefit': 'Beauty', 'Clinique': 'Beauty', 'MAC': 'Beauty', 'Jo Malone': 'Beauty' };
+  var DEMO = false; try { DEMO = sessionStorage.getItem('gr-demo') === '1'; } catch (e) {}
+  var ALIAS = {};
+  function industryOf(c) { return INDUSTRY[c] || 'Retail'; }
+  function buildAliases() {
+    var byInd = {}, names = {};
+    Object.keys(ESTATE.feeds || {}).forEach(function (k) { names[parts(k).client] = 1; });
+    Object.keys(names).sort().forEach(function (c) { (byInd[industryOf(c)] = byInd[industryOf(c)] || []).push(c); });
+    ALIAS = {};
+    Object.keys(byInd).forEach(function (ind) {
+      byInd[ind].forEach(function (c, i) { ALIAS[c] = ind + ' ' + String.fromCharCode(65 + (i % 26)); });
+    });
+  }
+  function dispClient(c) { return DEMO ? (ALIAS[c] || 'Retail X') : c; }
+  function maskText(t) {
+    if (!DEMO) return t;
+    var out = String(t == null ? '' : t);
+    Object.keys(ALIAS).forEach(function (c) {
+      out = out.replace(new RegExp(c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), ALIAS[c]);
+    });
+    return out;
+  }
+  function setDemo(on) {
+    DEMO = !!on;
+    try { sessionStorage.setItem('gr-demo', DEMO ? '1' : '0'); } catch (e) {}
+    document.body.classList.toggle('demo', DEMO);
+    var b = $('demo-tgl'); if (b) b.classList.toggle('demo-on', DEMO);
+    renderEstate(); renderAlerts();
+    if (SEL) renderDetail(SEL);
+  }
+  $('demo-tgl').onclick = function () { setDemo(!DEMO); };
+  $('demo-off').onclick = function () { setDemo(false); };
+  if (DEMO) { document.body.classList.add('demo'); $('demo-tgl').classList.add('demo-on'); }
+
+  /* ---------------- estate scorecard ---------------- */
+  function statusOf(f) {
+    if (f.status === 'unreachable') return 'unreachable';
+    if (!f.t) return 'never';
+    if (f.status === 'crit' || f.status === 'warn') return f.status;
+    if (Date.now() - f.t > 26 * 3600 * 1000) return 'stale';
+    return 'ok';
+  }
+  function renderEstate() {
+    var byClient = {};
+    feedList().forEach(function (f) { (byClient[f.client] = byClient[f.client] || []).push(f); });
+    Object.keys(byClient).forEach(function (c) {
+      byClient[c].sort(function (a, b) { return String(a.mkt).localeCompare(String(b.mkt)); });
+    });
+    var clients = Object.keys(byClient).sort();
+    if (!clients.length) { $('est-grid').innerHTML = '<div class="panel"><span class="muted">No Google Shopping feeds wired yet.</span></div>'; return; }
+    var h = '';
+    clients.forEach(function (c) {
+      h += '<div class="est-card"><h3>' + esc(dispClient(c)) + '</h3>';
+      byClient[c].forEach(function (f) {
+        var k = keyOf(f.client, f.mkt), st = statusOf(f);
+        var miss = (f.reqMissing || []).length;
+        h += '<div class="est-mkt' + (SEL === k ? ' sel' : '') + '" data-k="' + esc(k) + '">' +
+          '<span class="mkt-code">' + chChip() + esc(String(f.mkt).toUpperCase()) + '</span>' +
+          '<span class="st-pill st-' + st + '">' + (st === 'never' ? 'not scanned' : st) + '</span>' +
+          (f.score != null ? '<span class="est-score" style="color:' + scoreCol(f.score) + '" title="Golden Record score — weighted attribute completeness">' + f.score + '</span>' : '') +
+          (miss ? '<span class="st-pill st-crit" title="Required attributes missing from the feed: ' + esc((f.reqMissing || []).join(', ')) + '">' + miss + ' req missing</span>' : '') +
+          '<span class="est-meta">' + (f.t ? fmt(f.rows) + ' rows · ' + ago(f.t) : (f.err ? esc(f.err).slice(0, 40) : '—')) +
+          ((f.nCrit || f.nWarn) ? '<br>' + (f.nCrit ? f.nCrit + ' crit ' : '') + (f.nWarn ? f.nWarn + ' warn' : '') : '') + '</span>' +
+          '</div>';
+      });
+      h += '</div>';
+    });
+    $('est-grid').innerHTML = h;
+    Array.prototype.forEach.call(document.querySelectorAll('.est-mkt'), function (el) {
+      el.onclick = function () { select(el.getAttribute('data-k')); };
+    });
+  }
+
+  /* ---------------- alerts panel ---------------- */
+  function renderAlerts() {
+    var rows = [];
+    Object.keys(ESTATE.alerts || {}).forEach(function (k) {
+      var e = ESTATE.alerts[k];
+      (e.alerts || []).forEach(function (a) {
+        if (a.sev === 'info') return;
+        rows.push({ k: k, client: e.client, mkt: e.mkt, t: e.t, a: a });
+      });
+    });
+    rows.sort(function (a, b) { return (a.a.sev === 'crit' ? 0 : 1) - (b.a.sev === 'crit' ? 0 : 1) || b.t - a.t; });
+    var nc = rows.filter(function (r) { return r.a.sev === 'crit'; }).length;
+    $('al-count').textContent = rows.length ? (rows.length + ' active' + (nc ? ' · ' + nc + ' critical' : '')) : '';
+    if (!rows.length) {
+      $('alerts-panel').innerHTML = '<div class="al-empty">✓ No active coverage drop-offs — every scanned feed holds its last known-good attribute coverage.</div>';
+      return;
+    }
+    var h = '';
+    rows.forEach(function (r) {
+      h += '<div class="al-row"><span class="al-sev ' + r.a.sev + '">' + r.a.sev + '</span>' +
+        '<span class="al-feed" data-k="' + esc(r.k) + '">' + esc(dispClient(r.client)) + ' · ' + esc(String(r.mkt).toUpperCase()) + '</span> ' + chChip() +
+        '<span class="al-msg">' + esc(maskText(r.a.msg)) + '</span>' +
+        '<span class="al-t">' + ago(r.t) + '</span>' +
+        '<button class="btn" data-ack="' + esc(r.k) + '" title="Accept the current feed as the new known-good reference and clear this feed’s flags">✓ Expected — accept as known-good</button>' +
+        '</div>';
+    });
+    $('alerts-panel').innerHTML = h;
+    Array.prototype.forEach.call(document.querySelectorAll('.al-feed'), function (el) {
+      el.onclick = function () { select(el.getAttribute('data-k')); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ack]'), function (el) {
+      el.onclick = function (ev) { ev.stopPropagation(); ack(el.getAttribute('data-ack'), el); };
+    });
+  }
+
+  /* ---------------- detail: the feed scorecard ---------------- */
+  function select(k) {
+    SEL = k;
+    try { history.replaceState(null, '', '#' + encodeURIComponent(k)); } catch (e) {}
+    renderEstate();
+    var p = parts(k);
+    $('det-panel').innerHTML = '<span class="muted"><span class="spin"></span>Loading ' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + '…</span>';
+    fetch(API + '/api/golden/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        CACHE[k] = d;
+        if (!d.snapshot || (Date.now() - d.snapshot.t) > STALE_MS) { scan(k, true); }
+        else renderDetail(k);
+      })
+      .catch(function () { $('det-panel').innerHTML = '<span class="muted">Could not load snapshot.</span>'; });
+  }
+
+  function scan(k, thenRender) {
+    var p = parts(k);
+    $('det-panel').innerHTML = '<span class="muted"><span class="spin"></span>Scanning live feed — ' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + ' (Google is aggregating the counts)…</span>';
+    return fetch(API + '/api/golden/scan?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt), { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) { $('det-panel').innerHTML = '<span class="muted">Scan failed: ' + esc(maskText(d.error)) + '</span>'; return refreshEstate(); }
+        return fetch(API + '/api/golden/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
+          .then(function (r) { return r.json(); })
+          .then(function (full) { CACHE[k] = full; if (thenRender !== false) renderDetail(k); return refreshEstate(); });
+      })
+      .catch(function () { $('det-panel').innerHTML = '<span class="muted">Scan failed — network.</span>'; });
+  }
+
+  function ack(k, btn) {
+    var p = parts(k);
+    if (btn) { btn.disabled = true; btn.textContent = 'Accepting…'; }
+    fetch(API + '/api/golden/ack?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt), { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function () { delete CACHE[k]; return refreshEstate(); })
+      .then(function () { if (SEL === k) select(k); });
+  }
+
+  // which reference the Δ column reads: yesterday's auto-capture (default) or last known-good
+  function refFor(d) {
+    var daily = (REFMODE !== 'base' && d.daily) ? d.daily : null;
+    return { ref: daily || d.baseline, isDaily: !!daily };
+  }
+
+  function dial(score) {
+    var C = 326.7, v = score == null ? 0 : Math.max(0, Math.min(100, score));
+    return '<svg class="dial" viewBox="0 0 120 120" role="img" aria-label="Golden Record score ' + (score == null ? 'not available' : score) + '">' +
+      '<circle class="dial-bg" cx="60" cy="60" r="52"/>' +
+      '<circle class="dial-fg" cx="60" cy="60" r="52" style="stroke:' + scoreCol(score) + ';stroke-dasharray:' + Math.round(C * v) / 100 + ' ' + C + '"/>' +
+      '<text class="dial-n" x="60" y="63" text-anchor="middle">' + (score == null ? '—' : score) + '</text>' +
+      '<text class="dial-s" x="60" y="80" text-anchor="middle">GOLDEN SCORE</text></svg>';
+  }
+
+  var TIERS = [
+    { t: 'req', badge: '<span class="tbadge req">Required</span>', title: 'Required — every product',
+      sub: 'Missing or under-filled attributes here disapprove products. Google requires these on every item submitted.' },
+    { t: 'cond', badge: '<span class="tbadge cond">Required in cases</span>', title: 'Required in specific cases',
+      sub: 'Required when the condition applies — apparel markets, variants, identifiers. “Not in feed” is a review flag, not an automatic fault.' },
+    { t: 'rec', badge: '<span class="tbadge rec">Recommended</span>', title: 'Recommended — the optimisation surface',
+      sub: 'Optional per the spec but they drive performance: matching, PMAX segmentation, AI shopping surfaces. This is where FeedSpark lifts the score.' }
+  ];
+
+  function renderDetail(k) {
+    var d = CACHE[k]; if (!d) return;
+    var p = parts(k);
+    var s = d.snapshot;
+    var rf = refFor(d), ref = rf.ref, refLbl = rf.isDaily ? 'yesterday' : 'known-good';
+    var h = '<div class="det-head"><h3>' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + '</h3>' + chChip() +
+      '<span class="det-actions" style="margin-left:auto">' +
+      '<button class="btn" id="det-csv" title="Download this scorecard as CSV">⬇ CSV</button>' +
+      '<button class="btn" id="det-ack" title="Adopt the current coverage as the new known-good">✓ Accept as known-good</button>' +
+      '<button class="btn pri" id="det-scan">⟳ Rescan now</button></span></div>';
+    if (!s) {
+      h += '<p class="muted">No snapshot yet — rescan.</p>';
+      $('det-panel').innerHTML = h; wire(k); return;
+    }
+    var score = goldenScore(s.attrs);
+    var reqMiss = SPEC.filter(function (x) { return x.t === 'req' && !(s.attrs[x.k] || {}).present; });
+    var condMiss = SPEC.filter(function (x) { return x.t === 'cond' && !(s.attrs[x.k] || {}).present; });
+    var apMiss = condMiss.filter(function (x) { return x.a; });
+    h += '<div class="gr-top">' + dial(score) +
+      '<div class="gr-info">' +
+      '<div class="det-stats"><b>' + fmt(s.rows) + '</b> rows · scanned <b>' + ago(s.t) + '</b>' +
+      '<span class="refseg" title="Which reference the Δ column reads — estate alerts always fire vs last known-good">' +
+      '<button id="ref-yday"' + (rf.isDaily ? ' class="on"' : '') + (d.daily ? '' : ' disabled title="No yesterday capture yet — it lands automatically on the first scan of each day"') + '>Δ vs yesterday</button>' +
+      '<button id="ref-base"' + (!rf.isDaily ? ' class="on"' : '') + '>Δ vs known-good</button></span>' +
+      (d.baseline && d.baseline.t ? '<span>known-good set ' + ago(d.baseline.t) + '</span>' : '') + '</div>' +
+      '<p class="gr-verdict">' +
+      (reqMiss.length
+        ? '<b>' + reqMiss.length + ' required attribute' + (reqMiss.length === 1 ? '' : 's') + ' missing from the feed</b> (' + esc(reqMiss.map(function (x) { return x.k; }).join(', ')) + ') — products cannot serve without them. '
+        : 'All <b>7 required attributes</b> present. ') +
+      (apMiss.length
+        ? '<b>' + apMiss.length + ' apparel attribute' + (apMiss.length === 1 ? '' : 's') + ' not in the feed</b> (' + esc(apMiss.map(function (x) { return x.k; }).join(', ')) + ') — required for apparel in UK/DE/FR/US. '
+        : '') +
+      'Weighted completeness <b style="color:' + scoreCol(score) + '">' + (score == null ? '—' : score + '%') + '</b> vs the FeedSpark Golden Record target of <b>99.9%</b>.</p>' +
+      '</div></div>';
+
+    TIERS.forEach(function (T) {
+      var list = SPEC.filter(function (x) { return x.t === T.t; });
+      var present = list.filter(function (x) { return (s.attrs[x.k] || {}).present; });
+      var avg = present.length ? Math.round(present.reduce(function (a, x) { return a + s.attrs[x.k].cov; }, 0) / present.length * 10) / 10 : null;
+      h += '<div class="tier"><div class="tier-h">' + T.badge + '<h4>' + T.title + '</h4>' +
+        '<span class="tavg">' + (avg == null ? 'none in feed' : 'avg fill ' + avg + '%') + '</span></div>' +
+        '<p class="tier-sub">' + T.sub + '</p>';
+      list.forEach(function (x) {
+        var a = s.attrs[x.k] || { present: false };
+        var refA = ref && ref.attrs ? (ref.attrs[x.k] || { present: false }) : null;
+        var row = '<div class="at-row' + (a.present ? '' : ' missing') + '">' +
+          '<span class="at-nm" title="g:' + esc(x.k) + '"><i>g:</i>' + esc(x.k) + '</span>';
+        if (a.present) {
+          var cls = a.cov >= 99.5 ? ' class="full"' : (a.cov < 50 ? ' class="low"' : '');
+          var delta = '';
+          if (refA && refA.present) {
+            var dn = Math.round((a.cov - refA.cov) * 10) / 10;
+            delta = dn === 0 ? '<span class="muted">=</span>'
+              : '<span class="' + (dn > 0 ? 'up' : 'down') + '">' + (dn > 0 ? '▲ +' + dn : '▼ ' + (-dn)) + 'pp</span>';
+          } else if (refA) delta = '<span class="up">new</span>';
+          row += '<span class="at-bar" title="' + a.cov + '% of ' + fmt(s.rows) + ' rows filled"><i' + cls + ' style="width:' + Math.max(1.5, Math.min(100, a.cov)) + '%"></i></span>' +
+            '<span class="at-cov">' + a.cov + '%</span>' +
+            '<span class="at-delta" title="vs ' + refLbl + '">' + delta + '</span>' +
+            '<span class="at-note">' + esc(x.n) + '</span>';
+        } else {
+          var hard = x.t === 'req' || x.a;
+          row += '<span class="at-miss' + (hard ? ' hard' : '') + '">not in feed</span>' +
+            '<span class="at-cov muted">—</span><span class="at-delta"></span>' +
+            '<span class="at-note">' + esc(x.n) + '</span>';
+        }
+        h += row + '</div>';
+      });
+      h += '</div>';
+    });
+    $('det-panel').innerHTML = h;
+    wire(k, s);
+  }
+
+  function wire(k, s) {
+    if ($('det-scan')) $('det-scan').onclick = function () { scan(k); };
+    if ($('det-ack')) $('det-ack').onclick = function () { ack(k, $('det-ack')); };
+    if ($('det-csv')) $('det-csv').onclick = function () { exportCsv(k); };
+    var rq = $('ref-yday'), rb = $('ref-base');
+    if (rq) rq.onclick = function () {
+      if (rq.disabled || REFMODE === 'yday') return;
+      REFMODE = 'yday'; try { sessionStorage.setItem('gr-ref', 'yday'); } catch (e) {} renderDetail(k);
+    };
+    if (rb) rb.onclick = function () {
+      if (REFMODE === 'base') return;
+      REFMODE = 'base'; try { sessionStorage.setItem('gr-ref', 'base'); } catch (e) {} renderDetail(k);
+    };
+  }
+
+  /* ---------------- CSV export ---------------- */
+  function exportCsv(k) {
+    var d = CACHE[k]; if (!d || !d.snapshot) return;
+    var s = d.snapshot, rf = refFor(d), ref = rf.ref;
+    var out = ['attribute,tier,filled,coverage_pct,' + (rf.isDaily ? 'yesterday_pct' : 'known_good_pct') + ',delta_pp,spec_note'];
+    SPEC.forEach(function (x) {
+      var a = s.attrs[x.k] || { present: false };
+      var refA = ref && ref.attrs ? (ref.attrs[x.k] || { present: false }) : null;
+      var was = refA && refA.present ? refA.cov : '';
+      out.push(['g:' + x.k, x.t === 'req' ? 'required' : (x.t === 'cond' ? 'required_in_cases' : 'recommended'),
+        a.present ? a.filled : '', a.present ? a.cov : 'not_in_feed', was,
+        (a.present && was !== '') ? Math.round((a.cov - was) * 10) / 10 : '',
+        '"' + String(x.n).replace(/"/g, '""') + '"'].join(','));
+    });
+    var blob = new Blob([out.join('\n')], { type: 'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'goldenrecord_' + s.client.replace(/\W+/g, '') + '_' + (s.market || 'gb') + '_' + new Date(s.t).toISOString().slice(0, 10) + '.csv';
+    a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  }
+
+  /* ---------------- boot ---------------- */
+  function refreshEstate() {
+    return fetch(API + '/api/golden/estate').then(function (r) { return r.json(); }).then(function (d) {
+      ESTATE = d || { feeds: {}, alerts: {} };
+      buildAliases();
+      renderEstate(); renderAlerts();
+    }).catch(function () {});
+  }
+
+  $('scan-all').onclick = function () {
+    var feeds = feedList(); if (!feeds.length) return;
+    var btn = $('scan-all'); btn.disabled = true;
+    var i = 0;
+    function step() {
+      if (i >= feeds.length) {
+        $('scan-all-msg').textContent = 'Done — ' + feeds.length + ' scanned';
+        btn.disabled = false;
+        return refreshEstate().then(function () { if (SEL) select(SEL); });
+      }
+      var f = feeds[i++];
+      // no freshness skip — the estate catch-up: labels, product types and attribute
+      // coverage all land in the same forced pass
+      $('scan-all-msg').innerHTML = '<span class="spin"></span>' + esc(dispClient(f.client)) + ' · ' + esc(String(f.mkt).toUpperCase()) + ' (' + i + '/' + feeds.length + ')';
+      return fetch(API + '/api/golden/scan?client=' + encodeURIComponent(f.client) + '&market=' + encodeURIComponent(f.mkt), { method: 'POST' })
+        .then(function (r) { return r.json(); }).catch(function () {}).then(step);
+    }
+    step();
+  };
+
+  // email-on-confirmed-warning settings (KV goldenalertcfg via the worker)
+  fetch(API + '/api/golden/alertcfg').then(function (r) { return r.json(); }).then(function (c) {
+    if ($('ml-on')) $('ml-on').checked = c.on !== false;
+    if ($('ml-to')) $('ml-to').value = c.to || '';
+  }).catch(function () {});
+  if ($('ml-save')) $('ml-save').onclick = function () {
+    var body = { on: $('ml-on').checked, to: $('ml-to').value.trim() };
+    $('ml-msg').textContent = 'saving…';
+    fetch(API + '/api/golden/alertcfg', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { $('ml-msg').textContent = d.error ? '✗ ' + d.error : '✓ saved'; setTimeout(function () { $('ml-msg').textContent = ''; }, 2500); })
+      .catch(function () { $('ml-msg').textContent = '✗ network'; });
+  };
+
+  refreshEstate().then(function () {
+    var k = null;
+    try { k = decodeURIComponent((location.hash || '').slice(1)) || null; } catch (e) {}
+    if (!k || !ESTATE.feeds[k]) {
+      var alerted = Object.keys(ESTATE.alerts);
+      k = alerted.length ? alerted[0] : (Object.keys(ESTATE.feeds).sort()[0] || null);
+    }
+    if (k) select(k);
+  });
+})();
+</script>
