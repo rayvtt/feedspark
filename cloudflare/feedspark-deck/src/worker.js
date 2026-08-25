@@ -28,7 +28,7 @@ import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js"
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes } from "./briefmatch.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC } from "./labelguard.js";
+import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -310,7 +310,7 @@ export default {
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send',
-        '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task',
+        '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile',
         '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
@@ -1910,10 +1910,16 @@ async function runLabelScan(env, client, mkt) {
       gBase = grSnap; await env.EDITS.put('goldenbase' + GK, JSON.stringify(grSnap));
     }
     await env.EDITS.put('golden' + GK, JSON.stringify(grSnap));
-    const gs = goldenScore(grSnap.attrs);
+    // score to the brand's industry best-practice profile (KV goldenprofiles overrides);
+    // the index also carries per-attribute coverage + the industry, so the page can
+    // compute estate-wide industry benchmarks (avg / best) from the one estate call
+    const gProf = profileFor(client, await env.EDITS.get('goldenprofiles', 'json'));
+    const gs = goldenScore(grSnap.attrs, gProf);
+    const covMap = {};
+    ATTR_SPEC.forEach((sp) => { const a = grSnap.attrs[sp.key]; covMap[sp.key] = a && a.present ? a.cov : null; });
     const gidx = (await env.EDITS.get('goldenidx', 'json')) || {};
     gidx[lgKey(client, mkt)] = { client, mkt, t: grSnap.t, rows: grSnap.rows, baseT: gBase.t,
-      score: gs ? gs.score : null, ai: gs ? gs.ai : null,
+      score: gs ? gs.score : null, ai: gs ? gs.ai : null, ind: gProf.industry, cov: covMap,
       reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
       status: gActive.some((a) => a.sev === 'crit') ? 'crit' : (gActive.length ? 'warn' : 'ok'),
       nCrit: gActive.filter((a) => a.sev === 'crit').length, nWarn: gActive.filter((a) => a.sev === 'warn').length };
@@ -2340,6 +2346,34 @@ async function goldenRoutes(env, request, url) {
     return json(r.gr);
   }
 
+  // scoring profiles: which attributes count per brand / per industry (best practices).
+  // GET returns the committed defaults + KV overrides + the client->industry map; PUT
+  // saves one override ({ scope: 'client'|'industry', name, expected, waived } — pass
+  // reset:true to drop the override and fall back to the layer below). The required
+  // seven and the gtin/mpn identifier pair are rejected — Google requires them everywhere.
+  if (path === '/api/golden/profile') {
+    if (request.method === 'GET') {
+      const overrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
+      return json({ defaults: INDUSTRY_PROFILES, overrides, industryMap: INDUSTRY });
+    }
+    if (request.method === 'PUT') {
+      let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+      const scope = b.scope === 'industry' ? 'industries' : (b.scope === 'client' ? 'clients' : null);
+      const name = String(b.name || '').slice(0, 60);
+      if (!scope || !name) return json({ error: 'scope (client|industry) + name required' }, 400);
+      const overrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
+      overrides[scope] = overrides[scope] || {};
+      if (b.reset) { delete overrides[scope][name]; }
+      else {
+        const clean = (v) => (Array.isArray(v) ? v : []).map(String)
+          .filter((k) => ATTR_SPEC.some((sp) => sp.key === k && sp.req !== 'required' && k !== 'gtin' && k !== 'mpn')).slice(0, 40);
+        overrides[scope][name] = { expected: clean(b.expected), waived: clean(b.waived) };
+      }
+      await env.EDITS.put('goldenprofiles', JSON.stringify(overrides));
+      return json({ ok: true, overrides, effective: scope === 'clients' ? profileFor(name, overrides) : null });
+    }
+  }
+
   // file an attribute fix into the brand's Project Plan — the same appendPlanRows write
   // the Workflow "+ Add task" and the Gmail-triage adoption use, so the task rides
   // Intake > Project Plan > pipeline identically (status dropdown, editable due).
@@ -2363,10 +2397,13 @@ async function goldenRoutes(env, request, url) {
     const snap = await env.EDITS.get('golden:' + client + ':' + mkt, 'json');
     if (!snap) return json({ error: 'no snapshot to adopt as known-good - scan first' }, 404);
     await env.EDITS.put('goldenbase:' + client + ':' + mkt, JSON.stringify(snap));
-    const gs = goldenScore(snap.attrs);
+    const ackProf = profileFor(client, await env.EDITS.get('goldenprofiles', 'json'));
+    const gs = goldenScore(snap.attrs, ackProf);
+    const ackCov = {};
+    ATTR_SPEC.forEach((sp) => { const a = snap.attrs[sp.key]; ackCov[sp.key] = a && a.present ? a.cov : null; });
     const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
     idx[lgKey(client, mkt)] = { client, mkt, t: snap.t, rows: snap.rows, baseT: snap.t,
-      score: gs ? gs.score : null, ai: gs ? gs.ai : null,
+      score: gs ? gs.score : null, ai: gs ? gs.ai : null, ind: ackProf.industry, cov: ackCov,
       reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
       status: 'ok', nCrit: 0, nWarn: 0 };
     await env.EDITS.put('goldenidx', JSON.stringify(idx));

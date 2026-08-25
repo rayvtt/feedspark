@@ -2341,6 +2341,36 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "print-head",
       "min": 3
+    },
+    {
+      "name": "engine: industry scoring profiles (INDUSTRY_PROFILES / profileFor)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "INDUSTRY_PROFILES",
+      "min": 2
+    },
+    {
+      "name": "engine: profile-aware goldenScore (expected counts-when-absent, waived excluded)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "profileFor",
+      "min": 1
+    },
+    {
+      "name": "worker: scoring-profile route + profile-aware scan scoring",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "/api/golden/profile",
+      "min": 2
+    },
+    {
+      "name": "GoldenRecord: industry best-practice chip + ⚙ profile editor",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "profileForC",
+      "min": 3
+    },
+    {
+      "name": "GoldenRecord: industry benchmark line + best-practice bar ticks",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "bp-tick",
+      "min": 2
     }
   ]
 }
