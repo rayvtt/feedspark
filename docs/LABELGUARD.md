@@ -372,7 +372,10 @@ prep for client demo").
   sections with spec badges and per-attribute fill bars / Δ vs yesterday ↔ known-good /
   spec-condition notes, "not in feed" flags (hard red-dashed on required + apparel attrs,
   soft on genuinely conditional ones), estate scorecard with per-market scores and
-  "N req missing" pills, ⚡ whole-estate rescan, CSV export, and the same 🎭 demo mode as
+  "N req missing" pills, ⚡ whole-estate rescan, ⬇ CSV export + ⬇ PDF (a branded,
+  print-optimised client presentation of the scorecard — FeedSpark header, dial + verdict,
+  the four tier sections, confidentiality footer; browser print-to-PDF, aliases apply when
+  demo mode is on), and the same 🎭 demo mode as
   §5b (industry aliases, gr-demo sessionStorage key) for client-facing screen shares. The
   policy page is cited in the hero and footer.
 

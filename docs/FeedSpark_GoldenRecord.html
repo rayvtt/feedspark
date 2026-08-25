@@ -156,6 +156,31 @@ window.addEventListener('load',restore);
   .q-in:focus{outline:none;border-color:var(--orange)}
   @keyframes lgspin{to{transform:rotate(360deg)}}
   .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--orange);border-top-color:transparent;border-radius:50%;animation:lgspin .7s linear infinite;vertical-align:-1px;margin-right:5px}
+  /* ⬇ PDF: the feed scorecard prints as a clean client-ready document (browser print-to-PDF).
+     Everything except section 03's panel hides; a branded header + footer frame the scorecard. */
+  #print-head{display:none}
+  @media print{
+    @page{margin:14mm 12mm}
+    body{background:#fff!important;color:#333!important}
+    .topbar,.demo-banner,.hero,.cat:not(#sec-detail),.footmark,#theme-tgl,
+    .det-actions,.at-act,#askp-slot,.refseg,#sec-detail .cat-h,#sec-detail .cat-sub{display:none!important}
+    #sec-detail{border-top:none;padding:0}
+    #sec-detail .wrap{max-width:none;padding:0}
+    .panel,.tier{box-shadow:none!important;border:1px solid #E6E6E6!important;background:#fff!important}
+    .tier{page-break-inside:avoid}
+    .gr-top{page-break-after:avoid}
+    #print-head{display:block;margin:0 0 14px;border-bottom:3px solid #ED6F0B;padding-bottom:10px}
+    #print-head .ph-brand{font-size:19px;font-weight:900}
+    #print-head .ph-brand span{color:#ED6F0B}
+    #print-head .ph-title{font-size:13px;font-weight:800;color:#4a4a4a;margin-top:2px}
+    #print-head .ph-meta{font-size:11px;font-weight:700;color:#8a94a0;margin-top:2px}
+    #print-foot{display:block!important;margin-top:16px;padding-top:8px;border-top:1px solid #E6E6E6;font-size:10px;font-weight:700;color:#8a94a0}
+    .at-row{grid-template-columns:230px 1fr 62px 54px!important}
+    .at-bar{border-color:#E6E6E6!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .dial .dial-bg{stroke:#F0F0EE!important}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+  #print-foot{display:none}
   /* rocket logo + module nav (shared) */
   .nav-toggle{border:none;background:none;cursor:pointer;padding:1px;border-radius:10px;flex:none;transition:transform .22s ease;display:inline-flex;text-decoration:none}
   .nav-toggle svg{width:26px;height:26px;display:block;overflow:visible}
@@ -272,7 +297,8 @@ window.addEventListener('load',restore);
   <div class="est-grid" id="est-grid"><div class="panel"><span class="muted">Loading…</span></div></div>
 </div></section>
 
-<section class="cat"><div class="wrap">
+<section class="cat" id="sec-detail"><div class="wrap">
+  <div id="print-head"></div>
   <div class="cat-h"><span class="k">03</span><h2>Feed scorecard</h2></div>
   <p class="cat-sub">The full attribute-by-attribute read: fill bars per attribute, Δ vs yesterday (or vs last
   known-good — flip the toggle), and the spec condition each requirement comes from. “Not in feed” on a
@@ -281,6 +307,7 @@ window.addEventListener('load',restore);
   Gmail-draft rails) and <b>→ Brief</b> (opens a prefilled Workflow brief) — both also file the fix as a
   task into Intake → Project Plan, like the Gmail triage.</p>
   <div class="panel" id="det-panel"><span class="muted">Pick a feed above.</span></div>
+  <div id="print-foot">FeedSpark · Private &amp; Confidential — Golden Record scorecard · attribute roster vetted against Google’s product data specification (support.google.com/google-ads/answer/7052112)</div>
 </div></section>
 
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential — Golden Record · attribute roster vetted against
@@ -600,6 +627,7 @@ window.addEventListener('load',restore);
     var h = '<div class="det-head"><h3>' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + '</h3>' + chChip() +
       '<span class="det-actions" style="margin-left:auto">' +
       '<button class="btn" id="det-csv" title="Download this scorecard as CSV">⬇ CSV</button>' +
+      '<button class="btn" id="det-pdf" title="Print-ready client presentation of this scorecard — save as PDF from the print dialog">⬇ PDF</button>' +
       '<button class="btn" id="det-ack" title="Adopt the current coverage as the new known-good">✓ Accept as known-good</button>' +
       '<button class="btn pri" id="det-scan">⟳ Rescan now</button></span></div>';
     if (!s) {
@@ -765,6 +793,7 @@ window.addEventListener('load',restore);
     if ($('det-scan')) $('det-scan').onclick = function () { scan(k); };
     if ($('det-ack')) $('det-ack').onclick = function () { ack(k, $('det-ack')); };
     if ($('det-csv')) $('det-csv').onclick = function () { exportCsv(k); };
+    if ($('det-pdf')) $('det-pdf').onclick = function () { exportPdf(k); };
     var rq = $('ref-yday'), rb = $('ref-base');
     if (rq) rq.onclick = function () {
       if (rq.disabled || REFMODE === 'yday') return;
@@ -774,6 +803,24 @@ window.addEventListener('load',restore);
       if (REFMODE === 'base') return;
       REFMODE = 'base'; try { sessionStorage.setItem('gr-ref', 'base'); } catch (e) {} renderDetail(k);
     };
+  }
+
+  /* ---------------- PDF export (print-to-PDF: branded header, scorecard only) -------- */
+  function exportPdf(k) {
+    var d = CACHE[k]; if (!d || !d.snapshot) return;
+    var p = parts(k), s = d.snapshot;
+    var when = new Date(s.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    var score = goldenScore(s.attrs);
+    $('print-head').innerHTML =
+      '<div class="ph-brand">Feed<span>Spark</span></div>' +
+      '<div class="ph-title">Golden Record scorecard — ' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + ' (Google Shopping)</div>' +
+      '<div class="ph-meta">Attribute completeness vs Google’s product data specification · ' + fmt(s.rows) + ' products · scanned ' + esc(when) +
+      (score != null ? ' · Golden Record score ' + score + '%' : '') + '</div>';
+    var t0 = document.title;
+    document.title = 'FeedSpark Golden Record — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase() + ' — ' + new Date(s.t).toISOString().slice(0, 10);
+    var done = function () { document.title = t0; window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    window.print();
   }
 
   /* ---------------- CSV export ---------------- */

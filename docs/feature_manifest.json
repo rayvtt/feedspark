@@ -2335,6 +2335,12 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "tbadge ai",
       "min": 1
+    },
+    {
+      "name": "GoldenRecord: ⬇ PDF client-presentation export (print header + print CSS)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "print-head",
+      "min": 3
     }
   ]
 }
