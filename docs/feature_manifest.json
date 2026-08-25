@@ -2299,6 +2299,42 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "tbadge",
       "min": 4
+    },
+    {
+      "name": "engine: per-attribute client-ask email (attrAskEmail)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "attrAskEmail",
+      "min": 1
+    },
+    {
+      "name": "engine: the conversational AI six on the roster (tier 'ai')",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "req: 'ai'",
+      "min": 6
+    },
+    {
+      "name": "worker: Golden Record plan-task route (attr fix into the Project Plan)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "/api/golden/plantask",
+      "min": 2
+    },
+    {
+      "name": "GoldenRecord: per-attribute ✉ Ask client + → Brief actions",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "data-brief",
+      "min": 2
+    },
+    {
+      "name": "GoldenRecord: client-ask composer on the shared askdraft rails",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "askp-slot",
+      "min": 2
+    },
+    {
+      "name": "GoldenRecord: Conversational AI tier section",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "tbadge ai",
+      "min": 1
     }
   ]
 }
