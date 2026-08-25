@@ -312,4 +312,48 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
 - No custom watch rules for PT v1 — estate alerts + badge + emails cover the drop-off case;
   watches can be extended to PT later on the same `labelwatch` rails.
 
+## 9. Golden Record (`/golden`) — attribute coverage vs Google's product data spec
+
+The third guard on the same rails: every Google Shopping feed scored live for **attribute
+completeness against Google's product data specification**
+(support.google.com/google-ads/answer/7052112 — the roster was vetted against the policy
+page, Aug 2026). Built client-demo-ready (Ray's brief: "group them all into required vs.
+recommended attributes vetted against Google's policy page … design this module nicely and
+prep for client demo").
+
+- **The roster** (`ATTR_SPEC`, engine): three tiers exactly as the spec draws them —
+  **required** (id, title, description, link, image_link, availability, price — required on
+  every product), **required in specific cases** (brand for new products; gtin/mpn as the
+  identifier pair; condition if used/refurbished; item_group_id for variants + free
+  listings; color/size/gender/age_group for apparel in UK/DE/FR/US/JP/BR — flagged as the
+  apparel five) and **recommended** (google_product_category, product_type, sale_price,
+  additional_image_link, product_highlight, product_detail, material, pattern, size_type,
+  size_system — the optimisation surface). Account-level attributes (shipping, tax) are
+  deliberately absent — they live in Merchant Center, not the feed. Repeatable fields
+  resolve their slot-1 numbered headers (`additional_image_link(1)` etc.).
+- **Zero extra subrequests**: the roster rides `runLabelScan`'s existing multi-count gviz
+  query (extra `count()` aggregates on the same request; columns already counted — id,
+  product_type — reuse their position). Same caveat as the raw count() column elsewhere:
+  formula-blank `""` cells read as filled.
+- **Golden Record score** (`goldenScore`): weighted completeness — required ×3 (a missing
+  column counts 0), conditional ×2 when present (absent = excluded from the score but
+  flagged on the page; a pet-supplement feed without `color` is not incomplete), gtin+mpn
+  merge into ONE identifier component (best of the two), recommended ×1 (absent = 0 — that
+  IS the optimisation surface). Reported against FeedSpark's 99.9% Golden Record target.
+- **Stores + alerts**: `golden:`/`goldenbase:`/`goldenday:`/`goldenidx`/`goldenalerts` —
+  the same three-reference model as §2/§8, ack via `POST /api/golden/ack`. `diffCoverage`
+  fires on coverage drops vs last known-good: required + conditional tiers can go **crit**
+  (≥10pp drop, or the column vanishing — products disapprove), warn at ≥3pp; recommended
+  warns at ≥10pp and never crits. Two-strike email-on-confirmed-warning rides
+  `estateMailPlan` (KV `goldenalertcfg`, default on → `OWNER_EMAIL`), the daily report
+  gains a GOLDEN RECORD ALERTS section, and the nav badge dots `/golden` from the same
+  `/api/labels/alerts` call (`gr` counts, `grClients` split for the dossier).
+- **The page** (`/golden`): score dial + plain-English verdict per feed, the three tier
+  sections with spec badges and per-attribute fill bars / Δ vs yesterday ↔ known-good /
+  spec-condition notes, "not in feed" flags (hard red-dashed on required + apparel attrs,
+  soft on genuinely conditional ones), estate scorecard with per-market scores and
+  "N req missing" pills, ⚡ whole-estate rescan, CSV export, and the same 🎭 demo mode as
+  §5b (industry aliases, gr-demo sessionStorage key) for client-facing screen shares. The
+  policy page is cited in the hero and footer.
+
 Engine unit tests: `node tools/test_labelguard.mjs` (runs in `validate.yml` on every PR).

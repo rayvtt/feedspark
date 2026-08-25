@@ -28,7 +28,7 @@ import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js"
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes } from "./briefmatch.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile } from "./labelguard.js";
+import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -60,6 +60,8 @@ import PRICER from "../../../docs/FeedSpark_Pricer.html";
 import LABELGUARD_PAGE from "../../../docs/FeedSpark_LabelGuard.html";
 // Product Type Guard — primary g:product_type monitoring, Google channel (page at /ptypes)
 import PTGUARD_PAGE from "../../../docs/FeedSpark_ProductTypeGuard.html";
+// Golden Record — attribute coverage vs Google's product data spec (page at /golden)
+import GOLDEN_PAGE from "../../../docs/FeedSpark_GoldenRecord.html";
 // Keyword optimisation calendar — marketing moments drive the KW schedule (docs/FeedSpark_KWCal.html)
 import KWCAL from "../../../docs/FeedSpark_KWCal.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
@@ -128,6 +130,7 @@ const PAGES = {
   '/feedchat':    { html: FEEDCHAT,    slug: 'feedchat' },
   '/labels':      { html: LABELGUARD_PAGE, slug: 'labels' },
   '/ptypes':      { html: PTGUARD_PAGE, slug: 'ptypes' },
+  '/golden':      { html: GOLDEN_PAGE, slug: 'golden' },
   '/pricer':      { html: PRICER,      slug: 'pricer' },
   '/kwcal':       { html: KWCAL,       slug: 'kwcal' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
@@ -144,7 +147,7 @@ const CORS = {
 // Label Guard nav badge — injected on app pages only (never client decks): dots the /labels
 // nav icon with the number of feeds carrying active drop-off alerts, red when any is critical.
 const LGBADGE = `<style>.lg-dot{position:absolute;top:1px;right:1px;min-width:14px;height:14px;padding:0 3px;border-radius:100px;background:#ED6F0B;color:#fff;font-size:9.5px;font-weight:900;line-height:14px;text-align:center;pointer-events:none}.lg-dot.crit{background:#C0392B}</style>
-<script>/* FCC-LABELGUARD badge */(function(){function dot(href,c){var n=(c.crit||0)+(c.warn||0);if(!n)return;var a=document.querySelector('#tb-modules a[href="'+href+'"]');if(!a)return;var b=document.createElement('span');b.className='lg-dot'+(c.crit?' crit':'');b.textContent=n>9?'9+':String(n);a.appendChild(b);}try{fetch('/api/labels/alerts').then(function(r){return r.json();}).then(function(d){dot('/labels',(d&&d.counts)||{});if(d&&d.pt)dot('/ptypes',d.pt);}).catch(function(){});}catch(e){}})();</script>`;
+<script>/* FCC-LABELGUARD badge */(function(){function dot(href,c){var n=(c.crit||0)+(c.warn||0);if(!n)return;var a=document.querySelector('#tb-modules a[href="'+href+'"]');if(!a)return;var b=document.createElement('span');b.className='lg-dot'+(c.crit?' crit':'');b.textContent=n>9?'9+':String(n);a.appendChild(b);}try{fetch('/api/labels/alerts').then(function(r){return r.json();}).then(function(d){dot('/labels',(d&&d.counts)||{});if(d&&d.pt)dot('/ptypes',d.pt);if(d&&d.gr)dot('/golden',d.gr);}).catch(function(){});}catch(e){}})();</script>`;
 
 // client -> Project Plan Google Sheet id. Mirrors FeedSpark_Workflow.html's client-side
 // PLANSHEET map (used there for the "+ Add task" row and status/owner/due write-back) —
@@ -307,6 +310,7 @@ export default {
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send',
+        '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase',
         '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
@@ -929,6 +933,14 @@ export default {
     // Guard — runLabelScan captures PT into its own ptype* stores on every Google-feed scan.
     if (path.startsWith('/api/ptypes/')) {
       const r = await productTypeRoutes(env, request, url);
+      if (r) return r;
+    }
+
+    // ---- Golden Record: attribute coverage vs Google's product data spec, Google
+    // Shopping channel only (page at /golden). Captured by runLabelScan on the same
+    // multi-count query — these routes just read/ack the golden* stores.
+    if (path.startsWith('/api/golden/')) {
+      const r = await goldenRoutes(env, request, url);
       if (r) return r;
     }
 
@@ -1736,9 +1748,12 @@ async function runLabelScan(env, client, mkt) {
   // (shared header probe + counts query, one extra group-by ≈ +1 subrequest) — the
   // Product Type Guard (/ptypes) reads its own ptype* stores written below.
   const wantPT = !/-fb$/.test(String(mkt || ''));
+  // Google feeds also ride the Golden Record roster on the SAME multi-count query
+  // (attribute coverage vs Google's product data spec — zero extra subrequests).
+  const scanOpts = wantPT ? { attrs: true } : null;
   let snap;
   try {
-    snap = await scanFeed(fetch, src, { client, market: mkt }, wantPT ? LABEL_KEYS.concat(PT_KEYS) : LABEL_KEYS);
+    snap = await scanFeed(fetch, src, { client, market: mkt }, wantPT ? LABEL_KEYS.concat(PT_KEYS) : LABEL_KEYS, scanOpts);
   } catch (e) {
     const msg = String((e && e.message) || e).slice(0, 140);
     // index + alert maps are re-read right before each write to keep the clobber window
@@ -1755,20 +1770,25 @@ async function runLabelScan(env, client, mkt) {
       const pidx = (await env.EDITS.get('ptypeidx', 'json')) || {};
       pidx[lgKey(client, mkt)] = Object.assign({}, pidx[lgKey(client, mkt)] || {}, { client, mkt, status: 'unreachable', err: msg, tErr: Date.now() });
       await env.EDITS.put('ptypeidx', JSON.stringify(pidx));
+      const gidx = (await env.EDITS.get('goldenidx', 'json')) || {};
+      gidx[lgKey(client, mkt)] = Object.assign({}, gidx[lgKey(client, mkt)] || {}, { client, mkt, status: 'unreachable', err: msg, tErr: Date.now() });
+      await env.EDITS.put('goldenidx', JSON.stringify(gidx));
     } catch (e2) {}
     return { error: msg, status: 502 };
   }
-  // split: PT goes to its own stores; the label stores keep their exact historical shape
+  // split: PT + Golden Record go to their own stores; the label stores keep their exact
+  // historical shape (attrs never ride into the labels:/ptype: snapshots)
   const splitRaw = (raw) => {
-    if (!wantPT) return { lbl: raw, pt: null };
+    if (!wantPT) return { lbl: raw, pt: null, gr: null };
     const lblOnly = {};
     LABEL_KEYS.forEach((k) => { lblOnly[k] = (raw.labels || {})[k]; });
     return {
-      lbl: Object.assign({}, raw, { labels: lblOnly }),
-      pt: Object.assign({}, raw, { labels: { product_type: (raw.labels || {}).product_type || { present: false } } }),
+      lbl: Object.assign({}, raw, { labels: lblOnly, attrs: undefined }),
+      pt: Object.assign({}, raw, { labels: { product_type: (raw.labels || {}).product_type || { present: false } }, attrs: undefined }),
+      gr: raw.attrs ? { v: 1, t: raw.t, client: raw.client, market: raw.market, rows: raw.rows, attrs: raw.attrs } : null,
     };
   };
-  let { lbl: snapL, pt: ptSnap } = splitRaw(snap);
+  let { lbl: snapL, pt: ptSnap, gr: grSnap } = splitRaw(snap);
   snap = snapL;
   // DAILY reference (Ray's rule): the pivot's Δ columns read "vs yesterday" — automatically,
   // every day, every account, every label. The first scan of each UTC day promotes the
@@ -1792,13 +1812,13 @@ async function runLabelScan(env, client, mkt) {
   // their own two-strike — this is the estate sweep's equivalent.)
   if (alerts.some((a) => a.code === 'rows-drop' && a.sev === 'crit') || alerts.filter((a) => a.sev === 'crit').length >= 6) {
     let raw2 = null;
-    try { raw2 = await scanFeed(fetch, src, { client, market: mkt }, wantPT ? LABEL_KEYS.concat(PT_KEYS) : LABEL_KEYS); } catch (e) {}
+    try { raw2 = await scanFeed(fetch, src, { client, market: mkt }, wantPT ? LABEL_KEYS.concat(PT_KEYS) : LABEL_KEYS, scanOpts); } catch (e) {}
     if (!raw2 || Math.abs((raw2.rows || 0) - (snap.rows || 0)) > Math.max(1, snap.rows || 0) * 0.15) {
       try { await logAlertActivity(env, client + ' ' + mkt + ' · catastrophic reading NOT confirmed by re-read — scan skipped (gviz instability)'); } catch (e) {}
       return { skipped: 'unstable read — catastrophic diff not confirmed by immediate re-read', status: 202 };
     }
     const again = splitRaw(raw2);   // both reads agree — adopt the fresher snapshot
-    snap = again.lbl; ptSnap = again.pt;
+    snap = again.lbl; ptSnap = again.pt; grSnap = again.gr;
     alerts = diffSnapshots(base, snap);
   }
   const active = alerts.filter((a) => a.sev !== 'info');
@@ -1869,7 +1889,56 @@ async function runLabelScan(env, client, mkt) {
     pt = { snapshot: ptSnap, alerts: pAlerts, baseT: pBase.t };
   } catch (e) {}
 
-  return { snapshot: snap, alerts, baseT: base.t, pt };
+  // ---- Golden Record stores (Google feeds only) — attribute coverage vs Google's product
+  // data specification, captured on the same query. Same three-reference model (goldenday: =
+  // yesterday, goldenbase: = last known-good moved by /api/golden/ack, golden: = latest)
+  // and the same two-strike email-on-confirmed-warning as the PT block above (goldenalertcfg).
+  let gr = null;
+  if (grSnap) try {
+    const GK = ':' + client + ':' + mkt;
+    try {
+      const gPrev = await env.EDITS.get('golden' + GK, 'json');
+      if (gPrev && gPrev.t && new Date(gPrev.t).toISOString().slice(0, 10) !== new Date(grSnap.t).toISOString().slice(0, 10)) {
+        await env.EDITS.put('goldenday' + GK, JSON.stringify(gPrev));
+      }
+    } catch (e) {}
+    let gBase = await env.EDITS.get('goldenbase' + GK, 'json');
+    if (!gBase) { gBase = grSnap; await env.EDITS.put('goldenbase' + GK, JSON.stringify(grSnap)); }
+    const gAlerts = diffCoverage(gBase, grSnap);
+    const gActive = gAlerts.filter((a) => a.sev !== 'info');
+    if (!gActive.length && gBase.t !== grSnap.t) {
+      gBase = grSnap; await env.EDITS.put('goldenbase' + GK, JSON.stringify(grSnap));
+    }
+    await env.EDITS.put('golden' + GK, JSON.stringify(grSnap));
+    const gs = goldenScore(grSnap.attrs);
+    const gidx = (await env.EDITS.get('goldenidx', 'json')) || {};
+    gidx[lgKey(client, mkt)] = { client, mkt, t: grSnap.t, rows: grSnap.rows, baseT: gBase.t,
+      score: gs ? gs.score : null,
+      reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
+      status: gActive.some((a) => a.sev === 'crit') ? 'crit' : (gActive.length ? 'warn' : 'ok'),
+      nCrit: gActive.filter((a) => a.sev === 'crit').length, nWarn: gActive.filter((a) => a.sev === 'warn').length };
+    await env.EDITS.put('goldenidx', JSON.stringify(gidx));
+    const gMap = (await env.EDITS.get('goldenalerts', 'json')) || {};
+    const gPlan = estateMailPlan(gMap[lgKey(client, mkt)], gActive);
+    if (gActive.length) gMap[lgKey(client, mkt)] = { t: grSnap.t, client, mkt, alerts: gAlerts, mailed: gPlan.mailed };
+    else delete gMap[lgKey(client, mkt)];
+    await env.EDITS.put('goldenalerts', JSON.stringify(gMap));
+    if (gPlan.mail.length || gPlan.recovered) try {
+      const gcfg = (await env.EDITS.get('goldenalertcfg', 'json')) || {};
+      if (gcfg.on !== false) {
+        const to = String(gcfg.to || env.OWNER_EMAIL || 'ray@feedspark.com');
+        const name = dispFeed(client, mkt);
+        const link = 'https://feedspark.ray-vtt.workers.dev/golden';
+        await sendPing(env, { type: 'email', to }, gPlan.mail.length
+          ? goldenAlertEmail(name, gPlan.mail, link)
+          : goldenRecoveryEmail(name, link));
+        await logAlertActivity(env, 'Golden Record ' + (gPlan.mail.length ? 'alert email (' + gPlan.mail.length + ' confirmed)' : 'recovery email') + ' → ' + to + ' · ' + name);
+      }
+    } catch (e) {}
+    gr = { snapshot: grSnap, alerts: gAlerts, baseT: gBase.t };
+  } catch (e) {}
+
+  return { snapshot: snap, alerts, baseT: base.t, pt, gr };
 }
 
 async function labelGuardRoutes(env, request, url) {
@@ -1910,15 +1979,21 @@ async function labelGuardRoutes(env, request, url) {
     Object.keys(pAlerts).forEach((k) => (pAlerts[k].alerts || []).forEach((a) => {
       if (a.sev === 'crit') pc++; else if (a.sev === 'warn') pw++;
     }));
+    const gAlerts = (await env.EDITS.get('goldenalerts', 'json')) || {};
+    let gc = 0, gw = 0;
+    Object.keys(gAlerts).forEach((k) => (gAlerts[k].alerts || []).forEach((a) => {
+      if (a.sev === 'crit') gc++; else if (a.sev === 'warn') gw++;
+    }));
     const out = { counts: { crit, warn, feeds: Object.keys(alerts).length },
-      pt: { crit: pc, warn: pw, feeds: Object.keys(pAlerts).length } };
+      pt: { crit: pc, warn: pw, feeds: Object.keys(pAlerts).length },
+      gr: { crit: gc, warn: gw, feeds: Object.keys(gAlerts).length } };
     // ?by=client — per-brand splits for the dossier portfolio view (keys are "<client>|<mkt>")
     if (url.searchParams.get('by') === 'client') {
       const split = (m) => { const per = {}; Object.keys(m).forEach((k) => {
         const c = k.split('|')[0]; const e = per[c] = per[c] || { crit: 0, warn: 0 };
         (m[k].alerts || []).forEach((a) => { if (a.sev === 'crit') e.crit++; else if (a.sev === 'warn') e.warn++; }); });
         return per; };
-      out.clients = split(alerts); out.ptClients = split(pAlerts);
+      out.clients = split(alerts); out.ptClients = split(pAlerts); out.grClients = split(gAlerts);
     }
     return json(out);
   }
@@ -2205,6 +2280,88 @@ async function productTypeRoutes(env, request, url) {
   return null;
 }
 
+/* ---- Golden Record (docs/LABELGUARD.md §9): attribute coverage per Google's product
+   data specification — required vs required-in-cases vs recommended — captured by
+   runLabelScan on every Google-feed scan (zero extra subrequests: the roster rides the
+   same multi-count query). These routes read/ack the golden* stores. */
+async function goldenRoutes(env, request, url) {
+  const path = url.pathname;
+  const client = (url.searchParams.get('client') || '').slice(0, 60);
+  const mkt = mktOf(url.searchParams.get('market'));
+  const badClient = !client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0;
+  const isFb = /-fb$/.test(mkt);
+
+  if (path === '/api/golden/estate' && request.method === 'GET') {
+    const roster = await feedRoster(env);
+    const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
+    const alerts = (await env.EDITS.get('goldenalerts', 'json')) || {};
+    const feeds = {};
+    for (const f of roster) {
+      if (!f.src || !f.src.id) continue;                 // sheet-backed only
+      if (/-fb$/.test(String(f.mkt || ''))) continue;    // Google Shopping channel only
+      feeds[lgKey(f.client, f.mkt)] = Object.assign({ client: f.client, mkt: f.mkt, status: 'never' }, idx[lgKey(f.client, f.mkt)] || {});
+    }
+    Object.keys(idx).forEach((k) => {
+      if (!feeds[k] && !/-fb$/.test(k.split('|')[1] || '')) {
+        feeds[k] = Object.assign({ client: k.split('|')[0], mkt: k.split('|')[1] || 'gb', detached: true }, idx[k]);
+      }
+    });
+    return json({ feeds, alerts });
+  }
+
+  // email-on-warning settings (recipient + on/off) — mirrors ptypealertcfg's shape
+  if (path === '/api/golden/alertcfg') {
+    if (request.method === 'GET') {
+      return json((await env.EDITS.get('goldenalertcfg', 'json')) || { on: true, to: String(env.OWNER_EMAIL || 'ray@feedspark.com') });
+    }
+    if (request.method === 'PUT') {
+      let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+      const to = String(b.to || '').slice(0, 120);
+      if (to.indexOf('@') < 1) return json({ error: 'not an email address' }, 400);
+      const cfg = { on: !!b.on, to };
+      await env.EDITS.put('goldenalertcfg', JSON.stringify(cfg));
+      return json(Object.assign({ ok: true }, cfg));
+    }
+  }
+
+  if (path === '/api/golden/snapshot' && request.method === 'GET') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    const snap = await env.EDITS.get('golden:' + client + ':' + mkt, 'json');
+    const base = await env.EDITS.get('goldenbase:' + client + ':' + mkt, 'json');
+    const daily = await env.EDITS.get('goldenday:' + client + ':' + mkt, 'json');
+    return json({ snapshot: snap || null, baseline: base || null, daily: daily || null });
+  }
+
+  if (path === '/api/golden/scan' && request.method === 'POST') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    const r = await runLabelScan(env, client, mkt);   // one pass writes labels, ptype AND golden stores
+    if (r.error) return json({ error: r.error }, r.status || 502);
+    if (!r.gr) return json({ error: 'scan succeeded but captured no attribute-coverage view' }, 502);
+    return json(r.gr);
+  }
+
+  // "expected change" — adopt the current coverage snapshot as the new known-good
+  if (path === '/api/golden/ack' && request.method === 'POST') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    const snap = await env.EDITS.get('golden:' + client + ':' + mkt, 'json');
+    if (!snap) return json({ error: 'no snapshot to adopt as known-good - scan first' }, 404);
+    await env.EDITS.put('goldenbase:' + client + ':' + mkt, JSON.stringify(snap));
+    const gs = goldenScore(snap.attrs);
+    const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
+    idx[lgKey(client, mkt)] = { client, mkt, t: snap.t, rows: snap.rows, baseT: snap.t,
+      score: gs ? gs.score : null,
+      reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
+      status: 'ok', nCrit: 0, nWarn: 0 };
+    await env.EDITS.put('goldenidx', JSON.stringify(idx));
+    const alertsMap = (await env.EDITS.get('goldenalerts', 'json')) || {};
+    delete alertsMap[lgKey(client, mkt)];
+    await env.EDITS.put('goldenalerts', JSON.stringify(alertsMap));
+    return json({ ok: true, baseT: snap.t });
+  }
+
+  return null;
+}
+
 /* ---- custom alert delivery + watch evaluation (docs/LABELGUARD.md §7) ----
    Destinations (KV labeldest): { id: { name, type: 'gchat'|'slack'|'email', url?, to?,
    mention? } }. gchat/slack = incoming-webhook URL, pinged straight from the worker
@@ -2339,7 +2496,8 @@ async function queueLabelReport(env, why) {
     const idx = (await env.EDITS.get('labelidx', 'json')) || {};
     const alerts = (await env.EDITS.get('labelalerts', 'json')) || {};
     const ptAlerts = (await env.EDITS.get('ptypealerts', 'json')) || {};
-    const body = buildReport({ rules, dests, idx, alerts, ptAlerts, now, link: 'https://feedspark.ray-vtt.workers.dev/labels' });
+    const grAlerts = (await env.EDITS.get('goldenalerts', 'json')) || {};
+    const body = buildReport({ rules, dests, idx, alerts, ptAlerts, grAlerts, now, link: 'https://feedspark.ray-vtt.workers.dev/labels' });
     let downN = 0;
     Object.keys(rules).forEach((k) => { const st = (rules[k] || {}).state || {};
       Object.keys(st).forEach((v) => { if (st[v] && st[v].st === 'fired') downN++; }); });

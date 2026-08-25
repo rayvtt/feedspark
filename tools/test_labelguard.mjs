@@ -590,5 +590,79 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
     mS.body.indexOf('restructuring the tree to 3–4 levels') > 0 && mS.body.indexOf('• 1–2 levels: 61%') > 0, mS.body);
 }
 
+/* ---------- Golden Record: attribute coverage vs Google's product data spec ---------- */
+{
+  ok('ATTR_SPEC: 7 always-required attributes', LG.ATTR_SPEC.filter((s) => s.req === 'required').length === 7);
+  ok('ATTR_SPEC: three tiers only', LG.ATTR_SPEC.every((s) => ['required', 'cond', 'rec'].includes(s.req)));
+
+  const cols = LG.findAttrCols(['id', 'g:title', 'description', 'link', 'image link', 'availability', 'price',
+    'brand', 'gtin', 'item_group_id', 'color', 'size', 'g:product_type(1)', 'sale_price', 'custom_label_0']);
+  eq('findAttrCols: g:-prefixed + spaced headers resolve', [cols.title, cols.image_link], [1, 4]);
+  eq('findAttrCols: product_type via slot-1 alias', cols.product_type, 12);
+  eq('findAttrCols: absent attr -> -1', cols.gender, -1);
+}
+{
+  // full scan with opts.attrs: the roster rides the SAME multi-count query
+  const HEADER2 = '"id","g:title","description","link","image link","availability","price","brand","gtin","item_group_id","color","size","g:product_type(1)","sale_price","custom_label_0"\n"sku-1","Boot","d","u","i","in_stock","10","Reiss","123","g1","black","M","Womens > Boots","8","bestseller"';
+  const routes2 = [
+    ['select * limit 1', HEADER2],
+    // count(A)=rows, count(O)=cl0, count(M)=product_type, then the attr columns in
+    // ATTR_SPEC order (id + product_type reuse existing positions — no duplicate aggregates)
+    ['select count(A), count(O), count(M), count(B), count(C), count(D), count(E), count(F), count(G), count(H), count(I), count(J), count(K), count(L), count(N)',
+      '"h"\n"1000","950","980","1000","990","1000","1000","1000","1000","940","700","1000","850","900","240"'],
+    ['select O, count(A)', '"cl0","c"\n"bestseller","950"'],
+    ['select M, count(A)', '"pt","c"\n"Womens > Boots","980"'],
+  ];
+  const s = await LG.scanFeed(gvizMock(routes2), { id: 'X', gid: '0' },
+    { client: 'Reiss', market: 'gb' }, LG.LABEL_KEYS.concat(LG.PT_KEYS), { attrs: true });
+  ok('attrs captured on the snapshot', !!s.attrs);
+  eq('attrs: required attr coverage', [s.attrs.title.cov, s.attrs.description.cov], [100, 99]);
+  eq('attrs: id reuses the rows count', [s.attrs.id.filled, s.attrs.id.cov], [1000, 100]);
+  eq('attrs: product_type reuses the label count position', s.attrs.product_type.cov, 98);
+  eq('attrs: gtin 70%', s.attrs.gtin.cov, 70);
+  ok('attrs: absent columns -> present:false', !s.attrs.mpn.present && !s.attrs.gender.present && !s.attrs.product_highlight.present);
+  ok('no attrs without opts', !('attrs' in snap));
+
+  const gs = LG.goldenScore(s.attrs);
+  eq('goldenScore: weighted completeness', gs.score, 75.5);
+  eq('goldenScore: no required attr missing', gs.reqMissing, []);
+  eq('goldenScore: conditional gaps flagged', gs.condMissing, ['mpn', 'condition', 'gender', 'age_group']);
+  ok('goldenScore: identifier pair merges into one part', gs.parts.filter((p) => p.key === 'gtin/mpn').length === 1 &&
+    gs.parts.every((p) => p.key !== 'gtin' && p.key !== 'mpn'));
+  ok('goldenScore: null on no attrs', LG.goldenScore(null) === null);
+}
+{
+  const A = (cov) => ({ present: true, filled: Math.round(cov * 10), cov });
+  const base = { attrs: { availability: A(100), color: A(85), sale_price: A(40), product_highlight: A(50), title: A(100) } };
+  const cur = { attrs: { availability: A(88), color: A(83.5), sale_price: A(27), title: A(98), material: A(60) } };
+  const al = LG.diffCoverage(base, cur);
+  eq('diffCoverage: required 12pp drop -> crit', al.filter((a) => a.sev === 'crit').map((a) => a.label), ['availability']);
+  ok('diffCoverage: required crit says products will disapprove', al.filter((a) => a.label === 'availability')[0].msg.indexOf('products will disapprove') > 0);
+  eq('diffCoverage: rec 13pp drop -> warn; rec column gone -> warn', al.filter((a) => a.sev === 'warn').map((a) => a.label).sort(), ['product_highlight', 'sale_price']);
+  ok('diffCoverage: gone message carries the was%', al.filter((a) => a.code === 'attr-gone')[0].msg.indexOf('was 50% filled') > 0);
+  eq('diffCoverage: new column -> info', al.filter((a) => a.sev === 'info').map((a) => a.label), ['material']);
+  ok('diffCoverage: small drops below threshold stay silent', !al.some((a) => a.label === 'color' || a.label === 'title'));
+  const gone = LG.diffCoverage({ attrs: { title: A(100) } }, { attrs: {} });
+  ok('diffCoverage: required column vanished -> crit attr-gone', gone.length === 1 && gone[0].sev === 'crit' && gone[0].code === 'attr-gone');
+  eq('diffCoverage: no refs -> empty', LG.diffCoverage(null, cur), []);
+}
+{
+  const mail = LG.goldenAlertEmail('Reiss · GB', [{ sev: 'crit', msg: 'availability coverage dropped 12pp' }], 'https://x/golden');
+  ok('golden alert email', mail.indexOf('🔴 Golden Record — Reiss · GB: 1 confirmed attribute alert') === 0 &&
+    mail.indexOf('accept as known-good') > 0 && mail.indexOf('https://x/golden') > 0, mail);
+  ok('golden recovery email', LG.goldenRecoveryEmail('Reiss · GB', 'https://x/golden').indexOf('✅ Golden Record — Reiss · GB recovered') === 0);
+}
+{
+  const base = { now: 1754280000000, link: 'https://x/labels', rules: {}, dests: {}, idx: {}, alerts: {} };
+  const rep = LG.buildReport(Object.assign({}, base, { grAlerts: { 'Reiss|gb': { alerts: [
+    { sev: 'crit', msg: 'availability coverage dropped 12pp (was 100%, now 88%)' },
+    { sev: 'info', msg: 'must not appear' } ] } } }));
+  ok('report GR section header + crit line, info excluded', rep.indexOf('GOLDEN RECORD ALERTS — attribute coverage vs last known-good (1)') > 0 &&
+    rep.indexOf('availability coverage dropped') > 0 && rep.indexOf('must not appear') < 0, rep);
+  ok('report GR empty state', LG.buildReport(Object.assign({}, base, { grAlerts: {} }))
+    .indexOf('attribute coverage holds on every scanned feed') > 0);
+  ok('report without grAlerts input has no GR section', LG.buildReport(base).indexOf('GOLDEN RECORD ALERTS') < 0);
+}
+
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
