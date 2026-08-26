@@ -2376,19 +2376,22 @@
       "name": "workflow: plan write resync — once-per-session re-send of unconfirmed rows",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "resyncPlanWrites",
-      "min": 3
+      "min": 3,
+      "pr": 278
     },
     {
       "name": "workflow: confirmed-write flag (w) on manual plan rows",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "markWritten",
-      "min": 5
+      "min": 5,
+      "pr": 278
     },
     {
       "name": "worker: idempotent plan append — task dedupe vs the tab",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "normAppendKey",
-      "min": 3
+      "min": 3,
+      "pr": 278
     }
   ]
 }
