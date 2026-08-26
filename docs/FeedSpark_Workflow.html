@@ -939,8 +939,11 @@ window.addEventListener('load',restore);
   var ALL_BRANDS=['Reiss','AllSaints','Schuh','Superdry','Accessorize','Monsoon','Hobbycraft','YuMOVE',
     'Estée Lauder','Bobbi Brown','Benefit','Jo Malone','Clinique','MAC','Craghoppers','Regatta','Dare2b','House of Bruar','American Golf','Ryobi'];
   var BKEY='fcc-wf-brands';
-  function loadBrands(){ try{var s=JSON.parse(localStorage.getItem(BKEY)); if(s&&s.length)return s;}catch(e){}
-    return Array.from(new Set(ALL_BRANDS.concat(Object.keys(PT)))).sort(function(a,b){return a.localeCompare(b);}); }
+  // a saved roster UNIONS with the defaults, never replaces them: the old early-return meant a
+  // roster snapshotted before a client was onboarded hid that client forever — adoptCalls then
+  // silently skipped its call actions (Ray's 26 Aug report: HoB rows in Intake, plan sheet empty)
+  function loadBrands(){ var saved=[]; try{var s=JSON.parse(localStorage.getItem(BKEY)); if(s&&s.length)saved=s;}catch(e){}
+    return Array.from(new Set(saved.concat(ALL_BRANDS,Object.keys(PT)))).sort(function(a,b){return a.localeCompare(b);}); }
   var CLIENTS=loadBrands();
   function saveBrands(){ try{localStorage.setItem(BKEY,JSON.stringify(CLIENTS));}catch(e){} }
   var ASPL=['Dinesh','Thia','Mariraj','Muji'];
@@ -1487,7 +1490,7 @@ window.addEventListener('load',restore);
     toast('↻ '+REC_LBL[r.every]+' — next occurrence created, due '+due);
     var id=PLANSHEET[client];
     if(id){ fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',rows:[{task:name,owner:owner,status:'Open',due:due}]})})
-      .then(function(x){return x.json();}).then(function(d){ if(d&&d.ok&&LIVE[client])setTimeout(function(){fetchLive(true);},800); }).catch(function(){}); } }
+      .then(function(x){return x.json();}).then(function(d){ if(d&&d.ok){ markWritten(client,name); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } }).catch(function(){}); } }
   function recMenu(btn,t){
     var old=document.getElementById('rec-menu'); if(old)old.remove();
     var cur=(RECUR[t.client+'|'+t.task]||{}).every||'';
@@ -1611,10 +1614,38 @@ window.addEventListener('load',restore);
     if(id){ toast('Adding to '+client+'’s plan…');
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
           body:JSON.stringify({id:id,tab:'Project Plan',rows:[{task:task,owner:owner||'',status:status||'Open',due:due}]})})
-        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok&&LIVE[client])setTimeout(function(){fetchLive(true);},800); })
+        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok){ markWritten(client,task); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } })
         .catch(function(){ toast('Saved locally — plan write failed (check the SA has Editor access)'); });
     } else toast('Added to '+client+' locally · no plan sheet linked to write back');
     return true; }
+  // w:1 on a MANUAL row = its sheet append CONFIRMED ok. A row without it is an optimistic local
+  // write the sheet may never have received — resyncPlanWrites re-sends those, so the flag is
+  // only ever set from a confirmed {ok:true} response, never optimistically.
+  function markWritten(client,task){ var hit=false;
+    MANUAL.forEach(function(m){ if(m.client===client&&m.task===task&&!m.w){ m.w=1; hit=true; } });
+    if(hit)saveManual(); }
+  // ---- plan write RESYNC (Ray's 26 Aug report: call actions visible in Intake but missing from
+  // the client's Project Plan sheet). An optimistic MANUAL row used to be the ONLY record of a
+  // task whose sheet append failed or never fired — the dup-guard then blocked every later
+  // attempt, so the sheet stayed behind with no error anywhere. Once per session, rows still
+  // lacking w for a plan-linked client are re-sent, batched per client; the worker skips rows
+  // whose task already sits in the tab, so a lost response can never double-append.
+  function resyncPlanWrites(){
+    try{ if(sessionStorage.getItem('fcc-planq-run'))return; sessionStorage.setItem('fcc-planq-run','1'); }catch(e){}
+    var ren=renameOverlay(), by={};
+    MANUAL.forEach(function(m){ if(m.w||!m.client||!m.task)return;
+      var k=m.client+'|'+m.task; if(DELETED[k]||ren[k])return;                 // deleted rows stay deleted; renamed rows' truth lives under the new name
+      if(!PLANSHEET[m.client])return;
+      if(planTasks().some(function(p){ return p.client===m.client&&sameTask(p.task,m.task); })){ m.w=1; return; }   // the plan already carries it — settle the flag
+      (by[m.client]=by[m.client]||[]).push(m); });
+    saveManual();
+    Object.keys(by).forEach(function(c){ var rows=by[c];
+      fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
+          body:JSON.stringify({id:PLANSHEET[c],tab:'Project Plan',rows:rows.map(function(m){ return {task:m.task,owner:m.owner||'',status:m.status||'Open',due:m.due||''}; })})})
+        .then(function(r){return r.json();}).then(function(d){ if(!d||!d.ok)return;
+          rows.forEach(function(m){ m.w=1; }); saveManual();
+          if(d.appended)toast('⟲ '+d.appended+' unsynced task'+(d.appended===1?'':'s')+' written to '+c+'’s plan'); })
+        .catch(function(){}); }); }
   // ---- manually-added tasks: written into the plan sheet, shown here until live sync pulls them back ----
   var MANUAL=[]; try{MANUAL=JSON.parse(localStorage.getItem('fcc-manual')||'[]');}catch(e){}
   function saveManual(){ try{localStorage.setItem('fcc-manual',JSON.stringify(MANUAL));}catch(e){} }
@@ -1675,7 +1706,7 @@ window.addEventListener('load',restore);
     var id=PLANSHEET[client];
     if(id){ toast('Adding to '+client+'’s plan…');
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:id,tab:'Project Plan',rows:[{task:task,owner:owner,status:status,due:due}]})})
-        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Added to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok&&LIVE[client])setTimeout(function(){fetchLive(true);},800); })
+        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Added to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok){ markWritten(client,task); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } })
         .catch(function(){ toast('Saved locally — sheet write failed (check the SA has Editor access)'); });
     } else toast('Added locally · no plan sheet linked for '+client);
   }
@@ -1728,13 +1759,13 @@ window.addEventListener('load',restore);
     var owner=(t.owner&&t.owner!=='—')?t.owner:'', status=t.s||'Open';
     var pd=taskDate(t), due=pd?(pad(pd.getDate())+'/'+pad(pd.getMonth()+1)+'/'+pd.getFullYear()):'';
     var mi=-1; MANUAL.forEach(function(m,x){ if(mi<0&&m.client===oc&&sameTask(m.task,t.task))mi=x; });
-    if(mi>=0){ MANUAL[mi].client=nc; } else { MANUAL.push({client:nc,task:t.task,owner:owner,status:status,due:due,esrc:t.esrc?1:0}); }
+    if(mi>=0){ MANUAL[mi].client=nc; delete MANUAL[mi].w; } else { MANUAL.push({client:nc,task:t.task,owner:owner,status:status,due:due,esrc:t.esrc?1:0}); }
     saveManual(); markDel(oc,t.task); _planCache=null;   // suppress the old row locally
     var oldId=PLANSHEET[oc], newId=PLANSHEET[nc];
     if(oldId){ fetch('/api/sheets/unappend',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:oldId,tab:'Project Plan',tasks:[t.task]})})
       .then(function(r){return r.json();}).then(function(d){ if(d&&d.ok&&d.deleted)toast('✓ Removed from '+oc+'’s plan'); }).catch(function(){}); }
     if(newId){ fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:newId,tab:'Project Plan',rows:[{task:t.task,owner:owner,status:status,due:due}]})})
-      .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+nc+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Moved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok&&LIVE[nc])setTimeout(function(){fetchLive(true);},800); })
+      .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+nc+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Moved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok){ markWritten(nc,t.task); if(LIVE[nc])setTimeout(function(){fetchLive(true);},800); } })
       .catch(function(){ toast('Moved locally — plan write failed (check the SA has Editor access)'); }); }
     else toast('Moved to '+nc+' · no plan sheet linked to write back');
     if(t.source==='call'){ callPatch(t.callid,{client:nc}); markCsrc(nc,t.task,t.call,t.cwhen); }   // assignment persists to KV; the 📞 origin rides onto the plan row
@@ -3407,6 +3438,9 @@ window.addEventListener('load',restore);
     st.textContent='Connected — '+pend.length+' email'+(pend.length===1?'':'s')
       +(th<pend.length?(' in '+th+' thread'+(th===1?'':'s')):'')+' waiting for triage'
       +(brf?(' · '+brf+' look like action requests ⚡'):'')+(done?(' · '+done+' triaged'):'')+'.'; }
+  // resync BEFORE the intake fetch can resolve: it snapshots the pre-existing unconfirmed rows,
+  // so a call action adoptCalls files seconds later is covered by its own confirmed write alone
+  resyncPlanWrites();
   (function(){ var dot=document.getElementById('gdot');
     fetch('/api/gmail/intake').then(function(r){return r.json();}).then(function(d){
       if(d && d.connected){ gmailItems=d.items||[]; applyTaught(gmailItems); if(dot)dot.classList.add('on');
