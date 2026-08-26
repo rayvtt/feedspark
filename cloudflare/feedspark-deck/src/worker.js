@@ -2786,7 +2786,17 @@ async function appendPlanRows(env, id, tab, rows) {
     const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
     const oc = c.ownerCol, sc = c.statusCol, dc = c.dueCol;
     const width = Math.max(tc, oc, sc, dc, 0) + 1;
-    const values = rows.map(r => { const a = new Array(width).fill(''); a[tc] = r.task || ''; if (oc >= 0) a[oc] = r.owner || ''; if (sc >= 0) a[sc] = r.status || 'Open'; if (dc >= 0 && r.due) a[dc] = r.due; return a; });
+    // IDEMPOTENT: skip rows whose task text already sits in the tab's task column (normalised
+    // match). The page re-sends any row a lost/failed response left unconfirmed (resyncPlanWrites),
+    // so a retried append must land zero duplicates — a lost response is indistinguishable from a
+    // lost write on the client side, and only the sheet itself knows which one happened.
+    const normAppendKey = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const have = new Set(); for (const g of grid) { const v = normAppendKey((g || [])[tc]); if (v) have.add(v); }
+    const fresh = rows.filter(r => { const k = normAppendKey(r.task); if (!k || have.has(k)) return false; have.add(k); return true; });
+    const skipped = rows.length - fresh.length;
+    const colsOut = { task: colLetter(tc), owner: oc >= 0 ? colLetter(oc) : null, status: sc >= 0 ? colLetter(sc) : null, due: dc >= 0 ? colLetter(dc) : null };
+    if (!fresh.length) return { ok: true, appended: 0, skipped, tab: realTab || '(first sheet)', atRow: null, cols: colsOut };
+    const values = fresh.map(r => { const a = new Array(width).fill(''); a[tc] = r.task || ''; if (oc >= 0) a[oc] = r.owner || ''; if (sc >= 0) a[sc] = r.status || 'Open'; if (dc >= 0 && r.due) a[dc] = r.due; return a; });
     // find the LAST row that has any content and write directly below it — the values:append
     // API mis-detects the table on multi-block plan layouts and drops rows at the top.
     let lastRow = 0; for (let r = 0; r < grid.length; r++) { if ((grid[r] || []).some(x => String(x || '').trim() !== '')) lastRow = r; }
@@ -2797,8 +2807,7 @@ async function appendPlanRows(env, id, tab, rows) {
     const wd = await wr.json();
     if (wd.error) return { ok: false, error: permHint(wd.error.message) };
     try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
-    return { ok: true, appended: values.length, tab: realTab || '(first sheet)', atRow: startRow,
-      cols: { task: colLetter(tc), owner: oc >= 0 ? colLetter(oc) : null, status: sc >= 0 ? colLetter(sc) : null, due: dc >= 0 ? colLetter(dc) : null } };
+    return { ok: true, appended: values.length, skipped, tab: realTab || '(first sheet)', atRow: startRow, cols: colsOut };
   } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
 }
 
