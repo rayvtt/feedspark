@@ -2398,56 +2398,56 @@
       "file": "cloudflare/feedspark-deck/src/access.js",
       "pattern": "scopeBriefsIncoming",
       "min": 1,
-      "pr": 280
+      "pr": 279
     },
     {
       "name": "access: Radostina -> House of Bruar seed",
       "file": "cloudflare/feedspark-deck/src/access.js",
       "pattern": "radostina@feedspark.com",
       "min": 1,
-      "pr": 280
+      "pr": 279
     },
     {
       "name": "worker: /api/access directory + per-user scope resolution",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "accessdir",
       "min": 3,
-      "pr": 280
+      "pr": 279
     },
     {
       "name": "worker: scoped briefs PUT re-injects foreign briefs (kvmerge trap)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "scopeBriefsIncoming",
       "min": 2,
-      "pr": 280
+      "pr": 279
     },
     {
       "name": "workflow: scope badge + locked roster for scoped signins",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "wf-scope",
       "min": 3,
-      "pr": 280
+      "pr": 279
     },
     {
       "name": "workflow: owner 👥 Access directory panel",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "acl-scrim",
       "min": 4,
-      "pr": 280
+      "pr": 279
     },
     {
       "name": "gates: access-scoping harness wired (qa_gate)",
       "file": "tools/qa_gate.sh",
       "pattern": "test_access.mjs",
       "min": 1,
-      "pr": 280
+      "pr": 279
     },
     {
       "name": "gates: access-scoping harness wired (validate CI)",
       "file": ".github/workflows/validate.yml",
       "pattern": "test_access.mjs",
       "min": 1,
-      "pr": 280
+      "pr": 279
     }
   ]
 }
