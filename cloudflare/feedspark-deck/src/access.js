@@ -103,6 +103,19 @@ export function scopeRows(rows, clients) {
   return (rows || []).filter((r) => r && clientMatch(clients, r.client));
 }
 
+// 👁 VIEW-AS: parse the fcc-viewas cookie into a preview target. This is only the parser —
+// the worker honors it EXCLUSIVELY when the real Access identity is the owner (viewAsOf),
+// so the cookie is inert for everyone else and can never widen access. Previewing yourself
+// is a no-op (null) so the owner can't lock himself out of owner-ness by accident.
+export function viewAsEmail(cookieHeader, ownerEmail) {
+  const m = /(?:^|;\s*)fcc-viewas=([^;]+)/.exec(String(cookieHeader || ''));
+  if (!m) return null;
+  let v = m[1]; try { v = decodeURIComponent(v); } catch (e) {}
+  v = String(v).trim().toLowerCase().slice(0, 120);
+  if (v.indexOf('@') < 1 || v === String(ownerEmail || '').toLowerCase()) return null;
+  return v;
+}
+
 // PUT /api/access body -> stored directory. Whole-map replace, owner-only, small N.
 export function sanitizeDir(body) {
   const src = (body && typeof body === 'object' && !Array.isArray(body)) ? body : {};
