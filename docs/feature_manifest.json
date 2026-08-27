@@ -2448,6 +2448,41 @@
       "pattern": "test_access.mjs",
       "min": 1,
       "pr": 279
+    },
+    {
+      "name": "access: view-as cookie parser (owner-only preview)",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "viewAsEmail",
+      "min": 1,
+      "pr": 280
+    },
+    {
+      "name": "worker: view-as resolution + owner gates honor the preview",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "realOwner(env, request)",
+      "min": 5,
+      "pr": 280
+    },
+    {
+      "name": "worker: view-as pill widget injected on app pages",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "VIEWASW",
+      "min": 2,
+      "pr": 280
+    },
+    {
+      "name": "viewas widget: the hovering 'viewing as' pill",
+      "file": "docs/viewas_widget.html",
+      "pattern": "FCC-VIEWAS",
+      "min": 1,
+      "pr": 280
+    },
+    {
+      "name": "workflow: 👁 view-as button on Access panel rows",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "acl-view",
+      "min": 3,
+      "pr": 280
     }
   ]
 }

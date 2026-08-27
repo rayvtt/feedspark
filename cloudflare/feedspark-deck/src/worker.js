@@ -28,7 +28,7 @@ import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js"
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes } from "./briefmatch.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
-import { ACCESS_SEED, resolveAccess, clientMatch, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir } from "./access.js";
+import { ACCESS_SEED, resolveAccess, clientMatch, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
 import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
@@ -52,6 +52,7 @@ import PRESENCEW from "../../../docs/presence_widget.html";
 // FCC-FEEDCHAT-BUBBLE: Feed Chat as an ambient chatbot — floating bubble bottom-right on every
 // app page; the panel hovers over the current page (embedded /feedchat?embed=1, URL unchanged).
 import FEEDCHATW from "../../../docs/feedchat_widget.html";
+import VIEWASW from "../../../docs/viewas_widget.html";
 // FCC-INSTR: collapsible-instructions widget — injected on app pages only (never decks),
 // so every module's explainer subtext folds behind a ⓘ by default
 import INSTR from "../../../docs/instr_collapse.html";
@@ -326,7 +327,7 @@ export default {
 
     // the activity feed itself — restricted to the account owner, enforced server-side
     if (path === '/api/activity' && request.method === 'GET') {
-      if (who(request) !== ownerEmail(env)) return json({ error: 'restricted to the account owner' }, 403);
+      if (!realOwner(env, request)) return json({ error: 'restricted to the account owner' }, 403);
       const days = Math.min(90, Math.max(1, +(url.searchParams.get('days') || 14) || 14));
       const cutoff = Date.now() - days * 86400000;
       const entries = []; let cursor;
@@ -345,17 +346,17 @@ export default {
     }
 
     // the activity PAGE is owner-only too (the link is visible to everyone; the data is not)
-    if (path === '/activity' && who(request) !== ownerEmail(env)) {
-      return new Response('<!doctype html><meta charset="utf-8"><title>Restricted</title><body style="font-family:Lato,system-ui,sans-serif;padding:60px;color:#333"><h2>Restricted</h2><p>The user activity log is only available to the account owner.</p><p><a href="/" style="color:#ED6F0B;font-weight:700">← Back to the command center</a></p>', { status: 403, headers: { 'content-type': 'text/html;charset=utf-8' } });
+    if (path === '/activity' && !realOwner(env, request)) {
+      return new Response('<!doctype html><meta charset="utf-8"><title>Restricted</title><body style="font-family:Lato,system-ui,sans-serif;padding:60px;color:#333"><h2>Restricted</h2><p>The user activity log is only available to the account owner.</p><p><a href="/" style="color:#ED6F0B;font-weight:700">← Back to the command center</a></p>' + viewAsExitHtml(env, request), { status: 403, headers: { 'content-type': 'text/html;charset=utf-8' } });
     }
 
     // ---- Leadership = the owner's dashboard. The landing (book health, commercial burn-down,
     // retention radar) AND the modules folded under it — Readiness, Task library, Build roadmap —
     // are all gated to OWNER_EMAIL via the verified Access identity. The old standalone URLs
     // 301 into their /leadership/* homes so bookmarks and deep links keep working.
-    if ((path === '/leadership' || path.startsWith('/leadership/')) && who(request) !== ownerEmail(env)) {
+    if ((path === '/leadership' || path.startsWith('/leadership/')) && !realOwner(env, request)) {
       logActivity(ctx, env, request, 'view-denied', path);
-      return new Response('<!doctype html><meta charset="utf-8"><title>Restricted</title><body style="font-family:Lato,system-ui,sans-serif;padding:60px;color:#333"><h2>Restricted</h2><p>The leadership dashboard is only available to the account owner.</p><p><a href="/" style="color:#ED6F0B;font-weight:700">← Back to the command center</a></p>', { status: 403, headers: { 'content-type': 'text/html;charset=utf-8' } });
+      return new Response('<!doctype html><meta charset="utf-8"><title>Restricted</title><body style="font-family:Lato,system-ui,sans-serif;padding:60px;color:#333"><h2>Restricted</h2><p>The leadership dashboard is only available to the account owner.</p><p><a href="/" style="color:#ED6F0B;font-weight:700">← Back to the command center</a></p>' + viewAsExitHtml(env, request), { status: 403, headers: { 'content-type': 'text/html;charset=utf-8' } });
     }
     if (path === '/readiness' || path === '/library' || path === '/roadmap') {
       return new Response(null, { status: 301, headers: { Location: '/leadership' + path, ...CORS } });
@@ -507,7 +508,7 @@ export default {
     if (path === '/api/access') {
       const acc = await accessOf(env, request);
       if (request.method === 'GET' && url.searchParams.get('me')) {
-        return json({ email: acc.email, owner: !!acc.owner, clients: acc.clients, name: acc.name || '' });
+        return json({ email: acc.email, owner: !!acc.owner, clients: acc.clients, name: acc.name || '', viewAs: acc.viewAs || null });
       }
       if (!acc.owner) return json({ error: 'restricted to the account owner' }, 403);
       if (request.method === 'GET') {
@@ -689,7 +690,7 @@ export default {
     // POST = queue the reminders immediately ({force:true} re-runs after today's cron pass —
     // the day-scoped outbox ids still make a double-send impossible).
     if (path === '/api/tasks/remind') {
-      if (who(request) !== ownerEmail(env)) return json({ error: 'restricted to the account owner' }, 403);
+      if (!realOwner(env, request)) return json({ error: 'restricted to the account owner' }, 403);
       if (request.method === 'GET') return json(await queueDueReminders(env, { dry: true }));
       if (request.method === 'POST') {
         let body; try { body = await request.json(); } catch (e) { body = {}; }
@@ -756,7 +757,7 @@ export default {
 
     // the Gmail-sync run history (owner-only, rendered beside the activity stream)
     if (path === '/api/gmail/pushlog' && request.method === 'GET') {
-      if (who(request) !== ownerEmail(env)) return json({ error: 'restricted to the account owner' }, 403);
+      if (!realOwner(env, request)) return json({ error: 'restricted to the account owner' }, 403);
       return json({ runs: ((await env.EDITS.get('gmailpushlog', 'json')) || []).slice(-60).reverse() });
     }
 
@@ -1676,7 +1677,7 @@ export default {
       // exists, append to the end otherwise (trailing <style>/<script> parse into body fine).
       const inject = (html, extra) => (html.indexOf('</body>') >= 0 ? html.replace('</body>', extra + '\n</body>') : html + '\n' + extra);
       let html = inject(page.html, getEditorScript(page.slug));
-      if (!path.startsWith('/deck/')) html = inject(html, TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW);
+      if (!path.startsWith('/deck/')) html = inject(html, TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW);
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
@@ -1764,16 +1765,36 @@ function who(request) {
   return 'unknown';
 }
 function ownerEmail(env) { return String(env.OWNER_EMAIL || 'ray@feedspark.com').toLowerCase(); }
+// 👁 VIEW-AS (Ray, Aug 2026): with the fcc-viewas cookie set, the OWNER browses the FCC
+// exactly as that signin — every scoped route AND every owner gate resolves as them, so
+// what he sees is what they get, 403s included. The cookie is honored ONLY when the real
+// Access identity is the owner: for anyone else it is inert and can never widen access.
+function viewAsOf(env, request) {
+  if (who(request) !== ownerEmail(env)) return null;
+  return viewAsEmail(request.headers.get('Cookie'), ownerEmail(env));
+}
+// owner gates (activity / leadership / reminders / pushlog) use THIS, not a bare who()
+// compare, so a view-as preview is denied exactly like the person being previewed
+function realOwner(env, request) { return who(request) === ownerEmail(env) && !viewAsOf(env, request); }
+// the "you are previewing" strip appended to owner-only 403 pages while view-as is active
+function viewAsExitHtml(env, request) {
+  const vs = viewAsOf(env, request);
+  if (!vs) return '';
+  return '<p style="margin-top:18px;font-size:13px;color:#8a94a0">\u{1F441} You are previewing the FCC as <b>' + vs.replace(/[<>&]/g, '') + '</b> \u2014 they get exactly this page. <a href="#" style="color:#ED6F0B;font-weight:700" onclick="document.cookie=\'fcc-viewas=;path=/;max-age=0\';location.reload();return false">Exit view-as</a></p>';
+}
 // the caller's Workflow scope: owner -> full house; directory row (KV accessdir, git seed
 // until first save) or client-team alias (houseofbruar@ -> House of Bruar) -> that client's
 // view; anyone else -> full house. Two KV reads, only on the routes that scope.
 async function accessOf(env, request) {
   const email = who(request);
-  if (email === ownerEmail(env)) return { email, owner: true, clients: null, name: 'Owner' };
+  const vs = viewAsOf(env, request);   // non-null only for the real owner
+  if (email === ownerEmail(env) && !vs) return { email, owner: true, clients: null, name: 'Owner' };
   const dir = await env.EDITS.get('accessdir', 'json');
   let names = Object.keys(DEFAULT_FEEDS);
   try { names = names.concat(Object.keys(liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data)); } catch (e) {}
-  return resolveAccess(email, false, dir, names);
+  const r = resolveAccess(vs || email, false, dir, names);
+  if (vs) r.viewAs = { real: email, as: vs };
+  return r;
 }
 // append an activity entry without blocking the response (per-entry key, 90-day TTL,
 // entry stored in key METADATA so reading the feed is one list() with no value gets)

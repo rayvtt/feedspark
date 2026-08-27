@@ -322,12 +322,14 @@ window.addEventListener('load',restore);
 .acl-head .mc{font-size:12.5px;color:var(--muted,#8a94a0);line-height:1.55;max-width:580px}
 .acl-head .x{border:none;background:none;font-size:22px;cursor:pointer;color:var(--muted,#8a94a0);line-height:1}
 .acl-rows{display:flex;flex-direction:column;gap:10px;max-height:46vh;overflow:auto;padding:2px}
-.acl-row{display:grid;grid-template-columns:225px 130px 1fr 28px;gap:8px;align-items:start;padding:10px;border:1px solid var(--line,#E6E6E6);border-radius:10px;background:var(--wash,#F7F7F5)}
+.acl-row{display:grid;grid-template-columns:225px 130px 1fr 28px 28px;gap:8px;align-items:start;padding:10px;border:1px solid var(--line,#E6E6E6);border-radius:10px;background:var(--wash,#F7F7F5)}
 .acl-row input{width:100%;padding:7px 9px;border:1px solid var(--line,#E6E6E6);border-radius:8px;font:inherit;font-size:13px;background:var(--paper,#fff)}
 .acl-cl{display:flex;flex-wrap:wrap;gap:5px;padding-top:2px}
 .acl-chip{padding:3px 9px;border-radius:999px;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);font-size:11.5px;font-weight:700;cursor:pointer;color:var(--ink-2,#555)}
 .acl-chip.on{background:rgba(245,166,35,.16);border-color:rgba(237,111,11,.4);color:var(--orange-deep,#ED6F0B)}
 .acl-del{border:none;background:none;cursor:pointer;color:var(--muted,#8a94a0);font-size:15px;padding:4px}
+.acl-view{border:none;background:none;cursor:pointer;font-size:14px;padding:4px;opacity:.75}
+.acl-view:hover{opacity:1}
 .acl-foot{display:flex;align-items:center;gap:10px;margin-top:12px}
 .acl-stat{font-size:12px;color:var(--muted,#8a94a0)}
 .acl-note{font-size:11.5px;color:var(--muted,#8a94a0);margin-top:10px;line-height:1.55}
@@ -961,7 +963,7 @@ window.addEventListener('load',restore);
     <span class="acl-stat" id="acl-stat"></span>
     <button class="btn sm navy" id="acl-save" type="button">Save access</button>
   </div>
-  <div class="acl-note">Scoping only ever <b>narrows</b> a view — it can't grant anything. A person's scope applies the moment they next load Workflow; they keep working their client's pipeline with you (shared board, same tickets), they just don't see the rest of the book.</div>
+  <div class="acl-note">👁 on a row previews the FCC as that signin — the server treats you as them until you Exit (pill at the top of every page; auto-expires in 2h). Scoping only ever <b>narrows</b> a view — it can't grant anything. A person's scope applies the moment they next load Workflow; they keep working their client's pipeline with you (shared board, same tickets), they just don't see the rest of the book.</div>
 </div></div>
 <div class="scrim tle-scrim" id="tle-scrim"><div class="modal tle-modal" id="tle-modal" role="dialog" aria-modal="true" aria-label="Edit task"></div></div>
 
@@ -3511,12 +3513,17 @@ window.addEventListener('load',restore);
     function aclRow(email,row){ var d=document.createElement('div'); d.className='acl-row';
       d.innerHTML='<input class="acl-em" type="email" placeholder="person@feedspark.com" value="'+esc(email||'')+'">'
         +'<input class="acl-nm" type="text" placeholder="Name" value="'+esc((row&&row.name)||'')+'">'
-        +'<div class="acl-cl"></div><button class="acl-del" type="button" title="Remove this person">✕</button>';
+        +'<div class="acl-cl"></div><button class="acl-view" type="button" title="👁 View the FCC as this signin — the whole app serves you exactly what they get (auto-expires in 2h; Exit any time)">👁</button>'
+        +'<button class="acl-del" type="button" title="Remove this person">✕</button>';
       var cl=d.querySelector('.acl-cl'), sel={}; ((row&&row.clients)||[]).forEach(function(c){sel[slugClient(c)]=1;});
       CLIENTS.forEach(function(c){ var ch=document.createElement('button'); ch.type='button';
         ch.className='acl-chip'+(sel[slugClient(c)]?' on':''); ch.textContent=c;
         ch.onclick=function(){ ch.classList.toggle('on'); }; cl.appendChild(ch); });
       d.querySelector('.acl-del').onclick=function(){ d.remove(); };
+      d.querySelector('.acl-view').onclick=function(){ var em=(d.querySelector('.acl-em').value||'').trim().toLowerCase();
+        if(em.indexOf('@')<1){ toast('Enter their email first'); return; }
+        document.cookie='fcc-viewas='+encodeURIComponent(em)+';path=/;max-age=7200';
+        location.reload(); };
       return d; }
     function openAcl(){ var host=document.getElementById('acl-rows'); host.innerHTML='';
       DIRSTAT.textContent='Loading…'; document.getElementById('acl-scrim').classList.add('on');

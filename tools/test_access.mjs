@@ -6,7 +6,7 @@
  * Run: node tools/test_access.mjs   (pure node, no browser — also part of the gates)
  */
 import { ACCESS_SEED, clientSlug, aliasClient, resolveAccess, clientMatch,
-  scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir } from '../cloudflare/feedspark-deck/src/access.js';
+  scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail } from '../cloudflare/feedspark-deck/src/access.js';
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from '../cloudflare/feedspark-deck/src/kvmerge.js';
 
 let passed = 0, failed = 0;
@@ -84,6 +84,14 @@ const dir = sanitizeDir({ ' Rado@FeedSpark.com ': { name: 'Radostina', clients: 
 ok(Object.keys(dir).length === 1 && dir['rado@feedspark.com'] && dir['rado@feedspark.com'].clients.length === 2,
   'sanitizer: emails lowercased/trimmed, junk rows dropped, clients coerced to strings');
 ok(dir['rado@feedspark.com'].clients[1] === '42', 'non-string client coerced, empties dropped');
+
+/* ---- 👁 view-as cookie parser (owner-only gating itself lives in the worker's viewAsOf) ---- */
+const OWN = 'ray@feedspark.com';
+ok(viewAsEmail('fcc-viewas=radostina%40feedspark.com', OWN) === 'radostina@feedspark.com', 'view-as: cookie parses + decodes');
+ok(viewAsEmail('theme=dark; fcc-viewas=Steven@FeedSpark.com; other=1', OWN) === 'steven@feedspark.com', 'view-as: found mid-header, lowercased');
+ok(viewAsEmail('fcc-viewas=ray%40feedspark.com', OWN) === null, 'view-as: previewing yourself is a no-op (owner stays owner)');
+ok(viewAsEmail('fcc-viewas=notanemail', OWN) === null && viewAsEmail('', OWN) === null && viewAsEmail(null, OWN) === null, 'view-as: junk / absent cookie -> null');
+ok(viewAsEmail('xfcc-viewas=a@b.com', OWN) === null, 'view-as: name must match exactly (no prefix bleed)');
 
 console.log('\nRESULT: ' + (failed ? 'FAIL — ' + failed + ' failed, ' : 'PASS — ') + passed + ' assertions');
 process.exit(failed ? 1 : 0);
