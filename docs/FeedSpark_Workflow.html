@@ -313,6 +313,31 @@ window.addEventListener('load',restore);
 </style>
 
 
+<style>
+/* ---- individual access: scope badge + owner panel (Ray, Aug 2026) ---- */
+.wf-scope{display:inline-flex;align-items:center;gap:6px;margin-left:10px;padding:4px 11px;border-radius:999px;background:rgba(245,166,35,.14);border:1px solid rgba(237,111,11,.35);color:var(--orange-deep,#ED6F0B);font-size:12px;font-weight:800;white-space:nowrap;cursor:default}
+.acl-modal{max-width:780px;width:min(780px,96vw)}
+.acl-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:12px}
+.acl-head h3{margin:0 0 6px}
+.acl-head .mc{font-size:12.5px;color:var(--muted,#8a94a0);line-height:1.55;max-width:580px}
+.acl-head .x{border:none;background:none;font-size:22px;cursor:pointer;color:var(--muted,#8a94a0);line-height:1}
+.acl-rows{display:flex;flex-direction:column;gap:10px;max-height:46vh;overflow:auto;padding:2px}
+.acl-row{display:grid;grid-template-columns:225px 130px 1fr 28px 28px;gap:8px;align-items:start;padding:10px;border:1px solid var(--line,#E6E6E6);border-radius:10px;background:var(--wash,#F7F7F5)}
+.acl-row input{width:100%;padding:7px 9px;border:1px solid var(--line,#E6E6E6);border-radius:8px;font:inherit;font-size:13px;background:var(--paper,#fff)}
+.acl-cl{display:flex;flex-wrap:wrap;gap:5px;padding-top:2px}
+.acl-chip{padding:3px 9px;border-radius:999px;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);font-size:11.5px;font-weight:700;cursor:pointer;color:var(--ink-2,#555)}
+.acl-chip.on{background:rgba(245,166,35,.16);border-color:rgba(237,111,11,.4);color:var(--orange-deep,#ED6F0B)}
+.acl-del{border:none;background:none;cursor:pointer;color:var(--muted,#8a94a0);font-size:15px;padding:4px}
+.acl-view{border:none;background:none;cursor:pointer;font-size:14px;padding:4px;opacity:.75}
+.acl-view:hover{opacity:1}
+.acl-foot{display:flex;align-items:center;gap:10px;margin-top:12px}
+.acl-stat{font-size:12px;color:var(--muted,#8a94a0)}
+.acl-note{font-size:11.5px;color:var(--muted,#8a94a0);margin-top:10px;line-height:1.55}
+[data-theme=dark] .acl-row{background:#191C24}
+[data-theme=dark] .acl-row input,[data-theme=dark] .acl-chip{background:#20242E;color:var(--ink-2);border-color:var(--line)}
+@media(max-width:700px){.acl-row{grid-template-columns:1fr;gap:6px}}
+</style>
+
 <div class="topbar"><div class="topbar-in">
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
   <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
@@ -925,6 +950,21 @@ window.addEventListener('load',restore);
 </main>
 
 <div class="scrim" id="scrim"><div class="modal" id="modal"></div></div>
+
+<!-- 👥 Individual access (owner-only; the button mounts only for the account owner) -->
+<div class="scrim" id="acl-scrim"><div class="modal acl-modal" role="dialog" aria-modal="true" aria-label="Individual access">
+  <div class="acl-head"><div><h3>👥 Individual access</h3>
+    <div class="mc">Assign a person to their managed client(s) and their <b>Workflow becomes that client's view only</b> — briefs, plan tasks, captured emails and call actions are filtered server-side for their signin. Client-team aliases need no setup at all (<b>houseofbruar@feedspark.com</b> already sees House of Bruar only). Everyone unassigned keeps the full view; every other module stays open to all; Leadership &amp; Activity stay owner-only.</div></div>
+    <button class="x" id="acl-x" type="button" aria-label="Close">×</button></div>
+  <div class="acl-rows" id="acl-rows"></div>
+  <div class="acl-foot">
+    <button class="btn sm" id="acl-add" type="button">＋ Add person</button>
+    <span class="grow"></span>
+    <span class="acl-stat" id="acl-stat"></span>
+    <button class="btn sm navy" id="acl-save" type="button">Save access</button>
+  </div>
+  <div class="acl-note">👁 on a row previews the FCC as that signin — the server treats you as them until you Exit (pill at the top of every page; auto-expires in 2h). Scoping only ever <b>narrows</b> a view — it can't grant anything. A person's scope applies the moment they next load Workflow; they keep working their client's pipeline with you (shared board, same tickets), they just don't see the rest of the book.</div>
+</div></div>
 <div class="scrim tle-scrim" id="tle-scrim"><div class="modal tle-modal" id="tle-modal" role="dialog" aria-modal="true" aria-label="Edit task"></div></div>
 
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Workflow control center · live from the project plans</div></div>
@@ -946,6 +986,17 @@ window.addEventListener('load',restore);
     return Array.from(new Set(saved.concat(ALL_BRANDS,Object.keys(PT)))).sort(function(a,b){return a.localeCompare(b);}); }
   var CLIENTS=loadBrands();
   function saveBrands(){ try{localStorage.setItem(BKEY,JSON.stringify(CLIENTS));}catch(e){} }
+  // ---- individual access (Ray, Aug 2026): a scoped signin works ONE client's Workflow ----
+  // The worker is the gate — /api/briefs, /api/gmail/intake, dismiss, calls and techam all
+  // come back pre-filtered to the signin's assigned clients (directory row or client-team
+  // alias like houseofbruar@feedspark.com). This mirrors that server truth in the chrome:
+  // plan rows filtered, the client roster locked, a 🔒 badge naming the scope. SCOPE=null
+  // (owner / unassigned) = today's full house.
+  var SCOPE=null, ACCESS_ME=null;
+  function slugClient(n){ try{ return String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,''); }
+    catch(e){ return String(n||'').toLowerCase().replace(/[^a-z0-9]/g,''); } }
+  function inScopeClient(c){ if(!SCOPE)return true; var l=slugClient(c); if(!l)return false;
+    for(var i=0;i<SCOPE.length;i++){ if(slugClient(SCOPE[i])===l)return true; } return false; }
   var ASPL=['Dinesh','Thia','Mariraj','Muji'];
   var BRIEF_TO='briefing@feedspark.com';
   var STAGES=[['intake','Intake','#8a94a0'],['briefed','Briefed to ASPL','#B1550A'],['progress','In progress','#2F6FB0'],
@@ -1674,7 +1725,7 @@ window.addEventListener('load',restore);
         var s=ov[k]!=null?ov[k]:(src.status||'Open');
         return {client:m.c,task:m.task,cat:classifyLite(m.task),owner:(owo[k]!=null?owo[k]:(src.owner||'—')),source:'plan',
           esrc:(src.esrc||isEsrc(k,m.task))?1:0,csrc:CSRC[k]||null,s:s,b:bucketOf(s),live:false,manual:true,sheet:PLANSHEET[m.c]||'',d:(duo[k]||src.due||'')}; }); }
-  function allIntake(){ return planTasks().concat(manualTasks()).concat(emailIntake()).concat(callTasks()).filter(function(r){ return !RMCL[r.client]; }); }
+  function allIntake(){ return planTasks().concat(manualTasks()).concat(emailIntake()).concat(callTasks()).filter(function(r){ return !RMCL[r.client]&&inScopeClient(r.client); }); }
   // DDMM (or DDMMYYYY) -> ISO yyyy-mm-dd; a near-past DDMM rolls to next year
   function ddmmToIso(v){ v=String(v||'').replace(/\D/g,'');
     if(v.length===4){ var dd=+v.slice(0,2), mm=+v.slice(2,4); if(dd<1||dd>31||mm<1||mm>12)return '';
@@ -3449,5 +3500,65 @@ window.addEventListener('load',restore);
       // then write the client-attributed ones through to their plan sheets (Ray's rule)
       if(d && d.calls && d.calls.length){ CALLS=d.calls; adoptCalls(); renderAll(); }
     }).catch(function(){}); })();
+
+  // ---- individual access bootstrap: learn my scope, mirror the server's gate in the chrome ----
+  // (the data itself is already filtered per signin by the worker — this locks the roster,
+  // shows the 🔒 badge, and mounts the owner's 👥 Access directory editor)
+  (function(){
+    function mountBadge(){ var tag=document.querySelector('.tb-tag'); if(!tag||document.getElementById('wf-scope'))return;
+      var b=document.createElement('span'); b.id='wf-scope'; b.className='wf-scope'; b.textContent='🔒 '+SCOPE.join(' + ');
+      b.title='Your Workflow is scoped to '+SCOPE.join(', ')+' — the pipeline, plan tasks, emails and call actions here are this client’s only. Every other module stays open to you.';
+      tag.parentNode.insertBefore(b,tag.nextSibling); }
+    var DIRSTAT=document.getElementById('acl-stat');
+    function aclRow(email,row){ var d=document.createElement('div'); d.className='acl-row';
+      d.innerHTML='<input class="acl-em" type="email" placeholder="person@feedspark.com" value="'+esc(email||'')+'">'
+        +'<input class="acl-nm" type="text" placeholder="Name" value="'+esc((row&&row.name)||'')+'">'
+        +'<div class="acl-cl"></div><button class="acl-view" type="button" title="👁 View the FCC as this signin — the whole app serves you exactly what they get (auto-expires in 2h; Exit any time)">👁</button>'
+        +'<button class="acl-del" type="button" title="Remove this person">✕</button>';
+      var cl=d.querySelector('.acl-cl'), sel={}; ((row&&row.clients)||[]).forEach(function(c){sel[slugClient(c)]=1;});
+      CLIENTS.forEach(function(c){ var ch=document.createElement('button'); ch.type='button';
+        ch.className='acl-chip'+(sel[slugClient(c)]?' on':''); ch.textContent=c;
+        ch.onclick=function(){ ch.classList.toggle('on'); }; cl.appendChild(ch); });
+      d.querySelector('.acl-del').onclick=function(){ d.remove(); };
+      d.querySelector('.acl-view').onclick=function(){ var em=(d.querySelector('.acl-em').value||'').trim().toLowerCase();
+        if(em.indexOf('@')<1){ toast('Enter their email first'); return; }
+        document.cookie='fcc-viewas='+encodeURIComponent(em)+';path=/;max-age=7200';
+        location.reload(); };
+      return d; }
+    function openAcl(){ var host=document.getElementById('acl-rows'); host.innerHTML='';
+      DIRSTAT.textContent='Loading…'; document.getElementById('acl-scrim').classList.add('on');
+      fetch('/api/access').then(function(r){return r.json();}).then(function(d){
+        var dir=(d&&d.users)||{}; host.innerHTML='';
+        Object.keys(dir).sort().forEach(function(em){ host.appendChild(aclRow(em,dir[em])); });
+        if(!Object.keys(dir).length)host.appendChild(aclRow('',null));
+        DIRSTAT.textContent=(d&&d.stored)?'':'Showing the built-in seed — Save to take it over.';
+      }).catch(function(){ DIRSTAT.textContent='Could not load the directory.'; }); }
+    function saveAcl(){ var out={};
+      document.querySelectorAll('#acl-rows .acl-row').forEach(function(d){
+        var em=(d.querySelector('.acl-em').value||'').trim().toLowerCase(); if(em.indexOf('@')<1)return;
+        var cls=[]; d.querySelectorAll('.acl-chip.on').forEach(function(ch){cls.push(ch.textContent);});
+        out[em]={name:(d.querySelector('.acl-nm').value||'').trim(),clients:cls}; });
+      DIRSTAT.textContent='Saving…';
+      fetch('/api/access',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(out)})
+        .then(function(r){return r.json();}).then(function(d){
+          if(d&&d.ok){ DIRSTAT.textContent=''; toast('Access saved — '+d.n+' assigned signin'+(d.n===1?'':'s'));
+            document.getElementById('acl-scrim').classList.remove('on'); }
+          else DIRSTAT.textContent=(d&&d.error)||'Save failed'; })
+        .catch(function(){ DIRSTAT.textContent='Save failed — network'; }); }
+    function mountOwnerBtn(){ var bar=document.querySelector('.live-bar'); if(!bar||document.getElementById('acl-open'))return;
+      var b=document.createElement('button'); b.type='button'; b.id='acl-open'; b.className='live-add'; b.style.marginLeft='0';
+      b.title='Individual access — who sees which client’s Workflow'; b.textContent='👥 Access';
+      b.onclick=openAcl; bar.appendChild(b);
+      document.getElementById('acl-x').onclick=function(){ document.getElementById('acl-scrim').classList.remove('on'); };
+      document.getElementById('acl-add').onclick=function(){ document.getElementById('acl-rows').appendChild(aclRow('',null)); };
+      document.getElementById('acl-save').onclick=saveAcl;
+      document.getElementById('acl-scrim').addEventListener('click',function(e){ if(e.target===this)this.classList.remove('on'); }); }
+    fetch('/api/access?me=1').then(function(r){return r.json();}).then(function(d){ ACCESS_ME=d||null;
+      if(d&&d.owner){ mountOwnerBtn(); return; }
+      if(d&&d.clients&&d.clients.length){ SCOPE=d.clients.slice();
+        CLIENTS=CLIENTS.filter(inScopeClient); if(!CLIENTS.length)CLIENTS=SCOPE.slice();
+        fillClientSelect(); mountBadge(); renderAll(); }
+    }).catch(function(){});
+  })();
 })();
 </script>

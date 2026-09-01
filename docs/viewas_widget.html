@@ -1,0 +1,28 @@
+<!-- FCC-VIEWAS: the owner's "viewing as" pill. Injected on every app page; completely
+     inert unless the fcc-viewas cookie is present AND the server confirms the caller is
+     the real owner (the /api/access?me=1 response only carries viewAs in that case) —
+     so for everyone else this widget costs one cookie regex and renders nothing. -->
+<style>
+#fcc-viewas{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:9600;display:flex;align-items:center;gap:10px;background:#1A365D;color:#fff;border:1.5px solid #F5A623;border-radius:999px;padding:8px 16px;font:700 12.5px/1.3 Lato,system-ui,sans-serif;box-shadow:0 10px 30px rgba(10,20,40,.35);max-width:94vw}
+#fcc-viewas .vw-eye{animation:vwblink 2.2s infinite}
+@keyframes vwblink{0%,100%{opacity:1}50%{opacity:.4}}
+#fcc-viewas .vw-scope{color:#F5A623;font-weight:800}
+#fcc-viewas button{border:none;border-radius:999px;background:#F5A623;color:#1A365D;font:800 12px Lato,system-ui,sans-serif;padding:5px 12px;cursor:pointer;white-space:nowrap}
+#fcc-viewas button:hover{background:#ED6F0B;color:#fff}
+@media(max-width:640px){#fcc-viewas{top:auto;bottom:86px;flex-wrap:wrap;justify-content:center}}
+</style>
+<script>
+(function(){
+  if(!/(?:^|;\s*)fcc-viewas=/.test(document.cookie))return;   // no cookie -> zero work
+  fetch('/api/access?me=1').then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.viewAs)return;   // server ignored the cookie (not the real owner) -> nothing
+    var clean=function(x){return String(x||'').replace(/[<>&]/g,'');};
+    var scope=(d.clients&&d.clients.length)?d.clients.join(' + '):'full Workflow view (unassigned)';
+    var el=document.createElement('div'); el.id='fcc-viewas';
+    el.innerHTML='<span class="vw-eye">👁</span><span>Viewing as <b>'+clean(d.name||d.email)+'</b>'
+      +' <span class="vw-scope">· '+clean(scope)+'</span></span><button type="button" title="Back to your own (owner) view">Exit</button>';
+    el.querySelector('button').onclick=function(){ document.cookie='fcc-viewas=;path=/;max-age=0'; location.reload(); };
+    document.body.appendChild(el);
+  }).catch(function(){});
+})();
+</script>
