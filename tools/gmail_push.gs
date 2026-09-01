@@ -117,6 +117,12 @@ function pushInbox() {
   // (the REAL sender is gemini-notes@google.com with subject 'Notes: “<title>” Mon DD, YYYY' —
   // subject:notes catches that shape; the worker's parser is the precise gate)
   var notes = GmailApp.search('newer_than:2d from:google.com (subject:notes OR subject:"meeting summary" OR subject:transcript)', 0, 10);
+  // Scheduled keyword-optimisation RESULT updates (Dino → clients, e.g. 'Schuh GB x Feedspark -
+  // Aug I - Keyword Optimisation') come FROM the team, so the internal-sender exclusion above
+  // would drop them — a third targeted search captures them for the worker's results archive
+  // (KV kwresults → brand dossier). The worker's subject parser is the precise gate; these
+  // need the result body, so they push the long snippet like call notes do.
+  var kwr = GmailApp.search('newer_than:2d subject:("x feedspark" keyword)', 0, 15);
   var out = [], seen = {};
   var collect = function (t) {
     t.getMessages().forEach(function (m) {
@@ -126,11 +132,12 @@ function pushInbox() {
       if (Date.now() - when > 2 * 24 * 60 * 60 * 1000) return;
       var subj = m.getSubject() || '', from = m.getFrom() || '';
       var isNotes = /notes by gemini|meeting (notes|summary|recap)|transcript|notes(\s+from)?\s*[::]?\s*[“"]/i.test(subj) || /(gemini|meet)[a-z.\-]*@google\.com/i.test(from);
+      var isKwr = /x\s*feed\s*spark/i.test(subj) && /keyword\s*optimi[sz]ation/i.test(subj);
       out.push({ id: id, from: from, to: m.getTo(), cc: m.getCc(), subject: subj,
-        snippet: (m.getPlainBody() || '').slice(0, isNotes ? 9000 : 500), date: when });
+        snippet: (m.getPlainBody() || '').slice(0, (isNotes || isKwr) ? 9000 : 500), date: when });
     });
   };
-  threads.forEach(collect); notes.forEach(collect);
+  threads.forEach(collect); notes.forEach(collect); kwr.forEach(collect);
   if (!out.length) { console.log('FCC inbox: nothing new'); return; }
   var res = UrlFetchApp.fetch(ENDPOINT, { method: 'post', contentType: 'application/json',
     headers: { 'X-FCC-Push-Key': KEY }, payload: JSON.stringify({ inbox: out }), muteHttpExceptions: true });
