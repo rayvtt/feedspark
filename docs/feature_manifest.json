@@ -2511,6 +2511,12 @@
       "pattern": "acl-view",
       "min": 3,
       "pr": 280
+    },
+    {
+      "name": "ops: plan-ingest lane (committed batch -> live PP append)",
+      "file": "tools/plan_ingest.mjs",
+      "pattern": "INGEST_FILE",
+      "min": 2
     }
   ]
 }
