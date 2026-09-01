@@ -2518,6 +2518,18 @@
       "pattern": "INGEST_FILE",
       "min": 2,
       "pr": 282
+    },
+    {
+      "name": "worker: committed-batch ingest (one-click plan import)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "INGEST_BATCHES",
+      "min": 3
+    },
+    {
+      "name": "workflow: 📥 batch-import banner over Intake",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "ingest-banner",
+      "min": 4
     }
   ]
 }

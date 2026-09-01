@@ -547,6 +547,10 @@ window.addEventListener('load',restore);
   .tpl-hint{font-weight:600;color:var(--muted);font-size:11px}
   /* live sync bar */
   .live-bar{display:flex;align-items:center;gap:10px;margin:2px 0 10px;font-size:12.5px;color:var(--muted);font-weight:600}
+  .ingest-banner{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:9px 13px;border:1px solid #E8C68A;background:#FDF6E9;border-radius:10px;font-size:12.5px;font-weight:700;color:#7A5A1F}
+  .ingest-banner button{font:inherit;font-size:12px;font-weight:800;padding:5px 12px;border-radius:100px;border:1px solid #B1550A;background:#B1550A;color:#fff;cursor:pointer;flex:none;margin-left:auto}
+  .ingest-banner button:hover{background:#8f4408}
+  .ingest-banner button:disabled{opacity:.6;cursor:default}
   .live-dot{width:9px;height:9px;border-radius:50%;background:#C9CDD4;flex:none}
   .live-dot.on{background:var(--good);box-shadow:0 0 0 3px rgba(72,208,126,.18)}
   .live-state{flex:1;min-width:0}
@@ -816,6 +820,7 @@ window.addEventListener('load',restore);
     <div class="info-pop">Pure tasks only — monthly <b>project-plan</b> rows plus the <b>emails you briefed</b> from the triage queue (raw emails stay up there until you decide). Change a <b>status</b> inline and plan rows write back to the sheet. Stack filters — pick several <b>sources</b>, <b>statuses</b>, <b>clients</b> or <b>AMs</b> at once — tick rows to <b>bulk-brief</b>, or hit <b>Brief</b> to prefill the generator. Works like a spreadsheet — click a cell, arrow-key around, <b>Cmd/Ctrl+C</b> copy, <b>Ctrl+D</b> fill down, <b>Ctrl+V</b> paste, <b>Ctrl+Z</b> undo; <b>double-click</b> to edit; on a status cell just <b>type a letter</b> (O, B, I, H, W, D) to set it.</div>
   </h2>
   <div class="live-bar"><span class="live-dot" id="live-dot"></span><span class="live-state" id="live-state">Live plan sync — connect the service account and share each plan to pull current rows.</span><button class="live-add" id="new-brief-btn" type="button" title="Open the brief composer">✉ New brief</button><button class="live-add" id="add-task-btn" type="button" style="margin-left:0">＋ Add task</button><button class="live-refresh" id="live-refresh" type="button">↻ Refresh</button></div>
+  <div id="ingest-banner" hidden></div>
   <div class="it-ctl">
     <div class="it-multi" id="it-views-wrap">
       <button type="button" class="it-multi-btn" id="it-views-btn" aria-haspopup="true" aria-expanded="false" title="Save & reapply filter views">★ Views ▾</button>
@@ -3489,6 +3494,32 @@ window.addEventListener('load',restore);
     st.textContent='Connected — '+pend.length+' email'+(pend.length===1?'':'s')
       +(th<pend.length?(' in '+th+' thread'+(th===1?'':'s')):'')+' waiting for triage'
       +(brf?(' · '+brf+' look like action requests ⚡'):'')+(done?(' · '+done+' triaged'):'')+'.'; }
+  // ---- 📥 committed action batches (ops/ingest/*.json): a batch generated in a Code session
+  // rides in git; anyone logged in files it into the plan with one click — the worker's append
+  // skips rows already in the tab, so a re-click can never double-append. The banner clears
+  // for everyone once filed (KV ingestdone).
+  (function(){
+    var host=document.getElementById('ingest-banner'); if(!host)return;
+    fetch('/api/ingest/pending').then(function(r){return r.json();}).then(function(d){
+      var open=((d&&d.batches)||[]).filter(function(b){return !b.done;});
+      if(!open.length)return;
+      host.hidden=false;
+      host.innerHTML=open.map(function(b){
+        return '<div class="ingest-banner" title="'+esc(b.note||'')+'">📥 <b>'+esc(b.client)+'</b> — '+b.rows+' committed action'+(b.rows===1?'':'s')+' ready to file ('+esc(b.key)+')'
+          +'<button type="button" data-key="'+esc(b.key)+'">Import into the plan</button></div>'; }).join('');
+      Array.prototype.forEach.call(host.querySelectorAll('button'),function(btn){ btn.onclick=function(){
+        btn.disabled=true; btn.textContent='Filing…';
+        fetch('/api/ingest/run',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({key:btn.getAttribute('data-key')})})
+          .then(function(r){return r.json();}).then(function(x){
+            if(x&&x.ok){ toast('✓ '+x.appended+' task'+(x.appended===1?'':'s')+' written to '+(x.client||'the plan')+'’s plan'+(x.skipped?(' · '+x.skipped+' already there'):''));
+              var row=btn.closest('.ingest-banner'); if(row)row.remove();
+              if(!host.querySelector('.ingest-banner'))host.hidden=true;
+              fetchLive(true); }
+            else { btn.disabled=false; btn.textContent='Import into the plan'; toast('Import failed'+(x&&x.error?': '+x.error:'')); } })
+          .catch(function(){ btn.disabled=false; btn.textContent='Import into the plan'; toast('Import failed — network'); });
+      }; });
+    }).catch(function(){});
+  })();
   // resync BEFORE the intake fetch can resolve: it snapshots the pre-existing unconfirmed rows,
   // so a call action adoptCalls files seconds later is covered by its own confirmed write alone
   resyncPlanWrites();

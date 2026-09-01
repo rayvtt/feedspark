@@ -27,6 +27,11 @@
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
+// Committed action batches (ops/ingest/*.json) — bundled at build time so a logged-in user can
+// file them into a plan sheet with ONE CLICK from /workflow (no CI service token needed).
+// New batch = commit the JSON + add it to INGEST_BATCHES.
+import INGEST_SUPERDRY_SVS_AUG26 from "../../../ops/ingest/superdry_svs_aug26.json";
+const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import { ACCESS_SEED, resolveAccess, clientMatch, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
@@ -312,7 +317,7 @@ export default {
         '/api/labels/scan': 'label-scan', '/api/labels/ack': 'label-rebase',
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
-        '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send',
+        '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
         '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile',
         '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save' };
       if (ACT[path]) {
@@ -1257,6 +1262,32 @@ export default {
     // ---- Google connection status (Option A: service account + domain-wide delegation) ----
     if (path === '/api/google/status' && request.method === 'GET') {
       return json({ configured: !!env.GOOGLE_SA_JSON, impersonate: env.GOOGLE_IMPERSONATE || null });
+    }
+
+    // ---- committed action batches → one-click plan import (Ray's SVS-Aug26 ask) ----
+    // The batch rides in git (ops/ingest/*.json, bundled above); a logged-in /workflow user
+    // clicks Import and the worker files it through appendPlanRows — the same idempotent
+    // write "+ Add task" uses, so a re-click or a later CI dispatch never double-appends.
+    // KV ingestdone remembers filed batches so the page's banner clears for everyone.
+    if (path === '/api/ingest/pending' && request.method === 'GET') {
+      const done = (await env.EDITS.get('ingestdone', 'json')) || {};
+      const out = Object.keys(INGEST_BATCHES).map((k) => { const b = INGEST_BATCHES[k]; return {
+        key: k, client: b.client || '', rows: (b.rows || []).length, note: b.note || '', done: done[k] || null }; });
+      return json({ ok: true, batches: out });
+    }
+    if (path === '/api/ingest/run' && request.method === 'POST') {
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' });
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const batch = INGEST_BATCHES[String(body.key || '')];
+      if (!batch) return json({ ok: false, error: 'unknown batch "' + String(body.key || '') + '"' }, 404);
+      const r = await appendPlanRows(env, batch.id, batch.tab || 'Project Plan', batch.rows || []);
+      if (r.ok) {
+        const done = (await env.EDITS.get('ingestdone', 'json')) || {};
+        done[String(body.key)] = { at: Date.now(), appended: r.appended, skipped: r.skipped || 0,
+          by: request.headers.get('Cf-Access-Authenticated-User-Email') || '' };
+        await env.EDITS.put('ingestdone', JSON.stringify(done));
+      }
+      return json(Object.assign({ client: batch.client || '' }, r));
     }
 
     // ---- scheduled keyword-optimisation results archive (KV kwresults, captured on gmail push) ----
