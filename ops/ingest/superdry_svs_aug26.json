@@ -1,0 +1,19 @@
+{
+  "client": "Superdry",
+  "id": "16Sn9HB56eaNytr7pM3sY0aJTRhK-I-RpNr84EQ36KMI",
+  "tab": "Project Plan",
+  "note": "SVS-Aug26 testing roadmap (T1-T11) from the Superdry Service Review — actions generated for the Project Plan + Workflow Intake. Owners default to FS; Ray sets dues when scheduling. Priority + success metric ride in the task text.",
+  "rows": [
+    { "task": "[SVS-Aug26] T1 - AI A/B test - [Search Intent] in Titles - Brand+Material+Fit+Colour+[Search Intent] via Tachyon → CTR (HIGH)", "owner": "FS", "status": "Open", "due": "" },
+    { "task": "[SVS-Aug26] T2 - Description expansion to 500+ chars - 5 sections (FAQ / Highlights / descriptions) for long-tail & AI queries → Impressions (HIGH)", "owner": "FS", "status": "Open", "due": "" },
+    { "task": "[SVS-Aug26] T3 - AI A/B test - [Description FAQ] over 500 chars - Tachyon AI description (short desc + details + FAQ) → CTR (HIGH)", "owner": "FS", "status": "Open", "due": "" },
+    { "task": "[SVS-Aug26] T4 - Visual attributes extraction via Tachyon - product highlights to Google's 4-10 per SKU (30.5% in-range, 63.3% at zero) → Rich results / CTR (HIGH)", "owner": "FS", "status": "Open", "due": "" },
+    { "task": "[SVS-Aug26] T5 - Keywords Optimisation Planner - MoM focus 6 months ahead + Product Type highlights to 70-80% feed saturation → CVR (MEDIUM)", "owner": "FS", "status": "Open", "due": "" },
+    { "task": "[SVS-Aug26] T6 - New Google attributes item_group_title + variant_option - clean variant data across size/colour runs (Conversational Attributes) → Cross-sell (MEDIUM)", "owner": "FS", "status": "Open", "due": "" },
+    { "task": "[SVS-Aug26] T7 - New Google attribute related_product - outfit & bundle links for shop-the-look visibility in Shopping & AI answers → AOV (MEDIUM)", "owner": "FS", "status": "Open", "due": "" },
+    { "task": "[SVS-Aug26] T8 - Peak Planning (BF & XMAS) - align optimisation schedules for Peak → CTR (MEDIUM)", "owner": "FS", "status": "Open", "due": "" },
+    { "task": "[SVS-Aug26] T9 - Dynamic image overlay trial - live-stock / countdown overlays on Social without breaking image-type tags → CTR (LOW)", "owner": "FS", "status": "Open", "due": "" },
+    { "task": "[SVS-Aug26] T10 - New Google attribute question_and_answer on top categories - pre-answered Q&A (fit / care / sizing) parsed from Description FAQ → AI citations (LOW)", "owner": "FS", "status": "Open", "due": "" },
+    { "task": "[SVS-Aug26] T11 - Rolling PPC overlay for Shopping - promo messages (% off, x units left, % code) in the Shopping carousel → CTR / CVR (LOW)", "owner": "FS", "status": "Open", "due": "" }
+  ]
+}
