@@ -25,7 +25,7 @@
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
-import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes } from "./briefmatch.js";
+import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
 import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY } from "./labelguard.js";
@@ -570,7 +570,11 @@ export default {
         // Dedupe is by message id, so the 2-day rolling re-push files each call exactly once.
         const calls = (await env.EDITS.get('callactions', 'json')) || [];
         const haveCall = {}; calls.forEach((a) => { if (a.mid) haveCall[a.mid] = 1; });
-        let added = 0, briefable = 0, callsAdded = 0;
+        // scheduled keyword-optimisation RESULT emails (Dino → clients, Ray cc'd) are archive
+        // records for future decks — captured into KV kwresults per brand, never triaged.
+        const kwres = (await env.EDITS.get('kwresults', 'json')) || [];
+        const haveKw = {}; kwres.forEach((k) => { if (k.id) haveKw[k.id] = 1; });
+        let added = 0, briefable = 0, callsAdded = 0, kwAdded = 0;
         const names = Object.keys(dossier);
         for (const m of inbox) {
           if (!m || !m.id) continue;
@@ -600,6 +604,25 @@ export default {
             }
             continue;
           }
+          // keyword-result gate ALSO before the stored-id dedupe: a result forwarded from an
+          // external address may have been pre-captured as a triage item — lift it out, the
+          // archived result IS the record (same upgrade-race fix the call notes needed).
+          const kw = parseKwResult(m);
+          if (kw) {
+            if (!haveKw[m.id]) {
+              if (seen[m.id]) {
+                const j2 = stored.findIndex((it) => it && it.id === m.id);
+                if (j2 >= 0) stored.splice(j2, 1);
+                delete seen[m.id];
+              }
+              const exK = detectClientEx({ subject: kw.brand, snippet: '' }, clientDoms, names);
+              kwres.push({ id: m.id, client: exK.client || kw.brand, via: exK.via || '', mkt: kw.mkt,
+                period: kw.period, when: m.date || Date.now(), from: String(m.from || '').slice(0, 120),
+                subject: String(m.subject || '').slice(0, 160), metrics: kw.metrics, raw: kw.raw });
+              haveKw[m.id] = 1; kwAdded++;
+            }
+            continue;
+          }
           if (seen[m.id]) continue;   // ordinary mail: already captured on an earlier push
           const c = classifyInbound(m, clientDoms, { selfRe: selfRe2, clientNames: names });
           if (c.hints[0] === 'noise/self') continue;
@@ -611,10 +634,14 @@ export default {
           calls.sort((a, b) => (b.when || 0) - (a.when || 0));
           await env.EDITS.put('callactions', JSON.stringify(calls.slice(0, 300)));
         }
+        if (kwAdded) {
+          kwres.sort((a, b) => (b.when || 0) - (a.when || 0));
+          await env.EDITS.put('kwresults', JSON.stringify(kwres.slice(0, 400)));
+        }
         stored.sort((a, b) => (b.date || 0) - (a.date || 0));
         await env.EDITS.put('gmailinbox', JSON.stringify(stored.slice(0, 120)));
-        logActivity(ctx, env, request, 'gmail-inbox', added + ' new · ' + briefable + ' briefable' + (callsAdded ? (' · ' + callsAdded + ' call actions') : ''), 'gmail-sync');
-        return json({ ok: true, received: inbox.length, added, briefable, callActions: callsAdded });
+        logActivity(ctx, env, request, 'gmail-inbox', added + ' new · ' + briefable + ' briefable' + (callsAdded ? (' · ' + callsAdded + ' call actions') : '') + (kwAdded ? (' · ' + kwAdded + ' kw results') : ''), 'gmail-sync');
+        return json({ ok: true, received: inbox.length, added, briefable, callActions: callsAdded, kwResults: kwAdded });
       }
 
       const messages = Array.isArray(body.messages) ? body.messages.slice(0, 200) : [];
@@ -1162,6 +1189,17 @@ export default {
     // ---- Google connection status (Option A: service account + domain-wide delegation) ----
     if (path === '/api/google/status' && request.method === 'GET') {
       return json({ configured: !!env.GOOGLE_SA_JSON, impersonate: env.GOOGLE_IMPERSONATE || null });
+    }
+
+    // ---- scheduled keyword-optimisation results archive (KV kwresults, captured on gmail push) ----
+    // ?client=Name filters to one brand (matched loosely so 'Schuh' finds entries whose detected
+    // client kept the raw subject brand). The dossier's Optimisation-results section and future
+    // deck builds read from here.
+    if (path === '/api/kwresults' && request.method === 'GET') {
+      const all = (await env.EDITS.get('kwresults', 'json')) || [];
+      const q = (url.searchParams.get('client') || '').trim().toLowerCase();
+      const results = q ? all.filter((k) => { const c = String(k.client || '').toLowerCase(); return c && (c.indexOf(q) >= 0 || q.indexOf(c) >= 0); }) : all;
+      return json({ ok: true, results: results.slice(0, 200), total: results.length });
     }
 
     // ---- Gmail intake: recent client task emails → Workflow "Incoming emails" stream ----

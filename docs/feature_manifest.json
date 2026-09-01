@@ -2392,6 +2392,30 @@
       "pattern": "normAppendKey",
       "min": 3,
       "pr": 278
+    },
+    {
+      "name": "briefmatch: scheduled keyword-result email parser (parseKwResult)",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "parseKwResult",
+      "min": 1
+    },
+    {
+      "name": "worker: kwresults archive — push capture + /api/kwresults",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "kwresults",
+      "min": 4
+    },
+    {
+      "name": "CmdCenter: dossier 📈 optimisation-results archive",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "loadKwResults",
+      "min": 2
+    },
+    {
+      "name": "tools: pusher kw-result capture leg (internal-sender carve-out)",
+      "file": "tools/gmail_push.gs",
+      "pattern": "isKwr",
+      "min": 2
     }
   ]
 }
