@@ -1037,7 +1037,7 @@ window.addEventListener('load',restore);
 
   // email-on-confirmed-warning settings (KV goldenalertcfg via the worker)
   fetch(API + '/api/golden/alertcfg').then(function (r) { return r.json(); }).then(function (c) {
-    if ($('ml-on')) $('ml-on').checked = c.on !== false;
+    if ($('ml-on')) $('ml-on').checked = c.on === true;   // opt-in only (off by default — Ray, Aug 2026)
     if ($('ml-to')) $('ml-to').value = c.to || '';
   }).catch(function () {});
   if ($('ml-save')) $('ml-save').onclick = function () {

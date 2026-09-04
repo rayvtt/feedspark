@@ -2046,8 +2046,11 @@ async function runLabelScan(env, client, mkt) {
     else delete pMap[lgKey(client, mkt)];
     await env.EDITS.put('ptypealerts', JSON.stringify(pMap));
     if (mailPlan.mail.length || mailPlan.recovered) try {
+      // OPT-IN ONLY (Ray, Aug 2026: "drop these alerts — don't send them to ray@feedspark.com"):
+      // emails send only from a config explicitly saved on the page (v2). The old default-on
+      // behaviour — and any config saved in that era — never emails again.
       const mcfg = (await env.EDITS.get('ptypealertcfg', 'json')) || {};
-      if (mcfg.on !== false) {
+      if (mcfg.on === true && mcfg.v2) {
         const to = String(mcfg.to || env.OWNER_EMAIL || 'ray@feedspark.com');
         const name = dispFeed(client, mkt);
         const link = 'https://feedspark.ray-vtt.workers.dev/ptypes';
@@ -2101,8 +2104,9 @@ async function runLabelScan(env, client, mkt) {
     else delete gMap[lgKey(client, mkt)];
     await env.EDITS.put('goldenalerts', JSON.stringify(gMap));
     if (gPlan.mail.length || gPlan.recovered) try {
+      // opt-in only — same rule as the PT Guard block above (Ray, Aug 2026)
       const gcfg = (await env.EDITS.get('goldenalertcfg', 'json')) || {};
-      if (gcfg.on !== false) {
+      if (gcfg.on === true && gcfg.v2) {
         const to = String(gcfg.to || env.OWNER_EMAIL || 'ray@feedspark.com');
         const name = dispFeed(client, mkt);
         const link = 'https://feedspark.ray-vtt.workers.dev/golden';
@@ -2374,13 +2378,15 @@ async function productTypeRoutes(env, request, url) {
   // email-on-warning settings (recipient + on/off) — mirrors labelreportcfg's shape
   if (path === '/api/ptypes/alertcfg') {
     if (request.method === 'GET') {
-      return json((await env.EDITS.get('ptypealertcfg', 'json')) || { on: true, to: String(env.OWNER_EMAIL || 'ray@feedspark.com') });
+      const cfg = (await env.EDITS.get('ptypealertcfg', 'json')) || {};
+      // off unless explicitly re-enabled on the page (v2) — legacy default-era configs read as off
+      return json({ on: cfg.on === true && !!cfg.v2, to: cfg.to || String(env.OWNER_EMAIL || 'ray@feedspark.com') });
     }
     if (request.method === 'PUT') {
       let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
       const to = String(b.to || '').slice(0, 120);
       if (to.indexOf('@') < 1) return json({ error: 'not an email address' }, 400);
-      const cfg = { on: !!b.on, to };
+      const cfg = { on: !!b.on, to, v2: true };
       await env.EDITS.put('ptypealertcfg', JSON.stringify(cfg));
       return json(Object.assign({ ok: true }, cfg));
     }
@@ -2489,13 +2495,14 @@ async function goldenRoutes(env, request, url) {
   // email-on-warning settings (recipient + on/off) — mirrors ptypealertcfg's shape
   if (path === '/api/golden/alertcfg') {
     if (request.method === 'GET') {
-      return json((await env.EDITS.get('goldenalertcfg', 'json')) || { on: true, to: String(env.OWNER_EMAIL || 'ray@feedspark.com') });
+      const cfg = (await env.EDITS.get('goldenalertcfg', 'json')) || {};
+      return json({ on: cfg.on === true && !!cfg.v2, to: cfg.to || String(env.OWNER_EMAIL || 'ray@feedspark.com') });
     }
     if (request.method === 'PUT') {
       let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
       const to = String(b.to || '').slice(0, 120);
       if (to.indexOf('@') < 1) return json({ error: 'not an email address' }, 400);
-      const cfg = { on: !!b.on, to };
+      const cfg = { on: !!b.on, to, v2: true };
       await env.EDITS.put('goldenalertcfg', JSON.stringify(cfg));
       return json(Object.assign({ ok: true }, cfg));
     }
