@@ -27,6 +27,8 @@ jobs:
 
       - name: Label Guard engine unit tests
         run: node tools/test_labelguard.mjs
+      - name: Access scoping harness (per-user Workflow views)
+        run: node tools/test_access.mjs
 
       - name: Shipped-feature markers (multi-session overwrite tripwire)
         run: node tools/check_markers.js

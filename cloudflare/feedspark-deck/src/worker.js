@@ -25,8 +25,15 @@
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
-import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes } from "./briefmatch.js";
+import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
+// Committed action batches (ops/ingest/*.json) — bundled at build time so a logged-in user can
+// file them into a plan sheet with ONE CLICK from /workflow (no CI service token needed).
+// New batch = commit the JSON + add it to INGEST_BATCHES.
+import INGEST_SUPERDRY_SVS_AUG26 from "../../../ops/ingest/superdry_svs_aug26.json";
+const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
+// Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
+import { ACCESS_SEED, resolveAccess, clientMatch, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
 import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
@@ -50,6 +57,7 @@ import PRESENCEW from "../../../docs/presence_widget.html";
 // FCC-FEEDCHAT-BUBBLE: Feed Chat as an ambient chatbot — floating bubble bottom-right on every
 // app page; the panel hovers over the current page (embedded /feedchat?embed=1, URL unchanged).
 import FEEDCHATW from "../../../docs/feedchat_widget.html";
+import VIEWASW from "../../../docs/viewas_widget.html";
 // FCC-INSTR: collapsible-instructions widget — injected on app pages only (never decks),
 // so every module's explainer subtext folds behind a ⓘ by default
 import INSTR from "../../../docs/instr_collapse.html";
@@ -309,9 +317,9 @@ export default {
         '/api/labels/scan': 'label-scan', '/api/labels/ack': 'label-rebase',
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
-        '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send',
+        '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
         '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile',
-        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save' };
+        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -324,7 +332,7 @@ export default {
 
     // the activity feed itself — restricted to the account owner, enforced server-side
     if (path === '/api/activity' && request.method === 'GET') {
-      if (who(request) !== ownerEmail(env)) return json({ error: 'restricted to the account owner' }, 403);
+      if (!realOwner(env, request)) return json({ error: 'restricted to the account owner' }, 403);
       const days = Math.min(90, Math.max(1, +(url.searchParams.get('days') || 14) || 14));
       const cutoff = Date.now() - days * 86400000;
       const entries = []; let cursor;
@@ -343,17 +351,17 @@ export default {
     }
 
     // the activity PAGE is owner-only too (the link is visible to everyone; the data is not)
-    if (path === '/activity' && who(request) !== ownerEmail(env)) {
-      return new Response('<!doctype html><meta charset="utf-8"><title>Restricted</title><body style="font-family:Lato,system-ui,sans-serif;padding:60px;color:#333"><h2>Restricted</h2><p>The user activity log is only available to the account owner.</p><p><a href="/" style="color:#ED6F0B;font-weight:700">← Back to the command center</a></p>', { status: 403, headers: { 'content-type': 'text/html;charset=utf-8' } });
+    if (path === '/activity' && !realOwner(env, request)) {
+      return new Response('<!doctype html><meta charset="utf-8"><title>Restricted</title><body style="font-family:Lato,system-ui,sans-serif;padding:60px;color:#333"><h2>Restricted</h2><p>The user activity log is only available to the account owner.</p><p><a href="/" style="color:#ED6F0B;font-weight:700">← Back to the command center</a></p>' + viewAsExitHtml(env, request), { status: 403, headers: { 'content-type': 'text/html;charset=utf-8' } });
     }
 
     // ---- Leadership = the owner's dashboard. The landing (book health, commercial burn-down,
     // retention radar) AND the modules folded under it — Readiness, Task library, Build roadmap —
     // are all gated to OWNER_EMAIL via the verified Access identity. The old standalone URLs
     // 301 into their /leadership/* homes so bookmarks and deep links keep working.
-    if ((path === '/leadership' || path.startsWith('/leadership/')) && who(request) !== ownerEmail(env)) {
+    if ((path === '/leadership' || path.startsWith('/leadership/')) && !realOwner(env, request)) {
       logActivity(ctx, env, request, 'view-denied', path);
-      return new Response('<!doctype html><meta charset="utf-8"><title>Restricted</title><body style="font-family:Lato,system-ui,sans-serif;padding:60px;color:#333"><h2>Restricted</h2><p>The leadership dashboard is only available to the account owner.</p><p><a href="/" style="color:#ED6F0B;font-weight:700">← Back to the command center</a></p>', { status: 403, headers: { 'content-type': 'text/html;charset=utf-8' } });
+      return new Response('<!doctype html><meta charset="utf-8"><title>Restricted</title><body style="font-family:Lato,system-ui,sans-serif;padding:60px;color:#333"><h2>Restricted</h2><p>The leadership dashboard is only available to the account owner.</p><p><a href="/" style="color:#ED6F0B;font-weight:700">← Back to the command center</a></p>' + viewAsExitHtml(env, request), { status: 403, headers: { 'content-type': 'text/html;charset=utf-8' } });
     }
     if (path === '/readiness' || path === '/library' || path === '/roadmap') {
       return new Response(null, { status: 301, headers: { Location: '/leadership' + path, ...CORS } });
@@ -495,10 +503,54 @@ export default {
       }
     }
 
+    // ---- individual access (Ray, Aug 2026): who sees which clients' Workflow ----
+    // GET ?me=1        -> the caller's own scope {email, owner, clients|null, name} (any signin)
+    // GET              -> the full directory (owner only; git seed until first save)
+    // PUT              -> replace the directory (owner only; whole map, sanitized)
+    // Enforcement lives on the Workflow data routes below — briefs, intake, dismiss, calls,
+    // techam — which all pre-filter to the caller's clients. Scoping only narrows: an
+    // unassigned signin keeps today's full view, and owner-only pages stay owner-only.
+    if (path === '/api/access') {
+      const acc = await accessOf(env, request);
+      if (request.method === 'GET' && url.searchParams.get('me')) {
+        return json({ email: acc.email, owner: !!acc.owner, clients: acc.clients, name: acc.name || '', viewAs: acc.viewAs || null });
+      }
+      if (!acc.owner) return json({ error: 'restricted to the account owner' }, 403);
+      if (request.method === 'GET') {
+        const dir = await env.EDITS.get('accessdir', 'json');
+        return json({ users: dir || ACCESS_SEED, stored: !!dir });
+      }
+      if (request.method === 'PUT') {
+        let body; try { body = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+        const users = sanitizeDir(body);
+        await env.EDITS.put('accessdir', JSON.stringify(users));
+        return json({ ok: true, users, n: Object.keys(users).length });
+      }
+    }
+
     // ---- briefs store (Workflow control center: brief/ticket pipeline, shared across the team) ----
     // A single JSON object keyed by brief id: {id: {client, code, task, due, status, comms, ...}}.
     // The board owns its state and PUTs the whole map; small N, no races worth the complexity.
     if (path === '/api/briefs') {
+      const acc = await accessOf(env, request);
+      if (acc.clients) {
+        // scoped signin: they see (and can save) only their clients' briefs. Their PUT is a
+        // whole-map save of a PARTIAL view against a delete-by-absence store — re-inject
+        // everything foreign before the merge or their save would wipe the rest of the board.
+        if (request.method === 'GET') {
+          const lifted = liftEnvelope(await env.EDITS.get('briefs', 'json'), Date.now());
+          return json(scopeBriefsView(lifted.data, acc.clients), 200, { 'X-Sync-Base': String(Date.now()) });
+        }
+        if (request.method === 'PUT') {
+          let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+          const base = Number(request.headers.get('X-Sync-Base') || 0) || 0;
+          const now = Date.now();
+          const cur = liftEnvelope(await env.EDITS.get('briefs', 'json'), now);
+          const envx = mergeIntoEnvelope(cur, scopeBriefsIncoming(cur.data, body, acc.clients), base, now, {});
+          await env.EDITS.put('briefs', JSON.stringify(envx));
+          return json(scopeBriefsView(envx.data, acc.clients), 200, { 'X-Sync-Base': String(Date.now()) });
+        }
+      }
       // brief pipeline: deletion = absence, disambiguated by the writer's X-Sync-Base read-stamp
       const r = await mapStoreRoute(env, request, 'briefs', {});
       if (r) return r;
@@ -570,7 +622,11 @@ export default {
         // Dedupe is by message id, so the 2-day rolling re-push files each call exactly once.
         const calls = (await env.EDITS.get('callactions', 'json')) || [];
         const haveCall = {}; calls.forEach((a) => { if (a.mid) haveCall[a.mid] = 1; });
-        let added = 0, briefable = 0, callsAdded = 0;
+        // scheduled keyword-optimisation RESULT emails (Dino → clients, Ray cc'd) are archive
+        // records for future decks — captured into KV kwresults per brand, never triaged.
+        const kwres = (await env.EDITS.get('kwresults', 'json')) || [];
+        const haveKw = {}; kwres.forEach((k) => { if (k.id) haveKw[k.id] = 1; });
+        let added = 0, briefable = 0, callsAdded = 0, kwAdded = 0;
         const names = Object.keys(dossier);
         for (const m of inbox) {
           if (!m || !m.id) continue;
@@ -600,6 +656,25 @@ export default {
             }
             continue;
           }
+          // keyword-result gate ALSO before the stored-id dedupe: a result forwarded from an
+          // external address may have been pre-captured as a triage item — lift it out, the
+          // archived result IS the record (same upgrade-race fix the call notes needed).
+          const kw = parseKwResult(m);
+          if (kw) {
+            if (!haveKw[m.id]) {
+              if (seen[m.id]) {
+                const j2 = stored.findIndex((it) => it && it.id === m.id);
+                if (j2 >= 0) stored.splice(j2, 1);
+                delete seen[m.id];
+              }
+              const exK = detectClientEx({ subject: kw.brand, snippet: '' }, clientDoms, names);
+              kwres.push({ id: m.id, client: exK.client || kw.brand, via: exK.via || '', mkt: kw.mkt,
+                period: kw.period, when: m.date || Date.now(), from: String(m.from || '').slice(0, 120),
+                subject: String(m.subject || '').slice(0, 160), metrics: kw.metrics, raw: kw.raw });
+              haveKw[m.id] = 1; kwAdded++;
+            }
+            continue;
+          }
           if (seen[m.id]) continue;   // ordinary mail: already captured on an earlier push
           const c = classifyInbound(m, clientDoms, { selfRe: selfRe2, clientNames: names });
           if (c.hints[0] === 'noise/self') continue;
@@ -611,10 +686,14 @@ export default {
           calls.sort((a, b) => (b.when || 0) - (a.when || 0));
           await env.EDITS.put('callactions', JSON.stringify(calls.slice(0, 300)));
         }
+        if (kwAdded) {
+          kwres.sort((a, b) => (b.when || 0) - (a.when || 0));
+          await env.EDITS.put('kwresults', JSON.stringify(kwres.slice(0, 400)));
+        }
         stored.sort((a, b) => (b.date || 0) - (a.date || 0));
         await env.EDITS.put('gmailinbox', JSON.stringify(stored.slice(0, 120)));
-        logActivity(ctx, env, request, 'gmail-inbox', added + ' new · ' + briefable + ' briefable' + (callsAdded ? (' · ' + callsAdded + ' call actions') : ''), 'gmail-sync');
-        return json({ ok: true, received: inbox.length, added, briefable, callActions: callsAdded });
+        logActivity(ctx, env, request, 'gmail-inbox', added + ' new · ' + briefable + ' briefable' + (callsAdded ? (' · ' + callsAdded + ' call actions') : '') + (kwAdded ? (' · ' + kwAdded + ' kw results') : ''), 'gmail-sync');
+        return json({ ok: true, received: inbox.length, added, briefable, callActions: callsAdded, kwResults: kwAdded });
       }
 
       const messages = Array.isArray(body.messages) ? body.messages.slice(0, 200) : [];
@@ -643,7 +722,7 @@ export default {
     // POST = queue the reminders immediately ({force:true} re-runs after today's cron pass —
     // the day-scoped outbox ids still make a double-send impossible).
     if (path === '/api/tasks/remind') {
-      if (who(request) !== ownerEmail(env)) return json({ error: 'restricted to the account owner' }, 403);
+      if (!realOwner(env, request)) return json({ error: 'restricted to the account owner' }, 403);
       if (request.method === 'GET') return json(await queueDueReminders(env, { dry: true }));
       if (request.method === 'POST') {
         let body; try { body = await request.json(); } catch (e) { body = {}; }
@@ -669,6 +748,13 @@ export default {
         const to = String(b.to || '').slice(0, 160).trim();
         if (!mid) return json({ error: 'missing id' }, 400);
         if (to.indexOf('@') < 1) return json({ error: 'not an email address' }, 400);
+        // scoped signins can only delegate their own clients' emails
+        const accT = await accessOf(env, request);
+        if (accT.clients) {
+          const inbox = (await env.EDITS.get('gmailinbox', 'json')) || [];
+          const it = inbox.filter((x) => x && String(x.id) === mid)[0];
+          if (!it || !clientMatch(accT.clients, it.client)) return json({ error: 'outside your scoped clients' }, 403);
+        }
         await env.EDITS.put('techamcfg', JSON.stringify({ to }));
         const q = (await env.EDITS.get('techamq', 'json')) || [];
         if (!q.some((e) => e && e.id === mid)) q.push({ qid: 'ta_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), id: mid, to, t: Date.now() });
@@ -687,6 +773,12 @@ export default {
       const calls2 = (await env.EDITS.get('callactions', 'json')) || [];
       const hit = calls2.filter((a) => a && a.id === cid)[0];
       if (!hit) return json({ error: 'unknown call action' }, 404);
+      // scoped signins: only their clients' call rows, and never re-assigning one out of scope
+      const accC = await accessOf(env, request);
+      if (accC.clients && (!clientMatch(accC.clients, hit.client)
+        || (b.client != null && !clientMatch(accC.clients, b.client)))) {
+        return json({ error: 'outside your scoped clients' }, 403);
+      }
       if (b.s != null) hit.s = String(b.s).slice(0, 24);
       if (b.due != null) hit.due = String(b.due).slice(0, 10);        // ISO yyyy-mm-dd, '' clears
       if (b.client != null) hit.client = String(b.client).slice(0, 60);
@@ -697,7 +789,7 @@ export default {
 
     // the Gmail-sync run history (owner-only, rendered beside the activity stream)
     if (path === '/api/gmail/pushlog' && request.method === 'GET') {
-      if (who(request) !== ownerEmail(env)) return json({ error: 'restricted to the account owner' }, 403);
+      if (!realOwner(env, request)) return json({ error: 'restricted to the account owner' }, 403);
       return json({ runs: ((await env.EDITS.get('gmailpushlog', 'json')) || []).slice(-60).reverse() });
     }
 
@@ -711,9 +803,17 @@ export default {
       // email when clearing a thread; each request did get->mutate->put on the SAME KV key, so
       // the concurrent writes clobbered each other and all but one decision were lost —
       // dismissed threads resurfaced on the next refresh (Ray's report). One request, one write.
-      const ids = (Array.isArray(body.ids) ? body.ids : [body.id])
+      let ids = (Array.isArray(body.ids) ? body.ids : [body.id])
         .map((x) => String(x || '').slice(0, 64)).filter(Boolean).slice(0, 50);
       if (!ids.length) return json({ ok: false, error: 'missing id' }, 400);
+      // a scoped signin can only triage their own clients' emails
+      const accD = await accessOf(env, request);
+      if (accD.clients) {
+        const inbox = (await env.EDITS.get('gmailinbox', 'json')) || [];
+        const mine = {}; inbox.forEach((it) => { if (it && clientMatch(accD.clients, it.client)) mine[String(it.id)] = 1; });
+        ids = ids.filter((id) => mine[id]);
+        if (!ids.length) return json({ ok: false, error: 'outside your scoped clients' }, 403);
+      }
       const dis = (await env.EDITS.get('gmaildismissed', 'json')) || {};
       const validReasons = ['briefed', 'task', 'notask', 'techam'];
       const reason = validReasons.includes(body.reason) ? body.reason : 'notask';
@@ -1164,6 +1264,43 @@ export default {
       return json({ configured: !!env.GOOGLE_SA_JSON, impersonate: env.GOOGLE_IMPERSONATE || null });
     }
 
+    // ---- committed action batches → one-click plan import (Ray's SVS-Aug26 ask) ----
+    // The batch rides in git (ops/ingest/*.json, bundled above); a logged-in /workflow user
+    // clicks Import and the worker files it through appendPlanRows — the same idempotent
+    // write "+ Add task" uses, so a re-click or a later CI dispatch never double-appends.
+    // KV ingestdone remembers filed batches so the page's banner clears for everyone.
+    if (path === '/api/ingest/pending' && request.method === 'GET') {
+      const done = (await env.EDITS.get('ingestdone', 'json')) || {};
+      const out = Object.keys(INGEST_BATCHES).map((k) => { const b = INGEST_BATCHES[k]; return {
+        key: k, client: b.client || '', rows: (b.rows || []).length, note: b.note || '', done: done[k] || null }; });
+      return json({ ok: true, batches: out });
+    }
+    if (path === '/api/ingest/run' && request.method === 'POST') {
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' });
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const batch = INGEST_BATCHES[String(body.key || '')];
+      if (!batch) return json({ ok: false, error: 'unknown batch "' + String(body.key || '') + '"' }, 404);
+      const r = await appendPlanRows(env, batch.id, batch.tab || 'Project Plan', batch.rows || []);
+      if (r.ok) {
+        const done = (await env.EDITS.get('ingestdone', 'json')) || {};
+        done[String(body.key)] = { at: Date.now(), appended: r.appended, skipped: r.skipped || 0,
+          by: request.headers.get('Cf-Access-Authenticated-User-Email') || '' };
+        await env.EDITS.put('ingestdone', JSON.stringify(done));
+      }
+      return json(Object.assign({ client: batch.client || '' }, r));
+    }
+
+    // ---- scheduled keyword-optimisation results archive (KV kwresults, captured on gmail push) ----
+    // ?client=Name filters to one brand (matched loosely so 'Schuh' finds entries whose detected
+    // client kept the raw subject brand). The dossier's Optimisation-results section and future
+    // deck builds read from here.
+    if (path === '/api/kwresults' && request.method === 'GET') {
+      const all = (await env.EDITS.get('kwresults', 'json')) || [];
+      const q = (url.searchParams.get('client') || '').trim().toLowerCase();
+      const results = q ? all.filter((k) => { const c = String(k.client || '').toLowerCase(); return c && (c.indexOf(q) >= 0 || q.indexOf(c) >= 0); }) : all;
+      return json({ ok: true, results: results.slice(0, 200), total: results.length });
+    }
+
     // ---- Gmail intake: recent client task emails → Workflow "Incoming emails" stream ----
     // Reads (readonly) the impersonated mailbox via the service account. Degrades to
     // {connected:false, items:[]} until GOOGLE_SA_JSON + GOOGLE_IMPERSONATE are set.
@@ -1172,9 +1309,12 @@ export default {
       // Each item carries its triage decision (dismissed + decidedAs) so the panel can split
       // pending vs already-triaged without a second call.
       const pushed = (await env.EDITS.get('gmailinbox', 'json')) || [];
+      // a scoped signin gets only their clients' emails and call actions — unattributed
+      // rows (no detected client yet) stay with the full-house views
+      const acc = await accessOf(env, request);
       // call actions parsed from Gemini/Meet notes emails ride the same response — the page
       // files them as Intake rows (📞 Call source) regardless of the triage queue's state
-      const calls = ((await env.EDITS.get('callactions', 'json')) || []).slice(0, 120);
+      const calls = scopeRows(((await env.EDITS.get('callactions', 'json')) || []).slice(0, 120), acc.clients);
       if (pushed.length) {
         // back-fill client on stored emails the older/weaker detector missed — the current
         // detectClient (domain label, display name, folded mentions) re-runs against the live
@@ -1202,7 +1342,7 @@ export default {
           const k = mailThreadKey(it.subject); const d = k && byKey[k]; if (!d) continue;
           dis[it.id] = { t: Date.now(), r: d.r || 'notask', inh: 1 }; inherited++; }
         if (inherited) ctx.waitUntil(env.EDITS.put('gmaildismissed', JSON.stringify(dis)));
-        const items = pushed.slice(0, 60).map((it) => (dis[it.id] ? Object.assign({}, it, { dismissed: true, decidedAs: dis[it.id].r || 'notask' }) : it));
+        const items = scopeRows(pushed, acc.clients).slice(0, 60).map((it) => (dis[it.id] ? Object.assign({}, it, { dismissed: true, decidedAs: dis[it.id].r || 'notask' }) : it));
         return json({ connected: true, source: 'push', items, calls });
       }
       // fallback: the original DWD pull, if a super-admin ever authorises it
@@ -1220,7 +1360,7 @@ export default {
           const h = {}; ((m.payload && m.payload.headers) || []).forEach(x => { h[x.name.toLowerCase()] = x.value; });
           items.push({ id, from: h.from || '', to: h.to || '', cc: h.cc || '', subject: h.subject || '(no subject)', date: h.date || '', snippet: (m.snippet || '').slice(0, 160) });
         }
-        return json({ connected: true, items, calls });
+        return json({ connected: true, items: scopeRows(items, acc.clients), calls });
       } catch (e) {
         return json({ connected: false, error: String((e && e.message) || e), items: [], calls });
       }
@@ -1606,7 +1746,7 @@ export default {
       // exists, append to the end otherwise (trailing <style>/<script> parse into body fine).
       const inject = (html, extra) => (html.indexOf('</body>') >= 0 ? html.replace('</body>', extra + '\n</body>') : html + '\n' + extra);
       let html = inject(page.html, getEditorScript(page.slug));
-      if (!path.startsWith('/deck/')) html = inject(html, TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW);
+      if (!path.startsWith('/deck/')) html = inject(html, TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW);
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
@@ -1694,6 +1834,37 @@ function who(request) {
   return 'unknown';
 }
 function ownerEmail(env) { return String(env.OWNER_EMAIL || 'ray@feedspark.com').toLowerCase(); }
+// 👁 VIEW-AS (Ray, Aug 2026): with the fcc-viewas cookie set, the OWNER browses the FCC
+// exactly as that signin — every scoped route AND every owner gate resolves as them, so
+// what he sees is what they get, 403s included. The cookie is honored ONLY when the real
+// Access identity is the owner: for anyone else it is inert and can never widen access.
+function viewAsOf(env, request) {
+  if (who(request) !== ownerEmail(env)) return null;
+  return viewAsEmail(request.headers.get('Cookie'), ownerEmail(env));
+}
+// owner gates (activity / leadership / reminders / pushlog) use THIS, not a bare who()
+// compare, so a view-as preview is denied exactly like the person being previewed
+function realOwner(env, request) { return who(request) === ownerEmail(env) && !viewAsOf(env, request); }
+// the "you are previewing" strip appended to owner-only 403 pages while view-as is active
+function viewAsExitHtml(env, request) {
+  const vs = viewAsOf(env, request);
+  if (!vs) return '';
+  return '<p style="margin-top:18px;font-size:13px;color:#8a94a0">\u{1F441} You are previewing the FCC as <b>' + vs.replace(/[<>&]/g, '') + '</b> \u2014 they get exactly this page. <a href="#" style="color:#ED6F0B;font-weight:700" onclick="document.cookie=\'fcc-viewas=;path=/;max-age=0\';location.reload();return false">Exit view-as</a></p>';
+}
+// the caller's Workflow scope: owner -> full house; directory row (KV accessdir, git seed
+// until first save) or client-team alias (houseofbruar@ -> House of Bruar) -> that client's
+// view; anyone else -> full house. Two KV reads, only on the routes that scope.
+async function accessOf(env, request) {
+  const email = who(request);
+  const vs = viewAsOf(env, request);   // non-null only for the real owner
+  if (email === ownerEmail(env) && !vs) return { email, owner: true, clients: null, name: 'Owner' };
+  const dir = await env.EDITS.get('accessdir', 'json');
+  let names = Object.keys(DEFAULT_FEEDS);
+  try { names = names.concat(Object.keys(liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data)); } catch (e) {}
+  const r = resolveAccess(vs || email, false, dir, names);
+  if (vs) r.viewAs = { real: email, as: vs };
+  return r;
+}
 // append an activity entry without blocking the response (per-entry key, 90-day TTL,
 // entry stored in key METADATA so reading the feed is one list() with no value gets)
 function logActivity(ctx, env, request, action, detail, userOverride) {
@@ -2793,7 +2964,17 @@ async function appendPlanRows(env, id, tab, rows) {
     const tc = c.taskCol >= 0 ? c.taskCol : (c.offset || 0);
     const oc = c.ownerCol, sc = c.statusCol, dc = c.dueCol;
     const width = Math.max(tc, oc, sc, dc, 0) + 1;
-    const values = rows.map(r => { const a = new Array(width).fill(''); a[tc] = r.task || ''; if (oc >= 0) a[oc] = r.owner || ''; if (sc >= 0) a[sc] = r.status || 'Open'; if (dc >= 0 && r.due) a[dc] = r.due; return a; });
+    // IDEMPOTENT: skip rows whose task text already sits in the tab's task column (normalised
+    // match). The page re-sends any row a lost/failed response left unconfirmed (resyncPlanWrites),
+    // so a retried append must land zero duplicates — a lost response is indistinguishable from a
+    // lost write on the client side, and only the sheet itself knows which one happened.
+    const normAppendKey = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const have = new Set(); for (const g of grid) { const v = normAppendKey((g || [])[tc]); if (v) have.add(v); }
+    const fresh = rows.filter(r => { const k = normAppendKey(r.task); if (!k || have.has(k)) return false; have.add(k); return true; });
+    const skipped = rows.length - fresh.length;
+    const colsOut = { task: colLetter(tc), owner: oc >= 0 ? colLetter(oc) : null, status: sc >= 0 ? colLetter(sc) : null, due: dc >= 0 ? colLetter(dc) : null };
+    if (!fresh.length) return { ok: true, appended: 0, skipped, tab: realTab || '(first sheet)', atRow: null, cols: colsOut };
+    const values = fresh.map(r => { const a = new Array(width).fill(''); a[tc] = r.task || ''; if (oc >= 0) a[oc] = r.owner || ''; if (sc >= 0) a[sc] = r.status || 'Open'; if (dc >= 0 && r.due) a[dc] = r.due; return a; });
     // find the LAST row that has any content and write directly below it — the values:append
     // API mis-detects the table on multi-block plan layouts and drops rows at the top.
     let lastRow = 0; for (let r = 0; r < grid.length; r++) { if ((grid[r] || []).some(x => String(x || '').trim() !== '')) lastRow = r; }
@@ -2804,8 +2985,7 @@ async function appendPlanRows(env, id, tab, rows) {
     const wd = await wr.json();
     if (wd.error) return { ok: false, error: permHint(wd.error.message) };
     try { await env.EDITS.delete('planlive:' + id); } catch (e) {}
-    return { ok: true, appended: values.length, tab: realTab || '(first sheet)', atRow: startRow,
-      cols: { task: colLetter(tc), owner: oc >= 0 ? colLetter(oc) : null, status: sc >= 0 ? colLetter(sc) : null, due: dc >= 0 ? colLetter(dc) : null } };
+    return { ok: true, appended: values.length, skipped, tab: realTab || '(first sheet)', atRow: startRow, cols: colsOut };
   } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
 }
 

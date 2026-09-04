@@ -482,3 +482,36 @@ export function matchGmailToBriefs(briefs, messages, opts) {
   }
   return { matched, skipped, moved, loggedTo, repaired, results };
 }
+
+// ---- scheduled keyword-optimisation RESULT emails (Ray's ask, 27 Aug 2026) ----
+// Dino Kumar mails clients a running result update for every SCHEDULED (non-client-requested)
+// keyword optimisation — subject 'Schuh GB x Feedspark - Aug I - Keyword Optimisation', daily
+// results arriving sporadically through the month. These are RESULT RECORDS to archive for
+// future deck-making, never triage items. The subject shape is the gate; metric lines are
+// extracted best-effort AND the body head is archived raw, so extraction can be re-tightened
+// against real specimens later without losing anything (the Gemini-notes lesson: a synthetic
+// shape never survives contact with the real email).
+const KWR_SUBJ_RE = /^\s*(?:(?:fwd?|re)\s*:\s*)*(.+?)\s+x\s+feed\s*spark\s*[\s-–—:]+(.+?)[\s-–—:]+keyword\s*optimi[sz]ation\b/i;
+const KWR_MKT_RE = /\b(GB|UK|IE|US|USA|DE|FR|NL|AU|CA|EU|UAE|Global)\.?\s*$/i;
+const KWR_METRIC_RE = /(click|impression|\bctr\b|conv|\bcpc\b|\bcpa\b|roas|revenue|cost|session|traffic|uplift|\bcvr\b|\baov\b|sales?\b|spend|orders?\b)/i;
+export function parseKwResult(msg) {
+  const m = KWR_SUBJ_RE.exec(String((msg && msg.subject) || ''));
+  if (!m) return null;
+  let brand = m[1].trim(), period = m[2].trim(), mkt = '';
+  const mk = KWR_MKT_RE.exec(brand);
+  if (mk) { mkt = mk[1].toLowerCase(); brand = brand.slice(0, mk.index).trim(); }
+  if (mkt === 'uk') mkt = 'gb';
+  if (mkt === 'usa') mkt = 'us';
+  if (!brand) return null;
+  const body = String((msg && msg.snippet) || '');
+  const metrics = [];
+  for (const line of body.split(/\r?\n/)) {
+    const t = line.replace(/\s+/g, ' ').trim();
+    if (!t || t.length > 260) continue;                       // tables/legal footers, not metric lines
+    if (/%|\bx[0-9]|[0-9]+(\.[0-9]+)?x\b/.test(t) && KWR_METRIC_RE.test(t)) {
+      metrics.push(t.slice(0, 200));
+      if (metrics.length >= 14) break;
+    }
+  }
+  return { brand, period: period.slice(0, 40), mkt, metrics, raw: body.slice(0, 2500) };
+}

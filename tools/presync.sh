@@ -32,6 +32,10 @@ echo "── validating: dashboard inline scripts"
 node tools/check_inline_scripts.js >/dev/null
 echo "   ✓ inline scripts parse"
 
+echo "── validating: access scoping (per-user Workflow views)"
+node tools/test_access.mjs >/dev/null
+echo "   ✓ scoped views + the briefs tombstone trap hold"
+
 echo "── validating: live deck editor (real browser)"
 if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   NODE_PATH=$(npm root -g) node tools/test_editor.mjs || {

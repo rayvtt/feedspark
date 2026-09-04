@@ -1,0 +1,28 @@
+# Plan ingest — file a committed batch of tasks (ops/ingest/*.json) into a client's
+# Project Plan sheet through the live worker, from the Actions tab (workflow_dispatch).
+# Same Access service-token lane as the estate rescan; the worker's append skips rows
+# already in the tab, so re-running a batch never double-appends.
+name: Plan ingest
+on:
+  workflow_dispatch:
+    inputs:
+      file:
+        description: Batch file under ops/ingest/
+        required: true
+        default: ops/ingest/superdry_svs_aug26.json
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Append the batch via the live worker
+        env:
+          FCC_ACCESS_CLIENT_ID: ${{ secrets.FCC_ACCESS_CLIENT_ID }}
+          FCC_ACCESS_CLIENT_SECRET: ${{ secrets.FCC_ACCESS_CLIENT_SECRET }}
+          INGEST_FILE: ${{ inputs.file }}
+        run: node tools/plan_ingest.mjs

@@ -1141,9 +1141,11 @@ window.addEventListener('load',restore);
         +'<span class="chip"><b>'+((p&&p.cats&&p.cats.test)?p.cats.test.total:tst.length)+'</b> tests</span></div>'
       +testsHtml
       +'<div class="dz-mat" id="dz-mat"></div>'
+      +'<div class="dz-mat" id="dz-kwr"></div>'
       +'<div class="dz-foot">'+planCtl+deckCtl+feedCtl
         +(editMode?'<span class="dz-con"'+edA('con')+' data-ph="contacts…">'+esc(b.con||'')+'</span>':(b.con?'<span class="dz-con">'+esc(b.con)+'</span>':''))+'</div>';
     loadMats(name);
+    loadKwResults(name);
     portFill(name);
     var shb=detail.querySelector('.dz-showb');
     if(shb)shb.onclick=function(){ showOpen(name); };
@@ -1265,6 +1267,43 @@ window.addEventListener('load',restore);
           .then(function(){ tzt('Removed'); loadMats(name); });
       }; });
     }).catch(function(){ box.innerHTML='<div class="dz-mat-h"><b>Materials</b></div><div class="dz-mat-e">Could not load the bank.</div>'; });
+  }
+  // ---- 📈 scheduled keyword-optimisation results (Ray's ask, 27 Aug): Dino's daily result
+  // updates to clients ('Schuh GB x Feedspark - Aug I - Keyword Optimisation') are captured
+  // by the Gmail bridge into KV kwresults — this section is the brand's ARCHIVE of them,
+  // grouped by optimisation batch, each row expandable to the extracted uplift lines + the
+  // raw email head. Built for future deck-making: the numbers stay findable per brand.
+  function loadKwResults(name){
+    var box=document.getElementById('dz-kwr'); if(!box) return;
+    box.innerHTML='<div class="dz-mat-h"><b>📈 Optimisation results</b><span class="n">loading…</span></div>';
+    fetch('/api/kwresults?client='+encodeURIComponent(name)).then(function(r){return r.json();}).then(function(d){
+      if(document.getElementById('dz-kwr')!==box) return;   // brand switched mid-flight
+      var items=(d&&d.results)||[];
+      var head='<div class="dz-mat-h"><b>📈 Optimisation results</b><span class="n">'+(items.length?(items.length+' archived'):'none')+'</span></div>';
+      if(!items.length){
+        box.innerHTML=head+'<div class="dz-mat-e">None captured yet — scheduled keyword-optimisation result emails (“'+esc(name)+' GB x Feedspark - … - Keyword Optimisation”) archive here automatically.</div>';
+        return;
+      }
+      var groups={},order=[];
+      items.forEach(function(k){ var g=k.period||'—'; if(!groups[g]){groups[g]=[];order.push(g);} groups[g].push(k); });
+      var body='';
+      order.forEach(function(g){
+        body+='<div class="dz-mat-g">'+esc(g)+' · '+groups[g].length+' update'+(groups[g].length===1?'':'s')+'</div>';
+        groups[g].forEach(function(k){
+          var dt=k.when?new Date(k.when).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'';
+          var mline=(k.metrics&&k.metrics.length)?esc(k.metrics[0])+(k.metrics.length>1?' · +'+(k.metrics.length-1)+' more':''):'no % lines detected — open for the raw email';
+          body+='<div class="dz-mat-i dz-kwr-i" data-kid="'+esc(k.id)+'" style="cursor:pointer" title="Click to open the extracted result lines + raw email">'
+            +'<span class="ic">📈</span>'
+            +'<span class="tx"><span class="tt">'+esc(k.period||'')+(k.mkt?' · '+esc(k.mkt.toUpperCase()):'')+(dt?' · '+dt:'')+'</span>'
+            +'<span class="mt">'+mline+'</span>'
+            +'<span class="mt dz-kwr-raw" hidden>'+(k.metrics&&k.metrics.length?k.metrics.map(function(x){return '▸ '+esc(x);}).join('<br>')+'<br>':'')
+            +'<span style="opacity:.75">'+esc(String(k.raw||'').slice(0,1200))+'</span></span></span></div>';
+        });
+      });
+      box.innerHTML=head+body;
+      Array.prototype.forEach.call(box.querySelectorAll('.dz-kwr-i'),function(row){ row.onclick=function(){
+        var raw=row.querySelector('.dz-kwr-raw'); if(raw)raw.hidden=!raw.hidden; }; });
+    }).catch(function(){ box.innerHTML='<div class="dz-mat-h"><b>📈 Optimisation results</b></div><div class="dz-mat-e">Could not load the archive.</div>'; });
   }
   function buildList(){
     list.innerHTML='';

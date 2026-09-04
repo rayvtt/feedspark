@@ -2371,6 +2371,167 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "bp-tick",
       "min": 2
+    },
+    {
+      "name": "workflow: plan write resync — once-per-session re-send of unconfirmed rows",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "resyncPlanWrites",
+      "min": 3,
+      "pr": 278
+    },
+    {
+      "name": "workflow: confirmed-write flag (w) on manual plan rows",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "markWritten",
+      "min": 5,
+      "pr": 278
+    },
+    {
+      "name": "worker: idempotent plan append — task dedupe vs the tab",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "normAppendKey",
+      "min": 3,
+      "pr": 278
+    },
+    {
+      "name": "briefmatch: scheduled keyword-result email parser (parseKwResult)",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "parseKwResult",
+      "min": 1,
+      "pr": 281
+    },
+    {
+      "name": "worker: kwresults archive — push capture + /api/kwresults",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "kwresults",
+      "min": 4,
+      "pr": 281
+    },
+    {
+      "name": "CmdCenter: dossier 📈 optimisation-results archive",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "loadKwResults",
+      "min": 2,
+      "pr": 281
+    },
+    {
+      "name": "tools: pusher kw-result capture leg (internal-sender carve-out)",
+      "file": "tools/gmail_push.gs",
+      "pattern": "isKwr",
+      "min": 2,
+      "pr": 281
+    },
+    {
+      "name": "access: scoping module (seed + alias rule + briefs tombstone guard)",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "scopeBriefsIncoming",
+      "min": 1,
+      "pr": 279
+    },
+    {
+      "name": "access: Radostina -> House of Bruar seed",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "radostina@feedspark.com",
+      "min": 1,
+      "pr": 279
+    },
+    {
+      "name": "worker: /api/access directory + per-user scope resolution",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "accessdir",
+      "min": 3,
+      "pr": 279
+    },
+    {
+      "name": "worker: scoped briefs PUT re-injects foreign briefs (kvmerge trap)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "scopeBriefsIncoming",
+      "min": 2,
+      "pr": 279
+    },
+    {
+      "name": "workflow: scope badge + locked roster for scoped signins",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "wf-scope",
+      "min": 3,
+      "pr": 279
+    },
+    {
+      "name": "workflow: owner 👥 Access directory panel",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "acl-scrim",
+      "min": 4,
+      "pr": 279
+    },
+    {
+      "name": "gates: access-scoping harness wired (qa_gate)",
+      "file": "tools/qa_gate.sh",
+      "pattern": "test_access.mjs",
+      "min": 1,
+      "pr": 279
+    },
+    {
+      "name": "gates: access-scoping harness wired (validate CI)",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "test_access.mjs",
+      "min": 1,
+      "pr": 279
+    },
+    {
+      "name": "access: view-as cookie parser (owner-only preview)",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "viewAsEmail",
+      "min": 1,
+      "pr": 280
+    },
+    {
+      "name": "worker: view-as resolution + owner gates honor the preview",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "realOwner(env, request)",
+      "min": 5,
+      "pr": 280
+    },
+    {
+      "name": "worker: view-as pill widget injected on app pages",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "VIEWASW",
+      "min": 2,
+      "pr": 280
+    },
+    {
+      "name": "viewas widget: the hovering 'viewing as' pill",
+      "file": "docs/viewas_widget.html",
+      "pattern": "FCC-VIEWAS",
+      "min": 1,
+      "pr": 280
+    },
+    {
+      "name": "workflow: 👁 view-as button on Access panel rows",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "acl-view",
+      "min": 3,
+      "pr": 280
+    },
+    {
+      "name": "ops: plan-ingest lane (committed batch -> live PP append)",
+      "file": "tools/plan_ingest.mjs",
+      "pattern": "INGEST_FILE",
+      "min": 2,
+      "pr": 282
+    },
+    {
+      "name": "worker: committed-batch ingest (one-click plan import)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "INGEST_BATCHES",
+      "min": 3,
+      "pr": 283
+    },
+    {
+      "name": "workflow: 📥 batch-import banner over Intake",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "ingest-banner",
+      "min": 4,
+      "pr": 283
     }
   ]
 }
