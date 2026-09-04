@@ -288,7 +288,9 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   SKUs profiled) on the market rows, the scanned date, the brand heading and the PT name —
   aria-labels keep the chevron-separated text form.
 - **Email on confirmed warning** (✉ toggle + recipient in `/ptypes` §01, KV `ptypealertcfg`,
-  default on → `OWNER_EMAIL`): an estate warn/crit emails a per-feed digest via the same Gmail
+  **OPT-IN — off by default** since Ray dropped the automated alert emails, Aug 2026; a
+  deliberate ✉ re-enable on the page is required, and configs saved before the opt-in
+  change never email): an estate warn/crit emails a per-feed digest via the same Gmail
   bridge outbox Label Guard uses — but only on its **second consecutive sighting**
   (`estateMailPlan`: one garbage read — mid-refresh sheet, gviz throttling — never emails),
   once per continuous incident, with a ✅ when the feed clears. The daily 07:00 report also
@@ -362,7 +364,7 @@ prep for client demo").
   fires on coverage drops vs last known-good: required + conditional tiers can go **crit**
   (≥10pp drop, or the column vanishing — products disapprove), warn at ≥3pp; recommended
   warns at ≥10pp and never crits. Two-strike email-on-confirmed-warning rides
-  `estateMailPlan` (KV `goldenalertcfg`, default on → `OWNER_EMAIL`), the daily report
+  `estateMailPlan` (KV `goldenalertcfg`, **opt-in — off by default**, same rule as §8), the daily report
   gains a GOLDEN RECORD ALERTS section, and the nav badge dots `/golden` from the same
   `/api/labels/alerts` call (`gr` counts, `grClients` split for the dossier).
 - **The conversational AI six** (Ray, Aug 2026: "add 6 conversational attributes that
