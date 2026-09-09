@@ -2656,6 +2656,27 @@
       "name": "dossier: A/B test archive section",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function loadAbTests"
+    },
+    {
+      "name": "worker: shared scan processing (gviz sweep + xml-scan push)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "processScanSnapshot",
+      "min": 3,
+      "pr": 293
+    },
+    {
+      "name": "worker: xmlscan push handler (wired-xml-only, identity forced)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "xmlscan",
+      "min": 2,
+      "pr": 293
+    },
+    {
+      "name": "tools: xml-scan agent (labelguard-shaped snapshots, 4x/day)",
+      "file": "tools/xml_scan.mjs",
+      "pattern": "snapshotFeed",
+      "min": 3,
+      "pr": 293
     }
   ]
 }
