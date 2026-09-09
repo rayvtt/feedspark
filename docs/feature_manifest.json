@@ -2571,7 +2571,8 @@
       "name": "tools: column-E feed migration (sheet id join, verified XML splice)",
       "file": "tools/sync_feedmap.mjs",
       "pattern": "FEEDMAP_CSV",
-      "min": 2
+      "min": 2,
+      "pr": 288
     }
   ]
 }
