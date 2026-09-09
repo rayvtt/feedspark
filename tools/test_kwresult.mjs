@@ -7,6 +7,7 @@
 //
 // NOTE: no real specimen from Dino has been captured yet — every fixture below is synthetic,
 // modelled on the subject shape in CLAUDE.md. Re-run and re-tighten against the first real email.
+import { readFileSync } from 'node:fs';
 import { parseKwResult, kwVerdict } from '../cloudflare/feedspark-deck/src/briefmatch.js';
 
 let pass = 0, fail = 0;
@@ -75,6 +76,25 @@ console.log('\n-- end to end --');
   const r = parseKwResult(mail('Reiss US x Feedspark - Sep I - Keyword Optimisation', body));
   ok('bad month reads negative', r && r.verdict === 'negative', r && r.verdict);
   ok('rising CPC counted against', r && r.bad === 3, r && { good: r.good, bad: r.bad });
+}
+
+// The backfill guards live inside worker.js's push handler, which is a Cloudflare module
+// (default export + HTML text-module imports) and cannot be imported into plain node. These
+// are SOURCE-LEVEL assertions, not behavioural ones — they pin that the guards exist and sit
+// in the right order, which is what a careless edit would break.
+console.log('\n-- backfill guards (source-level) --');
+{
+  const src = readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', import.meta.url), 'utf8');
+  const declared = src.indexOf('const backfill = body.backfill === true');
+  const skipTriage = src.indexOf('if (backfill) continue;     // a backfill sweep only harvests');
+  const skipRow = src.indexOf('if (backfill) continue;\n            if (!seen[m.id])');
+  ok('backfill flag is read from the push body', declared > 0);
+  ok('backfilled results skip the triage row', skipRow > 0);
+  ok('backfill ignores ordinary mail', skipTriage > 0);
+  ok('the flag is declared before both guards', declared > 0 && declared < skipRow && declared < skipTriage,
+     { declared, skipRow, skipTriage });
+  ok('archive cap raised to hold a year', /kwres\.slice\(0, 2000\)/.test(src));
+  ok('triage queue cap left alone at 120', /stored\.slice\(0, 120\)/.test(src));
 }
 
 console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' + pass + ' passed' : '✓ all green  ' + pass + ' passed, 0 failed') + '\n');
