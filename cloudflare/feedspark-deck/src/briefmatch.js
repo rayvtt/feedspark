@@ -303,7 +303,8 @@ export function parseGeminiNotes(msg) {
   const body = String((msg && msg.snippet) || '');
   const isNotes = /notes by gemini/i.test(subj)
     || (GEM_FROM_RE.test(from) && GEM_SUBJ_RE.test(subj))
-    || (GEM_SUBJ_RE.test(subj) && GEM_BODYMARK_RE.test(body));   // forwarded copies: sender is the forwarder
+    || (GEM_SUBJ_RE.test(subj) && GEM_BODYMARK_RE.test(body))    // forwarded copies: sender is the forwarder
+    || (GEM_FROM_RE.test(from) && GEM_BODYMARK_RE.test(body));   // subject = just the meeting name ("Monsoon x cate.com x Fispar") — Gemini sender + notes-shaped body is proof enough
   if (!isNotes) return null;
   const lines = body.split(/\r?\n/);
   const actions = [];
