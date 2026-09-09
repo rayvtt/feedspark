@@ -48,18 +48,26 @@ function wiredXmlFeeds() {
   return out;
 }
 
-// one feed -> the scanFeed-shape raw snapshot, aggregated incrementally per row
+// one feed -> the scanFeed-shape raw snapshot, aggregated incrementally per row.
+// Alongside the snapshot it captures the feed's SKU id set as "id|category" lines
+// (category = first chevron segment of the PRIMARY product_type) — the worker diffs
+// consecutive days' closing sets into the /volume module's in/out churn (Ray, 9 Sep
+// 2026: "300 new products coming in and 900 going out … like Merchant Center").
+const VOLCAP = 40000;   // beyond this a set is TRUNCATED and the worker records rows only
 async function snapshotFeed(feed) {
   const wantPT = !/-fb$/.test(feed.mkt);
   const keys = wantPT ? LABEL_KEYS.concat(PT_KEYS) : LABEL_KEYS;
-  let header = null, cols = null, attrCols = null;
+  let header = null, cols = null, attrCols = null, ptCol = -1;
   let rows = 0;
+  const vids = []; let volTrunc = false;  // "id|cat" lines for the volume diff
   const filled = {}, maps = {};          // per key: filled count + value->n map
   let attrFilled = null;                 // per attr key: filled count
   const onRow = (r) => {
     if (!header) {
       header = r;
       cols = findCols(header, keys);
+      // -fb feeds don't carry PT in `keys` — resolve the category column separately
+      ptCol = wantPT ? cols.labels.product_type : findCols(header, PT_KEYS).labels.product_type;
       for (const k of keys) if (cols.labels[k] >= 0) { filled[k] = 0; maps[k] = new Map(); }
       if (wantPT) {
         attrCols = findAttrCols(header);
@@ -68,7 +76,14 @@ async function snapshotFeed(feed) {
       }
       return;
     }
-    if (String(r[cols.id] == null ? '' : r[cols.id]).trim() !== '') rows++;
+    const idv = String(r[cols.id] == null ? '' : r[cols.id]).trim();
+    if (idv !== '') {
+      rows++;
+      if (vids.length < VOLCAP) {
+        const pv = ptCol >= 0 ? String(r[ptCol] == null ? '' : r[ptCol]) : '';
+        vids.push(idv.replace(/[|\n]/g, ' ') + '|' + pv.split('>')[0].trim().slice(0, 60));
+      } else volTrunc = true;
+    }
     for (const k of keys) {
       const ci = cols.labels[k];
       if (ci < 0) continue;
@@ -110,7 +125,7 @@ async function snapshotFeed(feed) {
   }
   const snap = snapshotFromParts({ client: feed.client, market: feed.mkt, fetchedAt: Date.now() }, cols, countsRow, groupRowsByKey, keys);
   if (attrCols) snap.attrs = attrsFromCounts(attrCols, attrPos, countsRow, snap.rows);
-  return snap;
+  return { snap, vol: { ids: vids.join('\n'), trunc: volTrunc } };
 }
 
 async function post(entries) {
@@ -134,9 +149,10 @@ const workers = Array.from({ length: 3 }, async () => {
   while (i < feeds.length) {
     const f = feeds[i++];
     try {
-      const snap = await snapshotFeed(f);
-      entries.push({ client: f.client, mkt: f.mkt, snap });
-      console.log('✓ ' + f.client + ' ' + f.mkt + ' — ' + snap.rows + ' rows');
+      const { snap, vol } = await snapshotFeed(f);
+      entries.push({ client: f.client, mkt: f.mkt, snap, vol });
+      console.log('✓ ' + f.client + ' ' + f.mkt + ' — ' + snap.rows + ' rows · '
+        + (vol.ids ? vol.ids.split('\n').length : 0) + ' ids' + (vol.trunc ? ' (truncated)' : ''));
     } catch (e) {
       entries.push({ client: f.client, mkt: f.mkt, err: String((e && e.message) || e).slice(0, 140) });
       console.log('✗ ' + f.client + ' ' + f.mkt + ' — ' + String((e && e.message) || e).slice(0, 100));
@@ -162,7 +178,7 @@ if (held.length) {
   for (const h of held) {
     const f = feeds.find((x) => x.client === h.client && x.mkt === h.mkt);
     if (!f) continue;
-    try { confirm.push({ client: f.client, mkt: f.mkt, snap: await snapshotFeed(f) }); }
+    try { const { snap, vol } = await snapshotFeed(f); confirm.push({ client: f.client, mkt: f.mkt, snap, vol }); }
     catch (e) { confirm.push({ client: f.client, mkt: f.mkt, err: String((e && e.message) || e).slice(0, 140) }); }
   }
   for (let b = 0; b < confirm.length; b += 8) { const rs = await post(confirm.slice(b, b + 8)); rs.forEach(explain); all.push(...rs); }
