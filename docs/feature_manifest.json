@@ -2566,6 +2566,12 @@
       "pattern": "settleHeader",
       "min": 3,
       "pr": 287
+    },
+    {
+      "name": "tools: column-E feed migration (sheet id join, verified XML splice)",
+      "file": "tools/sync_feedmap.mjs",
+      "pattern": "FEEDMAP_CSV",
+      "min": 2
     }
   ]
 }
