@@ -77,6 +77,12 @@ window.addEventListener('load',restore);
   .em-act{display:flex;align-items:center;gap:6px;justify-content:flex-end}
   .em-row:last-child{border-bottom:none}
   .em-brf{flex:none;font-size:10.5px;font-weight:900;color:#fff;background:var(--orange-deep);border-radius:100px;padding:1px 8px}
+  /* scheduled keyword-optimisation RESULT emails: archive records that now also ride the triage
+     queue (Ray, 9 Sep). Colour carries the parsed verdict so a bad month is visible at a glance. */
+  .em-kw{flex:none;font-size:10.5px;font-weight:900;color:#fff;background:#64748b;border-radius:100px;padding:1px 8px}
+  .em-kw.pos{background:#15803d}
+  .em-kw.neg{background:#b91c1c}
+  .em-kw.mix{background:#b45309}
   .em-from{flex:none;font-weight:800;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .em-cl{flex:none;font-size:10.5px;font-weight:900;color:var(--ink-2);border:1px solid var(--line);border-radius:100px;padding:1px 8px;background:var(--wash)}
   .em-subj{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
@@ -3387,6 +3393,19 @@ window.addEventListener('load',restore);
       toast(sel.value+' assigned — future emails from this sender will auto-detect'); }; });
     list.querySelectorAll('.em-res').forEach(function(b){ b.onclick=function(){ decideEmail(b.getAttribute('data-id'),true); }; });
   }
+  // Scheduled keyword-optimisation result emails carry a verdict parsed from their metric lines
+  // (positive / negative / mixed / unknown). Unknown still gets a chip: the point is that Ray can
+  // SEE a result landed even when the wording defeated the parser.
+  var KWV={positive:['pos','📈 Positive','Metric lines read positive'],
+           negative:['neg','📉 Negative','Metric lines read negative'],
+           mixed:['mix','📊 Mixed','Metric lines point both ways'],
+           unknown:['','📈 Result','A result landed — no readable movement in the metric lines, open it to read']};
+  function kwChip(g){
+    if(!g||g.kind!=='kwresult')return '';
+    var k=KWV[g.verdict]||KWV.unknown;
+    var where=[(g.mkt||'').toUpperCase(),g.period||''].filter(Boolean).join(' · ');
+    return '<span class="em-kw'+(k[0]?' '+k[0]:'')+'" title="Keyword optimisation result'+(where?' — '+esc(where):'')+'. '+k[2]+'. Archived to the brand dossier.">'+k[1]+'</span>';
+  }
   // one row per conversation: the newest message fronts it, the count chip expands the rest
   function threadRow(th){
     var g=th.rep, n=th.all.length;
@@ -3397,7 +3416,8 @@ window.addEventListener('load',restore);
     var row='<div class="em-row">'
       +'<span class="em-cell-brand">'+(th.client?'<span class="em-cl">'+esc(th.client)+'</span>'
         :'<select class="em-cl-sel" data-th="'+esc(th.key)+'" title="Detection found no brand — assign one and → Task writes straight into that brand’s plan (the sender is remembered for next time)"><option value="">— brand</option>'+CLIENTS.map(function(c){return '<option>'+esc(c)+'</option>';}).join('')+'</select>')
-        +(th.briefable?'<span class="em-brf" title="Action request detected in this thread">⚡</span>':'')+'</span>'
+        +(th.briefable?'<span class="em-brf" title="Action request detected in this thread">⚡</span>':'')
+        +kwChip(g)+'</span>'
       +(th.via?'<span class="em-cue" title="How the brand was detected">'+esc(th.via)+'</span>':'<span class="em-cue none">—</span>')
       +'<span class="em-from" title="'+esc(senders.join(', '))+'">'+esc(senders[0])+(senders.length>1?' +'+(senders.length-1):'')+'</span>'
       +'<span class="em-subj" title="'+esc(g.snippet||'')+'">'+esc(g.subject)

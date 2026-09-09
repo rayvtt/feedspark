@@ -494,6 +494,39 @@ export function matchGmailToBriefs(briefs, messages, opts) {
 const KWR_SUBJ_RE = /^\s*(?:(?:fwd?|re)\s*:\s*)*(.+?)\s+x\s+feed\s*spark\s*[\s-–—:]+(.+?)[\s-–—:]+keyword\s*optimi[sz]ation\b/i;
 const KWR_MKT_RE = /\b(GB|UK|IE|US|USA|DE|FR|NL|AU|CA|EU|UAE|Global)\.?\s*$/i;
 const KWR_METRIC_RE = /(click|impression|\bctr\b|conv|\bcpc\b|\bcpa\b|roas|revenue|cost|session|traffic|uplift|\bcvr\b|\baov\b|sales?\b|spend|orders?\b)/i;
+// Metrics where DOWN is the win. Without this a "-18% CPC" reads as a bad month, which is the
+// one way an automated verdict can be confidently, embarrassingly wrong in front of a client.
+const KWR_INVERSE_RE = /(\bcpc\b|\bcpa\b|\bcpm\b|\bcost\b|spend|bounce)/i;
+const KWR_UP_RE   = /\b(up|rose|grew|growth|increase[sd]?|gain(?:ed|s)?|improve[sd]?|uplift|higher)\b/i;
+const KWR_DOWN_RE = /\b(down|fell|drop(?:ped|s)?|decline[sd]?|decrease[sd]?|lower|reduc(?:ed|tion))\b/i;
+
+// Direction of one metric line, or null when it carries no readable movement.
+// Sign first (an explicit +/- beats prose), then a direction word, then a bare multiplier.
+function kwLineDir(line) {
+  const t = String(line || '');
+  let dir = 0;
+  const signed = /([+-])\s*\d+(?:\.\d+)?\s*%/.exec(t);
+  if (signed) dir = signed[1] === '-' ? -1 : 1;
+  else if (KWR_UP_RE.test(t)) dir = 1;
+  else if (KWR_DOWN_RE.test(t)) dir = -1;
+  else {
+    const mult = /(\d+(?:\.\d+)?)\s*x\b/i.exec(t);
+    if (mult) { const v = parseFloat(mult[1]); if (v > 1) dir = 1; else if (v && v < 1) dir = -1; }
+  }
+  if (!dir) return null;
+  return KWR_INVERSE_RE.test(t) ? -dir : dir;   // cost down = good
+}
+
+// Overall read across the metric lines. Deliberately coarse — this is a triage signal telling
+// Ray which archived result to open first, not a substitute for reading the email.
+export function kwVerdict(metrics) {
+  let good = 0, bad = 0;
+  (metrics || []).forEach((line) => { const d = kwLineDir(line); if (d > 0) good++; else if (d < 0) bad++; });
+  if (!good && !bad) return { verdict: 'unknown', good, bad };
+  if (good && bad) return { verdict: (good >= bad * 2 ? 'positive' : bad >= good * 2 ? 'negative' : 'mixed'), good, bad };
+  return { verdict: good ? 'positive' : 'negative', good, bad };
+}
+
 export function parseKwResult(msg) {
   const m = KWR_SUBJ_RE.exec(String((msg && msg.subject) || ''));
   if (!m) return null;
@@ -513,5 +546,7 @@ export function parseKwResult(msg) {
       if (metrics.length >= 14) break;
     }
   }
-  return { brand, period: period.slice(0, 40), mkt, metrics, raw: body.slice(0, 2500) };
+  const v = kwVerdict(metrics);
+  return { brand, period: period.slice(0, 40), mkt, metrics, raw: body.slice(0, 2500),
+           verdict: v.verdict, good: v.good, bad: v.bad };
 }
