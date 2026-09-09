@@ -269,35 +269,41 @@ window.addEventListener('load',restore);
   [data-theme=dark] .qp.on{background:var(--orange);color:#14161C}
   .scope-sum{font-size:13px;font-weight:800;color:var(--ink-2);margin-left:auto}
   .scope-sum b{color:var(--orange-deep);font-size:15px}
-  /* field quote table */
-  .qtbl{width:100%;border-collapse:collapse;font-size:13.5px}
-  .qtbl th{text-align:left;font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:0 10px 8px;border-bottom:1px solid var(--line)}
-  .qtbl th.num,.qtbl td.num{text-align:right}
-  .qtbl td{padding:11px 10px;border-bottom:1px solid var(--wash);vertical-align:top}
-  [data-theme=dark] .qtbl td{border-bottom-color:#181B22}
-  .qtbl tr.off td{opacity:.42}
-  .qtbl .fname{font-weight:900;font-size:13.5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-  .qtbl .fkey{font-size:11px;color:var(--muted);font-weight:700;font-family:ui-monospace,Menlo,monospace}
-  .qtbl .fdesc{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:2px;max-width:420px}
-  .ftag{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;border-radius:100px;padding:2px 7px;border:1px solid}
-  .ftag.ai{color:var(--navy);border-color:rgba(26,54,93,.32);background:rgba(26,54,93,.06)}
-  .ftag.hi{color:var(--orange-ink);border-color:rgba(245,166,35,.4);background:rgba(245,166,35,.1)}
-  [data-theme=dark] .ftag.ai{background:rgba(91,130,190,.18);border-color:rgba(91,130,190,.36);color:#93B4E0}
-  .qtbl input.cnt,.qtbl input.rate{font:inherit;font-size:13px;font-weight:800;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;width:104px;text-align:right}
-  [data-theme=dark] .qtbl input.cnt,[data-theme=dark] .qtbl input.rate{background:#161922;color:var(--ink);border-color:var(--line)}
-  .qtbl input.cnt.auto{color:var(--muted);font-weight:700}
-  .qtbl input.rate.card{color:var(--navy);border-style:dashed}
-  [data-theme=dark] .qtbl input.rate.card{color:#93B4E0}
-  .qtbl .line{font-weight:900}
-  .qtbl .line.unset{color:var(--muted);font-weight:700;font-size:11.5px}
+  /* collapsible field groups */
+  .qgrp{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;background:#fff}
+  [data-theme=dark] .qgrp{background:var(--paper);border-color:var(--line)}
+  .qgh{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;user-select:none;background:var(--wash)}
+  [data-theme=dark] .qgh{background:#191C24}
+  .qgh .tw{width:14px;font-size:11px;color:var(--muted);transition:transform .15s}
+  .qgrp.closed .qgh .tw{transform:rotate(-90deg)}
+  .qgh .gname{font-size:13px;font-weight:900;letter-spacing:.02em}
+  .qgh .gname.conv{color:var(--orange-deep)}
+  .qgh .gcount{margin-left:auto;font-size:11px;font-weight:800;color:var(--muted)}
+  .qgh .gcount.has{color:var(--good)}
+  .qgrp.closed .qrows{display:none}
+  .qrow{display:grid;grid-template-columns:30px 1fr 108px 110px 116px;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid var(--wash)}
+  [data-theme=dark] .qrow{border-top-color:#181B22}
+  .qrow.off{opacity:.5}
+  .qrow .fname{font-weight:800;font-size:13.5px}
+  .qrow .fmeta{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap}
+  .qrow .fmeta b{color:var(--ink-2);font-weight:800}
+  .qrow .fmeta .conv-tag{color:var(--navy);font-weight:800}
+  [data-theme=dark] .qrow .fmeta .conv-tag{color:#93B4E0}
+  .qrow input.cnt,.qrow input.rate{font:inherit;font-size:13px;font-weight:800;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;width:100%;text-align:right}
+  [data-theme=dark] .qrow input.cnt,[data-theme=dark] .qrow input.rate{background:#161922;color:var(--ink);border-color:var(--line)}
+  .qrow input.cnt.auto{color:var(--muted);font-weight:700}
+  .qrow input.rate.card{color:var(--navy);border-style:dashed}
+  [data-theme=dark] .qrow input.rate.card{color:#93B4E0}
+  .qrow .line{font-weight:900;text-align:right}
+  .qrow .line.unset{color:var(--muted);font-weight:700;font-size:11.5px}
   .cbx{width:17px;height:17px;accent-color:var(--orange-deep);cursor:pointer}
-  .priceless .col-rate,.priceless .col-line{display:none}
-  tfoot .qt-sub td{padding-top:12px;font-weight:800}
-  tfoot .qt-tot td{padding-top:8px;border-top:2px solid var(--line);font-size:15px;font-weight:900}
-  tfoot .qt-tot .grand{color:var(--orange-deep);font-size:20px}
-  tfoot .qt-tot .grand.unset{color:var(--muted);font-size:13px}
-  tfoot .qt-min td{font-size:11.5px;color:var(--muted);font-weight:700;padding-top:4px}
-  .qopts{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+  .priceless .col-rate,.priceless .col-line,.priceless .rate-h,.priceless .line-h{visibility:hidden}
+  .qhead{display:grid;grid-template-columns:30px 1fr 108px 110px 116px;gap:10px;padding:0 14px 6px;font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .qhead .num{text-align:right}
+  .qtot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;padding-top:13px;border-top:2px solid var(--line);font-size:14px;font-weight:900}
+  .qtot .grand{color:var(--orange-deep);font-size:20px}
+  .qtot .grand.unset{color:var(--muted);font-size:13px}
+  .qopts{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:12px}
   .qopt{display:flex;gap:7px;align-items:center;font-size:12.5px;font-weight:800;color:var(--ink-2)}
   .qopt input[type=text]{font:inherit;font-size:13px;font-weight:800;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;width:92px;text-align:right}
   [data-theme=dark] .qopt input[type=text]{background:#161922;color:var(--ink);border-color:var(--line)}
@@ -305,6 +311,7 @@ window.addEventListener('load',restore);
   .hint{font-size:11.5px;color:var(--muted);font-weight:700}
   .rc-note{font-size:11.5px;color:var(--navy);font-weight:800;margin-top:10px}
   [data-theme=dark] .rc-note{color:#93B4E0}
+  @media(max-width:720px){.qrow,.qhead{grid-template-columns:26px 1fr 84px}.qhead .rate-h,.qhead .line-h,.qrow .col-rate,.qrow .col-line{display:none}}
 </style>
 
 <div class="topbar"><div class="topbar-in">
@@ -317,7 +324,7 @@ window.addEventListener('load',restore);
 <header class="hero"><div class="wrap">
   <div class="eyebrow">Private &amp; Confidential · AI field generation</div>
   <h1>AI field quote</h1>
-  <p class="sub">Scope an <b>AI field-generation</b> engagement straight off the client's <b>live feed</b>: pick the product types you'll cover, and the SKU volumes come back real. The six Google <b>conversational attributes</b> plus <b>product highlights</b> and <b>product details</b> are pre-loaded — set your per-product rates once (they save as your rate card and pre-fill every client) and the quote totals itself. Volumes are live; the £ rates are yours.</p>
+  <p class="sub">Scope an <b>AI field-generation</b> engagement off the client's <b>live feed</b>. The six Google <b>conversational attributes</b> sit on top; below them is the full <b>Tachyon optimisation catalogue</b> (titles, descriptions, highlights, keywords, attributes, GPC/PT) — the same library as the Pricer, grouped and collapsible. Tick what you're proposing, and each is priced at its rate × your live volume. Volumes are live; the £ rates seed from the catalogue and are yours to change.</p>
   <div class="ctl">
     <label for="brand">Client</label>
     <select id="brand" aria-label="Choose a client"></select>
@@ -337,7 +344,7 @@ window.addEventListener('load',restore);
 <main class="wrap">
   <div class="card" id="scope-card">
     <h3>Product scope</h3>
-    <div class="ch">The base volume every field is quoted against. Pick a headline number, choose exact product types from the live feed, or cover the whole catalogue. Each field can be overridden below.</div>
+    <div class="ch">The base volume every ticked field is quoted against. Pick a headline number, choose exact product types from the live feed, or cover the whole catalogue. Each field can be overridden below.</div>
     <div class="scope-row">
       <button class="qp" data-qp="10000" type="button">10,000</button>
       <button class="qp" data-qp="20000" type="button">20,000</button>
@@ -350,18 +357,10 @@ window.addEventListener('load',restore);
 
   <div class="card priceless" id="fields-card">
     <h3>Fields to generate</h3>
-    <div class="ch">The core AI fields clients ask for. Toggle what you're proposing; set a £ rate per product on each. Product counts default to the scope above — type over any cell to override. Rates you enter save to your rate card and pre-fill the next client.</div>
-    <table class="qtbl" id="qtbl">
-      <thead><tr>
-        <th style="width:34px"></th>
-        <th>Field</th>
-        <th class="num">Products</th>
-        <th class="num col-rate">£ / product</th>
-        <th class="num col-line">Line total</th>
-      </tr></thead>
-      <tbody id="qbody"></tbody>
-      <tfoot id="qfoot"></tfoot>
-    </table>
+    <div class="ch">Tick an optimisation to price it. The six conversational attributes are on top; the Tachyon catalogue follows, grouped — click a group header to fold it. Rates seed from the catalogue (your Pricer figures) and save to your rate card; type over any to override for this client.</div>
+    <div class="qhead"><span></span><span>Optimisation</span><span class="num">Products</span><span class="num rate-h col-rate">£ / SKU</span><span class="num line-h col-line">Line total</span></div>
+    <div id="qgroups"></div>
+    <div class="qtot" id="qtot"></div>
     <div class="qopts col-rate">
       <span class="qopt">One-off setup <input type="text" id="setup" inputmode="decimal" placeholder="£ —"></span>
       <label class="qopt"><input type="checkbox" class="cbx" id="vat"> +VAT 20%</label>
@@ -370,20 +369,22 @@ window.addEventListener('load',restore);
     <div class="qactions">
       <button class="btn" id="copy" type="button">⧉ Copy quote</button>
       <button class="btn" id="csv" type="button">⇩ Export CSV</button>
-      <button class="btn col-rate" id="savecard" type="button" title="Save the rates on this quote as your default rate card — they pre-fill every client">★ Save as my rate card</button>
+      <button class="btn col-rate" id="savecard" type="button" title="Save the rates on this quote as your default rate card">★ Save as my rate card</button>
+      <button class="btn" id="expand" type="button">⊕ Expand all</button>
       <span class="hint" id="save-hint"></span>
     </div>
     <div class="rc-note col-rate" id="rc-note" hidden></div>
   </div>
 
   <div class="card" style="background:var(--wash)">
-    <div class="ch" style="margin:0"><b>How the numbers work.</b> Volumes are pulled live from the client's Google feed and counted per product type — nothing is estimated. £ rates are entered by you and never pre-filled; they save to your rate card so a new client already carries your standard pricing. The quote stays hidden until you reveal it, so you can screen-share the scope with a client safely. This is separate from the hourly/retainer Pricer (now under the ▦ apps icon in the top bar).</div>
+    <div class="ch" style="margin:0"><b>How the numbers work.</b> Volumes are pulled live from the client's Google feed and counted per product type — nothing is estimated. £ rates seed from the Tachyon catalogue (the same figures the Pricer uses) and save to your rate card; they are never invented and you can change any. The quote stays hidden until you reveal it, so you can screen-share the scope safely. The full hourly/retainer commercial model lives in the Pricer (▦ apps icon).</div>
   </div>
 </main>
 
 <div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span id="syncstate"></span></div></div>
 
 <script src="/feedlab/engine.js" onerror="window.__engineFail=1"></script>
+<script src="/pricer/engine.js" onerror="window.__pricerFail=1"></script>
 <script>
 (function(){
   var $=function(s){return document.querySelector(s)};
@@ -391,31 +392,41 @@ window.addEventListener('load',restore);
   function fmt(n){n=Math.round(+n||0);return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,',')}
   function money(n){return '£'+ (Math.round((+n||0)*100)/100).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2})}
 
-  // the 8 core fields clients ask for: the six Google conversational attributes + highlights + details
-  var FIELDS=[
-    {k:'question_and_answer',name:'Q&A pairs',desc:'Conversational question/answer pairs surfaced in Google AI Mode, ChatGPT & Perplexity shopping',tag:'ai'},
-    {k:'product_highlight',name:'Product highlights',desc:'Up to 100 scannable bullet highlights per product — the AI-readable summary of what a product is',tag:'hi'},
-    {k:'product_detail',name:'Product details',desc:'Structured section · attribute name · value the spec sheets agentic shoppers read',tag:'hi'},
-    {k:'related_product',name:'Related products',desc:'Cross-sell / accessory relationships that build the shopping graph',tag:'ai'},
-    {k:'item_group_title',name:'Item group title',desc:'Human variant-group naming so a family reads as one product',tag:'ai'},
-    {k:'variant_option',name:'Variant options',desc:'Structured variant axes (size, colour, material…) for precise matching',tag:'ai'},
-    {k:'popularity_rank',name:'Popularity rank',desc:'Ranking signal that lifts hero products in AI ranking',tag:'ai'},
-    {k:'document_link',name:'Document link',desc:'Spec sheets, manuals and size guides linked as supplemental sources',tag:'ai'}
+  // ---- the field catalogue: the six Google conversational attributes ON TOP, then the live
+  // Tachyon optimisation catalogue (same library as the Pricer, read from PricerEngine.CATALOG) ----
+  var CONV_GRP='Conversational attributes';
+  var CONV=[
+    {id:'question_and_answer',name:'Q&A pairs',desc:'Conversational question/answer pairs'},
+    {id:'document_link',name:'Document link',desc:'Spec sheets, manuals, size guides'},
+    {id:'related_product',name:'Related products',desc:'Cross-sell / accessory relationships'},
+    {id:'item_group_title',name:'Item group title',desc:'Human variant-group naming'},
+    {id:'variant_option',name:'Variant options',desc:'Structured variant axes'},
+    {id:'popularity_rank',name:'Popularity rank',desc:'Ranking signal for AI ranking'}
   ];
-  var FMAP={}; FIELDS.forEach(function(f){FMAP[f.k]=f});
-  var RCKEY='ratecard';   // internal key in the /api/aiquote map — never a brand name
+  var CAT=[], GROUPS=[], CMAP={};
+  function buildCat(){
+    CAT=[]; CONV.forEach(function(c){ CAT.push({id:c.id,grp:CONV_GRP,name:c.name,desc:c.desc,unit:null,setup:null,lead:null,conv:1}); });
+    var pc=(window.PricerEngine&&PricerEngine.CATALOG)||[];
+    pc.forEach(function(c){ CAT.push({id:c.id,grp:c.grp,name:c.name,unit:c.unit,setup:(+c.aspl||0)+(+c.qc||0)+(+c.pm||0),lead:c.lead}); });
+    GROUPS=[]; CMAP={}; var seen={};
+    CAT.forEach(function(it){ CMAP[it.id]=it; if(!seen[it.grp]){seen[it.grp]=1;GROUPS.push(it.grp);} });
+  }
 
   var CLIENT='', MKT='gb', MKTLIST=['gb'], IDX={}, BASE=0, CACHING={};
-  var STORE={};   // {<brand>:{mkt,scope,pts,fields,setup,vat,valid,updated}, ratecard:{fields:{k:{rate}}}}
+  var STORE={};   // {<brand>:{mkt,scope,pts,fields,setup,vat,valid,updated}, ratecard:{fields:{id:{rate}}}}
   var SHOWP=false; try{SHOWP=localStorage.getItem('fcc-aiq-showp')==='1'}catch(e){}
+  var OPEN={}; try{OPEN=JSON.parse(localStorage.getItem('fcc-aiq-open')||'{}')||{}}catch(e){OPEN={}}
+  function grpOpen(g){ return OPEN[g]!==false; }   // default open
+  var RCKEY='ratecard';
 
   function card(){ return (STORE[RCKEY]&&STORE[RCKEY].fields)||{}; }
   function rec(){ if(!STORE[CLIENT])STORE[CLIENT]={mkt:MKT,scope:{mode:'all'},pts:{},fields:{}};
     var r=STORE[CLIENT]; if(!r.scope)r.scope={mode:'all'}; if(!r.pts)r.pts={}; if(!r.fields)r.fields={};
-    FIELDS.forEach(function(f){ if(!r.fields[f.k])r.fields[f.k]={on:true,count:null,rate:null}; }); return r; }
+    CAT.forEach(function(f){ if(!r.fields[f.id])r.fields[f.id]={on:false,count:null,rate:null}; }); return r; }
   function err(m){ var e=$('#aq-error'); if(!m){e.className='err-strip';return;} $('#aq-error-msg').textContent=m; e.className='err-strip on'; }
 
   /* ---------- data load ---------- */
+  buildCat();
   fetch('/api/feed/clients').then(function(r){return r.json()}).then(function(d){
     var cs=Object.keys((d&&d.clients)||{}).sort();
     var sel=$('#brand'); sel.innerHTML=cs.map(function(c){return '<option>'+esc(c)+'</option>'}).join('');
@@ -452,13 +463,12 @@ window.addEventListener('load',restore);
       if(!header){ header=r;
         for(var i=0;i<r.length;i++){ var k=FeedAudit.normKey(r[i]);
           var kd=k.replace(/[^a-z0-9]/g,'').match(/^producttype([0-9]{1,2})$/);
-          if(kd&&+kd[1]>=2){ kwc.push(i); }   // numbered slots 2..10 = keyword injections, not the category tree
+          if(kd&&+kd[1]>=2){ kwc.push(i); }
           else if(k==='product_type'||k.indexOf('product_type')===0||k.replace(/[^a-z]/g,'')==='producttype')cands.push(i); }
         return; }
       buf.push(cands.map(function(i2){return String(r[i2]||'').trim()}));
     }
-    // the estate is now mostly FeedHero XML — sniff the first non-empty chunk and dispatch (Feed Lab's rule)
-    function mkParser(t){ if(/^\s*</.test(t)){ if(!FeedAudit.createXmlParser)throw new Error('XML feed but the cached engine predates XML support — hard-refresh so the page and /feedlab/engine.js come from the same deploy'); return FeedAudit.createXmlParser(onRow); } return FeedAudit.createParser(onRow); }
+    function mkParser(t){ if(/^\s*</.test(t)){ if(!FeedAudit.createXmlParser)throw new Error('XML feed but the cached engine predates XML support — hard-refresh'); return FeedAudit.createXmlParser(onRow); } return FeedAudit.createParser(onRow); }
     function finish(){
       var best=-1,wci=0; cands.forEach(function(ci,j){ var n=0; buf.forEach(function(b){ if(b[j])n++; }); if(n>best){best=n;wci=j} });
       var map={},tot=buf.length; buf.forEach(function(b){ var pt=b[wci]||'(no product_type)'; map[pt]=(map[pt]||0)+1; });
@@ -483,19 +493,20 @@ window.addEventListener('load',restore);
   function baseVol(){ var r=rec(), sc=r.scope||{mode:'all'}, ix=idx();
     if(sc.mode==='manual')return +sc.manual||0;
     if(sc.mode==='pts'){ var sel=(r.pts&&r.pts[MKT])||[]; if(!ix)return 0; if(!sel.length)return ix.total||0; var v=0; sel.forEach(function(pt){v+=ix.map[pt]||0}); return v; }
-    return ix?ix.total||0:0;   // 'all'
+    return ix?ix.total||0:0;
   }
-  function fCount(k){ var f=rec().fields[k]; return (f&&f.count!=null)?(+f.count||0):baseVol(); }
-  // effective rate: per-client override first, else the saved rate card, else null (unset)
-  function fRate(k){ var f=rec().fields[k]; if(f&&f.rate!=null&&f.rate!=='')return +f.rate||0;
-    var c=card()[k]; return (c&&c.rate!=null&&c.rate!=='')?(+c.rate||0):null; }
-  function fRateFromCard(k){ var f=rec().fields[k]; return !(f&&f.rate!=null&&f.rate!=='') && fRate(k)!=null; }
-  function fOn(k){ var f=rec().fields[k]; return !f||f.on!==false; }
+  function fCount(id){ var f=rec().fields[id]; return (f&&f.count!=null)?(+f.count||0):baseVol(); }
+  function catUnit(id){ var it=CMAP[id]; return (it&&it.unit!=null)?+it.unit:null; }
+  // effective rate: per-client override > rate card > catalogue unit > null
+  function fRate(id){ var f=rec().fields[id]; if(f&&f.rate!=null&&f.rate!=='')return +f.rate||0;
+    var c=card()[id]; if(c&&c.rate!=null&&c.rate!=='')return +c.rate||0; return catUnit(id); }
+  function rateSrc(id){ var f=rec().fields[id]; if(f&&f.rate!=null&&f.rate!=='')return 'own';
+    var c=card()[id]; if(c&&c.rate!=null&&c.rate!=='')return 'card'; return catUnit(id)!=null?'cat':'none'; }
+  function fOn(id){ var f=rec().fields[id]; return !!(f&&f.on); }
   function vatOn(){ return !!rec().vat; }
   function setupFee(){ var s=rec().setup; return (s!=null&&s!=='')?(+s||0):0; }
-
   function totals(){ var inc=0,tp=0,net=0,miss=false;
-    FIELDS.forEach(function(f){ if(!fOn(f.k))return; inc++; var c=fCount(f.k),rt=fRate(f.k); tp+=c; if(rt==null)miss=true; else net+=c*rt; });
+    CAT.forEach(function(f){ if(!fOn(f.id))return; inc++; var c=fCount(f.id),rt=fRate(f.id); tp+=c; if(rt==null)miss=true; else net+=c*rt; });
     net+=setupFee(); var vat=vatOn()?net*0.2:0; return {inc:inc,tp:tp,net:net,vat:vat,gross:net+vat,miss:miss}; }
 
   /* ---------- render ---------- */
@@ -506,6 +517,13 @@ window.addEventListener('load',restore);
       return '<b>'+fmt(baseVol())+'</b> products · '+sel.length+' product type'+(sel.length===1?'':'s'); }
     return ix?('<b>'+fmt(ix.total)+'</b> products · whole live catalogue'):'Pull the live feed for the catalogue size';
   }
+  function metaHtml(f){ var p=[];
+    if(f.conv)p.push('<span class="conv-tag">Conversational</span>');
+    if(f.setup!=null)p.push('setup <b>'+f.setup+'h</b>');
+    if(f.unit!=null)p.push('£'+f.unit+'/SKU');
+    if(f.lead!=null)p.push('live ~'+f.lead+'d');
+    if(f.desc)p.push(esc(f.desc));
+    return p.join(' · '); }
   function render(){
     if(!CLIENT)return; var r=rec();
     var mode=(r.scope||{}).mode, man=(r.scope||{}).manual;
@@ -513,55 +531,58 @@ window.addEventListener('load',restore);
       var on=(q==='all'&&mode==='all')||(q==='pts'&&mode==='pts')||(mode==='manual'&&String(man)===q); b.classList.toggle('on',!!on); });
     $('#scope-sum').innerHTML=scopeSummary();
     $('#fields-card').classList.toggle('priceless',!SHOWP);
-    var rows=FIELDS.map(function(f){ var on=fOn(f.k), c=fCount(f.k), rt=fRate(f.k), fr=rec().fields[f.k];
-      var lineHtml = rt==null ? '<span class="line unset">set rate</span>' : '<span class="line">'+money(c*rt)+'</span>';
-      var isAuto = !(fr&&fr.count!=null);
-      var fromCard = fRateFromCard(f.k);
-      return '<tr class="'+(on?'':'off')+'" data-k="'+f.k+'">'
-        +'<td><input type="checkbox" class="cbx" data-on="'+f.k+'"'+(on?' checked':'')+'></td>'
-        +'<td><div class="fname">'+esc(f.name)+' <span class="ftag '+f.tag+'">'+(f.tag==='ai'?'Conversational':'Highlight')+'</span></div>'
-          +'<div class="fkey">g:'+f.k+'</div><div class="fdesc">'+esc(f.desc)+'</div></td>'
-        +'<td class="num"><input class="cnt'+(isAuto?' auto':'')+'" data-cnt="'+f.k+'" inputmode="numeric" value="'+fmt(c)+'"'+(isAuto?' title="auto from scope — type to override"':'')+'></td>'
-        +'<td class="num col-rate"><input class="rate'+(fromCard?' card':'')+'" data-rate="'+f.k+'" inputmode="decimal" placeholder="£ —" value="'+(rt==null?'':rt)+'"'+(fromCard?' title="from your rate card — type to override for this client"':'')+'></td>'
-        +'<td class="num col-line">'+lineHtml+'</td></tr>';
+    var html=GROUPS.map(function(g){ var items=CAT.filter(function(f){return f.grp===g});
+      var onN=items.filter(function(f){return fOn(f.id)}).length; var open=grpOpen(g);
+      var rows=items.map(function(f){ var on=fOn(f.id),c=fCount(f.id),rt=fRate(f.id),fr=r.fields[f.id],src=rateSrc(f.id);
+        var isAuto=!(fr&&fr.count!=null);
+        var line = rt==null?'<span class="line unset">set rate</span>':'<span class="line">'+money(c*rt)+'</span>';
+        return '<div class="qrow'+(on?'':' off')+'" data-k="'+f.id+'">'
+          +'<span><input type="checkbox" class="cbx" data-on="'+f.id+'"'+(on?' checked':'')+'></span>'
+          +'<span><div class="fname">'+esc(f.name)+'</div><div class="fmeta">'+metaHtml(f)+'</div></span>'
+          +'<span class="col-cnt"><input class="cnt'+(isAuto?' auto':'')+'" data-cnt="'+f.id+'" inputmode="numeric" value="'+fmt(c)+'"'+(isAuto?' title="auto from scope — type to override"':'')+'></span>'
+          +'<span class="col-rate"><input class="rate'+(src==='card'||src==='cat'?' card':'')+'" data-rate="'+f.id+'" inputmode="decimal" placeholder="£ —" value="'+(rt==null?'':rt)+'"'+(src==='cat'?' title="catalogue rate — type to override"':src==='card'?' title="from your rate card"':'')+'></span>'
+          +'<span class="col-line">'+line+'</span></div>';
+      }).join('');
+      return '<div class="qgrp'+(open?'':' closed')+'" data-g="'+esc(g)+'"><div class="qgh" data-gt="'+esc(g)+'"><span class="tw">▾</span><span class="gname'+(g===CONV_GRP?' conv':'')+'">'+esc(g)+'</span><span class="gcount'+(onN?' has':'')+'">'+(onN?onN+' selected':items.length+' fields')+'</span></div><div class="qrows">'+rows+'</div></div>';
     }).join('');
-    $('#qbody').innerHTML=rows;
+    $('#qgroups').innerHTML=html;
     foot();
-    // sync option inputs
     $('#setup').value=(r.setup!=null?r.setup:''); $('#vat').checked=vatOn(); $('#valid').value=(r.valid!=null?r.valid:'');
     $('#showp').textContent=SHOWP?'£ Hide quote':'£ Show quote'; $('#showp').setAttribute('aria-pressed',SHOWP?'true':'false'); $('#showp').classList.toggle('on',SHOWP);
-    var anyCard=FIELDS.some(function(f){return fRateFromCard(f.k)}); var rn=$('#rc-note');
-    rn.hidden=!anyCard; if(anyCard)rn.textContent='Dashed rates come from your saved rate card — edit any to override for '+CLIENT+' only.';
+    var anyCard=CAT.some(function(f){return rateSrc(f.id)==='card'||rateSrc(f.id)==='cat'}); var rn=$('#rc-note');
+    rn.hidden=!anyCard; if(anyCard)rn.textContent='Dashed rates seed from the catalogue / your rate card — edit any to override for '+CLIENT+' only.';
   }
   function kpi(n,l){ return '<div class="kpi"><div class="n">'+n+'</div><div class="l">'+esc(l)+'</div></div>'; }
-  // recompute totals/foot/kpis without rebuilding inputs (keeps focus while typing)
   function foot(){ var t=totals();
-    // refresh each row's line cell in place (a typed rate/count must update its own line)
-    FIELDS.forEach(function(f){ var cell=document.querySelector('tr[data-k="'+f.k+'"] .col-line'); if(!cell)return;
-      var rt=fRate(f.k), c=fCount(f.k);
-      cell.innerHTML = rt==null ? '<span class="line unset">set rate</span>' : '<span class="line">'+money(c*rt)+'</span>'; });
-    var sub='<tr class="qt-sub"><td></td><td>Subtotal (fields'+(setupFee()?' + setup':'')+')</td><td class="num">'+fmt(t.tp)+'</td><td class="num col-rate"></td><td class="num col-line">'+(t.miss?'<span class="line unset">set rates</span>':money(t.net))+'</td></tr>';
-    var vat=vatOn()?'<tr class="qt-sub"><td></td><td>VAT 20%</td><td class="num"></td><td class="num col-rate"></td><td class="num col-line">'+(t.miss?'—':money(t.vat))+'</td></tr>':'';
+    CAT.forEach(function(f){ var cell=document.querySelector('.qrow[data-k="'+f.id+'"] .col-line'); if(!cell)return;
+      var rt=fRate(f.id),c=fCount(f.id); cell.innerHTML=rt==null?'<span class="line unset">set rate</span>':'<span class="line">'+money(c*rt)+'</span>'; });
+    // per-group counts
+    GROUPS.forEach(function(g){ var items=CAT.filter(function(f){return f.grp===g}); var onN=items.filter(function(f){return fOn(f.id)}).length;
+      var gc=document.querySelector('.qgrp[data-g="'+cssEsc(g)+'"] .gcount'); if(gc){gc.textContent=onN?onN+' selected':items.length+' fields'; gc.className='gcount'+(onN?' has':'');} });
     var grand=t.miss?'<span class="grand unset">set every rate to total</span>':'<span class="grand">'+money(t.gross)+'</span>';
-    var tot='<tr class="qt-tot"><td></td><td>Quote total'+(vatOn()?' (inc VAT)':'')+'<div class="fdesc" style="font-weight:700">'+t.inc+' of 8 fields · '+fmt(t.tp)+' products in scope</div></td><td class="num">'+fmt(t.tp)+'</td><td class="num col-rate"></td><td class="num col-line">'+grand+'</td></tr>';
-    $('#qfoot').innerHTML=sub+vat+tot;
-    $('#kpis').innerHTML=kpi(fmt(baseVol()),'Scope products')+kpi(t.inc+' / 8','Fields proposed')+kpi(fmt(t.tp),'Products in quote')
+    $('#qtot').innerHTML='<span>Quote total'+(vatOn()?' (inc VAT)':'')+'</span><span class="hint">'+t.inc+' selected · '+fmt(t.tp)+' products'+(setupFee()?' · +setup '+money(setupFee()):'')+(vatOn()&&!t.miss?' · VAT '+money(t.vat):'')+'</span><span style="margin-left:auto" class="col-line">'+grand+'</span>';
+    $('#kpis').innerHTML=kpi(fmt(baseVol()),'Scope products')+kpi(t.inc+' / '+CAT.length,'Fields selected')+kpi(fmt(t.tp),'Products in quote')
       +(SHOWP?kpi(t.miss?'—':money(t.gross),'Quote total'+(t.miss?' (set rates)':(vatOn()?' inc VAT':''))):kpi('£ hidden','Quote (tap £ Show)'));
     $('#scope-sum').innerHTML=scopeSummary();
   }
+  function cssEsc(s){ return String(s).replace(/["\\]/g,'\\$&'); }
 
   /* ---------- edits ---------- */
   document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('.qp'); if(!b)return;
     var q=b.getAttribute('data-qp'), r=rec();
-    if(q==='all')r.scope={mode:'all'};
-    else if(q==='pts'){ r.scope={mode:'pts'}; openPicker(); }
-    else r.scope={mode:'manual',manual:+q};
+    if(q==='all')r.scope={mode:'all'}; else if(q==='pts'){ r.scope={mode:'pts'}; openPicker(); } else r.scope={mode:'manual',manual:+q};
     render(); saveSoon();
   });
   $('#ptpick').addEventListener('click',function(){ rec().scope={mode:'pts'}; openPicker(); render(); });
   $('#showp').addEventListener('click',function(){ SHOWP=!SHOWP; try{localStorage.setItem('fcc-aiq-showp',SHOWP?'1':'0')}catch(e){} render(); });
-  $('#qbody').addEventListener('change',function(e){ var t=e.target; if(t.dataset.on){ rec().fields[t.dataset.on].on=t.checked; render(); saveSoon(); } });
-  $('#qbody').addEventListener('input',function(e){ var t=e.target;
+  $('#expand').addEventListener('click',function(){ var anyClosed=GROUPS.some(function(g){return !grpOpen(g)}); GROUPS.forEach(function(g){OPEN[g]=anyClosed;}); saveOpen(); render(); $('#expand').textContent=anyClosed?'⊖ Collapse all':'⊕ Expand all'; });
+  function saveOpen(){ try{localStorage.setItem('fcc-aiq-open',JSON.stringify(OPEN))}catch(e){} }
+  $('#qgroups').addEventListener('click',function(e){ var h=e.target.closest('.qgh'); if(!h)return; if(e.target.closest('input'))return;
+    var g=h.getAttribute('data-gt'); OPEN[g]=!grpOpen(g); saveOpen();
+    var grp=h.parentNode; grp.classList.toggle('closed',!grpOpen(g)); });
+  $('#qgroups').addEventListener('change',function(e){ var t=e.target; if(t.dataset.on){ rec().fields[t.dataset.on].on=t.checked;
+    var row=t.closest('.qrow'); if(row)row.classList.toggle('off',!t.checked); foot(); saveSoon(); } });
+  $('#qgroups').addEventListener('input',function(e){ var t=e.target;
     if(t.dataset.cnt!=null){ var v=String(t.value).replace(/[^0-9]/g,''); rec().fields[t.dataset.cnt].count=v===''?null:+v; foot(); saveSoon(); }
     else if(t.dataset.rate!=null){ var rv=String(t.value).replace(/[^0-9.]/g,''); rec().fields[t.dataset.rate].rate=rv===''?null:rv; t.classList.remove('card'); foot(); saveSoon(); }
   });
@@ -569,7 +590,7 @@ window.addEventListener('load',restore);
   $('#vat').addEventListener('change',function(){ rec().vat=this.checked; foot(); saveSoon(); });
   $('#valid').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9]/g,''); rec().valid=v===''?null:+v; saveSoon(); });
   $('#savecard').addEventListener('click',function(){ var rc=STORE[RCKEY]||{fields:{}}; rc.fields=rc.fields||{};
-    FIELDS.forEach(function(f){ var rt=fRate(f.k); if(rt!=null)rc.fields[f.k]={rate:rt}; }); rc.updated=Date.now(); STORE[RCKEY]=rc;
+    CAT.forEach(function(f){ var rt=fRate(f.id); if(rt!=null)rc.fields[f.id]={rate:rt}; }); rc.updated=Date.now(); STORE[RCKEY]=rc;
     var body={}; body[RCKEY]=rc; putMap(body,'Rate card saved — it pre-fills every client'); render();
   });
 
@@ -603,7 +624,7 @@ window.addEventListener('load',restore);
   function closePicker(){ if(pop){pop.remove();pop=null;} }
   document.addEventListener('keydown',function(e){ if(e.key==='Escape')closePicker(); });
 
-  /* ---------- persist (kvmerge per key) ---------- */
+  /* ---------- persist ---------- */
   var _t=null;
   function saveSoon(){ if(_t)clearTimeout(_t); $('#save-hint').textContent='saving…'; _t=setTimeout(function(){ if(!CLIENT)return; var r=rec(); r.updated=Date.now(); var body={}; body[CLIENT]=r; putMap(body); },700); }
   function putMap(body,msg){ fetch('/api/aiquote',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(BASE)},body:JSON.stringify(body)})
@@ -613,26 +634,26 @@ window.addEventListener('load',restore);
   }
 
   /* ---------- copy / export ---------- */
-  function lines(){ return FIELDS.filter(function(f){return fOn(f.k)}).map(function(f){ return {name:f.name,k:f.k,c:fCount(f.k),rt:fRate(f.k)}; }); }
+  function lines(){ return CAT.filter(function(f){return fOn(f.id)}).map(function(f){ return {name:f.name,grp:f.grp,id:f.id,c:fCount(f.id),rt:fRate(f.id)}; }); }
   $('#copy').addEventListener('click',function(){
     var L=lines(), t=totals(), r=rec();
     var out=['FeedSpark — AI field generation quote','Client: '+CLIENT+'   Market: '+MKT.toUpperCase(),'Date: '+new Date().toLocaleDateString('en-GB'),''];
-    out.push('Fields proposed:');
-    L.forEach(function(l){ out.push('  • '+l.name+' — '+fmt(l.c)+' products'+(SHOWP&&l.rt!=null?('  @ '+money(l.rt)+'/product  =  '+money(l.c*l.rt)):'')); });
-    out.push(''); out.push('Products in scope: '+fmt(t.tp)+' across '+L.length+' field'+(L.length===1?'':'s'));
-    if(SHOWP){
-      if(setupFee())out.push('One-off setup: '+money(setupFee()));
+    var lastG='';
+    L.forEach(function(l){ if(l.grp!==lastG){ out.push(l.grp+':'); lastG=l.grp; }
+      out.push('  • '+l.name+' — '+fmt(l.c)+' products'+(SHOWP&&l.rt!=null?('  @ £'+l.rt+'/SKU  =  '+money(l.c*l.rt)):'')); });
+    out.push(''); out.push('Products in scope: '+fmt(t.tp)+' across '+L.length+' optimisation'+(L.length===1?'':'s'));
+    if(SHOWP){ if(setupFee())out.push('One-off setup: '+money(setupFee()));
       out.push(t.miss?'Subtotal: (set every rate to total)':'Subtotal: '+money(t.net));
       if(vatOn()&&!t.miss)out.push('VAT 20%: '+money(t.vat));
       out.push(t.miss?'TOTAL: (rates incomplete)':('TOTAL'+(vatOn()?' (inc VAT)':'')+': '+money(t.gross)));
-      if(r.valid)out.push(''),out.push('Quote valid for '+r.valid+' days.');
-    } else { out.push(''); out.push('(Commercials on request.)'); }
+      if(r.valid)out.push('','Quote valid for '+r.valid+' days.');
+    } else { out.push('','(Commercials on request.)'); }
     copy(out.join('\n'), SHOWP?'Quote copied (with £)':'Scope copied (£ hidden)');
   });
   $('#csv').addEventListener('click',function(){
-    var L=lines(); var rows=[['field','products','rate_per_product_gbp','line_total_gbp']];
-    L.forEach(function(l){ rows.push(['g:'+l.k,l.c,l.rt==null?'':l.rt,l.rt==null?'':(Math.round(l.c*l.rt*100)/100)]); });
-    if(setupFee())rows.push(['setup_one_off','', '', setupFee()]);
+    var L=lines(); var rows=[['group','optimisation','field_id','products','rate_per_sku_gbp','line_total_gbp']];
+    L.forEach(function(l){ rows.push([l.grp,l.name,l.id,l.c,l.rt==null?'':l.rt,l.rt==null?'':(Math.round(l.c*l.rt*100)/100)]); });
+    if(setupFee())rows.push(['','setup one-off','setup','','',setupFee()]);
     var csv=rows.map(function(r){return r.map(function(c){var s=String(c);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(',')}).join('\n');
     var blob=new Blob([csv],{type:'text/csv'}); var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
     a.download='aiquote_'+CLIENT.replace(/[^a-z0-9]+/gi,'_')+'_'+MKT+'.csv'; document.body.appendChild(a); a.click(); a.remove();

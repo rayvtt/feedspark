@@ -2793,6 +2793,34 @@
    "pattern": "href=\"/volume\"",
    "min": 1,
    "pr": null
+  },
+  {
+   "name": "aiquote: loads the live Pricer catalogue (shared attribute library)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "PricerEngine.CATALOG",
+   "min": 1,
+   "pr": 300
+  },
+  {
+   "name": "aiquote: six conversational attributes as a top group",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "CONV_GRP",
+   "min": 2,
+   "pr": 300
+  },
+  {
+   "name": "aiquote: pricer engine loaded for the catalogue",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "/pricer/engine.js",
+   "min": 1,
+   "pr": 300
+  },
+  {
+   "name": "aiquote: collapsible field groups",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "qgrp",
+   "min": 3,
+   "pr": 300
   }
  ]
 }
