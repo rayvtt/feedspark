@@ -660,7 +660,9 @@ export default {
         const kwres = (await env.EDITS.get('kwresults', 'json')) || [];
         const haveKw = {}; kwres.forEach((k) => { if (k.id) haveKw[k.id] = 1; });
         let added = 0, briefable = 0, callsAdded = 0, kwAdded = 0;
-        const names = Object.keys(dossier);
+        // detector roster = dossier cards ∪ the wired feed estate: a client with a live feed
+        // but no dossier card yet must still be detectable (Ray's Monsoon call, 9 Sep 2026)
+        const names = Array.from(new Set(Object.keys(dossier).concat(Object.keys(DEFAULT_FEEDS))));
         for (const m of inbox) {
           if (!m || !m.id) continue;
           // The call-notes check runs BEFORE the stored-id dedupe: a notes email captured as a
@@ -676,9 +678,12 @@ export default {
                 delete seen[m.id];
               }
               // client cue ladder: the meeting title alone first (a body mention could be any
-              // brand discussed), then title+body head; a brand named IN the action line wins.
+              // brand discussed), then the RAW EMAIL SUBJECT + recipients (Ray, 9 Sep: the note
+              // arrives with the client right on the subject line — "Monsoon x cate.com x
+              // Fispar" — parse it directly), then title+body head; an action-line brand wins.
               const ex0 = detectClientEx({ subject: g.call, snippet: '' }, clientDoms, names);
-              const ex = ex0.client ? ex0 : detectClientEx({ subject: g.call, snippet: String(m.snippet || '').slice(0, 600) }, clientDoms, names);
+              const exS = ex0.client ? ex0 : detectClientEx({ subject: String(m.subject || ''), to: m.to, cc: m.cc, snippet: '' }, clientDoms, names);
+              const ex = exS.client ? exS : detectClientEx({ subject: g.call, snippet: String(m.snippet || '').slice(0, 600) }, clientDoms, names);
               g.actions.forEach((a, i) => {
                 const exA = detectClientEx({ subject: a.task, snippet: '' }, clientDoms, names);
                 calls.push({ id: m.id + '#' + i, mid: m.id, call: g.call, client: exA.client || ex.client || '',
@@ -1370,18 +1375,35 @@ export default {
       // a scoped signin gets only their clients' emails and call actions — unattributed
       // rows (no detected client yet) stay with the full-house views
       const acc = await accessOf(env, request);
+      // roster + dom map for the read-time back-fills below (emails AND call actions):
+      // dossier cards ∪ the wired feed estate, same union the push handler detects with
+      let doms = {}, namesU = Object.keys(DEFAULT_FEEDS);
+      try {
+        const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
+        Object.keys(dossier).forEach((n) => { if (dossier[n] && dossier[n].dom) doms[n] = dossier[n].dom; });
+        namesU = Array.from(new Set(Object.keys(dossier).concat(namesU)));
+      } catch (e) {}
       // call actions parsed from Gemini/Meet notes emails ride the same response — the page
-      // files them as Intake rows (📞 Call source) regardless of the triage queue's state
-      const calls = scopeRows(((await env.EDITS.get('callactions', 'json')) || []).slice(0, 120), acc.clients);
+      // files them as Intake rows (📞 Call source) regardless of the triage queue's state.
+      // Back-fill client on rows the old title-only scan missed (meeting title + task text
+      // vs the estate roster): a filled client is what lets the page adopt the row into the
+      // brand's plan sheet, so past calls self-heal on the next read (Ray's Monsoon call).
+      const callsAll = (await env.EDITS.get('callactions', 'json')) || [];
+      let cfilled = 0;
+      for (const a of callsAll) {
+        if (!a || a.client) continue;
+        const exC = detectClientEx({ subject: (a.call || '') + ' · ' + (a.task || ''), snippet: '' }, doms, namesU);
+        if (exC.client) { a.client = exC.client; a.via = exC.via; cfilled++; }
+      }
+      if (cfilled) ctx.waitUntil(env.EDITS.put('callactions', JSON.stringify(callsAll)));
+      const calls = scopeRows(callsAll.slice(0, 120), acc.clients);
       if (pushed.length) {
         // back-fill client on stored emails the older/weaker detector missed — the current
         // detectClient (domain label, display name, folded mentions) re-runs against the live
-        // dossier, so adding a brand or a dom mapping upgrades past captures too
+        // dossier + estate roster, so adding a brand or a dom mapping upgrades past captures
         try {
-          const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
-          const doms = {}; Object.keys(dossier).forEach((n) => { if (dossier[n] && dossier[n].dom) doms[n] = dossier[n].dom; });
           let filled = 0;
-          for (const it of pushed) { if (!it.client) { const ex = detectClientEx(it, doms, Object.keys(dossier)); if (ex.client) { it.client = ex.client; it.via = ex.via; filled++; } } }
+          for (const it of pushed) { if (!it.client) { const ex = detectClientEx(it, doms, namesU); if (ex.client) { it.client = ex.client; it.via = ex.via; filled++; } } }
           if (filled) ctx.waitUntil(env.EDITS.put('gmailinbox', JSON.stringify(pushed)));
         } catch (e) {}
         const dis = (await env.EDITS.get('gmaildismissed', 'json')) || {};
