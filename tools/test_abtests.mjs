@@ -11,7 +11,7 @@
  *      naively that is +17.67% and a losing test reports as a win.
  * Run: node tools/test_abtests.mjs
  */
-import { parseAbTests, extractMetrics, abVerdict, abSummary, resolveAbTab, findHeaderRow }
+import { parseAbTests, extractMetrics, abVerdict, abSummary, resolveAbTab, findHeaderRow, hasAbHeader, abClientKey }
   from '../cloudflare/feedspark-deck/src/abtests.js';
 
 let pass = 0, fail = 0;
@@ -50,6 +50,24 @@ ok('two near-misses and no exact = ambiguous, not a guess',
    resolveAbTab(['Old AB Test Archive', 'AB Test Archive 2024']) === null,
    resolveAbTab(['Old AB Test Archive', 'AB Test Archive 2024']));
 
+
+console.log('\n-- SHARED WORKBOOKS: Monsoon + Accessorize live in one sheet --');
+// Ray's real tab names. Without brand-matching this workbook is either "ambiguous" (nothing
+// shows) or first-wins (Accessorize's dossier shows Monsoon's tests).
+const SHARED = ['Project Plan', 'AB Test Archives Monsoon', 'AB Test Archives Accessorize'];
+ok('Monsoon picks its own tab', resolveAbTab(SHARED, 'Monsoon') === 'AB Test Archives Monsoon',
+   resolveAbTab(SHARED, 'Monsoon'));
+ok('Accessorize picks its own tab', resolveAbTab(SHARED, 'Accessorize') === 'AB Test Archives Accessorize',
+   resolveAbTab(SHARED, 'Accessorize'));
+ok('a brand with no tab in the workbook gets nothing, not a sibling\u2019s',
+   resolveAbTab(SHARED, 'Hobbycraft') === null, resolveAbTab(SHARED, 'Hobbycraft'));
+ok('accents/spacing fold in the brand match',
+   resolveAbTab(['AB Test Archive Estee Lauder', 'AB Test Archive MAC'], 'Estée Lauder')
+     === 'AB Test Archive Estee Lauder');
+ok('single archive still resolves without a client', resolveAbTab(['AB Test Archive']) === 'AB Test Archive');
+ok('client key folds case, accents and punctuation',
+   abClientKey('Estée Lauder') === 'esteelauder' && abClientKey('House of Bruar') === 'houseofbruar');
+
 console.log('\n-- unsigned prose keeps its direction --');
 ok('"-17.67% lowered" is negative', extractMetrics(JAN1).impressions === -17.67, extractMetrics(JAN1));
 ok('"-18.18% lowered in clicks" is negative', extractMetrics(JAN1).clicks === -18.18);
@@ -62,6 +80,28 @@ ok('unsigned + "uplift" stays positive',
 ok('metric-then-percent order also reads',
    extractMetrics('impressions rose by 9.4% over the period').impressions === 9.4,
    extractMetrics('impressions rose by 9.4% over the period'));
+
+
+console.log('\n-- adjacent figures must never fuse (Monsoon/Accessorize "Eid" test) --');
+{
+  // Reconnaissance over this sheet once reported +10285.47% impressions by JOINING the merged
+  // Report cells and welding 102… to …85.47. The real figures are 85.18 / 104.42. The parser
+  // takes ONE cell, never a concatenation — this pins that.
+  const EID = 'Results: The A/B test for keyword optimization resulted in a positive impact on both '
+    + 'impressions and clicks. The test group experienced a 85.18% uplift in impressions and a '
+    + '104.42% uplift in clicks. Conclusion: the strategy was effective.';
+  const m = extractMetrics(EID);
+  ok('impressions read as 85.18, not fused', m.impressions === 85.18, m);
+  ok('clicks read as 104.42', m.clicks === 104.42, m);
+  ok('no impossible figure survives', Math.abs(m.impressions) < 1000 && Math.abs(m.clicks) < 1000, m);
+
+  // the merged Report block repeats the same prose across seven columns: the parser must pick
+  // one of them, not stitch them together
+  const row = ['UK', 'Single Group', 'Keyword Optimisation', 'Eid', '28/01/2025', '', ...new Array(7).fill(EID)];
+  const r = parseAbTests([HDR, row]);
+  ok('a repeated merged block yields one clean read',
+     r.tests[0].metrics.impressions === 85.18 && r.tests[0].metrics.clicks === 104.42, r.tests[0].metrics);
+}
 
 console.log('\n-- verdicts --');
 ok('both metrics down = negative', abVerdict(extractMetrics(JAN1), JAN1) === 'negative');
@@ -152,6 +192,20 @@ console.log('\n-- summary --');
   ok('types tallied', s.types['Keyword Optimisation'] === 3, s.types);
   ok('no decided tests = null win rate', abSummary([{ verdict: 'inconclusive' }]).winRate === null);
 }
+
+
+console.log('\n-- content probe: the archive found by its header, whatever the tab is called --');
+// Schuh and Hobbycraft both carry this archive with the identical layout; if the feature hangs
+// on someone having typed the right tab name, it silently shows nothing for those brands.
+ok('a real archive header is detected',
+   hasAbHeader([['Country', 'Test Method', 'Test Type', 'Batch URL', 'Live Date', 'Report Date']]));
+ok('detected even when the table starts lower down',
+   hasAbHeader([[''], ['Some notes'], ['Country', 'Test Method', 'Test Type']]));
+ok('a Project Plan tab is NOT an archive',
+   !hasAbHeader([['Area', 'Task', 'Owner', 'Hours', 'Priority', 'Status', 'Due']]));
+ok('an empty tab is not an archive', !hasAbHeader([]));
+ok('a lookalike without Test Method is not an archive',
+   !hasAbHeader([['Country', 'Market', 'Currency', 'Feeds']]));
 
 console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' + pass + ' passed' : '✓ all green  ' + pass + ' passed, 0 failed') + '\n');
 process.exit(fail ? 1 : 0);
