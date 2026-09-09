@@ -73,6 +73,8 @@ import PTGUARD_PAGE from "../../../docs/FeedSpark_ProductTypeGuard.html";
 import GOLDEN_PAGE from "../../../docs/FeedSpark_GoldenRecord.html";
 // Keyword optimisation calendar — marketing moments drive the KW schedule (docs/FeedSpark_KWCal.html)
 import KWCAL from "../../../docs/FeedSpark_KWCal.html";
+import AIQUOTE from "../../../docs/FeedSpark_AIQuote.html";
+import APPSW from "../../../docs/apps_widget.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
 // node tests share the file, same pattern as the Feed Lab engine)
 import PRICER_ENGINE from "../../../docs/pricer_engine.js";
@@ -142,6 +144,7 @@ const PAGES = {
   '/golden':      { html: GOLDEN_PAGE, slug: 'golden' },
   '/pricer':      { html: PRICER,      slug: 'pricer' },
   '/kwcal':       { html: KWCAL,       slug: 'kwcal' },
+  '/aiquote':     { html: AIQUOTE,     slug: 'aiquote' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
@@ -359,7 +362,7 @@ export default {
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
         '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile',
-        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save' };
+        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -970,6 +973,11 @@ export default {
     // Routing runs off this bank in-page, so answers never require the Anthropic key.
     if (path === '/api/feedchat') {
       const r = await mapStoreRoute(env, request, 'feedchat', {});
+      if (r) return r;
+    }
+    // AI Field Quote — per-client field-generation quotes + Ray's reusable rate card (kvmerge)
+    if (path === '/api/aiquote') {
+      const r = await mapStoreRoute(env, request, 'aiquote', {});
       if (r) return r;
     }
     // FCC-PRESENCE heartbeat: stamp the caller's Access identity into the `presence` map and
@@ -1930,7 +1938,7 @@ export default {
       // exists, append to the end otherwise (trailing <style>/<script> parse into body fine).
       const inject = (html, extra) => (html.indexOf('</body>') >= 0 ? html.replace('</body>', extra + '\n</body>') : html + '\n' + extra);
       let html = inject(page.html, getEditorScript(page.slug));
-      if (!path.startsWith('/deck/')) html = inject(html, TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW);
+      if (!path.startsWith('/deck/')) html = inject(html, TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW);
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
