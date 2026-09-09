@@ -2586,35 +2586,35 @@
       "file": "cloudflare/feedspark-deck/src/briefmatch.js",
       "pattern": "GEM_FROM_RE.test(from) && GEM_BODYMARK_RE.test(body)",
       "min": 1,
-      "pr": 290
+      "pr": 291
     },
     {
       "name": "worker: call cue ladder reaches the raw email subject",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "const exS = ex0.client ? ex0 : detectClientEx",
       "min": 1,
-      "pr": 290
+      "pr": 291
     },
     {
       "name": "worker: detector roster = dossier ∪ wired feed estate",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "Object.keys(dossier).concat(Object.keys(DEFAULT_FEEDS))",
       "min": 1,
-      "pr": 290
+      "pr": 291
     },
     {
       "name": "worker: read-time back-fill of unattributed call actions",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "cfilled",
       "min": 3,
-      "pr": 290
+      "pr": 291
     },
     {
       "name": "gates: call-client harness wired (qa_gate)",
       "file": "tools/qa_gate.sh",
       "pattern": "test_callclient.mjs",
       "min": 1,
-      "pr": 290
+      "pr": 291
     }
   ]
 }
