@@ -606,8 +606,7 @@
    "name": "worker: Templates module RETIRED (menu cleanup, must stay gone)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "'/templates'",
-   "forbidden": true,
-   "pr": 301
+   "forbidden": true
   },
   {
    "name": "Workflow: assignable brand in Gmail triage + sender memory",
@@ -1167,8 +1166,7 @@
   {
    "name": "worker: XML (Meta/FeedHero) feed source support — xmlRef/feedRef",
    "file": "cloudflare/feedspark-deck/src/worker.js",
-   "pattern": "const feedRef = (u) => sheetRef(u) || xmlRef(u)",
-   "pr": 301
+   "pattern": "const feedRef = (u) => sheetRef(u) || xmlRef(u)"
   },
   {
    "name": "worker: remaining sheet-backed -fb feeds (post Meta-XML migration, 9 Sep 2026)",
@@ -1180,14 +1178,12 @@
   {
    "name": "worker: :30 cron advances the sweep rotation (budget-guarded second batch)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
-   "pattern": "second sweep batch",
-   "pr": 301
+   "pattern": "second sweep batch"
   },
   {
    "name": "engine: XML feed parser (Meta channel)",
    "file": "docs/feedlab_engine.js",
-   "pattern": "createXmlParser",
-   "pr": 301
+   "pattern": "createXmlParser"
   },
   {
    "name": "LabelGuard: Facebook channel set (-fb markets, blue chips)",
@@ -1221,36 +1217,31 @@
    "name": "LabelGuard: compact Δ-reference toggle (yesterday ↔ known-good)",
    "file": "docs/FeedSpark_LabelGuard.html",
    "pattern": "refseg",
-   "min": 3,
-   "pr": 301
+   "min": 3
   },
   {
    "name": "labelguard engine: reference terminology (last known-good / pinned reference)",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "last known-good",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "Materials bank: per-client collateral API (seeds + KV uploads)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "/api/materials",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "Materials bank: git-bundled seed manifest",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "SEED_MATERIALS",
-   "min": 3,
-   "pr": 301
+   "min": 3
   },
   {
    "name": "Materials bank: Brand dossier panel",
    "file": "docs/FeedSpark_Command_Center.html",
    "pattern": "dz-mat",
-   "min": 6,
-   "pr": 301
+   "min": 6
   },
   {
    "name": "worker: triage decisions inherit down a conversation (new replies stay triaged)",
@@ -1661,165 +1652,139 @@
    "name": "worker: Product Type Guard routes (/api/ptypes/*)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "api/ptypes/",
-   "min": 5,
-   "pr": 301
+   "min": 5
   },
   {
    "name": "worker: PT stores (ptypebase known-good reference)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "ptypebase",
-   "min": 3,
-   "pr": 301
+   "min": 3
   },
   {
    "name": "worker: PT capture rides the label scan pass",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "wantPT",
-   "min": 3,
-   "pr": 301
+   "min": 3
   },
   {
    "name": "engine: PT_KEYS (parameterised key set)",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "PT_KEYS",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "engine: primary PT resolves g:product_type(1) slot-1 convention",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "product_type(1)",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "PTGuard: page present (/ptypes)",
    "file": "docs/FeedSpark_ProductTypeGuard.html",
    "pattern": "api/ptypes",
-   "min": 3,
-   "pr": 301
+   "min": 3
   },
   {
    "name": "LabelGuard: breakdown sort + search (filter input, sortable headers)",
    "file": "docs/FeedSpark_LabelGuard.html",
    "pattern": "lg-q",
-   "min": 3,
-   "pr": 301
+   "min": 3
   },
   {
    "name": "PTGuard: breakdown sort + search (filter input, sortable headers)",
    "file": "docs/FeedSpark_ProductTypeGuard.html",
    "pattern": "pt-q",
-   "min": 3,
-   "pr": 301
+   "min": 3
   },
   {
    "name": "PTGuard: ⚡ estate catch-up button force-rescans (no freshness skip)",
    "file": "docs/FeedSpark_ProductTypeGuard.html",
-   "pattern": "no freshness skip",
-   "pr": 301
+   "pattern": "no freshness skip"
   },
   {
    "name": "ops: estate-rescan parallel agent (workflow_dispatch + service-token script)",
    "file": ".github/workflows/estate-rescan.yml",
-   "pattern": "estate_rescan.mjs",
-   "pr": 301
+   "pattern": "estate_rescan.mjs"
   },
   {
    "name": "ops: estate-rescan script JSON-verifies (Access login page is HTTP 200 html)",
    "file": "tools/estate_rescan.mjs",
-   "pattern": "non-JSON response",
-   "pr": 301
+   "pattern": "non-JSON response"
   },
   {
    "name": "nav: PT Guard link on Activity",
    "file": "docs/FeedSpark_Activity.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "nav: PT Guard link on Command_Center",
    "file": "docs/FeedSpark_Command_Center.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "nav: PT Guard link on DeckBuilder",
    "file": "docs/FeedSpark_DeckBuilder.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "nav: PT Guard link on FeedChat",
    "file": "docs/FeedSpark_FeedChat.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "nav: PT Guard link on FeedLab",
    "file": "docs/FeedSpark_FeedLab.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "nav: PT Guard link on KWCal",
    "file": "docs/FeedSpark_KWCal.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "nav: PT Guard link on LabelGuard",
    "file": "docs/FeedSpark_LabelGuard.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "nav: PT Guard link on Leadership",
    "file": "docs/FeedSpark_Leadership.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "nav: PT Guard link on Pricer",
    "file": "docs/FeedSpark_Pricer.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "nav: PT Guard link on ProductTypeGuard",
    "file": "docs/FeedSpark_ProductTypeGuard.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "nav: PT Guard link on Readiness",
    "file": "docs/FeedSpark_Readiness.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "nav: PT Guard link on Roadmap",
    "file": "docs/FeedSpark_Roadmap.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "nav: PT Guard link on Task_Library",
    "file": "docs/FeedSpark_Task_Library.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "nav: PT Guard link on Templates",
    "file": "docs/FeedSpark_Templates.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "nav: PT Guard link on Workflow",
    "file": "docs/FeedSpark_Workflow.html",
-   "pattern": "href=\"/ptypes\"",
-   "pr": 301
+   "pattern": "href=\"/ptypes\""
   },
   {
    "name": "DeckBuilder: pptx-only output + core template library panel",
@@ -1946,8 +1911,7 @@
   {
    "name": "engine: channel-aware Meta title scoring (25-65 window)",
    "file": "docs/feedlab_engine.js",
-   "pattern": "Meta window is 25–65",
-   "pr": 301
+   "pattern": "Meta window is 25–65"
   },
   {
    "name": "labelguard: ask-the-client compose (alerts → Gmail draft)",
@@ -2043,22 +2007,19 @@
   {
    "name": "engine: estate mail plan (two-strike email-on-warning, once per incident)",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
-   "pattern": "estateMailPlan",
-   "pr": 301
+   "pattern": "estateMailPlan"
   },
   {
    "name": "worker: PT email-on-warning cfg + queue (ptypealertcfg)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "ptypealertcfg",
-   "min": 3,
-   "pr": 301
+   "min": 3
   },
   {
    "name": "PTGuard: email-on-confirmed-warning settings row",
    "file": "docs/FeedSpark_ProductTypeGuard.html",
    "pattern": "ml-on",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "workflow: call actions write through to the plan sheet",
@@ -2106,15 +2067,13 @@
    "name": "engine: PT depth granularity KPI (pathDepth/depthProfile)",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "depthProfile",
-   "min": 1,
-   "pr": 301
+   "min": 1
   },
   {
    "name": "worker: depth profile attached to ptypeidx entries",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "depthProfile",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "FeedChat bubble: floating-chat widget present",
@@ -2148,15 +2107,13 @@
    "name": "PTGuard: depth KPI presentation (stacked bars + styled hover card)",
    "file": "docs/FeedSpark_ProductTypeGuard.html",
    "pattern": "dptip",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "PTGuard: depth stacked bar renderer",
    "file": "docs/FeedSpark_ProductTypeGuard.html",
    "pattern": "dpBar",
-   "min": 3,
-   "pr": 301
+   "min": 3
   },
   {
    "name": "worker: widget injection appends on fragment pages (no </body> = no longer homepage-only)",
@@ -2183,265 +2140,225 @@
    "name": "engine: 5-depth standard verdict (DEPTH_STD / depthStandard)",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "depthStandard",
-   "min": 1,
-   "pr": 301
+   "min": 1
   },
   {
    "name": "engine: client depth-optimisation proposal email (depthAskEmail)",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "depthAskEmail",
-   "min": 1,
-   "pr": 301
+   "min": 1
   },
   {
    "name": "worker: PT depth plan-task route (files into the client Project Plan)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "/api/ptypes/plantask",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "PTGuard: depth-standard verdict pill + ✉ Propose depth optimisation",
    "file": "docs/FeedSpark_ProductTypeGuard.html",
    "pattern": "std-ask",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "PTGuard: client-ask composer on the shared askdraft rails",
    "file": "docs/FeedSpark_ProductTypeGuard.html",
    "pattern": "askp-slot",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "nav: Golden Record link on Activity",
    "file": "docs/FeedSpark_Activity.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on Command_Center",
    "file": "docs/FeedSpark_Command_Center.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on DeckBuilder",
    "file": "docs/FeedSpark_DeckBuilder.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on FeedChat",
    "file": "docs/FeedSpark_FeedChat.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on FeedLab",
    "file": "docs/FeedSpark_FeedLab.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on GoldenRecord",
    "file": "docs/FeedSpark_GoldenRecord.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on KWCal",
    "file": "docs/FeedSpark_KWCal.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on LabelGuard",
    "file": "docs/FeedSpark_LabelGuard.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on Leadership",
    "file": "docs/FeedSpark_Leadership.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on Pricer",
    "file": "docs/FeedSpark_Pricer.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on ProductTypeGuard",
    "file": "docs/FeedSpark_ProductTypeGuard.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on Readiness",
    "file": "docs/FeedSpark_Readiness.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on Roadmap",
    "file": "docs/FeedSpark_Roadmap.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on Task_Library",
    "file": "docs/FeedSpark_Task_Library.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on Templates",
    "file": "docs/FeedSpark_Templates.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "nav: Golden Record link on Workflow",
    "file": "docs/FeedSpark_Workflow.html",
-   "pattern": "href=\"/golden\"",
-   "pr": 301
+   "pattern": "href=\"/golden\""
   },
   {
    "name": "engine: Golden Record attribute roster vetted vs Google spec (ATTR_SPEC)",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "ATTR_SPEC",
-   "min": 3,
-   "pr": 301
+   "min": 3
   },
   {
    "name": "engine: weighted Golden Record score (goldenScore)",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "goldenScore",
-   "min": 1,
-   "pr": 301
+   "min": 1
   },
   {
    "name": "engine: attribute-coverage drop alerts (diffCoverage)",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "diffCoverage",
-   "min": 1,
-   "pr": 301
+   "min": 1
   },
   {
    "name": "worker: Golden Record routes + scan-pass capture",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "/api/golden/",
-   "min": 4,
-   "pr": 301
+   "min": 4
   },
   {
    "name": "worker: golden alert stores + badge counts",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "goldenalerts",
-   "min": 3,
-   "pr": 301
+   "min": 3
   },
   {
    "name": "GoldenRecord: score dial + verdict",
    "file": "docs/FeedSpark_GoldenRecord.html",
    "pattern": "gr-verdict",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "GoldenRecord: required/cond/rec tier badges",
    "file": "docs/FeedSpark_GoldenRecord.html",
    "pattern": "tbadge",
-   "min": 4,
-   "pr": 301
+   "min": 4
   },
   {
    "name": "engine: per-attribute client-ask email (attrAskEmail)",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "attrAskEmail",
-   "min": 1,
-   "pr": 301
+   "min": 1
   },
   {
    "name": "engine: the conversational AI six on the roster (tier 'ai')",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "req: 'ai'",
-   "min": 6,
-   "pr": 301
+   "min": 6
   },
   {
    "name": "worker: Golden Record plan-task route (attr fix into the Project Plan)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "/api/golden/plantask",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "GoldenRecord: per-attribute ✉ Ask client + → Brief actions",
    "file": "docs/FeedSpark_GoldenRecord.html",
    "pattern": "data-brief",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "GoldenRecord: client-ask composer on the shared askdraft rails",
    "file": "docs/FeedSpark_GoldenRecord.html",
    "pattern": "askp-slot",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "GoldenRecord: Conversational AI tier section",
    "file": "docs/FeedSpark_GoldenRecord.html",
    "pattern": "tbadge ai",
-   "min": 1,
-   "pr": 301
+   "min": 1
   },
   {
    "name": "GoldenRecord: ⬇ PDF client-presentation export (print header + print CSS)",
    "file": "docs/FeedSpark_GoldenRecord.html",
    "pattern": "print-head",
-   "min": 3,
-   "pr": 301
+   "min": 3
   },
   {
    "name": "engine: industry scoring profiles (INDUSTRY_PROFILES / profileFor)",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "INDUSTRY_PROFILES",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "engine: profile-aware goldenScore (expected counts-when-absent, waived excluded)",
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "profileFor",
-   "min": 1,
-   "pr": 301
+   "min": 1
   },
   {
    "name": "worker: scoring-profile route + profile-aware scan scoring",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "/api/golden/profile",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "GoldenRecord: industry best-practice chip + ⚙ profile editor",
    "file": "docs/FeedSpark_GoldenRecord.html",
    "pattern": "profileForC",
-   "min": 3,
-   "pr": 301
+   "min": 3
   },
   {
    "name": "GoldenRecord: industry benchmark line + best-practice bar ticks",
    "file": "docs/FeedSpark_GoldenRecord.html",
    "pattern": "bp-tick",
-   "min": 2,
-   "pr": 301
+   "min": 2
   },
   {
    "name": "workflow: plan write resync — once-per-session re-send of unconfirmed rows",
@@ -2607,26 +2524,22 @@
   {
    "name": "kwresult: verdict parsed from metric lines (cost inverted)",
    "file": "cloudflare/feedspark-deck/src/briefmatch.js",
-   "pattern": "KWR_INVERSE_RE",
-   "pr": 301
+   "pattern": "KWR_INVERSE_RE"
   },
   {
    "name": "kwresult: result emails also ride the Email Triage queue",
    "file": "cloudflare/feedspark-deck/src/worker.js",
-   "pattern": "kind: 'kwresult'",
-   "pr": 301
+   "pattern": "kind: 'kwresult'"
   },
   {
    "name": "workflow: keyword-result verdict chip in triage",
    "file": "docs/FeedSpark_Workflow.html",
-   "pattern": "function kwChip",
-   "pr": 301
+   "pattern": "function kwChip"
   },
   {
    "name": "dossier: keyword-result verdict pill",
    "file": "docs/FeedSpark_Command_Center.html",
-   "pattern": "function kwVerdictPill",
-   "pr": 301
+   "pattern": "function kwVerdictPill"
   },
   {
    "name": "worker: Reiss gb = realtime FeedHero XML (Ray 9 Sep — survives master-sheet re-imports)",
@@ -2652,20 +2565,17 @@
   {
    "name": "kwresult backfill: archive-only push mode",
    "file": "cloudflare/feedspark-deck/src/worker.js",
-   "pattern": "const backfill = body.backfill === true",
-   "pr": 301
+   "pattern": "const backfill = body.backfill === true"
   },
   {
    "name": "kwresult backfill: archive holds a year, not a fortnight",
    "file": "cloudflare/feedspark-deck/src/worker.js",
-   "pattern": "kwres.slice(0, 2000)",
-   "pr": 301
+   "pattern": "kwres.slice(0, 2000)"
   },
   {
    "name": "kwresult backfill: resumable Apps Script sweep",
    "file": "tools/gmail_push.gs",
-   "pattern": "function backfillKwResults",
-   "pr": 301
+   "pattern": "function backfillKwResults"
   },
   {
    "name": "worker: estate XML migration — 62 FeedHero feeds wired (Google + Meta)",
@@ -2712,32 +2622,27 @@
   {
    "name": "abtests: merged-cell aware archive parser",
    "file": "cloudflare/feedspark-deck/src/abtests.js",
-   "pattern": "export function parseAbTests",
-   "pr": 301
+   "pattern": "export function parseAbTests"
   },
   {
    "name": "abtests: archive tab resolver fails closed (never the plan tab)",
    "file": "cloudflare/feedspark-deck/src/abtests.js",
-   "pattern": "export function resolveAbTab",
-   "pr": 301
+   "pattern": "export function resolveAbTab"
   },
   {
    "name": "abtests: unsigned prose keeps its direction",
    "file": "cloudflare/feedspark-deck/src/abtests.js",
-   "pattern": "DOWN_NEAR",
-   "pr": 301
+   "pattern": "DOWN_NEAR"
   },
   {
    "name": "abtests: live per-brand archive endpoint",
    "file": "cloudflare/feedspark-deck/src/worker.js",
-   "pattern": "path === '/api/abtests'",
-   "pr": 301
+   "pattern": "path === '/api/abtests'"
   },
   {
    "name": "dossier: A/B test archive section",
    "file": "docs/FeedSpark_Command_Center.html",
-   "pattern": "function loadAbTests",
-   "pr": 301
+   "pattern": "function loadAbTests"
   },
   {
    "name": "worker: shared scan processing (gviz sweep + xml-scan push)",
@@ -2763,14 +2668,12 @@
   {
    "name": "abtests: shared workbooks resolve the brand's own archive tab",
    "file": "cloudflare/feedspark-deck/src/abtests.js",
-   "pattern": "export function abClientKey",
-   "pr": 301
+   "pattern": "export function abClientKey"
   },
   {
    "name": "abtests: archive found by header when the tab is renamed",
    "file": "cloudflare/feedspark-deck/src/abtests.js",
-   "pattern": "export function hasAbHeader",
-   "pr": 301
+   "pattern": "export function hasAbHeader"
   },
   {
    "name": "aiquote: worker page route",
