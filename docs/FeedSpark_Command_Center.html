@@ -1142,10 +1142,12 @@ window.addEventListener('load',restore);
       +testsHtml
       +'<div class="dz-mat" id="dz-mat"></div>'
       +'<div class="dz-mat" id="dz-kwr"></div>'
+      +'<div class="dz-mat" id="dz-ab"></div>'
       +'<div class="dz-foot">'+planCtl+deckCtl+feedCtl
         +(editMode?'<span class="dz-con"'+edA('con')+' data-ph="contacts…">'+esc(b.con||'')+'</span>':(b.con?'<span class="dz-con">'+esc(b.con)+'</span>':''))+'</div>';
     loadMats(name);
     loadKwResults(name);
+    loadAbTests(name);
     portFill(name);
     var shb=detail.querySelector('.dz-showb');
     if(shb)shb.onclick=function(){ showOpen(name); };
@@ -1284,6 +1286,69 @@ window.addEventListener('load',restore);
     return ' <span style="display:inline-block;font-size:9.5px;font-weight:900;color:#fff;background:'+p[0]
       +';border-radius:100px;padding:0 6px;vertical-align:1px" title="Read from the metric lines'
       +(n.length?' ('+n.join(' · ')+')':'')+' — cost metrics count a fall as positive">'+p[1]+'</span>';
+  }
+  // ---- A/B TEST ARCHIVE (Ray, 9 Sep 2026) --------------------------------------------
+  // Each project plan carries a tab summarising the brand's tests and the uplift each one
+  // produced, backdated. The worker reads it live per brand (/api/abtests) and hands back
+  // parsed rows + a verdict per test; this renders them grouped by test type, newest block
+  // first, each row expandable to the team's own write-up.
+  var ABV={positive:['#15803d','▲','won'],negative:['#b91c1c','▼','lost'],
+           mixed:['#b45309','◆','mixed'],inconclusive:['#64748b','–','inconclusive'],
+           unknown:['#64748b','?','no read']};
+  function abPill(t){
+    var v=ABV[t.verdict]||ABV.unknown;
+    return '<span style="display:inline-block;font-size:9.5px;font-weight:900;color:#fff;background:'+v[0]
+      +';border-radius:100px;padding:0 6px;vertical-align:1px">'+v[1]+' '+v[2]+'</span>';
+  }
+  function abMetrics(m){
+    var out=[];
+    ['impressions','clicks','conversions','revenue','ctr','cvr'].forEach(function(k){
+      if(m&&typeof m[k]==='number'){
+        var up=m[k]>0, c=up?'#15803d':(m[k]<0?'#b91c1c':'#64748b');
+        out.push('<span style="color:'+c+';font-weight:800">'+(up?'+':'')+m[k]+'% '+k.slice(0,4)+'</span>');
+      } });
+    return out.join(' <span style="opacity:.4">·</span> ');
+  }
+  function loadAbTests(name){
+    var box=document.getElementById('dz-ab'); if(!box) return;
+    box.innerHTML='<div class="dz-mat-h"><b>\U0001F9EA A/B test archive</b><span class="n">loading…</span></div>';
+    fetch('/api/abtests?client='+encodeURIComponent(name)).then(function(r){return r.json();}).then(function(d){
+      if(document.getElementById('dz-ab')!==box) return;   // brand switched mid-flight
+      var head='<div class="dz-mat-h"><b>\U0001F9EA A/B test archive</b><span class="n">';
+      if(!d||!d.ok){
+        // every failure says what to DO about it — a silent empty section reads as "no tests"
+        var why={no_plan_sheet:'No project plan wired for this brand yet.',
+                 no_archive_tab:'No “AB Test Archive” tab in the plan'+((d&&d.tabs&&d.tabs.length)?' — tabs found: '+d.tabs.slice(0,12).map(esc).join(', '):'')+'.',
+                 no_sa:'The Google service account is not configured on the worker.',
+                 no_header:'The archive tab has no Country / Test Method header row.'}[d&&d.error]
+                 ||('Could not read the archive'+(d&&d.error?' — '+esc(String(d.error).slice(0,120)):'')+'.');
+        box.innerHTML=head+'none</span></div><div class="dz-mat-e">'+why+'</div>'; return;
+      }
+      var tests=d.tests||[], sm=d.summary||{};
+      if(!tests.length){ box.innerHTML=head+'none</span></div><div class="dz-mat-e">The archive tab is wired but has no test rows yet.</div>'; return; }
+      var bits=[tests.length+' test'+(tests.length===1?'':'s')];
+      if(sm.winRate!==null&&sm.winRate!==undefined)bits.push(sm.winRate+'% won');
+      if(sm.inconclusive)bits.push(sm.inconclusive+' inconclusive');
+      head+=esc(bits.join(' · '))+'</span></div>';
+      var groups={},order=[];
+      tests.forEach(function(t){ var g=t.type||'Other'; if(!groups[g]){groups[g]=[];order.push(g);} groups[g].push(t); });
+      var body='';
+      order.forEach(function(g){
+        body+='<div class="dz-mat-g">'+esc(g)+' · '+groups[g].length+'</div>';
+        groups[g].forEach(function(t,i){
+          var when=[t.country,t.live&&t.live!=='NA'?t.live:''].filter(Boolean).join(' · ');
+          var mt=abMetrics(t.metrics);
+          body+='<div class="dz-mat-i dz-ab-i" style="cursor:pointer" title="Click to open the team’s write-up">'
+            +'<span class="ic">'+(ABV[t.verdict]||ABV.unknown)[1]+'</span>'
+            +'<span class="tx"><span class="tt">'+esc(t.batch||t.type||'Test')+(when?' · '+esc(when):'')+' '+abPill(t)+'</span>'
+            +'<span class="mt">'+(mt||'no uplift figures in the write-up')+'</span>'
+            +'<span class="mt dz-ab-raw" hidden style="opacity:.75">'+esc(String(t.report||'').slice(0,1500))+'</span></span></div>';
+        });
+      });
+      box.innerHTML=head+body;
+      Array.prototype.forEach.call(box.querySelectorAll('.dz-ab-i'),function(row){ row.onclick=function(){
+        var raw=row.querySelector('.dz-ab-raw'); if(raw)raw.hidden=!raw.hidden; }; });
+    }).catch(function(){ box.innerHTML='<div class="dz-mat-h"><b>\U0001F9EA A/B test archive</b></div><div class="dz-mat-e">Could not load the archive.</div>'; });
   }
   function loadKwResults(name){
     var box=document.getElementById('dz-kwr'); if(!box) return;

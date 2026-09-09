@@ -26,6 +26,7 @@
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
+import { parseAbTests, abSummary, resolveAbTab } from "./abtests.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 // Committed action batches (ops/ingest/*.json) — bundled at build time so a logged-in user can
 // file them into a plan sheet with ONE CLICK from /workflow (no CI service token needed).
@@ -1367,6 +1368,42 @@ export default {
       const q = (url.searchParams.get('client') || '').trim().toLowerCase();
       const results = q ? all.filter((k) => { const c = String(k.client || '').toLowerCase(); return c && (c.indexOf(q) >= 0 || q.indexOf(c) >= 0); }) : all;
       return json({ ok: true, results: results.slice(0, 200), total: results.length });
+    }
+
+    // ---- A/B TEST ARCHIVE (Ray, 9 Sep 2026) ----------------------------------------------
+    // Every project plan carries a tab where the team summarises the brand's tests and the
+    // uplift each produced, backdated. Read LIVE through the service account rather than
+    // snapshotted into git: the team keeps editing these tabs, and a committed copy would be
+    // stale the moment they do. KV holds a short cache so a dossier browse doesn't hit Sheets
+    // once per card; ?refresh=1 forces a re-read.
+    if (path === '/api/abtests' && request.method === 'GET') {
+      const client = (url.searchParams.get('client') || '').trim();
+      const id = PLAN_SHEETS[client];
+      if (!id) return json({ ok: false, error: 'no_plan_sheet', client, tests: [] });
+      const ck = 'abtests:' + client;
+      if (url.searchParams.get('refresh') !== '1') {
+        const hit = await env.EDITS.get(ck, 'json');
+        if (hit && (Date.now() - (hit.at || 0)) < 6 * 60 * 60 * 1000) return json({ ...hit, cached: true });
+      }
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa', client, tests: [] });
+      try {
+        const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
+        const meta = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '?fields=sheets.properties.title',
+          { headers: { Authorization: 'Bearer ' + token } })).json();
+        const titles = (((meta && meta.sheets) || []).map((x) => x.properties.title)).filter(Boolean);
+        const tab = resolveAbTab(titles);
+        // fails closed on purpose: reading the Project Plan and calling its rows "tests" is a
+        // far worse outcome than telling Ray the tab is missing or oddly named
+        if (!tab) return json({ ok: false, error: 'no_archive_tab', client, tabs: titles.slice(0, 40), tests: [] });
+        const r = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/'
+          + encodeURIComponent(tab + '!A1:Z400'), { headers: { Authorization: 'Bearer ' + token } })).json();
+        if (r.error) return json({ ok: false, error: r.error.message, client, tests: [] });
+        const p = parseAbTests(r.values || []);
+        if (!p.ok) return json({ ok: false, error: p.error, client, tab, tests: [] });
+        const payload = { ok: true, client, tab, at: Date.now(), tests: p.tests, summary: abSummary(p.tests) };
+        await env.EDITS.put(ck, JSON.stringify(payload));
+        return json(payload);
+      } catch (e) { return json({ ok: false, error: String((e && e.message) || e), client, tests: [] }); }
     }
 
     // ---- Gmail intake: recent client task emails → Workflow "Incoming emails" stream ----
