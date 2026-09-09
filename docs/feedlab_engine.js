@@ -24,7 +24,7 @@
   (typeof self !== 'undefined' ? self : this), function () {
   'use strict';
 
-  var VERSION = '1.2.0';
+  var VERSION = '1.3.0';   // 1.3.0: XML header = sampled union padded to slot 10 (was first-item-only — dropped keyword slots)
 
   /* ================================================================
    * 1. Incremental RFC-4180 CSV parser
@@ -100,18 +100,51 @@
    *     channel exports, e.g. FeedHero-hosted latest.xml)
    * ----------------------------------------------------------------
    * Same contract as createParser: push(chunk)/end(), first onRow()
-   * is the header, then one row per <item>. The header is derived
-   * from the FIRST item's child tags in document order; repeated
-   * tags within an item (additional_image_link…) get (2), (3)…
-   * suffixes so normKey lands on the same canonical names as the
-   * sheet exports' |||N columns. Items are flat key→text by spec;
-   * CDATA is unwrapped and entities decoded. Chunk-safe: an <item>
-   * split anywhere across push() boundaries is buffered until its
-   * </item> arrives; complete items are released from the buffer
-   * immediately so memory stays bounded by one item, not the feed.
+   * is the header, then one row per <item>. The header is the UNION
+   * of tags across the first SAMPLE items (first-seen order); any
+   * tag that repeats within an item gets (2), (3)… suffixes, PADDED
+   * to slot 10 (the sheet exports pre-declare product_type(1..8),
+   * additional_image_link(1..10), product_highlight(1..10) — the
+   * old first-item-only header silently DROPPED every slot the
+   * first item didn't carry: on the real Reiss GB FeedHero feed
+   * item #1 has 2 product_types while ~6k items carry 3–10, so all
+   * injected keyword slots vanished from audits/kw-saturation).
+   * normKey lands the suffixed names on the same canonical names as
+   * the sheet exports' |||N columns. Items are flat key→text by
+   * spec; CDATA is unwrapped and entities decoded. Chunk-safe: an
+   * <item> split anywhere across push() boundaries is buffered
+   * until its </item> arrives; complete items are released as soon
+   * as the sample header is settled, so memory stays bounded by the
+   * SAMPLE, never the feed.
    * ================================================================ */
   function createXmlParser(onRow) {
     var buf = '', header = null, ix = null, done = false;
+    var SAMPLE = 50, PADCAP = 10, pend = [];
+    function settleHeader() {   // union header over the sampled items, then release them
+      var order = [], maxRep = {};
+      for (var p = 0; p < pend.length; p++) {
+        for (var q = 0; q < pend[p].length; q++) {
+          var key = pend[p][q][0], sm = /^(.*)\((\d+)\)$/.exec(key);
+          var base = sm ? sm[1] : key, n = sm ? +sm[2] : 1;
+          if (!(base in maxRep)) { maxRep[base] = n; order.push(base); }
+          else if (n > maxRep[base]) maxRep[base] = n;
+        }
+      }
+      header = [];
+      for (var o = 0; o < order.length; o++) {
+        var b = order[o], top = maxRep[b] > 1 ? Math.max(maxRep[b], PADCAP) : 1;
+        for (var s = 1; s <= top; s++) header.push(s > 1 ? b + '(' + s + ')' : b);
+      }
+      ix = {}; header.forEach(function (k, i) { ix[k] = i; });
+      onRow(header.slice());
+      for (var r = 0; r < pend.length; r++) emitRow(pend[r]);
+      pend = null;
+    }
+    function emitRow(fs) {
+      var row = header.map(function () { return ''; });
+      for (var i = 0; i < fs.length; i++) if (fs[i][0] in ix) row[ix[fs[i][0]]] = fs[i][1];
+      onRow(row);
+    }
     function decode(s) {
       s = s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
       return s.replace(/&#x([0-9a-fA-F]+);/g, function (_, h) { return String.fromCodePoint(parseInt(h, 16)); })
@@ -141,17 +174,15 @@
         var fs = fieldsOf(body);
         if (!fs.length) continue;
         if (!header) {
-          header = fs.map(function (f) { return f[0]; });
-          ix = {}; header.forEach(function (k, i) { ix[k] = i; });
-          onRow(header.slice());
+          pend.push(fs);
+          if (pend.length >= SAMPLE) settleHeader();
+          continue;
         }
-        var row = header.map(function () { return ''; });
-        for (var i = 0; i < fs.length; i++) if (fs[i][0] in ix) row[ix[fs[i][0]]] = fs[i][1];
-        onRow(row);
+        emitRow(fs);
       }
-      if (!header && buf.length > 4194304) buf = buf.slice(-65536);   // no <item> in 4MB — not a feed; keep a tail, stay bounded
+      if (!header && !pend.length && buf.length > 4194304) buf = buf.slice(-65536);   // no <item> in 4MB — not a feed; keep a tail, stay bounded
     }
-    function end() { done = true; buf = ''; }
+    function end() { done = true; buf = ''; if (!header && pend && pend.length) settleHeader(); }
     return { push: push, end: end };
   }
 

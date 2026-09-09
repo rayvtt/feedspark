@@ -2539,6 +2539,12 @@
       "pattern": "latest-uk.xml",
       "min": 1,
       "pr": 285
+    },
+    {
+      "name": "engine: XML header = sampled union padded to slot 10 (keyword slots survive)",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "settleHeader",
+      "min": 3
     }
   ]
 }
