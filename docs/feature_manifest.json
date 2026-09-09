@@ -2633,6 +2633,31 @@
       "pr": 291
     },
     {
+      "name": "abtests: merged-cell aware archive parser",
+      "file": "cloudflare/feedspark-deck/src/abtests.js",
+      "pattern": "export function parseAbTests"
+    },
+    {
+      "name": "abtests: archive tab resolver fails closed (never the plan tab)",
+      "file": "cloudflare/feedspark-deck/src/abtests.js",
+      "pattern": "export function resolveAbTab"
+    },
+    {
+      "name": "abtests: unsigned prose keeps its direction",
+      "file": "cloudflare/feedspark-deck/src/abtests.js",
+      "pattern": "DOWN_NEAR"
+    },
+    {
+      "name": "abtests: live per-brand archive endpoint",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/api/abtests'"
+    },
+    {
+      "name": "dossier: A/B test archive section",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function loadAbTests"
+    },
+    {
       "name": "worker: shared scan processing (gviz sweep + xml-scan push)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "processScanSnapshot",
