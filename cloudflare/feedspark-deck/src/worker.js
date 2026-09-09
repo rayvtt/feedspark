@@ -74,6 +74,8 @@ import GOLDEN_PAGE from "../../../docs/FeedSpark_GoldenRecord.html";
 // Keyword optimisation calendar — marketing moments drive the KW schedule (docs/FeedSpark_KWCal.html)
 import KWCAL from "../../../docs/FeedSpark_KWCal.html";
 import AIQUOTE from "../../../docs/FeedSpark_AIQuote.html";
+// Product Volume — daily in/out churn per feed from the xml-scan id sets (page at /volume)
+import VOLUME_PAGE from "../../../docs/FeedSpark_Volume.html";
 import APPSW from "../../../docs/apps_widget.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
 // node tests share the file, same pattern as the Feed Lab engine)
@@ -145,6 +147,7 @@ const PAGES = {
   '/pricer':      { html: PRICER,      slug: 'pricer' },
   '/kwcal':       { html: KWCAL,       slug: 'kwcal' },
   '/aiquote':     { html: AIQUOTE,     slug: 'aiquote' },
+  '/volume':      { html: VOLUME_PAGE, slug: 'volume' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
@@ -679,8 +682,13 @@ export default {
           if (!snap.t || typeof snap.t !== 'number') snap.t = Date.now();
           try {
             const r = await processScanSnapshot(env, client, mkt, snap, { wantPT, rescan: null });
-            results.push(r && r.skipped ? { client, mkt, skipped: true, retry: !!r.retry }
-              : { client, mkt, ok: true, alerts: ((r && r.alerts) || []).filter((a) => a.sev !== 'info').length });
+            if (r && r.skipped) results.push({ client, mkt, skipped: true, retry: !!r.retry });
+            else {
+              // volume tracking rides only CONFIRMED scans — a held catastrophic reading's
+              // id set would fake a churn crater, so it lands with the confirming re-push
+              try { await volTrack(env, client, mkt, snap.rows, e.vol); } catch (e3) {}
+              results.push({ client, mkt, ok: true, alerts: ((r && r.alerts) || []).filter((a) => a.sev !== 'info').length });
+            }
           } catch (e2) { results.push({ client, mkt, error: String((e2 && e2.message) || e2).slice(0, 120) }); }
         }
         logActivity(ctx, env, request, 'xml-scan', results.filter((r) => r.ok).length + ' scanned · '
@@ -1421,6 +1429,22 @@ export default {
       return json({ ok: true, results: results.slice(0, 200), total: results.length });
     }
 
+    // ---- daily product-volume history for the /volume module (built by volTrack on each
+    // confirmed xml-scan push): per-day in/out churn + per-category movers, plus the raw
+    // rows-per-scan series from the guard history so sheet-backed feeds (no id sets) still
+    // get an honest row-count trend.
+    if (path === '/api/volume' && request.method === 'GET') {
+      const client = String(url.searchParams.get('client') || '').slice(0, 60);
+      const mkt = mktOf(url.searchParams.get('market'));
+      if (!client) return json({ ok: false, error: 'client required' }, 400);
+      const src = await feedSourceFor(env, client, mkt);
+      const tracked = src && src.xml ? 'xml' : (src && src.id ? 'sheet' : false);
+      const hist = (await env.EDITS.get('volhist:' + client + ':' + mkt, 'json')) || [];
+      const lh = (await env.EDITS.get('labelhist:' + client + ':' + mkt, 'json')) || [];
+      return json({ ok: true, client, market: mkt, tracked, hist,
+        scans: lh.map((h) => ({ t: h.t, rows: h.rows })) });
+    }
+
     // ---- A/B TEST ARCHIVE (Ray, 9 Sep 2026) ----------------------------------------------
     // Every project plan carries a tab where the team summarises the brand's tests and the
     // uplift each produced, backdated. Read LIVE through the service account rather than
@@ -2148,6 +2172,47 @@ async function markScanUnreachable(env, client, mkt, msg, wantPT) {
     gidx[lgKey(client, mkt)] = Object.assign({}, gidx[lgKey(client, mkt)] || {}, { client, mkt, status: 'unreachable', err: msg, tErr: Date.now() });
     await env.EDITS.put('goldenidx', JSON.stringify(gidx));
   } catch (e2) {}
+}
+
+// ---- Daily product-volume tracking (Ray, 9 Sep 2026: "document the daily product volume …
+// 300 new products coming in and 900 products going out, per category, like Merchant
+// Center"). The xml-scan agent sends each feed's full SKU id set as "id|category" lines
+// (category = first chevron segment of the primary product_type). Only the LATEST set per
+// feed is kept (volids: — closing-state semantics: a later same-day scan replaces it), and
+// the first confirmed scan of a new UTC day diffs yesterday's closing set against today's:
+// ids gained = IN, ids vanished = OUT, split per category (top 12 movers), appended to
+// volhist: (cap 60 days) for the /volume module. A TRUNCATED capture (feed past the agent's
+// 40k-SKU cap) records the day's row count only — diffing a partial set would fake churn.
+async function volTrack(env, client, mkt, rows, vol) {
+  if (!vol || typeof vol.ids !== 'string') return null;
+  const VK = 'volids:' + client + ':' + mkt, HK = 'volhist:' + client + ':' + mkt;
+  const today = new Date().toISOString().slice(0, 10);
+  const trunc = !!vol.trunc;
+  const prev = await env.EDITS.get(VK, 'json');
+  const hist = (await env.EDITS.get(HK, 'json')) || [];
+  const last = hist.length ? hist[hist.length - 1] : null;
+  if (prev && prev.d && prev.d !== today && !prev.trunc && !trunc) {
+    const parse = (s) => { const m = new Map(); for (const ln of String(s).split('\n')) {
+      if (!ln) continue; const i = ln.lastIndexOf('|');
+      m.set(i < 0 ? ln : ln.slice(0, i), i < 0 ? '' : ln.slice(i + 1)); } return m; };
+    const was = parse(prev.ids || ''), now = parse(vol.ids);
+    let nIn = 0, nOut = 0; const cat = {};
+    const bump = (c, k) => { const key = c || 'Uncategorised'; (cat[key] = cat[key] || { c: key, in: 0, out: 0 })[k]++; };
+    for (const [id, c] of now) if (!was.has(id)) { nIn++; bump(c, 'in'); }
+    for (const [id, c] of was) if (!now.has(id)) { nOut++; bump(c, 'out'); }
+    const cats = Object.values(cat).sort((a, b) => (b.in + b.out) - (a.in + a.out)).slice(0, 12);
+    const entry = { d: today, rows, in: nIn, out: nOut, cats };
+    if (last && last.d === today) hist[hist.length - 1] = entry; else hist.push(entry);
+  } else {
+    // first-ever capture, a later same-day scan, or a truncated set: keep today's row
+    // count honest, never invent an in/out figure (a same-day rescan keeps the morning's
+    // diff — churn is measured day-close to day-close, not scan to scan)
+    if (last && last.d === today) last.rows = rows;
+    else hist.push(Object.assign({ d: today, rows }, trunc ? { trunc: true } : {}));
+  }
+  await env.EDITS.put(HK, JSON.stringify(hist.slice(-60)));
+  await env.EDITS.put(VK, JSON.stringify({ d: today, ids: trunc ? '' : vol.ids, trunc }));
+  return { d: today };
 }
 
 // EVERYTHING below the fetch: split the raw snapshot, roll the day/known-good references,
