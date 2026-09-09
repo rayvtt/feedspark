@@ -149,6 +149,10 @@ if (process.env.DRY) { console.log('\nDRY — computed ' + entries.length + ' sn
 let held = [];
 const all = [];
 for (let b = 0; b < entries.length; b += 8) all.push(...await post(entries.slice(b, b + 8)));
+// every non-ok worker verdict is printed with its reason — a silent reject is undebuggable
+const explain = (r) => { if (r.error) console.log('✗ rejected  ' + r.client + ' ' + r.mkt + ' — ' + r.error);
+  else if (r.skipped) console.log('~ held      ' + r.client + ' ' + r.mkt + ' — awaiting confirming re-read'); };
+all.forEach(explain);
 held = all.filter((r) => r.retry);
 if (held.length) {
   // catastrophic readings held by the worker: re-fetch those feeds NOW (the confirming
@@ -161,9 +165,12 @@ if (held.length) {
     try { confirm.push({ client: f.client, mkt: f.mkt, snap: await snapshotFeed(f) }); }
     catch (e) { confirm.push({ client: f.client, mkt: f.mkt, err: String((e && e.message) || e).slice(0, 140) }); }
   }
-  for (let b = 0; b < confirm.length; b += 8) all.push(...await post(confirm.slice(b, b + 8)));
+  for (let b = 0; b < confirm.length; b += 8) { const rs = await post(confirm.slice(b, b + 8)); rs.forEach(explain); all.push(...rs); }
 }
 const ok = all.filter((r) => r.ok).length, bad = all.filter((r) => r.error).length, unr = all.filter((r) => r.unreachable).length;
+// "still held" = a hold with NO later ok for the same feed (the confirm entry supersedes the hold)
+const okKeys = new Set(all.filter((r) => r.ok).map((r) => r.client + '|' + r.mkt));
+const stillHeld = all.filter((r) => r.retry && !okKeys.has(r.client + '|' + r.mkt)).length;
 console.log('\n✓ scan push complete — ' + ok + ' processed · ' + unr + ' unreachable · ' + bad + ' rejected'
-  + (all.filter((r) => r.retry).length ? ' · ' + all.filter((r) => r.retry).length + ' still held' : ''));
+  + (stillHeld ? ' · ' + stillHeld + ' still held' : ''));
 process.exit(bad > 0 ? 1 : 0);
