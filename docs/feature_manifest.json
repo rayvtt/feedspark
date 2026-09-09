@@ -1186,7 +1186,7 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "-fb': { id:",
       "min": 7,
-      "pr": null
+      "pr": 292
     },
     {
       "name": "worker: :30 cron advances the sweep rotation (budget-guarded second batch)",
@@ -2595,7 +2595,7 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "feedhero.net/output_feeds",
       "min": 62,
-      "pr": 289
+      "pr": 292
     },
     {
       "name": "briefmatch: subject-free notes detection (Gemini sender + notes body)",
