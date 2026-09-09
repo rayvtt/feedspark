@@ -661,17 +661,35 @@ export default {
           // archived result IS the record (same upgrade-race fix the call notes needed).
           const kw = parseKwResult(m);
           if (kw) {
+            const exK = detectClientEx({ subject: kw.brand, snippet: '' }, clientDoms, names);
+            const kwClient = exK.client || kw.brand;
             if (!haveKw[m.id]) {
-              if (seen[m.id]) {
-                const j2 = stored.findIndex((it) => it && it.id === m.id);
-                if (j2 >= 0) stored.splice(j2, 1);
-                delete seen[m.id];
-              }
-              const exK = detectClientEx({ subject: kw.brand, snippet: '' }, clientDoms, names);
-              kwres.push({ id: m.id, client: exK.client || kw.brand, via: exK.via || '', mkt: kw.mkt,
+              kwres.push({ id: m.id, client: kwClient, via: exK.via || '', mkt: kw.mkt,
                 period: kw.period, when: m.date || Date.now(), from: String(m.from || '').slice(0, 120),
-                subject: String(m.subject || '').slice(0, 160), metrics: kw.metrics, raw: kw.raw });
+                subject: String(m.subject || '').slice(0, 160), metrics: kw.metrics, raw: kw.raw,
+                verdict: kw.verdict, good: kw.good, bad: kw.bad });
               haveKw[m.id] = 1; kwAdded++;
+            }
+            // Ray's ask (9 Sep): a result must ALSO surface in Email Triage, not only inside the
+            // brand dossier — the archive is where he looks later, triage is where he looks now.
+            // The row is purpose-built (kind 'kwresult' + verdict) rather than the generic capture,
+            // and it carries the archive's client so an undetected brand never hides the result.
+            if (!seen[m.id]) {
+              stored.push({ id: m.id, from: String(m.from || '').slice(0, 120),
+                subject: String(m.subject || '(no subject)').slice(0, 160),
+                snippet: String(kw.metrics[0] || m.snippet || '').slice(0, 220),
+                date: m.date || Date.now(), client: kwClient, briefable: false, hints: ['kw result'],
+                kind: 'kwresult', verdict: kw.verdict, mkt: kw.mkt, period: kw.period });
+              seen[m.id] = 1; added++;
+            } else {
+              // captured as ordinary mail on an earlier push, before the parser knew its shape:
+              // upgrade the row in place rather than leaving a plain unlabelled email behind
+              const j2 = stored.findIndex((it) => it && it.id === m.id);
+              if (j2 >= 0) {
+                stored[j2].kind = 'kwresult'; stored[j2].verdict = kw.verdict;
+                stored[j2].mkt = kw.mkt; stored[j2].period = kw.period;
+                if (!stored[j2].client) stored[j2].client = kwClient;
+              }
             }
             continue;
           }

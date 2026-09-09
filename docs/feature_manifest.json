@@ -2532,6 +2532,26 @@
       "pattern": "ingest-banner",
       "min": 4,
       "pr": 283
+    },
+    {
+      "name": "kwresult: verdict parsed from metric lines (cost inverted)",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "KWR_INVERSE_RE"
+    },
+    {
+      "name": "kwresult: result emails also ride the Email Triage queue",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "kind: 'kwresult'"
+    },
+    {
+      "name": "workflow: keyword-result verdict chip in triage",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function kwChip"
+    },
+    {
+      "name": "dossier: keyword-result verdict pill",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function kwVerdictPill"
     }
   ]
 }
