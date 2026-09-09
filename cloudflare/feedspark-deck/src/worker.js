@@ -641,6 +641,43 @@ export default {
 
       // inbox feed: general incoming mail → classify (client + briefable) and store for the
       // Workflow's "Incoming emails" stream. Same endpoint/key/bypass as the brief sync.
+      // ---- XML scan push (Ray, 9 Sep 2026: "fetch four times a day for every URL … migrate
+      // the monitoring to the URL instead of the sheet"): the GitHub xml-scan agent fetches
+      // every wired {xml} feed, computes the SAME raw snapshot scanFeed builds from gviz
+      // (it imports labelguard.js's own snapshot assembly), and posts batches here. Each
+      // entry runs the shared processScanSnapshot — identical baselines/day-refs/alerts/
+      // two-strike semantics as the sheet sweep. {err} entries mark the feed unreachable.
+      // Rides this route's existing Access bypass + push key; the feed must be a WIRED
+      // {xml} source (never a caller-supplied URL), and identity fields are forced
+      // server-side so a snapshot can only land on the feed it claims to be.
+      if (Array.isArray(body.xmlscan)) {
+        const results = [];
+        for (const e of body.xmlscan.slice(0, 12)) {   // chunked by the agent — keeps KV ops per invocation well under budget
+          const client = String((e && e.client) || '').slice(0, 60), mkt = mktOf(e && e.mkt);
+          if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) { results.push({ client, mkt, error: 'bad client' }); continue; }
+          const src = await feedSourceFor(env, client, mkt);
+          if (!src || !src.xml) { results.push({ client, mkt, error: 'not a wired XML feed' }); continue; }
+          const wantPT = !/-fb$/.test(mkt);
+          if (e.err) {
+            await markScanUnreachable(env, client, mkt, String(e.err).slice(0, 140), wantPT);
+            results.push({ client, mkt, unreachable: true });
+            continue;
+          }
+          const snap = e.snap;
+          if (!snap || typeof snap !== 'object' || !snap.labels || typeof snap.rows !== 'number') { results.push({ client, mkt, error: 'bad snapshot' }); continue; }
+          snap.client = client; snap.market = mkt; snap.v = 1;
+          if (!snap.t || typeof snap.t !== 'number') snap.t = Date.now();
+          try {
+            const r = await processScanSnapshot(env, client, mkt, snap, { wantPT, rescan: null });
+            results.push(r && r.skipped ? { client, mkt, skipped: true, retry: !!r.retry }
+              : { client, mkt, ok: true, alerts: ((r && r.alerts) || []).filter((a) => a.sev !== 'info').length });
+          } catch (e2) { results.push({ client, mkt, error: String((e2 && e2.message) || e2).slice(0, 120) }); }
+        }
+        logActivity(ctx, env, request, 'xml-scan', results.filter((r) => r.ok).length + ' scanned · '
+          + results.filter((r) => r.retry).length + ' held · ' + results.filter((r) => r.error || r.unreachable).length + ' failed', 'xml-scan');
+        return json({ ok: true, results });
+      }
+
       if (Array.isArray(body.inbox)) {
         const inbox = body.inbox.slice(0, 150);
         // BACKFILL mode (gmail_push.gs backfillKwResults): a resumable sweep of the whole
@@ -1999,7 +2036,7 @@ const lgKey = (c, m) => c + '|' + m;
 async function runLabelScan(env, client, mkt) {
   const src = await feedSourceFor(env, client, mkt);
   if (!src) return { error: 'no feed sheet linked for this client/market - attach one in Feed Lab or the brand dossier', status: 404 };
-  if (src.xml) return { error: 'XML feed (Meta channel) - Label Guard monitors sheet-backed feeds only (gviz cannot query XML)', status: 400 };
+  if (src.xml) return { error: 'XML feed - live scans are sheets-only (gviz cannot query XML); XML feeds are scanned by the 4x-daily xml-scan push instead', status: 400 };
   // Google-channel feeds also capture the primary g:product_type in the SAME pass
   // (shared header probe + counts query, one extra group-by ≈ +1 subrequest) — the
   // Product Type Guard (/ptypes) reads its own ptype* stores written below.
@@ -2007,31 +2044,53 @@ async function runLabelScan(env, client, mkt) {
   // Google feeds also ride the Golden Record roster on the SAME multi-count query
   // (attribute coverage vs Google's product data spec — zero extra subrequests).
   const scanOpts = wantPT ? { attrs: true } : null;
+  const keys = wantPT ? LABEL_KEYS.concat(PT_KEYS) : LABEL_KEYS;
   let snap;
   try {
-    snap = await scanFeed(fetch, src, { client, market: mkt }, wantPT ? LABEL_KEYS.concat(PT_KEYS) : LABEL_KEYS, scanOpts);
+    snap = await scanFeed(fetch, src, { client, market: mkt }, keys, scanOpts);
   } catch (e) {
     const msg = String((e && e.message) || e).slice(0, 140);
-    // index + alert maps are re-read right before each write to keep the clobber window
-    // (cron sweep vs a page-triggered scan) down to milliseconds; a lost entry self-heals
-    // on the feed's next scan
-    const idx = (await env.EDITS.get('labelidx', 'json')) || {};
-    idx[lgKey(client, mkt)] = Object.assign({}, idx[lgKey(client, mkt)] || {}, { client, mkt, status: 'unreachable', err: msg, tErr: Date.now() });
-    await env.EDITS.put('labelidx', JSON.stringify(idx));
-    const alertsMap = (await env.EDITS.get('labelalerts', 'json')) || {};
-    alertsMap[lgKey(client, mkt)] = { t: Date.now(), client, mkt,
-      alerts: [{ sev: 'warn', code: 'fetch-fail', msg: 'feed unreachable: ' + msg }] };
-    await env.EDITS.put('labelalerts', JSON.stringify(alertsMap));
-    if (wantPT) try {
-      const pidx = (await env.EDITS.get('ptypeidx', 'json')) || {};
-      pidx[lgKey(client, mkt)] = Object.assign({}, pidx[lgKey(client, mkt)] || {}, { client, mkt, status: 'unreachable', err: msg, tErr: Date.now() });
-      await env.EDITS.put('ptypeidx', JSON.stringify(pidx));
-      const gidx = (await env.EDITS.get('goldenidx', 'json')) || {};
-      gidx[lgKey(client, mkt)] = Object.assign({}, gidx[lgKey(client, mkt)] || {}, { client, mkt, status: 'unreachable', err: msg, tErr: Date.now() });
-      await env.EDITS.put('goldenidx', JSON.stringify(gidx));
-    } catch (e2) {}
+    await markScanUnreachable(env, client, mkt, msg, wantPT);
     return { error: msg, status: 502 };
   }
+  return processScanSnapshot(env, client, mkt, snap, { wantPT,
+    rescan: async () => { try { return await scanFeed(fetch, src, { client, market: mkt }, keys, scanOpts); } catch (e) { return null; } } });
+}
+
+// a feed that could not be read: index it unreachable + raise the fetch-fail warn — shared
+// by the gviz path above and the xml-scan push (whose agent reports its own fetch failures)
+async function markScanUnreachable(env, client, mkt, msg, wantPT) {
+  // index + alert maps are re-read right before each write to keep the clobber window
+  // (cron sweep vs a page-triggered scan) down to milliseconds; a lost entry self-heals
+  // on the feed's next scan
+  const idx = (await env.EDITS.get('labelidx', 'json')) || {};
+  idx[lgKey(client, mkt)] = Object.assign({}, idx[lgKey(client, mkt)] || {}, { client, mkt, status: 'unreachable', err: msg, tErr: Date.now() });
+  await env.EDITS.put('labelidx', JSON.stringify(idx));
+  const alertsMap = (await env.EDITS.get('labelalerts', 'json')) || {};
+  alertsMap[lgKey(client, mkt)] = { t: Date.now(), client, mkt,
+    alerts: [{ sev: 'warn', code: 'fetch-fail', msg: 'feed unreachable: ' + msg }] };
+  await env.EDITS.put('labelalerts', JSON.stringify(alertsMap));
+  if (wantPT) try {
+    const pidx = (await env.EDITS.get('ptypeidx', 'json')) || {};
+    pidx[lgKey(client, mkt)] = Object.assign({}, pidx[lgKey(client, mkt)] || {}, { client, mkt, status: 'unreachable', err: msg, tErr: Date.now() });
+    await env.EDITS.put('ptypeidx', JSON.stringify(pidx));
+    const gidx = (await env.EDITS.get('goldenidx', 'json')) || {};
+    gidx[lgKey(client, mkt)] = Object.assign({}, gidx[lgKey(client, mkt)] || {}, { client, mkt, status: 'unreachable', err: msg, tErr: Date.now() });
+    await env.EDITS.put('goldenidx', JSON.stringify(gidx));
+  } catch (e2) {}
+}
+
+// EVERYTHING below the fetch: split the raw snapshot, roll the day/known-good references,
+// diff, alert, index — shared verbatim by the gviz scan above and the XML scan push
+// (the 4x-daily GitHub agent computes the same raw snapshot from the FeedHero XML and
+// posts it here, so every guard semantic — baselines, acks, two-strike emails, reports,
+// badges — behaves identically on both feed kinds). opts.rescan re-reads the feed for the
+// catastrophic two-strike; when absent (push lane), a pending marker holds the reading
+// until a second pushed read agrees (the agent retries immediately on a 202).
+async function processScanSnapshot(env, client, mkt, rawSnap, opts) {
+  const wantPT = !!(opts && opts.wantPT);
+  const rescan = opts && opts.rescan;
+  let snapIn = rawSnap;
   // split: PT + Golden Record go to their own stores; the label stores keep their exact
   // historical shape (attrs never ride into the labels:/ptype: snapshots)
   const splitRaw = (raw) => {
@@ -2044,8 +2103,8 @@ async function runLabelScan(env, client, mkt) {
       gr: raw.attrs ? { v: 1, t: raw.t, client: raw.client, market: raw.market, rows: raw.rows, attrs: raw.attrs } : null,
     };
   };
-  let { lbl: snapL, pt: ptSnap, gr: grSnap } = splitRaw(snap);
-  snap = snapL;
+  let { lbl: snapL, pt: ptSnap, gr: grSnap } = splitRaw(snapIn);
+  let snap = snapL;
   // DAILY reference (Ray's rule): the pivot's Δ columns read "vs yesterday" — automatically,
   // every day, every account, every label. The first scan of each UTC day promotes the
   // outgoing snapshot to labelday:<client>:<mkt>, freezing yesterday's closing state for
@@ -2066,17 +2125,30 @@ async function runLabelScan(env, client, mkt) {
   // a crater for one scan, and one bad read used to poison the alert board until the next
   // rotation. Real damage is still there seconds later; garbage isn't. (Custom watches have
   // their own two-strike — this is the estate sweep's equivalent.)
+  const PEND = 'labelpend:' + client + ':' + mkt;
   if (alerts.some((a) => a.code === 'rows-drop' && a.sev === 'crit') || alerts.filter((a) => a.sev === 'crit').length >= 6) {
-    let raw2 = null;
-    try { raw2 = await scanFeed(fetch, src, { client, market: mkt }, wantPT ? LABEL_KEYS.concat(PT_KEYS) : LABEL_KEYS, scanOpts); } catch (e) {}
-    if (!raw2 || Math.abs((raw2.rows || 0) - (snap.rows || 0)) > Math.max(1, snap.rows || 0) * 0.15) {
-      try { await logAlertActivity(env, client + ' ' + mkt + ' · catastrophic reading NOT confirmed by re-read — scan skipped (gviz instability)'); } catch (e) {}
-      return { skipped: 'unstable read — catastrophic diff not confirmed by immediate re-read', status: 202 };
+    if (rescan) {
+      let raw2 = await rescan();
+      if (!raw2 || Math.abs((raw2.rows || 0) - (snap.rows || 0)) > Math.max(1, snap.rows || 0) * 0.15) {
+        try { await logAlertActivity(env, client + ' ' + mkt + ' · catastrophic reading NOT confirmed by re-read — scan skipped (gviz instability)'); } catch (e) {}
+        return { skipped: 'unstable read — catastrophic diff not confirmed by immediate re-read', status: 202 };
+      }
+      const again = splitRaw(raw2);   // both reads agree — adopt the fresher snapshot
+      snap = again.lbl; ptSnap = again.pt; grSnap = again.gr;
+      alerts = diffSnapshots(base, snap);
+    } else {
+      // push lane: the agent is the re-reader. Hold the reading until a SECOND pushed
+      // read (the agent retries on 202, seconds later) agrees on the row count.
+      const pend = await env.EDITS.get(PEND, 'json');
+      if (pend && Math.abs((pend.rows || 0) - (snap.rows || 0)) <= Math.max(1, snap.rows || 0) * 0.15) {
+        await env.EDITS.delete(PEND);   // two readings agree — the damage is real, let it land
+      } else {
+        await env.EDITS.put(PEND, JSON.stringify({ t: Date.now(), rows: snap.rows || 0 }));
+        try { await logAlertActivity(env, client + ' ' + mkt + ' · catastrophic reading held for a confirming re-push'); } catch (e) {}
+        return { skipped: 'catastrophic diff held for a confirming re-push', status: 202, retry: true };
+      }
     }
-    const again = splitRaw(raw2);   // both reads agree — adopt the fresher snapshot
-    snap = again.lbl; ptSnap = again.pt; grSnap = again.gr;
-    alerts = diffSnapshots(base, snap);
-  }
+  } else if (!rescan) { try { await env.EDITS.delete(PEND); } catch (e) {} }
   const active = alerts.filter((a) => a.sev !== 'info');
   if (!active.length && base.t !== snap.t) {
     base = snap; await env.EDITS.put(BK, JSON.stringify(snap));   // clean scan rolls the baseline forward
@@ -2222,7 +2294,7 @@ async function labelGuardRoutes(env, request, url) {
     const alerts = (await env.EDITS.get('labelalerts', 'json')) || {};
     const feeds = {};
     for (const f of roster) {
-      if (f.src && f.src.xml) continue;   // XML (Meta) feeds aren't label-monitorable — keep them off the estate grid
+      // XML feeds are first-class on the grid since the xml-scan push lane (9 Sep 2026)
       feeds[lgKey(f.client, f.mkt)] = Object.assign({ client: f.client, mkt: f.mkt, status: 'never' }, idx[lgKey(f.client, f.mkt)] || {});
     }
     // scanned-but-detached feeds stay visible (with their history) rather than vanishing
@@ -2439,7 +2511,7 @@ async function productTypeRoutes(env, request, url) {
     const alerts = (await env.EDITS.get('ptypealerts', 'json')) || {};
     const feeds = {};
     for (const f of roster) {
-      if (!f.src || !f.src.id) continue;                 // sheet-backed only
+      if (!f.src || (!f.src.id && !f.src.xml)) continue; // wired feeds only (sheet OR xml — the scan push covers xml since 9 Sep 2026)
       if (/-fb$/.test(String(f.mkt || ''))) continue;    // Google Shopping channel only
       feeds[lgKey(f.client, f.mkt)] = Object.assign({ client: f.client, mkt: f.mkt, status: 'never' }, idx[lgKey(f.client, f.mkt)] || {});
     }
@@ -2565,7 +2637,7 @@ async function goldenRoutes(env, request, url) {
     const alerts = (await env.EDITS.get('goldenalerts', 'json')) || {};
     const feeds = {};
     for (const f of roster) {
-      if (!f.src || !f.src.id) continue;                 // sheet-backed only
+      if (!f.src || (!f.src.id && !f.src.xml)) continue; // wired feeds only (sheet OR xml — the scan push covers xml since 9 Sep 2026)
       if (/-fb$/.test(String(f.mkt || ''))) continue;    // Google Shopping channel only
       feeds[lgKey(f.client, f.mkt)] = Object.assign({ client: f.client, mkt: f.mkt, status: 'never' }, idx[lgKey(f.client, f.mkt)] || {});
     }

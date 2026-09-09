@@ -1,0 +1,32 @@
+# XML scan — the 4x-daily guard monitoring for FeedHero XML feeds (Ray, 9 Sep 2026):
+# fetches every wired {xml} feed, computes the scanFeed-shape snapshot with the shared
+# labelguard code, and pushes it to the worker (existing /api/gmail/push bypass + key),
+# which runs the same baseline/alert processing as the sheet sweep.
+#
+# Secret: FCC_PUSH_KEY = the same value as the worker's GMAIL_PUSH_KEY (Ray has it in
+# his Apps Script). Until it exists the job fails fast with instructions.
+name: XML scan
+on:
+  schedule:
+    - cron: '15 2,8,14,20 * * *'   # 4x/day UTC, offset from the worker's own crons
+  workflow_dispatch:
+    inputs:
+      only:
+        description: Scan one feed only ("Client|mkt", e.g. "Reiss|gb")
+        required: false
+        default: ''
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Scan every wired XML feed and push snapshots
+        env:
+          FCC_PUSH_KEY: ${{ secrets.FCC_PUSH_KEY }}
+          SCAN_ONLY: ${{ inputs.only }}
+        run: node tools/xml_scan.mjs
