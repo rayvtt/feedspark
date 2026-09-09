@@ -26,7 +26,7 @@
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
-import { parseAbTests, abSummary, resolveAbTab } from "./abtests.js";
+import { parseAbTests, abSummary, resolveAbTab, hasAbHeader, abClientKey } from "./abtests.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 // Committed action batches (ops/ingest/*.json) — bundled at build time so a logged-in user can
 // file them into a plan sheet with ONE CLICK from /workflow (no CI service token needed).
@@ -1434,7 +1434,26 @@ export default {
         const meta = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '?fields=sheets.properties.title',
           { headers: { Authorization: 'Bearer ' + token } })).json();
         const titles = (((meta && meta.sheets) || []).map((x) => x.properties.title)).filter(Boolean);
-        const tab = resolveAbTab(titles);
+        let tab = resolveAbTab(titles, client);
+        // Name search failed — probe the tabs for the archive's own header (Country beside Test
+        // Method) rather than giving up on a rename. One batchGet covers the whole workbook.
+        // Still fail-closed: no tab carries that header unless it IS an archive, so this can
+        // never mistake a Project Plan for one.
+        if (!tab && titles.length) {
+          // In a shared workbook, probe the brand's own tabs FIRST — otherwise the first tab
+          // carrying an archive header wins and one brand reads the other's tests.
+          const ck = abClientKey(client);
+          const all = titles.slice(0, 40);
+          const mine = ck ? all.filter((t) => abClientKey(t).indexOf(ck) >= 0) : [];
+          const probe = mine.length ? mine : all;
+          const qs = probe.map((t) => 'ranges=' + encodeURIComponent(t + '!A1:H12')).join('&');
+          const b = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values:batchGet?' + qs,
+            { headers: { Authorization: 'Bearer ' + token } })).json();
+          const ranges = (b && b.valueRanges) || [];
+          for (let i = 0; i < ranges.length; i++) {
+            if (hasAbHeader(ranges[i] && ranges[i].values)) { tab = probe[i]; break; }
+          }
+        }
         // fails closed on purpose: reading the Project Plan and calling its rows "tests" is a
         // far worse outcome than telling Ray the tab is missing or oddly named
         if (!tab) return json({ ok: false, error: 'no_archive_tab', client, tabs: titles.slice(0, 40), tests: [] });

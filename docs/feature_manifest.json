@@ -2677,6 +2677,16 @@
       "pattern": "snapshotFeed",
       "min": 3,
       "pr": 293
+    },
+    {
+      "name": "abtests: shared workbooks resolve the brand's own archive tab",
+      "file": "cloudflare/feedspark-deck/src/abtests.js",
+      "pattern": "export function abClientKey"
+    },
+    {
+      "name": "abtests: archive found by header when the tab is renamed",
+      "file": "cloudflare/feedspark-deck/src/abtests.js",
+      "pattern": "export function hasAbHeader"
     }
   ]
 }

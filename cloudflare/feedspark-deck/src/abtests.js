@@ -25,13 +25,35 @@
 // something unrecognised reports "no archive tab", which is true and fixable, rather than
 // inventing an archive out of the wrong tab.
 const AB_TAB_RE = /(a\/?b|ab)[\s_-]*test.*archive|archive.*(a\/?b|ab)[\s_-]*test|test\s*archive/i;
-export function resolveAbTab(titles) {
+// `client` matters because SHEETS ARE SHARED: Monsoon and Accessorize live in one workbook, as
+// do the five ELC brands. That workbook holds "AB Test Archives Monsoon" AND "AB Test Archives
+// Accessorize", so a name search that ignores the brand either calls it ambiguous and shows
+// nothing, or picks the first — putting one brand's tests on the other's dossier. Brand-matching
+// is therefore checked BEFORE the single-match shortcut, not after it.
+export function abClientKey(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+}
+export function resolveAbTab(titles, client) {
   const list = (titles || []).filter(Boolean);
+  const near = list.filter((t) => AB_TAB_RE.test(t));
+  const key = abClientKey(client);
+  if (key && near.length > 1) {
+    const mine = near.filter((t) => abClientKey(t).indexOf(key) >= 0);
+    if (mine.length === 1) return mine[0];
+    return null;                               // still can't tell them apart — never guess
+  }
   const exact = list.find((t) => /^\s*ab test archive\s*$/i.test(t));
   if (exact) return exact;
-  const near = list.filter((t) => AB_TAB_RE.test(t));
   return near.length === 1 ? near[0] : null;   // several archive-ish tabs = ambiguous, not a guess
 }
+
+// Name matching alone is too brittle to hang the whole feature on: the archive exists in Schuh
+// and Hobbycraft with the identical column layout, and whether the dossier finds it comes down
+// to what someone typed on the tab. So when the name search comes up empty the worker probes
+// the sheet's tabs for the ARCHIVE'S OWN HEADER instead — Country beside Test Method. That
+// shape appears nowhere else in these workbooks (a Project Plan has no Test Method column), so
+// content detection stays as fail-closed as the name match while surviving any rename.
+export function hasAbHeader(values) { return !!findHeaderRow(values); }
 
 const HDR_COUNTRY = /^countr(y|ies)$/i;
 const HDR_METHOD = /^test\s*method$/i;
