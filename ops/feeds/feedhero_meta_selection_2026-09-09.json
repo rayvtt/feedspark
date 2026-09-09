@@ -1,0 +1,164 @@
+[
+ {
+  "client": "Accessorize",
+  "mkt": "gb-fb",
+  "cid": "accessorize_uk",
+  "pick": "Facebook",
+  "url": "https://s3.feedhero.net/output_feeds/fb/accessorize_uk/d6373ff1df6bc6fc27d239eb490656ca/accessorize_uk_fb_output.xml",
+  "n": 3445,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Monsoon",
+  "mkt": "gb-fb",
+  "cid": "monsoon_uk",
+  "pick": "Facebook",
+  "url": "https://s2.feedhero.net/output_feeds/fb/monsoon_uk/bf3bf28c34af0fe4335e16e285d6af19/monsoon_uk_fb_output.xml",
+  "n": 1917,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "au-fb",
+  "cid": "reiss_au",
+  "pick": "Facebook",
+  "url": "https://s2.feedhero.net/output_feeds/fb/reiss_au/ce8834b17c05acf0ad3dc53ce7cf4e53/reiss_au_fb_output.xml",
+  "n": 6789,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "ca-fb",
+  "cid": "reiss_ca",
+  "pick": "Facebook",
+  "url": "https://s2.feedhero.net/output_feeds/fb/reiss_ca/5e878963c4224bce5b16b9ce87d3764c/reiss_ca_fb_output.xml",
+  "n": 6562,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "de-fb",
+  "cid": "reiss_de",
+  "pick": "Facebook",
+  "url": "https://s2.feedhero.net/output_feeds/fb/reiss_de/3e39ec8792933dd27c63fdc39b20aca1/reiss_de_fb_output.xml",
+  "n": 6824,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "eu-fb",
+  "cid": "reiss_eu",
+  "pick": "Facebook",
+  "url": "https://s2.feedhero.net/output_feeds/fb/reiss_eu/dcd2e05fd92bd3ba7877d889c3e55f55/copy_reiss_eu_facebook.xml",
+  "n": 6647,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "gb-fb",
+  "cid": "reiss_gb",
+  "pick": "Facebook",
+  "url": "https://s2.feedhero.net/output_feeds/fb/reiss_gb/a57b35eff04c8fc0eb8128aac5df23d4/latest.xml",
+  "n": 9547,
+  "alts": [
+   "Facebook- Florere brand products"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "ie-fb",
+  "cid": "reiss_ie_pla",
+  "pick": "Facebook",
+  "url": "https://s3.feedhero.net/output_feeds/fb/reiss_ie_pla/3a010137189be1d4ffec6b67368860a1/reiss_ie_fb_output.xml",
+  "n": 6847,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "nl-fb",
+  "cid": "reiss_nl",
+  "pick": "Facebook",
+  "url": "https://s3.feedhero.net/output_feeds/fb/reiss_nl/ea1e887d592d19361818f58ceb216072/reiss_nl_facebook.xml",
+  "n": 6843,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "sa-fb",
+  "cid": "reiss_sa",
+  "pick": "Facebook",
+  "url": "https://s2.feedhero.net/output_feeds/fb/reiss_sa/6a30d5daae3478323c169da1039e5861/reiss_sa_fb_output.xml",
+  "n": 6552,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "uae-fb",
+  "cid": "reiss_uae",
+  "pick": "Facebook",
+  "url": "https://s2.feedhero.net/output_feeds/fb/reiss_uae/d40ef3a59bdd49e250da9f7f1507d4a4/reiss_uae_fb_output.xml",
+  "n": 6826,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "us-fb",
+  "cid": "reiss_us",
+  "pick": "Facebook",
+  "url": "https://feedhero.net/output_feeds/fb/reiss_us/b9417c1e4cb408f160960fcc5dcd4af8/latest.xml",
+  "n": 5853,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Schuh",
+  "mkt": "gb-fb",
+  "cid": "schuh_uk_1",
+  "pick": "Facebook",
+  "url": "https://s3.feedhero.net/output_feeds/fb/schuh_uk_1/77d9ae6685cf7e2e700f9c71506c020c/latest.xml",
+  "n": 5797,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Schuh",
+  "mkt": "de-fb",
+  "cid": "schuhde",
+  "pick": "Facebook",
+  "url": "https://s2.feedhero.net/output_feeds/fb/schuhde/0fc9b9dbac75185042ac09d3d759d275/latest-de.xml",
+  "n": 3567,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Schuh",
+  "mkt": "ie-fb",
+  "cid": "schuhie",
+  "pick": "Facebook",
+  "url": "https://s3.feedhero.net/output_feeds/fb/schuhie/3ffd9f3767b396e3bf5b3ccdfea2afff/latest-ie.xml",
+  "n": 3569,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Superdry",
+  "mkt": "gb-fb",
+  "cid": "superdry_gb",
+  "pick": "Facebook",
+  "url": "https://s2.feedhero.net/output_feeds/fb/superdry_gb/2d98a671028d410b7572d2bb3c78a0ca/superdry_gb_fb_output.xml",
+  "n": 7207,
+  "alts": [],
+  "verified": true
+ }
+]
