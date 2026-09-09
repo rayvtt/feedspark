@@ -1273,6 +1273,18 @@ window.addEventListener('load',restore);
   // by the Gmail bridge into KV kwresults — this section is the brand's ARCHIVE of them,
   // grouped by optimisation batch, each row expandable to the extracted uplift lines + the
   // raw email head. Built for future deck-making: the numbers stay findable per brand.
+  // Verdict parsed from the result's own metric lines (worker-side, so the archive and the
+  // Workflow triage chip always agree). 'unknown' stays deliberately visible rather than blank:
+  // a result whose wording defeated the parser still needs opening, and hiding that reads as
+  // "no result". Cost metrics are inverted upstream — a CPC fall counts as positive.
+  var KWPILL={positive:['#15803d','positive'],negative:['#b91c1c','negative'],mixed:['#b45309','mixed'],unknown:['#64748b','unread']};
+  function kwVerdictPill(k){
+    var p=KWPILL[k&&k.verdict]||KWPILL.unknown;
+    var n=[]; if(k&&k.good)n.push(k.good+'↑'); if(k&&k.bad)n.push(k.bad+'↓');
+    return ' <span style="display:inline-block;font-size:9.5px;font-weight:900;color:#fff;background:'+p[0]
+      +';border-radius:100px;padding:0 6px;vertical-align:1px" title="Read from the metric lines'
+      +(n.length?' ('+n.join(' · ')+')':'')+' — cost metrics count a fall as positive">'+p[1]+'</span>';
+  }
   function loadKwResults(name){
     var box=document.getElementById('dz-kwr'); if(!box) return;
     box.innerHTML='<div class="dz-mat-h"><b>📈 Optimisation results</b><span class="n">loading…</span></div>';
@@ -1293,8 +1305,8 @@ window.addEventListener('load',restore);
           var dt=k.when?new Date(k.when).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'';
           var mline=(k.metrics&&k.metrics.length)?esc(k.metrics[0])+(k.metrics.length>1?' · +'+(k.metrics.length-1)+' more':''):'no % lines detected — open for the raw email';
           body+='<div class="dz-mat-i dz-kwr-i" data-kid="'+esc(k.id)+'" style="cursor:pointer" title="Click to open the extracted result lines + raw email">'
-            +'<span class="ic">📈</span>'
-            +'<span class="tx"><span class="tt">'+esc(k.period||'')+(k.mkt?' · '+esc(k.mkt.toUpperCase()):'')+(dt?' · '+dt:'')+'</span>'
+            +'<span class="ic">'+(k.verdict==='negative'?'📉':k.verdict==='mixed'?'📊':'📈')+'</span>'
+            +'<span class="tx"><span class="tt">'+esc(k.period||'')+(k.mkt?' · '+esc(k.mkt.toUpperCase()):'')+(dt?' · '+dt:'')+kwVerdictPill(k)+'</span>'
             +'<span class="mt">'+mline+'</span>'
             +'<span class="mt dz-kwr-raw" hidden>'+(k.metrics&&k.metrics.length?k.metrics.map(function(x){return '▸ '+esc(x);}).join('<br>')+'<br>':'')
             +'<span style="opacity:.75">'+esc(String(k.raw||'').slice(0,1200))+'</span></span></span></div>';

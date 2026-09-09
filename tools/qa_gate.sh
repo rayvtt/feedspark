@@ -40,6 +40,13 @@ else
   echo "   ✗ access-scoping harness FAILED — see node tools/test_access.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3b/7: keyword-result parsing + verdict"
+if node tools/test_kwresult.mjs >/dev/null 2>&1; then
+  echo "   ✓ subject shape, verdict direction + inverted cost metrics hold"
+else
+  echo "   ✗ kwresult harness FAILED — see node tools/test_kwresult.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 4/7: shipped-feature markers"
 if node tools/check_markers.js >/dev/null 2>&1; then
   echo "   ✓ no shipped feature regressed"
