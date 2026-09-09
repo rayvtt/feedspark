@@ -1,0 +1,500 @@
+[
+ {
+  "client": "Accessorize",
+  "mkt": "gb",
+  "cid": "accessorize_uk",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/accessorize_uk/cdbb9878b23c9a8dd1897c4a12ca251c/accessorize_uk_gb_output.xml",
+  "n": 3553,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "American Golf",
+  "mkt": "gb",
+  "cid": "american_golf",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/american_golf/96357050a3ca0230515509d2987ca800/american_golf_uk_gb_output.xml",
+  "n": 7778,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Hobbycraft",
+  "mkt": "gb",
+  "cid": "hobbycraft_uk",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/fs_new_hobbycraft/8517dae4ffbc651f5e3765a6bf39e578/latest.xml",
+  "n": 24702,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Monsoon",
+  "mkt": "gb",
+  "cid": "monsoon_uk",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/monsoon_uk/edaf3656af520cb1c047c6f3fcef7401/monsoon_uk_gb_output.xml",
+  "n": 9822,
+  "alts": [
+   "Google Shopping - Bazaar Brands"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "at",
+  "cid": "reiss_at",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_at/d4c21897434d09889f9d57e1e5fa119c/reiss_at_gb_output.xml",
+  "n": 25451,
+  "alts": [
+   "Google Shopping AT"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "au",
+  "cid": "reiss_au",
+  "pick": "AU Shopping feed",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_au/998304be080ec21e849e9103d8341aa0/reiss_au_gb_output.xml",
+  "n": 25324,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "be",
+  "cid": "reiss_be",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/reiss_be/74694d0b4dbad8caea3759be2bc25617/reiss_be_gb_output.xml",
+  "n": 25446,
+  "alts": [
+   "Google Shopping BE"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "ca",
+  "cid": "reiss_ca",
+  "pick": "CA Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_ca/3cfecc6d77cbb0bcbd794467e84806f4/reiss_ca_gb_output.xml",
+  "n": 24213,
+  "alts": [
+   "Google Shopping - French"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "ch",
+  "cid": "reiss_ch",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_ch/312ea04b1db1d1efcdf04b34fd65ff9d/reiss_ch_gb_output.xml",
+  "n": 25405,
+  "alts": [
+   "Google Shopping - German"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "cz",
+  "cid": "reiss_cz",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_cz/c90b303acd0135ffc8ad747ff5c0dcfd/reiss_cz_gb_output.xml",
+  "n": 25714,
+  "alts": [
+   "Google Shopping CZ"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "de",
+  "cid": "reiss_de",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_de/87b033276d384b5ee2bc2323fd8c5d00/reiss_de_gb_output.xml",
+  "n": 25386,
+  "alts": [
+   "Google Shopping German"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "dk",
+  "cid": "reiss_dk",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_dk/a5d85f7ef91013f6cf73bebde9cd98cb/reiss_dk_gb_output.xml",
+  "n": 25452,
+  "alts": [
+   "Google Shopping DK"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "es",
+  "cid": "reiss_es",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_es/ba0a9474c7f5eabca780fc006a3bece3/reiss_es_gb_output.xml",
+  "n": 25706,
+  "alts": [
+   "Google Shopping ES"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "eu",
+  "cid": "reiss_eu",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_eu/95bba4ec0ca5f57ac837bc820792ef42/latest.xml",
+  "n": 24490,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "fi",
+  "cid": "reiss_fi",
+  "pick": "Google Shopping - EN",
+  "url": "https://s3.feedhero.net/output_feeds/gb/reiss_fi/74c1c6d62b82b269bda4ccb5fb4eaad3/reiss_fi_gb_output.xml",
+  "n": 25714,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "fr",
+  "cid": "reiss_fr",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_fr/d407b81ad143a7f4ccbd542007898c73/reiss_fr_gb_output.xml",
+  "n": 25427,
+  "alts": [
+   "Google Shopping French"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "gb",
+  "cid": "reiss_gb",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_gb/2f11f1da77c4c268a0e59da61083f3a0/latest-uk.xml",
+  "n": 23634,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "gr",
+  "cid": "reiss_gr",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_gr/77ff72d8d1a44ce68d625a84210a225c/reiss_gr_gb_output.xml",
+  "n": 25456,
+  "alts": [
+   "Google Shopping GR"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "hk",
+  "cid": "reiss_hk",
+  "pick": "Google Shopping - EN",
+  "url": "https://s3.feedhero.net/output_feeds/gb/reiss_hk/a603d55f3afcb447c7938b5d75d7e07a/reiss_hk_gb_output.xml",
+  "n": 24462,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "ie",
+  "cid": "reiss_ie",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/reiss_ie_pla/4f1dea9c83e4fc05dcb39dfc7d5446d5/reiss_ie_gb_output.xml",
+  "n": 25444,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "it",
+  "cid": "reiss_it",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_it/7b739c083f38acf0afb55e92799c930a/reiss_it_gb_output.xml",
+  "n": 25449,
+  "alts": [
+   "Google Shopping IT"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "kw",
+  "cid": "reiss_kw",
+  "pick": "Google Shopping - EN",
+  "url": "https://s3.feedhero.net/output_feeds/gb/reiss_kw/d5af923558fff573fd79e679c8517ced/reiss_kw_gb_output.xml",
+  "n": 25692,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "nl",
+  "cid": "reiss_nl",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/reiss_nl/72d604cf4fa22d67045de8f2ece60f78/reiss_nl_gb_output.xml",
+  "n": 25427,
+  "alts": [
+   "Google Shopping NL"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "pl",
+  "cid": "reiss_pl",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_pl/b97abbc2d668a909ea1aa7ceadb3e2c3/reiss_pl_gb_output.xml",
+  "n": 25451,
+  "alts": [
+   "Google Shopping PL"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "pt",
+  "cid": "reiss_pt",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_pt/fa6aac0ad0b9a15da018f0dcf13f7a1a/reiss_pt_gb_output.xml",
+  "n": 25301,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "ro",
+  "cid": "reiss_ro",
+  "pick": "Google Shopping - EN",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_ro/d57f0ccf53e5723ccb70ab7082f67c06/reiss_ro_gb_output.xml",
+  "n": 25714,
+  "alts": [
+   "Google Shopping RO"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "sa",
+  "cid": "reiss_sa",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_sa/b6806b71ae23174d87365710a0309310/reiss_sa_gb_output.xml",
+  "n": 24228,
+  "alts": [
+   "Google Shopping - Arabic"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "se",
+  "cid": "reiss_se",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/reiss_se/84622e1d9a9db52f965a42111932842a/reiss_se_gb_output.xml",
+  "n": 25714,
+  "alts": [
+   "Google Shopping SE"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "sg",
+  "cid": "reiss_sg",
+  "pick": "Google Shopping - EN",
+  "url": "https://s3.feedhero.net/output_feeds/gb/reiss_sg/1d10806705163782aa736a07a5f1bab3/reiss_sg_gb_output.xml",
+  "n": 25700,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "sk",
+  "cid": "reiss_sk",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_sk/7740e979e4560ee197a741f7817cdc39/reiss_sk_gb_output.xml",
+  "n": 25451,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "uae",
+  "cid": "reiss_uae",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/reiss_uae/be64735f5e2397390c43b2417a782e5d/reiss_uae_gb_output.xml",
+  "n": 25406,
+  "alts": [
+   "Google Shopping UAE"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Reiss",
+  "mkt": "us",
+  "cid": "reiss_us",
+  "pick": "Google Shopping",
+  "url": "https://feedhero.net/output_feeds/gb/reiss_us/945d72c5ddb1d676521b2155627fc466/latest-us.xml",
+  "n": 23356,
+  "alts": [
+   "Google Shopping CA"
+  ],
+  "verified": true
+ },
+ {
+  "client": "Schuh",
+  "mkt": "de",
+  "cid": "schuh_de",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/schuhde/aaf2bea1902e09cb29abc193c9774c86/latest-de.xml",
+  "n": 11044,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Schuh",
+  "mkt": "ie",
+  "cid": "schuh_ie",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/schuhie/d0b35f28db8bcb725f9c757b66364c07/latest-ie.xml",
+  "n": 11046,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Schuh",
+  "mkt": "gb",
+  "cid": "schuh_uk",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/schuh_uk_1/aff57230442604853b0564a803b9b100/latest.xml",
+  "n": 21424,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Superdry",
+  "mkt": "befr",
+  "cid": "superdry_befr",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/superdry_befr/82f59dd7079b447e6fe5f1169f93e8d2/superdry_befr_gb_output.xml",
+  "n": 28830,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Superdry",
+  "mkt": "benl",
+  "cid": "superdry_benl",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/superdry_benl/3b4ca3d074dad8f1470984baa7d94e2a/superdry_benl_gb_output.xml",
+  "n": 28829,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Superdry",
+  "mkt": "de",
+  "cid": "superdry_de",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/superdry_de/0b8f38601b081416b5946b766a87a8b5/superdry_de_gb_output.xml",
+  "n": 28702,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Superdry",
+  "mkt": "dk",
+  "cid": "superdry_dk",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/superdry_dk/6d19138f306b180edc9233b3bb4554b5/superdry_dk_gb_output.xml",
+  "n": 28856,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Superdry",
+  "mkt": "es",
+  "cid": "superdry_es",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/superdry_es/b7687bb2913f6e6deb310421ebb8d76d/superdry_es_gb_output.xml",
+  "n": 28878,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Superdry",
+  "mkt": "fr",
+  "cid": "superdry_fr",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/superdry_fr/763c26e4c54ba6d465648f12d7112d0c/superdry_fr_gb_output.xml",
+  "n": 28899,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Superdry",
+  "mkt": "gb",
+  "cid": "superdry_gb",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/superdry_gb/b91629af3ebd82676817c3ddee95b591/superdry_gb_gb_output.xml",
+  "n": 28860,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Superdry",
+  "mkt": "ie",
+  "cid": "superdry_ie",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/superdry_ie/65765952c07a37c035450df5af5c493f/superdry_ie_gb_output.xml",
+  "n": 25398,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Superdry",
+  "mkt": "nl",
+  "cid": "superdry_nl",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/superdry_nl/f2dc77d9f615b5c90ab60cafe5112433/superdry_nl_gb_output.xml",
+  "n": 26829,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "Superdry",
+  "mkt": "us",
+  "cid": "superdry_us",
+  "pick": "Google Shopping",
+  "url": "https://s2.feedhero.net/output_feeds/gb/superdry_us/90b8bebfae4c7f43b1fe6dea56081da1/superdry_us_gb_output.xml",
+  "n": 16609,
+  "alts": [],
+  "verified": true
+ },
+ {
+  "client": "YuMOVE",
+  "mkt": "gb",
+  "cid": "yumove_uk",
+  "pick": "Google Shopping",
+  "url": "https://s3.feedhero.net/output_feeds/gb/yumove_uk/b4260c0c6c71beb9db92d2ff5eb944c2/yumove_uk_gb_output.xml",
+  "n": 85,
+  "alts": [],
+  "verified": true
+ }
+]
