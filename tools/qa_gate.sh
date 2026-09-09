@@ -54,6 +54,13 @@ else
   echo "   ✗ call-client harness FAILED — see node tools/test_callclient.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d/7: A/B test archive parsing"
+if node tools/test_abtests.mjs >/dev/null 2>&1; then
+  echo "   ✓ merged cells, unsigned prose + fail-closed tab resolution hold"
+else
+  echo "   ✗ abtests harness FAILED — see node tools/test_abtests.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 4/7: shipped-feature markers"
 if node tools/check_markers.js >/dev/null 2>&1; then
   echo "   ✓ no shipped feature regressed"
