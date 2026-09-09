@@ -233,7 +233,10 @@ const DEFAULT_FEEDS = {
   },
   'American Golf': { gb: { id: '1W4Tasbdi7jR7kmlIjYjrPtAb2BvW-AkQZBz9XW1aNHk', gid: '0' } },  // API-fed sheet
   Reiss: {
-    gb: { id: '1KTx9ONZSju_DD06V3F7p958LfzAL0ccJJFXPf5NpLCw', gid: '0' },
+    // Ray (9 Sep 2026): import Reiss UK from the realtime FeedHero output instead of the
+    // Google Sheet — keep this {xml} entry through any future master-sheet re-import.
+    // Consequence (accepted): Label/PT/Golden guards skip XML (gviz is sheets-only).
+    gb: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_gb/2f11f1da77c4c268a0e59da61083f3a0/latest-uk.xml' },
     us: { id: '1_-7yjB-hZfmk9VU_srfn6oZwFGTVzHWLtdOKJRmR-nA', gid: '0' },
     ie: { id: '1BMUgdup13kqcubAA1AhLrw63_Stlr0SvXFRh4PxQ7YA', gid: '0' },
     de: { id: '13C8ECyr6lYlkI2PmMfEp_XYKTcjUivy8BpCb-dWC2OY', gid: '0' },

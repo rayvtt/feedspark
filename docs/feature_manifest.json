@@ -2532,6 +2532,13 @@
       "pattern": "ingest-banner",
       "min": 4,
       "pr": 283
+    },
+    {
+      "name": "worker: Reiss gb = realtime FeedHero XML (Ray 9 Sep — survives master-sheet re-imports)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "latest-uk.xml",
+      "min": 1,
+      "pr": 285
     }
   ]
 }
