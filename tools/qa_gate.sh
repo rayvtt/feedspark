@@ -47,6 +47,13 @@ else
   echo "   ✗ kwresult harness FAILED — see node tools/test_kwresult.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3c/7: call-notes client attribution"
+if node tools/test_callclient.mjs >/dev/null 2>&1; then
+  echo "   ✓ calls attribute from title / subject / estate roster"
+else
+  echo "   ✗ call-client harness FAILED — see node tools/test_callclient.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 4/7: shipped-feature markers"
 if node tools/check_markers.js >/dev/null 2>&1; then
   echo "   ✓ no shipped feature regressed"
