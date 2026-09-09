@@ -2573,6 +2573,12 @@
       "pattern": "FEEDMAP_CSV",
       "min": 2,
       "pr": 288
+    },
+    {
+      "name": "worker: estate XML migration — 46 FeedHero Google feeds wired",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "feedhero.net/output_feeds",
+      "min": 46
     }
   ]
 }

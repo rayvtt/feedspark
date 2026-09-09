@@ -192,32 +192,37 @@ const PLAN_SHEETS = {
 // link-shared Google Sheet, so they ride the full rails (Feed Lab AND Label Guard).
 const DEFAULT_FEEDS = {
   Schuh: {
-    gb: { id: '1uAM5I_KSsjucCr3GLXc2ekZeiMoAG6x8TIh5ZntwseA', gid: '0' },
-    de: { id: '1u-B6VECXLk1YefoED5FfjpnXw1uEwV8cE_f6t-ed12I', gid: '0' },
-    ie: { id: '1bawEQkhpl8GsSGVNkPnsi228TM_z1LXf1Dj35s-a9p4', gid: '0' },
+    gb: { xml: 'https://s3.feedhero.net/output_feeds/gb/schuh_uk_1/aff57230442604853b0564a803b9b100/latest.xml' },
+    de: { xml: 'https://s2.feedhero.net/output_feeds/gb/schuhde/aaf2bea1902e09cb29abc193c9774c86/latest-de.xml' },
+    ie: { xml: 'https://s3.feedhero.net/output_feeds/gb/schuhie/d0b35f28db8bcb725f9c757b66364c07/latest-ie.xml' },
     'gb-fb': { id: '13AyrXlP0se24SJS8O_aZFAi51rdTrhnxVe_h4sdKn1w', gid: '0' },
     'de-fb': { id: '1xmvblk89mmxgtFuXEYFC8towiKPsN8ILmLCfPX911H8', gid: '0' },
     'ie-fb': { id: '1hxBYKvl6trfaieFJaKbii2QyoUXuGdjdZqFpsGoiiHo', gid: '0' },
   },
-  YuMOVE: { gb: { id: '1PtsaNBd5NGimchw18YlBPCtOgl0HcgkWrKdhy4lfvzA', gid: '0' } },
+  YuMOVE: { gb: { xml: 'https://s3.feedhero.net/output_feeds/gb/yumove_uk/b4260c0c6c71beb9db92d2ff5eb944c2/yumove_uk_gb_output.xml' } },
   Monsoon: {
-    gb: { id: '1pW6CqyzM_1Rqr8O0basrxxuNAWG9sR2_OrjCIkE_8PU', gid: '0' },
+    gb: { xml: 'https://s2.feedhero.net/output_feeds/gb/monsoon_uk/edaf3656af520cb1c047c6f3fcef7401/monsoon_uk_gb_output.xml' },
     'gb-fb': { id: '1p-nudKJ_67OVqsrmEgjut1KeZu_2g_aactQShz-mp1Q', gid: '0' },
   },
   Accessorize: {
-    gb: { id: '1_OkGi8ucOmJcdu5TBWm3vl5cK3bmmaimoMYvR03Z3Ic', gid: '0' },
+    gb: { xml: 'https://s3.feedhero.net/output_feeds/gb/accessorize_uk/cdbb9878b23c9a8dd1897c4a12ca251c/accessorize_uk_gb_output.xml' },
     'gb-fb': { id: '1RQLrwFPdW_Svu7ZPzuB1YJztDV12tzpQm0Fr_Fnrc0k', gid: '0' },
   },
   Hobbycraft: {
-    gb: { id: '1rlQ7H3LYeN1hbyQ9uUG-DszgpGVxuUdiQTOaFWjEL7Q', gid: '0' },
+    gb: { xml: 'https://s3.feedhero.net/output_feeds/gb/fs_new_hobbycraft/8517dae4ffbc651f5e3765a6bf39e578/latest.xml' },
     'gb-fb': { id: '1R1ES_XtA1r6NAqROkyr_lWb3cuy3_AQDJ4b5MTJ_2A8', gid: '0' },
   },
   Superdry: {
-    gb: { id: '1PimExRPPqf1CknH3yLs_tUfJrr2HZgjpiMUDiOUDc3k', gid: '0' },
-    ie: { id: '1SjuQ0M-cangxVcNdlb72RQM0-ZTev7aE-R5v1iX9EGQ', gid: '0' },
-    de: { id: '1y0phqG10OH55u6s6w8xpsVfZe2LohwlpelWPvb0QM3k', gid: '0' },
-    fr: { id: '1FVthehZKfAiUIU0qCGrsdENMQW896o8S19C6fT0gkx4', gid: '0' },
-    nl: { id: '1f4tL0BPNrVFC7Lj0az4LLs9NvIvf3YiFRBXXPafU1t0', gid: '0' },
+    gb: { xml: 'https://s2.feedhero.net/output_feeds/gb/superdry_gb/b91629af3ebd82676817c3ddee95b591/superdry_gb_gb_output.xml' },
+    ie: { xml: 'https://s3.feedhero.net/output_feeds/gb/superdry_ie/65765952c07a37c035450df5af5c493f/superdry_ie_gb_output.xml' },
+    de: { xml: 'https://s3.feedhero.net/output_feeds/gb/superdry_de/0b8f38601b081416b5946b766a87a8b5/superdry_de_gb_output.xml' },
+    fr: { xml: 'https://s3.feedhero.net/output_feeds/gb/superdry_fr/763c26e4c54ba6d465648f12d7112d0c/superdry_fr_gb_output.xml' },
+    nl: { xml: 'https://s2.feedhero.net/output_feeds/gb/superdry_nl/f2dc77d9f615b5c90ab60cafe5112433/superdry_nl_gb_output.xml' },
+    befr: { xml: 'https://s3.feedhero.net/output_feeds/gb/superdry_befr/82f59dd7079b447e6fe5f1169f93e8d2/superdry_befr_gb_output.xml' },
+    benl: { xml: 'https://s3.feedhero.net/output_feeds/gb/superdry_benl/3b4ca3d074dad8f1470984baa7d94e2a/superdry_benl_gb_output.xml' },
+    dk: { xml: 'https://s3.feedhero.net/output_feeds/gb/superdry_dk/6d19138f306b180edc9233b3bb4554b5/superdry_dk_gb_output.xml' },
+    es: { xml: 'https://s2.feedhero.net/output_feeds/gb/superdry_es/b7687bb2913f6e6deb310421ebb8d76d/superdry_es_gb_output.xml' },
+    us: { xml: 'https://s2.feedhero.net/output_feeds/gb/superdry_us/90b8bebfae4c7f43b1fe6dea56081da1/superdry_us_gb_output.xml' },
     'gb-fb': { id: '1SmpIXWedrLlbO-NcfSmYakyxoXJr8C2fxxSkWSeaJZ0', gid: '0' },
     'ie-fb': { id: '1TmZknTdwYUkw7gbpLzfUNEUC66GS4cwOoGlB4M4aBgM', gid: '0' },
     'de-fb': { id: '1yWEyXdDWkJh1723db9QeAixrLmBDHAqhFvGupWYeEwk', gid: '0' },
@@ -231,21 +236,41 @@ const DEFAULT_FEEDS = {
     'gb-fb': { id: '1XSH6lWe2qiG-58GUKHOw4CQQCzkPF_kv2tKQwIyrU1k', gid: '0' },
     'us-fb': { id: '1smKCDoMZnC1tvffeaCAHymfvEhFvPsFuvyhZxxgpV7Y', gid: '0' },  // no CL3 column in the Meta feed
   },
-  'American Golf': { gb: { id: '1W4Tasbdi7jR7kmlIjYjrPtAb2BvW-AkQZBz9XW1aNHk', gid: '0' } },  // API-fed sheet
+  'American Golf': { gb: { xml: 'https://s3.feedhero.net/output_feeds/gb/american_golf/96357050a3ca0230515509d2987ca800/american_golf_uk_gb_output.xml' } },
   Reiss: {
-    // Ray (9 Sep 2026): import Reiss UK from the realtime FeedHero output instead of the
-    // Google Sheet — keep this {xml} entry through any future master-sheet re-import.
-    // Consequence (accepted): Label/PT/Golden guards skip XML (gviz is sheets-only).
+    // ESTATE XML MIGRATION (Ray, 9 Sep 2026): every Google-channel feed here imports from its
+    // realtime FeedHero output (his uploaded FeedHero export is the source; the old sheets stay
+    // only for cross-check) — keep {xml} entries through any future master-sheet re-import.
+    // Consequence (accepted): Label/PT/Golden guards skip XML (gviz is sheets-only) until the
+    // XML scan lane exists. -fb Meta feeds stay sheet-backed and fully guarded.
     gb: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_gb/2f11f1da77c4c268a0e59da61083f3a0/latest-uk.xml' },
-    us: { id: '1_-7yjB-hZfmk9VU_srfn6oZwFGTVzHWLtdOKJRmR-nA', gid: '0' },
-    ie: { id: '1BMUgdup13kqcubAA1AhLrw63_Stlr0SvXFRh4PxQ7YA', gid: '0' },
-    de: { id: '13C8ECyr6lYlkI2PmMfEp_XYKTcjUivy8BpCb-dWC2OY', gid: '0' },
-    nl: { id: '17a8RKY01vcmbmwHBw-kigGBo5N-PY6cSNj-SM5IOGzE', gid: '0' },
-    au: { id: '1VTE5MkGw3XSacA6w5YAciwBIl0yBLt2KlKAQbXmCYyI', gid: '0' },
-    ca: { id: '1pG9dzcKnGRx-r56eNISksUeeyNovJbF4tkVUBtYs25U', gid: '0' },
-    eu: { id: '1LaOCzKf_zxRpSBobb-iwgYGAgggwWqB8XMjQRtbr6mM', gid: '0' },
-    fr: { id: '1eb1-NHas0oDVozjQ7-gbZfvfUdM0iJTwtTTovy7pLuc', gid: '0' },
-    uae: { id: '14iybEDaewEqlnsG4lMtYFwBU4s4iwqJNFma_-8VOmIY', gid: '0' },
+    us: { xml: 'https://feedhero.net/output_feeds/gb/reiss_us/945d72c5ddb1d676521b2155627fc466/latest-us.xml' },
+    ie: { xml: 'https://s3.feedhero.net/output_feeds/gb/reiss_ie_pla/4f1dea9c83e4fc05dcb39dfc7d5446d5/reiss_ie_gb_output.xml' },
+    de: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_de/87b033276d384b5ee2bc2323fd8c5d00/reiss_de_gb_output.xml' },
+    nl: { xml: 'https://s3.feedhero.net/output_feeds/gb/reiss_nl/72d604cf4fa22d67045de8f2ece60f78/reiss_nl_gb_output.xml' },
+    au: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_au/998304be080ec21e849e9103d8341aa0/reiss_au_gb_output.xml' },
+    ca: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_ca/3cfecc6d77cbb0bcbd794467e84806f4/reiss_ca_gb_output.xml' },
+    eu: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_eu/95bba4ec0ca5f57ac837bc820792ef42/latest.xml' },
+    fr: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_fr/d407b81ad143a7f4ccbd542007898c73/reiss_fr_gb_output.xml' },
+    uae: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_uae/be64735f5e2397390c43b2417a782e5d/reiss_uae_gb_output.xml' },
+    at: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_at/d4c21897434d09889f9d57e1e5fa119c/reiss_at_gb_output.xml' },
+    be: { xml: 'https://s3.feedhero.net/output_feeds/gb/reiss_be/74694d0b4dbad8caea3759be2bc25617/reiss_be_gb_output.xml' },
+    ch: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_ch/312ea04b1db1d1efcdf04b34fd65ff9d/reiss_ch_gb_output.xml' },
+    cz: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_cz/c90b303acd0135ffc8ad747ff5c0dcfd/reiss_cz_gb_output.xml' },
+    dk: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_dk/a5d85f7ef91013f6cf73bebde9cd98cb/reiss_dk_gb_output.xml' },
+    es: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_es/ba0a9474c7f5eabca780fc006a3bece3/reiss_es_gb_output.xml' },
+    fi: { xml: 'https://s3.feedhero.net/output_feeds/gb/reiss_fi/74c1c6d62b82b269bda4ccb5fb4eaad3/reiss_fi_gb_output.xml' },
+    gr: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_gr/77ff72d8d1a44ce68d625a84210a225c/reiss_gr_gb_output.xml' },
+    hk: { xml: 'https://s3.feedhero.net/output_feeds/gb/reiss_hk/a603d55f3afcb447c7938b5d75d7e07a/reiss_hk_gb_output.xml' },
+    it: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_it/7b739c083f38acf0afb55e92799c930a/reiss_it_gb_output.xml' },
+    kw: { xml: 'https://s3.feedhero.net/output_feeds/gb/reiss_kw/d5af923558fff573fd79e679c8517ced/reiss_kw_gb_output.xml' },
+    pl: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_pl/b97abbc2d668a909ea1aa7ceadb3e2c3/reiss_pl_gb_output.xml' },
+    pt: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_pt/fa6aac0ad0b9a15da018f0dcf13f7a1a/reiss_pt_gb_output.xml' },
+    ro: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_ro/d57f0ccf53e5723ccb70ab7082f67c06/reiss_ro_gb_output.xml' },
+    sa: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_sa/b6806b71ae23174d87365710a0309310/reiss_sa_gb_output.xml' },
+    se: { xml: 'https://s3.feedhero.net/output_feeds/gb/reiss_se/84622e1d9a9db52f965a42111932842a/reiss_se_gb_output.xml' },
+    sg: { xml: 'https://s3.feedhero.net/output_feeds/gb/reiss_sg/1d10806705163782aa736a07a5f1bab3/reiss_sg_gb_output.xml' },
+    sk: { xml: 'https://s2.feedhero.net/output_feeds/gb/reiss_sk/7740e979e4560ee197a741f7817cdc39/reiss_sk_gb_output.xml' },
     'gb-fb': { id: '1i5EKldXa_d8VsKbMfsixWPY_Tr0j7GyAWYSxr0xDAN4', gid: '0' },  // was FeedHero XML — Meta tab now supplies a sheet, so Label Guard covers it too
     'ca-fb': { id: '1YRWfLwevu_MnLnxMmPe41LRD6NWxYoi89QqvZtLW4LQ', gid: '0' },
     'de-fb': { id: '1fMmv_DjOFKWZAAOTOW_3hRfXxzTCwl0iyP4N7EeaUdg', gid: '0' },
@@ -263,7 +288,7 @@ const sheetRef = (u) => {
 // FeedHero-hosted XML product feeds (Meta/FB channel) — realtime company-public data. The
 // host is allowlisted so the feed proxy can never be pointed at arbitrary URLs; a source is
 // either a sheet {id,gid} or an {xml} URL, and feedRef() resolves a pasted URL to whichever.
-const xmlRef = (u) => (/^https:\/\/[a-z0-9-]+\.feedhero\.net\/[^\s"'<>]+\.xml$/i.test(String(u || '').trim())
+const xmlRef = (u) => (/^https:\/\/(?:[a-z0-9-]+\.)?feedhero\.net\/[^\s"'<>]+\.xml$/i.test(String(u || '').trim())
   ? { xml: String(u).trim() } : null);
 const feedRef = (u) => sheetRef(u) || xmlRef(u);
 const feedMarketsFor = async (env, client) => {   // { mkt: {id,gid} } for every attached market
