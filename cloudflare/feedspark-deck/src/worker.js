@@ -638,6 +638,11 @@ export default {
       // Workflow's "Incoming emails" stream. Same endpoint/key/bypass as the brief sync.
       if (Array.isArray(body.inbox)) {
         const inbox = body.inbox.slice(0, 150);
+        // BACKFILL mode (gmail_push.gs backfillKwResults): a resumable sweep of the whole
+        // result history. These are ARCHIVE-ONLY — the triage queue keeps just the newest 120
+        // items, so filing hundreds of historical results into it would evict today's actual
+        // email. Ordinary mail in a backfill payload is ignored for the same reason.
+        const backfill = body.backfill === true;
         const selfSrc2 = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
         const selfRe2 = new RegExp(selfSrc2, 'i');
         const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
@@ -707,6 +712,8 @@ export default {
             // brand dossier — the archive is where he looks later, triage is where he looks now.
             // The row is purpose-built (kind 'kwresult' + verdict) rather than the generic capture,
             // and it carries the archive's client so an undetected brand never hides the result.
+            // A BACKFILLED result skips this: it is history, not something to triage today.
+            if (backfill) continue;
             if (!seen[m.id]) {
               stored.push({ id: m.id, from: String(m.from || '').slice(0, 120),
                 subject: String(m.subject || '(no subject)').slice(0, 160),
@@ -726,6 +733,7 @@ export default {
             }
             continue;
           }
+          if (backfill) continue;     // a backfill sweep only harvests results, never ordinary mail
           if (seen[m.id]) continue;   // ordinary mail: already captured on an earlier push
           const c = classifyInbound(m, clientDoms, { selfRe: selfRe2, clientNames: names });
           if (c.hints[0] === 'noise/self') continue;
@@ -739,7 +747,11 @@ export default {
         }
         if (kwAdded) {
           kwres.sort((a, b) => (b.when || 0) - (a.when || 0));
-          await env.EDITS.put('kwresults', JSON.stringify(kwres.slice(0, 400)));
+          // 400 held roughly a fortnight of live capture. A 2026 backfill is hundreds of
+          // results across the estate, and the point of the archive is that a deck can reach
+          // back for them — so the cap is the year, not the fortnight. Each entry is ~2.7KB
+          // (raw body head included), so 2000 sits near 5MB against KV's 25MB value ceiling.
+          await env.EDITS.put('kwresults', JSON.stringify(kwres.slice(0, 2000)));
         }
         stored.sort((a, b) => (b.date || 0) - (a.date || 0));
         await env.EDITS.put('gmailinbox', JSON.stringify(stored.slice(0, 120)));

@@ -182,3 +182,96 @@ function pushBriefReplies() {
     console.error('✗ FCC push failed: HTTP ' + code + ' ' + body.slice(0, 300) + (code === 401 ? '  → KEY here does not match the GMAIL_PUSH_KEY secret' : code === 503 ? '  → GMAIL_PUSH_KEY secret not set on the worker yet' : ''));
   }
 }
+
+// ---- ONE-OFF BACKFILL: the whole keyword-optimisation result history -----------------
+// Ray (9 Sep 2026): "there must have been hundreds of email results sent through … capture
+// as many as possible, at least within 2026."
+//
+// The live capture in pushInbox() searches `newer_than:2d`, so anything older than the last
+// two days was never seen and never will be — there is no catch-up path in the 5-minute
+// trigger. This is that path: a RESUMABLE sweep over the full year.
+//
+// Why it is separate from pushInbox rather than just widening its window:
+//  * pushInbox runs every 5 minutes. Re-scanning a year of mail 288 times a day would burn
+//    the Gmail read quota for nothing — the same messages are already archived server-side.
+//  * These push with `backfill: true`, so the worker archives them WITHOUT filing triage
+//    rows. Hundreds of historical results would otherwise evict the live triage queue
+//    (it keeps the newest 120 items) and bury today's actual emails.
+//
+// HOW TO RUN (script.google.com, the same project as the rest of this file):
+//  1. Run ▶ backfillKwResults  — sweeps for ~4 minutes, then stops and saves its place.
+//  2. Check the log: it prints "… resume by running again" or "BACKFILL COMPLETE".
+//  3. Re-run until it says COMPLETE. Each run continues where the last stopped; the worker
+//     dedupes by Gmail message id, so an accidental double-run costs nothing.
+//  (Prefer it unattended? Put a 10-minute time trigger on backfillKwResults and remove the
+//   trigger once the log says COMPLETE.)
+//
+// To sweep a different window, change KWR_BACKFILL_FROM and run resetKwBackfill() first.
+var KWR_BACKFILL_FROM  = '2026/01/01';   // Gmail date syntax, yyyy/mm/dd
+var KWR_BATCH_THREADS  = 25;             // threads fetched per page
+var KWR_TIME_BUDGET_MS = 4 * 60 * 1000;  // stop well inside the 6-minute execution ceiling
+var KWR_BACKFILL_PROP  = 'KWR_BACKFILL_OFFSET';
+
+function kwBackfillQuery() {
+  // Same shape the live capture uses, plus the date floor. The worker's subject parser is
+  // still the precise gate — this only has to be narrow enough not to sweep the whole mailbox.
+  return 'subject:("x feedspark" keyword) after:' + KWR_BACKFILL_FROM;
+}
+
+function backfillKwResults() {
+  var props = PropertiesService.getScriptProperties();
+  var offset = parseInt(props.getProperty(KWR_BACKFILL_PROP) || '0', 10) || 0;
+  var query = kwBackfillQuery(), t0 = Date.now();
+  var scanned = 0, matched = 0, pushed = 0, batches = 0, complete = false;
+
+  while (Date.now() - t0 < KWR_TIME_BUDGET_MS) {
+    var threads = GmailApp.search(query, offset, KWR_BATCH_THREADS);
+    if (!threads.length) { complete = true; break; }
+    var out = [];
+    threads.forEach(function (t) {
+      t.getMessages().forEach(function (m) {
+        var subj = m.getSubject() || '';
+        // mirror the worker's gate so we never ship it mail it will only discard
+        if (!/x\s*feed\s*spark/i.test(subj) || !/keyword\s*optimi[sz]ation/i.test(subj)) return;
+        out.push({ id: m.getId(), from: m.getFrom(), to: m.getTo(), cc: m.getCc(), subject: subj,
+          // 4000 is ample: the worker archives 2500 chars of body and reads metric lines from
+          // the head. Halving the live 9000 keeps a 25-thread payload comfortably small.
+          snippet: (m.getPlainBody() || '').slice(0, 4000), date: m.getDate().getTime() });
+      });
+    });
+    scanned += threads.length; offset += threads.length; matched += out.length; batches++;
+    if (out.length && pushKwBackfill(out)) pushed += out.length;
+    // save the cursor after EVERY page: a timeout or quota stop mid-sweep must not restart
+    // the year from zero
+    props.setProperty(KWR_BACKFILL_PROP, String(offset));
+    if (threads.length < KWR_BATCH_THREADS) { complete = true; break; }
+  }
+
+  var head = 'FCC kw backfill: ' + scanned + ' threads scanned · ' + matched + ' result emails · '
+    + pushed + ' pushed · ' + batches + ' batch' + (batches === 1 ? '' : 'es') + ' · cursor ' + offset;
+  if (complete) {
+    props.deleteProperty(KWR_BACKFILL_PROP);
+    console.log(head + '\n✓ BACKFILL COMPLETE — every ' + KWR_BACKFILL_FROM
+      + '+ result email has been sent. Remove the trigger if you added one.');
+  } else {
+    console.log(head + '\n… time budget reached — resume by running backfillKwResults again.');
+  }
+}
+
+function pushKwBackfill(out) {
+  var res = UrlFetchApp.fetch(ENDPOINT, { method: 'post', contentType: 'application/json',
+    headers: { 'X-FCC-Push-Key': KEY },
+    payload: JSON.stringify({ inbox: out, backfill: true }), muteHttpExceptions: true });
+  var body = res.getContentText(), p = null; try { p = JSON.parse(body); } catch (e) {}
+  if (p && p.ok) { console.log('  ✓ pushed ' + out.length + ' · archived ' + (p.kwResults || 0)); return true; }
+  console.error('  ✗ backfill push failed: HTTP ' + res.getResponseCode() + ' ' + body.slice(0, 200));
+  return false;
+}
+
+// Start the sweep over from the beginning (after changing KWR_BACKFILL_FROM, or to re-run
+// a completed sweep). Safe: the worker dedupes by message id, so nothing is duplicated.
+function resetKwBackfill() {
+  PropertiesService.getScriptProperties().deleteProperty(KWR_BACKFILL_PROP);
+  console.log('FCC kw backfill: cursor cleared — next backfillKwResults() starts at '
+    + KWR_BACKFILL_FROM + '.');
+}
