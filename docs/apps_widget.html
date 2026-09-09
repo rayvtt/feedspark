@@ -1,41 +1,156 @@
-<!-- FCC-APPS: the ▦ overflow in the topbar for modules kept OUT of the core menu.
-     Ray, Sep 2026: "hide the price on the core menu — I don't use it much — and allow it
-     to be shown again when needed in the dashboard icon." The Pricer (hourly/retainer rate
-     card) lives here now; the volume-based AI Quote took its place in the core nav.
-     Injected on every app page (worker), so it's identical everywhere. -->
+<!-- FCC-APPS: customizable module menu (Ray, Sep 2026: "make the menu completely
+     customizable so it can be moved in and out of module bundles").
+     The static .tb-modules nav carries the FULL module roster on every page (nav-parity
+     rule). This manager applies the viewer's saved layout at load — placing each module in
+     the MENU or the ▦ APPS bundle, in their chosen order — and offers an editor to change it.
+     Layout is per-viewer in localStorage (like theme / nav-collapsed); the markup never
+     changes, so parity holds and a newly-shipped module always appears (defaults to menu).
+     Injected on every app page. -->
 <style>
 #fcc-apps{position:relative;flex:none;margin-left:2px}
-#fcc-apps-btn{width:34px;height:34px;border-radius:9px;border:1px solid var(--line,#E6E6E6);background:transparent;color:var(--ink-2,#4a4a4a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s}
+#fcc-apps-btn{position:relative;width:34px;height:34px;border-radius:9px;border:1px solid var(--line,#E6E6E6);background:transparent;color:var(--ink-2,#4a4a4a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s}
 #fcc-apps-btn:hover,#fcc-apps.open #fcc-apps-btn{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
-#fcc-apps-menu{position:absolute;top:calc(100% + 8px);right:0;z-index:80;background:#fff;border:1px solid var(--line,#E6E6E6);border-radius:12px;box-shadow:0 14px 40px rgba(16,24,40,.18);padding:7px;min-width:210px;display:none}
+#fcc-apps-btn .ab-dot{position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:var(--orange,#F5A623);display:none}
+#fcc-apps.hasapps #fcc-apps-btn .ab-dot{display:block}
+#fcc-apps-menu{position:absolute;top:calc(100% + 8px);right:0;z-index:80;background:#fff;border:1px solid var(--line,#E6E6E6);border-radius:12px;box-shadow:0 14px 40px rgba(16,24,40,.18);padding:7px;min-width:230px;display:none}
 #fcc-apps.open #fcc-apps-menu{display:block}
 #fcc-apps-menu .ah{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:var(--muted,#8a94a0);padding:4px 8px 6px}
-#fcc-apps-menu a{display:flex;gap:10px;align-items:center;text-decoration:none;color:var(--ink-2,#4a4a4a);font-size:13px;font-weight:800;padding:8px 9px;border-radius:9px}
-#fcc-apps-menu a:hover{background:var(--wash,#F7F7F5);color:var(--orange-deep,#ED6F0B)}
-#fcc-apps-menu a .amd{font-size:11px;font-weight:700;color:var(--muted,#8a94a0)}
-#fcc-apps-menu a svg{flex:none}
+#fcc-apps-menu .ah.none{font-weight:700;text-transform:none;letter-spacing:0;color:var(--muted,#8a94a0);padding:4px 8px 8px}
+/* a module bundled into the ▦ group renders as a full-width labelled row (its icon-only
+   tooltip is suppressed here) — the SAME <a> node, so href/svg/badges travel with it */
+#fcc-apps-menu a.tbm.napps{width:auto;height:auto;justify-content:flex-start;gap:10px;padding:8px 9px;border-radius:9px;font-size:13px;font-weight:800;color:var(--ink-2,#4a4a4a)}
+#fcc-apps-menu a.tbm.napps:hover{background:var(--wash,#F7F7F5);color:var(--orange-deep,#ED6F0B)}
+#fcc-apps-menu a.tbm.napps.on{color:var(--orange-deep,#ED6F0B)}
+#fcc-apps-menu a.tbm.napps::after{display:none}
+#fcc-apps-menu a.tbm.napps .nl{white-space:nowrap}
+#fcc-apps-menu .adiv{height:1px;background:var(--line,#E6E6E6);margin:6px 4px}
+#fcc-apps-menu .acust{display:flex;gap:9px;align-items:center;width:100%;text-align:left;font:inherit;font-size:12.5px;font-weight:800;padding:8px 9px;border-radius:9px;border:none;background:none;color:var(--muted,#8a94a0);cursor:pointer}
+#fcc-apps-menu .acust:hover{background:var(--wash,#F7F7F5);color:var(--orange-deep,#ED6F0B)}
 [data-theme=dark] #fcc-apps-menu{background:#1C1F27;border-color:#2C3039}
-[data-theme=dark] #fcc-apps-menu a:hover{background:#20242E}
+[data-theme=dark] #fcc-apps-menu a.tbm.napps:hover,[data-theme=dark] #fcc-apps-menu .acust:hover{background:#20242E}
+/* the customizer */
+#fcc-navcz-scrim{position:fixed;inset:0;background:rgba(20,20,25,.4);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:60px 16px}
+#fcc-navcz-scrim.on{display:flex}
+#fcc-navcz{background:#fff;border-radius:16px;width:min(460px,100%);box-shadow:0 24px 60px rgba(0,0,0,.28);padding:18px 20px;max-height:80vh;overflow:auto}
+[data-theme=dark] #fcc-navcz{background:#1C1F27;color:var(--ink,#E7E9ED)}
+#fcc-navcz h3{margin:0 0 3px;font-size:16px;font-weight:900}
+#fcc-navcz .cz-sub{font-size:12px;color:var(--muted,#8a94a0);font-weight:700;margin:0 0 12px}
+.cz-row{display:flex;align-items:center;gap:9px;padding:8px;border:1px solid var(--line,#E6E6E6);border-radius:10px;margin-bottom:7px;background:var(--wash,#F7F7F5)}
+[data-theme=dark] .cz-row{background:#191C24;border-color:#2C3039}
+.cz-row .cz-ic{width:22px;height:22px;flex:none;display:inline-flex;color:var(--ink-2,#4a4a4a)}
+.cz-row .cz-ic svg{width:19px;height:19px}
+.cz-row .cz-nm{font-size:13.5px;font-weight:900;flex:1}
+.cz-move{display:flex;flex-direction:column;gap:1px}
+.cz-move button{border:none;background:none;cursor:pointer;color:var(--muted,#8a94a0);font-size:10px;line-height:1;padding:1px 3px}
+.cz-move button:hover{color:var(--orange-deep,#ED6F0B)}
+.cz-seg{display:inline-flex;border:1px solid var(--line,#E6E6E6);border-radius:8px;overflow:hidden}
+.cz-seg button{border:none;background:#fff;font:inherit;font-size:11px;font-weight:900;padding:5px 10px;cursor:pointer;color:var(--muted,#8a94a0)}
+.cz-seg button.on{background:var(--orange,#F5A623);color:#fff}
+[data-theme=dark] .cz-seg button{background:#20242E;color:var(--muted)}
+[data-theme=dark] .cz-seg button.on{background:var(--orange);color:#14161C}
+#fcc-navcz .cz-foot{display:flex;gap:9px;align-items:center;margin-top:12px}
+#fcc-navcz .cz-foot .grow{flex:1}
+#fcc-navcz .cz-btn{font:inherit;font-size:12.5px;font-weight:800;padding:8px 14px;border-radius:9px;border:1px solid var(--line,#E6E6E6);background:#fff;color:var(--ink-2,#4a4a4a);cursor:pointer}
+#fcc-navcz .cz-btn.pri{background:var(--orange,#F5A623);border-color:var(--orange);color:#fff}
+[data-theme=dark] #fcc-navcz .cz-btn{background:#20242E;color:var(--ink-2);border-color:#2C3039}
 </style>
 <script>
 (function(){
   if(document.getElementById('fcc-apps'))return;
+  var LKEY='fcc-nav-layout';
+  var DEFAULT_APPS={'/pricer':1};   // out of the box, the hourly Pricer sits in the ▦ bundle
+  var HOME='/';                      // Command center stays pinned to the menu (the home anchor)
+  var LO=load();
+  function load(){ try{var o=JSON.parse(localStorage.getItem(LKEY)); if(o&&o.place)return o;}catch(e){} return {v:1,place:null,order:null}; }
+  function save(){ try{localStorage.setItem(LKEY,JSON.stringify(LO));}catch(e){} }
+  function placeOf(href){ if(href===HOME)return 'menu';
+    if(LO.place&&LO.place[href])return LO.place[href];
+    if(LO.place)return LO.place[href]||'menu';          // saved layout is authoritative once set
+    return DEFAULT_APPS[href]?'apps':'menu'; }            // no saved layout -> defaults
+
+  // every module anchor, wherever it currently lives (menu nav or the ▦ bundle)
+  function anchors(){ var nav=document.getElementById('tb-modules'); var menu=document.getElementById('fcc-apps-menu');
+    var a=[]; if(nav)a=a.concat([].slice.call(nav.querySelectorAll('a.tbm')));
+    if(menu)a=a.concat([].slice.call(menu.querySelectorAll('a.tbm'))); return a; }
+  function domOrder(){ return anchors().map(function(a){return a.getAttribute('href')}); }
+  function effOrder(){ var have=domOrder(), seen={}, out=[];
+    (LO.order||[]).forEach(function(h){ if(have.indexOf(h)>=0&&!seen[h]){seen[h]=1;out.push(h)} });
+    have.forEach(function(h){ if(!seen[h]){seen[h]=1;out.push(h)} }); return out; }
+  function byHref(){ var m={}; anchors().forEach(function(a){m[a.getAttribute('href')]=a}); return m; }
+
+  var host,navEl,menuEl,appsHdr,appsWrap;
+  function apply(){
+    var nav=document.getElementById('tb-modules'); if(!nav||!menuEl)return;
+    var map=byHref(), order=effOrder(), anyApps=false;
+    order.forEach(function(href){ var a=map[href]; if(!a)return; var pl=placeOf(href);
+      // reset any prior bundling, then place fresh
+      a.classList.remove('napps'); var ex=a.querySelector('.nl'); if(ex)ex.remove();
+      if(pl==='apps'){ anyApps=true; a.classList.add('napps');
+        var s=document.createElement('span'); s.className='nl'; s.textContent=a.getAttribute('data-lbl')||''; a.appendChild(s);
+        appsWrap.appendChild(a);
+      } else { nav.appendChild(a); }   // re-append in order
+    });
+    appsHdr.textContent = anyApps ? 'Bundled tools' : 'All modules are in the menu';
+    appsHdr.className = anyApps ? 'ah' : 'ah none';
+    host.classList.toggle('hasapps',anyApps);
+  }
+
   function mount(){
     var tb=document.querySelector('.topbar-in'); if(!tb)return;
-    var host=document.createElement('div'); host.id='fcc-apps';
-    host.innerHTML='<button id="fcc-apps-btn" type="button" aria-label="More tools" title="More tools" aria-haspopup="true" aria-expanded="false">'
-      +'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.4"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.4"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.4"/><rect x="14" y="14" width="6.5" height="6.5" rx="1.4"/></svg></button>'
-      +'<div id="fcc-apps-menu" role="menu">'
-      +'<div class="ah">More tools</div>'
-      +'<a href="/pricer" role="menuitem"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg><span>Pricer<div class="amd">Hourly / retainer rate card</div></span></a>'
-      +'</div>';
-    // sit just before the theme toggle if present, else at the end of the bar
-    var tgl=document.getElementById('theme-tgl'); if(tgl)tb.insertBefore(host,tgl); else tb.appendChild(host);
+    host=document.createElement('div'); host.id='fcc-apps';
+    host.innerHTML='<button id="fcc-apps-btn" type="button" aria-label="Menu &amp; more tools" title="Menu &amp; more tools" aria-haspopup="true" aria-expanded="false">'
+      +'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.4"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.4"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.4"/><rect x="14" y="14" width="6.5" height="6.5" rx="1.4"/></svg><span class="ab-dot"></span></button>'
+      +'<div id="fcc-apps-menu" role="menu"><div class="ah" id="fcc-apps-hdr">Bundled tools</div><div id="fcc-apps-wrap"></div>'
+      +'<div class="adiv"></div><button class="acust" id="fcc-apps-cust" type="button">'
+      +'<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3"/></svg>Customize menu…</button></div>';
+    var tgl=document.getElementById('theme-tgl'); if(tgl&&tgl.parentNode===tb)tb.insertBefore(host,tgl); else tb.appendChild(host);
+    menuEl=host.querySelector('#fcc-apps-menu'); appsHdr=host.querySelector('#fcc-apps-hdr'); appsWrap=host.querySelector('#fcc-apps-wrap');
     var btn=host.querySelector('#fcc-apps-btn');
     btn.addEventListener('click',function(e){ e.stopPropagation(); var o=host.classList.toggle('open'); btn.setAttribute('aria-expanded',o?'true':'false'); });
     document.addEventListener('click',function(e){ if(!host.contains(e.target))host.classList.remove('open'); });
-    document.addEventListener('keydown',function(e){ if(e.key==='Escape')host.classList.remove('open'); });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape'){host.classList.remove('open'); czClose();} });
+    host.querySelector('#fcc-apps-cust').addEventListener('click',function(){ host.classList.remove('open'); czOpen(); });
+    apply();
   }
+
+  /* ---- the customizer ---- */
+  var scrim=null;
+  function czOpen(){
+    czClose();
+    scrim=document.createElement('div'); scrim.id='fcc-navcz-scrim';
+    scrim.innerHTML='<div id="fcc-navcz" role="dialog" aria-modal="true" aria-label="Customize menu">'
+      +'<h3>Customize menu</h3><div class="cz-sub">Move any module between the <b>menu</b> and the <b>▦ bundle</b>, and reorder. Saved on this device.</div>'
+      +'<div id="cz-list"></div>'
+      +'<div class="cz-foot"><button class="cz-btn" id="cz-reset" type="button">Reset to default</button><span class="grow"></span><button class="cz-btn pri" id="cz-done" type="button">Done</button></div></div>';
+    document.body.appendChild(scrim); scrim.classList.add('on');
+    scrim.addEventListener('click',function(e){ if(e.target===scrim)czClose(); });
+    scrim.querySelector('#cz-done').onclick=czClose;
+    scrim.querySelector('#cz-reset').onclick=function(){ LO={v:1,place:null,order:null}; save(); apply(); drawCz(); };
+    drawCz();
+  }
+  function czClose(){ if(scrim){scrim.remove();scrim=null;} }
+  function ensureLayout(){ // materialize current effective layout into LO so edits are explicit
+    if(!LO.place){ LO.place={}; anchors().forEach(function(a){ var h=a.getAttribute('href'); LO.place[h]=placeOf(h); }); }
+    LO.order=effOrder(); }
+  function drawCz(){
+    var list=scrim.querySelector('#cz-list'); var map=byHref(), order=effOrder();
+    list.innerHTML=order.map(function(href){ var a=map[href]; if(!a)return '';
+      var pinned=(href===HOME); var pl=placeOf(href); var icon=(a.querySelector('svg')?a.querySelector('svg').outerHTML:'');
+      return '<div class="cz-row" data-h="'+href+'"><span class="cz-ic">'+icon+'</span><span class="cz-nm">'+(a.getAttribute('data-lbl')||href)+'</span>'
+        +'<span class="cz-move"><button data-mv="up" title="Move up">▲</button><button data-mv="down" title="Move down">▼</button></span>'
+        +'<span class="cz-seg">'+(pinned
+            ? '<button class="on" disabled title="Home stays in the menu">Menu</button>'
+            : '<button data-pl="menu" class="'+(pl==='menu'?'on':'')+'">Menu</button><button data-pl="apps" class="'+(pl==='apps'?'on':'')+'">▦ Bundle</button>')
+        +'</span></div>';
+    }).join('');
+    list.querySelectorAll('.cz-row').forEach(function(row){ var h=row.getAttribute('data-h');
+      row.querySelectorAll('[data-pl]').forEach(function(b){ b.onclick=function(){ ensureLayout(); LO.place[h]=b.getAttribute('data-pl'); save(); apply(); drawCz(); }; });
+      row.querySelectorAll('[data-mv]').forEach(function(b){ b.onclick=function(){ ensureLayout();
+        var o=LO.order.slice(), i=o.indexOf(h), j=b.getAttribute('data-mv')==='up'?i-1:i+1;
+        if(i<0||j<0||j>=o.length)return; var t=o[i];o[i]=o[j];o[j]=t; LO.order=o; save(); apply(); drawCz(); }; });
+    });
+  }
+
   if(document.readyState!=='loading')mount(); else document.addEventListener('DOMContentLoaded',mount);
 })();
 </script>

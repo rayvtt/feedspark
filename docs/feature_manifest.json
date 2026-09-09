@@ -2725,13 +2725,6 @@
       "pr": 298
     },
     {
-      "name": "nav: Pricer retired from the core menu",
-      "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "href=\"/pricer\"",
-      "forbidden": true,
-      "pr": 298
-    },
-    {
       "name": "nav: AI Quote in the Command Center menu (Pricer moved to apps)",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "href=\"/aiquote\"",
@@ -2739,11 +2732,25 @@
       "pr": 298
     },
     {
-      "name": "nav: Pricer retired from the Command Center menu + sidenav",
-      "file": "docs/FeedSpark_Command_Center.html",
+      "name": "nav: customizable menu manager (menu ↔ ▦ bundle)",
+      "file": "docs/apps_widget.html",
+      "pattern": "fcc-nav-layout",
+      "min": 1,
+      "pr": 299
+    },
+    {
+      "name": "nav: per-module Menu/Bundle customizer",
+      "file": "docs/apps_widget.html",
+      "pattern": "Customize menu",
+      "min": 1,
+      "pr": 299
+    },
+    {
+      "name": "nav: full module roster present in static nav (runtime-bundled)",
+      "file": "docs/FeedSpark_Workflow.html",
       "pattern": "href=\"/pricer\"",
-      "forbidden": true,
-      "pr": 298
+      "min": 1,
+      "pr": 299
     }
   ]
 }
