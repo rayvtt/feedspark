@@ -304,9 +304,15 @@ const feedMarketsFor = async (env, client) => {   // { mkt: {id,gid} } for every
   if (client) try {
     const dossier = liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data;
     const rec = dossier[client] || {};
-    if (rec.feed) { const r = feedRef(rec.feed); if (r) out.gb = r; }   // legacy single feed = gb
+    // ad-hoc dossier attaches override the wired entry per market — EXCEPT a stale sheet
+    // attach shadowing a deliberately wired {xml} source (9 Sep 2026 estate migration:
+    // Schuh gb + Superdry gb carried old sheet attaches that silently pinned the proxy AND
+    // the xml-scan lane to the dead sheets). A sheet override still applies over a wired
+    // sheet or an unwired market; an xml override always applies (newer realtime truth).
+    const overlay = (mk, r) => { if (!r) return; if (r.id && out[mk] && out[mk].xml) return; out[mk] = r; };
+    if (rec.feed) overlay('gb', feedRef(rec.feed));   // legacy single feed = gb
     if (rec.feeds && typeof rec.feeds === 'object') {
-      Object.keys(rec.feeds).forEach((mk) => { const r = feedRef(rec.feeds[mk]); if (r) out[mktOf(mk)] = r; });
+      Object.keys(rec.feeds).forEach((mk) => { overlay(mktOf(mk), feedRef(rec.feeds[mk])); });
     }
   } catch (e) {}
   return out;
