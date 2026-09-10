@@ -3059,6 +3059,97 @@
    "pattern": "bl-search",
    "min": 2,
    "pr": null
+  },
+  {
+   "name": "Pricer engine: AI Text Attribute RETIRED — Ray 10 Sep 2026 'not needed ever' (must stay gone)",
+   "file": "docs/pricer_engine.js",
+   "pattern": "text_attr",
+   "pr": 319,
+   "forbidden": true
+  },
+  {
+   "name": "overlay engine: URL-string classifier + feed collector (UMD, agent + page + tests)",
+   "file": "docs/overlay_engine.js",
+   "pattern": "function classifyOverlay",
+   "min": 1,
+   "pr": 317
+  },
+  {
+   "name": "overlay engine: FeedSpark image hosts (dashboard./lia. feedspark.com, feed5.com)",
+   "file": "docs/overlay_engine.js",
+   "pattern": "(feedspark|feed5)",
+   "min": 1,
+   "pr": 317
+  },
+  {
+   "name": "xml-scan agent: overlay capture rides the same feed stream (ovl beside snap/vol)",
+   "file": "tools/xml_scan.mjs",
+   "pattern": "overlayCollector",
+   "min": 1,
+   "pr": 317
+  },
+  {
+   "name": "worker: overlayTrack store (overlay:/overlayhist:/overlayidx) on confirmed scans",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "async function overlayTrack",
+   "min": 1,
+   "pr": 317
+  },
+  {
+   "name": "worker: /api/overlays estate + per-feed reads",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "path === '/api/overlays'",
+   "min": 1,
+   "pr": 317
+  },
+  {
+   "name": "worker: /api/overlays/scanpush (page live scan lane)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "/api/overlays/scanpush",
+   "min": 2,
+   "pr": 317
+  },
+  {
+   "name": "worker: /overlays module page + engine served (import + PAGES + /overlays/engine.js)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "/overlays/engine.js",
+   "min": 1,
+   "pr": 317
+  },
+  {
+   "name": "wrangler: overlay_engine.js bundled as a Text module",
+   "file": "wrangler.toml",
+   "pattern": "overlay_engine.js",
+   "min": 1,
+   "pr": 317
+  },
+  {
+   "name": "overlays page: type cards decode the URL recipe + rendered gallery + lightbox",
+   "file": "docs/FeedSpark_Overlays.html",
+   "pattern": "function typeCard",
+   "min": 1,
+   "pr": 317
+  },
+  {
+   "name": "overlays page: ⚡ live in-browser scan streams the feed through the engine and pushes",
+   "file": "docs/FeedSpark_Overlays.html",
+   "pattern": "api/overlays/scanpush",
+   "min": 1,
+   "pr": 317
+  },
+  {
+   "name": "nav: Overlays module link on every app page",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "href=\"/overlays\"",
+   "min": 1,
+   "pr": 317
+  },
+  {
+   "name": "qa: overlay engine harness wired",
+   "file": "tools/qa_gate.sh",
+   "pattern": "test_overlays.mjs",
+   "min": 1,
+   "pr": 317
   }
  ]
 }

@@ -27,6 +27,8 @@ jobs:
 
       - name: Label Guard engine unit tests
         run: node tools/test_labelguard.mjs
+      - name: Overlays engine unit tests (URL-string classification + collector)
+        run: node tools/test_overlays.mjs
       - name: Access scoping harness (per-user Workflow views)
         run: node tools/test_access.mjs
 
