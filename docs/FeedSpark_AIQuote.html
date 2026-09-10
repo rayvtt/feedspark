@@ -897,7 +897,7 @@ window.addEventListener('load',restore);
     CAT.forEach(function(f){ var ch=fCharge(f.id), hb=(ch==='flat'||ch==='monthly'), rt=hb?null:fRate(f.id), h=hb?fHours(f.id):null;
       if(rt!=null||h!=null)rc.fields[f.id]={rate:rt,charge:ch,hours:h}; });
     rc.blockGBP=blockGBP(); rc.updated=Date.now(); STORE[RCKEY]=rc;
-    var body={}; body[RCKEY]=rc; putMap(body,'Rate card saved — it pre-fills every client'); render();
+    putMap(storeBody(),'Rate card saved — it pre-fills every client'); render();   // the FULL map — a {ratecard}-only PUT used to tombstone every client record
   });
 
   /* ---------- product-type picker (reuse .ptp) ---------- */
@@ -976,11 +976,31 @@ window.addEventListener('load',restore);
   document.addEventListener('keydown',function(e){ if(e.key==='Escape')closePicker(); });
 
   /* ---------- persist ---------- */
-  var _t=null;
-  function saveSoon(){ if(_t)clearTimeout(_t); $('#save-hint').textContent='saving…'; _t=setTimeout(function(){ if(!CLIENT)return; var r=rec(); r.updated=Date.now(); var body={}; body[CLIENT]=r; putMap(body); },700); }
-  function putMap(body,msg){ fetch('/api/aiquote',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(BASE)},body:JSON.stringify(body)})
+  /* WHOLE-MAP saves (10 Sep 2026 — Ray: "issue when i try to save Accessorize quote"). The store is a
+     kvmerge map: a key ABSENT from a PUT that was stored before the writer's read-stamp counts as
+     DELETED. The page used to PUT only the record it changed ({Accessorize} or {ratecard}), so
+     every save tombstoned every OTHER client's builder record — and ★ Save as my rate card
+     tombstoned the record being built; the echoed map was adopted silently, so the screen still
+     showed five ticked fields while Save saw none. Now the page always PUTs the full map (it never
+     deletes a key), adopts only the LATEST echo (a slow earlier echo cannot regress the state),
+     never lets an echo drop or age the record being edited (a missing/older echo = re-send it with
+     the fresh stamp, so a stale second tab's tombstone is overwritten), and re-renders whenever the
+     adopted record differs from the one on screen. */
+  var _t=null,_seq=0,_reput=0;
+  function storeBody(){ var out={}; Object.keys(STORE).forEach(function(k){ if(k.charAt(0)!=='_')out[k]=STORE[k]; }); return out; }
+  function saveSoon(){ if(_t)clearTimeout(_t); $('#save-hint').textContent='saving…'; _t=setTimeout(function(){ if(!CLIENT)return; var r=rec(); r.updated=Date.now(); putMap(storeBody()); },700); }
+  function putMap(body,msg){ var my=++_seq, cl=CLIENT;
+    fetch('/api/aiquote',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(BASE)},body:JSON.stringify(body)})
       .then(function(res){ BASE=+res.headers.get('X-Sync-Base')||BASE; return res.json(); })
-      .then(function(m){ if(m&&typeof m==='object')STORE=m; $('#save-hint').textContent=msg||'saved'; setTimeout(function(){ var h=$('#save-hint'); if(h.textContent===(msg||'saved'))h.textContent=''; },1600); })
+      .then(function(m){ if(my!==_seq)return;   // an older echo — a newer save has landed or is in flight
+        if(m&&typeof m==='object'){
+          var mine=STORE[cl], theirs=m[cl], stale=!!mine&&(!theirs||(+mine.updated||0)>(+theirs.updated||0));
+          if(stale)m[cl]=mine;                                   // local edits win over a missing / older echo
+          var shown=JSON.stringify(STORE[CLIENT]||null); STORE=m;
+          if(JSON.stringify(STORE[CLIENT]||null)!==shown)render();   // the screen must never show a state the store lacks
+          if(stale&&cl===CLIENT&&_reput<3){ _reput++; saveSoon(); } else if(!stale)_reput=0;   // re-send with the fresh stamp
+        }
+        $('#save-hint').textContent=msg||'saved'; setTimeout(function(){ var h=$('#save-hint'); if(h.textContent===(msg||'saved'))h.textContent=''; },1600); })
       .catch(function(){ $('#save-hint').textContent='save failed (offline?)'; });
   }
 

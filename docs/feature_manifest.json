@@ -3353,6 +3353,41 @@
    "pattern": ">£ / SKU</button>",
    "pr": 331,
    "min": 1
+  },
+  {
+   "name": "AI Quote store: WHOLE-MAP saves (storeBody) — a partial {client}/{ratecard} PUT tombstoned every other record (Ray 10 Sep 2026 'issue when i try to save Accessorize quote')",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function storeBody(){",
+   "pr": 332,
+   "min": 1
+  },
+  {
+   "name": "AI Quote store: only the LATEST echo is adopted (sequence guard) + missing/older echo re-sent",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "if(my!==_seq)return;",
+   "pr": 332,
+   "min": 1
+  },
+  {
+   "name": "AI Quote store: the {client}-only debounced PUT must stay gone",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "body[CLIENT]=r; putMap(body)",
+   "pr": 332,
+   "forbidden": true
+  },
+  {
+   "name": "AI Quote store: the {ratecard}-only PUT must stay gone",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "body[RCKEY]=rc; putMap(body",
+   "pr": 332,
+   "forbidden": true
+  },
+  {
+   "name": "Worker: /api/aiquote is an explicit-tombstone store — absence never deletes",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "mapStoreRoute(env, request, 'aiquote', { explicitTombstones: true })",
+   "pr": 332,
+   "min": 1
   }
  ]
 }
