@@ -75,6 +75,9 @@ import KWCAL from "../../../docs/FeedSpark_KWCal.html";
 import AIQUOTE from "../../../docs/FeedSpark_AIQuote.html";
 // Product Volume — daily in/out churn per feed from the xml-scan id sets (page at /volume)
 import VOLUME_PAGE from "../../../docs/FeedSpark_Volume.html";
+// /overlays module (Ray, 10 Sep 2026): which FeedSpark image overlay is live on each feed,
+// read off the image_link URL string (dashboard.feedspark.com/image-creator/…)
+import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
 import APPSW from "../../../docs/apps_widget.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
 // node tests share the file, same pattern as the Feed Lab engine)
@@ -89,6 +92,9 @@ import FEEDLAB_ENGINE from "../../../docs/feedlab_engine.js";
 // tools/check_lgcopy.js — wrangler can't serve a bundled module's own source), served at
 // /labels/engine.js for the guard pages' in-browser XML live rescan
 import LABELGUARD_ENGINE_SRC from "../../../docs/labelguard_engine.js";
+// /overlays/engine.js — the overlay classifier + collector the xml-scan agent, the page's
+// live in-browser scan and the node harness all share (one file, three lanes)
+import OVERLAY_ENGINE_SRC from "../../../docs/overlay_engine.js";
 
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
@@ -151,6 +157,7 @@ const PAGES = {
   '/kwcal':       { html: KWCAL,       slug: 'kwcal' },
   '/aiquote':     { html: AIQUOTE,     slug: 'aiquote' },
   '/volume':      { html: VOLUME_PAGE, slug: 'volume' },
+  '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
@@ -364,6 +371,7 @@ export default {
         '/api/briefs': 'briefs-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
         '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save',
         '/api/labels/scan': 'label-scan', '/api/labels/scanpush': 'label-scan-live', '/api/labels/ack': 'label-rebase',
+        '/api/overlays/scanpush': 'overlay-scan-live',
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
@@ -682,9 +690,9 @@ export default {
           const snap = e.snap;
           if (!snap || typeof snap !== 'object' || !snap.labels || typeof snap.rows !== 'number') { results.push({ client, mkt, error: 'bad snapshot' }); continue; }
           try {
-            const r = await applyPushedSnapshot(env, client, mkt, snap, e.vol);
+            const r = await applyPushedSnapshot(env, client, mkt, snap, e.vol, e.ovl);
             results.push(r.skipped ? { client, mkt, skipped: true, retry: r.retry }
-              : { client, mkt, ok: true, alerts: r.alerts });
+              : { client, mkt, ok: true, alerts: r.alerts, overlays: r.overlays });
           } catch (e2) { results.push({ client, mkt, error: String((e2 && e2.message) || e2).slice(0, 120) }); }
         }
         logActivity(ctx, env, request, 'xml-scan', results.filter((r) => r.ok).length + ' scanned · '
@@ -1058,6 +1066,9 @@ export default {
     }
     if (path === '/feedlab/engine.js' && request.method === 'GET') {
       return new Response(FEEDLAB_ENGINE, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/overlays/engine.js' && request.method === 'GET') {
+      return new Response(OVERLAY_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
 
     // KWCal calendar seeds: brand planner slides bundled in git (see CAL_SEED_FILES above)
@@ -1458,6 +1469,40 @@ export default {
       const q = (url.searchParams.get('client') || '').trim().toLowerCase();
       const results = q ? all.filter((k) => { const c = String(k.client || '').toLowerCase(); return c && (c.indexOf(q) >= 0 || q.indexOf(c) >= 0); }) : all;
       return json({ ok: true, results: results.slice(0, 200), total: results.length });
+    }
+
+    // ---- /overlays module reads: the estate board (full feed roster ∪ the scanned index, so
+    // a never-scanned feed shows as "not scanned yet", never silently absent) or one feed's
+    // full capture + its coverage history
+    if (path === '/api/overlays' && request.method === 'GET') {
+      const client = String(url.searchParams.get('client') || '').slice(0, 60);
+      if (client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      if (client) {
+        const mkt = mktOf(url.searchParams.get('market'));
+        const src = await feedSourceFor(env, client, mkt);
+        const snap = await env.EDITS.get('overlay:' + client + ':' + mkt, 'json');
+        const hist = (await env.EDITS.get('overlayhist:' + client + ':' + mkt, 'json')) || [];
+        return json({ ok: true, client, market: mkt, kind: src && src.xml ? 'xml' : (src && src.id ? 'sheet' : null), snap: snap || null, hist });
+      }
+      const roster = await feedRoster(env);
+      const idx = (await env.EDITS.get('overlayidx', 'json')) || {};
+      const feeds = roster.map((f) => Object.assign({ client: f.client, mkt: f.mkt, kind: f.src && f.src.xml ? 'xml' : 'sheet' }, idx[f.client + '|' + f.mkt] ? { scan: idx[f.client + '|' + f.mkt] } : {}));
+      return json({ ok: true, feeds });
+    }
+    // the page's ⚡ live scan: the browser streamed /api/feed/proxy through the Feed Lab parser
+    // + the overlay collector (the agent's exact code, served at /overlays/engine.js) and
+    // posts the computed capture. Identity is forced server-side; the feed must resolve to a
+    // wired or dossier-attached source (never a caller-supplied URL).
+    if (path === '/api/overlays/scanpush' && request.method === 'POST') {
+      const client = String(url.searchParams.get('client') || '').slice(0, 60);
+      const mkt = mktOf(url.searchParams.get('market'));
+      if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      const src = await feedSourceFor(env, client, mkt);
+      if (!src) return json({ ok: false, error: 'no feed linked for this client/market' }, 404);
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad json' }, 400); }
+      const r = await overlayTrack(env, client, mkt, body && body.ovl);
+      if (!r) return json({ ok: false, error: 'bad capture' }, 400);
+      return json(Object.assign({ ok: true, client, market: mkt }, r));
     }
 
     // ---- daily product-volume history for the /volume module (built by volTrack on each
@@ -2251,7 +2296,7 @@ async function volTrack(env, client, mkt, rows, vol) {
 // (POST /api/labels/scanpush) — identical semantics on both lanes, including the
 // catastrophic labelpend two-strike (retry:true asks the pusher for an immediate
 // confirming re-read). Identity fields are always forced server-side.
-async function applyPushedSnapshot(env, client, mkt, snap, vol) {
+async function applyPushedSnapshot(env, client, mkt, snap, vol, ovl) {
   const wantPT = !/-fb$/.test(mkt);
   snap.client = client; snap.market = mkt; snap.v = 1;
   if (!snap.t || typeof snap.t !== 'number') snap.t = Date.now();
@@ -2260,7 +2305,54 @@ async function applyPushedSnapshot(env, client, mkt, snap, vol) {
   // volume tracking rides only CONFIRMED scans — a held catastrophic reading's id set
   // would fake a churn crater, so it lands with the confirming re-push
   try { await volTrack(env, client, mkt, snap.rows, vol); } catch (e) {}
-  return { ok: true, alerts: ((r && r.alerts) || []).filter((a) => a.sev !== 'info').length, full: r };
+  // overlay capture (the /overlays module) rides the same confirmed scan — a half-read feed
+  // would otherwise fake an overlay drop-off
+  let overlays = null;
+  if (ovl) { try { overlays = await overlayTrack(env, client, mkt, ovl); } catch (e) {} }
+  return { ok: true, alerts: ((r && r.alerts) || []).filter((a) => a.sev !== 'info').length, full: r, overlays };
+}
+
+// ---- /overlays module store (Ray, 10 Sep 2026: "render the type of overlay that is
+// currently live on each client and render the image") -----------------------------
+// One capture per feed scan: the overlay collector's summary — rows, how many image_links
+// are FeedSpark-served overlays, the overlay TYPES read off the URL string (host + engine
+// path + params) with up to 16 rendered examples each. Stored whole at overlay:<c>:<m>,
+// appended (counts only) to overlayhist:<c>:<m> for the coverage trend, and rolled into
+// the ONE estate index overlayidx so the board renders from a single read. Written by the
+// 4x-daily agent (confirmed scans only) and the page's ⚡ live in-browser scan.
+const OVL_HIST_CAP = 120, OVL_TYPES_CAP = 40, OVL_SAMPLES_CAP = 16;
+function sanitizeOverlayCapture(client, mkt, raw) {
+  if (!raw || typeof raw !== 'object' || typeof raw.rows !== 'number' || !Array.isArray(raw.types)) return null;
+  const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+  const num = (v) => Math.max(0, Math.round(+v || 0));
+  const isHttp = (u) => /^https?:\/\//i.test(String(u || ''));
+  const types = raw.types.slice(0, OVL_TYPES_CAP).map((t) => ({
+    key: str(t.key, 300), host: str(t.host, 120), family: str(t.family, 40), project: str(t.project, 200), script: str(t.script, 120),
+    label: str(t.label, 120), layout: str(t.layout, 20), n: num(t.n), addl: num(t.addl),
+    vers: Object.fromEntries(Object.entries(t.vers || {}).slice(0, 12).map(([k, v]) => [str(k, 20), num(v)])),
+    recipe: (Array.isArray(t.recipe) ? t.recipe : []).slice(0, 20).map((r) => ({ k: str(r.k, 40), label: str(r.label, 40), v: str(r.v, 200) })),
+    samples: (Array.isArray(t.samples) ? t.samples : []).slice(0, OVL_SAMPLES_CAP).filter((x) => x && isHttp(x.url)).map((x) => ({
+      id: str(x.id, 80), ti: str(x.ti, 140), link: isHttp(x.link) ? str(x.link, 500) : '', url: str(x.url, 2000),
+      src: (Array.isArray(x.src) ? x.src : []).slice(0, 4).filter(isHttp).map((u) => str(u, 1000)), ver: str(x.ver, 20) })),
+  })).filter((t) => t.key);
+  return { v: 1, t: Date.now(), client, market: mkt, rows: num(raw.rows), ovl: num(raw.ovl), addl: num(raw.addl), plain: num(raw.plain),
+    hasImage: raw.hasImage !== false,
+    hosts: (Array.isArray(raw.hosts) ? raw.hosts : []).slice(0, 5).map((h) => [str(h && h[0], 120), num(h && h[1])]), types };
+}
+async function overlayTrack(env, client, mkt, raw) {
+  const cap = sanitizeOverlayCapture(client, mkt, raw);
+  if (!cap) return null;
+  const K = 'overlay:' + client + ':' + mkt, HK = 'overlayhist:' + client + ':' + mkt;
+  const hist = (await env.EDITS.get(HK, 'json')) || [];
+  const ty = {}; cap.types.forEach((t) => { ty[t.key] = t.n + t.addl; });
+  hist.push({ t: cap.t, rows: cap.rows, ovl: cap.ovl, addl: cap.addl, ty });
+  await env.EDITS.put(K, JSON.stringify(cap));
+  await env.EDITS.put(HK, JSON.stringify(hist.slice(-OVL_HIST_CAP)));
+  const idx = (await env.EDITS.get('overlayidx', 'json')) || {};
+  idx[client + '|' + mkt] = { client, mkt, t: cap.t, rows: cap.rows, ovl: cap.ovl, addl: cap.addl, hasImage: cap.hasImage,
+    types: cap.types.slice(0, 6).map((t) => ({ key: t.key, label: t.label, n: t.n, addl: t.addl, family: t.family })) };
+  await env.EDITS.put('overlayidx', JSON.stringify(idx));
+  return { ovl: cap.ovl, types: cap.types.length };
 }
 
 // EVERYTHING below the fetch: split the raw snapshot, roll the day/known-good references,
