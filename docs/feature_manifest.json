@@ -3051,7 +3051,7 @@
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "bl-search",
    "min": 2,
-   "pr": null
+   "pr": 320
   },
   {
    "name": "Pricer engine: AI Text Attribute RETIRED — Ray 10 Sep 2026 'not needed ever' (must stay gone)",
