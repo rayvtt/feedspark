@@ -104,6 +104,34 @@ window.addEventListener('load',restore);
   .clical .ch{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:900;color:var(--muted);margin-bottom:8px}
   .clical img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
   .clical .cc-none{font-size:12.5px;color:var(--muted);font-weight:700;padding:14px 6px}
+  /* right rail — keyword-generation hours & resourcing (Ray, 10 Sep 2026) */
+  .split.two{grid-template-columns:minmax(0,1fr) minmax(300px,360px);align-items:start}
+  .split.two.side{grid-template-columns:minmax(0,1fr) minmax(300px,540px)}
+  .srail{align-self:start;position:sticky;top:74px;max-height:calc(100vh - 90px);overflow:auto;display:flex;flex-direction:column;gap:14px}
+  .srail::-webkit-scrollbar{width:8px}.srail::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+  .srail>.clical{position:static;top:auto}
+  .hrail{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+  .hrail h3{margin:0 0 2px;font-size:14px;font-weight:900}
+  .hrail .hsub{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:10px;line-height:1.4}
+  .hrail .hrule{font-size:10.5px;color:var(--muted);font-weight:700;background:var(--wash);border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-bottom:11px;line-height:1.55}
+  .hrail .htot{display:flex;gap:7px;margin-bottom:6px}
+  .hrail .htot .hk{flex:1;text-align:center;background:var(--wash);border:1px solid var(--line);border-radius:9px;padding:7px 4px}
+  .hrail .htot .hk .n{font-size:17px;font-weight:900;line-height:1.1}
+  .hrail .htot .hk .l{font-size:9px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+  .hrail .hgrp{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:13px 0 6px}
+  .htask{border:1px solid var(--line);border-radius:9px;padding:8px 9px;margin-bottom:7px}
+  .htask .ht-top{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+  .htask .ht-n{font-size:12.5px;font-weight:800;line-height:1.25}
+  .htask .ht-h{font-size:13px;font-weight:900;color:var(--orange-deep);flex:none}
+  .htask .ht-m{font-size:10.5px;color:var(--muted);font-weight:700;margin:2px 0 4px}
+  .htask select.ht-o{font:inherit;font-size:11.5px;font-weight:700;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);width:100%;cursor:pointer}
+  .hrail .hpers{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800;padding:6px 9px;border-radius:8px;background:var(--wash);margin-bottom:5px}
+  .hrail .hpers .hh{font-weight:900;color:var(--orange-ink)}
+  .hrail .hnone{font-size:12px;color:var(--muted);font-weight:700;padding:10px 4px;text-align:center;line-height:1.5}
+  .hrail .hsync{width:100%;margin-top:4px}
+  [data-theme=dark] .hrail{background:var(--paper);border-color:var(--line)}
+  [data-theme=dark] .htask,[data-theme=dark] .hrail .hpers,[data-theme=dark] .hrail .hrule,[data-theme=dark] .hrail .htot .hk{background:#181B22;border-color:var(--line)}
+  [data-theme=dark] .htask select.ht-o{background:#161922;color:var(--ink);border-color:var(--line)}
   #cal-wrap{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;overflow-x:auto}
   .road{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(252px,290px);gap:0}
   .mo-sec{padding:0 12px;border-left:2px dashed var(--line)}
@@ -189,6 +217,8 @@ window.addEventListener('load',restore);
     .tb-modules a.tbm::after{display:none}
     .topbar-in{gap:8px;padding:10px 14px}
     .brand{flex:none}
+    .split.two,.split.two.side{grid-template-columns:1fr}
+    .srail{position:static;max-height:none;overflow:visible}
   }
   @media(max-width:640px){
     .wrap{padding:0 14px}
@@ -288,7 +318,10 @@ window.addEventListener('load',restore);
   <p class="sub">Marketing moments by lane (as the brand shared them) with the <b>keyword optimisation schedule</b> underneath — each optimisation lands ahead of its moment. Click a status chip to advance it; <b>→ Brief</b> drops the task into the Workflow composer prefilled.</p>
   <div class="split" id="split">
     <div id="cal-wrap"><div class="road" id="road"></div></div>
-    <div class="clical" id="clical" hidden></div>
+    <div class="srail" id="srail">
+      <div class="hrail" id="hoursrail" hidden></div>
+      <div class="clical" id="clical" hidden></div>
+    </div>
   </div>
   <div id="ov" hidden></div>
 </main>
@@ -339,6 +372,8 @@ var SEED={Reiss:{events:[
 var CLIENT='Reiss', STORE={}, BASE=0, editMode=false, saveT=null, MEASURING=false;
 var BRIEFS={};
 var MKT='gb', MKTLIST=['gb']; // board market — scopes, volumes, sync and briefs follow it (events may pin their own) // Workflow pipeline (read-only) — live stages auto-badge matching KW tasks
+// keyword-generation resourcing roster (assignable in the hours rail; "＋ add person" extends it, remembered per client)
+var KW_PEOPLE=['Ray','Steven','Matt','Radostina','ASPL','TechAM'];
 
 function rec(){ if(!STORE[CLIENT])STORE[CLIENT]={events:[]}; if(!STORE[CLIENT].measured)STORE[CLIENT].measured={}; return STORE[CLIENT]; }
 function evs(){ return (rec().events||[]).slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date))}); }
@@ -633,10 +668,59 @@ function briefLinkFor(brand,e){
   }
   return '/workflow?brief='+b64url({client:brand,task:task,cat:'keyword',scope:lines.join('\n')});
 }
+/* ---------------- hours & resourcing (Ray, 10 Sep 2026) ----------------
+ * Keyword-generation rule of thumb: 500→4h · 1500→6h · 4000→8h · 10000→10h.
+ * Linear-interpolate between the anchors; ≤500 = the 4h minimum batch; above 10k
+ * extend at the final segment's marginal rate. Products = volOf() per market. */
+function kwHours(n){ n=Math.max(0,Math.round(+n||0)); if(!n)return 0; if(n<=500)return 4;
+  var p=[[500,4],[1500,6],[4000,8],[10000,10]],i;
+  for(i=1;i<p.length;i++){ if(n<=p[i][0]){ var a=p[i-1],b=p[i]; return a[1]+(n-a[0])/(b[0]-a[0])*(b[1]-a[1]); } }
+  var L=p[p.length-1],P=p[p.length-2],rate=(L[1]-P[1])/(L[0]-P[0]); return L[1]+(n-L[0])*rate; }
+function h1(h){ return (Math.round(h*2)/2).toFixed(1); } // nearest half-hour
+function kwown(){ var r=rec(); if(!r.kwown)r.kwown={}; return r.kwown; }
+function renderHours(){
+  var rail=$('#hoursrail'); if(!rail)return;
+  if(CLIENT==='*'){ rail.hidden=true; return; }
+  rail.hidden=false;
+  var E=evs(), own=kwown(), rows=[], unsized=0, totP=0, totH=0, perP={};
+  E.forEach(function(e){ var v=volOf(CLIENT,e);
+    if(!v||v.unset){ unsized++; return; }
+    var n=v.vol||0, hh=kwHours(n); totP+=n; totH+=hh;
+    var o=own[e.id]||''; perP[o||'__un']=(perP[o||'__un']||0)+hh;
+    rows.push({e:e,n:n,h:hh,o:o,wide:!!v.wide}); });
+  var people=KW_PEOPLE.slice(); Object.keys(own).forEach(function(k){ var nm=own[k]; if(nm&&people.indexOf(nm)<0)people.push(nm); });
+  function opts(sel){ return '<option value="">— unassigned —</option>'+people.map(function(p){return '<option'+(p===sel?' selected':'')+'>'+esc(p)+'</option>'}).join('')+'<option value="__add">＋ add person…</option>'; }
+  var h='<h3>⏱ Hours &amp; resourcing</h3>'
+    +'<div class="hsub">'+esc(CLIENT)+' · '+MKT.toUpperCase()+' — keyword-generation effort for this roadmap</div>'
+    +'<div class="hrule">Rule of thumb: 500→4h · 1,500→6h · 4,000→8h · 10,000→10h — interpolated by the products in each optimisation’s scope.</div>'
+    +'<div class="htot"><div class="hk"><div class="n">'+(rows.length?fmt(totP):'—')+'</div><div class="l">Products</div></div>'
+    +'<div class="hk"><div class="n">'+(rows.length?h1(totH):'—')+'</div><div class="l">Hours</div></div>'
+    +'<div class="hk"><div class="n">'+rows.length+'</div><div class="l">Sized</div></div></div>';
+  if(!rows.length){
+    h+='<div class="hnone">'+(E.length?'⟳ Sync product types, then set a scope on each optimisation to size the hours.':'No optimisations yet — ✒ Edit calendar to add moments.')+'</div>'
+      +(E.length?'<button class="btn pri hsync" id="h-sync">⟳ Sync product types</button>':'');
+  } else {
+    h+='<div class="hgrp">Per optimisation</div>';
+    rows.forEach(function(r){
+      h+='<div class="htask"><div class="ht-top"><span class="ht-n">'+esc(r.e.name)+'</span><span class="ht-h">'+h1(r.h)+'h</span></div>'
+        +'<div class="ht-m">lands '+dLbl(r.e)+' · '+fmt(r.n)+' products'+(r.wide?' · brand-wide':'')+'</div>'
+        +'<select class="ht-o" data-hown="'+esc(r.e.id)+'" aria-label="Assign '+esc(r.e.name)+'">'+opts(r.o)+'</select></div>';
+    });
+    h+='<div class="hgrp">By team member</div>';
+    var pk=Object.keys(perP).filter(function(k){return k!=='__un'}).sort(function(a,b){return perP[b]-perP[a]});
+    if(!pk.length)h+='<div class="hsub">Nothing assigned yet — pick an owner per optimisation above.</div>';
+    pk.forEach(function(p){ h+='<div class="hpers"><span>'+esc(p)+'</span><span class="hh">'+h1(perP[p])+'h</span></div>'; });
+    if(perP['__un'])h+='<div class="hpers"><span style="color:var(--muted)">Unassigned</span><span class="hh" style="color:var(--muted)">'+h1(perP['__un'])+'h</span></div>';
+    if(unsized)h+='<div class="hsub" style="margin-top:9px">+ '+unsized+' optimisation'+(unsized===1?'':'s')+' not yet sized (set a scope to include).</div>';
+  }
+  rail.innerHTML=h;
+  var sb=rail.querySelector('#h-sync'); if(sb)sb.onclick=function(){ syncPT(); };
+}
 function render(){
   popClose();
   if(CLIENT==='*'){ $('#split').hidden=true; renderOverview(); return; }
   $('#split').hidden=false; $('#cal-wrap').hidden=false; $('#ov').hidden=true;
+  $('#split').classList.add('two');
   kpis();
   $('#cal-title').textContent=CLIENT+' — FeedSpark keyword roadmap'+(MKT!=='gb'?' · '+MKT.toUpperCase():'');
   renderMkts();
@@ -658,6 +742,7 @@ function render(){
           +'<a class="bgo" href="'+briefLink(e)+'" title="Auto-generated brief — moment, dates, scope PTs + SKUs, themes">→ Brief</a></div></div>';
       }).join('')+'</div></section>';
   }).join('')||'<p class="sub">No moments yet — ✒ Edit calendar → ＋ Add event, with the client’s calendar side-by-side.</p>';
+  renderHours();
 }
 
 /* ---------------- PT scope picker (searchable multiselect over real product_type values) ---------------- */
@@ -786,6 +871,13 @@ document.addEventListener('click',function(ev){
   if(!ev.target.closest('#ptp')&&!ev.target.closest('[data-scope]'))ptClose();
 });
 $('#sbs').addEventListener('click',function(){ if(CLIENT==='*')return; window.__sbs=!window.__sbs; renderClical(); });
+$('#hoursrail').addEventListener('change',function(ev){
+  var s=ev.target.closest('select[data-hown]'); if(!s)return;
+  var id=s.getAttribute('data-hown'), val=s.value;
+  if(val==='__add'){ var nm=(window.prompt('Assign this optimisation to (name):')||'').trim(); if(!nm){ renderHours(); return; } val=nm; }
+  var own=kwown(); if(val)own[id]=val; else delete own[id];
+  save(); renderHours();
+});
 
 /* ---------------- PT sync — one stream builds the product-type index; volumes are instant after ---------------- */
 function syncPT(){

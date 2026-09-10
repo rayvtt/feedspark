@@ -3423,6 +3423,13 @@
    "pattern": "rate provenance",
    "pr": 333,
    "forbidden": true
+  },
+  {
+   "name": "kwcal: hours & resourcing rail — products→hours (500/1.5k/4k/10k = 4/6/8/10h) + per-team assignment (Ray, 10 Sep 2026)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function renderHours(",
+   "min": 1,
+   "pr": 334
   }
  ]
 }
