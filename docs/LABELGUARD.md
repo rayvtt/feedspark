@@ -121,6 +121,13 @@ disagrees on row count by >15% the scan is SKIPPED (activity-logged, previous st
 a throttled/partial gviz answer can no longer poison the alert board until the next rotation.
 Custom watches keep their own two-strike + implausibility guards; this is the sweep's equivalent.
 The same differ serves the Product Type Guard, so `/ptypes` alerts get every floor above too.
+**Manual verify (Ray, Sep 2026):** every *vanished-column* alert (`label-gone` / `cov-zero`
+on /labels and /ptypes, `attr-gone` on /golden) carries a **"⟳ Verify — fresh scan"**
+button — one click re-scans that live feed and either **confirms** the wipe ("still gone —
+the drop is real") or **clears the flag** ("it was a bad read": a clean scan rolls the
+baseline forward, so a recovered column clears itself). An unstable-read skip is surfaced
+honestly ("previous state kept, try again shortly") — the PT/GR scan routes return the
+`skipped` reason instead of a misleading error.
 
 ## 4. API
 
