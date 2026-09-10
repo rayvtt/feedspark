@@ -87,9 +87,9 @@ window.addEventListener('load',restore);
   .recipe .r b{font-weight:900;color:var(--ink)}
   .recipe .r .sw{display:inline-block;width:11px;height:11px;border-radius:3px;border:1px solid rgba(0,0,0,.15);vertical-align:-1px;margin-left:5px}
   .layout{font-size:12.5px;color:var(--muted);font-weight:700;margin:4px 0 8px}
-  .tpl{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--muted);background:var(--tile);border-radius:8px;padding:6px 9px;overflow-x:auto;white-space:nowrap;margin:6px 0 10px}
+  .tpl{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--muted);background:var(--tile);border-radius:8px;padding:6px 9px;white-space:normal;word-break:break-all;overflow-wrap:anywhere;margin:6px 0 10px}
   .tpl b{color:var(--orange-ink);font-weight:700}
-  .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
   .gal .g{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--tile);cursor:zoom-in;position:relative}
   .gal .g .ph{aspect-ratio:1/1;width:100%;display:block;object-fit:cover;background:var(--tile)}
   .gal .g .cap{font-size:11px;font-weight:700;color:var(--ink-2);padding:6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -103,8 +103,8 @@ window.addEventListener('load',restore);
   table.est tr.row{cursor:pointer}table.est tr.row:hover td{background:var(--wash)}
   table.est tr.sel td{background:rgba(245,166,35,.09)}
   table.est td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-  table.est td.feed{white-space:nowrap}
-  table.est th.types{width:44%}
+  table.est td.feed{min-width:110px}
+  table.est th.types{width:40%}
   /* Ray: the estate is always max-expanded — it wraps, it never scrolls sideways */
   @media(max-width:760px){
     table.est thead{display:none}
@@ -119,8 +119,13 @@ window.addEventListener('load',restore);
   .cov .bar i{display:block;height:100%;background:var(--orange);border-radius:4px}
   .cov .bar i.fb{background:var(--meta)}
   .tchips{display:flex;gap:5px;flex-wrap:wrap}
-  .tchips .t{font-size:11px;font-weight:800;color:var(--ink-2);background:var(--tile);border-radius:6px;padding:2px 7px;white-space:nowrap}
+  .tchips .t{font-size:11px;font-weight:800;color:var(--ink-2);background:var(--tile);border-radius:6px;padding:2px 7px}
   .ago{color:var(--muted);font-size:12px;white-space:nowrap}
+  /* Ray: the live-overlays panel sits to the RIGHT of the estate; the estate takes the
+     width it needs first (never squeezed, never scrolled), the panel gets what remains */
+  .duo{display:grid;grid-template-columns:fit-content(62%) minmax(0,1fr);gap:14px;align-items:start;margin:14px 0}
+  .duo>.card{margin:0;min-width:0}
+  @media(max-width:1100px){.duo{grid-template-columns:minmax(0,1fr)}}
   .split2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
   @media(max-width:900px){.split2{grid-template-columns:minmax(0,1fr)}}
   #trend{display:block;width:100%;height:auto;margin-top:6px}
@@ -233,6 +238,13 @@ window.addEventListener('load',restore);
 </div></header>
 
 <main class="wrap">
+  <div class="duo">
+  <div class="card" id="estate">
+    <h3>Overlay estate</h3>
+    <div class="ch">Every wired feed, Meta catalogues first — which ones carry a FeedSpark overlay today, and how much of the catalogue it covers.</div>
+    <table class="est" id="esttbl"><thead><tr><th>Feed</th><th>Channel</th><th>Coverage</th><th class="types">Overlay types live</th><th class="num">Scanned</th><th></th></tr></thead><tbody></tbody></table>
+    <div class="empty" id="est-empty" hidden></div>
+  </div>
   <div class="card" id="detail">
     <div class="chead">
       <div><h3 id="det-title">Live overlays</h3><div class="ch" id="det-sub">Pick a client and market to see the overlay creative running on that feed.</div></div>
@@ -243,11 +255,6 @@ window.addEventListener('load',restore);
     <div class="empty" id="det-empty" hidden></div>
   </div>
 
-  <div class="card" id="estate">
-    <h3>Overlay estate</h3>
-    <div class="ch">Every wired feed, Meta catalogues first — which ones carry a FeedSpark overlay today, and how much of the catalogue it covers.</div>
-    <table class="est" id="esttbl"><thead><tr><th>Feed</th><th>Channel</th><th>Coverage</th><th class="types">Overlay types live</th><th class="num">Scanned</th><th></th></tr></thead><tbody></tbody></table>
-    <div class="empty" id="est-empty" hidden></div>
   </div>
 
   <div class="split2">
