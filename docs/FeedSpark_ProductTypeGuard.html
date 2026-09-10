@@ -682,16 +682,76 @@ window.addEventListener('load',restore);
       .catch(function () { $('det-panel').innerHTML = '<span class="muted">Could not load snapshot.</span>'; });
   }
 
+  /* ---- XML manual live rescan (Ray, 10 Sep 2026): when the server answers "sheets-only"
+     for a wired FeedHero XML feed, stream the feed in the browser through the Feed Lab
+     parser + labelguard's xmlCollector (served at /labels/engine.js — the agent's exact
+     code) and push the snapshot to /api/labels/scanpush; one pass writes the PT stores
+     too. A catastrophic reading is held server-side (retry) — stream again to confirm. */
+  function loadFA() {
+    if (window.FeedAudit) return Promise.resolve(window.FeedAudit);
+    return fetch('/feedlab/engine.js').then(function (r) { if (!r.ok) throw new Error('parser engine unavailable'); return r.text(); })
+      .then(function (s) { (new Function(s))(); return window.FeedAudit; });
+  }
+  function loadLG() {
+    if (window.__LG) return Promise.resolve(window.__LG);
+    return fetch('/labels/engine.js').then(function (r) { if (!r.ok) throw new Error('labelguard engine unavailable'); return r.text(); })
+      .then(function (s) { return import(URL.createObjectURL(new Blob([s], { type: 'text/javascript' }))); })
+      .then(function (m) { window.__LG = m; return m; });
+  }
+  function xmlStreamOnce(client, mkt, onState) {
+    return Promise.all([loadFA(), loadLG()]).then(function (a) {
+      var col = a[1].xmlCollector({ client: client, market: mkt });
+      var parser = a[0].createXmlParser(col.onRow);
+      return fetch('/api/feed/proxy?client=' + encodeURIComponent(client) + '&market=' + encodeURIComponent(mkt))
+        .then(function (res) {
+          if (!res.ok || !res.body) throw new Error('feed fetch failed (HTTP ' + res.status + ')');
+          var rd = res.body.getReader(), dec = new TextDecoder(), got = 0, next = 0;
+          function pump() {
+            return rd.read().then(function (x) {
+              if (x.done) { parser.push(dec.decode()); parser.end(); return col.finish(); }
+              got += x.value.length;
+              if (onState && got > next) { next = got + 4 * 1048576; onState('streaming the live XML — ' + (got / 1048576).toFixed(1) + ' MB…'); }
+              parser.push(dec.decode(x.value, { stream: true }));
+              return pump();
+            });
+          }
+          return pump();
+        });
+    }).then(function (out) {
+      if (onState) onState('processing snapshot (' + out.snap.rows.toLocaleString() + ' SKUs)…');
+      return fetch('/api/labels/scanpush?client=' + encodeURIComponent(client) + '&market=' + encodeURIComponent(mkt),
+        { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(out) })
+        .then(function (r) { return r.json(); });
+    });
+  }
+  function xmlLiveScan(client, mkt, onState) {
+    return xmlStreamOnce(client, mkt, onState).then(function (d) {
+      if (d && d.retry) { if (onState) onState('big change detected — re-reading the feed to confirm…'); return xmlStreamOnce(client, mkt, onState); }
+      return d;
+    });
+  }
+  var XML_REFUSAL = /gviz cannot query XML/;
+
   function scan(k, thenRender) {
     var p = parts(k);
-    $('det-panel').innerHTML = '<span class="muted"><span class="spin"></span>Scanning live feed — ' + esc(p.client) + ' · ' + esc(p.mkt.toUpperCase()) + ' (Google is aggregating the pivot)…</span>';
+    var who = esc(p.client) + ' · ' + esc(p.mkt.toUpperCase());
+    var st = function (m) { $('det-panel').innerHTML = '<span class="muted"><span class="spin"></span>' + who + ' — ' + esc(m) + '</span>'; };
+    st('scanning live feed (Google is aggregating the pivot)…');
+    var after = function (d) {
+      if (!d || d.error) { $('det-panel').innerHTML = '<span class="muted">Scan failed: ' + esc((d && d.error) || 'no response') + '</span>'; return refreshEstate(); }
+      return fetch(API + '/api/ptypes/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
+        .then(function (r) { return r.json(); })
+        .then(function (full) { CACHE[k] = full; if (thenRender !== false) renderDetail(k); return refreshEstate(); });
+    };
     return fetch(API + '/api/ptypes/scan?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt), { method: 'POST' })
       .then(function (r) { return r.json(); })
       .then(function (d) {
-        if (d.error) { $('det-panel').innerHTML = '<span class="muted">Scan failed: ' + esc(d.error) + '</span>'; return refreshEstate(); }
-        return fetch(API + '/api/ptypes/snapshot?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
-          .then(function (r) { return r.json(); })
-          .then(function (full) { CACHE[k] = full; if (thenRender !== false) renderDetail(k); return refreshEstate(); });
+        if (d && d.error && XML_REFUSAL.test(d.error)) {
+          return xmlLiveScan(p.client, p.mkt, st)
+            .then(function (d2) { return after(d2 && d2.skipped ? { error: 'catastrophic reading held — two live reads disagreed; scan again to retry' } : d2); })
+            .catch(function (e) { return after({ error: 'live XML scan failed — ' + ((e && e.message) || 'network') }); });
+        }
+        return after(d);
       })
       .catch(function () { $('det-panel').innerHTML = '<span class="muted">Scan failed — network.</span>'; });
   }
