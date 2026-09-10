@@ -2863,6 +2863,44 @@
    "pattern": "check_lgcopy",
    "min": 1,
    "pr": 304
+  },
+  {
+   "name": "xml-scan agent: SKU id|category set capture for volume tracking",
+   "file": "tools/xml_scan.mjs",
+   "pattern": "VOLCAP",
+   "min": 2,
+   "pr": 301
+  },
+  {
+   "name": "AI Quote: PT picker bulk actions — search-scoped Select all / Deselect all + Clear all",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "pt-acts",
+   "min": 3,
+   "pr": 305
+  },
+  {
+   "name": "LabelGuard: ⟳ Verify — fresh scan on vanished-column alerts",
+   "file": "docs/FeedSpark_LabelGuard.html",
+   "pattern": "data-verify",
+   "min": 2
+  },
+  {
+   "name": "PTGuard: ⟳ Verify — fresh scan on vanished-column alerts",
+   "file": "docs/FeedSpark_ProductTypeGuard.html",
+   "pattern": "data-verify",
+   "min": 2
+  },
+  {
+   "name": "GoldenRecord: ⟳ Verify — fresh scan on vanished-column alerts",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "data-verify",
+   "min": 2
+  },
+  {
+   "name": "worker: verify scans surface the unstable-read skip honestly",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "skipped: r.skipped",
+   "min": 2
   }
  ]
 }

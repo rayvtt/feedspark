@@ -298,7 +298,7 @@ window.addEventListener('load',restore);
 
 <section class="cat"><div class="wrap">
   <div class="cat-h"><span class="k">01</span><h2>Active alerts</h2>
-    <span class="scanmsg" id="al-count"></span></div>
+    <span class="scanmsg" id="al-count"></span><span class="scanmsg" id="al-vmsg"></span></div>
   <p class="cat-sub">Every unresolved drop-off vs the last known-good state, worst first. Alerts stay live until the
   feed recovers or the change is accepted as the new known-good — they do not fade on their own.</p>
   <div class="panel" id="alerts-panel"><span class="muted">Loading…</span></div>
@@ -579,6 +579,7 @@ window.addEventListener('load',restore);
         (akd ? '<span class="al-asked" title="Client already asked — draft to ' + esc(akd.to || '') + '. Accepting the change (or recovery) clears this.">✉ asked ' + ago(akd.t) + '</span>' : '') +
         '<button class="btn" data-ask="' + i + '" title="Draft a client email asking whether this change is expected — professional wording, before/after breakdown image attached. Creates a Gmail draft for review, never auto-sends.">✉ Ask client' + (akd ? ' again' : '') + '</button>' +
         '<button class="btn" data-ack="' + esc(r.k) + '" title="Accept the current feed as the new known-good reference and clear this feed’s flags">✓ Expected — accept as known-good</button>' +
+        (VGONE.indexOf(r.a.code) >= 0 ? '<button class="btn" data-verify="' + i + '" title="One bad read — a mid-refresh sheet or a throttled gviz response — can fake a vanished column. Re-scan the live feed now to confirm before acting.">⟳ Verify — fresh scan</button>' : '') +
         (open ? '<div class="al-diff" id="al-diff"><span class="muted"><span class="spin"></span>Loading references…</span></div>' : '') +
         '</div>';
     });
@@ -596,6 +597,9 @@ window.addEventListener('load',restore);
     Array.prototype.forEach.call(document.querySelectorAll('[data-ack]'), function (el) {
       el.onclick = function (ev) { ev.stopPropagation(); ack(el.getAttribute('data-ack'), el); };
     });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-verify]'), function (el) {
+      el.onclick = function (ev) { ev.stopPropagation(); verifyAlert(rows[+el.getAttribute('data-verify')], el); };
+    });
     Array.prototype.forEach.call(document.querySelectorAll('.al-row'), function (el) {
       el.onclick = function () {
         var r = rows[+el.getAttribute('data-i')];
@@ -605,6 +609,34 @@ window.addEventListener('load',restore);
       };
     });
     if (ALOPEN) { var cur = rows.filter(function (r) { return alKey(r) === ALOPEN; })[0]; if (cur) fillAlertDiff(cur); }
+  }
+
+  /* ---- verify a vanished column with a fresh manual scan (Ray, Sep 2026): one bad read
+     can fake a wipe — re-scan the live feed and either CONFIRM the drop or clear the flag
+     (a clean scan rolls the baseline forward, so a recovered column clears itself). ---- */
+  var VGONE = ['label-gone', 'cov-zero'];
+  function verifyAlert(r, btn) {
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Re-scanning…'; }
+    var vm = $('al-vmsg'); if (vm) vm.textContent = '';
+    var p = parts(r.k);
+    var who = dispClient(p.client) + ' · ' + mktBase(p.mkt).toUpperCase();
+    var what = r.a.label || 'the column';
+    fetch(API + '/api/labels/scan?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt), { method: 'POST' })
+      .then(function (x) { return x.json(); })
+      .then(function (d) {
+        if (d && d.skipped) { if (vm) vm.textContent = '⚠ verify scan skipped — unstable read; previous state kept, try again shortly'; renderAlerts(); return; }
+        if (d && d.error) { if (vm) vm.textContent = '✗ verify scan failed: ' + d.error; renderAlerts(); return; }
+        delete CACHE[r.k];
+        return refreshEstate().then(function () {
+          var still = false;
+          var e = ESTATE.alerts[r.k];
+          ((e && e.alerts) || []).forEach(function (a) { if (a.code === r.a.code && a.label === r.a.label) still = true; });
+          if (vm) vm.textContent = still
+            ? '⟳ fresh scan confirms it — ' + what + ' is still gone from ' + who + '. The drop is real: ✉ ask the client or ✓ accept if intentional.'
+            : '✅ fresh scan: ' + what + ' is back in ' + who + ' — flag cleared, it was a bad read.';
+        });
+      })
+      .catch(function () { if (vm) vm.textContent = '✗ verify scan failed — network'; renderAlerts(); });
   }
 
   function fillAlertDiff(r) {

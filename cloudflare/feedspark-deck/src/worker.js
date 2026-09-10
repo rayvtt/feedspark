@@ -2736,6 +2736,7 @@ async function productTypeRoutes(env, request, url) {
     if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
     const r = await runLabelScan(env, client, mkt);   // one pass writes labels AND ptype stores
     if (r.error) return json({ error: r.error }, r.status || 502);
+    if (r.skipped) return json({ skipped: r.skipped }, 202);   // unstable-read guard — verify scans surface it honestly
     if (!r.pt) return json({ error: 'scan succeeded but captured no product_type view' }, 502);
     return json(r.pt);
   }
@@ -2852,6 +2853,7 @@ async function goldenRoutes(env, request, url) {
     if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
     const r = await runLabelScan(env, client, mkt);   // one pass writes labels, ptype AND golden stores
     if (r.error) return json({ error: r.error }, r.status || 502);
+    if (r.skipped) return json({ skipped: r.skipped }, 202);   // unstable-read guard — verify scans surface it honestly
     if (!r.gr) return json({ error: 'scan succeeded but captured no attribute-coverage view' }, 502);
     return json(r.gr);
   }
