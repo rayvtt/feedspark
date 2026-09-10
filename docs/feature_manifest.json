@@ -3227,6 +3227,41 @@
    "pattern": "discPct",
    "min": 2,
    "pr": 322
+  },
+  {
+   "name": "AI Quote: UNLOCK LADDER — shared tiers (kvmerge), delivered/feed/manual coverage, hard locks with cascading release, drag-and-drop tiers + chips (Ray 10 Sep 2026 'tier unlock levels')",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "AIQUOTE-LADDER",
+   "min": 1,
+   "pr": 323
+  },
+  {
+   "name": "AI Quote ladder: lockInfo gate on every field row + enforceLocks release",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "lockInfo",
+   "min": 5,
+   "pr": 323
+  },
+  {
+   "name": "AI Quote ladder: renderLadder + DnD handlers",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "renderLadder",
+   "min": 2,
+   "pr": 323
+  },
+  {
+   "name": "AI Quote: one-off lines priced from HOURS at the block rate (£595 / 8h default, rate card) — Ray 10 Sep 2026",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "BLOCK_DEFAULT",
+   "min": 2,
+   "pr": 323
+  },
+  {
+   "name": "AI Quote: one line per attribute — charge toggle + note + boxes on the same grid row (Ray 10 Sep 2026)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "data-hrs",
+   "min": 1,
+   "pr": 323
   }
  ]
 }

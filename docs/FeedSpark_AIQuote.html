@@ -297,7 +297,9 @@ window.addEventListener('load',restore);
   .qgh .gcount{margin-left:auto;font-size:11px;font-weight:800;color:var(--muted)}
   .qgh .gcount.has{color:var(--good)}
   .qgrp.closed .qrows{display:none}
-  .qrow{display:grid;grid-template-columns:30px 1fr 108px 110px 116px;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid var(--wash)}
+  /* ONE line per attribute (Ray, 10 Sep 2026: "mix all boxes and text boxes on the same line …
+     even if the notes are long"): checkbox · name · charge toggle · note · products · rate · total */
+  .qrow{display:grid;grid-template-columns:30px minmax(190px,1fr) auto minmax(150px,1fr) 96px 112px 108px;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid var(--wash)}
   [data-theme=dark] .qrow{border-top-color:#181B22}
   .qrow.off{opacity:.5}
   .qrow .fname{font-weight:800;font-size:13.5px}
@@ -317,16 +319,18 @@ window.addEventListener('load',restore);
   .qrow .line.unset{color:var(--muted);font-weight:700;font-size:11.5px}
   .cbx{width:17px;height:17px;accent-color:var(--orange-deep);cursor:pointer}
   .priceless .col-rate,.priceless .col-line,.priceless .rate-h,.priceless .line-h{visibility:hidden}
-  .qhead{display:grid;grid-template-columns:30px 1fr 108px 110px 116px;gap:10px;padding:0 14px 6px;font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .qhead{display:grid;grid-template-columns:30px minmax(190px,1fr) auto minmax(150px,1fr) 96px 112px 108px;gap:10px;padding:0 14px 6px;font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .qhead .cm-h{min-width:118px}
   .qhead .num{text-align:right}
   /* per-line extras (Ray, 10 Sep 2026: "within each attribute allow more Note / whether £ per
      product charge or one-off charge") — the charge-model toggle and the free note sit under
      the field name, so the five-column grid stays as it is */
-  .qrow .fx{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
-  .cm{display:inline-flex;border:1px solid var(--line);border-radius:100px;overflow:hidden;flex:none}
+  .cm{display:inline-flex;border:1px solid var(--line);border-radius:100px;overflow:hidden;flex:none;justify-self:start;white-space:nowrap}
   .cmb{font:inherit;font-size:10.5px;font-weight:800;padding:3px 9px;border:0;background:#fff;color:var(--muted);cursor:pointer}
   .cmb.on{background:var(--orange);color:#fff}
-  .qrow input.fnote{font:inherit;font-size:11.5px;font-weight:600;padding:4px 8px;border:1px dashed var(--line);border-radius:8px;background:#fff;flex:1;min-width:180px;margin:0;box-shadow:none;color:var(--ink)}
+  .qrow input.fnote{font:inherit;font-size:11.5px;font-weight:600;padding:6px 8px;border:1px dashed var(--line);border-radius:8px;background:#fff;width:100%;min-width:0;margin:0;box-shadow:none;color:var(--ink)}
+  .qrow input.rate.hrs{color:var(--ink)}
+  .qrow input.rate.hrs.seeded{color:var(--navy)}
   .qrow input.fnote:focus{outline:none;border-style:solid;border-color:var(--orange)}
   .qrow .line .lflat{display:block;font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
   .qrow.flat input.cnt{opacity:.55}
@@ -334,6 +338,40 @@ window.addEventListener('load',restore);
   [data-theme=dark] .cmb{background:#20242E}
   [data-theme=dark] .cmb.on{background:var(--orange);color:#14161C}
   [data-theme=dark] .qrow input.fnote{background:#161922}
+  /* unlock ladder (Ray, 10 Sep 2026): tiers as a left-to-right pipeline, attributes as chips */
+  .ladder{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+  .tier{flex:1 1 236px;min-width:236px;max-width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;display:flex;flex-direction:column}
+  .tier.ok{border-color:var(--good)}
+  .tier.next{border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
+  .tier.locked{opacity:.72}
+  .tier.over{background:rgba(245,166,35,.08);border-style:dashed}
+  .tier .th{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--wash);font-size:12px;font-weight:900;flex-wrap:wrap}
+  .tier .tn{width:20px;height:20px;border-radius:50%;background:var(--wash);color:var(--ink-2);display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex:none}
+  .tier.ok .tn{background:var(--good);color:#fff}
+  .tier.next .tn{background:var(--orange);color:#fff}
+  .tier .tname{flex:1 1 110px;min-width:0;outline:none;border-radius:4px;padding:0 3px;cursor:text;line-height:1.25;overflow-wrap:normal;word-break:normal}   /* contenteditable's UA break-word split "Foundati onal" in a narrow box */
+  .tier .tname:focus{background:var(--wash)}
+  .tier .tneed{font:inherit;font-size:10px;font-weight:900;border:1px solid var(--line);border-radius:100px;padding:1px 7px;background:#fff;color:var(--muted);cursor:pointer;flex:none}
+  .tier .tneed:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .tier .tgrab{cursor:grab;color:var(--muted);font-size:14px;line-height:1;padding:0 2px;flex:none}
+  .tier .tx{font:inherit;border:0;background:none;color:var(--muted);cursor:pointer;font-size:13px;flex:none}
+  .tier .tbody{padding:8px;display:flex;flex-wrap:wrap;gap:6px;min-height:44px;flex:1;align-content:flex-start}
+  .tier .tstat{font-size:10.5px;font-weight:800;color:var(--muted);padding:0 10px 8px}
+  .tier.ok .tstat{color:var(--good)}
+  .tier.next .tstat{color:var(--orange-deep)}
+  .chip{font-size:11px;font-weight:800;padding:4px 9px;border-radius:100px;border:1px solid var(--line);background:#fff;cursor:grab;user-select:none;color:var(--ink-2);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip.st-delivered,.chip.st-feed,.chip.st-manual{background:rgba(46,125,50,.1);border-color:var(--good);color:#1e6b23}
+  .chip.st-quote{background:rgba(245,166,35,.14);border-color:var(--orange);color:var(--orange-deep)}
+  .chip.st-locked{color:var(--muted);border-style:dashed}
+  .chip.drag{opacity:.4}
+  .ld-foot{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+  .qrow.locked{opacity:.55}
+  .qrow.locked .cbx{cursor:not-allowed}
+  .qrow .lk{color:var(--orange-deep);font-weight:800}
+  .qrow .tt{color:var(--muted);border:1px solid var(--line);border-radius:100px;padding:0 6px;font-size:10px}
+  [data-theme=dark] .tier{background:#1C1F27}
+  [data-theme=dark] .tier .tneed,[data-theme=dark] .chip{background:#20242E}
+  [data-theme=dark] .chip.st-delivered,[data-theme=dark] .chip.st-feed,[data-theme=dark] .chip.st-manual{background:rgba(46,125,50,.22);color:#9be3a0}
   .qtot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;padding-top:13px;border-top:2px solid var(--line);font-size:14px;font-weight:900}
   .qtot .grand{color:var(--orange-deep);font-size:20px}
   .qtot .grand.unset{color:var(--muted);font-size:13px}
@@ -465,14 +503,22 @@ window.addEventListener('load',restore);
     </div>
   </div>
 
+  <div class="card" id="ladder-card">
+    <h3>Unlock ladder <span class="hint" id="ld-n"></span></h3>
+    <div class="ch">Each tier unlocks the next: no AI description without AI titles, highlights &amp; details, visual attributes, GPC mapping &amp; product type, and the foundational attributes — material, pattern, colour, gender, age group. An attribute counts as <b>in place</b> when it is <b>delivered</b> (the Pricer's delivery tracker), <b>measured in the live feed</b> (≥ 95% of the scope's SKUs carry it) or <b>marked in place</b> for this client by clicking it — or when it is <b>in this quote</b>. A locked line can't be ticked until every tier below it is covered; unticking a prerequisite releases what sat on it. Drag a tier by ⋮⋮ to re-order it, drag an attribute between tiers, click a name to rename it, switch a tier between <b>all</b> and <b>any one</b>. The ladder is shared with every client; the in-place marks are per client.</div>
+    <div class="ladder" id="ladder"></div>
+    <div class="ld-foot"><button class="btn" id="ld-add" type="button">＋ Add tier</button><button class="btn quiet" id="ld-reset" type="button" style="margin-left:0">Reset to the default ladder</button><span class="hint" id="ld-msg"></span></div>
+  </div>
+
   <div class="card priceless" id="fields-card">
     <h3>Fields to generate</h3>
     <div class="ch">Tick an optimisation to price it. The six conversational attributes are on top; the Tachyon catalogue follows, grouped — click a group header to fold it. Rates seed from the catalogue (your Pricer figures) and save to your rate card; type over any to override for this client. Every line carries its own <b>note</b> (it lands in the quote's Additional Notes, the email and the brief) and is charged either <b>£ per product</b> or as a <b>one-off</b> for the line.</div>
-    <div class="qhead"><span></span><span>Optimisation</span><span class="num" title="Unique products — distinct g:item_group_id; variants inherit the generated fields">Products</span><span class="num rate-h col-rate" title="£ per unique product × quantity, or one flat charge for the line">£ / product · one-off</span><span class="num line-h col-line">Line total</span></div>
+    <div class="qhead"><span></span><span>Optimisation</span><span class="cm-h col-rate" title="£ per unique product × quantity, or a one-off charge for the line priced from its hours">Charge</span><span>Note</span><span class="num" title="Unique products — distinct g:item_group_id; variants inherit the generated fields">Products</span><span class="num rate-h col-rate" title="£ per unique product — or, on a one-off line, the hours it takes (× the block rate below)">£ / product · hours</span><span class="num line-h col-line">Line total</span></div>
     <div id="qgroups"></div>
     <div class="qtot" id="qtot"></div>
     <div class="qopts col-rate">
       <span class="qopt">One-off setup <input type="text" id="setup" inputmode="decimal" placeholder="£ —"></span>
+      <span class="qopt" title="One-off lines are priced from their hours at this block rate — Ray, 10 Sep 2026: £595 per 8 hours. Saves with your rate card.">One-off hours at £<input type="text" id="blockrate" inputmode="decimal" placeholder="595" style="width:56px"> / 8h</span>
       <span class="qopt" title="Partner / agency discount off every line of the quote — it rides the template's own Discount % column in the Excel export, so the formulas carry it">Partner discount <input type="text" id="disc" inputmode="decimal" placeholder="0" style="width:52px"> %</span>
       <label class="qopt"><input type="checkbox" class="cbx" id="vat"> +VAT 20%</label>
       <span class="qopt">Quote valid <input type="text" id="valid" inputmode="numeric" placeholder="30"> days</span>
@@ -569,6 +615,15 @@ window.addEventListener('load',restore);
     .catch(function(){ return {}; }).then(function(m){ if(m&&typeof m==='object')SAVED=m; renderTracker(); });
   fetch('/api/access?me=1').then(function(r){ return r.json(); }).catch(function(){ return null; })
     .then(function(a){ ME=(a&&(a.email||a.name))||''; });
+  // delivered AI work per client for the unlock ladder — the Pricer's delivery tracker (KV
+  // tachyontrack) joined with the Workflow briefs by the engine's OWN title scan, so "delivered"
+  // here is exactly what the Pricer's table shows as done
+  Promise.all([fetch('/api/briefs').then(function(r){ return r.json(); }).catch(function(){ return {}; }),
+               fetch('/api/tachyon/track').then(function(r){ return r.json(); }).catch(function(){ return {}; })]).then(function(res){
+    if(!window.PricerEngine||!PricerEngine.aiBriefRows)return;
+    var rows=PricerEngine.aiBriefRows((res[0]&&typeof res[0]==='object')?res[0]:{},(res[1]&&typeof res[1]==='object')?res[1]:{});
+    DONE={}; rows.forEach(function(r){ if(!r.done||!r.tach)return; var c=String(r.client||'').trim().toLowerCase(); (DONE[c]=DONE[c]||{})[r.tach]=true; });
+    render(); });
 
   function pickClient(){ if(!CLIENT)return; rec(); loadMkts(); render(); }
   $('#brand').addEventListener('change',function(){ CLIENT=this.value; rec(); IDX={}; loadMkts(); render(); });
@@ -593,33 +648,39 @@ window.addEventListener('load',restore);
     if(window.__engineFail||!window.FeedAudit||!FeedAudit.createParser){ err('The feed parser is unavailable (engine failed to load) — pulling needs the live worker.'); return; }
     var key=CLIENT+'|'+MKT; if(CACHING[key])return; CACHING[key]=1;
     $('#mstate').textContent='Pulling '+CLIENT+' '+MKT.toUpperCase()+'…';
-    var header=null,cands=[],kwc=[],buf=[],parser=null,igc=-1,idc=-1;
+    var header=null,cands=[],kwc=[],buf=[],parser=null,igc=-1,idc=-1,acols={};
     function onRow(r){
       if(!header){ header=r;
         for(var i=0;i<r.length;i++){ var k=FeedAudit.normKey(r[i]), kk=k.replace(/[^a-z0-9]/g,'');
           var kd=kk.match(/^producttype([0-9]{1,2})$/);
           if(kd&&+kd[1]>=2){ kwc.push(i); }
           else if(k==='product_type'||k.indexOf('product_type')===0||kk==='producttype')cands.push(i);
-          if(igc<0&&kk==='itemgroupid')igc=i; if(idc<0&&kk==='id')idc=i; }
+          if(igc<0&&kk==='itemgroupid')igc=i; if(idc<0&&kk==='id')idc=i;
+          // the foundational attributes the unlock ladder measures (colour / material / pattern / gender / age group)
+          FOUND.forEach(function(a){ if(acols[a.id]==null&&a.keys.indexOf(kk)>=0)acols[a.id]=i; }); }
         return; }
       /* the PARENT key — the pricing unit (Ray, 10 Sep 2026: unique products by g:item_group_id,
          the same rule as PricerEngine.parentCounter): a row with no group is its own product,
          keyed on its id (else the row number), so a variant-less catalogue counts 1:1 */
       var g=igc>=0?String(r[igc]||'').trim():'', id=idc>=0?String(r[idc]||'').trim():'';
-      buf.push({pt:cands.map(function(i2){return String(r[i2]||'').trim()}),pk:g?'g:'+g:(id?'i:'+id:'r:'+buf.length),g:!!g});
+      var av={}; FOUND.forEach(function(a){ var ci=acols[a.id]; av[a.id]=ci!=null&&String(r[ci]==null?'':r[ci]).trim()!==''; });
+      buf.push({pt:cands.map(function(i2){return String(r[i2]||'').trim()}),pk:g?'g:'+g:(id?'i:'+id:'r:'+buf.length),g:!!g,a:av});
     }
     function mkParser(t){ if(/^\s*</.test(t)){ if(!FeedAudit.createXmlParser)throw new Error('XML feed but the cached engine predates XML support — hard-refresh'); return FeedAudit.createXmlParser(onRow); } return FeedAudit.createParser(onRow); }
     function finish(){
       var best=-1,wci=0; cands.forEach(function(ci,j){ var n=0; buf.forEach(function(b){ if(b.pt[j])n++; }); if(n>best){best=n;wci=j} });
-      var map={},pmap={},pkeys={},seenAll={},prod=0,grouped=0,tot=buf.length;
+      var map={},pmap={},pkeys={},cov={},seenAll={},prod=0,grouped=0,tot=buf.length;
       buf.forEach(function(b){ var pt=b.pt[wci]||'(no product_type)'; map[pt]=(map[pt]||0)+1;
         if(b.g)grouped++;
         if(!seenAll[b.pk]){ seenAll[b.pk]=1; prod++; }
-        var ks=pkeys[pt]||(pkeys[pt]={}); if(!ks[b.pk]){ ks[b.pk]=1; pmap[pt]=(pmap[pt]||0)+1; } });
+        var ks=pkeys[pt]||(pkeys[pt]={}); if(!ks[b.pk]){ ks[b.pk]=1; pmap[pt]=(pmap[pt]||0)+1; }
+        var cv=cov[pt]||(cov[pt]={}); FOUND.forEach(function(a){ if(b.a[a.id])cv[a.id]=(cv[a.id]||0)+1; }); });
       /* pkeys = per product type, its parent keys as an ARRAY: a scope's unique-product count is
-         the UNION across its types, so a parent split over two types is never counted twice */
+         the UNION across its types, so a parent split over two types is never counted twice;
+         cov = per product type, how many SKUs carry each foundational attribute (the ladder's
+         feed-measured tier) */
       Object.keys(pkeys).forEach(function(pt){ pkeys[pt]=Object.keys(pkeys[pt]); });
-      IDX[MKT]={map:map,pmap:pmap,pkeys:pkeys,total:tot,prod:prod,grouped:grouped,hasGroups:igc>=0,when:Date.now()};
+      IDX[MKT]={map:map,pmap:pmap,pkeys:pkeys,cov:cov,acols:Object.keys(acols),total:tot,prod:prod,grouped:grouped,hasGroups:igc>=0,when:Date.now()};
       delete CACHING[key];
       $('#mstate').textContent=fmt(prod)+' unique products · '+fmt(tot)+' SKUs · '+Object.keys(map).length+' product types'+(igc>=0?'':' · no item_group_id in this feed, every SKU is its own product');
       render();
@@ -666,11 +727,25 @@ window.addEventListener('load',restore);
     var c=card()[id]; return (c&&c.charge==='flat')?'flat':'unit'; }
   function fNote(id){ var f=rec().fields[id]; return (f&&f.note)?String(f.note):''; }
   function lineCost(c,rt,charge){ return rt==null?null:(charge==='flat'?(+rt||0):c*rt); }
+  function hoursWord(h){ return h+'h at £'+blockGBP()+' per '+BLOCK_H+'h'; }
   function catUnit(id){ var it=CMAP[id]; return (it&&it.unit!=null)?+it.unit:null; }
-  // effective rate: per-client override > rate card > catalogue unit > null
-  function fRate(id){ var f=rec().fields[id]; if(f&&f.rate!=null&&f.rate!=='')return +f.rate||0;
+  /* one-off lines are priced from HOURS at the block rate (Ray, 10 Sep 2026: "the one-off charge
+     will also be based on price per hours, which is currently at £595 per 8 hours"). Hours default
+     to the catalogue's setup hours for the optimisation (ASPL + QC + PM); the block rate lives on
+     the quote, falls back to the rate card, then £595. */
+  var BLOCK_DEFAULT=595, BLOCK_H=8;
+  function blockGBP(){ var r=rec(); if(r.blockGBP!=null&&r.blockGBP!==''&&isFinite(+r.blockGBP)&&+r.blockGBP>0)return +r.blockGBP;
+    var c=STORE[RCKEY]||{}; if(c.blockGBP!=null&&isFinite(+c.blockGBP)&&+c.blockGBP>0)return +c.blockGBP; return BLOCK_DEFAULT; }
+  function fHours(id){ var f=rec().fields[id]; if(f&&f.hours!=null&&f.hours!=='')return +f.hours||0; var c=CMAP[id]; return (c&&c.setup!=null)?+c.setup:null; }
+  function hoursSrc(id){ var f=rec().fields[id]; return (f&&f.hours!=null&&f.hours!=='')?'own':(fHours(id)!=null?'cat':'none'); }
+  function flatCost(h){ return h==null?null:Math.round(h/BLOCK_H*blockGBP()*100)/100; }
+  // effective rate: on a one-off line the £ derived from its hours; otherwise per-client override
+  // > rate card > catalogue unit > null
+  function fRate(id){ if(fCharge(id)==='flat')return flatCost(fHours(id));
+    var f=rec().fields[id]; if(f&&f.rate!=null&&f.rate!=='')return +f.rate||0;
     var c=card()[id]; if(c&&c.rate!=null&&c.rate!=='')return +c.rate||0; return catUnit(id); }
-  function rateSrc(id){ var f=rec().fields[id]; if(f&&f.rate!=null&&f.rate!=='')return 'own';
+  function rateSrc(id){ if(fCharge(id)==='flat')return fHours(id)!=null?'hours':'none';
+    var f=rec().fields[id]; if(f&&f.rate!=null&&f.rate!=='')return 'own';
     var c=card()[id]; if(c&&c.rate!=null&&c.rate!=='')return 'card'; return catUnit(id)!=null?'cat':'none'; }
   function fOn(id){ var f=rec().fields[id]; return !!(f&&f.on); }
   function vatOn(){ return !!rec().vat; }
@@ -714,34 +789,41 @@ window.addEventListener('load',restore);
     var html=GROUPS.map(function(g){ var items=CAT.filter(function(f){return f.grp===g});
       var onN=items.filter(function(f){return fOn(f.id)}).length; var open=grpOpen(g);
       var rows=items.map(function(f){ var on=fOn(f.id),c=fCount(f.id),rt=fRate(f.id),fr=r.fields[f.id],src=rateSrc(f.id),ch=fCharge(f.id),note=fNote(f.id);
-        var isAuto=!(fr&&fr.count!=null);
-        var line = lineHtml(c,rt,ch);
-        return '<div class="qrow'+(on?'':' off')+(ch==='flat'?' flat':'')+'" data-k="'+f.id+'">'
-          +'<span><input type="checkbox" class="cbx" data-on="'+f.id+'"'+(on?' checked':'')+'></span>'
-          +'<span><div class="fname">'+esc(f.name)+'</div><div class="fmeta">'+metaHtml(f)+'</div>'
-            +'<div class="fx"><span class="cm col-rate" role="group" aria-label="Charge model">'
-              +'<button type="button" class="cmb'+(ch==='unit'?' on':'')+'" data-cm="'+f.id+'" data-v="unit" title="Charged per unique product × the quantity">£ / product</button>'
-              +'<button type="button" class="cmb'+(ch==='flat'?' on':'')+'" data-cm="'+f.id+'" data-v="flat" title="One flat charge for this line, whatever the volume">one-off</button></span>'
-            +'<input class="fnote" data-note="'+f.id+'" type="text" maxlength="240" placeholder="Note for this line — lands in the quote’s Additional Notes, the email and the brief" value="'+esc(note)+'"></div></span>'
+        var isAuto=!(fr&&fr.count!=null), flat=ch==='flat', h=flat?fHours(f.id):null, hs=flat?hoursSrc(f.id):'';
+        var line = lineHtml(c,rt,ch,h);
+        var li=lockInfo(f.id), lockedOff=li.locked&&!on;
+        var rateCell = flat
+          ? '<input class="rate hrs'+(hs==='cat'?' seeded':'')+'" data-hrs="'+f.id+'" inputmode="decimal" placeholder="hours" value="'+(h==null?'':h)+'" title="'+(hs==='cat'?'catalogue setup hours (ASPL + QC + PM) — type to override · ':'')+'hours × £'+blockGBP()+' per '+BLOCK_H+'h'+(rt!=null?' = '+money(rt):'')+'">'
+          : '<input class="rate'+(src==='card'||src==='cat'?' seeded':'')+'" data-rate="'+f.id+'" inputmode="decimal" placeholder="£ —" value="'+(rt==null?'':rt)+'"'+(src==='cat'?' title="catalogue rate — type to override"':src==='card'?' title="from your rate card"':'')+'>';
+        return '<div class="qrow'+(on?'':' off')+(flat?' flat':'')+(lockedOff?' locked':'')+'" data-k="'+f.id+'">'
+          +'<span><input type="checkbox" class="cbx" data-on="'+f.id+'"'+(on?' checked':'')+(lockedOff?' disabled':'')+'></span>'
+          +'<span><div class="fname">'+esc(f.name)+'</div><div class="fmeta">'+metaHtml(f)
+            +(li.tier>=0?'<span class="tt" title="Its tier on the unlock ladder">tier '+(li.tier+1)+'</span>':'')
+            +(li.locked?'<span class="lk" title="'+esc(li.needs.join(' · '))+'">🔒 '+(on?'prerequisite missing — ':'needs ')+esc(li.needs.join(' · '))+'</span>':'')+'</div></span>'
+          +'<span class="cm col-rate" role="group" aria-label="Charge model">'
+            +'<button type="button" class="cmb'+(flat?'':' on')+'" data-cm="'+f.id+'" data-v="unit" title="Charged per unique product × the quantity">£ / product</button>'
+            +'<button type="button" class="cmb'+(flat?' on':'')+'" data-cm="'+f.id+'" data-v="flat" title="One-off charge for this line, priced from its hours at £'+blockGBP()+' per '+BLOCK_H+'h">one-off</button></span>'
+          +'<span><input class="fnote" data-note="'+f.id+'" type="text" maxlength="240" placeholder="Note — lands in the quote’s Additional Notes, the email and the brief" value="'+esc(note)+'"></span>'
           +'<span class="col-cnt"><input class="cnt'+(isAuto?' auto':'')+'" data-cnt="'+f.id+'" inputmode="numeric" value="'+fmt(c)+'"'+(isAuto?' title="auto from scope — unique products (g:item_group_id); type to override"':'')+'></span>'
-          +'<span class="col-rate"><input class="rate'+(src==='card'||src==='cat'?' seeded':'')+'" data-rate="'+f.id+'" inputmode="decimal" placeholder="'+(ch==='flat'?'£ one-off':'£ —')+'" value="'+(rt==null?'':rt)+'"'+(src==='cat'?' title="catalogue rate — type to override"':src==='card'?' title="from your rate card"':'')+'></span>'
+          +'<span class="col-rate">'+rateCell+'</span>'
           +'<span class="col-line">'+line+'</span></div>';
       }).join('');
       return '<div class="qgrp'+(open?'':' closed')+'" data-g="'+esc(g)+'"><div class="qgh" data-gt="'+esc(g)+'"><span class="tw">▾</span><span class="gname'+(g===CONV_GRP?' conv':'')+'">'+esc(g)+'</span><span class="gcount'+(onN?' has':'')+'">'+(onN?onN+' selected':items.length+' fields')+'</span></div><div class="qrows">'+rows+'</div></div>';
     }).join('');
     $('#qgroups').innerHTML=html;
-    foot();
+    foot(); renderLadder();
     $('#setup').value=(r.setup!=null?r.setup:''); $('#disc').value=(r.disc!=null?r.disc:''); $('#vat').checked=vatOn(); $('#valid').value=(r.valid!=null?r.valid:'');
+    $('#blockrate').value=(r.blockGBP!=null&&r.blockGBP!=='')?r.blockGBP:''; $('#blockrate').placeholder=String(blockGBP());
     $('#showp').textContent=SHOWP?'£ Hide quote':'£ Show quote'; $('#showp').setAttribute('aria-pressed',SHOWP?'true':'false'); $('#showp').classList.toggle('on',SHOWP);
     var anyCard=CAT.some(function(f){return rateSrc(f.id)==='card'||rateSrc(f.id)==='cat'}); var rn=$('#rc-note');
     rn.hidden=!anyCard; if(anyCard)rn.textContent='Dashed rates seed from the catalogue / your rate card — edit any to override for '+CLIENT+' only.';
   }
   function kpi(n,l){ return '<div class="kpi"><div class="n">'+n+'</div><div class="l">'+esc(l)+'</div></div>'; }
-  function lineHtml(c,rt,ch){ return rt==null?'<span class="line unset">set rate</span>'
-    :'<span class="line">'+money(lineCost(c,rt,ch))+(ch==='flat'?'<span class="lflat">one-off</span>':'')+'</span>'; }
+  function lineHtml(c,rt,ch,h){ return rt==null?'<span class="line unset">'+(ch==='flat'?'set hours':'set rate')+'</span>'
+    :'<span class="line">'+money(lineCost(c,rt,ch))+(ch==='flat'?'<span class="lflat">'+(h!=null?h+'h · ':'')+'one-off</span>':'')+'</span>'; }
   function foot(){ var t=totals();
     CAT.forEach(function(f){ var cell=document.querySelector('.qrow[data-k="'+f.id+'"] .col-line'); if(!cell)return;
-      cell.innerHTML=lineHtml(fCount(f.id),fRate(f.id),fCharge(f.id)); });
+      var ch=fCharge(f.id); cell.innerHTML=lineHtml(fCount(f.id),fRate(f.id),ch,ch==='flat'?fHours(f.id):null); });
     // per-group counts
     GROUPS.forEach(function(g){ var items=CAT.filter(function(f){return f.grp===g}); var onN=items.filter(function(f){return fOn(f.id)}).length;
       var gc=document.querySelector('.qgrp[data-g="'+cssEsc(g)+'"] .gcount'); if(gc){gc.textContent=onN?onN+' selected':items.length+' fields'; gc.className='gcount'+(onN?' has':'');} });
@@ -753,6 +835,120 @@ window.addEventListener('load',restore);
     $('#scope-sum').innerHTML=scopeSummary();
   }
   function cssEsc(s){ return String(s).replace(/["\\]/g,'\\$&'); }
+
+  /* ---------- unlock ladder — AIQUOTE-LADDER ----------
+     Ray (10 Sep 2026): "add tier unlock levels based on each attribute generation … you cannot
+     use AI to generate a description without having an AI title, product highlight detail,
+     visual attribute, GPC mapping in PT, and foundational attributes such as material, pattern,
+     color, gender, and age group. Each of these attributes, once optimized, will unlock the next
+     step. The final step is the AI description and AI title. You can also move it around by
+     drag and drop."
+     ONE shared ladder (STORE.tiers — kvmerge, like the rate card) of tiers, each listing
+     attribute ids: catalogue optimisations, or attr:<feed attribute> checks the live feed
+     measures. An item is COVERED when it is in place for this client — delivered per the
+     Pricer's delivery tracker, carried by ≥ COV_OK% of the scope's SKUs in the feed, or marked
+     in place by hand — or ticked in this quote. A tier is satisfied by ALL its items or ANY ONE
+     (per-tier switch); a line is LOCKED until every tier below it is satisfied, and a
+     prerequisite that stops being covered releases what sat on it. Nothing else is inferred. */
+  var TKEY='tiers', COV_OK=95, DONE={};
+  var FOUND=[{id:'attr:material',name:'Material',keys:['material']},{id:'attr:pattern',name:'Pattern',keys:['pattern']},
+    {id:'attr:color',name:'Colour',keys:['color','colour']},{id:'attr:gender',name:'Gender',keys:['gender']},{id:'attr:age_group',name:'Age group',keys:['agegroup']}];
+  var FMAP={}; FOUND.forEach(function(a){ FMAP[a.id]=a; });
+  var DEFAULT_TIERS=[
+    {id:'t_found',name:'Foundational attributes',need:'all',items:['attr:material','attr:pattern','attr:color','attr:gender','attr:age_group']},
+    {id:'t_cat',  name:'GPC mapping & product type',need:'all',items:['gpc','pt_class']},
+    {id:'t_vis',  name:'Visual attributes',need:'all',items:['visual_attr']},
+    {id:'t_hl',   name:'Highlights & details',need:'all',items:['highlights','details']},
+    {id:'t_pre',  name:'Pre-description',need:'any',items:['predesc_attr','predesc']},
+    {id:'t_title',name:'AI titles & keywords',need:'any',items:['title_gen','title_short','title_intent','keywords']},
+    {id:'t_desc', name:'AI descriptions',need:'any',items:['desc_gen','desc_pro']},
+    {id:'t_conv', name:'Conversational attributes',need:'any',items:['question_and_answer','document_link','related_product','item_group_title','variant_option','popularity_rank']}
+  ];
+  function cloneTiers(ts){ return JSON.parse(JSON.stringify(ts)); }
+  function tiersCfg(){ var t=STORE[TKEY]; return (t&&t.tiers&&t.tiers.length)?t.tiers:cloneTiers(DEFAULT_TIERS); }
+  function knownItem(id){ return !!(FMAP[id]||CMAP[id]); }
+  function itemName(id){ return FMAP[id]?FMAP[id].name:(CMAP[id]?CMAP[id].name:id); }
+  function scopePts(){ var ix=idx(); if(!ix)return []; var sc=rec().scope||{mode:'all'}; return (sc.mode==='pts'&&selPts().length)?selPts():Object.keys(ix.map); }
+  // feed coverage of a foundational attribute over the scope — SKU level, because Google reads
+  // the attribute on every variant it sees
+  function covPct(id){ var ix=idx(), a=FMAP[id]; if(!ix||!ix.cov||!a)return null;
+    var rows=0,hit=0; scopePts().forEach(function(pt){ rows+=ix.map[pt]||0; hit+=((ix.cov[pt]||{})[a.id])||0; });
+    return rows?Math.round(hit/rows*100):null; }
+  function deliveredSet(){ return DONE[String(CLIENT||'').trim().toLowerCase()]||{}; }
+  function inPlace(id){ var ip=rec().inplace||{}; if(ip[id])return 'manual';
+    if(FMAP[id]){ var p=covPct(id); return (p!=null&&p>=COV_OK)?'feed':''; }
+    return deliveredSet()[id]?'delivered':''; }
+  function covered(id){ return !!inPlace(id)||(!FMAP[id]&&fOn(id)); }
+  function tierItems(t){ return (t.items||[]).filter(knownItem); }
+  function tierOK(t){ var items=tierItems(t); if(!items.length)return true; var c=items.filter(covered).length; return t.need==='any'?c>0:c===items.length; }
+  function tierIndexOf(id){ var ts=tiersCfg(); for(var i=0;i<ts.length;i++)if((ts[i].items||[]).indexOf(id)>=0)return i; return -1; }
+  function lockInfo(id){ var k=tierIndexOf(id); if(k<=0)return {locked:false,needs:[],tier:k};
+    var ts=tiersCfg(), needs=[];
+    for(var i=0;i<k;i++){ if(tierOK(ts[i]))continue; var miss=tierItems(ts[i]).filter(function(x){return !covered(x)}).map(itemName);
+      needs.push(ts[i].name+(ts[i].need==='any'?' (any one of '+miss.join(' / ')+')':': '+miss.join(', '))); }
+    return {locked:needs.length>0,needs:needs,tier:k}; }
+  // a prerequisite that stops being covered locks its dependants again — they are RELEASED
+  // (unticked, and said so) rather than left priced behind a lock
+  function enforceLocks(){ var rel=[],guard=0,again=true;
+    while(again&&guard++<12){ again=false; CAT.forEach(function(f){ if(fOn(f.id)&&lockInfo(f.id).locked){ rec().fields[f.id].on=false; rel.push(f.name); again=true; } }); }
+    if(rel.length)ldMsg('🔒 released '+rel.join(', ')+' — a tier below is no longer covered');
+    return rel; }
+  function ladderSummary(){ var ts=tiersCfg(), inPl=[], inQ=[], lk=[];
+    ts.forEach(function(t,i){ if(!tierItems(t).length)return; var n=(i+1)+' '+t.name;
+      var q=tierItems(t).some(function(id){return !FMAP[id]&&fOn(id)});
+      if(q)inQ.push(n); else if(tierOK(t))inPl.push(n); else lk.push(n); });
+    return 'in place: '+(inPl.join(', ')||'none')+' · this quote: '+(inQ.join(', ')||'none')+' · still to unlock: '+(lk.join(', ')||'none'); }
+  function saveTiers(ts,msg){ var cfg={tiers:ts,updated:Date.now(),by:ME}; STORE[TKEY]=cfg; var body={}; body[TKEY]=cfg; putMap(body,msg||'Ladder saved — shared with every client'); }
+  var _ldT=null;
+  function ldMsg(m){ var e=$('#ld-msg'); if(!e)return; e.textContent=m; if(_ldT)clearTimeout(_ldT); _ldT=setTimeout(function(){ if(e.textContent===m)e.textContent=''; },6000); }
+  function chipHtml(id){ var st=inPlace(id), q=!FMAP[id]&&fOn(id), li=lockInfo(id), p=FMAP[id]?covPct(id):null, cls, lab, tip;
+    if(st){ cls='st-'+st; lab='✓ '+itemName(id)+(st==='feed'?' · '+p+'%':'');
+      tip=st==='delivered'?'Delivered — in the Pricer\'s delivery tracker':st==='feed'?(p+'% of the scope\'s SKUs carry it in the live feed (≥ '+COV_OK+'% counts as in place)'):'Marked in place for '+CLIENT+' — click to unmark'; }
+    else if(q){ cls='st-quote'; lab='◐ '+itemName(id); tip='In this quote — it counts as covered for the tiers above'; }
+    else if(li.locked){ cls='st-locked'; lab='🔒 '+itemName(id)+(p!=null?' · '+p+'%':''); tip='Locked — needs '+li.needs.join(' · '); }
+    else { cls='st-open'; lab='○ '+itemName(id)+(p!=null?' · '+p+'%':'');
+      tip=FMAP[id]?(p==null?'Pull the live feed to measure it, or click to mark it in place':p+'% of the scope\'s SKUs carry it — below '+COV_OK+'%; click to mark it in place anyway'):'Unlocked — tick it in the quote, or click to mark it as already in place'; }
+    return '<span class="chip '+cls+'" draggable="true" data-item="'+esc(id)+'" title="'+esc(tip)+'">'+esc(lab)+'</span>'; }
+  function renderLadder(){ var el=$('#ladder'); if(!el)return; var ts=tiersCfg(), nextSeen=false;
+    el.innerHTML=ts.map(function(t,i){ var ok=tierOK(t), items=tierItems(t), cov=items.filter(covered).length, cls;
+      if(ok)cls='ok'; else if(!nextSeen){ cls='next'; nextSeen=true; } else cls='locked';
+      return '<div class="tier '+cls+'" data-tid="'+esc(t.id)+'" data-tier="'+i+'">'
+        +'<div class="th"><span class="tgrab" draggable="true" title="Drag to re-order this tier">⋮⋮</span><span class="tn">'+(i+1)+'</span>'
+        +'<span class="tname" contenteditable="true" spellcheck="false" title="Click to rename">'+esc(t.name)+'</span>'
+        +'<button type="button" class="tneed" title="'+(t.need==='any'?'Satisfied by ANY ONE of its attributes — click to require all of them':'Needs ALL of its attributes — click to accept any one')+'">'+(t.need==='any'?'any one':'all')+'</button>'
+        +(items.length?'':'<button type="button" class="tx" title="Remove this empty tier">✕</button>')+'</div>'
+        +'<div class="tbody">'+(items.length?items.map(chipHtml).join(''):'<span class="hint">drop attributes here</span>')+'</div>'
+        +'<div class="tstat">'+(items.length?(ok?'✓ in place':(cls==='next'?'unlock this next · ':'locked · ')+cov+' of '+items.length+' covered'):'empty')+'</div></div>'; }).join('');
+    var n=$('#ld-n'); if(n)n.textContent='· '+ts.length+' tiers'; }
+  // ladder interactions — a chip click marks the attribute in place for THIS client; the header
+  // controls edit the shared ladder
+  $('#ladder').addEventListener('click',function(e){
+    var chip=e.target.closest('.chip'); if(chip){ var id=chip.getAttribute('data-item'), ip=rec().inplace=rec().inplace||{};
+      if(ip[id]){ delete ip[id]; enforceLocks(); } else ip[id]={t:Date.now(),by:ME}; render(); saveSoon(); return; }
+    var need=e.target.closest('.tneed'); if(need){ var ts=tiersCfg(), i=+need.closest('.tier').getAttribute('data-tier'); ts[i].need=ts[i].need==='any'?'all':'any'; saveTiers(ts); enforceLocks(); render(); return; }
+    var x=e.target.closest('.tx'); if(x){ var ts2=tiersCfg(), j=+x.closest('.tier').getAttribute('data-tier'); if(tierItems(ts2[j]).length)return; ts2.splice(j,1); saveTiers(ts2); render(); return; }
+  });
+  $('#ladder').addEventListener('focusout',function(e){ var nm=e.target.closest&&e.target.closest('.tname'); if(!nm)return;
+    var ts=tiersCfg(), i=+nm.closest('.tier').getAttribute('data-tier'), v=String(nm.textContent||'').trim().slice(0,60)||ts[i].name;
+    if(v!==ts[i].name){ ts[i].name=v; saveTiers(ts); } render(); });
+  $('#ladder').addEventListener('keydown',function(e){ if(e.key==='Enter'&&e.target.closest&&e.target.closest('.tname')){ e.preventDefault(); e.target.blur(); } });
+  $('#ld-add').addEventListener('click',function(){ var ts=tiersCfg(); ts.push({id:'t_'+Date.now().toString(36),name:'New tier',need:'all',items:[]}); saveTiers(ts); render(); });
+  $('#ld-reset').addEventListener('click',function(){ if(!confirm('Reset the ladder to the default tiers for every client?'))return; saveTiers(cloneTiers(DEFAULT_TIERS),'Ladder reset to the default'); enforceLocks(); render(); });
+  // drag & drop: a chip moves between tiers, the ⋮⋮ handle re-orders tiers (HTML5 DnD, no library)
+  var DRAG=null;
+  $('#ladder').addEventListener('dragstart',function(e){ var chip=e.target.closest&&e.target.closest('.chip'), grab=e.target.closest&&e.target.closest('.tgrab');
+    if(chip){ DRAG={type:'item',id:chip.getAttribute('data-item')}; chip.classList.add('drag'); }
+    else if(grab){ DRAG={type:'tier',i:+grab.closest('.tier').getAttribute('data-tier')}; }
+    else return;
+    try{ e.dataTransfer.setData('text/plain',DRAG.type+':'+(DRAG.id||DRAG.i)); e.dataTransfer.effectAllowed='move'; }catch(x){} });
+  $('#ladder').addEventListener('dragover',function(e){ var t=e.target.closest&&e.target.closest('.tier'); if(!t||!DRAG)return; e.preventDefault(); t.classList.add('over'); });
+  $('#ladder').addEventListener('dragleave',function(e){ var t=e.target.closest&&e.target.closest('.tier'); if(t&&!t.contains(e.relatedTarget))t.classList.remove('over'); });
+  $('#ladder').addEventListener('drop',function(e){ var t=e.target.closest&&e.target.closest('.tier'); if(!t||!DRAG)return; e.preventDefault();
+    var ts=tiersCfg(), j=+t.getAttribute('data-tier'), d=DRAG; DRAG=null;
+    if(d.type==='item'){ ts.forEach(function(x){ var k=(x.items||[]).indexOf(d.id); if(k>=0)x.items.splice(k,1); }); (ts[j].items=ts[j].items||[]).push(d.id); }
+    else { if(d.i===j)return; var mv=ts.splice(d.i,1)[0]; ts.splice(j,0,mv); }
+    saveTiers(ts); enforceLocks(); render(); });
+  $('#ladder').addEventListener('dragend',function(){ DRAG=null; document.querySelectorAll('#ladder .drag,#ladder .over').forEach(function(x){ x.classList.remove('drag'); x.classList.remove('over'); }); });
 
   /* ---------- edits ---------- */
   document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('.qp'); if(!b)return;
@@ -768,26 +964,32 @@ window.addEventListener('load',restore);
   $('#qgroups').addEventListener('click',function(e){ var h=e.target.closest('.qgh'); if(!h)return; if(e.target.closest('input'))return;
     var g=h.getAttribute('data-gt'); OPEN[g]=!grpOpen(g); saveOpen();
     var grp=h.parentNode; grp.classList.toggle('closed',!grpOpen(g)); });
-  $('#qgroups').addEventListener('change',function(e){ var t=e.target; if(t.dataset.on){ rec().fields[t.dataset.on].on=t.checked;
-    var row=t.closest('.qrow'); if(row)row.classList.toggle('off',!t.checked); foot(); saveSoon(); } });
+  // ticking honours the ladder: a locked line refuses (and says why); unticking a prerequisite
+  // releases whatever sat on it; either way the rows + ladder re-render
+  $('#qgroups').addEventListener('change',function(e){ var t=e.target; if(!t.dataset.on)return; var id=t.dataset.on;
+    if(t.checked){ var li=lockInfo(id); if(li.locked){ t.checked=false; ldMsg('🔒 '+itemName(id)+' is locked — needs '+li.needs.join(' · ')); return; } }
+    rec().fields[id].on=t.checked;
+    if(!t.checked)enforceLocks();
+    render(); saveSoon(); });
   $('#qgroups').addEventListener('input',function(e){ var t=e.target;
     if(t.dataset.cnt!=null){ var v=String(t.value).replace(/[^0-9]/g,''); rec().fields[t.dataset.cnt].count=v===''?null:+v; foot(); saveSoon(); }
     else if(t.dataset.rate!=null){ var rv=String(t.value).replace(/[^0-9.]/g,''); rec().fields[t.dataset.rate].rate=rv===''?null:rv; t.classList.remove('seeded'); foot(); saveSoon(); }
+    else if(t.dataset.hrs!=null){ var hv=String(t.value).replace(/[^0-9.]/g,''); rec().fields[t.dataset.hrs].hours=hv===''?null:hv; t.classList.remove('seeded'); foot(); saveSoon(); }
     else if(t.dataset.note!=null){ rec().fields[t.dataset.note].note=String(t.value).slice(0,240); saveSoon(); }
   });
-  // charge model toggle: flips the row in place (no re-render, so the note keeps focus elsewhere)
+  // charge model toggle: the rate cell changes meaning (£/product ↔ hours), so the rows re-render
   $('#qgroups').addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('[data-cm]'); if(!b)return;
-    var id=b.getAttribute('data-cm'), v=b.getAttribute('data-v'); rec().fields[id].charge=v;
-    var row=b.closest('.qrow'); if(row){ row.classList.toggle('flat',v==='flat');
-      row.querySelectorAll('.cmb').forEach(function(x){ x.classList.toggle('on',x.getAttribute('data-v')===v); });
-      var ri=row.querySelector('input.rate'); if(ri)ri.placeholder=(v==='flat'?'£ one-off':'£ —'); }
-    foot(); saveSoon(); });
+    var id=b.getAttribute('data-cm'), v=b.getAttribute('data-v'); if(fCharge(id)===v)return; rec().fields[id].charge=v;
+    render(); saveSoon(); });
+  $('#blockrate').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9.]/g,''); rec().blockGBP=v===''?null:v; foot(); saveSoon(); });
   $('#setup').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9.]/g,''); rec().setup=v===''?null:v; foot(); saveSoon(); });
   $('#disc').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9.]/g,''); rec().disc=v===''?null:v; foot(); saveSoon(); });
   $('#vat').addEventListener('change',function(){ rec().vat=this.checked; foot(); saveSoon(); });
   $('#valid').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9]/g,''); rec().valid=v===''?null:+v; saveSoon(); });
   $('#savecard').addEventListener('click',function(){ var rc=STORE[RCKEY]||{fields:{}}; rc.fields=rc.fields||{};
-    CAT.forEach(function(f){ var rt=fRate(f.id); if(rt!=null)rc.fields[f.id]={rate:rt,charge:fCharge(f.id)}; }); rc.updated=Date.now(); STORE[RCKEY]=rc;
+    CAT.forEach(function(f){ var fl=fCharge(f.id)==='flat', rt=fl?null:fRate(f.id), h=fl?fHours(f.id):null;
+      if(rt!=null||h!=null)rc.fields[f.id]={rate:rt,charge:fCharge(f.id),hours:h}; });
+    rc.blockGBP=blockGBP(); rc.updated=Date.now(); STORE[RCKEY]=rc;
     var body={}; body[RCKEY]=rc; putMap(body,'Rate card saved — it pre-fills every client'); render();
   });
 
@@ -876,9 +1078,10 @@ window.addEventListener('load',restore);
   }
 
   /* ---------- copy / export ---------- */
-  function lines(){ return CAT.filter(function(f){return fOn(f.id)}).map(function(f){ return {name:f.name,grp:f.grp,id:f.id,c:fCount(f.id),rt:fRate(f.id),charge:fCharge(f.id),note:fNote(f.id)}; }); }
+  function lines(){ return CAT.filter(function(f){return fOn(f.id)}).map(function(f){ var fl=fCharge(f.id)==='flat';
+    return {name:f.name,grp:f.grp,id:f.id,c:fCount(f.id),rt:fRate(f.id),charge:fCharge(f.id),note:fNote(f.id),hours:fl?fHours(f.id):null,block:fl?blockGBP():null}; }); }
   // one line's £ wording, shared by the copy text, the email and the brief
-  function lineMoney(l){ return l.rt==null?'':(l.charge==='flat'?('one-off '+money(l.rt)):('@ £'+l.rt+'/product = '+money(l.c*l.rt))); }
+  function lineMoney(l){ return l.rt==null?'':(l.charge==='flat'?('one-off '+money(l.rt)+(l.hours!=null?' ('+l.hours+'h at £'+(l.block||blockGBP())+' per 8h)':'')):('@ £'+l.rt+'/product = '+money(l.c*l.rt))); }
   $('#copy').addEventListener('click',function(){
     var L=lines(), t=totals(), r=rec();
     var out=['FeedSpark — AI field generation quote','Client: '+CLIENT+'   Market: '+MKT.toUpperCase(),'Date: '+new Date().toLocaleDateString('en-GB'),''];
@@ -887,6 +1090,7 @@ window.addEventListener('load',restore);
       out.push('  • '+l.name+' — '+fmt(l.c)+' products'+(SHOWP&&l.rt!=null?('  '+lineMoney(l)):'')+(l.note?('  — '+l.note):'')); });
     var bs=baseSkus();
     out.push(''); out.push('Products in scope: '+fmt(baseVol())+' unique products (g:item_group_id)'+(bs>baseVol()?' · '+fmt(bs)+' variant SKUs inherit':'')+' · '+L.length+' optimisation'+(L.length===1?'':'s'));
+    out.push('Unlock ladder — '+ladderSummary());
     if(SHOWP){ if(setupFee())out.push('One-off setup: '+money(setupFee()));
       if(t.disc>0&&!t.miss){ out.push('Subtotal: '+money(t.sub)); out.push('Partner discount '+t.disc+'%: −'+money(t.discAmt)); }
       out.push(t.miss?'Subtotal: (set every rate to total)':(t.disc>0?'Net (ex VAT): ':'Subtotal: ')+money(t.net));
@@ -932,11 +1136,11 @@ window.addEventListener('load',restore);
              :'Scope: whole live catalogue — the live feed has not been pulled, volume unknown';
   }
   function rateWord(src){ return src==='own'?'rate: set on this quote':src==='card'?'rate: saved rate card'
-    :src==='cat'?'rate: Tachyon catalogue':'RATE NOT SET — line cannot be priced'; }
+    :src==='cat'?'rate: Tachyon catalogue':src==='hours'?'priced from hours at the block rate':'RATE NOT SET — line cannot be priced'; }
   /* the Additional Notes cell: Ray's own note for the line FIRST, then the derived facts */
   function lineNote(l){ var f=CMAP[l.id]||{}, fr=rec().fields[l.id], p=[];
     if(l.note)p.push(l.note);
-    if(l.charge==='flat')p.push('one-off charge for the line — covers '+fmt(l.c)+' unique products');
+    if(l.charge==='flat')p.push('one-off charge for the line'+(l.hours!=null?' — '+hoursWord(l.hours)+(l.rt!=null?' = '+money(l.rt):''):' — hours not set')+' · covers '+fmt(l.c)+' unique products');
     if(f.conv)p.push('Google conversational attribute');
     if(fr&&fr.count!=null)p.push('volume overridden on this line');
     if(f.setup!=null)p.push('setup '+f.setup+'h (ASPL+QC+PM)');
@@ -1021,7 +1225,7 @@ window.addEventListener('load',restore);
     var mkt=MKT.toUpperCase();
     var validDays=(r.valid!=null&&r.valid!=='')?+r.valid:30;
     var vTo=new Date(now.getTime()); vTo.setDate(vTo.getDate()+validDays);
-    var missN=0, srcN={own:0,card:0,cat:0,none:0}, hrs=0, hrsN=0;
+    var missN=0, srcN={own:0,card:0,cat:0,hours:0,none:0}, hrs=0, hrsN=0;
     L.forEach(function(l){ if(l.rt==null)missN++; srcN[rateSrc(l.id)]++;
       var f=CMAP[l.id]||{}; if(f.setup!=null){hrs+=+f.setup||0;hrsN++;} });
     // pro-rated window: rest of the run to the next January contract year-end
@@ -1105,7 +1309,7 @@ window.addEventListener('load',restore);
     if(!L.length)row({A:{v:'No optimisations selected',s:S.lbl},B:{v:'',s:S.lblq},
       N:{v:'Tick the optimisations you are proposing in the AI field quote and re-export',s:S.note}});
     L.forEach(function(l){ var flat=l.charge==='flat';
-      costRow({name:l.name,qual:l.grp+(flat?' · one-off':''),qty:flat?1:l.c,rate:(l.rt==null?'':l.rt),flat:flat,note:lineNote(l)}); });
+      costRow({name:l.name,qual:l.grp+(flat?' · one-off'+(l.hours!=null?' '+l.hours+'h':''):''),qty:flat?1:l.c,rate:(l.rt==null?'':l.rt),flat:flat,note:lineNote(l)}); });
     row();
     /* 6 — account management / manpower (days per month — not priced by this module) */
     var s3=row({A:{v:'Account Management & Data Optimisation - ManPower (Days / Month)',s:S.sect},
@@ -1161,10 +1365,11 @@ window.addEventListener('load',restore);
     if(selPts.length)notes.push({t:'Product types in scope ('+selPts.length+'): '
       +selPts.slice(0,25).join('; ')+(selPts.length>25?('; +'+(selPts.length-25)+' more'):'')+'.'});
     var flatN=L.filter(function(l){return l.charge==='flat'}).length;
-    if(flatN)notes.push({t:flatN+' line'+(flatN===1?'':'s')+' charged as a one-off (Quantity 1 × the flat figure); every other line is £ per unique product × quantity.'});
+    if(flatN)notes.push({t:flatN+' line'+(flatN===1?'':'s')+' charged as a one-off — hours × £'+blockGBP()+' per '+BLOCK_H+'h, written as Quantity 1 × the figure; every other line is £ per unique product × quantity.'});
     if(L.length)notes.push({t:'£/product rate provenance: '+srcN.own+' set on this quote, '+srcN.card+' from the saved rate card, '
-      +srcN.cat+' from the Tachyon catalogue'+(srcN.none?(', '+srcN.none+' still unset'):'')+'.'});
+      +srcN.cat+' from the Tachyon catalogue'+(srcN.hours?(', '+srcN.hours+' priced from hours'):'')+(srcN.none?(', '+srcN.none+' still unset'):'')+'.'});
     if(dsc)notes.push({t:'Partner discount: '+t.disc+'% off every line (the Discount % column)'+(t.miss?'.':' — '+money(t.discAmt)+' off a '+money(t.sub)+' subtotal, net '+money(t.net)+' ex VAT.')});
+    notes.push({t:'Unlock ladder — '+ladderSummary()+'.'});
     if(hrs)notes.push({t:'Delivery effort across the selection: '+fmt(hrs)+' setup hours (ASPL + QC + PM).'});
     notes.push({t:'All figures ex VAT'+(vatOn()?'; the VAT 20% line above is shown separately.':' — VAT is not applied on this quote.')});
     /* xo = Excel-only: a CSV has no formulas, so this line must never reach the CSV */
@@ -1412,10 +1617,10 @@ window.addEventListener('load',restore);
   function snapshot(){
     var t=totals(),L=lines(),now=Date.now(),r=rec(),ix=idx(),sel=(r.pts&&r.pts[MKT])||[];
     return { ref:quoteRef(new Date(now)), client:CLIENT, mkt:MKT, t:now, by:ME,
-      lines:L.map(function(l){ return {name:l.name,grp:l.grp,id:l.id,c:l.c,rt:l.rt,charge:l.charge,note:l.note}; }),
+      lines:L.map(function(l){ return {name:l.name,grp:l.grp,id:l.id,c:l.c,rt:l.rt,charge:l.charge,note:l.note,hours:l.hours,block:l.block}; }),
       scope:{mode:(r.scope||{}).mode||'all',pts:sel.slice(0,60),vol:baseVol(),skus:baseSkus(),feedTotal:ix?ix.total:null,feedProd:ix?ix.prod:null},
       setup:setupFee(), disc:t.disc, discAmt:t.discAmt, sub:t.sub, vat:vatOn(), valid:(r.valid!=null?r.valid:null),
-      net:t.net, vatAmt:t.vat, gross:t.gross, miss:t.miss, fields:t.inc, prods:t.tp,
+      net:t.net, vatAmt:t.vat, gross:t.gross, miss:t.miss, fields:t.inc, prods:t.tp, ladder:ladderSummary(),
       stage:'Saved', owner:'', hist:[{s:'Saved',t:now,by:ME}] };
   }
   function tkWhen(ts){ if(!ts)return '—'; var d=new Date(+ts);
@@ -1514,6 +1719,7 @@ window.addEventListener('load',restore);
     if(+q.disc>0&&!q.miss)out.push('Partner discount '+q.disc+'%: −'+money(q.discAmt)+' (subtotal '+money(q.sub)+' → net '+money(q.net)+' ex VAT)');
     out.push(q.miss?'Commercials: rates incomplete — the quote cannot total until every line carries a £/product or one-off rate'
       :('Total'+(q.vat?' (inc VAT 20%)':' (ex VAT)')+': '+money(q.gross)+(q.vat?' · VAT '+money(q.vatAmt):'')));
+    if(q.ladder)out.push('Unlock ladder — '+q.ladder);
     out.push('Valid '+qValid(q)+' days from the save date');
     out.push('Source: AI Field Quote finance tracker (/aiquote)');
     return out.join('\n'); }
@@ -1638,7 +1844,7 @@ window.addEventListener('load',restore);
       if(TKOPEN[k]){
         var dl=(q.lines||[]).map(function(l){
           return '<div class="dl"><span>'+esc(l.name)+' <span style="color:var(--muted)">· '+esc(l.grp||'')+'</span>'+(l.note?'<br><span style="color:var(--muted);font-weight:600">'+esc(l.note)+'</span>':'')+'</span>'
-            +'<span class="tk-money'+(SHOWP?'':' hid')+'">'+(l.charge==='flat'?(fmt(l.c)+' products · '+(l.rt==null?'one-off, rate not set':'one-off '+money(l.rt)))
+            +'<span class="tk-money'+(SHOWP?'':' hid')+'">'+(l.charge==='flat'?(fmt(l.c)+' products · '+(l.rt==null?'one-off, hours not set':'one-off '+money(l.rt)+(l.hours!=null?' · '+l.hours+'h':'')))
               :(fmt(l.c)+' × '+(l.rt==null?'rate not set':('£'+l.rt))+(l.rt==null?'':' = '+money(l.c*l.rt))))+'</span></div>'; }).join('')
           +((+q.setup)?'<div class="dl"><span>One-off setup</span><span class="tk-money'+(SHOWP?'':' hid')+'">'+money(q.setup)+'</span></div>':'')
           +((+q.disc>0)?'<div class="dl"><span>Partner discount '+esc(String(q.disc))+'%</span><span class="tk-money'+(SHOWP?'':' hid')+'">'+(q.miss?'—':'−'+money(q.discAmt))+'</span></div>':'')
