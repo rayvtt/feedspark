@@ -2879,7 +2879,7 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "import TACHYON from",
       "forbidden": true,
-      "pr": 308
+      "pr": 307
     }
   ]
 }
