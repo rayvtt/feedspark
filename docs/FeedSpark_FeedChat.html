@@ -368,7 +368,12 @@ function ensureFeed(brand,mkt,onProg){
   return new Promise(function(res,rej){
     var header=null,cands=[],kwc=[],ix={},rows=[],n=0;
     function col(k){return ix[k]!=null?ix[k]:-1}
-    var parser=FeedAudit.createParser(function(r){
+    // Sniff XML vs CSV from the first bytes (same row contract for both parsers: header
+    // callback first, then one row per <item>/CSV line). Without this the CSV parser ran on
+    // FeedHero XML feeds and counted every LINE as a "product" — a ~8k-SKU feed reported as
+    // ~590k rows with every field 100% empty (the estate went {xml} on 9 Sep 2026).
+    var parser=null;
+    function onRow(r){
       if(!header){ header=r;
         for(var i=0;i<r.length;i++){ var k=FeedAudit.normKey(r[i]);
           // numbered product_type 2..10 = the keyword fields (same rules as the Keyword Calendar)
@@ -391,17 +396,20 @@ function ensureFeed(brand,mkt,onProg){
         av:String(col('availability')>=0?r[col('availability')]:'').trim(),
         cv:cands.map(function(ci){return String(r[ci]||'').trim()}), pt:'', kw:kw});
       if(n%2000===0&&onProg)onProg(n);
-    });
+    }
+    function mkParser(t){ if(/^\s*</.test(t)){ if(!FeedAudit.createXmlParser)throw new Error('XML feed but the cached engine predates XML support — hard-refresh so the page and /feedlab/engine.js come from the same deploy'); return FeedAudit.createXmlParser(onRow); } return FeedAudit.createParser(onRow); }
     fetch('/api/feed/proxy?client='+encodeURIComponent(brand)+'&market='+encodeURIComponent(mkt)).then(function(resp){
       if(!resp.ok)return resp.json().catch(function(){return{}}).then(function(j){throw new Error(j.error||('feed proxy said '+resp.status))});
       var reader=resp.body.getReader(),dec=new TextDecoder();
       function step(){ return reader.read().then(function(x){
-        if(x.done){ parser.push(dec.decode()); parser.end();
+        if(x.done){ if(parser){ parser.push(dec.decode()); parser.end(); }
           var best=-1,wci=0; cands.forEach(function(ci,j2){ var c=0; rows.forEach(function(rw){ if(rw.cv[j2])c++; }); if(c>best){best=c;wci=j2} });
           rows.forEach(function(rw){ rw.pt=rw.cv[wci]||''; delete rw.cv; });
           CACHE[key]={rows:rows,n:n,kwcols:kwc.length,t:Date.now()};
           res(CACHE[key]); return; }
-        parser.push(dec.decode(x.value,{stream:true})); return step(); }); }
+        var chunk=dec.decode(x.value,{stream:true});
+        if(!parser){ if(!chunk.trim())return step(); parser=mkParser(chunk); }
+        parser.push(chunk); return step(); }); }
       return step();
     }).catch(rej);
   });

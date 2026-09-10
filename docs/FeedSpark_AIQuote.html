@@ -302,11 +302,14 @@ window.addEventListener('load',restore);
   .qrow .fmeta b{color:var(--ink-2);font-weight:800}
   .qrow .fmeta .conv-tag{color:var(--navy);font-weight:800}
   [data-theme=dark] .qrow .fmeta .conv-tag{color:#93B4E0}
-  .qrow input.cnt,.qrow input.rate{font:inherit;font-size:13px;font-weight:800;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;width:100%;text-align:right}
+  /* margin:0 + box-shadow:none are load-bearing, not cosmetic: they keep the row's boxes on
+     one baseline even if an input picks up a page-level class (a global .card once shoved the
+     rate box up 8px inside the centred grid row and drew a shadow under it) */
+  .qrow input.cnt,.qrow input.rate{font:inherit;font-size:13px;font-weight:800;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;width:100%;text-align:right;margin:0;box-shadow:none}
   [data-theme=dark] .qrow input.cnt,[data-theme=dark] .qrow input.rate{background:#161922;color:var(--ink);border-color:var(--line)}
   .qrow input.cnt.auto{color:var(--muted);font-weight:700}
-  .qrow input.rate.card{color:var(--navy);border-style:dashed}
-  [data-theme=dark] .qrow input.rate.card{color:#93B4E0}
+  .qrow input.rate.seeded{color:var(--navy);border-style:dashed}
+  [data-theme=dark] .qrow input.rate.seeded{color:#93B4E0}
   .qrow .line{font-weight:900;text-align:right}
   .qrow .line.unset{color:var(--muted);font-weight:700;font-size:11.5px}
   .cbx{width:17px;height:17px;accent-color:var(--orange-deep);cursor:pointer}
@@ -325,6 +328,49 @@ window.addEventListener('load',restore);
   .rc-note{font-size:11.5px;color:var(--navy);font-weight:800;margin-top:10px}
   [data-theme=dark] .rc-note{color:#93B4E0}
   @media(max-width:720px){.qrow,.qhead{grid-template-columns:26px 1fr 84px}.qhead .rate-h,.qhead .line-h,.qrow .col-rate,.qrow .col-line{display:none}}
+
+  /* ---------- saved quotes: the finance tracker ---------- */
+  .tk-kpis{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+  .tk-kpi{flex:1 1 150px;background:var(--wash);border:1px solid var(--line);border-radius:10px;padding:10px 13px}
+  .tk-kpi .v{font-size:20px;font-weight:900;letter-spacing:-.01em}
+  .tk-kpi .l{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:2px}
+  [data-theme=dark] .tk-kpi{background:#181B22}
+  .tk-scroll{overflow-x:auto}
+  .tk{width:100%;border-collapse:collapse;font-size:12.5px;min-width:1080px}
+  .tk th{text-align:left;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:0 9px 7px;white-space:nowrap}
+  .tk td{padding:9px;border-top:1px solid var(--wash);vertical-align:middle}
+  [data-theme=dark] .tk td{border-top-color:#181B22}
+  .tk tbody tr:hover td{background:rgba(245,166,35,.05)}
+  .tk .t-ref{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tk .t-cl{font-weight:800}
+  .tk .t-mk{font-size:10px;font-weight:900;color:var(--orange-ink);letter-spacing:.04em}
+  .tk .t-when{color:var(--muted);font-weight:700;white-space:nowrap;font-size:11.5px}
+  .tk .t-tot{font-weight:900;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tk .t-tot.unset{color:var(--muted);font-weight:700;font-size:11px}
+  /* stage rail: every stage visible so the whole lifecycle reads at a glance, current one lit */
+  .st-rail{display:inline-flex;gap:3px;flex-wrap:wrap}
+  .st{font:inherit;font-size:10.5px;font-weight:900;padding:3px 9px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer;white-space:nowrap}
+  .st:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .st.done{background:rgba(21,128,61,.09);border-color:rgba(21,128,61,.3);color:var(--good)}
+  .st.on{background:linear-gradient(135deg,var(--orange),var(--orange-deep));border-color:transparent;color:#fff}
+  .st.dec{color:var(--risk)}
+  .st.dec.on{background:var(--risk);border-color:transparent;color:#fff}
+  [data-theme=dark] .st{background:#20242E}
+  .tk select.t-own{font:inherit;font-size:11.5px;font-weight:800;padding:4px 7px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+  [data-theme=dark] .tk select.t-own{background:#161922;color:var(--ink)}
+  .tk .t-x{font:inherit;font-size:11px;font-weight:900;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--muted);cursor:pointer;padding:2px 8px;opacity:0;transition:opacity .12s}
+  .tk tbody tr:hover .t-x,.tk .t-x:focus-visible{opacity:1}
+  .tk .t-x:hover{border-color:var(--risk);color:var(--risk)}
+  .tk .t-exp{font:inherit;font-size:11px;font-weight:900;border:0;background:none;color:var(--muted);cursor:pointer;padding:2px 4px}
+  .tk .t-exp:hover{color:var(--orange-deep)}
+  .tk tr.t-det td{background:var(--wash);font-size:11.5px;color:var(--ink-2)}
+  [data-theme=dark] .tk tr.t-det td{background:#181B22}
+  .t-det .dl{display:flex;justify-content:space-between;gap:14px;padding:2px 0;max-width:640px}
+  .t-det .dh{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:2px 0 4px}
+  .t-det .hist{margin-top:9px;font-size:11px;font-weight:700;color:var(--muted);line-height:1.7}
+  .t-det .hist b{color:var(--ink-2)}
+  .tk-empty{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 0}
+  .tk-money.hid{visibility:hidden}
 </style>
 
 <div class="topbar"><div class="topbar-in">
@@ -380,6 +426,7 @@ window.addEventListener('load',restore);
       <span class="qopt">Quote valid <input type="text" id="valid" inputmode="numeric" placeholder="30"> days</span>
     </div>
     <div class="qactions">
+      <button class="btn pri" id="savequote" type="button" title="Freeze this quote as a dated snapshot and put it on the finance tracker">💾 Save quote</button>
       <button class="btn" id="copy" type="button">⧉ Copy quote</button>
       <button class="btn pri" id="xlsx" type="button" title="Branded, formula-driven Excel workbook on Ray's quote template">⇩ Download quote (Excel)</button>
       <button class="btn" id="csv" type="button" title="Same quote as raw CSV data">⇩ CSV</button>
@@ -388,6 +435,21 @@ window.addEventListener('load',restore);
       <span class="hint" id="save-hint"></span>
     </div>
     <div class="rc-note col-rate" id="rc-note" hidden></div>
+  </div>
+
+  <div class="card" id="tracker-card">
+    <h3>Saved quotes — finance tracker <span class="hint" id="tk-n"></span></h3>
+    <div class="ch">Every saved quote is frozen with its numbers, its scope and the moment it was saved — editing the live quote above can never rewrite a figure finance has already signed off. Walk each one along the rail as it moves: <b>Approved → Greenlight → In action → Billed</b>, with <b>Andy or Jackie</b> on the finance owner. Every stage change is stamped with who did it and when; click ⌄ for the line detail and the full audit trail.</div>
+    <div class="tk-kpis" id="tk-kpis"></div>
+    <div class="tk-scroll"><table class="tk" id="tk">
+      <thead><tr>
+        <th>Ref</th><th>Client</th><th>Saved</th><th>Scope</th>
+        <th style="text-align:right" class="tk-money">Total</th>
+        <th>Stage — click to move it</th><th>Finance owner</th><th>Last update</th><th></th>
+      </tr></thead>
+      <tbody id="tk-body"></tbody>
+    </table></div>
+    <div class="hint" id="tk-state" style="margin-top:10px"></div>
   </div>
 
   <div class="card" style="background:var(--wash)">
@@ -448,6 +510,13 @@ window.addEventListener('load',restore);
       STORE=(m&&typeof m==='object')?m:{}; CLIENT=cs[0]||''; if(CLIENT){sel.value=CLIENT;} pickClient();
     });
   }).catch(function(){ err('Could not load the client list — this needs the live worker.'); });
+
+  // the saved-quote snapshots + who is signed in (the Access-verified email the worker reports,
+  // so a stage stamp records a real identity rather than a name typed into the page)
+  fetch('/api/aiquote/saved').then(function(r){ SAVED_BASE=+r.headers.get('X-Sync-Base')||0; return r.json(); })
+    .catch(function(){ return {}; }).then(function(m){ if(m&&typeof m==='object')SAVED=m; renderTracker(); });
+  fetch('/api/access?me=1').then(function(r){ return r.json(); }).catch(function(){ return null; })
+    .then(function(a){ ME=(a&&(a.email||a.name))||''; });
 
   function pickClient(){ if(!CLIENT)return; rec(); loadMkts(); render(); }
   $('#brand').addEventListener('change',function(){ CLIENT=this.value; rec(); IDX={}; loadMkts(); render(); });
@@ -554,7 +623,7 @@ window.addEventListener('load',restore);
           +'<span><input type="checkbox" class="cbx" data-on="'+f.id+'"'+(on?' checked':'')+'></span>'
           +'<span><div class="fname">'+esc(f.name)+'</div><div class="fmeta">'+metaHtml(f)+'</div></span>'
           +'<span class="col-cnt"><input class="cnt'+(isAuto?' auto':'')+'" data-cnt="'+f.id+'" inputmode="numeric" value="'+fmt(c)+'"'+(isAuto?' title="auto from scope — type to override"':'')+'></span>'
-          +'<span class="col-rate"><input class="rate'+(src==='card'||src==='cat'?' card':'')+'" data-rate="'+f.id+'" inputmode="decimal" placeholder="£ —" value="'+(rt==null?'':rt)+'"'+(src==='cat'?' title="catalogue rate — type to override"':src==='card'?' title="from your rate card"':'')+'></span>'
+          +'<span class="col-rate"><input class="rate'+(src==='card'||src==='cat'?' seeded':'')+'" data-rate="'+f.id+'" inputmode="decimal" placeholder="£ —" value="'+(rt==null?'':rt)+'"'+(src==='cat'?' title="catalogue rate — type to override"':src==='card'?' title="from your rate card"':'')+'></span>'
           +'<span class="col-line">'+line+'</span></div>';
       }).join('');
       return '<div class="qgrp'+(open?'':' closed')+'" data-g="'+esc(g)+'"><div class="qgh" data-gt="'+esc(g)+'"><span class="tw">▾</span><span class="gname'+(g===CONV_GRP?' conv':'')+'">'+esc(g)+'</span><span class="gcount'+(onN?' has':'')+'">'+(onN?onN+' selected':items.length+' fields')+'</span></div><div class="qrows">'+rows+'</div></div>';
@@ -588,7 +657,8 @@ window.addEventListener('load',restore);
     render(); saveSoon();
   });
   $('#ptpick').addEventListener('click',function(){ rec().scope={mode:'pts'}; openPicker(); render(); });
-  $('#showp').addEventListener('click',function(){ SHOWP=!SHOWP; try{localStorage.setItem('fcc-aiq-showp',SHOWP?'1':'0')}catch(e){} render(); });
+  // £ Show/Hide covers the tracker too — the whole page has to stay safe to screen-share
+  $('#showp').addEventListener('click',function(){ SHOWP=!SHOWP; try{localStorage.setItem('fcc-aiq-showp',SHOWP?'1':'0')}catch(e){} render(); renderTracker(); });
   $('#expand').addEventListener('click',function(){ var anyClosed=GROUPS.some(function(g){return !grpOpen(g)}); GROUPS.forEach(function(g){OPEN[g]=anyClosed;}); saveOpen(); render(); $('#expand').textContent=anyClosed?'⊖ Collapse all':'⊕ Expand all'; });
   function saveOpen(){ try{localStorage.setItem('fcc-aiq-open',JSON.stringify(OPEN))}catch(e){} }
   $('#qgroups').addEventListener('click',function(e){ var h=e.target.closest('.qgh'); if(!h)return; if(e.target.closest('input'))return;
@@ -598,7 +668,7 @@ window.addEventListener('load',restore);
     var row=t.closest('.qrow'); if(row)row.classList.toggle('off',!t.checked); foot(); saveSoon(); } });
   $('#qgroups').addEventListener('input',function(e){ var t=e.target;
     if(t.dataset.cnt!=null){ var v=String(t.value).replace(/[^0-9]/g,''); rec().fields[t.dataset.cnt].count=v===''?null:+v; foot(); saveSoon(); }
-    else if(t.dataset.rate!=null){ var rv=String(t.value).replace(/[^0-9.]/g,''); rec().fields[t.dataset.rate].rate=rv===''?null:rv; t.classList.remove('card'); foot(); saveSoon(); }
+    else if(t.dataset.rate!=null){ var rv=String(t.value).replace(/[^0-9.]/g,''); rec().fields[t.dataset.rate].rate=rv===''?null:rv; t.classList.remove('seeded'); foot(); saveSoon(); }
   });
   $('#setup').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9.]/g,''); rec().setup=v===''?null:v; foot(); saveSoon(); });
   $('#vat').addEventListener('change',function(){ rec().vat=this.checked; foot(); saveSoon(); });
@@ -1170,6 +1240,128 @@ window.addEventListener('load',restore);
     /* the BOM is what stops Excel decoding UTF-8 as Windows-1252 (the â€" / Â· mojibake) */
     download(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}), fileStem()+'.csv');
   });
+  /* ---------- saved quotes + the finance tracker ---------- */
+  // A saved quote is an IMMUTABLE SNAPSHOT in its own KV map (`aiquotesaved`, kvmerge-backed
+  // like /api/briefs), deliberately NOT the live working quote: editing the quote above can
+  // never rewrite a figure Andy or Jackie have already signed off. Every stage change and
+  // owner change appends to `hist` with a timestamp and the signed-in identity, so the row
+  // carries its own audit trail.
+  var SAVED={},SAVED_BASE=0,ME='',TKOPEN={};
+  var STAGES=['Saved','Approved','Greenlight','In action','Billed'];   // Ray's rail (+ Declined)
+  var FINANCE=['Andy','Jackie'];
+
+  function putSaved(msg){
+    fetch('/api/aiquote/saved',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(SAVED_BASE)},body:JSON.stringify(SAVED)})
+      .then(function(res){ SAVED_BASE=+res.headers.get('X-Sync-Base')||SAVED_BASE; return res.json(); })
+      .then(function(m){ if(m&&typeof m==='object'&&!m.ok)SAVED=m; renderTracker();
+        if(msg){ $('#tk-state').textContent=msg; setTimeout(function(){ if($('#tk-state').textContent===msg)$('#tk-state').textContent=''; },2800); } })
+      .catch(function(){ $('#tk-state').textContent='save failed — offline?'; });
+  }
+  function snapshot(){
+    var t=totals(),L=lines(),now=Date.now(),r=rec(),ix=idx(),sel=(r.pts&&r.pts[MKT])||[];
+    return { ref:quoteRef(new Date(now)), client:CLIENT, mkt:MKT, t:now, by:ME,
+      lines:L.map(function(l){ return {name:l.name,grp:l.grp,id:l.id,c:l.c,rt:l.rt}; }),
+      scope:{mode:(r.scope||{}).mode||'all',pts:sel.slice(0,60),vol:baseVol(),feedTotal:ix?ix.total:null},
+      setup:setupFee(), vat:vatOn(), valid:(r.valid!=null?r.valid:null),
+      net:t.net, vatAmt:t.vat, gross:t.gross, miss:t.miss, fields:t.inc, prods:t.tp,
+      stage:'Saved', owner:'', hist:[{s:'Saved',t:now,by:ME}] };
+  }
+  function tkWhen(ts){ if(!ts)return '—'; var d=new Date(+ts);
+    return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+  function tkWho(w){ return w?String(w).split('@')[0]:'—'; }
+  function stamp(id,label){ var q=SAVED[id]; if(!q)return;
+    q.hist=(q.hist||[]).concat([{s:label,t:Date.now(),by:ME}]); q.upd=Date.now(); }
+  function setStage(id,st){ var q=SAVED[id]; if(!q||q.stage===st)return;
+    q.stage=st; stamp(id,st); putSaved(q.ref+' → '+st); }
+  function setOwner(id,o){ var q=SAVED[id]; if(!q||(q.owner||'')===o)return;
+    q.owner=o; stamp(id,'owner: '+(o||'unassigned')); putSaved(q.ref+' → '+(o||'unassigned')); }
+
+  function renderTracker(){
+    var ids=Object.keys(SAVED).filter(function(k){ return SAVED[k]&&typeof SAVED[k]==='object'&&!SAVED[k].deleted&&SAVED[k].ref; });
+    ids.sort(function(a,b){ return (+SAVED[b].t||0)-(+SAVED[a].t||0); });
+    $('#tk-n').textContent=ids.length?'· '+ids.length+' saved':'';
+    var pipe=0,billed=0,withFin=0,incomplete=0;
+    ids.forEach(function(k){ var q=SAVED[k],g=+q.gross||0;
+      if(q.miss)incomplete++;
+      if(q.stage==='Billed')billed+=g;
+      else if(q.stage!=='Declined'){ pipe+=g; if(q.stage!=='Saved')withFin++; } });
+    var m=function(v){ return SHOWP?money(v):'£ hidden'; };
+    $('#tk-kpis').innerHTML=
+       '<div class="tk-kpi"><div class="v">'+ids.length+'</div><div class="l">Saved quotes</div></div>'
+      +'<div class="tk-kpi"><div class="v">'+m(pipe)+'</div><div class="l">In pipeline · not billed</div></div>'
+      +'<div class="tk-kpi"><div class="v">'+m(billed)+'</div><div class="l">Billed</div></div>'
+      +'<div class="tk-kpi"><div class="v">'+withFin+'</div><div class="l">Moving with finance</div></div>'
+      +(incomplete?'<div class="tk-kpi"><div class="v" style="color:var(--orange-ink)">'+incomplete+'</div><div class="l">Rates incomplete</div></div>':'');
+    if(!ids.length){ $('#tk-body').innerHTML='<tr><td colspan="9"><div class="tk-empty">No saved quotes yet — build one above and hit 💾 Save quote. Each save freezes its numbers and lands here with a timestamp.</div></td></tr>'; return; }
+    $('#tk-body').innerHTML=ids.map(function(k){
+      var q=SAVED[k], si=STAGES.indexOf(q.stage);
+      var rail=STAGES.map(function(s,i){
+        var cls=(q.stage===s)?'st on':((si>=0&&i<si)?'st done':'st');
+        return '<button type="button" class="'+cls+'" data-st="'+esc(s)+'" data-id="'+esc(k)+'" title="Mark '+esc(s)+'">'+esc(s)+'</button>'; }).join('')
+        +'<button type="button" class="st dec'+(q.stage==='Declined'?' on':'')+'" data-st="Declined" data-id="'+esc(k)+'" title="Mark Declined">Declined</button>';
+      var tot=q.miss?'<span class="t-tot unset">rates incomplete</span>'
+              :'<span class="t-tot">'+money(q.gross)+(q.vat?'':' <span style="font-weight:700;color:var(--muted);font-size:10px">ex VAT</span>')+'</span>';
+      var scope=q.scope||{};
+      var scopeTxt=(scope.mode==='pts'&&(scope.pts||[]).length)?((scope.pts||[]).length+' product types')
+                  :(scope.mode==='manual'?'headline figure':'whole catalogue');
+      var last=q.upd||q.t, lastBy=(q.hist&&q.hist.length)?q.hist[q.hist.length-1].by:q.by;
+      var row='<tr>'
+        +'<td class="t-ref">'+esc(q.ref||'—')+'</td>'
+        +'<td><span class="t-cl">'+esc(q.client||'—')+'</span> <span class="t-mk">'+esc(String(q.mkt||'').toUpperCase())+'</span></td>'
+        +'<td class="t-when">'+tkWhen(q.t)+'<br><span style="font-size:10px">by '+esc(tkWho(q.by))+'</span></td>'
+        +'<td class="t-when">'+esc(scopeTxt)+'<br><span style="font-size:10px">'+fmt(scope.vol||q.prods||0)+' products · '+(q.fields||0)+' field'+((q.fields||0)===1?'':'s')+'</span></td>'
+        +'<td style="text-align:right" class="tk-money'+(SHOWP?'':' hid')+'">'+tot+'</td>'
+        +'<td><span class="st-rail">'+rail+'</span></td>'
+        +'<td><select class="t-own" data-own="'+esc(k)+'"><option value="">— unassigned</option>'
+          +FINANCE.map(function(f){ return '<option'+((q.owner||'')===f?' selected':'')+'>'+esc(f)+'</option>'; }).join('')+'</select></td>'
+        +'<td class="t-when">'+tkWhen(last)+'<br><span style="font-size:10px">'+esc(tkWho(lastBy))+'</span></td>'
+        +'<td style="white-space:nowrap"><button class="t-exp" type="button" data-exp="'+esc(k)+'" title="Line detail + audit trail">'+(TKOPEN[k]?'⌃':'⌄')+'</button>'
+          +'<button class="t-x" type="button" data-x="'+esc(k)+'" title="Remove this saved quote">✕</button></td>'
+        +'</tr>';
+      if(TKOPEN[k]){
+        var dl=(q.lines||[]).map(function(l){
+          return '<div class="dl"><span>'+esc(l.name)+' <span style="color:var(--muted)">· '+esc(l.grp||'')+'</span></span>'
+            +'<span class="tk-money'+(SHOWP?'':' hid')+'">'+fmt(l.c)+' × '+(l.rt==null?'rate not set':('£'+l.rt))+(l.rt==null?'':' = '+money(l.c*l.rt))+'</span></div>'; }).join('')
+          +((+q.setup)?'<div class="dl"><span>One-off setup</span><span class="tk-money'+(SHOWP?'':' hid')+'">'+money(q.setup)+'</span></div>':'')
+          +'<div class="dl" style="border-top:1px solid var(--line);margin-top:5px;padding-top:5px"><span><b>Total'+(q.vat?' (inc VAT 20%)':' (ex VAT)')+'</b></span><span class="tk-money'+(SHOWP?'':' hid')+'"><b>'+(q.miss?'rates incomplete':money(q.gross))+'</b></span></div>';
+        var hist=(q.hist||[]).map(function(h){ return '<b>'+esc(h.s)+'</b> — '+tkWhen(h.t)+' · '+esc(tkWho(h.by)); }).join('<br>');
+        row+='<tr class="t-det"><td colspan="9">'
+          +'<div class="dh">Lines as saved</div>'+dl
+          +((scope.pts||[]).length?('<div class="dh" style="margin-top:9px">Product types in scope ('+(scope.pts||[]).length+')</div><div style="max-width:640px">'+esc((scope.pts||[]).slice(0,12).join(' · '))+((scope.pts||[]).length>12?(' · +'+((scope.pts||[]).length-12)+' more'):'')+'</div>'):'')
+          +'<div class="dh" style="margin-top:9px">Audit trail</div><div class="hist">'+(hist||'—')
+          +(q.valid?('<br><span style="color:var(--muted)">Quote valid '+q.valid+' days from the save date</span>'):'')+'</div>'
+          +'</td></tr>';
+      }
+      return row;
+    }).join('');
+  }
+  $('#tk-body').addEventListener('click',function(e){
+    var st=e.target.closest&&e.target.closest('[data-st]');
+    if(st){ setStage(st.getAttribute('data-id'),st.getAttribute('data-st')); return; }
+    var ex=e.target.closest&&e.target.closest('[data-exp]');
+    if(ex){ var kk=ex.getAttribute('data-exp'); TKOPEN[kk]=!TKOPEN[kk]; renderTracker(); return; }
+    var x=e.target.closest&&e.target.closest('[data-x]');
+    if(x){ var id=x.getAttribute('data-x'), q=SAVED[id]; if(!q)return;
+      if(!confirm('Remove saved quote '+(q.ref||'')+' ('+(q.client||'')+')? Its audit trail goes with it.'))return;
+      SAVED[id]={deleted:true,t:Date.now()};   // tombstone — a hard delete can be resurrected by another tab's merge
+      putSaved('removed'); }
+  });
+  $('#tk-body').addEventListener('change',function(e){
+    var s=e.target.closest&&e.target.closest('[data-own]'); if(!s)return;
+    setOwner(s.getAttribute('data-own'),s.value);
+  });
+  $('#savequote').addEventListener('click',function(){
+    if(!CLIENT){ err('Pick a client before saving a quote.'); return; }
+    var t=totals();
+    if(!t.inc){ err('Tick at least one optimisation before saving the quote.'); return; }
+    err('');
+    var id='q'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    SAVED[id]=snapshot(); TKOPEN[id]=false;
+    putSaved('Saved '+SAVED[id].ref+(t.miss?' — note: some rates are still unset':''));
+    toast('Quote saved · '+SAVED[id].ref);
+    var el=$('#tracker-card'); if(el&&el.scrollIntoView)setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'start'})},140);
+  });
+
   function copy(text,msg){ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){toast(msg)})}else{var a=document.createElement('textarea');a.value=text;document.body.appendChild(a);a.select();try{document.execCommand('copy');toast(msg)}catch(e){}a.remove();} }
   function toast(m){var t=document.createElement('div');t.textContent=m;t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1A365D;color:#fff;padding:9px 15px;border-radius:8px;z-index:9999;font-weight:700;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2)';document.body.appendChild(t);setTimeout(function(){t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(function(){t.remove()},300)},1700);}
 })();

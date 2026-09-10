@@ -52,6 +52,10 @@ echo "── validating: module-nav parity (the menu stays identical on every pa
 node tools/check_nav.js >/dev/null
 echo "   ✓ nav identical across all app pages"
 
+echo "── validating: labelguard browser-engine copy (served /labels/engine.js = src)"
+node tools/check_lgcopy.js >/dev/null
+echo "   ✓ docs/labelguard_engine.js in sync"
+
 echo "── auditing: deck content consistency (changed decks only)"
 # Structural validation is not enough. The Reiss deck once passed every structural check
 # while quoting two different values for the same metric, citing a figure whose source

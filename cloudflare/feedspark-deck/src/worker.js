@@ -51,7 +51,6 @@ import DECK_REISS from "../../../docs/Reiss_Strategy_Review_FY2526.html";
 import DECK_SUPERDRY from "../../../docs/Superdry_Strategy_Review_AllTime.html";
 // Tachyon copilot widget (style + script fragment). Injected on the app pages only —
 // never on client-facing decks. Reads window.PLANTASKS and calls /api/claude.
-import TACHYON from "../../../docs/tachyon_widget.html";
 // FCC-PRESENCE: Google-Docs-style live avatars in the topbar — injected on app pages only.
 // Identity comes from Cloudflare Access (who()); heartbeats live in the KV `presence` map.
 import PRESENCEW from "../../../docs/presence_widget.html";
@@ -86,6 +85,10 @@ import GPC_TAXONOMY from "../../../docs/gpc_taxonomy.txt";
 // the Feed Lab audit engine, bundled verbatim (wrangler Text rule) and served at
 // /feedlab/engine.js so the page and its node tests run the exact same code
 import FEEDLAB_ENGINE from "../../../docs/feedlab_engine.js";
+// the labelguard engine's BROWSER copy (kept byte-identical to src/labelguard.js by
+// tools/check_lgcopy.js — wrangler can't serve a bundled module's own source), served at
+// /labels/engine.js for the guard pages' in-browser XML live rescan
+import LABELGUARD_ENGINE_SRC from "../../../docs/labelguard_engine.js";
 
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
@@ -360,12 +363,12 @@ export default {
         '/api/materials': 'material-save',
         '/api/briefs': 'briefs-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
         '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save',
-        '/api/labels/scan': 'label-scan', '/api/labels/ack': 'label-rebase',
+        '/api/labels/scan': 'label-scan', '/api/labels/scanpush': 'label-scan-live', '/api/labels/ack': 'label-rebase',
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
         '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile',
-        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save' };
+        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -678,17 +681,10 @@ export default {
           }
           const snap = e.snap;
           if (!snap || typeof snap !== 'object' || !snap.labels || typeof snap.rows !== 'number') { results.push({ client, mkt, error: 'bad snapshot' }); continue; }
-          snap.client = client; snap.market = mkt; snap.v = 1;
-          if (!snap.t || typeof snap.t !== 'number') snap.t = Date.now();
           try {
-            const r = await processScanSnapshot(env, client, mkt, snap, { wantPT, rescan: null });
-            if (r && r.skipped) results.push({ client, mkt, skipped: true, retry: !!r.retry });
-            else {
-              // volume tracking rides only CONFIRMED scans — a held catastrophic reading's
-              // id set would fake a churn crater, so it lands with the confirming re-push
-              try { await volTrack(env, client, mkt, snap.rows, e.vol); } catch (e3) {}
-              results.push({ client, mkt, ok: true, alerts: ((r && r.alerts) || []).filter((a) => a.sev !== 'info').length });
-            }
+            const r = await applyPushedSnapshot(env, client, mkt, snap, e.vol);
+            results.push(r.skipped ? { client, mkt, skipped: true, retry: r.retry }
+              : { client, mkt, ok: true, alerts: r.alerts });
           } catch (e2) { results.push({ client, mkt, error: String((e2 && e2.message) || e2).slice(0, 120) }); }
         }
         logActivity(ctx, env, request, 'xml-scan', results.filter((r) => r.ok).length + ' scanned · '
@@ -988,6 +984,14 @@ export default {
       const r = await mapStoreRoute(env, request, 'aiquote', {});
       if (r) return r;
     }
+    // Saved quote SNAPSHOTS + the finance tracker (Ray, Sep 2026: save a quote, timestamp it,
+    // and follow it through Approved -> Greenlight -> In action -> Billed with Andy/Jackie).
+    // Separate KV key from the live working quote so a snapshot is immutable by construction:
+    // editing the quote on /aiquote can never rewrite a figure finance has already signed off.
+    if (path === '/api/aiquote/saved') {
+      const r = await mapStoreRoute(env, request, 'aiquotesaved', {});
+      if (r) return r;
+    }
     // FCC-PRESENCE heartbeat: stamp the caller's Access identity into the `presence` map and
     // return everyone's last-seen. One beat per open page per minute — deliberately NOT in the
     // ACT activity log (heartbeats would drown the real usage trail /api/activity keeps).
@@ -1026,6 +1030,9 @@ export default {
     }
 
     // the engine, served verbatim so the page and node tests share one file
+    if (path === '/labels/engine.js' && request.method === 'GET') {
+      return new Response(LABELGUARD_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
     if (path === '/feedlab/engine.js' && request.method === 'GET') {
       return new Response(FEEDLAB_ENGINE, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
@@ -1962,7 +1969,7 @@ export default {
       // exists, append to the end otherwise (trailing <style>/<script> parse into body fine).
       const inject = (html, extra) => (html.indexOf('</body>') >= 0 ? html.replace('</body>', extra + '\n</body>') : html + '\n' + extra);
       let html = inject(page.html, getEditorScript(page.slug));
-      if (!path.startsWith('/deck/')) html = inject(html, TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW);
+      if (!path.startsWith('/deck/')) html = inject(html, INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW);
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
@@ -2213,6 +2220,23 @@ async function volTrack(env, client, mkt, rows, vol) {
   await env.EDITS.put(HK, JSON.stringify(hist.slice(-60)));
   await env.EDITS.put(VK, JSON.stringify({ d: today, ids: trunc ? '' : vol.ids, trunc }));
   return { d: today };
+}
+
+// One pushed raw snapshot → the shared guard processing + volume tracking. Used by the
+// 4x-daily agent's {xmlscan} batches AND the guard pages' manual live rescan
+// (POST /api/labels/scanpush) — identical semantics on both lanes, including the
+// catastrophic labelpend two-strike (retry:true asks the pusher for an immediate
+// confirming re-read). Identity fields are always forced server-side.
+async function applyPushedSnapshot(env, client, mkt, snap, vol) {
+  const wantPT = !/-fb$/.test(mkt);
+  snap.client = client; snap.market = mkt; snap.v = 1;
+  if (!snap.t || typeof snap.t !== 'number') snap.t = Date.now();
+  const r = await processScanSnapshot(env, client, mkt, snap, { wantPT, rescan: null });
+  if (r && r.skipped) return { skipped: true, retry: !!r.retry };
+  // volume tracking rides only CONFIRMED scans — a held catastrophic reading's id set
+  // would fake a churn crater, so it lands with the confirming re-push
+  try { await volTrack(env, client, mkt, snap.rows, vol); } catch (e) {}
+  return { ok: true, alerts: ((r && r.alerts) || []).filter((a) => a.sev !== 'info').length, full: r };
 }
 
 // EVERYTHING below the fetch: split the raw snapshot, roll the day/known-good references,
@@ -2486,6 +2510,29 @@ async function labelGuardRoutes(env, request, url) {
     const r = await runLabelScan(env, client, mkt);
     if (r.error) return json({ error: r.error }, r.status || 502);
     return json(r);
+  }
+
+  // Manual live rescan for XML feeds (Ray, 10 Sep 2026: the per-feed scan button must not
+  // depend on the 4x-daily run when there's an issue): the guard page STREAMS the FeedHero
+  // XML in the browser through /labels/engine.js's xmlCollector (the agent's exact code)
+  // and posts the raw snapshot here. Same trust posture as the page's other writes —
+  // behind Cloudflare Access — and the same safety rails as the agent lane: the feed must
+  // resolve to an {xml} source, identity fields are forced server-side, and a catastrophic
+  // reading is HELD (retry:true) until the page pushes an agreeing second read.
+  if (path === '/api/labels/scanpush' && request.method === 'POST') {
+    if (badClient) return json({ error: 'bad client' }, 400);
+    const src = await feedSourceFor(env, client, mkt);
+    if (!src || !src.xml) return json({ error: 'not an XML feed - sheet feeds scan via /api/labels/scan (gviz)' }, 400);
+    let body; try { body = await request.json(); } catch (e) { return json({ error: 'bad json' }, 400); }
+    const snap = body && body.snap;
+    if (!snap || typeof snap !== 'object' || !snap.labels || typeof snap.rows !== 'number') return json({ error: 'bad snapshot' }, 400);
+    try {
+      const r = await applyPushedSnapshot(env, client, mkt, snap, body.vol);
+      if (r.skipped) return json({ skipped: true, retry: r.retry }, 202);
+      // the full processScanSnapshot result, so each guard page can read its own slice
+      // (labels pages use .snapshot/.alerts, /ptypes uses .pt, /golden uses .gr)
+      return json(Object.assign({ ok: true }, r.full));
+    } catch (e2) { return json({ error: String((e2 && e2.message) || e2).slice(0, 140) }, 500); }
   }
 
   // live cross-label dissection: within by=<value> (CL0 = "Best Sellers"), pivot the
