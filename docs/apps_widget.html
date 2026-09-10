@@ -17,8 +17,12 @@
 #fcc-apps-menu .ah{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:var(--muted,#8a94a0);padding:4px 8px 6px}
 #fcc-apps-menu .ah.none{font-weight:700;text-transform:none;letter-spacing:0;color:var(--muted,#8a94a0);padding:4px 8px 8px}
 /* a module bundled into the ▦ group renders as a full-width labelled row (its icon-only
-   tooltip is suppressed here) — the SAME <a> node, so href/svg/badges travel with it */
-#fcc-apps-menu a.tbm.napps{width:auto;height:auto;justify-content:flex-start;gap:10px;padding:8px 9px;border-radius:9px;font-size:13px;font-weight:800;color:var(--ink-2,#4a4a4a)}
+   tooltip is suppressed here) — the SAME <a> node, so href/svg/badges travel with it.
+   The row stack is a flex column so the moved .tbm anchors don't keep their inline-flex,
+   icon-only sizing and wrap into crammed side-by-side columns (Ray's margin report). */
+#fcc-apps-wrap{display:flex;flex-direction:column;gap:2px}
+#fcc-apps-menu a.tbm.napps{display:flex;width:100%;height:auto;justify-content:flex-start;align-items:center;gap:10px;padding:8px 9px;border-radius:9px;font-size:13px;font-weight:800;color:var(--ink-2,#4a4a4a)}
+#fcc-apps-menu a.tbm.napps svg{flex:none;width:19px;height:19px}
 #fcc-apps-menu a.tbm.napps:hover{background:var(--wash,#F7F7F5);color:var(--orange-deep,#ED6F0B)}
 #fcc-apps-menu a.tbm.napps.on{color:var(--orange-deep,#ED6F0B)}
 #fcc-apps-menu a.tbm.napps::after{display:none}
