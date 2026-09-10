@@ -2929,6 +2929,13 @@
    "pattern": "import TACHYON from",
    "forbidden": true,
    "pr": 307
+  },
+  {
+   "name": "feedchat: XML-vs-CSV sniff so FeedHero XML feeds parse per <item>, not per line (Ray, 10 Sep 2026)",
+   "file": "docs/FeedSpark_FeedChat.html",
+   "pattern": "createXmlParser(onRow)",
+   "min": 1,
+   "pr": 309
   }
  ]
 }
