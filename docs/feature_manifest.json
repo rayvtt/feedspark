@@ -2924,11 +2924,43 @@
    "pr": 306
   },
   {
+   "name": "AI Quote: saved-quote snapshots + finance tracker (stage rail, timestamps, Andy/Jackie)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "tk-body",
+   "min": 4,
+   "pr": 309
+  },
+  {
+   "name": "AI Quote: immutable snapshot store — saved quotes never follow the live quote",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function snapshot()",
+   "pr": 309
+  },
+  {
+   "name": "worker: saved AI quotes store (aiquotesaved, kvmerge)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "aiquotesaved",
+   "min": 1,
+   "pr": 309
+  },
+  {
    "name": "worker: Tachyon copilot widget REMOVED — no Anthropic key (Ray, 10 Sep 2026)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "import TACHYON from",
    "forbidden": true,
    "pr": 307
+  },
+  {
+   "name": "feedlab: XML parser grows the header on late-debut sparse tags",
+   "file": "docs/feedlab_engine.js",
+   "pattern": "GROW the live header",
+   "min": 1
+  },
+  {
+   "name": "engine: xmlCollector re-resolves columns when the parser header grows",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "liveHeader",
+   "min": 2
   },
   {
    "name": "labelguard engine: XML cross capture (tag-name per <item>, sparse-label safe)",

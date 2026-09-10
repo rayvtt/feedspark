@@ -834,19 +834,30 @@ export function xmlCollector(meta) {
   const vids = []; let volTrunc = false;
   const filled = {}, maps = {};          // per key: filled count + value->n map
   let attrFilled = null;                 // per attr key: filled count
-  const onRow = (r) => {
+  const resolveCols = () => {
+    cols = findCols(header, keys);
+    // -fb feeds don't carry PT in `keys` — resolve the category column separately
+    ptCol = wantPT ? cols.labels.product_type : findCols(header, PT_KEYS).labels.product_type;
+    for (const k of keys) if (cols.labels[k] >= 0 && !maps[k]) { filled[k] = 0; maps[k] = new Map(); }
+    if (wantPT) {
+      attrCols = findAttrCols(header);
+      attrFilled = attrFilled || {};
+      for (const s of ATTR_SPEC) if (attrCols[s.key] != null && attrCols[s.key] >= 0 && attrFilled[s.key] == null) attrFilled[s.key] = 0;
+    }
+  };
+  const onRow = (r, liveHeader) => {
     if (!header) {
       header = r;
-      cols = findCols(header, keys);
-      // -fb feeds don't carry PT in `keys` — resolve the category column separately
-      ptCol = wantPT ? cols.labels.product_type : findCols(header, PT_KEYS).labels.product_type;
-      for (const k of keys) if (cols.labels[k] >= 0) { filled[k] = 0; maps[k] = new Map(); }
-      if (wantPT) {
-        attrCols = findAttrCols(header);
-        attrFilled = {};
-        for (const s of ATTR_SPEC) if (attrCols[s.key] != null && attrCols[s.key] >= 0) attrFilled[s.key] = 0;
-      }
+      resolveCols();
       return;
+    }
+    // the parser GREW its header mid-stream (a sparse tag debuted past the sample —
+    // e.g. Monsoon GB's custom_label_1, on 458 of 8,898 items, first appears at item
+    // #52): adopt the live header and re-resolve every column. Rows before a column's
+    // debut were empty for it by definition, so the running counts stay exact.
+    if (liveHeader && liveHeader.length !== header.length) {
+      header = liveHeader.slice();
+      resolveCols();
     }
     const idv = String(r[cols.id] == null ? '' : r[cols.id]).trim();
     if (idv !== '') {

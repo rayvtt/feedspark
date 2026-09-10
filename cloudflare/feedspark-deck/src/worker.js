@@ -368,7 +368,7 @@ export default {
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
         '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile',
-        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save' };
+        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -982,6 +982,14 @@ export default {
     // AI Field Quote — per-client field-generation quotes + Ray's reusable rate card (kvmerge)
     if (path === '/api/aiquote') {
       const r = await mapStoreRoute(env, request, 'aiquote', {});
+      if (r) return r;
+    }
+    // Saved quote SNAPSHOTS + the finance tracker (Ray, Sep 2026: save a quote, timestamp it,
+    // and follow it through Approved -> Greenlight -> In action -> Billed with Andy/Jackie).
+    // Separate KV key from the live working quote so a snapshot is immutable by construction:
+    // editing the quote on /aiquote can never rewrite a figure finance has already signed off.
+    if (path === '/api/aiquote/saved') {
+      const r = await mapStoreRoute(env, request, 'aiquotesaved', {});
       if (r) return r;
     }
     // FCC-PRESENCE heartbeat: stamp the caller's Access identity into the `presence` map and
