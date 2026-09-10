@@ -61,6 +61,13 @@ else
   echo "   ✗ abtests harness FAILED — see node tools/test_abtests.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3e/7: overlay engine (URL-string classification + feed collector)"
+if node tools/test_overlays.mjs >/dev/null 2>&1; then
+  echo "   ✓ overlay types read off the image_link URL; collector counts hold"
+else
+  echo "   ✗ overlay harness FAILED — see node tools/test_overlays.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 4/7: shipped-feature markers"
 if node tools/check_markers.js >/dev/null 2>&1; then
   echo "   ✓ no shipped feature regressed"
