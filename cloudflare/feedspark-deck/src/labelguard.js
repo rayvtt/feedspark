@@ -299,6 +299,88 @@ export async function crossFeed(fetchFn, src, byKey, value, vsKey) {
     truncated: g.length - 1 >= TH.maxValues, t: Date.now() };
 }
 
+/* ---------------- browser cross rails for {xml} feeds (Ray, 10 Sep 2026) ---------------
+ * gviz can only query Google Sheets, so a FeedHero-XML feed's cross-dissection is computed
+ * IN THE PAGE (same posture as the #304 live rescan): the guard page streams
+ * /api/feed/proxy ONCE through xmlCrossCapture below, keeps only the six cross columns
+ * per item, and answers every subsequent by/value/vs flip from that in-memory capture —
+ * flipping CL chips never re-streams a 40MB feed. crossFromRows then returns the EXACT
+ * crossFeed() response shape, so the pages' renderCross panels work unchanged.
+ *
+ * xmlCrossCapture reads each <item>'s tags BY NAME, deliberately independent of any
+ * parser header settled from early items — a sparse label that first appears thousands
+ * of rows in (Monsoon's custom_label_1: filled on 458 of 8,898 items, first at #52,
+ * past createXmlParser's 50-item header sample) is still captured. */
+export const XKEYS = LABEL_KEYS.concat(PT_KEYS);
+export function xmlCrossCapture() {
+  let buf = '', done = false;
+  const rows = [];
+  // <g:custom_label_2>…</g:custom_label_2> — optional ns prefix, backreferenced close tag
+  const tagRe = new RegExp('<((?:[A-Za-z0-9_.-]+:)?(' + XKEYS.join('|') + '))(?:\\s[^>]*)?>([\\s\\S]*?)<\\/\\1\\s*>', 'g');
+  const decode = (s) => {
+    s = s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
+    return s.replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+      .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d))
+      .replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').trim();
+  };
+  const item = (body) => {
+    const row = XKEYS.map(() => '');
+    const seen = {};
+    let m, any = false;
+    tagRe.lastIndex = 0;
+    while ((m = tagRe.exec(body))) {
+      const k = m[2];
+      if (seen[k]) continue;   // first occurrence only — repeated product_type slots (2..10) are keywords, not the category tree
+      seen[k] = 1;
+      const v = decode(m[3]);
+      if (v) { row[XKEYS.indexOf(k)] = v; any = true; }
+    }
+    if (any) rows.push(row);   // items with no cross column filled can never join a segment
+  };
+  const push = (chunk) => {
+    if (done) return;
+    buf += chunk;
+    for (;;) {
+      const lo = buf.search(/<item[\s>]/);   // NOT indexOf('<item') — <item_group_id> must not match
+      if (lo < 0) { if (buf.length > 65536) buf = buf.slice(-4096); break; }   // no boundary — keep a tail, stay bounded
+      const hi = buf.indexOf('</item>', lo);
+      if (hi < 0) { if (lo > 0) buf = buf.slice(lo); break; }   // partial item — wait for more chunks
+      item(buf.slice(buf.indexOf('>', lo) + 1, hi));
+      buf = buf.slice(hi + 7);
+    }
+  };
+  const end = () => { done = true; buf = ''; return rows; };
+  return { push, end, rows: () => rows };
+}
+
+// crossFeed's exact response contract, computed from the captured rows: labelled sums
+// only the kept top-250 (the gviz `limit` also hid the tail inside `unlabelled`), so the
+// panels read identically whichever lane answered.
+export function crossFromRows(rows, byKey, value, vsKey) {
+  const bi = XKEYS.indexOf(byKey), vi = XKEYS.indexOf(vsKey);
+  if (bi < 0 || vi < 0 || byKey === vsKey) {
+    throw new Error('bad-cross: by/vs must be two different keys from custom_label_0..4 / product_type');
+  }
+  const want = String(value == null ? '' : value).trim();
+  if (!want) throw new Error('bad-cross: empty value');
+  let segment = 0;
+  const m = new Map();
+  for (const r of rows || []) {
+    if (String(r[bi] == null ? '' : r[bi]).trim() !== want) continue;
+    segment++;
+    const v = String(r[vi] == null ? '' : r[vi]).trim();
+    if (v) m.set(v, (m.get(v) || 0) + 1);
+  }
+  const all = [...m.entries()].sort((a, b) => b[1] - a[1]);
+  const kept = all.slice(0, TH.maxValues);
+  let labelled = 0;
+  for (const e of kept) labelled += e[1];
+  return { by: byKey, value: String(value), vs: vsKey, segment, labelled,
+    unlabelled: Math.max(0, segment - labelled), rows: kept.map((e) => [e[0], e[1]]),
+    truncated: all.length > TH.maxValues, t: Date.now() };
+}
+
 /* ---------------- custom watch rules (the alert builder) -------------------------------
  * A watch rule pins a REFERENCE set of values (captured from the live pivot the moment
  * Ray creates it — e.g. Reiss GB CL0 "Best Sellers" -> the 8 CL2 cross values) and every

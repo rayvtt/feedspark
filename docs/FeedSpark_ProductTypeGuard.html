@@ -367,6 +367,9 @@ window.addEventListener('load',restore);
   var CROSS = null;              // {k, value, vs} — live PT -> custom-label dissection
   var XCACHE = {};
   var XMORE = false;
+  var XKIND = {};                // per feed k: 'xml' once the cross route refuses gviz — go straight to the browser lane
+  var XROWS = {};                // per feed k: the streamed cross rows ('~'+k = in-flight stream promise) — one stream per feed per session
+  var XPROG = '';                // live progress line while the XML cross stream runs
   // Δ-reference: 'yday' = yesterday's auto-capture (default), 'base' = last known-good.
   // Estate alerts ALWAYS fire vs last known-good regardless of this display toggle.
   var REFMODE = 'yday'; try { if (sessionStorage.getItem('pt-ref') === 'base') REFMODE = 'base'; } catch (e) {}
@@ -1038,11 +1041,66 @@ window.addEventListener('load',restore);
     var key = crossKeyStr();
     if (XCACHE[key]) { renderCross(); return; }
     var p = parts(CROSS.k);
+    if (XKIND[CROSS.k] === 'xml') { xmlCross(key, p); return; }   // known XML feed — skip the gviz round trip
     fetch(API + '/api/ptypes/cross?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt) +
       '&by=product_type&vs=' + encodeURIComponent(CROSS.vs) + '&value=' + encodeURIComponent(CROSS.value))
       .then(function (r) { return r.json(); })
-      .then(function (x) { XCACHE[key] = x || { error: 'empty response' }; if (crossKeyStr() === key) renderCross(); })
+      .then(function (x) {
+        if (x && x.xml) { XKIND[CROSS.k] = 'xml'; if (crossKeyStr() === key) xmlCross(key, parts(CROSS.k)); return; }
+        XCACHE[key] = x || { error: 'empty response' }; if (crossKeyStr() === key) renderCross();
+      })
       .catch(function () { XCACHE[key] = { error: 'network' }; if (crossKeyStr() === key) renderCross(); });
+  }
+
+  /* XML feeds (the 9 Sep 2026 FeedHero estate migration): gviz can't query XML, so the
+     PT -> CL cross is computed HERE IN THE BROWSER — stream /api/feed/proxy once through
+     labelguard's xmlCrossCapture (tag-name capture per <item>, so a sparse label that
+     first appears thousands of rows in still lands) and answer every value/vs flip from
+     the cached rows: flipping CL chips never re-streams the feed. Same rails as the
+     manual live rescan above; sheet-backed feeds keep the cheap gviz lane. */
+  function xprog(m) { XPROG = m; if (CROSS) renderCross(); }
+  function xmlCrossRows(k, p) {
+    if (XROWS[k]) return Promise.resolve(XROWS[k]);
+    if (XROWS['~' + k]) return XROWS['~' + k];   // a stream is already in flight — share it
+    var pr = loadLG().then(function (LG) {
+      var cap = LG.xmlCrossCapture();
+      return fetch('/api/feed/proxy?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
+        .then(function (res) {
+          if (!res.ok || !res.body) throw new Error('feed fetch failed (HTTP ' + res.status + ')');
+          var rd = res.body.getReader(), dec = new TextDecoder(), got = 0, next = 0;
+          function pump() {
+            return rd.read().then(function (x) {
+              if (x.done) { cap.push(dec.decode()); return cap.end(); }
+              got += x.value.length;
+              if (got > next) { next = got + 4 * 1048576; xprog('streaming the live XML — ' + (got / 1048576).toFixed(1) + ' MB…'); }
+              cap.push(dec.decode(x.value, { stream: true }));
+              return pump();
+            });
+          }
+          return pump();
+        });
+    }).then(function (rows) {
+      delete XROWS['~' + k];
+      if (!rows.length) throw new Error('no labelled items parsed from the XML');
+      XROWS[k] = rows; return rows;
+    }, function (e) { delete XROWS['~' + k]; throw e; });
+    XROWS['~' + k] = pr;
+    return pr;
+  }
+  function xmlCross(key, p) {
+    var k = CROSS.k, value = CROSS.value, vs = CROSS.vs;
+    xprog(XROWS[k] ? 'computing from the cached stream…' : 'XML feed — streaming it live to compute the cross…');
+    xmlCrossRows(k, p).then(function (rows) {
+      return loadLG().then(function (LG) {
+        var x = LG.crossFromRows(rows, 'product_type', value, vs);
+        x.live = 'xml';   // honest provenance: computed in-page from the live stream, not a gviz query
+        XCACHE[key] = x; XPROG = '';
+        if (crossKeyStr() === key) renderCross();
+      });
+    }).catch(function (e) {
+      XCACHE[key] = { error: 'live XML cross failed — ' + ((e && e.message) || 'network') }; XPROG = '';
+      if (crossKeyStr() === key) renderCross();
+    });
   }
   function renderCross() {
     var slot = $('cross-slot'); if (!slot) return;
@@ -1051,13 +1109,13 @@ window.addEventListener('load',restore);
     var x = XCACHE[crossKeyStr()];
     var h = '<div class="xpanel"><div class="xhead">' +
       '<span class="xt">⤯ product_type · <b>“' + esc(CROSS.value) + '”</b> → breakdown</span>' +
-      (x && !x.error ? '<span class="xseg">' + fmt(x.segment) + ' SKUs in segment · ' + fmt(x.labelled) + ' carry ' + 'CL' + CROSS.vs.slice(-1) + (x.truncated ? ' · top 250 shown' : '') + '</span>' : '') +
+      (x && !x.error ? '<span class="xseg">' + fmt(x.segment) + ' SKUs in segment · ' + fmt(x.labelled) + ' carry ' + 'CL' + CROSS.vs.slice(-1) + (x.truncated ? ' · top 250 shown' : '') + (x.live === 'xml' ? ' · computed in-browser from the live XML stream' : '') + '</span>' : '') +
       '<span class="xchips"><span class="xl">by</span>' +
       CLK.map(function (ck) {
         return '<button class="xchip' + (ck === CROSS.vs ? ' on' : '') + '" data-vs="' + ck + '">CL' + ck.slice(-1) + '</button>';
       }).join('') +
       '<button class="xchip" id="x-close" title="Close">✕</button></span></div>';
-    if (!x) h += '<p class="muted" style="margin:8px 0 4px"><span class="spin"></span>Google is aggregating the cross pivot…</p>';
+    if (!x) h += '<p class="muted" style="margin:8px 0 4px"><span class="spin"></span>' + (XPROG ? esc(XPROG) : 'Google is aggregating the cross pivot…') + '</p>';
     else if (x.error) h += '<p class="muted" style="margin:8px 0 4px">Cross dissection failed: <b>' + esc(x.error) + '</b></p>';
     else {
       var rows = (x.rows || []).slice();

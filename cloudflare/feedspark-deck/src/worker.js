@@ -1051,8 +1051,9 @@ export default {
       const src = await feedSourceFor(env, client, url.searchParams.get('market'));
       if (!src) return json({ error: 'no feed sheet linked for this client/market - attach one in Feed Lab or the brand dossier' }, 404);
       if (src.xml) {
-        // FeedHero-hosted XML (Meta/FB channel) — realtime upstream, streamed through untouched;
-        // the page's engine sniffs XML vs CSV from the first bytes, so one proxy serves both
+        // FeedHero-hosted XML (since the 9 Sep 2026 estate migration this is most Google feeds,
+        // not just Meta) — realtime upstream, streamed through untouched; the page's engine
+        // sniffs XML vs CSV from the first bytes, so one proxy serves both
         const upx = await fetch(src.xml);
         const ctx2 = upx.headers.get('content-type') || '';
         if (!upx.ok || !upx.body || !/xml|rss|octet-stream/i.test(ctx2)) {
@@ -2548,7 +2549,8 @@ async function labelGuardRoutes(env, request, url) {
     }
     const src = await feedSourceFor(env, client, mkt);
     if (!src) return json({ error: 'no feed sheet linked for this client/market' }, 404);
-    if (src.xml) return json({ error: 'XML feed (Meta channel) - cross-label dissection needs a sheet-backed feed (gviz)' }, 400);
+    // XML feeds carry the xml flag so the page streams the feed and computes the cross in-browser
+    if (src.xml) return json({ error: 'XML feed - gviz cannot query it; the page computes this cross in-browser from the live stream', xml: true }, 400);
     try {
       return json(await crossFeed(fetch, src, by, value, vs));
     } catch (e) {
@@ -2761,7 +2763,8 @@ async function productTypeRoutes(env, request, url) {
     }
     const src = await feedSourceFor(env, client, mkt);
     if (!src) return json({ error: 'no feed sheet linked for this client/market' }, 404);
-    if (src.xml) return json({ error: 'XML feed - cross dissection needs a sheet-backed feed (gviz)' }, 400);
+    // XML feeds carry the xml flag so the page streams the feed and computes the cross in-browser
+    if (src.xml) return json({ error: 'XML feed - gviz cannot query it; the page computes this cross in-browser from the live stream', xml: true }, 400);
     try {
       return json(await crossFeed(fetch, src, by, value, vs));
     } catch (e) {
