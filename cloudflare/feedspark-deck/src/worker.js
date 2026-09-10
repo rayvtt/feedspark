@@ -376,7 +376,7 @@ export default {
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
         '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile',
-        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved' };
+        '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved', '/api/aiquote/plantask': 'aiquote-task' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
           (path === '/api/edits' || path === '/api/feedback') ? (url.searchParams.get('page') || '') : '');
@@ -999,6 +999,29 @@ export default {
     if (path === '/api/aiquote/saved') {
       const r = await mapStoreRoute(env, request, 'aiquotesaved', {});
       if (r) return r;
+    }
+    // → Intake from a saved quote on /aiquote (Ray, 10 Sep 2026: "save the quote inside Intake,
+    // following the normal workflow protocol"): files the quote as a task in the client's
+    // Project Plan through the SAME appendPlanRows write the guards' plantask routes, the
+    // Workflow "+ Add task" row and the Gmail-triage adoption use — one write path, never a
+    // second implementation — so it rides Intake → Project Plan → pipeline identically (status
+    // dropdown, editable due). The page composes the title because it needs the IDENTICAL
+    // string for the /workflow?brief= deep link that creates the brief (the pipeline ties a
+    // brief to its plan row on task wording); the route only accepts the AI Field Quote title
+    // shape, so it cannot be used to file arbitrary rows. appendPlanRows is idempotent on task
+    // text, so the page's ↻ retry can never double-append.
+    if (path === '/api/aiquote/plantask' && request.method === 'POST') {
+      const client = (url.searchParams.get('client') || '').slice(0, 60);
+      if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' }, 503);
+      const sheetId = PLAN_SHEETS[client];
+      if (!sheetId) return json({ ok: false, error: 'no Project Plan sheet wired for "' + client + '" — add it to PLAN_SHEETS' }, 400);
+      let b; try { b = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+      const task = String((b && b.task) || '').replace(/\s+/g, ' ').trim().slice(0, 200);
+      if (!/^AI Field Quote — QT\d{6} — /.test(task)) return json({ ok: false, error: 'task must carry the AI Field Quote title shape' }, 400);
+      const r = await appendPlanRows(env, sheetId, 'Project Plan', [{ task, owner: '', status: 'Open', due: '' }]);
+      if (r && r.ok) { try { await env.EDITS.delete('planlive:' + sheetId); } catch (e) {} }
+      return json(Object.assign({ task }, r));
     }
     // FCC-PRESENCE heartbeat: stamp the caller's Access identity into the `presence` map and
     // return everyone's last-seen. One beat per open page per minute — deliberately NOT in the
