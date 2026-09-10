@@ -136,14 +136,22 @@
         for (var s = 1; s <= top; s++) header.push(s > 1 ? b + '(' + s + ')' : b);
       }
       ix = {}; header.forEach(function (k, i) { ix[k] = i; });
-      onRow(header.slice());
+      onRow(header.slice(), header);
       for (var r = 0; r < pend.length; r++) emitRow(pend[r]);
       pend = null;
     }
     function emitRow(fs) {
+      // late-debut tags (sparse fields can first appear ARBITRARILY deep in a sorted feed —
+      // Monsoon GB's custom_label_1 lives on 458 of 8,898 items and debuts at item #52,
+      // just past the sample): GROW the live header instead of dropping the value. Every
+      // earlier row was empty for this column by definition, so nothing is lost; consumers
+      // get the live header as onRow's 2nd argument and can re-resolve their columns.
+      for (var g = 0; g < fs.length; g++) {
+        if (!(fs[g][0] in ix)) { ix[fs[g][0]] = header.length; header.push(fs[g][0]); }
+      }
       var row = header.map(function () { return ''; });
-      for (var i = 0; i < fs.length; i++) if (fs[i][0] in ix) row[ix[fs[i][0]]] = fs[i][1];
-      onRow(row);
+      for (var i = 0; i < fs.length; i++) row[ix[fs[i][0]]] = fs[i][1];
+      onRow(row, header);
     }
     function decode(s) {
       s = s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1');
