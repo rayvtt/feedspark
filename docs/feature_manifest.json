@@ -2922,6 +2922,13 @@
    "pattern": "Initial Data Optimisation - Initial (One-off)",
    "min": 1,
    "pr": 306
+  },
+  {
+   "name": "worker: Tachyon copilot widget REMOVED — no Anthropic key (Ray, 10 Sep 2026)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "import TACHYON from",
+   "forbidden": true,
+   "pr": 307
   }
  ]
 }
