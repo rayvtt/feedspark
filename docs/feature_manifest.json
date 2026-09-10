@@ -2844,6 +2844,13 @@
    "pr": 302
   },
   {
+   "name": "AI Quote: PT picker bulk actions — search-scoped Select all / Deselect all + Clear all",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "pt-acts",
+   "min": 3,
+   "pr": 305
+  },
+  {
    "name": "LabelGuard: ⟳ Verify — fresh scan on vanished-column alerts",
    "file": "docs/FeedSpark_LabelGuard.html",
    "pattern": "data-verify",

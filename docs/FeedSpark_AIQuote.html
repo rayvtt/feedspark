@@ -136,7 +136,18 @@ window.addEventListener('load',restore);
   .ptp input.pt-q{font:inherit;font-size:13px;font-weight:700;padding:9px 12px;border:1px solid var(--line);border-radius:10px;width:100%}
   /* selections are full-width rows: NEVER let the greedy list below flex-squeeze them away */
   .ptp .pt-sel{flex:none;display:flex;flex-direction:column;gap:4px;margin:8px 0 6px;max-height:138px;overflow-y:auto}
-  .ptp .pt-selh{flex:none;font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:7px}
+  .ptp .pt-selh{flex:none;display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:7px}
+  /* bulk actions: scoped to whatever the search box is showing, so the label always says
+     how many types the button is about to touch (never a blind "select all") */
+  .ptp .pt-acts{flex:none;display:flex;align-items:center;gap:7px;margin-top:8px;font-size:11px;font-weight:800;color:var(--muted)}
+  .ptp .pt-acts .pt-mc{color:var(--ink-2);text-transform:none;letter-spacing:0}
+  .ptp .pt-acts .pt-mc b{color:var(--ink)}
+  .ptp .pt-act{font:inherit;font-size:11px;font-weight:900;padding:4px 10px;border-radius:100px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer;white-space:nowrap;text-transform:none;letter-spacing:0}
+  .ptp .pt-act:hover{border-color:var(--orange);color:var(--orange-deep);background:rgba(245,166,35,.07)}
+  .ptp .pt-acts .pt-act:first-of-type{margin-left:auto}
+  .ptp .pt-act[data-act=all]{border-color:rgba(245,166,35,.5);color:var(--orange-ink);background:rgba(245,166,35,.09)}
+  .ptp .pt-trunc{font-size:10px;color:var(--muted);font-weight:700;text-transform:none;letter-spacing:0}
+  .ptp #pt-clear{margin-left:auto;padding:2px 9px}
   .ptp b.pt-t{cursor:move;user-select:none}
   .ptp .pt-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.35);color:var(--orange-ink);border-radius:100px;padding:2px 9px}
   .ptp .pt-chip button{border:none;background:none;font-weight:900;cursor:pointer;color:inherit;padding:0 1px}
@@ -151,6 +162,8 @@ window.addEventListener('load',restore);
   [data-theme=dark] .mo-sec,[data-theme=dark] .clical,[data-theme=dark] .ptp{background:var(--paper);border-color:var(--line)}
   [data-theme=dark] .rc{background:#181B22;border-color:var(--line)}
   [data-theme=dark] .ptp input.pt-q{background:#161922;color:var(--ink);border-color:var(--line)}
+  [data-theme=dark] .ptp .pt-act{background:#20242E;color:var(--ink-2);border-color:var(--line)}
+  [data-theme=dark] .ptp .pt-act[data-act=all]{background:rgba(245,166,35,.15);color:var(--orange-ink)}
   [data-theme=dark] .scope.unset{background:transparent}
   [data-theme=dark] .scope.wide{background:#3B577F;border-color:#3B577F}
   [data-theme=dark] .themes{color:var(--muted)}
@@ -604,23 +617,67 @@ window.addEventListener('load',restore);
     var names=Object.keys(ix.map).sort(function(a,b){return ix.map[b]-ix.map[a]});
     pop.innerHTML='<b class="pt-t">Product types · '+MKT.toUpperCase()+'</b><div class="pt-sub">'+fmt(ix.total)+' SKUs · pick the types this quote covers (volumes are live)</div>'
       +'<input class="pt-q" placeholder="Search product types…">'
-      +'<div class="pt-selh">Selected <span id="pt-tot" class="pt-tot"></span></div><div class="pt-sel" id="pt-sel"></div>'
+      +'<div class="pt-selh">Selected <span id="pt-tot" class="pt-tot"></span><button class="pt-act" id="pt-clear" type="button" hidden>Clear all</button></div><div class="pt-sel" id="pt-sel"></div>'
+      +'<div class="pt-acts" id="pt-acts"></div>'
       +'<div class="pt-list" id="pt-list"></div>'
       +'<div class="pt-foot"><span class="hint">'+names.length+' types</span><button class="btn pri" id="pt-apply">Apply</button><button class="btn" id="pt-x">Close</button></div>';
     document.body.appendChild(pop); place();
-    function selTot(){ var v=0; sel.forEach(function(p){v+=ix.map[p]||0}); pop.querySelector('#pt-tot').textContent=sel.length?(fmt(v)+' SKUs · '+sel.length+' types'):'nothing yet = whole catalogue'; }
+    var LISTCAP=400;
+    function qNow(){ var i=pop&&pop.querySelector('.pt-q'); return i?i.value:''; }
+    /* every match for the current search — UNCAPPED, so a bulk action covers the whole
+       result set and not merely the first LISTCAP rows the list can show */
+    function matches(q){ q=String(q||'').trim().toLowerCase();
+      return q?names.filter(function(n){return n.toLowerCase().indexOf(q)>=0}):names.slice(); }
+    function selTot(){ var v=0; sel.forEach(function(p){v+=ix.map[p]||0}); pop.querySelector('#pt-tot').textContent=sel.length?(fmt(v)+' SKUs · '+sel.length+' types'):'nothing yet = whole catalogue';
+      pop.querySelector('#pt-clear').hidden=!sel.length; }
     function drawSel(){ pop.querySelector('#pt-sel').innerHTML=sel.map(function(p){return '<span class="pt-chip">'+esc(p)+' <button data-x="'+esc(p)+'">×</button></span>'}).join(''); selTot(); }
-    function drawList(q){ q=(q||'').toLowerCase(); var list=names.filter(function(n){return !q||n.toLowerCase().indexOf(q)>=0}).slice(0,400);
-      pop.querySelector('#pt-list').innerHTML=list.map(function(n){return '<div class="pt-row'+(sel.indexOf(n)>=0?' on':'')+'" data-pt="'+esc(n)+'">'+esc(n)+'<span class="n">'+fmt(ix.map[n])+'</span></div>'}).join(''); }
+    /* the bulk bar: Select all / Deselect all for exactly what the search is showing. Both
+       appear when the matches are part-selected, so neither action is ever out of reach. */
+    function drawActs(q){ var m=matches(q), qs=String(q||'').trim();
+      var on=0, addVol=0;
+      m.forEach(function(n){ if(sel.indexOf(n)>=0)on++; else addVol+=ix.map[n]||0; });
+      var off=m.length-on, h='';
+      if(!m.length){ h='<span class="pt-mc">no product type matches “'+esc(qs)+'”</span>'; }
+      else{
+        h='<span class="pt-mc">'+(qs?('<b>'+m.length+'</b> match “'+esc(qs)+'”'+(on?' · '+on+' selected':''))
+                                   :('<b>'+m.length+'</b> types'+(on?' · '+on+' selected':'')))+'</span>';
+        if(m.length>LISTCAP)h+='<span class="pt-trunc" title="The list shows the first '+LISTCAP+' by volume — the buttons still cover all '+m.length+' matches">showing top '+LISTCAP+'</span>';
+        if(off>0)h+='<button class="pt-act" data-act="all" type="button">✓ Select all '+off+(addVol?' · +'+fmt(addVol)+' SKUs':'')+'</button>';
+        if(on>0)h+='<button class="pt-act" data-act="none" type="button">✕ Deselect '+(off>0?on:'all '+on)+'</button>';
+      }
+      pop.querySelector('#pt-acts').innerHTML=h;
+    }
+    function drawList(q){ var list=matches(q).slice(0,LISTCAP);
+      pop.querySelector('#pt-list').innerHTML=list.map(function(n){return '<div class="pt-row'+(sel.indexOf(n)>=0?' on':'')+'" data-pt="'+esc(n)+'">'+esc(n)+'<span class="n">'+fmt(ix.map[n])+'</span></div>'}).join('');
+      drawActs(q); }
     drawSel(); drawList('');
     pop.querySelector('.pt-q').addEventListener('input',function(){drawList(this.value)});
+    pop.querySelector('#pt-acts').addEventListener('click',function(e){ var b=e.target.closest('[data-act]'); if(!b)return;
+      var q=qNow(), m=matches(q);
+      if(b.getAttribute('data-act')==='all'){ m.forEach(function(n){ if(sel.indexOf(n)<0)sel.push(n); }); }
+      else { m.forEach(function(n){ var i=sel.indexOf(n); if(i>=0)sel.splice(i,1); }); }
+      drawSel(); drawList(q); var qi=pop.querySelector('.pt-q'); if(qi)qi.focus(); });
+    pop.querySelector('#pt-clear').addEventListener('click',function(){ sel.length=0; drawSel(); drawList(qNow()); });
     pop.querySelector('#pt-list').addEventListener('click',function(e){ var row=e.target.closest('[data-pt]'); if(!row)return; var n=row.getAttribute('data-pt');
-      var i=sel.indexOf(n); if(i>=0)sel.splice(i,1); else sel.push(n); drawSel(); row.classList.toggle('on'); });
-    pop.querySelector('#pt-sel').addEventListener('click',function(e){ var x=e.target.closest('[data-x]'); if(!x)return; var n=x.getAttribute('data-x'); var i=sel.indexOf(n); if(i>=0)sel.splice(i,1); drawSel(); drawList(pop.querySelector('.pt-q').value); });
+      var i=sel.indexOf(n); if(i>=0)sel.splice(i,1); else sel.push(n); drawSel(); row.classList.toggle('on'); drawActs(qNow()); });
+    pop.querySelector('#pt-sel').addEventListener('click',function(e){ var x=e.target.closest('[data-x]'); if(!x)return; var n=x.getAttribute('data-x'); var i=sel.indexOf(n); if(i>=0)sel.splice(i,1); drawSel(); drawList(qNow()); });
     pop.querySelector('#pt-apply').onclick=function(){ var r=rec(); r.pts[MKT]=sel; r.scope={mode:'pts'}; closePicker(); render(); saveSoon(); };
     pop.querySelector('#pt-x').onclick=closePicker;
   }
-  function place(){ if(!pop)return; var r=$('#ptpick').getBoundingClientRect(); pop.style.top=(r.bottom+8)+'px'; pop.style.left=Math.max(10,Math.min(r.left,window.innerWidth-pop.offsetWidth-10))+'px'; }
+  /* Keep the footer (Apply/Close) on screen at every viewport height. The chip area grows as
+     you select — and bulk-selecting 100+ types used to push Apply clean off the bottom, so the
+     popup is height-capped to the room it actually has and the LIST takes the squeeze. */
+  function place(){ if(!pop)return; var r=$('#ptpick').getBoundingClientRect(), vh=window.innerHeight, PAD=10, GAP=8;
+    var top=r.bottom+GAP, avail=vh-top-PAD;
+    // not enough room under the button for a workable picker? lift it up the viewport rather
+    // than starve the list — anchoring is a nicety, a usable list is not
+    if(avail<460){ top=Math.max(PAD, vh-PAD-Math.min(560, vh-2*PAD)); avail=vh-top-PAD; }
+    pop.style.top=top+'px'; pop.style.maxHeight=avail+'px';
+    // last resort on very short screens: the chip area yields before the list does
+    var chips=pop.querySelector('#pt-sel');
+    if(chips)chips.style.maxHeight=Math.max(44,Math.min(138,avail-300))+'px';
+    pop.style.left=Math.max(PAD,Math.min(r.left,window.innerWidth-pop.offsetWidth-PAD))+'px'; }
+  window.addEventListener('resize',function(){ if(pop)place(); });
   function closePicker(){ if(pop){pop.remove();pop=null;} }
   document.addEventListener('keydown',function(e){ if(e.key==='Escape')closePicker(); });
 
