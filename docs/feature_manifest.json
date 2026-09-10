@@ -2869,28 +2869,28 @@
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "AIQUOTE-XLSX-WRITER",
    "min": 1,
-   "pr": 0
+   "pr": 314
   },
   {
    "name": "aiquote: xlsx carries live formulas (line total / discount / net / SUM / VAT)",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "IFERROR(D'+rn+'*E'+rn+',\"-\")",
    "min": 1,
-   "pr": 0
+   "pr": 314
   },
   {
    "name": "aiquote: xlsx mirrors Ray's template widths, merges + gridlines-off",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "showGridLines=\"0\"",
    "min": 1,
-   "pr": 0
+   "pr": 314
   },
   {
    "name": "aiquote: CSV is BOM'd and formula-injection safe (no #NAME? / mojibake)",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "/^[-=+@]/.test(s)",
    "min": 1,
-   "pr": 0
+   "pr": 314
   },
   {
    "name": "AI Quote: PT picker bulk actions — search-scoped Select all / Deselect all + Clear all",
