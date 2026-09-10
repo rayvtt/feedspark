@@ -623,20 +623,29 @@ window.addEventListener('load',restore);
     var p = parts(r.k);
     var who = p.client + ' · ' + p.mkt.toUpperCase();
     var what = r.a.label || 'the column';
+    var handle = function (d) {
+      if (d && d.skipped) { if (vm) vm.textContent = '⚠ verify scan skipped — unstable read; previous state kept, try again shortly'; renderAlerts(); return; }
+      if (d && d.error) { if (vm) vm.textContent = '✗ verify scan failed: ' + d.error; renderAlerts(); return; }
+      delete CACHE[r.k];
+      return refreshEstate().then(function () {
+        var still = false;
+        var e = ESTATE.alerts[r.k];
+        ((e && e.alerts) || []).forEach(function (a) { if (a.code === r.a.code && a.label === r.a.label) still = true; });
+        if (vm) vm.textContent = still
+          ? '⟳ fresh scan confirms it — ' + what + ' is still gone from ' + who + '. The drop is real: ✓ accept if intentional.'
+          : '✅ fresh scan: ' + what + ' is back in ' + who + ' — flag cleared, it was a bad read.';
+      });
+    };
     fetch(API + '/api/ptypes/scan?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt), { method: 'POST' })
       .then(function (x) { return x.json(); })
       .then(function (d) {
-        if (d && d.skipped) { if (vm) vm.textContent = '⚠ verify scan skipped — unstable read; previous state kept, try again shortly'; renderAlerts(); return; }
-        if (d && d.error) { if (vm) vm.textContent = '✗ verify scan failed: ' + d.error; renderAlerts(); return; }
-        delete CACHE[r.k];
-        return refreshEstate().then(function () {
-          var still = false;
-          var e = ESTATE.alerts[r.k];
-          ((e && e.alerts) || []).forEach(function (a) { if (a.code === r.a.code && a.label === r.a.label) still = true; });
-          if (vm) vm.textContent = still
-            ? '⟳ fresh scan confirms it — ' + what + ' is still gone from ' + who + '. The drop is real: ✓ accept if intentional.'
-            : '✅ fresh scan: ' + what + ' is back in ' + who + ' — flag cleared, it was a bad read.';
-        });
+        // XML feeds verify through the browser live-rescan lane (same fallback as scan())
+        if (d && d.error && XML_REFUSAL.test(d.error)) {
+          return xmlLiveScan(p.client, p.mkt, function (m) { if (vm) vm.textContent = who + ' — ' + m; })
+            .catch(function (e) { return { error: 'live XML scan failed — ' + ((e && e.message) || 'network') }; })
+            .then(handle);
+        }
+        return handle(d);
       })
       .catch(function () { if (vm) vm.textContent = '✗ verify scan failed — network'; renderAlerts(); });
   }
