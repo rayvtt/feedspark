@@ -2896,6 +2896,13 @@
    "min": 2
   },
   {
+   "name": "AI Quote: field-row boxes share one baseline (seeded class, no global .card collision)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "rate.seeded",
+   "min": 2,
+   "pr": 308
+  },
+  {
    "name": "aiquote: CSV export reproduces Ray's client quote template",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "AIQUOTE-CSV-TEMPLATE",
