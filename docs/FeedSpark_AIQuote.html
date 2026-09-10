@@ -427,8 +427,9 @@ window.addEventListener('load',restore);
     </div>
     <div class="qactions">
       <button class="btn pri" id="savequote" type="button" title="Freeze this quote as a dated snapshot and put it on the finance tracker">💾 Save quote</button>
+      <button class="btn pri" id="xlsx" type="button" title="Branded, formula-driven Excel workbook built on Ray's quote template — change a quantity, rate or discount and every total recalculates">⇩ Download quote (Excel)</button>
       <button class="btn" id="copy" type="button">⧉ Copy quote</button>
-      <button class="btn" id="csv" type="button">⇩ Export CSV</button>
+      <button class="btn" id="csv" type="button" title="The same quote as raw CSV data">⇩ CSV</button>
       <button class="btn col-rate" id="savecard" type="button" title="Save the rates on this quote as your default rate card">★ Save as my rate card</button>
       <button class="btn" id="expand" type="button">⊕ Expand all</button>
       <span class="hint" id="save-hint"></span>
@@ -777,7 +778,7 @@ window.addEventListener('load',restore);
     } else { out.push('','(Commercials on request.)'); }
     copy(out.join('\n'), SHOWP?'Quote copied (with £)':'Scope copied (£ hidden)');
   });
-  /* ---------- CSV export — AIQUOTE-CSV-TEMPLATE ----------
+  /* ---------- quote export — AIQUOTE-CSV-TEMPLATE / AIQUOTE-XLSX-WRITER ----------
      The download reproduces Ray's client quote sheet ("Quick Start" skeleton): title cell,
      Client/Agency + Created By header block, the MONTHLY RECURRING COSTS column band, the three
      cost sections (System / Platform · Initial one-off · ManPower), the totals block, the standing
@@ -786,10 +787,13 @@ window.addEventListener('load',restore);
        · K Net Cost · N Additional Notes
      Everything is driven by the live selection (client, market, ticked optimisations, live volumes,
      your £/SKU rates). Nothing commercial is invented: a line with no rate leaves its money cells
-     BLANK and flags the row, and sections this module does not price stay blank with a note. */
-  var QCOL={A:0,B:1,C:2,D:3,E:4,F:5,G:6,H:7,I:8,J:9,K:10,L:11,M:12,N:13};
-  function qrow(o){ var r=[],i,k; for(i=0;i<14;i++)r.push('');
-    if(o)for(k in o){ if(QCOL[k]!=null&&o[k]!=null&&o[k]!=='')r[QCOL[k]]=o[k]; } return r; }
+     BLANK and flags the row, and sections this module does not price stay blank with a note.
+
+     TWO containers off ONE row model:
+       ⇩ Excel (.xlsx)  the real deliverable — styled, branded, and FORMULA-DRIVEN, so Ray can
+                        change a quantity, a rate or a discount and watch every total recalculate.
+       ⇩ CSV            the raw-data fallback (BOM'd UTF-8, formula-injection neutralised). */
+  var XCOL='ABCDEFGHIJKLMNO'.split('');
   function n2(v){ return Math.round((+v||0)*100)/100; }
   function dmy(d){ return d.toLocaleDateString('en-GB'); }
   function monthYear(d){ return d.toLocaleDateString('en-GB',{month:'long',year:'numeric'}); }
@@ -817,8 +821,66 @@ window.addEventListener('load',restore);
     if(f.lead!=null)p.push('live ~'+f.lead+' working days');
     p.push(rateWord(rateSrc(l.id)));
     return p.join(' · '); }
-  function quoteRows(){
-    var L=lines(), t=totals(), r=rec(), ix=idx(), now=new Date(), rows=[];
+
+  /* ---- cell styles: Ray's template idiom, repainted in the FeedSpark design system ----
+     deep orange #ED6F0B title band (white 28pt) · orange #F5A623 column band · deep-orange
+     section headers on the #F7F7F5 wash · charcoal #333333 body. The template's OWN commercial
+     markers are kept verbatim because Ray reads the sheet by them: YELLOW = an input cell you
+     are meant to type in (the discount %), RED figures = discount, RED-filled cell = a grand
+     total. Number formats: money "£"#,##0.00 · per-SKU rates "£"#,##0.000 · discount 0% · dates. */
+  var XINK='333333', XORA='F5A623', XORD='ED6F0B', XGREY='F5F5F5', XWASH='F7F7F5';
+  var S={
+    title : {b:1,sz:28,c:'FFFFFF',fl:XORD,bd:'medium:lrtb',h:'center',v:'center',w:1},
+    hlab  : {b:1,h:'left'},
+    hval  : {b:1,fl:XWASH,bd:'thin:lrtb',h:'center'},
+    hvalO : {b:1,c:XORD,fl:XWASH,bd:'thin:lrtb',h:'center'},
+    hvalD : {b:1,fl:XWASH,bd:'thin:ltb',h:'center',n:'date'},
+    hvalL : {b:1,fl:XWASH,bd:'thin:ltb',h:'center'},
+    hvalR : {b:1,fl:XWASH,bd:'thin:rtb',h:'center'},
+    band  : {b:1,fl:XORA,bd:'thin:lrtb',h:'center',v:'center',w:1},
+    band2 : {b:1,fl:XGREY,bd:'thin:lrtb',h:'center',v:'center',w:1},
+    sect  : {b:1,c:XORD,fl:XWASH,bd:'thin:ltb',h:'left',w:1},
+    sectB : {b:1,c:XORD,fl:XWASH,bd:'thin:rtb',h:'left',w:1},
+    /* the A label wraps: column A is Ray's exact 24.4 and a long optimisation name would
+       otherwise be CLIPPED, because column B alongside it is never empty to spill into */
+    lbl   : {bd:'thin:ltb',h:'left',w:1},
+    lblq  : {i:1,bd:'thin:rtb',h:'left',w:1},
+    qty   : {b:1,fl:XGREY,bd:'thin:lrtb',h:'center',n:'int'},
+    rate  : {b:1,fl:XGREY,bd:'thin:lrtb',h:'center',n:'rate'},
+    rateF : {b:1,fl:XGREY,bd:'thin:lrtb',h:'center',n:'gbp'},
+    money : {bd:'thin:lrtb',h:'center',n:'gbp'},
+    blank : {bd:'thin:lrtb',h:'center'},
+    disc  : {b:1,c:XORD,fl:'FFFF00',bd:'thin:lrtb',h:'center',n:'pct'},
+    discv : {b:1,c:'FF0000',bd:'thin:lrtb',h:'center',n:'gbp'},
+    net   : {b:1,bd:'thin:lrtb',h:'center',n:'gbp'},
+    note  : {bd:'thin:lrtb',h:'left',w:1},
+    noteb : {b:1,bd:'thin:lrtb',h:'left',w:1},
+    totlb : {b:1,fl:XGREY,h:'left'},
+    totl  : {b:1,h:'left'},
+    totli : {b:1,i:1,h:'left'},
+    totred: {b:1,c:'FFFFFF',fl:'FF0000',bd:'thin:lrtb',h:'center',n:'gbp'},
+    totgap: {b:1,fl:XGREY,bd:'thin:lrtb',h:'center',n:'gbp'},
+    per   : {i:1,h:'left'}
+  };
+  /* framed full-width note block, drawn cell by cell exactly as the template does it */
+  function bxs(sides,bold){ return {b:bold?1:0,fl:XWASH,bd:'medium:'+(sides||''),h:'left',w:1}; }
+  /* Same style, different border edges. A merged range must NOT carry internal borders — each
+     member cell owns only the outer edges it sits on, which is how Ray's template draws its
+     A12:B13 / D12:F12 / H12:H13 bands. */
+  function sv(base,bd){ var o={},k; for(k in base)o[k]=base[k]; o.bd=bd; return o; }
+
+  /* ---------- the one row model both exports read ----------
+     Each cell is {v:<value>, f:<optional live formula>, x:<optional plain text for CSV>,
+     s:<style>}. Formulas only ever appear where the figure is genuinely known — an unrated
+     line gets no formula and no money value at all, so nothing can silently total to a
+     partial number. */
+  function xserial(d){ return Math.floor((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())-Date.UTC(1899,11,30))/86400000); }
+  function quoteSheet(){
+    var L=lines(), t=totals(), r=rec(), ix=idx(), now=new Date();
+    var sh={rows:[],merges:[],h:{}};
+    function row(cells,ht){ sh.rows.push(cells||{}); if(ht)sh.h[sh.rows.length]=ht; return sh.rows.length; }
+    function mg(a){ sh.merges.push(a); }
+    function pad(cells,from,to,st){ var i; for(i=from;i<=to;i++)if(!cells[XCOL[i]])cells[XCOL[i]]={v:'',s:st}; return cells; }
     var mkt=MKT.toUpperCase();
     var validDays=(r.valid!=null&&r.valid!=='')?+r.valid:30;
     var vTo=new Date(now.getTime()); vTo.setDate(vTo.getDate()+validDays);
@@ -831,92 +893,351 @@ window.addEventListener('load',restore);
     var pmo=(pt.getFullYear()-pf.getFullYear())*12+(pt.getMonth()-pf.getMonth())+1;
     var NOTPRICED='Not priced by the AI field quote — the platform / retainer model lives in the Pricer';
 
-    /* 1 — title */
-    rows.push(qrow({D:'AI Field Generation Quote - '+monthYear(now)}));
-    rows.push(qrow()); rows.push(qrow()); rows.push(qrow());
+    /* 1 — title band (D1:I2, 28pt, medium box drawn round the OUTSIDE of the merge only) */
+    function tEdge(top){ var c={},j,e=top?'t':'b';
+      for(j=3;j<=8;j++)c[XCOL[j]]={v:'',s:sv(S.title,'medium:'+(j===3?'l':j===8?'r':'')+e)};
+      return c; }
+    var tc=tEdge(1); tc.D.v='AI Field Generation Quote - '+monthYear(now);
+    row(tc,32.45); row(tEdge(0),50.65); mg('D1:I2');
+    row({},14.45); row({},14.45);
     /* 2 — header block */
-    rows.push(qrow({A:'Client',B:CLIENT||'-',K:'Created By'}));
-    rows.push(qrow({A:'URL',K:'Date Created',M:dmy(now)}));
-    rows.push(qrow({A:'Client Contact',K:'Quote Valid',M:dmy(vTo)+' ('+validDays+' days)'}));
-    rows.push(qrow({A:'Agency',B:'-',K:'Reference',M:quoteRef(now)}));
-    rows.push(qrow({A:'Contact',B:'-'}));
-    rows.push(qrow()); rows.push(qrow());
-    /* 3 — column band */
-    rows.push(qrow({A:'MONTHLY RECURRING COSTS',D:mkt+' Market',H:'Discount % (Exc Man Power)',
-      I:'Discount £ (Exc Man Power)',K:'Net Cost',N:'Additional Notes'}));
-    rows.push(qrow({D:'Quantity',E:'Cost',F:'Total Cost'}));
-    rows.push(qrow());
+    var h1=row({A:{v:'Client',s:S.hlab},B:{v:CLIENT||'-',s:S.hvalO},K:{v:'Created By',s:S.hlab},M:{v:'',s:S.hvalL},N:{v:'',s:S.hvalR}});
+    mg('M'+h1+':N'+h1);
+    var h2=row({A:{v:'URL',s:S.hlab},B:{v:'-',s:S.hval},K:{v:'Date Created',s:S.hlab},
+      M:{v:xserial(now),x:dmy(now),s:S.hvalD},N:{v:'',s:S.hvalR}});
+    mg('M'+h2+':N'+h2);
+    /* Quote Valid rides a LIVE formula off Date Created — move the date, the expiry moves */
+    var h3=row({A:{v:'Client Contact',s:S.hlab},B:{v:'-',s:S.hval},K:{v:'Quote Valid',s:S.hlab},
+      M:{f:'M'+h2+'+'+validDays,v:xserial(vTo),x:dmy(vTo)+' ('+validDays+' days)',s:S.hvalD},N:{v:'',s:S.hvalR}});
+    mg('M'+h3+':N'+h3);
+    var h4=row({A:{v:'Agency',s:S.hlab},B:{v:'-',s:S.hval},K:{v:'Reference',s:S.hlab},
+      M:{v:quoteRef(now),s:S.hvalL},N:{v:'',s:S.hvalR}});
+    mg('M'+h4+':N'+h4);
+    row({A:{v:'Contact',s:S.hlab},B:{v:'-',s:S.hval}});
+    row(); row();
+    /* 3 — column band. C / G / J are the template's 1-char spacer columns and stay unpainted;
+       every OTHER cell inside a merged range carries the band style so the outline closes. */
+    var bandT=sv(S.band,'thin:lrt'), bandB=sv(S.band,'thin:lrb');
+    var b1=row({A:{v:'MONTHLY RECURRING COSTS',s:sv(S.band,'thin:lt')},B:{v:'',s:sv(S.band,'thin:rt')},
+      D:{v:mkt+' Market',s:sv(S.band,'thin:ltb')},E:{v:'',s:sv(S.band,'thin:tb')},F:{v:'',s:sv(S.band,'thin:rtb')},
+      H:{v:'Discount %\n(Exc Man Power)',s:bandT},I:{v:'Discount £\n(Exc Man Power)',s:bandT},
+      K:{v:'Net\nCost',s:bandT},N:{v:'Additional Notes',s:bandT}},27);
+    var b2=row({A:{v:'',s:sv(S.band,'thin:lb')},B:{v:'',s:sv(S.band,'thin:rb')},
+      D:{v:'Quantity',s:S.band2},E:{v:'Cost',s:S.band2},F:{v:'Total Cost',s:S.band2},
+      H:{v:'',s:bandB},I:{v:'',s:bandB},K:{v:'',s:bandB},N:{v:'',s:bandB}},27);
+    mg('A'+b1+':B'+b2); mg('D'+b1+':F'+b1); mg('H'+b1+':H'+b2); mg('I'+b1+':I'+b2);
+    mg('K'+b1+':K'+b2); mg('N'+b1+':N'+b2);
+    row({},6.6);
     /* 4 — system / platform costs (this module prices no platform line) */
-    rows.push(qrow({A:'System / Platform Costs',N:NOTPRICED}));
-    rows.push(qrow({A:'Total System Costs',N:'Total tech costs — no platform, feed-processing or scrape line is quoted here'}));
-    rows.push(qrow());
-    /* 5 — initial data optimisation: one row per SELECTED optimisation */
-    rows.push(qrow({A:'Initial Data Optimisation - Initial (One-off)',N:scopeTextPlain()}));
-    if(setupFee())rows.push(qrow({A:'One-off setup & onboarding',B:'setup fee',D:1,E:n2(setupFee()),
-      F:n2(setupFee()),K:n2(setupFee()),N:'Flat one-off entered on this quote'}));
-    if(!L.length)rows.push(qrow({A:'No optimisations selected',
-      N:'Tick the optimisations you are proposing in the AI field quote and re-export'}));
-    L.forEach(function(l){ var priced=(l.rt!=null), tot=priced?n2(l.c*l.rt):'';
-      rows.push(qrow({A:l.name,B:l.grp,D:l.c,E:priced?l.rt:'',F:tot,K:tot,N:lineNote(l)})); });
-    rows.push(qrow());
+    var s1=row({A:{v:'System / Platform Costs',s:S.sect},B:{v:'',s:S.sectB},N:{v:NOTPRICED,s:S.note}});
+    mg('A'+s1+':B'+s1);
+    row({A:{v:'Total System Costs',s:S.totlb},B:{v:'',s:S.totlb},K:{v:'',s:S.totgap},
+      N:{v:'Total tech costs — no platform, feed-processing or scrape line is quoted here',s:S.noteb}});
+    row();
+    /* 5 — initial data optimisation: one row per SELECTED optimisation, each fully live */
+    var s2=row({A:{v:'Initial Data Optimisation - Initial (One-off)',s:S.sect},B:{v:'',s:S.sectB},
+      N:{v:scopeTextPlain(),s:S.note}});
+    mg('A'+s2+':B'+s2);
+    var oneA=0, oneB=0;
+    function costRow(o){
+      var rn=sh.rows.length+1, priced=(o.rate!=null&&o.rate!=='');
+      /* the Cost column is a £/SKU rate on an optimisation line (pennies — 3dp) but a flat
+         figure on the setup line, so each carries its own currency format */
+      var rateSt=o.flat?S.rateF:S.rate;
+      var cells={A:{v:o.name,s:S.lbl},B:{v:o.qual||'',s:S.lblq},
+        D:{v:o.qty,s:S.qty},N:{v:o.note||'',s:S.note}};
+      if(priced){
+        cells.E={v:+o.rate,s:rateSt};
+        cells.F={f:'IFERROR(D'+rn+'*E'+rn+',"-")',v:n2(o.qty*o.rate),s:S.money};
+        cells.H={v:0,s:S.disc};
+        cells.I={f:'F'+rn+'*H'+rn,v:0,s:S.discv};
+        cells.K={f:'SUM(F'+rn+'-I'+rn+')',v:n2(o.qty*o.rate),s:S.net};
+      } else {
+        /* honest blank: no rate, so no cost, no total, no formula anywhere on the line */
+        cells.E={v:'',s:rateSt}; cells.F={v:'',s:S.money}; cells.H={v:'',s:S.blank};
+        cells.I={v:'',s:S.discv}; cells.K={v:'',s:S.net};
+      }
+      var n=row(cells); if(!oneA)oneA=n; oneB=n; return n;
+    }
+    if(setupFee())costRow({name:'One-off setup & onboarding',qual:'setup fee',qty:1,rate:n2(setupFee()),
+      flat:1,note:'Flat one-off entered on this quote'});
+    if(!L.length)row({A:{v:'No optimisations selected',s:S.lbl},B:{v:'',s:S.lblq},
+      N:{v:'Tick the optimisations you are proposing in the AI field quote and re-export',s:S.note}});
+    L.forEach(function(l){ costRow({name:l.name,qual:l.grp,qty:l.c,rate:(l.rt==null?'':l.rt),note:lineNote(l)}); });
+    row();
     /* 6 — account management / manpower (days per month — not priced by this module) */
-    rows.push(qrow({A:'Account Management & Data Optimisation - ManPower (Days / Month)',N:NOTPRICED}));
-    if(hrs)rows.push(qrow({A:'Delivery effort (informational)',
-      B:fmt(hrs)+'h across '+hrsN+' optimisation'+(hrsN===1?'':'s'),
-      N:'ASPL + QC + PM setup hours from the Tachyon catalogue — not charged on this quote; day rate / retainer to confirm'}));
-    rows.push(qrow());
-    /* 7 — totals block */
-    rows.push(qrow({H:'Total One-off Cost',K:t.miss?'':n2(t.net),
-      N:t.miss?('RATES INCOMPLETE — '+missN+' selected optimisation'+(missN===1?'':'s')+' still need a £/SKU rate, so the total cannot be calculated')
-              :'Initial optimisation + one-off setup (ex VAT)'}));
-    rows.push(qrow({H:'Monthly Cost (Tech)',N:NOTPRICED}));
-    rows.push(qrow({H:'Monthly Cost (Monitoring & AM)',N:NOTPRICED}));
-    rows.push(qrow({H:'Total Monthly Cost',I:'per market',N:'No monthly recurring line is priced on this quote'}));
-    rows.push(qrow({H:'Total Annual',I:'per market'}));
-    rows.push(qrow({H:'Pro-rated '+monY(pf)+' to '+monY(pt),I:'per market',
-      N:pmo+' month'+(pmo===1?'':'s')+' — contract year assumed to January, adjust to the client’s'}));
-    rows.push(qrow({H:'Total Monthly Cost',I:'1 market ('+mkt+')',
-      N:'This module quotes one market at a time — repeat per market for a multi-market rollout'}));
-    rows.push(qrow({H:'Total Annual',I:'1 market ('+mkt+')'}));
-    rows.push(qrow({H:'Pro-rated '+monY(pf)+' to '+monY(pt),I:'1 market ('+mkt+')'}));
-    rows.push(qrow());
-    if(vatOn())rows.push(qrow({H:'VAT 20%',K:t.miss?'':n2(t.vat)}));
-    rows.push(qrow({H:'Total Quote'+(vatOn()?' (inc VAT)':' (ex VAT)'),K:t.miss?'':n2(t.gross),
-      N:t.miss?'Set every £/SKU rate in the module to total this quote':''}));
-    rows.push(qrow()); rows.push(qrow());
-    /* 8 — the five standing commercial notes */
-    rows.push(qrow({A:'Notes on the Quotation'}));
-    [ '- Is based on the validity & accuracy of the information provided & is assumed to be reflective of the services required',
-      '- It is indicative of a ‘standard’ deployment; more complex deployments, bespoke work or work outside scope may be subject to additional charges',
-      '- The prices and discounts shown are based on the quotation being accepted on a total basis. Should any changes be required to the level or number of services required then this may impact the prices & discounts shown',
-      '- This quotation is valid for '+validDays+' days from the date of issue & prices as at '+monY(now),
-      '- E&O Excluded'
-    ].forEach(function(b){ rows.push(qrow({A:b})); });
-    rows.push(qrow()); rows.push(qrow());
+    var s3=row({A:{v:'Account Management & Data Optimisation - ManPower (Days / Month)',s:S.sect},
+      B:{v:'',s:S.sectB},N:{v:NOTPRICED,s:S.note}});
+    mg('A'+s3+':B'+s3);
+    if(hrs)row({A:{v:'Delivery effort (informational)',s:S.lbl},
+      B:{v:fmt(hrs)+'h across '+hrsN+' optimisation'+(hrsN===1?'':'s'),s:S.lblq},
+      N:{v:'ASPL + QC + PM setup hours from the Tachyon catalogue — not charged on this quote; day rate / retainer to confirm',s:S.note}});
+    row();
+    /* 7 — totals block. The one-off total is a REAL =SUM() over the net column, so a discount
+       typed into any line rolls straight through it, the VAT line and the quote total. When a
+       rate is missing the whole chain stays blank rather than showing a partial figure. */
+    var live=(!t.miss&&oneA>0);
+    var rTot=row({H:{v:'Total One-off Cost',s:S.totl},
+      K:live?{f:'SUM(K'+oneA+':K'+oneB+')',v:n2(t.net),s:S.totred}:{v:'',s:S.totgap},
+      N:{v:t.miss?('RATES INCOMPLETE — '+missN+' selected optimisation'+(missN===1?'':'s')+' still need a £/SKU rate, so the total cannot be calculated')
+                 :'Initial optimisation + one-off setup (ex VAT)',s:S.noteb}});
+    row({H:{v:'Monthly Cost (Tech)',s:S.totli},N:{v:NOTPRICED,s:S.note}});
+    row({H:{v:'Monthly Cost (Monitoring & AM)',s:S.totli},N:{v:NOTPRICED,s:S.note}});
+    row({H:{v:'Total Monthly Cost',s:S.totl},I:{v:'per market',s:S.per},
+      N:{v:'No monthly recurring line is priced on this quote',s:S.note}});
+    row({H:{v:'Total Annual',s:S.totl},I:{v:'per market',s:S.per}});
+    row({H:{v:'Pro-rated '+monY(pf)+' to '+monY(pt),s:S.totli},I:{v:'per market',s:S.per},
+      N:{v:pmo+' month'+(pmo===1?'':'s')+' — contract year assumed to January, adjust to the client’s',s:S.note}});
+    row({H:{v:'Total Monthly Cost',s:S.totl},I:{v:'1 market ('+mkt+')',s:S.per},
+      N:{v:'This module quotes one market at a time — repeat per market for a multi-market rollout',s:S.note}});
+    row({H:{v:'Total Annual',s:S.totl},I:{v:'1 market ('+mkt+')',s:S.per}});
+    row({H:{v:'Pro-rated '+monY(pf)+' to '+monY(pt),s:S.totli},I:{v:'1 market ('+mkt+')',s:S.per}});
+    row();
+    var rVat=0;
+    if(vatOn())rVat=row({H:{v:'VAT 20%',s:S.totl},
+      K:live?{f:'ROUND(K'+rTot+'*0.2,2)',v:n2(t.vat),s:S.net}:{v:'',s:S.totgap}});
+    var qCells={H:{v:'Total Quote'+(vatOn()?' (inc VAT)':' (ex VAT)'),s:S.totl},
+      K:live?{f:rVat?('K'+rTot+'+K'+rVat):('K'+rTot),v:n2(t.gross),s:S.totred}:{v:'',s:S.totgap}};
+    if(t.miss)qCells.N={v:'Set every £/SKU rate in the module to total this quote',s:S.noteb};
+    row(qCells);
+    row(); row();
+    /* 8 — the five standing commercial notes, in the template's framed box */
+    box([{t:'Notes on the Quotation',b:1},
+      {t:'- Is based on the validity & accuracy of the information provided & is assumed to be reflective of the services required'},
+      {t:'- It is indicative of a ‘standard’ deployment; more complex deployments, bespoke work or work outside scope may be subject to additional charges'},
+      {t:'- The prices and discounts shown are based on the quotation being accepted on a total basis. Should any changes be required to the level or number of services required then this may impact the prices & discounts shown'},
+      {t:'- This quotation is valid for '+validDays+' days from the date of issue & prices as at '+monY(now)},
+      {t:'- E&O Excluded'}]);
+    row(); row();
     /* 9 — free notes, all computed from the live selection */
-    rows.push(qrow({A:'Notes:'}));
-    var notes=[];
-    notes.push('Quote covers '+(CLIENT||'-')+' '+mkt+' — AI field generation on the client’s live product feed.');
-    notes.push(ix?('Live feed pull: '+fmt(ix.total)+' SKUs across '+Object.keys(ix.map).length+' product types.')
-                 :'Live feed not pulled — the volumes on this quote were entered by hand.');
-    notes.push(scopeTextPlain()+'.');
+    var notes=[{t:'Notes:',b:1}];
+    notes.push({t:'Quote covers '+(CLIENT||'-')+' '+mkt+' — AI field generation on the client’s live product feed.'});
+    notes.push({t:ix?('Live feed pull: '+fmt(ix.total)+' SKUs across '+Object.keys(ix.map).length+' product types.')
+                 :'Live feed not pulled — the volumes on this quote were entered by hand.'});
+    notes.push({t:scopeTextPlain()+'.'});
     var selPts=((rec().pts||{})[MKT]||[]);
-    if(selPts.length)notes.push('Product types in scope ('+selPts.length+'): '
-      +selPts.slice(0,25).join('; ')+(selPts.length>25?('; +'+(selPts.length-25)+' more'):'')+'.');
-    if(L.length)notes.push('£/SKU rate provenance: '+srcN.own+' set on this quote, '+srcN.card+' from the saved rate card, '
-      +srcN.cat+' from the Tachyon catalogue'+(srcN.none?(', '+srcN.none+' still unset'):'')+'.');
-    if(hrs)notes.push('Delivery effort across the selection: '+fmt(hrs)+' setup hours (ASPL + QC + PM).');
-    notes.push('All figures ex VAT'+(vatOn()?'; the VAT 20% line above is shown separately.':' — VAT is not applied on this quote.'));
-    notes.push('Volumes are live from the client feed and £/SKU rates come from this quote, the saved rate card or the Tachyon catalogue — nothing here is estimated.');
-    notes.forEach(function(nn){ rows.push(qrow({A:nn})); });
-    return rows;
+    if(selPts.length)notes.push({t:'Product types in scope ('+selPts.length+'): '
+      +selPts.slice(0,25).join('; ')+(selPts.length>25?('; +'+(selPts.length-25)+' more'):'')+'.'});
+    if(L.length)notes.push({t:'£/SKU rate provenance: '+srcN.own+' set on this quote, '+srcN.card+' from the saved rate card, '
+      +srcN.cat+' from the Tachyon catalogue'+(srcN.none?(', '+srcN.none+' still unset'):'')+'.'});
+    if(hrs)notes.push({t:'Delivery effort across the selection: '+fmt(hrs)+' setup hours (ASPL + QC + PM).'});
+    notes.push({t:'All figures ex VAT'+(vatOn()?'; the VAT 20% line above is shown separately.':' — VAT is not applied on this quote.')});
+    notes.push({t:'Every cost cell above is a live formula — change a Quantity, a Cost or a Discount % and the totals recalculate.'});
+    notes.push({t:'Volumes are live from the client feed and £/SKU rates come from this quote, the saved rate card or the Tachyon catalogue — nothing here is estimated.'});
+    box(notes);
+    function box(lz){ var i,j,total=lz.length+2;
+      for(i=0;i<total;i++){
+        var isTop=(i===0), isBot=(i===total-1), ln=(!isTop&&!isBot)?lz[i-1]:null, cells={};
+        for(j=0;j<14;j++){
+          var sides=(j===0?'l':'')+(j===13?'r':'')+(isTop?'t':'')+(isBot?'b':'');
+          cells[XCOL[j]]={v:(j===0&&ln)?ln.t:'',s:bxs(sides,ln&&ln.b&&j===0)};
+        }
+        var n=row(cells,(isTop||isBot)?6:null); mg('A'+n+':N'+n);
+      }
+    }
+    return sh;
   }
-  function toCsv(rows){ return rows.map(function(r){ return r.map(function(c){
-      var s=String(c==null?'':c); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }).join(','); }).join('\n'); }
+
+  /* ---------- CSV (raw-data fallback) ----------
+     Two defects Ray hit in Excel, both fixed here: (1) a field opening with - = + @ is parsed as
+     a FORMULA — that's the #NAME? on the "- Is based on…" notes — so those fields get a single
+     leading space (invisible in the sheet, content verbatim) and are always quoted; (2) without a
+     UTF-8 BOM Excel decodes the file as Windows-1252, which is where â€" and Â· came from. */
+  function csvCell(v){ if(typeof v==='number')return String(v);
+    var s=String(v==null?'':v); if(/^[-=+@]/.test(s))s=' '+s;
+    return (/[",\r\n]/.test(s)||/^ /.test(s))?'"'+s.replace(/"/g,'""')+'"':s; }
+  function csvRows(sh){ return sh.rows.map(function(cells){ var i,out=[],c;
+    for(i=0;i<14;i++){ c=cells[XCOL[i]]; out.push(c?(c.x!=null?c.x:(c.v==null?'':c.v)):''); } return out; }); }
+  function toCsv(rows){ return rows.map(function(r){ return r.map(csvCell).join(','); }).join('\r\n'); }
+
+  /* ---------- minimal XLSX writer — AIQUOTE-XLSX-WRITER ----------
+     An .xlsx is a ZIP of XML parts, so no library is needed: build the parts, CRC32 each one and
+     lay them out as a STORE-method (uncompressed) ZIP with correct local + central directory
+     headers. Parts written: [Content_Types].xml, _rels/.rels, xl/workbook.xml + rels,
+     xl/styles.xml, xl/worksheets/sheet1.xml + rels, xl/drawings/drawing1.xml + rels and the
+     FeedSpark wordmark PNG. Every string is XML-escaped — the template text carries & in
+     "Q&A pairs", "Account Management & Data Optimisation" and "E&O Excluded". */
+  function xesc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;').replace(/\r?\n/g,'&#10;'); }
+  var XNF={gbp:'"£"#,##0.00',rate:'"£"#,##0.000',date:'dd/mm/yyyy'};
+  function xStyler(){
+    var F=[],FL=[],BD=[],NF=[],XF=[],memo={};
+    FL.push('<fill><patternFill patternType="none"/></fill>','<fill><patternFill patternType="gray125"/></fill>');
+    BD.push('<border><left/><right/><top/><bottom/><diagonal/></border>');
+    function reg(a,x){ var i=a.indexOf(x); if(i<0){i=a.length;a.push(x);} return i; }
+    function font(o){ return reg(F,'<font>'+(o.b?'<b/>':'')+(o.i?'<i/>':'')+'<sz val="'+(o.sz||12)+'"/>'
+      +'<color rgb="FF'+(o.c||XINK)+'"/><name val="Calibri"/><family val="2"/></font>'); }
+    function fill(rgb){ return rgb?reg(FL,'<fill><patternFill patternType="solid"><fgColor rgb="FF'+rgb
+      +'"/><bgColor indexed="64"/></patternFill></fill>'):0; }
+    function bord(sp){ if(!sp)return 0; var p=sp.split(':'),st=p[0],sd=p[1]||'',o='<border>';
+      ['left','right','top','bottom'].forEach(function(s){
+        o+=(sd.indexOf(s.charAt(0))>=0)?('<'+s+' style="'+st+'"><color indexed="64"/></'+s+'>'):('<'+s+'/>'); });
+      return sd?reg(BD,o+'<diagonal/></border>'):0; }
+    function num(k){ if(!k)return 0; if(k==='pct')return 9; if(k==='int')return 3;
+      var f=XNF[k]; if(!f)return 0; var i=NF.indexOf(f); if(i<0){i=NF.length;NF.push(f);} return 164+i; }
+    function xf(o){ o=o||{}; var key=JSON.stringify(o); if(memo[key]!=null)return memo[key];
+      var fo=font(o),fli=fill(o.fl),bi=bord(o.bd),ni=num(o.n);
+      var al=(o.h||o.v||o.w)?('<alignment'+(o.h?' horizontal="'+o.h+'"':'')+(o.v?' vertical="'+o.v+'"':'')
+        +(o.w?' wrapText="1"':'')+'/>'):'';
+      var x='<xf numFmtId="'+ni+'" fontId="'+fo+'" fillId="'+fli+'" borderId="'+bi+'" xfId="0" applyFont="1"'
+        +(fli?' applyFill="1"':'')+(bi?' applyBorder="1"':'')+(ni?' applyNumberFormat="1"':'')
+        +(al?' applyAlignment="1"':'')+(al?('>'+al+'</xf>'):'/>');
+      memo[key]=XF.length; XF.push(x); return memo[key]; }
+    xf({});   // xf 0 / font 0 = the workbook default (Calibri 12 charcoal)
+    return { xf:xf, xml:function(){
+      return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+       +'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+       +(NF.length?('<numFmts count="'+NF.length+'">'+NF.map(function(f,i){
+           return '<numFmt numFmtId="'+(164+i)+'" formatCode="'+xesc(f)+'"/>'; }).join('')+'</numFmts>'):'')
+       +'<fonts count="'+F.length+'">'+F.join('')+'</fonts>'
+       +'<fills count="'+FL.length+'">'+FL.join('')+'</fills>'
+       +'<borders count="'+BD.length+'">'+BD.join('')+'</borders>'
+       +'<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+       +'<cellXfs count="'+XF.length+'">'+XF.join('')+'</cellXfs>'
+       +'<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
+       +'<dxfs count="0"/><tableStyles count="0" defaultTableStyle="TableStyleMedium2" defaultPivotStyle="PivotStyleLight16"/>'
+       +'</styleSheet>'; } };
+  }
+  /* Ray's template widths verbatim (A 24.4 · B 42.1 · C 1.4 spacer · D 17 · G 1.3 spacer
+     · H 30.4 · I 17 · J 0.9 spacer · K 17 · L 21.4 · M 3.3 · N 74.4 · O 8.9). E and F carry
+     no width in the template and default to ~8.4 — which is exactly why Ray saw ######## on
+     money cells — so they are pinned at 14 here. */
+  var XWID=[24.42578125,42.140625,1.42578125,17,14,14,1.28515625,30.42578125,17,0.85546875,17,21.42578125,3.28515625,74.42578125,8.85546875];
+  function sheetXml(sh,st){
+    var i,j,out=[],last=sh.rows.length;
+    for(i=0;i<sh.rows.length;i++){
+      var cells=sh.rows[i], rn=i+1, ht=sh.h[rn], body='';
+      for(j=0;j<15;j++){ var c=cells[XCOL[j]]; if(!c)continue;
+        var ref=XCOL[j]+rn, s=' s="'+st.xf(c.s)+'"';
+        if(c.f!=null&&c.f!==''){ body+='<c r="'+ref+'"'+s+'><f>'+xesc(c.f)+'</f>'
+          +(typeof c.v==='number'?('<v>'+c.v+'</v>'):'')+'</c>'; }
+        else if(c.v==null||c.v===''){ body+='<c r="'+ref+'"'+s+'/>'; }
+        else if(typeof c.v==='number'){ body+='<c r="'+ref+'"'+s+'><v>'+c.v+'</v></c>'; }
+        else { body+='<c r="'+ref+'"'+s+' t="inlineStr"><is><t xml:space="preserve">'+xesc(c.v)+'</t></is></c>'; }
+      }
+      if(!body&&!ht)continue;
+      out.push('<row r="'+rn+'"'+(ht?(' ht="'+ht+'" customHeight="1"'):'')+'>'+body+'</row>');
+    }
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      +'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'
+      +' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+      +'<dimension ref="A1:O'+(last||1)+'"/>'
+      /* gridlines OFF — the template reads as a document, not a grid */
+      +'<sheetViews><sheetView showGridLines="0" tabSelected="1" zoomScale="70" zoomScaleNormal="70" workbookViewId="0"/></sheetViews>'
+      +'<sheetFormatPr defaultRowHeight="15"/>'
+      +'<cols>'+XWID.map(function(w,k){ return '<col min="'+(k+1)+'" max="'+(k+1)+'" width="'+w+'" customWidth="1"/>'; }).join('')+'</cols>'
+      +'<sheetData>'+out.join('')+'</sheetData>'
+      +(sh.merges.length?('<mergeCells count="'+sh.merges.length+'">'
+        +sh.merges.map(function(m){return '<mergeCell ref="'+m+'"/>'}).join('')+'</mergeCells>'):'')
+      +'<pageMargins left="0.25" right="0.25" top="0.5" bottom="0.5" header="0.3" footer="0.3"/>'
+      +'<pageSetup paperSize="9" orientation="landscape"/>'
+      +'<drawing r:id="rId1"/></worksheet>';
+  }
+  /* the FeedSpark wordmark, lifted from Ray's own quote template (xl/media/image1.png),
+     placed at its natural 195×50px at the sheet's top-left exactly as he anchors it */
+  var FSMARK='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';
+  function drawingXml(){
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      +'<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing"'
+      +' xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"'
+      +' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+      +'<xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>32465</xdr:colOff>'
+      +'<xdr:row>0</xdr:row><xdr:rowOff>28575</xdr:rowOff></xdr:from>'
+      +'<xdr:ext cx="1857375" cy="476250"/>'
+      +'<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="2" name="FeedSpark"/>'
+      +'<xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>'
+      +'<xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>'
+      +'<xdr:spPr><a:xfrm><a:off x="32465" y="28575"/><a:ext cx="1857375" cy="476250"/></a:xfrm>'
+      +'<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic>'
+      +'<xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>';
+  }
+  function xlsxBytes(sh){
+    var st=xStyler(), sx=sheetXml(sh,st), REL='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    var files=[
+      {n:'[Content_Types].xml',s:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        +'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        +'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        +'<Default Extension="xml" ContentType="application/xml"/>'
+        +'<Default Extension="png" ContentType="image/png"/>'
+        +'<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+        +'<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+        +'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+        +'<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>'
+        +'</Types>'},
+      {n:'_rels/.rels',s:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        +'<Relationship Id="rId1" Type="'+REL+'/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+      {n:'xl/workbook.xml',s:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        +'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="'+REL+'">'
+        +'<workbookPr/><sheets><sheet name="Quick Start" sheetId="1" r:id="rId1"/></sheets>'
+        /* fullCalcOnLoad: Excel recalculates the whole chain the moment the file opens */
+        +'<calcPr calcId="171027" fullCalcOnLoad="1"/></workbook>'},
+      {n:'xl/_rels/workbook.xml.rels',s:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        +'<Relationship Id="rId1" Type="'+REL+'/worksheet" Target="worksheets/sheet1.xml"/>'
+        +'<Relationship Id="rId2" Type="'+REL+'/styles" Target="styles.xml"/></Relationships>'},
+      {n:'xl/styles.xml',s:st.xml()},
+      {n:'xl/worksheets/sheet1.xml',s:sx},
+      {n:'xl/worksheets/_rels/sheet1.xml.rels',s:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        +'<Relationship Id="rId1" Type="'+REL+'/drawing" Target="../drawings/drawing1.xml"/></Relationships>'},
+      {n:'xl/drawings/drawing1.xml',s:drawingXml()},
+      {n:'xl/drawings/_rels/drawing1.xml.rels',s:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        +'<Relationship Id="rId1" Type="'+REL+'/image" Target="../media/feedspark.png"/></Relationships>'},
+      {n:'xl/media/feedspark.png',b:FSMARK}
+    ];
+    return zipStore(files.map(function(f){ return {name:f.n,data:f.b?b64bytes(f.b):utf8Bytes(f.s)}; }));
+  }
+  function utf8Bytes(s){ if(window.TextEncoder)return new TextEncoder().encode(s);
+    var b=unescape(encodeURIComponent(s)),u=new Uint8Array(b.length),i;
+    for(i=0;i<b.length;i++)u[i]=b.charCodeAt(i)&255; return u; }
+  function b64bytes(b){ var s=atob(b),u=new Uint8Array(s.length),i;
+    for(i=0;i<s.length;i++)u[i]=s.charCodeAt(i)&255; return u; }
+  var _CRCT=null;
+  function crc32(u){ var i,k,c; if(!_CRCT){ _CRCT=new Int32Array(256);
+      for(i=0;i<256;i++){ c=i; for(k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); _CRCT[i]=c; } }
+    c=-1; for(i=0;i<u.length;i++)c=_CRCT[(c^u[i])&255]^(c>>>8); return (c^-1)>>>0; }
+  function zipStore(files){
+    var parts=[],cd=[],off=0,i,d=new Date();
+    var tm=((d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1))&0xFFFF;
+    var dt=(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xFFFF;
+    function w16(a,v){a.push(v&255,(v>>>8)&255)} function w32(a,v){a.push(v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255)}
+    for(i=0;i<files.length;i++){
+      var f=files[i], nm=utf8Bytes(f.name), da=f.data, c=crc32(da), h=[];
+      w32(h,0x04034b50); w16(h,20); w16(h,0x0800); w16(h,0); w16(h,tm); w16(h,dt);
+      w32(h,c); w32(h,da.length); w32(h,da.length); w16(h,nm.length); w16(h,0);
+      parts.push(new Uint8Array(h),nm,da);
+      var e=[]; w32(e,0x02014b50); w16(e,20); w16(e,20); w16(e,0x0800); w16(e,0); w16(e,tm); w16(e,dt);
+      w32(e,c); w32(e,da.length); w32(e,da.length); w16(e,nm.length); w16(e,0); w16(e,0); w16(e,0); w16(e,0);
+      w32(e,0); w32(e,off);
+      cd.push(new Uint8Array(e),nm);
+      off+=h.length+nm.length+da.length;
+    }
+    var cdLen=0; for(i=0;i<cd.length;i++){ parts.push(cd[i]); cdLen+=cd[i].length; }
+    var eo=[]; w32(eo,0x06054b50); w16(eo,0); w16(eo,0); w16(eo,files.length); w16(eo,files.length);
+    w32(eo,cdLen); w32(eo,off); w16(eo,0); parts.push(new Uint8Array(eo));
+    var tot=0; for(i=0;i<parts.length;i++)tot+=parts[i].length;
+    var u=new Uint8Array(tot),p=0;
+    for(i=0;i<parts.length;i++){ u.set(parts[i],p); p+=parts[i].length; }
+    return u;
+  }
+  function fileStem(){ return 'aiquote_'+(CLIENT||'client').replace(/[^a-z0-9]+/gi,'_')+'_'+MKT; }
+  function download(blob,name){ var url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ try{URL.revokeObjectURL(url)}catch(e){} },4000); }
+  $('#xlsx').addEventListener('click',function(){
+    try{
+      var bytes=xlsxBytes(quoteSheet());
+      download(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),
+        fileStem()+'.xlsx');
+      toast('Excel quote downloaded');
+    }catch(e){ err('Could not build the Excel file: '+((e&&e.message)||e)); }
+  });
   $('#csv').addEventListener('click',function(){
-    var csv=toCsv(quoteRows());
-    var blob=new Blob([csv],{type:'text/csv'}); var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-    a.download='aiquote_'+(CLIENT||'client').replace(/[^a-z0-9]+/gi,'_')+'_'+MKT+'.csv'; document.body.appendChild(a); a.click(); a.remove();
+    var csv=toCsv(csvRows(quoteSheet()));
+    /* the BOM is what stops Excel decoding UTF-8 as Windows-1252 (the â€" / Â· mojibake) */
+    download(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}), fileStem()+'.csv');
   });
   /* ---------- saved quotes + the finance tracker ---------- */
   // A saved quote is an IMMUTABLE SNAPSHOT in its own KV map (`aiquotesaved`, kvmerge-backed
