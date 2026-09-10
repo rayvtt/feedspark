@@ -3171,6 +3171,34 @@
    "pattern": "test_overlays.mjs",
    "min": 1,
    "pr": 317
+  },
+  {
+   "name": "Pricer: volume = PARENT PRODUCTS (unique g:item_group_id) counted live from the wired feed, variant SKUs as context — Ray 10 Sep 2026 'for parent products because of unique products'",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "countParents",
+   "min": 3,
+   "pr": 321
+  },
+  {
+   "name": "Pricer: Products done (parents) field in the Bill-units pop-up + tok/product hover note",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "tp-prod",
+   "min": 3,
+   "pr": 321
+  },
+  {
+   "name": "Pricer engine 1.5.0: parentCounter — the one item_group_id counting rule every page streams a feed through; per-product actuals tokPerProd/billPerProd",
+   "file": "docs/pricer_engine.js",
+   "pattern": "parentCounter",
+   "min": 3,
+   "pr": 321
+  },
+  {
+   "name": "Pricer engine: quote() carries unit:'product' + the variant SKUs behind the volume",
+   "file": "docs/pricer_engine.js",
+   "pattern": "unit: 'product'",
+   "min": 1,
+   "pr": 321
   }
  ]
 }

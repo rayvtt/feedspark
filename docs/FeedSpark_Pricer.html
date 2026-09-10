@@ -115,6 +115,7 @@ window.addEventListener('load',restore);
   /* ---------------- pricer layout ---------------- */
   .pz-grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
   .pz-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px}
+  [hidden]{display:none!important}   /* .pz-f / .btn set display:flex, which used to beat the hidden attribute (an empty Market select showed for single-market clients) */
   .pz-ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:0 0 14px}
   .pz-scaf{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
   .pz-scaf .sl{font-size:10.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
@@ -126,7 +127,11 @@ window.addEventListener('load',restore);
   .pz-f select,.pz-f input{font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:8px 10px}
   .pz-f select:focus,.pz-f input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
   #pz-volume{width:110px}
-  .pz-vol-src{font-size:10.5px;color:var(--muted);font-weight:700}
+  .pz-vol-src{font-size:10.5px;color:var(--muted);font-weight:700;max-width:420px;line-height:1.35}
+  .pz-vol-src b{color:var(--ink)}
+  .pz-count{font:inherit;font-size:10.5px;font-weight:800;padding:5px 10px;border-radius:100px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;align-self:center}
+  .pz-count:hover{border-color:var(--orange);color:var(--orange-ink)}
+  .pz-count[disabled]{opacity:.5;cursor:default}
   .pz-tog{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;color:var(--ink-2);cursor:pointer;padding:8px 0}
   .pz-tog input{accent-color:var(--orange-deep);width:15px;height:15px}
   /* catalogue picker */
@@ -310,21 +315,22 @@ window.addEventListener('load',restore);
 <header class="hero"><div class="wrap">
   <div class="eyebrow">Private &amp; Confidential · AI optimisation cost studio</div>
   <h1>Tachyon Pricer</h1>
-  <p>What it really costs to switch on any Tachyon optimisation for a client — the retainer hours each team tags (ASPL setup, AM QC, project management, monitoring) sold in £585+VAT 8-hour blocks, plus Tachyon processing priced per SKU through the volume ladder. Rates live in the collaborative rate card below: London and ASPL edit the same numbers, quotes update everywhere instantly.</p>
+  <p>What it really costs to switch on any Tachyon optimisation for a client — the retainer hours each team tags (ASPL setup, AM QC, project management, monitoring) sold in £585+VAT 8-hour blocks, plus Tachyon processing priced per <b>parent product</b> (unique <code>g:item_group_id</code> — Tachyon generates once per product and the variants inherit) through the volume ladder. Rates live in the collaborative rate card below: London and ASPL edit the same numbers, quotes update everywhere instantly.</p>
 </div></header>
 
 <section><div class="wrap">
   <h2>Quote builder</h2>
-  <p class="sub">Pick the client (volume auto-fills from their Feed Lab scan), tick the optimisations, read the number. Copy it, save it, or brief it straight into Workflow.</p>
+  <p class="sub">Pick the client — the volume fills itself in <b>parent products</b>, counted live from the wired feed by distinct <code>g:item_group_id</code> (variant SKUs shown beside it for context) — tick the optimisations, read the number. Copy it, save it, or brief it straight into Workflow.</p>
   <div class="pz-scaf" id="pz-scaf"></div>
   <div class="pz-ctl pz-card">
     <div class="pz-f"><label for="pz-client">Client</label><select id="pz-client"></select></div>
     <div class="pz-f" id="pz-mkt-wrap" hidden><label for="pz-mkt">Market</label><select id="pz-mkt"></select></div>
-    <div class="pz-f"><label for="pz-volume">Volume (SKUs)</label><input id="pz-volume" type="number" min="0" step="1" value="0"></div>
+    <div class="pz-f"><label for="pz-volume" title="Unique products = distinct g:item_group_id. Variants inherit the generated fields, so they are never billed again.">Volume (parent products)</label><input id="pz-volume" type="number" min="0" step="1" value="0" title="Parent products — unique g:item_group_id, not variant SKUs"></div>
     <span class="pz-vol-src" id="pz-vol-src"></span>
+    <button class="pz-count" id="pz-count" type="button" title="Re-count parent products from the live feed (distinct g:item_group_id)" hidden>⟳ count</button>
     <div class="pz-f"><label for="pz-refresh">Monthly refresh</label><select id="pz-refresh">
-      <option value="0">none</option><option value="0.05">~5% of SKUs</option>
-      <option value="0.1" selected>~10% of SKUs</option><option value="0.2">~20% of SKUs</option></select></div>
+      <option value="0">none</option><option value="0.05">~5% of products</option>
+      <option value="0.1" selected>~10% of products</option><option value="0.2">~20% of products</option></select></div>
     <label class="pz-tog"><input type="checkbox" id="pz-absorb"> Monitoring absorbed into existing retainer</label>
   </div>
   <div class="pz-grid">
@@ -347,7 +353,7 @@ window.addEventListener('load',restore);
 
 <section><div class="wrap">
   <h2>AI briefs — delivery tracking <span class="ai-n" id="ai-n"></span></h2>
-  <p class="sub">Every brief whose task title reads as AI work is pulled in here automatically — no tagging inside Workflow, no pipeline clutter. The teams track delivery on the brief itself: hours per role and the brief's token economics in a single <b>Bill units</b> column — hover a value for the <b>actual tokens</b> and <b>billing tokens</b> behind it, click it to edit them (run times live in the same pop-up). Run-time and token totals per brand are summarised below the table. Averages (and tokens-per-SKU) feed the rate card's evidence pricing.</p>
+  <p class="sub">Every brief whose task title reads as AI work is pulled in here automatically — no tagging inside Workflow, no pipeline clutter. The teams track delivery on the brief itself: hours per role and the brief's token economics in a single <b>Bill units</b> column — hover a value for the <b>actual tokens</b> and <b>billing tokens</b> behind it, click it to edit them (run times live in the same pop-up). Run-time and token totals per brand are summarised below the table. Averages (and tokens per parent product) feed the rate card's evidence pricing.</p>
   <div class="pz-card">
     <div class="rc-scroll"><table class="rc ai-track" id="ai-track">
       <thead><tr><th>Client · brief</th><th>Stage</th><th>Tachyon task</th>
@@ -355,7 +361,7 @@ window.addEventListener('load',restore);
         <th title="London AM quality-control hours">QC h</th>
         <th title="Project-management hours">PM h</th>
         <th title="Ongoing monitoring hours per month">Mon h</th>
-        <th title="Billing units = billing tokens ÷ 1M, the unit AI processing is billed in. Hover a value for the actual + billing tokens behind it; click to edit tokens and run times.">Bill units</th>
+        <th title="Billing units = billing tokens ÷ 1M, the unit AI processing is billed in. Hover a value for the actual + billing tokens behind it; click to edit tokens, run times and products done (parents).">Bill units</th>
         <th>Vol done</th><th>Categories done</th><th></th></tr></thead>
       <tbody id="ai-body"></tbody>
     </table></div>
@@ -373,7 +379,7 @@ window.addEventListener('load',restore);
         <th title="Total AI running time, single-request, across the brand's briefs">Run 1 req</th>
         <th title="Total AI running time at 25 parallel requests">Run 25 req</th>
         <th title="TOTAL MAN TIME for the brand's AI briefs, assigned to ASPL hours — click to edit">Man time (ASPL h)</th>
-        <th title="Products covered by the runs — variant level (grouping count in brackets). Vol-done column above tracks per brief">Products</th></tr></thead>
+        <th title="Products covered by the runs — PARENT PRODUCTS first (unique g:item_group_id, the unit Tachyon is priced in), variant SKUs beside. Vol-done column above tracks variants per brief; Products done lives in the Bill-units pop-up">Products</th></tr></thead>
       <tbody id="ai-sum"></tbody>
     </table></div>
   </div>
@@ -381,10 +387,10 @@ window.addEventListener('load',restore);
 
 <section><div class="wrap">
   <h2>Rate card — hours &amp; unit prices, owned by the teams</h2>
-  <p class="sub">This is the collaborative bit: ASPL tags the setup hours they really take, London tags QC / PM / monitoring, commercial sets the £ per SKU. Click any number to edit — saves instantly for everyone (concurrency-safe), and the row loses its DRAFT flag once a human has confirmed it. Every edit is attributed in the owner's Activity log.</p>
+  <p class="sub">This is the collaborative bit: ASPL tags the setup hours they really take, London tags QC / PM / monitoring, commercial sets the £ per parent product. Click any number to edit — saves instantly for everyone (concurrency-safe), and the row loses its DRAFT flag once a human has confirmed it. Every edit is attributed in the owner's Activity log.</p>
   <div class="pz-card">
     <div class="rc-scroll"><table class="rc" id="rc">
-      <thead><tr><th>Optimisation</th><th>ASPL setup h</th><th>AM QC h</th><th>PM h</th><th>Monitor h/mo</th><th>Tachyon £/SKU</th><th>Lead (days)</th><th>Status</th><th>Note</th></tr></thead>
+      <thead><tr><th>Optimisation</th><th>ASPL setup h</th><th>AM QC h</th><th>PM h</th><th>Monitor h/mo</th><th title="Per parent product — unique g:item_group_id, variants inherit">Tachyon £/product</th><th>Lead (days)</th><th>Status</th><th>Note</th></tr></thead>
       <tbody id="rc-body"></tbody>
     </table></div>
     <div class="rc-foot">
@@ -416,10 +422,11 @@ window.addEventListener('load',restore);
         <dt>PM h</dt><dd>Project-management hours: briefing, client comms, scheduling, chasing, status reporting for this brief.</dd>
         <dt>Mon h</dt><dd>Ongoing monitoring hours <b>per month</b> after go-live: output QA, drift checks, exception handling. Monthly figure, not a running total.</dd>
         <dt>Bill units</dt><dd>Billing tokens ÷ 1M — the unit AI processing is billed in, and the one token number shown per brief. <b>Derived automatically</b>, never entered. Hover a value for the actual + billing tokens behind it; click to edit them in the pop-up.</dd>
-        <dt>Actual / billing tok (in the pop-up)</dt><dd><b>Actual tokens</b> = what the run consumed (input + output, from the Tachyon run log); ÷ volume done it becomes the <b>tok/SKU</b> signal on the rate card. <b>Billing tokens</b> = actual × the model's cost multiplier — what the provider actually charges for. Visual work carries a much higher multiplier than text (image tokens are dearer), so both are tracked, never just one.</dd>
+        <dt>Actual / billing tok (in the pop-up)</dt><dd><b>Actual tokens</b> = what the run consumed (input + output, from the Tachyon run log); ÷ products done it becomes the <b>tok/product</b> signal on the rate card (÷ volume done = tok/SKU, the variant view). <b>Billing tokens</b> = actual × the model's cost multiplier — what the provider actually charges for. Visual work carries a much higher multiplier than text (image tokens are dearer), so both are tracked, never just one.</dd>
         <dt>Run 1 req / 25 req (in the pop-up)</dt><dd>AI running time end-to-end: one request at a time, and with 25 requests in parallel. <b>Enter minutes</b> — totalled per brand (shown as h m) in the summary below the table.</dd>
         <dt>Man time (ASPL h)</dt><dd>The brand's <b>total man time</b> across its AI briefs, assigned to ASPL hours. The dev handback reports it per brand, so it lives on the per-brand summary row — splitting it per brief would be invented data.</dd>
         <dt>Vol done</dt><dd>SKUs actually processed and delivered — what shipped, not what the brief hoped for. Variant-level count. Powers tok/SKU and the delivery record.</dd>
+        <dt>Products done (in the pop-up)</dt><dd><b>Parent products</b> the run covered — unique <code>g:item_group_id</code>, the unit Tachyon is priced in (variants inherit). When a brief doesn't carry its own, the brand's product-group count from the dev handback stands in. Powers tok/product on the rate card.</dd>
         <dt>＋ Add historic AI task</dt><dd>A track-only row for AI work delivered before the FCC existed — client and task editable inline, counted in the averages like any brief (no lead time: nothing to measure).</dd>
         <dt>🔗 Attach Workflow brief</dt><dd>Pulls in a brief the title scan can't see (no AI wording in its task name). Once attached, set its Tachyon task and track as normal; ✕ detaches it again.</dd>
         <dt>Categories done</dt><dd>The Google product categories covered, picked from the official 5,595-entry GPC taxonomy (searchable — type to filter, click to toggle).</dd>
@@ -427,7 +434,7 @@ window.addEventListener('load',restore);
       <div class="fg-sec">Derived on the rate card</div>
       <dl>
         <dt>actuals ×N</dt><dd>That optimisation's hours are the <b>average of N tracked briefs</b> — evidence has replaced the estimate. Hover the badge for the breakdown.</dd>
-        <dt>tok/SKU</dt><dd>Σ tokens ÷ Σ volume done across tracked briefs — the real marginal cost per SKU. Sanity-check the commercial £/SKU against it; the £ itself is never auto-set.</dd>
+        <dt>tok/product</dt><dd>Σ tokens ÷ Σ products done across tracked briefs — the real marginal cost per parent product, the unit the £ is set in. Sanity-check the commercial £/product against it; the £ itself is never auto-set. tok/SKU (÷ volume done) sits beside it as the variant view.</dd>
       </dl>
     </div>
   </div>
@@ -448,6 +455,7 @@ window.addEventListener('load',restore);
     <label>Billing tokens <input id="tp-bill" type="number" min="0" step="1000" placeholder="actual × cost multiplier"></label>
     <label>Run 1 req (min) <input id="tp-one" type="number" min="0" step="5" placeholder="minutes"></label>
     <label>Run 25 req (min) <input id="tp-par" type="number" min="0" step="5" placeholder="minutes"></label>
+    <label title="Parent products the run covered — unique g:item_group_id, the billing unit. Blank = the brand's product-group count from the handback stands in.">Products done (parents) <input id="tp-prod" type="number" min="0" step="1" placeholder="unique g:item_group_id"></label>
   </div>
   <div class="gpc-foot"><span class="tiers-line" id="tp-units"></span><button class="btn" id="tp-save" type="button">Save</button></div>
 </div>
@@ -462,6 +470,7 @@ window.addEventListener('load',restore);
 
 <div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Tachyon Pricer<span class="fv" id="eng-v"></span></div></div>
 
+<script src="/feedlab/engine.js" onerror="window.__feedFail=1"></script>
 <script src="/pricer/engine.js" onerror="window.__engineFail=1"></script>
 <script>
 (function(){
@@ -509,7 +518,9 @@ function renderRates(){
       +cell('aspl',r.aspl)+cell('qc',r.qc)+cell('pm',r.pm)+cell('mon',r.mon)
       +cell('unit','£'+r.unit,0.01)+cell('lead',r.lead)
       +'<td>'+(function(){var a=ACTUALS[r.id];
-          if(a&&USE_ACTUALS)return '<span class="r-act" title="ASPL '+a.aspl+' · QC '+a.qc+' · PM '+a.pm+(a.lead?(' · real lead '+a.lead+'d'):'')+(a.tokPerSku?(' · ≈'+a.tokPerSku+' actual tok/SKU over '+fmt(a.volDone)+' done'):'')+(a.billPerSku?(' · ≈'+a.billPerSku+' billing tok/SKU'):'')+' — averaged from the AI-briefs tracking table">actuals ×'+a.n+'</span>';
+          if(a&&USE_ACTUALS)return '<span class="r-act" title="ASPL '+a.aspl+' · QC '+a.qc+' · PM '+a.pm+(a.lead?(' · real lead '+a.lead+'d'):'')
+            +(a.tokPerProd?(' · ≈'+fmt(Math.round(a.tokPerProd))+' actual tok/product over '+fmt(a.prodDone)+' parent products'):'')+(a.billPerProd?(' · ≈'+fmt(Math.round(a.billPerProd))+' billing tok/product'):'')
+            +(a.tokPerSku?(' · ≈'+fmt(Math.round(a.tokPerSku))+' tok/SKU over '+fmt(a.volDone)+' variants'):'')+' — averaged from the AI-briefs tracking table">actuals ×'+a.n+'</span>';
           if(a)return '<span class="r-ok" title="actuals available (×'+a.n+') but the toggle is off">confirmed</span>';
           return r.draft?'<span class="r-draft">draft</span>':'<span class="r-ok">confirmed</span>'})()+'</td>'
       +'<td class="r-note"><span class="r-ed" data-id="'+r.id+'" data-f="note" data-txt="1">'+(esc(r.note)||'<span style="opacity:.4">add note…</span>')+'</span></td>'
@@ -543,21 +554,21 @@ function renderCatalog(){
   $('#cat-grid').innerHTML=Object.keys(grps).map(function(g){
     return '<div class="cat-grp"><h4>'+esc(g)+'</h4>'+grps[g].map(function(r){
       return '<label class="cat-opt'+(picks[r.id]?' on':'')+'"><input type="checkbox" data-id="'+r.id+'"'+(picks[r.id]?' checked':'')+'>'
-        +'<span><span class="cn">'+esc(r.name)+'</span><br><span class="cm">setup <b>'+(r.aspl+r.qc+r.pm)+'h</b> · <b>£'+r.unit+'</b>/SKU · live ~<b>'+r.lead+'d</b></span></span></label>'}).join('')+'</div>'}).join('');
+        +'<span><span class="cn">'+esc(r.name)+'</span><br><span class="cm">setup <b>'+(r.aspl+r.qc+r.pm)+'h</b> · <b>£'+r.unit+'</b>/product · live ~<b>'+r.lead+'d</b></span></span></label>'}).join('')+'</div>'}).join('');
   $('#cat-grid').querySelectorAll('input[type=checkbox]').forEach(function(cb){
     cb.onchange=function(){if(cb.checked)picks[cb.getAttribute('data-id')]=1;else delete picks[cb.getAttribute('data-id')];renderCatalog();renderQuote()}});
 }
 
 /* ---------------- the quote ---------------- */
 function currentQuote(){
-  return E.quote(Object.keys(picks),{volume:+$('#pz-volume').value||0,rateOverrides:effOverrides(),
+  return E.quote(Object.keys(picks),{volume:+$('#pz-volume').value||0,skus:(MARKET&&MKROWS[MARKET])||0,rateOverrides:effOverrides(),
     blockGBP:blockGBP(),absorbMonitoring:$('#pz-absorb').checked,refreshPct:+$('#pz-refresh').value||0,
     client:CLIENT,market:Object.keys(MKROWS).length>1?MARKET:''});
 }
 function renderQuote(){
   var q=currentQuote(),F=E.fmtGBP;
   $('#q-title').textContent='Quote — '+(CLIENT||'client');
-  $('#q-sub').textContent=q.picks.length? q.picks.length+' optimisation'+(q.picks.length===1?'':'s')+' · '+fmt(q.volume)+' SKUs'+(q.market?' · '+q.market.toUpperCase():'') : 'tick an optimisation to price it';
+  $('#q-sub').textContent=q.picks.length? q.picks.length+' optimisation'+(q.picks.length===1?'':'s')+' · '+fmt(q.volume)+' parent products'+(q.skus>q.volume?' ('+fmt(q.skus)+' SKUs)':'')+(q.market?' · '+q.market.toUpperCase():'') : 'tick an optimisation to price it';
   if(!q.picks.length){$('#q-body').innerHTML='<div class="q-empty">Nothing selected yet.</div>';$('#q-copy').disabled=true;$('#q-save').disabled=true;$('#q-brief').hidden=true;return}
   var h='';
   h+=q.lines.map(function(l){return '<div class="q-line small"><span>'+esc(l.name)+'</span><b>'+l.hours+'h · '+F(l.tachyon)+'</b></div>'}).join('');
@@ -567,13 +578,13 @@ function renderQuote(){
     +'<div class="q-total"><span>One-off</span><span class="amt">'+F(q.oneOff.total)+'</span></div><div class="q-vat">+VAT</div></div>';
   h+='<div class="q-sec"><div class="qh">Ongoing monthly</div>'
     +'<div class="q-line"><span>Monitoring '+q.monthly.monHours+'h/mo'+(q.monthly.absorbed?' — absorbed':'')+'</span><b>'+(q.monthly.absorbed?'£0':q.monthly.blocks+' × '+F(q.blockGBP)+' = '+F(q.monthly.blockCost))+'</b></div>'
-    +(q.monthly.refreshPct>0?'<div class="q-line"><span>New/refreshed SKUs ~'+Math.round(q.monthly.refreshPct*100)+'%/mo</span><b>'+F(q.monthly.refreshTachyon)+'</b></div>':'')
+    +(q.monthly.refreshPct>0?'<div class="q-line"><span>New/refreshed products ~'+Math.round(q.monthly.refreshPct*100)+'%/mo</span><b>'+F(q.monthly.refreshTachyon)+'</b></div>':'')
     +'<div class="q-total"><span>Monthly</span><span class="amt">'+F(q.monthly.total)+'</span></div><div class="q-vat">+VAT</div></div>';
   h+='<div class="q-sla">⏱ Live in ~'+q.slaDays+' working days from sign-off</div>';
   if(q.draftRates)h+='<div class="q-draft">DRAFT RATES — confirm hours &amp; unit £ in the rate card before this goes near a client</div>';
   $('#q-body').innerHTML=h;
   $('#q-copy').disabled=false;$('#q-save').disabled=false;
-  var brief={client:CLIENT||'',task:'Tachyon setup — '+q.lines.map(function(l){return l.name}).join(' + ')+' ('+fmt(q.volume)+' SKUs'+(q.market?' · '+q.market.toUpperCase():'')+') · one-off '+F(q.oneOff.total)+' +VAT',cat:'opt',source:'plan'};   // the tracking table finds it by TITLE scan — no tagging needed
+  var brief={client:CLIENT||'',task:'Tachyon setup — '+q.lines.map(function(l){return l.name}).join(' + ')+' ('+fmt(q.volume)+' parent products'+(q.market?' · '+q.market.toUpperCase():'')+') · one-off '+F(q.oneOff.total)+' +VAT',cat:'opt',source:'plan'};   // the tracking table finds it by TITLE scan — no tagging needed
   var a=$('#q-brief');a.hidden=false;a.href='/workflow?brief='+b64url(brief);
 }
 ['pz-volume','pz-refresh','pz-absorb'].forEach(function(id){var el=document.getElementById(id);
@@ -586,7 +597,7 @@ function ok(sel,msg){$(sel).textContent=msg;setTimeout(function(){$(sel).textCon
 $('#q-save').addEventListener('click',function(){
   var q=currentQuote();if(!q.picks.length)return;
   var id='q'+Date.now().toString(36);
-  QUOTES[id]={t:Date.now(),client:CLIENT,market:q.market,volume:q.volume,picks:q.picks,
+  QUOTES[id]={t:Date.now(),client:CLIENT,market:q.market,volume:q.volume,unit:'product',skus:q.skus||0,picks:q.picks,
     names:q.lines.map(function(l){return l.name}),oneOff:q.oneOff.total,monthly:q.monthly.total,sla:q.slaDays,draft:q.draftRates};
   fetch('/api/tachyon/quotes',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(QUOTES_BASE)},body:JSON.stringify(QUOTES)})
     .then(function(r){QUOTES_BASE=+r.headers.get('X-Sync-Base')||QUOTES_BASE;return r.json()})
@@ -598,7 +609,7 @@ function renderSaved(){
   $('#sq').innerHTML=ids.length?ids.map(function(id){var s=QUOTES[id];
     var d=new Date(s.t||0);
     return '<div class="sq-card"><div class="sh"><span class="sc">'+esc(s.client||'—')+(s.market?' · '+esc(String(s.market).toUpperCase()):'')+'</span><span class="st">'+d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()+'</span></div>'
-      +'<div class="sp">'+esc((s.names||[]).join(' + '))+' · '+fmt(s.volume)+' SKUs</div>'
+      +'<div class="sp">'+esc((s.names||[]).join(' + '))+' · '+fmt(s.volume)+(s.unit==='product'?' parent products'+(s.skus>s.volume?' ('+fmt(s.skus)+' SKUs)':''):' SKUs · pre-Sep-26 quote, priced per SKU')+'</div>'
       +'<div class="sm"><span>One-off <span class="a">'+E.fmtGBP(s.oneOff||0)+'</span></span><span>Monthly <span class="a">'+E.fmtGBP(s.monthly||0)+'</span></span></div>'
       +'<div class="sx"><button data-del="'+id+'" type="button">Delete</button>'+(s.draft?'<span class="r-draft" style="align-self:center">draft rates</span>':'')+'</div></div>'}).join('')
     :'<div class="sq-empty">No saved quotes yet — build one above and hit 💾 Save.</div>';
@@ -622,7 +633,7 @@ var SCAFFOLDS=[
 ];
 function renderScaffolds(){
   $('#pz-scaf').innerHTML='<span class="sl">Current AI briefs — one-click scaffold:</span>'+SCAFFOLDS.map(function(sc,i){
-    return '<button type="button" class="scafc" data-i="'+i+'" title="'+esc(sc.note)+' — loads client, volume and a baseline pick-set; align the ticks to the live brief before quoting"><b>'+esc(sc.client)+'</b>'+(sc.vol?' · '+fmt(sc.vol)+' SKUs':'')+'</button>'}).join('');
+    return '<button type="button" class="scafc" data-i="'+i+'" title="'+esc(sc.note)+' — loads client and a baseline pick-set; the volume is counted live from the feed in parent products (the account record\'s SKU figure is only the fallback); align the ticks to the live brief before quoting"><b>'+esc(sc.client)+'</b>'+(sc.vol?' · '+fmt(sc.vol)+' SKUs on record':'')+'</button>'}).join('');
   $('#pz-scaf').querySelectorAll('.scafc').forEach(function(b){b.onclick=function(){
     var sc=SCAFFOLDS[+b.getAttribute('data-i')];
     var sel=$('#pz-client');
@@ -632,7 +643,8 @@ function renderScaffolds(){
     picks={};sc.picks.forEach(function(id){picks[id]=1});
     CLIENT=sc.client;
     loadClientVolume();
-    setTimeout(function(){ if(sc.vol&&(!(+$('#pz-volume').value)))$('#pz-volume').value=sc.vol;
+    setTimeout(function(){ if(sc.vol&&(!(+$('#pz-volume').value))&&!MKPROD[CLIENT+'|'+MARKET]){$('#pz-volume').value=sc.vol;
+        if(!COUNTING[CLIENT+'|'+MARKET])volSrc(fmt(sc.vol)+' SKUs from the account record — no live count; type the unique-product count (g:item_group_id)')}
       renderCatalog();renderQuote();
       ok('#q-savedok','scaffold loaded — align the ticks to the live brief') },420);
   }});
@@ -643,11 +655,20 @@ function fmtTok(n){n=+n||0;return n>=1e6?(n/1e6).toFixed(1).replace(/\.0$/,'')+'
 /* the billing-units hover note: the actual + billing tokens behind the number and its
    derivation (plus run times, which have no column of their own), so the pop-up answers
    "where did this come from" without opening the field guide */
+/* the brand's parent-product count from the handback (clientMeta.prodGroups) — the
+   per-product denominator for any brief that doesn't carry its own prodDone */
+function metaProdFor(client){
+  var c=String(client||'').trim().toLowerCase(),n=0;
+  Object.keys(TRACK).forEach(function(k){var t=TRACK[k];if(t&&t.clientMeta&&!t.deleted&&String(t.client||'').trim().toLowerCase()===c&&+t.prodGroups>0)n=+t.prodGroups});
+  return n;
+}
 function tokNote(r){
-  if(!r.billTok&&!r.tokens)return 'No token record yet — click to enter actual + billing tokens and run times';
+  if(!r.billTok&&!r.tokens)return 'No token record yet — click to enter actual + billing tokens, run times and products done';
   var s='Actual tok '+fmtTok(r.tokens)+'  ·  billing tok '+fmtTok(r.billTok);
   if(r.tokens>0&&r.billTok>0)s+=' (× ≈'+(r.billTok/r.tokens).toFixed(1)+' model cost multiplier)';
   if(r.billTok>0)s+='  ·  '+(r.billTok/1e6).toFixed(2)+' units = billing tok ÷ 1M';
+  var p=+r.prodDone||metaProdFor(r.client);
+  if(p>0&&r.tokens>0)s+='  ·  ≈'+fmtTok(Math.round(r.tokens/p))+' tok/product over '+fmt(p)+' parent products'+(+r.prodDone?'':' (brand handback)');
   if(r.runOne||r.runPar)s+='  ·  run '+E.fmtMin(r.runOne)+' / '+E.fmtMin(r.runPar)+' at ×25';
   return s+'  —  click to edit';
 }
@@ -739,7 +760,8 @@ function renderSummary(rows){
   $('#ai-sum').innerHTML=sums.map(function(s){
     tot.n+=s.n;tot.tokens+=s.tokens;tot.billTok+=s.billTok;tot.runOne+=s.runOne;tot.runPar+=s.runPar;
     if(s.manh!=null){tot.manh+=s.manh;tot.anyMan=true}
-    var prod=s.prodVariants?fmt(s.prodVariants)+(s.prodGroups?' ('+fmt(s.prodGroups)+' groups)':''):(s.volDone?fmt(s.volDone):'—');
+    var prod=s.prodGroups?'<b>'+fmt(s.prodGroups)+'</b> products'+(s.prodVariants?' · '+fmt(s.prodVariants)+' SKUs':'')
+      :(s.prodVariants?fmt(s.prodVariants)+' SKUs':(s.volDone?fmt(s.volDone)+' SKUs':'—'));
     return '<tr><td class="s-brand">'+esc(s.client)+'</td><td>'+s.n+'</td>'
       +'<td>'+(s.tokens?fmtTok(s.tokens):'—')+'</td><td>'+(s.billTok?fmtTok(s.billTok):'—')+'</td>'
       +'<td>'+(s.billTok?'<span class="t-note" title="'+esc(s.billUnits.toFixed(2)+' billing units = '+fmtTok(s.billTok)+' billing tok ÷ 1M')+'">'+s.billUnits.toFixed(2)+'</span>':'—')+'</td>'
@@ -777,6 +799,7 @@ function tokPopOpen(bid,anchor){
   tokBid=bid;var t=TRACK[bid]||{};
   $('#tp-tokens').value=t.tokens||'';$('#tp-bill').value=t.billTok||'';
   $('#tp-one').value=t.runOne||'';$('#tp-par').value=t.runPar||'';
+  $('#tp-prod').value=t.prodDone||'';$('#tp-prod').placeholder=(function(){var m=metaProdFor(t.client);return m?('brand handback: '+fmt(m)):'unique g:item_group_id'})();
   var pop=$('#tok-pop'),r=anchor.getBoundingClientRect();
   pop.hidden=false;
   pop.style.top=(r.bottom+window.scrollY+6)+'px';
@@ -794,6 +817,7 @@ function tokPopSave(){
   t.billTok=Math.max(0,+$('#tp-bill').value||0);
   t.runOne=Math.max(0,+$('#tp-one').value||0);
   t.runPar=Math.max(0,+$('#tp-par').value||0);
+  t.prodDone=Math.max(0,+$('#tp-prod').value||0);
   t.t=Date.now();TRACK[tokBid]=t;
   tokBid=null;$('#tok-pop').hidden=true;
   refreshActuals();saveTrack();
@@ -859,7 +883,7 @@ function applySeeds(){
    never folded — a live ticket must not vanish from the table. */
 var OLD_SEEDS=['seed_mon_title','seed_mon_desc','seed_mon_kw','seed_acc_title','seed_acc_desc','seed_acc_kw','seed_sup_title','seed_sup_desc','seed_sup_kw'];
 function hasTrackData(tr){
-  return ['aspl','qc','pm','mon','tokens','billTok','runOne','runPar','volDone'].some(function(f){return +tr[f]>0})||!!tr.catsDone;
+  return ['aspl','qc','pm','mon','tokens','billTok','runOne','runPar','volDone','prodDone'].some(function(f){return +tr[f]>0})||!!tr.catsDone;
 }
 function mergeLegacyIntoSeeds(){
   var byKey={};SEED_TRACK.forEach(function(sd){byKey[(sd.client+'|'+sd.tach).toLowerCase()]=sd.id});
@@ -871,7 +895,7 @@ function mergeLegacyIntoSeeds(){
     var sid=byKey[(String(tr.client||'').trim()+'|'+tach).toLowerCase()];
     if(!sid||sid===k)return;                       // no handback twin, or it IS the seed
     var seed=TRACK[sid];if(!seed||seed.deleted)return;   // a ✕'d seed must stay gone
-    ['aspl','qc','pm','mon','tokens','billTok','runOne','runPar','volDone'].forEach(function(f){
+    ['aspl','qc','pm','mon','tokens','billTok','runOne','runPar','volDone','prodDone'].forEach(function(f){
       if(+tr[f]>0&&!(+seed[f]>0)){seed[f]=+tr[f];changed=true}});
     if(tr.catsDone){var cs=String(seed.catsDone||'').split(' | ').filter(Boolean);
       String(tr.catsDone).split(' | ').filter(Boolean).forEach(function(c){if(cs.indexOf(c)<0)cs.push(c)});
@@ -996,25 +1020,78 @@ document.addEventListener('mousedown',function(e){var pop=$('#gpc-pop');
   if(!pop.hidden&&!pop.contains(e.target)&&!(e.target.closest&&e.target.closest('.cat-count')))gpcClose(true)});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')gpcClose(false)});
 
-/* ---------------- client + volume (Feed Lab wired) ---------------- */
+/* ---------------- client + volume (Feed Lab wired) ----------------
+   Volume = PARENT PRODUCTS (unique g:item_group_id), not variant SKUs — Ray, 10 Sep 2026:
+   Tachyon generates once per unique product and the variants inherit. The Feed Lab index
+   only knows row counts, so on client/market selection the page streams the wired feed once
+   (the same £0 in-browser parser the AI Quote and KWCal use), counts distinct item_group_id
+   through the engine's parentCounter and fills the volume; the SKU rows stay beside it as
+   context. A volume typed by hand wins over a count that lands later; ⟳ re-counts on demand.
+   Counts are cached per client|market for the session. */
+var MKPROD={};                    // 'client|market' -> {rows, products, grouped, hasGroups, ratio, when}
+var COUNTING={},VOL_MANUAL=false;
+function volSrc(html){$('#pz-vol-src').innerHTML=html}
+function mktLabel(k){var p=MKPROD[CLIENT+'|'+k];
+  return esc(k.toUpperCase())+' · '+(p?fmt(p.products)+' products · '+fmt(p.rows)+' SKUs':(MKROWS[k]?fmt(MKROWS[k])+' SKUs':'not scanned yet'))}
+function renderMkts(){var ks=Object.keys(MKROWS).sort();
+  $('#pz-mkt').innerHTML=ks.map(function(k){return '<option value="'+esc(k)+'"'+(k===MARKET?' selected':'')+'>'+mktLabel(k)+'</option>'}).join('')}
+function applyCount(client,mkt,force){
+  var p=MKPROD[client+'|'+mkt];if(!p||client!==CLIENT||mkt!==MARKET)return;
+  if(force||!VOL_MANUAL)$('#pz-volume').value=p.products;
+  var ratio=p.ratio&&p.ratio!==1?' · ×'+p.ratio+' variants per product':'';
+  volSrc(p.hasGroups
+    ?'<b>'+fmt(p.products)+'</b> parent products · '+fmt(p.rows)+' SKUs'+ratio+' · counted live from the feed by distinct g:item_group_id'
+    :'<b>'+fmt(p.products)+'</b> products = '+fmt(p.rows)+' SKUs · no g:item_group_id in this feed, so every SKU is its own product');
+  if(Object.keys(MKROWS).length>1)renderMkts();
+  renderQuote();
+}
+function countParents(client,mkt,force){
+  if(!client||!mkt)return;
+  var key=client+'|'+mkt;
+  if(MKPROD[key]){applyCount(client,mkt,force);return}
+  if(COUNTING[key])return;
+  if(window.__feedFail||!window.FeedAudit||!FeedAudit.createParser||!E.parentCounter){
+    volSrc(fmt(MKROWS[mkt]||0)+' SKUs on the Feed Lab scan · the parent-product count needs the live worker (feed parser missing) — type the unique-product count');return}
+  COUNTING[key]=1;$('#pz-count').disabled=true;
+  volSrc('counting parent products in the live feed… ('+fmt(MKROWS[mkt]||0)+' SKUs on the Feed Lab scan)');
+  var pc=E.parentCounter(FeedAudit.normKey),header=false,parser=null;
+  function onRow(r){if(!header){header=true;pc.header(r);return}pc.row(r)}
+  function mkParser(t){if(/^\s*</.test(t)){if(!FeedAudit.createXmlParser)throw new Error('XML feed but the cached engine predates XML support — hard-refresh');return FeedAudit.createXmlParser(onRow)}return FeedAudit.createParser(onRow)}
+  function finish(){var res=pc.result();res.when=Date.now();MKPROD[key]=res;delete COUNTING[key];$('#pz-count').disabled=false;
+    if(res.rows>0)MKROWS[mkt]=res.rows;   // the live stream is fresher than the scan index
+    applyCount(client,mkt,force)}
+  fetch('/api/feed/proxy?client='+encodeURIComponent(client)+'&market='+encodeURIComponent(mkt)).then(function(res){
+    if(!res.ok)throw new Error('feed proxy said '+res.status);
+    var reader=res.body.getReader(),dec=new TextDecoder();
+    function step(){return reader.read().then(function(x){
+      if(x.done){if(parser){parser.push(dec.decode());parser.end()}finish();return}
+      var chunk=dec.decode(x.value,{stream:true});
+      if(!parser){if(!chunk.trim())return step();parser=mkParser(chunk)}
+      parser.push(chunk);return step()})}
+    return step();
+  }).catch(function(e2){delete COUNTING[key];$('#pz-count').disabled=false;
+    if(client!==CLIENT||mkt!==MARKET)return;
+    volSrc(fmt(MKROWS[mkt]||0)+' SKUs on the Feed Lab scan · live count failed ('+esc((e2&&e2.message)||e2)+') — type the unique-product count')});
+}
 function loadClientVolume(){
-  CLIENT=$('#pz-client').value;MKROWS={};MARKET='';
-  $('#pz-mkt-wrap').hidden=true;$('#pz-vol-src').textContent='';
+  CLIENT=$('#pz-client').value;MKROWS={};MARKET='';VOL_MANUAL=false;
+  $('#pz-mkt-wrap').hidden=true;$('#pz-count').hidden=true;volSrc('');
   fetch('/api/feed/markets?client='+encodeURIComponent(CLIENT)).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
     var mk=(d&&d.markets)||{};
-    Object.keys(mk).forEach(function(k){if(mk[k]&&mk[k].rows)MKROWS[k]=mk[k].rows});
-    var ks=Object.keys(MKROWS);
-    if(ks.length>1){$('#pz-mkt-wrap').hidden=false;
-      $('#pz-mkt').innerHTML=ks.sort().map(function(k){return '<option value="'+esc(k)+'">'+esc(k.toUpperCase())+' · '+fmt(MKROWS[k])+' SKUs</option>'}).join('');
-      MARKET=ks.indexOf('gb')>=0?'gb':ks.sort()[0];$('#pz-mkt').value=MARKET;
-      $('#pz-volume').value=MKROWS[MARKET];$('#pz-vol-src').textContent='live from Feed Lab · '+MARKET.toUpperCase()}
-    else if(ks.length===1){MARKET=ks[0];$('#pz-volume').value=MKROWS[MARKET];$('#pz-vol-src').textContent='live from Feed Lab scan'}
-    else $('#pz-vol-src').textContent='no Feed Lab scan — enter the volume';
+    // every wired/attached market lists, scanned or not — the live count fills the rest
+    Object.keys(mk).forEach(function(k){MKROWS[k]=(mk[k]&&mk[k].rows)||0});
+    var ks=Object.keys(MKROWS).sort();
+    if(ks.length>1){$('#pz-mkt-wrap').hidden=false;MARKET=ks.indexOf('gb')>=0?'gb':ks[0];renderMkts()}
+    else if(ks.length===1)MARKET=ks[0];
+    if(MARKET){$('#pz-count').hidden=false;$('#pz-volume').value=MKROWS[MARKET]||0;countParents(CLIENT,MARKET,false)}
+    else volSrc('no feed wired for this client — enter the volume in parent products (unique g:item_group_id)');
     renderQuote();
   });
 }
 $('#pz-client').addEventListener('change',loadClientVolume);
-$('#pz-mkt').addEventListener('change',function(){MARKET=this.value;if(MKROWS[MARKET])$('#pz-volume').value=MKROWS[MARKET];renderQuote()});
+$('#pz-mkt').addEventListener('change',function(){MARKET=this.value;VOL_MANUAL=false;$('#pz-volume').value=MKROWS[MARKET]||0;countParents(CLIENT,MARKET,false);renderQuote()});
+$('#pz-count').addEventListener('click',function(){if(!CLIENT||!MARKET)return;delete MKPROD[CLIENT+'|'+MARKET];VOL_MANUAL=false;countParents(CLIENT,MARKET,true)});
+$('#pz-volume').addEventListener('input',function(){VOL_MANUAL=true});
 
 /* ---------------- boot ---------------- */
 function boot(){

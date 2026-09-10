@@ -4,11 +4,17 @@
  *
  * Commercial model (v1):
  *   one-off  = setup hours (ASPL + AM QC + PM, per optimisation) rounded UP to 8h retainer
- *              blocks × block £  +  Tachyon processing (unit £/SKU × volume through the
+ *              blocks × block £  +  Tachyon processing (unit £/product × volume through the
  *              MARGINAL tier ladder — each band priced like tax brackets)
  *   monthly  = monitoring hours/mo (block-rounded unless "absorb into existing retainer")
- *              + optional refresh processing (newPct of volume × unit £/SKU each month)
+ *              + optional refresh processing (newPct of volume × unit £/product each month)
  *   sla      = longest selected lead time + 2 working days per extra optimisation (stagger)
+ *   VOLUME UNIT = PARENT PRODUCTS — unique g:item_group_id, NOT variant SKUs (Ray, 10 Sep
+ *              2026: "for parent products (g:item_group_id) because of unique products").
+ *              Tachyon generates once per unique product and the variants inherit, so a
+ *              dress in six sizes is ONE billable unit. parentCounter() below is the single
+ *              counting rule every page streams a feed through; a row with no item_group_id
+ *              is its own product, so single-SKU catalogues price 1:1.
  * All prices ex-VAT; the page labels +VAT.
  */
 (function (g) {
@@ -69,20 +75,58 @@
     return CATALOG.map(function (b) { return effRow(b, overrides[b.id]); });
   }
 
-  // marginal tier maths: each band of volume pays unit × band multiplier
+  // marginal tier maths: each band of volume (parent products) pays unit × band multiplier
   function tieredUnits(volume, tiers) {
     tiers = tiers && tiers.length ? tiers : DEFAULTS.tiers;
     var left = Math.max(0, Math.floor(+volume || 0)), prev = 0, units = 0, bands = [];
     for (var i = 0; i < tiers.length && left > 0; i++) {
       var cap = tiers[i].upTo, take = Math.min(left, cap - prev);
-      if (take > 0) { units += take * tiers[i].x; bands.push({ from: prev, upTo: Math.min(cap, prev + take), x: tiers[i].x, skus: take }); left -= take; prev += take; }
+      // `products` is the band's unit count; `skus` kept as an alias for older readers
+      if (take > 0) { units += take * tiers[i].x; bands.push({ from: prev, upTo: Math.min(cap, prev + take), x: tiers[i].x, products: take, skus: take }); left -= take; prev += take; }
       else prev = cap;
     }
     return { units: units, bands: bands };
   }
 
-  // The quote. picks = [optimisation ids]; opts = { volume, rateOverrides, blockGBP, blockHours,
-  // tiers, absorbMonitoring, refreshPct (0-1 of volume reprocessed monthly), client, market }
+  // ---- parent products: the pricing unit ------------------------------------------------
+  // Streams a feed's rows (the Feed Lab parser contract: first row = header) and counts
+  // DISTINCT g:item_group_id. A row without one is its own product (keyed on id, else the
+  // row number), so a variant-less catalogue counts 1:1 and never prices at zero.
+  // normKey = FeedAudit.normKey when available (strips g:/c:, |||N, BOM); falls back to a
+  // local equivalent so node tests need no parser. result() = { rows, products, grouped,
+  // hasGroups, ratio } where grouped = rows carrying an item_group_id and ratio = SKUs
+  // per product (the variant multiplier the page shows beside the volume).
+  function parentCounter(normKey) {
+    var ig = -1, idc = -1, n = 0, grouped = 0, seen = {}, products = 0, hdr = false;
+    function nk(s) {
+      var k = normKey ? normKey(s) : String(s == null ? '' : s).replace(/^\uFEFF/, '').trim().replace(/^[gc]:/i, '').toLowerCase();
+      return k.replace(/[^a-z0-9]/g, '');
+    }
+    var pc = {
+      header: function (r) {
+        hdr = true;
+        for (var i = 0; i < (r || []).length; i++) { var k = nk(r[i]); if (ig < 0 && k === 'itemgroupid') ig = i; if (idc < 0 && k === 'id') idc = i; }
+      },
+      row: function (r) {
+        if (!hdr) { pc.header(r); return; }
+        n++;
+        var g = ig >= 0 ? String(r[ig] == null ? '' : r[ig]).trim() : '', key;
+        if (g) { grouped++; key = 'g:' + g; }
+        else { var id = idc >= 0 ? String(r[idc] == null ? '' : r[idc]).trim() : ''; key = id ? 'i:' + id : 'r:' + n; }
+        if (!seen[key]) { seen[key] = 1; products++; }
+      },
+      result: function () {
+        return { rows: n, products: products, grouped: grouped, hasGroups: ig >= 0,
+          ratio: products ? Math.round(n / products * 10) / 10 : 0 };
+      }
+    };
+    return pc;
+  }
+
+  // The quote. picks = [optimisation ids]; opts = { volume (PARENT PRODUCTS), skus (the
+  // variant SKUs behind that volume — informational, echoed on the quote), rateOverrides,
+  // blockGBP, blockHours, tiers, absorbMonitoring, refreshPct (0-1 of volume reprocessed
+  // monthly), client, market }
   function quote(picks, opts) {
     opts = opts || {};
     var R = {}; rates(opts.rateOverrides).forEach(function (r) { R[r.id] = r; });
@@ -90,6 +134,7 @@
     var blockGBP = isFinite(+opts.blockGBP) && +opts.blockGBP > 0 ? +opts.blockGBP : DEFAULTS.blockGBP;
     var blockHours = isFinite(+opts.blockHours) && +opts.blockHours > 0 ? +opts.blockHours : DEFAULTS.blockHours;
     var vol = Math.max(0, Math.floor(+opts.volume || 0));
+    var skus = Math.max(0, Math.floor(+opts.skus || 0));
     var tv = tieredUnits(vol, opts.tiers);
 
     var h = { aspl: 0, qc: 0, pm: 0, mon: 0 }, tach = 0, lead = 0, lines = [], draft = false;
@@ -114,7 +159,7 @@
       refreshPct: refreshPct, refreshTachyon: refreshTach,
       total: round2((opts.absorbMonitoring ? 0 : monBlocks * blockGBP) + refreshTach) };
     var sla = rows.length ? lead + (rows.length - 1) * (isFinite(+opts.staggerDays) ? +opts.staggerDays : DEFAULTS.staggerDays) : 0;
-    return { picks: rows.map(function (r) { return r.id; }), volume: vol, tier: tv,
+    return { picks: rows.map(function (r) { return r.id; }), volume: vol, unit: 'product', skus: skus, tier: tv,
       blockGBP: blockGBP, blockHours: blockHours, lines: lines,
       oneOff: oneOff, monthly: monthly, slaDays: sla, draftRates: draft,
       client: opts.client || '', market: opts.market || '' };
@@ -125,7 +170,8 @@
   function quoteText(q) {
     var L = [];
     L.push('TACHYON AI OPTIMISATION — ' + (q.client || 'Client') + (q.market ? ' (' + q.market.toUpperCase() + ')' : ''));
-    L.push('Volume: ' + q.volume.toLocaleString('en-GB') + ' SKUs');
+    L.push('Volume: ' + q.volume.toLocaleString('en-GB') + ' parent products (unique g:item_group_id)'
+      + (q.skus > q.volume ? ' — ' + q.skus.toLocaleString('en-GB') + ' variant SKUs inherit the generated fields' : ''));
     L.push('');
     q.lines.forEach(function (l) {
       L.push('· ' + l.name + ' — setup ' + l.hours + 'h · Tachyon ' + fmtGBP(l.tachyon) + ' · live in ~' + l.lead + ' working days');
@@ -139,7 +185,7 @@
     L.push('ONGOING (MONTHLY)');
     if (q.monthly.absorbed) L.push('  Monitoring: ' + q.monthly.monHours + 'h/mo — absorbed into the existing retainer');
     else L.push('  Monitoring: ' + q.monthly.monHours + 'h/mo = ' + q.monthly.blocks + ' × ' + fmtGBP(q.blockGBP) + ' = ' + fmtGBP(q.monthly.blockCost) + ' +VAT');
-    if (q.monthly.refreshPct > 0) L.push('  New/refreshed SKUs (~' + Math.round(q.monthly.refreshPct * 100) + '%/mo): ' + fmtGBP(q.monthly.refreshTachyon) + ' +VAT');
+    if (q.monthly.refreshPct > 0) L.push('  New/refreshed products (~' + Math.round(q.monthly.refreshPct * 100) + '%/mo): ' + fmtGBP(q.monthly.refreshTachyon) + ' +VAT');
     L.push('  Monthly total: ' + fmtGBP(q.monthly.total) + ' +VAT');
     L.push('');
     L.push('Live in ~' + q.slaDays + ' working days from sign-off.');
@@ -168,16 +214,18 @@
     return '';
   }
   // briefs = the Workflow briefs map; track = KV `tachyontrack` (briefId -> {tach, aspl, qc,
-  // pm, mon, tokens, billTok, runOne, runPar, volDone, catsDone, t}). tokens = ACTUAL tokens
-  // consumed; billTok = billing tokens (actual × model cost multiplier); billing units are
-  // always derived (billTok ÷ 1M), never stored. runOne/runPar = AI running time in MINUTES
-  // (single request / 25 parallel requests). A brief joins the table when its TITLE scans as
-  // AI work or a track record exists; the track's explicit tach overrides the scan.
+  // pm, mon, tokens, billTok, runOne, runPar, volDone, prodDone, catsDone, t}). tokens =
+  // ACTUAL tokens consumed; billTok = billing tokens (actual × model cost multiplier); billing
+  // units are always derived (billTok ÷ 1M), never stored. runOne/runPar = AI running time in
+  // MINUTES (single request / 25 parallel requests). volDone = variant SKUs delivered;
+  // prodDone = PARENT PRODUCTS delivered (the billing unit — when absent, the brand's
+  // clientMeta.prodGroups stands in). A brief joins the table when its TITLE scans as AI work
+  // or a track record exists; the track's explicit tach overrides the scan.
   function trackNums(tr) {
     return { aspl: +tr.aspl || 0, qc: +tr.qc || 0, pm: +tr.pm || 0, mon: +tr.mon || 0,
       tokens: +tr.tokens || 0, billTok: +tr.billTok || 0,
       runOne: +tr.runOne || 0, runPar: +tr.runPar || 0,
-      volDone: +tr.volDone || 0, catsDone: String(tr.catsDone || '') };
+      volDone: +tr.volDone || 0, prodDone: +tr.prodDone || 0, catsDone: String(tr.catsDone || '') };
   }
   function aiBriefRows(briefs, track) {
     track = track || {};
@@ -216,8 +264,33 @@
   // the evidence-based rate ("price = the average of all the briefs done", Ray). Bundles
   // (multi-optimisation briefs) are excluded — their hours can't be attributed cleanly.
   // Actual lead time comes from the ticket history (briefed → done days) when present.
+  // Token economics come out per PARENT PRODUCT (the billing unit) as tokPerProd/billPerProd —
+  // denominator = the brief's prodDone, else the brand's clientMeta.prodGroups from the dev
+  // handback — and per variant SKU (tokPerSku/billPerSku over volDone) for the delivery view.
   function actualsFromBriefs(briefs, track) {
     var acc = {};
+    var metaProd = {};   // client -> parent products covered (clientMeta.prodGroups)
+    Object.keys(track || {}).forEach(function (k) {
+      var tr = track[k]; if (!tr || !tr.clientMeta || tr.deleted || !tr.client) return;
+      if (+tr.prodGroups > 0) metaProd[String(tr.client).trim().toLowerCase()] = +tr.prodGroups;
+    });
+    function slot(tach) {
+      return acc[tach] = acc[tach] || { n: 0, aspl: 0, qc: 0, pm: 0, mon: 0, leadN: 0, lead: 0,
+        tok: 0, bill: 0, vol: 0, ptok: 0, pbill: 0, prod: 0 };
+    }
+    // one record's contribution; returns the accumulator only when HOURS were tagged (lead
+    // time is measured on those briefs alone)
+    function tally(tach, tr, client, h) {
+      var any = h.aspl > 0 || h.qc > 0 || h.pm > 0 || h.mon > 0;
+      var tokens = +tr.tokens || 0, volDone = +tr.volDone || 0;
+      var prod = +tr.prodDone || metaProd[String(client || '').trim().toLowerCase()] || 0;
+      if (!any && !(tokens > 0 && (volDone > 0 || prod > 0))) return null;
+      var a = slot(tach);
+      if (any) { a.n++; ['aspl', 'qc', 'pm', 'mon'].forEach(function (f) { a[f] += Math.max(0, h[f]); }); }
+      if (tokens > 0 && volDone > 0) { a.tok += tokens; a.bill += (+tr.billTok || 0); a.vol += volDone; }
+      if (tokens > 0 && prod > 0) { a.ptok += tokens; a.pbill += (+tr.billTok || 0); a.prod += prod; }
+      return any ? a : null;
+    }
     Object.keys(briefs || {}).forEach(function (k) {
       var b = briefs[k]; if (!b) return;
       var tr = (track || {})[k] || {};
@@ -227,18 +300,14 @@
       if (!tach) return;
       var h = { aspl: +tr.aspl || +(b.hours || {}).aspl || 0, qc: +tr.qc || +(b.hours || {}).qc || 0,
         pm: +tr.pm || +(b.hours || {}).pm || 0, mon: +tr.mon || +(b.hours || {}).mon || 0 };
-      var any = h.aspl > 0 || h.qc > 0 || h.pm > 0 || h.mon > 0;
-      var tokens = +tr.tokens || 0, volDone = +tr.volDone || 0;
-      if (!any && !(tokens > 0 && volDone > 0)) return;
-      var a = acc[tach] = acc[tach] || { n: 0, aspl: 0, qc: 0, pm: 0, mon: 0, leadN: 0, lead: 0, tok: 0, bill: 0, vol: 0 };
-      if (any) { a.n++; ['aspl', 'qc', 'pm', 'mon'].forEach(function (f) { a[f] += Math.max(0, h[f]); }); }
-      if (tokens > 0 && volDone > 0) { a.tok += tokens; a.bill += (+tr.billTok || 0); a.vol += volDone; }
+      var a = tally(tach, tr, b.client, h);
+      if (!a) return;
       var t0 = 0, t1 = 0;
       (b.hist || []).forEach(function (e) {
         if (e.s === 'briefed' && !t0) t0 = +e.t || 0;
         if ((e.s === 'done' || e.s === 'confirmed' || e.s === 'analysis') && !t1) t1 = +e.t || 0;
       });
-      if (any && t0 && t1 && t1 > t0) { a.leadN++; a.lead += (t1 - t0) / 86400000; }
+      if (t0 && t1 && t1 > t0) { a.leadN++; a.lead += (t1 - t0) / 86400000; }
     });
     // manual/historic records join the averages too (no lead — nothing to measure)
     Object.keys(track || {}).forEach(function (k) {
@@ -246,24 +315,20 @@
       var tr = track[k]; if (!tr || !tr.manual || tr.deleted) return;
       var tach = (typeof tr.tach === 'string' && tr.tach) || classifyTach(tr.task);
       if (!tach) return;
-      var h = { aspl: +tr.aspl || 0, qc: +tr.qc || 0, pm: +tr.pm || 0, mon: +tr.mon || 0 };
-      var any = h.aspl > 0 || h.qc > 0 || h.pm > 0 || h.mon > 0;
-      var tokens = +tr.tokens || 0, volDone = +tr.volDone || 0;
-      if (!any && !(tokens > 0 && volDone > 0)) return;
-      var a = acc[tach] = acc[tach] || { n: 0, aspl: 0, qc: 0, pm: 0, mon: 0, leadN: 0, lead: 0, tok: 0, bill: 0, vol: 0 };
-      if (any) { a.n++; ['aspl', 'qc', 'pm', 'mon'].forEach(function (f) { a[f] += Math.max(0, h[f]); }); }
-      if (tokens > 0 && volDone > 0) { a.tok += tokens; a.bill += (+tr.billTok || 0); a.vol += volDone; }
+      tally(tach, tr, tr.client, { aspl: +tr.aspl || 0, qc: +tr.qc || 0, pm: +tr.pm || 0, mon: +tr.mon || 0 });
     });
     var out = {};
     Object.keys(acc).forEach(function (id) {
       var a = acc[id];
-      if (!a.n && !a.vol) return;
+      if (!a.n && !a.vol && !a.prod) return;
       out[id] = { n: a.n,
         aspl: a.n ? round2(a.aspl / a.n) : 0, qc: a.n ? round2(a.qc / a.n) : 0,
         pm: a.n ? round2(a.pm / a.n) : 0, mon: a.n ? round2(a.mon / a.n) : 0,
         lead: a.leadN ? Math.max(1, Math.round(a.lead / a.leadN)) : null,
         tokPerSku: a.vol > 0 ? round2(a.tok / a.vol) : null,
-        billPerSku: a.vol > 0 && a.bill > 0 ? round2(a.bill / a.vol) : null, volDone: a.vol };
+        billPerSku: a.vol > 0 && a.bill > 0 ? round2(a.bill / a.vol) : null, volDone: a.vol,
+        tokPerProd: a.prod > 0 ? round2(a.ptok / a.prod) : null,
+        billPerProd: a.prod > 0 && a.pbill > 0 ? round2(a.pbill / a.prod) : null, prodDone: a.prod };
     });
     return out;
   }
@@ -306,7 +371,7 @@
     return h ? (h + 'h' + (m ? ' ' + m + 'm' : '')) : (m + 'm');
   }
   // rate-card overrides with actuals layered on top (unit £ stays commercial — actuals only
-  // ever replace HOURS + lead, never the per-SKU price)
+  // ever replace HOURS + lead, never the per-product price)
   function overridesWithActuals(rateOverrides, actuals, minN) {
     minN = minN || 1;
     var out = {};
@@ -323,8 +388,8 @@
     return out;
   }
 
-  var PricerEngine = { VERSION: '1.4.1', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
-    rates: rates, tieredUnits: tieredUnits, quote: quote, quoteText: quoteText, fmtGBP: fmtGBP,
+  var PricerEngine = { VERSION: '1.5.0', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
+    rates: rates, tieredUnits: tieredUnits, parentCounter: parentCounter, quote: quote, quoteText: quoteText, fmtGBP: fmtGBP,
     fmtMin: fmtMin, classifyTach: classifyTach, aiBriefRows: aiBriefRows, clientSummary: clientSummary,
     actualsFromBriefs: actualsFromBriefs, overridesWithActuals: overridesWithActuals };
   g.PricerEngine = PricerEngine;
