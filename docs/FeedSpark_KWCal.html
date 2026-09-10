@@ -157,6 +157,17 @@ window.addEventListener('load',restore);
   .scope.wide{color:#fff;border-color:var(--navy);background:var(--navy)}
   .themes{font-size:11px;font-weight:800;color:var(--muted);background:none;border:none;padding:3px 2px;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
   .themes:hover{color:var(--orange-deep)}
+  /* MoM board — cleaner columns + drag-to-reschedule (Ray, 11 Sep 2026) */
+  .mo-sec[data-mon]{min-height:130px;transition:background .12s}
+  .mo-sec.drop{background:rgba(245,166,35,.10);border-left:2px solid var(--orange)}
+  .mo-h .mo-nm{color:var(--orange-deep)}
+  .mo-h .mo-hrs{margin-left:auto;color:var(--orange-ink);background:rgba(245,166,35,.13);border:1px solid rgba(245,166,35,.32);border-radius:100px;padding:1px 8px;font-size:10px;font-weight:900;letter-spacing:0;text-transform:none}
+  .rc{cursor:grab} .rc:active{cursor:grabbing} .rc.dragging{opacity:.4}
+  .rc .grip{color:var(--line);font-size:13px;line-height:1;letter-spacing:-3px;margin-right:1px;flex:none;cursor:grab}
+  .rc .lane{margin-left:auto;font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);white-space:nowrap;flex:none}
+  .mo-empty{border:1.5px dashed var(--line);border-radius:10px;padding:16px 8px;text-align:center;font-size:11px;color:var(--muted);font-weight:700;opacity:.65}
+  [data-theme=dark] .mo-h .mo-hrs{background:rgba(245,166,35,.14);border-color:rgba(245,166,35,.32);color:#F0A44E}
+  [data-theme=dark] .rc .grip{color:#3A3F4A}
   /* PT scope picker — searchable multiselect over the feed's real product_type values */
   .ptp{position:fixed;z-index:90;inset:auto;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 54px rgba(16,24,40,.24);width:min(560px,94vw);max-height:min(560px,84vh);display:flex;flex-direction:column;padding:14px}
   .ptp b.pt-t{font-size:14px;font-weight:900}
@@ -752,6 +763,18 @@ function renderHours(){
   rail.innerHTML=h;
   var sb=rail.querySelector('#h-sync'); if(sb)sb.onclick=function(){ syncPT(); };
 }
+function addMonthsISO(ds,delta){ var d=new Date(ds+'T12:00:00Z'), day=d.getUTCDate(), mm=d.getUTCMonth()+delta;
+  var y=d.getUTCFullYear()+Math.floor(mm/12), m=((mm%12)+12)%12, last=new Date(Date.UTC(y,m+1,0)).getUTCDate();
+  return new Date(Date.UTC(y,m,Math.min(day,last),12,0,0)).toISOString().slice(0,10); }
+function rescheduleToMonth(id,targetKey){ var e=findEv(id); if(!e)return; // drop a theme into another month → shift its moment (and the derived schedule) by the month delta
+  var sd=schedDate(e), cur=sd.getUTCFullYear()*12+sd.getUTCMonth(), delta=targetKey-cur; if(!delta)return;
+  e.date=addMonthsISO(e.date,delta); save(); render(); }
+function laneLbl(l){ l=String(l||'').toLowerCase();
+  if(l.indexOf('camp')>=0)return '📣 Campaign';
+  if(l.indexOf('sale')>=0)return '🏷 Sale';
+  if(l.indexOf('studio')>=0)return '📸 Studio';
+  if(l.indexOf('location')>=0)return '📍 Location';
+  return l?('✦ '+l.charAt(0).toUpperCase()+l.slice(1)):''; }
 function render(){
   popClose();
   if(CLIENT==='*'){ $('#split').hidden=true; renderOverview(); return; }
@@ -763,21 +786,25 @@ function render(){
   renderClical();
   var E=evs(), byMon={};
   E.forEach(function(e){ var sd=schedDate(e), k=sd.getUTCFullYear()*12+sd.getUTCMonth(); (byMon[k]=byMon[k]||[]).push(e); });
-  var mons=Object.keys(byMon).map(Number).sort(function(a,b){return a-b});
+  if(!E.length){ $('#road').innerHTML='<p class="sub">No moments yet — ✒ Edit calendar → ＋ Add event, with the client’s calendar side-by-side.</p>'; renderHours(); return; }
+  var rg=monthRange(), mons=[]; for(var mk=rg[0];mk<=rg[1];mk++)mons.push(mk); // full span so empty months are drop targets too
   $('#road').innerHTML=mons.map(function(k){
-    return '<section class="mo-sec"><div class="mo-h">'+MON[k%12]+' ’'+String(Math.floor(k/12)).slice(2)
-      +'<span class="mn">'+byMon[k].length+' optimisation'+(byMon[k].length===1?'':'s')+' to brief</span></div>'
-      +'<div class="mo-cards">'+byMon[k].map(function(e){
-        var wf=wfFor(CLIENT,e), st=wf?wf.st:(e.st||'planned');
-        return '<div class="rc" data-kw="'+esc(e.id)+'"><div class="rt"><span class="lens">✦</span>'+esc(e.name)
-          +(editMode?'<button class="del" style="position:static;opacity:1;margin-left:auto" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</div>'
+    var ek=byMon[k]||[], mh=0; ek.forEach(function(e){ var v=volOf(CLIENT,e); if(v&&!v.unset)mh+=kwHours(v.vol||0); });
+    return '<section class="mo-sec" data-mon="'+k+'"><div class="mo-h"><span class="mo-nm">'+MON[k%12]+' ’'+String(Math.floor(k/12)).slice(2)+'</span>'
+      +'<span class="mn">'+(ek.length?ek.length+' opt'+(ek.length===1?'':'s'):'—')+'</span>'
+      +(mh?'<span class="mo-hrs" title="keyword-generation hours scheduled this month">'+h1(mh)+'h</span>':'')+'</div>'
+      +'<div class="mo-cards">'+(ek.length?ek.map(function(e){
+        var wf=wfFor(CLIENT,e), st=wf?wf.st:(e.st||'planned'), ln=laneLbl(e.lane);
+        return '<div class="rc" draggable="true" data-kw="'+esc(e.id)+'" data-lane="'+esc(e.lane||'')+'"><div class="rt"><span class="grip" title="Drag to reschedule to another month">⠿</span><span class="lens">✦</span>'+esc(e.name)
+          +(ln?'<span class="lane">'+esc(ln)+'</span>':'')
+          +(editMode?'<button class="del" style="position:static;opacity:1;margin-left:6px" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</div>'
           +'<div class="rd">lands '+dLbl(e)+((e.mkt&&e.mkt!=='gb')?' · '+e.mkt.toUpperCase():'')+'</div>'
           +'<div class="ra">'+scopeBtn(CLIENT,e)
           +'<span class="themes" data-terms="'+esc(e.id)+'" title="'+esc((e.terms||[]).join(', '))+'">✦ '+(e.terms||[]).length+' themes</span>'
           +'<button type="button" class="stx '+esc(st)+'" data-st="'+esc(e.id)+'"'+(wf?' title="Live from the Workflow pipeline"':'')+'>'+(wf?'WF · ':'')+esc(st)+'</button>'
           +'<a class="bgo" href="'+briefLink(e)+'" title="Auto-generated brief — moment, dates, scope PTs + SKUs, themes">→ Brief</a></div></div>';
-      }).join('')+'</div></section>';
-  }).join('')||'<p class="sub">No moments yet — ✒ Edit calendar → ＋ Add event, with the client’s calendar side-by-side.</p>';
+      }).join(''):'<div class="mo-empty">drop a theme here</div>')+'</div></section>';
+  }).join('');
   renderHours();
 }
 
@@ -1062,6 +1089,18 @@ $('#road').addEventListener('click',function(ev){
   if(editMode){ var card=t.closest('.ev[data-ev]');
     if(card){ editEvent(findEv(card.getAttribute('data-ev'))); } }
 });
+// drag a theme card into another month → reschedule (Ray: drag/drop/reorder into a different month)
+$('#road').addEventListener('dragstart',function(ev){ var c=ev.target.closest('.rc[data-kw]'); if(!c)return;
+  window.__dragKw=c.getAttribute('data-kw'); try{ev.dataTransfer.setData('text/plain',window.__dragKw);ev.dataTransfer.effectAllowed='move';}catch(e){} c.classList.add('dragging'); });
+$('#road').addEventListener('dragend',function(){ window.__dragKw=null;
+  Array.prototype.forEach.call(document.querySelectorAll('.rc.dragging'),function(x){x.classList.remove('dragging')});
+  Array.prototype.forEach.call(document.querySelectorAll('.mo-sec.drop'),function(x){x.classList.remove('drop')}); });
+$('#road').addEventListener('dragover',function(ev){ if(!window.__dragKw)return; var s=ev.target.closest('.mo-sec[data-mon]'); if(!s)return;
+  ev.preventDefault(); try{ev.dataTransfer.dropEffect='move';}catch(e){}
+  if(!s.classList.contains('drop')){ Array.prototype.forEach.call(document.querySelectorAll('.mo-sec.drop'),function(x){x.classList.remove('drop')}); s.classList.add('drop'); } });
+$('#road').addEventListener('drop',function(ev){ var s=ev.target.closest('.mo-sec[data-mon]'); if(!s)return; ev.preventDefault();
+  var id=(ev.dataTransfer&&ev.dataTransfer.getData('text/plain'))||window.__dragKw; window.__dragKw=null;
+  if(id)rescheduleToMonth(id,+s.getAttribute('data-mon')); });
 function findEv(id){ var E=rec().events||[]; for(var i=0;i<E.length;i++)if(E[i].id===id)return E[i]; return null; }
 function editEvent(e){
   if(!e)return;
