@@ -931,7 +931,7 @@ window.addEventListener('load',restore);
     <button type="button" class="sec-tog" id="bl-tog" aria-expanded="false" aria-controls="bl-body">▸ Show</button>
   </h2>
   <div id="bl-body" hidden>
-    <div class="bl-bar"><input id="bl-search" type="search" placeholder="Search briefs — id, client, task, ASPL…" aria-label="Search the brief ledger"><span class="it-n" id="bl-n"></span></div>
+    <div class="bl-bar"><input id="bl-search" type="search" placeholder="Search briefs — id, client, task, ASPL, stage, read-out…" aria-label="Search the brief ledger"><span class="it-n" id="bl-n"></span></div>
     <div class="it-scroll" style="max-height:56vh"><table class="itbl" id="bltbl">
       <colgroup><col style="width:118px"><col style="width:11%"><col><col style="width:9%"><col style="width:84px"><col style="width:84px"><col style="width:120px"></colgroup>
       <thead><tr><th data-k="id">Brief</th><th data-k="client">Client</th><th data-k="task">Task &amp; read-out</th><th data-k="aspl">ASPL</th><th data-k="created">Sent</th><th data-k="due">Due</th><th data-k="status">Stage</th></tr></thead>
@@ -3261,7 +3261,14 @@ window.addEventListener('load',restore);
     tog.textContent=BL_OPEN?'▾ Hide':('▸ Show — '+all.length+' brief'+(all.length===1?'':'s')+' ever sent');
     tog.setAttribute('aria-expanded',BL_OPEN?'true':'false');
     if(!BL_OPEN)return;
-    var q=blState.q, rows=!q?all:all.filter(function(b){ return (b.id+' '+b.client+' '+b.task+' '+(b.aspl||'')).toLowerCase().indexOf(q)>=0; });
+    // the haystack covers EVERYTHING visible in a row (Ray, 10 Sep 2026: "search in Brief
+    // Ledger is not filtered") — stage label, read-out, owner incl. the derived ASPL, and
+    // both date columns, so anything an AM can read on screen is searchable.
+    var q=blState.q, rows=!q?all:all.filter(function(b){
+      var hay=(b.id+' '+(b.client||'')+' '+(b.task||'')+' '+(b.aspl||asplOf(b)||'')+' '
+        +(STAGE_LBL[b.status]||b.status||'')+' '+(lastResultTxt(b)||'')+' '+humanDD(b.due)+' '
+        +(b.created?new Date(b.created).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}):'')).toLowerCase();
+      return hay.indexOf(q)>=0; });
     rows.sort(function(a,b2){ var k=blState.sort, va=a[k], vb=b2[k];
       if(k==='due'){ va=(ddmmyyyyToDate(a.due)||0)-0; vb=(ddmmyyyyToDate(b2.due)||0)-0; }
       if(k==='created'){ va=a.created||0; vb=b2.created||0; }
@@ -3279,10 +3286,19 @@ window.addEventListener('load',restore);
       :'<tr><td colspan="7" class="it-empty">No briefs match.</td></tr>';
     body.querySelectorAll('tr[data-bid]').forEach(function(r){ r.onclick=function(){ openModal(r.getAttribute('data-bid')); }; });
   }
-  (function(){ var tog=document.getElementById('bl-tog'); if(tog)tog.onclick=function(){ BL_OPEN=!BL_OPEN; try{localStorage.setItem('fcc-bl-open',BL_OPEN?'1':'0');}catch(e){} renderLedger(); };
-    var s=document.getElementById('bl-search'); if(s)s.addEventListener('input',function(){ blState.q=this.value.trim().toLowerCase(); renderLedger(); });
-    document.querySelectorAll('#bltbl thead th[data-k]').forEach(function(th){ th.onclick=function(){
-      var k=th.getAttribute('data-k'); if(blState.sort===k)blState.dir*=-1; else {blState.sort=k;blState.dir=(k==='created'?-1:1);} renderLedger(); }; }); })();
+  // DELEGATED wiring (Ray, 10 Sep 2026): the live page can replace these nodes after load
+  // (saved edit overlays re-write blocks in place), which silently dropped listeners bound
+  // to the original elements — the search box then typed into the void. Document-level
+  // delegation survives any DOM swap, so search, toggle and column sorts always work.
+  (function(){
+    document.addEventListener('input',function(e){ var t=e.target;
+      if(t&&t.id==='bl-search'){ blState.q=String(t.value||'').trim().toLowerCase(); renderLedger(); } });
+    document.addEventListener('click',function(e){
+      var tog=e.target.closest&&e.target.closest('#bl-tog');
+      if(tog){ BL_OPEN=!BL_OPEN; try{localStorage.setItem('fcc-bl-open',BL_OPEN?'1':'0');}catch(e2){} renderLedger(); return; }
+      var th=e.target.closest&&e.target.closest('#bltbl thead th[data-k]');
+      if(th){ var k=th.getAttribute('data-k'); if(blState.sort===k)blState.dir*=-1; else {blState.sort=k;blState.dir=(k==='created'?-1:1);} renderLedger(); } });
+  })();
   var BP_OPEN=false; try{ BP_OPEN=localStorage.getItem('fcc-bp-open')==='1'; }catch(e){}
   function renderBpTog(){ var b=document.getElementById('bp-tog'), body=document.getElementById('bp-body'); if(!b||!body)return;
     body.hidden=!BP_OPEN;

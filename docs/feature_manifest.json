@@ -3052,6 +3052,13 @@
    "pattern": "XMETA",
    "min": 3,
    "pr": 315
+  },
+  {
+   "name": "Workflow: Brief Ledger delegated search/sort/toggle + full-row haystack",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "bl-search",
+   "min": 2,
+   "pr": null
   }
  ]
 }
