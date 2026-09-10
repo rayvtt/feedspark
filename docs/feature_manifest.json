@@ -2827,42 +2827,42 @@
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "scanpush",
    "min": 2,
-   "pr": null
+   "pr": 304
   },
   {
    "name": "worker: labelguard browser engine served at /labels/engine.js",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "LABELGUARD_ENGINE_SRC",
    "min": 2,
-   "pr": null
+   "pr": 304
   },
   {
    "name": "Label Guard page: in-browser XML live rescan fallback",
    "file": "docs/FeedSpark_LabelGuard.html",
    "pattern": "xmlLiveScan",
    "min": 2,
-   "pr": null
+   "pr": 304
   },
   {
    "name": "PT Guard page: in-browser XML live rescan fallback",
    "file": "docs/FeedSpark_ProductTypeGuard.html",
    "pattern": "xmlLiveScan",
    "min": 2,
-   "pr": null
+   "pr": 304
   },
   {
    "name": "Golden Record page: in-browser XML live rescan fallback",
    "file": "docs/FeedSpark_GoldenRecord.html",
    "pattern": "xmlLiveScan",
    "min": 2,
-   "pr": null
+   "pr": 304
   },
   {
    "name": "labelguard engine browser copy stays byte-identical (tools/check_lgcopy.js)",
    "file": ".github/workflows/validate.yml",
    "pattern": "check_lgcopy",
    "min": 1,
-   "pr": null
+   "pr": 304
   }
  ]
 }
