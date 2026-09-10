@@ -2951,6 +2951,13 @@
    "pr": 307
   },
   {
+   "name": "feedchat: XML-vs-CSV sniff so FeedHero XML feeds parse per <item>, not per line (Ray, 10 Sep 2026)",
+   "file": "docs/FeedSpark_FeedChat.html",
+   "pattern": "createXmlParser(onRow)",
+   "min": 1,
+   "pr": 311
+  },
+  {
    "name": "feedlab: XML parser grows the header on late-debut sparse tags",
    "file": "docs/feedlab_engine.js",
    "pattern": "GROW the live header",
