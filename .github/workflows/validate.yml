@@ -35,3 +35,6 @@ jobs:
 
       - name: Module-nav parity (the menu stays identical on every app page)
         run: node tools/check_nav.js
+
+      - name: Labelguard browser-engine copy in sync (served /labels/engine.js = src)
+        run: node tools/check_lgcopy.js
