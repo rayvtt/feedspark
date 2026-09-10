@@ -3264,7 +3264,7 @@ window.addEventListener('load',restore);
     // the haystack covers EVERYTHING visible in a row (Ray, 10 Sep 2026: "search in Brief
     // Ledger is not filtered") — stage label, read-out, owner incl. the derived ASPL, and
     // both date columns, so anything an AM can read on screen is searchable.
-    var q=blState.q, rows=!q?all:all.filter(function(b){
+    var q=blQuery(), rows=!q?all:all.filter(function(b){
       var hay=(b.id+' '+(b.client||'')+' '+(b.task||'')+' '+(b.aspl||asplOf(b)||'')+' '
         +(STAGE_LBL[b.status]||b.status||'')+' '+(lastResultTxt(b)||'')+' '+humanDD(b.due)+' '
         +(b.created?new Date(b.created).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}):'')).toLowerCase();
@@ -3286,13 +3286,25 @@ window.addEventListener('load',restore);
       :'<tr><td colspan="7" class="it-empty">No briefs match.</td></tr>';
     body.querySelectorAll('tr[data-bid]').forEach(function(r){ r.onclick=function(){ openModal(r.getAttribute('data-bid')); }; });
   }
+  // The BOX ITSELF is the query's source of truth (Ray, 10 Sep 2026, second report: rows
+  // still rendered unfiltered with "superdry" sitting in the search box) — every render
+  // re-reads whatever is typed, so a rendered ledger can never disagree with the visible
+  // input, whatever delivered (or swallowed) the keystroke events.
+  function blQuery(){
+    var el=document.getElementById('bl-search')||document.querySelector('.bl-bar input');
+    if(el)blState.q=String(el.value||'').trim().toLowerCase();
+    return blState.q;
+  }
   // DELEGATED wiring (Ray, 10 Sep 2026): the live page can replace these nodes after load
   // (saved edit overlays re-write blocks in place), which silently dropped listeners bound
   // to the original elements — the search box then typed into the void. Document-level
-  // delegation survives any DOM swap, so search, toggle and column sorts always work.
+  // delegation survives any DOM swap — and matches the bar by CONTAINER too, so even a
+  // replacement input that lost its id keeps filtering. Several event types for belt and
+  // braces (input covers typing; search covers the ✕-clear; change/keyup catch stragglers).
   (function(){
-    document.addEventListener('input',function(e){ var t=e.target;
-      if(t&&t.id==='bl-search'){ blState.q=String(t.value||'').trim().toLowerCase(); renderLedger(); } });
+    ['input','keyup','change','search'].forEach(function(ev){
+      document.addEventListener(ev,function(e){ var t=e.target;
+        if(t&&t.tagName==='INPUT'&&(t.id==='bl-search'||(t.closest&&t.closest('.bl-bar'))))renderLedger(); }); });
     document.addEventListener('click',function(e){
       var tog=e.target.closest&&e.target.closest('#bl-tog');
       if(tog){ BL_OPEN=!BL_OPEN; try{localStorage.setItem('fcc-bl-open',BL_OPEN?'1':'0');}catch(e2){} renderLedger(); return; }
