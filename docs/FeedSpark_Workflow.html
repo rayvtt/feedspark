@@ -3255,11 +3255,44 @@ window.addEventListener('load',restore);
   // ---- Brief ledger: the flat register of every brief ever sent (closed + duplicates included) ----
   var blState={q:'',sort:'created',dir:-1};
   var BL_OPEN=false; try{ BL_OPEN=localStorage.getItem('fcc-bl-open')==='1'; }catch(e){}
-  function renderLedger(){ var body=document.getElementById('bl-rows'), tog=document.getElementById('bl-tog'); if(!body||!tog)return;
+  // SELF-HEALING CONTROLS (Ray, 10 Sep 2026, third report: "the brief ledger search bar
+  // still not working"). Saved edit patches are applied as el.innerHTML=<saved html>, so
+  // editing the ledger's HEADING in Edit mode silently deletes the ▸ Show/▾ Hide button
+  // nested inside it (and the ⓘ). renderLedger used to bail on its first line when that
+  // button was missing, which froze the table at whatever had rendered before the patch
+  // loaded — typing in the search box then did nothing at all. Rebuild any control a patch
+  // removed instead of giving up, so the ledger can never be stranded again.
+  function blEnsureUI(){
+    var wrap=document.getElementById('bl-body');
+    var tog=document.getElementById('bl-tog');
+    if(!tog&&wrap){
+      var h=wrap.previousElementSibling;
+      while(h&&!/^H[1-4]$/.test(h.tagName))h=h.previousElementSibling;
+      if(h){ tog=document.createElement('button'); tog.type='button'; tog.className='sec-tog';
+        tog.id='bl-tog'; tog.setAttribute('aria-controls','bl-body'); h.appendChild(tog); }
+    }
+    var inp=document.getElementById('bl-search')||(wrap?wrap.querySelector('.bl-bar input'):null);
+    if(!inp&&wrap){
+      var bar=wrap.querySelector('.bl-bar');
+      if(!bar){ bar=document.createElement('div'); bar.className='bl-bar'; wrap.insertBefore(bar,wrap.firstChild); }
+      inp=document.createElement('input'); inp.id='bl-search'; inp.type='search';
+      inp.setAttribute('aria-label','Search the brief ledger');
+      inp.placeholder='Search briefs — id, client, task, ASPL, stage, read-out…';
+      bar.insertBefore(inp,bar.firstChild);
+      if(!bar.querySelector('#bl-n')){ var n=document.createElement('span'); n.className='it-n'; n.id='bl-n'; bar.appendChild(n); }
+    }
+    if(inp&&!inp.id)inp.id='bl-search';
+    return { tog: tog, inp: inp, wrap: wrap };
+  }
+  function renderLedger(){ var body=document.getElementById('bl-rows'); if(!body)return;
+    var ui=blEnsureUI(), tog=ui.tog;
     var all=Object.keys(BRIEFS).map(function(id){return BRIEFS[id];}).filter(function(b){return b&&b.id;});
-    document.getElementById('bl-body').hidden=!BL_OPEN;
-    tog.textContent=BL_OPEN?'▾ Hide':('▸ Show — '+all.length+' brief'+(all.length===1?'':'s')+' ever sent');
-    tog.setAttribute('aria-expanded',BL_OPEN?'true':'false');
+    if(!tog)BL_OPEN=true;   // nothing left to re-open it with — never strand the ledger hidden
+    if(ui.wrap)ui.wrap.hidden=!BL_OPEN;
+    if(tog){
+      tog.textContent=BL_OPEN?'▾ Hide':('▸ Show — '+all.length+' brief'+(all.length===1?'':'s')+' ever sent');
+      tog.setAttribute('aria-expanded',BL_OPEN?'true':'false');
+    }
     if(!BL_OPEN)return;
     // the haystack covers EVERYTHING visible in a row (Ray, 10 Sep 2026: "search in Brief
     // Ledger is not filtered") — stage label, read-out, owner incl. the derived ASPL, and
@@ -3295,6 +3328,16 @@ window.addEventListener('load',restore);
     if(el)blState.q=String(el.value||'').trim().toLowerCase();
     return blState.q;
   }
+  // the pipeline section's toggle is nested in its heading too — same patch hazard
+  function bpTogEl(){
+    var t=document.getElementById('bp-tog'), wrap=document.getElementById('bp-body');
+    if(t||!wrap)return t;
+    var h=wrap.previousElementSibling;
+    while(h&&!/^H[1-4]$/.test(h.tagName))h=h.previousElementSibling;
+    if(!h)return null;
+    t=document.createElement('button'); t.type='button'; t.className='sec-tog'; t.id='bp-tog';
+    t.setAttribute('aria-controls','bp-body'); h.appendChild(t); return t;
+  }
   // DELEGATED wiring (Ray, 10 Sep 2026): the live page can replace these nodes after load
   // (saved edit overlays re-write blocks in place), which silently dropped listeners bound
   // to the original elements — the search box then typed into the void. Document-level
@@ -3312,13 +3355,16 @@ window.addEventListener('load',restore);
       if(th){ var k=th.getAttribute('data-k'); if(blState.sort===k)blState.dir*=-1; else {blState.sort=k;blState.dir=(k==='created'?-1:1);} renderLedger(); } });
   })();
   var BP_OPEN=false; try{ BP_OPEN=localStorage.getItem('fcc-bp-open')==='1'; }catch(e){}
-  function renderBpTog(){ var b=document.getElementById('bp-tog'), body=document.getElementById('bp-body'); if(!b||!body)return;
+  function renderBpTog(){ var body=document.getElementById('bp-body'); if(!body)return;
+    var b=bpTogEl(); if(!b)BP_OPEN=true;
     body.hidden=!BP_OPEN;
+    if(!b)return;
     var n=Object.keys(BRIEFS).filter(function(k){ return BRIEFS[k]&&BRIEFS[k].status!=='confirmed'; }).length;
     b.textContent=BP_OPEN?'▾ Hide':('▸ Show'+(n?' — '+n+' brief'+(n===1?'':'s')+' in motion':''));
     b.setAttribute('aria-expanded',BP_OPEN?'true':'false'); }
-  (function(){ var b=document.getElementById('bp-tog'); if(!b)return;
-    b.onclick=function(){ BP_OPEN=!BP_OPEN; try{localStorage.setItem('fcc-bp-open',BP_OPEN?'1':'0');}catch(e){} renderBpTog(); }; })();
+  // delegated, so a toggle rebuilt after an edit patch wiped it still works
+  document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('#bp-tog'); if(!b)return;
+    BP_OPEN=!BP_OPEN; try{localStorage.setItem('fcc-bp-open',BP_OPEN?'1':'0');}catch(e2){} renderBpTog(); });
   function renderAll(){ _planCache=null; autoAdvanceReadouts(); refreshDupMap(); renderKPIs(); renderCourts(); renderIntake(); renderBoard(); renderSLA(); renderTests(); renderWorkload(); renderAlerts(); renderBpTog(); renderLedger(); }   // duplicate tickets collapse before anything renders; renderIntake cascades into renderTimeline
 
   // set a sensible default due date (today + 5 working-ish days) and boot

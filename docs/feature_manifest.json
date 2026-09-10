@@ -3243,6 +3243,13 @@
    "pr": 323
   },
   {
+   "name": "Workflow: ledger/pipeline controls self-heal after an edit patch wipes them",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "blEnsureUI",
+   "min": 2,
+   "pr": 328
+  },
+  {
    "name": "AI Quote: One-off | Monthly | Settings summary panel replaces the single totals line (Ray 10 Sep 2026 'add monthly costs … more organised and easy to use')",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "qs-mongross",
