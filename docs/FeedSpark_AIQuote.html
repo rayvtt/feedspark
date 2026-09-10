@@ -340,16 +340,16 @@ window.addEventListener('load',restore);
   [data-theme=dark] .qrow input.fnote{background:#161922}
   /* unlock ladder (Ray, 10 Sep 2026): tiers as a left-to-right pipeline, attributes as chips */
   .ladder{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
-  .tier{flex:1 1 190px;min-width:190px;max-width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;display:flex;flex-direction:column}
+  .tier{flex:1 1 236px;min-width:236px;max-width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;display:flex;flex-direction:column}
   .tier.ok{border-color:var(--good)}
   .tier.next{border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
   .tier.locked{opacity:.72}
   .tier.over{background:rgba(245,166,35,.08);border-style:dashed}
-  .tier .th{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--wash);font-size:12px;font-weight:900}
+  .tier .th{display:flex;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--wash);font-size:12px;font-weight:900;flex-wrap:wrap}
   .tier .tn{width:20px;height:20px;border-radius:50%;background:var(--wash);color:var(--ink-2);display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex:none}
   .tier.ok .tn{background:var(--good);color:#fff}
   .tier.next .tn{background:var(--orange);color:#fff}
-  .tier .tname{flex:1;min-width:0;outline:none;border-radius:4px;padding:0 3px;cursor:text}
+  .tier .tname{flex:1 1 110px;min-width:0;outline:none;border-radius:4px;padding:0 3px;cursor:text;line-height:1.25;overflow-wrap:normal;word-break:normal}   /* contenteditable's UA break-word split "Foundati onal" in a narrow box */
   .tier .tname:focus{background:var(--wash)}
   .tier .tneed{font:inherit;font-size:10px;font-weight:900;border:1px solid var(--line);border-radius:100px;padding:1px 7px;background:#fff;color:var(--muted);cursor:pointer;flex:none}
   .tier .tneed:hover{border-color:var(--orange);color:var(--orange-deep)}
