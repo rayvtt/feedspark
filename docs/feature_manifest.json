@@ -3283,6 +3283,48 @@
    "pattern": "uniqueRef",
    "min": 2,
    "pr": 327
+  },
+  {
+   "name": "Pricer engine: AI Pre-Description (predesc / predesc_attr) RETIRED — Ray 10 Sep 2026 'remove AI Pre Description also' (must stay gone)",
+   "file": "docs/pricer_engine.js",
+   "pattern": "predesc",
+   "pr": 329,
+   "forbidden": true
+  },
+  {
+   "name": "Pricer engine: retired tags read as untagged (liveTag) so orphan slots never reach the actuals",
+   "file": "docs/pricer_engine.js",
+   "pattern": "function liveTag(",
+   "pr": 329,
+   "min": 1
+  },
+  {
+   "name": "Pricer tracker: Pre-Description handback rows kept as untagged billing history (no tach:'predesc')",
+   "file": "docs/FeedSpark_Pricer.html",
+   "pattern": "tach:'predesc'",
+   "pr": 329,
+   "forbidden": true
+  },
+  {
+   "name": "AI Quote xlsx: ONE monthly totals chain (per month → 12 months → pro-rated) — no per-market twins (Ray 10 Sep 2026)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "Total Monthly Cost × 12 (ex VAT)",
+   "pr": 329,
+   "min": 1
+  },
+  {
+   "name": "AI Quote xlsx: '1 market (GB)' duplicate monthly rows must stay gone",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "1 market (",
+   "pr": 329,
+   "forbidden": true
+  },
+  {
+   "name": "AI Quote xlsx: 'one market at a time' claim must stay gone (quotes are brand-level)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "one market at a time",
+   "pr": 329,
+   "forbidden": true
   }
  ]
 }
