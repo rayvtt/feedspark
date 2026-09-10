@@ -3458,6 +3458,20 @@
    "pattern": "drop a theme here",
    "min": 1,
    "pr": 336
+  },
+  {
+   "name": "kwcal: import calendar events from the JSON extracted in a Claude session (Ray, 11 Sep 2026)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function importEvents(",
+   "min": 1,
+   "pr": 337
+  },
+  {
+   "name": "kwcal: drop a calendar image/PDF/json onto the pane to attach the reference or import",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function attachCalFile(",
+   "min": 1,
+   "pr": 337
   }
  ]
 }

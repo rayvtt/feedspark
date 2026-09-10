@@ -104,6 +104,8 @@ window.addEventListener('load',restore);
   .clical .ch{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:900;color:var(--muted);margin-bottom:8px}
   .clical img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
   .clical .cc-none{font-size:12.5px;color:var(--muted);font-weight:700;padding:14px 6px}
+  .clical.drop{outline:2px dashed var(--orange);outline-offset:-4px}
+  .clical .cc-doc{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:8px;line-height:1.5}
   /* right rail — keyword-generation hours & resourcing (Ray, 10 Sep 2026) */
   .split.two{grid-template-columns:minmax(0,1fr) minmax(300px,360px);align-items:start}
   .split.two.side{grid-template-columns:minmax(0,1fr) minmax(300px,540px)}
@@ -314,6 +316,7 @@ window.addEventListener('load',restore);
     <button class="btn" id="sbs" type="button">🗂 Client calendar</button>
     <button class="btn" id="edit" type="button">✎ Edit calendar</button>
     <button class="btn" id="add" type="button" hidden>＋ Add event</button>
+    <button class="btn" id="import" type="button" hidden>⤓ Import events</button>
     <span class="mstate" id="mstate"></span>
   </div>
   <div class="ctl" id="mkt-row" style="margin-top:10px" hidden>
@@ -648,9 +651,66 @@ function loadMkts(){
     if(CLIENT!=='*')render();
   });
 }
+/* ---------------- calendar capture — attach the reference (portal), import events (extracted in a Claude session) ---------------- */
+function importEvents(data){ // merge events from the JSON Claude returns after reading a dropped calendar PDF
+  var obj; try{ obj=(typeof data==='string')?JSON.parse(data):data; }catch(e){ err('Could not read that — paste the JSON events block (an object with "events":[…] or a bare [ … ] array).'); return 0; }
+  var arr=Array.isArray(obj)?obj:(obj&&Array.isArray(obj.events)?obj.events:null);
+  if(!arr){ err('No events found — expected {"events":[…]} or a [ … ] array.'); return 0; }
+  var tgt=(!Array.isArray(obj)&&obj.client&&STORE[obj.client])?obj.client:CLIENT;
+  var r=STORE[tgt]||(STORE[tgt]={events:[]}); r.events=r.events||[];
+  var have={}; r.events.forEach(function(e){ have[String(e.name||'').toLowerCase()+'|'+e.date]=1; });
+  var n=0;
+  arr.forEach(function(x){ if(!x||!x.name)return; var date=String(x.date||'').trim(); if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
+    var key=String(x.name).toLowerCase()+'|'+date; if(have[key])return; have[key]=1;
+    var lane=String(x.lane||'studio').toLowerCase(); if(['campaign','location','studio','sale'].indexOf(lane)<0)lane='studio';
+    var terms=Array.isArray(x.terms)?x.terms:(x.terms?String(x.terms).split(','):[]);
+    var ev={ id:(x.id&&String(x.id))||('imp'+Date.now().toString(36)+(n++)), name:String(x.name).trim(), lane:lane, date:date,
+      terms:terms.map(function(t){return String(t).trim()}).filter(Boolean) };
+    if(x.mkt)ev.mkt=String(x.mkt).toLowerCase();
+    if(x.brandwide||lane==='sale')ev.brandwide=1;
+    r.events.push(ev); });
+  if(n){ save(); if(tgt===CLIENT)render(); }
+  return n;
+}
+function impOpen(){ ptClose();
+  var d=document.createElement('div'); d.className='ptp'; d.id='imp';
+  d.innerHTML='<b class="pt-t">⤓ Import calendar events</b>'
+    +'<div class="pt-sub">The portal attaches the calendar as a reference (drop it on 🗂). To <b>capture the events</b>, drop the calendar <b>PDF into a Claude Code session</b> — Claude returns a JSON block. Paste it here (or drop the .json file).</div>'
+    +'<textarea id="imp-ta" class="pt-q" style="height:150px;font-family:ui-monospace,Menlo,monospace;font-size:11px;resize:vertical" placeholder=\'{"client":"'+esc(CLIENT)+'","events":[{"name":"Summer Sale","lane":"sale","date":"2026-07-01","terms":["summer","sale"],"mkt":"gb"}]}\'></textarea>'
+    +'<div class="cc-none" id="imp-drop" style="border:1.5px dashed var(--line);border-radius:8px;padding:12px;text-align:center;margin-top:6px">…or drop a .json file here</div>'
+    +'<div class="pt-foot"><span class="pt-sub" id="imp-state"></span><button class="btn" id="imp-cancel">Cancel</button><button class="btn pri" id="imp-go">Import</button></div>';
+  document.body.appendChild(d); ptPlace(d);
+  d.addEventListener('click',function(ev){ ev.stopPropagation(); });
+  d.querySelector('#imp-cancel').onclick=function(){ d.remove(); };
+  d.querySelector('#imp-go').onclick=function(){ hideErr(); var n=importEvents(d.querySelector('#imp-ta').value);
+    if(n){ d.remove(); $('#mstate').textContent='imported '+n+' event'+(n===1?'':'s')+' from the calendar'; }
+    else if(!$('#kw-error').classList.contains('on')) d.querySelector('#imp-state').textContent='nothing imported — check the format'; };
+  var dz=d.querySelector('#imp-drop');
+  dz.addEventListener('dragover',function(ev){ ev.preventDefault(); dz.style.borderColor='var(--orange)'; });
+  dz.addEventListener('dragleave',function(){ dz.style.borderColor='var(--line)'; });
+  dz.addEventListener('drop',function(ev){ ev.preventDefault(); dz.style.borderColor='var(--line)'; var f=ev.dataTransfer.files&&ev.dataTransfer.files[0]; if(!f)return; var rd=new FileReader(); rd.onload=function(){ d.querySelector('#imp-ta').value=rd.result; }; rd.readAsText(f); });
+  d.querySelector('#imp-ta').focus();
+}
+function setCalImage(f){ // downscale + re-encode so the shared store stays light (a slide reads fine at ≤1600px)
+  var rd=new FileReader();
+  rd.onload=function(){ var img=new Image();
+    img.onload=function(){ var w=img.width,h=img.height,max=1600; if(w>max){h=Math.round(h*max/w);w=max;}
+      var cv=document.createElement('canvas');cv.width=w;cv.height=h; cv.getContext('2d').drawImage(img,0,0,w,h);
+      var out=cv.toDataURL('image/jpeg',.82);
+      if(out.length>900000){ cv.width=1100;cv.height=Math.round(h*1100/w); cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height); out=cv.toDataURL('image/jpeg',.72); }
+      rec().calImg=out; save(); renderClical(); };
+    img.src=rd.result; };
+  rd.readAsDataURL(f);
+}
+function attachCalFile(f){ if(!f)return;
+  if(/^image\//.test(f.type)){ setCalImage(f); $('#mstate').textContent='calendar image attached'; return; }
+  if(/json/.test(f.type)||/\.json$/i.test(f.name)){ var rd=new FileReader(); rd.onload=function(){ hideErr(); var n=importEvents(rd.result); if(n)$('#mstate').textContent='imported '+n+' event'+(n===1?'':'s'); }; rd.readAsText(f); return; }
+  // PDF / other — the portal can't read it; attach as the reference and extract events in a Claude session
+  var rd2=new FileReader(); rd2.onload=function(){ rec().calDoc={name:f.name,url:rd2.result}; save(); renderClical(); $('#mstate').textContent='attached '+f.name+' — drop it into a Claude session to extract events, then ⤓ Import'; }; rd2.readAsDataURL(f);
+}
 function renderClical(){
   var r=rec(), box=$('#clical'), on=!!window.__sbs;
-  var ci=r.calImg||CALSEED[CLIENT]||'';
+  var ci=r.calImg||CALSEED[CLIENT]||'', doc=r.calDoc;
   $('#split').classList.toggle('side',on);
   box.hidden=!on;
   $('#sbs').classList.toggle('on',on);
@@ -660,31 +720,17 @@ function renderClical(){
       +'<button class="btn" style="padding:4px 10px;font-size:11px" id="cc-up">⬆ Upload</button>'
       +'<input type="file" id="cc-file" accept="image/*" hidden></span>':'')+'</div>'
     +(ci?'<a href="'+esc(ci)+'" target="_blank" rel="noopener"><img src="'+esc(ci)+'" alt="Client calendar"></a>'
-      :'<div class="cc-none">No client calendar linked yet — ✎ Edit calendar → 🗂 → 🖼 Link, paste an image URL (the brand’s shared slide). It opens side-by-side for transcribing moments into the FeedSpark roadmap.</div>');
+      :'<div class="cc-none">Drop the brand’s calendar here (image or PDF), or ✎ Edit → 🖼 URL. It opens side-by-side for transcribing moments. To auto-capture the events, drop the calendar PDF into a Claude session and paste the JSON via ⤓ Import events.</div>')
+    +(doc?'<div class="cc-doc">📎 <a href="'+esc(doc.url)+'" target="_blank" rel="noopener" download="'+esc(doc.name)+'">'+esc(doc.name)+'</a> attached — drop it into a Claude session to extract the events, then ⤓ Import.</div>':'');
   var lk=box.querySelector('#cc-link');
-  if(lk)lk.onclick=function(){ var u=prompt('Image URL of the client’s shared calendar (link-viewable):',r.calImg||''); if(u===null)return; r.calImg=u.trim(); save(); renderClical(); };
+  if(lk)lk.onclick=function(){ var u=prompt('Image URL of the client’s shared calendar (link-viewable):',r.calImg||''); if(u===null)return; rec().calImg=u.trim(); save(); renderClical(); };
   var up=box.querySelector('#cc-up'), fi=box.querySelector('#cc-file');
   if(up)up.onclick=function(){ fi.click(); };
-  if(fi)fi.onchange=function(){
-    var f=fi.files&&fi.files[0]; if(!f)return;
-    if(!/^image\//.test(f.type)){ err('That file isn’t an image — export the calendar slide as PNG/JPG and upload that (PDFs: screenshot the page).'); return; }
-    var rd=new FileReader();
-    rd.onload=function(){
-      var img=new Image();
-      img.onload=function(){
-        // downscale + re-encode so the shared store stays light (a slide reads fine at ≤1600px)
-        var w=img.width,h=img.height,max=1600; if(w>max){h=Math.round(h*max/w);w=max;}
-        var cv=document.createElement('canvas');cv.width=w;cv.height=h;
-        cv.getContext('2d').drawImage(img,0,0,w,h);
-        var out=cv.toDataURL('image/jpeg',.82);
-        if(out.length>900000){ cv.width=1100;cv.height=Math.round(h*1100/w);
-          cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height); out=cv.toDataURL('image/jpeg',.72); }
-        rec().calImg=out; save(); renderClical();
-      };
-      img.src=rd.result;
-    };
-    rd.readAsDataURL(f);
-  };
+  if(fi)fi.onchange=function(){ var f=fi.files&&fi.files[0]; if(!f)return; if(!/^image\//.test(f.type)){ err('That file isn’t an image — for a PDF just drop it on the pane to attach, then extract the events in a Claude session.'); return; } setCalImage(f); };
+  if(!box.__dnd){ box.__dnd=1; // drop-to-attach (image pins the reference · PDF attaches · .json imports)
+    box.addEventListener('dragover',function(ev){ ev.preventDefault(); box.classList.add('drop'); });
+    box.addEventListener('dragleave',function(ev){ if(ev.target===box)box.classList.remove('drop'); });
+    box.addEventListener('drop',function(ev){ ev.preventDefault(); box.classList.remove('drop'); attachCalFile(ev.dataTransfer.files&&ev.dataTransfer.files[0]); }); }
 }
 function briefLinkFor(brand,e){
   var v=volOf(brand,e)||{}, bmkt=evMkt(brand,e), ps=ptsOf(e,bmkt), idx=ptidxFor(brand,bmkt);
@@ -1126,8 +1172,10 @@ $('#edit').addEventListener('click',function(){
   this.textContent=editMode?'✓ Done editing':'✎ Edit calendar';
   this.classList.toggle('on',editMode);
   $('#add').hidden=!editMode;
+  $('#import').hidden=!editMode;
   render();
 });
+$('#import').addEventListener('click',function(){ if(CLIENT==='*'){err('Open a brand’s board to import its calendar events.');return;} impOpen(); });
 
 /* ---------------- store sync (kvmerge per client key) ---------------- */
 function save(){ if(saveT)clearTimeout(saveT); saveT=setTimeout(function(){
