@@ -3201,10 +3201,10 @@
    "pr": 321
   },
   {
-   "name": "AI Quote: quantities in UNIQUE PRODUCTS (distinct g:item_group_id) — per-type parent keys, scope = the union (Ray 10 Sep 2026 'because of unique products')",
+   "name": "AI Quote: quantities in UNIQUE PRODUCTS (distinct g:item_group_id) — per-type parent keys, scope = the union (Ray 10 Sep 2026 'because of unique products') — PARKED 10 Sep 2026 (#330): scope is SKU variants now, the parent-key union stays indexed but hidden",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "unionProds",
-   "min": 3,
+   "min": 1,
    "pr": 322
   },
   {
@@ -3325,6 +3325,34 @@
    "pattern": "one market at a time",
    "pr": 329,
    "forbidden": true
+  },
+  {
+   "name": "AI Quote: product scope is ALWAYS variant SKUs — Ray 10 Sep 2026 'logic for product scope is always SKU variant pls (hide the unique)'",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function baseSkus(){ return baseVol(); }",
+   "pr": 330,
+   "min": 1
+  },
+  {
+   "name": "AI Quote: KPI reads 'SKUs in scope' (unique-product KPI hidden)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "'SKUs in scope'",
+   "pr": 330,
+   "min": 1
+  },
+  {
+   "name": "AI Quote: 'Unique products in scope' KPI must stay gone",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "Unique products in scope",
+   "pr": 330,
+   "forbidden": true
+  },
+  {
+   "name": "AI Quote: unit button reads £ / SKU",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": ">£ / SKU</button>",
+   "pr": 330,
+   "min": 1
   }
  ]
 }
