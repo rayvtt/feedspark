@@ -833,20 +833,23 @@ document.addEventListener('mousedown',function(e){var pop=$('#tok-pop');
    run log's real numbers: actual tokens, billing tokens (units derive ÷1M), run time in
    minutes single-request / 25-parallel, and volume done at VARIANT level. One row = one
    individual brief. Fixed ids so KV edits overlay them and a ✕ tombstones them permanently.
-   If the real Workflow brief later scans in by title, ✕ the seed. */
+   If the real Workflow brief later scans in by title, ✕ the seed.
+   The Text Attribute and Pre-Description rows carry NO tach tag: both optimisations were
+   RETIRED from the catalogue on 10 Sep 2026 (Ray), so they stay as billing history only —
+   the engine's liveTag() also blanks any retired tag still sitting in KV. */
 var SEED_TRACK=[
   {id:'seed_mon_text', client:'Monsoon',    task:'AI Text Attribute — Monsoon',                          tokens:1910000, billTok:3780000,  runOne:180,  runPar:15, volDone:500},
   {id:'seed_mon_vis',  client:'Monsoon',    task:'AI Visual Attribute — Monsoon',    tach:'visual_attr', tokens:6350000, billTok:39000000, runOne:1140, runPar:55, volDone:500},
-  {id:'seed_mon_pre',  client:'Monsoon',    task:'AI Pre-Description — Monsoon',     tach:'predesc',     tokens:429610,  billTok:843660,   runOne:38,   runPar:5,  volDone:500},
+  {id:'seed_mon_pre',  client:'Monsoon',    task:'AI Pre-Description — Monsoon',                         tokens:429610,  billTok:843660,   runOne:38,   runPar:5,  volDone:500},
   {id:'seed_mon_det',  client:'Monsoon',    task:'AI Product Details — Monsoon',     tach:'details',     tokens:1020000, billTok:2360000,  runOne:329,  runPar:20, volDone:500},
   {id:'seed_acc_text', client:'Accessorize',task:'AI Text Attribute — Accessorize',                      tokens:2720000, billTok:5420000,  runOne:165,  runPar:13, volDone:280},
   {id:'seed_acc_vis',  client:'Accessorize',task:'AI Visual Attribute — Accessorize',tach:'visual_attr', tokens:5860000, billTok:47470000, runOne:1660, runPar:80, volDone:280},
-  {id:'seed_acc_pre',  client:'Accessorize',task:'AI Pre-Description — Accessorize', tach:'predesc',     tokens:621930,  billTok:1230000,  runOne:70,   runPar:9,  volDone:280},
+  {id:'seed_acc_pre',  client:'Accessorize',task:'AI Pre-Description — Accessorize',                     tokens:621930,  billTok:1230000,  runOne:70,   runPar:9,  volDone:280},
   {id:'seed_acc_det',  client:'Accessorize',task:'AI Product Details — Accessorize', tach:'details',     tokens:1450000, billTok:3370000,  runOne:390,  runPar:28, volDone:280},
   {id:'seed_hob_text', client:'Hobbycraft', task:'AI Text Attribute — Hobbycraft',                       tokens:1430000, billTok:2860000,  runOne:220,  runPar:15, volDone:113},
   {id:'seed_hob_vis',  client:'Hobbycraft', task:'AI Visual Attribute — Hobbycraft', tach:'visual_attr', tokens:2860000, billTok:22530000, runOne:620,  runPar:25, volDone:113},
   {id:'seed_hob_int',  client:'Hobbycraft', task:'AI Search Intent — Hobbycraft',    tach:'title_intent',tokens:157130,  billTok:268680,   runOne:51,   runPar:5,  volDone:113},
-  {id:'seed_hob_pre',  client:'Hobbycraft', task:'AI Pre-Description — Hobbycraft',  tach:'predesc',     tokens:270620,  billTok:511480,   runOne:70,   runPar:7,  volDone:113},
+  {id:'seed_hob_pre',  client:'Hobbycraft', task:'AI Pre-Description — Hobbycraft',                      tokens:270620,  billTok:511480,   runOne:70,   runPar:7,  volDone:113},
   {id:'seed_hob_det',  client:'Hobbycraft', task:'AI Product Details — Hobbycraft',  tach:'details',     tokens:730660,  billTok:1710000,  runOne:210,  runPar:15, volDone:113},
   {id:'seed_sup_qa',   client:'Superdry',   task:'AI Question & Answer — Superdry',  tach:'desc_pro',    tokens:135450,  billTok:290960,   runOne:10,   runPar:0,  volDone:100}
 ];
@@ -886,7 +889,7 @@ function hasTrackData(tr){
   return ['aspl','qc','pm','mon','tokens','billTok','runOne','runPar','volDone','prodDone'].some(function(f){return +tr[f]>0})||!!tr.catsDone;
 }
 function mergeLegacyIntoSeeds(){
-  var byKey={};SEED_TRACK.forEach(function(sd){byKey[(sd.client+'|'+sd.tach).toLowerCase()]=sd.id});
+  var byKey={};SEED_TRACK.forEach(function(sd){if(sd.tach)byKey[(sd.client+'|'+sd.tach).toLowerCase()]=sd.id});   // untagged (retired) seeds have no twin to fold
   var changed=false;
   Object.keys(TRACK).forEach(function(k){
     var tr=TRACK[k];

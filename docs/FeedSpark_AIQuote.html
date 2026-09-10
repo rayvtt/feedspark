@@ -1265,16 +1265,17 @@ window.addEventListener('load',restore);
     var rMon=row({H:{v:'Monthly Cost (Monitoring & AM)',s:S.totli},
       K:mlive?{f:'SUM(K'+mpA+':K'+mpB+')',v:n2(t.monNet),s:S.net}:{v:'',s:S.totgap},
       N:{v:mlive?('Monthly maintenance on '+monL.length+' line'+(monL.length===1?'':'s')+', '+monH+'h per month (ex VAT'+(dsc?', net of the partner discount':'')+')'):NOTPRICED,s:S.note}});
-    var rMT=row({H:{v:'Total Monthly Cost',s:S.totl},I:{v:'per market',s:S.per},
+    /* ONE monthly chain — the recurring charge is a brand-level figure (unique products across
+       the wired markets), so it does not vary by market: no "per market" vs "1 market" twins
+       (Ray, 10 Sep 2026: "the yellow highlighted section doesn't make sense … this doesn't
+       impact market"). Per month → × 12 → pro-rated to the January contract year-end. */
+    var rMT=row({H:{v:'Total Monthly Cost',s:S.totl},I:{v:'per month',s:S.per},
       K:mlive?{f:'K'+rMon,v:n2(t.monNet),s:S.totred}:{v:'',s:S.totgap},
-      N:{v:mlive?'Monitoring & AM only — no platform line is priced on this quote':'No monthly recurring line is priced on this quote',s:S.note}});
-    row({H:{v:'Total Annual',s:S.totl},I:{v:'per market',s:S.per},K:mlive?{f:'K'+rMT+'*12',v:n2(t.monNet*12),s:S.net}:{v:'',s:S.totgap}});
-    row({H:{v:'Pro-rated '+monY(pf)+' to '+monY(pt),s:S.totli},I:{v:'per market',s:S.per},K:mlive?{f:'K'+rMT+'*'+pmo,v:n2(t.monNet*pmo),s:S.net}:{v:'',s:S.totgap},
-      N:{v:pmo+' month'+(pmo===1?'':'s')+' — contract year assumed to January, adjust to the client’s',s:S.note}});
-    row({H:{v:'Total Monthly Cost',s:S.totl},I:{v:'1 market ('+mkt+')',s:S.per},K:mlive?{f:'K'+rMT,v:n2(t.monNet),s:S.net}:{v:'',s:S.totgap},
-      N:{v:'This module quotes one market at a time — repeat per market for a multi-market rollout',s:S.note}});
-    row({H:{v:'Total Annual',s:S.totl},I:{v:'1 market ('+mkt+')',s:S.per},K:mlive?{f:'K'+rMT+'*12',v:n2(t.monNet*12),s:S.net}:{v:'',s:S.totgap}});
-    row({H:{v:'Pro-rated '+monY(pf)+' to '+monY(pt),s:S.totli},I:{v:'1 market ('+mkt+')',s:S.per},K:mlive?{f:'K'+rMT+'*'+pmo,v:n2(t.monNet*pmo),s:S.net}:{v:'',s:S.totgap}});
+      N:{v:mlive?'Monitoring & AM only — no platform line is priced on this quote; a brand-level figure that does not vary by market':'No monthly recurring line is priced on this quote',s:S.note}});
+    row({H:{v:'Total Annual',s:S.totl},I:{v:'12 months',s:S.per},K:mlive?{f:'K'+rMT+'*12',v:n2(t.monNet*12),s:S.net}:{v:'',s:S.totgap},
+      N:{v:mlive?'Total Monthly Cost × 12 (ex VAT)':'',s:S.note}});
+    row({H:{v:'Pro-rated '+monY(pf)+' to '+monY(pt),s:S.totli},I:{v:pmo+' month'+(pmo===1?'':'s'),s:S.per},K:mlive?{f:'K'+rMT+'*'+pmo,v:n2(t.monNet*pmo),s:S.net}:{v:'',s:S.totgap},
+      N:{v:'Contract year assumed to end in January — adjust to the client’s',s:S.note}});
     row();
     var rVat=0, rMV=0;
     if(vatOn())rVat=row({H:{v:'VAT 20%',s:S.totl},
