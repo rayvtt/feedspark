@@ -3430,6 +3430,20 @@
    "pattern": "function renderHours(",
    "min": 1,
    "pr": 334
+  },
+  {
+   "name": "kwcal: attribute step-filter — combined (PT∪text AND conds) counter over the per-SKU cache (Ray, 11 Sep 2026)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function scopeCount(",
+   "min": 1,
+   "pr": 335
+  },
+  {
+   "name": "kwcal: scope picker step-by-step condition builder (attribute → values with live counts)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "data-cndattr",
+   "min": 2,
+   "pr": 335
   }
  ]
 }

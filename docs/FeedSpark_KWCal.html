@@ -374,6 +374,9 @@ var BRIEFS={};
 var MKT='gb', MKTLIST=['gb']; // board market — scopes, volumes, sync and briefs follow it (events may pin their own) // Workflow pipeline (read-only) — live stages auto-badge matching KW tasks
 // keyword-generation resourcing roster (assignable in the hours rail; "＋ add person" extends it, remembered per client)
 var KW_PEOPLE=['Ray','Steven','Matt','Radostina','ASPL','TechAM'];
+// attribute step-filter — the feed columns a scope can narrow on (Google spec keys; normKey strips g:/c:)
+var KW_ATTRS=['gender','age_group','material','color','size','size_type','pattern','brand','condition'];
+var KW_ATTR_LBL={gender:'Gender',age_group:'Age group',material:'Material',color:'Colour',size:'Size',size_type:'Size type',pattern:'Pattern',brand:'Brand',condition:'Condition'};
 
 function rec(){ if(!STORE[CLIENT])STORE[CLIENT]={events:[]}; if(!STORE[CLIENT].measured)STORE[CLIENT].measured={}; return STORE[CLIENT]; }
 function evs(){ return (rec().events||[]).slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date))}); }
@@ -525,11 +528,39 @@ function txCount(brand,mkt,pts,qs){ // one pass over the cache: per-term counts 
     if(hit){ uni++; if(!rows[i][2])unsat++; } }
   return {ns:ns,uni:uni,unsat:unsat};
 }
+/* ---- attribute step-filter: conditions AND-narrow the PT∪text selection (row[3] = per-attr values) ---- */
+function cndOf(e,mkt){ var c=e.cndm&&e.cndm[mkt]; return (c&&c.conds&&c.conds.length)?c:null; }
+function condSat(row,conds){ var a=row[3]||[]; // AND across conditions, OR across each condition's values
+  for(var c=0;c<conds.length;c++){ var ci=KW_ATTRS.indexOf(conds[c].attr); if(ci<0)continue;
+    if((conds[c].vals||[]).indexOf(a[ci]||'')<0)return false; } return true; }
+function scopeCount(brand,mkt,pts,qs,conds){ // combined: (PT∪text, or all if none) AND all conds → unique count
+  var rows=skuCache(brand,mkt); if(!rows)return null;
+  var sset={}; (pts||[]).forEach(function(p){sset[p]=1});
+  var wss=(qs||[]).map(txWords), ns=(qs||[]).map(function(){return 0});
+  var base=((pts&&pts.length)||(qs&&qs.length)), cds=conds||[], uni=0, unsat=0;
+  for(var i=0;i<rows.length;i++){ var row=rows[i];
+    if(cds.length&&!condSat(row,cds))continue;
+    var hit=base?(sset[row[0]]?1:0):1;
+    for(var t=0;t<wss.length;t++){ if(txHit(row[1],wss[t])){ns[t]++;hit=1;} }
+    if(hit){ uni++; if(!row[2])unsat++; } }
+  return {ns:ns,uni:uni,unsat:unsat}; }
+function attrsPresent(rows){ return KW_ATTRS.filter(function(a){ var ai=KW_ATTRS.indexOf(a);
+  for(var i=0;i<rows.length;i++)if((rows[i][3]||[])[ai])return true; return false; }); }
+function attrIndex(rows,attr,pts,qs,conds){ // value→count for one attribute, over the rows the OTHER filters already keep
+  var ai=KW_ATTRS.indexOf(attr); if(ai<0)return {};
+  var sset={}; (pts||[]).forEach(function(p){sset[p]=1}); var wss=(qs||[]).map(txWords);
+  var base=((pts&&pts.length)||(qs&&qs.length)), other=(conds||[]).filter(function(c){return c.attr!==attr}), m={};
+  for(var i=0;i<rows.length;i++){ var row=rows[i];
+    if(other.length&&!condSat(row,other))continue;
+    var hit=base?(sset[row[0]]?1:0):1; if(!hit)for(var t=0;t<wss.length;t++){ if(txHit(row[1],wss[t])){hit=1;break;} }
+    if(!hit)continue;
+    var v=(row[3]||[])[ai]||''; if(!v)continue; m[v]=(m[v]||0)+1; }
+  return m; }
 function ensureCache(brand,mkt,cb){ // stream the live feed once to warm the SKU cache (text counts need per-SKU text)
   if(skuCache(brand,mkt))return cb(true);
   if(window.__engineFail||!window.FeedAudit||!FeedAudit.createParser)return cb(false);
   var key=brand+'|'+mkt; if(CACHING[key]){CACHING[key].push(cb);return;} CACHING[key]=[cb];
-  var header=null,cands=[],tCol=-1,dCol=-1,buf=[],kwc=[],satN=0;
+  var header=null,cands=[],tCol=-1,dCol=-1,buf=[],kwc=[],satN=0,aCols={};
   // sniff XML vs CSV from the first bytes — same header-then-rows contract for both parsers
   var parser=null;
   function onRow(r){
@@ -538,12 +569,14 @@ function ensureCache(brand,mkt,cb){ // stream the live feed once to warm the SKU
         var kd=k.replace(/[^a-z0-9]/g,'').match(/^producttype([0-9]{1,2})$/);
         if(kd&&+kd[1]>=2){ kwc.push(i); }
         else if(k==='product_type'||k.indexOf('product_type')===0||k.replace(/[^a-z]/g,'')==='producttype')cands.push(i);
+        else if(KW_ATTRS.indexOf(k)>=0&&aCols[k]==null)aCols[k]=i;
         if(k==='title'&&tCol<0)tCol=i; if(k==='description'&&dCol<0)dCol=i; }
       return; }
     var sflag=0; for(var ki=0;ki<kwc.length;ki++){ if(String(r[kwc[ki]]||'').trim()){sflag=1;break;} }
     satN+=sflag;
     buf.push([cands.map(function(i2){return String(r[i2]||'').trim()}),
-      ((tCol>=0?String(r[tCol]||''):'')+' '+(dCol>=0?String(r[dCol]||'').slice(0,800):'')).toLowerCase(),sflag]);
+      ((tCol>=0?String(r[tCol]||''):'')+' '+(dCol>=0?String(r[dCol]||'').slice(0,800):'')).toLowerCase(),sflag,
+      KW_ATTRS.map(function(a){return aCols[a]!=null?String(r[aCols[a]]||'').trim().toLowerCase():''})]);
   }
   function mkParser(t){ if(/^\s*</.test(t)){ if(!FeedAudit.createXmlParser)throw new Error('XML feed but the cached engine predates XML support — hard-refresh so the page and /feedlab/engine.js come from the same deploy'); return FeedAudit.createXmlParser(onRow); } return FeedAudit.createParser(onRow); }
   fetch('/api/feed/proxy?client='+encodeURIComponent(brand)+'&market='+encodeURIComponent(mkt)).then(function(res){
@@ -552,7 +585,7 @@ function ensureCache(brand,mkt,cb){ // stream the live feed once to warm the SKU
     function step(){ return reader.read().then(function(x){
       if(x.done){ if(parser){ parser.push(dec.decode()); parser.end(); }
         var best=-1,wci=0; cands.forEach(function(ci,j){ var n=0; buf.forEach(function(b){ if(b[0][j])n++; }); if(n>best){best=n;wci=j} });
-        SKUC[key]={t:Date.now(),rows:buf.map(function(b){return [b[0][wci]||'',b[1],b[2]]})};
+        SKUC[key]={t:Date.now(),rows:buf.map(function(b){return [b[0][wci]||'',b[1],b[2],b[3]]})};
         // keep the always-shown saturation KPI live: refresh the stored audit off this stream
         var rr=STORE[brand]; if(rr&&rr.ptidx&&rr.ptidx[mkt]){ rr.ptidx[mkt].sat={n:satN,cols:kwc.length}; rr.ptidx[mkt].__total=buf.length; save(); }
         (CACHING[key]||[]).forEach(function(f){f(true)}); delete CACHING[key]; return; }
@@ -566,24 +599,27 @@ function volOf(brand,e){ // exact PT counts per market (+ text-filter union), br
   var mkt=evMkt(brand,e);
   var idx=ptidxFor(brand,mkt); if(!idx)return null;
   if(e.brandwide)return {vol:idx.__total||0,pct:100,wide:1};
-  var ps=ptsOf(e,mkt), tx=txOf(e,mkt);
-  if(!ps.length&&!tx)return {unset:1};
-  var v=0; ps.forEach(function(pt){ v+=idx.map[pt]||0; });
-  if(tx)v=(tx.uni!=null)?tx.uni:v+tx.qs.reduce(function(s,q){return s+(q.n||0)},0);
+  var ps=ptsOf(e,mkt), tx=txOf(e,mkt), cnd=cndOf(e,mkt);
+  if(!ps.length&&!tx&&!cnd)return {unset:1};
+  var v;
+  if(cnd){ v=(cnd.uni!=null)?cnd.uni:0; } // conditions present → picker stored the full (PT∪text) AND conds count
+  else { v=0; ps.forEach(function(pt){ v+=idx.map[pt]||0; });
+    if(tx)v=(tx.uni!=null)?tx.uni:v+tx.qs.reduce(function(s,q){return s+(q.n||0)},0); }
   var o={vol:v,pct:idx.__total?Math.round(v/idx.__total*1000)/10:0};
-  if(tx){o.tx=tx.qs.length;o.npts=ps.length;}
+  if(tx)o.tx=tx.qs.length; if(ps.length)o.npts=ps.length; if(cnd)o.cnd=cnd.conds.length;
   return o;
 }
 function scopeBtn(brand,e){
   var v=volOf(brand,e);
   if(v&&v.wide)return '<button type="button" class="scope wide" data-scope="'+esc(e.id)+'" title="Sale window — whole catalogue in scope">'+fmt(v.vol)+' SKUs · all</button>';
-  var psb=ptsOf(e,evMkt(brand,e)), txb=txOf(e,evMkt(brand,e));
-  var idxT=ptidxFor(brand,evMkt(brand,e));
+  var pmkt=evMkt(brand,e), psb=ptsOf(e,pmkt), txb=txOf(e,pmkt), cnb=cndOf(e,pmkt);
+  var idxT=ptidxFor(brand,pmkt);
   if(v&&!v.unset){
     var tip=psb.map(function(pt){return pt+(idxT?' ('+fmt(idxT.map[pt]||0)+')':'')})
-      .concat((txb?txb.qs:[]).map(function(q){return 'txt “'+q.q+'” ('+(q.n!=null?fmt(q.n):'?')+')'})).join(' · ');
-    var lbl=(psb.length?psb.length+' PTs':'')+(txb?((psb.length?' +':'')+txb.qs.length+' txt'):'');
-    return '<button type="button" class="scope set" data-scope="'+esc(e.id)+'" title="'+esc(tip)+'">'+lbl+' · '+fmt(v.vol)+' SKUs · '+v.pct+'%</button>';
+      .concat((txb?txb.qs:[]).map(function(q){return 'txt “'+q.q+'” ('+(q.n!=null?fmt(q.n):'?')+')'}))
+      .concat((cnb?cnb.conds:[]).map(function(c){return (KW_ATTR_LBL[c.attr]||c.attr)+': '+(c.vals||[]).join('/')})).join(' · ');
+    var parts=[]; if(psb.length)parts.push(psb.length+' PTs'); if(txb)parts.push(txb.qs.length+' txt'); if(cnb)parts.push(cnb.conds.length+' cond');
+    return '<button type="button" class="scope set" data-scope="'+esc(e.id)+'" title="'+esc(tip)+'">'+parts.join(' + ')+' · '+fmt(v.vol)+' SKUs · '+v.pct+'%</button>';
   }
   return '<button type="button" class="scope unset" data-scope="'+esc(e.id)+'">⚙ Set scope'+(psb.length?' ('+psb.length+' PTs)':'')+'</button>';
 }
@@ -761,6 +797,8 @@ function ptOpen(e){
   }
   var sel=ptsOf(e,pmkt).slice();
   var txs=(txOf(e,pmkt)?txOf(e,pmkt).qs.map(function(q){return q.q}):[]), txn={}, uniN=null, unsatN=null;
+  var conds=(cndOf(e,pmkt)?JSON.parse(JSON.stringify(cndOf(e,pmkt).conds)):[]); // attribute step-filters
+  var abuild=null; // in-progress condition: {attr, vals:[], q} — null when the builder is closed
   d.innerHTML='<b class="pt-t">'+esc(e.name)+' — product scope · '+esc(pmkt.toUpperCase())+' <span style="font-weight:700;color:var(--muted);font-size:10.5px">(drag to move)</span></b>'
     +'<div class="pt-sub">'+fmt(Object.keys(idx.map).length)+' unique product types off the live feed — word-search, tick to add, × to remove. Or filter free-text below; both methods combine, counted unique.</div>'
     +'<input class="pt-q" id="pt-q" type="search" placeholder="Search product types… (e.g. coat, tailoring)">'
@@ -769,6 +807,8 @@ function ptOpen(e){
     +'<input class="pt-q" id="tx-q" type="search" placeholder="Free-text filter… (e.g. denim) — Enter adds it">'
     +'<div id="tx-quick" style="display:flex;flex-wrap:wrap;gap:5px"></div>'
     +'<div class="pt-sel" id="tx-sel"></div><div class="pt-sub" id="tx-state" hidden></div>'
+    +'<div class="pt-selh" style="margin-top:9px">Attribute conditions — step-by-step, each one AND-narrows</div>'
+    +'<div class="pt-sel" id="cnd-sel"></div><div id="cnd-build" style="margin-top:5px"></div>'
     +'<div class="pt-foot"><span class="pt-tot" id="pt-tot"></span><button class="btn" id="pt-sug" title="Preselect product types whose NAME or crawled product titles/descriptions carry any keyword theme">✨ Suggest from themes</button><button class="btn pri" id="pt-done">Done</button></div>';
   document.body.appendChild(d); ptPlace(d);
   var keys=Object.keys(idx.map).sort(function(a,b){return idx.map[b]-idx.map[a]});
@@ -790,17 +830,50 @@ function ptOpen(e){
       ||'<span class="pt-sub">no text filters yet — type above, Enter adds one</span>';
     var quick=(e.terms||[]).filter(function(t){ var lt=String(t).toLowerCase(); return !txs.some(function(x){return x.toLowerCase()===lt}); });
     d.querySelector('#tx-quick').innerHTML=quick.map(function(t){return '<button type="button" class="btn" style="padding:3px 9px;font-size:11px" data-txq="'+esc(t)+'" title="Add this keyword theme as a text filter">+ '+esc(t)+'</button>'}).join('');
+    var active=[]; if(sel.length)active.push(sel.length+' PTs'); if(txs.length)active.push(txs.length+' txt'); if(conds.length)active.push(conds.length+' cond');
     var lbl='';
-    if(sel.length&&txs.length)lbl=sel.length+' PTs + '+txs.length+' txt · '+(uniN!=null?fmt(uniN)+' SKUs unique':'counting…')+' in scope';
-    else if(sel.length)lbl=sel.length+' PTs · '+fmt(tot())+' SKUs in scope';
-    else if(txs.length)lbl=txs.length+' txt · '+(uniN!=null?fmt(uniN)+' SKUs':'counting…')+' in scope';
-    if(lbl&&unsatN!=null)lbl+=' · '+fmt(unsatN)+' not yet keyworded';
+    if(active.length){
+      var cnt=(uniN!=null)?(fmt(uniN)+' SKUs'):((sel.length&&!txs.length&&!conds.length)?(fmt(tot())+' SKUs'):'counting…');
+      lbl=active.join(' + ')+' · '+cnt+' in scope';
+      if(uniN!=null&&unsatN!=null)lbl+=' · '+fmt(unsatN)+' not yet keyworded';
+    }
     d.querySelector('#pt-tot').textContent=lbl;
     d.querySelector('#pt-selh').textContent=sel.length?('Selected — '+sel.length):'';
+    paintCnd();
   }
   function recount(){ txn={}; uniN=null; unsatN=null;
-    if(txs.length||sel.length){ var tc=txCount(CLIENT,pmkt,sel,txs);
-      if(tc){ txs.forEach(function(q,i){txn[q]=tc.ns[i]}); if(txs.length)uniN=tc.uni; unsatN=tc.unsat; } } }
+    if(txs.length||sel.length||conds.length){ var tc=scopeCount(CLIENT,pmkt,sel,txs,conds);
+      if(tc){ txs.forEach(function(q,i){txn[q]=tc.ns[i]}); uniN=tc.uni; unsatN=tc.unsat; } } }
+  function paintCnd(){ // attribute step-filter: active-condition chips + the add/attr/value builder
+    var cs=d.querySelector('#cnd-sel'), cb=d.querySelector('#cnd-build'), rowsC=skuCache(CLIENT,pmkt);
+    cs.innerHTML=conds.map(function(c,ci){
+      return '<span class="pt-chip" style="width:100%;justify-content:space-between"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(KW_ATTR_LBL[c.attr]||c.attr)+': '+esc((c.vals||[]).join(', '))+'</span>'
+        +'<span style="flex:none;display:inline-flex;gap:7px;align-items:center"><button type="button" data-cndrm="'+ci+'">×</button></span></span>'; }).join('')
+      ||'<span class="pt-sub">no conditions yet — narrow by gender, age, material…</span>';
+    if(!abuild){ cb.innerHTML='<button type="button" class="btn" id="cnd-add" style="padding:4px 11px;font-size:11.5px"'+(rowsC?'':' disabled title="streaming the feed…"')+'>＋ Add condition</button>'; return; }
+    if(!abuild.attr){ var present=rowsC?attrsPresent(rowsC):[];
+      cb.innerHTML='<div class="pt-sub">Attribute to narrow on:</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px">'
+        +present.map(function(a){return '<button type="button" class="btn" style="padding:3px 10px;font-size:11px" data-cndattr="'+esc(a)+'">'+esc(KW_ATTR_LBL[a]||a)+'</button>'}).join('')
+        +'</div>'+(present.length?'':'<span class="pt-sub">no attribute columns found in this feed</span>')
+        +'<div style="margin-top:6px"><button type="button" class="btn" id="cnd-cancel" style="padding:3px 9px;font-size:11px">cancel</button></div>'; return; }
+    var many=Object.keys(attrIndex(rowsC,abuild.attr,sel,txs,conds)).length>14;
+    cb.innerHTML='<div class="pt-sub">'+esc(KW_ATTR_LBL[abuild.attr]||abuild.attr)+' — tick values (within the current scope):</div>'
+      +(many?'<input class="pt-q" id="cnd-q" type="search" placeholder="filter values…" value="'+esc(abuild.q||'')+'">':'')
+      +'<div class="pt-list" id="cnd-vlist"></div>'
+      +'<div style="margin-top:6px;display:flex;gap:6px"><button type="button" class="btn pri" id="cnd-commit" style="padding:3px 10px;font-size:11px"></button>'
+      +'<button type="button" class="btn" id="cnd-cancel" style="padding:3px 9px;font-size:11px">cancel</button></div>';
+    refreshVals();
+  }
+  function refreshVals(){ // fills #cnd-vlist + the commit button WITHOUT rebuilding the filter input (keeps focus)
+    if(!abuild||!abuild.attr)return; var rowsC=skuCache(CLIENT,pmkt); if(!rowsC)return;
+    var vi=attrIndex(rowsC,abuild.attr,sel,txs,conds), vkeys=Object.keys(vi).sort(function(a,b){return vi[b]-vi[a]});
+    var q=(abuild.q||'').toLowerCase(), shown=vkeys.filter(function(v){return !q||v.indexOf(q)>=0}).slice(0,60);
+    var vl=d.querySelector('#cnd-vlist'); if(vl)vl.innerHTML=shown.map(function(v){ var on=abuild.vals.indexOf(v)>=0;
+        return '<div class="pt-row'+(on?' on':'')+'" data-cndval="'+esc(v)+'">'+(on?'☑':'☐')+' '+esc(v||'(blank)')+'<span class="n">'+fmt(vi[v])+'</span></div>'; }).join('')
+      +(vkeys.length>shown.length?'<div class="pt-row" style="cursor:default;color:var(--muted)">… '+(vkeys.length-shown.length)+' more — filter above</div>':'')
+      +(!vkeys.length?'<div class="pt-row" style="cursor:default;color:var(--muted)">no values in scope</div>':'');
+    var cc=d.querySelector('#cnd-commit'); if(cc){ cc.disabled=!abuild.vals.length; cc.textContent='Add'+(abuild.vals.length?' '+abuild.vals.length+' value'+(abuild.vals.length===1?'':'s'):''); }
+  }
   var warming=false;
   function warm(){ // text counts need the per-SKU cache — stream the feed once, then everything is live
     if(skuCache(CLIENT,pmkt)||warming)return; warming=true;
@@ -823,11 +896,18 @@ function ptOpen(e){
     if(trm){ var ti=txs.indexOf(trm.getAttribute('data-txrm')); if(ti>=0)txs.splice(ti,1); recount(); paint(); return; }
     var tq=ev.target.closest('[data-txq]');
     if(tq){ addTerm(tq.getAttribute('data-txq')); return; }
+    var cadd=ev.target.closest('#cnd-add'); if(cadd){ abuild={attr:null,vals:[],q:''}; paintCnd(); return; }
+    var cattr=ev.target.closest('[data-cndattr]'); if(cattr){ abuild={attr:cattr.getAttribute('data-cndattr'),vals:[],q:''}; paintCnd(); return; }
+    var cval=ev.target.closest('[data-cndval]'); if(cval&&abuild){ var cv=cval.getAttribute('data-cndval'), vj=abuild.vals.indexOf(cv); if(vj>=0)abuild.vals.splice(vj,1); else abuild.vals.push(cv); refreshVals(); return; }
+    var ccommit=ev.target.closest('#cnd-commit'); if(ccommit&&abuild&&abuild.attr&&abuild.vals.length){ conds=conds.filter(function(c){return c.attr!==abuild.attr}); conds.push({attr:abuild.attr,vals:abuild.vals.slice()}); abuild=null; recount(); paint(); return; }
+    var ccancel=ev.target.closest('#cnd-cancel'); if(ccancel){ abuild=null; paintCnd(); return; }
+    var crm=ev.target.closest('[data-cndrm]'); if(crm){ conds.splice(+crm.getAttribute('data-cndrm'),1); recount(); paint(); return; }
     if(ev.target.id==='pt-sug'){ var bgs=idx.bags||{};
       (e.terms||[]).forEach(function(t){ var lt=String(t).toLowerCase();
         keys.forEach(function(k){ if(sel.indexOf(k)>=0)return;
           if(k.toLowerCase().indexOf(lt)>=0||String(bgs[k]||'').indexOf(lt)>=0)sel.push(k); }); }); recount(); paint(); return; }
-    if(ev.target.id==='pt-done'){ e.ptsm=e.ptsm||{}; e.ptsm[pmkt]=sel.slice(); if(pmkt==='gb')e.pts=sel.slice();
+    if(ev.target.id==='pt-done'){ e=findEv(e.id)||e; // re-resolve: a save() response mid-picker can swap STORE's objects — write to the live one
+      e.ptsm=e.ptsm||{}; e.ptsm[pmkt]=sel.slice(); if(pmkt==='gb')e.pts=sel.slice();
       var old=(e.txsm&&e.txsm[pmkt])||{}, oldn={}; (old.qs||[]).forEach(function(x){oldn[x.q]=x.n});
       var hasC=!!skuCache(CLIENT,pmkt); recount();
       if(!txs.length){ if(e.txsm)delete e.txsm[pmkt]; }
@@ -836,9 +916,15 @@ function ptOpen(e){
         // no cache yet (stream still running / worker unreachable): keep the previous numbers rather than write zeros
         e.txsm[pmkt]={qs:txs.map(function(q){return {q:q,n:hasC?(txn[q]||0):(oldn[q]!=null?oldn[q]:null)}}),
           uni:hasC?uniN:(old.uni!=null?old.uni:null)}; }
+      // attribute conditions — persist WITH the combined (PT∪text AND conds) count so volOf sizes off it
+      var oldc=(e.cndm&&e.cndm[pmkt])||{};
+      if(!conds.length){ if(e.cndm)delete e.cndm[pmkt]; }
+      else{ e.cndm=e.cndm||{};
+        e.cndm[pmkt]={conds:conds.map(function(c){return {attr:c.attr,vals:c.vals.slice()}}),
+          uni:hasC?uniN:(oldc.uni!=null?oldc.uni:null), unsat:hasC?unsatN:(oldc.unsat!=null?oldc.unsat:null)}; }
       // saturation lift for this scope (how many in-scope SKUs still lack g:product_type2+ keywords)
       if(hasC&&unsatN!=null){ e.satm=e.satm||{}; e.satm[pmkt]={unsat:unsatN}; }
-      else if(!sel.length&&!txs.length&&e.satm)delete e.satm[pmkt];
+      else if(!sel.length&&!txs.length&&!conds.length&&e.satm)delete e.satm[pmkt];
       save(); ptClose(); render(); return; }
   });
   (function(){ // drag the picker by its title — Ray wants the board visible behind it
@@ -854,6 +940,7 @@ function ptOpen(e){
     t.addEventListener('pointerup',function(){ moving=false; });
   })();
   d.querySelector('#pt-q').addEventListener('input',paint);
+  d.addEventListener('input',function(ev){ if(ev.target.id==='cnd-q'&&abuild){ abuild.q=ev.target.value; refreshVals(); } });
   d.querySelector('#tx-q').addEventListener('keydown',function(ev){
     if(ev.key==='Enter'){ ev.preventDefault(); addTerm(this.value); this.value=''; } });
   d.querySelector('#tx-q').addEventListener('focus',function(){ warm(); });
@@ -890,7 +977,7 @@ function syncPT(){
   function nextMkt(){
     if(mi>=list.length){ MEASURING=false; $('#measure').disabled=false; $('#mstate').textContent='product types synced — scopes are live'; save(); render(); return; }
     var mkt=list[mi++];
-    var rows=0, header=null, cands=[], cmaps=[], bags={}, tCol=-1, dCol=-1, cache=[], kwc=[], satN=0;
+    var rows=0, header=null, cands=[], cmaps=[], bags={}, tCol=-1, dCol=-1, cache=[], kwc=[], satN=0, aCols={};
     var STOP={the:1,and:1,for:1,with:1,from:1,this:1,that:1,are:1,our:1,its:1,has:1,было:1};
     // sniff XML vs CSV from the first bytes — same header-then-rows contract for both parsers
     var parser=null;
@@ -907,6 +994,7 @@ function syncPT(){
           var kd=k.replace(/[^a-z0-9]/g,'').match(/^producttype([0-9]{1,2})$/);
           if(kd&&+kd[1]>=2){ kwc.push(i); }
           else if(k==='product_type'||k.indexOf('product_type')===0||k.replace(/[^a-z]/g,'')==='producttype')cands.push(i);
+          else if(KW_ATTRS.indexOf(k)>=0&&aCols[k]==null)aCols[k]=i;
           if(k==='title'&&tCol<0)tCol=i; if(k==='description'&&dCol<0)dCol=i; }
         cmaps=cands.map(function(){return {}});
         return; }
@@ -916,7 +1004,8 @@ function syncPT(){
       // per-SKU cache (in-memory only): candidate PT values + searchable text + keyworded flag —
       // free-text scope filters and saturation lifts count against this without another stream
       cache.push([cands.map(function(i2){return String(r[i2]||'').trim()}),
-        ((tCol>=0?String(r[tCol]||''):'')+' '+(dCol>=0?String(r[dCol]||'').slice(0,800):'')).toLowerCase(),sflag]);
+        ((tCol>=0?String(r[tCol]||''):'')+' '+(dCol>=0?String(r[dCol]||'').slice(0,800):'')).toLowerCase(),sflag,
+        KW_ATTRS.map(function(a){return aCols[a]!=null?String(r[aCols[a]]||'').trim().toLowerCase():''})]);
       var rowTxt=null;
       for(var ci=0;ci<cands.length;ci++){ var v=String(r[cands[ci]]||'').trim(); if(!v)continue;
         cmaps[ci][v]=(cmaps[ci][v]||0)+1;
@@ -940,7 +1029,7 @@ function syncPT(){
           var map={}, best=-1, wci=0; // the populated candidate wins (FeedHero empty-input columns lose)
           cmaps.forEach(function(m2,ci){ var n=0,k2; for(k2 in m2)n+=m2[k2]; if(n>best){best=n;map=m2;wci=ci} });
           var sb={}, kb; for(kb in bags){ if(map[kb])sb[kb]=Object.keys(bags[kb].w).join(' '); } // keep bags for the winning column only
-          SKUC[CLIENT+'|'+mkt]={t:Date.now(),rows:cache.map(function(c){return [c[0][wci]||'',c[1],c[2]]})};
+          SKUC[CLIENT+'|'+mkt]={t:Date.now(),rows:cache.map(function(c){return [c[0][wci]||'',c[1],c[2],c[3]]})};
           var r=rec(); r.ptidx=r.ptidx||{}; r.ptidx[mkt]={__total:rows,map:map,bags:sb,t:Date.now(),sat:{n:satN,cols:kwc.length}};
           if(!Object.keys(map).length){ // zero uniques = the column wasn't matched; name the suspects
             var suspects=(header||[]).map(function(h){return FeedAudit.normKey(h)}).filter(function(k){return k.indexOf('type')>=0||k.indexOf('categor')>=0});
