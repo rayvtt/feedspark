@@ -927,13 +927,6 @@
    "pr": 173
   },
   {
-   "name": "Pricer engine: AI Text Attribute RETIRED — Ray 10 Sep 2026 'not needed ever' (must stay gone)",
-   "file": "docs/pricer_engine.js",
-   "pattern": "text_attr",
-   "pr": 319,
-   "forbidden": true
-  },
-  {
    "name": "Pricer: compact token column — single Bill units cell + token-economics pop-up",
    "file": "docs/FeedSpark_Pricer.html",
    "pattern": "tok-pop",
@@ -3047,11 +3040,53 @@
    "min": 2
   },
   {
+   "name": "AI Quote: saved-quote row actions — ✉ Draft email (Gmail Drafts via the askdraft rails) + → Intake (plan task + brief)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "AIQUOTE-ROW-ACTIONS",
+   "min": 1,
+   "pr": 316
+  },
+  {
+   "name": "AI Quote: two-tone client email composer (confident/direct vs collaborative/consultative) off the saved snapshot, £ only when revealed",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function quoteEmail(",
+   "min": 1,
+   "pr": 316
+  },
+  {
+   "name": "AI Quote: → Intake files the Project Plan task, persists intake:{planOk} then deep-links /workflow?brief=",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function fileIntake(",
+   "min": 1,
+   "pr": 316
+  },
+  {
+   "name": "worker: AI quote → Project Plan task route (/api/aiquote/plantask via the shared appendPlanRows, ACT-logged)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "'/api/aiquote/plantask'",
+   "min": 2,
+   "pr": 316
+  },
+  {
    "name": "AI Quote: Excel export replicates Ray's quote template EXACTLY (resolved theme palette, red qty, exact wordmark anchor); CSV demoted to raw data",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "XMETA",
    "min": 3,
    "pr": 315
+  },
+  {
+   "name": "Workflow: Brief Ledger delegated search/sort/toggle + full-row haystack",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "bl-search",
+   "min": 2,
+   "pr": 320
+  },
+  {
+   "name": "Pricer engine: AI Text Attribute RETIRED — Ray 10 Sep 2026 'not needed ever' (must stay gone)",
+   "file": "docs/pricer_engine.js",
+   "pattern": "text_attr",
+   "pr": 319,
+   "forbidden": true
   },
   {
    "name": "overlay engine: URL-string classifier + feed collector (UMD, agent + page + tests)",
