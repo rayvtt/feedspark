@@ -20,8 +20,12 @@
 (function (g) {
   'use strict';
 
-  // The Tachyon catalogue ("What We Do") — 13 optimisations in 7 groups. (An "AI Text Attribute
-  // Extraction" entry was added 10 Sep 2026 and RETIRED the same day — Ray: "not needed ever".)
+  // The Tachyon catalogue ("What We Do") — 11 optimisations in 6 groups. RETIRED entries (must
+  // stay gone): an "AI Text Attribute Extraction" entry was added 10 Sep 2026 and pulled the same
+  // day — Ray: "not needed ever"; the two "AI Pre-Description" entries (plain + Highlighting
+  // Attributes) were pulled 10 Sep 2026 — Ray: "remove AI Pre Description also". Their
+  // handback rows in the Pricer tracker stay as untagged billing history; classifyTach below
+  // sends that wording to '' so it can never fall through to the AI Description slot.
   // Hours/unit rates are DRAFT defaults: the collaborative rate card (KV `tachyonrates`) overrides every field, and
   // the module flags rows still on draft values. id keys are stable — KV merges hang off them.
   var CATALOG = [
@@ -30,8 +34,6 @@
     { id: 'title_intent',   grp: 'AI Titles',                    name: 'Title with AI Search Intent',            aspl: 8,  qc: 4, pm: 2, mon: 2, unit: 0.12, lead: 12 },
     { id: 'desc_gen',       grp: 'AI Description',               name: 'AI Product Description Generation',      aspl: 8,  qc: 4, pm: 3, mon: 3, unit: 0.15, lead: 14 },
     { id: 'desc_pro',       grp: 'AI Description',               name: 'AI Description Pro (Compare & Q/A)',     aspl: 12, qc: 6, pm: 3, mon: 4, unit: 0.25, lead: 18 },
-    { id: 'predesc_attr',   grp: 'AI Pre-Description',           name: 'AI Pre-Description (Highlighting Attributes)', aspl: 6, qc: 3, pm: 2, mon: 2, unit: 0.10, lead: 10 },
-    { id: 'predesc',        grp: 'AI Pre-Description',           name: 'AI Pre-Description',                     aspl: 5,  qc: 2, pm: 2, mon: 2, unit: 0.08, lead: 8 },
     { id: 'highlights',     grp: 'Product Highlights & Details', name: 'AI Product Highlights',                  aspl: 6,  qc: 3, pm: 2, mon: 2, unit: 0.10, lead: 10 },
     { id: 'details',        grp: 'Product Highlights & Details', name: 'AI Product Details',                     aspl: 6,  qc: 3, pm: 2, mon: 2, unit: 0.10, lead: 10 },
     { id: 'keywords',       grp: 'AI Keywords',                  name: 'AI Keyword Generation',                  aspl: 5,  qc: 3, pm: 2, mon: 2, unit: 0.06, lead: 8 },
@@ -201,7 +203,9 @@
     if (!/\bai\b|tachyon/.test(t)) return '';
     if (/short title/.test(t)) return 'title_short';
     if (/search intent/.test(t)) return 'title_intent';
-    if (/pre.?desc/.test(t)) return /attribute/.test(t) ? 'predesc_attr' : 'predesc';
+    // RETIRED wording (AI Pre-Description, 10 Sep 2026) stays untagged — it must NOT fall
+    // through to the /desc/ rule and pollute the AI Description averages
+    if (/pre.?desc/.test(t)) return '';
     if (/description pro|q\/?a|q\s*&\s*a|question.{0,12}answer|compare/.test(t)) return 'desc_pro';
     if (/desc/.test(t)) return 'desc_gen';
     if (/highlight/.test(t)) return 'highlights';
@@ -227,6 +231,12 @@
       runOne: +tr.runOne || 0, runPar: +tr.runPar || 0,
       volDone: +tr.volDone || 0, prodDone: +tr.prodDone || 0, catsDone: String(tr.catsDone || '') };
   }
+  // A stored tag only counts while its optimisation is still in the catalogue: a KV record
+  // tagged with a RETIRED id (the Pre-Description handbacks) reads as untagged, so the
+  // tracker shows "— pick —" and no orphan slot leaks into the actuals.
+  var LIVE_IDS = {};
+  CATALOG.forEach(function (c) { LIVE_IDS[c.id] = 1; });
+  function liveTag(v) { return (typeof v === 'string' && LIVE_IDS[v]) ? v : ''; }
   function aiBriefRows(briefs, track) {
     track = track || {};
     var rows = [];
@@ -234,11 +244,11 @@
       var b = briefs[k]; if (!b) return;
       var scanned = classifyTach(b.task);
       var tr = track[k] || {};
-      if (!scanned && !tr.tach && !Object.keys(tr).length) return;
+      if (!scanned && !liveTag(tr.tach) && !Object.keys(tr).length) return;
       var done = b.status === 'done' || b.status === 'confirmed' || b.status === 'analysis';
       var row = trackNums(tr);
       row.bid = k; row.client = b.client || ''; row.task = b.task || ''; row.status = b.status || 'intake';
-      row.done = done; row.created = +b.created || 0; row.tach = tr.tach || scanned || '';
+      row.done = done; row.created = +b.created || 0; row.tach = liveTag(tr.tach) || scanned || '';
       rows.push(row);
     });
     // manual/historic entries: track records with no Workflow brief behind them (AI work
@@ -251,7 +261,7 @@
       var row = trackNums(tr);
       row.bid = k; row.client = String(tr.client || ''); row.task = String(tr.task || '');
       row.status = 'historic'; row.done = true; row.manual = true; row.created = +tr.t || 0;
-      row.tach = tr.tach || classifyTach(tr.task) || '';
+      row.tach = liveTag(tr.tach) || classifyTach(tr.task) || '';
       rows.push(row);
     });
     rows.sort(function (a, b2) { return (b2.created || 0) - (a.created || 0); });
@@ -296,7 +306,7 @@
       var tr = (track || {})[k] || {};
       // track record wins; a brief-embedded tag (the retired Workflow tagging) still counts;
       // otherwise the TITLE SCAN decides — same rule that builds the tracking table
-      var tach = (typeof tr.tach === 'string' && tr.tach) || (typeof b.tach === 'string' && b.tach) || classifyTach(b.task);
+      var tach = liveTag(tr.tach) || liveTag(b.tach) || classifyTach(b.task);
       if (!tach) return;
       var h = { aspl: +tr.aspl || +(b.hours || {}).aspl || 0, qc: +tr.qc || +(b.hours || {}).qc || 0,
         pm: +tr.pm || +(b.hours || {}).pm || 0, mon: +tr.mon || +(b.hours || {}).mon || 0 };
@@ -313,7 +323,7 @@
     Object.keys(track || {}).forEach(function (k) {
       if ((briefs || {})[k]) return;
       var tr = track[k]; if (!tr || !tr.manual || tr.deleted) return;
-      var tach = (typeof tr.tach === 'string' && tr.tach) || classifyTach(tr.task);
+      var tach = liveTag(tr.tach) || classifyTach(tr.task);
       if (!tach) return;
       tally(tach, tr, tr.client, { aspl: +tr.aspl || 0, qc: +tr.qc || 0, pm: +tr.pm || 0, mon: +tr.mon || 0 });
     });
@@ -388,7 +398,7 @@
     return out;
   }
 
-  var PricerEngine = { VERSION: '1.5.0', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
+  var PricerEngine = { VERSION: '1.6.0', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
     rates: rates, tieredUnits: tieredUnits, parentCounter: parentCounter, quote: quote, quoteText: quoteText, fmtGBP: fmtGBP,
     fmtMin: fmtMin, classifyTach: classifyTach, aiBriefRows: aiBriefRows, clientSummary: clientSummary,
     actualsFromBriefs: actualsFromBriefs, overridesWithActuals: overridesWithActuals };
