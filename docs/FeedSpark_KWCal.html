@@ -495,7 +495,9 @@ function ensureCache(brand,mkt,cb){ // stream the live feed once to warm the SKU
   if(window.__engineFail||!window.FeedAudit||!FeedAudit.createParser)return cb(false);
   var key=brand+'|'+mkt; if(CACHING[key]){CACHING[key].push(cb);return;} CACHING[key]=[cb];
   var header=null,cands=[],tCol=-1,dCol=-1,buf=[],kwc=[],satN=0;
-  var parser=FeedAudit.createParser(function(r){
+  // sniff XML vs CSV from the first bytes — same header-then-rows contract for both parsers
+  var parser=null;
+  function onRow(r){
     if(!header){ header=r; // same candidate/keyword-column rules as syncPT (the populated column wins at end)
       for(var i=0;i<r.length;i++){ var k=FeedAudit.normKey(r[i]);
         var kd=k.replace(/[^a-z0-9]/g,'').match(/^producttype([0-9]{1,2})$/);
@@ -507,18 +509,21 @@ function ensureCache(brand,mkt,cb){ // stream the live feed once to warm the SKU
     satN+=sflag;
     buf.push([cands.map(function(i2){return String(r[i2]||'').trim()}),
       ((tCol>=0?String(r[tCol]||''):'')+' '+(dCol>=0?String(r[dCol]||'').slice(0,800):'')).toLowerCase(),sflag]);
-  });
+  }
+  function mkParser(t){ if(/^\s*</.test(t)){ if(!FeedAudit.createXmlParser)throw new Error('XML feed but the cached engine predates XML support — hard-refresh so the page and /feedlab/engine.js come from the same deploy'); return FeedAudit.createXmlParser(onRow); } return FeedAudit.createParser(onRow); }
   fetch('/api/feed/proxy?client='+encodeURIComponent(brand)+'&market='+encodeURIComponent(mkt)).then(function(res){
     if(!res.ok)throw new Error('feed proxy said '+res.status);
     var reader=res.body.getReader(),dec=new TextDecoder();
     function step(){ return reader.read().then(function(x){
-      if(x.done){ parser.push(dec.decode()); parser.end();
+      if(x.done){ if(parser){ parser.push(dec.decode()); parser.end(); }
         var best=-1,wci=0; cands.forEach(function(ci,j){ var n=0; buf.forEach(function(b){ if(b[0][j])n++; }); if(n>best){best=n;wci=j} });
         SKUC[key]={t:Date.now(),rows:buf.map(function(b){return [b[0][wci]||'',b[1],b[2]]})};
         // keep the always-shown saturation KPI live: refresh the stored audit off this stream
         var rr=STORE[brand]; if(rr&&rr.ptidx&&rr.ptidx[mkt]){ rr.ptidx[mkt].sat={n:satN,cols:kwc.length}; rr.ptidx[mkt].__total=buf.length; save(); }
         (CACHING[key]||[]).forEach(function(f){f(true)}); delete CACHING[key]; return; }
-      parser.push(dec.decode(x.value,{stream:true})); return step(); }); }
+      var chunk=dec.decode(x.value,{stream:true});
+      if(!parser){ if(!chunk.trim())return step(); parser=mkParser(chunk); }
+      parser.push(chunk); return step(); }); }
     return step();
   }).catch(function(){ (CACHING[key]||[]).forEach(function(f){f(false)}); delete CACHING[key]; });
 }
@@ -795,7 +800,9 @@ function syncPT(){
     var mkt=list[mi++];
     var rows=0, header=null, cands=[], cmaps=[], bags={}, tCol=-1, dCol=-1, cache=[], kwc=[], satN=0;
     var STOP={the:1,and:1,for:1,with:1,from:1,this:1,that:1,are:1,our:1,its:1,has:1,было:1};
-    var parser=FeedAudit.createParser(function(r){
+    // sniff XML vs CSV from the first bytes — same header-then-rows contract for both parsers
+    var parser=null;
+    function onRow(r){
       if(!header){ header=r;
         // real sheets name this many ways (g:product_type, product_type|||1, "Product Type",
         // FeedHero working copies with an EMPTY input column beside the populated output) —
@@ -830,13 +837,14 @@ function syncPT(){
         }
       }
       if(rows%2000===0)$('#mstate').textContent='syncing '+mkt.toUpperCase()+'… '+fmt(rows)+' products';
-    });
+    }
+    function mkParser(t){ if(/^\s*</.test(t)){ if(!FeedAudit.createXmlParser)throw new Error('XML feed but the cached engine predates XML support — hard-refresh so the page and /feedlab/engine.js come from the same deploy'); return FeedAudit.createXmlParser(onRow); } return FeedAudit.createParser(onRow); }
     $('#mstate').textContent='streaming the live '+mkt.toUpperCase()+' feed…';
     fetch('/api/feed/proxy?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(mkt)).then(function(res){
       if(!res.ok)return res.json().catch(function(){return{}}).then(function(j){throw new Error(j.error||('feed proxy said '+res.status))});
       var reader=res.body.getReader(),dec=new TextDecoder();
       function step(){ return reader.read().then(function(x){
-        if(x.done){ parser.push(dec.decode()); parser.end();
+        if(x.done){ if(parser){ parser.push(dec.decode()); parser.end(); }
           var map={}, best=-1, wci=0; // the populated candidate wins (FeedHero empty-input columns lose)
           cmaps.forEach(function(m2,ci){ var n=0,k2; for(k2 in m2)n+=m2[k2]; if(n>best){best=n;map=m2;wci=ci} });
           var sb={}, kb; for(kb in bags){ if(map[kb])sb[kb]=Object.keys(bags[kb].w).join(' '); } // keep bags for the winning column only
@@ -846,7 +854,9 @@ function syncPT(){
             var suspects=(header||[]).map(function(h){return FeedAudit.normKey(h)}).filter(function(k){return k.indexOf('type')>=0||k.indexOf('categor')>=0});
             err('Synced '+fmt(rows)+' '+mkt.toUpperCase()+' products but no product_type column matched. Type-ish headers seen: '+(suspects.join(', ')||'(none)')+' — tell Claude and it will map this client.'); }
           nextMkt(); return; }
-        parser.push(dec.decode(x.value,{stream:true})); return step();
+        var chunk=dec.decode(x.value,{stream:true});
+        if(!parser){ if(!chunk.trim())return step(); parser=mkParser(chunk); }
+        parser.push(chunk); return step();
       }); }
       return step();
     }).catch(function(e2){ err(String(e2&&e2.message||e2)); MEASURING=false; $('#measure').disabled=false; $('#mstate').textContent=''; });
