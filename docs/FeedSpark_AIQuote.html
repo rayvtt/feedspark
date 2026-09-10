@@ -319,6 +319,21 @@ window.addEventListener('load',restore);
   .priceless .col-rate,.priceless .col-line,.priceless .rate-h,.priceless .line-h{visibility:hidden}
   .qhead{display:grid;grid-template-columns:30px 1fr 108px 110px 116px;gap:10px;padding:0 14px 6px;font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
   .qhead .num{text-align:right}
+  /* per-line extras (Ray, 10 Sep 2026: "within each attribute allow more Note / whether £ per
+     product charge or one-off charge") — the charge-model toggle and the free note sit under
+     the field name, so the five-column grid stays as it is */
+  .qrow .fx{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+  .cm{display:inline-flex;border:1px solid var(--line);border-radius:100px;overflow:hidden;flex:none}
+  .cmb{font:inherit;font-size:10.5px;font-weight:800;padding:3px 9px;border:0;background:#fff;color:var(--muted);cursor:pointer}
+  .cmb.on{background:var(--orange);color:#fff}
+  .qrow input.fnote{font:inherit;font-size:11.5px;font-weight:600;padding:4px 8px;border:1px dashed var(--line);border-radius:8px;background:#fff;flex:1;min-width:180px;margin:0;box-shadow:none;color:var(--ink)}
+  .qrow input.fnote:focus{outline:none;border-style:solid;border-color:var(--orange)}
+  .qrow .line .lflat{display:block;font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+  .qrow.flat input.cnt{opacity:.55}
+  .priceless .cm{visibility:hidden}
+  [data-theme=dark] .cmb{background:#20242E}
+  [data-theme=dark] .cmb.on{background:var(--orange);color:#14161C}
+  [data-theme=dark] .qrow input.fnote{background:#161922}
   .qtot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;padding-top:13px;border-top:2px solid var(--line);font-size:14px;font-weight:900}
   .qtot .grand{color:var(--orange-deep);font-size:20px}
   .qtot .grand.unset{color:var(--muted);font-size:13px}
@@ -419,7 +434,7 @@ window.addEventListener('load',restore);
 <header class="hero"><div class="wrap">
   <div class="eyebrow">Private &amp; Confidential · AI field generation</div>
   <h1>AI field quote</h1>
-  <p class="sub">Scope an <b>AI field-generation</b> engagement off the client's <b>live feed</b>. The six Google <b>conversational attributes</b> sit on top; below them is the full <b>Tachyon optimisation catalogue</b> (titles, descriptions, highlights, keywords, attributes, GPC/PT) — the same library as the Pricer, grouped and collapsible. Tick what you're proposing, and each is priced at its rate × your live volume. Volumes are live; the £ rates seed from the catalogue and are yours to change.</p>
+  <p class="sub">Scope an <b>AI field-generation</b> engagement off the client's <b>live feed</b>. The six Google <b>conversational attributes</b> sit on top; below them is the full <b>Tachyon optimisation catalogue</b> (titles, descriptions, highlights, keywords, attributes, GPC/PT) — the same library as the Pricer, grouped and collapsible. Tick what you're proposing, and each is priced at its rate × the <b>unique products</b> in scope (distinct <code>g:item_group_id</code> — variants inherit the generated fields, so they are never billed twice) or as a one-off charge for the line. Volumes are live; the £ rates seed from the catalogue and are yours to change.</p>
   <div class="ctl">
     <label for="brand">Client</label>
     <select id="brand" aria-label="Choose a client"></select>
@@ -439,12 +454,12 @@ window.addEventListener('load',restore);
 <main class="wrap">
   <div class="card" id="scope-card">
     <h3>Product scope</h3>
-    <div class="ch">The base volume every ticked field is quoted against. Pick a headline number, choose exact product types from the live feed, or cover the whole catalogue. Each field can be overridden below.</div>
+    <div class="ch">The base volume every ticked field is quoted against — counted in <b>unique products</b> (distinct <code>g:item_group_id</code>; the variant SKUs are shown beside it for context). Pick a headline number, choose exact product types from the live feed, or cover the whole catalogue. Each field can be overridden below.</div>
     <div class="scope-row">
       <button class="qp" data-qp="10000" type="button">10,000</button>
       <button class="qp" data-qp="20000" type="button">20,000</button>
       <button class="qp" data-qp="25000" type="button">25,000</button>
-      <button class="qp" data-qp="all" type="button">All live SKUs</button>
+      <button class="qp" data-qp="all" type="button">Whole live catalogue</button>
       <button class="qp" data-qp="pts" type="button">⚙ Product types…</button>
       <span class="scope-sum" id="scope-sum"></span>
     </div>
@@ -452,12 +467,13 @@ window.addEventListener('load',restore);
 
   <div class="card priceless" id="fields-card">
     <h3>Fields to generate</h3>
-    <div class="ch">Tick an optimisation to price it. The six conversational attributes are on top; the Tachyon catalogue follows, grouped — click a group header to fold it. Rates seed from the catalogue (your Pricer figures) and save to your rate card; type over any to override for this client.</div>
-    <div class="qhead"><span></span><span>Optimisation</span><span class="num">Products</span><span class="num rate-h col-rate">£ / SKU</span><span class="num line-h col-line">Line total</span></div>
+    <div class="ch">Tick an optimisation to price it. The six conversational attributes are on top; the Tachyon catalogue follows, grouped — click a group header to fold it. Rates seed from the catalogue (your Pricer figures) and save to your rate card; type over any to override for this client. Every line carries its own <b>note</b> (it lands in the quote's Additional Notes, the email and the brief) and is charged either <b>£ per product</b> or as a <b>one-off</b> for the line.</div>
+    <div class="qhead"><span></span><span>Optimisation</span><span class="num" title="Unique products — distinct g:item_group_id; variants inherit the generated fields">Products</span><span class="num rate-h col-rate" title="£ per unique product × quantity, or one flat charge for the line">£ / product · one-off</span><span class="num line-h col-line">Line total</span></div>
     <div id="qgroups"></div>
     <div class="qtot" id="qtot"></div>
     <div class="qopts col-rate">
       <span class="qopt">One-off setup <input type="text" id="setup" inputmode="decimal" placeholder="£ —"></span>
+      <span class="qopt" title="Partner / agency discount off every line of the quote — it rides the template's own Discount % column in the Excel export, so the formulas carry it">Partner discount <input type="text" id="disc" inputmode="decimal" placeholder="0" style="width:52px"> %</span>
       <label class="qopt"><input type="checkbox" class="cbx" id="vat"> +VAT 20%</label>
       <span class="qopt">Quote valid <input type="text" id="valid" inputmode="numeric" placeholder="30"> days</span>
     </div>
@@ -489,7 +505,7 @@ window.addEventListener('load',restore);
   </div>
 
   <div class="card" style="background:var(--wash)">
-    <div class="ch" style="margin:0"><b>How the numbers work.</b> Volumes are pulled live from the client's Google feed and counted per product type — nothing is estimated. £ rates seed from the Tachyon catalogue (the same figures the Pricer uses) and save to your rate card; they are never invented and you can change any. The quote stays hidden until you reveal it, so you can screen-share the scope safely. The full hourly/retainer commercial model lives in the Pricer (▦ apps icon).</div>
+    <div class="ch" style="margin:0"><b>How the numbers work.</b> Volumes are pulled live from the client's Google feed and counted in <b>unique products</b> — distinct <code>g:item_group_id</code>, with the variant SKUs shown beside them; Tachyon generates once per product and the variants inherit — per product type. Nothing is estimated. £ rates seed from the Tachyon catalogue (the same figures the Pricer uses) and save to your rate card; they are never invented and you can change any. The quote stays hidden until you reveal it, so you can screen-share the scope safely. The full hourly/retainer commercial model lives in the Pricer (▦ apps icon).</div>
   </div>
 </main>
 
@@ -577,22 +593,36 @@ window.addEventListener('load',restore);
     if(window.__engineFail||!window.FeedAudit||!FeedAudit.createParser){ err('The feed parser is unavailable (engine failed to load) — pulling needs the live worker.'); return; }
     var key=CLIENT+'|'+MKT; if(CACHING[key])return; CACHING[key]=1;
     $('#mstate').textContent='Pulling '+CLIENT+' '+MKT.toUpperCase()+'…';
-    var header=null,cands=[],kwc=[],buf=[],parser=null;
+    var header=null,cands=[],kwc=[],buf=[],parser=null,igc=-1,idc=-1;
     function onRow(r){
       if(!header){ header=r;
-        for(var i=0;i<r.length;i++){ var k=FeedAudit.normKey(r[i]);
-          var kd=k.replace(/[^a-z0-9]/g,'').match(/^producttype([0-9]{1,2})$/);
+        for(var i=0;i<r.length;i++){ var k=FeedAudit.normKey(r[i]), kk=k.replace(/[^a-z0-9]/g,'');
+          var kd=kk.match(/^producttype([0-9]{1,2})$/);
           if(kd&&+kd[1]>=2){ kwc.push(i); }
-          else if(k==='product_type'||k.indexOf('product_type')===0||k.replace(/[^a-z]/g,'')==='producttype')cands.push(i); }
+          else if(k==='product_type'||k.indexOf('product_type')===0||kk==='producttype')cands.push(i);
+          if(igc<0&&kk==='itemgroupid')igc=i; if(idc<0&&kk==='id')idc=i; }
         return; }
-      buf.push(cands.map(function(i2){return String(r[i2]||'').trim()}));
+      /* the PARENT key — the pricing unit (Ray, 10 Sep 2026: unique products by g:item_group_id,
+         the same rule as PricerEngine.parentCounter): a row with no group is its own product,
+         keyed on its id (else the row number), so a variant-less catalogue counts 1:1 */
+      var g=igc>=0?String(r[igc]||'').trim():'', id=idc>=0?String(r[idc]||'').trim():'';
+      buf.push({pt:cands.map(function(i2){return String(r[i2]||'').trim()}),pk:g?'g:'+g:(id?'i:'+id:'r:'+buf.length),g:!!g});
     }
     function mkParser(t){ if(/^\s*</.test(t)){ if(!FeedAudit.createXmlParser)throw new Error('XML feed but the cached engine predates XML support — hard-refresh'); return FeedAudit.createXmlParser(onRow); } return FeedAudit.createParser(onRow); }
     function finish(){
-      var best=-1,wci=0; cands.forEach(function(ci,j){ var n=0; buf.forEach(function(b){ if(b[j])n++; }); if(n>best){best=n;wci=j} });
-      var map={},tot=buf.length; buf.forEach(function(b){ var pt=b[wci]||'(no product_type)'; map[pt]=(map[pt]||0)+1; });
-      IDX[MKT]={map:map,total:tot,when:Date.now()};
-      delete CACHING[key]; $('#mstate').textContent=fmt(tot)+' SKUs · '+Object.keys(map).length+' product types'; render();
+      var best=-1,wci=0; cands.forEach(function(ci,j){ var n=0; buf.forEach(function(b){ if(b.pt[j])n++; }); if(n>best){best=n;wci=j} });
+      var map={},pmap={},pkeys={},seenAll={},prod=0,grouped=0,tot=buf.length;
+      buf.forEach(function(b){ var pt=b.pt[wci]||'(no product_type)'; map[pt]=(map[pt]||0)+1;
+        if(b.g)grouped++;
+        if(!seenAll[b.pk]){ seenAll[b.pk]=1; prod++; }
+        var ks=pkeys[pt]||(pkeys[pt]={}); if(!ks[b.pk]){ ks[b.pk]=1; pmap[pt]=(pmap[pt]||0)+1; } });
+      /* pkeys = per product type, its parent keys as an ARRAY: a scope's unique-product count is
+         the UNION across its types, so a parent split over two types is never counted twice */
+      Object.keys(pkeys).forEach(function(pt){ pkeys[pt]=Object.keys(pkeys[pt]); });
+      IDX[MKT]={map:map,pmap:pmap,pkeys:pkeys,total:tot,prod:prod,grouped:grouped,hasGroups:igc>=0,when:Date.now()};
+      delete CACHING[key];
+      $('#mstate').textContent=fmt(prod)+' unique products · '+fmt(tot)+' SKUs · '+Object.keys(map).length+' product types'+(igc>=0?'':' · no item_group_id in this feed, every SKU is its own product');
+      render();
     }
     fetch('/api/feed/proxy?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT)).then(function(res){
       if(!res.ok)throw new Error('feed proxy said '+res.status);
@@ -609,12 +639,33 @@ window.addEventListener('load',restore);
 
   /* ---------- scope + rate maths ---------- */
   function idx(){ return IDX[MKT]||null; }
+  function selPts(){ var r=rec(); return (r.pts&&r.pts[MKT])||[]; }
+  /* unique products across a set of product types = the UNION of their parent keys (memoised
+     per pull + selection — render() and foot() ask for it often) */
+  var _uCache={};
+  function unionProds(ix,sel){ var sig=(ix.when||0)+'|'+sel.join(''); if(_uCache.sig===sig)return _uCache.n;
+    var seen={},n=0; sel.forEach(function(pt){ ((ix.pkeys&&ix.pkeys[pt])||[]).forEach(function(k){ if(!seen[k]){seen[k]=1;n++;} }); });
+    _uCache={sig:sig,n:n}; return n; }
+  // base volume = UNIQUE PRODUCTS (distinct g:item_group_id) in scope — the unit every line is priced in
   function baseVol(){ var r=rec(), sc=r.scope||{mode:'all'}, ix=idx();
     if(sc.mode==='manual')return +sc.manual||0;
-    if(sc.mode==='pts'){ var sel=(r.pts&&r.pts[MKT])||[]; if(!ix)return 0; if(!sel.length)return ix.total||0; var v=0; sel.forEach(function(pt){v+=ix.map[pt]||0}); return v; }
-    return ix?ix.total||0:0;
+    if(sc.mode==='pts'){ var sel=selPts(); if(!ix)return 0; if(!sel.length)return ix.prod||0; return unionProds(ix,sel); }
+    return ix?ix.prod||0:0;
+  }
+  // the variant SKUs behind that scope — context beside the figure, never a quantity
+  function baseSkus(){ var r=rec(), sc=r.scope||{mode:'all'}, ix=idx();
+    if(sc.mode==='manual'||!ix)return 0;
+    if(sc.mode==='pts'){ var sel=selPts(); if(!sel.length)return ix.total||0; var v=0; sel.forEach(function(pt){v+=ix.map[pt]||0}); return v; }
+    return ix.total||0;
   }
   function fCount(id){ var f=rec().fields[id]; return (f&&f.count!=null)?(+f.count||0):baseVol(); }
+  /* charge model per line (Ray, 10 Sep 2026): 'unit' = £ per unique product × quantity (the
+     default) · 'flat' = one flat £ for the line, whatever the volume. Per-client choice first,
+     then the saved rate card, then unit. The note is free text per line. */
+  function fCharge(id){ var f=rec().fields[id]; if(f&&(f.charge==='flat'||f.charge==='unit'))return f.charge;
+    var c=card()[id]; return (c&&c.charge==='flat')?'flat':'unit'; }
+  function fNote(id){ var f=rec().fields[id]; return (f&&f.note)?String(f.note):''; }
+  function lineCost(c,rt,charge){ return rt==null?null:(charge==='flat'?(+rt||0):c*rt); }
   function catUnit(id){ var it=CMAP[id]; return (it&&it.unit!=null)?+it.unit:null; }
   // effective rate: per-client override > rate card > catalogue unit > null
   function fRate(id){ var f=rec().fields[id]; if(f&&f.rate!=null&&f.rate!=='')return +f.rate||0;
@@ -624,22 +675,32 @@ window.addEventListener('load',restore);
   function fOn(id){ var f=rec().fields[id]; return !!(f&&f.on); }
   function vatOn(){ return !!rec().vat; }
   function setupFee(){ var s=rec().setup; return (s!=null&&s!=='')?(+s||0):0; }
-  function totals(){ var inc=0,tp=0,net=0,miss=false;
-    CAT.forEach(function(f){ if(!fOn(f.id))return; inc++; var c=fCount(f.id),rt=fRate(f.id); tp+=c; if(rt==null)miss=true; else net+=c*rt; });
-    net+=setupFee(); var vat=vatOn()?net*0.2:0; return {inc:inc,tp:tp,net:net,vat:vat,gross:net+vat,miss:miss}; }
+  // partner discount (Ray, 10 Sep 2026: "allow partner discount as well at bottom of quoting"):
+  // a % off every line INCLUDING the one-off setup, applied before VAT. sub = before discount,
+  // net = after it — every consumer of net/vat/gross downstream sees the discounted figures.
+  function discPct(){ var d=rec().disc; d=(d!=null&&d!=='')?+d:0; return isFinite(d)?Math.max(0,Math.min(100,d)):0; }
+  /* tp = the unique products the quote COVERS — the largest ticked line, i.e. the scope unless
+     every line is overridden. It used to be the per-line counts ADDED UP (5 fields × 8,898 =
+     44,490 — Ray: "this number doesn't make sense"); that products × fields figure survives
+     only as `gens` (field generations) for anyone sizing a run, never as a KPI. */
+  function totals(){ var inc=0,tp=0,gens=0,sub=0,miss=false;
+    CAT.forEach(function(f){ if(!fOn(f.id))return; inc++; var c=fCount(f.id),rt=fRate(f.id); gens+=c; if(c>tp)tp=c; if(rt==null)miss=true; else sub+=lineCost(c,rt,fCharge(f.id)); });
+    sub+=setupFee(); var disc=discPct(), discAmt=sub*disc/100, net=sub-discAmt; var vat=vatOn()?net*0.2:0;
+    return {inc:inc,tp:tp,gens:gens,sub:sub,disc:disc,discAmt:discAmt,net:net,vat:vat,gross:net+vat,miss:miss}; }
 
   /* ---------- render ---------- */
   function scopeSummary(){ var r=rec(), sc=r.scope||{mode:'all'}, ix=idx();
     if(sc.mode==='manual')return '<b>'+fmt(sc.manual)+'</b> products · headline figure';
-    if(sc.mode==='pts'){ var sel=(r.pts&&r.pts[MKT])||[]; if(!ix)return 'Pull the live feed to size the selected product types';
-      if(!sel.length)return '<b>'+fmt(ix.total)+'</b> products · whole catalogue (no types picked)';
-      return '<b>'+fmt(baseVol())+'</b> products · '+sel.length+' product type'+(sel.length===1?'':'s'); }
-    return ix?('<b>'+fmt(ix.total)+'</b> products · whole live catalogue'):'Pull the live feed for the catalogue size';
+    var sk=baseSkus(), tail=sk>baseVol()?' · '+fmt(sk)+' SKUs':'';
+    if(sc.mode==='pts'){ var sel=selPts(); if(!ix)return 'Pull the live feed to size the selected product types';
+      if(!sel.length)return '<b>'+fmt(ix.prod)+'</b> unique products · whole catalogue (no types picked)'+tail;
+      return '<b>'+fmt(baseVol())+'</b> unique products · '+sel.length+' product type'+(sel.length===1?'':'s')+tail; }
+    return ix?('<b>'+fmt(ix.prod)+'</b> unique products · whole live catalogue'+tail):'Pull the live feed for the catalogue size';
   }
   function metaHtml(f){ var p=[];
     if(f.conv)p.push('<span class="conv-tag">Conversational</span>');
     if(f.setup!=null)p.push('setup <b>'+f.setup+'h</b>');
-    if(f.unit!=null)p.push('£'+f.unit+'/SKU');
+    if(f.unit!=null)p.push('£'+f.unit+'/product');
     if(f.lead!=null)p.push('live ~'+f.lead+'d');
     if(f.desc)p.push(esc(f.desc));
     return p.join(' · '); }
@@ -652,35 +713,42 @@ window.addEventListener('load',restore);
     $('#fields-card').classList.toggle('priceless',!SHOWP);
     var html=GROUPS.map(function(g){ var items=CAT.filter(function(f){return f.grp===g});
       var onN=items.filter(function(f){return fOn(f.id)}).length; var open=grpOpen(g);
-      var rows=items.map(function(f){ var on=fOn(f.id),c=fCount(f.id),rt=fRate(f.id),fr=r.fields[f.id],src=rateSrc(f.id);
+      var rows=items.map(function(f){ var on=fOn(f.id),c=fCount(f.id),rt=fRate(f.id),fr=r.fields[f.id],src=rateSrc(f.id),ch=fCharge(f.id),note=fNote(f.id);
         var isAuto=!(fr&&fr.count!=null);
-        var line = rt==null?'<span class="line unset">set rate</span>':'<span class="line">'+money(c*rt)+'</span>';
-        return '<div class="qrow'+(on?'':' off')+'" data-k="'+f.id+'">'
+        var line = lineHtml(c,rt,ch);
+        return '<div class="qrow'+(on?'':' off')+(ch==='flat'?' flat':'')+'" data-k="'+f.id+'">'
           +'<span><input type="checkbox" class="cbx" data-on="'+f.id+'"'+(on?' checked':'')+'></span>'
-          +'<span><div class="fname">'+esc(f.name)+'</div><div class="fmeta">'+metaHtml(f)+'</div></span>'
-          +'<span class="col-cnt"><input class="cnt'+(isAuto?' auto':'')+'" data-cnt="'+f.id+'" inputmode="numeric" value="'+fmt(c)+'"'+(isAuto?' title="auto from scope — type to override"':'')+'></span>'
-          +'<span class="col-rate"><input class="rate'+(src==='card'||src==='cat'?' seeded':'')+'" data-rate="'+f.id+'" inputmode="decimal" placeholder="£ —" value="'+(rt==null?'':rt)+'"'+(src==='cat'?' title="catalogue rate — type to override"':src==='card'?' title="from your rate card"':'')+'></span>'
+          +'<span><div class="fname">'+esc(f.name)+'</div><div class="fmeta">'+metaHtml(f)+'</div>'
+            +'<div class="fx"><span class="cm col-rate" role="group" aria-label="Charge model">'
+              +'<button type="button" class="cmb'+(ch==='unit'?' on':'')+'" data-cm="'+f.id+'" data-v="unit" title="Charged per unique product × the quantity">£ / product</button>'
+              +'<button type="button" class="cmb'+(ch==='flat'?' on':'')+'" data-cm="'+f.id+'" data-v="flat" title="One flat charge for this line, whatever the volume">one-off</button></span>'
+            +'<input class="fnote" data-note="'+f.id+'" type="text" maxlength="240" placeholder="Note for this line — lands in the quote’s Additional Notes, the email and the brief" value="'+esc(note)+'"></div></span>'
+          +'<span class="col-cnt"><input class="cnt'+(isAuto?' auto':'')+'" data-cnt="'+f.id+'" inputmode="numeric" value="'+fmt(c)+'"'+(isAuto?' title="auto from scope — unique products (g:item_group_id); type to override"':'')+'></span>'
+          +'<span class="col-rate"><input class="rate'+(src==='card'||src==='cat'?' seeded':'')+'" data-rate="'+f.id+'" inputmode="decimal" placeholder="'+(ch==='flat'?'£ one-off':'£ —')+'" value="'+(rt==null?'':rt)+'"'+(src==='cat'?' title="catalogue rate — type to override"':src==='card'?' title="from your rate card"':'')+'></span>'
           +'<span class="col-line">'+line+'</span></div>';
       }).join('');
       return '<div class="qgrp'+(open?'':' closed')+'" data-g="'+esc(g)+'"><div class="qgh" data-gt="'+esc(g)+'"><span class="tw">▾</span><span class="gname'+(g===CONV_GRP?' conv':'')+'">'+esc(g)+'</span><span class="gcount'+(onN?' has':'')+'">'+(onN?onN+' selected':items.length+' fields')+'</span></div><div class="qrows">'+rows+'</div></div>';
     }).join('');
     $('#qgroups').innerHTML=html;
     foot();
-    $('#setup').value=(r.setup!=null?r.setup:''); $('#vat').checked=vatOn(); $('#valid').value=(r.valid!=null?r.valid:'');
+    $('#setup').value=(r.setup!=null?r.setup:''); $('#disc').value=(r.disc!=null?r.disc:''); $('#vat').checked=vatOn(); $('#valid').value=(r.valid!=null?r.valid:'');
     $('#showp').textContent=SHOWP?'£ Hide quote':'£ Show quote'; $('#showp').setAttribute('aria-pressed',SHOWP?'true':'false'); $('#showp').classList.toggle('on',SHOWP);
     var anyCard=CAT.some(function(f){return rateSrc(f.id)==='card'||rateSrc(f.id)==='cat'}); var rn=$('#rc-note');
     rn.hidden=!anyCard; if(anyCard)rn.textContent='Dashed rates seed from the catalogue / your rate card — edit any to override for '+CLIENT+' only.';
   }
   function kpi(n,l){ return '<div class="kpi"><div class="n">'+n+'</div><div class="l">'+esc(l)+'</div></div>'; }
+  function lineHtml(c,rt,ch){ return rt==null?'<span class="line unset">set rate</span>'
+    :'<span class="line">'+money(lineCost(c,rt,ch))+(ch==='flat'?'<span class="lflat">one-off</span>':'')+'</span>'; }
   function foot(){ var t=totals();
     CAT.forEach(function(f){ var cell=document.querySelector('.qrow[data-k="'+f.id+'"] .col-line'); if(!cell)return;
-      var rt=fRate(f.id),c=fCount(f.id); cell.innerHTML=rt==null?'<span class="line unset">set rate</span>':'<span class="line">'+money(c*rt)+'</span>'; });
+      cell.innerHTML=lineHtml(fCount(f.id),fRate(f.id),fCharge(f.id)); });
     // per-group counts
     GROUPS.forEach(function(g){ var items=CAT.filter(function(f){return f.grp===g}); var onN=items.filter(function(f){return fOn(f.id)}).length;
       var gc=document.querySelector('.qgrp[data-g="'+cssEsc(g)+'"] .gcount'); if(gc){gc.textContent=onN?onN+' selected':items.length+' fields'; gc.className='gcount'+(onN?' has':'');} });
     var grand=t.miss?'<span class="grand unset">set every rate to total</span>':'<span class="grand">'+money(t.gross)+'</span>';
-    $('#qtot').innerHTML='<span>Quote total'+(vatOn()?' (inc VAT)':'')+'</span><span class="hint">'+t.inc+' selected · '+fmt(t.tp)+' products'+(setupFee()?' · +setup '+money(setupFee()):'')+(vatOn()&&!t.miss?' · VAT '+money(t.vat):'')+'</span><span style="margin-left:auto" class="col-line">'+grand+'</span>';
-    $('#kpis').innerHTML=kpi(fmt(baseVol()),'Scope products')+kpi(t.inc+' / '+CAT.length,'Fields selected')+kpi(fmt(t.tp),'Products in quote')
+    $('#qtot').innerHTML='<span>Quote total'+(vatOn()?' (inc VAT)':'')+'</span><span class="hint">'+t.inc+' selected · '+fmt(t.tp)+' products'+(setupFee()?' · +setup '+money(setupFee()):'')+(t.disc>0?' · partner discount '+t.disc+'%'+(t.miss?'':' (−'+money(t.discAmt)+')'):'')+(vatOn()&&!t.miss?' · VAT '+money(t.vat):'')+'</span><span style="margin-left:auto" class="col-line">'+grand+'</span>';
+    var bs=baseSkus();
+    $('#kpis').innerHTML=kpi(fmt(baseVol()),'Unique products in scope')+(bs>baseVol()?kpi(fmt(bs),'Variant SKUs behind them'):'')+kpi(t.inc+' / '+CAT.length,'Fields selected')+kpi(fmt(t.tp),'Unique products quoted')
       +(SHOWP?kpi(t.miss?'—':money(t.gross),'Quote total'+(t.miss?' (set rates)':(vatOn()?' inc VAT':''))):kpi('£ hidden','Quote (tap £ Show)'));
     $('#scope-sum').innerHTML=scopeSummary();
   }
@@ -705,12 +773,21 @@ window.addEventListener('load',restore);
   $('#qgroups').addEventListener('input',function(e){ var t=e.target;
     if(t.dataset.cnt!=null){ var v=String(t.value).replace(/[^0-9]/g,''); rec().fields[t.dataset.cnt].count=v===''?null:+v; foot(); saveSoon(); }
     else if(t.dataset.rate!=null){ var rv=String(t.value).replace(/[^0-9.]/g,''); rec().fields[t.dataset.rate].rate=rv===''?null:rv; t.classList.remove('seeded'); foot(); saveSoon(); }
+    else if(t.dataset.note!=null){ rec().fields[t.dataset.note].note=String(t.value).slice(0,240); saveSoon(); }
   });
+  // charge model toggle: flips the row in place (no re-render, so the note keeps focus elsewhere)
+  $('#qgroups').addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('[data-cm]'); if(!b)return;
+    var id=b.getAttribute('data-cm'), v=b.getAttribute('data-v'); rec().fields[id].charge=v;
+    var row=b.closest('.qrow'); if(row){ row.classList.toggle('flat',v==='flat');
+      row.querySelectorAll('.cmb').forEach(function(x){ x.classList.toggle('on',x.getAttribute('data-v')===v); });
+      var ri=row.querySelector('input.rate'); if(ri)ri.placeholder=(v==='flat'?'£ one-off':'£ —'); }
+    foot(); saveSoon(); });
   $('#setup').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9.]/g,''); rec().setup=v===''?null:v; foot(); saveSoon(); });
+  $('#disc').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9.]/g,''); rec().disc=v===''?null:v; foot(); saveSoon(); });
   $('#vat').addEventListener('change',function(){ rec().vat=this.checked; foot(); saveSoon(); });
   $('#valid').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9]/g,''); rec().valid=v===''?null:+v; saveSoon(); });
   $('#savecard').addEventListener('click',function(){ var rc=STORE[RCKEY]||{fields:{}}; rc.fields=rc.fields||{};
-    CAT.forEach(function(f){ var rt=fRate(f.id); if(rt!=null)rc.fields[f.id]={rate:rt}; }); rc.updated=Date.now(); STORE[RCKEY]=rc;
+    CAT.forEach(function(f){ var rt=fRate(f.id); if(rt!=null)rc.fields[f.id]={rate:rt,charge:fCharge(f.id)}; }); rc.updated=Date.now(); STORE[RCKEY]=rc;
     var body={}; body[RCKEY]=rc; putMap(body,'Rate card saved — it pre-fills every client'); render();
   });
 
@@ -721,8 +798,9 @@ window.addEventListener('load',restore);
     if(!ix){ pop.innerHTML='<b class="pt-t">Product types</b><div class="pt-sub">Pull the live feed first — then pick the exact product types this quote covers.</div><div class="pt-foot"><button class="btn pri" id="pt-pull">⟳ Pull live feed</button><button class="btn" id="pt-x">Close</button></div>';
       document.body.appendChild(pop); place(); pop.querySelector('#pt-pull').onclick=function(){closePicker();pullFeed();}; pop.querySelector('#pt-x').onclick=closePicker; return; }
     var sel=((rec().pts||{})[MKT]||[]).slice();
-    var names=Object.keys(ix.map).sort(function(a,b){return ix.map[b]-ix.map[a]});
-    pop.innerHTML='<b class="pt-t">Product types · '+MKT.toUpperCase()+'</b><div class="pt-sub">'+fmt(ix.total)+' SKUs · pick the types this quote covers (volumes are live)</div>'
+    var pm=ix.pmap||{};
+    var names=Object.keys(ix.map).sort(function(a,b){return (pm[b]||0)-(pm[a]||0)||ix.map[b]-ix.map[a]});
+    pop.innerHTML='<b class="pt-t">Product types · '+MKT.toUpperCase()+'</b><div class="pt-sub">'+fmt(ix.prod)+' unique products · '+fmt(ix.total)+' SKUs · pick the types this quote covers (figures = unique products, live)</div>'
       +'<input class="pt-q" placeholder="Search product types…">'
       +'<div class="pt-selh">Selected <span id="pt-tot" class="pt-tot"></span><button class="pt-act" id="pt-clear" type="button" hidden>Clear all</button></div><div class="pt-sel" id="pt-sel"></div>'
       +'<div class="pt-acts" id="pt-acts"></div>'
@@ -735,27 +813,27 @@ window.addEventListener('load',restore);
        result set and not merely the first LISTCAP rows the list can show */
     function matches(q){ q=String(q||'').trim().toLowerCase();
       return q?names.filter(function(n){return n.toLowerCase().indexOf(q)>=0}):names.slice(); }
-    function selTot(){ var v=0; sel.forEach(function(p){v+=ix.map[p]||0}); pop.querySelector('#pt-tot').textContent=sel.length?(fmt(v)+' SKUs · '+sel.length+' types'):'nothing yet = whole catalogue';
+    function selTot(){ var v=unionProds(ix,sel); pop.querySelector('#pt-tot').textContent=sel.length?(fmt(v)+' unique products · '+sel.length+' types'):'nothing yet = whole catalogue';
       pop.querySelector('#pt-clear').hidden=!sel.length; }
     function drawSel(){ pop.querySelector('#pt-sel').innerHTML=sel.map(function(p){return '<span class="pt-chip">'+esc(p)+' <button data-x="'+esc(p)+'">×</button></span>'}).join(''); selTot(); }
     /* the bulk bar: Select all / Deselect all for exactly what the search is showing. Both
        appear when the matches are part-selected, so neither action is ever out of reach. */
     function drawActs(q){ var m=matches(q), qs=String(q||'').trim();
       var on=0, addVol=0;
-      m.forEach(function(n){ if(sel.indexOf(n)>=0)on++; else addVol+=ix.map[n]||0; });
+      m.forEach(function(n){ if(sel.indexOf(n)>=0)on++; else addVol+=pm[n]||0; });
       var off=m.length-on, h='';
       if(!m.length){ h='<span class="pt-mc">no product type matches “'+esc(qs)+'”</span>'; }
       else{
         h='<span class="pt-mc">'+(qs?('<b>'+m.length+'</b> match “'+esc(qs)+'”'+(on?' · '+on+' selected':''))
                                    :('<b>'+m.length+'</b> types'+(on?' · '+on+' selected':'')))+'</span>';
         if(m.length>LISTCAP)h+='<span class="pt-trunc" title="The list shows the first '+LISTCAP+' by volume — the buttons still cover all '+m.length+' matches">showing top '+LISTCAP+'</span>';
-        if(off>0)h+='<button class="pt-act" data-act="all" type="button">✓ Select all '+off+(addVol?' · +'+fmt(addVol)+' SKUs':'')+'</button>';
+        if(off>0)h+='<button class="pt-act" data-act="all" type="button">✓ Select all '+off+(addVol?' · +'+fmt(addVol)+' products':'')+'</button>';
         if(on>0)h+='<button class="pt-act" data-act="none" type="button">✕ Deselect '+(off>0?on:'all '+on)+'</button>';
       }
       pop.querySelector('#pt-acts').innerHTML=h;
     }
     function drawList(q){ var list=matches(q).slice(0,LISTCAP);
-      pop.querySelector('#pt-list').innerHTML=list.map(function(n){return '<div class="pt-row'+(sel.indexOf(n)>=0?' on':'')+'" data-pt="'+esc(n)+'">'+esc(n)+'<span class="n">'+fmt(ix.map[n])+'</span></div>'}).join('');
+      pop.querySelector('#pt-list').innerHTML=list.map(function(n){return '<div class="pt-row'+(sel.indexOf(n)>=0?' on':'')+'" data-pt="'+esc(n)+'">'+esc(n)+'<span class="n" title="'+fmt(pm[n]||0)+' unique products · '+fmt(ix.map[n])+' SKUs">'+fmt(pm[n]||0)+'</span></div>'}).join('');
       drawActs(q); }
     drawSel(); drawList('');
     pop.querySelector('.pt-q').addEventListener('input',function(){drawList(this.value)});
@@ -798,16 +876,20 @@ window.addEventListener('load',restore);
   }
 
   /* ---------- copy / export ---------- */
-  function lines(){ return CAT.filter(function(f){return fOn(f.id)}).map(function(f){ return {name:f.name,grp:f.grp,id:f.id,c:fCount(f.id),rt:fRate(f.id)}; }); }
+  function lines(){ return CAT.filter(function(f){return fOn(f.id)}).map(function(f){ return {name:f.name,grp:f.grp,id:f.id,c:fCount(f.id),rt:fRate(f.id),charge:fCharge(f.id),note:fNote(f.id)}; }); }
+  // one line's £ wording, shared by the copy text, the email and the brief
+  function lineMoney(l){ return l.rt==null?'':(l.charge==='flat'?('one-off '+money(l.rt)):('@ £'+l.rt+'/product = '+money(l.c*l.rt))); }
   $('#copy').addEventListener('click',function(){
     var L=lines(), t=totals(), r=rec();
     var out=['FeedSpark — AI field generation quote','Client: '+CLIENT+'   Market: '+MKT.toUpperCase(),'Date: '+new Date().toLocaleDateString('en-GB'),''];
     var lastG='';
     L.forEach(function(l){ if(l.grp!==lastG){ out.push(l.grp+':'); lastG=l.grp; }
-      out.push('  • '+l.name+' — '+fmt(l.c)+' products'+(SHOWP&&l.rt!=null?('  @ £'+l.rt+'/SKU  =  '+money(l.c*l.rt)):'')); });
-    out.push(''); out.push('Products in scope: '+fmt(t.tp)+' across '+L.length+' optimisation'+(L.length===1?'':'s'));
+      out.push('  • '+l.name+' — '+fmt(l.c)+' products'+(SHOWP&&l.rt!=null?('  '+lineMoney(l)):'')+(l.note?('  — '+l.note):'')); });
+    var bs=baseSkus();
+    out.push(''); out.push('Products in scope: '+fmt(baseVol())+' unique products (g:item_group_id)'+(bs>baseVol()?' · '+fmt(bs)+' variant SKUs inherit':'')+' · '+L.length+' optimisation'+(L.length===1?'':'s'));
     if(SHOWP){ if(setupFee())out.push('One-off setup: '+money(setupFee()));
-      out.push(t.miss?'Subtotal: (set every rate to total)':'Subtotal: '+money(t.net));
+      if(t.disc>0&&!t.miss){ out.push('Subtotal: '+money(t.sub)); out.push('Partner discount '+t.disc+'%: −'+money(t.discAmt)); }
+      out.push(t.miss?'Subtotal: (set every rate to total)':(t.disc>0?'Net (ex VAT): ':'Subtotal: ')+money(t.net));
       if(vatOn()&&!t.miss)out.push('VAT 20%: '+money(t.vat));
       out.push(t.miss?'TOTAL: (rates incomplete)':('TOTAL'+(vatOn()?' (inc VAT)':'')+': '+money(t.gross)));
       if(r.valid)out.push('','Quote valid for '+r.valid+' days.');
@@ -839,18 +921,22 @@ window.addEventListener('load',restore);
   function quoteRef(d){ var s=CLIENT+'|'+MKT+'|'+d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(),h=0,i;
     for(i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%10000;
     return 'QT'+String(d.getFullYear()).slice(2)+('000'+h).slice(-4); }
+  function upWord(n,s){ return fmt(n)+' unique products'+(s>n?' ('+fmt(s)+' SKUs)':''); }
   function scopeTextPlain(){ var r=rec(), sc=r.scope||{mode:'all'}, ix=idx();
     if(sc.mode==='manual')return 'Scope: headline figure of '+fmt(sc.manual)+' products';
-    if(sc.mode==='pts'){ var sel=(r.pts&&r.pts[MKT])||[];
+    if(sc.mode==='pts'){ var sel=selPts();
       if(!ix)return 'Scope: product types selected, but the live feed has not been pulled — volumes unknown';
-      if(!sel.length)return 'Scope: whole live catalogue ('+fmt(ix.total)+' live SKUs — no product types picked)';
-      return 'Scope: '+sel.length+' product type'+(sel.length===1?'':'s')+' — '+fmt(baseVol())+' of '+fmt(ix.total)+' live SKUs'; }
-    return ix?('Scope: whole live catalogue ('+fmt(ix.total)+' live SKUs)')
+      if(!sel.length)return 'Scope: whole live catalogue ('+upWord(ix.prod,ix.total)+' live — no product types picked)';
+      return 'Scope: '+sel.length+' product type'+(sel.length===1?'':'s')+' — '+upWord(baseVol(),baseSkus())+' of '+upWord(ix.prod,ix.total)+' live'; }
+    return ix?('Scope: whole live catalogue ('+upWord(ix.prod,ix.total)+' live)')
              :'Scope: whole live catalogue — the live feed has not been pulled, volume unknown';
   }
   function rateWord(src){ return src==='own'?'rate: set on this quote':src==='card'?'rate: saved rate card'
     :src==='cat'?'rate: Tachyon catalogue':'RATE NOT SET — line cannot be priced'; }
+  /* the Additional Notes cell: Ray's own note for the line FIRST, then the derived facts */
   function lineNote(l){ var f=CMAP[l.id]||{}, fr=rec().fields[l.id], p=[];
+    if(l.note)p.push(l.note);
+    if(l.charge==='flat')p.push('one-off charge for the line — covers '+fmt(l.c)+' unique products');
     if(f.conv)p.push('Google conversational attribute');
     if(fr&&fr.count!=null)p.push('volume overridden on this line');
     if(f.setup!=null)p.push('setup '+f.setup+'h (ASPL+QC+PM)');
@@ -943,6 +1029,9 @@ window.addEventListener('load',restore);
     var pt=new Date(pf.getMonth()===0?pf.getFullYear():pf.getFullYear()+1,0,1);
     var pmo=(pt.getFullYear()-pf.getFullYear())*12+(pt.getMonth()-pf.getMonth())+1;
     var NOTPRICED='Not priced on this quote — see the Pricer';   // one line in column N, as the template's notes are
+    /* the partner discount rides the template's OWN Discount % column on every priced line, so
+       the sheet's formulas (I = F×H, K = F−I, the =SUM over K) carry it — nothing bespoke */
+    var dsc=t.disc>0?t.disc/100:0;
 
     /* 1 — title band (D1:I2, 28pt, medium box drawn round the OUTSIDE of the merge only) */
     function tEdge(top){ var c={},j,e=top?'t':'b';
@@ -992,17 +1081,18 @@ window.addEventListener('load',restore);
     var oneA=0, oneB=0;
     function costRow(o){
       var rn=sh.rows.length+1, priced=(o.rate!=null&&o.rate!=='');
-      /* the Cost column is a £/SKU rate on an optimisation line (pennies — 3dp) but a flat
-         figure on the setup line, so each carries its own currency format */
+      /* the Cost column is a £/product rate on an optimisation line (pennies — 3dp) but a flat
+         figure on the setup line and on a one-off line (quantity 1, like the template's own
+         setup row), so each carries its own currency format */
       var rateSt=o.flat?S.rateF:S.rate;
       var cells={A:{v:o.name,s:S.lbl},B:{v:o.qual||'',s:S.lblq},
         D:{v:o.qty,s:S.qty},N:{v:o.note||'',s:S.note}};
       if(priced){
         cells.E={v:+o.rate,s:rateSt};
         cells.F={f:'IFERROR(D'+rn+'*E'+rn+',"-")',v:n2(o.qty*o.rate),s:S.money};
-        cells.H={v:0,s:S.disc};
-        cells.I={f:'F'+rn+'*H'+rn,v:0,s:S.discv};
-        cells.K={f:'SUM(F'+rn+'-I'+rn+')',v:n2(o.qty*o.rate),s:S.net};
+        cells.H={v:dsc,s:S.disc};
+        cells.I={f:'F'+rn+'*H'+rn,v:n2(o.qty*o.rate*dsc),s:S.discv};
+        cells.K={f:'SUM(F'+rn+'-I'+rn+')',v:n2(o.qty*o.rate*(1-dsc)),s:S.net};
       } else {
         /* honest blank: no rate, so no cost, no total, no formula anywhere on the line */
         cells.E={v:'',s:rateSt}; cells.F={v:'',s:S.money}; cells.H={v:'',s:S.blank};
@@ -1014,7 +1104,8 @@ window.addEventListener('load',restore);
       flat:1,note:'Flat one-off entered on this quote'});
     if(!L.length)row({A:{v:'No optimisations selected',s:S.lbl},B:{v:'',s:S.lblq},
       N:{v:'Tick the optimisations you are proposing in the AI field quote and re-export',s:S.note}});
-    L.forEach(function(l){ costRow({name:l.name,qual:l.grp,qty:l.c,rate:(l.rt==null?'':l.rt),note:lineNote(l)}); });
+    L.forEach(function(l){ var flat=l.charge==='flat';
+      costRow({name:l.name,qual:l.grp+(flat?' · one-off':''),qty:flat?1:l.c,rate:(l.rt==null?'':l.rt),flat:flat,note:lineNote(l)}); });
     row();
     /* 6 — account management / manpower (days per month — not priced by this module) */
     var s3=row({A:{v:'Account Management & Data Optimisation - ManPower (Days / Month)',s:S.sect},
@@ -1030,8 +1121,8 @@ window.addEventListener('load',restore);
     var live=(!t.miss&&oneA>0);
     var rTot=row({H:{v:'Total One-off Cost',s:S.totl},
       K:live?{f:'SUM(K'+oneA+':K'+oneB+')',v:n2(t.net),s:S.totred}:{v:'',s:S.totgap},
-      N:{v:t.miss?('RATES INCOMPLETE — '+missN+' selected optimisation'+(missN===1?'':'s')+' still need a £/SKU rate, so the total cannot be calculated')
-                 :'Initial optimisation + one-off setup (ex VAT)',s:S.noteb}});
+      N:{v:t.miss?('RATES INCOMPLETE — '+missN+' selected optimisation'+(missN===1?'':'s')+' still need a £/product or one-off rate, so the total cannot be calculated')
+                 :('Initial optimisation + one-off setup (ex VAT)'+(dsc?', net of the '+t.disc+'% partner discount in the Discount % column':'')),s:S.noteb}});
     row({H:{v:'Monthly Cost (Tech)',s:S.totli},N:{v:NOTPRICED,s:S.note}});
     row({H:{v:'Monthly Cost (Monitoring & AM)',s:S.totli},N:{v:NOTPRICED,s:S.note}});
     row({H:{v:'Total Monthly Cost',s:S.totl},I:{v:'per market',s:S.per},
@@ -1049,7 +1140,7 @@ window.addEventListener('load',restore);
       K:live?{f:'ROUND(K'+rTot+'*0.2,2)',v:n2(t.vat),s:S.net}:{v:'',s:S.totgap}});
     var qCells={H:{v:'Total Quote'+(vatOn()?' (inc VAT)':' (ex VAT)'),s:S.totl},
       K:live?{f:rVat?('K'+rTot+'+K'+rVat):('K'+rTot),v:n2(t.gross),s:S.totred}:{v:'',s:S.totgap}};
-    if(t.miss)qCells.N={v:'Set every £/SKU rate in the module to total this quote',s:S.noteb};
+    if(t.miss)qCells.N={v:'Set every £/product or one-off rate in the module to total this quote',s:S.noteb};
     row(qCells);
     row(); row();
     /* 8 — the five standing commercial notes, in the template's framed box */
@@ -1063,19 +1154,22 @@ window.addEventListener('load',restore);
     /* 9 — free notes, all computed from the live selection */
     var notes=[{t:'Notes:',b:1}];
     notes.push({t:'Quote covers '+(CLIENT||'-')+' '+mkt+' — AI field generation on the client’s live product feed.'});
-    notes.push({t:ix?('Live feed pull: '+fmt(ix.total)+' SKUs across '+Object.keys(ix.map).length+' product types.')
+    notes.push({t:ix?('Live feed pull: '+fmt(ix.prod)+' unique products (distinct g:item_group_id — variants inherit the generated fields) from '+fmt(ix.total)+' SKUs across '+Object.keys(ix.map).length+' product types.'+(ix.hasGroups?'':' No item_group_id in this feed, so every SKU counts as its own product.'))
                  :'Live feed not pulled — the volumes on this quote were entered by hand.'});
     notes.push({t:scopeTextPlain()+'.'});
     var selPts=((rec().pts||{})[MKT]||[]);
     if(selPts.length)notes.push({t:'Product types in scope ('+selPts.length+'): '
       +selPts.slice(0,25).join('; ')+(selPts.length>25?('; +'+(selPts.length-25)+' more'):'')+'.'});
-    if(L.length)notes.push({t:'£/SKU rate provenance: '+srcN.own+' set on this quote, '+srcN.card+' from the saved rate card, '
+    var flatN=L.filter(function(l){return l.charge==='flat'}).length;
+    if(flatN)notes.push({t:flatN+' line'+(flatN===1?'':'s')+' charged as a one-off (Quantity 1 × the flat figure); every other line is £ per unique product × quantity.'});
+    if(L.length)notes.push({t:'£/product rate provenance: '+srcN.own+' set on this quote, '+srcN.card+' from the saved rate card, '
       +srcN.cat+' from the Tachyon catalogue'+(srcN.none?(', '+srcN.none+' still unset'):'')+'.'});
+    if(dsc)notes.push({t:'Partner discount: '+t.disc+'% off every line (the Discount % column)'+(t.miss?'.':' — '+money(t.discAmt)+' off a '+money(t.sub)+' subtotal, net '+money(t.net)+' ex VAT.')});
     if(hrs)notes.push({t:'Delivery effort across the selection: '+fmt(hrs)+' setup hours (ASPL + QC + PM).'});
     notes.push({t:'All figures ex VAT'+(vatOn()?'; the VAT 20% line above is shown separately.':' — VAT is not applied on this quote.')});
     /* xo = Excel-only: a CSV has no formulas, so this line must never reach the CSV */
     notes.push({t:'Every cost cell above is a live formula — change a Quantity, a Cost or a Discount % and the totals recalculate.',xo:1});
-    notes.push({t:'Volumes are live from the client feed and £/SKU rates come from this quote, the saved rate card or the Tachyon catalogue — nothing here is estimated.'});
+    notes.push({t:'Volumes are live from the client feed, counted in unique products, and the £/product rates come from this quote, the saved rate card or the Tachyon catalogue — nothing here is estimated.'});
     box(notes);
     function box(lz){ var i,j,total=lz.length+2;
       for(i=0;i<total;i++){
@@ -1318,9 +1412,9 @@ window.addEventListener('load',restore);
   function snapshot(){
     var t=totals(),L=lines(),now=Date.now(),r=rec(),ix=idx(),sel=(r.pts&&r.pts[MKT])||[];
     return { ref:quoteRef(new Date(now)), client:CLIENT, mkt:MKT, t:now, by:ME,
-      lines:L.map(function(l){ return {name:l.name,grp:l.grp,id:l.id,c:l.c,rt:l.rt}; }),
-      scope:{mode:(r.scope||{}).mode||'all',pts:sel.slice(0,60),vol:baseVol(),feedTotal:ix?ix.total:null},
-      setup:setupFee(), vat:vatOn(), valid:(r.valid!=null?r.valid:null),
+      lines:L.map(function(l){ return {name:l.name,grp:l.grp,id:l.id,c:l.c,rt:l.rt,charge:l.charge,note:l.note}; }),
+      scope:{mode:(r.scope||{}).mode||'all',pts:sel.slice(0,60),vol:baseVol(),skus:baseSkus(),feedTotal:ix?ix.total:null,feedProd:ix?ix.prod:null},
+      setup:setupFee(), disc:t.disc, discAmt:t.discAmt, sub:t.sub, vat:vatOn(), valid:(r.valid!=null?r.valid:null),
       net:t.net, vatAmt:t.vat, gross:t.gross, miss:t.miss, fields:t.inc, prods:t.tp,
       stage:'Saved', owner:'', hist:[{s:'Saved',t:now,by:ME}] };
   }
@@ -1368,20 +1462,22 @@ window.addEventListener('load',restore);
   function qValid(q){ return (q.valid!=null&&q.valid!=='')?+q.valid:30; }
   function qTotalWord(q){ return q.miss?'rates incomplete':(money(q.gross)+(q.vat?' inc VAT':' ex VAT')); }
   function qScopeLine(q){ var sc=q.scope||{}, n=(sc.pts||[]).length, vol=fmt(sc.vol||q.prods||0);
-    if(sc.mode==='pts'&&n)return n+' product type'+(n===1?'':'s')+' — '+vol+' products';
+    var sk=(+sc.skus>+sc.vol)?' ('+fmt(sc.skus)+' variant SKUs inherit)':'';
+    if(sc.mode==='pts'&&n)return n+' product type'+(n===1?'':'s')+' — '+vol+' unique products'+sk;
     if(sc.mode==='manual')return 'a headline volume of '+vol+' products';
-    return 'the whole live catalogue — '+vol+' products'+(sc.feedTotal?' ('+fmt(sc.feedTotal)+' live SKUs at the time of the quote)':''); }
+    return 'the whole live catalogue — '+vol+' unique products'+sk+(sc.feedTotal&&!sc.skus?' ('+fmt(sc.feedTotal)+' live SKUs at the time of the quote)':''); }
   // the quote block every variant shares — figures ONLY when £ is revealed on the page
   function qBlock(q,withP){ var L=q.lines||[], d=new Date(+q.t||Date.now()), out=[];
     var missN=L.filter(function(l){return l.rt==null}).length;
     out.push('Reference: '+q.ref+' · '+qLoc(q)+' · issued '+dmy(d));
     out.push('Scope: '+qScopeLine(q));
     out.push('Fields ('+L.length+'):');
-    L.forEach(function(l){ out.push('• '+l.name+' — '+fmt(l.c)+' products'+(withP&&l.rt!=null?(' @ £'+l.rt+'/SKU = '+money(l.c*l.rt)):'')); });
+    L.forEach(function(l){ out.push('• '+l.name+' — '+fmt(l.c)+' products'+(withP&&l.rt!=null?(' '+lineMoney(l)):'')+(l.note?(' — '+l.note):'')); });
     if(withP){
       if(q.miss){ out.push('Commercials: rates incomplete — '+missN+' of '+L.length+' line'+(L.length===1?'':'s')+' still to be priced; a fully priced quote follows under separate cover.'); }
       else{ if(+q.setup)out.push('One-off setup: '+money(q.setup));
-        out.push('Subtotal (ex VAT): '+money(q.net));
+        if(+q.disc>0){ out.push('Subtotal (ex VAT): '+money(q.sub)); out.push('Partner discount '+q.disc+'%: −'+money(q.discAmt)); out.push('Net (ex VAT): '+money(q.net)); }
+        else out.push('Subtotal (ex VAT): '+money(q.net));
         if(q.vat)out.push('VAT 20%: '+money(q.vatAmt));
         out.push('Total'+(q.vat?' (inc VAT)':' (ex VAT)')+': '+money(q.gross)); }
       out.push('This quotation is valid for '+qValid(q)+' days from the date of issue & prices as at '+monY(d)+'.');
@@ -1413,9 +1509,10 @@ window.addEventListener('load',restore);
     out.push('Saved quote '+q.ref+' — '+qLoc(q)+' — saved '+tkWhen(q.t)+' by '+tkWho(q.by));
     out.push('Scope: '+qScopeLine(q));
     out.push('Fields ('+L.length+'):');
-    L.forEach(function(l){ out.push('• '+l.name+' ('+(l.grp||'')+') — '+fmt(l.c)+' products'+(l.rt==null?' — rate not set':(' @ £'+l.rt+'/SKU = '+money(l.c*l.rt)))); });
+    L.forEach(function(l){ out.push('• '+l.name+' ('+(l.grp||'')+') — '+fmt(l.c)+' products'+(l.rt==null?' — rate not set':(' '+lineMoney(l)))+(l.note?(' — '+l.note):'')); });
     if(+q.setup)out.push('One-off setup: '+money(q.setup));
-    out.push(q.miss?'Commercials: rates incomplete — the quote cannot total until every line carries a £/SKU rate'
+    if(+q.disc>0&&!q.miss)out.push('Partner discount '+q.disc+'%: −'+money(q.discAmt)+' (subtotal '+money(q.sub)+' → net '+money(q.net)+' ex VAT)');
+    out.push(q.miss?'Commercials: rates incomplete — the quote cannot total until every line carries a £/product or one-off rate'
       :('Total'+(q.vat?' (inc VAT 20%)':' (ex VAT)')+': '+money(q.gross)+(q.vat?' · VAT '+money(q.vatAmt):'')));
     out.push('Valid '+qValid(q)+' days from the save date');
     out.push('Source: AI Field Quote finance tracker (/aiquote)');
@@ -1540,9 +1637,11 @@ window.addEventListener('load',restore);
       if(TKASK&&TKASK.id===k)row+=askRow(k,q);
       if(TKOPEN[k]){
         var dl=(q.lines||[]).map(function(l){
-          return '<div class="dl"><span>'+esc(l.name)+' <span style="color:var(--muted)">· '+esc(l.grp||'')+'</span></span>'
-            +'<span class="tk-money'+(SHOWP?'':' hid')+'">'+fmt(l.c)+' × '+(l.rt==null?'rate not set':('£'+l.rt))+(l.rt==null?'':' = '+money(l.c*l.rt))+'</span></div>'; }).join('')
+          return '<div class="dl"><span>'+esc(l.name)+' <span style="color:var(--muted)">· '+esc(l.grp||'')+'</span>'+(l.note?'<br><span style="color:var(--muted);font-weight:600">'+esc(l.note)+'</span>':'')+'</span>'
+            +'<span class="tk-money'+(SHOWP?'':' hid')+'">'+(l.charge==='flat'?(fmt(l.c)+' products · '+(l.rt==null?'one-off, rate not set':'one-off '+money(l.rt)))
+              :(fmt(l.c)+' × '+(l.rt==null?'rate not set':('£'+l.rt))+(l.rt==null?'':' = '+money(l.c*l.rt))))+'</span></div>'; }).join('')
           +((+q.setup)?'<div class="dl"><span>One-off setup</span><span class="tk-money'+(SHOWP?'':' hid')+'">'+money(q.setup)+'</span></div>':'')
+          +((+q.disc>0)?'<div class="dl"><span>Partner discount '+esc(String(q.disc))+'%</span><span class="tk-money'+(SHOWP?'':' hid')+'">'+(q.miss?'—':'−'+money(q.discAmt))+'</span></div>':'')
           +'<div class="dl" style="border-top:1px solid var(--line);margin-top:5px;padding-top:5px"><span><b>Total'+(q.vat?' (inc VAT 20%)':' (ex VAT)')+'</b></span><span class="tk-money'+(SHOWP?'':' hid')+'"><b>'+(q.miss?'rates incomplete':money(q.gross))+'</b></span></div>';
         var hist=(q.hist||[]).map(function(h){ return '<b>'+esc(h.s)+'</b> — '+tkWhen(h.t)+' · '+esc(tkWho(h.by)); }).join('<br>');
         row+='<tr class="t-det"><td colspan="10">'

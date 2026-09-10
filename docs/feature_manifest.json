@@ -3199,6 +3199,34 @@
    "pattern": "unit: 'product'",
    "min": 1,
    "pr": 321
+  },
+  {
+   "name": "AI Quote: quantities in UNIQUE PRODUCTS (distinct g:item_group_id) — per-type parent keys, scope = the union (Ray 10 Sep 2026 'because of unique products')",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "unionProds",
+   "min": 3,
+   "pr": 322
+  },
+  {
+   "name": "AI Quote: per-line charge model £/product vs one-off (Ray 10 Sep 2026 'whether £ per product charge or one-off charge')",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "fCharge",
+   "min": 5,
+   "pr": 322
+  },
+  {
+   "name": "AI Quote: per-line Note → Additional Notes cell, copy text, email, brief, tracker detail (Ray 10 Sep 2026 'within each attribute allow more Note')",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "data-note",
+   "min": 1,
+   "pr": 322
+  },
+  {
+   "name": "AI Quote: partner discount % at the bottom of the quote, carried by the template's Discount % column (Ray 10 Sep 2026)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "discPct",
+   "min": 2,
+   "pr": 322
   }
  ]
 }
