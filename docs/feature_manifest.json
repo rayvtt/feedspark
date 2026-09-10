@@ -2821,6 +2821,13 @@
    "pattern": "qgrp",
    "min": 3,
    "pr": 300
+  },
+  {
+   "name": "AI Quote: PT picker bulk actions — search-scoped Select all / Deselect all + Clear all",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "pt-acts",
+   "min": 3,
+   "pr": 302
   }
  ]
 }
