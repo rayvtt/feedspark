@@ -740,5 +740,48 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   ok('report without grAlerts input has no GR section', LG.buildReport(base).indexOf('GOLDEN RECORD ALERTS') < 0);
 }
 
+/* ---------- XML pipeline: sparse tags that debut PAST the parser's sample ---------- */
+// The Monsoon GB regression (Ray, 10 Sep 2026): custom_label_1 lives on 458 of 8,898
+// items and first appears at item #52 — one past the parser's 50-item union sample —
+// so every guard scan read it as label-gone while the live feed carried it intact.
+// The parser now GROWS its header on late-debut tags and hands consumers the live
+// header; xmlCollector re-resolves its columns. This pipes the real parser into the
+// real collector over a synthetic feed shaped like Monsoon.
+{
+  const { createRequire } = await import('node:module');
+  const req = createRequire(import.meta.url);
+  const FA = req('../docs/feedlab_engine.js');
+  const item = (id, extra) => '<item><g:id>' + id + '</g:id><g:title>T</g:title><g:price>9 GBP</g:price>' +
+    '<g:custom_label_2>core</g:custom_label_2><g:product_type>Women &gt; Dresses</g:product_type>' + (extra || '') + '</item>';
+  let xml = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>';
+  for (let i = 1; i <= 54; i++) xml += item('sku' + i);
+  // custom_label_1 debuts at item 55 — past the 50-item sample — on 6 items total
+  for (let i = 55; i <= 60; i++) xml += item('sku' + i, '<g:custom_label_1>' + (i % 2 ? 'HIGH' : 'LOW') + '</g:custom_label_1>');
+  xml += '</channel></rss>';
+  const col = LG.xmlCollector({ client: 'Monsoon', market: 'gb' });
+  const parser = FA.createXmlParser(col.onRow);
+  // push in tiny chunks so items split across push() boundaries too
+  for (let o = 0; o < xml.length; o += 777) parser.push(xml.slice(o, o + 777));
+  parser.end();
+  const { snap } = col.finish();
+  eq('xml pipe: all rows counted', snap.rows, 60);
+  ok('xml pipe: late-debut custom_label_1 is PRESENT, never label-gone', snap.labels.custom_label_1.present === true);
+  eq('xml pipe: late-debut label counts are exact', [snap.labels.custom_label_1.filled, snap.labels.custom_label_1.cov], [6, 10]);
+  eq('xml pipe: late-debut value pivot', snap.labels.custom_label_1.values, [['HIGH', 3], ['LOW', 3]]);
+  ok('xml pipe: sampled columns unaffected', snap.labels.custom_label_2.filled === 60 && snap.labels.product_type.filled === 60);
+  ok('xml pipe: labels absent from the WHOLE feed still read absent', snap.labels.custom_label_0.present === false);
+
+  // a late-debut ATTR (Golden Record roster) grows in the same way
+  let xml2 = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>';
+  for (let i = 1; i <= 54; i++) xml2 += item('sku' + i);
+  for (let i = 55; i <= 58; i++) xml2 += item('sku' + i, '<g:sale_price>5 GBP</g:sale_price>');
+  xml2 += '</channel></rss>';
+  const col2 = LG.xmlCollector({ client: 'Monsoon', market: 'gb' });
+  const parser2 = FA.createXmlParser(col2.onRow);
+  parser2.push(xml2); parser2.end();
+  const snap2 = col2.finish().snap;
+  ok('xml pipe: late-debut Golden Record attr captured', snap2.attrs.sale_price.present === true && snap2.attrs.sale_price.filled === 4);
+}
+
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
