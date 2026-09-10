@@ -2949,6 +2949,18 @@
    "pattern": "import TACHYON from",
    "forbidden": true,
    "pr": 307
+  },
+  {
+   "name": "feedlab: XML parser grows the header on late-debut sparse tags",
+   "file": "docs/feedlab_engine.js",
+   "pattern": "GROW the live header",
+   "min": 1
+  },
+  {
+   "name": "engine: xmlCollector re-resolves columns when the parser header grows",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "liveHeader",
+   "min": 2
   }
  ]
 }

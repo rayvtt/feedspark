@@ -121,6 +121,18 @@ disagrees on row count by >15% the scan is SKIPPED (activity-logged, previous st
 a throttled/partial gviz answer can no longer poison the alert board until the next rotation.
 Custom watches keep their own two-strike + implausibility guards; this is the sweep's equivalent.
 The same differ serves the Product Type Guard, so `/ptypes` alerts get every floor above too.
+**Late-debut sparse tags (the Monsoon GB false-vanish, 10 Sep 2026):** the XML parser
+settles its union header over the first 50 items — but a sparse field can debut
+arbitrarily late (Monsoon's `custom_label_1` lives on 458 of 8,898 items and first
+appears at item #52), which read as `label-gone` while the live feed carried it intact.
+The parser now **grows its header** whenever a new tag debuts mid-stream (earlier rows
+were empty for that column by definition, so counts stay exact) and passes the live
+header to consumers; `xmlCollector` re-resolves its columns on growth. One fix covers
+the 4x-daily agent, the in-browser live rescan AND the ⟳ Verify path (shared code:
+`tools/xml_scan.mjs` + `/labels/engine.js` both run `xmlCollector`). Regression-tested
+end-to-end (real parser → real collector, sparse label debuting past the sample) and
+validated against the live Monsoon feed (458 = HIGH 142 / MEDIUM 129 / LOW 115 /
+EXCLUDE 72, matching Ray's manual export exactly).
 **Manual verify (Ray, Sep 2026):** every *vanished-column* alert (`label-gone` / `cov-zero`
 on /labels and /ptypes, `attr-gone` on /golden) carries a **"⟳ Verify — fresh scan"**
 button — one click re-scans that live feed and either **confirms** the wipe ("still gone —
