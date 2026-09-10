@@ -3388,6 +3388,41 @@
    "pattern": "mapStoreRoute(env, request, 'aiquote', { explicitTombstones: true })",
    "pr": 332,
    "min": 1
+  },
+  {
+   "name": "AI Quote xlsx: Additional Notes = Ray's own line note only (Ray 10 Sep 2026 'quite a few redundant lines — can remove from template')",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function lineNote(l){ var p=[];",
+   "pr": 333,
+   "min": 1
+  },
+  {
+   "name": "AI Quote xlsx: the empty System / Platform Costs section must stay gone",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "v:'System / Platform Costs'",
+   "pr": 333,
+   "forbidden": true
+  },
+  {
+   "name": "AI Quote xlsx: the 'Monthly Cost (Tech)' placeholder row must stay gone",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "Monthly Cost (Tech)",
+   "pr": 333,
+   "forbidden": true
+  },
+  {
+   "name": "AI Quote xlsx: the internal 'Delivery effort' row + note must stay gone",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "Delivery effort",
+   "pr": 333,
+   "forbidden": true
+  },
+  {
+   "name": "AI Quote xlsx: the rate-provenance tally must stay out of the client notes",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "rate provenance",
+   "pr": 333,
+   "forbidden": true
   }
  ]
 }
