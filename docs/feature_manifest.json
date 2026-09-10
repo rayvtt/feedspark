@@ -3047,6 +3047,13 @@
    "min": 2
   },
   {
+   "name": "AI Quote: Excel export replicates Ray's quote template EXACTLY (resolved theme palette, red qty, exact wordmark anchor); CSV demoted to raw data",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "XMETA",
+   "min": 3,
+   "pr": 315
+  },
+  {
    "name": "overlay engine: URL-string classifier + feed collector (UMD, agent + page + tests)",
    "file": "docs/overlay_engine.js",
    "pattern": "function classifyOverlay",
