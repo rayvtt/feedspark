@@ -3444,6 +3444,20 @@
    "pattern": "data-cndattr",
    "min": 2,
    "pr": 335
+  },
+  {
+   "name": "kwcal: drag a theme card into another month → reschedule (Ray, 11 Sep 2026)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function rescheduleToMonth(",
+   "min": 1,
+   "pr": 336
+  },
+  {
+   "name": "kwcal: MoM board renders the full month span with empty drop zones + month-hours chips",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "drop a theme here",
+   "min": 1,
+   "pr": 336
   }
  ]
 }
