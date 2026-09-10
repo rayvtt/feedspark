@@ -2865,13 +2865,6 @@
    "pr": 304
   },
   {
-   "name": "xml-scan agent: SKU id|category set capture for volume tracking",
-   "file": "tools/xml_scan.mjs",
-   "pattern": "VOLCAP",
-   "min": 2,
-   "pr": 301
-  },
-  {
    "name": "AI Quote: PT picker bulk actions — search-scoped Select all / Deselect all + Clear all",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "pt-acts",
