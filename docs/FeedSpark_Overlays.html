@@ -96,13 +96,24 @@ window.addEventListener('load',restore);
   .gal .g .cap small{display:block;color:var(--muted);font-weight:700}
   .gal .g.err .ph{display:none}.gal .g.err::before{content:'image did not load';display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;font-size:11px;font-weight:800;color:var(--risk)}
   /* estate */
-  table.est{width:100%;border-collapse:collapse;font-size:13px}
+  table.est{width:100%;max-width:100%;border-collapse:collapse;font-size:13px;table-layout:auto}
   table.est th{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
   table.est td{padding:8px 8px;border-bottom:1px solid var(--line);font-weight:700;vertical-align:middle}
   table.est tr:last-child td{border-bottom:none}
   table.est tr.row{cursor:pointer}table.est tr.row:hover td{background:var(--wash)}
   table.est tr.sel td{background:rgba(245,166,35,.09)}
   table.est td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  table.est td.feed{white-space:nowrap}
+  table.est th.types{width:44%}
+  /* Ray: the estate is always max-expanded — it wraps, it never scrolls sideways */
+  @media(max-width:760px){
+    table.est thead{display:none}
+    table.est tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:9px 0;border-bottom:1px solid var(--line)}
+    table.est td{display:block;border-bottom:none;padding:0}
+    table.est td.feed{flex:1 1 auto}
+    table.est td.types{order:9;flex-basis:100%}
+    table.est td.num.ago{margin-left:auto}
+  }
   .cov{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
   .cov .bar{width:64px;height:8px;border-radius:4px;background:var(--tile);overflow:hidden;display:inline-block}
   .cov .bar i{display:block;height:100%;background:var(--orange);border-radius:4px}
@@ -110,7 +121,7 @@ window.addEventListener('load',restore);
   .tchips{display:flex;gap:5px;flex-wrap:wrap}
   .tchips .t{font-size:11px;font-weight:800;color:var(--ink-2);background:var(--tile);border-radius:6px;padding:2px 7px;white-space:nowrap}
   .ago{color:var(--muted);font-size:12px;white-space:nowrap}
-  .split2{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:14px}
+  .split2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
   @media(max-width:900px){.split2{grid-template-columns:minmax(0,1fr)}}
   #trend{display:block;width:100%;height:auto;margin-top:6px}
   #trend .grid{stroke:var(--grid);stroke-width:1}
@@ -232,13 +243,14 @@ window.addEventListener('load',restore);
     <div class="empty" id="det-empty" hidden></div>
   </div>
 
+  <div class="card" id="estate">
+    <h3>Overlay estate</h3>
+    <div class="ch">Every wired feed, Meta catalogues first — which ones carry a FeedSpark overlay today, and how much of the catalogue it covers.</div>
+    <table class="est" id="esttbl"><thead><tr><th>Feed</th><th>Channel</th><th>Coverage</th><th class="types">Overlay types live</th><th class="num">Scanned</th><th></th></tr></thead><tbody></tbody></table>
+    <div class="empty" id="est-empty" hidden></div>
+  </div>
+
   <div class="split2">
-    <div class="card">
-      <h3>Overlay estate</h3>
-      <div class="ch">Every wired feed, Meta catalogues first — which ones carry a FeedSpark overlay today, and how much of the catalogue it covers.</div>
-      <div style="overflow-x:auto"><table class="est" id="esttbl"><thead><tr><th>Feed</th><th>Channel</th><th>Coverage</th><th>Overlay types live</th><th class="num">Scan</th><th></th></tr></thead><tbody></tbody></table></div>
-      <div class="empty" id="est-empty" hidden></div>
-    </div>
     <div>
       <div class="card">
         <h3>Coverage trend</h3>
@@ -246,6 +258,8 @@ window.addEventListener('load',restore);
         <svg id="trend" viewBox="0 0 1000 190" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Overlay coverage trend"></svg>
         <div class="empty" id="trend-empty" hidden></div>
       </div>
+    </div>
+    <div>
       <div class="card meth" id="meth">
         <h3>How overlays are detected</h3>
         <div class="ch">The quick breakdown behind every figure on this page.</div>
@@ -446,9 +460,9 @@ window.addEventListener('load',restore);
       var s=f.scan, cov=s?pc(s.ovl,s.rows):null;
       var covH=s?'<span class="cov"><span class="bar"><i class="'+(isFb(f.mkt)?'fb':'')+'" style="width:'+Math.max(s.ovl?3:0,Math.min(100,cov))+'%"></i></span>'+(s.ovl?fmt(s.ovl)+' · '+cov+'%':'<span class="ago">none</span>')+'</span>':'<span class="ago">not scanned</span>';
       var tys=s&&s.types&&s.types.length?'<div class="tchips">'+s.types.map(function(t){return '<span class="t" title="'+esc(t.key)+'">'+esc(t.label)+' ×'+fmt(t.n+(t.addl||0))+'</span>'}).join('')+'</div>':(s?'<span class="ago">'+(s.hasImage===false?'no image column':'plain client images')+'</span>':'');
-      return '<tr class="row'+((f.client===CLIENT&&f.mkt===MKT)?' sel':'')+'" data-feed="'+esc(f.client+'|'+f.mkt)+'"><td><b>'+esc(f.client)+'</b> · '+esc(mktLbl(f.mkt))+(f.kind==='sheet'?' <span class="ago" title="sheet-backed: live scan only">sheet</span>':'')+'</td>'
+      return '<tr class="row'+((f.client===CLIENT&&f.mkt===MKT)?' sel':'')+'" data-feed="'+esc(f.client+'|'+f.mkt)+'"><td class="feed"><b>'+esc(f.client)+'</b> · '+esc(mktLbl(f.mkt))+(f.kind==='sheet'?' <span class="ago" title="sheet-backed: live scan only">sheet</span>':'')+'</td>'
         +'<td><span class="chip '+(isFb(f.mkt)?'fb':'gg')+'">'+(isFb(f.mkt)?'Meta':'Google')+'</span></td>'
-        +'<td>'+covH+'</td><td>'+tys+'</td><td class="num ago" title="'+esc(s?ago(s.t):'never scanned')+'">'+esc(s?agoShort(s.t):'—')+'</td>'
+        +'<td>'+covH+'</td><td class="types">'+tys+'</td><td class="num ago" title="'+esc(s?ago(s.t):'never scanned')+'">'+esc(s?agoShort(s.t):'—')+'</td>'
         +'<td class="num"><button type="button" class="btn sm" data-scan="'+esc(f.client+'|'+f.mkt)+'" title="Stream this feed now">⚡</button></td></tr>';
     }).join('');
   }
