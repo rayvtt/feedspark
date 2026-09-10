@@ -302,11 +302,14 @@ window.addEventListener('load',restore);
   .qrow .fmeta b{color:var(--ink-2);font-weight:800}
   .qrow .fmeta .conv-tag{color:var(--navy);font-weight:800}
   [data-theme=dark] .qrow .fmeta .conv-tag{color:#93B4E0}
-  .qrow input.cnt,.qrow input.rate{font:inherit;font-size:13px;font-weight:800;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;width:100%;text-align:right}
+  /* margin:0 + box-shadow:none are load-bearing, not cosmetic: they keep the row's boxes on
+     one baseline even if an input picks up a page-level class (a global .card once shoved the
+     rate box up 8px inside the centred grid row and drew a shadow under it) */
+  .qrow input.cnt,.qrow input.rate{font:inherit;font-size:13px;font-weight:800;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;width:100%;text-align:right;margin:0;box-shadow:none}
   [data-theme=dark] .qrow input.cnt,[data-theme=dark] .qrow input.rate{background:#161922;color:var(--ink);border-color:var(--line)}
   .qrow input.cnt.auto{color:var(--muted);font-weight:700}
-  .qrow input.rate.card{color:var(--navy);border-style:dashed}
-  [data-theme=dark] .qrow input.rate.card{color:#93B4E0}
+  .qrow input.rate.seeded{color:var(--navy);border-style:dashed}
+  [data-theme=dark] .qrow input.rate.seeded{color:#93B4E0}
   .qrow .line{font-weight:900;text-align:right}
   .qrow .line.unset{color:var(--muted);font-weight:700;font-size:11.5px}
   .cbx{width:17px;height:17px;accent-color:var(--orange-deep);cursor:pointer}
@@ -553,7 +556,7 @@ window.addEventListener('load',restore);
           +'<span><input type="checkbox" class="cbx" data-on="'+f.id+'"'+(on?' checked':'')+'></span>'
           +'<span><div class="fname">'+esc(f.name)+'</div><div class="fmeta">'+metaHtml(f)+'</div></span>'
           +'<span class="col-cnt"><input class="cnt'+(isAuto?' auto':'')+'" data-cnt="'+f.id+'" inputmode="numeric" value="'+fmt(c)+'"'+(isAuto?' title="auto from scope — type to override"':'')+'></span>'
-          +'<span class="col-rate"><input class="rate'+(src==='card'||src==='cat'?' card':'')+'" data-rate="'+f.id+'" inputmode="decimal" placeholder="£ —" value="'+(rt==null?'':rt)+'"'+(src==='cat'?' title="catalogue rate — type to override"':src==='card'?' title="from your rate card"':'')+'></span>'
+          +'<span class="col-rate"><input class="rate'+(src==='card'||src==='cat'?' seeded':'')+'" data-rate="'+f.id+'" inputmode="decimal" placeholder="£ —" value="'+(rt==null?'':rt)+'"'+(src==='cat'?' title="catalogue rate — type to override"':src==='card'?' title="from your rate card"':'')+'></span>'
           +'<span class="col-line">'+line+'</span></div>';
       }).join('');
       return '<div class="qgrp'+(open?'':' closed')+'" data-g="'+esc(g)+'"><div class="qgh" data-gt="'+esc(g)+'"><span class="tw">▾</span><span class="gname'+(g===CONV_GRP?' conv':'')+'">'+esc(g)+'</span><span class="gcount'+(onN?' has':'')+'">'+(onN?onN+' selected':items.length+' fields')+'</span></div><div class="qrows">'+rows+'</div></div>';
@@ -597,7 +600,7 @@ window.addEventListener('load',restore);
     var row=t.closest('.qrow'); if(row)row.classList.toggle('off',!t.checked); foot(); saveSoon(); } });
   $('#qgroups').addEventListener('input',function(e){ var t=e.target;
     if(t.dataset.cnt!=null){ var v=String(t.value).replace(/[^0-9]/g,''); rec().fields[t.dataset.cnt].count=v===''?null:+v; foot(); saveSoon(); }
-    else if(t.dataset.rate!=null){ var rv=String(t.value).replace(/[^0-9.]/g,''); rec().fields[t.dataset.rate].rate=rv===''?null:rv; t.classList.remove('card'); foot(); saveSoon(); }
+    else if(t.dataset.rate!=null){ var rv=String(t.value).replace(/[^0-9.]/g,''); rec().fields[t.dataset.rate].rate=rv===''?null:rv; t.classList.remove('seeded'); foot(); saveSoon(); }
   });
   $('#setup').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9.]/g,''); rec().setup=v===''?null:v; foot(); saveSoon(); });
   $('#vat').addEventListener('change',function(){ rec().vat=this.checked; foot(); saveSoon(); });

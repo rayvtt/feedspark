@@ -2873,6 +2873,13 @@
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "skipped: r.skipped",
    "min": 2
+  },
+  {
+   "name": "AI Quote: field-row boxes share one baseline (seeded class, no global .card collision)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "rate.seeded",
+   "min": 2,
+   "pr": 307
   }
  ]
 }
