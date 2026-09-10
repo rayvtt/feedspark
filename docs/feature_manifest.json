@@ -2821,6 +2821,30 @@
    "pattern": "qgrp",
    "min": 3,
    "pr": 300
+  },
+  {
+   "name": "LabelGuard: ⟳ Verify — fresh scan on vanished-column alerts",
+   "file": "docs/FeedSpark_LabelGuard.html",
+   "pattern": "data-verify",
+   "min": 2
+  },
+  {
+   "name": "PTGuard: ⟳ Verify — fresh scan on vanished-column alerts",
+   "file": "docs/FeedSpark_ProductTypeGuard.html",
+   "pattern": "data-verify",
+   "min": 2
+  },
+  {
+   "name": "GoldenRecord: ⟳ Verify — fresh scan on vanished-column alerts",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "data-verify",
+   "min": 2
+  },
+  {
+   "name": "worker: verify scans surface the unstable-read skip honestly",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "skipped: r.skipped",
+   "min": 2
   }
  ]
 }
