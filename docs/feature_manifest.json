@@ -930,7 +930,7 @@
    "name": "Pricer engine: AI Text Attribute RETIRED — Ray 10 Sep 2026 'not needed ever' (must stay gone)",
    "file": "docs/pricer_engine.js",
    "pattern": "text_attr",
-   "pr": 316,
+   "pr": 319,
    "forbidden": true
   },
   {
