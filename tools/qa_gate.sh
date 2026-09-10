@@ -75,6 +75,12 @@ else
   echo "   ✗ nav parity FAILED (the module menu drifted — see node tools/check_nav.js)"; FAIL=1
 fi
 
+if node tools/check_lgcopy.js >/dev/null 2>&1; then
+  echo "   ✓ labelguard browser copy in sync"
+else
+  echo "   ✗ labelguard engine copy DRIFTED (cp cloudflare/feedspark-deck/src/labelguard.js docs/labelguard_engine.js)"; FAIL=1
+fi
+
 echo "── qa-gate 6/7: bracket placeholders in changed pages"
 git fetch origin main --quiet 2>/dev/null || true
 CHANGED=$(git diff --name-only origin/main -- 'docs/*.html' 2>/dev/null | grep -v '^docs/archive/' || true)

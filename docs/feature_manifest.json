@@ -2774,8 +2774,8 @@
    "pr": 301
   },
   {
-   "name": "xml-scan agent: SKU id|category set capture for volume tracking",
-   "file": "tools/xml_scan.mjs",
+   "name": "labelguard: shared xmlCollector + volume id capture (agent + browser lanes)",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "VOLCAP",
    "min": 2,
    "pr": 301
@@ -2823,25 +2823,46 @@
    "pr": 300
   },
   {
-   "name": "aiquote: CSV export reproduces Ray's client quote template",
-   "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "AIQUOTE-CSV-TEMPLATE",
-   "min": 1,
-   "pr": 306
+   "name": "worker: /api/labels/scanpush manual live-rescan lane (XML feeds)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "scanpush",
+   "min": 2,
+   "pr": 304
   },
   {
-   "name": "aiquote: quote CSV carries the standing commercial notes",
-   "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "Notes on the Quotation",
-   "min": 1,
-   "pr": 306
+   "name": "worker: labelguard browser engine served at /labels/engine.js",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "LABELGUARD_ENGINE_SRC",
+   "min": 2,
+   "pr": 304
   },
   {
-   "name": "aiquote: quote CSV template sections (system / one-off / manpower)",
-   "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "Initial Data Optimisation - Initial (One-off)",
+   "name": "Label Guard page: in-browser XML live rescan fallback",
+   "file": "docs/FeedSpark_LabelGuard.html",
+   "pattern": "xmlLiveScan",
+   "min": 2,
+   "pr": 304
+  },
+  {
+   "name": "PT Guard page: in-browser XML live rescan fallback",
+   "file": "docs/FeedSpark_ProductTypeGuard.html",
+   "pattern": "xmlLiveScan",
+   "min": 2,
+   "pr": 304
+  },
+  {
+   "name": "Golden Record page: in-browser XML live rescan fallback",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "xmlLiveScan",
+   "min": 2,
+   "pr": 304
+  },
+  {
+   "name": "labelguard engine browser copy stays byte-identical (tools/check_lgcopy.js)",
+   "file": ".github/workflows/validate.yml",
+   "pattern": "check_lgcopy",
    "min": 1,
-   "pr": 306
+   "pr": 304
   },
   {
    "name": "AI Quote: PT picker bulk actions — search-scoped Select all / Deselect all + Clear all",
@@ -2880,6 +2901,27 @@
    "pattern": "rate.seeded",
    "min": 2,
    "pr": 308
+  },
+  {
+   "name": "aiquote: CSV export reproduces Ray's client quote template",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "AIQUOTE-CSV-TEMPLATE",
+   "min": 1,
+   "pr": 306
+  },
+  {
+   "name": "aiquote: quote CSV carries the standing commercial notes",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "Notes on the Quotation",
+   "min": 1,
+   "pr": 306
+  },
+  {
+   "name": "aiquote: quote CSV template sections (system / one-off / manpower)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "Initial Data Optimisation - Initial (One-off)",
+   "min": 1,
+   "pr": 306
   }
  ]
 }
