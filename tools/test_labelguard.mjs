@@ -740,6 +740,64 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   ok('report without grAlerts input has no GR section', LG.buildReport(base).indexOf('GOLDEN RECORD ALERTS') < 0);
 }
 
+/* ---------- xmlCrossCapture + crossFromRows (browser cross rails for {xml} feeds) ----
+ * The capture must aggregate BY TAG NAME per <item> — independent of any header settled
+ * from early items — so a sparse label first appearing past createXmlParser's 50-item
+ * sample (Monsoon's custom_label_1, first filled at item #52) still lands. */
+{
+  const item = (id, cl0, cl1, cl2, pt) => '<item><g:id>' + id + '</g:id>' +
+    (cl0 != null ? '<g:custom_label_0>' + cl0 + '</g:custom_label_0>' : '') +
+    (cl1 != null ? '<g:custom_label_1>' + cl1 + '</g:custom_label_1>' : '') +
+    (cl2 != null ? '<g:custom_label_2>' + cl2 + '</g:custom_label_2>' : '') +
+    (pt != null ? '<g:product_type>' + pt + '</g:product_type>' : '') + '</item>';
+  let xml = '<?xml version="1.0"?><rss><channel><title>Feed</title><item_group_id>ignored</item_group_id>';
+  // 60 items: CL0 "Best Sellers" on all, CL2 alternates women - fp / women - sale,
+  // CL1 appears ONLY from item #52 on — beyond any 50-item header sample
+  for (let i = 1; i <= 60; i++) {
+    xml += item('sku' + i, 'Best Sellers', i >= 52 ? 'sparse-late' : null,
+      i % 2 ? 'women - fp' : 'women - sale', 'Women &gt; <![CDATA[Dresses & Gowns]]>' +
+      '</g:product_type><g:product_type>keyword slot 2');
+  }
+  xml += item('skuNone', null, null, null, null);                       // no cross column at all — never joins a segment
+  xml += item('skuOther', 'New In', null, ' women - fp ', 'Women > Tops');
+  xml += '</channel></rss>';
+  const cap = LG.xmlCrossCapture();
+  for (let o = 0; o < xml.length; o += 97) cap.push(xml.slice(o, o + 97));   // ragged chunks — tags split mid-stream
+  const rows = cap.end();
+  eq('xmlCrossCapture keeps only items with a cross column', rows.length, 61);
+  const x = LG.crossFromRows(rows, 'custom_label_0', 'Best Sellers', 'custom_label_2');
+  eq('cross segment counts exact by-value matches', x.segment, 60);
+  eq('cross rows: CL2 distribution within the segment',
+    x.rows, [['women - fp', 30], ['women - sale', 30]]);
+  eq('cross labelled/unlabelled', [x.labelled, x.unlabelled, x.truncated], [60, 0, false]);
+  eq('cross response contract fields', [x.by, x.value, x.vs], ['custom_label_0', 'Best Sellers', 'custom_label_2']);
+  // the sparse label that first appears at item #52 is still queryable
+  const sparse = LG.crossFromRows(rows, 'custom_label_1', 'sparse-late', 'custom_label_2');
+  eq('sparse late-appearing label captured (first at item #52)', sparse.segment, 9);
+  // repeated product_type: only the FIRST slot is the category tree; CDATA + entities decode
+  const pt = LG.crossFromRows(rows, 'custom_label_0', 'Best Sellers', 'product_type');
+  eq('PT cross uses the first product_type slot, decoded', pt.rows, [['Women > Dresses & Gowns', 60]]);
+  ok('keyword slot 2 never becomes a PT value', !pt.rows.some((r) => String(r[0]).indexOf('keyword') >= 0));
+  // values are trimmed at capture, so " women - fp " groups with the clean form
+  const other = LG.crossFromRows(rows, 'custom_label_0', 'New In', 'custom_label_2');
+  eq('captured values are trimmed', other.rows, [['women - fp', 1]]);
+  // unlabelled = segment rows with an empty vs column
+  const un = LG.crossFromRows(rows, 'custom_label_2', 'women - fp', 'custom_label_1');
+  eq('unlabelled counts segment rows missing the vs value', [un.segment, un.labelled, un.unlabelled],
+    [31, un.rows.reduce((a, r) => a + r[1], 0), 31 - un.rows.reduce((a, r) => a + r[1], 0)]);
+  ok('bad-cross: same key refused', (() => { try { LG.crossFromRows(rows, 'custom_label_0', 'x', 'custom_label_0'); return false; } catch (e) { return String(e.message).indexOf('bad-cross') === 0; } })());
+  ok('bad-cross: empty value refused', (() => { try { LG.crossFromRows(rows, 'custom_label_0', '  ', 'custom_label_1'); return false; } catch (e) { return String(e.message).indexOf('bad-cross') === 0; } })());
+}
+{
+  // truncation: >250 distinct vs values -> top 250 kept, tail folded into unlabelled
+  const rows = [];
+  for (let i = 0; i < 300; i++) rows.push(['seg', '', '', '', '', 'pt-' + i]);
+  rows.push(['seg', '', '', '', '', 'pt-0']);   // pt-0 twice so the sort keeps it
+  const t = LG.crossFromRows(rows, 'custom_label_0', 'seg', 'product_type');
+  eq('truncated at TH.maxValues', [t.rows.length, t.truncated, t.segment], [250, true, 301]);
+  eq('truncated tail folds into unlabelled', t.unlabelled, t.segment - t.labelled);
+}
+
 /* ---------- XML pipeline: sparse tags that debut PAST the parser's sample ---------- */
 // The Monsoon GB regression (Ray, 10 Sep 2026): custom_label_1 lives on 458 of 8,898
 // items and first appears at item #52 — one past the parser's 50-item union sample —

@@ -2968,6 +2968,48 @@
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "liveHeader",
    "min": 2
+  },
+  {
+   "name": "labelguard engine: XML cross capture (tag-name per <item>, sparse-label safe)",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "export function xmlCrossCapture",
+   "pr": 312,
+   "min": 1
+  },
+  {
+   "name": "labelguard engine: crossFromRows — crossFeed's contract off cached XML rows",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "export function crossFromRows",
+   "pr": 312,
+   "min": 1
+  },
+  {
+   "name": "worker: cross routes flag XML feeds for the in-browser lane (both guards)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "computes this cross in-browser from the live stream",
+   "pr": 312,
+   "min": 2
+  },
+  {
+   "name": "worker: stale 'XML feed (Meta channel)' cross refusal RETIRED",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "XML feed (Meta channel)",
+   "forbidden": true,
+   "pr": 312
+  },
+  {
+   "name": "LabelGuard: in-browser cross-dissection for XML feeds (one stream, cached rows)",
+   "file": "docs/FeedSpark_LabelGuard.html",
+   "pattern": "xmlCrossRows",
+   "pr": 312,
+   "min": 2
+  },
+  {
+   "name": "PTGuard: in-browser PT->CL cross for XML feeds (one stream, cached rows)",
+   "file": "docs/FeedSpark_ProductTypeGuard.html",
+   "pattern": "xmlCrossRows",
+   "pr": 312,
+   "min": 2
   }
  ]
 }
