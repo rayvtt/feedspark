@@ -20,7 +20,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { findCols, findAttrCols, snapshotFromParts, attrsFromCounts, LABEL_KEYS, PT_KEYS, TH, ATTR_SPEC } from '../cloudflare/feedspark-deck/src/labelguard.js';
+import { xmlCollector } from '../cloudflare/feedspark-deck/src/labelguard.js';
 const require = createRequire(import.meta.url);
 const FA = require('../docs/feedlab_engine.js');
 
@@ -48,84 +48,18 @@ function wiredXmlFeeds() {
   return out;
 }
 
-// one feed -> the scanFeed-shape raw snapshot, aggregated incrementally per row.
-// Alongside the snapshot it captures the feed's SKU id set as "id|category" lines
-// (category = first chevron segment of the PRIMARY product_type) — the worker diffs
-// consecutive days' closing sets into the /volume module's in/out churn (Ray, 9 Sep
-// 2026: "300 new products coming in and 900 going out … like Merchant Center").
-const VOLCAP = 40000;   // beyond this a set is TRUNCATED and the worker records rows only
+// one feed -> the scanFeed-shape raw snapshot + the /volume SKU id set. All the
+// aggregation and assembly lives in labelguard.js's xmlCollector — the SAME code the
+// guard pages' in-browser manual live rescan runs, so the two lanes can never drift.
 async function snapshotFeed(feed) {
-  const wantPT = !/-fb$/.test(feed.mkt);
-  const keys = wantPT ? LABEL_KEYS.concat(PT_KEYS) : LABEL_KEYS;
-  let header = null, cols = null, attrCols = null, ptCol = -1;
-  let rows = 0;
-  const vids = []; let volTrunc = false;  // "id|cat" lines for the volume diff
-  const filled = {}, maps = {};          // per key: filled count + value->n map
-  let attrFilled = null;                 // per attr key: filled count
-  const onRow = (r) => {
-    if (!header) {
-      header = r;
-      cols = findCols(header, keys);
-      // -fb feeds don't carry PT in `keys` — resolve the category column separately
-      ptCol = wantPT ? cols.labels.product_type : findCols(header, PT_KEYS).labels.product_type;
-      for (const k of keys) if (cols.labels[k] >= 0) { filled[k] = 0; maps[k] = new Map(); }
-      if (wantPT) {
-        attrCols = findAttrCols(header);
-        attrFilled = {};
-        for (const s of ATTR_SPEC) if (attrCols[s.key] != null && attrCols[s.key] >= 0) attrFilled[s.key] = 0;
-      }
-      return;
-    }
-    const idv = String(r[cols.id] == null ? '' : r[cols.id]).trim();
-    if (idv !== '') {
-      rows++;
-      if (vids.length < VOLCAP) {
-        const pv = ptCol >= 0 ? String(r[ptCol] == null ? '' : r[ptCol]) : '';
-        vids.push(idv.replace(/[|\n]/g, ' ') + '|' + pv.split('>')[0].trim().slice(0, 60));
-      } else volTrunc = true;
-    }
-    for (const k of keys) {
-      const ci = cols.labels[k];
-      if (ci < 0) continue;
-      const v = String(r[ci] == null ? '' : r[ci]).trim();
-      if (!v) continue;
-      filled[k]++;
-      maps[k].set(v, (maps[k].get(v) || 0) + 1);
-    }
-    if (attrFilled) for (const s of ATTR_SPEC) {
-      const ci = attrCols[s.key];
-      if (ci == null || ci < 0) continue;
-      if (String(r[ci] == null ? '' : r[ci]).trim() !== '') attrFilled[s.key]++;
-    }
-  };
-  const parser = FA.createXmlParser(onRow);
+  const col = xmlCollector({ client: feed.client, market: feed.mkt });
+  const parser = FA.createXmlParser(col.onRow);
   const res = await fetch(feed.url);
   if (!res.ok || !res.body) throw new Error('fetch-fail: HTTP ' + res.status);
   const dec = new TextDecoder();
   for await (const chunk of res.body) parser.push(dec.decode(chunk, { stream: true }));
   parser.push(dec.decode()); parser.end();
-  if (!header) throw new Error('fetch-fail: no <item> rows parsed');
-
-  // assemble countsRow + attrPos exactly as scanFeed does (positions in query order)
-  const countsRow = [String(rows)];
-  const posOf = {}; posOf[cols.id] = 0;
-  { let ci = 1; for (const k of keys) if (cols.labels[k] >= 0) { countsRow.push(String(filled[k])); posOf[cols.labels[k]] = ci; ci++; } }
-  const attrPos = {};
-  if (attrCols) for (const s of ATTR_SPEC) {
-    const c = attrCols[s.key];
-    if (c == null || c < 0) continue;
-    if (posOf[c] != null) attrPos[s.key] = posOf[c];
-    else { posOf[c] = countsRow.length; attrPos[s.key] = countsRow.length; countsRow.push(String(attrFilled[s.key] || 0)); }
-  }
-  const groupRowsByKey = {};
-  for (const k of keys) {
-    if (cols.labels[k] < 0) continue;
-    groupRowsByKey[k] = [...maps[k].entries()].sort((a, b) => b[1] - a[1]).slice(0, TH.maxValues)
-      .map(([v, n]) => [v, String(n)]);
-  }
-  const snap = snapshotFromParts({ client: feed.client, market: feed.mkt, fetchedAt: Date.now() }, cols, countsRow, groupRowsByKey, keys);
-  if (attrCols) snap.attrs = attrsFromCounts(attrCols, attrPos, countsRow, snap.rows);
-  return { snap, vol: { ids: vids.join('\n'), trunc: volTrunc } };
+  return col.finish();
 }
 
 async function post(entries) {
