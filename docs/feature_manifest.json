@@ -927,13 +927,6 @@
    "pr": 173
   },
   {
-   "name": "Pricer engine: AI Text Attribute catalogue entry + title-scan patterns",
-   "file": "docs/pricer_engine.js",
-   "pattern": "text_attr",
-   "min": 2,
-   "pr": 173
-  },
-  {
    "name": "Pricer: compact token column — single Bill units cell + token-economics pop-up",
    "file": "docs/FeedSpark_Pricer.html",
    "pattern": "tok-pop",
