@@ -2879,7 +2879,7 @@
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "rate.seeded",
    "min": 2,
-   "pr": 307
+   "pr": 308
   }
  ]
 }
