@@ -3241,6 +3241,13 @@
    "pattern": "data-hrs",
    "min": 1,
    "pr": 323
+  },
+  {
+   "name": "Workflow: ledger/pipeline controls self-heal after an edit patch wipes them",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "blEnsureUI",
+   "min": 2,
+   "pr": null
   }
  ]
 }
