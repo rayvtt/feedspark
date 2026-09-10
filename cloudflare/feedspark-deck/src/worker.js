@@ -51,7 +51,6 @@ import DECK_REISS from "../../../docs/Reiss_Strategy_Review_FY2526.html";
 import DECK_SUPERDRY from "../../../docs/Superdry_Strategy_Review_AllTime.html";
 // Tachyon copilot widget (style + script fragment). Injected on the app pages only —
 // never on client-facing decks. Reads window.PLANTASKS and calls /api/claude.
-import TACHYON from "../../../docs/tachyon_widget.html";
 // FCC-PRESENCE: Google-Docs-style live avatars in the topbar — injected on app pages only.
 // Identity comes from Cloudflare Access (who()); heartbeats live in the KV `presence` map.
 import PRESENCEW from "../../../docs/presence_widget.html";
@@ -1970,7 +1969,7 @@ export default {
       // exists, append to the end otherwise (trailing <style>/<script> parse into body fine).
       const inject = (html, extra) => (html.indexOf('</body>') >= 0 ? html.replace('</body>', extra + '\n</body>') : html + '\n' + extra);
       let html = inject(page.html, getEditorScript(page.slug));
-      if (!path.startsWith('/deck/')) html = inject(html, TACHYON + '\n' + INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW);
+      if (!path.startsWith('/deck/')) html = inject(html, INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW);
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
