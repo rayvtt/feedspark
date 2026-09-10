@@ -707,13 +707,146 @@ window.addEventListener('load',restore);
     } else { out.push('','(Commercials on request.)'); }
     copy(out.join('\n'), SHOWP?'Quote copied (with £)':'Scope copied (£ hidden)');
   });
+  /* ---------- CSV export — AIQUOTE-CSV-TEMPLATE ----------
+     The download reproduces Ray's client quote sheet ("Quick Start" skeleton): title cell,
+     Client/Agency + Created By header block, the MONTHLY RECURRING COSTS column band, the three
+     cost sections (System / Platform · Initial one-off · ManPower), the totals block, the standing
+     Notes on the Quotation and free Notes. Physical columns match the sheet so it opens aligned:
+       A label · B qualifier · D Quantity · E Cost · F Total Cost · H Discount % · I Discount £
+       · K Net Cost · N Additional Notes
+     Everything is driven by the live selection (client, market, ticked optimisations, live volumes,
+     your £/SKU rates). Nothing commercial is invented: a line with no rate leaves its money cells
+     BLANK and flags the row, and sections this module does not price stay blank with a note. */
+  var QCOL={A:0,B:1,C:2,D:3,E:4,F:5,G:6,H:7,I:8,J:9,K:10,L:11,M:12,N:13};
+  function qrow(o){ var r=[],i,k; for(i=0;i<14;i++)r.push('');
+    if(o)for(k in o){ if(QCOL[k]!=null&&o[k]!=null&&o[k]!=='')r[QCOL[k]]=o[k]; } return r; }
+  function n2(v){ return Math.round((+v||0)*100)/100; }
+  function dmy(d){ return d.toLocaleDateString('en-GB'); }
+  function monthYear(d){ return d.toLocaleDateString('en-GB',{month:'long',year:'numeric'}); }
+  var QMON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function monY(d){ return QMON[d.getMonth()]+'-'+String(d.getFullYear()).slice(2); }
+  // stable-looking QT###### reference (an id, not a commercial figure)
+  function quoteRef(d){ var s=CLIENT+'|'+MKT+'|'+d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(),h=0,i;
+    for(i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%10000;
+    return 'QT'+String(d.getFullYear()).slice(2)+('000'+h).slice(-4); }
+  function scopeTextPlain(){ var r=rec(), sc=r.scope||{mode:'all'}, ix=idx();
+    if(sc.mode==='manual')return 'Scope: headline figure of '+fmt(sc.manual)+' products';
+    if(sc.mode==='pts'){ var sel=(r.pts&&r.pts[MKT])||[];
+      if(!ix)return 'Scope: product types selected, but the live feed has not been pulled — volumes unknown';
+      if(!sel.length)return 'Scope: whole live catalogue ('+fmt(ix.total)+' live SKUs — no product types picked)';
+      return 'Scope: '+sel.length+' product type'+(sel.length===1?'':'s')+' — '+fmt(baseVol())+' of '+fmt(ix.total)+' live SKUs'; }
+    return ix?('Scope: whole live catalogue ('+fmt(ix.total)+' live SKUs)')
+             :'Scope: whole live catalogue — the live feed has not been pulled, volume unknown';
+  }
+  function rateWord(src){ return src==='own'?'rate: set on this quote':src==='card'?'rate: saved rate card'
+    :src==='cat'?'rate: Tachyon catalogue':'RATE NOT SET — line cannot be priced'; }
+  function lineNote(l){ var f=CMAP[l.id]||{}, fr=rec().fields[l.id], p=[];
+    if(f.conv)p.push('Google conversational attribute');
+    if(fr&&fr.count!=null)p.push('volume overridden on this line');
+    if(f.setup!=null)p.push('setup '+f.setup+'h (ASPL+QC+PM)');
+    if(f.lead!=null)p.push('live ~'+f.lead+' working days');
+    p.push(rateWord(rateSrc(l.id)));
+    return p.join(' · '); }
+  function quoteRows(){
+    var L=lines(), t=totals(), r=rec(), ix=idx(), now=new Date(), rows=[];
+    var mkt=MKT.toUpperCase();
+    var validDays=(r.valid!=null&&r.valid!=='')?+r.valid:30;
+    var vTo=new Date(now.getTime()); vTo.setDate(vTo.getDate()+validDays);
+    var missN=0, srcN={own:0,card:0,cat:0,none:0}, hrs=0, hrsN=0;
+    L.forEach(function(l){ if(l.rt==null)missN++; srcN[rateSrc(l.id)]++;
+      var f=CMAP[l.id]||{}; if(f.setup!=null){hrs+=+f.setup||0;hrsN++;} });
+    // pro-rated window: rest of the run to the next January contract year-end
+    var pf=new Date(now.getFullYear(),now.getMonth()+1,1);
+    var pt=new Date(pf.getMonth()===0?pf.getFullYear():pf.getFullYear()+1,0,1);
+    var pmo=(pt.getFullYear()-pf.getFullYear())*12+(pt.getMonth()-pf.getMonth())+1;
+    var NOTPRICED='Not priced by the AI field quote — the platform / retainer model lives in the Pricer';
+
+    /* 1 — title */
+    rows.push(qrow({D:'AI Field Generation Quote - '+monthYear(now)}));
+    rows.push(qrow()); rows.push(qrow()); rows.push(qrow());
+    /* 2 — header block */
+    rows.push(qrow({A:'Client',B:CLIENT||'-',K:'Created By'}));
+    rows.push(qrow({A:'URL',K:'Date Created',M:dmy(now)}));
+    rows.push(qrow({A:'Client Contact',K:'Quote Valid',M:dmy(vTo)+' ('+validDays+' days)'}));
+    rows.push(qrow({A:'Agency',B:'-',K:'Reference',M:quoteRef(now)}));
+    rows.push(qrow({A:'Contact',B:'-'}));
+    rows.push(qrow()); rows.push(qrow());
+    /* 3 — column band */
+    rows.push(qrow({A:'MONTHLY RECURRING COSTS',D:mkt+' Market',H:'Discount % (Exc Man Power)',
+      I:'Discount £ (Exc Man Power)',K:'Net Cost',N:'Additional Notes'}));
+    rows.push(qrow({D:'Quantity',E:'Cost',F:'Total Cost'}));
+    rows.push(qrow());
+    /* 4 — system / platform costs (this module prices no platform line) */
+    rows.push(qrow({A:'System / Platform Costs',N:NOTPRICED}));
+    rows.push(qrow({A:'Total System Costs',N:'Total tech costs — no platform, feed-processing or scrape line is quoted here'}));
+    rows.push(qrow());
+    /* 5 — initial data optimisation: one row per SELECTED optimisation */
+    rows.push(qrow({A:'Initial Data Optimisation - Initial (One-off)',N:scopeTextPlain()}));
+    if(setupFee())rows.push(qrow({A:'One-off setup & onboarding',B:'setup fee',D:1,E:n2(setupFee()),
+      F:n2(setupFee()),K:n2(setupFee()),N:'Flat one-off entered on this quote'}));
+    if(!L.length)rows.push(qrow({A:'No optimisations selected',
+      N:'Tick the optimisations you are proposing in the AI field quote and re-export'}));
+    L.forEach(function(l){ var priced=(l.rt!=null), tot=priced?n2(l.c*l.rt):'';
+      rows.push(qrow({A:l.name,B:l.grp,D:l.c,E:priced?l.rt:'',F:tot,K:tot,N:lineNote(l)})); });
+    rows.push(qrow());
+    /* 6 — account management / manpower (days per month — not priced by this module) */
+    rows.push(qrow({A:'Account Management & Data Optimisation - ManPower (Days / Month)',N:NOTPRICED}));
+    if(hrs)rows.push(qrow({A:'Delivery effort (informational)',
+      B:fmt(hrs)+'h across '+hrsN+' optimisation'+(hrsN===1?'':'s'),
+      N:'ASPL + QC + PM setup hours from the Tachyon catalogue — not charged on this quote; day rate / retainer to confirm'}));
+    rows.push(qrow());
+    /* 7 — totals block */
+    rows.push(qrow({H:'Total One-off Cost',K:t.miss?'':n2(t.net),
+      N:t.miss?('RATES INCOMPLETE — '+missN+' selected optimisation'+(missN===1?'':'s')+' still need a £/SKU rate, so the total cannot be calculated')
+              :'Initial optimisation + one-off setup (ex VAT)'}));
+    rows.push(qrow({H:'Monthly Cost (Tech)',N:NOTPRICED}));
+    rows.push(qrow({H:'Monthly Cost (Monitoring & AM)',N:NOTPRICED}));
+    rows.push(qrow({H:'Total Monthly Cost',I:'per market',N:'No monthly recurring line is priced on this quote'}));
+    rows.push(qrow({H:'Total Annual',I:'per market'}));
+    rows.push(qrow({H:'Pro-rated '+monY(pf)+' to '+monY(pt),I:'per market',
+      N:pmo+' month'+(pmo===1?'':'s')+' — contract year assumed to January, adjust to the client’s'}));
+    rows.push(qrow({H:'Total Monthly Cost',I:'1 market ('+mkt+')',
+      N:'This module quotes one market at a time — repeat per market for a multi-market rollout'}));
+    rows.push(qrow({H:'Total Annual',I:'1 market ('+mkt+')'}));
+    rows.push(qrow({H:'Pro-rated '+monY(pf)+' to '+monY(pt),I:'1 market ('+mkt+')'}));
+    rows.push(qrow());
+    if(vatOn())rows.push(qrow({H:'VAT 20%',K:t.miss?'':n2(t.vat)}));
+    rows.push(qrow({H:'Total Quote'+(vatOn()?' (inc VAT)':' (ex VAT)'),K:t.miss?'':n2(t.gross),
+      N:t.miss?'Set every £/SKU rate in the module to total this quote':''}));
+    rows.push(qrow()); rows.push(qrow());
+    /* 8 — the five standing commercial notes */
+    rows.push(qrow({A:'Notes on the Quotation'}));
+    [ '- Is based on the validity & accuracy of the information provided & is assumed to be reflective of the services required',
+      '- It is indicative of a ‘standard’ deployment; more complex deployments, bespoke work or work outside scope may be subject to additional charges',
+      '- The prices and discounts shown are based on the quotation being accepted on a total basis. Should any changes be required to the level or number of services required then this may impact the prices & discounts shown',
+      '- This quotation is valid for '+validDays+' days from the date of issue & prices as at '+monY(now),
+      '- E&O Excluded'
+    ].forEach(function(b){ rows.push(qrow({A:b})); });
+    rows.push(qrow()); rows.push(qrow());
+    /* 9 — free notes, all computed from the live selection */
+    rows.push(qrow({A:'Notes:'}));
+    var notes=[];
+    notes.push('Quote covers '+(CLIENT||'-')+' '+mkt+' — AI field generation on the client’s live product feed.');
+    notes.push(ix?('Live feed pull: '+fmt(ix.total)+' SKUs across '+Object.keys(ix.map).length+' product types.')
+                 :'Live feed not pulled — the volumes on this quote were entered by hand.');
+    notes.push(scopeTextPlain()+'.');
+    var selPts=((rec().pts||{})[MKT]||[]);
+    if(selPts.length)notes.push('Product types in scope ('+selPts.length+'): '
+      +selPts.slice(0,25).join('; ')+(selPts.length>25?('; +'+(selPts.length-25)+' more'):'')+'.');
+    if(L.length)notes.push('£/SKU rate provenance: '+srcN.own+' set on this quote, '+srcN.card+' from the saved rate card, '
+      +srcN.cat+' from the Tachyon catalogue'+(srcN.none?(', '+srcN.none+' still unset'):'')+'.');
+    if(hrs)notes.push('Delivery effort across the selection: '+fmt(hrs)+' setup hours (ASPL + QC + PM).');
+    notes.push('All figures ex VAT'+(vatOn()?'; the VAT 20% line above is shown separately.':' — VAT is not applied on this quote.'));
+    notes.push('Volumes are live from the client feed and £/SKU rates come from this quote, the saved rate card or the Tachyon catalogue — nothing here is estimated.');
+    notes.forEach(function(nn){ rows.push(qrow({A:nn})); });
+    return rows;
+  }
+  function toCsv(rows){ return rows.map(function(r){ return r.map(function(c){
+      var s=String(c==null?'':c); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }).join(','); }).join('\n'); }
   $('#csv').addEventListener('click',function(){
-    var L=lines(); var rows=[['group','optimisation','field_id','products','rate_per_sku_gbp','line_total_gbp']];
-    L.forEach(function(l){ rows.push([l.grp,l.name,l.id,l.c,l.rt==null?'':l.rt,l.rt==null?'':(Math.round(l.c*l.rt*100)/100)]); });
-    if(setupFee())rows.push(['','setup one-off','setup','','',setupFee()]);
-    var csv=rows.map(function(r){return r.map(function(c){var s=String(c);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(',')}).join('\n');
+    var csv=toCsv(quoteRows());
     var blob=new Blob([csv],{type:'text/csv'}); var a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-    a.download='aiquote_'+CLIENT.replace(/[^a-z0-9]+/gi,'_')+'_'+MKT+'.csv'; document.body.appendChild(a); a.click(); a.remove();
+    a.download='aiquote_'+(CLIENT||'client').replace(/[^a-z0-9]+/gi,'_')+'_'+MKT+'.csv'; document.body.appendChild(a); a.click(); a.remove();
   });
   function copy(text,msg){ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){toast(msg)})}else{var a=document.createElement('textarea');a.value=text;document.body.appendChild(a);a.select();try{document.execCommand('copy');toast(msg)}catch(e){}a.remove();} }
   function toast(m){var t=document.createElement('div');t.textContent=m;t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1A365D;color:#fff;padding:9px 15px;border-radius:8px;z-index:9999;font-weight:700;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2)';document.body.appendChild(t);setTimeout(function(){t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(function(){t.remove()},300)},1700);}
