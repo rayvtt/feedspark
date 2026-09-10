@@ -336,7 +336,7 @@ window.addEventListener('load',restore);
   .tk-kpi .l{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:2px}
   [data-theme=dark] .tk-kpi{background:#181B22}
   .tk-scroll{overflow-x:auto}
-  .tk{width:100%;border-collapse:collapse;font-size:12.5px;min-width:1080px}
+  .tk{width:100%;border-collapse:collapse;font-size:12.5px;min-width:1200px}
   .tk th{text-align:left;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:0 9px 7px;white-space:nowrap}
   .tk td{padding:9px;border-top:1px solid var(--wash);vertical-align:middle}
   [data-theme=dark] .tk td{border-top-color:#181B22}
@@ -371,6 +371,39 @@ window.addEventListener('load',restore);
   .t-det .hist b{color:var(--ink-2)}
   .tk-empty{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 0}
   .tk-money.hid{visibility:hidden}
+  /* per-row actions — ✉ Draft email + → Intake — each a button UNTIL used, then a state chip
+     (stamped who/when) so neither can be fired twice by accident */
+  .tk .t-acts{display:flex;flex-direction:column;gap:4px;align-items:flex-start;min-width:132px}
+  .tk .t-act{font:inherit;font-size:11px;font-weight:900;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--ink-2);cursor:pointer;padding:3px 10px;white-space:nowrap}
+  .tk .t-act:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .tk .t-act.warn{border-color:rgba(237,111,11,.5);color:var(--orange-ink)}
+  .tk .t-act[disabled]{opacity:.55;cursor:default}
+  .tk .t-done{display:inline-block;font-size:10.5px;font-weight:800;color:var(--good);line-height:1.35}
+  .tk .t-done.busy{color:var(--muted)}
+  .tk .t-done[data-draft]{cursor:pointer}
+  .tk .t-done[data-draft]:hover{text-decoration:underline dotted;text-underline-offset:3px}
+  [data-theme=dark] .tk .t-act{background:#20242E}
+  /* the client-email composer — Label Guard's shared ask rails, rendered under the row */
+  .tk tr.t-ask td{background:var(--wash);padding:10px 9px 12px}
+  [data-theme=dark] .tk tr.t-ask td{background:#181B22}
+  .askp{background:var(--paper);border:1px solid var(--orange);border-radius:12px;padding:12px 14px;max-width:820px}
+  .askp .af{display:flex;gap:8px;align-items:center;margin-bottom:7px;font-size:12px;font-weight:800;flex-wrap:wrap}
+  .askp .af label{width:56px;flex:none;color:var(--muted)}
+  .askp input{font:inherit;font-size:12px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);flex:1;min-width:0}
+  .askp textarea{font:inherit;font-size:12px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);width:100%;min-height:210px;resize:vertical;line-height:1.45;box-sizing:border-box}
+  .askp .ab{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:12px;font-weight:800}
+  .askp .scanmsg{font-size:12px;font-weight:800;color:var(--orange-deep)}
+  .askp .hint{font-weight:700}
+  .askp .pnote{font-size:11.5px;color:var(--orange-ink);font-weight:800;margin:0 0 7px}
+  /* the two tone variants (Ray's email rule): confident/direct vs collaborative/consultative */
+  .tone{display:inline-flex;border:1px solid var(--line);border-radius:100px;overflow:hidden}
+  .tone button{font:inherit;font-size:11px;font-weight:900;padding:4px 11px;border:0;background:var(--paper);color:var(--muted);cursor:pointer}
+  .tone button+button{border-left:1px solid var(--line)}
+  .tone button.on{background:var(--orange);color:#fff}
+  [data-theme=dark] .askp{background:#1C1F27;border-color:rgba(245,166,35,.4)}
+  [data-theme=dark] .askp input,[data-theme=dark] .askp textarea{background:#161922;color:var(--ink);border-color:var(--line)}
+  [data-theme=dark] .tone button{background:#20242E}
+  [data-theme=dark] .tone button.on{background:var(--orange);color:#14161C}
 </style>
 
 <div class="topbar"><div class="topbar-in">
@@ -439,13 +472,13 @@ window.addEventListener('load',restore);
 
   <div class="card" id="tracker-card">
     <h3>Saved quotes — finance tracker <span class="hint" id="tk-n"></span></h3>
-    <div class="ch">Every saved quote is frozen with its numbers, its scope and the moment it was saved — editing the live quote above can never rewrite a figure finance has already signed off. Walk each one along the rail as it moves: <b>Approved → Greenlight → In action → Billed</b>, with <b>Andy or Jackie</b> on the finance owner. Every stage change is stamped with who did it and when; click ⌄ for the line detail and the full audit trail.</div>
+    <div class="ch">Every saved quote is frozen with its numbers, its scope and the moment it was saved — editing the live quote above can never rewrite a figure finance has already signed off. Walk each one along the rail as it moves: <b>Approved → Greenlight → In action → Billed</b>, with <b>Andy or Jackie</b> on the finance owner. Every stage change is stamped with who did it and when; click ⌄ for the line detail and the full audit trail. Two actions per quote: <b>✉ Draft email</b> composes the client email (two tones) and queues it into the ray@feedspark.com <b>Gmail Drafts</b> — it never sends itself; <b>→ Intake</b> files the quote into the client's <b>Project Plan</b> and opens the <b>brief</b> in the Workflow pipeline, like any other intake.</div>
     <div class="tk-kpis" id="tk-kpis"></div>
     <div class="tk-scroll"><table class="tk" id="tk">
       <thead><tr>
         <th>Ref</th><th>Client</th><th>Saved</th><th>Scope</th>
         <th style="text-align:right" class="tk-money">Total</th>
-        <th>Stage — click to move it</th><th>Finance owner</th><th>Last update</th><th></th>
+        <th>Stage — click to move it</th><th>Finance owner</th><th>Last update</th><th>Client email · Intake</th><th></th>
       </tr></thead>
       <tbody id="tk-body"></tbody>
     </table></div>
@@ -1249,8 +1282,11 @@ window.addEventListener('load',restore);
   var STAGES=['Saved','Approved','Greenlight','In action','Billed'];   // Ray's rail (+ Declined)
   var FINANCE=['Andy','Jackie'];
 
+  // returns the round-trip promise so an action that navigates away (→ Intake) can wait for
+  // its stamp to land in KV before it leaves the page (deliberately NOT keepalive: the whole
+  // map is the body and keepalive caps bodies at 64KB — a big tracker would stop saving)
   function putSaved(msg){
-    fetch('/api/aiquote/saved',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(SAVED_BASE)},body:JSON.stringify(SAVED)})
+    return fetch('/api/aiquote/saved',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(SAVED_BASE)},body:JSON.stringify(SAVED)})
       .then(function(res){ SAVED_BASE=+res.headers.get('X-Sync-Base')||SAVED_BASE; return res.json(); })
       .then(function(m){ if(m&&typeof m==='object'&&!m.ok)SAVED=m; renderTracker();
         if(msg){ $('#tk-state').textContent=msg; setTimeout(function(){ if($('#tk-state').textContent===msg)$('#tk-state').textContent=''; },2800); } })
@@ -1275,6 +1311,166 @@ window.addEventListener('load',restore);
   function setOwner(id,o){ var q=SAVED[id]; if(!q||(q.owner||'')===o)return;
     q.owner=o; stamp(id,'owner: '+(o||'unassigned')); putSaved(q.ref+' → '+(o||'unassigned')); }
 
+  /* ---------- the two row actions — AIQUOTE-ROW-ACTIONS ----------
+     Ray (10 Sep 2026): "after quote is saved, create a button for drafting email in gmail and
+     also save the quote inside Intake, following the normal workflow protocol, so it can be
+     saved in both project plans and the brief." Both ride the FCC's EXISTING rails — nothing
+     new is invented for delivery:
+       ✉ Draft email  Label Guard's ask-the-client rails: POST /api/labels/askdraft queues a
+                      Gmail DRAFT in ray@feedspark.com (KV labeldrafts, drained by gmail_push.gs
+                      — never a send); the contact is remembered per client (labelaskcfg) and
+                      pre-fills next time; "Open in Gmail now" = the compose deep link with a
+                      mailto: fallback. Two tone variants, per the email rules: confident/direct
+                      vs collaborative/consultative.
+       → Intake       the guards' plantask pattern: POST /api/aiquote/plantask files the task
+                      into the client's Project Plan (worker PLAN_SHEETS → appendPlanRows, the
+                      one shared write) and the page deep-links /workflow?brief= so the brief is
+                      created in the pipeline — Intake → Project Plan → brief, like the Gmail
+                      triage. The plan write is awaited (keepalive as belt-and-braces) and its
+                      result recorded on the quote (intake.planOk) BEFORE the page navigates.
+     Everything is composed from the SAVED SNAPSHOT — never the live quote — £ figures appear
+     only while the page has them revealed (SHOWP), and an unrated quote says "rates
+     incomplete" in the email and the task title. Each action stamps the audit trail and turns
+     into a state chip (who · when), not a repeatable button. */
+  var ASK={cfg:{to:{}},asked:{}};   // shared with the guards' ask rails (labelaskcfg / labelasked)
+  var TKASK=null;                   // the open composer: {id, tone, to, subject, body, edited}
+  var TONES=[['direct','Confident · direct'],['consult','Collaborative · consultative']];
+  fetch('/api/labels/askdraft').then(function(r){ return r.json(); }).catch(function(){ return null; })
+    .then(function(d){ if(d&&d.cfg){ ASK.cfg=d.cfg; ASK.cfg.to=ASK.cfg.to||{}; } if(d&&d.asked)ASK.asked=d.asked; });
+  function b64url(o){ var j=JSON.stringify(o),b=new TextEncoder().encode(j),s=''; b.forEach(function(c){s+=String.fromCharCode(c)}); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+  function tkWhenS(ts){ var d=new Date(+ts||0);
+    return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+  function askKey(q){ return 'aiquote|'+q.client+'|'+q.mkt+'|'+q.ref; }
+  function qLoc(q){ return q.client+' '+String(q.mkt||'').toUpperCase(); }
+  function qValid(q){ return (q.valid!=null&&q.valid!=='')?+q.valid:30; }
+  function qTotalWord(q){ return q.miss?'rates incomplete':(money(q.gross)+(q.vat?' inc VAT':' ex VAT')); }
+  function qScopeLine(q){ var sc=q.scope||{}, n=(sc.pts||[]).length, vol=fmt(sc.vol||q.prods||0);
+    if(sc.mode==='pts'&&n)return n+' product type'+(n===1?'':'s')+' — '+vol+' products';
+    if(sc.mode==='manual')return 'a headline volume of '+vol+' products';
+    return 'the whole live catalogue — '+vol+' products'+(sc.feedTotal?' ('+fmt(sc.feedTotal)+' live SKUs at the time of the quote)':''); }
+  // the quote block every variant shares — figures ONLY when £ is revealed on the page
+  function qBlock(q,withP){ var L=q.lines||[], d=new Date(+q.t||Date.now()), out=[];
+    var missN=L.filter(function(l){return l.rt==null}).length;
+    out.push('Reference: '+q.ref+' · '+qLoc(q)+' · issued '+dmy(d));
+    out.push('Scope: '+qScopeLine(q));
+    out.push('Fields ('+L.length+'):');
+    L.forEach(function(l){ out.push('• '+l.name+' — '+fmt(l.c)+' products'+(withP&&l.rt!=null?(' @ £'+l.rt+'/SKU = '+money(l.c*l.rt)):'')); });
+    if(withP){
+      if(q.miss){ out.push('Commercials: rates incomplete — '+missN+' of '+L.length+' line'+(L.length===1?'':'s')+' still to be priced; a fully priced quote follows under separate cover.'); }
+      else{ if(+q.setup)out.push('One-off setup: '+money(q.setup));
+        out.push('Subtotal (ex VAT): '+money(q.net));
+        if(q.vat)out.push('VAT 20%: '+money(q.vatAmt));
+        out.push('Total'+(q.vat?' (inc VAT)':' (ex VAT)')+': '+money(q.gross)); }
+      out.push('This quotation is valid for '+qValid(q)+' days from the date of issue & prices as at '+monY(d)+'.');
+    } else {
+      out.push('Commercials: to follow under separate cover.');
+      out.push('This quotation is valid for '+qValid(q)+' days from the date of issue.');
+    }
+    return out.join('\n'); }
+  function quoteEmail(q,tone){ var loc=qLoc(q), blk=qBlock(q,SHOWP);
+    if(tone==='consult')return {
+      subject: loc+' — AI field generation: proposal for discussion ('+q.ref+')',
+      body: 'Hi team,\n\n'
+        +'Following our recent conversations about getting the '+loc+' feed ready for Google’s AI and agentic shopping surfaces, I have put together a proposal for the fields we would generate with Tachyon. The volumes are pulled live from the feed, so the scope below reflects the catalogue as it stands today rather than an estimate.\n\n'
+        +blk+'\n\n'
+        +'I would suggest we walk through this together — happy to adjust which fields or product types we start with, or phase the work, so it lands in a way that suits your priorities and budget cycle. Nothing here is fixed until you are comfortable with it.\n\n'
+        +'Best regards,\nRay' };
+    return {
+      subject: loc+' — AI field generation quote '+q.ref,
+      body: 'Hi team,\n\n'
+        +'Please find below our quote for AI field generation on the '+loc+' feed — the fields Tachyon will generate across the scope, at the volumes pulled live from the feed on the date of issue.\n\n'
+        +blk+'\n\n'
+        +'To proceed, reply confirming the scope and we will schedule the generation run and share the delivery timeline. Any questions, call me.\n\n'
+        +'Best regards,\nRay' }; }
+  // the task title — one string, used verbatim for the Project Plan row AND the brief, so the
+  // pipeline ties the two together on wording (shape: Ray's spec)
+  function quoteTaskTitle(q){ var n=q.fields||(q.lines||[]).length;
+    return 'AI Field Quote — '+q.ref+' — '+qLoc(q)+' — '+n+' field'+(n===1?'':'s')+' · '+qTotalWord(q); }
+  function quoteBriefScope(q){ var L=q.lines||[], out=[];
+    out.push('Saved quote '+q.ref+' — '+qLoc(q)+' — saved '+tkWhen(q.t)+' by '+tkWho(q.by));
+    out.push('Scope: '+qScopeLine(q));
+    out.push('Fields ('+L.length+'):');
+    L.forEach(function(l){ out.push('• '+l.name+' ('+(l.grp||'')+') — '+fmt(l.c)+' products'+(l.rt==null?' — rate not set':(' @ £'+l.rt+'/SKU = '+money(l.c*l.rt)))); });
+    if(+q.setup)out.push('One-off setup: '+money(q.setup));
+    out.push(q.miss?'Commercials: rates incomplete — the quote cannot total until every line carries a £/SKU rate'
+      :('Total'+(q.vat?' (inc VAT 20%)':' (ex VAT)')+': '+money(q.gross)+(q.vat?' · VAT '+money(q.vatAmt):'')));
+    out.push('Valid '+qValid(q)+' days from the save date');
+    out.push('Source: AI Field Quote finance tracker (/aiquote)');
+    return out.join('\n'); }
+
+  function actsCell(k,q){ var h='<div class="t-acts">';
+    if(q.draft){ h+='<span class="t-done" data-draft="'+esc(k)+'" title="Gmail draft '+(q.draft.via==='gmail'?'composed':'queued')+' '+esc(tkWhenS(q.draft.t))+' by '+esc(tkWho(q.draft.by))+' → '+esc(q.draft.to||'')+(q.draft.figures?' (with £)':' (£ hidden — volumes only)')+' — click to compose another">✉ drafted · '+esc(tkWhenS(q.draft.t))+' · '+esc(tkWho(q.draft.by))+'</span>'; }
+    else h+='<button type="button" class="t-act" data-draft="'+esc(k)+'" title="Compose the client email (two tones) and queue it into Gmail Drafts — never sends itself">✉ Draft email</button>';
+    if(q.intake){ var it=q.intake;
+      if(it.busy)h+='<span class="t-done busy">→ filing…</span>';
+      else{ h+='<span class="t-done" title="Filed into the '+esc(q.client)+' Project Plan + brief opened '+esc(tkWhenS(it.t))+' by '+esc(tkWho(it.by))+' — plan task '+(it.planOk?'filed':(it.planOk===false?('failed: '+esc(it.err||'?')):'unconfirmed'))+'">→ Intake · '+esc(tkWhenS(it.t))+' · '+esc(tkWho(it.by))+'</span>';
+        if(!it.planOk)h+='<button type="button" class="t-act warn" data-retry="'+esc(k)+'" title="The Project Plan write '+(it.planOk===false?('failed ('+esc(it.err||'?')+')'):'was not confirmed')+' — retry it (the sheet write is idempotent, so this can never double-file)">↻ plan</button>'; } }
+    else h+='<button type="button" class="t-act" data-intake="'+esc(k)+'" title="File this quote into the client’s Project Plan and open the brief in the Workflow pipeline">→ Intake</button>';
+    return h+'</div>'; }
+  function askRow(k,q){ var a=TKASK, t=quoteEmail(q,a.tone);
+    var to=(a.to!=null)?a.to:(ASK.cfg.to[q.client]||''), subject=(a.subject!=null)?a.subject:t.subject, body=(a.body!=null)?a.body:t.body;
+    return '<tr class="t-ask"><td colspan="10"><div class="askp" data-askid="'+esc(k)+'">'
+      +'<div class="af"><label>To</label><input id="ask-to" value="'+esc(to)+'" placeholder="client contact email"></div>'
+      +'<div class="af"><label>Tone</label><span class="tone">'+TONES.map(function(tn){ return '<button type="button" data-tone="'+tn[0]+'"'+(a.tone===tn[0]?' class="on"':'')+'>'+tn[1]+'</button>'; }).join('')+'</span><span class="hint">switching tone rewrites the subject and body</span></div>'
+      +'<div class="af"><label>Subject</label><input id="ask-subject" value="'+esc(subject)+'"></div>'
+      +(SHOWP?'':'<p class="pnote">£ hidden — this draft carries the fields and volumes only. Tap £ Show quote to include the rates and totals.</p>')
+      +(q.miss?'<p class="pnote">Rates incomplete on this quote — the email says so; a priced version has to follow.</p>':'')
+      +'<textarea id="ask-body">'+esc(body)+'</textarea>'
+      +'<div class="ab"><button class="btn pri" id="ask-draft" type="button">✉ Create Gmail draft</button>'
+      +'<button class="btn" id="ask-gmail" type="button" title="Compose right now in the ray@feedspark.com inbox (mailto: if the popup is blocked)">Open in Gmail now</button>'
+      +'<button class="btn" id="ask-cancel" type="button">✕</button><span class="scanmsg" id="ask-msg"></span></div>'
+      +'<p class="hint" style="margin:8px 0 0">Review and edit freely — nothing sends itself. The draft lands in the ray@feedspark.com Drafts folder via the Gmail bridge (~5 min); the contact is remembered for '+esc(q.client)+' next time.</p>'
+      +'</div></td></tr>'; }
+  function openAsk(id){ var q=SAVED[id]; if(!q)return;
+    TKASK={id:id,tone:(q.draft&&q.draft.tone)||'direct'}; renderTracker();
+    var el=document.querySelector('.askp[data-askid="'+cssEsc(id)+'"]'); if(el&&el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+  function askVals(){ return {to:($('#ask-to')||{}).value||'',subject:($('#ask-subject')||{}).value||'',body:($('#ask-body')||{}).value||''}; }
+  function askMsg(m){ var s=$('#ask-msg'); if(s)s.textContent=m; }
+  function markDrafted(id,to,via){ var q=SAVED[id]; if(!q)return;
+    ASK.cfg.to[q.client]=to; ASK.asked[askKey(q)]={t:Date.now(),to:to};
+    q.draft={t:Date.now(),by:ME,to:to,tone:TKASK?TKASK.tone:'direct',figures:!!SHOWP,via:via};
+    stamp(id,via==='gmail'?'✉ composed in Gmail':'✉ draft queued'); TKASK=null;
+    putSaved(q.ref+' — '+(via==='gmail'?'composed in Gmail':'Gmail draft queued')+' for '+to); }
+  function queueDraft(id){ var q=SAVED[id]; if(!q)return; var v=askVals(), to=v.to.trim();
+    if(to.indexOf('@')<1){ askMsg('✗ add the client contact email'); return; }
+    if(!v.subject.trim()||!v.body.trim()){ askMsg('✗ subject and body are both needed'); return; }
+    askMsg('queueing…'); var b=$('#ask-draft'); if(b)b.disabled=true;
+    fetch('/api/labels/askdraft',{method:'POST',headers:{'content-type':'application/json'},
+      body:JSON.stringify({to:to,subject:v.subject.trim(),text:v.body,keys:[askKey(q)],client:q.client})})
+      .then(function(r){ return r.json(); })
+      .then(function(r){ if(!r||r.error){ askMsg('✗ '+((r&&r.error)||'the worker did not accept the draft')); if(b)b.disabled=false; return; }
+        markDrafted(id,to,'bridge'); toast('Gmail draft queued · '+q.ref); })
+      .catch(function(){ askMsg('✗ network'); if(b)b.disabled=false; }); }
+  function composeGmail(id){ var q=SAVED[id]; if(!q)return; var v=askVals(), to=v.to.trim();
+    if(to.indexOf('@')<1){ askMsg('✗ add the client contact email'); return; }
+    var w=null; try{ w=window.open('https://mail.google.com/mail/?view=cm&fs=1&authuser=ray%40feedspark.com&to='+encodeURIComponent(to)
+      +'&su='+encodeURIComponent(v.subject)+'&body='+encodeURIComponent(v.body),'_blank'); }catch(e){ w=null; }
+    if(!w)location.href='mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent(v.subject)+'&body='+encodeURIComponent(v.body);   // popup blocked / no Gmail — the mail app
+    fetch('/api/labels/askdraft',{method:'POST',headers:{'content-type':'application/json'},   // composed = asked; remembers the contact for the team
+      body:JSON.stringify({markOnly:true,to:to,keys:[askKey(q)],client:q.client})}).catch(function(){});
+    markDrafted(id,to,'gmail'); }
+  function fileIntake(id){ var q=SAVED[id]; if(!q||q.intake)return;
+    var task=quoteTaskTitle(q), now=Date.now();
+    q.intake={t:now,by:ME,planOk:null,task:task,busy:1}; stamp(id,'→ Intake'); renderTracker();
+    $('#tk-state').textContent='Filing '+q.ref+' into the '+q.client+' Project Plan…';
+    var brief={client:q.client,task:task,cat:'opt',source:'plan',scope:quoteBriefScope(q)};
+    var plan=fetch('/api/aiquote/plantask?client='+encodeURIComponent(q.client)+'&market='+encodeURIComponent(q.mkt),
+        {method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({task:task,ref:q.ref,id:id})})
+      .then(function(r){ return r.json(); })
+      .then(function(r){ q.intake.planOk=!!(r&&r.ok); if(!(r&&r.ok))q.intake.err=String((r&&r.error)||'?').slice(0,120); })
+      .catch(function(){ q.intake.planOk=false; q.intake.err='network'; });
+    var slow=new Promise(function(res){ setTimeout(res,8000); });   // a stuck sheet write must not trap the user on this page
+    Promise.race([plan,slow]).then(function(){ delete q.intake.busy; return putSaved(); })
+      .then(function(){ location.href='/workflow?brief='+b64url(brief); }); }
+  function retryPlan(id){ var q=SAVED[id]; if(!q||!q.intake||q.intake.busy)return; var it=q.intake;
+    it.busy=1; renderTracker();
+    fetch('/api/aiquote/plantask?client='+encodeURIComponent(q.client)+'&market='+encodeURIComponent(q.mkt),
+        {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({task:it.task||quoteTaskTitle(q),ref:q.ref,id:id})})
+      .then(function(r){ return r.json(); })
+      .then(function(r){ it.planOk=!!(r&&r.ok); if(it.planOk)delete it.err; else it.err=String((r&&r.error)||'?').slice(0,120); })
+      .catch(function(){ it.planOk=false; it.err='network'; })
+      .then(function(){ delete it.busy; stamp(id,it.planOk?'↻ plan task filed':'↻ plan task failed'); putSaved(q.ref+' — plan task '+(it.planOk?'filed':'failed: '+(it.err||'?'))); }); }
+
   function renderTracker(){
     var ids=Object.keys(SAVED).filter(function(k){ return SAVED[k]&&typeof SAVED[k]==='object'&&!SAVED[k].deleted&&SAVED[k].ref; });
     ids.sort(function(a,b){ return (+SAVED[b].t||0)-(+SAVED[a].t||0); });
@@ -1291,7 +1487,7 @@ window.addEventListener('load',restore);
       +'<div class="tk-kpi"><div class="v">'+m(billed)+'</div><div class="l">Billed</div></div>'
       +'<div class="tk-kpi"><div class="v">'+withFin+'</div><div class="l">Moving with finance</div></div>'
       +(incomplete?'<div class="tk-kpi"><div class="v" style="color:var(--orange-ink)">'+incomplete+'</div><div class="l">Rates incomplete</div></div>':'');
-    if(!ids.length){ $('#tk-body').innerHTML='<tr><td colspan="9"><div class="tk-empty">No saved quotes yet — build one above and hit 💾 Save quote. Each save freezes its numbers and lands here with a timestamp.</div></td></tr>'; return; }
+    if(!ids.length){ $('#tk-body').innerHTML='<tr><td colspan="10"><div class="tk-empty">No saved quotes yet — build one above and hit 💾 Save quote. Each save freezes its numbers and lands here with a timestamp.</div></td></tr>'; return; }
     $('#tk-body').innerHTML=ids.map(function(k){
       var q=SAVED[k], si=STAGES.indexOf(q.stage);
       var rail=STAGES.map(function(s,i){
@@ -1314,9 +1510,11 @@ window.addEventListener('load',restore);
         +'<td><select class="t-own" data-own="'+esc(k)+'"><option value="">— unassigned</option>'
           +FINANCE.map(function(f){ return '<option'+((q.owner||'')===f?' selected':'')+'>'+esc(f)+'</option>'; }).join('')+'</select></td>'
         +'<td class="t-when">'+tkWhen(last)+'<br><span style="font-size:10px">'+esc(tkWho(lastBy))+'</span></td>'
+        +'<td>'+actsCell(k,q)+'</td>'
         +'<td style="white-space:nowrap"><button class="t-exp" type="button" data-exp="'+esc(k)+'" title="Line detail + audit trail">'+(TKOPEN[k]?'⌃':'⌄')+'</button>'
           +'<button class="t-x" type="button" data-x="'+esc(k)+'" title="Remove this saved quote">✕</button></td>'
         +'</tr>';
+      if(TKASK&&TKASK.id===k)row+=askRow(k,q);
       if(TKOPEN[k]){
         var dl=(q.lines||[]).map(function(l){
           return '<div class="dl"><span>'+esc(l.name)+' <span style="color:var(--muted)">· '+esc(l.grp||'')+'</span></span>'
@@ -1324,7 +1522,7 @@ window.addEventListener('load',restore);
           +((+q.setup)?'<div class="dl"><span>One-off setup</span><span class="tk-money'+(SHOWP?'':' hid')+'">'+money(q.setup)+'</span></div>':'')
           +'<div class="dl" style="border-top:1px solid var(--line);margin-top:5px;padding-top:5px"><span><b>Total'+(q.vat?' (inc VAT 20%)':' (ex VAT)')+'</b></span><span class="tk-money'+(SHOWP?'':' hid')+'"><b>'+(q.miss?'rates incomplete':money(q.gross))+'</b></span></div>';
         var hist=(q.hist||[]).map(function(h){ return '<b>'+esc(h.s)+'</b> — '+tkWhen(h.t)+' · '+esc(tkWho(h.by)); }).join('<br>');
-        row+='<tr class="t-det"><td colspan="9">'
+        row+='<tr class="t-det"><td colspan="10">'
           +'<div class="dh">Lines as saved</div>'+dl
           +((scope.pts||[]).length?('<div class="dh" style="margin-top:9px">Product types in scope ('+(scope.pts||[]).length+')</div><div style="max-width:640px">'+esc((scope.pts||[]).slice(0,12).join(' · '))+((scope.pts||[]).length>12?(' · +'+((scope.pts||[]).length-12)+' more'):'')+'</div>'):'')
           +'<div class="dh" style="margin-top:9px">Audit trail</div><div class="hist">'+(hist||'—')
@@ -1335,16 +1533,29 @@ window.addEventListener('load',restore);
     }).join('');
   }
   $('#tk-body').addEventListener('click',function(e){
-    var st=e.target.closest&&e.target.closest('[data-st]');
+    var c=function(sel){ return e.target.closest&&e.target.closest(sel); };
+    var st=c('[data-st]');
     if(st){ setStage(st.getAttribute('data-id'),st.getAttribute('data-st')); return; }
-    var ex=e.target.closest&&e.target.closest('[data-exp]');
+    var ex=c('[data-exp]');
     if(ex){ var kk=ex.getAttribute('data-exp'); TKOPEN[kk]=!TKOPEN[kk]; renderTracker(); return; }
-    var x=e.target.closest&&e.target.closest('[data-x]');
+    // the two row actions + the composer's own buttons
+    var dr=c('[data-draft]'); if(dr){ var did=dr.getAttribute('data-draft'); if(TKASK&&TKASK.id===did){ TKASK=null; renderTracker(); } else openAsk(did); return; }
+    var it=c('[data-intake]'); if(it){ fileIntake(it.getAttribute('data-intake')); return; }
+    var rp=c('[data-retry]'); if(rp){ retryPlan(rp.getAttribute('data-retry')); return; }
+    var tn=c('[data-tone]'); if(tn&&TKASK){ TKASK={id:TKASK.id,tone:tn.getAttribute('data-tone'),to:askVals().to}; renderTracker(); return; }   // a tone switch REWRITES subject + body
+    if(c('#ask-draft')&&TKASK){ queueDraft(TKASK.id); return; }
+    if(c('#ask-gmail')&&TKASK){ composeGmail(TKASK.id); return; }
+    if(c('#ask-cancel')){ TKASK=null; renderTracker(); return; }
+    var x=c('[data-x]');
     if(x){ var id=x.getAttribute('data-x'), q=SAVED[id]; if(!q)return;
       if(!confirm('Remove saved quote '+(q.ref||'')+' ('+(q.client||'')+')? Its audit trail goes with it.'))return;
+      if(TKASK&&TKASK.id===id)TKASK=null;
       SAVED[id]={deleted:true,t:Date.now()};   // tombstone — a hard delete can be resurrected by another tab's merge
       putSaved('removed'); }
   });
+  // the composer keeps what you typed across re-renders (£ toggle, a save landing, …)
+  $('#tk-body').addEventListener('input',function(e){ if(!TKASK)return; var t=e.target;
+    if(t.id==='ask-to')TKASK.to=t.value; else if(t.id==='ask-subject')TKASK.subject=t.value; else if(t.id==='ask-body')TKASK.body=t.value; });
   $('#tk-body').addEventListener('change',function(e){
     var s=e.target.closest&&e.target.closest('[data-own]'); if(!s)return;
     setOwner(s.getAttribute('data-own'),s.value);
