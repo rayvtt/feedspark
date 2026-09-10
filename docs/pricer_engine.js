@@ -14,8 +14,9 @@
 (function (g) {
   'use strict';
 
-  // The Tachyon catalogue ("What We Do") — 13 optimisations in 7 groups. Hours/unit rates are
-  // DRAFT defaults: the collaborative rate card (KV `tachyonrates`) overrides every field, and
+  // The Tachyon catalogue ("What We Do") — 13 optimisations in 7 groups. (An "AI Text Attribute
+  // Extraction" entry was added 10 Sep 2026 and RETIRED the same day — Ray: "not needed ever".)
+  // Hours/unit rates are DRAFT defaults: the collaborative rate card (KV `tachyonrates`) overrides every field, and
   // the module flags rows still on draft values. id keys are stable — KV merges hang off them.
   var CATALOG = [
     { id: 'title_gen',      grp: 'AI Titles',                    name: 'AI Product Title Generation',            aspl: 6,  qc: 3, pm: 2, mon: 2, unit: 0.08, lead: 10 },
@@ -28,7 +29,6 @@
     { id: 'highlights',     grp: 'Product Highlights & Details', name: 'AI Product Highlights',                  aspl: 6,  qc: 3, pm: 2, mon: 2, unit: 0.10, lead: 10 },
     { id: 'details',        grp: 'Product Highlights & Details', name: 'AI Product Details',                     aspl: 6,  qc: 3, pm: 2, mon: 2, unit: 0.10, lead: 10 },
     { id: 'keywords',       grp: 'AI Keywords',                  name: 'AI Keyword Generation',                  aspl: 5,  qc: 3, pm: 2, mon: 2, unit: 0.06, lead: 8 },
-    { id: 'text_attr',      grp: 'AI Text Attributes',           name: 'AI Text Attribute Extraction',           aspl: 6,  qc: 3, pm: 2, mon: 2, unit: 0.10, lead: 10 },
     { id: 'visual_attr',    grp: 'AI Visual Attributes',         name: 'AI Visual Attribute Extraction',         aspl: 10, qc: 5, pm: 3, mon: 3, unit: 0.20, lead: 15 },
     { id: 'gpc',            grp: 'GPC Mapping & PT',             name: 'AI GPC Mapping',                         aspl: 6,  qc: 3, pm: 2, mon: 1, unit: 0.05, lead: 8 },
     { id: 'pt_class',       grp: 'GPC Mapping & PT',             name: 'AI Product Type Classification',         aspl: 6,  qc: 3, pm: 2, mon: 1, unit: 0.05, lead: 8 }
@@ -161,7 +161,6 @@
     if (/highlight/.test(t)) return 'highlights';
     if (/product detail/.test(t)) return 'details';
     if (/keyword/.test(t)) return 'keywords';
-    if (/text attr/.test(t)) return 'text_attr';
     if (/visual|image attr/.test(t)) return 'visual_attr';
     if (/gpc/.test(t)) return 'gpc';
     if (/product type|classif/.test(t)) return 'pt_class';
@@ -324,7 +323,7 @@
     return out;
   }
 
-  var PricerEngine = { VERSION: '1.4.0', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
+  var PricerEngine = { VERSION: '1.4.1', CATALOG: CATALOG, DEFAULTS: DEFAULTS,
     rates: rates, tieredUnits: tieredUnits, quote: quote, quoteText: quoteText, fmtGBP: fmtGBP,
     fmtMin: fmtMin, classifyTach: classifyTach, aiBriefRows: aiBriefRows, clientSummary: clientSummary,
     actualsFromBriefs: actualsFromBriefs, overridesWithActuals: overridesWithActuals };

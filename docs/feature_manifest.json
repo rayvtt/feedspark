@@ -927,11 +927,11 @@
    "pr": 173
   },
   {
-   "name": "Pricer engine: AI Text Attribute catalogue entry + title-scan patterns",
+   "name": "Pricer engine: AI Text Attribute RETIRED — Ray 10 Sep 2026 'not needed ever' (must stay gone)",
    "file": "docs/pricer_engine.js",
    "pattern": "text_attr",
-   "min": 2,
-   "pr": 173
+   "pr": 316,
+   "forbidden": true
   },
   {
    "name": "Pricer: compact token column — single Bill units cell + token-economics pop-up",
