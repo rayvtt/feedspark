@@ -427,9 +427,9 @@ window.addEventListener('load',restore);
     </div>
     <div class="qactions">
       <button class="btn pri" id="savequote" type="button" title="Freeze this quote as a dated snapshot and put it on the finance tracker">💾 Save quote</button>
+      <button class="btn pri" id="xlsx" type="button" title="Branded, formula-driven Excel workbook built on Ray's quote template — change a quantity, rate or discount and every total recalculates">⇩ Download quote (Excel)</button>
       <button class="btn" id="copy" type="button">⧉ Copy quote</button>
-      <button class="btn pri" id="xlsx" type="button" title="Branded, formula-driven Excel workbook on Ray's quote template">⇩ Download quote (Excel)</button>
-      <button class="btn" id="csv" type="button" title="Same quote as raw CSV data">⇩ CSV</button>
+      <button class="btn" id="csv" type="button" title="The same quote as raw CSV data">⇩ CSV</button>
       <button class="btn col-rate" id="savecard" type="button" title="Save the rates on this quote as your default rate card">★ Save as my rate card</button>
       <button class="btn" id="expand" type="button">⊕ Expand all</button>
       <span class="hint" id="save-hint"></span>
@@ -793,7 +793,6 @@ window.addEventListener('load',restore);
        ⇩ Excel (.xlsx)  the real deliverable — styled, branded, and FORMULA-DRIVEN, so Ray can
                         change a quantity, a rate or a discount and watch every total recalculate.
        ⇩ CSV            the raw-data fallback (BOM'd UTF-8, formula-injection neutralised). */
-  var QCOL={A:0,B:1,C:2,D:3,E:4,F:5,G:6,H:7,I:8,J:9,K:10,L:11,M:12,N:13};
   var XCOL='ABCDEFGHIJKLMNO'.split('');
   function n2(v){ return Math.round((+v||0)*100)/100; }
   function dmy(d){ return d.toLocaleDateString('en-GB'); }
