@@ -3241,6 +3241,41 @@
    "pattern": "data-hrs",
    "min": 1,
    "pr": 323
+  },
+  {
+   "name": "AI Quote: One-off | Monthly | Settings summary panel replaces the single totals line (Ray 10 Sep 2026 'add monthly costs … more organised and easy to use')",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "qs-mongross",
+   "min": 2,
+   "pr": 327
+  },
+  {
+   "name": "AI Quote: maintenance hours per month on any line + 'monthly' charge model (recurring line from hours/month) — Monthly side, ManPower rows in the export",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "data-mon",
+   "min": 1,
+   "pr": 327
+  },
+  {
+   "name": "AI Quote: monthly charge model toggle",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "data-v=\"monthly\"",
+   "min": 1,
+   "pr": 327
+  },
+  {
+   "name": "AI Quote: ✎ Edit a saved quote → new linked version, original stamped (Ray 10 Sep 2026 'saved quote also be able to edit again')",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "loadSaved",
+   "min": 2,
+   "pr": 327
+  },
+  {
+   "name": "AI Quote: uniqueRef — a second save the same day gets -2, -3 …",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "uniqueRef",
+   "min": 2,
+   "pr": 327
   }
  ]
 }
