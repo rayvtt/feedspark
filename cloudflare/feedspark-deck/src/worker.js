@@ -987,9 +987,13 @@ export default {
       const r = await mapStoreRoute(env, request, 'feedchat', {});
       if (r) return r;
     }
-    // AI Field Quote — per-client field-generation quotes + Ray's reusable rate card (kvmerge)
+    // AI Field Quote — per-client field-generation quotes + Ray's reusable rate card (kvmerge).
+    // explicitTombstones (10 Sep 2026): the page never deletes a key, so absence must NEVER delete —
+    // its old {client}-only / {ratecard}-only PUTs were tombstoning every other record (Ray:
+    // "issue when i try to save Accessorize quote"); this closes the door server-side too, so even
+    // a cached old page can't wipe the store.
     if (path === '/api/aiquote') {
-      const r = await mapStoreRoute(env, request, 'aiquote', {});
+      const r = await mapStoreRoute(env, request, 'aiquote', { explicitTombstones: true });
       if (r) return r;
     }
     // Saved quote SNAPSHOTS + the finance tracker (Ray, Sep 2026: save a quote, timestamp it,
