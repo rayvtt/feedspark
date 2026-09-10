@@ -2968,6 +2968,13 @@
    "file": "cloudflare/feedspark-deck/src/labelguard.js",
    "pattern": "liveHeader",
    "min": 2
+  },
+  {
+   "name": "kwcal: XML-vs-CSV sniff on both feed streams (sync + ensureCache) so XML parses per <item>, not per line (Ray, 10 Sep 2026)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "createXmlParser(onRow)",
+   "min": 2,
+   "pr": 312
   }
  ]
 }
