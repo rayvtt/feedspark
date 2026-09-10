@@ -2823,6 +2823,27 @@
    "pr": 300
   },
   {
+   "name": "aiquote: CSV export reproduces Ray's client quote template",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "AIQUOTE-CSV-TEMPLATE",
+   "min": 1,
+   "pr": 306
+  },
+  {
+   "name": "aiquote: quote CSV carries the standing commercial notes",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "Notes on the Quotation",
+   "min": 1,
+   "pr": 306
+  },
+  {
+   "name": "aiquote: quote CSV template sections (system / one-off / manpower)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "Initial Data Optimisation - Initial (One-off)",
+   "min": 1,
+   "pr": 306
+  },
+  {
    "name": "AI Quote: PT picker bulk actions — search-scoped Select all / Deselect all + Clear all",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "pt-acts",
