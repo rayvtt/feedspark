@@ -42,6 +42,9 @@ window.addEventListener('load',restore);
   .ctl label{font-size:12px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
   select#brand{font:inherit;font-weight:800;font-size:14px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;min-width:170px}
   .btn{font:inherit;font-size:13px;font-weight:800;padding:9px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer}
+  /* a deliberately unglamorous text action: the raw CSV must never read as "the export" */
+  .btn.quiet{border-color:transparent;background:none;color:var(--muted);font-weight:700;font-size:12px;text-decoration:underline dotted;text-underline-offset:3px;margin-left:auto}
+  .btn.quiet:hover{color:var(--ink-2);border-color:transparent}
   .btn:hover{border-color:var(--orange);color:var(--orange-deep)}
   .btn.pri{background:var(--orange);border-color:var(--orange);color:#fff}
   .btn.pri:hover{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
@@ -427,9 +430,9 @@ window.addEventListener('load',restore);
     </div>
     <div class="qactions">
       <button class="btn pri" id="savequote" type="button" title="Freeze this quote as a dated snapshot and put it on the finance tracker">💾 Save quote</button>
-      <button class="btn pri" id="xlsx" type="button" title="Branded, formula-driven Excel workbook built on Ray's quote template — change a quantity, rate or discount and every total recalculates">⇩ Download quote (Excel)</button>
+      <button class="btn pri" id="xlsx" type="button" title="Your quote template, replicated exactly — Excel workbook with live formulas: change a quantity, rate or discount and every total recalculates">⇩ Export quote</button>
       <button class="btn" id="copy" type="button">⧉ Copy quote</button>
-      <button class="btn" id="csv" type="button" title="The same quote as raw CSV data">⇩ CSV</button>
+      <button class="btn quiet" id="csv" type="button" title="Raw data only — a CSV cannot carry colours, fonts, borders or formulas. Use ⇩ Export quote for the client-ready workbook.">raw data (.csv)</button>
       <button class="btn col-rate" id="savecard" type="button" title="Save the rates on this quote as your default rate card">★ Save as my rate card</button>
       <button class="btn" id="expand" type="button">⊕ Expand all</button>
       <span class="hint" id="save-hint"></span>
@@ -822,48 +825,63 @@ window.addEventListener('load',restore);
     p.push(rateWord(rateSrc(l.id)));
     return p.join(' · '); }
 
-  /* ---- cell styles: Ray's template idiom, repainted in the FeedSpark design system ----
-     deep orange #ED6F0B title band (white 28pt) · orange #F5A623 column band · deep-orange
-     section headers on the #F7F7F5 wash · charcoal #333333 body. The template's OWN commercial
-     markers are kept verbatim because Ray reads the sheet by them: YELLOW = an input cell you
-     are meant to type in (the discount %), RED figures = discount, RED-filled cell = a grand
-     total. Number formats: money "£"#,##0.00 · per-SKU rates "£"#,##0.000 · discount 0% · dates. */
-  var XINK='333333', XORA='F5A623', XORD='ED6F0B', XGREY='F5F5F5', XWASH='F7F7F5';
+  /* ---- cell styles: Ray's quote template, replicated EXACTLY (Ray, 10 Sep 2026: "replicate
+     exactly what I shared") — every value below was read out of his workbook, with its theme
+     colours resolved to RGB, not chosen:
+       body            Calibri 12, black (theme dk1)
+       title  D1:I2    Calibri 28, NOT bold, no fill, medium box, centred + wrapped
+       header values   B5..B9 / M5..M8   light GREEN #E2EFDA (accent6 +80%), thin box, centred;
+                       the CLIENT NAME (B5) in bold RED — the only red text in the header block
+       column band     A12..N13          light GREY #F2F2F2 (lt1 −5%), bold black, thin box, wrap
+       section heads   A15 / A22 / A27   bold RED text, NO fill
+       Quantity/Cost   D / E             light BLUE #DEEBF7 (accent5 +80%), bold, thin box
+       Discount %      H                 YELLOW #FFFF00, bold RED figure, 0%   ← the cell you type in
+       Discount £      I                 bold RED figure
+       Net Cost        K                 bold black
+       grand totals    K20 / K32 / K37…  RED fill, WHITE bold figure
+       note frames     A47:N54 etc.      MEDIUM-weight box, no fill, heading bold
+     Deliberate departures, both because the template never priced per-SKU pennies: money is
+     "£"#,##0.00 (template "£"#,##0) and per-SKU rates "£"#,##0.000 — £0.045 would otherwise
+     print as £0. Columns E/F are pinned to 14 wide (template default ~8.4 → ########). */
+  var XINK='000000', XBAND='F2F2F2', XIN='DEEBF7', XMETA='E2EFDA', XRED='FF0000';
   var S={
-    title : {b:1,sz:28,c:'FFFFFF',fl:XORD,bd:'medium:lrtb',h:'center',v:'center',w:1},
+    title : {sz:28,bd:'medium:lrtb',h:'center',v:'center',w:1},
     hlab  : {b:1,h:'left'},
-    hval  : {b:1,fl:XWASH,bd:'thin:lrtb',h:'center'},
-    hvalO : {b:1,c:XORD,fl:XWASH,bd:'thin:lrtb',h:'center'},
-    hvalD : {b:1,fl:XWASH,bd:'thin:ltb',h:'center',n:'date'},
-    hvalL : {b:1,fl:XWASH,bd:'thin:ltb',h:'center'},
-    hvalR : {b:1,fl:XWASH,bd:'thin:rtb',h:'center'},
-    band  : {b:1,fl:XORA,bd:'thin:lrtb',h:'center',v:'center',w:1},
-    band2 : {b:1,fl:XGREY,bd:'thin:lrtb',h:'center',v:'center',w:1},
-    sect  : {b:1,c:XORD,fl:XWASH,bd:'thin:ltb',h:'left',w:1},
-    sectB : {b:1,c:XORD,fl:XWASH,bd:'thin:rtb',h:'left',w:1},
+    hval  : {fl:XMETA,bd:'thin:lrtb',h:'center'},
+    hvalO : {b:1,c:XRED,fl:XMETA,bd:'thin:lrtb',h:'center'},
+    hvalD : {fl:XMETA,bd:'thin:ltb',h:'center',n:'date'},
+    hvalL : {fl:XMETA,bd:'thin:ltb',h:'center'},
+    hvalR : {fl:XMETA,bd:'thin:rtb',h:'center'},
+    band  : {b:1,fl:XBAND,bd:'thin:lrtb',h:'center',v:'center',w:1},    // H/I/K/N — two-line headings, wrap as the template does
+    bandN : {b:1,fl:XBAND,bd:'thin:lrtb',h:'center',v:'center'},        // A12:B13 + D12:F12 — single line, no wrap, as the template
+    band2 : {b:1,fl:XBAND,bd:'thin:lrtb',h:'center',v:'center',w:1},
+    sect  : {b:1,c:XRED,bd:'thin:ltb',h:'left'},     // merged A:B is 66 chars wide — no wrap, as the template
+    sectB : {b:1,c:XRED,bd:'thin:rtb',h:'left'},
     /* the A label wraps: column A is Ray's exact 24.4 and a long optimisation name would
        otherwise be CLIPPED, because column B alongside it is never empty to spill into */
     lbl   : {bd:'thin:ltb',h:'left',w:1},
-    lblq  : {i:1,bd:'thin:rtb',h:'left',w:1},
-    qty   : {b:1,fl:XGREY,bd:'thin:lrtb',h:'center',n:'int'},
-    rate  : {b:1,fl:XGREY,bd:'thin:lrtb',h:'center',n:'rate'},
-    rateF : {b:1,fl:XGREY,bd:'thin:lrtb',h:'center',n:'gbp'},
+    lblq  : {bd:'thin:rtb',h:'left',w:1},
+    qty   : {b:1,c:XRED,fl:XIN,bd:'thin:lrtb',h:'center',n:'int'},   // the template's Quantity figures are RED
+    rate  : {b:1,fl:XIN,bd:'thin:lrtb',h:'center',n:'rate'},
+    rateF : {b:1,fl:XIN,bd:'thin:lrtb',h:'center',n:'gbp'},
     money : {bd:'thin:lrtb',h:'center',n:'gbp'},
     blank : {bd:'thin:lrtb',h:'center'},
-    disc  : {b:1,c:XORD,fl:'FFFF00',bd:'thin:lrtb',h:'center',n:'pct'},
-    discv : {b:1,c:'FF0000',bd:'thin:lrtb',h:'center',n:'gbp'},
+    disc  : {b:1,c:XRED,fl:'FFFF00',bd:'thin:lrtb',h:'center',n:'pct'},
+    discv : {b:1,c:XRED,bd:'thin:lrtb',h:'center',n:'gbp'},
     net   : {b:1,bd:'thin:lrtb',h:'center',n:'gbp'},
     note  : {bd:'thin:lrtb',h:'left',w:1},
     noteb : {b:1,bd:'thin:lrtb',h:'left',w:1},
-    totlb : {b:1,fl:XGREY,h:'left'},
+    totlb : {b:1,h:'left'},
     totl  : {b:1,h:'left'},
-    totli : {b:1,i:1,h:'left'},
-    totred: {b:1,c:'FFFFFF',fl:'FF0000',bd:'thin:lrtb',h:'center',n:'gbp'},
-    totgap: {b:1,fl:XGREY,bd:'thin:lrtb',h:'center',n:'gbp'},
-    per   : {i:1,h:'left'}
+    totli : {b:1,h:'left'},
+    totred: {b:1,c:'FFFFFF',fl:XRED,bd:'thin:lrtb',h:'center',n:'gbp'},
+    /* an incomplete quote's blank total: neutral, never dressed as a red grand total */
+    totgap: {b:1,bd:'thin:lrtb',h:'center',n:'gbp'},
+    per   : {h:'left'}
   };
-  /* framed full-width note block, drawn cell by cell exactly as the template does it */
-  function bxs(sides,bold){ return {b:bold?1:0,fl:XWASH,bd:'medium:'+(sides||''),h:'left',w:1}; }
+  /* framed full-width note block, drawn cell by cell exactly as the template does it:
+     medium outline, no fill, ordinary-height edge rows */
+  function bxs(sides,bold){ return {b:bold?1:0,bd:'medium:'+(sides||''),h:'left',w:1}; }
   /* Same style, different border edges. A merged range must NOT carry internal borders — each
      member cell owns only the outer edges it sits on, which is how Ray's template draws its
      A12:B13 / D12:F12 / H12:H13 bands. */
@@ -891,7 +909,7 @@ window.addEventListener('load',restore);
     var pf=new Date(now.getFullYear(),now.getMonth()+1,1);
     var pt=new Date(pf.getMonth()===0?pf.getFullYear():pf.getFullYear()+1,0,1);
     var pmo=(pt.getFullYear()-pf.getFullYear())*12+(pt.getMonth()-pf.getMonth())+1;
-    var NOTPRICED='Not priced by the AI field quote — the platform / retainer model lives in the Pricer';
+    var NOTPRICED='Not priced on this quote — see the Pricer';   // one line in column N, as the template's notes are
 
     /* 1 — title band (D1:I2, 28pt, medium box drawn round the OUTSIDE of the merge only) */
     function tEdge(top){ var c={},j,e=top?'t':'b';
@@ -918,11 +936,11 @@ window.addEventListener('load',restore);
     /* 3 — column band. C / G / J are the template's 1-char spacer columns and stay unpainted;
        every OTHER cell inside a merged range carries the band style so the outline closes. */
     var bandT=sv(S.band,'thin:lrt'), bandB=sv(S.band,'thin:lrb');
-    var b1=row({A:{v:'MONTHLY RECURRING COSTS',s:sv(S.band,'thin:lt')},B:{v:'',s:sv(S.band,'thin:rt')},
-      D:{v:mkt+' Market',s:sv(S.band,'thin:ltb')},E:{v:'',s:sv(S.band,'thin:tb')},F:{v:'',s:sv(S.band,'thin:rtb')},
+    var b1=row({A:{v:'MONTHLY RECURRING COSTS',s:sv(S.bandN,'thin:lt')},B:{v:'',s:sv(S.bandN,'thin:rt')},
+      D:{v:mkt+' Market',s:sv(S.bandN,'thin:ltb')},E:{v:'',s:sv(S.bandN,'thin:tb')},F:{v:'',s:sv(S.bandN,'thin:rtb')},
       H:{v:'Discount %\n(Exc Man Power)',s:bandT},I:{v:'Discount £\n(Exc Man Power)',s:bandT},
       K:{v:'Net\nCost',s:bandT},N:{v:'Additional Notes',s:bandT}},27);
-    var b2=row({A:{v:'',s:sv(S.band,'thin:lb')},B:{v:'',s:sv(S.band,'thin:rb')},
+    var b2=row({A:{v:'',s:sv(S.bandN,'thin:lb')},B:{v:'',s:sv(S.bandN,'thin:rb')},
       D:{v:'Quantity',s:S.band2},E:{v:'Cost',s:S.band2},F:{v:'Total Cost',s:S.band2},
       H:{v:'',s:bandB},I:{v:'',s:bandB},K:{v:'',s:bandB},N:{v:'',s:bandB}},27);
     mg('A'+b1+':B'+b2); mg('D'+b1+':F'+b1); mg('H'+b1+':H'+b2); mg('I'+b1+':I'+b2);
@@ -932,7 +950,7 @@ window.addEventListener('load',restore);
     var s1=row({A:{v:'System / Platform Costs',s:S.sect},B:{v:'',s:S.sectB},N:{v:NOTPRICED,s:S.note}});
     mg('A'+s1+':B'+s1);
     row({A:{v:'Total System Costs',s:S.totlb},B:{v:'',s:S.totlb},K:{v:'',s:S.totgap},
-      N:{v:'Total tech costs — no platform, feed-processing or scrape line is quoted here',s:S.noteb}});
+      N:{v:'Total Tech Costs',s:S.noteb}});
     row();
     /* 5 — initial data optimisation: one row per SELECTED optimisation, each fully live */
     var s2=row({A:{v:'Initial Data Optimisation - Initial (One-off)',s:S.sect},B:{v:'',s:S.sectB},
@@ -1022,17 +1040,19 @@ window.addEventListener('load',restore);
       +srcN.cat+' from the Tachyon catalogue'+(srcN.none?(', '+srcN.none+' still unset'):'')+'.'});
     if(hrs)notes.push({t:'Delivery effort across the selection: '+fmt(hrs)+' setup hours (ASPL + QC + PM).'});
     notes.push({t:'All figures ex VAT'+(vatOn()?'; the VAT 20% line above is shown separately.':' — VAT is not applied on this quote.')});
-    notes.push({t:'Every cost cell above is a live formula — change a Quantity, a Cost or a Discount % and the totals recalculate.'});
+    /* xo = Excel-only: a CSV has no formulas, so this line must never reach the CSV */
+    notes.push({t:'Every cost cell above is a live formula — change a Quantity, a Cost or a Discount % and the totals recalculate.',xo:1});
     notes.push({t:'Volumes are live from the client feed and £/SKU rates come from this quote, the saved rate card or the Tachyon catalogue — nothing here is estimated.'});
     box(notes);
     function box(lz){ var i,j,total=lz.length+2;
       for(i=0;i<total;i++){
         var isTop=(i===0), isBot=(i===total-1), ln=(!isTop&&!isBot)?lz[i-1]:null, cells={};
+        if(ln&&ln.xo)cells._xo=1;   // row-level flag, read only by the CSV serialiser
         for(j=0;j<14;j++){
           var sides=(j===0?'l':'')+(j===13?'r':'')+(isTop?'t':'')+(isBot?'b':'');
           cells[XCOL[j]]={v:(j===0&&ln)?ln.t:'',s:bxs(sides,ln&&ln.b&&j===0)};
         }
-        var n=row(cells,(isTop||isBot)?6:null); mg('A'+n+':N'+n);
+        var n=row(cells); mg('A'+n+':N'+n);
       }
     }
     return sh;
@@ -1046,7 +1066,7 @@ window.addEventListener('load',restore);
   function csvCell(v){ if(typeof v==='number')return String(v);
     var s=String(v==null?'':v); if(/^[-=+@]/.test(s))s=' '+s;
     return (/[",\r\n]/.test(s)||/^ /.test(s))?'"'+s.replace(/"/g,'""')+'"':s; }
-  function csvRows(sh){ return sh.rows.map(function(cells){ var i,out=[],c;
+  function csvRows(sh){ return sh.rows.filter(function(cells){ return !cells._xo; }).map(function(cells){ var i,out=[],c;
     for(i=0;i<14;i++){ c=cells[XCOL[i]]; out.push(c?(c.x!=null?c.x:(c.v==null?'':c.v)):''); } return out; }); }
   function toCsv(rows){ return rows.map(function(r){ return r.map(csvCell).join(','); }).join('\r\n'); }
 
@@ -1133,8 +1153,11 @@ window.addEventListener('load',restore);
       +'<pageSetup paperSize="9" orientation="landscape"/>'
       +'<drawing r:id="rId1"/></worksheet>';
   }
-  /* the FeedSpark wordmark, lifted from Ray's own quote template (xl/media/image1.png),
-     placed at its natural 195×50px at the sheet's top-left exactly as he anchors it */
+  /* the FeedSpark wordmark, lifted from Ray's own quote template (xl/media/image1.png) and
+     anchored EXACTLY as his drawing1.xml places it: col 0 + 32465 EMU, row 0, stretched to
+     2,899,148 × 790,734 EMU (3.17" × 0.86") — his size, not the PNG's natural 195×50.
+     The template's second picture (top-right, column N) is the REISS logo — client-specific,
+     so that slot is deliberately left empty rather than put one client's mark on another's quote. */
   var FSMARK='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';
   function drawingXml(){
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
@@ -1142,12 +1165,12 @@ window.addEventListener('load',restore);
       +' xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"'
       +' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
       +'<xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>32465</xdr:colOff>'
-      +'<xdr:row>0</xdr:row><xdr:rowOff>28575</xdr:rowOff></xdr:from>'
-      +'<xdr:ext cx="1857375" cy="476250"/>'
-      +'<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="2" name="FeedSpark"/>'
+      +'<xdr:row>0</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>'
+      +'<xdr:ext cx="2899148" cy="790734"/>'
+      +'<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="2" name="Picture 1"/>'
       +'<xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>'
       +'<xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>'
-      +'<xdr:spPr><a:xfrm><a:off x="32465" y="28575"/><a:ext cx="1857375" cy="476250"/></a:xfrm>'
+      +'<xdr:spPr><a:xfrm><a:off x="32465" y="0"/><a:ext cx="2899148" cy="790734"/></a:xfrm>'
       +'<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic>'
       +'<xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>';
   }
