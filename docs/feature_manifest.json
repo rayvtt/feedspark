@@ -927,13 +927,6 @@
    "pr": 173
   },
   {
-   "name": "Pricer engine: AI Text Attribute RETIRED — Ray 10 Sep 2026 'not needed ever' (must stay gone)",
-   "file": "docs/pricer_engine.js",
-   "pattern": "text_attr",
-   "pr": 319,
-   "forbidden": true
-  },
-  {
    "name": "Pricer: compact token column — single Bill units cell + token-economics pop-up",
    "file": "docs/FeedSpark_Pricer.html",
    "pattern": "tok-pop",
@@ -3080,6 +3073,20 @@
    "pattern": "XMETA",
    "min": 3,
    "pr": 315
+  },
+  {
+   "name": "Workflow: Brief Ledger delegated search/sort/toggle + full-row haystack",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "bl-search",
+   "min": 2,
+   "pr": 320
+  },
+  {
+   "name": "Pricer engine: AI Text Attribute RETIRED — Ray 10 Sep 2026 'not needed ever' (must stay gone)",
+   "file": "docs/pricer_engine.js",
+   "pattern": "text_attr",
+   "pr": 319,
+   "forbidden": true
   },
   {
    "name": "overlay engine: URL-string classifier + feed collector (UMD, agent + page + tests)",
