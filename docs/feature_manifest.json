@@ -2955,7 +2955,7 @@
    "file": "docs/FeedSpark_FeedChat.html",
    "pattern": "createXmlParser(onRow)",
    "min": 1,
-   "pr": 309
+   "pr": 311
   },
   {
    "name": "feedlab: XML parser grows the header on late-debut sparse tags",
