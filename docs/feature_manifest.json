@@ -3397,18 +3397,18 @@
    "min": 1
   },
   {
-   "name": "AI Quote xlsx: the empty System / Platform Costs section must stay gone",
+   "name": "AI Quote xlsx: System / Platform Costs section written ONLY when the monthly new-products bundle is on (was forbidden in #333; conditional since #339)",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "v:'System / Platform Costs'",
-   "pr": 333,
-   "forbidden": true
+   "pattern": "if(t.upd){ var s1=row({A:{v:'System / Platform Costs'",
+   "pr": 339,
+   "min": 1
   },
   {
-   "name": "AI Quote xlsx: the 'Monthly Cost (Tech)' placeholder row must stay gone",
+   "name": "AI Quote xlsx: Monthly Cost (Tech) row = the new-products bundle, written only when it is on (was forbidden in #333; conditional since #339)",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "Monthly Cost (Tech)",
-   "pr": 333,
-   "forbidden": true
+   "pattern": "if(platA)rTech=row({H:{v:'Monthly Cost (Tech)'",
+   "pr": 339,
+   "min": 1
   },
   {
    "name": "AI Quote xlsx: the internal 'Delivery effort' row + note must stay gone",
@@ -3472,6 +3472,41 @@
    "pattern": "function attachCalFile(",
    "min": 1,
    "pr": 337
+  },
+  {
+   "name": "AI Quote: monthly update — new products bundle (Ray 11 Sep 2026 'update this monthly … minimum £100 … bundled up to 1k / 1–5k / 5–10k / 10–20k … expected monthly arrivals for forecasting')",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function updInfo(){",
+   "pr": 339,
+   "min": 1
+  },
+  {
+   "name": "AI Quote: arrivals forecast read from the Product Volume module (/api/volume) — avg daily arrivals × 30.4",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "fetch('/api/volume?client='",
+   "pr": 339,
+   "min": 1
+  },
+  {
+   "name": "AI Quote: £100 floor on the bundle (UPD_MIN) + draft band ladder on the rate card",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "var UPD_MIN=100, UPD_DEFAULT_TIERS=",
+   "pr": 339,
+   "min": 1
+  },
+  {
+   "name": "AI Quote: bundle card in the page (#upd-card) + summary row #qs-upd",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "id=\"qs-upd\"",
+   "pr": 339,
+   "min": 1
+  },
+  {
+   "name": "AI Quote: bundle survives save → ✎ Edit (snapshot upd + loadSaved pin)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "r.upd=q.upd?{on:true,est:",
+   "pr": 339,
+   "min": 1
   }
  ]
 }
