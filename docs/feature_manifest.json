@@ -3851,6 +3851,20 @@
    "pattern": "sect('Setup Pre-charges (One-off)'",
    "pr": 349,
    "min": 1
+  },
+  {
+   "name": "kwcal: import counts events OUTSIDE the id fallback — a JSON whose events all carry an id used to import silently and report 'nothing imported'",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "r.events.push(ev); n++;",
+   "min": 1,
+   "pr": 349
+  },
+  {
+   "name": "kwcal: opening ⤓ Import twice replaces the panel instead of stacking two",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "opening it twice used to stack panels",
+   "min": 1,
+   "pr": 349
   }
  ]
 }
