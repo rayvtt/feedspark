@@ -360,24 +360,35 @@ window.addEventListener('load',restore);
   .tier.on{border-color:var(--orange);box-shadow:0 0 0 2px rgba(245,166,35,.25)}
   .tier .tag{position:absolute;top:-8px;right:8px;font-size:9.5px;font-weight:900;background:var(--orange);color:#fff;border-radius:100px;padding:1px 7px}
   .upd-sum{font-size:12.5px;font-weight:700;color:var(--ink-2)}
-  /* quote types: the "What are you quoting?" picker + the per-type section cards */
-  .types{display:flex;flex-wrap:wrap;gap:8px}
-  .types .tp{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border-radius:14px;padding:9px 14px;min-width:170px}
+  /* quote types (UX pass — Ray, 11 Sep 2026: "the boxes are sized incorrectly and the details are
+     probably too much"): the picker is an even grid; every service card is three rows — the choice
+     (market chips / feed rows / hours), ONE muted settings strip (rate · setup · ✎ note) where every
+     box is the same 30px height, and the summary line. The long wording lives behind the ⓘ. */
+  .types{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+  .types .tp{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border-radius:14px;padding:9px 14px;min-width:0}
   .types .tp small{font-size:10.5px;font-weight:700;opacity:.8;line-height:1.25}
-  .xrate{font-size:12.5px;font-weight:800;color:var(--ink-2);margin-bottom:8px} .xrate input.xr,.xret input.xh,.xfeed input,.xfeed select,.xnote input.xn,.xm-new{font:inherit;font-weight:800;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
-  .xrate input.xr{width:76px;text-align:right} .xret input.xh{width:76px;text-align:right}
-  .xm-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px} .xm-new{width:150px;font-weight:700}
-  .xnote{margin:6px 0} .xnote input.xn{width:100%;font-weight:700}
-  .xfeed{display:grid;grid-template-columns:110px minmax(180px,1fr) 64px 150px 30px;gap:6px;align-items:center;margin:6px 0} .xfeed .xf-qty{text-align:right} .xfeed .xf-price{text-align:right}
-  .xfeed .xf-fixed{font-size:12px;font-weight:800;color:var(--muted)} .xfeed .xf-x{font:inherit;font-weight:900;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;color:var(--muted);padding:4px 0}
-  .xfeed textarea.xf-req{grid-column:1/-1;font:inherit;font-size:12px;font-weight:600;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);resize:vertical}
-  .xfeed .dsc{grid-column:1/-1;justify-self:start}
-  .xret{display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:12.5px;font-weight:800;color:var(--ink-2)} .xret label{display:inline-flex;align-items:center;gap:6px}
-  .xsum{margin-top:8px;font-size:12.5px;font-weight:700;color:var(--ink-2)} .xsum .dsc{margin-left:6px}
-  .xpre{font-size:12.5px;font-weight:800;color:var(--ink-2);margin:0 0 8px;display:flex;flex-wrap:wrap;align-items:center;gap:6px} .xpre input.xp-h{width:52px;text-align:right;font:inherit;font-weight:800;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
-  .xpre select.xp-mode{font:inherit;font-size:11.5px;font-weight:800;border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:#fff;color:var(--ink-2)}
-  [data-theme=dark] .xpre input.xp-h,[data-theme=dark] .xpre select.xp-mode{background:#20242E;color:var(--ink)}
-  [data-theme=dark] .xrate input.xr,[data-theme=dark] .xret input.xh,[data-theme=dark] .xfeed input,[data-theme=dark] .xfeed select,[data-theme=dark] .xnote input.xn,[data-theme=dark] .xm-new,[data-theme=dark] .xfeed textarea.xf-req,[data-theme=dark] .xfeed .xf-x{background:#20242E;color:var(--ink)}
+  .xrate input.xr,.xpre input.xp-h,.xpre select.xp-mode,.xret input.xh,.xfeed input,.xfeed select,.xnote input.xn,.xm-new{font:inherit;font-size:12.5px;font-weight:800;height:30px;padding:0 8px;margin:0;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);box-sizing:border-box;box-shadow:none}
+  .xrate input.xr{width:66px;text-align:right} .xpre input.xp-h{width:48px;text-align:right} .xret input.xh{width:60px;text-align:right}
+  .xpre select.xp-mode{font-size:11.5px;color:var(--ink-2);padding:0 4px}
+  .xbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin:8px 0 0;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--wash);font-size:11.5px;font-weight:800;color:var(--muted)}
+  .xk{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex-wrap:wrap}
+  .xk .xp-sum{font-weight:700;white-space:normal}
+  .xnb{margin-left:auto;font:inherit;font-size:11px;font-weight:900;padding:4px 10px;border-radius:100px;border:1px dashed var(--line);background:#fff;color:var(--muted);cursor:pointer;white-space:nowrap}
+  .xnb.on,.xnb:hover{border-style:solid;border-color:var(--orange);color:var(--orange-ink)}
+  .xm-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:2px 0 0} .xm-new{width:78px;font-weight:700;border-style:dashed;border-radius:100px;text-align:center}
+  .xm-new::placeholder{color:var(--muted)}
+  .xnote{margin:8px 0 0} .xnote input.xn{width:100%;font-weight:700;border-style:dashed}
+  .xfeed{display:grid;grid-template-columns:96px minmax(160px,1fr) 56px 120px 30px;gap:6px;align-items:center;margin:0 0 6px} .xfeed .xf-qty{text-align:right} .xfeed .xf-price{text-align:right}
+  .xfeed .xf-fixed{font-size:11.5px;font-weight:800;color:var(--muted);white-space:nowrap} .xfeed .xf-x{font:inherit;font-size:12px;font-weight:900;height:30px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;color:var(--muted);padding:0}
+  .xfeed textarea.xf-req{grid-column:1/-1;font:inherit;font-size:12px;font-weight:600;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);resize:vertical;box-sizing:border-box}
+  .xfeed .dsc{grid-column:1/-1;justify-self:start} .xfeed input,.xfeed select{min-width:0;width:100%}
+  @media (max-width:640px){ .xfeed{grid-template-columns:96px minmax(0,1fr) 56px 30px} .xfeed .xf-x{grid-column:4;grid-row:1} .xfeed .xf-price,.xfeed .xf-fixed{grid-column:1/-1;justify-self:start} .xfeed .xf-price{width:120px} }
+  .xadd{font:inherit;font-size:11.5px;font-weight:900;padding:5px 12px;border-radius:100px;border:1px dashed var(--line);background:#fff;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  .xadd:hover{border-style:solid;border-color:var(--orange);color:var(--orange-deep)}
+  .xret{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:12.5px;font-weight:800;color:var(--ink-2);margin:2px 0 0} .xret label{display:inline-flex;align-items:center;gap:6px}
+  .xsum{margin-top:8px;font-size:12.5px;font-weight:700;color:var(--ink-2)} .xsum .dsc{margin-left:6px} .xsum .dsl{margin-left:10px;font-size:10px;font-weight:900;color:var(--muted)} .xsum .dsl+.dsc{margin-left:3px}
+  [data-theme=dark] .xrate input.xr,[data-theme=dark] .xpre input.xp-h,[data-theme=dark] .xpre select.xp-mode,[data-theme=dark] .xret input.xh,[data-theme=dark] .xfeed input,[data-theme=dark] .xfeed select,[data-theme=dark] .xnote input.xn,[data-theme=dark] .xm-new,[data-theme=dark] .xfeed textarea.xf-req,[data-theme=dark] .xfeed .xf-x,[data-theme=dark] .xnb,[data-theme=dark] .xadd{background:#20242E;color:var(--ink)}
+  [data-theme=dark] .xbar{background:#1C1F27}
   /* partner-discount scope: the selector beside the %, and the per-line chip in "selected lines" mode */
   #discscope{font:inherit;font-size:11px;font-weight:800;border:1px solid var(--line);border-radius:8px;padding:3px 5px;background:#fff;color:var(--ink-2);margin-left:4px}
   .dscw{margin:0 0 0 6px;font-size:11px;color:var(--muted)}
@@ -395,6 +406,7 @@ window.addEventListener('load',restore);
   .qs-r .unset{color:var(--muted);font-weight:700;font-size:12px}
   .qs-r input[type=text]{font:inherit;font-size:13px;font-weight:800;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;width:84px;text-align:right}
   .qs-in{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+  .edit-bar[hidden]{display:none}
   .edit-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:9px 12px;border:1px dashed var(--orange);border-radius:10px;background:rgba(245,166,35,.08);font-size:12.5px;font-weight:800;color:var(--orange-ink)}
   .t-sup{display:block;font-size:10px;font-weight:800;color:var(--muted)}
   [data-theme=dark] .qs-col{background:#1C1F27}
@@ -527,7 +539,7 @@ window.addEventListener('load',restore);
 <main class="wrap">
   <div class="card" id="type-card">
     <h3>What are you quoting?</h3>
-    <div class="ch">Pick every part of the engagement this quote covers. Each type has its own section below and its own place on the Excel export; the totals and the tracker combine them. Every £ here is a rate on the shared rate card — change it and it saves for every client.</div>
+    <div class="ch">Pick every part of the engagement this quote covers. Each type gets its own section below and its own place on the Excel export; the totals and the tracker combine them. Every £ is a rate on the shared rate card — change it and it saves for every client.</div>
     <div class="types" id="types"></div>
   </div>
 
@@ -559,25 +571,25 @@ window.addEventListener('load',restore);
 
   <div class="card" id="sys-card" data-tp="sys">
     <h3>New system — FeedHero dashboard</h3>
-    <div class="ch">A system is a FeedHero dashboard for <b>one</b> market; a brand with several markets needs one per market. Tick the markets below (the brand's wired markets are listed; add any other), at the per-system rate.</div>
+    <div class="ch">A system is a FeedHero dashboard for <b>one</b> market — a brand with several markets needs one per market. Tick the markets (the brand's wired markets are listed; + add any other). The strip below holds the per-system rate, the automatic setup hours and how they are billed.</div>
     <div id="sys-body"></div>
   </div>
 
   <div class="card" id="feed-card" data-tp="feed">
     <h3>New feed</h3>
-    <div class="ch">A <b>generic</b> feed is a fixed price per feed (ex VAT). A <b>bespoke</b> feed depends on its complexity: capture the requirements here and they go to ASPL for costing — the price is decided later and stays blank on the quote until it is agreed.</div>
+    <div class="ch">A <b>generic</b> feed is a fixed price per feed (ex VAT). A <b>bespoke</b> feed depends on its complexity: capture the requirements and they go to ASPL for costing — the price stays blank on the quote until it is agreed. Setup hours are added automatically per feed.</div>
     <div id="feed-body"></div>
   </div>
 
   <div class="card" id="lia-card" data-tp="lia">
     <h3>Local inventory feed</h3>
-    <div class="ch">A monthly charge per local inventory feed. Tick the markets that need one.</div>
+    <div class="ch">A monthly charge per local inventory feed. Tick the markets that need one; setup hours are added automatically per feed.</div>
     <div id="lia-body"></div>
   </div>
 
   <div class="card" id="ret-card" data-tp="ret">
     <h3>Retainer hours</h3>
-    <div class="ch">One-off hours and / or hours per month at the day rate (the block rate in Settings — £595 per 8 hours). One-off hours land in the one-off total; monthly hours land in the ManPower (Days / Month) section of the export.</div>
+    <div class="ch">One-off hours and / or hours per month at the day rate (the block rate in Settings — £595 per 8 hours). One-off hours land in the one-off total; monthly hours in the ManPower (Days / Month) section of the export.</div>
     <div id="ret-body"></div>
   </div>
 
@@ -610,7 +622,7 @@ window.addEventListener('load',restore);
         <div class="qs-h">Settings</div>
         <div class="qs-r"><span>Block rate — one-off hours &amp; maintenance</span><span class="qs-in" title="Ray, 10 Sep 2026: £595 per 8 hours. Saves with your rate card.">£<input type="text" id="blockrate" inputmode="decimal" placeholder="595" style="width:56px"> / 8h</span></div>
         <div class="qs-r"><span>Quote valid</span><span class="qs-in"><input type="text" id="valid" inputmode="numeric" placeholder="30" style="width:52px"> days</span></div>
-        <div class="qs-r"><span class="hint">Type maintenance hours per month on any line to add it to the Monthly side; the discount and VAT apply to both sides, and the export writes the monthly lines into the template's ManPower (days / month) section.</span></div>
+        <div class="qs-r"><span class="hint">Maintenance hours on any line land on the Monthly side; discount and VAT apply to both sides.</span></div>
       </div>
     </div>
     <div class="edit-bar" id="edit-bar" hidden>✎ Editing <b id="edit-ref"></b> — Save stores a <b>new version</b> linked to it; the original stays on the tracker for finance. Quantities are as saved; ⟳ Pull live feed again for fresh volumes. <button class="btn quiet" id="edit-stop" type="button" style="margin-left:0">stop editing</button></div>
@@ -930,11 +942,11 @@ window.addEventListener('load',restore);
        lia  — a local inventory feed — ~£250 per feed per month
        ret  — retainer hours: one-off hours and / or hours per month at the day rate (£595 / 8h)
      Every £ is a changeable rate on the shared rate card (rc.rates); the day rate is blockGBP(). */
-  var TYPES=[['ai','AI feed generation','Tachyon fields on the live feed — scope, fields, monthly update'],
-             ['sys','New system','A FeedHero dashboard for one market — one per market'],
-             ['feed','New feed','Generic at a fixed £, or bespoke — requirements to ASPL for costing'],
+  var TYPES=[['ai','AI feed generation','Tachyon fields on the live feed'],
+             ['sys','New system','FeedHero dashboard, one per market'],
+             ['feed','New feed','Generic at a fixed £, or bespoke via ASPL'],
              ['lia','Local inventory feed','Per feed, per month'],
-             ['ret','Retainer hours','One-off hours and / or hours per month at the day rate']];
+             ['ret','Retainer hours','One-off or monthly, at the day rate']];
   var RATE_DEFAULT={sys:500,feed:150,lia:250};
   function rateOf(k){ var rc=STORE[RCKEY]||{}; var v=rc.rates&&rc.rates[k]; return (v!=null&&v!==''&&isFinite(+v))?+v:RATE_DEFAULT[k]; }
   function setRate(k,v){ var rc=STORE[RCKEY]||(STORE[RCKEY]={fields:{}}); rc.rates=rc.rates||{}; rc.rates[k]=(v===''||v==null)?null:+v; rc.updated=Date.now(); }
@@ -977,9 +989,14 @@ window.addEventListener('load',restore);
     return {kind:'pre',of:k,id:'pre:'+k,name:'Setup pre-charge — '+KIND_HEAD[k].toLowerCase(),qual:n+' × '+h+'h = '+tot+'h'+(fromRet?' from the retainer':' · £'+day+' per '+BLOCK_H+'h'),qty:hoursToDays(tot),rate:fromRet?0:day,
       amount:fromRet?0:Math.round(tot/BLOCK_H*day*100)/100,side:'oneoff',tbc:false,free:fromRet,hours:tot,per:h,n:n,note:fromRet?'Taken from the retainer — not charged':'',disc:discOn('oneoff','pre:'+k)}; }
   function preHtml(k){ var n=extraLines().filter(function(l){return l.kind===k}).length, pl=preLine(k,n);
-    return '<div class="xpre">Setup pre-charge <input type="text" class="xp-h" data-pre="'+k+'" inputmode="decimal" value="'+esc(String(preHours(k)))+'"> h per '+PRE_WORD[k]
-      +' <select class="xp-mode" data-pre="'+k+'"><option value="oneoff"'+(preMode(k)==='oneoff'?' selected':'')+'>one-off cost at the day rate</option><option value="retainer"'+(preMode(k)==='retainer'?' selected':'')+'>from the retainer (no charge)</option></select>'
-      +' <span class="hint xp-sum">'+(pl?(pl.n+' × '+pl.per+'h = '+pl.hours+'h → '+(pl.free?'from the retainer, £0':money(pl.amount)+' one-off')):'added automatically to every '+PRE_WORD[k]+' on this quote')+'</span>'+(pl?dscChip(pl.id):'')+'</div>'; }
+    return '<span class="xk xpre">Setup <input type="text" class="xp-h" data-pre="'+k+'" inputmode="decimal" value="'+esc(String(preHours(k)))+'" title="Setup hours added automatically per '+PRE_WORD[k]+' — saves with your rate card"> h each'
+      +' <select class="xp-mode" data-pre="'+k+'" title="How the setup hours are billed"><option value="oneoff"'+(preMode(k)==='oneoff'?' selected':'')+'>one-off · day rate</option><option value="retainer"'+(preMode(k)==='retainer'?' selected':'')+'>from retainer · £0</option></select>'
+      +' <span class="hint xp-sum">'+(pl?(pl.n+' × '+pl.per+'h = '+pl.hours+'h → '+(pl.free?'from the retainer, £0':money(pl.amount)+' one-off')):'added automatically to every '+PRE_WORD[k]+' on this quote')+'</span>'+(pl?dscChip(pl.id):'')+'</span>'; }
+  // the section note: hidden behind ✎ Note until it has something in it (or is opened for this session)
+  var NOTE_OPEN={};
+  function noteOpen(k,v){ return NOTE_OPEN[k]===true||(NOTE_OPEN[k]==null&&!!(v&&String(v).trim())); }
+  function noteBtn(k,v){ return '<button type="button" class="xnb'+(noteOpen(k,v)?' on':'')+'" data-xnb="'+k+'" title="A note for this section — lands in the quote’s Additional Notes">✎ Note</button>'; }
+  function noteHtml(k,v,ph){ return '<div class="xnote"'+(noteOpen(k,v)?'':' hidden')+'><input type="text" class="xn" data-note="'+k+'" maxlength="240" placeholder="'+ph+'" value="'+esc(v||'')+'"></div>'; }
   function xLineMoney(l){ if(l.tbc)return 'priced separately by ASPL'; if(l.kind==='pre')return l.free?(l.hours+'h from the retainer — not charged'):(l.hours+'h = '+money(l.amount)); return (l.kind==='ret'?(l.hours+'h = '):(l.qty>1?(l.qty+' × '+money(l.rate)+' = '):''))+money(l.amount)+(l.side==='monthly'?' / month':''); }
   // "2 systems · 1 feed · 1 bespoke feed (ASPL) · 1 local inventory feed · retainer 8h + 4h/mo"
   function xWord(X){ var n={sys:0,feed:0,tbc:0,lia:0}, ret=[], preH=0, preR=0; (X||[]).forEach(function(l){ if(l.kind==='pre'){ if(l.free)preR+=l.hours; else preH+=l.hours; return; } if(l.kind==='feed'&&l.tbc)n.tbc++; else if(n[l.kind]!=null)n[l.kind]++; if(l.kind==='ret')ret.push(l.hours+'h'+(l.side==='monthly'?'/mo':'')); });
@@ -990,37 +1007,40 @@ window.addEventListener('load',restore);
     $('#types').innerHTML=TYPES.map(function(x){ return '<button type="button" class="qp tp'+(ty[x[0]]?' on':'')+'" data-tp="'+x[0]+'" aria-pressed="'+(ty[x[0]]?'true':'false')+'"><span>'+(ty[x[0]]?'✓ ':'')+esc(x[1])+'</span><small>'+esc(x[2])+'</small></button>'; }).join('');
     document.querySelectorAll('.card[data-tp]').forEach(function(c){ c.hidden=!ty[c.getAttribute('data-tp')]; }); }
   function chipRow(o,key){ return '<div class="xm-row">'+mktsAll(o).map(function(m){ return '<button type="button" class="qp xm'+(o.mkts[m]?' on':'')+'" data-xm="'+key+'" data-m="'+esc(m)+'">'+esc(m.toUpperCase())+'</button>'; }).join('')
-      +'<input type="text" class="xm-new" data-xmnew="'+key+'" placeholder="+ market code, Enter (e.g. ch)" maxlength="8"></div>'; }
-  function sysSum(){ var X=extraLines().filter(function(l){return l.kind==='sys'}); return X.length?('<b>'+X.length+'</b> system'+(X.length===1?'':'s')+' × '+money(rateOf('sys'))+' = <b>'+money(X.length*rateOf('sys'))+'</b> one-off'+X.map(function(l){return dscChip(l.id)}).join('')):'<span class="hint">Tick the markets that need a dashboard</span>'; }
-  function liaSum(){ var X=extraLines().filter(function(l){return l.kind==='lia'}); return X.length?('<b>'+X.length+'</b> feed'+(X.length===1?'':'s')+' × '+money(rateOf('lia'))+' = <b>'+money(X.length*rateOf('lia'))+' / month</b>'+X.map(function(l){return dscChip(l.id)}).join('')):'<span class="hint">Tick the markets that need a local inventory feed</span>'; }
+      +'<input type="text" class="xm-new" data-xmnew="'+key+'" placeholder="+ add" maxlength="8" title="Another market — type its code (e.g. ch) and press Enter"></div>'; }
+  function dscLbl(id){ return discScope()==='lines'?'<span class="dsl">'+esc(String(id).split(':')[1]||'').toUpperCase()+'</span>':''; }
+  function sysSum(){ var X=extraLines().filter(function(l){return l.kind==='sys'}); return X.length?('<b>'+X.length+'</b> system'+(X.length===1?'':'s')+' × '+money(rateOf('sys'))+' = <b>'+money(X.length*rateOf('sys'))+'</b> one-off'+X.map(function(l){return dscLbl(l.id)+dscChip(l.id)}).join('')):'<span class="hint">Tick the markets that need a dashboard</span>'; }
+  function liaSum(){ var X=extraLines().filter(function(l){return l.kind==='lia'}); return X.length?('<b>'+X.length+'</b> feed'+(X.length===1?'':'s')+' × '+money(rateOf('lia'))+' = <b>'+money(X.length*rateOf('lia'))+' / month</b>'+X.map(function(l){return dscLbl(l.id)+dscChip(l.id)}).join('')):'<span class="hint">Tick the markets that need a local inventory feed</span>'; }
   function feedSum(){ var X=extraLines().filter(function(l){return l.kind==='feed'}), gen=X.filter(function(l){return !l.tbc}), tbc=X.filter(function(l){return l.tbc}), sum=0; gen.forEach(function(l){sum+=l.amount});
     if(!X.length)return '<span class="hint">Add the feeds this quote covers</span>';
     return (gen.length?('<b>'+gen.length+'</b> priced feed'+(gen.length===1?'':'s')+' = <b>'+money(sum)+'</b> one-off'):'')+(tbc.length?((gen.length?' · ':'')+'<b>'+tbc.length+'</b> bespoke feed'+(tbc.length===1?'':'s')+' — requirements to ASPL, priced separately'):''); }
   function retSum(){ var rt=retRec(), day=blockGBP(), a=(+rt.one>0), b=(+rt.mon>0);
-    return (a?(rt.one+'h one-off = <b>'+money(+rt.one/BLOCK_H*day)+'</b>'+dscChip('ret:one')):'')+((a&&b)?' · ':'')+(b?(rt.mon+'h / month = <b>'+money(+rt.mon/BLOCK_H*day)+' / month</b>'+dscChip('ret:mon')):'')+((!a&&!b)?'<span class="hint">Type the hours</span>':''); }
+    return (a?(rt.one+'h one-off = <b>'+money(+rt.one/BLOCK_H*day)+'</b>'+dscChip('ret:one')):'')+((a&&b)?' · ':'')+(b?(rt.mon+'h / month = <b>'+money(+rt.mon/BLOCK_H*day)+' / month</b>'+dscChip('ret:mon')):'')+((!a&&!b)?'<span class="hint">Type the hours — ':'<span class="hint"> · ')+'day rate £'+day+' per '+BLOCK_H+'h</span>'; }
   function xsums(){ var m={'#sys-body':sysSum,'#lia-body':liaSum,'#feed-body':feedSum,'#ret-body':retSum}; Object.keys(m).forEach(function(k){ var el=document.querySelector(k+' .xsum'); if(el)el.innerHTML=m[k](); });
     ['sys','feed','lia'].forEach(function(k){ var el=document.querySelector('#'+k+'-body .xpre'); if(el){ var n=extraLines().filter(function(l){return l.kind===k}).length, pl=preLine(k,n), sp=el.querySelector('.xp-sum');
       if(sp)sp.textContent=pl?(pl.n+' × '+pl.per+'h = '+pl.hours+'h → '+(pl.free?'from the retainer, £0':money(pl.amount)+' one-off')):'added automatically to every '+PRE_WORD[k]+' on this quote';
       var ch=el.querySelector('[data-dsc]'); if(pl&&!ch)el.insertAdjacentHTML('beforeend',dscChip(pl.id)); else if(!pl&&ch)ch.remove(); } }); }
-  function renderX(){ var sy=sysRec(), li=liaRec(), F=feedsRec(), rt=retRec(), rf=rateOf('feed'), day=blockGBP();
-    $('#sys-body').innerHTML='<div class="xrate">£ per system <input type="text" class="xr" data-rate="sys" inputmode="decimal" value="'+esc(String(rateOf('sys')))+'"> <span class="hint">one FeedHero dashboard per market · saves with your rate card</span></div>'
-      +preHtml('sys')+chipRow(sy,'sys')+'<div class="xnote"><input type="text" class="xn" data-note="sys" maxlength="240" placeholder="Note — lands in the quote’s Additional Notes" value="'+esc(sy.note||'')+'"></div><div class="xsum">'+sysSum()+'</div>';
-    $('#feed-body').innerHTML='<div class="xrate">£ per generic feed <input type="text" class="xr" data-rate="feed" inputmode="decimal" value="'+esc(String(rf))+'"> <span class="hint">ex VAT · saves with your rate card · a bespoke feed stays unpriced until ASPL has costed it — type the £ once agreed</span></div>'
-      +preHtml('feed')+'<div class="xfeeds">'+F.map(function(fd,i){ var bes=fd.kind==='bespoke';
+  function renderX(){ var sy=sysRec(), li=liaRec(), F=feedsRec(), rt=retRec(), rf=rateOf('feed');
+    $('#sys-body').innerHTML=chipRow(sy,'sys')
+      +'<div class="xbar"><span class="xk xrate">£ per system <input type="text" class="xr" data-rate="sys" inputmode="decimal" value="'+esc(String(rateOf('sys')))+'" title="One FeedHero dashboard per market — saves with your rate card"></span>'+preHtml('sys')+noteBtn('sys',sy.note)+'</div>'
+      +noteHtml('sys',sy.note,'Note — lands in the quote’s Additional Notes')+'<div class="xsum">'+sysSum()+'</div>';
+    $('#feed-body').innerHTML='<div class="xfeeds">'+F.map(function(fd,i){ var bes=fd.kind==='bespoke';
         return '<div class="xfeed" data-i="'+i+'"><select class="xf-kind" data-i="'+i+'"><option value="generic"'+(bes?'':' selected')+'>Generic</option><option value="bespoke"'+(bes?' selected':'')+'>Bespoke</option></select>'
-          +'<input type="text" class="xf-name" data-i="'+i+'" placeholder="Feed — e.g. Google Shopping DE, Meta catalogue" value="'+esc(fd.name||'')+'">'
+          +'<input type="text" class="xf-name" data-i="'+i+'" placeholder="Feed name — e.g. Google Shopping DE" value="'+esc(fd.name||'')+'">'
           +'<input type="text" class="xf-qty" data-i="'+i+'" inputmode="numeric" value="'+esc(String(fd.qty||1))+'" title="Quantity">'
-          +(bes?'<input type="text" class="xf-price" data-i="'+i+'" inputmode="decimal" placeholder="£ TBC — ASPL" value="'+esc(fd.price!=null?String(fd.price):'')+'" title="Blank until ASPL has costed it">':'<span class="xf-fixed">'+money(rf)+' each</span>')
+          +(bes?'<input type="text" class="xf-price" data-i="'+i+'" inputmode="decimal" placeholder="£ TBC — ASPL" value="'+esc(fd.price!=null?String(fd.price):'')+'" title="Blank until ASPL has costed it — type the £ once agreed">':'<span class="xf-fixed">'+money(rf)+' each</span>')
           +'<button type="button" class="xf-x" data-i="'+i+'" title="Remove this feed">✕</button>'
-          +(bes?'<textarea class="xf-req" data-i="'+i+'" rows="2" placeholder="Feed requirements — sources, fields, rules, cadence, destinations (this goes to ASPL for costing)">'+esc(fd.req||'')+'</textarea>':'')
+          +(bes?'<textarea class="xf-req" data-i="'+i+'" rows="2" placeholder="Requirements for ASPL — sources, fields, rules, cadence, destinations">'+esc(fd.req||'')+'</textarea>':'')
           +dscChip('feed:'+i)+'</div>'; }).join('')+'</div>'
-      +'<button type="button" class="pt-act" id="xf-add">＋ Add feed</button><div class="xsum">'+feedSum()+'</div>';
-    $('#lia-body').innerHTML='<div class="xrate">£ per feed per month <input type="text" class="xr" data-rate="lia" inputmode="decimal" value="'+esc(String(rateOf('lia')))+'"> <span class="hint">saves with your rate card</span></div>'
-      +preHtml('lia')+chipRow(li,'lia')+'<div class="xnote"><input type="text" class="xn" data-note="lia" maxlength="240" placeholder="Note — lands in the quote’s Additional Notes" value="'+esc(li.note||'')+'"></div><div class="xsum">'+liaSum()+'</div>';
+      +'<button type="button" class="xadd" id="xf-add">＋ Add feed</button>'
+      +'<div class="xbar"><span class="xk xrate">£ per generic feed <input type="text" class="xr" data-rate="feed" inputmode="decimal" value="'+esc(String(rf))+'" title="Fixed price per generic feed, ex VAT — saves with your rate card. A bespoke feed stays unpriced until ASPL has costed it"></span>'+preHtml('feed')+'</div>'
+      +'<div class="xsum">'+feedSum()+'</div>';
+    $('#lia-body').innerHTML=chipRow(li,'lia')
+      +'<div class="xbar"><span class="xk xrate">£ per feed / month <input type="text" class="xr" data-rate="lia" inputmode="decimal" value="'+esc(String(rateOf('lia')))+'" title="Monthly charge per local inventory feed — saves with your rate card"></span>'+preHtml('lia')+noteBtn('lia',li.note)+'</div>'
+      +noteHtml('lia',li.note,'Note — lands in the quote’s Additional Notes')+'<div class="xsum">'+liaSum()+'</div>';
     $('#ret-body').innerHTML='<div class="xret"><label>One-off hours <input type="text" class="xh" data-h="one" inputmode="decimal" placeholder="0" value="'+esc(rt.one!=null?String(rt.one):'')+'"></label>'
-      +'<label>Hours per month <input type="text" class="xh" data-h="mon" inputmode="decimal" placeholder="0" value="'+esc(rt.mon!=null?String(rt.mon):'')+'"></label>'
-      +'<span class="hint">at the day rate £'+day+' per '+BLOCK_H+'h (Settings → block rate)</span></div>'
-      +'<div class="xnote"><input type="text" class="xn" data-note="ret" maxlength="240" placeholder="Note — what the hours cover" value="'+esc(rt.note||'')+'"></div><div class="xsum">'+retSum()+'</div>'; }
+      +'<label>Hours per month <input type="text" class="xh" data-h="mon" inputmode="decimal" placeholder="0" value="'+esc(rt.mon!=null?String(rt.mon):'')+'"></label>'+noteBtn('ret',rt.note)+'</div>'
+      +noteHtml('ret',rt.note,'Note — what the hours cover')+'<div class="xsum">'+retSum()+'</div>'; }
   /* tp = the SKUs the quote COVERS — the largest ticked line, i.e. the scope unless
      every line is overridden. It used to be the per-line counts ADDED UP (5 fields × 8,898 =
      44,490 — Ray: "this number doesn't make sense"); that products × fields figure survives
@@ -1198,6 +1218,7 @@ window.addEventListener('load',restore);
       var m=String(t.value).trim().toLowerCase().replace(/[^a-z0-9-]/g,''); if(!m)return; var o=t.getAttribute('data-xmnew')==='sys'?sysRec():liaRec();
       if(mktsAll(o).indexOf(m)<0)o.extra.push(m); o.mkts[m]=true; renderX(); foot(); saveSoon(); });
     wrap.addEventListener('click',function(e){ var t=e.target;
+      var nb=t.closest&&t.closest('[data-xnb]'); if(nb){ var nk=nb.getAttribute('data-xnb'), box=document.querySelector('#'+nk+'-body .xnote'); if(!box)return; var show=!!box.hidden; NOTE_OPEN[nk]=show; box.hidden=!show; nb.classList.toggle('on',show); if(show){ var inp=box.querySelector('input'); if(inp)inp.focus(); } return; }
       var xm=t.closest&&t.closest('[data-xm]'); if(xm){ var o=xm.getAttribute('data-xm')==='sys'?sysRec():liaRec(), m=xm.getAttribute('data-m'); o.mkts[m]=!o.mkts[m]; renderX(); foot(); saveSoon(); return; }
       if(t.id==='xf-add'){ feedsRec().push({kind:'generic',name:'',qty:1}); renderX(); foot(); saveSoon(); var last=document.querySelector('#feed-body .xfeed:last-child .xf-name'); if(last)last.focus(); return; }
       var x=t.closest&&t.closest('.xf-x'); if(x){ var i=+x.getAttribute('data-i'); feedsRec().splice(i,1); var r=rec(); if(r.dflags){ var nd={}; Object.keys(r.dflags).forEach(function(k){ var mm=/^feed:(\d+)$/.exec(k); if(!mm){nd[k]=r.dflags[k];return;} var j=+mm[1]; if(j<i)nd[k]=r.dflags[k]; else if(j>i)nd['feed:'+(j-1)]=r.dflags[k]; }); r.dflags=nd; } renderX(); foot(); saveSoon(); } });

@@ -1344,12 +1344,6 @@
    "pr": 215
   },
   {
-   "name": "kwcal: month-per-column board + distinct chip system — the HORIZONTAL-SCROLL timeline was retired in PR #352 (Ray: 'the rolling bar for the calendar doesn't look good'); this now pins the wrapping month grid that replaced it",
-   "file": "docs/FeedSpark_KWCal.html",
-   "pattern": "repeat(auto-fill,minmax(250px,1fr))",
-   "pr": 217
-  },
-  {
    "name": "Workflow: go-live starts the test run — due -> +run-SLA, stage -> analysis, card jumps",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "function goLive",
@@ -3881,6 +3875,12 @@
    "pr": 351
   },
   {
+   "name": "kwcal: month-per-column board + distinct chip system — the HORIZONTAL-SCROLL timeline was retired in PR #352 (Ray: 'the rolling bar for the calendar doesn't look good'); this now pins the wrapping month grid that replaced it",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "repeat(auto-fill,minmax(250px,1fr))",
+   "pr": 217
+  },
+  {
    "name": "kwcal: the board wraps instead of scrolling sideways — no rolling bar (Ray, 11 Sep 2026)",
    "file": "docs/FeedSpark_KWCal.html",
    "pattern": "align-items:start}",
@@ -3914,6 +3914,41 @@
    "pattern": "function laneKey(",
    "min": 1,
    "pr": 352
+  },
+  {
+   "name": "Quote generator UX pass (Ray 11 Sep 2026 'boxes sized incorrectly, details too much'): every service card = choice row · ONE settings strip (rate · setup · ✎ note) · summary",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "<div class=\"xbar\">",
+   "pr": 353,
+   "min": 3
+  },
+  {
+   "name": "Quote generator UX pass: section notes hidden behind ✎ Note until they hold text",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function noteOpen(k,v){",
+   "pr": 353,
+   "min": 1
+  },
+  {
+   "name": "Quote generator UX pass: 'What are you quoting?' chips are an even grid, not a wrapping flex row",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": ".types{display:grid;",
+   "pr": 353,
+   "min": 1
+  },
+  {
+   "name": "Quote generator UX pass: the Editing strip is hidden when nothing is being edited ([hidden] beats display:flex)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": ".edit-bar[hidden]{display:none}",
+   "pr": 353,
+   "min": 1
+  },
+  {
+   "name": "Quote generator UX pass: 'selected lines' discount chips on the system / local inventory summaries carry their market label",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function dscLbl(id){",
+   "pr": 353,
+   "min": 1
   }
  ]
 }
