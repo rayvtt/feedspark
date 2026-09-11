@@ -240,7 +240,9 @@ window.addEventListener('load',restore);
   .stat-seg button.on{color:#fff;border-color:transparent;background:var(--navy)}
   .comm{display:flex;gap:9px;padding:8px 0;border-bottom:1px dashed var(--line)}
   .comm:last-child{border-bottom:0}
-  .comm .cw{font-size:12px;font-weight:900;color:var(--navy);flex:none;min-width:64px}
+  .comm .cw{font-size:12px;font-weight:900;color:var(--navy);flex:none;min-width:92px;display:flex;flex-direction:column;gap:1px}
+  .comm .cw .cwd{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;letter-spacing:.01em}
+  .comm .cw .cwt{font-size:11px;font-weight:800;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
   .comm .cb{font-size:12.5px;color:var(--ink-2)}
   .comm .ck{font-size:10px;font-weight:800;color:var(--good);text-transform:uppercase;letter-spacing:.03em}
   .addc{display:grid;grid-template-columns:120px 1fr auto;gap:7px;margin-top:9px}
@@ -348,7 +350,7 @@ window.addEventListener('load',restore);
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
   <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
   <div class="tb-tag">Workflow</div>
-  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm on" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a></nav>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm on" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/playbook" class="tbm" data-lbl="Playbook" title="Playbook — meeting copilot" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a></nav>
 </div></div>
 
 <header class="hero"><div class="wrap">
@@ -397,9 +399,9 @@ window.addEventListener('load',restore);
         <div class="fld"><label>Source</label><select id="bg-source"><option value="email">Email</option><option value="plan">Project plan</option><option value="call">📞 Call</option></select></div>
       </div>
       <div class="fld"><label>Task</label><input id="bg-task" placeholder="e.g. Rewrite 200 MASK titles — SS26 sandals"></div>
-      <div class="fld"><label>Category <span class="tpl-hint">— auto-fills scope, definition of done &amp; the two streams</span></label>
+      <div class="fld"><label>Category <span class="tpl-hint">— classifies the brief for routing and reporting</span></label>
         <select id="bg-cat">
-          <option value="">— choose to load a template —</option>
+          <option value="">— choose a category —</option>
           <option value="title">Titles</option><option value="image">Imagery</option>
           <option value="keyword">Keywords</option><option value="custom_label">Custom labels</option>
           <option value="product_type">Product type</option><option value="data">Data fields</option>
@@ -1160,42 +1162,14 @@ window.addEventListener('load',restore);
 
   // ---- category-aware brief templates (auto-fill scope + definition of done) ----
   var CAT_LBL={title:'Titles',image:'Imagery',keyword:'Keywords',custom_label:'Custom labels',product_type:'Product type',data:'Data fields',technical:'Feed & technical',channel:'Channels',test:'Testing',opt:'Optimisation',account:'Account'};
-  var TWO_STREAMS='\n\nRun TWO streams before actioning:\n • Stream A — Project-plan worksheet: read the full tab, confirm this task’s current state, dependencies and prior notes.\n • Stream B — Live product feed (~5,000 rows) as source of truth: analyse, score and update against the actual feed data, not assumptions.';
-  var TEMPLATES={
-    title:{s:'Rewrite/optimise titles to MASK structure (Brand + Material + Fit + Colour + Use-case, 80–120 chars). Markets/categories: [confirm]. Respect character limits and brand tone.',d:'Titles live in FeedHero, QA’d against the feed; 5 sample titles approved by AM before full roll-out; no truncation >150 chars.'},
-    image:{s:'Image work — tag/cycle imagery by type (product-only vs on-model), overlays or roundels as specified. Confirm the image_type source and rotation rules.',d:'Overlay/cycler live in FeedHero, QA’d on 10 sample SKUs across categories, no image_link rotation wiping tags.'},
-    keyword:{s:'Keyword optimisation — inject high-volume/search-intent terms into the target attributes. Source terms: [Keyword Planner / list]. Markets: [confirm].',d:'Keywords live, mapped to the right attribute, QA’d against duplicate/over-stuffing rules; before/after sample shared.'},
-    custom_label:{s:'Custom-label build/update (CL[n]) — define the rule/values and where they feed (Shopping/Social/PPC). Scrape or data source: [confirm].',d:'CL populated in FeedHero, values validated on the feed, campaign-side mapping confirmed with PPC/Social.'},
-    product_type:{s:'Product-type / category mapping — deepen taxonomy to [n]-level granularity (FS Tachyon). Confirm GPC vs product_type split.',d:'product_type rolled out across the market, spot-checked against the feed, no non-existent values.'},
-    data:{s:'Data-field back-fill / attribute enrichment — fill mandatory + AI-enriched fields. Confirm which fields and the source (master feed / Tachyon).',d:'Fields populated + validated on the feed, disapprovals cleared, sample QA’d by AM.'},
-    technical:{s:'Feed / technical change — migration, refresh cadence, item-group/ID logic or rule change. Confirm the switch-over date and rollback.',d:'Change live in all target feeds, monitored for 48h, no campaign disruption, confirmed with the client.'},
-    channel:{s:'Channel work — Meta/Social/LIA/PPC overlay or feed architecture. Confirm markets, creative/typography and identifiers.',d:'Live in the target channel, QA’d on sample, mockup/typography approved by client.'},
-    test:{s:'A/B test — define hypothesis, control vs variant, SKUs, market and duration. Ensure the cohort is excluded from AI enrichment so the read is clean.',d:'Test live, tracked in the Test register with an analysis date; result logged (uplift %); winner rolled out or parked.'},
-    opt:{s:'Feed optimisation task — confirm exact scope, markets and rules with the AM before starting.',d:'Change live in FeedHero, QA’d against the feed, sample approved by AM.'},
-    account:{s:'Account / strategy action — deck, proposal, call prep or commercial item. Confirm the deliverable and audience.',d:'Deliverable shared with the client / internal owner and signed off.'}
-  };
-  // ---- mechanical self-learning: every brief Ray edits before saving teaches the generator.
-  // Keyed client|category with a *|category fallback — the next brief for that client/category
-  // pre-fills from the last edited version instead of the static template. Pure recall, no AI.
-  var LEARN={}; try{LEARN=JSON.parse(localStorage.getItem('fcc-brief-learn')||'{}');}catch(e){}
-  function saveLearn(){ try{localStorage.setItem('fcc-brief-learn',JSON.stringify(LEARN));}catch(e){} }
-  function learnKey(client,cat){ return client+'|'+(cat||'opt'); }
-  function learned(client,cat){ return LEARN[learnKey(client,cat)]||LEARN[learnKey('*',cat)]; }
-  function recordLearning(client,cat,f){
-    var tpl=TEMPLATES[cat]||TEMPLATES.opt, rec={t:Date.now()}, edited=false;
-    if(f.scope&&f.scope!==(tpl.s+TWO_STREAMS)){ rec.s=f.scope; edited=true; }
-    if(f.dod&&f.dod!==tpl.d){ rec.d=f.dod; edited=true; }
-    if(f.assets&&f.assets!=='—'){ rec.a=f.assets; edited=true; }
-    if(!edited)return;
-    rec.n=((LEARN[learnKey(client,cat)]||{}).n||0)+1;
-    LEARN[learnKey(client,cat)]=rec; LEARN[learnKey('*',cat)]=Object.assign({},rec); saveLearn(); }
-  function applyTemplate(cat,quiet){ var tpl=TEMPLATES[cat]||TEMPLATES.opt;
-    var client=document.getElementById('bg-client').value, ln=learned(client,cat);
-    document.getElementById('bg-scope').value=(ln&&ln.s)||(tpl.s+TWO_STREAMS);
-    document.getElementById('bg-dod').value=(ln&&ln.d)||tpl.d;
-    if(ln&&ln.a){ var as=document.getElementById('bg-assets'); if(as&&!as.value.trim())as.value=ln.a; }
-    if(ln&&!quiet)toast('Pre-filled from your last edited '+(CAT_LBL[cat]||'optimisation')+' brief'+(LEARN[learnKey(client,cat)]?(' · '+client):''));
-    return !!ln; }
+  // PREFILLS REMOVED (Ray, 11 Sep 2026: "the prefilled data and prefilled text in the
+  // briefing mechanic are not technically good, so we might as well just remove them. Leave
+  // the section on scope, details, and definitions"). The generator used to invent a scope and
+  // a definition of done per category — plausible-sounding prose nobody had verified, which
+  // went out to ASPL as if it were the AM's instruction. The SECTIONS stay in the brief; what
+  // goes in them is now typed by the AM, or folded in from REAL context (⚡ Compose from
+  // context: plan-row state, email-thread lines, actual links) and from module deep-links that
+  // ship a computed scope (Golden Record, KWCal) — data we hold, never guesswork.
 
   // ---- ASPL delegation ----
   function asplFor(seed){ return ASPL[Math.abs(hashStr(seed))%ASPL.length]; }   // stable per-task
@@ -1303,7 +1277,7 @@ window.addEventListener('load',restore);
   fillClientSelect();   // CLIENTS still drives the brief generator + intake; the brand-book panel was removed
   ['bg-client','bg-market','bg-source','bg-task','bg-scope','bg-dod','bg-assets','bg-due','bg-priority'].forEach(function(id){
     var el=document.getElementById(id); el.addEventListener('input',refreshPreview); el.addEventListener('change',refreshPreview); });
-  (function(){ var cs=document.getElementById('bg-cat'); if(cs)cs.addEventListener('change',function(){ resetBodyOverride(); if(cs.value){ applyTemplate(cs.value); } refreshPreview(); }); })();
+  (function(){ var cs=document.getElementById('bg-cat'); if(cs)cs.addEventListener('change',function(){ resetBodyOverride(); refreshPreview(); }); })();
 
   function copy(text,msg){ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){toast(msg);});}
     else{var a=document.createElement('textarea');a.value=text;document.body.appendChild(a);a.select();try{document.execCommand('copy');toast(msg);}catch(e){}a.remove();} }
@@ -1447,7 +1421,7 @@ window.addEventListener('load',restore);
         links.forEach(function(u){ if(cur.indexOf(u)<0)cur=(cur?cur+'\n':'')+u; }); as.value=cur; }
       resetBodyOverride(); refreshPreview();
       toast(add.length?('Context folded into the scope'+(links.length?' · '+links.length+' link'+(links.length===1?'':'s')+' captured':''))
-        :'No extra context found — the template + your learned edits are already applied');
+        :'No extra context found in the plan row or thread — nothing to fold in');
     }; })();
 
   document.getElementById('bg-copy').onclick=function(){ var o=refreshPreview(); copy(o.subj+'\n\n'+o.body,'Brief copied'); };
@@ -1458,6 +1432,7 @@ window.addEventListener('load',restore);
     b.id=id; b.client=o.f.client; b.code=code(o.f.client,o.f.market); b.task=o.f.task; b.scope=o.f.scope;
     b.dod=o.f.dod; b.assets=o.f.assets; b.due=isoToDDMMYYYY(o.f.dueIso); b.source=o.f.source; b.priority=o.f.priority;
     b.subject=o.subj; b.body=o.body; b.updated=Date.now();
+    if(window.__kwId){ b.kw=window.__kwId; window.__kwId=null; }   // KWCal moment tie (set once, kept through later edits)
     // an email-sourced task briefed against a brand becomes a real plan row (write-back included)
     if(o.f.source==='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',1);
     // tie the ticket to its plan row: the prefill link if it still matches, else auto-match on task wording
@@ -1473,7 +1448,6 @@ window.addEventListener('load',restore);
     // exactly like the email path. adoptIntoPlan self-guards against duplicates, so a brief
     // raised FROM an intake row (lk found) or an edit of an existing brief never double-writes.
     if(!lk && !existing && o.f.source!=='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',0,strictTie);
-    recordLearning(o.f.client,(document.getElementById('bg-cat').value)||classifyLite(o.f.task),o.f);   // edited briefs teach the generator
     BRIEFS[id]=b; window.__editId=null; persist(); renderAll();
     // briefed straight from the email triage queue → that email's decision is "task": clear it
     if(window.__emailId){ decideEmail(window.__emailId,false,'briefed'); window.__emailId=null; }
@@ -2213,16 +2187,14 @@ window.addEventListener('load',restore);
       L.push('   Task: '+t.task);
       L.push('   Category: '+(CAT_LBL[t.cat]||'Optimisation'));
       L.push(''); });
-    L.push('Two streams per task: (A) project-plan worksheet, (B) the live ~5,000-row feed as source of truth.');
     L.push('Reply-all to update status. Keep the [ibfcode] + ibfdue tokens intact.');
     L.push('FeedSpark · Private & Confidential'); return L.join('\n'); }
   function bulkSaveAll(){ var items=bulkList(); if(!items.length)return; var made=0;
     items.forEach(function(t){ var id=newId(t.client); var c=code(t.client,'gb');
       var pd=taskDate(t), d=pd||new Date(); if(!pd){ d=new Date(); d.setDate(d.getDate()+5); }   // bulk briefs inherit the row's due date too
-      var tpl=TEMPLATES[t.cat]||TEMPLATES.opt, ln=learned(t.client,t.cat||'opt');
       BRIEFS[id]={id:id,created:Date.now(),updated:Date.now(),status:'intake',comms:[],hist:[{s:'intake',t:Date.now()}],
         taskKey:rowKey(t),client:t.client,code:c,task:t.task,
-        scope:(ln&&ln.s)||(tpl.s+TWO_STREAMS),dod:(ln&&ln.d)||tpl.d,assets:(ln&&ln.a)||'—',
+        scope:'',dod:'',assets:'',   // the AM fills these — the generator never invents them
         due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
         source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++;
       if(t.source==='email') adoptIntoPlan(t.client,t.task,'Briefed',BRIEFS[id].due,'',1);   // bulk-briefed email tasks join the plan too
@@ -2441,21 +2413,24 @@ window.addEventListener('load',restore);
   })();
   function prefill(t){
     window.__editId=null;
+    window.__kwId=null;      // Keyword-Calendar tie: cleared here so only the deep link that
+                             // just opened this composer can stamp one onto the saved brief
     window.__emailId=null;        // the email-triage opener re-sets this after calling prefill
     resetBodyOverride();   // a fresh intake row shouldn't inherit an edit made on a previous draft
     window.__linkKey=rowKey(t);   // tie the brief being drafted back to this intake row
     document.getElementById('bg-client').value= CLIENTS.indexOf(t.client)>=0? t.client : CLIENTS[0];
     document.getElementById('bg-source').value= t.source||'plan';
     document.getElementById('bg-task').value=t.task;
-    var cat=t.cat||'opt', cs=document.getElementById('bg-cat'); if(cs)cs.value=(TEMPLATES[cat]?cat:'');
+    var cat=t.cat||'opt', cs=document.getElementById('bg-cat'); if(cs)cs.value=(CAT_LBL[cat]?cat:'');
     var pd=taskDate(t);
     if(pd){ document.getElementById('bg-due').value=pd.getFullYear()+'-'+pad(pd.getMonth()+1)+'-'+pad(pd.getDate());   // brief inherits the intake due date
       window.__bsAuto='from the intake row — your date, kept'; }
     else bsPropose();                   // no AM date -> propose the first week with free capacity
     fillAttach(t);
     renderCtx(t);
-    var ln=applyTemplate(cat,true);     // #2 auto-fill scope + DoD (learned version when one exists)
-    if(t.scope)document.getElementById('bg-scope').value=t.scope;   // module deep-links ship a ready-made scope — it beats the template
+    // scope/DoD start EMPTY now the invented templates are gone; a module deep-link still
+    // ships a ready-made scope (Golden Record / KWCal compute it from real feed numbers)
+    if(t.scope)document.getElementById('bg-scope').value=t.scope;
     refreshPreview();
     openBrief();
     toast('Prefilled from '+(ln?'your last edited '+(CAT_LBL[cat]||'optimisation')+' brief':'the '+(CAT_LBL[cat]||'optimisation')+' template')
@@ -2628,7 +2603,11 @@ window.addEventListener('load',restore);
       window.__editId=null; window.__linkKey=null; window.__emailId=null; window.__bsRow=null; resetBodyOverride();
       fillAttach(null); bsPropose(); renderCtx(null); refreshPreview(); openBrief(); }; })();
   function openModal(id){ var b=BRIEFS[id]; if(!b)return;
-    var comms=(b.comms||[]).map(function(c){ return '<div class="comm"><span class="cw">'+esc(c.from)+'</span><span class="cb">'+esc(c.note)+(c.done?' <span class="ck">✓ done signal</span>':'')+'</span></div>'; }).join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
+    var comms=(b.comms||[]).map(function(c){ var w=commWhen(c);
+      return '<div class="comm"><span class="cw">'+esc(c.from)
+        +(w?('<span class="cwd">'+esc(w.d)+'</span><span class="cwt">'+esc(w.t)+'</span>'):'')
+        +'</span><span class="cb">'+esc(commBody(c))+(c.done?' <span class="ck">✓ done signal</span>':'')+'</span></div>'; })
+      .join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
     var stat=STAGES.filter(function(s){ return s[0]!=='analysis'||needsAnalysis(b); })
       .map(function(s){ return '<button data-s="'+s[0]+'" class="'+(b.status===s[0]?'on':'')+'">'+s[1]+'</button>'; }).join('');
     var doneNote=lastDoneNote(b);
@@ -2702,12 +2681,18 @@ window.addEventListener('load',restore);
     // upgrade the thread link from a search to a DIRECT deep-link once the worker resolves the
     // Gmail thread id (cached on the brief so later opens are instant). Falls back to the
     // quoted-token search until Gmail creds are connected.
-    (function(){ var a=document.getElementById('m-thread'); if(!a||!b.code)return;
-      function apply(g){ if(!g||!g.id)return; a.href='https://mail.google.com/mail/u/'+encodeURIComponent(g.mb||'0')+'/#all/'+encodeURIComponent(g.id); a.innerHTML='✉ Open the email thread ('+esc(b.code)+')'; }
-      if(b.gthread){ apply(b.gthread); return; }
-      fetch('/api/gmail/thread?q='+encodeURIComponent(threadQuery(b))+'&q='+encodeURIComponent('"'+b.id+'"')+'&q='+encodeURIComponent('"ibfcode:'+b.code+'"')).then(function(r){return r.json();}).then(function(d){
-        if(d&&d.connected&&d.threadId){ b.gthread={id:d.threadId,mb:d.mailbox||'',t:Date.now()}; persist(); apply(b.gthread); }
-      }).catch(function(){});
+    (function(){ var a=document.getElementById('m-thread'), ch=document.getElementById('m-chase'); if(!b.code)return;
+      function apply(g){
+        if(!g||!g.id)return;
+        if(a){ a.href=gthreadHref(g); a.innerHTML='✉ Open the email thread ('+esc(b.code)+')'; }
+        // the chase now lands IN the conversation instead of opening a new compose window
+        if(ch){ ch.href=gthreadHref(g); ch.textContent='⏰ Chase ASPL in thread';
+          ch.title='Opens the brief’s original Gmail conversation — hit Reply all so everyone already on it stays on it. The chase note is copied to your clipboard, ready to paste.';
+          ch.onclick=function(){ copy(chaseNote(b),'Chase note copied — hit Reply all in the thread so everyone stays on it'); };
+        }
+      }
+      if(b.gthread&&b.gthread.id){ apply(b.gthread); return; }
+      resolveThread(b,function(g){ if(g)apply(g); else if(ch)ch.title='No original thread found yet (Gmail lookup empty) — this opens a fresh chase addressed to the ASPL list.'; });
     })();
   }
   // Gmail-proof thread query: Gmail tokenises away punctuation, so hyphenated tokens like the
@@ -2715,6 +2700,31 @@ window.addEventListener('load',restore);
   // brief's subject for the client + the task's words (punctuation stripped, first 8 words).
   function threadQuery(b){ var w=String(b.task||'').replace(/[^a-z0-9À-ɏ]+/gi,' ').trim().split(/\s+/).slice(0,8).join(' ');
     return w?('subject:("'+b.client+'" "'+w+'")'):('"'+b.id+'"'); }
+  // ---- reply scanning (Ray, 11 Sep 2026: "have the tracking of each thread give clear dates
+  // and times on the left-hand side under the person's name, and remove that from the body
+  // content so I can scan easier"). The date shown is the REAL email time when the pasted
+  // reply carries Outlook/Gmail's "Sent:" header, falling back to when it was logged here.
+  var SENT_RE=/\bSent:\s*([A-Za-z0-9 ,:]{8,48}?)(?=\s{1,}(?:To|Cc|Subject|From):|\s*$)/;
+  function commWhen(c){
+    var d=null, m=SENT_RE.exec(String((c&&c.note)||''));
+    if(m){ var p=new Date(m[1].replace(/,/g,' ').trim()); if(!isNaN(p.getTime()))d=p; }
+    if(!d&&c&&c.when){ var q=new Date(c.when); if(!isNaN(q.getTime()))d=q; }
+    if(!d)return null;
+    return { d: d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}),
+             t: d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) };
+  }
+  // strip the quoted-original block and the routing tokens out of the visible note: the
+  // From/Sent/To/Subject chain, the [ibfcode:]/[ibfref:]/ibfdue: markers the router needs but
+  // nobody reads, and the FEEDSPARK BRIEF banner. What's left is what the person actually wrote.
+  function commBody(c){
+    var t=String((c&&c.note)||'');
+    t=t.replace(/\bFrom:\s*[^]*$/i,' ');                       // quoted original onwards
+    t=t.replace(/\b(?:Sent|To|Cc|Subject):\s*[^\n]*/gi,' ');    // stray headers without a From:
+    t=t.replace(/\[ibf(?:code|ref):[^\]]*\]/gi,' ').replace(/\bibfdue:\s*\d+/gi,' ');
+    t=t.replace(/\bFEEDSPARK BRIEF\b/gi,' ').replace(/\bDONE SIGNAL\b/gi,' ').replace(/[✓✔]/g,' ');
+    t=t.replace(/\s{2,}/g,' ').replace(/^[\s·—-]+|[\s·—-]+$/g,'');
+    return t || String((c&&c.note)||'').slice(0,200);           // never render an empty reply
+  }
   function lastDoneNote(b){ if(!b.comms)return ''; for(var i=b.comms.length-1;i>=0;i--){ if(b.comms[i].done||DONE_RE.test(b.comms[i].note)) return b.comms[i].note; } return ''; }
   function hasResult(b){ if(!b.comms)return false; for(var i=b.comms.length-1;i>=0;i--){ if(/^Result:/.test(b.comms[i].note))return true; } return false; }
   // read-out extraction — the page mirror of the worker's extractResult, so pasting ASPL's
@@ -2901,11 +2911,37 @@ window.addEventListener('load',restore);
     var ta=document.getElementById('lu-text'); if(ta)ta.addEventListener('keydown',function(e){ if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); routeUpdate(); } }); })();
 
   // ---- #4 chase drafts ----
-  function chaseAspl(b){ var L=['Hi '+(asplOf(b)||'team')+',','','Chasing this brief — '+dueState(b)+':','',
-    '• '+b.task+'  ['+b.code+']  ibfdue:'+(b.due||'TBC'),'','Could you confirm status / ETA? Reply-all keeps the portal in sync.','','Thanks,','Ray'];
-    // "Re: <original subject>" so Gmail threads the chase into the brief's conversation instead of starting a new one
+  function chaseNote(b){ return ['Hi '+(asplOf(b)||'team')+',','','Chasing this brief — '+dueState(b)+':','',
+    '• '+b.task+'  ['+b.code+']  ibfdue:'+(b.due||'TBC'),'','Could you confirm status / ETA? Reply-all keeps the portal in sync.','','Thanks,','Ray'].join('\n'); }
+  // COMPOSE fallback only. Gmail's view=cm always starts a NEW conversation whatever the
+  // subject says, so this is used only when the original thread can't be resolved.
+  function chaseAspl(b){
     var su='Re: '+(b.subject||('[FS Brief] '+b.client+' · '+b.task+' · [ibfcode:'+b.code+'] ibfdue:'+(b.due||'')+' [ibfref:'+b.id+']'));
-    return 'https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(su)+'&body='+encodeURIComponent(L.join('\n')); }
+    return 'https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(su)+'&body='+encodeURIComponent(chaseNote(b)); }
+  // ---- CHASE IN THE ORIGINAL THREAD (Ray, 11 Sep 2026: "that button should link directly to
+  // the original thread and include all the people answering in the same thread, rather than
+  // creating a new Gmail thread"). Gmail has no URL that pre-fills a reply, so the chase opens
+  // the real conversation — where Reply all keeps every participant — and the note is copied
+  // ready to paste. Resolution is the same worker lookup the ✉ thread link uses, cached on the
+  // brief (b.gthread) so repeat opens are instant.
+  function gthreadHref(g){ return 'https://mail.google.com/mail/u/'+encodeURIComponent((g&&g.mb)||'0')+'/#all/'+encodeURIComponent(g.id); }
+  function resolveThread(b,cb){
+    if(!b||!b.code){ cb(null); return; }
+    if(b.gthread&&b.gthread.id){ cb(b.gthread); return; }
+    fetch('/api/gmail/thread?q='+encodeURIComponent(threadQuery(b))+'&q='+encodeURIComponent('"'+b.id+'"')+'&q='+encodeURIComponent('"ibfcode:'+b.code+'"'))
+      .then(function(r){return r.json();}).then(function(d){
+        if(d&&d.connected&&d.threadId){ b.gthread={id:d.threadId,mb:d.mailbox||'',t:Date.now()}; persist(); cb(b.gthread); }
+        else cb(null);
+      }).catch(function(){ cb(null); });
+  }
+  // used by the escalation list, where there is no pre-resolved link to click
+  function openChaseAspl(b){
+    resolveThread(b,function(g){
+      if(g){ copy(chaseNote(b),'Chase note copied — hit Reply all in the thread so everyone stays on it');
+        window.open(gthreadHref(g),'_blank','noopener'); }
+      else { toast('No original thread found — opening a fresh chase'); window.open(chaseAspl(b),'_blank','noopener'); }
+    });
+  }
   function chaseClient(b){ var L=['Hi team,','','Quick update on the below — checking you have everything you need from us to move it forward:','',
     '• '+b.task,'','Happy to jump on a quick call if easier.','','Best,','Ray','FeedSpark'];
     return 'https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark · '+b.client+' — '+b.task)+'&body='+encodeURIComponent(L.join('\n')); }
@@ -2950,7 +2986,7 @@ window.addEventListener('load',restore);
       : '<div class="sub" style="margin:0">Nothing over SLA in any court — every ticket is moving. 👌</div>';
     s.querySelectorAll('[data-act]').forEach(function(btn){ btn.onclick=function(e){ e.stopPropagation(); var b=BRIEFS[btn.getAttribute('data-b')]; if(!b)return;
       var a=btn.getAttribute('data-act');
-      if(a==='chaseA')window.open(chaseAspl(b),'_blank','noopener'); else if(a==='chaseC')window.open(chaseClient(b),'_blank','noopener'); else openModal(b.id); }; });
+      if(a==='chaseA')openChaseAspl(b); else if(a==='chaseC')window.open(chaseClient(b),'_blank','noopener'); else openModal(b.id); }; });
     s.querySelectorAll('.stall-row').forEach(function(r){ r.onclick=function(){ openModal(r.getAttribute('data-id')); }; });
   }
 
@@ -3392,6 +3428,9 @@ window.addEventListener('load',restore);
     window.__fromLink=1;   // module deep-link: the tie to plan rows must be EXACT, never fuzzy
     setTimeout(function(){ prefill({client:j.client||'',task:String(j.task).slice(0,200),cat:j.cat||'',source:j.source||'plan',scope:j.scope?String(j.scope).slice(0,2000):''});
       window.__linkKey=null;   // prefill assumes an intake-row opener — a deep link has NO row yet; a phantom tie here blocked row-creation on save
+      // Keyword Calendar: carry the moment's id onto the brief so the calendar's status chip
+      // tracks THIS ticket for life — renaming the moment can never break the tie (Ray, 11 Sep 2026)
+      if(j.kw)window.__kwId=String(j.kw).slice(0,60);
     },450);
   }catch(e){} })();
   // pull the live Gmail intake (client task emails) once the service account is connected
