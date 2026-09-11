@@ -1458,6 +1458,7 @@ window.addEventListener('load',restore);
     b.id=id; b.client=o.f.client; b.code=code(o.f.client,o.f.market); b.task=o.f.task; b.scope=o.f.scope;
     b.dod=o.f.dod; b.assets=o.f.assets; b.due=isoToDDMMYYYY(o.f.dueIso); b.source=o.f.source; b.priority=o.f.priority;
     b.subject=o.subj; b.body=o.body; b.updated=Date.now();
+    if(window.__kwId){ b.kw=window.__kwId; window.__kwId=null; }   // KWCal moment tie (set once, kept through later edits)
     // an email-sourced task briefed against a brand becomes a real plan row (write-back included)
     if(o.f.source==='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',1);
     // tie the ticket to its plan row: the prefill link if it still matches, else auto-match on task wording
@@ -2441,6 +2442,8 @@ window.addEventListener('load',restore);
   })();
   function prefill(t){
     window.__editId=null;
+    window.__kwId=null;      // Keyword-Calendar tie: cleared here so only the deep link that
+                             // just opened this composer can stamp one onto the saved brief
     window.__emailId=null;        // the email-triage opener re-sets this after calling prefill
     resetBodyOverride();   // a fresh intake row shouldn't inherit an edit made on a previous draft
     window.__linkKey=rowKey(t);   // tie the brief being drafted back to this intake row
@@ -3392,6 +3395,9 @@ window.addEventListener('load',restore);
     window.__fromLink=1;   // module deep-link: the tie to plan rows must be EXACT, never fuzzy
     setTimeout(function(){ prefill({client:j.client||'',task:String(j.task).slice(0,200),cat:j.cat||'',source:j.source||'plan',scope:j.scope?String(j.scope).slice(0,2000):''});
       window.__linkKey=null;   // prefill assumes an intake-row opener — a deep link has NO row yet; a phantom tie here blocked row-creation on save
+      // Keyword Calendar: carry the moment's id onto the brief so the calendar's status chip
+      // tracks THIS ticket for life — renaming the moment can never break the tie (Ray, 11 Sep 2026)
+      if(j.kw)window.__kwId=String(j.kw).slice(0,60);
     },450);
   }catch(e){} })();
   // pull the live Gmail intake (client task emails) once the service account is connected
