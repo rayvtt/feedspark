@@ -42,6 +42,25 @@ function liftVar(name) {
   if (!m) throw new Error(`KWCal: var ${name} not found`);
   return m[0];
 }
+function liftDecl(name) {                   // `var NAME={…}` / `var NAME=[…]` — brace-matched, so
+  const at = src.indexOf('var ' + name + '=');            // nested arrays and objects survive
+  if (at < 0) throw new Error(`KWCal: var ${name} not found — did it get renamed?`);
+  const open = /[[{]/.exec(src.slice(at))?.index;
+  const shut = src[at + open] === '[' ? ']' : '}';
+  let depth = 0, inS = null, esc = false, line = false, block = false;
+  for (let j = at + open; j < src.length; j++) {
+    const c = src[j], n = src[j + 1];
+    if (line) { if (c === '\n') line = false; continue; }
+    if (block) { if (c === '*' && n === '/') { block = false; j++; } continue; }
+    if (inS) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === inS) inS = null; continue; }
+    if (c === '/' && n === '/') { line = true; j++; continue; }
+    if (c === '/' && n === '*') { block = true; j++; continue; }
+    if (c === '"' || c === "'" || c === '`') { inS = c; continue; }
+    if (c === '[' || c === '{') depth++;
+    else if (c === ']' || c === '}') { depth--; if (!depth) { if (c !== shut) throw new Error(`KWCal: ${name} closed with ${c}`); return src.slice(at, j + 1) + ';'; } }
+  }
+  throw new Error(`KWCal: unbalanced brackets reading var ${name}`);
+}
 
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const LEAD_DAYS = 21;
@@ -115,6 +134,50 @@ is('a brand with no archive gets nothing', api.resFor('Schuh', aw26), null);
 // ---------- the canonical task name (what the brief is raised as) ----------
 is('house task name', api.kwTask('Reiss', ev('k', 'Coats', '2026-10-12')), 'Keywords Optimisation - Coats - Marketing Planner - 1026');
 is('non-GB markets are suffixed', api.kwTask('Reiss', ev('k', 'Coats', '2026-10-12', 'us')), 'Keywords Optimisation - Coats - Marketing Planner - 1026 - US');
+
+// ---------- the Accessorize ingest (Ray, 11 Sep 2026) ----------
+/* The brand's own master marketing calendar is SEEDED into the page, not handed over as a file to
+ * import — an ingest that only exists in a download is an ingest nobody can see. Five moments per
+ * retail period, and the moments that turn on a date correction carry the reason. */
+const seedApi = new Function(`${liftDecl('SEED')} return SEED;`)();
+const ACC = seedApi.Accessorize && seedApi.Accessorize.events;
+is('Accessorize is seeded', Array.isArray(ACC), true);
+is('15 moments — five per retail period', ACC.length, 15);
+is('every moment carries keyword themes', ACC.every((e) => Array.isArray(e.terms) && e.terms.length), true);
+is('every moment has a real ISO date', ACC.every((e) => /^\d{4}-\d{2}-\d{2}$/.test(e.date)), true);
+is('every lane is one the board renders', ACC.every((e) => ['campaign','location','studio','sale'].includes(e.lane)), true);
+is('ids are unique and brand-prefixed', new Set(ACC.map((e) => e.id)).size === 15 && ACC.every((e) => e.id.startsWith('acc_')), true);
+const per = (a, b) => ACC.filter((e) => e.date >= a && e.date <= b).length;
+is('P1 · 30 Aug – 3 Oct', per('2026-08-30', '2026-10-03'), 5);
+is('P2 · 4 – 31 Oct', per('2026-10-04', '2026-10-31'), 5);
+is('P3 · 1 – 28 Nov', per('2026-11-01', '2026-11-28'), 5);
+// the workbook's key-dates row is carried over from 2024 — a moment whose date we moved, or that
+// the client has not confirmed, must say so on the card or the caveat is lost
+is('the corrected / unconfirmed dates carry their reason', ACC.filter((e) => e.note).map((e) => e.id).sort(),
+  ['acc_country', 'acc_halloween', 'acc_sparkle', 'acc_xmaslaunch']);
+
+// ---------- the mis-file repair ----------
+/* importEvents used to honour the JSON's own "client" only when that brand already had a record,
+ * so a calendar for a brand the board had never stored filed itself into whatever was ON SCREEN.
+ * rehomeImports puts those events back; it must be idempotent and must not touch anything else. */
+let STORE;
+const rehome = new Function('getS', `${liftDecl('IMPORT_HOMES')} ${lift('rehomeImports')}
+   var STORE; return function(s){ STORE = s; return rehomeImports(); };`)(() => STORE);
+const misfiled = {
+  Reiss: { events: [{ id: 'coats', name: 'Coats', date: '2026-10-12' }, { id: 'acc_newbag', name: 'That New-Bag Feeling — Hero Bags', date: '2026-09-02' }] },
+  Schuh: { events: [{ id: 'acc_layerup', name: 'Layer It Up — Scarves', date: '2026-09-06' }] },
+  _meta: { events: [{ id: 'acc_nope' }] },
+};
+is('both mis-filed moments move home', rehome(misfiled), 2);
+is('the wrong brand is left clean', misfiled.Reiss.events.map((e) => e.id), ['coats']);
+is('and keeps nothing of its own', misfiled.Schuh.events.length, 0);
+is('they land on the brand the calendar named', misfiled.Accessorize.events.map((e) => e.id).sort(), ['acc_layerup', 'acc_newbag']);
+is('an underscore key is never scanned', misfiled._meta.events.length, 1);
+is('running it again is a no-op', rehome(misfiled), 0);
+is('and never duplicates', misfiled.Accessorize.events.length, 2);
+// an event already home is not "mis-filed"
+const clean = { Accessorize: { events: [{ id: 'acc_newbag' }] } };
+is('the home brand is never rehomed onto itself', rehome(clean), 0);
 
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) { fails.forEach((f) => console.error('  ✗ ' + f)); process.exit(1); }

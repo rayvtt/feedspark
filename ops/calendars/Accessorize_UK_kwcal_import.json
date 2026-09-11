@@ -1,0 +1,202 @@
+{
+ "client": "Accessorize",
+ "market": "gb",
+ "_source": "ACC_ marketing_calendar.xlsx — Accessorize UK Master Marketing Calendar, retail Periods 1-3 (30 Aug - 28 Nov 2026)",
+ "_note": "5 moments per retail period, per Ray. Dates are the CORRECTED 2026 dates - the workbook's key-dates row carries 2024 dates (see the brief).",
+ "events": [
+  {
+   "id": "acc_modernfolk",
+   "name": "Modern Folk — Autumn Launch",
+   "lane": "campaign",
+   "date": "2026-09-02",
+   "terms": [
+    "modern folk",
+    "autumn",
+    "new season",
+    "aw26",
+    "folk print"
+   ]
+  },
+  {
+   "id": "acc_newbag",
+   "name": "That New-Bag Feeling — Hero Bags",
+   "lane": "studio",
+   "date": "2026-09-02",
+   "terms": [
+    "bag",
+    "handbag",
+    "tote",
+    "shoulder bag",
+    "crossbody"
+   ]
+  },
+  {
+   "id": "acc_layerup",
+   "name": "Layer It Up — Scarves",
+   "lane": "studio",
+   "date": "2026-09-06",
+   "terms": [
+    "scarf",
+    "scarves",
+    "layering",
+    "knit",
+    "wrap"
+   ]
+  },
+  {
+   "id": "acc_100days",
+   "name": "100 Days to Christmas — Gifting soft launch",
+   "lane": "campaign",
+   "date": "2026-09-16",
+   "terms": [
+    "christmas",
+    "gift",
+    "gifting",
+    "christmas shop",
+    "advent calendar"
+   ]
+  },
+  {
+   "id": "acc_goodmanners",
+   "name": "Accessorize x GoodManners — Good Style, Everyday",
+   "lane": "campaign",
+   "date": "2026-09-24",
+   "terms": [
+    "goodmanners",
+    "good style",
+    "collaboration",
+    "collab",
+    "new in"
+   ]
+  },
+  {
+   "id": "acc_country",
+   "name": "Country Calling — Autumn phase 2",
+   "lane": "campaign",
+   "date": "2026-10-08",
+   "terms": [
+    "country",
+    "countryside",
+    "tweed",
+    "check",
+    "autumn"
+   ]
+  },
+  {
+   "id": "acc_handbagday",
+   "name": "Bags of Compliments — National Handbag Day",
+   "lane": "location",
+   "date": "2026-10-10",
+   "terms": [
+    "handbag",
+    "bag",
+    "tote",
+    "shoulder bag",
+    "bag strap"
+   ]
+  },
+  {
+   "id": "acc_wintershop",
+   "name": "Winter Shop — Bags & Cold Weather",
+   "lane": "studio",
+   "date": "2026-10-11",
+   "terms": [
+    "winter",
+    "cold weather",
+    "gloves",
+    "hat",
+    "scarf"
+   ]
+  },
+  {
+   "id": "acc_xmaslaunch",
+   "name": "Christmas Hard Launch — Gifting",
+   "lane": "campaign",
+   "date": "2026-10-14",
+   "terms": [
+    "christmas",
+    "gift",
+    "gifting",
+    "present",
+    "stocking filler"
+   ]
+  },
+  {
+   "id": "acc_halloween",
+   "name": "Halloween & Half-Term",
+   "lane": "location",
+   "date": "2026-10-26",
+   "terms": [
+    "halloween",
+    "party",
+    "costume",
+    "half term",
+    "kids"
+   ]
+  },
+  {
+   "id": "acc_xmasnice",
+   "name": "Christmas — Nice (gifting peak)",
+   "lane": "campaign",
+   "date": "2026-11-01",
+   "terms": [
+    "christmas",
+    "gift",
+    "gifting",
+    "christmas gifts",
+    "secret santa"
+   ]
+  },
+  {
+   "id": "acc_sparkle",
+   "name": "Sparkle Season — Diwali & Jewellery",
+   "lane": "studio",
+   "date": "2026-11-08",
+   "terms": [
+    "jewellery",
+    "sparkle",
+    "diwali",
+    "earrings",
+    "party"
+   ]
+  },
+  {
+   "id": "acc_coldweather",
+   "name": "Cold Weather Push",
+   "lane": "studio",
+   "date": "2026-11-15",
+   "terms": [
+    "cold weather",
+    "gloves",
+    "hats",
+    "scarves",
+    "cosy"
+   ]
+  },
+  {
+   "id": "acc_specialbuys",
+   "name": "Black Friday Special Buys",
+   "lane": "sale",
+   "date": "2026-11-17",
+   "terms": [
+    "special buy",
+    "black friday",
+    "deal",
+    "offer"
+   ]
+  },
+  {
+   "id": "acc_blackfriday",
+   "name": "Black Friday — 25% off Everything",
+   "lane": "sale",
+   "date": "2026-11-27",
+   "brandwide": 1,
+   "terms": [
+    "black friday",
+    "sale",
+    "25% off",
+    "cyber monday"
+   ]
+  }
+ ]
+}
