@@ -3767,6 +3767,13 @@
    "pattern": "acl-mchip",
    "min": 1,
    "pr": 346
+  },
+  {
+   "name": "presence: live-only popover — the always-on Stephen/Matt watchlist is retired (Ray, Sep 2026)",
+   "file": "docs/presence_widget.html",
+   "pattern": "var WATCH=",
+   "forbidden": true,
+   "pr": 347
   }
  ]
 }
