@@ -3535,6 +3535,20 @@
    "pattern": "function stOf(",
    "min": 1,
    "pr": 340
+  },
+  {
+   "name": "Workflow: Chase ASPL replies inside the brief's original Gmail thread",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "openChaseAspl",
+   "min": 2,
+   "pr": null
+  },
+  {
+   "name": "Workflow: ASPL reply list shows date+time per sender, body stripped of quoted headers",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "commWhen",
+   "min": 2,
+   "pr": null
   }
  ]
 }

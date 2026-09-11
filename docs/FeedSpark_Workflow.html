@@ -240,7 +240,9 @@ window.addEventListener('load',restore);
   .stat-seg button.on{color:#fff;border-color:transparent;background:var(--navy)}
   .comm{display:flex;gap:9px;padding:8px 0;border-bottom:1px dashed var(--line)}
   .comm:last-child{border-bottom:0}
-  .comm .cw{font-size:12px;font-weight:900;color:var(--navy);flex:none;min-width:64px}
+  .comm .cw{font-size:12px;font-weight:900;color:var(--navy);flex:none;min-width:92px;display:flex;flex-direction:column;gap:1px}
+  .comm .cw .cwd{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;letter-spacing:.01em}
+  .comm .cw .cwt{font-size:11px;font-weight:800;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
   .comm .cb{font-size:12.5px;color:var(--ink-2)}
   .comm .ck{font-size:10px;font-weight:800;color:var(--good);text-transform:uppercase;letter-spacing:.03em}
   .addc{display:grid;grid-template-columns:120px 1fr auto;gap:7px;margin-top:9px}
@@ -2628,7 +2630,11 @@ window.addEventListener('load',restore);
       window.__editId=null; window.__linkKey=null; window.__emailId=null; window.__bsRow=null; resetBodyOverride();
       fillAttach(null); bsPropose(); renderCtx(null); refreshPreview(); openBrief(); }; })();
   function openModal(id){ var b=BRIEFS[id]; if(!b)return;
-    var comms=(b.comms||[]).map(function(c){ return '<div class="comm"><span class="cw">'+esc(c.from)+'</span><span class="cb">'+esc(c.note)+(c.done?' <span class="ck">✓ done signal</span>':'')+'</span></div>'; }).join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
+    var comms=(b.comms||[]).map(function(c){ var w=commWhen(c);
+      return '<div class="comm"><span class="cw">'+esc(c.from)
+        +(w?('<span class="cwd">'+esc(w.d)+'</span><span class="cwt">'+esc(w.t)+'</span>'):'')
+        +'</span><span class="cb">'+esc(commBody(c))+(c.done?' <span class="ck">✓ done signal</span>':'')+'</span></div>'; })
+      .join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
     var stat=STAGES.filter(function(s){ return s[0]!=='analysis'||needsAnalysis(b); })
       .map(function(s){ return '<button data-s="'+s[0]+'" class="'+(b.status===s[0]?'on':'')+'">'+s[1]+'</button>'; }).join('');
     var doneNote=lastDoneNote(b);
@@ -2702,12 +2708,18 @@ window.addEventListener('load',restore);
     // upgrade the thread link from a search to a DIRECT deep-link once the worker resolves the
     // Gmail thread id (cached on the brief so later opens are instant). Falls back to the
     // quoted-token search until Gmail creds are connected.
-    (function(){ var a=document.getElementById('m-thread'); if(!a||!b.code)return;
-      function apply(g){ if(!g||!g.id)return; a.href='https://mail.google.com/mail/u/'+encodeURIComponent(g.mb||'0')+'/#all/'+encodeURIComponent(g.id); a.innerHTML='✉ Open the email thread ('+esc(b.code)+')'; }
-      if(b.gthread){ apply(b.gthread); return; }
-      fetch('/api/gmail/thread?q='+encodeURIComponent(threadQuery(b))+'&q='+encodeURIComponent('"'+b.id+'"')+'&q='+encodeURIComponent('"ibfcode:'+b.code+'"')).then(function(r){return r.json();}).then(function(d){
-        if(d&&d.connected&&d.threadId){ b.gthread={id:d.threadId,mb:d.mailbox||'',t:Date.now()}; persist(); apply(b.gthread); }
-      }).catch(function(){});
+    (function(){ var a=document.getElementById('m-thread'), ch=document.getElementById('m-chase'); if(!b.code)return;
+      function apply(g){
+        if(!g||!g.id)return;
+        if(a){ a.href=gthreadHref(g); a.innerHTML='✉ Open the email thread ('+esc(b.code)+')'; }
+        // the chase now lands IN the conversation instead of opening a new compose window
+        if(ch){ ch.href=gthreadHref(g); ch.textContent='⏰ Chase ASPL in thread';
+          ch.title='Opens the brief’s original Gmail conversation — hit Reply all so everyone already on it stays on it. The chase note is copied to your clipboard, ready to paste.';
+          ch.onclick=function(){ copy(chaseNote(b),'Chase note copied — hit Reply all in the thread so everyone stays on it'); };
+        }
+      }
+      if(b.gthread&&b.gthread.id){ apply(b.gthread); return; }
+      resolveThread(b,function(g){ if(g)apply(g); else if(ch)ch.title='No original thread found yet (Gmail lookup empty) — this opens a fresh chase addressed to the ASPL list.'; });
     })();
   }
   // Gmail-proof thread query: Gmail tokenises away punctuation, so hyphenated tokens like the
@@ -2715,6 +2727,31 @@ window.addEventListener('load',restore);
   // brief's subject for the client + the task's words (punctuation stripped, first 8 words).
   function threadQuery(b){ var w=String(b.task||'').replace(/[^a-z0-9À-ɏ]+/gi,' ').trim().split(/\s+/).slice(0,8).join(' ');
     return w?('subject:("'+b.client+'" "'+w+'")'):('"'+b.id+'"'); }
+  // ---- reply scanning (Ray, 11 Sep 2026: "have the tracking of each thread give clear dates
+  // and times on the left-hand side under the person's name, and remove that from the body
+  // content so I can scan easier"). The date shown is the REAL email time when the pasted
+  // reply carries Outlook/Gmail's "Sent:" header, falling back to when it was logged here.
+  var SENT_RE=/\bSent:\s*([A-Za-z0-9 ,:]{8,48}?)(?=\s{1,}(?:To|Cc|Subject|From):|\s*$)/;
+  function commWhen(c){
+    var d=null, m=SENT_RE.exec(String((c&&c.note)||''));
+    if(m){ var p=new Date(m[1].replace(/,/g,' ').trim()); if(!isNaN(p.getTime()))d=p; }
+    if(!d&&c&&c.when){ var q=new Date(c.when); if(!isNaN(q.getTime()))d=q; }
+    if(!d)return null;
+    return { d: d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}),
+             t: d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) };
+  }
+  // strip the quoted-original block and the routing tokens out of the visible note: the
+  // From/Sent/To/Subject chain, the [ibfcode:]/[ibfref:]/ibfdue: markers the router needs but
+  // nobody reads, and the FEEDSPARK BRIEF banner. What's left is what the person actually wrote.
+  function commBody(c){
+    var t=String((c&&c.note)||'');
+    t=t.replace(/\bFrom:\s*[^]*$/i,' ');                       // quoted original onwards
+    t=t.replace(/\b(?:Sent|To|Cc|Subject):\s*[^\n]*/gi,' ');    // stray headers without a From:
+    t=t.replace(/\[ibf(?:code|ref):[^\]]*\]/gi,' ').replace(/\bibfdue:\s*\d+/gi,' ');
+    t=t.replace(/\bFEEDSPARK BRIEF\b/gi,' ').replace(/\bDONE SIGNAL\b/gi,' ').replace(/[✓✔]/g,' ');
+    t=t.replace(/\s{2,}/g,' ').replace(/^[\s·—-]+|[\s·—-]+$/g,'');
+    return t || String((c&&c.note)||'').slice(0,200);           // never render an empty reply
+  }
   function lastDoneNote(b){ if(!b.comms)return ''; for(var i=b.comms.length-1;i>=0;i--){ if(b.comms[i].done||DONE_RE.test(b.comms[i].note)) return b.comms[i].note; } return ''; }
   function hasResult(b){ if(!b.comms)return false; for(var i=b.comms.length-1;i>=0;i--){ if(/^Result:/.test(b.comms[i].note))return true; } return false; }
   // read-out extraction — the page mirror of the worker's extractResult, so pasting ASPL's
@@ -2901,11 +2938,37 @@ window.addEventListener('load',restore);
     var ta=document.getElementById('lu-text'); if(ta)ta.addEventListener('keydown',function(e){ if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); routeUpdate(); } }); })();
 
   // ---- #4 chase drafts ----
-  function chaseAspl(b){ var L=['Hi '+(asplOf(b)||'team')+',','','Chasing this brief — '+dueState(b)+':','',
-    '• '+b.task+'  ['+b.code+']  ibfdue:'+(b.due||'TBC'),'','Could you confirm status / ETA? Reply-all keeps the portal in sync.','','Thanks,','Ray'];
-    // "Re: <original subject>" so Gmail threads the chase into the brief's conversation instead of starting a new one
+  function chaseNote(b){ return ['Hi '+(asplOf(b)||'team')+',','','Chasing this brief — '+dueState(b)+':','',
+    '• '+b.task+'  ['+b.code+']  ibfdue:'+(b.due||'TBC'),'','Could you confirm status / ETA? Reply-all keeps the portal in sync.','','Thanks,','Ray'].join('\n'); }
+  // COMPOSE fallback only. Gmail's view=cm always starts a NEW conversation whatever the
+  // subject says, so this is used only when the original thread can't be resolved.
+  function chaseAspl(b){
     var su='Re: '+(b.subject||('[FS Brief] '+b.client+' · '+b.task+' · [ibfcode:'+b.code+'] ibfdue:'+(b.due||'')+' [ibfref:'+b.id+']'));
-    return 'https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(su)+'&body='+encodeURIComponent(L.join('\n')); }
+    return 'https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(su)+'&body='+encodeURIComponent(chaseNote(b)); }
+  // ---- CHASE IN THE ORIGINAL THREAD (Ray, 11 Sep 2026: "that button should link directly to
+  // the original thread and include all the people answering in the same thread, rather than
+  // creating a new Gmail thread"). Gmail has no URL that pre-fills a reply, so the chase opens
+  // the real conversation — where Reply all keeps every participant — and the note is copied
+  // ready to paste. Resolution is the same worker lookup the ✉ thread link uses, cached on the
+  // brief (b.gthread) so repeat opens are instant.
+  function gthreadHref(g){ return 'https://mail.google.com/mail/u/'+encodeURIComponent((g&&g.mb)||'0')+'/#all/'+encodeURIComponent(g.id); }
+  function resolveThread(b,cb){
+    if(!b||!b.code){ cb(null); return; }
+    if(b.gthread&&b.gthread.id){ cb(b.gthread); return; }
+    fetch('/api/gmail/thread?q='+encodeURIComponent(threadQuery(b))+'&q='+encodeURIComponent('"'+b.id+'"')+'&q='+encodeURIComponent('"ibfcode:'+b.code+'"'))
+      .then(function(r){return r.json();}).then(function(d){
+        if(d&&d.connected&&d.threadId){ b.gthread={id:d.threadId,mb:d.mailbox||'',t:Date.now()}; persist(); cb(b.gthread); }
+        else cb(null);
+      }).catch(function(){ cb(null); });
+  }
+  // used by the escalation list, where there is no pre-resolved link to click
+  function openChaseAspl(b){
+    resolveThread(b,function(g){
+      if(g){ copy(chaseNote(b),'Chase note copied — hit Reply all in the thread so everyone stays on it');
+        window.open(gthreadHref(g),'_blank','noopener'); }
+      else { toast('No original thread found — opening a fresh chase'); window.open(chaseAspl(b),'_blank','noopener'); }
+    });
+  }
   function chaseClient(b){ var L=['Hi team,','','Quick update on the below — checking you have everything you need from us to move it forward:','',
     '• '+b.task,'','Happy to jump on a quick call if easier.','','Best,','Ray','FeedSpark'];
     return 'https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark · '+b.client+' — '+b.task)+'&body='+encodeURIComponent(L.join('\n')); }
@@ -2950,7 +3013,7 @@ window.addEventListener('load',restore);
       : '<div class="sub" style="margin:0">Nothing over SLA in any court — every ticket is moving. 👌</div>';
     s.querySelectorAll('[data-act]').forEach(function(btn){ btn.onclick=function(e){ e.stopPropagation(); var b=BRIEFS[btn.getAttribute('data-b')]; if(!b)return;
       var a=btn.getAttribute('data-act');
-      if(a==='chaseA')window.open(chaseAspl(b),'_blank','noopener'); else if(a==='chaseC')window.open(chaseClient(b),'_blank','noopener'); else openModal(b.id); }; });
+      if(a==='chaseA')openChaseAspl(b); else if(a==='chaseC')window.open(chaseClient(b),'_blank','noopener'); else openModal(b.id); }; });
     s.querySelectorAll('.stall-row').forEach(function(r){ r.onclick=function(){ openModal(r.getAttribute('data-id')); }; });
   }
 
