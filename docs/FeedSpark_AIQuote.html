@@ -334,6 +334,11 @@ window.addEventListener('load',restore);
   .cm{display:inline-flex;border:1px solid var(--line);border-radius:100px;overflow:hidden;flex:none;justify-self:start;white-space:nowrap}
   .cmb{font:inherit;font-size:10.5px;font-weight:800;padding:3px 9px;border:0;background:#fff;color:var(--muted);cursor:pointer}
   .cmb.on{background:var(--orange);color:#fff}
+  /* generation METHOD next to the charge toggle (Ray, 11 Sep 2026): manual / rules / predefined rules / AI + script */
+  .cmg{display:inline-flex;align-items:center;gap:6px;justify-self:start;white-space:nowrap}
+  .gm{font:inherit;font-size:10.5px;font-weight:800;padding:3px 6px;border:1px solid var(--line);border-radius:100px;background:#fff;color:var(--ink-2);cursor:pointer;max-width:132px}
+  .gm.manual{border-color:var(--orange-deep);color:var(--orange-deep)}
+  [data-theme=dark] .gm{background:#20242E;color:var(--ink-2)}
   .qrow input.fnote{font:inherit;font-size:11.5px;font-weight:600;padding:6px 8px;border:1px dashed var(--line);border-radius:8px;background:#fff;width:100%;min-width:0;margin:0;box-shadow:none;color:var(--ink)}
   .qrow input.rate.hrs{color:var(--ink)}
   .qrow input.rate.hrs.seeded{color:var(--navy)}
@@ -343,6 +348,14 @@ window.addEventListener('load',restore);
      and easy to use"): One-off | Monthly | Settings, every input on the row it affects */
   .qtot .gmon{display:block;font-size:12px;color:var(--muted);text-align:right}
   .qsum{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:12px}
+  /* Ray, 11 Sep 2026: "align it so that net ex VAT and one-off total appear on the same horizontal line" —
+     side by side, the three tiles share ONE set of row tracks (subgrid): row 6 is Net and row 8 the total in
+     both the One-off and the Monthly tile, so a wrapped hint or the setup-fee box above them can no longer
+     push one tile's Net / VAT / total below the other's. Stacked (narrow), the tiles flow as before. */
+  @media (min-width:900px){ @supports (grid-template-rows:subgrid){
+    .qsum{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(9,auto)}
+    .qs-col{display:grid;grid-template-rows:subgrid;grid-row:1/-1;align-content:start}
+    .qs-col>.qs-r{align-self:stretch} } }
   .qs-col{border:1px solid var(--line);border-radius:12px;padding:10px 14px 8px;background:#fff}
   .qs-col.set{background:var(--wash)}
   .qs-h{font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px}
@@ -430,7 +443,7 @@ window.addEventListener('load',restore);
   .hint{font-size:11.5px;color:var(--muted);font-weight:700}
   .rc-note{font-size:11.5px;color:var(--navy);font-weight:800;margin-top:10px}
   [data-theme=dark] .rc-note{color:#93B4E0}
-  @media(max-width:720px){.qrow,.qhead{grid-template-columns:26px 1fr 84px}.qhead .rate-h,.qhead .line-h,.qrow .col-rate,.qrow .col-line{display:none}}
+  @media(max-width:720px){.qrow,.qhead{grid-template-columns:26px 1fr 84px}.qhead .rate-h,.qhead .line-h,.qrow .col-rate,.qrow .col-line,.qrow .cmg{display:none}}
 
   /* ---------- saved quotes: the finance tracker ---------- */
   .tk-kpis{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}
@@ -558,8 +571,8 @@ window.addEventListener('load',restore);
 
   <div class="card priceless" id="fields-card" data-tp="ai">
     <h3>Fields to generate</h3>
-    <div class="ch">Tick an optimisation to price it. The six conversational attributes are on top; the Tachyon catalogue follows, grouped — click a group header to fold it. Rates seed from the catalogue (your Pricer figures) and save to your rate card; type over any to override for this client. Every line carries its own <b>note</b> (it lands in the quote's Additional Notes, the email and the brief) and is charged <b>£ per SKU</b>, as a <b>one-off</b> (hours at the block rate) or <b>monthly</b> (hours per month — a recurring line). A per-SKU or one-off line that also needs looking after takes <b>maintenance hours per month</b> in its own box. Everything monthly builds the <b>Monthly</b> column of the summary below.</div>
-    <div class="qhead"><span></span><span>Optimisation</span><span class="cm-h col-rate" title="£ per SKU × quantity, or a one-off charge for the line priced from its hours">Charge</span><span>Note</span><span class="num" title="Variant SKUs in scope — every SKU row in the live feed">SKUs</span><span class="num rate-h col-rate" title="£ per SKU — or, on a one-off line, the hours it takes (× the block rate)">£ / SKU · hrs</span><span class="num col-rate" title="Maintenance hours per month for this line, at the block rate — the Monthly side of the quote">Maintain h/mo</span><span class="num line-h col-line">Line total</span></div>
+    <div class="ch">Tick an optimisation to price it. The six conversational attributes are on top; the Tachyon catalogue follows, grouped — click a group header to fold it. Rates seed from the catalogue (your Pricer figures) and save to your rate card; type over any to override for this client. Next to the charge, the <b>generation method</b> — manual, rules, predefined rules or AI + script — records how the team will produce the field, so ASPL sizes the work from the quote (it labels the line on the export, the email and the brief; the £ and hours stay yours per line). Every line carries its own <b>note</b> (it lands in the quote's Additional Notes, the email and the brief) and is charged <b>£ per SKU</b>, as a <b>one-off</b> (hours at the block rate) or <b>monthly</b> (hours per month — a recurring line). A per-SKU or one-off line that also needs looking after takes <b>maintenance hours per month</b> in its own box. Everything monthly builds the <b>Monthly</b> column of the summary below.</div>
+    <div class="qhead"><span></span><span>Optimisation</span><span class="cm-h" title="Charge: £ per SKU × quantity, a one-off from hours, or monthly · Method: how the team will produce the field — manual, rules, predefined rules or AI + script">Charge · method</span><span>Note</span><span class="num" title="Variant SKUs in scope — every SKU row in the live feed">SKUs</span><span class="num rate-h col-rate" title="£ per SKU — or, on a one-off line, the hours it takes (× the block rate)">£ / SKU · hrs</span><span class="num col-rate" title="Maintenance hours per month for this line, at the block rate — the Monthly side of the quote">Maintain h/mo</span><span class="num line-h col-line">Line total</span></div>
     <div id="qgroups"></div>
   </div>
 
@@ -823,6 +836,21 @@ window.addEventListener('load',restore);
   function fCharge(id){ var f=rec().fields[id]; if(f&&(f.charge==='flat'||f.charge==='unit'||f.charge==='monthly'))return f.charge;
     var c=card()[id]; return (c&&(c.charge==='flat'||c.charge==='monthly'))?c.charge:'unit'; }
   function fNote(id){ var f=rec().fields[id]; return (f&&f.note)?String(f.note):''; }
+  /* GENERATION METHOD per line (Ray, 11 Sep 2026: "next to charge, let's also have the mode of
+     generation — whether manual, rules, predefined rules, or AI tech and our script; these four
+     methods will decide how much work they'll do for each field generation"): how the team will
+     produce the field. Per-client choice first, then the rate card, then AI + script (the
+     catalogue is Tachyon's). It labels the line everywhere — row, export descriptor, notes, copy
+     text, email, brief, tracker — so ASPL sizes the work from the quote; the £ / hours stay the
+     AM's call per line. */
+  var MODES=[['manual','Manual','Written by hand, field by field'],['rules','Rules','FeedHero rules built for this brand'],['preset','Predefined rules','Off-the-shelf FeedHero rule set'],['ai','AI + script','Tachyon AI with our scripts']];
+  var MODE_WORD={}; MODES.forEach(function(m){ MODE_WORD[m[0]]=m[1]; });
+  function fMode(id){ var f=rec().fields[id]; if(f&&MODE_WORD[f.mode])return f.mode; var c=card()[id]; return (c&&MODE_WORD[c.mode])?c.mode:'ai'; }
+  function modeSelect(id){ var cur=fMode(id); return '<select class="gm '+cur+'" data-gm="'+id+'" title="Generation method — how the team will produce this field: '+MODES.map(function(m){return m[1]+' = '+m[2]}).join(' · ')+'">'
+    +MODES.map(function(m){ return '<option value="'+m[0]+'"'+(m[0]===cur?' selected':'')+'>'+esc(m[1])+'</option>'; }).join('')+'</select>'; }
+  // "all AI + script" or "AI + script ×3 · Rules ×1" — the methods across the ticked lines
+  function modeWord(L){ var c={}; (L||[]).forEach(function(l){ var m=MODE_WORD[l.mode]?l.mode:'ai'; c[m]=(c[m]||0)+1; }); var ks=MODES.map(function(m){return m[0]}).filter(function(k){return c[k]});
+    if(!ks.length)return ''; if(ks.length===1)return 'all '+MODE_WORD[ks[0]]; return ks.map(function(k){return MODE_WORD[k]+' ×'+c[k]}).join(' · '); }
   function lineCost(c,rt,charge){ return rt==null?null:(charge==='flat'?(+rt||0):c*rt); }
   /* monthly maintenance per line (Ray, 10 Sep 2026: "attributes that need to be maintained
      monthly as well"): hours per month at the block rate — the Monthly side of the quote */
@@ -1099,10 +1127,10 @@ window.addEventListener('load',restore);
         return '<div class="qrow'+(on?'':' off')+(flat?' flat':'')+(mo?' mo':'')+'" data-k="'+f.id+'">'
           +'<span><input type="checkbox" class="cbx" data-on="'+f.id+'"'+(on?' checked':'')+'></span>'
           +'<span><div class="fname">'+esc(f.name)+'</div><div class="fmeta">'+metaHtml(f)+'</div></span>'
-          +'<span class="cm col-rate" role="group" aria-label="Charge model">'
+          +'<span class="cmg"><span class="cm col-rate" role="group" aria-label="Charge model">'
             +'<button type="button" class="cmb'+(ch==='unit'?' on':'')+'" data-cm="'+f.id+'" data-v="unit" title="Charged per SKU × the quantity">£ / SKU</button>'
             +'<button type="button" class="cmb'+(flat?' on':'')+'" data-cm="'+f.id+'" data-v="flat" title="One-off charge for this line, priced from its hours at £'+blockGBP()+' per '+BLOCK_H+'h">one-off</button>'
-            +'<button type="button" class="cmb'+(mo?' on':'')+'" data-cm="'+f.id+'" data-v="monthly" title="Recurring charge — hours per month at £'+blockGBP()+' per '+BLOCK_H+'h, on the Monthly side of the quote">monthly</button></span>'
+            +'<button type="button" class="cmb'+(mo?' on':'')+'" data-cm="'+f.id+'" data-v="monthly" title="Recurring charge — hours per month at £'+blockGBP()+' per '+BLOCK_H+'h, on the Monthly side of the quote">monthly</button></span>'+modeSelect(f.id)+'</span>'
           +'<span><input class="fnote" data-note="'+f.id+'" type="text" maxlength="240" placeholder="Note — lands in the quote’s Additional Notes, the email and the brief" value="'+esc(note)+'"></span>'
           +'<span class="col-cnt"><input class="cnt'+(isAuto?' auto':'')+'" data-cnt="'+f.id+'" inputmode="numeric" value="'+fmt(c)+'"'+(isAuto?' title="auto from scope — variant SKUs; type to override"':'')+'></span>'
           +'<span class="col-rate">'+rateCell+'</span>'
@@ -1135,7 +1163,7 @@ window.addEventListener('load',restore);
     GROUPS.forEach(function(g){ var items=CAT.filter(function(f){return f.grp===g}); var onN=items.filter(function(f){return fOn(f.id)}).length;
       var gc=document.querySelector('.qgrp[data-g="'+cssEsc(g)+'"] .gcount'); if(gc){gc.textContent=onN?onN+' selected':items.length+' fields'; gc.className='gcount'+(onN?' has':'');} });
     var grand=t.miss?'<span class="grand unset">set every rate to total</span>':'<span class="grand">'+money(t.gross)+'</span>';
-    $('#qtot').innerHTML='<span>Quote summary</span><span class="hint">'+(t.inc?(t.inc+' AI field'+(t.inc===1?'':'s')+' · '+fmt(t.tp)+' SKUs'):'no AI fields')+(t.x.length?' · '+xWord(t.x):'')+(t.monN?' · '+t.monN+' monthly line'+(t.monN===1?'':'s'):'')+(t.disc>0?' · partner discount '+t.disc+'%'+(t.discScope!=='all'?' ('+discScopeWord(t.discScope)+')':''):'')+(vatOn()?' · inc VAT':' · ex VAT')+'</span>'
+    $('#qtot').innerHTML='<span>Quote summary</span><span class="hint">'+(t.inc?(t.inc+' AI field'+(t.inc===1?'':'s')+' · '+fmt(t.tp)+' SKUs · '+modeWord(lines())):'no AI fields')+(t.x.length?' · '+xWord(t.x):'')+(t.monN?' · '+t.monN+' monthly line'+(t.monN===1?'':'s'):'')+(t.disc>0?' · partner discount '+t.disc+'%'+(t.discScope!=='all'?' ('+discScopeWord(t.discScope)+')':''):'')+(vatOn()?' · inc VAT':' · ex VAT')+'</span>'
       +'<span style="margin-left:auto;text-align:right" class="col-line">'+grand+(t.monGross>0&&!t.miss?'<span class="gmon">+ '+money(t.monGross)+' / month</span>':'')+'</span>';
     var S1=function(id,v){ var e=$(id); if(e)e.innerHTML=v; };
     S1('#qs-linesn','· '+t.inc+' line'+(t.inc===1?'':'s')+' · '+fmt(t.tp)+' SKUs');
@@ -1191,6 +1219,8 @@ window.addEventListener('load',restore);
   $('#qgroups').addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('[data-cm]'); if(!b)return;
     var id=b.getAttribute('data-cm'), v=b.getAttribute('data-v'); if(fCharge(id)===v)return; rec().fields[id].charge=v;
     render(); saveSoon(); });
+  $('#qgroups').addEventListener('change',function(e){ var t=e.target; if(!t.classList||!t.classList.contains('gm'))return;
+    var id=t.getAttribute('data-gm'), v=MODE_WORD[t.value]?t.value:'ai', r=rec(); (r.fields[id]||(r.fields[id]={})).mode=v; render(); saveSoon(); });
   $('#blockrate').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9.]/g,''); rec().blockGBP=v===''?null:v; foot(); saveSoon(); });
   $('#setup').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9.]/g,''); rec().setup=v===''?null:v; foot(); saveSoon(); });
   $('#disc').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9.]/g,''); rec().disc=v===''?null:v; foot(); saveSoon(); });
@@ -1240,7 +1270,7 @@ window.addEventListener('load',restore);
     var d=t.closest&&t.closest('.tier'); if(d&&!(t.classList&&t.classList.contains('tgbp'))){ updRec().tier=+d.getAttribute('data-tier'); updRefresh(); foot(); saveSoon(); } });
   $('#savecard').addEventListener('click',function(){ var rc=STORE[RCKEY]||{fields:{}}; rc.fields=rc.fields||{};
     CAT.forEach(function(f){ var ch=fCharge(f.id), hb=(ch==='flat'||ch==='monthly'), rt=hb?null:fRate(f.id), h=hb?fHours(f.id):null;
-      if(rt!=null||h!=null)rc.fields[f.id]={rate:rt,charge:ch,hours:h}; });
+      if(rt!=null||h!=null)rc.fields[f.id]={rate:rt,charge:ch,hours:h,mode:fMode(f.id)}; });
     rc.blockGBP=blockGBP(); rc.upd={tiers:updTiers()}; rc.rates={sys:rateOf('sys'),feed:rateOf('feed'),lia:rateOf('lia')}; rc.pre={sys:preHours('sys'),feed:preHours('feed')}; rc.updated=Date.now(); STORE[RCKEY]=rc;
     putMap(storeBody(),'Rate card saved — it pre-fills every client'); render();   // the FULL map — a {ratecard}-only PUT used to tombstone every client record
   });
@@ -1353,7 +1383,7 @@ window.addEventListener('load',restore);
   /* a line as every consumer sees it. On a monthly line `mon` is its hours per month and
      `monGBP` its £ / month (rt is the same £); on the others `mon` is the maintenance add-on */
   function lines(){ return CAT.filter(function(f){return fOn(f.id)}).map(function(f){ var ch=fCharge(f.id), fl=ch==='flat', mo=ch==='monthly', rt=fRate(f.id), h=(fl||mo)?fHours(f.id):null, mh=mo?null:fMon(f.id);
-    return {name:f.name,grp:f.grp,id:f.id,c:fCount(f.id),rt:rt,charge:ch,note:fNote(f.id),hours:h,block:(fl||mo||mh>0)?blockGBP():null,
+    return {name:f.name,grp:f.grp,id:f.id,c:fCount(f.id),rt:rt,charge:ch,mode:fMode(f.id),note:fNote(f.id),hours:h,block:(fl||mo||mh>0)?blockGBP():null,
       mon:mo?h:(mh>0?mh:null),monGBP:mo?(rt||0):(mh>0?monCost(mh):0),
       disc:discOn(mo?'monthly':'oneoff',f.id),mdisc:(mh>0)?discOn('monthly',f.id):null}; }); }
   // one line's £ wording, shared by the copy text, the email and the brief
@@ -1616,7 +1646,7 @@ window.addEventListener('load',restore);
     else if(aiSect&&L.length&&!oneL.length&&!setupFee())row({A:{v:'No one-off lines',s:S.lbl},B:{v:'recurring only',s:S.lblq},
       N:{v:'Every line on this quote is a monthly charge — see the ManPower (Days / Month) section',s:S.note}});
     oneL.forEach(function(l){ var flat=l.charge==='flat';
-      costRow({name:l.name,qual:l.grp+(flat?' · one-off'+(l.hours!=null?' '+l.hours+'h':''):''),qty:flat?1:l.c,rate:(l.rt==null?'':l.rt),flat:flat,note:lineNote(l),dsc:l.disc?dsc:0}); });
+      costRow({name:l.name,qual:l.grp+' · '+MODE_WORD[l.mode||'ai']+(flat?' · one-off'+(l.hours!=null?' '+l.hours+'h':''):''),qty:flat?1:l.c,rate:(l.rt==null?'':l.rt),flat:flat,note:lineNote(l),dsc:l.disc?dsc:0}); });
     if(aiSect)row();
     /* 5b — one-off retainer hours: hours × the day rate, written as days */
     if(retOne){ sect('Retainer Hours (One-off)','Hours × the day rate, written as days (hours ÷ '+BLOCK_H+')');
@@ -1700,6 +1730,8 @@ window.addEventListener('load',restore);
     /* 9 — free notes, all computed from the live selection */
     var notes=[{t:'Notes:',b:1}];
     notes.push({t:'Quote covers '+(CLIENT||'-')+' '+mkt+' — AI field generation on the client’s live product feed.'});
+    if(L.length){ var byM={}; L.forEach(function(l){ var m=MODE_WORD[l.mode]?l.mode:'ai'; (byM[m]=byM[m]||[]).push(l.name); }); var mks=MODES.map(function(m){return m[0]}).filter(function(k){return byM[k]});
+      notes.push({t:'Generation method: '+(mks.length===1?(MODE_WORD[mks[0]]+' for every field.'):mks.map(function(k){return MODE_WORD[k]+' — '+byM[k].join(', ')}).join('; ')+'.')}); }
     notes.push({t:ix?('Live feed pull: '+fmt(ix.total)+' variant SKUs across '+Object.keys(ix.map).length+' product types — the product scope is counted at SKU level.')
                  :'Live feed not pulled — the volumes on this quote were entered by hand.'});
     if(L.length||typesRec().ai)notes.push({t:scopeTextPlain()+'.'});
@@ -1963,7 +1995,7 @@ window.addEventListener('load',restore);
   function snapshot(){
     var t=totals(),L=lines(),now=Date.now(),r=rec(),ix=idx(),sel=(r.pts&&r.pts[MKT])||[];
     return { ref:uniqueRef(quoteRef(new Date(now))), client:CLIENT, mkt:MKT, t:now, by:ME,
-      lines:L.map(function(l){ return {name:l.name,grp:l.grp,id:l.id,c:l.c,rt:l.rt,charge:l.charge,note:l.note,hours:l.hours,block:l.block,mon:l.mon,monGBP:l.monGBP,disc:l.disc,mdisc:l.mdisc}; }),
+      lines:L.map(function(l){ return {name:l.name,grp:l.grp,id:l.id,c:l.c,rt:l.rt,charge:l.charge,mode:l.mode||'ai',note:l.note,hours:l.hours,block:l.block,mon:l.mon,monGBP:l.monGBP,disc:l.disc,mdisc:l.mdisc}; }),
       scope:{mode:(r.scope||{}).mode||'all',pts:sel.slice(0,60),vol:baseVol(),skus:baseSkus(),feedTotal:ix?ix.total:null,feedProd:ix?ix.prod:null,manual:(r.scope||{}).manual},
       setup:setupFee(), disc:t.disc, discAmt:t.discAmt, discScope:t.discScope, discSetup:!!r.discSetup, sub:t.sub, vat:vatOn(), valid:(r.valid!=null?r.valid:null), blockGBP:blockGBP(),
       net:t.net, vatAmt:t.vat, gross:t.gross, miss:t.miss, fields:t.inc, prods:t.tp,
@@ -1989,7 +2021,7 @@ window.addEventListener('load',restore);
     if(sc.mode==='pts'){ r.pts=r.pts||{}; r.pts[MKT]=(sc.pts||[]).slice(); }
     CAT.forEach(function(f){ r.fields[f.id]={on:false,count:null,rate:null}; });
     (q.lines||[]).forEach(function(l){ if(!CMAP[l.id])return; var ch=l.charge||'unit', hb=(ch==='flat'||ch==='monthly');
-      r.fields[l.id]={on:true,count:l.c,rate:(hb?null:l.rt),charge:ch,hours:(hb?l.hours:null),mon:(ch!=='monthly'&&l.mon>0?l.mon:null),note:l.note||'',disc:!!l.disc}; });
+      r.fields[l.id]={on:true,count:l.c,rate:(hb?null:l.rt),charge:ch,mode:(MODE_WORD[l.mode]?l.mode:'ai'),hours:(hb?l.hours:null),mon:(ch!=='monthly'&&l.mon>0?l.mon:null),note:l.note||'',disc:!!l.disc}; });
     r.discScope=(q.discScope==='oneoff'||q.discScope==='monthly'||q.discScope==='lines')?q.discScope:'all'; r.discSetup=!!q.discSetup;
     // the quote types and their sections as saved (a quote saved before 11 Sep 2026 is AI-only)
     r.types=q.types?JSON.parse(JSON.stringify(q.types)):{ai:true};
@@ -2058,7 +2090,7 @@ window.addEventListener('load',restore);
     out.push('Reference: '+q.ref+' · '+qLoc(q)+' · issued '+dmy(d));
     if(L.length||q.upd)out.push('Scope: '+qScopeLine(q));
     if(L.length){ out.push('Fields ('+L.length+'):');
-      L.forEach(function(l){ out.push('• '+l.name+' — '+fmt(l.c)+' SKUs'+(withP&&l.rt!=null?(' '+lineMoney(l)):'')+(l.note?(' — '+l.note):'')); }); }
+      L.forEach(function(l){ out.push('• '+l.name+' — '+fmt(l.c)+' SKUs · '+MODE_WORD[l.mode||'ai']+(withP&&l.rt!=null?(' '+lineMoney(l)):'')+(l.note?(' — '+l.note):'')); }); }
     if(q.upd)out.push('Monthly update — new products: '+updWord(q.upd,withP));
     var XL=q.xlines||[]; ['sys','feed','lia','ret','pre'].forEach(function(k){ var g=XL.filter(function(l){return l.kind===k}); if(!g.length)return; out.push(KIND_HEAD[k]+' ('+g.length+'):');
       g.forEach(function(l){ out.push('• '+l.name+' — '+l.qual+(withP?(' '+xLineMoney(l)):'')+(l.note?(' — '+l.note):'')); }); });
@@ -2102,7 +2134,8 @@ window.addEventListener('load',restore);
     out.push('Saved quote '+q.ref+' — '+qLoc(q)+' — saved '+tkWhen(q.t)+' by '+tkWho(q.by));
     if(L.length||q.upd)out.push('Scope: '+qScopeLine(q));
     if(L.length){ out.push('Fields ('+L.length+'):');
-      L.forEach(function(l){ out.push('• '+l.name+' ('+(l.grp||'')+') — '+fmt(l.c)+' SKUs'+(l.rt==null?' — rate not set':(' '+lineMoney(l)))+(l.note?(' — '+l.note):'')); }); }
+      L.forEach(function(l){ out.push('• '+l.name+' ('+(l.grp||'')+') — '+fmt(l.c)+' SKUs · '+MODE_WORD[l.mode||'ai']+(l.rt==null?' — rate not set':(' '+lineMoney(l)))+(l.note?(' — '+l.note):'')); });
+      out.push('Generation methods: '+modeWord(L)+' — sizes the work per field (manual = written by hand; rules = FeedHero rules built for the brand; predefined rules = off-the-shelf rule set; AI + script = Tachyon with our scripts).'); }
     if(q.upd)out.push('Monthly update — new products: '+updWord(q.upd,true));
     var XB=q.xlines||[]; ['sys','feed','lia','ret','pre'].forEach(function(k){ var g=XB.filter(function(l){return l.kind===k}); if(!g.length)return; out.push(KIND_HEAD[k]+' ('+g.length+'):');
       g.forEach(function(l){ out.push('• '+l.name+' — '+l.qual+' '+xLineMoney(l)+(l.note?(' — '+l.note):'')); }); });
@@ -2242,7 +2275,7 @@ window.addEventListener('load',restore);
       if(TKASK&&TKASK.id===k)row+=askRow(k,q);
       if(TKOPEN[k]){
         var dl=(q.lines||[]).map(function(l){
-          return '<div class="dl"><span>'+esc(l.name)+' <span style="color:var(--muted)">· '+esc(l.grp||'')+'</span>'+(l.note?'<br><span style="color:var(--muted);font-weight:600">'+esc(l.note)+'</span>':'')+'</span>'
+          return '<div class="dl"><span>'+esc(l.name)+' <span style="color:var(--muted)">· '+esc(l.grp||'')+' · '+esc(MODE_WORD[l.mode||'ai'])+'</span>'+(l.note?'<br><span style="color:var(--muted);font-weight:600">'+esc(l.note)+'</span>':'')+'</span>'
             +'<span class="tk-money'+(SHOWP?'':' hid')+'">'+(l.charge==='monthly'?(fmt(l.c)+' SKUs · '+(l.rt==null?'monthly, hours not set':'monthly '+money(l.rt)+'/mo'+(l.hours!=null?' · '+l.hours+'h':'')))
               :l.charge==='flat'?(fmt(l.c)+' SKUs · '+(l.rt==null?'one-off, hours not set':'one-off '+money(l.rt)+(l.hours!=null?' · '+l.hours+'h':'')))
               :(fmt(l.c)+' × '+(l.rt==null?'rate not set':('£'+l.rt))+(l.rt==null?'':' = '+money(l.c*l.rt))))

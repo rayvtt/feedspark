@@ -3970,6 +3970,34 @@
    "pattern": "id=\"lia-card\"",
    "pr": 354,
    "forbidden": true
+  },
+  {
+   "name": "Quote generator: GENERATION METHOD per field next to the charge toggle — manual / rules / predefined rules / AI + script (Ray 11 Sep 2026 'these four methods decide how much work they'll do')",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function fMode(id){",
+   "pr": 355,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: the method rides the line everywhere — export descriptor, notes ('Generation method:'), copy text, email, brief ('Generation methods:'), tracker; saved on snapshots + the rate card",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "Generation method: ",
+   "pr": 355,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: method select in the charge cell (.cmg wraps .cm + select.gm)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "<span class=\"cmg\"><span class=\"cm col-rate\"",
+   "pr": 355,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: the One-off / Monthly / Settings tiles share one set of row tracks (subgrid) so Net (ex VAT) and the totals sit on the same horizontal line (Ray 11 Sep 2026)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "grid-template-rows:subgrid",
+   "pr": 355,
+   "min": 1
   }
  ]
 }
