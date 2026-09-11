@@ -3576,35 +3576,35 @@
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "path === '/api/playbook'",
    "min": 1,
-   "pr": 341
+   "pr": 342
   },
   {
    "name": "playbook: page route wired into PAGES",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "'/playbook':",
    "min": 1,
-   "pr": 341
+   "pr": 342
   },
   {
    "name": "playbook: retrospective — completed-task checklist by category + time window",
    "file": "docs/FeedSpark_Playbook.html",
    "pattern": "function renderRetro(",
    "min": 1,
-   "pr": 341
+   "pr": 342
   },
   {
    "name": "playbook: prospective — cross-brand play suggestions (overlay on Accessorize → Hobbycraft)",
    "file": "docs/FeedSpark_Playbook.html",
    "pattern": "function renderProsp(",
    "min": 1,
-   "pr": 341
+   "pr": 342
   },
   {
    "name": "playbook: nav link present on the canonical page (parity propagates it to every page)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "href=\"/playbook\"",
    "min": 1,
-   "pr": 341
+   "pr": 342
   }
  ]
 }
