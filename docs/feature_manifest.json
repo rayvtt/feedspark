@@ -3970,6 +3970,62 @@
    "pattern": "id=\"lia-card\"",
    "pr": 354,
    "forbidden": true
+  },
+  {
+   "name": "KWCal: Accessorize GB is SEEDED from the client's own master marketing calendar (Ray 11 Sep 2026 'still not seeing accessorize GB feed events/themes being populated') — 15 moments, 5 per retail period",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "Accessorize:{events:[",
+   "pr": 355,
+   "min": 1
+  },
+  {
+   "name": "KWCal: the Accessorize moments whose dates were corrected off the workbook's 2024 key-dates row, or that the client has not confirmed, carry the reason",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "which is Halloween week in 2024",
+   "pr": 355,
+   "min": 1
+  },
+  {
+   "name": "KWCal import: the JSON's own \"client\" resolves against the roster (resolveBrand) — it no longer falls through to whatever brand is on screen when that brand has no record yet",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function resolveBrand(name){",
+   "pr": 355,
+   "min": 1
+  },
+  {
+   "name": "KWCal import: a top-level \"market\" pins itself onto every imported event that names no market of its own",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "else if(dmkt)ev.mkt=dmkt;",
+   "pr": 355,
+   "min": 1
+  },
+  {
+   "name": "KWCal import: the board lands on the brand it imported into, and the status line names it (IMPTGT)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "var IMPTGT=",
+   "pr": 355,
+   "min": 1
+  },
+  {
+   "name": "KWCal: rehomeImports repairs calendars the old guard mis-filed onto the wrong brand — runs on boot BEFORE applySeeds so a repaired brand is not double-seeded",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function rehomeImports(){",
+   "pr": 355,
+   "min": 1
+  },
+  {
+   "name": "KWCal: a moment's note reaches the card (it was stored on the Reiss seed and never rendered)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "(e.note?' · '+e.note:'')",
+   "pr": 355,
+   "min": 1
+  },
+  {
+   "name": "KWCal harness: the Accessorize seed shape + the mis-file repair are pinned in tools/test_kwcal_tie.mjs",
+   "file": "tools/test_kwcal_tie.mjs",
+   "pattern": "function liftDecl(name)",
+   "pr": 355,
+   "min": 1
   }
  ]
 }
