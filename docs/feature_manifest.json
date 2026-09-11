@@ -3833,9 +3833,9 @@
    "min": 1
   },
   {
-   "name": "Quote generator: pre-charge hours on the rate card (rc.pre; feed 2h = Ray's figure) + billing mode per quote (r.pre[k].mode)",
+   "name": "Quote generator: pre-charge hours on the rate card (rc.pre; feed 2h = Ray's figure) + billing mode per quote (r.pre[k].mode) — feed hours cover every feed row, local inventory included (#354)",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "var PRE_DEFAULT={sys:2,feed:2,lia:2}",
+   "pattern": "var PRE_DEFAULT={sys:2,feed:2}",
    "pr": 349,
    "min": 1
   },
@@ -3916,11 +3916,11 @@
    "pr": 352
   },
   {
-   "name": "Quote generator UX pass (Ray 11 Sep 2026 'boxes sized incorrectly, details too much'): every service card = choice row · ONE settings strip (rate · setup · ✎ note) · summary",
+   "name": "Quote generator UX pass (Ray 11 Sep 2026 'boxes sized incorrectly, details too much'): the system + feed cards = choice row · ONE settings strip (rate · setup · ✎ note) · summary",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "<div class=\"xbar\">",
    "pr": 353,
-   "min": 3
+   "min": 2
   },
   {
    "name": "Quote generator UX pass: section notes hidden behind ✎ Note until they hold text",
@@ -3949,6 +3949,27 @@
    "pattern": "function dscLbl(id){",
    "pr": 353,
    "min": 1
+  },
+  {
+   "name": "Quote generator: LOCAL INVENTORY sits inside the New feed section as a third feed kind (Ray 11 Sep 2026) — old standalone-card records fold into feed rows",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function migrateLia(r){",
+   "pr": 354,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: feed-kind select carries Generic / Bespoke / Local inventory; LIA lines keep kind 'lia' (monthly side, own export section)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "<option value=\"lia\"",
+   "pr": 354,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: no standalone local-inventory type card (four type chips)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "id=\"lia-card\"",
+   "pr": 354,
+   "forbidden": true
   }
  ]
 }
