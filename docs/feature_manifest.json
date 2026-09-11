@@ -3851,6 +3851,20 @@
    "pattern": "sect('Setup Pre-charges (One-off)'",
    "pr": 349,
    "min": 1
+  },
+  {
+   "name": "presence: owner-only Team last-seen roster (last login timestamp+date per person, Ray Sep 2026)",
+   "file": "docs/presence_widget.html",
+   "pattern": "Team · last seen",
+   "min": 1,
+   "pr": 350
+  },
+  {
+   "name": "worker: presence returns the owner-only last-seen roster (realOwner-gated)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "owner: !!roster",
+   "min": 1,
+   "pr": 350
   }
  ]
 }

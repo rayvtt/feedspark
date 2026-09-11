@@ -1045,10 +1045,27 @@ export default {
       if (me !== 'unknown' && !me.startsWith('service:')) {
         map[me] = { t: now, page: String(body.page || '').slice(0, 40) };
       }
-      for (const k of Object.keys(map)) { if (now - (map[k].t || 0) > 30 * 86400000) delete map[k]; }
+      // keep last-seen for 90 days so the owner's roster can show "last seen 6 weeks ago"
+      // accurately rather than collapsing an inactive teammate to "not seen yet"
+      for (const k of Object.keys(map)) { if (now - (map[k].t || 0) > 90 * 86400000) delete map[k]; }
       ctx.waitUntil(env.EDITS.put('presence', JSON.stringify(map)));
       const users = Object.keys(map).map((e) => ({ e, t: map[e].t || 0, page: map[e].page || '' }));
-      return json({ ok: true, me, now, users });
+      // OWNER-ONLY last-seen roster (Ray, Sep 2026: "the activity for the user that last logged
+      // in … last seen at timestamp and date … everyone in my access"): everyone who has signed
+      // in (real Access identity + last-seen, ≤90d) UNION anyone assigned in the access directory
+      // who hasn't been seen (→ t:0 "not seen yet"). Only the real owner receives it (view-as gets
+      // the previewed person's view, never this) — so the shared live view stays live-only.
+      let roster = null;
+      if (realOwner(env, request)) {
+        const seen = {}; users.forEach((u) => { seen[u.e.toLowerCase()] = 1; });
+        roster = users.slice();
+        try {
+          const dir = (await env.EDITS.get('accessdir', 'json')) || ACCESS_SEED;
+          Object.keys(dir).forEach((e) => { const le = String(e).toLowerCase();
+            if (!seen[le]) roster.push({ e: le, t: 0, page: '', name: (dir[e] && dir[e].name) || '' }); });
+        } catch (e) {}
+      }
+      return json({ ok: true, me, owner: !!roster, now, users, roster });
     }
     if (path === '/api/tachyon/rates') {
       const r = await mapStoreRoute(env, request, 'tachyonrates', {});
