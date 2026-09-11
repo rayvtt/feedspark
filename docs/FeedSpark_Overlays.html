@@ -94,6 +94,18 @@ window.addEventListener('load',restore);
   .gal .g .ph{aspect-ratio:1/1;width:100%;display:block;object-fit:cover;background:var(--tile)}
   .gal .g .cap{font-size:11px;font-weight:700;color:var(--ink-2);padding:6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .gal .g .cap small{display:block;color:var(--muted);font-weight:700}
+  /* product search (Ray, 11 Sep 2026): find one product by ID or title and see its card image */
+  .psbox{display:flex;gap:8px;align-items:center;margin:12px 0 4px}
+  .psbox .psi{font-size:14px;flex:none}
+  .psbox input{flex:1;min-width:0;font:inherit;font-size:13.5px;font-weight:700;padding:8px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+  .psbox input:focus{outline:none;border-color:var(--orange)}
+  .psstate{font-size:12.5px;font-weight:700;color:var(--muted);margin:4px 0 8px}
+  .psstate .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--line);border-top-color:var(--orange-deep);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-1px;margin-right:6px}
+  .psr{margin:6px 0 14px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+  .gal .g .ovc{position:absolute;top:6px;left:6px;font-size:10px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;padding:2px 7px;border-radius:100px;background:rgba(245,166,35,.94);color:#fff;max-width:calc(100% - 12px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gal .g .ovc.plain{background:rgba(51,51,51,.72)}
+  .gal .g .ovc.none{background:rgba(192,57,43,.9)}
+  .gal .g.noimg .ph{display:none}.gal .g.noimg::before{content:'no image_link';display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;font-size:11px;font-weight:800;color:var(--muted)}
   .gal .g.err .ph{display:none}.gal .g.err::before{content:'image did not load';display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;font-size:11px;font-weight:800;color:var(--risk)}
   /* estate */
   table.est{width:100%;max-width:100%;border-collapse:collapse;font-size:13px;table-layout:auto}
@@ -205,6 +217,7 @@ window.addEventListener('load',restore);
 :root[data-theme=dark]{--tile:#20242E;--meta:#4C82E0;--meta-bg:rgba(76,130,224,.18);--goog:#48D07E;--goog-bg:rgba(72,208,126,.16)}
 [data-theme=dark] .tcard{background:var(--paper);border-color:var(--line)}
 [data-theme=dark] .gal .g{background:#20242E;border-color:var(--line)}
+[data-theme=dark] .psbox input{background:#20242E;border-color:var(--line);color:var(--ink)}
 [data-theme=dark] #lb .box{background:#1C1F27;color:var(--ink)}
 [data-theme=dark] #lb .x{background:#20242E;color:var(--ink-2)}
 [data-theme=dark] .chip{background:#20242E;color:var(--ink-2)}
@@ -250,6 +263,11 @@ window.addEventListener('load',restore);
       <div><h3 id="det-title">Live overlays</h3><div class="ch" id="det-sub">Pick a client and market to see the overlay creative running on that feed.</div></div>
       <span class="spacer"></span>
       <div id="det-chips" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div>
+    </div>
+    <div class="psearch" id="psearch-wrap">
+      <div class="psbox"><span class="psi" aria-hidden="true">🔍</span><input id="psearch" type="search" placeholder="Find a product on this feed — ID or title" autocomplete="off" aria-label="Search products by ID or title"><button class="btn sm pri" id="psgo" type="button">Search</button><button class="btn sm" id="psclear" type="button" hidden aria-label="Clear search">✕</button></div>
+      <div class="psstate" id="psstate" hidden></div>
+      <div class="gal psr" id="psr" hidden></div>
     </div>
     <div id="types"></div>
     <div class="empty" id="det-empty" hidden></div>
@@ -310,6 +328,8 @@ window.addEventListener('load',restore);
   var ago=function(t){ if(!t)return 'never'; var s=(Date.now()-t)/1000; if(s<90)return 'just now'; if(s<5400)return Math.round(s/60)+' min ago'; if(s<172800)return Math.round(s/3600)+' h ago'; return Math.round(s/86400)+' d ago'; };
   var agoShort=function(t){ if(!t)return '—'; var s=(Date.now()-t)/1000; if(s<90)return 'now'; if(s<5400)return Math.round(s/60)+'m'; if(s<172800)return Math.round(s/3600)+'h'; return Math.round(s/86400)+'d'; };
   var FEEDS=[],CLIENT='',MKT='',DATA=null,BUSY=false,ABORT=false;
+  var ROWS={};        // client|mkt -> {rows:[{id,ti,im,link}],t} — the feed's products, kept in memory for the product search (never persisted)
+  var ROWCAP=80000;
 
   /* ---------- bootstrap: estate roster ∪ scanned index in one call ---------- */
   function loadEstate(keepSel){
@@ -333,6 +353,7 @@ window.addEventListener('load',restore);
   }
   function mktsOf(c){ return FEEDS.filter(function(f){return f.client===c}).map(function(f){return f.mkt}).sort(function(a,b){ if(isFb(a)!==isFb(b))return isFb(a)?-1:1; return a.localeCompare(b); }); }
   function renderMkts(){
+    if(HITS.length||PSQ){ HITS=[]; $('#psr').hidden=true; $('#psr').innerHTML=''; psState(''); if(PSQ)setTimeout(runSearch,0); }
     var ms=mktsOf(CLIENT);
     if(!MKT||ms.indexOf(MKT)<0){ var hot=ms.filter(function(m){ var f=feedOf(CLIENT,m); return f&&f.scan&&f.scan.ovl; }); MKT=hot[0]||ms[0]||''; }
     $('#mkt-chips').innerHTML=ms.map(function(m){ return '<button type="button" class="mkc'+(m===MKT?' on':'')+(isFb(m)?' fb':'')+'" data-mkc="'+esc(m)+'">'+esc(mktLbl(m))+'<span class="ch">'+(isFb(m)?'Meta':'Google')+'</span></button>'; }).join('');
@@ -350,6 +371,8 @@ window.addEventListener('load',restore);
     if(sb){ var q=sb.getAttribute('data-scan').split('|'); scanFeed(q[0],q[1]).then(function(){ if(q[0]===CLIENT&&q[1]===MKT)load(); }); return; }
     var g=e.target.closest&&e.target.closest('.gal .g[data-ti]');
     if(g){ openLb(+g.getAttribute('data-ti'),+g.getAttribute('data-si')); return; }
+    var hg=e.target.closest&&e.target.closest('.psr .g[data-hit]');
+    if(hg){ openHit(+hg.getAttribute('data-hit')); return; }
   });
   $('#scan1').addEventListener('click',function(){ if(CLIENT&&MKT)scanFeed(CLIENT,MKT).then(function(){load();}); });
   $('#scanall').addEventListener('click',function(){
@@ -441,16 +464,19 @@ window.addEventListener('load',restore);
   var LBT=null;
   function openLb(ti,si){
     var snap=DATA&&DATA.snap; if(!snap)return; var t=snap.types[ti]; if(!t)return; var s=t.samples[si]; if(!s)return;
+    openLbFor(t,s);
+  }
+  function openLbFor(t,s){
     LBT=t;
     $('#lb-title').textContent=s.ti||s.id||t.label;
     $('#lb-sub').textContent=t.label+' · '+CLIENT+' '+mktLbl(MKT)+(s.id?' · '+s.id:'')+(s.ver?' · version '+s.ver:'');
     $('#lb-img').src=s.url;
     var lbls=t.layout==='split'?['Left image','Right image']:['Source image'];
-    $('#lb-srclbl').textContent=s.src&&s.src.length?'Source image'+(s.src.length>1?'s':'')+' the engine composed':'No source image in the URL';
+    $('#lb-srclbl').textContent=s.src&&s.src.length?'Source image'+(s.src.length>1?'s':'')+' the engine composed':(t.layout==='plain'?'The client\'s own image — no FeedSpark overlay applied':'No source image in the URL');
     var srcs=$('#lb-srcs'); srcs.className='srcs'+((s.src||[]).length<2?' one':'');
     srcs.innerHTML=(s.src||[]).map(function(u,i){ return '<div><img src="'+esc(u)+'" alt="'+esc(lbls[i]||'Source')+'"><div class="sc">'+esc(lbls[i]||('Source '+(i+1)))+'</div></div>'; }).join('');
     $('#lb-recipe').innerHTML=recipeHtml(t.recipe)||'<span class="r">—</span>';
-    $('#lb-foot').innerHTML='<a href="'+esc(s.url)+'" target="_blank" rel="noopener">Open the overlay image ↗</a>'+(s.link?' <a href="'+esc(s.link)+'" target="_blank" rel="noopener">Product page ↗</a>':'');
+    $('#lb-foot').innerHTML='<a href="'+esc(s.url)+'" target="_blank" rel="noopener">Open the '+(t.layout==='plain'?'image':'overlay image')+' ↗</a>'+(s.link?' <a href="'+esc(s.link)+'" target="_blank" rel="noopener">Product page ↗</a>':'');
     $('#lb').classList.add('on');
   }
   function closeLb(){ $('#lb').classList.remove('on'); $('#lb-img').removeAttribute('src'); }
@@ -497,6 +523,61 @@ window.addEventListener('load',restore);
     svg.innerHTML=s;
   }
 
+  /* ---------- product search (Ray, 11 Sep 2026): "search for a specific product using
+     product ID or product title to see what card image it is on". The feed is streamed
+     ONCE into memory (the same stream the ⚡ scan uses), then matched here: exact ID first,
+     then ID prefix / substring, then every word of the query in the title. Each hit renders
+     the product's actual image_link — overlay type read off the URL, or the plain client
+     image — and opens the same lightbox as the gallery. ---------- */
+  var HITS=[],PSQ='',PST=null,PSMAX=24;
+  function psState(m,spin){ var el=$('#psstate'); if(!m){el.hidden=true;el.innerHTML='';return;} el.hidden=false; el.innerHTML=(spin?'<span class="spin"></span>':'')+esc(m); }
+  function ensureRows(client,mkt){
+    var k=client+'|'+mkt; if(ROWS[k])return Promise.resolve(ROWS[k]);
+    var who=client+' '+mktLbl(mkt);
+    psState('Reading the '+who+' feed once so every product is searchable…',true);
+    return streamCapture(client,mkt,function(n){ psState('Reading '+who+' — '+fmt(n)+' products so far…',true); }).then(function(){ return ROWS[k]; });
+  }
+  function clearSearch(){ HITS=[]; PSQ=''; $('#psearch').value=''; $('#psr').hidden=true; $('#psr').innerHTML=''; $('#psclear').hidden=true; psState(''); }
+  function runSearch(){
+    var q=$('#psearch').value.trim(); PSQ=q;
+    if(!q){ clearSearch(); return; }
+    if(!CLIENT||!MKT){ psState('Pick a client and market first.'); return; }
+    $('#psclear').hidden=false;
+    var client=CLIENT,mkt=MKT;
+    ensureRows(client,mkt).then(function(cache){
+      if(q!==PSQ||client!==CLIENT||mkt!==MKT)return;   /* superseded */
+      var ql=q.toLowerCase(),terms=ql.split(/\s+/).filter(Boolean),rows=cache.rows,out=[],i,r,idl,rank;
+      for(i=0;i<rows.length;i++){ r=rows[i]; idl=r.id.toLowerCase(); rank=-1;
+        if(idl===ql)rank=0; else if(idl.indexOf(ql)===0)rank=1; else if(idl.indexOf(ql)>=0)rank=2;
+        else { var tl=r.ti.toLowerCase(),ok=terms.length>0; for(var j=0;j<terms.length;j++){ if(tl.indexOf(terms[j])<0){ok=false;break;} } if(ok)rank=3; }
+        if(rank>=0)out.push({r:r,rank:rank}); }
+      out.sort(function(a,b){ return a.rank-b.rank||a.r.id.localeCompare(b.r.id); });
+      HITS=out.slice(0,PSMAX).map(function(h){ var cls=h.r.im?window.Overlay.classifyOverlay(h.r.im):null;
+        return {id:h.r.id,ti:h.r.ti,url:h.r.im,link:h.r.link,cls:cls,rank:h.rank}; });
+      renderHits(out.length,client,mkt);
+    }).catch(function(e){ psState('Search failed: '+((e&&e.message)||e)); });
+  }
+  function renderHits(total,client,mkt){
+    var box=$('#psr');
+    if(!total){ box.hidden=true; box.innerHTML=''; psState('No product on '+client+' '+mktLbl(mkt)+' matches “'+PSQ+'” by ID or title.'); return; }
+    var withOv=HITS.filter(function(h){return h.cls}).length;
+    psState(fmt(total)+' match'+(total===1?'':'es')+' on '+client+' '+mktLbl(mkt)+(total>PSMAX?' — showing the first '+PSMAX:'')+' · '+withOv+' with a FeedSpark overlay, '+(HITS.length-withOv)+' on the plain client image.');
+    box.hidden=false;
+    box.innerHTML=HITS.map(function(h,i){
+      var chip=h.cls?'<span class="ovc" title="'+esc(h.cls.label)+'">'+esc(h.cls.label)+'</span>':(h.url?'<span class="ovc plain">Plain image</span>':'<span class="ovc none">No image</span>');
+      return '<div class="g'+(h.url?'':' noimg')+'" data-hit="'+i+'" title="Click to open">'+(h.url?'<img class="ph" loading="lazy" src="'+esc(h.url)+'" alt="'+esc(h.ti||h.id)+'" onerror="this.parentNode.classList.add(\'err\')">':'')+chip+'<div class="cap">'+esc(h.ti||'—')+'<small>'+esc(h.id||'')+(h.cls&&h.cls.ver?' · v'+esc(h.cls.ver):'')+'</small></div></div>';
+    }).join('');
+  }
+  function openHit(i){
+    var h=HITS[i]; if(!h||!h.url)return;
+    var t=h.cls?{label:h.cls.label,layout:h.cls.layout,recipe:h.cls.recipe.filter(function(r){return !r.url})}:{label:'Plain client image',layout:'plain',recipe:[]};
+    openLbFor(t,{id:h.id,ti:h.ti,url:h.url,link:h.link,src:h.cls?h.cls.sources.slice(0,4):[],ver:h.cls?h.cls.ver:''});
+  }
+  $('#psgo').addEventListener('click',runSearch);
+  $('#psclear').addEventListener('click',clearSearch);
+  $('#psearch').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();runSearch();} if(e.key==='Escape'){clearSearch();} });
+  $('#psearch').addEventListener('input',function(){ if(PST)clearTimeout(PST); var v=this.value.trim(); if(!v){clearSearch();return;} PST=setTimeout(runSearch,380); });
+
   /* ---------- ⚡ live in-browser scan: stream /api/feed/proxy through the Feed Lab parser
      + the overlay collector (the agent's exact engine, /overlays/engine.js), then push the
      computed capture so the estate and the monitor's history pick it up ---------- */
@@ -505,12 +586,21 @@ window.addEventListener('load',restore);
     return new Promise(function(res,rej){
       if(!window.FeedAudit||!window.Overlay)return rej(new Error(window.__engineFail||window.__ovEngineFail?'engine scripts did not load — hard-refresh':'engines not ready'));
       var col=window.Overlay.overlayCollector({client:client,market:mkt}),parser=null,n=0,next=0;
-      var onRow=function(r,h){ col.onRow(r,h); if(++n%2000===0&&onProg)onProg(n); };
+      /* alongside the overlay capture, keep a slim per-product row {id,ti,im,link} so the
+         product search can answer without a second stream */
+      var rows=[],hdr=null,ci=-1,ct=-1,cim=-1,cl=-1;
+      var resolve=function(h){ hdr=h; ci=ct=cim=cl=-1; for(var i=0;i<h.length;i++){ var k=window.Overlay.normKey(h[i]); if(k==='id'&&ci<0)ci=i; else if(k==='title'&&ct<0)ct=i; else if(k==='image_link'&&cim<0)cim=i; else if(k==='link'&&cl<0)cl=i; } };
+      var cell=function(r,i){ return i>=0&&r[i]!=null?String(r[i]).trim():''; };
+      var onRow=function(r,h){ col.onRow(r,h);
+        if(!hdr){ resolve(r); return; }
+        if(h&&h.length!==hdr.length)resolve(h);
+        if(rows.length<ROWCAP)rows.push({id:cell(r,ci),ti:cell(r,ct).slice(0,160),im:cell(r,cim),link:cell(r,cl)});
+        if(++n%2000===0&&onProg)onProg(n); };
       fetch('/api/feed/proxy?client='+encodeURIComponent(client)+'&market='+encodeURIComponent(mkt)).then(function(resp){
         if(!resp.ok||!resp.body)return resp.json().catch(function(){return{}}).then(function(j){throw new Error(j.error||('feed proxy said '+resp.status))});
         var reader=resp.body.getReader(),dec=new TextDecoder();
         function step(){ return reader.read().then(function(x){
-          if(x.done){ if(parser){parser.push(dec.decode());parser.end();} res(col.finish()); return; }
+          if(x.done){ if(parser){parser.push(dec.decode());parser.end();} ROWS[client+'|'+mkt]={rows:rows,t:Date.now()}; res(col.finish()); return; }
           var chunk=dec.decode(x.value,{stream:true});
           if(!parser){ if(!chunk.trim())return step(); parser=/^\s*</.test(chunk)?window.FeedAudit.createXmlParser(onRow):window.FeedAudit.createParser(onRow); }
           parser.push(chunk); return step(); }); }
