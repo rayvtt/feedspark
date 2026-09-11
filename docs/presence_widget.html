@@ -4,7 +4,12 @@
      show ONLY who is ACTUALLY LIVE on the FCC right now (active within the last 3 min — green
      dot, initials circle, tooltip = name · page · ago). No always-on watchlist: someone who
      isn't currently in the dashboards simply doesn't appear (Ray, Sep 2026: "only allow me to
-     see who is actually live and using the dashboard"). -->
+     see who is actually live and using the dashboard").
+     OWNER ONLY: the popover also carries a "Team · last seen" roster — everyone who has signed
+     in (real identity + exact last-seen timestamp/date, kept 90 days) ∪ anyone assigned in the
+     access directory who hasn't logged in yet ("not seen yet"). Server-gated (realOwner); the
+     shared live view above stays live-only for everyone else. (Ray, Sep 2026: "the activity for
+     the user that last logged in … last seen at timestamp and date … everyone in my access.") -->
 <style>
 #fcc-presence{display:flex;align-items:center;margin-left:4px;position:relative}
 #fcc-presence .pz-av{width:28px;height:28px;border-radius:50%;font:800 11px/24px Lato,system-ui,sans-serif;text-align:center;color:#fff;border:2px solid #fff;margin-left:-7px;position:relative;cursor:pointer;box-shadow:0 1px 3px rgba(16,24,40,.22);user-select:none}
@@ -33,13 +38,18 @@ if(window.__fccPresence)return; window.__fccPresence=1;
 var ACTIVE_MS=3*60*1000, BEAT_MS=60*1000, MAXAV=6;
 var FIXED={ray:'#ED6F0B',stephen:'#1A365D',matt:'#15803D'};   // consistent colours when these people ARE live
 var PALETTE=['#7C3AED','#0E7490','#B45309','#BE185D','#4D7C0F','#6D28D9','#0F766E'];
-var ME='',USERS=[],NOW=0,pop=null;
+var ME='',USERS=[],NOW=0,pop=null,OWNER=false,ROSTER=null;
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function nameOf(e){ var lp=String(e).split('@')[0].split(/[._-]/)[0]; return lp?lp.charAt(0).toUpperCase()+lp.slice(1):e; }
 function colOf(e){ var n=nameOf(e).toLowerCase(); if(FIXED[n])return FIXED[n];
   var h=0,i; for(i=0;i<e.length;i++)h=(h*31+e.charCodeAt(i))>>>0; return PALETTE[h%PALETTE.length]; }
 function ago(t){ var s=Math.max(0,Math.round((NOW-t)/1000));
   if(s<75)return s+'s ago'; if(s<5400)return Math.round(s/60)+'m ago';
   if(s<129600)return Math.round(s/3600)+'h ago'; return Math.round(s/86400)+'d ago'; }
+// exact last-seen for the owner roster: "11 Sep 2026 · 14:32" (viewer-local), or the never-seen note
+function whenFull(t){ if(!t)return 'not seen yet'; var d=new Date(t);
+  var hh=('0'+d.getHours()).slice(-2), mm=('0'+d.getMinutes()).slice(-2);
+  return d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear()+' · '+hh+':'+mm; }
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function host(){ return document.getElementById('fcc-presence'); }
 function ensureHost(){
@@ -69,6 +79,13 @@ function rowFor(u){
     +'<span class="pz-mini" style="background:'+colOf(u.e)+'">'+esc(n.charAt(0))+'</span>'
     +'<b>'+esc(n)+esc(me)+'</b><span class="pz-sub">'+esc((u.page||'/')+' · '+ago(u.t))+'</span></div>';
 }
+// owner roster row: name + exact last-seen date·time (grey dot; they're not currently live)
+function seenRow(u){
+  var n=nameOf(u.e), me=u.e===ME?' (you)':'';
+  return '<div class="pz-row"><span class="pz-dot off"></span>'
+    +'<span class="pz-mini" style="background:'+colOf(u.e)+'">'+esc(n.charAt(0))+'</span>'
+    +'<b>'+esc(n)+esc(me)+'</b><span class="pz-sub">'+esc(whenFull(u.t))+'</span></div>';
+}
 function paintPop(){
   // only who is actually live right now — no watchlist padding
   var act=USERS.filter(function(u){return NOW-u.t<=ACTIVE_MS});
@@ -76,6 +93,16 @@ function paintPop(){
   var h='<h4>Live on the FCC</h4>';
   if(!act.length)h+='<div class="pz-row"><span class="pz-dot off"></span><span style="font-size:12.5px;color:#8a94a0;font-weight:700">nobody in the dashboards right now</span></div>';
   act.forEach(function(u){ h+=rowFor(u); });
+  // OWNER ONLY — the last-seen roster for everyone in the book: who logged in last, with the
+  // exact timestamp + date. The currently-live people are shown above, so this lists the rest.
+  if(OWNER&&ROSTER){
+    var liveKeys={}; act.forEach(function(u){liveKeys[String(u.e).toLowerCase()]=1});
+    var seen=ROSTER.filter(function(u){return !liveKeys[String(u.e).toLowerCase()]})
+      .sort(function(a,b){return (b.t||0)-(a.t||0)});
+    h+='<h4 style="margin-top:12px">Team · last seen</h4>';
+    if(!seen.length)h+='<div class="pz-row"><span class="pz-dot off"></span><span style="font-size:12.5px;color:#8a94a0;font-weight:700">everyone in your access is live right now</span></div>';
+    seen.forEach(function(u){ h+=seenRow(u); });
+  }
   pop.innerHTML=h;
 }
 function togglePop(){
@@ -90,7 +117,7 @@ function beat(){
   if(document.visibilityState==='hidden')return;
   fetch('/api/presence',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({page:location.pathname})})
     .then(function(r){return r.json()})
-    .then(function(j){ if(!j||!j.ok)return; ME=j.me||''; NOW=j.now||Date.now(); USERS=j.users||[]; render(); })
+    .then(function(j){ if(!j||!j.ok)return; ME=j.me||''; NOW=j.now||Date.now(); USERS=j.users||[]; OWNER=!!j.owner; ROSTER=j.roster||null; render(); })
     .catch(function(){});
 }
 function start(){ ensureHost(); beat(); setInterval(beat,BEAT_MS);

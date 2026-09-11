@@ -219,7 +219,12 @@ GET|POST /api/claude            → Tachyon copilot proxy to Claude Messages API
   into KV `presence`, avatars = active ≤3min with green dot + name·page·ago tooltip; popover
   shows ONLY who is ACTUALLY LIVE right now — no always-on watchlist (Ray, Sep 2026: "only
   allow me to see who is actually live and using the dashboard"), so an offline teammate simply
-  doesn't appear; heartbeats deliberately NOT in the activity log), the **Feed Chat bubble** (docs/feedchat_widget.html — the chatbot
+  doesn't appear; PLUS an OWNER-ONLY "Team · last seen" roster in the popover (Ray, Sep 2026:
+  "the activity for the user that last logged in … last seen at timestamp and date … everyone
+  in my access") — everyone who has signed in (real identity + exact last-seen date/time, KV
+  `presence` kept 90 days) ∪ anyone assigned in the access directory who hasn't logged in yet
+  ("not seen yet"); server-gated (realOwner → `roster` on POST /api/presence; the shared live
+  view stays live-only); heartbeats deliberately NOT in the activity log), the **Feed Chat bubble** (docs/feedchat_widget.html — the chatbot
   hovering bottom-right, see /feedchat above) + the **Tachyon copilot**
   (`docs/tachyon_widget.html`, reads `window.PLANTASKS`, calls `/api/claude`).
 - **Secrets**: `ANTHROPIC_API_KEY` powers Tachyon (`wrangler secret put ANTHROPIC_API_KEY`); both
