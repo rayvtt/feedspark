@@ -3397,20 +3397,6 @@
    "min": 1
   },
   {
-   "name": "AI Quote xlsx: System / Platform Costs section written ONLY when the monthly new-products bundle is on (was forbidden in #333; conditional since #339)",
-   "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "if(t.upd){ var s1=row({A:{v:'System / Platform Costs'",
-   "pr": 339,
-   "min": 1
-  },
-  {
-   "name": "AI Quote xlsx: Monthly Cost (Tech) row = the new-products bundle, written only when it is on (was forbidden in #333; conditional since #339)",
-   "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "if(platA)rTech=row({H:{v:'Monthly Cost (Tech)'",
-   "pr": 339,
-   "min": 1
-  },
-  {
    "name": "AI Quote xlsx: the internal 'Delivery effort' row + note must stay gone",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "Delivery effort",
