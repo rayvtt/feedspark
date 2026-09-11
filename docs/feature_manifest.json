@@ -3503,9 +3503,9 @@
    "pr": 340
   },
   {
-   "name": "kwcal: client PDF is rendered from data into #pdf-doc, never the internal board (no hours/owners/→ Brief)",
+   "name": "kwcal: client PDF is rendered from data into #pdf-doc, never the internal board (no hours/owners/→ Brief) — the card document became a one-page calendar in PR #348, so this pins the calendar's agenda markup instead of the retired .pd-card",
    "file": "docs/FeedSpark_KWCal.html",
-   "pattern": "pd-card",
+   "pattern": "pd-ag",
    "min": 2,
    "pr": 340
   },
@@ -3776,18 +3776,95 @@
    "pr": 347
   },
   {
+   "name": "kwcal: scope picker two-column workbench — browse/search at full height (Ray, 11 Sep 2026: 'too narrow to visually see')",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "pt-body",
+   "min": 2,
+   "pr": 348
+  },
+  {
+   "name": "kwcal: picker rows are leaf + breadcrumb with the count in its own column (never clipped)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function ptCrumb(",
+   "min": 1,
+   "pr": 348
+  },
+  {
+   "name": "kwcal: picker browse is grouped by category, collapsible, with select-all per group",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "data-gall",
+   "min": 2,
+   "pr": 348
+  },
+  {
+   "name": "kwcal: picker search highlights matches",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function hlEsc(",
+   "min": 1,
+   "pr": 348
+  },
+  {
+   "name": "kwcal: picker keyboard nav (arrows move, Enter ticks, Esc closes)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function moveCur(",
+   "min": 1,
+   "pr": 348
+  },
+  {
+   "name": "kwcal: client PDF is a ONE-PAGE calendar (Ray, 11 Sep 2026: 'look like a calendar … fit on one page only')",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function monthCells(",
+   "min": 1,
+   "pr": 348
+  },
+  {
+   "name": "kwcal: the one-page fit is measured and applied with ZOOM — transform:scale paginates on the untransformed height",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "zoom:var(--pdfk,1)",
+   "min": 1,
+   "pr": 348
+  },
+  {
+   "name": "kwcal: PDF layout rules live outside @media print so fitPdf can measure them",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "#pdf-doc .pd-cal",
+   "min": 1,
+   "pr": 348
+  },
+  {
+   "name": "Quote generator: setup PRE-CHARGE per service — automatic hours per new feed / system / local inventory feed, one-off at the day rate or from the retainer at £0 (Ray 11 Sep 2026)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function preLine(k,n){",
+   "pr": 349,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: pre-charge hours on the rate card (rc.pre; feed 2h = Ray's figure) + billing mode per quote (r.pre[k].mode)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "var PRE_DEFAULT={sys:2,feed:2,lia:2}",
+   "pr": 349,
+   "min": 1
+  },
+  {
+   "name": "Quote generator xlsx: 'Setup Pre-charges (One-off)' section (retainer-funded rows at £0 with the note)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "sect('Setup Pre-charges (One-off)'",
+   "pr": 349,
+   "min": 1
+  },
+  {
    "name": "presence: owner-only Team last-seen roster (last login timestamp+date per person, Ray Sep 2026)",
    "file": "docs/presence_widget.html",
    "pattern": "Team · last seen",
    "min": 1,
-   "pr": 348
+   "pr": 350
   },
   {
    "name": "worker: presence returns the owner-only last-seen roster (realOwner-gated)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "owner: !!roster",
    "min": 1,
-   "pr": 348
+   "pr": 350
   }
  ]
 }
