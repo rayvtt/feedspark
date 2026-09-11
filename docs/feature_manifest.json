@@ -3397,20 +3397,6 @@
    "min": 1
   },
   {
-   "name": "AI Quote xlsx: System / Platform Costs section written ONLY when the monthly new-products bundle is on (was forbidden in #333; conditional since #339)",
-   "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "if(t.upd){ var s1=row({A:{v:'System / Platform Costs'",
-   "pr": 339,
-   "min": 1
-  },
-  {
-   "name": "AI Quote xlsx: Monthly Cost (Tech) row = the new-products bundle, written only when it is on (was forbidden in #333; conditional since #339)",
-   "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "if(platA)rTech=row({H:{v:'Monthly Cost (Tech)'",
-   "pr": 339,
-   "min": 1
-  },
-  {
    "name": "AI Quote xlsx: the internal 'Delivery effort' row + note must stay gone",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "Delivery effort",
@@ -3535,6 +3521,55 @@
    "pattern": "function stOf(",
    "min": 1,
    "pr": 340
+  },
+  {
+   "name": "AI Quote xlsx: 'New Product Arrivals - Monthly Tachyon Update' section written ONLY when the bundle is on (Ray 11 Sep 2026: not a platform cost)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "if(t.upd){ var s1=row({A:{v:'New Product Arrivals - Monthly Tachyon Update'",
+   "pr": 339,
+   "min": 1
+  },
+  {
+   "name": "AI Quote xlsx: 'Monthly Cost (New product arrivals)' totals row = the Tachyon monthly-update row, written only when it is on",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "if(platA)rTech=row({H:{v:'Monthly Cost (New product arrivals)'",
+   "pr": 339,
+   "min": 1
+  },
+  {
+   "name": "AI Quote: partner discount SCOPE — all / one-off only / monthly only / selected lines (Ray 11 Sep 2026)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function discOn(side,id){",
+   "pr": 340,
+   "min": 1
+  },
+  {
+   "name": "AI Quote: discount scope selector beside the % (#discscope) + per-line chip in selected-lines mode",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "id=\"discscope\"",
+   "pr": 340,
+   "min": 1
+  },
+  {
+   "name": "AI Quote xlsx: Discount % column is per row (scope-aware rd)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "rd=(o.dsc!=null)?o.dsc:dsc;",
+   "pr": 340,
+   "min": 1
+  },
+  {
+   "name": "AI Quote xlsx: the platform-cost label must stay out of the export (Ray 11 Sep 2026: nothing here is a platform cost)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "v:'System / Platform Costs'",
+   "pr": 340,
+   "forbidden": true
+  },
+  {
+   "name": "AI Quote: section helper text hidden behind ⓘ per heading (fcc-aiq-help)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "var HK='fcc-aiq-help'",
+   "pr": 340,
+   "min": 1
   }
  ]
 }
