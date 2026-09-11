@@ -6,7 +6,8 @@
  * Run: node tools/test_access.mjs   (pure node, no browser — also part of the gates)
  */
 import { ACCESS_SEED, clientSlug, aliasClient, resolveAccess, clientMatch,
-  scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail } from '../cloudflare/feedspark-deck/src/access.js';
+  scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail,
+  MODULES, MODULE_PATHS, moduleAllowed } from '../cloudflare/feedspark-deck/src/access.js';
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from '../cloudflare/feedspark-deck/src/kvmerge.js';
 
 let passed = 0, failed = 0;
@@ -92,6 +93,29 @@ ok(viewAsEmail('theme=dark; fcc-viewas=Steven@FeedSpark.com; other=1', OWN) === 
 ok(viewAsEmail('fcc-viewas=ray%40feedspark.com', OWN) === null, 'view-as: previewing yourself is a no-op (owner stays owner)');
 ok(viewAsEmail('fcc-viewas=notanemail', OWN) === null && viewAsEmail('', OWN) === null && viewAsEmail(null, OWN) === null, 'view-as: junk / absent cookie -> null');
 ok(viewAsEmail('xfcc-viewas=a@b.com', OWN) === null, 'view-as: name must match exactly (no prefix bleed)');
+
+/* ---- module-access dimension (Ray, Sep 2026: "select individual module access for each person") ---- */
+ok(moduleAllowed(null, 'labels') === true && moduleAllowed(undefined, 'labels') === true, 'modules null/absent = all granted (owner or unconfigured)');
+ok(moduleAllowed(['labels', 'playbook'], 'labels') === true && moduleAllowed(['labels', 'playbook'], 'aiquote') === false, 'a module list is exact membership');
+ok(moduleAllowed([], 'labels') === false, 'empty module list locks every module');
+const NAMES2 = ['House of Bruar', 'Reiss', 'Schuh'];
+const andrew = resolveAccess('andrew@aroxo.com', false, null, NAMES2);
+ok(andrew.clients === null && andrew.modules === null && andrew.name === 'Andrew', 'seed: Andrew is listed, full house, all modules (unrestricted until tuned in the panel)');
+const dirMod = { 'sam@feedspark.com': { name: 'Sam', modules: ['feedlab', 'playbook'] },
+  'jo@feedspark.com': { name: 'Jo', clients: ['Reiss'], modules: ['labels'] } };
+const sam = resolveAccess('sam@feedspark.com', false, dirMod, NAMES2);
+ok(sam.clients === null && sam.modules.join(',') === 'feedlab,playbook', 'a full-house signin can still be module-restricted');
+const jo = resolveAccess('jo@feedspark.com', false, dirMod, NAMES2);
+ok(jo.clients[0] === 'Reiss' && jo.modules.join(',') === 'labels', 'client scope + module restriction are independent');
+ok(resolveAccess('ray@feedspark.com', true, dirMod, NAMES2).modules === null, 'owner: all modules');
+const dm = sanitizeDir({ 'a@b.com': { name: 'A', clients: ['Reiss'], modules: ['labels', 'bogus', 'playbook'] },
+  'c@d.com': { name: 'C', modules: [] }, 'e@f.com': { name: 'E', clients: ['Schuh'] } });
+ok(dm['a@b.com'].modules.join(',') === 'labels,playbook', 'sanitizer: unknown module slugs dropped');
+ok(Array.isArray(dm['c@d.com'].modules) && dm['c@d.com'].modules.length === 0, 'sanitizer: empty module list preserved (a locked signin)');
+ok(dm['e@f.com'].modules === undefined, 'sanitizer: a row with no modules key stays unrestricted (all)');
+ok(MODULE_PATHS['/labels'] === 'labels' && MODULE_PATHS['/playbook'] === 'playbook', 'MODULE_PATHS maps a route to its slug');
+ok(MODULE_PATHS['/leadership'] === undefined && MODULE_PATHS['/activity'] === undefined && MODULE_PATHS['/'] === undefined, 'leadership / activity / landing are NOT grantable modules');
+ok(MODULES.length === 12 && MODULES.every((m) => m.slug && m.label && m.path), 'twelve grantable modules, each {slug,label,path}');
 
 console.log('\nRESULT: ' + (failed ? 'FAIL — ' + failed + ' failed, ' : 'PASS — ') + passed + ' assertions');
 process.exit(failed ? 1 : 0);

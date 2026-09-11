@@ -3683,6 +3683,41 @@
    "pattern": "PREFILLS REMOVED",
    "min": 1,
    "pr": null
+  },
+  {
+   "name": "access: grantable MODULES registry + moduleAllowed (per-person module access, Ray Sep 2026)",
+   "file": "cloudflare/feedspark-deck/src/access.js",
+   "pattern": "export function moduleAllowed(",
+   "min": 1,
+   "pr": 343
+  },
+  {
+   "name": "access: Andrew (aroxo) seeded into the directory",
+   "file": "cloudflare/feedspark-deck/src/access.js",
+   "pattern": "andrew@aroxo.com",
+   "min": 1,
+   "pr": 343
+  },
+  {
+   "name": "worker: module-access gate on page serves (403 → landing) + MODGATE nav trim",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "const MODGATE =",
+   "min": 1,
+   "pr": 343
+  },
+  {
+   "name": "worker: /api/access ships the module registry + me=1 carries modules",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "modules: MODULES",
+   "min": 1,
+   "pr": 343
+  },
+  {
+   "name": "Workflow 👥 panel: per-person module-access chips (All/None, saves modules)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "acl-mchip",
+   "min": 1,
+   "pr": 343
   }
  ]
 }

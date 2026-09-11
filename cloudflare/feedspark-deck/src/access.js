@@ -20,10 +20,43 @@
 
 // git seed: in effect until the owner first saves the panel. Radostina co-manages
 // House of Bruar with Ray — her row works for whichever address she signs in with
-// alongside the houseofbruar@ alias the auto-rule already covers.
+// alongside the houseofbruar@ alias the auto-rule already covers. Andrew (aroxo staff)
+// is seeded as a listed, unrestricted signin so he shows up in the 👥 panel for the owner
+// to dial his module access down (no clients/modules field = full house + all modules).
 export const ACCESS_SEED = {
   'radostina@feedspark.com': { name: 'Radostina', clients: ['House of Bruar'] },
+  'andrew@aroxo.com': { name: 'Andrew' },
 };
+
+// Grantable feature MODULES (the module-access dimension, Ray Sep 2026: "select individual
+// module access for each person"). A directory row's `modules` array lists exactly the module
+// slugs that signin may open; absent/null = ALL modules (backward compatible — every existing
+// signin keeps the full suite); [] = none (the landing page only). The owner always has all.
+// Leadership & Activity are deliberately NOT grantable here — they stay owner-only regardless.
+// The landing page (/) is always reachable, so a person is never fully locked out.
+export const MODULES = [
+  { slug: 'workflow', label: 'Workflow', path: '/workflow' },
+  { slug: 'deck-builder', label: 'Deck generator', path: '/deck-builder' },
+  { slug: 'feedlab', label: 'Feed Lab', path: '/feedlab' },
+  { slug: 'labels', label: 'Label Guard', path: '/labels' },
+  { slug: 'ptypes', label: 'PT Guard', path: '/ptypes' },
+  { slug: 'golden', label: 'Golden Record', path: '/golden' },
+  { slug: 'volume', label: 'Product volume', path: '/volume' },
+  { slug: 'overlays', label: 'Overlays', path: '/overlays' },
+  { slug: 'kwcal', label: 'Keyword calendar', path: '/kwcal' },
+  { slug: 'aiquote', label: 'AI Quote', path: '/aiquote' },
+  { slug: 'pricer', label: 'Pricer', path: '/pricer' },
+  { slug: 'playbook', label: 'Playbook', path: '/playbook' },
+];
+export const MODULE_PATHS = MODULES.reduce((m, x) => { m[x.path] = x.slug; return m; }, {});
+const MODULE_SLUGS = MODULES.map((x) => x.slug);
+
+// is this module allowed for the resolved scope? modules null/undefined = all (owner or an
+// unconfigured signin); an array = membership, so [] locks every module. Unknown slug = no.
+export function moduleAllowed(modules, slug) {
+  if (!Array.isArray(modules)) return true;
+  return modules.indexOf(slug) >= 0;
+}
 
 // 'Estée Lauder' -> 'esteelauder', 'House of Bruar' -> 'houseofbruar'
 export function clientSlug(name) {
@@ -46,15 +79,23 @@ export function aliasClient(email, clientNames) {
 // one signin -> its scope. dir = stored directory (null -> git seed); clientNames = the
 // known client roster the alias rule matches against. clients:null = full house.
 export function resolveAccess(email, owner, dir, clientNames) {
-  if (owner) return { email, owner: true, clients: null, name: 'Owner' };
+  if (owner) return { email, owner: true, clients: null, modules: null, name: 'Owner' };
   const d = dir || ACCESS_SEED;
   const row = d[String(email || '').toLowerCase()];
-  if (row && Array.isArray(row.clients) && row.clients.length) {
-    return { email, owner: false, clients: row.clients.slice(0, 20).map(String), name: String(row.name || '') };
+  let clients = null, modules = null, name = '';
+  if (row) {
+    name = String(row.name || '');
+    if (Array.isArray(row.clients) && row.clients.length) clients = row.clients.slice(0, 20).map(String);
+    // a row's modules narrows independently of clients — a full-house signin can still be
+    // module-restricted, and a module-restricted signin can still be client-scoped.
+    if (Array.isArray(row.modules)) modules = row.modules.slice(0, 40).map(String);
   }
-  const ali = aliasClient(email, clientNames);
-  if (ali) return { email, owner: false, clients: [ali], name: '' };
-  return { email, owner: false, clients: null, name: '' };
+  // no explicit client scope on the row -> the client-team alias rule may still scope by email
+  if (clients === null) {
+    const ali = aliasClient(email, clientNames);
+    if (ali) clients = [ali];
+  }
+  return { email, owner: false, clients, modules, name };
 }
 
 // does this client name fall inside the scope? clients:null = full house = everything.
@@ -126,7 +167,14 @@ export function sanitizeDir(body) {
     const row = src[k] || {};
     const clients = (Array.isArray(row.clients) ? row.clients : [])
       .map((c) => String(c || '').trim().slice(0, 60)).filter(Boolean).slice(0, 20);
-    out[email] = { name: String(row.name || '').slice(0, 48), clients };
+    const entry = { name: String(row.name || '').slice(0, 48), clients };
+    // modules only stored when the row explicitly carries the array (the panel always sends it):
+    // a validated slug list — [] locks every module, absent = all. Unknown slugs are dropped.
+    if (Array.isArray(row.modules)) {
+      entry.modules = row.modules.map((m) => String(m || '').trim())
+        .filter((m) => MODULE_SLUGS.indexOf(m) >= 0).slice(0, 40);
+    }
+    out[email] = entry;
   }
   return out;
 }
