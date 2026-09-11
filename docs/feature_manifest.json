@@ -200,12 +200,6 @@
    "pr": 72
   },
   {
-   "name": "Workflow: mechanical brief self-learning store",
-   "file": "docs/FeedSpark_Workflow.html",
-   "pattern": "fcc-brief-learn",
-   "pr": 74
-  },
-  {
    "name": "worker: Gmail thread deep-link lookup",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "api/gmail/thread",
@@ -3583,6 +3577,13 @@
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "commWhen",
    "min": 2,
+   "pr": null
+  },
+  {
+   "name": "Workflow: brief generator invents no scope/DoD prose — sections stay, content is the AM's",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "PREFILLS REMOVED",
+   "min": 1,
    "pr": null
   }
  ]

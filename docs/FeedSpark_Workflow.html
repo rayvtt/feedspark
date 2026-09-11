@@ -399,9 +399,9 @@ window.addEventListener('load',restore);
         <div class="fld"><label>Source</label><select id="bg-source"><option value="email">Email</option><option value="plan">Project plan</option><option value="call">📞 Call</option></select></div>
       </div>
       <div class="fld"><label>Task</label><input id="bg-task" placeholder="e.g. Rewrite 200 MASK titles — SS26 sandals"></div>
-      <div class="fld"><label>Category <span class="tpl-hint">— auto-fills scope, definition of done &amp; the two streams</span></label>
+      <div class="fld"><label>Category <span class="tpl-hint">— classifies the brief for routing and reporting</span></label>
         <select id="bg-cat">
-          <option value="">— choose to load a template —</option>
+          <option value="">— choose a category —</option>
           <option value="title">Titles</option><option value="image">Imagery</option>
           <option value="keyword">Keywords</option><option value="custom_label">Custom labels</option>
           <option value="product_type">Product type</option><option value="data">Data fields</option>
@@ -1162,42 +1162,14 @@ window.addEventListener('load',restore);
 
   // ---- category-aware brief templates (auto-fill scope + definition of done) ----
   var CAT_LBL={title:'Titles',image:'Imagery',keyword:'Keywords',custom_label:'Custom labels',product_type:'Product type',data:'Data fields',technical:'Feed & technical',channel:'Channels',test:'Testing',opt:'Optimisation',account:'Account'};
-  var TWO_STREAMS='\n\nRun TWO streams before actioning:\n • Stream A — Project-plan worksheet: read the full tab, confirm this task’s current state, dependencies and prior notes.\n • Stream B — Live product feed (~5,000 rows) as source of truth: analyse, score and update against the actual feed data, not assumptions.';
-  var TEMPLATES={
-    title:{s:'Rewrite/optimise titles to MASK structure (Brand + Material + Fit + Colour + Use-case, 80–120 chars). Markets/categories: [confirm]. Respect character limits and brand tone.',d:'Titles live in FeedHero, QA’d against the feed; 5 sample titles approved by AM before full roll-out; no truncation >150 chars.'},
-    image:{s:'Image work — tag/cycle imagery by type (product-only vs on-model), overlays or roundels as specified. Confirm the image_type source and rotation rules.',d:'Overlay/cycler live in FeedHero, QA’d on 10 sample SKUs across categories, no image_link rotation wiping tags.'},
-    keyword:{s:'Keyword optimisation — inject high-volume/search-intent terms into the target attributes. Source terms: [Keyword Planner / list]. Markets: [confirm].',d:'Keywords live, mapped to the right attribute, QA’d against duplicate/over-stuffing rules; before/after sample shared.'},
-    custom_label:{s:'Custom-label build/update (CL[n]) — define the rule/values and where they feed (Shopping/Social/PPC). Scrape or data source: [confirm].',d:'CL populated in FeedHero, values validated on the feed, campaign-side mapping confirmed with PPC/Social.'},
-    product_type:{s:'Product-type / category mapping — deepen taxonomy to [n]-level granularity (FS Tachyon). Confirm GPC vs product_type split.',d:'product_type rolled out across the market, spot-checked against the feed, no non-existent values.'},
-    data:{s:'Data-field back-fill / attribute enrichment — fill mandatory + AI-enriched fields. Confirm which fields and the source (master feed / Tachyon).',d:'Fields populated + validated on the feed, disapprovals cleared, sample QA’d by AM.'},
-    technical:{s:'Feed / technical change — migration, refresh cadence, item-group/ID logic or rule change. Confirm the switch-over date and rollback.',d:'Change live in all target feeds, monitored for 48h, no campaign disruption, confirmed with the client.'},
-    channel:{s:'Channel work — Meta/Social/LIA/PPC overlay or feed architecture. Confirm markets, creative/typography and identifiers.',d:'Live in the target channel, QA’d on sample, mockup/typography approved by client.'},
-    test:{s:'A/B test — define hypothesis, control vs variant, SKUs, market and duration. Ensure the cohort is excluded from AI enrichment so the read is clean.',d:'Test live, tracked in the Test register with an analysis date; result logged (uplift %); winner rolled out or parked.'},
-    opt:{s:'Feed optimisation task — confirm exact scope, markets and rules with the AM before starting.',d:'Change live in FeedHero, QA’d against the feed, sample approved by AM.'},
-    account:{s:'Account / strategy action — deck, proposal, call prep or commercial item. Confirm the deliverable and audience.',d:'Deliverable shared with the client / internal owner and signed off.'}
-  };
-  // ---- mechanical self-learning: every brief Ray edits before saving teaches the generator.
-  // Keyed client|category with a *|category fallback — the next brief for that client/category
-  // pre-fills from the last edited version instead of the static template. Pure recall, no AI.
-  var LEARN={}; try{LEARN=JSON.parse(localStorage.getItem('fcc-brief-learn')||'{}');}catch(e){}
-  function saveLearn(){ try{localStorage.setItem('fcc-brief-learn',JSON.stringify(LEARN));}catch(e){} }
-  function learnKey(client,cat){ return client+'|'+(cat||'opt'); }
-  function learned(client,cat){ return LEARN[learnKey(client,cat)]||LEARN[learnKey('*',cat)]; }
-  function recordLearning(client,cat,f){
-    var tpl=TEMPLATES[cat]||TEMPLATES.opt, rec={t:Date.now()}, edited=false;
-    if(f.scope&&f.scope!==(tpl.s+TWO_STREAMS)){ rec.s=f.scope; edited=true; }
-    if(f.dod&&f.dod!==tpl.d){ rec.d=f.dod; edited=true; }
-    if(f.assets&&f.assets!=='—'){ rec.a=f.assets; edited=true; }
-    if(!edited)return;
-    rec.n=((LEARN[learnKey(client,cat)]||{}).n||0)+1;
-    LEARN[learnKey(client,cat)]=rec; LEARN[learnKey('*',cat)]=Object.assign({},rec); saveLearn(); }
-  function applyTemplate(cat,quiet){ var tpl=TEMPLATES[cat]||TEMPLATES.opt;
-    var client=document.getElementById('bg-client').value, ln=learned(client,cat);
-    document.getElementById('bg-scope').value=(ln&&ln.s)||(tpl.s+TWO_STREAMS);
-    document.getElementById('bg-dod').value=(ln&&ln.d)||tpl.d;
-    if(ln&&ln.a){ var as=document.getElementById('bg-assets'); if(as&&!as.value.trim())as.value=ln.a; }
-    if(ln&&!quiet)toast('Pre-filled from your last edited '+(CAT_LBL[cat]||'optimisation')+' brief'+(LEARN[learnKey(client,cat)]?(' · '+client):''));
-    return !!ln; }
+  // PREFILLS REMOVED (Ray, 11 Sep 2026: "the prefilled data and prefilled text in the
+  // briefing mechanic are not technically good, so we might as well just remove them. Leave
+  // the section on scope, details, and definitions"). The generator used to invent a scope and
+  // a definition of done per category — plausible-sounding prose nobody had verified, which
+  // went out to ASPL as if it were the AM's instruction. The SECTIONS stay in the brief; what
+  // goes in them is now typed by the AM, or folded in from REAL context (⚡ Compose from
+  // context: plan-row state, email-thread lines, actual links) and from module deep-links that
+  // ship a computed scope (Golden Record, KWCal) — data we hold, never guesswork.
 
   // ---- ASPL delegation ----
   function asplFor(seed){ return ASPL[Math.abs(hashStr(seed))%ASPL.length]; }   // stable per-task
@@ -1305,7 +1277,7 @@ window.addEventListener('load',restore);
   fillClientSelect();   // CLIENTS still drives the brief generator + intake; the brand-book panel was removed
   ['bg-client','bg-market','bg-source','bg-task','bg-scope','bg-dod','bg-assets','bg-due','bg-priority'].forEach(function(id){
     var el=document.getElementById(id); el.addEventListener('input',refreshPreview); el.addEventListener('change',refreshPreview); });
-  (function(){ var cs=document.getElementById('bg-cat'); if(cs)cs.addEventListener('change',function(){ resetBodyOverride(); if(cs.value){ applyTemplate(cs.value); } refreshPreview(); }); })();
+  (function(){ var cs=document.getElementById('bg-cat'); if(cs)cs.addEventListener('change',function(){ resetBodyOverride(); refreshPreview(); }); })();
 
   function copy(text,msg){ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){toast(msg);});}
     else{var a=document.createElement('textarea');a.value=text;document.body.appendChild(a);a.select();try{document.execCommand('copy');toast(msg);}catch(e){}a.remove();} }
@@ -1449,7 +1421,7 @@ window.addEventListener('load',restore);
         links.forEach(function(u){ if(cur.indexOf(u)<0)cur=(cur?cur+'\n':'')+u; }); as.value=cur; }
       resetBodyOverride(); refreshPreview();
       toast(add.length?('Context folded into the scope'+(links.length?' · '+links.length+' link'+(links.length===1?'':'s')+' captured':''))
-        :'No extra context found — the template + your learned edits are already applied');
+        :'No extra context found in the plan row or thread — nothing to fold in');
     }; })();
 
   document.getElementById('bg-copy').onclick=function(){ var o=refreshPreview(); copy(o.subj+'\n\n'+o.body,'Brief copied'); };
@@ -1475,7 +1447,6 @@ window.addEventListener('load',restore);
     // exactly like the email path. adoptIntoPlan self-guards against duplicates, so a brief
     // raised FROM an intake row (lk found) or an edit of an existing brief never double-writes.
     if(!lk && !existing && o.f.source!=='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',0,strictTie);
-    recordLearning(o.f.client,(document.getElementById('bg-cat').value)||classifyLite(o.f.task),o.f);   // edited briefs teach the generator
     BRIEFS[id]=b; window.__editId=null; persist(); renderAll();
     // briefed straight from the email triage queue → that email's decision is "task": clear it
     if(window.__emailId){ decideEmail(window.__emailId,false,'briefed'); window.__emailId=null; }
@@ -2215,16 +2186,14 @@ window.addEventListener('load',restore);
       L.push('   Task: '+t.task);
       L.push('   Category: '+(CAT_LBL[t.cat]||'Optimisation'));
       L.push(''); });
-    L.push('Two streams per task: (A) project-plan worksheet, (B) the live ~5,000-row feed as source of truth.');
     L.push('Reply-all to update status. Keep the [ibfcode] + ibfdue tokens intact.');
     L.push('FeedSpark · Private & Confidential'); return L.join('\n'); }
   function bulkSaveAll(){ var items=bulkList(); if(!items.length)return; var made=0;
     items.forEach(function(t){ var id=newId(t.client); var c=code(t.client,'gb');
       var pd=taskDate(t), d=pd||new Date(); if(!pd){ d=new Date(); d.setDate(d.getDate()+5); }   // bulk briefs inherit the row's due date too
-      var tpl=TEMPLATES[t.cat]||TEMPLATES.opt, ln=learned(t.client,t.cat||'opt');
       BRIEFS[id]={id:id,created:Date.now(),updated:Date.now(),status:'intake',comms:[],hist:[{s:'intake',t:Date.now()}],
         taskKey:rowKey(t),client:t.client,code:c,task:t.task,
-        scope:(ln&&ln.s)||(tpl.s+TWO_STREAMS),dod:(ln&&ln.d)||tpl.d,assets:(ln&&ln.a)||'—',
+        scope:'',dod:'',assets:'',   // the AM fills these — the generator never invents them
         due:isoToDDMMYYYY(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())),
         source:'plan',priority:'Normal',aspl:asplFor(t.client+t.task)}; made++;
       if(t.source==='email') adoptIntoPlan(t.client,t.task,'Briefed',BRIEFS[id].due,'',1);   // bulk-briefed email tasks join the plan too
@@ -2449,15 +2418,16 @@ window.addEventListener('load',restore);
     document.getElementById('bg-client').value= CLIENTS.indexOf(t.client)>=0? t.client : CLIENTS[0];
     document.getElementById('bg-source').value= t.source||'plan';
     document.getElementById('bg-task').value=t.task;
-    var cat=t.cat||'opt', cs=document.getElementById('bg-cat'); if(cs)cs.value=(TEMPLATES[cat]?cat:'');
+    var cat=t.cat||'opt', cs=document.getElementById('bg-cat'); if(cs)cs.value=(CAT_LBL[cat]?cat:'');
     var pd=taskDate(t);
     if(pd){ document.getElementById('bg-due').value=pd.getFullYear()+'-'+pad(pd.getMonth()+1)+'-'+pad(pd.getDate());   // brief inherits the intake due date
       window.__bsAuto='from the intake row — your date, kept'; }
     else bsPropose();                   // no AM date -> propose the first week with free capacity
     fillAttach(t);
     renderCtx(t);
-    var ln=applyTemplate(cat,true);     // #2 auto-fill scope + DoD (learned version when one exists)
-    if(t.scope)document.getElementById('bg-scope').value=t.scope;   // module deep-links ship a ready-made scope — it beats the template
+    // scope/DoD start EMPTY now the invented templates are gone; a module deep-link still
+    // ships a ready-made scope (Golden Record / KWCal compute it from real feed numbers)
+    if(t.scope)document.getElementById('bg-scope').value=t.scope;
     refreshPreview();
     openBrief();
     toast('Prefilled from '+(ln?'your last edited '+(CAT_LBL[cat]||'optimisation')+' brief':'the '+(CAT_LBL[cat]||'optimisation')+' template')
