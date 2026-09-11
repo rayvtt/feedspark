@@ -3570,6 +3570,55 @@
    "pattern": "var HK='fcc-aiq-help'",
    "pr": 340,
    "min": 1
+  },
+  {
+   "name": "Quote generator: QUOTE TYPES picker — ai / sys (FeedHero dashboard per market) / feed (generic or bespoke → ASPL) / lia / ret (Ray 11 Sep 2026 'what are you trying to quote?')",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function extraLines(){",
+   "pr": 342,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: 'What are you quoting?' picker card + per-type section cards (data-tp)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "id=\"type-card\"",
+   "pr": 342,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: type rates on the shared rate card (sys 500 / feed 150 / lia 250, changeable)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "var RATE_DEFAULT={sys:500,feed:150,lia:250};",
+   "pr": 342,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: the summary panel + actions live in their own Quote total card (shown whatever types are on)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "id=\"total-card\"",
+   "pr": 342,
+   "min": 1
+  },
+  {
+   "name": "Quote generator xlsx: a section per type — New Systems / New Feeds / Local Inventory Feeds / Retainer Hours; one-off total = SUM over compact K ranges",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function kRanges(rows){",
+   "pr": 342,
+   "min": 1
+  },
+  {
+   "name": "Quote generator xlsx: bespoke feed rows stay unpriced ('Priced separately by ASPL') and never block the total",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "Priced separately by ASPL",
+   "pr": 342,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: snapshot carries types + xlines + cfg; ✎ Edit restores every section",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "r.types=q.types?JSON.parse(JSON.stringify(q.types)):{ai:true};",
+   "pr": 342,
+   "min": 1
   }
  ]
 }
