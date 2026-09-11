@@ -928,15 +928,19 @@ function importEvents(data){ // merge events from the JSON Claude returns after 
     var key=String(x.name).toLowerCase()+'|'+date; if(have[key])return; have[key]=1;
     var lane=String(x.lane||'studio').toLowerCase(); if(['campaign','location','studio','sale'].indexOf(lane)<0)lane='studio';
     var terms=Array.isArray(x.terms)?x.terms:(x.terms?String(x.terms).split(','):[]);
-    var ev={ id:(x.id&&String(x.id))||('imp'+Date.now().toString(36)+(n++)), name:String(x.name).trim(), lane:lane, date:date,
+    // n++ used to live inside this || fallback, so a JSON whose events ALL carry an id (exactly
+    // what a Claude-generated block looks like) short-circuited past it: the events were pushed,
+    // but n stayed 0, so save() and render() never ran and the panel said "nothing imported".
+    var ev={ id:(x.id&&String(x.id))||('imp'+Date.now().toString(36)+r.events.length), name:String(x.name).trim(), lane:lane, date:date,
       terms:terms.map(function(t){return String(t).trim()}).filter(Boolean) };
     if(x.mkt)ev.mkt=String(x.mkt).toLowerCase();
     if(x.brandwide||lane==='sale')ev.brandwide=1;
-    r.events.push(ev); });
+    r.events.push(ev); n++; });
   if(n){ save(); if(tgt===CLIENT)render(); }
   return n;
 }
 function impOpen(){ ptClose();
+  var old=document.getElementById('imp'); if(old)old.remove();   // opening it twice used to stack panels
   var d=document.createElement('div'); d.className='ptp'; d.id='imp';
   d.innerHTML='<b class="pt-t">⤓ Import calendar events</b>'
     +'<div class="pt-sub">The portal attaches the calendar as a reference (drop it on 🗂). To <b>capture the events</b>, drop the calendar <b>PDF into a Claude Code session</b> — Claude returns a JSON block. Paste it here (or drop the .json file).</div>'
