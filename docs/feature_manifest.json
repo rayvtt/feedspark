@@ -3509,6 +3509,7 @@
    "min": 1
   },
   {
+<<<<<<< HEAD
    "name": "AI Quote: partner discount SCOPE — all / one-off only / monthly only / selected lines (Ray 11 Sep 2026)",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "function discOn(side,id){",
@@ -3542,6 +3543,34 @@
    "pattern": "var HK='fcc-aiq-help'",
    "pr": 340,
    "min": 1
+=======
+   "name": "kwcal: ⬇ Client PDF — print-to-PDF export of the roadmap (Ray, 11 Sep 2026)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function renderPdfDoc(",
+   "min": 1,
+   "pr": 340
+  },
+  {
+   "name": "kwcal: the PDF export button in the hero controls",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "⬇ Client PDF",
+   "min": 1,
+   "pr": 340
+  },
+  {
+   "name": "kwcal: client PDF is rendered from data into #pdf-doc, never the internal board (no hours/owners/→ Brief)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "pd-card",
+   "min": 2,
+   "pr": 340
+  },
+  {
+   "name": "kwcal: Workflow brief stage resolves off b.status (was reading b.st -> \"WF · undefined\")",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function stOf(",
+   "min": 1,
+   "pr": 340
+>>>>>>> origin/main
   }
  ]
 }
