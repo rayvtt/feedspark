@@ -217,8 +217,9 @@ GET|POST /api/claude            → Tachyon copilot proxy to Claude Messages API
   (`docs/presence_widget.html` — Google-Docs-style live avatars in the topbar: each open page
   heartbeats `POST /api/presence` per minute while visible, worker stamps the Access identity
   into KV `presence`, avatars = active ≤3min with green dot + name·page·ago tooltip; popover
-  ALWAYS lists the adoption watchlist Stephen + Matt with last-seen; heartbeats deliberately
-  NOT in the activity log), the **Feed Chat bubble** (docs/feedchat_widget.html — the chatbot
+  shows ONLY who is ACTUALLY LIVE right now — no always-on watchlist (Ray, Sep 2026: "only
+  allow me to see who is actually live and using the dashboard"), so an offline teammate simply
+  doesn't appear; heartbeats deliberately NOT in the activity log), the **Feed Chat bubble** (docs/feedchat_widget.html — the chatbot
   hovering bottom-right, see /feedchat above) + the **Tachyon copilot**
   (`docs/tachyon_widget.html`, reads `window.PLANTASKS`, calls `/api/claude`).
 - **Secrets**: `ANTHROPIC_API_KEY` powers Tachyon (`wrangler secret put ANTHROPIC_API_KEY`); both

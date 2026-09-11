@@ -3769,6 +3769,13 @@
    "pr": 346
   },
   {
+   "name": "presence: live-only popover — the always-on Stephen/Matt watchlist is retired (Ray, Sep 2026)",
+   "file": "docs/presence_widget.html",
+   "pattern": "var WATCH=",
+   "forbidden": true,
+   "pr": 347
+  },
+  {
    "name": "kwcal: scope picker two-column workbench — browse/search at full height (Ray, 11 Sep 2026: 'too narrow to visually see')",
    "file": "docs/FeedSpark_KWCal.html",
    "pattern": "pt-body",
