@@ -78,6 +78,10 @@ import VOLUME_PAGE from "../../../docs/FeedSpark_Volume.html";
 // /overlays module (Ray, 10 Sep 2026): which FeedSpark image overlay is live on each feed,
 // read off the image_link URL string (dashboard.feedspark.com/image-creator/…)
 import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
+// Playbook — AM meeting copilot: crawls every client's plan tasks, classifies them into
+// feed-optimisation strategies, and surfaces "what's been done for brand X" + cross-brand
+// suggestions ("overlay is BAU on Accessorize → propose to Hobbycraft"). Page at /playbook.
+import PLAYBOOK_PAGE from "../../../docs/FeedSpark_Playbook.html";
 import APPSW from "../../../docs/apps_widget.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
 // node tests share the file, same pattern as the Feed Lab engine)
@@ -158,6 +162,7 @@ const PAGES = {
   '/aiquote':     { html: AIQUOTE,     slug: 'aiquote' },
   '/volume':      { html: VOLUME_PAGE, slug: 'volume' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
+  '/playbook':    { html: PLAYBOOK_PAGE, slug: 'playbook' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
@@ -1827,6 +1832,33 @@ export default {
         }
         return json({ connected: true, brands: out });
       } catch (e) { return json({ connected: false, error: String((e && e.message) || e), brands: out }); }
+    }
+
+    // ---- Playbook / meeting-copilot crawl (Ray, 11 Sep 2026): one scoped read of EVERY
+    // client's project-plan tasks so an AM can, mid-meeting, see what's been done for a brand
+    // and what peers have done that it hasn't. Reads ONLY the cron-warmed planlive:<id> caches
+    // (scheduled() warms them hourly) — no cold Sheets fetch, so this stays fast and bounded
+    // however many clients are wired. Dedupe by sheet id (Accessorize+Monsoon and the ELC group
+    // share a workbook); a shared id is flagged so the page can prefer its per-brand baked split.
+    // Scoped by accessOf: a client-scoped signin sees only their brands, the owner the full book.
+    // Tasks are compacted to {t,o,b,d}; the page reclassifies the text into the rich taxonomy.
+    if (path === '/api/playbook' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      // scope with the shared slug-folding matcher (accents/case) — owner (clients null) = full house
+      const brands = Object.keys(PLAN_SHEETS).filter((name) => clientMatch(acc.clients, name));
+      const idCount = {};
+      brands.forEach((b) => { const id = PLAN_SHEETS[b]; if (id) idCount[id] = (idCount[id] || 0) + 1; });
+      const out = {}; const idCache = {};
+      for (const b of brands) {
+        const id = PLAN_SHEETS[b];
+        if (!id) { out[b] = { tasks: [], cold: true }; continue; }
+        let cached = idCache[id];
+        if (cached === undefined) { cached = await env.EDITS.get('planlive:' + id, 'json'); idCache[id] = cached || null; }
+        if (!cached || !Array.isArray(cached.tasks)) { out[b] = { tasks: [], cold: true }; continue; }
+        const tasks = cached.tasks.slice(0, 1500).map((t) => ({ t: t.t, o: t.o, b: t.b, d: t.d }));
+        out[b] = Object.assign({ tasks, updated: cached.updated || 0 }, idCount[id] > 1 ? { shared: 1 } : {});
+      }
+      return json({ ok: true, owner: !!acc.owner, scoped: !!acc.clients, brands: out, generated: Date.now() });
     }
 
     // ---- 2-way owner reassign: write an AE/owner back into the plan tab (workload heatmap) ----
