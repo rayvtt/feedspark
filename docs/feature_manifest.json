@@ -3503,9 +3503,9 @@
    "pr": 340
   },
   {
-   "name": "kwcal: client PDF is rendered from data into #pdf-doc, never the internal board (no hours/owners/→ Brief)",
+   "name": "kwcal: client PDF is rendered from data into #pdf-doc, never the internal board (no hours/owners/→ Brief) — the card document became a one-page calendar in PR #348, so this pins the calendar's agenda markup instead of the retired .pd-card",
    "file": "docs/FeedSpark_KWCal.html",
-   "pattern": "pd-card",
+   "pattern": "pd-ag",
    "min": 2,
    "pr": 340
   },
@@ -3767,6 +3767,62 @@
    "pattern": "acl-mchip",
    "min": 1,
    "pr": 346
+  },
+  {
+   "name": "kwcal: scope picker two-column workbench — browse/search at full height (Ray, 11 Sep 2026: 'too narrow to visually see')",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "pt-body",
+   "min": 2,
+   "pr": 348
+  },
+  {
+   "name": "kwcal: picker rows are leaf + breadcrumb with the count in its own column (never clipped)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function ptCrumb(",
+   "min": 1,
+   "pr": 348
+  },
+  {
+   "name": "kwcal: picker browse is grouped by category, collapsible, with select-all per group",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "data-gall",
+   "min": 2,
+   "pr": 348
+  },
+  {
+   "name": "kwcal: picker search highlights matches",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function hlEsc(",
+   "min": 1,
+   "pr": 348
+  },
+  {
+   "name": "kwcal: picker keyboard nav (arrows move, Enter ticks, Esc closes)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function moveCur(",
+   "min": 1,
+   "pr": 348
+  },
+  {
+   "name": "kwcal: client PDF is a ONE-PAGE calendar (Ray, 11 Sep 2026: 'look like a calendar … fit on one page only')",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function monthCells(",
+   "min": 1,
+   "pr": 348
+  },
+  {
+   "name": "kwcal: the one-page fit is measured and applied with ZOOM — transform:scale paginates on the untransformed height",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "zoom:var(--pdfk,1)",
+   "min": 1,
+   "pr": 348
+  },
+  {
+   "name": "kwcal: PDF layout rules live outside @media print so fitPdf can measure them",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "#pdf-doc .pd-cal",
+   "min": 1,
+   "pr": 348
   }
  ]
 }
