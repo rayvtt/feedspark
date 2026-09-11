@@ -89,6 +89,12 @@ else
   echo "   ✗ nav parity FAILED (the module menu drifted — see node tools/check_nav.js)"; FAIL=1
 fi
 
+if node tools/test_replyclass.mjs >/dev/null 2>&1; then
+  echo "   ✓ reply classifier agrees across worker + page"
+else
+  echo "   ✗ reply classifier FAILED (node tools/test_replyclass.mjs)"; FAIL=1
+fi
+
 if node tools/check_lgcopy.js >/dev/null 2>&1; then
   echo "   ✓ labelguard browser copy in sync"
 else

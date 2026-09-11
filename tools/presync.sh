@@ -61,6 +61,9 @@ node tools/check_nav.js >/dev/null
 echo "   ✓ nav identical across all app pages"
 
 echo "── validating: labelguard browser-engine copy (served /labels/engine.js = src)"
+node tools/test_replyclass.mjs >/dev/null
+echo "   ✓ reply classifier agrees across worker + page"
+
 node tools/check_lgcopy.js >/dev/null
 echo "   ✓ docs/labelguard_engine.js in sync"
 
