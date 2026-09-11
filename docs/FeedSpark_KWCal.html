@@ -93,6 +93,22 @@ window.addEventListener('load',restore);
   .stx.blocked{color:var(--risk);border-color:rgba(192,57,43,.4);background:rgba(192,57,43,.08)}
   .stx.analysis{color:#7C3AED;border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.08)}
   .stx.confirmed{color:var(--good);border-color:rgba(21,128,61,.4);background:#EBF7EF}
+  /* a WF-linked chip is a LINK, not a control — the stage moves in Workflow, never here */
+  a.stx.wfl{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  a.stx.wfl:hover{filter:brightness(.93)}
+  .stx .ct{font-size:8.5px;font-weight:900;letter-spacing:.05em;background:rgba(0,0,0,.07);border-radius:100px;padding:1px 6px;color:inherit}
+  /* result chip — the loop closing back onto the moment */
+  .rchip{font:inherit;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;border-radius:100px;
+    padding:2px 9px;border:1px solid;cursor:pointer;background:#fff}
+  .rchip.positive{color:var(--good);border-color:rgba(21,128,61,.42);background:#EBF7EF}
+  .rchip.negative{color:var(--risk);border-color:rgba(192,57,43,.42);background:#FDEEE9}
+  .rchip.mixed{color:var(--orange-ink);border-color:rgba(245,166,35,.5);background:rgba(245,166,35,.1)}
+  .rchip.unknown{color:var(--muted);border-color:var(--line);background:var(--wash)}
+  .rchip:hover{filter:brightness(.95)}
+  .pop .rlines{display:flex;flex-direction:column;gap:4px;max-height:230px;overflow:auto;margin-top:2px}
+  .pop .rlines div{font-size:11.5px;font-weight:700;color:var(--ink-2);background:var(--wash);border:1px solid var(--line);
+    border-radius:7px;padding:5px 8px;line-height:1.4}
+  .wfb.rz{background:rgba(21,128,61,.12);border-color:rgba(21,128,61,.3)}
   a.bgo{font-size:11px;font-weight:900;color:#fff;text-decoration:none;border:1px solid var(--orange);border-radius:9px;padding:3px 11px;background:var(--orange);margin-left:auto}
   a.bgo:hover{background:var(--orange-deep);border-color:var(--orange-deep)}
   .ovc a.bgo,.pop a.bgo{margin-left:0}
@@ -296,6 +312,16 @@ window.addEventListener('load',restore);
     .pd-st.prog{color:#B1550A;border-color:rgba(245,166,35,.45);background:rgba(245,166,35,.1)}
     .pd-st.live{color:#ED6F0B;border-color:#ED6F0B;background:rgba(237,111,11,.08)}
     .pd-st.done{color:#15803D;border-color:rgba(21,128,61,.4);background:#EBF7EF}
+    .pd-st.neg{color:#C0392B;border-color:rgba(192,57,43,.4);background:#FDEEE9}
+    .pd-rmeta{font-size:9.5px;font-weight:700;color:#8a94a0;margin-left:7px}
+    .pd-rl{display:flex;flex-direction:column;gap:3px;margin:5px 0 0 0}
+    .pd-rl div{font-size:10px;font-weight:700;color:#4a4a4a;background:#F7F7F5;border:1px solid #E6E6E6;
+      border-radius:6px;padding:3px 7px;line-height:1.4}
+    .pd-round{border:1px solid #E6E6E6;border-left:3px solid #ED6F0B;border-radius:8px;padding:8px 11px;
+      margin:2px 0 9px;background:#fff;break-inside:avoid;page-break-inside:avoid}
+    .pd-rh{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+    .pd-rh b{font-size:11px;font-weight:900;color:#333}
+    .pd-rcov{font-size:9.5px;font-weight:700;color:#8a94a0;margin-top:5px}
     /* methodology + footer */
     .pd-meth{background:#F7F7F5;border:1px solid #E6E6E6;border-radius:10px;padding:11px 13px;margin-top:16px;break-inside:avoid;page-break-inside:avoid}
     .pd-meth h3{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#333;margin:0 0 6px}
@@ -356,6 +382,13 @@ window.addEventListener('load',restore);
 [data-theme=dark] .stx.progress{background:rgba(91,130,190,.18);border-color:rgba(91,130,190,.36);color:#93B4E0}
 [data-theme=dark] .stx.blocked{background:rgba(241,112,122,.14);border-color:rgba(241,112,122,.32);color:#F3868F}
 [data-theme=dark] .stx.analysis{background:rgba(155,110,240,.16);border-color:rgba(155,110,240,.34);color:#B694F5}
+[data-theme=dark] .stx .ct{background:rgba(255,255,255,.12)}
+[data-theme=dark] .rchip{background:#20242E}
+[data-theme=dark] .rchip.positive{background:rgba(72,208,126,.14);border-color:rgba(72,208,126,.3);color:#6FE0A0}
+[data-theme=dark] .rchip.negative{background:rgba(241,112,122,.14);border-color:rgba(241,112,122,.3);color:#F3868F}
+[data-theme=dark] .rchip.mixed{background:rgba(245,166,35,.15);border-color:rgba(245,166,35,.34);color:#F0A44E}
+[data-theme=dark] .rchip.unknown{background:#20242E;border-color:var(--line);color:var(--muted)}
+[data-theme=dark] .pop .rlines div{background:#181B22;border-color:var(--line)}
 [data-theme=dark] .err-strip{background:rgba(241,112,122,.12);border-color:rgba(241,112,122,.3);color:#F3868F}
 [data-theme=dark] a.bgo{background:rgba(245,166,35,.1)}
 [data-theme=dark] a.bgo:hover{background:var(--orange);color:#14161C}
@@ -368,7 +401,7 @@ window.addEventListener('load',restore);
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
   <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
   <div class="tb-tag">Keyword Calendar</div>
-  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/kwcal" class="tbm on" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a></nav>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/playbook" class="tbm" data-lbl="Playbook" title="Playbook — meeting copilot" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/kwcal" class="tbm on" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a></nav>
 </div></div>
 
 <header class="hero"><div class="wrap">
@@ -396,7 +429,7 @@ window.addEventListener('load',restore);
 
 <main class="wrap">
   <h2 id="cal-title">Calendar</h2>
-  <p class="sub">Marketing moments by lane (as the brand shared them) with the <b>keyword optimisation schedule</b> underneath — each optimisation lands ahead of its moment. Click a status chip to advance it; <b>→ Brief</b> drops the task into the Workflow composer prefilled.</p>
+  <p class="sub">Marketing moments by lane (as the brand shared them) with the <b>keyword optimisation schedule</b> underneath — each optimisation lands ahead of its moment. <b>→ Brief</b> raises the ticket in Workflow and ties it to that moment for life; from then on the chip is <b>live from the pipeline</b> (with the team holding the ball) and the stage moves in Workflow, not here. Un-briefed moments keep a manual chip you can click. <b>📈</b> is the optimisation round that reported on the moment — click it for the numbers. Stages and results refresh on their own.</p>
   <div class="split" id="split">
     <div id="cal-wrap"><div class="road" id="road"></div></div>
     <div class="srail" id="srail">
@@ -453,6 +486,7 @@ var SEED={Reiss:{events:[
 ]}};
 
 var CLIENT='Reiss', STORE={}, BASE=0, editMode=false, saveT=null, MEASURING=false;
+var LIVESIG='', LIVET=null;   // live-refresh signature + interval (briefs + results)
 var BRIEFS={};
 var MKT='gb', MKTLIST=['gb']; // board market — scopes, volumes, sync and briefs follow it (events may pin their own) // Workflow pipeline (read-only) — live stages auto-badge matching KW tasks
 // keyword-generation resourcing roster (assignable in the hours rail; "＋ add person" extends it, remembered per client)
@@ -475,7 +509,9 @@ function dLbl(e){ var d=new Date(e.date+'T12:00:00Z'); return (e.wc?'w/c ':'')+d
 function kpis(){
   var E=evs();
   var st={planned:0,intake:0,briefed:0,live:0,done:0}, vol=0, scoped=0, unset=0;
+  var resIn=0, briefed=0;
   E.forEach(function(e){ var wf=wfFor(CLIENT,e); var k=stOf(wf,e); st[k]=(st[k]||0)+1;
+    if(wf)briefed++; if(resFor(CLIENT,e))resIn++;
     var v=volOf(CLIENT,e);
     if(v&&!v.unset&&!v.wide){vol+=v.vol;scoped++} else if(!e.brandwide&&(!v||v.unset))unset++; });
   // the live saturation audit — keywords land in g:product_type2..10, and every brand/market
@@ -489,7 +525,9 @@ function kpis(){
     +'<div class="kpi good"><div class="n">'+((st.live||0)+(st.done||0)+(st.confirmed||0))+'</div><div class="l">Live / done</div></div>'
     +'<div class="kpi"><div class="n">'+(scoped?fmt(vol):'—')+'</div><div class="l">SKUs in scope</div></div>'
     +satK
-    +(unset?'<div class="kpi warn"><div class="n">'+unset+'</div><div class="l">Scopes to set</div></div>':'');
+    +'<div class="kpi'+(resIn?' good':'')+'"><div class="n">'+resIn+'</div><div class="l">Results reported</div></div>'
+    +(unset?'<div class="kpi warn"><div class="n">'+unset+'</div><div class="l">Scopes to set</div></div>':'')
+    +((E.length-briefed)?'<div class="kpi"><div class="n">'+(E.length-briefed)+'</div><div class="l">Not yet briefed</div></div>':'');
 }
 function monthRange(){
   var E=evs(); if(!E.length){var n=new Date();return [n.getUTCFullYear()*12+n.getUTCMonth(), n.getUTCFullYear()*12+n.getUTCMonth()+5];}
@@ -506,12 +544,87 @@ function volBadge(e){
   return '<span class="vol'+(m.vol?'':' zero')+'" title="'+m.pct+'% of the live '+(e.mkt||'gb').toUpperCase()+' feed matches this moment’s terms">'+fmt(m.vol)+' SKUs · '+m.pct+'%</span>';
 }
 function briefLink(e){ return briefLinkFor(CLIENT,e); }
-function wfFor(brand,e){ // the seamless Workflow link: a brief whose task carries the KW-task name
-  var ks=Object.keys(BRIEFS||{});
-  for(var i=0;i<ks.length;i++){ var b=BRIEFS[ks[i]]||{};
-    var tk=String((b&&b.task)||'');
-    if(b&&b.client===brand&&(tk.indexOf('Keywords Optimisation - '+e.name)>=0||tk.indexOf('AI Keyword Optimisation — '+e.name)>=0)) return b; }
-  return null;
+/* ---- event ⇄ Workflow ticket: ONE tie, strongest evidence first (Ray, 11 Sep 2026) ----
+ * Every keyword optimisation is briefed from THIS calendar and nowhere else, so each moment
+ * owns exactly one ticket and the board must never guess which. → Brief stamps the moment's id
+ * onto the brief (b.kw, written by the Workflow composer), so the tie survives a rename, a
+ * market change and a re-brief. The two weaker rungs only exist for tickets raised before the
+ * stamp shipped: the regenerated house task name, then the moment name ENDING its segment —
+ * never bare containment, which let "Coats" capture "Coats & Jackets". */
+function normTask(s){ return String(s||'').toLowerCase().replace(/[‐-―−]/g,'-').replace(/\s+/g,' ').trim(); }
+function kwTask(brand,e){ // the house task-name format — details live in the brief SCOPE, not the title
+  var bmkt=evMkt(brand,e), d=new Date(e.date+'T12:00:00Z');
+  var mmyy=('0'+(d.getUTCMonth()+1)).slice(-2)+String(d.getUTCFullYear()).slice(2);
+  return 'Keywords Optimisation - '+e.name+' - Marketing Planner - '+mmyy+(bmkt!=='gb'?' - '+bmkt.toUpperCase():'');
+}
+function wfFor(brand,e){
+  var ks=Object.keys(BRIEFS||{}), canon=normTask(kwTask(brand,e));
+  var pfx=normTask('Keywords Optimisation - '+e.name), pfx2=normTask('AI Keyword Optimisation - '+e.name);
+  var byId=null, byTask=null, byName=null;
+  function newer(a,b){ return (!a||(b.updated||b.created||0)>(a.updated||a.created||0))?b:a; }
+  for(var i=0;i<ks.length;i++){ var b=BRIEFS[ks[i]];
+    if(!b||b.client!==brand)continue;
+    if(b.kw&&String(b.kw)===String(e.id)){ byId=newer(byId,b); continue; }
+    var tk=normTask(b.task);
+    if(tk===canon){ byTask=newer(byTask,b); continue; }
+    if(tk===pfx||tk===pfx2||tk.indexOf(pfx+' - ')===0||tk.indexOf(pfx2+' - ')===0) byName=newer(byName,b); }
+  return byId||byTask||byName||null;
+}
+// which team holds the ball at each pipeline stage — the Workflow board's own map, so the
+// calendar answers "whose court is this in?" without opening Workflow
+var COURTM={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',analysis:'AM',confirmed:''};
+function stChip(brand,e,wf,st){
+  if(wf){ var ct=COURTM[st]||'';
+    return '<a class="stx '+esc(st)+' wfl" href="/workflow" title="Live from the Workflow pipeline'
+      +(wf.id?' · ticket '+esc(wf.id):'')+(ct?' · '+esc(ct)+' holds the ball':'')
+      +' — the stage moves in Workflow, not here">WF · '+esc(st)+(ct?'<b class="ct">'+esc(ct)+'</b>':'')+'</a>'; }
+  return '<button type="button" class="stx '+esc(st)+'" data-st="'+esc(e.id)+'" title="Not briefed yet — '
+    +'click to set the manual stage, or → Brief to raise the ticket and let Workflow drive it">'+esc(st)+'</button>';
+}
+/* ---- results: the loop closes back onto the moment (Ray: "including result") ----
+ * Dino's scheduled result emails are archived per brand × market × HALF-MONTH period
+ * (/api/kwresults, subject "<Brand> <MKT> x Feedspark - <Mon I/II> - Keyword Optimisation") —
+ * they carry no moment id, so a batch is tied to every optimisation whose live-by date falls
+ * inside its period window. That is the real relationship: one batch reports the work that
+ * went live in that fortnight. The batch label is always shown so the join stays honest. */
+var KWRES={};
+var MONI={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+function periodWin(r){
+  var m=/^([a-z]{3})[a-z]*\.?\s*(i{1,2}|1|2)?$/i.exec(String((r&&r.period)||'').trim());
+  if(!m)return null;
+  var mo=MONI[m[1].toLowerCase()]; if(mo==null)return null;
+  var half=m[2]?(/^(ii|2)$/i.test(m[2])?2:1):0;
+  var w=new Date(r.when||Date.now()), y=w.getUTCFullYear(), dm=mo-w.getUTCMonth();
+  if(dm>6)y--; else if(dm<-6)y++;              // a December period reported in January
+  var eom=new Date(Date.UTC(y,mo+1,0)).getUTCDate();
+  return { a:Date.UTC(y,mo,half===2?16:1), b:Date.UTC(y,mo,half===1?15:eom,23,59,59),
+           label:MON[mo]+' '+y+(half?(half===1?' · 1st half':' · 2nd half'):'') };
+}
+function resFor(brand,e){
+  var rs=KWRES[brand]; if(!rs||!rs.length)return null;
+  var mk=evMkt(brand,e), t=schedDate(e).getTime(), out=null;
+  for(var i=0;i<rs.length;i++){ var r=rs[i];
+    if(r.mkt&&String(r.mkt).toLowerCase()!==mk)continue;   // a batch whose subject named no market rides the board's
+    var w=r.__w; if(!w)continue;
+    if(t>=w.a&&t<=w.b&&(!out||(r.when||0)>(out.when||0)))out=r; }
+  return out;
+}
+var VERDL={positive:'Positive',negative:'Negative',mixed:'Mixed',unknown:'Reported'};
+function resLbl(r){ return VERDL[r&&r.verdict]||'Reported'; }
+function resPop(btn,brand,e,r){
+  popClose();
+  var w=r.__w, ms=(r.metrics||[]);
+  var d=document.createElement('div'); d.className='pop'; d.id='kw-pop'; d.style.maxWidth='420px';
+  d.innerHTML='<b>📈 '+esc(e.name)+' — result</b>'
+    +'<div class="pm">'+esc(resLbl(r))+' · '+esc((r.mkt||evMkt(brand,e)).toUpperCase())+' batch '+esc(w?w.label:(r.period||''))
+    +' · reported '+esc(new Date(r.when||Date.now()).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}))+'</div>'
+    +(ms.length?'<div class="rlines">'+ms.map(function(l){return '<div>'+esc(l)+'</div>'}).join('')+'</div>'
+      :'<div class="pm">No metric lines parsed from the report — open the archive for the full email.</div>')
+    +'<div class="pm" style="margin:8px 0 0">This batch reports every optimisation that went live in that window, not this moment alone.</div>';
+  document.body.appendChild(d);
+  var q=btn.getBoundingClientRect();
+  d.style.left=Math.min(window.scrollX+q.left,window.scrollX+document.documentElement.clientWidth-d.offsetWidth-14)+'px';
+  d.style.top=(window.scrollY+q.bottom+8)+'px';
 }
 // Workflow briefs carry their stage on b.status — b.st never existed, so every consumer of
 // wfFor() was reading undefined and badging "WF \u00b7 undefined". Resolve it in one place so a live
@@ -522,7 +635,7 @@ function ovBrands(){ return Object.keys(STORE).filter(function(k){return k.charA
 function renderOverview(){
   $('#cal-wrap').hidden=true; $('#ov').hidden=false;
   $('#cal-title').textContent='All brands — keyword optimisation overview';
-  var brands=ovBrands(), tot=0, inflight=0, done=0, vol=0;
+  var brands=ovBrands(), tot=0, inflight=0, done=0, vol=0, resIn=0;
   var h='';
   brands.forEach(function(brand){
     var E=evsOf(brand);
@@ -531,7 +644,7 @@ function renderOverview(){
       (byMon[k]=byMon[k]||[]).push(e); });
     var next=null;
     E.forEach(function(e){ var wf=wfFor(brand,e), st=stOf(wf,e);
-      tot++;
+      tot++; if(resFor(brand,e))resIn++;
       if(st==='intake'||st==='briefed'||st==='progress'||st==='live')inflight++;
       if(st==='done'||st==='confirmed')done++;
       var vv=volOf(brand,e); if(vv&&!vv.unset&&!vv.wide)vol+=vv.vol;
@@ -546,7 +659,8 @@ function renderOverview(){
           +byMon[k].map(function(e){ var wf=wfFor(brand,e), st=stOf(wf,e), mm=volOf(brand,e);
             return '<button type="button" class="ovc" data-pop="'+esc(brand)+'|'+esc(e.id)+'"><span class="dot '+esc(st)+'"></span>'+esc(e.name)
               +(mm&&!mm.unset?'<span class="ov-vol">'+fmt(mm.vol)+(mm.wide?' · all':'')+'</span>':'')
-              +(wf?'<span class="wfb" title="Live from the Workflow pipeline">WF · '+esc(st)+'</span>':'')+'</button>';
+              +(wf?'<span class="wfb" title="Live from the Workflow pipeline'+(COURTM[st]?' · '+esc(COURTM[st])+'\u2019s court':'')+'">WF · '+esc(st)+'</span>':'')
+              +(resFor(brand,e)?'<span class="wfb rz" title="Result reported">📈</span>':'')+'</button>';
           }).join('')+'</div></div>';
       }).join('')+'</div></div>';
   });
@@ -556,7 +670,8 @@ function renderOverview(){
     +'<div class="kpi"><div class="n">'+tot+'</div><div class="l">KW optimisations</div></div>'
     +'<div class="kpi warn"><div class="n">'+inflight+'</div><div class="l">In flight (incl. Workflow)</div></div>'
     +'<div class="kpi good"><div class="n">'+done+'</div><div class="l">Done</div></div>'
-    +'<div class="kpi"><div class="n">'+(vol?fmt(vol):'—')+'</div><div class="l">Category SKUs impacted</div></div>';
+    +'<div class="kpi"><div class="n">'+(vol?fmt(vol):'—')+'</div><div class="l">Category SKUs impacted</div></div>'
+    +'<div class="kpi'+(resIn?' good':'')+'"><div class="n">'+resIn+'</div><div class="l">Results reported</div></div>';
 }
 function popClose(){ var p=$('#kw-pop'); if(p)p.remove(); }
 function popOpen(btn,brand,e){
@@ -566,12 +681,17 @@ function popOpen(btn,brand,e){
   var mail='mailto:?subject='+encodeURIComponent('Keyword optimisation — '+e.name+' · '+brand)
     +'&body='+encodeURIComponent('Hi,\n\nAhead of "'+e.name+'" ('+dLbl(e)+') we’re lining up the keyword optimisation for: '+(e.terms||[]).join(', ')+'.\n\nCould you confirm the categories in scope and any changes to the marketing calendar?\n\nThanks,\nFeedSpark');
   var d=document.createElement('div'); d.className='pop'; d.id='kw-pop';
-  d.innerHTML='<b>'+esc(e.name)+' · '+esc(brand)+'</b><div class="pm">lands '+dLbl(e)+' · status '+esc(st)+(wf?' (live from Workflow)':'')+'</div>'
+  var rr=resFor(brand,e), ct=wf?(COURTM[st]||''):'';
+  d.innerHTML='<b>'+esc(e.name)+' · '+esc(brand)+'</b><div class="pm">lands '+dLbl(e)+' · status '+esc(st)
+    +(wf?' — live from Workflow'+(ct?', '+esc(ct)+'\u2019s court':''):'')+'</div>'
+    +(rr?'<div class="pm" style="color:var(--orange-ink)">📈 '+esc(resLbl(rr))+' · '+esc(rr.__w?rr.__w.label:(rr.period||''))+' batch</div>':'')
     +'<div class="pa">'
-    +'<a href="'+briefLinkFor(brand,e)+'">→ Brief it · into the Workflow pipeline</a>'
+    +'<a href="'+briefLinkFor(brand,e)+'">'+(wf?'↻ Re-brief · updates the same ticket':'→ Brief it · into the Workflow pipeline')+'</a>'
     +'<a href="/workflow?brief='+b64url(chase)+'">⏰ Chase · nudge the owner via Workflow</a>'
     +'<a href="'+mail+'">✉ Ask client · drafted email</a>'
-    +'<button type="button" data-adv="'+esc(brand)+'|'+esc(e.id)+'">↻ Advance status ('+esc(st)+' →)</button>'
+    // the manual chip exists only until a ticket does — after that Workflow owns the stage
+    +(wf?'<a href="/workflow">🎫 Open in Workflow · stage moves there</a>'
+        :'<button type="button" data-adv="'+esc(brand)+'|'+esc(e.id)+'">↻ Advance status ('+esc(st)+' →)</button>')
     +'</div>';
   document.body.appendChild(d);
   var r=btn.getBoundingClientRect();
@@ -584,6 +704,9 @@ document.addEventListener('click',function(ev){
   var adv=ev.target.closest('[data-adv]');
   if(adv){ var pa=adv.getAttribute('data-adv').split('|'); var e2=findEvIn(pa[0],pa[1]); if(e2){
     e2.st=STATES[(STATES.indexOf(e2.st||'planned')+1)%STATES.length]; save(); renderOverview(); } popClose(); return; }
+  var rz=ev.target.closest('[data-res]');
+  if(rz){ var e3=findEv(rz.getAttribute('data-res')), r3=e3?resFor(CLIENT,e3):null;
+    if(e3&&r3)resPop(rz,CLIENT,e3,r3); ev.stopPropagation(); return; }
   var op=ev.target.closest('[data-open]');
   if(op){ ev.preventDefault(); CLIENT=op.getAttribute('data-open'); $('#brand').value=CLIENT; render();
     try{history.replaceState(null,'',location.pathname+'?client='+encodeURIComponent(CLIENT))}catch(err){} return; }
@@ -807,10 +930,7 @@ function renderClical(){
 }
 function briefLinkFor(brand,e){
   var v=volOf(brand,e)||{}, bmkt=evMkt(brand,e), ps=ptsOf(e,bmkt), idx=ptidxFor(brand,bmkt);
-  var d=new Date(e.date+'T12:00:00Z');
-  var mmyy=('0'+(d.getUTCMonth()+1)).slice(-2)+String(d.getUTCFullYear()).slice(2);
-  // the house task-name format — details live in the brief SCOPE, not the title
-  var task='Keywords Optimisation - '+e.name+' - Marketing Planner - '+mmyy+(bmkt!=='gb'?' - '+bmkt.toUpperCase():'');
+  var task=kwTask(brand,e);
   var lines=['Moment: '+e.name+' — lands '+dLbl(e)+' ('+bmkt.toUpperCase()+') · brief by '+schedDate(e).getUTCDate()+' '+MON[schedDate(e).getUTCMonth()],
     'Keyword themes: '+((e.terms||[]).join(', ')||'TBC')];
   var tx=txOf(e,bmkt);
@@ -832,7 +952,9 @@ function briefLinkFor(brand,e){
       else sl+=' — '+fmt(sm.unsat)+' in-scope SKUs still to keyword; landing this brief lifts the brand to ~'+(Math.round((sat.n+sm.unsat)/idx.__total*1000)/10)+'%'; }
     lines.push(sl);
   }
-  return '/workflow?brief='+b64url({client:brand,task:task,cat:'keyword',scope:lines.join('\n')});
+  // kw = the moment's id: the composer stamps it on the saved brief so this calendar tracks
+  // THAT ticket for life — the tie can't be broken by renaming the moment
+  return '/workflow?brief='+b64url({client:brand,task:task,cat:'keyword',scope:lines.join('\n'),kw:e.id});
 }
 /* ---------------- hours & resourcing (Ray, 10 Sep 2026) ----------------
  * Keyword-generation rule of thumb: 500→4h · 1500→6h · 4000→8h · 10000→10h.
@@ -895,6 +1017,7 @@ var MONF=['January','February','March','April','May','June','July','August','Sep
 var CST={planned:'Scheduled',intake:'Scheduled',briefed:'In progress',progress:'In progress',
   blocked:'In progress',live:'Live',analysis:'Live',done:'Complete',confirmed:'Complete'};
 var CSTC={Scheduled:'sched','In progress':'prog',Live:'live',Complete:'done'};
+var RSTC={positive:'done',negative:'neg',mixed:'prog',unknown:'sched'};
 function fullDate(d){ return d.getUTCDate()+' '+MON[d.getUTCMonth()]+' '+d.getUTCFullYear(); }
 function laneTxt(l){ l=String(l||'').toLowerCase(); // the board's emoji lane labels, in plain words
   if(l.indexOf('camp')>=0)return 'Campaign';
@@ -919,9 +1042,10 @@ function renderPdfDoc(){
   var mons=Object.keys(byMon).map(Number).sort(function(a,b){return a-b});
   function mLbl(k){ return MONF[k%12]+' '+Math.floor(k/12); }
   var period=mons.length?(mLbl(mons[0])+(mons.length>1?' – '+mLbl(mons[mons.length-1]):'')):'—';
-  var vol=0,scoped=0,liveDone=0;
+  var vol=0,scoped=0,liveDone=0,resIn=0;
   E.forEach(function(e){ var v=volOf(CLIENT,e); if(v&&!v.unset&&!v.wide){vol+=v.vol;scoped++}
-    var c=CST[stOf(wfFor(CLIENT,e),e)]; if(c==='Live'||c==='Complete')liveDone++; });
+    var c=CST[stOf(wfFor(CLIENT,e),e)]; if(c==='Live'||c==='Complete')liveDone++;
+    if(resFor(CLIENT,e))resIn++; });
   var idx=ptidxFor(CLIENT,MKT), sat=(idx&&idx.sat&&idx.__total)?Math.round(idx.sat.n/idx.__total*1000)/10:null;
   var today=new Date(), mk=MKT.toUpperCase();
 
@@ -935,7 +1059,8 @@ function renderPdfDoc(){
     +'<div class="pd-kpi"><div class="n">'+E.length+'</div><div class="l">Optimisations scheduled</div></div>'
     +'<div class="pd-kpi"><div class="n">'+(scoped?fmt(vol):'—')+'</div><div class="l">Products in scope</div></div>'
     +'<div class="pd-kpi"><div class="n">'+(sat!=null?sat+'%':'—')+'</div><div class="l">Keyword saturation · '+esc(mk)+'</div></div>'
-    +'<div class="pd-kpi"><div class="n">'+liveDone+'</div><div class="l">Live or complete</div></div></div>';
+    +'<div class="pd-kpi"><div class="n">'+liveDone+'</div><div class="l">Live or complete</div></div>'
+    +(resIn?'<div class="pd-kpi"><div class="n">'+resIn+'</div><div class="l">Results reported</div></div>':'')+'</div>';
 
   h+='<p class="pd-intro">Every moment on '+esc(CLIENT)+'’s marketing calendar schedules an AI keyword optimisation ahead of it, '
     +'so the product categories that moment drives are already optimised before the traffic arrives. The roadmap below is that schedule '
@@ -943,10 +1068,14 @@ function renderPdfDoc(){
 
   h+=mons.map(function(k){
     var ek=byMon[k];
+    var rounds=[], rseen={};
+    ek.forEach(function(e){ var r=resFor(CLIENT,e); if(!r)return;
+      if(!rseen[r.id]){ rseen[r.id]={r:r,names:[]}; rounds.push(rseen[r.id]); }
+      rseen[r.id].names.push(e.name); });
     return '<section class="pd-mo"><div class="pd-mo-h"><span class="pd-mo-nm">'+esc(mLbl(k))+'</span>'
       +'<span class="pd-mo-n">'+ek.length+' optimisation'+(ek.length===1?'':'s')+'</span></div>'
       +ek.map(function(e){
-        var st=CST[stOf(wfFor(CLIENT,e),e)]||'Scheduled', ln=laneTxt(e.lane);
+        var st=CST[stOf(wfFor(CLIENT,e),e)]||'Scheduled', ln=laneTxt(e.lane), rr=resFor(CLIENT,e);
         var md=new Date(e.date+'T12:00:00Z'), terms=(e.terms||[]);
         return '<div class="pd-card"><div class="pd-ct"><span class="pd-nm">'+esc(e.name)+'</span>'
           +(ln?'<span class="pd-lane">'+esc(ln)+'</span>':'')+'</div>'
@@ -956,7 +1085,16 @@ function renderPdfDoc(){
           +'<div class="pd-row"><b>Scope</b>'+esc(pdfScope(e))+'</div>'
           +(terms.length?'<div class="pd-row"><b>Keyword themes</b>'
             +terms.map(function(t){return '<span class="pd-term">'+esc(t)+'</span>'}).join('')+'</div>':'')
-          +'<div class="pd-row"><b>Status</b><span class="pd-st '+esc(CSTC[st]||'sched')+'">'+esc(st)+'</span></div></div>';
+          +'<div class="pd-row"><b>Status</b><span class="pd-st '+esc(CSTC[st]||'sched')+'">'+esc(st)+'</span></div>'
+          +(rr?'<div class="pd-row"><b>Result</b><span class="pd-st '+esc(RSTC[rr.verdict]||'sched')+'">'+esc(resLbl(rr))+'</span>'
+            +'<span class="pd-rmeta">reported in the '+esc(rr.__w?rr.__w.label:(rr.period||''))+' round, below</span></div>':'')+'</div>';
+      }).join('')
+      +rounds.map(function(g){ var r=g.r;
+        return '<div class="pd-round"><div class="pd-rh"><b>'+esc(r.__w?r.__w.label:(r.period||''))+' optimisation round</b>'
+          +'<span class="pd-st '+esc(RSTC[r.verdict]||'sched')+'">'+esc(resLbl(r))+'</span></div>'
+          +((r.metrics&&r.metrics.length)?'<div class="pd-rl">'+r.metrics.slice(0,6).map(function(l){return '<div>'+esc(l)+'</div>'}).join('')+'</div>'
+            :'<div class="pd-rmeta" style="margin:0">Reported in the scheduled performance update.</div>')
+          +'<div class="pd-rcov">Covers: '+esc(g.names.join(' · '))+'</div></div>';
       }).join('')+'</section>';
   }).join('');
 
@@ -966,7 +1104,10 @@ function renderPdfDoc(){
     +'<p><b>Product scope.</b> Every optimisation is sized against the live '+esc(mk)+' Google Shopping feed — the product types and search terms it '
     +'covers, counted as real products. Sale windows are brand-wide and cover the whole catalogue.</p>'
     +'<p><b>Keyword saturation.</b> Optimised keywords are written into the feed’s numbered product type fields. Saturation is the share of the '
-    +'catalogue already carrying them — every optimisation on this roadmap moves it closer to full coverage.</p></div>';
+    +'catalogue already carrying them — every optimisation on this roadmap moves it closer to full coverage.</p>'
+    +(resIn?'<p><b>Results.</b> Each optimisation round is measured and reported back to you in the scheduled performance update. The result shown '
+      +'against a moment is that round’s reported outcome — it covers every optimisation that went live in the same window, not the moment alone.</p>':'')
+    +'</div>';
 
   h+='<div class="pd-foot"><span>FeedSpark · Private &amp; Confidential</span>'
     +'<span>'+esc(CLIENT)+' · keyword optimisation roadmap</span></div>';
@@ -1014,14 +1155,15 @@ function render(){
       +'<span class="mn">'+(ek.length?ek.length+' opt'+(ek.length===1?'':'s'):'—')+'</span>'
       +(mh?'<span class="mo-hrs" title="keyword-generation hours scheduled this month">'+h1(mh)+'h</span>':'')+'</div>'
       +'<div class="mo-cards">'+(ek.length?ek.map(function(e){
-        var wf=wfFor(CLIENT,e), st=stOf(wf,e), ln=laneLbl(e.lane);
+        var wf=wfFor(CLIENT,e), st=stOf(wf,e), ln=laneLbl(e.lane), rr=resFor(CLIENT,e);
         return '<div class="rc" draggable="true" data-kw="'+esc(e.id)+'" data-lane="'+esc(e.lane||'')+'"><div class="rt"><span class="grip" title="Drag to reschedule to another month">⠿</span><span class="lens">✦</span>'+esc(e.name)
           +(ln?'<span class="lane">'+esc(ln)+'</span>':'')
           +(editMode?'<button class="del" style="position:static;opacity:1;margin-left:6px" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</div>'
           +'<div class="rd">lands '+dLbl(e)+((e.mkt&&e.mkt!=='gb')?' · '+e.mkt.toUpperCase():'')+'</div>'
           +'<div class="ra">'+scopeBtn(CLIENT,e)
           +'<span class="themes" data-terms="'+esc(e.id)+'" title="'+esc((e.terms||[]).join(', '))+'">✦ '+(e.terms||[]).length+' themes</span>'
-          +'<button type="button" class="stx '+esc(st)+'" data-st="'+esc(e.id)+'"'+(wf?' title="Live from the Workflow pipeline"':'')+'>'+(wf?'WF · ':'')+esc(st)+'</button>'
+          +stChip(CLIENT,e,wf,st)
+          +(rr?'<button type="button" class="rchip '+esc(rr.verdict||'unknown')+'" data-res="'+esc(e.id)+'" title="Result reported for the '+esc(rr.__w?rr.__w.label:(rr.period||''))+' batch — click for the metric lines">📈 '+esc(resLbl(rr))+'</button>':'')
           +'<a class="bgo" href="'+briefLink(e)+'" title="Auto-generated brief — moment, dates, scope PTs + SKUs, themes">→ Brief</a></div></div>';
       }).join(''):'<div class="mo-empty">drop a theme here</div>')+'</div></section>';
   }).join('');
@@ -1366,6 +1508,46 @@ function err(m){ $('#kw-error-msg').textContent=m; $('#kw-error').classList.add(
 function hideErr(){ $('#kw-error').classList.remove('on'); }
 $('#measure').addEventListener('click',function(){ if(CLIENT==='*'){err('Pick a brand to sync its live feed — the overview reads every brand\u2019s stored scopes.');return;} syncPT(); });
 
+/* ---------------- live refresh: stages and results move without this page (Ray, 11 Sep 2026) ----
+ * "all updates and statuses should be refreshed throughout the weeks and the month" — the brief
+ * pipeline and the result archive both change in other systems, so the board polls them instead
+ * of showing whatever was true at page load. Cheap: two GETs, and it only re-renders when the
+ * signature actually moved (and never while a scope picker or popover is open). */
+function liveSig(){
+  var s=[]; Object.keys(BRIEFS||{}).sort().forEach(function(k){ var b=BRIEFS[k];
+    if(b)s.push(k+':'+(b.status||b.st||'')+':'+(b.kw||'')+':'+(b.task||'')); });
+  Object.keys(KWRES).sort().forEach(function(c){ s.push(c+'#'+(KWRES[c]||[]).length); });
+  return s.join('|');
+}
+function loadLive(){
+  var who=CLIENT;
+  return Promise.all([
+    fetch('/api/briefs').then(function(r){return r.json()}).catch(function(){return null}),
+    fetch('/api/kwresults'+(who&&who!=='*'?'?client='+encodeURIComponent(who):'')).then(function(r){return r.json()}).catch(function(){return null})
+  ]).then(function(res){
+    if(res[0]&&typeof res[0]==='object'&&!res[0].error)BRIEFS=res[0];
+    var d=res[1];
+    if(d&&d.results){ var by={};
+      d.results.forEach(function(r){ var c=r&&r.client; if(!c)return; r.__w=periodWin(r); (by[c]=by[c]||[]).push(r); });
+      // the ?client= filter is deliberately loose server-side, so group by the record's OWN brand
+      if(who&&who!=='*'){ KWRES[who]=by[who]||[];   // no results = an empty list, never a stale one
+        Object.keys(by).forEach(function(c){ KWRES[c]=by[c]; }); }
+      else KWRES=by; }
+  });
+}
+function liveTick(){
+  if(document.hidden)return Promise.resolve();
+  return loadLive().then(function(){
+    var s=liveSig(); if(s===LIVESIG)return; LIVESIG=s;
+    if(document.querySelector('.ptp')||document.querySelector('#kw-pop'))return;  // mid-interaction — the next tick repaints
+    render();
+  }).catch(function(){});
+}
+function startLive(){
+  if(LIVET)clearInterval(LIVET);
+  LIVET=setInterval(liveTick,90000);   // stages move over weeks, not seconds — 90s is plenty
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden)liveTick(); });
+}
 /* ---------------- boot ---------------- */
 function boot(){
   var q=/[?&]client=([^&]+)/.exec(location.search),pre=q?decodeURIComponent(q[1].replace(/\+/g,' ')):'';
@@ -1385,9 +1567,10 @@ function boot(){
     $('#brand').value=CLIENT;
     var qm=/[?&]market=([^&]+)/.exec(location.search); if(qm)MKT=decodeURIComponent(qm[1]).toLowerCase();
     syncNote(); if(CLIENT!=='*')loadMkts(); render();
+    liveTick(); startLive();   // results + any stage that moved since the boot fetch, then every 90s
   });
 }
-$('#brand').addEventListener('change',function(){ CLIENT=this.value; hideErr(); $('#mstate').textContent=''; if(CLIENT!=='*')loadMkts(); render();
+$('#brand').addEventListener('change',function(){ CLIENT=this.value; hideErr(); $('#mstate').textContent=''; if(CLIENT!=='*')loadMkts(); render(); liveTick();
   try{history.replaceState(null,'',location.pathname+'?client='+encodeURIComponent(CLIENT))}catch(e){} });
 boot();
 })();

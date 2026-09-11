@@ -3566,6 +3566,104 @@
    "min": 1
   },
   {
+   "name": "playbook: AM meeting-copilot crawl endpoint (Ray, 11 Sep 2026)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "path === '/api/playbook'",
+   "min": 1,
+   "pr": 342
+  },
+  {
+   "name": "playbook: page route wired into PAGES",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "'/playbook':",
+   "min": 1,
+   "pr": 342
+  },
+  {
+   "name": "playbook: retrospective — completed-task checklist by category + time window",
+   "file": "docs/FeedSpark_Playbook.html",
+   "pattern": "function renderRetro(",
+   "min": 1,
+   "pr": 342
+  },
+  {
+   "name": "playbook: prospective — cross-brand play suggestions (overlay on Accessorize → Hobbycraft)",
+   "file": "docs/FeedSpark_Playbook.html",
+   "pattern": "function renderProsp(",
+   "min": 1,
+   "pr": 342
+  },
+  {
+   "name": "playbook: nav link present on the canonical page (parity propagates it to every page)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "href=\"/playbook\"",
+   "min": 1,
+   "pr": 342
+  },
+  {
+   "name": "kwcal: moment⇄ticket tie stamped at brief time (b.kw) — survives a rename (Ray, 11 Sep 2026)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "b.kw&&String(b.kw)===String(e.id)",
+   "min": 1,
+   "pr": 343
+  },
+  {
+   "name": "kwcal: the → Brief deep-link carries the moment id",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "kw:e.id",
+   "min": 1,
+   "pr": 343
+  },
+  {
+   "name": "workflow: the composer stamps the KWCal moment id onto the saved brief",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "window.__kwId",
+   "min": 3,
+   "pr": 343
+  },
+  {
+   "name": "kwcal: live refresh of pipeline stages + results (90s poll + visibility)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function liveTick(",
+   "min": 1,
+   "pr": 343
+  },
+  {
+   "name": "kwcal: result archive joined onto moments by half-month round window",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function periodWin(",
+   "min": 1,
+   "pr": 343
+  },
+  {
+   "name": "kwcal: results surfaced per moment (chip + metric popover)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function resFor(",
+   "min": 1,
+   "pr": 343
+  },
+  {
+   "name": "kwcal: whose court a briefed moment sits in (Workflow's own stage→team map)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "var COURTM=",
+   "min": 1,
+   "pr": 343
+  },
+  {
+   "name": "kwcal: a briefed moment's chip is a LINK to Workflow, never a phantom manual control",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "a.stx.wfl",
+   "min": 1,
+   "pr": 343
+  },
+  {
+   "name": "kwcal: tie + result-window harness wired into the unattended gate",
+   "file": "tools/qa_gate.sh",
+   "pattern": "test_kwcal_tie.mjs",
+   "min": 1,
+   "pr": 343
+  },
+  {
    "name": "Workflow: Chase ASPL replies inside the brief's original Gmail thread",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "openChaseAspl",

@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
+<meta charset="utf-8">
 <script>/* FCC-THEME */(function(){var d=document.documentElement;
 try{var t=localStorage.getItem('fcc-theme');if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light';}d.setAttribute('data-theme',t);}catch(e){d.setAttribute('data-theme','light');}
 try{if(localStorage.getItem('fcc-nav-collapsed')==='1')d.classList.add('nav-collapsed');}catch(e){}
@@ -20,72 +19,117 @@ function mk(){
 var _st;window.addEventListener('scroll',function(){if(_st)cancelAnimationFrame(_st);_st=requestAnimationFrame(function(){try{sessionStorage.setItem(SK,window.scrollY);}catch(e){}});},{passive:true});
 if(document.readyState!=='loading')mk();else document.addEventListener('DOMContentLoaded',mk);
 window.addEventListener('load',restore);
-})();</script><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FeedSpark · Task Library</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FeedSpark · Playbook</title>
 <style>
-  :root{--orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;--ink:#333;--ink-2:#5b6470;--muted:#8a94a0;
-    --line:#E6E6E6;--paper:#fff;--wash:#F7F7F5;--wash-2:#F1F1EE;--navy:#1A365D;--good:#15803D;
-    --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);--radius:14px;}
-  *{box-sizing:border-box} html{scroll-behavior:smooth}
-  body{margin:0;font-family:Lato,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--paper);line-height:1.5}
-  a{color:var(--orange-ink);text-decoration:none} a:hover{text-decoration:underline}
-  .wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+  @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
+  :root{--orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;--ink:#333;--ink-2:#4a4a4a;
+    --muted:#8a94a0;--line:#E6E6E6;--paper:#fff;--wash:#F7F7F5;--navy:#1A365D;--good:#15803D;--risk:#C0392B;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);--radius:14px;
+    --done:#2563EB;--gap:#ED6F0B}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Lato,system-ui,sans-serif;color:var(--ink);background:var(--wash);line-height:1.5}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 22px}
   .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-  .topbar-in{max-width:1120px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-  .brand{font-weight:900;font-size:19px} .brand span{color:var(--orange-deep)}
-  .tb-tag{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border-left:1px solid var(--line);padding-left:14px}
-  .tb-nav{margin-left:auto;display:flex;gap:18px;flex-wrap:wrap} .tb-nav a{font-size:13px;font-weight:700;color:var(--ink-2)}
-  .tb-back{font-size:13px;font-weight:700;color:var(--ink-2);border-left:1px solid var(--line);padding-left:16px}
-  .hero{padding:46px 0 30px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,var(--wash))}
-  .eyebrow{font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:var(--orange-deep)}
-  .hero h1{font-size:36px;line-height:1.1;margin:12px 0 0;font-weight:900;letter-spacing:-.02em}
-  .hero p{font-size:16px;color:var(--ink-2);max-width:70ch;margin:14px 0 0}
-  .stat3{display:flex;gap:34px;margin-top:26px} .stat3 .n{font-size:28px;font-weight:900} .stat3 .l{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.02em}
-  .cat{padding:44px 0;border-top:1px solid var(--line)}
-  .cat-h{display:flex;align-items:baseline;gap:14px;margin-bottom:22px}
-  .cat-h .k{font-size:12px;font-weight:900;color:var(--orange);letter-spacing:.12em}
-  .cat-h h2{font-size:22px;font-weight:900;margin:0;letter-spacing:-.01em}
-  .cat-h .cat-n{font-size:12.5px;color:var(--muted);font-weight:700;margin-left:auto}
-  .tt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
-  .tt{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px}
-  .tt-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .tt-h h4{margin:0;font-size:16px;font-weight:900}
-  .tt-n{font-size:15px;font-weight:900;color:var(--orange-deep);background:#FCF1E3;border:1px solid #F3D9B8;border-radius:100px;padding:3px 11px;white-space:nowrap}
-  .tt-n small{font-size:11px;color:var(--muted);font-weight:700}
-  .tt-d{font-size:13.5px;color:var(--ink-2);margin:10px 0 12px;line-height:1.5}
-  .tt-lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:900;margin-bottom:4px}
-  .tt-ex ul{margin:0;padding-left:16px} .tt-ex li{font-size:12.5px;color:var(--ink-2);margin-bottom:3px}
-  .tt-ex li.muted{color:var(--muted);font-style:italic;list-style:none;margin-left:-16px}
-  .tt-cl{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px;border-top:1px solid var(--line);padding-top:11px}
-  .mini{font-size:11px;font-weight:800;color:var(--ink-2);background:var(--wash);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
-  .footmark{border-top:1px solid var(--line);color:var(--muted);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:20px 0}
-  @media(max-width:560px){.hero h1{font-size:27px}.stat3{gap:22px}}
-.live-sub{color:var(--muted);font-size:14px;max-width:820px;margin:0 0 18px}
-#live .cat-h .k{color:var(--orange-deep)}
-.lc-wrap{overflow-x:auto;margin-top:4px}
-.lc{border-collapse:separate;border-spacing:5px;width:100%;min-width:720px}
-.lc th{font-size:11px;font-weight:800;color:var(--ink-2);text-align:center;padding:6px 6px;letter-spacing:.02em}
-.lc thead th{cursor:pointer;user-select:none;border-radius:8px}
-.lc thead th:hover{background:var(--wash)}
-.lc th.lc-b{text-align:left}
-.lc-b{font-size:12.5px;font-weight:800;color:var(--ink);white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis}
-.lc-cell,.lc-tot{text-align:center;border-radius:9px;padding:10px 6px;font-size:14px;font-weight:800;min-width:58px;transition:transform .1s}
-.lc-cell:hover{transform:scale(1.06)}
-.lc-cell span,.lc-tot span{color:inherit;opacity:.6;font-size:11px;font-weight:700}
-.lc-0{background:var(--wash)}
-.lc-1{background:#FDEFD9;color:var(--orange-ink)}
-.lc-2{background:#F8CE87;color:#8a4d05}
-.lc-3{background:#F5A623;color:#3a2600}
-.lc-tot{background:#EEF2F7;color:var(--navy)}
-.lc-foot td,.lc-foot th{border-top:2px solid var(--line)}
-.lc-foot .lc-b{color:var(--orange-deep)}
-.lc col.on{background:rgba(245,166,35,.10)}
-.lc-dim{color:var(--muted);font-weight:700}
-.lc-leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:11.5px;color:var(--muted);font-weight:700;align-items:center}
-.lc-leg i{display:inline-block;width:13px;height:13px;border-radius:4px;margin-right:5px;vertical-align:-2px}
-  /* rocket logo + module nav (shared) */
+  .topbar-in{max-width:1240px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px}
+  .brand{font-weight:900;font-size:18px}.brand span{color:var(--orange-deep)}
+  .tb-tag{font-size:12px;font-weight:800;color:var(--muted);border-left:1px solid var(--line);padding-left:14px}
+  .hero{padding:30px 0 8px}
+  .eyebrow{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--orange-deep)}
+  h1{font-size:30px;font-weight:900;margin:8px 0 6px;letter-spacing:-.01em}
+  .hero p.sub{color:var(--ink-2);font-size:14.5px;max-width:900px;margin:0 0 6px}
+  /* search canvas */
+  .search{margin:18px 0 6px;position:relative}
+  .search .field{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--line);border-radius:16px;padding:14px 18px;box-shadow:var(--shadow);transition:border-color .15s}
+  .search .field:focus-within{border-color:var(--orange)}
+  .search svg.mag{flex:none;color:var(--muted)}
+  .search input{flex:1;border:none;outline:none;font:inherit;font-size:19px;font-weight:800;background:transparent;color:var(--ink)}
+  .search input::placeholder{color:var(--muted);font-weight:700}
+  .search .clr{border:none;background:none;color:var(--muted);cursor:pointer;font-size:20px;font-weight:900;padding:0 4px;display:none}
+  .search .clr.on{display:block}
+  .sugg{position:absolute;left:0;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 34px rgba(16,24,40,.16);z-index:30;overflow:hidden;display:none}
+  .sugg.on{display:block}
+  .sugg button{display:flex;width:100%;align-items:center;gap:10px;padding:11px 16px;border:none;background:none;font:inherit;font-size:15px;font-weight:800;color:var(--ink);cursor:pointer;text-align:left;border-bottom:1px solid var(--line)}
+  .sugg button:last-child{border-bottom:none}
+  .sugg button:hover,.sugg button.hi{background:var(--wash);color:var(--orange-deep)}
+  .sugg .ind{font-size:11.5px;font-weight:800;color:var(--muted);margin-left:auto}
+  .hint{font-size:12.5px;color:var(--muted);font-weight:700;margin:9px 2px 0}
+  .hint b{color:var(--ink-2)}
+  /* book overview */
+  .book{display:grid;grid-template-columns:repeat(auto-fill,minmax(184px,1fr));gap:12px;margin:18px 0 10px}
+  .bk{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 15px;cursor:pointer;text-align:left;font:inherit;transition:border-color .15s,transform .12s}
+  .bk:hover{border-color:var(--orange);transform:translateY(-2px)}
+  .bk .bn{font-size:15px;font-weight:900;color:var(--ink)}
+  .bk .bi{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:3px 0 9px}
+  .bk .bstat{display:flex;gap:12px;font-size:12px;font-weight:800;color:var(--ink-2)}
+  .bk .bstat b{font-size:16px;font-weight:900}
+  .bk .bstat .d{color:var(--done)}
+  .sec-lbl{font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:20px 2px 2px}
+  /* result panel */
+  #panel{margin:16px 0 8px;display:none}
+  #panel.on{display:block}
+  .pnl-head{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px}
+  .pnl-head .ttl{font-size:23px;font-weight:900;letter-spacing:-.01em}
+  .pnl-head .chip{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--orange-ink);background:rgba(245,166,35,.14);padding:3px 9px;border-radius:100px;margin-left:8px;vertical-align:3px}
+  .pnl-head .sum{font-size:13px;color:var(--ink-2);font-weight:700;margin-top:4px}
+  .pnl-head .x{margin-left:auto;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:10px;cursor:pointer;font-size:18px;font-weight:900;width:34px;height:34px;flex:none}
+  .pnl-head .x:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .win{display:flex;gap:6px;align-items:center;margin:14px 0 4px;flex-wrap:wrap}
+  .win label{font-size:12px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-right:4px}
+  .wb{font:inherit;font-size:12.5px;font-weight:800;padding:7px 13px;border-radius:100px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer}
+  .wb.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:12px}
+  @media(max-width:920px){.cols{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px}
+  .card>h3{margin:0 0 2px;font-size:16px;font-weight:900;display:flex;align-items:center;gap:8px}
+  .card .ch{font-size:12.5px;color:var(--muted);font-weight:700;margin-bottom:12px}
+  .catrow{border:1px solid var(--line);border-radius:11px;margin:8px 0;overflow:hidden}
+  .catrow>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:11px 13px;font-weight:800;font-size:14px}
+  .catrow>summary::-webkit-details-marker{display:none}
+  .catrow>summary .em{font-size:16px;flex:none}
+  .catrow>summary .cn{flex:1;min-width:0}
+  .catrow>summary .ct{font-size:12px;font-weight:900;color:#fff;background:var(--done);border-radius:100px;padding:2px 9px;flex:none}
+  .catrow[data-k].gap>summary .ct{background:var(--gap)}
+  .catrow>summary .cv{color:var(--muted);font-size:11px;font-weight:800;transition:transform .15s}
+  .catrow[open]>summary .cv{transform:rotate(90deg)}
+  .tlist{padding:2px 13px 12px;border-top:1px solid var(--line)}
+  .ti{display:flex;gap:9px;align-items:baseline;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .ti:last-child{border-bottom:none}
+  .ti .ck{color:var(--done);flex:none;font-weight:900}
+  .ti .tt{flex:1;min-width:0;font-weight:700;color:var(--ink-2)}
+  .ti .to{font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap}
+  .ti .tm{font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap}
+  .empty{padding:20px 8px;text-align:center;color:var(--muted);font-size:13px;font-weight:700}
+  .sug{border:1px solid var(--line);border-left:3px solid var(--gap);border-radius:11px;padding:12px 14px;margin:9px 0;background:linear-gradient(90deg,rgba(245,166,35,.05),transparent 60%)}
+  .sug .sh{display:flex;align-items:center;gap:8px;font-weight:900;font-size:14px}
+  .sug .sh .em{font-size:16px}
+  .sug .sh .why{margin-left:auto;font-size:11px;font-weight:800;color:var(--gap);white-space:nowrap}
+  .sug .peers{font-size:12px;font-weight:700;color:var(--ink-2);margin:6px 0 2px}
+  .sug .peers b{color:var(--ink)}
+  .sug .egs{font-size:12px;color:var(--muted);font-weight:700;margin:4px 0 8px;padding-left:2px}
+  .sug .egs div{padding:2px 0}
+  .sug .act{display:flex;gap:8px;flex-wrap:wrap}
+  .sug a.brief,.sug button.brief{font:inherit;font-size:12px;font-weight:800;text-decoration:none;padding:7px 12px;border-radius:9px;border:1px solid var(--orange);background:var(--orange);color:#14161C;cursor:pointer}
+  .sug a.brief:hover{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
+  .note{font-size:12px;color:var(--muted);font-weight:700;margin-top:12px}
+  .note code{background:var(--wash);padding:1px 5px;border-radius:5px;font-size:11px}
+  .miniflight{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:12px;font-weight:800;color:var(--ink-2)}
+  .miniflight .fp{background:var(--wash);border:1px solid var(--line);border-radius:100px;padding:4px 11px}
+  .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 2px 0}
+  .btn{font:inherit;font-size:12.5px;font-weight:800;padding:8px 13px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer}
+  .btn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  /* taxonomy tuner */
+  #tuner{display:none;margin:12px 0}
+  #tuner.on{display:block}
+  .txrow{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .txrow .txn{font-weight:900;font-size:13.5px;min-width:190px;display:flex;align-items:center;gap:7px}
+  .txrow input.kw{flex:1;min-width:200px;font:inherit;font-size:12.5px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+  .txrow label.hd{font-size:12px;font-weight:800;color:var(--muted);display:flex;gap:5px;align-items:center;white-space:nowrap}
+  .footmark{padding:34px 0;color:var(--muted);font-size:12px;font-weight:700;border-top:1px solid var(--line);margin-top:30px}
+  .footmark .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  @media(max-width:820px){.tb-tag{display:none}h1{font-size:24px}.search input{font-size:16px}}
+  /* rocket + icon nav (shared) */
   .nav-toggle{border:none;background:none;cursor:pointer;padding:1px;border-radius:10px;flex:none;transition:transform .22s ease;display:inline-flex;text-decoration:none}
   .nav-toggle svg{width:26px;height:26px;display:block;overflow:visible}
   .rk-lift{animation:rkbob 2.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
@@ -95,13 +139,11 @@ window.addEventListener('load',restore);
   @keyframes rkbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}
   @keyframes rkflame{from{transform:scaleY(.6) scaleX(.82);opacity:.7}to{transform:scaleY(1.15) scaleX(1);opacity:1}}
   .spk-flame{width:11px;height:15px;margin-left:2px;fill:var(--orange);transform-box:fill-box;transform-origin:center bottom;animation:rkflame .55s ease-in-out infinite alternate}
-  .tb-modules a.on{color:var(--orange-deep)}
   @media(prefers-reduced-motion:reduce){.rk-lift,.rk-flame,.spk-flame{animation:none}}
 </style>
 <style>/* FCC-THEME */
 #theme-tgl{margin-left:10px;flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line,#E6E6E6);background:transparent;color:var(--ink-2,#4a4a4a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s}
 #theme-tgl:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
-/* icon module nav + collapse */
 .nav-collapse{border:none;background:none;cursor:pointer;color:var(--muted,#8a94a0);padding:5px;border-radius:8px;display:inline-flex;align-items:center;flex:none;margin-left:auto}
 .nav-collapse:hover{color:var(--orange-deep,#ED6F0B)}
 .tb-modules{margin-left:8px!important;display:flex;gap:3px;align-items:center;flex-wrap:wrap}
@@ -119,197 +161,402 @@ window.addEventListener('load',restore);
 :root[data-theme=dark]{color-scheme:dark;
   --ink:#E7E9ED;--ink-2:#B9BEC7;--muted:#828D9C;--line:#2C3039;--paper:#1C1F27;--wash:#101218;
   --navy:#5B82BE;--orange-ink:#F0A44E;--good:#48D07E;--risk:#F1707A;
-  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.42)}
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.42);
+  --done:#4C82E0;--gap:#E1893B}
 [data-theme=dark] body{background:var(--wash);color:var(--ink)}
 [data-theme=dark] .topbar{background:rgba(18,20,26,.9)}
 [data-theme=dark] a{color:var(--orange-ink)}
-/* card surfaces */
-[data-theme=dark] .kpi,[data-theme=dark] .panel,[data-theme=dark] .card,[data-theme=dark] .modal,[data-theme=dark] .modal-card,[data-theme=dark] .modal-content,[data-theme=dark] .tik,[data-theme=dark] .itk,[data-theme=dark] .cm-card,[data-theme=dark] .rd-card,[data-theme=dark] .pm-card,[data-theme=dark] .ai-card,[data-theme=dark] .ev,[data-theme=dark] .tab,[data-theme=dark] .mc-panel,[data-theme=dark] .dz-item,[data-theme=dark] .dz-detail,[data-theme=dark] .dz-list,[data-theme=dark] .dz-logo,[data-theme=dark] .row,[data-theme=dark] .tt,[data-theme=dark] .en-card,[data-theme=dark] .tier,[data-theme=dark] .callout,[data-theme=dark] .note,[data-theme=dark] .stat,[data-theme=dark] .statstrip,[data-theme=dark] .planrow,[data-theme=dark] .col,[data-theme=dark] .before,[data-theme=dark] .after,[data-theme=dark] .sc-cell,[data-theme=dark] .mo,[data-theme=dark] .pipe-card,[data-theme=dark] .proto,[data-theme=dark] .flow-step,[data-theme=dark] .ask,[data-theme=dark] .pm-card,[data-theme=dark] .brand-logo,[data-theme=dark] .dg-bar,[data-theme=dark] .ct,[data-theme=dark] .chip{background:var(--paper);border-color:var(--line)}
-/* washes / tracks / insets */
-[data-theme=dark] .lane,[data-theme=dark] .prev-subj,[data-theme=dark] .rd-play,[data-theme=dark] .rd-dv,[data-theme=dark] .m-pill,[data-theme=dark] .m-sec,[data-theme=dark] .ptrack,[data-theme=dark] .cm-bar,[data-theme=dark] .addc select,[data-theme=dark] .lc-cell.lc-0,[data-theme=dark] .de-pop,[data-theme=dark] .lc-ctl select,[data-theme=dark] .live-sub{background:#181B22;border-color:var(--line)}
-[data-theme=dark] pre.brief{background:#0E1016;border-color:var(--line);color:var(--ink-2)}
-[data-theme=dark] pre.brief .tok{background:rgba(245,166,35,.16)}
-/* inputs & neutral controls */
-[data-theme=dark] input,[data-theme=dark] select,[data-theme=dark] textarea{background:#161922;color:var(--ink);border-color:var(--line)}
-[data-theme=dark] .fchip,[data-theme=dark] .fsel,[data-theme=dark] .btn,[data-theme=dark] .ghost,[data-theme=dark] .btn-ghost,[data-theme=dark] .cm-rep,[data-theme=dark] .sent-seg,[data-theme=dark] .stat-seg button,[data-theme=dark] .itk-more,[data-theme=dark] .lc-star{background:#20242E;color:var(--ink-2);border-color:var(--line)}
-[data-theme=dark] .btn.pri,[data-theme=dark] .btn.navy,[data-theme=dark] .btn-primary,[data-theme=dark] .fchip.on,[data-theme=dark] .stat-seg button.on{color:#fff}
-/* gradients / hero washes back to flat dark */
-[data-theme=dark] .hero,[data-theme=dark] .glive,[data-theme=dark] .wf-cta,[data-theme=dark] .toolbar{background:transparent}
-[data-theme=dark] .glive,[data-theme=dark] .wf-cta{background:rgba(245,166,35,.09);border-color:rgba(245,166,35,.28)}
-/* semantic tint pills — green */
-[data-theme=dark] .built,[data-theme=dark] .atrt-badge,[data-theme=dark] .cm-pill.ok,[data-theme=dark] .rd-band.b0,[data-theme=dark] .scan-hit,[data-theme=dark] .tag-open,[data-theme=dark] .card.on,[data-theme=dark] .card.shipped,[data-theme=dark] .wl-test{background:rgba(72,208,126,.14)!important;border-color:rgba(72,208,126,.3)!important;color:#6FE0A0!important}
-/* orange */
-[data-theme=dark] .mchip.imp-med,[data-theme=dark] .cm-pill.warn,[data-theme=dark] .rd-band.b2,[data-theme=dark] .due.soon,[data-theme=dark] .tag-hold,[data-theme=dark] .top10,[data-theme=dark] .top,[data-theme=dark] .rd-band.b1{background:rgba(245,166,35,.15)!important;border-color:rgba(245,166,35,.32)!important;color:#F0A44E!important}
-/* red */
-[data-theme=dark] .mchip.imp-high,[data-theme=dark] .cm-pill.risk,[data-theme=dark] .rd-band.b3,[data-theme=dark] .due.over,[data-theme=dark] .atrt-badge.danger,[data-theme=dark] .tag-risk,[data-theme=dark] .row.attn,[data-theme=dark] .rd-card.crit{background:rgba(241,112,122,.13)!important;border-color:rgba(241,112,122,.3)!important;color:#F3868F!important}
-/* navy/blue */
-[data-theme=dark] .mchip.eff,[data-theme=dark] .who-chip,[data-theme=dark] .tag-progress,[data-theme=dark] .tag-client{background:rgba(91,130,190,.18)!important;border-color:rgba(91,130,190,.36)!important;color:#93B4E0!important}
-/* neutral chips */
-[data-theme=dark] .mchip,[data-theme=dark] .mini,[data-theme=dark] .mchip.ch,[data-theme=dark] .tag,[data-theme=dark] .pill,[data-theme=dark] .cm-pill.na,[data-theme=dark] .m-pill{background:#20242E;border-color:var(--line);color:var(--ink-2)}
-[data-theme=dark] .lc-cell.lc-0 .lc-dim{color:var(--muted)}
-/* meter tracks + score-ring insets */
-[data-theme=dark] .vbar-track,[data-theme=dark] .tbar-track,[data-theme=dark] .ptrack,[data-theme=dark] .bar,[data-theme=dark] .dg-track,[data-theme=dark] .track,[data-theme=dark] .cm-bar{background:#191C24;border-color:var(--line)}
-[data-theme=dark] .score-ring::before,[data-theme=dark] .dg-ring::before,[data-theme=dark] .s-ring::before,[data-theme=dark] .sc::before,[data-theme=dark] .rd-ring::before,[data-theme=dark] .ring::before{background:var(--paper)}
-[data-theme=dark] ::-webkit-scrollbar-thumb{background:#2C3039}
-</style></head><body>
+[data-theme=dark] .card,[data-theme=dark] .pnl-head,[data-theme=dark] .bk,[data-theme=dark] .search .field,[data-theme=dark] .sugg{background:var(--paper);border-color:var(--line)}
+[data-theme=dark] .search input{color:var(--ink)}
+[data-theme=dark] .sugg button{color:var(--ink)}
+[data-theme=dark] .sugg button:hover,[data-theme=dark] .sugg button.hi{background:#20242E}
+[data-theme=dark] .btn,[data-theme=dark] .wb,[data-theme=dark] .pnl-head .x,[data-theme=dark] .txrow input.kw{background:#20242E;color:var(--ink-2);border-color:var(--line)}
+[data-theme=dark] .wb.on{background:var(--navy);border-color:var(--navy);color:#0B0D12}
+[data-theme=dark] .miniflight .fp{background:#20242E}
+[data-theme=dark] .sug a.brief{color:#14161C}
+</style>
+
 <div class="topbar"><div class="topbar-in">
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
   <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
-  <div class="tb-tag">Leadership · Task Library</div>
-  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/playbook" class="tbm" data-lbl="Playbook" title="Playbook — meeting copilot" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a><a href="/leadership" class="tbm on" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a></nav>
+  <div class="tb-tag">Playbook</div>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/playbook" class="tbm on" data-lbl="Playbook" title="Playbook — meeting copilot" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a></nav>
 </div></div>
-<header class="hero"><div class="wrap"><div class="eyebrow">Private &amp; Confidential · categorised from the ATRT Tracker</div>
-<h1>Task library</h1>
-<p>Every type of work FeedSpark handles, grouped and defined — from technical (scraping, CSS, migrations) to
-optimisation (titles, keywords, AI, visual enrichment, overlays, AOT). Counts are drawn from the ATRT Tracker.
-This is the base taxonomy: incoming tasks map to a type here, so briefs, hours and reporting stay consistent. Editable in place (⌘/Ctrl+Shift+E).</p>
-<div class="stat3"><div><div class="n">27</div><div class="l">Task types</div></div>
-<div><div class="n">5</div><div class="l">Categories</div></div>
-<div><div class="n">161</div><div class="l">Tasks classified</div></div></div></div></header>
-<section id="live" class="cat"><div class="wrap">
-<div class="cat-h"><span class="k">◆</span><h2>Live coverage — from the project plans</h2><span class="cat-n" id="live-n"></span></div>
-<p class="live-sub">Every task imported live from the client project plans, tagged into the six feeds. Each cell is tasks <b>done / total</b> — lit where a brand has delivered work in that feed, brighter as completion rises. Click a feed to highlight it; hover a cell for the exact split. This updates automatically whenever the plans are re-synced.</p>
-<style>
-#live .lc-ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 16px}
-#live .lc-ctl label{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#8a8a8a}
-#live .lc-ctl select{font:inherit;font-size:14px;font-weight:600;color:#333;background:#fff;border:1px solid #E6E6E6;border-radius:8px;padding:7px 30px 7px 12px;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23F5A623' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:12px}
-#live .lc-ctl select:focus{outline:none;border-color:#F5A623;box-shadow:0 0 0 3px rgba(245,166,35,.15)}
-#live .lc-hint{font-size:12px;color:#a08a5c;font-style:italic}
-#live .lc-star{color:#C9A24B;font-weight:700;cursor:help}
-#live tr.lc-allwin th.lc-b{color:#8a7a52}
-</style>
-<div class="lc-ctl"><label for="lc-win">Look-back</label>
-<select id="lc-win">
-<option value="all">All time</option>
-<option value="12">Last 12 months</option>
-<option value="6">Last 6 months</option>
-<option value="3">Last 3 months</option>
-<option value="1">Last month</option>
-</select><span class="lc-hint" id="lc-hint"></span></div>
-<div id="live-cov"></div>
-<div class="lc-leg"><span><i style="background:var(--wash)"></i>none</span><span><i style="background:#FDEFD9"></i>started</span><span><i style="background:#F8CE87"></i>progressing</span><span><i style="background:#F5A623"></i>mostly done</span></div>
-</div></section>
-<style>
-#tl-bar{margin:26px auto 4px}
-.tl-ctl{display:flex;gap:9px;align-items:center;flex-wrap:wrap;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px 13px;box-shadow:var(--shadow)}
-.tl-ctl input[type=search]{flex:1;min-width:180px;font:inherit;font-size:13.5px;padding:8px 11px;border:1px solid var(--line);border-radius:9px;color:var(--ink);background:var(--paper)}
-.tl-ctl select{font:inherit;font-size:13px;font-weight:700;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink-2);cursor:pointer}
-.tl-ctl input:focus,.tl-ctl select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
-.tl-cats{display:flex;gap:5px;flex-wrap:wrap}
-.tl-chip{font:inherit;font-size:12px;font-weight:800;padding:6px 11px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
-.tl-chip:hover{border-color:var(--orange);color:var(--orange-deep)}
-.tl-chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
-.tl-n{font-size:12px;font-weight:800;color:var(--muted);margin-left:auto;white-space:nowrap}
-.tl-empty{color:var(--muted);font-size:14px;text-align:center;padding:26px;display:none}
-</style>
-<div class="wrap" id="tl-bar"><div class="tl-ctl">
-  <input id="tl-search" type="search" placeholder="Search task types, examples, clients…" aria-label="Search task types">
-  <select id="tl-client" aria-label="Filter by client"><option value="">All clients</option></select>
-  <select id="tl-sort" aria-label="Sort task types"><option value="def">Catalogue order</option><option value="count">Most used</option><option value="az">A–Z</option></select>
-  <div class="tl-cats" id="tl-cats"></div>
-  <span class="tl-n" id="tl-n"></span>
-</div></div>
-<p class="tl-empty" id="tl-empty">No task types match — <button class="linkish" id="tl-clear" style="background:none;border:0;color:var(--orange-ink);font:inherit;font-weight:800;cursor:pointer;text-decoration:underline;padding:0">clear filters</button>.</p>
-<section id="c0" class="cat"><div class="wrap"><div class="cat-h"><span class="k">01</span><h2>Feed &amp; technical</h2><span class="cat-n">8 types</span></div><div class="tt-grid"><div class="tt"><div class="tt-h"><h4>Scraping</h4><span class="tt-n">15<small>×</small></span></div><p class="tt-d">Harvest data from client sites — nodes, categories, promo roundels, new hobby/product URLs — to build or enrich the feed.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>FS to update all current scrape nodes</li><li>Scrape promo roundels on website - overlays for PPC</li><li>SA/CA-FR * new market local language scrape</li></ul></div><div class="tt-cl"><span class="mini">Accessorize</span><span class="mini">AllSaints</span><span class="mini">Estee Lauder</span><span class="mini">Hobbycraft</span><span class="mini">Monsoon</span><span class="mini">Reiss</span></div></div><div class="tt"><div class="tt-h"><h4>Feed migration</h4><span class="tt-n">5<small>×</small></span></div><p class="tt-d">Move a feed between platforms or markets (e.g. SFCC), or migrate URLs / market structure.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Reviewing Proposal for 2nd migration</li><li>Time table for market swapover SFCC</li><li>Migration dates reviewed with</li></ul></div><div class="tt-cl"><span class="mini">Superdry</span></div></div><div class="tt"><div class="tt-h"><h4>CSS switching</h4><span class="tt-n">2<small>×</small></span></div><p class="tt-d">Comparison Shopping Service work — switch or split-test CSS, restructure CSS campaigns.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>CSS vs. CSS Google - Retest split test - no CPC benefit in UK market</li><li>CSS Testing - duplication of the feed Partnerize</li></ul></div><div class="tt-cl"><span class="mini">Reiss</span><span class="mini">Schuh</span></div></div><div class="tt"><div class="tt-h"><h4>Custom labels</h4><span class="tt-n">9<small>×</small></span></div><p class="tt-d">Build and restructure custom labels (CL0–CL4) for bidding and segmentation.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Reiss CL2 for all markets</li><li>can you pick up the custom labels tasks below ?</li><li>CL1 structure review</li></ul></div><div class="tt-cl"><span class="mini">AllSaints</span><span class="mini">Craghopper</span><span class="mini">Estée Lauder</span><span class="mini">Reiss</span><span class="mini">Schuh</span><span class="mini">Superdry</span></div></div><div class="tt"><div class="tt-h"><h4>Data fields &amp; structure</h4><span class="tt-n">8<small>×</small></span></div><p class="tt-d">Populate and localise data fields; fix taxonomy/structure and naming conventions.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Brand Names convention</li><li>\_1.jpg * structure to check if this is full body center</li><li>Review Titles structure Shopping &amp; Social</li></ul></div><div class="tt-cl"><span class="mini">AllSaints</span><span class="mini">Jo Malone</span><span class="mini">Monsoon</span><span class="mini">Schuh</span></div></div><div class="tt"><div class="tt-h"><h4>Image &amp; pixel fixes</h4><span class="tt-n">9<small>×</small></span></div><p class="tt-d">Resolve image/pixel issues — disapprovals, broken image links, zoomed-image bugs.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>issues with Tiktok pixel</li><li>Check image URLs (new format) on Tues</li><li>Text on image disapprovals</li></ul></div><div class="tt-cl"><span class="mini">AllSaints</span><span class="mini">Clinique</span><span class="mini">Monsoon</span><span class="mini">Schuh</span><span class="mini">YuMOVE</span></div></div><div class="tt"><div class="tt-h"><h4>Supplemental feeds</h4><span class="tt-n">5<small>×</small></span></div><p class="tt-d">Layer a supplemental feed on the primary — titles, AOT, item groups, conversational attributes.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Review supplemental feed and devise keyword optimisation strategy/ cadence across market</li><li>Supp feed AOT to D2B UK/IE</li><li>Supp feed from UK -&gt; IE Shopping Titles</li></ul></div><div class="tt-cl"><span class="mini">Regatta</span><span class="mini">Reiss</span><span class="mini">Schuh</span></div></div><div class="tt"><div class="tt-h"><h4>Exclusions &amp; cleanup</h4><span class="tt-n">6<small>×</small></span></div><p class="tt-d">Park or remove low-value SKUs — low-stock exclusions, zombie resets, label cleanup.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Review billing to remove Meta</li><li>Removing colour in Social titles</li><li>3rd June - putting /sale/ exclusion back in all feeds (EU markets)</li></ul></div><div class="tt-cl"><span class="mini">Accessorize</span><span class="mini">AllSaints</span><span class="mini">Hobbycraft</span><span class="mini">Schuh</span><span class="mini">YuMOVE</span></div></div></div></div></section>
-<section id="c1" class="cat"><div class="wrap"><div class="cat-h"><span class="k">02</span><h2>Optimisation</h2><span class="cat-n">7 types</span></div><div class="tt-grid"><div class="tt"><div class="tt-h"><h4>AI titles / search intent</h4><span class="tt-n">3<small>×</small></span></div><p class="tt-d">Generate titles from search intent with AI — aligned to how buyers actually search.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>AI TItles A/B Test - [Search Intent] on 200 products</li><li>A/B Title Test - [search intent]</li><li>A/B Test Titles - [Search Intent ] -</li></ul></div><div class="tt-cl"><span class="mini">Hobbycraft</span><span class="mini">Reiss</span><span class="mini">Schuh</span></div></div><div class="tt"><div class="tt-h"><h4>Title optimisation (MASK)</h4><span class="tt-n">16<small>×</small></span></div><p class="tt-d">Rewrite titles to MASK structure (Brand + Material + Fit + Colour + Use-case); AOT queues; brand inclusion.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>[Brand] includsion (Reiss) - A/B Title Test - Shopping</li><li>DE/FR - title optimisation AOT</li><li>ToB - AOT for House of Bruar</li></ul></div><div class="tt-cl"><span class="mini">Accessorize</span><span class="mini">AllSaints</span><span class="mini">Bobbi Brown</span><span class="mini">House of Bruar</span><span class="mini">Regatta</span><span class="mini">Reiss</span></div></div><div class="tt"><div class="tt-h"><h4>Keyword optimisation</h4><span class="tt-n">15<small>×</small></span></div><p class="tt-d">Inject and expand keywords — planner batches, seasonal (BF/XMAS/gifting/V-Day), brand terms.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>English Pear&#x27; KW optimization</li><li>Symptom Matrix over the seasons, Summer, Winter, Spring - FS to automate adding these sy</li><li>Keywords Planner - next batch</li></ul></div><div class="tt-cl"><span class="mini">Accessorize</span><span class="mini">AllSaints</span><span class="mini">Craghopper</span><span class="mini">Hobbycraft</span><span class="mini">Jo Malone</span><span class="mini">Reiss</span></div></div><div class="tt"><div class="tt-h"><h4>Search terms</h4><span class="tt-n">1<small>×</small></span></div><p class="tt-d">Fold high-volume search terms into the feed to widen matched queries.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Integrate High-Volume Search Terms into FeedHero to Compare with Current Feed Data</li></ul></div><div class="tt-cl"><span class="mini">YuMOVE</span></div></div><div class="tt"><div class="tt-h"><h4>Visual enrichment</h4><span class="tt-n">2<small>×</small></span></div><p class="tt-d">Enrich product imagery — visual attribute harvest, main-image selection, box shots.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Infer optimisation for AI enrichedment attributes</li><li>Setting main image Box-I</li></ul></div><div class="tt-cl"><span class="mini">AllSaints</span><span class="mini">YuMOVE</span></div></div><div class="tt"><div class="tt-h"><h4>Image overlay / badges</h4><span class="tt-n">19<small>×</small></span></div><p class="tt-d">Overlay badges/roundels — sale, low-stock, bestseller, [Selling Fast] / [Trending Now] / [New].</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>BAU: Stickers vs. {AI Matching Skintone Tool]</li><li>PPC: Image Overlay: (low stock, back in stock, % discount, x amount of stock left)</li><li>Overlay [Selling Fast] [Trending Now] [New] - FS to share final design</li></ul></div><div class="tt-cl"><span class="mini">Aveda &amp; Bumble</span><span class="mini">Benefit</span><span class="mini">Benefit Cosmetic</span><span class="mini">Bobbi Brown</span><span class="mini">Elc Group</span><span class="mini">Estee Lauder</span></div></div><div class="tt"><div class="tt-h"><h4>Localisation</h4><span class="tt-n">3<small>×</small></span></div><p class="tt-d">Localise titles and data fields across markets; local-language vs EN feeds.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Loyalty Program multiple region</li><li>Reiss * localisation project</li><li>SOCIAL: multilanguage feed - EU markets</li></ul></div><div class="tt-cl"><span class="mini">Reiss</span></div></div></div></div></section>
-<section id="c2" class="cat"><div class="wrap"><div class="cat-h"><span class="k">03</span><h2>Testing</h2><span class="cat-n">3 types</span></div><div class="tt-grid"><div class="tt"><div class="tt-h"><h4>A/B &amp; split tests</h4><span class="tt-n">8<small>×</small></span></div><p class="tt-d">Controlled A/B tests — titles, overlays, keywords — via a supplemental feed and a randomised split.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>A/B Test - Tial test: revisit mockups again</li><li>A/B Test - [Active Ingredient] inclusion (e.g., hyaluronic acid, omega-3, glucosamine)l.</li><li>Test Roadmap for AllSAints (date back 2years)</li></ul></div><div class="tt-cl"><span class="mini">Accessorize</span><span class="mini">AllSaints</span><span class="mini">Superdry</span><span class="mini">YuMOVE</span></div></div><div class="tt"><div class="tt-h"><h4>Product experiments</h4><span class="tt-n">4<small>×</small></span></div><p class="tt-d">Google product experiments / PMax feed tests; Monetate rule validation.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Monetate project overview for Phoebe</li><li>All Monetate rules in FeedHero</li><li>Check with NEXT on Monetate new markets</li></ul></div><div class="tt-cl"><span class="mini">Reiss</span></div></div><div class="tt"><div class="tt-h"><h4>Testing roadmap</h4><span class="tt-n">2<small>×</small></span></div><p class="tt-d">Plan and sequence the test backlog per client, prioritised by expected uplift.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>FS to share Testing Roadmap for Q2 Q3</li><li>Testing roadmap for Schuh</li></ul></div><div class="tt-cl"><span class="mini">Schuh</span><span class="mini">Superdry</span></div></div></div></div></section>
-<section id="c3" class="cat"><div class="wrap"><div class="cat-h"><span class="k">04</span><h2>Creative, PPC &amp; channels</h2><span class="cat-n">5 types</span></div><div class="tt-grid"><div class="tt"><div class="tt-h"><h4>DPA creative</h4><span class="tt-n">1<small>×</small></span></div><p class="tt-d">Dynamic Product Ads creative — overlays, roundels, DPA feed for Meta / social.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Issues with Snapchat images link (likely DPA)</li></ul></div><div class="tt-cl"><span class="mini">Superdry</span></div></div><div class="tt"><div class="tt-h"><h4>Image cyclers</h4><span class="tt-n">2<small>×</small></span></div><p class="tt-d">Always-on image cycling — rotate hero/lifestyle imagery (dress cycler, always-on cycler).</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Image Cycler * ALWAYS ON * Summer categories * start with Tshirt - analysis to remind AS</li><li>New Balance &amp; Nike - Image Cycler - (all) - analysis deck to ask ASPL</li></ul></div><div class="tt-cl"><span class="mini">Monsoon</span><span class="mini">Schuh</span></div></div><div class="tt"><div class="tt-h"><h4>PPC overlays / restructure</h4><span class="tt-n">2<small>×</small></span></div><p class="tt-d">PPC-side work — image overlays, campaign restructure, weighted/margin bidding.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Review AS PPC Testing Plan</li><li>Check CVR for the weighted sizes inclusion</li></ul></div><div class="tt-cl"><span class="mini">AllSaints</span></div></div><div class="tt"><div class="tt-h"><h4>LIA / Click &amp; Collect</h4><span class="tt-n">3<small>×</small></span></div><p class="tt-d">Local Inventory Ads and Click &amp; Collect — light-LIA, bid tests, store-front feeds.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>LIA : Light version for Google Hosted store-front.</li><li>Shall we try Click &amp; Collect vs, LIA  &gt; in BID for 20% cheaper CPC ?</li><li>Click &amp; Collect express on PDPS -&gt; Light LIA * Ray to work up propsaol</li></ul></div><div class="tt-cl"><span class="mini">Accessorize</span><span class="mini">AllSaints</span><span class="mini">Hobbycraft</span></div></div><div class="tt"><div class="tt-h"><h4>Social feeds</h4><span class="tt-n">8<small>×</small></span></div><p class="tt-d">Social commerce feeds — Meta, TikTok, Partnerize, Reddit, Snapchat.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Explore video GIF for Social ?</li><li>International Meta feed</li><li>Reddit feed for US market</li></ul></div><div class="tt-cl"><span class="mini">AllSaints</span><span class="mini">Damson</span><span class="mini">Hobbycraft</span><span class="mini">Reiss</span></div></div></div></div></section>
-<section id="c4" class="cat"><div class="wrap"><div class="cat-h"><span class="k">05</span><h2>Account &amp; strategy</h2><span class="cat-n">4 types</span></div><div class="tt-grid"><div class="tt"><div class="tt-h"><h4>Strategy review / QBR</h4><span class="tt-n">2<small>×</small></span></div><p class="tt-d">Quarterly strategy and business reviews — results, roadmap, next quarter.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>QBR Strategy in person</li><li>Review Training Plan foe new comers</li></ul></div><div class="tt-cl"><span class="mini">Internal</span><span class="mini">Reiss</span></div></div><div class="tt"><div class="tt-h"><h4>Proposals &amp; quotes</h4><span class="tt-n">8<small>×</small></span></div><p class="tt-d">Scoping and commercials — proposals, quotes, time estimates, re-pitches.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Estimate and implement &quot;Sale Feature&quot; tagging across all products in MON &amp; ACC.</li><li>Deck prep for Re-Pitch</li><li>AI package proposal (Full, Standard, Basic) - wrap up chaser to Monsoon</li></ul></div><div class="tt-cl"><span class="mini">Accessorize</span><span class="mini">AllSaints</span><span class="mini">Hobbycraft</span><span class="mini">Monsoon</span><span class="mini">Reiss</span><span class="mini">Schuh</span></div></div><div class="tt"><div class="tt-h"><h4>Audits</h4><span class="tt-n">1<small>×</small></span></div><p class="tt-d">Feed/account audits — Golden Record baseline, hours &amp; feed review.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Feedhero initial audit &amp; recommendation</li></ul></div><div class="tt-cl"><span class="mini">House Of Bruar</span></div></div><div class="tt"><div class="tt-h"><h4>Onboarding</h4><span class="tt-n">2<small>×</small></span></div><p class="tt-d">New-client onboarding — audit, quick wins, plan and team setup.</p><div class="tt-ex"><div class="tt-lbl">Recent examples</div><ul><li>Intro with Alex from Croud</li><li>Accessorize moving to K\&amp;C - Intro with (Charlotte, Hakan, Olivia)</li></ul></div><div class="tt-cl"><span class="mini">Accessorize</span><span class="mini">AllSaints</span></div></div></div></div></section>
+
 <!-- PLANS:START -->
 <script>window.PLANTASKS={"Reiss": {"score": 96, "total": 469, "done": 447, "open": 22, "hold": 0, "updated": "2026-07", "cats": {"data": {"total": 29, "done": 25}, "keyword": {"total": 54, "done": 50}, "opt": {"total": 150, "done": 146}, "account": {"total": 28, "done": 28}, "title": {"total": 49, "done": 47}, "image": {"total": 29, "done": 27}, "custom_label": {"total": 42, "done": 41}, "product_type": {"total": 15, "done": 13}, "technical": {"total": 44, "done": 43}, "test": {"total": 5, "done": 5}, "channel": {"total": 24, "done": 22}}, "catsw": {"all": {"data": {"total": 29, "done": 25}, "keyword": {"total": 54, "done": 50}, "opt": {"total": 150, "done": 146}, "account": {"total": 28, "done": 28}, "title": {"total": 49, "done": 47}, "image": {"total": 29, "done": 27}, "custom_label": {"total": 42, "done": 41}, "product_type": {"total": 15, "done": 13}, "technical": {"total": 44, "done": 43}, "test": {"total": 5, "done": 5}, "channel": {"total": 24, "done": 22}}, "1": {"account": {"total": 1, "done": 1}, "opt": {"total": 3, "done": 3}, "keyword": {"total": 2, "done": 1}, "channel": {"total": 1, "done": 1}}, "3": {"title": {"total": 3, "done": 1}, "custom_label": {"total": 4, "done": 3}, "opt": {"total": 8, "done": 5}, "product_type": {"total": 4, "done": 2}, "keyword": {"total": 6, "done": 2}, "image": {"total": 2, "done": 0}, "data": {"total": 4, "done": 1}, "channel": {"total": 4, "done": 2}, "account": {"total": 4, "done": 4}, "technical": {"total": 1, "done": 0}}, "6": {"account": {"total": 6, "done": 6}, "channel": {"total": 6, "done": 4}, "title": {"total": 8, "done": 6}, "opt": {"total": 10, "done": 7}, "keyword": {"total": 8, "done": 4}, "product_type": {"total": 5, "done": 3}, "custom_label": {"total": 4, "done": 3}, "image": {"total": 2, "done": 0}, "data": {"total": 4, "done": 1}, "technical": {"total": 1, "done": 0}}, "12": {"image": {"total": 6, "done": 4}, "opt": {"total": 18, "done": 15}, "data": {"total": 5, "done": 2}, "custom_label": {"total": 6, "done": 5}, "channel": {"total": 9, "done": 7}, "keyword": {"total": 11, "done": 7}, "account": {"total": 7, "done": 7}, "technical": {"total": 2, "done": 1}, "title": {"total": 9, "done": 7}, "product_type": {"total": 5, "done": 3}}}, "vol": [{"l": "Jul 25", "d": 15, "o": 0}, {"l": "Aug 25", "d": 5, "o": 0}, {"l": "Sep 25", "d": 5, "o": 0}, {"l": "Oct 25", "d": 9, "o": 0}, {"l": "Dec 25", "d": 5, "o": 0}, {"l": "Apr 26", "d": 14, "o": 0}, {"l": "May 26", "d": 3, "o": 14}, {"l": "Jun 26", "d": 11, "o": 5}, {"l": "Jul 26", "d": 6, "o": 1}], "volkind": "month", "latest": [{"t": "QBR Strategy in person", "o": "FS x Reiss", "c": "account", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Reviewing Meta activities - merged feeds with Social team", "o": "Social", "c": "channel", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Recrawl titles PDP vs. Titles received from NEXT", "o": "Ray/ ASPL", "c": "title", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "FS recommendations for WoW", "o": "Ray", "c": "account", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Share mismatched example from NEXT", "o": "Ray", "c": "opt", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "39% duplicated titles - we're running through Auto-optimised-title", "o": "Ray", "c": "title", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Weak keyword targeting - we've got a new Keywords Planner x Eliza", "o": "Ezgi", "c": "keyword", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "IE LIA ( Click & Collect ) to set up", "o": "Ray/ Eliza", "c": "channel", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Reiss' Keyword Planner", "o": "Ray", "c": "keyword", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "FS to confirm current [Title_EN] mapping for all markets Shopping", "o": "Ray", "c": "title", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "A/B Titles Test = [Search Intent] vs. None", "o": "Ezgi", "c": "title", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Stock_Flag vs. Actual availability - FS to attache example (OOS but flagged Stock_Include)", "o": "Eliaza", "c": "opt", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Product type further breakdown categorisation", "o": "Eliza", "c": "product_type", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Close all P0/P1 Google audit gaps (SKU coverage → 95%, catch-all campaign, Image AI enablement, title de-duplication)", "o": "Ray", "c": "title", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "exact top 3 product Titles in [Style it With] section on website", "o": "Ray", "c": "title", "s": "Open", "b": "open", "d": "2026-05-01"}, {"t": "Custom label overview and update", "o": "Ez", "c": "custom_label", "s": "Open", "b": "open", "d": "2026-05-01"}, {"t": "Expand product descriptions to 500+ chars using Tachyon (initial 1,000 SKUs)", "o": "Ray", "c": "opt", "s": "Open", "b": "open", "d": "2026-05-01"}, {"t": "Enhance product type depth & align SEO attribute mapping (3M taxonomy alignment)", "o": "Ray", "c": "product_type", "s": "Open", "b": "open", "d": "2026-05-01"}, {"t": "Launch GEO intent integration into PMax (via descriptions & highlights)", "o": "Ray", "c": "keyword", "s": "Open", "b": "open", "d": "2026-05-01"}, {"t": "Extend AI roundel overlays from Meta to Shopping PLAs", "o": "Ray", "c": "image", "s": "Open", "b": "open", "d": "2026-05-01"}, {"t": "Roll out product highlights (4–10 per SKU for AI readiness)", "o": "", "c": "data", "s": "Open", "b": "open", "d": "2026-05-01"}, {"t": "Deliver Q3 lift report (performance impact across AI + Shopping)", "o": "Ray", "c": "channel", "s": "Open", "b": "open", "d": "2026-05-01"}, {"t": "Re-run Golden Record audit to track AI-readiness improvements", "o": "Ray", "c": "account", "s": "Done", "b": "done", "d": "2026-05-01"}, {"t": "Book Q4 strategy session (Reiss x Dentsu x FeedSpark)", "o": "", "c": "opt", "s": "Done", "b": "done", "d": "2026-05-01"}, {"t": "Chelsey's - SEO Mapping - attributes inclusion within FeedSpark optimisaiton roadmap", "o": "Ray", "c": "data", "s": "", "b": "open", "d": "2026-05-01"}, {"t": "A/B Titles Test = [Search Intent] vs. None", "o": "Ezgi", "c": "title", "s": "Done", "b": "done", "d": "2026-05-01"}, {"t": "Stock_Flag vs. Actual availability - FS to attache example (OOS but flagged Stock_Include)", "o": "Ray", "c": "opt", "s": "In-Progress", "b": "progress", "d": "2026-05-01"}, {"t": "Product type further breakdown categorisation", "o": "Ray", "c": "product_type", "s": "In-Progress", "b": "progress", "d": "2026-05-01"}, {"t": "Reiss' Keyword Planner", "o": "Ray", "c": "keyword", "s": "In-Progress", "b": "progress", "d": "2026-05-01"}, {"t": "Confirm new cost for International Meta-feed (new markets)", "o": "Ray", "c": "channel", "s": "Open", "b": "open", "d": "2026-05-01"}, {"t": "New Conversational attributes", "o": "Ray", "c": "data", "s": "Open", "b": "open", "d": "2026-05-01"}, {"t": "Creative Testing - Eliza will follow up with design", "o": "Eliza", "c": "account", "s": "27/07/2026", "b": "done", "d": "2026-06-01"}, {"t": "Keyword Trend Map - FS to align date activation for July events", "o": "Ezgi", "c": "keyword", "s": "Open", "b": "open", "d": "2026-06-01"}, {"t": "Attribution Matrix - Categorisation - FS to roll out product type optimisation (4 depth granularity using FS Tachyon)", "o": "Ray", "c": "product_type", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "A/B Product Title Testing - [Title + Search Intent] > US market  - FS to reach out to Google rep re AI MAX manipulation", "o": "Ezgi", "c": "title", "s": "In Progress", "b": "progress", "d": "2026-06-01"}, {"t": "Change of Billing recipient > to FS accountant", "o": "Cam", "c": "account", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "Stock_Flag vs. Actual availability - Aimee to push NEXT for stock_flag solution/", "o": "Aimee", "c": "opt", "s": "In-Progress", "b": "progress", "d": "2026-06-01"}, {"t": "Item Group ID > Item No - Eliza will confirm which date to switchover", "o": "Eliza/ Ray", "c": "technical", "s": "In Progress", "b": "progress", "d": "2026-06-01"}, {"t": "Reiss DE / CH-DE (55% & 53%) mixed with EN / AT-DE - Shopping local - FS to review final", "o": "Ray", "c": "channel", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "Best-seller - integration - FS to share Bestseller Google Sheet", "o": "Eliza/ Ray", "c": "custom_label", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "LL vs EN - this issues sit with NEXT team to get everything fully translated", "o": "Ray", "c": "opt", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "Bestsellers - This issue is rectified, FS has helped to relink with the new Google Sheet  > Check if weekly or daily refresh needed", "o": "Ray", "c": "custom_label", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "Product Type - Rolled out across UK - FS is at the last stop reviewing the final edits", "o": "Ray", "c": "product_type", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "Random keywords string - \"Reiss Dresses\" a random keyword string is removed from UK markets - it affected 80 SKUs", "o": "Ray", "c": "keyword", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "Troy & Stock flag - Social: Switch CL1 -", "o": "Ray", "c": "custom_label", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "SEO team meeting - checkup on Attributes Matrix", "o": "Ray", "c": "data", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "Rework SEO x FS Tachyon - Visual Attibutes generation (Product team will pick SEO matrix from Sept/26 onwards) - FS will generate anything not on the ", "o": "Ray", "c": "image", "s": "Open", "b": "open", "d": "2026-06-01"}, {"t": "Strategy Review (Added note) - market roll-out plan (hopefully out ahead of Peak) - proposal for expansion", "o": "Ray", "c": "account", "s": "23/07/2026", "b": "done", "d": "2026-07-01"}, {"t": "Malta, Japan, Bahrain, Hungary, Norway, Taiwan, Cyprus, New Zealand, Kazakhstan, Bulgaria, Iceland, Malaysia, Oman, Mexico, Ukraine, India, South Afri", "o": "", "c": "opt", "s": "23/07/2026", "b": "done", "d": "2026-07-01"}, {"t": "Resources plan - swapping market in & out", "o": "Ray", "c": "opt", "s": "24/07/2026", "b": "done", "d": "2026-07-01"}, {"t": "Focus more on Reiss' main lines", "o": "Ray", "c": "opt", "s": "23/07/2026", "b": "done", "d": "2026-07-01"}, {"t": "Keywords Optimisation - Resort Wear - Men's & Women's", "o": "ASPL", "c": "keyword", "s": "02/08/2026", "b": "done", "d": "2026-07-01"}, {"t": "Keywords Optimisation - Autumn Winter launch - new season products", "o": "ASPL", "c": "keyword", "s": "Open", "b": "open", "d": "2026-07-01"}, {"t": "[Internal] - Shopping Feed via Google Sheet -", "o": "ASPL", "c": "channel", "s": "Done", "b": "done", "d": "2026-07-01"}]}, "Schuh": {"score": 74, "total": 96, "done": 61, "open": 34, "hold": 1, "updated": "2026-07", "cats": {"account": {"total": 11, "done": 6}, "opt": {"total": 16, "done": 11}, "data": {"total": 8, "done": 5}, "product_type": {"total": 4, "done": 2}, "title": {"total": 9, "done": 5}, "keyword": {"total": 12, "done": 10}, "technical": {"total": 8, "done": 4}, "custom_label": {"total": 6, "done": 4}, "image": {"total": 12, "done": 8}, "channel": {"total": 8, "done": 4}, "test": {"total": 2, "done": 2}}, "catsw": {"all": {"account": {"total": 11, "done": 6}, "opt": {"total": 16, "done": 11}, "data": {"total": 8, "done": 5}, "product_type": {"total": 4, "done": 2}, "title": {"total": 9, "done": 5}, "keyword": {"total": 12, "done": 10}, "technical": {"total": 8, "done": 4}, "custom_label": {"total": 6, "done": 4}, "image": {"total": 12, "done": 8}, "channel": {"total": 8, "done": 4}, "test": {"total": 2, "done": 2}}, "1": {"keyword": {"total": 1, "done": 1}, "channel": {"total": 1, "done": 0}, "image": {"total": 1, "done": 1}}, "3": {"account": {"total": 6, "done": 6}, "keyword": {"total": 2, "done": 2}, "test": {"total": 1, "done": 1}, "opt": {"total": 2, "done": 0}, "title": {"total": 1, "done": 1}, "custom_label": {"total": 1, "done": 1}, "channel": {"total": 2, "done": 1}, "image": {"total": 1, "done": 1}}, "6": {"image": {"total": 3, "done": 1}, "account": {"total": 6, "done": 6}, "keyword": {"total": 2, "done": 2}, "test": {"total": 1, "done": 1}, "opt": {"total": 2, "done": 0}, "title": {"total": 1, "done": 1}, "custom_label": {"total": 1, "done": 1}, "channel": {"total": 2, "done": 1}}, "12": {"keyword": {"total": 4, "done": 4}, "opt": {"total": 5, "done": 3}, "image": {"total": 7, "done": 4}, "channel": {"total": 4, "done": 2}, "custom_label": {"total": 2, "done": 1}, "account": {"total": 6, "done": 6}, "test": {"total": 1, "done": 1}, "title": {"total": 1, "done": 1}}}, "vol": [{"l": "May 25", "d": 5, "o": 0}, {"l": "Jun 25", "d": 6, "o": 1}, {"l": "Aug 25", "d": 1, "o": 0}, {"l": "Sep 25", "d": 3, "o": 1}, {"l": "Oct 25", "d": 5, "o": 2}, {"l": "Feb 26", "d": 0, "o": 2}, {"l": "Apr 26", "d": 3, "o": 0}, {"l": "May 26", "d": 8, "o": 2}, {"l": "Jun 26", "d": 2, "o": 1}], "volkind": "month", "latest": [{"t": "Review curents stock quantity from <5 -> <2, and also addo n Hero Sizes.", "o": "Ray", "c": "image", "s": "in-progress", "b": "progress", "d": "2026-02-01"}, {"t": "Hero Sizes mapping for Mens/ Womens/ Childrens - Footwear mapping", "o": "Ray/ Will & team", "c": "image", "s": "in-progress", "b": "progress", "d": "2026-02-01"}, {"t": "Pound Margin - review (-) margin", "o": "Steven", "c": "account", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Access for MIA", "o": "Ezgi", "c": "account", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Keywords Optimisation - Trainers (MSS) - Will will share list of brands", "o": "Ezgi", "c": "keyword", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "remove current exlcusion / exclude < 0 pound margin instead", "o": "Steven", "c": "account", "s": "Done", "b": "done", "d": "2026-05-01"}, {"t": "AI Score Card review for Schuh (UK & IE) - recommendations", "o": "Ray", "c": "account", "s": "5/28/2026", "b": "done", "d": "2026-05-01"}, {"t": "CSS vs. CSS Google - Retest split test - no CPC benefit in UK market", "o": "Ray/ Will", "c": "test", "s": "5/31/2026", "b": "done", "d": "2026-05-01"}, {"t": "Product Rating - subimit manually via retailer - FS to share fields of rating from Schuhs' dev", "o": "Steven", "c": "opt", "s": "Parked", "b": "hold", "d": "2026-05-01"}, {"t": "FS to host short Intro with Mia (PPC manager)", "o": "Ray", "c": "account", "s": "Done", "b": "done", "d": "2026-05-01"}, {"t": "A/B Test Titles - [Search Intent ] - Fashion category", "o": "Steven", "c": "title", "s": "6/1", "b": "done", "d": "2026-05-01"}, {"t": "Will will share s360 description (technical stup (prompt) for generating PDP descriptiom)", "o": "Will/ Ray", "c": "opt", "s": "Open", "b": "open", "d": "2026-05-01"}, {"t": "FS to share Custom Label overview -", "o": "Steven", "c": "custom_label", "s": "Done", "b": "done", "d": "2026-05-01"}, {"t": "FS to share Recommendation for Campaign Structure", "o": "Steven", "c": "channel", "s": "Done", "b": "done", "d": "2026-05-01"}, {"t": "FS to share AI Workshop availability", "o": "Ray", "c": "account", "s": "Done", "b": "done", "d": "2026-05-01"}, {"t": "EOSS - sale keywords", "o": "Steven", "c": "keyword", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "maegin & pound margin through CN in Meta", "o": "Ray", "c": "channel", "s": "Open", "b": "open", "d": "2026-06-01"}, {"t": "Image_tag work - structurally setting (FS to check if can specify from URL) - test: bestsellers, key franchise, full price sandals", "o": "Ray", "c": "image", "s": "Done", "b": "done", "d": "2026-06-01"}]}, "Monsoon": {"score": 68, "total": 389, "done": 234, "open": 145, "hold": 10, "updated": "2026-07", "cats": {"data": {"total": 9, "done": 4}, "product_type": {"total": 10, "done": 3}, "opt": {"total": 126, "done": 74}, "title": {"total": 35, "done": 21}, "keyword": {"total": 51, "done": 39}, "account": {"total": 41, "done": 24}, "image": {"total": 33, "done": 21}, "custom_label": {"total": 30, "done": 18}, "test": {"total": 8, "done": 5}, "channel": {"total": 28, "done": 15}, "technical": {"total": 18, "done": 10}}, "catsw": {"all": {"data": {"total": 9, "done": 4}, "product_type": {"total": 10, "done": 3}, "opt": {"total": 126, "done": 74}, "title": {"total": 35, "done": 21}, "keyword": {"total": 51, "done": 39}, "account": {"total": 41, "done": 24}, "image": {"total": 33, "done": 21}, "custom_label": {"total": 30, "done": 18}, "test": {"total": 8, "done": 5}, "channel": {"total": 28, "done": 15}, "technical": {"total": 18, "done": 10}}, "1": {"test": {"total": 2, "done": 2}, "title": {"total": 1, "done": 0}, "account": {"total": 1, "done": 1}}, "3": {"image": {"total": 2, "done": 0}, "opt": {"total": 4, "done": 3}, "custom_label": {"total": 5, "done": 4}, "channel": {"total": 3, "done": 2}, "test": {"total": 3, "done": 3}, "account": {"total": 5, "done": 2}, "title": {"total": 1, "done": 0}}, "6": {"opt": {"total": 13, "done": 7}, "title": {"total": 2, "done": 0}, "keyword": {"total": 1, "done": 1}, "channel": {"total": 6, "done": 3}, "account": {"total": 8, "done": 4}, "data": {"total": 1, "done": 1}, "image": {"total": 3, "done": 0}, "custom_label": {"total": 6, "done": 5}, "test": {"total": 3, "done": 3}}, "12": {"test": {"total": 4, "done": 3}, "opt": {"total": 28, "done": 17}, "account": {"total": 11, "done": 5}, "channel": {"total": 11, "done": 6}, "keyword": {"total": 3, "done": 3}, "image": {"total": 7, "done": 3}, "custom_label": {"total": 11, "done": 8}, "technical": {"total": 4, "done": 2}, "title": {"total": 3, "done": 0}, "data": {"total": 1, "done": 1}}}, "vol": [{"l": "Oct 25", "d": 9, "o": 4}, {"l": "Nov 25", "d": 4, "o": 3}, {"l": "Dec 25", "d": 4, "o": 1}, {"l": "Jan 26", "d": 3, "o": 4}, {"l": "Feb 26", "d": 7, "o": 4}, {"l": "Apr 26", "d": 3, "o": 6}, {"l": "May 26", "d": 4, "o": 1}, {"l": "Jun 26", "d": 7, "o": 7}, {"l": "Jul 26", "d": 3, "o": 1}], "volkind": "month", "latest": [{"t": "MON - Dresss - Occassionwear for AI Generated (100 skus)", "o": "Ray", "c": "opt", "s": "on-hold", "b": "hold", "d": "2026-04-01"}, {"t": "Wrap up AI enriched fields (highlights & detials)", "o": "Ray", "c": "data", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Low Performance identifier and devise workflow to include/exclude into campaign", "o": "Olivia/ Venetia/ Ray", "c": "channel", "s": "Open", "b": "open", "d": "2026-04-01"}, {"t": "Duplicated Feed - new feed with overlayed images - approved design - same content_ids", "o": "Ezgi", "c": "image", "s": "in-progress", "b": "progress", "d": "2026-04-01"}, {"t": "EZ to follow up on final overlay for MON & ACC", "o": "Ezgi", "c": "channel", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "New In < 30days - CL0 [New In]", "o": "Ray", "c": "custom_label", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Henry to share list of Business' [Low Performers] / FS to set up excluded_destination", "o": "Ray", "c": "opt", "s": "Open", "b": "open", "d": "2026-04-01"}, {"t": "FS to confirm Google Sheet access /", "o": "Ray", "c": "account", "s": "", "b": "open", "d": "2026-04-01"}, {"t": "FS to confirm ChatGPT feed package", "o": "Ray", "c": "opt", "s": "Open", "b": "open", "d": "2026-04-01"}, {"t": "AI Visual extraction to work with SEO / FeedSparks", "o": "Ray/Matt", "c": "image", "s": "in-progress", "b": "progress", "d": "2026-05-01"}, {"t": "Occasion season (holidaywear / resort/ beachwear/ weddding)", "o": "Ezgi", "c": "opt", "s": "Done", "b": "done", "d": "2026-05-01"}, {"t": "Google Merchant Promotion - Henry to share Trading calendar  - setup SS26 15% OFF on GMC", "o": "Ezgi", "c": "opt", "s": "Done", "b": "done", "d": "2026-05-01"}, {"t": "CL0: New In - to scrape site from PLPs for both MON & ACC", "o": "Ezgi", "c": "custom_label", "s": "5/15", "b": "done", "d": "2026-05-01"}, {"t": "PPC Overlay: Dresses - [New In] [% off]  / Henry to share Brand typography  - <Monsoon", "o": "Ray", "c": "channel", "s": "5/20", "b": "done", "d": "2026-05-01"}, {"t": "[New In] - to scrape for Social & PPC CL4 - (New In - Ladies & Kids) - scrape from website", "o": "Ray", "c": "custom_label", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "PPC Overlay - Henry to confirm font/ color to use", "o": "Henry", "c": "channel", "s": "Open", "b": "open", "d": "2026-06-01"}, {"t": "Social Overlay - designing sale overlay ( strikethrough price) - red banner ? - FS to share mockup - adding CN as well for identification", "o": "Ezgi", "c": "channel", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "AI Visual extraction to work with SEO / FeedSparks - Sen AI Proposal", "o": "Ray", "c": "image", "s": "", "b": "open", "d": "2026-06-01"}, {"t": "Next A/B Test pair [Sale Features]  - with vs without -> with [Sale Feature] wins", "o": "Ezgi", "c": "test", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "Custom Label overview to update", "o": "Ezgi", "c": "custom_label", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "East brand to go back into Monsoon BAU feed - label ?", "o": "Henry/ Ray", "c": "opt", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "Liam to share Margin change - Clearance flags - Return Rate data", "o": "Ray", "c": "account", "s": "In-progress", "b": "progress", "d": "2026-06-01"}, {"t": "Call with Monsoon performance data - Liam x Matt x Precis team", "o": "Ray", "c": "account", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "Margin data - review matrrix for High/Low ROAS vs. Margin - MON CL1  & ACC CL2", "o": "Ray", "c": "custom_label", "s": "Open", "b": "open", "d": "2026-06-01"}, {"t": "Return Rate - FS to share % of RR threshold vs. Volume SKUs  - both MON & ACC", "o": "Ray", "c": "opt", "s": "Open", "b": "open", "d": "2026-06-01"}, {"t": "Margin data - check if margin data from Liam's source changes throughout SALE", "o": "Liam", "c": "account", "s": "Open", "b": "open", "d": "2026-06-01"}, {"t": "ACC CL2: keep all scraped values in FH", "o": "Steven", "c": "custom_label", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "RR & Margin - exclusion solution", "o": "", "c": "account", "s": "Open", "b": "open", "d": "2026-06-01"}, {"t": "AI AB Test - ACC - Bags - fp only", "o": "Ray", "c": "test", "s": "Live", "b": "done", "d": "2026-07-01"}, {"t": "AI AB Test - MON - Dresses  - fp only", "o": "Ray", "c": "test", "s": "Live", "b": "done", "d": "2026-07-01"}, {"t": "MON & ACC - roll out [Sale Features] to titles", "o": "Ray", "c": "title", "s": "", "b": "open", "d": "2026-07-01"}, {"t": "MON restructing website (sale / clearance) > website URL structure (clearance vs. Sale) - Marie still to confirm - FS will monitor product changes", "o": "Marie/ Ray", "c": "account", "s": "14/07/2026", "b": "done", "d": "2026-07-01"}]}, "Accessorize": {"score": 68, "total": 391, "done": 236, "open": 145, "hold": 10, "updated": "2026-07", "cats": {"data": {"total": 9, "done": 4}, "product_type": {"total": 10, "done": 3}, "opt": {"total": 129, "done": 76}, "title": {"total": 35, "done": 22}, "keyword": {"total": 52, "done": 40}, "account": {"total": 43, "done": 24}, "image": {"total": 32, "done": 19}, "custom_label": {"total": 31, "done": 19}, "test": {"total": 7, "done": 5}, "channel": {"total": 27, "done": 16}, "technical": {"total": 16, "done": 8}}, "catsw": {"all": {"data": {"total": 9, "done": 4}, "product_type": {"total": 10, "done": 3}, "opt": {"total": 129, "done": 76}, "title": {"total": 35, "done": 22}, "keyword": {"total": 52, "done": 40}, "account": {"total": 43, "done": 24}, "image": {"total": 32, "done": 19}, "custom_label": {"total": 31, "done": 19}, "test": {"total": 7, "done": 5}, "channel": {"total": 27, "done": 16}, "technical": {"total": 16, "done": 8}}, "1": {"test": {"total": 2, "done": 2}, "title": {"total": 1, "done": 0}, "account": {"total": 1, "done": 1}}, "3": {"image": {"total": 2, "done": 0}, "opt": {"total": 4, "done": 3}, "custom_label": {"total": 5, "done": 4}, "channel": {"total": 3, "done": 2}, "test": {"total": 3, "done": 3}, "account": {"total": 5, "done": 2}, "title": {"total": 1, "done": 0}}, "6": {"opt": {"total": 13, "done": 7}, "custom_label": {"total": 6, "done": 5}, "keyword": {"total": 1, "done": 1}, "channel": {"total": 6, "done": 3}, "account": {"total": 8, "done": 4}, "data": {"total": 1, "done": 1}, "image": {"total": 3, "done": 0}, "test": {"total": 3, "done": 3}, "title": {"total": 1, "done": 0}}, "12": {"channel": {"total": 12, "done": 8}, "image": {"total": 7, "done": 1}, "custom_label": {"total": 12, "done": 9}, "opt": {"total": 30, "done": 18}, "account": {"total": 11, "done": 5}, "keyword": {"total": 4, "done": 4}, "technical": {"total": 3, "done": 1}, "title": {"total": 3, "done": 1}, "data": {"total": 1, "done": 1}, "test": {"total": 3, "done": 3}}}, "vol": [{"l": "Oct 25", "d": 6, "o": 5}, {"l": "Nov 25", "d": 4, "o": 3}, {"l": "Dec 25", "d": 4, "o": 1}, {"l": "Jan 26", "d": 5, "o": 4}, {"l": "Feb 26", "d": 8, "o": 3}, {"l": "Apr 26", "d": 2, "o": 6}, {"l": "May 26", "d": 4, "o": 1}, {"l": "Jun 26", "d": 7, "o": 7}, {"l": "Jul 26", "d": 3, "o": 1}], "volkind": "month", "latest": [{"t": "ACC - Bags -  for AI Generated (100 skus)", "o": "Ray", "c": "opt", "s": "on-hold", "b": "hold", "d": "2026-04-01"}, {"t": "Wrap up AI enriched fields (highlights & detials)", "o": "Ray", "c": "data", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Low Performance identifier and devise workflow to include/exclude into campaign", "o": "Olivia/ Venetia/ Ray", "c": "channel", "s": "Open", "b": "open", "d": "2026-04-01"}, {"t": "Duplicated Feed - new feed with overlayed images - approved design  - same content_ids", "o": "Ezgi", "c": "image", "s": "in-progress", "b": "progress", "d": "2026-04-01"}, {"t": "EZ to follow up on final overlay for MON & ACC", "o": "Ezgi", "c": "channel", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Henry to share list of Business' [Low Performers] / FS to set up excluded_destination", "o": "Ray", "c": "opt", "s": "Open", "b": "open", "d": "2026-04-01"}, {"t": "FS to confirm Google Sheet access /", "o": "Ray", "c": "account", "s": "", "b": "open", "d": "2026-04-01"}, {"t": "FS to confirm ChatGPT feed package", "o": "Ray", "c": "opt", "s": "Open", "b": "open", "d": "2026-04-01"}, {"t": "AI Visual extraction to work with SEO / FeedSparks", "o": "Ray/Matt", "c": "image", "s": "in-progress", "b": "progress", "d": "2026-05-01"}, {"t": "Occasion season (holidaywear / resort/ beachwear/ weddding)", "o": "Ezgi", "c": "opt", "s": "Done", "b": "done", "d": "2026-05-01"}, {"t": "Google Merchant Promotion - Henry to share Trading calendar  - setup SS26 15% OFF on GMC", "o": "Ezgi", "c": "opt", "s": "Done", "b": "done", "d": "2026-05-01"}, {"t": "CL0: New In - to scrape site from PLPs for both MON & ACC", "o": "Ezgi", "c": "custom_label", "s": "5/15", "b": "done", "d": "2026-05-01"}, {"t": "PPC Overlay: Dresses - [New In] [% off]  / Henry to share Brand typography  - <Monsoon", "o": "Ray", "c": "channel", "s": "5/20", "b": "done", "d": "2026-05-01"}, {"t": "[New In] - to scrape for Social & PPC CL4 - (New In - Ladies & Kids) - scrape from website", "o": "Ray", "c": "custom_label", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "PPC Overlay - Henry to confirm font/ color to use", "o": "Henry", "c": "channel", "s": "Open", "b": "open", "d": "2026-06-01"}, {"t": "Social Overlay - designing sale overlay ( strikethrough price) - red banner ? - FS to share mockup - adding CN as well for identification", "o": "Ezgi", "c": "channel", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "AI Visual extraction to work with SEO / FeedSparks - Sen AI Proposal", "o": "Ray", "c": "image", "s": "", "b": "open", "d": "2026-06-01"}, {"t": "Next A/B Test pair [Sale Features]  - with vs without -> with [Sale Feature] wins", "o": "Ezgi", "c": "test", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "Custom Label overview to update", "o": "Ezgi", "c": "custom_label", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "East brand to go back into Monsoon BAU feed - label ?", "o": "Henry/ Ray", "c": "opt", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "Liam to share Margin change - Clearance flags - Return Rate data", "o": "Ray", "c": "account", "s": "In-progress", "b": "progress", "d": "2026-06-01"}, {"t": "Call with Monsoon performance data - Liam x Matt x Precis team", "o": "Ray", "c": "account", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "Margin data - review matrrix for High/Low ROAS vs. Margin - MON CL1  & ACC CL2", "o": "Ray", "c": "custom_label", "s": "Open", "b": "open", "d": "2026-06-01"}, {"t": "Return Rate - FS to share % of RR threshold vs. Volume SKUs  - both MON & ACC", "o": "Ray", "c": "opt", "s": "Open", "b": "open", "d": "2026-06-01"}, {"t": "Margin data - check if margin data from Liam's source changes throughout SALE", "o": "Liam", "c": "account", "s": "Open", "b": "open", "d": "2026-06-01"}, {"t": "ACC CL2: keep all scraped values in FH", "o": "Steven", "c": "custom_label", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "RR & Margin - exclusion solution", "o": "", "c": "account", "s": "Open", "b": "open", "d": "2026-06-01"}, {"t": "AI AB Test - ACC - Bags - fp only", "o": "Ray", "c": "test", "s": "Live", "b": "done", "d": "2026-07-01"}, {"t": "AI AB Test - MON - Dresses  - fp only", "o": "Ray", "c": "test", "s": "Live", "b": "done", "d": "2026-07-01"}, {"t": "MON & ACC - roll out [Sale Features] to titles", "o": "Ray", "c": "title", "s": "", "b": "open", "d": "2026-07-01"}, {"t": "MON restructing website (sale / clearance) > website URL structure (clearance vs. Sale) - Marie still to confirm - FS will monitor product changes", "o": "Marie/ Ray", "c": "account", "s": "14/07/2026", "b": "done", "d": "2026-07-01"}]}, "Superdry": {"score": 70, "total": 260, "done": 169, "open": 86, "hold": 5, "updated": "2026-07", "cats": {"account": {"total": 22, "done": 11}, "opt": {"total": 88, "done": 57}, "product_type": {"total": 3, "done": 1}, "data": {"total": 5, "done": 1}, "keyword": {"total": 29, "done": 20}, "test": {"total": 8, "done": 6}, "title": {"total": 14, "done": 8}, "technical": {"total": 17, "done": 11}, "image": {"total": 30, "done": 20}, "channel": {"total": 26, "done": 18}, "custom_label": {"total": 18, "done": 16}}, "catsw": {"all": {"account": {"total": 22, "done": 11}, "opt": {"total": 88, "done": 57}, "product_type": {"total": 3, "done": 1}, "data": {"total": 5, "done": 1}, "keyword": {"total": 29, "done": 20}, "test": {"total": 8, "done": 6}, "title": {"total": 14, "done": 8}, "technical": {"total": 17, "done": 11}, "image": {"total": 30, "done": 20}, "channel": {"total": 26, "done": 18}, "custom_label": {"total": 18, "done": 16}}}, "vol": [{"l": "Titles", "d": 8, "o": 6}, {"l": "Keywords", "d": 20, "o": 9}, {"l": "Data fields", "d": 1, "o": 4}, {"l": "Imagery", "d": 20, "o": 10}, {"l": "Custom labels", "d": 16, "o": 2}, {"l": "Product type", "d": 1, "o": 2}, {"l": "Feed & technical", "d": 11, "o": 6}, {"l": "Channels", "d": 18, "o": 8}, {"l": "Testing", "d": 6, "o": 2}, {"l": "Account & strategy", "d": 11, "o": 11}], "volkind": "lane", "latest": [{"t": "Onboarding Call", "o": "May (FS)", "c": "account", "s": "Open", "b": "open", "d": ""}, {"t": "Requirements", "o": "Superdry", "c": "opt", "s": "Open", "b": "open", "d": ""}, {"t": "Create Platform + feeds", "o": "May (FS)", "c": "opt", "s": "Open", "b": "open", "d": ""}, {"t": "Category mapping (deepest category)", "o": "Gary (FS)", "c": "product_type", "s": "Open", "b": "open", "d": ""}, {"t": "Shipping rate", "o": "Gary (FS)", "c": "opt", "s": "Open", "b": "open", "d": ""}, {"t": "Data fields Back Filling (for mandatory fields) + Rules (Description missing, sizes need to be converted...)+ GAG + material+ too short and missing de", "o": "Mike (FS)", "c": "data", "s": "Open", "b": "open", "d": ""}, {"t": "GMC + AW Checks (unclaimed website + MCA)", "o": "May (FS)", "c": "opt", "s": "Open", "b": "open", "d": ""}, {"t": "Feeds Comp", "o": "Ray (FS)", "c": "opt", "s": "Open", "b": "open", "d": ""}, {"t": "Launch", "o": "May (FS)", "c": "opt", "s": "Open", "b": "open", "d": ""}, {"t": "Post Launch Call", "o": "May (FS)", "c": "account", "s": "Open", "b": "open", "d": ""}, {"t": "Disapprovals", "o": "Gary (FS)", "c": "data", "s": "Open", "b": "open", "d": ""}, {"t": "Keyword optimisation", "o": "Dino (FS)", "c": "keyword", "s": "Open", "b": "open", "d": ""}, {"t": "Category mapping", "o": "Gary (FS)", "c": "product_type", "s": "Open", "b": "open", "d": ""}, {"t": "Shipping test", "o": "Dino (FS)", "c": "test", "s": "Open", "b": "open", "d": ""}, {"t": "Prio Batch to be sent to FS", "o": "Superdry", "c": "opt", "s": "Open", "b": "open", "d": ""}, {"t": "Title optimisation", "o": "Mike (FS)", "c": "title", "s": "Open", "b": "open", "d": ""}, {"t": "Data fields tagging", "o": "Mike (FS)", "c": "data", "s": "Open", "b": "open", "d": ""}, {"t": "Copy data fields & titles across to US", "o": "Mike (FS)", "c": "title", "s": "Open", "b": "open", "d": ""}, {"t": "Quarter business review", "o": "May (FS)", "c": "account", "s": "Open", "b": "open", "d": ""}, {"t": "Client call x Superdry", "o": "May (FS)", "c": "account", "s": "Open", "b": "open", "d": ""}, {"t": "Rakuten feeds are launched", "o": "Ray (FS)", "c": "opt", "s": "Open", "b": "open", "d": ""}, {"t": "PPC: Range Completion exclusion for 60% (all markets)", "o": "Ray (FS)", "c": "technical", "s": "Open", "b": "open", "d": ""}, {"t": "PPC: Exclude products with Stock units < 5 (to OOS, all markets)", "o": "Ray (FS)", "c": "opt", "s": "Open", "b": "open", "d": ""}, {"t": "PPC: A/b Testing Titles [Colour] vs. [Item ttype]", "o": "Isa (FS)", "c": "title", "s": "", "b": "open", "d": ""}, {"t": "PPC: SD to increase Refresh frequency to 2/3 times - day -> Migration", "o": "Will", "c": "technical", "s": "", "b": "open", "d": ""}, {"t": "PPC: SD to confirm how to pass Margin data", "o": "Em/ Ray", "c": "account", "s": "", "b": "open", "d": ""}, {"t": "PPC: Analytics access - FS's usage attached", "o": "Ray/ Will", "c": "account", "s": "Open", "b": "open", "d": ""}, {"t": "PPC: [Black Friday] batch x accelerate to 20% of feed ?", "o": "Will / Em", "c": "opt", "s": "", "b": "open", "d": ""}, {"t": "PPC: Image overlay issue", "o": "Em", "c": "image", "s": "", "b": "open", "d": ""}, {"t": "PPC: Image Cycler - [Jacket] - SD to confirm image tagging quote", "o": "Em/Ray", "c": "image", "s": "", "b": "open", "d": ""}, {"t": "SOCIAL: DPA overlays optimisation with brand messaing", "o": "Ray/ Michelle / Assembly", "c": "channel", "s": "", "b": "open", "d": ""}, {"t": "SOCIAL: Title Optimisation Plan (UK/IE/DE/FR)", "o": "Ray/ Michelle", "c": "title", "s": "", "b": "open", "d": ""}, {"t": "SOCIAL: Image quality issue -> scrape or inbound update? (most likely internal solution)", "o": "Michelle/ Ray", "c": "image", "s": "", "b": "open", "d": ""}, {"t": "SOCIAL: DPA dynamic messaging - Black Friday copies across all Meta markets", "o": "Ray (FS)", "c": "channel", "s": "Open", "b": "open", "d": ""}, {"t": "PPC: FS to set up giftcard (£20)", "o": "Ray (FS)", "c": "opt", "s": "", "b": "open", "d": ""}, {"t": "SOCIAL: New In (within the last 4 weeks) / SD to confirm DoB threshold", "o": "Michelle/ Ray", "c": "channel", "s": "Open", "b": "open", "d": ""}, {"t": "PPC : FS to run Top 10 converting searchterms for [T-Shirts] [Dresses] / FS to share list of top 30 Searchterms", "o": "Craig / Ray", "c": "keyword", "s": "Open", "b": "open", "d": ""}, {"t": "PPC: Image Cycler to setup after PF campaign finishes", "o": "Ray/ Craig", "c": "image", "s": "", "b": "open", "d": ""}, {"t": "PPC: Keywords - Dresses - (1000 SKUs per month)", "o": "SImu", "c": "keyword", "s": "", "b": "open", "d": ""}, {"t": "PPC: Keywords - Shorts both mens / womens (1000 SKUs per month)", "o": "SImu", "c": "keyword", "s": "", "b": "open", "d": ""}, {"t": "Zombie Campaign - DE/FR/NL (0 imprs over last 30days) - CL1", "o": "Joao", "c": "custom_label", "s": "5-June", "b": "open", "d": ""}, {"t": "ALP fast tracked for NL", "o": "Ray to check with Andy", "c": "opt", "s": "", "b": "open", "d": ""}, {"t": "Length of contract for Superdry  - Over a year, and 3 months rolling contract", "o": "to update/ remove from July", "c": "opt", "s": "", "b": "open", "d": ""}, {"t": "What Service does FeedSpark", "o": "to update/ remove from July", "c": "opt", "s": "", "b": "open", "d": ""}, {"t": "Added on all the services since last year", "o": "To remove Shopping/ Market", "c": "opt", "s": "", "b": "open", "d": ""}, {"t": "Contract for Superdry (seems to be 24th of June) -", "o": "Denmark", "c": "opt", "s": "", "b": "open", "d": ""}, {"t": "Current invoices - line by line -", "o": "Canada - EN/FR", "c": "account", "s": "", "b": "open", "d": ""}, {"t": "KelKoo removed both for UK & DE", "o": "Switzerland - FR/DE", "c": "opt", "s": "", "b": "open", "d": ""}, {"t": "DK, DE, IT, NO, PL, SE, ES, CA, CH", "o": "Italy", "c": "opt", "s": "", "b": "open", "d": ""}, {"t": "Quote to be updated according to the markets/ feeds removed (% per qty to be discussed)", "o": "Norway", "c": "opt", "s": "", "b": "open", "d": ""}, {"t": "ALP - service & quote to propose - testing for NL first", "o": "Poland", "c": "opt", "s": "", "b": "open", "d": ""}, {"t": "ALP - repropose for all markets rolling out (10) situation - regroup", "o": "Spain", "c": "opt", "s": "", "b": "open", "d": ""}, {"t": "ALP - repropose for all markets rolling out (6) situation - regroup", "o": "Sweden", "c": "opt", "s": "", "b": "open", "d": ""}, {"t": "PPC: Image Cycler to setup after PF campaign finishes", "o": "Ray/ Craig", "c": "image", "s": "", "b": "open", "d": ""}, {"t": "PPC: Keywords - Dresses - (1000 SKUs per month)", "o": "SImu", "c": "keyword", "s": "", "b": "open", "d": ""}, {"t": "PPC: Marign labels (12K still missing)", "o": "Em/Ray", "c": "custom_label", "s": "Open", "b": "open", "d": ""}, {"t": "Wunderkind - IE is live", "o": "Seb/ Ray", "c": "opt", "s": "Open", "b": "open", "d": ""}, {"t": "Migration", "o": "Ray/Jo/ Aurore", "c": "technical", "s": "Open", "b": "open", "d": ""}, {"t": "Jacket & Coats  - Image cycler - product-only vs product-on-model", "o": "Adri", "c": "image", "s": "", "b": "open", "d": ""}, {"t": "US: Short (AI) description vs. Long description AB test - 3¬4 weeks duration", "o": "", "c": "test", "s": "24-Jan", "b": "open", "d": ""}, {"t": "UK: image cycler (knitwear, jumper, jacket) fullbody vs. Product-only ( any product that has the image types)", "o": "Adriana", "c": "image", "s": "", "b": "open", "d": ""}, {"t": "FS to run sale keywords optimisation for sale linelist -", "o": "Mo", "c": "keyword", "s": "Open", "b": "open", "d": ""}, {"t": "AS to share access to analytics.feedspark@gmail.com", "o": "", "c": "account", "s": "Open", "b": "open", "d": ""}, {"t": "Product Highlights : to add from masterfeed - check if new IE feed will contain highlights", "o": "Ray", "c": "data", "s": "Open", "b": "open", "d": ""}, {"t": "Bing - to reactive - SD to use UK Shopping", "o": "BFBC x Ray", "c": "channel", "s": "On hold", "b": "hold", "d": ""}, {"t": "CL5- Low Performer ideas based on exclusion (low Roas, high spend) (0c0c past x period) - threshold to confirmed be BFBC", "o": "Ray", "c": "custom_label", "s": "Open", "b": "open", "d": ""}, {"t": "Sale Phrases per event", "o": "", "c": "opt", "s": "Open", "b": "open", "d": ""}, {"t": "Migration Phase 2 (UK) high prio market to ensure campaigns activitiy are not impacted", "o": "", "c": "technical", "s": "Open", "b": "open", "d": ""}, {"t": "PPC: Range Completion setup per categories (size variations per group0", "o": "", "c": "technical", "s": "Open", "b": "open", "d": ""}, {"t": "Migration PL - Wunderkind - summarise availability logic", "o": "Ray", "c": "technical", "s": "Open", "b": "open", "d": ""}]}, "YuMOVE": {"score": 65, "total": 131, "done": 66, "open": 64, "hold": 1, "updated": "2026-07", "cats": {"image": {"total": 22, "done": 11}, "opt": {"total": 45, "done": 26}, "channel": {"total": 7, "done": 2}, "technical": {"total": 9, "done": 4}, "custom_label": {"total": 10, "done": 6}, "product_type": {"total": 3, "done": 2}, "account": {"total": 8, "done": 0}, "title": {"total": 11, "done": 5}, "keyword": {"total": 7, "done": 4}, "data": {"total": 3, "done": 3}, "test": {"total": 6, "done": 3}}, "catsw": {"all": {"image": {"total": 22, "done": 11}, "opt": {"total": 45, "done": 26}, "channel": {"total": 7, "done": 2}, "technical": {"total": 9, "done": 4}, "custom_label": {"total": 10, "done": 6}, "product_type": {"total": 3, "done": 2}, "account": {"total": 8, "done": 0}, "title": {"total": 11, "done": 5}, "keyword": {"total": 7, "done": 4}, "data": {"total": 3, "done": 3}, "test": {"total": 6, "done": 3}}, "1": {"opt": {"total": 1, "done": 0}, "title": {"total": 1, "done": 1}, "image": {"total": 1, "done": 1}}, "3": {"opt": {"total": 1, "done": 0}, "title": {"total": 1, "done": 1}, "image": {"total": 1, "done": 1}}, "6": {"opt": {"total": 1, "done": 0}, "title": {"total": 1, "done": 1}, "image": {"total": 1, "done": 1}}, "12": {"title": {"total": 2, "done": 1}, "opt": {"total": 10, "done": 7}, "account": {"total": 1, "done": 0}, "channel": {"total": 1, "done": 1}, "image": {"total": 5, "done": 5}, "keyword": {"total": 2, "done": 2}}}, "vol": [{"l": "Mar 25", "d": 7, "o": 0}, {"l": "Apr 25", "d": 4, "o": 4}, {"l": "May 25", "d": 2, "o": 2}, {"l": "Jun 25", "d": 0, "o": 7}, {"l": "Jul 25", "d": 2, "o": 2}, {"l": "Sep 25", "d": 5, "o": 0}, {"l": "Oct 25", "d": 3, "o": 1}, {"l": "Dec 25", "d": 4, "o": 1}, {"l": "Jun 26", "d": 2, "o": 1}], "volkind": "month", "latest": [{"t": "Sub-G roundel - sbould be activated as \"up to % off\" rather than \"From: £...\" - black back ground + white text", "o": "Ray", "c": "image", "s": "Completed", "b": "done", "d": "2025-09-01"}, {"t": "Black Friday keywords optimisation - start from 1st November", "o": "Ez", "c": "keyword", "s": "Completed", "b": "done", "d": "2025-09-01"}, {"t": "Overlay roundel BF > B&W (black with white text font)", "o": "Ray", "c": "image", "s": "Completed", "b": "done", "d": "2025-09-01"}, {"t": "Overlar roundel XMAS > Red roundel ?(red with white text)", "o": "Ray", "c": "image", "s": "Completed", "b": "done", "d": "2025-09-01"}, {"t": "Creative competitor research", "o": "Ez", "c": "opt", "s": "Completed", "b": "done", "d": "2025-09-01"}, {"t": "Michel to share list of DIgestive products - Simon can add in the Benefits copy", "o": "Michel/ SImon", "c": "opt", "s": "Completed", "b": "done", "d": "2025-10-01"}, {"t": "BLock refresh until 7AM refresh on Friday", "o": "Ray", "c": "opt", "s": "Completed", "b": "done", "d": "2025-10-01"}, {"t": "Bundles for Simon to confirm - if able to push into FeedSpark feed", "o": "Simon/ Michel", "c": "opt", "s": "On Hold", "b": "hold", "d": "2025-10-01"}, {"t": "A/B Test [SUB display] - Roundel vs. GMP (item filter) - Product IDs", "o": "Ray", "c": "image", "s": "Completed", "b": "done", "d": "2025-10-01"}, {"t": "40% PAYG", "o": "Ray", "c": "opt", "s": "Completed", "b": "done", "d": "2025-12-01"}, {"t": "Further Reductions:", "o": "Ray", "c": "opt", "s": "Completed", "b": "done", "d": "2025-12-01"}, {"t": "XMAS keywords optimisation - across all products", "o": "Ray", "c": "keyword", "s": "Completed", "b": "done", "d": "2025-12-01"}, {"t": "Bundles - issue with pricing variant matching", "o": "Ray", "c": "opt", "s": "In Progress", "b": "progress", "d": "2025-12-01"}, {"t": "PPC: blue sidebar padding [Up to 40%]", "o": "Ray", "c": "opt", "s": "Completed", "b": "done", "d": "2025-12-01"}, {"t": "Symptom Matrix - works on all SKUs", "o": "Simon / Ez", "c": "opt", "s": "", "b": "open", "d": "2026-06-01"}, {"t": "Remove [Bulk Pack] from Shopping Titles", "o": "Ray", "c": "title", "s": "Completed", "b": "done", "d": "2026-06-01"}, {"t": "Review individual cropped image", "o": "Ray", "c": "image", "s": "Completed", "b": "done", "d": "2026-06-01"}]}, "Hobbycraft": {"score": 73, "total": 222, "done": 146, "open": 75, "hold": 1, "updated": "2026-07", "cats": {"data": {"total": 8, "done": 5}, "product_type": {"total": 9, "done": 7}, "test": {"total": 9, "done": 6}, "opt": {"total": 59, "done": 42}, "title": {"total": 14, "done": 8}, "keyword": {"total": 36, "done": 31}, "account": {"total": 22, "done": 15}, "image": {"total": 13, "done": 6}, "channel": {"total": 37, "done": 18}, "custom_label": {"total": 9, "done": 4}, "technical": {"total": 6, "done": 4}}, "catsw": {"all": {"data": {"total": 8, "done": 5}, "product_type": {"total": 9, "done": 7}, "test": {"total": 9, "done": 6}, "opt": {"total": 59, "done": 42}, "title": {"total": 14, "done": 8}, "keyword": {"total": 36, "done": 31}, "account": {"total": 22, "done": 15}, "image": {"total": 13, "done": 6}, "channel": {"total": 37, "done": 18}, "custom_label": {"total": 9, "done": 4}, "technical": {"total": 6, "done": 4}}, "1": {"opt": {"total": 4, "done": 1}, "channel": {"total": 2, "done": 0}, "account": {"total": 1, "done": 1}, "title": {"total": 1, "done": 0}}, "3": {"keyword": {"total": 1, "done": 1}, "title": {"total": 2, "done": 0}, "account": {"total": 2, "done": 2}, "opt": {"total": 5, "done": 2}, "channel": {"total": 3, "done": 1}}, "6": {"channel": {"total": 5, "done": 2}, "image": {"total": 1, "done": 1}, "keyword": {"total": 3, "done": 3}, "custom_label": {"total": 1, "done": 1}, "account": {"total": 3, "done": 3}, "opt": {"total": 6, "done": 3}, "test": {"total": 1, "done": 0}, "title": {"total": 2, "done": 0}}, "12": {"keyword": {"total": 6, "done": 6}, "channel": {"total": 6, "done": 3}, "image": {"total": 3, "done": 1}, "title": {"total": 3, "done": 1}, "account": {"total": 4, "done": 3}, "opt": {"total": 7, "done": 4}, "custom_label": {"total": 1, "done": 1}, "test": {"total": 1, "done": 0}}}, "vol": [{"l": "Mar 25", "d": 3, "o": 2}, {"l": "May 25", "d": 4, "o": 2}, {"l": "Jun 25", "d": 3, "o": 1}, {"l": "Jul 25", "d": 2, "o": 1}, {"l": "Sep 25", "d": 4, "o": 2}, {"l": "Feb 26", "d": 5, "o": 1}, {"l": "Mar 26", "d": 2, "o": 1}, {"l": "Apr 26", "d": 4, "o": 1}, {"l": "Jun 26", "d": 2, "o": 6}], "volkind": "month", "latest": [{"t": "Meta-data x FS Enriched Fields", "o": "Ray", "c": "channel", "s": "", "b": "open", "d": "2026-02-01"}, {"t": "Promo/ Roundels - FS to confirm promo box roundels localtion in Social feed", "o": "Ray", "c": "image", "s": "Done", "b": "done", "d": "2026-02-01"}, {"t": "Custom label to align with promo offers / removing linelist process", "o": "Ezgi", "c": "keyword", "s": "Done", "b": "done", "d": "2026-02-01"}, {"t": "Valentines Day - [Heart] related products > VDAY keywords - removing keywrods by 15-02", "o": "Ezgi", "c": "keyword", "s": "Done", "b": "done", "d": "2026-02-01"}, {"t": "All custom label overview [PPC] & [Social] - for Performic to review", "o": "Ezgi", "c": "custom_label", "s": "Done", "b": "done", "d": "2026-02-01"}, {"t": "new WoW to mirror Social - keep adhoc request in place", "o": "Ray", "c": "channel", "s": "Done", "b": "done", "d": "2026-02-01"}, {"t": "Intro for Chris", "o": "Ray", "c": "account", "s": "Done", "b": "done", "d": "2026-03-01"}, {"t": "Easters - Easter Party & Occasions", "o": "Ezgi", "c": "opt", "s": "Done", "b": "done", "d": "2026-03-01"}, {"t": "AI unbiased - making sure AB Tests are excluded from AI enrichment", "o": "Ray", "c": "test", "s": "Open", "b": "open", "d": "2026-03-01"}, {"t": "Kids - keywords optimisation", "o": "Ezgi", "c": "keyword", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "AI TItles A/B Test - to debrief process", "o": "Ray", "c": "title", "s": "Open", "b": "open", "d": "2026-04-01"}, {"t": "Review TikTok feeds setup with Claudia", "o": "Ray", "c": "account", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "AI Enrched fields  - debrief after Partner's meeting with Bonnie", "o": "Ray", "c": "opt", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "P3 Meta Overlay", "o": "Ezgi", "c": "channel", "s": "Done", "b": "done", "d": "2026-04-01"}, {"t": "Upload Logo in GMC", "o": "Ezgi", "c": "opt", "s": "Open", "b": "open", "d": "2026-06-01"}, {"t": "Delivery Rate to setup in GMC  - remo einformation from Feed instead", "o": "Ezgi", "c": "opt", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "Shall we try Click & Collect vs, LIA  > in BID for 20% cheaper CPC ?", "o": "Chris x Ray", "c": "channel", "s": "", "b": "open", "d": "2026-06-01"}, {"t": "Overlay [Selling Fast] [Trending Now] [New] - FS to share final design", "o": "Ray", "c": "channel", "s": "", "b": "open", "d": "2026-06-01"}, {"t": "Review [PRoduct_type] for non-existent values", "o": "Ray", "c": "account", "s": "Done", "b": "done", "d": "2026-06-01"}, {"t": "SEO chat with Hobbycraft team x Matt - Chris to link wih new SEO Manager", "o": "Ray", "c": "opt", "s": "", "b": "open", "d": "2026-06-01"}, {"t": "AI TItles A/B Test - [Search Intent] on 200 products", "o": "Ezgi", "c": "title", "s": "", "b": "open", "d": "2026-06-01"}, {"t": "Saver via Code-  Merchant Promotion ?", "o": "Cnris x Ezgi", "c": "opt", "s": "Open", "b": "open", "d": "2026-06-01"}]}};</script>
 <!-- PLANS:END -->
-<script>(function(){
-  var PT=window.PLANTASKS||{}; var host=document.getElementById('live-cov'); if(!host) return;
-  var brands=Object.keys(PT);
-  if(!brands.length){ document.getElementById('live').style.display='none'; return; }
-  var FEEDS=[['tech','Feed & technical'],['opt','Optimisation'],['test','Testing'],['creative','Creative / PPC'],['channel','Channels'],['account','Account & strategy']];
-  var MAP={technical:'tech',title:'opt',keyword:'opt',data:'opt',product_type:'opt',opt:'opt',test:'test',image:'creative',custom_label:'creative',channel:'channel',account:'account'};
-  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-  // look-back: use the per-window aggregates baked by the builder; brands with no dated
-  // tasks only carry "all", so a window selection transparently falls back to all-time.
-  function windowable(b,win){ var cw=(PT[b]||{}).catsw||{}; return win==='all' || !!cw[win]; }
-  function catsFor(b,win){ var p=PT[b]||{}, cw=p.catsw||{};
-    if(win!=='all' && cw[win]) return cw[win];
-    return cw.all || p.cats || {}; }
-  function agg(b,win){ var o={}; FEEDS.forEach(function(f){o[f[0]]={t:0,d:0};});
-    var cats=catsFor(b,win);
-    Object.keys(cats).forEach(function(c){ var f=MAP[c]||'opt'; o[f].t+=cats[c].total||0; o[f].d+=cats[c].done||0; });
-    return o; }
-  function cell(o){ if(!o.t) return '<td class="lc-cell lc-0"><span class="lc-dim">–</span></td>';
-    var pct=Math.round(o.d/o.t*100), lit=pct>=66?'lc-3':pct>=33?'lc-2':'lc-1';
-    return '<td class="lc-cell '+lit+'" title="'+o.d+' of '+o.t+' done ('+pct+'%)"><b>'+o.d+'</b><span>/'+o.t+'</span></td>'; }
-  function render(win){
-    var rows={}, ftot={}, total=0, tdone=0, nowin=0;
-    FEEDS.forEach(function(f){ftot[f[0]]={t:0,d:0};});
-    brands.forEach(function(b){ rows[b]=agg(b,win); if(!windowable(b,win)) nowin++;
-      FEEDS.forEach(function(f){ ftot[f[0]].t+=rows[b][f[0]].t; ftot[f[0]].d+=rows[b][f[0]].d; total+=rows[b][f[0]].t; tdone+=rows[b][f[0]].d; }); });
-    document.getElementById('live-n').textContent=total+' tasks · '+brands.length+' brands';
-    var hint=document.getElementById('lc-hint');
-    if(hint) hint.textContent = (win==='all'||!nowin) ? '' : (nowin+' brand'+(nowin>1?'s':'')+' undated — shown all-time');
-    var order=brands.slice().sort(function(a,b){return PT[b].total-PT[a].total;});
-    var h='<div class="lc-wrap"><table class="lc"><colgroup><col><col><col><col><col><col><col><col></colgroup>'
-      +'<thead><tr><th class="lc-b">Brand</th>'+FEEDS.map(function(f,i){return '<th data-i="'+(i+1)+'">'+esc(f[1])+'</th>';}).join('')+'<th>Total</th></tr></thead><tbody>';
-    order.forEach(function(b){ var bt=0,bd=0; FEEDS.forEach(function(f){bt+=rows[b][f[0]].t;bd+=rows[b][f[0]].d;});
-      var allwin=!windowable(b,win);
-      h+='<tr'+(allwin?' class="lc-allwin"':'')+'><th class="lc-b" title="'+esc(b)+(allwin?' · undated plan, showing all-time':'')+'">'+esc(b)+(allwin?' <span class="lc-star">∗</span>':'')+'</th>'+FEEDS.map(function(f){return cell(rows[b][f[0]]);}).join('')
-        +'<td class="lc-tot"><b>'+bd+'</b><span>/'+bt+'</span></td></tr>'; });
-    h+='<tr class="lc-foot"><th class="lc-b">All brands</th>'+FEEDS.map(function(f){return cell(ftot[f[0]]);}).join('')
-      +'<td class="lc-tot"><b>'+tdone+'</b><span>/'+total+'</span></td></tr></tbody></table></div>';
-    host.innerHTML=h;
-    var cols=host.querySelectorAll('col');
-    host.querySelectorAll('thead th[data-i]').forEach(function(th){ th.onclick=function(){
-      var i=+th.getAttribute('data-i'), was=cols[i].classList.contains('on');
-      cols.forEach(function(c){c.classList.remove('on');}); if(!was) cols[i].classList.add('on'); }; });
+
+<header class="hero"><div class="wrap">
+  <div class="eyebrow">Private &amp; Confidential · Meeting copilot</div>
+  <h1>Playbook</h1>
+  <p class="sub">One read across <b>every brand's project plan</b>. Ask what's been done for a client and see it as a categorised checklist — then bring the <b>plays that are working elsewhere in the book</b> to the brands that haven't had them yet. Built for the live client conversation.</p>
+  <div class="search">
+    <div class="field">
+      <svg class="mag" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="q" type="text" autocomplete="off" spellcheck="false" placeholder="What should I do for Accessorize?" aria-label="Search a brand">
+      <button class="clr" id="clr" type="button" aria-label="Clear">×</button>
+    </div>
+    <div class="sugg" id="sugg" role="listbox"></div>
+    <div class="hint">Type a brand — <b>“what should I do for Reiss”</b>, or just <b>Hobbycraft</b>. Or pick one below.</div>
+  </div>
+  <div class="tools">
+    <button class="btn" id="tune-btn" type="button">⚙ Tune categories</button>
+    <span class="note" id="src" style="margin-top:0"></span>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <div id="tuner" class="card"></div>
+
+  <section id="canvas">
+    <div class="sec-lbl">The book — click any brand</div>
+    <div class="book" id="book"></div>
+  </section>
+
+  <section id="panel">
+    <div class="pnl-head">
+      <div style="flex:1;min-width:0">
+        <div class="ttl" id="p-name"></div>
+        <div class="sum" id="p-sum"></div>
+      </div>
+      <button class="x" id="p-close" type="button" aria-label="Back to the book" title="Back to the book">×</button>
+    </div>
+    <div class="win" id="p-win"></div>
+    <div class="cols">
+      <div class="card" id="retro">
+        <h3>✓ What's been done</h3>
+        <div class="ch" id="retro-sub"></div>
+        <div id="retro-body"></div>
+        <div class="miniflight" id="retro-flight"></div>
+        <div class="note" id="retro-note"></div>
+      </div>
+      <div class="card" id="prosp">
+        <h3>💡 Bring these from the wider book</h3>
+        <div class="ch">Plays running on comparable brands that this one hasn't had — ranked by how proven they are across the book.</div>
+        <div id="prosp-body"></div>
+        <div class="note">Each suggestion files straight into the brand's plan via the Workflow brief composer.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span id="verstate"></span></div></div>
+
+<script>
+(function(){
+  'use strict';
+  var $=function(s){return document.querySelector(s)};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+  var fmt=function(n){return (n==null||isNaN(n))?'0':Number(n).toLocaleString('en-GB')};
+  function b64url(o){var b=new TextEncoder().encode(JSON.stringify(o)),s='';b.forEach(function(c){s+=String.fromCharCode(c)});return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+
+  /* ---- industries (multi-industry framing + peer relevance) ---- */
+  var INDUSTRY={Reiss:'Fashion',Schuh:'Footwear',Monsoon:'Fashion',Accessorize:'Accessories',Superdry:'Fashion',
+    YuMOVE:'Pet care',Hobbycraft:'Crafts & hobby','House of Bruar':'Luxury country','American Golf':'Golf & sport',
+    Ryobi:'Tools & DIY','Estée Lauder':'Beauty','Jo Malone':'Beauty','Bobbi Brown':'Beauty',Benefit:'Beauty',Clinique:'Beauty',MAC:'Beauty'};
+
+  /* ---- taxonomy: the meeting-facing strategy categories (Ray's list, calibrated to real
+     plan vocabulary). Each has a keyword bag [term, weight]; classify() picks the top-scoring
+     category from a task's text. xp=cross-pollinate (a proposable play, not BAU admin).
+     Editable in-page (⚙ Tune) — overrides persist locally per user. ---- */
+  var TAX=[
+    {k:'labels',n:'Custom Labels',e:'🏷',xp:1,kw:[['custom label',3],['custom_label',3],['cl0',3],['cl1',3],['cl2',3],['cl3',3],['cl4',3],['cl5',3],['bestseller',2],['best-seller',2],['best seller',2],['margin label',3],['zombie campaign',3],['low performer',2],['low roas',2],['velocity',2],['price tier',2]]},
+    {k:'image',n:'Image & Overlays',e:'🖼️',xp:1,kw:[['overlay',3],['roundel',3],['image cycler',3],['cycler',3],['product-on-model',3],['product-only',2],['fullbody',2],['lifestyle',2],['dpa creative',3],['image tag',2],['image quality',2],['image_link',2],['additional image',2],['badge',1]]},
+    {k:'title',n:'Titles',e:'🔤',xp:1,kw:[['title',3],['titles',3],['mask',2],['duplicated title',3],['auto-optimised title',3],['title_en',3],['recrawl title',3]]},
+    {k:'keyword',n:'Keyword Optimisation',e:'🔍',xp:1,kw:[['keyword',3],['keywords',3],['kw optimisation',3],['keyword planner',3],['sale keywords',3],['keyword injection',3],['saturation',2],['search term',2],['searchterm',2]]},
+    {k:'desc',n:'Descriptions & Highlights',e:'📝',xp:1,kw:[['description',3],['descriptions',3],['500+ char',3],['pdp description',3],['product highlight',3],['highlights',2],['product_detail',3],['enrich',2],['benefit copy',3]]},
+    {k:'golden',n:'Attributes & Golden Record',e:'⭐',xp:1,kw:[['golden record',3],['attribute',2],['attributes matrix',3],['gtin',3],['mpn',3],['gpc',3],['google product category',3],['mandatory field',3],['data field',2],['item group',3],['backfill',2],['back filling',3],['age_group',2],['size_type',2]]},
+    {k:'ptype',n:'Product Type & Taxonomy',e:'🗂️',xp:1,kw:[['product type',3],['product_type',3],['taxonomy',3],['category mapping',3],['deepest category',3],['categorisation',2],['depth',2],['chevron',2]]},
+    {k:'stock',n:'Stock & Range',e:'📦',xp:1,kw:[['stock_flag',3],['stock flag',3],['out of stock',3],['range completion',3],['hero size',3],['hero sizes',3],['exclusion',2],['exclude',2],['size variation',3],['availability',2],['inventory',2],['sold out',2],['oos',3]]},
+    {k:'test',n:'A/B Testing',e:'🧪',xp:1,kw:[['a/b',3],['ab test',3],['a/b test',3],['split test',3],['split-test',3],['retest',2],['with vs without',3],['test pair',3],['control group',2],['uplift',2]]},
+    {k:'events',n:'Events & Seasonal',e:'📅',xp:1,kw:[['eoss',3],['black friday',3],['bfcm',3],['christmas',3],['peak',2],['autumn winter',3],['spring summer',3],['resort wear',3],['new season',2],['seasonal',2],['clearance',2],['sale event',3],['promotion',2]]},
+    {k:'intent',n:'Search Intent & Demand',e:'🧭',xp:1,kw:[['search intent',3],['geo intent',3],['intent integration',3],['trend map',3],['converting search',3],['demand',2],['s360',2],['query mining',3]]},
+    {k:'airdy',n:'AI-Ready & Conversational',e:'🤖',xp:1,kw:[['conversational',3],['ai readiness',3],['ai-ready',3],['ai ready',3],['chatgpt',3],['ai mode',3],['agentic',3],['question_and_answer',3],['q&a',2],['related_product',3],['variant_option',3],['popularity_rank',3],['ai enabled',2],['ai enriched',3],['ai generated',2]]},
+    {k:'competitor',n:'Competitor & Market Intel',e:'📊',xp:1,kw:[['competitor',3],['competitive',3],['benchmark',3],['share of voice',3],['market analysis',3],['mismatch',2],['vs next',3],['from next',2]]},
+    {k:'channel',n:'Channels & Markets',e:'🌐',xp:1,kw:[['meta',2],['facebook',2],['social',1],['lia',2],['click & collect',3],['new market',3],['international',2],['shopping local',3],['local language',3],['campaign structure',3],['pmax',2],['css',2],['market roll-out',3],['market rollout',3]]},
+    {k:'tech',n:'Feed Health & Technical',e:'🩺',xp:0,kw:[['migration',3],['refresh frequency',3],['disapproval',3],['feed error',3],['structured data',2],['suspension',2],['item no',2],['sync',1]]},
+    {k:'account',n:'Account & Strategy',e:'🤝',xp:0,kw:[['qbr',3],['strategy review',3],['strategy session',3],['recommendation',2],['ways of working',3],['billing',3],['access for',2],['workshop',2],['intro',1],['kick off',2],['kickoff',2],['review call',2]]}
+  ];
+  var GENERAL={k:'general',n:'General Optimisation',e:'✨',xp:0};
+
+  /* editable overrides (localStorage): { extra:{k:[terms]}, hide:{k:1}, name:{k:'…'} } */
+  var OV={extra:{},hide:{},name:{}};
+  try{var raw=localStorage.getItem('fcc-pb-tax');if(raw)OV=JSON.parse(raw)||OV;}catch(e){}
+  function catName(k){var b=TAX.filter(function(c){return c.k===k})[0]||GENERAL;return (OV.name&&OV.name[k])||b.n;}
+  function catEmoji(k){var b=TAX.filter(function(c){return c.k===k})[0]||GENERAL;return b.e;}
+  function saveOV(){try{localStorage.setItem('fcc-pb-tax',JSON.stringify(OV));}catch(e){}}
+
+  var hit=function(text,term){try{return new RegExp('(^|[^a-z0-9])'+term.replace(/[.*+?^${}()|[\]\\/]/g,'\\$&')+'([^a-z0-9]|$)','i').test(text);}catch(e){return text.indexOf(term)>=0;}};
+  function classify(t){
+    var s=String(t||'').toLowerCase(),best=null,bs=0;
+    for(var i=0;i<TAX.length;i++){var c=TAX[i];if(OV.hide&&OV.hide[c.k])continue;
+      var sc=0,j;
+      for(j=0;j<c.kw.length;j++){if(hit(s,c.kw[j][0]))sc+=c.kw[j][1];}
+      var ex=(OV.extra&&OV.extra[c.k])||[];
+      for(j=0;j<ex.length;j++){if(ex[j]&&hit(s,ex[j].toLowerCase()))sc+=3;}
+      if(sc>bs){bs=sc;best=c.k;}
+    }
+    return best||'general';
   }
-  var sel=document.getElementById('lc-win');
-  if(sel) sel.onchange=function(){ render(sel.value); };
-  render(sel?sel.value:'all');
-})();</script>
-<div class="footmark"><div class="wrap">FeedSpark · Private &amp; Confidential · Task Library</div></div>
-<script>(function(){
-  var cards=[].slice.call(document.querySelectorAll('.cat:not(#live) .tt'));
-  if(!cards.length){ var bar=document.getElementById('tl-bar'); if(bar)bar.style.display='none'; return; }
-  cards.forEach(function(c){
-    var sec=c.closest('.cat'); c.__cat=sec?sec.querySelector('.cat-h h2').textContent.trim():'';
-    c.__name=((c.querySelector('h4')||{}).textContent||'').trim();
-    var n=(c.querySelector('.tt-n')||{}).textContent||'0'; c.__count=parseInt(n,10)||0;
-    c.__clients=[].slice.call(c.querySelectorAll('.tt-cl .mini')).map(function(m){return m.textContent.trim();});
-    c.__text=(c.textContent||'').toLowerCase();
-    c.__orig=Array.prototype.indexOf.call(c.parentNode.children,c);
-  });
-  // clients dropdown (union across all cards)
-  var seen={}; cards.forEach(function(c){c.__clients.forEach(function(cl){seen[cl]=1;});});
-  var clientSel=document.getElementById('tl-client');
-  Object.keys(seen).sort().forEach(function(cl){var o=document.createElement('option');o.value=cl;o.textContent=cl;clientSel.appendChild(o);});
-  // category chips
-  var cats=[]; document.querySelectorAll('.cat:not(#live) .cat-h h2').forEach(function(h){var t=h.textContent.trim();if(cats.indexOf(t)<0)cats.push(t);});
-  var catWrap=document.getElementById('tl-cats'), curCat='';
-  function chip(lbl,val){var b=document.createElement('button');b.className='tl-chip'+(val===curCat?' on':'');b.textContent=lbl;
-    b.onclick=function(){curCat=val;[].forEach.call(catWrap.children,function(x){x.classList.remove('on');});b.classList.add('on');render();};return b;}
-  catWrap.appendChild(chip('All',''));
-  cats.forEach(function(c){catWrap.appendChild(chip(c,c));});
-  var search=document.getElementById('tl-search'), sort=document.getElementById('tl-sort'), nlbl=document.getElementById('tl-n'), empty=document.getElementById('tl-empty');
-  [search,clientSel,sort].forEach(function(el){ el.addEventListener('input',render); el.addEventListener('change',render); });
-  document.getElementById('tl-clear').onclick=function(){ search.value='';clientSel.value='';sort.value='def';curCat='';
-    [].forEach.call(catWrap.children,function(x,i){x.classList.toggle('on',i===0);}); render(); };
-  function render(){
-    var q=search.value.trim().toLowerCase(), cl=clientSel.value, so=sort.value, shown=0;
-    cards.forEach(function(c){
-      var ok=(!curCat||c.__cat===curCat)&&(!q||c.__text.indexOf(q)>=0)&&(!cl||c.__clients.indexOf(cl)>=0);
-      c.style.display=ok?'':'none'; if(ok)shown++;
+  /* A/B sub-type: refine test into title/keyword/description flavour where the text says so */
+  function abFlavour(t){var s=String(t||'').toLowerCase();
+    if(/title/.test(s))return 'title';if(/keyword/.test(s))return 'keyword';
+    if(/desc|description/.test(s))return 'description';if(/image|overlay/.test(s))return 'image';return '';}
+
+  /* ---- data: baked window.PLANTASKS (instant) merged with GET /api/playbook (live, full) ---- */
+  var MODEL={};       /* brand -> { tasks:[{t,o,b,d}], live, baked, industry } */
+  function ingestBaked(){
+    var P=window.PLANTASKS||{};
+    Object.keys(P).forEach(function(b){
+      var e=P[b]||{},lat=e.latest||[];
+      MODEL[b]={tasks:lat.map(function(t){return {t:t.t,o:t.o,b:t.b,d:t.d};}),live:false,baked:true,industry:INDUSTRY[b]||''};
     });
-    document.querySelectorAll('.cat:not(#live) .tt-grid').forEach(function(grid){
-      var kids=[].slice.call(grid.children).filter(function(k){return k.classList.contains('tt');});
-      kids.sort(function(a,b){ if(so==='count')return b.__count-a.__count; if(so==='az')return a.__name.localeCompare(b.__name); return a.__orig-b.__orig; });
-      kids.forEach(function(k){grid.appendChild(k);});
-    });
-    document.querySelectorAll('.cat:not(#live)').forEach(function(sec){
-      var any=[].slice.call(sec.querySelectorAll('.tt')).some(function(c){return c.style.display!=='none';});
-      sec.style.display=any?'':'none';
-    });
-    nlbl.textContent=shown+' task type'+(shown===1?'':'s');
-    empty.style.display=shown?'none':'block';
   }
-  render();
-})();</script>
-</body></html>
+  function ingestLive(d){
+    if(!d||!d.brands)return;
+    Object.keys(d.brands).forEach(function(b){
+      var e=d.brands[b]||{};
+      if(!e.tasks||!e.tasks.length)return;
+      /* shared-workbook brands (Accessorize/Monsoon, ELC group) keep their per-brand baked
+         split rather than the merged workbook — but a brand with no baked data uses live */
+      if(e.shared&&MODEL[b]&&MODEL[b].baked)return;
+      MODEL[b]={tasks:e.tasks.map(function(t){return {t:t.t,o:t.o,b:t.b,d:t.d};}),live:true,baked:!!(MODEL[b]&&MODEL[b].baked),industry:INDUSTRY[b]||''};
+    });
+  }
+
+  /* ---- windowing: recency from the plan date d (ISO month or due date). No true completion
+     timestamp exists in the plans, so this is by plan month/due — labelled honestly. ---- */
+  var NOW=new Date();
+  function monthsAgo(iso){
+    if(!iso)return 999;var m=String(iso).match(/^(\d{4})-(\d{2})/);if(!m)return 999;
+    var mb=(NOW.getFullYear()-(+m[1]))*12+(NOW.getMonth()-((+m[2])-1));
+    return mb<0?0:mb;
+  }
+  function inWin(iso,w){return w==='all'?true:monthsAgo(iso)<(+w);}
+
+  /* classify a brand's tasks once: {k:{done:[],flight:[],all:[]}} + flat counts */
+  function catsOf(brand){
+    var m=MODEL[brand];if(!m)return null;
+    var out={};
+    m.tasks.forEach(function(t){
+      var k=classify(t.t);
+      (out[k]=out[k]||{done:[],flight:[],all:[]}).all.push(t);
+      if(t.b==='done')out[k].done.push(t);
+      else out[k].flight.push(t);
+    });
+    return out;
+  }
+
+  /* cross-book activity index: per category, how many (all) tasks each brand carries.
+     Presence = the brand has meaningfully worked the category (>=2 tasks). */
+  var IDX=null;
+  function buildIndex(){
+    IDX={};
+    Object.keys(MODEL).forEach(function(b){
+      var c=catsOf(b);
+      Object.keys(c).forEach(function(k){(IDX[k]=IDX[k]||{})[b]=c[k].all.length;});
+    });
+  }
+
+  /* ---- render: the book overview (blank canvas) ---- */
+  function roster(){return Object.keys(MODEL).sort();}
+  function doneCount(b){return (MODEL[b].tasks||[]).filter(function(t){return t.b==='done';}).length;}
+  function lastActive(b){var mx='';MODEL[b].tasks.forEach(function(t){if(t.b==='done'&&t.d&&t.d>mx)mx=t.d;});return mx;}
+  function monLbl(iso){if(!iso)return '';var m=String(iso).match(/^(\d{4})-(\d{2})/);if(!m)return '';
+    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][(+m[2])-1]+" '"+m[1].slice(2);}
+  function renderBook(){
+    var b=$('#book'),rs=roster();
+    if(!rs.length){b.innerHTML='<div class="empty" style="grid-column:1/-1">No plans in scope yet — this needs the live worker (or the baked plan snapshot).</div>';return;}
+    b.innerHTML=rs.map(function(name){
+      var dn=doneCount(name),tot=MODEL[name].tasks.length,la=lastActive(name);
+      return '<button class="bk" data-brand="'+esc(name)+'">'+
+        '<div class="bn">'+esc(name)+'</div>'+
+        '<div class="bi">'+esc(MODEL[name].industry||'—')+'</div>'+
+        '<div class="bstat"><span><b class="d">'+fmt(dn)+'</b> done</span>'+
+        (la?'<span style="margin-left:auto;color:var(--muted)">'+esc(monLbl(la))+'</span>':'')+'</div>'+
+        '</button>';
+    }).join('');
+  }
+
+  /* ---- render: a brand's panel ---- */
+  var CUR='',WIN='3';
+  function openBrand(name){
+    if(!MODEL[name]){return;}
+    CUR=name;
+    $('#p-name').innerHTML=esc(name)+'<span class="chip">'+esc(MODEL[name].industry||'brand')+'</span>';
+    var dn=doneCount(name),tot=MODEL[name].tasks.length,fl=tot-dn,la=lastActive(name);
+    $('#p-sum').innerHTML=fmt(dn)+' completed of '+fmt(tot)+' logged'+(fl?' · '+fmt(fl)+' in flight':'')+(la?' · last active '+esc(monLbl(la)):'')+
+      (MODEL[name].live?'':' · <span title="Showing the recent snapshot; live refresh pending">recent snapshot</span>');
+    $('#p-win').innerHTML='<label>Completed in the last</label>'+
+      [['1','month'],['3','3 months'],['6','6 months'],['12','year'],['all','all time']].map(function(w){
+        return '<button class="wb'+(w[0]===WIN?' on':'')+'" data-win="'+w[0]+'" type="button">'+w[1]+'</button>';
+      }).join('');
+    $('#canvas').style.display='none';
+    $('#panel').classList.add('on');
+    renderRetro();renderProsp();
+    try{$('#panel').scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+  }
+  function renderRetro(){
+    var c=catsOf(CUR),body=$('#retro-body');
+    var rows=[];
+    TAX.concat([GENERAL]).forEach(function(cat){
+      if(OV.hide&&OV.hide[cat.k])return;
+      var slot=c[cat.k];if(!slot)return;
+      var done=slot.done.filter(function(t){return inWin(t.d,WIN);});
+      if(!done.length)return;
+      rows.push({cat:cat,done:done,n:done.length});
+    });
+    rows.sort(function(a,b){return b.n-a.n;});
+    var winLbl={'1':'the last month','3':'the last 3 months','6':'the last 6 months','12':'the last year','all':'all time'}[WIN];
+    $('#retro-sub').textContent='Completed work for '+CUR+', '+winLbl+', grouped by strategy.';
+    if(!rows.length){
+      body.innerHTML='<div class="empty">No completed work recorded for '+esc(CUR)+' in this window. Try a wider window, or check the plays on the right.</div>';
+    }else{
+      body.innerHTML=rows.map(function(r,i){
+        return '<details class="catrow" data-k="'+r.cat.k+'"'+(i<2?' open':'')+'>'+
+          '<summary><span class="em">'+r.cat.e+'</span><span class="cn">'+esc(catName(r.cat.k))+'</span>'+
+          '<span class="ct">'+r.n+'</span><span class="cv">▶</span></summary>'+
+          '<div class="tlist">'+r.done.map(function(t){
+            var fv=r.cat.k==='test'?abFlavour(t.t):'';
+            return '<div class="ti"><span class="ck">✓</span><span class="tt">'+esc(t.t)+(fv?' <span style="color:var(--muted);font-weight:800">· '+fv+'</span>':'')+'</span>'+
+              (t.o?'<span class="to">'+esc(t.o)+'</span>':'')+(t.d?'<span class="tm">'+esc(monLbl(t.d))+'</span>':'')+'</div>';
+          }).join('')+'</div>'+
+          '</details>';
+      }).join('');
+    }
+    /* in-flight strip (all-time, open/hold/progress/briefed) */
+    var flight={};
+    (c&&Object.keys(c)||[]).forEach(function(k){(c[k].flight||[]).forEach(function(t){flight[k]=(flight[k]||0)+1;});});
+    var fk=Object.keys(flight).sort(function(a,b){return flight[b]-flight[a];}).slice(0,6);
+    $('#retro-flight').innerHTML=fk.length?('<span style="color:var(--muted)">In flight:</span>'+fk.map(function(k){
+      return '<span class="fp">'+catEmoji(k)+' '+esc(catName(k))+' · '+flight[k]+'</span>';}).join('')):'';
+    $('#retro-note').innerHTML='Recency is by <b>plan date</b> (the month a task is filed under, or its due date) — project plans carry no explicit completion timestamp, so this is the honest best-effort, not a click-date.';
+  }
+  function mapWfCat(k){return {labels:'custom_label',image:'image',title:'title',keyword:'keyword',desc:'keyword',golden:'data',ptype:'product_type',stock:'technical',test:'test',events:'keyword',intent:'keyword',airdy:'data',competitor:'account',channel:'channel',tech:'technical',account:'account'}[k]||'opt';}
+  function renderProsp(){
+    if(!IDX)buildIndex();
+    var body=$('#prosp-body'),mine=catsOf(CUR)||{};
+    var peersN=Object.keys(MODEL).length-1;
+    var sugg=[];
+    TAX.forEach(function(cat){
+      if(!cat.xp||(OV.hide&&OV.hide[cat.k]))return;
+      var mineN=(mine[cat.k]&&mine[cat.k].all.length)||0;
+      var idx=IDX[cat.k]||{};
+      var peers=Object.keys(idx).filter(function(b){return b!==CUR&&idx[b]>=2;}).sort(function(a,b){return idx[b]-idx[a];});
+      if(peers.length<2)return;                       /* needs a real cross-book pattern */
+      var peerVol=peers.reduce(function(s,b){return s+idx[b];},0);
+      var peerAvg=peerVol/peers.length;
+      if(mineN>=Math.max(2,peerAvg*0.34))return;      /* the brand already does this enough */
+      sugg.push({cat:cat,peers:peers,mineN:mineN,peerVol:peerVol,score:peers.length*10+peerVol});
+    });
+    sugg.sort(function(a,b){return b.score-a.score;});
+    sugg=sugg.slice(0,7);
+    if(!sugg.length){body.innerHTML='<div class="empty">'+esc(CUR)+' is already active across the plays the rest of the book runs. Nothing obvious to cross-pollinate.</div>';return;}
+    body.innerHTML=sugg.map(function(s){
+      var topPeer=s.peers[0],egs=[];
+      var pc=catsOf(topPeer);var pool=(pc&&pc[s.cat.k]&&pc[s.cat.k].all)||[];
+      /* prefer done examples, most descriptive */
+      pool.slice().sort(function(a,b){return (b.b==='done')-(a.b==='done');}).slice(0,2).forEach(function(t){egs.push({b:topPeer,t:t.t});});
+      var peerTxt=s.peers.slice(0,4).map(function(b){return '<b>'+esc(b)+'</b> ('+((IDX[s.cat.k]||{})[b])+')';}).join(', ')+(s.peers.length>4?' +'+(s.peers.length-4)+' more':'');
+      var brief=b64url({client:CUR,task:catName(s.cat.k)+' — '+CUR,cat:mapWfCat(s.cat.k),
+        scope:'Playbook cross-pollination.\nStrategy: '+catName(s.cat.k)+'\nProven on: '+s.peers.slice(0,5).join(', ')+
+        (egs.length?'\nExample plays:\n'+egs.map(function(e){return '• '+e.t+' ('+e.b+')';}).join('\n'):'')+
+        (s.mineN?'\n'+CUR+' has '+s.mineN+' related task(s) — this deepens it.':'\n'+CUR+' has not run this play yet.')});
+      return '<div class="sug">'+
+        '<div class="sh"><span class="em">'+s.cat.e+'</span>'+esc(catName(s.cat.k))+
+        '<span class="why">'+(s.mineN?'thin here':'not run yet')+'</span></div>'+
+        '<div class="peers">Proven on '+peerTxt+'</div>'+
+        (egs.length?'<div class="egs">'+egs.map(function(e){return '<div>↳ '+esc(e.t)+' <span style="color:var(--muted)">— '+esc(e.b)+'</span></div>';}).join('')+'</div>':'')+
+        '<div class="act"><a class="brief" href="/workflow?brief='+brief+'" title="Open the Workflow brief composer prefilled for '+esc(CUR)+'">→ Brief this for '+esc(CUR)+'</a></div>'+
+        '</div>';
+    }).join('');
+  }
+  function closeBrand(){CUR='';$('#panel').classList.remove('on');$('#canvas').style.display='';$('#q').value='';toggleClr();$('#sugg').classList.remove('on');}
+
+  /* ---- search box ---- */
+  var HI=-1;
+  function matches(q){q=q.trim().toLowerCase();
+    /* strip meeting phrasing: "what should i do for X", "for X", "about X" */
+    var m=q.match(/(?:for|about|on|do for)\s+([a-z0-9 &'-]+)$/);if(m)q=m[1].trim();
+    var rs=roster();if(!q)return rs.slice(0,8);
+    return rs.filter(function(b){return b.toLowerCase().indexOf(q)>=0;}).slice(0,8);
+  }
+  function renderSugg(){
+    var q=$('#q').value,list=matches(q),s=$('#sugg');
+    if(!list.length){s.classList.remove('on');s.innerHTML='';return;}
+    s.innerHTML=list.map(function(b,i){
+      return '<button type="button" role="option" data-brand="'+esc(b)+'"'+(i===HI?' class="hi"':'')+'>'+
+        esc(b)+'<span class="ind">'+esc(MODEL[b].industry||'')+' · '+fmt(doneCount(b))+' done</span></button>';
+    }).join('');
+    s.classList.add('on');
+  }
+  function toggleClr(){$('#clr').classList.toggle('on',!!$('#q').value);}
+
+  /* ---- taxonomy tuner ---- */
+  function renderTuner(){
+    var t=$('#tuner');
+    t.innerHTML='<h3 style="margin:0 0 2px;font-size:16px;font-weight:900">⚙ Tune categories</h3>'+
+      '<div class="ch">Add words that route a task into a category, rename a category, or hide one. Saved on this device; the defaults ship with the module. This re-classifies instantly.</div>'+
+      TAX.map(function(c){
+        var ex=((OV.extra&&OV.extra[c.k])||[]).join(', ');
+        return '<div class="txrow"><span class="txn">'+c.e+' '+
+          '<input class="kw" style="min-width:120px;max-width:150px;font-weight:900" data-name="'+c.k+'" value="'+esc(catName(c.k))+'"></span>'+
+          '<input class="kw" data-extra="'+c.k+'" placeholder="extra keywords, comma-separated" value="'+esc(ex)+'">'+
+          '<label class="hd"><input type="checkbox" data-hide="'+c.k+'"'+(OV.hide&&OV.hide[c.k]?' checked':'')+'> hide</label></div>';
+      }).join('')+
+      '<div class="tools"><button class="btn" id="tx-save" type="button">Save &amp; re-classify</button>'+
+      '<button class="btn" id="tx-reset" type="button">Reset to defaults</button></div>';
+    t.querySelector('#tx-save').onclick=function(){
+      OV={extra:{},hide:{},name:{}};
+      t.querySelectorAll('[data-name]').forEach(function(i){var v=i.value.trim();if(v&&v!==(TAX.filter(function(c){return c.k===i.getAttribute('data-name');})[0]||{}).n)OV.name[i.getAttribute('data-name')]=v;});
+      t.querySelectorAll('[data-extra]').forEach(function(i){var arr=i.value.split(',').map(function(x){return x.trim();}).filter(Boolean);if(arr.length)OV.extra[i.getAttribute('data-extra')]=arr;});
+      t.querySelectorAll('[data-hide]').forEach(function(i){if(i.checked)OV.hide[i.getAttribute('data-hide')]=1;});
+      saveOV();IDX=null;renderBook();if(CUR){renderRetro();renderProsp();}
+      t.classList.remove('on');
+    };
+    t.querySelector('#tx-reset').onclick=function(){OV={extra:{},hide:{},name:{}};saveOV();IDX=null;renderTuner();renderBook();if(CUR){renderRetro();renderProsp();}};
+  }
+
+  /* ---- wiring ---- */
+  function boot(){
+    ingestBaked();
+    renderBook();
+    if(!Object.keys(MODEL).length)$('#book').innerHTML='<div class="empty" style="grid-column:1/-1">Loading the book…</div>';
+    /* live crawl (scoped) merges full task lists over the baked snapshot */
+    fetch('/api/playbook').then(function(r){return r.json();}).then(function(d){
+      ingestLive(d);IDX=null;renderBook();
+      var live=Object.keys(MODEL).filter(function(b){return MODEL[b].live;}).length;
+      $('#src').textContent=(d&&d.ok)?('Live · '+Object.keys(MODEL).length+' brands in scope'+(d.scoped?' (your clients)':'')+(live?' · '+live+' refreshed':'')):'';
+      if(CUR){renderRetro();renderProsp();}
+    }).catch(function(){ $('#src').textContent='Recent snapshot (live worker unavailable)'; });
+
+    var qi=$('#q');
+    qi.addEventListener('input',function(){HI=-1;toggleClr();renderSugg();});
+    qi.addEventListener('keydown',function(e){
+      var list=matches(qi.value);
+      if(e.key==='ArrowDown'){HI=Math.min(list.length-1,HI+1);renderSugg();e.preventDefault();}
+      else if(e.key==='ArrowUp'){HI=Math.max(0,HI-1);renderSugg();e.preventDefault();}
+      else if(e.key==='Enter'){var pick=(HI>=0?list[HI]:list[0]);if(pick){openBrand(pick);$('#sugg').classList.remove('on');}e.preventDefault();}
+      else if(e.key==='Escape'){$('#sugg').classList.remove('on');}
+    });
+    qi.addEventListener('focus',renderSugg);
+    $('#clr').onclick=function(){qi.value='';toggleClr();qi.focus();renderSugg();};
+    document.addEventListener('click',function(e){
+      var sb=e.target.closest&&e.target.closest('[data-brand]');
+      if(sb){openBrand(sb.getAttribute('data-brand'));$('#sugg').classList.remove('on');return;}
+      var wb=e.target.closest&&e.target.closest('[data-win]');
+      if(wb){WIN=wb.getAttribute('data-win');$('#p-win').querySelectorAll('.wb').forEach(function(x){x.classList.toggle('on',x===wb);});renderRetro();return;}
+      if(!e.target.closest||!e.target.closest('.search'))$('#sugg').classList.remove('on');
+    });
+    $('#p-close').onclick=closeBrand;
+    $('#tune-btn').onclick=function(){var t=$('#tuner');if(t.classList.contains('on')){t.classList.remove('on');}else{renderTuner();t.classList.add('on');t.scrollIntoView({behavior:'smooth',block:'nearest'});}};
+
+    /* deep link: /playbook?b=Accessorize opens straight to a brand (meeting shortcut) */
+    try{var qp=new URLSearchParams(location.search).get('b');if(qp){var found=roster().filter(function(b){return b.toLowerCase()===qp.toLowerCase();})[0];if(found)openBrand(found);}}catch(e){}
+
+    fetch('/api/version').then(function(r){return r.json();}).then(function(v){if(v&&v.sha)$('#verstate').textContent='build '+String(v.sha).slice(0,7);}).catch(function(){});
+  }
+  if(document.readyState!=='loading')boot();else document.addEventListener('DOMContentLoaded',boot);
+})();
+</script>

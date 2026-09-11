@@ -40,6 +40,10 @@ echo "── validating: overlay engine (URL-string classification + collector)"
 node tools/test_overlays.mjs >/dev/null
 echo "   ✓ overlay types read off the image_link URL"
 
+echo "── validating: KWCal event ⇄ ticket tie + result-window join"
+node tools/test_kwcal_tie.mjs >/dev/null
+echo "   ✓ stamped-id precedence + the half-month result join hold"
+
 echo "── validating: live deck editor (real browser)"
 if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   NODE_PATH=$(npm root -g) node tools/test_editor.mjs || {
