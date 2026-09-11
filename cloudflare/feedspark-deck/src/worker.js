@@ -34,7 +34,7 @@ import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 import INGEST_SUPERDRY_SVS_AUG26 from "../../../ops/ingest/superdry_svs_aug26.json";
 const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
-import { ACCESS_SEED, resolveAccess, clientMatch, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail } from "./access.js";
+import { ACCESS_SEED, resolveAccess, clientMatch, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
 import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
@@ -575,12 +575,14 @@ export default {
     if (path === '/api/access') {
       const acc = await accessOf(env, request);
       if (request.method === 'GET' && url.searchParams.get('me')) {
-        return json({ email: acc.email, owner: !!acc.owner, clients: acc.clients, name: acc.name || '', viewAs: acc.viewAs || null });
+        return json({ email: acc.email, owner: !!acc.owner, clients: acc.clients, modules: acc.modules || null, name: acc.name || '', viewAs: acc.viewAs || null });
       }
       if (!acc.owner) return json({ error: 'restricted to the account owner' }, 403);
       if (request.method === 'GET') {
         const dir = await env.EDITS.get('accessdir', 'json');
-        return json({ users: dir || ACCESS_SEED, stored: !!dir });
+        // ship the grantable-module registry with the directory so the 👥 panel renders the
+        // module chips from the server's truth (no client-side mirror to drift)
+        return json({ users: dir || ACCESS_SEED, stored: !!dir, modules: MODULES });
       }
       if (request.method === 'PUT') {
         let body; try { body = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
@@ -2074,7 +2076,23 @@ export default {
       // exists, append to the end otherwise (trailing <style>/<script> parse into body fine).
       const inject = (html, extra) => (html.indexOf('</body>') >= 0 ? html.replace('</body>', extra + '\n</body>') : html + '\n' + extra);
       let html = inject(page.html, getEditorScript(page.slug));
-      if (!path.startsWith('/deck/')) html = inject(html, INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW);
+      if (!path.startsWith('/deck/')) {
+        // MODULE ACCESS (Ray Sep 2026): a non-owner whose directory row restricts modules can't
+        // open a module page outside their grant — bounced to the always-open landing. Leadership
+        // & Activity are already owner-gated above; the landing (/) is never blocked. The same
+        // resolved grant is stamped into the page (window.__FCCMOD) so MODGATE hides the nav links
+        // they can't reach (runtime only — the static nav stays byte-identical for check_nav).
+        const acc = await accessOf(env, request);
+        const modSlug = MODULE_PATHS[path];
+        if (modSlug && !acc.owner && !moduleAllowed(acc.modules, modSlug)) {
+          logActivity(ctx, env, request, 'module-denied', path);
+          return new Response(moduleDeniedHtml(path) + viewAsExitHtml(env, request),
+            { status: 403, headers: { 'content-type': 'text/html;charset=utf-8', ...CORS } });
+        }
+        const modList = acc.owner ? null : (acc.modules || null);
+        html = inject(html, INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW
+          + '\n<script>window.__FCCMOD=' + JSON.stringify(modList) + ';</script>\n' + MODGATE);
+      }
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
 
@@ -2179,13 +2197,30 @@ function viewAsExitHtml(env, request) {
   if (!vs) return '';
   return '<p style="margin-top:18px;font-size:13px;color:#8a94a0">\u{1F441} You are previewing the FCC as <b>' + vs.replace(/[<>&]/g, '') + '</b> \u2014 they get exactly this page. <a href="#" style="color:#ED6F0B;font-weight:700" onclick="document.cookie=\'fcc-viewas=;path=/;max-age=0\';location.reload();return false">Exit view-as</a></p>';
 }
+// the 403 shown when a module-restricted signin opens a module outside their grant
+function moduleDeniedHtml(path) {
+  const m = MODULES.filter((x) => x.path === path)[0];
+  const label = (m && m.label) || 'This module';
+  return '<!doctype html><meta charset="utf-8"><title>Not in your access</title><body style="font-family:Lato,system-ui,sans-serif;padding:60px;color:#333;max-width:560px;margin:0 auto">'
+    + '<h2 style="font-weight:900">' + label.replace(/[<>&]/g, '') + ' isn\u2019t part of your access</h2>'
+    + '<p style="color:#4a4a4a">Your FeedSpark access doesn\u2019t include this module. If you need it, ask the account owner to add it in the \ud83d\udc65 Individual access panel.</p>'
+    + '<p><a href="/" style="color:#ED6F0B;font-weight:700">\u2190 Back to the command center</a></p></body>';
+}
+// MODGATE \u2014 runtime nav trim (injected on every app page). Reads window.__FCCMOD (the caller's
+// granted module slugs, or null = all for owner/unconfigured). When it's an array, hides every
+// topbar module link the person can't reach \u2014 including the owner-only Leadership/Activity links
+// (not grantable), so a restricted signin sees only their modules + the always-present landing.
+// Runtime-only: the static .tb-modules markup stays byte-identical, so check_nav parity holds.
+const MODGATE = '<script>(function(){try{var m=window.__FCCMOD;if(!Array.isArray(m))return;var ok={};for(var i=0;i<m.length;i++)ok[m[i]]=1;'
+  + 'var links=document.querySelectorAll(".tb-modules a.tbm");for(var j=0;j<links.length;j++){var h=links[j].getAttribute("href")||"";if(h==="/"||h==="")continue;var slug=h.replace(/^\\//,"");if(!ok[slug])links[j].style.display="none";}'
+  + '}catch(e){}})();</script>';
 // the caller's Workflow scope: owner -> full house; directory row (KV accessdir, git seed
 // until first save) or client-team alias (houseofbruar@ -> House of Bruar) -> that client's
 // view; anyone else -> full house. Two KV reads, only on the routes that scope.
 async function accessOf(env, request) {
   const email = who(request);
   const vs = viewAsOf(env, request);   // non-null only for the real owner
-  if (email === ownerEmail(env) && !vs) return { email, owner: true, clients: null, name: 'Owner' };
+  if (email === ownerEmail(env) && !vs) return { email, owner: true, clients: null, modules: null, name: 'Owner' };
   const dir = await env.EDITS.get('accessdir', 'json');
   let names = Object.keys(DEFAULT_FEEDS);
   try { names = names.concat(Object.keys(liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data)); } catch (e) {}
