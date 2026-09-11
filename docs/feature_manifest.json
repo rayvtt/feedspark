@@ -3857,14 +3857,14 @@
    "file": "docs/FeedSpark_KWCal.html",
    "pattern": "r.events.push(ev); n++;",
    "min": 1,
-   "pr": 349
+   "pr": 351
   },
   {
    "name": "kwcal: opening ⤓ Import twice replaces the panel instead of stacking two",
    "file": "docs/FeedSpark_KWCal.html",
    "pattern": "opening it twice used to stack panels",
    "min": 1,
-   "pr": 349
+   "pr": 351
   }
  ]
 }
