@@ -3397,20 +3397,6 @@
    "min": 1
   },
   {
-   "name": "AI Quote xlsx: the empty System / Platform Costs section must stay gone",
-   "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "v:'System / Platform Costs'",
-   "pr": 333,
-   "forbidden": true
-  },
-  {
-   "name": "AI Quote xlsx: the 'Monthly Cost (Tech)' placeholder row must stay gone",
-   "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "Monthly Cost (Tech)",
-   "pr": 333,
-   "forbidden": true
-  },
-  {
    "name": "AI Quote xlsx: the internal 'Delivery effort' row + note must stay gone",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "Delivery effort",
@@ -3474,39 +3460,151 @@
    "pr": 337
   },
   {
+   "name": "AI Quote: monthly update — new products bundle (Ray 11 Sep 2026 'update this monthly … minimum £100 … bundled up to 1k / 1–5k / 5–10k / 10–20k … expected monthly arrivals for forecasting')",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function updInfo(){",
+   "pr": 339,
+   "min": 1
+  },
+  {
+   "name": "AI Quote: arrivals forecast read from the Product Volume module (/api/volume) — avg daily arrivals × 30.4",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "fetch('/api/volume?client='",
+   "pr": 339,
+   "min": 1
+  },
+  {
+   "name": "AI Quote: £100 floor on the bundle (UPD_MIN) + draft band ladder on the rate card",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "var UPD_MIN=100, UPD_DEFAULT_TIERS=",
+   "pr": 339,
+   "min": 1
+  },
+  {
+   "name": "AI Quote: bundle card in the page (#upd-card) + summary row #qs-upd",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "id=\"qs-upd\"",
+   "pr": 339,
+   "min": 1
+  },
+  {
+   "name": "AI Quote: bundle survives save → ✎ Edit (snapshot upd + loadSaved pin)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "r.upd=q.upd?{on:true,est:",
+   "pr": 339,
+   "min": 1
+  },
+  {
+   "name": "kwcal: ⬇ Client PDF — print-to-PDF export of the roadmap (Ray, 11 Sep 2026)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function renderPdfDoc(",
+   "min": 1,
+   "pr": 340
+  },
+  {
+   "name": "kwcal: the PDF export button in the hero controls",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "⬇ Client PDF",
+   "min": 1,
+   "pr": 340
+  },
+  {
+   "name": "kwcal: client PDF is rendered from data into #pdf-doc, never the internal board (no hours/owners/→ Brief)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "pd-card",
+   "min": 2,
+   "pr": 340
+  },
+  {
+   "name": "kwcal: Workflow brief stage resolves off b.status (was reading b.st -> \"WF · undefined\")",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function stOf(",
+   "min": 1,
+   "pr": 340
+  },
+  {
+   "name": "AI Quote xlsx: 'New Product Arrivals - Monthly Tachyon Update' section written ONLY when the bundle is on (Ray 11 Sep 2026: not a platform cost)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "if(t.upd){ var s1=row({A:{v:'New Product Arrivals - Monthly Tachyon Update'",
+   "pr": 339,
+   "min": 1
+  },
+  {
+   "name": "AI Quote xlsx: 'Monthly Cost (New product arrivals)' totals row = the Tachyon monthly-update row, written only when it is on",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "if(platA)rTech=row({H:{v:'Monthly Cost (New product arrivals)'",
+   "pr": 339,
+   "min": 1
+  },
+  {
+   "name": "AI Quote: partner discount SCOPE — all / one-off only / monthly only / selected lines (Ray 11 Sep 2026)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function discOn(side,id){",
+   "pr": 340,
+   "min": 1
+  },
+  {
+   "name": "AI Quote: discount scope selector beside the % (#discscope) + per-line chip in selected-lines mode",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "id=\"discscope\"",
+   "pr": 340,
+   "min": 1
+  },
+  {
+   "name": "AI Quote xlsx: Discount % column is per row (scope-aware rd)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "rd=(o.dsc!=null)?o.dsc:dsc;",
+   "pr": 340,
+   "min": 1
+  },
+  {
+   "name": "AI Quote xlsx: the platform-cost label must stay out of the export (Ray 11 Sep 2026: nothing here is a platform cost)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "v:'System / Platform Costs'",
+   "pr": 340,
+   "forbidden": true
+  },
+  {
+   "name": "AI Quote: section helper text hidden behind ⓘ per heading (fcc-aiq-help)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "var HK='fcc-aiq-help'",
+   "pr": 340,
+   "min": 1
+  },
+  {
    "name": "playbook: AM meeting-copilot crawl endpoint (Ray, 11 Sep 2026)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "path === '/api/playbook'",
    "min": 1,
-   "pr": 339
+   "pr": 341
   },
   {
    "name": "playbook: page route wired into PAGES",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "'/playbook':",
    "min": 1,
-   "pr": 339
+   "pr": 341
   },
   {
    "name": "playbook: retrospective — completed-task checklist by category + time window",
    "file": "docs/FeedSpark_Playbook.html",
    "pattern": "function renderRetro(",
    "min": 1,
-   "pr": 339
+   "pr": 341
   },
   {
    "name": "playbook: prospective — cross-brand play suggestions (overlay on Accessorize → Hobbycraft)",
    "file": "docs/FeedSpark_Playbook.html",
    "pattern": "function renderProsp(",
    "min": 1,
-   "pr": 339
+   "pr": 341
   },
   {
    "name": "playbook: nav link present on the canonical page (parity propagates it to every page)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "href=\"/playbook\"",
    "min": 1,
-   "pr": 339
+   "pr": 341
   }
  ]
 }

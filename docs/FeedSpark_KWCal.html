@@ -88,6 +88,11 @@ window.addEventListener('load',restore);
   .stx.briefed{color:var(--orange-ink);border-color:rgba(245,166,35,.45);background:rgba(245,166,35,.1)}
   .stx.live{color:var(--orange-deep);border-color:var(--orange-deep);background:rgba(237,111,11,.08)}
   .stx.done{color:var(--good);border-color:rgba(21,128,61,.4);background:#EBF7EF}
+  /* Workflow pipeline stages (live via stOf) — same colours the Workflow board uses */
+  .stx.progress{color:#2F6FB0;border-color:rgba(47,111,176,.4);background:rgba(47,111,176,.08)}
+  .stx.blocked{color:var(--risk);border-color:rgba(192,57,43,.4);background:rgba(192,57,43,.08)}
+  .stx.analysis{color:#7C3AED;border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.08)}
+  .stx.confirmed{color:var(--good);border-color:rgba(21,128,61,.4);background:#EBF7EF}
   a.bgo{font-size:11px;font-weight:900;color:#fff;text-decoration:none;border:1px solid var(--orange);border-radius:9px;padding:3px 11px;background:var(--orange);margin-left:auto}
   a.bgo:hover{background:var(--orange-deep);border-color:var(--orange-deep)}
   .ovc a.bgo,.pop a.bgo{margin-left:0}
@@ -242,6 +247,63 @@ window.addEventListener('load',restore);
     select#brand{flex:1 1 150px;font-size:16px}
     .mstate{flex-basis:100%}
   }
+  /* ============ ⬇ Client PDF (browser print-to-PDF) ============
+     Ray: the roadmap has to be shareable with the client. The live board can't be printed —
+     it's a horizontally-scrolling month grid — and it carries internal-only detail (hours &
+     owners, → Brief links, PT/text-filter scope jargon). So the export renders a SEPARATE
+     client-facing document into #pdf-doc from the same data and prints only that.
+     Colours are hard-coded (never var()) so the PDF is on-brand whichever theme Ray is in. */
+  #pdf-doc{display:none}
+  @page{size:A4 portrait;margin:14mm 13mm}
+  @media print{
+    html,body{background:#fff!important;color:#333!important}
+    body>*{display:none!important}
+    #fcc-fcb,#fcc-fcp,#fcc-presence,#fcc-viewas,[id^="tky-"]{display:none!important}
+    #pdf-doc{display:block!important;font-family:Lato,system-ui,sans-serif;color:#333;line-height:1.5}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    /* header */
+    .pd-head{border-bottom:3px solid #ED6F0B;padding-bottom:10px;margin-bottom:16px}
+    .pd-brand{font-size:19px;font-weight:900;color:#333}
+    .pd-brand span{color:#ED6F0B}
+    .pd-h1{font-size:20px;font-weight:900;margin:6px 0 2px;letter-spacing:-.01em}
+    .pd-h2{font-size:13.5px;font-weight:800;color:#4a4a4a}
+    .pd-meta{font-size:11px;font-weight:700;color:#8a94a0;margin-top:3px}
+    /* summary tiles + intro */
+    .pd-kpis{display:flex;gap:9px;margin:0 0 14px}
+    .pd-kpi{flex:1;background:#F7F7F5;border:1px solid #E6E6E6;border-radius:10px;padding:9px 10px}
+    .pd-kpi .n{font-size:17px;font-weight:900;line-height:1.15;color:#333}
+    .pd-kpi .l{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#8a94a0;margin-top:3px}
+    .pd-intro{font-size:11.5px;color:#4a4a4a;line-height:1.6;margin:0 0 16px;max-width:none}
+    /* month sections */
+    .pd-mo{margin-bottom:13px}
+    .pd-mo-h{display:flex;align-items:baseline;gap:8px;border-bottom:1px solid #E6E6E6;padding-bottom:4px;margin-bottom:8px;
+      break-after:avoid;page-break-after:avoid}
+    .pd-mo-nm{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.07em;color:#ED6F0B}
+    .pd-mo-n{font-size:10px;font-weight:700;color:#8a94a0;margin-left:auto}
+    .pd-card{border:1px solid #E6E6E6;border-radius:10px;padding:9px 11px;margin-bottom:7px;background:#fff;break-inside:avoid;page-break-inside:avoid}
+    .pd-ct{display:flex;align-items:baseline;gap:8px}
+    .pd-nm{font-size:13px;font-weight:900;color:#333}
+    .pd-lane{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#8a94a0;margin-left:auto;white-space:nowrap}
+    .pd-dates{display:flex;gap:18px;margin:5px 0 6px}
+    .pd-d{font-size:10.5px;font-weight:700;color:#4a4a4a}
+    .pd-d b{display:block;font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#8a94a0}
+    .pd-row{font-size:10.5px;font-weight:700;color:#4a4a4a;margin-top:4px}
+    .pd-row>b{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#8a94a0;margin-right:6px}
+    .pd-term{display:inline-block;font-size:9.5px;font-weight:800;background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.34);
+      color:#B1550A;border-radius:100px;padding:1px 8px;margin:0 3px 3px 0}
+    .pd-st{display:inline-block;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;border-radius:100px;padding:1px 9px;border:1px solid}
+    .pd-st.sched{color:#8a94a0;border-color:#E6E6E6;background:#F7F7F5}
+    .pd-st.prog{color:#B1550A;border-color:rgba(245,166,35,.45);background:rgba(245,166,35,.1)}
+    .pd-st.live{color:#ED6F0B;border-color:#ED6F0B;background:rgba(237,111,11,.08)}
+    .pd-st.done{color:#15803D;border-color:rgba(21,128,61,.4);background:#EBF7EF}
+    /* methodology + footer */
+    .pd-meth{background:#F7F7F5;border:1px solid #E6E6E6;border-radius:10px;padding:11px 13px;margin-top:16px;break-inside:avoid;page-break-inside:avoid}
+    .pd-meth h3{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#333;margin:0 0 6px}
+    .pd-meth p{font-size:10.5px;color:#4a4a4a;line-height:1.6;margin:0 0 5px}
+    .pd-meth p:last-child{margin-bottom:0}
+    .pd-foot{margin-top:14px;padding-top:8px;border-top:1px solid #E6E6E6;font-size:9.5px;font-weight:700;color:#8a94a0;
+      display:flex;justify-content:space-between;gap:14px}
+  }
   /* rocket + icon nav (shared) */
   .nav-toggle{border:none;background:none;cursor:pointer;padding:1px;border-radius:10px;flex:none;transition:transform .22s ease;display:inline-flex;text-decoration:none}
   .nav-toggle svg{width:26px;height:26px;display:block;overflow:visible}
@@ -290,6 +352,10 @@ window.addEventListener('load',restore);
 [data-theme=dark] .stx.intake{background:rgba(91,130,190,.18);border-color:rgba(91,130,190,.36);color:#93B4E0}
 [data-theme=dark] .stx.briefed,[data-theme=dark] .stx.live{background:rgba(245,166,35,.15);border-color:rgba(245,166,35,.4);color:#F0A44E}
 [data-theme=dark] .stx.done{background:rgba(72,208,126,.14);border-color:rgba(72,208,126,.3);color:#6FE0A0}
+[data-theme=dark] .stx.confirmed{background:rgba(72,208,126,.14);border-color:rgba(72,208,126,.3);color:#6FE0A0}
+[data-theme=dark] .stx.progress{background:rgba(91,130,190,.18);border-color:rgba(91,130,190,.36);color:#93B4E0}
+[data-theme=dark] .stx.blocked{background:rgba(241,112,122,.14);border-color:rgba(241,112,122,.32);color:#F3868F}
+[data-theme=dark] .stx.analysis{background:rgba(155,110,240,.16);border-color:rgba(155,110,240,.34);color:#B694F5}
 [data-theme=dark] .err-strip{background:rgba(241,112,122,.12);border-color:rgba(241,112,122,.3);color:#F3868F}
 [data-theme=dark] a.bgo{background:rgba(245,166,35,.1)}
 [data-theme=dark] a.bgo:hover{background:var(--orange);color:#14161C}
@@ -314,6 +380,7 @@ window.addEventListener('load',restore);
     <select id="brand" aria-label="Choose a brand"></select>
     <button class="btn pri" id="measure" type="button">⟳ Sync product types (live feed)</button>
     <button class="btn" id="sbs" type="button">🗂 Client calendar</button>
+    <button class="btn" id="pdf" type="button" title="Print-ready client document of this roadmap — save as PDF from the print dialog">⬇ Client PDF</button>
     <button class="btn" id="edit" type="button">✎ Edit calendar</button>
     <button class="btn" id="add" type="button" hidden>＋ Add event</button>
     <button class="btn" id="import" type="button" hidden>⤓ Import events</button>
@@ -339,6 +406,8 @@ window.addEventListener('load',restore);
   </div>
   <div id="ov" hidden></div>
 </main>
+
+<div id="pdf-doc" aria-hidden="true"></div>
 
 <div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span id="syncstate"></span></div></div>
 
@@ -406,7 +475,7 @@ function dLbl(e){ var d=new Date(e.date+'T12:00:00Z'); return (e.wc?'w/c ':'')+d
 function kpis(){
   var E=evs();
   var st={planned:0,intake:0,briefed:0,live:0,done:0}, vol=0, scoped=0, unset=0;
-  E.forEach(function(e){ var wf=wfFor(CLIENT,e); st[(wf?wf.st:e.st)||'planned']=(st[(wf?wf.st:e.st)||'planned']||0)+1;
+  E.forEach(function(e){ var wf=wfFor(CLIENT,e); var k=stOf(wf,e); st[k]=(st[k]||0)+1;
     var v=volOf(CLIENT,e);
     if(v&&!v.unset&&!v.wide){vol+=v.vol;scoped++} else if(!e.brandwide&&(!v||v.unset))unset++; });
   // the live saturation audit — keywords land in g:product_type2..10, and every brand/market
@@ -444,6 +513,10 @@ function wfFor(brand,e){ // the seamless Workflow link: a brief whose task carri
     if(b&&b.client===brand&&(tk.indexOf('Keywords Optimisation - '+e.name)>=0||tk.indexOf('AI Keyword Optimisation — '+e.name)>=0)) return b; }
   return null;
 }
+// Workflow briefs carry their stage on b.status — b.st never existed, so every consumer of
+// wfFor() was reading undefined and badging "WF \u00b7 undefined". Resolve it in one place so a live
+// pipeline stage lands on the board, in the KPIs and in the client PDF.
+function stOf(wf,e){ return (wf&&(wf.status||wf.st))||(e&&e.st)||'planned'; }
 function evsOf(brand){ var r=STORE[brand]||{}; return (r.events||[]).slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date))}); }
 function ovBrands(){ return Object.keys(STORE).filter(function(k){return k.charAt(0)!=='_'&&(STORE[k]&&(STORE[k].events||[]).length)}).sort(); }
 function renderOverview(){
@@ -457,7 +530,7 @@ function renderOverview(){
     E.forEach(function(e){ var sd=schedDate(e), k=sd.getUTCFullYear()*12+sd.getUTCMonth();
       (byMon[k]=byMon[k]||[]).push(e); });
     var next=null;
-    E.forEach(function(e){ var wf=wfFor(brand,e), st=wf?wf.st:(e.st||'planned');
+    E.forEach(function(e){ var wf=wfFor(brand,e), st=stOf(wf,e);
       tot++;
       if(st==='intake'||st==='briefed'||st==='progress'||st==='live')inflight++;
       if(st==='done'||st==='confirmed')done++;
@@ -470,7 +543,7 @@ function renderOverview(){
       +'<a class="ob" href="/kwcal?client='+encodeURIComponent(brand)+'" data-open="'+esc(brand)+'">Open board →</a></div>'
       +'<div class="ov-mons">'+mons.map(function(k){
         return '<div class="ov-mon"><div class="oml">'+MON[k%12]+' ’'+String(Math.floor(k/12)).slice(2)+'</div><div class="ov-chips">'
-          +byMon[k].map(function(e){ var wf=wfFor(brand,e), st=wf?wf.st:(e.st||'planned'), mm=volOf(brand,e);
+          +byMon[k].map(function(e){ var wf=wfFor(brand,e), st=stOf(wf,e), mm=volOf(brand,e);
             return '<button type="button" class="ovc" data-pop="'+esc(brand)+'|'+esc(e.id)+'"><span class="dot '+esc(st)+'"></span>'+esc(e.name)
               +(mm&&!mm.unset?'<span class="ov-vol">'+fmt(mm.vol)+(mm.wide?' · all':'')+'</span>':'')
               +(wf?'<span class="wfb" title="Live from the Workflow pipeline">WF · '+esc(st)+'</span>':'')+'</button>';
@@ -488,7 +561,7 @@ function renderOverview(){
 function popClose(){ var p=$('#kw-pop'); if(p)p.remove(); }
 function popOpen(btn,brand,e){
   popClose();
-  var wf=wfFor(brand,e), st=wf?wf.st:(e.st||'planned');
+  var wf=wfFor(brand,e), st=stOf(wf,e);
   var chase={client:brand,task:'CHASE — AI Keyword Optimisation "'+e.name+'" — brief due '+schedDate(e).getUTCDate()+' '+MON[schedDate(e).getUTCMonth()]+' (status: '+st+')',cat:'account'};
   var mail='mailto:?subject='+encodeURIComponent('Keyword optimisation — '+e.name+' · '+brand)
     +'&body='+encodeURIComponent('Hi,\n\nAhead of "'+e.name+'" ('+dLbl(e)+') we’re lining up the keyword optimisation for: '+(e.terms||[]).join(', ')+'.\n\nCould you confirm the categories in scope and any changes to the marketing calendar?\n\nThanks,\nFeedSpark');
@@ -809,6 +882,107 @@ function renderHours(){
   rail.innerHTML=h;
   var sb=rail.querySelector('#h-sync'); if(sb)sb.onclick=function(){ syncPT(); };
 }
+/* ---------------- ⬇ Client PDF (browser print-to-PDF) ----------------
+ * Ray: the roadmap has to be shareable with the client. The live board can't be printed — it's
+ * a horizontally-scrolling month grid — and it carries internal-only detail (hours & owners,
+ * → Brief links, PT/text-filter scope jargon, edit controls). So the export renders a SEPARATE
+ * client-facing document into #pdf-doc from the same data and prints only that: client-safe by
+ * construction, because nothing internal is ever written into it. No library and no CDN — the
+ * browser's own print-to-PDF, the same route as the Golden Record scorecard.
+ * renderPdfDoc() runs on every render so a native Cmd/Ctrl+P gives the client doc too. */
+var MONF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+// internal stages (ours + the Workflow pipeline's) collapse to four words a client reads
+var CST={planned:'Scheduled',intake:'Scheduled',briefed:'In progress',progress:'In progress',
+  blocked:'In progress',live:'Live',analysis:'Live',done:'Complete',confirmed:'Complete'};
+var CSTC={Scheduled:'sched','In progress':'prog',Live:'live',Complete:'done'};
+function fullDate(d){ return d.getUTCDate()+' '+MON[d.getUTCMonth()]+' '+d.getUTCFullYear(); }
+function laneTxt(l){ l=String(l||'').toLowerCase(); // the board's emoji lane labels, in plain words
+  if(l.indexOf('camp')>=0)return 'Campaign';
+  if(l.indexOf('sale')>=0)return 'Sale';
+  if(l.indexOf('studio')>=0)return 'Studio moment';
+  if(l.indexOf('location')>=0)return 'Location moment';
+  return l?l.charAt(0).toUpperCase()+l.slice(1):''; }
+function pdfScope(e){ // the client reads products and % of catalogue — never "3 PTs + 2 txt"
+  var v=volOf(CLIENT,e), mk=evMkt(CLIENT,e).toUpperCase();
+  if(!v)return 'Not yet sized against the live feed';
+  if(v.wide)return 'Whole '+mk+' catalogue · '+fmt(v.vol)+' products';
+  if(v.unset)return 'Product scope to be confirmed';
+  return fmt(v.vol)+' products · '+v.pct+'% of the '+mk+' feed'; }
+function pdfNote(msg){ $('#pdf-doc').innerHTML='<div class="pd-head"><div class="pd-brand">Feed<span>Spark</span></div>'
+  +'<div class="pd-h1">Keyword optimisation roadmap</div></div><p class="pd-intro">'+esc(msg)+'</p>'; }
+function renderPdfDoc(){
+  if(CLIENT==='*'){ pdfNote('Open a brand’s board to export its keyword roadmap — the all-brands overview is internal.'); return; }
+  var E=evs();
+  if(!E.length){ pdfNote('No marketing moments captured for '+CLIENT+' yet.'); return; }
+  var byMon={}; E.forEach(function(e){ var sd=schedDate(e), k=sd.getUTCFullYear()*12+sd.getUTCMonth(); (byMon[k]=byMon[k]||[]).push(e); });
+  // only months that carry work — the board's empty drop zones are an editing affordance, not client content
+  var mons=Object.keys(byMon).map(Number).sort(function(a,b){return a-b});
+  function mLbl(k){ return MONF[k%12]+' '+Math.floor(k/12); }
+  var period=mons.length?(mLbl(mons[0])+(mons.length>1?' – '+mLbl(mons[mons.length-1]):'')):'—';
+  var vol=0,scoped=0,liveDone=0;
+  E.forEach(function(e){ var v=volOf(CLIENT,e); if(v&&!v.unset&&!v.wide){vol+=v.vol;scoped++}
+    var c=CST[stOf(wfFor(CLIENT,e),e)]; if(c==='Live'||c==='Complete')liveDone++; });
+  var idx=ptidxFor(CLIENT,MKT), sat=(idx&&idx.sat&&idx.__total)?Math.round(idx.sat.n/idx.__total*1000)/10:null;
+  var today=new Date(), mk=MKT.toUpperCase();
+
+  var h='<div class="pd-head"><div class="pd-brand">Feed<span>Spark</span></div>'
+    +'<div class="pd-h1">AI keyword optimisation roadmap</div>'
+    +'<div class="pd-h2">'+esc(CLIENT)+' · '+esc(mk)+' Google Shopping</div>'
+    +'<div class="pd-meta">'+esc(period)+' · '+E.length+' optimisation'+(E.length===1?'':'s')+' scheduled · prepared '
+    +esc(today.getDate()+' '+MONF[today.getMonth()]+' '+today.getFullYear())+'</div></div>';
+
+  h+='<div class="pd-kpis">'
+    +'<div class="pd-kpi"><div class="n">'+E.length+'</div><div class="l">Optimisations scheduled</div></div>'
+    +'<div class="pd-kpi"><div class="n">'+(scoped?fmt(vol):'—')+'</div><div class="l">Products in scope</div></div>'
+    +'<div class="pd-kpi"><div class="n">'+(sat!=null?sat+'%':'—')+'</div><div class="l">Keyword saturation · '+esc(mk)+'</div></div>'
+    +'<div class="pd-kpi"><div class="n">'+liveDone+'</div><div class="l">Live or complete</div></div></div>';
+
+  h+='<p class="pd-intro">Every moment on '+esc(CLIENT)+'’s marketing calendar schedules an AI keyword optimisation ahead of it, '
+    +'so the product categories that moment drives are already optimised before the traffic arrives. The roadmap below is that schedule '
+    +'for the '+esc(mk)+' Google Shopping feed — what is being optimised, the date it goes live, and how much of the catalogue each pass covers.</p>';
+
+  h+=mons.map(function(k){
+    var ek=byMon[k];
+    return '<section class="pd-mo"><div class="pd-mo-h"><span class="pd-mo-nm">'+esc(mLbl(k))+'</span>'
+      +'<span class="pd-mo-n">'+ek.length+' optimisation'+(ek.length===1?'':'s')+'</span></div>'
+      +ek.map(function(e){
+        var st=CST[stOf(wfFor(CLIENT,e),e)]||'Scheduled', ln=laneTxt(e.lane);
+        var md=new Date(e.date+'T12:00:00Z'), terms=(e.terms||[]);
+        return '<div class="pd-card"><div class="pd-ct"><span class="pd-nm">'+esc(e.name)+'</span>'
+          +(ln?'<span class="pd-lane">'+esc(ln)+'</span>':'')+'</div>'
+          +'<div class="pd-dates"><div class="pd-d"><b>Optimisation live by</b>'+esc(fullDate(schedDate(e)))+'</div>'
+          +'<div class="pd-d"><b>Marketing moment</b>'+esc((e.wc?'w/c ':'')+fullDate(md))+'</div>'
+          +(e.mkt&&e.mkt!==MKT?'<div class="pd-d"><b>Market</b>'+esc(e.mkt.toUpperCase())+'</div>':'')+'</div>'
+          +'<div class="pd-row"><b>Scope</b>'+esc(pdfScope(e))+'</div>'
+          +(terms.length?'<div class="pd-row"><b>Keyword themes</b>'
+            +terms.map(function(t){return '<span class="pd-term">'+esc(t)+'</span>'}).join('')+'</div>':'')
+          +'<div class="pd-row"><b>Status</b><span class="pd-st '+esc(CSTC[st]||'sched')+'">'+esc(st)+'</span></div></div>';
+      }).join('')+'</section>';
+  }).join('');
+
+  h+='<div class="pd-meth"><h3>How this roadmap is built</h3>'
+    +'<p><b>Lead time.</b> Each marketing moment schedules its keyword optimisation to be live '+LEAD_DAYS+' days ahead of the moment itself, '
+    +'so the categories it drives are already optimised when the campaign lands.</p>'
+    +'<p><b>Product scope.</b> Every optimisation is sized against the live '+esc(mk)+' Google Shopping feed — the product types and search terms it '
+    +'covers, counted as real products. Sale windows are brand-wide and cover the whole catalogue.</p>'
+    +'<p><b>Keyword saturation.</b> Optimised keywords are written into the feed’s numbered product type fields. Saturation is the share of the '
+    +'catalogue already carrying them — every optimisation on this roadmap moves it closer to full coverage.</p></div>';
+
+  h+='<div class="pd-foot"><span>FeedSpark · Private &amp; Confidential</span>'
+    +'<span>'+esc(CLIENT)+' · keyword optimisation roadmap</span></div>';
+
+  $('#pdf-doc').innerHTML=h;
+}
+function exportPdf(){
+  if(CLIENT==='*'){ err('Open a brand’s board to export a client PDF — the all-brands overview mixes clients.'); return; }
+  if(!evs().length){ err('Nothing to export yet — add '+CLIENT+'’s marketing moments first.'); return; }
+  hideErr(); renderPdfDoc();
+  var t0=document.title; // Chrome seeds the saved filename from the title
+  document.title='FeedSpark - '+CLIENT+' keyword roadmap - '+MKT.toUpperCase()+' - '+new Date().toISOString().slice(0,10);
+  var done=function(){ document.title=t0; window.removeEventListener('afterprint',done); };
+  window.addEventListener('afterprint',done);
+  window.print();
+}
 function addMonthsISO(ds,delta){ var d=new Date(ds+'T12:00:00Z'), day=d.getUTCDate(), mm=d.getUTCMonth()+delta;
   var y=d.getUTCFullYear()+Math.floor(mm/12), m=((mm%12)+12)%12, last=new Date(Date.UTC(y,m+1,0)).getUTCDate();
   return new Date(Date.UTC(y,m,Math.min(day,last),12,0,0)).toISOString().slice(0,10); }
@@ -823,8 +997,8 @@ function laneLbl(l){ l=String(l||'').toLowerCase();
   return l?('✦ '+l.charAt(0).toUpperCase()+l.slice(1)):''; }
 function render(){
   popClose();
-  if(CLIENT==='*'){ $('#split').hidden=true; renderOverview(); return; }
-  $('#split').hidden=false; $('#cal-wrap').hidden=false; $('#ov').hidden=true;
+  if(CLIENT==='*'){ $('#split').hidden=true; $('#pdf').hidden=true; renderOverview(); renderPdfDoc(); return; }
+  $('#split').hidden=false; $('#pdf').hidden=false; $('#cal-wrap').hidden=false; $('#ov').hidden=true;
   $('#split').classList.add('two');
   kpis();
   $('#cal-title').textContent=CLIENT+' — FeedSpark keyword roadmap'+(MKT!=='gb'?' · '+MKT.toUpperCase():'');
@@ -832,7 +1006,7 @@ function render(){
   renderClical();
   var E=evs(), byMon={};
   E.forEach(function(e){ var sd=schedDate(e), k=sd.getUTCFullYear()*12+sd.getUTCMonth(); (byMon[k]=byMon[k]||[]).push(e); });
-  if(!E.length){ $('#road').innerHTML='<p class="sub">No moments yet — ✒ Edit calendar → ＋ Add event, with the client’s calendar side-by-side.</p>'; renderHours(); return; }
+  if(!E.length){ $('#road').innerHTML='<p class="sub">No moments yet — ✒ Edit calendar → ＋ Add event, with the client’s calendar side-by-side.</p>'; renderHours(); renderPdfDoc(); return; }
   var rg=monthRange(), mons=[]; for(var mk=rg[0];mk<=rg[1];mk++)mons.push(mk); // full span so empty months are drop targets too
   $('#road').innerHTML=mons.map(function(k){
     var ek=byMon[k]||[], mh=0; ek.forEach(function(e){ var v=volOf(CLIENT,e); if(v&&!v.unset)mh+=kwHours(v.vol||0); });
@@ -840,7 +1014,7 @@ function render(){
       +'<span class="mn">'+(ek.length?ek.length+' opt'+(ek.length===1?'':'s'):'—')+'</span>'
       +(mh?'<span class="mo-hrs" title="keyword-generation hours scheduled this month">'+h1(mh)+'h</span>':'')+'</div>'
       +'<div class="mo-cards">'+(ek.length?ek.map(function(e){
-        var wf=wfFor(CLIENT,e), st=wf?wf.st:(e.st||'planned'), ln=laneLbl(e.lane);
+        var wf=wfFor(CLIENT,e), st=stOf(wf,e), ln=laneLbl(e.lane);
         return '<div class="rc" draggable="true" data-kw="'+esc(e.id)+'" data-lane="'+esc(e.lane||'')+'"><div class="rt"><span class="grip" title="Drag to reschedule to another month">⠿</span><span class="lens">✦</span>'+esc(e.name)
           +(ln?'<span class="lane">'+esc(ln)+'</span>':'')
           +(editMode?'<button class="del" style="position:static;opacity:1;margin-left:6px" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</div>'
@@ -851,7 +1025,7 @@ function render(){
           +'<a class="bgo" href="'+briefLink(e)+'" title="Auto-generated brief — moment, dates, scope PTs + SKUs, themes">→ Brief</a></div></div>';
       }).join(''):'<div class="mo-empty">drop a theme here</div>')+'</div></section>';
   }).join('');
-  renderHours();
+  renderHours(); renderPdfDoc();
 }
 
 /* ---------------- PT scope picker (searchable multiselect over real product_type values) ---------------- */
@@ -1175,6 +1349,7 @@ $('#edit').addEventListener('click',function(){
   $('#import').hidden=!editMode;
   render();
 });
+$('#pdf').addEventListener('click',exportPdf);
 $('#import').addEventListener('click',function(){ if(CLIENT==='*'){err('Open a brand’s board to import its calendar events.');return;} impOpen(); });
 
 /* ---------------- store sync (kvmerge per client key) ---------------- */
