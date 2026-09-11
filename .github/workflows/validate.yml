@@ -40,5 +40,8 @@ jobs:
       - name: Module-nav parity (the menu stays identical on every app page)
         run: node tools/check_nav.js
 
+      - name: Reply classifier in sync (worker briefmatch = Workflow page)
+        run: node tools/test_replyclass.mjs
+
       - name: Labelguard browser-engine copy in sync (served /labels/engine.js = src)
         run: node tools/check_lgcopy.js

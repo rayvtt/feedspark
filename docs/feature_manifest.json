@@ -3970,6 +3970,27 @@
    "pattern": "id=\"lia-card\"",
    "pr": 354,
    "forbidden": true
+  },
+  {
+   "name": "Workflow+worker: reply classifier — a pickup is not a completion",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "classifyReply",
+   "min": 3,
+   "pr": null
+  },
+  {
+   "name": "Workflow: ledger re-label pass + ⟳ Re-read replies",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "relabelLedger",
+   "min": 3,
+   "pr": null
+  },
+  {
+   "name": "Workflow: Brief Ledger names who briefed it",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "briefedBy",
+   "min": 3,
+   "pr": null
   }
  ]
 }

@@ -938,10 +938,10 @@ window.addEventListener('load',restore);
     <button type="button" class="sec-tog" id="bl-tog" aria-expanded="false" aria-controls="bl-body">▸ Show</button>
   </h2>
   <div id="bl-body" hidden>
-    <div class="bl-bar"><input id="bl-search" type="search" placeholder="Search briefs — id, client, task, ASPL, stage, read-out…" aria-label="Search the brief ledger"><span class="it-n" id="bl-n"></span></div>
+    <div class="bl-bar"><input id="bl-search" type="search" placeholder="Search briefs — id, client, task, ASPL, stage, read-out…" aria-label="Search the brief ledger"><span class="it-n" id="bl-n"></span><button type="button" class="btn" id="bl-relabel" style="margin-left:auto;font-size:12px;padding:6px 11px" title="Re-read every reply on every brief and correct the stage — a pickup (“we will do the needful”) means In progress, only a confirmed completion means Done.">⟳ Re-read replies</button></div>
     <div class="it-scroll" style="max-height:56vh"><table class="itbl" id="bltbl">
-      <colgroup><col style="width:118px"><col style="width:11%"><col><col style="width:9%"><col style="width:84px"><col style="width:84px"><col style="width:120px"></colgroup>
-      <thead><tr><th data-k="id">Brief</th><th data-k="client">Client</th><th data-k="task">Task &amp; read-out</th><th data-k="aspl">ASPL</th><th data-k="created">Sent</th><th data-k="due">Due</th><th data-k="status">Stage</th></tr></thead>
+      <colgroup><col style="width:118px"><col style="width:11%"><col><col style="width:9%"><col style="width:9%"><col style="width:84px"><col style="width:84px"><col style="width:120px"></colgroup>
+      <thead><tr><th data-k="id">Brief</th><th data-k="client">Client</th><th data-k="task">Task &amp; read-out</th><th data-k="by">Briefed by</th><th data-k="aspl">ASPL</th><th data-k="created">Sent</th><th data-k="due">Due</th><th data-k="status">Stage</th></tr></thead>
       <tbody id="bl-rows"></tbody></table></div>
   </div>
 
@@ -1047,7 +1047,34 @@ window.addEventListener('load',restore);
     'American Golf':'AMG','Ryobi':'RYO'};
   function abbr(c){ if(ABBR[c])return ABBR[c]; var w=String(c||'').trim().split(/\s+/);
     return ((w.length>1?w.map(function(x){return x.charAt(0);}).join(''):String(c||'').slice(0,3)).toUpperCase().slice(0,3))||'—'; }
-  var DONE_RE=/\b(done|finished|complete|completed|delivered|live|actioned|signed[\s-]?off)\b/i;
+  /* ---- REPLY CLASSIFIER (Ray, 11 Sep 2026) ----------------------------------------
+     "when Dinesh said 'Hi Ray, we will do the needful and update you' … it is NOT done by
+     ASPL. It means the ticket has been picked up and is in progress. The next confirmation
+     would be them confirming that the task has been done."
+     The old DONE_RE matched the bare word done/complete(d) ANYWHERE, so a PROMISE to complete
+     read as a completion and every acknowledgement closed its ticket. A completion word now
+     counts only when it is not inside a promise: a subordinating conjunction earlier in the
+     clause (once/when/after/until/if/pending/before) or a modal in the three words before it
+     (will/shall/to be/should/can/need to/please/not/yet to) makes it a PICKUP. MIRRORS
+     cloudflare/feedspark-deck/src/briefmatch.js — tools/test_replyclass.mjs runs one corpus
+     through both copies and fails the build if they disagree. */
+  var DONE_WORD_RE=/\b(done|finished|complete[ds]?|completion|delivered|actioned|implemented|deployed|signed[\s-]?off|(?:is|are|now|gone|went|pushed|set|all)\s+live)\b/i;
+  var SUBCONJ_RE=/\b(once|when|after|as soon as|until|till|unless|if|pending|before)\b/i;
+  var NEAR_FUT_RE=/\b(will|we'?ll|i'?ll|shall|going to|gonna|to be|should|would|could|can|may|might|need(?:s|ed)? to|have to|has to|plan(?:ning)? to|aim(?:ing)? to|expect(?:ing)? to|hop(?:e|ing) to|please|kindly|not|yet to|due to be)\b\s*(?:\w+\s+){0,2}$/i;
+  var ACK_RE=/\b(do the needful|pick(?:ing|s|ed)?(?:\s+(?:this|it|that|these|them))?\s*up|on it|noted|acknowledg(?:e|ed|ing)|will do|we will|we'?ll|started|in progress|underway|working on|wip|eta|assigned|looking into|look into|will check|will update|update you|revert)\b/i;
+  function classifyReply(text){
+    var t=String(text||'').replace(/\bFrom:\s*[\s\S]*$/i,' ');   // the quoted original never votes
+    var clauses=t.split(/[.;!?\n\u2022]+|,\s+(?=(?:and|but|so|then)\b)/i);
+    var done=false, ack=false;
+    for(var i=0;i<clauses.length;i++){
+      var c=String(clauses[i]||''), m=DONE_WORD_RE.exec(c);
+      if(!m){ if(ACK_RE.test(c))ack=true; continue; }
+      var before=c.slice(0,m.index);
+      if(SUBCONJ_RE.test(before)||NEAR_FUT_RE.test(before))ack=true; else done=true;
+    }
+    return done?'done':(ack?'ack':'');
+  }
+  var DONE_RE={ test:function(t){ return classifyReply(t)==='done'; } };   // drop-in for the old regex
   // go-live signal for TEST briefs (keywords / A/B / title tests): ASPL saying it's live, or
   // Ray's own "please live it". Distinct from DONE_RE — going live starts the RUN, it doesn't
   // finish the work: the due re-dates to +SLA (the analysis date) and the stage flips to 🧪.
@@ -1437,6 +1464,10 @@ window.addEventListener('load',restore);
     b.id=id; b.client=o.f.client; b.code=code(o.f.client,o.f.market); b.task=o.f.task; b.scope=o.f.scope;
     b.dod=o.f.dod; b.assets=o.f.assets; b.due=isoToDDMMYYYY(o.f.dueIso); b.source=o.f.source; b.priority=o.f.priority;
     b.subject=o.subj; b.body=o.body; b.updated=Date.now();
+    // WHO BRIEFED IT (Ray, 11 Sep 2026: "the brief ledger is to show the brief is briefed by
+    // anyone inside the company, either Ray, Steven, Radostina, or anyone else") — the signed-in
+    // Access identity, stamped once at creation and never rewritten by a later editor.
+    if(!b.by){ var me=meName(); if(me)b.by=me; }
     if(window.__kwId){ b.kw=window.__kwId; window.__kwId=null; }   // KWCal moment tie (set once, kept through later edits)
     // an email-sourced task briefed against a brand becomes a real plan row (write-back included)
     if(o.f.source==='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',1);
@@ -2611,7 +2642,7 @@ window.addEventListener('load',restore);
     var comms=(b.comms||[]).map(function(c){ var w=commWhen(c);
       return '<div class="comm"><span class="cw">'+esc(c.from)
         +(w?('<span class="cwd">'+esc(w.d)+'</span><span class="cwt">'+esc(w.t)+'</span>'):'')
-        +'</span><span class="cb">'+esc(commBody(c))+(c.done?' <span class="ck">✓ done signal</span>':'')+'</span></div>'; })
+        +'</span><span class="cb">'+esc(commBody(c))+commChip(c)+'</span></div>'; })
       .join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
     var stat=STAGES.filter(function(s){ return s[0]!=='analysis'||needsAnalysis(b); })
       .map(function(s){ return '<button data-s="'+s[0]+'" class="'+(b.status===s[0]?'on':'')+'">'+s[1]+'</button>'; }).join('');
@@ -2662,13 +2693,17 @@ window.addEventListener('load',restore);
     var noteEl=document.getElementById('m-note'), scanEl=document.getElementById('m-scan');
     noteEl.addEventListener('input',function(){
       if(LIVE_RE.test(noteEl.value)&&needsAnalysis(b)){ scanEl.className='scan-hit on'; scanEl.textContent='🚀 Go-live signal — logging this re-dates the due to +'+(runSlaDays(b)||14)+'d for analysis and moves the ticket to “Analysis 🧪”.'; }
-      else if(DONE_RE.test(noteEl.value)){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this moves the ticket to '+(needsAnalysis(b)?'“Analysis 🧪” (analysis still needed)':'“Done — ASPL”')+'.'; } else scanEl.className='scan-hit'; });
+      else { var cls=classifyReply(noteEl.value);
+        if(cls==='done'){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this moves the ticket to '+(needsAnalysis(b)?'“Analysis 🧪” (analysis still needed)':'“Done — ASPL”')+'.'; }
+        else if(cls==='ack'){ scanEl.className='scan-hit on'; scanEl.textContent='↗ Pickup — they have taken it on but not finished it. Logging this moves the ticket to “In progress”; the next reply confirming the work is what completes it.'; }
+        else scanEl.className='scan-hit'; } });
     document.getElementById('m-log').onclick=function(){ var note=noteEl.value.trim(); if(!note)return;
-      var done=DONE_RE.test(note), golive=LIVE_RE.test(note)&&needsAnalysis(b); b.comms=b.comms||[]; b.comms.push({from:document.getElementById('m-from').value,note:note,done:done,when:Date.now()});
+      var cls=classifyReply(note), done=cls==='done', golive=LIVE_RE.test(note)&&needsAnalysis(b); b.comms=b.comms||[]; b.comms.push({from:document.getElementById('m-from').value,note:note,done:done,when:Date.now()});
       // a go-live signal starts the RUN (due → +SLA, stage → analysis); a completion signal
       // moves the brief on — test tickets go to Analysis, not Done.
       if(golive && b.status!=='confirmed') goLive(b);
       else if(done && b.status!=='confirmed' && b.status!=='done' && b.status!=='analysis') setStage(b,needsAnalysis(b)?'analysis':'done');
+      else if(cls==='ack' && (b.status==='intake'||b.status==='briefed')) setStage(b,'progress');   // picked up ≠ finished
       b.updated=Date.now(); persist(); renderAll(); openModal(b.id); };
     // client confirmation draft
     var conf=document.getElementById('m-confirm');
@@ -2730,7 +2765,48 @@ window.addEventListener('load',restore);
     t=t.replace(/\s{2,}/g,' ').replace(/^[\s·—-]+|[\s·—-]+$/g,'');
     return t || String((c&&c.note)||'').slice(0,200);           // never render an empty reply
   }
-  function lastDoneNote(b){ if(!b.comms)return ''; for(var i=b.comms.length-1;i>=0;i--){ if(b.comms[i].done||DONE_RE.test(b.comms[i].note)) return b.comms[i].note; } return ''; }
+  // who is signed in (Cloudflare Access identity, already fetched for scoping)
+  function meName(){ try{ if(!ACCESS_ME)return ''; return String(ACCESS_ME.name||'').trim()
+    || String(ACCESS_ME.email||'').split('@')[0].replace(/[._-]+/g,' ').replace(/\b\w/g,function(x){return x.toUpperCase();}); }catch(e){ return ''; } }
+  function briefedBy(b){ return (b&&b.by)||'—'; }   // never guessed: briefs raised before this shipped show —
+  // a reply's chip states what it actually was: a completion, or a pickup that is not one
+  function commChip(c){
+    var v=classifyReply((c&&c.note)||'');
+    if(v==='done')return ' <span class="ck">✓ done signal</span>';
+    if(v==='ack')return ' <span class="ck" style="color:var(--navy)" title="Picked up — the work is not finished until they confirm it is">↗ picked up</span>';
+    return '';
+  }
+  // ---- RE-LABEL THE LEDGER (Ray, 11 Sep 2026: "please re-browse the entire brief ledger and
+  // re-label the status"). Tickets closed by the old bare-word matcher are re-read with the
+  // classifier: a ticket whose only evidence is a PICKUP goes back to In progress, and every
+  // stored comm's done flag is corrected so the chips tell the truth. Deliberately
+  // conservative — a stage a human set (Client confirmed) and a test's Analysis run are never
+  // touched, and nothing is ever promoted to Done by this pass.
+  function relabelLedger(opts){
+    var ids=Object.keys(BRIEFS), moved=[], fixed=0;
+    ids.forEach(function(id){
+      var b=BRIEFS[id]; if(!b||!b.comms||!b.comms.length)return;
+      var realDone=false, ack=false;
+      b.comms.forEach(function(c){
+        if(/^Result:/.test(c.note||'')){ realDone=true; return; }   // a logged read-out is real evidence
+        var v=classifyReply(c.note||'');
+        if(v==='done')realDone=true; else if(v==='ack')ack=true;
+        var want=(v==='done');
+        if(!!c.done!==want){ c.done=want; fixed++; }
+      });
+      if(realDone||!ack)return;
+      if(b.status==='done'||b.status==='briefed'){
+        var from=b.status; setStage(b,'progress'); moved.push({id:id,from:from});
+      }
+    });
+    if(moved.length||fixed){ persist(); renderAll(); }
+    if(!opts||!opts.quiet){
+      toast(moved.length? ('Re-labelled '+moved.length+' ticket'+(moved.length===1?'':'s')+' → In progress (a pickup is not a completion)')
+        : (fixed? 'Reply signals corrected on '+fixed+' repl'+(fixed===1?'y':'ies') : 'Ledger re-read — every stage already matches its replies'));
+    }
+    return { moved: moved, fixed: fixed };
+  }
+  function lastDoneNote(b){ if(!b.comms)return ''; for(var i=b.comms.length-1;i>=0;i--){ if(classifyReply(b.comms[i].note||'')==='done') return b.comms[i].note; } return ''; }
   function hasResult(b){ if(!b.comms)return false; for(var i=b.comms.length-1;i>=0;i--){ if(/^Result:/.test(b.comms[i].note))return true; } return false; }
   // read-out extraction — the page mirror of the worker's extractResult, so pasting ASPL's
   // result email into the update router files it exactly like the Gmail scan would. Handles
@@ -2885,8 +2961,9 @@ window.addEventListener('load',restore);
         ta.value=''; return; }
       out.className='lu-out miss'; out.textContent='No ticket matched — include the [ibfcode:…] token, the brief ID, or more of the task wording.'; return; }
     var sender='ASPL'; ASPL.forEach(function(n){ if(new RegExp('\\b'+n+'\\b','i').test(text))sender=n; });
-    var done=DONE_RE.test(text), blocked=/\b(blocked|blocker|waiting on|on hold|stuck|dependency)\b/i.test(text),
-        prog=/\b(started|in progress|underway|working on|wip|eta|will complete|picking (this|it) up)\b/i.test(text),
+    var rcls=classifyReply(text);
+    var done=rcls==='done', blocked=/\b(blocked|blocker|waiting on|on hold|stuck|dependency)\b/i.test(text),
+        prog=/\b(started|in progress|underway|working on|wip|eta|will complete|picking (this|it) up)\b/i.test(text)||rcls==='ack',
         golive=LIVE_RE.test(text)&&needsAnalysis(b);
     // a pasted read-out on a live/analysis test files as its Result — same rules as the scan
     // manual paste is authoritative: unlike the unattended scan (first result wins), pasting a
@@ -3339,13 +3416,14 @@ window.addEventListener('load',restore);
     // Ledger is not filtered") — stage label, read-out, owner incl. the derived ASPL, and
     // both date columns, so anything an AM can read on screen is searchable.
     var q=blQuery(), rows=!q?all:all.filter(function(b){
-      var hay=(b.id+' '+(b.client||'')+' '+(b.task||'')+' '+(b.aspl||asplOf(b)||'')+' '
+      var hay=(b.id+' '+(b.client||'')+' '+(b.task||'')+' '+(b.aspl||asplOf(b)||'')+' '+briefedBy(b)+' '
         +(STAGE_LBL[b.status]||b.status||'')+' '+(lastResultTxt(b)||'')+' '+humanDD(b.due)+' '
         +(b.created?new Date(b.created).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}):'')).toLowerCase();
       return hay.indexOf(q)>=0; });
     rows.sort(function(a,b2){ var k=blState.sort, va=a[k], vb=b2[k];
       if(k==='due'){ va=(ddmmyyyyToDate(a.due)||0)-0; vb=(ddmmyyyyToDate(b2.due)||0)-0; }
       if(k==='created'){ va=a.created||0; vb=b2.created||0; }
+      if(k==='by'){ va=briefedBy(a); vb=briefedBy(b2); }
       if(typeof va==='string')return String(va||'').localeCompare(String(vb||''))*blState.dir;
       return ((va||0)-(vb||0))*blState.dir; });
     var n=document.getElementById('bl-n'); if(n)n.textContent=rows.length+(rows.length===1?' brief':' briefs');
@@ -3353,11 +3431,12 @@ window.addEventListener('load',restore);
       return '<tr data-bid="'+esc(b.id)+'" style="cursor:pointer"><td class="c-owner" style="white-space:nowrap">'+esc(b.id)+(isDup(b)?' <span title="Collapsed duplicate of '+esc(BRIEF_DUP[b.id])+'">👥</span>':'')+'</td>'
         +'<td class="c-client">'+esc(b.client||'—')+'</td>'
         +'<td class="c-task">'+esc(b.task||'—')+(res?' <span class="src-tag" style="color:#15803D;background:rgba(21,128,61,.1);border-color:rgba(21,128,61,.3)" title="Recorded read-out">🧪 '+esc(res.slice(0,48))+'</span>':'')+'</td>'
+        +'<td class="c-owner">'+esc(briefedBy(b))+'</td>'
         +'<td class="c-owner">'+esc(b.aspl||asplOf(b)||'—')+'</td>'
         +'<td class="c-due">'+(b.created?new Date(b.created).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}):'—')+'</td>'
         +'<td class="c-due">'+humanDD(b.due)+'</td>'
         +'<td><span class="bf-chip" style="background:'+(STAGE_COLOR[b.status]||'#8a94a0')+'">'+esc(STAGE_LBL[b.status]||b.status||'—')+'</span></td></tr>'; }).join('')
-      :'<tr><td colspan="7" class="it-empty">No briefs match.</td></tr>';
+      :'<tr><td colspan="8" class="it-empty">No briefs match.</td></tr>';
     body.querySelectorAll('tr[data-bid]').forEach(function(r){ r.onclick=function(){ openModal(r.getAttribute('data-bid')); }; });
   }
   // The BOX ITSELF is the query's source of truth (Ray, 10 Sep 2026, second report: rows
@@ -3390,6 +3469,8 @@ window.addEventListener('load',restore);
       document.addEventListener(ev,function(e){ var t=e.target;
         if(t&&t.tagName==='INPUT'&&(t.id==='bl-search'||(t.closest&&t.closest('.bl-bar'))))renderLedger(); }); });
     document.addEventListener('click',function(e){
+      var rl=e.target.closest&&e.target.closest('#bl-relabel');
+      if(rl){ relabelLedger({quiet:false}); return; }
       var tog=e.target.closest&&e.target.closest('#bl-tog');
       if(tog){ BL_OPEN=!BL_OPEN; try{localStorage.setItem('fcc-bl-open',BL_OPEN?'1':'0');}catch(e2){} renderLedger(); return; }
       var th=e.target.closest&&e.target.closest('#bltbl thead th[data-k]');
@@ -3414,7 +3495,11 @@ window.addEventListener('load',restore);
   refreshPreview();
   // scanned read-outs need BOTH stores in hand before they can be folded into the register
   var _srB=false,_srT=false; function _srTry(){ if(_srB&&_srT){ var n=rescanComms(); syncScannedResults(); if(n)renderAll(); } }
-  apiGet().then(function(d){ BRIEFS=d||{}; _srB=true; _srTry(); renderAll(); setTimeout(maybeNotify,800); });
+  apiGet().then(function(d){ BRIEFS=d||{}; _srB=true; _srTry(); renderAll();
+    // one-time repair of stages the old bare-word matcher closed on a pickup; the flag keeps
+    // it to a single pass per browser, and the ⟳ button below re-runs it on demand
+    try{ if(localStorage.getItem('fcc-relabel-v1')!=='1'){ localStorage.setItem('fcc-relabel-v1','1'); relabelLedger({quiet:false}); } }catch(e){ relabelLedger({quiet:true}); }
+    setTimeout(maybeNotify,800); });
   // #10 load the test register (KV; seed from wins + plan test-tasks on first run)
   fetch('/api/tests').then(function(r){return r.json();}).then(function(d){ if(d&&d.length){TESTS=d;} else {TESTS=seedTests(); saveTests();} _srT=true; _srTry(); renderTests(); renderTimeline(); renderAlerts(); })
     .catch(function(){ try{TESTS=JSON.parse(localStorage.getItem('fcc-tests'));}catch(e){} if(!TESTS||!TESTS.length)TESTS=seedTests(); _srT=true; _srTry(); renderTests(); renderTimeline(); renderAlerts(); });

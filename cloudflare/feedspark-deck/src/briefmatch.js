@@ -21,7 +21,43 @@
  * Pure module — no KV, no fetch — so it is unit-testable outside the worker.
  */
 
-const DONE_RE = /\b(done|finished|complete|completed|delivered|live|actioned|signed[\s-]?off)\b/i;
+/* ---- REPLY CLASSIFIER (Ray, 11 Sep 2026) -------------------------------------------
+ * "when Dinesh said 'Hi Ray, we will do the needful and update you' … it is NOT done by
+ * ASPL. It means the ticket has been picked up and is in progress. The next confirmation
+ * would be them confirming that the task has been done."
+ *
+ * The old DONE_RE matched the bare word done/complete(d) ANYWHERE, so a PROMISE to complete
+ * read as a completion and every acknowledgement closed its ticket. A completion word now
+ * only counts when it is not inside a promise:
+ *   · a subordinating conjunction anywhere earlier in the clause (once / when / after /
+ *     until / if / pending / before) scopes the whole clause → pickup, e.g.
+ *     "please pickup and update ONCE it has been completed";
+ *   · a modal or intent marker in the three words before it (will / shall / to be / should /
+ *     can / need to / plan to / please / not / yet to) → pickup, e.g. "WE WILL complete".
+ * Everything else — "has been completed", "we have actioned it", "it is now live" — is a
+ * real completion. "live" only counts with its own cue (is/now/gone/went/pushed/set live),
+ * so a sentence about the live feed is never mistaken for a finished task.
+ * MIRRORED VERBATIM in docs/FeedSpark_Workflow.html; tools/test_replyclass.mjs runs the same
+ * corpus through both copies and fails the build if they ever disagree. */
+const DONE_WORD_RE = /\b(done|finished|complete[ds]?|completion|delivered|actioned|implemented|deployed|signed[\s-]?off|(?:is|are|now|gone|went|pushed|set|all)\s+live)\b/i;
+const SUBCONJ_RE = /\b(once|when|after|as soon as|until|till|unless|if|pending|before)\b/i;
+const NEAR_FUT_RE = /\b(will|we'?ll|i'?ll|shall|going to|gonna|to be|should|would|could|can|may|might|need(?:s|ed)? to|have to|has to|plan(?:ning)? to|aim(?:ing)? to|expect(?:ing)? to|hop(?:e|ing) to|please|kindly|not|yet to|due to be)\b\s*(?:\w+\s+){0,2}$/i;
+const ACK_RE = /\b(do the needful|pick(?:ing|s|ed)?(?:\s+(?:this|it|that|these|them))?\s*up|on it|noted|acknowledg(?:e|ed|ing)|will do|we will|we'?ll|started|in progress|underway|working on|wip|eta|assigned|looking into|look into|will check|will update|update you|revert)\b/i;
+export function classifyReply(text) {
+  const t = String(text || '').replace(/\bFrom:\s*[\s\S]*$/i, ' ');   // the quoted original never votes
+  const clauses = t.split(/[.;!?\n\u2022]+|,\s+(?=(?:and|but|so|then)\b)/i);
+  let done = false, ack = false;
+  for (const raw of clauses) {
+    const c = String(raw || '');
+    const m = DONE_WORD_RE.exec(c);
+    if (!m) { if (ACK_RE.test(c)) ack = true; continue; }
+    const before = c.slice(0, m.index);
+    if (SUBCONJ_RE.test(before) || NEAR_FUT_RE.test(before)) ack = true;
+    else done = true;
+  }
+  return done ? 'done' : (ack ? 'ack' : '');
+}
+const DONE_RE = { test: (t) => classifyReply(t) === 'done' };   // drop-in for the old regex
 const BLOCK_RE = /\b(blocked|blocker|waiting on|on hold|stuck|dependency)\b/i;
 const PROG_RE = /\b(started|in progress|underway|working on|wip|eta|will complete|picking (this|it) up)\b/i;
 const ID_RE = /\b([A-Z]{2,4}-\d{8}-\d{2})\b/;
@@ -427,7 +463,9 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     matched++;
     let sender = from.replace(/<[^>]*>/, '').trim() || from;
     (opts.aspl || []).forEach((n) => { if (new RegExp('\\b' + n + '\\b', 'i').test(text)) sender = n; });
-    const done = DONE_RE.test(text), blocked = BLOCK_RE.test(text), prog = PROG_RE.test(text);
+    const cls = classifyReply(text);
+    const done = cls === 'done', blocked = BLOCK_RE.test(text);
+    const prog = PROG_RE.test(text) || cls === 'ack';   // "we will do the needful" = picked up, not finished
     const golive = LIVE_RE.test(text) && !!analysisKind(b);
     // an ASPL read-out reply on a live/analysis test ticket files as a Result: comm — the page
     // then treats it exactly like a manually logged result (register back-fill, confirmation
