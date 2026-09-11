@@ -3397,20 +3397,6 @@
    "min": 1
   },
   {
-   "name": "AI Quote xlsx: System / Platform Costs section written ONLY when the monthly new-products bundle is on (was forbidden in #333; conditional since #339)",
-   "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "if(t.upd){ var s1=row({A:{v:'System / Platform Costs'",
-   "pr": 339,
-   "min": 1
-  },
-  {
-   "name": "AI Quote xlsx: Monthly Cost (Tech) row = the new-products bundle, written only when it is on (was forbidden in #333; conditional since #339)",
-   "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "if(platA)rTech=row({H:{v:'Monthly Cost (Tech)'",
-   "pr": 339,
-   "min": 1
-  },
-  {
    "name": "AI Quote xlsx: the internal 'Delivery effort' row + note must stay gone",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "Delivery effort",
@@ -3537,20 +3523,6 @@
    "pr": 340
   },
   {
-   "name": "Workflow: Chase ASPL replies inside the brief's original Gmail thread",
-   "file": "docs/FeedSpark_Workflow.html",
-   "pattern": "openChaseAspl",
-   "min": 2,
-   "pr": null
-  },
-  {
-   "name": "Workflow: ASPL reply list shows date+time per sender, body stripped of quoted headers",
-   "file": "docs/FeedSpark_Workflow.html",
-   "pattern": "commWhen",
-   "min": 2,
-   "pr": null
-  },
-  {
    "name": "AI Quote xlsx: 'New Product Arrivals - Monthly Tachyon Update' section written ONLY when the bundle is on (Ray 11 Sep 2026: not a platform cost)",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "if(t.upd){ var s1=row({A:{v:'New Product Arrivals - Monthly Tachyon Update'",
@@ -3598,6 +3570,20 @@
    "pattern": "var HK='fcc-aiq-help'",
    "pr": 340,
    "min": 1
+  },
+  {
+   "name": "Workflow: Chase ASPL replies inside the brief's original Gmail thread",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "openChaseAspl",
+   "min": 2,
+   "pr": null
+  },
+  {
+   "name": "Workflow: ASPL reply list shows date+time per sender, body stripped of quoted headers",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "commWhen",
+   "min": 2,
+   "pr": null
   }
  ]
 }
