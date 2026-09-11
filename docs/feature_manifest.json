@@ -3919,35 +3919,35 @@
    "name": "Quote generator UX pass (Ray 11 Sep 2026 'boxes sized incorrectly, details too much'): every service card = choice row · ONE settings strip (rate · setup · ✎ note) · summary",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "<div class=\"xbar\">",
-   "pr": 352,
+   "pr": 353,
    "min": 3
   },
   {
    "name": "Quote generator UX pass: section notes hidden behind ✎ Note until they hold text",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "function noteOpen(k,v){",
-   "pr": 352,
+   "pr": 353,
    "min": 1
   },
   {
    "name": "Quote generator UX pass: 'What are you quoting?' chips are an even grid, not a wrapping flex row",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": ".types{display:grid;",
-   "pr": 352,
+   "pr": 353,
    "min": 1
   },
   {
    "name": "Quote generator UX pass: the Editing strip is hidden when nothing is being edited ([hidden] beats display:flex)",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": ".edit-bar[hidden]{display:none}",
-   "pr": 352,
+   "pr": 353,
    "min": 1
   },
   {
    "name": "Quote generator UX pass: 'selected lines' discount chips on the system / local inventory summaries carry their market label",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "function dscLbl(id){",
-   "pr": 352,
+   "pr": 353,
    "min": 1
   }
  ]
