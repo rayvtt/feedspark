@@ -374,6 +374,9 @@ window.addEventListener('load',restore);
   .xfeed .dsc{grid-column:1/-1;justify-self:start}
   .xret{display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:12.5px;font-weight:800;color:var(--ink-2)} .xret label{display:inline-flex;align-items:center;gap:6px}
   .xsum{margin-top:8px;font-size:12.5px;font-weight:700;color:var(--ink-2)} .xsum .dsc{margin-left:6px}
+  .xpre{font-size:12.5px;font-weight:800;color:var(--ink-2);margin:0 0 8px;display:flex;flex-wrap:wrap;align-items:center;gap:6px} .xpre input.xp-h{width:52px;text-align:right;font:inherit;font-weight:800;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+  .xpre select.xp-mode{font:inherit;font-size:11.5px;font-weight:800;border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:#fff;color:var(--ink-2)}
+  [data-theme=dark] .xpre input.xp-h,[data-theme=dark] .xpre select.xp-mode{background:#20242E;color:var(--ink)}
   [data-theme=dark] .xrate input.xr,[data-theme=dark] .xret input.xh,[data-theme=dark] .xfeed input,[data-theme=dark] .xfeed select,[data-theme=dark] .xnote input.xn,[data-theme=dark] .xm-new,[data-theme=dark] .xfeed textarea.xf-req,[data-theme=dark] .xfeed .xf-x{background:#20242E;color:var(--ink)}
   /* partner-discount scope: the selector beside the %, and the per-line chip in "selected lines" mode */
   #discscope{font:inherit;font-size:11px;font-weight:800;border:1px solid var(--line);border-radius:8px;padding:3px 5px;background:#fff;color:var(--ink-2);margin-left:4px}
@@ -953,12 +956,35 @@ window.addEventListener('load',restore);
     if(ty.ret){ var rt=retRec(), day=blockGBP();
       if(+rt.one>0)out.push({kind:'ret',id:'ret:one',name:'Retainer hours — one-off',qual:rt.one+'h · £'+day+' per '+BLOCK_H+'h',qty:hoursToDays(+rt.one),rate:day,amount:Math.round(+rt.one/BLOCK_H*day*100)/100,side:'oneoff',tbc:false,note:rt.note||'',hours:+rt.one,disc:discOn('oneoff','ret:one')});
       if(+rt.mon>0)out.push({kind:'ret',id:'ret:mon',name:'Retainer hours — monthly',qual:rt.mon+'h / month · £'+day+' per '+BLOCK_H+'h',qty:hoursToDays(+rt.mon),rate:day,amount:Math.round(+rt.mon/BLOCK_H*day*100)/100,side:'monthly',tbc:false,note:rt.note||'',hours:+rt.mon,disc:discOn('monthly','ret:mon')}); }
+    // the automatic setup pre-charge per service type — one line per type, N services × hours
+    ['sys','feed','lia'].forEach(function(k){ if(!ty[k])return; var n=out.filter(function(l){return l.kind===k}).length; var pl=preLine(k,n); if(pl)out.push(pl); });
     return out; }
-  var KIND_HEAD={sys:'New systems (FeedHero dashboards)',feed:'New feeds',lia:'Local inventory feeds',ret:'Retainer hours'};
-  function xLineMoney(l){ if(l.tbc)return 'priced separately by ASPL'; return (l.kind==='ret'?(l.hours+'h = '):(l.qty>1?(l.qty+' × '+money(l.rate)+' = '):''))+money(l.amount)+(l.side==='monthly'?' / month':''); }
+  var KIND_HEAD={sys:'New systems (FeedHero dashboards)',feed:'New feeds',lia:'Local inventory feeds',ret:'Retainer hours',pre:'Setup pre-charges'};
+  /* SETUP PRE-CHARGE per service (Ray, 11 Sep 2026: "a pre-charge for each individual service — when a
+     new feed is created, an automatic two-hour charge is added to the line; it can be extracted from
+     a retainer or be a one-off cost"): every new system / feed / local inventory feed carries N hours
+     of setup automatically. Hours per service live on the rate card (rc.pre — feed 2h is Ray's
+     figure; system and local inventory default to 2h too, changeable); HOW they are billed is per
+     quote and per type (r.pre[k].mode): 'oneoff' = hours × the day rate on the one-off side,
+     'retainer' = the hours come out of the client's retainer, listed at £0. */
+  var PRE_DEFAULT={sys:2,feed:2,lia:2}, PRE_WORD={sys:'system',feed:'feed',lia:'local inventory feed'};
+  function preHours(k){ var rc=STORE[RCKEY]||{}; var v=rc.pre&&rc.pre[k]; return (v!=null&&v!==''&&isFinite(+v))?+v:PRE_DEFAULT[k]; }
+  function setPreHours(k,v){ var rc=STORE[RCKEY]||(STORE[RCKEY]={fields:{}}); rc.pre=rc.pre||{}; rc.pre[k]=(v===''||v==null)?null:+v; rc.updated=Date.now(); }
+  function preRec(k){ var r=rec(); if(!r.pre||typeof r.pre!=='object')r.pre={}; if(!r.pre[k]||typeof r.pre[k]!=='object')r.pre[k]={mode:'oneoff'}; return r.pre[k]; }
+  function preMode(k){ var m=preRec(k).mode; return m==='retainer'?'retainer':'oneoff'; }
+  // the pre-charge line for one service type: N services × hours, at the day rate or from the retainer
+  function preLine(k,n){ if(!n)return null; var h=preHours(k); if(!(h>0))return null; var tot=Math.round(n*h*100)/100, day=blockGBP(), fromRet=preMode(k)==='retainer';
+    return {kind:'pre',of:k,id:'pre:'+k,name:'Setup pre-charge — '+KIND_HEAD[k].toLowerCase(),qual:n+' × '+h+'h = '+tot+'h'+(fromRet?' from the retainer':' · £'+day+' per '+BLOCK_H+'h'),qty:hoursToDays(tot),rate:fromRet?0:day,
+      amount:fromRet?0:Math.round(tot/BLOCK_H*day*100)/100,side:'oneoff',tbc:false,free:fromRet,hours:tot,per:h,n:n,note:fromRet?'Taken from the retainer — not charged':'',disc:discOn('oneoff','pre:'+k)}; }
+  function preHtml(k){ var n=extraLines().filter(function(l){return l.kind===k}).length, pl=preLine(k,n);
+    return '<div class="xpre">Setup pre-charge <input type="text" class="xp-h" data-pre="'+k+'" inputmode="decimal" value="'+esc(String(preHours(k)))+'"> h per '+PRE_WORD[k]
+      +' <select class="xp-mode" data-pre="'+k+'"><option value="oneoff"'+(preMode(k)==='oneoff'?' selected':'')+'>one-off cost at the day rate</option><option value="retainer"'+(preMode(k)==='retainer'?' selected':'')+'>from the retainer (no charge)</option></select>'
+      +' <span class="hint xp-sum">'+(pl?(pl.n+' × '+pl.per+'h = '+pl.hours+'h → '+(pl.free?'from the retainer, £0':money(pl.amount)+' one-off')):'added automatically to every '+PRE_WORD[k]+' on this quote')+'</span>'+(pl?dscChip(pl.id):'')+'</div>'; }
+  function xLineMoney(l){ if(l.tbc)return 'priced separately by ASPL'; if(l.kind==='pre')return l.free?(l.hours+'h from the retainer — not charged'):(l.hours+'h = '+money(l.amount)); return (l.kind==='ret'?(l.hours+'h = '):(l.qty>1?(l.qty+' × '+money(l.rate)+' = '):''))+money(l.amount)+(l.side==='monthly'?' / month':''); }
   // "2 systems · 1 feed · 1 bespoke feed (ASPL) · 1 local inventory feed · retainer 8h + 4h/mo"
-  function xWord(X){ var n={sys:0,feed:0,tbc:0,lia:0}, ret=[]; (X||[]).forEach(function(l){ if(l.kind==='feed'&&l.tbc)n.tbc++; else if(n[l.kind]!=null)n[l.kind]++; if(l.kind==='ret')ret.push(l.hours+'h'+(l.side==='monthly'?'/mo':'')); });
-    var p=[]; if(n.sys)p.push(n.sys+' system'+(n.sys===1?'':'s')); if(n.feed)p.push(n.feed+' feed'+(n.feed===1?'':'s')); if(n.tbc)p.push(n.tbc+' bespoke feed'+(n.tbc===1?'':'s')+' (ASPL)'); if(n.lia)p.push(n.lia+' local inventory feed'+(n.lia===1?'':'s')); if(ret.length)p.push('retainer '+ret.join(' + ')); return p.join(' · '); }
+  function xWord(X){ var n={sys:0,feed:0,tbc:0,lia:0}, ret=[], preH=0, preR=0; (X||[]).forEach(function(l){ if(l.kind==='pre'){ if(l.free)preR+=l.hours; else preH+=l.hours; return; } if(l.kind==='feed'&&l.tbc)n.tbc++; else if(n[l.kind]!=null)n[l.kind]++; if(l.kind==='ret')ret.push(l.hours+'h'+(l.side==='monthly'?'/mo':'')); });
+    var p=[]; if(n.sys)p.push(n.sys+' system'+(n.sys===1?'':'s')); if(n.feed)p.push(n.feed+' feed'+(n.feed===1?'':'s')); if(n.tbc)p.push(n.tbc+' bespoke feed'+(n.tbc===1?'':'s')+' (ASPL)'); if(n.lia)p.push(n.lia+' local inventory feed'+(n.lia===1?'':'s')); if(ret.length)p.push('retainer '+ret.join(' + '));
+    if(preH)p.push('setup '+preH+'h'); if(preR)p.push('setup '+preR+'h from the retainer'); return p.join(' · '); }
   // ---- the picker + the section cards ----
   function renderTypes(){ var ty=typesRec();
     $('#types').innerHTML=TYPES.map(function(x){ return '<button type="button" class="qp tp'+(ty[x[0]]?' on':'')+'" data-tp="'+x[0]+'" aria-pressed="'+(ty[x[0]]?'true':'false')+'"><span>'+(ty[x[0]]?'✓ ':'')+esc(x[1])+'</span><small>'+esc(x[2])+'</small></button>'; }).join('');
@@ -972,12 +998,15 @@ window.addEventListener('load',restore);
     return (gen.length?('<b>'+gen.length+'</b> priced feed'+(gen.length===1?'':'s')+' = <b>'+money(sum)+'</b> one-off'):'')+(tbc.length?((gen.length?' · ':'')+'<b>'+tbc.length+'</b> bespoke feed'+(tbc.length===1?'':'s')+' — requirements to ASPL, priced separately'):''); }
   function retSum(){ var rt=retRec(), day=blockGBP(), a=(+rt.one>0), b=(+rt.mon>0);
     return (a?(rt.one+'h one-off = <b>'+money(+rt.one/BLOCK_H*day)+'</b>'+dscChip('ret:one')):'')+((a&&b)?' · ':'')+(b?(rt.mon+'h / month = <b>'+money(+rt.mon/BLOCK_H*day)+' / month</b>'+dscChip('ret:mon')):'')+((!a&&!b)?'<span class="hint">Type the hours</span>':''); }
-  function xsums(){ var m={'#sys-body':sysSum,'#lia-body':liaSum,'#feed-body':feedSum,'#ret-body':retSum}; Object.keys(m).forEach(function(k){ var el=document.querySelector(k+' .xsum'); if(el)el.innerHTML=m[k](); }); }
+  function xsums(){ var m={'#sys-body':sysSum,'#lia-body':liaSum,'#feed-body':feedSum,'#ret-body':retSum}; Object.keys(m).forEach(function(k){ var el=document.querySelector(k+' .xsum'); if(el)el.innerHTML=m[k](); });
+    ['sys','feed','lia'].forEach(function(k){ var el=document.querySelector('#'+k+'-body .xpre'); if(el){ var n=extraLines().filter(function(l){return l.kind===k}).length, pl=preLine(k,n), sp=el.querySelector('.xp-sum');
+      if(sp)sp.textContent=pl?(pl.n+' × '+pl.per+'h = '+pl.hours+'h → '+(pl.free?'from the retainer, £0':money(pl.amount)+' one-off')):'added automatically to every '+PRE_WORD[k]+' on this quote';
+      var ch=el.querySelector('[data-dsc]'); if(pl&&!ch)el.insertAdjacentHTML('beforeend',dscChip(pl.id)); else if(!pl&&ch)ch.remove(); } }); }
   function renderX(){ var sy=sysRec(), li=liaRec(), F=feedsRec(), rt=retRec(), rf=rateOf('feed'), day=blockGBP();
     $('#sys-body').innerHTML='<div class="xrate">£ per system <input type="text" class="xr" data-rate="sys" inputmode="decimal" value="'+esc(String(rateOf('sys')))+'"> <span class="hint">one FeedHero dashboard per market · saves with your rate card</span></div>'
-      +chipRow(sy,'sys')+'<div class="xnote"><input type="text" class="xn" data-note="sys" maxlength="240" placeholder="Note — lands in the quote’s Additional Notes" value="'+esc(sy.note||'')+'"></div><div class="xsum">'+sysSum()+'</div>';
+      +preHtml('sys')+chipRow(sy,'sys')+'<div class="xnote"><input type="text" class="xn" data-note="sys" maxlength="240" placeholder="Note — lands in the quote’s Additional Notes" value="'+esc(sy.note||'')+'"></div><div class="xsum">'+sysSum()+'</div>';
     $('#feed-body').innerHTML='<div class="xrate">£ per generic feed <input type="text" class="xr" data-rate="feed" inputmode="decimal" value="'+esc(String(rf))+'"> <span class="hint">ex VAT · saves with your rate card · a bespoke feed stays unpriced until ASPL has costed it — type the £ once agreed</span></div>'
-      +'<div class="xfeeds">'+F.map(function(fd,i){ var bes=fd.kind==='bespoke';
+      +preHtml('feed')+'<div class="xfeeds">'+F.map(function(fd,i){ var bes=fd.kind==='bespoke';
         return '<div class="xfeed" data-i="'+i+'"><select class="xf-kind" data-i="'+i+'"><option value="generic"'+(bes?'':' selected')+'>Generic</option><option value="bespoke"'+(bes?' selected':'')+'>Bespoke</option></select>'
           +'<input type="text" class="xf-name" data-i="'+i+'" placeholder="Feed — e.g. Google Shopping DE, Meta catalogue" value="'+esc(fd.name||'')+'">'
           +'<input type="text" class="xf-qty" data-i="'+i+'" inputmode="numeric" value="'+esc(String(fd.qty||1))+'" title="Quantity">'
@@ -987,7 +1016,7 @@ window.addEventListener('load',restore);
           +dscChip('feed:'+i)+'</div>'; }).join('')+'</div>'
       +'<button type="button" class="pt-act" id="xf-add">＋ Add feed</button><div class="xsum">'+feedSum()+'</div>';
     $('#lia-body').innerHTML='<div class="xrate">£ per feed per month <input type="text" class="xr" data-rate="lia" inputmode="decimal" value="'+esc(String(rateOf('lia')))+'"> <span class="hint">saves with your rate card</span></div>'
-      +chipRow(li,'lia')+'<div class="xnote"><input type="text" class="xn" data-note="lia" maxlength="240" placeholder="Note — lands in the quote’s Additional Notes" value="'+esc(li.note||'')+'"></div><div class="xsum">'+liaSum()+'</div>';
+      +preHtml('lia')+chipRow(li,'lia')+'<div class="xnote"><input type="text" class="xn" data-note="lia" maxlength="240" placeholder="Note — lands in the quote’s Additional Notes" value="'+esc(li.note||'')+'"></div><div class="xsum">'+liaSum()+'</div>';
     $('#ret-body').innerHTML='<div class="xret"><label>One-off hours <input type="text" class="xh" data-h="one" inputmode="decimal" placeholder="0" value="'+esc(rt.one!=null?String(rt.one):'')+'"></label>'
       +'<label>Hours per month <input type="text" class="xh" data-h="mon" inputmode="decimal" placeholder="0" value="'+esc(rt.mon!=null?String(rt.mon):'')+'"></label>'
       +'<span class="hint">at the day rate £'+day+' per '+BLOCK_H+'h (Settings → block rate)</span></div>'
@@ -1155,13 +1184,16 @@ window.addEventListener('load',restore);
   (function(){ var wrap=document.querySelector('main');
     wrap.addEventListener('input',function(e){ var t=e.target; if(!t.classList)return;
       if(t.classList.contains('xr')){ setRate(t.getAttribute('data-rate'),String(t.value).replace(/[^0-9.]/g,'')); foot(); xsums(); saveSoon(); }
+      else if(t.classList.contains('xp-h')){ setPreHours(t.getAttribute('data-pre'),String(t.value).replace(/[^0-9.]/g,'')); foot(); xsums(); saveSoon(); }
       else if(t.classList.contains('xn')){ var k=t.getAttribute('data-note'); (k==='sys'?sysRec():k==='lia'?liaRec():retRec()).note=t.value; saveSoon(); }
       else if(t.classList.contains('xh')){ var v=String(t.value).replace(/[^0-9.]/g,''); retRec()[t.getAttribute('data-h')]=v===''?null:v; foot(); xsums(); saveSoon(); }
       else if(t.classList.contains('xf-name')){ feedsRec()[+t.getAttribute('data-i')].name=t.value; saveSoon(); }
       else if(t.classList.contains('xf-qty')){ var q=String(t.value).replace(/[^0-9]/g,''); feedsRec()[+t.getAttribute('data-i')].qty=q===''?1:+q; foot(); xsums(); saveSoon(); }
       else if(t.classList.contains('xf-price')){ var pv=String(t.value).replace(/[^0-9.]/g,''); feedsRec()[+t.getAttribute('data-i')].price=pv===''?null:pv; foot(); xsums(); saveSoon(); }
       else if(t.classList.contains('xf-req')){ feedsRec()[+t.getAttribute('data-i')].req=t.value; saveSoon(); } });
-    wrap.addEventListener('change',function(e){ var t=e.target; if(t.classList&&t.classList.contains('xf-kind')){ var fd=feedsRec()[+t.getAttribute('data-i')]; fd.kind=t.value; if(fd.kind!=='bespoke'){ fd.price=null; } renderX(); foot(); saveSoon(); } });
+    wrap.addEventListener('change',function(e){ var t=e.target;
+      if(t.classList&&t.classList.contains('xp-mode')){ preRec(t.getAttribute('data-pre')).mode=t.value; foot(); xsums(); saveSoon(); return; }
+      if(t.classList&&t.classList.contains('xf-kind')){ var fd=feedsRec()[+t.getAttribute('data-i')]; fd.kind=t.value; if(fd.kind!=='bespoke'){ fd.price=null; } renderX(); foot(); saveSoon(); } });
     wrap.addEventListener('keydown',function(e){ var t=e.target; if(e.key!=='Enter'||!t.classList||!t.classList.contains('xm-new'))return; e.preventDefault();
       var m=String(t.value).trim().toLowerCase().replace(/[^a-z0-9-]/g,''); if(!m)return; var o=t.getAttribute('data-xmnew')==='sys'?sysRec():liaRec();
       if(mktsAll(o).indexOf(m)<0)o.extra.push(m); o.mkts[m]=true; renderX(); foot(); saveSoon(); });
@@ -1185,7 +1217,7 @@ window.addEventListener('load',restore);
   $('#savecard').addEventListener('click',function(){ var rc=STORE[RCKEY]||{fields:{}}; rc.fields=rc.fields||{};
     CAT.forEach(function(f){ var ch=fCharge(f.id), hb=(ch==='flat'||ch==='monthly'), rt=hb?null:fRate(f.id), h=hb?fHours(f.id):null;
       if(rt!=null||h!=null)rc.fields[f.id]={rate:rt,charge:ch,hours:h}; });
-    rc.blockGBP=blockGBP(); rc.upd={tiers:updTiers()}; rc.rates={sys:rateOf('sys'),feed:rateOf('feed'),lia:rateOf('lia')}; rc.updated=Date.now(); STORE[RCKEY]=rc;
+    rc.blockGBP=blockGBP(); rc.upd={tiers:updTiers()}; rc.rates={sys:rateOf('sys'),feed:rateOf('feed'),lia:rateOf('lia')}; rc.pre={sys:preHours('sys'),feed:preHours('feed'),lia:preHours('lia')}; rc.updated=Date.now(); STORE[RCKEY]=rc;
     putMap(storeBody(),'Rate card saved — it pre-fills every client'); render();   // the FULL map — a {ratecard}-only PUT used to tombstone every client record
   });
 
@@ -1312,7 +1344,7 @@ window.addEventListener('load',restore);
       out.push('  • '+l.name+' — '+fmt(l.c)+' SKUs'+(SHOWP&&l.rt!=null?('  '+lineMoney(l)):'')+(l.note?('  — '+l.note):'')); });
     if(L.length){ out.push(''); out.push('SKUs in scope: '+fmt(baseVol())+' variant SKUs · '+L.length+' optimisation'+(L.length===1?'':'s')); }
     if(t.upd)out.push('Monthly update — new products: '+updWord(t.upd,SHOWP));
-    ['sys','feed','lia','ret'].forEach(function(k){ var g=t.x.filter(function(l){return l.kind===k}); if(!g.length)return; out.push(''); out.push(KIND_HEAD[k]+':');
+    ['sys','feed','lia','ret','pre'].forEach(function(k){ var g=t.x.filter(function(l){return l.kind===k}); if(!g.length)return; out.push(''); out.push(KIND_HEAD[k]+':');
       g.forEach(function(l){ out.push('  • '+l.name+' — '+l.qual+(SHOWP?('  '+xLineMoney(l)):'')+(l.note?('  — '+l.note):'')); }); });
     if(SHOWP){ if(setupFee())out.push('One-off setup: '+money(setupFee()));
       if(t.discAmt>0&&!t.miss){ out.push('Subtotal: '+money(t.sub)); out.push('Partner discount '+t.disc+'%'+(t.discScope!=='all'?' ('+discScopeWord(t.discScope)+')':'')+': −'+money(t.discAmt)); }
@@ -1513,6 +1545,10 @@ window.addEventListener('load',restore);
     /* 4c — local inventory feeds: monthly, per feed */
     if(liaL.length){ sect('Local Inventory Feeds (Monthly)','Per feed, per month');
       liaL.forEach(function(l){ var n=costRow({name:l.name,qual:l.qual,qty:1,rate:n2(l.rate),flat:1,mon:1,note:l.note,dsc:l.disc?dsc:0}); if(!liaA)liaA=n; liaB=n; }); row(); }
+    /* 4c′ — setup pre-charges: N services × hours per service, at the day rate (one-off) or from the retainer (£0) */
+    var preL=X.filter(function(l){return l.kind==='pre'});
+    if(preL.length){ sect('Setup Pre-charges (One-off)','Automatic setup hours per service — at the day rate, or taken from the retainer');
+      preL.forEach(function(l){ costRow({name:l.name,qual:l.qual,qty:l.qty,rate:n2(l.rate),flat:1,days:1,note:l.note,dsc:l.disc?dsc:0}); }); row(); }
     if(t.upd){ var s1=row({A:{v:'New Product Arrivals - Monthly Tachyon Update',s:S.sect},B:{v:'',s:S.sectB},N:{v:'Every new product is updated with Tachyon the month it lands — no quarterly re-quote',s:S.note}});
       mg('A'+s1+':B'+s1);
       platA=platB=costRow({name:'Tachyon monthly update — new product arrivals',qual:'bundle '+t.upd.label+' new SKUs / month',qty:1,rate:n2(t.upd.gbp),flat:1,plat:1,dsc:updDsc,
@@ -1586,7 +1622,7 @@ window.addEventListener('load',restore);
     var live=(!t.miss&&oneRows.length>0), mlive=(mpA>0||platA>0||liaA>0);
     // the one-off rows may sit in several sections — SUM over their K cells as compact ranges
     function kRanges(rows){ rows=rows.slice().sort(function(a,b){return a-b}); var out=[],i=0; while(i<rows.length){ var j=i; while(j+1<rows.length&&rows[j+1]===rows[j]+1)j++; out.push(i===j?('K'+rows[i]):('K'+rows[i]+':K'+rows[j])); i=j+1; } return out.join(','); }
-    var oneParts=[]; if(sysL.length)oneParts.push('new systems'); if(feedL.some(function(l){return !l.tbc}))oneParts.push('new feeds'); if(L.length)oneParts.push('initial optimisation'); if(setupFee())oneParts.push('one-off setup'); if(retOne)oneParts.push('retainer hours');
+    var oneParts=[]; if(sysL.length)oneParts.push('new systems'); if(feedL.some(function(l){return !l.tbc}))oneParts.push('new feeds'); if(preL.some(function(l){return !l.free}))oneParts.push('setup pre-charges'); if(L.length)oneParts.push('initial optimisation'); if(setupFee())oneParts.push('one-off setup'); if(retOne)oneParts.push('retainer hours');
     var rTot=row({H:{v:'Total One-off Cost',s:S.totl},
       K:live?{f:'SUM('+kRanges(oneRows)+')',v:n2(t.net),s:S.totred}:{v:'',s:S.totgap},
       N:{v:t.miss?('RATES INCOMPLETE — '+missN+' selected optimisation'+(missN===1?'':'s')+' still need a £/SKU or one-off rate, so the total cannot be calculated')
@@ -1648,6 +1684,7 @@ window.addEventListener('load',restore);
       if(fg.length)notes.push({t:'New feeds: '+fg.map(function(l){return l.name+(l.qty>1?' × '+l.qty:'')}).join('; ')+' — '+(fg.every(function(l){return l.rate===rateOf('feed')})?money(rateOf('feed'))+' per generic feed, ':'')+'one-off, ex VAT.'});
       fb.forEach(function(l){ notes.push({t:'Bespoke feed — '+l.name+': priced separately by ASPL once the requirements are costed.'+(l.note?' Requirements: '+l.note:'')}); }); }
     if(liaL.length)notes.push({t:'Local inventory feeds: '+liaL.map(function(l){return l.name.replace('Local inventory feed — ','')}).join(', ')+' at '+money(rateOf('lia'))+' per feed per month.'});
+    preL.forEach(function(l){ notes.push({t:'Setup pre-charge — '+KIND_HEAD[l.of].toLowerCase()+': '+l.n+' × '+l.per+'h = '+l.hours+'h'+(l.free?', taken from the retainer (not charged).':' at £'+blockGBP()+' per '+BLOCK_H+'h = '+money(l.amount)+', one-off.')}); });
     if(retOne||retMon)notes.push({t:'Retainer: '+[retOne?retOne.hours+'h one-off':'',retMon?retMon.hours+'h per month':''].filter(Boolean).join(' + ')+' at £'+blockGBP()+' per '+BLOCK_H+'h, written as days in the sheet.'});
     if(t.upd)notes.push({t:'Monthly update — new products: '+updWord(t.upd,true)+'.'});
     var selPts=((rec().pts||{})[MKT]||[]);
@@ -1907,8 +1944,8 @@ window.addEventListener('load',restore);
       setup:setupFee(), disc:t.disc, discAmt:t.discAmt, discScope:t.discScope, discSetup:!!r.discSetup, sub:t.sub, vat:vatOn(), valid:(r.valid!=null?r.valid:null), blockGBP:blockGBP(),
       net:t.net, vatAmt:t.vat, gross:t.gross, miss:t.miss, fields:t.inc, prods:t.tp,
       monN:t.monN, monSub:t.monSub, monDisc:t.monDisc, monNet:t.monNet, monVat:t.monVat, monGross:t.monGross, upd:t.upd||null,
-      types:JSON.parse(JSON.stringify(t.types)), xlines:t.x.map(function(l){ return {kind:l.kind,id:l.id,name:l.name,qual:l.qual,qty:l.qty,rate:l.rate,amount:l.amount,side:l.side,tbc:l.tbc,note:l.note,hours:l.hours,disc:l.disc}; }),
-      xOne:t.xOne, xMon:t.xMon, tbcN:t.tbcN, cfg:JSON.parse(JSON.stringify({sys:r.sys||null,feeds:r.feeds||[],lia:r.lia||null,ret:r.ret||null,dflags:r.dflags||{}})),
+      types:JSON.parse(JSON.stringify(t.types)), xlines:t.x.map(function(l){ return {kind:l.kind,id:l.id,name:l.name,qual:l.qual,qty:l.qty,rate:l.rate,amount:l.amount,side:l.side,tbc:l.tbc,note:l.note,hours:l.hours,disc:l.disc,free:!!l.free,of:l.of||null,per:l.per||null,n:l.n||null}; }),
+      xOne:t.xOne, xMon:t.xMon, tbcN:t.tbcN, cfg:JSON.parse(JSON.stringify({sys:r.sys||null,feeds:r.feeds||[],lia:r.lia||null,ret:r.ret||null,dflags:r.dflags||{},pre:r.pre||{}})),
       stage:'Saved', owner:'', hist:[{s:'Saved',t:now,by:ME}] };
   }
   // a second save the same day gets "-2", "-3" … — the base ref is a hash of client|market|date
@@ -1933,7 +1970,7 @@ window.addEventListener('load',restore);
     // the quote types and their sections as saved (a quote saved before 11 Sep 2026 is AI-only)
     r.types=q.types?JSON.parse(JSON.stringify(q.types)):{ai:true};
     var cf=q.cfg||{}; r.sys=cf.sys?JSON.parse(JSON.stringify(cf.sys)):{mkts:{},extra:[],note:''}; r.feeds=Array.isArray(cf.feeds)?JSON.parse(JSON.stringify(cf.feeds)):[];
-    r.lia=cf.lia?JSON.parse(JSON.stringify(cf.lia)):{mkts:{},extra:[],note:''}; r.ret=cf.ret?JSON.parse(JSON.stringify(cf.ret)):{one:null,mon:null,note:''}; r.dflags=cf.dflags?JSON.parse(JSON.stringify(cf.dflags)):{};
+    r.lia=cf.lia?JSON.parse(JSON.stringify(cf.lia)):{mkts:{},extra:[],note:''}; r.ret=cf.ret?JSON.parse(JSON.stringify(cf.ret)):{one:null,mon:null,note:''}; r.dflags=cf.dflags?JSON.parse(JSON.stringify(cf.dflags)):{}; r.pre=cf.pre?JSON.parse(JSON.stringify(cf.pre)):{};
     r.setup=(q.setup!=null&&q.setup!==''&&+q.setup>0)?q.setup:null; r.disc=(+q.disc>0)?q.disc:null; r.vat=!!q.vat; r.valid=(q.valid!=null)?q.valid:null; r.blockGBP=q.blockGBP||null;
     // the new-products bundle as saved: on, the estimate, and the band PINNED so the saved figure is reproduced
     r.upd=q.upd?{on:true,est:(q.upd.est!=null?q.upd.est:null),tier:(q.upd.tier!=null?q.upd.tier:null),disc:!!q.upd.disc}:{on:false,est:null,tier:null};
@@ -1995,11 +2032,11 @@ window.addEventListener('load',restore);
   function qBlock(q,withP){ var L=q.lines||[], d=new Date(+q.t||Date.now()), out=[];
     var missN=L.filter(function(l){return l.rt==null}).length;
     out.push('Reference: '+q.ref+' · '+qLoc(q)+' · issued '+dmy(d));
-    out.push('Scope: '+qScopeLine(q));
+    if(L.length||q.upd)out.push('Scope: '+qScopeLine(q));
     if(L.length){ out.push('Fields ('+L.length+'):');
       L.forEach(function(l){ out.push('• '+l.name+' — '+fmt(l.c)+' SKUs'+(withP&&l.rt!=null?(' '+lineMoney(l)):'')+(l.note?(' — '+l.note):'')); }); }
     if(q.upd)out.push('Monthly update — new products: '+updWord(q.upd,withP));
-    var XL=q.xlines||[]; ['sys','feed','lia','ret'].forEach(function(k){ var g=XL.filter(function(l){return l.kind===k}); if(!g.length)return; out.push(KIND_HEAD[k]+' ('+g.length+'):');
+    var XL=q.xlines||[]; ['sys','feed','lia','ret','pre'].forEach(function(k){ var g=XL.filter(function(l){return l.kind===k}); if(!g.length)return; out.push(KIND_HEAD[k]+' ('+g.length+'):');
       g.forEach(function(l){ out.push('• '+l.name+' — '+l.qual+(withP?(' '+xLineMoney(l)):'')+(l.note?(' — '+l.note):'')); }); });
     if(+q.tbcN>0)out.push(q.tbcN+' bespoke feed'+(q.tbcN===1?'':'s')+' priced separately by ASPL once the requirements are costed.');
     if(withP){
@@ -2039,11 +2076,11 @@ window.addEventListener('load',restore);
     return 'Quote — '+q.ref+' — '+qLoc(q)+' — '+(n?(n+' AI field'+(n===1?'':'s')+' · '):'')+xWord(XT)+' · '+qTotalWord(q); }
   function quoteBriefScope(q){ var L=q.lines||[], out=[];
     out.push('Saved quote '+q.ref+' — '+qLoc(q)+' — saved '+tkWhen(q.t)+' by '+tkWho(q.by));
-    out.push('Scope: '+qScopeLine(q));
+    if(L.length||q.upd)out.push('Scope: '+qScopeLine(q));
     if(L.length){ out.push('Fields ('+L.length+'):');
       L.forEach(function(l){ out.push('• '+l.name+' ('+(l.grp||'')+') — '+fmt(l.c)+' SKUs'+(l.rt==null?' — rate not set':(' '+lineMoney(l)))+(l.note?(' — '+l.note):'')); }); }
     if(q.upd)out.push('Monthly update — new products: '+updWord(q.upd,true));
-    var XB=q.xlines||[]; ['sys','feed','lia','ret'].forEach(function(k){ var g=XB.filter(function(l){return l.kind===k}); if(!g.length)return; out.push(KIND_HEAD[k]+' ('+g.length+'):');
+    var XB=q.xlines||[]; ['sys','feed','lia','ret','pre'].forEach(function(k){ var g=XB.filter(function(l){return l.kind===k}); if(!g.length)return; out.push(KIND_HEAD[k]+' ('+g.length+'):');
       g.forEach(function(l){ out.push('• '+l.name+' — '+l.qual+' '+xLineMoney(l)+(l.note?(' — '+l.note):'')); }); });
     if(+q.tbcN>0)out.push(q.tbcN+' bespoke feed'+(q.tbcN===1?'':'s')+' to ASPL for costing — requirements above; priced separately.');
     if(+q.setup)out.push('One-off setup: '+money(q.setup));
@@ -2166,7 +2203,7 @@ window.addEventListener('load',restore);
       var row='<tr>'
         +'<td class="t-ref">'+esc(q.ref||'—')+(q.prev?'<span class="t-sup" title="Edited from '+esc(q.prev)+'">v'+esc(String(q.ver||2))+' of '+esc(q.prev)+'</span>':'')+'</td>'
         +'<td><span class="t-cl">'+esc(q.client||'—')+'</span> <span class="t-mk">'+esc(String(q.mkt||'').toUpperCase())+'</span>'
-          +(function(){ var ks=[]; if((q.lines||[]).length||q.upd)ks.push('AI'); (q.xlines||[]).forEach(function(l){ var w=l.kind==='sys'?'System':l.kind==='feed'?'Feed':l.kind==='lia'?'LIA':'Retainer'; if(ks.indexOf(w)<0)ks.push(w); }); return ks.length>1||(ks.length===1&&ks[0]!=='AI')?'<br>'+ks.map(function(k){return '<span class="t-mk">'+esc(k)+'</span>'}).join(' '):''; })()+'</td>'
+          +(function(){ var ks=[]; if((q.lines||[]).length||q.upd)ks.push('AI'); (q.xlines||[]).forEach(function(l){ if(l.kind==='pre')return; var w=l.kind==='sys'?'System':l.kind==='feed'?'Feed':l.kind==='lia'?'LIA':'Retainer'; if(ks.indexOf(w)<0)ks.push(w); }); return ks.length>1||(ks.length===1&&ks[0]!=='AI')?'<br>'+ks.map(function(k){return '<span class="t-mk">'+esc(k)+'</span>'}).join(' '):''; })()+'</td>'
         +'<td class="t-when">'+tkWhen(q.t)+'<br><span style="font-size:10px">by '+esc(tkWho(q.by))+'</span></td>'
         +'<td class="t-when">'+esc(scopeTxt)+'<br><span style="font-size:10px">'+fmt(scope.vol||q.prods||0)+((+scope.skus>+scope.vol)?' products · ':' SKUs · ')+(q.fields||0)+' field'+((q.fields||0)===1?'':'s')+'</span></td>'
         +'<td style="text-align:right" class="tk-money'+(SHOWP?'':' hid')+'">'+tot+'</td>'

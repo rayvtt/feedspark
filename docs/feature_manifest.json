@@ -3774,6 +3774,27 @@
    "pattern": "var WATCH=",
    "forbidden": true,
    "pr": 347
+  },
+  {
+   "name": "Quote generator: setup PRE-CHARGE per service — automatic hours per new feed / system / local inventory feed, one-off at the day rate or from the retainer at £0 (Ray 11 Sep 2026)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function preLine(k,n){",
+   "pr": 348,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: pre-charge hours on the rate card (rc.pre; feed 2h = Ray's figure) + billing mode per quote (r.pre[k].mode)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "var PRE_DEFAULT={sys:2,feed:2,lia:2}",
+   "pr": 348,
+   "min": 1
+  },
+  {
+   "name": "Quote generator xlsx: 'Setup Pre-charges (One-off)' section (retainer-funded rows at £0 with the note)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "sect('Setup Pre-charges (One-off)'",
+   "pr": 348,
+   "min": 1
   }
  ]
 }
