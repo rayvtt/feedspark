@@ -3535,6 +3535,69 @@
    "pattern": "function stOf(",
    "min": 1,
    "pr": 340
+  },
+  {
+   "name": "kwcal: moment⇄ticket tie stamped at brief time (b.kw) — survives a rename (Ray, 11 Sep 2026)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "b.kw&&String(b.kw)===String(e.id)",
+   "min": 1,
+   "pr": 341
+  },
+  {
+   "name": "kwcal: the → Brief deep-link carries the moment id",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "kw:e.id",
+   "min": 1,
+   "pr": 341
+  },
+  {
+   "name": "workflow: the composer stamps the KWCal moment id onto the saved brief",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "window.__kwId",
+   "min": 3,
+   "pr": 341
+  },
+  {
+   "name": "kwcal: live refresh of pipeline stages + results (90s poll + visibility)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function liveTick(",
+   "min": 1,
+   "pr": 341
+  },
+  {
+   "name": "kwcal: result archive joined onto moments by half-month round window",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function periodWin(",
+   "min": 1,
+   "pr": 341
+  },
+  {
+   "name": "kwcal: results surfaced per moment (chip + metric popover)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function resFor(",
+   "min": 1,
+   "pr": 341
+  },
+  {
+   "name": "kwcal: whose court a briefed moment sits in (Workflow's own stage→team map)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "var COURTM=",
+   "min": 1,
+   "pr": 341
+  },
+  {
+   "name": "kwcal: a briefed moment's chip is a LINK to Workflow, never a phantom manual control",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "a.stx.wfl",
+   "min": 1,
+   "pr": 341
+  },
+  {
+   "name": "kwcal: tie + result-window harness wired into the unattended gate",
+   "file": "tools/qa_gate.sh",
+   "pattern": "test_kwcal_tie.mjs",
+   "min": 1,
+   "pr": 341
   }
  ]
 }
