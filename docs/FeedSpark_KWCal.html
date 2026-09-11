@@ -588,6 +588,31 @@ var SEED={Reiss:{events:[
   {id:'mss',    name:'MSS',                       lane:'sale',     date:'2026-08-03', wc:1, brandwide:1, terms:['sale','mid season']},
   {id:'bfusa',  name:'Black Friday USA',          lane:'sale',     date:'2026-11-27', mkt:'us', brandwide:1, terms:['black friday']},
   {id:'eoss',   name:'EOSS',                      lane:'sale',     date:'2026-12-26', brandwide:1, terms:['sale','end of season']}
+]},
+/* ---- Accessorize seed — ingested from the brand's OWN master marketing calendar
+   (ACC_ marketing_calendar.xlsx · retail Periods 1–3 · 30 Aug – 28 Nov 2026), five moments per
+   retail period per Ray. Row 48 "Key Focus" only runs to W4, so P2/P3 are read off the messaging
+   hierarchy the client fills every week — R15 Overarching / R16 Primary / R17 Secondary /
+   R18 Tertiary, plus the web promos and homepage tiles.
+   ⚠ The workbook's key-dates row is carried over from 2024 (4/4 of its deterministic dates match
+   2024, not 2026) — these are the CORRECTED 2026 dates, and the moments that turn on that
+   correction, or on a date the client has not confirmed, carry a note (hover the card). ---- */
+Accessorize:{events:[
+  {id:'acc_modernfolk', name:'Modern Folk — Autumn Launch',       lane:'campaign', date:'2026-09-02', terms:['modern folk','autumn','new season','aw26','folk print']},
+  {id:'acc_newbag',     name:'That New-Bag Feeling — Hero Bags',  lane:'studio',   date:'2026-09-02', terms:['bag','handbag','tote','shoulder bag','crossbody']},
+  {id:'acc_layerup',    name:'Layer It Up — Scarves',             lane:'studio',   date:'2026-09-06', terms:['scarf','scarves','layering','knit','wrap']},
+  {id:'acc_100days',    name:'100 Days to Christmas — Gifting soft launch', lane:'campaign', date:'2026-09-16', terms:['christmas','gift','gifting','christmas shop','advent calendar']},
+  {id:'acc_goodmanners',name:'Accessorize x GoodManners — Good Style, Everyday', lane:'campaign', date:'2026-09-24', terms:['goodmanners','good style','collaboration','collab','new in']},
+  {id:'acc_country',    name:'Country Calling — Autumn phase 2',  lane:'campaign', date:'2026-10-08', note:'Date NOT confirmed by the client — read off R15/R16 W6 “(Autumn) Country Calling”. Confirm before the brief goes out.', terms:['country','countryside','tweed','check','autumn']},
+  {id:'acc_handbagday', name:'Bags of Compliments — National Handbag Day', lane:'location', date:'2026-10-10', terms:['handbag','bag','tote','shoulder bag','bag strap']},
+  {id:'acc_wintershop', name:'Winter Shop — Bags & Cold Weather', lane:'studio',   date:'2026-10-11', terms:['winter','cold weather','gloves','hat','scarf']},
+  {id:'acc_xmaslaunch', name:'Christmas Hard Launch — Gifting',   lane:'campaign', date:'2026-10-14', note:'Date NOT confirmed by the client — read off R16 W7 “CHRISTMAS HARD LAUNCH (GIFTING)”. Confirm before the brief goes out.', terms:['christmas','gift','gifting','present','stocking filler']},
+  {id:'acc_halloween',  name:'Halloween & Half-Term',             lane:'location', date:'2026-10-26', note:'Date corrected: the workbook says 28 Oct, which is Halloween week in 2024. Halloween 2026 is Sat 31 Oct, so the retail push sits w/c 26 Oct.', terms:['halloween','party','costume','half term','kids']},
+  {id:'acc_xmasnice',   name:'Christmas — Nice (gifting peak)',   lane:'campaign', date:'2026-11-01', terms:['christmas','gift','gifting','christmas gifts','secret santa']},
+  {id:'acc_sparkle',    name:'Sparkle Season — Diwali & Jewellery',lane:'studio',  date:'2026-11-08', note:'Moved off the 31 Oct in the workbook, which is the 2024 Diwali. Diwali 2026 falls on 8 Nov.', terms:['jewellery','sparkle','diwali','earrings','party']},
+  {id:'acc_coldweather',name:'Cold Weather Push',                 lane:'studio',   date:'2026-11-15', terms:['cold weather','gloves','hats','scarves','cosy']},
+  {id:'acc_specialbuys',name:'Black Friday Special Buys',         lane:'sale',     date:'2026-11-17', terms:['special buy','black friday','deal','offer']},
+  {id:'acc_blackfriday',name:'Black Friday — 25% off Everything', lane:'sale',     date:'2026-11-27', brandwide:1, terms:['black friday','sale','25% off','cyber monday']}
 ]}};
 
 var CLIENT='Reiss', STORE={}, BASE=0, editMode=false, saveT=null, MEASURING=false;
@@ -964,11 +989,21 @@ function loadMkts(){
   });
 }
 /* ---------------- calendar capture — attach the reference (portal), import events (extracted in a Claude session) ---------------- */
+var IMPTGT='';   // the brand the last import resolved to — the status line has to name it
 function importEvents(data){ // merge events from the JSON Claude returns after reading a dropped calendar PDF
   var obj; try{ obj=(typeof data==='string')?JSON.parse(data):data; }catch(e){ err('Could not read that — paste the JSON events block (an object with "events":[…] or a bare [ … ] array).'); return 0; }
   var arr=Array.isArray(obj)?obj:(obj&&Array.isArray(obj.events)?obj.events:null);
   if(!arr){ err('No events found — expected {"events":[…]} or a [ … ] array.'); return 0; }
-  var tgt=(!Array.isArray(obj)&&obj.client&&STORE[obj.client])?obj.client:CLIENT;
+  // An import names its OWN brand, and that name is the one that counts — the guard used to honour
+  // obj.client only when STORE[obj.client] already existed, so a calendar for a brand with no
+  // record yet (every brand but Reiss, on a board seeded for Reiss) silently filed itself into
+  // whatever was ON SCREEN. Resolve the name against the real roster instead: match it, or refuse.
+  var named=(!Array.isArray(obj)&&obj.client)?resolveBrand(obj.client):'';
+  if(!Array.isArray(obj)&&obj.client&&!named){
+    err('This calendar is for “'+obj.client+'”, which is not a brand on this board. Fix the "client" field, or drop it to import into '+CLIENT+'.'); return 0; }
+  var tgt=named||CLIENT;
+  // a top-level "market" is the calendar's market — pin it on every event that does not name its own
+  var dmkt=(!Array.isArray(obj)&&obj.market)?String(obj.market).toLowerCase().replace(/[^a-z0-9-]/g,''):'';
   var r=STORE[tgt]||(STORE[tgt]={events:[]}); r.events=r.events||[];
   var have={}; r.events.forEach(function(e){ have[String(e.name||'').toLowerCase()+'|'+e.date]=1; });
   var n=0;
@@ -981,11 +1016,43 @@ function importEvents(data){ // merge events from the JSON Claude returns after 
     // but n stayed 0, so save() and render() never ran and the panel said "nothing imported".
     var ev={ id:(x.id&&String(x.id))||('imp'+Date.now().toString(36)+r.events.length), name:String(x.name).trim(), lane:lane, date:date,
       terms:terms.map(function(t){return String(t).trim()}).filter(Boolean) };
-    if(x.mkt)ev.mkt=String(x.mkt).toLowerCase();
+    if(x.mkt)ev.mkt=String(x.mkt).toLowerCase(); else if(dmkt)ev.mkt=dmkt;
     if(x.brandwide||lane==='sale')ev.brandwide=1;
     r.events.push(ev); n++; });
-  if(n){ save(); if(tgt===CLIENT)render(); }
+  // land ON the brand you just imported into — "imported 15 events" over an empty board is the
+  // same silence as importing nothing, which is exactly how the mis-filing above stayed invisible
+  IMPTGT=tgt;
+  if(n){ save(); if(tgt!==CLIENT){ CLIENT=tgt; $('#brand').value=tgt; MKT=dmkt||MKT; loadMkts(); } render(); }
   return n;
+}
+function resolveBrand(name){ // roster match, case/space-insensitive — never invents a brand
+  var want=String(name||'').trim().toLowerCase(); if(!want)return '';
+  var opts=($('#brand')&&$('#brand').options)||[];
+  for(var i=0;i<opts.length;i++){ var v=opts[i].value; if(v!=='*'&&v.toLowerCase()===want)return v; }
+  return '';
+}
+/* ---- Repair for calendars the old guard mis-filed. An import block carries brand-prefixed event
+   ids, so an event whose id belongs to one brand sitting on ANOTHER brand's board can only have
+   got there that way — move it home. Idempotent, and a no-op when nothing was mis-filed. ---- */
+var IMPORT_HOMES=[['acc_','Accessorize']];
+function rehomeImports(){
+  var moved=0;
+  IMPORT_HOMES.forEach(function(pair){
+    var pfx=pair[0], home=pair[1];
+    Object.keys(STORE).forEach(function(c){
+      if(c===home||c.charAt(0)==='_')return;
+      var src=STORE[c]; if(!src||!Array.isArray(src.events))return;
+      var keep=[], take=[];
+      src.events.forEach(function(e){ (String(e.id||'').indexOf(pfx)===0?take:keep).push(e); });
+      if(!take.length)return;
+      src.events=keep;
+      var h=STORE[home]||(STORE[home]={events:[]}); h.events=h.events||[];
+      var have={}; h.events.forEach(function(e){ have[String(e.id)]=1; });
+      take.forEach(function(e){ if(!have[String(e.id)]){ have[String(e.id)]=1; h.events.push(e); } });
+      moved+=take.length;
+    });
+  });
+  return moved;
 }
 function impOpen(){ ptClose();
   var old=document.getElementById('imp'); if(old)old.remove();   // opening it twice used to stack panels
@@ -999,7 +1066,7 @@ function impOpen(){ ptClose();
   d.addEventListener('click',function(ev){ ev.stopPropagation(); });
   d.querySelector('#imp-cancel').onclick=function(){ d.remove(); };
   d.querySelector('#imp-go').onclick=function(){ hideErr(); var n=importEvents(d.querySelector('#imp-ta').value);
-    if(n){ d.remove(); $('#mstate').textContent='imported '+n+' event'+(n===1?'':'s')+' from the calendar'; }
+    if(n){ d.remove(); $('#mstate').textContent='imported '+n+' event'+(n===1?'':'s')+' into '+IMPTGT; }
     else if(!$('#kw-error').classList.contains('on')) d.querySelector('#imp-state').textContent='nothing imported — check the format'; };
   var dz=d.querySelector('#imp-drop');
   dz.addEventListener('dragover',function(ev){ ev.preventDefault(); dz.style.borderColor='var(--orange)'; });
@@ -1020,7 +1087,7 @@ function setCalImage(f){ // downscale + re-encode so the shared store stays ligh
 }
 function attachCalFile(f){ if(!f)return;
   if(/^image\//.test(f.type)){ setCalImage(f); $('#mstate').textContent='calendar image attached'; return; }
-  if(/json/.test(f.type)||/\.json$/i.test(f.name)){ var rd=new FileReader(); rd.onload=function(){ hideErr(); var n=importEvents(rd.result); if(n)$('#mstate').textContent='imported '+n+' event'+(n===1?'':'s'); }; rd.readAsText(f); return; }
+  if(/json/.test(f.type)||/\.json$/i.test(f.name)){ var rd=new FileReader(); rd.onload=function(){ hideErr(); var n=importEvents(rd.result); if(n)$('#mstate').textContent='imported '+n+' event'+(n===1?'':'s')+' into '+IMPTGT; }; rd.readAsText(f); return; }
   // PDF / other — the portal can't read it; attach as the reference and extract events in a Claude session
   var rd2=new FileReader(); rd2.onload=function(){ rec().calDoc={name:f.name,url:rd2.result}; save(); renderClical(); $('#mstate').textContent='attached '+f.name+' — drop it into a Claude session to extract events, then ⤓ Import'; }; rd2.readAsDataURL(f);
 }
@@ -1328,7 +1395,7 @@ function render(){
         var lk=laneKey(e.lane), v=volOf(CLIENT,e), hh=(v&&!v.unset)?kwHours(v.vol||0):0;
         var tms=(e.terms||[]).length;
         return '<div class="rc lane-'+esc(lk)+'" draggable="true" data-kw="'+esc(e.id)+'" data-lane="'+esc(e.lane||'')+'"'
-          +' title="'+esc(laneLbl(e.lane)||'')+' — drag to another month">'
+          +' title="'+esc((laneLbl(e.lane)||'')+(e.note?' · '+e.note:'')+' — drag to another month')+'">'
           +'<div class="rt">'+esc(e.name)
           +(editMode?'<button class="del" style="opacity:1" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</div>'
           +'<div class="rd">'+esc(dLbl(e))+((e.mkt&&e.mkt!=='gb')?' · '+esc(e.mkt.toUpperCase()):'')
@@ -1859,6 +1926,7 @@ function boot(){
   ]).then(function(res){
     BRIEFS=(res[2]&&typeof res[2]==='object'&&!res[2].error)?res[2]:{};
     STORE=res[0]&&typeof res[0]==='object'?res[0]:{};
+    if(rehomeImports())save();   // before applySeeds — a repaired brand already has its events
     applySeeds();
     var roster={}; Object.keys((res[1]&&res[1].clients)||{}).forEach(function(k){roster[k]=1});
     Object.keys(STORE).forEach(function(k){ if(k.charAt(0)!=='_')roster[k]=1; });
