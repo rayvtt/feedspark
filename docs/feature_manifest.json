@@ -1344,9 +1344,9 @@
    "pr": 215
   },
   {
-   "name": "KWCal: horizontal month-column timeline + distinct chip system",
+   "name": "kwcal: month-per-column board + distinct chip system — the HORIZONTAL-SCROLL timeline was retired in PR #352 (Ray: 'the rolling bar for the calendar doesn't look good'); this now pins the wrapping month grid that replaced it",
    "file": "docs/FeedSpark_KWCal.html",
-   "pattern": "grid-auto-flow:column",
+   "pattern": "repeat(auto-fill,minmax(250px,1fr))",
    "pr": 217
   },
   {
@@ -3879,6 +3879,41 @@
    "pattern": "opening it twice used to stack panels",
    "min": 1,
    "pr": 351
+  },
+  {
+   "name": "kwcal: the board wraps instead of scrolling sideways — no rolling bar (Ray, 11 Sep 2026)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "align-items:start}",
+   "min": 1,
+   "pr": 352
+  },
+  {
+   "name": "kwcal: resourcing is its own collapsed band below the board, never in the calendar's zone",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "class=\"hband\" id=\"hoursrail\"",
+   "min": 1,
+   "pr": 352
+  },
+  {
+   "name": "kwcal: resourcing shows WHO is carrying it + WHEN it lands as bars, not a repeated task list",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function bars(",
+   "min": 1,
+   "pr": 352
+  },
+  {
+   "name": "kwcal: owner assignment lives on the card's initials chip, so the band never duplicates the tasks",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function ownChip(",
+   "min": 1,
+   "pr": 352
+  },
+  {
+   "name": "kwcal: the lane is a coloured card edge + one legend, not a word repeated on every card",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function laneKey(",
+   "min": 1,
+   "pr": 352
   }
  ]
 }

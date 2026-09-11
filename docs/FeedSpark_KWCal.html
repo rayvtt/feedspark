@@ -81,7 +81,7 @@ window.addEventListener('load',restore);
   .vol{font-size:11px;font-weight:900;border-radius:100px;padding:2px 9px;background:#EBF7EF;border:1px solid #CDE9D8;color:var(--good)}
   .vol.zero{background:var(--wash);border-color:var(--line);color:var(--muted)}
   .vol.wide{background:rgba(26,54,93,.08);border-color:rgba(26,54,93,.22);color:var(--navy)}
-  .stx{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;border-radius:100px;padding:2px 9px 2px 7px;border:1px solid;cursor:pointer;background:#fff;display:inline-flex;align-items:center;gap:5px}
+  .stx{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;border-radius:100px;padding:2px 7px 2px 6px;border:1px solid;cursor:pointer;background:#fff;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;flex:none}
   .stx::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
   .stx.planned{color:var(--muted);border-color:var(--line)}
   .stx.intake{color:var(--navy);border-color:rgba(26,54,93,.35);background:rgba(26,54,93,.06)}
@@ -96,10 +96,10 @@ window.addEventListener('load',restore);
   /* a WF-linked chip is a LINK, not a control — the stage moves in Workflow, never here */
   a.stx.wfl{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
   a.stx.wfl:hover{filter:brightness(.93)}
-  .stx .ct{font-size:8.5px;font-weight:900;letter-spacing:.05em;background:rgba(0,0,0,.07);border-radius:100px;padding:1px 6px;color:inherit}
+  .stx .ct{font-size:8px;font-weight:900;letter-spacing:.04em;background:rgba(0,0,0,.08);border-radius:100px;padding:0 4px;color:inherit}
   /* result chip — the loop closing back onto the moment */
-  .rchip{font:inherit;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;border-radius:100px;
-    padding:2px 9px;border:1px solid;cursor:pointer;background:#fff}
+  .rchip{font:inherit;font-size:10px;font-weight:900;border-radius:100px;line-height:1;
+    padding:3px 5px;border:1px solid;cursor:pointer;background:#fff;flex:none}
   .rchip.positive{color:var(--good);border-color:rgba(21,128,61,.42);background:#EBF7EF}
   .rchip.negative{color:var(--risk);border-color:rgba(192,57,43,.42);background:#FDEEE9}
   .rchip.mixed{color:var(--orange-ink);border-color:rgba(245,166,35,.5);background:rgba(245,166,35,.1)}
@@ -127,70 +127,105 @@ window.addEventListener('load',restore);
   .clical .cc-none{font-size:12.5px;color:var(--muted);font-weight:700;padding:14px 6px}
   .clical.drop{outline:2px dashed var(--orange);outline-offset:-4px}
   .clical .cc-doc{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:8px;line-height:1.5}
-  /* right rail — keyword-generation hours & resourcing (Ray, 10 Sep 2026) */
-  .split.two{grid-template-columns:minmax(0,1fr) minmax(300px,360px);align-items:start}
-  .split.two.side{grid-template-columns:minmax(0,1fr) minmax(300px,540px)}
-  .srail{align-self:start;position:sticky;top:74px;max-height:calc(100vh - 90px);overflow:auto;display:flex;flex-direction:column;gap:14px}
-  .srail::-webkit-scrollbar{width:8px}.srail::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
-  .srail>.clical{position:static;top:auto}
-  .hrail{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
-  .hrail h3{margin:0 0 2px;font-size:14px;font-weight:900}
-  .hrail .hsub{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:10px;line-height:1.4}
-  .hrail .hrule{font-size:10.5px;color:var(--muted);font-weight:700;background:var(--wash);border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-bottom:11px;line-height:1.55}
-  .hrail .htot{display:flex;gap:7px;margin-bottom:6px}
-  .hrail .htot .hk{flex:1;text-align:center;background:var(--wash);border:1px solid var(--line);border-radius:9px;padding:7px 4px}
-  .hrail .htot .hk .n{font-size:17px;font-weight:900;line-height:1.1}
-  .hrail .htot .hk .l{font-size:9px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
-  .hrail .hgrp{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:13px 0 6px}
-  .htask{border:1px solid var(--line);border-radius:9px;padding:8px 9px;margin-bottom:7px}
-  .htask .ht-top{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
-  .htask .ht-n{font-size:12.5px;font-weight:800;line-height:1.25}
-  .htask .ht-h{font-size:13px;font-weight:900;color:var(--orange-deep);flex:none}
-  .htask .ht-m{font-size:10.5px;color:var(--muted);font-weight:700;margin:2px 0 4px}
-  .htask select.ht-o{font:inherit;font-size:11.5px;font-weight:700;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);width:100%;cursor:pointer}
-  .hrail .hpers{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800;padding:6px 9px;border-radius:8px;background:var(--wash);margin-bottom:5px}
-  .hrail .hpers .hh{font-weight:900;color:var(--orange-ink)}
-  .hrail .hnone{font-size:12px;color:var(--muted);font-weight:700;padding:10px 4px;text-align:center;line-height:1.5}
-  .hrail .hsync{width:100%;margin-top:4px}
-  [data-theme=dark] .hrail{background:var(--paper);border-color:var(--line)}
-  [data-theme=dark] .htask,[data-theme=dark] .hrail .hpers,[data-theme=dark] .hrail .hrule,[data-theme=dark] .hrail .htot .hk{background:#181B22;border-color:var(--line)}
-  [data-theme=dark] .htask select.ht-o{background:#161922;color:var(--ink);border-color:var(--line)}
-  #cal-wrap{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;overflow-x:auto}
-  .road{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(252px,290px);gap:0}
-  .mo-sec{padding:0 12px;border-left:2px dashed var(--line)}
-  .mo-sec:first-child{border-left:none;padding-left:2px}
-  .mo-h{font-size:12.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--orange-deep);margin-bottom:10px;display:flex;gap:8px;align-items:baseline;position:sticky;top:0}
-  .mo-h .mn{color:var(--muted);font-weight:700;text-transform:none;letter-spacing:0;font-size:11px}
-  .mo-cards{display:flex;flex-direction:column;gap:9px}
-  .rc{border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:var(--wash)}
-  .rc .rt{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:900}
-  .rc .rt .lens{color:var(--orange-deep)}
-  .rc .rt .mtag{margin-left:auto;font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
-  .rc .rd{font-size:11.5px;color:var(--muted);font-weight:700;margin:3px 0 8px}
-  .rc .ra{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-  .mkc{font:inherit;font-size:11.5px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;padding:5px 12px;border-radius:100px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer}
-  .mkc.on{background:var(--orange);border-color:var(--orange);color:#fff}
-  [data-theme=dark] .mkc{background:#20242E;border-color:var(--line);color:var(--ink-2)}
-  [data-theme=dark] .mkc.on{background:var(--orange);color:#14161C}
-  /* chip system — four distinct silhouettes so a glance separates data / meta / state / action:
-     scope = square DATA badge · themes = bare ghost text · status = dot pill · → Brief = solid button */
-  .scope{font:inherit;font-size:11px;font-weight:900;border-radius:7px;padding:3px 9px;border:1.5px solid;cursor:pointer;background:#fff}
-  .scope.unset{color:var(--orange-deep);border-style:dashed;border-color:rgba(237,111,11,.55);background:transparent}
-  .scope.set{color:var(--good);border-color:rgba(21,128,61,.4);background:#EBF7EF}
-  .scope.wide{color:#fff;border-color:var(--navy);background:var(--navy)}
-  .themes{font-size:11px;font-weight:800;color:var(--muted);background:none;border:none;padding:3px 2px;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
+  /* ============ roadmap board — v4 declutter (Ray, 11 Sep 2026: "it looks quite cluttered …
+     the calendar and the hours resourcing shouldn't be in the same zone … the rolling bar for
+     the calendar doesn't look good") ============
+     Three structural changes, not styling:
+       1. The months WRAP instead of scrolling sideways, so the whole roadmap is on screen and
+          the horizontal scrollbar is gone.
+       2. Resourcing leaves the side rail and becomes its own collapsed band below the board —
+          the rail was stealing a quarter of the calendar's width to repeat what the cards say.
+       3. A moment card carries four facts, not eight: name, one meta line, status, owner. The
+          lane moved to a coloured edge, and the grip/✦ glyphs are gone. */
+  #cal-wrap{background:transparent;border:none;box-shadow:none;padding:0;overflow:visible}
+  .road{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;align-items:start}
+  .mo-sec{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:11px 12px 12px;min-height:0}
+  .mo-h{font-size:12px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--orange-deep);margin:0 0 9px;display:flex;gap:7px;align-items:baseline;
+    padding-bottom:7px;border-bottom:1px solid var(--line)}
+  .mo-h .mn{color:var(--muted);font-weight:700;text-transform:none;letter-spacing:0;font-size:10.5px}
+  .mo-h .mo-hrs{margin-left:auto;color:var(--orange-ink);font-size:10px;font-weight:900;letter-spacing:0;text-transform:none}
+  .mo-cards{display:flex;flex-direction:column;gap:8px}
+  /* the card: a coloured lane edge instead of a lane word, and one muted meta line */
+  .rc{position:relative;border:1px solid var(--line);border-left:3px solid var(--muted);
+    border-radius:9px;padding:8px 10px 9px;background:var(--wash);cursor:grab}
+  .rc:active{cursor:grabbing}
+  .rc.dragging{opacity:.4}
+  .rc.lane-campaign{border-left-color:var(--orange-deep)}
+  .rc.lane-location{border-left-color:var(--navy)}
+  .rc.lane-sale{border-left-color:var(--good)}
+  .rc.lane-studio{border-left-color:var(--muted)}
+  .rc .rt{font-size:13px;font-weight:900;line-height:1.25;overflow-wrap:anywhere}
+  .rc .rd{font-size:10.5px;color:var(--muted);font-weight:700;margin:3px 0 7px;line-height:1.5}
+  .rc .ra{display:flex;gap:5px;align-items:center}
+  .rc .del{position:absolute;top:4px;right:5px;border:none;background:none;color:var(--muted);
+    font-weight:900;cursor:pointer;font-size:13px;padding:1px 3px;border-radius:6px;opacity:0}
+  .rc:hover .del{opacity:1}.rc .del:hover{color:var(--risk)}
+  /* inline scope + themes live INSIDE the meta line, so they add no visual weight of their own */
+  .scope{font:inherit;font-size:10.5px;font-weight:800;border:none;background:none;padding:0;
+    cursor:pointer;color:var(--ink-2);border-bottom:1px dotted var(--line)}
+  .scope:hover{color:var(--orange-deep);border-bottom-color:var(--orange)}
+  .scope.unset{color:var(--orange-deep);font-weight:900;border-bottom:1px dashed rgba(237,111,11,.6)}
+  .scope.wide{color:var(--navy)}
+  .themes{font-size:10.5px;font-weight:800;color:var(--muted);background:none;border:none;padding:0;
+    cursor:pointer;border-bottom:1px dotted var(--line)}
   .themes:hover{color:var(--orange-deep)}
-  /* MoM board — cleaner columns + drag-to-reschedule (Ray, 11 Sep 2026) */
-  .mo-sec[data-mon]{min-height:130px;transition:background .12s}
-  .mo-sec.drop{background:rgba(245,166,35,.10);border-left:2px solid var(--orange)}
-  .mo-h .mo-nm{color:var(--orange-deep)}
-  .mo-h .mo-hrs{margin-left:auto;color:var(--orange-ink);background:rgba(245,166,35,.13);border:1px solid rgba(245,166,35,.32);border-radius:100px;padding:1px 8px;font-size:10px;font-weight:900;letter-spacing:0;text-transform:none}
-  .rc{cursor:grab} .rc:active{cursor:grabbing} .rc.dragging{opacity:.4}
-  .rc .grip{color:var(--line);font-size:13px;line-height:1;letter-spacing:-3px;margin-right:1px;flex:none;cursor:grab}
-  .rc .lane{margin-left:auto;font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);white-space:nowrap;flex:none}
+  /* owner chip — initials, so "who owns this" is on the board and not in a second list */
+  .own{font:inherit;font-size:9.5px;font-weight:900;letter-spacing:.02em;width:22px;height:22px;
+    flex:none;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink-2);
+    cursor:pointer;display:inline-flex;align-items:center;justify-content:center;margin-left:auto}
+  .own:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .own.none{border-style:dashed;color:var(--muted)}
+  .ownmenu{position:absolute;z-index:85;background:#fff;border:1px solid var(--line);border-radius:11px;
+    box-shadow:0 14px 40px rgba(16,24,40,.2);padding:5px;min-width:150px;display:flex;flex-direction:column;gap:1px}
+  .ownmenu button{font:inherit;font-size:12px;font-weight:800;text-align:left;border:none;background:none;
+    color:var(--ink-2);padding:6px 9px;border-radius:7px;cursor:pointer}
+  .ownmenu button:hover{background:var(--wash);color:var(--orange-deep)}
+  .ownmenu button.on{color:var(--orange-deep)}
+  a.bgo{font-size:10.5px;font-weight:900;color:#fff;text-decoration:none;border:1px solid var(--orange);
+    border-radius:7px;padding:2px 8px;background:var(--orange);flex:none}
+  a.bgo:hover{background:var(--orange-deep);border-color:var(--orange-deep)}
+  .ovc a.bgo,.pop a.bgo{margin-left:0;font-size:11px;padding:3px 11px}
+  /* lane legend — one line, replaces a lane word repeated on every card */
+  .lgnd{display:flex;gap:13px;align-items:center;flex-wrap:wrap;font-size:10.5px;font-weight:800;
+    color:var(--muted);margin:0 0 12px}
+  .lgnd i{width:9px;height:3px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:middle}
+  .lgnd .lc{background:var(--orange-deep)}.lgnd .ll{background:var(--navy)}
+  .lgnd .ls{background:var(--muted)}.lgnd .lx{background:var(--good)}
+  /* ============ resourcing band — its own zone, collapsed by default ============ */
+  .hband{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);margin-top:14px;overflow:hidden}
+  .hb-h{display:flex;align-items:center;gap:12px;width:100%;font:inherit;border:none;background:none;
+    padding:12px 16px;cursor:pointer;text-align:left;color:var(--ink)}
+  .hb-h:hover{background:var(--wash)}
+  .hb-t{font-size:13.5px;font-weight:900;flex:none}
+  .hb-sum{font-size:11.5px;font-weight:700;color:var(--muted);flex:1;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hb-cx{font-size:10px;color:var(--muted);flex:none;transition:transform .15s}
+  .hband.open .hb-cx{transform:rotate(180deg)}
+  .hb-body{display:none;padding:0 16px 15px}
+  .hband.open .hb-body{display:block}
+  .hb-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px}
+  .hb-lbl{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--muted);margin:0 0 8px}
+  .hb-row{display:flex;align-items:center;gap:9px;margin-bottom:6px;font-size:11.5px;font-weight:800}
+  .hb-nm{flex:0 0 78px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+  .hb-bar{flex:1;min-width:0;height:8px;border-radius:100px;background:var(--wash);
+    border:1px solid var(--line);overflow:hidden}
+  .hb-bar i{display:block;height:100%;background:var(--orange);border-radius:100px}
+  .hb-row.un .hb-bar i{background:repeating-linear-gradient(45deg,var(--line),var(--line) 3px,transparent 3px,transparent 6px)}
+  .hb-row.un .hb-nm,.hb-row.un .hb-v{color:var(--muted)}
+  .hb-v{flex:0 0 48px;text-align:right;color:var(--orange-ink);font-variant-numeric:tabular-nums}
+  .hb-note{font-size:10.5px;color:var(--muted);font-weight:700;margin-top:14px;line-height:1.55;
+    padding-top:11px;border-top:1px solid var(--line)}
+  .hb-none{font-size:12px;color:var(--muted);font-weight:700;padding:4px 0 2px;line-height:1.6}
+  [data-theme=dark] .hband,[data-theme=dark] .mo-sec{background:var(--paper);border-color:var(--line)}
+  [data-theme=dark] .rc{background:#181B22;border-color:var(--line)}
+  [data-theme=dark] .own,[data-theme=dark] .ownmenu{background:#20242E;border-color:var(--line);color:var(--ink-2)}
+  [data-theme=dark] .hb-h:hover{background:#181B22}
   .mo-empty{border:1.5px dashed var(--line);border-radius:10px;padding:16px 8px;text-align:center;font-size:11px;color:var(--muted);font-weight:700;opacity:.65}
-  [data-theme=dark] .mo-h .mo-hrs{background:rgba(245,166,35,.14);border-color:rgba(245,166,35,.32);color:#F0A44E}
-  [data-theme=dark] .rc .grip{color:#3A3F4A}
+  [data-theme=dark] .mo-h .mo-hrs{color:#F0A44E}
   /* PT scope picker — searchable multiselect over the feed's real product_type values */
   /* ===== PT scope picker — two-column workbench (Ray, 11 Sep 2026: "this selection is too
      narrow to visually see"). The old panel stacked six full-width sections in a 560px box, so
@@ -281,10 +316,10 @@ window.addEventListener('load',restore);
 [data-theme=dark] .ptp .pt-row.on{background:rgba(245,166,35,.16)}
 [data-theme=dark] .ptp .pt-row mark{background:rgba(245,166,35,.32);color:#F5D9AE}
 [data-theme=dark] .ptp .pt-hint kbd{background:#20242E}
-  [data-theme=dark] .scope.unset{background:transparent}
-  [data-theme=dark] .scope.wide{background:#3B577F;border-color:#3B577F}
-  [data-theme=dark] .themes{color:var(--muted)}
-  [data-theme=dark] a.bgo{color:#14161C}
+  [data-theme=dark] .scope{color:var(--ink-2);border-bottom-color:#3A3F4A}
+  [data-theme=dark] .scope.wide{color:#93B4E0}
+  [data-theme=dark] .scope.unset{color:var(--orange-ink);border-bottom-color:rgba(245,166,35,.5)}
+  [data-theme=dark] .themes{color:var(--muted);border-bottom-color:#3A3F4A}
   /* ============ kw-overview — every brand on one view ============ */
   .ov-row{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-bottom:12px}
   .ov-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:9px}
@@ -319,7 +354,8 @@ window.addEventListener('load',restore);
     .tb-modules a.tbm::after{display:none}
     .topbar-in{gap:8px;padding:10px 14px}
     .brand{flex:none}
-    .split.two,.split.two.side{grid-template-columns:1fr}
+    .split.side{grid-template-columns:1fr}
+    .road{grid-template-columns:1fr}
     .srail{position:static;max-height:none;overflow:visible}
   }
   @media(max-width:640px){
@@ -458,8 +494,8 @@ window.addEventListener('load',restore);
 [data-theme=dark] .rchip.unknown{background:#20242E;border-color:var(--line);color:var(--muted)}
 [data-theme=dark] .pop .rlines div{background:#181B22;border-color:var(--line)}
 [data-theme=dark] .err-strip{background:rgba(241,112,122,.12);border-color:rgba(241,112,122,.3);color:#F3868F}
-[data-theme=dark] a.bgo{background:rgba(245,166,35,.1)}
-[data-theme=dark] a.bgo:hover{background:var(--orange);color:#14161C}
+[data-theme=dark] a.bgo{background:var(--orange);border-color:var(--orange);color:#14161C}
+[data-theme=dark] a.bgo:hover{background:var(--orange-ink);border-color:var(--orange-ink);color:#14161C}
 [data-theme=dark] .cal .mh{color:var(--ink-2)}
 [data-theme=dark] .cal .cell{border-bottom-color:#181B22}
 [data-theme=dark] .cal .lane-end{border-bottom-color:var(--line)}
@@ -475,7 +511,7 @@ window.addEventListener('load',restore);
 <header class="hero"><div class="wrap">
   <div class="eyebrow">Private &amp; Confidential · Keyword optimisation calendar</div>
   <h1>Keyword Calendar</h1>
-  <p class="sub">The brand's <b>marketing calendar</b> drives the keyword plan: every campaign, universe moment and sale window schedules an <b>AI keyword optimisation</b> ~3 weeks ahead, sized against the <b>live feed</b> — so the categories a moment touches are optimised before it lands, and clients see the roadmap and the SKU impact on one board.</p>
+  <p class="sub">Every marketing moment schedules an <b>AI keyword optimisation</b> three weeks ahead, sized against the <b>live feed</b>.</p>
   <div class="ctl">
     <label for="brand">Brand</label>
     <select id="brand" aria-label="Choose a brand"></select>
@@ -497,14 +533,15 @@ window.addEventListener('load',restore);
 
 <main class="wrap">
   <h2 id="cal-title">Calendar</h2>
-  <p class="sub">Marketing moments by lane (as the brand shared them) with the <b>keyword optimisation schedule</b> underneath — each optimisation lands ahead of its moment. <b>→ Brief</b> raises the ticket in Workflow and ties it to that moment for life; from then on the chip is <b>live from the pipeline</b> (with the team holding the ball) and the stage moves in Workflow, not here. Un-briefed moments keep a manual chip you can click. <b>📈</b> is the optimisation round that reported on the moment — click it for the numbers. Stages and results refresh on their own.</p>
+  <p class="sub"><b>→ Brief</b> raises the ticket and ties it to that moment — the chip then tracks it live. Drag a card to move its month.</p>
+  <div class="lgnd" id="lgnd" hidden></div>
   <div class="split" id="split">
     <div id="cal-wrap"><div class="road" id="road"></div></div>
     <div class="srail" id="srail">
-      <div class="hrail" id="hoursrail" hidden></div>
       <div class="clical" id="clical" hidden></div>
     </div>
   </div>
+  <section class="hband" id="hoursrail" hidden></section>
   <div id="ov" hidden></div>
 </main>
 
@@ -641,11 +678,22 @@ function wfFor(brand,e){
 // which team holds the ball at each pipeline stage — the Workflow board's own map, so the
 // calendar answers "whose court is this in?" without opening Workflow
 var COURTM={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',analysis:'AM',confirmed:''};
+// a one-word name gives one letter, which collides constantly across a small team — take two
+function ownIni(nm){
+  var parts=String(nm||'').split(/[\s/_-]+/).filter(Boolean);
+  if(!parts.length)return '';
+  return (parts.length>1?parts[0][0]+parts[1][0]:parts[0].slice(0,2)).toUpperCase();
+}
+function ownChip(e){
+  var nm=kwown()[e.id]||'';
+  return '<button type="button" class="own'+(nm?'':' none')+'" data-own="'+esc(e.id)+'" title="'
+    +(nm?'Owner: '+esc(nm)+' — click to change':'Unassigned — click to assign an owner')+'">'+esc(nm?ownIni(nm):'+')+'</button>';
+}
 function stChip(brand,e,wf,st){
   if(wf){ var ct=COURTM[st]||'';
     return '<a class="stx '+esc(st)+' wfl" href="/workflow" title="Live from the Workflow pipeline'
       +(wf.id?' · ticket '+esc(wf.id):'')+(ct?' · '+esc(ct)+' holds the ball':'')
-      +' — the stage moves in Workflow, not here">WF · '+esc(st)+(ct?'<b class="ct">'+esc(ct)+'</b>':'')+'</a>'; }
+      +' — the stage moves in Workflow, not here">'+esc(st)+(ct?'<b class="ct">'+esc(ct)+'</b>':'')+'</a>'; }
   return '<button type="button" class="stx '+esc(st)+'" data-st="'+esc(e.id)+'" title="Not briefed yet — '
     +'click to set the manual stage, or → Brief to raise the ticket and let Workflow drive it">'+esc(st)+'</button>';
 }
@@ -888,18 +936,18 @@ function volOf(brand,e){ // exact PT counts per market (+ text-filter union), br
   return o;
 }
 function scopeBtn(brand,e){
-  var v=volOf(brand,e);
-  if(v&&v.wide)return '<button type="button" class="scope wide" data-scope="'+esc(e.id)+'" title="Sale window — whole catalogue in scope">'+fmt(v.vol)+' SKUs · all</button>';
-  var pmkt=evMkt(brand,e), psb=ptsOf(e,pmkt), txb=txOf(e,pmkt), cnb=cndOf(e,pmkt);
-  var idxT=ptidxFor(brand,pmkt);
+  var v=volOf(brand,e), pmkt=evMkt(brand,e), psb=ptsOf(e,pmkt), txb=txOf(e,pmkt), cnb=cndOf(e,pmkt), idxT=ptidxFor(brand,pmkt);
+  if(v&&v.wide)return '<button type="button" class="scope wide" data-scope="'+esc(e.id)+'" title="Sale window — the whole '
+    +esc(pmkt.toUpperCase())+' catalogue ('+fmt(v.vol)+' products) is in scope">whole catalogue</button>';
   if(v&&!v.unset){
+    // the card shows the NUMBER; the PT/text/condition breakdown stays in the tooltip
     var tip=psb.map(function(pt){return pt+(idxT?' ('+fmt(idxT.map[pt]||0)+')':'')})
-      .concat((txb?txb.qs:[]).map(function(q){return 'txt “'+q.q+'” ('+(q.n!=null?fmt(q.n):'?')+')'}))
+      .concat((txb?txb.qs:[]).map(function(q){return 'text “'+q.q+'” ('+(q.n!=null?fmt(q.n):'?')+')'}))
       .concat((cnb?cnb.conds:[]).map(function(c){return (KW_ATTR_LBL[c.attr]||c.attr)+': '+(c.vals||[]).join('/')})).join(' · ');
-    var parts=[]; if(psb.length)parts.push(psb.length+' PTs'); if(txb)parts.push(txb.qs.length+' txt'); if(cnb)parts.push(cnb.conds.length+' cond');
-    return '<button type="button" class="scope set" data-scope="'+esc(e.id)+'" title="'+esc(tip)+'">'+parts.join(' + ')+' · '+fmt(v.vol)+' SKUs · '+v.pct+'%</button>';
+    return '<button type="button" class="scope set" data-scope="'+esc(e.id)+'" title="'+esc(tip||'in scope')
+      +' — '+v.pct+'% of the live feed · click to edit">'+fmt(v.vol)+' products</button>';
   }
-  return '<button type="button" class="scope unset" data-scope="'+esc(e.id)+'">⚙ Set scope'+(psb.length?' ('+psb.length+' PTs)':'')+'</button>';
+  return '<button type="button" class="scope unset" data-scope="'+esc(e.id)+'" title="No product scope yet — click to set one">⚙ Set scope</button>';
 }
 function renderMkts(){
   var row=$('#mkt-row');
@@ -1038,43 +1086,61 @@ function kwHours(n){ n=Math.max(0,Math.round(+n||0)); if(!n)return 0; if(n<=500)
   var L=p[p.length-1],P=p[p.length-2],rate=(L[1]-P[1])/(L[0]-P[0]); return L[1]+(n-L[0])*rate; }
 function h1(h){ return (Math.round(h*2)/2).toFixed(1); } // nearest half-hour
 function kwown(){ var r=rec(); if(!r.kwown)r.kwown={}; return r.kwown; }
+/* ---- resourcing band (Ray, 11 Sep 2026: "hours and resourcing could be displayed more
+   intelligently") — it used to be a side rail listing every optimisation AGAIN, with its name
+   and date repeated next to a dropdown, stealing a quarter of the calendar's width to say what
+   the cards already said. It is now its own collapsed band answering the two questions a list
+   of cards never did: WHO is carrying the load, and WHEN it lands. Assignment moved onto the
+   card's owner chip, so nothing is duplicated. ---- */
+function bandOpen(){ try{ return localStorage.getItem('fcc-kw-band')==='1'; }catch(e){ return false; } }
+function bars(rowsIn, max){
+  return rowsIn.map(function(r){
+    return '<div class="hb-row'+(r.un?' un':'')+'"><span class="hb-nm" title="'+esc(r.name)+'">'+esc(r.name)+'</span>'
+      +'<span class="hb-bar"><i style="width:'+(max?Math.max(2,Math.round(r.h/max*100)):0)+'%"></i></span>'
+      +'<span class="hb-v">'+h1(r.h)+'h</span></div>';
+  }).join('');
+}
 function renderHours(){
-  var rail=$('#hoursrail'); if(!rail)return;
-  if(CLIENT==='*'){ rail.hidden=true; return; }
-  rail.hidden=false;
-  var E=evs(), own=kwown(), rows=[], unsized=0, totP=0, totH=0, perP={};
+  var band=$('#hoursrail'); if(!band)return;
+  if(CLIENT==='*'){ band.hidden=true; return; }
+  band.hidden=false;
+  var E=evs(), own=kwown(), sized=0, unsized=0, totP=0, totH=0, perP={}, perM={};
   E.forEach(function(e){ var v=volOf(CLIENT,e);
     if(!v||v.unset){ unsized++; return; }
-    var n=v.vol||0, hh=kwHours(n); totP+=n; totH+=hh;
-    var o=own[e.id]||''; perP[o||'__un']=(perP[o||'__un']||0)+hh;
-    rows.push({e:e,n:n,h:hh,o:o,wide:!!v.wide}); });
-  var people=KW_PEOPLE.slice(); Object.keys(own).forEach(function(k){ var nm=own[k]; if(nm&&people.indexOf(nm)<0)people.push(nm); });
-  function opts(sel){ return '<option value="">— unassigned —</option>'+people.map(function(p){return '<option'+(p===sel?' selected':'')+'>'+esc(p)+'</option>'}).join('')+'<option value="__add">＋ add person…</option>'; }
-  var h='<h3>⏱ Hours &amp; resourcing</h3>'
-    +'<div class="hsub">'+esc(CLIENT)+' · '+MKT.toUpperCase()+' — keyword-generation effort for this roadmap</div>'
-    +'<div class="hrule">Rule of thumb: 500→4h · 1,500→6h · 4,000→8h · 10,000→10h — interpolated by the products in each optimisation’s scope.</div>'
-    +'<div class="htot"><div class="hk"><div class="n">'+(rows.length?fmt(totP):'—')+'</div><div class="l">Products</div></div>'
-    +'<div class="hk"><div class="n">'+(rows.length?h1(totH):'—')+'</div><div class="l">Hours</div></div>'
-    +'<div class="hk"><div class="n">'+rows.length+'</div><div class="l">Sized</div></div></div>';
-  if(!rows.length){
-    h+='<div class="hnone">'+(E.length?'⟳ Sync product types, then set a scope on each optimisation to size the hours.':'No optimisations yet — ✒ Edit calendar to add moments.')+'</div>'
-      +(E.length?'<button class="btn pri hsync" id="h-sync">⟳ Sync product types</button>':'');
+    var n=v.vol||0, hh=kwHours(n); totP+=n; totH+=hh; sized++;
+    var o=own[e.id]||'';
+    perP[o||'__un']=(perP[o||'__un']||0)+hh;
+    var sd=schedDate(e), mk=sd.getUTCFullYear()*12+sd.getUTCMonth();
+    perM[mk]=(perM[mk]||0)+hh; });
+
+  var sum=sized
+    ? fmt(totP)+' products · '+h1(totH)+'h across '+sized+' optimisation'+(sized===1?'':'s')
+      +(unsized?' · '+unsized+' not yet sized':'')
+    : (E.length?'Set a scope on an optimisation to size the effort':'No optimisations yet');
+  var h='<button type="button" class="hb-h" id="hb-tog" aria-expanded="'+(bandOpen()?'true':'false')+'">'
+    +'<span class="hb-t">⏱ Resourcing</span><span class="hb-sum">'+esc(sum)+'</span><span class="hb-cx">▼</span></button>'
+    +'<div class="hb-body">';
+  if(!sized){
+    h+='<div class="hb-none">'+(E.length
+      ? 'Nothing is sized yet. <b>⟳ Sync product types</b>, then set a scope on an optimisation — hours follow the products in scope.'
+      : 'Add the brand’s marketing moments with <b>✎ Edit calendar</b> first.')+'</div>';
   } else {
-    h+='<div class="hgrp">Per optimisation</div>';
-    rows.forEach(function(r){
-      h+='<div class="htask"><div class="ht-top"><span class="ht-n">'+esc(r.e.name)+'</span><span class="ht-h">'+h1(r.h)+'h</span></div>'
-        +'<div class="ht-m">lands '+dLbl(r.e)+' · '+fmt(r.n)+' products'+(r.wide?' · brand-wide':'')+'</div>'
-        +'<select class="ht-o" data-hown="'+esc(r.e.id)+'" aria-label="Assign '+esc(r.e.name)+'">'+opts(r.o)+'</select></div>';
-    });
-    h+='<div class="hgrp">By team member</div>';
-    var pk=Object.keys(perP).filter(function(k){return k!=='__un'}).sort(function(a,b){return perP[b]-perP[a]});
-    if(!pk.length)h+='<div class="hsub">Nothing assigned yet — pick an owner per optimisation above.</div>';
-    pk.forEach(function(p){ h+='<div class="hpers"><span>'+esc(p)+'</span><span class="hh">'+h1(perP[p])+'h</span></div>'; });
-    if(perP['__un'])h+='<div class="hpers"><span style="color:var(--muted)">Unassigned</span><span class="hh" style="color:var(--muted)">'+h1(perP['__un'])+'h</span></div>';
-    if(unsized)h+='<div class="hsub" style="margin-top:9px">+ '+unsized+' optimisation'+(unsized===1?'':'s')+' not yet sized (set a scope to include).</div>';
+    var pk=Object.keys(perP).sort(function(a,b){ if(a==='__un')return 1; if(b==='__un')return -1; return perP[b]-perP[a]; });
+    var prows=pk.map(function(k){ return {name:k==='__un'?'Unassigned':k, h:perP[k], un:k==='__un'}; });
+    var mk2=Object.keys(perM).map(Number).sort(function(a,b){return a-b});
+    var mrows=mk2.map(function(k){ return {name:MON[k%12]+' ’'+String(Math.floor(k/12)).slice(2), h:perM[k]}; });
+    var pmax=Math.max.apply(null,prows.map(function(r){return r.h})), mmax=Math.max.apply(null,mrows.map(function(r){return r.h}));
+    h+='<div class="hb-cols">'
+      +'<div><div class="hb-lbl">Who is carrying it</div>'+bars(prows,pmax)
+      +(perP['__un']?'<div class="hb-note" style="margin-top:9px;padding-top:9px">Assign an owner from the <b>＋</b> chip on any card.</div>':'')+'</div>'
+      +'<div><div class="hb-lbl">When it lands</div>'+bars(mrows,mmax)+'</div>'
+      +'</div>';
   }
-  rail.innerHTML=h;
-  var sb=rail.querySelector('#h-sync'); if(sb)sb.onclick=function(){ syncPT(); };
+  h+='<div class="hb-note">Hours are interpolated from the products in each optimisation’s scope — '
+    +'500→4h · 1,500→6h · 4,000→8h · 10,000→10h'+(unsized&&sized?'. '+unsized+' optimisation'+(unsized===1?' is':'s are')+' still unsized and excluded.':'.')+'</div>'
+    +'</div>';
+  band.innerHTML=h;
+  band.classList.toggle('open',bandOpen());
 }
 /* ---------------- ⬇ Client PDF (browser print-to-PDF) ----------------
  * Ray: the roadmap has to be shareable with the client. The live board can't be printed — it's
@@ -1219,6 +1285,16 @@ function addMonthsISO(ds,delta){ var d=new Date(ds+'T12:00:00Z'), day=d.getUTCDa
 function rescheduleToMonth(id,targetKey){ var e=findEv(id); if(!e)return; // drop a theme into another month → shift its moment (and the derived schedule) by the month delta
   var sd=schedDate(e), cur=sd.getUTCFullYear()*12+sd.getUTCMonth(), delta=targetKey-cur; if(!delta)return;
   e.date=addMonthsISO(e.date,delta); save(); render(); }
+function laneKey(l){ l=String(l||'').toLowerCase();
+  return l.indexOf('camp')>=0?'campaign':l.indexOf('sale')>=0?'sale':l.indexOf('location')>=0?'location':'studio'; }
+var LANE_LGND={campaign:['lc','Campaign'],location:['ll','Location'],studio:['ls','Studio'],sale:['lx','Sale']};
+function renderLegend(E){   // one line, instead of a lane word repeated on every card
+  var el=$('#lgnd'); if(!el)return;
+  var seen={}; E.forEach(function(e){ seen[laneKey(e.lane)]=1; });
+  var ks=Object.keys(LANE_LGND).filter(function(k){return seen[k]});
+  el.hidden=ks.length<2;
+  el.innerHTML=ks.map(function(k){ return '<span><i class="'+LANE_LGND[k][0]+'"></i>'+LANE_LGND[k][1]+'</span>'; }).join('');
+}
 function laneLbl(l){ l=String(l||'').toLowerCase();
   if(l.indexOf('camp')>=0)return '📣 Campaign';
   if(l.indexOf('sale')>=0)return '🏷 Sale';
@@ -1227,15 +1303,16 @@ function laneLbl(l){ l=String(l||'').toLowerCase();
   return l?('✦ '+l.charAt(0).toUpperCase()+l.slice(1)):''; }
 function render(){
   popClose();
-  if(CLIENT==='*'){ $('#split').hidden=true; $('#pdf').hidden=true; renderOverview(); renderPdfDoc(); return; }
+  if(CLIENT==='*'){ $('#split').hidden=true; $('#pdf').hidden=true; if($('#lgnd'))$('#lgnd').hidden=true;
+    renderOverview(); renderPdfDoc(); return; }
   $('#split').hidden=false; $('#pdf').hidden=false; $('#cal-wrap').hidden=false; $('#ov').hidden=true;
-  $('#split').classList.add('two');
   kpis();
   $('#cal-title').textContent=CLIENT+' — FeedSpark keyword roadmap'+(MKT!=='gb'?' · '+MKT.toUpperCase():'');
   renderMkts();
   renderClical();
   var E=evs(), byMon={};
   E.forEach(function(e){ var sd=schedDate(e), k=sd.getUTCFullYear()*12+sd.getUTCMonth(); (byMon[k]=byMon[k]||[]).push(e); });
+  renderLegend(E);
   if(!E.length){ $('#road').innerHTML='<p class="sub">No moments yet — ✒ Edit calendar → ＋ Add event, with the client’s calendar side-by-side.</p>'; renderHours(); renderPdfDoc(); return; }
   var rg=monthRange(), mons=[]; for(var mk=rg[0];mk<=rg[1];mk++)mons.push(mk); // full span so empty months are drop targets too
   $('#road').innerHTML=mons.map(function(k){
@@ -1244,15 +1321,23 @@ function render(){
       +'<span class="mn">'+(ek.length?ek.length+' opt'+(ek.length===1?'':'s'):'—')+'</span>'
       +(mh?'<span class="mo-hrs" title="keyword-generation hours scheduled this month">'+h1(mh)+'h</span>':'')+'</div>'
       +'<div class="mo-cards">'+(ek.length?ek.map(function(e){
-        var wf=wfFor(CLIENT,e), st=stOf(wf,e), ln=laneLbl(e.lane), rr=resFor(CLIENT,e);
-        return '<div class="rc" draggable="true" data-kw="'+esc(e.id)+'" data-lane="'+esc(e.lane||'')+'"><div class="rt"><span class="grip" title="Drag to reschedule to another month">⠿</span><span class="lens">✦</span>'+esc(e.name)
-          +(ln?'<span class="lane">'+esc(ln)+'</span>':'')
-          +(editMode?'<button class="del" style="position:static;opacity:1;margin-left:6px" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</div>'
-          +'<div class="rd">lands '+dLbl(e)+((e.mkt&&e.mkt!=='gb')?' · '+e.mkt.toUpperCase():'')+'</div>'
-          +'<div class="ra">'+scopeBtn(CLIENT,e)
-          +'<span class="themes" data-terms="'+esc(e.id)+'" title="'+esc((e.terms||[]).join(', '))+'">✦ '+(e.terms||[]).length+' themes</span>'
-          +stChip(CLIENT,e,wf,st)
-          +(rr?'<button type="button" class="rchip '+esc(rr.verdict||'unknown')+'" data-res="'+esc(e.id)+'" title="Result reported for the '+esc(rr.__w?rr.__w.label:(rr.period||''))+' batch — click for the metric lines">📈 '+esc(resLbl(rr))+'</button>':'')
+        // FOUR facts, not eight: the name, one muted meta line (date · scope · hours · themes),
+        // the state, and who owns it. The lane is the card's coloured edge; the drag grip and the
+        // ✦ glyph are gone (the whole card is the drag handle).
+        var wf=wfFor(CLIENT,e), st=stOf(wf,e), rr=resFor(CLIENT,e);
+        var lk=laneKey(e.lane), v=volOf(CLIENT,e), hh=(v&&!v.unset)?kwHours(v.vol||0):0;
+        var tms=(e.terms||[]).length;
+        return '<div class="rc lane-'+esc(lk)+'" draggable="true" data-kw="'+esc(e.id)+'" data-lane="'+esc(e.lane||'')+'"'
+          +' title="'+esc(laneLbl(e.lane)||'')+' — drag to another month">'
+          +'<div class="rt">'+esc(e.name)
+          +(editMode?'<button class="del" style="opacity:1" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</div>'
+          +'<div class="rd">'+esc(dLbl(e))+((e.mkt&&e.mkt!=='gb')?' · '+esc(e.mkt.toUpperCase()):'')
+          +' · '+scopeBtn(CLIENT,e)+(hh?' · '+h1(hh)+'h':'')
+          +(tms?' · <button type="button" class="themes" data-terms="'+esc(e.id)+'" title="'+esc((e.terms||[]).join(', '))+' — click to edit">✦'+tms+'</button>':'')
+          +'</div>'
+          +'<div class="ra">'+stChip(CLIENT,e,wf,st)
+          +(rr?'<button type="button" class="rchip '+esc(rr.verdict||'unknown')+'" data-res="'+esc(e.id)+'" title="Result reported for the '+esc(rr.__w?rr.__w.label:(rr.period||''))+' round — click for the metric lines">📈</button>':'')
+          +ownChip(e)
           +'<a class="bgo" href="'+briefLink(e)+'" title="Auto-generated brief — moment, dates, scope PTs + SKUs, themes">→ Brief</a></div></div>';
       }).join(''):'<div class="mo-empty">drop a theme here</div>')+'</div></section>';
   }).join('');
@@ -1534,13 +1619,42 @@ document.addEventListener('click',function(ev){
   if(!ev.target.closest('#ptp')&&!ev.target.closest('[data-scope]'))ptClose();
 });
 $('#sbs').addEventListener('click',function(){ if(CLIENT==='*')return; window.__sbs=!window.__sbs; renderClical(); });
-$('#hoursrail').addEventListener('change',function(ev){
-  var s=ev.target.closest('select[data-hown]'); if(!s)return;
-  var id=s.getAttribute('data-hown'), val=s.value;
-  if(val==='__add'){ var nm=(window.prompt('Assign this optimisation to (name):')||'').trim(); if(!nm){ renderHours(); return; } val=nm; }
-  var own=kwown(); if(val)own[id]=val; else delete own[id];
-  save(); renderHours();
+$('#hoursrail').addEventListener('click',function(ev){
+  if(!ev.target.closest('#hb-tog'))return;
+  var band=$('#hoursrail'), open=!band.classList.contains('open');
+  band.classList.toggle('open',open);
+  var t=band.querySelector('#hb-tog'); if(t)t.setAttribute('aria-expanded',open?'true':'false');
+  try{ localStorage.setItem('fcc-kw-band',open?'1':'0'); }catch(e){}
 });
+/* owner menu — assignment lives on the card now, so the band never repeats the task list */
+function ownClose(){ var m=$('#ownmenu'); if(m)m.remove(); }
+function ownOpen(btn,id){
+  ownClose();
+  var own=kwown(), cur=own[id]||'';
+  var people=KW_PEOPLE.slice(); Object.keys(own).forEach(function(k){ var nm=own[k]; if(nm&&people.indexOf(nm)<0)people.push(nm); });
+  var d=document.createElement('div'); d.className='ownmenu'; d.id='ownmenu';
+  d.innerHTML=people.map(function(pn){ return '<button type="button" data-set="'+esc(pn)+'" class="'+(pn===cur?'on':'')+'">'+(pn===cur?'✓ ':'')+esc(pn)+'</button>'; }).join('')
+    +(cur?'<button type="button" data-set="">— unassign —</button>':'')
+    +'<button type="button" data-set="__add">＋ add person…</button>';
+  document.body.appendChild(d);
+  var r=btn.getBoundingClientRect();
+  d.style.left=Math.min(window.scrollX+r.left-40,window.scrollX+document.documentElement.clientWidth-d.offsetWidth-12)+'px';
+  d.style.top=(window.scrollY+r.bottom+6)+'px';
+  d.addEventListener('click',function(ev){
+    var b=ev.target.closest('[data-set]'); if(!b)return;
+    ev.stopPropagation();
+    var val=b.getAttribute('data-set');
+    if(val==='__add'){ val=(window.prompt('Assign this optimisation to (name):')||'').trim(); if(!val){ ownClose(); return; } }
+    var o=kwown(); if(val)o[id]=val; else delete o[id];
+    ownClose(); save(); render();
+  });
+}
+document.addEventListener('click',function(ev){
+  var b=ev.target.closest('[data-own]');
+  if(b){ ev.stopPropagation(); ownOpen(b,b.getAttribute('data-own')); return; }
+  if(!ev.target.closest('#ownmenu'))ownClose();
+});
+document.addEventListener('keydown',function(ev){ if(ev.key==='Escape')ownClose(); });
 
 /* ---------------- PT sync — one stream builds the product-type index; volumes are instant after ---------------- */
 function syncPT(){
