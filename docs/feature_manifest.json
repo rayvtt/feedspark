@@ -3840,10 +3840,10 @@
    "min": 1
   },
   {
-   "name": "Quote generator xlsx: 'Setup Hours (from the retainer)' section — setup hours per service always taken from the retainer at £0 (Ray 14 Sep 2026 'one-off is always the retainer'); the day-rate option is retired",
+   "name": "Quote generator xlsx: 'Setup Hours (One-off)' section — setup hours per service taken from the retainer (£0, default) or charged at the day rate (Ray 14 Sep 2026 'either from retainer OR one-off charge')",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "sect('Setup Hours (from the retainer)'",
-   "pr": 362,
+   "pattern": "sect('Setup Hours (One-off)'",
+   "pr": 363,
    "min": 1
   },
   {
@@ -4273,11 +4273,39 @@
    "forbidden": true
   },
   {
-   "name": "Quote generator: setup hours always from the retainer — no day-rate billing mode select on the strips",
+   "name": "Quote generator: the bottom line reads monthly FIRST, then one-off, then Year 1 (Ray 14 Sep 2026 'the number doesn't add up at the bottom'); KPI row shows Monthly total + One-off total",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "class=\"xp-mode\"",
-   "pr": 362,
-   "forbidden": true
+   "pattern": "Year 1 · ",
+   "pr": 363,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: service cards (system · feed · retainer) sit directly under the picker; a switched-on type scrolls its card into view and flashes it",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "card.classList.add('flash')",
+   "pr": 363,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: render hardening — each section draws on its own and a failure names itself in the error strip",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "Part of the page failed to draw",
+   "pr": 363,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: a ticked market stays on the quote even if the wired roster no longer lists it / has not loaded yet",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "a ticked market stays on the quote",
+   "pr": 363,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: setup-hours billing choice per service — from retainer (default, £0) or one-off at the day rate",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "<select class=\"xp-mode\"",
+   "pr": 363,
+   "min": 1
   }
  ]
 }
