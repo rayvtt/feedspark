@@ -225,6 +225,13 @@ window.addEventListener('load',restore);
   [data-theme=dark] .own,[data-theme=dark] .ownmenu{background:#20242E;border-color:var(--line);color:var(--ink-2)}
   [data-theme=dark] .hb-h:hover{background:#181B22}
   .mo-empty{border:1.5px dashed var(--line);border-radius:10px;padding:16px 8px;text-align:center;font-size:11px;color:var(--muted);font-weight:700;opacity:.65}
+  /* the window is a plan read left to right: months already gone recede, this month is marked */
+  .mo-sec.mo-past{opacity:.62}
+  .mo-sec.mo-now{border-color:var(--orange)}
+  .mo-h .mo-tag{font-size:9.5px;font-weight:900;letter-spacing:.06em;color:#fff;background:var(--orange);
+    border-radius:100px;padding:1px 6px;text-transform:uppercase}
+  [data-theme=dark] .mo-sec.mo-now{border-color:#C67B28}
+  [data-theme=dark] .mo-h .mo-tag{background:#C67B28}
   [data-theme=dark] .mo-h .mo-hrs{color:#F0A44E}
   /* PT scope picker — searchable multiselect over the feed's real product_type values */
   /* ===== PT scope picker — two-column workbench (Ray, 11 Sep 2026: "this selection is too
@@ -527,6 +534,11 @@ window.addEventListener('load',restore);
     <label>Markets</label>
     <div id="mkt-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
   </div>
+  <div class="ctl" id="win-row" style="margin-top:10px" hidden>
+    <label>Plan</label>
+    <div id="win-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    <span class="mstate" id="win-span"></span>
+  </div>
   <div class="err-strip" id="kw-error" role="alert"><span id="kw-error-msg"></span></div>
   <div class="kpis" id="kpis"></div>
 </div></header>
@@ -659,13 +671,29 @@ function kpis(){
     +(unset?'<div class="kpi warn"><div class="n">'+unset+'</div><div class="l">Scopes to set</div></div>':'')
     +((E.length-briefed)?'<div class="kpi"><div class="n">'+(E.length-briefed)+'</div><div class="l">Not yet briefed</div></div>':'');
 }
+/* ---- The board is a ROLLING PLAN, not the span of whatever moments happen to exist
+   (Ray, 14 Sep 2026: "where is December and onwards? Please show six months from the current
+   timeline so I can track, drop, and plan ahead"). The old range ran earliest-moment →
+   latest-moment, so Accessorize stopped dead at Nov — the month its source calendar ran out —
+   and there was nowhere to drop December. The window now starts at THIS month and runs
+   winLen() months whether or not those months carry work: an empty month is a drop target,
+   which is how you plan ahead. It only ever GROWS, never shrinks, so a moment scheduled before
+   this month or dropped past the horizon is never hidden. ---- */
+var WIN_OPTS=[6,12,18], WIN_DEF=6, WIN_MAX=36;   // WIN_MAX guards a mistyped year, see outsideWin
+function nowKey(){ var n=new Date(); return n.getUTCFullYear()*12+n.getUTCMonth(); }
+function monKey(e){ var s=schedDate(e); return s.getUTCFullYear()*12+s.getUTCMonth(); }
+function monLbl(k){ return MON[((k%12)+12)%12]+' \u2019'+String(Math.floor(k/12)).slice(2); }
+function winLen(){ try{ var v=+localStorage.getItem('fcc-kw-win'); return WIN_OPTS.indexOf(v)>=0?v:WIN_DEF; }catch(e){ return WIN_DEF; } }
 function monthRange(){
-  var E=evs(); if(!E.length){var n=new Date();return [n.getUTCFullYear()*12+n.getUTCMonth(), n.getUTCFullYear()*12+n.getUTCMonth()+5];}
-  var lo=1/0,hi=-1/0;
-  E.forEach(function(e){ var d=new Date(e.date+'T12:00:00Z'), s=schedDate(e);
-    var a=s.getUTCFullYear()*12+s.getUTCMonth(), b=d.getUTCFullYear()*12+d.getUTCMonth();
-    if(a<lo)lo=a; if(b>hi)hi=b; });
-  return [lo,hi];
+  var now=nowKey(), a=now, b=now+winLen()-1;
+  evs().forEach(function(e){ var k=monKey(e);
+    if(k<a&&k>=now-WIN_MAX)a=k;
+    if(k>b&&k<=now+WIN_MAX)b=k; });
+  return [a,b];
+}
+function outsideWin(){   // a moment more than WIN_MAX months out is a mistyped year, not a plan
+  var now=nowKey(), rg=monthRange();
+  return evs().filter(function(e){ var k=monKey(e); return k<rg[0]||k>rg[1]; });
 }
 function volBadge(e){
   var m=(rec().measured||{})[e.id];
@@ -974,6 +1002,21 @@ function scopeBtn(brand,e){
   }
   return '<button type="button" class="scope unset" data-scope="'+esc(e.id)+'" title="No product scope yet — click to set one">⚙ Set scope</button>';
 }
+function renderWin(){   // how far ahead the board plans — the window always starts at THIS month
+  var row=$('#win-row'); if(!row)return;
+  row.hidden=(CLIENT==='*');
+  if(row.hidden)return;
+  var w=winLen(), rg=monthRange(), span=rg[1]-rg[0]+1;
+  $('#win-chips').innerHTML=WIN_OPTS.map(function(n){
+    return '<button type="button" class="mkc'+(n===w?' on':'')+'" data-win="'+n+'" title="Plan '+n+' months ahead from this month">'+n+' months</button>';}).join('');
+  $('#win-span').textContent=monLbl(rg[0])+' \u2013 '+monLbl(rg[1])
+    +(span>w?' \u00b7 widened to '+span+' so every moment stays on the board':'');
+}
+$('#win-row').addEventListener('click',function(ev){
+  var b=ev.target.closest('[data-win]'); if(!b)return;
+  try{ localStorage.setItem('fcc-kw-win',b.getAttribute('data-win')); }catch(e){}
+  render();
+});
 function renderMkts(){
   var row=$('#mkt-row');
   row.hidden=MKTLIST.length<2;
@@ -1371,6 +1414,7 @@ function laneLbl(l){ l=String(l||'').toLowerCase();
 function render(){
   popClose();
   if(CLIENT==='*'){ $('#split').hidden=true; $('#pdf').hidden=true; if($('#lgnd'))$('#lgnd').hidden=true;
+    if($('#win-row'))$('#win-row').hidden=true;   // the overview is a scan across brands, not a plan board
     renderOverview(); renderPdfDoc(); return; }
   $('#split').hidden=false; $('#pdf').hidden=false; $('#cal-wrap').hidden=false; $('#ov').hidden=true;
   kpis();
@@ -1380,11 +1424,21 @@ function render(){
   var E=evs(), byMon={};
   E.forEach(function(e){ var sd=schedDate(e), k=sd.getUTCFullYear()*12+sd.getUTCMonth(); (byMon[k]=byMon[k]||[]).push(e); });
   renderLegend(E);
-  if(!E.length){ $('#road').innerHTML='<p class="sub">No moments yet — ✒ Edit calendar → ＋ Add event, with the client’s calendar side-by-side.</p>'; renderHours(); renderPdfDoc(); return; }
-  var rg=monthRange(), mons=[]; for(var mk=rg[0];mk<=rg[1];mk++)mons.push(mk); // full span so empty months are drop targets too
-  $('#road').innerHTML=mons.map(function(k){
+  renderWin();
+  // an empty brand still gets its six months — that IS the invitation to plan, so the hint sits
+  // above the board instead of replacing it
+  var hint=E.length?'':'<p class="sub">No moments yet — ✒ Edit calendar → ＋ Add event, with the client’s calendar side-by-side.</p>';
+  var out=outsideWin();
+  if(out.length)hint+='<p class="sub" style="color:var(--bad)"><b>'+out.length+' moment'+(out.length===1?'':'s')
+    +' sit'+(out.length===1?'s':'')+' outside this window</b> — '
+    +out.slice(0,3).map(function(e){return '<button type="button" class="themes" data-fix="'+esc(e.id)+'" title="Fix this moment\u2019s date">'+esc(e.name)+' ('+esc(e.date)+')</button>'}).join(', ')
+    +(out.length>3?' …':'')+'. Check the year on those dates.</p>';
+  var nk=nowKey();
+  var rg=monthRange(), mons=[]; for(var mk=rg[0];mk<=rg[1];mk++)mons.push(mk); // the whole window, so empty months are drop targets too
+  $('#road').innerHTML=hint+mons.map(function(k){
     var ek=byMon[k]||[], mh=0; ek.forEach(function(e){ var v=volOf(CLIENT,e); if(v&&!v.unset)mh+=kwHours(v.vol||0); });
-    return '<section class="mo-sec" data-mon="'+k+'"><div class="mo-h"><span class="mo-nm">'+MON[k%12]+' ’'+String(Math.floor(k/12)).slice(2)+'</span>'
+    return '<section class="mo-sec'+(k<nk?' mo-past':k===nk?' mo-now':'')+'" data-mon="'+k+'"><div class="mo-h"><span class="mo-nm">'+monLbl(k)+'</span>'
+      +(k===nk?'<span class="mo-tag">now</span>':'')
       +'<span class="mn">'+(ek.length?ek.length+' opt'+(ek.length===1?'':'s'):'—')+'</span>'
       +(mh?'<span class="mo-hrs" title="keyword-generation hours scheduled this month">'+h1(mh)+'h</span>':'')+'</div>'
       +'<div class="mo-cards">'+(ek.length?ek.map(function(e){
@@ -1805,6 +1859,8 @@ function syncPT(){
 /* ---------------- edit interactions ---------------- */
 $('#road').addEventListener('click',function(ev){
   var t=ev.target;
+  var fix=t.closest('[data-fix]');   // a moment outside the window has no card — edit it from the warning
+  if(fix){ editEvent(findEv(fix.getAttribute('data-fix'))); return; }
   var stBtn=t.closest('[data-st]');
   if(stBtn){ var e=findEv(stBtn.getAttribute('data-st')); if(!e)return;
     e.st=STATES[(STATES.indexOf(e.st||'planned')+1)%STATES.length]; save(); render(); return; }

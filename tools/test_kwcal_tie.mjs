@@ -42,6 +42,11 @@ function liftVar(name) {
   if (!m) throw new Error(`KWCal: var ${name} not found`);
   return m[0];
 }
+function liftLine(name) {                   // a whole `var A=…, B=…;` statement, comment stripped
+  const m = new RegExp('var ' + name + '=[^\\n]*').exec(src);
+  if (!m) throw new Error(`KWCal: var ${name} not found — did it get renamed?`);
+  return m[0].replace(/\s*\/\/.*$/, '');
+}
 function liftDecl(name) {                   // `var NAME={…}` / `var NAME=[…]` — brace-matched, so
   const at = src.indexOf('var ' + name + '=');            // nested arrays and objects survive
   if (at < 0) throw new Error(`KWCal: var ${name} not found — did it get renamed?`);
@@ -178,6 +183,61 @@ is('and never duplicates', misfiled.Accessorize.events.length, 2);
 // an event already home is not "mis-filed"
 const clean = { Accessorize: { events: [{ id: 'acc_newbag' }] } };
 is('the home brand is never rehomed onto itself', rehome(clean), 0);
+
+// ---------- the rolling plan window (Ray, 14 Sep 2026) ----------
+/* "where is December and onwards? Please show six months from the current timeline so I can
+ * track, drop, and plan ahead." The window starts at THIS month and runs winLen() months whether
+ * or not they carry work — an empty month is a drop target. It may only ever GROW, so a moment
+ * scheduled before this month, or dropped past the horizon, is never hidden; and it is capped so
+ * a mistyped year (2062) can't render four hundred sections. */
+let EVS = [], WINLS = null;
+const winApi = new Function('MON', 'schedDate', 'getE', 'LS',
+  `${liftLine('WIN_OPTS')}
+   ${lift('nowKey')}
+   ${lift('monKey')}
+   ${lift('monLbl')}
+   ${lift('winLen')}
+   ${lift('monthRange')}
+   ${lift('outsideWin')}
+   var localStorage = LS, evs = getE;
+   return { monthRange:monthRange, outsideWin:outsideWin, monLbl:monLbl, nowKey:nowKey, winLen:winLen };`
+)(MON, schedDate, () => EVS, { getItem: () => WINLS });
+
+const NOW = (() => { const n = new Date(); return n.getUTCFullYear() * 12 + n.getUTCMonth(); })();
+const evAt = (k, id) => {                       // an event whose SCHEDULE (moment - 21d) lands in month k
+  const d = new Date(Date.UTC(Math.floor(k / 12), k % 12, 25));
+  d.setUTCDate(d.getUTCDate() + 21);
+  return { id: id || ('m' + k), name: 'M' + k, date: d.toISOString().slice(0, 10), terms: ['x'] };
+};
+const rel = () => { const r = winApi.monthRange(); return [r[0] - NOW, r[1] - NOW]; };  // months from now
+
+EVS = [];
+is('an empty board still plans six months', rel(), [0, 5]);
+EVS = [evAt(NOW + 1), evAt(NOW + 2)];
+is('months with no work do not shrink the window', rel(), [0, 5]);
+EVS = [evAt(NOW - 1), evAt(NOW + 2)];
+is('it widens BACK for a moment already scheduled', rel(), [-1, 5]);
+EVS = [evAt(NOW + 9)];
+is('it widens FORWARD for a moment dropped past the horizon', rel(), [0, 9]);
+is('nothing is outside a window that widened to fit it', winApi.outsideWin().length, 0);
+EVS = [evAt(NOW - 4), evAt(NOW + 11)];
+is('it widens both ways at once', rel(), [-4, 11]);
+
+WINLS = '12';
+EVS = [];
+is('a 12-month plan runs twelve months', rel(), [0, 11]);
+WINLS = '7';                                   // not an offered length
+is('an unoffered length falls back to six', winApi.winLen(), 6);
+WINLS = null;
+
+// the guard: a mistyped year is named, not rendered
+EVS = [evAt(NOW + 1), { id: 'typo', name: 'Spring Launch', date: '2062-03-01', terms: ['x'] }];
+const wide = winApi.monthRange();
+is('a 2062 date cannot stretch the board', wide[1] - wide[0] + 1 <= 37, true);
+is('and it is named as outside the window', winApi.outsideWin().map((e) => e.id), ['typo']);
+
+is('month labels carry the short year', winApi.monLbl(2026 * 12 + 11), 'Dec \u201926');
+is('and roll into the next one', winApi.monLbl(2027 * 12 + 0), 'Jan \u201927');
 
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) { fails.forEach((f) => console.error('  ✗ ' + f)); process.exit(1); }

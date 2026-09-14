@@ -4082,6 +4082,62 @@
    "pattern": "volbase:",
    "min": 1,
    "pr": 358
+  },
+  {
+   "name": "KWCal: the board is a ROLLING six-month plan from THIS month (Ray 14 Sep 2026 'where is December and onwards? show six months from the current timeline') — not the span of whatever moments exist",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "var now=nowKey(), a=now, b=now+winLen()-1;",
+   "pr": 359,
+   "min": 1
+  },
+  {
+   "name": "KWCal: the window only ever GROWS — a moment scheduled before this month or dropped past the horizon is never hidden",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "if(k<a&&k>=now-WIN_MAX)a=k;",
+   "pr": 359,
+   "min": 1
+  },
+  {
+   "name": "KWCal: plan-length chips (6/12/18 months) + the span line, remembered in localStorage fcc-kw-win",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function renderWin(){",
+   "pr": 359,
+   "min": 1
+  },
+  {
+   "name": "KWCal: this month is marked on the board and the months already gone recede",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "(k<nk?' mo-past':k===nk?' mo-now':'')",
+   "pr": 359,
+   "min": 1
+  },
+  {
+   "name": "KWCal: a mistyped year (WIN_MAX guard) is named above the board and editable from there, never rendered as hundreds of month sections",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function outsideWin(){",
+   "pr": 359,
+   "min": 1
+  },
+  {
+   "name": "KWCal: the out-of-window warning names each moment as a button that opens its date editor",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "if(fix){ editEvent(findEv(fix.getAttribute('data-fix'))); return; }",
+   "pr": 359,
+   "min": 1
+  },
+  {
+   "name": "KWCal: an empty brand still renders its six months (the hint sits above the board, it does not replace it)",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "var hint=E.length?'':",
+   "pr": 359,
+   "min": 1
+  },
+  {
+   "name": "KWCal harness: the rolling-window rules are pinned in tools/test_kwcal_tie.mjs",
+   "file": "tools/test_kwcal_tie.mjs",
+   "pattern": "function liftLine(name)",
+   "pr": 359,
+   "min": 1
   }
  ]
 }
