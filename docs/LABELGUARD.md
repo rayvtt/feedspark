@@ -418,3 +418,64 @@ prep for client demo").
   policy page is cited in the hero and footer.
 
 Engine unit tests: `node tools/test_labelguard.mjs` (runs in `validate.yml` on every PR).
+
+### 9.5 PDP recovery scan — "missing data can be sourced from the PDP" (Ray, 14 Sep 2026)
+
+**Why.** The Golden Record gaps are rarely gaps on the client's site: a 14 Sep 2026 probe of the
+eight wired GB brands (three product pages each) found the composition, colour name, pattern,
+fit/care rows, key-feature bullets, size guides and FAQ pairs sitting in the visible
+"Fabric & Details / Composition & Care / Key features" sections — while the schema.org JSON-LD
+mostly mirrors what the feed already sends (brand, sku, price, availability, images, breadcrumb).
+So the scanner reads both, and it reads them in the **browser**: the worker never parses a
+product page (same rule as the feeds — Feed Lab / Label Guard / Overlays run their engines
+client-side; the worker only proxies bytes).
+
+**Where.** `/golden` → every non-required attribute row carries **🔎 PDP** next to ✉ Ask client
+and → Brief; the scorecard header carries **🔎 Scan PDPs** (every gap at once). Both open the
+pop-up scanner: focus attribute (or every gap) · sample 10 / 25 / 50 · "AI read of the details
+text" (on when the worker has `ANTHROPIC_API_KEY`, greyed otherwise) · Start.
+
+**How (`docs/pdp_engine.js`, served at `/golden/pdp-engine.js`, harness `tools/test_pdpharvest.mjs`).**
+1. `sampler(n, attr)` on the Feed Lab parser contract: the page streams `/api/feed/proxy`
+   (XML or CSV, sniffed from the first bytes; header may grow mid-stream) into two reservoirs —
+   rows **blank in the focus attribute first**, any row as the fill — reading at most 60k rows /
+   48 MB.
+2. Each sampled `link` goes through `GET /api/golden/pdp/fetch?client=&market=&url=`. **No open
+   proxy:** the client/market must resolve to a wired or dossier-attached feed and the URL's host
+   must equal that feed's own product host (learned once from the feed head — the first product
+   `<link>` / link column — cached a day in `pdphost:<c>:<m>`; `www.` is the only tolerated
+   variance, look-alike and sub-domains are refused). The fetch is bounded (9 s, redirects
+   followed, HTML only, body read to 1.5 MB in the browser) and identifies itself honestly —
+   UA `FeedSparkPDPScan/1.0` + `x-feedspark-scan` (the reachable sites serve it identically to a
+   browser). A 403/429/503 is reported as **blocked** with the allowlisting ask.
+3. `extract(html, url, row)` — JSON-LD (Product / ProductGroup / variants / offers /
+   BreadcrumbList / FAQPage / positiveNotes) → OpenGraph `product:` meta → microdata → GA4
+   dataLayer items → embedded JSON keys → the visible details text (label:value rows,
+   composition lines → dominant fibre, pattern vocabulary, fastening/neckline/sleeve/care rows →
+   `section:attribute:value` product_detail, feature bullets → product_highlight, size-guide /
+   care / ingredients / PDF links → document_link). Every value carries `src` + the `ev` line it
+   came from. **Identifiers are variant facts:** gtin/mpn/size come only from the variant that
+   IS the feed row (sku/mpn/gtin match or the `?variant=` id in the link) or from a single-SKU
+   page — a page-level barcode on a multi-variant page is another SKU's (YuMOVE's 30-bite
+   barcode would have landed on the 90-bite row). A retailer SKU is accepted as MPN only for
+   own-brand products (Monsoon sells Monsoon; Stromberg at American Golf is not). Recommendation
+   blocks are a **signal** for related_product, never a value.
+4. Optional AI pass: `llmPrompt` batches five products' details excerpts (≤3.5k chars each) into
+   one `/api/claude` call asking for strict JSON with a **verbatim evidence quote per attribute**;
+   `mergeLlm` drops any value whose quote is not in the page text, enforces Google's vocabularies
+   (gender / age_group / size_type / size_system), never takes identifiers, and never overrides a
+   rule-found value.
+5. `matrix(results)` — per attribute: blank in feed · found on PDP · rate · examples with source
+   and evidence · signals apart; the page adds the **estimated Golden Record uplift** (the
+   sample's recovery rate applied to the feed's blank share, re-scored with the brand's profile).
+   Exits: **⬇ Supplemental CSV** (`id` + `g:` columns of the recovered values — a Merchant Center
+   supplemental source or a FeedHero rule input), **→ Brief** (Workflow deep-link, cat technical,
+   files "Golden Record PDP Recovery - <Brand> <MKT> - MMYY" via `plantask?attr=pdp`), **✉ Ask
+   client** (the evidence-led proposal on the shared askdraft rails). The sample is stored per feed
+   (`PUT /api/golden/pdp` → `goldenpdp:<c>:<m>`, ≤60 rows) and reopens from the scorecard chip.
+
+**Estate truth (probe, 14 Sep 2026).** Server-fetchable: Accessorize, Monsoon, Superdry, YuMOVE,
+American Golf (HTTP 200, 0.3–1.7 s). Blocked by bot walls: Reiss (Akamai), Schuh, Hobbycraft
+(Cloudflare) — those need the client to allowlist the scanner; the page says so on an all-blocked
+run. Phase 2 (not built): full-catalogue harvest on the GitHub Actions agent lane.
+
