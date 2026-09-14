@@ -2342,24 +2342,40 @@ async function markScanUnreachable(env, client, mkt, msg, wantPT) {
 // 300 new products coming in and 900 products going out, per category, like Merchant
 // Center"). The xml-scan agent sends each feed's full SKU id set as "id|category" lines
 // (category = first chevron segment of the primary product_type). Only the LATEST set per
-// feed is kept (volids: — closing-state semantics: a later same-day scan replaces it), and
-// the first confirmed scan of a new UTC day diffs yesterday's closing set against today's:
+// feed is kept (volids: — closing-state semantics: a later same-day scan replaces it); the
+// previous day's close is pinned as the baseline (volbase:) and EVERY scan of the day diffs
+// today's latest set against it (running close-to-close — see volTrack):
 // ids gained = IN, ids vanished = OUT, split per category (top 12 movers), appended to
 // volhist: (cap 60 days) for the /volume module. A TRUNCATED capture (feed past the agent's
 // 40k-SKU cap) records the day's row count only — diffing a partial set would fake churn.
 async function volTrack(env, client, mkt, rows, vol) {
   if (!vol || typeof vol.ids !== 'string') return null;
-  const VK = 'volids:' + client + ':' + mkt, HK = 'volhist:' + client + ':' + mkt;
+  const VK = 'volids:' + client + ':' + mkt, HK = 'volhist:' + client + ':' + mkt, BK = 'volbase:' + client + ':' + mkt;
   const today = new Date().toISOString().slice(0, 10);
   const trunc = !!vol.trunc;
   const prev = await env.EDITS.get(VK, 'json');
   const hist = (await env.EDITS.get(HK, 'json')) || [];
   const last = hist.length ? hist[hist.length - 1] : null;
-  if (prev && prev.d && prev.d !== today && !prev.trunc && !trunc) {
+  // RUNNING CLOSE-TO-CLOSE (fix, 14 Sep 2026 — Accessorize read 0 in / 0 out while its SKU
+  // count moved): yesterday's CLOSE is the baseline for the WHOLE of today. On the first scan
+  // of a new UTC day the previous day's final set becomes the baseline (volbase:), and every
+  // later scan that day re-diffs today's latest set against that SAME baseline — so the day's
+  // in/out builds through the day and settles at the last scan. The old code diffed only the
+  // first scan of the day (02:15 UTC) and let same-day scans overwrite the close, so a feed
+  // that regenerates in daytime had its movement absorbed into the close and never measured.
+  let base = null;
+  if (prev && prev.d && prev.d !== today) {
+    base = { d: prev.d, ids: prev.trunc ? '' : (prev.ids || ''), trunc: !!prev.trunc };
+    try { await env.EDITS.put(BK, JSON.stringify(base)); } catch (e) {}
+  } else {
+    base = await env.EDITS.get(BK, 'json');
+    if (base && base.d === today) base = null;   // a baseline can only ever be a PREVIOUS day's close
+  }
+  if (base && base.d && !base.trunc && !trunc) {
     const parse = (s) => { const m = new Map(); for (const ln of String(s).split('\n')) {
       if (!ln) continue; const i = ln.lastIndexOf('|');
       m.set(i < 0 ? ln : ln.slice(0, i), i < 0 ? '' : ln.slice(i + 1)); } return m; };
-    const was = parse(prev.ids || ''), now = parse(vol.ids);
+    const was = parse(base.ids || ''), now = parse(vol.ids);
     let nIn = 0, nOut = 0; const cat = {};
     const bump = (c, k) => { const key = c || 'Uncategorised'; (cat[key] = cat[key] || { c: key, in: 0, out: 0 })[k]++; };
     for (const [id, c] of now) if (!was.has(id)) { nIn++; bump(c, 'in'); }
@@ -2368,9 +2384,8 @@ async function volTrack(env, client, mkt, rows, vol) {
     const entry = { d: today, rows, in: nIn, out: nOut, cats };
     if (last && last.d === today) hist[hist.length - 1] = entry; else hist.push(entry);
   } else {
-    // first-ever capture, a later same-day scan, or a truncated set: keep today's row
-    // count honest, never invent an in/out figure (a same-day rescan keeps the morning's
-    // diff — churn is measured day-close to day-close, not scan to scan)
+    // first-ever capture (no previous-day close yet) or a truncated set: keep today's row
+    // count honest, never invent an in/out figure
     if (last && last.d === today) last.rows = rows;
     else hist.push(Object.assign({ d: today, rows }, trunc ? { trunc: true } : {}));
   }
@@ -2378,7 +2393,6 @@ async function volTrack(env, client, mkt, rows, vol) {
   await env.EDITS.put(VK, JSON.stringify({ d: today, ids: trunc ? '' : vol.ids, trunc }));
   return { d: today };
 }
-
 // One pushed raw snapshot → the shared guard processing + volume tracking. Used by the
 // 4x-daily agent's {xmlscan} batches AND the guard pages' manual live rescan
 // (POST /api/labels/scanpush) — identical semantics on both lanes, including the
