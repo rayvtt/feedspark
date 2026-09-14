@@ -324,8 +324,8 @@ def render_bench(tasks, plan_tasks):
     ranked = sorted(scores.items(), key=lambda kv: -kv[1]["total"])
     lead = "".join(
         f'<div class="planrow"><span class="nm">{esc(b)}<span style="color:var(--muted);font-weight:700"> · {esc(s["cat"])}</span></span>'
-        f'<span class="tag" style="background:{"#EBF7EF" if s["total"]>=66 else "#FCF1E3" if s["total"]>=40 else "#FBEBEB"};'
-        f'color:{"var(--good)" if s["total"]>=66 else "var(--orange-ink)" if s["total"]>=40 else "var(--risk)"}">'
+        # a CLASS, not an inline background: inline styles beat the dark theme (Ray's dark-view review, 14 Sep 2026)
+        f'<span class="tag {"sc-good" if s["total"]>=66 else "sc-mid" if s["total"]>=40 else "sc-low"}">'
         f'{s["total"]}/100</span></div>' for b, s in ranked[:12])
     catc = Counter(s["cat"] for s in scores.values())
     comp = "".join(f'<span class="chip"><b>{v}</b> {esc(c)}</span>' for c, v in catc.most_common())
