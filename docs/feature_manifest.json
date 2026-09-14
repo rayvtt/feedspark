@@ -4306,6 +4306,69 @@
    "pattern": "<select class=\"xp-mode\"",
    "pr": 363,
    "min": 1
+  },
+  {
+   "name": "Dark view (Ray's re-review): the PDP recovery scanner modal is styled for dark mode",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "[data-theme=dark] .pdp-box{background:var(--paper)",
+   "pr": 364,
+   "min": 1
+  },
+  {
+   "name": "Dark view: the homepage section drawer, dossier controls, next-step band and done chips are dark-styled",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "[data-theme=dark] .sidenav{background:var(--paper)",
+   "pr": 364,
+   "min": 1
+  },
+  {
+   "name": "Dark view: homepage score tags carry a CLASS (sc-good/mid/low), never an inline light background",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "function scol(v){return v>=66?'sc-good':v>=40?'sc-mid':'sc-low';}",
+   "pr": 364,
+   "min": 1
+  },
+  {
+   "name": "Dark view: the ATRT splice emits score-tag classes, not inline backgrounds",
+   "file": "tools/sync_atrt.py",
+   "pattern": "\"sc-good\" if s[\"total\"]>=66",
+   "pr": 364,
+   "min": 1
+  },
+  {
+   "name": "Dark view: leadership risk flag + selected sentiment readable",
+   "file": "docs/FeedSpark_Leadership.html",
+   "pattern": "[data-theme=dark] .who .flag{",
+   "pr": 364,
+   "min": 1
+  },
+  {
+   "name": "Dark view: readiness matrix cells dark-styled",
+   "file": "docs/FeedSpark_Readiness.html",
+   "pattern": "[data-theme=dark] .s-opt{",
+   "pr": 364,
+   "min": 1
+  },
+  {
+   "name": "Dark view: task-library cells, count pill and window select dark-styled",
+   "file": "docs/FeedSpark_Task_Library.html",
+   "pattern": "[data-theme=dark] .lc-tot{",
+   "pr": 364,
+   "min": 1
+  },
+  {
+   "name": "Dark view: templates sticky tab bar + placeholder chip dark-styled",
+   "file": "docs/FeedSpark_Templates.html",
+   "pattern": "[data-theme=dark] .tabs{background:rgba(18,20,26,.92)",
+   "pr": 364,
+   "min": 1
+  },
+  {
+   "name": "Dark-view tripwire: every app page rendered in dark mode fails on a light island",
+   "file": "tools/check_darkmode.js",
+   "pattern": "light island(s) in dark mode",
+   "pr": 364,
+   "min": 1
   }
  ]
 }
