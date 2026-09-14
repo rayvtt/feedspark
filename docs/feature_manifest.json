@@ -4140,6 +4140,13 @@
    "min": 1
   },
   {
+   "name": "Workflow: → Brief straight off an email triage row (files the Intake task too)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "briefEmail",
+   "min": 2,
+   "pr": 360
+  },
+  {
    "name": "Golden Record PDP harvest engine: the page runs docs/pdp_engine.js on proxied HTML (JSON-LD/meta/microdata/details-text → g: attributes)",
    "file": "docs/pdp_engine.js",
    "pattern": "function extract(html, url, row)",
