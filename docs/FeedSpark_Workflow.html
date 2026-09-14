@@ -100,6 +100,8 @@ window.addEventListener('load',restore);
   .em-tog:hover{border-color:var(--navy);color:var(--navy)}
   .em-no{flex:none;font:inherit;font-size:11.5px;font-weight:800;padding:4px 9px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer}
   .em-no:hover{border-color:#C0392B;color:#C0392B}
+  .em-br{flex:none;font:inherit;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:100px;border:1px solid var(--orange);background:var(--orange);color:#fff;cursor:pointer}
+  .em-br:hover{background:var(--orange-deep);border-color:var(--orange-deep)}
   .em-ta{flex:none;font:inherit;font-size:11.5px;font-weight:800;padding:4px 11px;border-radius:100px;border:1px solid #0E8A6D;background:var(--paper);color:#0E8A6D;cursor:pointer}
   .em-ta:hover{background:#0E8A6D;color:#fff}
   .em-res{flex:none;font:inherit;font-size:11px;font-weight:800;padding:3px 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--navy);cursor:pointer;white-space:nowrap}
@@ -372,7 +374,7 @@ window.addEventListener('load',restore);
   <div class="panel gmod">
     <div class="gm-head">
       <span class="gm-title"><span class="gdot" id="gdot"></span>✉ Gmail live sync<button class="info-btn" type="button" aria-label="How Gmail live sync works">i</button>
-        <div class="info-pop">Every 5 min the mailbox script pushes brief replies (they move tickets) and captures external client emails into the triage queue — each one is either a task or it isn't. <b>→ Task</b> writes it into the detected brand's project plan; <b>→ TechAM</b> delegates a common request to the TechAM team (forwards the email from your mailbox + records it in the plan as Done, owner TechAM — their A2Z lane isn't tracked); <b>✕ Not a task</b> clears it (restorable). ⚡ = reads as an action request. The <b>cue</b> column shows how the brand was detected — Facebook/Meta aliases and client email domains included.</div>
+        <div class="info-pop">Every 5 min the mailbox script pushes brief replies (they move tickets) and captures external client emails into the triage queue — each one is either a task or it isn't. <b>→ Task</b> writes it into the detected brand's project plan; <b>→ Brief</b> does that AND opens the brief composer tied to the new row (the email clears as briefed when you save); <b>→ TechAM</b> delegates a common request to the TechAM team (forwards the email from your mailbox + records it in the plan as Done, owner TechAM — their A2Z lane isn't tracked); <b>✕ Not a task</b> clears it (restorable). ⚡ = reads as an action request. The <b>cue</b> column shows how the brand was detected — Facebook/Meta aliases and client email domains included.</div>
       </span>
       <span class="em-n" id="em-n"></span>
       <span class="gm-stat" id="gstate">Waiting for the first push — set up tools/gmail_push.gs (GOOGLE_SETUP.md §8).</span>
@@ -1486,7 +1488,8 @@ window.addEventListener('load',restore);
     if(!lk && !existing && o.f.source!=='email') adoptIntoPlan(o.f.client,o.f.task,'Briefed',b.due,'',0,strictTie);
     BRIEFS[id]=b; window.__editId=null; persist(); renderAll();
     // briefed straight from the email triage queue → that email's decision is "task": clear it
-    if(window.__emailId){ decideEmail(window.__emailId,false,'briefed'); window.__emailId=null; }
+    if(window.__emailIds&&window.__emailIds.length){ decideMany(window.__emailIds,'briefed'); window.__emailIds=null; window.__emailId=null; }
+    else if(window.__emailId){ decideEmail(window.__emailId,false,'briefed'); window.__emailId=null; }
     closeBrief();
     toast(existing?'Brief updated':'Brief saved to pipeline'); };
 
@@ -2451,7 +2454,7 @@ window.addEventListener('load',restore);
     window.__editId=null;
     window.__kwId=null;      // Keyword-Calendar tie: cleared here so only the deep link that
                              // just opened this composer can stamp one onto the saved brief
-    window.__emailId=null;        // the email-triage opener re-sets this after calling prefill
+    window.__emailId=null; window.__emailIds=null;   // the email-triage opener re-sets these after calling prefill
     resetBodyOverride();   // a fresh intake row shouldn't inherit an edit made on a previous draft
     window.__linkKey=rowKey(t);   // tie the brief being drafted back to this intake row
     document.getElementById('bg-client').value= CLIENTS.indexOf(t.client)>=0? t.client : CLIENTS[0];
@@ -2469,8 +2472,8 @@ window.addEventListener('load',restore);
     if(t.scope)document.getElementById('bg-scope').value=t.scope;
     refreshPreview();
     openBrief();
-    toast('Prefilled from '+(ln?'your last edited '+(CAT_LBL[cat]||'optimisation')+' brief':'the '+(CAT_LBL[cat]||'optimisation')+' template')
-      +(pd?' · due pulled from the intake row':' — set the due date')+' and save');
+    toast('Composer prefilled from the row'+(pd?' · due pulled from the intake row':' — set the due date')
+      +' — fill the scope and save');
   }
   // ---- attach an intake row to an EXISTING ticket instead of drafting a new brief ----
   // The ticket keeps its primary taskKey and gains the row's key in taskKeys[], so several
@@ -2632,7 +2635,7 @@ window.addEventListener('load',restore);
   var bgScrim=document.getElementById('bg-scrim');
   function openBrief(){ if(!bgScrim)return; bgScrim.classList.add('on');
     setTimeout(function(){ var t=document.getElementById('bg-task'); if(t)t.focus(); },60); }
-  function closeBrief(){ if(!bgScrim)return; bgScrim.classList.remove('on'); window.__emailId=null; }
+  function closeBrief(){ if(!bgScrim)return; bgScrim.classList.remove('on'); window.__emailId=null; window.__emailIds=null; }
   if(bgScrim)bgScrim.addEventListener('click',function(e){ if(e.target===bgScrim) closeBrief(); });
   (function(){ var x=document.getElementById('bg-x'); if(x)x.onclick=closeBrief;
     var nb=document.getElementById('new-brief-btn'); if(nb)nb.onclick=function(){
@@ -3551,6 +3554,7 @@ window.addEventListener('load',restore);
       ? (g.decidedAs==='task'?'<span class="em-was tsk">saved as task</span>':g.decidedAs==='briefed'?'<span class="em-was brf">briefed</span>':g.decidedAs==='techam'?'<span class="em-was ta">→ TechAM</span>':'<span class="em-was">not a task</span>')
         +'<button class="em-res" data-id="'+esc(g.id)+'" type="button">↩ Restore</button>'
       : '<button class="em-go" data-id="'+esc(g.id)+'" type="button" title="Save as a task in Intake — draft the brief from there when ready">→ Task</button>'
+        +'<button class="em-br" data-id="'+esc(g.id)+'" type="button" title="Brief it now — files the task into Intake AND opens the composer tied to that row; the email clears as briefed once you save">→ Brief</button>'
         +'<button class="em-no" data-id="'+esc(g.id)+'" type="button" title="Not a task — clear it (restorable under Show triaged)">✕</button>';
     return '<div class="em-row'+(g.dismissed?' dis':'')+'">'
       +'<span class="em-cell-brand">'+(g.client?'<span class="em-cl">'+esc(g.client)+'</span>'
@@ -3585,6 +3589,7 @@ window.addEventListener('load',restore);
       gmailItems.forEach(function(g){ if(String(g.id)===id)hit=g; }); return hit; }
     function thOf(b){ return TH[b.getAttribute('data-th')]; }
     list.querySelectorAll('.em-go').forEach(function(b){ b.onclick=function(){ var th=thOf(b); if(!th)return; saveEmailAsTask(th.rep, th.all); }; });
+    list.querySelectorAll('.em-br').forEach(function(b){ b.onclick=function(){ var th=thOf(b); if(!th)return; briefEmail(th.rep, th.all); }; });
     list.querySelectorAll('.em-no').forEach(function(b){ b.onclick=function(){ var th=thOf(b); if(!th)return; decideThread(th,'notask'); }; });
     list.querySelectorAll('.em-ta').forEach(function(b){ b.onclick=function(){ var th=thOf(b); if(!th)return; sendToTechAM(th); }; });
     list.querySelectorAll('.em-thn').forEach(function(b){ b.onclick=function(){ var k=b.getAttribute('data-th');
@@ -3627,6 +3632,7 @@ window.addEventListener('load',restore);
         +(n>1?'<button class="em-thn'+(open?' on':'')+'" data-th="'+esc(th.key)+'" type="button" title="'+n+' emails in this conversation — click to '+(open?'collapse':'review each')+'">'+n+' ✉</button>':'')+'</span>'
       +'<span class="em-ago">'+ago+'</span>'
       +'<span class="em-act"><button class="em-go" data-th="'+esc(th.key)+'" type="button" title="Save as ONE task in Intake (from the newest email) — the whole thread is marked triaged">→ Task</button>'
+        +'<button class="em-br" data-th="'+esc(th.key)+'" type="button" title="Brief it now — files the task into Intake AND opens the composer tied to that row; the whole thread clears as briefed once you save">→ Brief</button>'
         +'<button class="em-ta" data-th="'+esc(th.key)+'" type="button" title="Delegate to TechAM — forwards the newest email to the TechAM team from your mailbox, records the task in the brand’s plan as Done (owner TechAM, their A2Z lane isn’t tracked), and marks the thread triaged">→ TechAM</button>'
         +'<button class="em-no" data-th="'+esc(th.key)+'" type="button" title="Not a task — clears the whole thread (restorable under Show triaged)">✕</button></span></div>';
     if(open&&n>1) row+=th.all.map(function(m){ var a=''; if(m.date){ var s2=(Date.now()-(+m.date||0))/1000;
@@ -3665,15 +3671,35 @@ window.addEventListener('load',restore);
   // -> Task: saves the email straight into Intake as a plain task — no brief drafted yet.
   // Briefing happens later from Intake itself, same as any other task (Ray's explicit ask:
   // this button shouldn't jump into the brief composer the way project-plan rows' Brief does).
-  function saveEmailAsTask(g,thread){
+  // the task an email becomes — shared by → Task and → Brief so both write the SAME row
+  function emailTaskName(g){ return g.subject+' — from '+senderName(g.from); }
+  function adoptEmailTask(g,quiet){
     // client comes from detection only (domain / display-name / brand-mention cues, resolved
     // server-side and back-filled) — the sender belongs in the TASK NAME, never in the Client field.
     // A recognised brand goes through adoptIntoPlan: the row reaches the brand's plan SHEET
     // (append write-back + live re-pull), not just the local tracker.
-    var task=g.subject+' — from '+senderName(g.from);
-    if(g.client&&CLIENTS.indexOf(g.client)>=0){ adoptIntoPlan(g.client,task,'Open','',senderName(g.from),1); }
+    var task=emailTaskName(g), known=!!(g.client&&CLIENTS.indexOf(g.client)>=0);
+    if(known){ adoptIntoPlan(g.client,task,'Open','',senderName(g.from),1); }
     else { MANUAL.push({client:g.client||'',task:task,owner:senderName(g.from),status:'Open',due:'',esrc:1}); saveManual(); markEsrc(g.client||'',task);
-      toast('Saved to Intake — client not recognised: double-click its Client cell to assign one'); }
+      if(!quiet)toast('Saved to Intake — client not recognised: double-click its Client cell to assign one'); }
+    return { client: known?g.client:(g.client||''), task: task, known: known };
+  }
+  // → BRIEF straight off the email (Ray, 14 Sep 2026: "when new email rows appear also add the
+  // brief button directly there … when I add it to a task, I have to spend time finding the task
+  // inside Intake and then brief"). One click does the whole chain: the email becomes a real
+  // Intake/plan row exactly as → Task would, the composer opens prefilled and TIED to that row
+  // (prefill sets __linkKey), and the thread clears as "briefed" when the brief is saved — not
+  // before, so an abandoned draft leaves the email in the queue.
+  function briefEmail(g,thread){
+    var r=adoptEmailTask(g,true);
+    prefill({ client:r.client, task:r.task, source:'email', cat:classifyLite(r.task) });
+    var ids=[String(g.id)]; (thread||[]).forEach(function(m){ if(ids.indexOf(String(m.id))<0)ids.push(String(m.id)); });
+    window.__emailIds=ids; window.__emailId=String(g.id);   // prefill cleared them — set after it
+    renderAll();
+    toast(r.known?('Task filed to '+r.client+'’s plan — brief it here'):'Task filed to Intake — assign its brand after saving');
+  }
+  function saveEmailAsTask(g,thread){
+    adoptEmailTask(g);
     // the whole conversation is covered by that one task — one BATCHED decision for every
     // member (parallel per-email posts raced on the worker's KV key and lost decisions)
     var ids=[String(g.id)]; (thread||[]).forEach(function(m){ if(ids.indexOf(String(m.id))<0)ids.push(String(m.id)); });
