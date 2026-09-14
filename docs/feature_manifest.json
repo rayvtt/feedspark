@@ -3707,7 +3707,7 @@
    "min": 1
   },
   {
-   "name": "Quote generator xlsx: a section per type — New Systems / New Feeds / Local Inventory Feeds / Retainer Hours; one-off total = SUM over compact K ranges",
+   "name": "Quote generator xlsx: sections per type — New Systems (Monthly) / Setup Hours (retainer) / New Feeds (Monthly, generic + bespoke + local inventory) / Retainer Hours (One-off); one-off total = SUM over compact K ranges",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "function kRanges(rows){",
    "pr": 345,
@@ -3840,10 +3840,10 @@
    "min": 1
   },
   {
-   "name": "Quote generator xlsx: 'Setup Pre-charges (One-off)' section (retainer-funded rows at £0 with the note)",
+   "name": "Quote generator xlsx: 'Setup Hours (from the retainer)' section — setup hours per service always taken from the retainer at £0 (Ray 14 Sep 2026 'one-off is always the retainer'); the day-rate option is retired",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "sect('Setup Pre-charges (One-off)'",
-   "pr": 349,
+   "pattern": "sect('Setup Hours (from the retainer)'",
+   "pr": 362,
    "min": 1
   },
   {
@@ -4250,6 +4250,34 @@
    "pattern": "tools/test_pdpharvest.mjs",
    "pr": 361,
    "min": 1
+  },
+  {
+   "name": "Quote generator: NEW FEEDS ARE MONTHLY (Ray 14 Sep 2026 'feed cost is monthly') — one 'New Feeds (Monthly)' export section for generic + bespoke + local inventory, its own 'Monthly Cost (New feeds)' total",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "sect('New Feeds (Monthly)'",
+   "pr": 362,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: NEW SYSTEMS ARE MONTHLY (Ray 14 Sep 2026 'same for system') — 'New Systems - FeedHero Dashboards (Monthly)' section + 'Monthly Cost (New systems)' total",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "sect('New Systems - FeedHero Dashboards (Monthly)'",
+   "pr": 362,
+   "min": 1
+  },
+  {
+   "name": "Quote generator: no one-off feed / system sections remain",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "New Feeds (One-off)",
+   "pr": 362,
+   "forbidden": true
+  },
+  {
+   "name": "Quote generator: setup hours always from the retainer — no day-rate billing mode select on the strips",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "class=\"xp-mode\"",
+   "pr": 362,
+   "forbidden": true
   }
  ]
 }
