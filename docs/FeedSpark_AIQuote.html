@@ -584,13 +584,13 @@ window.addEventListener('load',restore);
 
   <div class="card" id="sys-card" data-tp="sys">
     <h3>New system — FeedHero dashboard</h3>
-    <div class="ch">A system is a FeedHero dashboard for <b>one</b> market — a brand with several markets needs one per market. Tick the markets (the brand's wired markets are listed; + add any other). The strip below holds the per-system rate, the automatic setup hours and how they are billed.</div>
+    <div class="ch">A system is a FeedHero dashboard for <b>one</b> market — a brand with several markets needs one per market — charged <b>per system per month</b> on the Monthly side of the quote. Tick the markets (the brand's wired markets are listed; + add any other). The strip below holds the monthly rate and the automatic setup hours, which come out of the retainer.</div>
     <div id="sys-body"></div>
   </div>
 
   <div class="card" id="feed-card" data-tp="feed">
     <h3>New feed</h3>
-    <div class="ch">Three kinds of feed. A <b>generic</b> feed is a fixed price per feed (ex VAT). A <b>bespoke</b> feed depends on its complexity: capture the requirements and they go to ASPL for costing — the price stays blank on the quote until it is agreed. A <b>local inventory</b> feed is a monthly charge per feed (it lands on the Monthly side). Setup hours are added automatically per feed, whatever the kind.</div>
+    <div class="ch">Three kinds of feed, every one a <b>monthly</b> charge per feed (ex VAT) on the Monthly side of the quote. A <b>generic</b> feed is a fixed £ per feed per month. A <b>bespoke</b> feed depends on its complexity: capture the requirements and they go to ASPL for costing — the £ stays blank on the quote until it is agreed. A <b>local inventory</b> feed has its own monthly rate. Only the setup hours are one-off (or taken from the retainer) — added automatically per feed, whatever the kind.</div>
     <div id="feed-body"></div>
   </div>
 
@@ -607,7 +607,7 @@ window.addEventListener('load',restore);
       <div class="qs-col">
         <div class="qs-h">One-off</div>
         <div class="qs-r"><span>AI optimisation lines <span class="hint" id="qs-linesn"></span></span><b id="qs-lines"></b></div>
-        <div class="qs-r"><span>Systems · feeds · retainer <span class="hint" id="qs-xonen"></span></span><b id="qs-xone"></b></div>
+        <div class="qs-r"><span>Retainer hours · setup <span class="hint" id="qs-xonen"></span></span><b id="qs-xone"></b></div>
         <div class="qs-r"><span>Setup fee <input type="text" id="setup" inputmode="decimal" placeholder="£ —" title="Flat one-off setup / onboarding fee"> <label class="qopt dscw" id="discsetup-w" hidden title="Partner discount on the setup fee"><input type="checkbox" class="cbx" id="discsetup"> disc.</label></span><b id="qs-setup"></b></div>
         <div class="qs-r"><span>Partner discount <input type="text" id="disc" inputmode="decimal" placeholder="0" style="width:52px" title="Rides the template's own Discount % column in the Excel export, so the formulas carry it"> % <select id="discscope" title="Where the partner discount applies"><option value="all">all lines</option><option value="oneoff">one-off only</option><option value="monthly">monthly only</option><option value="lines">selected lines</option></select></span><b id="qs-disc"></b></div>
         <div class="qs-r net"><span>Net (ex VAT)</span><b id="qs-net"></b></div>
@@ -617,7 +617,7 @@ window.addEventListener('load',restore);
       <div class="qs-col">
         <div class="qs-h">Monthly</div>
         <div class="qs-r"><span>New-product updates <span class="hint" id="qs-updn"></span></span><b id="qs-upd"></b></div>
-        <div class="qs-r"><span>Local inventory · retainer <span class="hint" id="qs-xmonn"></span></span><b id="qs-xmon"></b></div>
+        <div class="qs-r"><span>Systems · feeds · retainer <span class="hint" id="qs-xmonn"></span></span><b id="qs-xmon"></b></div>
         <div class="qs-r"><span>All monthly lines <span class="hint" id="qs-monn"></span></span><b id="qs-mon"></b></div>
         <div class="qs-r"><span>Partner discount</span><b id="qs-mondisc"></b></div>
         <div class="qs-r net"><span>Net (ex VAT)</span><b id="qs-monnet"></b></div>
@@ -959,16 +959,18 @@ window.addEventListener('load',restore);
      new system — a new FeedHero dashboard, a new feed, one-off retainer hours or monthly hours …
      split out different sections by type of quote and work on each individually") ----
        ai   — AI feed generation: scope + fields + monthly update (the original module)
-       sys  — a new SYSTEM = a FeedHero dashboard for ONE market (one brand, many markets) — ~£500 each
-       feed — a new FEED: generic at a fixed £ (~£150, ex VAT); bespoke = requirements captured, costed by ASPL later;
-              local inventory = ~£250 per feed per month (Ray, 11 Sep 2026: "Local inventory feed should sit within
-              the new feed section" — it is a third feed KIND, not a section of its own; lines keep kind 'lia' so the
-              export's monthly section, the email and the tracker are unchanged)
+       sys  — a new SYSTEM = a FeedHero dashboard for ONE market (one brand, many markets) — ~£500 per system
+              PER MONTH (Ray, 14 Sep 2026: "same for system" — monthly, like the feeds)
+       feed — a new FEED, charged PER FEED PER MONTH (Ray, 14 Sep 2026: "feed cost is monthly"): generic at a
+              fixed £ (~£150 / month, ex VAT); bespoke = requirements captured, costed by ASPL later, monthly once
+              priced; local inventory = ~£250 per feed per month (Ray, 11 Sep 2026: "Local inventory feed should
+              sit within the new feed section" — a third feed KIND, lines keep kind 'lia'). Every feed line sits on
+              the Monthly side; only the setup pre-charge is one-off (or from the retainer)
        ret  — retainer hours: one-off hours and / or hours per month at the day rate (£595 / 8h)
      Every £ is a changeable rate on the shared rate card (rc.rates); the day rate is blockGBP(). */
   var TYPES=[['ai','AI feed generation','Tachyon fields on the live feed'],
-             ['sys','New system','FeedHero dashboard, one per market'],
-             ['feed','New feed','Generic, bespoke or local inventory'],
+             ['sys','New system','Per market per month — FeedHero dashboard'],
+             ['feed','New feed','Per feed per month — generic, bespoke, LIA'],
              ['ret','Retainer hours','One-off or monthly, at the day rate']];
   var RATE_DEFAULT={sys:500,feed:150,lia:250};
   function rateOf(k){ var rc=STORE[RCKEY]||{}; var v=rc.rates&&rc.rates[k]; return (v!=null&&v!==''&&isFinite(+v))?+v:RATE_DEFAULT[k]; }
@@ -990,39 +992,38 @@ window.addEventListener('load',restore);
   function hoursToDays(h){ return Math.round(h/BLOCK_H*100)/100; }
   // the non-AI lines of the quote — ONE shape for the totals, the panel, the export, the copy text, the email and the brief
   function extraLines(){ var out=[], ty=typesRec();
-    if(ty.sys){ var sy=sysRec(), rs=rateOf('sys'); mktsOn(sy).forEach(function(m){ out.push({kind:'sys',id:'sys:'+m,name:'FeedHero dashboard — '+m.toUpperCase(),qual:'new system · 1 market',qty:1,rate:rs,amount:rs,side:'oneoff',tbc:false,note:sy.note||'',disc:discOn('oneoff','sys:'+m)}); }); }
+    if(ty.sys){ var sy=sysRec(), rs=rateOf('sys'); mktsOn(sy).forEach(function(m){ out.push({kind:'sys',id:'sys:'+m,name:'FeedHero dashboard — '+m.toUpperCase(),qual:'new system · 1 market · per month',qty:1,rate:rs,amount:rs,side:'monthly',tbc:false,note:sy.note||'',disc:discOn('monthly','sys:'+m)}); }); }
     if(ty.feed){ var rf=rateOf('feed'), rl=rateOf('lia'); feedsRec().forEach(function(fd,i){ var bes=fd.kind==='bespoke', q=Math.max(1,Math.round(+fd.qty)||1);
       if(fd.kind==='lia'){ out.push({kind:'lia',id:'feed:'+i,name:(fd.name||'Local inventory feed'),qual:'local inventory feed · per month',qty:q,rate:rl,amount:Math.round(q*rl*100)/100,side:'monthly',tbc:false,note:fd.note||'',disc:discOn('monthly','feed:'+i)}); return; }
       var pr=bes?((fd.price!=null&&fd.price!==''&&isFinite(+fd.price))?+fd.price:null):rf;
-      out.push({kind:'feed',id:'feed:'+i,name:(fd.name||(bes?'Bespoke feed':'Generic feed')),qual:bes?('bespoke feed'+(pr==null?' · costed by ASPL':'')):'generic feed',qty:q,rate:pr,amount:(pr==null?0:q*pr),side:'oneoff',tbc:(bes&&pr==null),note:bes?(fd.req||''):(fd.note||''),disc:discOn('oneoff','feed:'+i)}); }); }
+      out.push({kind:'feed',id:'feed:'+i,name:(fd.name||(bes?'Bespoke feed':'Generic feed')),qual:(bes?'bespoke feed':'generic feed')+' · per month'+((bes&&pr==null)?' · costed by ASPL':''),qty:q,rate:pr,amount:(pr==null?0:Math.round(q*pr*100)/100),side:'monthly',tbc:(bes&&pr==null),note:bes?(fd.req||''):(fd.note||''),disc:discOn('monthly','feed:'+i)}); }); }
     if(ty.ret){ var rt=retRec(), day=blockGBP();
       if(+rt.one>0)out.push({kind:'ret',id:'ret:one',name:'Retainer hours — one-off',qual:rt.one+'h · £'+day+' per '+BLOCK_H+'h',qty:hoursToDays(+rt.one),rate:day,amount:Math.round(+rt.one/BLOCK_H*day*100)/100,side:'oneoff',tbc:false,note:rt.note||'',hours:+rt.one,disc:discOn('oneoff','ret:one')});
       if(+rt.mon>0)out.push({kind:'ret',id:'ret:mon',name:'Retainer hours — monthly',qual:rt.mon+'h / month · £'+day+' per '+BLOCK_H+'h',qty:hoursToDays(+rt.mon),rate:day,amount:Math.round(+rt.mon/BLOCK_H*day*100)/100,side:'monthly',tbc:false,note:rt.note||'',hours:+rt.mon,disc:discOn('monthly','ret:mon')}); }
     // the automatic setup pre-charge per service type — one line per type, N services × hours (every feed row counts, local inventory included)
     ['sys','feed'].forEach(function(k){ if(!ty[k])return; var n=out.filter(function(l){return PRE_KINDS[k].indexOf(l.kind)>=0}).length; var pl=preLine(k,n); if(pl)out.push(pl); });
     return out; }
-  var KIND_HEAD={sys:'New systems (FeedHero dashboards)',feed:'New feeds',lia:'Local inventory feeds',ret:'Retainer hours',pre:'Setup pre-charges'};
+  var KIND_HEAD={sys:'New systems (FeedHero dashboards)',feed:'New feeds',lia:'Local inventory feeds',ret:'Retainer hours',pre:'Setup hours (from the retainer)'};
   /* SETUP PRE-CHARGE per service (Ray, 11 Sep 2026: "a pre-charge for each individual service — when a
      new feed is created, an automatic two-hour charge is added to the line; it can be extracted from
      a retainer or be a one-off cost"): every new system / feed / local inventory feed carries N hours
      of setup automatically. Hours per service live on the rate card (rc.pre — feed 2h is Ray's
-     figure; system and local inventory default to 2h too, changeable); HOW they are billed is per
-     quote and per type (r.pre[k].mode): 'oneoff' = hours × the day rate on the one-off side,
-     'retainer' = the hours come out of the client's retainer, listed at £0. */
+     figure; system and local inventory default to 2h too, changeable). Ray, 14 Sep 2026: "one-off is
+     always the retainer" — the hours ALWAYS come out of the client's retainer, listed at £0 (the
+     day-rate option is retired; r.pre[k].mode on older records is ignored). */
   var PRE_DEFAULT={sys:2,feed:2}, PRE_WORD={sys:'system',feed:'feed'}, PRE_KINDS={sys:['sys'],feed:['feed','lia']};
   function preCount(k){ return extraLines().filter(function(l){return PRE_KINDS[k].indexOf(l.kind)>=0}).length; }
   function preHours(k){ var rc=STORE[RCKEY]||{}; var v=rc.pre&&rc.pre[k]; return (v!=null&&v!==''&&isFinite(+v))?+v:PRE_DEFAULT[k]; }
   function setPreHours(k,v){ var rc=STORE[RCKEY]||(STORE[RCKEY]={fields:{}}); rc.pre=rc.pre||{}; rc.pre[k]=(v===''||v==null)?null:+v; rc.updated=Date.now(); }
   function preRec(k){ var r=rec(); if(!r.pre||typeof r.pre!=='object')r.pre={}; if(!r.pre[k]||typeof r.pre[k]!=='object')r.pre[k]={mode:'oneoff'}; return r.pre[k]; }
-  function preMode(k){ var m=preRec(k).mode; return m==='retainer'?'retainer':'oneoff'; }
+  function preMode(k){ return 'retainer'; }   // always from the retainer (Ray, 14 Sep 2026) — the mode on older records is ignored
   // the pre-charge line for one service type: N services × hours, at the day rate or from the retainer
   function preLine(k,n){ if(!n)return null; var h=preHours(k); if(!(h>0))return null; var tot=Math.round(n*h*100)/100, day=blockGBP(), fromRet=preMode(k)==='retainer';
-    return {kind:'pre',of:k,id:'pre:'+k,name:'Setup pre-charge — '+KIND_HEAD[k].toLowerCase(),qual:n+' × '+h+'h = '+tot+'h'+(fromRet?' from the retainer':' · £'+day+' per '+BLOCK_H+'h'),qty:hoursToDays(tot),rate:fromRet?0:day,
+    return {kind:'pre',of:k,id:'pre:'+k,name:'Setup hours — '+KIND_HEAD[k].toLowerCase().replace(' (feedhero dashboards)',''),qual:n+' × '+h+'h = '+tot+'h'+(fromRet?' from the retainer':' · £'+day+' per '+BLOCK_H+'h'),qty:hoursToDays(tot),rate:fromRet?0:day,
       amount:fromRet?0:Math.round(tot/BLOCK_H*day*100)/100,side:'oneoff',tbc:false,free:fromRet,hours:tot,per:h,n:n,note:fromRet?'Taken from the retainer — not charged':'',disc:discOn('oneoff','pre:'+k)}; }
   function preHtml(k){ var n=preCount(k), pl=preLine(k,n);
     return '<span class="xk xpre">Setup <input type="text" class="xp-h" data-pre="'+k+'" inputmode="decimal" value="'+esc(String(preHours(k)))+'" title="Setup hours added automatically per '+PRE_WORD[k]+' — saves with your rate card"> h each'
-      +' <select class="xp-mode" data-pre="'+k+'" title="How the setup hours are billed"><option value="oneoff"'+(preMode(k)==='oneoff'?' selected':'')+'>one-off · day rate</option><option value="retainer"'+(preMode(k)==='retainer'?' selected':'')+'>from retainer · £0</option></select>'
-      +' <span class="hint xp-sum">'+(pl?(pl.n+' × '+pl.per+'h = '+pl.hours+'h → '+(pl.free?'from the retainer, £0':money(pl.amount)+' one-off')):'added automatically to every '+PRE_WORD[k]+' on this quote')+'</span>'+(pl?dscChip(pl.id):'')+'</span>'; }
+      +' <span class="hint xp-sum" title="Setup hours always come out of the client’s retainer — never billed at the day rate">'+(pl?(pl.n+' × '+pl.per+'h = '+pl.hours+'h → '+(pl.free?'from the retainer, £0':money(pl.amount)+' one-off')):'added automatically to every '+PRE_WORD[k]+' on this quote, from the retainer')+'</span>'+(pl?dscChip(pl.id):'')+'</span>'; }
   // the section note: hidden behind ✎ Note until it has something in it (or is opened for this session)
   var NOTE_OPEN={};
   function noteOpen(k,v){ return NOTE_OPEN[k]===true||(NOTE_OPEN[k]==null&&!!(v&&String(v).trim())); }
@@ -1040,33 +1041,33 @@ window.addEventListener('load',restore);
   function chipRow(o,key){ return '<div class="xm-row">'+mktsAll(o).map(function(m){ return '<button type="button" class="qp xm'+(o.mkts[m]?' on':'')+'" data-xm="'+key+'" data-m="'+esc(m)+'">'+esc(m.toUpperCase())+'</button>'; }).join('')
       +'<input type="text" class="xm-new" data-xmnew="'+key+'" placeholder="+ add" maxlength="8" title="Another market — type its code (e.g. ch) and press Enter"></div>'; }
   function dscLbl(id){ return discScope()==='lines'?'<span class="dsl">'+esc(String(id).split(':')[1]||'').toUpperCase()+'</span>':''; }
-  function sysSum(){ var X=extraLines().filter(function(l){return l.kind==='sys'}); return X.length?('<b>'+X.length+'</b> system'+(X.length===1?'':'s')+' × '+money(rateOf('sys'))+' = <b>'+money(X.length*rateOf('sys'))+'</b> one-off'+X.map(function(l){return dscLbl(l.id)+dscChip(l.id)}).join('')):'<span class="hint">Tick the markets that need a dashboard</span>'; }
+  function sysSum(){ var X=extraLines().filter(function(l){return l.kind==='sys'}); return X.length?('<b>'+X.length+'</b> system'+(X.length===1?'':'s')+' × '+money(rateOf('sys'))+' = <b>'+money(X.length*rateOf('sys'))+' / month</b>'+X.map(function(l){return dscLbl(l.id)+dscChip(l.id)}).join('')):'<span class="hint">Tick the markets that need a dashboard</span>'; }
   function feedSum(){ var X=extraLines().filter(function(l){return l.kind==='feed'||l.kind==='lia'}), gen=X.filter(function(l){return l.kind==='feed'&&!l.tbc}), tbc=X.filter(function(l){return l.tbc}), li=X.filter(function(l){return l.kind==='lia'}), sum=0, lsum=0;
     var gn=0, ln=0; gen.forEach(function(l){sum+=l.amount; gn+=l.qty||1}); li.forEach(function(l){lsum+=l.amount; ln+=l.qty||1});
     if(!X.length)return '<span class="hint">Add the feeds this quote covers — generic, bespoke or local inventory</span>';
-    var p=[]; if(gen.length)p.push('<b>'+gn+'</b> priced feed'+(gn===1?'':'s')+' = <b>'+money(sum)+'</b> one-off');
+    var p=[]; if(gen.length)p.push('<b>'+gn+'</b> priced feed'+(gn===1?'':'s')+' = <b>'+money(sum)+' / month</b>');
     if(li.length)p.push('<b>'+ln+'</b> local inventory feed'+(ln===1?'':'s')+' = <b>'+money(lsum)+' / month</b>');
     if(tbc.length)p.push('<b>'+tbc.length+'</b> bespoke feed'+(tbc.length===1?'':'s')+' — requirements to ASPL, priced separately'); return p.join(' · '); }
   function retSum(){ var rt=retRec(), day=blockGBP(), a=(+rt.one>0), b=(+rt.mon>0);
     return (a?(rt.one+'h one-off = <b>'+money(+rt.one/BLOCK_H*day)+'</b>'+dscChip('ret:one')):'')+((a&&b)?' · ':'')+(b?(rt.mon+'h / month = <b>'+money(+rt.mon/BLOCK_H*day)+' / month</b>'+dscChip('ret:mon')):'')+((!a&&!b)?'<span class="hint">Type the hours — ':'<span class="hint"> · ')+'day rate £'+day+' per '+BLOCK_H+'h</span>'; }
   function xsums(){ var m={'#sys-body':sysSum,'#feed-body':feedSum,'#ret-body':retSum}; Object.keys(m).forEach(function(k){ var el=document.querySelector(k+' .xsum'); if(el)el.innerHTML=m[k](); });
     ['sys','feed'].forEach(function(k){ var el=document.querySelector('#'+k+'-body .xpre'); if(el){ var n=preCount(k), pl=preLine(k,n), sp=el.querySelector('.xp-sum');
-      if(sp)sp.textContent=pl?(pl.n+' × '+pl.per+'h = '+pl.hours+'h → '+(pl.free?'from the retainer, £0':money(pl.amount)+' one-off')):'added automatically to every '+PRE_WORD[k]+' on this quote';
+      if(sp)sp.textContent=pl?(pl.n+' × '+pl.per+'h = '+pl.hours+'h → '+(pl.free?'from the retainer, £0':money(pl.amount)+' one-off')):'added automatically to every '+PRE_WORD[k]+' on this quote, from the retainer';
       var ch=el.querySelector('[data-dsc]'); if(pl&&!ch)el.insertAdjacentHTML('beforeend',dscChip(pl.id)); else if(!pl&&ch)ch.remove(); } }); }
   function renderX(){ var sy=sysRec(), F=feedsRec(), rt=retRec(), rf=rateOf('feed'), rl=rateOf('lia');
     $('#sys-body').innerHTML=chipRow(sy,'sys')
-      +'<div class="xbar"><span class="xk xrate">£ per system <input type="text" class="xr" data-rate="sys" inputmode="decimal" value="'+esc(String(rateOf('sys')))+'" title="One FeedHero dashboard per market — saves with your rate card"></span>'+preHtml('sys')+noteBtn('sys',sy.note)+'</div>'
+      +'<div class="xbar"><span class="xk xrate">£ per system <input type="text" class="xr" data-rate="sys" inputmode="decimal" value="'+esc(String(rateOf('sys')))+'" title="Per FeedHero dashboard (one market) per month — saves with your rate card"> / month</span>'+preHtml('sys')+noteBtn('sys',sy.note)+'</div>'
       +noteHtml('sys',sy.note,'Note — lands in the quote’s Additional Notes')+'<div class="xsum">'+sysSum()+'</div>';
     $('#feed-body').innerHTML='<div class="xfeeds">'+F.map(function(fd,i){ var bes=fd.kind==='bespoke', lia=fd.kind==='lia';
         return '<div class="xfeed" data-i="'+i+'"><select class="xf-kind" data-i="'+i+'" title="Generic = fixed £ one-off · Bespoke = costed by ASPL · Local inventory = £ per feed per month"><option value="generic"'+(bes||lia?'':' selected')+'>Generic</option><option value="bespoke"'+(bes?' selected':'')+'>Bespoke</option><option value="lia"'+(lia?' selected':'')+'>Local inventory</option></select>'
           +'<input type="text" class="xf-name" data-i="'+i+'" placeholder="'+(lia?'Local inventory feed — e.g. GB stores':'Feed name — e.g. Google Shopping DE')+'" value="'+esc(fd.name||'')+'">'
           +'<input type="text" class="xf-qty" data-i="'+i+'" inputmode="numeric" value="'+esc(String(fd.qty||1))+'" title="Quantity">'
-          +(bes?'<input type="text" class="xf-price" data-i="'+i+'" inputmode="decimal" placeholder="£ TBC — ASPL" value="'+esc(fd.price!=null?String(fd.price):'')+'" title="Blank until ASPL has costed it — type the £ once agreed">':lia?'<span class="xf-fixed">'+money(rl)+' / month</span>':'<span class="xf-fixed">'+money(rf)+' each</span>')
+          +(bes?'<input type="text" class="xf-price" data-i="'+i+'" inputmode="decimal" placeholder="£ TBC — ASPL" value="'+esc(fd.price!=null?String(fd.price):'')+'" title="£ per month — blank until ASPL has costed it, type the £ once agreed">':lia?'<span class="xf-fixed">'+money(rl)+' / month</span>':'<span class="xf-fixed">'+money(rf)+' / month</span>')
           +'<button type="button" class="xf-x" data-i="'+i+'" title="Remove this feed">✕</button>'
           +(bes?'<textarea class="xf-req" data-i="'+i+'" rows="2" placeholder="Requirements for ASPL — sources, fields, rules, cadence, destinations">'+esc(fd.req||'')+'</textarea>':'')
           +dscChip('feed:'+i)+'</div>'; }).join('')+'</div>'
       +'<button type="button" class="xadd" id="xf-add">＋ Add feed</button>'
-      +'<div class="xbar"><span class="xk xrate">Generic £ <input type="text" class="xr" data-rate="feed" inputmode="decimal" value="'+esc(String(rf))+'" title="Fixed price per generic feed, ex VAT — saves with your rate card. A bespoke feed stays unpriced until ASPL has costed it"> each</span>'
+      +'<div class="xbar"><span class="xk xrate">Generic £ <input type="text" class="xr" data-rate="feed" inputmode="decimal" value="'+esc(String(rf))+'" title="Per generic feed per month, ex VAT — saves with your rate card. A bespoke feed stays unpriced until ASPL has costed it"> / month</span>'
       +'<span class="xk xrate">Local inventory £ <input type="text" class="xr" data-rate="lia" inputmode="decimal" value="'+esc(String(rl))+'" title="Monthly charge per local inventory feed — saves with your rate card"> / month</span>'+preHtml('feed')+'</div>'
       +'<div class="xsum">'+feedSum()+'</div>';
     $('#ret-body').innerHTML='<div class="xret"><label>One-off hours <input type="text" class="xh" data-h="one" inputmode="decimal" placeholder="0" value="'+esc(rt.one!=null?String(rt.one):'')+'"></label>'
@@ -1168,8 +1169,8 @@ window.addEventListener('load',restore);
     var S1=function(id,v){ var e=$(id); if(e)e.innerHTML=v; };
     S1('#qs-linesn','· '+t.inc+' line'+(t.inc===1?'':'s')+' · '+fmt(t.tp)+' SKUs');
     var xo=t.x.filter(function(l){return l.side==='oneoff'}), xm=t.x.filter(function(l){return l.side==='monthly'});
-    S1('#qs-xonen',xo.length?'· '+xWord(xo):'· none'); S1('#qs-xone',money(t.xOne)+(t.tbcN?' <span class="hint">+ '+t.tbcN+' TBC</span>':''));
-    S1('#qs-xmonn',xm.length?'· '+xWord(xm):'· none'); S1('#qs-xmon',money(t.xMon));
+    S1('#qs-xonen',xo.length?'· '+xWord(xo):'· none'); S1('#qs-xone',money(t.xOne));
+    S1('#qs-xmonn',xm.length?'· '+xWord(xm):'· none'); S1('#qs-xmon',money(t.xMon)+(t.tbcN?' <span class="hint">+ '+t.tbcN+' TBC</span>':''));
     S1('#qs-lines',t.miss?'<span class="unset">set every rate</span>':money(t.linesSub));
     S1('#qs-setup',money(setupFee()));
     S1('#qs-disc',t.disc>0?(t.miss?'—':(t.discBase>0?'−'+money(t.discAmt):'<span class="hint">not on one-off</span>')):'—');
@@ -1245,7 +1246,6 @@ window.addEventListener('load',restore);
       else if(t.classList.contains('xf-price')){ var pv=String(t.value).replace(/[^0-9.]/g,''); feedsRec()[+t.getAttribute('data-i')].price=pv===''?null:pv; foot(); xsums(); saveSoon(); }
       else if(t.classList.contains('xf-req')){ feedsRec()[+t.getAttribute('data-i')].req=t.value; saveSoon(); } });
     wrap.addEventListener('change',function(e){ var t=e.target;
-      if(t.classList&&t.classList.contains('xp-mode')){ preRec(t.getAttribute('data-pre')).mode=t.value; foot(); xsums(); saveSoon(); return; }
       if(t.classList&&t.classList.contains('xf-kind')){ var fd=feedsRec()[+t.getAttribute('data-i')]; fd.kind=t.value; if(fd.kind!=='bespoke'){ fd.price=null; } renderX(); foot(); saveSoon(); } });
     wrap.addEventListener('keydown',function(e){ var t=e.target; if(e.key!=='Enter'||!t.classList||!t.classList.contains('xm-new'))return; e.preventDefault();
       var m=String(t.value).trim().toLowerCase().replace(/[^a-z0-9-]/g,''); if(!m)return; var o=sysRec();
@@ -1586,23 +1586,23 @@ window.addEventListener('load',restore);
     /* every one-off row (any section) joins oneRows → Total One-off = SUM over their K cells; the
        monthly rows keep their own contiguous ranges (local inventory feeds → liaA:liaB, ManPower →
        mpA:mpB, the bundle → platA:platB) */
-    var oneRows=[], liaA=0, liaB=0;
+    var oneRows=[], feedA=0, feedB=0, sysA=0, sysB=0;
     function sect(title,note){ var n=row({A:{v:title,s:S.sect},B:{v:'',s:S.sectB},N:{v:note||'',s:S.note}}); mg('A'+n+':B'+n); return n; }
     var sysL=X.filter(function(l){return l.kind==='sys'}), feedL=X.filter(function(l){return l.kind==='feed'}), liaL=X.filter(function(l){return l.kind==='lia'});
     var retOne=X.filter(function(l){return l.kind==='ret'&&l.side==='oneoff'})[0], retMon=X.filter(function(l){return l.kind==='ret'&&l.side==='monthly'})[0];
-    /* 4a — new systems: one FeedHero dashboard per market (Ray: ~£500 a system) */
-    if(sysL.length){ sect('New Systems - FeedHero Dashboards (One-off)','One dashboard per market');
-      sysL.forEach(function(l){ costRow({name:l.name,qual:l.qual,qty:1,rate:n2(l.rate),flat:1,note:l.note,dsc:l.disc?dsc:0}); }); row(); }
-    /* 4b — new feeds: generic at the feed rate; bespoke = requirements in the notes, £ blank until ASPL has costed it */
-    if(feedL.length){ sect('New Feeds (One-off)','Generic feeds at the feed rate (ex VAT); a bespoke feed carries its requirements and is costed by ASPL');
-      feedL.forEach(function(l){ costRow({name:l.name,qual:l.qual,qty:l.qty,rate:(l.tbc?'':n2(l.rate)),flat:1,note:(l.tbc?'Priced separately by ASPL'+(l.note?' · '+l.note:''):l.note),dsc:l.disc?dsc:0}); }); row(); }
-    /* 4c — setup pre-charges: N services × hours per service, at the day rate (one-off) or from the retainer (£0) */
+    /* 4a — new systems: one FeedHero dashboard per market, PER MONTH (Ray, 14 Sep 2026: "same for system") */
+    if(sysL.length){ sect('New Systems - FeedHero Dashboards (Monthly)','One dashboard per market, per month (ex VAT)');
+      sysL.forEach(function(l){ var n=costRow({name:l.name,qual:l.qual,qty:1,rate:n2(l.rate),flat:1,mon:1,note:l.note,dsc:l.disc?dsc:0}); if(!sysA)sysA=n; sysB=n; }); row(); }
+    /* 4c — setup hours: N services × hours per service, always taken from the retainer (£0 — Ray, 14 Sep 2026: "one-off is always the retainer") */
     var preL=X.filter(function(l){return l.kind==='pre'});
-    if(preL.length){ sect('Setup Pre-charges (One-off)','Automatic setup hours per service — at the day rate, or taken from the retainer');
+    if(preL.length){ sect('Setup Hours (from the retainer)','Automatic setup hours per service — taken from the retainer, not charged');
       preL.forEach(function(l){ costRow({name:l.name,qual:l.qual,qty:l.qty,rate:n2(l.rate),flat:1,days:1,note:l.note,dsc:l.disc?dsc:0}); }); row(); }
-    /* 4d — local inventory feeds (a New-feed kind, but monthly — so their own section on the Monthly side) */
-    if(liaL.length){ sect('Local Inventory Feeds (Monthly)','Per feed, per month');
-      liaL.forEach(function(l){ var n=costRow({name:l.name,qual:l.qual,qty:l.qty||1,rate:n2(l.rate),flat:1,mon:1,note:l.note,dsc:l.disc?dsc:0}); if(!liaA)liaA=n; liaB=n; }); row(); }
+    /* 4d — NEW FEEDS are MONTHLY (Ray, 14 Sep 2026: "feed cost is monthly"): generic at the feed rate per month,
+       local inventory at its rate, a bespoke feed carries its requirements and stays blank until ASPL has costed
+       it — one section on the Monthly side, one total row; only the setup pre-charge above is one-off */
+    var allF=feedL.concat(liaL);
+    if(allF.length){ sect('New Feeds (Monthly)','Per feed, per month (ex VAT) — generic at the feed rate, local inventory at its rate; a bespoke feed carries its requirements and is costed by ASPL');
+      allF.forEach(function(l){ var n=costRow({name:l.name,qual:l.qual,qty:l.qty||1,rate:(l.tbc?'':n2(l.rate)),flat:1,mon:1,note:(l.tbc?'Priced separately by ASPL'+(l.note?' · '+l.note:''):l.note),dsc:l.disc?dsc:0}); if(!feedA)feedA=n; feedB=n; }); row(); }
     if(t.upd){ var s1=row({A:{v:'New Product Arrivals - Monthly Tachyon Update',s:S.sect},B:{v:'',s:S.sectB},N:{v:'Every new product is updated with Tachyon the month it lands — no quarterly re-quote',s:S.note}});
       mg('A'+s1+':B'+s1);
       platA=platB=costRow({name:'Tachyon monthly update — new product arrivals',qual:'bundle '+t.upd.label+' new SKUs / month',qty:1,rate:n2(t.upd.gbp),flat:1,plat:1,dsc:updDsc,
@@ -1673,27 +1673,31 @@ window.addEventListener('load',restore);
        rate is missing the whole chain stays blank rather than showing a partial figure. The
        monthly chain (Monitoring & AM → Total Monthly → Annual / pro-rated) is a =SUM() over the
        ManPower rows in the same way. */
-    var live=(!t.miss&&oneRows.length>0), mlive=(mpA>0||platA>0||liaA>0);
+    var live=(!t.miss&&oneRows.length>0), mlive=(mpA>0||platA>0||feedA>0||sysA>0);
     // the one-off rows may sit in several sections — SUM over their K cells as compact ranges
     function kRanges(rows){ rows=rows.slice().sort(function(a,b){return a-b}); var out=[],i=0; while(i<rows.length){ var j=i; while(j+1<rows.length&&rows[j+1]===rows[j]+1)j++; out.push(i===j?('K'+rows[i]):('K'+rows[i]+':K'+rows[j])); i=j+1; } return out.join(','); }
-    var oneParts=[]; if(sysL.length)oneParts.push('new systems'); if(feedL.some(function(l){return !l.tbc}))oneParts.push('new feeds'); if(preL.some(function(l){return !l.free}))oneParts.push('setup pre-charges'); if(L.length)oneParts.push('initial optimisation'); if(setupFee())oneParts.push('one-off setup'); if(retOne)oneParts.push('retainer hours');
+    var oneParts=[]; if(preL.length)oneParts.push('setup hours from the retainer (£0)'); if(L.length)oneParts.push('initial optimisation'); if(setupFee())oneParts.push('one-off setup'); if(retOne)oneParts.push('retainer hours');
     var rTot=row({H:{v:'Total One-off Cost',s:S.totl},
       K:live?{f:'SUM('+kRanges(oneRows)+')',v:n2(t.net),s:S.totred}:{v:'',s:S.totgap},
       N:{v:t.miss?('RATES INCOMPLETE — '+missN+' selected optimisation'+(missN===1?'':'s')+' still need a £/SKU or one-off rate, so the total cannot be calculated')
-                 :((oneParts.length?oneParts.join(' + '):'One-off')+' (ex VAT)'+(t.discAmt>0?', net of the '+t.disc+'% partner discount in the Discount % column':'')+(t.tbcN?' · '+t.tbcN+' bespoke feed'+(t.tbcN===1?'':'s')+' priced separately by ASPL':'')),s:S.noteb}});
-    /* Monthly Cost (Local inventory feeds) = the local inventory rows, written only when present */
-    var rLia=0, liaNet=0; liaL.forEach(function(l){ liaNet+=l.amount*(1-(l.disc?dsc:0)); }); liaNet=n2(liaNet);
-    if(liaA)rLia=row({H:{v:'Monthly Cost (Local inventory feeds)',s:S.totli},K:{f:'SUM(K'+liaA+':K'+liaB+')',v:liaNet,s:S.net},
-      N:{v:liaL.length+' feed'+(liaL.length===1?'':'s')+' (ex VAT'+(liaL.some(function(l){return l.disc})&&dsc?', net of the partner discount':'')+')',s:S.note}});
+                 :((oneParts.length?oneParts.join(' + '):'One-off')+' (ex VAT)'+(t.discAmt>0?', net of the '+t.disc+'% partner discount in the Discount % column':'')),s:S.noteb}});
+    /* Monthly Cost (New systems) = the dashboard rows, written only when present */
+    var rSys=0, sysNet=0; sysL.forEach(function(l){ sysNet+=l.amount*(1-(l.disc?dsc:0)); }); sysNet=n2(sysNet);
+    if(sysA)rSys=row({H:{v:'Monthly Cost (New systems)',s:S.totli},K:{f:'SUM(K'+sysA+':K'+sysB+')',v:sysNet,s:S.net},
+      N:{v:sysL.length+' FeedHero dashboard'+(sysL.length===1?'':'s')+' (ex VAT'+(sysL.some(function(l){return l.disc})&&dsc?', net of the partner discount':'')+')',s:S.note}});
+    /* Monthly Cost (New feeds) = every feed row — generic, local inventory, and a bespoke feed once priced */
+    var rFeed=0, feedNet=0, feedPriced=allF.filter(function(l){return !l.tbc}); feedPriced.forEach(function(l){ feedNet+=l.amount*(1-(l.disc?dsc:0)); }); feedNet=n2(feedNet);
+    if(feedA)rFeed=row({H:{v:'Monthly Cost (New feeds)',s:S.totli},K:{f:'SUM(K'+feedA+':K'+feedB+')',v:feedNet,s:S.net},
+      N:{v:feedPriced.length+' priced feed'+(feedPriced.length===1?'':'s')+' (ex VAT'+(feedPriced.some(function(l){return l.disc})&&dsc?', net of the partner discount':'')+')'+(t.tbcN?' · '+t.tbcN+' bespoke feed'+(t.tbcN===1?'':'s')+' priced separately by ASPL':''),s:S.note}});
     /* Monthly Cost (New product arrivals) = the Tachyon monthly-update row, written only when it is on */
     var rTech=0, techNet=t.upd?n2(t.upd.gbp*(1-updDsc)):0;
     if(platA)rTech=row({H:{v:'Monthly Cost (New product arrivals)',s:S.totli},K:{f:'SUM(K'+platA+':K'+platB+')',v:techNet,s:S.net},
       N:{v:'Monthly Tachyon update for new product arrivals (ex VAT'+(updDsc?', net of the partner discount':'')+')',s:S.note}});
     var rMon=row({H:{v:'Monthly Cost (Monitoring & AM)',s:S.totli},
-      K:mpA?{f:'SUM(K'+mpA+':K'+mpB+')',v:n2(t.monNet-techNet-liaNet),s:S.net}:{v:'',s:S.totgap},
-      N:{v:mpA?((monL.length+(retMon?1:0))+' line'+((monL.length+(retMon?1:0))===1?'':'s')+', '+(monH+(retMon?retMon.hours:0))+'h per month (ex VAT'+((t.monDisc-(t.upd?t.upd.gbp*updDsc:0)-(liaL.length?liaL.reduce(function(a,l){return a+(l.disc?l.amount*dsc:0)},0):0))>0.004?', net of the partner discount':'')+')'):'',s:S.note}});
-    var mParts=[]; if(rLia)mParts.push('K'+rLia); if(rTech)mParts.push('K'+rTech); if(mpA)mParts.push('K'+rMon);
-    var monParts=[]; if(rLia)monParts.push('Local inventory feeds'); if(rTech)monParts.push('New product arrivals'); if(mpA)monParts.push('Monitoring & AM');
+      K:mpA?{f:'SUM(K'+mpA+':K'+mpB+')',v:n2(t.monNet-techNet-feedNet-sysNet),s:S.net}:{v:'',s:S.totgap},
+      N:{v:mpA?((monL.length+(retMon?1:0))+' line'+((monL.length+(retMon?1:0))===1?'':'s')+', '+(monH+(retMon?retMon.hours:0))+'h per month (ex VAT'+((t.monDisc-(t.upd?t.upd.gbp*updDsc:0)-(allF.concat(sysL).reduce(function(a,l){return a+(l.disc?l.amount*dsc:0)},0)))>0.004?', net of the partner discount':'')+')'):'',s:S.note}});
+    var mParts=[]; if(rSys)mParts.push('K'+rSys); if(rFeed)mParts.push('K'+rFeed); if(rTech)mParts.push('K'+rTech); if(mpA)mParts.push('K'+rMon);
+    var monParts=[]; if(rSys)monParts.push('New systems'); if(rFeed)monParts.push('New feeds'); if(rTech)monParts.push('New product arrivals'); if(mpA)monParts.push('Monitoring & AM');
     /* ONE monthly chain — the recurring charge is a brand-level figure (SKUs across
        the wired markets), so it does not vary by market: no "per market" vs "1 market" twins
        (Ray, 10 Sep 2026: "the yellow highlighted section doesn't make sense … this doesn't
@@ -1735,12 +1739,12 @@ window.addEventListener('load',restore);
     notes.push({t:ix?('Live feed pull: '+fmt(ix.total)+' variant SKUs across '+Object.keys(ix.map).length+' product types — the product scope is counted at SKU level.')
                  :'Live feed not pulled — the volumes on this quote were entered by hand.'});
     if(L.length||typesRec().ai)notes.push({t:scopeTextPlain()+'.'});
-    if(sysL.length)notes.push({t:'New systems: '+sysL.length+' FeedHero dashboard'+(sysL.length===1?'':'s')+' ('+sysL.map(function(l){return l.name.replace('FeedHero dashboard — ','')}).join(', ')+') at '+money(rateOf('sys'))+' each, one-off.'});
+    if(sysL.length)notes.push({t:'New systems: '+sysL.length+' FeedHero dashboard'+(sysL.length===1?'':'s')+' ('+sysL.map(function(l){return l.name.replace('FeedHero dashboard — ','')}).join(', ')+') at '+money(rateOf('sys'))+' each per month.'});
     if(feedL.length){ var fg=feedL.filter(function(l){return !l.tbc}), fb=feedL.filter(function(l){return l.tbc});
-      if(fg.length)notes.push({t:'New feeds: '+fg.map(function(l){return l.name+(l.qty>1?' × '+l.qty:'')}).join('; ')+' — '+(fg.every(function(l){return l.rate===rateOf('feed')})?money(rateOf('feed'))+' per generic feed, ':'')+'one-off, ex VAT.'});
+      if(fg.length)notes.push({t:'New feeds: '+fg.map(function(l){return l.name+(l.qty>1?' × '+l.qty:'')}).join('; ')+' — '+(fg.every(function(l){return l.rate===rateOf('feed')})?money(rateOf('feed'))+' per generic feed ':'')+'per month, ex VAT.'});
       fb.forEach(function(l){ notes.push({t:'Bespoke feed — '+l.name+': priced separately by ASPL once the requirements are costed.'+(l.note?' Requirements: '+l.note:'')}); }); }
     if(liaL.length)notes.push({t:'Local inventory feeds: '+liaL.map(function(l){return l.name+(l.qty>1?' × '+l.qty:'')}).join('; ')+' at '+money(rateOf('lia'))+' per feed per month.'});
-    preL.forEach(function(l){ notes.push({t:'Setup pre-charge — '+KIND_HEAD[l.of].toLowerCase()+': '+l.n+' × '+l.per+'h = '+l.hours+'h'+(l.free?', taken from the retainer (not charged).':' at £'+blockGBP()+' per '+BLOCK_H+'h = '+money(l.amount)+', one-off.')}); });
+    preL.forEach(function(l){ notes.push({t:'Setup hours — '+KIND_HEAD[l.of].toLowerCase().replace(' (feedhero dashboards)','')+': '+l.n+' × '+l.per+'h = '+l.hours+'h'+(l.free?', taken from the retainer (not charged).':' at £'+blockGBP()+' per '+BLOCK_H+'h = '+money(l.amount)+', one-off.')}); });
     if(retOne||retMon)notes.push({t:'Retainer: '+[retOne?retOne.hours+'h one-off':'',retMon?retMon.hours+'h per month':''].filter(Boolean).join(' + ')+' at £'+blockGBP()+' per '+BLOCK_H+'h, written as days in the sheet.'});
     if(t.upd)notes.push({t:'Monthly update — new products: '+updWord(t.upd,true)+'.'});
     var selPts=((rec().pts||{})[MKT]||[]);
