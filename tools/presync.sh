@@ -44,6 +44,10 @@ echo "── validating: KWCal event ⇄ ticket tie + result-window join"
 node tools/test_kwcal_tie.mjs >/dev/null
 echo "   ✓ stamped-id precedence + the half-month result join hold"
 
+echo "── validating: product-volume churn (running close-to-close baseline)"
+node tools/test_volume.mjs >/dev/null
+echo "   ✓ intraday movement lands in the day's in/out; baseline rolls at midnight"
+
 echo "── validating: live deck editor (real browser)"
 if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   NODE_PATH=$(npm root -g) node tools/test_editor.mjs || {

@@ -31,6 +31,8 @@ jobs:
         run: node tools/test_overlays.mjs
       - name: KWCal tie + result-window harness (event ⇄ Workflow ticket)
         run: node tools/test_kwcal_tie.mjs
+      - name: Product-volume churn harness (running close-to-close baseline)
+        run: node tools/test_volume.mjs
       - name: Access scoping harness (per-user Workflow views)
         run: node tools/test_access.mjs
 

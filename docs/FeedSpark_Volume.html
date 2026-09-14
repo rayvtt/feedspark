@@ -204,7 +204,7 @@ window.addEventListener('load',restore);
     <ol>
       <li><b>4×-daily live scans.</b> The monitor fetches every wired FeedHero XML feed four times a day (02:15, 08:15, 14:15, 20:15 UTC) — the same pass that powers Label Guard, PT Guard and Golden Record.</li>
       <li><b>Every SKU is fingerprinted.</b> Each scan captures the feed's full set of product IDs, each tagged with its top-level category (the first level of the primary <code>g:product_type</code>).</li>
-      <li><b>Days are compared close-to-close.</b> Only the day's <b>last</b> captured set is kept. At the first scan of a new day, yesterday's closing set is compared with today's: IDs that appeared = <b>new in</b>; IDs that vanished = <b>dropped out</b>. Intraday flapping never double-counts.</li>
+      <li><b>Days are compared close-to-close.</b> Yesterday's <b>closing</b> set is the baseline for the whole of today: every scan compares today's latest set against it — IDs that appeared = <b>new in</b>; IDs that vanished = <b>dropped out</b> — so today's bar builds through the day and settles at the last scan. Intraday flapping never double-counts.</li>
       <li><b>Categories explain the movement.</b> Every in/out is attributed to its category, and the top movers are stored per day — so "Reiss had 300 in and 900 out" breaks down into the collections that drove it.</li>
       <li><b>History accrues forward.</b> Up to 60 days of daily movement is retained per feed. Tracking started 9 Sep 2026 — bars fill in from the first midnight after each feed's first scan; a catastrophic feed reading is quarantined by the guards' two-strike check before it can fake a movement spike.</li>
     </ol>
@@ -299,7 +299,7 @@ window.addEventListener('load',restore);
     var tracked=DATA&&DATA.tracked;
     var note=$('#meth-note');
     if(tracked==='sheet'){ note.textContent='⚠ This market still rides its Google Sheet export — SKU-level in/out tracking needs the feed’s FeedHero XML URL, so only scan row-counts are shown here.'; }
-    else if(tracked==='xml'&&!have.length){ note.textContent='⏳ First capture pending for '+CLIENT+' '+MKT.toUpperCase()+' — the monitor records the SKU set from its next scan, and day-over-day movement appears after the first midnight roll.'; }
+    else if(tracked==='xml'&&!have.length){ note.textContent='⏳ First capture pending for '+CLIENT+' '+MKT.toUpperCase()+' — the monitor records the SKU set from its next scan, and day-over-day movement appears from the first scan after midnight (then keeps updating through the day).'; }
     else note.textContent='';
   }
 
@@ -321,7 +321,7 @@ window.addEventListener('load',restore);
       empty.hidden=false;
       empty.textContent=(DATA&&DATA.tracked==='sheet')
         ? 'No churn data for this market — in/out tracking needs the FeedHero XML feed (see the breakdown below).'
-        : 'No movement recorded yet — bars appear after the monitor’s first midnight roll for this feed.';
+        : 'No movement recorded yet — bars appear from the first scan after this feed’s first midnight roll.';
       return;
     }
     svg.style.display=''; empty.hidden=true;
