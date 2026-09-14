@@ -99,6 +99,10 @@ import LABELGUARD_ENGINE_SRC from "../../../docs/labelguard_engine.js";
 // /overlays/engine.js — the overlay classifier + collector the xml-scan agent, the page's
 // live in-browser scan and the node harness all share (one file, three lanes)
 import OVERLAY_ENGINE_SRC from "../../../docs/overlay_engine.js";
+// /golden/pdp-engine.js — the Golden Record PDP harvest engine (JSON-LD / meta / microdata /
+// details-text → g: attributes). The page runs it on HTML the worker only PROXIES
+// (host-allowlisted to the feed's own product host); tools/test_pdpharvest.mjs tests the same file
+import PDP_ENGINE_SRC from "../../../docs/pdp_engine.js";
 
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
@@ -380,7 +384,7 @@ export default {
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
-        '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile',
+        '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile', '/api/golden/pdp': 'golden-pdp-sample',
         '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved', '/api/aiquote/plantask': 'aiquote-task' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
@@ -1097,6 +1101,9 @@ export default {
     }
     if (path === '/overlays/engine.js' && request.method === 'GET') {
       return new Response(OVERLAY_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/golden/pdp-engine.js' && request.method === 'GET') {
+      return new Response(PDP_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
 
     // KWCal calendar seeds: brand planner slides bundled in git (see CAL_SEED_FILES above)
@@ -3120,14 +3127,76 @@ async function goldenRoutes(env, request, url) {
     if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
     if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa' }, 503);
     const attr = String(url.searchParams.get('attr') || '');
-    if (!ATTR_SPEC.some((s) => s.key === attr)) return json({ ok: false, error: 'unknown attribute' }, 400);
+    if (attr !== 'pdp' && !ATTR_SPEC.some((s) => s.key === attr)) return json({ ok: false, error: 'unknown attribute' }, 400);
     const sheetId = PLAN_SHEETS[client];
     if (!sheetId) return json({ ok: false, error: 'no Project Plan sheet wired for "' + client + '" — add it to PLAN_SHEETS' }, 400);
     const mon = new Date().toLocaleDateString('en-GB', { month: 'short' }) + String(new Date().getUTCFullYear()).slice(2);
-    const task = 'Golden Record Fix - g:' + attr + ' - ' + client + ' ' + mkt.toUpperCase() + ' - ' + mon;
+    // attr=pdp files the PDP recovery pass itself (Ray, 14 Sep 2026) — the same rails
+    const task = (attr === 'pdp' ? 'Golden Record PDP Recovery - ' : 'Golden Record Fix - g:' + attr + ' - ') + client + ' ' + mkt.toUpperCase() + ' - ' + mon;
     const r = await appendPlanRows(env, sheetId, 'Project Plan', [{ task, owner: '', status: 'Open', due: '' }]);
     if (r && r.ok) { try { await env.EDITS.delete('planlive:' + sheetId); } catch (e) {} }
     return json(Object.assign({ task }, r));
+  }
+
+  // ---- PDP recovery scan (Ray, 14 Sep 2026: "missing data can be sourced from the PDP …
+  // take one URL linked to a product PDP to scan for any information for missing attributes")
+  // The worker never parses a product page — the browser runs docs/pdp_engine.js on the
+  // HTML this route PROXIES. No open proxy: the client/market must resolve to a wired or
+  // dossier-attached feed, and the URL's host must be that feed's own product host (learned
+  // once from the feed head — first product <link> — and cached 24h in pdphost:). The fetch
+  // identifies itself honestly (FeedSparkPDPScan UA; the probe showed the reachable sites
+  // serve it identically to a browser) and is bounded (9s, redirects followed, HTML only).
+  if (path === '/api/golden/pdp/fetch' && request.method === 'GET') {
+    if (badClient) return json({ ok: false, error: 'bad client/market' }, 400);
+    const target = String(url.searchParams.get('url') || '').trim().slice(0, 2000);
+    if (!/^https?:\/\//i.test(target)) return json({ ok: false, error: 'url required' }, 400);
+    const src = await feedSourceFor(env, client, mkt);
+    if (!src) return json({ ok: false, error: 'no feed linked for this client/market' }, 404);
+    const host = await pdpHostFor(env, client, mkt, src);
+    if (!host) return json({ ok: false, error: 'could not determine the product host for this feed (no product link in the feed head)' }, 422);
+    if (!pdpHostAllowed(target, host)) return json({ ok: false, error: 'host not allowed — this feed\'s products live on ' + host }, 403);
+    const t0 = Date.now();
+    const ctl = new AbortController();
+    const timer = setTimeout(() => { try { ctl.abort(); } catch (e) {} }, 9000);
+    let up;
+    try {
+      up = await fetch(target, { redirect: 'follow', signal: ctl.signal,
+        headers: { 'user-agent': PDP_SCAN_UA, accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
+          'accept-language': pdpLang(mkt), 'x-feedspark-scan': 'golden-record' } });
+    } catch (e) {
+      clearTimeout(timer);
+      return json({ ok: false, error: /abort/i.test(String(e && e.name)) ? 'timed out after 9s' : 'fetch failed: ' + String(e && e.message || e).slice(0, 120), ms: Date.now() - t0 }, 502);
+    }
+    clearTimeout(timer);
+    const ct = up.headers.get('content-type') || '';
+    if (!up.ok) {
+      const blocked = up.status === 403 || up.status === 429 || up.status === 503;
+      try { await up.body.cancel(); } catch (e) {}
+      return json({ ok: false, http: up.status, blocked, ms: Date.now() - t0,
+        error: 'HTTP ' + up.status + (blocked ? ' — the site blocks automated fetches; ask the client to allowlist the FeedSpark scanner (UA FeedSparkPDPScan)' : '') }, 502);
+    }
+    if (!/html|xml|text\/plain/i.test(ct)) { try { await up.body.cancel(); } catch (e) {} return json({ ok: false, http: up.status, error: 'not an HTML page (' + (ct.split(';')[0] || 'no type') + ')' }, 502); }
+    return new Response(up.body, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store',
+      'x-pdp-http': String(up.status), 'x-pdp-url': encodeURI(String(up.url || target)).slice(0, 1500), 'x-pdp-ms': String(Date.now() - t0) } });
+  }
+  // the last recovery sample per feed — the page aggregates the scan in-browser and stores
+  // the compact result here so the scorecard can show "recoverable from the PDP" on reload
+  if (path === '/api/golden/pdp' && request.method === 'GET') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    const s = await env.EDITS.get('goldenpdp:' + client + ':' + mkt, 'json');
+    return json({ sample: s || null });
+  }
+  if (path === '/api/golden/pdp' && request.method === 'PUT') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+    if (!b || typeof b !== 'object' || !b.matrix || typeof b.matrix !== 'object') return json({ error: 'matrix required' }, 400);
+    const rec = { t: Date.now(), n: Math.max(0, parseInt(b.n, 10) || 0), ok: Math.max(0, parseInt(b.ok, 10) || 0),
+      attr: String(b.attr || '').slice(0, 40), ai: b.ai === true, host: String(b.host || '').slice(0, 120),
+      matrix: b.matrix, rows: Array.isArray(b.rows) ? b.rows.slice(0, 60) : [] };
+    const packed = JSON.stringify(rec);
+    if (packed.length > 250000) return json({ error: 'sample too large' }, 413);
+    await env.EDITS.put('goldenpdp:' + client + ':' + mkt, packed);
+    return json({ ok: true, t: rec.t });
   }
 
   // "expected change" — adopt the current coverage snapshot as the new known-good
@@ -3153,6 +3222,73 @@ async function goldenRoutes(env, request, url) {
   }
 
   return null;
+}
+
+// ---- PDP recovery scan helpers (the allowlist maths duplicates docs/pdp_engine.js's
+// hostOf/hostAllowed/linkHostFromFeedHead — tools/test_pdpharvest.mjs pins the two in step)
+const PDP_SCAN_UA = 'Mozilla/5.0 (compatible; FeedSparkPDPScan/1.0; +https://feedspark.com)';
+const PDP_LANG = { gb: 'en-GB', ie: 'en-IE', us: 'en-US', au: 'en-AU', ca: 'en-CA', eu: 'en-GB', de: 'de-DE', at: 'de-AT', ch: 'de-CH',
+  fr: 'fr-FR', befr: 'fr-BE', be: 'nl-BE', benl: 'nl-BE', nl: 'nl-NL', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', dk: 'da-DK', se: 'sv-SE',
+  fi: 'fi-FI', pl: 'pl-PL', cz: 'cs-CZ', sk: 'sk-SK', gr: 'el-GR', ro: 'ro-RO', hk: 'en-HK', sg: 'en-SG', uae: 'en-AE', sa: 'en-SA', kw: 'en-KW' };
+function pdpLang(mkt) { const l = PDP_LANG[String(mkt || '').replace(/-fb$/, '')] || 'en-GB'; return l + ',en;q=0.8'; }
+function pdpHostOf(u) { const m = /^https?:\/\/([^/?#:]+)/i.exec(String(u || '').trim()); return m ? m[1].toLowerCase() : ''; }
+function pdpHostAllowed(u, host) {
+  const bare = (h) => String(h || '').toLowerCase().replace(/^www\./, '');
+  const h = pdpHostOf(u), a = bare(host);
+  return !!h && !!a && bare(h) === a;
+}
+function pdpLinkHostFromHead(text) {
+  text = String(text || '');
+  const dec = (v) => String(v || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/&amp;/g, '&');
+  if (/<item[\s>]/.test(text) || /<rss|<feed|<channel/i.test(text)) {
+    const it = /<item[\s>]([\s\S]*?)(<\/item>|$)/.exec(text);
+    const scope = it ? it[1] : text;
+    const re = /<(?:g:)?link>\s*(?:<!\[CDATA\[)?\s*(https?:\/\/[^<\s\]]+)/i;
+    const m = re.exec(scope) || re.exec(text);
+    return m ? pdpHostOf(dec(m[1])) : '';
+  }
+  const lines = text.split(/\r?\n/).filter((l) => l.trim());
+  if (lines.length < 2) return '';
+  const split = (line) => { const out = []; let cur = '', q = false;
+    for (let i = 0; i < line.length; i++) { const c = line[i];
+      if (q) { if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+      else if (c === '"') q = true; else if (c === ',') { out.push(cur); cur = ''; } else cur += c; }
+    out.push(cur); return out; };
+  const head = split(lines[0]).map((k) => String(k).trim().replace(/^g:/i, '').toLowerCase());
+  const li = head.indexOf('link');
+  if (li < 0) return '';
+  for (let i = 1; i < Math.min(lines.length, 40); i++) { const h = pdpHostOf(split(lines[i])[li] || ''); if (h) return h; }
+  return '';
+}
+// read at most `cap` bytes of a response body then cancel it (the feed head is enough)
+async function readHead(resp, cap) {
+  const reader = resp.body.getReader(), dec = new TextDecoder();
+  let out = '', got = 0;
+  while (got < cap) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    got += value.length; out += dec.decode(value, { stream: true });
+  }
+  try { await reader.cancel(); } catch (e) {}
+  return out;
+}
+// the feed's own product host — learned once from the feed head, cached a day
+async function pdpHostFor(env, client, mkt, src) {
+  const ck = 'pdphost:' + client + ':' + mkt;
+  const cached = await env.EDITS.get(ck, 'json');
+  if (cached && cached.host) return cached.host;
+  let host = '';
+  try {
+    if (src.xml) {
+      const r = await fetch(src.xml);
+      if (r.ok && r.body) host = pdpLinkHostFromHead(await readHead(r, 384 * 1024));
+    } else if (src.id) {
+      const r = await fetch('https://docs.google.com/spreadsheets/d/' + src.id + '/export?format=csv&gid=' + (src.gid || '0'));
+      if (r.ok && r.body && /csv|text\/plain/i.test(r.headers.get('content-type') || '')) host = pdpLinkHostFromHead(await readHead(r, 128 * 1024));
+    }
+  } catch (e) { host = ''; }
+  if (host) { try { await env.EDITS.put(ck, JSON.stringify({ host, t: Date.now() }), { expirationTtl: 86400 }); } catch (e) {} }
+  return host;
 }
 
 /* ---- custom alert delivery + watch evaluation (docs/LABELGUARD.md §7) ----

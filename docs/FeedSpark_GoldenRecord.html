@@ -114,7 +114,7 @@ window.addEventListener('load',restore);
   .tbadge.cond{background:#FCF1E3;color:var(--orange-ink)}
   .tbadge.rec{background:#EEF2F7;color:var(--navy)}
   .tbadge.ai{background:#F1EBFD;color:#6D28D9}
-  .at-row{display:grid;grid-template-columns:200px minmax(120px,1fr) 62px 74px minmax(140px,.85fr) 152px;gap:10px;align-items:center;padding:5px 0;border-top:1px dashed var(--line);font-size:12.5px}
+  .at-row{display:grid;grid-template-columns:200px minmax(120px,1fr) 62px 74px minmax(140px,.85fr) 212px;gap:10px;align-items:center;padding:5px 0;border-top:1px dashed var(--line);font-size:12.5px}
   .at-row:first-of-type{border-top:none}
   @media(max-width:900px){.at-row{grid-template-columns:150px 1fr 56px 64px;}.at-note,.at-act{display:none}}
   .at-act{display:flex;gap:5px;align-items:center;justify-content:flex-end;flex-wrap:nowrap}
@@ -157,6 +157,45 @@ window.addEventListener('load',restore);
   .at-miss{font-size:10px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--line);border-radius:100px;padding:2px 9px;justify-self:start}
   .at-miss.hard{color:var(--risk);border-color:var(--risk)}
   .at-row.missing .at-nm,.at-row.missing .at-note{opacity:.6}
+  /* PDP recovery scanner (Ray, 14 Sep 2026): the pop-up that samples product pages */
+  .pdpm{position:fixed;inset:0;z-index:120;background:rgba(26,54,93,.42);display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto}
+  .pdp-box{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.22);width:min(1080px,100%);padding:18px 22px 20px;font-size:12.5px}
+  .pdp-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .pdp-h h3{margin:0;font-size:17px;font-weight:900}
+  .pdp-sub{color:var(--muted);font-size:12px;margin:0 0 12px;max-width:820px}
+  .pdp-cfg{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--wash);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-weight:800;font-size:12px}
+  .pdp-cfg select{font:inherit;font-size:12px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+  .pdp-cfg label{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+  .pdp-prog{display:flex;align-items:center;gap:8px;color:var(--ink-2);font-weight:700;margin:6px 0 10px}
+  .pdp-kpis{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+  .pdp-kpi{background:var(--wash);border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:120px}
+  .pdp-kpi b{display:block;font-size:19px;font-weight:900;color:var(--ink);line-height:1.15}
+  .pdp-kpi span{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .pdp-kpi.up b{color:var(--good)}
+  .pdp-mx{width:100%;border-collapse:collapse;margin:4px 0 10px}
+  .pdp-mx th{text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line)}
+  .pdp-mx td{padding:6px 8px;border-top:1px dashed var(--line);vertical-align:top;font-size:12px}
+  .pdp-mx td.n{text-align:right;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .pdp-rate{display:inline-flex;align-items:center;gap:6px;min-width:120px}
+  .pdp-rate i{display:block;height:8px;border-radius:100px;background:var(--wash);border:1px solid var(--line);width:78px;overflow:hidden;position:relative}
+  .pdp-rate i b{position:absolute;left:0;top:0;bottom:0;background:var(--good);border-radius:100px}
+  .pdp-src{font-size:9.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;border-radius:6px;padding:1px 6px;margin-left:6px;background:#EEF2F7;color:var(--navy)}
+  .pdp-src.ai{background:#F1EBFD;color:#6D28D9}.pdp-src.signal{background:var(--wash);color:var(--muted)}
+  .pdp-ex{color:var(--ink-2);font-size:11.5px;word-break:break-word}
+  .pdp-ex code{font-family:inherit;background:var(--wash);border-radius:5px;padding:0 4px}
+  .pdp-sku{border-top:1px dashed var(--line);padding:7px 0;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+  .pdp-sku .id{font-weight:900;white-space:nowrap;min-width:120px}
+  .pdp-sku .ttl{color:var(--ink-2);flex:1;min-width:180px}
+  .pdp-sku .st{font-size:10.5px;font-weight:800;color:var(--muted);white-space:nowrap}
+  .pdp-sku .st.bad{color:var(--risk)}
+  .pdp-chips{display:flex;gap:5px;flex-wrap:wrap;width:100%}
+  .pdp-chip{font-size:11px;font-weight:800;border:1px solid var(--line);border-radius:100px;padding:2px 9px;background:#fff;color:var(--ink-2);cursor:default;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pdp-chip.rec{border-color:var(--good);color:var(--good)}.pdp-chip.ai{border-color:#6D28D9;color:#6D28D9}
+  .pdp-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:12px;font-weight:800}
+  .pdp-note{font-size:11.5px;color:var(--muted);margin:8px 0 0}
+  details.pdp-d summary{cursor:pointer;font-weight:900;font-size:12.5px;margin:10px 0 4px}
+  body.demo #det-pdp,body.demo #pdp-last{display:none!important}
+  @media(max-width:700px){.pdp-box{padding:14px}.pdp-sku .id{min-width:0}}
   /* demo mode (client-facing screen shares): identities masked */
   .demo-banner{position:sticky;top:62px;z-index:45;background:#1A365D;color:#fff;font-size:12.5px;font-weight:800;padding:8px 0;display:none}
   body.demo .demo-banner{display:block}
@@ -325,8 +364,10 @@ window.addEventListener('load',restore);
   known-good — flip the toggle), and the spec condition each requirement comes from. “Not in feed” on a
   conditional attribute is a flag to review, not an automatic fault — a pet-supplement feed has no
   <b>color</b> to fill. Every attribute carries <b>✉ Ask client</b> (a prefilled proposal on the shared
-  Gmail-draft rails) and <b>→ Brief</b> (opens a prefilled Workflow brief) — both also file the fix as a
-  task into Intake → Project Plan, like the Gmail triage.</p>
+  Gmail-draft rails), <b>→ Brief</b> (opens a prefilled Workflow brief) — both also file the fix as a
+  task into Intake → Project Plan, like the Gmail triage — and <b>🔎 PDP</b>: sample the client’s own
+  product pages for that attribute and see how much of the gap the site already holds (composition
+  lines, colour names, FAQ pairs, size guides) — evidence for the ask, or a supplemental feed.</p>
   <div class="panel" id="det-panel"><span class="muted">Pick a feed above.</span></div>
   <div id="print-foot">FeedSpark · Private &amp; Confidential — Golden Record scorecard · attribute roster vetted against Google’s product data specification (support.google.com/google-ads/answer/7052112)</div>
 </div></section>
@@ -672,6 +713,11 @@ window.addEventListener('load',restore);
         CACHE[k] = d;
         if (!d.snapshot || (Date.now() - d.snapshot.t) > STALE_MS) { scan(k, true); }
         else renderDetail(k);
+        // the last PDP recovery sample (non-blocking; a chip appears when one exists)
+        fetch(API + '/api/golden/pdp?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
+          .then(function (r) { return r.json(); })
+          .then(function (j) { if (j && j.sample && CACHE[k]) { CACHE[k].pdp = j.sample; if (SEL === k && !PDP.open) renderDetail(k); } })
+          .catch(function () {});
       })
       .catch(function () { $('det-panel').innerHTML = '<span class="muted">Could not load snapshot.</span>'; });
   }
@@ -795,6 +841,7 @@ window.addEventListener('load',restore);
       '<button class="btn" id="det-csv" title="Download this scorecard as CSV">⬇ CSV</button>' +
       '<button class="btn" id="det-pdf" title="Print-ready client presentation of this scorecard — save as PDF from the print dialog">⬇ PDF</button>' +
       '<button class="btn" id="det-ack" title="Adopt the current coverage as the new known-good">✓ Accept as known-good</button>' +
+      '<button class="btn" id="det-pdp" title="Sample this feed\'s product pages and see which Golden Record gaps the site itself can fill">🔎 Scan PDPs</button>' +
       '<button class="btn pri" id="det-scan">⟳ Rescan now</button></span></div>';
     if (!s) {
       h += '<p class="muted">No snapshot yet — rescan.</p>';
@@ -813,6 +860,7 @@ window.addEventListener('load',restore);
       '<button id="ref-yday"' + (rf.isDaily ? ' class="on"' : '') + (d.daily ? '' : ' disabled title="No yesterday capture yet — it lands automatically on the first scan of each day"') + '>Δ vs yesterday</button>' +
       '<button id="ref-base"' + (!rf.isDaily ? ' class="on"' : '') + '>Δ vs known-good</button></span>' +
       (d.baseline && d.baseline.t ? '<span>known-good set ' + ago(d.baseline.t) + '</span>' : '') +
+      (d.pdp && d.pdp.matrix ? '<button class="btn" id="pdp-last" style="padding:3px 9px;font-size:10.5px" title="Open the last PDP recovery sample for this feed">🔎 PDP sample · ' + fmt(d.pdp.ok) + ' pages · ' + ago(d.pdp.t) + '</button>' : '') +
       '<span class="prof-chip" title="Attributes marked ★ are scored for this brand — the ' + esc(prof.industry) + ' best-practice profile (industry defaults + any brand override)">⚖ ' + esc(prof.industry) + ' best practice</span>' +
       '<button class="btn" id="prof-edit" style="padding:3px 9px;font-size:10.5px" title="Edit which attributes count in this brand\'s / industry\'s score">⚙</button></div>' +
       '<p class="gr-verdict">' +
@@ -871,7 +919,8 @@ window.addEventListener('load',restore);
           (stamp ? 'Proposal composed ' + new Date(stamp.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' → ' + esc(stamp.to) + ' — click to compose again'
             : 'Compose the client proposal for this attribute — and file it into the Project Plan') + '">' +
           (stamp ? '✓ asked' : '✉ Ask client') + '</button>' +
-          '<button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled brief in Workflow — the fix also files as an Intake task">→ Brief</button></span>';
+          '<button class="abtn" data-brief="' + esc(x.k) + '" title="Open a prefilled brief in Workflow — the fix also files as an Intake task">→ Brief</button>' +
+          (x.t === 'req' ? '' : '<button class="abtn" data-pdp="' + esc(x.k) + '" title="Sample product pages blank in g:' + esc(x.k) + ' — how much of this gap does the site itself hold?">🔎 PDP</button>') + '</span>';
         h += row + '</div>';
       });
       h += '</div>';
@@ -888,12 +937,12 @@ window.addEventListener('load',restore);
       .then(function (r) { then(r.ok ? ' + plan task filed' : ' (plan task failed: ' + (r.error || '?') + ')'); })
       .catch(function () { then(' (plan task failed: network)'); });
   }
-  function openAsk(k, attr) {
+  function openAsk(k, attr, override) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var p = parts(k);
-    var x = SPEC.filter(function (s) { return s.k === attr; })[0]; if (!x) return;
-    var a = d.snapshot.attrs[attr] || { present: false };
-    var t = attrAskEmail(p.client, p.mkt, x, a.present ? a.cov : null);
+    var x = SPEC.filter(function (s) { return s.k === attr; })[0]; if (!x && !override) return;
+    var a = x ? (d.snapshot.attrs[attr] || { present: false }) : { present: false };
+    var t = override || attrAskEmail(p.client, p.mkt, x, a.present ? a.cov : null);
     var slot = $('askp-slot'); if (!slot) return;
     slot.innerHTML = '<div class="askp">' +
       '<div class="af"><label>To</label><input id="ask-to" value="' + esc(ASK.cfg.to[p.client] || '') + '" placeholder="client contact email"></div>' +
@@ -905,7 +954,7 @@ window.addEventListener('load',restore);
       '<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ask-task" checked> file task in the Project Plan</label>' +
       '<button class="btn" id="ask-cancel">✕</button>' +
       '<span class="scanmsg" id="ask-msg"></span></div>' +
-      '<p class="hint muted" style="margin:8px 0 0;font-size:11.5px">Review and edit freely — nothing sends itself. The draft lands in the ray@feedspark.com Drafts folder via the Gmail bridge (~5 min); the plan task files as "Golden Record Fix - g:' + esc(attr) + '" so it rides Intake → Project Plan → pipeline like the Gmail triage.</p></div>';
+      '<p class="hint muted" style="margin:8px 0 0;font-size:11.5px">Review and edit freely — nothing sends itself. The draft lands in the ray@feedspark.com Drafts folder via the Gmail bridge (~5 min); the plan task files as "' + (attr === 'pdp' ? 'Golden Record PDP Recovery' : 'Golden Record Fix - g:' + esc(attr)) + '" so it rides Intake → Project Plan → pipeline like the Gmail triage.</p></div>';
     slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     function maybeTask(then) {
       if (!$('ask-task').checked) { then(''); return; }
@@ -1036,6 +1085,11 @@ window.addEventListener('load',restore);
     Array.prototype.forEach.call(document.querySelectorAll('[data-brief]'), function (el) {
       el.onclick = function () { briefAttr(k, el.getAttribute('data-brief')); };
     });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-pdp]'), function (el) {
+      el.onclick = function () { pdpOpen(k, el.getAttribute('data-pdp')); };
+    });
+    if ($('det-pdp')) $('det-pdp').onclick = function () { pdpOpen(k, ''); };
+    if ($('pdp-last')) $('pdp-last').onclick = function () { var d2 = CACHE[k]; if (d2 && d2.pdp) pdpOpen(k, d2.pdp.attr || '', d2.pdp); };
     if ($('det-scan')) $('det-scan').onclick = function () { scan(k); };
     if ($('det-ack')) $('det-ack').onclick = function () { ack(k, $('det-ack')); };
     if ($('det-csv')) $('det-csv').onclick = function () { exportCsv(k); };
@@ -1049,6 +1103,291 @@ window.addEventListener('load',restore);
       if (REFMODE === 'base') return;
       REFMODE = 'base'; try { sessionStorage.setItem('gr-ref', 'base'); } catch (e) {} renderDetail(k);
     };
+  }
+
+  /* ---------------- PDP recovery scan (Ray, 14 Sep 2026) ----------------------------
+     "missing data can be sourced from the PDP — take one URL linked to a product PDP to
+     scan for any information for missing attributes … a button to scan, a pop-up module
+     scanner". The browser does the work: it streams the live feed through the Feed Lab
+     parser into the engine's sampler (rows BLANK in the chosen attribute first), fetches
+     each sampled product page through the worker's host-allowlisted proxy, runs
+     docs/pdp_engine.js on the HTML (JSON-LD → meta → microdata → the visible details
+     text), optionally lets Tachyon read the details text (every AI value must quote the
+     page or it is dropped), and renders the recovery matrix: per attribute, how many of
+     the blank rows the site itself could fill, with the evidence. Exits: a supplemental-
+     feed CSV of the recovered values, → Brief, ✉ Ask client. The sample is stored per
+     feed (goldenpdp:) so the scorecard shows it on reload. */
+  var PDP = { open: false, run: null, cfg: null };
+  function loadPDP() {
+    if (window.PdpHarvest) return Promise.resolve(window.PdpHarvest);
+    return fetch('/golden/pdp-engine.js').then(function (r) { if (!r.ok) throw new Error('PDP engine unavailable'); return r.text(); })
+      .then(function (s) { (new Function(s))(); return window.PdpHarvest; });
+  }
+  // stream the live feed into the sampler (XML or CSV, sniffed from the first bytes); stop
+  // once the sampler has read enough or the feed ends — 48 MB is the ceiling per scan
+  function pdpSample(client, mkt, n, attr, onState) {
+    return Promise.all([loadFA(), loadPDP()]).then(function (a) {
+      var FA = a[0], P = a[1], smp = P.sampler(n, attr), parser = null, got = 0, next = 0;
+      return fetch('/api/feed/proxy?client=' + encodeURIComponent(client) + '&market=' + encodeURIComponent(mkt)).then(function (res) {
+        if (!res.ok || !res.body) throw new Error('feed fetch failed (HTTP ' + res.status + ')');
+        var rd = res.body.getReader(), dec = new TextDecoder();
+        function pump() {
+          return rd.read().then(function (x) {
+            if (x.done) { if (parser) { parser.push(dec.decode()); parser.end(); } return smp; }
+            var chunk = dec.decode(x.value, { stream: true });
+            if (!parser) parser = /^\s*</.test(chunk) ? FA.createXmlParser(smp.onRow) : FA.createParser(smp.onRow);
+            got += x.value.length;
+            if (onState && got > next) { next = got + 2 * 1048576; onState('reading the live feed — ' + (got / 1048576).toFixed(1) + ' MB · ' + smp.seen().toLocaleString('en-GB') + ' products'); }
+            parser.push(chunk);
+            if (smp.full() || got > 48 * 1048576) { try { rd.cancel(); } catch (e) {} parser.end(); return smp; }
+            return pump();
+          });
+        }
+        return pump();
+      });
+    });
+  }
+  // one product page through the worker proxy (feed-host allowlisted); body capped at 1.5 MB
+  function pdpFetch(client, mkt, url) {
+    var t0 = Date.now();
+    return fetch(API + '/api/golden/pdp/fetch?client=' + encodeURIComponent(client) + '&market=' + encodeURIComponent(mkt) + '&url=' + encodeURIComponent(url))
+      .then(function (res) {
+        var ct = res.headers.get('content-type') || '';
+        if (/json/.test(ct)) return res.json().then(function (j) { return { error: (j && j.error) || ('HTTP ' + res.status), http: (j && j.http) || res.status, blocked: !!(j && j.blocked), ms: Date.now() - t0 }; });
+        if (!res.ok || !res.body) return { error: 'HTTP ' + res.status, http: res.status, ms: Date.now() - t0 };
+        var rd = res.body.getReader(), dec = new TextDecoder(), html = '', got = 0;
+        function pump() {
+          return rd.read().then(function (x) {
+            if (x.done) return html + dec.decode();
+            got += x.value.length; html += dec.decode(x.value, { stream: true });
+            if (got > 1572864) { try { rd.cancel(); } catch (e) {} return html; }
+            return pump();
+          });
+        }
+        var fin = url; try { fin = decodeURI(res.headers.get('x-pdp-url') || url); } catch (e) {}
+        return pump().then(function (h) { return { html: h, http: +(res.headers.get('x-pdp-http') || 200), url: fin, ms: Date.now() - t0, kb: Math.round(got / 1024) }; });
+      })
+      .catch(function (e) { return { error: (e && e.message) || 'network', ms: Date.now() - t0 }; });
+  }
+  function pdpOpen(k, attr, stored) {
+    var p = parts(k);
+    PDP.open = true;
+    var old = $('pdpm'); if (old) old.parentNode.removeChild(old);
+    var m = document.createElement('div'); m.className = 'pdpm'; m.id = 'pdpm';
+    m.innerHTML = '<div class="pdp-box" role="dialog" aria-label="PDP recovery scan">' +
+      '<div class="pdp-h"><h3>🔎 PDP recovery scan</h3><span class="muted">' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + '</span>' +
+      '<span style="margin-left:auto;display:flex;gap:8px"><button class="btn" id="pdp-x" title="Close">✕</button></span></div>' +
+      '<p class="pdp-sub">Samples product pages from the live feed — rows <b>blank in the chosen attribute first</b> — and reads each page for the attributes the feed does not carry: schema.org / OpenGraph data first, then the visible “Fabric &amp; Details / Composition &amp; Care / Key features” text. Every value shows its source and the line it came from. Pages are fetched by the FeedSpark scanner (FeedSparkPDPScan) on this client’s own domain only.</p>' +
+      '<div class="pdp-cfg" id="pdp-cfg"></div><div id="pdp-body"></div></div>';
+    document.body.appendChild(m);
+    $('pdp-x').onclick = pdpClose;
+    m.onclick = function (e) { if (e.target === m) pdpClose(); };
+    var cfgOpts = '<option value="">Every gap (any attribute the feed leaves blank)</option>';
+    SPEC.forEach(function (x) { if (x.t === 'req') return; cfgOpts += '<option value="' + esc(x.k) + '"' + (x.k === attr ? ' selected' : '') + '>g:' + esc(x.k) + ' — ' + esc(x.n.slice(0, 48)) + '</option>'; });
+    $('pdp-cfg').innerHTML = '<span>Focus</span><select id="pdp-attr">' + cfgOpts + '</select>' +
+      '<span>Sample</span><span class="pseg" style="margin-left:0"><button data-n="10">10</button><button data-n="25" class="on">25</button><button data-n="50">50</button></span>' +
+      '<label title="Tachyon reads each page\'s details text for what the rules cannot parse — every value must quote the page verbatim or it is dropped"><input type="checkbox" id="pdp-ai" checked> AI read of the details text</label>' +
+      '<button class="btn pri" id="pdp-go" style="margin-left:auto">Start scan</button>';
+    PDP.cfg = { n: 25 };
+    Array.prototype.forEach.call(m.querySelectorAll('[data-n]'), function (b) {
+      b.onclick = function () { Array.prototype.forEach.call(m.querySelectorAll('[data-n]'), function (x) { x.classList.remove('on'); }); b.classList.add('on'); PDP.cfg.n = +b.getAttribute('data-n'); };
+    });
+    fetch(API + '/api/claude').then(function (r) { return r.json(); }).then(function (j) {
+      if (j && j.configured === false && $('pdp-ai')) { $('pdp-ai').checked = false; $('pdp-ai').disabled = true; $('pdp-ai').parentNode.title = 'Tachyon isn’t connected (no Anthropic key on the worker) — the rules still run'; }
+    }).catch(function () {});
+    $('pdp-go').onclick = function () {
+      if (PDP.run && !PDP.run.done) return;
+      pdpRun(k, { attr: $('pdp-attr').value, n: PDP.cfg.n, ai: !!($('pdp-ai') && $('pdp-ai').checked) });
+    };
+    if (stored) { PDP.run = pdpFromStored(k, stored); pdpPaint(); }
+    else { $('pdp-body').innerHTML = '<p class="pdp-note">Pick the attribute to chase (or every gap), the sample size, then <b>Start scan</b>. 25 pages take roughly half a minute.</p>'; }
+  }
+  function pdpClose() { PDP.open = false; var m = $('pdpm'); if (m) m.parentNode.removeChild(m); if (SEL) renderDetail(SEL); }
+  // a stored sample renders through the same painter: rows carry rec {attr:{v,src,ev}}
+  function pdpFromStored(k, st) {
+    return { k: k, attr: st.attr || '', n: st.n, ai: !!st.ai, done: true, stage: 'done', stored: true, t: st.t, host: st.host || '',
+      matrix: st.matrix, results: (st.rows || []).map(function (r) { return { id: r.id, title: r.title, link: r.link, http: r.http, ms: r.ms, error: r.error, blocked: r.blocked, rec: r.rec || {}, ai: r.ai }; }) };
+  }
+  function pdpRun(k, opts) {
+    var p = parts(k);
+    var R = PDP.run = { k: k, attr: opts.attr || '', n: opts.n || 25, ai: !!opts.ai, items: [], results: [], t0: Date.now(), stage: 'sampling', done: false, msg: 'loading the engine…' };
+    var st = function (m2) { R.msg = m2; pdpPaint(); };
+    pdpPaint();
+    pdpSample(p.client, p.mkt, R.n, R.attr, st).then(function (smp) {
+      var P = window.PdpHarvest;
+      R.items = smp.pick().map(function (it) { it.client = p.client; return it; });
+      R.seen = smp.seen(); R.blankSeen = smp.blank();
+      if (!R.items.length) throw new Error('no products with a link in the feed');
+      R.stage = 'fetching';
+      var i = 0, active = 0, CONC = 3;
+      return new Promise(function (resolve) {
+        function next() {
+          while (active < CONC && i < R.items.length) {
+            (function (it, idx) {
+              active++;
+              R.results[idx] = { id: it.id, title: it.title, link: it.link, pending: true };
+              pdpFetch(p.client, p.mkt, it.link).then(function (f) {
+                var res = R.results[idx]; res.pending = false; res.ms = f.ms; res.http = f.http; res.kb = f.kb;
+                if (f.error) { res.error = f.error; res.blocked = f.blocked; }
+                else {
+                  try { res.ex = P.extract(f.html, f.url || it.link, it); res.map = P.mapToGolden(it, res.ex); res.rec = pdpRec(res.map); if (!R.host) R.host = P.hostOf(f.url || it.link); }
+                  catch (e) { res.error = 'extract failed: ' + ((e && e.message) || e); }
+                }
+                active--; st('scanned ' + R.results.filter(function (r) { return r && !r.pending; }).length + ' of ' + R.items.length + ' product pages'); next();
+              });
+            })(R.items[i], i); i++;
+          }
+          if (!active && i >= R.items.length) resolve();
+        }
+        next();
+      });
+    }).then(function () {
+      if (!R.ai) { R.aiState = 'off'; return; }
+      R.stage = 'ai';
+      var P = window.PdpHarvest, pages = R.results.filter(function (r) { return r && r.ex && r.ex.details; });
+      var batches = []; for (var b = 0; b < pages.length; b += 5) batches.push(pages.slice(b, b + 5));
+      var bi = 0; R.aiState = batches.length ? 'on' : 'off';
+      function step() {
+        if (bi >= batches.length) return;
+        var batch = batches[bi++];
+        st('Tachyon reading the details text — batch ' + bi + ' of ' + batches.length);
+        var pr = P.llmPrompt(batch.map(function (r) {
+          var rows = r.map.rows, have = [], need = [];
+          P.GOLDEN_KEYS.forEach(function (kk) { if (rows[kk].feed) have.push(kk); else if (!rows[kk].pdp && P.LLM_KEYS.indexOf(kk) >= 0) need.push(kk); });
+          return { id: r.id, title: r.title, details: r.ex.details, have: have.join(', '), need: need.join(', ') };
+        }));
+        return fetch(API + '/api/claude', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ system: pr.system, prompt: pr.prompt, max_tokens: 3000 }) })
+          .then(function (r) { return r.json(); })
+          .then(function (j) {
+            if (j && j.error === 'no_key') { R.aiState = 'nokey'; bi = batches.length; return; }
+            if (j && j.error) { R.aiState = 'error'; return; }
+            var items = P.parseLlm(j && j.text) || [];
+            items.forEach(function (it) {
+              var r = batch.filter(function (x) { return String(x.id) === String(it.id); })[0]; if (!r) return;
+              var added = P.mergeLlm(r.ex, it.attrs);
+              if (added.length) { var src = R.items.filter(function (x) { return x.id === r.id; })[0]; r.map = P.mapToGolden(src, r.ex); r.rec = pdpRec(r.map); r.ai = added; }
+            });
+          }).catch(function () { R.aiState = 'error'; }).then(step);
+      }
+      return step();
+    }).then(function () {
+      var P = window.PdpHarvest;
+      R.matrix = P.matrix(R.results.map(function (r) { return r || { error: 'missing' }; }), P.GOLDEN_KEYS);
+      R.stage = 'done'; R.done = true; R.t = Date.now();
+      pdpPaint();
+      pdpSave(k, R);
+    }).catch(function (e) { R.error = (e && e.message) || 'scan failed'; R.stage = 'done'; R.done = true; pdpPaint(); });
+  }
+  // the compact per-SKU view the painter + the store use: only what the page adds
+  function pdpRec(map) {
+    var rec = {};
+    Object.keys(map.rows).forEach(function (kk) { var x = map.rows[kk]; if (x.state === 'recovered' || x.state === 'signal') rec[kk] = { v: String(x.pdp).slice(0, 400), src: x.src, ev: x.ev, s: x.state }; });
+    return rec;
+  }
+  function pdpSave(k, R) {
+    var p = parts(k);
+    var body = { n: R.results.length, ok: R.results.filter(function (r) { return r && r.map; }).length, attr: R.attr, ai: R.aiState === 'on', host: R.host || '',
+      matrix: R.matrix, rows: R.results.slice(0, 60).map(function (r) { return { id: r.id, title: String(r.title || '').slice(0, 120), link: r.link, http: r.http, ms: r.ms, error: r.error, blocked: !!r.blocked, rec: r.rec || {}, ai: r.ai }; }) };
+    fetch(API + '/api/golden/pdp?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt), { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (j && j.ok && CACHE[k]) { body.t = j.t; CACHE[k].pdp = body; R.saved = true; pdpPaint(); } })
+      .catch(function () {});
+  }
+  // score uplift if the sample's recovery rates were applied to the whole feed (an estimate)
+  function pdpUplift(k, R) {
+    var d = CACHE[k]; if (!d || !d.snapshot || !R.matrix) return null;
+    var s = d.snapshot, prof = profileForC(parts(k).client), base = goldenScore(s.attrs, prof);
+    var attrs2 = {};
+    SPEC.forEach(function (x) { var a = s.attrs[x.k] || { present: false }; attrs2[x.k] = { present: !!a.present, cov: a.cov || 0 }; });
+    Object.keys(R.matrix.attrs).forEach(function (kk) {
+      var mx = R.matrix.attrs[kk]; if (!mx.blank || !mx.found || !attrs2[kk]) return;
+      var cov = attrs2[kk].present ? attrs2[kk].cov : 0;
+      attrs2[kk] = { present: true, cov: Math.min(100, Math.round((cov + (100 - cov) * (mx.found / mx.blank)) * 10) / 10) };
+    });
+    var after = goldenScore(attrs2, prof);
+    return { base: base, after: after, delta: Math.round((after - base) * 10) / 10 };
+  }
+  function pdpPaint() {
+    var R = PDP.run, box = $('pdp-body'); if (!R || !box) return;
+    var P = window.PdpHarvest, p = parts(R.k);
+    if (!R.done) {
+      var n = R.results.filter(function (r) { return r && !r.pending; }).length;
+      box.innerHTML = '<div class="pdp-prog"><span class="spin"></span>' + esc(R.msg || '') + '</div>' +
+        (R.stage !== 'sampling' ? '<div class="pdp-note">Sample: ' + R.items.length + ' products' + (R.attr ? ' blank in g:' + esc(R.attr) : '') + ' from ' + fmt(R.seen) + ' read' + (R.attr ? ' (' + fmt(R.blankSeen) + ' blank in the feed)' : '') + ' · ' + n + ' pages read so far</div>' : '');
+      if ($('pdp-go')) $('pdp-go').disabled = true;
+      return;
+    }
+    if ($('pdp-go')) $('pdp-go').disabled = false;
+    if (R.error) { box.innerHTML = '<p class="muted">Scan failed: ' + esc(R.error) + '</p>'; return; }
+    var ok = R.results.filter(function (r) { return r && (r.map || r.rec) && !r.error; }).length, bad = R.results.filter(function (r) { return r && r.error; });
+    var blocked = bad.filter(function (r) { return r.blocked; }).length;
+    var mx = R.matrix, keys = Object.keys(mx.attrs).filter(function (kk) { return mx.attrs[kk].blank > 0; });
+    keys.sort(function (a, b) { return (mx.attrs[b].found - mx.attrs[a].found) || (mx.attrs[b].blank - mx.attrs[a].blank); });
+    var recoverable = keys.filter(function (kk) { return mx.attrs[kk].found > 0; });
+    var up = pdpUplift(R.k, R);
+    var h = '<div class="pdp-kpis">' +
+      '<div class="pdp-kpi"><b>' + ok + ' / ' + R.results.length + '</b><span>pages read' + (bad.length ? ' · ' + bad.length + ' failed' + (blocked ? ' (' + blocked + ' blocked)' : '') : '') + '</span></div>' +
+      '<div class="pdp-kpi' + (recoverable.length ? ' up' : '') + '"><b>' + recoverable.length + ' of ' + keys.length + '</b><span>gap attributes the site can fill</span></div>' +
+      (up ? '<div class="pdp-kpi' + (up.delta > 0 ? ' up' : '') + '"><b>' + (up.delta > 0 ? '+' : '') + up.delta + ' pts</b><span>est. Golden Record uplift (' + up.base + ' → ' + up.after + ')</span></div>' : '') +
+      '<div class="pdp-kpi"><b>' + (R.aiState === 'on' ? 'on' : (R.aiState === 'nokey' ? 'no key' : (R.aiState === 'error' ? 'failed' : 'off'))) + '</b><span>Tachyon details read</span></div>' +
+      '</div>';
+    if (blocked && blocked === R.results.length) h += '<p class="pdp-note" style="color:var(--risk)">Every fetch was blocked — this site runs a bot wall (Akamai / Cloudflare bot management). Ask the client to allowlist the FeedSpark scanner (user agent <code>FeedSparkPDPScan</code>) and rerun.</p>';
+    h += '<table class="pdp-mx"><thead><tr><th>Attribute</th><th style="text-align:right">Blank in feed</th><th style="text-align:right">Found on PDP</th><th>Recovery</th><th>Example (value · source · the line it came from)</th></tr></thead><tbody>';
+    if (!keys.length) h += '<tr><td colspan="5" class="muted">The sampled rows carry every harvestable attribute already — nothing to recover.</td></tr>';
+    keys.forEach(function (kk) {
+      var a = mx.attrs[kk], ex = a.examples[0];
+      var srcs = Object.keys(a.srcs).map(function (s2) { return '<span class="pdp-src' + (s2 === 'ai' ? ' ai' : '') + '">' + esc(s2 === 'ld' ? 'schema' : s2) + ' ' + a.srcs[s2] + '</span>'; }).join('');
+      h += '<tr><td><b>g:' + esc(kk) + '</b></td><td class="n">' + a.blank + '</td><td class="n">' + a.found + (a.signal ? ' <span class="pdp-src signal" title="The page shows the information exists (e.g. recommendation blocks) but the values live in the client\'s systems">+' + a.signal + ' signal</span>' : '') + '</td>' +
+        '<td><span class="pdp-rate"><i><b style="width:' + (a.rate || 0) + '%"></b></i><span>' + (a.rate == null ? '—' : a.rate + '%') + '</span></span></td>' +
+        '<td class="pdp-ex">' + (ex ? '<code>' + esc(String(ex.v).slice(0, 90)) + (String(ex.v).length > 90 ? '…' : '') + '</code>' + srcs + '<br><span class="muted" title="' + esc(ex.ev) + '">“' + esc(String(ex.ev).slice(0, 110)) + (String(ex.ev).length > 110 ? '…' : '') + '”</span>' : (a.signal ? '<span class="muted">signal only</span>' : '<span class="muted">not on the sampled pages</span>')) + '</td></tr>';
+    });
+    h += '</tbody></table>';
+    h += '<details class="pdp-d"' + (R.results.length <= 12 ? ' open' : '') + '><summary>Per product — ' + R.results.length + ' sampled' + (R.attr ? ' (blank in g:' + esc(R.attr) + ' first)' : '') + '</summary>';
+    R.results.forEach(function (r) {
+      if (!r) return;
+      var rec = r.rec || {}, ks = Object.keys(rec).filter(function (kk) { return rec[kk].s !== 'signal'; });
+      h += '<div class="pdp-sku"><span class="id" title="' + esc(r.link || '') + '">' + esc(r.id || '?') + '</span><span class="ttl">' + esc(String(r.title || '').slice(0, 90)) + '</span>' +
+        '<span class="st' + (r.error ? ' bad' : '') + '">' + (r.error ? esc(r.error.slice(0, 70)) : 'HTTP ' + (r.http || 200) + ' · ' + (r.ms || 0) + ' ms' + (r.kb ? ' · ' + r.kb + ' KB' : '')) + '</span>' +
+        '<span class="pdp-chips">' + (ks.length ? ks.map(function (kk) { var x = rec[kk]; return '<span class="pdp-chip rec' + (x.src === 'ai' ? ' ai' : '') + '" title="' + esc(kk + ' ← ' + (x.src === 'ld' ? 'schema.org' : x.src) + '\n“' + x.ev + '”') + '">' + esc(kk) + ' = ' + esc(String(x.v).slice(0, 60)) + '</span>'; }).join('') : (r.error ? '' : '<span class="muted" style="font-size:11px">nothing new on this page</span>')) + '</span></div>';
+    });
+    h += '</details>';
+    var csvOk = R.results.some(function (r) { return r && r.rec && Object.keys(r.rec).some(function (kk) { return r.rec[kk].s === 'recovered'; }); });
+    h += '<div class="pdp-foot">' +
+      '<button class="btn pri" id="pdp-csv"' + (csvOk ? '' : ' disabled') + ' title="id + g:attribute columns of every value recovered — a supplemental data source for Merchant Center, or a FeedHero rule input">⬇ Supplemental CSV</button>' +
+      '<button class="btn" id="pdp-brief" title="Open a prefilled Workflow brief for the recovery pass — it also files as an Intake task">→ Brief</button>' +
+      '<button class="btn" id="pdp-ask" title="Compose the client proposal with this evidence on the shared Gmail-draft rails">✉ Ask client</button>' +
+      '<span class="scanmsg">' + (R.stored ? 'stored sample · ' + ago(R.t) : (R.saved ? '✓ sample saved to this feed' : '')) + (R.host ? ' · ' + esc(R.host) : '') + '</span></div>';
+    h += '<p class="pdp-note">Sample estimate — recovery rates are read off the sampled pages, the uplift assumes the same rate across the feed. Signals (recommendation blocks, variant families) show that the information exists; the values themselves come from the client’s systems. Blocked fetches mean the site runs a bot wall — a client-side allowlist for the FeedSpark scanner opens it.</p>';
+    box.innerHTML = h;
+    if ($('pdp-csv')) $('pdp-csv').onclick = function () { pdpCsv(R); };
+    if ($('pdp-brief')) $('pdp-brief').onclick = function () { pdpBrief(R); };
+    if ($('pdp-ask')) $('pdp-ask').onclick = function () { pdpAsk(R); };
+  }
+  function pdpLines(R) {
+    var mx = R.matrix, out = [];
+    Object.keys(mx.attrs).forEach(function (kk) { var a = mx.attrs[kk]; if (a.blank && a.found) out.push('g:' + kk + ': ' + a.found + ' of ' + a.blank + ' blank rows recoverable (' + a.rate + '%)' + (a.examples[0] ? ' — e.g. ' + String(a.examples[0].v).slice(0, 60) : '')); });
+    return out;
+  }
+  function pdpCsv(R) {
+    var P = window.PdpHarvest, p = parts(R.k);
+    var results = R.results.map(function (r) { if (r && r.map) return r; if (!r || !r.rec) return { error: 1 }; var rows = {}; P.GOLDEN_KEYS.forEach(function (kk) { var x = r.rec[kk]; rows[kk] = x && x.s === 'recovered' ? { feed: '', pdp: x.v, src: x.src, ev: x.ev, state: 'recovered' } : { feed: '', pdp: '', state: 'none' }; }); return { map: { id: r.id, rows: rows } }; });
+    var csv = P.supplementalCsv(results);
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = p.client.replace(/[^A-Za-z0-9]+/g, '_') + '_' + p.mkt + '_pdp_supplemental.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+  function pdpBrief(R) {
+    var p = parts(R.k), dt = new Date(), mmyy = ('0' + (dt.getMonth() + 1)).slice(-2) + String(dt.getFullYear()).slice(2);
+    var lines = ['PDP recovery scan — ' + R.results.length + ' product pages sampled' + (R.attr ? ' (blank in g:' + R.attr + ' first)' : '')].concat(pdpLines(R), ['Source: Golden Record scorecard (/golden) — 🔎 PDP recovery scan', 'Next: map the recovered attributes into the feed (supplemental source / FeedHero rules) and re-score']);
+    try { fetch(API + '/api/golden/plantask?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt) + '&attr=pdp', { method: 'POST', keepalive: true }).catch(function () {}); } catch (e) {}
+    location.href = '/workflow?brief=' + b64url({ client: p.client, task: 'Golden Record PDP Recovery - ' + p.client + ' ' + p.mkt.toUpperCase() + ' - ' + mmyy, cat: 'technical', scope: lines.join('\n') });
+  }
+  function pdpAsk(R) {
+    var p = parts(R.k), loc = p.client + ' ' + p.mkt.toUpperCase(), ls = pdpLines(R);
+    var t = { subject: loc + ' — feed data: attributes your product pages already hold',
+      body: 'Hi team,\n\nA quick finding from our feed monitoring. We sampled ' + R.results.length + ' of your product pages and compared them with the ' + loc + ' feed: several attributes the feed leaves blank are already published on the pages themselves' + (ls.length ? ':\n\n- ' + ls.join('\n- ') : '.') +
+        '\n\nBecause the data exists on your side, mapping it into the feed is a structured pass rather than new content — we can share the affected product set and the proposed values for sign-off before anything changes in the live feed. Filling these improves product matching and gives the Shopping campaigns more surface to segment and optimise against.\n\nBest regards,\nRay' };
+    pdpClose();
+    openAsk(R.k, 'pdp', t);
   }
 
   /* ---------------- PDF export (print-to-PDF: branded header, scorecard only) -------- */

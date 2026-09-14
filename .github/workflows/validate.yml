@@ -35,6 +35,8 @@ jobs:
         run: node tools/test_volume.mjs
       - name: Access scoping harness (per-user Workflow views)
         run: node tools/test_access.mjs
+      - name: Golden Record PDP harvest harness (extraction + host allowlist + sampler)
+        run: node tools/test_pdpharvest.mjs
 
       - name: Shipped-feature markers (multi-session overwrite tripwire)
         run: node tools/check_markers.js

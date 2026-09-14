@@ -81,6 +81,13 @@ else
   echo "   ✗ volume harness FAILED — see node tools/test_volume.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h/7: Golden Record PDP harvest (page extraction + host allowlist + sampler)"
+if node tools/test_pdpharvest.mjs >/dev/null 2>&1; then
+  echo "   ✓ details-text rules, variant-only identifiers, evidence-gated AI merge + the proxy allowlist hold"
+else
+  echo "   ✗ PDP harvest harness FAILED — see node tools/test_pdpharvest.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 4/7: shipped-feature markers"
 if node tools/check_markers.js >/dev/null 2>&1; then
   echo "   ✓ no shipped feature regressed"

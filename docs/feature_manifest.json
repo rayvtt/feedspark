@@ -4138,6 +4138,111 @@
    "pattern": "function liftLine(name)",
    "pr": 359,
    "min": 1
+  },
+  {
+   "name": "Golden Record PDP harvest engine: the page runs docs/pdp_engine.js on proxied HTML (JSON-LD/meta/microdata/details-text → g: attributes)",
+   "file": "docs/pdp_engine.js",
+   "pattern": "function extract(html, url, row)",
+   "pr": 360,
+   "min": 1
+  },
+  {
+   "name": "PDP engine: identifiers only from the matched variant or a single-SKU page (the YuMOVE wrong-barcode trap)",
+   "file": "docs/pdp_engine.js",
+   "pattern": "var single = !cands.length;",
+   "pr": 360,
+   "min": 1
+  },
+  {
+   "name": "PDP engine: the AI pass is evidence-gated (a value without a verbatim page quote is dropped)",
+   "file": "docs/pdp_engine.js",
+   "pattern": "if (nev.length < 4 || hay.indexOf(nev) < 0) continue;",
+   "pr": 360,
+   "min": 1
+  },
+  {
+   "name": "PDP engine: related_product is a signal, never a recovered value",
+   "file": "docs/pdp_engine.js",
+   "pattern": "'signal', 'you may also like / complete the look block'",
+   "pr": 360,
+   "min": 1
+  },
+  {
+   "name": "Worker: /golden/pdp-engine.js serves the harvest engine verbatim",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "path === '/golden/pdp-engine.js'",
+   "pr": 360,
+   "min": 1
+  },
+  {
+   "name": "Worker: /api/golden/pdp/fetch proxies a product page ONLY on the feed's own product host (no open proxy)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "if (!pdpHostAllowed(target, host)) return json({ ok: false, error: 'host not allowed",
+   "pr": 360,
+   "min": 1
+  },
+  {
+   "name": "Worker: the PDP fetch identifies itself honestly (FeedSparkPDPScan UA)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "const PDP_SCAN_UA = 'Mozilla/5.0 (compatible; FeedSparkPDPScan/1.0; +https://feedspark.com)';",
+   "pr": 360,
+   "min": 1
+  },
+  {
+   "name": "Worker: the last PDP recovery sample is stored per feed (goldenpdp:)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "await env.EDITS.put('goldenpdp:' + client + ':' + mkt, packed);",
+   "pr": 360,
+   "min": 1
+  },
+  {
+   "name": "Worker: plantask files the PDP recovery pass itself (attr=pdp)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "'Golden Record PDP Recovery - '",
+   "pr": 360,
+   "min": 1
+  },
+  {
+   "name": "wrangler: pdp_engine.js bundled as a Text module",
+   "file": "wrangler.toml",
+   "pattern": "pdp_engine.js",
+   "pr": 360,
+   "min": 1
+  },
+  {
+   "name": "Golden page: 🔎 PDP action on every attribute row + the scan button on the scorecard",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "data-pdp=\"",
+   "pr": 360,
+   "min": 1
+  },
+  {
+   "name": "Golden page: the PDP recovery scanner modal (sample → proxy fetch → engine → matrix → CSV/Brief/Ask)",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "function pdpRun(k, opts)",
+   "pr": 360,
+   "min": 1
+  },
+  {
+   "name": "Golden page: recovered values are exported as a supplemental-feed CSV",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "supplementalCsv(",
+   "pr": 360,
+   "min": 1
+  },
+  {
+   "name": "PDP harvest harness wired into qa_gate",
+   "file": "tools/qa_gate.sh",
+   "pattern": "tools/test_pdpharvest.mjs",
+   "pr": 360,
+   "min": 1
+  },
+  {
+   "name": "PDP harvest harness wired into validate.yml",
+   "file": ".github/workflows/validate.yml",
+   "pattern": "tools/test_pdpharvest.mjs",
+   "pr": 360,
+   "min": 1
   }
  ]
 }
