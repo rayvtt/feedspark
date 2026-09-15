@@ -130,6 +130,79 @@ window.addEventListener('load',restore);
   .spk-flame{width:11px;height:15px;margin-left:2px;fill:var(--orange);transform-box:fill-box;transform-origin:center bottom;animation:rkflame .55s ease-in-out infinite alternate}
   .tb-modules a.on{color:var(--orange-deep)}
   @media(prefers-reduced-motion:reduce){.rk-lift,.rk-flame,.spk-flame{animation:none}}
+  /* FCC-DG-CHARTS — work-volume chart workbench */
+  .vz-head{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+  .vz-head>div:first-child{flex:1;min-width:280px}
+  .vz-pinned{display:flex;gap:6px;flex-wrap:wrap;align-items:center;max-width:460px}
+  .vz-pinned .pn{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;color:var(--ink-2);background:var(--wash);border:1px solid var(--line);border-radius:100px;padding:4px 6px 4px 10px;max-width:230px}
+  .vz-pinned .pn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .vz-pinned .pn button{border:none;background:none;color:var(--muted);cursor:pointer;font-weight:900;font-size:13px;padding:0 2px;line-height:1}
+  .vz-pinned .pn button:hover{color:var(--risk)}
+  .vz-pinned .pnl{font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--orange-deep)}
+  .vz-ctl{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin:6px 0 10px}
+  .vz-ctl .fld{display:flex;flex-direction:column;gap:5px}
+  .vz-ctl select{min-width:150px;font-size:13px;padding:7px 10px}
+  .vz-ctl .chip{font-size:12px;padding:6px 11px}
+  .vz-opts{display:flex;gap:12px;align-items:center;min-height:34px}
+  .vz .tog{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:var(--ink-2);cursor:pointer}
+  .vz-series{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px;min-height:0}
+  .vz-series .sc{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--ink-2);border:1px solid var(--line);border-radius:100px;padding:4px 10px 4px 7px;background:#fff;cursor:pointer;user-select:none}
+  .vz-series .sc i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .vz-series .sc.off{opacity:.45;text-decoration:line-through}
+  .vz-series .sc b{color:var(--muted);font-weight:800}
+  .vz-stage{border:1px solid var(--line);border-radius:12px;padding:14px 16px 12px;background:#fff}
+  .vz-cap{margin:0 0 6px}
+  .vz-title{font-size:17px;font-weight:900;color:var(--ink);outline:none;border-radius:6px;padding:2px 4px;margin:0 -4px}
+  .vz-sub{font-size:12.5px;font-weight:700;color:var(--ink-2);outline:none;border-radius:6px;padding:2px 4px;margin:0 -4px}
+  .vz-title:focus,.vz-sub:focus{background:rgba(245,166,35,.12)}
+  .vz-title:empty::before,.vz-sub:empty::before{content:attr(data-ph);color:var(--muted);font-weight:700}
+  .vz-plot{position:relative}
+  .vz-plot svg{width:100%;height:auto;display:block;font-family:Lato,system-ui,sans-serif}
+  .vz-plot svg text{font-size:12px;font-weight:700;fill:var(--muted)}
+  .vz-plot svg text.v{font-size:11px;font-weight:800;fill:var(--ink)}
+  .vz-plot svg text.d{font-size:11.5px;font-weight:900;fill:var(--ink)}
+  .vz-plot svg line.g{stroke:var(--line);stroke-width:1}
+  .vz-plot svg .hit{fill:transparent;cursor:crosshair}
+  .vz-plot svg .hit:hover{fill:rgba(26,54,93,.05)}
+  .vz-plot svg line.x{stroke:var(--ink-2);stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
+  .vz-tip{position:absolute;pointer-events:none;background:#1A365D;color:#fff;font-size:12px;font-weight:700;border-radius:9px;padding:8px 11px;box-shadow:0 8px 24px rgba(16,24,40,.25);z-index:5;min-width:150px;max-width:280px}
+  .vz-tip b{display:block;font-weight:900;margin-bottom:3px}
+  .vz-tip .r{display:flex;justify-content:space-between;gap:12px}
+  .vz-tip .r i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px}
+  .vz-tip .t{border-top:1px solid rgba(255,255,255,.25);margin-top:4px;padding-top:4px;font-weight:900}
+  .vz-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:13.5px;font-weight:700;padding:20px}
+  .vz-empty[hidden],.vz-tip[hidden],#vz-tblwrap[hidden]{display:none}
+  .vz-legend{display:flex;gap:6px 14px;flex-wrap:wrap;margin:6px 2px 2px;font-size:12px;font-weight:800;color:var(--ink-2)}
+  .vz-legend span{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+  .vz-legend span i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .vz-legend span.off{opacity:.4;text-decoration:line-through}
+  table.vz-tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin:10px 0 4px}
+  table.vz-tbl th{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+  table.vz-tbl th:first-child,table.vz-tbl td:first-child{text-align:left}
+  table.vz-tbl td{padding:6px 8px;border-bottom:1px solid var(--line);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+  table.vz-tbl tr.tot td{font-weight:900;color:var(--ink)}
+  .vz-notes{width:100%;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin-top:10px;resize:vertical;background:#fff}
+  .vz-src{font-size:11.5px;font-weight:700;color:var(--muted);margin-top:8px;line-height:1.5}
+  .vz-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+  .vz-act .btn{padding:9px 14px;font-size:13px}
+  .btn.vz-ghost{background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+  .btn.vz-ghost:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .vz-presets{display:inline-flex;gap:6px;align-items:center;margin-left:auto}
+  .vz-presets select{min-width:140px;font-size:12.5px;padding:7px 10px}
+  .vz-msg{font-size:12.5px;font-weight:800;color:var(--good)}
+  [data-theme=dark] .vz-stage,[data-theme=dark] .vz-series .sc,[data-theme=dark] .vz-notes,[data-theme=dark] .btn.vz-ghost{background:var(--paper);border-color:var(--line);color:var(--ink-2)}
+  [data-theme=dark] .vz-pinned .pn{background:#20242E;border-color:var(--line)}
+  [data-theme=dark] .vz-plot svg .hit:hover{fill:rgba(255,255,255,.05)}
+  [data-theme=dark] .vz-tip{background:#0B0D12}
+  /* pinned charts in the in-browser preview */
+  .s-chart svg{width:100%;height:auto;display:block;font-family:Lato,system-ui,sans-serif}
+  .s-chart svg text{font-size:12px;font-weight:700;fill:#8a94a0}
+  .s-chart svg text.v{font-size:11px;font-weight:800;fill:#333}
+  .s-chart svg text.d{font-size:11.5px;font-weight:900;fill:#333}
+  .s-chart svg line.g{stroke:#E6E6E6}
+  .s-chart .s-clg{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12px;font-weight:800;color:#4a4a4a;margin-top:6px}
+  .s-chart .s-clg i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:-1px}
+  .s-chart .s-cnote{font-size:12.5px;color:#4a4a4a;font-weight:600;margin-top:8px}
 </style>
 <style>/* FCC-THEME */
 #theme-tgl{margin-left:10px;flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line,#E6E6E6);background:transparent;color:var(--ink-2,#4a4a4a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s}
@@ -213,6 +286,43 @@ window.addEventListener('load',restore);
     <div class="col lib"><h3>Section library</h3><p class="cs">Drag into the outline, or click to add</p><div id="lib"></div></div>
     <div class="col"><h3>Deck outline <span id="ocount" style="color:var(--muted);font-weight:700"></span></h3>
       <p class="cs">Drag to reorder · × to remove</p><ul class="out" id="out"></ul></div>
+  </div>
+
+  <!-- FCC-DG-CHARTS: work-volume chart workbench (Ray, 15 Sep 2026) — every workstream on the
+       account bucketed by month from /api/volumes; customise, pin to the build brief, export. -->
+  <div class="col vz" id="vz" style="margin-top:16px;min-height:0">
+    <div class="vz-head">
+      <div><h3>Work-volume charts</h3>
+        <p class="cs">Every workstream on the account — <b>project-plan tasks</b>, <b>client emails</b>, <b>call actions</b>, <b>briefs</b>, the <b>ASPL scheduled work</b> and <b>result rounds</b> — counted per month. Pick the brand and the window, choose a view, shape the chart, then <b>pin it to the build brief</b> so the deck carries it as a native chart.</p></div>
+      <div class="vz-pinned" id="vz-pinned"></div>
+    </div>
+    <div class="vz-ctl">
+      <div class="fld"><label>Brand</label><select id="vz-client"></select></div>
+      <div class="fld"><label>Window</label><div class="chips vz-win" id="vz-win"><span class="chip" data-n="3">3 months</span><span class="chip on" data-n="6">6 months</span><span class="chip" data-n="12">12 months</span></div></div>
+      <div class="fld"><label>View</label><select id="vz-view"></select></div>
+      <div class="fld"><label>Form</label><div class="chips" id="vz-form"><span class="chip on" data-f="stack">Stacked columns</span><span class="chip" data-f="line">Lines</span><span class="chip" data-f="pct">100% stacked</span><span class="chip" data-f="hbar">Totals</span></div></div>
+      <div class="fld"><label>Options</label><div class="vz-opts"><label class="tog"><input type="checkbox" id="vz-labels" checked> value labels</label><label class="tog"><input type="checkbox" id="vz-table"> table</label></div></div>
+    </div>
+    <div class="vz-series" id="vz-series"></div>
+    <div class="vz-stage">
+      <div class="vz-cap">
+        <div class="vz-title" id="vz-title" contenteditable="true" spellcheck="false" data-ph="Chart title — click to edit"></div>
+        <div class="vz-sub" id="vz-sub" contenteditable="true" spellcheck="false" data-ph="Subtitle — what the reader should take from it"></div>
+      </div>
+      <div class="vz-plot" id="vz-plot"><svg id="vz-svg" viewBox="0 0 1000 380" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Work volume chart"></svg><div class="vz-tip" id="vz-tip" hidden></div><div class="vz-empty" id="vz-empty" hidden></div></div>
+      <div class="vz-legend" id="vz-legend"></div>
+      <div id="vz-tblwrap" hidden><table class="vz-tbl" id="vz-tbl"></table></div>
+      <textarea class="vz-notes" id="vz-notes" rows="2" placeholder="Notes for the deck — the reading, the caveat, the ask (goes into the brief with the chart)"></textarea>
+      <div class="vz-src" id="vz-src"></div>
+    </div>
+    <div class="vz-act">
+      <button class="btn btn-primary" id="vz-pin">📌 Pin to build brief</button>
+      <button class="btn vz-ghost" id="vz-png">⬇ PNG</button>
+      <button class="btn vz-ghost" id="vz-copy">⎘ Copy table</button>
+      <button class="btn vz-ghost" id="vz-link">🔗 Copy link</button>
+      <span class="vz-presets"><select id="vz-preset"><option value="">My presets…</option></select><button class="btn vz-ghost" id="vz-save">💾 Save preset</button><button class="btn vz-ghost" id="vz-del" title="Delete the selected preset">✕</button></span>
+      <span class="vz-msg" id="vz-msg"></span>
+    </div>
   </div>
 
   <!-- TEMPLATES:START -->
@@ -432,6 +542,7 @@ window.addEventListener('load',restore);
     L.push("Establish what's delivered, what's in flight and the testing roadmap over "+lbl+". The snapshot above summarises it; the sheet holds the detail.");
     L.push("");
     L.push("**Stream B — product data feed (the source of truth).** Attach "+client+"'s current product feed — an up-to-date export (~5,000 rows). Analyse and SCORE it: MASK title structure (Brand + Material + Fit + Colour + Use-case, 80–120 chars), attribute completeness (Golden Record 99.9% target), GPC / product-type depth, imagery, custom labels, and conversational-attribute coverage (question_and_answer, item_group_title, variant_option, popularity_rank, related_product). Populate and update every data-driven section from the feed — the numbers come from the feed, not from memory. Where the feed and the plan diverge, lead with the feed.");
+    var _ch=window.__dgChartsBrief?window.__dgChartsBrief():''; if(_ch){ L.push(_ch); }
     L.push("");
     L.push("## Build notes");
     L.push("- OUTPUT IS A .PPTX — always. HTML decks are no longer an output option. Build on the FeedSpark core deck template: reference-files/deck-templates/FeedSpark_Core_Deck_Template.pptx governs design, elements, colour, text and voice (Inter; slate #0F172A; orange #F7941E; 18 named layouts; footer 'Private & Confidential'). Check reference-files/deck-templates/ for a closer deck-type or client reference deposited by Ray.");
@@ -491,12 +602,15 @@ window.addEventListener('load',restore);
   function renderDeck(){
     var p=cfg.client?PT[cfg.client]:null, client=cfg.client||"[Prospect]";
     var lbl={"1m":"Last month","3m":"Last 3 months","6m":"Last 6 months","fy":"Full FY","all":"All-time"}[cfg.lookback];
-    var total=cfg.out.length+1;
+    var _cs=window.__dgChartSlides?window.__dgChartSlides():[];
+    var total=cfg.out.length+1+_cs.length;
     var cover='<section class="slide cover"><div class="sk"></div><div class="eyebrow2">FeedSpark · '+esc(typeName())+'</div>'
       +'<h1>'+esc(client)+'</h1><div class="meta">'+esc(typeName())+' · look-back: '+lbl+'</div>'
       +(p?'<div class="meta">Feed-optimisation score '+p.score+'/100 · '+p.total+' tasks · '+p.done+' delivered</div>':'')
       +'<div class="foot"><span>FeedSpark · Private &amp; Confidential</span><span>1 / '+total+'</span></div></section>';
-    document.getElementById("dg-slides").innerHTML=cover+cfg.out.map(function(id,i){return slideFor(id,i+2,total,p);}).join('');
+    var chartSlides=_cs.map(function(sl,j){ return '<section class="slide"><div class="sk"></div><div class="eyebrow2">'+sl.eye+'</div><h2>'+sl.h+'</h2><div class="s-body">'+sl.body+'</div>'
+      +'<div class="foot"><span>FeedSpark · Private &amp; Confidential · '+esc(client)+'</span><span>'+(cfg.out.length+2+j)+' / '+total+'</span></div></section>'; }).join('');
+    document.getElementById("dg-slides").innerHTML=cover+cfg.out.map(function(id,i){return slideFor(id,i+2,total,p);}).join('')+chartSlides;
     document.getElementById("dg-title").textContent=client+" — "+typeName();
     document.getElementById("dg-sub2").textContent=total+" slides · "+lbl;
     document.getElementById("dg-stage").hidden=false; window.scrollTo(0,0);
@@ -528,5 +642,247 @@ window.addEventListener('load',restore);
   document.addEventListener("keydown",function(e){if(e.key==="Escape")modal.hidden=true;});
 
   renderTypes(); renderLib(); renderOut();
+})();
+</script>
+<script>
+/* FCC-DG-CHARTS — work-volume chart workbench (Ray, 15 Sep 2026): "a chart generator for any
+   kind of work-volumes type analysis … Reiss for the past six months … project plans, emails,
+   calls, and scheduled work … customised, edited, personalised for AMs". Reads /api/volumes
+   (every stream bucketed by month, scoped per signin), renders in-page SVG (no library), and
+   hands pinned charts to the build brief as data tables the deck skill turns into native
+   PowerPoint charts. Presets + pins live on this device, like the rest of the generator. */
+(function(){
+  var $=function(s){return document.querySelector(s)};
+  var PT=window.PLANTASKS||{};
+  var STREAMS=[['plan','Project-plan tasks','Plan'],['emails','Client emails','Emails'],['calls','Call actions','Calls'],['briefs','Briefs (tickets)','Briefs'],['schedule','Scheduled work','Schedule'],['results','Result rounds','Results']];
+  // validated six-slot categorical set (dataviz palette; adjacent pairlist passes light + dark)
+  var PAL={light:['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948'],dark:['#3987e5','#d95926','#199e70','#c98500','#d55181','#008300','#9085e9','#e66767']};
+  var OTHER={light:'#9aa3ad',dark:'#6b7482'};
+  var VIEWS=[['streams','Volume by stream']];
+  var DIMS={plan:[['category','by category'],['status','by status'],['owner','by owner']],emails:[['decision','by triage decision'],['kind','by kind']],calls:[['meeting','by meeting'],['owner','by owner']],briefs:[['stage','by stage'],['category','by category'],['source','by source']],schedule:[['task','by task type'],['decision','went ahead vs skipped'],['market','by market'],['hours','hours offered · delivered · skipped']],results:[['market','by market'],['verdict','by verdict']]};
+  STREAMS.forEach(function(s){ (DIMS[s[0]]||[]).forEach(function(d){ VIEWS.push([s[0]+':'+d[0],s[2]+' · '+d[1]]); }); });
+  var KEY='fcc-dg-charts';
+  var ST={client:'',n:6,view:'streams',form:'stack',hidden:{},labels:true,table:false,title:'',sub:'',notes:''};
+  var PINS=[], PRESETS=[];
+  try{ var sv=JSON.parse(localStorage.getItem(KEY)||'null'); if(sv){ if(sv.st)Object.keys(sv.st).forEach(function(k){ST[k]=sv.st[k];}); PINS=sv.pins||[]; PRESETS=sv.presets||[]; } }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify({st:ST,pins:PINS,presets:PRESETS})); }catch(e){} }
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function fmt(n){ n=+n||0; return Number.isInteger(n)?n.toLocaleString('en-GB'):n.toLocaleString('en-GB',{maximumFractionDigits:1}); }
+  function dark(){ return document.documentElement.getAttribute('data-theme')==='dark'; }
+  function mlbl(k){ var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; var p=String(k).split('-'); return M[+p[1]-1]+' '+p[0].slice(2); }
+  function msg(t){ var m=$('#vz-msg'); m.textContent=t; clearTimeout(msg._t); msg._t=setTimeout(function(){m.textContent='';},2200); }
+
+  // deep link ?chart=<base64url json>
+  try{ var q=new URLSearchParams(location.search).get('chart'); if(q){ var spec=JSON.parse(decodeURIComponent(escape(atob(q.replace(/-/g,'+').replace(/_/g,'/'))))); Object.keys(spec).forEach(function(k){ST[k]=spec[k];}); } }catch(e){}
+
+  // brand roster: the deck's client list (baked plan brands) — follows the deck client until overridden
+  var deckClient=$('#client');
+  var clSel=$('#vz-client');
+  var brands=Object.keys(PT).sort();
+  clSel.innerHTML='<option value="">— pick a brand —</option>'+brands.map(function(b){return '<option>'+esc(b)+'</option>'}).join('');
+  if(!ST.client&&deckClient&&deckClient.value)ST.client=deckClient.value;
+  clSel.value=ST.client||'';
+  if(deckClient)deckClient.addEventListener('change',function(){ if(!ST._own){ ST.client=deckClient.value; clSel.value=ST.client; load(); } });
+  clSel.onchange=function(){ ST.client=clSel.value; ST._own=true; load(); };
+  $('#vz-view').innerHTML=VIEWS.map(function(v){return '<option value="'+v[0]+'">'+esc(v[1])+'</option>'}).join('');
+  $('#vz-view').value=ST.view; if($('#vz-view').value!==ST.view){ST.view='streams';$('#vz-view').value='streams';}
+  $('#vz-view').onchange=function(){ ST.view=this.value; ST.hidden={}; render(); };
+  function chipSet(id,attr,val){ document.querySelectorAll('#'+id+' .chip').forEach(function(c){ c.classList.toggle('on',c.getAttribute(attr)===String(val)); }); }
+  chipSet('vz-win','data-n',ST.n); chipSet('vz-form','data-f',ST.form);
+  $('#vz-win').onclick=function(e){ var c=e.target.closest('.chip'); if(!c)return; ST.n=+c.getAttribute('data-n'); chipSet('vz-win','data-n',ST.n); load(); };
+  $('#vz-form').onclick=function(e){ var c=e.target.closest('.chip'); if(!c)return; ST.form=c.getAttribute('data-f'); chipSet('vz-form','data-f',ST.form); render(); };
+  $('#vz-labels').checked=ST.labels!==false; $('#vz-labels').onchange=function(){ ST.labels=this.checked; render(); };
+  $('#vz-table').checked=!!ST.table; $('#vz-table').onchange=function(){ ST.table=this.checked; render(); };
+  ['title','sub'].forEach(function(k){ var el=$('#vz-'+k); el.textContent=ST[k]||''; el.addEventListener('input',function(){ ST[k]=el.textContent.trim(); ST._t=1; save(); }); el.addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();el.blur();} }); });
+  $('#vz-notes').value=ST.notes||''; $('#vz-notes').addEventListener('input',function(){ ST.notes=this.value; save(); });
+
+  // ---- data ----
+  var CACHE={}, DATA=null, LOADING=false;
+  function load(){
+    save(); renderPins();
+    if(!ST.client){ DATA=null; render(); return; }
+    var ck=ST.client+'|'+ST.n;
+    if(CACHE[ck]){ DATA=CACHE[ck]; render(); return; }
+    LOADING=true; render();
+    fetch('/api/volumes?client='+encodeURIComponent(ST.client)+'&months='+ST.n).then(function(r){return r.json()}).then(function(d){
+      LOADING=false;
+      if(!d||!d.ok){ DATA={error:(d&&d.error)||'could not read the volumes'}; render(); return; }
+      // plan cold (no service account / never warmed) → the baked monthly volume stands in
+      var pl=d.streams.plan;
+      if(pl&&pl.meta&&pl.meta.source!=='planlive'&&PT[ST.client]&&PT[ST.client].vol){
+        var by={}; d.months.forEach(function(m){by[m]=0;}); var dims={status:{Done:{},Open:{}}}; var n=0;
+        PT[ST.client].vol.forEach(function(v){ var M=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']; var mm=String(v.l||'').match(/^([a-z]{3})\D*(\d{2})$/i); if(!mm)return; var k=('20'+mm[2])+'-'+String(M.indexOf(mm[1].toLowerCase())+1).padStart(2,'0'); if(by[k]==null)return; by[k]+=(v.d||0)+(v.o||0); n+=(v.d||0)+(v.o||0); if(v.d)dims.status.Done[k]=v.d; if(v.o)dims.status.Open[k]=v.o; });
+        d.streams.plan={n:n,byMonth:by,undated:0,outside:0,dims:dims,sums:{},meta:{source:'baked',note:'plan read from the committed monthly volume (status only) — the live plan cache was cold'}};
+      }
+      CACHE[ck]=d; DATA=d; render();
+    }).catch(function(e){ LOADING=false; DATA={error:String(e)}; render(); });
+  }
+
+  // ---- series for the current view ----
+  function series(){
+    if(!DATA||DATA.error)return {months:[],series:[],unit:'items'};
+    var months=DATA.months, out=[], pal=PAL[dark()?'dark':'light'];
+    if(ST.view==='streams'){
+      STREAMS.forEach(function(s,i){ var st=DATA.streams[s[0]]; if(!st)return; out.push({key:s[0],name:s[1],short:s[2],color:pal[i],vals:months.map(function(m){return st.byMonth[m]||0}),n:st.n}); });
+      return {months:months,series:out,unit:'items'};
+    }
+    var p=ST.view.split(':'), st=DATA.streams[p[0]]; if(!st)return {months:months,series:[],unit:'items'};
+    if(p[1]==='hours'){
+      var S=st.sums||{}; var defs=[['hours','Hours offered'],['hoursDelivered','Hours delivered'],['hoursSkipped','Hours skipped']];
+      defs.forEach(function(dd,i){ out.push({key:dd[0],name:dd[1],short:dd[1],color:pal[i],vals:months.map(function(m){return (S[dd[0]]||{})[m]||0}),n:0}); });
+      return {months:months,series:out,unit:'hours'};
+    }
+    var dim=(st.dims||{})[p[1]]||{};
+    var vals=Object.keys(dim).map(function(v){ return {v:v,tot:months.reduce(function(a,m){return a+(dim[v][m]||0)},0)}; }).sort(function(a,b){return b.tot-a.tot||a.v.localeCompare(b.v)});
+    var top=vals.slice(0,7), rest=vals.slice(7);
+    top.forEach(function(x,i){ out.push({key:x.v,name:x.v,short:x.v,color:pal[i],vals:months.map(function(m){return dim[x.v][m]||0}),n:x.tot}); });
+    if(rest.length){ out.push({key:'__other',name:'Other ('+rest.length+')',short:'Other',color:OTHER[dark()?'dark':'light'],vals:months.map(function(m){return rest.reduce(function(a,x){return a+(dim[x.v][m]||0)},0)}),n:rest.reduce(function(a,x){return a+x.tot},0)}); }
+    return {months:months,series:out,unit:'items'};
+  }
+  function visible(S){ return S.series.filter(function(s){return !ST.hidden[s.key]}); }
+
+  // ---- render ----
+  function defaultTitle(S){
+    var v=VIEWS.filter(function(x){return x[0]===ST.view})[0]; var lbl=v?v[1]:'';
+    return (ST.client||'Brand')+' — '+(ST.view==='streams'?'work volume by stream':lbl.replace(' · ',': '))+' · '+mlbl(S.months[0])+' – '+mlbl(S.months[S.months.length-1]);
+  }
+  function render(){
+    var S=series(), plot=$('#vz-plot'), empty=$('#vz-empty'), svg=$('#vz-svg');
+    $('#vz-title').setAttribute('data-ph',S.months.length?defaultTitle(S):'Chart title — click to edit');
+    // series chips (streams view: toggles; breakdowns: legend does the toggling)
+    $('#vz-series').innerHTML=S.series.map(function(s){ return '<span class="sc'+(ST.hidden[s.key]?' off':'')+'" data-k="'+esc(s.key)+'" title="'+esc(s.name)+' — click to hide / show"><i style="background:'+s.color+'"></i>'+esc(s.short)+' <b>'+fmt(s.vals.reduce(function(a,b){return a+b},0))+'</b></span>'; }).join('');
+    if(!ST.client){ svg.innerHTML=''; empty.hidden=false; empty.textContent='Pick a brand to read its workstreams.'; $('#vz-legend').innerHTML=''; $('#vz-tblwrap').hidden=true; $('#vz-src').textContent=''; return; }
+    if(LOADING){ svg.innerHTML=''; empty.hidden=false; empty.textContent='Reading '+ST.client+'’s workstreams…'; return; }
+    if(!DATA||DATA.error){ svg.innerHTML=''; empty.hidden=false; empty.textContent='Could not read the volumes'+(DATA&&DATA.error?' — '+DATA.error:''); return; }
+    var vis=visible(S);
+    if(!vis.length||!vis.some(function(s){return s.vals.some(function(v){return v>0})})){ svg.innerHTML=''; empty.hidden=false; empty.textContent='Nothing recorded in this window for this view.'; $('#vz-legend').innerHTML=''; $('#vz-tblwrap').hidden=true; renderSrc(); return; }
+    empty.hidden=true;
+    svg.innerHTML=draw(S,vis,ST.form,ST.labels!==false,true);
+    $('#vz-legend').innerHTML=S.series.length>1?S.series.map(function(s){ return '<span class="'+(ST.hidden[s.key]?'off':'')+'" data-k="'+esc(s.key)+'"><i style="background:'+s.color+'"></i>'+esc(s.name)+'</span>'; }).join(''):'';
+    renderTable(S,vis);
+    renderSrc();
+  }
+  function renderSrc(){
+    if(!DATA||DATA.error){ $('#vz-src').textContent=''; return; }
+    var parts=[]; STREAMS.forEach(function(s){ var st=DATA.streams[s[0]]; if(!st)return; var m=st.meta||{}; var bits=[s[2]+' '+fmt(st.n)]; if(st.undated)bits.push(st.undated+' undated'); if(m.source==='baked')bits.push('baked plan volume'); if(m.source==='cold'||m.source==='none')bits.push('not available'); if(s[0]==='schedule'&&m.source)bits.push(m.source==='snapshot'?'snapshot':'live'); parts.push(bits.join(' · ')); });
+    var notes=[]; STREAMS.forEach(function(s){ var m=(DATA.streams[s[0]]||{}).meta; if(m&&m.note)notes.push(m.note); });
+    $('#vz-src').innerHTML='Source: '+esc(parts.join('  ·  '))+(notes.length?'<br>'+esc(notes.join(' · ')):'')+(DATA.scoped?'<br>🔒 your client scope':'');
+  }
+  function renderTable(S,vis){
+    var wrap=$('#vz-tblwrap'); wrap.hidden=!ST.table; if(!ST.table)return;
+    var h='<thead><tr><th>Series</th>'+S.months.map(function(m){return '<th>'+esc(mlbl(m))+'</th>'}).join('')+'<th>Total</th></tr></thead><tbody>';
+    vis.forEach(function(s){ h+='<tr><td>'+esc(s.name)+'</td>'+s.vals.map(function(v){return '<td>'+fmt(v)+'</td>'}).join('')+'<td>'+fmt(s.vals.reduce(function(a,b){return a+b},0))+'</td></tr>'; });
+    var tot=S.months.map(function(m,i){return vis.reduce(function(a,s){return a+s.vals[i]},0)});
+    h+='<tr class="tot"><td>Total</td>'+tot.map(function(v){return '<td>'+fmt(v)+'</td>'}).join('')+'<td>'+fmt(tot.reduce(function(a,b){return a+b},0))+'</td></tr></tbody>';
+    $('#vz-tbl').innerHTML=h;
+  }
+  // SVG chart — viewBox 1000×380, thin marks, 2px gaps, direct labels ≤4 series, hover targets
+  function draw(S,vis,form,labels,interactive){
+    var W=1000,H=380,L=52,R=16,T=18,B=40, months=S.months, n=months.length, k=vis.length;
+    var pw=W-L-R, ph=H-T-B, out='', isDark=dark(), ink=isDark?'#E7E9ED':'#333', mut=isDark?'#828D9C':'#8a94a0', paper=isDark?'#1C1F27':'#fff';
+    var X=function(i){return L+pw*(i+0.5)/n};
+    if(form==='hbar'){
+      var rows=vis.map(function(s){return {name:s.name,color:s.color,v:s.vals.reduce(function(a,b){return a+b},0)}}).sort(function(a,b){return b.v-a.v});
+      var mx=Math.max.apply(null,rows.map(function(r){return r.v}).concat([1])), rh=Math.min(34,(ph)/rows.length), lw=230, bw=W-lw-R-70;
+      var hh=T+rows.length*rh+B; out='';
+      rows.forEach(function(r,i){ var y=T+i*rh, w=Math.max(r.v?4:0,bw*r.v/mx);
+        out+='<text x="'+(lw-10)+'" y="'+(y+rh/2+4)+'" text-anchor="end" class="d" fill="'+ink+'">'+esc(r.name.length>30?r.name.slice(0,29)+'…':r.name)+'</text>';
+        out+='<path d="'+rrect(lw,y+3,w,rh-6,4,'r')+'" fill="'+r.color+'"><title>'+esc(r.name+': '+fmt(r.v))+'</title></path>';
+        out+='<text x="'+(lw+w+8)+'" y="'+(y+rh/2+4)+'" class="v" fill="'+ink+'">'+fmt(r.v)+'</text>'; });
+      return '<g data-h="'+hh+'">'+out+'</g>';
+    }
+    var stacked=form==='stack'||form==='pct', pct=form==='pct';
+    var tot=months.map(function(m,i){return vis.reduce(function(a,s){return a+s.vals[i]},0)});
+    var mx=1;
+    if(pct)mx=100; else if(stacked)mx=Math.max.apply(null,tot.concat([1])); else vis.forEach(function(s){s.vals.forEach(function(v){mx=Math.max(mx,v)})});
+    var nice=niceMax(mx); var Y=function(v){return T+ph-ph*v/nice};
+    // grid + y labels
+    for(var g=0;g<=4;g++){ var gv=nice*g/4; out+='<line class="g" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(gv)+'" y2="'+Y(gv)+'" stroke="'+(isDark?'#2C3039':'#E6E6E6')+'"/><text x="'+(L-8)+'" y="'+(Y(gv)+4)+'" text-anchor="end" fill="'+mut+'">'+(pct?Math.round(gv)+'%':fmt(gv))+'</text>'; }
+    months.forEach(function(m,i){ out+='<text x="'+X(i)+'" y="'+(H-14)+'" text-anchor="middle" fill="'+mut+'">'+esc(mlbl(m))+'</text>'; });
+    var bw=Math.min(64,pw/n*0.58);
+    if(stacked){
+      months.forEach(function(m,i){ var y0=T+ph, x=X(i)-bw/2, tt=tot[i]||1;
+        var segs=vis.map(function(s){return {s:s,v:s.vals[i]}}).filter(function(z){return z.v>0});
+        segs.forEach(function(z,j){ var vv=pct?z.v/tt*100:z.v, h=ph*vv/nice, y=y0-h, top=j===segs.length-1;
+          var hgap=Math.max(0,h-(j?2:0));
+          out+='<path d="'+rrect(x,y,bw,hgap,top?4:0,'t')+'" fill="'+z.s.color+'"/>';
+          if(labels&&hgap>=15&&(pct||vis.length<=8)) out+='<text x="'+X(i)+'" y="'+(y+hgap/2+4)+'" text-anchor="middle" class="v" fill="#fff" style="font-weight:800;font-size:11px;fill:#fff">'+(pct?Math.round(vv)+'%':fmt(z.v))+'</text>';
+          y0=y; });
+        if(!pct&&tot[i]) out+='<text x="'+X(i)+'" y="'+(Y(tot[i])-6)+'" text-anchor="middle" class="d" fill="'+ink+'">'+fmt(tot[i])+'</text>';
+      });
+    } else {
+      vis.forEach(function(s,si){ var d=''; s.vals.forEach(function(v,i){ d+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1); });
+        out+='<path d="'+d+'" fill="none" stroke="'+s.color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+        s.vals.forEach(function(v,i){ out+='<circle cx="'+X(i)+'" cy="'+Y(v)+'" r="4" fill="'+s.color+'" stroke="'+paper+'" stroke-width="2"/>'; });
+        if(vis.length<=4){ var li=s.vals.length-1; out+='<text x="'+(X(li)+8)+'" y="'+(Y(s.vals[li])+4)+'" class="d" fill="'+ink+'" text-anchor="start" style="font-size:11px">'+esc(s.short)+'</text>'; }
+        else if(labels){ var lj=s.vals.length-1; out+='<text x="'+X(lj)+'" y="'+(Y(s.vals[lj])-8)+'" class="v" text-anchor="middle" fill="'+ink+'">'+fmt(s.vals[lj])+'</text>'; }
+      });
+    }
+    if(interactive){ months.forEach(function(m,i){ out+='<rect class="hit" data-i="'+i+'" x="'+(L+pw*i/n)+'" y="'+T+'" width="'+(pw/n)+'" height="'+ph+'"/>'; }); }
+    return out;
+  }
+  function rrect(x,y,w,h,r,side){ if(h<=0||w<=0)return 'M0 0'; r=Math.min(r,h/2,w/2);
+    if(side==='t') return 'M'+x+' '+(y+h)+'V'+(y+r)+'Q'+x+' '+y+' '+(x+r)+' '+y+'H'+(x+w-r)+'Q'+(x+w)+' '+y+' '+(x+w)+' '+(y+r)+'V'+(y+h)+'Z';
+    return 'M'+x+' '+y+'H'+(x+w-r)+'Q'+(x+w)+' '+y+' '+(x+w)+' '+(y+r)+'V'+(y+h-r)+'Q'+(x+w)+' '+(y+h)+' '+(x+w-r)+' '+(y+h)+'H'+x+'Z'; }
+  function niceMax(v){ if(v<=5)return 5; var p=Math.pow(10,Math.floor(Math.log10(v))); var f=v/p; var nf=f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10; return nf*p; }
+
+  // hover tooltip (month column → every visible series + total)
+  var plotEl=$('#vz-plot'), tip=$('#vz-tip');
+  plotEl.addEventListener('mousemove',function(e){ var h=e.target.closest('.hit'); if(!h){tip.hidden=true;return;} var S=series(), vis=visible(S), i=+h.getAttribute('data-i');
+    var rows=vis.map(function(s){return '<div class="r"><span><i style="background:'+s.color+'"></i>'+esc(s.name)+'</span><span>'+fmt(s.vals[i])+(S.unit==='hours'?' h':'')+'</span></div>'}).join('');
+    var tot=vis.reduce(function(a,s){return a+s.vals[i]},0);
+    tip.innerHTML='<b>'+esc(mlbl(S.months[i]))+'</b>'+rows+(vis.length>1?'<div class="r t"><span>Total</span><span>'+fmt(tot)+'</span></div>':'');
+    tip.hidden=false; var r=plotEl.getBoundingClientRect(); var x=e.clientX-r.left+14, y=e.clientY-r.top+14; if(x+tip.offsetWidth>r.width-4)x=e.clientX-r.left-tip.offsetWidth-14; tip.style.left=x+'px'; tip.style.top=y+'px'; });
+  plotEl.addEventListener('mouseleave',function(){tip.hidden=true;});
+  function toggleKey(k){ ST.hidden[k]=!ST.hidden[k]; save(); render(); }
+  $('#vz-series').addEventListener('click',function(e){ var c=e.target.closest('.sc'); if(c)toggleKey(c.getAttribute('data-k')); });
+  $('#vz-legend').addEventListener('click',function(e){ var c=e.target.closest('span[data-k]'); if(c)toggleKey(c.getAttribute('data-k')); });
+  new MutationObserver(function(){ render(); }).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+  // ---- pins → the build brief + the preview ----
+  function snapshot(){ var S=series(), vis=visible(S); if(!S.months.length||!vis.length)return null;
+    return {id:'c'+Date.now().toString(36),client:ST.client,n:ST.n,view:ST.view,form:ST.form,unit:S.unit,title:ST.title||defaultTitle(S),sub:ST.sub||'',notes:ST.notes||'',months:S.months.slice(),
+      series:vis.map(function(s){return {name:s.name,color:s.color,vals:s.vals.slice()}}),at:Date.now()}; }
+  function renderPins(){ var el=$('#vz-pinned'); if(!PINS.length){ el.innerHTML=''; return; }
+    el.innerHTML='<span class="pnl">Pinned to brief · '+PINS.length+'</span>'+PINS.map(function(p){return '<span class="pn" title="'+esc(p.title)+'"><span>'+esc(p.title)+'</span><button type="button" data-id="'+esc(p.id)+'" aria-label="Unpin">×</button></span>'}).join(''); }
+  $('#vz-pinned').addEventListener('click',function(e){ var b=e.target.closest('button[data-id]'); if(!b)return; PINS=PINS.filter(function(p){return p.id!==b.getAttribute('data-id')}); save(); renderPins(); msg('Unpinned'); });
+  $('#vz-pin').onclick=function(){ var p=snapshot(); if(!p){ msg('Nothing to pin yet'); return; } PINS.push(p); save(); renderPins(); msg('Pinned — it rides the next build brief'); };
+  window.__dgChartsBrief=function(){ if(!PINS.length)return '';
+    var L=['','## Work-volume charts (pinned in the Deck Generator)','','Build EACH as a NATIVE PowerPoint chart on its own slide (never a screenshot): the template’s chart colours, thin marks, a legend, the data labels the table carries. Keep the title and subtitle as written; the notes are the speaker line.',''];
+    PINS.forEach(function(p,i){ var v=VIEWS.filter(function(x){return x[0]===p.view})[0];
+      L.push('### Chart '+(i+1)+' — '+p.title); if(p.sub)L.push('_'+p.sub+'_');
+      L.push('- Brand: '+p.client+' · window: '+mlbl(p.months[0])+' – '+mlbl(p.months[p.months.length-1])+' ('+p.n+' months) · view: '+(v?v[1]:p.view)+' · form: '+({stack:'stacked columns',line:'lines',pct:'100% stacked columns',hbar:'horizontal totals'}[p.form]||p.form)+(p.unit==='hours'?' · unit: hours':''));
+      if(p.notes)L.push('- Notes: '+p.notes.replace(/\s+/g,' '));
+      L.push(''); L.push('| Series | '+p.months.map(mlbl).join(' | ')+' | Total |'); L.push('|---|'+p.months.map(function(){return '---:'}).join('|')+'|---:|');
+      p.series.forEach(function(s){ L.push('| '+s.name+' | '+s.vals.map(fmt).join(' | ')+' | '+fmt(s.vals.reduce(function(a,b){return a+b},0))+' |'); });
+      L.push(''); });
+    return L.join('\n'); };
+  window.__dgChartSlides=function(){ return PINS.map(function(p){ var S={months:p.months,unit:p.unit}, vis=p.series.map(function(s){return {key:s.name,name:s.name,short:s.name,color:s.color,vals:s.vals}});
+    return {eye:'Work volume',h:esc(p.title),body:'<div class="s-chart">'+(p.sub?'<div class="s-cnote" style="margin:0 0 6px">'+esc(p.sub)+'</div>':'')+'<svg viewBox="0 0 1000 380" preserveAspectRatio="xMidYMid meet">'+draw(S,vis,p.form,true,false)+'</svg>'+(vis.length>1?'<div class="s-clg">'+vis.map(function(s){return '<span><i style="background:'+s.color+'"></i>'+esc(s.name)+'</span>'}).join('')+'</div>':'')+(p.notes?'<div class="s-cnote">'+esc(p.notes)+'</div>':'')+'</div>'}; }); };
+
+  // ---- exports ----
+  $('#vz-copy').onclick=function(){ var S=series(), vis=visible(S); if(!vis.length){msg('Nothing to copy');return;}
+    var lines=['Series\t'+S.months.map(mlbl).join('\t')+'\tTotal']; vis.forEach(function(s){ lines.push(s.name+'\t'+s.vals.join('\t')+'\t'+s.vals.reduce(function(a,b){return a+b},0)); });
+    try{ navigator.clipboard.writeText(lines.join('\n')); msg('Table copied (paste into Sheets / PowerPoint)'); }catch(e){ msg('Copy blocked by the browser'); } };
+  $('#vz-png').onclick=function(){ var S=series(), vis=visible(S); if(!vis.length){msg('Nothing to export');return;}
+    var isDark=dark(), ink=isDark?'#E7E9ED':'#333', mut=isDark?'#828D9C':'#8a94a0', paper=isDark?'#1C1F27':'#fff';
+    var title=ST.title||defaultTitle(S), sub=ST.sub||'';
+    var legend=vis.length>1?vis.map(function(s,i){return '<rect x="'+(52+i*150)+'" y="452" width="11" height="11" rx="3" fill="'+s.color+'"/><text x="'+(69+i*150)+'" y="462" font-size="12" font-weight="700" fill="'+ink+'">'+esc(s.name.length>18?s.name.slice(0,17)+'…':s.name)+'</text>'}).join(''):'';
+    var body=draw(S,vis,ST.form,ST.labels!==false,false).replace(/class="g"/g,'').replace(/class="v"/g,'font-size="11" font-weight="800"').replace(/class="d"/g,'font-size="11.5" font-weight="900"');
+    var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 490" width="2000" height="980" font-family="Lato,Helvetica,Arial,sans-serif"><rect width="1000" height="490" fill="'+paper+'"/><text x="52" y="30" font-size="18" font-weight="900" fill="'+ink+'">'+esc(title)+'</text>'+(sub?'<text x="52" y="50" font-size="12.5" font-weight="700" fill="'+mut+'">'+esc(sub)+'</text>':'')+'<g transform="translate(0,62)" font-size="12" font-weight="700" fill="'+mut+'">'+body+'</g>'+legend+'<text x="52" y="482" font-size="10.5" font-weight="700" fill="'+mut+'">FeedSpark · Private &amp; Confidential</text></svg>';
+    var img=new Image(); var url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
+    img.onload=function(){ var c=document.createElement('canvas'); c.width=2000; c.height=980; var ctx=c.getContext('2d'); ctx.drawImage(img,0,0); URL.revokeObjectURL(url);
+      var a=document.createElement('a'); a.download=(ST.client||'chart').replace(/[^a-z0-9]+/gi,'_')+'_work_volume_'+ST.view.replace(':','_')+'.png'; a.href=c.toDataURL('image/png'); document.body.appendChild(a); a.click(); a.remove(); msg('PNG downloaded'); };
+    img.onerror=function(){ msg('PNG export failed in this browser'); }; img.src=url; };
+  $('#vz-link').onclick=function(){ var spec={client:ST.client,n:ST.n,view:ST.view,form:ST.form,hidden:ST.hidden,labels:ST.labels,table:ST.table,title:ST.title,sub:ST.sub,notes:ST.notes};
+    var b=btoa(unescape(encodeURIComponent(JSON.stringify(spec)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    var u=location.origin+location.pathname+'?chart='+b; try{ navigator.clipboard.writeText(u); msg('Link copied — opens this exact chart'); }catch(e){ prompt('Chart link',u); } };
+  // presets — per device, named by the AM
+  function renderPresets(){ var s=$('#vz-preset'); s.innerHTML='<option value="">My presets…</option>'+PRESETS.map(function(p,i){return '<option value="'+i+'">'+esc(p.name)+'</option>'}).join(''); }
+  $('#vz-save').onclick=function(){ var name=prompt('Name this preset (brand, view and styling are saved):',(ST.title||defaultTitle(series()))); if(!name)return;
+    PRESETS.push({name:name,spec:{client:ST.client,n:ST.n,view:ST.view,form:ST.form,hidden:ST.hidden,labels:ST.labels,table:ST.table,title:ST.title,sub:ST.sub,notes:ST.notes}}); save(); renderPresets(); $('#vz-preset').value=String(PRESETS.length-1); msg('Preset saved on this device'); };
+  $('#vz-preset').onchange=function(){ var p=PRESETS[+this.value]; if(!p)return; Object.keys(p.spec).forEach(function(k){ST[k]=p.spec[k];}); ST._own=true; clSel.value=ST.client; $('#vz-view').value=ST.view; chipSet('vz-win','data-n',ST.n); chipSet('vz-form','data-f',ST.form); $('#vz-labels').checked=ST.labels!==false; $('#vz-table').checked=!!ST.table; $('#vz-title').textContent=ST.title||''; $('#vz-sub').textContent=ST.sub||''; $('#vz-notes').value=ST.notes||''; load(); };
+  $('#vz-del').onclick=function(){ var i=+$('#vz-preset').value; if(!PRESETS[i]){msg('Pick a preset first');return;} if(!confirm('Delete preset “'+PRESETS[i].name+'”?'))return; PRESETS.splice(i,1); save(); renderPresets(); msg('Preset deleted'); };
+  renderPresets(); renderPins(); load();
 })();
 </script>

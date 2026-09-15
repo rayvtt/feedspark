@@ -41,6 +41,8 @@ jobs:
         run: node tools/test_pdpharvest.mjs
       - name: Scheduled Work harness (the content team's sheet → skip cadence per brand)
         run: node tools/test_schedule.mjs
+      - name: Work-volumes harness (every workstream bucketed by month)
+        run: node tools/test_volumes.mjs
 
       - name: Shipped-feature markers (multi-session overwrite tripwire)
         run: node tools/check_markers.js
