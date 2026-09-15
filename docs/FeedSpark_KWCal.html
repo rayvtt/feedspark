@@ -92,6 +92,9 @@ window.addEventListener('load',restore);
   .stx.progress{color:#2F6FB0;border-color:rgba(47,111,176,.4);background:rgba(47,111,176,.08)}
   .stx.blocked{color:var(--risk);border-color:rgba(192,57,43,.4);background:rgba(192,57,43,.08)}
   .stx.running{color:#9D174D;border-color:rgba(157,23,77,.4);background:rgba(157,23,77,.08)}
+  .wfb.gz{color:var(--risk);border-color:rgba(192,57,43,.45);background:rgba(192,57,43,.09)}
+  .stx.ghost{color:var(--risk);border-color:rgba(192,57,43,.45);background:rgba(192,57,43,.09);text-decoration:none}
+  .stx.ghost:hover{background:rgba(192,57,43,.16)}
   .stx.analysis{color:#7C3AED;border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.08)}
   .stx.confirmed{color:var(--good);border-color:rgba(21,128,61,.4);background:#EBF7EF}
   /* a WF-linked chip is a LINK, not a control — the stage moves in Workflow, never here */
@@ -494,6 +497,7 @@ window.addEventListener('load',restore);
 [data-theme=dark] .stx.progress{background:rgba(91,130,190,.18);border-color:rgba(91,130,190,.36);color:#93B4E0}
 [data-theme=dark] .stx.blocked{background:rgba(241,112,122,.14);border-color:rgba(241,112,122,.32);color:#F3868F}
 [data-theme=dark] .stx.running{background:rgba(236,72,153,.16);border-color:rgba(236,72,153,.34);color:#EC4899}
+[data-theme=dark] .stx.ghost{background:rgba(241,112,122,.16);border-color:rgba(241,112,122,.36);color:#F3868F}
 [data-theme=dark] .stx.analysis{background:rgba(155,110,240,.16);border-color:rgba(155,110,240,.34);color:#B694F5}
 [data-theme=dark] .stx .ct{background:rgba(255,255,255,.12)}
 [data-theme=dark] .rchip{background:#20242E}
@@ -576,7 +580,15 @@ var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
 // default when the brand has no calImg in KV; a URL/upload set in-page always overrides.
 var CALSEED={Reiss:'/kwcal/cal/reiss_marketing_planner.webp'};
 var LANES=[['campaign','Campaign'],['location','Moments · Location'],['studio','Moments · Studio'],['sale','Sale']];
-var STATES=['planned','intake','briefed','live','done'];
+// The manual chip may only claim what the calendar itself knows: it is planned, or it has been
+// picked up into intake. Everything past that is the PIPELINE's word (Ray's own rule, 11 Sep
+// 2026: "the stage moves in Workflow, not here"). Cycling to 'briefed' here used to set a flag
+// nothing backed — the moment read as briefed on every teammate's board while no ticket, no
+// Intake row and no plan row existed anywhere (Ray, 15 Sep 2026: "still not seeing Steven's
+// brief through to my view"). GHOST_STATES are the ones a moment can only be carrying from
+// that old cycle; they are shown as the warning they are, never as a stage.
+var STATES=['planned','intake'];
+var GHOST_STATES=['briefed','live','done'];
 var LEAD_DAYS=21; // keyword optimisation lands ~3 weeks before the moment
 
 /* ---- Reiss seed — transcribed from the brand's shared marketing calendar (Jul–Dec 2026).
@@ -653,9 +665,10 @@ function dLbl(e){ var d=new Date(e.date+'T12:00:00Z'); return (e.wc?'w/c ':'')+d
 function kpis(){
   var E=evs();
   var st={planned:0,intake:0,briefed:0,live:0,done:0}, vol=0, scoped=0, unset=0;
-  var resIn=0, briefed=0;
+  var resIn=0, briefed=0, ghosts=0;
   E.forEach(function(e){ var wf=wfFor(CLIENT,e); var k=stOf(wf,e); st[k]=(st[k]||0)+1;
-    if(wf)briefed++; if(resFor(CLIENT,e))resIn++;
+    if(wf)briefed++; else if(isGhost(e,wf))ghosts++;
+    if(resFor(CLIENT,e))resIn++;
     var v=volOf(CLIENT,e);
     if(v&&!v.unset&&!v.wide){vol+=v.vol;scoped++} else if(!e.brandwide&&(!v||v.unset))unset++; });
   // the live saturation audit — keywords land in g:product_type2..10, and every brand/market
@@ -671,7 +684,8 @@ function kpis(){
     +satK
     +'<div class="kpi'+(resIn?' good':'')+'"><div class="n">'+resIn+'</div><div class="l">Results reported</div></div>'
     +(unset?'<div class="kpi warn"><div class="n">'+unset+'</div><div class="l">Scopes to set</div></div>':'')
-    +((E.length-briefed)?'<div class="kpi"><div class="n">'+(E.length-briefed)+'</div><div class="l">Not yet briefed</div></div>':'');
+    +((E.length-briefed)?'<div class="kpi"><div class="n">'+(E.length-briefed)+'</div><div class="l">Not yet briefed</div></div>':'')
+    +(ghosts?'<div class="kpi warn" title="Marked briefed/live/done on this calendar, but no ticket exists behind them — nobody is carrying the work. Open each one and raise the brief."><div class="n">'+ghosts+'</div><div class="l">Claimed, never briefed</div></div>':'');
 }
 /* ---- The board is a ROLLING PLAN, not the span of whatever moments happen to exist
    (Ray, 14 Sep 2026: "where is December and onwards? Please show six months from the current
@@ -744,13 +758,19 @@ function ownChip(e){
   return '<button type="button" class="own'+(nm?'':' none')+'" data-own="'+esc(e.id)+'" title="'
     +(nm?'Owner: '+esc(nm)+' — click to change':'Unassigned — click to assign an owner')+'">'+esc(nm?ownIni(nm):'+')+'</button>';
 }
+// a moment claiming a pipeline stage with no ticket behind it — the calendar's old manual cycle
+function isGhost(e,wf){ return !wf && GHOST_STATES.indexOf((e&&e.st)||'')>=0; }
 function stChip(brand,e,wf,st){
   if(wf){ var ct=COURTM[st]||'';
     return '<a class="stx '+esc(st)+' wfl" href="/workflow" title="Live from the Workflow pipeline'
       +(wf.id?' · ticket '+esc(wf.id):'')+(ct?' · '+esc(ct)+' holds the ball':'')
       +' — the stage moves in Workflow, not here">'+esc(st)+(ct?'<b class="ct">'+esc(ct)+'</b>':'')+'</a>'; }
+  if(isGhost(e,wf))
+    return '<a class="stx ghost" href="'+esc(briefLinkFor(brand,e))+'" title="Marked &quot;'+esc(e.st)
+      +'&quot; on this calendar, but NO ticket exists — nothing is in Workflow, nothing in Intake and '
+      +'nothing in the project plan, so nobody is carrying it. Click to raise the brief for real.">⚠ not briefed</a>';
   return '<button type="button" class="stx '+esc(st)+'" data-st="'+esc(e.id)+'" title="Not briefed yet — '
-    +'click to set the manual stage, or → Brief to raise the ticket and let Workflow drive it">'+esc(st)+'</button>';
+    +'click to mark it picked up into intake, or → Brief to raise the ticket and let Workflow drive it">'+esc(st)+'</button>';
 }
 /* ---- results: the loop closes back onto the moment (Ray: "including result") ----
  * Dino's scheduled result emails are archived per brand × market × HALF-MONTH period
@@ -800,13 +820,14 @@ function resPop(btn,brand,e,r){
 // Workflow briefs carry their stage on b.status — b.st never existed, so every consumer of
 // wfFor() was reading undefined and badging "WF \u00b7 undefined". Resolve it in one place so a live
 // pipeline stage lands on the board, in the KPIs and in the client PDF.
-function stOf(wf,e){ return (wf&&(wf.status||wf.st))||(e&&e.st)||'planned'; }
+function stOf(wf,e){ if(wf)return wf.status||wf.st;
+  return (e&&GHOST_STATES.indexOf(e.st)<0&&e.st)||'planned'; }   // a ghost claim never counts as a stage
 function evsOf(brand){ var r=STORE[brand]||{}; return (r.events||[]).slice().sort(function(a,b){return String(a.date).localeCompare(String(b.date))}); }
 function ovBrands(){ return Object.keys(STORE).filter(function(k){return k.charAt(0)!=='_'&&(STORE[k]&&(STORE[k].events||[]).length)}).sort(); }
 function renderOverview(){
   $('#cal-wrap').hidden=true; $('#ov').hidden=false;
   $('#cal-title').textContent='All brands — keyword optimisation overview';
-  var brands=ovBrands(), tot=0, inflight=0, done=0, vol=0, resIn=0;
+  var brands=ovBrands(), tot=0, inflight=0, done=0, vol=0, resIn=0, ghost=0;
   var h='';
   brands.forEach(function(brand){
     var E=evsOf(brand);
@@ -815,7 +836,7 @@ function renderOverview(){
       (byMon[k]=byMon[k]||[]).push(e); });
     var next=null;
     E.forEach(function(e){ var wf=wfFor(brand,e), st=stOf(wf,e);
-      tot++; if(resFor(brand,e))resIn++;
+      tot++; if(resFor(brand,e))resIn++; if(isGhost(e,wf))ghost++;
       if(st==='intake'||st==='briefed'||st==='progress'||st==='live')inflight++;
       if(st==='done'||st==='confirmed')done++;
       var vv=volOf(brand,e); if(vv&&!vv.unset&&!vv.wide)vol+=vv.vol;
@@ -830,7 +851,8 @@ function renderOverview(){
           +byMon[k].map(function(e){ var wf=wfFor(brand,e), st=stOf(wf,e), mm=volOf(brand,e);
             return '<button type="button" class="ovc" data-pop="'+esc(brand)+'|'+esc(e.id)+'"><span class="dot '+esc(st)+'"></span>'+esc(e.name)
               +(mm&&!mm.unset?'<span class="ov-vol">'+fmt(mm.vol)+(mm.wide?' · all':'')+'</span>':'')
-              +(wf?'<span class="wfb" title="Live from the Workflow pipeline'+(COURTM[st]?' · '+esc(COURTM[st])+'\u2019s court':'')+'">WF · '+esc(st)+'</span>':'')
+              +(wf?'<span class="wfb" title="Live from the Workflow pipeline'+(COURTM[st]?' · '+esc(COURTM[st])+'\u2019s court':'')+'">WF · '+esc(st)+'</span>'
+                 :(isGhost(e,wf)?'<span class="wfb gz" title="Marked &quot;'+esc(e.st)+'&quot; on the calendar with no ticket behind it — nothing in Workflow, Intake or the plan">⚠ not briefed</span>':''))
               +(resFor(brand,e)?'<span class="wfb rz" title="Result reported">📈</span>':'')+'</button>';
           }).join('')+'</div></div>';
       }).join('')+'</div></div>';
@@ -840,6 +862,7 @@ function renderOverview(){
     '<div class="kpi"><div class="n">'+brands.length+'</div><div class="l">Brands scheduled</div></div>'
     +'<div class="kpi"><div class="n">'+tot+'</div><div class="l">KW optimisations</div></div>'
     +'<div class="kpi warn"><div class="n">'+inflight+'</div><div class="l">In flight (incl. Workflow)</div></div>'
+    +(ghost?'<div class="kpi warn" title="Claiming briefed/live/done on a calendar with no ticket behind them"><div class="n">'+ghost+'</div><div class="l">Claimed, never briefed</div></div>':'')
     +'<div class="kpi good"><div class="n">'+done+'</div><div class="l">Done</div></div>'
     +'<div class="kpi"><div class="n">'+(vol?fmt(vol):'—')+'</div><div class="l">Category SKUs impacted</div></div>'
     +'<div class="kpi'+(resIn?' good':'')+'"><div class="n">'+resIn+'</div><div class="l">Results reported</div></div>';

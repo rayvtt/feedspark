@@ -239,6 +239,29 @@ is('and it is named as outside the window', winApi.outsideWin().map((e) => e.id)
 is('month labels carry the short year', winApi.monLbl(2026 * 12 + 11), 'Dec \u201926');
 is('and roll into the next one', winApi.monLbl(2027 * 12 + 0), 'Jan \u201927');
 
+/* ---- a calendar chip may not claim a stage only a TICKET can earn -----------------------
+ * (Ray, 15 Sep 2026: "still not seeing Steven's brief through to my view"). The manual chip
+ * used to cycle planned → intake → briefed → live → done, so a teammate could mark a moment
+ * "briefed" on the shared calendar while no ticket, no Intake row and no plan row existed —
+ * and it reached every other board looking exactly like real briefed work. */
+{
+  const api = new Function(
+    liftDecl('STATES') + liftDecl('GHOST_STATES') + lift('isGhost') + lift('stOf') +
+    'return { STATES, GHOST_STATES, isGhost, stOf };')();
+
+  is('the manual cycle stops before the pipeline stages', api.STATES, ['planned', 'intake']);
+  is('…and the stages only a ticket can earn are named', api.GHOST_STATES, ['briefed', 'live', 'done']);
+
+  is('a moment claiming "briefed" with no ticket is a ghost', api.isGhost({ st: 'briefed' }, null), true);
+  is('…so is one claiming live or done', [api.isGhost({ st: 'live' }, null), api.isGhost({ st: 'done' }, null)], [true, true]);
+  is('a planned or intake moment is not', [api.isGhost({ st: 'planned' }, null), api.isGhost({ st: 'intake' }, null)], [false, false]);
+  is('and neither is one with a real ticket', api.isGhost({ st: 'briefed' }, { id: 'IB-1', status: 'progress' }), false);
+
+  is('a ghost never reports as a stage', api.stOf(null, { st: 'briefed' }), 'planned');
+  is('a real ticket always wins', api.stOf({ status: 'running' }, { st: 'briefed' }), 'running');
+  is('an honest manual state still shows', api.stOf(null, { st: 'intake' }), 'intake');
+}
+
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) { fails.forEach((f) => console.error('  ✗ ' + f)); process.exit(1); }
 console.log('PASS');
