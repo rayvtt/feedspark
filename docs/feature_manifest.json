@@ -4369,6 +4369,27 @@
    "pattern": "light island(s) in dark mode",
    "pr": 364,
    "min": 1
+  },
+  {
+   "name": "Dark view: dossier archive / materials / results rows are dark cards (the generic .tt rule no longer paints a bar behind the name)",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "[data-theme=dark] .dz-mat-i{background:var(--paper)",
+   "pr": 365,
+   "min": 1
+  },
+  {
+   "name": "Dark view: A/B metric deltas use the theme tokens, never hex greens/reds",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "c=up?'var(--good)':(m[k]<0?'var(--risk)':'var(--muted)')",
+   "pr": 365,
+   "min": 1
+  },
+  {
+   "name": "Dark-view tripwire renders the dossier's live blocks (A/B archive + results) from stubbed payloads",
+   "file": "tools/check_darkmode.js",
+   "pattern": "url.indexOf('/api/abtests')>=0",
+   "pr": 365,
+   "min": 1
   }
  ]
 }
