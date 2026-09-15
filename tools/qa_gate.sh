@@ -95,6 +95,13 @@ else
   echo "   ✗ PDP harvest harness FAILED — see node tools/test_pdpharvest.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h2/7: Vietnamese UI toggle (engine rules + seed integrity + owner gating)"
+if node tools/test_i18n.mjs >/dev/null 2>&1; then
+  echo "   ✓ skip / keep rules, number templating, seed integrity, owner-only route + injection hold"
+else
+  echo "   ✗ i18n harness FAILED — see node tools/test_i18n.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3i/7: Scheduled Work (the content team's sheet → skip cadence per brand)"
 if node tools/test_schedule.mjs >/dev/null 2>&1; then
   echo "   ✓ header layouts, DDMM tab dating, the AM's word + month streaks hold; the snapshot still reads"

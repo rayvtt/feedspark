@@ -56,6 +56,10 @@ echo "── validating: Golden Record PDP harvest (extraction + allowlist + sam
 node tools/test_pdpharvest.mjs >/dev/null
 echo "   ✓ details-text rules, variant-only identifiers + the proxy allowlist hold"
 
+echo "── validating: Vietnamese UI toggle (engine + seed + owner gating)"
+node tools/test_i18n.mjs >/dev/null
+echo "   ✓ skip / keep rules, number templating, seed integrity, owner-only route + injection hold"
+
 echo "── validating: Scheduled Work (sheet → skip cadence per brand)"
 node tools/test_schedule.mjs >/dev/null
 echo "   ✓ header layouts, DDMM tab dating, the AM's word + month streaks hold"
