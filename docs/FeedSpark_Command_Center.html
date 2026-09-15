@@ -296,6 +296,9 @@ window.addEventListener('load',restore);
   [data-theme=dark] .dzp-sug{background:var(--paper);border-color:var(--line)}
   [data-theme=dark] .dzp-al{background:#241a17;border-color:#5a3128}
   [data-theme=dark] .sidenav{background:var(--paper);border-right-color:var(--line)}
+  [data-theme=dark] .dz-mat-i{background:var(--paper);border-color:var(--line)}
+  [data-theme=dark] .dz-mat-i .tt{background:transparent}
+  [data-theme=dark] .dz-mat-i:hover{border-color:var(--orange)}
   [data-theme=dark] .sidenav a{color:var(--ink-2)}
   [data-theme=dark] .sidenav a:hover{background:#20242E;color:var(--orange-ink)}
   [data-theme=dark] .sidenav-bg{background:rgba(0,0,0,.55)}
@@ -1323,7 +1326,7 @@ window.addEventListener('load',restore);
     var out=[];
     ['impressions','clicks','conversions','revenue','ctr','cvr'].forEach(function(k){
       if(m&&typeof m[k]==='number'){
-        var up=m[k]>0, c=up?'#15803d':(m[k]<0?'#b91c1c':'#64748b');
+        var up=m[k]>0, c=up?'var(--good)':(m[k]<0?'var(--risk)':'var(--muted)');
         out.push('<span style="color:'+c+';font-weight:800">'+(up?'+':'')+m[k]+'% '+k.slice(0,4)+'</span>');
       } });
     return out.join(' <span style="opacity:.4">·</span> ');
