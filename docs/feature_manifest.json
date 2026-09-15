@@ -4775,6 +4775,41 @@
    "pattern": "return (e&&GHOST_STATES.indexOf(e.st)<0&&e.st)||'planned';",
    "pr": 373,
    "min": 1
+  },
+  {
+   "name": "A deep link's BRAND is data — the composer can't re-file it under another (Ray 15 Sep 2026)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "var PINNED_CLIENT=null;",
+   "pr": 0,
+   "min": 1
+  },
+  {
+   "name": "…out of scope, the composer refuses instead of saving under the first brand",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function clientBlocked(){",
+   "pr": 0,
+   "min": 1
+  },
+  {
+   "name": "…and the pinned brand survives every async roster rebuild",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function applyPin(){",
+   "pr": 0,
+   "min": 1
+  },
+  {
+   "name": "KWCal: a ticket filed under the wrong brand is found, named and repairable in one click",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function misfiledFor(brand,e){",
+   "pr": 0,
+   "min": 1
+  },
+  {
+   "name": "…the repair keeps the ticket's stage and history, and drops the foreign plan tie",
+   "file": "docs/FeedSpark_KWCal.html",
+   "pattern": "function refileBrief(brand,e,b){",
+   "pr": 0,
+   "min": 1
   }
  ]
 }
