@@ -4395,7 +4395,7 @@
    "name": "Quote generator: the Quote summary band (monthly · one-off · Year 1) sits BELOW the tiles — the final numbers close the card (Ray 15 Sep 2026)",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "</div>\n    <div class=\"qtot\" id=\"qtot\"></div>\n    <div class=\"edit-bar\"",
-   "pr": 364,
+   "pr": 366,
    "min": 1
   }
  ]
