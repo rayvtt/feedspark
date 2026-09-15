@@ -603,10 +603,10 @@
    "forbidden": true
   },
   {
-   "name": "Workflow: assignable brand in Gmail triage + sender memory",
+   "name": "Workflow: assignable brand in Gmail triage + sender memory (now on the shared /api/state store, PR #380)",
    "file": "docs/FeedSpark_Workflow.html",
-   "pattern": "fcc-sender-brand",
-   "min": 2,
+   "pattern": "function teachSender(from,brand){",
+   "min": 1,
    "pr": 138
   },
   {
@@ -5104,6 +5104,97 @@
    "pattern": "discMan:discMan()",
    "min": 1,
    "pr": 379
+  },
+  {
+   "name": "Shared working state: the Workflow plan overlays live in KV behind /api/state, not one person's localStorage (Ray 15 Sep 2026: 'the updates are not seen by everyone but only by themselves')",
+   "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+   "pattern": "export const STATE_NS",
+   "pr": 380,
+   "min": 1
+  },
+  {
+   "name": "Shared state: a scoped signin's partial save can never wipe the rest of the board (foreign entries re-injected before the merge)",
+   "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+   "pattern": "export function scopeStateIncoming",
+   "pr": 380,
+   "min": 1
+  },
+  {
+   "name": "Shared state: one kvmerge envelope per namespace under state:<ns>, so two people editing different things never contend",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "await env.EDITS.put('state:' + ns,",
+   "pr": 380,
+   "min": 1
+  },
+  {
+   "name": "Shared state: an unknown namespace can never become a KV key",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "if (!isStateNs(ns)) continue;",
+   "pr": 380,
+   "min": 1
+  },
+  {
+   "name": "Workflow: the overlay maps are handed out once and mutated in place, so every holder stays live across a refresh (shApply)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function shApply(m){",
+   "pr": 380,
+   "min": 1
+  },
+  {
+   "name": "Workflow: localStorage is the OFFLINE MIRROR of the shared state, never the source of truth",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function shCache(ns){",
+   "pr": 380,
+   "min": 1
+  },
+  {
+   "name": "Workflow: a failed push retries with backoff and flushes on reconnect — an offline edit still reaches the team",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "window.addEventListener('online',function(){ if(Object.keys(SHDIRTY).length)",
+   "pr": 380,
+   "min": 1
+  },
+  {
+   "name": "Workflow: first open PUBLISHES whatever that browser was holding alone (union only — it can never remove another user's)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function shBoot(){",
+   "pr": 380,
+   "min": 1
+  },
+  {
+   "name": "Workflow: a colleague's change arrives without a reload (60s poll + on tab-visible)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function shPoll(){",
+   "pr": 380,
+   "min": 1
+  },
+  {
+   "name": "Workflow: the first full render is chained off BOTH the briefs and the shared state, so neither paints a board the other hasn't reached",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "SHBOOT.then(function(){ renderAll(); });",
+   "pr": 380,
+   "min": 1
+  },
+  {
+   "name": "Command Center: the dossier reads and writes the SAME task-status store the Workflow board uses",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "function shStatusSet(k,v){",
+   "pr": 380,
+   "min": 1
+  },
+  {
+   "name": "Playbook: the tuned taxonomy is the team's, synced through /api/state (the KV-sync fast-follow CLAUDE.md flagged)",
+   "file": "docs/FeedSpark_Playbook.html",
+   "pattern": "body:JSON.stringify({pbtax:OV})",
+   "pr": 380,
+   "min": 1
+  },
+  {
+   "name": "Shared-state harness: scoping + the partial-save wipe trap are pinned in tools/test_sharedstate.mjs",
+   "file": "tools/test_sharedstate.mjs",
+   "pattern": "un-scoped, that save would have wiped the rest",
+   "pr": 380,
+   "min": 1
   }
  ]
 }

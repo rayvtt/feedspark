@@ -37,6 +37,8 @@ jobs:
         run: node tools/test_arrivals.mjs
       - name: Access scoping harness (per-user Workflow views)
         run: node tools/test_access.mjs
+      - name: Shared working state harness (one team, one store)
+        run: node tools/test_sharedstate.mjs
       - name: Golden Record PDP harvest harness (extraction + host allowlist + sampler)
         run: node tools/test_pdpharvest.mjs
       - name: Vietnamese UI toggle harness (engine rules + seed integrity + owner gating)
