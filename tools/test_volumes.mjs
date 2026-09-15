@@ -79,5 +79,40 @@ ok('meta rides on its stream', V.streams.plan.meta.source === 'planlive' && !V.s
 ok('default window = n months ending now', buildVolumes({ n: 3 }).months.length === 3 && buildVolumes({ n: 3 }).months[2] === monthKey(Date.now()));
 ok('empty dims stay empty objects, never crash', Object.keys(V.streams.calls.dims).length === 0 && V.streams.calls.n === 0);
 
+/* ---- an email is not a task (Ray, 15 Sep 2026: "I can see 36 client emails within September
+ * 2026, but within Intake … only 12 tasks that actually came from email. So where is the 36
+ * coming from?"). The bar counts captured MESSAGES; Intake holds one row per DECISION, and a
+ * reply chain is many messages under one. The stream carries both conversions per month. */
+{
+  const MS = [
+    // one conversation, four messages, decided once as a task
+    { id: 'a1', subject: 'Catalogue feed warnings', date: '2026-09-02T09:00:00Z', dismissed: true, decidedAs: 'task' },
+    { id: 'a2', subject: 'RE: Catalogue feed warnings', date: '2026-09-02T11:00:00Z', dismissed: true, decidedAs: 'task' },
+    { id: 'a3', subject: 'Re: Re: Catalogue feed warnings', date: '2026-09-03T09:00:00Z', dismissed: true, decidedAs: 'task' },
+    { id: 'a4', subject: 'FW: Catalogue feed warnings', date: '2026-09-03T10:00:00Z', dismissed: true, decidedAs: 'task' },
+    // a second conversation handed to TechAM — that files a row too
+    { id: 'b1', subject: 'Image tag question', date: '2026-09-05T09:00:00Z', dismissed: true, decidedAs: 'techam' },
+    // cleared as noise: never a row
+    { id: 'c1', subject: 'Newsletter', date: '2026-09-06T09:00:00Z', dismissed: true, decidedAs: 'notask' },
+    { id: 'c2', subject: 'Re: Newsletter', date: '2026-09-06T10:00:00Z', dismissed: true, decidedAs: 'notask' },
+    // still sitting in the triage queue
+    { id: 'd1', subject: 'New AW26 assets', date: '2026-09-08T09:00:00Z' },
+    // last month, so the window maths is exercised too
+    { id: 'e1', subject: 'August thing', date: '2026-08-11T09:00:00Z', dismissed: true, decidedAs: 'briefed' },
+  ];
+  const st = emailStream(MS, ['2026-08', '2026-09']);
+  ok('every captured message is counted', st.byMonth['2026-09'] === 8 && st.byMonth['2026-08'] === 1, st.byMonth);
+  ok('reply prefixes collapse into one conversation', st.conv.threads['2026-09'] === 4, st.conv.threads);
+  ok('messages that create a row are counted', st.conv.tasked['2026-09'] === 5, st.conv.tasked);
+  ok('…and deduped to the conversations Intake actually holds', st.conv.threadsTasked['2026-09'] === 2, st.conv.threadsTasked);
+  ok('a briefed message counts as filed', st.conv.threadsTasked['2026-08'] === 1 && st.conv.tasked['2026-08'] === 1);
+  ok('the decision split still adds up', st.dims.decision['Filed as task']['2026-09'] === 4
+    && st.dims.decision['To TechAM']['2026-09'] === 1
+    && st.dims.decision['Not a task']['2026-09'] === 2
+    && st.dims.decision['Awaiting triage']['2026-09'] === 1, st.dims.decision);
+  ok('a subject-less message is its own conversation, never merged',
+    emailStream([{ id: 'x', date: '2026-09-01T09:00:00Z' }, { id: 'y', date: '2026-09-01T10:00:00Z' }], ['2026-09']).conv.threads['2026-09'] === 2);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
