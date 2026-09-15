@@ -4738,42 +4738,42 @@
    "name": "A ticket with no task: orphaned module briefs get their plan row (Ray 15 Sep 2026)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "function reconcileBriefTasks(){",
-   "pr": 0,
+   "pr": 373,
    "min": 1
   },
   {
    "name": "…the brief itself carries the once-only guard, so a second browser stands down",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "b.planned=1; b.taskKey=b.client+'|'+b.task;",
-   "pr": 0,
+   "pr": 373,
    "min": 1
   },
   {
    "name": "…and a TechAM hand-off is dated, so it isn't born into the archive",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "adoptIntoPlan(g.client,task,'Done',dd8,'TechAM',1)",
-   "pr": 0,
+   "pr": 373,
    "min": 1
   },
   {
    "name": "KWCal: a calendar chip can't claim a stage only a ticket earns (Ray 15 Sep 2026)",
    "file": "docs/FeedSpark_KWCal.html",
    "pattern": "var GHOST_STATES=['briefed','live','done'];",
-   "pr": 0,
+   "pr": 373,
    "min": 1
   },
   {
    "name": "…a claim with no ticket behind it reads '⚠ not briefed' and links to the brief",
    "file": "docs/FeedSpark_KWCal.html",
    "pattern": "function isGhost(e,wf){",
-   "pr": 0,
+   "pr": 373,
    "min": 1
   },
   {
    "name": "…and it never reports as a stage anywhere (board, overview, KPIs, client PDF)",
    "file": "docs/FeedSpark_KWCal.html",
    "pattern": "return (e&&GHOST_STATES.indexOf(e.st)<0&&e.st)||'planned';",
-   "pr": 0,
+   "pr": 373,
    "min": 1
   }
  ]
