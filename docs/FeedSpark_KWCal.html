@@ -93,6 +93,8 @@ window.addEventListener('load',restore);
   .stx.blocked{color:var(--risk);border-color:rgba(192,57,43,.4);background:rgba(192,57,43,.08)}
   .stx.running{color:#9D174D;border-color:rgba(157,23,77,.4);background:rgba(157,23,77,.08)}
   .wfb.gz{color:var(--risk);border-color:rgba(192,57,43,.45);background:rgba(192,57,43,.09)}
+  .stx.misfiled{color:var(--orange-deep);border-color:rgba(237,111,11,.5);background:rgba(237,111,11,.1);cursor:pointer}
+  .stx.misfiled:hover{background:rgba(237,111,11,.2)}
   .stx.ghost{color:var(--risk);border-color:rgba(192,57,43,.45);background:rgba(192,57,43,.09);text-decoration:none}
   .stx.ghost:hover{background:rgba(192,57,43,.16)}
   .stx.analysis{color:#7C3AED;border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.08)}
@@ -497,6 +499,7 @@ window.addEventListener('load',restore);
 [data-theme=dark] .stx.progress{background:rgba(91,130,190,.18);border-color:rgba(91,130,190,.36);color:#93B4E0}
 [data-theme=dark] .stx.blocked{background:rgba(241,112,122,.14);border-color:rgba(241,112,122,.32);color:#F3868F}
 [data-theme=dark] .stx.running{background:rgba(236,72,153,.16);border-color:rgba(236,72,153,.34);color:#EC4899}
+[data-theme=dark] .stx.misfiled{background:rgba(240,164,78,.16);border-color:rgba(240,164,78,.36);color:#F0A44E}
 [data-theme=dark] .stx.ghost{background:rgba(241,112,122,.16);border-color:rgba(241,112,122,.36);color:#F3868F}
 [data-theme=dark] .stx.analysis{background:rgba(155,110,240,.16);border-color:rgba(155,110,240,.34);color:#B694F5}
 [data-theme=dark] .stx .ct{background:rgba(255,255,255,.12)}
@@ -665,9 +668,9 @@ function dLbl(e){ var d=new Date(e.date+'T12:00:00Z'); return (e.wc?'w/c ':'')+d
 function kpis(){
   var E=evs();
   var st={planned:0,intake:0,briefed:0,live:0,done:0}, vol=0, scoped=0, unset=0;
-  var resIn=0, briefed=0, ghosts=0;
+  var resIn=0, briefed=0, ghosts=0, misf=0;
   E.forEach(function(e){ var wf=wfFor(CLIENT,e); var k=stOf(wf,e); st[k]=(st[k]||0)+1;
-    if(wf)briefed++; else if(isGhost(e,wf))ghosts++;
+    if(wf)briefed++; else if(misfiledFor(CLIENT,e))misf++; else if(isGhost(e,wf))ghosts++;
     if(resFor(CLIENT,e))resIn++;
     var v=volOf(CLIENT,e);
     if(v&&!v.unset&&!v.wide){vol+=v.vol;scoped++} else if(!e.brandwide&&(!v||v.unset))unset++; });
@@ -685,6 +688,7 @@ function kpis(){
     +'<div class="kpi'+(resIn?' good':'')+'"><div class="n">'+resIn+'</div><div class="l">Results reported</div></div>'
     +(unset?'<div class="kpi warn"><div class="n">'+unset+'</div><div class="l">Scopes to set</div></div>':'')
     +((E.length-briefed)?'<div class="kpi"><div class="n">'+(E.length-briefed)+'</div><div class="l">Not yet briefed</div></div>':'')
+    +(misf?'<div class="kpi warn" title="Briefed for real, but the ticket saved under a different brand — it never reached this board, this brand\u2019s Intake or its plan. Click the chip on the card to move it."><div class="n">'+misf+'</div><div class="l">Filed under the wrong brand</div></div>':'')
     +(ghosts?'<div class="kpi warn" title="Marked briefed/live/done on this calendar, but no ticket exists behind them — nobody is carrying the work. Open each one and raise the brief."><div class="n">'+ghosts+'</div><div class="l">Claimed, never briefed</div></div>':'');
 }
 /* ---- The board is a ROLLING PLAN, not the span of whatever moments happen to exist
@@ -731,6 +735,40 @@ function kwTask(brand,e){ // the house task-name format — details live in the 
   var mmyy=('0'+(d.getUTCMonth()+1)).slice(-2)+String(d.getUTCFullYear()).slice(2);
   return 'Keywords Optimisation - '+e.name+' - Marketing Planner - '+mmyy+(bmkt!=='gb'?' - '+bmkt.toUpperCase():'');
 }
+/* ---- A TICKET FILED UNDER THE WRONG BRAND (Ray, 15 Sep 2026: "Steve has used the marketing
+ * keyword calendar to brief … two themes … which is not captured on my keyword calendar").
+ * The composer's client is a <select> whose roster is rebuilt asynchronously. When the brand a
+ * deep link named wasn't in the rebuilt list — a scoped signin briefing a brand outside their
+ * access — setting it was a silent no-op and the brief saved under the FIRST brand in the list.
+ * Workflow now refuses that outright, but the tickets already written carry the wrong client,
+ * and wfFor() is client-exact by design (a foreign brand's brief must never leak onto a board),
+ * so they are invisible here. b.kw is unambiguous evidence of where a ticket belongs: it is the
+ * moment's own id. Find them, say so on the card, and offer the one-click correction. */
+function misfiledFor(brand,e){
+  var ks=Object.keys(BRIEFS||{});
+  for(var i=0;i<ks.length;i++){ var b=BRIEFS[ks[i]];
+    if(!b||b.client===brand)continue;
+    if(b.kw&&String(b.kw)===String(e.id))return b;                       // stamped: decisive
+    if(normTask(b.task)===normTask(kwTask(brand,e)))return b;            // the house name for THIS brand
+  }
+  return null;
+}
+// rewrite the ticket onto the brand it was raised for. The code carries the brand too, and the
+// plan tie was made against the wrong brand's rows, so it is dropped — Workflow's own
+// reconciliation then files the task into the right plan on its next load.
+function refileBrief(brand,e,b){
+  var fixed={}; Object.keys(b).forEach(function(k){ fixed[k]=b[k]; });
+  var was=fixed.client;
+  fixed.client=brand;
+  fixed.code=String(fixed.code||'').replace(/^[^-]*/, brand.toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,8));
+  delete fixed.taskKey; delete fixed.planned;
+  if(!fixed.kw)fixed.kw=e.id;
+  var body={}; body[b.id]=fixed;
+  return fetch('/api/briefs',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
+    .then(function(r){return r.json();})
+    .then(function(m){ if(m&&typeof m==='object'&&!m.error)BRIEFS=m; render();
+      return was; });
+}
 function wfFor(brand,e){
   var ks=Object.keys(BRIEFS||{}), canon=normTask(kwTask(brand,e));
   var pfx=normTask('Keywords Optimisation - '+e.name), pfx2=normTask('AI Keyword Optimisation - '+e.name);
@@ -765,6 +803,11 @@ function stChip(brand,e,wf,st){
     return '<a class="stx '+esc(st)+' wfl" href="/workflow" title="Live from the Workflow pipeline'
       +(wf.id?' · ticket '+esc(wf.id):'')+(ct?' · '+esc(ct)+' holds the ball':'')
       +' — the stage moves in Workflow, not here">'+esc(st)+(ct?'<b class="ct">'+esc(ct)+'</b>':'')+'</a>'; }
+  var mis=misfiledFor(brand,e);
+  if(mis)
+    return '<button type="button" class="stx misfiled" data-refile="'+esc(e.id)+'" title="This moment WAS briefed — ticket '
+      +esc(mis.id)+' — but it saved under '+esc(mis.client)+' instead of '+esc(brand)+', so it never reached this board, '
+      +esc(brand)+'’s Intake or its project plan. Click to move the ticket onto '+esc(brand)+'.">⚠ filed under '+esc(mis.client)+'</button>';
   if(isGhost(e,wf))
     return '<a class="stx ghost" href="'+esc(briefLinkFor(brand,e))+'" title="Marked &quot;'+esc(e.st)
       +'&quot; on this calendar, but NO ticket exists — nothing is in Workflow, nothing in Intake and '
@@ -1886,6 +1929,12 @@ $('#road').addEventListener('click',function(ev){
   var t=ev.target;
   var fix=t.closest('[data-fix]');   // a moment outside the window has no card — edit it from the warning
   if(fix){ editEvent(findEv(fix.getAttribute('data-fix'))); return; }
+  var rf=t.closest('[data-refile]');
+  if(rf){ var er=findEv(rf.getAttribute('data-refile')); if(!er)return;
+    var mb=misfiledFor(CLIENT,er); if(!mb)return;
+    if(!confirm('Ticket '+mb.id+' was raised for "'+er.name+'" but saved under '+mb.client+'.\n\nMove it onto '+CLIENT+'?\n\nThe ticket keeps its stage, replies and history. The stray task row left in '+mb.client+'\u2019s project plan stays — delete it there.'))return;
+    refileBrief(CLIENT,er,mb).then(function(was){ alert('Moved ticket '+mb.id+' from '+was+' to '+CLIENT+'. Workflow will file the task into '+CLIENT+'\u2019s plan on its next load.'); });
+    return; }
   var stBtn=t.closest('[data-st]');
   if(stBtn){ var e=findEv(stBtn.getAttribute('data-st')); if(!e)return;
     e.st=STATES[(STATES.indexOf(e.st||'planned')+1)%STATES.length]; save(); render(); return; }
