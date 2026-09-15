@@ -740,6 +740,28 @@ window.addEventListener('load',restore);
     return {months:months,series:out,unit:'items'};
   }
   function visible(S){ return S.series.filter(function(s){return !ST.hidden[s.key]}); }
+  // EMAILS ARE NOT TASKS (Ray, 15 Sep 2026: "I can see 36 client emails within September 2026,
+  // but within Intake … only 12 tasks that actually came from email. So where is the 36 coming
+  // from?"). The bar counts captured MESSAGES — the honest measure of inbound volume — while
+  // Intake holds one row per DECISION, and a reply chain is many messages under one. The stream
+  // now carries both conversions, so the chart states them instead of leaving the reader to
+  // assume the two numbers should match.
+  function convOf(m){
+    var st=DATA&&DATA.streams&&DATA.streams.emails, c=st&&st.conv;
+    if(!c||!c.threads)return null;
+    var n=(st.byMonth||{})[m]||0; if(!n)return null;
+    return { n:n, threads:c.threads[m]||0, tasked:c.tasked[m]||0, filed:c.threadsTasked[m]||0 };
+  }
+  function emailsInView(){
+    if(ST.view==='streams')return !ST.hidden.emails;
+    return ST.view.split(':')[0]==='emails';
+  }
+  function convRows(m){
+    if(!emailsInView())return '';
+    var c=convOf(m); if(!c)return '';
+    return '<div class="r t"><span>Emails → tasks</span><span>'+fmt(c.filed)+' of '+fmt(c.threads)+'</span></div>'
+      +'<div class="r" style="opacity:.8;font-weight:700"><span>conversations</span><span>'+fmt(c.threads)+' from '+fmt(c.n)+' msgs</span></div>';
+  }
 
   // ---- render ----
   function defaultTitle(S){
@@ -766,7 +788,17 @@ window.addEventListener('load',restore);
     if(!DATA||DATA.error){ $('#vz-src').textContent=''; return; }
     var parts=[]; STREAMS.forEach(function(s){ var st=DATA.streams[s[0]]; if(!st)return; var m=st.meta||{}; var bits=[s[2]+' '+fmt(st.n)]; if(st.undated)bits.push(st.undated+' undated'); if(m.source==='baked')bits.push('baked plan volume'); if(m.source==='cold'||m.source==='none')bits.push('not available'); if(s[0]==='schedule'&&m.source)bits.push(m.source==='snapshot'?'snapshot':'live'); parts.push(bits.join(' · ')); });
     var notes=[]; STREAMS.forEach(function(s){ var m=(DATA.streams[s[0]]||{}).meta; if(m&&m.note)notes.push(m.note); });
-    $('#vz-src').innerHTML='Source: '+esc(parts.join('  ·  '))+(notes.length?'<br>'+esc(notes.join(' · ')):'')+(DATA.scoped?'<br>🔒 your client scope':'');
+    // the email bar counts MESSAGES; Intake counts decisions. Say so on the chart itself, with
+    // this window's own numbers, so the two are never read as the same measure (Ray, 15 Sep 2026)
+    var cline='';
+    if(emailsInView()){
+      var tn=0,tt=0,tf=0; (DATA.months||[]).forEach(function(m){ var c=convOf(m); if(c){tn+=c.n;tt+=c.threads;tf+=c.filed;} });
+      if(tn)cline='<br>✉ '+fmt(tn)+' captured message'+(tn===1?'':'s')+' = '+fmt(tt)+' conversation'+(tt===1?'':'s')+' · '
+        +fmt(tf)+' filed as a task in Intake. The bar counts every message; Intake holds one row per decision, '
+        +'so a reply chain, a “not a task” and anything still awaiting triage never become separate rows. '
+        +'Switch VIEW to “Client emails × decision” for the full split.';
+    }
+    $('#vz-src').innerHTML='Source: '+esc(parts.join('  ·  '))+(notes.length?'<br>'+esc(notes.join(' · ')):'')+cline+(DATA.scoped?'<br>🔒 your client scope':'');
   }
   function renderTable(S,vis){
     var wrap=$('#vz-tblwrap'); wrap.hidden=!ST.table; if(!ST.table)return;
@@ -831,7 +863,7 @@ window.addEventListener('load',restore);
   plotEl.addEventListener('mousemove',function(e){ var h=e.target.closest('.hit'); if(!h){tip.hidden=true;return;} var S=series(), vis=visible(S), i=+h.getAttribute('data-i');
     var rows=vis.map(function(s){return '<div class="r"><span><i style="background:'+s.color+'"></i>'+esc(s.name)+'</span><span>'+fmt(s.vals[i])+(S.unit==='hours'?' h':'')+'</span></div>'}).join('');
     var tot=vis.reduce(function(a,s){return a+s.vals[i]},0);
-    tip.innerHTML='<b>'+esc(mlbl(S.months[i]))+'</b>'+rows+(vis.length>1?'<div class="r t"><span>Total</span><span>'+fmt(tot)+'</span></div>':'');
+    tip.innerHTML='<b>'+esc(mlbl(S.months[i]))+'</b>'+rows+(vis.length>1?'<div class="r t"><span>Total</span><span>'+fmt(tot)+'</span></div>':'')+convRows(S.months[i]);
     tip.hidden=false; var r=plotEl.getBoundingClientRect(); var x=e.clientX-r.left+14, y=e.clientY-r.top+14; if(x+tip.offsetWidth>r.width-4)x=e.clientX-r.left-tip.offsetWidth-14; tip.style.left=x+'px'; tip.style.top=y+'px'; });
   plotEl.addEventListener('mouseleave',function(){tip.hidden=true;});
   function toggleKey(k){ ST.hidden[k]=!ST.hidden[k]; save(); render(); }
