@@ -79,6 +79,9 @@ echo "── validating: labelguard browser-engine copy (served /labels/engine.j
 node tools/test_replyclass.mjs >/dev/null
 echo "   ✓ reply classifier agrees across worker + page"
 
+node tools/test_running_stage.mjs >/dev/null
+echo "   ✓ Test running ⏱ stage: worker lane matches the page"
+
 node tools/check_lgcopy.js >/dev/null
 echo "   ✓ docs/labelguard_engine.js in sync"
 

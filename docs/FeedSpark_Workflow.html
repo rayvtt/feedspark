@@ -198,7 +198,7 @@ window.addEventListener('load',restore);
   .itk button:hover{background:var(--orange);color:#fff}
   .itk-more{font:inherit;font-size:12.5px;font-weight:800;color:var(--orange-ink);background:none;border:0;cursor:pointer;padding:8px 0}
   /* pipeline board */
-  .board{display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:9px;overflow-x:auto;padding-bottom:8px}
+  .board{display:grid;grid-template-columns:repeat(8,minmax(140px,1fr));gap:9px;overflow-x:auto;padding-bottom:8px}
   .tk-tst{font-size:9.5px;flex:none;line-height:1}
   .tk-flow{display:flex;align-items:center;gap:4px;font-size:9.5px;font-weight:800;color:#7C3AED;border-top:1px dashed #C9B8F0;margin-top:2px;padding-top:3px;white-space:nowrap}
   .tk-flow.now{color:#C0392B;border-top-color:rgba(192,57,43,.4)}
@@ -1020,9 +1020,18 @@ window.addEventListener('load',restore);
   var ASPL=['Dinesh','Thia','Mariraj','Muji'];
   var BRIEF_TO='briefing@feedspark.com';
   var STAGES=[['intake','Intake','#8a94a0'],['briefed','Briefed to ASPL','#B1550A'],['progress','In progress','#2F6FB0'],
-    ['blocked','Blocked','#C0392B'],['done','Done — ASPL','#15803D'],['analysis','Analysis 🧪','#7C3AED'],['confirmed','Client confirmed','#15803D']];
+    ['blocked','Blocked','#C0392B'],['done','Done — ASPL','#15803D'],['running','Test running ⏱','#9D174D'],
+    ['analysis','Analysis 🧪','#7C3AED'],['confirmed','Client confirmed','#15803D']];
   // A/B-test tickets (task contains “test”) get the extra Analysis step: ASPL done ≠ complete
   // until the read-out is logged. Completion signals route them to Analysis instead of Done.
+  // ---- TEST RUNNING (Ray, 15 Sep 2026: "any A/B test or single test … is missing a stage —
+  // 'test running', after done by ASPL, between done by ASPL and analysis"). Nothing described
+  // the WEEKS between ASPL shipping the change and there being anything to read out: a test
+  // landed in Analysis the same day ASPL finished, so the journey read as though the analysis
+  // had been sitting untouched for a fortnight when in truth the test was simply running.
+  // The run now has its own stage. Done — ASPL stays the milestone it was (ASPL's work is
+  // finished); Test running is the state that follows it and holds the clock, and Analysis
+  // begins only when the run SLA elapses or a read-out arrives.
   function isTest(b){ return /\btest/i.test((b&&b.task)||''); }
   // ---- read-out (run) SLAs: how long a brief runs before its analysis is triggered ----
   // Keyword optimisation → 2 weeks; Title A/B tests → 3 weeks; other tests → 2 weeks.
@@ -1037,7 +1046,12 @@ window.addEventListener('load',restore);
     return ''; }
   function needsAnalysis(b){ return !!analysisKind(b); }
   function runSlaDays(b){ var k=analysisKind(b); return k?(+RUNSLA[k]||RUNSLA_DEF[k]||14):null; }
-  function runStart(b){ var h=(b&&b.hist)||[], go={progress:1,done:1,analysis:1};
+  // when the RUN began. A go-live stamp is the truth when we have one (the change is in the
+  // feed from that moment); otherwise fall back to the first working stage. Without this a
+  // brief that had been in progress for longer than its SLA would go live and be declared
+  // ready to analyse in the same breath.
+  function runStart(b){ if(b&&b.liveAt)return b.liveAt;
+    var h=(b&&b.hist)||[], go={progress:1,done:1,running:1,analysis:1};
     for(var i=0;i<h.length;i++){ if(go[h[i].s])return h[i].t; } return null; }
   function readoutDue(b){ if(!needsAnalysis(b))return null; var s=runStart(b); if(s==null)return null;
     return s+runSlaDays(b)*86400000; }
@@ -1084,7 +1098,8 @@ window.addEventListener('load',restore);
   function goLive(b,ts){ if(!b||!needsAnalysis(b)||b.status==='confirmed')return false;
     ts=ts||Date.now(); var sla=runSlaDays(b)||14, nd=new Date(ts+sla*86400000);
     b.liveAt=ts; b.due=pad(nd.getDate())+pad(nd.getMonth()+1)+nd.getFullYear();
-    if(b.status!=='analysis')setStage(b,'analysis'); else b.updated=Date.now();
+    // live = the run has STARTED, not that it is ready to analyse (Ray, 15 Sep 2026)
+    if(b.status!=='running'&&b.status!=='analysis')setStage(b,'running'); else b.updated=Date.now();
     persist();
     // the timeline plots the INTAKE ROW's date — re-date the linked row too (plan write-back
     // included), so the card jumps to the analysis week and the grid shows the same date
@@ -1094,13 +1109,23 @@ window.addEventListener('load',restore);
     toast('🚀 Live — '+sla+'d run · analysis due '+humanDD(b.due));
     return true; }
   // ---- the 3 courts: which team/domain holds the ball at each stage ----
-  var COURT={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',analysis:'AM',confirmed:''};
-  var SLA_STAGE={intake:2,blocked:1,done:3,analysis:5};   // max days sitting in a stage before it escalates (ASPL court uses the silence rule)
+  var COURT={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',running:'AM',analysis:'AM',confirmed:''};
+  // max days sitting in a stage before it escalates (ASPL court uses the silence rule).
+  // `running` deliberately has none: a test is MEANT to sit there for its whole run window,
+  // so the thing that escalates is the read-out date, not the dwell (see the escalation list).
+  var SLA_STAGE={intake:2,blocked:1,done:3,analysis:5};
   // every stage change goes through here so the handoff history (b.hist) stays complete
   function setStage(b,stage){ if(!b||b.status===stage)return;
     (b.hist=(b.hist&&b.hist.length)?b.hist:[{s:b.status||'intake',t:b.created||Date.now()}]).push({s:stage,t:Date.now()});
     b.status=stage; b.updated=Date.now(); }
   function courtOf(b){ return COURT[b.status]||''; }
+  // ASPL says the work is finished. For an ordinary brief that IS the end of their lane; for a
+  // test / keyword optimisation the change now goes live and RUNS, so the ticket records the
+  // milestone AND the state that follows it — the journey reads "Done — ASPL → Test running",
+  // which is what actually happened (Ray, 15 Sep 2026). Analysis waits for the run to finish.
+  function markAsplDone(b){ if(!b)return;
+    if(b.status!=='done')setStage(b,'done');
+    if(needsAnalysis(b))setStage(b,'running'); }
   function stageSince(b){ var h=b.hist; return (h&&h.length)?h[h.length-1].t:(b.updated||b.created||Date.now()); }
   function daysInStage(b){ return Math.floor((Date.now()-stageSince(b))/86400000); }
   function courtSince(b){ var c=courtOf(b); if(!c)return null; var h=b.hist;
@@ -2569,11 +2594,15 @@ window.addEventListener('load',restore);
   }
 
   // ---- board ----
-  function dueBadge(b){ if(b.status==='confirmed')return '';
+  function dueBadge(b,urgentOnly){ if(b.status==='confirmed')return '';
     var d=ddmmyyyyToDate(b.due); if(!d)return '<span class="due ok">no due</span>';
     var days=Math.round((d-today())/86400000);
     var cls=days<0?'over':days<=2?'soon':'ok';
-    var lbl=days<0?('overdue '+(-days)+'d'):days===0?'due today':days<=2?('due '+days+'d'):humanDD(b.due).replace(/,.*/,'');
+    if(urgentOnly&&cls==='ok')return '';   // the modal already carries "Due <date>" in full — only say more when it's close
+    // a far-off due date shows as "30 Sep" — the full "Wed 30 September 2026" has never fitted
+    // a board card and simply clipped (the lane is narrower again now the run stage has one)
+    var lbl=days<0?('overdue '+(-days)+'d'):days===0?'due today':days<=2?('due '+days+'d')
+      :d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
     return '<span class="due '+cls+'">'+lbl+'</span>'; }
   // ---- courts strip: live count + oldest + SLA breaches per team; click to spotlight the board ----
   var courtSel='';
@@ -2600,17 +2629,21 @@ window.addEventListener('load',restore);
         // No client/code line (the chip is the client), no court name (the lane says it), no who-chip (modal has it).
         var crt=courtOf(b);
         var ageChip=crt?('<span class="tk-age'+(stageBreached(b)?' warn':'')+'" title="In '+crt+'’s court '+daysInCourt(b)+'d">'+daysInCourt(b)+'d</span>'):'';
-        if(b.status==='analysis'){ var rd0=readoutDue(b); if(rd0!=null){ var dl0=Math.ceil((rd0-Date.now())/86400000);
-          ageChip='<span class="tk-age'+(dl0<=0?' warn':'')+'" title="'+(dl0>0?('Analysis due in '+dl0+'d ('+runSlaDays(b)+'d run SLA)'):'Run complete — analysis due')+'">'+(dl0>0?('⏱ '+dl0+'d'):'analyse')+'</span>'; } }
+        // a RUNNING card's clock is the flow line under the task ("⇢ Analysis in 10d"), so the
+        // meta row stays clear; an ANALYSIS card has no flow line and carries the clock itself
+        if(b.status==='running')ageChip='';
+        else if(b.status==='analysis'){ var rd0=readoutDue(b); if(rd0!=null){ var dl0=Math.ceil((rd0-Date.now())/86400000);
+          ageChip='<span class="tk-age'+(dl0<=0?' warn':'')+'" title="'+(dl0>0?('Run ends in '+dl0+'d ('+runSlaDays(b)+'d run SLA) — analysis follows'):'Run complete — analysis due')+'">'+(dl0>0?('⏱ '+dl0+'d'):'analyse')+'</span>'; } }
         var mk=(b.code||'').split('-').pop(); mk=(mk&&mk!=='gb')?('<span class="tk-mk">'+esc(mk.toUpperCase())+'</span>'):'';
         var pri=(b.priority&&b.priority!=='Normal')?('<span class="tk-pri '+(b.priority==='Urgent'?'ur':'hi')+'" title="'+esc(b.priority)+'"></span>'):'';
         var tst=needsAnalysis(b)?'<span class="tk-tst" title="Needs the Analysis step — analysis due '+runSlaDays(b)+'d after the run starts">🧪</span>':'';
         var db=dueBadge(b); if(/no due/.test(db))db='';
         // dotted-arrow cue on analysis-bound cards still in flight: where they flow next + in how many days
         var flow='';
-        if(needsAnalysis(b)&&(b.status==='progress'||b.status==='done')){ var rdF=readoutDue(b);
+        if(needsAnalysis(b)&&(b.status==='progress'||b.status==='done'||b.status==='running')){ var rdF=readoutDue(b);
+          var nxF=b.status==='running'?'Analysis':'Test running';
           if(rdF!=null){ var dlF=Math.ceil((rdF-Date.now())/86400000);
-            flow='<div class="tk-flow'+(dlF<=0?' now':'')+'" title="Auto-moves to Analysis when the '+runSlaDays(b)+'-day run completes">⇢ Analysis '+(dlF>0?('in '+dlF+'d'):'due now')+'</div>'; }
+            flow='<div class="tk-flow'+(dlF<=0?' now':'')+'" title="'+(b.status==='running'?('Auto-moves to Analysis when the '+runSlaDays(b)+'-day run completes'):('Runs for '+runSlaDays(b)+' days once ASPL ships it, then Analysis'))+'">⇢ '+nxF+' '+(dlF>0?('in '+dlF+'d'):'due now')+'</div>'; }
           else flow='<div class="tk-flow" title="Runs '+runSlaDays(b)+' days once started, then Analysis">⇢ Analysis after '+runSlaDays(b)+'d run</div>'; }
         return '<div class="tik'+(courtSel&&crt!==courtSel?' dim':'')+'" draggable="true" data-id="'+esc(b.id)+'">'
           +'<div class="tk-m"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+tst+pri+'<span class="grow"></span>'+db+ageChip+'</div>'
@@ -2633,7 +2666,7 @@ window.addEventListener('load',restore);
       l.addEventListener('dragleave',function(){ l.classList.remove('drop'); });
       l.addEventListener('drop',function(e){ e.preventDefault(); l.classList.remove('drop');
         if(dragId&&BRIEFS[dragId]){ var st=l.getAttribute('data-stage');
-          if(st==='analysis'&&!needsAnalysis(BRIEFS[dragId])){ toast('Analysis is the extra step for test / keyword-optimisation briefs'); return; }
+          if((st==='analysis'||st==='running')&&!needsAnalysis(BRIEFS[dragId])){ toast(STAGE_LBL[st]+' is an extra step for test / keyword-optimisation briefs'); return; }
           setStage(BRIEFS[dragId],st); persist(); renderAll(); } });
     });
   }
@@ -2659,7 +2692,7 @@ window.addEventListener('load',restore);
         +(w?('<span class="cwd">'+esc(w.d)+'</span><span class="cwt">'+esc(w.t)+'</span>'):'')
         +'</span><span class="cb">'+esc(commBody(c))+commChip(c)+'</span></div>'; })
       .join('') || '<div class="sub" style="margin:0">No replies logged yet.</div>';
-    var stat=STAGES.filter(function(s){ return s[0]!=='analysis'||needsAnalysis(b); })
+    var stat=STAGES.filter(function(s){ return (s[0]!=='analysis'&&s[0]!=='running')||needsAnalysis(b); })
       .map(function(s){ return '<button data-s="'+s[0]+'" class="'+(b.status===s[0]?'on':'')+'">'+s[1]+'</button>'; }).join('');
     var doneNote=lastDoneNote(b);
     var crt=courtOf(b);
@@ -2680,7 +2713,7 @@ window.addEventListener('load',restore);
         +'<span class="m-pill"'+(stageBreached(b)?' style="color:#C0392B;border-color:rgba(192,57,43,.4)"':'')+'>Ball: '+(crt?(crt+' · '+daysInCourt(b)+'d'):'—')+'</span>'
         +(function(){ var rd=readoutDue(b); if(rd==null||b.status==='confirmed')return ''; var dl=Math.ceil((rd-Date.now())/86400000);
           return '<span class="m-pill"'+(dl<=0?' style="color:#C0392B;border-color:rgba(192,57,43,.4)"':'')+' title="'+runSlaDays(b)+'-day run SLA from when the brief starts running">Analysis '+(dl>0?('in '+dl+'d'):(dl===0?'due today':((-dl)+'d overdue')))+'</span>'; })()
-        +(dueBadge(b))+'</div>'
+        +(dueBadge(b,true))+'</div>'
       +'<div class="m-sec"><h4>Stage</h4><div class="stat-seg" id="m-stat">'+stat+'</div></div>'
       +'<div class="m-sec"><h4>Journey — handoffs across the three courts</h4><div class="jny">'+journeyHtml(b)+'</div>'
         +(xl.length?('<div class="m-xl">'+xl.join('')+'</div>'):'')+'</div>'
@@ -2689,8 +2722,8 @@ window.addEventListener('load',restore);
         +'<input id="m-note" placeholder="Paste / summarise their reply…"><button class="btn" id="m-log">Log</button></div>'
         +'<div class="scan-hit" id="m-scan"></div></div>'
       +'<div class="m-act">'
-        +(needsAnalysis(b)&&b.status!=='confirmed'&&b.status!=='analysis'?'<button class="btn" id="m-live" style="border-color:#BFE3C8;color:#15803D" title="The test is live: due re-dates to +'+(runSlaDays(b)||14)+'d (the analysis date), the card jumps to that week, stage → Analysis 🧪">🚀 Test live</button>':'')
-        +(needsAnalysis(b)&&(b.status==='analysis'||b.status==='done')?'<button class="btn" id="m-result" style="border-color:#D8CCF4;color:#7C3AED">🧪 Log result</button>':'')
+        +(needsAnalysis(b)&&b.status!=='confirmed'&&b.status!=='running'&&b.status!=='analysis'?'<button class="btn" id="m-live" style="border-color:#BFE3C8;color:#15803D" title="The test is live: due re-dates to +'+(runSlaDays(b)||14)+'d (the analysis date), the card jumps to that week, stage → Test running ⏱ until the run completes">🚀 Test live</button>':'')
+        +(needsAnalysis(b)&&(b.status==='analysis'||b.status==='running'||b.status==='done')?'<button class="btn" id="m-result" style="border-color:#D8CCF4;color:#7C3AED">🧪 Log result</button>':'')
         +'<a class="btn pri" id="m-brief" target="_blank" rel="noopener">✉ Re-draft brief to ASPL</a>'
         +'<a class="btn" id="m-chase" target="_blank" rel="noopener">⏰ Chase ASPL</a>'
         +'<a class="btn" id="m-chasec" target="_blank" rel="noopener">⏰ Chase client</a>'
@@ -2709,22 +2742,22 @@ window.addEventListener('load',restore);
     noteEl.addEventListener('input',function(){
       if(LIVE_RE.test(noteEl.value)&&needsAnalysis(b)){ scanEl.className='scan-hit on'; scanEl.textContent='🚀 Go-live signal — logging this re-dates the due to +'+(runSlaDays(b)||14)+'d for analysis and moves the ticket to “Analysis 🧪”.'; }
       else { var cls=classifyReply(noteEl.value);
-        if(cls==='done'){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this moves the ticket to '+(needsAnalysis(b)?'“Analysis 🧪” (analysis still needed)':'“Done — ASPL”')+'.'; }
+        if(cls==='done'){ scanEl.className='scan-hit on'; scanEl.textContent='✓ Completion signal detected — logging this moves the ticket to '+(needsAnalysis(b)?'“Done — ASPL”, then “Test running ⏱” for its '+(runSlaDays(b)||14)+'-day run':'“Done — ASPL”')+'.'; }
         else if(cls==='ack'){ scanEl.className='scan-hit on'; scanEl.textContent='↗ Pickup — they have taken it on but not finished it. Logging this moves the ticket to “In progress”; the next reply confirming the work is what completes it.'; }
         else scanEl.className='scan-hit'; } });
     document.getElementById('m-log').onclick=function(){ var note=noteEl.value.trim(); if(!note)return;
       var cls=classifyReply(note), done=cls==='done', golive=LIVE_RE.test(note)&&needsAnalysis(b); b.comms=b.comms||[]; b.comms.push({from:document.getElementById('m-from').value,note:note,done:done,when:Date.now()});
-      // a go-live signal starts the RUN (due → +SLA, stage → analysis); a completion signal
-      // moves the brief on — test tickets go to Analysis, not Done.
+      // a go-live signal starts the RUN (due → +SLA, stage → Test running); a completion
+      // signal moves the brief on — a test lands on Done — ASPL then Test running, not Analysis.
       if(golive && b.status!=='confirmed') goLive(b);
-      else if(done && b.status!=='confirmed' && b.status!=='done' && b.status!=='analysis') setStage(b,needsAnalysis(b)?'analysis':'done');
+      else if(done && b.status!=='confirmed' && b.status!=='done' && b.status!=='running' && b.status!=='analysis') markAsplDone(b);
       else if(cls==='ack' && (b.status==='intake'||b.status==='briefed')) setStage(b,'progress');   // picked up ≠ finished
       b.updated=Date.now(); persist(); renderAll(); openModal(b.id); };
     // client confirmation draft
     var conf=document.getElementById('m-confirm');
     var cbody=clientConfirm(b,doneNote);
     conf.href='https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent(b.client+': '+String(b.task||'').trim().slice(0,70)+' — done')+'&body='+encodeURIComponent(cbody);   // subject in Ray's own "Client: thing" style, not the old system banner
-    conf.addEventListener('click',function(ev){ if(b.status!=='done'&&b.status!=='analysis')return;
+    conf.addEventListener('click',function(ev){ if(b.status!=='done'&&b.status!=='running'&&b.status!=='analysis')return;
       if(needsAnalysis(b)&&!hasResult(b)){ ev.preventDefault(); toast('Log the analysis result first — 🧪 Log result'); return; }
       setStage(b,'confirmed'); persist(); setTimeout(function(){renderAll();},400); });
     var resBtn=document.getElementById('m-result'); if(resBtn)resBtn.onclick=function(){ logResult(b); };
@@ -2810,7 +2843,11 @@ window.addEventListener('load',restore);
         if(!!c.done!==want){ c.done=want; fixed++; }
       });
       if(realDone||!ack)return;
-      if(b.status==='done'||b.status==='briefed'){
+      // a ticket whose replies show ONLY a pickup has not been delivered, so it cannot be
+      // finished — nor can its test be running or ready to analyse (Ray, 15 Sep 2026). The
+      // reply evidence outranks the mechanical run-window rules, which is why this pass runs
+      // before autoAdvanceReadouts gets to look at the same ticket.
+      if(b.status==='done'||b.status==='briefed'||b.status==='running'||b.status==='analysis'){
         var from=b.status; setStage(b,'progress'); moved.push({id:id,from:from});
       }
     });
@@ -2855,7 +2892,7 @@ window.addEventListener('load',restore);
     var v=prompt('Test result — the analysis (e.g. “+24.7% CTR” or “no lift — rolled back”):',''); if(v===null)return; v=(''+v).trim(); if(!v)return;
     b.comms=b.comms||[]; b.comms.push({from:'Ray',note:'Result: '+v,done:true,when:Date.now()});
     regResult(b,v);
-    if(b.status==='done')setStage(b,'analysis');   // a result logged from Done pulls the ticket into its Analysis step
+    if(b.status==='done'||b.status==='running')setStage(b,'analysis');   // a read-out ends the run — pull the ticket into its Analysis step
     b.updated=Date.now(); persist(); renderAll(); openModal(b.id);
     toast('Result logged to the Test register — draft the client confirmation to close'); }
   // the Gmail scan logs ASPL's "Result: …" reply onto the ticket unattended — fold any such
@@ -2868,11 +2905,11 @@ window.addEventListener('load',restore);
   function rescanComms(){ var n=0;
     Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b||!needsAnalysis(b)||hasResult(b)||!b.comms||!b.comms.length)return;
       for(var i=b.comms.length-1;i>=0;i--){ var c=b.comms[i], txt=String(c.note||'');
-        if(!(RESULT_CTX_RE.test(txt)||b.liveAt||b.status==='analysis'||b.status==='done'))continue;
+        if(!(RESULT_CTX_RE.test(txt)||b.liveAt||b.status==='analysis'||b.status==='running'||b.status==='done'))continue;
         var rv=extractResultTxt(txt); if(!rv)continue;
         c.note='Result: '+rv.slice(0,140); c.done=true;
         regResult(b,rv.slice(0,140));
-        if(b.status==='briefed'||b.status==='progress'||b.status==='done')setStage(b,'analysis');
+        if(b.status==='briefed'||b.status==='progress'||b.status==='done'||b.status==='running')setStage(b,'analysis');
         b.updated=Date.now(); n++; break; } });
     if(n){ persist(); toast('🧪 '+n+' historic read-out'+(n===1?'':'s')+' recovered from the brief threads'); }
     return n; }
@@ -2983,14 +3020,14 @@ window.addEventListener('load',restore);
     // a pasted read-out on a live/analysis test files as its Result — same rules as the scan
     // manual paste is authoritative: unlike the unattended scan (first result wins), pasting a
     // NEWER read-out here UPDATES the recorded one — same figures twice is a no-op
-    var rvv=(!golive&&needsAnalysis(b)&&(b.liveAt||b.status==='analysis'||b.status==='done'||RESULT_CTX_RE.test(text)))?extractResultTxt(text):'';
+    var rvv=(!golive&&needsAnalysis(b)&&(b.liveAt||b.status==='analysis'||b.status==='running'||b.status==='done'||RESULT_CTX_RE.test(text)))?extractResultTxt(text):'';
     var rvOld=lastResultTxt(b); if(rvv&&rvOld&&rvv.slice(0,140)===rvOld){ out.hidden=false; out.className='lu-out hit';
       out.innerHTML='✓ Already recorded on <b>'+esc(b.id)+'</b> — the read-out is unchanged ('+esc(rvOld.slice(0,60))+').'; ta.value=''; return; }
     b.comms=b.comms||[]; b.comms.push({from:sender,note:rvv?('Result: '+rvv.slice(0,140)):text.slice(0,600),done:done||!!rvv,when:Date.now()});
     var moved='', dueTxt='';
-    if(golive&&b.status!=='confirmed'){ goLive(b); moved=STAGE_LBL.analysis; dueTxt=' · 🚀 live, '+(runSlaDays(b)||14)+'d run → analysis due '+humanDD(b.due); }
-    else if(rvv){ regResult(b,rvv.slice(0,140)); if(b.status==='briefed'||b.status==='progress'||b.status==='done'){ setStage(b,'analysis'); moved=STAGE_LBL.analysis; } dueTxt=' · 🧪 result '+(rvOld?'UPDATED — '+rvOld.slice(0,40)+' → ':'logged — ')+rvv.slice(0,80)+' (filed to the Test register)'; }
-    else if(done&&b.status!=='confirmed'&&b.status!=='done'&&b.status!=='analysis'){ var ds2=needsAnalysis(b)?'analysis':'done'; setStage(b,ds2); moved=STAGE_LBL[ds2]; }
+    if(golive&&b.status!=='confirmed'){ goLive(b); moved=STAGE_LBL.running; dueTxt=' · 🚀 live, '+(runSlaDays(b)||14)+'d run → analysis due '+humanDD(b.due); }
+    else if(rvv){ regResult(b,rvv.slice(0,140)); if(b.status==='briefed'||b.status==='progress'||b.status==='done'||b.status==='running'){ setStage(b,'analysis'); moved=STAGE_LBL.analysis; } dueTxt=' · 🧪 result '+(rvOld?'UPDATED — '+rvOld.slice(0,40)+' → ':'logged — ')+rvv.slice(0,80)+' (filed to the Test register)'; }
+    else if(done&&b.status!=='confirmed'&&b.status!=='done'&&b.status!=='running'&&b.status!=='analysis'){ markAsplDone(b); moved=STAGE_LBL[b.status]; }
     else if(blocked&&(b.status==='briefed'||b.status==='progress')){ setStage(b,'blocked'); moved=STAGE_LBL.blocked; }
     else if(prog&&(b.status==='intake'||b.status==='briefed')){ setStage(b,'progress'); moved=STAGE_LBL.progress; }
     // pasted replies quote the ORIGINAL brief, whose subject carries the old ibfdue token —
@@ -3054,7 +3091,7 @@ window.addEventListener('load',restore);
     var mem={}; ASPL.forEach(function(a){mem[a]={open:0,done:0,ta:[],stall:0};});
     arr.forEach(function(b){ var a=asplOf(b); if(!mem[a])mem[a]={open:0,done:0,ta:[],stall:0};
       if(b.status==='briefed'||b.status==='progress'){ mem[a].open++; if(silentDays(b)>=STALL_DAYS)mem[a].stall++; }
-      if(b.status==='done'||b.status==='confirmed'||b.status==='analysis'){ mem[a].done++; var t=turnaroundDays(b); if(t!=null)mem[a].ta.push(t); } });
+      if(b.status==='done'||b.status==='confirmed'||b.status==='running'||b.status==='analysis'){ mem[a].done++; var t=turnaroundDays(b); if(t!=null)mem[a].ta.push(t); } });
     host.innerHTML=ASPL.map(function(a){ var m=mem[a]; var avg=m.ta.length?Math.round(m.ta.reduce(function(x,y){return x+y;},0)/m.ta.length):null;
       return '<div class="sla-card'+(m.stall?' warn':'')+'"><div class="sla-name">'+esc(a)+'</div>'
         +'<div class="sla-row"><span>Open</span><b>'+m.open+'</b></div>'
@@ -3069,10 +3106,10 @@ window.addEventListener('load',restore);
       else if(b.status==='blocked'&&ds>SLA_STAGE.blocked) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'blocked '+ds+'d — unblock / reassign',act:'chaseA',lbl:'Chase ASPL'});
       else if((b.status==='briefed'||b.status==='progress')&&silentDays(b)>=STALL_DAYS){ var lr=lastReplyDays(b);
         items.push({b:b,c:'ASPL',cls:'c-aspl',d:silentDays(b),why:(lr==null?('briefed '+briefAgeDays(b)+'d ago — no reply'):('silent '+lr+'d')),act:'chaseA',lbl:'Chase ASPL'}); }
-      else if(b.status==='analysis'&&!hasResult(b)){ var rd=readoutDue(b);
+      else if((b.status==='analysis'||b.status==='running')&&!hasResult(b)){ var rd=readoutDue(b);
         if(rd!=null){ if(Date.now()>rd){ var ov=Math.floor((Date.now()-rd)/86400000);
             items.push({b:b,c:'AM',cls:'c-am',d:ov,why:'run complete ('+runSlaDays(b)+'d SLA) — analysis '+(ov?ov+'d overdue':'due today'),act:'open',lbl:'Analyse'}); } }
-        else if(ds>SLA_STAGE.analysis) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'awaiting analysis '+ds+'d — analyse it',act:'open',lbl:'Analyse'}); }
+        else if(b.status==='analysis'&&ds>SLA_STAGE.analysis) items.push({b:b,c:'AM',cls:'c-am',d:ds,why:'awaiting analysis '+ds+'d — analyse it',act:'open',lbl:'Analyse'}); }
       else if(b.status==='done'&&ds>SLA_STAGE.done) items.push({b:b,c:'Client',cls:'c-client',d:ds,why:'awaiting sign-off '+ds+'d',act:'chaseC',lbl:'Chase client'}); });
     items.sort(function(a,b2){return b2.d-a.d;});
     s.innerHTML = items.length? items.map(function(it){ var b=it.b;
@@ -3377,11 +3414,34 @@ window.addEventListener('load',restore);
       if(!(v>0)){ inp.value=+RUNSLA[inp.getAttribute('data-k')]||14; return; }
       RUNSLA[inp.getAttribute('data-k')]=v; saveRunSla(); toast('Analysis SLA saved — '+v+' days'); renderAll(); }; }); }
   renderRunSla();
-  // automation: a Done brief whose run window has elapsed is pulled into Analysis automatically
-  function autoAdvanceReadouts(){ var moved=0;
+  // automation: the run window decides where a test brief sits. Three idempotent rules —
+  //  · ASPL is done and the test is running  → Test running ⏱ (it was never "in analysis")
+  //  · the run window has elapsed            → Analysis 🧪
+  //  · it is in Analysis but the run is NOT over and no read-out exists → back to Test running.
+  // That last one is the repair for every ticket booked before this stage existed (Ray, 15 Sep
+  // 2026): they jumped to Analysis the day ASPL finished, so the board read "awaiting analysis"
+  // for a fortnight when the test was simply running. A logged read-out is never walked back.
+  // …and none of them fire without evidence that ASPL actually SHIPPED the change: a go-live
+  // stamp, a Done — ASPL handoff already in the journey, or a reply that reads as a completion
+  // (a silent ticket with no replies at all is taken at its stage). A ticket closed by the old
+  // bare-word matcher off a pickup reply has none of those, so the run rules leave it alone and
+  // the reply re-label puts it back In progress where it belongs — evidence beats mechanics.
+  function shipped(b){ if(!b)return false;
+    if(b.liveAt)return true;
+    var h=b.hist||[]; for(var i=0;i<h.length;i++){ if(h[i].s==='done'||h[i].s==='running')return true; }
+    var c=b.comms||[];
+    for(var j=0;j<c.length;j++){ if(/^Result:/.test(c[j].note||'')||classifyReply(c[j].note||'')==='done')return true; }
+    return !c.length&&(b.status==='done'||b.status==='running'||b.status==='analysis'); }
+  function autoAdvanceReadouts(){ var fwd=0, back=0;
     Object.keys(BRIEFS).forEach(function(k){ var b=BRIEFS[k];
-      if(b&&b.status==='done'&&needsAnalysis(b)){ var rd=readoutDue(b); if(rd!=null&&Date.now()>rd){ setStage(b,'analysis'); moved++; } } });
-    if(moved){ persist(); toast(moved+' brief'+(moved===1?'':'s')+' finished the run window — moved to Analysis'); } }
+      if(!b||!needsAnalysis(b)||!shipped(b))return;
+      var rd=readoutDue(b), over=(rd!=null&&Date.now()>rd);
+      if(b.status==='done'){ setStage(b,over?'analysis':'running'); fwd++; return; }
+      if(b.status==='running'&&over){ setStage(b,'analysis'); fwd++; return; }
+      if(b.status==='analysis'&&!over&&rd!=null&&!hasResult(b)){ setStage(b,'running'); back++; } });
+    if(fwd||back){ persist();
+      toast([fwd?(fwd+' brief'+(fwd===1?'':'s')+' moved on'):'',
+             back?(back+' still running — moved out of Analysis'):''].filter(Boolean).join(' · ')); } }
   // ---- Brief pipeline fold: the Timeline above shows the same briefs by date (Ray's call),
   // so the lanes collapse away by default. The chip carries the live in-motion count so the
   // folded section still says whether there's anything behind it; state sticks per device.

@@ -4565,6 +4565,41 @@
    "pattern": "test_arrivals.mjs",
    "min": 1,
    "pr": 368
+  },
+  {
+   "name": "Test running ⏱ — the run between Done — ASPL and Analysis (Ray 15 Sep 2026)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "['running','Test running ⏱','#9D174D']",
+   "pr": 368,
+   "min": 1
+  },
+  {
+   "name": "…ASPL finishing a test records the milestone AND the run it starts",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function markAsplDone(b){",
+   "pr": 368,
+   "min": 1
+  },
+  {
+   "name": "…a test inside its run window is never left sitting in Analysis (shipping evidence gates it)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function shipped(b){",
+   "pr": 368,
+   "min": 1
+  },
+  {
+   "name": "…the unattended Gmail lane reaches the same stage as the page",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "if (to === 'done' && analysisKind(b)) {",
+   "pr": 368,
+   "min": 1
+  },
+  {
+   "name": "…and a run-stage regression fails the build (worker ⇄ page parity harness)",
+   "file": "tools/test_running_stage.mjs",
+   "pattern": "page stage order",
+   "pr": 368,
+   "min": 1
   }
  ]
 }
