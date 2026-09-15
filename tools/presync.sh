@@ -48,6 +48,10 @@ echo "── validating: product-volume churn (running close-to-close baseline)"
 node tools/test_volume.mjs >/dev/null
 echo "   ✓ intraday movement lands in the day's in/out; baseline rolls at midnight"
 
+echo "── validating: new-product arrivals (first-seen dates → forecast)"
+node tools/test_arrivals.mjs >/dev/null
+echo "   ✓ engine maths + collector capture + worker store hold"
+
 echo "── validating: Golden Record PDP harvest (extraction + allowlist + sampler)"
 node tools/test_pdpharvest.mjs >/dev/null
 echo "   ✓ details-text rules, variant-only identifiers + the proxy allowlist hold"

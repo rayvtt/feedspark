@@ -827,17 +827,26 @@ export function attrsFromCounts(attrCols, attrPos, countsRow, rows) {
    algorithm exactly. Alongside the snapshot it captures the /volume module's SKU id set
    ("id|category" lines, category = first chevron level of the primary product_type). */
 export const VOLCAP = 40000;   // id-set cap — beyond it the capture is TRUNCATED (volume records rows only)
+// NEW-PRODUCT ARRIVALS (Ray, 15 Sep 2026): c:fs_date_of_birth is FeedHero's stamp of the day a
+// product ID first appeared in the feed. The collector histograms it per month (YYYY-MM) for
+// every Google Shopping feed — SURVIVORS ONLY (products still in the feed today), so recent months
+// are complete and older ones lower bounds. Same parsing rules as docs/arrivals_engine.js's
+// dobMonth (tools/test_arrivals.mjs pins the two agree). Shopping feeds only (Ray: "just use
+// Shopping feed") — a -fb market captures nothing.
+export const DOB_KEY = 'fs_date_of_birth';
 export function xmlCollector(meta) {
   const wantPT = !/-fb$/.test(String((meta && meta.market) || ''));
   const keys = wantPT ? LABEL_KEYS.concat(PT_KEYS) : LABEL_KEYS;
   let header = null, cols = null, attrCols = null, ptCol = -1, rows = 0;
   const vids = []; let volTrunc = false;
+  let dobCol = -1; const dob = { n: 0, bad: 0, m: {}, min: null, max: null };
   const filled = {}, maps = {};          // per key: filled count + value->n map
   let attrFilled = null;                 // per attr key: filled count
   const resolveCols = () => {
     cols = findCols(header, keys);
     // -fb feeds don't carry PT in `keys` — resolve the category column separately
     ptCol = wantPT ? cols.labels.product_type : findCols(header, PT_KEYS).labels.product_type;
+    dobCol = wantPT ? findCols(header, [DOB_KEY]).labels[DOB_KEY] : -1;
     for (const k of keys) if (cols.labels[k] >= 0 && !maps[k]) { filled[k] = 0; maps[k] = new Map(); }
     if (wantPT) {
       attrCols = findAttrCols(header);
@@ -866,6 +875,16 @@ export function xmlCollector(meta) {
         const pv = ptCol >= 0 ? String(r[ptCol] == null ? '' : r[ptCol]) : '';
         vids.push(idv.replace(/[|\n]/g, ' ') + '|' + pv.split('>')[0].trim().slice(0, 60));
       } else volTrunc = true;
+      if (dobCol >= 0) {
+        const s = String(r[dobCol] == null ? '' : r[dobCol]).trim();
+        if (s) {
+          const mm = /^(\d{4})-(\d{2})-(\d{2})/.exec(s), y = mm ? +mm[1] : 0, mo = mm ? +mm[2] : 0, da = mm ? +mm[3] : 0;
+          if (mm && y >= 2000 && y <= 2100 && mo >= 1 && mo <= 12 && da >= 1 && da <= 31) {
+            dob.n++; const k = mm[1] + '-' + mm[2]; dob.m[k] = (dob.m[k] || 0) + 1;
+            const d = s.slice(0, 10); if (dob.min == null || d < dob.min) dob.min = d; if (dob.max == null || d > dob.max) dob.max = d;
+          } else dob.bad++;
+        }
+      }
     }
     for (const k of keys) {
       const ci = cols.labels[k];
@@ -902,7 +921,7 @@ export function xmlCollector(meta) {
     }
     const snap = snapshotFromParts({ client: meta.client, market: meta.market, fetchedAt: Date.now() }, cols, countsRow, groupRowsByKey, keys);
     if (attrCols) snap.attrs = attrsFromCounts(attrCols, attrPos, countsRow, snap.rows);
-    return { snap, vol: { ids: vids.join('\n'), trunc: volTrunc } };
+    return { snap, vol: { ids: vids.join('\n'), trunc: volTrunc, dob: dobCol >= 0 ? dob : null } };
   };
   return { onRow, finish };
 }

@@ -99,6 +99,9 @@ import LABELGUARD_ENGINE_SRC from "../../../docs/labelguard_engine.js";
 // /overlays/engine.js — the overlay classifier + collector the xml-scan agent, the page's
 // live in-browser scan and the node harness all share (one file, three lanes)
 import OVERLAY_ENGINE_SRC from "../../../docs/overlay_engine.js";
+// /volume/engine.js — the new-product ARRIVALS maths (first-seen dates → per month / quarter /
+// year + the run-rate forecast) the /volume page, the quote generator and tools/test_arrivals.mjs share
+import ARRIVALS_ENGINE_SRC from "../../../docs/arrivals_engine.js";
 // /golden/pdp-engine.js — the Golden Record PDP harvest engine (JSON-LD / meta / microdata /
 // details-text → g: attributes). The page runs it on HTML the worker only PROXIES
 // (host-allowlisted to the feed's own product host); tools/test_pdpharvest.mjs tests the same file
@@ -380,7 +383,7 @@ export default {
         '/api/briefs': 'briefs-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
         '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save',
         '/api/labels/scan': 'label-scan', '/api/labels/scanpush': 'label-scan-live', '/api/labels/ack': 'label-rebase',
-        '/api/overlays/scanpush': 'overlay-scan-live',
+        '/api/overlays/scanpush': 'overlay-scan-live', '/api/volume/dobpush': 'volume-arrivals-live',
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
@@ -1102,6 +1105,9 @@ export default {
     if (path === '/overlays/engine.js' && request.method === 'GET') {
       return new Response(OVERLAY_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
+    if (path === '/volume/engine.js' && request.method === 'GET') {
+      return new Response(ARRIVALS_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
     if (path === '/golden/pdp-engine.js' && request.method === 'GET') {
       return new Response(PDP_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
@@ -1552,8 +1558,36 @@ export default {
       const tracked = src && src.xml ? 'xml' : (src && src.id ? 'sheet' : false);
       const hist = (await env.EDITS.get('volhist:' + client + ':' + mkt, 'json')) || [];
       const lh = (await env.EDITS.get('labelhist:' + client + ':' + mkt, 'json')) || [];
+      // + the feed's first-seen histogram (voldob:) — the arrivals run-rate the page and the quote forecast on
+      const dob = /-fb$/.test(mkt) ? null : ((await env.EDITS.get('voldob:' + client + ':' + mkt, 'json')) || null);
       return json({ ok: true, client, market: mkt, tracked, hist,
-        scans: lh.map((h) => ({ t: h.t, rows: h.rows })) });
+        scans: lh.map((h) => ({ t: h.t, rows: h.rows })), dob });
+    }
+    // ---- NEW-PRODUCT ARRIVALS across the estate (Ray, 15 Sep 2026: "how many products arrive
+    // per year per quarter per month for all my accounts"): every Shopping feed's first-seen
+    // histogram from the ONE index voldobidx — never-scanned feeds are listed honestly without one
+    if (path === '/api/volume/arrivals' && request.method === 'GET') {
+      const roster = await feedRoster(env);
+      const idx = (await env.EDITS.get('voldobidx', 'json')) || {};
+      const feeds = roster.filter((f) => !/-fb$/.test(f.mkt)).map((f) => Object.assign(
+        { client: f.client, mkt: f.mkt, kind: f.src && f.src.xml ? 'xml' : 'sheet' },
+        idx[f.client + '|' + f.mkt] ? { dob: idx[f.client + '|' + f.mkt] } : {}));
+      return json({ ok: true, field: 'fs_date_of_birth', feeds });
+    }
+    // the page's ⚡ live scan: the browser streamed /api/feed/proxy through the Feed Lab parser
+    // and the arrivals collector (/volume/engine.js) and posts the histogram. Identity is forced
+    // server-side; the feed must resolve to a wired or dossier-attached Shopping source.
+    if (path === '/api/volume/dobpush' && request.method === 'POST') {
+      const client = String(url.searchParams.get('client') || '').slice(0, 60);
+      const mkt = mktOf(url.searchParams.get('market'));
+      if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) return json({ ok: false, error: 'bad client' }, 400);
+      if (/-fb$/.test(mkt)) return json({ ok: false, error: 'Shopping feeds only — arrivals are not read off Meta feeds' }, 400);
+      const src = await feedSourceFor(env, client, mkt);
+      if (!src) return json({ ok: false, error: 'no feed linked for this client/market' }, 404);
+      let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad json' }, 400); }
+      const r = await dobStore(env, client, mkt, body && body.rows, body && body.dob);
+      if (!r) return json({ ok: false, error: 'bad capture — no first-seen histogram' }, 400);
+      return json(Object.assign({ ok: true, client, market: mkt }, r));
     }
 
     // ---- A/B TEST ARCHIVE (Ray, 9 Sep 2026) ----------------------------------------------
@@ -2345,6 +2379,34 @@ async function markScanUnreachable(env, client, mkt, msg, wantPT) {
   } catch (e2) {}
 }
 
+// ---- New-product ARRIVALS by first-seen date (Ray, 15 Sep 2026: "fs:date_of_birth signals the
+// timestamp when the product ID first appears — use that to forecast how many products arrive
+// per year per quarter per month for all my accounts"). The collector histograms
+// c:fs_date_of_birth per month for every Google Shopping feed — SURVIVORS ONLY (products still in
+// the feed today), so recent months are complete and older months lower bounds. Stored whole at
+// voldob:<c>:<m> and rolled into the ONE estate index voldobidx (last 36 months per feed) so the
+// /volume all-accounts board renders from a single read. Shopping feeds only — a -fb market is
+// refused. Written by the 4x-daily agent (confirmed scans, via volTrack) and the page's ⚡ live scan.
+const DOB_MONTHS_CAP = 240, DOB_IDX_MONTHS = 36;
+function sanitizeDob(raw) {
+  if (!raw || typeof raw !== 'object' || !raw.m || typeof raw.m !== 'object') return null;
+  const m = {}; let n = 0;
+  Object.keys(raw.m).filter((k) => /^\d{4}-\d{2}$/.test(k)).sort().slice(-DOB_MONTHS_CAP)
+    .forEach((k) => { const v = Math.max(0, Math.round(+raw.m[k] || 0)); if (v > 0) { m[k] = v; n += v; } });
+  const day = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : null);
+  return { n: Math.max(0, Math.round(+raw.n || 0)) || n, bad: Math.max(0, Math.round(+raw.bad || 0)), m, min: day(raw.min), max: day(raw.max) };
+}
+async function dobStore(env, client, mkt, rows, raw) {
+  if (/-fb$/.test(String(mkt || ''))) return null;
+  const dob = sanitizeDob(raw); if (!dob) return null;
+  const rec = Object.assign({ t: Date.now(), rows: Math.max(0, Math.round(+rows || 0)) }, dob);
+  await env.EDITS.put('voldob:' + client + ':' + mkt, JSON.stringify(rec));
+  const idx = (await env.EDITS.get('voldobidx', 'json')) || {};
+  const ks = Object.keys(dob.m).sort().slice(-DOB_IDX_MONTHS); const m = {}; ks.forEach((k) => { m[k] = dob.m[k]; });
+  idx[client + '|' + mkt] = { client, mkt, t: rec.t, rows: rec.rows, n: dob.n, min: dob.min, max: dob.max, m };
+  await env.EDITS.put('voldobidx', JSON.stringify(idx));
+  return { n: dob.n, months: ks.length };
+}
 // ---- Daily product-volume tracking (Ray, 9 Sep 2026: "document the daily product volume …
 // 300 new products coming in and 900 products going out, per category, like Merchant
 // Center"). The xml-scan agent sends each feed's full SKU id set as "id|category" lines
@@ -2398,6 +2460,8 @@ async function volTrack(env, client, mkt, rows, vol) {
   }
   await env.EDITS.put(HK, JSON.stringify(hist.slice(-60)));
   await env.EDITS.put(VK, JSON.stringify({ d: today, ids: trunc ? '' : vol.ids, trunc }));
+  // the first-seen histogram rides the same confirmed scan (Shopping feeds only — dobStore refuses -fb)
+  if (vol.dob) { try { await dobStore(env, client, mkt, rows, vol.dob); } catch (e) {} }
   return { d: today };
 }
 // One pushed raw snapshot → the shared guard processing + volume tracking. Used by the
