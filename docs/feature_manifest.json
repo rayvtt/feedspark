@@ -4777,73 +4777,108 @@
       "min": 1
     },
     {
+      "name": "A deep link's BRAND is data — the composer can't re-file it under another (Ray 15 Sep 2026)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var PINNED_CLIENT=null;",
+      "pr": 374,
+      "min": 1
+    },
+    {
+      "name": "…out of scope, the composer refuses instead of saving under the first brand",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function clientBlocked(){",
+      "pr": 374,
+      "min": 1
+    },
+    {
+      "name": "…and the pinned brand survives every async roster rebuild",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function applyPin(){",
+      "pr": 374,
+      "min": 1
+    },
+    {
+      "name": "KWCal: a ticket filed under the wrong brand is found, named and repairable in one click",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function misfiledFor(brand,e){",
+      "pr": 374,
+      "min": 1
+    },
+    {
+      "name": "…the repair keeps the ticket's stage and history, and drops the foreign plan tie",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function refileBrief(brand,e,b){",
+      "pr": 374,
+      "min": 1
+    },
+    {
       "name": "VI toggle: the DOM-translation engine ships as its own UMD module (Ray 15 Sep 2026)",
       "file": "docs/i18n_engine.js",
       "pattern": "function keepsProtected(src, dst)",
-      "pr": 374,
+      "pr": 375,
       "min": 1
     },
     {
       "name": "…plural-canon protection: a protected 'SKUs' may legitimately come back as 'SKU'",
       "file": "docs/i18n_engine.js",
       "pattern": "function canon(t)",
-      "pr": 374,
+      "pr": 375,
       "min": 1
     },
     {
       "name": "…the owner-only language widget restores exact originals off the live DOM",
       "file": "docs/lang_widget.html",
       "pattern": "function restore(root)",
-      "pr": 374,
+      "pr": 375,
       "min": 1
     },
     {
       "name": "…and never translates the Templates copy bodies or the wordmark",
       "file": "docs/lang_widget.html",
       "pattern": ".tpl .subj,.tpl .body,.topbar-in .brand",
-      "pr": 374,
+      "pr": 375,
       "min": 1
     },
     {
       "name": "…worker: /api/i18n is realOwner-gated, one KV key per language",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "const LK = 'i18n:' + lang;",
-      "pr": 374,
+      "pr": 375,
       "min": 1
     },
     {
       "name": "…worker: the widget is injected only for the real owner identity",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "if (realOwner(env, request)) html = inject(html, LANGW);",
-      "pr": 374,
+      "pr": 375,
       "min": 1
     },
     {
       "name": "…the hand-written Vietnamese seed dictionary is committed",
       "file": "docs/i18n/vi.json",
       "pattern": "\"Command center\"",
-      "pr": 374,
+      "pr": 375,
       "min": 1
     },
     {
       "name": "…i18n harness wired into the QA gate",
       "file": "tools/qa_gate.sh",
       "pattern": "node tools/test_i18n.mjs",
-      "pr": 374,
+      "pr": 375,
       "min": 1
     },
     {
       "name": "…i18n harness wired into presync",
       "file": "tools/presync.sh",
       "pattern": "node tools/test_i18n.mjs",
-      "pr": 374,
+      "pr": 375,
       "min": 1
     },
     {
       "name": "…i18n harness wired into validate.yml",
       "file": ".github/workflows/validate.yml",
       "pattern": "node tools/test_i18n.mjs",
-      "pr": 374,
+      "pr": 375,
       "min": 1
     }
   ]
