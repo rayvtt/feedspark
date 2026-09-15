@@ -40,6 +40,13 @@ else
   echo "   ✗ access-scoping harness FAILED — see node tools/test_access.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3a/7: shared working state (one team, one store)"
+if node tools/test_sharedstate.mjs >/dev/null 2>&1; then
+  echo "   ✓ scoped views + the partial-save wipe trap hold on /api/state"
+else
+  echo "   ✗ shared-state harness FAILED — see node tools/test_sharedstate.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3b/7: keyword-result parsing + verdict"
 if node tools/test_kwresult.mjs >/dev/null 2>&1; then
   echo "   ✓ subject shape, verdict direction + inverted cost metrics hold"

@@ -1000,6 +1000,21 @@ window.addEventListener('load',restore);
     return '<span class="tag tag-'+c+'">'+esc(s||(b==='done'?'Done':'Open'))+'</span>'; }
   // editable status → bucket (colour) mapping + a pill-styled <select> that writes back to the plan
   var STATUS_OPTS=['Open','In Progress','On Hold','With Client','Done'];
+  /* Task status is TEAM state, not this browser's: the dossier reads and writes the same
+     /api/state store the Workflow board uses (Ray, 15 Sep 2026 — "nothing is kept for a
+     specific user only"). localStorage is only the offline mirror. */
+  var SHSTAT={}; try{ SHSTAT=JSON.parse(localStorage.getItem('fcc-taskstatus')||'{}')||{}; }catch(e){}
+  function shStatus(){ return SHSTAT; }
+  function shStatusSet(k,v){ SHSTAT[k]=v;
+    try{ localStorage.setItem('fcc-taskstatus',JSON.stringify(SHSTAT)); }catch(e){}
+    var one={}; one[k]=v;     // send ONLY what changed — a whole-map PUT off a stale read would
+    fetch('/api/state',{method:'PUT',headers:{'content-type':'application/json'},   // resurrect
+      body:JSON.stringify({taskstatus:one})}).catch(function(){});                  // deleted keys
+  }
+  fetch('/api/state?ns=taskstatus').then(function(r){return r.json();}).then(function(m){
+    if(!m||typeof m!=='object'||m.error||!m.taskstatus)return;
+    SHSTAT=m.taskstatus; try{ localStorage.setItem('fcc-taskstatus',JSON.stringify(SHSTAT)); }catch(e){}
+  }).catch(function(){});
   function bucketOf(s){ s=String(s||'').toLowerCase();
     if(/(done|complete|finish|live|delivered|actioned)/.test(s))return 'done';
     if(/(hold|park)/.test(s))return 'hold';
@@ -1123,9 +1138,11 @@ window.addEventListener('load',restore);
   function render(name){
     cur=name; var b=B[name]||{}, p=PT[name];
     var tasks = p ? planItems(p) : ((A.brands&&A.brands[name])||[]);
-    // overlay any locally-saved status changes (2-way: also written to the plan sheet)
-    try{ var _ov=JSON.parse(localStorage.getItem('fcc-taskstatus')||'{}');
-      tasks.forEach(function(t){ var v=_ov[name+'|'+t.t]; if(v){ t.s=v; t.b=bucketOf(v); } }); }catch(e){}
+    // overlay the TEAM's status changes — the same shared store Workflow writes (Ray, 15 Sep
+    // 2026: a status one AM set must be the status everyone sees), mirrored to localStorage so
+    // the dossier still shows the last known state offline
+    var _ov=shStatus();
+    tasks.forEach(function(t){ var v=_ov[name+'|'+t.t]; if(v){ t.s=v; t.b=bucketOf(v); } });
     var tst=tasks.filter(function(t){return t.x;}), od=A.overdue[name]||0;
     // dossier now features only the brand's current running tests (full detail in Workflow)
     var runTests=tst.filter(function(t){return t.b!=='done';});
@@ -1219,7 +1236,7 @@ window.addEventListener('load',restore);
       sel.addEventListener('change',function(){
         var li=sel.closest('.wl-item'), task=li?li.getAttribute('data-task'):'', val=sel.value;
         var bk=bucketOf(val); sel.className='stat-sel tag-'+bk; if(li) li.setAttribute('data-b',bk);
-        try{ var ov=JSON.parse(localStorage.getItem('fcc-taskstatus')||'{}'); ov[name+'|'+task]=val; localStorage.setItem('fcc-taskstatus',JSON.stringify(ov)); }catch(e){}
+        shStatusSet(name+'|'+task,val);
         if(!sheetId){ tzt('Status saved · link '+name+'’s plan sheet to write it back'); return; }
         tzt('Writing status to '+name+'’s plan…');
         fetch('/api/sheets/status',{method:'POST',headers:{'content-type':'application/json'},

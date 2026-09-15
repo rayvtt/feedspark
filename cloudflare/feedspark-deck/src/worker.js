@@ -25,6 +25,7 @@
 // editing the .html in git and pushing to main; Cloudflare rebuilds and redeploys.
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
+import { STATE_NS, isStateNs, scopeStateView, scopeStateIncoming } from "./sharedstate.js";
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
 import { parseAbTests, abSummary, resolveAbTab, hasAbHeader, abClientKey } from "./abtests.js";
 // Scheduled Work (Ray, 15 Sep 2026): the content team's weekly schedule sheet (hidden weekly tabs
@@ -396,7 +397,7 @@ export default {
     if (request.method === 'PUT' || request.method === 'POST') {
       const ACT = { '/api/edits': 'edit', '/api/feedback': 'feedback', '/api/clients': 'dossier-save',
         '/api/materials': 'material-save',
-        '/api/briefs': 'briefs-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
+        '/api/briefs': 'briefs-save', '/api/state': 'state-save', '/api/buildqueue': 'queue-save', '/api/claude': 'tachyon', '/api/plan/live': 'plan-sync',
         '/api/feed/audit': 'feed-audit', '/api/tachyon/rates': 'rates-save', '/api/tachyon/quotes': 'quote-save', '/api/tachyon/track': 'track-save',
         '/api/labels/scan': 'label-scan', '/api/labels/scanpush': 'label-scan-live', '/api/labels/ack': 'label-rebase',
         '/api/overlays/scanpush': 'overlay-scan-live', '/api/volume/dobpush': 'volume-arrivals-live',
@@ -618,6 +619,48 @@ export default {
     // ---- briefs store (Workflow control center: brief/ticket pipeline, shared across the team) ----
     // A single JSON object keyed by brief id: {id: {client, code, task, due, status, comms, ...}}.
     // The board owns its state and PUTs the whole map; small N, no races worth the complexity.
+    /* ---- SHARED WORKING STATE (src/sharedstate.js) ----------------------------------------
+       The Workflow board's plan overlays used to live in each person's localStorage, so one
+       AM's status change, owner, due date, added row or deletion was invisible to everyone
+       else and died with their browser profile (Ray, 15 Sep 2026). One kvmerge envelope per
+       namespace under `state:<ns>`: independent merges, per-key tombstones, and the same
+       X-Sync-Base read-stamp rule /api/briefs uses. Scoped signins see and write only their
+       clients' entries; foreign entries are re-injected before the merge so a partial view
+       can never wipe the board. */
+    if (path === '/api/state') {
+      const acc = await accessOf(env, request);
+      const names = Object.keys(STATE_NS);
+      const wanted = url.searchParams.get('ns');
+      const list = wanted ? wanted.split(',').filter(isStateNs) : names;
+      if (wanted && !list.length) return json({ ok: false, error: 'unknown_ns' }, 400);
+
+      if (request.method === 'GET') {
+        const now = Date.now(), out = {};
+        for (const ns of list) {
+          const lifted = liftEnvelope(await env.EDITS.get('state:' + ns, 'json'), now);
+          out[ns] = acc.clients ? scopeStateView(ns, lifted.data, acc.clients, clientMatch) : lifted.data;
+        }
+        return json(out, 200, { 'X-Sync-Base': String(Date.now()) });
+      }
+      if (request.method === 'PUT') {
+        let body; try { body = await request.json(); } catch (e) { return json({ ok: false, error: 'bad_json' }, 400); }
+        const base = Number(request.headers.get('X-Sync-Base') || 0) || 0;
+        const out = {};
+        for (const ns of Object.keys(body || {})) {
+          if (!isStateNs(ns)) continue;                       // never let an unknown name make a KV key
+          const now = Date.now();
+          const cur = liftEnvelope(await env.EDITS.get('state:' + ns, 'json'), now);
+          const inc = acc.clients
+            ? scopeStateIncoming(ns, cur.data, body[ns], acc.clients, clientMatch)
+            : (body[ns] || {});
+          const envx = mergeIntoEnvelope(cur, inc, base, now, {});
+          await env.EDITS.put('state:' + ns, JSON.stringify(envx));
+          out[ns] = acc.clients ? scopeStateView(ns, envx.data, acc.clients, clientMatch) : envx.data;
+        }
+        return json(out, 200, { 'X-Sync-Base': String(Date.now()) });
+      }
+    }
+
     if (path === '/api/briefs') {
       const acc = await accessOf(env, request);
       if (acc.clients) {

@@ -282,10 +282,19 @@ window.addEventListener('load',restore);
 
   /* editable overrides (localStorage): { extra:{k:[terms]}, hide:{k:1}, name:{k:'…'} } */
   var OV={extra:{},hide:{},name:{}};
+  // the tuned taxonomy is the TEAM's, not this browser's (Ray, 15 Sep 2026) — localStorage is
+  // the offline mirror, /api/state is the truth, and a later pull re-renders with it
   try{var raw=localStorage.getItem('fcc-pb-tax');if(raw)OV=JSON.parse(raw)||OV;}catch(e){}
+  fetch('/api/state?ns=pbtax').then(function(r){return r.json();}).then(function(m){
+    if(!m||typeof m!=='object'||m.error||!m.pbtax||!Object.keys(m.pbtax).length)return;
+    OV=m.pbtax; try{localStorage.setItem('fcc-pb-tax',JSON.stringify(OV));}catch(e){}
+    IDX=null; if(typeof renderBook==='function'){ renderBook(); if(CUR){renderRetro();renderProsp();} }
+  }).catch(function(){});
   function catName(k){var b=TAX.filter(function(c){return c.k===k})[0]||GENERAL;return (OV.name&&OV.name[k])||b.n;}
   function catEmoji(k){var b=TAX.filter(function(c){return c.k===k})[0]||GENERAL;return b.e;}
-  function saveOV(){try{localStorage.setItem('fcc-pb-tax',JSON.stringify(OV));}catch(e){}}
+  function saveOV(){try{localStorage.setItem('fcc-pb-tax',JSON.stringify(OV));}catch(e){}
+    fetch('/api/state',{method:'PUT',headers:{'content-type':'application/json'},
+      body:JSON.stringify({pbtax:OV})}).catch(function(){}); }
 
   var hit=function(text,term){try{return new RegExp('(^|[^a-z0-9])'+term.replace(/[.*+?^${}()|[\]\\/]/g,'\\$&')+'([^a-z0-9]|$)','i').test(text);}catch(e){return text.indexOf(term)>=0;}};
   function classify(t){

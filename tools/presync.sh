@@ -36,6 +36,10 @@ echo "── validating: access scoping (per-user Workflow views)"
 node tools/test_access.mjs >/dev/null
 echo "   ✓ scoped views + the briefs tombstone trap hold"
 
+echo "── validating: shared working state (one team, one store)"
+node tools/test_sharedstate.mjs >/dev/null
+echo "   ✓ scoped views + the partial-save wipe trap hold on /api/state"
+
 echo "── validating: overlay engine (URL-string classification + collector)"
 node tools/test_overlays.mjs >/dev/null
 echo "   ✓ overlay types read off the image_link URL"
