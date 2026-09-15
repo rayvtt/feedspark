@@ -119,6 +119,8 @@ import PDP_ENGINE_SRC from "../../../docs/pdp_engine.js";
 import I18N_ENGINE_SRC from "../../../docs/i18n_engine.js";
 import I18N_VI_SEED from "../../../docs/i18n/vi.json";
 import LANGW from "../../../docs/lang_widget.html";
+// the phone layer (Ray, 15 Sep 2026: "complete overhaul for UX UI for mobile version — MIRROR desktop setting")
+import MOBILEW from "../../../docs/mobile_widget.html";
 
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
@@ -2272,6 +2274,8 @@ export default {
         // the Vietnamese UI toggle is Ray's alone: injected only for the REAL owner identity
         // (never for another signin, never while previewing someone else's FCC via view-as)
         if (realOwner(env, request)) html = inject(html, LANGW);
+        // the phone layer rides last so it sees every other widget's chrome (bar, sheets, bubble)
+        html = inject(html, MOBILEW);
       }
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }

@@ -102,6 +102,13 @@ else
   echo "   ✗ i18n harness FAILED — see node tools/test_i18n.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h3/7: phone layer (the module bar, mirror rules, pan sweep, wiring)"
+if node tools/test_mobile.mjs >/dev/null 2>&1; then
+  echo "   ✓ bottom bar, sheets, mirror rules, pan sweep + worker/tripwire wiring hold"
+else
+  echo "   ✗ phone-layer harness FAILED — see node tools/test_mobile.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3i/7: Scheduled Work (the content team's sheet → skip cadence per brand)"
 if node tools/test_schedule.mjs >/dev/null 2>&1; then
   echo "   ✓ header layouts, DDMM tab dating, the AM's word + month streaks hold; the snapshot still reads"

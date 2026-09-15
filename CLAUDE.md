@@ -227,7 +227,7 @@ GET|POST /api/i18n?lang=vi      → owner-only runtime lane for strings the seed
   in my access") — everyone who has signed in (real identity + exact last-seen date/time, KV
   `presence` kept 90 days) ∪ anyone assigned in the access directory who hasn't logged in yet
   ("not seen yet"); server-gated (realOwner → `roster` on POST /api/presence; the shared live
-  view stays live-only); heartbeats deliberately NOT in the activity log), the **UI language toggle** (docs/lang_widget.html — Ray's owner-only EN/VI pill, see /i18n above), the **Feed Chat bubble** (docs/feedchat_widget.html — the chatbot
+  view stays live-only); heartbeats deliberately NOT in the activity log), the **UI language toggle** (docs/lang_widget.html — Ray's owner-only EN/VI pill, see /i18n above), the **PHONE LAYER** (docs/mobile_widget.html, every signin, Ray 15 Sep 2026: "complete overhaul for UX UI for mobile version — MIRROR desktop setting": under 760px the SAME module nav node becomes a fixed bottom bar of icon+label tap targets — same anchors, same order, the viewer's own ▦ bundling; the desktop collapse toggle collapses the bar; the ▦ sheet lists every module with labels; the presence popover, view-as pill and customizer become bottom sheets; the topbar is one 52px row; controls pages used to hide under 900px are shown again (Golden Record per-attribute actions, the brief composer's context rail, AI Quote rate columns, the home CTA); anything wider than the screen — tables, min-width workbenches, the quote grid — pans inside its own frame via the sweep ("pan, don't crush"); inputs 16px, buttons ≥36px. Tripwires: tools/check_mobile.js (Playwright, presync: 390px render of every app page — no overflow, header ≤64px, bar carries every module, every desktop-visible control visible) + tools/test_mobile.mjs (node, qa_gate/presync/validate). Docs: docs/MOBILE.md), the **Feed Chat bubble** (docs/feedchat_widget.html — the chatbot
   hovering bottom-right, see /feedchat above) + the **Tachyon copilot**
   (`docs/tachyon_widget.html`, reads `window.PLANTASKS`, calls `/api/claude`).
 - **Secrets**: `ANTHROPIC_API_KEY` powers Tachyon (`wrangler secret put ANTHROPIC_API_KEY`); both
@@ -270,6 +270,7 @@ babysitting by default). Overlap safeguards, both inside presync:
 the **overwrite tripwire** (`docs/feature_manifest.json` checked by `tools/check_markers.js` — when you
 ship a feature into a shared file, add its marker in the same PR) and the **overlap detector**
 (`tools/overlap.sh` — also run it at task START; 🔥 hot-file overlap = sequence, don't parallel-edit).
+**Phone tripwire (Ray's standing rule, Sep 2026): every app page mirrors its desktop feature set at 390px** — `tools/check_mobile.js` in presync fails the build on sideways overflow, a header over 64px, a lost module bar or any control visible on desktop but hidden on the phone; the shared layer is `docs/mobile_widget.html` (see docs/MOBILE.md) — fix a page there or in its own CSS, never by hiding the control.
 **Nav-parity tripwire (Ray's standing rule): the module menu stays IDENTICAL on every app page** —
 `tools/check_nav.js` (in presync + qa_gate + validate.yml) fails the build if any page's `.tb-modules`
 nav drifts from `docs/FeedSpark_Workflow.html` (the canonical). Adding a module = add its link to

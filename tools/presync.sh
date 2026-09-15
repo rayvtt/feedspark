@@ -60,6 +60,10 @@ echo "── validating: Vietnamese UI toggle (engine + seed + owner gating)"
 node tools/test_i18n.mjs >/dev/null
 echo "   ✓ skip / keep rules, number templating, seed integrity, owner-only route + injection hold"
 
+echo "── validating: phone layer (bar, sheets, mirror rules, pan sweep, wiring)"
+node tools/test_mobile.mjs >/dev/null
+echo "   ✓ bottom bar, sheets, mirror rules, pan sweep + wiring hold"
+
 echo "── validating: Scheduled Work (sheet → skip cadence per brand)"
 node tools/test_schedule.mjs >/dev/null
 echo "   ✓ header layouts, DDMM tab dating, the AM's word + month streaks hold"
@@ -75,6 +79,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: dark view (every app page rendered dark — no light islands)"
   NODE_PATH=$(npm root -g) node tools/check_darkmode.js || {
     echo "✗ dark-view tripwire failed — a hard-coded light background slipped past the page's [data-theme=dark] block"; exit 1; }
+  echo "── validating: phone layout (every app page at 390px — one-row header, module bar, no overflow, desktop parity)"
+  NODE_PATH=$(npm root -g) node tools/check_mobile.js || {
+    echo "✗ phone tripwire failed — a page overflows sideways, hides a desktop control or lost its module bar"; exit 1; }
 else
   echo "   · playwright unavailable, skipped (run tools/test_editor.mjs before shipping editor changes)"
 fi
