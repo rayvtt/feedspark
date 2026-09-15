@@ -123,7 +123,6 @@ export function taskDice(a, b) {
   return (2 * hit) / (A.length + B.length);
 }
 
-function isTest(b) { return /\btest/i.test((b && b.task) || ''); }
 function validDD(dd8) {
   if (!/^\d{8}$/.test(dd8 || '')) return false;
   const d = +dd8.slice(0, 2), m = +dd8.slice(2, 4), y = +dd8.slice(4);
@@ -442,13 +441,13 @@ export function matchGmailToBriefs(briefs, messages, opts) {
       // chance: if the ticket still lacks a Result:, scan the fresh text and UPGRADE the comm.
       if (analysisKind(b) && !(b.comms || []).some((c) => /^Result:/.test(c.note || ''))
           && !(LIVE_RE.test(text) && !b.liveAt)
-          && (b.liveAt || b.status === 'analysis' || b.status === 'done' || RESULT_CTX_RE.test(String(msg.snippet || '')))) {
+          && (b.liveAt || b.status === 'analysis' || b.status === 'running' || b.status === 'done' || RESULT_CTX_RE.test(String(msg.snippet || '')))) {
         const rvU = extractResult(String(msg.snippet || ''));
         if (rvU) {
           const c0 = b.comms.find((c) => c.mid === msg.id);
           c0.note = 'Result: ' + rvU.slice(0, 140); c0.done = true;
           results.push({ id: b.id, result: rvU.slice(0, 140) });
-          if (b.status === 'briefed' || b.status === 'progress' || b.status === 'done') {
+          if (b.status === 'briefed' || b.status === 'progress' || b.status === 'done' || b.status === 'running') {
             (b.hist = (b.hist && b.hist.length) ? b.hist : [{ s: b.status, t: b.created || now }]).push({ s: 'analysis', t: now });
             b.status = 'analysis';
             moved.push({ id: b.id, stage: 'analysis' });
@@ -472,7 +471,7 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     // unlock, chase-analysis escalation cleared). First result only; never on the go-live msg.
     let rv = '';
     if (!golive && analysisKind(b)
-        && (b.liveAt || b.status === 'analysis' || b.status === 'done' || RESULT_CTX_RE.test(String(msg.snippet || '')))
+        && (b.liveAt || b.status === 'analysis' || b.status === 'running' || b.status === 'done' || RESULT_CTX_RE.test(String(msg.snippet || '')))
         && !(b.comms || []).some((c) => /^Result:/.test(c.note || ''))) {
       rv = extractResult(String(msg.snippet || ''));
     }
@@ -481,23 +480,30 @@ export function matchGmailToBriefs(briefs, messages, opts) {
     let to = '';
     if (golive && b.status !== 'confirmed' && !b.liveAt) {
       // the test just went live: record it, start the run clock, re-date the due to the
-      // analysis date (+run-SLA) and move the ticket to analysis
+      // analysis date (+run-SLA) and move the ticket into its RUN — analysis comes after it
       b.liveAt = msg.date || now;
       b.due = dd8Of(b.liveAt + (RUNSLA_DEF[analysisKind(b)] || 14) * 86400000);
-      if (b.status !== 'analysis') to = 'analysis';
+      if (b.status !== 'running' && b.status !== 'analysis') to = 'running';
     }
-    else if (done && b.status !== 'confirmed' && b.status !== 'done' && b.status !== 'analysis') to = isTest(b) ? 'analysis' : 'done';
+    // ASPL finishing a TEST is the Done — ASPL milestone AND the start of its run: both are
+    // recorded, so the journey reads "Done — ASPL → Test running" (page parity: markAsplDone).
+    else if (done && b.status !== 'confirmed' && b.status !== 'done' && b.status !== 'running' && b.status !== 'analysis') to = 'done';
     else if (blocked && (b.status === 'briefed' || b.status === 'progress')) to = 'blocked';
     else if (prog && (b.status === 'intake' || b.status === 'briefed')) to = 'progress';
     if (to) {
       (b.hist = (b.hist && b.hist.length) ? b.hist : [{ s: b.status || 'intake', t: b.created || now }]).push({ s: to, t: now });
       b.status = to;
       moved.push({ id: b.id, stage: to });
+      if (to === 'done' && analysisKind(b)) {
+        b.hist.push({ s: 'running', t: now });
+        b.status = 'running';
+        moved.push({ id: b.id, stage: 'running' });
+      }
     }
     if (rv) {
       results.push({ id: b.id, result: rv.slice(0, 140) });
       // a result pulls an in-flight test into its Analysis step (page parity); confirmed stays closed
-      if (b.status === 'briefed' || b.status === 'progress' || b.status === 'done') {
+      if (b.status === 'briefed' || b.status === 'progress' || b.status === 'done' || b.status === 'running') {
         (b.hist = (b.hist && b.hist.length) ? b.hist : [{ s: b.status, t: b.created || now }]).push({ s: 'analysis', t: now });
         b.status = 'analysis';
         moved.push({ id: b.id, stage: 'analysis' });

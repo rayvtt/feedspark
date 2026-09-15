@@ -245,7 +245,7 @@
       var scanned = classifyTach(b.task);
       var tr = track[k] || {};
       if (!scanned && !liveTag(tr.tach) && !Object.keys(tr).length) return;
-      var done = b.status === 'done' || b.status === 'confirmed' || b.status === 'analysis';
+      var done = b.status === 'done' || b.status === 'confirmed' || b.status === 'running' || b.status === 'analysis';
       var row = trackNums(tr);
       row.bid = k; row.client = b.client || ''; row.task = b.task || ''; row.status = b.status || 'intake';
       row.done = done; row.created = +b.created || 0; row.tach = liveTag(tr.tach) || scanned || '';
@@ -315,7 +315,7 @@
       var t0 = 0, t1 = 0;
       (b.hist || []).forEach(function (e) {
         if (e.s === 'briefed' && !t0) t0 = +e.t || 0;
-        if ((e.s === 'done' || e.s === 'confirmed' || e.s === 'analysis') && !t1) t1 = +e.t || 0;
+        if ((e.s === 'done' || e.s === 'confirmed' || e.s === 'running' || e.s === 'analysis') && !t1) t1 = +e.t || 0;
       });
       if (t0 && t1 && t1 > t0) { a.leadN++; a.lead += (t1 - t0) / 86400000; }
     });

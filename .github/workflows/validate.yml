@@ -47,5 +47,8 @@ jobs:
       - name: Reply classifier in sync (worker briefmatch = Workflow page)
         run: node tools/test_replyclass.mjs
 
+      - name: Test-running stage in sync (worker briefmatch = Workflow page)
+        run: node tools/test_running_stage.mjs
+
       - name: Labelguard browser-engine copy in sync (served /labels/engine.js = src)
         run: node tools/check_lgcopy.js
