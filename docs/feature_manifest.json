@@ -4397,6 +4397,27 @@
    "pattern": "</div>\n    <div class=\"qtot\" id=\"qtot\"></div>\n    <div class=\"edit-bar\"",
    "pr": 366,
    "min": 1
+  },
+  {
+   "name": "Email tasks carry 📧 instead of the mail client's RE: prefix (Ray 15 Sep 2026)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "var MAIL_TAG='📧';",
+   "pr": 367,
+   "min": 1
+  },
+  {
+   "name": "…new email tasks are BORN with the mail tag — one builder for → Task, → Brief and → TechAM",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function emailTaskName(g){ return MAIL_TAG+' '+(stripReply(g.subject)||'(no subject)')",
+   "pr": 367,
+   "min": 1
+  },
+  {
+   "name": "…rows already written with RE: swap it at DISPLAY only — the stored task text is the row's identity",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function taskDisp(t){",
+   "pr": 367,
+   "min": 1
   }
  ]
 }
