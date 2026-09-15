@@ -97,11 +97,44 @@ export function planStream(tasks, months) {
   }));
 }
 // captured emails {id, from, subject, date, client, kind, dismissed, decidedAs}
+//
+// AN EMAIL IS NOT A TASK, and one conversation is not one email (Ray, 15 Sep 2026: "I can see
+// 36 client emails within September 2026, but within Intake and plan across all history
+// there's only 12 tasks that actually came from email. So where is the 36 coming from? Maybe
+// you can also indicate how many of those emails actually created a task for that month").
+// The stream counts every captured MESSAGE, which is the honest measure of inbound volume —
+// but a reply chain is several messages under one decision, and "not a task" or untriaged
+// messages never become a row at all. So the chart used to invite a comparison it couldn't
+// answer. `conv` carries the two numbers that close the gap, per month:
+//   threads      — distinct conversations (subject with its re:/fw: prefixes stripped)
+//   tasked       — messages whose triage decision creates an Intake row
+//   threadsTasked— those conversations, deduped: the figure that lines up with Intake itself
+// Thread keying mirrors the Workflow triage panel's own grouping, so the counts agree with
+// what an AM decides on screen.
+const TASKING = { task: 1, briefed: 1, techam: 1 };   // the decisions that create an Intake row
+export function threadKeyOf(subject) {
+  return String(subject || '').toLowerCase()
+    .replace(/^\s*((re|fw|fwd|aw|sv)\s*:\s*)+/i, '').replace(/\s+/g, ' ').trim();
+}
 export function emailStream(items, months) {
-  return bucket(months, items || [], (e) => monthKey(e.date), (e) => ({
+  const out = bucket(months, items || [], (e) => monthKey(e.date), (e) => ({
     decision: DECISION_LABEL[e.dismissed ? (e.decidedAs || 'notask') : 'pending'],
     kind: e.kind === 'kwresult' ? 'Result update' : (e.briefable ? 'Briefable request' : 'Client email'),
   }));
+  const conv = { threads: {}, tasked: {}, threadsTasked: {} };
+  months.forEach((m) => { conv.threads[m] = 0; conv.tasked[m] = 0; conv.threadsTasked[m] = 0; });
+  const seen = {}, tasked = {};
+  (items || []).forEach((e) => {
+    const m = monthKey(e.date);
+    if (!m || conv.threads[m] === undefined) return;
+    const dec = e.dismissed ? (e.decidedAs || 'notask') : 'pending';
+    if (TASKING[dec]) conv.tasked[m]++;
+    const tk = m + '\u0000' + (threadKeyOf(e.subject) || ('id:' + e.id));
+    if (!seen[tk]) { seen[tk] = 1; conv.threads[m]++; }
+    if (TASKING[dec] && !tasked[tk]) { tasked[tk] = 1; conv.threadsTasked[m]++; }
+  });
+  out.conv = conv;
+  return out;
 }
 // call-notes action items {id, mid, call, client, when, owner, task}
 export function callStream(calls, months) {
