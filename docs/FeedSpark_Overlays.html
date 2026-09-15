@@ -96,10 +96,24 @@ window.addEventListener('load',restore);
   .galctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:8px 0;font-size:12px;font-weight:700;color:var(--muted)}
   .galctl .lbl{margin-right:2px}
   .galctl .btn.sm.on{background:var(--orange);border-color:var(--orange);color:#fff}
-  .consist{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;padding:4px 10px;border-radius:100px;margin:2px 0 8px;max-width:100%}
+  /* the verdict is a PILL, never a paragraph — the breakdown lives behind "details" */
+  .consist{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;padding:4px 11px;border-radius:100px;margin:2px 0 8px;max-width:100%;white-space:nowrap}
   .consist.ok{background:rgba(21,128,61,.12);color:var(--good)}
-  .consist.warn{background:rgba(237,111,11,.14);color:var(--orange-ink)}
-  .consist .vs{font-weight:700;color:var(--ink-2);white-space:normal}
+  .consist.warn{background:rgba(237,111,11,.14);color:var(--orange-ink);cursor:pointer}
+  .consist.warn:hover{background:rgba(237,111,11,.2)}
+  .consist .cn{font-weight:700;color:var(--muted)}
+  .consist .cmore{font-weight:800;color:inherit;opacity:.75;text-decoration:underline;text-underline-offset:2px}
+  .cdet{border:1px solid var(--line);border-radius:10px;background:var(--wash);padding:10px 12px;margin:0 0 10px;font-size:12px;max-width:560px}
+  .cdet .cr{display:grid;grid-template-columns:minmax(78px,auto) 1fr;gap:4px 10px;align-items:start;margin:0 0 8px}
+  .cdet .cr:last-of-type{margin-bottom:0}
+  .cdet .ck{font-weight:900;color:var(--ink)}
+  .cdet .cv{display:grid;grid-template-columns:1fr 56px 44px;gap:8px;align-items:center;font-weight:700;color:var(--ink-2);margin-bottom:2px}
+  .cdet .cv .cb{height:6px;border-radius:3px;background:var(--orange);min-width:2px}
+  .cdet .cv .cb.mut{background:var(--muted);opacity:.45}
+  .cdet .cv .cc{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-weight:800}
+  .cdet .cv .cpv{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cdet .cfoot{border-top:1px solid var(--line);margin-top:9px;padding-top:8px;color:var(--muted);font-weight:700}
+  .recipe .r.rdata{color:var(--muted);background:transparent;border:1px dashed var(--line)}
   .galmore{margin:10px 0 2px;display:flex;gap:8px;align-items:center;font-size:12px;font-weight:700;color:var(--muted)}
   .gal .g{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--tile);cursor:zoom-in;position:relative}
   .gal .g .ph{aspect-ratio:1/1;width:100%;display:block;object-fit:cover;background:var(--tile)}
@@ -231,6 +245,7 @@ window.addEventListener('load',restore);
 [data-theme=dark] .psbox input{background:#20242E;border-color:var(--line);color:var(--ink)}
 [data-theme=dark] .consist.ok{background:rgba(72,208,126,.16)}
 [data-theme=dark] .consist.warn{background:rgba(245,166,35,.18)}
+[data-theme=dark] .cdet{background:#20242E;border-color:var(--line)}
 [data-theme=dark] #lb .box{background:#1C1F27;color:var(--ink)}
 [data-theme=dark] #lb .x{background:#20242E;color:var(--ink-2)}
 [data-theme=dark] .chip{background:#20242E;color:var(--ink-2)}
@@ -345,7 +360,7 @@ window.addEventListener('load',restore);
   /* gallery view state (Ray, 15 Sep 2026: "show up to 50/60/100 products with overlays … scan
      if the dynamic overlay is consistent across images"): per type key -> 50 | 100 | 'all'
      (all = every product on the type, from the in-memory feed rows) + a dense-grid toggle */
-  var SHOW={},MORE={},ALLSET=null,ALLKEY='',DENSE=false,PAGE=100;
+  var SHOW={},MORE={},ALLSET=null,ALLKEY='',DENSE=false,PAGE=100,CDET={};
   try{DENSE=localStorage.getItem('fcc-ovl-dense')==='1';}catch(e){}
   var ROWCAP=80000;
 
@@ -399,6 +414,8 @@ window.addEventListener('load',restore);
       render(); return; }
     var mb=e.target.closest&&e.target.closest('button[data-more]');
     if(mb){ var mk=mb.getAttribute('data-more'); MORE[mk]=(MORE[mk]||PAGE)+PAGE; render(); return; }
+    var cd=e.target.closest&&e.target.closest('[data-cdet]');
+    if(cd){ var ck=cd.getAttribute('data-cdet'); CDET[ck]=!CDET[ck]; render(); return; }
     var db=e.target.closest&&e.target.closest('button[data-dense]');
     if(db){ DENSE=!DENSE; try{localStorage.setItem('fcc-ovl-dense',DENSE?'1':'0');}catch(e2){} render(); return; }
   });
@@ -465,14 +482,20 @@ window.addEventListener('load',restore);
       return '<span class="r">'+esc(r.label)+' <b>'+esc(r.v)+'</b>'+sw+'</span>';
     }).join('');
   }
-  function tplOf(t){
-    var s=t.samples&&t.samples[0]; if(!s)return t.key;
-    var q=s.url.indexOf('?'); var base=q<0?s.url:s.url.slice(0,q); var qs=q<0?'':s.url.slice(q+1);
-    var parts=qs.split('&').map(function(p){ var e=p.indexOf('='); var k=e<0?p:p.slice(0,e); var v=e<0?'':p.slice(e+1); return esc(k)+'=<b>'+(/^https?:/i.test(v)?'{image}':(esc(v.length>18?v.slice(0,17)+'…':v)))+'</b>'; });
+  /* a real TEMPLATE, not one product's URL: per-product fields become {placeholders} so the
+     line shows the RECIPE (Ray: the card was mostly text nobody needed to read) */
+  function tplOf(t,pr){
+    var s2=(t.samples&&t.samples[0])||null; if(!s2)return esc(t.key);
+    var cls=window.Overlay?window.Overlay.classifyOverlay(s2.url):null; if(!cls)return esc(s2.url);
+    var q=s2.url.indexOf('?'),base=q<0?s2.url:s2.url.slice(0,q),dk={};
+    ((pr&&pr.data)||[]).forEach(function(x){ dk[x.k]=x.label.toLowerCase(); });
+    var parts=cls.recipe.map(function(r){
+      var v=r.url?'{image}':(dk[r.k]?'{'+dk[r.k]+'}':(r.v.length>18?r.v.slice(0,17)+'…':r.v));
+      return esc(r.k)+'=<b>'+esc(v)+'</b>';
+    });
     return esc(base)+(parts.length?'?'+parts.join('&amp;'):'');
   }
-  /* the list a type's gallery is drawn from: the stored samples (≤100, feed order) or —
-     after ⚡ All — every product on the type from the streamed feed */
+
   function galList(t){
     if(SHOW[t.key]==='all'&&ALLSET&&ALLKEY===CLIENT+'|'+MKT&&ALLSET[t.key])return ALLSET[t.key];
     var n=SHOW[t.key]||50; return (t.samples||[]).slice(0,n);
@@ -481,30 +504,69 @@ window.addEventListener('load',restore);
      (version, width, frame, tag colours…). Signature = the recipe minus the source URLs. */
   /* per-product data (a price tag's price, a discount figure, a text line) is meant to differ
      product to product — it is not a recipe variant, so it stays out of the signature */
-  var PRODUCT_PARAMS={show_price:1,price:1,sale_price:1,discount:1,text:1,label:1,title:1,name:1,rating:1};
-  function consistency(list){
-    var sig={},parts={},order=[],i,cls,k,pp;
-    for(i=0;i<list.length;i++){ cls=window.Overlay?window.Overlay.classifyOverlay(list[i].url):null; if(!cls)continue;
-      pp=cls.recipe.filter(function(r){return !r.url&&!PRODUCT_PARAMS[r.k]});
-      k=pp.map(function(r){return r.label+' '+r.v}).join(' · ')||'(no parameters)';
-      if(!sig[k]){sig[k]=0;order.push(k);parts[k]=pp;} sig[k]++; }
-    order.sort(function(a,b){return sig[b]-sig[a]});
-    /* which parameters actually differ between variants — that is all the reader needs */
-    var vals={},lab;
-    order.forEach(function(k2){ parts[k2].forEach(function(r){ (vals[r.label]=vals[r.label]||{})[r.v]=1; }); });
-    var diff={}; for(lab in vals)if(Object.keys(vals[lab]).length>1)diff[lab]=1;
-    /* a parameter present on some variants and missing on others differs too */
-    order.forEach(function(k2){ var have={}; parts[k2].forEach(function(r){have[r.label]=1;}); for(lab in vals)if(!have[lab])diff[lab]=1; });
-    return {n:list.length,diff:Object.keys(diff),variants:order.map(function(k2){
-      var d=parts[k2].filter(function(r){return diff[r.label]}).map(function(r){return r.label+' '+r.v}).join(' · ');
-      return {sig:k2,n:sig[k2],short:d||'(default)'}; })};
+  /* ---------- recipe profile ----------------------------------------------------
+     A parameter that takes a DIFFERENT value on nearly every product is per-product DATA
+     (the product id, its price, its title) — not a recipe difference. Deciding that by
+     CARDINALITY rather than a hardcoded list means a future engine's data fields sort
+     themselves out: Monsoon's Meta template carries product_id (881 distinct across 881
+     products), qtitle (841) and qprice (91) — as recipe variants they made every single
+     product its own "variant". A genuine recipe drift is a handful of values: engine
+     version 3 vs 4, width 1000 vs 640, tag version 9/10/11/13. */
+  var DATA_DISTINCT=8;                 // 8+ distinct values = data, never a recipe setting
+  var PRODUCT_HINT={show_price:1,price:1,sale_price:1,discount:1,text:1,label:1,title:1,
+    name:1,rating:1,product_id:1,id:1,sku:1};   // floor for samples too small to judge
+  function profileOf(list){
+    var map={},order=[],n=0,i,j,cls,r,e;
+    for(i=0;i<list.length;i++){
+      cls=window.Overlay?window.Overlay.classifyOverlay(list[i].url):null; if(!cls)continue; n++;
+      for(j=0;j<cls.recipe.length;j++){ r=cls.recipe[j]; if(r.url)continue;
+        if(!map[r.k]){ map[r.k]={k:r.k,label:r.label,vals:{},vorder:[],present:0}; order.push(r.k); }
+        e=map[r.k]; e.present++; if(e.vals[r.v]==null){e.vals[r.v]=0;e.vorder.push(r.v);} e.vals[r.v]++; }
+    }
+    var fixed=[],varies=[],data=[];
+    order.forEach(function(k){
+      var x=map[k],d=x.vorder.length;
+      x.n=n; x.distinct=d;
+      x.values=x.vorder.map(function(v){return {v:v,n:x.vals[v]}}).sort(function(p,q){return q.n-p.n});
+      if(x.present<n)x.values.push({v:'(not set)',n:n-x.present,miss:true});
+      if(PRODUCT_HINT[k]||d>=DATA_DISTINCT||(n>=4&&d>=Math.ceil(n*0.75)))data.push(x);
+      else if(d>1||x.present<n)varies.push(x);
+      else fixed.push(x);
+    });
+    return {n:n,fixed:fixed,varies:varies,data:data};
   }
-  function consistHtml(t,list){
-    if(!list.length)return '';
-    var c=consistency(list),scope=(SHOW[t.key]==='all'&&list.length>=t.n?'all '+fmt(c.n)+' products on this type':'the '+fmt(c.n)+' shown');
-    if(c.variants.length<=1)return '<div class="consist ok" title="'+esc(c.variants[0]?c.variants[0].sig:'')+'">✓ Overlay recipe consistent across '+esc(scope)+'</div>';
-    var top=c.variants.slice(0,4).map(function(v){return '<span class="vs">'+esc(v.short)+' <b>×'+fmt(v.n)+'</b></span>'}).join(' · ');
-    return '<div class="consist warn" title="'+esc(c.variants.map(function(v){return v.sig+' ×'+v.n}).join('\n'))+'">⚠ '+c.variants.length+' recipe variants across '+esc(scope)+' — '+esc(c.diff.join(', '))+' differ'+(c.diff.length===1?'s':'')+': '+top+(c.variants.length>4?' · …':'')+'</div>';
+  /* the card's recipe row: the SETTINGS only — per-product fields collapse to one muted chip */
+  function recipeRow(pr){
+    var h=pr.fixed.concat(pr.varies).map(function(x){
+      var v=x.values[0].v,sw=/colou?r/i.test(x.k+' '+x.label)&&/^#[0-9A-F]{6}$/.test(v)?'<span class="sw" style="background:'+esc(v)+'"></span>':'';
+      return '<span class="r">'+esc(x.label)+' <b>'+esc(x.values.length>1?x.values.length+' values':v)+'</b>'+sw+'</span>';
+    }).join('');
+    if(pr.data.length)h+='<span class="r rdata" title="'+esc(pr.data.map(function(x){return x.label+' — '+fmt(x.distinct)+' distinct values'}).join('\n'))+'">'+pr.data.length+' per-product field'+(pr.data.length===1?'':'s')+'</span>';
+    return h;
+  }
+  function consistHtml(t,list,pr){
+    if(!pr.n)return '';
+    var whole=SHOW[t.key]==='all'&&list.length>=t.n;
+    var scope='<span class="cn">'+(whole?'all ':'')+fmt(pr.n)+' checked</span>';
+    if(!pr.varies.length){
+      var tip=pr.fixed.map(function(x){return x.label+' '+x.values[0].v}).join(' · ')||'no parameters';
+      return '<div class="consist ok" title="'+esc(tip)+'">✓ Consistent recipe '+scope+'</div>';
+    }
+    var names=pr.varies.map(function(x){return x.label});
+    var head=pr.varies.length===1?esc(names[0])+' varies':pr.varies.length+' settings vary';
+    var h='<div class="consist warn" data-cdet="'+esc(t.key)+'" title="'+esc(names.join(', '))+' — click for the breakdown">⚠ '+head+' '+scope+' <span class="cmore">'+(CDET[t.key]?'hide':'details')+'</span></div>';
+    if(CDET[t.key]){
+      h+='<div class="cdet">'+pr.varies.map(function(x){
+        var mx=x.values[0].n;
+        return '<div class="cr"><div class="ck">'+esc(x.label)+'</div><div>'+x.values.map(function(v){
+          return '<div class="cv"><span class="cpv" title="'+esc(v.v)+'">'+esc(v.v)+'</span>'
+            +'<span class="cb'+(v.miss?' mut':'')+'" style="width:'+Math.max(2,Math.round(v.n/mx*56))+'px"></span>'
+            +'<span class="cc">'+fmt(v.n)+'</span></div>'; }).join('')+'</div></div>';
+      }).join('')
+      +(pr.data.length?'<div class="cfoot">Per-product by design: '+esc(pr.data.map(function(x){return x.label}).join(' · '))+'</div>':'')
+      +'</div>';
+    }
+    return h;
   }
   function typeCard(t,ti,snap){
     var vers=Object.keys(t.vers||{}).sort(function(a,b){return (t.vers[b]||0)-(t.vers[a]||0)});
@@ -514,9 +576,10 @@ window.addEventListener('load',restore);
       +'<span class="spacer" style="flex:1"></span>'
       +'<span class="tcount"><b>'+fmt(t.n)+'</b> product'+(t.n===1?'':'s')+' · '+pc(t.n,snap.rows)+'% of the feed'+(t.addl?' · <b>'+fmt(t.addl)+'</b> in additional images':'')+'</span></div>';
     h+='<div class="layout">'+esc(LAYOUT[t.layout]||'')+(t.project?' · project <b>'+esc(t.project)+'</b>':'')+' · script <b>'+esc(t.script||'—')+'</b></div>';
-    h+='<div class="recipe">'+recipeHtml(t.recipe)+'</div>';
-    h+='<div class="tpl" title="URL template — the image parameters vary per product">'+tplOf(t)+'</div>';
-    var list=galList(t),mode=SHOW[t.key]||50,avail=(t.samples||[]).length,isAll=mode==='all'&&ALLSET&&ALLKEY===CLIENT+'|'+MKT&&ALLSET[t.key];
+    var list=galList(t),pr=profileOf(list);
+    h+='<div class="recipe">'+recipeRow(pr)+'</div>';
+    h+='<div class="tpl" title="The recipe this type sends — {braces} are filled per product">'+tplOf(t,pr)+'</div>';
+    var mode=SHOW[t.key]||50,avail=(t.samples||[]).length,isAll=mode==='all'&&ALLSET&&ALLKEY===CLIENT+'|'+MKT&&ALLSET[t.key];
     var lim=isAll?(MORE[t.key]||PAGE):list.length,shown=list.slice(0,lim);
     h+='<div class="galctl"><span class="lbl">Showing <b>'+fmt(shown.length)+'</b> of '+fmt(isAll?list.length:t.n)+'</span>'
       +'<button type="button" class="btn sm'+(mode===50?' on':'')+'" data-show="50" data-tkey="'+esc(t.key)+'">50</button>'
@@ -524,7 +587,7 @@ window.addEventListener('load',restore);
       +'<button type="button" class="btn sm'+(mode==='all'?' on':'')+'" data-show="all" data-tkey="'+esc(t.key)+'" title="Every product on this type — streams the feed once">⚡ All '+fmt(t.n)+'</button>'
       +'<span class="spacer" style="flex:1"></span>'
       +'<button type="button" class="btn sm'+(DENSE?' on':'')+'" data-dense="1" title="Smaller tiles so 100 fit on one screen">▦ Dense</button></div>';
-    h+=consistHtml(t,list);
+    h+=consistHtml(t,list,pr);
     if(shown.length){
       h+='<div class="gal'+(DENSE?' dense':'')+'">'+shown.map(function(s2,si){ return '<div class="g" data-ti="'+ti+'" data-si="'+si+'" title="Click to compare with the source images"><img class="ph" loading="lazy" src="'+esc(s2.url)+'" alt="'+esc(s2.ti||s2.id)+'" onerror="this.parentNode.classList.add(\'err\')"><div class="cap">'+esc(s2.ti||'—')+'<small>'+esc(s2.id||'')+(s2.ver?' · v'+esc(s2.ver):'')+'</small></div></div>'; }).join('')+'</div>';
       if(isAll&&list.length>shown.length)h+='<div class="galmore"><button type="button" class="btn sm" data-more="'+esc(t.key)+'">Show '+fmt(Math.min(PAGE,list.length-shown.length))+' more</button><span>'+fmt(list.length-shown.length)+' remaining</span></div>';

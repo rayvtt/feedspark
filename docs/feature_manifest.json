@@ -5104,6 +5104,24 @@
    "pattern": "discMan:discMan()",
    "min": 1,
    "pr": 379
+  },
+  {
+   "name": "overlays: per-product fields judged by cardinality, never recipe variants",
+   "file": "docs/FeedSpark_Overlays.html",
+   "pattern": "function profileOf",
+   "min": 1
+  },
+  {
+   "name": "overlays: verdict is a compact pill with the breakdown behind details",
+   "file": "docs/FeedSpark_Overlays.html",
+   "pattern": "Consistent recipe",
+   "min": 1
+  },
+  {
+   "name": "overlay engine: an '&' inside a value never invents a parameter",
+   "file": "docs/overlay_engine.js",
+   "pattern": "KEY_RE",
+   "min": 2
   }
  ]
 }
