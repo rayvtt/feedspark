@@ -2615,7 +2615,7 @@ async function applyPushedSnapshot(env, client, mkt, snap, vol, ovl) {
 // appended (counts only) to overlayhist:<c>:<m> for the coverage trend, and rolled into
 // the ONE estate index overlayidx so the board renders from a single read. Written by the
 // 4x-daily agent (confirmed scans only) and the page's ⚡ live in-browser scan.
-const OVL_HIST_CAP = 120, OVL_TYPES_CAP = 40, OVL_SAMPLES_CAP = 16;
+const OVL_HIST_CAP = 120, OVL_TYPES_CAP = 40, OVL_SAMPLES_CAP = 100;   // 100 (was 16): the page shows 50/100/all so the overlay's consistency can be eyeballed
 function sanitizeOverlayCapture(client, mkt, raw) {
   if (!raw || typeof raw !== 'object' || typeof raw.rows !== 'number' || !Array.isArray(raw.types)) return null;
   const str = (v, n) => String(v == null ? '' : v).slice(0, n);
