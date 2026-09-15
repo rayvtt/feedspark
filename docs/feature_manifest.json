@@ -4712,6 +4712,48 @@
    "pattern": "window.__dgChartSlides=function",
    "pr": 371,
    "min": 1
+  },
+  {
+   "name": "Intake archive: completed work with NO date leaves the working view (Ray 15 Sep 2026)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function isArchived(r){",
+   "pr": 372,
+   "min": 1
+  },
+  {
+   "name": "…revealed on its own terms, so the status filter can't swallow what the chip just offered",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "var arch=isArchived(r); if(arch&&!S.showArchived)return false;",
+   "pr": 372,
+   "min": 1
+  },
+  {
+   "name": "…and a row you just marked Done never vanishes under the cursor",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "JUSTSET[client+'|'+task]=1;",
+   "pr": 372,
+   "min": 1
+  },
+  {
+   "name": "A ticket with no task: orphaned module briefs get their plan row (Ray 15 Sep 2026)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function reconcileBriefTasks(){",
+   "pr": 0,
+   "min": 1
+  },
+  {
+   "name": "…the brief itself carries the once-only guard, so a second browser stands down",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "b.planned=1; b.taskKey=b.client+'|'+b.task;",
+   "pr": 0,
+   "min": 1
+  },
+  {
+   "name": "…and a TechAM hand-off is dated, so it isn't born into the archive",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "adoptIntoPlan(g.client,task,'Done',dd8,'TechAM',1)",
+   "pr": 0,
+   "min": 1
   }
  ]
 }

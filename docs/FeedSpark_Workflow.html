@@ -880,6 +880,7 @@ window.addEventListener('load',restore);
     <button type="button" class="it-over-tog" id="it-over-tog" aria-pressed="false" title="Show only tasks past their due date and not yet Done — the plan-month window is ignored so older overdue work can’t hide">⏰ Overdue</button>
     <input id="it-search" type="search" placeholder="Search tasks, owners…" aria-label="Search intake">
     <span class="it-n" id="it-n"></span>
+    <button type="button" class="it-hidden-tog" id="it-arch-tog" hidden aria-pressed="false"></button>
     <button type="button" class="it-hidden-tog" id="it-hidden-tog" hidden aria-pressed="false"></button>
   </div>
   <div class="it-fchips" id="it-client-chips" hidden></div>
@@ -1223,7 +1224,8 @@ window.addEventListener('load',restore);
     if(!found) opts='<option selected>'+esc(cur)+'</option>'+opts;
     return '<select class="stat-sel tag-'+c+'" data-prev="'+esc(cur)+'" title="Change status — writes back to the plan sheet (type a letter to pick)">'+opts+'</select>'; }
   function statusOverlay(){ try{return JSON.parse(localStorage.getItem('fcc-taskstatus')||'{}');}catch(e){return {};} }
-  function saveStatus(client,task,val){ try{var o=statusOverlay(); o[client+'|'+task]=val; localStorage.setItem('fcc-taskstatus',JSON.stringify(o));}catch(e){} }
+  function saveStatus(client,task,val){ JUSTSET[client+'|'+task]=1;   // don't archive a row out from under the cursor
+    try{var o=statusOverlay(); o[client+'|'+task]=val; localStorage.setItem('fcc-taskstatus',JSON.stringify(o));}catch(e){} }
   function writeStatus(client,task,val){                 // 2-way write to the brand's plan sheet
     saveStatus(client,task,val);
     if(bucketOf(val)==='done'){ recSpawn(client,task);   // a recurring row completing spawns its next occurrence
@@ -1581,7 +1583,20 @@ window.addEventListener('load',restore);
   function isHidden(t){ return !!HIDDEN[t.client+'|'+t.task]; }
   function hideTask(t){ HIDDEN[t.client+'|'+t.task]=1; saveHidden(); toast('Hidden as a note — still in '+(t.source==='plan'?(t.client+'’s plan'):'the record')); renderAll(); }
   function unhideTask(t){ delete HIDDEN[t.client+'|'+t.task]; saveHidden(); toast('Restored to the task list'); renderAll(); }
-  function hiddenInView(){ var n=0; allIntake().forEach(function(r){ if(HIDDEN[r.client+'|'+r.task])n++; }); return n; }
+  function hiddenInView(){ var n=0; allIntake().forEach(function(r){ if(HIDDEN[r.client+'|'+r.task]&&!isArchived(r))n++; }); return n; }
+  // ---- ARCHIVE: finished work with no date at all (Ray, 15 Sep 2026: "any task that shows up
+  // in Intake with no due date and status is done … you can effectively hide it from the Intake
+  // view. It just kind of messes up my filters, but any new incoming task should already have a
+  // month stamp"). Intake is the WORKING list; a row carrying neither a deadline nor a month
+  // section, already completed, is the tidied-up residue of an old plan — it can't be worked,
+  // can't be overdue, can't be scheduled, and it survived every date window precisely because
+  // it has no date (dateless plan rows always pass the month filter). So it leaves the view by
+  // default and comes back with one click — never deleted, and never hidden from the plan sheet.
+  function isArchived(r){ return !!r && r.b==='done' && !taskDate(r) && !JUSTSET[r.client+'|'+r.task]; }
+  // …except a row whose status YOU just set: completing an undated task shouldn't make it
+  // vanish under the cursor. It archives on the next load, when it is genuinely history.
+  var JUSTSET={};
+  function archivedInView(){ var n=0; allIntake().forEach(function(r){ if(isArchived(r))n++; }); return n; }
   // ---- recurring tasks (⟳): weekly / monthly / every 3 months per row. The marker sits on the
   // LATEST occurrence only; when that row reaches a done-bucket status, the next occurrence is
   // created through the same MANUAL + sheet-append path as Add task and the marker moves onto
@@ -1741,6 +1756,7 @@ window.addEventListener('load',restore);
     if(exists)return false;
     var due=(dueDD&&String(dueDD).length===8)?(dueDD.slice(0,2)+'/'+dueDD.slice(2,4)+'/'+dueDD.slice(4,8)):'';
     MANUAL.push({client:client,task:task,owner:owner||'',status:status||'Open',due:due,esrc:esrc?1:0}); saveManual(); _planCache=null;
+    JUSTSET[client+'|'+task]=1;   // a row you just filed never archives out from under you, even born Done
     if(esrc)markEsrc(client,task);   // survives the live-pull replacing the MANUAL row
     var id=PLANSHEET[client];
     if(id){ toast('Adding to '+client+'’s plan…');
@@ -1842,7 +1858,7 @@ window.addEventListener('load',restore);
         .catch(function(){ toast('Saved locally — sheet write failed (check the SA has Editor access)'); });
     } else toast('Added locally · no plan sheet linked for '+client);
   }
-  var itState={srcs:[],clients:[],ams:[],owners:[],q:'',statuses:['open','progress','briefed'],window:'2m',sort:'client',dir:1,showHidden:false,overdue:false};   // multi-select: empty array = all
+  var itState={srcs:[],clients:[],ams:[],owners:[],q:'',statuses:['open','progress','briefed'],window:'2m',sort:'client',dir:1,showHidden:false,showArchived:false,overdue:false};   // multi-select: empty array = all
   // Timeline-ONLY state is scope / flags / horizon. Brand, AM and search are NOT here — the
   // timeline reads them straight from itState, because it's the Intake re-plotted by date.
   var tlState={scope:[],flags:[],weeks:6};
@@ -1981,7 +1997,11 @@ window.addEventListener('load',restore);
       var st=!S.statuses.length||S.statuses.indexOf(r.b)>=0;   // empty = all statuses
       if(S.overdue){ var od=taskDate(r); if(!od||od>=today()||r.b==='done')return false; }   // ⏰ quick-filter: past due, not Done
       var win=true; if(!S.overdue && allow && r.source==='plan'){ var pd=taskDate(r); if(pd) win=!!(allow[r.client]&&allow[r.client][monthKey(pd)]); }   // latest-N-months per brand (overdue mode looks at ALL history); dateless plan rows always show
-      return win&&st&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0||(r.esrc&&S.srcs.indexOf('email')>=0)||(r.csrc&&S.srcs.indexOf('call')>=0))&&(!S.clients.length||S.clients.indexOf(r.client)>=0)&&amMatch(r,S.ams)&&ownMatch(r,S.owners||[])
+      // the archive: out of the working view by default and, when asked for, shown on its own
+      // terms — a status filter of "open · in progress · briefed" or a 2-month window would
+      // otherwise swallow the very rows the chip just offered to reveal
+      var arch=isArchived(r); if(arch&&!S.showArchived)return false;
+      return (arch||(win&&st))&&!DELETED[r.client+'|'+r.task]&&(S.showHidden||!HIDDEN[r.client+'|'+r.task])&&(!S.srcs.length||S.srcs.indexOf(r.source)>=0||(r.esrc&&S.srcs.indexOf('email')>=0)||(r.csrc&&S.srcs.indexOf('call')>=0))&&(!S.clients.length||S.clients.indexOf(r.client)>=0)&&amMatch(r,S.ams)&&ownMatch(r,S.owners||[])
         &&(!S.q||(r.task+' '+r.client+' '+(r.owner||'')).toLowerCase().indexOf(S.q)>=0); })
       .sort(function(a,b){ var k=itState.sort;
         if(k==='dsort'){ var da=taskDate(a), db=taskDate(b);
@@ -2106,6 +2126,14 @@ window.addEventListener('load',restore);
         } });
     });
     var n=document.getElementById('it-n'); if(n)n.textContent=f.length+' task'+(f.length===1?'':'s');
+    var at=document.getElementById('it-arch-tog'); if(at){ var ac=archivedInView();
+      if(ac===0){ itState.showArchived=false; at.hidden=true; }
+      else { at.hidden=false; at.classList.toggle('on',itState.showArchived);
+        at.textContent=itState.showArchived?('Hide '+ac+' archived'):('📁 '+ac+' archived');
+        at.title=itState.showArchived
+          ? 'Hide the completed, dateless rows again — they stay in the plan sheet either way'
+          : ac+' completed task'+(ac===1?'':'s')+' with no date at all — kept out of Intake so they can’t skew a filter. They are still in the project plan; click to show them here.';
+        at.setAttribute('aria-pressed',itState.showArchived?'true':'false'); } }
     var ht=document.getElementById('it-hidden-tog'); if(ht){ var hc=hiddenInView();
       if(hc===0){ itState.showHidden=false; ht.hidden=true; }
       else { ht.hidden=false; ht.classList.toggle('on',itState.showHidden);
@@ -2452,10 +2480,10 @@ window.addEventListener('load',restore);
   // ---- saved filter views: name the current filter set, reapply or delete later (per device) ----
   function savedViews(){ try{return JSON.parse(localStorage.getItem('fcc-filters')||'{}');}catch(e){return {};} }
   function saveViews(v){ try{localStorage.setItem('fcc-filters',JSON.stringify(v));}catch(e){} }
-  function captureFilter(){ return {srcs:itState.srcs.slice(),statuses:itState.statuses.slice(),clients:itState.clients.slice(),ams:itState.ams.slice(),owners:itState.owners.slice(),window:itState.window,q:itState.q,showHidden:itState.showHidden,overdue:!!itState.overdue}; }
+  function captureFilter(){ return {srcs:itState.srcs.slice(),statuses:itState.statuses.slice(),clients:itState.clients.slice(),ams:itState.ams.slice(),owners:itState.owners.slice(),window:itState.window,q:itState.q,showHidden:itState.showHidden,showArchived:!!itState.showArchived,overdue:!!itState.overdue}; }
   function applyFilter(f){
     itState.srcs=(f.srcs||[]).slice(); itState.statuses=(f.statuses||[]).slice(); itState.clients=(f.clients||[]).slice(); itState.ams=(f.ams||[]).slice(); itState.owners=(f.owners||[]).slice();
-    itState.window=f.window||''; itState.q=f.q||''; itState.showHidden=!!f.showHidden; itState.overdue=!!f.overdue;
+    itState.window=f.window||''; itState.q=f.q||''; itState.showHidden=!!f.showHidden; itState.showArchived=!!f.showArchived; itState.overdue=!!f.overdue;
     renderSrcChips(); buildStatusFilter(); buildClientFilter();                       // sync the controls to the view
     var w=document.getElementById('it-window'); if(w)w.value=itState.window;
     var s=document.getElementById('it-search'); if(s)s.value=itState.q;
@@ -2487,6 +2515,7 @@ window.addEventListener('load',restore);
   document.getElementById('it-search').addEventListener('input',function(){ itState.q=this.value.trim().toLowerCase(); renderIntake(); });
   (function(){ var ht=document.getElementById('it-hidden-tog'); if(ht)ht.onclick=function(){ itState.showHidden=!itState.showHidden; renderIntake(); }; })();
   (function(){ var ot=document.getElementById('it-over-tog'); if(ot)ot.onclick=function(){ itState.overdue=!itState.overdue; renderIntake(); }; })();
+  (function(){ var at=document.getElementById('it-arch-tog'); if(at)at.onclick=function(){ itState.showArchived=!itState.showArchived; renderIntake(); }; })();
   document.querySelectorAll('#itbl thead th[data-k]').forEach(function(th){ th.onclick=function(){
     var k=th.getAttribute('data-k'); if(itState.sort===k) itState.dir*=-1; else {itState.sort=k;itState.dir=1;}
     document.querySelectorAll('#itbl thead th .ar').forEach(function(a){a.remove();});
@@ -2989,9 +3018,49 @@ window.addEventListener('load',restore);
           LIVE_AT=Date.now(); var dot=document.getElementById('live-dot'); if(dot)dot.classList.add('on');
           if(banner) banner.textContent='Live — '+n+' tasks across '+brands+' plans · synced '+timeAgo(LIVE_AT)+(errs.length?(' · '+errs.length+' not shared with the service account'):'');
           renderAll();
+          reconcileBriefTasks();   // a ticket whose task never reached the plan gets its row now
         } else { if(banner) banner.textContent=(d&&d.error==='no_sa')?'Not connected — set the Google service-account secret to sync plans live.':'Sync unavailable — showing the last snapshot.'; }
       }).catch(function(){ if(btn)btn.disabled=false; if(banner) banner.textContent='Sync failed — showing the last snapshot.'; });
   }
+
+  // ---- A TICKET WITH NO TASK (Ray, 15 Sep 2026: "Steven briefed Cashmere / Merino from the
+  // keyword calendar — why is it not appearing inside Intake?").
+  // A brief raised from a module deep-link (Keyword Calendar, Feed Lab, Golden Record, PT) is
+  // the task's birth: saving it calls adoptIntoPlan, which writes the row to MANUAL first and
+  // then appends it to the brand's plan sheet. But MANUAL is localStorage and the BRIEF is KV.
+  // So when that append fails, is skipped, or the brand has no sheet wired, the ticket is
+  // visible to the whole team while the task exists only in the briefer's browser — and the
+  // retry queue (resyncPlanWrites) reads that same local MANUAL, so nobody else can ever heal
+  // it. The gap is silent and permanent, which is exactly what Ray hit.
+  // Reconcile from the SHARED side instead: the brief already carries client, task, due and
+  // stage, so any live ticket whose task matches no row in its brand's plan can be filed by
+  // whoever opens Workflow next. The brief itself carries the once-only guard (b.planned), so
+  // the second browser stands down rather than appending a duplicate — and appendPlanRows is
+  // idempotent on task text, so even a simultaneous pair can't double-write.
+  var STAGE_STATUS={intake:'Briefed',briefed:'Briefed',progress:'In Progress',blocked:'On Hold',
+    done:'Done',running:'In Progress',analysis:'In Progress',confirmed:'Done'};
+  function briefRow(b){   // the brief's task as it exists in Intake today, or null
+    var rows=allIntake(), hit=null;
+    for(var i=0;i<rows.length&&!hit;i++){ var r=rows[i];
+      if(r.client!==b.client)continue;
+      if(normTask(r.task)===normTask(b.task)||sameTask(r.task,b.task))hit=r; }
+    return hit; }
+  function reconcileBriefTasks(){
+    if(!LIVE_CONN)return;   // without a live plan read every row would look missing
+    var made=0, pend=[];
+    Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id];
+      if(!b||!b.client||!b.task||b.planned||isDup(b))return;
+      if(b.status==='confirmed')return;                     // closed work needs no plan row
+      if(!inScopeClient(b.client))return;                   // a scoped signin can't file another book's task
+      if(b.taskKey&&allIntake().some(function(r){ return rowKey(r)===b.taskKey; }))return;   // already tied to a live row
+      if(briefRow(b)){ b.planned=1; pend.push(b); return; } // it IS there under other wording — settle the flag, don't write
+      if(!PLANSHEET[b.client])return;                       // no sheet to write to; the ticket stands alone
+      if(adoptIntoPlan(b.client,b.task,STAGE_STATUS[b.status]||'Briefed',b.due,'',0,true)){
+        b.planned=1; b.taskKey=b.client+'|'+b.task; pend.push(b); made++; }
+    });
+    if(pend.length){ persist();
+      if(made){ toast('⟲ '+made+' briefed ticket'+(made===1?'':'s')+' had no task in the plan — filed into Intake');
+        renderAll(); } } }
 
   // ---- ticket journey: every handoff with how long each stage held the ball ----
   function journeyHtml(b){ var h=(b.hist&&b.hist.length)?b.hist:[{s:b.status,t:b.created||b.updated||Date.now()}];
@@ -3816,9 +3885,11 @@ window.addEventListener('load',restore);
       .then(function(r){return r.json();}).then(function(d){ if(d&&d.ok)toast('→ TechAM — the email forwards from your mailbox within ~5 min');
         else toast('TechAM hand-off failed: '+((d&&d.error)||'try again')); })
       .catch(function(){ toast('TechAM hand-off failed — network; try again'); });
-    var task=emailTaskName(g);
-    if(g.client&&CLIENTS.indexOf(g.client)>=0){ adoptIntoPlan(g.client,task,'Done','','TechAM',1); }
-    else { MANUAL.push({client:g.client||'',task:task,owner:'TechAM',status:'Done',due:'',esrc:1}); saveManual(); markEsrc(g.client||'',task);
+    var task=emailTaskName(g), tdy=today(), dd8=pad(tdy.getDate())+pad(tdy.getMonth()+1)+tdy.getFullYear();
+    // the hand-off is dated: it happened today. A dateless Done row would read as old history
+    // the next time the plan loads, and the archive would (rightly) take it out of the view.
+    if(g.client&&CLIENTS.indexOf(g.client)>=0){ adoptIntoPlan(g.client,task,'Done',dd8,'TechAM',1); }
+    else { MANUAL.push({client:g.client||'',task:task,owner:'TechAM',status:'Done',due:pad(tdy.getDate())+'/'+pad(tdy.getMonth()+1)+'/'+tdy.getFullYear(),esrc:1}); saveManual(); markEsrc(g.client||'',task);
       toast('Recorded as Done — client not recognised: double-click its Client cell to assign one'); }
     var ids=[String(g.id)]; th.all.forEach(function(m){ if(ids.indexOf(String(m.id))<0)ids.push(String(m.id)); });
     decideMany(ids,'techam');
