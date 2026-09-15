@@ -4738,91 +4738,112 @@
       "name": "A ticket with no task: orphaned module briefs get their plan row (Ray 15 Sep 2026)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function reconcileBriefTasks(){",
-      "pr": 0,
+      "pr": 373,
       "min": 1
     },
     {
       "name": "…the brief itself carries the once-only guard, so a second browser stands down",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "b.planned=1; b.taskKey=b.client+'|'+b.task;",
-      "pr": 0,
+      "pr": 373,
       "min": 1
     },
     {
       "name": "…and a TechAM hand-off is dated, so it isn't born into the archive",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "adoptIntoPlan(g.client,task,'Done',dd8,'TechAM',1)",
-      "pr": 0,
+      "pr": 373,
+      "min": 1
+    },
+    {
+      "name": "KWCal: a calendar chip can't claim a stage only a ticket earns (Ray 15 Sep 2026)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "var GHOST_STATES=['briefed','live','done'];",
+      "pr": 373,
+      "min": 1
+    },
+    {
+      "name": "…a claim with no ticket behind it reads '⚠ not briefed' and links to the brief",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function isGhost(e,wf){",
+      "pr": 373,
+      "min": 1
+    },
+    {
+      "name": "…and it never reports as a stage anywhere (board, overview, KPIs, client PDF)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "return (e&&GHOST_STATES.indexOf(e.st)<0&&e.st)||'planned';",
+      "pr": 373,
       "min": 1
     },
     {
       "name": "VI toggle: the DOM-translation engine ships as its own UMD module (Ray 15 Sep 2026)",
       "file": "docs/i18n_engine.js",
       "pattern": "function keepsProtected(src, dst)",
-      "pr": 373,
+      "pr": 374,
       "min": 1
     },
     {
       "name": "…plural-canon protection: a protected 'SKUs' may legitimately come back as 'SKU'",
       "file": "docs/i18n_engine.js",
       "pattern": "function canon(t)",
-      "pr": 373,
+      "pr": 374,
       "min": 1
     },
     {
       "name": "…the owner-only language widget restores exact originals off the live DOM",
       "file": "docs/lang_widget.html",
       "pattern": "function restore(root)",
-      "pr": 373,
+      "pr": 374,
       "min": 1
     },
     {
       "name": "…and never translates the Templates copy bodies or the wordmark",
       "file": "docs/lang_widget.html",
       "pattern": ".tpl .subj,.tpl .body,.topbar-in .brand",
-      "pr": 373,
+      "pr": 374,
       "min": 1
     },
     {
       "name": "…worker: /api/i18n is realOwner-gated, one KV key per language",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "const LK = 'i18n:' + lang;",
-      "pr": 373,
+      "pr": 374,
       "min": 1
     },
     {
       "name": "…worker: the widget is injected only for the real owner identity",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "if (realOwner(env, request)) html = inject(html, LANGW);",
-      "pr": 373,
+      "pr": 374,
       "min": 1
     },
     {
       "name": "…the hand-written Vietnamese seed dictionary is committed",
       "file": "docs/i18n/vi.json",
       "pattern": "\"Command center\"",
-      "pr": 373,
+      "pr": 374,
       "min": 1
     },
     {
       "name": "…i18n harness wired into the QA gate",
       "file": "tools/qa_gate.sh",
       "pattern": "node tools/test_i18n.mjs",
-      "pr": 373,
+      "pr": 374,
       "min": 1
     },
     {
       "name": "…i18n harness wired into presync",
       "file": "tools/presync.sh",
       "pattern": "node tools/test_i18n.mjs",
-      "pr": 373,
+      "pr": 374,
       "min": 1
     },
     {
       "name": "…i18n harness wired into validate.yml",
       "file": ".github/workflows/validate.yml",
       "pattern": "node tools/test_i18n.mjs",
-      "pr": 373,
+      "pr": 374,
       "min": 1
     }
   ]
