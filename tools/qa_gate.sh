@@ -108,6 +108,12 @@ else
   echo "   ✗ reply classifier FAILED (node tools/test_replyclass.mjs)"; FAIL=1
 fi
 
+if node tools/test_running_stage.mjs >/dev/null 2>&1; then
+  echo "   ✓ Test running ⏱ stage: worker lane matches the page"
+else
+  echo "   ✗ test-running stage FAILED (node tools/test_running_stage.mjs)"; FAIL=1
+fi
+
 if node tools/check_lgcopy.js >/dev/null 2>&1; then
   echo "   ✓ labelguard browser copy in sync"
 else
