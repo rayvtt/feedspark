@@ -436,6 +436,7 @@ window.addEventListener('load',restore);
   [data-theme=dark] .cmb{background:#20242E}
   [data-theme=dark] .cmb.on{background:var(--orange);color:#14161C}
   [data-theme=dark] .qrow input.fnote{background:#161922}
+  /* the summary band sits UNDER the three tiles — the final numbers close the card (Ray, 15 Sep 2026) */
   .qtot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px;padding-top:13px;border-top:2px solid var(--line);font-size:14px;font-weight:900}
   .qtot .grand{color:var(--orange-deep);font-size:20px}
   .qtot .grand.unset{color:var(--muted);font-size:13px}
@@ -606,7 +607,6 @@ window.addEventListener('load',restore);
 
   <div class="card priceless" id="total-card">
     <h3>Quote total</h3>
-    <div class="qtot" id="qtot"></div>
     <div class="qsum col-rate" id="qsum">
       <div class="qs-col">
         <div class="qs-h">Monthly</div>
@@ -636,6 +636,7 @@ window.addEventListener('load',restore);
         <div class="qs-r"><span class="hint">Maintenance hours on any line land on the Monthly side; discount and VAT apply to both sides.</span></div>
       </div>
     </div>
+    <div class="qtot" id="qtot"></div>
     <div class="edit-bar" id="edit-bar" hidden>✎ Editing <b id="edit-ref"></b> — Save stores a <b>new version</b> linked to it; the original stays on the tracker for finance. Quantities are as saved; ⟳ Pull live feed again for fresh volumes. <button class="btn quiet" id="edit-stop" type="button" style="margin-left:0">stop editing</button></div>
     <div class="qactions">
       <button class="btn pri" id="savequote" type="button" title="Freeze this quote as a dated snapshot and put it on the finance tracker">💾 Save quote</button>
