@@ -115,6 +115,10 @@ import ARRIVALS_ENGINE_SRC from "../../../docs/arrivals_engine.js";
 // details-text → g: attributes). The page runs it on HTML the worker only PROXIES
 // (host-allowlisted to the feed's own product host); tools/test_pdpharvest.mjs tests the same file
 import PDP_ENGINE_SRC from "../../../docs/pdp_engine.js";
+// /i18n/engine.js + /i18n/vi.json + the owner-only language widget (Ray's Vietnamese view)
+import I18N_ENGINE_SRC from "../../../docs/i18n_engine.js";
+import I18N_VI_SEED from "../../../docs/i18n/vi.json";
+import LANGW from "../../../docs/lang_widget.html";
 
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
@@ -1120,6 +1124,40 @@ export default {
     }
     if (path === '/golden/pdp-engine.js' && request.method === 'GET') {
       return new Response(PDP_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/i18n/engine.js' && request.method === 'GET') {
+      return new Response(I18N_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/i18n/vi.json' && request.method === 'GET') {
+      return new Response(JSON.stringify(I18N_VI_SEED), { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    // ---- UI language (Ray, 15 Sep 2026): the owner's Vietnamese view. GET = the learned map
+    // (strings Tachyon translated on demand, ONE KV key per language); POST = translate what
+    // the shipped seed + learned map cannot answer, cache it, hand it back. Owner-only both ways —
+    // the toggle is Ray's, so no other signin can spend the key or read the map.
+    if (path === '/api/i18n') {
+      if (!realOwner(env, request)) return json({ error: 'forbidden' }, 403);
+      const lang = String(url.searchParams.get('lang') || '').slice(0, 5) || 'vi';
+      if (lang !== 'vi') return json({ error: 'unsupported language' }, 400);
+      const LK = 'i18n:' + lang;
+      if (request.method === 'GET') {
+        const learned = (await env.EDITS.get(LK, 'json')) || {};
+        return json({ ok: true, lang, map: learned, n: Object.keys(learned).length, ai: env.ANTHROPIC_API_KEY ? 'on' : 'nokey' });
+      }
+      if (request.method === 'POST') {
+        let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+        const strings = uniq((Array.isArray(b.strings) ? b.strings : []).map((x) => String(x || '').replace(/\s+/g, ' ').trim()).filter((x) => x.length >= 2 && x.length <= 600)).slice(0, 80);
+        const learned = (await env.EDITS.get(LK, 'json')) || {};
+        const map = {}, miss = [];
+        for (const x of strings) { if (typeof learned[x] === 'string') map[x] = learned[x]; else miss.push(x); }
+        if (!miss.length) return json({ ok: true, lang, map, ai: env.ANTHROPIC_API_KEY ? 'on' : 'nokey' });
+        if (!env.ANTHROPIC_API_KEY) return json({ ok: true, lang, map, missing: miss, error: 'no_key', ai: 'nokey' });
+        const got = await translateVi(env, miss);
+        let added = 0;
+        Object.keys(got).forEach((k) => { if (i18nKeeps(k, got[k])) { learned[k] = got[k]; map[k] = got[k]; added++; } });
+        if (added) { try { await env.EDITS.put(LK, JSON.stringify(learned)); } catch (e) {} }
+        return json({ ok: true, lang, map, added, missing: miss.filter((k) => !map[k]), ai: 'on' });
+      }
     }
 
     // KWCal calendar seeds: brand planner slides bundled in git (see CAL_SEED_FILES above)
@@ -2231,6 +2269,9 @@ export default {
         const modList = acc.owner ? null : (acc.modules || null);
         html = inject(html, INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW
           + '\n<script>window.__FCCMOD=' + JSON.stringify(modList) + ';</script>\n' + MODGATE);
+        // the Vietnamese UI toggle is Ray's alone: injected only for the REAL owner identity
+        // (never for another signin, never while previewing someone else's FCC via view-as)
+        if (realOwner(env, request)) html = inject(html, LANGW);
       }
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }
@@ -3367,6 +3408,53 @@ async function goldenRoutes(env, request, url) {
   }
 
   return null;
+}
+
+// ---- UI language helpers (Ray's Vietnamese view) ---------------------------------------
+function uniq(a) { const m = {}; return a.filter((x) => (m[x] ? false : (m[x] = 1))); }
+// tokens a translation must carry verbatim — mirrors docs/i18n_engine.js KEEP (test pins parity)
+const I18N_KEEP = ['FeedSpark', 'FeedHero', 'Tachyon', 'Feed Lab', 'Feed Chat', 'Label Guard', 'PT Guard', 'Golden Record', 'Playbook',
+  'Reiss', 'Schuh', 'Superdry', 'Accessorize', 'Monsoon', 'Hobbycraft', 'YuMOVE', 'Ryobi', 'Benefit Cosmetics', 'Clinique', 'MAC',
+  'AllSaints', 'Estee Lauder', 'Estée Lauder', 'Bobbi Brown', 'Jo Malone', 'American Golf', 'House of Bruar',
+  'Google', 'Meta', 'Facebook', 'Pinterest', 'Shopify', 'PMax', 'PMAX', 'Merchant Center', 'Gmail', 'Cloudflare', 'Akamai',
+  'ChatGPT', 'Perplexity', 'Gemini', 'Klaviyo', 'GMC', 'CTR', 'CVR', 'ROAS', 'CPC', 'SKU', 'SKUs', 'GTIN', 'MPN', 'GPC', 'PDP', 'ASPL', 'TechAM', 'KV', 'XML', 'CSV', 'PDF', 'AM', 'AMs'];
+const I18N_KEEP_RE = new RegExp('(^|[^A-Za-z])(' + I18N_KEEP.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')(?![A-Za-z])', 'g');
+function i18nTokens(s) { const out = []; let m; I18N_KEEP_RE.lastIndex = 0; while ((m = I18N_KEEP_RE.exec(String(s || '')))) out.push(m[2]); return out; }
+// Vietnamese has no plural inflection: 'SKUs' / 'AMs' legitimately come back as 'SKU' / 'AM'
+function i18nCanon(t) { return (/s$/.test(t) && I18N_KEEP.indexOf(t.slice(0, -1)) >= 0) ? t.slice(0, -1) : t; }
+function i18nKeeps(src, dst) {
+  if (typeof dst !== 'string' || !dst.trim()) return false;
+  const have = i18nTokens(dst).map(i18nCanon);
+  for (const k of i18nTokens(src).map(i18nCanon)) if (have.indexOf(k) < 0) return false;
+  const tn = (src.match(/\{n\}/g) || []).length, dn = (dst.match(/\{n\}/g) || []).length;
+  return tn === dn;
+}
+const I18N_SYSTEM = 'You translate the user-interface strings of FeedSpark\'s internal Command Center (a Google Shopping feed-optimisation agency dashboard) from English into natural, concise, professional Vietnamese for a Vietnamese-speaking director. '
+  + 'Reply with STRICT JSON only: {"t":["…"]} — one translation per input string, same order, same count. '
+  + 'Keep verbatim: {n} placeholders (a number goes there), brand and client names, people\'s names, product names (FeedSpark, FeedHero, Tachyon, Feed Lab, Label Guard, PT Guard, Golden Record, Playbook), platform names (Google, Meta, Merchant Center, PMax, Shopify, Gmail), attribute names like g:material or custom_label_0, SKUs, codes, URLs, emails, dates, units, emoji, arrows and leading/trailing punctuation. '
+  + 'Terms Vietnamese digital-marketing teams keep in English stay in English: feed, brief, SKU, CTR, CVR, ROAS, PMax, A/B test, keyword, custom label, product type, dashboard, deck. '
+  + 'House glossary: task → đầu việc; client → khách hàng; brand → thương hiệu; market → thị trường; scan → quét; rescan → quét lại; alert → cảnh báo; known-good → mốc chuẩn; estate → toàn bộ feed; overlay → lớp phủ ảnh; attribute → thuộc tính; coverage → độ phủ; owner → người phụ trách; due → hạn; overdue → quá hạn; in progress → đang làm; done → đã xong; on hold → tạm dừng; open → đang mở; save → lưu; cancel → huỷ; close → đóng; export → xuất; import → nhập; settings → cài đặt; search → tìm kiếm; filter → lọc; loading → đang tải. '
+  + 'If a string is a name, code or already language-neutral, return it unchanged. Never add explanations.';
+async function translateVi(env, strings) {
+  const out = {};
+  if (!strings.length) return out;
+  let r;
+  try {
+    r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-opus-4-8', max_tokens: 6000, system: I18N_SYSTEM,
+        messages: [{ role: 'user', content: 'Translate these ' + strings.length + ' UI strings:\n' + JSON.stringify(strings) }] }),
+    });
+  } catch (e) { return out; }
+  if (!r.ok) return out;
+  const data = await r.json().catch(() => ({}));
+  const text = (data.content || []).filter((c) => c && c.type === 'text').map((c) => c.text).join('\n').trim();
+  let arr = null;
+  try { const a = text.indexOf('{'), b = text.lastIndexOf('}'); const j = JSON.parse(text.slice(a, b + 1)); arr = Array.isArray(j.t) ? j.t : null; } catch (e) { arr = null; }
+  if (!arr || arr.length !== strings.length) return out;
+  strings.forEach((s, i) => { const t = String(arr[i] == null ? '' : arr[i]).trim(); if (t && t !== s) out[s] = t; });
+  return out;
 }
 
 // ---- PDP recovery scan helpers (the allowlist maths duplicates docs/pdp_engine.js's

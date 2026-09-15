@@ -1,0 +1,159 @@
+<!-- FCC-LANG: the owner-only UI language toggle (Ray, 15 Sep 2026: "build completely a VI
+     (Vietnamese) toggle for my view only"). Injected by the worker ONLY when the real Access
+     identity is OWNER_EMAIL — never for another signin, never under view-as. The FCC's ~20
+     pages render their English chrome from inline scripts (nothing is templated), so this
+     translates the DOM in place: every text node + title / placeholder / aria-label / alt,
+     numbers riding through, exact originals restored on the way back. Dictionary = the shipped
+     seed (/i18n/vi.json, hand-written) ∪ the learned map (KV, GET /api/i18n) ∪ what Tachyon
+     translates on demand for strings neither knows (POST /api/i18n → one KV map, cached).
+     Editable / data-entry surfaces are never touched: inputs, textareas, contenteditable,
+     the dossier's data-ed fields, code. -->
+<style>
+#lang-tgl{margin-left:6px;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);color:var(--ink-2,#4a4a4a);font:inherit;font-size:10.5px;font-weight:900;letter-spacing:.08em;border-radius:100px;padding:5px 9px;cursor:pointer;line-height:1;flex:none}
+#lang-tgl:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
+#lang-tgl.on{background:var(--orange-deep,#ED6F0B);border-color:var(--orange-deep,#ED6F0B);color:#fff}
+#lang-tgl.busy{opacity:.7}
+[data-theme=dark] #lang-tgl{background:#20242E;border-color:#2C3039;color:#B9BEC7}
+[data-theme=dark] #lang-tgl.on{background:var(--orange-deep,#ED6F0B);border-color:var(--orange-deep,#ED6F0B);color:#fff}
+@media print{#lang-tgl{display:none}}
+</style>
+<script>/* FCC-LANG */(function () {
+  'use strict';
+  var LS = 'fcc-lang', SEED = '/i18n/vi.json', ENGINE = '/i18n/engine.js', API = '/api/i18n';
+  var ATTRS = ['title', 'placeholder', 'aria-label', 'alt'];
+  var SKIP = 'script,style,noscript,code,pre,kbd,textarea,input,select,option,svg,[translate=no],.notranslate,[contenteditable="true"],[contenteditable=""],[data-ed],.dz-editing,.tpl .subj,.tpl .body,.topbar-in .brand,#lang-tgl';
+  var lang = 'en'; try { lang = localStorage.getItem(LS) === 'vi' ? 'vi' : 'en'; } catch (e) {}
+  var I = null, dict = null, obs = null, timer = null, inflight = false, batches = 0, MAXB = 10, noKey = false;
+  var origT = new WeakMap(), setT = new WeakMap(), origA = new WeakMap(), setA = new WeakMap();
+  var queue = {}, asked = {};
+
+  function btn() { return document.getElementById('lang-tgl'); }
+  function paint() { var b = btn(); if (!b) return; b.textContent = lang === 'vi' ? 'VI' : 'EN'; b.classList.toggle('on', lang === 'vi');
+    b.title = lang === 'vi' ? 'Giao diện tiếng Việt — bấm để về English (chỉ hiển thị cho Ray)' + (noKey ? ' · Tachyon chưa có API key: chỉ từ điển có sẵn được áp dụng' : '') : 'UI language: English — click for Vietnamese (visible to Ray only)'; }
+  function mk() {
+    if (btn()) return;
+    var tb = document.querySelector('.topbar-in'); if (!tb) return;
+    var b = document.createElement('button'); b.id = 'lang-tgl'; b.type = 'button'; b.setAttribute('translate', 'no'); b.setAttribute('aria-label', 'UI language');
+    b.onclick = function () { lang = lang === 'vi' ? 'en' : 'vi'; try { localStorage.setItem(LS, lang); } catch (e) {} paint(); if (lang === 'vi') start(); else stop(); };
+    tb.appendChild(b); paint();
+  }
+  function loadEngine() {
+    if (window.I18N) return Promise.resolve(window.I18N);
+    return fetch(ENGINE).then(function (r) { if (!r.ok) throw new Error('engine'); return r.text(); }).then(function (s) { (new Function(s))(); return window.I18N; });
+  }
+  function loadDict() {
+    if (dict) return Promise.resolve(dict);
+    return Promise.all([
+      fetch(SEED).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }),
+      fetch(API + '?lang=vi').then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; })
+    ]).then(function (a) {
+      var d = {};
+      Object.keys(a[0] || {}).forEach(function (k) { if (k.charAt(0) !== '_' && typeof a[0][k] === 'string') d[k] = a[0][k]; });
+      var learned = (a[1] && a[1].map) || {};
+      Object.keys(learned).forEach(function (k) { if (!d[k] && typeof learned[k] === 'string') d[k] = learned[k]; });
+      if (a[1] && a[1].ai === 'nokey') noKey = true;
+      dict = I.index(d); paint(); return dict;
+    });
+  }
+  var SKIP_A = SKIP.replace('textarea,input,', '');                   // a placeholder is chrome; a value is never touched
+  function skipEl(el, sel) { return !el || (el.closest && el.closest(sel || SKIP)); }
+  function tText(n) {
+    var cur = n.nodeValue; if (!cur || !cur.trim() || skipEl(n.parentElement)) return;
+    var o = origT.get(n);
+    if (o === undefined || cur !== setT.get(n)) o = cur;          // first sight, or a script rewrote it
+    var t = I.lookup(dict, o);
+    origT.set(n, o);
+    if (t) { setT.set(n, t); if (cur !== t) n.nodeValue = t; }
+    else { setT.set(n, o); enqueue(o); }
+  }
+  function tAttrs(el) {
+    if (skipEl(el, SKIP_A)) return;
+    var oa = origA.get(el), sa = setA.get(el);
+    for (var i = 0; i < ATTRS.length; i++) {
+      var a = ATTRS[i]; if (!el.hasAttribute(a)) continue;
+      var cur = el.getAttribute(a); if (!cur || !cur.trim()) continue;
+      var o = oa && oa[a] !== undefined && cur === (sa && sa[a]) ? oa[a] : cur;
+      var t = I.lookup(dict, o);
+      if (!oa) { oa = {}; origA.set(el, oa); }
+      if (!sa) { sa = {}; setA.set(el, sa); }
+      oa[a] = o;
+      if (t) { sa[a] = t; if (cur !== t) el.setAttribute(a, t); } else { sa[a] = o; enqueue(o); }
+    }
+  }
+  function walk(root) {
+    if (!root || !dict) return;
+    if (root.nodeType === 3) { tText(root); return; }
+    if (root.nodeType !== 1 && root.nodeType !== 9 && root.nodeType !== 11) return;
+    if (root.nodeType === 1 && skipEl(root)) return;
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), n;
+    while ((n = w.nextNode())) tText(n);
+    if (root.nodeType === 1) tAttrs(root);
+    var els = root.querySelectorAll ? root.querySelectorAll('[title],[placeholder],[aria-label],[alt]') : [];
+    for (var i = 0; i < els.length; i++) tAttrs(els[i]);
+  }
+  function observe() {
+    if (obs || !window.MutationObserver) return;
+    obs = new MutationObserver(function (muts) {
+      if (lang !== 'vi' || !dict) return;
+      for (var i = 0; i < muts.length; i++) {
+        var m = muts[i];
+        if (m.type === 'characterData') { if (m.target.nodeValue !== setT.get(m.target)) tText(m.target); }
+        else if (m.type === 'attributes') { var el = m.target, sa = setA.get(el); if (!sa || el.getAttribute(m.attributeName) !== sa[m.attributeName]) tAttrs(el); }
+        else for (var j = 0; j < m.addedNodes.length; j++) walk(m.addedNodes[j]);
+      }
+    });
+    obs.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTRS });
+  }
+  // strings the dictionary cannot answer go to Tachyon in small batches (owner-only route);
+  // the reply is cached server-side in one KV map, so every later page load has it
+  function enqueue(s) {
+    if (!I || noKey) return;
+    var k = I.norm(s); if (!k || I.skip(k)) return;
+    var t = I.tpl(k); k = t.key;                                   // counts share one entry
+    if (Object.prototype.hasOwnProperty.call(dict, k) || asked[k]) return;
+    queue[k] = 1; if (timer) clearTimeout(timer); timer = setTimeout(flush, 700);
+  }
+  function flush() {
+    timer = null;
+    if (inflight || noKey || batches >= MAXB || lang !== 'vi') return;
+    var keys = Object.keys(queue).slice(0, 80); if (!keys.length) return;
+    keys.forEach(function (k) { asked[k] = 1; delete queue[k]; });
+    inflight = true; batches++; var b = btn(); if (b) b.classList.add('busy');
+    fetch(API, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ lang: 'vi', strings: keys }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.error === 'no_key') { noKey = true; paint(); return; }
+        var m = (j && j.map) || {}, n = 0;
+        Object.keys(m).forEach(function (k) { if (typeof m[k] === 'string' && m[k] && !dict[k]) { dict[k] = m[k]; n++; } });
+        if (n) { I.index(dict); walk(document.body); }
+      })
+      .catch(function () {})
+      .then(function () { inflight = false; if (b) b.classList.remove('busy'); if (Object.keys(queue).length) { timer = setTimeout(flush, 300); } });
+  }
+  function start() {
+    document.documentElement.setAttribute('lang', 'vi');
+    loadEngine().then(function (e) { I = e; return loadDict(); }).then(function () { if (lang !== 'vi') return; walk(document.body); observe(); }).catch(function () {});
+  }
+  // back to English: every node still showing what we set gets its exact original back —
+  // read off the live DOM, so a node translated late (learned map) restores too and nodes a
+  // script has since removed are simply gone (nothing here pins them in memory)
+  function restore(root) {
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), n;
+    while ((n = w.nextNode())) { var o = origT.get(n); if (o !== undefined && n.nodeValue === setT.get(n) && n.nodeValue !== o) n.nodeValue = o; }
+    var els = root.querySelectorAll('[title],[placeholder],[aria-label],[alt]');
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i], oa = origA.get(el), sa = setA.get(el); if (!oa || !sa) continue;
+      Object.keys(oa).forEach(function (a) { if (el.getAttribute(a) === sa[a] && sa[a] !== oa[a]) el.setAttribute(a, oa[a]); });
+    }
+  }
+  function stop() {
+    if (obs) { obs.disconnect(); obs = null; }
+    if (timer) { clearTimeout(timer); timer = null; } queue = {};
+    restore(document.body);
+    origT = new WeakMap(); setT = new WeakMap(); origA = new WeakMap(); setA = new WeakMap();
+    document.documentElement.setAttribute('lang', 'en');
+  }
+  function boot() { mk(); if (lang === 'vi') start(); }
+  if (document.readyState !== 'loading') boot(); else document.addEventListener('DOMContentLoaded', boot);
+  window.__fccLang = { get: function () { return lang; }, set: function (l) { if ((l === 'vi') !== (lang === 'vi')) btn().click(); }, dict: function () { return dict; } };
+})();</script>

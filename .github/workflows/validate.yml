@@ -39,6 +39,8 @@ jobs:
         run: node tools/test_access.mjs
       - name: Golden Record PDP harvest harness (extraction + host allowlist + sampler)
         run: node tools/test_pdpharvest.mjs
+      - name: Vietnamese UI toggle harness (engine rules + seed integrity + owner gating)
+        run: node tools/test_i18n.mjs
       - name: Scheduled Work harness (the content team's sheet → skip cadence per brand)
         run: node tools/test_schedule.mjs
       - name: Work-volumes harness (every workstream bucketed by month)
