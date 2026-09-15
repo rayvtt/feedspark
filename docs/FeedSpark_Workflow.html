@@ -1615,6 +1615,17 @@ window.addEventListener('load',restore);
   var gmailItems=[]; // live client emails pulled from Gmail (once the service account is connected)
   function senderName(from){ var m=/^\s*"?([^"<]+?)"?\s*</.exec(from||''); if(m)return m[1].trim();
     var e=/([^@<\s]+)@/.exec(from||''); return e?e[1]:(from||'—'); }
+  // ---- Gmail reply prefixes are noise in a task list (Ray, 15 Sep 2026: "for any email task
+  // coming from Gmail … within task name - change RE: -> 📧"). Two halves, deliberately:
+  //  · WRITE: every task an email becomes is BORN carrying 📧 instead of the mail client's
+  //    "RE:" run — one glance says "this came in by email", the same mark on every row.
+  //  · DISPLAY: rows already written into a plan SHEET carrying "RE:" swap it for 📧 when
+  //    rendered — never rewritten, because the task text IS the row's identity (taskKey ties
+  //    the brief, the status/due/owner overlays, ESRC/RECUR and the sheet's own match column).
+  var MAIL_TAG='📧';
+  var REPLY_RE=/^\s*(?:re\s*(?:\[\d+\])?\s*:\s*)+/i;   // "RE:", "Re: Re:", "RE[2]:"
+  function stripReply(s){ return String(s==null?'':s).replace(REPLY_RE,'').trim(); }
+  function taskDisp(t){ t=String(t==null?'':t); return REPLY_RE.test(t)?(MAIL_TAG+' '+stripReply(t)):t; }
   function emailIntake(){ // email-sourced BRIEFS still at intake stage. Raw captured emails never
     // enter the tracker — they wait in the triage panel until briefed or dismissed (Ray's rule:
     // each email is either a task or not a task, so don't mix them with tasks). Briefs adopted
@@ -1966,7 +1977,8 @@ window.addEventListener('load',restore);
       var k=rowKey(t), ck=itSel[k]?' checked':'', hid=isHidden(t), ed=(t.source==='plan'||t.source==='atrt'), edc=ed||t.source==='call', rec=RECUR[k];
       var bf=BK[k], bfChip=bf?('<span class="bf-chip" data-bid="'+esc(bf.id)+'" style="background:'+(STAGE_COLOR[bf.status]||'#8a94a0')+'" title="Ticket '+esc(bf.id)+' — '+esc(STAGE_LBL[bf.status]||bf.status)+(courtOf(bf)?(' · ball with '+courtOf(bf)):'')+'. Click to open">'+esc(STAGE_LBL[bf.status]||bf.status)+'</span>'):'';
       // a briefed row's task text is a click-through to its ticket (Ray's ask) — same target as the chip
-      var tkTxt=bf?('<span class="tk-open" data-bid="'+esc(bf.id)+'" title="Click to open ticket '+esc(bf.id)+'">'+esc(t.task)+'</span>'):esc(t.task);
+      var tkD=taskDisp(t.task);
+      var tkTxt=bf?('<span class="tk-open" data-bid="'+esc(bf.id)+'" title="Click to open ticket '+esc(bf.id)+'">'+esc(tkD)+'</span>'):esc(tkD);
       var stat=(t.source==='plan'||t.source==='atrt'||t.source==='call')
         ?('<td class="c-stat" data-r="'+i+'" data-col="status" data-src="'+t.source+'" data-callid="'+esc(t.callid||'')+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
         :'<td class="c-stat" data-r="'+i+'" data-col="status"><span class="c-owner">—</span></td>';
@@ -2602,7 +2614,7 @@ window.addEventListener('load',restore);
           else flow='<div class="tk-flow" title="Runs '+runSlaDays(b)+' days once started, then Analysis">⇢ Analysis after '+runSlaDays(b)+'d run</div>'; }
         return '<div class="tik'+(courtSel&&crt!==courtSel?' dim':'')+'" draggable="true" data-id="'+esc(b.id)+'">'
           +'<div class="tk-m"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+tst+pri+'<span class="grow"></span>'+db+ageChip+'</div>'
-          +'<div class="tk-t" title="'+esc(b.task)+'">'+esc(b.task)+'</div>'+flow+'</div>';
+          +'<div class="tk-t" title="'+esc(taskDisp(b.task))+'">'+esc(taskDisp(b.task))+'</div>'+flow+'</div>';
       }).join('') || '<div class="board-empty">—</div>';
       return '<div class="lane" data-stage="'+s[0]+'"><div class="lane-h"><span class="dot" style="background:'+s[2]+'"></span>'+s[1]+'<span class="ct">'+items.length+'</span></div>'+cards+'</div>';
     }).join('');
@@ -2660,7 +2672,7 @@ window.addEventListener('load',restore);
     if(PLANSHEET[b.client]) xl.push('<a class="xl" target="_blank" rel="noopener" href="https://docs.google.com/spreadsheets/d/'+PLANSHEET[b.client]+'">📊 Open '+esc(b.client)+'’s plan sheet</a>');
     if(b.code) xl.push('<a class="xl" id="m-thread" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent(threadQuery(b))+'" title="Searches the brief’s subject (client + task words) — punctuation tokens like the ID search badly in Gmail">✉ Find the email thread</a>');
     modalEl.innerHTML=''
-      +'<div style="display:flex;align-items:flex-start"><div><h3>'+esc(b.task)+'</h3>'
+      +'<div style="display:flex;align-items:flex-start"><div><h3>'+esc(taskDisp(b.task))+'</h3>'
         +'<div class="mc">'+esc(b.id)+' · '+esc(b.client)+' · ['+esc(b.code)+']</div></div><button class="x" id="m-x">×</button></div>'
       +'<div class="m-meta"><span class="m-pill">Due '+humanDD(b.due)+'</span><span class="m-pill">'+esc(b.priority||'Normal')+'</span>'
         +(lastResultTxt(b)?('<span class="m-pill" style="color:#15803D;border-color:rgba(21,128,61,.35)" title="The recorded read-out — travels with the brief">🧪 '+esc(lastResultTxt(b).slice(0,60))+'</span>'):'')
@@ -3433,7 +3445,7 @@ window.addEventListener('load',restore);
     body.innerHTML=rows.length?rows.map(function(b){ var res=lastResultTxt(b);
       return '<tr data-bid="'+esc(b.id)+'" style="cursor:pointer"><td class="c-owner" style="white-space:nowrap">'+esc(b.id)+(isDup(b)?' <span title="Collapsed duplicate of '+esc(BRIEF_DUP[b.id])+'">👥</span>':'')+'</td>'
         +'<td class="c-client">'+esc(b.client||'—')+'</td>'
-        +'<td class="c-task">'+esc(b.task||'—')+(res?' <span class="src-tag" style="color:#15803D;background:rgba(21,128,61,.1);border-color:rgba(21,128,61,.3)" title="Recorded read-out">🧪 '+esc(res.slice(0,48))+'</span>':'')+'</td>'
+        +'<td class="c-task">'+esc(taskDisp(b.task)||'—')+(res?' <span class="src-tag" style="color:#15803D;background:rgba(21,128,61,.1);border-color:rgba(21,128,61,.3)" title="Recorded read-out">🧪 '+esc(res.slice(0,48))+'</span>':'')+'</td>'
         +'<td class="c-owner">'+esc(briefedBy(b))+'</td>'
         +'<td class="c-owner">'+esc(b.aspl||asplOf(b)||'—')+'</td>'
         +'<td class="c-due">'+(b.created?new Date(b.created).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}):'—')+'</td>'
@@ -3672,7 +3684,7 @@ window.addEventListener('load',restore);
   // Briefing happens later from Intake itself, same as any other task (Ray's explicit ask:
   // this button shouldn't jump into the brief composer the way project-plan rows' Brief does).
   // the task an email becomes — shared by → Task and → Brief so both write the SAME row
-  function emailTaskName(g){ return g.subject+' — from '+senderName(g.from); }
+  function emailTaskName(g){ return MAIL_TAG+' '+(stripReply(g.subject)||'(no subject)')+' — from '+senderName(g.from); }
   function adoptEmailTask(g,quiet){
     // client comes from detection only (domain / display-name / brand-mention cues, resolved
     // server-side and back-filled) — the sender belongs in the TASK NAME, never in the Client field.
@@ -3723,7 +3735,7 @@ window.addEventListener('load',restore);
       .then(function(r){return r.json();}).then(function(d){ if(d&&d.ok)toast('→ TechAM — the email forwards from your mailbox within ~5 min');
         else toast('TechAM hand-off failed: '+((d&&d.error)||'try again')); })
       .catch(function(){ toast('TechAM hand-off failed — network; try again'); });
-    var task=g.subject+' — from '+senderName(g.from);
+    var task=emailTaskName(g);
     if(g.client&&CLIENTS.indexOf(g.client)>=0){ adoptIntoPlan(g.client,task,'Done','','TechAM',1); }
     else { MANUAL.push({client:g.client||'',task:task,owner:'TechAM',status:'Done',due:'',esrc:1}); saveManual(); markEsrc(g.client||'',task);
       toast('Recorded as Done — client not recognised: double-click its Client cell to assign one'); }
