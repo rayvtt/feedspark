@@ -34,8 +34,8 @@
   (typeof self !== 'undefined' ? self : this), function () {
   'use strict';
 
-  var VERSION = '1.0.0';
-  var SAMPLES = 16;          // rendered examples kept per overlay type per feed
+  var VERSION = '1.1.0';     // 1.1.0: 100 stored samples per type (Ray, 15 Sep 2026: scan overlay consistency across images)
+  var SAMPLES = 100;         // rendered examples kept per overlay type per feed (feed order — deterministic scan to scan)
   var MAX_TYPES = 40;        // distinct scripts tracked per feed (safety cap)
 
   // FeedSpark image services. dashboard.* hosts the image-creator scripts (the overlay

@@ -126,9 +126,9 @@ console.log('· sample cap');
 {
   const col = O.overlayCollector({ client: 'X', market: 'gb-fb' });
   col.onRow(['id', 'image_link']);
-  for (let i = 0; i < 40; i++) col.onRow([String(i), MONSOON]);
+  for (let i = 0; i < 130; i++) col.onRow([String(i), MONSOON]);
   const s = col.finish();
-  t('samples capped at ' + O.SAMPLES + ' while n counts all', s.types[0].samples.length === O.SAMPLES && s.types[0].n === 40);
+  t('samples capped at ' + O.SAMPLES + ' (=100) while n counts all', O.SAMPLES === 100 && s.types[0].samples.length === O.SAMPLES && s.types[0].n === 130);
 }
 
 // optional real fixture — stream through FeedAudit's XML parser exactly as the agent does

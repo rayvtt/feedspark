@@ -90,6 +90,17 @@ window.addEventListener('load',restore);
   .tpl{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--muted);background:var(--tile);border-radius:8px;padding:6px 9px;white-space:normal;word-break:break-all;overflow-wrap:anywhere;margin:6px 0 10px}
   .tpl b{color:var(--orange-ink);font-weight:700}
   .gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+  /* consistency scan (Ray, 15 Sep 2026): show 50 / 100 / every product on a type, dense grid */
+  .gal.dense{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
+  .gal.dense .cap{font-size:9.5px;padding:3px 5px}
+  .galctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:8px 0;font-size:12px;font-weight:700;color:var(--muted)}
+  .galctl .lbl{margin-right:2px}
+  .galctl .btn.sm.on{background:var(--orange);border-color:var(--orange);color:#fff}
+  .consist{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;padding:4px 10px;border-radius:100px;margin:2px 0 8px;max-width:100%}
+  .consist.ok{background:rgba(21,128,61,.12);color:var(--good)}
+  .consist.warn{background:rgba(237,111,11,.14);color:var(--orange-ink)}
+  .consist .vs{font-weight:700;color:var(--ink-2);white-space:normal}
+  .galmore{margin:10px 0 2px;display:flex;gap:8px;align-items:center;font-size:12px;font-weight:700;color:var(--muted)}
   .gal .g{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--tile);cursor:zoom-in;position:relative}
   .gal .g .ph{aspect-ratio:1/1;width:100%;display:block;object-fit:cover;background:var(--tile)}
   .gal .g .cap{font-size:11px;font-weight:700;color:var(--ink-2);padding:6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -218,6 +229,8 @@ window.addEventListener('load',restore);
 [data-theme=dark] .tcard{background:var(--paper);border-color:var(--line)}
 [data-theme=dark] .gal .g{background:#20242E;border-color:var(--line)}
 [data-theme=dark] .psbox input{background:#20242E;border-color:var(--line);color:var(--ink)}
+[data-theme=dark] .consist.ok{background:rgba(72,208,126,.16)}
+[data-theme=dark] .consist.warn{background:rgba(245,166,35,.18)}
 [data-theme=dark] #lb .box{background:#1C1F27;color:var(--ink)}
 [data-theme=dark] #lb .x{background:#20242E;color:var(--ink-2)}
 [data-theme=dark] .chip{background:#20242E;color:var(--ink-2)}
@@ -329,6 +342,11 @@ window.addEventListener('load',restore);
   var agoShort=function(t){ if(!t)return '—'; var s=(Date.now()-t)/1000; if(s<90)return 'now'; if(s<5400)return Math.round(s/60)+'m'; if(s<172800)return Math.round(s/3600)+'h'; return Math.round(s/86400)+'d'; };
   var FEEDS=[],CLIENT='',MKT='',DATA=null,BUSY=false,ABORT=false;
   var ROWS={};        // client|mkt -> {rows:[{id,ti,im,link}],t} — the feed's products, kept in memory for the product search (never persisted)
+  /* gallery view state (Ray, 15 Sep 2026: "show up to 50/60/100 products with overlays … scan
+     if the dynamic overlay is consistent across images"): per type key -> 50 | 100 | 'all'
+     (all = every product on the type, from the in-memory feed rows) + a dense-grid toggle */
+  var SHOW={},MORE={},ALLSET=null,ALLKEY='',DENSE=false,PAGE=100;
+  try{DENSE=localStorage.getItem('fcc-ovl-dense')==='1';}catch(e){}
   var ROWCAP=80000;
 
   /* ---------- bootstrap: estate roster ∪ scanned index in one call ---------- */
@@ -353,6 +371,7 @@ window.addEventListener('load',restore);
   }
   function mktsOf(c){ return FEEDS.filter(function(f){return f.client===c}).map(function(f){return f.mkt}).sort(function(a,b){ if(isFb(a)!==isFb(b))return isFb(a)?-1:1; return a.localeCompare(b); }); }
   function renderMkts(){
+    if(ALLKEY&&ALLKEY!==CLIENT+'|'+MKT){ ALLSET=null; ALLKEY=''; SHOW={}; MORE={}; }
     if(HITS.length||PSQ){ HITS=[]; $('#psr').hidden=true; $('#psr').innerHTML=''; psState(''); if(PSQ)setTimeout(runSearch,0); }
     var ms=mktsOf(CLIENT);
     if(!MKT||ms.indexOf(MKT)<0){ var hot=ms.filter(function(m){ var f=feedOf(CLIENT,m); return f&&f.scan&&f.scan.ovl; }); MKT=hot[0]||ms[0]||''; }
@@ -373,6 +392,15 @@ window.addEventListener('load',restore);
     if(g){ openLb(+g.getAttribute('data-ti'),+g.getAttribute('data-si')); return; }
     var hg=e.target.closest&&e.target.closest('.psr .g[data-hit]');
     if(hg){ openHit(+hg.getAttribute('data-hit')); return; }
+    var sb2=e.target.closest&&e.target.closest('button[data-show]');
+    if(sb2){ var tk=sb2.getAttribute('data-tkey'),mode=sb2.getAttribute('data-show'); SHOW[tk]=mode==='all'?'all':+mode; MORE[tk]=PAGE;
+      if(mode==='all'&&!(ALLSET&&ALLKEY===CLIENT+'|'+MKT)){ var c0=CLIENT,m0=MKT; sb2.disabled=true; sb2.textContent='⚡ reading the feed…';
+        buildAllSet(c0,m0).then(function(){ if(c0===CLIENT&&m0===MKT)render(); }).catch(function(err){ setState('Could not read the feed: '+((err&&err.message)||err)); SHOW[tk]=50; render(); }); return; }
+      render(); return; }
+    var mb=e.target.closest&&e.target.closest('button[data-more]');
+    if(mb){ var mk=mb.getAttribute('data-more'); MORE[mk]=(MORE[mk]||PAGE)+PAGE; render(); return; }
+    var db=e.target.closest&&e.target.closest('button[data-dense]');
+    if(db){ DENSE=!DENSE; try{localStorage.setItem('fcc-ovl-dense',DENSE?'1':'0');}catch(e2){} render(); return; }
   });
   $('#scan1').addEventListener('click',function(){ if(CLIENT&&MKT)scanFeed(CLIENT,MKT).then(function(){load();}); });
   $('#scanall').addEventListener('click',function(){
@@ -443,6 +471,41 @@ window.addEventListener('load',restore);
     var parts=qs.split('&').map(function(p){ var e=p.indexOf('='); var k=e<0?p:p.slice(0,e); var v=e<0?'':p.slice(e+1); return esc(k)+'=<b>'+(/^https?:/i.test(v)?'{image}':(esc(v.length>18?v.slice(0,17)+'…':v)))+'</b>'; });
     return esc(base)+(parts.length?'?'+parts.join('&amp;'):'');
   }
+  /* the list a type's gallery is drawn from: the stored samples (≤100, feed order) or —
+     after ⚡ All — every product on the type from the streamed feed */
+  function galList(t){
+    if(SHOW[t.key]==='all'&&ALLSET&&ALLKEY===CLIENT+'|'+MKT&&ALLSET[t.key])return ALLSET[t.key];
+    var n=SHOW[t.key]||50; return (t.samples||[]).slice(0,n);
+  }
+  /* recipe consistency: every product on a type should carry the SAME non-image parameters
+     (version, width, frame, tag colours…). Signature = the recipe minus the source URLs. */
+  /* per-product data (a price tag's price, a discount figure, a text line) is meant to differ
+     product to product — it is not a recipe variant, so it stays out of the signature */
+  var PRODUCT_PARAMS={show_price:1,price:1,sale_price:1,discount:1,text:1,label:1,title:1,name:1,rating:1};
+  function consistency(list){
+    var sig={},parts={},order=[],i,cls,k,pp;
+    for(i=0;i<list.length;i++){ cls=window.Overlay?window.Overlay.classifyOverlay(list[i].url):null; if(!cls)continue;
+      pp=cls.recipe.filter(function(r){return !r.url&&!PRODUCT_PARAMS[r.k]});
+      k=pp.map(function(r){return r.label+' '+r.v}).join(' · ')||'(no parameters)';
+      if(!sig[k]){sig[k]=0;order.push(k);parts[k]=pp;} sig[k]++; }
+    order.sort(function(a,b){return sig[b]-sig[a]});
+    /* which parameters actually differ between variants — that is all the reader needs */
+    var vals={},lab;
+    order.forEach(function(k2){ parts[k2].forEach(function(r){ (vals[r.label]=vals[r.label]||{})[r.v]=1; }); });
+    var diff={}; for(lab in vals)if(Object.keys(vals[lab]).length>1)diff[lab]=1;
+    /* a parameter present on some variants and missing on others differs too */
+    order.forEach(function(k2){ var have={}; parts[k2].forEach(function(r){have[r.label]=1;}); for(lab in vals)if(!have[lab])diff[lab]=1; });
+    return {n:list.length,diff:Object.keys(diff),variants:order.map(function(k2){
+      var d=parts[k2].filter(function(r){return diff[r.label]}).map(function(r){return r.label+' '+r.v}).join(' · ');
+      return {sig:k2,n:sig[k2],short:d||'(default)'}; })};
+  }
+  function consistHtml(t,list){
+    if(!list.length)return '';
+    var c=consistency(list),scope=(SHOW[t.key]==='all'&&list.length>=t.n?'all '+fmt(c.n)+' products on this type':'the '+fmt(c.n)+' shown');
+    if(c.variants.length<=1)return '<div class="consist ok" title="'+esc(c.variants[0]?c.variants[0].sig:'')+'">✓ Overlay recipe consistent across '+esc(scope)+'</div>';
+    var top=c.variants.slice(0,4).map(function(v){return '<span class="vs">'+esc(v.short)+' <b>×'+fmt(v.n)+'</b></span>'}).join(' · ');
+    return '<div class="consist warn" title="'+esc(c.variants.map(function(v){return v.sig+' ×'+v.n}).join('\n'))+'">⚠ '+c.variants.length+' recipe variants across '+esc(scope)+' — '+esc(c.diff.join(', '))+' differ'+(c.diff.length===1?'s':'')+': '+top+(c.variants.length>4?' · …':'')+'</div>';
+  }
   function typeCard(t,ti,snap){
     var vers=Object.keys(t.vers||{}).sort(function(a,b){return (t.vers[b]||0)-(t.vers[a]||0)});
     var h='<div class="tcard" data-type="'+esc(t.key)+'"><div class="th"><span class="tn">'+esc(t.label)+'</span>'
@@ -453,17 +516,36 @@ window.addEventListener('load',restore);
     h+='<div class="layout">'+esc(LAYOUT[t.layout]||'')+(t.project?' · project <b>'+esc(t.project)+'</b>':'')+' · script <b>'+esc(t.script||'—')+'</b></div>';
     h+='<div class="recipe">'+recipeHtml(t.recipe)+'</div>';
     h+='<div class="tpl" title="URL template — the image parameters vary per product">'+tplOf(t)+'</div>';
-    if(t.samples&&t.samples.length){
-      h+='<div class="gal">'+t.samples.map(function(s,si){ return '<div class="g" data-ti="'+ti+'" data-si="'+si+'" title="Click to compare with the source images"><img class="ph" loading="lazy" src="'+esc(s.url)+'" alt="'+esc(s.ti||s.id)+'" onerror="this.parentNode.classList.add(\'err\')"><div class="cap">'+esc(s.ti||'—')+'<small>'+esc(s.id||'')+(s.ver?' · v'+esc(s.ver):'')+'</small></div></div>'; }).join('')+'</div>';
-      if(t.n>t.samples.length)h+='<div class="note">Showing the first '+t.samples.length+' of '+fmt(t.n)+' — every product on this type uses the same recipe.</div>';
+    var list=galList(t),mode=SHOW[t.key]||50,avail=(t.samples||[]).length,isAll=mode==='all'&&ALLSET&&ALLKEY===CLIENT+'|'+MKT&&ALLSET[t.key];
+    var lim=isAll?(MORE[t.key]||PAGE):list.length,shown=list.slice(0,lim);
+    h+='<div class="galctl"><span class="lbl">Showing <b>'+fmt(shown.length)+'</b> of '+fmt(isAll?list.length:t.n)+'</span>'
+      +'<button type="button" class="btn sm'+(mode===50?' on':'')+'" data-show="50" data-tkey="'+esc(t.key)+'">50</button>'
+      +'<button type="button" class="btn sm'+(mode===100?' on':'')+'" data-show="100" data-tkey="'+esc(t.key)+'"'+(avail<=50&&t.n>50?' title="the stored capture holds '+avail+' — the next scan stores 100"':'')+'>100</button>'
+      +'<button type="button" class="btn sm'+(mode==='all'?' on':'')+'" data-show="all" data-tkey="'+esc(t.key)+'" title="Every product on this type — streams the feed once">⚡ All '+fmt(t.n)+'</button>'
+      +'<span class="spacer" style="flex:1"></span>'
+      +'<button type="button" class="btn sm'+(DENSE?' on':'')+'" data-dense="1" title="Smaller tiles so 100 fit on one screen">▦ Dense</button></div>';
+    h+=consistHtml(t,list);
+    if(shown.length){
+      h+='<div class="gal'+(DENSE?' dense':'')+'">'+shown.map(function(s2,si){ return '<div class="g" data-ti="'+ti+'" data-si="'+si+'" title="Click to compare with the source images"><img class="ph" loading="lazy" src="'+esc(s2.url)+'" alt="'+esc(s2.ti||s2.id)+'" onerror="this.parentNode.classList.add(\'err\')"><div class="cap">'+esc(s2.ti||'—')+'<small>'+esc(s2.id||'')+(s2.ver?' · v'+esc(s2.ver):'')+'</small></div></div>'; }).join('')+'</div>';
+      if(isAll&&list.length>shown.length)h+='<div class="galmore"><button type="button" class="btn sm" data-more="'+esc(t.key)+'">Show '+fmt(Math.min(PAGE,list.length-shown.length))+' more</button><span>'+fmt(list.length-shown.length)+' remaining</span></div>';
+      else if(!isAll&&t.n>shown.length)h+='<div class="note">'+(mode===100&&avail<100&&t.n>avail?'The stored capture holds '+avail+' examples — the next scan stores 100. ':'')+'Press ⚡ All to check every one of the '+fmt(t.n)+' products.</div>';
     }
     return h+'</div>';
+  }
+  /* ⚡ All: build every type's full product list from the streamed feed rows */
+  function buildAllSet(client,mkt){
+    return ensureRows(client,mkt).then(function(cache){
+      var set={},i,r,cls;
+      for(i=0;i<cache.rows.length;i++){ r=cache.rows[i]; if(!r.im||!window.Overlay.isOverlayUrl(r.im))continue; cls=window.Overlay.classifyOverlay(r.im); if(!cls)continue;
+        (set[cls.key]=set[cls.key]||[]).push({id:r.id,ti:r.ti,link:r.link,url:r.im,src:cls.sources.slice(0,4),ver:cls.ver}); }
+      ALLSET=set; ALLKEY=client+'|'+mkt; psState(''); return set;
+    });
   }
 
   /* ---------- lightbox: composite vs the source inputs ---------- */
   var LBT=null;
   function openLb(ti,si){
-    var snap=DATA&&DATA.snap; if(!snap)return; var t=snap.types[ti]; if(!t)return; var s=t.samples[si]; if(!s)return;
+    var snap=DATA&&DATA.snap; if(!snap)return; var t=snap.types[ti]; if(!t)return; var s=galList(t)[si]; if(!s)return;
     openLbFor(t,s);
   }
   function openLbFor(t,s){
