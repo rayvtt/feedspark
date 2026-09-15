@@ -603,13 +603,6 @@
    "forbidden": true
   },
   {
-   "name": "Workflow: assignable brand in Gmail triage + sender memory (now on the shared /api/state store, PR #381)",
-   "file": "docs/FeedSpark_Workflow.html",
-   "pattern": "function teachSender(from,brand){",
-   "min": 1,
-   "pr": 138
-  },
-  {
    "name": "Pricer: module page (quote builder + collaborative rate card)",
    "file": "docs/FeedSpark_Pricer.html",
    "pattern": "Tachyon Pricer",
@@ -5120,6 +5113,38 @@
    "min": 1
   },
   {
+   "name": "…and the chart states the conversion instead of inviting the comparison",
+   "file": "docs/FeedSpark_DeckBuilder.html",
+   "pattern": "function convRows(m){",
+   "pr": 380,
+   "min": 1
+  },
+  {
+   "name": "overlays: per-product fields judged by cardinality, never recipe variants",
+   "file": "docs/FeedSpark_Overlays.html",
+   "pattern": "function profileOf",
+   "min": 1
+  },
+  {
+   "name": "overlays: verdict is a compact pill with the breakdown behind details",
+   "file": "docs/FeedSpark_Overlays.html",
+   "pattern": "Consistent recipe",
+   "min": 1
+  },
+  {
+   "name": "overlay engine: an '&' inside a value never invents a parameter",
+   "file": "docs/overlay_engine.js",
+   "pattern": "KEY_RE",
+   "min": 2
+  },
+  {
+   "name": "Workflow: assignable brand in Gmail triage + sender memory (now on the shared /api/state store, PR #381)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function teachSender(from,brand){",
+   "min": 1,
+   "pr": 138
+  },
+  {
    "name": "Shared state: one kvmerge envelope per namespace under state:<ns>, so two people editing different things never contend",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "await env.EDITS.put('state:' + ns,",
@@ -5187,13 +5212,6 @@
    "file": "docs/FeedSpark_Playbook.html",
    "pattern": "body:JSON.stringify({pbtax:OV})",
    "pr": 381,
-   "min": 1
-  },
-  {
-   "name": "…and the chart states the conversion instead of inviting the comparison",
-   "file": "docs/FeedSpark_DeckBuilder.html",
-   "pattern": "function convRows(m){",
-   "pr": 380,
    "min": 1
   },
   {

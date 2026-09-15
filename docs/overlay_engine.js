@@ -59,15 +59,22 @@
       eq = seg.indexOf('=');
       k = eq < 0 ? seg : seg.slice(0, eq);
       prev = out.length ? out[out.length - 1] : null;
-      // continuation of a source URL's own query (…x.jpg?a=1&b=2): glue when the previous
-      // value is a URL already carrying '?' and this key is not one the engines take
-      if (prev && isUrl(prev.v) && prev.v.indexOf('?') >= 0 && (eq < 0 || !PARAM[k.toLowerCase()])) { prev.v += '&' + seg; continue; }
+      // a '&' INSIDE a value, not a separator. Two cases, both glued back onto the previous
+      // value: a source URL carrying its own query (…x.jpg?a=1&b=2), and a plain text value
+      // like a product title ("Joggers & Shorts Set Ivory") — a real key is a bare token, so
+      // a segment whose key has spaces (or no '=' at all) is a continuation, never a param.
+      // Without this, one ampersand in a title invented a new parameter per product.
+      if (prev && (eq < 0 || !PARAM[k.toLowerCase()]) &&
+          (isUrl(prev.v) ? prev.v.indexOf('?') >= 0        // inside the source URL's own query
+                         : (eq < 0 || !KEY_RE.test(k)))) { // inside a plain text value
+        prev.v += '&' + seg; continue; }
       if (eq < 0) { out.push({ k: seg, v: '' }); continue; }
       out.push({ k: k, v: seg.slice(eq + 1) });
     }
     return out;
   }
   var isUrl = function (v) { return /^https?:\/\//i.test(String(v || '')); };
+  var KEY_RE = /^[A-Za-z0-9_.:\[\]-]+$/;   // a query KEY is a bare token — anything else is value text
 
   // token dictionary for the script / project names (image_process_products_lifestyle
   // -> Product × Lifestyle); unknown tokens are capitalised, never dropped
@@ -114,7 +121,7 @@
     cache: 'Cached', brand: 'Brand', logo: 'Logo'
   };
   var VER_KEYS = { img_ver: 1, image_version: 1, ver: 1, v: 1 };
-  var prettyKey = function (k) { return String(k).replace(/[_-]+/g, ' ').replace(/^./, function (c) { return c.toUpperCase(); }); };
+  var prettyKey = function (k) { return String(k).replace(/^[_-]+/, '').replace(/[_-]+/g, ' ').replace(/^./, function (c) { return c.toUpperCase(); }); };
   var stripExt = function (s) { return String(s).replace(/\.(php|aspx?|jsp|cgi)$/i, ''); };
   var friendlyValue = function (k, v) {
     if (/color|colour/.test(k) && /^[0-9a-f]{6}$/i.test(v)) return '#' + v.toUpperCase();
