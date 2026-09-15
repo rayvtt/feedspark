@@ -145,6 +145,8 @@ window.addEventListener('load',restore);
           lane moved to a coloured edge, and the grip/✦ glyphs are gone. */
   #cal-wrap{background:transparent;border:none;box-shadow:none;padding:0;overflow:visible}
   .road{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;align-items:start}
+  /* the notices above the board are full-width rows, not month columns */
+  .road>p.sub,.road>.loose{grid-column:1/-1;margin:0 0 10px}
   .mo-sec{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
     box-shadow:var(--shadow);padding:11px 12px 12px;min-height:0}
   .mo-h{font-size:12px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;
@@ -168,6 +170,7 @@ window.addEventListener('load',restore);
   .rc .del{position:absolute;top:4px;right:5px;border:none;background:none;color:var(--muted);
     font-weight:900;cursor:pointer;font-size:13px;padding:1px 3px;border-radius:6px;opacity:0}
   .rc:hover .del{opacity:1}.rc .del:hover{color:var(--risk)}
+  .rc .del.ul{right:24px}   /* ⛓ unlink sits BESIDE the × — both are absolute, so they stacked */
   /* inline scope + themes live INSIDE the meta line, so they add no visual weight of their own */
   .scope{font:inherit;font-size:10.5px;font-weight:800;border:none;background:none;padding:0;
     cursor:pointer;color:var(--ink-2);border-bottom:1px dotted var(--line)}
@@ -231,6 +234,27 @@ window.addEventListener('load',restore);
   [data-theme=dark] .own,[data-theme=dark] .ownmenu{background:#20242E;border-color:var(--line);color:var(--ink-2)}
   [data-theme=dark] .hb-h:hover{background:#181B22}
   .mo-empty{border:1.5px dashed var(--line);border-radius:10px;padding:16px 8px;text-align:center;font-size:11px;color:var(--muted);font-weight:700;opacity:.65}
+  /* keyword tickets the board could not place — the gap, said out loud */
+  .loose{grid-column:1/-1;border:1px solid var(--orange);background:var(--paper);border-radius:var(--radius);
+    padding:12px 14px;margin-bottom:14px}
+  .loose>b{display:block;font-size:12.5px;color:var(--orange-ink)}
+  .loose .sub{display:block;margin:2px 0 8px;font-size:11.5px}
+  .lz-row{display:flex;gap:8px;flex-wrap:wrap}
+  .lz{display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left;cursor:pointer;
+    border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:7px 10px;
+    font:inherit;font-size:12px;font-weight:800;color:var(--ink);max-width:340px}
+  .lz:hover{border-color:var(--orange)}
+  .lz-st{font-style:normal;font-size:9.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .lk-list{max-height:320px;overflow:auto;display:flex;flex-direction:column;gap:4px;margin-top:6px}
+  .lk{display:flex;justify-content:space-between;gap:10px;align-items:baseline;cursor:pointer;text-align:left;
+    border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 10px;font:inherit;font-size:12px}
+  .lk:hover{border-color:var(--orange)}
+  .lk.busy{opacity:.6}
+  .lk-n{font-weight:800;color:var(--ink)}
+  .lk-d{font-size:11px;color:var(--muted);white-space:nowrap}
+  [data-theme=dark] .loose{background:var(--paper);border-color:#C67B28}
+  [data-theme=dark] .loose>b{color:#F0A44E}
+  [data-theme=dark] .lz,[data-theme=dark] .lk{background:var(--bg);border-color:var(--line)}
   /* the window is a plan read left to right: months already gone recede, this month is marked */
   .mo-sec.mo-past{opacity:.62}
   .mo-sec.mo-now{border-color:var(--orange)}
@@ -769,19 +793,97 @@ function refileBrief(brand,e,b){
     .then(function(m){ if(m&&typeof m==='object'&&!m.error)BRIEFS=m; render();
       return was; });
 }
-function wfFor(brand,e){
-  var ks=Object.keys(BRIEFS||{}), canon=normTask(kwTask(brand,e));
-  var pfx=normTask('Keywords Optimisation - '+e.name), pfx2=normTask('AI Keyword Optimisation - '+e.name);
-  var byId=null, byTask=null, byName=null;
-  function newer(a,b){ return (!a||(b.updated||b.created||0)>(a.updated||a.created||0))?b:a; }
-  for(var i=0;i<ks.length;i++){ var b=BRIEFS[ks[i]];
-    if(!b||b.client!==brand)continue;
-    if(b.kw&&String(b.kw)===String(e.id)){ byId=newer(byId,b); continue; }
-    var tk=normTask(b.task);
-    if(tk===canon){ byTask=newer(byTask,b); continue; }
-    if(tk===pfx||tk===pfx2||tk.indexOf(pfx+' - ')===0||tk.indexOf(pfx2+' - ')===0) byName=newer(byName,b); }
-  return byId||byTask||byName||null;
+/* ---- COLLEAGUES BRIEF FROM WORKFLOW, NOT ONLY FROM THIS CALENDAR (Ray, 15 Sep 2026: "you're
+ * still not able to add any activities that Steven has actioned from his end — Cashmere/Merino
+ * and Gifting have been briefed successfully from his end and ASPL already picked up").
+ * Every rung below the last matches the CALENDAR'S OWN wording — its stamp, its generated task
+ * name — so a ticket a colleague raised by hand ("Cashmere Keyword Optimisation", "Gifting")
+ * was invisible here: the moment sat on "planned" while ASPL was already working it. The last
+ * rung therefore reads the ticket's task as WORDS.
+ * Two rules keep that from guessing: a brief is claimed by AT MOST ONE moment (resolved in a
+ * single pass over the brand, rung by rung, so an early moment can't greedily take a ticket a
+ * later one owns), and a word-match that two moments fit equally well ("Party" against both
+ * Event/Party and Winterwear/Gifting/Party) is claimed by NEITHER — it goes to the unlinked
+ * strip for a human to place. A confidently wrong tie is worse than an honest gap. ---- */
+var TASK_STOP={the:1,and:1,a:1,an:1,of:1,for:1,to:1,in:1,on:1,at:1,with:1,from:1,
+  keyword:1,keywords:1,kw:1,optimisation:1,optimization:1,optimise:1,optimize:1,ai:1,opt:1,
+  marketing:1,planner:1,calendar:1,brief:1,briefing:1,task:1,feed:1,test:1,update:1,new:1,fix:1};
+function taskWords(s){ return normTask(s).split(/[^a-z0-9]+/).filter(Boolean); }
+function sigWords(s,drop){   // the words that actually IDENTIFY something — filler, the brand's own
+  var out=[], seen={};       // name and bare date tokens (0926) carry no signal on either side
+  taskWords(s).forEach(function(w){ if(w.length<3||/^\d+$/.test(w)||TASK_STOP[w]||(drop&&drop[w])||seen[w])return;
+    seen[w]=1; out.push(w); });
+  return out;
 }
+/* How well a moment and a ticket name the SAME thing — both directions, or a short moment name
+   wins everything: "Coats" is 100% present in a ticket called "Coats & Jackets", so coverage of
+   the moment alone would let Coats steal that ticket from Coats & Jackets. Weighing how much of
+   the TICKET the moment accounts for puts it back where it belongs. */
+function nameScore(mw,tw){
+  if(!mw.length||!tw.length)return 0;
+  var set={}; tw.forEach(function(w){ set[w]=1; });
+  var hit=0; mw.forEach(function(w){ if(set[w])hit++; });
+  if(!hit)return 0;
+  var mom=hit/mw.length, tick=hit/tw.length;
+  return 2*mom*tick/(mom+tick);
+}
+var WFC={};   // one resolution pass per brand per render — render() resets it
+function wfReset(){ WFC={}; }
+function wfBuild(brand){
+  var E=evsOf(brand), mine=[], out={}, taken={}, done={};
+  Object.keys(BRIEFS||{}).forEach(function(k){ var b=BRIEFS[k]; if(b&&b.client===brand&&b.id)mine.push(b); });
+  mine.sort(function(a,b){ return (b.updated||b.created||0)-(a.updated||a.created||0); });   // newest ticket wins a contest
+  function newer(a,b){ return (!a||(b.updated||b.created||0)>(a.updated||a.created||0))?b:a; }
+  function assign(e,b,how){ out[e.id]={b:b,how:how}; taken[b.id]=1; done[e.id]=1; }
+
+  // 0 — linked BY HAND: decisive, and it survives any rename on either side
+  E.forEach(function(e){ if(!e.wf)return;
+    for(var i=0;i<mine.length;i++) if(mine[i].id===e.wf&&!taken[mine[i].id]){ assign(e,mine[i],'linked'); return; } });
+
+  // 1-3 — the calendar's own evidence, strongest first, every moment before the next rung
+  [['kw',   function(e,b){ return b.kw&&String(b.kw)===String(e.id); }],
+   ['task', function(e,b){ return normTask(b.task)===normTask(kwTask(brand,e)); }],
+   ['name', function(e,b){ var tk=normTask(b.task),
+       p1=normTask('Keywords Optimisation - '+e.name), p2=normTask('AI Keyword Optimisation - '+e.name);
+       return tk===p1||tk===p2||tk.indexOf(p1+' - ')===0||tk.indexOf(p2+' - ')===0; }]
+  ].forEach(function(rung){
+    E.forEach(function(e){ if(done[e.id])return; var best=null;
+      mine.forEach(function(b){ if(taken[b.id])return; if(rung[1](e,b))best=newer(best,b); });
+      if(best)assign(e,best,rung[0]); });
+  });
+
+  // 4 — the WORDS of a ticket someone raised by hand, one brief at a time, newest first.
+  // A ticket that doesn't read as keyword work must name the moment OUTRIGHT (every identifying
+  // word), so a "Feed Fix - …" or a Golden Record ticket can never drift onto a moment on the
+  // strength of one shared word. A keyword ticket needs half the moment's words, and a strict win.
+  var drop={}; taskWords(brand).forEach(function(w){ drop[w]=1; });
+  var sig={}; E.forEach(function(e){ sig[e.id]=sigWords(e.name,drop); });
+  var near={};
+  mine.forEach(function(b){ if(taken[b.id])return;
+    var tw=sigWords(b.task,drop);
+    var top=null, topS=0, second=0;
+    E.forEach(function(e){ if(done[e.id])return;
+      var sc=nameScore(sig[e.id]||[],tw);
+      if(sc>topS){ second=topS; topS=sc; top=e; } else if(sc>second) second=sc; });
+    near[b.id]=topS;
+    var floor=isKwTicket(b)?0.5:1;
+    if(top&&topS>=floor&&topS>second) assign(top,b,'words'); });
+
+  return { map:out, loose:mine.filter(function(b){ return !taken[b.id]; })
+    .map(function(b){ return {b:b, near:near[b.id]||0}; }) };
+}
+function wfAll(brand){ if(!WFC[brand])WFC[brand]=wfBuild(brand); return WFC[brand]; }
+function wfFor(brand,e){ var r=wfAll(brand).map[e&&e.id]; return r?r.b:null; }
+function wfHow(brand,e){ var r=wfAll(brand).map[e&&e.id]; return r?r.how:''; }
+var HOWL={linked:'linked to this moment by hand',kw:'raised from this moment',
+  task:'matched on the house task name',name:'matched on the moment name',
+  words:'matched on the ticket wording — a colleague raised it in Workflow'};
+function isKwTicket(b){ return String(b.cat||'')==='keyword'||/keyword|optimis|optimiz/i.test(String(b.task||'')); }
+// tickets on this brand that no moment claimed — keyword work, or anything that ALMOST matched a
+// moment (a near miss is exactly the case a human needs to see: the wording didn't quite land)
+function looseKw(brand){ return wfAll(brand).loose
+  .filter(function(x){ return isKwTicket(x.b)||x.near>0; })
+  .map(function(x){ return x.b; }); }
 // which team holds the ball at each pipeline stage — the Workflow board's own map, so the
 // calendar answers "whose court is this in?" without opening Workflow
 var COURTM={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',running:'AM',analysis:'AM',confirmed:''};
@@ -798,10 +900,51 @@ function ownChip(e){
 }
 // a moment claiming a pipeline stage with no ticket behind it — the calendar's old manual cycle
 function isGhost(e,wf){ return !wf && GHOST_STATES.indexOf((e&&e.st)||'')>=0; }
+/* A keyword ticket nobody on this board claimed. Before this existed a failed tie was SILENT —
+   the moment simply read "planned" and there was nothing anywhere to say a ticket was already
+   moving. Now the board says what it could not place, and one click places it. */
+function looseStrip(brand){
+  var L=looseKw(brand); if(!L.length)return '';
+  return '<div class="loose"><b>🔗 '+L.length+' keyword ticket'+(L.length===1?'':'s')+' not on this calendar</b>'
+    +'<span class="sub">Raised in Workflow rather than from a moment, so nothing here claims '
+    +(L.length===1?'it':'them')+'. Click one to put it on the moment it belongs to.</span>'
+    +'<div class="lz-row">'+L.map(function(b){
+      var stg=stOf(b,null), ct=COURTM[stg]||'';
+      return '<button type="button" class="lz" data-link="'+esc(b.id)+'" title="Ticket '+esc(b.id)
+        +(b.by?' · briefed by '+esc(b.by):'')+' — click to link it to a moment">'+esc(b.task||b.id)
+        +'<i class="lz-st '+esc(stg)+'">'+esc(stg)+(ct?' · '+esc(ct):'')+'</i></button>'; }).join('')
+    +'</div></div>';
+}
+function linkOpen(btn,bid){
+  ptClose();
+  var b=(BRIEFS||{})[bid]; if(!b)return;
+  var E=evs();
+  var d=document.createElement('div'); d.className='ptp slim'; d.id='ptp';   // a short list, not the full workbench
+  d.style.width='min(560px,94vw)';
+  d.innerHTML='<b class="pt-t">🔗 Which moment is this ticket?</b>'
+    +'<div class="pt-sub">'+esc(b.task||bid)+'</div>'
+    +'<div class="lk-list">'+(E.length?E.map(function(e){
+        var cur=wfFor(CLIENT,e);
+        return '<button type="button" class="lk'+(cur?' busy':'')+'" data-lke="'+esc(e.id)+'"'
+          +(cur?' title="Already tied to ticket '+esc(cur.id)+' — linking here moves this moment onto the new ticket"':'')+'>'
+          +'<span class="lk-n">'+esc(e.name)+'</span><span class="lk-d">'+esc(dLbl(e))+(cur?' · tied':'')+'</span></button>'; }).join('')
+      :'<div class="cc-none">No moments on this board yet.</div>')+'</div>'
+    +'<div class="pt-foot"><span class="pt-sub">The link sticks — it survives a rename on either side.</span>'
+    +'<button class="btn" id="lk-cancel">Cancel</button></div>';
+  document.body.appendChild(d); ptPlace(d);
+  d.addEventListener('click',function(ev){ ev.stopPropagation();
+    var c=ev.target.closest('#lk-cancel'); if(c){ ptClose(); return; }
+    var pick=ev.target.closest('[data-lke]'); if(!pick)return;
+    var e=findEv(pick.getAttribute('data-lke')); if(!e)return;
+    e.wf=bid; save(); ptClose(); render();
+    $('#mstate').textContent='linked “'+(b.task||bid)+'” to '+e.name;
+  });
+}
 function stChip(brand,e,wf,st){
-  if(wf){ var ct=COURTM[st]||'';
+  if(wf){ var ct=COURTM[st]||'', how=HOWL[wfHow(brand,e)]||'';
     return '<a class="stx '+esc(st)+' wfl" href="/workflow" title="Live from the Workflow pipeline'
-      +(wf.id?' · ticket '+esc(wf.id):'')+(ct?' · '+esc(ct)+' holds the ball':'')
+      +(wf.id?' · ticket '+esc(wf.id):'')+(wf.by?' · briefed by '+esc(wf.by):'')+(ct?' · '+esc(ct)+' holds the ball':'')
+      +(how?' · '+esc(how):'')
       +' — the stage moves in Workflow, not here">'+esc(st)+(ct?'<b class="ct">'+esc(ct)+'</b>':'')+'</a>'; }
   var mis=misfiledFor(brand,e);
   if(mis)
@@ -1480,7 +1623,7 @@ function laneLbl(l){ l=String(l||'').toLowerCase();
   if(l.indexOf('location')>=0)return '📍 Location';
   return l?('✦ '+l.charAt(0).toUpperCase()+l.slice(1)):''; }
 function render(){
-  popClose();
+  popClose(); wfReset();   // one ticket⇄moment resolution pass per render, for every brand on screen
   if(CLIENT==='*'){ $('#split').hidden=true; $('#pdf').hidden=true; if($('#lgnd'))$('#lgnd').hidden=true;
     if($('#win-row'))$('#win-row').hidden=true;   // the overview is a scan across brands, not a plan board
     renderOverview(); renderPdfDoc(); return; }
@@ -1501,6 +1644,7 @@ function render(){
     +' sit'+(out.length===1?'s':'')+' outside this window</b> — '
     +out.slice(0,3).map(function(e){return '<button type="button" class="themes" data-fix="'+esc(e.id)+'" title="Fix this moment\u2019s date">'+esc(e.name)+' ('+esc(e.date)+')</button>'}).join(', ')
     +(out.length>3?' …':'')+'. Check the year on those dates.</p>';
+  hint+=looseStrip(CLIENT);
   var nk=nowKey();
   var rg=monthRange(), mons=[]; for(var mk=rg[0];mk<=rg[1];mk++)mons.push(mk); // the whole window, so empty months are drop targets too
   $('#road').innerHTML=hint+mons.map(function(k){
@@ -1519,6 +1663,7 @@ function render(){
         return '<div class="rc lane-'+esc(lk)+'" draggable="true" data-kw="'+esc(e.id)+'" data-lane="'+esc(e.lane||'')+'"'
           +' title="'+esc((laneLbl(e.lane)||'')+(e.note?' · '+e.note:'')+' — drag to another month')+'">'
           +'<div class="rt">'+esc(e.name)
+          +(editMode&&e.wf?'<button class="del ul" style="opacity:1" data-unlink="'+esc(e.id)+'" title="Unlink the ticket tied to this moment by hand">⛓</button>':'')
           +(editMode?'<button class="del" style="opacity:1" data-del="'+esc(e.id)+'" title="Remove">×</button>':'')+'</div>'
           +'<div class="rd">'+esc(dLbl(e))+((e.mkt&&e.mkt!=='gb')?' · '+esc(e.mkt.toUpperCase()):'')
           +' · '+scopeBtn(CLIENT,e)+(hh?' · '+h1(hh)+'h':'')
@@ -1805,7 +1950,9 @@ document.addEventListener('click',function(ev){
     try{history.replaceState(null,'',location.pathname+'?client='+encodeURIComponent(CLIENT)+(MKT!=='gb'?'&market='+encodeURIComponent(MKT):''))}catch(e2){} return; }
   var sc=ev.target.closest('[data-scope]');
   if(sc){ var e=findEv(sc.getAttribute('data-scope'))||findEvIn(CLIENT,sc.getAttribute('data-scope')); if(e&&!e.brandwide)ptOpen(e); ev.stopPropagation(); return; }
-  if(!ev.target.closest('#ptp')&&!ev.target.closest('[data-scope]'))ptClose();
+  // [data-link] opens the ticket picker in this same panel — without the exemption the
+  // document handler closed it on the very click that opened it
+  if(!ev.target.closest('#ptp')&&!ev.target.closest('[data-scope]')&&!ev.target.closest('[data-link]'))ptClose();
 });
 $('#sbs').addEventListener('click',function(){ if(CLIENT==='*')return; window.__sbs=!window.__sbs; renderClical(); });
 $('#hoursrail').addEventListener('click',function(ev){
@@ -1929,6 +2076,11 @@ $('#road').addEventListener('click',function(ev){
   var t=ev.target;
   var fix=t.closest('[data-fix]');   // a moment outside the window has no card — edit it from the warning
   if(fix){ editEvent(findEv(fix.getAttribute('data-fix'))); return; }
+  var lz=t.closest('[data-link]');   // an unclaimed keyword ticket — place it on a moment
+  if(lz){ linkOpen(lz,lz.getAttribute('data-link')); return; }
+  var ul=t.closest('[data-unlink]');
+  if(ul){ var eu=findEv(ul.getAttribute('data-unlink')); if(!eu)return;
+    delete eu.wf; save(); render(); $('#mstate').textContent='unlinked '+eu.name; return; }
   var rf=t.closest('[data-refile]');
   if(rf){ var er=findEv(rf.getAttribute('data-refile')); if(!er)return;
     var mb=misfiledFor(CLIENT,er); if(!mb)return;
