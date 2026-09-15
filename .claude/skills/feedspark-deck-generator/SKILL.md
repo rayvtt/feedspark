@@ -80,6 +80,33 @@ more precise source for every feed-quality claim in the deck. If an older brief 
 boilerplate predates the pptx-only rule — the deliverable is the `.pptx`; don't wire a new
 `/deck/` page because a stale brief mentions one.
 
+## Step 1a — Pinned work-volume charts (Deck Generator chart workbench)
+
+A brief may carry a **`## Work-volume charts (pinned in the Deck Generator)`** section: one
+block per chart the AM pinned on `/deck-builder` — a title, an optional subtitle, the brand
+and window, the **view** (volume by stream, or one stream broken down by a dimension), the
+**form** (stacked columns / lines / 100% stacked / horizontal totals), optional notes, and a
+**markdown table** of the exact numbers (series × months + totals). These are the AM's own
+reading of the account's workload — project-plan tasks, client emails, call actions, briefs,
+the ASPL scheduled work, result rounds — already customised and worded.
+
+Rules:
+- **Each pinned chart is a slide of its own**, placed after the outline section it best
+  supports (a "Look-back period" or "Review & project recap" section usually) — if none fits,
+  after the recap. Keep the title and subtitle **verbatim**; the notes are the speaker line
+  (or a one-line caption under the chart), never dropped.
+- Build it as a **native PowerPoint chart** (python-pptx `chart_data` / pptxgenjs `addChart`),
+  never a screenshot: the table IS the data — one series per row, the months as categories,
+  in the row order given. Match the form: stacked column → `BAR_STACKED`/`COL_STACKED`;
+  lines → `LINE_MARKERS`; 100% stacked → `COL_STACKED_100`; horizontal totals → a horizontal
+  bar of each series' Total column, sorted descending.
+- Colours come from the core template's chart set (blue, green, violet, orange …) in series
+  order; thin marks, a legend when there is more than one series, data labels on. Never
+  invent a month or a number that is not in the table; if a series is all zeros, drop it and
+  say so in the notes rather than plotting an empty band.
+- Where a "Source" line names a stream as unavailable or a baked fallback, keep that caveat
+  in the slide's footnote — the AM chose to show it knowing that.
+
 ## Step 2 — Resolve the client's real data
 
 Placeholder copy (`[Client]`, `[N]`, "illustrative") is exactly what this skill exists to
