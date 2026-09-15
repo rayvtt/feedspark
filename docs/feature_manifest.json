@@ -4675,21 +4675,21 @@
    "name": "Intake archive: completed work with NO date leaves the working view (Ray 15 Sep 2026)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "function isArchived(r){",
-   "pr": 0,
+   "pr": 372,
    "min": 1
   },
   {
    "name": "…revealed on its own terms, so the status filter can't swallow what the chip just offered",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "var arch=isArchived(r); if(arch&&!S.showArchived)return false;",
-   "pr": 0,
+   "pr": 372,
    "min": 1
   },
   {
    "name": "…and a row you just marked Done never vanishes under the cursor",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "JUSTSET[client+'|'+task]=1;",
-   "pr": 0,
+   "pr": 372,
    "min": 1
   }
  ]
