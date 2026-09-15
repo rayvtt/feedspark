@@ -56,6 +56,10 @@ echo "── validating: Golden Record PDP harvest (extraction + allowlist + sam
 node tools/test_pdpharvest.mjs >/dev/null
 echo "   ✓ details-text rules, variant-only identifiers + the proxy allowlist hold"
 
+echo "── validating: Scheduled Work (sheet → skip cadence per brand)"
+node tools/test_schedule.mjs >/dev/null
+echo "   ✓ header layouts, DDMM tab dating, the AM's word + month streaks hold"
+
 echo "── validating: live deck editor (real browser)"
 if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   NODE_PATH=$(npm root -g) node tools/test_editor.mjs || {

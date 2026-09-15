@@ -4600,6 +4600,76 @@
    "pattern": "page stage order",
    "pr": 368,
    "min": 1
+  },
+  {
+   "name": "schedule: engine — the content team's sheet read as a skip cadence (Ray 15 Sep 2026)",
+   "file": "cloudflare/feedspark-deck/src/schedwork.js",
+   "pattern": "export function buildCadence(rows)",
+   "pr": 370,
+   "min": 1
+  },
+  {
+   "name": "…hidden weekly tabs dated off their DDMM name against the consolidated anchor",
+   "file": "cloudflare/feedspark-deck/src/schedwork.js",
+   "pattern": "export function tabInfo(title, anchorIso)",
+   "pr": 370,
+   "min": 1
+  },
+  {
+   "name": "schedule: worker route /api/schedule (live via SA, else the committed snapshot, scoped)",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "path === '/api/schedule'",
+   "pr": 370,
+   "min": 1
+  },
+  {
+   "name": "schedule: page route wired into PAGES",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "'/schedule':",
+   "pr": 370,
+   "min": 1
+  },
+  {
+   "name": "schedule: the Sheets reader covers every tab, hidden ones included",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "async function readScheduleSheet(env)",
+   "pr": 370,
+   "min": 1
+  },
+  {
+   "name": "schedule: grantable module (access directory)",
+   "file": "cloudflare/feedspark-deck/src/access.js",
+   "pattern": "slug: 'schedule'",
+   "pr": 370,
+   "min": 1
+  },
+  {
+   "name": "schedule: page — per-task skip cadence table + drawer log",
+   "file": "docs/FeedSpark_Schedule.html",
+   "pattern": "FCC-SCHEDWORK page",
+   "pr": 370,
+   "min": 1
+  },
+  {
+   "name": "schedule: nav link present on the canonical page (parity propagates it to every page)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "href=\"/schedule\"",
+   "pr": 370,
+   "min": 1
+  },
+  {
+   "name": "schedule: Workflow Intake hand-off band (scheduled work sits outside Intake)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "id=\"sw-band\"",
+   "pr": 370,
+   "min": 1
+  },
+  {
+   "name": "schedule: committed snapshot ingest tool (xlsx → ops/schedule)",
+   "file": "tools/schedule_ingest.py",
+   "pattern": "def main():",
+   "pr": 370,
+   "min": 1
   }
  ]
 }

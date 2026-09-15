@@ -95,6 +95,13 @@ else
   echo "   ✗ PDP harvest harness FAILED — see node tools/test_pdpharvest.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3i/7: Scheduled Work (the content team's sheet → skip cadence per brand)"
+if node tools/test_schedule.mjs >/dev/null 2>&1; then
+  echo "   ✓ header layouts, DDMM tab dating, the AM's word + month streaks hold; the snapshot still reads"
+else
+  echo "   ✗ schedule harness FAILED — see node tools/test_schedule.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 4/7: shipped-feature markers"
 if node tools/check_markers.js >/dev/null 2>&1; then
   echo "   ✓ no shipped feature regressed"

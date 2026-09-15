@@ -27,6 +27,11 @@
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
 import { parseAbTests, abSummary, resolveAbTab, hasAbHeader, abClientKey } from "./abtests.js";
+// Scheduled Work (Ray, 15 Sep 2026): the content team's weekly schedule sheet (hidden weekly tabs
+// included) read as a skip cadence per dossier brand — live via the service account when the
+// sheet is shared with it, else the committed snapshot. Engine: src/schedwork.js; page /schedule.
+import { SCHEDULE_SHEET_ID, parseWorkbook, buildCadence, brandSummary, compactRow, isoOf as schedIso } from "./schedwork.js";
+import SCHEDULE_SNAPSHOT from "../../../ops/schedule/scheduled_work_2026-09-15.json";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 // Committed action batches (ops/ingest/*.json) — bundled at build time so a logged-in user can
 // file them into a plan sheet with ONE CLICK from /workflow (no CI service token needed).
@@ -82,6 +87,7 @@ import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
 // feed-optimisation strategies, and surfaces "what's been done for brand X" + cross-brand
 // suggestions ("overlay is BAU on Accessorize → propose to Hobbycraft"). Page at /playbook.
 import PLAYBOOK_PAGE from "../../../docs/FeedSpark_Playbook.html";
+import SCHEDULE_PAGE from "../../../docs/FeedSpark_Schedule.html";
 import APPSW from "../../../docs/apps_widget.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
 // node tests share the file, same pattern as the Feed Lab engine)
@@ -170,6 +176,7 @@ const PAGES = {
   '/volume':      { html: VOLUME_PAGE, slug: 'volume' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
   '/playbook':    { html: PLAYBOOK_PAGE, slug: 'playbook' },
+  '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
@@ -1588,6 +1595,50 @@ export default {
       const r = await dobStore(env, client, mkt, body && body.rows, body && body.dob);
       if (!r) return json({ ok: false, error: 'bad capture — no first-seen histogram' }, 400);
       return json(Object.assign({ ok: true, client, market: mkt }, r));
+    }
+
+    // ---- SCHEDULED WORK (Ray, 15 Sep 2026) ----------------------------------------------
+    // The content team's "Scheduled Title and Keyword Optimisation" sheet — the ASPL weekly
+    // schedule the AMs answer Go ahead / Skip on — is a stream of work OUTSIDE Intake. Read
+    // every tab (the 76 hidden weekly tabs included) through the service account when the
+    // sheet is shared with it (KV schedwork, 6 h; ?refresh=1 re-reads), else serve the
+    // committed snapshot and say so. Rows are scoped server-side like every Workflow route:
+    // a scoped signin sees only its clients' cadence. Engine + harness: src/schedwork.js,
+    // tools/test_schedule.mjs. ?lite=1 = cadence + brand summary only (the Workflow band).
+    if (path === '/api/schedule' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const lite = url.searchParams.get('lite') === '1';
+      const refresh = url.searchParams.get('refresh') === '1';
+      let roster = Object.keys(PLAN_SHEETS).concat(Object.keys(DEFAULT_FEEDS));
+      try { roster = roster.concat(Object.keys(liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data)); } catch (e) {}
+      roster = Array.from(new Set(roster.filter(Boolean)));
+      let tabs = null, source = 'snapshot', at = SCHEDULE_SNAPSHOT.at;
+      const sa = { configured: !!env.GOOGLE_SA_JSON, shared: null, email: '', error: '' };
+      if (env.GOOGLE_SA_JSON) {
+        try { sa.email = JSON.parse(env.GOOGLE_SA_JSON).client_email || ''; } catch (e) {}
+        const ck = 'schedwork';
+        const hit = await env.EDITS.get(ck, 'json');
+        if (!refresh && hit && (Date.now() - (hit.at || 0)) < 6 * 3600 * 1000) { tabs = hit.tabs; source = 'live'; at = hit.at; sa.shared = true; }
+        else {
+          const r = await readScheduleSheet(env);
+          if (r.ok) {
+            tabs = r.tabs; source = 'live'; at = Date.now(); sa.shared = true;
+            try { await env.EDITS.put(ck, JSON.stringify({ at, tabs }), { expirationTtl: 14 * 86400 }); } catch (e) {}
+            logActivity(ctx, env, request, 'schedule-read', r.tabs.length + ' tabs');
+          } else {
+            sa.error = r.error; sa.shared = /permission|forbidden|not found|403|404/i.test(r.error) ? false : null;
+            if (hit && hit.tabs) { tabs = hit.tabs; source = 'live-stale'; at = hit.at; }
+          }
+        }
+      }
+      if (!tabs) tabs = SCHEDULE_SNAPSHOT.tabs;
+      const parsed = parseWorkbook(tabs, roster, schedIso(new Date()));
+      const rows = (acc.owner || !acc.clients) ? parsed.rows : parsed.rows.filter((r) => r.b && clientMatch(acc.clients, r.b));
+      const cadence = buildCadence(rows);
+      const payload = { ok: true, source, at, sheet: { id: SCHEDULE_SHEET_ID, title: SCHEDULE_SNAPSHOT.title }, sa, anchor: parsed.anchor,
+        tabs: parsed.tabs, roster, scoped: !!acc.clients, cadence, brands: brandSummary(cadence) };
+      if (!lite) payload.rows = rows.map(compactRow);
+      return json(payload);
     }
 
     // ---- A/B TEST ARCHIVE (Ray, 9 Sep 2026) ----------------------------------------------
@@ -3753,6 +3804,33 @@ async function appendPlanRows(env, id, tab, rows) {
 // read a tab's values AND per-cell background colour (needed to tell separators from tasks)
 // Writes must land on the tab the reads came from: exact name -> case-insensitive ->
 // first tab containing "plan" -> the sheet's first tab (mirrors fetchGrid's read fallback).
+// Scheduled Work: every tab of the content team's schedule sheet through the service account —
+// 1 token + 1 metadata + batchGet in slices of 40 ranges (77 tabs → 2 calls), UNFORMATTED so
+// dates arrive as Sheets serials and hours as numbers (the engine parses both). Hidden tabs come
+// back like any other; their `hidden` flag rides along so the page can say how many weeks are
+// folded away in the sheet. Returns {ok, tabs:[{title, hidden, values}]} or {ok:false, error}.
+async function readScheduleSheet(env) {
+  try {
+    const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
+    const H = { headers: { Authorization: 'Bearer ' + token } };
+    const meta = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + SCHEDULE_SHEET_ID + '?fields=sheets.properties(title,hidden)', H)).json();
+    if (meta.error) return { ok: false, error: meta.error.message || String(meta.error.status || meta.error.code) };
+    const props = (meta.sheets || []).map((x) => x.properties).filter((p) => p && p.title);
+    if (!props.length) return { ok: false, error: 'the sheet has no tabs' };
+    const tabs = [];
+    for (let i = 0; i < props.length; i += 40) {
+      const slice = props.slice(i, i + 40);
+      const qs = slice.map((p) => 'ranges=' + encodeURIComponent("'" + p.title.replace(/'/g, "''") + "'!A1:X4000")).join('&');
+      const b = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + SCHEDULE_SHEET_ID + '/values:batchGet?valueRenderOption=UNFORMATTED_VALUE&majorDimension=ROWS&' + qs, H)).json();
+      if (b.error) return { ok: false, error: b.error.message || String(b.error.status || b.error.code) };
+      (b.valueRanges || []).forEach((vr, j) => {
+        const values = (vr.values || []).filter((row) => Array.isArray(row) && row.some((v) => v !== '' && v != null));
+        tabs.push({ title: slice[j].title, hidden: !!slice[j].hidden, values });
+      });
+    }
+    return { ok: true, tabs };
+  } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
+}
 async function resolveTab(id, tab, token) {
   try {
     const d = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '?fields=sheets.properties.title', { headers: { Authorization: 'Bearer ' + token } })).json();

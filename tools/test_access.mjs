@@ -115,7 +115,8 @@ ok(Array.isArray(dm['c@d.com'].modules) && dm['c@d.com'].modules.length === 0, '
 ok(dm['e@f.com'].modules === undefined, 'sanitizer: a row with no modules key stays unrestricted (all)');
 ok(MODULE_PATHS['/labels'] === 'labels' && MODULE_PATHS['/playbook'] === 'playbook', 'MODULE_PATHS maps a route to its slug');
 ok(MODULE_PATHS['/leadership'] === undefined && MODULE_PATHS['/activity'] === undefined && MODULE_PATHS['/'] === undefined, 'leadership / activity / landing are NOT grantable modules');
-ok(MODULES.length === 12 && MODULES.every((m) => m.slug && m.label && m.path), 'twelve grantable modules, each {slug,label,path}');
+ok(MODULES.length === 13 && MODULES.every((m) => m.slug && m.label && m.path), 'thirteen grantable modules, each {slug,label,path}');
+ok(MODULE_PATHS['/schedule'] === 'schedule', 'Scheduled work (the ASPL weekly schedule) is a grantable module');
 
 console.log('\nRESULT: ' + (failed ? 'FAIL — ' + failed + ' failed, ' : 'PASS — ') + passed + ' assertions');
 process.exit(failed ? 1 : 0);
