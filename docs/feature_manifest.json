@@ -4424,14 +4424,14 @@
    "file": "docs/arrivals_engine.js",
    "pattern": "FeedArrivals",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "arrivals engine: stats() forecast = mean of the last 3 COMPLETE months × 3 / × 12",
    "file": "docs/arrivals_engine.js",
    "pattern": "function stats(",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "labelguard: xmlCollector histograms c:fs_date_of_birth alongside the id set (agent + browser lanes)",
@@ -4445,126 +4445,126 @@
    "file": "docs/labelguard_engine.js",
    "pattern": "DOB_KEY",
    "min": 3,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "worker: dobStore — voldob:<c>:<m> record + ONE estate index voldobidx (Shopping feeds only, -fb refused)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "function dobStore(",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "worker: volTrack hands the collector's dob histogram to dobStore on confirmed scans",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "dobStore(env, client, mkt, rows, vol.dob)",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "worker: GET /api/volume/arrivals — every Shopping feed's histogram from the estate index",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "'/api/volume/arrivals'",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "worker: POST /api/volume/dobpush — the page's ⚡ live in-browser read (ACT volume-arrivals-live)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "'/api/volume/dobpush'",
    "min": 2,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "worker: /api/volume carries the feed's dob histogram (null on -fb)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "voldob:",
    "min": 2,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "worker: /volume/engine.js serves the arrivals engine verbatim (Text module import)",
    "file": "cloudflare/feedspark-deck/src/worker.js",
    "pattern": "ARRIVALS_ENGINE_SRC",
    "min": 2,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "wrangler: arrivals_engine.js imported as a Text module",
    "file": "wrangler.toml",
    "pattern": "arrivals_engine.js",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "volume page: 'New product arrivals — by first-seen date' card (KPIs, forecast band, monthly bars, per-quarter + per-year tables)",
    "file": "docs/FeedSpark_Volume.html",
    "pattern": "id=\"arr-card\"",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "volume page: ⚡ Scan now streams the live feed in-browser through the arrivals collector and POSTs /api/volume/dobpush",
    "file": "docs/FeedSpark_Volume.html",
    "pattern": "/api/volume/dobpush",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "volume page: 'Arrivals across all accounts' estate table from /api/volume/arrivals, ranked by run-rate, row click opens the feed",
    "file": "docs/FeedSpark_Volume.html",
    "pattern": "/api/volume/arrivals",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "volume page: arrivals engine loaded from /volume/engine.js",
    "file": "docs/FeedSpark_Volume.html",
    "pattern": "/volume/engine.js",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "volume page: Meta feeds never read — Shopping feeds only empty state (Ray: 'just use Shopping feed to access this only')",
    "file": "docs/FeedSpark_Volume.html",
    "pattern": "Shopping feeds only",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "AI Quote: new-product forecast prefers the feed's first-seen dates (FeedArrivals.stats over /api/volume dob), churn stays the fallback",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "FeedArrivals.stats",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "AI Quote: arrivals engine loaded from /volume/engine.js",
    "file": "docs/FeedSpark_AIQuote.html",
    "pattern": "/volume/engine.js",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "qa_gate: tools/test_arrivals.mjs (engine + collector + dobStore) in the gate",
    "file": "tools/qa_gate.sh",
    "pattern": "test_arrivals.mjs",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "presync: tools/test_arrivals.mjs",
    "file": "tools/presync.sh",
    "pattern": "test_arrivals.mjs",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "validate.yml: tools/test_arrivals.mjs",
    "file": ".github/workflows/validate.yml",
    "pattern": "test_arrivals.mjs",
    "min": 1,
-   "pr": 368
+   "pr": 369
   },
   {
    "name": "Test running ⏱ — the run between Done — ASPL and Analysis (Ray 15 Sep 2026)",
