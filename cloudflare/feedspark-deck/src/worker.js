@@ -32,6 +32,9 @@ import { parseAbTests, abSummary, resolveAbTab, hasAbHeader, abClientKey } from 
 // sheet is shared with it, else the committed snapshot. Engine: src/schedwork.js; page /schedule.
 import { SCHEDULE_SHEET_ID, parseWorkbook, buildCadence, brandSummary, compactRow, isoOf as schedIso } from "./schedwork.js";
 import SCHEDULE_SNAPSHOT from "../../../ops/schedule/scheduled_work_2026-09-15.json";
+// Work volumes (Ray, 15 Sep 2026): every workstream on an account bucketed by month for the
+// Deck Generator's chart workbench — plan tasks, emails, calls, briefs, scheduled work, results.
+import { buildVolumes, monthKey as volMonthKey, monthRange as volMonthRange } from "./volumes.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 // Committed action batches (ops/ingest/*.json) — bundled at build time so a logged-in user can
 // file them into a plan sheet with ONE CLICK from /workflow (no CI service token needed).
@@ -39,7 +42,7 @@ import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 import INGEST_SUPERDRY_SVS_AUG26 from "../../../ops/ingest/superdry_svs_aug26.json";
 const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
-import { ACCESS_SEED, resolveAccess, clientMatch, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed } from "./access.js";
+import { ACCESS_SEED, resolveAccess, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
 import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
@@ -1597,6 +1600,52 @@ export default {
       return json(Object.assign({ ok: true, client, market: mkt }, r));
     }
 
+    // ---- WORK VOLUMES (Ray, 15 Sep 2026) ------------------------------------------------
+    // One brand, one window: every workstream bucketed by month for the Deck Generator's chart
+    // workbench — plan tasks (cron-warmed planlive), captured emails, call actions, briefs, the
+    // ASPL schedule and result rounds. Scoped per signin; nothing here is written.
+    if (path === '/api/volumes' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const client = String(url.searchParams.get('client') || '').trim().slice(0, 60);
+      if (!client) return json({ ok: false, error: 'client required' }, 400);
+      if (!clientMatch(acc.clients, client)) return json({ ok: false, error: 'outside your client scope' }, 403);
+      const n = Math.max(1, Math.min(24, parseInt(url.searchParams.get('months') || '6', 10) || 6));
+      const end = /^\d{4}-\d{2}$/.test(url.searchParams.get('end') || '') ? url.searchParams.get('end') : volMonthKey(Date.now());
+      const months = volMonthRange(n, end);
+      const key = clientSlug(client);
+      const same = (name) => clientSlug(name) === key;
+      const meta = {};
+      // plan tasks: the cron-warmed cache of the brand's Project Plan (cold = no SA / never warmed)
+      let plan = [];
+      const sheetId = PLAN_SHEETS[client];
+      if (sheetId) {
+        const cached = await env.EDITS.get('planlive:' + sheetId, 'json');
+        if (cached && Array.isArray(cached.tasks)) { plan = cached.tasks; meta.plan = { source: 'planlive', updated: cached.updated || 0 }; }
+        else meta.plan = { source: 'cold', note: 'plan not warmed yet — the page falls back to the baked monthly volume' };
+      } else meta.plan = { source: 'none', note: 'no Project Plan sheet wired for ' + client };
+      const inbox = (await env.EDITS.get('gmailinbox', 'json')) || [];
+      const dis = (await env.EDITS.get('gmaildismissed', 'json')) || {};
+      const emails = inbox.filter((it) => it && same(it.client)).map((it) => (dis[it.id] ? Object.assign({}, it, { dismissed: true, decidedAs: dis[it.id].r || 'notask' }) : it));
+      meta.emails = { source: 'gmailinbox', note: 'inbox capture began Aug 2026 and keeps a rolling 120 messages', kept: inbox.length };
+      const callsAll = (await env.EDITS.get('callactions', 'json')) || [];
+      const calls = callsAll.filter((a) => a && same(a.client));
+      meta.calls = { source: 'callactions', kept: callsAll.length };
+      const briefsMap = liftEnvelope(await env.EDITS.get('briefs', 'json'), Date.now()).data || {};
+      const briefs = Object.keys(briefsMap).map((k) => briefsMap[k]).filter((b) => b && same(b.client));
+      meta.briefs = { source: 'briefs' };
+      const kwAll = (await env.EDITS.get('kwresults', 'json')) || [];
+      const results = kwAll.filter((k) => k && same(k.client));
+      meta.results = { source: 'kwresults' };
+      const sched = await scheduleTabs(env, false);
+      let roster = Object.keys(PLAN_SHEETS).concat(Object.keys(DEFAULT_FEEDS));
+      try { roster = roster.concat(Object.keys(liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data)); } catch (e) {}
+      const parsed = parseWorkbook(sched.tabs, Array.from(new Set(roster.filter(Boolean))), schedIso(new Date()));
+      const schedule = parsed.rows.filter((r) => r.b && same(r.b)).map(compactRow);
+      meta.schedule = { source: sched.source, at: sched.at };
+      const vol = buildVolumes({ months, plan, emails, calls, briefs, schedule, results, meta });
+      return json(Object.assign({ ok: true, client, generated: Date.now(), scoped: !!acc.clients }, vol));
+    }
+
     // ---- SCHEDULED WORK (Ray, 15 Sep 2026) ----------------------------------------------
     // The content team's "Scheduled Title and Keyword Optimisation" sheet — the ASPL weekly
     // schedule the AMs answer Go ahead / Skip on — is a stream of work OUTSIDE Intake. Read
@@ -1612,26 +1661,7 @@ export default {
       let roster = Object.keys(PLAN_SHEETS).concat(Object.keys(DEFAULT_FEEDS));
       try { roster = roster.concat(Object.keys(liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data)); } catch (e) {}
       roster = Array.from(new Set(roster.filter(Boolean)));
-      let tabs = null, source = 'snapshot', at = SCHEDULE_SNAPSHOT.at;
-      const sa = { configured: !!env.GOOGLE_SA_JSON, shared: null, email: '', error: '' };
-      if (env.GOOGLE_SA_JSON) {
-        try { sa.email = JSON.parse(env.GOOGLE_SA_JSON).client_email || ''; } catch (e) {}
-        const ck = 'schedwork';
-        const hit = await env.EDITS.get(ck, 'json');
-        if (!refresh && hit && (Date.now() - (hit.at || 0)) < 6 * 3600 * 1000) { tabs = hit.tabs; source = 'live'; at = hit.at; sa.shared = true; }
-        else {
-          const r = await readScheduleSheet(env);
-          if (r.ok) {
-            tabs = r.tabs; source = 'live'; at = Date.now(); sa.shared = true;
-            try { await env.EDITS.put(ck, JSON.stringify({ at, tabs }), { expirationTtl: 14 * 86400 }); } catch (e) {}
-            logActivity(ctx, env, request, 'schedule-read', r.tabs.length + ' tabs');
-          } else {
-            sa.error = r.error; sa.shared = /permission|forbidden|not found|403|404/i.test(r.error) ? false : null;
-            if (hit && hit.tabs) { tabs = hit.tabs; source = 'live-stale'; at = hit.at; }
-          }
-        }
-      }
-      if (!tabs) tabs = SCHEDULE_SNAPSHOT.tabs;
+      const { tabs, source, at, sa } = await scheduleTabs(env, refresh, ctx, request);
       const parsed = parseWorkbook(tabs, roster, schedIso(new Date()));
       const rows = (acc.owner || !acc.clients) ? parsed.rows : parsed.rows.filter((r) => r.b && clientMatch(acc.clients, r.b));
       const cadence = buildCadence(rows);
@@ -3804,6 +3834,32 @@ async function appendPlanRows(env, id, tab, rows) {
 // read a tab's values AND per-cell background colour (needed to tell separators from tasks)
 // Writes must land on the tab the reads came from: exact name -> case-insensitive ->
 // first tab containing "plan" -> the sheet's first tab (mirrors fetchGrid's read fallback).
+// Scheduled Work: the workbook's tabs — live through the service account when the sheet is shared
+// with it (KV schedwork, 6 h; refresh re-reads; a failed refresh serves the last good read as
+// live-stale), else the committed snapshot. Shared by /api/schedule and /api/volumes.
+async function scheduleTabs(env, refresh, ctx, request) {
+  let tabs = null, source = 'snapshot', at = SCHEDULE_SNAPSHOT.at;
+  const sa = { configured: !!env.GOOGLE_SA_JSON, shared: null, email: '', error: '' };
+  if (env.GOOGLE_SA_JSON) {
+    try { sa.email = JSON.parse(env.GOOGLE_SA_JSON).client_email || ''; } catch (e) {}
+    const ck = 'schedwork';
+    const hit = await env.EDITS.get(ck, 'json');
+    if (!refresh && hit && (Date.now() - (hit.at || 0)) < 6 * 3600 * 1000) { tabs = hit.tabs; source = 'live'; at = hit.at; sa.shared = true; }
+    else {
+      const r = await readScheduleSheet(env);
+      if (r.ok) {
+        tabs = r.tabs; source = 'live'; at = Date.now(); sa.shared = true;
+        try { await env.EDITS.put(ck, JSON.stringify({ at, tabs }), { expirationTtl: 14 * 86400 }); } catch (e) {}
+        if (ctx && request) logActivity(ctx, env, request, 'schedule-read', r.tabs.length + ' tabs');
+      } else {
+        sa.error = r.error; sa.shared = /permission|forbidden|not found|403|404/i.test(r.error) ? false : null;
+        if (hit && hit.tabs) { tabs = hit.tabs; source = 'live-stale'; at = hit.at; }
+      }
+    }
+  }
+  if (!tabs) tabs = SCHEDULE_SNAPSHOT.tabs;
+  return { tabs, source, at, sa };
+}
 // Scheduled Work: every tab of the content team's schedule sheet through the service account —
 // 1 token + 1 metadata + batchGet in slices of 40 ranges (77 tabs → 2 calls), UNFORMATTED so
 // dates arrive as Sheets serials and hours as numbers (the engine parses both). Hidden tabs come

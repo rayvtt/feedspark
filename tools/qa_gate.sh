@@ -102,6 +102,13 @@ else
   echo "   ✗ schedule harness FAILED — see node tools/test_schedule.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3j/7: work volumes (every workstream bucketed by month)"
+if node tools/test_volumes.mjs >/dev/null 2>&1; then
+  echo "   ✓ six date shapes, the fixed window, labelled dims + hour sums hold"
+else
+  echo "   ✗ volumes harness FAILED — see node tools/test_volumes.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 4/7: shipped-feature markers"
 if node tools/check_markers.js >/dev/null 2>&1; then
   echo "   ✓ no shipped feature regressed"

@@ -60,6 +60,10 @@ echo "── validating: Scheduled Work (sheet → skip cadence per brand)"
 node tools/test_schedule.mjs >/dev/null
 echo "   ✓ header layouts, DDMM tab dating, the AM's word + month streaks hold"
 
+echo "── validating: work volumes (every workstream bucketed by month)"
+node tools/test_volumes.mjs >/dev/null
+echo "   ✓ six date shapes, the fixed window, labelled dims + hour sums hold"
+
 echo "── validating: live deck editor (real browser)"
 if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   NODE_PATH=$(npm root -g) node tools/test_editor.mjs || {
