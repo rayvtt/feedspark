@@ -1756,6 +1756,7 @@ window.addEventListener('load',restore);
     if(exists)return false;
     var due=(dueDD&&String(dueDD).length===8)?(dueDD.slice(0,2)+'/'+dueDD.slice(2,4)+'/'+dueDD.slice(4,8)):'';
     MANUAL.push({client:client,task:task,owner:owner||'',status:status||'Open',due:due,esrc:esrc?1:0}); saveManual(); _planCache=null;
+    JUSTSET[client+'|'+task]=1;   // a row you just filed never archives out from under you, even born Done
     if(esrc)markEsrc(client,task);   // survives the live-pull replacing the MANUAL row
     var id=PLANSHEET[client];
     if(id){ toast('Adding to '+client+'’s plan…');
@@ -3017,9 +3018,49 @@ window.addEventListener('load',restore);
           LIVE_AT=Date.now(); var dot=document.getElementById('live-dot'); if(dot)dot.classList.add('on');
           if(banner) banner.textContent='Live — '+n+' tasks across '+brands+' plans · synced '+timeAgo(LIVE_AT)+(errs.length?(' · '+errs.length+' not shared with the service account'):'');
           renderAll();
+          reconcileBriefTasks();   // a ticket whose task never reached the plan gets its row now
         } else { if(banner) banner.textContent=(d&&d.error==='no_sa')?'Not connected — set the Google service-account secret to sync plans live.':'Sync unavailable — showing the last snapshot.'; }
       }).catch(function(){ if(btn)btn.disabled=false; if(banner) banner.textContent='Sync failed — showing the last snapshot.'; });
   }
+
+  // ---- A TICKET WITH NO TASK (Ray, 15 Sep 2026: "Steven briefed Cashmere / Merino from the
+  // keyword calendar — why is it not appearing inside Intake?").
+  // A brief raised from a module deep-link (Keyword Calendar, Feed Lab, Golden Record, PT) is
+  // the task's birth: saving it calls adoptIntoPlan, which writes the row to MANUAL first and
+  // then appends it to the brand's plan sheet. But MANUAL is localStorage and the BRIEF is KV.
+  // So when that append fails, is skipped, or the brand has no sheet wired, the ticket is
+  // visible to the whole team while the task exists only in the briefer's browser — and the
+  // retry queue (resyncPlanWrites) reads that same local MANUAL, so nobody else can ever heal
+  // it. The gap is silent and permanent, which is exactly what Ray hit.
+  // Reconcile from the SHARED side instead: the brief already carries client, task, due and
+  // stage, so any live ticket whose task matches no row in its brand's plan can be filed by
+  // whoever opens Workflow next. The brief itself carries the once-only guard (b.planned), so
+  // the second browser stands down rather than appending a duplicate — and appendPlanRows is
+  // idempotent on task text, so even a simultaneous pair can't double-write.
+  var STAGE_STATUS={intake:'Briefed',briefed:'Briefed',progress:'In Progress',blocked:'On Hold',
+    done:'Done',running:'In Progress',analysis:'In Progress',confirmed:'Done'};
+  function briefRow(b){   // the brief's task as it exists in Intake today, or null
+    var rows=allIntake(), hit=null;
+    for(var i=0;i<rows.length&&!hit;i++){ var r=rows[i];
+      if(r.client!==b.client)continue;
+      if(normTask(r.task)===normTask(b.task)||sameTask(r.task,b.task))hit=r; }
+    return hit; }
+  function reconcileBriefTasks(){
+    if(!LIVE_CONN)return;   // without a live plan read every row would look missing
+    var made=0, pend=[];
+    Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id];
+      if(!b||!b.client||!b.task||b.planned||isDup(b))return;
+      if(b.status==='confirmed')return;                     // closed work needs no plan row
+      if(!inScopeClient(b.client))return;                   // a scoped signin can't file another book's task
+      if(b.taskKey&&allIntake().some(function(r){ return rowKey(r)===b.taskKey; }))return;   // already tied to a live row
+      if(briefRow(b)){ b.planned=1; pend.push(b); return; } // it IS there under other wording — settle the flag, don't write
+      if(!PLANSHEET[b.client])return;                       // no sheet to write to; the ticket stands alone
+      if(adoptIntoPlan(b.client,b.task,STAGE_STATUS[b.status]||'Briefed',b.due,'',0,true)){
+        b.planned=1; b.taskKey=b.client+'|'+b.task; pend.push(b); made++; }
+    });
+    if(pend.length){ persist();
+      if(made){ toast('⟲ '+made+' briefed ticket'+(made===1?'':'s')+' had no task in the plan — filed into Intake');
+        renderAll(); } } }
 
   // ---- ticket journey: every handoff with how long each stage held the ball ----
   function journeyHtml(b){ var h=(b.hist&&b.hist.length)?b.hist:[{s:b.status,t:b.created||b.updated||Date.now()}];
@@ -3844,9 +3885,11 @@ window.addEventListener('load',restore);
       .then(function(r){return r.json();}).then(function(d){ if(d&&d.ok)toast('→ TechAM — the email forwards from your mailbox within ~5 min');
         else toast('TechAM hand-off failed: '+((d&&d.error)||'try again')); })
       .catch(function(){ toast('TechAM hand-off failed — network; try again'); });
-    var task=emailTaskName(g);
-    if(g.client&&CLIENTS.indexOf(g.client)>=0){ adoptIntoPlan(g.client,task,'Done','','TechAM',1); }
-    else { MANUAL.push({client:g.client||'',task:task,owner:'TechAM',status:'Done',due:'',esrc:1}); saveManual(); markEsrc(g.client||'',task);
+    var task=emailTaskName(g), tdy=today(), dd8=pad(tdy.getDate())+pad(tdy.getMonth()+1)+tdy.getFullYear();
+    // the hand-off is dated: it happened today. A dateless Done row would read as old history
+    // the next time the plan loads, and the archive would (rightly) take it out of the view.
+    if(g.client&&CLIENTS.indexOf(g.client)>=0){ adoptIntoPlan(g.client,task,'Done',dd8,'TechAM',1); }
+    else { MANUAL.push({client:g.client||'',task:task,owner:'TechAM',status:'Done',due:pad(tdy.getDate())+'/'+pad(tdy.getMonth()+1)+'/'+tdy.getFullYear(),esrc:1}); saveManual(); markEsrc(g.client||'',task);
       toast('Recorded as Done — client not recognised: double-click its Client cell to assign one'); }
     var ids=[String(g.id)]; th.all.forEach(function(m){ if(ids.indexOf(String(m.id))<0)ids.push(String(m.id)); });
     decideMany(ids,'techam');

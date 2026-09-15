@@ -4691,6 +4691,27 @@
    "pattern": "JUSTSET[client+'|'+task]=1;",
    "pr": 372,
    "min": 1
+  },
+  {
+   "name": "A ticket with no task: orphaned module briefs get their plan row (Ray 15 Sep 2026)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function reconcileBriefTasks(){",
+   "pr": 0,
+   "min": 1
+  },
+  {
+   "name": "…the brief itself carries the once-only guard, so a second browser stands down",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "b.planned=1; b.taskKey=b.client+'|'+b.task;",
+   "pr": 0,
+   "min": 1
+  },
+  {
+   "name": "…and a TechAM hand-off is dated, so it isn't born into the archive",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "adoptIntoPlan(g.client,task,'Done',dd8,'TechAM',1)",
+   "pr": 0,
+   "min": 1
   }
  ]
 }
