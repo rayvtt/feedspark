@@ -22,6 +22,12 @@ window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Prom
  if(url.indexOf('/api/access')>=0)return j({ok:true,email:'ray@feedspark.com',owner:true,clients:null,modules:null});
  if(url.indexOf('/api/labels/alerts')>=0)return j({ok:true,crit:0,warn:0,pt:{crit:0,warn:0},gr:{crit:0,warn:0},clients:{}});
  if(url.indexOf('/api/claude')>=0)return j({ok:true,configured:false});
+ if(url.indexOf('/api/abtests')>=0)return j({ok:true,client:'YuMOVE',summary:{winRate:25,inconclusive:0},tests:[
+   {country:'UK',type:'Title optimisation',batch:'MultiVits Versus MultiVitamins',live:'31/01/2025',verdict:'positive',metrics:{impressions:126.62,clicks:87.63},report:'Impressions rose 126.62%.'},
+   {country:'UK',type:'Title optimisation',batch:'Joint Care Plus - Title Optimisation',live:'05/05/2025',verdict:'mixed',metrics:{impressions:-15.68,clicks:23.76},report:'Mixed.'},
+   {country:'UK',type:'Image overlay',batch:'PPC Overlays - All products with SUBG price',live:'22/07/2025',verdict:'negative',metrics:{impressions:-3.99,clicks:-15.6},report:'Lost.'},
+   {country:'UK',type:'Image overlay',batch:'Black Friday - Keyword Optimisation',live:'01/11/2025',verdict:'unknown',metrics:{},report:''}]});
+ if(url.indexOf('/api/kwresults')>=0)return j({ok:true,results:[{mid:'a',period:'Aug II',brand:'YuMOVE',market:'GB',date:'2026-08-28',metrics:[{k:'impressions',v:'+12.4%'},{k:'clicks',v:'+8.1%'}],raw:'YuMOVE GB x Feedspark - Aug II - Keyword Optimisation',subject:'YuMOVE GB x Feedspark - Aug II - Keyword Optimisation'}]});
  return j({ok:false,error:'stub'},404);};`;
 const AUDIT = `(() => {
   function lum(rgb){const [r,g,b]=rgb.map(v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4)});return 0.2126*r+0.7152*g+0.0722*b;}
