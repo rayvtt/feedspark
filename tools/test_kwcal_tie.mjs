@@ -73,14 +73,28 @@ let BRIEFS = {}, KWRES = {};
 const evMkt = (brand, e) => e.mkt || 'gb';
 const schedDate = (e) => { const d = new Date(e.date + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - LEAD_DAYS); return d; };
 
-const body = [liftVar('MONI'), lift('normTask'), lift('kwTask'), lift('wfFor'), lift('periodWin'), lift('resFor')].join('\n');
-const api = new Function('MON', 'LEAD_DAYS', 'evMkt', 'schedDate', 'getB', 'getR',
+// the tie is resolved for the WHOLE brand in one pass, so the resolver needs the brand's moments.
+// ROSTER supplies them; with none set a query resolves against just the moment being asked about.
+let ROSTER = null;
+const body = [liftVar('MONI'), liftDecl('TASK_STOP'), liftLine('WFC'),
+  lift('normTask'), lift('kwTask'), lift('taskWords'), lift('sigWords'), lift('nameScore'),
+  lift('wfReset'), lift('wfBuild'), lift('wfAll'), lift('wfFor'), lift('wfHow'),
+  lift('isKwTicket'), lift('looseKw'), lift('periodWin'), lift('resFor')].join('\n');
+const api = new Function('MON', 'LEAD_DAYS', 'evMkt', 'schedDate', 'getB', 'getR', 'getEvs',
   `${body}
    var BRIEFS, KWRES;
-   return { wfFor:function(b,e){ BRIEFS=getB(); return wfFor(b,e); },
+   var evsOf = getEvs;
+   return { wfFor:function(b,e){ BRIEFS=getB(); wfReset(); return wfFor(b,e); },
+            wfHow:function(b,e){ BRIEFS=getB(); wfReset(); return wfHow(b,e); },
+            looseKw:function(b){ BRIEFS=getB(); wfReset(); return looseKw(b); },
             resFor:function(b,e){ KWRES=getR(); return resFor(b,e); },
             periodWin:periodWin, kwTask:kwTask, normTask:normTask };`
-)(MON, LEAD_DAYS, evMkt, schedDate, () => BRIEFS, () => KWRES);
+)(MON, LEAD_DAYS, evMkt, schedDate, () => BRIEFS, () => KWRES,
+  (brand) => ROSTER || (QUERY ? [QUERY] : []));
+let QUERY = null;
+
+const ask = (fn) => (brand, e) => { QUERY = e; const r = api[fn](brand, e); QUERY = null; return r; };
+const wfFor = ask('wfFor'), wfHow = ask('wfHow'), resFor = ask('resFor');
 
 let pass = 0; const fails = [];
 const is = (name, got, want) => {
@@ -100,20 +114,25 @@ BRIEFS = {
   c: { id: 'c', client: 'Schuh', kw: 'coats', task: 'Keywords Optimisation - Coats - Marketing Planner - 1026', status: 'done' },
   d: { id: 'd', client: 'Reiss', task: 'AI Keyword Optimisation — Denim - Marketing Planner - 0826', status: 'progress' },
 };
-is('stamped id survives a rename', api.wfFor('Reiss', aw26)?.id, 'a');
-is('"Coats" cannot capture the "Coats & Jackets" ticket', api.wfFor('Reiss', coats), null);
-is('"Coats & Jackets" resolves its own ticket', api.wfFor('Reiss', coatsj)?.id, 'b');
-is('another client’s brief never leaks in', api.wfFor('Reiss', ev('coats', 'Coats', '2026-10-12')), null);
-is('legacy em-dash task name still ties', api.wfFor('Reiss', ev('denim', 'Denim', '2026-08-21'))?.id, 'd');
-is('no ticket = no tie', api.wfFor('Reiss', ev('zzz', 'Nothing Briefed', '2026-11-02')), null);
+is('stamped id survives a rename', wfFor('Reiss', aw26)?.id, 'a');
+// Both on the board, one ticket named for the longer: the ticket is scored against every moment,
+// and the one that accounts for MORE of its wording wins. ("Coats" is 100% present in "Coats &
+// Jackets", so scoring the moment alone would let the short name steal it.)
+ROSTER = [coats, coatsj];
+is('"Coats & Jackets" resolves its own ticket', wfFor('Reiss', coatsj)?.id, 'b');
+is('"Coats" cannot capture it', wfFor('Reiss', coats), null);
+ROSTER = null;
+is('another client’s brief never leaks in', wfFor('Reiss', ev('silk2', 'Silk', '2026-10-12')), null);
+is('legacy em-dash task name still ties', wfFor('Reiss', ev('denim', 'Denim', '2026-08-21'))?.id, 'd');
+is('no ticket = no tie', wfFor('Reiss', ev('zzz', 'Nothing Briefed', '2026-11-02')), null);
 
 // the stamped id outranks a name that matches a DIFFERENT ticket
 BRIEFS.e = { id: 'e', client: 'Reiss', kw: 'coats', task: 'something else entirely', status: 'live', updated: 1 };
-is('stamped id outranks the name rungs', api.wfFor('Reiss', coats)?.id, 'e');
+is('stamped id outranks the name rungs', wfFor('Reiss', coats)?.id, 'e');
 
 // newest wins when two tickets carry the same stamp
 BRIEFS.f = { id: 'f', client: 'Reiss', kw: 'coats', task: 'another', status: 'done', updated: 99 };
-is('newest stamped ticket wins', api.wfFor('Reiss', coats)?.id, 'f');
+is('newest stamped ticket wins', wfFor('Reiss', coats)?.id, 'f');
 
 // ---------- the result window ----------
 const W = (p, when) => { const w = api.periodWin({ period: p, when }); return w && [new Date(w.a).toISOString().slice(0, 10), new Date(w.b).toISOString().slice(0, 10), w.label]; };
@@ -130,11 +149,11 @@ KWRES = { Reiss: [
   { id: 'r2', client: 'Reiss', mkt: 'gb', period: 'Sep II', when: Date.UTC(2026, 8, 30), verdict: 'mixed' },
   { id: 'r3', client: 'Reiss', mkt: 'us', period: 'Sep II', when: Date.UTC(2026, 8, 30), verdict: 'negative' },
 ].map((r) => ({ ...r, __w: api.periodWin(r) })) };
-is('a moment lands in the batch covering its live-by date', api.resFor('Reiss', aw26)?.id, 'r1');   // live-by 19 Aug
-is('a later moment lands in the later batch', api.resFor('Reiss', coats)?.id, 'r2');                 // live-by 21 Sep
-is('a moment outside every window gets nothing', api.resFor('Reiss', ev('x', 'X', '2026-08-21')), null); // live-by 31 Jul
-is('a market-pinned moment takes its own market’s batch', api.resFor('Reiss', ev('y', 'Y', '2026-10-12', 'us'))?.id, 'r3');
-is('a brand with no archive gets nothing', api.resFor('Schuh', aw26), null);
+is('a moment lands in the batch covering its live-by date', resFor('Reiss', aw26)?.id, 'r1');   // live-by 19 Aug
+is('a later moment lands in the later batch', resFor('Reiss', coats)?.id, 'r2');                 // live-by 21 Sep
+is('a moment outside every window gets nothing', resFor('Reiss', ev('x', 'X', '2026-08-21')), null); // live-by 31 Jul
+is('a market-pinned moment takes its own market’s batch', resFor('Reiss', ev('y', 'Y', '2026-10-12', 'us'))?.id, 'r3');
+is('a brand with no archive gets nothing', resFor('Schuh', aw26), null);
 
 // ---------- the canonical task name (what the brief is raised as) ----------
 is('house task name', api.kwTask('Reiss', ev('k', 'Coats', '2026-10-12')), 'Keywords Optimisation - Coats - Marketing Planner - 1026');
@@ -261,6 +280,67 @@ is('and roll into the next one', winApi.monLbl(2027 * 12 + 0), 'Jan \u201927');
   is('a real ticket always wins', api.stOf({ status: 'running' }, { st: 'briefed' }), 'running');
   is('an honest manual state still shows', api.stOf(null, { st: 'intake' }), 'intake');
 }
+
+// ---------- tickets a colleague raised in Workflow (Ray, 15 Sep 2026) ----------
+/* "you're still not able to add any activities that Steven has actioned from his end —
+ * Cashmere/Merino and Gifting have been briefed successfully from his end and ASPL already
+ * picked up." Every rung above matches the calendar's OWN wording, so a hand-raised ticket was
+ * invisible. The word rung reads the task as words; it must claim the obvious, refuse the
+ * ambiguous, and never drag in work that isn't this board's. */
+const R = {                                       // a slice of the Reiss roster with real collisions
+  cashmr: ev('cashmr', 'Cashmere/Merino', '2026-09-28'),
+  gift:   ev('gift',   'Gifting',         '2026-10-19'),
+  winter: ev('winter', 'Winterwear/Gifting/Party', '2026-10-19'),
+  party:  ev('party',  'Event/Party',     '2026-10-19'),
+  atel1:  ev('atel1',  'Atelier 1',       '2026-09-02'),
+  atel2:  ev('atel2',  'Atelier 2',       '2026-09-30'),
+  silk:   ev('silk',   'Silk',            '2026-08-30'),
+};
+ROSTER = Object.values(R);
+const T = (id, task, extra) => ({ id, client: 'Reiss', task, status: 'briefed', cat: 'keyword', updated: 1, ...extra });
+const only = (...bs) => { BRIEFS = {}; bs.forEach((b) => { BRIEFS[b.id] = b; }); };
+
+only(T('s1', 'Cashmere Keyword Optimisation - Reiss GB', { by: 'Steven' }));
+is('a hand-raised ticket naming part of the moment ties', wfFor('Reiss', R.cashmr)?.id, 's1');
+is('and the card can say how it got there', wfHow('Reiss', R.cashmr), 'words');
+is('no other moment picks it up', wfFor('Reiss', R.gift), null);
+is('nothing is left unlinked', api.looseKw('Reiss').length, 0);
+
+only(T('s2', 'Gifting', { status: 'progress' }));
+is('a one-word ticket goes to the moment it names exactly', wfFor('Reiss', R.gift)?.id, 's2');
+is('not to the longer name that merely contains the word', wfFor('Reiss', R.winter), null);
+
+only(T('s3', 'Keyword optimisation - Party'));
+is('a closer fit wins outright', wfFor('Reiss', R.party)?.id, 's3');
+
+only(T('s4', 'Atelier refresh'));
+is('a ticket two moments fit EQUALLY is claimed by neither (1)', wfFor('Reiss', R.atel1), null);
+is('…nor by the other (2)', wfFor('Reiss', R.atel2), null);
+is('it is surfaced instead of guessed', api.looseKw('Reiss').map((b) => b.id), ['s4']);
+
+// a ticket that isn't keyword work has to name the moment OUTRIGHT — one shared word is not enough
+only(T('s5', 'Golden Record Fix - g:silk - Reiss GB - 0926', { cat: 'technical' }));
+is('a Golden Record ticket does not drift onto Silk on one shared word', wfFor('Reiss', R.silk), null);
+only(T('s5b', 'Silk', { cat: 'technical' }));
+is('…but one that names it outright still ties', wfFor('Reiss', R.silk)?.id, 's5b');
+only(T('s6', 'Feed Fix - dup_title - Reiss GB - 0926', { cat: 'technical' }));
+is('…and one that names no moment claims nothing', ROSTER.map((e) => wfFor('Reiss', e)).filter(Boolean).length, 0);
+is('nor does it clutter the unlinked strip', api.looseKw('Reiss').length, 0);
+
+// one ticket, one moment — the first moment resolved cannot leave a better-matching one empty
+only(T('s7', 'Cashmere/Merino keyword optimisation'), T('s8', 'Gifting keyword optimisation'));
+is('two tickets, two moments (1)', wfFor('Reiss', R.cashmr)?.id, 's7');
+is('two tickets, two moments (2)', wfFor('Reiss', R.gift)?.id, 's8');
+
+// a hand link beats every rung, and survives a rename on either side
+only(T('s9', 'Something Steven called it'));
+R.silk.wf = 's9';
+is('a hand link is decisive', wfFor('Reiss', R.silk)?.id, 's9');
+is('and says so', wfHow('Reiss', R.silk), 'linked');
+R.silk.name = 'Silk & Satin';
+is('a rename cannot break it', wfFor('Reiss', R.silk)?.id, 's9');
+delete R.silk.wf; R.silk.name = 'Silk';
+ROSTER = null;
 
 console.log(`\n${pass} passed, ${fails.length} failed`);
 if (fails.length) { fails.forEach((f) => console.error('  ✗ ' + f)); process.exit(1); }
