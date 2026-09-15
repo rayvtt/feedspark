@@ -44,6 +44,7 @@ export const MODULES = [
   { slug: 'volume', label: 'Product volume', path: '/volume' },
   { slug: 'overlays', label: 'Overlays', path: '/overlays' },
   { slug: 'kwcal', label: 'Keyword calendar', path: '/kwcal' },
+  { slug: 'schedule', label: 'Scheduled work', path: '/schedule' },
   { slug: 'aiquote', label: 'AI Quote', path: '/aiquote' },
   { slug: 'pricer', label: 'Pricer', path: '/pricer' },
   { slug: 'playbook', label: 'Playbook', path: '/playbook' },
