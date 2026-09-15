@@ -1,0 +1,182 @@
+<!-- FCC-MOBILE: the phone layer (Ray, 15 Sep 2026: "complete overhaul for UX UI for mobile
+     version — MIRROR desktop setting"). Every app page keeps its desktop feature set on a phone:
+     the SAME module nav node (#tb-modules — same anchors, same order, the viewer's own menu /
+     ▦-bundle customisation) becomes a fixed bottom bar with icon + label tap targets; the ▦
+     sheet, the presence popover, the view-as pill and the customizer become bottom sheets; the
+     topbar collapses to one 52px row (wordmark · collapse · ▦ · presence · theme · language);
+     controls that pages used to HIDE under 900px (Golden Record's per-attribute actions, the
+     brief composer's context rail, the AI Quote rate columns, the home CTA) are shown again;
+     and anything wider than the screen — tables, min-width workbenches, the quote grid — pans
+     inside its own frame instead of crushing the page ("pan, don't crush", the Workflow rule).
+     Injected worker-side on app pages only (never client decks), after the other widgets. -->
+<style>
+@media (max-width:760px){
+  :root{--fcc-bar:70px}
+  html{-webkit-text-size-adjust:100%}
+  body{padding-bottom:calc(var(--fcc-bar) + env(safe-area-inset-bottom,0px))!important}
+  :root.nav-collapsed body{padding-bottom:env(safe-area-inset-bottom,0px)!important}
+  /* ---- topbar: one compact row. backdrop-filter would make it the containing block of the
+          fixed bar + sheets that live inside it, so the blur is dropped on phones ---- */
+  .topbar{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:var(--paper,#fff)!important;padding-top:env(safe-area-inset-top,0px)}
+  [data-theme=dark] .topbar{background:var(--paper,#1C1F27)!important}
+  .topbar-in{flex-wrap:nowrap!important;gap:5px!important;padding:8px 10px!important;min-height:52px;max-width:none}
+  .topbar-in .brand{font-size:16px;flex:none;white-space:nowrap;display:inline-flex;align-items:center}
+  .topbar-in .brand .spk-flame{width:11px!important;height:15px!important;margin-left:2px;flex:none}
+  .topbar-in .tb-tag,.topbar-in .tb-who{display:none!important}
+  .topbar-in .nav-collapse{margin-left:auto!important;padding:4px}
+  #fcc-apps{margin-left:0!important}
+  #fcc-presence{margin-left:0!important}
+  #fcc-presence .pz-av:nth-child(n+3){display:none}
+  #theme-tgl{margin-left:0!important;width:34px;height:34px}
+  #lang-tgl{margin-left:0!important;padding:5px 7px}
+  @media (max-width:360px){.topbar-in .nav-collapse{display:none!important}.topbar-in .brand{font-size:15px}}
+  /* ---- the module menu = the bottom bar. Same node, same anchors, same order, same ▦ bundling;
+          the desktop collapse toggle collapses the bar too (mirror), the ▦ sheet still lists all ---- */
+  #tb-modules{display:flex!important;position:fixed;left:0;right:0;bottom:0;z-index:60;margin:0!important;padding:5px 6px calc(5px + env(safe-area-inset-bottom,0px));gap:2px;flex-wrap:nowrap!important;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:var(--paper,#fff);border-top:1px solid var(--line,#E6E6E6);box-shadow:0 -6px 20px rgba(16,24,40,.07);min-width:0;flex:none!important;width:auto!important;height:auto!important;max-height:none!important;scroll-snap-type:x proximity;scroll-padding:0 6px}
+  #tb-modules::-webkit-scrollbar{display:none}
+  :root.nav-collapsed #tb-modules{display:none!important}
+  #tb-modules a.tbm{flex:0 0 70px;width:70px!important;height:58px!important;flex-direction:column;justify-content:center;gap:2px;border-radius:10px;scroll-snap-align:center;padding:0 3px;color:var(--ink-2,#4a4a4a);text-decoration:none!important}
+  #tb-modules a.tbm svg{width:20px;height:20px;flex:none}
+  #tb-modules a.tbm::after{content:attr(data-lbl);position:static!important;transform:none!important;opacity:1!important;background:none!important;color:inherit;font-size:9px;font-weight:800;letter-spacing:0;padding:0;white-space:normal;line-height:1.05;text-align:center;max-width:66px;max-height:19px;overflow:hidden;display:block!important;transition:none;pointer-events:none}
+  #tb-modules a.tbm.on{background:rgba(245,166,35,.16);color:var(--orange-deep,#ED6F0B)}
+  [data-theme=dark] #tb-modules{background:#1C1F27;border-top-color:#2C3039;box-shadow:0 -6px 20px rgba(0,0,0,.35)}
+  [data-theme=dark] #tb-modules a.tbm{color:#B9BEC7}
+  [data-theme=dark] #tb-modules a.tbm.on{color:var(--orange-ink,#F0A44E)}
+  /* ---- sheets: the ▦ menu, the customizer, the presence popover, the view-as pill ---- */
+  #fcc-apps-menu{position:fixed!important;left:8px;right:8px;top:auto!important;bottom:calc(var(--fcc-bar) + 8px + env(safe-area-inset-bottom,0px))!important;max-height:62vh;overflow:auto;min-width:0!important;box-shadow:0 -10px 40px rgba(16,24,40,.22)}
+  #fcc-apps-menu .mwho{font-size:12px;font-weight:800;color:var(--ink-2,#4a4a4a);padding:6px 9px 8px;border-bottom:1px solid var(--line,#E6E6E6);margin-bottom:6px}
+  #fcc-apps-menu .mwho small{display:block;font-weight:700;color:var(--muted,#8a94a0)}
+  #fcc-apps-menu a.tbm.mall{display:flex;width:100%;height:auto;justify-content:flex-start;align-items:center;gap:10px;padding:9px 9px;border-radius:9px;font-size:13px;font-weight:800;color:var(--ink-2,#4a4a4a);text-decoration:none}
+  #fcc-apps-menu a.tbm.mall svg{flex:none;width:19px;height:19px}
+  #fcc-apps-menu a.tbm.mall.on{color:var(--orange-deep,#ED6F0B);background:rgba(245,166,35,.12)}
+  #fcc-apps-menu a.tbm.mall::after{display:none}
+  #fcc-navcz-scrim{padding:12px!important;align-items:flex-end!important}
+  #fcc-navcz{width:100%!important;max-height:86vh!important;padding:16px!important}
+  .pz-pop{left:8px!important;right:8px!important;top:auto!important;bottom:calc(var(--fcc-bar) + 8px + env(safe-area-inset-bottom,0px));min-width:0!important;max-width:none!important;max-height:60vh;overflow:auto}
+  #fcc-viewas{top:auto!important;bottom:calc(var(--fcc-bar) + 10px + env(safe-area-inset-bottom,0px));max-width:calc(100vw - 20px);font-size:12px}
+  #fcc-fcb{bottom:calc(var(--fcc-bar) + 12px + env(safe-area-inset-bottom,0px))!important;z-index:61!important}
+  #fcc-fcp{z-index:65!important}
+  /* ---- content: one column, readable type, real tap targets ---- */
+  .wrap{padding-left:14px!important;padding-right:14px!important}
+  .hero{padding-top:14px!important;padding-bottom:8px!important}
+  .hero h1{font-size:24px!important;line-height:1.15!important}
+  .hero p{font-size:13.5px!important}
+  .eyebrow{font-size:10.5px!important;letter-spacing:.06em!important}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .split,.split.side,.split.two,.split2,.cols,.grid-2,.grid-3,.road,.courts,.dossier,.dz-cols,#lb .cmp,.bg-modal .gen,.two-col,.twocol{grid-template-columns:1fr!important}
+  .mc-panel{width:min(400px,calc(100vw - 16px))!important}
+  .drawer{width:100vw!important;max-width:100vw!important}
+  .ptp{width:min(920px,calc(100vw - 8px))!important;height:auto!important;max-height:92vh!important;overflow:auto!important;left:4px!important;right:4px!important;transform:none!important}
+  .ptp .pt-body{flex-direction:column!important}
+  .modal,.pdpm,.fg,.ask-box,#lb .lb-in{max-width:calc(100vw - 12px)!important}
+  /* mirror the desktop: what the pages used to hide under 900px is back */
+  .at-row{grid-template-columns:minmax(0,1fr) 56px 64px!important;row-gap:4px!important}
+  .at-nm,.at-note,.at-act{grid-column:1 / -1!important}
+  .at-note{display:block!important;white-space:normal!important;overflow:visible!important}
+  .at-act{display:flex!important;justify-content:flex-start!important;flex-wrap:wrap!important;gap:6px!important}
+  .wf-cta .wf-go{display:inline-flex!important}
+  .bs-ctx{display:block!important;max-height:none!important}
+  .bg-mhead .mc{display:block!important}
+  .court .ct-s{display:block!important}
+  .qhead .rate-h,.qhead .line-h,.qrow .col-rate,.qrow .col-line,.qrow .col-mth,.qhead .mth-h{display:block!important}
+  .qrows{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .qrows .qrow,.qhead{min-width:760px}
+  /* inputs at 16px stop iOS zooming on focus; checkboxes and buttons get a thumb's worth of target */
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),select,textarea{font-size:16px!important}
+  input[type=checkbox],input[type=radio]{width:18px;height:18px}
+  button:not(.instr-tgl):not(.info-btn):not(.tbm):not(.pz-av):not(.cz-move button):not(.x):not(.close):not(.nav-toggle):not(.nav-collapse):not(#lang-tgl):not(.dz-x):not(.tag):not(.chipx),a.btn{min-height:36px}
+  /* pan, don't crush: anything wider than the screen scrolls inside its own frame */
+  .fcc-mpan{overflow-x:auto!important;-webkit-overflow-scrolling:touch;max-width:100%;scrollbar-width:thin;overscroll-behavior-x:contain;
+    background:linear-gradient(90deg,var(--paper,#fff) 30%,rgba(255,255,255,0)) left/34px 100% no-repeat local,linear-gradient(270deg,var(--paper,#fff) 30%,rgba(255,255,255,0)) right/34px 100% no-repeat local,linear-gradient(90deg,rgba(16,24,40,.14),rgba(16,24,40,0)) left/12px 100% no-repeat scroll,linear-gradient(270deg,rgba(16,24,40,.14),rgba(16,24,40,0)) right/12px 100% no-repeat scroll}
+  /* a sticky side rail (the quote total, a context rail) is just another block on a phone */
+  .split>aside,.split.side>aside,.split.side>.side,.rail,.side-rail,.sticky-rail{position:static!important;top:auto!important;height:auto!important;max-height:none!important;min-height:0!important}
+  .fcc-mpan>table{min-width:max-content}
+  .info-pop{max-width:calc(100vw - 28px)!important;left:12px!important;right:12px!important;transform:none!important}
+  /* page toolbars that were one desktop row: the status line takes its own line, buttons wrap under */
+  .live-bar{flex-wrap:wrap!important;row-gap:6px}
+  .live-bar>:not(button){flex:1 1 100%}
+  .sec-head{flex-wrap:wrap!important;gap:6px 12px!important;margin-bottom:14px!important}
+  .sec-head p{margin-left:0!important;text-align:left!important;max-width:none!important;flex:1 1 100%}
+  .dz-head,.gm-head{flex-wrap:wrap!important}
+}
+</style>
+<script>/* FCC-MOBILE */(function () {
+  'use strict';
+  if (window.__fccMobile) return; window.__fccMobile = 1;
+  var MQ = window.matchMedia('(max-width:760px)'), docEl = document.documentElement;
+  var isMob = function () { return MQ.matches; };
+  try { var vp = document.querySelector('meta[name="viewport"]'); if (vp && !/viewport-fit/.test(vp.content || '')) vp.content = (vp.content || 'width=device-width,initial-scale=1') + ', viewport-fit=cover'; } catch (e) {}
+  function flag() { docEl.classList.toggle('fcc-mob', isMob()); }
+  // wrap a too-wide element in a scrolling frame (or make its lone parent the frame)
+  function pan(el) {
+    if (!el || el.closest('.fcc-mpan')) return;
+    var p = el.parentElement; if (!p || p === document.body || p === docEl) return;
+    var kids = Array.prototype.filter.call(p.childNodes, function (n) { return n.nodeType === 1 || (n.nodeType === 3 && n.nodeValue.trim()); });
+    if (kids.length === 1 && !/^(MAIN|SECTION|ARTICLE|HEADER|FORM)$/.test(p.tagName) && !p.classList.contains('wrap') && !p.classList.contains('panel')) { p.classList.add('fcc-mpan'); return; }
+    var w = document.createElement('div'); w.className = 'fcc-mpan'; p.insertBefore(w, el); w.appendChild(el);
+  }
+  var SKIP = '.fcc-mpan,.topbar,#tb-modules,svg,table,#fcc-fcp,#fcc-fcb,.pz-pop,#fcc-apps-menu,#fcc-navcz-scrim';
+  function sweep() {
+    if (!isMob()) return;
+    var W = docEl.clientWidth;
+    // 1. tables wider than the screen
+    Array.prototype.forEach.call(document.querySelectorAll('table'), function (t) {
+      if (t.closest(SKIP.replace(',table', ''))) return;
+      var p = t.parentElement; if (!p) return;
+      if (/(auto|scroll)/.test(getComputedStyle(p).overflowX)) return;
+      if (t.getBoundingClientRect().width > W - 26 || t.scrollWidth > W - 26) pan(t);
+    });
+    // 2. blocks with a min-width wider than the screen, or spilling past its right edge
+    var all = document.body.querySelectorAll('*');
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      if (el.closest(SKIP)) continue;
+      var r = el.getBoundingClientRect(); if (r.width <= W + 2 || r.width > 8000) continue;
+      var cs = getComputedStyle(el);
+      if (cs.display === 'none' || cs.position === 'fixed' || cs.position === 'absolute' || /(auto|scroll)/.test(cs.overflowX)) continue;
+      var mw = parseFloat(cs.minWidth) || 0;
+      if (mw > W - 26 || el.scrollWidth > W + 2 || r.width > W + 2) pan(el);
+    }
+  }
+  // the bar: bring the current module into view
+  function barSync() {
+    var nav = document.getElementById('tb-modules'); if (!nav || !isMob()) return;
+    var on = nav.querySelector('a.tbm.on'); if (!on) return;
+    var x = on.offsetLeft - (nav.clientWidth - on.offsetWidth) / 2; if (x > 0) nav.scrollLeft = x;
+  }
+  // the ▦ sheet on a phone lists EVERY module with its label (bundled ones + the menu's), plus
+  // the signed-in identity the home page shows in its topbar — same information, one thumb away
+  function sheet() {
+    var menu = document.getElementById('fcc-apps-menu'), nav = document.getElementById('tb-modules'); if (!menu || !nav) return;
+    var old = menu.querySelector('#fcc-mall'); if (old) old.remove();
+    var oldWho = menu.querySelector('.mwho'); if (oldWho) oldWho.remove();
+    if (!isMob()) return;
+    var who = document.querySelector('.topbar-in .tb-who');
+    if (who) { var w = document.createElement('div'); w.className = 'mwho'; w.innerHTML = who.innerHTML.replace(/<br\s*\/?>/i, '<small>') + (/<br/i.test(who.innerHTML) ? '</small>' : ''); menu.insertBefore(w, menu.firstChild); }
+    var box = document.createElement('div'); box.id = 'fcc-mall';
+    var h = document.createElement('div'); h.className = 'ah'; h.textContent = 'All modules'; box.appendChild(h);
+    var links = nav.querySelectorAll('a.tbm');
+    Array.prototype.forEach.call(links, function (a) {
+      var c = a.cloneNode(true); c.className = 'tbm mall' + (a.classList.contains('on') ? ' on' : ''); c.removeAttribute('id');
+      var lbl = document.createElement('span'); lbl.className = 'nl'; lbl.textContent = a.getAttribute('data-lbl') || a.getAttribute('title') || a.getAttribute('href'); c.appendChild(lbl); box.appendChild(c);
+    });
+    var wrap = menu.querySelector('#fcc-apps-wrap'); var hdr = menu.querySelector('#fcc-apps-hdr');
+    if (hdr && hdr.parentNode === menu) menu.insertBefore(box, hdr); else menu.insertBefore(box, wrap || menu.firstChild);
+  }
+  var t = null;
+  function run() { flag(); if (!isMob()) return; sweep(); barSync(); }
+  function later() { if (t) clearTimeout(t); t = setTimeout(function () { t = null; run(); }, 450); }
+  function boot() {
+    run(); sheet();
+    setTimeout(function () { run(); sheet(); }, 800);
+    setTimeout(run, 2500);
+    if (window.MutationObserver) new MutationObserver(function (m) {
+      for (var i = 0; i < m.length; i++) { var tg = m[i].target; if (tg && tg.closest && tg.closest('#tb-modules,#fcc-apps-menu,.pz-pop')) continue; later(); return; }
+    }).observe(document.body, { childList: true, subtree: true });
+    var apps = document.getElementById('fcc-apps-btn'); if (apps) apps.addEventListener('click', function () { setTimeout(sheet, 0); });
+    window.addEventListener('resize', function () { later(); setTimeout(sheet, 500); });
+    if (MQ.addEventListener) MQ.addEventListener('change', function () { run(); sheet(); });
+  }
+  if (document.readyState !== 'loading') boot(); else document.addEventListener('DOMContentLoaded', boot);
+  window.__fccMobileSweep = run;
+})();</script>
