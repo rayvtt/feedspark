@@ -675,6 +675,7 @@ window.addEventListener('load',restore);
 
 <script src="/feedlab/engine.js" onerror="window.__engineFail=1"></script>
 <script src="/pricer/engine.js" onerror="window.__pricerFail=1"></script>
+<script src="/volume/engine.js" onerror="window.__arrivalsFail=1"></script>
 <script>
 (function(){
   var $=function(s){return document.querySelector(s)};
@@ -924,8 +925,13 @@ window.addEventListener('load',restore);
   function ensureVolume(){ var k=volKey(); if(!CLIENT||VOL[k])return; VOL[k]={pending:true};
     fetch('/api/volume?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT)).then(function(r){return r.json()}).catch(function(){return null})
       .then(function(d){ var h=(d&&d.hist)||[], days=h.length, inS=0, outS=0; h.forEach(function(e){ inS+=+e.in||0; outS+=+e.out||0; });
-        VOL[k]=days?{days:days,inS:inS,outS:outS,perDay:inS/days,monthly:Math.round(inS/days*30.4),outMonthly:Math.round(outS/days*30.4),from:h[0].d,to:h[days-1].d,tracked:d&&d.tracked}
+        VOL[k]=days?{days:days,inS:inS,outS:outS,perDay:inS/days,monthly:Math.round(inS/days*30.4),outMonthly:Math.round(outS/days*30.4),from:h[0].d,to:h[days-1].d,tracked:d&&d.tracked,basis:'churn'}
                    :{days:0,tracked:d&&d.tracked};
+        /* FIRST-SEEN DATES WIN (Ray, 15 Sep 2026): the feed's own c:fs_date_of_birth histogram (voldob, read
+           by the arrivals engine) gives a run-rate over complete months — steadier than a few days of churn */
+        var st=null; try{ st=(d&&d.dob&&typeof FeedArrivals!=='undefined')?FeedArrivals.stats(d.dob,new Date(),d.dob.rows):null; }catch(e){ st=null; }
+        if(st&&st.forecast&&st.forecast.month>0){ var v0=VOL[k]; VOL[k]={days:v0.days||1,inS:v0.inS||0,outS:v0.outS||0,perDay:v0.perDay||0,monthly:st.forecast.month,outMonthly:v0.outMonthly||0,from:v0.from||null,to:v0.to||null,tracked:d&&d.tracked,
+          basis:'dob',basisTxt:'the feed’s first-seen dates ('+st.forecast.basis+')',quarter:st.forecast.quarter,year:st.forecast.year}; }
         if(volKey()===k){ renderUpd(); foot(); } }); }
   function updForecast(){ var v=VOL[volKey()]; return (v&&v.days)?v:null; }
   function updExpected(){ var u=updRec(); if(u.est!=null&&u.est!=='')return +u.est||0; var f=updForecast(); return f?f.monthly:null; }
@@ -936,14 +942,15 @@ window.addEventListener('load',restore);
   function updGBP(){ var T=updTiers(); return Math.max(UPD_MIN,+T[updTierIdx()].gbp||0); }
   function updInfo(){ var u=updRec(); if(!u.on)return null; var i=updTierIdx(), f=updForecast();
     return {on:true,gbp:updGBP(),tier:i,label:updLabel(i),exp:updExpected(),src:updSrc(),est:(u.est!=null&&u.est!=='')?+u.est:null,pinned:(u.tier!=null&&u.tier!==''),disc:!!u.disc,
-      fc:f?{monthly:f.monthly,outMonthly:f.outMonthly,days:f.days,from:f.from,to:f.to}:null}; }
+      fc:f?{monthly:f.monthly,outMonthly:f.outMonthly,days:f.days,from:f.from,to:f.to,basis:f.basis||'churn',basisTxt:f.basisTxt||null,quarter:f.quarter||null,year:f.year||null}:null}; }
   // one wording for the copy text, the email, the brief, the tracker and the export notes
   function updWord(u,withP){ if(!u)return ''; var w='bundle '+u.label+' new SKUs / month'+(withP&&u.gbp!=null?' — '+money(u.gbp)+' / month':'');
-    if(u.exp!=null)w+=' · '+(u.src==='estimate'?'estimate':'forecast')+' ~'+fmt(u.exp)+' new SKUs / month ('+fmt(u.exp*12)+' a year'+(u.fc&&u.src!=='estimate'?', from '+u.fc.days+' days of feed arrivals'+(u.fc.days<14?' — indicative':''):'')+')';
+    if(u.exp!=null)w+=' · '+(u.src==='estimate'?'estimate':'forecast')+' ~'+fmt(u.exp)+' new SKUs / month ('+fmt(u.exp*12)+' a year'+(u.fc&&u.src!=='estimate'?', from '+(u.fc.basisTxt||(u.fc.days+' days of feed arrivals'+(u.fc.days<14?' — indicative':''))):'')+')';
     return w+' — every new product is updated the month it lands, no quarterly re-quote'; }
   function renderUpd(){ var el=$('#upd-body'); if(!el)return; var u=updRec(), T=updTiers(), f=updForecast(), v=VOL[volKey()], i=updTierIdx(), ai=updAutoIdx();
-    var fc=f?('<b>'+fmt(f.monthly)+'</b> new SKUs / month expected — from '+f.days+' day'+(f.days===1?'':'s')+' of feed arrivals ('+esc(f.from)+' → '+esc(f.to)+': '+fmt(f.inS)+' in · '+fmt(f.outS)+' out, avg '+(Math.round(f.perDay*10)/10)+' a day) · ≈ '+fmt(f.monthly*12)+' a year'
-        +(f.days<14?' <span class="hint">· only '+f.days+' day'+(f.days===1?'':'s')+' of history — indicative; type an estimate if you know the run-rate</span>':''))
+    var fc=f?(f.basis==='dob'?('<b>'+fmt(f.monthly)+'</b> new SKUs / month expected — from '+esc(f.basisTxt)+' · ≈ '+fmt(f.quarter)+' a quarter · ≈ '+fmt(f.year)+' a year <span class="hint">· read off the feed’s fs_date_of_birth stamps (see /volume)</span>')
+      :('<b>'+fmt(f.monthly)+'</b> new SKUs / month expected — from '+f.days+' day'+(f.days===1?'':'s')+' of feed arrivals ('+esc(f.from)+' → '+esc(f.to)+': '+fmt(f.inS)+' in · '+fmt(f.outS)+' out, avg '+(Math.round(f.perDay*10)/10)+' a day) · ≈ '+fmt(f.monthly*12)+' a year'
+        +(f.days<14?' <span class="hint">· only '+f.days+' day'+(f.days===1?'':'s')+' of history — indicative; type an estimate if you know the run-rate</span>':'')))
       :((v&&v.pending)?'Reading the feed’s arrivals history…':'No arrivals history for this feed yet'+((v&&v.tracked==='sheet')?' — a sheet-backed feed is not on the daily XML scan':'')+' — type an estimate');
     el.innerHTML='<label class="qopt upd-on"><input type="checkbox" class="cbx" id="upd-on"'+(u.on?' checked':'')+'> <b>Include monthly new-product updates</b> — every new product is updated the month it lands, instead of a quarterly re-quote</label>'
       +'<div class="upd-fc"><div class="upd-fl">Forecast · '+esc(MKT.toUpperCase())+' · Product Volume module</div><div class="upd-ft" id="upd-ftxt">'+fc+'</div>'
@@ -1626,7 +1633,7 @@ window.addEventListener('load',restore);
     if(t.upd){ var s1=row({A:{v:'New Product Arrivals - Monthly Tachyon Update',s:S.sect},B:{v:'',s:S.sectB},N:{v:'Every new product is updated with Tachyon the month it lands — no quarterly re-quote',s:S.note}});
       mg('A'+s1+':B'+s1);
       platA=platB=costRow({name:'Tachyon monthly update — new product arrivals',qual:'bundle '+t.upd.label+' new SKUs / month',qty:1,rate:n2(t.upd.gbp),flat:1,plat:1,dsc:updDsc,
-        note:(t.upd.exp!=null?((t.upd.src==='estimate'?'Estimate':'Forecast')+' ~'+fmt(t.upd.exp)+' new SKUs / month'+(t.upd.fc&&t.upd.src!=='estimate'?' from '+t.upd.fc.days+' days of feed arrivals':'')+' · ≈ '+fmt(t.upd.exp*12)+' a year'):'Monthly volume estimate to confirm')});
+        note:(t.upd.exp!=null?((t.upd.src==='estimate'?'Estimate':'Forecast')+' ~'+fmt(t.upd.exp)+' new SKUs / month'+(t.upd.fc&&t.upd.src!=='estimate'?' from '+(t.upd.fc.basisTxt||(t.upd.fc.days+' days of feed arrivals')):'')+' · ≈ '+fmt(t.upd.exp*12)+' a year'):'Monthly volume estimate to confirm')});
       row(); }
     /* 5 — initial data optimisation: one row per SELECTED optimisation, each fully live (the section
        is written when the AI type is on, or when AI lines / a setup fee exist) */

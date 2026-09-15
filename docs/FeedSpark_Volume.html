@@ -73,6 +73,8 @@ window.addEventListener('load',restore);
   #trend{display:block;width:100%;height:auto;margin-top:6px}
   #trend .grid{stroke:var(--grid);stroke-width:1}
   #trend text{font-family:Lato,system-ui,sans-serif;fill:var(--muted);font-size:11px;font-weight:700}
+  #arr-chart{display:block;width:100%;height:auto} #arr-chart .grid{stroke:var(--grid);stroke-width:1} #arr-chart .axis{stroke:var(--muted);stroke-width:1.4}
+  #arr-chart text{font-family:Lato,system-ui,sans-serif;fill:var(--muted);font-size:11px;font-weight:700}
   .tip{position:absolute;pointer-events:none;background:var(--navy);color:#fff;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:700;line-height:1.55;opacity:0;transition:opacity .12s;z-index:20;white-space:nowrap;box-shadow:0 6px 20px rgba(16,24,40,.25)}
   .tip b{font-weight:900}
   .tip .ti{color:#9DBDF3}.tip .to{color:#F5C08A}
@@ -90,6 +92,12 @@ window.addEventListener('load',restore);
   .net-pos{color:var(--vin)}.net-neg{color:var(--vout)}
   .meth ol{margin:6px 0 2px;padding-left:20px;font-size:13.5px;color:var(--ink-2)}
   .meth li{margin:7px 0}
+  /* arrivals (first-seen dates) */
+  .arr-fc{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:baseline;margin:0 0 12px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--wash);font-size:12.5px;font-weight:800;color:var(--ink-2)}
+  .arr-fc b{font-size:20px;font-weight:900;color:var(--orange-deep)} .arr-fc .fb{font-size:11px;color:var(--muted);font-weight:700;flex-basis:100%}
+  .spark{display:inline-flex;align-items:flex-end;gap:1px;height:18px;vertical-align:middle} .spark i{display:inline-block;width:5px;background:var(--vin);border-radius:1px 1px 0 0;min-height:1px} .spark i.cur{opacity:.45}
+  #esttbl tbody tr.has{cursor:pointer} #esttbl tbody tr.has:hover td{background:var(--wash)} #esttbl td.dim{color:var(--muted);font-weight:700}
+  [data-theme=dark] .arr-fc{background:#1C1F27}
   .meth b{color:var(--ink)}
   .note{font-size:12px;color:var(--muted);font-weight:700;margin-top:10px}
   .footmark{padding:34px 0;color:var(--muted);font-size:12px;font-weight:700;border-top:1px solid var(--line);margin-top:30px}
@@ -198,6 +206,39 @@ window.addEventListener('load',restore);
     </div>
   </div>
 
+  <!-- NEW-PRODUCT ARRIVALS by first-seen date (Ray, 15 Sep 2026: "fs:date_of_birth signals the timestamp when the
+       product ID first appears — use that to forecast how many products arrive per year per quarter per month") -->
+  <div class="card" id="arr-card">
+    <div class="chart-head">
+      <div><h3>New product arrivals — by first-seen date</h3><div class="ch">Products still in the feed, counted by the month their ID first appeared (<code>fs:date_of_birth</code>, FeedHero's stamp). The run-rate behind the forecast — Shopping feeds only.</div></div>
+      <span class="spacer"></span>
+      <button class="btn" id="arr-scan" type="button" title="Stream the live feed now and read every product's first-seen date — no need to wait for the 4×-daily scan">⚡ Scan now</button>
+      <span class="mstate" id="arr-state"></span>
+    </div>
+    <div class="kpis" id="arr-kpis" style="margin:8px 0 10px"></div>
+    <div class="arr-fc" id="arr-fc" hidden></div>
+    <div class="chart-wrap" id="arr-zone">
+      <svg id="arr-chart" viewBox="0 0 1000 220" preserveAspectRatio="xMidYMid meet" role="img" aria-label="New products per month by first-seen date"></svg>
+      <div class="empty" id="arr-empty" hidden></div>
+    </div>
+    <div class="split2" id="arr-tables" hidden>
+      <div><div class="ch" style="margin:10px 0 4px"><b>Per quarter</b> · calendar quarters, the current one still filling</div><div style="overflow-x:auto"><table class="vt" id="arr-q"><thead><tr><th>Quarter</th><th class="num">New products</th><th class="num">≈ per month</th></tr></thead><tbody></tbody></table></div></div>
+      <div><div class="ch" style="margin:10px 0 4px"><b>Per year</b> · calendar years — older years are lower bounds (survivors only)</div><div style="overflow-x:auto"><table class="vt" id="arr-y"><thead><tr><th>Year</th><th class="num">New products</th><th class="num">≈ per month</th></tr></thead><tbody></tbody></table></div></div>
+    </div>
+    <div class="note" id="arr-note"></div>
+  </div>
+
+  <div class="card" id="est-card">
+    <div class="chart-head">
+      <div><h3>Arrivals across all accounts</h3><div class="ch">Every Shopping feed's run-rate from its first-seen dates — how many products land per month, per quarter and per year, estate-wide. Click a row to open that feed above.</div></div>
+      <span class="spacer"></span>
+      <span class="mstate" id="est-state"></span>
+    </div>
+    <div class="kpis" id="est-kpis" style="margin:8px 0 10px"></div>
+    <div style="overflow-x:auto"><table class="vt" id="esttbl"><thead><tr><th>Client</th><th>Market</th><th class="num">SKUs</th><th class="num" title="Share of SKUs carrying a first-seen date">With date</th><th class="num">Last full month</th><th class="num">3-mo avg</th><th class="num">Last 12 mo</th><th class="num">≈ / month</th><th class="num">≈ / quarter</th><th class="num">≈ / year</th><th>Last 12 months</th><th>Scanned</th></tr></thead><tbody></tbody></table></div>
+    <div class="empty" id="est-empty" hidden></div>
+  </div>
+
   <div class="card meth" id="meth">
     <h3>How these volume movements are tracked</h3>
     <div class="ch">The quick breakdown behind every number on this page.</div>
@@ -207,6 +248,7 @@ window.addEventListener('load',restore);
       <li><b>Days are compared close-to-close.</b> Yesterday's <b>closing</b> set is the baseline for the whole of today: every scan compares today's latest set against it — IDs that appeared = <b>new in</b>; IDs that vanished = <b>dropped out</b> — so today's bar builds through the day and settles at the last scan. Intraday flapping never double-counts.</li>
       <li><b>Categories explain the movement.</b> Every in/out is attributed to its category, and the top movers are stored per day — so "Reiss had 300 in and 900 out" breaks down into the collections that drove it.</li>
       <li><b>History accrues forward.</b> Up to 60 days of daily movement is retained per feed. Tracking started 9 Sep 2026 — bars fill in from the first midnight after each feed's first scan; a catastrophic feed reading is quarantined by the guards' two-strike check before it can fake a movement spike.</li>
+      <li><b>Arrivals come from the feed's own first-seen dates.</b> FeedHero stamps every product with <code>fs:date_of_birth</code> — the day its ID first appeared in the feed. Counting the products still in the feed by that month gives new products per month, quarter and year with no dependence on when monitoring started; the forecast is the plain run-rate of the last three <i>complete</i> months (× 3 for a quarter, × 12 for a year), never a fitted curve. <b>Survivors only:</b> a month counts what is still live today, so recent months are complete and older months are lower bounds. Shopping feeds only — Meta feeds mirror the same products.</li>
     </ol>
     <div class="note" id="meth-note"></div>
   </div>
@@ -214,20 +256,28 @@ window.addEventListener('load',restore);
 
 <div class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span id="verstate"></span></div></div>
 
+<script src="/feedlab/engine.js" onerror="window.__engineFail=1"></script>
+<script src="/volume/engine.js" onerror="window.__arrivalsFail=1"></script>
 <script>
 (function(){
   'use strict';
   var $=function(s){return document.querySelector(s)};
   var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
   var fmt=function(n){return (n==null||isNaN(n))?'—':Number(n).toLocaleString('en-GB')};
-  var CLIENT='',MKT='gb',MKTLIST=['gb'],RANGE=30,DATA=null,SELDAY=null;
+  var CLIENT='',MKT='gb',MKTLIST=['gb'],RANGE=30,DATA=null,SELDAY=null,EST=null;
+  var enc=encodeURIComponent, MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var monLbl=function(k){ return MON[+k.slice(5,7)-1]+' '+k.slice(2,4); };
 
   fetch('/api/feed/clients').then(function(r){return r.json()}).then(function(d){
     var cs=Object.keys((d&&d.clients)||{}).sort();
     var sel=$('#brand'); sel.innerHTML=cs.map(function(c){return '<option>'+esc(c)+'</option>'}).join('');
     CLIENT=cs[0]||''; if(CLIENT)sel.value=CLIENT;
-    loadMkts();
+    loadMkts(); loadEstate();
   }).catch(function(){ $('#mstate').textContent='Could not load the client list — this needs the live worker.'; });
+  $('#arr-scan').addEventListener('click',scanNow);
+  document.addEventListener('click',function(e){ var tr=e.target.closest&&e.target.closest('#esttbl tr[data-c]'); if(!tr)return;
+    var c=tr.getAttribute('data-c'), m=tr.getAttribute('data-m'); if(!c)return; CLIENT=c; $('#brand').value=c; SELDAY=null; loadMkts(m);
+    try{ $('#arr-card').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e2){} });
 
   $('#brand').addEventListener('change',function(){ CLIENT=this.value; SELDAY=null; loadMkts(); });
   document.addEventListener('click',function(e){
@@ -243,11 +293,11 @@ window.addEventListener('load',restore);
     this.classList.toggle('on',t); this.setAttribute('aria-pressed',t?'true':'false');
   });
 
-  function loadMkts(){ MKT='gb'; MKTLIST=['gb'];
+  function loadMkts(want){ MKT=want||'gb'; MKTLIST=[MKT];
     fetch('/api/feed/markets?client='+encodeURIComponent(CLIENT)).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
       var ks=d&&d.markets?Object.keys(d.markets):[];
       if(ks&&ks.length)MKTLIST=ks.sort(function(a,b){return a==='gb'?-1:b==='gb'?1:a.localeCompare(b)});
-      if(MKTLIST.indexOf('gb')<0)MKT=MKTLIST[0];
+      if(MKTLIST.indexOf(MKT)<0)MKT=MKTLIST.indexOf('gb')>=0?'gb':MKTLIST[0];
       renderMkts(); load();
     });
   }
@@ -262,8 +312,103 @@ window.addEventListener('load',restore);
       .then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
         DATA=(d&&d.ok)?d:null;
         $('#mstate').textContent=DATA?'':'Volume history is unavailable — this needs the live worker.';
-        render();
+        render(); renderArrivals();
       });
+  }
+
+  /* ---------- NEW-PRODUCT ARRIVALS by first-seen date (fs:date_of_birth) ---------- */
+  function astate(m){ $('#arr-state').textContent=m||''; }
+  function arrStats(){ var d=DATA&&DATA.dob; if(!d||typeof FeedArrivals==='undefined')return null; try{ return FeedArrivals.stats(d,new Date(),d.rows); }catch(e){ return null; } }
+  function renderArrivals(){
+    var kp=$('#arr-kpis'),fc=$('#arr-fc'),svg=$('#arr-chart'),empty=$('#arr-empty'),tbls=$('#arr-tables'),note=$('#arr-note'),btn=$('#arr-scan');
+    var meta=/-fb$/.test(MKT);
+    btn.hidden=meta; btn.disabled=false;
+    var st=arrStats();
+    if(meta||!st){
+      kp.innerHTML=''; fc.hidden=true; svg.style.display='none'; tbls.hidden=true; empty.hidden=false;
+      empty.textContent=meta?'Shopping feeds only — a Meta catalogue feed mirrors the same products, so arrivals are read off the Google feed for this market.'
+        :(DATA&&DATA.tracked==='sheet')?'No first-seen dates yet — ⚡ Scan now reads them straight off the feed (a sheet-backed feed needs the field in its export).'
+        :'No first-seen dates captured yet — ⚡ Scan now reads them straight off the live feed; the 4×-daily monitor keeps them fresh from its next pass.';
+      note.textContent=''; return;
+    }
+    empty.hidden=true; svg.style.display=''; tbls.hidden=false; fc.hidden=false;
+    var cov=st.coverage!=null?Math.round(st.coverage*100):null;
+    kp.innerHTML=
+      '<div class="kpi"><div class="n">'+(cov!=null?cov+'%':'—')+'</div><div class="l">SKUs with a first-seen date · '+fmt(st.n)+' of '+fmt(st.rows)+'</div></div>'+
+      '<div class="kpi vin"><div class="n">'+(st.lastFull?'+'+fmt(st.lastFull.n):'—')+'</div><div class="l">'+(st.lastFull?'Last full month · '+esc(monLbl(st.lastFull.k)):'No complete month yet')+'</div></div>'+
+      '<div class="kpi"><div class="n">'+(st.m3!=null?fmt(Math.round(st.m3)):'—')+'</div><div class="l">Run-rate · avg of last '+Math.min(3,st.fullMonths)+' complete month'+(Math.min(3,st.fullMonths)===1?'':'s')+'</div></div>'+
+      '<div class="kpi"><div class="n">'+(st.y12!=null?fmt(st.y12):'—')+'</div><div class="l">Last '+st.y12Months+' complete month'+(st.y12Months===1?'':'s')+' · new products</div></div>';
+    var f=st.forecast;
+    fc.innerHTML=f?('<span>≈ <b>'+fmt(f.month)+'</b> new products / month</span><span>≈ <b>'+fmt(f.quarter)+'</b> / quarter</span><span>≈ <b>'+fmt(f.year)+'</b> / year</span>'
+      +'<span class="fb">Forecast = the plain run-rate of '+esc(f.basis)+' (× 3, × 12). This month so far: +'+fmt(st.thisMonth.n)+' · first-seen dates run '+esc(st.first||'—')+' → '+esc(st.last||'—')+(DATA.dob.t?' · read '+esc(new Date(DATA.dob.t).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})):'')+'</span>'):'';
+    drawArrivals(st);
+    var q=$('#arr-q tbody'),y=$('#arr-y tbody'), nowM=new Date().getUTCMonth();
+    q.innerHTML=st.quarters.slice().reverse().map(function(x){ var mo=x.partial?((nowM%3)+1):3;
+      return '<tr><td>'+esc(x.q)+(x.partial?' <span class="hint">so far</span>':'')+'</td><td class="num net-pos">+'+fmt(x.n)+'</td><td class="num">'+fmt(Math.round(x.n/mo))+'</td></tr>'; }).join('')||'<tr><td colspan="3" class="empty">—</td></tr>';
+    y.innerHTML=st.years.slice().reverse().map(function(x){ var lb=st.first&&x.y===st.first.slice(0,4)&&st.first.slice(5,7)!=='01', startM=lb?+st.first.slice(5,7):1;
+      var mo=x.partial?(nowM+1-startM+1):(12-startM+1); mo=Math.max(1,mo);
+      return '<tr><td>'+esc(x.y)+(x.partial?' <span class="hint">so far</span>':'')+(lb?' <span class="hint">from '+esc(monLbl(st.first))+'</span>':'')+'</td><td class="num net-pos">+'+fmt(x.n)+'</td><td class="num">'+fmt(Math.round(x.n/mo))+'</td></tr>'; }).join('')||'<tr><td colspan="3" class="empty">—</td></tr>';
+    note.textContent=(cov!=null&&cov<90)?('⚠ Only '+cov+'% of SKUs carry a first-seen date — the counts cover those SKUs; the rest were in the feed before FeedHero started stamping, or carry no stamp.'):'';
+  }
+  function drawArrivals(st){
+    var svg=$('#arr-chart'),W=1000,H=220,T=18,B=H-34,L=52,R=8, ms=st.months;
+    var peak=1; ms.forEach(function(x){ if(x.observed)peak=Math.max(peak,x.n); });
+    var slot=(W-L-R)/ms.length, bw=Math.max(6,slot-6), s='';
+    [0.5,1].forEach(function(fr){ var v=Math.round(peak*fr), y=B-(B-T)*fr;
+      s+='<line class="grid" x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'"/><text x="'+(L-6)+'" y="'+(y+4)+'" text-anchor="end">'+fmt(v)+'</text>'; });
+    s+='<line class="axis" x1="'+L+'" y1="'+B+'" x2="'+(W-R)+'" y2="'+B+'"/>';
+    ms.forEach(function(x,i){ var cx=L+slot*i+(slot-bw)/2;
+      if(i%3===0)s+='<text x="'+(L+slot*i+slot/2)+'" y="'+(H-12)+'" text-anchor="middle">'+esc(monLbl(x.k))+'</text>';
+      if(!x.observed)return;
+      var h=Math.max(x.n?2:0,x.n/peak*(B-T));
+      s+='<path fill="var(--vin)"'+(x.complete?'':' opacity=".45"')+' d="'+barPath(cx,bw,B,h,true)+'"><title>'+esc(monLbl(x.k))+': +'+fmt(x.n)+(x.complete?'':' so far')+'</title></path>';
+      if(x.n)s+='<text x="'+(cx+bw/2)+'" y="'+(B-h-4)+'" text-anchor="middle" style="font-size:10px">'+fmt(x.n)+'</text>'; });
+    svg.innerHTML=s;
+  }
+  /* ⚡ the page streams the live feed itself — the Feed Lab parser + the arrivals collector (the same
+     engine the agent runs) — and stores the histogram, so nobody waits for the 4×-daily pass */
+  function scanNow(){
+    if(!CLIENT||/-fb$/.test(MKT))return;
+    if(window.__engineFail||typeof FeedAudit==='undefined'||typeof FeedArrivals==='undefined'){ astate('The scan engines are unavailable — this needs the live worker.'); return; }
+    var btn=$('#arr-scan'); btn.disabled=true; astate('Streaming the live feed…');
+    var header=null,di=-1,idi=-1,rows=0,col=FeedArrivals.dobCollector(),parser=null;
+    function resolve(){ di=-1; idi=-1; header.forEach(function(h,i){ if(di<0&&FeedArrivals.isDobHeader(h))di=i;
+      var k=String(h==null?'':h).replace(/\s+type=.*$/i,'').replace(/^[gc]:/i,'').trim().toLowerCase(); if(idi<0&&(k==='id'||k==='item_id'||k==='offer_id'))idi=i; }); if(idi<0)idi=0; }
+    var onRow=function(r,live){ if(!header){ header=r; resolve(); return; } if(live&&live.length!==header.length){ header=live.slice(); resolve(); }
+      var id=String(r[idi]==null?'':r[idi]).trim(); if(!id)return; rows++; if(di>=0)col.add(r[di]); if(rows%2000===0)astate('Streaming… '+fmt(rows)+' SKUs'); };
+    fetch('/api/feed/proxy?client='+enc(CLIENT)+'&market='+enc(MKT)).then(function(r){
+      if(!r.ok||!r.body)throw new Error('HTTP '+r.status); var reader=r.body.getReader(), dec=new TextDecoder();
+      function pump(){ return reader.read().then(function(x){ if(x.done){ if(parser){ parser.push(dec.decode()); parser.end(); } return; }
+        var t=dec.decode(x.value,{stream:true}); if(!parser)parser=/^\s*</.test(t)?FeedAudit.createXmlParser(onRow):FeedAudit.createParser(onRow); parser.push(t); return pump(); }); }
+      return pump();
+    }).then(function(){ var dob=col.finish(); if(di<0)throw new Error('nofield');
+      return fetch('/api/volume/dobpush?client='+enc(CLIENT)+'&market='+enc(MKT),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({rows:rows,dob:dob})})
+        .then(function(r){return r.json()}).then(function(j){ if(!j||!j.ok)throw new Error((j&&j.error)||'store failed'); astate('Read '+fmt(dob.n)+' first-seen dates across '+fmt(rows)+' SKUs.'); load(); loadEstate(); });
+    }).catch(function(e){ astate(e&&e.message==='nofield'?'This feed carries no fs_date_of_birth field — nothing to read.':'Scan failed: '+((e&&e.message)||e)); })
+      .then(function(){ btn.disabled=false; });
+  }
+  /* ---------- all accounts: every Shopping feed's run-rate from the estate index ---------- */
+  function loadEstate(){ $('#est-state').textContent='Loading…';
+    fetch('/api/volume/arrivals').then(function(r){return r.json()}).catch(function(){return null}).then(function(d){ EST=(d&&d.ok)?d:null; $('#est-state').textContent=EST?'':'Estate view unavailable — this needs the live worker.'; renderEstate(); }); }
+  function renderEstate(){
+    var tb=$('#esttbl tbody'),kp=$('#est-kpis'),empty=$('#est-empty'); if(!EST){ tb.innerHTML=''; kp.innerHTML=''; return; }
+    var now=new Date(), rows=EST.feeds.map(function(f){ var st=null; if(f.dob&&typeof FeedArrivals!=='undefined'){ try{ st=FeedArrivals.stats(f.dob,now,f.dob.rows); }catch(e){} } return {f:f,st:st}; });
+    rows.sort(function(a,b){ var fa=a.st&&a.st.forecast?a.st.forecast.month:-1, fb=b.st&&b.st.forecast?b.st.forecast.month:-1; return fb-fa||a.f.client.localeCompare(b.f.client)||a.f.mkt.localeCompare(b.f.mkt); });
+    var have=rows.filter(function(r){return r.st&&r.st.forecast}), sm=0,sq=0,sy=0; have.forEach(function(r){ sm+=r.st.forecast.month; sq+=r.st.forecast.quarter; sy+=r.st.forecast.year; });
+    kp.innerHTML='<div class="kpi"><div class="n">'+have.length+' / '+rows.length+'</div><div class="l">Shopping feeds with first-seen dates</div></div>'
+      +'<div class="kpi vin"><div class="n">≈ '+fmt(sm)+'</div><div class="l">New products / month · all accounts</div></div>'
+      +'<div class="kpi vin"><div class="n">≈ '+fmt(sq)+'</div><div class="l">/ quarter</div></div>'
+      +'<div class="kpi vin"><div class="n">≈ '+fmt(sy)+'</div><div class="l">/ year</div></div>';
+    if(!rows.length){ tb.innerHTML=''; empty.hidden=false; empty.textContent='No Shopping feeds wired.'; return; } empty.hidden=true;
+    tb.innerHTML=rows.map(function(r){ var f=r.f,st=r.st;
+      if(!st||!st.forecast)return '<tr data-c="'+esc(f.client)+'" data-m="'+esc(f.mkt)+'" class="has"><td>'+esc(f.client)+'</td><td>'+esc(f.mkt.toUpperCase())+'</td><td class="num dim">'+(f.dob?fmt(f.dob.rows):'—')+'</td><td class="dim" colspan="9">'+(f.kind==='sheet'?'sheet-backed — open the feed above and ⚡ Scan now':'not captured yet — the monitor reads it on its next pass, or open the feed above and ⚡ Scan now')+'</td></tr>';
+      var last12=st.months.slice(-12), pk=1; last12.forEach(function(x){ pk=Math.max(pk,x.n); });
+      var spark='<span class="spark" title="'+last12.map(function(x){return monLbl(x.k)+' +'+fmt(x.n)}).join(' · ')+'">'+last12.map(function(x){ return '<i'+(x.complete?'':' class="cur"')+' style="height:'+Math.max(1,Math.round(x.n/pk*18))+'px"></i>'; }).join('')+'</span>';
+      var cov=st.coverage!=null?Math.round(st.coverage*100)+'%':'—';
+      return '<tr data-c="'+esc(f.client)+'" data-m="'+esc(f.mkt)+'" class="has"><td>'+esc(f.client)+'</td><td>'+esc(f.mkt.toUpperCase())+'</td><td class="num">'+fmt(st.rows)+'</td><td class="num">'+cov+'</td>'
+        +'<td class="num">'+(st.lastFull?'+'+fmt(st.lastFull.n):'—')+'</td><td class="num">'+(st.m3!=null?fmt(Math.round(st.m3)):'—')+'</td><td class="num">'+(st.y12!=null?fmt(st.y12)+(st.y12Months<12?' <span class="hint">('+st.y12Months+'m)</span>':''):'—')+'</td>'
+        +'<td class="num net-pos"><b>≈ '+fmt(st.forecast.month)+'</b></td><td class="num">≈ '+fmt(st.forecast.quarter)+'</td><td class="num">≈ '+fmt(st.forecast.year)+'</td><td>'+spark+'</td>'
+        +'<td class="dim">'+(f.dob&&f.dob.t?esc(new Date(f.dob.t).toLocaleDateString('en-GB',{day:'numeric',month:'short'})):'—')+'</td></tr>'; }).join('');
   }
 
   /* window = a continuous run of the last RANGE days; missing days render as honest gaps */

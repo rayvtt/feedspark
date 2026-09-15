@@ -33,6 +33,8 @@ jobs:
         run: node tools/test_kwcal_tie.mjs
       - name: Product-volume churn harness (running close-to-close baseline)
         run: node tools/test_volume.mjs
+      - name: New-product arrivals harness (first-seen dates → month / quarter / year + forecast)
+        run: node tools/test_arrivals.mjs
       - name: Access scoping harness (per-user Workflow views)
         run: node tools/test_access.mjs
       - name: Golden Record PDP harvest harness (extraction + host allowlist + sampler)

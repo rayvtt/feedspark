@@ -81,6 +81,13 @@ else
   echo "   ✗ volume harness FAILED — see node tools/test_volume.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3g′/7: new-product arrivals (first-seen dates → month / quarter / year + forecast)"
+if node tools/test_arrivals.mjs >/dev/null 2>&1; then
+  echo "   ✓ engine maths, the collector's capture (Shopping feeds only) and the worker store hold"
+else
+  echo "   ✗ arrivals harness FAILED — see node tools/test_arrivals.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h/7: Golden Record PDP harvest (page extraction + host allowlist + sampler)"
 if node tools/test_pdpharvest.mjs >/dev/null 2>&1; then
   echo "   ✓ details-text rules, variant-only identifiers, evidence-gated AI merge + the proxy allowlist hold"
