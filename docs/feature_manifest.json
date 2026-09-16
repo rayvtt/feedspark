@@ -6128,21 +6128,21 @@
    "name": "Scheduled work: 🔒 Client view — one brand, no other account named (Ray 16 Sep 2026)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "function renderClient(d){",
-   "pr": 0,
+   "pr": 407,
    "min": 1
   },
   {
    "name": "…the internal league table is EMPTIED from the DOM, not just hidden",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "if(CV)chips.innerHTML='';",
-   "pr": 0,
+   "pr": 407,
    "min": 1
   },
   {
    "name": "…and the band follows Intake's client filter onto the brand on the call",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "document.dispatchEvent(new CustomEvent('fcc-clients'",
-   "pr": 0,
+   "pr": 407,
    "min": 1
   }
  ]
