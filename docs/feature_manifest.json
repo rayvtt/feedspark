@@ -6011,6 +6011,16 @@
       "pattern": "data-hrs",
       "min": 2,
       "pr": 401
+    },
+    {
+      "name": "abtests: the exact archive tab name wins before brand disambiguation",
+      "file": "cloudflare/feedspark-deck/src/abtests.js",
+      "pattern": "a\\/?b test archives?"
+    },
+    {
+      "name": "dossier: tab-list diagnostic declares when it is truncated",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function abTabList"
     }
   ]
 }
