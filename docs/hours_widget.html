@@ -47,82 +47,90 @@
   max-height:min(660px,calc(100vh - 24px));overflow:auto;overscroll-behavior:contain;
   opacity:0;transform:translateY(4px);pointer-events:none;transition:opacity .13s,transform .13s}
 #fcc-hrs.on{opacity:1;transform:none;pointer-events:auto}
-#fcc-hrs h4{margin:0;font-size:14.5px;font-weight:900;letter-spacing:-.01em;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-#fcc-hrs .fh-pill{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:100px;white-space:nowrap}
-#fcc-hrs .fh-pill.ok{color:#15803D;background:rgba(21,128,61,.12)}
-#fcc-hrs .fh-pill.tight{color:#B1550A;background:rgba(245,166,35,.18)}
-#fcc-hrs .fh-pill.over{color:#fff;background:#C0392B}
-#fcc-hrs .fh-pill.served{color:#fff;background:#7C3AED}
-#fcc-hrs .fh-pill.held{color:#fff;background:#B3261E}
-#fcc-hrs .fh-pill.none{color:var(--muted,#8a94a0);background:var(--wash,#F7F7F5)}
-#fcc-hrs .fh-sub{font-size:11.5px;font-weight:700;color:var(--muted,#8a94a0);margin:3px 0 10px}
-#fcc-hrs .fh-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
-#fcc-hrs .fh-nums .n{background:var(--wash,#F7F7F5);border-radius:9px;padding:7px 9px;min-width:0}
-#fcc-hrs .fh-nums .n b{display:block;font-size:16px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
-#fcc-hrs .fh-nums .n span{display:block;font-size:9.5px;font-weight:800;color:var(--muted,#8a94a0);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
-#fcc-hrs .fh-nums .n.neg b{color:#C0392B}
-#fcc-hrs .fh-verd{font-size:12.5px;font-weight:700;color:var(--ink-2,#4a4a4a);margin:0 0 11px}
-#fcc-hrs .fh-h5{font-size:9.5px;font-weight:900;color:var(--muted,#8a94a0);text-transform:uppercase;letter-spacing:.06em;margin:0 0 5px;display:flex;align-items:baseline;gap:6px}
-#fcc-hrs .fh-h5 em{font-style:normal;font-weight:800;letter-spacing:0;text-transform:none;font-size:10.5px;color:var(--ink-2,#4a4a4a);margin-left:auto}
-#fcc-hrs svg{display:block;width:100%;height:auto;overflow:visible}
-#fcc-hrs .fh-key{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;font-weight:800;margin:6px 0 2px}
-#fcc-hrs .fh-key span{display:inline-flex;align-items:center;gap:5px;color:var(--ink-2,#4a4a4a)}
-#fcc-hrs .fh-key i{width:9px;height:9px;border-radius:2px;flex:none}
-#fcc-hrs .fh-note{font-size:11px;font-weight:700;color:var(--muted,#8a94a0);margin:6px 0 0;line-height:1.45}
-#fcc-hrs .fh-skip{margin-top:12px;padding:9px 11px 8px;border-radius:9px;background:var(--wash,#F7F7F5);border:1px solid var(--line,#E6E6E6)}
-#fcc-hrs .fh-skip .fh-h5{margin:0 0 7px}
-#fcc-hrs .fh-sr{display:flex;align-items:center;gap:6px;margin-bottom:5px}
-#fcc-hrs .fh-sr .nm{flex:0 0 84px;display:flex;align-items:baseline;gap:3px;min-width:0}
-#fcc-hrs .fh-sr .nm b{font-size:10.5px;font-weight:700;color:var(--ink-2,#555);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#fcc-hrs .fh-sr .nm span{flex:none;font-size:9px;font-weight:800;color:var(--muted,#8a94a0);letter-spacing:.03em}
-#fcc-hrs .fh-shead{margin:0 0 7px;font-size:11px;font-weight:700;color:var(--muted,#8a94a0)}
-#fcc-hrs .fh-shead.warn{color:var(--orange-deep,#ED6F0B)}
-#fcc-hrs .fh-sr .bar{flex:1;display:flex;gap:1.5px;min-width:0}
-#fcc-hrs .fh-sr .bar i{flex:1 1 0;height:13px;border-radius:2px;min-width:0}
-#fcc-hrs .fh-sr .bar i.off{background:transparent;box-shadow:inset 0 0 0 1px var(--line,#E6E6E6)}
-#fcc-hrs .fh-sr .tl{flex:0 0 32px;text-align:right;font-size:10px;font-weight:600;color:var(--muted,#8a94a0);white-space:nowrap}
-#fcc-hrs .fh-sr .tl b{color:var(--orange-deep,#ED6F0B);font-weight:800}
-#fcc-hrs .fh-sr .tl .ok{color:#2E7D32;font-weight:700}
-#fcc-hrs .fh-sleg{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:6px;font-size:9.5px;font-weight:600;color:var(--muted,#8a94a0)}
-#fcc-hrs .fh-sleg span{display:inline-flex;align-items:center;gap:3px}
-#fcc-hrs .fh-sleg i{width:8px;height:8px;border-radius:2px;flex:none}
-#fcc-hrs .fh-sleg i.off{box-shadow:inset 0 0 0 1px var(--line,#E6E6E6)}
-#fcc-hrs .fh-sleg .sp{margin-left:auto}
-#fcc-hrs .fh-smore{margin:5px 0 0;font-size:10.5px;font-weight:600;color:var(--muted,#8a94a0)}
-#fcc-hrs .fh-skip a{display:inline-block;margin-top:6px;font-size:11px;font-weight:700;color:var(--orange-deep,#ED6F0B);text-decoration:none}
-#fcc-hrs .fh-skip a:hover{text-decoration:underline}
-[data-theme=dark] #fcc-hrs .fh-skip{background:#20242E;border-color:var(--line,#2C3039)}
-[data-theme=dark] #fcc-hrs .fh-sr .bar i.off,[data-theme=dark] #fcc-hrs .fh-sleg i.off{box-shadow:inset 0 0 0 1px var(--line,#2C3039)}
-[data-theme=dark] #fcc-hrs .fh-sr .tl .ok{color:#48D07E}
-#fcc-hrs .fh-post{border-top:1px solid var(--line,#E6E6E6);margin-top:11px;padding-top:10px}
-#fcc-hrs .fh-btns{display:flex;gap:4px;flex-wrap:wrap}
-#fcc-hrs .fh-btns button{font:inherit;font-size:11px;font-weight:800;padding:5px 9px;border-radius:100px;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);color:var(--ink-2,#4a4a4a);cursor:pointer;white-space:nowrap}
-#fcc-hrs .fh-btns button:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
-#fcc-hrs .fh-btns button.on{background:var(--navy,#1A365D);border-color:var(--navy,#1A365D);color:#fff}
-#fcc-hrs .fh-btns button[disabled]{opacity:.5;cursor:default}
-#fcc-hrs .fh-why{display:block;width:100%;box-sizing:border-box;margin-top:7px;font:inherit;font-size:11.5px;font-weight:600;color:var(--ink,#333);background:var(--wash,#F7F7F5);border:1px solid var(--line,#E6E6E6);border-radius:8px;padding:6px 9px}
-#fcc-hrs .fh-why:focus{outline:none;border-color:var(--orange,#F5A623);background:var(--paper,#fff)}
-#fcc-hrs .fh-why[disabled]{opacity:.6}
-#fcc-hrs .fh-who{font-size:10.5px;font-weight:700;color:var(--muted,#8a94a0);margin-top:6px}
-#fcc-hrs .fh-links{display:flex;gap:10px;margin-top:9px;font-size:11.5px;font-weight:800}
-#fcc-hrs .fh-links a{color:var(--orange-deep,#ED6F0B);text-decoration:none}
-#fcc-hrs .fh-links a:hover{text-decoration:underline}
-#fcc-hrs .fh-x{display:none}
+.fh-body h4{margin:0;font-size:14.5px;font-weight:900;letter-spacing:-.01em;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.fh-body .fh-pill{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:100px;white-space:nowrap}
+.fh-body .fh-pill.ok{color:#15803D;background:rgba(21,128,61,.12)}
+.fh-body .fh-pill.tight{color:#B1550A;background:rgba(245,166,35,.18)}
+.fh-body .fh-pill.over{color:#fff;background:#C0392B}
+.fh-body .fh-pill.served{color:#fff;background:#7C3AED}
+.fh-body .fh-pill.held{color:#fff;background:#B3261E}
+.fh-body .fh-pill.none{color:var(--muted,#8a94a0);background:var(--wash,#F7F7F5)}
+.fh-body .fh-sub{font-size:11.5px;font-weight:700;color:var(--muted,#8a94a0);margin:3px 0 10px}
+.fh-body .fh-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+.fh-body .fh-nums .n{background:var(--wash,#F7F7F5);border-radius:9px;padding:7px 9px;min-width:0}
+.fh-body .fh-nums .n b{display:block;font-size:16px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fh-body .fh-nums .n span{display:block;font-size:9.5px;font-weight:800;color:var(--muted,#8a94a0);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.fh-body .fh-nums .n.neg b{color:#C0392B}
+.fh-body .fh-verd{font-size:12.5px;font-weight:700;color:var(--ink-2,#4a4a4a);margin:0 0 11px}
+.fh-body .fh-h5{font-size:9.5px;font-weight:900;color:var(--muted,#8a94a0);text-transform:uppercase;letter-spacing:.06em;margin:0 0 5px;display:flex;align-items:baseline;gap:6px}
+.fh-body .fh-h5 em{font-style:normal;font-weight:800;letter-spacing:0;text-transform:none;font-size:10.5px;color:var(--ink-2,#4a4a4a);margin-left:auto}
+.fh-body svg{display:block;width:100%;height:auto;overflow:visible}
+.fh-body .fh-key{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;font-weight:800;margin:6px 0 2px}
+.fh-body .fh-key span{display:inline-flex;align-items:center;gap:5px;color:var(--ink-2,#4a4a4a)}
+.fh-body .fh-key i{width:9px;height:9px;border-radius:2px;flex:none}
+.fh-body .fh-note{font-size:11px;font-weight:700;color:var(--muted,#8a94a0);margin:6px 0 0;line-height:1.45}
+.fh-body .fh-skip{margin-top:12px;padding:9px 11px 8px;border-radius:9px;background:var(--wash,#F7F7F5);border:1px solid var(--line,#E6E6E6)}
+.fh-body .fh-skip .fh-h5{margin:0 0 7px}
+.fh-body .fh-sr{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.fh-body .fh-sr .nm{flex:0 0 84px;display:flex;align-items:baseline;gap:3px;min-width:0}
+.fh-body .fh-sr .nm b{font-size:10.5px;font-weight:700;color:var(--ink-2,#555);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fh-body .fh-sr .nm span{flex:none;font-size:9px;font-weight:800;color:var(--muted,#8a94a0);letter-spacing:.03em}
+.fh-body .fh-shead{margin:0 0 7px;font-size:11px;font-weight:700;color:var(--muted,#8a94a0)}
+.fh-body .fh-shead.warn{color:var(--orange-deep,#ED6F0B)}
+.fh-body .fh-sr .bar{flex:1;display:flex;gap:1.5px;min-width:0}
+.fh-body .fh-sr .bar i{flex:1 1 0;height:13px;border-radius:2px;min-width:0}
+.fh-body .fh-sr .bar i.off{background:transparent;box-shadow:inset 0 0 0 1px var(--line,#E6E6E6)}
+.fh-body .fh-sr .tl{flex:0 0 32px;text-align:right;font-size:10px;font-weight:600;color:var(--muted,#8a94a0);white-space:nowrap}
+.fh-body .fh-sr .tl b{color:var(--orange-deep,#ED6F0B);font-weight:800}
+.fh-body .fh-sr .tl .ok{color:#2E7D32;font-weight:700}
+.fh-body .fh-sleg{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:6px;font-size:9.5px;font-weight:600;color:var(--muted,#8a94a0)}
+.fh-body .fh-sleg span{display:inline-flex;align-items:center;gap:3px}
+.fh-body .fh-sleg i{width:8px;height:8px;border-radius:2px;flex:none}
+.fh-body .fh-sleg i.off{box-shadow:inset 0 0 0 1px var(--line,#E6E6E6)}
+.fh-body .fh-sleg .sp{margin-left:auto}
+.fh-body .fh-smore{margin:5px 0 0;font-size:10.5px;font-weight:600;color:var(--muted,#8a94a0)}
+.fh-body .fh-skip a{display:inline-block;margin-top:6px;font-size:11px;font-weight:700;color:var(--orange-deep,#ED6F0B);text-decoration:none}
+.fh-body .fh-skip a:hover{text-decoration:underline}
+[data-theme=dark] .fh-body .fh-skip{background:#20242E;border-color:var(--line,#2C3039)}
+[data-theme=dark] .fh-body .fh-sr .bar i.off,[data-theme=dark] .fh-body .fh-sleg i.off{box-shadow:inset 0 0 0 1px var(--line,#2C3039)}
+[data-theme=dark] .fh-body .fh-sr .tl .ok{color:#48D07E}
+.fh-body .fh-post{border-top:1px solid var(--line,#E6E6E6);margin-top:11px;padding-top:10px}
+.fh-body .fh-btns{display:flex;gap:4px;flex-wrap:wrap}
+.fh-body .fh-btns button{font:inherit;font-size:11px;font-weight:800;padding:5px 9px;border-radius:100px;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);color:var(--ink-2,#4a4a4a);cursor:pointer;white-space:nowrap}
+.fh-body .fh-btns button:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
+.fh-body .fh-btns button.on{background:var(--navy,#1A365D);border-color:var(--navy,#1A365D);color:#fff}
+.fh-body .fh-btns button[disabled]{opacity:.5;cursor:default}
+.fh-body .fh-why{display:block;width:100%;box-sizing:border-box;margin-top:7px;font:inherit;font-size:11.5px;font-weight:600;color:var(--ink,#333);background:var(--wash,#F7F7F5);border:1px solid var(--line,#E6E6E6);border-radius:8px;padding:6px 9px}
+.fh-body .fh-why:focus{outline:none;border-color:var(--orange,#F5A623);background:var(--paper,#fff)}
+.fh-body .fh-why[disabled]{opacity:.6}
+.fh-body .fh-who{font-size:10.5px;font-weight:700;color:var(--muted,#8a94a0);margin-top:6px}
+.fh-body .fh-links{display:flex;gap:10px;margin-top:9px;font-size:11.5px;font-weight:800}
+.fh-body .fh-links a{color:var(--orange-deep,#ED6F0B);text-decoration:none}
+.fh-body .fh-links a:hover{text-decoration:underline}
+.fh-body .fh-x{display:none}
+/* THE DOCKED HOME (Ray, 16 Sep 2026: "right now when you hover over the retainer pop-up, it covers
+   all the tasks and brands in the workflow, making it less interactive and efficient. Show it only
+   on the left-hand panel for the workflow module"). A page that mounts #fcc-hrs-dock gets this same
+   read-out rendered INTO its own layout, and then nothing floats over its content at all: hover
+   stops opening anything and a click loads that client into the panel. One body(), two homes. */
+.fh-body{font:400 13px/1.5 Lato,system-ui,sans-serif;color:var(--ink,#333)}
+#fcc-hrs-dock .fh-x{display:none!important}
+#fcc-hrs-dock .fh-links{flex-wrap:wrap}
 [data-theme=dark] #fcc-hrs{background:var(--paper,#1C1F27);border-color:var(--line,#2C3039);box-shadow:0 10px 40px rgba(0,0,0,.5)}
-[data-theme=dark] #fcc-hrs .fh-nums .n{background:#181B22}
-[data-theme=dark] #fcc-hrs .fh-pill.ok{color:#48D07E;background:rgba(72,208,126,.16)}
-[data-theme=dark] #fcc-hrs .fh-pill.tight{color:#F0A44E;background:rgba(240,164,78,.16)}
-[data-theme=dark] #fcc-hrs .fh-nums .n.neg b{color:#F1707A}
-[data-theme=dark] #fcc-hrs .fh-btns button{background:#20242E;border-color:var(--line,#2C3039);color:var(--ink-2,#B9BEC7)}
-[data-theme=dark] #fcc-hrs .fh-why{background:#20242E;border-color:var(--line,#2C3039);color:var(--ink,#E6E9EF)}
+[data-theme=dark] .fh-body .fh-nums .n{background:#181B22}
+[data-theme=dark] .fh-body .fh-pill.ok{color:#48D07E;background:rgba(72,208,126,.16)}
+[data-theme=dark] .fh-body .fh-pill.tight{color:#F0A44E;background:rgba(240,164,78,.16)}
+[data-theme=dark] .fh-body .fh-nums .n.neg b{color:#F1707A}
+[data-theme=dark] .fh-body .fh-btns button{background:#20242E;border-color:var(--line,#2C3039);color:var(--ink-2,#B9BEC7)}
+[data-theme=dark] .fh-body .fh-why{background:#20242E;border-color:var(--line,#2C3039);color:var(--ink,#E6E9EF)}
 /* the set posture is navy-on-white in light mode; navy on a dark surface is almost the surface,
    so dark gets its own step rather than an automatic flip */
-[data-theme=dark] #fcc-hrs .fh-btns button.on{background:#4C82E0;border-color:#4C82E0;color:#0F1218}
+[data-theme=dark] .fh-body .fh-btns button.on{background:#4C82E0;border-color:#4C82E0;color:#0F1218}
 /* on a phone the popover is a bottom sheet, like every other FCC overlay */
 @media(max-width:760px){
   #fcc-hrs{left:8px!important;right:8px!important;width:auto!important;top:auto!important;
     bottom:calc(var(--fcc-bar,70px) + 8px + env(safe-area-inset-bottom,0px))!important;max-height:72vh;overflow:auto}
-  #fcc-hrs .fh-x{display:block;position:absolute;top:8px;right:9px;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);color:var(--muted,#8a94a0);
+  .fh-body .fh-x{display:block;position:absolute;top:8px;right:9px;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);color:var(--muted,#8a94a0);
     border-radius:9px;width:30px;height:30px;font-size:16px;font-weight:900;cursor:pointer;line-height:1}
   .fh-dot{width:20px;height:20px}
   .fh-dot i{width:9px;height:9px}
@@ -201,6 +209,8 @@
     fetch('/api/hours').then(function (r) { return r.json(); }).then(function (d) {
       if (d && d.ok) {
         DATA = d; decorate();
+        var dk = dockEl();
+        if (dk && dk.__fh && !dk.contains(document.activeElement)) { var nm = dk.__fh; dk.__fh = ''; dockShow(nm); }
         // pages that render hours INTO their own layout (the dossier's portfolio band) can't
         // know when this fetch lands — so say so rather than making them poll
         try { document.dispatchEvent(new CustomEvent('fcc-hours')); } catch (e) {}
@@ -276,10 +286,23 @@
   }
 
   // ---- the popover ----------------------------------------------------------------------------
+  // WHERE THE READ-OUT GOES. By default a floating popover. A page that mounts #fcc-hrs-dock
+  // takes it into its OWN layout instead (Workflow's left-hand rail) — and once it is docked
+  // nothing ever covers the page: hoverOpen becomes a no-op and a click loads that client into
+  // the panel. Both homes render the same body() and are wired by the same wire().
+  function dockEl() { return document.getElementById('fcc-hrs-dock'); }
+  function dockShow(name) {
+    var d = dockEl(); if (!d || !name) return !!d;
+    if (d.__fh !== name) { d.__fh = name; openFor = ''; HOST = d; d.innerHTML = body(name); wire(name); }
+    try { document.dispatchEvent(new CustomEvent('fcc-hours-dock', { detail: { client: name } })); } catch (e) {}
+    who();
+    return true;
+  }
   function ensure() {
     if (pop) return pop;
     pop = document.createElement('div');
     pop.id = 'fcc-hrs';
+    pop.className = 'fh-body';
     pop.setAttribute('role', 'dialog');
     pop.addEventListener('mouseenter', function () { if (tShut) { clearTimeout(tShut); tShut = null; } });
     pop.addEventListener('mouseleave', function () { if (!pinned) hoverShut(); });
@@ -294,13 +317,16 @@
     return pop;
   }
   var openAnchor = null;
-  function hoverOpen(b) { if (tShut) { clearTimeout(tShut); tShut = null; } if (tOpen) clearTimeout(tOpen); tOpen = setTimeout(function () { show(b, false); }, 120); }
+  var HOST = null;          // the element body() was last rendered into — the popover or the dock
+  function hoverOpen(b) { if (dockEl()) return; if (tShut) { clearTimeout(tShut); tShut = null; } if (tOpen) clearTimeout(tOpen); tOpen = setTimeout(function () { show(b, false); }, 120); }
   function hoverShut() { if (tOpen) { clearTimeout(tOpen); tOpen = null; } if (pinned) return; if (tShut) clearTimeout(tShut); tShut = setTimeout(hide, 260); }
   function hide() { pinned = false; openFor = ''; openAnchor = null; if (pop) pop.classList.remove('on'); }
 
   function show(b, pin) {
     var name = b.getAttribute('data-fh');
+    if (dockShow(name)) return;
     ensure();
+    HOST = pop;
     if (pin) pinned = true;
     if (openFor !== name) { openFor = name; pop.innerHTML = body(name); wire(name); }
     openAnchor = b;
@@ -504,8 +530,9 @@
   }
 
   function wire(name) {
-    var x = pop.querySelector('.fh-x'); if (x) x.onclick = hide;
-    var btns = pop.querySelectorAll('button[data-post]');
+    var W = HOST || pop; if (!W) return;
+    var x = W.querySelector('.fh-x'); if (x) x.onclick = hide;
+    var btns = W.querySelectorAll('button[data-post]');
     Array.prototype.forEach.call(btns, function (b) {
       b.onclick = function () {
         var k = b.getAttribute('data-post');
@@ -517,12 +544,12 @@
         var keep = (cur === k && rec && rec.posture && rec.posture.note) || '';
         savePosture(key, next, next ? keep : '', function (ok) {
           if (ok && rec) rec.posture = next ? { state: next, by: ME, at: Date.now(), note: keep } : null;
-          if (ok) { openFor = ''; show(openAnchor || btns[0], true); decorate(); }
+          if (ok) { var d = dockEl(); if (d) { d.__fh = ''; dockShow(key); } else { openFor = ''; show(openAnchor || btns[0], true); } decorate(); }
           else Array.prototype.forEach.call(btns, function (o) { o.disabled = false; });
         });
       };
     });
-    var why = pop.querySelector('.fh-why');
+    var why = W.querySelector('.fh-why');
     if (why) {
       var commit = function () {
         var hit = recOf(name), rec = hit ? hit.rec : null;
@@ -568,5 +595,5 @@
     document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
   }
   if (document.readyState !== 'loading') boot(); else document.addEventListener('DOMContentLoaded', boot);
-  window.FCCHours = { reload: load, decorate: decorate, state: hoursState, verdict: hoursVerdict, rec: recOf };
+  window.FCCHours = { reload: load, decorate: decorate, state: hoursState, verdict: hoursVerdict, rec: recOf, dock: dockShow, docked: function () { return !!dockEl(); } };
 })();</script>

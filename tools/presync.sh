@@ -108,6 +108,10 @@ echo "── validating: the FCC-wide hours badge (trail, posture, widget/engine
 node tools/test_hoursbadge.mjs >/dev/null
 echo "   ✓ the three-month trail, relationship smoothing and the widget twin hold"
 
+echo "── validating: the Playbook panel inside Workflow (practices, arrivals band, weak attributes)"
+node tools/test_playbook_panel.mjs >/dev/null
+echo "   ✓ 10–20% reads as a collection landing, and the standalone module stays retired"
+
 echo "── validating: retainer hours (optimisation vs technical vs feature vs account)"
 node tools/test_reporthours.mjs >/dev/null
 echo "   ✓ precedence traps hold; the baked snapshot reconciles to its own totals"

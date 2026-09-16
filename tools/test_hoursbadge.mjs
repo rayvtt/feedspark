@@ -186,10 +186,17 @@ const ANCHORS = [
   ['docs/FeedSpark_Workflow.html', 'the Workflow board'],
   ['docs/FeedSpark_Command_Center.html', 'the brand dossier'],
   ['docs/FeedSpark_TaskManager.html', 'the Task Manager'],
-  ['docs/FeedSpark_Playbook.html', 'the Playbook'],
   ['docs/FeedSpark_Leadership.html', 'Leadership'],
 ];
 ANCHORS.forEach(([f, what]) => ok(/data-hrs=/.test(rd(f)), what + ' anchors the badge'));
+// The Playbook stopped being a page of its own on 16 Sep 2026 — it is Workflow's right-hand rail,
+// and the retainer read-out is the LEFT one. So the strongest form of that anchor now lives in
+// Workflow: not a dot beside a brand name but the whole report DOCKED into the page, because
+// hovering it there "covers all the tasks and brands in the workflow" (Ray).
+ok(/id="fcc-hrs-dock"/.test(rd('docs/FeedSpark_Workflow.html')),
+  'Workflow docks the whole read-out in its left rail rather than floating it over the board');
+ok(/function dockShow\(/.test(rd('docs/hours_widget.html')) && /function hoverOpen\(b\) \{ if \(dockEl\(\)\) return;/.test(rd('docs/hours_widget.html')),
+  'and once docked, hover opens nothing at all');
 
 const WF = rd('docs', 'FeedSpark_Workflow.html');
 ok(/data-hrs="'\+esc\(b\.client\)\+'"/.test(WF), 'every Workflow ticket card carries its client');

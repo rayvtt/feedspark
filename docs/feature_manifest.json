@@ -3560,30 +3560,30 @@
       "pr": 342
     },
     {
-      "name": "playbook: page route wired into PAGES",
+      "name": "playbook: the retired /playbook route 301s onto Workflow's rail (old links keep landing)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "'/playbook':",
+      "pattern": "Location: '/workflow?pb=1'",
       "min": 1,
       "pr": 342
     },
     {
-      "name": "playbook: retrospective — completed-task checklist by category + time window",
-      "file": "docs/FeedSpark_Playbook.html",
-      "pattern": "function renderRetro(",
+      "name": "playbook: retrospective — what the account is doing well vs stalling, by category",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function pbPractice(",
       "min": 1,
       "pr": 342
     },
     {
-      "name": "playbook: prospective — cross-brand play suggestions (overlay on Accessorize → Hobbycraft)",
-      "file": "docs/FeedSpark_Playbook.html",
-      "pattern": "function renderProsp(",
+      "name": "playbook: prospective — cross-brand play suggestions (a play two peers run, absent here)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "gap.push({k:c.k,peers:",
       "min": 1,
       "pr": 342
     },
     {
       "name": "playbook: nav link present on the canonical page (parity propagates it to every page)",
       "file": "docs/FeedSpark_Workflow.html",
-      "pattern": "href=\"/playbook\"",
+      "pattern": "href=\"/workflow?pb=1\"",
       "min": 1,
       "pr": 342
     },
@@ -5209,8 +5209,8 @@
     },
     {
       "name": "Playbook: the tuned taxonomy is the team's, synced through /api/state (the KV-sync fast-follow CLAUDE.md flagged)",
-      "file": "docs/FeedSpark_Playbook.html",
-      "pattern": "body:JSON.stringify({pbtax:OV})",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "JSON.stringify({pbtax:OV})",
       "pr": 381,
       "min": 1
     },
@@ -6533,6 +6533,62 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "read across <b>' + r.cols",
       "min": 1
+    },
+    {
+      "name": "Playbook panel: the three sections Ray asked for — practices, new products, golden record",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "secPractice(BRAND)+secArrivals(BRAND)+secGolden(BRAND)",
+      "min": 1,
+      "pr": 420
+    },
+    {
+      "name": "Playbook panel: a new-product share of 10–20% is a collection landing, and is highlighted",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function pbBand(",
+      "min": 1,
+      "pr": 420
+    },
+    {
+      "name": "Playbook panel: arrivals read the last COMPLETE month, never the running one",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function pbArrivals(",
+      "min": 1,
+      "pr": 420
+    },
+    {
+      "name": "Playbook panel: weak Golden Record attributes, with the supplemental AI six left out",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function pbWeak(",
+      "min": 1,
+      "pr": 420
+    },
+    {
+      "name": "Cockpit: the retainer read-out is DOCKED in Workflow's left rail, never hovering the board",
+      "file": "docs/hours_widget.html",
+      "pattern": "function dockShow(",
+      "min": 1,
+      "pr": 420
+    },
+    {
+      "name": "Cockpit: once docked, hover opens nothing (Ray: it 'covers all the tasks and brands')",
+      "file": "docs/hours_widget.html",
+      "pattern": "function hoverOpen(b) { if (dockEl()) return;",
+      "min": 1,
+      "pr": 420
+    },
+    {
+      "name": "Cockpit: both rails PUSH the page rather than sit on top of it",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "body.ck-l-on{padding-left",
+      "min": 1,
+      "pr": 420
+    },
+    {
+      "name": "Cockpit: MODGATE resolves a nav link's module slug past its query string",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "var slug=h.replace(/[?#].*$/,\"\")",
+      "min": 1,
+      "pr": 420
     }
   ]
 }

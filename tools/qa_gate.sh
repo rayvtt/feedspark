@@ -103,6 +103,13 @@ else
   echo "   ✗ hours-badge harness FAILED — see node tools/test_hoursbadge.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d2c/7: Playbook panel (practices, the 10–20% collection band, weak attributes)"
+if node tools/test_playbook_panel.mjs >/dev/null 2>&1; then
+  echo "   ✓ landing vs stalling vs not-doing hold, 10–20% highlights, the retired module stays retired"
+else
+  echo "   ✗ playbook-panel harness FAILED — see node tools/test_playbook_panel.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3d3/7: retainer-hours classification (optimisation vs technical vs feature vs account)"
 if node tools/test_reporthours.mjs >/dev/null 2>&1; then
   echo "   ✓ precedence traps hold; the baked snapshot reconciles"
