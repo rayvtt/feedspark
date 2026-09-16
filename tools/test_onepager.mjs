@@ -29,6 +29,7 @@ const ok = (name, cond, got) => {
 };
 
 // Stub set A: everything healthy. Five intake items, only FOUR of them Reiss.
+let FULL_PLAN = {};
 const FULL = {
   abtests: { ok: true, client: 'Reiss', tab: 'AB Test Archive',
     summary: { total: 10, positive: 2, negative: 2, inconclusive: 6, winRate: 50 },
@@ -37,6 +38,11 @@ const FULL = {
       { batch: 'Jan I - Keyword Optimisation', type: 'Keyword Optimisation', verdict: 'negative', metrics: { impressions: -17.67, clicks: -18.18 }, report: 'r' },
     ] },
   kwresults: { ok: true, results: [], total: 23 },
+  arrivals: null,   // filled below, once the month list exists
+  intake: { connected: true, calls: [], items: [
+    { client: 'Reiss', subject: 'Newest Reiss request', from: 'Emily Clark <emily@reiss.com>', date: Date.now() },
+    { client: 'Reiss', subject: 'Batch approval [ibfref:REIS-20260910-02]', from: 'steven@agency.com', date: Date.now() - 2e8 },
+    { client: 'Schuh', subject: 'A SCHUH email that must not appear', from: 'x@schuh.com', date: Date.now() }] },
   audit: { score: { total: 88 } },
   clients: { clients: { Reiss: { wired: ['gb', 'us', 'de', 'fr', 'nl'] } } },
   alerts: { clients: { Reiss: { crit: 1, warn: 2 } }, ptClients: {} },
@@ -47,16 +53,26 @@ const FULL = {
     // 10,11,…,21 across the 12 months: 12mo = 186, 6mo = 111, 3mo = 60. Deliberately rising so
     // a window that silently summed the WHOLE range instead of its tail would not coincide.
     months.forEach((m, i) => { hours[m] = 10 + i; emails[m] = 2; });
+    FULL_PLAN = {}; months.forEach((m, i) => { FULL_PLAN[m] = 4 + (i % 3); });
     return { ok: true, client: 'Reiss', months,
-      streams: { schedule: { n: 12, byMonth: hours, sums: { hours: hours } }, emails: { n: 24, byMonth: emails } } };
+      streams: { schedule: { n: 12, byMonth: hours, sums: { hours: hours } }, emails: { n: 24, byMonth: emails },
+        plan: { n: 60, byMonth: FULL_PLAN } } };
   })(),
 };
+// arrivals ride the same months as the volumes payload; Schuh's feed is present precisely so
+// the sum can be asserted to exclude it
+FULL.arrivals = { ok: true, feeds: [
+  { client: 'Reiss', mkt: 'gb', kind: 'xml', dob: { m: Object.fromEntries(FULL.volumes.months.map((m, i) => [m, 100 + i])) } },
+  { client: 'Reiss', mkt: 'us', kind: 'xml', dob: { m: Object.fromEntries(FULL.volumes.months.map((m) => [m, 50])) } },
+  { client: 'Schuh', mkt: 'gb', kind: 'xml', dob: { m: Object.fromEntries(FULL.volumes.months.map((m) => [m, 9999])) } }] };
+
 // Stub set B: the archives are down and nothing is wired. Nothing here may render as a zero.
 const EMPTY = {
   abtests: { ok: false, error: 'no_archive_tab', tests: [] },
   kwresults: { ok: false },
   audit: {}, clients: { clients: {} }, alerts: {}, briefs: {},
   volumes: { ok: false, error: 'outside your client scope' },
+  arrivals: { ok: false }, intake: { connected: false },
 };
 
 async function run(stubs) {
@@ -71,6 +87,8 @@ async function run(stubs) {
     if (u.includes('/api/feed/audit')) return j(stubs.audit);
     if (u.includes('/api/feed/clients')) return j(stubs.clients);
     if (u.includes('/api/labels/alerts')) return j(stubs.alerts);
+    if (u.includes('/api/volume/arrivals')) return j(stubs.arrivals);
+    if (u.includes('/api/gmail/intake')) return j(stubs.intake);
     if (u.includes('/api/volumes')) return j(stubs.volumes);
     if (u.includes('/api/briefs')) return j(stubs.briefs);
     return j({});
@@ -86,8 +104,10 @@ async function run(stubs) {
   if (btn) { await page.locator('.dz-opb').first().click(); await page.waitForTimeout(1400); }
   const sheet = await page.locator('#op-sheet').count();
   const text = sheet ? await page.locator('#op-sheet').innerText() : '';
+  const html = sheet ? await page.locator('#op-sheet').innerHTML() : '';
+  const svgs = sheet ? await page.locator('#op-sheet svg').count() : 0;
   await browser.close();
-  return { btn, sheet, text, errs };
+  return { btn, sheet, text, html, svgs, errs };
 }
 
 console.log('\n-- the sheet opens from the dossier --');
@@ -97,8 +117,8 @@ ok('clicking it renders the sheet', A.sheet === 1);
 ok('no page errors', A.errs.length === 0, A.errs.slice(0, 2));
 
 console.log('\n-- every section is present --');
-['What’s live today', 'The work behind it', 'Nothing changes without a test',
- 'Watched every day', 'Where the account stands'].forEach((s) => {
+['What’s live today', 'The work behind it', 'Optimisation in detail',
+ 'Watched every day', 'Month by month', 'Where the account stands'].forEach((s) => {
   ok('section: ' + s, A.text.includes(s));
 });
 ok('carries the confidentiality footer', A.text.includes('Private & Confidential'));
@@ -122,6 +142,49 @@ ok('each window is a strict subset of the longer one',
 ok('emails handled appear per window (24 over 12mo)', /Last 12 months[\s\S]{0,80}24/.test(A.text));
 ok('12-month email total also heads the standing section', /24[\s\S]{0,40}Requests answered/.test(A.text),
    A.text.match(/[\s\S]{0,60}Requests answered/));
+
+
+console.log('\n-- section 1 is coverage only; anything granular moved to optimisation --');
+ok('search-term coverage is NOT in section 1',
+   A.text.indexOf('Search-term coverage') > A.text.indexOf('Optimisation in detail'),
+   { cov: A.text.indexOf('Search-term coverage'), opt: A.text.indexOf('Optimisation in detail') });
+ok('markets and feed quality sit together', /Markets live[\s\S]{0,120}Feed quality score/.test(A.text));
+ok('a per-market table lists each market', /MARKET[\s\S]{0,200}\bGB\b[\s\S]{0,120}\bUS\b/i.test(A.text));
+
+console.log('\n-- the area mix carries percentages --');
+ok('a "where the work went" breakdown renders', /Where the work went/i.test(A.text));
+ok('areas are shown as percentages', /\d+(\.\d+)?%[\s\S]{0,30}\d+\/\d+ done/.test(A.text),
+   A.text.match(/Where the work went[\s\S]{0,160}/));
+ok('the mix sums to about 100%', (function () {
+  const seg = (A.text.split(/where the work went/i)[1] || '').split(/by look-back/i)[0];
+  const pcts = (seg.match(/(\d+(?:\.\d+)?)%/g) || []).map((x) => parseFloat(x));
+  const sum = pcts.reduce((a, b) => a + b, 0);
+  return sum > 97 && sum < 103;
+})());
+
+console.log('\n-- the test record is itemised, not just counted --');
+ok('a test-record table renders', /THE TEST RECORD/i.test(A.text));
+ok('a named test appears with its uplift', /Jan II - Keyword Optimisation[\s\S]{0,80}\+21\.37%/.test(A.text));
+ok('a losing test is labelled lost', /-17\.67%[\s\S]{0,60}lost/.test(A.text));
+
+console.log('\n-- monthly volume charts --');
+ok('at least two charts render as SVG', A.svgs >= 2, A.svgs);
+ok('new products get their OWN chart, not a shared scale',
+   /New products entering the catalogue/i.test(A.text));
+ok('the work chart legends both series', /Emails in[\s\S]{0,40}Work booked in/.test(A.text));
+// the arrivals chart must sum this brand's markets only — Schuh's 9999/month sits in the payload
+ok('arrivals exclude another brand\u2019s feed', !/9999/.test(A.html), A.html.match(/.{0,40}9999.{0,40}/));
+ok('arrivals sum the brand\u2019s own markets (gb+us)', /151|150/.test(A.html));
+
+console.log('\n-- section 6 is itemised --');
+ok('open tasks are listed by name', /OPEN RIGHT NOW/i.test(A.text));
+ok('the pipeline is listed by name', /IN THE PIPELINE/i.test(A.text));
+ok('the five most recent requests are listed', /MOST RECENT REQUESTS/i.test(A.text));
+ok('the newest request is this brand\u2019s', A.text.includes('Newest Reiss request'));
+ok('another brand\u2019s email never appears', !A.text.includes('A SCHUH email that must not appear'));
+ok('a ticket reference is stripped without leaving empty brackets',
+   A.text.includes('Batch approval') && !/Batch approval\s*\[\s*\]/.test(A.text),
+   A.text.match(/Batch approval.{0,24}/));
 
 console.log('\n-- missing data renders as "—", never as a confident zero --');
 const B = await run(EMPTY);
