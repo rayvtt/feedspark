@@ -119,6 +119,19 @@ window.addEventListener('load',restore);
   .tab .c{font-size:11.5px;font-weight:800;color:var(--muted);margin-left:5px}
   /* tables */
   .tscroll{overflow:auto;max-height:74vh}
+  .pq-bar{display:flex;align-items:center;gap:9px;margin:0 0 9px}
+  .pq-bar input{flex:1;min-width:0;font:inherit;font-size:13px;font-weight:600;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+  .pq-bar input:focus{outline:none;border-color:var(--orange)}
+  .pq-n{font-size:11.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+  .pq-x{font:inherit;font-size:11.5px;font-weight:600;color:var(--muted);background:none;border:1px solid var(--line);border-radius:100px;padding:4px 10px;cursor:pointer}
+  .pq-x:hover{color:var(--orange-deep);border-color:var(--orange)}
+  /* the totals row stays put while the list scrolls — the whole point is that you can read what
+     the rows add up to without arriving at the end of them */
+  .st tfoot td{position:sticky;bottom:0;background:var(--paper);border-top:2px solid var(--line);
+    font-weight:800;padding:9px 10px;font-size:12.5px;z-index:2}
+  .st tfoot td.lbl{font-weight:600;color:var(--muted)}
+  [data-theme=dark] .st tfoot td{background:var(--paper)}
+  [data-theme=dark] .pq-bar input{background:#20242E;border-color:var(--line);color:var(--ink)}
   table.st{width:100%;border-collapse:collapse;font-size:13px}
   table.st th{position:sticky;top:0;background:var(--paper);z-index:2;font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
   table.st th.num,table.st td.num{text-align:right;font-variant-numeric:tabular-nums}
@@ -338,6 +351,11 @@ window.addEventListener('load',restore);
       <span class="grow"></span>
       <button class="btn sm" id="pxlsx" type="button" title="Download these rows as an Excel workbook — typed columns, a frozen filterable header, and a sheet recording the search behind them">⇩ Excel</button>
       <button class="btn sm" id="pmore" type="button" hidden>Show more</button>
+    </div>
+    <div class="pq-bar">
+      <input id="pq" type="search" placeholder="Filter these rows — task, client, market, who, status…" aria-label="Filter the rows in this tab">
+      <span class="pq-n" id="pq-n"></span>
+      <button type="button" class="pq-x" id="pq-x" hidden aria-label="Clear this filter">Clear</button>
     </div>
     <div class="tscroll" id="pbody"></div>
   </section>
@@ -1075,13 +1093,14 @@ window.addEventListener('load',restore);
   // the rows the ACTIVE tab is showing, in the order it is showing them, with the page's own
   // display labels resolved so the workbook reads in the same words the screen does
   function xrows(tab) {
-    if (tab === 'tickets') return sortRows(FK, SORT.tickets.k, SORT.tickets.dir).map(function (t) {
+    var rows = paneRows(tab);          // the SAME resolver the table uses, pane filter included
+    if (tab === 'tickets') return rows.map(function (t) {
       return Object.assign({}, t, { status: TICKET_LIVE[t.status] ? t.status : (t.status || '') });
     });
-    if (tab === 'accounts') return sortRows(ACCOUNTS, SORT.accounts.k, SORT.accounts.dir).map(function (a) {
+    if (tab === 'accounts') return rows.map(function (a) {
       return Object.assign({}, a, { stateL: a.flag === 0 ? 'live' : (a.status || 'stopped') });
     });
-    return sortRows(FT, SORT.tasks.k, SORT.tasks.dir).map(function (t) {
+    return rows.map(function (t) {
       return Object.assign({}, t, { catL: CAT_LABEL[t.cat] || t.cat, bucketL: BUCKET_LABEL[t.bucket] || t.bucket });
     });
   }
@@ -1094,6 +1113,7 @@ window.addEventListener('load',restore);
     add('Taken', new Date().toLocaleString('en-GB'));
     add('Rows in this export', n);
     add('Search', Q.raw.trim() || '(no search — the whole book in scope)');
+    if (PQ) add('Filter on this tab', PQ);
     add('Window', (D.from || '?') + ' to ' + (D.to || '?') + ' (' + (D.months || 12) + ' months)');
     if (tab === 'tickets') add('Ticket window', 'Tickets are windowed by LAST ACTIVITY, not by when they opened.');
     add('Book read', (h.read || 0) + ' of ' + (h.total || 0) + ' markets'
@@ -1206,13 +1226,102 @@ window.addEventListener('load',restore);
     { k: 'am', l: 'AM' }, { k: 'am2', l: 'Second' }, { k: 'allowance', l: 'Allowance', num: 1 },
     { k: 'used', l: 'Used', num: 1 }, { k: 'balance', l: 'Balance', num: 1 }, { k: 'status', l: 'State' }];
 
+  /* ---- the pane's own filter + totals (Ray, 16 Sep 2026: "Under the task box, include a search
+     bar. It should display the list of tasks, and at the bottom show the total hours of billable
+     and non-billable for filtered searches") ------------------------------------------------------
+
+     This is NOT a second copy of the top bar. That one is a grammar (client:/owner:/bill:/from:)
+     driving the chart, the KPIs and every tab at once. This one is a quick narrow over the rows
+     already in front of you — plain substring, no syntax — and it COMPOSES with the top bar rather
+     than replacing it, so a scoped search stays scoped.
+
+     THE TOTALS ARE OVER THE WHOLE FILTERED SET, NOT THE VISIBLE SLICE. The table paints 200 rows
+     at a time, so a footer summed from the DOM would quietly report a fifth of the book as the
+     total. It sums the filtered array and says how many rows that was — and when the list is
+     capped it says that too, because "202.5 h across 1,240 rows" beside 200 painted rows is the
+     only version of this that cannot mislead. */
+  var PQ = '';
+  function pqHay(tab, r) {
+    if (tab === 'tickets') return [r.subject, r.client, r.status, r.from, r.origin, r.am].join(' ').toLowerCase();
+    if (tab === 'accounts') return [r.client, r.market, r.name, r.group, r.am, r.am2, r.type, r.status, r.health].join(' ').toLowerCase();
+    return [r.title, r.client, r.market, r.owner, r.am, r.status, r.note, CAT_LABEL[r.cat] || r.cat].join(' ').toLowerCase();
+  }
+  // every word must appear somewhere in the row — "reiss stock" finds the stock work on Reiss
+  // without caring which column each word landed in
+  function pqMatch(tab, r) {
+    if (!PQ) return true;
+    var hay = pqHay(tab, r), w = PQ.split(/\s+/);
+    for (var i = 0; i < w.length; i++) if (w[i] && hay.indexOf(w[i]) < 0) return false;
+    return true;
+  }
+  // the ONE place a tab's rows are resolved — the table, the totals and the Excel export all read
+  // it, so the download can never be a different population from the screen
+  function paneRows(tab) {
+    tab = tab || TAB;
+    var src = tab === 'tickets' ? FK : (tab === 'accounts' ? ACCOUNTS : FT);
+    var out = PQ ? src.filter(function (r) { return pqMatch(tab, r); }) : src.slice();
+    return sortRows(out, SORT[tab].k, SORT[tab].dir);
+  }
+  // which columns a tab can honestly add up. Summing "Age" across tickets would be arithmetic on
+  // a number that means nothing added together, so those columns simply have no total.
+  var FOOT = {
+    tasks: [{ i: 6, k: 'bill', c: 'var(--bil)' }, { i: 7, k: 'nonbill', c: 'var(--nbil)' }, { i: 8, k: 'hours', b: 1 }],
+    tickets: [{ i: 7, k: 'tasks', n: 1 }, { i: 8, k: 'hours', b: 1 }],
+    accounts: [{ i: 5, k: 'allowance' }, { i: 6, k: 'used' }, { i: 7, k: 'balance', b: 1 }]
+  };
+  function footHtml(tab, rows, cols, capped) {
+    var spec = FOOT[tab]; if (!spec || !rows.length) return '';
+    var sum = {}, byIdx = {};
+    spec.forEach(function (f) { sum[f.k] = 0; byIdx[f.i] = f; });
+    rows.forEach(function (r) { spec.forEach(function (f) { sum[f.k] += (Number(r[f.k]) || 0); }); });
+    var first = spec[0].i;                       // the label spans everything before the first total
+    var lbl = num(rows.length) + (rows.length === 1 ? ' row' : ' rows')
+      + (PQ ? ' matching \u201c' + esc(PQ) + '\u201d' : '')
+      + (capped ? ' \u2014 totalled in full, not just the ' + num(SHOW) + ' shown' : '');
+    var td = '<td class="lbl" colspan="' + first + '">' + lbl + '</td>';
+    for (var i = first; i < cols.length; i++) {
+      var f = byIdx[i];
+      td += f
+        ? ('<td class="num"' + (f.c ? ' style="color:' + f.c + '"' : '') + '>'
+            + (f.n ? num(Math.round(sum[f.k])) : hrs(Math.round(sum[f.k] * 100) / 100)) + '</td>')
+        : '<td></td>';
+    }
+    return '<tfoot><tr>' + td + '</tr></tfoot>';
+  }
+  function pqWire() {
+    var el = $('pq'); if (!el || el.__w) return; el.__w = 1;
+    var t = null;
+    el.addEventListener('input', function () {
+      if (t) clearTimeout(t);
+      t = setTimeout(function () { t = null; PQ = el.value.trim().toLowerCase(); SHOW = 200; pane(); }, 120);
+    });
+    el.addEventListener('keydown', function (e) { if (e.key === 'Escape') { el.value = ''; PQ = ''; SHOW = 200; pane(); } });
+    $('pq-x').onclick = function () { el.value = ''; PQ = ''; SHOW = 200; pane(); el.focus(); };
+  }
+
+  // an empty result has two different causes and they need different words: the top bar matched
+  // nothing at all, or it matched and then THIS filter narrowed it to nothing. Saying "no task
+  // matches" when a filter two lines above is the reason sends people back to the wrong control.
+  function pqEmpty(what) {
+    if (!PQ) return empty(what);
+    return '<div class="empty">No ' + what + ' here matches <b>' + esc(PQ) + '</b>.<br>'
+      + 'That filter runs on top of the search above — clear it to widen, or clear both.</div>';
+  }
+  function pqCount(n) {
+    var el = $('pq-n'); if (el) el.textContent = PQ ? (num(n) + ' of ' + num(paneTotal())) : '';
+    var x = $('pq-x'); if (x) x.hidden = !PQ;
+  }
+  function paneTotal() { return (TAB === 'tickets' ? FK : (TAB === 'accounts' ? ACCOUNTS : FT)).length; }
+
   function pane() {
     var body = $('pbody');
+    pqWire();
     if (TAB === 'tasks') {
       $('pane-h').textContent = 'Tasks';
       $('pane-s').textContent = 'Every piece of work the reports database recorded against the book in this window. Click a row for the full record.';
       if (!FT.length) { body.innerHTML = empty('task'); $('pmore').hidden = true; return; }
-      var rows = sortRows(FT, SORT.tasks.k, SORT.tasks.dir), shown = rows.slice(0, SHOW);
+      var rows = paneRows('tasks'), shown = rows.slice(0, SHOW);
+      if (!rows.length) { body.innerHTML = pqEmpty('task'); $('pmore').hidden = true; pqCount(0); return; }
       body.innerHTML = '<table class="st">' + th(TASK_COLS, 'tasks') + '<tbody>' + shown.map(function (t, i) {
         return '<tr data-i="' + i + '">'
           + '<td>' + esc(t.d || '—') + '</td>'
@@ -1224,9 +1333,10 @@ window.addEventListener('load',restore);
           + '<td class="num" style="color:var(--bil)">' + (t.bill ? hrs(t.bill) : '·') + '</td>'
           + '<td class="num" style="color:var(--nbil)">' + (t.nonbill ? hrs(t.nonbill) : '·') + '</td>'
           + '<td class="num b">' + (t.hours ? hrs(t.hours) : '·') + '</td></tr>';
-      }).join('') + '</tbody></table>';
+      }).join('') + '</tbody>' + footHtml('tasks', rows, TASK_COLS, rows.length > SHOW) + '</table>';
       $('pmore').hidden = rows.length <= SHOW;
       $('pmore').textContent = 'Show more (' + num(rows.length - SHOW) + ' left)';
+      pqCount(rows.length);
       Array.prototype.forEach.call(body.querySelectorAll('tbody tr'), function (tr) {
         tr.onclick = function () { taskDrawer(rows[Number(tr.getAttribute('data-i'))]); };
       });
@@ -1238,7 +1348,8 @@ window.addEventListener('load',restore);
         ? ts.live + ' live · ' + ts.closed + ' closed · ' + ts.ignored + ' never closed or worked · ' + hrs(ts.hours) + ' h booked through them'
         : 'The email ticket queue, windowed by last activity.';
       if (!FK.length) { body.innerHTML = empty('ticket'); $('pmore').hidden = true; return; }
-      var kr = sortRows(FK, SORT.tickets.k, SORT.tickets.dir);
+      var kr = paneRows('tickets');
+      if (!kr.length) { body.innerHTML = pqEmpty('ticket'); $('pmore').hidden = true; pqCount(0); return; }
       body.innerHTML = '<table class="st">' + th(TK_COLS, 'tickets') + '<tbody>' + kr.map(function (t, i) {
         return '<tr data-i="' + i + '">'
           + '<td>' + esc(t.d) + '</td><td class="b">' + esc(t.client) + '</td>'
@@ -1247,8 +1358,9 @@ window.addEventListener('load',restore);
           + '<td class="num"><span class="age ' + esc(t.level || 'ok') + '">' + num(t.age) + '</span></td>'
           + '<td class="num">' + num(t.idle) + '</td><td class="num">' + num(t.msgs) + '</td>'
           + '<td class="num">' + num(t.tasks) + '</td><td class="num b">' + (t.hours ? hrs(t.hours) : '·') + '</td></tr>';
-      }).join('') + '</tbody></table>';
+      }).join('') + '</tbody>' + footHtml('tickets', kr, TK_COLS, false) + '</table>';
       $('pmore').hidden = true;
+      pqCount(kr.length);
       Array.prototype.forEach.call(body.querySelectorAll('tbody tr'), function (tr) {
         tr.onclick = function () { ticketDrawer(kr[Number(tr.getAttribute('data-i'))]); };
       });
@@ -1256,7 +1368,8 @@ window.addEventListener('load',restore);
     } else {
       $('pane-h').textContent = 'Accounts & hours balance';
       $('pane-s').textContent = 'The client master: every market the reports database holds, live and stopped, with its monthly allowance and where its hours balance stands.';
-      var ar = sortRows(ACCOUNTS, SORT.accounts.k, SORT.accounts.dir);
+      var ar = paneRows('accounts');
+      if (!ar.length) { body.innerHTML = pqEmpty('account'); $('pmore').hidden = true; pqCount(0); return; }
       body.innerHTML = '<table class="st">' + th(AC_COLS, 'accounts') + '<tbody>' + ar.map(function (a, i) {
         var st = balanceState(a.allowance, a.balance);
         return '<tr data-i="' + i + '"' + (a.flag !== 0 ? ' style="opacity:.62"' : '') + '>'
@@ -1266,8 +1379,9 @@ window.addEventListener('load',restore);
           + '<td class="num">' + (a.used ? hrs(a.used) : '·') + '</td>'
           + '<td class="num b" style="color:' + (st === 'over' ? 'var(--risk)' : st === 'banked' ? 'var(--navy)' : 'var(--ink)') + '">' + hrs(a.balance) + '</td>'
           + '<td><span class="st-p ' + (a.flag === 0 ? 'done' : 'cancelled') + '">' + esc(a.flag === 0 ? 'live' : a.status || 'stopped') + '</span></td></tr>';
-      }).join('') + '</tbody></table>';
+      }).join('') + '</tbody>' + footHtml('accounts', ar, AC_COLS, false) + '</table>';
       $('pmore').hidden = true;
+      pqCount(ar.length);
       Array.prototype.forEach.call(body.querySelectorAll('tbody tr'), function (tr) {
         tr.onclick = function () { acctDrawer(ar[Number(tr.getAttribute('data-i'))]); };
       });

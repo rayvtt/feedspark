@@ -469,3 +469,38 @@ container, the part manifest, the sheet-name rules Excel enforces silently, the 
 absent-is-absent rule, XML escaping (a single control character refuses a whole workbook) and the
 page wiring. The three exports were also driven end-to-end in a real browser and the workbooks
 re-opened with `openpyxl`.
+
+
+## A filter and a bottom line on the pane
+
+> Ray, 16 Sep 2026: *"Under the task box, include a search bar. It should display the list of
+> tasks, and at the bottom show the total hours of billable and non-billable for filtered
+> searches."*
+
+**The filter is not a second copy of the top bar.** That one is a grammar (`client:` `owner:`
+`bill:` `from:`) driving the chart, the KPIs and every tab at once. This one is a quick narrow over
+the rows already in front of you — plain substring, every word must appear somewhere in the row,
+no syntax — and it **composes** with the top bar rather than replacing it, so a scoped search stays
+scoped. `Esc` or **Clear** drops it; the counter reads `44 of 220`.
+
+**The totals row sums the whole filtered set, not the visible slice.** The table paints 200 rows at
+a time, so a footer summed from what is on screen would quietly report a fraction of the search as
+its total — 252 h beside a search that actually found 275 h. It sums the filtered array and, when
+the list is capped, says so in the row itself: *"220 rows — totalled in full, not just the 200
+shown"*. The footer is sticky, so you can read what the rows come to without arriving at the end of
+them.
+
+Billable and non-billable are totalled **separately** with the total beside them, on the same
+palette as the chart. Tickets and accounts get the same treatment for the columns that can honestly
+be added — never `Age` or `Idle`, because adding those together is arithmetic on a number that
+means nothing summed.
+
+One resolver (`paneRows`) feeds the table, the totals **and** the Excel export, so a download can
+never be a different population from the screen. An empty result distinguishes its two causes: the
+top bar matched nothing, or it matched and *this* filter narrowed it to nothing — saying "no task
+matches" when a filter two lines above is the reason sends people back to the wrong control.
+
+QA: `tools/test_reporttasks.mjs` lifts `pqMatch` and `footHtml` out of the page by name and pins the
+filter (case, multi-word AND, display-label matching on Type, per-tab fields) and the totals — in
+particular that 220 rows total 275 h while only 200 are painted, that the split is never merged, and
+that an empty list produces no totals row at all rather than a row of zeroes.

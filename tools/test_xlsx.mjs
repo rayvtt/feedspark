@@ -120,8 +120,9 @@ ok(/id="pxlsx"/.test(PAGE), 'the export button is on the tab pane, so it follows
 const XC = PAGE.slice(PAGE.indexOf('var XCOLS'), PAGE.indexOf('var XNAME'));
 ['tasks', 'tickets', 'accounts'].forEach((t) => ok(new RegExp(t + ':\\s*\\[').test(XC),
   'XCOLS covers the ' + t + ' tab'));
-ok(/xrows\(tab\)/.test(PAGE) && /sortRows\(FT, SORT\.tasks/.test(PAGE),
-  'it exports the CURRENT filtered, sorted view — not the whole book');
+ok(/xrows\(tab\)/.test(PAGE) && /var rows = paneRows\(tab\);/.test(PAGE),
+  'it exports the CURRENT view through the same resolver the table uses — the top-bar search, the '
+  + 'pane filter and the sort — not the whole book, and not the rows that happen to be painted');
 ok(/Billable h/.test(XC) && /Non-billable h/.test(XC) && /Total h/.test(XC),
   'billable and non-billable stay split, with the total beside them');
 ok(/About this export/.test(PAGE), 'provenance rides as its own sheet, never mixed into the data grid');

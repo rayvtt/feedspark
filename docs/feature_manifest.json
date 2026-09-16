@@ -6105,6 +6105,24 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "idx[key].airP = pm",
       "min": 1
+    },
+    {
+      "name": "Task Manager: the pane's own filter, under the tab header",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "id=\"pq\"",
+      "pr": 406
+    },
+    {
+      "name": "Task Manager: totals footer sums the WHOLE filtered set, not the painted slice",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function footHtml",
+      "pr": 406
+    },
+    {
+      "name": "Task Manager: one row resolver feeds the table, the totals and the export",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function paneRows",
+      "pr": 406
     }
   ]
 }
