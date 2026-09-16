@@ -36,14 +36,23 @@ export function abClientKey(s) {
 export function resolveAbTab(titles, client) {
   const list = (titles || []).filter(Boolean);
   const near = list.filter((t) => AB_TAB_RE.test(t));
+  // THE EXACT NAME WINS FIRST, before any brand reasoning (Ray, 16 Sep 2026: Reiss's tab is
+  // called "AB Test Archive" and the dossier still said the plan had no archive tab).
+  // The brand branch below used to run first, so in a workbook holding the archive AND any
+  // second archive-ish tab — an "Old AB Test Archive", an "AB Test Archive 2024" — near.length
+  // was 2, neither name contained "reiss", and it refused. Passing the client made the answer
+  // WORSE than omitting it, which is the opposite of what disambiguation is for.
+  // This does not weaken the shared-workbook guard: Monsoon and Accessorize live in one file as
+  // "AB Test Archives Monsoon" / "AB Test Archives Accessorize", and neither is the exact name,
+  // so those still fall through to the brand match below.
+  const exact = list.filter((t) => /^\s*a\/?b test archives?\s*$/i.test(t));
+  if (exact.length === 1) return exact[0];
   const key = abClientKey(client);
   if (key && near.length > 1) {
     const mine = near.filter((t) => abClientKey(t).indexOf(key) >= 0);
     if (mine.length === 1) return mine[0];
     return null;                               // still can't tell them apart — never guess
   }
-  const exact = list.find((t) => /^\s*ab test archive\s*$/i.test(t));
-  if (exact) return exact;
   return near.length === 1 ? near[0] : null;   // several archive-ish tabs = ambiguous, not a guess
 }
 

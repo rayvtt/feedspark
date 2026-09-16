@@ -1316,7 +1316,7 @@ window.addEventListener('load',restore);
     } else if (ab && !ab.ok) {
       // self-diagnosing: the sheet says exactly why, so it is fixable without opening the console
       var why = { no_plan_sheet: 'no project plan is wired for this brand',
-        no_archive_tab: 'the plan has no “AB Test Archive” tab' + ((ab.tabs && ab.tabs.length) ? ' (tabs seen: ' + ab.tabs.slice(0, 10).map(esc).join(', ') + ')' : ''),
+        no_archive_tab: 'the plan has no “AB Test Archive” tab' + abTabList(ab),
         no_sa: 'the Google service account is not configured',
         not_shared: 'the plan sheet is not shared with our reader' + (ab.sa ? ' — share it (Viewer) with ' + esc(ab.sa) : ''),
         bad_sheet_id: 'the wired plan sheet id does not resolve — it needs re-pointing',
@@ -1978,16 +1978,25 @@ window.addEventListener('load',restore);
       } });
     return out.join(' <span style="opacity:.4">·</span> ');
   }
+  // The tab list is DIAGNOSTIC — it is the evidence for "no archive tab", so it must never
+  // read as the whole workbook when it is a subset. Printing twelve of thirty names silently
+  // is what sent us hunting for a tab that was there all along (Ray, 16 Sep 2026).
+  function abTabList(d){
+    var t=(d&&d.tabs)||[]; if(!t.length) return '';
+    var n=(d&&d.tabCount)||t.length, show=t.slice(0,24);
+    return ' — '+(n>show.length?('showing '+show.length+' of '+n+' tabs: '):'tabs found: ')
+      +show.map(esc).join(', ')+(n>show.length?' …':'');
+  }
   function loadAbTests(name){
     var box=document.getElementById('dz-ab'); if(!box) return;
-    box.innerHTML='<div class="dz-mat-h"><b>\U0001F9EA A/B test archive</b><span class="n">loading…</span></div>';
+    box.innerHTML='<div class="dz-mat-h"><b>🧪 A/B test archive</b><span class="n">loading…</span></div>';
     fetch('/api/abtests?client='+encodeURIComponent(name)).then(function(r){return r.json();}).then(function(d){
       if(document.getElementById('dz-ab')!==box) return;   // brand switched mid-flight
-      var head='<div class="dz-mat-h"><b>\U0001F9EA A/B test archive</b><span class="n">';
+      var head='<div class="dz-mat-h"><b>🧪 A/B test archive</b><span class="n">';
       if(!d||!d.ok){
         // every failure says what to DO about it — a silent empty section reads as "no tests"
         var why={no_plan_sheet:'No project plan wired for this brand yet.',
-                 no_archive_tab:'No “AB Test Archive” tab in the plan'+((d&&d.tabs&&d.tabs.length)?' — tabs found: '+d.tabs.slice(0,12).map(esc).join(', '):'')+'.',
+                 no_archive_tab:'No “AB Test Archive” tab in the plan'+abTabList(d)+'.',
                  no_sa:'The Google service account is not configured on the worker.',
                  not_shared:'The plan sheet is not shared with our reader'+((d&&d.sa)?', so the archive cannot be opened. Share the sheet (Viewer) with '+esc(d.sa)+'.':'.'),
                  bad_sheet_id:'The wired plan sheet id does not resolve — it needs re-pointing in PLAN_SHEETS.',
@@ -2020,7 +2029,7 @@ window.addEventListener('load',restore);
       box.innerHTML=head+body;
       Array.prototype.forEach.call(box.querySelectorAll('.dz-ab-i'),function(row){ row.onclick=function(){
         var raw=row.querySelector('.dz-ab-raw'); if(raw)raw.hidden=!raw.hidden; }; });
-    }).catch(function(){ box.innerHTML='<div class="dz-mat-h"><b>\U0001F9EA A/B test archive</b></div><div class="dz-mat-e">Could not load the archive.</div>'; });
+    }).catch(function(){ box.innerHTML='<div class="dz-mat-h"><b>🧪 A/B test archive</b></div><div class="dz-mat-e">Could not load the archive.</div>'; });
   }
   function loadKwResults(name){
     var box=document.getElementById('dz-kwr'); if(!box) return;
