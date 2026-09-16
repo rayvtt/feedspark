@@ -45,6 +45,10 @@ jobs:
         run: node tools/test_pdpharvest.mjs
       - name: Vietnamese UI toggle harness (engine rules + seed integrity + owner gating)
         run: node tools/test_i18n.mjs
+      - name: Task Manager harness (parser, agent, worker store + scoped read, Leadership overlay)
+        run: node tools/test_tm.mjs
+      - name: Task Manager automatic sync harness (MCP transport, rotation, ticket hours, lifted tmPull vs a stub MCP)
+        run: node tools/test_tmmcp.mjs
       - name: Phone-layer harness (bottom bar, sheets, mirror rules, pan sweep, wiring)
         run: node tools/test_mobile.mjs
       - name: Scheduled Work harness (the content team's sheet → skip cadence per brand)

@@ -37,6 +37,8 @@ import SCHEDULE_SNAPSHOT from "../../../ops/schedule/scheduled_work_2026-09-15.j
 // Deck Generator's chart workbench — plan tasks, emails, calls, briefs, scheduled work, results.
 import { buildVolumes, monthKey as volMonthKey, monthRange as volMonthRange } from "./volumes.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
+import { aggregateClientList } from "./tmparse.js";
+import * as TMM from "./tmmcp.js";
 // Committed action batches (ops/ingest/*.json) — bundled at build time so a logged-in user can
 // file them into a plan sheet with ONE CLICK from /workflow (no CI service token needed).
 // New batch = commit the JSON + add it to INGEST_BATCHES.
@@ -120,6 +122,7 @@ import PDP_ENGINE_SRC from "../../../docs/pdp_engine.js";
 import I18N_ENGINE_SRC from "../../../docs/i18n_engine.js";
 import I18N_VI_SEED from "../../../docs/i18n/vi.json";
 import LANGW from "../../../docs/lang_widget.html";
+// Task Manager hours seed (committed MCP snapshot; the /api/tm fallback until a live push lands)
 // the phone layer (Ray, 15 Sep 2026: "complete overhaul for UX UI for mobile version — MIRROR desktop setting")
 import MOBILEW from "../../../docs/mobile_widget.html";
 
@@ -790,6 +793,24 @@ export default {
         }
         logActivity(ctx, env, request, 'xml-scan', results.filter((r) => r.ok).length + ' scanned · '
           + results.filter((r) => r.retry).length + ' held · ' + results.filter((r) => r.error || r.unreachable).length + ' failed', 'xml-scan');
+        return json({ ok: true, results });
+      }
+
+      // Task Manager push (Ray, 16 Sep 2026: "connect to FS's Task Manager which has an hours
+      // report on every task and map it back into our system"). SOURCE = the team's custom
+      // connector MCP `feedspark-reports` (get_client_list: allowance / used_hours / balance per
+      // client x market, hours already computed). The AUTOMATIC lane is the worker's own cron
+      // pull (tmPull, :15/:45 — see the Task Manager block near realOwner); this push stays as
+      // the alternative producer — the team's server or a keyed session may post the per-brand
+      // rollup src/tmparse.js › aggregateClientList produces — on the SAME key + Access bypass
+      // as the feed scan above (no new Zero Trust config). Both lanes write through tmStore
+      // (tm:<client> + the one-read tmidx the Leadership hours overlay reads) — KV is the ONLY
+      // home of these figures; no client hours are committed to git. rawHead optionally
+      // archives the producer's shape.
+      if (Array.isArray(body.tmpush)) {
+        const { results } = await tmStore(env, body.tmpush, { source: 'push' });
+        if (body.rawHead) { try { await env.EDITS.put('tmraw', JSON.stringify(body.rawHead)); } catch (e) {} }
+        logActivity(ctx, env, request, 'tm-scan', results.filter((r) => r.ok).length + ' client(s) · ' + results.filter((r) => r.ok).reduce((a, r) => a + (r.used || 0), 0) + ' h used', 'tm-scan');
         return json({ ok: true, results });
       }
 
@@ -1849,6 +1870,45 @@ export default {
     // ---- Gmail intake: recent client task emails → Workflow "Incoming emails" stream ----
     // Reads (readonly) the impersonated mailbox via the service account. Degrades to
     // {connected:false, items:[]} until GOOGLE_SA_JSON + GOOGLE_IMPERSONATE are set.
+    // Task Manager hours read (Ray, 16 Sep 2026). Scoped per signin like every Workflow route:
+    // owner sees the whole book, a client-scoped signin only their clients. Bare GET = the
+    // per-brand rollup the Leadership hours overlay + the dossier band read, plus `status` (the
+    // cron pull's honest state); ?client=<name> = that brand's record + its per-market task
+    // summaries (tmtasks:<client>); ?hours=1 = brief id → hours logged in the TM (the Workflow
+    // ⏱ chip), scoped by the brief's client; ?pull=1 = OWNER-ONLY "sync now" — runs the same
+    // tmPull the :15/:45 cron runs and returns its state (Ray never has to wait for a firing).
+    if (path === '/api/tm' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const inScope = (name) => acc.owner || !acc.clients || (acc.clients || []).some((c) => clientMatch(c, name));
+      const pubStatus = (s) => (s ? { state: s.state || null, at: s.at || null, ok_at: s.ok_at || null, fails: s.fails | 0, error: s.error || null, auth: s.auth || null, url: s.url || null, clients: s.clients == null ? null : s.clients, markets: s.markets == null ? null : s.markets, tasks: s.tasks == null ? null : s.tasks, refs: s.refs == null ? null : s.refs, pulled: s.pulled || null, changed: s.changed == null ? null : s.changed } : null);
+      if (url.searchParams.get('pull')) {
+        if (!realOwner(env, request)) return json({ ok: false, error: 'owner only' }, 403);
+        const s = await tmPull(env, { pulls: Math.min(8, Math.max(0, +url.searchParams.get('pulls') || TMM.TM_TASK_PULLS)) });
+        logActivity(ctx, env, request, 'tm-sync-now', s.state + (s.error ? ' — ' + s.error : '') + (s.pulled && s.pulled.length ? ' · ' + s.pulled.join(', ') : ''));
+        return json({ ok: s.state === 'ok', status: pubStatus(s) });
+      }
+      const status = pubStatus(await env.EDITS.get('tmstatus', 'json'));
+      if (url.searchParams.get('hours')) {
+        const all = (await env.EDITS.get('tmhours', 'json')) || {}; const out = {};
+        Object.keys(all).forEach((ref) => { const r = all[ref]; if (r && inScope(r.client)) out[ref] = r; });
+        return json({ ok: true, hours: out, tracked: Object.keys(out).length, status });
+      }
+      const one = url.searchParams.get('client');
+      if (one) {
+        if (!inScope(one)) return json({ ok: false, error: 'out of scope' }, 403);
+        const rec = await env.EDITS.get('tm:' + one, 'json');
+        const tasks = await env.EDITS.get('tmtasks:' + one, 'json');
+        return json({ ok: true, client: one, record: rec || null, tasks: tasks || null, status });
+      }
+      // No hours data lives in git — the figures exist only in KV, written by the cron pull (or
+      // the push lane). Before the first sync the book is simply empty and says so (source 'none').
+      const idx = (await env.EDITS.get('tmidx', 'json')) || {};
+      const src = Object.keys(idx).length ? 'live' : 'none';
+      const out = {}; let updated = 0;
+      Object.keys(idx).forEach((c) => { if (inScope(c)) { const r = Object.assign({}, idx[c]); delete r.sig; out[c] = r; if (idx[c].updated > updated) updated = idx[c].updated; } });
+      return json({ ok: true, clients: out, tracked: Object.keys(out).length, updated: updated || null, source: src, status });
+    }
+
     if (path === '/api/gmail/intake' && request.method === 'GET') {
       // primary source: the Apps Script inbox push (no-admin path) — classified + stored in KV.
       // Each item carries its triage decision (dismissed + decidedAs) so the panel can split
@@ -2378,6 +2438,12 @@ export default {
   // Reads the brand->sheet map the dashboard last posted (KV `plansheets`) and re-parses
   // each Project-Plan tab into KV (planlive:<id>). Registered in wrangler.toml [triggers].
   async scheduled(event, env, ctx) {
+    // Task Manager sync (Ray, 16 Sep 2026: "that sync must be automatic") — :15 and :45, its
+    // own firing so its MCP + KV subrequests never compete with the guard sweeps' budget.
+    if (event && event.cron === '15,45 * * * *') {
+      await tmPull(env);
+      return;
+    }
     // Custom-watch passes (Ray's alert builder) with their OWN subrequest budget: the :30
     // firing checks hourly-schedule rules; 07:00/17:00 GMT checks twice-daily rules.
     if (event && event.cron === '30 * * * *') {
@@ -2455,6 +2521,117 @@ function viewAsOf(env, request) {
 }
 // owner gates (activity / leadership / reminders / pushlog) use THIS, not a bare who()
 // compare, so a view-as preview is denied exactly like the person being previewed
+// ---- Task Manager: the worker pulls the feedspark-reports MCP ITSELF ----
+// Ray, 16 Sep 2026: "an automatic scan or push … has to sync almost four to six times a day …
+// If a brief is being sent from FCC and users are logging hours, reporting to clients, then that
+// sync must be automatic. I don't need a manual push or manual pull." No agent, no Action, no
+// Claude session: the :15/:45 cron runs tmPull. tmMcp = a minimal Streamable-HTTP MCP client
+// (JSON-RPC over POST, JSON or SSE answers, Mcp-Session-Id honoured) authenticated with the
+// TM_MCP_TOKEN secret — `Authorization: Bearer` unless TM_MCP_AUTH names the header the server
+// reads (e.g. X-API-Key); TM_MCP_URL overrides the endpoint. tmStore = the ONE writer of
+// tm:<client> + tmidx (the push lane and the pull share it; a record is re-written only when its
+// figures moved, so a quiet firing costs one KV write). tmPull = one firing: client list → the
+// per-brand rollup, then TM_TASK_PULLS task lists on the market rotation → tmtasks:<client>
+// (per-market summaries) + tmhours (brief id → hours, via the [ibfref:] token) + tmstatus, the
+// honest state the pages read: ok / no_token / unauthorized / unreachable / error.
+function tmMcp(env, fetchFn) {
+  const url = String(env.TM_MCP_URL || TMM.TM_MCP_URL);
+  const auth = TMM.authHeader(env.TM_MCP_TOKEN, env.TM_MCP_AUTH);
+  let sid = null, n = 0;
+  const post = async (body) => {
+    const h = { 'content-type': 'application/json', accept: 'application/json, text/event-stream' };
+    if (auth) h[auth.name] = auth.value;
+    if (sid) h['Mcp-Session-Id'] = sid;
+    const init = { method: 'POST', headers: h, body: JSON.stringify(body) };
+    if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) init.signal = AbortSignal.timeout(25000);
+    const r = await fetchFn(url, init);
+    const s = r.headers.get('Mcp-Session-Id') || r.headers.get('mcp-session-id'); if (s) sid = s;
+    const text = await r.text();
+    if (r.status === 401 || r.status === 403) { const e = new Error('unauthorized (HTTP ' + r.status + ')'); e.code = 'unauthorized'; throw e; }
+    if (r.status === 202 || !text) return null;
+    if (!r.ok) { const e = new Error('HTTP ' + r.status + (/json/i.test(r.headers.get('content-type') || '') ? '' : ' (non-JSON — Access login page? wrong URL?)')); e.code = r.status >= 500 ? 'unreachable' : 'http'; throw e; }
+    return TMM.parseRpc(text, r.headers.get('content-type') || '');
+  };
+  return {
+    async init() {
+      const m = await post(TMM.rpc(++n, 'initialize', { protocolVersion: TMM.TM_PROTOCOL, capabilities: {}, clientInfo: { name: 'feedspark-command-center', version: '1' } }));
+      if (m && m.error) { const e = new Error('initialize: ' + String(m.error.message || m.error.code)); e.code = 'init'; throw e; }
+      try { await post({ jsonrpc: '2.0', method: 'notifications/initialized' }); } catch (e) {}
+      return m;
+    },
+    async call(name, args) { return TMM.toolPayload(await post(TMM.rpc(++n, 'tools/call', { name, arguments: args || {} }))); },
+    auth: auth ? auth.name : null,
+    host: url.replace(/^https?:\/\//, '').split('/')[0],
+  };
+}
+
+async function tmStore(env, brands, opts) {
+  opts = opts || {};
+  const results = [];
+  const idx = (await env.EDITS.get('tmidx', 'json')) || {};
+  let changed = 0;
+  for (const c of (Array.isArray(brands) ? brands : []).slice(0, 40)) {
+    const client = String((c && c.client) || '').slice(0, 60).trim();
+    if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) { results.push({ client, error: 'bad client' }); continue; }
+    const nn = (v) => Math.round((+v || 0) * 100) / 100;
+    const markets = Array.isArray(c.markets) ? c.markets.slice(0, 60).map((m) => ({ market: String(m.market || '').slice(0, 24), allowance: nn(m.allowance), used: nn(m.used), balance: nn(m.balance), health: String(m.health || '').slice(0, 16) || null })) : [];
+    const rec = { client, group: String(c.group || '').slice(0, 60), am: String(c.am || '').slice(0, 40), allowance: nn(c.allowance), used: nn(c.used), balance: nn(c.balance), current: nn(c.current), carried: nn(c.carried), health: String(c.health || '').slice(0, 16) || null, marketCount: markets.length, markets, updated: Date.now(), src: String(opts.source || 'push') };
+    const sig = TMM.sigOf(rec, ['updated', 'src']);
+    if (opts.onlyChanged && idx[client] && idx[client].sig === sig) { results.push({ client, ok: true, unchanged: true, allowance: rec.allowance, used: rec.used }); continue; }
+    try { await env.EDITS.put('tm:' + client, JSON.stringify(rec)); } catch (e) { results.push({ client, error: 'kv put failed' }); continue; }
+    idx[client] = { allowance: rec.allowance, used: rec.used, balance: rec.balance, health: rec.health, marketCount: rec.marketCount, am: rec.am, updated: rec.updated, sig, src: rec.src };
+    changed++;
+    results.push({ client, ok: true, allowance: rec.allowance, used: rec.used });
+  }
+  if (changed || !opts.onlyChanged) { try { await env.EDITS.put('tmidx', JSON.stringify(idx)); } catch (e) {} }
+  return { results, idx, changed };
+}
+
+async function tmPull(env, opts) {
+  opts = opts || {};
+  const now = opts.now || Date.now();
+  const fetchFn = opts.fetch || fetch;
+  const prev = (await env.EDITS.get('tmstatus', 'json')) || {};
+  const st = { at: now, ok_at: prev.ok_at || null, fails: prev.fails | 0, rot: prev.rot || {}, auth: null, url: null };
+  const save = async (s) => { try { await env.EDITS.put('tmstatus', JSON.stringify(s)); } catch (e) {} return s; };
+  if (!env.TM_MCP_TOKEN) return save(Object.assign(st, { state: 'no_token', error: 'TM_MCP_TOKEN not set — wrangler secret put TM_MCP_TOKEN' }));
+  const mcp = tmMcp(env, fetchFn); st.auth = mcp.auth; st.url = mcp.host;
+  try {
+    try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }   // a server without a handshake still answers tools/call
+    const rows = TMM.rowsOf(await mcp.call('get_client_list', { flag_scope: 'live' }));
+    if (!rows.length) { const e = new Error('empty client list'); e.code = 'shape'; throw e; }
+    const by = aggregateClientList(rows);
+    const brands = Object.values(by).map((b) => Object.assign({}, b, { updated: now }));
+    const stored = await tmStore(env, brands, { onlyChanged: true, source: 'mcp' });
+    // task lists — a rotation of the markets worth reading, hot briefs first
+    const markets = TMM.marketsOf(rows);
+    let hot = new Set();
+    try { const bx = liftEnvelope(await env.EDITS.get('briefs', 'json'), now); hot = TMM.briefCodes((bx && bx.data) || {}, now); } catch (e) {}
+    const k = opts.pulls == null ? TMM.TM_TASK_PULLS : opts.pulls;
+    const plan = TMM.planPulls(markets, st.rot, hot, k, now);
+    const hours = (await env.EDITS.get('tmhours', 'json')) || {};
+    let hoursChanged = 0, tasksN = 0; const pulled = [];
+    for (const m of plan) {
+      const payload = await mcp.call('get_task_list_for_client', { client_id: m.id, from_date: TMM.isoDay(now - TMM.TM_TASK_DAYS * 86400000), limit: TMM.TM_TASK_LIMIT });
+      const trows = TMM.rowsOf(payload);
+      const sum = TMM.summariseTasks(trows, { client: m.client, market: m.market, id: m.id, now, total: payload && payload.total_count });
+      const key = 'tmtasks:' + m.client;
+      const book = (await env.EDITS.get(key, 'json')) || { client: m.client, markets: {} };
+      book.markets = book.markets || {}; book.markets[m.market] = sum; book.updated = now;
+      try { await env.EDITS.put(key, JSON.stringify(book)); } catch (e) {}
+      hoursChanged += TMM.mergeHours(hours, sum, now);
+      st.rot[m.id] = now; tasksN += trows.length; pulled.push(m.client + ' ' + m.market + ' (' + trows.length + ')');
+    }
+    if (hoursChanged) { try { await env.EDITS.put('tmhours', JSON.stringify(hours)); } catch (e) {} }
+    return save(Object.assign(st, { state: 'ok', ok_at: now, fails: 0, error: null, clients: brands.length, markets: rows.length, changed: stored.changed, pulled, tasks: tasksN, refs: Object.keys(hours).length }));
+  } catch (e) {
+    const msg = String((e && e.message) || e).slice(0, 160);
+    const code = e && e.code;
+    const state = code === 'unauthorized' ? 'unauthorized' : (code === 'unreachable' || /fetch failed|network|ECONN|ENOTFOUND|timed? ?out|aborted|HTTP 5\d\d/i.test(msg) ? 'unreachable' : 'error');
+    return save(Object.assign(st, { state, fails: (prev.fails | 0) + 1, error: msg }));
+  }
+}
+
 function realOwner(env, request) { return who(request) === ownerEmail(env) && !viewAsOf(env, request); }
 // the "you are previewing" strip appended to owner-only 403 pages while view-as is active
 function viewAsExitHtml(env, request) {

@@ -132,6 +132,16 @@ window.addEventListener('load',restore);
   .rd-ring::before{content:"";position:absolute;inset:4px;background:#fff;border-radius:50%}.rd-ring span{position:relative;z-index:1}
   .rd-who .nm{font-weight:900;font-size:15.5px}
   .rd-band{display:inline-block;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;border-radius:100px;padding:2px 9px;margin-top:4px;border:1px solid}
+  .tm-chip{display:inline-block;font-size:9px;font-weight:900;letter-spacing:.04em;color:var(--navy,#1A365D);background:rgba(91,130,190,.16);border-radius:100px;padding:1px 5px;margin-left:5px;vertical-align:1px}
+  [data-theme=dark] .tm-chip{color:#93B4E0;background:rgba(91,130,190,.22)}
+  #tm-src{font-size:11.5px;font-weight:700;color:var(--navy,#1A365D);margin:-6px 0 10px}
+  .tm-sync{font:inherit;font-size:10.5px;font-weight:800;margin-left:8px;padding:2px 9px;border-radius:100px;border:1px solid var(--line,#E6E6E6);background:#fff;color:var(--navy,#1A365D);cursor:pointer;vertical-align:1px}
+  .tm-sync:disabled{opacity:.6;cursor:default}
+  .tm-warn{color:var(--risk,#C0392B)}
+  [data-theme=dark] .tm-sync{background:transparent;color:#93B4E0;border-color:rgba(147,180,224,.4)}
+  .tm-bal{font-size:11px;font-weight:800;color:var(--muted);margin-left:6px}
+  .tm-bal.neg{color:var(--risk,#C0392B)}
+  [data-theme=dark] #tm-src{color:#93B4E0}
   .rd-band.b0{color:var(--good);background:#EBF7EF;border-color:#CDE9D8}
   .rd-band.b1{color:#8a6d1f;background:#FEF6E4;border-color:#F0E0B0}
   .rd-band.b2{color:var(--orange-ink);background:#FEF3E2;border-color:#F5D9A8}
@@ -237,6 +247,7 @@ window.addEventListener('load',restore);
   <section id="commercial">
     <h2>Hours &amp; commercial</h2>
     <p class="sub">Retainer burn-down and a profitability read per client. <b>Click any figure</b> to set the contracted block, rate and hours used — saved to this browser. Rates and used-hours are yours to confirm; nothing is invented.</p>
+    <div id="tm-src"></div>
     <div class="cm-roll" id="cm-roll"></div>
     <div class="cm-grid" id="cm-grid"></div>
   </section>
@@ -297,8 +308,43 @@ window.addEventListener('load',restore);
   var CM_KEY='fcc-commercial';
   var CM_DEF={ Monsoon:{hours:32,rate:73.125}, Accessorize:{hours:27,rate:73.125},
     YuMOVE:{hours:24,adhoc:21}, Schuh:{hours:46} };
-  var cm={}; (function(){ var saved={}; try{saved=JSON.parse(localStorage.getItem(CM_KEY))||{};}catch(e){}
-    brands.forEach(function(b){ cm[b]=Object.assign({hours:null,rate:null,adhoc:null,used:null}, CM_DEF[b]||{}, saved[b]||{}); }); })();
+  var cm={}, hadUsed={}, hadHours={}; (function(){ var saved={}; try{saved=JSON.parse(localStorage.getItem(CM_KEY))||{};}catch(e){}
+    brands.forEach(function(b){ cm[b]=Object.assign({hours:null,rate:null,adhoc:null,used:null}, CM_DEF[b]||{}, saved[b]||{}); hadUsed[b]=!!(saved[b]&&saved[b].used!=null); hadHours[b]=!!(saved[b]&&saved[b].hours!=null); }); })();
+  // Task Manager hours (Ray, 16 Sep 2026): real hours-per-task, logged in FS's Task Manager
+  // and pulled into KV by the worker's own :15/:45 cron from the feedspark-reports MCP (Ray:
+  // "that sync must be automatic"), feed the block + "Used" figures — but a figure you set by
+  // hand always wins (nothing is invented), and the source is labelled with a TM chip.
+  var tmNorm=function(s){return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'');};
+  function loadTM(){
+    fetch('/api/tm').then(function(r){return r.ok?r.json():null;}).then(function(d){
+      if(!d||!d.ok||!d.clients) return; var any=false;
+      var bynorm={}; brands.forEach(function(b){bynorm[tmNorm(b)]=b;});
+      Object.keys(d.clients).forEach(function(c){ var b=bynorm[tmNorm(c)]; if(!b){ var fw=tmNorm(c).slice(0,6); brands.forEach(function(x){ if(!b&&tmNorm(x).slice(0,6)===fw&&fw.length>=4)b=x;});} if(!b)return;
+        var row=d.clients[c];
+        cm[b].tmBlock=row.allowance; cm[b].tmUsed=row.used; cm[b].tmBal=row.balance; cm[b].tmHealth=row.health; cm[b].tmMkts=row.marketCount;
+        if(row.allowance!=null && !hadHours[b]){ cm[b].hours=row.allowance; cm[b].hoursTM=true; any=true; }
+        if(row.used!=null && !hadUsed[b]){ cm[b].used=row.used; cm[b].usedTM=true; any=true; } });
+      var line=document.getElementById('tm-src'); if(line){ line.innerHTML=tmLine(d); var sb=document.getElementById('tm-sync'); if(sb)sb.onclick=tmSyncNow; }
+      if(any||d.tracked){ renderCM(); renderRadar(); }
+    }).catch(function(){});
+  }
+  // The source line tells the truth about the sync — live and how fresh, waiting for its secret,
+  // refused, or unreachable — and says what the figures on screen are in each case. ⟳ Sync now
+  // runs the same pull the cron runs (owner-only route), so nobody waits for :15 / :45.
+  function tmAgo(t){ var m=Math.round((Date.now()-t)/60000); return m<1?'just now':m<60?(m+' min ago'):m<1440?(Math.round(m/60)+'h ago'):new Date(t).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+  function tmLine(d){
+    var st=d.status||null, esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+    var n=d.tracked||0, base=n?('· Task Manager — block + used hours on '+n+' client'+(n===1?'':'s')):'· Task Manager — no synced hours yet (the figures shown are the hand-set defaults)';
+    var btn=' <button type="button" id="tm-sync" class="tm-sync" title="Run the Task Manager pull now — the cron runs it at :15 and :45 every hour">⟳ Sync now</button>';
+    if(!st||!st.state) return esc(base)+(n&&d.updated?', live '+esc(new Date(d.updated).toLocaleDateString('en-GB')):(n?'':' — the automatic sync runs at :15 and :45'))+btn;
+    if(st.state==='ok') return esc(base)+' · <b>LIVE</b> from the reports MCP, synced '+esc(tmAgo(st.ok_at||st.at))+(st.markets?' · '+st.markets+' markets':'')+(st.refs?' · ticket hours on '+st.refs+' brief'+(st.refs===1?'':'s'):'')+btn;
+    var shown=st.ok_at?('showing the last good sync, '+tmAgo(st.ok_at)):(n?'showing the last stored figures':'no synced figures yet');
+    if(st.state==='no_token') return esc(base)+' · <span class="tm-warn">automatic sync is waiting for the TM_MCP_TOKEN secret</span> — '+esc(shown)+btn;
+    if(st.state==='unauthorized') return esc(base)+' · <span class="tm-warn">sync REFUSED by the reports MCP ('+esc(st.error||'401')+') — check TM_MCP_TOKEN, or set TM_MCP_AUTH to the header it expects (sending '+esc(st.auth||'Authorization')+')</span> — '+esc(shown)+btn;
+    return esc(base)+' · <span class="tm-warn">sync '+(st.state==='unreachable'?'unreachable':'failing')+' since '+esc(tmAgo(st.at))+' ('+(st.fails|0)+' failed pull'+((st.fails|0)===1?'':'s')+(st.error?': '+esc(st.error):'')+')</span> — '+esc(shown)+btn;
+  }
+  function tmSyncNow(){ var b=document.getElementById('tm-sync'); if(b){ b.disabled=true; b.textContent='⟳ syncing…'; }
+    fetch('/api/tm?pull=1').then(function(r){return r.json();}).then(function(){ loadTM(); }).catch(function(){ loadTM(); }); }
   function saveCM(){ try{localStorage.setItem(CM_KEY, JSON.stringify(cm));}catch(e){} }
   function num(v){ return (v==null||v==='')?null:(isNaN(+v)?null:+v); }
   function money(n){ return '£'+(Math.round(n)).toLocaleString('en-GB'); }
@@ -313,7 +359,9 @@ window.addEventListener('load',restore);
   function utilLabel(u){ if(u==null) return 'set hours'; if(u>1.05) return 'over block'; if(u<0.6) return 'under-used'; if(u>=0.85) return 'healthy'; return 'on track'; }
   function valSpan(b,field,suffix){ var v=cm[b][field];
     var txt = v==null? '+ set' : (v+(suffix||''));
-    return '<span class="cm-val'+(v==null?' unset':'')+'" data-b="'+esc(b)+'" data-f="'+field+'">'+txt+'</span>'; }
+    var fromTM = (field==='used'&&cm[b].usedTM) || (field==='hours'&&cm[b].hoursTM);
+    var tm = (fromTM&&v!=null) ? '<span class="tm-chip" title="From the FS Task Manager ('+(field==='hours'?'monthly allowance':'hours used this billing cycle')+') — click the figure to override">TM</span>' : '';
+    return '<span class="cm-val'+(v==null?' unset':'')+'" data-b="'+esc(b)+'" data-f="'+field+'">'+txt+'</span>'+tm; }
   function renderCM(){
     var grid=document.getElementById('cm-grid'); if(!grid) return;
     var order=brands.slice().sort(function(a,b){ return (cm[b].hours||0)-(cm[a].hours||0); });
@@ -325,7 +373,7 @@ window.addEventListener('load',restore);
       return '<div class="cm-card"><div class="cm-hd"><span class="nm">'+esc(b)+'</span>'
         +'<span class="cm-pill '+uc+'">'+utilLabel(u)+'</span></div>'
         +'<div class="cm-bar"><span class="cm-fill '+fillClass+'" style="width:'+pct+'%"></span></div>'
-        +'<div class="cm-nums"><span>Used '+valSpan(b,'used','h')+' / block '+valSpan(b,'hours','h')+'</span>'
+        +'<div class="cm-nums"><span>Used '+valSpan(b,'used','h')+' / block '+valSpan(b,'hours','h')+(c.tmBal!=null?' <span class="tm-bal '+(c.tmBal<0?'neg':'')+'" title="Task Manager balance incl. carried hours'+(c.tmMkts?' · '+c.tmMkts+' market'+(c.tmMkts===1?'':'s'):'')+'">bal '+(c.tmBal>0?'+':'')+c.tmBal+'h</span>':'')+'</span>'
         +'<span>'+(u==null?'—':pct+'%')+'</span></div>'
         +'<div class="cm-nums"><span>Rate '+valSpan(b,'rate','')+' · ad-hoc '+valSpan(b,'adhoc','h')+'</span><span>'+moLine+'</span></div>'
         +'<div class="cm-foot"><button class="cm-rep" data-rep="'+esc(b)+'">⧉ Copy hour report</button></div></div>';
@@ -349,7 +397,7 @@ window.addEventListener('load',restore);
       var b=el.getAttribute('data-b'), f=el.getAttribute('data-f'), cur=cm[b][f];
       var inp=document.createElement('input'); inp.className='cm-ed'; inp.type='number'; inp.step='any'; inp.value=cur==null?'':cur;
       el.textContent=''; el.appendChild(inp); inp.focus(); inp.select();
-      function commit(){ cm[b][f]=num(inp.value); saveCM(); renderCM(); renderRadar(); }
+      function commit(){ cm[b][f]=num(inp.value); if(f==='used'){cm[b].usedTM=false;hadUsed[b]=cm[b].used!=null;} if(f==='hours'){cm[b].hoursTM=false;hadHours[b]=cm[b].hours!=null;} saveCM(); renderCM(); renderRadar(); }
       inp.onblur=commit; inp.onkeydown=function(e){ if(e.key==='Enter'){e.preventDefault();inp.blur();} if(e.key==='Escape'){renderCM();} };
     }; });
   }
@@ -439,6 +487,6 @@ window.addEventListener('load',restore);
     t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1A365D;color:#fff;padding:9px 15px;border-radius:8px;z-index:99999;font-weight:700;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.2)';
     document.body.appendChild(t); setTimeout(function(){t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(function(){t.remove();},300);},1800); }
 
-  renderCM(); renderRadar();
+  renderCM(); renderRadar(); loadTM();
 })();
 </script>
