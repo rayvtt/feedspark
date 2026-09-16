@@ -851,5 +851,123 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   ok('xml pipe: late-debut Golden Record attr captured', snap2.attrs.sale_price.present === true && snap2.attrs.sale_price.filled === 4);
 }
 
+
+/* ---------- Content quality: the free-text attributes vs Google's own rules ---------- */
+{
+  eq('QSPEC: the eight free-text attributes', LG.QSPEC.map((q) => q.key),
+    ['title', 'description', 'product_highlight', 'google_product_category', 'product_type', 'color', 'material', 'pattern']);
+  ok('QSPEC: every rule carries a severity, a label, a Google quote', LG.QSPEC.every((q) => q.doc &&
+    q.rules.every((r) => ['fail', 'warn'].includes(r.sev) && r.label && r.why && (r.test || r.dupe))));
+
+  // caps: emphasis trips it, acronyms and a brand STYLED in capitals do not
+  ok('shoutyCaps: shouting', LG.shoutyCaps('SALE NOW ON') && LG.shoutyCaps('CLEARANCEBARGAIN'));
+  ok('shoutyCaps: acronyms + normal copy safe', !LG.shoutyCaps('Reiss Wool Coat XL UK') && !LG.shoutyCaps('USB-C Cable 2m'));
+  ok('stripBrand: HUGO BOSS is a logo, not a shout',
+    !LG.shoutyCaps(LG.stripBrand('HUGO BOSS Wool Blend Coat', 'HUGO BOSS')) &&
+    LG.shoutyCaps(LG.stripBrand('HUGO BOSS COAT SALE NOW', 'HUGO BOSS')));
+  eq('multiVals: repeatable fields split on |||', LG.multiVals('Waterproof|||Breathable|||  Lined  '),
+    ['Waterproof', 'Breathable', 'Lined']);
+
+  // a 10-row feed with one deliberate violation of each kind
+  const HEAD = ['id', 'title', 'description', 'brand', 'product_highlight', 'google_product_category', 'product_type', 'color', 'material', 'pattern'];
+  const cols = {}; HEAD.forEach((h, i) => { cols[h] = i; });
+  const ROWS = [
+    // clean baseline row, repeated so percentages are readable
+    ['1', 'Reiss Margot Wool Blend Longline Coat in Camel, Size 12', 'A longline coat cut from an Italian wool blend with a notch lapel, welt pockets and a half lining. Falls below the knee, true to size, and finished with horn-effect buttons for a tailored winter silhouette that layers over knitwear.', 'Reiss', 'Italian wool blend|||Half lined|||Notch lapel|||Horn-effect buttons', 'Apparel & Accessories > Clothing > Outerwear > Coats & Jackets', 'Women > Coats & Jackets > Wool Coats', 'Camel', 'wool/polyester', 'Herringbone'],
+    ['2', 'Reiss Elena Cotton Shirt Dress in Ivory, Size 10 Midi Length', 'A midi shirt dress in crisp cotton poplin with a self-tie waist, dropped shoulders and a hidden placket. Cut for an easy fit through the body with a gently gathered skirt that moves; wear it belted for the office or loose at the weekend.', 'Reiss', 'Cotton poplin|||Self-tie waist|||Hidden placket|||Midi length', 'Apparel & Accessories > Clothing > Dresses', 'Women > Dresses > Shirt Dresses', 'Ivory', 'cotton', 'Plain'],
+    // 3: title over 150 + promo + caps
+    ['3', 'SALE NOW ON ' + 'Reiss Luxury Cashmere Scarf in Charcoal with Hand Rolled Edges and a Gift Box Included Free Shipping This Weekend Only While Stocks Last Hurry'.padEnd(150, ' x'), 'Buy now and save £20 on this scarf. Visit www.example.com for more.', 'Reiss', 'Cashmere', '166', 'Accessories', '#3a3a3a', 'cashmere, silk', 'n/a'],
+    // 4: HTML description + thin + single-level PT + placeholder material
+    ['4', 'Reiss Belt', '<p>A leather belt.</p>', 'Reiss', 'Leather|||Leather', 'Apparel & Accessories', 'Belts', 'Black/Brown/Tan/Navy', 'none', 'PTN_04'],
+    // 5: no brand in title, gimmick symbols, colour not a colour
+    ['5', '★★★ Best Selling Midi Dress ★★★', 'A dress. It is a nice dress for many occasions and comes in several colours.', 'Reiss', 'Nice', 'Apparel & Accessories > Clothing > Dresses', 'Women>Dresses', 'variety', 'Cotton with a soft brushed finish for winter.', 'Striped/Plain'],
+    // 6-10: clean rows to give the percentages a denominator
+    ...[6, 7, 8, 9, 10].map((n) => ['' + n,
+      'Reiss Hailey Slim Fit Trousers in Navy, Size ' + n + ' Tailored Ankle Length',
+      'Slim-fit tailored trousers in a stretch wool blend with a mid rise, pressed creases and a cropped ankle. Fully lined to the knee with a hook-and-bar closure; pair with the matching blazer for a full suit or wear alone with knitwear.',
+      'Reiss', 'Stretch wool|||Mid rise|||Pressed creases|||Ankle length',
+      'Apparel & Accessories > Clothing > Pants', 'Women > Trousers > Tailored Trousers', 'Navy', 'wool/elastane', 'Plain']),
+  ];
+  const col = LG.qualityCollector(cols);
+  ROWS.forEach((r) => col.onRow(r));
+  const snap = col.finish({ client: 'Reiss', market: 'gb' });
+  eq('qualityCollector: every row counted', snap.rows, 10);
+  eq('quality: identity carried onto the snapshot', [snap.client, snap.market], ['Reiss', 'gb']);
+
+  const t = snap.attrs.title;
+  eq('title: all ten rows carry a title', t.filled, 10);
+  eq('title: the over-length title is caught once', t.rules['len-over'].n, 1);
+  eq('title: promotional copy caught', t.rules.promo.n, 1);
+  eq('title: shouting caught (brand styling not counted)', t.rules.caps.n, 1);
+  eq('title: decorative symbols caught', t.rules.gimmick.n, 1);
+  eq('title: the one title without the brand is caught', t.rules['no-brand'].n, 1);
+  ok('title: offenders are sampled for the page', t.rules.promo.eg.length === 1 && t.rules.promo.eg[0].length <= 140);
+
+  const d = snap.attrs.description;
+  eq('description: HTML markup caught', d.rules.html.n, 1);
+  eq('description: a link caught', d.rules.links.n, 1);
+  eq('description: thin copy caught', d.rules.thin.n, 3);
+  eq('description: duplicated boilerplate caught across the five repeats', d.rules.dupe.n, 5);
+
+  eq('highlights: fewer than 2 caught', snap.attrs.product_highlight.rules['count-min'].n, 2);
+  eq('highlights: the same highlight twice caught', snap.attrs.product_highlight.rules['dupe-in'].n, 1);
+  eq('GPC: a bare numeric id is valid taxonomy', snap.attrs.google_product_category.rules['not-taxonomy'].n, 0);
+  eq('GPC: a bare top-level name is shallow, not invalid', snap.attrs.google_product_category.rules.shallow.n, 1);
+  eq('product_type: chevrons without spaces caught', snap.attrs.product_type.rules.sep.n, 1);
+  eq('product_type: single level caught', snap.attrs.product_type.rules['single-level'].n, 2);
+  eq('colour: hex code caught', snap.attrs.color.rules.hex.n, 1);
+  eq('colour: "variety" is not a colour', snap.attrs.color.rules['not-colour'].n, 1);
+  eq('colour: more than three colours caught', snap.attrs.color.rules['too-many'].n, 1);
+  eq('material: placeholder caught', snap.attrs.material.rules.placeholder.n, 1);
+  eq('material: comma separator caught', snap.attrs.material.rules.sep.n, 1);
+  eq('material: prose caught', snap.attrs.material.rules.sentence.n, 1);
+  eq('pattern: internal code caught', snap.attrs.pattern.rules.internal.n, 1);
+  eq('pattern: two values caught', snap.attrs.pattern.rules.multi.n, 1);
+  eq('pattern: placeholder caught', snap.attrs.pattern.rules.placeholder.n, 1);
+
+  // scoring: a rule costs the share of products that break it, fails at full weight
+  const q = LG.qualityScore(snap);
+  ok('qualityScore: parts for every measured attribute', q.parts.length === 8);
+  const ti = q.parts.filter((p) => p.key === 'title')[0];
+  // title: len-over 10% + promo 10% + caps 10% + gimmick 10% (fails, ×1) = 40
+  //        thin 10% + short 10% + no-brand 20% + space 10% + dupe 0 (warns, ×0.4) = 20
+  eq('attrQuality: title scores 100 − fail% − 0.4×warn%', ti.score, 20);
+  ok('attrQuality: worst rule sorts first', ti.broken[0].cost >= ti.broken[1].cost);
+  eq('attrQuality: fail/warn counts', [ti.fails, ti.warns], [4, 3]);
+  ok('qualityScore: weighted by attribute, not a flat mean',
+    Math.abs(q.score - q.parts.reduce((s, p) => s + p.score * p.w, 0) / q.parts.reduce((s, p) => s + p.w, 0)) < 0.06);
+  ok('qualityScore: verdict names the band', q.verdict.pill.indexOf('Spec violations') >= 0 && q.verdict.line.length > 40);
+  eq('qualityVerdict: a clean feed reads as meeting the spec', LG.qualityVerdict(96, 0).band, 'good');
+  eq('qualityVerdict: best-practice gap is its own band', LG.qualityVerdict(82, 0).band, 'mid');
+  ok('attrQuality: an attribute nobody fills scores nothing', LG.attrQuality('title', { filled: 0 }) === null);
+
+  // a perfect feed must actually reach 100 — no rule fires on compliant content
+  const clean = LG.qualityCollector(cols);
+  // titles padded past 70 chars: the clean feed must trip nothing at all, 'short' included
+  [ROWS[0], ROWS[1], ...ROWS.slice(5)].forEach((r, i) => clean.onRow(r.map((c, j) => {
+    if (j === 1) return c + ' with Notch Lapel and Half Lining ' + (i + 1);
+    if (j === 2) return c + ' Style reference ' + (i + 1) + '.';   // unique per product, as the spec asks
+    return c;
+  })));
+  const cq = LG.qualityScore(clean.finish());
+  ok('a spec-compliant feed scores 100 on title + description',
+    cq.parts.filter((p) => p.key === 'title')[0].score === 100 &&
+    cq.parts.filter((p) => p.key === 'description')[0].score === 100, JSON.stringify(cq.parts.filter((p) => p.key === 'title')[0].broken));
+
+  // the client ask
+  const mail = LG.qualityAskEmail('Reiss', 'gb', ti);
+  ok('qualityAskEmail: names the feed, the score and the top rules',
+    mail.subject.indexOf('Reiss GB') === 0 && mail.subject.indexOf('g:title') > 0 &&
+    mail.body.indexOf(ti.score + '/100') > 0 && mail.body.indexOf('% of products') > 0 &&
+    mail.body.indexOf('disapproval') > 0 && mail.body.indexOf('Best regards,\nRay') > 0, mail.body);
+  const warnOnly = LG.qualityAskEmail('Reiss', 'gb', { key: 'material', score: 88, filled: 100, fails: 0, broken: [{ label: 'a sentence', pct: 12, n: 12, why: 'w', sev: 'warn' }] });
+  ok('qualityAskEmail: no requirement broken -> performance framing, not compliance',
+    warnOnly.body.indexOf('best practices rather than hard rules') > 0 && warnOnly.body.indexOf('disapproval') < 0);
+
+  // memory: duplicate tracking is bounded, never unbounded on a huge feed
+  ok('qualityCollector: example offenders capped at 4',
+    Object.keys(snap.attrs).every((k) => Object.keys(snap.attrs[k].rules).every((r) => snap.attrs[k].rules[r].eg.length <= 4)));
+}
+
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

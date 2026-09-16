@@ -45,7 +45,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import { ACCESS_SEED, resolveAccess, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY } from "./labelguard.js";
+import { QSPEC, qualityScore, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -404,7 +404,7 @@ export default {
         '/api/labels/watch': 'watch-save', '/api/labels/dest': 'dest-save',
         '/api/labels/dest/test': 'dest-test', '/api/labels/watch/run': 'watch-run',
         '/api/labels/report': 'report-save', '/api/labels/report/send': 'report-send', '/api/labels/askdraft': 'label-ask', '/api/ptypes/plantask': 'ptdepth-task', '/api/gmail/techam': 'techam-send', '/api/ingest/run': 'plan-ingest',
-        '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile', '/api/golden/pdp': 'golden-pdp-sample',
+        '/api/golden/scan': 'golden-scan', '/api/golden/ack': 'golden-rebase', '/api/golden/plantask': 'golden-task', '/api/golden/profile': 'golden-profile', '/api/golden/pdp': 'golden-pdp-sample', '/api/golden/quality': 'golden-quality',
         '/api/kwcal': 'kwcal-save', '/api/feedchat': 'feedchat-save', '/api/access': 'access-save', '/api/aiquote': 'aiquote-save', '/api/aiquote/saved': 'aiquote-saved', '/api/aiquote/plantask': 'aiquote-task' };
       if (ACT[path]) {
         logActivity(ctx, env, request, ACT[path],
@@ -3430,6 +3430,60 @@ async function goldenRoutes(env, request, url) {
     if (packed.length > 250000) return json({ error: 'sample too large' }, 413);
     await env.EDITS.put('goldenpdp:' + client + ':' + mkt, packed);
     return json({ ok: true, t: rec.t });
+  }
+
+  /* ---- Content quality (docs/LABELGUARD.md §9.6): how GOOD the free-text attributes are,
+     measured against Google's own specification pages. The BROWSER streams the feed and
+     runs labelguard's qualityCollector over every row (the worker never parses a feed —
+     the Feed Lab CPU rule); what lands here is the compact aggregate: per-rule hit counts
+     and a handful of example offenders. The feed's quality score rides onto goldenidx so
+     the estate scorecard can show it without a second read. */
+  if (path === '/api/golden/quality' && request.method === 'GET') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    const q = await env.EDITS.get('goldenqual:' + client + ':' + mkt, 'json');
+    return json({ quality: q || null });
+  }
+  if (path === '/api/golden/quality' && request.method === 'PUT') {
+    if (badClient || isFb) return json({ error: 'bad client/market' }, 400);
+    let b; try { b = await request.json(); } catch (e) { return json({ error: 'bad_json' }, 400); }
+    if (!b || typeof b !== 'object' || !b.attrs || typeof b.attrs !== 'object') return json({ error: 'attrs required' }, 400);
+    const rows = Math.max(0, parseInt(b.rows, 10) || 0);
+    if (!rows) return json({ error: 'a run over zero rows is not a reading' }, 400);
+    // keep only attributes the spec knows, and only the shape the page renders — a client
+    // cannot widen what is stored by inventing keys
+    const attrs = {};
+    for (const q of QSPEC) {
+      const a = b.attrs[q.key];
+      if (!a || typeof a !== 'object') continue;
+      const rules = {};
+      for (const rule of q.rules) {
+        const hit = (a.rules || {})[rule.id];
+        if (!hit) continue;
+        rules[rule.id] = { n: Math.max(0, parseInt(hit.n, 10) || 0),
+          pct: Math.round((Number(hit.pct) || 0) * 10) / 10,
+          eg: Array.isArray(hit.eg) ? hit.eg.slice(0, 4).map((x) => String(x).slice(0, 160)) : [] };
+      }
+      attrs[q.key] = { filled: Math.max(0, parseInt(a.filled, 10) || 0),
+        cov: Math.round((Number(a.cov) || 0) * 10) / 10,
+        avgLen: Math.max(0, parseInt(a.avgLen, 10) || 0),
+        minLen: Math.max(0, parseInt(a.minLen, 10) || 0),
+        maxLen: Math.max(0, parseInt(a.maxLen, 10) || 0),
+        rules, dupeCapped: a.dupeCapped === true || undefined };
+    }
+    if (!Object.keys(attrs).length) return json({ error: 'no known free-text attribute in this feed' }, 400);
+    const rec = { t: Date.now(), client, market: mkt, rows, attrs, kind: String(b.kind || '').slice(0, 8) };
+    const packed = JSON.stringify(rec);
+    if (packed.length > 250000) return json({ error: 'quality reading too large' }, 413);
+    await env.EDITS.put('goldenqual:' + client + ':' + mkt, packed);
+    // surface the headline on the estate index (never invents a row — only annotates one)
+    const qs = qualityScore(rec);
+    const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
+    const key = lgKey(client, mkt);
+    if (idx[key] && qs) {
+      idx[key].q = qs.score; idx[key].qFails = qs.fails; idx[key].qT = rec.t;
+      await env.EDITS.put('goldenidx', JSON.stringify(idx));
+    }
+    return json({ ok: true, t: rec.t, score: qs ? qs.score : null });
   }
 
   // "expected change" — adopt the current coverage snapshot as the new known-good
