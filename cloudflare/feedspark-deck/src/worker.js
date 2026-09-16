@@ -139,6 +139,7 @@ import HOURSW from "../../../docs/hours_widget.html";
 // the Build Log as a right-hand slide-over, so "what have I actually shipped" is answerable
 // without leaving the page you are working on. Owner-only, like the /activity board it mirrors
 import SHIPPEDW from "../../../docs/shipped_widget.html";
+import TOUCHW from "../../../docs/touch_widget.html";
 
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
@@ -2524,7 +2525,7 @@ export default {
         }
         const modList = acc.owner ? null : (acc.modules || null);
         html = inject(html, INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW
-          + '\n' + HOURSW
+          + '\n' + HOURSW + '\n' + TOUCHW
           + '\n<script>window.__FCCMOD=' + JSON.stringify(modList) + ';</script>\n' + MODGATE);
         // the Vietnamese UI toggle is Ray's alone: injected only for the REAL owner identity
         // (never for another signin, never while previewing someone else's FCC via view-as)

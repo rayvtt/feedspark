@@ -57,6 +57,8 @@ jobs:
         run: node tools/test_volumes.mjs
       - name: Retainer-hours harness (how delivered hours are classified for the one-pager pie)
         run: node tools/test_reporthours.mjs
+      - name: Dossier live-work harness (running tests read from the pipeline)
+        run: node tools/test_dossierlive.mjs
       - name: FS Task Manager harness (search grammar, billable split, page/engine parity)
         run: node tools/test_reporttasks.mjs
       - name: FCC hours badge harness (three-month trail, posture, widget/engine parity)

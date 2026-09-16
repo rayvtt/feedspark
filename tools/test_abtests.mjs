@@ -251,6 +251,31 @@ ok('an empty tab is not an archive', !hasAbHeader([]));
 ok('a lookalike without Test Method is not an archive',
    !hasAbHeader([['Country', 'Market', 'Currency', 'Feeds']]));
 
+// SUPERDRY heads the same table "Market" where Reiss heads it "Country" (Ray, 16 Sep 2026).
+// Its tab resolved by name and then failed to PARSE — the same blank card by another route.
+const SD_HDR = ['Market', 'Test Method', 'Test Type', 'Batch URL', 'Live Date', 'Report Date', 'Graph'];
+ok('Superdry’s "Market" header is an archive too', hasAbHeader([SD_HDR]));
+ok('…even with the merged "AB" banner row above it, as in the real sheet',
+   hasAbHeader([['AB'], SD_HDR]));
+ok('"Markets" and "Region" are accepted as the same column',
+   hasAbHeader([['Markets', 'Test Method']]) && hasAbHeader([['Region', 'Test Method']]));
+ok('the PAIR is still what identifies it — Market alone is not an archive',
+   !hasAbHeader([['Market', 'Currency', 'Feeds']]));
+{
+  // and it must actually parse, not merely be detected
+  const rows = [['AB'], SD_HDR,
+    ['UK', 'Single Group', 'Title Optimisation', 'url', 'NA', 'NA', '', 'no performance data'],
+    ['', '', '', '', '', '', '', ''],
+    ['UK', 'Single Group', 'Keyword Optimisation', 'url', '14/01/2025', '10/2/2025', '',
+      'Results: impressions of 21.37% and clicks of 11.85%'],
+  ];
+  const p = parseAbTests(rows);
+  ok('Superdry’s rows parse', p.ok && p.tests.length === 2, p.tests && p.tests.length);
+  ok('…the market travels with each test', p.ok && p.tests.every((t) => t.country === 'UK'));
+  ok('…and the verdict still reads off the prose',
+     p.ok && p.tests[1].verdict === 'positive', p.ok && p.tests[1].verdict);
+}
+
 // ---- the page's own diagnostics -----------------------------------------------------------
 // The tab list is the EVIDENCE for "no archive tab". It printed 12 names with no sign it had
 // truncated, which read as the whole workbook and hid the tab we were looking for.
