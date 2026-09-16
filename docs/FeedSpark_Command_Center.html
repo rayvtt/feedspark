@@ -375,6 +375,21 @@ window.addEventListener('load',restore);
   .dzp-t .n{font-size:21px;font-weight:900;line-height:1.1}
   .dzp-t .l{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
   .dzp-t.bad .n{color:var(--risk)}.dzp-t.good .n{color:var(--good)}.dzp-t.warn .n{color:var(--orange-deep)}
+  /* Activity reads as a shape first, then the numbers (Ray, 16 Sep 2026: "use pie chart or some
+     chart to break the text flow, fit in that same box though") — same card, no taller. */
+  .dzp-act{display:grid;grid-template-columns:76px 1fr;gap:13px;align-items:center;margin-top:2px}
+  .dzp-ring{position:relative;width:76px;height:76px}
+  .dzp-ring .mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .dzp-ring .mid b{font-size:17px;font-weight:900;line-height:1;letter-spacing:-.02em}
+  .dzp-ring .mid span{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:1px}
+  .dzp-leg{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .dzp-leg i{width:9px;height:9px;border-radius:2px;flex:none}
+  .dzp-lr{display:flex;align-items:center;gap:7px;font-size:11.5px;line-height:1.25}
+  .dzp-lr b{font-weight:900;font-variant-numeric:tabular-nums}
+  .dzp-lr span{color:var(--muted);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dzp-foot{display:flex;gap:14px;margin-top:9px;padding-top:8px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .dzp-foot em{font-style:normal;font-weight:900;font-size:13px}
+  .dzp-foot .lb{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-left:4px}
   .dzp-health{display:flex;align-items:center;gap:10px;margin-bottom:7px}
   .dzp-hn{font-size:24px;font-weight:900}
   .dzp-band{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;padding:3px 10px;border-radius:999px;color:#fff}
@@ -895,24 +910,39 @@ window.addEventListener('load',restore);
      the 2,000+ plan records (PLANTASKS), briefs in flight (/api/briefs), Feed Lab audits
      (/api/feed/audit per wired market), Label+PT Guard alerts (/api/labels/alerts?by=client)
      and Keyword Calendar saturation (/api/kwcal). All numbers computed, all £0. */
-  var BRIEFSC=null,ALERTC=null,KWC=null,AUDC={},PORTREQ=0,BRIEFAT=0;
+  var BRIEFSC=null,ALERTC=null,KWC=null,AUDC={},AUDAT={},PORTREQ=0;
   // The pipeline is the one source here that moves minute to minute — a colleague drags a
   // ticket to Test running and this page should say so. It was fetched ONCE per page load and
   // cached for the life of the tab, so a dossier left open on a leadership screen went stale
   // and quietly stayed that way. 60s is the cadence Workflow's own poll uses.
   var BRIEF_TTL=60000;
   function portShell(){ return '<div class="dz-port" id="dz-port"><div class="dzp-load">assembling live portfolio — briefs · audits · guards · keywords…</div></div>'; }
+  /* Ray, 16 Sep 2026: "when you follow the suggested next moves and work on, for example, go to
+     the workflow, go to Feed Lab, keyword calendar, and label guard, and once you have to check
+     and actioned … the brand dossier doesn't automatically update what the other module has
+     worked on unless you hit a refresh button. But it should be real time."
+
+     Every one of those caches was read ONCE and held for the life of the tab: scan a feed in
+     Feed Lab, accept a drop in Label Guard, move a ticket in Workflow, come back — and the
+     dossier still showed the state from whenever this page happened to load. The suggested
+     next moves are computed from exactly these reads, so the card kept recommending work that
+     was already done.
+     Each cache now carries its own stamp and expires; PSTAMP holds them in one place so a
+     cache added later cannot quietly become the immortal one. */
+  var PSTAMP={briefs:0,alerts:0,kw:0};
+  function pFresh(k,ttl){ return (Date.now()-(PSTAMP[k]||0)) < (ttl||BRIEF_TTL); }
   function portData(cb){
     var need=1; function done(){ if(--need<=0)cb(); }
-    if(BRIEFSC===null||(Date.now()-BRIEFAT)>BRIEF_TTL){ need++; fetch(API+'/api/briefs').then(function(r){return r.json()})
-      .then(function(j){BRIEFSC=(j&&typeof j==='object'&&!j.error)?j:(BRIEFSC||{}); BRIEFAT=Date.now(); done();},
+    if(BRIEFSC===null||!pFresh('briefs')){ need++; fetch(API+'/api/briefs').then(function(r){return r.json()})
+      .then(function(j){BRIEFSC=(j&&typeof j==='object'&&!j.error)?j:(BRIEFSC||{}); PSTAMP.briefs=Date.now(); done();},
             function(){BRIEFSC=BRIEFSC||{}; done();}); }
-    if(ALERTC===null){ need++; fetch(API+'/api/labels/alerts?by=client').then(function(r){return r.json()})
-      .then(function(j){ALERTC=j||{}; done();},function(){ALERTC={}; done();}); }
-    if(KWC===null){ need++; fetch(API+'/api/kwcal').then(function(r){return r.json()})
-      .then(function(j){KWC=(j&&typeof j==='object'&&!j.error)?j:{}; done();},function(){KWC={}; done();}); }
+    if(ALERTC===null||!pFresh('alerts')){ need++; fetch(API+'/api/labels/alerts?by=client').then(function(r){return r.json()})
+      .then(function(j){ALERTC=j||ALERTC||{}; PSTAMP.alerts=Date.now(); done();},function(){ALERTC=ALERTC||{}; done();}); }
+    if(KWC===null||!pFresh('kw')){ need++; fetch(API+'/api/kwcal').then(function(r){return r.json()})
+      .then(function(j){KWC=(j&&typeof j==='object'&&!j.error)?j:(KWC||{}); PSTAMP.kw=Date.now(); done();},function(){KWC=KWC||{}; done();}); }
     done();
   }
+  function portExpire(){ PSTAMP.briefs=PSTAMP.alerts=PSTAMP.kw=0; AUDAT={}; }
   function portMkts(name){ var b=B[name]||{}, ks={};
     if(b.feed)ks.gb=1; Object.keys(b.feeds||{}).forEach(function(k){ks[String(k).toLowerCase()]=1;});
     (FEEDWIRED[name]||[]).forEach(function(k){ks[k]=1;});
@@ -922,10 +952,11 @@ window.addEventListener('load',restore);
       var mkts=portMkts(name), pend=mkts.length;
       if(!pend)return cb(mkts);
       mkts.forEach(function(m){ var key=name+'|'+m;
-        if(AUDC[key]!==undefined){ if(--pend<=0)cb(mkts); return; }
+        // the feed audit is the read Feed Lab REWRITES when you scan — it expires like the rest
+        if(AUDC[key]!==undefined&&(Date.now()-(AUDAT[key]||0))<BRIEF_TTL){ if(--pend<=0)cb(mkts); return; }
         fetch(API+'/api/feed/audit?client='+encodeURIComponent(name)+'&market='+encodeURIComponent(m))
           .then(function(r){return r.json()})
-          .then(function(j){AUDC[key]=(j&&j.score&&typeof j.score.total==='number')?j:null;},function(){AUDC[key]=null;})
+          .then(function(j){AUDC[key]=(j&&j.score&&typeof j.score.total==='number')?j:null;AUDAT[key]=Date.now();},function(){AUDC[key]=null;AUDAT[key]=Date.now();})
           .then(function(){ if(--pend<=0)cb(mkts); });
       });
     });
@@ -1529,12 +1560,19 @@ window.addEventListener('load',restore);
     var p=M.p,od=M.od,inflight=M.inflight,done1=M.done1,kev=M.kev,satL=M.satL,crit=M.crit,warn=M.warn,
       audL=M.audL,avgA=M.avgA,h=M.h,band=M.band,bandL=M.bandL,fac=M.fac,sug=M.sug;
     /* assemble */
-    var act='<div class="dzp-card"><h5>Activity — '+(p?fmtN(p.total)+' tracked tasks':'no plan records')+'</h5><div class="dzp-tiles">'
-      +'<span class="dzp-t"><span class="n">'+(p?fmtN(p.open):'—')+'</span><span class="l">open</span></span>'
-      +'<span class="dzp-t good"><span class="n">'+(p?fmtN(done1):'—')+'</span><span class="l">done · 30d</span></span>'
-      +'<span class="dzp-t'+(od?' bad':'')+'"><span class="n">'+od+'</span><span class="l">overdue</span></span>'
-      +'<span class="dzp-t'+(inflight?' warn':'')+'"><span class="n">'+inflight+'</span><span class="l">briefs live</span></span>'
-      +'<span class="dzp-t"><span class="n">'+kev+'</span><span class="l">kw moments</span></span>'
+    /* Ray, 16 Sep 2026: "pre sent this number better please - use pie chart or some chart to
+       break the text flow, fit in that same box though". Five numbers in a row read as a wall;
+       the same five read instantly as a ring plus its legend. The ring is the TASK RECORD —
+       done / open / overdue, which are the three states a reader is actually weighing — with
+       overdue carved OUT of open, since an overdue task is an open one past its date and
+       drawing both whole would count it twice. Briefs live and kw moments are not task states,
+       so they sit under a rule rather than distorting the ring. */
+    var act='<div class="dzp-card"><h5>Activity — '+(p?fmtN(p.total)+' tracked tasks':'no plan records')+'</h5>'
+      + (p ? actRing(p, od, done1) : '<div class="dzp-tiles"><span class="dzp-t"><span class="n">—</span><span class="l">no plan wired</span></span></div>')
+      +'<div class="dzp-foot">'
+      +'<span><em'+(inflight?' style="color:var(--orange-deep)"':'')+'>'+inflight+'</em><span class="lb">briefs live</span></span>'
+      +'<span><em>'+kev+'</em><span class="lb">kw moments</span></span>'
+      +'<span><em class="'+(done1?'':'')+'" style="'+(done1?'color:var(--good)':'')+'">'+(p?fmtN(done1):'—')+'</em><span class="lb">done · 30d</span></span>'
       +'</div></div>';
     var hl='<div class="dzp-card"><h5>Health</h5><div class="dzp-health"><span class="dzp-hn">'+h+'</span><span class="dzp-band '+band+'">'+bandL+'</span></div>'+fac.slice(0,4).join('')+'</div>';
     var arows=audL.map(function(a){
@@ -1735,6 +1773,45 @@ window.addEventListener('load',restore);
         +'<a class="lw-chip" href="/workflow" title="Open in Workflow" style="background:'+r.col+'">'
         +esc(r.lbl)+'</a></li>'; }).join('')+'</ul>';
   }
+  /* The task record as one ring. Overdue is carved OUT of open — an overdue task is an open
+     one past its date, so drawing both whole would count it twice and the ring would not add
+     up to the total it sits under. A remainder (total − done − open) is real in some plans
+     (parked rows), so it is shown rather than quietly folded into one of the others. */
+  function actRing(p,od,done1){
+    var total=Math.max(0,p.total||0), done=Math.max(0,p.done||0), open=Math.max(0,p.open||0);
+    var over=Math.max(0,Math.min(od||0,open)), openOk=Math.max(0,open-over);
+    var other=Math.max(0,total-done-open);
+    var segs=[[done,'#15803D','Done'],[openOk,'#2F6FB0','Open'],[over,'#C0392B','Overdue'],[other,'#C9CDD4','Other']]
+      .filter(function(s){return s[0]>0;});
+    var sum=segs.reduce(function(a,s){return a+s[0];},0);
+    if(!sum) return '<div class="dzp-tiles"><span class="dzp-t"><span class="n">0</span><span class="l">tracked tasks</span></span></div>';
+    var S=76,R=S/2,r0=R-2,ri=R*0.62,a=-Math.PI/2,g='';
+    var pt=function(r,ang){return [R+r*Math.cos(ang),R+r*Math.sin(ang)];};
+    segs.forEach(function(s){
+      var sw=(s[0]/sum)*Math.PI*2, a2=a+sw, big=sw>Math.PI?1:0;
+      var ttl=esc(s[2])+': '+fmtN(s[0])+' ('+Math.round(s[0]/sum*100)+'%)';
+      if(segs.length===1){
+        g+='<circle cx="'+R+'" cy="'+R+'" r="'+((r0+ri)/2)+'" fill="none" stroke="'+s[1]
+          +'" stroke-width="'+(r0-ri)+'"><title>'+ttl+'</title></circle>';
+      }else{
+        var p1=pt(r0,a),p2=pt(r0,a2),p3=pt(ri,a2),p4=pt(ri,a);
+        g+='<path d="M'+p1[0].toFixed(2)+' '+p1[1].toFixed(2)
+          +'A'+r0+' '+r0+' 0 '+big+' 1 '+p2[0].toFixed(2)+' '+p2[1].toFixed(2)
+          +'L'+p3[0].toFixed(2)+' '+p3[1].toFixed(2)
+          +'A'+ri+' '+ri+' 0 '+big+' 0 '+p4[0].toFixed(2)+' '+p4[1].toFixed(2)+'Z" fill="'+s[1]
+          +'" stroke="var(--card,#fff)" stroke-width="1.2"><title>'+ttl+'</title></path>';
+      }
+      a=a2;
+    });
+    var pctDone=Math.round(done/sum*100);
+    var leg=segs.map(function(s){
+      return '<span class="dzp-lr"><i style="background:'+s[1]+'"></i><b>'+fmtN(s[0])+'</b><span>'+esc(s[2])+'</span></span>';
+    }).join('');
+    return '<div class="dzp-act"><div class="dzp-ring">'
+      +'<svg viewBox="0 0 '+S+' '+S+'" width="'+S+'" height="'+S+'" role="img" aria-label="Task record">'+g+'</svg>'
+      +'<span class="mid"><b>'+pctDone+'%</b><span>done</span></span></div>'
+      +'<div class="dzp-leg">'+leg+'</div></div>';
+  }
   function liveHtml(name,tasks){
     var LW=liveWork(name,tasks);
     return '<div class="dz-work-head"><h4>Currently running tests <span class="dz-histn">'+LW.tests.length+' live</span></h4>'
@@ -1751,13 +1828,20 @@ window.addEventListener('load',restore);
     var ov=shStatus(); tasks.forEach(function(t){ var v=ov[name+'|'+t.t]; if(v){t.s=v;t.b=bucketOf(v);} });
     box.innerHTML=liveHtml(name,tasks);
   }
-  function livePoll(){
+  /* One refresh for the whole dossier: the live block AND the portfolio band (audits, guard
+     alerts, keyword moments, suggested next moves), because those are what the other modules
+     change. Coming BACK to the tab is the important trigger — that is the moment after Feed Lab
+     scanned or Label Guard was accepted — so a return repaints immediately rather than waiting
+     out the interval. */
+  function livePoll(force){
     if(!cur||document.hidden)return;
-    BRIEFAT=0;                                   // force the next read past the TTL
-    portData(function(){ liveFill(cur); });
+    if(force)portExpire();
+    portData(function(){ if(!cur)return; liveFill(cur); portFill(cur); });
   }
-  setInterval(livePoll,BRIEF_TTL);
-  document.addEventListener('visibilitychange',function(){ if(!document.hidden)livePoll(); });
+  setInterval(function(){ livePoll(true); },BRIEF_TTL);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden)livePoll(true); });
+  // a module in ANOTHER TAB can say it changed something; same-tab navigation reloads anyway
+  window.addEventListener('storage',function(e){ if(e&&e.key==='fcc-touch')livePoll(true); });
   function planList(items){ if(!items.length) return '<p class="dz-empty">No tasks in the latest sections.</p>';
     return '<ul class="worklist">'+items.map(function(t){ var c=t.c||'opt';
       return '<li class="wl-item" data-b="'+esc(t.b)+'" data-task="'+esc(t.t)+'"><span class="wl-ic ic-'+c+'" title="'+(CATLBL[c]||c)+'">'+(ICONS[c]||ICONS.tech)+'</span>'

@@ -144,7 +144,7 @@ ok('the in-flight count reads .status, not the .st that never existed',
    /!WF_SHUT\[wfNorm\(x\.status\)\]/.test(CC) && !/String\(x\.st\|\|''\)/.test(CC));
 ok('the block has its own container to repaint', CC.indexOf('id="dz-live"') > 0);
 ok('there is a refresh that re-reads the pipeline', /function livePoll\(/.test(CC));
-ok('…on a timer', /setInterval\(livePoll/.test(CC));
+ok('…on a timer', /setInterval\(function\(\)\{ livePoll\(true\); \},BRIEF_TTL\)/.test(CC));
 ok('…and when the tab comes back', /visibilitychange[\s\S]{0,80}livePoll/.test(CC));
 ok('the cached pipeline expires instead of living forever', /BRIEF_TTL/.test(CC));
 ok('a failed refresh keeps the last good data rather than blanking the block',
@@ -153,6 +153,55 @@ ok('the pipeline section is rendered', CC.indexOf('In the pipeline') > 0);
 ok('rows link into Workflow', /class="lw-chip" href="\/workflow"/.test(CC));
 // the dossier is the INTERNAL view — the client-facing one-pager is what sanitises vocabulary
 ok('live rows are not run through the client-safe scrubber', !/liveRows[\s\S]{0,400}opSafe\(/.test(CC));
+
+console.log('\n-- the Activity ring (Ray: "use pie chart or some chart to break the text flow") --');
+const ring = new Function('fmtN', 'esc', `${lift(CC, 'actRing')} return actRing;`)(
+  (n) => String(n), (s) => String(s));
+{
+  const h = ring({ total: 108, done: 98, open: 6 }, 4, 0);
+  ok('it draws a ring', /<svg[\s\S]*<path/.test(h) || /<circle/.test(h));
+  ok('overdue is carved OUT of open, never counted twice',
+     /<title>Open: 2 /.test(h) && /<title>Overdue: 4 /.test(h), h.match(/<title>[^<]*<\/title>/g));
+  ok('the slices add up to the tracked total',
+     (h.match(/<title>\w+: (\d+)/g) || []).map((m) => +m.split(': ')[1]).reduce((a, b) => a + b, 0) === 108,
+     (h.match(/<title>[^<]*<\/title>/g) || []));
+  ok('the centre states the done share', /<b>91%<\/b>/.test(h), h.match(/<b>\d+%<\/b>/));
+  ok('every slice is labelled in the legend', /Done<\/span>/.test(h) && /Overdue<\/span>/.test(h));
+}
+{
+  // a plan whose parts do not sum to the total keeps the remainder visible rather than hiding it
+  const h = ring({ total: 96, done: 61, open: 34 }, 0, 0);
+  ok('a remainder is shown, not folded away', /<title>Other: 1 /.test(h), h.match(/<title>[^<]*<\/title>/g));
+}
+ok('a brand with no tasks does not draw an empty ring',
+   !/<svg/.test(ring({ total: 0, done: 0, open: 0 }, 0, 0)));
+ok('overdue larger than open is clamped, never negative',
+   !/-\d/.test(ring({ total: 10, done: 8, open: 2 }, 99, 0)));
+ok('the ring sits in the same card, with briefs/kw below a rule',
+   /dzp-act[\s\S]{0,4000}dzp-foot/.test(CC));
+
+console.log('\n-- real time: what another module changed shows without a manual refresh --');
+ok('every portfolio cache has a stamp, not just the briefs', /var PSTAMP=\{briefs:0,alerts:0,kw:0\}/.test(CC));
+ok('the guard-alert read expires', /ALERTC===null\|\|!pFresh\('alerts'\)/.test(CC));
+ok('the keyword-calendar read expires', /KWC===null\|\|!pFresh\('kw'\)/.test(CC));
+ok('the Feed Lab audit expires too — it is what a scan rewrites', /AUDAT\[key\]/.test(CC));
+ok('the poll repaints the portfolio band, not only the live block', /liveFill\(cur\); portFill\(cur\);/.test(CC));
+ok('coming back to the tab refreshes immediately', /visibilitychange[\s\S]{0,90}livePoll\(true\)/.test(CC));
+ok('another tab can announce a change', /'storage'[\s\S]{0,80}fcc-touch/.test(CC));
+
+console.log('\n-- the cross-tab broadcaster --');
+{
+  const TW = fs.readFileSync(path.join(ROOT, 'docs', 'touch_widget.html'), 'utf8');
+  const WK = fs.readFileSync(path.join(ROOT, 'cloudflare', 'feedspark-deck', 'src', 'worker.js'), 'utf8');
+  ok('it is injected on app pages', /TOUCHW/.test(WK) && /touch_widget\.html/.test(WK));
+  ok('only mutating methods announce', /MUT=\/\^\(POST\|PUT\|PATCH\|DELETE\)/.test(TW));
+  ok('only a successful response announces', /if\(r&&r\.ok\)touch\(\)/.test(TW));
+  ok('the heartbeat routes are excluded, or every page would fire it every minute',
+     /presence\|activity\|claude\|version/.test(TW));
+  ok('storage failure cannot break the fetch it observes', /try\{ localStorage\.setItem/.test(TW));
+  ok('it returns the original promise', /return p;/.test(TW));
+  ok('it installs once', /window\.__fccTouch/.test(TW));
+}
 
 console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' + pass + ' passed' : '✓ all green  ' + pass + ' passed, 0 failed') + '\n');
 process.exit(fail ? 1 : 0);
