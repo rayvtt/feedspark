@@ -6333,7 +6333,7 @@
     {
       "name": "Golden Record content quality: the duplicate example list names each value ONCE, not once per repeat",
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "a.rules[dr.id].groups = gs;",
+      "pattern": "slot.eg = gs.map((g) => g.v);",
       "min": 1
     },
     {
@@ -6358,6 +6358,42 @@
       "name": "Feed proxy declares an XML feed's size as x-feed-bytes (informational — never content-length, which truncates a decoded stream) so the Golden Record scan can draw a real bar",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "x-feed-bytes",
+      "min": 1
+    },
+    {
+      "name": "Golden Record content quality: the DESCRIPTION duplicate rule is variant-aware — only copy reused across DIFFERENT item_group_ids is a finding, variants sharing copy is reported as context (the method difference behind Ray's 60.1-vs-89 question, 16 Sep 2026)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "variantAware: true",
+      "min": 1
+    },
+    {
+      "name": "Golden Record content quality: the TITLE duplicate rule still counts every repeat — Google asks titles to carry distinguishing details of each variant",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "whether the other row is a variant of the same product or a different product entirely",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: each duplicate group is labelled 'different products' or 'variants of one product', and the finding states what it did NOT count",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "share copy only with variants of the same product",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: TWO SCORES, TWO QUESTIONS — the band reconciling content quality with the AI-Readiness pillars, flagging every field the two sections read differently (Ray 16 Sep 2026: 'how do we bring this together and flag IF there is different scoring logic between the two sections')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function reconcileSection",
+      "min": 1
+    },
+    {
+      "name": "Golden Record reconciliation: each pair states what each side MEASURES and, past a 15-point gap, the plain-English cause — never an average of the two",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var RECON_GAP = 15",
+      "min": 1
+    },
+    {
+      "name": "Golden Record reconciliation prints with the scorecard — body.pdf restores the ≤900px grid-column stacking, else the measured sheet is shorter than the printed document",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "else each row stacks into three",
       "min": 1
     }
   ]

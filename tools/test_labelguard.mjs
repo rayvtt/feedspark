@@ -920,6 +920,37 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   ok('dupe: attrQuality carries the groups to the page',
     (() => { const b = LG.attrQuality('description', d).broken.filter((x) => x.id === 'dupe')[0];
       return b && b.vals === 1 && b.groups.length === 1 && b.groups[0].n === 5; })());
+  // VARIANT AWARENESS (Ray, 16 Sep 2026: "there's definitely a discrepancy between the scoring
+  // of content quality versus AI readiness … description for Superdry GB 60.1 but AI readiness
+  // 89"). Google asks the TITLE to distinguish each variant, so a shared title counts however
+  // it is shared; the DESCRIPTION rule is about boilerplate, and variants of one product
+  // legitimately share copy — the same call the Feed Lab pillar makes, which is most of why the
+  // two numbers diverged. Measured on the real Superdry GB feed: 99.7% of products vs 81.0%.
+  {
+    const cv = LG.qualityCollector({ id: 0, title: 1, description: 2, item_group_id: 3 });
+    const D1 = 'A longline coat cut from an Italian wool blend with a notch lapel and welt pockets, half lined, true to size and finished with horn-effect buttons for a tailored winter silhouette.';
+    const D2 = 'Slim-fit tailored trousers in a stretch wool blend with a mid rise, pressed creases and a cropped ankle, fully lined to the knee with a hook-and-bar closure for a sharp finish.';
+    [['s1', 'Reiss Margot Coat in Camel, Size 8 Longline Wool Blend Notch Lapel', D1, 'G1'],
+      ['s2', 'Reiss Margot Coat in Camel, Size 10 Longline Wool Blend Notch Lapel', D1, 'G1'],
+      ['s3', 'Reiss Margot Coat in Camel, Size 12 Longline Wool Blend Notch Lapel', D1, 'G1'],
+      ['t1', 'Reiss Hailey Trousers in Navy, Size 8 Tailored Slim Fit Ankle Length', D2, 'G2'],
+      ['t2', 'Reiss Hailey Trousers in Navy, Size 8 Tailored Slim Fit Ankle Length', D2, 'G2'],
+      ['u1', 'Reiss Something Else Entirely in Black, Size 10 With A Long Enough Name', D2, 'G3']].forEach((r) => cv.onRow(r));
+    const av = cv.finish().attrs;
+    eq('variant: a description shared only between variants of one product is NOT a finding',
+      [av.description.rules.dupe.n, av.description.rules.dupe.vals], [3, 1]);
+    eq('variant: …and is reported as context instead',
+      [av.description.rules.dupe.within, av.description.rules.dupe.withinVals], [3, 1]);
+    ok('variant: the only group shown is the one shared across DIFFERENT products',
+      av.description.rules.dupe.groups.length === 1 && av.description.rules.dupe.groups[0].x === 1 &&
+      av.description.rules.dupe.groups[0].n === 3, av.description.rules.dupe.groups);
+    eq('variant: a title two variants share IS a finding — Google asks titles to distinguish variants',
+      [av.title.rules.dupe.n, av.title.rules.dupe.vals, av.title.rules.dupe.within], [2, 1, undefined]);
+    ok('variant: the title group is marked as variants, not different products',
+      av.title.rules.dupe.groups[0].x === 0, av.title.rules.dupe.groups);
+    ok('variant: the description rule says so in its own wording',
+      /Variants of the SAME product/.test(LG.qspecOf('description').rules.filter((r) => r.dupe)[0].why));
+  }
   // two different values each shared by two products = 4 products, 2 values — the Monsoon shape
   {
     const c2 = LG.qualityCollector({ id: 0, title: 1 });

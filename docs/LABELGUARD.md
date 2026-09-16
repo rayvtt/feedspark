@@ -506,6 +506,52 @@ the same number on both pages.
   spec tiers, content quality, AI-readiness — lands at roughly two A4 lengths on its single sheet,
   and `tools/check_grpdf.js` asserts the score, the ladder and all eight pillars are present.
 
+### 9.8 Two scores, two questions (`/golden`, under AI-Readiness)
+
+Ray, 16 Sep 2026: *"there's definitely a discrepancy between the scoring of content quality
+versus AI readiness. For example, the description for Superdry GB has a content quality score of
+60.1, but the AI readiness score is 89. Is there a different scoring matrix for each? Also, if
+you go through taxonomy depth, AI readiness is only 49, whereas the product type / Google product
+category is rated almost 100 in content quality. How do we bring this together and flag IF there
+is different scoring logic between the two sections."*
+
+There is, deliberately — and the answer is not to average them. **Content quality** scores
+PRODUCTS against rules Google *states*: a floor (does this risk disapproval, or leave stated
+guidance unused). **AI-Readiness** scores the feed against the agentic ladder: a ceiling (how far
+toward best-in-class), blending coverage, depth and uniqueness inside each pillar. A field can
+pass every stated rule and still be shallow; a field can be complete, long and legal and still be
+boilerplate. Both are computed from the **same single read of the same products at the same
+moment**, so a gap between them is a finding about the feed, never a disagreement between tools.
+
+**One real inconsistency, fixed.** Chasing Ray's description case down to the live Superdry GB
+feed exposed a genuine difference in *method*, not just in question: the AI pillar judged
+duplication per `item_group_id` (size variants legitimately share copy) while the content-quality
+rule counted every repeat. 99.7% against 55%, for the same field on the same read. The rule is now
+variant-aware (§9.6) and the description reading moves 60.1 → 67.6.
+
+**The rest of each gap is explained, not removed.** The band lists each field pair with both
+numbers, the gap, and what each side is measuring — the live worst-breaking rule on one side, the
+pillar's own summary on the other — and flags any gap of 15 points or more:
+
+| pair | quality measures | the pillar measures |
+| --- | --- | --- |
+| `g:title` ↔ Title anatomy | the stated rules (150-char cap, capitals, promotional copy, a shared title) | the 80–120 window and the MASK slots the title carries |
+| `g:description` ↔ Descriptions | the share of PRODUCTS sharing copy with a different product | the share of DISTINCT copy reused — and only a fifth of the pillar, next to coverage (½) and length (³⁄₁₀) |
+| `g:google_product_category` + `g:product_type` ↔ Taxonomy depth | whether the value is SHAPED as Google specifies (≥3 levels, never single-level) | how DEEP the tree goes — GPC toward four levels, ≥3 product_type assignments |
+| `g:color` `g:material` `g:pattern` ↔ Attribute completeness | whether the values that are there are usable | weighted COVERAGE of the variant attributes |
+| `g:product_highlight` ↔ Agentic readiness | the stated highlight rules (≥2, ≤100, 150 chars each) | the whole agentic surface, of which highlights are one input |
+
+Superdry GB, as it stands: description 67.6 vs 89 (different denominators — one boilerplate
+paragraph on thousands of products is thousands of products but a single value); GPC + product
+type 99.6 vs 49 (every path clears the stated minimum while the catalogue stays shallow);
+title 94.6 vs 71 (breaks no rule, carries few MASK slots).
+
+**Which to use.** Content quality for what to fix and what to brief — every finding quotes a rule
+Google publishes, so it survives a conversation with the client. AI-Readiness for what to sell and
+where the feed sits on the ladder the readiness decks speak. A wide gap is the useful case: it
+names a field that is compliant and underused, or complete and not yet correct. The band prints
+with the rest of the scorecard.
+
 ## 9.6 Content quality — is the data any GOOD? (`/golden`, the fifth section)
 
 Ray, 16 Sep 2026: *"what's missing is also reviewing the data quality of each attribute,
@@ -564,6 +610,16 @@ each finding quotes and links its source.
   a value ONCE instead of pushing it again on every repeat. The page renders `×4 <title>` with
   the product ids under it, the hit column reads *76 products / 35 values*, and a caption states
   the test: one whole value, matched case-insensitively.
+- **Variant-aware, where Google is** (16 Sep 2026, and most of why the two sections disagreed —
+  see §9.8). Google asks the **title** to carry "distinguishing details of each variant", so a
+  title two rows share is a finding however they are related, and that rule counts every repeat.
+  The **description** rule is about boilerplate ("describe only the product itself"), and
+  variants of one product legitimately share copy — so it counts only copy reused across
+  *different* `item_group_id`s, the same call the Feed Lab audit makes, and reports the rest as
+  context ("a further N products share copy only with variants of the same product — expected,
+  and not counted above"). Measured on the live Superdry GB feed: 99.7% of products before,
+  81.0% after, with 4,858 products across 1,136 values correctly set aside. Every group is
+  labelled *different products* or *variants of one product*.
 - **The scan shows its progress** (Ray, same day: *"ensure this scanning is high quality and
   takes as long as needed, you don't need to rush it — allow the user to see a progress bar"*).
   Nothing is sampled or cut short: every product is scored. `qualityRun` hands its caller a
