@@ -6051,6 +6051,24 @@
       "name": "dossier: tab-list diagnostic declares when it is truncated",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function abTabList"
+    },
+    {
+      "name": "Golden Record: PILLAR HEATMAP — this brand's analysed markets x the eight audit pillars, weakest cell ringed and named, row click opens that market (Ray 16 Sep 2026: 'the pillar heatmap is great too')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function pillarHeat",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: an analysed feed joins the heatmap immediately — the page mirrors onto its estate row exactly what the worker writes to goldenidx",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "mirror onto the estate row exactly what the worker just wrote",
+      "min": 1
+    },
+    {
+      "name": "Worker: per-pillar AI-readiness scores ride onto goldenidx (airP) so the estate can draw the heatmap without re-reading every feed's stored block",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "idx[key].airP = pm",
+      "min": 1
     }
   ]
 }

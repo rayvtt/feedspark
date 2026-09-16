@@ -477,6 +477,15 @@ the same number on both pages.
   (Brand / Material / Fit / Colour / Use-case, each with its share and SKU count) and the length
   histogram with the 80–120 window marked — because that is the anatomy of the titles whose
   CONTENT the rules directly above it just judged.
+- **Pillar heatmap** (Ray: *"the pillar heatmap is great too"*): under the pillar cards, this
+  brand's analysed markets × the eight pillars, the Feed Lab grid scoped to one brand — same
+  colour scale, the weakest cell across the brand ringed and named in the subtitle ("weakest: DE
+  Agentic at 31"), and a row click opens that market's scorecard. It reads off the estate index,
+  which carries each analysed feed's per-pillar scores (`airP`), so a market nobody has analysed
+  says "—" rather than pretending to a number; it appears once a second market has been analysed
+  (one market is a card, not a heatmap). A finished analysis mirrors onto its own estate row
+  exactly what the worker writes to `goldenidx`, so the feed joins the grid immediately rather
+  than after a reload.
 - **In the PDF:** it prints with everything else. Print pins the card's desktop geometry
   (`body.pdf .score-grid`, `.ladder`): the ≤900px rules stack the ring above the ladder, which is
   right on a phone but would make the measured sheet shorter than the printed document — the same

@@ -249,6 +249,19 @@ window.addEventListener('load',restore);
   .wdots i.on{background:var(--orange-deep)}
   .psum{font-size:11px;font-weight:700;color:var(--muted);line-height:1.35;overflow-wrap:anywhere}
   .air-foot{font-size:11px;font-weight:700;color:var(--muted);margin:10px 0 0;line-height:1.5}
+  /* pillar heatmap — the Feed Lab grid, scoped to this brand's markets */
+  .heat-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:13px 15px;margin-top:12px}
+  .heat-h{font-size:12.5px;font-weight:900;margin-bottom:8px}
+  .heat-sub{font-weight:600;font-size:11px;color:var(--muted);margin-left:8px}
+  .heat-scroll{overflow-x:auto}
+  .mk-heat{border-collapse:collapse;min-width:560px;width:100%}
+  .mk-heat th{font-size:9.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:left;padding:5px 7px;white-space:nowrap}
+  .mk-heat td{padding:3px 5px}
+  .mk-heat .hm{display:block;min-width:46px;text-align:center;font-size:11px;font-weight:900;border-radius:7px;padding:5px 0;color:#fff}
+  .mk-heat .hm.worst{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--risk)}
+  .mk-heat .hmk{font-size:11px;font-weight:900;letter-spacing:.04em;white-space:nowrap;color:var(--ink);cursor:pointer}
+  .mk-heat tr.on .hmk{color:var(--orange-deep)}
+  .mk-heat tr[data-hk]{cursor:pointer}
   /* title anatomy — nested under the title row of the content-quality read */
   .mask-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin-top:8px}
   .mseg{background:var(--wash);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
@@ -399,6 +412,10 @@ window.addEventListener('load',restore);
   body.pdf .air-foot{font-size:10px;margin-top:8px}
   body.pdf .tier-line{margin-bottom:9px}
   body.pdf .thist{height:52px}
+  body.pdf .heat-scroll{overflow:visible}
+  body.pdf .mk-heat{min-width:0}
+  body.pdf .mk-heat .hm{min-width:0;font-size:10px;padding:4px 0}
+  body.pdf .heat-card{padding:10px 12px;margin-top:9px}
   /* the printable column is 703px, which trips the ≤900px responsive rule that drops the
      spec note — but the note is exactly the context a client needs, so keep it here */
   body.pdf .at-note{display:block!important;font-size:10px}
@@ -1294,7 +1311,7 @@ window.addEventListener('load',restore);
   }
 
   function wire(k, s) {
-    wireQuality(k);
+    wireQuality(k); wireHeat();
     if ($('prof-edit')) $('prof-edit').onclick = function () { openProf(k); };
     Array.prototype.forEach.call(document.querySelectorAll('[data-ask]'), function (el) {
       el.onclick = function () { openAsk(k, el.getAttribute('data-ask')); };
@@ -1690,6 +1707,13 @@ window.addEventListener('load',restore);
             .then(function (d) {
               if (d && d.error) throw new Error(d.error);
               QUAL[k] = snap;
+              // mirror onto the estate row exactly what the worker just wrote to goldenidx,
+              // so this market joins the pillar heatmap now rather than after a reload
+              var row = ESTATE.feeds[k];
+              if (row && snap.ai) {
+                row.air = snap.ai.total; row.airTier = snap.ai.tier; row.airP = {};
+                snap.ai.pillars.forEach(function (pp) { if (pp.key) row.airP[pp.key] = pp.score; });
+              }
               return snap;
             });
         });
@@ -1771,6 +1795,11 @@ window.addEventListener('load',restore);
       h += '</div>';
     });
     return h + '</div>';
+  }
+  function wireHeat() {
+    Array.prototype.forEach.call(document.querySelectorAll('.mk-heat tr[data-hk]'), function (tr) {
+      tr.onclick = function () { select(tr.getAttribute('data-hk')); };
+    });
   }
   function wireQuality(k) {
     var btn = $('qz-run');
@@ -1872,6 +1901,48 @@ window.addEventListener('load',restore);
     };
   }
 
+  // ---- pillar heatmap: this brand's markets × the eight pillars (Ray: "the pillar heatmap
+  // is great too"). Feed Lab draws this per brand too; here it reads off the estate index,
+  // which carries each analysed feed's per-pillar scores — so one analysed market shows its
+  // own row and the rest say "—" rather than pretending to a number nobody measured.
+  var PILL_COLS = [['identity', 'Identity'], ['titles', 'Titles'], ['descriptions', 'Descr'], ['attributes', 'Attrs'],
+    ['taxonomy', 'Taxo'], ['media', 'Media'], ['labels', 'Labels'], ['ai', 'Agentic']];
+  function heatCol(v) { return v == null ? '#C9CDD4' : (v < 40 ? '#D9534F' : (v < 60 ? '#ED6F0B' : (v < 80 ? '#F5A623' : '#48A868'))); }
+  function pillarHeat(k) {
+    var p = parts(k);
+    var rows = feedList().filter(function (f) { return f.client === p.client && f.airP; });
+    if (rows.length < 2) return '';        // one market is a card, not a heatmap
+    rows.sort(function (a, b) { return String(a.mkt).localeCompare(String(b.mkt)); });
+    // the weakest cell in the whole grid — the one place to start
+    var worst = null;
+    rows.forEach(function (f) {
+      PILL_COLS.forEach(function (pc) {
+        var v = (f.airP || {})[pc[0]];
+        if (v != null && (!worst || v < worst.v)) worst = { mkt: f.mkt, p: pc[0], v: v };
+      });
+    });
+    var head = '<tr><th>Market</th>' + PILL_COLS.map(function (pc) { return '<th>' + esc(pc[1]) + '</th>'; }).join('') + '<th>Total</th></tr>';
+    var body = rows.map(function (f) {
+      var sel = keyOf(f.client, f.mkt) === k;
+      return '<tr' + (sel ? ' class="on"' : '') + ' data-hk="' + esc(keyOf(f.client, f.mkt)) + '">' +
+        '<td class="hmk">' + esc(String(f.mkt).toUpperCase()) + '</td>' +
+        PILL_COLS.map(function (pc) {
+          var v = (f.airP || {})[pc[0]];
+          var isW = worst && worst.mkt === f.mkt && worst.p === pc[0];
+          return '<td><span class="hm' + (isW ? ' worst' : '') + '" style="background:' + heatCol(v) +
+            (v == null ? ';color:var(--muted)' : '') + '"' +
+            (isW ? ' title="Weakest pillar across this brand\'s markets — start here"' : '') + '>' +
+            (v == null ? '—' : v) + '</span></td>';
+        }).join('') +
+        '<td><span class="hm" style="background:' + heatCol(f.air) + '">' + (f.air == null ? '—' : f.air) + '</span></td></tr>';
+    }).join('');
+    return '<div class="heat-card"><div class="heat-h">Pillar heatmap' +
+      '<span class="heat-sub">this brand’s analysed markets × the eight pillars — green is strong, red is the gap' +
+      (worst ? ' · weakest: ' + esc(String(worst.mkt).toUpperCase()) + ' ' +
+        esc((PILL_COLS.filter(function (c) { return c[0] === worst.p; })[0] || [])[1] || worst.p) + ' at ' + worst.v : '') +
+      '</span></div><div class="heat-scroll"><table class="mk-heat">' + head + body + '</table></div></div>';
+  }
+
   function airSection(k) {
     var q = QUAL[k], a = q && q.ai;
     if (!a || !a.total) return '';
@@ -1903,6 +1974,7 @@ window.addEventListener('load',restore);
           '<div class="pf2"><span class="wdots" title="pillar weight ×' + w + '">' + dh + '</span>' +
           '<span class="psum">' + esc(p.summary) + '</span></div></div>';
       }).join('') + '</div>' +
+      pillarHeat(k) +
       '<p class="air-foot">Pillars are weighted, so the headline is not their average: title anatomy, attribute' +
       ' completeness and agentic readiness carry the most (three dots), label architecture the least. The four' +
       ' tiers are the same ladder used in the readiness decks — Foundational, Structured, Enriched, Agentic-ready.</p>' +
