@@ -70,6 +70,35 @@ window.addEventListener('load',restore);
   .sw-chip .m{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
   .sw-band .sw-more{font-size:12px;font-weight:800;color:var(--navy);text-decoration:none;white-space:nowrap;margin-left:auto}
   [data-theme=dark] .sw-chip{background:#20242E;border-color:var(--line);color:var(--ink-2)}
+  /* CLIENT VIEW (Ray, 16 Sep 2026: "sometimes I use this module to have a walkthrough with the
+     client on the call … slightly anonymous to clients — private and confidential — while still
+     showcasing what's happening on a schedule basis for each client"). One brand, its own tasks,
+     no other account named anywhere. */
+  .sw-mode{font:inherit;font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:100px;border:1px dashed var(--line);background:var(--paper);color:var(--muted);cursor:pointer;white-space:nowrap}
+  .sw-mode:hover{border-color:var(--navy);color:var(--navy)}
+  .sw-mode.on{border-style:solid;border-color:var(--navy);background:rgba(26,54,93,.08);color:var(--navy)}
+  .sw-pc{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-deep);border:1px solid rgba(237,111,11,.4);background:rgba(237,111,11,.08);border-radius:5px;padding:2px 7px;white-space:nowrap}
+  .sw-cv{display:flex;flex-direction:column;gap:9px}
+  .sw-cvh{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .sw-who{font-size:14px;font-weight:900;color:var(--ink)}
+  .sw-cvs{font-size:12px;font-weight:700;color:var(--muted)}
+  .sw-rows{display:flex;flex-direction:column;gap:5px}
+  .sw-row{display:flex;align-items:center;gap:11px;flex-wrap:wrap;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--wash)}
+  .sw-row .k{font-size:12.5px;font-weight:900;color:var(--ink);min-width:150px}
+  .sw-row .k em{font-style:normal;font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-left:6px}
+  .sw-row .st{font-size:12px;font-weight:800;color:var(--muted);flex:1;min-width:190px}
+  .sw-row .st b{color:var(--orange-deep)}
+  .sw-row.ok .st b{color:var(--good)}
+  .sw-strip{display:flex;gap:2px}
+  .sw-strip i{width:11px;height:16px;border-radius:3px;background:#EFEFED;display:block}
+  .sw-strip i.go{background:#2E7D32}.sw-strip i.skip{background:#ED6F0B}.sw-strip i.none{background:#C9CDD3}
+  [data-theme=dark] .sw-strip i{background:#23262E}
+  [data-theme=dark] .sw-strip i.go{background:#3FA34D}
+  [data-theme=dark] .sw-strip i.skip{background:#D2782A}
+  [data-theme=dark] .sw-strip i.none{background:#3A3F4A}
+  .sw-foot{font-size:11.5px;font-weight:700;color:var(--muted);line-height:1.45}
+  [data-theme=dark] .sw-row{background:#20242E}
+
   /* gmail live banner */
   .gmod{margin:20px 0 4px;padding:13px 16px}
   .gm-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -922,8 +951,16 @@ window.addEventListener('load',restore);
 
   <!-- FCC-SCHEDWORK: scheduled work sits outside Intake — the strip below is a read-only hand-off -->
   <div class="panel sw-band" id="sw-band" hidden>
-    <div class="sw-head"><span class="sw-t">⏭ Scheduled work</span><span class="sw-sub" id="sw-sub"></span><a class="sw-more" href="/schedule">Open the schedule →</a></div>
+    <div class="sw-head"><span class="sw-t">⏭ Scheduled work</span><span class="sw-sub" id="sw-sub"></span>
+      <span class="sw-pc" id="sw-pc" hidden>Private &amp; Confidential</span>
+      <button type="button" class="sw-mode" id="sw-mode" aria-pressed="false" title="Client view — one brand only, no other account named anywhere on the band. For sharing your screen on a client call.">🔒 Client view</button>
+      <a class="sw-more" href="/schedule">Open the schedule →</a></div>
     <div class="sw-chips" id="sw-chips"></div>
+    <div class="sw-cv" id="sw-cv" hidden>
+      <div class="sw-cvh"><span class="sw-who" id="sw-brand"></span><span class="sw-cvs" id="sw-cvs"></span></div>
+      <div class="sw-rows" id="sw-rows"></div>
+      <div class="sw-foot" id="sw-foot"></div>
+    </div>
   </div>
 
   <h2>Timeline — every dated task<button class="info-btn" type="button" aria-label="How Timeline works">i</button>
@@ -2307,6 +2344,9 @@ window.addEventListener('load',restore);
   function renderClientChips(){
     var wrap=document.getElementById('it-client-chips'); if(!wrap)return;
     var sel=itState.clients;
+    // the Scheduled-work band follows whatever brand the board is filtered to, so a client call
+    // that starts by filtering Intake to that client brings the band with it (Ray, 16 Sep 2026)
+    try{ document.dispatchEvent(new CustomEvent('fcc-clients',{detail:{clients:sel.slice()}})); }catch(e){}
     if(!sel.length){ wrap.hidden=true; wrap.innerHTML=''; return; }
     wrap.hidden=false;
     wrap.innerHTML=sel.map(function(c){ return '<span class="it-fchip"><span data-hrs="'+esc(c)+'">'+esc(c)+'</span>'
@@ -4397,23 +4437,109 @@ window.addEventListener('load',restore);
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function mlbl(m){ if(!m)return ''; var p=m.split('-'); return MON[+p[1]-1]+' '+p[0].slice(2); }
+  // ---- CLIENT VIEW (Ray, 16 Sep 2026: "Scheduled work should be displayed better within the
+  // workflow because sometimes I use this module to have a walkthrough with the client on the
+  // call. Find a way for it to be slightly anonymous to clients — private and confidential —
+  // while still showcasing what's happening on a schedule basis for each client.")
+  //
+  // The internal band is a league table of the whole book: every brand that is skipping
+  // scheduled work, named, ranked by how long. Screen-shared on a Reiss call it shows Reiss
+  // what Superdry, Clinique, Benefit and MAC are doing — other clients' names against their
+  // own record of declined work. That is the confidentiality problem, and no amount of
+  // restyling fixes it, because the information itself belongs to other people.
+  //
+  // So client view doesn't dress the league table up — it REPLACES it with the one brand on
+  // screen and that brand's own cadence: a task per row, the twelve-month strip that says what
+  // actually ran, and in words how long since the last go-ahead. Every other account leaves the
+  // DOM entirely; the only thing said about them is an anonymous count, with no name, no
+  // market, no number attached to any one of them. The brand follows Intake's client filter, so
+  // filtering the board to the client you are talking to brings the band with it.
+  var CV=false; try{ CV=localStorage.getItem('fcc-sw-cv')==='1'; }catch(e){}
+  var DATA=null, PICK='', PINNED=false;
+  function monthsAgo(m){ if(!m)return null; var p=String(m).split('-'), d=new Date();
+    return (d.getUTCFullYear()-+p[0])*12+(d.getUTCMonth()+1-+p[1]); }
+  function rosterOf(d){ var seen={},out=[];
+    (d.cadence||[]).forEach(function(c){ if(c.inRoster&&!seen[c.client]){seen[c.client]=1;out.push(c.client);} });
+    return out.sort(function(a,b){return a.localeCompare(b)}); }
+  function renderClient(d){
+    var all=rosterOf(d), brand=PICK&&all.indexOf(PICK)>=0?PICK:(all[0]||'');
+    PICK=brand;
+    // NOT a dropdown: a roster of options IS the list of other clients, in the DOM and one click
+    // from being on screen. The brand is named, and changing it is the Intake client filter above
+    // (or leaving client view) — both of which are Ray's controls, not a shared-screen surface.
+    document.getElementById('sw-brand').textContent=brand;
+    var mine=(d.cadence||[]).filter(function(c){ return c.inRoster&&c.client===brand; })
+      .sort(function(a,b){ return (b.streak-a.streak)||a.kind.localeCompare(b.kind)||a.mkt.localeCompare(b.mkt); });
+    var paused=mine.filter(function(c){return c.streak>0}).length;
+    document.getElementById('sw-cvs').innerHTML=esc(mine.length
+      ? (mine.length+' scheduled task'+(mine.length===1?'':'s')+' · '+(paused?paused+' paused':'all running'))
+      : 'No scheduled optimisation on this account yet.')
+      +(PINNED?'':' <span style="opacity:.75">— filter Intake to a client to point this at them</span>');
+    document.getElementById('sw-rows').innerHTML=mine.map(function(c){
+      var strip=(c.months||[]).slice(-12).map(function(m){
+        return '<i class="'+esc(m.v)+'" title="'+esc(mlbl(m.m)+' — '+(m.v==='go'?'went ahead':m.v==='skip'?'skipped':'not scheduled'))+'"></i>'; }).join('');
+      var ago=monthsAgo(c.lastGo), st;
+      if(c.streak>0) st='<b>'+c.streak+' month'+(c.streak===1?'':'s')+' without an optimisation</b>'
+        +(c.lastGo?' · last one '+mlbl(c.lastGo):' · none on record');
+      else if(c.lastGo) st='<b>Running</b> · last optimisation '+mlbl(c.lastGo)+(ago!=null&&ago>0?' ('+ago+' mo ago)':'');
+      else st='<b>Scheduled</b> · nothing run yet';
+      return '<div class="sw-row'+(c.streak>0?'':' ok')+'"><span class="k">'+esc(KL[c.kind]||c.kind)
+        +'<em>'+esc((c.mkt||'').toUpperCase())+'</em></span>'
+        +'<span class="sw-strip">'+strip+'</span>'
+        +'<span class="st">'+st+'</span></div>';
+    }).join('')||'';
+    // the ONLY thing said about anyone else, and it names nobody
+    var others=all.filter(function(b){return b!==brand}).length;
+    var otherPaused=0; var seen={};
+    (d.cadence||[]).forEach(function(c){ if(c.inRoster&&c.client!==brand&&c.streak>0&&!seen[c.client]){seen[c.client]=1;otherPaused++;} });
+    document.getElementById('sw-foot').textContent=
+      'The twelve months to date, per task: green ran, orange was skipped, grey wasn’t scheduled.'
+      +(others?'  Across the other '+others+' accounts we schedule this way, '+otherPaused+' currently have at least one task paused.':'');
+  }
+  function renderInternal(d){
+    var latest=''; (d.cadence||[]).forEach(function(c){ if(c.lastDecided&&c.lastDecided>latest)latest=c.lastDecided; });
+    function stale(m){ if(!m||!latest)return false; var a=latest.split('-'),b=m.split('-'); return ((+a[0]-+b[0])*12+(+a[1]-+b[1]))>2; }
+    var brands=(d.brands||[]).filter(function(b){ return b.inRoster&&!stale(b.lastDecided); });
+    var on=brands.filter(function(b){return b.maxStreak>0}).sort(function(a,b){return b.maxStreak-a.maxStreak||b.onStreak-a.onStreak});
+    var tasks=0,onT=0; (d.cadence||[]).forEach(function(c){ if(!c.inRoster||stale(c.lastDecided))return; tasks++; if(c.streak>0)onT++; });
+    document.getElementById('sw-sub').textContent=(d.source==='snapshot'?'snapshot '+d.at:'live')+' · '+on.length+' of '+brands.length+' dossier brands have a scheduled task skipped this month ('+onT+' of '+tasks+' tasks)';
+    document.getElementById('sw-chips').innerHTML=on.slice(0,14).map(function(b){
+      var w=b.worst||{};
+      return '<a class="sw-chip'+(b.maxStreak>=3?' r':'')+'" href="/schedule?b='+encodeURIComponent(b.client)+'" title="'+esc(b.client)+' — worst streak: '+esc((w.mkt||'').toUpperCase())+' '+esc(KL[w.kind]||w.kind||'')+' skipped '+b.maxStreak+' month'+(b.maxStreak>1?'s':'')+' running since '+mlbl(w.since)+' · '+b.onStreak+' of '+b.tasks+' tasks on a streak'+(b.hoursSkipped?' · '+b.hoursSkipped+' hrs of scheduled work skipped':'')+'">'
+        +esc(b.client)+' <b>'+b.maxStreak+' mo</b><span class="m">'+esc((w.mkt||'').toUpperCase())+' · '+esc(KL[w.kind]||w.kind||'')+'</span></a>';
+    }).join('')+(on.length>14?'<a class="sw-chip" href="/schedule">+'+(on.length-14)+' more</a>':'')
+      +(!on.length?'<span class="sw-sub">No dossier brand is skipping scheduled work this month.</span>':'');
+  }
+  function paint(){
+    if(!DATA)return;
+    var band=document.getElementById('sw-band');
+    var chips=document.getElementById('sw-chips');
+    chips.hidden=CV;
+    if(CV)chips.innerHTML='';   // hidden still ships the names in the markup — a screen share, a
+                                // print, an inspector or a stray stylesheet would surface them
+    document.getElementById('sw-cv').hidden=!CV;
+    document.getElementById('sw-pc').hidden=!CV;
+    document.getElementById('sw-sub').hidden=CV;
+    var m=document.getElementById('sw-mode'); m.classList.toggle('on',CV); m.setAttribute('aria-pressed',CV?'true':'false');
+    m.textContent=CV?'🔒 Client view · on':'🔒 Client view';
+    var more=band.querySelector('.sw-more'); if(more)more.hidden=CV;   // the whole-book page is not for the call
+    if(CV)renderClient(DATA); else renderInternal(DATA);
+    band.hidden=false;
+  }
   function go(){
     var band=document.getElementById('sw-band'); if(!band)return;
+    document.getElementById('sw-mode').onclick=function(){ CV=!CV;
+      try{localStorage.setItem('fcc-sw-cv',CV?'1':'0');}catch(e){} paint(); };
+
+    // follow the board: filtering Intake to one client points the band at them
+    document.addEventListener('fcc-clients',function(e){
+      var cs=(e.detail&&e.detail.clients)||[];
+      PINNED=cs.length===1;
+      if(cs.length===1&&cs[0]!==PICK){ PICK=cs[0]; if(CV&&DATA)renderClient(DATA); }
+      else if(CV&&DATA)renderClient(DATA);
+    });
     fetch('/api/schedule?lite=1').then(function(r){return r.json()}).then(function(d){
-      if(!d||!d.ok)return;
-      var latest=''; (d.cadence||[]).forEach(function(c){ if(c.lastDecided&&c.lastDecided>latest)latest=c.lastDecided; });
-      function stale(m){ if(!m||!latest)return false; var a=latest.split('-'),b=m.split('-'); return ((+a[0]-+b[0])*12+(+a[1]-+b[1]))>2; }
-      var brands=(d.brands||[]).filter(function(b){ return b.inRoster&&!stale(b.lastDecided); });
-      var on=brands.filter(function(b){return b.maxStreak>0}).sort(function(a,b){return b.maxStreak-a.maxStreak||b.onStreak-a.onStreak});
-      var tasks=0,onT=0; (d.cadence||[]).forEach(function(c){ if(!c.inRoster||stale(c.lastDecided))return; tasks++; if(c.streak>0)onT++; });
-      document.getElementById('sw-sub').textContent=(d.source==='snapshot'?'snapshot '+d.at:'live')+' · '+on.length+' of '+brands.length+' dossier brands have a scheduled task skipped this month ('+onT+' of '+tasks+' tasks)';
-      document.getElementById('sw-chips').innerHTML=on.slice(0,14).map(function(b){
-        var w=b.worst||{};
-        return '<a class="sw-chip'+(b.maxStreak>=3?' r':'')+'" href="/schedule?b='+encodeURIComponent(b.client)+'" title="'+esc(b.client)+' — worst streak: '+esc((w.mkt||'').toUpperCase())+' '+esc(KL[w.kind]||w.kind||'')+' skipped '+b.maxStreak+' month'+(b.maxStreak>1?'s':'')+' running since '+mlbl(w.since)+' · '+b.onStreak+' of '+b.tasks+' tasks on a streak'+(b.hoursSkipped?' · '+b.hoursSkipped+' hrs of scheduled work skipped':'')+'">'
-          +esc(b.client)+' <b>'+b.maxStreak+' mo</b><span class="m">'+esc((w.mkt||'').toUpperCase())+' · '+esc(KL[w.kind]||w.kind||'')+'</span></a>';
-      }).join('')+(on.length>14?'<a class="sw-chip" href="/schedule">+'+(on.length-14)+' more</a>':'')
-        +(!on.length?'<span class="sw-sub">No dossier brand is skipping scheduled work this month.</span>':'');
-      band.hidden=false;
+      if(!d||!d.ok)return; DATA=d; paint();
     }).catch(function(){});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go); else go();
