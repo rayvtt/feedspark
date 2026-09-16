@@ -6308,6 +6308,21 @@
       "name": "dossier: the stage chip mirrors Workflow's .bf-chip and cannot stretch",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": ".lw-item{grid-template-columns:1fr auto}"
+    },
+    {
+      "name": "dossier: Golden Record card + full snapshot popup",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function grOpen("
+    },
+    {
+      "name": "dossier: Golden Record averages exclude never-scanned markets",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function grAvg("
+    },
+    {
+      "name": "Golden Record: ?client= jumps to that brand's estate card",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "est-card\" data-client="
     }
   ]
 }

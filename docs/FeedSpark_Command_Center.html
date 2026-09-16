@@ -413,6 +413,28 @@ window.addEventListener('load',restore);
   .dzp-s a{font-weight:900;color:var(--orange-deep);text-decoration:none;white-space:nowrap}
   .dzp-s a:hover{text-decoration:underline}
   [data-theme=dark] .dzp-card{background:#181B22;border-color:var(--line)}
+  /* Golden Record: compact on the card, whole report in the popup (Ray, 16 Sep 2026 — "a pop-up
+     snapshot similar to the retainer pop-up") */
+  .dzp-grbtn{margin-top:9px;width:100%;border:1px solid var(--line);background:#fff;border-radius:8px;
+    padding:6px 10px;font:800 11.5px system-ui,sans-serif;color:var(--ink-2);cursor:pointer}
+  .dzp-grbtn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  [data-theme=dark] .dzp-grbtn{background:#20242D}
+  .grm{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;padding:24px}
+  .grm-bg{position:absolute;inset:0;background:rgba(15,23,42,.55)}
+  .grm-card{position:relative;background:var(--card,#fff);border:1px solid var(--line);border-radius:14px;
+    padding:20px 22px;max-width:760px;width:100%;max-height:86vh;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.28)}
+  .grm-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .grm-top h3{margin:0;font-size:16px;font-weight:900;letter-spacing:-.01em;flex:1;min-width:0}
+  .grm-x{border:1px solid var(--line);background:transparent;border-radius:8px;width:30px;height:30px;
+    font-size:14px;cursor:pointer;color:var(--muted);flex:none}
+  .grm-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:6px}
+  .grm-k{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--wash)}
+  .grm-k b{display:block;font-size:24px;font-weight:900;line-height:1;letter-spacing:-.02em}
+  .grm-k b.good{color:var(--good)}.grm-k b.warn{color:var(--orange-deep)}.grm-k b.bad{color:var(--risk)}
+  .grm-k b small{font-size:13px;font-weight:800;color:var(--muted)}
+  .grm-k span{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--muted);margin-top:4px}
+  @media (max-width:720px){ .grm{padding:0;align-items:flex-end} .grm-card{max-height:92vh;border-radius:14px 14px 0 0} }
   [data-theme=dark] .dzp-sug{background:var(--paper);border-color:var(--line)}
   [data-theme=dark] .dzp-al{background:#241a17;border-color:#5a3128}
   [data-theme=dark] .sidenav{background:var(--paper);border-right-color:var(--line)}
@@ -913,7 +935,7 @@ window.addEventListener('load',restore);
      the 2,000+ plan records (PLANTASKS), briefs in flight (/api/briefs), Feed Lab audits
      (/api/feed/audit per wired market), Label+PT Guard alerts (/api/labels/alerts?by=client)
      and Keyword Calendar saturation (/api/kwcal). All numbers computed, all £0. */
-  var BRIEFSC=null,ALERTC=null,KWC=null,AUDC={},AUDAT={},PORTREQ=0;
+  var BRIEFSC=null,ALERTC=null,KWC=null,GRC=null,AUDC={},AUDAT={},PORTREQ=0;
   // The pipeline is the one source here that moves minute to minute — a colleague drags a
   // ticket to Test running and this page should say so. It was fetched ONCE per page load and
   // cached for the life of the tab, so a dossier left open on a leadership screen went stale
@@ -932,7 +954,7 @@ window.addEventListener('load',restore);
      was already done.
      Each cache now carries its own stamp and expires; PSTAMP holds them in one place so a
      cache added later cannot quietly become the immortal one. */
-  var PSTAMP={briefs:0,alerts:0,kw:0};
+  var PSTAMP={briefs:0,alerts:0,kw:0,gr:0};
   function pFresh(k,ttl){ return (Date.now()-(PSTAMP[k]||0)) < (ttl||BRIEF_TTL); }
   function portData(cb){
     var need=1; function done(){ if(--need<=0)cb(); }
@@ -943,9 +965,12 @@ window.addEventListener('load',restore);
       .then(function(j){ALERTC=j||ALERTC||{}; PSTAMP.alerts=Date.now(); done();},function(){ALERTC=ALERTC||{}; done();}); }
     if(KWC===null||!pFresh('kw')){ need++; fetch(API+'/api/kwcal').then(function(r){return r.json()})
       .then(function(j){KWC=(j&&typeof j==='object'&&!j.error)?j:(KWC||{}); PSTAMP.kw=Date.now(); done();},function(){KWC=KWC||{}; done();}); }
+    // the Golden Record estate — one read serves every brand's card AND its snapshot popup
+    if(GRC===null||!pFresh('gr')){ need++; fetch(API+'/api/golden/estate').then(function(r){return r.json()})
+      .then(function(j){GRC=(j&&j.feeds)?j:(GRC||{feeds:{}}); PSTAMP.gr=Date.now(); done();},function(){GRC=GRC||{feeds:{}}; done();}); }
     done();
   }
-  function portExpire(){ PSTAMP.briefs=PSTAMP.alerts=PSTAMP.kw=0; AUDAT={}; }
+  function portExpire(){ PSTAMP.briefs=PSTAMP.alerts=PSTAMP.kw=PSTAMP.gr=0; AUDAT={}; }
   function portMkts(name){ var b=B[name]||{}, ks={};
     if(b.feed)ks.gb=1; Object.keys(b.feeds||{}).forEach(function(k){ks[String(k).toLowerCase()]=1;});
     (FEEDWIRED[name]||[]).forEach(function(k){ks[k]=1;});
@@ -1598,8 +1623,111 @@ window.addEventListener('load',restore);
     var sh=sug.length?('<div class="dzp-sug"><h5>Suggested next moves</h5>'+sug.map(function(s){
         return '<div class="dzp-s"><span class="pri p'+s.p+'">P'+s.p+'</span><span>'+esc(s.t)+'</span><a href="'+esc(s.l)+'">→ '+esc(s.ll)+'</a></div>'; }).join('')+'</div>')
       :'<div class="dzp-sug"><h5>Suggested next moves</h5><div class="dzp-s"><span class="pri p3">✓</span><span>Nothing urgent — board is clean. Keep the testing cadence going.</span><a href="/workflow">→ Workflow</a></div></div>';
-    return '<div class="dzp-grid">'+act+hl+portHours(name)+aud+'</div>'+sh;
+    return '<div class="dzp-grid">'+act+hl+portHours(name)+aud+portGolden(name)+'</div>'+sh;
   }
+  /* ===== GOLDEN RECORD SNAPSHOT (Ray, 16 Sep 2026) ==========================================
+     "bring the golden record report entirely over to brand[ dossier] as well, maybe in a pop-up
+     snapshot similar to the retainer pop-up. Locate it somewhere inside brand dossier."
+
+     One read of /api/golden/estate serves every brand — the same goldenidx the /golden module
+     renders from, so a figure here and a figure there can never disagree. The band gets a
+     compact card; the whole per-market report lives one click away in a popup, which is how the
+     hours badge already behaves: a small footprint on the card, the detail on demand.
+
+     WHAT IS NOT SCANNED IS NOT ZERO. A market the guard has never read shows "not scanned" and
+     is excluded from every average — averaging an unscanned market in as 0 would report a
+     healthy brand as failing, and averaging it as 100 would hide a real gap. */
+  function grRows(name){
+    var F=(GRC&&GRC.feeds)||{}, out=[];
+    Object.keys(F).forEach(function(k){ var f=F[k];
+      if(!f||f.client!==name)return;
+      out.push({m:String(f.mkt||'').toLowerCase(), score:(typeof f.score==='number'?f.score:null),
+        ai:(typeof f.ai==='number'?f.ai:null), q:(typeof f.q==='number'?f.q:null),
+        air:(typeof f.air==='number'?f.air:null), tier:f.airTier||null,
+        req:(f.reqMissing||[]).length, cond:(f.condMissing||[]).length,
+        st:f.status||'never', crit:f.nCrit||0, warn:f.nWarn||0, rows:f.rows||null, t:f.t||null});
+    });
+    out.sort(function(a,b){ return a.m.localeCompare(b.m); });
+    return out;
+  }
+  function grAvg(rows,key){
+    var v=rows.filter(function(r){ return typeof r[key]==='number'; });
+    if(!v.length)return null;
+    return Math.round(v.reduce(function(s,r){return s+r[key];},0)/v.length);
+  }
+  function grBand(n){ return n==null?'':(n>=90?'good':n>=75?'warn':'bad'); }
+  function portGolden(name){
+    var rows=grRows(name);
+    if(!rows.length)return '';
+    var scored=rows.filter(function(r){return r.score!=null;});
+    var avg=grAvg(rows,'score'), q=grAvg(rows,'q');
+    var req=rows.reduce(function(s,r){return s+r.req;},0);
+    var never=rows.length-scored.length;
+    var h='<div class="dzp-card"><h5>Golden Record'+(avg!=null?' — avg '+avg+'/100':'')+'</h5>';
+    if(!scored.length){
+      h+='<div class="dzp-arow" style="color:var(--muted)">no market scanned yet — run the Golden Record scan</div>';
+    }else{
+      h+='<div class="dzp-tiles">'
+        +'<span class="dzp-t '+grBand(avg)+'"><span class="n">'+avg+'</span><span class="l">record</span></span>'
+        +(q!=null?'<span class="dzp-t '+grBand(q)+'"><span class="n">'+q+'</span><span class="l">content</span></span>':'')
+        +'<span class="dzp-t'+(req?' bad':'')+'"><span class="n">'+req+'</span><span class="l">req missing</span></span>'
+        +'</div>';
+      if(never)h+='<div class="dzp-arow" style="color:var(--muted)">'+never+' market'+(never===1?'':'s')+' not scanned</div>';
+    }
+    h+='<button type="button" class="dzp-grbtn" data-gr="'+esc(name)+'">Full snapshot ↗</button></div>';
+    return h;
+  }
+  /* the popup: the whole report, per market, in the dossier — same numbers as /golden */
+  function grClose(){ var el=document.getElementById('dz-gr'); if(el)el.remove();
+    document.removeEventListener('keydown',grKey); }
+  function grKey(ev){ if(ev.key==='Escape')grClose(); }
+  function grOpen(name){
+    grClose();
+    var rows=grRows(name), scored=rows.filter(function(r){return r.score!=null;});
+    var avg=grAvg(rows,'score'), q=grAvg(rows,'q'), air=grAvg(rows,'air');
+    var wrap=document.createElement('div'); wrap.id='dz-gr'; wrap.className='grm';
+    var body='';
+    if(!scored.length){
+      body='<p class="dz-empty">No market has been scanned yet. Open <a href="/golden?client='
+        +encodeURIComponent(name)+'">Golden Record</a> and run a scan to populate this.</p>';
+    }else{
+      body='<div class="grm-kpi">'
+        +'<div class="grm-k"><b class="'+grBand(avg)+'">'+avg+'</b><span>Golden Record</span></div>'
+        +(q!=null?'<div class="grm-k"><b class="'+grBand(q)+'">'+q+'</b><span>Content quality</span></div>':'')
+        +(air!=null?'<div class="grm-k"><b>'+air+'</b><span>AI readiness</span></div>':'')
+        +'<div class="grm-k"><b>'+scored.length+'<small>/'+rows.length+'</small></b><span>markets scanned</span></div>'
+        +'</div>';
+      body+='<table class="op-tbl"><thead><tr><th>Market</th><th>Record</th><th>Content</th>'
+        +'<th>AI six</th><th>Req missing</th><th>Alerts</th></tr></thead><tbody>';
+      rows.forEach(function(r){
+        if(r.score==null){
+          body+='<tr><td><b>'+esc(r.m.toUpperCase())+'</b></td>'
+            +'<td colspan="5" class="op-na">not scanned</td></tr>'; return;
+        }
+        body+='<tr><td><b>'+esc(r.m.toUpperCase())+'</b></td>'
+          +'<td><span class="dzp-as '+grBand(r.score)+'">'+r.score+'</span></td>'
+          +'<td>'+(r.q!=null?'<span class="dzp-as '+grBand(r.q)+'">'+r.q+'</span>':'<span class="op-na">—</span>')+'</td>'
+          +'<td>'+(r.ai!=null?r.ai+' of 6':'<span class="op-na">—</span>')+'</td>'
+          +'<td>'+(r.req?'<b style="color:var(--risk)">'+r.req+'</b>':'0')+'</td>'
+          +'<td>'+((r.crit||r.warn)?((r.crit?r.crit+' crit':'')+(r.crit&&r.warn?' · ':'')+(r.warn?r.warn+' warn':'')):'<span class="op-na">none</span>')+'</td></tr>';
+      });
+      body+='</tbody></table>';
+      body+='<p class="op-note">Read from the same scan the Golden Record module renders — a market '
+        +'nobody has scanned is shown as such and left out of every average, never counted as zero.</p>';
+    }
+    wrap.innerHTML='<div class="grm-bg"></div><div class="grm-card" role="dialog" aria-label="Golden Record snapshot">'
+      +'<div class="grm-top"><h3>Golden Record — '+esc(name)+'</h3>'
+      +'<a class="lnk primary" href="/golden?client='+encodeURIComponent(name)+'">Open module ↗</a>'
+      +'<button class="grm-x" type="button" aria-label="Close">✕</button></div>'+body+'</div>';
+    document.body.appendChild(wrap);
+    wrap.querySelector('.grm-bg').onclick=grClose;
+    wrap.querySelector('.grm-x').onclick=grClose;
+    document.addEventListener('keydown',grKey);
+  }
+  document.addEventListener('click',function(ev){
+    var b=ev.target&&ev.target.closest&&ev.target.closest('[data-gr]');
+    if(b){ ev.preventDefault(); grOpen(b.getAttribute('data-gr')); }
+  });
   function fmtN(n){ n=+n; return isFinite(n)?n.toLocaleString('en-GB'):'0'; }
   /* ---- 🎬 brand showcase: cinematic full-screen intro over the live portfolio model ----
      Luxury-listing pacing: title reveal → numbers counting up → health stamp → market audit
