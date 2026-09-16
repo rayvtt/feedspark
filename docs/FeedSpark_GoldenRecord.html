@@ -342,7 +342,20 @@ window.addEventListener('load',restore);
      printable column (210 − 2×12mm margins) = 703 CSS px at 96dpi, so measured px map
      1:1 onto printed mm. */
   #print-head,#print-foot{display:none}
-  body.pdf{background:#fff!important;color:#333!important;width:186mm;margin:0 auto}
+  /* THE PDF IS THE PAGE, SCALED — not a second design (Ray, 16 Sep 2026: "PDF export still
+     doesn't reflect exact same visual as FCC"). It used to restyle twenty-odd properties on
+     the way to paper — smaller dial, tighter rows, cut type scale, different grid columns —
+     which made it a compact variant of the scorecard rather than the scorecard. Now print
+     LAYS THE PAGE OUT AT ITS DESKTOP WIDTH (PDF_W below) and scales the whole thing down
+     with `zoom` so that width lands exactly on the 186mm printable column. Every size,
+     space, colour and column ratio survives the trip; only the ruler changes.
+     `zoom` and not transform:scale — transform is paint-time, so Chrome would paginate on
+     the UNSCALED height and silently produce extra pages (the lesson the keyword-calendar
+     PDF already learned). Nothing here may set a size the screen does not: the only rules
+     below hide interactive chrome, restore the DESKTOP form of the page's own ≤900px
+     responsive rules (the print viewport is 703px, so they would otherwise fire and give a
+     phone layout on paper), and frame the document with its header and footer. */
+  body.pdf{background:#fff!important;color:#333!important;width:960px;zoom:.7327;margin:0 auto}
   body.pdf .topbar,body.pdf .demo-banner,body.pdf .hero,body.pdf .cat:not(#sec-detail),body.pdf .footmark,
   body.pdf #theme-tgl,body.pdf .det-actions,body.pdf .at-act,body.pdf #askp-slot,body.pdf #profp-slot,
   body.pdf .refseg,body.pdf #sec-detail .cat-h,body.pdf #sec-detail .cat-sub,
@@ -351,77 +364,28 @@ window.addEventListener('load',restore);
   body.pdf .qz-act,body.pdf #qz-run,body.pdf #qz-msg{display:none!important}
   body.pdf #sec-detail{border-top:none;padding:0}
   body.pdf #sec-detail .wrap{max-width:none;padding:0}
-  body.pdf .panel,body.pdf .tier{box-shadow:none!important;border:1px solid #E6E6E6!important;background:#fff!important}
   body.pdf .tier{break-inside:avoid;page-break-inside:avoid}   /* only bites in the A4 fallback */
-  body.pdf #print-head{display:block;margin:0 0 12px;border-bottom:3px solid #ED6F0B;padding-bottom:9px}
+  body.pdf #print-head{display:block;margin:0 0 14px;border-bottom:3px solid #ED6F0B;padding-bottom:10px}
   body.pdf #print-head .ph-brand{font-size:19px;font-weight:900}
   body.pdf #print-head .ph-brand span{color:#ED6F0B}
   body.pdf #print-head .ph-title{font-size:13px;font-weight:800;color:#4a4a4a;margin-top:2px}
   body.pdf #print-head .ph-meta{font-size:11px;font-weight:700;color:#8a94a0;margin-top:2px}
-  body.pdf #print-foot{display:block!important;margin-top:14px;padding-top:8px;border-top:1px solid #E6E6E6;font-size:10px;font-weight:700;color:#8a94a0}
-  /* single-line attribute rows: on the old 4-column print grid the spec note had no
-     column of its own and wrapped onto a second grid line, doubling every row (56px) and
-     with it the whole document. Five columns, so a row is a row. */
-  body.pdf .at-row{grid-template-columns:146px minmax(60px,.7fr) 44px 56px minmax(150px,1.3fr)!important;
-    gap:9px!important;padding:2.5px 0!important;font-size:11px}
-  /* COMPACT (Ray, 16 Sep 2026: "make sure it is one or two pages … easy to compact"): the
-     scorecard AND the content-quality read have to sit inside one or two A4 lengths, so the
-     print pass trims CHROME — padding, the dial, the type scale — and never the content.
-     What is on the page is what prints, including any rule rows left expanded. */
-  body.pdf .tier{padding:9px 13px;margin-top:9px}
-  body.pdf .tier-h{margin-bottom:3px}
-  body.pdf .tier-h h4{font-size:13.5px}
-  body.pdf .tier-sub{font-size:9.5px;line-height:1.42;margin:0 0 4px}
-  body.pdf .dial{width:104px;height:104px}
-  body.pdf .gr-top{gap:16px;margin-bottom:4px}
-  body.pdf .gr-verdict{font-size:11px;line-height:1.5;margin:6px 0 0}
-  body.pdf .det-stats{font-size:10px;gap:7px}
-  body.pdf .det-head{margin-bottom:2px}
-  /* the 703px printable column trips the ≤900px responsive rule that drops the worst-rule
-     summary and the per-rule hit counts — the very findings the client is reading — so the
-     print layout gives them their own columns instead (the action buttons stay hidden) */
-  body.pdf .qz-row{padding:3px 0;grid-template-columns:148px 36px minmax(44px,.45fr) minmax(215px,1.8fr)!important;gap:8px!important}
-  body.pdf .qz-flag{margin-left:4px;padding:1px 5px}
+  body.pdf #print-foot{display:block!important;margin-top:16px;padding-top:8px;border-top:1px solid #E6E6E6;font-size:10px;font-weight:700;color:#8a94a0}
+  /* --- the page's own ≤900px rules, put back to their DESKTOP form. The print viewport is
+     the page box (703px), so every one of these would fire on paper and hand the client a
+     phone layout. The values are the screen's, minus only the columns whose contents are
+     hidden above (the per-row action buttons). --- */
+  body.pdf .at-row{grid-template-columns:200px minmax(120px,1fr) 62px 74px minmax(140px,.85fr)!important;gap:10px!important}
+  body.pdf .at-note{display:block!important}
+  body.pdf .qz-row{grid-template-columns:186px 52px minmax(90px,1fr) minmax(190px,1.4fr)!important;gap:10px!important}
   body.pdf .qz-worst{display:block!important}
-  body.pdf .qz-rule{grid-template-columns:100px minmax(150px,1fr) 72px!important}
+  body.pdf .qz-rule{grid-template-columns:104px minmax(150px,1fr) 78px!important}
   body.pdf .qz-hit{display:block!important}
-  body.pdf .qz-head{margin-bottom:4px}
-  body.pdf .qz-score{font-size:25px}
-  body.pdf .qz-line{font-size:10.5px;line-height:1.45;margin-bottom:5px}
-  body.pdf .qz-rule{padding:5px 0}
-  body.pdf .qz-why{font-size:10.5px;line-height:1.42}
-  body.pdf .qz-eg{font-size:10px}
-  /* the AI-Readiness card in print. The ≤900px rules below stack the ring above the ladder —
-     correct on a phone, but the PDF is measured at desktop width and PRINTED at 703px, so
-     letting them apply would make the sheet shorter than the document (the same trap that
-     ate the spec note and the quality findings). Print pins the desktop geometry and trims
-     the scale instead. */
-  body.pdf .score-grid{grid-template-columns:auto 1fr!important;gap:12px 22px!important}
+  body.pdf .score-grid{grid-template-columns:auto 1fr!important;gap:14px 28px!important}
   body.pdf .ladder{flex-wrap:nowrap!important}
-  body.pdf .lad{flex:1 1 0!important;padding:7px 9px}
-  body.pdf .lad .ln{font-size:11.5px}
-  body.pdf .lad .lt{font-size:9px;letter-spacing:.03em}
-  body.pdf .big-ring{width:118px;height:118px}
-  body.pdf .big-ring::before{inset:10px}
-  body.pdf .brv .bn{font-size:32px}
-  body.pdf .air-card{padding:11px 13px}
-  body.pdf .pillars{gap:8px;margin-top:9px}
-  body.pdf .pillar{padding:9px 11px}
-  body.pdf .pillar .pf2{margin-top:6px}
-  body.pdf .psum{font-size:10px}
-  body.pdf .air-foot{font-size:10px;margin-top:8px}
-  body.pdf .tier-line{margin-bottom:9px}
-  body.pdf .thist{height:52px}
+  body.pdf .lad{flex:1 1 0!important}
   body.pdf .heat-scroll{overflow:visible}
   body.pdf .mk-heat{min-width:0}
-  body.pdf .mk-heat .hm{min-width:0;font-size:10px;padding:4px 0}
-  body.pdf .heat-card{padding:10px 12px;margin-top:9px}
-  /* the printable column is 703px, which trips the ≤900px responsive rule that drops the
-     spec note — but the note is exactly the context a client needs, so keep it here */
-  body.pdf .at-note{display:block!important;font-size:10px}
-  body.pdf .at-delta{white-space:nowrap}
-  body.pdf .at-bar{border-color:#E6E6E6!important}
-  body.pdf .dial .dial-bg{stroke:#F0F0EE!important}
   body.pdf *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   @media print{@page{margin:14mm 12mm}body{background:#fff!important;color:#333!important}}
   /* rocket logo + module nav (shared) */
