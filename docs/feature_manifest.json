@@ -5715,6 +5715,25 @@
       "file": "tools/test_teamsync.mjs",
       "pattern": "no distinct keyword theme is collapsed into another",
       "pr": 398
+    },
+    {
+      "name": "Workflow: the brief→task reconcile runs when the BRIEFS land too, not only from fetchLive — the plan read winning the race left BRIEFS empty and the pass never ran again for the life of the tab",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "reconcileBriefTasks();",
+      "min": 3,
+      "pr": 398
+    },
+    {
+      "name": "Workflow: a manual Intake row is suppressed only when the plan carries the SAME task — the fuzzy test hid a freshly-filed row behind a sibling in the same family",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(normTask(m.task)===normTask(plan[i]))return false;",
+      "pr": 398
+    },
+    {
+      "name": "Workflow: shApply never deletes shared-state keys while this tab holds an unpushed change — the boot's own reply, snapshotted before the row existed, wiped a task filed seconds earlier",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(!SHDIRTY[ns]) Object.keys(tgt).forEach",
+      "pr": 398
     }
   ]
 }

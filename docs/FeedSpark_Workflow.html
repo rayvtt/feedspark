@@ -1107,7 +1107,14 @@ window.addEventListener('load',restore);
     Object.keys(m||{}).forEach(function(ns){
       if(!SHLK[ns])return;
       var tgt=shMap(ns), src=m[ns]||{}, before=JSON.stringify(tgt);
-      Object.keys(tgt).forEach(function(k){ if(!(k in src))delete tgt[k]; });
+      // A key missing from the server's map normally means somebody deleted it — EXCEPT while
+      // this tab is holding an unpushed change to that namespace, when it just as likely means
+      // the server has not been told yet. Deleting then wipes work this browser created
+      // seconds ago (Ray, 16 Sep 2026: a task filed into Intake during page load vanished
+      // before it ever rendered — the row reached the plan sheet, then shBoot's own reply,
+      // snapshotted before the row existed, deleted it back out of the board).
+      // Same rule bfPoll already follows for briefs: never overwrite work this tab hasn't saved.
+      if(!SHDIRTY[ns]) Object.keys(tgt).forEach(function(k){ if(!(k in src))delete tgt[k]; });
       Object.keys(src).forEach(function(k){ tgt[k]=src[k]; });
       if(JSON.stringify(tgt)!==before)moved=true;
       shCache(ns);
@@ -1458,7 +1465,7 @@ window.addEventListener('load',restore);
         if(JSON.stringify(m)===JSON.stringify(BRIEFS))return;
         BRIEFS=m; if(pair[1])BRIEFS_BASE=pair[1];
         try{localStorage.setItem('fcc-briefs',JSON.stringify(m));}catch(e){}
-        renderAll(); })
+        renderAll(); reconcileBriefTasks(); })   // a colleague's ticket arriving mid-session needs its task filed too
       .catch(function(){});
   }
   setInterval(bfPoll,60000);
@@ -2067,8 +2074,13 @@ window.addEventListener('load',restore);
     var ov=statusOverlay(), duo=dueOverlay(), owo=ownerOverlay(), ren=renameOverlay();
     return MANUAL.map(function(m){ var task=ren[m.client+'|'+m.task]||m.task; return {c:m.client,orig:m.task,task:task}; })
       .filter(function(m){ var plan=idx[m.c]||[];                          // suppress once the real plan contains it
-        var rec=!!RECUR[m.c+'|'+m.task];                                   // a spawned occurrence ("task · 12 Sep") fuzzy-matches its own base row — exact match only, or it vanishes until the sheet round-trip
-        for(var i=0;i<plan.length;i++){ if(rec?normTask(m.task)===normTask(plan[i]):sameTask(m.task,plan[i]))return false; }
+        // EXACT wording, always (Ray, 16 Sep 2026 — the last reason Cashmere/Merino had no
+        // Intake row): the local row is a stand-in until the SAME task round-trips from the
+        // sheet, so anything less than the same task is a different task. The fuzzy test hid
+        // a freshly-filed row behind a sibling in the same family — Reiss's own
+        // "… - Leather & Suede - … - 0926" dices .769 against "… - Knitwear - … - 0926" —
+        // and the recurrence case had already needed the exact rule for the same reason.
+        for(var i=0;i<plan.length;i++){ if(normTask(m.task)===normTask(plan[i]))return false; }
         return !DELETED[m.c+'|'+m.task]; })
       .map(function(m){ var src=MANUAL.filter(function(x){return x.client===m.c&&x.task===m.orig;})[0]||{}; var k=m.c+'|'+m.task;
         var s=ov[k]!=null?ov[k]:(src.status||'Open');
@@ -3972,6 +3984,13 @@ window.addEventListener('load',restore);
   var SHBOOT=shBoot().then(function(ok){ shStart(); return ok; });
   apiGet().then(function(d){ BRIEFS=d||{}; bfRescueLocal(); _srB=true; _srTry(); renderAll();
     SHBOOT.then(function(){ renderAll(); });   // whichever lands last, the board ends up current
+    // RACE (Ray, 16 Sep 2026 — the other half of why Cashmere/Merino and Gifting had no task):
+    // reconcileBriefTasks was called ONLY from fetchLive's success handler. The plan read and
+    // the briefs fetch are independent, so when the plan won the race BRIEFS was still {} —
+    // the pass looked at nothing, found nothing, and was never called again for the life of
+    // the tab. It self-guards on LIVE_CONN, so calling it here is a no-op until the plan is
+    // live and a full pass when it already is: whichever lands second, the tickets get read.
+    reconcileBriefTasks();
     // one-time repair of stages the old bare-word matcher closed on a pickup; the flag keeps
     // it to a single pass per browser, and the ⟳ button below re-runs it on demand
     try{ if(localStorage.getItem('fcc-relabel-v1')!=='1'){ localStorage.setItem('fcc-relabel-v1','1'); relabelLedger({quiet:false}); } }catch(e){ relabelLedger({quiet:true}); }

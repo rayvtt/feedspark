@@ -77,7 +77,9 @@ const server = http.createServer(async (q, r) => {
     await body(q);
     if (!PLANLIVE) return send({ ok: true, connected: false });
     const brands = {};
-    for (const [b, tasks] of Object.entries(PLANLIVE)) brands[b] = { tasks: tasks.map(t => ({ t, s: 'Open', b: 'open', c: 'keyword', o: '' })) };
+    // dated, like a real plan: intakeFiltered windows plan rows to the brand's latest months,
+    // so a dateless fixture leaves that window empty and hides every dated row filed into it
+    for (const [b, tasks] of Object.entries(PLANLIVE)) brands[b] = { tasks: tasks.map(t => ({ t, s: 'Open', b: 'open', c: 'keyword', o: '', d: '10/09/2026' })) };
     return send({ ok: true, connected: true, brands });
   }
   if (p === '/__planlive') { PLANLIVE = JSON.parse(await body(q) || 'null'); return send({ ok: true }); }
@@ -244,10 +246,14 @@ const ID10 = 'REIS-20260910-02' + RUN;
 await planLive({ Reiss: [SIB] });
 await seedBriefs({ [ID10]: { id: ID10, client: 'Reiss', task: T10, status: 'running', by: 'Steven Opuni', due: '15092026', planned: 1, created: 1, updated: 1, comms: [], hist: [] } });
 const Ray10 = await user();
-ok(await till(async () => (await sheet(REISS_SHEET)).rows.some(r => r.task === T10), true, 15000) === true,
-  'the ticket\'s task is written into Reiss\'s Project Plan');
-ok(await till(() => Ray10.p.evaluate(t => document.body.innerText.indexOf(t) >= 0, 'Knitwear'), true) === true,
-  'and it shows in Intake');
+const wrote10 = await till(async () => (await sheet(REISS_SHEET)).rows.some(r => r.task === T10), true, 15000);
+ok(wrote10 === true, 'the ticket\'s task is written into Reiss\'s Project Plan');
+// the INTAKE TABLE specifically — body.innerText also matches the ticket's own board card, so
+// the weaker check passed on runs where no Intake row had been created at all
+const inIntake = await till(() => Ray10.p.evaluate(() => {
+  const b = document.getElementById('it-body'); if (!b) return false;
+  return (b.innerText || '').indexOf('Knitwear') >= 0; }), true);
+ok(inIntake === true, 'and it has a real row in the Intake table');
 // the blocker was isDup: every "Keywords Optimisation - <theme> - Marketing Planner" ticket
 // anchored to the same Intake row at dice >= .45 and collapsed into one, so the reconcile
 // skipped it and it never rendered as its own record anywhere
@@ -259,7 +265,10 @@ const dupMark = await Ray10.p.evaluate(() => {
 });
 const knit = dupMark.filter(r => r.task.indexOf('Knitwear') >= 0);
 ok(knit.length === 1 && !knit[0].dup, 'and it is NOT collapsed as a duplicate of another keyword ticket');
-const collapsed = dupMark.filter(r => r.dup);
+// scoped to the themes this scenario pits against each other — earlier scenarios deliberately
+// raise RUN-suffixed twins of the same task, which SHOULD collapse
+const themes = ['Knitwear', 'Leather & Suede'];
+const collapsed = dupMark.filter(r => r.dup && themes.some(t => r.task.indexOf(t) >= 0));
 ok(collapsed.length === 0, 'no distinct keyword theme is collapsed into another — ' +
   (collapsed.length ? JSON.stringify(collapsed.map(r => r.task.slice(0, 50))) : 'none'));
 
