@@ -6243,6 +6243,43 @@
       "pattern": "__fccTouch"
     },
     {
+      "name": "Hours badge: the schedule's go/skip strip, 12 months, beside the balance",
+      "file": "docs/hours_widget.html",
+      "pattern": "function skipBlock",
+      "pr": 411
+    },
+    {
+      "name": "Hours badge: a month never scheduled is an outline, never a coloured decision",
+      "file": "docs/hours_widget.html",
+      "pattern": "'-': { c: '', t: 'not scheduled' }",
+      "pr": 411
+    },
+    {
+      "name": "Schedule: the skip digest the badge reads (strips + streaks, top 3 tasks)",
+      "file": "cloudflare/feedspark-deck/src/schedwork.js",
+      "pattern": "export function skipDigest",
+      "pr": 411
+    },
+    {
+      "name": "Schedule: a gap month is '-' in the strip, never filled forward",
+      "file": "cloudflare/feedspark-deck/src/schedwork.js",
+      "pattern": "export function stripOf",
+      "pr": 411
+    },
+    {
+      "name": "Schedule: the digest is written only from an UNSCOPED read (a scoped one would store a partial house)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (!acc.clients) {",
+      "pr": 411
+    },
+    {
+      "name": "Hours route serves the schedule skip digest",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "schedskip",
+      "min": 2,
+      "pr": 411
+    },
+    {
       "name": "dossier: suggested next moves deep-link with their own filter",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "WF=function(f)"

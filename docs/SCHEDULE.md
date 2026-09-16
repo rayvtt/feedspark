@@ -107,3 +107,54 @@ clients' cadence; sheet-only clients belong to the full-house views.
 - **`/workflow`, under Intake** — the *⏭ Scheduled work* band: how many dossier brands have a
   scheduled task skipped this month, one chip per brand with its worst streak, each a link into
   `/schedule?b=`. Read-only; the pipeline never files these.
+
+
+## The go/skip strip on the hours popover (Sep 2026)
+
+> Ray, 16 Sep 2026: *"This pop-up over retainer should also include the skipped schedule work, as
+> well as an indication of the last 12 months, so bring in that dotted bar chart"* — then, on seeing
+> the hours bars stretched to twelve: *"no i prefer the dotted green and orange bar for go and skip
+> that you have, just try to fit 3 at least in that popup."*
+
+The retainer balance says what an account has **cost**. This module says what it has **declined**.
+Side by side at the moment of the decision they answer different halves of the same question: an
+account over its block that is also turning work away is a different conversation from one that is
+over *because* it takes everything offered.
+
+So the hours badge now carries this module's own cadence strip — the top **three** tasks, twelve
+months each, in the same colours the `/schedule` page uses so the two surfaces can never disagree:
+
+| | |
+|---|---|
+| green `#2E7D32` | the work went ahead |
+| orange `#ED6F0B` | the AM skipped it |
+| grey `#C9CDD3` | scheduled, no decision recorded |
+| outline | **not scheduled that month** |
+
+That last one is the distinction the whole strip turns on. A month nothing was offered in is not a
+month anything was refused, and filling gaps forward would turn every quiet summer into a skip
+streak. `stripOf` writes `-` for it, and the widget renders it as an outline rather than a colour
+that could read as a decision.
+
+### How it gets there without costing anything
+
+Parsing this workbook is a multi-tab walk. The badge appears on **every page for every signin**, so
+it must never pay that. `skipDigest` derives a tiny record once — four codes, twelve characters,
+three tasks per brand, a couple of KB for the whole estate — which `/api/schedule` writes to KV as a
+side effect and `GET /api/hours` reads with one get.
+
+**Written only from an unscoped read.** The cadence in that route is built from rows already
+filtered to the caller's clients, so persisting it from a scoped signin would replace the whole
+house's summary with one AM's slice and every other brand would silently read as "no skips". An
+absent record makes the popover show nothing, which is the honest answer; a partial one would state
+a falsehood.
+
+The rows shipped are the three on the longest current skip streak, because those are what an AM
+needs beside a negative balance — and the digest says how many it left out rather than implying
+three is all there are. A brand with nothing skipped still ships its rows: a strip of green is the
+answer to "are they taking the work", where an empty block would read as "no data".
+
+QA: `tools/test_schedule.mjs` (79 → 101) pins the strip encoding, the gap rule in both directions,
+the per-client aggregation, hours summing only over tasks actually on a streak, the three-row cap
+with its "more" count, the all-green case, and the real committed workbook digesting end to end —
+plus the badge's rendering of it.
