@@ -210,31 +210,45 @@ window.addEventListener('load',restore);
   .q-in:focus{outline:none;border-color:var(--orange)}
   @keyframes lgspin{to{transform:rotate(360deg)}}
   .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--orange);border-top-color:transparent;border-radius:50%;animation:lgspin .7s linear infinite;vertical-align:-1px;margin-right:5px}
-  /* ⬇ PDF: the feed scorecard prints as a clean client-ready document (browser print-to-PDF).
-     Everything except section 03's panel hides; a branded header + footer frame the scorecard. */
-  #print-head{display:none}
-  @media print{
-    @page{margin:14mm 12mm}
-    body{background:#fff!important;color:#333!important}
-    .topbar,.demo-banner,.hero,.cat:not(#sec-detail),.footmark,#theme-tgl,
-    .det-actions,.at-act,#askp-slot,#profp-slot,.refseg,#sec-detail .cat-h,#sec-detail .cat-sub{display:none!important}
-    #sec-detail{border-top:none;padding:0}
-    #sec-detail .wrap{max-width:none;padding:0}
-    .panel,.tier{box-shadow:none!important;border:1px solid #E6E6E6!important;background:#fff!important}
-    .tier{page-break-inside:avoid}
-    .gr-top{page-break-after:avoid}
-    #print-head{display:block;margin:0 0 14px;border-bottom:3px solid #ED6F0B;padding-bottom:10px}
-    #print-head .ph-brand{font-size:19px;font-weight:900}
-    #print-head .ph-brand span{color:#ED6F0B}
-    #print-head .ph-title{font-size:13px;font-weight:800;color:#4a4a4a;margin-top:2px}
-    #print-head .ph-meta{font-size:11px;font-weight:700;color:#8a94a0;margin-top:2px}
-    #print-foot{display:block!important;margin-top:16px;padding-top:8px;border-top:1px solid #E6E6E6;font-size:10px;font-weight:700;color:#8a94a0}
-    .at-row{grid-template-columns:230px 1fr 62px 54px!important}
-    .at-bar{border-color:#E6E6E6!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .dial .dial-bg{stroke:#F0F0EE!important}
-    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  }
-  #print-foot{display:none}
+  /* ⬇ PDF: the feed scorecard prints as a clean client-ready document — ONE CONTINUOUS
+     VERTICAL PAGE (Ray, 16 Sep 2026: "should all fit in 1 vertical page"). exportPdf
+     measures the laid-out scorecard and injects @page{size:210mm <content>mm}, so the
+     browser writes a single tall sheet instead of slicing the scorecard across A4 breaks.
+     The layout hangs off body.pdf rather than @media print so the measuring pass sees
+     EXACTLY what prints (a media query is invisible to getBoundingClientRect); a bare
+     Ctrl+P gets the same treatment via beforeprint. Width is pinned to the 186mm
+     printable column (210 − 2×12mm margins) = 703 CSS px at 96dpi, so measured px map
+     1:1 onto printed mm. */
+  #print-head,#print-foot{display:none}
+  body.pdf{background:#fff!important;color:#333!important;width:186mm;margin:0 auto}
+  body.pdf .topbar,body.pdf .demo-banner,body.pdf .hero,body.pdf .cat:not(#sec-detail),body.pdf .footmark,
+  body.pdf #theme-tgl,body.pdf .det-actions,body.pdf .at-act,body.pdf #askp-slot,body.pdf #profp-slot,
+  body.pdf .refseg,body.pdf #sec-detail .cat-h,body.pdf #sec-detail .cat-sub,
+  body.pdf #fcc-fcb,body.pdf #fcc-fcp,body.pdf #tky-fab,body.pdf #tky-scrim,body.pdf #tky-drawer,
+  body.pdf #fcc-viewas,body.pdf #fcc-apps,body.pdf #fcc-navcz,body.pdf #fcc-navcz-scrim{display:none!important}
+  body.pdf #sec-detail{border-top:none;padding:0}
+  body.pdf #sec-detail .wrap{max-width:none;padding:0}
+  body.pdf .panel,body.pdf .tier{box-shadow:none!important;border:1px solid #E6E6E6!important;background:#fff!important}
+  body.pdf .tier{break-inside:avoid;page-break-inside:avoid}   /* only bites in the A4 fallback */
+  body.pdf #print-head{display:block;margin:0 0 12px;border-bottom:3px solid #ED6F0B;padding-bottom:9px}
+  body.pdf #print-head .ph-brand{font-size:19px;font-weight:900}
+  body.pdf #print-head .ph-brand span{color:#ED6F0B}
+  body.pdf #print-head .ph-title{font-size:13px;font-weight:800;color:#4a4a4a;margin-top:2px}
+  body.pdf #print-head .ph-meta{font-size:11px;font-weight:700;color:#8a94a0;margin-top:2px}
+  body.pdf #print-foot{display:block!important;margin-top:14px;padding-top:8px;border-top:1px solid #E6E6E6;font-size:10px;font-weight:700;color:#8a94a0}
+  /* single-line attribute rows: on the old 4-column print grid the spec note had no
+     column of its own and wrapped onto a second grid line, doubling every row (56px) and
+     with it the whole document. Five columns, so a row is a row. */
+  body.pdf .at-row{grid-template-columns:146px minmax(60px,.7fr) 44px 56px minmax(150px,1.3fr)!important;
+    gap:9px!important;padding:3.5px 0!important;font-size:11.5px}
+  /* the printable column is 703px, which trips the ≤900px responsive rule that drops the
+     spec note — but the note is exactly the context a client needs, so keep it here */
+  body.pdf .at-note{display:block!important;font-size:10px}
+  body.pdf .at-delta{white-space:nowrap}
+  body.pdf .at-bar{border-color:#E6E6E6!important}
+  body.pdf .dial .dial-bg{stroke:#F0F0EE!important}
+  body.pdf *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @media print{@page{margin:14mm 12mm}body{background:#fff!important;color:#333!important}}
   /* rocket logo + module nav (shared) */
   .nav-toggle{border:none;background:none;cursor:pointer;padding:1px;border-radius:10px;flex:none;transition:transform .22s ease;display:inline-flex;text-decoration:none}
   .nav-toggle svg{width:26px;height:26px;display:block;overflow:visible}
@@ -1429,7 +1443,37 @@ window.addEventListener('load',restore);
     openAsk(R.k, 'pdp', t);
   }
 
-  /* ---------------- PDF export (print-to-PDF: branded header, scorecard only) -------- */
+  /* ---------------- PDF export (print-to-PDF: branded header, scorecard only) --------
+     ONE CONTINUOUS VERTICAL PAGE (Ray, 16 Sep 2026): the scorecard used to slice across
+     A4 breaks — 5–9 sheets, the first mostly blank because a tier that would not fit was
+     pushed whole. Instead of paginating we size the sheet to the document: lay the page
+     out exactly as it prints (body.pdf), measure it, and write that height into @page. */
+  var PG = { w: 210, mx: 12, my: 14, a4h: 297 };   // A4 portrait + the @page margins, mm
+  var PX_MM = 25.4 / 96;                           // CSS px -> mm at the 96dpi print scale
+  var PG_MAX = 4800;                               // PDF's own ceiling is 200in/5080mm
+  function pdfPage(mm) {
+    var el = document.getElementById('pdf-page');
+    if (!el) { el = document.createElement('style'); el.id = 'pdf-page'; document.head.appendChild(el); }
+    el.textContent = '@page{size:' + PG.w + 'mm ' + mm + 'mm;margin:' + PG.my + 'mm ' + PG.mx + 'mm}';
+  }
+  function preparePdf() {
+    document.body.classList.add('pdf');
+    var el = $('sec-detail');
+    var h = el ? el.getBoundingClientRect().height : 0;   // reading it forces the reflow
+    var mm = Math.ceil(h * PX_MM) + PG.my * 2 + 2;        // + both margins + a hair of slack
+    // an absurdly long document falls back to plain A4 pagination — a PDF the reader
+    // cannot open is worse than one that runs to two pages
+    pdfPage(!h || mm > PG_MAX ? PG.a4h : mm);
+    return true;
+  }
+  function restorePdf() {
+    document.body.classList.remove('pdf');
+    var el = document.getElementById('pdf-page'); if (el) el.parentNode.removeChild(el);
+  }
+  // a bare Ctrl+P gets the same single-page document as the ⬇ PDF button
+  window.addEventListener('beforeprint', function () { if (!document.body.classList.contains('pdf')) preparePdf(); });
+  window.addEventListener('afterprint', restorePdf);
+
   function exportPdf(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var p = parts(k), s = d.snapshot;
@@ -1444,6 +1488,7 @@ window.addEventListener('load',restore);
     document.title = 'FeedSpark Golden Record — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase() + ' — ' + new Date(s.t).toISOString().slice(0, 10);
     var done = function () { document.title = t0; window.removeEventListener('afterprint', done); };
     window.addEventListener('afterprint', done);
+    preparePdf();      // lay out + measure, then size the sheet to the whole scorecard
     window.print();
   }
 

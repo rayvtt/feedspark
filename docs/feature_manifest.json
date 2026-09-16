@@ -5393,6 +5393,24 @@
    "pattern": "if(stamp)BRIEFS_BASE=stamp;",
    "pr": 386,
    "min": 1
+  },
+  {
+   "name": "Golden Record PDF: ONE continuous vertical page — exportPdf measures the laid-out scorecard and writes @page{size:210mm <content>mm} (Ray 16 Sep 2026: 'should all fit in 1 vertical page')",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "function preparePdf",
+   "min": 1
+  },
+  {
+   "name": "Golden Record PDF: print layout hangs off body.pdf (not @media print) so the measuring pass sees exactly what prints; beforeprint gives a bare Ctrl+P the same document",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "body.pdf{background:#fff!important",
+   "min": 1
+  },
+  {
+   "name": "Golden Record PDF: single-line attribute rows — the spec note gets its own print column instead of wrapping onto a second grid line",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "body.pdf .at-note{display:block!important",
+   "min": 1
   }
  ]
 }
