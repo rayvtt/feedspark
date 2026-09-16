@@ -10,3 +10,9 @@ __pycache__/
 
 # agent worktrees (harness-managed, never repo content)
 .claude/worktrees/
+
+
+# FS Task Manager: the reports database is read LIVE by the worker (src/tmmcp.js, the :15/:45
+# cron). No client hours, task titles or contact addresses are committed — they live in KV only.
+# Anything a session pulls from the MCP while working on the module stays local.
+ops/reports/

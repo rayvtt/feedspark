@@ -134,3 +134,142 @@ server with a fake KV — no token, refused token (fails up, last good sync kept
 (no re-writes, rotation moves on), a 500 (unreachable), X-API-Key mode — and the cron / route /
 page wiring. `tools/test_tm.mjs` still pins the rollup, the store, and that no client hours are
 committed to git.
+
+---
+
+# The `/tasks` module — the same database, made searchable
+
+> Ray, 16 Sep 2026: *"lets build a new module as FS Task Manager (to show all capabilities of this
+> new feedspark-reports mcp please) — Allow more area where you can also create a search bar for
+> each AM to work inside the pull‑in report via the MCP, and a quick pull‑out report—either a pie
+> chart or any type of chart—based on the hours of billable versus non‑billable, where you reach
+> inside this MCP."*
+
+Everything above maps TM **hours** onto figures the FCC already shows — a block on Leadership, a
+⏱ on a Workflow ticket. **`/tasks`** is the other half: the database itself, on one page, with a
+query bar over it. Same MCP, same credential, same cron firing, its own rotation.
+
+## All four reads have a home
+
+| MCP read | Where it lands |
+|---|---|
+| `get_client_list` | **Accounts & hours balance** tab — every market, live and stopped, with its group, AMs, monthly allowance, hours used and balance. Row → drawer with that market's own hours in the window. |
+| `get_task_list_for_client` | **Tasks** tab + the chart + every KPI — one row per booked task with its owner, day, status and its two hour columns. |
+| `get_tickets_for_client` | **Client tickets** tab — the queue the hours lane had listed as *not yet*: subject, status, age, idle days, messages, tasks spawned, hours consumed. |
+| `get_ticket_detail` | The ticket drawer — who raised the thread, when it opened, who replied last. |
+
+## Its own rotation on the same firing
+
+`tmPull` chases hours onto tickets inside a **21-day** window: four markets a firing, brands with
+a brief in flight weighted twice. The module needs the opposite shape — **even coverage of twelve
+months** across the whole book, so an AM can search it. So `tmBookPull` runs right after it on the
+same `:15/:45` firing, sharing the same MCP session (one handshake, not two):
+
+```
+ tmBookPull  ─ get_client_list(flag_scope 'all')  → the roster + the Accounts tab
+             ─ BOOK_MARKETS (2) × get_task_list_for_client(limit 1600)  → KV tmbook:<client>
+             ─ BOOK_QUEUES  (1) × get_tickets_for_client(status 'all')  → KV tmtick:<client>
+             ─ KV tmbookidx {clients, accounts, roster, queues, rot, qrot} · tmbookst {state, pulled}
+```
+
+**Stalest first, and a market never read always leads** — otherwise a market at the end of the
+roster starves behind whichever ones the hot-brief rotation keeps choosing. ~39 worked markets at
+2 a firing turns the whole book over roughly **twice a day**; the 12 ticket queues turn over in
+about six hours. `GET /api/taskmanager?sync=N` (owner) reads N more markets now, and the page's
+**⟳ Sync more** loops it until the estate is covered, so nobody waits for the cron on a fresh
+deploy.
+
+Only markets carrying a retainer block or booked hours this cycle are pulled: a stopped market
+with neither has no work to find, and reading it would spend a pull a live market needs. It still
+appears in the Accounts tab — the roster is kept whole.
+
+## Nothing in git
+
+Same rule the hours lane set: hours, task titles and client contact addresses are per-client
+commercial data and live in **KV only**. `ops/reports/` is ignored wholesale, so a session that
+pulls the MCP while working on the module cannot commit what it pulled by accident. The harness
+asserts it.
+
+The page is **served scoped**, not filtered in the browser: `/api/taskmanager` reads only the
+client records the signin is allowed, so a client-scoped AM never receives another AM's rows at
+all. The module is grantable per person (`taskmanager` in `access.js`'s `MODULES`).
+
+## The search bar
+
+One bar, filtering the tasks, the tickets, the chart, the breakdown strip and every KPI at once.
+Bare words search the record; `field:value` narrows; `-` negates. Repeats of one field OR
+together, different fields AND.
+
+| | |
+|---|---|
+| `keyword optimisation` | both words appear somewhere on the row (title, notes, owner, client, market, status) |
+| `"keyword optimisation"` | the exact phrase, not two loose words |
+| `client:` `brand:` `account:` | the brand. Exactly, **or by prefix of 2+ characters** — `client:rei` finds Reiss, `client:eiss` finds nothing (a mid-word substring is not a name) |
+| `owner:` `who:` `by:` | the person who did the work |
+| `market:` `mkt:` `country:` | GB, DE, BE-NL … |
+| `am:` | the account manager on the market |
+| `cat:` `type:` | `opt` / `tech` / `feat` / `acct` / `other`, and their own words (`cat:optimisation`, `cat:fixes`) |
+| `status:` | the database's own word (`done`, `created`) or the bucket (`open`, `hold`, `cancelled`) |
+| `bill:yes` / `bill:no` | carries charged time / carries unbilled time |
+| `from:` `to:` `month:` | `2026-04` or `2026-04-15`; `to:2026-06` covers the whole of June |
+| `min:` `max:` | total hours on the row |
+| `-call`, `-client:Schuh` | exclude |
+
+`/` focuses it, `?q=` deep-links a view, chips run the common ones, **＋ Save this view** keeps a
+query per device, and clicking a breakdown row toggles that filter in.
+
+**`bill:yes` and `bill:no` are not opposites.** Most of the book is part charged and part not, and
+such a row answers to *both*, because both are true of it. Reading `bill:no` as "nothing was
+billed" would hide the majority of the very thing the module exists to show.
+
+## The chart
+
+The series is always **billable vs non-billable**; the axis is whatever you split by — everything
+(a donut), client, who did it, type of work, month, market, AM, status, task — in four forms
+(donut, stacked columns, 100% stacked, horizontal bars). It reads the **current search result**,
+so it is never a different population from the table under it, and it states its conclusion in
+words rather than leaving the reader to do the division.
+
+**Pull-out exits:** `⬇ PNG` (2000px, footer-stamped with the window and the query), `⎘ Copy table`
+(TSV), `⬇ CSV of these rows` (every matching task with both hour columns and its notes),
+`🔗 Copy link`.
+
+Colours are the validated pairs: billable `#2563EB` / non-billable `#ED6F0B` on light,
+`#4C82E0` / `#C67B28` on dark — the pair the Product Volume module uses, so billable is the same
+blue everywhere. Type-of-work dots reuse the retainer donut's palette, and the categories come
+from `tools/reporthours.mjs`, so this module and the brand one-pager can never disagree about
+what a task was.
+
+## Two traps in the source, handled in the sync
+
+- **`from_date` is not applied.** Verified 16 Sep 2026: a task list asked for `2026-07-01` came
+  back with February rows; a ticket pull asked for `2026-08-01` returned 2024 threads. The window
+  is applied in `packMarket` / `packQueue` and nowhere else.
+- **Pulls are newest-first and capped.** A market whose deepest row starts *after* the window
+  opens did not reach back far enough, and reading that as a whole year would overstate every
+  total. It is stored `full: false`, shown as **partial** in the coverage drawer, and contributes
+  the rows it does have.
+
+`0000-00-00` is **undated**: counted in the totals, in no month, and the page says so. Tickets are
+windowed by **last activity**, the same twelve months as the tasks, for every client alike. And
+what has not been read yet is **absent, not zero** — the source line says how many markets the
+book holds and how stale the oldest read is.
+
+## Files
+
+| File | Role |
+|---|---|
+| `cloudflare/feedspark-deck/src/taskbook.js` | pure: the grammar (`parseQuery`, `matchTask`, `matchTicket`), the aggregation (`summarise`, `groupBy`, `ticketStats`), and the book store (`bookWindow`, `packMarket`, `packQueue`, `bookPlan`, `queuePlan`, `rosterOf`, `assembleBook`, `bookHealth`) |
+| `worker.js › tmBookPull` | the I/O: one firing's pulls into KV, on the shared MCP session |
+| `worker.js › GET /api/taskmanager` | the scoped read, and `?sync=N` for the owner |
+| `docs/FeedSpark_TaskManager.html` | the page |
+| `tools/test_reporttasks.mjs` | 296 assertions |
+
+**Page / engine parity.** A page cannot import the module, so it carries a behavioural twin of the
+grammar between `/* ENGINE:START */` and `/* ENGINE:END */`. The harness lifts that block out by
+name and runs the **same assertion table** against both, plus a term-by-term comparison over
+fifteen query shapes. It then lifts **`tmBookPull` out of `worker.js` by name** and runs it
+against an in-process stub MCP with a fake KV — no credential, a refused credential, the real
+pull, the rotation moving on rather than re-reading, a partial pull refused as a full year, and an
+unreachable endpoint that fails up rather than writing a half-built index. In qa_gate, presync and
+`validate.yml`.

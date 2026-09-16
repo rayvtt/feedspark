@@ -57,6 +57,8 @@ jobs:
         run: node tools/test_volumes.mjs
       - name: Retainer-hours harness (how delivered hours are classified for the one-pager pie)
         run: node tools/test_reporthours.mjs
+      - name: FS Task Manager harness (search grammar, billable split, page/engine parity)
+        run: node tools/test_reporttasks.mjs
 
       - name: Shipped-feature markers (multi-session overwrite tripwire)
         run: node tools/check_markers.js

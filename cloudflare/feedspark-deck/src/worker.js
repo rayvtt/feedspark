@@ -33,12 +33,17 @@ import { parseAbTests, abSummary, resolveAbTab, hasAbHeader, abClientKey } from 
 // sheet is shared with it, else the committed snapshot. Engine: src/schedwork.js; page /schedule.
 import { SCHEDULE_SHEET_ID, parseWorkbook, buildCadence, brandSummary, compactRow, isoOf as schedIso } from "./schedwork.js";
 import SCHEDULE_SNAPSHOT from "../../../ops/schedule/scheduled_work_2026-09-15.json";
+
 // Work volumes (Ray, 15 Sep 2026): every workstream on an account bucketed by month for the
 // Deck Generator's chart workbench — plan tasks, emails, calls, briefs, scheduled work, results.
 import { buildVolumes, monthKey as volMonthKey, monthRange as volMonthRange } from "./volumes.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
 import { aggregateClientList } from "./tmparse.js";
 import * as TMM from "./tmmcp.js";
+// FS TASK MANAGER (/tasks, Ray 16 Sep 2026) — the query engine and the book store behind the
+// module: normalising a pulled task or ticket row, the 12-month window, the market rotation,
+// and the search grammar the page carries a twin of. Pure; tmBookPull does the I/O around it.
+import * as TB from "./taskbook.js";
 // Committed action batches (ops/ingest/*.json) — bundled at build time so a logged-in user can
 // file them into a plan sheet with ONE CLICK from /workflow (no CI service token needed).
 // New batch = commit the JSON + add it to INGEST_BATCHES.
@@ -94,6 +99,7 @@ import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
 // suggestions ("overlay is BAU on Accessorize → propose to Hobbycraft"). Page at /playbook.
 import PLAYBOOK_PAGE from "../../../docs/FeedSpark_Playbook.html";
 import SCHEDULE_PAGE from "../../../docs/FeedSpark_Schedule.html";
+import TASKMANAGER_PAGE from "../../../docs/FeedSpark_TaskManager.html";
 import APPSW from "../../../docs/apps_widget.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
 // node tests share the file, same pattern as the Feed Lab engine)
@@ -190,6 +196,7 @@ const PAGES = {
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
   '/playbook':    { html: PLAYBOOK_PAGE, slug: 'playbook' },
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
+  '/tasks':       { html: TASKMANAGER_PAGE, slug: 'taskmanager' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
@@ -1804,6 +1811,47 @@ export default {
       return json(payload);
     }
 
+    // ---- FS TASK MANAGER (Ray, 16 Sep 2026) ----------------------------------------------
+    // "a search bar for each AM to work inside the pull-in report via the MCP, and a quick
+    //  pull-out report ... based on the hours of billable versus non-billable."
+    //
+    // The book the :15/:45 cron pulls out of the reports MCP (tmBookPull → KV tmbook:<client>,
+    // tmtick:<client>, tmbookidx), assembled and served SCOPED. Nothing here is in git: this is
+    // per-client commercial data — hours, task titles, client contact addresses — and it lives
+    // in KV only, the same rule the hours sync set when it shipped.
+    //
+    // Scoping is server-side and filters on the CLIENT RECORD, not the payload: a scoped signin
+    // never has another AM's rows in its response to begin with, rather than being handed the
+    // book and asked to look away.
+    //
+    // ?sync=N (owner) reads N more markets right now, so nobody waits for :15 / :45 to see the
+    // book fill. The page loops it and shows how far it has got.
+    if (path === '/api/taskmanager' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const syncN = url.searchParams.get('sync');
+      let synced = null;
+      if (syncN != null) {
+        if (!acc.owner) return json({ ok: false, error: 'sync is owner-only' }, 403);
+        synced = await tmBookPull(env, { pulls: Math.min(10, Math.max(1, parseInt(syncN, 10) || 4)), queues: 2 });
+        logActivity(ctx, env, request, 'taskmanager-sync', (synced.pulled || []).join(', ').slice(0, 180));
+      }
+      const idx = (await env.EDITS.get('tmbookidx', 'json')) || { clients: {}, roster: [], queues: [], at: 0, rot: {}, qrot: {} };
+      const names = Object.keys(idx.clients || {}).filter((n) => clientMatch(acc.clients, n));
+      const books = [], queues = [];
+      for (const n of names) {
+        const b = await env.EDITS.get('tmbook:' + n, 'json'); if (b) books.push(b);
+        const q = await env.EDITS.get('tmtick:' + n, 'json'); if (q) queues.push(Object.assign({ client: n }, q));
+      }
+      const accounts = (idx.accounts || []).filter((a) => clientMatch(acc.clients, a.client));
+      const data = TB.assembleBook(books, queues, accounts, Date.now());
+      const roster = (idx.roster || []).filter((m) => clientMatch(acc.clients, m.client));
+      data.health = TB.bookHealth(data.coverage, roster, Date.now());
+      data.scoped = !!acc.clients;
+      data.queuesTotal = (idx.queues || []).filter((q) => clientMatch(acc.clients, q.client)).length;
+      const st = (await env.EDITS.get('tmbookst', 'json')) || {};
+      return json({ ok: true, owner: !!acc.owner, scoped: !!acc.clients, status: st, synced, data });
+    }
+
     // ---- A/B TEST ARCHIVE (Ray, 9 Sep 2026) ----------------------------------------------
     // Every project plan carries a tab where the team summarises the brand's tests and the
     // uplift each produced, backdated. Read LIVE through the service account rather than
@@ -2445,6 +2493,9 @@ export default {
     // own firing so its MCP + KV subrequests never compete with the guard sweeps' budget.
     if (event && event.cron === '15,45 * * * *') {
       await tmPull(env);
+      // and the /tasks module's own book — its own rotation (even coverage of twelve months,
+      // stalest market first) on the same firing, so the estate turns over ~twice a day.
+      await tmBookPull(env);
       return;
     }
     // Custom-watch passes (Ray's alert builder) with their OWN subrequest budget: the :30
@@ -2632,6 +2683,75 @@ async function tmPull(env, opts) {
     const code = e && e.code;
     const state = code === 'unauthorized' ? 'unauthorized' : (code === 'unreachable' || /fetch failed|network|ECONN|ENOTFOUND|timed? ?out|aborted|HTTP 5\d\d/i.test(msg) ? 'unreachable' : 'error');
     return save(Object.assign(st, { state, fails: (prev.fails | 0) + 1, error: msg }));
+  }
+}
+
+// ---- FS TASK MANAGER: the book the /tasks module reads -----------------------------------
+// tmPull (above) chases hours onto Workflow tickets inside a 21-day window — four markets a
+// firing, brands with a brief in flight weighted twice. The MODULE needs something different:
+// even coverage of twelve months across the whole book, so an AM can search it. So this is its
+// own rotation on the same firing, sharing the same MCP session (one handshake, not two):
+// TB.BOOK_MARKETS markets and TB.BOOK_QUEUES ticket queue per pull, STALEST FIRST with a
+// never-read market always leading, which turns the whole estate over roughly twice a day.
+// ?sync=N on /api/taskmanager (owner) runs it on demand so the book fills without waiting.
+//
+// Nothing is committed to git — hours, task titles and client contact addresses are per-client
+// commercial data and live in KV only.
+async function tmBookPull(env, opts) {
+  opts = opts || {};
+  const now = opts.now || Date.now();
+  const fetchFn = opts.fetch || fetch;
+  const st = { at: now, state: 'ok', error: null, pulled: [], queues: [] };
+  const save = async (x) => { try { await env.EDITS.put('tmbookst', JSON.stringify(x)); } catch (e) {} return x; };
+  if (!env.TM_MCP_TOKEN) return save(Object.assign(st, { state: 'no_token', error: 'TM_MCP_TOKEN not set — the book cannot be read until the secret is in place' }));
+  const idx = (await env.EDITS.get('tmbookidx', 'json')) || { clients: {}, accounts: [], roster: [], queues: [], rot: {}, qrot: {} };
+  idx.clients = idx.clients || {}; idx.rot = idx.rot || {}; idx.qrot = idx.qrot || {};
+  const mcp = opts.mcp || tmMcp(env, fetchFn);
+  const win = TB.bookWindow(now, TB.BOOK_MONTHS);
+  try {
+    if (!opts.mcp) { try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; } }
+    let rows = opts.clientRows;
+    if (!rows) rows = TMM.rowsOf(await mcp.call('get_client_list', { flag_scope: 'all' }));
+    if (!rows.length) { const e = new Error('empty client list'); e.code = 'shape'; throw e; }
+    const roster = TB.rosterOf(rows);
+    idx.accounts = roster.accounts; idx.roster = roster.markets; idx.queues = roster.queues;
+
+    const plan = TB.bookPlan(roster.markets, idx.rot, opts.pulls == null ? TB.BOOK_MARKETS : opts.pulls, now);
+    for (const m of plan) {
+      // `from_date` is NOT applied by the server (verified 16 Sep 2026) — it is passed because
+      // the tool takes it, and the window is applied in packMarket regardless.
+      const payload = await mcp.call('get_task_list_for_client', { client_id: m.id, from_date: win.from, limit: TB.BOOK_PULL_LIMIT });
+      const rec = TB.packMarket(TMM.rowsOf(payload), { client: m.client, market: m.market, am: m.am, cid: m.id }, win, now);
+      const key = 'tmbook:' + m.client;
+      const book = (await env.EDITS.get(key, 'json')) || { client: m.client, markets: {} };
+      book.markets = book.markets || {}; book.markets[m.market] = rec; book.updated = now;
+      try { await env.EDITS.put(key, JSON.stringify(book)); } catch (e) { st.error = 'kv put failed for ' + m.client; }
+      idx.clients[m.client] = { at: now, markets: Object.keys(book.markets).length };
+      idx.rot[m.id] = now;
+      st.pulled.push(m.client + ' ' + m.market + ' (' + rec.n + (rec.full ? '' : ', partial') + ')');
+    }
+
+    const qplan = TB.queuePlan(roster.queues, idx.qrot, opts.queues == null ? TB.BOOK_QUEUES : opts.queues);
+    for (const q of qplan) {
+      const payload = await mcp.call('get_tickets_for_client', { client_id: q.tid, ticket_status: 'all' });
+      const rec = TB.packQueue(TMM.rowsOf(payload), q.client, win, now);
+      try { await env.EDITS.put('tmtick:' + q.client, JSON.stringify(rec)); } catch (e) {}
+      if (!idx.clients[q.client]) idx.clients[q.client] = { at: now, markets: 0 };
+      idx.qrot[q.tid] = now;
+      st.queues.push(q.client + ' (' + rec.n + ')');
+    }
+
+    idx.at = now;
+    try { await env.EDITS.put('tmbookidx', JSON.stringify(idx)); } catch (e) {}
+    st.read = Object.keys(idx.rot).length; st.total = roster.markets.length;
+    return save(st);
+  } catch (e) {
+    const msg = String((e && e.message) || e).slice(0, 160);
+    const code = e && e.code;
+    return save(Object.assign(st, {
+      state: code === 'unauthorized' ? 'unauthorized' : (code === 'unreachable' || /fetch failed|network|ECONN|ENOTFOUND|timed? ?out|aborted|HTTP 5\d\d/i.test(msg) ? 'unreachable' : 'error'),
+      error: msg,
+    }));
   }
 }
 
