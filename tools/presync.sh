@@ -68,6 +68,14 @@ echo "── validating: Vietnamese UI toggle (engine + seed + owner gating)"
 node tools/test_i18n.mjs >/dev/null
 echo "   ✓ skip / keep rules, number templating, seed integrity, owner-only route + injection hold"
 
+echo "── validating: Task Manager integration (parser + agent + worker store + mapping)"
+node tools/test_tm.mjs >/dev/null
+echo "   ✓ column resolver, hours/date parsing, tmpush store + scoped read, Leadership overlay hold"
+
+echo "── validating: Task Manager AUTOMATIC sync (MCP transport + rotation + ticket hours + lifted tmPull)"
+node tools/test_tmmcp.mjs >/dev/null
+echo "   ✓ JSON/SSE parsing, auth modes, market rotation, ibfref hours, cron pull vs stub MCP + page wiring hold"
+
 echo "── validating: phone layer (bar, sheets, mirror rules, pan sweep, wiring)"
 node tools/test_mobile.mjs >/dev/null
 echo "   ✓ bottom bar, sheets, mirror rules, pan sweep + wiring hold"
@@ -79,6 +87,14 @@ echo "   ✓ header layouts, DDMM tab dating, the AM's word + month streaks hold
 echo "── validating: work volumes (every workstream bucketed by month)"
 node tools/test_volumes.mjs >/dev/null
 echo "   ✓ six date shapes, the fixed window, labelled dims + hour sums hold"
+
+echo "── validating: FS Task Manager (query grammar, billable split, page/engine parity)"
+node tools/test_reporttasks.mjs >/dev/null
+echo "   ✓ the search grammar, the billable/non-billable maths and the baked snapshot hold"
+
+echo "── validating: the FCC-wide hours badge (trail, posture, widget/engine parity)"
+node tools/test_hoursbadge.mjs >/dev/null
+echo "   ✓ the three-month trail, relationship smoothing and the widget twin hold"
 
 echo "── validating: retainer hours (optimisation vs technical vs feature vs account)"
 node tools/test_reporthours.mjs >/dev/null

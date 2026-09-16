@@ -5663,6 +5663,356 @@
       "pattern": "HOURS:START"
     },
     {
+      "name": "Task Manager AUTOMATIC sync: the pure MCP half — rotation of the markets worth reading (Ray 16 Sep 2026: 'that sync must be automatic')",
+      "file": "cloudflare/feedspark-deck/src/tmmcp.js",
+      "pattern": "export function planPulls(markets, rot, hot, k, now)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…tmmcp: a TM task's [ibfref:] token is the ONLY tie to a ticket",
+      "file": "cloudflare/feedspark-deck/src/tmmcp.js",
+      "pattern": "export function ibfrefOf(task)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…tmmcp: ref hours replace on re-read, keep when the window rolled past",
+      "file": "cloudflare/feedspark-deck/src/tmmcp.js",
+      "pattern": "export function mergeHours(hours, sum, now)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…worker: the cron pull itself (client list → rollup, task rotation → ticket hours, honest tmstatus)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function tmPull(env, opts)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…worker: tmStore is the one writer both lanes share (change-detected)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function tmStore(env, brands, opts)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…worker: the :15/:45 firing dispatches to tmPull",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "event.cron === '15,45 * * * *'",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…worker: owner-only sync-now on /api/tm",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "await tmPull(env, { pulls:",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…wrangler: the Task Manager cron trigger",
+      "file": "wrangler.toml",
+      "pattern": "\"15,45 * * * *\"",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Workflow: the ticket card wears the TM hours",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function tmChip(b)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Workflow: reads brief-id → hours from the worker",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "fetch('/api/tm?hours=1')",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Leadership: the source line tells the sync's truth",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "function tmLine(d)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Leadership: ⟳ Sync now",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "id=\"tm-sync\"",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Task Manager sync harness in the gates",
+      "file": "tools/test_tmmcp.mjs",
+      "pattern": "lift('tmPull')",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "Task Manager: shared normaliser rolls the MCP client list up per brand (Ray 16 Sep 2026)",
+      "file": "cloudflare/feedspark-deck/src/tmparse.js",
+      "pattern": "function aggregateClientList(rows, opts)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…worker: the tmpush lane (external producer) still lands",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "Array.isArray(body.tmpush)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…worker: GET /api/tm is scoped per signin",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/api/tm' && request.method === 'GET'",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Leadership overlays real TM hours onto Used, hand-set wins",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "cm[b].used=row.used; cm[b].usedTM=true",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Leadership block ← allowance, hand-set wins",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "cm[b].hours=row.allowance; cm[b].hoursTM=true",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Task Manager rollup harness in the gates",
+      "file": "tools/test_tm.mjs",
+      "pattern": "aggregateClientList(rows)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "Workflow: duplicate collapse needs SAME WORK, not similar wording — every 'Keywords Optimisation - <theme> - Marketing Planner' ticket anchored at dice>=.45 and collapsed into one, hiding Cashmere/Merino + Gifting from Intake, the plan, the board and the KPIs (Ray 16 Sep 2026, from the Brief Ledger)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function sameWork(",
+      "pr": 398
+    },
+    {
+      "name": "Workflow: sole-words rule — two names are one record only when neither names something the other doesn't (singular/plural-canonical)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function soleWords(",
+      "pr": 398
+    },
+    {
+      "name": "Workflow: the dup anchor refuses a row that names other work, however much wording they share",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(!sameWork(r.task,b.task))return;",
+      "pr": 398
+    },
+    {
+      "name": "Workflow: briefRow (is the ticket's task already in Intake?) is EXACT wording — the fuzzy test matched a sibling theme and stranded the ticket",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var rows=allIntake(), hit=null, want=normTask(b.task);",
+      "pr": 398
+    },
+    {
+      "name": "Workflow: b.planned is a hint, never a veto — a ticket wrongly stamped filed can still be healed on a later open",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(briefRow(b)){ if(!b.planned){ b.planned=1; pend.push(b); } return; }",
+      "pr": 398
+    },
+    {
+      "name": "Brief ledger: an unattributed brief names the owner (display fallback, marked as inferred, never backfilled onto the ticket) — Ray 16 Sep 2026",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function briefedByCell(b)",
+      "pr": 398
+    },
+    {
+      "name": "access: displayName — the owner reads as their name, not the literal word Owner",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "export function displayName(",
+      "pr": 398
+    },
+    {
+      "name": "worker: ownerName ships on /api/access?me=1 so the whole team reads the same name in the ledger",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "ownerName: displayName(ownerEmail(env))",
+      "pr": 398
+    },
+    {
+      "name": "team-sync tripwire: a briefed ticket with no plan task is filed, no distinct theme is collapsed, the ledger names the owner",
+      "file": "tools/test_teamsync.mjs",
+      "pattern": "no distinct keyword theme is collapsed into another",
+      "pr": 398
+    },
+    {
+      "name": "Workflow: the brief→task reconcile runs when the BRIEFS land too, not only from fetchLive — the plan read winning the race left BRIEFS empty and the pass never ran again for the life of the tab",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "reconcileBriefTasks();",
+      "min": 3,
+      "pr": 398
+    },
+    {
+      "name": "Workflow: a manual Intake row is suppressed only when the plan carries the SAME task — the fuzzy test hid a freshly-filed row behind a sibling in the same family",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(normTask(m.task)===normTask(plan[i]))return false;",
+      "pr": 398
+    },
+    {
+      "name": "Workflow: shApply never deletes shared-state keys while this tab holds an unpushed change — the boot's own reply, snapshotted before the row existed, wiped a task filed seconds earlier",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(!SHDIRTY[ns]) Object.keys(tgt).forEach",
+      "pr": 398
+    },
+    {
+      "name": "FS Task Manager: the module page exists",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "FS Task Manager"
+    },
+    {
+      "name": "FS Task Manager: the AM search bar",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "id=\"q\""
+    },
+    {
+      "name": "FS Task Manager: the billable vs non-billable chart workbench",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "Billable vs non-billable"
+    },
+    {
+      "name": "FS Task Manager: the pull-out exits (PNG / CSV / copy table / link)",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "id=\"xpng\""
+    },
+    {
+      "name": "FS Task Manager: the page/engine parity markers the harness lifts",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "ENGINE:START"
+    },
+    {
+      "name": "FS Task Manager: all four MCP reads have a tab (tasks / tickets / accounts)",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "data-t=\"accounts\""
+    },
+    {
+      "name": "FS Task Manager: the worker serves the SCOPED dataset route",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "/api/taskmanager"
+    },
+    {
+      "name": "FS Task Manager: the worker serves /tasks",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "TASKMANAGER_PAGE"
+    },
+    {
+      "name": "FS Task Manager: the module is grantable per person",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "slug: 'taskmanager'"
+    },
+    {
+      "name": "FS Task Manager: the nav link is on the canonical nav",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "href=\"/tasks\""
+    },
+    {
+      "name": "FS Task Manager: the worker pulls the book out of the MCP itself",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function tmBookPull"
+    },
+    {
+      "name": "FS Task Manager: the book pull rides the :15/:45 cron",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "await tmBookPull(env);"
+    },
+    {
+      "name": "FS Task Manager: the book + ticket KV records",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "tmbookidx"
+    },
+    {
+      "name": "FS Task Manager: the engine + book store",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function packMarket"
+    },
+    {
+      "name": "FS Task Manager: the stalest-first rotation",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function bookPlan"
+    },
+    {
+      "name": "FS Task Manager: no client hours in git",
+      "file": ".gitignore",
+      "pattern": "ops/reports/"
+    },
+    {
+      "name": "FCC hours badge: the shared widget",
+      "file": "docs/hours_widget.html",
+      "pattern": "FCC-HOURS:ENGINE-END",
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: injected on every app page",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "import HOURSW from",
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: /api/hours",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "/api/hours",
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: the three-month trail is written on the cron",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "tmtrail",
+      "min": 2,
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: relationship smoothing (the posture is shared state)",
+      "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+      "pattern": "hourspost",
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: the trail + posture engine",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function hoursState",
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: Workflow ticket cards carry their client",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "data-hrs=",
+      "min": 3,
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: the intake table flags the exception only",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "data-hrs-flag",
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: the brand dossier carries the hours inline",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "portHours",
+      "min": 2,
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: Leadership, Playbook + the Task Manager anchor it",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "data-hrs",
+      "min": 2,
+      "pr": 401
+    },
+    {
       "name": "Golden Record: the Feed Lab AI-READINESS score rides the same stream as the content-quality read — ring, tier ladder and all eight weighted pillars on the scorecard (Ray 16 Sep 2026: 'the most important item is the AI readiness score')",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function airSection",

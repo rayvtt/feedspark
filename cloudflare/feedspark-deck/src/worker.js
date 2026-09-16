@@ -33,17 +33,24 @@ import { parseAbTests, abSummary, resolveAbTab, hasAbHeader, abClientKey } from 
 // sheet is shared with it, else the committed snapshot. Engine: src/schedwork.js; page /schedule.
 import { SCHEDULE_SHEET_ID, parseWorkbook, buildCadence, brandSummary, compactRow, isoOf as schedIso } from "./schedwork.js";
 import SCHEDULE_SNAPSHOT from "../../../ops/schedule/scheduled_work_2026-09-15.json";
+
 // Work volumes (Ray, 15 Sep 2026): every workstream on an account bucketed by month for the
 // Deck Generator's chart workbench — plan tasks, emails, calls, briefs, scheduled work, results.
 import { buildVolumes, monthKey as volMonthKey, monthRange as volMonthRange } from "./volumes.js";
 import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
+import { aggregateClientList } from "./tmparse.js";
+import * as TMM from "./tmmcp.js";
+// FS TASK MANAGER (/tasks, Ray 16 Sep 2026) — the query engine and the book store behind the
+// module: normalising a pulled task or ticket row, the 12-month window, the market rotation,
+// and the search grammar the page carries a twin of. Pure; tmBookPull does the I/O around it.
+import * as TB from "./taskbook.js";
 // Committed action batches (ops/ingest/*.json) — bundled at build time so a logged-in user can
 // file them into a plan sheet with ONE CLICK from /workflow (no CI service token needed).
 // New batch = commit the JSON + add it to INGEST_BATCHES.
 import INGEST_SUPERDRY_SVS_AUG26 from "../../../ops/ingest/superdry_svs_aug26.json";
 const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
-import { ACCESS_SEED, resolveAccess, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed } from "./access.js";
+import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
 import { QSPEC, qualityScore, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
@@ -92,6 +99,7 @@ import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
 // suggestions ("overlay is BAU on Accessorize → propose to Hobbycraft"). Page at /playbook.
 import PLAYBOOK_PAGE from "../../../docs/FeedSpark_Playbook.html";
 import SCHEDULE_PAGE from "../../../docs/FeedSpark_Schedule.html";
+import TASKMANAGER_PAGE from "../../../docs/FeedSpark_TaskManager.html";
 import APPSW from "../../../docs/apps_widget.html";
 // Tachyon Pricer quote engine — Text module, served verbatim at /pricer/engine.js (page +
 // node tests share the file, same pattern as the Feed Lab engine)
@@ -120,8 +128,10 @@ import PDP_ENGINE_SRC from "../../../docs/pdp_engine.js";
 import I18N_ENGINE_SRC from "../../../docs/i18n_engine.js";
 import I18N_VI_SEED from "../../../docs/i18n/vi.json";
 import LANGW from "../../../docs/lang_widget.html";
+// Task Manager hours seed (committed MCP snapshot; the /api/tm fallback until a live push lands)
 // the phone layer (Ray, 15 Sep 2026: "complete overhaul for UX UI for mobile version — MIRROR desktop setting")
 import MOBILEW from "../../../docs/mobile_widget.html";
+import HOURSW from "../../../docs/hours_widget.html";
 
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
@@ -187,6 +197,7 @@ const PAGES = {
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
   '/playbook':    { html: PLAYBOOK_PAGE, slug: 'playbook' },
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
+  '/tasks':       { html: TASKMANAGER_PAGE, slug: 'taskmanager' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
@@ -619,7 +630,10 @@ export default {
     if (path === '/api/access') {
       const acc = await accessOf(env, request);
       if (request.method === 'GET' && url.searchParams.get('me')) {
-        return json({ email: acc.email, owner: !!acc.owner, clients: acc.clients, modules: acc.modules || null, name: acc.name || '', viewAs: acc.viewAs || null });
+        // ownerName rides along for EVERY signin: the Brief Ledger names the owner on briefs
+        // raised before the `by` field shipped (Ray, 16 Sep 2026: "any '-' brief by is
+        // obviously Ray - so add me name too"), and the whole team must read the same name.
+        return json({ email: acc.email, owner: !!acc.owner, clients: acc.clients, modules: acc.modules || null, name: acc.name || '', ownerName: displayName(ownerEmail(env)), viewAs: acc.viewAs || null });
       }
       if (!acc.owner) return json({ error: 'restricted to the account owner' }, 403);
       if (request.method === 'GET') {
@@ -790,6 +804,24 @@ export default {
         }
         logActivity(ctx, env, request, 'xml-scan', results.filter((r) => r.ok).length + ' scanned · '
           + results.filter((r) => r.retry).length + ' held · ' + results.filter((r) => r.error || r.unreachable).length + ' failed', 'xml-scan');
+        return json({ ok: true, results });
+      }
+
+      // Task Manager push (Ray, 16 Sep 2026: "connect to FS's Task Manager which has an hours
+      // report on every task and map it back into our system"). SOURCE = the team's custom
+      // connector MCP `feedspark-reports` (get_client_list: allowance / used_hours / balance per
+      // client x market, hours already computed). The AUTOMATIC lane is the worker's own cron
+      // pull (tmPull, :15/:45 — see the Task Manager block near realOwner); this push stays as
+      // the alternative producer — the team's server or a keyed session may post the per-brand
+      // rollup src/tmparse.js › aggregateClientList produces — on the SAME key + Access bypass
+      // as the feed scan above (no new Zero Trust config). Both lanes write through tmStore
+      // (tm:<client> + the one-read tmidx the Leadership hours overlay reads) — KV is the ONLY
+      // home of these figures; no client hours are committed to git. rawHead optionally
+      // archives the producer's shape.
+      if (Array.isArray(body.tmpush)) {
+        const { results } = await tmStore(env, body.tmpush, { source: 'push' });
+        if (body.rawHead) { try { await env.EDITS.put('tmraw', JSON.stringify(body.rawHead)); } catch (e) {} }
+        logActivity(ctx, env, request, 'tm-scan', results.filter((r) => r.ok).length + ' client(s) · ' + results.filter((r) => r.ok).reduce((a, r) => a + (r.used || 0), 0) + ' h used', 'tm-scan');
         return json({ ok: true, results });
       }
 
@@ -1780,6 +1812,92 @@ export default {
       return json(payload);
     }
 
+    // ---- THE HOURS BADGE (Ray, 16 Sep 2026) ----------------------------------------------
+    // "this hour report should appear everywhere … flag whether the client is negative or not …
+    //  show the trajectory of the past three months of client activity per hour … a hovering
+    //  pop-up, so it doesn't clutter the current dashboard … display it within brand [dossier]
+    //  and other areas appropriate for an AM to decide whether to continue the task."
+    //
+    // ONE small payload for every client in scope, fetched once per page by the injected widget
+    // and shared across every badge on it. Three things are merged here and kept apart in the
+    // answer, because they are three different kinds of statement:
+    //   balance  — what the reports database says is true (tmidx, the hours lane)
+    //   trail    — what the last three months actually looked like (tmtrail, the book)
+    //   posture  — what the TEAM decided to do about it (shared state, hourspost)
+    // Deliberately tiny: no task rows, no market detail, no ticket data. A badge on every page
+    // must cost one KV get and a few KB, or it becomes the clutter it was meant to avoid.
+    if (path === '/api/hours' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const inScope = (name) => !acc.clients || (acc.clients || []).some((c) => clientMatch(c, name));
+      const idx = (await env.EDITS.get('tmidx', 'json')) || {};
+      const trail = (await env.EDITS.get('tmtrail', 'json')) || {};
+      const post = liftEnvelope(await env.EDITS.get('state:hourspost', 'json'), Date.now()).data || {};
+      const out = {};
+      const add = (name) => {
+        if (!name || out[name] || !inScope(name)) return;
+        const r = idx[name] || null, t = trail[name] || null, p = post[name] || null;
+        out[name] = {
+          tracked: !!r,
+          allowance: r ? r.allowance : null, used: r ? r.used : null,
+          balance: r ? r.balance : null, health: r ? r.health : null,
+          markets: r ? r.marketCount : null, am: r ? r.am : null, updated: r ? r.updated : null,
+          trail: t ? { m: t.m, months: t.months, current: t.current, read: t.read, total: t.total,
+            at: t.at, windowHours: t.windowHours } : null,
+          posture: p && p.state ? p : null,
+        };
+      };
+      Object.keys(idx).forEach(add);
+      Object.keys(trail).forEach(add);   // a book read before the hours lane saw the brand
+      Object.keys(post).forEach(add);    // and a posture set on a brand neither has reached yet
+      const st = (await env.EDITS.get('tmstatus', 'json')) || {};
+      const bst = (await env.EDITS.get('tmbookst', 'json')) || {};
+      return json({ ok: true, at: Date.now(), scoped: !!acc.clients, clients: out,
+        tracked: Object.keys(out).length,
+        status: { state: st.state || null, at: st.at || null, ok_at: st.ok_at || null },
+        book: { state: bst.state || null, at: bst.at || null, read: bst.read == null ? null : bst.read, total: bst.total == null ? null : bst.total } });
+    }
+
+    // ---- FS TASK MANAGER (Ray, 16 Sep 2026) ----------------------------------------------
+    // "a search bar for each AM to work inside the pull-in report via the MCP, and a quick
+    //  pull-out report ... based on the hours of billable versus non-billable."
+    //
+    // The book the :15/:45 cron pulls out of the reports MCP (tmBookPull → KV tmbook:<client>,
+    // tmtick:<client>, tmbookidx), assembled and served SCOPED. Nothing here is in git: this is
+    // per-client commercial data — hours, task titles, client contact addresses — and it lives
+    // in KV only, the same rule the hours sync set when it shipped.
+    //
+    // Scoping is server-side and filters on the CLIENT RECORD, not the payload: a scoped signin
+    // never has another AM's rows in its response to begin with, rather than being handed the
+    // book and asked to look away.
+    //
+    // ?sync=N (owner) reads N more markets right now, so nobody waits for :15 / :45 to see the
+    // book fill. The page loops it and shows how far it has got.
+    if (path === '/api/taskmanager' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const syncN = url.searchParams.get('sync');
+      let synced = null;
+      if (syncN != null) {
+        if (!acc.owner) return json({ ok: false, error: 'sync is owner-only' }, 403);
+        synced = await tmBookPull(env, { pulls: Math.min(10, Math.max(1, parseInt(syncN, 10) || 4)), queues: 2 });
+        logActivity(ctx, env, request, 'taskmanager-sync', (synced.pulled || []).join(', ').slice(0, 180));
+      }
+      const idx = (await env.EDITS.get('tmbookidx', 'json')) || { clients: {}, roster: [], queues: [], at: 0, rot: {}, qrot: {} };
+      const names = Object.keys(idx.clients || {}).filter((n) => clientMatch(acc.clients, n));
+      const books = [], queues = [];
+      for (const n of names) {
+        const b = await env.EDITS.get('tmbook:' + n, 'json'); if (b) books.push(b);
+        const q = await env.EDITS.get('tmtick:' + n, 'json'); if (q) queues.push(Object.assign({ client: n }, q));
+      }
+      const accounts = (idx.accounts || []).filter((a) => clientMatch(acc.clients, a.client));
+      const data = TB.assembleBook(books, queues, accounts, Date.now());
+      const roster = (idx.roster || []).filter((m) => clientMatch(acc.clients, m.client));
+      data.health = TB.bookHealth(data.coverage, roster, Date.now());
+      data.scoped = !!acc.clients;
+      data.queuesTotal = (idx.queues || []).filter((q) => clientMatch(acc.clients, q.client)).length;
+      const st = (await env.EDITS.get('tmbookst', 'json')) || {};
+      return json({ ok: true, owner: !!acc.owner, scoped: !!acc.clients, status: st, synced, data });
+    }
+
     // ---- A/B TEST ARCHIVE (Ray, 9 Sep 2026) ----------------------------------------------
     // Every project plan carries a tab where the team summarises the brand's tests and the
     // uplift each produced, backdated. Read LIVE through the service account rather than
@@ -1849,6 +1967,45 @@ export default {
     // ---- Gmail intake: recent client task emails → Workflow "Incoming emails" stream ----
     // Reads (readonly) the impersonated mailbox via the service account. Degrades to
     // {connected:false, items:[]} until GOOGLE_SA_JSON + GOOGLE_IMPERSONATE are set.
+    // Task Manager hours read (Ray, 16 Sep 2026). Scoped per signin like every Workflow route:
+    // owner sees the whole book, a client-scoped signin only their clients. Bare GET = the
+    // per-brand rollup the Leadership hours overlay + the dossier band read, plus `status` (the
+    // cron pull's honest state); ?client=<name> = that brand's record + its per-market task
+    // summaries (tmtasks:<client>); ?hours=1 = brief id → hours logged in the TM (the Workflow
+    // ⏱ chip), scoped by the brief's client; ?pull=1 = OWNER-ONLY "sync now" — runs the same
+    // tmPull the :15/:45 cron runs and returns its state (Ray never has to wait for a firing).
+    if (path === '/api/tm' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const inScope = (name) => acc.owner || !acc.clients || (acc.clients || []).some((c) => clientMatch(c, name));
+      const pubStatus = (s) => (s ? { state: s.state || null, at: s.at || null, ok_at: s.ok_at || null, fails: s.fails | 0, error: s.error || null, auth: s.auth || null, url: s.url || null, clients: s.clients == null ? null : s.clients, markets: s.markets == null ? null : s.markets, tasks: s.tasks == null ? null : s.tasks, refs: s.refs == null ? null : s.refs, pulled: s.pulled || null, changed: s.changed == null ? null : s.changed } : null);
+      if (url.searchParams.get('pull')) {
+        if (!realOwner(env, request)) return json({ ok: false, error: 'owner only' }, 403);
+        const s = await tmPull(env, { pulls: Math.min(8, Math.max(0, +url.searchParams.get('pulls') || TMM.TM_TASK_PULLS)) });
+        logActivity(ctx, env, request, 'tm-sync-now', s.state + (s.error ? ' — ' + s.error : '') + (s.pulled && s.pulled.length ? ' · ' + s.pulled.join(', ') : ''));
+        return json({ ok: s.state === 'ok', status: pubStatus(s) });
+      }
+      const status = pubStatus(await env.EDITS.get('tmstatus', 'json'));
+      if (url.searchParams.get('hours')) {
+        const all = (await env.EDITS.get('tmhours', 'json')) || {}; const out = {};
+        Object.keys(all).forEach((ref) => { const r = all[ref]; if (r && inScope(r.client)) out[ref] = r; });
+        return json({ ok: true, hours: out, tracked: Object.keys(out).length, status });
+      }
+      const one = url.searchParams.get('client');
+      if (one) {
+        if (!inScope(one)) return json({ ok: false, error: 'out of scope' }, 403);
+        const rec = await env.EDITS.get('tm:' + one, 'json');
+        const tasks = await env.EDITS.get('tmtasks:' + one, 'json');
+        return json({ ok: true, client: one, record: rec || null, tasks: tasks || null, status });
+      }
+      // No hours data lives in git — the figures exist only in KV, written by the cron pull (or
+      // the push lane). Before the first sync the book is simply empty and says so (source 'none').
+      const idx = (await env.EDITS.get('tmidx', 'json')) || {};
+      const src = Object.keys(idx).length ? 'live' : 'none';
+      const out = {}; let updated = 0;
+      Object.keys(idx).forEach((c) => { if (inScope(c)) { const r = Object.assign({}, idx[c]); delete r.sig; out[c] = r; if (idx[c].updated > updated) updated = idx[c].updated; } });
+      return json({ ok: true, clients: out, tracked: Object.keys(out).length, updated: updated || null, source: src, status });
+    }
+
     if (path === '/api/gmail/intake' && request.method === 'GET') {
       // primary source: the Apps Script inbox push (no-admin path) — classified + stored in KV.
       // Each item carries its triage decision (dismissed + decidedAs) so the panel can split
@@ -2351,6 +2508,7 @@ export default {
         }
         const modList = acc.owner ? null : (acc.modules || null);
         html = inject(html, INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW
+          + '\n' + HOURSW
           + '\n<script>window.__FCCMOD=' + JSON.stringify(modList) + ';</script>\n' + MODGATE);
         // the Vietnamese UI toggle is Ray's alone: injected only for the REAL owner identity
         // (never for another signin, never while previewing someone else's FCC via view-as)
@@ -2378,6 +2536,15 @@ export default {
   // Reads the brand->sheet map the dashboard last posted (KV `plansheets`) and re-parses
   // each Project-Plan tab into KV (planlive:<id>). Registered in wrangler.toml [triggers].
   async scheduled(event, env, ctx) {
+    // Task Manager sync (Ray, 16 Sep 2026: "that sync must be automatic") — :15 and :45, its
+    // own firing so its MCP + KV subrequests never compete with the guard sweeps' budget.
+    if (event && event.cron === '15,45 * * * *') {
+      await tmPull(env);
+      // and the /tasks module's own book — its own rotation (even coverage of twelve months,
+      // stalest market first) on the same firing, so the estate turns over ~twice a day.
+      await tmBookPull(env);
+      return;
+    }
     // Custom-watch passes (Ray's alert builder) with their OWN subrequest budget: the :30
     // firing checks hourly-schedule rules; 07:00/17:00 GMT checks twice-daily rules.
     if (event && event.cron === '30 * * * *') {
@@ -2455,6 +2622,197 @@ function viewAsOf(env, request) {
 }
 // owner gates (activity / leadership / reminders / pushlog) use THIS, not a bare who()
 // compare, so a view-as preview is denied exactly like the person being previewed
+// ---- Task Manager: the worker pulls the feedspark-reports MCP ITSELF ----
+// Ray, 16 Sep 2026: "an automatic scan or push … has to sync almost four to six times a day …
+// If a brief is being sent from FCC and users are logging hours, reporting to clients, then that
+// sync must be automatic. I don't need a manual push or manual pull." No agent, no Action, no
+// Claude session: the :15/:45 cron runs tmPull. tmMcp = a minimal Streamable-HTTP MCP client
+// (JSON-RPC over POST, JSON or SSE answers, Mcp-Session-Id honoured) authenticated with the
+// TM_MCP_TOKEN secret — `Authorization: Bearer` unless TM_MCP_AUTH names the header the server
+// reads (e.g. X-API-Key); TM_MCP_URL overrides the endpoint. tmStore = the ONE writer of
+// tm:<client> + tmidx (the push lane and the pull share it; a record is re-written only when its
+// figures moved, so a quiet firing costs one KV write). tmPull = one firing: client list → the
+// per-brand rollup, then TM_TASK_PULLS task lists on the market rotation → tmtasks:<client>
+// (per-market summaries) + tmhours (brief id → hours, via the [ibfref:] token) + tmstatus, the
+// honest state the pages read: ok / no_token / unauthorized / unreachable / error.
+function tmMcp(env, fetchFn) {
+  const url = String(env.TM_MCP_URL || TMM.TM_MCP_URL);
+  const auth = TMM.authHeader(env.TM_MCP_TOKEN, env.TM_MCP_AUTH);
+  let sid = null, n = 0;
+  const post = async (body) => {
+    const h = { 'content-type': 'application/json', accept: 'application/json, text/event-stream' };
+    if (auth) h[auth.name] = auth.value;
+    if (sid) h['Mcp-Session-Id'] = sid;
+    const init = { method: 'POST', headers: h, body: JSON.stringify(body) };
+    if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) init.signal = AbortSignal.timeout(25000);
+    const r = await fetchFn(url, init);
+    const s = r.headers.get('Mcp-Session-Id') || r.headers.get('mcp-session-id'); if (s) sid = s;
+    const text = await r.text();
+    if (r.status === 401 || r.status === 403) { const e = new Error('unauthorized (HTTP ' + r.status + ')'); e.code = 'unauthorized'; throw e; }
+    if (r.status === 202 || !text) return null;
+    if (!r.ok) { const e = new Error('HTTP ' + r.status + (/json/i.test(r.headers.get('content-type') || '') ? '' : ' (non-JSON — Access login page? wrong URL?)')); e.code = r.status >= 500 ? 'unreachable' : 'http'; throw e; }
+    return TMM.parseRpc(text, r.headers.get('content-type') || '');
+  };
+  return {
+    async init() {
+      const m = await post(TMM.rpc(++n, 'initialize', { protocolVersion: TMM.TM_PROTOCOL, capabilities: {}, clientInfo: { name: 'feedspark-command-center', version: '1' } }));
+      if (m && m.error) { const e = new Error('initialize: ' + String(m.error.message || m.error.code)); e.code = 'init'; throw e; }
+      try { await post({ jsonrpc: '2.0', method: 'notifications/initialized' }); } catch (e) {}
+      return m;
+    },
+    async call(name, args) { return TMM.toolPayload(await post(TMM.rpc(++n, 'tools/call', { name, arguments: args || {} }))); },
+    auth: auth ? auth.name : null,
+    host: url.replace(/^https?:\/\//, '').split('/')[0],
+  };
+}
+
+async function tmStore(env, brands, opts) {
+  opts = opts || {};
+  const results = [];
+  const idx = (await env.EDITS.get('tmidx', 'json')) || {};
+  let changed = 0;
+  for (const c of (Array.isArray(brands) ? brands : []).slice(0, 40)) {
+    const client = String((c && c.client) || '').slice(0, 60).trim();
+    if (!client || client.indexOf(':') >= 0 || client.indexOf('|') >= 0) { results.push({ client, error: 'bad client' }); continue; }
+    const nn = (v) => Math.round((+v || 0) * 100) / 100;
+    const markets = Array.isArray(c.markets) ? c.markets.slice(0, 60).map((m) => ({ market: String(m.market || '').slice(0, 24), allowance: nn(m.allowance), used: nn(m.used), balance: nn(m.balance), health: String(m.health || '').slice(0, 16) || null })) : [];
+    const rec = { client, group: String(c.group || '').slice(0, 60), am: String(c.am || '').slice(0, 40), allowance: nn(c.allowance), used: nn(c.used), balance: nn(c.balance), current: nn(c.current), carried: nn(c.carried), health: String(c.health || '').slice(0, 16) || null, marketCount: markets.length, markets, updated: Date.now(), src: String(opts.source || 'push') };
+    const sig = TMM.sigOf(rec, ['updated', 'src']);
+    if (opts.onlyChanged && idx[client] && idx[client].sig === sig) { results.push({ client, ok: true, unchanged: true, allowance: rec.allowance, used: rec.used }); continue; }
+    try { await env.EDITS.put('tm:' + client, JSON.stringify(rec)); } catch (e) { results.push({ client, error: 'kv put failed' }); continue; }
+    idx[client] = { allowance: rec.allowance, used: rec.used, balance: rec.balance, health: rec.health, marketCount: rec.marketCount, am: rec.am, updated: rec.updated, sig, src: rec.src };
+    changed++;
+    results.push({ client, ok: true, allowance: rec.allowance, used: rec.used });
+  }
+  if (changed || !opts.onlyChanged) { try { await env.EDITS.put('tmidx', JSON.stringify(idx)); } catch (e) {} }
+  return { results, idx, changed };
+}
+
+async function tmPull(env, opts) {
+  opts = opts || {};
+  const now = opts.now || Date.now();
+  const fetchFn = opts.fetch || fetch;
+  const prev = (await env.EDITS.get('tmstatus', 'json')) || {};
+  const st = { at: now, ok_at: prev.ok_at || null, fails: prev.fails | 0, rot: prev.rot || {}, auth: null, url: null };
+  const save = async (s) => { try { await env.EDITS.put('tmstatus', JSON.stringify(s)); } catch (e) {} return s; };
+  if (!env.TM_MCP_TOKEN) return save(Object.assign(st, { state: 'no_token', error: 'TM_MCP_TOKEN not set — wrangler secret put TM_MCP_TOKEN' }));
+  const mcp = tmMcp(env, fetchFn); st.auth = mcp.auth; st.url = mcp.host;
+  try {
+    try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; }   // a server without a handshake still answers tools/call
+    const rows = TMM.rowsOf(await mcp.call('get_client_list', { flag_scope: 'live' }));
+    if (!rows.length) { const e = new Error('empty client list'); e.code = 'shape'; throw e; }
+    const by = aggregateClientList(rows);
+    const brands = Object.values(by).map((b) => Object.assign({}, b, { updated: now }));
+    const stored = await tmStore(env, brands, { onlyChanged: true, source: 'mcp' });
+    // task lists — a rotation of the markets worth reading, hot briefs first
+    const markets = TMM.marketsOf(rows);
+    let hot = new Set();
+    try { const bx = liftEnvelope(await env.EDITS.get('briefs', 'json'), now); hot = TMM.briefCodes((bx && bx.data) || {}, now); } catch (e) {}
+    const k = opts.pulls == null ? TMM.TM_TASK_PULLS : opts.pulls;
+    const plan = TMM.planPulls(markets, st.rot, hot, k, now);
+    const hours = (await env.EDITS.get('tmhours', 'json')) || {};
+    let hoursChanged = 0, tasksN = 0; const pulled = [];
+    for (const m of plan) {
+      const payload = await mcp.call('get_task_list_for_client', { client_id: m.id, from_date: TMM.isoDay(now - TMM.TM_TASK_DAYS * 86400000), limit: TMM.TM_TASK_LIMIT });
+      const trows = TMM.rowsOf(payload);
+      const sum = TMM.summariseTasks(trows, { client: m.client, market: m.market, id: m.id, now, total: payload && payload.total_count });
+      const key = 'tmtasks:' + m.client;
+      const book = (await env.EDITS.get(key, 'json')) || { client: m.client, markets: {} };
+      book.markets = book.markets || {}; book.markets[m.market] = sum; book.updated = now;
+      try { await env.EDITS.put(key, JSON.stringify(book)); } catch (e) {}
+      hoursChanged += TMM.mergeHours(hours, sum, now);
+      st.rot[m.id] = now; tasksN += trows.length; pulled.push(m.client + ' ' + m.market + ' (' + trows.length + ')');
+    }
+    if (hoursChanged) { try { await env.EDITS.put('tmhours', JSON.stringify(hours)); } catch (e) {} }
+    return save(Object.assign(st, { state: 'ok', ok_at: now, fails: 0, error: null, clients: brands.length, markets: rows.length, changed: stored.changed, pulled, tasks: tasksN, refs: Object.keys(hours).length }));
+  } catch (e) {
+    const msg = String((e && e.message) || e).slice(0, 160);
+    const code = e && e.code;
+    const state = code === 'unauthorized' ? 'unauthorized' : (code === 'unreachable' || /fetch failed|network|ECONN|ENOTFOUND|timed? ?out|aborted|HTTP 5\d\d/i.test(msg) ? 'unreachable' : 'error');
+    return save(Object.assign(st, { state, fails: (prev.fails | 0) + 1, error: msg }));
+  }
+}
+
+// ---- FS TASK MANAGER: the book the /tasks module reads -----------------------------------
+// tmPull (above) chases hours onto Workflow tickets inside a 21-day window — four markets a
+// firing, brands with a brief in flight weighted twice. The MODULE needs something different:
+// even coverage of twelve months across the whole book, so an AM can search it. So this is its
+// own rotation on the same firing, sharing the same MCP session (one handshake, not two):
+// TB.BOOK_MARKETS markets and TB.BOOK_QUEUES ticket queue per pull, STALEST FIRST with a
+// never-read market always leading, which turns the whole estate over roughly twice a day.
+// ?sync=N on /api/taskmanager (owner) runs it on demand so the book fills without waiting.
+//
+// Nothing is committed to git — hours, task titles and client contact addresses are per-client
+// commercial data and live in KV only.
+async function tmBookPull(env, opts) {
+  opts = opts || {};
+  const now = opts.now || Date.now();
+  const fetchFn = opts.fetch || fetch;
+  const st = { at: now, state: 'ok', error: null, pulled: [], queues: [] };
+  const save = async (x) => { try { await env.EDITS.put('tmbookst', JSON.stringify(x)); } catch (e) {} return x; };
+  if (!env.TM_MCP_TOKEN) return save(Object.assign(st, { state: 'no_token', error: 'TM_MCP_TOKEN not set — the book cannot be read until the secret is in place' }));
+  const idx = (await env.EDITS.get('tmbookidx', 'json')) || { clients: {}, accounts: [], roster: [], queues: [], rot: {}, qrot: {} };
+  idx.clients = idx.clients || {}; idx.rot = idx.rot || {}; idx.qrot = idx.qrot || {};
+  const mcp = opts.mcp || tmMcp(env, fetchFn);
+  const win = TB.bookWindow(now, TB.BOOK_MONTHS);
+  try {
+    if (!opts.mcp) { try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; } }
+    let rows = opts.clientRows;
+    if (!rows) rows = TMM.rowsOf(await mcp.call('get_client_list', { flag_scope: 'all' }));
+    if (!rows.length) { const e = new Error('empty client list'); e.code = 'shape'; throw e; }
+    const roster = TB.rosterOf(rows);
+    idx.accounts = roster.accounts; idx.roster = roster.markets; idx.queues = roster.queues;
+    const trail = (await env.EDITS.get('tmtrail', 'json')) || {};
+    let trailDirty = 0;
+
+    const plan = TB.bookPlan(roster.markets, idx.rot, opts.pulls == null ? TB.BOOK_MARKETS : opts.pulls, now);
+    for (const m of plan) {
+      // `from_date` is NOT applied by the server (verified 16 Sep 2026) — it is passed because
+      // the tool takes it, and the window is applied in packMarket regardless.
+      const payload = await mcp.call('get_task_list_for_client', { client_id: m.id, from_date: win.from, limit: TB.BOOK_PULL_LIMIT });
+      const rec = TB.packMarket(TMM.rowsOf(payload), { client: m.client, market: m.market, am: m.am, cid: m.id }, win, now);
+      const key = 'tmbook:' + m.client;
+      const book = (await env.EDITS.get(key, 'json')) || { client: m.client, markets: {} };
+      book.markets = book.markets || {}; book.markets[m.market] = rec; book.updated = now;
+      try { await env.EDITS.put(key, JSON.stringify(book)); } catch (e) { st.error = 'kv put failed for ' + m.client; }
+      idx.clients[m.client] = { at: now, markets: Object.keys(book.markets).length };
+      idx.rot[m.id] = now;
+      // THE HOURS TRAIL, recomputed here rather than on read (Ray, 16 Sep 2026: "show the
+      // trajectory of the past three months of client activity per hour"). The popover appears
+      // on every page in the FCC, so it has to cost ONE small KV get — assembling twelve months
+      // of rows for every client on every page load would not. `total` is the client's whole
+      // market roster, so the trail can say "4 of 6 markets read" instead of implying the
+      // account entire.
+      trail[m.client] = TB.trailOf(book, roster.markets.filter((x) => x.client === m.client).length, now);
+      trailDirty = 1;
+      st.pulled.push(m.client + ' ' + m.market + ' (' + rec.n + (rec.full ? '' : ', partial') + ')');
+    }
+
+    const qplan = TB.queuePlan(roster.queues, idx.qrot, opts.queues == null ? TB.BOOK_QUEUES : opts.queues);
+    for (const q of qplan) {
+      const payload = await mcp.call('get_tickets_for_client', { client_id: q.tid, ticket_status: 'all' });
+      const rec = TB.packQueue(TMM.rowsOf(payload), q.client, win, now);
+      try { await env.EDITS.put('tmtick:' + q.client, JSON.stringify(rec)); } catch (e) {}
+      if (!idx.clients[q.client]) idx.clients[q.client] = { at: now, markets: 0 };
+      idx.qrot[q.tid] = now;
+      st.queues.push(q.client + ' (' + rec.n + ')');
+    }
+
+    idx.at = now;
+    try { await env.EDITS.put('tmbookidx', JSON.stringify(idx)); } catch (e) {}
+    if (trailDirty) { try { await env.EDITS.put('tmtrail', JSON.stringify(trail)); } catch (e) {} }
+    st.read = Object.keys(idx.rot).length; st.total = roster.markets.length;
+    return save(st);
+  } catch (e) {
+    const msg = String((e && e.message) || e).slice(0, 160);
+    const code = e && e.code;
+    return save(Object.assign(st, {
+      state: code === 'unauthorized' ? 'unauthorized' : (code === 'unreachable' || /fetch failed|network|ECONN|ENOTFOUND|timed? ?out|aborted|HTTP 5\d\d/i.test(msg) ? 'unreachable' : 'error'),
+      error: msg,
+    }));
+  }
+}
+
 function realOwner(env, request) { return who(request) === ownerEmail(env) && !viewAsOf(env, request); }
 // the "you are previewing" strip appended to owner-only 403 pages while view-as is active
 function viewAsExitHtml(env, request) {
@@ -2485,7 +2843,7 @@ const MODGATE = '<script>(function(){try{var m=window.__FCCMOD;if(!Array.isArray
 async function accessOf(env, request) {
   const email = who(request);
   const vs = viewAsOf(env, request);   // non-null only for the real owner
-  if (email === ownerEmail(env) && !vs) return { email, owner: true, clients: null, modules: null, name: 'Owner' };
+  if (email === ownerEmail(env) && !vs) return { email, owner: true, clients: null, modules: null, name: displayName(email) || 'Owner' };
   const dir = await env.EDITS.get('accessdir', 'json');
   let names = Object.keys(DEFAULT_FEEDS);
   try { names = names.concat(Object.keys(liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data)); } catch (e) {}

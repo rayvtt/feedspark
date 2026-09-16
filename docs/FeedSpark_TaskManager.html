@@ -1,0 +1,1383 @@
+<meta charset="utf-8">
+<script>/* FCC-THEME */(function(){var d=document.documentElement;
+try{var t=localStorage.getItem('fcc-theme');if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light';}d.setAttribute('data-theme',t);}catch(e){d.setAttribute('data-theme','light');}
+try{if(localStorage.getItem('fcc-nav-collapsed')==='1')d.classList.add('nav-collapsed');}catch(e){}
+var moon='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>';
+var sun='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+var SK='fcc-scroll:'+location.pathname;
+function restore(){try{var y=sessionStorage.getItem(SK);if(y!=null)window.scrollTo(0,parseInt(y,10)||0);}catch(e){}}
+function ic(){return d.getAttribute('data-theme')==='dark'?sun:moon;}
+function mk(){
+  if(!document.getElementById('theme-tgl')){var tb=document.querySelector('.topbar-in');
+    var b=document.createElement('button');b.id='theme-tgl';b.type='button';b.setAttribute('aria-label','Toggle light or dark theme');b.title='Toggle light / dark';b.innerHTML=ic();
+    b.onclick=function(){var n=d.getAttribute('data-theme')==='dark'?'light':'dark';d.setAttribute('data-theme',n);try{localStorage.setItem('fcc-theme',n);}catch(e){}b.innerHTML=ic();if(window.__tmTheme)window.__tmTheme();};
+    if(tb)tb.appendChild(b);else{b.style.cssText+=';position:fixed;top:12px;right:14px;z-index:60';document.body.appendChild(b);}}
+  var cc=document.getElementById('nav-collapse');
+  if(cc&&!cc.__w){cc.__w=1;cc.onclick=function(){var c=d.classList.toggle('nav-collapsed');try{localStorage.setItem('fcc-nav-collapsed',c?'1':'0');}catch(e){}};}
+  restore();
+}
+var _st;window.addEventListener('scroll',function(){if(_st)cancelAnimationFrame(_st);_st=requestAnimationFrame(function(){try{sessionStorage.setItem(SK,window.scrollY);}catch(e){}});},{passive:true});
+if(document.readyState!=='loading')mk();else document.addEventListener('DOMContentLoaded',mk);
+window.addEventListener('load',restore);
+})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FeedSpark · FS Task Manager</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
+  :root{--orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;--ink:#333;--ink-2:#4a4a4a;
+    --muted:#8a94a0;--line:#E6E6E6;--paper:#fff;--wash:#F7F7F5;--navy:#1A365D;--good:#15803D;--risk:#C0392B;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);--radius:14px;
+    /* the two chart series — the validated pair the Product Volume module already uses, so
+       "billable" reads the same blue everywhere in the FCC */
+    --bil:#2563EB;--nbil:#ED6F0B;--grid:#E6E6E6;
+    /* the work taxonomy, same five colours as the brand one-pager's retainer donut */
+    --c-opt:#ED6F0B;--c-tech:#B3261E;--c-feat:#2563EB;--c-acct:#6B7280;--c-other:#C9CDD4}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Lato,system-ui,sans-serif;color:var(--ink);background:var(--wash);line-height:1.5}
+  .wrap{max-width:1320px;margin:0 auto;padding:0 22px}
+  .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1320px;margin:0 auto;padding:12px 22px;display:flex;align-items:center;gap:14px}
+  .brand{font-weight:900;font-size:18px}.brand span{color:var(--orange-deep)}
+  .tb-tag{font-size:12px;font-weight:800;color:var(--muted);border-left:1px solid var(--line);padding-left:14px}
+  .hero{padding:30px 0 12px}
+  .eyebrow{font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--orange-deep)}
+  h1{font-size:30px;font-weight:900;margin:8px 0 6px;letter-spacing:-.01em}
+  .hero p.sub{color:var(--ink-2);font-size:14.5px;max-width:1000px;margin:0 0 12px}
+  .hero p.sub b{color:var(--ink)}
+  .src{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;font-weight:800;color:var(--ink-2);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:9px 13px;box-shadow:var(--shadow)}
+  .src .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none}
+  .src .dot.live{background:var(--good)}.src .dot.snap{background:var(--orange)}
+  .src .grow{flex:1;min-width:180px}
+  .src code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;background:var(--wash);padding:1px 6px;border-radius:6px;color:var(--ink)}
+  .btn{font:inherit;font-size:12.5px;font-weight:800;padding:7px 12px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
+  .btn:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .btn.on{background:var(--orange);border-color:var(--orange);color:#fff}
+  .btn.sm{padding:4px 9px;font-size:11.5px;border-radius:100px}
+  a.btn{text-decoration:none;display:inline-block}
+  /* kpis */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:11px;margin:16px 0 4px}
+  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;min-width:0}
+  .kpi .n{font-size:26px;font-weight:900;line-height:1;white-space:nowrap}
+  .kpi .n small{font-size:13px;color:var(--muted);font-weight:800}
+  .kpi .l{font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:6px}
+  .kpi .d{font-size:12px;font-weight:700;color:var(--ink-2);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .kpi.bil .n{color:var(--bil)}.kpi.nbil .n{color:var(--nbil)}.kpi.risk .n{color:var(--risk)}
+  /* search */
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin:12px 0}
+  .qwrap{position:relative;display:flex;align-items:center;gap:10px}
+  .qwrap .mag{position:absolute;left:14px;color:var(--muted);pointer-events:none;display:flex}
+  #q{flex:1;font:inherit;font-size:16px;font-weight:700;padding:13px 14px 13px 42px;border:1.5px solid var(--line);border-radius:12px;background:var(--wash);color:var(--ink);min-width:0}
+  #q:focus{outline:none;border-color:var(--orange);background:var(--paper)}
+  #qx{border:none;background:none;color:var(--muted);font-size:18px;font-weight:900;cursor:pointer;padding:6px 8px;border-radius:8px}
+  #qx:hover{color:var(--risk)}
+  .qhint{font-size:12px;font-weight:700;color:var(--muted);margin:9px 2px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .qhint code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;background:var(--wash);border:1px solid var(--line);padding:1px 6px;border-radius:6px;color:var(--ink-2);cursor:pointer}
+  .qhint code:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+  .chip{font:inherit;font-size:11.5px;font-weight:800;padding:5px 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .chip:hover{border-color:var(--orange)}
+  .qres{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:12px;padding-top:11px;border-top:1px solid var(--line);font-size:13px;font-weight:800;color:var(--ink-2)}
+  .qres .big{font-size:20px;font-weight:900;color:var(--ink)}
+  .qres .sep{color:var(--line)}
+  .qres .bad{color:var(--risk)}
+  /* chart */
+  .cw-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .cw-head h3{margin:0;font-size:16px;font-weight:900}
+  .cw-head .grow{flex:1}
+  .cw-ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .cw-ctl label{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .cw-ctl select{font:inherit;font-size:13px;font-weight:800;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+  .tog{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--ink-2);cursor:pointer}
+  .cbody{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+  .cstage{flex:1 1 460px;min-width:0}
+  .cstage svg{display:block;width:100%;height:auto;overflow:visible}
+  .clegend{flex:0 0 250px;min-width:0}
+  .lg-row{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;padding:6px 0;border-bottom:1px solid var(--line)}
+  .lg-row i{width:12px;height:12px;border-radius:3px;flex:none}
+  .lg-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lg-row .v{font-variant-numeric:tabular-nums;color:var(--ink)}
+  .lg-row .p{font-size:11.5px;color:var(--muted);width:44px;text-align:right;font-variant-numeric:tabular-nums}
+  .verdict{margin-top:12px;font-size:13.5px;font-weight:700;color:var(--ink-2);background:var(--wash);border-radius:10px;padding:10px 13px}
+  .verdict b{color:var(--ink)}
+  .exits{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+  .ctab{margin-top:12px;max-height:280px;overflow:auto}
+  /* tabs */
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;margin:20px 0 0;border-bottom:1px solid var(--line)}
+  .tab{font:inherit;font-size:13.5px;font-weight:900;padding:10px 15px;border:none;background:none;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+  .tab.on{color:var(--orange-deep);border-bottom-color:var(--orange-deep)}
+  .tab:hover{color:var(--ink)}
+  .tab .c{font-size:11.5px;font-weight:800;color:var(--muted);margin-left:5px}
+  /* tables */
+  .tscroll{overflow:auto;max-height:74vh}
+  table.st{width:100%;border-collapse:collapse;font-size:13px}
+  table.st th{position:sticky;top:0;background:var(--paper);z-index:2;font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
+  table.st th.num,table.st td.num{text-align:right;font-variant-numeric:tabular-nums}
+  table.st th.s::after{content:' ▾';color:var(--orange-deep)}
+  table.st th.s.up::after{content:' ▴'}
+  table.st td{padding:8px;border-bottom:1px solid var(--line);font-weight:700;vertical-align:middle}
+  table.st tbody tr{cursor:pointer}
+  table.st tbody tr:hover td{background:var(--wash)}
+  td .b{font-weight:900;color:var(--ink)}
+  td.ttl{max-width:420px}
+  td.ttl .tt{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  td.ttl .nt{display:block;font-size:11.5px;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mk{display:inline-block;font-size:10.5px;font-weight:900;color:var(--navy);background:rgba(26,54,93,.08);border-radius:100px;padding:1px 7px;text-transform:uppercase;letter-spacing:.04em}
+  .cat{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--ink-2);white-space:nowrap}
+  .cat i{width:8px;height:8px;border-radius:50%;flex:none}
+  .cat.opt i{background:var(--c-opt)}.cat.tech i{background:var(--c-tech)}.cat.feat i{background:var(--c-feat)}
+  .cat.acct i{background:var(--c-acct)}.cat.other i{background:var(--c-other)}
+  .st-p{display:inline-block;font-size:10.5px;font-weight:900;border-radius:100px;padding:1px 8px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+  .st-p.done{color:var(--good);background:rgba(21,128,61,.1)}
+  .st-p.open{color:var(--orange-deep);background:rgba(237,111,11,.12)}
+  .st-p.hold{color:var(--navy);background:rgba(26,54,93,.09)}
+  .st-p.cancelled{color:var(--muted);background:var(--wash)}
+  .hb{display:inline-block;width:52px;height:7px;border-radius:100px;background:var(--wash);overflow:hidden;vertical-align:middle}
+  .hb i{display:block;height:100%;background:var(--bil)}
+  .age{font-weight:900}.age.ok{color:var(--good)}.age.warn{color:var(--orange-deep)}.age.bad{color:var(--risk)}
+  .empty{padding:34px 10px;text-align:center;color:var(--muted);font-size:13.5px;font-weight:700}
+  .empty b{color:var(--ink)}
+  .thead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+  .thead h3{margin:0;font-size:16px;font-weight:900}
+  .thead .sub{font-size:12px;color:var(--muted);font-weight:700}
+  .thead .grow{flex:1}
+  /* breakdown strip */
+  .bd{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:11px;margin:12px 0}
+  .bd .bx{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:13px 15px;min-width:0}
+  .bd .bx h4{margin:0 0 9px;font-size:11.5px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .bd .r{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;padding:3px 0;cursor:pointer;min-width:0}
+  .bd .r:hover .nm{color:var(--orange-deep)}
+  .bd .r .nm{flex:1;min-width:0;display:flex;align-items:center}
+  .bd .r .nm .nmt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bd .r .bar{flex:0 0 74px;height:8px;border-radius:100px;background:var(--wash);overflow:hidden;display:flex}
+  .bd .r .bar i{height:100%}.bd .r .bar i.b{background:var(--bil)}.bd .r .bar i.n{background:var(--nbil)}
+  .bd .r .v{flex:0 0 52px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+  /* drawer */
+  .dim{position:fixed;inset:0;background:rgba(16,24,40,.32);z-index:80;display:none}
+  .dim.on{display:block}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(640px,100%);background:var(--paper);z-index:90;box-shadow:-12px 0 40px rgba(16,24,40,.22);transform:translateX(102%);transition:transform .2s ease;display:flex;flex-direction:column}
+  .drawer.on{transform:none}
+  .dr-h{padding:16px 20px 12px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;gap:12px}
+  .dr-h h2{margin:0;font-size:18px;font-weight:900;letter-spacing:-.01em}
+  .dr-h .dsub{font-size:12.5px;color:var(--ink-2);font-weight:700;margin-top:4px}
+  .dr-h .x{margin-left:auto;border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:10px;cursor:pointer;font-size:18px;font-weight:900;width:34px;height:34px;flex:none}
+  .dr-b{padding:12px 20px 24px;overflow:auto;flex:1}
+  .dr-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:0 0 14px}
+  .dr-stats .s{background:var(--wash);border-radius:10px;padding:9px 11px}
+  .dr-stats .s .n{font-size:18px;font-weight:900;line-height:1.1}
+  .dr-stats .s .l{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:3px}
+  .dr-f{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;font-size:13px;font-weight:700;margin-bottom:14px}
+  .dr-f dt{color:var(--muted);font-weight:800;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
+  .dr-f dd{margin:0;color:var(--ink);word-break:break-word}
+  .dr-note{background:var(--wash);border-radius:10px;padding:11px 13px;font-size:13px;font-weight:600;color:var(--ink-2);white-space:pre-wrap;word-break:break-word}
+  /* methodology */
+  .meth ol{margin:6px 0 2px;padding-left:20px;font-size:13.5px;color:var(--ink-2)}
+  .meth li{margin:7px 0}.meth b{color:var(--ink)}
+  .meth code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--wash);padding:1px 5px;border-radius:5px}
+  .footmark{padding:34px 0;color:var(--muted);font-size:12px;font-weight:700;border-top:1px solid var(--line);margin-top:30px}
+  .footmark .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .tip{position:fixed;z-index:95;background:#1A365D;color:#fff;font-size:12px;font-weight:800;padding:7px 10px;border-radius:8px;pointer-events:none;opacity:0;transition:opacity .12s;max-width:280px}
+  .tip.on{opacity:1}
+  .tip .ti{color:#8FB4F0}.tip .to{color:#E8B778}
+  @media(max-width:820px){.tb-tag{display:none}h1{font-size:24px}.clegend{flex:1 1 100%}}
+  /* rocket + icon nav (shared) */
+  .nav-toggle{border:none;background:none;cursor:pointer;padding:1px;border-radius:10px;flex:none;transition:transform .22s ease;display:inline-flex;text-decoration:none}
+  .nav-toggle svg{width:26px;height:26px;display:block;overflow:visible}
+  .rk-lift{animation:rkbob 2.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+  .rk-body{fill:var(--ink-2);transition:fill .2s}.rk-win{fill:#fff}.rk-fin{fill:var(--orange-deep)}
+  .rk-flame{fill:var(--orange);transform-box:fill-box;transform-origin:center top;animation:rkflame .42s ease-in-out infinite alternate}
+  .nav-toggle:hover{transform:translateY(-3px)}.nav-toggle:hover .rk-body{fill:var(--orange-ink)}
+  @keyframes rkbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}
+  @keyframes rkflame{from{transform:scaleY(.6) scaleX(.82);opacity:.7}to{transform:scaleY(1.15) scaleX(1);opacity:1}}
+  .spk-flame{width:11px;height:15px;margin-left:2px;fill:var(--orange);transform-box:fill-box;transform-origin:center bottom;animation:rkflame .55s ease-in-out infinite alternate}
+  @media(prefers-reduced-motion:reduce){.rk-lift,.rk-flame,.spk-flame{animation:none}}
+</style>
+<style>/* FCC-THEME */
+#theme-tgl{margin-left:10px;flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line,#E6E6E6);background:transparent;color:var(--ink-2,#4a4a4a);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s,color .15s,border-color .15s}
+#theme-tgl:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
+.nav-collapse{border:none;background:none;cursor:pointer;color:var(--muted,#8a94a0);padding:5px;border-radius:8px;display:inline-flex;align-items:center;flex:none;margin-left:auto}
+.nav-collapse:hover{color:var(--orange-deep,#ED6F0B)}
+.tb-modules{margin-left:8px!important;display:flex;gap:3px;align-items:center;flex-wrap:wrap}
+.tb-modules a.tbm{position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;color:var(--ink-2,#4a4a4a);text-decoration:none;transition:background .15s,color .15s}
+.tb-modules a.tbm:hover{background:var(--wash,#F7F7F5);color:var(--orange-deep,#ED6F0B)}
+.tb-modules a.tbm.on{background:rgba(245,166,35,.14);color:var(--orange-deep,#ED6F0B)}
+.tb-modules a.tbm::after{content:attr(data-lbl);position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%);background:#1A365D;color:#fff;font-size:11px;font-weight:800;letter-spacing:.02em;white-space:nowrap;padding:4px 8px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .15s;z-index:70}
+.tb-modules a.tbm:hover::after{opacity:1}
+.nav-collapsed .tb-modules{display:none}
+[data-theme=dark] .tb-modules a.tbm:hover{background:#20242E}
+[data-theme=dark] .tb-modules a.tbm.on{background:rgba(245,166,35,.16)}
+[data-theme=dark] .tb-modules a.tbm::after{background:#0B0D12}
+[data-theme=dark] .nav-collapse:hover{color:var(--orange-ink)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark;
+  --ink:#E7E9ED;--ink-2:#B9BEC7;--muted:#828D9C;--line:#2C3039;--paper:#1C1F27;--wash:#101218;
+  --navy:#5B82BE;--orange-ink:#F0A44E;--good:#48D07E;--risk:#F1707A;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.42);
+  /* dark-surface chart steps — separately validated against #1C1F27, not a flip of the light pair */
+  --bil:#4C82E0;--nbil:#C67B28;--grid:#242830;
+  --c-opt:#D2782A;--c-tech:#E06A63;--c-feat:#4C82E0;--c-acct:#8A93A1;--c-other:#3A3F4A}
+[data-theme=dark] body{background:var(--wash);color:var(--ink)}
+[data-theme=dark] .topbar{background:rgba(18,20,26,.9)}
+[data-theme=dark] a{color:var(--orange-ink)}
+[data-theme=dark] .kpi,[data-theme=dark] .card,[data-theme=dark] .src,[data-theme=dark] .drawer,[data-theme=dark] .bd .bx,[data-theme=dark] table.st th{background:var(--paper);border-color:var(--line);color:var(--ink)}
+[data-theme=dark] .btn,[data-theme=dark] .chip,[data-theme=dark] .cw-ctl select,[data-theme=dark] .dr-h .x{background:#20242E;color:var(--ink-2);border-color:var(--line)}
+[data-theme=dark] .btn.on{background:var(--orange);border-color:var(--orange);color:#14161C}
+[data-theme=dark] .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+[data-theme=dark] #q{background:#181B22;border-color:var(--line);color:var(--ink)}
+[data-theme=dark] #q:focus{background:#20242E}
+[data-theme=dark] .src code,[data-theme=dark] .qhint code,[data-theme=dark] .dr-stats .s,[data-theme=dark] .dr-note,[data-theme=dark] .verdict,[data-theme=dark] .meth code{background:#181B22;color:var(--ink-2);border-color:var(--line)}
+[data-theme=dark] .mk{color:#9DBDF3;background:rgba(91,130,190,.18)}
+[data-theme=dark] table.st tbody tr:hover td{background:#20242E}
+[data-theme=dark] .hb,[data-theme=dark] .bd .r .bar{background:#181B22}
+[data-theme=dark] .st-p.done{color:var(--good);background:rgba(72,208,126,.14)}
+[data-theme=dark] .st-p.open{color:var(--orange-ink);background:rgba(240,164,78,.14)}
+[data-theme=dark] .st-p.cancelled{background:#181B22}
+[data-theme=dark] .tip{background:#0B0D12}
+</style>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="nav-toggle" href="/" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-flame" d="M12 19.2c1.1 1.3 1.7 2.5 1.7 3.3 0 .9-.8 1.5-1.7 1.5s-1.7-.6-1.7-1.5c0-.8.6-2 1.7-3.3Z"/><path class="rk-body" d="M12 .9c3 2.4 4.8 6.2 4.8 10.4 0 2.6-.7 5-1.9 7.1H9.1A14.6 14.6 0 0 1 7.2 11.3C7.2 7.1 9 3.3 12 .9Z"/><circle class="rk-win" cx="12" cy="9.4" r="2"/><path class="rk-fin" d="M7.2 12.2 4.4 15v3.4l2.8-1.7v-4.5ZM16.8 12.2l2.8 2.8v3.4l-2.8-1.7v-4.5Z"/></g></svg></a>
+    <div class="brand">Feed<span>Spark</span></div>
+    <div class="tb-tag">FS Task Manager</div>
+    <nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm on" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/playbook" class="tbm" data-lbl="Playbook" title="Playbook — meeting copilot" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a></nav>
+    <button class="nav-collapse" id="nav-collapse" type="button" title="Hide / show the module menu" aria-label="Hide or show the module menu"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">Reports database</div>
+    <h1>FS Task Manager</h1>
+    <p class="sub">Every task our team booked against the book, every ticket the client queue raised, and every market's
+      hours balance — read out of the <b>FeedSpark reports database</b> and made searchable. Ask it anything in the bar
+      below; the chart, the tables and the totals all answer the same question. Hours are kept as two numbers all the way
+      through: <b>billable</b> — what the client was charged for — and <b>non-billable</b>, the time we spent and did not
+      charge. Merging them would hide the very thing worth looking at.</p>
+    <div class="src" id="src"><span class="dot"></span><span class="grow">Loading the reports snapshot…</span></div>
+  </section>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section class="card" id="qcard">
+    <div class="qwrap">
+      <span class="mag"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg></span>
+      <input id="q" type="search" autocomplete="off" spellcheck="false"
+        placeholder="Search every task and ticket — try: keyword optimisation client:Reiss bill:no" aria-label="Search the reports database">
+      <button id="qx" type="button" title="Clear the search" aria-label="Clear the search">✕</button>
+    </div>
+    <div class="qhint">
+      <span>Narrow it:</span>
+      <code data-ins="client:">client:</code><code data-ins="owner:">owner:</code><code data-ins="market:">market:</code>
+      <code data-ins="cat:opt">cat:opt</code><code data-ins="status:open">status:open</code>
+      <code data-ins="bill:no">bill:no</code><code data-ins="from:2026-04">from:</code><code data-ins="min:2">min:</code>
+      <span>· <code data-ins="&quot;&quot;">"exact phrase"</code> · <code data-ins="-call">-exclude</code></span>
+    </div>
+    <div class="chips" id="qchips"></div>
+    <div class="qres" id="qres"></div>
+  </section>
+
+  <section class="card" id="chartcard">
+    <div class="cw-head">
+      <h3>Billable vs non-billable</h3>
+      <span class="sub" id="cwsub" style="font-size:12px;color:var(--muted);font-weight:700"></span>
+      <span class="grow"></span>
+    </div>
+    <div class="cw-ctl">
+      <label for="cdim">Split by</label>
+      <select id="cdim"></select>
+      <label for="cform">Show as</label>
+      <select id="cform">
+        <option value="donut">Donut</option>
+        <option value="stack">Stacked columns</option>
+        <option value="pct">100% stacked</option>
+        <option value="bars">Horizontal bars</option>
+      </select>
+      <label class="tog"><input type="checkbox" id="clab" checked> Value labels</label>
+      <label class="tog"><input type="checkbox" id="ctab"> Table</label>
+    </div>
+    <div class="cbody">
+      <div class="cstage" id="cstage"></div>
+      <div class="clegend" id="clegend"></div>
+    </div>
+    <div class="verdict" id="cverdict"></div>
+    <div class="exits">
+      <button class="btn sm" id="xpng" type="button">⬇ PNG</button>
+      <button class="btn sm" id="xtsv" type="button">⎘ Copy table</button>
+      <button class="btn sm" id="xcsv" type="button">⬇ CSV of these rows</button>
+      <button class="btn sm" id="xlink" type="button">🔗 Copy link</button>
+    </div>
+    <div class="ctab" id="ctabbox" hidden></div>
+  </section>
+
+  <div class="bd" id="bd"></div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-t="tasks" type="button">Tasks<span class="c" id="c-tasks"></span></button>
+    <button class="tab" data-t="tickets" type="button">Client tickets<span class="c" id="c-tickets"></span></button>
+    <button class="tab" data-t="accounts" type="button">Accounts &amp; hours balance<span class="c" id="c-accounts"></span></button>
+  </nav>
+
+  <section class="card" id="pane">
+    <div class="thead">
+      <h3 id="pane-h">Tasks</h3>
+      <span class="sub" id="pane-s"></span>
+      <span class="grow"></span>
+      <button class="btn sm" id="pmore" type="button" hidden>Show more</button>
+    </div>
+    <div class="tscroll" id="pbody"></div>
+  </section>
+
+  <section class="card meth">
+    <h3 style="margin:0 0 4px;font-size:16px;font-weight:900">Where these numbers come from</h3>
+    <ol>
+      <li><b>The worker reads the FeedSpark reports database itself.</b> Its :15 and :45 cron speaks the
+        reports MCP directly and keeps what it reads in KV — no agent, no export, no manual push. This
+        module has its own rotation on that firing: a couple of markets and a ticket queue each time,
+        stalest first with a market never read always leading, so the whole estate turns over roughly
+        twice a day and nothing starves at the end of the roster.</li>
+      <li><b>Nothing here is in the repository.</b> Hours, task titles and client contact addresses are
+        per-client commercial data; they live in KV only. The page is served scoped to whoever opens it,
+        so a client-scoped account manager never receives another AM's rows at all.</li>
+      <li><b>All four of the database's reads are here.</b> The client master gives the roster, each
+        market's hours allowance and its balance (Accounts tab); the task list gives every piece of work
+        with its owner, its day and its hours (Tasks tab); the ticket queue gives every client email
+        thread with its age, its idle time and the hours it consumed (Client tickets tab); ticket detail
+        supplies who each thread came from.</li>
+      <li><b>Billable and non-billable are never merged.</b> <code>time_taken</code> is charged time,
+        <code>time_taken_nonbill</code> is time we spent and did not charge. Both are real delivered
+        effort, so both count toward what an account cost us — but they answer different questions, so
+        every total on this page carries the split.</li>
+      <li><b>The type of work</b> uses the same classifier as the brand one-pager's retainer donut, so the
+        two can never disagree about what a task was. A title matching no rule is <b>Other</b> and is
+        never folded into a category to flatter the mix.</li>
+      <li><b>Two traps in the source, both handled in the sync.</b> The database ignores the
+        <code>from_date</code> argument — asking for July returns February — so the twelve-month window is
+        applied when a pull is stored, not by the query. And pulls come back newest-first with a row cap,
+        so a market whose pull does not reach the start of the window is marked <b>partial</b> in the
+        coverage drawer: it contributes the rows it has and says so, rather than a part-year being read
+        as a whole one. A date of <code>0000-00-00</code> is counted as undated and never guessed into a
+        month.</li>
+      <li><b>Tickets are windowed by their last activity</b>, the same twelve months as the tasks. A thread
+        whose last message predates the window is out of scope for every client alike.</li>
+      <li><b>What has not been read is absent, not zero.</b> The line at the top says how many markets the
+        book holds and how stale the oldest read is, and the coverage drawer lists them one by one.</li>
+    </ol>
+  </section>
+</main>
+
+<div class="dim" id="dim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-label="Record detail"><div class="dr-h"><div><h2 id="dr-t"></h2><div class="dsub" id="dr-s"></div></div><button class="x" id="dr-x" type="button" aria-label="Close">✕</button></div><div class="dr-b" id="dr-b"></div></aside>
+<div class="tip" id="tip"></div>
+
+<footer class="footmark"><div class="wrap"><span>FeedSpark · Private &amp; Confidential</span><span id="fm-r"></span></div></footer>
+
+<script>
+/* ============================================================================================
+   FS TASK MANAGER (Ray, 16 Sep 2026)
+
+     "lets build a new module as FS Task Manager (to show all capabilities of this new
+      feedspark-reports mcp please) — Allow more area where you can also create a search bar for
+      each AM to work inside the pull-in report via the MCP, and a quick pull-out report —
+      either a pie chart or any type of chart — based on the hours of billable versus
+      non-billable, where you reach inside this MCP."
+
+   The data arrives from GET /api/taskmanager — the book the worker's :15/:45 cron pulls out of
+   the reports MCP itself and keeps in KV, SCOPED to the signed-in identity (a client-scoped AM is
+   filtered server-side rather than handed the whole book and asked to look away). Nothing is
+   baked into this page: hours, task titles and client contact addresses are per-client commercial
+   data and live in KV only. The book fills market by market, so the page states how much of it
+   has been read and how long ago rather than implying a completeness it does not have.
+
+   THE QUERY GRAMMAR below (between the ENGINE markers) is a behavioural twin of
+   tools/reporttasks.mjs.
+   tools/test_reporttasks.mjs lifts these functions out of this page by name and runs the SAME
+   assertion table against both, so the bar an AM types into and the harness that proves it
+   works can never drift apart.
+   ============================================================================================ */
+(function () {
+  'use strict';
+  /* ENGINE:START */
+  var CATS = ['opt', 'tech', 'feat', 'acct', 'other'];
+  var CAT_LABEL = { opt: 'Optimisation', tech: 'Technical fixes', feat: 'Feature & set-up', acct: 'Account & support', other: 'Other' };
+
+  var STATUS_BUCKET = {
+    done: 'done', completed: 'done', closed: 'done',
+    created: 'open', pending: 'open', assigned: 'open', progress: 'open', inprogress: 'open',
+    onhold: 'hold', hold: 'hold', paused: 'hold', withclient: 'hold', snoozed: 'hold',
+    cancelled: 'cancelled', canceled: 'cancelled', skipped: 'cancelled', deleted: 'cancelled'
+  };
+  var BUCKET_LABEL = { done: 'Done', open: 'Open', hold: 'On hold', cancelled: 'Cancelled' };
+  function bucketOf(s) {
+    var k = String(s || '').toLowerCase().replace(/[\s_-]/g, '');
+    return STATUS_BUCKET[k] || 'open';
+  }
+  function monthOf(d) { return d ? String(d).slice(0, 7) : ''; }
+
+  var FIELDS = {
+    owner: 'owner', who: 'owner', by: 'owner',
+    client: 'client', brand: 'client', account: 'client',
+    market: 'market', mkt: 'market', country: 'market',
+    am: 'am', manager: 'am',
+    status: 'status', state: 'status',
+    cat: 'cat', category: 'cat', type: 'cat',
+    bill: 'bill', billable: 'bill',
+    month: 'month',
+    from: 'from', since: 'from', after: 'from',
+    to: 'to', until: 'to', before: 'to',
+    min: 'min', max: 'max'
+  };
+  var CAT_ALIAS = {
+    opt: 'opt', optimisation: 'opt', optimization: 'opt', optimise: 'opt',
+    tech: 'tech', technical: 'tech', fix: 'tech', fixes: 'tech', broken: 'tech',
+    feat: 'feat', feature: 'feat', setup: 'feat', 'set-up': 'feat', build: 'feat',
+    acct: 'acct', account: 'acct', support: 'acct', admin: 'acct',
+    other: 'other', unclassified: 'other'
+  };
+
+  function parseQuery(q) {
+    var out = { text: [], neg: [], f: {}, nf: {}, num: [], raw: String(q || '') };
+    var src = String(q || ''), toks = [], cur = '', quote = false, i, c;
+    for (i = 0; i < src.length; i++) {
+      c = src.charAt(i);
+      if (c === '"') { quote = !quote; continue; }
+      if (!quote && /\s/.test(c)) { if (cur) toks.push(cur); cur = ''; continue; }
+      cur += c;
+    }
+    if (cur) toks.push(cur);
+    for (i = 0; i < toks.length; i++) {
+      var t0 = toks[i], not = t0.charAt(0) === '-' && t0.length > 1, t = not ? t0.slice(1) : t0;
+      var m = t.match(/^([a-z_-]+):([\s\S]*)$/i);
+      if (m && FIELDS[m[1].toLowerCase()] && m[2] !== '') {
+        var k = FIELDS[m[1].toLowerCase()], v = m[2];
+        if (k === 'cat') v = CAT_ALIAS[v.toLowerCase()] || v.toLowerCase();
+        else if (k === 'bill') v = /^(no|non|nonbill|non-billable|nonbillable|false|0)$/i.test(v) ? 'no' : 'yes';
+        else if (k === 'min' || k === 'max') { out.num.push({ k: k, v: Number(v) || 0 }); continue; }
+        var bag = not ? out.nf : out.f;
+        (bag[k] = bag[k] || []).push(v);
+        continue;
+      }
+      (not ? out.neg : out.text).push(t.toLowerCase());
+    }
+    return out;
+  }
+
+  function fold(s) { return String(s == null ? '' : s).toLowerCase(); }
+  function fieldHit(val, want) {
+    var a = fold(val), b = fold(want);
+    return a === b || (b.length >= 2 && a.indexOf(b) === 0);
+  }
+  function anyHit(val, wants) {
+    for (var i = 0; i < wants.length; i++) if (fieldHit(val, wants[i])) return true;
+    return false;
+  }
+  function taskBlob(t) { return fold([t.title, t.note, t.owner, t.client, t.market, t.status].join('  ')); }
+  function ticketBlob(t) { return fold([t.subject, t.client, t.from, t.status, t.by, t.origin].join('  ')); }
+
+  function numOk(t, q) {
+    for (var i = 0; i < q.num.length; i++) {
+      var b = q.num[i];
+      if (b.k === 'min' && t.hours < b.v) return false;
+      if (b.k === 'max' && t.hours > b.v) return false;
+    }
+    return true;
+  }
+
+  function matchTask(t, q) {
+    var blob = t.__b || (t.__b = taskBlob(t)), i;
+    for (i = 0; i < q.text.length; i++) if (blob.indexOf(q.text[i]) < 0) return false;
+    for (i = 0; i < q.neg.length; i++) if (blob.indexOf(q.neg[i]) >= 0) return false;
+    var f = q.f, nf = q.nf;
+    if (f.owner && !anyHit(t.owner, f.owner)) return false;
+    if (f.client && !anyHit(t.client, f.client)) return false;
+    if (f.market && !anyHit(t.market, f.market)) return false;
+    if (f.am && !anyHit(t.am, f.am)) return false;
+    if (f.cat && !anyHit(t.cat, f.cat)) return false;
+    if (f.status && !(anyHit(t.status, f.status) || anyHit(t.bucket, f.status))) return false;
+    if (f.month && f.month.indexOf(monthOf(t.d)) < 0) return false;
+    if (f.bill) {
+      var want = f.bill[f.bill.length - 1];
+      if (want === 'yes' && !(t.bill > 0)) return false;
+      if (want === 'no' && !(t.nonbill > 0)) return false;
+    }
+    if (f.from && !(t.d && t.d >= f.from[0])) return false;
+    if (f.to && !(t.d && t.d <= (f.to[0].length === 7 ? f.to[0] + '-31' : f.to[0]))) return false;
+    if (nf.owner && anyHit(t.owner, nf.owner)) return false;
+    if (nf.client && anyHit(t.client, nf.client)) return false;
+    if (nf.market && anyHit(t.market, nf.market)) return false;
+    if (nf.cat && anyHit(t.cat, nf.cat)) return false;
+    if (nf.status && (anyHit(t.status, nf.status) || anyHit(t.bucket, nf.status))) return false;
+    if (!numOk(t, q)) return false;
+    return true;
+  }
+
+  function matchTicket(t, q) {
+    var blob = t.__b || (t.__b = ticketBlob(t)), i;
+    for (i = 0; i < q.text.length; i++) if (blob.indexOf(q.text[i]) < 0) return false;
+    for (i = 0; i < q.neg.length; i++) if (blob.indexOf(q.neg[i]) >= 0) return false;
+    var f = q.f, nf = q.nf;
+    if (f.client && !anyHit(t.client, f.client)) return false;
+    if (f.am && !anyHit(t.am, f.am)) return false;
+    if (f.status && !anyHit(t.status, f.status)) return false;
+    if (f.month && f.month.indexOf(monthOf(t.d)) < 0) return false;
+    if (f.from && !(t.d && t.d >= f.from[0])) return false;
+    if (f.to && !(t.d && t.d <= (f.to[0].length === 7 ? f.to[0] + '-31' : f.to[0]))) return false;
+    if (nf.client && anyHit(t.client, nf.client)) return false;
+    if (nf.status && anyHit(t.status, nf.status)) return false;
+    if (f.owner || f.market || f.cat || f.bill) return false;
+    return true;
+  }
+
+  function r2(n) { return Math.round(n * 100) / 100; }
+
+  function summarise(rows) {
+    var s = { n: rows.length, hours: 0, bill: 0, nonbill: 0, billPct: 0, cats: {}, buckets: {},
+      owners: 0, clients: 0, markets: 0, months: 0, first: '', last: '', undated: 0 };
+    CATS.forEach(function (c) { s.cats[c] = 0; });
+    var ow = {}, cl = {}, mk = {}, mo = {}, no = 0, nc = 0, nm = 0, nmo = 0;
+    for (var i = 0; i < rows.length; i++) {
+      var t = rows[i];
+      s.hours += t.hours; s.bill += t.bill; s.nonbill += t.nonbill;
+      s.cats[t.cat] = r2((s.cats[t.cat] || 0) + t.hours);
+      s.buckets[t.bucket] = (s.buckets[t.bucket] || 0) + 1;
+      if (t.owner && !ow[t.owner]) { ow[t.owner] = 1; no++; }
+      if (t.client && !cl[t.client]) { cl[t.client] = 1; nc++; }
+      if (t.client && t.market && !mk[t.client + '|' + t.market]) { mk[t.client + '|' + t.market] = 1; nm++; }
+      if (t.d) {
+        var k = t.d.slice(0, 7); if (!mo[k]) { mo[k] = 1; nmo++; }
+        if (!s.first || t.d < s.first) s.first = t.d;
+        if (!s.last || t.d > s.last) s.last = t.d;
+      } else s.undated++;
+    }
+    s.hours = r2(s.hours); s.bill = r2(s.bill); s.nonbill = r2(s.nonbill);
+    s.billPct = s.hours ? Math.round((s.bill / s.hours) * 1000) / 10 : 0;
+    s.owners = no; s.clients = nc; s.markets = nm; s.months = nmo;
+    return s;
+  }
+
+  var DIMS = [
+    { k: 'total', label: 'Everything' },
+    { k: 'client', label: 'Client' },
+    { k: 'owner', label: 'Who did it' },
+    { k: 'cat', label: 'Type of work' },
+    { k: 'month', label: 'Month' },
+    { k: 'market', label: 'Market' },
+    { k: 'am', label: 'Account manager' },
+    { k: 'bucket', label: 'Status' },
+    { k: 'task', label: 'Task' }
+  ];
+  function dimKey(t, dim) {
+    if (dim === 'total') return 'All work';
+    if (dim === 'month') return monthOf(t.d) || '(undated)';
+    if (dim === 'cat') return t.cat;
+    if (dim === 'market') return (t.client && t.market) ? t.client + ' ' + t.market : (t.market || '(none)');
+    if (dim === 'task') return t.title || '(untitled)';
+    return t[dim] || '(none)';
+  }
+  function groupBy(rows, dim, cap) {
+    var m = {}, keys = [], i;
+    for (i = 0; i < rows.length; i++) {
+      var t = rows[i], k = dimKey(t, dim), g = m[k];
+      if (!g) { g = m[k] = { k: k, n: 0, bill: 0, nonbill: 0, hours: 0 }; keys.push(k); }
+      g.n++; g.bill += t.bill; g.nonbill += t.nonbill; g.hours += t.hours;
+    }
+    var out = keys.map(function (k) {
+      var g = m[k];
+      return { k: g.k, n: g.n, bill: r2(g.bill), nonbill: r2(g.nonbill), hours: r2(g.hours),
+        billPct: g.hours ? Math.round((g.bill / g.hours) * 1000) / 10 : 0 };
+    });
+    if (dim === 'month') out.sort(function (a, b) { return String(a.k) < String(b.k) ? -1 : String(a.k) > String(b.k) ? 1 : 0; });
+    else out.sort(function (a, b) { return (b.hours - a.hours) || (b.n - a.n) || (String(a.k) < String(b.k) ? -1 : 1); });
+    if (cap && out.length > cap && dim !== 'month') {
+      var keep = out.slice(0, cap - 1), rest = out.slice(cap - 1);
+      var f = { n: 0, bill: 0, nonbill: 0, hours: 0 };
+      rest.forEach(function (x) { f.n += x.n; f.bill += x.bill; f.nonbill += x.nonbill; f.hours += x.hours; });
+      keep.push({ k: 'Other (' + rest.length + ' more)', n: f.n, bill: r2(f.bill), nonbill: r2(f.nonbill),
+        hours: r2(f.hours), billPct: f.hours ? Math.round((f.bill / f.hours) * 1000) / 10 : 0, fold: rest.length });
+      out = keep;
+    }
+    return out;
+  }
+  function billVerdict(p) {
+    if (p >= 85) return 'Almost everything delivered here was charged for.';
+    if (p >= 70) return 'Most of this effort was charged for.';
+    if (p >= 55) return 'A meaningful slice of this effort went unbilled.';
+    if (p >= 40) return 'Close to half of this effort was never charged for.';
+    return 'Most of this effort was delivered without being charged for.';
+  }
+  var TICKET_LIVE = ['open', 'reopened'];
+  function ticketStats(rows) {
+    var s = { n: rows.length, live: 0, closed: 0, ignored: 0, hours: 0, tasks: 0, msgs: 0, stale: 0, byStatus: {}, oldest: 0 };
+    for (var i = 0; i < rows.length; i++) {
+      var t = rows[i];
+      s.byStatus[t.status] = (s.byStatus[t.status] || 0) + 1;
+      if (TICKET_LIVE.indexOf(t.status) >= 0) s.live++;
+      else if (t.status === 'closed') s.closed++;
+      else if (t.status === 'ignored') s.ignored++;
+      s.hours += t.hours; s.tasks += t.tasks; s.msgs += t.msgs;
+      if (t.idle >= 30 && TICKET_LIVE.indexOf(t.status) >= 0) s.stale++;
+      if (t.idle > s.oldest) s.oldest = t.idle;
+    }
+    s.hours = r2(s.hours);
+    return s;
+  }
+  function balanceState(allowance, balance) {
+    if (balance < 0) return 'over';
+    if (allowance > 0 && balance > allowance * 2) return 'banked';
+    return 'ok';
+  }
+  /* ENGINE:END */
+
+  window.FSTM = { parseQuery: parseQuery, matchTask: matchTask, matchTicket: matchTicket,
+    bucketOf: bucketOf, summarise: summarise, groupBy: groupBy, ticketStats: ticketStats,
+    billVerdict: billVerdict, balanceState: balanceState, taskBlob: taskBlob, ticketBlob: ticketBlob,
+    CATS: CATS, CAT_LABEL: CAT_LABEL, DIMS: DIMS, BUCKET_LABEL: BUCKET_LABEL };
+
+  /* ------------------------------------------------------------------------------------------
+     page
+     ------------------------------------------------------------------------------------------ */
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function hrs(n) { return (Math.round(n * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
+  function num(n) { return Number(n || 0).toLocaleString(); }
+  function cvar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888'; }
+
+  var D = null, STATUS = {}, OWNER = false, TASKS = [], TICKETS = [], ACCOUNTS = [], Q = parseQuery(''),
+      FT = [], FK = [], TAB = 'tasks', SHOW = 200,
+      SORT = { tasks: { k: 'd', dir: -1 }, tickets: { k: 'd', dir: -1 }, accounts: { k: 'used', dir: -1 } };
+
+  // The worker sends rows already unpacked — it holds the book in KV per market and assembles
+  // the scoped view server-side, so there is no dictionary to decode here.
+  function decode(d) {
+    TASKS = d.rows || [];
+    TICKETS = d.tickets || [];
+    ACCOUNTS = d.accounts || [];
+  }
+
+  /* ---- source line + KPIs ---- */
+  // The source line tells the truth about the book: which state the sync is in, how many of the
+  // markets have been read, and how stale the oldest read is. A page that showed 4,000 rows
+  // without saying it had read 12 of 39 markets would be quietly wrong.
+  function srcLine() {
+    var h = D.health || { read: 0, total: 0 }, st = STATUS || {};
+    var cls = 'snap', msg;
+    if (st.state === 'no_token') {
+      cls = 'risk';
+      msg = '<b>The reports sync is waiting for its credential</b> — TM_MCP_TOKEN is not set, so the book cannot be read yet.';
+    } else if (st.state === 'unauthorized') {
+      cls = 'risk';
+      msg = '<b>The reports MCP refused the sync</b> (' + esc(st.error || 'unauthorized') + ') — check TM_MCP_TOKEN, or TM_MCP_AUTH for the header it expects.';
+    } else if (!h.read) {
+      cls = 'risk';
+      msg = '<b>No market has been read yet.</b> The automatic sync runs at :15 and :45 past the hour and fills the book a few markets at a time.';
+    } else {
+      cls = h.complete ? 'live' : 'snap';
+      msg = '<b>' + esc(D.from) + ' → ' + esc(D.to) + '</b> · <b>' + h.read + ' of ' + (h.total || h.read) + '</b> market'
+        + ((h.total || h.read) === 1 ? '' : 's') + ' read'
+        + (h.staleHours ? ', oldest ' + ago(h.oldest) : '')
+        + ' · <b>' + num(TASKS.length) + '</b> tasks · <b>' + num(TICKETS.length) + '</b> tickets'
+        + ' · <b>' + num(ACCOUNTS.length) + '</b> markets in the client master';
+      if (h.partial) msg += ' · <b style="color:var(--risk)">' + h.partial + ' partial</b>';
+      if (st.state && st.state !== 'ok') msg += ' · <b style="color:var(--risk)">last sync ' + esc(st.state) + '</b>';
+    }
+    // with no credential there is nothing to sync — offering the button would only fail
+    var btn = (OWNER && st.state !== 'no_token') ? '<button class="btn sm" id="syncbtn" type="button">\u27F3 Sync more</button>' : '';
+    $('src').innerHTML = '<span class="dot ' + cls + '"></span><span class="grow">' + msg + '</span>'
+      + (h.read ? '<button class="btn sm" id="covbtn" type="button">Coverage</button>' : '') + btn;
+    if ($('covbtn')) $('covbtn').onclick = coverageDrawer;
+    if ($('syncbtn')) $('syncbtn').onclick = syncMore;
+  }
+
+  function ago(ms) {
+    if (!ms) return 'never';
+    var m = Math.max(0, Math.round((Date.now() - ms) / 60000));
+    if (m < 60) return m + ' min ago';
+    var hh = Math.round(m / 60);
+    return hh < 48 ? hh + 'h ago' : Math.round(hh / 24) + ' days ago';
+  }
+
+  // \u27F3 Sync more (owner): read another slice of the book now rather than waiting for :15/:45.
+  // Bounded per call by the worker; this loops until the estate is covered or a pull fails, and
+  // says where it has got to instead of spinning silently.
+  var SYNCING = false;
+  function syncMore() {
+    if (SYNCING) return;
+    SYNCING = true;
+    var b = $('syncbtn');
+    var step = function () {
+      if (b) { b.disabled = true; b.textContent = '\u27F3 Syncing…'; }
+      fetch('/api/taskmanager?sync=6').then(function (r) { return r.json(); }).then(function (d) {
+        if (!d || !d.ok) { toast((d && d.error) || 'Sync refused'); SYNCING = false; if (b) { b.disabled = false; b.textContent = '\u27F3 Sync more'; } return; }
+        STATUS = d.status || {}; OWNER = !!d.owner;
+        D = d.data; decode(d.data);
+        var sy = d.synced || {}, h = D.health || {};
+        if (sy.state && sy.state !== 'ok') { toast('Sync ' + sy.state + ((sy.error ? ' — ' + sy.error : ''))); SYNCING = false; }
+        else if (h.read < (h.total || 0)) { apply(); setTimeout(step, 250); return; }
+        else { toast('The whole book is read — ' + h.read + ' markets'); SYNCING = false; }
+        apply();
+      }).catch(function (e) { toast('Sync failed — ' + ((e && e.message) || e)); SYNCING = false; apply(); });
+    };
+    step();
+  }
+
+  function kpis() {
+    var s = summarise(FT), ts = ticketStats(FK);
+    var live = ACCOUNTS.filter(function (a) { return a.flag === 0; });
+    var over = live.filter(function (a) { return a.balance < 0; }).length;
+    var box = [
+      { n: num(s.n), l: 'Tasks', d: s.first ? s.first + ' → ' + s.last : '—' },
+      { n: hrs(s.hours) + '<small> h</small>', l: 'Hours delivered', d: s.months + ' month' + (s.months === 1 ? '' : 's') + ' · ' + s.markets + ' market' + (s.markets === 1 ? '' : 's') },
+      // with no hours in view there is no share to state — "100% of the hours" against zero
+      // hours is arithmetic, not a fact about the book
+      { n: hrs(s.bill) + '<small> h</small>', l: 'Billable', d: s.hours ? s.billPct + '% of the hours' : 'no hours in view', c: 'bil' },
+      { n: hrs(s.nonbill) + '<small> h</small>', l: 'Non-billable', d: s.hours ? (Math.round((100 - s.billPct) * 10) / 10) + '% of the hours' : 'no hours in view', c: 'nbil' },
+      { n: num(s.owners), l: 'People on it', d: s.clients + ' client' + (s.clients === 1 ? '' : 's') },
+      { n: num(ts.live), l: 'Live tickets', d: ts.stale ? ts.stale + ' idle 30 days+' : (ts.n ? 'none idle 30 days' : 'no tickets in view'), c: ts.stale ? 'risk' : '' },
+      { n: num(over), l: 'Over allowance', d: 'of ' + live.length + ' live market' + (live.length === 1 ? '' : 's'), c: over ? 'risk' : '' }
+    ];
+    $('kpis').innerHTML = box.map(function (k) {
+      return '<div class="kpi ' + (k.c || '') + '"><div class="n">' + k.n + '</div><div class="l">' + esc(k.l) + '</div><div class="d">' + esc(k.d) + '</div></div>';
+    }).join('');
+  }
+
+  /* ---- search ---- */
+  var PRESETS = [
+    { l: 'Everything', q: '' },
+    { l: 'Non-billable only', q: 'bill:no' },
+    { l: 'Still open', q: 'status:open' },
+    { l: 'Optimisation', q: 'cat:opt' },
+    { l: 'Technical fixes', q: 'cat:tech' },
+    { l: 'Account & support', q: 'cat:acct' },
+    { l: 'Keyword work', q: 'keyword' },
+    { l: 'Calls & reviews', q: 'call' },
+    { l: 'Half a day or more', q: 'min:4' }
+  ];
+  function chips() {
+    $('qchips').innerHTML = PRESETS.map(function (p, i) {
+      return '<button class="chip' + (($('q').value.trim() === p.q) ? ' on' : '') + '" data-q="' + esc(p.q) + '" type="button">' + esc(p.l) + '</button>';
+    }).join('') + savedChips();
+    Array.prototype.forEach.call($('qchips').querySelectorAll('.chip[data-q]'), function (b) {
+      b.onclick = function () { $('q').value = b.getAttribute('data-q'); apply(); };
+    });
+    Array.prototype.forEach.call($('qchips').querySelectorAll('.chip[data-sv]'), function (b) {
+      b.onclick = function (e) {
+        if (e.altKey || e.shiftKey) { delSaved(b.getAttribute('data-sv')); return; }
+        $('q').value = b.getAttribute('data-sv'); apply();
+      };
+    });
+    var add = document.createElement('button');
+    add.className = 'chip'; add.type = 'button'; add.textContent = '＋ Save this view';
+    add.title = 'Keep this query on this device. Alt-click a saved chip to remove it.';
+    add.onclick = saveView;
+    $('qchips').appendChild(add);
+  }
+  function saved() { try { return JSON.parse(localStorage.getItem('fcc-tm-views') || '[]'); } catch (e) { return []; } }
+  function savedChips() {
+    return saved().map(function (v) { return '<button class="chip" data-sv="' + esc(v) + '" type="button" title="Alt-click to remove">★ ' + esc(v.length > 34 ? v.slice(0, 33) + '…' : v) + '</button>'; }).join('');
+  }
+  function saveView() {
+    var v = $('q').value.trim(); if (!v) return;
+    var l = saved(); if (l.indexOf(v) < 0) l.unshift(v);
+    try { localStorage.setItem('fcc-tm-views', JSON.stringify(l.slice(0, 12))); } catch (e) {}
+    chips();
+  }
+  function delSaved(v) {
+    var l = saved().filter(function (x) { return x !== v; });
+    try { localStorage.setItem('fcc-tm-views', JSON.stringify(l)); } catch (e) {}
+    chips();
+  }
+
+  function apply() {
+    Q = parseQuery($('q').value);
+    FT = TASKS.filter(function (t) { return matchTask(t, Q); });
+    FK = TICKETS.filter(function (t) { return matchTicket(t, Q); });
+    SHOW = 200;
+    var s = summarise(FT);
+    var live = Q.raw.trim();
+    $('qres').innerHTML = '<span class="big">' + num(s.n) + '</span> task' + (s.n === 1 ? '' : 's')
+      + ' <span class="sep">·</span> <span class="big">' + hrs(s.hours) + ' h</span>'
+      + ' <span style="color:var(--bil)">' + hrs(s.bill) + ' billable</span>'
+      + ' <span class="sep">+</span> <span style="color:var(--nbil)">' + hrs(s.nonbill) + ' non-billable</span>'
+      + ' <span class="sep">·</span> ' + num(FK.length) + ' ticket' + (FK.length === 1 ? '' : 's')
+      + (live ? ' <span class="sep">·</span> <span style="color:var(--muted)">matching <b>' + esc(live) + '</b></span>' : '')
+      + (s.n === 0 && live ? ' <span class="bad">— nothing matches; try fewer words, or a shorter <code>client:</code></span>' : '');
+    $('c-tasks').textContent = ' ' + num(FT.length);
+    $('c-tickets').textContent = ' ' + num(FK.length);
+    $('c-accounts').textContent = ' ' + num(ACCOUNTS.length);
+    try {
+      var u = new URL(location.href);
+      if (live) u.searchParams.set('q', live); else u.searchParams.delete('q');
+      history.replaceState(null, '', u.toString());
+    } catch (e) {}
+    kpis(); chart(); breakdown(); pane(); chips();
+  }
+
+  /* ---- chart ----------------------------------------------------------------------------- */
+  var CDIM = 'total', CFORM = 'donut';
+  function chartRows() { return groupBy(FT, CDIM, CDIM === 'total' ? 0 : 12); }
+
+  function chart() {
+    var g = chartRows(), s = summarise(FT);
+    $('cwsub').textContent = (DIMS.filter(function (d) { return d.k === CDIM; })[0] || {}).label
+      + (CDIM === 'total' ? '' : ' · ' + g.length + ' ' + (g.length === 1 ? 'group' : 'groups'));
+    var stage = $('cstage');
+    if (!FT.length) {
+      var hh = D.health || {};
+      stage.innerHTML = '<div class="empty">' + (!hh.read
+        ? 'The book has not been read yet, so there is nothing to chart.'
+        : 'No task matches this search, so there is nothing to chart.') + '</div>';
+      $('clegend').innerHTML = ''; $('cverdict').textContent = ''; ctable(g); return;
+    }
+    var form = (CDIM === 'total' && CFORM !== 'donut') ? 'bars' : CFORM;
+    if (CDIM === 'total' && CFORM === 'donut') stage.innerHTML = donut(s);
+    else if (form === 'donut') stage.innerHTML = donut(s);
+    else if (form === 'bars') stage.innerHTML = hbars(g);
+    else stage.innerHTML = cols(g, form === 'pct');
+    legend(g, s);
+    $('cverdict').innerHTML = '<b>' + hrs(s.bill) + ' h billable</b> against <b>' + hrs(s.nonbill) + ' h non-billable</b>'
+      + ' — ' + s.billPct + '% of the ' + hrs(s.hours) + ' hours in view was charged for. ' + billVerdict(s.billPct)
+      + (s.undated ? ' <span style="color:var(--muted)">(' + s.undated + ' row' + (s.undated === 1 ? '' : 's') + ' carry no date and are counted in the totals but in no month.)</span>' : '');
+    ctable(g);
+    wireTips();
+  }
+
+  function donut(s) {
+    var S = 250, R = S / 2, r0 = R - 6, ri = R * 0.6, cx = R, cy = R;
+    var segs = [{ l: 'Billable', v: s.bill, c: cvar('--bil') }, { l: 'Non-billable', v: s.nonbill, c: cvar('--nbil') }]
+      .filter(function (x) { return x.v > 0; });
+    var tot = segs.reduce(function (a, x) { return a + x.v; }, 0);
+    if (!tot) return '<div class="empty">These rows carry no hours at all.</div>';
+    var a = -Math.PI / 2, g = '';
+    function pt(rad, ang) { return [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)]; }
+    segs.forEach(function (x) {
+      var sweep = (x.v / tot) * Math.PI * 2, a2 = a + sweep, big = sweep > Math.PI ? 1 : 0;
+      var pct = Math.round((x.v / tot) * 1000) / 10;
+      if (segs.length === 1) {
+        g += '<circle cx="' + cx + '" cy="' + cy + '" r="' + ((r0 + ri) / 2) + '" fill="none" stroke="' + x.c + '" stroke-width="' + (r0 - ri) + '"><title>' + esc(x.l) + ': ' + hrs(x.v) + ' h (100%)</title></circle>';
+      } else {
+        var p1 = pt(r0, a), p2 = pt(r0, a2), p3 = pt(ri, a2), p4 = pt(ri, a);
+        g += '<path d="M' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2)
+          + 'A' + r0 + ' ' + r0 + ' 0 ' + big + ' 1 ' + p2[0].toFixed(2) + ' ' + p2[1].toFixed(2)
+          + 'L' + p3[0].toFixed(2) + ' ' + p3[1].toFixed(2)
+          + 'A' + ri + ' ' + ri + ' 0 ' + big + ' 0 ' + p4[0].toFixed(2) + ' ' + p4[1].toFixed(2) + 'Z"'
+          + ' fill="' + x.c + '" stroke="' + cvar('--paper') + '" stroke-width="2"><title>' + esc(x.l) + ': ' + hrs(x.v) + ' h (' + pct + '%)</title></path>';
+        // the label rides the middle of the ring band, so it has to fit inside it — at 14px
+        // "37.6%" is wider than the 44px band and spills over the outer edge
+        if ($('clab').checked && sweep > 0.45) {
+          var mid = pt((r0 + ri) / 2, a + sweep / 2);
+          g += '<text x="' + mid[0].toFixed(1) + '" y="' + mid[1].toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" font-size="11.5" font-weight="900" fill="#fff">' + pct + '%</text>';
+        }
+      }
+      a = a2;
+    });
+    g += '<text x="' + cx + '" y="' + (cy - 6) + '" text-anchor="middle" font-size="27" font-weight="900" fill="' + cvar('--ink') + '">' + s.billPct + '%</text>';
+    g += '<text x="' + cx + '" y="' + (cy + 15) + '" text-anchor="middle" font-size="11" font-weight="800" letter-spacing="1" fill="' + cvar('--muted') + '">BILLABLE</text>';
+    return '<svg viewBox="0 0 ' + S + ' ' + S + '" style="max-width:280px;margin:0 auto" role="img" aria-label="Billable versus non-billable share of hours">' + g + '</svg>';
+  }
+
+  // Round an axis up to a readable step. A gridline reading 505.13 is arithmetic showing
+  // through; 600 is a number someone can hold in their head while reading the bars.
+  function niceMax(v) {
+    if (!(v > 0)) return 1;
+    var mag = Math.pow(10, Math.floor(Math.log(v) / Math.LN10));
+    var n = v / mag;
+    var step = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10;
+    return step * mag;
+  }
+
+  function cols(g, pct) {
+    var W = 720, H = 330, L = 46, Rp = 12, T = 14, B = 64;
+    var iw = W - L - Rp, ih = H - T - B, n = g.length || 1;
+    var step = iw / n, bw = Math.min(54, step * 0.62);
+    var max = pct ? 100 : niceMax(Math.max.apply(null, g.map(function (x) { return x.hours; }).concat([1])));
+    var ticks = 4, s = '';
+    for (var i = 0; i <= ticks; i++) {
+      var v = max * i / ticks, y = T + ih - (ih * i / ticks);
+      s += '<line x1="' + L + '" y1="' + y.toFixed(1) + '" x2="' + (W - Rp) + '" y2="' + y.toFixed(1) + '" stroke="' + cvar('--grid') + '" stroke-width="1"/>';
+      s += '<text x="' + (L - 7) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" font-size="10.5" font-weight="700" fill="' + cvar('--muted') + '">' + (pct ? Math.round(v) + '%' : hrs(v)) + '</text>';
+    }
+    g.forEach(function (x, i2) {
+      var cx0 = L + step * i2 + (step - bw) / 2;
+      var tot = pct ? (x.hours || 1) : max;
+      var hb = (pct ? (x.bill / (x.hours || 1)) * 100 : x.bill) / (pct ? 100 : max) * ih;
+      var hn = (pct ? (x.nonbill / (x.hours || 1)) * 100 : x.nonbill) / (pct ? 100 : max) * ih;
+      var yb = T + ih - hb, yn = yb - hn;
+      var ttl = esc(x.k) + ' — ' + hrs(x.bill) + ' h billable, ' + hrs(x.nonbill) + ' h non-billable (' + x.billPct + '% billable, ' + x.n + ' tasks)';
+      s += '<g class="cg" data-t="' + ttl + '">';
+      if (hb > 0) s += '<rect x="' + cx0.toFixed(1) + '" y="' + yb.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hb.toFixed(1) + '" fill="' + cvar('--bil') + '" rx="2"/>';
+      if (hn > 0) s += '<rect x="' + cx0.toFixed(1) + '" y="' + yn.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hn.toFixed(1) + '" fill="' + cvar('--nbil') + '" rx="2"/>';
+      if ($('clab').checked) s += '<text x="' + (cx0 + bw / 2).toFixed(1) + '" y="' + (yn - 5).toFixed(1) + '" text-anchor="middle" font-size="10.5" font-weight="900" fill="' + cvar('--ink-2') + '">' + (pct ? x.billPct + '%' : hrs(x.hours)) + '</text>';
+      s += '</g>';
+      var lab = String(x.k).length > 13 ? String(x.k).slice(0, 12) + '…' : String(x.k);
+      s += '<text x="' + (cx0 + bw / 2).toFixed(1) + '" y="' + (T + ih + 16) + '" text-anchor="end" font-size="10.5" font-weight="800" fill="' + cvar('--ink-2') + '" transform="rotate(-38 ' + (cx0 + bw / 2).toFixed(1) + ' ' + (T + ih + 16) + ')">' + esc(lab) + '</text>';
+    });
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Billable and non-billable hours by ' + esc(CDIM) + '">' + s + '</svg>';
+  }
+
+  function hbars(g) {
+    var W = 720, rowH = 26, T = 8, L = 150, Rp = 58;
+    var H = T + g.length * rowH + 8, iw = W - L - Rp;
+    var max = Math.max.apply(null, g.map(function (x) { return x.hours; }).concat([1]));
+    var s = '';
+    g.forEach(function (x, i) {
+      var y = T + i * rowH, h = 15;
+      var wb = (x.bill / max) * iw, wn = (x.nonbill / max) * iw;
+      var lab = String(x.k).length > 22 ? String(x.k).slice(0, 21) + '…' : String(x.k);
+      var ttl = esc(x.k) + ' — ' + hrs(x.bill) + ' h billable, ' + hrs(x.nonbill) + ' h non-billable (' + x.billPct + '% billable, ' + x.n + ' tasks)';
+      s += '<text x="' + (L - 9) + '" y="' + (y + 12) + '" text-anchor="end" font-size="11.5" font-weight="800" fill="' + cvar('--ink') + '">' + esc(lab) + '</text>';
+      s += '<g class="cg" data-t="' + ttl + '">';
+      if (wb > 0) s += '<rect x="' + L + '" y="' + y + '" width="' + wb.toFixed(1) + '" height="' + h + '" fill="' + cvar('--bil') + '" rx="2"/>';
+      if (wn > 0) s += '<rect x="' + (L + wb).toFixed(1) + '" y="' + y + '" width="' + wn.toFixed(1) + '" height="' + h + '" fill="' + cvar('--nbil') + '" rx="2"/>';
+      s += '<rect x="' + L + '" y="' + y + '" width="' + iw + '" height="' + h + '" fill="transparent"/></g>';
+      if ($('clab').checked) s += '<text x="' + (L + wb + wn + 7).toFixed(1) + '" y="' + (y + 12) + '" font-size="11" font-weight="900" fill="' + cvar('--ink-2') + '">' + hrs(x.hours) + ' h</text>';
+    });
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Billable and non-billable hours by ' + esc(CDIM) + '">' + s + '</svg>';
+  }
+
+  function legend(g, s) {
+    var h = '<div class="lg-row"><i style="background:' + cvar('--bil') + '"></i><span class="nm">Billable</span><span class="v">' + hrs(s.bill) + ' h</span><span class="p">' + s.billPct + '%</span></div>'
+      + '<div class="lg-row"><i style="background:' + cvar('--nbil') + '"></i><span class="nm">Non-billable</span><span class="v">' + hrs(s.nonbill) + ' h</span><span class="p">' + (Math.round((100 - s.billPct) * 10) / 10) + '%</span></div>';
+    if (CDIM !== 'total') {
+      h += '<div style="font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 4px">' + esc((DIMS.filter(function (d) { return d.k === CDIM; })[0] || {}).label) + '</div>';
+      h += g.slice(0, 12).map(function (x) {
+        var lbl = CDIM === 'cat' ? (CAT_LABEL[x.k] || x.k) : (CDIM === 'bucket' ? (BUCKET_LABEL[x.k] || x.k) : x.k);
+        return '<div class="lg-row" style="border:none;padding:3px 0"><span class="nm" style="font-weight:700">' + esc(lbl) + '</span><span class="v">' + hrs(x.hours) + ' h</span><span class="p">' + x.billPct + '%</span></div>';
+      }).join('');
+    }
+    $('clegend').innerHTML = h;
+  }
+
+  function ctable(g) {
+    var box = $('ctabbox');
+    box.hidden = !$('ctab').checked;
+    if (box.hidden) return;
+    var lab = function (k) { return CDIM === 'cat' ? (CAT_LABEL[k] || k) : (CDIM === 'bucket' ? (BUCKET_LABEL[k] || k) : k); };
+    box.innerHTML = '<table class="st"><thead><tr><th>' + esc((DIMS.filter(function (d) { return d.k === CDIM; })[0] || {}).label)
+      + '</th><th class="num">Tasks</th><th class="num">Billable</th><th class="num">Non-billable</th><th class="num">Total</th><th class="num">% billable</th></tr></thead><tbody>'
+      + g.map(function (x) {
+        return '<tr><td class="b">' + esc(lab(x.k)) + '</td><td class="num">' + num(x.n) + '</td><td class="num">' + hrs(x.bill)
+          + '</td><td class="num">' + hrs(x.nonbill) + '</td><td class="num b">' + hrs(x.hours) + '</td><td class="num">' + x.billPct + '%</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  function tsv() {
+    var g = chartRows();
+    var lab = function (k) { return CDIM === 'cat' ? (CAT_LABEL[k] || k) : (CDIM === 'bucket' ? (BUCKET_LABEL[k] || k) : k); };
+    return [(DIMS.filter(function (d) { return d.k === CDIM; })[0] || {}).label, 'Tasks', 'Billable h', 'Non-billable h', 'Total h', '% billable'].join('\t')
+      + '\n' + g.map(function (x) { return [lab(x.k), x.n, x.bill, x.nonbill, x.hours, x.billPct].join('\t'); }).join('\n');
+  }
+
+  /* SVG → PNG. Serialised with the computed colours already inlined (the chart draws with
+     resolved values, never CSS variables), so the download looks like what is on screen in
+     either theme. */
+  function png() {
+    var svg = $('cstage').querySelector('svg'); if (!svg) return;
+    var vb = (svg.getAttribute('viewBox') || '0 0 720 330').split(/\s+/).map(Number);
+    var W = 2000, H = Math.round(W * (vb[3] / vb[2])) + 96;
+    var clone = svg.cloneNode(true);
+    clone.setAttribute('width', vb[2]); clone.setAttribute('height', vb[3]);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    var blob = new Blob(['<?xml version="1.0"?>' + new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' });
+    var url = URL.createObjectURL(blob), img = new Image();
+    img.onload = function () {
+      var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      var cx = cv.getContext('2d');
+      cx.fillStyle = cvar('--paper') || '#fff'; cx.fillRect(0, 0, W, H);
+      cx.drawImage(img, 0, 0, W, H - 96);
+      cx.fillStyle = cvar('--ink') || '#333'; cx.font = '900 34px Lato, sans-serif';
+      cx.fillText('Billable vs non-billable · ' + ((DIMS.filter(function (d) { return d.k === CDIM; })[0] || {}).label), 40, H - 56);
+      cx.fillStyle = cvar('--muted') || '#888'; cx.font = '700 22px Lato, sans-serif';
+      cx.fillText('FeedSpark · Private & Confidential · reports database ' + D.from + ' → ' + D.to
+        + (Q.raw.trim() ? ' · query: ' + Q.raw.trim() : ''), 40, H - 22);
+      URL.revokeObjectURL(url);
+      var a = document.createElement('a');
+      a.href = cv.toDataURL('image/png');
+      a.download = 'feedspark-billable-' + CDIM + '-' + D.at + '.png';
+      a.click();
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); toast('Could not render the PNG — use ⎘ Copy table instead'); };
+    img.src = url;
+  }
+
+  function csv() {
+    var head = ['Date', 'Client', 'Market', 'Task', 'Type', 'Owner', 'Account manager', 'Status', 'Billable h', 'Non-billable h', 'Total h', 'Scheduled h', 'Task id', 'Notes'];
+    var q = function (v) { var s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    var body = FT.map(function (t) {
+      return [t.d, t.client, t.market, t.title, CAT_LABEL[t.cat] || t.cat, t.owner, t.am, t.status, t.bill, t.nonbill, t.hours, t.sched, t.id, t.note].map(q).join(',');
+    });
+    var blob = new Blob([head.join(',') + '\n' + body.join('\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'feedspark-tasks-' + D.at + (Q.raw.trim() ? '-filtered' : '') + '.csv';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+
+  function toast(msg) {
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#1A365D;color:#fff;font:800 13px Lato,sans-serif;padding:10px 16px;border-radius:10px;z-index:120;box-shadow:0 8px 28px rgba(16,24,40,.28)';
+    t.textContent = msg; document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 2200);
+  }
+  function copy(text, msg) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(function () { toast(msg); }, function () { fallbackCopy(text, msg); }); return; }
+    } catch (e) {}
+    fallbackCopy(text, msg);
+  }
+  function fallbackCopy(text, msg) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast(msg); } catch (e) { toast('Copy failed — select the table manually'); }
+    ta.remove();
+  }
+
+  /* ---- breakdown strip ---- */
+  function bdBox(title, g, dim) {
+    var max = Math.max.apply(null, g.map(function (x) { return x.hours; }).concat([1]));
+    return '<div class="bx"><h4>' + esc(title) + '</h4>' + (g.length ? g.slice(0, 7).map(function (x) {
+      var lbl = dim === 'cat' ? (CAT_LABEL[x.k] || x.k) : x.k;
+      var wb = (x.bill / max) * 100, wn = (x.nonbill / max) * 100;
+      return '<div class="r" data-dim="' + esc(dim) + '" data-k="' + esc(x.k) + '" title="' + esc(lbl) + ' — ' + hrs(x.bill) + ' h billable, ' + hrs(x.nonbill) + ' h non-billable">'
+        + '<span class="nm"' + (dim === 'client' && String(x.k).indexOf('Other (') !== 0 ? ' data-hrs="' + esc(x.k) + '"' : '') + '><span class="nmt">' + esc(lbl) + '</span></span>'
+        + '<span class="bar"><i class="b" style="width:' + wb.toFixed(1) + '%"></i><i class="n" style="width:' + wn.toFixed(1) + '%"></i></span>'
+        + '<span class="v">' + hrs(x.hours) + '</span></div>';
+    }).join('') : '<div style="font-size:12.5px;font-weight:700;color:var(--muted)">Nothing in view.</div>') + '</div>';
+  }
+  function breakdown() {
+    $('bd').innerHTML = bdBox('Hours by client', groupBy(FT, 'client', 8), 'client')
+      + bdBox('Hours by who did it', groupBy(FT, 'owner', 8), 'owner')
+      + bdBox('Hours by type of work', groupBy(FT, 'cat', 8), 'cat')
+      + bdBox('Hours by month', groupBy(FT, 'month', 0).slice(-7), 'month');
+    Array.prototype.forEach.call($('bd').querySelectorAll('.r'), function (r) {
+      r.onclick = function () {
+        var dim = r.getAttribute('data-dim'), k = r.getAttribute('data-k');
+        if (String(k).indexOf('Other (') === 0) return;
+        var field = dim === 'cat' ? 'cat' : (dim === 'month' ? 'month' : dim);
+        var v = /\s/.test(k) ? '"' + k + '"' : k;
+        var cur = $('q').value.trim();
+        var term = field + ':' + v;
+        $('q').value = cur.indexOf(term) >= 0 ? cur.replace(term, '').trim() : (cur + ' ' + term).trim();
+        apply();
+      };
+    });
+  }
+
+  /* ---- tables ---- */
+  function sortRows(rows, k, dir) {
+    return rows.slice().sort(function (a, b) {
+      var x = a[k], y = b[k];
+      if (typeof x === 'number' || typeof y === 'number') return ((Number(x) || 0) - (Number(y) || 0)) * dir;
+      x = String(x == null ? '' : x).toLowerCase(); y = String(y == null ? '' : y).toLowerCase();
+      return (x < y ? -1 : x > y ? 1 : 0) * dir;
+    });
+  }
+  function th(cols, tab) {
+    var s = SORT[tab];
+    return '<thead><tr>' + cols.map(function (c) {
+      return '<th class="' + (c.num ? 'num ' : '') + (s.k === c.k ? 's ' + (s.dir > 0 ? 'up' : '') : '') + '" data-k="' + c.k + '">' + esc(c.l) + '</th>';
+    }).join('') + '</tr></thead>';
+  }
+  function wireTh(tab) {
+    Array.prototype.forEach.call($('pbody').querySelectorAll('th[data-k]'), function (h) {
+      h.onclick = function () {
+        var k = h.getAttribute('data-k'), s = SORT[tab];
+        if (s.k === k) s.dir = -s.dir; else { s.k = k; s.dir = -1; }
+        pane();
+      };
+    });
+  }
+
+  var TASK_COLS = [{ k: 'd', l: 'Date' }, { k: 'client', l: 'Client' }, { k: 'title', l: 'Task' },
+    { k: 'cat', l: 'Type' }, { k: 'owner', l: 'Who' }, { k: 'bucket', l: 'Status' },
+    { k: 'bill', l: 'Billable', num: 1 }, { k: 'nonbill', l: 'Non-bill', num: 1 }, { k: 'hours', l: 'Total', num: 1 }];
+  var TK_COLS = [{ k: 'd', l: 'Last activity' }, { k: 'client', l: 'Client' }, { k: 'subject', l: 'Subject' },
+    { k: 'status', l: 'Status' }, { k: 'age', l: 'Age', num: 1 }, { k: 'idle', l: 'Idle', num: 1 },
+    { k: 'msgs', l: 'Msgs', num: 1 }, { k: 'tasks', l: 'Tasks', num: 1 }, { k: 'hours', l: 'Hours', num: 1 }];
+  var AC_COLS = [{ k: 'client', l: 'Client' }, { k: 'market', l: 'Market' }, { k: 'group', l: 'Group' },
+    { k: 'am', l: 'AM' }, { k: 'am2', l: 'Second' }, { k: 'allowance', l: 'Allowance', num: 1 },
+    { k: 'used', l: 'Used', num: 1 }, { k: 'balance', l: 'Balance', num: 1 }, { k: 'status', l: 'State' }];
+
+  function pane() {
+    var body = $('pbody');
+    if (TAB === 'tasks') {
+      $('pane-h').textContent = 'Tasks';
+      $('pane-s').textContent = 'Every piece of work the reports database recorded against the book in this window. Click a row for the full record.';
+      if (!FT.length) { body.innerHTML = empty('task'); $('pmore').hidden = true; return; }
+      var rows = sortRows(FT, SORT.tasks.k, SORT.tasks.dir), shown = rows.slice(0, SHOW);
+      body.innerHTML = '<table class="st">' + th(TASK_COLS, 'tasks') + '<tbody>' + shown.map(function (t, i) {
+        return '<tr data-i="' + i + '">'
+          + '<td>' + esc(t.d || '—') + '</td>'
+          + '<td><span class="b">' + esc(t.client) + '</span> <span class="mk">' + esc(t.market) + '</span></td>'
+          + '<td class="ttl"><span class="tt b">' + esc(t.title) + '</span>' + (t.note ? '<span class="nt">' + esc(t.note) + '</span>' : '') + '</td>'
+          + '<td><span class="cat ' + t.cat + '"><i></i>' + esc(CAT_LABEL[t.cat] || t.cat) + '</span></td>'
+          + '<td>' + esc(t.owner || '—') + '</td>'
+          + '<td><span class="st-p ' + t.bucket + '">' + esc(t.status || t.bucket) + '</span></td>'
+          + '<td class="num" style="color:var(--bil)">' + (t.bill ? hrs(t.bill) : '·') + '</td>'
+          + '<td class="num" style="color:var(--nbil)">' + (t.nonbill ? hrs(t.nonbill) : '·') + '</td>'
+          + '<td class="num b">' + (t.hours ? hrs(t.hours) : '·') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+      $('pmore').hidden = rows.length <= SHOW;
+      $('pmore').textContent = 'Show more (' + num(rows.length - SHOW) + ' left)';
+      Array.prototype.forEach.call(body.querySelectorAll('tbody tr'), function (tr) {
+        tr.onclick = function () { taskDrawer(rows[Number(tr.getAttribute('data-i'))]); };
+      });
+      wireTh('tasks');
+    } else if (TAB === 'tickets') {
+      var ts = ticketStats(FK);
+      $('pane-h').textContent = 'Client tickets';
+      $('pane-s').textContent = ts.n
+        ? ts.live + ' live · ' + ts.closed + ' closed · ' + ts.ignored + ' never closed or worked · ' + hrs(ts.hours) + ' h booked through them'
+        : 'The email ticket queue, windowed by last activity.';
+      if (!FK.length) { body.innerHTML = empty('ticket'); $('pmore').hidden = true; return; }
+      var kr = sortRows(FK, SORT.tickets.k, SORT.tickets.dir);
+      body.innerHTML = '<table class="st">' + th(TK_COLS, 'tickets') + '<tbody>' + kr.map(function (t, i) {
+        return '<tr data-i="' + i + '">'
+          + '<td>' + esc(t.d) + '</td><td class="b">' + esc(t.client) + '</td>'
+          + '<td class="ttl"><span class="tt b">' + esc(t.subject) + '</span><span class="nt">' + esc(t.from) + '</span></td>'
+          + '<td><span class="st-p ' + (t.status === 'closed' ? 'done' : t.status === 'ignored' ? 'cancelled' : 'open') + '">' + esc(t.status) + '</span></td>'
+          + '<td class="num"><span class="age ' + esc(t.level || 'ok') + '">' + num(t.age) + '</span></td>'
+          + '<td class="num">' + num(t.idle) + '</td><td class="num">' + num(t.msgs) + '</td>'
+          + '<td class="num">' + num(t.tasks) + '</td><td class="num b">' + (t.hours ? hrs(t.hours) : '·') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+      $('pmore').hidden = true;
+      Array.prototype.forEach.call(body.querySelectorAll('tbody tr'), function (tr) {
+        tr.onclick = function () { ticketDrawer(kr[Number(tr.getAttribute('data-i'))]); };
+      });
+      wireTh('tickets');
+    } else {
+      $('pane-h').textContent = 'Accounts & hours balance';
+      $('pane-s').textContent = 'The client master: every market the reports database holds, live and stopped, with its monthly allowance and where its hours balance stands.';
+      var ar = sortRows(ACCOUNTS, SORT.accounts.k, SORT.accounts.dir);
+      body.innerHTML = '<table class="st">' + th(AC_COLS, 'accounts') + '<tbody>' + ar.map(function (a, i) {
+        var st = balanceState(a.allowance, a.balance);
+        return '<tr data-i="' + i + '"' + (a.flag !== 0 ? ' style="opacity:.62"' : '') + '>'
+          + '<td class="b" data-hrs="' + esc(a.client) + '" data-hrs-flag>' + esc(a.client) + '</td><td><span class="mk">' + esc(a.market) + '</span></td>'
+          + '<td>' + esc(a.group || '—') + '</td><td>' + esc(a.am || '—') + '</td><td>' + esc(a.am2 || '—') + '</td>'
+          + '<td class="num">' + (a.allowance ? hrs(a.allowance) : '·') + '</td>'
+          + '<td class="num">' + (a.used ? hrs(a.used) : '·') + '</td>'
+          + '<td class="num b" style="color:' + (st === 'over' ? 'var(--risk)' : st === 'banked' ? 'var(--navy)' : 'var(--ink)') + '">' + hrs(a.balance) + '</td>'
+          + '<td><span class="st-p ' + (a.flag === 0 ? 'done' : 'cancelled') + '">' + esc(a.flag === 0 ? 'live' : a.status || 'stopped') + '</span></td></tr>';
+      }).join('') + '</tbody></table>';
+      $('pmore').hidden = true;
+      Array.prototype.forEach.call(body.querySelectorAll('tbody tr'), function (tr) {
+        tr.onclick = function () { acctDrawer(ar[Number(tr.getAttribute('data-i'))]); };
+      });
+      wireTh('accounts');
+    }
+  }
+  function empty(what) {
+    var h = D.health || {};
+    // Nothing read yet is not "nothing matched" — saying so would read as an empty book rather
+    // than an unfilled one, and those are very different facts.
+    if (!h.read && !Q.raw.trim()) {
+      return '<div class="empty"><b>The book has not been read yet.</b><br>'
+        + 'The sync runs at :15 and :45 past the hour and fills it a few markets at a time'
+        + (OWNER ? ' — or press <b>\u27F3 Sync more</b> above to read it now.' : '.') + '</div>';
+    }
+    if (what === 'ticket' && !(D.ticketCoverage || []).length) {
+      return '<div class="empty"><b>No ticket queue has been read yet.</b><br>The sync reads one queue per firing, after the task markets.</div>';
+    }
+    return '<div class="empty">No ' + what + ' matches <b>' + esc(Q.raw.trim() || 'this view') + '</b>.<br>'
+      + (Q.f.owner || Q.f.market || Q.f.cat || Q.f.bill ? 'Those filters are task dimensions — tickets carry none of them.' : 'Try fewer words, a shorter <code>client:</code>, or clear the bar.') + '</div>';
+  }
+
+  /* ---- drawers ---- */
+  function openDrawer(title, sub, html) {
+    $('dr-t').textContent = title; $('dr-s').textContent = sub; $('dr-b').innerHTML = html;
+    $('drawer').classList.add('on'); $('dim').classList.add('on');
+  }
+  function closeDrawer() { $('drawer').classList.remove('on'); $('dim').classList.remove('on'); }
+
+  function taskDrawer(t) {
+    var h = '<div class="dr-stats">'
+      + '<div class="s"><div class="n" style="color:var(--bil)">' + hrs(t.bill) + '</div><div class="l">Billable h</div></div>'
+      + '<div class="s"><div class="n" style="color:var(--nbil)">' + hrs(t.nonbill) + '</div><div class="l">Non-billable h</div></div>'
+      + '<div class="s"><div class="n">' + hrs(t.hours) + '</div><div class="l">Total h</div></div>'
+      + '<div class="s"><div class="n">' + hrs(t.sched) + '</div><div class="l">Scheduled h</div></div></div>'
+      + '<dl class="dr-f">'
+      + '<dt>Client</dt><dd>' + esc(t.client) + ' · ' + esc(t.market) + '</dd>'
+      + '<dt>Account manager</dt><dd>' + esc(t.am || '—') + '</dd>'
+      + '<dt>Done by</dt><dd>' + esc(t.owner || '—') + '</dd>'
+      + '<dt>Date</dt><dd>' + esc(t.d || 'undated') + '</dd>'
+      + '<dt>Status</dt><dd>' + esc(t.status) + ' <span style="color:var(--muted)">(' + esc(BUCKET_LABEL[t.bucket] || t.bucket) + ')</span></dd>'
+      + '<dt>Type of work</dt><dd>' + esc(CAT_LABEL[t.cat] || t.cat) + '</dd>'
+      + '<dt>Task id</dt><dd>' + num(t.id) + (t.ticket ? ' · raised from ticket ' + num(t.ticket) : '') + '</dd>'
+      + '</dl>'
+      + (t.note ? '<div style="font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Notes on the record</div><div class="dr-note">' + esc(t.note) + '</div>' : '')
+      + '<div style="margin-top:16px;display:flex;gap:6px;flex-wrap:wrap">'
+      + '<button class="btn sm" data-q="client:' + esc(t.client) + ' market:' + esc(t.market) + '" type="button">All ' + esc(t.client) + ' ' + esc(t.market) + '</button>'
+      + (t.owner ? '<button class="btn sm" data-q="owner:&quot;' + esc(t.owner) + '&quot;" type="button">All of ' + esc(t.owner) + '&rsquo;s work</button>' : '')
+      + '<button class="btn sm" data-q="&quot;' + esc(t.title) + '&quot;" type="button">Every &ldquo;' + esc(t.title) + '&rdquo;</button></div>';
+    openDrawer(t.title, t.client + ' ' + t.market + ' · ' + (t.d || 'undated'), h);
+    wireDrawerQ();
+  }
+  function ticketDrawer(t) {
+    var h = '<div class="dr-stats">'
+      + '<div class="s"><div class="n">' + num(t.age) + '</div><div class="l">Days old</div></div>'
+      + '<div class="s"><div class="n" style="color:' + (t.idle >= 30 ? 'var(--risk)' : 'var(--ink)') + '">' + num(t.idle) + '</div><div class="l">Days idle</div></div>'
+      + '<div class="s"><div class="n">' + num(t.msgs) + '</div><div class="l">Messages</div></div>'
+      + '<div class="s"><div class="n">' + hrs(t.hours) + '</div><div class="l">Hours booked</div></div></div>'
+      + '<dl class="dr-f">'
+      + '<dt>Client</dt><dd>' + esc(t.client) + '</dd>'
+      + '<dt>Account manager</dt><dd>' + esc(t.am || '—') + '</dd>'
+      + '<dt>Status</dt><dd>' + esc(t.status) + '</dd>'
+      + '<dt>Opened</dt><dd>' + esc(t.first || '—') + '</dd>'
+      + '<dt>Last activity</dt><dd>' + esc(t.d) + ' · last reply from the <b>' + esc(t.by || 'thread') + '</b></dd>'
+      + '<dt>Raised by</dt><dd>' + esc(t.from || '—') + ' <span style="color:var(--muted)">(' + esc(t.origin) + ')</span></dd>'
+      + '<dt>Tasks spawned</dt><dd>' + num(t.tasks) + '</dd>'
+      + '<dt>Ticket id</dt><dd>' + num(t.id) + '</dd></dl>'
+      + (t.status === 'ignored' ? '<div class="dr-note"><b>“Ignored” is the queue’s own word</b> for a thread nobody closed and nobody is working. It is reported as its own state rather than counted as open or closed, because which of those it really is is the question worth asking.</div>' : '')
+      + '<div style="margin-top:16px"><button class="btn sm" data-q="client:' + esc(t.client) + '" type="button">All ' + esc(t.client) + ' work</button></div>';
+    openDrawer(t.subject, t.client + ' · ticket ' + t.id, h);
+    wireDrawerQ();
+  }
+  function acctDrawer(a) {
+    var mine = TASKS.filter(function (t) { return t.client === a.client && t.market === a.market; });
+    var s = summarise(mine), st = balanceState(a.allowance, a.balance);
+    var h = '<div class="dr-stats">'
+      + '<div class="s"><div class="n">' + hrs(a.allowance) + '</div><div class="l">Allowance / mo</div></div>'
+      + '<div class="s"><div class="n">' + hrs(a.used) + '</div><div class="l">Used this cycle</div></div>'
+      + '<div class="s"><div class="n" style="color:' + (st === 'over' ? 'var(--risk)' : 'var(--ink)') + '">' + hrs(a.balance) + '</div><div class="l">Balance</div></div>'
+      + '<div class="s"><div class="n">' + hrs(s.hours) + '</div><div class="l">Hours in window</div></div></div>'
+      + '<dl class="dr-f">'
+      + '<dt>Market name</dt><dd>' + esc(a.name || '—') + '</dd>'
+      + '<dt>Group</dt><dd>' + esc(a.group || '—') + '</dd>'
+      + '<dt>Account managers</dt><dd>' + esc(a.am || '—') + (a.am2 ? ' · ' + esc(a.am2) : '') + '</dd>'
+      + '<dt>State</dt><dd>' + esc(a.flag === 0 ? 'live' : 'stopped') + ' · ' + esc(a.status || '—') + ' · ' + esc(a.type || '—') + '</dd>'
+      + '<dt>Ticket queue</dt><dd>' + (a.tid ? 'queue ' + a.tid : 'no ticket record') + '</dd>'
+      + '<dt>On the books since</dt><dd>' + esc(a.since || '—') + '</dd>'
+      + '<dt>Client id</dt><dd>' + num(a.cid) + '</dd></dl>'
+      + (mine.length
+        ? '<div style="font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Hours in the window</div>'
+          + '<div class="dr-note" style="white-space:normal"><b>' + hrs(s.bill) + ' h billable</b> and <b>' + hrs(s.nonbill) + ' h non-billable</b> across '
+          + num(s.n) + ' tasks — ' + s.billPct + '% billable. ' + esc(billVerdict(s.billPct)) + '</div>'
+        : '<div class="dr-note">No task rows for this market in the window. A stopped market, or one that carries no booked work.</div>')
+      + '<div style="margin-top:16px"><button class="btn sm" data-q="client:' + esc(a.client) + ' market:' + esc(a.market) + '" type="button">Open its tasks</button></div>';
+    openDrawer(a.client + ' ' + a.market, a.name || '', h);
+    wireDrawerQ();
+  }
+  function coverageDrawer() {
+    var cov = (D.coverage || []).slice(), tc = (D.ticketCoverage || []).slice(), h = D.health || {};
+    var un = (D.roster || []);
+    var html = '<p style="font-size:13.5px;font-weight:700;color:var(--ink-2);margin:0 0 12px">'
+      + 'The book is read market by market — the sync takes a couple each firing, stalest first, so the whole estate turns over about twice a day. '
+      + 'A market <b>not yet read</b> is simply absent from every number on this page rather than counted as zero. '
+      + 'A market marked <b>partial</b> is one whose pull did not reach the start of the window: the database returns rows newest-first with a row cap and ignores the date argument, '
+      + 'so a capped pull would report a part-year as a whole one. Those contribute the rows they have and say so here.</p>'
+      + '<div class="dr-stats"><div class="s"><div class="n">' + (h.read || 0) + ' / ' + (h.total || 0) + '</div><div class="l">Markets read</div></div>'
+      + '<div class="s"><div class="n">' + (h.partial || 0) + '</div><div class="l">Partial</div></div>'
+      + '<div class="s"><div class="n">' + esc(ago(h.newest)) + '</div><div class="l">Newest read</div></div>'
+      + '<div class="s"><div class="n">' + esc(ago(h.oldest)) + '</div><div class="l">Oldest read</div></div></div>'
+      + '<table class="st"><thead><tr><th>Market</th><th class="num">Rows</th><th class="num">Pulled</th><th>Reaches back to</th><th>Read</th><th>State</th></tr></thead><tbody>'
+      + cov.map(function (c) {
+        return '<tr><td class="b">' + esc(c.client + ' ' + c.market) + '</td><td class="num">' + num(c.n)
+          + '</td><td class="num">' + num(c.pulled) + '</td><td>' + esc(c.deepest || '—') + '</td><td>' + esc(ago(c.at))
+          + '</td><td><span class="st-p ' + (c.full ? 'done' : 'open') + '">' + (c.full ? 'full' : 'partial')
+          + (c.capped ? ' · capped' : '') + '</span></td></tr>';
+      }).join('') + '</tbody></table>';
+    if (tc.length) {
+      html += '<div style="font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:18px 0 6px">Ticket queues</div>'
+        + '<table class="st"><thead><tr><th>Queue</th><th class="num">In window</th><th class="num">Pulled</th><th>Oldest thread</th><th>Read</th></tr></thead><tbody>'
+        + tc.map(function (c) {
+          return '<tr><td class="b">' + esc(c.client) + '</td><td class="num">' + num(c.n) + '</td><td class="num">' + num(c.pulled)
+            + '</td><td>' + esc(c.deepest || '—') + '</td><td>' + esc(ago(c.at)) + '</td></tr>';
+        }).join('') + '</tbody></table>';
+    }
+    if (D.queuesTotal && tc.length < D.queuesTotal) {
+      html += '<p style="font-size:12.5px;font-weight:700;color:var(--muted);margin-top:10px">'
+        + (D.queuesTotal - tc.length) + ' more ticket queue' + ((D.queuesTotal - tc.length) === 1 ? '' : 's')
+        + ' have not been read yet.</p>';
+    }
+    openDrawer('What the book has read', D.from + ' → ' + D.to, html);
+  }
+
+  function wireDrawerQ() {
+    Array.prototype.forEach.call($('dr-b').querySelectorAll('button[data-q]'), function (b) {
+      b.onclick = function () { $('q').value = b.getAttribute('data-q'); closeDrawer(); apply(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+    });
+  }
+
+  /* ---- hover tips on chart marks ---- */
+  function wireTips() {
+    var tip = $('tip');
+    Array.prototype.forEach.call($('cstage').querySelectorAll('.cg'), function (g) {
+      g.style.cursor = 'default';
+      g.onmousemove = function (e) {
+        tip.innerHTML = g.getAttribute('data-t');
+        tip.classList.add('on');
+        var x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 10);
+        tip.style.left = x + 'px'; tip.style.top = (e.clientY + 16) + 'px';
+      };
+      g.onmouseleave = function () { tip.classList.remove('on'); };
+    });
+  }
+
+  /* ---- boot ---- */
+  function boot(d, envelope) {
+    D = d; STATUS = (envelope && envelope.status) || {}; OWNER = !!(envelope && envelope.owner);
+    decode(d);
+    DIMS.forEach(function (x) {
+      var o = document.createElement('option'); o.value = x.k; o.textContent = x.label; $('cdim').appendChild(o);
+    });
+    srcLine();
+    try {
+      var qp = new URL(location.href).searchParams;
+      if (qp.get('q')) $('q').value = qp.get('q');
+      if (qp.get('dim')) { CDIM = qp.get('dim'); $('cdim').value = CDIM; }
+      if (qp.get('form')) { CFORM = qp.get('form'); $('cform').value = CFORM; }
+    } catch (e) {}
+    var t = null;
+    $('q').oninput = function () { if (t) clearTimeout(t); t = setTimeout(function () { t = null; apply(); }, 160); };
+    $('qx').onclick = function () { $('q').value = ''; apply(); $('q').focus(); };
+    Array.prototype.forEach.call(document.querySelectorAll('.qhint code[data-ins]'), function (c) {
+      c.onclick = function () {
+        var ins = c.getAttribute('data-ins');
+        $('q').value = ($('q').value.trim() + ' ' + ins).trim();
+        $('q').focus();
+        if (ins.slice(-1) === ':' || ins === '""') $('q').setSelectionRange($('q').value.length - (ins === '""' ? 1 : 0), $('q').value.length - (ins === '""' ? 1 : 0));
+        apply();
+      };
+    });
+    $('cdim').onchange = function () { CDIM = $('cdim').value; if (CDIM !== 'total' && CFORM === 'donut') { CFORM = 'stack'; $('cform').value = 'stack'; } chart(); };
+    $('cform').onchange = function () { CFORM = $('cform').value; if (CFORM === 'donut' && CDIM !== 'total') { CDIM = 'total'; $('cdim').value = 'total'; } chart(); };
+    $('clab').onchange = chart; $('ctab').onchange = chart;
+    $('xpng').onclick = png;
+    $('xtsv').onclick = function () { copy(tsv(), 'Chart table copied'); };
+    $('xcsv').onclick = csv;
+    $('xlink').onclick = function () {
+      var u = new URL(location.href);
+      u.searchParams.set('dim', CDIM); u.searchParams.set('form', CFORM);
+      if (Q.raw.trim()) u.searchParams.set('q', Q.raw.trim()); else u.searchParams.delete('q');
+      copy(u.toString(), 'Link copied — it reopens this exact view');
+    };
+    $('pmore').onclick = function () { SHOW += 400; pane(); };
+    Array.prototype.forEach.call($('tabs').querySelectorAll('.tab'), function (b) {
+      b.onclick = function () {
+        Array.prototype.forEach.call($('tabs').querySelectorAll('.tab'), function (x) { x.classList.remove('on'); });
+        b.classList.add('on'); TAB = b.getAttribute('data-t'); SHOW = 200; pane();
+      };
+    });
+    $('dr-x').onclick = closeDrawer; $('dim').onclick = closeDrawer;
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeDrawer();
+      if (e.key === '/' && document.activeElement !== $('q') && !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); $('q').focus(); $('q').select(); }
+    });
+    window.__tmTheme = function () { chart(); breakdown(); };
+    $('fm-r').textContent = 'Reports database · live · ' + D.from + ' → ' + D.to;
+    apply();
+  }
+
+  function fail(msg) {
+    $('src').innerHTML = '<span class="dot" style="background:var(--risk)"></span><span class="grow"><b>' + esc(msg) + '</b></span>';
+    $('qres').innerHTML = '';
+    $('pbody').innerHTML = '<div class="empty">The reports snapshot could not be loaded, so this page has nothing to show.<br>' + esc(msg) + '</div>';
+  }
+
+  fetch('/api/taskmanager').then(function (r) { return r.json(); }).then(function (d) {
+    if (!d || !d.ok || !d.data) { fail((d && d.error) || 'The reports book is not available.'); return; }
+    boot(d.data, d);
+  }).catch(function (e) { fail('Could not reach /api/taskmanager — ' + ((e && e.message) || e)); });
+})();
+</script>

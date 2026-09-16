@@ -233,6 +233,10 @@ window.addEventListener('load',restore);
   .tk-pri.hi{background:var(--orange-deep)}
   .tk-pri.ur{background:#C0392B}
   .tik .tk-age{font-size:9.5px;font-weight:900;padding:1px 6px;border-radius:100px;background:var(--wash);color:var(--muted);flex:none;white-space:nowrap}
+  .tik .tk-hrs{font-size:9.5px;font-weight:900;padding:1px 6px;border-radius:100px;background:rgba(91,130,190,.14);color:#1A365D;flex:none;white-space:nowrap}
+  [data-theme=dark] .tik .tk-hrs{background:rgba(91,130,190,.24);color:#93B4E0}
+  .tmh-r{display:grid;grid-template-columns:78px 1fr auto auto 76px;gap:8px;font-size:11.5px;padding:4px 0;border-bottom:1px dashed var(--line);align-items:baseline}
+  .tmh-d,.tmh-o,.tmh-s{color:var(--muted)} .tmh-o,.tmh-s{font-size:10.5px} .tmh-h{text-align:right;font-weight:800} .tmh-h i{font-style:normal;color:var(--muted);font-weight:600}
   .tik .tk-age.warn{background:rgba(192,57,43,.12);color:#C0392B}
   .tik .tk-t{font-size:11.5px;font-weight:700;color:var(--ink);line-height:1.28;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .tik .due{font-size:9.5px;padding:0 6px;flex:none;white-space:nowrap}
@@ -372,7 +376,7 @@ window.addEventListener('load',restore);
   <a class="nav-toggle" href="/" aria-label="Command center" title="Command center"><svg viewBox="0 0 24 24" aria-hidden="true"><g class="rk-lift"><path class="rk-body" d="M12 2.4c2.5 2 3.8 4.8 3.8 8 0 1.8-.5 3.4-1.2 4.8h-5.2c-.7-1.4-1.2-3-1.2-4.8 0-3.2 1.3-6 3.8-8Z"/><circle class="rk-win" cx="12" cy="9" r="1.6"/><path class="rk-fin" d="M8.6 12.6 6 15.7l2.6-.5Zm6.8 0L18 15.7l-2.6-.5Z"/><path class="rk-flame" d="M10.3 15.9h3.4c0 2-.9 3.8-1.7 4.9-.8-1.1-1.7-2.9-1.7-4.9Z"/></g></svg></a>
   <div class="brand">Feed<span>Spark</span><svg class="spk-flame" viewBox="0 0 12 17" aria-hidden="true"><path d="M6 0c2.1 3 4 4.3 4 7.4A4 4 0 0 1 2 8c0-1.6.9-2.7 1.7-3.2.2 1.1.9 1.7 1.4 1.9C4.4 4 5 2 6 0Z"/></svg></div>
   <div class="tb-tag">Workflow</div>
-  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm on" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/playbook" class="tbm" data-lbl="Playbook" title="Playbook — meeting copilot" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a></nav>
+  <button class="nav-collapse" id="nav-collapse" type="button" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><nav class="tb-nav tb-modules" id="tb-modules"><a href="/" class="tbm" data-lbl="Command center" title="Command center" aria-label="Command center"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.7 12 3l9 7.7"/><path d="M5 9.5V21h14V9.5"/></svg></a><a href="/workflow" class="tbm on" data-lbl="Workflow" title="Workflow" aria-label="Workflow"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5V6h6V3.5M9 11h6M9 15h4"/></svg></a><a href="/tasks" class="tbm" data-lbl="Task Manager" title="FS Task Manager — the reports database" aria-label="FS Task Manager"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M4 11h7M4 16h5"/><circle cx="17" cy="16" r="4.4"/><path d="M17 13.9V16l1.5 1.2"/></svg></a><a href="/playbook" class="tbm" data-lbl="Playbook" title="Playbook — meeting copilot" aria-label="Playbook"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 4.8-4.8 2.2 2.2-4.8z"/></svg></a><a href="/leadership" class="tbm" data-lbl="Leadership" title="Leadership" aria-label="Leadership"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="12" width="3.4" height="8" rx="1"/><rect x="10.3" y="6" width="3.4" height="14" rx="1"/><rect x="16.6" y="9" width="3.4" height="11" rx="1"/></svg></a><a href="/deck-builder" class="tbm" data-lbl="Deck generator" title="Deck generator" aria-label="Deck generator"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M12 16.5V20M8.5 20h7"/></svg></a><a href="/feedlab" class="tbm" data-lbl="Feed Lab" title="Feed Lab" aria-label="Feed Lab"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3h4M11 3v5.2L5.8 17a2.4 2.4 0 0 0 2.1 3.6h8.2a2.4 2.4 0 0 0 2.1-3.6L13 8.2V3"/><path d="M7.5 14.5h9"/></svg></a><a href="/labels" class="tbm" data-lbl="Label Guard" title="Label Guard" aria-label="Label Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3.2v5.1c0 4.4-2.9 7.9-7 9.7-4.1-1.8-7-5.3-7-9.7V6.2L12 3Z"/><path d="M9 12l2.2 2.2 4.3-4.4"/></svg></a><a href="/ptypes" class="tbm" data-lbl="PT Guard" title="PT Guard" aria-label="PT Guard"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V11M12 11H6.5v3.9M12 11h5.5v3.9"/><circle cx="6.5" cy="17.6" r="2.3"/><circle cx="17.5" cy="17.6" r="2.3"/></svg></a><a href="/golden" class="tbm" data-lbl="Golden Record" title="Golden Record" aria-label="Golden Record"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M9.8 9.2l1.6 1.6 2.9-3.1"/><path d="M8.7 13.6 7 21l5-2.7 5 2.7-1.7-7.4"/></svg></a><a href="/volume" class="tbm" data-lbl="Product volume" title="Product volume" aria-label="Product volume"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18"/><path d="M7 12V6.5M12 12V4M17 12V8.5"/><path d="M9.5 12v5.5M14.5 12v4"/></svg></a><a href="/overlays" class="tbm" data-lbl="Overlays" title="Image overlays" aria-label="Image overlays"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7.5" width="13" height="13" rx="2"/><path d="M8.5 4.5H18a2.5 2.5 0 0 1 2.5 2.5v9.5"/><path d="M3 17l3.6-3.6 2.6 2.6 2.4-2.4L16 18"/><circle cx="7.4" cy="11.2" r="1.3"/></svg></a><a href="/kwcal" class="tbm" data-lbl="Keyword calendar" title="Keyword calendar" aria-label="Keyword calendar"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><circle cx="11" cy="15" r="2.6"/><path d="M13 17l2.5 2.5"/></svg></a><a href="/schedule" class="tbm" data-lbl="Scheduled work" title="Scheduled work — the ASPL weekly schedule" aria-label="Scheduled work"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.3 15.2l2.4 2.4 5-5.2"/></svg></a><a href="/aiquote" class="tbm" data-lbl="AI Quote" title="AI field-generation quote" aria-label="AI Quote"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4L12 3Z"/><path d="M18 14.5l.85 2.15L21 17.5l-2.15.85L18 20.5l-.85-2.15L15 17.5l2.15-.85L18 14.5Z"/></svg></a><a href="/pricer" class="tbm" data-lbl="Pricer" title="Pricer" aria-label="Pricer"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 4.8H5v7l8.6 8.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z"/><circle cx="8.5" cy="8.3" r="1.4"/></svg></a><a href="/activity" class="tbm" data-lbl="Activity" title="User activity (owner-only)" aria-label="User activity"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.9-4.6 5.5-4.6S13.8 16 14.5 19"/><path d="M15.5 5.5h5M15.5 9h5M17.5 12.5h3"/></svg></a></nav>
 </div></div>
 
 <header class="hero"><div class="wrap">
@@ -530,6 +534,9 @@ window.addEventListener('load',restore);
   .itbl .c-client{font-weight:800;white-space:nowrap;text-overflow:ellipsis}
   .itbl .c-task{color:var(--ink);line-height:1.3;white-space:normal;word-break:break-word}
   .itbl .c-owner{color:var(--muted);font-weight:700;white-space:nowrap;text-overflow:ellipsis}
+  /* an owner name shown because the ticket predates the `by` field — dotted, so it reads as
+     the inference it is rather than as something the ticket actually recorded */
+  .by-inf{border-bottom:1px dotted var(--line);cursor:help;opacity:.85}
   .itbl .c-due{color:var(--ink-2);font-weight:700;white-space:nowrap}
   .itbl .c-due-ed{cursor:pointer}
   .itbl .c-due-ed:hover{color:var(--orange-deep);text-decoration:underline}
@@ -1104,7 +1111,14 @@ window.addEventListener('load',restore);
     Object.keys(m||{}).forEach(function(ns){
       if(!SHLK[ns])return;
       var tgt=shMap(ns), src=m[ns]||{}, before=JSON.stringify(tgt);
-      Object.keys(tgt).forEach(function(k){ if(!(k in src))delete tgt[k]; });
+      // A key missing from the server's map normally means somebody deleted it — EXCEPT while
+      // this tab is holding an unpushed change to that namespace, when it just as likely means
+      // the server has not been told yet. Deleting then wipes work this browser created
+      // seconds ago (Ray, 16 Sep 2026: a task filed into Intake during page load vanished
+      // before it ever rendered — the row reached the plan sheet, then shBoot's own reply,
+      // snapshotted before the row existed, deleted it back out of the board).
+      // Same rule bfPoll already follows for briefs: never overwrite work this tab hasn't saved.
+      if(!SHDIRTY[ns]) Object.keys(tgt).forEach(function(k){ if(!(k in src))delete tgt[k]; });
       Object.keys(src).forEach(function(k){ tgt[k]=src[k]; });
       if(JSON.stringify(tgt)!==before)moved=true;
       shCache(ns);
@@ -1455,11 +1469,35 @@ window.addEventListener('load',restore);
         if(JSON.stringify(m)===JSON.stringify(BRIEFS))return;
         BRIEFS=m; if(pair[1])BRIEFS_BASE=pair[1];
         try{localStorage.setItem('fcc-briefs',JSON.stringify(m));}catch(e){}
-        renderAll(); })
+        renderAll(); reconcileBriefTasks(); })   // a colleague's ticket arriving mid-session needs its task filed too
       .catch(function(){});
   }
   setInterval(bfPoll,60000);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden)bfPoll(); });
+
+  /* ---- Task Manager hours ON the ticket (Ray, 16 Sep 2026: "if a brief is being sent from FCC
+     and users are logging hours … that sync must be automatic"): the worker pulls the reports
+     MCP at :15/:45 and keys every TM task carrying this ticket's [ibfref:] token to the brief —
+     /api/tm?hours=1 is that map, scoped like the board. Read at boot, every 5 min and on
+     tab-visible; the card wears ⏱ total hours, the modal breaks them down. Exact-token match
+     only — nothing here is typed by hand and nothing is guessed. */
+  var TMH={}, TMH_ST=null;
+  function tmLoad(){ if(document.hidden)return;
+    fetch('/api/tm?hours=1').then(function(r){return r.ok?r.json():null;}).then(function(d){
+      if(!d||!d.ok||!d.hours)return; TMH_ST=d.status||null;
+      var s=JSON.stringify(d.hours); if(s===JSON.stringify(TMH))return; TMH=d.hours; renderBoard(); })
+    .catch(function(){}); }
+  function fmtH(n){ n=Math.round((+n||0)*100)/100; return (Number.isInteger(n)?String(n):n.toFixed(Math.round(n*10)===n*10?1:2))+'h'; }
+  function tmAgoW(t){ var m=Math.round((Date.now()-t)/60000); return m<1?'just now':m<60?(m+' min ago'):(Math.round(m/60)+'h ago'); }
+  function tmChip(b){ var h=TMH[b.id]; if(!h)return ''; var tot=Math.round(((+h.h||0)+(+h.nb||0))*100)/100;
+    return '<span class="tk-hrs" title="Task Manager · '+fmtH(h.h)+' billable'+(h.nb?' · '+fmtH(h.nb)+' non-billable':'')+(h.sc?' · '+fmtH(h.sc)+' scheduled':'')+' · '+(h.n||1)+' task'+((h.n||1)===1?'':'s')+(h.dn!=null?' ('+h.dn+' done)':'')+(h.o?' · '+esc(h.o):'')+'">⏱ '+fmtH(tot)+'</span>'; }
+  function tmModalPill(b){ var h=TMH[b.id]; if(!h)return '';
+    return '<span class="m-pill" style="color:#1A365D;border-color:rgba(91,130,190,.45)" title="Hours logged in the Task Manager against this ticket — matched on [ibfref:'+esc(b.id)+']">⏱ TM '+fmtH((+h.h||0)+(+h.nb||0))+(h.nb?' ('+fmtH(h.h)+' billable · '+fmtH(h.nb)+' non-bill)':'')+(h.o?' · '+esc(h.o):'')+(h.st?' · '+esc(h.st):'')+'</span>'; }
+  function tmModalSec(b){ var h=TMH[b.id]; if(!h||!h.tasks||!h.tasks.length)return '';
+    return '<div class="m-sec"><h4>Hours logged in the Task Manager</h4><div class="tmh">'+h.tasks.map(function(t){ return '<div class="tmh-r"><span class="tmh-d">'+esc(t.d||'')+'</span><span class="tmh-t">'+esc(t.t||'')+'</span><span class="tmh-o">'+esc(t.o||'')+'</span><span class="tmh-s">'+esc(t.st||'')+'</span><span class="tmh-h">'+fmtH(t.h)+(t.nb?' <i>+'+fmtH(t.nb)+' nb</i>':'')+'</span></div>'; }).join('')
+      +'<div class="sub" style="margin:6px 0 0">'+esc((h.client||'')+(h.market?' '+h.market:''))+' · pulled from the reports MCP'+(TMH_ST&&TMH_ST.ok_at?' '+tmAgoW(TMH_ST.ok_at):'')+' · matched on the ticket’s ibfref token only, never by name.</div></div>'; }
+  setInterval(tmLoad,300000);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden)tmLoad(); });
 
   // ---- brief building ----
   function code(client,market){ return slug(client)+'-'+(slug(market)||'gb'); }
@@ -2064,8 +2102,13 @@ window.addEventListener('load',restore);
     var ov=statusOverlay(), duo=dueOverlay(), owo=ownerOverlay(), ren=renameOverlay();
     return MANUAL.map(function(m){ var task=ren[m.client+'|'+m.task]||m.task; return {c:m.client,orig:m.task,task:task}; })
       .filter(function(m){ var plan=idx[m.c]||[];                          // suppress once the real plan contains it
-        var rec=!!RECUR[m.c+'|'+m.task];                                   // a spawned occurrence ("task · 12 Sep") fuzzy-matches its own base row — exact match only, or it vanishes until the sheet round-trip
-        for(var i=0;i<plan.length;i++){ if(rec?normTask(m.task)===normTask(plan[i]):sameTask(m.task,plan[i]))return false; }
+        // EXACT wording, always (Ray, 16 Sep 2026 — the last reason Cashmere/Merino had no
+        // Intake row): the local row is a stand-in until the SAME task round-trips from the
+        // sheet, so anything less than the same task is a different task. The fuzzy test hid
+        // a freshly-filed row behind a sibling in the same family — Reiss's own
+        // "… - Leather & Suede - … - 0926" dices .769 against "… - Knitwear - … - 0926" —
+        // and the recurrence case had already needed the exact rule for the same reason.
+        for(var i=0;i<plan.length;i++){ if(normTask(m.task)===normTask(plan[i]))return false; }
         return !DELETED[m.c+'|'+m.task]; })
       .map(function(m){ var src=MANUAL.filter(function(x){return x.client===m.c&&x.task===m.orig;})[0]||{}; var k=m.c+'|'+m.task;
         var s=ov[k]!=null?ov[k]:(src.status||'Open');
@@ -2266,7 +2309,7 @@ window.addEventListener('load',restore);
     var sel=itState.clients;
     if(!sel.length){ wrap.hidden=true; wrap.innerHTML=''; return; }
     wrap.hidden=false;
-    wrap.innerHTML=sel.map(function(c){ return '<span class="it-fchip">'+esc(c)
+    wrap.innerHTML=sel.map(function(c){ return '<span class="it-fchip"><span data-hrs="'+esc(c)+'">'+esc(c)+'</span>'
       +'<button type="button" data-c="'+esc(c)+'" aria-label="Remove '+esc(c)+' from the client filter">×</button></span>'; }).join('');
     wrap.querySelectorAll('button').forEach(function(b){ b.onclick=function(){
       var c=b.getAttribute('data-c'), i=itState.clients.indexOf(c); if(i>=0)itState.clients.splice(i,1);
@@ -2298,7 +2341,7 @@ window.addEventListener('load',restore);
         ?('<td class="c-stat" data-r="'+i+'" data-col="status" data-src="'+t.source+'" data-callid="'+esc(t.callid||'')+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
         :'<td class="c-stat" data-r="'+i+'" data-col="status"><span class="c-owner">—</span></td>';
       return '<tr data-k="'+esc(k)+'" data-r="'+i+'"'+(hid?' class="row-hidden"':'')+'><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
-        +'<td class="c-client'+(edc?' c-client-ed" data-i="'+i+'" title="'+(t.source==='call'?'Double-click to assign the client — the action files into their project plan':'Double-click to reassign the client — the task moves between project plans')+'':'')+'" data-r="'+i+'" data-col="client">'+esc(t.client)+badge
+        +'<td class="c-client'+(edc?' c-client-ed" data-i="'+i+'" title="'+(t.source==='call'?'Double-click to assign the client — the action files into their project plan':'Double-click to reassign the client — the task moves between project plans')+'':'')+'" data-r="'+i+'" data-col="client" data-hrs="'+esc(t.client)+'" data-hrs-flag>'+esc(t.client)+badge
           +'<button class="cl-rm" data-c="'+esc(t.client)+'" title="Remove '+esc(t.client)+' from the intake and all filters — every task, reversible from the client-filter menu">✕</button></td><td data-r="'+i+'" data-col="feed">'+feed+'</td>'
         +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click or ✎ to edit — writes back to the plan">'+tkTxt+bfChip+'<button class="tk-ed" data-i="'+i+'" title="Edit the task name — writes back to the plan">✎</button></td>'
              :'<td class="c-task" data-r="'+i+'" data-col="task">'+tkTxt+bfChip+'</td>')
@@ -2854,18 +2897,43 @@ window.addEventListener('load',restore);
   // most recently updated. Duplicates stay in the store — the primary's pop-up lists them for
   // one-click open/delete — but they never render as their own record anywhere.
   var BRIEF_DUP={}, BRIEF_ANCHOR={};
+  // SAME WORK, NOT MERELY SIMILAR (Ray, 16 Sep 2026, from the Brief Ledger: Cashmere/Merino and
+  // Gifting at Test running with no Intake row and no plan row — because both were collapsed as
+  // duplicates of another Reiss keyword ticket, and a collapsed duplicate is skipped by the
+  // reconcile and never rendered as its own record).
+  // taskDice measures word overlap, and on a module task family
+  // ("Keywords Optimisation - <theme> - Marketing Planner - <MMYY>") the shared scaffolding IS
+  // most of the words: two tickets whose entire difference is the theme — the one part that
+  // says what the work IS — score 0.6-0.8, sailing past both the .45 anchor bar and the .6
+  // loose bar. So every Reiss keyword optimisation collapsed into one.
+  // The rule now: two names are the same work only when NEITHER names something the other
+  // doesn't. Words unique to each side decide it, singular/plural-canonical so "Keyword" and
+  // "Keywords" aren't a difference. One name being a fuller version of the other still
+  // collapses (only one side has sole words); two that each carry their own subject never do.
+  // Deliberately conservative — a duplicate left showing twice is visible and one click to
+  // merge, whereas a wrongly collapsed ticket is work that silently ceases to exist.
+  function soleWords(a,b){
+    var A={},B={};
+    normTask(a).split(' ').forEach(function(w){ if(w.length>2)A[w.replace(/s$/,'')]=1; });
+    normTask(b).split(' ').forEach(function(w){ if(w.length>2)B[w.replace(/s$/,'')]=1; });
+    return [Object.keys(A).filter(function(w){ return !B[w]; }),
+            Object.keys(B).filter(function(w){ return !A[w]; })]; }
+  function sameWork(a,b){ var na=normTask(a), nb=normTask(b);
+    if(!na||!nb)return false; if(na===nb)return true;
+    var s=soleWords(a,b); return !(s[0].length&&s[1].length); }
   function refreshDupMap(){
     var rowSet={}, rows={}; allIntake().forEach(function(r){ var k=r.client+'|'+r.task; rowSet[k]=1; (rows[r.client]=rows[r.client]||[]).push({k:k,task:r.task}); });
     var groups={}, loose=[], anchors={};
     Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b||b.status==='confirmed')return;
       var an=null;
       if(b.taskKey&&rowSet[b.taskKey])an=b.taskKey;
-      else { var bs=0; (rows[b.client]||[]).forEach(function(r){ var s=taskDice(r.task,b.task); if(s>bs){bs=s;an=r.k;} }); if(bs<0.45)an=null; }
+      else { var bs=0; (rows[b.client]||[]).forEach(function(r){ if(!sameWork(r.task,b.task))return;   // a row that names other work is not this ticket's anchor, however much wording they share
+          var s=taskDice(r.task,b.task); if(s>bs){bs=s;an=r.k;} }); if(bs<0.45)an=null; }
       if(an){ anchors[id]=an; (groups[an]=groups[an]||[]).push(id); } else loose.push(id);
     });
     var lg=[];
     loose.forEach(function(id){ var b=BRIEFS[id], hit=null;
-      for(var i=0;i<lg.length&&!hit;i++){ var p=BRIEFS[lg[i][0]]; if(p.client===b.client&&taskDice(p.task,b.task)>=0.6)hit=lg[i]; }
+      for(var i=0;i<lg.length&&!hit;i++){ var p=BRIEFS[lg[i][0]]; if(p.client===b.client&&sameWork(p.task,b.task)&&taskDice(p.task,b.task)>=0.6)hit=lg[i]; }
       if(hit)hit.push(id); else lg.push([id]); });
     lg.forEach(function(g,i){ groups['loose|'+i]=g; });
     var dup={};
@@ -2948,7 +3016,7 @@ window.addEventListener('load',restore);
             flow='<div class="tk-flow'+(dlF<=0?' now':'')+'" title="'+(b.status==='running'?('Auto-moves to Analysis when the '+runSlaDays(b)+'-day run completes'):('Runs for '+runSlaDays(b)+' days once ASPL ships it, then Analysis'))+'">⇢ '+nxF+' '+(dlF>0?('in '+dlF+'d'):'due now')+'</div>'; }
           else flow='<div class="tk-flow" title="Runs '+runSlaDays(b)+' days once started, then Analysis">⇢ Analysis after '+runSlaDays(b)+'d run</div>'; }
         return '<div class="tik'+(courtSel&&crt!==courtSel?' dim':'')+'" draggable="true" data-id="'+esc(b.id)+'">'
-          +'<div class="tk-m"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+tst+pri+'<span class="grow"></span>'+db+ageChip+'</div>'
+          +'<div class="tk-m" data-hrs="'+esc(b.client)+'"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+tst+pri+'<span class="grow"></span>'+db+ageChip+tmChip(b)+'</div>'
           +'<div class="tk-t" title="'+esc(taskDisp(b.task))+'">'+esc(taskDisp(b.task))+'</div>'+flow+'</div>';
       }).join('') || '<div class="board-empty">—</div>';
       return '<div class="lane" data-stage="'+s[0]+'"><div class="lane-h"><span class="dot" style="background:'+s[2]+'"></span>'+s[1]+'<span class="ct">'+items.length+'</span></div>'+cards+'</div>';
@@ -3009,17 +3077,19 @@ window.addEventListener('load',restore);
     if(b.code) xl.push('<a class="xl" id="m-thread" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent(threadQuery(b))+'" title="Searches the brief’s subject (client + task words) — punctuation tokens like the ID search badly in Gmail">✉ Find the email thread</a>');
     modalEl.innerHTML=''
       +'<div style="display:flex;align-items:flex-start"><div><h3>'+esc(taskDisp(b.task))+'</h3>'
-        +'<div class="mc">'+esc(b.id)+' · '+esc(b.client)+' · ['+esc(b.code)+']</div></div><button class="x" id="m-x">×</button></div>'
+        +'<div class="mc" data-hrs="'+esc(b.client)+'">'+esc(b.id)+' · '+esc(b.client)+' · ['+esc(b.code)+']</div></div><button class="x" id="m-x">×</button></div>'
       +'<div class="m-meta"><span class="m-pill">Due '+humanDD(b.due)+'</span><span class="m-pill">'+esc(b.priority||'Normal')+'</span>'
         +(lastResultTxt(b)?('<span class="m-pill" style="color:#15803D;border-color:rgba(21,128,61,.35)" title="The recorded read-out — travels with the brief">🧪 '+esc(lastResultTxt(b).slice(0,60))+'</span>'):'')
         +'<span class="m-pill">'+(b.source==='plan'?'Project plan':'Email')+'</span>'
         +'<span class="m-pill"'+(stageBreached(b)?' style="color:#C0392B;border-color:rgba(192,57,43,.4)"':'')+'>Ball: '+(crt?(crt+' · '+daysInCourt(b)+'d'):'—')+'</span>'
+        +tmModalPill(b)
         +(function(){ var rd=readoutDue(b); if(rd==null||b.status==='confirmed')return ''; var dl=Math.ceil((rd-Date.now())/86400000);
           return '<span class="m-pill"'+(dl<=0?' style="color:#C0392B;border-color:rgba(192,57,43,.4)"':'')+' title="'+runSlaDays(b)+'-day run SLA from when the brief starts running">Analysis '+(dl>0?('in '+dl+'d'):(dl===0?'due today':((-dl)+'d overdue')))+'</span>'; })()
         +(dueBadge(b,true))+'</div>'
       +'<div class="m-sec"><h4>Stage</h4><div class="stat-seg" id="m-stat">'+stat+'</div></div>'
       +'<div class="m-sec"><h4>Journey — handoffs across the three courts</h4><div class="jny">'+journeyHtml(b)+'</div>'
         +(xl.length?('<div class="m-xl">'+xl.join('')+'</div>'):'')+'</div>'
+      +tmModalSec(b)
       +'<div class="m-sec"><h4>ASPL tracking <span class="m-owner">· Owner <select id="m-aspl">'+ASPL.map(function(n){return '<option'+(asplOf(b)===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select></span></h4><div id="m-comms">'+comms+'</div>'
         +'<div class="addc"><select id="m-from">'+ASPL.concat(['Client','Ray','Other']).map(function(n){return '<option>'+n+'</option>';}).join('')+'</select>'
         +'<input id="m-note" placeholder="Paste / summarise their reply…"><button class="btn" id="m-log">Log</button></div>'
@@ -3119,7 +3189,16 @@ window.addEventListener('load',restore);
   // who is signed in (Cloudflare Access identity, already fetched for scoping)
   function meName(){ try{ if(!ACCESS_ME)return ''; return String(ACCESS_ME.name||'').trim()
     || String(ACCESS_ME.email||'').split('@')[0].replace(/[._-]+/g,' ').replace(/\b\w/g,function(x){return x.toUpperCase();}); }catch(e){ return ''; } }
-  function briefedBy(b){ return (b&&b.by)||'—'; }   // never guessed: briefs raised before this shipped show —
+  // Ray, 16 Sep 2026: "any '-' brief by is obviously Ray - so add me name too". Every brief
+  // raised before the `by` field shipped is the owner's, so the ledger names them instead of
+  // printing a dash. It is a DISPLAY fallback, not a backfill — nothing is written onto the
+  // stored ticket, so the day someone proves a dash was somebody else's, the record is intact.
+  // ownerName rides on /api/access?me=1 for every signin, so the whole team reads the same name.
+  function ownerName(){ try{ return String((ACCESS_ME&&ACCESS_ME.ownerName)||'').trim(); }catch(e){ return ''; } }
+  function briefedBy(b){ return (b&&b.by)||ownerName()||'—'; }
+  function briefedByCell(b){ if(b&&b.by)return esc(b.by);
+    var o=ownerName(); if(!o)return '—';
+    return '<span class="by-inf" title="Raised before the FCC recorded who briefed a ticket — those are '+esc(o)+'’s">'+esc(o)+'</span>'; }
   // a reply's chip states what it actually was: a completion, or a pickup that is not one
   function commChip(c){
     var v=classifyReply((c&&c.note)||'');
@@ -3292,21 +3371,35 @@ window.addEventListener('load',restore);
   // idempotent on task text, so even a simultaneous pair can't double-write.
   var STAGE_STATUS={intake:'Briefed',briefed:'Briefed',progress:'In Progress',blocked:'On Hold',
     done:'Done',running:'In Progress',analysis:'In Progress',confirmed:'Done'};
+  // EXACT wording only (Ray, 16 Sep 2026, from the Brief Ledger: Cashmere/Merino and Gifting
+  // sitting at Test running with no Intake row and no plan row). This asked "is the task
+  // already in Intake?" with the FUZZY sameTask — and module task families share a prefix, so
+  // Reiss's own "Keywords Optimisation - Leather & Suede - Marketing Planner - 0926" dices at
+  // 0.714 against "… - Cashmere/Merino - … - 0926". The reconcile therefore declared the
+  // ticket already present under other wording, stamped it planned, and never filed it. The
+  // same rule the worker's idempotent append uses is the only safe one here: a needless file
+  // is a no-op, a wrong "it's already there" is a task that never exists.
   function briefRow(b){   // the brief's task as it exists in Intake today, or null
-    var rows=allIntake(), hit=null;
+    var rows=allIntake(), hit=null, want=normTask(b.task);
     for(var i=0;i<rows.length&&!hit;i++){ var r=rows[i];
       if(r.client!==b.client)continue;
-      if(normTask(r.task)===normTask(b.task)||sameTask(r.task,b.task))hit=r; }
+      if(normTask(r.task)===want)hit=r; }
     return hit; }
   function reconcileBriefTasks(){
     if(!LIVE_CONN)return;   // without a live plan read every row would look missing
     var made=0, pend=[];
     Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id];
-      if(!b||!b.client||!b.task||b.planned||isDup(b))return;
+      if(!b||!b.client||!b.task||isDup(b))return;
       if(b.status==='confirmed')return;                     // closed work needs no plan row
       if(!inScopeClient(b.client))return;                   // a scoped signin can't file another book's task
       if(b.taskKey&&allIntake().some(function(r){ return rowKey(r)===b.taskKey; }))return;   // already tied to a live row
-      if(briefRow(b)){ b.planned=1; pend.push(b); return; } // it IS there under other wording — settle the flag, don't write
+      // b.planned is a HINT, never a veto. It used to skip the ticket outright, and it was
+      // stamped on the fuzzy match above AND on adoptIntoPlan's optimistic true — so a ticket
+      // wrongly marked filed, or one whose sheet write never landed, was stranded for good and
+      // no later open could heal it. The real veto is the row EXISTING: re-filing is safe
+      // because adoptIntoPlan strict-guards on exact wording and appendPlanRows skips a task
+      // already in the tab, so the worst case is a no-op.
+      if(briefRow(b)){ if(!b.planned){ b.planned=1; pend.push(b); } return; }   // it IS there — settle the flag, don't write
       if(!PLANSHEET[b.client])return;                       // no sheet to write to; the ticket stands alone
       if(adoptIntoPlan(b.client,b.task,STAGE_STATUS[b.status]||'Briefed',b.due,'',0,true)){
         b.planned=1; b.taskKey=b.client+'|'+b.task; pend.push(b); made++; }
@@ -3849,7 +3942,7 @@ window.addEventListener('load',restore);
       return '<tr data-bid="'+esc(b.id)+'" style="cursor:pointer"><td class="c-owner" style="white-space:nowrap">'+esc(b.id)+(isDup(b)?' <span title="Collapsed duplicate of '+esc(BRIEF_DUP[b.id])+'">👥</span>':'')+'</td>'
         +'<td class="c-client">'+esc(b.client||'—')+'</td>'
         +'<td class="c-task">'+esc(taskDisp(b.task)||'—')+(res?' <span class="src-tag" style="color:#15803D;background:rgba(21,128,61,.1);border-color:rgba(21,128,61,.3)" title="Recorded read-out">🧪 '+esc(res.slice(0,48))+'</span>':'')+'</td>'
-        +'<td class="c-owner">'+esc(briefedBy(b))+'</td>'
+        +'<td class="c-owner">'+briefedByCell(b)+'</td>'
         +'<td class="c-owner">'+esc(b.aspl||asplOf(b)||'—')+'</td>'
         +'<td class="c-due">'+(b.created?new Date(b.created).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}):'—')+'</td>'
         +'<td class="c-due">'+humanDD(b.due)+'</td>'
@@ -3919,8 +4012,15 @@ window.addEventListener('load',restore);
   // halves haven't loaded, and nothing re-rendered afterwards, so a colleague's status sat in
   // the store while the row on screen still read Open.
   var SHBOOT=shBoot().then(function(ok){ shStart(); return ok; });
-  apiGet().then(function(d){ BRIEFS=d||{}; bfRescueLocal(); _srB=true; _srTry(); renderAll();
+  apiGet().then(function(d){ BRIEFS=d||{}; bfRescueLocal(); _srB=true; _srTry(); renderAll(); tmLoad();
     SHBOOT.then(function(){ renderAll(); });   // whichever lands last, the board ends up current
+    // RACE (Ray, 16 Sep 2026 — the other half of why Cashmere/Merino and Gifting had no task):
+    // reconcileBriefTasks was called ONLY from fetchLive's success handler. The plan read and
+    // the briefs fetch are independent, so when the plan won the race BRIEFS was still {} —
+    // the pass looked at nothing, found nothing, and was never called again for the life of
+    // the tab. It self-guards on LIVE_CONN, so calling it here is a no-op until the plan is
+    // live and a full pass when it already is: whichever lands second, the tickets get read.
+    reconcileBriefTasks();
     // one-time repair of stages the old bare-word matcher closed on a pickup; the flag keeps
     // it to a single pass per browser, and the ⟳ button below re-runs it on demand
     try{ if(localStorage.getItem('fcc-relabel-v1')!=='1'){ localStorage.setItem('fcc-relabel-v1','1'); relabelLedger({quiet:false}); } }catch(e){ relabelLedger({quiet:true}); }
@@ -4276,6 +4376,9 @@ window.addEventListener('load',restore);
       document.getElementById('acl-save').onclick=saveAcl;
       document.getElementById('acl-scrim').addEventListener('click',function(e){ if(e.target===this)this.classList.remove('on'); }); }
     fetch('/api/access?me=1').then(function(r){return r.json();}).then(function(d){ ACCESS_ME=d||null;
+      // ownerName only exists once this resolves, and the first paint is long gone — without
+      // this the ledger keeps the dashes it drew before the answer arrived
+      if(d&&d.ownerName&&typeof renderAll==='function')renderAll();
       if(d&&d.owner){ mountOwnerBtn(); return; }
       if(d&&d.clients&&d.clients.length){ SCOPE=d.clients.slice();
         CLIENTS=CLIENTS.filter(inScopeClient); if(!CLIENTS.length)CLIENTS=SCOPE.slice();

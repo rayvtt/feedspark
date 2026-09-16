@@ -1,0 +1,462 @@
+<!-- FCC-HOURS: the hours badge, everywhere (Ray, 16 Sep 2026).
+
+     "this hour report should appear everywhere in [the FCC], for example with workflow, and flag
+      whether the client is negative or not. It should also show the trajectory of the past three
+      months of client activity per hour. It would be like a hovering pop-up, so it doesn't
+      clutter the current dashboard. At the same time, display it within brand [dossier] and other
+      areas in the FCC that are appropriate for an AM to decide whether to continue the task with
+      the current hours. Obviously, there are cases where a client is negative, but because of
+      relationship smoothing, the AM may still continue the task. Consider that perspective."
+
+     WHAT IS ADDED TO A PAGE: one 8px dot. That is the whole inline footprint — the brief was
+     explicitly that this must not clutter what is already there, so everything else lives in a
+     popover that only exists while someone is looking at it.
+
+     WHAT THE DOT SAYS: whether the client is negative. What it deliberately does NOT say is what
+     to do about it. A balance is a fact the reports database states; whether to keep working the
+     account is a judgement an AM makes, often for reasons the hours cannot see. So the popover
+     carries a POSTURE the team sets — Continue / Hold new work / Just watching — and an account
+     someone has decided to keep serving reads as "being served anyway" rather than going on
+     shouting red at every person who opens any page. The alarm stops; the fact does not change.
+
+     One /api/hours fetch per page, shared by every badge on it: balance (the hours lane), the
+     three-month trail (the Task Manager book) and the posture (shared state), merged server-side.
+     Injected on app pages only, never on client decks. -->
+<style>
+/* FCC-HOURS */
+.fh-dot{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;padding:0;margin:0 0 0 5px;border:none;background:none;cursor:pointer;vertical-align:-2px;flex:none;line-height:0;border-radius:50%}
+.fh-dot:focus-visible{outline:2px solid var(--orange,#F5A623);outline-offset:1px}
+.fh-dot i{display:block;width:8px;height:8px;border-radius:50%;background:var(--muted,#8a94a0);box-shadow:0 0 0 2px var(--paper,#fff)}
+.fh-dot[data-st=ok] i{background:#15803D}
+.fh-dot[data-st=tight] i{background:#F5A623}
+.fh-dot[data-st=over] i{background:#C0392B;animation:fhpulse 2.6s ease-in-out infinite}
+.fh-dot[data-st=served] i{background:#7C3AED}
+.fh-dot[data-st=held] i{background:#B3261E;box-shadow:0 0 0 2px var(--paper,#fff),inset 0 0 0 2px rgba(255,255,255,.75)}
+.fh-dot[data-st=none] i{background:transparent;box-shadow:0 0 0 1.5px var(--line,#E6E6E6)}
+.fh-dot:hover i{transform:scale(1.25);transition:transform .12s}
+@keyframes fhpulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.fh-dot[data-st=over] i{animation:none}}
+[data-theme=dark] .fh-dot i{box-shadow:0 0 0 2px var(--paper,#1C1F27)}
+[data-theme=dark] .fh-dot[data-st=ok] i{background:#48D07E}
+[data-theme=dark] .fh-dot[data-st=over] i{background:#F1707A}
+[data-theme=dark] .fh-dot[data-st=served] i{background:#A78BFA}
+[data-theme=dark] .fh-dot[data-st=held] i{background:#F1707A;box-shadow:0 0 0 2px var(--paper,#1C1F27),inset 0 0 0 2px rgba(0,0,0,.55)}
+
+#fcc-hrs{position:fixed;z-index:96;width:330px;max-width:calc(100vw - 20px);background:var(--paper,#fff);border:1px solid var(--line,#E6E6E6);border-radius:14px;
+  box-shadow:0 10px 40px rgba(16,24,40,.18),0 2px 6px rgba(16,24,40,.06);padding:13px 15px 12px;font:400 13px/1.5 Lato,system-ui,sans-serif;color:var(--ink,#333);
+  opacity:0;transform:translateY(4px);pointer-events:none;transition:opacity .13s,transform .13s}
+#fcc-hrs.on{opacity:1;transform:none;pointer-events:auto}
+#fcc-hrs h4{margin:0;font-size:14.5px;font-weight:900;letter-spacing:-.01em;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+#fcc-hrs .fh-pill{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:100px;white-space:nowrap}
+#fcc-hrs .fh-pill.ok{color:#15803D;background:rgba(21,128,61,.12)}
+#fcc-hrs .fh-pill.tight{color:#B1550A;background:rgba(245,166,35,.18)}
+#fcc-hrs .fh-pill.over{color:#fff;background:#C0392B}
+#fcc-hrs .fh-pill.served{color:#fff;background:#7C3AED}
+#fcc-hrs .fh-pill.held{color:#fff;background:#B3261E}
+#fcc-hrs .fh-pill.none{color:var(--muted,#8a94a0);background:var(--wash,#F7F7F5)}
+#fcc-hrs .fh-sub{font-size:11.5px;font-weight:700;color:var(--muted,#8a94a0);margin:3px 0 10px}
+#fcc-hrs .fh-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+#fcc-hrs .fh-nums .n{background:var(--wash,#F7F7F5);border-radius:9px;padding:7px 9px;min-width:0}
+#fcc-hrs .fh-nums .n b{display:block;font-size:16px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
+#fcc-hrs .fh-nums .n span{display:block;font-size:9.5px;font-weight:800;color:var(--muted,#8a94a0);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+#fcc-hrs .fh-nums .n.neg b{color:#C0392B}
+#fcc-hrs .fh-verd{font-size:12.5px;font-weight:700;color:var(--ink-2,#4a4a4a);margin:0 0 11px}
+#fcc-hrs .fh-h5{font-size:9.5px;font-weight:900;color:var(--muted,#8a94a0);text-transform:uppercase;letter-spacing:.06em;margin:0 0 5px;display:flex;align-items:baseline;gap:6px}
+#fcc-hrs .fh-h5 em{font-style:normal;font-weight:800;letter-spacing:0;text-transform:none;font-size:10.5px;color:var(--ink-2,#4a4a4a);margin-left:auto}
+#fcc-hrs svg{display:block;width:100%;height:auto;overflow:visible}
+#fcc-hrs .fh-key{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;font-weight:800;margin:6px 0 2px}
+#fcc-hrs .fh-key span{display:inline-flex;align-items:center;gap:5px;color:var(--ink-2,#4a4a4a)}
+#fcc-hrs .fh-key i{width:9px;height:9px;border-radius:2px;flex:none}
+#fcc-hrs .fh-note{font-size:11px;font-weight:700;color:var(--muted,#8a94a0);margin:6px 0 0;line-height:1.45}
+#fcc-hrs .fh-post{border-top:1px solid var(--line,#E6E6E6);margin-top:11px;padding-top:10px}
+#fcc-hrs .fh-btns{display:flex;gap:4px;flex-wrap:wrap}
+#fcc-hrs .fh-btns button{font:inherit;font-size:11px;font-weight:800;padding:5px 9px;border-radius:100px;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);color:var(--ink-2,#4a4a4a);cursor:pointer;white-space:nowrap}
+#fcc-hrs .fh-btns button:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
+#fcc-hrs .fh-btns button.on{background:var(--navy,#1A365D);border-color:var(--navy,#1A365D);color:#fff}
+#fcc-hrs .fh-btns button[disabled]{opacity:.5;cursor:default}
+#fcc-hrs .fh-why{display:block;width:100%;box-sizing:border-box;margin-top:7px;font:inherit;font-size:11.5px;font-weight:600;color:var(--ink,#333);background:var(--wash,#F7F7F5);border:1px solid var(--line,#E6E6E6);border-radius:8px;padding:6px 9px}
+#fcc-hrs .fh-why:focus{outline:none;border-color:var(--orange,#F5A623);background:var(--paper,#fff)}
+#fcc-hrs .fh-why[disabled]{opacity:.6}
+#fcc-hrs .fh-who{font-size:10.5px;font-weight:700;color:var(--muted,#8a94a0);margin-top:6px}
+#fcc-hrs .fh-links{display:flex;gap:10px;margin-top:9px;font-size:11.5px;font-weight:800}
+#fcc-hrs .fh-links a{color:var(--orange-deep,#ED6F0B);text-decoration:none}
+#fcc-hrs .fh-links a:hover{text-decoration:underline}
+#fcc-hrs .fh-x{display:none}
+[data-theme=dark] #fcc-hrs{background:var(--paper,#1C1F27);border-color:var(--line,#2C3039);box-shadow:0 10px 40px rgba(0,0,0,.5)}
+[data-theme=dark] #fcc-hrs .fh-nums .n{background:#181B22}
+[data-theme=dark] #fcc-hrs .fh-pill.ok{color:#48D07E;background:rgba(72,208,126,.16)}
+[data-theme=dark] #fcc-hrs .fh-pill.tight{color:#F0A44E;background:rgba(240,164,78,.16)}
+[data-theme=dark] #fcc-hrs .fh-nums .n.neg b{color:#F1707A}
+[data-theme=dark] #fcc-hrs .fh-btns button{background:#20242E;border-color:var(--line,#2C3039);color:var(--ink-2,#B9BEC7)}
+[data-theme=dark] #fcc-hrs .fh-why{background:#20242E;border-color:var(--line,#2C3039);color:var(--ink,#E6E9EF)}
+/* the set posture is navy-on-white in light mode; navy on a dark surface is almost the surface,
+   so dark gets its own step rather than an automatic flip */
+[data-theme=dark] #fcc-hrs .fh-btns button.on{background:#4C82E0;border-color:#4C82E0;color:#0F1218}
+/* on a phone the popover is a bottom sheet, like every other FCC overlay */
+@media(max-width:760px){
+  #fcc-hrs{left:8px!important;right:8px!important;width:auto!important;top:auto!important;
+    bottom:calc(var(--fcc-bar,70px) + 8px + env(safe-area-inset-bottom,0px))!important;max-height:72vh;overflow:auto}
+  #fcc-hrs .fh-x{display:block;position:absolute;top:8px;right:9px;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);color:var(--muted,#8a94a0);
+    border-radius:9px;width:30px;height:30px;font-size:16px;font-weight:900;cursor:pointer;line-height:1}
+  .fh-dot{width:20px;height:20px}
+  .fh-dot i{width:9px;height:9px}
+}
+</style>
+<script>/* FCC-HOURS */(function () {
+  'use strict';
+  if (window.__fccHours) return; window.__fccHours = 1;
+  if (/^\/deck\//.test(location.pathname)) return;
+  // the Feed Chat bubble embeds /feedchat in a small iframe — a popover in there would be clipped
+  // by the frame, and the host page already carries its own dots
+  if (/[?&]embed=1/.test(location.search)) return;
+
+  var DATA = null, ME = '', BASE = 0, POST = null, pop = null, openFor = '', pinned = false, tOpen = null, tShut = null;
+  var fold = function (s) { return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]+/g, ''); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var h1 = function (n) { return (Math.round((Number(n) || 0) * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 }); };
+  var cvar = function (n, f) { try { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || f; } catch (e) { return f; } };
+  var dark = function () { return document.documentElement.getAttribute('data-theme') === 'dark'; };
+  var BIL = function () { return dark() ? '#4C82E0' : '#2563EB'; };
+  var NBIL = function () { return dark() ? '#C67B28' : '#ED6F0B'; };
+
+  // ---- the engine's own rules, kept identical to src/taskbook.js -----------------------------
+  var POSTURES = {
+    continue: { label: 'Continue', short: 'Continuing', note: 'Work continues regardless of the balance — a deliberate call.' },
+    hold: { label: 'Hold new work', short: 'On hold', note: 'No new work until the balance is settled.' },
+    watch: { label: 'Just watching', short: 'Watching', note: 'No decision taken — the balance is being watched.' }
+  };
+  var STATE_LABEL = { none: 'No hours synced', ok: 'Within the retainer', tight: 'Close to the block',
+    over: 'Over the retainer', served: 'Over — being served anyway', held: 'Over — new work on hold' };
+  function hoursState(r) {
+    r = r || {};
+    var posture = (r.posture && r.posture.state) || '', bal = Number(r.balance) || 0, allowance = Number(r.allowance) || 0;
+    if (!r.tracked) return 'none';
+    if (bal < 0) return posture === 'continue' ? 'served' : (posture === 'hold' ? 'held' : 'over');
+    if (allowance > 0 && bal < allowance * 0.25) return 'tight';
+    return 'ok';
+  }
+  function hoursVerdict(r) {
+    r = r || {};
+    var st = hoursState(r), bal = Number(r.balance) || 0, h = function (n) { return h1(Math.abs(n)); };
+    if (st === 'none') return 'No hours have been synced for this client yet.';
+    if (st === 'ok') return h(bal) + ' hours left against a ' + h(r.allowance) + '-hour block.';
+    if (st === 'tight') return 'Only ' + h(bal) + ' hours left of the ' + h(r.allowance) + '-hour block — the next piece of work will likely take it under.';
+    if (st === 'served') return h(bal) + ' hours over, and the team has decided to keep going anyway.';
+    if (st === 'held') return h(bal) + ' hours over, and new work is on hold until it is settled.';
+    return h(bal) + ' hours over the block — worth a decision before the next task.';
+  }
+  function trailRows(t) {
+    var keys = (t && t.months) || [];
+    return keys.map(function (k) {
+      var c = (t.m && t.m[k]) || [0, 0, 0], bill = (c[0] || 0) / 4, nb = (c[1] || 0) / 4;
+      return { month: k, bill: bill, nonbill: nb, hours: Math.round((bill + nb) * 100) / 100, n: c[2] || 0, partial: k === t.current };
+    });
+  }
+  function trailTrend(rows) {
+    var done = (rows || []).filter(function (r) { return !r.partial; });
+    if (done.length < 2) return { dir: 'flat', pct: 0, enough: false };
+    var a = done[done.length - 2].hours, b = done[done.length - 1].hours;
+    if (!a && !b) return { dir: 'flat', pct: 0, enough: true };
+    var pct = a ? Math.round(((b - a) / a) * 100) : 100;
+    return { dir: pct > 8 ? 'up' : pct < -8 ? 'down' : 'flat', pct: pct, enough: true };
+  }
+  /* FCC-HOURS:ENGINE-END */
+
+  // ---- data ------------------------------------------------------------------------------------
+  function recOf(name) {
+    if (!DATA || !DATA.clients) return null;
+    var k = fold(name);
+    if (!k) return null;
+    var keys = Object.keys(DATA.clients);
+    for (var i = 0; i < keys.length; i++) if (fold(keys[i]) === k) return { name: keys[i], rec: DATA.clients[keys[i]] };
+    return null;
+  }
+  function load(then) {
+    fetch('/api/hours').then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.ok) {
+        DATA = d; decorate();
+        // pages that render hours INTO their own layout (the dossier's portfolio band) can't
+        // know when this fetch lands — so say so rather than making them poll
+        try { document.dispatchEvent(new CustomEvent('fcc-hours')); } catch (e) {}
+      }
+      if (then) then();
+    }).catch(function () { if (then) then(); });
+  }
+  function who() {
+    if (ME) return;
+    fetch('/api/access?me=1').then(function (r) { return r.json(); })
+      .then(function (d) { ME = (d && (d.name || d.ownerName || d.email)) || ''; }).catch(function () {});
+  }
+
+  // ---- the dot -----------------------------------------------------------------------------------
+  function dotFor(name) {
+    var hit = recOf(name), st = hit ? hoursState(hit.rec) : 'none';
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'fh-dot'; b.setAttribute('data-st', st);
+    b.setAttribute('data-fh', hit ? hit.name : name);
+    b.setAttribute('aria-label', name + ' — ' + STATE_LABEL[st] + '. Hours report.');
+    b.title = name + ' — ' + STATE_LABEL[st];
+    b.innerHTML = '<i></i>';
+    b.addEventListener('mouseenter', function () { hoverOpen(b); });
+    b.addEventListener('mouseleave', function () { hoverShut(); });
+    b.addEventListener('focus', function () { show(b, true); });
+    b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); show(b, true); });
+    return b;
+  }
+
+  // WHERE THE DOT GOES. `data-hrs="<client>"` is the explicit anchor a page opts into; on top of
+  // that every module page that picks a brand from a <select id="brand"> gets one automatically,
+  // following the selection — which is most of the FCC without touching most of the FCC.
+  //
+  // `data-hrs-flag` narrows it to the EXCEPTION. A long table repeats one client down hundreds of
+  // rows, and a healthy dot on every one of them is decoration, not information (Ray's ask was a
+  // hovering read-out that "doesn't clutter the current dashboard"). On a flag anchor the dot is
+  // drawn only when the balance is worth stopping at — tight, over, deliberately served, or held —
+  // so an intake row stays silent while the account is fine and speaks up the moment it is not.
+  function flagged(st) { return st === 'tight' || st === 'over' || st === 'served' || st === 'held'; }
+  function decorate() {
+    if (!DATA) return;
+    var i, els = document.querySelectorAll('[data-hrs]');
+    for (i = 0; i < els.length; i++) {
+      var el = els[i], name = el.getAttribute('data-hrs');
+      if (!name) continue;
+      var hit = recOf(name), st = hit ? hoursState(hit.rec) : 'none';
+      // the stamp carries the STATE as well as the name, so a posture saved in the popover (or a
+      // fresh sync) repaints the dot instead of being masked by an "already decorated" guard
+      var stamp = name + '|' + st;
+      if (el.__fh === stamp) continue;
+      el.__fh = stamp;
+      var old = el.querySelector(':scope > .fh-dot'); if (old) old.remove();
+      if (el.hasAttribute('data-hrs-flag') && !flagged(st)) continue;
+      el.appendChild(dotFor(name));
+    }
+    var sel = document.getElementById('brand');
+    if (sel && sel.tagName === 'SELECT') {
+      var host = sel.parentNode;
+      if (host && !host.__fhSel) {
+        host.__fhSel = 1;
+        sel.addEventListener('change', function () { setTimeout(syncSel, 0); });
+      }
+      syncSel();
+    }
+  }
+  function syncSel() {
+    var sel = document.getElementById('brand'); if (!sel) return;
+    var name = sel.value === '*' ? '' : sel.value;
+    var cur = document.getElementById('fh-sel');
+    if (!name || !recOf(name)) { if (cur) cur.remove(); return; }
+    var d = dotFor(name); d.id = 'fh-sel'; d.style.marginLeft = '6px';
+    if (cur) cur.replaceWith(d); else sel.parentNode.insertBefore(d, sel.nextSibling);
+  }
+
+  // ---- the popover ----------------------------------------------------------------------------
+  function ensure() {
+    if (pop) return pop;
+    pop = document.createElement('div');
+    pop.id = 'fcc-hrs';
+    pop.setAttribute('role', 'dialog');
+    pop.addEventListener('mouseenter', function () { if (tShut) { clearTimeout(tShut); tShut = null; } });
+    pop.addEventListener('mouseleave', function () { if (!pinned) hoverShut(); });
+    document.body.appendChild(pop);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(); });
+    document.addEventListener('click', function (e) {
+      if (!pinned || !pop.classList.contains('on')) return;
+      if (pop.contains(e.target) || (e.target.closest && e.target.closest('.fh-dot'))) return;
+      hide();
+    });
+    window.addEventListener('resize', function () { if (pop.classList.contains('on') && openAnchor) place(openAnchor); });
+    return pop;
+  }
+  var openAnchor = null;
+  function hoverOpen(b) { if (tShut) { clearTimeout(tShut); tShut = null; } if (tOpen) clearTimeout(tOpen); tOpen = setTimeout(function () { show(b, false); }, 120); }
+  function hoverShut() { if (tOpen) { clearTimeout(tOpen); tOpen = null; } if (pinned) return; if (tShut) clearTimeout(tShut); tShut = setTimeout(hide, 260); }
+  function hide() { pinned = false; openFor = ''; openAnchor = null; if (pop) pop.classList.remove('on'); }
+
+  function show(b, pin) {
+    var name = b.getAttribute('data-fh');
+    ensure();
+    if (pin) pinned = true;
+    if (openFor !== name) { openFor = name; pop.innerHTML = body(name); wire(name); }
+    openAnchor = b;
+    pop.classList.add('on');
+    place(b);
+    who();
+  }
+  function place(b) {
+    if (window.matchMedia && window.matchMedia('(max-width:760px)').matches) return;   // bottom sheet
+    var r = b.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+    var left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
+    var top = r.bottom + 9;
+    if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 9);
+    pop.style.left = left + 'px'; pop.style.top = top + 'px';
+  }
+
+  // THE TRAIL. Three stacked bars — billable below, non-billable above — one per calendar month.
+  // The CURRENT month is hatched and labelled "so far": plotting a part-month as a completed one
+  // makes every account look like it fell off a cliff on the 3rd, which is the opposite of the
+  // trajectory this is meant to show. Both series carry their numbers in the key, which is also
+  // the relief the palette validator asks for on the orange at light-mode contrast.
+  function chart(rows) {
+    var W = 300, H = 76, B = 16, L = 0, bw = 46, gap = 2;
+    var max = Math.max.apply(null, rows.map(function (r) { return r.hours; }).concat([1]));
+    var step = W / rows.length, s = '';
+    s += '<defs><pattern id="fh-part" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+      + '<rect width="5" height="5" fill="' + cvar('--paper', '#fff') + '"/><rect width="2.2" height="5" fill="' + NBIL() + '" opacity=".55"/></pattern>'
+      + '<pattern id="fh-partb" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+      + '<rect width="5" height="5" fill="' + cvar('--paper', '#fff') + '"/><rect width="2.2" height="5" fill="' + BIL() + '" opacity=".55"/></pattern></defs>';
+    s += '<line x1="0" y1="' + (H - B) + '" x2="' + W + '" y2="' + (H - B) + '" stroke="' + cvar('--line', '#E6E6E6') + '" stroke-width="1"/>';
+    rows.forEach(function (r, i) {
+      var x = L + step * i + (step - bw) / 2, avail = H - B - 14;
+      var hb = max ? (r.bill / max) * avail : 0, hn = max ? (r.nonbill / max) * avail : 0;
+      var yb = H - B - hb, yn = yb - hn - (hb > 0 && hn > 0 ? gap : 0);
+      if (hb > 0) s += '<rect x="' + x + '" y="' + yb.toFixed(1) + '" width="' + bw + '" height="' + hb.toFixed(1) + '" rx="2" fill="' + (r.partial ? 'url(#fh-partb)' : BIL()) + '"/>';
+      if (hn > 0) s += '<rect x="' + x + '" y="' + yn.toFixed(1) + '" width="' + bw + '" height="' + hn.toFixed(1) + '" rx="2" fill="' + (r.partial ? 'url(#fh-part)' : NBIL()) + '"/>';
+      if (!hb && !hn) s += '<rect x="' + x + '" y="' + (H - B - 2) + '" width="' + bw + '" height="2" rx="1" fill="' + cvar('--line', '#E6E6E6') + '"/>';
+      var top = Math.min(yn, yb) - 4;
+      s += '<text x="' + (x + bw / 2) + '" y="' + (r.hours ? top.toFixed(1) : H - B - 5) + '" text-anchor="middle" font-size="10.5" font-weight="900" fill="' + cvar('--ink-2', '#4a4a4a') + '">' + (r.hours ? h1(r.hours) : '0') + '</text>';
+      var lbl = new Date(r.month + '-01T00:00:00Z').toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' });
+      s += '<text x="' + (x + bw / 2) + '" y="' + (H - 4) + '" text-anchor="middle" font-size="10" font-weight="800" fill="' + cvar('--muted', '#8a94a0') + '">' + esc(lbl) + (r.partial ? ' ›' : '') + '</text>';
+    });
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Hours per month, billable and non-billable">' + s + '</svg>';
+  }
+
+  function ago(ms) {
+    if (!ms) return 'never';
+    var m = Math.max(0, Math.round((Date.now() - ms) / 60000));
+    if (m < 60) return m + ' min ago';
+    var hh = Math.round(m / 60);
+    return hh < 48 ? hh + 'h ago' : Math.round(hh / 24) + ' days ago';
+  }
+
+  function body(name) {
+    var hit = recOf(name), rec = hit ? hit.rec : { tracked: false };
+    var st = hoursState(rec), t = rec.trail, rows = t ? trailRows(t) : [];
+    var h = '<button class="fh-x" type="button" aria-label="Close">✕</button>';
+    h += '<h4>' + esc(hit ? hit.name : name) + '<span class="fh-pill ' + st + '">' + esc(STATE_LABEL[st]) + '</span></h4>';
+    h += '<div class="fh-sub">' + (rec.markets ? rec.markets + ' market' + (rec.markets === 1 ? '' : 's') : 'no markets synced')
+      + (rec.am ? ' · ' + esc(rec.am) : '') + (rec.updated ? ' · balance read ' + ago(rec.updated) : '') + '</div>';
+
+    if (!rec.tracked) {
+      h += '<p class="fh-verd">' + esc(hoursVerdict(rec)) + '</p>';
+      h += '<p class="fh-note">The reports sync fills the book a few markets at a time. Until this client is read, the FCC has no hours for it — which is not the same as zero.</p>';
+    } else {
+      h += '<div class="fh-nums">'
+        + '<div class="n"><b>' + h1(rec.allowance) + '</b><span>Block / mo</span></div>'
+        + '<div class="n"><b>' + h1(rec.used) + '</b><span>Used</span></div>'
+        + '<div class="n' + (rec.balance < 0 ? ' neg' : '') + '"><b>' + (rec.balance < 0 ? '−' : '') + h1(Math.abs(rec.balance)) + '</b><span>Balance</span></div>'
+        + '</div>';
+      h += '<p class="fh-verd">' + esc(hoursVerdict(rec)) + '</p>';
+    }
+
+    if (rows.length) {
+      var tr = trailTrend(rows), dirW = { up: 'up', down: 'down', flat: 'level' }[tr.dir];
+      h += '<div class="fh-h5">Last three months<em>' + (tr.enough
+        ? esc(dirW) + (tr.dir === 'flat' ? '' : ' ' + Math.abs(tr.pct) + '%')
+        : 'one month so far') + '</em></div>';
+      h += chart(rows);
+      var tb = rows.reduce(function (a, r) { return a + r.bill; }, 0), tn = rows.reduce(function (a, r) { return a + r.nonbill; }, 0);
+      h += '<div class="fh-key"><span><i style="background:' + BIL() + '"></i>Billable ' + h1(tb) + ' h</span>'
+        + '<span><i style="background:' + NBIL() + '"></i>Non-billable ' + h1(tn) + ' h</span></div>';
+      var part = rows.filter(function (r) { return r.partial; })[0];
+      var notes = [];
+      if (part) notes.push('The hatched month is still running.');
+      if (t.read < t.total) notes.push(t.read + ' of ' + t.total + ' markets read, so these are a floor — the sync is still filling the book.');
+      else if (t.at) notes.push('All ' + t.total + ' markets read, newest ' + ago(t.at) + '.');
+      if (notes.length) h += '<p class="fh-note">' + esc(notes.join(' ')) + '</p>';
+    } else if (rec.tracked) {
+      h += '<div class="fh-h5">Last three months</div><p class="fh-note">No task rows read for this client yet — the reports sync fills the book a few markets at a time, so the trajectory appears once it reaches this one.</p>';
+    }
+
+    // THE DECISION, kept apart from the fact. An account can be over its block and still be
+    // worked on purpose; saying so here is what stops the red dot reading as an unhandled alarm
+    // on every page in the FCC.
+    var cur = (rec.posture && rec.posture.state) || '';
+    h += '<div class="fh-post"><div class="fh-h5">Our call on it</div><div class="fh-btns">';
+    ['continue', 'hold', 'watch'].forEach(function (k) {
+      h += '<button type="button" data-post="' + k + '" class="' + (cur === k ? 'on' : '') + '">' + esc(POSTURES[k].label) + '</button>';
+    });
+    h += '</div>';
+    if (cur) {
+      // WHY, in the AM's own words. "Relationship smoothing" is a judgement about a client, and
+      // the judgement is the part the next person needs — the state alone just says somebody
+      // clicked a button. Optional, one line, and it travels with the decision.
+      h += '<input class="fh-why" type="text" maxlength="160" placeholder="Why — one line the next AM will read" value="'
+        + esc((rec.posture && rec.posture.note) || '') + '">';
+      h += '<div class="fh-who">' + ((rec.posture && rec.posture.note) ? '' : esc(POSTURES[cur].note) + ' ')
+        + (rec.posture.by ? 'Set by ' + esc(rec.posture.by) : '') + (rec.posture.at ? ' ' + ago(rec.posture.at) : '') + '</div>';
+    }
+    else h += '<div class="fh-who">Nobody has recorded a decision. A negative balance is a fact, not an instruction — the call is the AM’s.</div>';
+    h += '</div>';
+
+    h += '<div class="fh-links"><a href="/tasks?q=client:' + encodeURIComponent(hit ? hit.name : name) + '">Open the hours book →</a>'
+      + '<a href="/leadership">Commercial view →</a></div>';
+    return h;
+  }
+
+  function wire(name) {
+    var x = pop.querySelector('.fh-x'); if (x) x.onclick = hide;
+    var btns = pop.querySelectorAll('button[data-post]');
+    Array.prototype.forEach.call(btns, function (b) {
+      b.onclick = function () {
+        var k = b.getAttribute('data-post');
+        var hit = recOf(name), key = hit ? hit.name : name;
+        var rec = hit ? hit.rec : null;
+        var cur = (rec && rec.posture && rec.posture.state) || '';
+        var next = cur === k ? '' : k;           // clicking the set one clears it
+        Array.prototype.forEach.call(btns, function (o) { o.disabled = true; });
+        var keep = (cur === k && rec && rec.posture && rec.posture.note) || '';
+        savePosture(key, next, next ? keep : '', function (ok) {
+          if (ok && rec) rec.posture = next ? { state: next, by: ME, at: Date.now(), note: keep } : null;
+          if (ok) { openFor = ''; show(openAnchor || btns[0], true); decorate(); }
+          else Array.prototype.forEach.call(btns, function (o) { o.disabled = false; });
+        });
+      };
+    });
+    var why = pop.querySelector('.fh-why');
+    if (why) {
+      var commit = function () {
+        var hit = recOf(name), rec = hit ? hit.rec : null;
+        if (!rec || !rec.posture) return;
+        var txt = why.value.trim();
+        if (txt === ((rec.posture.note || ''))) return;
+        why.disabled = true;
+        savePosture(hit.name, rec.posture.state, txt, function (ok) {
+          why.disabled = false;
+          if (ok) { rec.posture.note = txt; rec.posture.by = ME || rec.posture.by; rec.posture.at = Date.now(); }
+        });
+      };
+      why.addEventListener('blur', commit);
+      why.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); why.blur(); } });
+    }
+  }
+
+  // The posture rides the SAME shared-state store every other team-visible decision uses
+  // (/api/state, kvmerge, X-Sync-Base), so one AM's call is every AM's call — the whole point.
+  function savePosture(client, state, note, then) {
+    var send = function () {
+      var body = { hourspost: {} };
+      body.hourspost[client] = state ? { state: state, note: String(note || '').slice(0, 160), by: ME || '', at: Date.now() } : null;
+      fetch('/api/state', { method: 'PUT', headers: { 'content-type': 'application/json', 'X-Sync-Base': String(BASE || 0) }, body: JSON.stringify(body) })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok && d && d.ok !== false, d: d }; }); })
+        .then(function (r) { then(r.ok); })
+        .catch(function () { then(false); });
+    };
+    if (BASE) return send();
+    fetch('/api/state?ns=hourspost').then(function (r) { BASE = Number(r.headers.get('X-Sync-Base') || 0) || Date.now(); return r.json(); })
+      .then(send).catch(function () { BASE = Date.now(); send(); });
+  }
+
+  // ---- boot -------------------------------------------------------------------------------------
+  function boot() {
+    load();
+    var t = null;
+    if (window.MutationObserver) new MutationObserver(function () {
+      if (t) clearTimeout(t);
+      t = setTimeout(function () { t = null; decorate(); }, 400);
+    }).observe(document.body, { childList: true, subtree: true });
+    setInterval(function () { if (!document.hidden) load(); }, 300000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+  }
+  if (document.readyState !== 'loading') boot(); else document.addEventListener('DOMContentLoaded', boot);
+  window.FCCHours = { reload: load, decorate: decorate, state: hoursState, verdict: hoursVerdict, rec: recOf };
+})();</script>

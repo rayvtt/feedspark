@@ -75,7 +75,21 @@ else
   echo "   ✗ abtests harness FAILED — see node tools/test_abtests.mjs"; FAIL=1
 fi
 
-echo "── qa-gate 3d2/7: retainer-hours classification (optimisation vs technical vs feature vs account)"
+echo "── qa-gate 3d2/7: FS Task Manager (search grammar, billable split, page/engine parity)"
+if node tools/test_reporttasks.mjs >/dev/null 2>&1; then
+  echo "   ✓ field prefixes, bill:yes/no on a part-billed row + the snapshot reconcile"
+else
+  echo "   ✗ task-manager harness FAILED — see node tools/test_reporttasks.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3d2b/7: FCC hours badge (trail maths, posture states, widget/engine parity)"
+if node tools/test_hoursbadge.mjs >/dev/null 2>&1; then
+  echo "   ✓ the partial month is flagged, a served negative is not an alarm, the twin agrees"
+else
+  echo "   ✗ hours-badge harness FAILED — see node tools/test_hoursbadge.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3d3/7: retainer-hours classification (optimisation vs technical vs feature vs account)"
 if node tools/test_reporthours.mjs >/dev/null 2>&1; then
   echo "   ✓ precedence traps hold; the baked snapshot reconciles"
 else
@@ -121,6 +135,20 @@ if node tools/test_i18n.mjs >/dev/null 2>&1; then
   echo "   ✓ skip / keep rules, number templating, seed integrity, owner-only route + injection hold"
 else
   echo "   ✗ i18n harness FAILED — see node tools/test_i18n.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3h4/7: Task Manager integration (parser, agent, worker store, mapping)"
+if node tools/test_tm.mjs >/dev/null 2>&1; then
+  echo "   ✓ column resolver, hours/date parsing, tmpush store + scoped read, Leadership overlay hold"
+else
+  echo "   ✗ Task Manager harness FAILED — see node tools/test_tm.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3h5/7: Task Manager AUTOMATIC sync (MCP transport, rotation, ticket hours, lifted tmPull)"
+if node tools/test_tmmcp.mjs >/dev/null 2>&1; then
+  echo "   ✓ JSON/SSE parsing, auth modes, market rotation, ibfref hours, cron pull vs stub MCP + page wiring hold"
+else
+  echo "   ✗ Task Manager sync harness FAILED — see node tools/test_tmmcp.mjs"; FAIL=1
 fi
 
 echo "── qa-gate 3h3/7: phone layer (the module bar, mirror rules, pan sweep, wiring)"

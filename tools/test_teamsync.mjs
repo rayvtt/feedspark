@@ -31,8 +31,10 @@ const KV = {}; let FAIL = false;
 const SHEET = {};                      // sheet id -> [{task,owner,status,due}] (the Project Plan tab)
 let SHEETFAIL = false, APPENDS = 0;
 const nk = s => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+let PLANLIVE = null;            // when set, /api/plan/live answers connected with these rows
 const API = { '/api/tests': [], '/api/gmail/intake': { items: [], calls: [] },
-  '/api/access?me=1': { ok: true, clients: null, modules: null }, '/api/plan/live': { ok: true, clients: {} },
+  '/api/access?me=1': { ok: true, clients: null, modules: null, owner: true, name: 'Ray', ownerName: 'Ray' },
+  '/api/plan/live': { ok: true, clients: {} },
   '/api/ingest/pending': { ok: true, items: [] }, '/api/schedule': { ok: true, brands: [] } };
 const body = q => new Promise(r => { let b = ''; q.on('data', d => b += d); q.on('end', () => r(b)); });
 
@@ -71,6 +73,16 @@ const server = http.createServer(async (q, r) => {
     const out = {}; for (const k of Object.keys(KV)) if (k.startsWith('state:')) out[k.slice(6)] = liftEnvelope(KV[k], now).data;
     return send(out, { 'X-Sync-Base': String(Date.now()) });
   }
+  if (p === '/api/plan/live' && q.method === 'POST') {
+    await body(q);
+    if (!PLANLIVE) return send({ ok: true, connected: false });
+    const brands = {};
+    // dated, like a real plan: intakeFiltered windows plan rows to the brand's latest months,
+    // so a dateless fixture leaves that window empty and hides every dated row filed into it
+    for (const [b, tasks] of Object.entries(PLANLIVE)) brands[b] = { tasks: tasks.map(t => ({ t, s: 'Open', b: 'open', c: 'keyword', o: '', d: '10/09/2026' })) };
+    return send({ ok: true, connected: true, brands });
+  }
+  if (p === '/__planlive') { PLANLIVE = JSON.parse(await body(q) || 'null'); return send({ ok: true }); }
   if (p === '/api/sheets/append') {
     const b = JSON.parse(await body(q) || '{}');
     if (SHEETFAIL) return send({ ok: false, error: 'no editor access' });
@@ -121,6 +133,8 @@ const briefs = () => fetch(U + '/__briefs').then(r => r.json());
 const sheet = id => fetch(U + '/__sheet?id=' + encodeURIComponent(id)).then(r => r.json());
 const setFail = v => fetch(U + '/__fail?on=' + (v ? 1 : 0)).then(r => r.json());
 const seedState = o => fetch(U + '/__seedstate', { method: 'POST', body: JSON.stringify(o) }).then(r => r.json());
+const seedBriefs = o => fetch(U + '/api/briefs', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(o) }).then(r => r.json());
+const planLive = o => fetch(U + '/__planlive', { method: 'POST', body: JSON.stringify(o) }).then(r => r.json());
 async function till(fn, want, ms) { const t0 = Date.now(); let v;
   while (Date.now() - t0 < (ms || 12000)) { v = await fn(); if (v === want) return v; await new Promise(r => setTimeout(r, 300)); } return v; }
 async function raise(p, client, task) { return p.evaluate(([c, t]) => {
@@ -216,6 +230,80 @@ await seedState({ manual: { ['Reiss|' + T9]: { client: 'Reiss', task: T9, owner:
 const Ray9 = await user({ plan: [{ client: 'Reiss', task: NEAR, status: 'Briefed' }] });
 ok(await till(async () => (await sheet(REISS_SHEET)).rows.some(r => r.task === T9), true, 15000) === true,
   'the near-miss sibling is written, not silently settled against the other theme');
+
+console.log('\n[10] A briefed ticket with no task in the plan is filed — even beside a fuzzy sibling');
+// Ray's Brief Ledger, 16 Sep 2026: REIS-20260910-02 (Cashmere/Merino) and REIS-20260914-01
+// (Gifting) sitting at Test running, briefed by Steven, with no Intake row and no plan row.
+// reconcileBriefTasks asked "is it already in Intake?" with the FUZZY sameTask, and Reiss's
+// own plan carries "Keywords Optimisation - Leather & Suede - Marketing Planner - 0926" —
+// dice 0.714 against Cashmere/Merino. So it said yes, stamped planned, and filed nothing.
+// planned:1 below is that stale stamp: the fix has to heal a ticket ALREADY carrying it.
+const SIB = 'Keywords Optimisation - Leather & Suede - Marketing Planner - 0926';
+// deliberately NOT the CASH string scenario [9] already wrote into this stub's sheet — a
+// pre-fix run passed on that row and proved nothing. Knitwear dices 0.769 against the sibling.
+const T10 = 'Keywords Optimisation - Knitwear - Marketing Planner - 0926' + RUN;
+const ID10 = 'REIS-20260910-02' + RUN;
+await planLive({ Reiss: [SIB] });
+await seedBriefs({ [ID10]: { id: ID10, client: 'Reiss', task: T10, status: 'running', by: 'Steven Opuni', due: '15092026', planned: 1, created: 1, updated: 1, comms: [], hist: [] } });
+const Ray10 = await user();
+const wrote10 = await till(async () => (await sheet(REISS_SHEET)).rows.some(r => r.task === T10), true, 15000);
+ok(wrote10 === true, 'the ticket\'s task is written into Reiss\'s Project Plan');
+// the INTAKE TABLE specifically — body.innerText also matches the ticket's own board card, so
+// the weaker check passed on runs where no Intake row had been created at all
+const inIntake = await till(() => Ray10.p.evaluate(() => {
+  const b = document.getElementById('it-body'); if (!b) return false;
+  return (b.innerText || '').indexOf('Knitwear') >= 0; }), true);
+ok(inIntake === true, 'and it has a real row in the Intake table');
+// the blocker was isDup: every "Keywords Optimisation - <theme> - Marketing Planner" ticket
+// anchored to the same Intake row at dice >= .45 and collapsed into one, so the reconcile
+// skipped it and it never rendered as its own record anywhere
+const dupMark = await Ray10.p.evaluate(() => {
+  const t = document.getElementById('bl-tog'); if (t) t.click();
+  return [...document.querySelectorAll('#bl-rows tr')].map(r => ({
+    task: (r.querySelectorAll('td')[2] || {}).textContent || '',
+    dup: !!r.querySelector('td span[title^="Collapsed duplicate"]') }));
+});
+const knit = dupMark.filter(r => r.task.indexOf('Knitwear') >= 0);
+ok(knit.length === 1 && !knit[0].dup, 'and it is NOT collapsed as a duplicate of another keyword ticket');
+// scoped to the themes this scenario pits against each other — earlier scenarios deliberately
+// raise RUN-suffixed twins of the same task, which SHOULD collapse
+const themes = ['Knitwear', 'Leather & Suede'];
+const collapsed = dupMark.filter(r => r.dup && themes.some(t => r.task.indexOf(t) >= 0));
+ok(collapsed.length === 0, 'no distinct keyword theme is collapsed into another — ' +
+  (collapsed.length ? JSON.stringify(collapsed.map(r => r.task.slice(0, 50))) : 'none'));
+
+console.log('\n[11] …and a ticket whose task IS in the plan is not filed twice');
+const T11 = SIB;   // already a live plan row
+const ID11 = 'REIS-20260101-99' + RUN;
+const appendsBefore = (await sheet(REISS_SHEET)).appends;
+await seedBriefs({ [ID11]: { id: ID11, client: 'Reiss', task: T11, status: 'running', created: 1, updated: 1, comms: [], hist: [] } });
+const Ray11 = await user();
+await Ray11.p.waitForTimeout(3000);
+const rows11 = (await sheet(REISS_SHEET)).rows.filter(r => r.task === T11).length;
+ok(rows11 === 0, 'a task the plan already carries is never appended again');
+ok((await sheet(REISS_SHEET)).appends >= appendsBefore, 'sanity: the sheet stub stayed reachable');
+
+console.log('\n[12] The ledger names the owner on a brief raised before `by` existed');
+const led = await Ray11.p.evaluate(() => {
+  const t = document.getElementById('bl-tog'); if (t) t.click();
+  const rows = [...document.querySelectorAll('#bl-rows tr')];
+  return rows.map(r => { const c = r.querySelectorAll('td');
+    return { task: (c[2] || {}).textContent || '', by: ((c[3] || {}).textContent || '').trim(),
+             inf: !!r.querySelector('.by-inf') }; });
+});
+const dashless = led.filter(r => r.by === '—');
+ok(led.length > 0, 'the ledger rendered ' + led.length + ' rows');
+ok(dashless.length === 0, 'no row is left as a dash');
+const stevens = led.filter(r => r.by === 'Steven Opuni');
+ok(stevens.length > 0 && stevens.every(r => !r.inf), 'a brief that recorded its author keeps that name, unmarked');
+// ID11 is the one seeded with NO `by`; the briefs raised through the composer above genuinely
+// recorded by:'Ray', so those must read Ray WITHOUT the inferred marking
+const unattr = led.filter(r => r.task.indexOf('Leather & Suede') >= 0);
+ok(unattr.length > 0 && unattr.every(r => r.by === 'Ray' && r.inf),
+  'the unattributed brief reads Ray, marked as the inference it is');
+const own = led.filter(r => r.task.indexOf('Tailoring') >= 0);
+ok(own.length > 0 && own.every(r => r.by === 'Ray' && !r.inf),
+  'a brief Ray actually raised records his name and is NOT marked inferred');
 
 await b.close(); server.close();
 console.log(fails ? ('\nFAIL (' + fails + ')') : '\nPASS');
