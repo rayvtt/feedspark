@@ -234,7 +234,7 @@ window.addEventListener('load',restore);
   .wdots{display:inline-flex;gap:3px;flex:none}
   .wdots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
   .wdots i.on{background:var(--orange-deep)}
-  .psum{font-size:11.5px;font-weight:700;color:var(--muted);line-height:1.35;overflow-wrap:anywhere}
+  .psum{font-size:12px;font-weight:700;color:var(--muted);line-height:1.55;overflow-wrap:anywhere}
   /* ---------------- title anatomy ---------------- */
   .mask-row{display:grid;grid-template-columns:repeat(5,minmax(118px,1fr));gap:9px;min-width:620px}
   .mseg{background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:10px 12px}
@@ -538,7 +538,7 @@ window.addEventListener('load',restore);
     </div>
   </div>
   <div class="pillars" id="pillars"></div>
-  <p class="sub" id="pill-foot" style="margin-top:12px"></p>
+  <p class="sub" id="pill-foot" style="margin-top:14px;line-height:1.7"></p>
 </div></section>
 
 <section id="titles" class="rv"><div class="wrap">
@@ -942,12 +942,10 @@ function renderScore(a){
   // architecture that involves custom labels is not necessarily usable for AI, so I don't
   // know what's in there". Now it says what is in there, and where it belongs instead.
   var la=a.labelArchitecture,foot=$('#pill-foot');
-  if(foot)foot.innerHTML='Pillars are weighted, so the headline is not their average — '
-    +'<b>conversational attributes</b> carry the most (×2.4), then title anatomy and attribute completeness. '
-    +'The four tiers are the ladder the readiness decks speak.'
-    +(la?' <b>Custom labels are measured but not scored</b>: label architecture reads '
-      +Math.round(la.score)+'/100 on this feed, and it is left out because '+esc(la.why)
-      +' — the detail lives in <a href="/labels">Label Guard</a>.':'');
+  if(foot)foot.innerHTML='<b>Conversational attributes carry the most</b> (×2.4), then title anatomy and '
+    +'attribute completeness — the headline is weighted, not an average.'
+    +(la?'<br><b>Custom labels are measured but not scored</b> — this feed reads '+Math.round(la.score)
+      +'/100. They are campaign filters, never shown to shoppers. Detail in <a href="/labels">Label Guard</a>.':'');
 }
 function renderTitles(a){
   var t=a.titles||{},mask=t.mask||{},rc=+a.rowCount||0;

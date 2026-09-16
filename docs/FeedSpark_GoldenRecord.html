@@ -262,8 +262,11 @@ window.addEventListener('load',restore);
   .wdots{display:inline-flex;gap:3px;flex:none}
   .wdots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
   .wdots i.on{background:var(--orange-deep)}
-  .psum{font-size:11px;font-weight:700;color:var(--muted);line-height:1.35;overflow-wrap:anywhere}
-  .air-foot{font-size:11px;font-weight:700;color:var(--muted);margin:10px 0 0;line-height:1.5}
+  .psum{font-size:12px;font-weight:700;color:var(--muted);line-height:1.55;overflow-wrap:anywhere}
+  .air-foot{font-size:12px;font-weight:700;color:var(--muted);margin:12px 0 0;line-height:1.65}
+  ul.air-foot{padding-left:16px;margin-top:14px}
+  ul.air-foot li{margin-bottom:5px}
+  ul.air-foot li::marker{color:var(--line)}
   /* pillar heatmap — the Feed Lab grid, scoped to this brand's markets */
   .heat-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:13px 15px;margin-top:12px}
   .heat-h{font-size:12.5px;font-weight:900;margin-bottom:8px}
@@ -323,27 +326,27 @@ window.addEventListener('load',restore);
   .qz-flag.f{background:#FDEBEA;color:var(--risk)}
   .qz-flag.w{background:#FDF3E3;color:var(--orange-deep)}
   .qz-det{grid-column:1/-1;padding:4px 0 10px}
-  .qz-rule{display:grid;grid-template-columns:104px minmax(150px,1fr) 78px;gap:10px;align-items:start;
-    padding:7px 0;border-top:1px dotted var(--line);font-size:12px}
+  .qz-rule{display:grid;grid-template-columns:104px minmax(150px,1fr) 78px;gap:12px;align-items:start;
+    padding:12px 0;border-top:1px dotted var(--line);font-size:12.5px}
   .qz-sev{font-size:9px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;border-radius:100px;
     padding:3px 6px;text-align:center;white-space:nowrap;align-self:start}
   .qz-sev.fail{background:#FDEBEA;color:var(--risk)}
   .qz-sev.warn{background:#FDF3E3;color:var(--orange-deep)}
   .qz-rl{font-weight:800;display:block}
-  .qz-why{display:block;font-weight:600;color:var(--muted);font-size:11.5px;margin-top:2px;line-height:1.5}
-  .qz-eg{margin-top:4px;font-size:11px;color:var(--ink-2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .qz-why{display:block;font-weight:600;color:var(--muted);font-size:12.5px;margin-top:4px;line-height:1.65}
+  .qz-eg{margin-top:6px;font-size:11.5px;color:var(--ink-2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
   .qz-eg span{display:block;background:var(--wash);border:1px solid var(--line);border-radius:6px;
-    padding:3px 7px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    padding:6px 8px;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* a duplicate shown as what it IS — one repeated value, the products that share it */
   .qz-egs{display:block;margin-top:4px}
-  .qz-cap{display:block;font-style:normal;font-size:10.5px;font-weight:700;color:var(--muted);line-height:1.55}
+  .qz-cap{display:block;font-style:normal;font-size:11.5px;font-weight:700;color:var(--muted);line-height:1.6;margin-bottom:2px}
   .qz-vc{margin-left:7px;padding:0 6px;border-radius:100px;background:var(--wash);border:1px solid var(--line);
     font-family:Lato,system-ui,sans-serif;font-size:9.5px;font-weight:900;letter-spacing:.02em;text-transform:uppercase}
   .qz-grp{display:block;background:var(--wash);border:1px solid var(--line);border-radius:6px;
-    padding:4px 8px;margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
+    padding:7px 9px;margin-top:5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.5}
   .qz-grp b{color:var(--orange-deep);font-weight:900;margin-right:6px;font-family:inherit}
   .qz-grp em{display:block;font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .qz-grp i{display:block;font-style:normal;color:var(--muted);font-size:10px;margin-top:2px;
+  .qz-grp i{display:block;font-style:normal;color:var(--muted);font-size:11px;margin-top:4px;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .qz-hit{text-align:right;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
   .qz-hit b{display:block;font-size:13px}
@@ -362,27 +365,37 @@ window.addEventListener('load',restore);
   .qz-peta{white-space:nowrap}
   /* two scores, two questions — where the content-quality read and the AI pillar diverge */
   .rec-tbl{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
-  .rec-row{display:grid;grid-template-columns:118px 132px 156px 54px minmax(220px,1.35fr);gap:12px;
-    align-items:start;padding:10px 12px;border-top:1px solid var(--line);font-size:12px}
+  .rec-row{display:grid;grid-template-columns:150px 130px 166px 58px minmax(230px,1.25fr);gap:14px;
+    align-items:start;padding:14px 14px;border-top:1px solid var(--line);font-size:12.5px}
+  .rec-row>*{min-width:0}   /* a long attribute name wraps inside its column, never over the score */
   .rec-row:first-child{border-top:none}
   .rec-row.on{background:#FFFBF4}
-  .rec-head{background:var(--wash);font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-  .rec-k{font-weight:800;line-height:1.7}
+  .rec-head{background:var(--wash);font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--muted);padding-top:9px;padding-bottom:9px}
+  .rec-k{font-weight:800;line-height:1.6;overflow-wrap:anywhere}
   .rec-k i{font-style:normal;color:var(--muted);font-weight:700}
-  .rec-n{font-weight:900;font-size:15px;font-variant-numeric:tabular-nums;line-height:1.2}
-  .rec-n em{display:block;font-style:normal;font-size:10.5px;font-weight:700;color:var(--muted);
-    margin-top:3px;line-height:1.45;font-variant-numeric:normal}
-  .rec-d{font-weight:900;font-size:14px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+  .rec-n{font-weight:900;font-size:16px;font-variant-numeric:tabular-nums;line-height:1.2}
+  /* two lines, then clamp — the full text is in the tooltip and on the pillar card itself.
+     Unclamped these ran to four lines and set the height of every row in the table. */
+  .rec-n em{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+    font-style:normal;font-size:11.5px;font-weight:700;color:var(--muted);
+    margin-top:5px;line-height:1.55;font-variant-numeric:normal;overflow-wrap:anywhere}
+  .rec-d{font-weight:900;font-size:15px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
   .rec-d.big{color:var(--orange-deep)}
-  .rec-w{font-size:11.5px;color:var(--ink-2);line-height:1.6}
-  .rec-w b{color:var(--ink);font-weight:800}
-  .rec-cause{display:block;margin-top:4px;color:var(--orange-deep);font-weight:700}
+  /* two labelled lines, not a paragraph — the eye finds "what does each side measure" without reading prose */
+  .rec-w{font-size:12.5px;color:var(--ink-2);line-height:1.6}
+  .rec-m{display:grid;grid-template-columns:54px 1fr;gap:10px;align-items:baseline;margin-bottom:5px}
+  .rec-m b{font-size:9.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .rec-cause{display:block;margin-top:9px;padding-top:8px;border-top:1px dotted var(--line);
+    color:var(--orange-deep);font-weight:700;line-height:1.55}
   .rec-flag{font-size:11px;font-weight:900;color:var(--orange-deep);background:#FDF3E3;border-radius:100px;padding:3px 9px}
   [data-theme=dark] .rec-row.on{background:#241B10}
   [data-theme=dark] .rec-tbl{background:var(--paper)}
   [data-theme=dark] .gr-sticky{background:var(--paper)}
   @media(max-width:900px){.rec-row{grid-template-columns:1fr 1fr;gap:8px}
     .rec-head{display:none}.rec-k,.rec-w{grid-column:1/-1}.rec-d{text-align:left}}
+  .qz-foot{display:grid;gap:3px;margin:12px 0 0;font-size:11.5px;font-weight:700;color:var(--muted);line-height:1.6}
+  .qz-foot b{color:var(--ink-2)}
   .qz-empty{font-size:12.5px;color:var(--ink-2);line-height:1.6}
   .qz-meta{font-size:11px;font-weight:700;color:var(--muted);margin-left:auto;display:flex;align-items:center;gap:8px}
   body.demo .qz-act{display:none!important}
@@ -451,6 +464,9 @@ window.addEventListener('load',restore);
   body.pdf .rec-head{display:grid!important}
   body.pdf .rec-k,body.pdf .rec-w{grid-column:auto!important}   /* else each row stacks into three */
   body.pdf .rec-d{text-align:right!important}
+  /* paper has no tooltip, so the clamped sub-label prints in full (measured after body.pdf,
+     so the sheet is sized to the unclamped height) */
+  body.pdf .rec-n em{display:block!important;-webkit-line-clamp:unset!important;overflow:visible!important}
   /* pinning means nothing on paper, and a condensed header would print a shrunken dial */
   body.pdf .gr-sticky{position:static!important;margin:0!important;padding:0!important;
     box-shadow:none!important;border-bottom:none!important}
@@ -1872,10 +1888,11 @@ window.addEventListener('load',restore);
                 // a duplicate is a GROUP: the shared value, how many products carry it and
                 // which ones. Four unrelated-looking strings read as a wrong finding (Ray on
                 // Monsoon GB) — "×2 · 1000945103, 1000944940" is the finding, verifiable.
-                ? '<span class="qz-egs"><i class="qz-cap">Each block is ONE value and the products sharing it — matched in' +
-                    ' full, case-insensitively' + (b.vals > b.groups.length ? '; ' + fmt(b.vals - b.groups.length) + ' more not shown' : '') + '.' +
-                    (b.within ? ' A further <b>' + fmt(b.within) + '</b> products share copy only with variants of the same product' +
-                      ' (' + fmt(b.withinVals) + ' value' + (b.withinVals === 1 ? '' : 's') + ') — expected, and not counted above.' : '') + '</i>' +
+                // two separate statements, on two lines — as one sentence this was a wall
+                ? '<span class="qz-egs"><i class="qz-cap">One block = one value, matched in full' +
+                    (b.vals > b.groups.length ? ' · ' + fmt(b.vals - b.groups.length) + ' more not shown' : '') + '</i>' +
+                    (b.within ? '<i class="qz-cap">Not counted: <b>' + fmt(b.within) + '</b> products share copy only with' +
+                      ' variants of the same product (' + fmt(b.withinVals) + ' value' + (b.withinVals === 1 ? '' : 's') + ')</i>' : '') +
                   b.groups.map(function (g) {
                     return '<span class="qz-grp" title="' + esc(g.v) + '"><em><b>×' + g.n + '</b>' + esc(g.v) + '</em>' +
                       (g.ids && g.ids.length ? '<i>' + esc(g.ids.join(' · ')) +
@@ -1889,12 +1906,14 @@ window.addEventListener('load',restore);
           });
         }
         if (r.key === 'title') h += titleAnatomy(k);   // the anatomy of what those rules just judged
-        h += '<p class="hint muted" style="margin:8px 0 0;font-size:11px">' + esc(r.spec) +
-          ' · <a href="https://support.google.com/merchants/answer/' + r.doc + '" target="_blank" rel="noopener">Google’s specification for g:' + esc(r.key) + '</a>' +
-          ' · average length ' + r.avgLen + ' chars (' + r.minLen + '–' + r.maxLen + ')' +
+        // the spec on one line, what was measured on another — as one ·-chain this wrapped
+        // into an unreadable run of grey text
+        h += '<p class="qz-foot"><span>' + esc(r.spec) +
+          ' · <a href="https://support.google.com/merchants/answer/' + r.doc + '" target="_blank" rel="noopener">Google’s specification for g:' + esc(r.key) + '</a></span>' +
+          '<span>Measured: average length <b>' + r.avgLen + '</b> chars (' + r.minLen + '–' + r.maxLen + ')' +
           // a count-based finding has to show what it counted, or it cannot be checked
           (r.perProduct ? ' · read across <b>' + r.cols + '</b> column' + (r.cols === 1 ? '' : 's') +
-            ' — <b>' + r.perProduct + '</b> values per product that has one' : '') + '</p></div>';
+            ', <b>' + r.perProduct + '</b> values per product' : '') + '</span></p></div>';
       }
       h += '</div>';
     });
@@ -2123,13 +2142,11 @@ window.addEventListener('load',restore);
           '<span class="psum">' + esc(p.summary) + '</span></div></div>';
       }).join('') + '</div>' +
       pillarHeat(k) +
-      '<p class="air-foot">Pillars are weighted, so the headline is not their average: <b>conversational attributes</b>' +
-      ' carry the most (×2.4, four dots) — they are the only fields in Google’s specification whose stated purpose is' +
-      ' AI comprehension — then title anatomy and attribute completeness. The weight is set so everything else tops out' +
-      ' at 79: a feed carrying none of the attributes Google built for agentic surfaces cannot read as Agentic-ready.' +
-      ' <b>Custom labels are measured but not scored</b> — Google’s own specification says their values “won’t be shown' +
-      ' to customers”, so they are evidence of campaign structure, not of AI readiness; the detail is in' +
-      ' <a href="/labels">Label Guard</a>. The four tiers are the ladder the readiness decks speak.</p>' +
+      '<ul class="air-foot"><li><b>Conversational attributes carry the most</b> (×2.4) — the only fields Google built' +
+      ' for AI surfaces. Everything else tops out at 79, so a feed with none of them cannot read as Agentic-ready.</li>' +
+      '<li><b>Custom labels are measured but not scored.</b> Google’s spec says their values “won’t be shown to' +
+      ' customers” — campaign structure, not AI readiness. Detail in <a href="/labels">Label Guard</a>.</li>' +
+      '<li>The four tiers are the ladder the readiness decks speak.</li></ul>' +
       '</div>';
     return h;
   }
@@ -2152,25 +2169,25 @@ window.addEventListener('load',restore);
      sections — the worst-breaking rule on one side, the pillar's own summary on the other. */
   var RECON = [
     { q: ['title'], p: 'titles',
-      qm: 'the stated rules for a title — the 150-character cap, block capitals, promotional copy, a title that repeats another product’s',
-      pm: 'the 80–120 character window and how many MASK slots (brand · material · fit · colour · use-case) the title actually carries',
-      why: 'a title can break no rule at all and still be short and bare — legal, but with little for Shopping or an AI surface to match on' },
+      qm: 'the stated rules — length cap, capitals, promo copy, repeats',
+      pm: 'the 80–120 window and how many MASK slots the title carries',
+      why: 'a title can break no rule and still be short and bare' },
     { q: ['description'], p: 'descriptions',
-      qm: 'the share of PRODUCTS whose description is shared with a different product (variants of one product are not counted)',
-      pm: 'the share of DISTINCT copy reused across products — and it counts for only a fifth of the pillar, next to coverage (half) and length (three tenths)',
-      why: 'different denominators: one boilerplate paragraph on 4,000 products is thousands of products but a single value, so the same duplication reads high on one side and small on the other' },
+      qm: 'share of PRODUCTS sharing copy with a different product',
+      pm: 'share of DISTINCT copy reused — a fifth of the pillar, beside coverage and length',
+      why: 'different denominators — one boilerplate paragraph on 4,000 products is one value' },
     { q: ['google_product_category', 'product_type'], p: 'taxonomy',
-      qm: 'whether the value is SHAPED the way Google specifies — a real taxonomy path, three levels or more, never a single level',
-      pm: 'how DEEP the tree actually goes — GPC toward four levels and three or more product_type assignments per product',
-      why: 'the floor and the ceiling of the same field: every path can clear the stated minimum while the catalogue as a whole stays shallow' },
+      qm: 'whether the path is SHAPED as Google specifies — three levels or more',
+      pm: 'how DEEP the tree goes — GPC toward four, product_type 3+ assignments',
+      why: 'floor against ceiling — every path can clear the minimum while the catalogue stays shallow' },
     { q: ['color', 'material', 'pattern'], p: 'attributes',
-      qm: 'whether the values that ARE there are usable — a real colour name, a material rather than a sentence, no internal codes',
-      pm: 'weighted COVERAGE of the variant attributes (colour, size, item_group_id, material, gender, age_group, pattern)',
-      why: 'coverage and correctness are independent — a feed can fill every attribute with something unusable, or leave gaps that are impeccably written' },
+      qm: 'whether the values that are there are usable',
+      pm: 'weighted COVERAGE of the variant attributes',
+      why: 'coverage and correctness are independent' },
     { q: ['product_highlight'], p: 'ai',
-      qm: 'the stated rules for highlights — at least two, at most 100, 150 characters each, no repeats',
-      pm: 'the structured detail an agent can quote back: how many highlights per product, and how deep product_type goes',
-      why: 'one is whether the highlights you have are legal, the other is whether there are enough of them to answer with — a feed can keep two perfect highlights and still have little to say' },
+      qm: 'the stated rules — two minimum, 150 characters each, no repeats',
+      pm: 'highlights per product and how deep product_type goes',
+      why: 'legal against enough — two perfect highlights still say little' },
   ];
   var RECON_GAP = 15;     // the point at which two readings of one field are worth explaining
   function reconcileSection(k) {
@@ -2216,18 +2233,18 @@ window.addEventListener('load',restore);
       h += '<div class="rec-row' + (big ? ' on' : '') + '">' +
         '<span class="rec-k">' + r.m.q.map(function (x) { return '<i>g:</i>' + esc(x); }).join('<br>') + '</span>' +
         '<span class="rec-n" style="color:' + scoreCol(r.q) + '">' + r.q +
-        '<em>' + (r.worst ? esc(r.worst.label) + ' · ' + r.worst.pct + '%' : 'nothing flagged') + '</em></span>' +
+        '<em title="' + esc(r.worst ? r.worst.label + ' · ' + r.worst.pct + '%' : 'nothing flagged') + '">' +
+        (r.worst ? esc(r.worst.label) + ' · ' + r.worst.pct + '%' : 'nothing flagged') + '</em></span>' +
         '<span class="rec-n" style="color:' + airCol(r.pil.score) + '">' + r.pil.score +
-        '<em>' + esc(r.pil.label) + ' — ' + esc(r.pil.summary) + '</em></span>' +
+        '<em title="' + esc(r.pil.label + ' — ' + r.pil.summary) + '">' + esc(r.pil.label) + ' — ' + esc(r.pil.summary) + '</em></span>' +
         '<span class="rec-d' + (big ? ' big' : '') + '">' + (big ? '⚠ ' : '') + r.gap + '</span>' +
-        '<span class="rec-w"><b>Quality measures</b> ' + esc(r.m.qm) + '. <b>The pillar measures</b> ' + esc(r.m.pm) +
-        '.' + (big ? ' <span class="rec-cause">' + esc(r.m.why) + '</span>' : '') + '</span></div>';
+        '<span class="rec-w">' +
+        '<span class="rec-m"><b>Quality</b><span>' + esc(r.m.qm) + '</span></span>' +
+        '<span class="rec-m"><b>Pillar</b><span>' + esc(r.m.pm) + '</span></span>' +
+        (big ? '<span class="rec-cause">' + esc(r.m.why) + '</span>' : '') + '</span></div>';
     });
-    h += '</div><p class="air-foot">Neither number checks the other, so neither is “right”. Use <b>content quality</b>' +
-      ' for what to fix and what to brief — every finding quotes a rule Google publishes, so it survives a conversation' +
-      ' with the client. Use <b>AI-Readiness</b> for what to sell and where this feed sits against the ladder the' +
-      ' readiness decks speak. A wide gap is the useful case: it names a field that is compliant and underused, or' +
-      ' complete and not yet correct.</p></div>';
+    h += '</div><p class="air-foot"><b>Content quality</b> is what to fix and brief — every finding quotes a published' +
+      ' rule. <b>AI-Readiness</b> is what to sell. A wide gap names a field that is compliant and underused.</p></div>';
     return h;
   }
   // the MASK read, nested under g:title in the content-quality section — the anatomy of the

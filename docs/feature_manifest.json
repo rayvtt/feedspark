@@ -6339,7 +6339,7 @@
     {
       "name": "Golden Record content quality: the page renders each duplicate as its group with the ids sharing it, and the hit column names products AND values",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "Each block is ONE value and the products sharing it",
+      "pattern": "<span class=\"qz-grp\" title=\"",
       "min": 1
     },
     {
@@ -6375,7 +6375,7 @@
     {
       "name": "Golden Record: each duplicate group is labelled 'different products' or 'variants of one product', and the finding states what it did NOT count",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "share copy only with variants of the same product",
+      "pattern": ">Not counted: <b>",
       "min": 1
     },
     {
