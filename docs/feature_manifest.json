@@ -5536,6 +5536,26 @@
    "min": 1
   },
   {
+   "name": "one-pager: area mix as percentages",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "function opAreas"
+  },
+  {
+   "name": "one-pager: monthly volume bar charts",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "function opChart"
+  },
+  {
+   "name": "one-pager: internal vocabulary scrubbed from client-facing text",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "var OPSAFE"
+  },
+  {
+   "name": "one-pager: itemised open tasks / pipeline / recent requests",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "Most recent requests"
+  },
+  {
    "name": "Workflow: briefs ALREADY stranded in a browser are published on next open — the boot replaced BRIEFS with the server map, so the next load dropped them (Ray 16 Sep 2026, Steven's board showing RUNNING off tickets nobody else had)",
    "file": "docs/FeedSpark_Workflow.html",
    "pattern": "function bfRescueLocal(){",

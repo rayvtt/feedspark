@@ -221,7 +221,7 @@ window.addEventListener('load',restore);
   /* ---- brand one-pager: a client-facing sheet, printable to PDF (Ray, 16 Sep 2026) ---- */
   .op-scrim{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:900;display:flex;
     align-items:flex-start;justify-content:center;padding:28px 18px;overflow:auto}
-  .op-sheet{background:#fff;width:100%;max-width:880px;border-radius:14px;padding:34px 38px 26px;
+  .op-sheet{background:#fff;width:100%;max-width:960px;border-radius:14px;padding:34px 38px 26px;
     box-shadow:0 24px 70px rgba(15,23,42,.3);position:relative}
   .op-load{padding:40px 0;text-align:center;color:var(--muted);font-weight:700}
   .op-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
@@ -260,6 +260,24 @@ window.addEventListener('load',restore);
     padding:9px 13px;border-radius:0 8px 8px 0;font-size:12.5px}
   .op-foot{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);
     font-weight:700;border-top:1px solid var(--line);margin-top:24px;padding-top:11px}
+  .op-h4{font-size:12px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:16px 0 0}
+  .op-mix{margin-top:9px}
+  .op-mixr{display:grid;grid-template-columns:150px 1fr 120px;gap:9px;align-items:center;padding:3px 0;font-size:12px}
+  .op-mixl{font-weight:700;color:var(--ink-2)}
+  .op-mixb{background:var(--wash);border-radius:100px;height:9px;overflow:hidden}
+  .op-mixb i{display:block;height:100%;background:var(--orange-deep);border-radius:100px}
+  .op-mixp{text-align:right;font-size:11px;color:var(--muted)}
+  .op-mixp b{font-size:12.5px;color:var(--ink-2)}
+  .op-chart{margin-top:12px;border:1px solid var(--line);border-radius:10px;padding:10px 12px 8px;background:#fff}
+  .op-keys{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--muted);font-weight:700}
+  .op-key{display:inline-flex;align-items:center;gap:5px}
+  .op-key i{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .op-list{list-style:none;margin:8px 0 0;padding:0}
+  .op-list li{display:flex;justify-content:space-between;gap:14px;align-items:baseline;
+    padding:6px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:5px;font-size:12.5px;background:#fff}
+  .op-li-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .op-li-m{flex:none;font-size:11px;color:var(--muted);font-weight:700}
+  @media (max-width:720px){ .op-mixr{grid-template-columns:1fr;gap:2px} .op-mixp{text-align:left} }
   @media (max-width:720px){ .op-stats{grid-template-columns:1fr} .op-sheet{padding:22px 18px} }
   /* print: the sheet IS the document — everything else leaves the page */
   @media print{
@@ -940,104 +958,177 @@ window.addEventListener('load',restore);
     document.removeEventListener('keydown', opEsc);
   }
 
+  // Free text lifted from the plan, the pipeline and the inbox carries OUR vocabulary — task
+  // rows say "using Tachyon", briefs name ASPL. Ray asked for the detail (which tasks are open,
+  // what is in the pipeline), and the detail is worth having, but the client's own sheet is not
+  // where they should meet our tooling's internal names. Substitute, never silently drop, so the
+  // line still reads as the work it describes. tools/test_onepager.mjs asserts the result.
+  var OPSAFE = [[/\bTachyon(\s*AI)?\b/gi, 'AI generation'], [/\bFeedHero\b/gi, 'the feed platform'],
+    [/\bASPL\b/g, 'the content team'], [/\bTechAM\b/gi, 'the technical team'],
+    [/\bFCC\b/g, 'the dashboard'], [/\[?\s*\bibf(code|ref|due):[a-z0-9-]+\s*\]?/gi, ''],
+    [/\[[A-Z]{2,4}-\d{8}-\d{2}\]/g, ''], [/\bgviz\b/gi, ''], [/\s{2,}/g, ' ']];
+  function opSafe(t) {
+    var v = String(t == null ? '' : t);
+    OPSAFE.forEach(function (r) { v = v.replace(r[0], r[1]); });
+    return v.trim();
+  }
+  // "Jane Doe <jane@brand.com>" -> "Jane Doe"; the address alone when there is no display name
+  function opSender(from) {
+    var f = String(from || '').trim();
+    var m = /^\s*"?([^"<]+?)"?\s*<[^>]+>/.exec(f);
+    return (m ? m[1] : f.replace(/[<>]/g, '')).trim() || 'unknown sender';
+  }
+  // ---- monthly volume chart: grouped bars, one group per month ------------------------------
+  // Ray, 16 Sep 2026: "the volume of emails, the volume of new products, and the volume of tasks
+  // that are coming in from scheduled work plus intake on a monthly basis. Provide a chart — a
+  // bar chart — as you have seen summarized in other modules." Inline SVG so it survives
+  // Print/PDF; palette is the validated categorical set the other modules use.
+  var OPBAR = [['#2563EB', 'Emails in'], ['#ED6F0B', 'Work booked in'], ['#15803d', 'New products']];
+  function opChart(series, months, labels) {
+    var W = 760, H = 210, PADL = 46, PADB = 30, PADT = 12;
+    var n = months.length; if (!n) return '';
+    var max = 0; series.forEach(function (s) { months.forEach(function (m) { max = Math.max(max, s.v[m] || 0); }); });
+    if (!max) return '';
+    var gw = (W - PADL - 8) / n, bw = Math.max(2, Math.min(13, (gw - 6) / series.length));
+    var y = function (v) { return PADT + (H - PADT - PADB) * (1 - v / max); };
+    var g = '';
+    // horizontal guides, so a bar can be read against a number rather than eyeballed
+    [0, 0.5, 1].forEach(function (f) {
+      var val = Math.round(max * f), yy = y(val);
+      g += '<line x1="' + PADL + '" y1="' + yy + '" x2="' + W + '" y2="' + yy + '" stroke="#e5e7eb" stroke-width="1"/>'
+        + '<text x="' + (PADL - 6) + '" y="' + (yy + 3.5) + '" text-anchor="end" font-size="9" fill="#64748b">' + val + '</text>';
+    });
+    months.forEach(function (m, i) {
+      var x0 = PADL + i * gw + 3;
+      series.forEach(function (s, si) {
+        var v = s.v[m] || 0; if (!v) return;
+        var hh = Math.max(1, (H - PADT - PADB) * (v / max));
+        g += '<rect x="' + (x0 + si * (bw + 1.5)) + '" y="' + (H - PADB - hh) + '" width="' + bw + '" height="' + hh
+          + '" fill="' + s.c + '" rx="1.5"><title>' + esc(labels[i]) + ' · ' + esc(s.l) + ': ' + v + '</title></rect>';
+      });
+      if (n <= 14 || i % 2 === 0) {
+        g += '<text x="' + (x0 + (gw - 6) / 2) + '" y="' + (H - PADB + 13) + '" text-anchor="middle" font-size="9" fill="#64748b">'
+          + esc(String(labels[i]).split(' ')[0]) + '</text>';
+      }
+    });
+    var key = series.map(function (s) {
+      return '<span class="op-key"><i style="background:' + s.c + '"></i>' + esc(s.l) + '</span>';
+    }).join('');
+    return '<div class="op-chart"><svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Monthly volumes">'
+      + g + '</svg><div class="op-keys">' + key + '</div></div>';
+  }
+
+  // area mix: what share of the work each part of the feed took
+  function opAreas(cats) {
+    var rows = Object.keys(cats || {}).map(function (c) {
+      return { c: c, l: OPCLBL[c] || c, t: cats[c].total || 0, d: cats[c].done || 0 };
+    }).filter(function (r) { return r.t; }).sort(function (a, b) { return b.t - a.t; });
+    var tot = rows.reduce(function (s, r) { return s + r.t; }, 0);
+    if (!tot) return '';
+    var h = '<div class="op-mix">';
+    rows.forEach(function (r) {
+      var pct = Math.round(r.t / tot * 1000) / 10;
+      h += '<div class="op-mixr"><span class="op-mixl">' + esc(r.l) + '</span>'
+        + '<span class="op-mixb"><i style="width:' + Math.max(1, pct) + '%"></i></span>'
+        + '<span class="op-mixp"><b>' + pct + '%</b> <span>' + r.d + '/' + r.t + ' done</span></span></div>';
+    });
+    return h + '</div>';
+  }
+
   function openOnePager(name) {
     opShell(name);
     var b = B[name] || {}, p = PT[name] || null;
-    // the two archives the dossier doesn't already hold; both degrade to null rather than
-    // blocking the page — a one-pager missing its test section still beats no one-pager
-    var got = {};
-    function done(k, v) { got[k] = v; if ('ab' in got && 'kw' in got && 'em' in got) portLoad(name, function (mkts) { opRender(name, b, p, mkts, got); }); }
-    fetch(API + '/api/abtests?client=' + encodeURIComponent(name)).then(function (r) { return r.json(); })
-      .then(function (j) { done('ab', (j && j.ok) ? j : null); }, function () { done('ab', null); });
-    fetch(API + '/api/kwresults?client=' + encodeURIComponent(name)).then(function (r) { return r.json(); })
-      .then(function (j) { done('kw', (j && j.ok) ? j : null); }, function () { done('kw', null); });
-    // Hours and inbound email are the two figures Ray asked for that the plan snapshot cannot
-    // give: hours live on the content team's weekly schedule, email on the inbox capture. Both
-    // are bucketed by month by the volumes payload, so one call covers every look-back window.
-    // Client-scoped — a signin without access gets nothing and the cells read "—", not 0.
-    fetch(API + '/api/volumes?client=' + encodeURIComponent(name) + '&months=12')
-      .then(function (r) { return r.json(); })
-      .then(function (j) { done('em', (j && j.ok && j.streams) ? j : null); }, function () { done('em', null); });
+    var need = ['ab', 'kw', 'em', 'ar', 'in'], got = {};
+    function done(k, v) {
+      got[k] = v;
+      if (need.every(function (x) { return x in got; })) portLoad(name, function (mkts) { opRender(name, b, p, mkts, got); });
+    }
+    var grab = function (k, u, pick) {
+      fetch(API + u).then(function (r) { return r.json(); })
+        .then(function (j) { done(k, pick(j)); }, function () { done(k, null); });
+    };
+    grab('ab', '/api/abtests?client=' + encodeURIComponent(name), function (j) { return j || null; });
+    grab('kw', '/api/kwresults?client=' + encodeURIComponent(name), function (j) { return (j && j.ok) ? j : null; });
+    // hours + emails + work booked in, bucketed by month
+    grab('em', '/api/volumes?client=' + encodeURIComponent(name) + '&months=12', function (j) { return (j && j.ok && j.streams) ? j : null; });
+    // new products by first-seen date, summed across this brand's Shopping feeds
+    grab('ar', '/api/volume/arrivals', function (j) { return (j && j.ok && j.feeds) ? j : null; });
+    // the actual recent emails, for the five-most-recent list
+    grab('in', '/api/gmail/intake', function (j) { return (j && j.items) ? j.items : null; });
   }
 
   function opRender(name, b, p, mkts, got) {
     var sheet = document.getElementById('op-sheet'); if (!sheet) return;
     var m = portModel(name, mkts);
-    var ab = got.ab, kwr = got.kw;
+    var ab = got.ab, kwr = got.kw, vol = got.em;
     var today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-
-    /* ---- 1. what's live (the part they already see) ---- */
     var feeds = mkts.length;
-    var chans = (b.mk || '').split(/[·,]/).map(function (x) { return x.trim(); }).filter(Boolean);
 
-    /* ---- 2. the work behind it ---- */
     var all = p ? opSum(p.catsw && p.catsw.all ? p.catsw.all : p.cats) : null;
-    var wins = OPW.map(function (w) {
-      var cw = p && p.catsw && p.catsw[w];
-      return { w: w, s: cw ? opSum(cw) : null };
-    });
-    // breadth: how many distinct areas of the feed have been worked, all-time
+    var wins = OPW.map(function (w) { var cw = p && p.catsw && p.catsw[w]; return { w: w, s: cw ? opSum(cw) : null }; });
     var areas = p ? Object.keys(p.cats || {}).filter(function (c) { return p.cats[c].total; }) : [];
     var monthsRun = (p && p.vol && p.volkind === 'month') ? p.vol.length : null;
 
-    /* ---- 3. testing ---- */
-    var abN = ab && ab.summary ? ab.summary.total : null;
-    var abWin = ab && ab.summary ? ab.summary.winRate : null;
-    var best = null;
-    if (ab && ab.tests) {
-      ab.tests.forEach(function (t) {
-        var im = t.metrics && t.metrics.impressions;
-        if (typeof im === 'number' && im > 0 && (!best || im > best.v)) best = { v: im, t: t };
-      });
-    }
+    var abN = ab && ab.ok && ab.summary ? ab.summary.total : null;
+    var abWin = ab && ab.ok && ab.summary ? ab.summary.winRate : null;
     var kwN = kwr && typeof kwr.total === 'number' ? kwr.total : null;
-
-    /* ---- 4. the watch ---- */
-    var guarded = feeds;                         // every wired market is under the guards
-    var checks = guarded ? guarded * 4 : null;   // the estate scan lane runs 4× a day
+    var satAvg = (m.satL && m.satL.length)
+      ? Math.round(m.satL.reduce(function (s, x) { return s + x.pct; }, 0) / m.satL.length) : null;
+    var guarded = feeds, checks = guarded ? guarded * 4 : null;
     var alerts = (m.crit || 0) + (m.warn || 0);
-    var satAvg = null;
-    if (m.satL && m.satL.length) {
-      satAvg = Math.round(m.satL.reduce(function (s, x) { return s + x.pct; }, 0) / m.satL.length);
-    }
 
     function stat(v, l, sub, tone) {
       return '<div class="op-stat' + (tone ? ' ' + tone : '') + '"><div class="op-v">' + v + '</div>'
         + '<div class="op-l">' + l + '</div>' + (sub ? '<div class="op-s">' + sub + '</div>' : '') + '</div>';
     }
     function sec(n, title, lede) {
-      return '<div class="op-sec"><div class="op-sech"><span class="op-n">' + n + '</span>'
-        + '<h3>' + title + '</h3></div>' + (lede ? '<p class="op-lede">' + lede + '</p>' : '');
+      return '<div class="op-sec"><div class="op-sech"><span class="op-n">' + n + '</span><h3>' + title + '</h3></div>'
+        + (lede ? '<p class="op-lede">' + lede + '</p>' : '');
     }
 
     var h = '';
-    h += '<div class="op-top">'
-      + '<div class="op-brand">' + logo(b.dom, 34) + '<div><h2>' + esc(name) + ' <span>× FeedSpark</span></h2>'
+    h += '<div class="op-top"><div class="op-brand">' + logo(b.dom, 34)
+      + '<div><h2>' + esc(name) + ' <span>× FeedSpark</span></h2>'
       + '<div class="op-sub">Account one-pager · ' + esc(today) + '</div></div></div>'
       + '<div class="op-acts"><button class="op-print" type="button">Print / PDF</button>'
       + '<button class="op-x" type="button" aria-label="Close">✕</button></div></div>';
-
-    /* the framing line — this is the argument the whole page makes */
     h += '<p class="op-thesis">The feed is the quiet infrastructure behind every product you advertise. '
       + 'This is what keeping it right actually takes — the work that never shows up in a campaign report.</p>';
 
-    /* 1 — what's live */
+    /* 1 — what is live. Coverage and quality only; anything granular belongs in section 3. */
     h += sec(1, 'What’s live today', 'The surface your team already sees.');
     h += '<div class="op-stats">'
       + stat(opNum(feeds), 'Markets live', feeds ? 'each with its own product feed' : 'no feed wired yet')
       + stat(opNum(m.avgA), 'Feed quality score', m.avgA != null ? 'averaged across markets, out of 100' : 'not yet audited')
-      + stat(satAvg != null ? satAvg + '%' : '—', 'Search-term coverage', satAvg != null ? 'of the catalogue carries optimised keywords' : 'not yet measured')
-      + '</div></div>';
+      + stat(p && p.score ? p.score + '/100' : '—', 'Plan completion', 'breadth across the feed × depth in each area')
+      + '</div>';
+    if (feeds) {
+      var satBy = {}; (m.satL || []).forEach(function (x) { satBy[x.m] = x.pct; });
+      h += '<table class="op-tbl"><thead><tr><th>Market</th><th>Feed quality</th><th>Search-term coverage</th></tr></thead><tbody>';
+      mkts.forEach(function (mk) {
+        var a = AUDC[name + '|' + mk], sc = (a && a.score) ? Math.round(a.score.total) : null;
+        h += '<tr><td><b>' + esc(mk.toUpperCase()) + '</b></td>'
+          + '<td>' + (sc == null ? '<span class="op-na">not scanned</span>' : sc + '/100') + '</td>'
+          + '<td>' + (satBy[mk] == null ? '<span class="op-na">not measured</span>' : satBy[mk] + '%') + '</td></tr>';
+      });
+      h += '</tbody></table>';
+    }
+    h += '</div>';
 
-    /* 2 — the work */
-    h += sec(2, 'The work behind it', 'Every change to a product feed is a task: written, checked, shipped, verified. This is the volume of that work — not a list of it.');
+    /* 2 — the work, with the mix and the look-back windows */
+    h += sec(2, 'The work behind it',
+      'Every change to a product feed is a task: written, checked, shipped, verified. This is the volume of that work, '
+      + 'and where it went — drawn from the project plan, the work booked in through the pipeline, and the content team’s weekly schedule.');
     h += '<div class="op-stats">'
       + stat(all ? all.done.toLocaleString() : '—', 'Tasks delivered', all ? 'across the life of the account' : 'no project plan wired')
-      + stat(areas.length ? areas.length : '—', 'Areas of the feed worked', areas.length ? 'titles, attributes, imagery, structure…' : '')
-      + stat(monthsRun ? monthsRun : '—', 'Consecutive months active', monthsRun ? 'continuous delivery, not a one-off project' : '')
+      + stat(areas.length ? areas.length : '—', 'Areas of the feed worked', 'every part of the record, not just titles')
+      + stat(monthsRun ? monthsRun : '—', 'Consecutive months active', 'continuous delivery, not a one-off project')
       + '</div>';
+    if (p && p.cats) {
+      h += '<h4 class="op-h4">Where the work went</h4>' + opAreas(p.cats);
+    }
     if (p && p.catsw) {
-      var vol = got.em;
+      h += '<h4 class="op-h4">By look-back period</h4>';
       h += '<table class="op-tbl"><thead><tr><th>Look-back</th><th>Tasks worked</th><th>Completed</th>'
         + '<th>Hours delivered</th><th>Emails handled</th></tr></thead><tbody>';
       wins.forEach(function (x) {
@@ -1050,44 +1141,143 @@ window.addEventListener('load',restore);
       });
       h += '</tbody></table>';
       if (opHours(vol, 12) === null) {
-        h += '<p class="op-note">Hours are shown where the content team’s weekly schedule covers this brand; '
-          + 'a dash means no scheduled-work rows reached it, not zero effort.</p>';
+        h += '<p class="op-note">Hours appear where the content team’s weekly schedule covers this brand; a dash means no '
+          + 'scheduled-work rows reached it, not zero effort.</p>';
       }
     }
     h += '</div>';
 
-    /* 3 — testing */
-    h += sec(3, 'Nothing changes without a test', 'Feed changes are run as controlled tests against a held-back control group, so a change that doesn’t earn its place is reverted rather than kept on faith.');
+    /* 3 — optimisation: the granular end, where search terms and the test record belong */
+    h += sec(3, 'Optimisation in detail',
+      'Keywords are embedded in the feed itself, and every change is run as a controlled test against a held-back '
+      + 'control group — so a change that doesn’t earn its place is reverted rather than kept on faith.');
     h += '<div class="op-stats">'
-      + stat(opNum(abN), 'Tests run and read out', abN ? 'each with a written result' : 'test archive not wired for this brand')
+      + stat(satAvg != null ? satAvg + '%' : '—', 'Search-term coverage', satAvg != null ? 'of the catalogue carries optimised keywords' : 'not yet measured')
+      + stat(opNum(abN), 'Tests run and read out', abN ? 'each with a written result' : 'archive not reachable')
       + stat(abWin != null ? abWin + '%' : '—', 'Of decided tests won', abWin != null ? 'losers are reverted, not quietly kept' : '')
-      + stat(opNum(kwN), 'Optimisation read-outs filed', kwN ? 'scheduled keyword rounds, archived' : '')
       + '</div>';
-    if (best) {
-      h += '<div class="op-quote"><b>Best result on record:</b> ' + esc(best.t.batch || best.t.type || 'test')
-        + ' — <b>+' + best.v + '%</b> impressions'
-        + (typeof best.t.metrics.clicks === 'number' ? ', ' + (best.t.metrics.clicks > 0 ? '+' : '') + best.t.metrics.clicks + '% clicks' : '')
-        + '.</div>';
+    if (ab && ab.ok && ab.tests && ab.tests.length) {
+      h += '<h4 class="op-h4">The test record</h4>';
+      h += '<table class="op-tbl"><thead><tr><th>Test</th><th>Live</th><th>Impressions</th><th>Clicks</th><th>Result</th></tr></thead><tbody>';
+      ab.tests.slice(0, 14).forEach(function (t) {
+        var mt = t.metrics || {}, v = ABV[t.verdict] || ABV.unknown;
+        var pc = function (x) { return typeof x === 'number' ? '<b style="color:' + (x > 0 ? '#15803d' : x < 0 ? '#b91c1c' : '#64748b') + '">' + (x > 0 ? '+' : '') + x + '%</b>' : '<span class="op-na">—</span>'; };
+        h += '<tr><td>' + esc(opSafe(t.batch || t.type) || 'Test') + '</td>'
+          + '<td>' + (t.live && t.live !== 'NA' ? esc(t.live) : '<span class="op-na">—</span>') + '</td>'
+          + '<td>' + pc(mt.impressions) + '</td><td>' + pc(mt.clicks) + '</td>'
+          + '<td><span style="color:' + v[0] + ';font-weight:800">' + v[2] + '</span></td></tr>';
+      });
+      h += '</tbody></table>';
+    } else if (ab && !ab.ok) {
+      // self-diagnosing: the sheet says exactly why, so it is fixable without opening the console
+      var why = { no_plan_sheet: 'no project plan is wired for this brand',
+        no_archive_tab: 'the plan has no “AB Test Archive” tab' + ((ab.tabs && ab.tabs.length) ? ' (tabs seen: ' + ab.tabs.slice(0, 10).map(esc).join(', ') + ')' : ''),
+        no_sa: 'the Google service account is not configured',
+        no_header: 'the archive tab has no Country / Test Method header row' }[ab.error]
+        || ('the plan sheet could not be read — ' + esc(String(ab.error || '').slice(0, 140)));
+      h += '<p class="op-note">Test record unavailable: ' + why + '.</p>';
+    }
+    if (kwN !== null) {
+      h += '<p class="op-note"><b>' + kwN + '</b> scheduled optimisation read-out' + (kwN === 1 ? '' : 's')
+        + ' filed against this account.</p>';
     }
     h += '</div>';
 
-    /* 4 — the watch: the most invisible part, and the strongest card */
-    h += sec(4, 'Watched every day', 'A product feed breaks silently. A category value disappears, a price stops matching, an attribute empties — and spend keeps flowing against products that can no longer be served properly. These checks run whether or not anything is wrong.');
+    /* 4 — the watch */
+    h += sec(4, 'Watched every day',
+      'A product feed breaks silently. A category value disappears, a price stops matching, an attribute empties — and spend '
+      + 'keeps flowing against products that can no longer be served properly. These checks run whether or not anything is wrong.');
     h += '<div class="op-stats">'
-      + stat(opNum(guarded), 'Feeds under monitoring', guarded ? 'structure, categories, attributes' : '')
-      + stat(opNum(checks), 'Automated checks per day', checks ? 'four passes over every feed' : '')
+      + stat(opNum(guarded), 'Feeds under monitoring', 'structure, categories, attributes')
+      + stat(opNum(checks), 'Automated checks per day', 'four passes over every feed')
       + stat(alerts ? alerts : '0', 'Issues open right now', alerts ? 'flagged and being worked' : 'nothing outstanding', alerts ? 'warn' : 'good')
       + '</div></div>';
 
-    /* 5 — right now */
-    h += sec(5, 'Where the account stands',
-      p && p.score ? 'The plan sits at <b>' + p.score + '/100</b> for completion — breadth across the feed as well as depth in each area.' : '');
+    /* 5 — monthly volumes: the bar chart */
+    var months = (vol && vol.months) || [], labels = (vol && vol.labels) || months;
+    if (months.length) {
+      var emB = (vol.streams.emails && vol.streams.emails.byMonth) || {};
+      var workIn = {};
+      ['plan', 'briefs', 'schedule', 'calls'].forEach(function (k) {
+        var st = vol.streams[k]; if (!st || !st.byMonth) return;
+        months.forEach(function (mo) { workIn[mo] = (workIn[mo] || 0) + (st.byMonth[mo] || 0); });
+      });
+      var np = {};
+      if (got.ar) {
+        var mine = {}; mkts.forEach(function (x) { mine[x] = 1; });
+        got.ar.feeds.forEach(function (f) {
+          if (f.client !== name || !mine[f.mkt] || !f.dob || !f.dob.m) return;
+          months.forEach(function (mo) { if (f.dob.m[mo]) np[mo] = (np[mo] || 0) + f.dob.m[mo]; });
+        });
+      }
+      var chart = opChart([{ c: OPBAR[0][0], l: OPBAR[0][1], v: emB },
+                           { c: OPBAR[1][0], l: OPBAR[1][1], v: workIn }], months, labels);
+      // deliberately its own chart: arrivals run in the hundreds against single-figure emails,
+      // and on a shared axis the two work series flatten into the baseline
+      var npChart = Object.keys(np).length ? opChart([{ c: OPBAR[2][0], l: OPBAR[2][1], v: np }], months, labels) : '';
+      if (chart || npChart) {
+        h += sec(5, 'Month by month',
+          'Inbound requests and the work booked in across the project plan, the pipeline and the content team’s weekly schedule.');
+        h += chart;
+        if (npChart) {
+          h += '<h4 class="op-h4">New products entering the catalogue</h4>'
+            + '<p class="op-lede">Counted by the date each product first appeared in the feed — the catalogue this work has to keep correct.</p>'
+            + npChart;
+        } else {
+          h += '<p class="op-note">New-product arrivals appear once the catalogue has been scanned for first-seen dates on this brand’s Shopping feeds.</p>';
+        }
+        h += '</div>';
+      }
+    }
+
+    /* 6 — where it stands, itemised */
+    h += sec(6, 'Where the account stands', '');
     h += '<div class="op-stats">'
-      + stat(p ? p.open : '—', 'Tasks open', p ? 'in flight or scheduled' : '')
+      + stat(p ? p.open : '—', 'Tasks open', 'in flight or scheduled')
       + stat(m.inflight || 0, 'Pieces of work in the pipeline', 'briefed and moving')
-      + (function () { var e12 = opEmails(got.em, 12);
-          return stat(e12 === null ? '—' : e12, 'Requests answered', e12 === null ? 'not visible from this signin' : 'inbound emails logged and actioned, 12 months'); })()
-      + '</div></div>';
+      + (function () { var e12 = opEmails(vol, 12);
+          return stat(e12 === null ? '—' : e12, 'Requests answered', e12 === null ? 'not visible from this signin' : 'inbound emails, 12 months'); })()
+      + '</div>';
+
+    // the open tasks themselves — named, so "24 open" is a list rather than a claim
+    var open = (p && p.latest || []).filter(function (t) { return t.b !== 'done'; }).slice(0, 12);
+    if (open.length) {
+      h += '<h4 class="op-h4">Open right now</h4><ul class="op-list">';
+      open.forEach(function (t) {
+        h += '<li><span class="op-li-t">' + esc(opSafe(t.t)) + '</span>'
+          + '<span class="op-li-m">' + esc(OPCLBL[t.c] || t.c || '') + (t.o ? ' · ' + esc(t.o) : '') + '</span></li>';
+      });
+      h += '</ul>';
+    }
+    // and the pipeline items by name
+    var pipe = [];
+    Object.keys(BRIEFSC || {}).forEach(function (k) {
+      var x = BRIEFSC[k];
+      if (x && x.client === name && ['done', 'confirmed', 'dead', 'closed'].indexOf(String(x.st || '').toLowerCase()) < 0) pipe.push(x);
+    });
+    if (pipe.length) {
+      h += '<h4 class="op-h4">In the pipeline</h4><ul class="op-list">';
+      pipe.slice(0, 12).forEach(function (x) {
+        h += '<li><span class="op-li-t">' + esc(opSafe(x.task) || 'Brief') + '</span>'
+          + '<span class="op-li-m">' + esc(String(x.st || 'in progress')) + '</span></li>';
+      });
+      h += '</ul>';
+    }
+    // the five most recent inbound requests
+    if (got.in && got.in.length) {
+      var mine2 = got.in.filter(function (it) { return it && String(it.client || '') === name; })
+        .sort(function (a, b) { return (b.date || 0) - (a.date || 0); }).slice(0, 5);
+      if (mine2.length) {
+        h += '<h4 class="op-h4">Most recent requests</h4><ul class="op-list">';
+        mine2.forEach(function (it) {
+          var d = it.date ? new Date(+it.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+          h += '<li><span class="op-li-t">' + esc(opSafe(it.subject) || '(no subject)') + '</span>'
+            + '<span class="op-li-m">' + esc(opSender(it.from)) + (d ? ' · ' + esc(d) : '') + '</span></li>';
+        });
+        h += '</ul>';
+      }
+    }
+    h += '</div>';
 
     h += '<div class="op-foot"><span>FeedSpark · Private &amp; Confidential</span>'
       + '<span>Prepared for ' + esc(name) + ' · ' + esc(today) + '</span></div>';
