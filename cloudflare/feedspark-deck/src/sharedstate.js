@@ -40,6 +40,11 @@ export const STATE_NS = {
   runsla:      null,     // stage -> days (the team's SLA, house-wide)
   pbtax:       null,     // Playbook category -> {name,kw,hide} — the AMs' shared taxonomy
   rollout:     null,     // '<deck>:<market>' -> 1 — which markets a rollout checklist has launched
+  // HOURS POSTURE (Ray, 16 Sep 2026: "there are cases where a client is negative, but because of
+  // relationship smoothing, the AM may still continue the task"). The balance is a FACT the
+  // reports database states; this is the team's DECISION about it, and the two are never merged.
+  // client -> {state:'continue'|'hold'|'watch', note, by, at}
+  hourspost:   'self',
 };
 
 export function isStateNs(ns) { return Object.prototype.hasOwnProperty.call(STATE_NS, ns); }

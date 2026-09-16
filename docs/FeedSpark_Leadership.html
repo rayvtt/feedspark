@@ -370,7 +370,7 @@ window.addEventListener('load',restore);
       var pct=u==null?0:Math.max(0,Math.min(100,Math.round(u*100)));
       var fillClass=u==null?'':(u>1.05?'over':(u<0.6?'under':''));
       var moLine = c.rate&&c.hours ? (money(c.hours*c.rate)+'/mo') : 'rate to confirm';
-      return '<div class="cm-card"><div class="cm-hd"><span class="nm">'+esc(b)+'</span>'
+      return '<div class="cm-card"><div class="cm-hd"><span class="nm" data-hrs="'+esc(b)+'">'+esc(b)+'</span>'
         +'<span class="cm-pill '+uc+'">'+utilLabel(u)+'</span></div>'
         +'<div class="cm-bar"><span class="cm-fill '+fillClass+'" style="width:'+pct+'%"></span></div>'
         +'<div class="cm-nums"><span>Used '+valSpan(b,'used','h')+' / block '+valSpan(b,'hours','h')+(c.tmBal!=null?' <span class="tm-bal '+(c.tmBal<0?'neg':'')+'" title="Task Manager balance incl. carried hours'+(c.tmMkts?' · '+c.tmMkts+' market'+(c.tmMkts===1?'':'s'):'')+'">bal '+(c.tmBal>0?'+':'')+c.tmBal+'h</span>':'')+'</span>'

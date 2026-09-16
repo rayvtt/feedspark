@@ -5947,6 +5947,70 @@
       "name": "FS Task Manager: no client hours in git",
       "file": ".gitignore",
       "pattern": "ops/reports/"
+    },
+    {
+      "name": "FCC hours badge: the shared widget",
+      "file": "docs/hours_widget.html",
+      "pattern": "FCC-HOURS:ENGINE-END",
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: injected on every app page",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "import HOURSW from",
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: /api/hours",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "/api/hours",
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: the three-month trail is written on the cron",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "tmtrail",
+      "min": 2,
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: relationship smoothing (the posture is shared state)",
+      "file": "cloudflare/feedspark-deck/src/sharedstate.js",
+      "pattern": "hourspost",
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: the trail + posture engine",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function hoursState",
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: Workflow ticket cards carry their client",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "data-hrs=",
+      "min": 3,
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: the intake table flags the exception only",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "data-hrs-flag",
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: the brand dossier carries the hours inline",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "portHours",
+      "min": 2,
+      "pr": 401
+    },
+    {
+      "name": "FCC hours badge: Leadership, Playbook + the Task Manager anchor it",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "data-hrs",
+      "min": 2,
+      "pr": 401
     }
   ]
 }

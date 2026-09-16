@@ -2309,7 +2309,7 @@ window.addEventListener('load',restore);
     var sel=itState.clients;
     if(!sel.length){ wrap.hidden=true; wrap.innerHTML=''; return; }
     wrap.hidden=false;
-    wrap.innerHTML=sel.map(function(c){ return '<span class="it-fchip">'+esc(c)
+    wrap.innerHTML=sel.map(function(c){ return '<span class="it-fchip"><span data-hrs="'+esc(c)+'">'+esc(c)+'</span>'
       +'<button type="button" data-c="'+esc(c)+'" aria-label="Remove '+esc(c)+' from the client filter">×</button></span>'; }).join('');
     wrap.querySelectorAll('button').forEach(function(b){ b.onclick=function(){
       var c=b.getAttribute('data-c'), i=itState.clients.indexOf(c); if(i>=0)itState.clients.splice(i,1);
@@ -2341,7 +2341,7 @@ window.addEventListener('load',restore);
         ?('<td class="c-stat" data-r="'+i+'" data-col="status" data-src="'+t.source+'" data-callid="'+esc(t.callid||'')+'" data-client="'+esc(t.client)+'" data-task="'+esc(t.task)+'">'+statSel(t)+'</td>')
         :'<td class="c-stat" data-r="'+i+'" data-col="status"><span class="c-owner">—</span></td>';
       return '<tr data-k="'+esc(k)+'" data-r="'+i+'"'+(hid?' class="row-hidden"':'')+'><td class="c-sel"><input type="checkbox" class="it-cb" data-i="'+i+'"'+ck+' aria-label="Select"></td>'
-        +'<td class="c-client'+(edc?' c-client-ed" data-i="'+i+'" title="'+(t.source==='call'?'Double-click to assign the client — the action files into their project plan':'Double-click to reassign the client — the task moves between project plans')+'':'')+'" data-r="'+i+'" data-col="client">'+esc(t.client)+badge
+        +'<td class="c-client'+(edc?' c-client-ed" data-i="'+i+'" title="'+(t.source==='call'?'Double-click to assign the client — the action files into their project plan':'Double-click to reassign the client — the task moves between project plans')+'':'')+'" data-r="'+i+'" data-col="client" data-hrs="'+esc(t.client)+'" data-hrs-flag>'+esc(t.client)+badge
           +'<button class="cl-rm" data-c="'+esc(t.client)+'" title="Remove '+esc(t.client)+' from the intake and all filters — every task, reversible from the client-filter menu">✕</button></td><td data-r="'+i+'" data-col="feed">'+feed+'</td>'
         +(ed?'<td class="c-task c-task-ed" data-r="'+i+'" data-col="task" data-i="'+i+'" title="Double-click or ✎ to edit — writes back to the plan">'+tkTxt+bfChip+'<button class="tk-ed" data-i="'+i+'" title="Edit the task name — writes back to the plan">✎</button></td>'
              :'<td class="c-task" data-r="'+i+'" data-col="task">'+tkTxt+bfChip+'</td>')
@@ -3016,7 +3016,7 @@ window.addEventListener('load',restore);
             flow='<div class="tk-flow'+(dlF<=0?' now':'')+'" title="'+(b.status==='running'?('Auto-moves to Analysis when the '+runSlaDays(b)+'-day run completes'):('Runs for '+runSlaDays(b)+' days once ASPL ships it, then Analysis'))+'">⇢ '+nxF+' '+(dlF>0?('in '+dlF+'d'):'due now')+'</div>'; }
           else flow='<div class="tk-flow" title="Runs '+runSlaDays(b)+' days once started, then Analysis">⇢ Analysis after '+runSlaDays(b)+'d run</div>'; }
         return '<div class="tik'+(courtSel&&crt!==courtSel?' dim':'')+'" draggable="true" data-id="'+esc(b.id)+'">'
-          +'<div class="tk-m"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+tst+pri+'<span class="grow"></span>'+db+ageChip+tmChip(b)+'</div>'
+          +'<div class="tk-m" data-hrs="'+esc(b.client)+'"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+tst+pri+'<span class="grow"></span>'+db+ageChip+tmChip(b)+'</div>'
           +'<div class="tk-t" title="'+esc(taskDisp(b.task))+'">'+esc(taskDisp(b.task))+'</div>'+flow+'</div>';
       }).join('') || '<div class="board-empty">—</div>';
       return '<div class="lane" data-stage="'+s[0]+'"><div class="lane-h"><span class="dot" style="background:'+s[2]+'"></span>'+s[1]+'<span class="ct">'+items.length+'</span></div>'+cards+'</div>';
@@ -3077,7 +3077,7 @@ window.addEventListener('load',restore);
     if(b.code) xl.push('<a class="xl" id="m-thread" target="_blank" rel="noopener" href="https://mail.google.com/mail/#search/'+encodeURIComponent(threadQuery(b))+'" title="Searches the brief’s subject (client + task words) — punctuation tokens like the ID search badly in Gmail">✉ Find the email thread</a>');
     modalEl.innerHTML=''
       +'<div style="display:flex;align-items:flex-start"><div><h3>'+esc(taskDisp(b.task))+'</h3>'
-        +'<div class="mc">'+esc(b.id)+' · '+esc(b.client)+' · ['+esc(b.code)+']</div></div><button class="x" id="m-x">×</button></div>'
+        +'<div class="mc" data-hrs="'+esc(b.client)+'">'+esc(b.id)+' · '+esc(b.client)+' · ['+esc(b.code)+']</div></div><button class="x" id="m-x">×</button></div>'
       +'<div class="m-meta"><span class="m-pill">Due '+humanDD(b.due)+'</span><span class="m-pill">'+esc(b.priority||'Normal')+'</span>'
         +(lastResultTxt(b)?('<span class="m-pill" style="color:#15803D;border-color:rgba(21,128,61,.35)" title="The recorded read-out — travels with the brief">🧪 '+esc(lastResultTxt(b).slice(0,60))+'</span>'):'')
         +'<span class="m-pill">'+(b.source==='plan'?'Project plan':'Email')+'</span>'

@@ -612,3 +612,138 @@ export function bookHealth(coverage, roster, now) {
     complete: total > 0 && cov.length >= total,
     staleHours: at[0] ? Math.round(((now || Date.now()) - at[0]) / 36e5) : 0 };
 }
+
+// ---------------------------------------------------------------------------------------------
+// THE HOURS TRAIL — "the trajectory of the past three months of client activity per hour"
+// ---------------------------------------------------------------------------------------------
+
+export const TRAIL_MONTHS = 3;
+
+/** The last N calendar months, oldest first, as 'YYYY-MM'. */
+export function trailMonths(now, n) {
+  const d = new Date(now || Date.now());
+  d.setUTCDate(1);
+  const out = [];
+  for (let i = (n || TRAIL_MONTHS) - 1; i >= 0; i--) {
+    const x = new Date(d.getTime());
+    x.setUTCMonth(x.getUTCMonth() - i);
+    out.push(x.toISOString().slice(0, 7));
+  }
+  return out;
+}
+
+/**
+ * One client's book → the compact trail the hours popover draws, everywhere in the FCC.
+ *
+ * Three honesty rules are baked in, because this number is read at the moment an AM decides
+ * whether to keep working an account:
+ *  - THE CURRENT MONTH IS PARTIAL. It is flagged, not quietly plotted as a completed month —
+ *    otherwise every trend reads as a cliff on the 3rd of the month.
+ *  - A PARTLY-READ BOOK IS A FLOOR, NOT A TOTAL. `read` / `total` travel with the numbers so
+ *    the popover can say "4 of 6 markets" rather than implying the whole account.
+ *  - HOURS STAY SPLIT. Billable and non-billable are two numbers here as everywhere else.
+ */
+export function trailOf(book, total, now, months) {
+  const keys = trailMonths(now, months || TRAIL_MONTHS);
+  const cur = keys[keys.length - 1];
+  const m = {};
+  keys.forEach((k) => { m[k] = [0, 0, 0]; });
+  let read = 0, at = 0, all = 0;
+  const markets = (book && book.markets) || {};
+  Object.keys(markets).forEach((mk) => {
+    const rec = markets[mk];
+    if (!rec) return;
+    read++;
+    if (rec.at > at) at = rec.at;
+    (rec.rows || []).forEach((r) => {
+      const day = r[0] || '';
+      if (!day) return;
+      const key = day.slice(0, 7);
+      all += ((r[5] || 0) + (r[6] || 0)) / 4;
+      const cell = m[key];
+      if (!cell) return;
+      cell[0] += r[5] || 0;
+      cell[1] += r[6] || 0;
+      cell[2] += 1;
+    });
+  });
+  return { m, months: keys, current: cur, read, total: total == null ? read : total,
+    at, windowHours: Math.round(all * 100) / 100 };
+}
+
+/**
+ * Read a trail as hours. Kept beside trailOf so the worker, the harness and the widget cannot
+ * disagree about what a quarter-hour integer means.
+ */
+export function trailRows(trail) {
+  const keys = (trail && trail.months) || [];
+  return keys.map((k) => {
+    const c = (trail.m && trail.m[k]) || [0, 0, 0];
+    const bill = (c[0] || 0) / 4, nonbill = (c[1] || 0) / 4;
+    return { month: k, bill, nonbill, hours: Math.round((bill + nonbill) * 100) / 100,
+      n: c[2] || 0, partial: k === trail.current };
+  });
+}
+
+// ---------------------------------------------------------------------------------------------
+// the verdict an AM actually needs
+// ---------------------------------------------------------------------------------------------
+
+// The posture an AM has taken on an account, as opposed to what its balance says. Ray, 16 Sep
+// 2026: "there are cases where a client is negative, but because of relationship smoothing, the
+// AM may still continue the task." So the badge never says STOP — it says what is true (the
+// balance) and what the team decided (the posture), and leaves the call where it belongs.
+export const POSTURES = {
+  continue: { label: 'Continue', short: 'Continuing', note: 'Work continues regardless of the balance — a deliberate call.' },
+  hold: { label: 'Hold new work', short: 'On hold', note: 'No new work until the balance is settled.' },
+  watch: { label: 'Just watching', short: 'Watching', note: 'No decision taken — the balance is being watched.' },
+};
+
+/**
+ * The state the dot shows. `over` is a fact about the balance; it is NOT an instruction, and a
+ * posture of `continue` softens it to `served` precisely so a deliberate decision stops looking
+ * like an unhandled alarm on every page in the FCC.
+ */
+export function hoursState(rec) {
+  const r = rec || {};
+  const posture = (r.posture && r.posture.state) || '';
+  const bal = Number(r.balance) || 0;
+  const allowance = Number(r.allowance) || 0;
+  if (!r.tracked) return 'none';
+  if (bal < 0) return posture === 'continue' ? 'served' : (posture === 'hold' ? 'held' : 'over');
+  if (allowance > 0 && bal < allowance * 0.25) return 'tight';
+  return 'ok';
+}
+
+export const STATE_LABEL = {
+  none: 'No hours synced',
+  ok: 'Within the retainer',
+  tight: 'Close to the block',
+  over: 'Over the retainer',
+  served: 'Over — being served anyway',
+  held: 'Over — new work on hold',
+};
+
+/** One sentence an AM can act on, balance and decision together. */
+export function hoursVerdict(rec) {
+  const r = rec || {};
+  const st = hoursState(r);
+  const bal = Number(r.balance) || 0;
+  const h = (n) => (Math.round(Math.abs(n) * 100) / 100).toLocaleString();
+  if (st === 'none') return 'No hours have been synced for this client yet.';
+  if (st === 'ok') return h(bal) + ' hours left against a ' + h(r.allowance) + '-hour block.';
+  if (st === 'tight') return 'Only ' + h(bal) + ' hours left of the ' + h(r.allowance) + '-hour block — the next piece of work will likely take it under.';
+  if (st === 'served') return h(bal) + ' hours over, and the team has decided to keep going anyway.';
+  if (st === 'held') return h(bal) + ' hours over, and new work is on hold until it is settled.';
+  return h(bal) + ' hours over the block — worth a decision before the next task.';
+}
+
+/** Is the trail rising, flat or falling? Two complete months are the minimum to say anything. */
+export function trailTrend(rows) {
+  const done = (rows || []).filter((r) => !r.partial);
+  if (done.length < 2) return { dir: 'flat', pct: 0, enough: false };
+  const a = done[done.length - 2].hours, b = done[done.length - 1].hours;
+  if (!a && !b) return { dir: 'flat', pct: 0, enough: true };
+  const pct = a ? Math.round(((b - a) / a) * 100) : 100;
+  return { dir: pct > 8 ? 'up' : pct < -8 ? 'down' : 'flat', pct, enough: true };
+}

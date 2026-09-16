@@ -273,3 +273,116 @@ against an in-process stub MCP with a fake KV — no credential, a refused crede
 pull, the rotation moving on rather than re-reading, a partial pull refused as a full year, and an
 unreachable endpoint that fails up rather than writing a half-built index. In qa_gate, presync and
 `validate.yml`.
+
+---
+
+# The hours badge — the balance everywhere in the FCC (Sep 2026)
+
+> Ray, 16 Sep 2026: *"In terms of display, this hour report should appear everywhere in Watcher,
+> for example with workflow, and flag whether the client is negative or not. It should also show
+> the trajectory of the past three months of client activity per hour. It would be like a hovering
+> pop-up, so it doesn't clutter the current dashboard. At the same time, display it within
+> brand[ dossier] and other areas in the F[C]C that are appropriate for an AM to decide whether to
+> continue the task with the current hours. Obviously, there are cases where a client is negative,
+> but because of relationship smoothing, the AM may still continue the task. Consider that
+> perspective as well."*
+
+The two lanes above put hours **on a figure** (Leadership) and **in a database** (`/tasks`). This
+third one puts them **at the moment of the decision** — beside the ticket an AM is about to move,
+the brand they are about to plan, the row they are about to brief.
+
+## An 8px dot and one popover
+
+`docs/hours_widget.html` is injected by the worker onto every app page, next to the editor,
+presence, Feed Chat and phone layers. It renders:
+
+- **a dot** on any element carrying `data-hrs="<client>"`, coloured by state;
+- **one popover**, shared by every dot on the page, opened on hover (120 ms in / 260 ms out) or
+  pinned by click, closed on Esc or an outside click, and a bottom sheet under 760px.
+
+Nothing is added to the page's own layout — the dot is the entire footprint. That is the "doesn't
+clutter the current dashboard" constraint taken literally.
+
+**Automatic coverage.** Any module page that picks a brand from its own `<select id="brand">` gets
+a badge beside the selector that follows the selection, with no change to that page: KWCal, Feed
+Lab, Volume, Overlays, Schedule and AI Quote are all covered that way.
+
+**The exception rule.** `data-hrs-flag` narrows a dot to the states worth stopping at — `tight`,
+`over`, `served`, `held`. A long table repeats one client down hundreds of rows, and a healthy dot
+on every one of them is decoration. The Workflow intake table and the Task Manager accounts table
+use it; everywhere a client appears once uses a plain `data-hrs`.
+
+## Six states, and why `over` is not the last word
+
+| State | When | |
+|---|---|---|
+| `none` | never synced | says so — an unread client is **not** zero hours |
+| `ok` | inside the block | |
+| `tight` | under a quarter of the block left | the next task will likely take it under |
+| `over` | negative, no decision recorded | |
+| `served` | negative, **and the team chose to continue** | Ray's case |
+| `held` | negative, and new work is on hold | |
+
+**Relationship smoothing is a first-class state, not a footnote.** The balance is a fact the
+reports database states; the posture is the team's decision about it, and the two are stored and
+displayed apart. Without `served`, a deliberate call to carry an account through a renewal would
+render as an unhandled red alarm on every page in the FCC, and AMs would learn to ignore the dot.
+The popover therefore never says *stop*: it states the balance, states the decision, and leaves the
+call where it belongs. Where a posture is set, an optional one-line **why** travels with it — the
+judgement is the part the next person needs; the state alone only says somebody clicked a button.
+
+The posture lives in the shared-state namespace `hourspost` (`/api/state`, `kvmerge`,
+`X-Sync-Base`, client-scoped like every other Workflow route), so one AM's call is the team's call.
+
+## The three-month trail
+
+`tmBookPull` already reads each client's task rows; `TB.trailOf` folds them into a compact
+`tmtrail` record (three months × `[billableQ, nonbillableQ, n]` quarter-hour integers) on the same
+firing, and `GET /api/hours` serves it merged with the balance and the posture. The popover draws
+three stacked bars — billable below, non-billable above, 2px surface gap, direct value labels,
+legend carrying both numbers (which is also the relief the palette validator requires on the
+light-mode orange). Palette: `#2563EB`/`#ED6F0B` light, `#4C82E0`/`#C67B28` dark — both validated.
+
+Three honesty rules are baked into the maths, because this number is read at the moment someone
+decides whether to keep working an account:
+
+1. **The current month is partial.** It is hatched and labelled, never plotted as a finished month
+   — otherwise every account looks like it fell off a cliff on the 3rd.
+2. **A partly-read book is a floor, not a total.** `read`/`total` travel with the numbers, so the
+   popover says "4 of 6 markets read" rather than implying the whole account.
+3. **Billable and non-billable never merge**, here as everywhere else in this integration.
+
+The trend line refuses to call a direction on fewer than two *complete* months, and treats a move
+under 8% as flat.
+
+## Where it appears
+
+| Surface | Anchor |
+|---|---|
+| Workflow — every ticket card | the client chip row, always |
+| Workflow — the ticket modal | the id · client · code line |
+| Workflow — the intake table | the client cell, **exception only** |
+| Workflow — active client-filter chips | always |
+| Command Center — brand dossier | the brand name, **plus an Hours card in the portfolio band** |
+| Leadership — Hours & commercial | each brand card's name |
+| Playbook — the brand header | always |
+| `/tasks` — accounts table | the client cell, **exception only** |
+| `/tasks` — "Hours by client" | each bar's name |
+| KWCal · Feed Lab · Volume · Overlays · Schedule · AI Quote | automatic, beside `select#brand` |
+
+Client decks and the embedded Feed Chat frame are skipped — the first because this is internal
+commercial data, the second because a popover inside a small iframe would be clipped.
+
+## No client hours in git
+
+Unchanged from the lanes above. `hours_widget.html` bakes no figures and names no clients; its only
+source is `GET /api/hours`, which reads KV and is scoped per signin. `tools/test_hoursbadge.mjs`
+asserts both.
+
+## QA
+
+`tools/test_hoursbadge.mjs` (qa_gate, presync, `validate.yml`) pins the trail maths, the posture
+states, the trend's refusals, the wiring, and — because the widget cannot import the module — lifts
+its hand-written engine twin out by name at `/* FCC-HOURS:ENGINE-END */` and runs it against the
+**same assertion table** as `src/taskbook.js`. `tools/check_mobile.js` renders the widget with every
+other injected layer at 390px.

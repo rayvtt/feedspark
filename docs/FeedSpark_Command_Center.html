@@ -362,6 +362,7 @@ window.addEventListener('load',restore);
   .dzp-load{font-size:12.5px;font-weight:700;color:var(--muted);padding:8px 2px}
   .dzp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
   .dzp-card{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+  .dzp-hrsn{margin-top:9px;font-size:11.5px;line-height:1.5;color:var(--muted);font-weight:600}
   .dzp-card h5{margin:0 0 8px;font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
   .dzp-tiles{display:flex;gap:14px;flex-wrap:wrap}
   .dzp-t .n{font-size:21px;font-weight:900;line-height:1.1}
@@ -916,6 +917,7 @@ window.addEventListener('load',restore);
       });
     });
   }
+  document.addEventListener('fcc-hours',function(){ if(cur)portFill(cur); });
   function portFill(name){
     var host=detail.querySelector('#dz-port'); if(!host)return;
     var token=++PORTREQ;
@@ -1487,6 +1489,26 @@ window.addEventListener('load',restore);
     return {p:p,od:od,inflight:inflight,done1:done1,kev:kev,satL:satL,crit:crit,warn:warn,
       audL:audL,scored:scored,avgA:avgA,h:h,band:band,bandL:bandL,fac:fac,facR:facR,sug:sug};
   }
+  /* HOURS — the retainer balance, read off the shared hours widget rather than fetched again.
+     Ray, 16 Sep 2026: "display it within brand… areas appropriate for an AM to decide whether to
+     continue the task with the current hours". The dossier is exactly that moment, so the band
+     carries the figures inline; the ⏱ dot beside the brand name opens the trajectory popover.
+     The widget is injected by the worker, so on a bare file:// preview this simply renders
+     nothing — never a fabricated zero. */
+  function portHours(name){
+    var W=window.FCCHours, hit=W&&W.rec?W.rec(name):null;
+    if(!hit||!hit.rec) return '';
+    var r=hit.rec, st=W.state(r), lbl={ok:'Healthy',tight:'Running tight',over:'Negative',
+      served:'Negative — being served',held:'Negative — new work on hold',none:'Not tracked'}[st]||st;
+    if(st==='none') return '';
+    var cls=(st==='ok')?'good':(st==='tight')?'warn':'bad';
+    var h=function(v){ return (v==null||v!==v)?'—':(Math.round(v*100)/100)+'h'; };
+    return '<div class="dzp-card"><h5>Hours — '+esc(lbl)+'</h5><div class="dzp-tiles">'
+      +'<span class="dzp-t"><span class="n">'+h(r.allowance)+'</span><span class="l">block</span></span>'
+      +'<span class="dzp-t"><span class="n">'+h(r.used)+'</span><span class="l">used</span></span>'
+      +'<span class="dzp-t '+cls+'"><span class="n">'+h(r.balance)+'</span><span class="l">balance</span></span>'
+      +'</div><div class="dzp-hrsn" data-hrs="'+esc(name)+'">'+esc(W.verdict(r))+'</div></div>';
+  }
   function portHtml(name,mkts){
     var M=portModel(name,mkts);
     var p=M.p,od=M.od,inflight=M.inflight,done1=M.done1,kev=M.kev,satL=M.satL,crit=M.crit,warn=M.warn,
@@ -1513,7 +1535,7 @@ window.addEventListener('load',restore);
     var sh=sug.length?('<div class="dzp-sug"><h5>Suggested next moves</h5>'+sug.map(function(s){
         return '<div class="dzp-s"><span class="pri p'+s.p+'">P'+s.p+'</span><span>'+esc(s.t)+'</span><a href="'+esc(s.l)+'">→ '+esc(s.ll)+'</a></div>'; }).join('')+'</div>')
       :'<div class="dzp-sug"><h5>Suggested next moves</h5><div class="dzp-s"><span class="pri p3">✓</span><span>Nothing urgent — board is clean. Keep the testing cadence going.</span><a href="/workflow">→ Workflow</a></div></div>';
-    return '<div class="dzp-grid">'+act+hl+aud+'</div>'+sh;
+    return '<div class="dzp-grid">'+act+hl+portHours(name)+aud+'</div>'+sh;
   }
   function fmtN(n){ n=+n; return isFinite(n)?n.toLocaleString('en-GB'):'0'; }
   /* ---- 🎬 brand showcase: cinematic full-screen intro over the live portfolio model ----
@@ -1776,7 +1798,7 @@ window.addEventListener('load',restore);
       ?'<button class="lnk dz-linkfeed"'+wiredTip+'>'+(mktN?'⚡ Feed markets ('+mktN+') — add another':'⚡ Attach feed sheet')+'</button>'
       :(hasFeed?'<a class="lnk primary"'+wiredTip+' href="/feedlab?client='+encodeURIComponent(name)+'">Feed Lab ⚡'+(mktN>1?' · '+mktN+' markets':'')+'</a>':'');
     detail.innerHTML=
-      '<div class="dz-head"><div class="dz-id">'+logo(b.dom,44)+'<div><h3>'+esc(name)+'</h3><div class="cat"><span'+edA('cat')+'>'+esc(b.cat||'')+'</span>'+((b.mk||editMode)?' · <span'+edA('mk')+'>'+esc(b.mk||'')+'</span>':'')+'</div></div></div>'
+      '<div class="dz-head"><div class="dz-id">'+logo(b.dom,44)+'<div><h3 data-hrs="'+esc(name)+'">'+esc(name)+'</h3><div class="cat"><span'+edA('cat')+'>'+esc(b.cat||'')+'</span>'+((b.mk||editMode)?' · <span'+edA('mk')+'>'+esc(b.mk||'')+'</span>':'')+'</div></div></div>'
       +'<div class="dz-head-r"><button class="lnk dz-showb" type="button" title="Play the cinematic brand intro — the live portfolio staged for a client call">🎬 Intro</button><button class="lnk dz-opb" type="button" title="A client-safe one-pager for this brand — what is live, what the work has been, what is watched. Printable to PDF.">📄 One-pager</button>'+(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+delBtn+'</div></div>'
       +scorePanel(name)
       +portShell()

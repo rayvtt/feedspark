@@ -82,6 +82,13 @@ else
   echo "   ✗ task-manager harness FAILED — see node tools/test_reporttasks.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d2b/7: FCC hours badge (trail maths, posture states, widget/engine parity)"
+if node tools/test_hoursbadge.mjs >/dev/null 2>&1; then
+  echo "   ✓ the partial month is flagged, a served negative is not an alarm, the twin agrees"
+else
+  echo "   ✗ hours-badge harness FAILED — see node tools/test_hoursbadge.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3d3/7: retainer-hours classification (optimisation vs technical vs feature vs account)"
 if node tools/test_reporthours.mjs >/dev/null 2>&1; then
   echo "   ✓ precedence traps hold; the baked snapshot reconciles"
