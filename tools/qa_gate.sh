@@ -131,6 +131,13 @@ else
   echo "   ✗ golden-snapshot harness FAILED — see node tools/test_goldensnap.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d7/7: dossier portfolio tiles (meter, per-market bars, score ring)"
+if node tools/test_dossiertiles.mjs >/dev/null 2>&1; then
+  echo "   ✓ an over-run crosses the block; served keeps its own colour; unscanned is not a zero"
+else
+  echo "   ✗ dossier-tiles harness FAILED — see node tools/test_dossiertiles.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3d2/7: Feed Lab AI-readiness model (conversational weighting, labels unscored)"
 if node tools/test_feedlab.mjs >/dev/null 2>&1; then
   echo "   ✓ conversational attributes lead the score; custom labels never move it"
