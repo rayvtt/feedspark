@@ -1942,7 +1942,10 @@ export default {
           const all = titles.slice(0, 40);
           const mine = ck ? all.filter((t) => abClientKey(t).indexOf(ck) >= 0) : [];
           const probe = mine.length ? mine : all;
-          const qs = probe.map((t) => 'ranges=' + encodeURIComponent(t + '!A1:H12')).join('&');
+          // A1:H40, not H12: the archive's header often sits below a title block or a note, and
+          // findHeaderRow itself scans 200 rows — probing only twelve made the content fallback
+          // miss the very tabs a rename was supposed to let it find.
+          const qs = probe.map((t) => 'ranges=' + encodeURIComponent(t + '!A1:H40')).join('&');
           const b = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values:batchGet?' + qs,
             { headers: { Authorization: 'Bearer ' + token } })).json();
           const ranges = (b && b.valueRanges) || [];
@@ -1952,7 +1955,10 @@ export default {
         }
         // fails closed on purpose: reading the Project Plan and calling its rows "tests" is a
         // far worse outcome than telling Ray the tab is missing or oddly named
-        if (!tab) return json({ ok: false, error: 'no_archive_tab', client, tabs: titles.slice(0, 40), tests: [] });
+        // `tabCount` so the page can say when it is showing a SUBSET. Printing twelve names out
+        // of thirty with no hint of the cut read as the whole workbook, and sent us looking for
+        // a tab that was sitting just past the truncation.
+        if (!tab) return json({ ok: false, error: 'no_archive_tab', client, tabs: titles.slice(0, 40), tabCount: titles.length, tests: [] });
         const r = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/'
           + encodeURIComponent(tab + '!A1:Z400'), { headers: { Authorization: 'Bearer ' + token } })).json();
         if (r.error) return json({ ...abReadError(r.error, env), client, tab, tests: [] });

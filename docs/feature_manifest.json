@@ -6043,6 +6043,16 @@
       "min": 1
     },
     {
+      "name": "abtests: the exact archive tab name wins before brand disambiguation",
+      "file": "cloudflare/feedspark-deck/src/abtests.js",
+      "pattern": "a\\/?b test archives?"
+    },
+    {
+      "name": "dossier: tab-list diagnostic declares when it is truncated",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function abTabList"
+    },
+    {
       "name": "Golden Record: PILLAR HEATMAP — this brand's analysed markets x the eight audit pillars, weakest cell ringed and named, row click opens that market (Ray 16 Sep 2026: 'the pillar heatmap is great too')",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function pillarHeat",

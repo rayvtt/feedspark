@@ -66,6 +66,25 @@ ok('exact name wins over a near-miss sibling',
 ok('two near-misses and no exact = ambiguous, not a guess',
    resolveAbTab(['Old AB Test Archive', 'AB Test Archive 2024']) === null,
    resolveAbTab(['Old AB Test Archive', 'AB Test Archive 2024']));
+
+// THE REISS BUG (Ray, 16 Sep 2026: "Reiss - AB Test Archive is still not populating"). The brand
+// branch used to run BEFORE the exact-name rule, so a workbook holding the archive alongside any
+// second archive-ish tab refused: near.length was 2, neither name contained "reiss", and the
+// answer was null. Passing the client made the result WORSE than omitting it.
+const REISS = ['Project Plan', 'Service Overview', 'AB Test Archive', 'Old AB Test Archive', 'Metric'];
+ok('the exact tab wins even with a stale sibling AND a client name',
+   resolveAbTab(REISS, 'Reiss') === 'AB Test Archive', resolveAbTab(REISS, 'Reiss'));
+ok('naming the client is never worse than omitting it',
+   resolveAbTab(REISS, 'Reiss') === resolveAbTab(REISS),
+   [resolveAbTab(REISS, 'Reiss'), resolveAbTab(REISS)]);
+ok('the plural exact name wins the same way',
+   resolveAbTab(['AB Test Archives', 'Old AB Test Archive'], 'Reiss') === 'AB Test Archives');
+ok('"A/B Test Archive" is the same exact name',
+   resolveAbTab(['A/B Test Archive', 'AB Test Archive 2024'], 'Reiss') === 'A/B Test Archive');
+// and the guard it must NOT weaken: two exact copies are still ambiguous
+ok('two tabs with the exact same name stay ambiguous',
+   resolveAbTab(['AB Test Archive', 'ab test archive'], 'Reiss') === null,
+   resolveAbTab(['AB Test Archive', 'ab test archive'], 'Reiss'));
 // Reiss's tab is PLURAL and carries no brand suffix (Ray, 16 Sep 2026: "tab is: AB Test
 // Archives"). It always resolved — pinned here so the answer to "is the name the problem?"
 // is a test rather than a re-reading of the regex.
@@ -231,6 +250,28 @@ ok('a Project Plan tab is NOT an archive',
 ok('an empty tab is not an archive', !hasAbHeader([]));
 ok('a lookalike without Test Method is not an archive',
    !hasAbHeader([['Country', 'Market', 'Currency', 'Feeds']]));
+
+// ---- the page's own diagnostics -----------------------------------------------------------
+// The tab list is the EVIDENCE for "no archive tab". It printed 12 names with no sign it had
+// truncated, which read as the whole workbook and hid the tab we were looking for.
+console.log('\n-- the failure message tells the truth about its own evidence --');
+{
+  const page = fs.readFileSync(path.join(root, 'docs', 'FeedSpark_Command_Center.html'), 'utf8');
+  ok('the page has one shared tab-list renderer', /function abTabList\(/.test(page));
+  const fn = new Function('esc', lift(page, 'abTabList') + ' return abTabList;')((s) => String(s));
+  const many = { tabs: Array.from({ length: 24 }, (_, i) => 'Tab' + i), tabCount: 31 };
+  ok('a truncated list SAYS it is truncated', /showing 24 of 31 tabs/.test(fn(many)), fn(many).slice(0, 60));
+  const few = { tabs: ['Project Plan', 'AB Test Archive'], tabCount: 2 };
+  ok('a complete list does not claim to be truncated', !/showing/.test(fn(few)) && /tabs found/.test(fn(few)));
+  ok('no tabs at all adds nothing', fn({ tabs: [] }) === '' && fn(null) === '');
+  ok('the count falls back to the list length when the worker sent none',
+     /tabs found/.test(fn({ tabs: ['A', 'B'] })));
+  ok('the worker sends the true tab count', /tabCount: titles\.length/.test(
+     fs.readFileSync(path.join(root, 'cloudflare', 'feedspark-deck', 'src', 'worker.js'), 'utf8')));
+  // \\U is not a JavaScript escape — the backslash is dropped and the page prints "U0001F9EA"
+  ok('no invalid \\U escapes survive in the page', !/\\U[0-9A-Fa-f]{4}/.test(page));
+  ok('the A/B card renders a real test-tube emoji', page.indexOf('\u{1F9EA} A/B test archive') > 0);
+}
 
 // ---- what the read FAILED with, lifted out of the worker by name ---------------------------
 // The bug this pins: a workbook the service account cannot open returns an error and no `sheets`,
