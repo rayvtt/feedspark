@@ -233,6 +233,10 @@ window.addEventListener('load',restore);
   .tk-pri.hi{background:var(--orange-deep)}
   .tk-pri.ur{background:#C0392B}
   .tik .tk-age{font-size:9.5px;font-weight:900;padding:1px 6px;border-radius:100px;background:var(--wash);color:var(--muted);flex:none;white-space:nowrap}
+  .tik .tk-hrs{font-size:9.5px;font-weight:900;padding:1px 6px;border-radius:100px;background:rgba(91,130,190,.14);color:#1A365D;flex:none;white-space:nowrap}
+  [data-theme=dark] .tik .tk-hrs{background:rgba(91,130,190,.24);color:#93B4E0}
+  .tmh-r{display:grid;grid-template-columns:78px 1fr auto auto 76px;gap:8px;font-size:11.5px;padding:4px 0;border-bottom:1px dashed var(--line);align-items:baseline}
+  .tmh-d,.tmh-o,.tmh-s{color:var(--muted)} .tmh-o,.tmh-s{font-size:10.5px} .tmh-h{text-align:right;font-weight:800} .tmh-h i{font-style:normal;color:var(--muted);font-weight:600}
   .tik .tk-age.warn{background:rgba(192,57,43,.12);color:#C0392B}
   .tik .tk-t{font-size:11.5px;font-weight:700;color:var(--ink);line-height:1.28;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .tik .due{font-size:9.5px;padding:0 6px;flex:none;white-space:nowrap}
@@ -1470,6 +1474,30 @@ window.addEventListener('load',restore);
   }
   setInterval(bfPoll,60000);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden)bfPoll(); });
+
+  /* ---- Task Manager hours ON the ticket (Ray, 16 Sep 2026: "if a brief is being sent from FCC
+     and users are logging hours … that sync must be automatic"): the worker pulls the reports
+     MCP at :15/:45 and keys every TM task carrying this ticket's [ibfref:] token to the brief —
+     /api/tm?hours=1 is that map, scoped like the board. Read at boot, every 5 min and on
+     tab-visible; the card wears ⏱ total hours, the modal breaks them down. Exact-token match
+     only — nothing here is typed by hand and nothing is guessed. */
+  var TMH={}, TMH_ST=null;
+  function tmLoad(){ if(document.hidden)return;
+    fetch('/api/tm?hours=1').then(function(r){return r.ok?r.json():null;}).then(function(d){
+      if(!d||!d.ok||!d.hours)return; TMH_ST=d.status||null;
+      var s=JSON.stringify(d.hours); if(s===JSON.stringify(TMH))return; TMH=d.hours; renderBoard(); })
+    .catch(function(){}); }
+  function fmtH(n){ n=Math.round((+n||0)*100)/100; return (Number.isInteger(n)?String(n):n.toFixed(Math.round(n*10)===n*10?1:2))+'h'; }
+  function tmAgoW(t){ var m=Math.round((Date.now()-t)/60000); return m<1?'just now':m<60?(m+' min ago'):(Math.round(m/60)+'h ago'); }
+  function tmChip(b){ var h=TMH[b.id]; if(!h)return ''; var tot=Math.round(((+h.h||0)+(+h.nb||0))*100)/100;
+    return '<span class="tk-hrs" title="Task Manager · '+fmtH(h.h)+' billable'+(h.nb?' · '+fmtH(h.nb)+' non-billable':'')+(h.sc?' · '+fmtH(h.sc)+' scheduled':'')+' · '+(h.n||1)+' task'+((h.n||1)===1?'':'s')+(h.dn!=null?' ('+h.dn+' done)':'')+(h.o?' · '+esc(h.o):'')+'">⏱ '+fmtH(tot)+'</span>'; }
+  function tmModalPill(b){ var h=TMH[b.id]; if(!h)return '';
+    return '<span class="m-pill" style="color:#1A365D;border-color:rgba(91,130,190,.45)" title="Hours logged in the Task Manager against this ticket — matched on [ibfref:'+esc(b.id)+']">⏱ TM '+fmtH((+h.h||0)+(+h.nb||0))+(h.nb?' ('+fmtH(h.h)+' billable · '+fmtH(h.nb)+' non-bill)':'')+(h.o?' · '+esc(h.o):'')+(h.st?' · '+esc(h.st):'')+'</span>'; }
+  function tmModalSec(b){ var h=TMH[b.id]; if(!h||!h.tasks||!h.tasks.length)return '';
+    return '<div class="m-sec"><h4>Hours logged in the Task Manager</h4><div class="tmh">'+h.tasks.map(function(t){ return '<div class="tmh-r"><span class="tmh-d">'+esc(t.d||'')+'</span><span class="tmh-t">'+esc(t.t||'')+'</span><span class="tmh-o">'+esc(t.o||'')+'</span><span class="tmh-s">'+esc(t.st||'')+'</span><span class="tmh-h">'+fmtH(t.h)+(t.nb?' <i>+'+fmtH(t.nb)+' nb</i>':'')+'</span></div>'; }).join('')
+      +'<div class="sub" style="margin:6px 0 0">'+esc((h.client||'')+(h.market?' '+h.market:''))+' · pulled from the reports MCP'+(TMH_ST&&TMH_ST.ok_at?' '+tmAgoW(TMH_ST.ok_at):'')+' · matched on the ticket’s ibfref token only, never by name.</div></div>'; }
+  setInterval(tmLoad,300000);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden)tmLoad(); });
 
   // ---- brief building ----
   function code(client,market){ return slug(client)+'-'+(slug(market)||'gb'); }
@@ -2988,7 +3016,7 @@ window.addEventListener('load',restore);
             flow='<div class="tk-flow'+(dlF<=0?' now':'')+'" title="'+(b.status==='running'?('Auto-moves to Analysis when the '+runSlaDays(b)+'-day run completes'):('Runs for '+runSlaDays(b)+' days once ASPL ships it, then Analysis'))+'">⇢ '+nxF+' '+(dlF>0?('in '+dlF+'d'):'due now')+'</div>'; }
           else flow='<div class="tk-flow" title="Runs '+runSlaDays(b)+' days once started, then Analysis">⇢ Analysis after '+runSlaDays(b)+'d run</div>'; }
         return '<div class="tik'+(courtSel&&crt!==courtSel?' dim':'')+'" draggable="true" data-id="'+esc(b.id)+'">'
-          +'<div class="tk-m"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+tst+pri+'<span class="grow"></span>'+db+ageChip+'</div>'
+          +'<div class="tk-m"><span class="tk-ab" title="'+esc(b.client)+' · '+esc(b.code)+'">'+esc(abbr(b.client))+'</span>'+mk+tst+pri+'<span class="grow"></span>'+db+ageChip+tmChip(b)+'</div>'
           +'<div class="tk-t" title="'+esc(taskDisp(b.task))+'">'+esc(taskDisp(b.task))+'</div>'+flow+'</div>';
       }).join('') || '<div class="board-empty">—</div>';
       return '<div class="lane" data-stage="'+s[0]+'"><div class="lane-h"><span class="dot" style="background:'+s[2]+'"></span>'+s[1]+'<span class="ct">'+items.length+'</span></div>'+cards+'</div>';
@@ -3054,12 +3082,14 @@ window.addEventListener('load',restore);
         +(lastResultTxt(b)?('<span class="m-pill" style="color:#15803D;border-color:rgba(21,128,61,.35)" title="The recorded read-out — travels with the brief">🧪 '+esc(lastResultTxt(b).slice(0,60))+'</span>'):'')
         +'<span class="m-pill">'+(b.source==='plan'?'Project plan':'Email')+'</span>'
         +'<span class="m-pill"'+(stageBreached(b)?' style="color:#C0392B;border-color:rgba(192,57,43,.4)"':'')+'>Ball: '+(crt?(crt+' · '+daysInCourt(b)+'d'):'—')+'</span>'
+        +tmModalPill(b)
         +(function(){ var rd=readoutDue(b); if(rd==null||b.status==='confirmed')return ''; var dl=Math.ceil((rd-Date.now())/86400000);
           return '<span class="m-pill"'+(dl<=0?' style="color:#C0392B;border-color:rgba(192,57,43,.4)"':'')+' title="'+runSlaDays(b)+'-day run SLA from when the brief starts running">Analysis '+(dl>0?('in '+dl+'d'):(dl===0?'due today':((-dl)+'d overdue')))+'</span>'; })()
         +(dueBadge(b,true))+'</div>'
       +'<div class="m-sec"><h4>Stage</h4><div class="stat-seg" id="m-stat">'+stat+'</div></div>'
       +'<div class="m-sec"><h4>Journey — handoffs across the three courts</h4><div class="jny">'+journeyHtml(b)+'</div>'
         +(xl.length?('<div class="m-xl">'+xl.join('')+'</div>'):'')+'</div>'
+      +tmModalSec(b)
       +'<div class="m-sec"><h4>ASPL tracking <span class="m-owner">· Owner <select id="m-aspl">'+ASPL.map(function(n){return '<option'+(asplOf(b)===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select></span></h4><div id="m-comms">'+comms+'</div>'
         +'<div class="addc"><select id="m-from">'+ASPL.concat(['Client','Ray','Other']).map(function(n){return '<option>'+n+'</option>';}).join('')+'</select>'
         +'<input id="m-note" placeholder="Paste / summarise their reply…"><button class="btn" id="m-log">Log</button></div>'
@@ -3982,7 +4012,7 @@ window.addEventListener('load',restore);
   // halves haven't loaded, and nothing re-rendered afterwards, so a colleague's status sat in
   // the store while the row on screen still read Open.
   var SHBOOT=shBoot().then(function(ok){ shStart(); return ok; });
-  apiGet().then(function(d){ BRIEFS=d||{}; bfRescueLocal(); _srB=true; _srTry(); renderAll();
+  apiGet().then(function(d){ BRIEFS=d||{}; bfRescueLocal(); _srB=true; _srTry(); renderAll(); tmLoad();
     SHBOOT.then(function(){ renderAll(); });   // whichever lands last, the board ends up current
     // RACE (Ray, 16 Sep 2026 — the other half of why Cashmere/Merino and Gifting had no task):
     // reconcileBriefTasks was called ONLY from fetchLive's success handler. The plan read and

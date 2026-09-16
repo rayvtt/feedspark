@@ -123,6 +123,20 @@ else
   echo "   ✗ i18n harness FAILED — see node tools/test_i18n.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h4/7: Task Manager integration (parser, agent, worker store, mapping)"
+if node tools/test_tm.mjs >/dev/null 2>&1; then
+  echo "   ✓ column resolver, hours/date parsing, tmpush store + scoped read, Leadership overlay hold"
+else
+  echo "   ✗ Task Manager harness FAILED — see node tools/test_tm.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3h5/7: Task Manager AUTOMATIC sync (MCP transport, rotation, ticket hours, lifted tmPull)"
+if node tools/test_tmmcp.mjs >/dev/null 2>&1; then
+  echo "   ✓ JSON/SSE parsing, auth modes, market rotation, ibfref hours, cron pull vs stub MCP + page wiring hold"
+else
+  echo "   ✗ Task Manager sync harness FAILED — see node tools/test_tmmcp.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h3/7: phone layer (the module bar, mirror rules, pan sweep, wiring)"
 if node tools/test_mobile.mjs >/dev/null 2>&1; then
   echo "   ✓ bottom bar, sheets, mirror rules, pan sweep + worker/tripwire wiring hold"
