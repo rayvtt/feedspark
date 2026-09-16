@@ -116,6 +116,10 @@ echo "── validating: suggested next moves arrive filtered"
 node tools/test_deeplink.mjs >/dev/null
 echo "   ✓ links carry their filter; Workflow, the guards, Feed Lab and the calendar read it"
 
+echo "── validating: Golden Record snapshot in the dossier"
+node tools/test_goldensnap.mjs >/dev/null
+echo "   ✓ averages exclude unscanned markets; popup + /golden?client= hold"
+
 echo "── validating: live deck editor (real browser)"
 if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   NODE_PATH=$(npm root -g) node tools/test_editor.mjs || {
