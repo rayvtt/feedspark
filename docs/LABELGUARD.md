@@ -506,6 +506,21 @@ the same number on both pages.
   spec tiers, content quality, AI-readiness — lands at roughly two A4 lengths on its single sheet,
   and `tools/check_grpdf.js` asserts the score, the ladder and all eight pillars are present.
 
+**The scorecard header rides with you** (Ray, 16 Sep 2026: *"when using the Golden Score card and
+scrolling down to review the feed scorecard, make sure this section stays frozen when scrolling
+down"*). The brand, the dial, the Δ reference and the actions pin under the topbar — whose height
+is *measured*, not assumed, since the topbar is sticky itself and grows with the phone layer and
+the view-as pill. Once pinned the block **condenses** (dial 150 → 74px, verdict paragraph away,
+206 → ~120px): a header frozen at full height is a wall across the viewport, not a help, and what
+stays is what you need while reading rows. The stuck state is read off the element's own position
+on each animation frame rather than tracked with a sentinel — `renderDetail` rewrites the panel
+whenever the profile, the reference or a finished analysis changes, and an observer bound to the
+old nodes would watch a detached element while the visible one never condensed. Under 760px it
+scrolls away like anything else (the viewport is the scarce thing on a phone, and every control
+stays on the page — the phone tripwire's rule). Printing takes the page **at rest**: `body.pdf`
+un-pins it and the condensing pass stands down, or the PDF would carry whatever size the dial
+happened to be when the reader hit ⬇ PDF.
+
 ### 9.8 Two scores, two questions (`/golden`, under AI-Readiness)
 
 Ray, 16 Sep 2026: *"there's definitely a discrepancy between the scoring of content quality

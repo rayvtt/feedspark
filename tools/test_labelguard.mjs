@@ -1050,6 +1050,26 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   eq('etaWords: nothing to say without a rate', etaWords(0), '');
   eq('etaWords: seconds', [etaWords(4), etaWords(23)], ['a few seconds left', '~25s left']);
   eq('etaWords: minutes', etaWords(200), '~3m 15s left');
+
+  // ---- the pinned scorecard header (Ray, 16 Sep 2026: "when using the Golden Score card and
+  // scrolling down to review the feed scorecard, make sure this section stays frozen when
+  // scrolling down"). Three things have to hold together or the header silently stops working.
+  console.log('\n— the pinned scorecard header —');
+  ok('the header block is sticky, under a MEASURED topbar offset (it is sticky itself)',
+    /\.gr-sticky\{position:sticky;top:var\(--stick/.test(page) && /--stick', GR_TOP \+ 'px'/.test(page));
+  ok('it condenses once pinned rather than freezing a wall across the viewport',
+    /\.gr-sticky\.stuck \.gr-verdict\{display:none\}/.test(page) && /\.gr-sticky\.stuck \.dial\{width:74px/.test(page));
+  ok('what an AM needs while reading rows is NOT hidden — the Δ reference and the actions',
+    !/\.gr-sticky\.stuck \.refseg\{display:none/.test(page) && !/\.gr-sticky\.stuck \.det-actions\{display:none/.test(page));
+  ok('the stuck state is read off the element itself, not a sentinel that a re-render detaches',
+    /function grStick/.test(page) && !/gr-sent/.test(page));
+  ok('it is opaque, so rows scroll under it rather than through it',
+    /\.gr-sticky\{position:sticky;[^}]*background:#fff/.test(page) && /\[data-theme=dark\] \.gr-sticky\{background:var\(--paper\)\}/.test(page));
+  ok('on a phone it scrolls away like anything else', /@media\(max-width:760px\)\{\.gr-sticky\{position:static/.test(page));
+  ok('paper gets the page AT REST — print un-pins it and the condensing pass stands down',
+    /body\.pdf \.gr-sticky\{position:static!important/.test(page) &&
+    /!document\.body\.classList\.contains\('pdf'\) &&\s*\n\s*el\.getBoundingClientRect\(\)\.top <= GR_TOP/.test(page) &&
+    /gs\.className = 'gr-sticky'/.test(page));
 }
 
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);

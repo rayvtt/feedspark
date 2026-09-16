@@ -84,6 +84,21 @@ window.addEventListener('load',restore);
   .al-t{font-size:11px;color:var(--muted);font-weight:700;flex:none;margin-top:3px}
   .al-empty{color:var(--good);font-weight:800;font-size:13.5px;padding:6px 0}
   /* detail: score dial + tiered attribute scorecard */
+  /* the scorecard header rides with you down the page — pinned under the topbar, and CONDENSED
+     once it sticks (a 220px block frozen across the viewport is a wall, not a help). What stays
+     is what you need while reading rows: the feed, the score, the Δ reference and the actions. */
+  .gr-sticky{position:sticky;top:var(--stick,58px);z-index:20;background:#fff;
+    margin:-18px -20px 0;padding:18px 20px 0;border-radius:12px 12px 0 0}
+  .gr-sticky.stuck{padding-bottom:9px;border-bottom:1px solid var(--line);box-shadow:0 8px 16px -10px rgba(0,0,0,.28)}
+  .gr-sticky.stuck .gr-verdict{display:none}
+  .gr-sticky.stuck .gr-top{gap:16px;margin-bottom:0}
+  .gr-sticky.stuck .dial{width:74px;height:74px}
+  .gr-sticky.stuck .det-head{margin-bottom:0}
+  .gr-sticky .dial{transition:width .18s,height .18s}
+  /* on a phone the viewport is the scarce thing — the header scrolls away like anything else,
+     and every control it carries stays on the page (the phone tripwire's rule) */
+  @media(max-width:760px){.gr-sticky{position:static;margin:0;padding:0;box-shadow:none;border-bottom:none}}
+  @media(prefers-reduced-motion:reduce){.gr-sticky .dial{transition:none}}
   .gr-top{display:flex;gap:26px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
   .dial{width:150px;height:150px;flex:none}
   .dial .dial-bg{fill:none;stroke:var(--wash);stroke-width:11}
@@ -346,7 +361,7 @@ window.addEventListener('load',restore);
   .qz-pmeta b{color:var(--ink-2);font-weight:800}
   .qz-peta{white-space:nowrap}
   /* two scores, two questions — where the content-quality read and the AI pillar diverge */
-  .rec-tbl{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+  .rec-tbl{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
   .rec-row{display:grid;grid-template-columns:118px 132px 156px 54px minmax(220px,1.35fr);gap:12px;
     align-items:start;padding:10px 12px;border-top:1px solid var(--line);font-size:12px}
   .rec-row:first-child{border-top:none}
@@ -364,6 +379,8 @@ window.addEventListener('load',restore);
   .rec-cause{display:block;margin-top:4px;color:var(--orange-deep);font-weight:700}
   .rec-flag{font-size:11px;font-weight:900;color:var(--orange-deep);background:#FDF3E3;border-radius:100px;padding:3px 9px}
   [data-theme=dark] .rec-row.on{background:#241B10}
+  [data-theme=dark] .rec-tbl{background:var(--paper)}
+  [data-theme=dark] .gr-sticky{background:var(--paper)}
   @media(max-width:900px){.rec-row{grid-template-columns:1fr 1fr;gap:8px}
     .rec-head{display:none}.rec-k,.rec-w{grid-column:1/-1}.rec-d{text-align:left}}
   .qz-empty{font-size:12.5px;color:var(--ink-2);line-height:1.6}
@@ -434,6 +451,9 @@ window.addEventListener('load',restore);
   body.pdf .rec-head{display:grid!important}
   body.pdf .rec-k,body.pdf .rec-w{grid-column:auto!important}   /* else each row stacks into three */
   body.pdf .rec-d{text-align:right!important}
+  /* pinning means nothing on paper, and a condensed header would print a shrunken dial */
+  body.pdf .gr-sticky{position:static!important;margin:0!important;padding:0!important;
+    box-shadow:none!important;border-bottom:none!important}
   body.pdf *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   @media print{@page{margin:14mm 12mm}body{background:#fff!important;color:#333!important}}
   /* rocket logo + module nav (shared) */
@@ -1077,7 +1097,11 @@ window.addEventListener('load',restore);
     var p = parts(k);
     var s = d.snapshot;
     var rf = refFor(d), ref = rf.ref, refLbl = rf.isDaily ? 'yesterday' : 'known-good';
-    var h = '<div class="det-head"><h3>' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + '</h3>' + chChip() +
+    // the scorecard header stays with you down the page (Ray, 16 Sep 2026: "when using the
+    // Golden Score card and scrolling down to review the feed scorecard, make sure this section
+    // stays frozen when scrolling down"); grStick() condenses it once it pins.
+    var h = '<div class="gr-sticky" id="gr-sticky">' +
+      '<div class="det-head"><h3>' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + '</h3>' + chChip() +
       '<span class="det-actions" style="margin-left:auto">' +
       '<button class="btn" id="det-csv" title="Download this scorecard as CSV">⬇ CSV</button>' +
       '<button class="btn" id="det-pdf" title="Print-ready client presentation of this scorecard — save as PDF from the print dialog">⬇ PDF</button>' +
@@ -1085,7 +1109,7 @@ window.addEventListener('load',restore);
       '<button class="btn" id="det-pdp" title="Sample this feed\'s product pages and see which Golden Record gaps the site itself can fill">🔎 Scan PDPs</button>' +
       '<button class="btn pri" id="det-scan">⟳ Rescan now</button></span></div>';
     if (!s) {
-      h += '<p class="muted">No snapshot yet — rescan.</p>';
+      h += '</div><p class="muted">No snapshot yet — rescan.</p>';
       $('det-panel').innerHTML = h; wire(k); return;
     }
     var prof = profileForC(p.client);
@@ -1114,7 +1138,7 @@ window.addEventListener('load',restore);
       'Weighted completeness <b style="color:' + scoreCol(score) + '">' + (score == null ? '—' : score + '%') + '</b> vs the FeedSpark Golden Record target of <b>99.9%</b>. ' +
       (function () { var ai = aiCount(s.attrs); return '<b>' + ai.n + ' of ' + ai.of + '</b> conversational AI attributes live.'; })() +
       (bench ? ' Industry benchmark — <b>' + esc(prof.industry) + '</b> (' + bench.n + ' estate feeds): avg <b>' + bench.avg + '</b> · best <b>' + bench.best.score + '</b> (' + esc(dispClient(bench.best.client)) + ').' : '') + '</p>' +
-      '</div></div>';
+      '</div></div></div>';    // …gr-info · gr-top · gr-sticky
     h += '<div id="profp-slot"></div><div id="askp-slot"></div>';
 
     TIERS.forEach(function (T) {
@@ -1323,7 +1347,40 @@ window.addEventListener('load',restore);
       cat: 'technical', scope: lines.join('\n') });
   }
 
+  /* ---- the pinned scorecard header (Ray, 16 Sep 2026) ----
+     Two things CSS alone cannot do. The offset: .topbar is itself sticky at top:0, so the
+     header has to sit exactly its height below — measured, not guessed, since the topbar's
+     height changes with the phone layer and the view-as pill. And the condensed state: there
+     is no selector for "this sticky element is currently stuck", so a 1px sentinel is left
+     where the header started and watched — once it has scrolled past the pin line, we are
+     stuck. Re-created on every render, because renderDetail rewrites the panel. */
+  var GR_TICK = false, GR_TOP = 58;
+  function stickTop() {
+    var tb = document.querySelector('.topbar');
+    GR_TOP = tb ? Math.round(tb.getBoundingClientRect().height) : 58;
+    document.documentElement.style.setProperty('--stick', GR_TOP + 'px');
+    return GR_TOP;
+  }
+  // read the header's own position rather than tracking a sentinel: renderDetail rewrites the
+  // panel whenever the profile, the reference or a finished analysis changes, and an observer
+  // bound to the old nodes would go on watching a detached element while the visible one never
+  // condensed. Looking the element up fresh on each frame cannot go stale.
+  function grStick() {
+    GR_TICK = false;
+    var el = $('gr-sticky'); if (!el) return;
+    var want = 'gr-sticky';
+    // while the document is laid out for paper it is the page AT REST — and switching to that
+    // layout reflows and re-fires scroll, which would otherwise condense the header again
+    if (window.innerWidth > 760 && !document.body.classList.contains('pdf') &&
+        el.getBoundingClientRect().top <= GR_TOP + 0.5) want += ' stuck';
+    if (el.className !== want) el.className = want;
+  }
+  function grScroll() { if (!GR_TICK) { GR_TICK = true; requestAnimationFrame(grStick); } }
+  function wireSticky() { stickTop(); grStick(); }
+  window.addEventListener('scroll', grScroll, { passive: true });
+  window.addEventListener('resize', function () { stickTop(); grScroll(); });
   function wire(k, s) {
+    wireSticky();
     wireQuality(k); wireHeat();
     if ($('prof-edit')) $('prof-edit').onclick = function () { openProf(k); };
     Array.prototype.forEach.call(document.querySelectorAll('[data-ask]'), function (el) {
@@ -2214,6 +2271,9 @@ window.addEventListener('load',restore);
   }
   function preparePdf() {
     document.body.classList.add('pdf');
+    // a header condensed by scrolling would print a shrunken dial — the document is the page
+    // at rest, whatever the reader happened to be scrolled to
+    var gs = $('gr-sticky'); if (gs) gs.className = 'gr-sticky';
     var el = $('sec-detail');
     var h = el ? el.getBoundingClientRect().height : 0;   // reading it forces the reflow
     var mm = Math.ceil(h * PX_MM) + PG.my * 2 + 2;        // + both margins + a hair of slack
