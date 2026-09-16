@@ -1372,13 +1372,59 @@ window.addEventListener('load',restore);
   var BRIEFS={}, BRIEFS_BASE=0;
   function apiGet(){ return fetch('/api/briefs').then(function(r){ BRIEFS_BASE=+r.headers.get('X-Sync-Base')||0; return r.json(); })
     .catch(function(){ try{return JSON.parse(localStorage.getItem('fcc-briefs'))||{};}catch(e){return {};} }); }
+  /* ---- A BRIEF IS THE UNIT OF WORK — IT CANNOT BE SAVED SILENTLY TO ONE BROWSER ----
+   * (Ray, 16 Sep 2026, with the evidence: Steven raised Cashmere/Merino and Gifting through
+   *  the module and the [FS Brief] emails went out, yet Ray's board still read NOT BRIEFED and
+   *  the tickets were in neither his Intake nor his pipeline.)
+   * This used to be fire-and-forget: one PUT, `.catch(function(){})`, and the composer toasted
+   * "Brief saved to pipeline" BEFORE the server had answered. A failed save left the ticket in
+   * that person's localStorage only, with the brief email already sent — the team's single
+   * record of the work, invisible to the team. The save now RETRIES with backoff, flushes on
+   * reconnect, and says what actually happened. */
+  var _bfT=null, _bfBack=2000, BRIEFS_DIRTY=0, _bfWarn=null;
   function persist(){ try{localStorage.setItem('fcc-briefs',JSON.stringify(BRIEFS));}catch(e){}
+    BRIEFS_DIRTY=Date.now(); bfPush(); }
+  function bfPush(delay){ if(_bfT)clearTimeout(_bfT); _bfT=setTimeout(function(){ _bfT=null;
+    var stamp=0;
     fetch('/api/briefs',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(BRIEFS_BASE)},body:JSON.stringify(BRIEFS)})
-      .then(function(r){ BRIEFS_BASE=+r.headers.get('X-Sync-Base')||BRIEFS_BASE; return r.json(); })
-      .then(function(m){ if(!m||typeof m!=='object'||m.ok)return;   // old worker shape ({ok:true}) — don't adopt
+      .then(function(r){ if(!r.ok)throw 0; stamp=+r.headers.get('X-Sync-Base')||0; return r.json(); })
+      .then(function(m){ _bfBack=2000; BRIEFS_DIRTY=0; bfWarn(false);
+        if(!m||typeof m!=='object'||m.ok)return;   // old worker shape ({ok:true}) — don't adopt,
+        // and DON'T advance the base off a response we didn't adopt: the next whole-map save
+        // would then carry a stale map with a fresh read-stamp, and absence means deletion.
+        if(stamp)BRIEFS_BASE=stamp;
         var merged=JSON.stringify(m); if(merged===JSON.stringify(BRIEFS))return;
         BRIEFS=m; try{localStorage.setItem('fcc-briefs',merged);}catch(e){} renderAll(); })
-      .catch(function(){}); }
+      .catch(function(){ bfPush(_bfBack); _bfBack=Math.min(_bfBack*2,60000); bfWarn(true); });
+  },delay||250); }
+  window.addEventListener('online',function(){ if(BRIEFS_DIRTY){ _bfBack=2000; bfPush(200); } });
+  // an unsaved brief is never left to a toast nobody re-reads — it stays on screen until it lands
+  function bfWarn(on){
+    if(!on){ if(_bfWarn){ _bfWarn.remove(); _bfWarn=null; } return; }
+    if(_bfWarn)return;
+    _bfWarn=document.createElement('div');
+    _bfWarn.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#8A2A1B;'
+      +'color:#fff;padding:9px 15px;border-radius:8px;z-index:9999;font-weight:800;font-size:13px;'
+      +'box-shadow:0 8px 24px rgba(0,0,0,.25)';
+    _bfWarn.textContent='⚠ Brief not saved to the pipeline yet — still on this device. Retrying…';
+    document.body.appendChild(_bfWarn);
+  }
+  /* And the board has to SEE a colleague's ticket. Workflow read /api/briefs once, at boot, and
+     never again — so a brief Steven raised at 09:00 was simply not on a board opened at 08:30.
+     (KWCal already polls; the board that OWNS the pipeline did not.) */
+  function bfPoll(){
+    if(document.hidden||BRIEFS_DIRTY)return;      // never overwrite work this tab hasn't saved
+    fetch('/api/briefs').then(function(r){ var st=+r.headers.get('X-Sync-Base')||0; return r.json().then(function(m){ return [m,st]; }); })
+      .then(function(pair){ var m=pair[0];
+        if(!m||typeof m!=='object'||m.error||m.ok)return;
+        if(JSON.stringify(m)===JSON.stringify(BRIEFS))return;
+        BRIEFS=m; if(pair[1])BRIEFS_BASE=pair[1];
+        try{localStorage.setItem('fcc-briefs',JSON.stringify(m));}catch(e){}
+        renderAll(); })
+      .catch(function(){});
+  }
+  setInterval(bfPoll,60000);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden)bfPoll(); });
 
   // ---- brief building ----
   function code(client,market){ return slug(client)+'-'+(slug(market)||'gb'); }
@@ -1669,7 +1715,18 @@ window.addEventListener('load',restore);
     if(window.__emailIds&&window.__emailIds.length){ decideMany(window.__emailIds,'briefed'); window.__emailIds=null; window.__emailId=null; }
     else if(window.__emailId){ decideEmail(window.__emailId,false,'briefed'); window.__emailId=null; }
     closeBrief();
-    toast(existing?'Brief updated':'Brief saved to pipeline'); };
+    // the toast used to fire before the PUT resolved, so a save that never landed still read
+    // "Brief saved to pipeline" — and the brief email went out on the strength of it
+    toast((existing?'Brief updated':'Brief saved')+' — syncing to the pipeline…');
+    var _tid=id; bfConfirm(_tid,existing); };
+  function bfConfirm(id,existing){   // tell the truth once the server has actually taken it
+    var t0=Date.now();
+    (function chk(){
+      if(!BRIEFS_DIRTY){ toast((existing?'Brief updated':'Brief saved to pipeline')+' · '+id); return; }
+      if(Date.now()-t0>20000)return;            // bfWarn is on screen and the retry is running
+      setTimeout(chk,600);
+    })();
+  }
 
   // ---- intake table: project-plan + incoming-email streams (ATRT-style, filter + sort) ----
   var FEEDLBL={technical:'Feed & tech',title:'Titles',keyword:'Keywords',data:'Data fields',product_type:'Product type',opt:'Optimisation',image:'Imagery',custom_label:'Custom labels',channel:'Channels',account:'Account',test:'Testing'};
