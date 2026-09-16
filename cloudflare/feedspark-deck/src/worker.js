@@ -225,6 +225,26 @@ const PLAN_SHEETS = {
   'House of Bruar': '1lgO-SrzWtHmsvKRXg2Xgzq3d7fCwv5V2Fauu6pJgYOA',
 };
 
+// Classify a Sheets API error into something a person can act on. PERMISSION_DENIED / 403 means
+// the workbook simply isn't shared with the worker's service account — the commonest cause by
+// far, since these plans are shared with US by name and the SA is a separate identity from
+// anyone's Google login. It is returned with that address so the page can print the remedy
+// rather than a raw Google string. NOT_FOUND means the wired sheet id is wrong, which is ours to
+// fix in PLAN_SHEETS. Anything else is passed through verbatim — inventing a cause is what put
+// us here.
+function abReadError(err, env) {
+  const status = String((err && err.status) || '');
+  const code = Number((err && err.code) || 0);
+  const msg = String((err && err.message) || 'sheet read failed');
+  if (status === 'PERMISSION_DENIED' || code === 403) {
+    let email = '';
+    try { email = JSON.parse(env.GOOGLE_SA_JSON || '{}').client_email || ''; } catch (e) {}
+    return { ok: false, error: 'not_shared', sa: email, detail: msg };
+  }
+  if (status === 'NOT_FOUND' || code === 404) return { ok: false, error: 'bad_sheet_id', detail: msg };
+  return { ok: false, error: msg };
+}
+
 // brands whose live feed is wired in code — imported from Ray's master feed-market sheet
 // (1eiqTbLC0fpJfjVyeJaf72kYfLPgGLDWUfXB38bRDfak: one row per client+country feed). This map
 // is the committed record; new rows in the sheet get re-imported here (or attached ad-hoc
@@ -1766,6 +1786,9 @@ export default {
     // snapshotted into git: the team keeps editing these tabs, and a committed copy would be
     // stale the moment they do. KV holds a short cache so a dossier browse doesn't hit Sheets
     // once per card; ?refresh=1 forces a re-read.
+    // A Sheets failure is only useful if it says what to DO. `not_shared` is the one the team can
+    // fix themselves in ten seconds, so it carries the address to share the plan sheet with —
+    // the same remedy /api/schedule already prints when its workbook isn't shared.
     if (path === '/api/abtests' && request.method === 'GET') {
       const client = (url.searchParams.get('client') || '').trim();
       const id = PLAN_SHEETS[client];
@@ -1780,7 +1803,15 @@ export default {
         const token = await googleToken(env, 'https://www.googleapis.com/auth/spreadsheets.readonly', false);
         const meta = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '?fields=sheets.properties.title',
           { headers: { Authorization: 'Bearer ' + token } })).json();
+        // A workbook the service account cannot OPEN returns an error here and no `sheets` —
+        // which then read as "zero tabs", and the tab search below reported `no_archive_tab`.
+        // That named the wrong cause and sent Ray looking for a tab that was there all along
+        // (Ray, 16 Sep 2026, on Reiss: "tab is: AB Test Archives"). A sheet we cannot read is
+        // never evidence about what is in it, so classify the failure instead of inferring one.
+        if (meta && meta.error) return json({ ...abReadError(meta.error, env), client, tests: [] });
         const titles = (((meta && meta.sheets) || []).map((x) => x.properties.title)).filter(Boolean);
+        // Belt and braces: a 200 with no tabs is not a workbook without an archive either.
+        if (!titles.length) return json({ ok: false, error: 'unreadable', client, tests: [] });
         let tab = resolveAbTab(titles, client);
         // Name search failed — probe the tabs for the archive's own header (Country beside Test
         // Method) rather than giving up on a rename. One batchGet covers the whole workbook.
@@ -1806,7 +1837,7 @@ export default {
         if (!tab) return json({ ok: false, error: 'no_archive_tab', client, tabs: titles.slice(0, 40), tests: [] });
         const r = await (await fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + '/values/'
           + encodeURIComponent(tab + '!A1:Z400'), { headers: { Authorization: 'Bearer ' + token } })).json();
-        if (r.error) return json({ ok: false, error: r.error.message, client, tests: [] });
+        if (r.error) return json({ ...abReadError(r.error, env), client, tab, tests: [] });
         const p = parseAbTests(r.values || []);
         if (!p.ok) return json({ ok: false, error: p.error, client, tab, tests: [] });
         const payload = { ok: true, client, tab, at: Date.now(), tests: p.tests, summary: abSummary(p.tests) };

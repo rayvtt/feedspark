@@ -1173,6 +1173,9 @@ window.addEventListener('load',restore);
       var why = { no_plan_sheet: 'no project plan is wired for this brand',
         no_archive_tab: 'the plan has no “AB Test Archive” tab' + ((ab.tabs && ab.tabs.length) ? ' (tabs seen: ' + ab.tabs.slice(0, 10).map(esc).join(', ') + ')' : ''),
         no_sa: 'the Google service account is not configured',
+        not_shared: 'the plan sheet is not shared with our reader' + (ab.sa ? ' — share it (Viewer) with ' + esc(ab.sa) : ''),
+        bad_sheet_id: 'the wired plan sheet id does not resolve — it needs re-pointing',
+        unreadable: 'the plan sheet returned no tabs, so it could not be read',
         no_header: 'the archive tab has no Country / Test Method header row' }[ab.error]
         || ('the plan sheet could not be read — ' + esc(String(ab.error || '').slice(0, 140)));
       h += '<p class="op-note">Test record unavailable: ' + why + '.</p>';
@@ -1821,6 +1824,9 @@ window.addEventListener('load',restore);
         var why={no_plan_sheet:'No project plan wired for this brand yet.',
                  no_archive_tab:'No “AB Test Archive” tab in the plan'+((d&&d.tabs&&d.tabs.length)?' — tabs found: '+d.tabs.slice(0,12).map(esc).join(', '):'')+'.',
                  no_sa:'The Google service account is not configured on the worker.',
+                 not_shared:'The plan sheet is not shared with our reader'+((d&&d.sa)?', so the archive cannot be opened. Share the sheet (Viewer) with '+esc(d.sa)+'.':'.'),
+                 bad_sheet_id:'The wired plan sheet id does not resolve — it needs re-pointing in PLAN_SHEETS.',
+                 unreadable:'The plan sheet returned no tabs, so it could not be read.',
                  no_header:'The archive tab has no Country / Test Method header row.'}[d&&d.error]
                  ||('Could not read the archive'+(d&&d.error?' — '+esc(String(d.error).slice(0,120)):'')+'.');
         box.innerHTML=head+'none</span></div><div class="dz-mat-e">'+why+'</div>'; return;
