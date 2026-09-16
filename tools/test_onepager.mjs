@@ -197,6 +197,21 @@ ok('feed quality is a dash', /—[\s\S]{0,40}Feed quality/.test(B.text));
 ok('hours dash out when the schedule does not cover the brand', !/Hours delivered[\s\S]{0,120}\b0\b/.test(B.text));
 ok('no stray "NaN" or "undefined" anywhere', !/NaN|undefined/.test(B.text), B.text.match(/.{0,40}(NaN|undefined).{0,40}/));
 
+// Stub set C: the plan sheet exists and has the archive — we just can't open it. This is the
+// case that sent Ray looking for a tab that was there all along, so the sheet must name the
+// remedy (share it with the reader) and must NOT claim the tab is missing.
+console.log('\n-- an unreadable sheet says so, and says what to do --');
+const C = await run({ ...EMPTY, abtests: { ok: false, error: 'not_shared',
+  sa: 'fcc-reader@feedspark.iam.gserviceaccount.com', detail: 'The caller does not have permission' } });
+ok('the sheet still renders', C.sheet === 1);
+ok('no page errors', C.errs.length === 0, C.errs.slice(0, 2));
+ok('names the address to share with',
+   C.text.includes('fcc-reader@feedspark.iam.gserviceaccount.com'),
+   C.text.match(/Test record unavailable.{0,160}/));
+ok('never blames a missing tab for a sheet it could not open',
+   !/has no .?AB Test Archive.? tab/i.test(C.text), C.text.match(/Test record unavailable.{0,160}/));
+ok('tests stat is still a dash, not 0', /—[\s\S]{0,40}Tests run/.test(C.text));
+
 console.log('\n-- client-safe: no internal vocabulary --');
 // these are everyday words elsewhere in the FCC and must never reach a client's desk
 const LEAKS = ['FCC', 'Command Center', 'Workflow', 'Feed Lab', 'Label Guard', 'Golden Record',

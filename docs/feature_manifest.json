@@ -5556,6 +5556,16 @@
       "pattern": "Most recent requests"
     },
     {
+      "name": "worker: A/B archive read failures classified (not_shared names the service account)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "function abReadError"
+    },
+    {
+      "name": "one-pager: unreadable plan sheet names the remedy, never a missing tab",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "not_shared:"
+    },
+    {
       "name": "Workflow: briefs ALREADY stranded in a browser are published on next open — the boot replaced BRIEFS with the server map, so the next load dropped them (Ray 16 Sep 2026, Steven's board showing RUNNING off tickets nobody else had)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function bfRescueLocal(){",
