@@ -210,6 +210,65 @@ window.addEventListener('load',restore);
   .q-in:focus{outline:none;border-color:var(--orange)}
   @keyframes lgspin{to{transform:rotate(360deg)}}
   .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--orange);border-top-color:transparent;border-radius:50%;animation:lgspin .7s linear infinite;vertical-align:-1px;margin-right:5px}
+  /* AI-Readiness — the Feed Lab block, brought onto the scorecard (Ray, 16 Sep 2026:
+     "bring in the AI readiness score on the feed lab section … anything from the feed lab
+     section that is colour-coded or nicely presented"). Same class names and same visual
+     language as /feedlab on purpose: one score, one ladder, one set of pillar cards, so a
+     client reading either page reads the same thing. */
+  .air-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:15px 17px}
+  .score-grid{display:grid;grid-template-columns:auto 1fr;gap:14px 28px;align-items:center}
+  .score-grid>*{min-width:0}
+  .big-ring{--p:0;--c:var(--orange);width:150px;height:150px;border-radius:50%;position:relative;display:grid;place-items:center;flex:none;margin:0 auto;
+    background:conic-gradient(var(--c) calc(var(--p)*1%),var(--wash) 0)}
+  .big-ring::before{content:"";position:absolute;inset:12px;border-radius:50%;background:var(--paper);box-shadow:inset 0 1px 3px rgba(16,24,40,.07)}
+  .brv{position:relative;z-index:1;text-align:center}
+  .brv .bn{font-size:40px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+  .brv em{font-style:normal;font-size:13px;font-weight:800;color:var(--muted)}
+  .brv i{display:block;font-style:normal;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+  .tier-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:11px}
+  .tier-pill{font-size:12.5px;font-weight:900;color:#fff;background:linear-gradient(135deg,var(--orange),var(--orange-deep));border-radius:100px;padding:5px 14px}
+  .tier-note{font-size:12px;font-weight:700;color:var(--muted)}
+  .ladder{display:flex;gap:8px}
+  .lad{flex:1;border:1px solid var(--line);background:var(--paper);border-radius:11px;padding:8px 11px;min-width:0}
+  .lad .lt{font-size:9.5px;font-weight:900;letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+  .lad .ln{display:block;font-size:12.5px;font-weight:900;margin:1px 0}
+  .lad .lr{font-size:10.5px;font-weight:800;color:var(--muted)}
+  .lad.done{background:rgba(245,166,35,.07);border-color:rgba(245,166,35,.3)}
+  .lad.on{background:rgba(245,166,35,.14);border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.12)}
+  .lad.on .lt{color:var(--orange-deep)}
+  .pillars{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(226px,100%),1fr));gap:11px;margin-top:12px}
+  .pillar{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 14px}
+  .pillar .ph{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:7px}
+  .pillar .pl2{font-size:12.5px;font-weight:900}
+  .pillar .pn{font-size:18px;font-weight:900;font-variant-numeric:tabular-nums}
+  .ptrack{height:8px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden}
+  .pfill{display:block;height:100%;width:0;border-radius:100px;background:linear-gradient(90deg,var(--orange),var(--orange-deep));transition:width .9s cubic-bezier(.25,.6,.3,1)}
+  .pillar .pf2{display:flex;align-items:center;gap:9px;margin-top:7px}
+  .wdots{display:inline-flex;gap:3px;flex:none}
+  .wdots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+  .wdots i.on{background:var(--orange-deep)}
+  .psum{font-size:11px;font-weight:700;color:var(--muted);line-height:1.35;overflow-wrap:anywhere}
+  .air-foot{font-size:11px;font-weight:700;color:var(--muted);margin:10px 0 0;line-height:1.5}
+  /* title anatomy — nested under the title row of the content-quality read */
+  .mask-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px;margin-top:8px}
+  .mseg{background:var(--wash);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .mseg .mh{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:900;margin-bottom:6px}
+  .mseg .mh b{margin-left:auto;font-size:12.5px;font-variant-numeric:tabular-nums}
+  .mdot{width:8px;height:8px;border-radius:3px;flex:none}
+  .mseg .mt{height:7px;border-radius:100px;background:#EFEFEC;overflow:hidden}
+  .mseg .mf{display:block;height:100%;width:0;border-radius:100px;transition:width .9s cubic-bezier(.25,.6,.3,1)}
+  .mseg .ms{display:block;font-size:10px;font-weight:800;color:var(--muted);margin-top:5px}
+  .tanat{margin-top:9px;padding-top:9px;border-top:1px dotted var(--line)}
+  .tanat-h{font-size:11.5px;font-weight:900;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .tanat-h span{font-size:10.5px;font-weight:800;color:var(--muted)}
+  .thist{display:flex;gap:6px;align-items:flex-end;margin-top:9px;height:62px}
+  .thb{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;min-width:0}
+  .thb i{display:block;width:100%;border-radius:5px 5px 0 0;background:var(--line);transition:height .8s cubic-bezier(.25,.6,.3,1);height:0}
+  .thb.win i{background:linear-gradient(180deg,var(--orange),var(--orange-deep))}
+  .thb .thn{font-size:10px;font-weight:900;font-variant-numeric:tabular-nums}
+  .thb .thl{font-size:9.5px;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  [data-theme=dark] .ptrack,[data-theme=dark] .mseg .mt{background:#191C24}
+  @media(max-width:900px){.score-grid{grid-template-columns:1fr}.ladder{flex-wrap:wrap}.lad{flex:1 1 44%}}
   /* content quality: how good the free-text data is, per Google's own spec pages */
   .qz-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
   .qz-score{font-size:30px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
@@ -319,6 +378,27 @@ window.addEventListener('load',restore);
   body.pdf .qz-rule{padding:5px 0}
   body.pdf .qz-why{font-size:10.5px;line-height:1.42}
   body.pdf .qz-eg{font-size:10px}
+  /* the AI-Readiness card in print. The ≤900px rules below stack the ring above the ladder —
+     correct on a phone, but the PDF is measured at desktop width and PRINTED at 703px, so
+     letting them apply would make the sheet shorter than the document (the same trap that
+     ate the spec note and the quality findings). Print pins the desktop geometry and trims
+     the scale instead. */
+  body.pdf .score-grid{grid-template-columns:auto 1fr!important;gap:12px 22px!important}
+  body.pdf .ladder{flex-wrap:nowrap!important}
+  body.pdf .lad{flex:1 1 0!important;padding:7px 9px}
+  body.pdf .lad .ln{font-size:11.5px}
+  body.pdf .lad .lt{font-size:9px;letter-spacing:.03em}
+  body.pdf .big-ring{width:118px;height:118px}
+  body.pdf .big-ring::before{inset:10px}
+  body.pdf .brv .bn{font-size:32px}
+  body.pdf .air-card{padding:11px 13px}
+  body.pdf .pillars{gap:8px;margin-top:9px}
+  body.pdf .pillar{padding:9px 11px}
+  body.pdf .pillar .pf2{margin-top:6px}
+  body.pdf .psum{font-size:10px}
+  body.pdf .air-foot{font-size:10px;margin-top:8px}
+  body.pdf .tier-line{margin-bottom:9px}
+  body.pdf .thist{height:52px}
   /* the printable column is 703px, which trips the ≤900px responsive rule that drops the
      spec note — but the note is exactly the context a client needs, so keep it here */
   body.pdf .at-note{display:block!important;font-size:10px}
@@ -1058,7 +1138,9 @@ window.addEventListener('load',restore);
       h += '</div>';
     });
     h += qualitySection(k, s);   // Ray's content-quality read, below the four spec tiers
+    h += airSection(k);          // and the AI-Readiness ladder under that
     $('det-panel').innerHTML = h;
+    airAnimate();
     wire(k, s);
   }
 
@@ -1553,8 +1635,11 @@ window.addEventListener('load',restore);
     var p = parts(k);
     return Promise.all([loadFA(), loadLG()]).then(function (a) {
       var FA = a[0], LG = a[1], col = null, cols = null, header = null, late = [];
+      var sample = [], nRows = 0;          // a bounded slice for the Feed Lab audit
       function onRow(r, liveHeader) {
         if (!col) { header = r.slice(); cols = LG.findAttrCols(header); col = LG.qualityCollector(cols); return; }
+        nRows++;
+        if (sample.length < AUD_CAP) sample.push(r);
         // an XML feed can GROW its header mid-stream when a sparse tag debuts late (the
         // Monsoon custom_label_1 lesson). Growth only ever APPENDS, so every column we
         // already resolved stays valid — but a free-text attribute that debuts after the
@@ -1594,6 +1679,11 @@ window.addEventListener('load',restore);
           if (!col) throw new Error('the feed produced no rows');
           var snap = col.finish({ client: p.client, market: p.mkt, late: late.length ? late : undefined });
           if (!snap.rows) throw new Error('the feed produced no rows');
+          // the SAME read, scored on the AI-Readiness ladder — one stream, two readings
+          try {
+            snap.ai = packAudit(FA.audit(header, sample, { client: p.client,
+              rowTotalEstimate: nRows, channel: 'google' }));   // /golden is Google-channel only
+          } catch (e) { snap.ai = null; }
           return fetch(API + '/api/golden/quality?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt),
             { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(snap) })
             .then(function (r) { return r.json(); })
@@ -1673,6 +1763,7 @@ window.addEventListener('load',restore);
               '<span class="qz-hit"><b>' + b.pct + '%</b><span>' + fmt(b.n) + ' products</span></span></div>';
           });
         }
+        if (r.key === 'title') h += titleAnatomy(k);   // the anatomy of what those rules just judged
         h += '<p class="hint muted" style="margin:8px 0 0;font-size:11px">' + esc(r.spec) +
           ' · <a href="https://support.google.com/merchants/answer/' + r.doc + '" target="_blank" rel="noopener">Google’s specification for g:' + esc(r.key) + '</a>' +
           ' · average length ' + r.avgLen + ' chars (' + r.minLen + '–' + r.maxLen + ')</p></div>';
@@ -1739,6 +1830,117 @@ window.addEventListener('load',restore);
     location.href = '/workflow?brief=' + b64url({ client: p.client,
       task: 'Content Quality - g:' + attr + ' - ' + p.client + ' ' + p.mkt.toUpperCase() + ' - ' + mmyy,
       cat: 'technical', scope: lines.join('\n') });
+  }
+
+  /* ---------------- AI-Readiness, on the same stream (Ray, 16 Sep 2026) ------------------
+     "bring in the AI readiness score on the feed lab section … the most important item is
+     the AI readiness score … you can bring in title anatomy to be nested after title content
+     quality scan."
+
+     Feed Lab already computes this — one weighted score across eight pillars, the four-tier
+     ladder, and the MASK title anatomy — so this reuses that engine rather than growing a
+     second opinion: the same feedlab_engine audit() the /feedlab page calls, on the SAME
+     stream the content-quality read is already pulling. One fetch, two readings, identical
+     numbers to /feedlab for the same feed.
+
+     Rows are sampled at AUD_CAP with rowTotalEstimate set to the true row count, which is
+     the contract audit() documents — every count it reports is scaled back to the whole
+     feed, so a 125MB feed costs a bounded slice of memory rather than all of it. */
+  var AUD_CAP = 30000;
+  var MASKS = [['brand', 'Brand', '#1A365D'], ['material', 'Material', '#7A5AA8'], ['fit', 'Fit', '#2F6FB0'],
+    ['colour', 'Colour', 'var(--orange-deep)'], ['use', 'Use-case', '#15803D']];
+  var LADDER = [{ t: 1, l: 'Foundational', r: '< 40' }, { t: 2, l: 'Structured', r: '40–59' },
+    { t: 3, l: 'Enriched', r: '60–79' }, { t: 4, l: 'Agentic-ready', r: '80+' }];
+  function airCol(s) { return s < 40 ? 'var(--risk)' : (s < 60 ? 'var(--orange-deep)' : (s < 80 ? 'var(--orange)' : 'var(--good)')); }
+  // keep only what the card renders — the full audit carries issues, recs and dissection the
+  // Feed Lab page owns, and none of it belongs in this store
+  function packAudit(a) {
+    if (!a || !a.score) return null;
+    var s = a.score, t = a.titles || {};
+    return {
+      total: Math.round(+s.total || 0), tier: +s.tier || 1, tierLabel: String(s.tierLabel || ''),
+      sampled: +a.sampled || 0, rows: +a.rowCount || 0,
+      pillars: (s.pillars || []).slice(0, 8).map(function (p) {
+        return { key: String(p.key || ''), label: String(p.label || ''), score: Math.round(+p.score || 0),
+          weight: +p.weight || 1, summary: String(p.summary || '').slice(0, 160) };
+      }),
+      titles: { avg: +t.avg || 0, min: +t.min || 0, max: +t.max || 0, dup: +t.dup || 0, allCaps: +t.allCaps || 0,
+        buckets: (t.buckets || []).slice(0, 6).map(function (b) { return { b: String(b.b || ''), n: +b.n || 0 }; }),
+        mask: { brand: Math.round(+(t.mask || {}).brand || 0), material: Math.round(+(t.mask || {}).material || 0),
+          fit: Math.round(+(t.mask || {}).fit || 0), colour: Math.round(+(t.mask || {}).colour || 0),
+          use: Math.round(+(t.mask || {}).use || 0) } },
+    };
+  }
+
+  function airSection(k) {
+    var q = QUAL[k], a = q && q.ai;
+    if (!a || !a.total) return '';
+    var col = airCol(a.total);
+    var next = a.tier < 4 ? Math.max(0, [40, 60, 80][a.tier - 1] - a.total) : 0;
+    var h = '<div class="tier" id="air-tier"><div class="tier-h">' +
+      '<span class="tbadge rec" style="background:#FDF0DC;color:var(--orange-deep)">AI-Readiness</span>' +
+      '<h4>How ready this feed is for agentic commerce</h4>' +
+      '<span class="qz-meta"><span>' + fmt(a.rows) + ' products' +
+      (a.sampled && a.sampled < a.rows ? ' · ' + fmt(a.sampled) + ' sampled' : '') + ' · ' + ago(q.t) + '</span></span></div>' +
+      '<p class="tier-sub">The FeedSpark AI-Readiness ladder — the same weighted score, pillars and tiers the' +
+      ' Feed Lab module and the client decks speak, computed on the same read as the content quality above.</p>' +
+      '<div class="air-card"><div class="score-grid">' +
+      '<div class="big-ring" style="--c:' + col + ';--p:' + a.total + '" role="img" aria-label="AI-readiness score ' + a.total + ' out of 100">' +
+      '<div class="brv"><span class="bn" style="color:' + col + '">' + a.total + '</span><em>/100</em><i>AI-readiness</i></div></div>' +
+      '<div><div class="tier-line"><span class="tier-pill">Tier ' + a.tier + ' · ' + esc(a.tierLabel) + '</span>' +
+      '<span class="tier-note">' + (a.tier < 4 ? '+' + next + ' points to Tier ' + (a.tier + 1) : 'top of the ladder') + '</span></div>' +
+      '<div class="ladder">' + LADDER.map(function (x) {
+        var cls = x.t === a.tier ? ' on' : (x.t < a.tier ? ' done' : '');
+        return '<div class="lad' + cls + '"><span class="lt">TIER ' + x.t + (x.t === a.tier ? ' · YOU ARE HERE' : '') + '</span>' +
+          '<span class="ln">' + x.l + '</span><span class="lr">' + x.r + '</span></div>';
+      }).join('') + '</div></div></div></div>' +
+      '<div class="pillars">' + a.pillars.map(function (p) {
+        var w = +p.weight || 1, dots = w < 1 ? 1 : (w < 1.4 ? 2 : 3), dh = '';
+        for (var i = 0; i < 3; i++) dh += '<i' + (i < dots ? ' class="on"' : '') + '></i>';
+        return '<div class="pillar"><div class="ph"><span class="pl2">' + esc(p.label) + '</span>' +
+          '<span class="pn" style="color:' + airCol(p.score) + '">' + p.score + '</span></div>' +
+          '<div class="ptrack"><i class="pfill" data-w="' + p.score + '"></i></div>' +
+          '<div class="pf2"><span class="wdots" title="pillar weight ×' + w + '">' + dh + '</span>' +
+          '<span class="psum">' + esc(p.summary) + '</span></div></div>';
+      }).join('') + '</div>' +
+      '<p class="air-foot">Pillars are weighted, so the headline is not their average: title anatomy, attribute' +
+      ' completeness and agentic readiness carry the most (three dots), label architecture the least. The four' +
+      ' tiers are the same ladder used in the readiness decks — Foundational, Structured, Enriched, Agentic-ready.</p>' +
+      '</div>';
+    return h;
+  }
+  // the MASK read, nested under g:title in the content-quality section — the anatomy of the
+  // titles whose CONTENT the rules above just judged
+  function titleAnatomy(k) {
+    var q = QUAL[k], a = q && q.ai, t = a && a.titles;
+    if (!t || !t.avg) return '';
+    var rows = a.rows || 0, bks = t.buckets || [], max = 1;
+    bks.forEach(function (b) { if (b.n > max) max = b.n; });
+    return '<div class="tanat"><div class="tanat-h">Title anatomy — MASK structure' +
+      '<span>avg ' + t.avg + ' chars (' + t.min + '–' + t.max + ') · the 80–120 window is where Shopping and AI surfaces read most' +
+      (t.dup ? ' · ' + fmt(t.dup) + ' duplicated' : '') + '</span></div>' +
+      '<div class="mask-row">' + MASKS.map(function (m) {
+        var pct = Math.round(+t.mask[m[0]] || 0);
+        return '<div class="mseg"><div class="mh"><i class="mdot" style="background:' + m[2] + '"></i><span>' + m[1] + '</span><b>' + pct + '%</b></div>' +
+          '<div class="mt"><i class="mf" data-w="' + pct + '" style="background:' + m[2] + '"></i></div>' +
+          '<span class="ms">in ' + fmt(Math.round(rows * pct / 100)) + ' titles</span></div>';
+      }).join('') + '</div>' +
+      '<div class="thist">' + bks.map(function (b) {
+        var win = /^80/.test(b.b), hh = Math.max(3, Math.round((b.n || 0) / max * 100));
+        return '<div class="thb' + (win ? ' win' : '') + '" title="' + fmt(b.n) + ' titles at ' + esc(b.b) + ' characters' + (win ? ' — the MASK window' : '') + '">' +
+          '<span class="thn">' + fmt(b.n) + '</span><i data-h="' + hh + '"></i><span class="thl">' + esc(b.b) + '</span></div>';
+      }).join('') + '</div></div>';
+  }
+  // bars animate on the frame after paint, the way the Feed Lab cards do
+  function airAnimate() {
+    if (!document.querySelector('.pfill,.mseg .mf,.thb i')) return;
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      Array.prototype.forEach.call(document.querySelectorAll('.pfill'), function (f, i) {
+        f.style.transitionDelay = (i * 70) + 'ms'; f.style.width = f.getAttribute('data-w') + '%';
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('.mseg .mf'), function (f) { f.style.width = f.getAttribute('data-w') + '%'; });
+      Array.prototype.forEach.call(document.querySelectorAll('.thb i'), function (f) { f.style.height = f.getAttribute('data-h') + '%'; });
+    }); });
   }
 
   /* ---------------- PDF export (print-to-PDF: branded header, scorecard only) --------
