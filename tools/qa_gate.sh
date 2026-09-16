@@ -124,6 +124,13 @@ else
   echo "   ✗ deep-link harness FAILED — see node tools/test_deeplink.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d6/7: Golden Record snapshot in the dossier (unscanned is never zero)"
+if node tools/test_goldensnap.mjs >/dev/null 2>&1; then
+  echo "   ✓ per-market report, averages exclude unscanned, popup + ?client= deep link"
+else
+  echo "   ✗ golden-snapshot harness FAILED — see node tools/test_goldensnap.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3e/7: overlay engine (URL-string classification + feed collector)"
 if node tools/test_overlays.mjs >/dev/null 2>&1; then
   echo "   ✓ overlay types read off the image_link URL; collector counts hold"

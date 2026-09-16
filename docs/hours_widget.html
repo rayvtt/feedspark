@@ -42,7 +42,7 @@
 [data-theme=dark] .fh-dot[data-st=served] i{background:#A78BFA}
 [data-theme=dark] .fh-dot[data-st=held] i{background:#F1707A;box-shadow:0 0 0 2px var(--paper,#1C1F27),inset 0 0 0 2px rgba(0,0,0,.55)}
 
-#fcc-hrs{position:fixed;z-index:96;width:330px;max-width:calc(100vw - 20px);background:var(--paper,#fff);border:1px solid var(--line,#E6E6E6);border-radius:14px;
+#fcc-hrs{position:fixed;z-index:96;width:330px;max-width:calc(100vw - 20px);background:var(--paper,#fff);border:1px solid var(--line,#E6E6E6);border-radius:14px;max-height:calc(100vh - 16px);overflow:auto;overscroll-behavior:contain}
   box-shadow:0 10px 40px rgba(16,24,40,.18),0 2px 6px rgba(16,24,40,.06);padding:13px 15px 12px;font:400 13px/1.5 Lato,system-ui,sans-serif;color:var(--ink,#333);
   opacity:0;transform:translateY(4px);pointer-events:none;transition:opacity .13s,transform .13s}
 #fcc-hrs.on{opacity:1;transform:none;pointer-events:auto}
@@ -68,6 +68,31 @@
 #fcc-hrs .fh-key span{display:inline-flex;align-items:center;gap:5px;color:var(--ink-2,#4a4a4a)}
 #fcc-hrs .fh-key i{width:9px;height:9px;border-radius:2px;flex:none}
 #fcc-hrs .fh-note{font-size:11px;font-weight:700;color:var(--muted,#8a94a0);margin:6px 0 0;line-height:1.45}
+#fcc-hrs .fh-skip{margin-top:12px;padding:9px 11px 8px;border-radius:9px;background:var(--wash,#F7F7F5);border:1px solid var(--line,#E6E6E6)}
+#fcc-hrs .fh-skip .fh-h5{margin:0 0 7px}
+#fcc-hrs .fh-sr{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+#fcc-hrs .fh-sr .nm{flex:0 0 94px;display:flex;align-items:baseline;gap:4px;min-width:0}
+#fcc-hrs .fh-sr .nm b{font-size:10.5px;font-weight:700;color:var(--ink-2,#555);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#fcc-hrs .fh-sr .nm span{flex:none;font-size:9px;font-weight:800;color:var(--muted,#8a94a0);letter-spacing:.03em}
+#fcc-hrs .fh-shead{margin:0 0 7px;font-size:11px;font-weight:700;color:var(--muted,#8a94a0)}
+#fcc-hrs .fh-shead.warn{color:var(--orange-deep,#ED6F0B)}
+#fcc-hrs .fh-sr .bar{flex:1;display:flex;gap:1.5px;min-width:0}
+#fcc-hrs .fh-sr .bar i{flex:1;height:13px;border-radius:2px;min-width:0}
+#fcc-hrs .fh-sr .bar i.off{background:transparent;box-shadow:inset 0 0 0 1px var(--line,#E6E6E6)}
+#fcc-hrs .fh-sr .tl{flex:0 0 auto;font-size:10px;font-weight:600;color:var(--muted,#8a94a0);white-space:nowrap}
+#fcc-hrs .fh-sr .tl b{color:var(--orange-deep,#ED6F0B);font-weight:800}
+#fcc-hrs .fh-sr .tl .ok{color:#2E7D32;font-weight:700}
+#fcc-hrs .fh-sleg{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:6px;font-size:9.5px;font-weight:600;color:var(--muted,#8a94a0)}
+#fcc-hrs .fh-sleg span{display:inline-flex;align-items:center;gap:3px}
+#fcc-hrs .fh-sleg i{width:8px;height:8px;border-radius:2px;flex:none}
+#fcc-hrs .fh-sleg i.off{box-shadow:inset 0 0 0 1px var(--line,#E6E6E6)}
+#fcc-hrs .fh-sleg .sp{margin-left:auto}
+#fcc-hrs .fh-smore{margin:5px 0 0;font-size:10.5px;font-weight:600;color:var(--muted,#8a94a0)}
+#fcc-hrs .fh-skip a{display:inline-block;margin-top:6px;font-size:11px;font-weight:700;color:var(--orange-deep,#ED6F0B);text-decoration:none}
+#fcc-hrs .fh-skip a:hover{text-decoration:underline}
+[data-theme=dark] #fcc-hrs .fh-skip{background:#20242E;border-color:var(--line,#2C3039)}
+[data-theme=dark] #fcc-hrs .fh-sr .bar i.off,[data-theme=dark] #fcc-hrs .fh-sleg i.off{box-shadow:inset 0 0 0 1px var(--line,#2C3039)}
+[data-theme=dark] #fcc-hrs .fh-sr .tl .ok{color:#48D07E}
 #fcc-hrs .fh-post{border-top:1px solid var(--line,#E6E6E6);margin-top:11px;padding-top:10px}
 #fcc-hrs .fh-btns{display:flex;gap:4px;flex-wrap:wrap}
 #fcc-hrs .fh-btns button{font:inherit;font-size:11px;font-weight:800;padding:5px 9px;border-radius:100px;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);color:var(--ink-2,#4a4a4a);cursor:pointer;white-space:nowrap}
@@ -296,28 +321,111 @@
   // makes every account look like it fell off a cliff on the 3rd, which is the opposite of the
   // trajectory this is meant to show. Both series carry their numbers in the key, which is also
   // the relief the palette validator asks for on the orange at light-mode contrast.
+  /* SKIPPED SCHEDULED WORK — the schedule's own go/skip strip, carried here.
+
+     Ray, 16 Sep 2026: "This pop-up over retainer should also include the skipped schedule work",
+     then "no i prefer the dotted green and orange bar for go and skip that you have, just try to
+     fit 3 at least in that popup."
+
+     The balance says what the account has COST. This says what it has DECLINED — the ASPL weekly
+     schedule of keyword / title / product-type work the AM answered "Skip" to. The two belong side
+     by side at exactly this moment: an account over its retainer that is also turning work away is
+     a different conversation from one that is over BECAUSE it takes everything offered.
+
+     One cell per calendar month, twelve of them, in the /schedule module's own colours so the two
+     surfaces read the same: green went ahead, orange skipped, grey scheduled-but-undecided, and
+     PALE = never scheduled that month. That last one is the honest distinction the whole strip
+     turns on — a month nothing was offered in is not a month anything was refused. */
+  var SKIPC = { g: { c: '#2E7D32', t: 'went ahead' }, s: { c: '#ED6F0B', t: 'skipped' },
+    n: { c: '#C9CDD3', t: 'scheduled, no decision recorded' }, '-': { c: '', t: 'not scheduled' } };
+  function moLabel(k) {
+    var d = new Date(k + '-01T00:00:00Z');
+    return d.toLocaleDateString(undefined, { month: 'short', year: '2-digit', timeZone: 'UTC' });
+  }
+  // the schedule's own kind labels, with the one that will not fit a 94px column shortened
+  var KSHORT = { 'Product Type': 'Prod Type', 'Data tagging': 'Data tag', 'Social titles': 'Social' };
+  function strip(row, months) {
+    var cells = String(row.s || '').split('').map(function (ch, i) {
+      var sp = SKIPC[ch] || SKIPC['-'], k = months[i] || '';
+      return '<i class="' + (ch === '-' ? 'off' : '') + '"' + (sp.c ? ' style="background:' + sp.c + '"' : '')
+        + ' title="' + esc(moLabel(k) + ' — ' + sp.t) + '"></i>';
+    }).join('');
+    var kind = row.kind || 'Scheduled';
+    var name = '<b>' + esc(KSHORT[kind] || kind) + '</b>'
+      + (row.mkt ? '<span>' + esc(String(row.mkt).toUpperCase()) + '</span>' : '');
+    var tail = row.streak
+      ? '<b>' + row.streak + 'mo</b>' + (row.hrsSkip ? ' \u00b7 ' + h1(row.hrsSkip) + ' h' : '')
+      : '<span class="ok">on track</span>';
+    var rt = kind + (row.mkt ? ' \u00b7 ' + String(row.mkt).toUpperCase() : '')
+      + (row.streak ? ' \u2014 skipped ' + row.streak + ' month' + (row.streak === 1 ? '' : 's') + ' running'
+          + (row.since ? ', since ' + moLabel(row.since) : '') : ' \u2014 no current skip streak');
+    return '<div class="fh-sr" title="' + esc(rt) + '"><span class="nm">' + name + '</span><span class="bar">' + cells + '</span>'
+      + '<span class="tl">' + tail + '</span></div>';
+  }
+  function skipBlock(rec, name) {
+    var k = rec && rec.skip;
+    if (!k || !k.rows || !k.rows.length) return '';
+    var months = k.months || [];
+    var head = k.onStreak
+      ? k.onStreak + ' of ' + k.tasks + ' on a skip streak'
+        + (k.hoursSkipped ? ' \u00b7 ' + h1(k.hoursSkipped) + ' h not taken' : '')
+      : 'all ' + k.tasks + ' task' + (k.tasks === 1 ? '' : 's') + ' taking the work';
+    var h = '<div class="fh-skip"><div class="fh-h5">Scheduled work</div>'
+      + '<p class="fh-shead' + (k.onStreak ? ' warn' : '') + '">' + esc(head) + '</p>';
+    h += k.rows.map(function (r) { return strip(r, months); }).join('');
+    h += '<div class="fh-sleg"><span><i style="background:#2E7D32"></i>went ahead</span>'
+      + '<span><i style="background:#ED6F0B"></i>skipped</span>'
+      + '<span><i class="off"></i>not scheduled</span>'
+      + '<span class="sp">' + esc(moLabel(months[0] || '') + ' \u2192 ' + moLabel(months[months.length - 1] || '')) + '</span></div>';
+    if (k.more) h += '<p class="fh-smore">' + k.more + ' more task' + (k.more === 1 ? '' : 's') + ' on the schedule.</p>';
+    h += '<a href="/schedule?b=' + encodeURIComponent(name || '') + '">See the full cadence \u2192</a></div>';
+    return h;
+  }
+
   function chart(rows) {
-    var W = 300, H = 76, B = 16, L = 0, bw = 46, gap = 2;
+    // TWELVE BARS, NOT THREE (Ray, 16 Sep 2026). At three, a value label on every bar was the
+    // right call; at twelve it would be a wall of numbers ~25px apart. So the labels go
+    // SELECTIVE — the biggest month and the one still running, which are the two an AM reads —
+    // the axis anchors quarterly BACK FROM THE CURRENT MONTH (so "now" is always named), and
+    // every bar carries its own exact split in a <title> for the hover.
+    var W = 300, H = 84, B = 17, TOP = 13, gap = 2;
+    var n = rows.length || 1, step = W / n, bw = Math.max(6, Math.min(46, step - 5));
     var max = Math.max.apply(null, rows.map(function (r) { return r.hours; }).concat([1]));
-    var step = W / rows.length, s = '';
+    var dense = n > 4;                 // past four bars a number on every one is a wall, not a read
+    var big = -1, bigV = 0, part = -1;
+    rows.forEach(function (r, i) { if (r.hours > bigV) { bigV = r.hours; big = i; } if (r.partial) part = i; });
+    var s = '';
     s += '<defs><pattern id="fh-part" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
       + '<rect width="5" height="5" fill="' + cvar('--paper', '#fff') + '"/><rect width="2.2" height="5" fill="' + NBIL() + '" opacity=".55"/></pattern>'
       + '<pattern id="fh-partb" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
       + '<rect width="5" height="5" fill="' + cvar('--paper', '#fff') + '"/><rect width="2.2" height="5" fill="' + BIL() + '" opacity=".55"/></pattern></defs>';
     s += '<line x1="0" y1="' + (H - B) + '" x2="' + W + '" y2="' + (H - B) + '" stroke="' + cvar('--line', '#E6E6E6') + '" stroke-width="1"/>';
     rows.forEach(function (r, i) {
-      var x = L + step * i + (step - bw) / 2, avail = H - B - 14;
+      var x = step * i + (step - bw) / 2, avail = H - B - TOP;
       var hb = max ? (r.bill / max) * avail : 0, hn = max ? (r.nonbill / max) * avail : 0;
       var yb = H - B - hb, yn = yb - hn - (hb > 0 && hn > 0 ? gap : 0);
-      if (hb > 0) s += '<rect x="' + x + '" y="' + yb.toFixed(1) + '" width="' + bw + '" height="' + hb.toFixed(1) + '" rx="2" fill="' + (r.partial ? 'url(#fh-partb)' : BIL()) + '"/>';
-      if (hn > 0) s += '<rect x="' + x + '" y="' + yn.toFixed(1) + '" width="' + bw + '" height="' + hn.toFixed(1) + '" rx="2" fill="' + (r.partial ? 'url(#fh-part)' : NBIL()) + '"/>';
-      if (!hb && !hn) s += '<rect x="' + x + '" y="' + (H - B - 2) + '" width="' + bw + '" height="2" rx="1" fill="' + cvar('--line', '#E6E6E6') + '"/>';
-      var top = Math.min(yn, yb) - 4;
-      s += '<text x="' + (x + bw / 2) + '" y="' + (r.hours ? top.toFixed(1) : H - B - 5) + '" text-anchor="middle" font-size="10.5" font-weight="900" fill="' + cvar('--ink-2', '#4a4a4a') + '">' + (r.hours ? h1(r.hours) : '0') + '</text>';
-      var lbl = new Date(r.month + '-01T00:00:00Z').toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' });
-      s += '<text x="' + (x + bw / 2) + '" y="' + (H - 4) + '" text-anchor="middle" font-size="10" font-weight="800" fill="' + cvar('--muted', '#8a94a0') + '">' + esc(lbl) + (r.partial ? ' ›' : '') + '</text>';
+      var mo = new Date(r.month + '-01T00:00:00Z');
+      var full = mo.toLocaleDateString(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' });
+      var tip = full + (r.partial ? ' (still running)' : '') + ' — ' + h1(r.bill) + ' h billable, '
+        + h1(r.nonbill) + ' h non-billable' + (r.n ? ' across ' + r.n + ' task' + (r.n === 1 ? '' : 's') : '');
+      s += '<g><title>' + esc(tip) + '</title>';
+      if (hb > 0) s += '<rect x="' + x.toFixed(1) + '" y="' + yb.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hb.toFixed(1) + '" rx="1.5" fill="' + (r.partial ? 'url(#fh-partb)' : BIL()) + '"/>';
+      if (hn > 0) s += '<rect x="' + x.toFixed(1) + '" y="' + yn.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hn.toFixed(1) + '" rx="1.5" fill="' + (r.partial ? 'url(#fh-part)' : NBIL()) + '"/>';
+      if (!hb && !hn) s += '<rect x="' + x.toFixed(1) + '" y="' + (H - B - 2) + '" width="' + bw.toFixed(1) + '" height="2" rx="1" fill="' + cvar('--line', '#E6E6E6') + '"/>';
+      // the transparent full-height hit area keeps the hover target the whole column, not the mark
+      s += '<rect x="' + (step * i).toFixed(1) + '" y="0" width="' + step.toFixed(1) + '" height="' + (H - B) + '" fill="transparent"/></g>';
+      if (dense ? (i === big || i === part) : true) {
+        var top = Math.min(yn, yb) - 3.5;
+        s += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (r.hours ? top.toFixed(1) : H - B - 4) + '" text-anchor="middle" font-size="9.5" font-weight="800" fill="' + cvar('--ink', '#333') + '">' + (r.hours ? h1(r.hours) : '0') + '</text>';
+      }
+      // few bars: name them all. Many: quarterly anchors counted BACK from the current month,
+      // so "now" is always one of them.
+      if (!dense || (n - 1 - i) % 3 === 0) {
+        var lbl = mo.toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' });
+        s += '<text x="' + (x + bw / 2).toFixed(1) + '" y="' + (H - 5) + '" text-anchor="middle" font-size="9" font-weight="600" fill="' + cvar('--muted', '#8a94a0') + '">' + esc(lbl) + (r.partial ? '\u203a' : '') + '</text>';
+      }
     });
-    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Hours per month, billable and non-billable">' + s + '</svg>';
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Hours per month over the last ' + n + ' months, billable and non-billable">' + s + '</svg>';
   }
 
   function ago(ms) {
@@ -348,9 +456,11 @@
       h += '<p class="fh-verd">' + esc(hoursVerdict(rec)) + '</p>';
     }
 
+    h += skipBlock(rec, hit ? hit.name : name);
+
     if (rows.length) {
       var tr = trailTrend(rows), dirW = { up: 'up', down: 'down', flat: 'level' }[tr.dir];
-      h += '<div class="fh-h5">Last three months<em>' + (tr.enough
+      h += '<div class="fh-h5">Last ' + rows.length + ' months<em>' + (tr.enough
         ? esc(dirW) + (tr.dir === 'flat' ? '' : ' ' + Math.abs(tr.pct) + '%')
         : 'one month so far') + '</em></div>';
       h += chart(rows);
@@ -364,7 +474,7 @@
       else if (t.at) notes.push('All ' + t.total + ' markets read, newest ' + ago(t.at) + '.');
       if (notes.length) h += '<p class="fh-note">' + esc(notes.join(' ')) + '</p>';
     } else if (rec.tracked) {
-      h += '<div class="fh-h5">Last three months</div><p class="fh-note">No task rows read for this client yet — the reports sync fills the book a few markets at a time, so the trajectory appears once it reaches this one.</p>';
+      h += '<div class="fh-h5">Last 12 months</div><p class="fh-note">No task rows read for this client yet — the reports sync fills the book a few markets at a time, so the trajectory appears once it reaches this one.</p>';
     }
 
     // THE DECISION, kept apart from the fact. An account can be over its block and still be

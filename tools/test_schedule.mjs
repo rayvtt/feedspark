@@ -17,7 +17,8 @@
  */
 import { readFileSync } from 'node:fs';
 import { dateCell, tabInfo, resolveHeader, decisionOf, rowDecision, kindOf, reasonClass, parseClient, resolveBrand,
-  parseTab, parseWorkbook, buildCadence, brandSummary, compactRow, hoursOf } from '../cloudflare/feedspark-deck/src/schedwork.js';
+  parseTab, parseWorkbook, buildCadence, brandSummary, compactRow, hoursOf,
+  digestMonths, stripOf, skipDigest, DIGEST_MONTHS, DIGEST_TASKS } from '../cloudflare/feedspark-deck/src/schedwork.js';
 
 let pass = 0, fail = 0;
 const ok = (name, cond, got) => {
@@ -159,6 +160,77 @@ ok('every row has a kind, none "other"', P.rows.every((r) => r.k && r.k !== 'oth
 const C = buildCadence(P.rows);
 ok('dossier brands produce cadences (Reiss, Superdry, Schuh, Estée Lauder, YuMOVE …)', ['Reiss', 'Superdry', 'Schuh', 'Estée Lauder', 'YuMOVE', 'Accessorize', 'Monsoon', 'Hobbycraft'].every((b) => C.some((c) => c.client === b && c.inRoster)));
 ok('the worst dossier streak is at least a year (Reiss EU keywords, since Aug 2025)', C.filter((c) => c.inRoster)[0].streak >= 12 && C.filter((c) => c.inRoster)[0].client === 'Reiss', C.filter((c) => c.inRoster)[0]);
+
+// ---------------------------------------------------------------------------------------------
+// THE DIGEST THE HOURS POPOVER READS
+// Ray, 16 Sep 2026: "This pop-up over retainer should also include the skipped schedule work …
+// i prefer the dotted green and orange bar for go and skip that you have, just try to fit 3 at
+// least in that popup."
+// ---------------------------------------------------------------------------------------------
+console.log('\n\u00b7 skip digest (the strip the hours badge shows)');
+{
+  const NOW = Date.UTC(2026, 8, 16);
+  const mo = digestMonths(NOW);
+  ok('twelve calendar months, oldest first, ending with the current one',
+    mo.length === 12 && mo[0] === '2025-10' && mo[11] === '2026-09', mo);
+  ok('DIGEST_TASKS is three — "fit 3 at least in that popup"', DIGEST_TASKS >= 3 && DIGEST_MONTHS === 12);
+
+  const entry = (client, mkt, kind, streak, hrs, months) =>
+    ({ client, mkt, kind, streak, hoursSkipped: hrs, since: '2026-04', lastDecided: '2026-09', months });
+  const M = (spec) => Object.keys(spec).map((k) => ({ m: k, v: spec[k] }));
+
+  const kw = entry('Schuh', 'gb', 'Keywords', 5, 22.5, M({
+    '2026-01': 'go', '2026-02': 'go', '2026-03': 'go',
+    '2026-04': 'skip', '2026-05': 'skip', '2026-06': 'skip', '2026-07': 'skip', '2026-08': 'skip', '2026-09': 'none' }));
+  ok('a month never scheduled is "-", NOT a skip — nothing was declined because nothing was offered',
+    stripOf(kw, NOW) === '---gggsssssn', stripOf(kw, NOW));
+  ok('the strip is exactly one character per month', stripOf(kw, NOW).length === 12);
+
+  const gap = entry('Schuh', 'de', 'Titles', 0, 0, M({ '2026-06': 'go', '2026-07': 'go', '2026-09': 'go' }));
+  ok('a GAP mid-history stays "-" rather than filling forward from the last decision',
+    stripOf(gap, NOW) === '--------gg-g', stripOf(gap, NOW));
+
+  const cad = [kw, gap,
+    entry('Schuh', 'ie', 'Product Type', 2, 6, M({ '2026-08': 'skip', '2026-09': 'skip' })),
+    entry('Schuh', 'fr', 'Data tagging', 1, 2, M({ '2026-09': 'skip' })),
+    entry('Reiss', 'gb', 'Keywords', 0, 0, M({ '2026-08': 'go', '2026-09': 'go' }))];
+  const d = skipDigest(cad, NOW);
+  ok('one entry per client, not per task', Object.keys(d).sort().join() === 'Reiss,Schuh');
+  const S2 = d.Schuh;
+  ok('the aggregate counts tasks and streaks', S2.tasks === 4 && S2.onStreak === 3 && S2.maxStreak === 5);
+  ok('hours skipped sum ONLY over tasks actually on a streak', S2.hoursSkipped === 30.5, S2.hoursSkipped);
+  ok('at most DIGEST_TASKS rows ship, longest streak first',
+    S2.rows.length === DIGEST_TASKS && S2.rows[0].kind === 'Keywords' && S2.rows[0].streak === 5
+    && S2.rows[1].streak === 2 && S2.rows[2].streak === 1, S2.rows.map((r) => r.kind + ':' + r.streak));
+  ok('and it says how many it left out rather than implying that is all of them', S2.more === 1);
+  ok('every shipped row carries its own twelve-month strip', S2.rows.every((r) => r.s.length === 12));
+  ok('the month keys travel with the digest so the badge can label the strip', S2.months.length === 12 && S2.months[11] === '2026-09');
+
+  const R = d.Reiss;
+  ok('a brand with NOTHING skipped still ships its rows — a green strip is the answer to "are they taking the work"',
+    R.rows.length === 1 && R.onStreak === 0 && R.maxStreak === 0 && R.rows[0].s.slice(-2) === 'gg');
+  ok('…and reports no skipped hours rather than omitting the figure', R.hoursSkipped === 0);
+  ok('an empty cadence yields an empty digest, never a fabricated brand', Object.keys(skipDigest([], NOW)).length === 0);
+
+  // the real workbook, end to end
+  const live = skipDigest(C, Date.now());
+  ok('the committed snapshot digests without throwing, one entry per client',
+    Object.keys(live).length > 0 && Object.values(live).every((e) => e.rows.length <= DIGEST_TASKS
+      && e.rows.every((r) => r.s.length === 12 && /^[gsn-]{12}$/.test(r.s))));
+}
+
+console.log('\n\u00b7 the badge renders it');
+{
+  const W = readFileSync(new URL('../docs/hours_widget.html', import.meta.url), 'utf8');
+  ok('the strip uses the /schedule module\u2019s own go/skip colours, so the two surfaces agree',
+    W.indexOf('#2E7D32') > 0 && W.indexOf('#ED6F0B') > 0);
+  ok('"not scheduled" is an OUTLINE, never a coloured cell that could read as a decision',
+    /'-': \{ c: '', t: 'not scheduled' \}/.test(W) && /i\.off\{background:transparent/.test(W));
+  ok('every cell names its month and outcome on hover', /title="' \+ esc\(moLabel\(k\) \+ ' \u2014 ' \+ sp\.t\)/.test(W));
+  ok('a legend names all three states — identity is never colour alone', /went ahead/.test(W) && /skipped/.test(W) && /not scheduled/.test(W));
+  ok('the popover scrolls rather than running off a short viewport', /max-height:calc\(100vh - 16px\);overflow:auto/.test(W));
+  ok('and links through to the full cadence for that brand', /\/schedule\?b=/.test(W));
+}
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

@@ -31,7 +31,7 @@ import { parseAbTests, abSummary, resolveAbTab, hasAbHeader, abClientKey } from 
 // Scheduled Work (Ray, 15 Sep 2026): the content team's weekly schedule sheet (hidden weekly tabs
 // included) read as a skip cadence per dossier brand — live via the service account when the
 // sheet is shared with it, else the committed snapshot. Engine: src/schedwork.js; page /schedule.
-import { SCHEDULE_SHEET_ID, parseWorkbook, buildCadence, brandSummary, compactRow, isoOf as schedIso } from "./schedwork.js";
+import { SCHEDULE_SHEET_ID, parseWorkbook, buildCadence, brandSummary, skipDigest, compactRow, isoOf as schedIso } from "./schedwork.js";
 import SCHEDULE_SNAPSHOT from "../../../ops/schedule/scheduled_work_2026-09-15.json";
 
 // Work volumes (Ray, 15 Sep 2026): every workstream on an account bucketed by month for the
@@ -1826,8 +1826,23 @@ export default {
       const parsed = parseWorkbook(tabs, roster, schedIso(new Date()));
       const rows = (acc.owner || !acc.clients) ? parsed.rows : parsed.rows.filter((r) => r.b && clientMatch(acc.clients, r.b));
       const cadence = buildCadence(rows);
+      const brands = brandSummary(cadence);
+      // THE SKIP SUMMARY THE HOURS POPOVER READS (Ray, 16 Sep 2026: "This pop-up over retainer
+      // should also include the skipped schedule work"). Parsing this workbook costs a full
+      // multi-tab walk, which the badge — on every page, for every signin — must never pay. So a
+      // TINY derived record is written here as a side effect and /api/hours does one KV get.
+      //
+      // WRITTEN ONLY FROM AN UNSCOPED READ. `cadence` is built from rows already filtered
+      // to the caller's clients, so persisting it from a scoped signin would replace the whole
+      // house's summary with that one AM's slice — every other brand would silently read as
+      // "no skips". An absent record makes the popover say nothing about scheduled work, which
+      // is the honest answer; a partial one would state a falsehood.
+      if (!acc.clients) {
+        ctx.waitUntil(env.EDITS.put('schedskip', JSON.stringify(
+          { at: Date.now(), source, clients: skipDigest(cadence, Date.now()) })).catch(() => {}));
+      }
       const payload = { ok: true, source, at, sheet: { id: SCHEDULE_SHEET_ID, title: SCHEDULE_SNAPSHOT.title }, sa, anchor: parsed.anchor,
-        tabs: parsed.tabs, roster, scoped: !!acc.clients, cadence, brands: brandSummary(cadence) };
+        tabs: parsed.tabs, roster, scoped: !!acc.clients, cadence, brands };
       if (!lite) payload.rows = rows.map(compactRow);
       return json(payload);
     }
@@ -1852,6 +1867,9 @@ export default {
       const idx = (await env.EDITS.get('tmidx', 'json')) || {};
       const trail = (await env.EDITS.get('tmtrail', 'json')) || {};
       const post = liftEnvelope(await env.EDITS.get('state:hourspost', 'json'), Date.now()).data || {};
+      // SKIPPED SCHEDULED WORK (Ray, 16 Sep 2026). Written by /api/schedule from an unscoped read
+      // — see there. One KV get; absent simply means the popover says nothing about it.
+      const skip = (await env.EDITS.get('schedskip', 'json')) || { clients: {} };
       const out = {};
       const add = (name) => {
         if (!name || out[name] || !inScope(name)) return;
@@ -1864,17 +1882,20 @@ export default {
           trail: t ? { m: t.m, months: t.months, current: t.current, read: t.read, total: t.total,
             at: t.at, windowHours: t.windowHours } : null,
           posture: p && p.state ? p : null,
+          skip: (skip.clients && skip.clients[name]) || null,
         };
       };
       Object.keys(idx).forEach(add);
       Object.keys(trail).forEach(add);   // a book read before the hours lane saw the brand
       Object.keys(post).forEach(add);    // and a posture set on a brand neither has reached yet
+      Object.keys(skip.clients || {}).forEach(add);   // a brand that only the schedule knows about
       const st = (await env.EDITS.get('tmstatus', 'json')) || {};
       const bst = (await env.EDITS.get('tmbookst', 'json')) || {};
       return json({ ok: true, at: Date.now(), scoped: !!acc.clients, clients: out,
         tracked: Object.keys(out).length,
         status: { state: st.state || null, at: st.at || null, ok_at: st.ok_at || null },
-        book: { state: bst.state || null, at: bst.at || null, read: bst.read == null ? null : bst.read, total: bst.total == null ? null : bst.total } });
+        book: { state: bst.state || null, at: bst.at || null, read: bst.read == null ? null : bst.read, total: bst.total == null ? null : bst.total },
+        sched: { at: skip.at || null, source: skip.source || null } });
     }
 
     // ---- FS TASK MANAGER (Ray, 16 Sep 2026) ----------------------------------------------

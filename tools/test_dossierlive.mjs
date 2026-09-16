@@ -233,7 +233,13 @@ ok('the ring sits in the same card, with briefs/kw below a rule',
    /dzp-act[\s\S]{0,4000}dzp-foot/.test(CC));
 
 console.log('\n-- real time: what another module changed shows without a manual refresh --');
-ok('every portfolio cache has a stamp, not just the briefs', /var PSTAMP=\{briefs:0,alerts:0,kw:0\}/.test(CC));
+// intent, not the literal: each cache must be stamped. A new cache added later extends this
+// record rather than becoming the one immortal read — which is the trap PSTAMP exists to close.
+{
+  const m = CC.match(/var PSTAMP=\{([^}]*)\}/);
+  ok('the portfolio caches share one stamp record', !!m, m && m[0]);
+  ['briefs', 'alerts', 'kw'].forEach((k) => ok('…including "' + k + '"', !!m && m[1].includes(k + ':'), m && m[0]));
+}
 ok('the guard-alert read expires', /ALERTC===null\|\|!pFresh\('alerts'\)/.test(CC));
 ok('the keyword-calendar read expires', /KWC===null\|\|!pFresh\('kw'\)/.test(CC));
 ok('the Feed Lab audit expires too — it is what a scan rewrites', /AUDAT\[key\]/.test(CC));
