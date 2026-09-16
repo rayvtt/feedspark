@@ -33,6 +33,19 @@
  * harness run the SAME functions — the page carries a behavioural twin between its ENGINE
  * markers, checked by tools/test_reporttasks.mjs.
  *
+ * A COMMA IS OR, WHITESPACE IS AND (Ray, 16 Sep 2026: "this search bar allows multiple filters
+ * separated by commas … 'Febin,Vitus' with no space after the comma"). Two names side by side
+ * already meant "rows mentioning BOTH", which is the right default and is not changing; a list is
+ * the other question — "either of these people" — and there was no way to ask it. `Febin,Vitus`
+ * asks it. The comma binds ACROSS a space too, so `Febin, Vitus` is the same list: half of us type
+ * the space, and silently reading that as AND would answer "no rows" to a query that plainly means
+ * two people. A trailing comma mid-typing is simply not a term yet. Inside "quotes" a comma is
+ * punctuation, not syntax — a quoted phrase is one literal, commas and all.
+ *
+ * On a FIELD the comma is the shorthand for what repeats already did: `owner:Febin,Vitus` is
+ * exactly `owner:Febin owner:Vitus`. The range and bound fields (from/to/min/max) and the two-state
+ * bill: inherit their existing repeat behaviour rather than inventing an alternation nobody means.
+ *
  * Categories come from tools/reporthours.mjs so the Task Manager and the brand one-pager's
  * "Where the retainer went" donut can never disagree about what a task was.
  *
@@ -174,6 +187,40 @@ const CAT_ALIAS = {
   other: 'other', unclassified: 'other',
 };
 
+// A comma inside "quotes" is punctuation; it rides through tokenization as this sentinel so the
+// comma logic below can be unconditional, and is restored the moment the alternatives are cut.
+const QCOMMA = '\u0000';
+
+/**
+ * Join tokens that a comma runs across, so `a, b` is the same list as `a,b` — a list typed with
+ * spaces after its commas is still one list, and reading it as AND would answer nothing.
+ */
+export function mergeCommaRuns(toks) {
+  const out = [];
+  for (const t of toks) {
+    const prev = out.length ? out[out.length - 1] : '';
+    if (out.length && (prev.slice(-1) === ',' || t.charAt(0) === ',')) out[out.length - 1] = prev + t;
+    else out.push(t);
+  }
+  return out;
+}
+
+/** One token's OR alternatives. Empties are dropped, so a half-typed `Febin,` is just `Febin`. */
+export function splitAlts(tok) {
+  return String(tok || '').split(',')
+    .map((s) => s.split(QCOMMA).join(','))
+    .filter((s) => s !== '');
+}
+
+/**
+ * The comma rule on its own, for the plain-substring pane search: whitespace ANDs, a comma ORs.
+ * Returns OR groups — every group must hit, any alternative within one will do.
+ */
+export function orTerms(s) {
+  return mergeCommaRuns(String(s || '').toLowerCase().split(/\s+/).filter(Boolean))
+    .map(splitAlts).filter((g) => g.length);
+}
+
 /**
  * Split a query string into terms, honouring "quoted phrases" and a leading - for negation.
  * Returns { text, neg, f, nf, num } where f/nf are field→[values] maps (positive / negated)
@@ -188,25 +235,31 @@ export function parseQuery(q) {
     const c = src[i];
     if (c === '"') { quote = !quote; continue; }
     if (!quote && /\s/.test(c)) { if (cur) toks.push(cur); cur = ''; continue; }
-    cur += c;
+    cur += (quote && c === ',') ? QCOMMA : c;
   }
   if (cur) toks.push(cur);
 
-  for (const t0 of toks) {
+  for (const t0 of mergeCommaRuns(toks)) {
     const not = t0[0] === '-' && t0.length > 1;
     const t = not ? t0.slice(1) : t0;
     const m = t.match(/^([a-z_-]+):(.*)$/i);
     if (m && FIELDS[m[1].toLowerCase()] && m[2] !== '') {
       const k = FIELDS[m[1].toLowerCase()];
-      let v = m[2];
-      if (k === 'cat') v = CAT_ALIAS[v.toLowerCase()] || v.toLowerCase();
-      else if (k === 'bill') v = /^(no|non|nonbill|non-billable|nonbillable|false|0)$/i.test(v) ? 'no' : 'yes';
-      else if (k === 'min' || k === 'max') { out.num.push({ k, v: Number(v) || 0 }); continue; }
+      const vals = splitAlts(m[2]);
+      if (!vals.length) continue;
+      // a bound is one number and a range is one date — an alternation there means nothing, so
+      // those keep the first value, exactly as a repeated from:/min: already did
+      if (k === 'min' || k === 'max') { out.num.push({ k, v: Number(vals[0]) || 0 }); continue; }
       const bag = not ? out.nf : out.f;
-      (bag[k] = bag[k] || []).push(v);
+      for (let v of vals) {
+        if (k === 'cat') v = CAT_ALIAS[v.toLowerCase()] || v.toLowerCase();
+        else if (k === 'bill') v = /^(no|non|nonbill|non-billable|nonbillable|false|0)$/i.test(v) ? 'no' : 'yes';
+        (bag[k] = bag[k] || []).push(v);
+      }
       continue;
     }
-    (not ? out.neg : out.text).push(t.toLowerCase());
+    const alts = splitAlts(t.toLowerCase());
+    if (alts.length) (not ? out.neg : out.text).push(alts);
   }
   return out;
 }
@@ -239,8 +292,10 @@ function numOk(t, q) {
 
 export function matchTask(t, q) {
   const blob = taskBlob(t);
-  for (const w of q.text) if (blob.indexOf(w) < 0) return false;
-  for (const w of q.neg) if (blob.indexOf(w) >= 0) return false;
+  // every group must hit (AND); any one alternative in it will do (OR). Negation is the mirror:
+  // -a,b excludes a row carrying EITHER, which is what "not these two" means.
+  for (const g of q.text) if (!g.some((w) => blob.indexOf(w) >= 0)) return false;
+  for (const g of q.neg) if (g.some((w) => blob.indexOf(w) >= 0)) return false;
   const f = q.f, nf = q.nf;
   if (f.owner && !anyHit(t.owner, f.owner)) return false;
   if (f.client && !anyHit(t.client, f.client)) return false;
@@ -269,8 +324,10 @@ export function matchTask(t, q) {
 
 export function matchTicket(t, q) {
   const blob = ticketBlob(t);
-  for (const w of q.text) if (blob.indexOf(w) < 0) return false;
-  for (const w of q.neg) if (blob.indexOf(w) >= 0) return false;
+  // every group must hit (AND); any one alternative in it will do (OR). Negation is the mirror:
+  // -a,b excludes a row carrying EITHER, which is what "not these two" means.
+  for (const g of q.text) if (!g.some((w) => blob.indexOf(w) >= 0)) return false;
+  for (const g of q.neg) if (g.some((w) => blob.indexOf(w) >= 0)) return false;
   const f = q.f, nf = q.nf;
   if (f.client && !anyHit(t.client, f.client)) return false;
   if (f.am && !anyHit(t.am, f.am)) return false;
