@@ -6323,6 +6323,42 @@
       "name": "Golden Record: ?client= jumps to that brand's estate card",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "est-card\" data-client="
+    },
+    {
+      "name": "Golden Record content quality: a DUPLICATE is reported as a GROUP — the repeated value, how many products carry it and which ones (Ray 16 Sep 2026, reading Monsoon GB: four unrelated titles under 'title duplicated across products' read as a wrong finding; the count was right, the evidence was unreadable)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "a duplicate is a GROUP, not a list of strings",
+      "min": 1
+    },
+    {
+      "name": "Golden Record content quality: the duplicate example list names each value ONCE, not once per repeat",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "a.rules[dr.id].groups = gs;",
+      "min": 1
+    },
+    {
+      "name": "Golden Record content quality: the page renders each duplicate as its group with the ids sharing it, and the hit column names products AND values",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "Each block is ONE value and the products sharing it",
+      "min": 1
+    },
+    {
+      "name": "Golden Record content-quality scan: a REAL PROGRESS BAR — percent, MB of MB, products scored and an ETA (Ray 16 Sep 2026: 'allow the user to see a progress bar indicating how long it will take to scan the feed quality')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function drawScan",
+      "min": 1
+    },
+    {
+      "name": "Golden Record scan progress: an undeclared feed size falls back to an indeterminate bar and says so — never a fabricated percentage",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "size not declared",
+      "min": 1
+    },
+    {
+      "name": "Feed proxy declares an XML feed's size as x-feed-bytes (informational — never content-length, which truncates a decoded stream) so the Golden Record scan can draw a real bar",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "x-feed-bytes",
+      "min": 1
     }
   ]
 }

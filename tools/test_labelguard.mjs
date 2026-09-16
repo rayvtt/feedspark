@@ -908,6 +908,33 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   eq('description: a link caught', d.rules.links.n, 1);
   eq('description: thin copy caught', d.rules.thin.n, 3);
   eq('description: duplicated boilerplate caught across the five repeats', d.rules.dupe.n, 5);
+  // a duplicate is reported as a GROUP — one value, its repeat count and the ids sharing it.
+  // Ray read four unrelated titles under "title duplicated across products" on Monsoon GB and
+  // called the finding wrong; the count was right, the evidence was unreadable.
+  eq('dupe: one distinct value is duplicated, not five findings', d.rules.dupe.vals, 1);
+  eq('dupe: the group is exported once', d.rules.dupe.groups.length, 1);
+  eq('dupe: the group counts every product carrying the value', d.rules.dupe.groups[0].n, 5);
+  eq('dupe: the group names the products, capped at four', d.rules.dupe.groups[0].ids, ['6', '7', '8', '9', '10'].slice(0, 4));
+  ok('dupe: the example list names the value ONCE, not once per repeat',
+    d.rules.dupe.eg.length === 1 && d.rules.dupe.eg[0] === d.rules.dupe.groups[0].v);
+  ok('dupe: attrQuality carries the groups to the page',
+    (() => { const b = LG.attrQuality('description', d).broken.filter((x) => x.id === 'dupe')[0];
+      return b && b.vals === 1 && b.groups.length === 1 && b.groups[0].n === 5; })());
+  // two different values each shared by two products = 4 products, 2 values — the Monsoon shape
+  {
+    const c2 = LG.qualityCollector({ id: 0, title: 1 });
+    [['a1', 'Monsoon Blue Harper Regular Wide Leg Jeans, in Size: XL'],
+      ['a2', 'Monsoon Blue Harper Regular Wide Leg Jeans, in Size: XL'],
+      ['b1', 'Monsoon Blue Arizona Halter Ruffle Prom Dress, in Size: 9 Years'],
+      ['b2', 'Monsoon Blue Arizona Halter Ruffle Prom Dress, in Size: 9 Years'],
+      ['c1', 'Monsoon Blue Harper Short Wide Leg Jeans, in Size: L']].forEach((r) => c2.onRow(r));
+    const dp = c2.finish().attrs.title.rules.dupe;
+    eq('dupe: products involved counts both sides of each pair', dp.n, 4);
+    eq('dupe: two distinct values shared', dp.vals, 2);
+    eq('dupe: biggest groups first, each with its own products',
+      dp.groups.map((g) => g.ids.join(',')).sort(), ['a1,a2', 'b1,b2']);
+    eq('dupe: a title carried by ONE product is not in the evidence', dp.groups.length, 2);
+  }
 
   eq('highlights: fewer than 2 caught', snap.attrs.product_highlight.rules['count-min'].n, 2);
   eq('highlights: the same highlight twice caught', snap.attrs.product_highlight.rules['dupe-in'].n, 1);
@@ -967,6 +994,31 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   // memory: duplicate tracking is bounded, never unbounded on a huge feed
   ok('qualityCollector: example offenders capped at 4',
     Object.keys(snap.attrs).every((k) => Object.keys(snap.attrs[k].rules).every((r) => snap.attrs[k].rules[r].eg.length <= 4)));
+}
+
+{
+  // ---- the scan's PROGRESS, wired end to end (Ray, 16 Sep 2026: "allow the user to see a
+  // progress bar indicating how long it will take to scan the feed quality"). A bar needs the
+  // size of the read up front, so the worker forwards the upstream length and the page reads
+  // it; if either side goes missing the bar silently becomes a lie, so both are pinned here.
+  console.log('\n— content-quality scan progress —');
+  const page = readFileSync(new URL('../docs/FeedSpark_GoldenRecord.html', import.meta.url), 'utf8');
+  const wk = readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', import.meta.url), 'utf8');
+  ok('worker: the feed proxy declares the XML feed’s size as x-feed-bytes',
+    /x-feed-bytes/.test(wk) && /content-encoding/.test(wk.split('x-feed-bytes')[0].slice(-400)));
+  ok('worker: it is never forwarded as content-length (that truncates a decoded stream)',
+    !/xh\[['"]content-length/.test(wk));
+  ok('page: the scan reads that header', /x-feed-bytes/.test(page));
+  ok('page: the progress band, bar and its two readouts exist',
+    ['id="qz-scan"', 'id="qz-pbar"', 'id="qz-pfill"', 'id="qz-ptxt"', 'id="qz-peta"'].every((s) => page.indexOf(s) > 0));
+  ok('page: an undeclared size falls back to an indeterminate bar, never a fake percentage',
+    /qz-pbar indet/.test(page) && /size not declared/.test(page));
+  ok('page: the band is hidden on paper', /body\.pdf[^{]*\.qz-scan\{display:none/.test(page.replace(/\s+/g, ' ')) || /\.qz-scan\{display:none!important\}/.test(page.replace(/,body\.pdf/g, ',body.pdf')));
+  // etaWords lifted out of the page by name and run — the words a human reads off the bar
+  const etaWords = new Function('return ' + (page.match(/function etaWords\(s\) \{[\s\S]*?\n  \}/) || [])[0])();
+  eq('etaWords: nothing to say without a rate', etaWords(0), '');
+  eq('etaWords: seconds', [etaWords(4), etaWords(23)], ['a few seconds left', '~25s left']);
+  eq('etaWords: minutes', etaWords(200), '~3m 15s left');
 }
 
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);

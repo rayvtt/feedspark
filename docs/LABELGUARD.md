@@ -553,6 +553,27 @@ each finding quotes and links its source.
   than the first product was never in the header when the stream started (the Monsoon
   `custom_label_1` lesson), so it is named as *not measured this run* rather than scored from a
   partial column.
+- **A duplicate is a GROUP, not a list of strings** (Ray, 16 Sep 2026, reading Monsoon GB:
+  *"the issue you highlighted — titles duplicated across products — is not correct"*). The count
+  was right: 76 of 9,664 products across 35 shared titles, verified against the live feed, real
+  products with different PDPs carrying an identical title. The *evidence* was wrong — four
+  different-looking titles listed under one finding, with nothing saying each of them appears
+  twice, reads as a false positive. The collector now keeps each repeated value with its repeat
+  count and the ids of the products carrying it (`groups: [{v, n, ids}]`, biggest first, capped
+  at 4 groups × 4 ids; `vals` = how many distinct values are shared), and the example list names
+  a value ONCE instead of pushing it again on every repeat. The page renders `×4 <title>` with
+  the product ids under it, the hit column reads *76 products / 35 values*, and a caption states
+  the test: one whole value, matched case-insensitively.
+- **The scan shows its progress** (Ray, same day: *"ensure this scanning is high quality and
+  takes as long as needed, you don't need to rush it — allow the user to see a progress bar"*).
+  Nothing is sampled or cut short: every product is scored. `qualityRun` hands its caller a
+  progress record (phase · bytes read · bytes expected · products scored) rather than a
+  sentence, and the band under the section draws **% · MB of MB · products scored** with an ETA
+  computed from the rate measured so far — no guess before ~1.5s of reading. The size comes from
+  `x-feed-bytes`, which the feed proxy forwards from the upstream XML feed (informational only —
+  *never* as `content-length`, which truncates a decoded stream). A sheet export declares no
+  size, and a feed that outruns its declared size can't be trusted either, so both fall back to
+  an indeterminate bar that says *size not declared* rather than inventing a percentage.
 
 ## 9.5 PDP recovery scan — "missing data can be sourced from the PDP" (Ray, 14 Sep 2026)
 
