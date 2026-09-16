@@ -36,6 +36,7 @@ export const ACCESS_SEED = {
 // The landing page (/) is always reachable, so a person is never fully locked out.
 export const MODULES = [
   { slug: 'workflow', label: 'Workflow', path: '/workflow' },
+  { slug: 'taskmanager', label: 'FS Task Manager', path: '/tasks' },
   { slug: 'deck-builder', label: 'Deck generator', path: '/deck-builder' },
   { slug: 'feedlab', label: 'Feed Lab', path: '/feedlab' },
   { slug: 'labels', label: 'Label Guard', path: '/labels' },

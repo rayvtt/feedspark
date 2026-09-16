@@ -75,7 +75,14 @@ else
   echo "   ✗ abtests harness FAILED — see node tools/test_abtests.mjs"; FAIL=1
 fi
 
-echo "── qa-gate 3d2/7: retainer-hours classification (optimisation vs technical vs feature vs account)"
+echo "── qa-gate 3d2/7: FS Task Manager (search grammar, billable split, page/engine parity)"
+if node tools/test_reporttasks.mjs >/dev/null 2>&1; then
+  echo "   ✓ field prefixes, bill:yes/no on a part-billed row + the snapshot reconcile"
+else
+  echo "   ✗ task-manager harness FAILED — see node tools/test_reporttasks.mjs"; FAIL=1
+fi
+
+echo "── qa-gate 3d3/7: retainer-hours classification (optimisation vs technical vs feature vs account)"
 if node tools/test_reporthours.mjs >/dev/null 2>&1; then
   echo "   ✓ precedence traps hold; the baked snapshot reconciles"
 else

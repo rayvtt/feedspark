@@ -88,6 +88,10 @@ echo "── validating: work volumes (every workstream bucketed by month)"
 node tools/test_volumes.mjs >/dev/null
 echo "   ✓ six date shapes, the fixed window, labelled dims + hour sums hold"
 
+echo "── validating: FS Task Manager (query grammar, billable split, page/engine parity)"
+node tools/test_reporttasks.mjs >/dev/null
+echo "   ✓ the search grammar, the billable/non-billable maths and the baked snapshot hold"
+
 echo "── validating: retainer hours (optimisation vs technical vs feature vs account)"
 node tools/test_reporthours.mjs >/dev/null
 echo "   ✓ precedence traps hold; the baked snapshot reconciles to its own totals"

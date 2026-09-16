@@ -5867,6 +5867,86 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "if(!SHDIRTY[ns]) Object.keys(tgt).forEach",
       "pr": 398
+    },
+    {
+      "name": "FS Task Manager: the module page exists",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "FS Task Manager"
+    },
+    {
+      "name": "FS Task Manager: the AM search bar",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "id=\"q\""
+    },
+    {
+      "name": "FS Task Manager: the billable vs non-billable chart workbench",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "Billable vs non-billable"
+    },
+    {
+      "name": "FS Task Manager: the pull-out exits (PNG / CSV / copy table / link)",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "id=\"xpng\""
+    },
+    {
+      "name": "FS Task Manager: the page/engine parity markers the harness lifts",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "ENGINE:START"
+    },
+    {
+      "name": "FS Task Manager: all four MCP reads have a tab (tasks / tickets / accounts)",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "data-t=\"accounts\""
+    },
+    {
+      "name": "FS Task Manager: the worker serves the SCOPED dataset route",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "/api/taskmanager"
+    },
+    {
+      "name": "FS Task Manager: the worker serves /tasks",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "TASKMANAGER_PAGE"
+    },
+    {
+      "name": "FS Task Manager: the module is grantable per person",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "slug: 'taskmanager'"
+    },
+    {
+      "name": "FS Task Manager: the nav link is on the canonical nav",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "href=\"/tasks\""
+    },
+    {
+      "name": "FS Task Manager: the worker pulls the book out of the MCP itself",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function tmBookPull"
+    },
+    {
+      "name": "FS Task Manager: the book pull rides the :15/:45 cron",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "await tmBookPull(env);"
+    },
+    {
+      "name": "FS Task Manager: the book + ticket KV records",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "tmbookidx"
+    },
+    {
+      "name": "FS Task Manager: the engine + book store",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function packMarket"
+    },
+    {
+      "name": "FS Task Manager: the stalest-first rotation",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function bookPlan"
+    },
+    {
+      "name": "FS Task Manager: no client hours in git",
+      "file": ".gitignore",
+      "pattern": "ops/reports/"
     }
   ]
 }

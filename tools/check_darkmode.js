@@ -16,8 +16,34 @@ const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget
   .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
 const PAGES = fs.readdirSync(D).filter((f) => /^FeedSpark_.*\.html$/.test(f) && !/Strategy_Review|Deck/.test(f))
   .filter((f) => fs.readFileSync(path.join(D, f), 'utf8').indexOf('tb-modules') >= 0 || f === 'FeedSpark_Command_Center.html');
+// FS Task Manager reads its book from /api/taskmanager (the worker pulls it out of the reports
+// MCP and keeps it in KV — nothing is committed), so both browser tripwires feed it a small
+// live-shaped payload. Without it /tasks renders its "not read yet" state and neither tripwire
+// sees the chart, the tables or the search bar it is supposed to be checking.
+const TMDATA = (() => {
+  const mk = (d, owner, title, cat, bill, nb) => [d, owner, title, 'done', cat, bill * 4, nb * 4, (bill + nb) * 4, 0, 0, ''];
+  const rows = [], OWN = ['Ray', 'Febin', 'Ezgi', 'Gary'], TT = ['Keyword optimisation', 'Title optimisation', 'GMC Fixing', 'New Feeds', 'Client call'];
+  for (let i = 0; i < 120; i++) {
+    const mth = 1 + (i % 9);
+    rows.push({ d: '2026-0' + mth + '-1' + (i % 9), client: i % 2 ? 'Reiss' : 'Schuh', market: i % 3 ? 'GB' : 'DE',
+      am: 'Ray', owner: OWN[i % 4], title: TT[i % 5], status: 'done', cat: ['opt', 'opt', 'tech', 'feat', 'acct'][i % 5],
+      bucket: 'done', bill: (i % 5) * 0.5, nonbill: (i % 3) * 0.25, hours: (i % 5) * 0.5 + (i % 3) * 0.25,
+      sched: 1, id: 1000 + i, ticket: 0, note: '' });
+  }
+  const tickets = [{ id: 1, client: 'Reiss', subject: 'Israel Feed Set Up', status: 'open', d: '2026-09-16',
+    first: '2026-09-14', by: 'internal', origin: 'client', from: 'a@reiss.com', age: 2, level: 'ok',
+    idle: 1, msgs: 7, tasks: 0, hours: 0.5, am: 'Ray' }];
+  const accounts = [{ cid: 155, tid: 51, client: 'Reiss', market: 'GB', name: 'Reiss - GB', group: '', flag: 0,
+    status: 'active', type: 'FM', am: 'Ray', am2: '', allowance: 35, used: 38.25, balance: -36.75, health: 'negative', since: '2019-01-01' }];
+  return JSON.stringify({ from: '2025-10-01', to: '2026-09-16', months: 12, at: Date.now(), rows, tickets, accounts,
+    coverage: [{ client: 'Reiss', market: 'GB', cid: 155, at: Date.now(), n: 60, pulled: 80, deepest: '2024-01-01', full: true, capped: false }],
+    ticketCoverage: [{ client: 'Reiss', at: Date.now(), n: 1, pulled: 3, deepest: '2024-10-01' }],
+    health: { read: 1, total: 2, partial: 0, oldest: Date.now(), newest: Date.now(), complete: false, staleHours: 0 },
+    scoped: false, queuesTotal: 2 });
+})();
 const STUB = `try{localStorage.setItem('fcc-theme','dark');}catch(e){}
 window.fetch=function(url,opts){url=String(url);var j=function(o,st){return Promise.resolve(new Response(JSON.stringify(o),{status:st||200,headers:{'content-type':'application/json'}}));};
+ if(url.indexOf('/api/taskmanager')>=0)return j({ok:true,owner:true,scoped:false,status:{state:'ok',at:Date.now()},data:${TMDATA}});
  if(url.indexOf('/api/presence')>=0)return j({ok:true,me:'ray@feedspark.com',owner:true,now:Date.now(),users:[],roster:[]});
  if(url.indexOf('/api/access')>=0)return j({ok:true,email:'ray@feedspark.com',owner:true,clients:null,modules:null});
  if(url.indexOf('/api/labels/alerts')>=0)return j({ok:true,crit:0,warn:0,pt:{crit:0,warn:0},gr:{crit:0,warn:0},clients:{}});
