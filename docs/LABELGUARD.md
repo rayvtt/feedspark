@@ -348,7 +348,16 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   bar at the industry's best observed coverage. Page: ⚖ "<Industry> best practice" chip + ⚙
   editor (tri-state chips default → ★ scored → waived, brand vs whole-industry scope, reset
   to defaults), ★ marks scored attrs, waived rows grey out, hard "not in feed" flags follow
-  the profile. **Profile edits re-score the whole brand instantly** (Ray, 16 Sep 2026): the
+  the profile. **⬇ PDF = one continuous vertical page** (Ray, 16 Sep 2026: "should all fit
+  in 1 vertical page"): the scorecard used to slice across A4 breaks — 5–9 sheets, the first
+  mostly blank because a tier that would not fit was pushed whole, and every attribute row
+  double-height because the spec note had no print column and wrapped. `exportPdf` now lays
+  the page out exactly as it prints (`body.pdf`, pinned to the 186mm printable column = 703
+  CSS px at 96dpi), measures it, and injects `@page{size:210mm <content>mm}` so the browser
+  writes ONE tall sheet at full legibility (no scaling); rows are single-line with the spec
+  note beside them, a bare Ctrl+P gets the same document via `beforeprint`, `afterprint`
+  tears it down, and an absurdly long document (>4800mm, PDF's own ceiling is 5080mm) falls
+  back to plain A4 pagination. **Profile edits re-score the whole brand instantly** (Ray, 16 Sep 2026): the
   page live-derives every estate score from that same stored cov map + the *current* profile
   (`rescoreEstate` — cov stores `null` for absent vs fill % for present, exactly the attrs
   shape `goldenScore` needs), so saving a profile re-runs the dial, every market on the
