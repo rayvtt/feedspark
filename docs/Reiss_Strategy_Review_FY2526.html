@@ -1048,8 +1048,29 @@ policy data become commercial controls"<br/>Google </p>
   var ccBtn=document.querySelector('.cc-toggle'), ccPanel=document.querySelector('.cc-panel');
   if(ccBtn && ccPanel){
     var ccBase='▾ Country code key (22)';
-    var ccSaved={};
+    // WHICH MARKETS HAVE LAUNCHED IS TEAM STATE (Ray, 16 Sep 2026: "other things Steven worked
+    // on in the FCC that are not reflected on my end") — this deck is served at /deck/reiss, so
+    // anyone on the team can tick a market here. It rides the shared /api/state store under
+    // `rollout`, keyed per deck, with localStorage kept as the offline mirror.
+    var ccSaved={}, CCNS='rollout', CCPFX='reiss:';
     try{ ccSaved=JSON.parse(localStorage.getItem('reiss-rollout-checklist')||'{}'); }catch(e){}
+    function ccPull(){
+      fetch('/api/state?ns='+CCNS).then(function(r){return r.json();}).then(function(m){
+        var src=(m&&m[CCNS])||null; if(!src)return;
+        var next={}; Object.keys(src).forEach(function(k){ if(k.indexOf(CCPFX)===0)next[k.slice(CCPFX.length)]=src[k]; });
+        if(JSON.stringify(next)===JSON.stringify(ccSaved))return;
+        ccSaved=next;
+        try{ localStorage.setItem('reiss-rollout-checklist',JSON.stringify(ccSaved)); }catch(e){}
+        ccPanel.querySelectorAll('input[type=checkbox]').forEach(function(cb){
+          cb.checked=!!ccSaved[cb.getAttribute('data-code')]; });
+        ccLabel();
+      }).catch(function(){});
+    }
+    function ccPush(code,on){
+      var one={}; one[CCPFX+code]=on?1:0;   // only what changed — a whole-map save off a stale
+      fetch('/api/state',{method:'PUT',headers:{'content-type':'application/json'},   // read would
+        body:JSON.stringify({rollout:one})}).catch(function(){});                     // undo others
+    }
     function ccCount(){ return Object.keys(ccSaved).filter(function(k){return ccSaved[k];}).length; }
     function ccLabel(){ var n=ccCount(); ccBtn.textContent=n?ccBase+' — '+n+' launched':ccBase; }
     ccPanel.querySelectorAll('input[type=checkbox]').forEach(function(cb){
@@ -1058,10 +1079,13 @@ policy data become commercial controls"<br/>Google </p>
       cb.addEventListener('change',function(){
         ccSaved[code]=cb.checked;
         try{ localStorage.setItem('reiss-rollout-checklist',JSON.stringify(ccSaved)); }catch(e){}
+        ccPush(code,cb.checked);
         ccLabel();
       });
     });
     ccLabel();
+    ccPull();
+    document.addEventListener('visibilitychange',function(){ if(!document.hidden)ccPull(); });
     ccBtn.addEventListener('click',function(e){
       e.stopPropagation();
       ccPanel.hidden=!ccPanel.hidden;

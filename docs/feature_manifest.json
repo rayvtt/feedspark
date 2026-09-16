@@ -5485,6 +5485,55 @@
    "file": "tools/test_labelguard.mjs",
    "pattern": "QSPEC: the eight free-text attributes",
    "min": 1
+  },
+  {
+   "name": "Brief recovery: an original [FS Brief] email rebuilds a ticket the store never got — the email Ray is copied on IS the backup copy (Ray 16 Sep 2026)",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "export function briefFromEmail(msg)",
+   "pr": 390,
+   "min": 1
+  },
+  {
+   "name": "Brief recovery is CREATE-ONLY — a ticket that has since moved on is never reset by its own original email",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "if (briefs[r.id]) continue;",
+   "pr": 390,
+   "min": 1
+  },
+  {
+   "name": "Brief recovery: a reply or forward is a status update, never the brief; an absent or ambiguous ibfref is never guessed",
+   "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+   "pattern": "if (refs.length !== 1) return null;",
+   "pr": 390,
+   "min": 1
+  },
+  {
+   "name": "Worker: both Gmail push lanes rebuild missing tickets from their brief emails",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "recoverBriefsFromEmail(briefs, messages, { now })",
+   "pr": 390,
+   "min": 2
+  },
+  {
+   "name": "gmail_push.gs: the pushed snippet carries the whole brief body (1200 chars cut off the DoD and assets)",
+   "file": "tools/gmail_push.gs",
+   "pattern": "slice(0, 4000)",
+   "pr": 390,
+   "min": 1
+  },
+  {
+   "name": "Reiss deck: the rollout checklist is team state on /api/state `rollout`, not one browser's",
+   "file": "docs/Reiss_Strategy_Review_FY2526.html",
+   "pattern": "function ccPush(code,on){",
+   "pr": 390,
+   "min": 1
+  },
+  {
+   "name": "Brief-recovery harness: the real [FS Brief] subject + body shape are pinned in tools/test_briefrecover.mjs",
+   "file": "tools/test_briefrecover.mjs",
+   "pattern": "both of the lost briefs come back in one pass",
+   "pr": 390,
+   "min": 1
   }
  ]
 }

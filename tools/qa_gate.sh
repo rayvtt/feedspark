@@ -47,6 +47,13 @@ else
   echo "   ✗ shared-state harness FAILED — see node tools/test_sharedstate.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3a2/7: brief recovery from the brief email"
+if node tools/test_briefrecover.mjs >/dev/null 2>&1; then
+  echo "   ✓ an emailed brief rebuilds its missing ticket, and never touches a live one"
+else
+  echo "   ✗ brief-recovery harness FAILED — see node tools/test_briefrecover.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3b/7: keyword-result parsing + verdict"
 if node tools/test_kwresult.mjs >/dev/null 2>&1; then
   echo "   ✓ subject shape, verdict direction + inverted cost metrics hold"

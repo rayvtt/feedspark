@@ -36,6 +36,10 @@ echo "── validating: access scoping (per-user Workflow views)"
 node tools/test_access.mjs >/dev/null
 echo "   ✓ scoped views + the briefs tombstone trap hold"
 
+echo "── validating: brief recovery from the brief email"
+node tools/test_briefrecover.mjs >/dev/null
+echo "   ✓ an emailed brief rebuilds its missing ticket, and never touches a live one"
+
 echo "── validating: shared working state (one team, one store)"
 node tools/test_sharedstate.mjs >/dev/null
 echo "   ✓ scoped views + the partial-save wipe trap hold on /api/state"
