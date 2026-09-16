@@ -321,7 +321,9 @@ window.addEventListener('load',restore);
     padding:3px 7px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* a duplicate shown as what it IS — one repeated value, the products that share it */
   .qz-egs{display:block;margin-top:4px}
-  .qz-cap{display:block;font-style:normal;font-size:10.5px;font-weight:700;color:var(--muted)}
+  .qz-cap{display:block;font-style:normal;font-size:10.5px;font-weight:700;color:var(--muted);line-height:1.55}
+  .qz-vc{margin-left:7px;padding:0 6px;border-radius:100px;background:var(--wash);border:1px solid var(--line);
+    font-family:Lato,system-ui,sans-serif;font-size:9.5px;font-weight:900;letter-spacing:.02em;text-transform:uppercase}
   .qz-grp{display:block;background:var(--wash);border:1px solid var(--line);border-radius:6px;
     padding:4px 8px;margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
   .qz-grp b{color:var(--orange-deep);font-weight:900;margin-right:6px;font-family:inherit}
@@ -343,6 +345,27 @@ window.addEventListener('load',restore);
     font-size:11.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
   .qz-pmeta b{color:var(--ink-2);font-weight:800}
   .qz-peta{white-space:nowrap}
+  /* two scores, two questions — where the content-quality read and the AI pillar diverge */
+  .rec-tbl{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+  .rec-row{display:grid;grid-template-columns:118px 132px 156px 54px minmax(220px,1.35fr);gap:12px;
+    align-items:start;padding:10px 12px;border-top:1px solid var(--line);font-size:12px}
+  .rec-row:first-child{border-top:none}
+  .rec-row.on{background:#FFFBF4}
+  .rec-head{background:var(--wash);font-size:10px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .rec-k{font-weight:800;line-height:1.7}
+  .rec-k i{font-style:normal;color:var(--muted);font-weight:700}
+  .rec-n{font-weight:900;font-size:15px;font-variant-numeric:tabular-nums;line-height:1.2}
+  .rec-n em{display:block;font-style:normal;font-size:10.5px;font-weight:700;color:var(--muted);
+    margin-top:3px;line-height:1.45;font-variant-numeric:normal}
+  .rec-d{font-weight:900;font-size:14px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+  .rec-d.big{color:var(--orange-deep)}
+  .rec-w{font-size:11.5px;color:var(--ink-2);line-height:1.6}
+  .rec-w b{color:var(--ink);font-weight:800}
+  .rec-cause{display:block;margin-top:4px;color:var(--orange-deep);font-weight:700}
+  .rec-flag{font-size:11px;font-weight:900;color:var(--orange-deep);background:#FDF3E3;border-radius:100px;padding:3px 9px}
+  [data-theme=dark] .rec-row.on{background:#241B10}
+  @media(max-width:900px){.rec-row{grid-template-columns:1fr 1fr;gap:8px}
+    .rec-head{display:none}.rec-k,.rec-w{grid-column:1/-1}.rec-d{text-align:left}}
   .qz-empty{font-size:12.5px;color:var(--ink-2);line-height:1.6}
   .qz-meta{font-size:11px;font-weight:700;color:var(--muted);margin-left:auto;display:flex;align-items:center;gap:8px}
   body.demo .qz-act{display:none!important}
@@ -407,6 +430,10 @@ window.addEventListener('load',restore);
   body.pdf .lad{flex:1 1 0!important}
   body.pdf .heat-scroll{overflow:visible}
   body.pdf .mk-heat{min-width:0}
+  body.pdf .rec-row{grid-template-columns:118px 132px 156px 54px minmax(220px,1.35fr)!important;gap:12px!important}
+  body.pdf .rec-head{display:grid!important}
+  body.pdf .rec-k,body.pdf .rec-w{grid-column:auto!important}   /* else each row stacks into three */
+  body.pdf .rec-d{text-align:right!important}
   body.pdf *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   @media print{@page{margin:14mm 12mm}body{background:#fff!important;color:#333!important}}
   /* rocket logo + module nav (shared) */
@@ -1141,6 +1168,7 @@ window.addEventListener('load',restore);
     });
     h += qualitySection(k, s);   // Ray's content-quality read, below the four spec tiers
     h += airSection(k);          // and the AI-Readiness ladder under that
+    h += reconcileSection(k);    // and where those two readings of the same field disagree
     $('det-panel').innerHTML = h;
     airAnimate();
     wire(k, s);
@@ -1786,10 +1814,14 @@ window.addEventListener('load',restore);
                 // which ones. Four unrelated-looking strings read as a wrong finding (Ray on
                 // Monsoon GB) — "×2 · 1000945103, 1000944940" is the finding, verifiable.
                 ? '<span class="qz-egs"><i class="qz-cap">Each block is ONE value and the products sharing it — matched in' +
-                    ' full, case-insensitively' + (b.vals > b.groups.length ? '; ' + fmt(b.vals - b.groups.length) + ' more not shown' : '') + '.</i>' +
+                    ' full, case-insensitively' + (b.vals > b.groups.length ? '; ' + fmt(b.vals - b.groups.length) + ' more not shown' : '') + '.' +
+                    (b.within ? ' A further <b>' + fmt(b.within) + '</b> products share copy only with variants of the same product' +
+                      ' (' + fmt(b.withinVals) + ' value' + (b.withinVals === 1 ? '' : 's') + ') — expected, and not counted above.' : '') + '</i>' +
                   b.groups.map(function (g) {
                     return '<span class="qz-grp" title="' + esc(g.v) + '"><em><b>×' + g.n + '</b>' + esc(g.v) + '</em>' +
-                      (g.ids && g.ids.length ? '<i>' + esc(g.ids.join(' · ')) + (g.n > g.ids.length ? ' …' : '') + '</i>' : '') + '</span>';
+                      (g.ids && g.ids.length ? '<i>' + esc(g.ids.join(' · ')) +
+                        (g.n > g.ids.length ? ' …' : '') +
+                        '<span class="qz-vc">' + (g.x ? 'different products' : 'variants of one product') + '</span></i>' : '') + '</span>';
                   }).join('') + '</span>'
                 : (b.eg && b.eg.length ? '<span class="qz-eg">' + b.eg.map(function (e) { return '<span title="' + esc(e) + '">' + esc(e) + '</span>'; }).join('') + '</span>' : '')) +
               '</span>' +
@@ -2032,6 +2064,103 @@ window.addEventListener('load',restore);
       ' completeness and agentic readiness carry the most (three dots), label architecture the least. The four' +
       ' tiers are the same ladder used in the readiness decks — Foundational, Structured, Enriched, Agentic-ready.</p>' +
       '</div>';
+    return h;
+  }
+  /* ---- Two scores, two questions (Ray, 16 Sep 2026: "there's definitely a discrepancy between
+     the scoring of content quality versus AI readiness … g:description content quality 60.1 but
+     AI readiness 89 … taxonomy depth 49 whereas product type / GPC is almost 100 in content
+     quality. Is there a different scoring matrix for each? How do we bring this together and
+     flag IF there is different scoring logic between the two sections").
+
+     There IS, deliberately, and the answer is not to average them — it is to say which question
+     each answers and to name the divergence where it happens. Content quality scores PRODUCTS
+     against rules Google STATES (a floor: does this risk disapproval or leave stated guidance
+     unused). AI-Readiness scores the feed against the agentic ladder (a ceiling: how far toward
+     best-in-class), blending coverage, depth and uniqueness per pillar. A field can pass every
+     stated rule and still be shallow; a field can be complete, long and legal and still be
+     boilerplate. Both are computed from the SAME single read of the SAME products at the SAME
+     moment, so a gap between them is a finding about the feed, never a bug in one of them.
+
+     Each pair carries what each side is measuring, and the row reads the LIVE numbers off both
+     sections — the worst-breaking rule on one side, the pillar's own summary on the other. */
+  var RECON = [
+    { q: ['title'], p: 'titles',
+      qm: 'the stated rules for a title — the 150-character cap, block capitals, promotional copy, a title that repeats another product’s',
+      pm: 'the 80–120 character window and how many MASK slots (brand · material · fit · colour · use-case) the title actually carries',
+      why: 'a title can break no rule at all and still be short and bare — legal, but with little for Shopping or an AI surface to match on' },
+    { q: ['description'], p: 'descriptions',
+      qm: 'the share of PRODUCTS whose description is shared with a different product (variants of one product are not counted)',
+      pm: 'the share of DISTINCT copy reused across products — and it counts for only a fifth of the pillar, next to coverage (half) and length (three tenths)',
+      why: 'different denominators: one boilerplate paragraph on 4,000 products is thousands of products but a single value, so the same duplication reads high on one side and small on the other' },
+    { q: ['google_product_category', 'product_type'], p: 'taxonomy',
+      qm: 'whether the value is SHAPED the way Google specifies — a real taxonomy path, three levels or more, never a single level',
+      pm: 'how DEEP the tree actually goes — GPC toward four levels and three or more product_type assignments per product',
+      why: 'the floor and the ceiling of the same field: every path can clear the stated minimum while the catalogue as a whole stays shallow' },
+    { q: ['color', 'material', 'pattern'], p: 'attributes',
+      qm: 'whether the values that ARE there are usable — a real colour name, a material rather than a sentence, no internal codes',
+      pm: 'weighted COVERAGE of the variant attributes (colour, size, item_group_id, material, gender, age_group, pattern)',
+      why: 'coverage and correctness are independent — a feed can fill every attribute with something unusable, or leave gaps that are impeccably written' },
+    { q: ['product_highlight'], p: 'ai',
+      qm: 'the stated rules for highlights — at least two, at most 100, 150 characters each, no repeats',
+      pm: 'agentic readiness overall: the conversational six, description depth, structured richness and identity — highlights are one input of several',
+      why: 'the highlights rule is pass/fail on this one field; the pillar is the whole agentic surface, so fixing highlights alone moves it only a little' },
+  ];
+  var RECON_GAP = 15;     // the point at which two readings of one field are worth explaining
+  function reconcileSection(k) {
+    var qd = QUAL[k], a = qd && qd.ai;
+    if (!a || !a.total || !LGQ) return '';
+    var qs = LGQ.qualityScore(qd);
+    if (!qs || !qs.parts || !qs.parts.length) return '';
+    var byQ = {}; qs.parts.forEach(function (p) { byQ[p.key] = p; });
+    var byP = {}; (a.pillars || []).forEach(function (p) { byP[p.key] = p; });
+    var rows = [], flagged = 0;
+    RECON.forEach(function (m) {
+      var mine = m.q.map(function (x) { return byQ[x]; }).filter(Boolean);
+      var pil = byP[m.p];
+      if (!mine.length || !pil) return;
+      // several attributes against one pillar: weigh them the way qualityScore does
+      var wsum = 0, wtot = 0;
+      mine.forEach(function (p) { var w = p.w || 1; wsum += p.score * w; wtot += w; });
+      var qscore = Math.round((wsum / wtot) * 10) / 10;
+      var gap = Math.round(Math.abs(qscore - pil.score) * 10) / 10;
+      if (gap >= RECON_GAP) flagged++;
+      var worst = null;
+      mine.forEach(function (p) { if (p.broken && p.broken[0] && (!worst || p.broken[0].cost > worst.cost)) worst = p.broken[0]; });
+      rows.push({ m: m, mine: mine, pil: pil, q: qscore, gap: gap, worst: worst });
+    });
+    if (!rows.length) return '';
+    rows.sort(function (x, y) { return y.gap - x.gap; });
+    var h = '<div class="tier" id="rec-tier"><div class="tier-h">' +
+      '<span class="tbadge rec" style="background:#E7F0FB;color:#1A365D">Scoring</span>' +
+      '<h4>Two scores, two questions</h4>' +
+      '<span class="qz-meta">' + (flagged
+        ? '<span class="rec-flag">⚠ ' + flagged + ' field' + (flagged === 1 ? '' : 's') + ' read differently by the two sections</span>'
+        : '<span>the two sections agree across every field</span>') + '</span></div>' +
+      '<p class="tier-sub"><b>Content quality</b> scores PRODUCTS against rules Google <i>states</i> — a floor:' +
+      ' does this risk disapproval, or leave stated guidance unused? <b>AI-Readiness</b> scores the feed against the' +
+      ' agentic ladder — a ceiling: how far toward best-in-class, blending coverage, depth and uniqueness per pillar.' +
+      ' Both are computed from the <b>same single read of the same products at the same moment</b>, so a gap between' +
+      ' them is a finding about the feed, not a disagreement between two tools. Where the numbers diverge by ' +
+      RECON_GAP + ' points or more, the row says why.</p>' +
+      '<div class="rec-tbl"><div class="rec-row rec-head"><span>Field</span><span>Content quality</span>' +
+      '<span>AI-Readiness pillar</span><span>Δ</span><span>Why the two differ</span></div>';
+    rows.forEach(function (r) {
+      var big = r.gap >= RECON_GAP;
+      h += '<div class="rec-row' + (big ? ' on' : '') + '">' +
+        '<span class="rec-k">' + r.m.q.map(function (x) { return '<i>g:</i>' + esc(x); }).join('<br>') + '</span>' +
+        '<span class="rec-n" style="color:' + scoreCol(r.q) + '">' + r.q +
+        '<em>' + (r.worst ? esc(r.worst.label) + ' · ' + r.worst.pct + '%' : 'nothing flagged') + '</em></span>' +
+        '<span class="rec-n" style="color:' + airCol(r.pil.score) + '">' + r.pil.score +
+        '<em>' + esc(r.pil.label) + ' — ' + esc(r.pil.summary) + '</em></span>' +
+        '<span class="rec-d' + (big ? ' big' : '') + '">' + (big ? '⚠ ' : '') + r.gap + '</span>' +
+        '<span class="rec-w"><b>Quality measures</b> ' + esc(r.m.qm) + '. <b>The pillar measures</b> ' + esc(r.m.pm) +
+        '.' + (big ? ' <span class="rec-cause">' + esc(r.m.why) + '</span>' : '') + '</span></div>';
+    });
+    h += '</div><p class="air-foot">Neither number checks the other, so neither is “right”. Use <b>content quality</b>' +
+      ' for what to fix and what to brief — every finding quotes a rule Google publishes, so it survives a conversation' +
+      ' with the client. Use <b>AI-Readiness</b> for what to sell and where this feed sits against the ladder the' +
+      ' readiness decks speak. A wide gap is the useful case: it names a field that is compliant and underused, or' +
+      ' complete and not yet correct.</p></div>';
     return h;
   }
   // the MASK read, nested under g:title in the content-quality section — the anatomy of the

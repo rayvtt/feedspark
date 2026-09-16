@@ -1284,8 +1284,8 @@ export const QSPEC = [
       { id: 'space', sev: 'warn', label: 'extra white space',
         why: '“Don’t include extra white spaces.”',
         test: (v, r, raw) => /\s{2,}/.test(raw) || raw !== raw.trim() },
-      { id: 'dupe', sev: 'warn', label: 'title duplicated across products', dupe: true,
-        why: 'Google asks for “distinguishing details of each variant” — identical titles make variants compete as one.' },
+      { id: 'dupe', sev: 'warn', label: 'title shared by more than one product', dupe: true,
+        why: 'Google asks for “distinguishing details of each variant” — identical titles make products and variants compete as one, so every repeat counts here, whether the other row is a variant of the same product or a different product entirely.' },
     ] },
   { key: 'description', doc: 6324468, w: 3, max: 5000, label: 'Product description',
     spec: '1–5,000 characters · the important details in the first 160–500',
@@ -1314,8 +1314,8 @@ export const QSPEC = [
       { id: 'same-as-title', sev: 'warn', label: 'same as the title',
         why: 'A description that repeats the title adds no new matching surface for Shopping or AI answers.',
         test: (v, r) => !!r.title && v.toLowerCase() === String(r.title).trim().toLowerCase() },
-      { id: 'dupe', sev: 'warn', label: 'description duplicated across products', dupe: true,
-        why: '“Be specific and accurate… describe only the product itself” — boilerplate shared across products describes none of them.' },
+      { id: 'dupe', sev: 'warn', label: 'description shared with a different product', dupe: true, variantAware: true,
+        why: '“Be specific and accurate… describe only the product itself” — boilerplate shared across products describes none of them. Variants of the SAME product (item_group_id) legitimately share copy, so they are not counted here.' },
     ] },
   { key: 'product_highlight', doc: 9216100, w: 2, max: 150, multi: true, label: 'Product highlights',
     spec: '1–150 characters each · recommended 4–6, minimum 2, maximum 100',
@@ -1462,6 +1462,8 @@ export function qualityCollector(cols, opts) {
       const ctx = { brand: at('brand'), title: at('title') };
       // what names the product in a duplicate group — its id, or the page it points at
       const who = at('id') || at('link').replace(/^https?:\/\/[^/]+\//, '').split('?')[0];
+      // and what makes it the SAME product as another row: the variant family
+      const fam = at('item_group_id') || who || 'r' + rows;
       for (const q of specs) {
         const raw = String(row[cols[q.key]] == null ? '' : row[cols[q.key]]);
         const v = raw.trim();
@@ -1484,16 +1486,18 @@ export function qualityCollector(cols, opts) {
           const k = v.toLowerCase();
           const prev = a.seen.get(k);
           if (prev) {
-            a.dupes += prev[0] === 1 ? 2 : 1;   // the first repeat implicates the original too
-            if (prev[0] === 1) a.vals++;        // one more VALUE that products share
             prev[0]++;
+            // is this value shared with a DIFFERENT product, or only between variants of the
+            // same one? Size variants sharing a description is normal; two separate products
+            // sharing it is the finding. The same distinction the Feed Lab audit makes.
+            if (!prev[3] && fam !== prev[2]) prev[3] = 1;
             let g = a.groups.get(k);
             if (!g) {
               if (a.groups.size < GRP_CAP) { g = { v: cut(v), n: 1, ids: prev[1] ? [prev[1]] : [] }; a.groups.set(k, g); }
               else a.gover = true;
             }
-            if (g) { g.n++; if (who && g.ids.length < ID_CAP) g.ids.push(who); }
-          } else if (a.seen.size < DUPE_CAP) a.seen.set(k, [1, who]);
+            if (g) { g.n++; g.x = prev[3] || 0; if (who && g.ids.length < ID_CAP) g.ids.push(who); }
+          } else if (a.seen.size < DUPE_CAP) a.seen.set(k, [1, who, fam, 0]);
           else a.over = true;
         }
       }
@@ -1504,21 +1508,43 @@ export function qualityCollector(cols, opts) {
         const a = acc[q.key];
         const dr = q.rules.filter((x) => x.dupe)[0];
         if (dr) {
+          // count from the map itself, so "products involved" and "distinct values shared"
+          // can each be split by whether the repeat crosses a variant family
+          let dupes = 0, xdupes = 0, vals = 0, xvals = 0;
+          a.seen.forEach((e) => {
+            if (e[0] < 2) return;
+            dupes += e[0]; vals++;
+            if (e[3]) { xdupes += e[0]; xvals++; }
+          });
+          // Google asks the TITLE to distinguish each variant, so a title two variants share
+          // is as much a finding as one two products share — that rule counts every repeat.
+          // The DESCRIPTION rule is about boilerplate ("describe only the product itself"),
+          // and variants of one product legitimately share copy, so it counts only the copy
+          // reused across different products — the same call the AI-Readiness pillar makes.
+          const across = !!dr.variantAware;
           // biggest groups first — the ones worth looking at — and the example list becomes
           // those same values, each named ONCE (it used to push the value again on every
           // repeat, so one title could fill all four slots and look like four findings)
-          const gs = Array.from(a.groups.values()).sort((x, y) => y.n - x.n).slice(0, EG_CAP);
-          a.rules[dr.id].n = a.dupes;
-          a.rules[dr.id].groups = gs;
-          a.rules[dr.id].vals = a.vals;
-          a.rules[dr.id].eg = gs.map((g) => g.v);
+          const gs = Array.from(a.groups.values())
+            .filter((g) => (across ? g.x : true))
+            .sort((x, y) => y.n - x.n).slice(0, EG_CAP);
+          const slot = a.rules[dr.id];
+          slot.n = across ? xdupes : dupes;
+          slot.vals = across ? xvals : vals;
+          slot.groups = gs;
+          slot.eg = gs.map((g) => g.v);
+          // what was NOT counted as a finding — context, so the number is never a mystery
+          if (across && dupes > xdupes) { slot.within = dupes - xdupes; slot.withinVals = vals - xvals; }
         }
         const pct = (n) => (a.filled ? Math.round((n / a.filled) * 1000) / 10 : 0);
         const rules = {};
         for (const rule of q.rules) {
           const hit = a.rules[rule.id];
           rules[rule.id] = { n: hit.n, pct: pct(hit.n), eg: hit.eg };
-          if (hit.groups) { rules[rule.id].groups = hit.groups; rules[rule.id].vals = hit.vals; }
+          if (hit.groups) {
+            rules[rule.id].groups = hit.groups; rules[rule.id].vals = hit.vals;
+            if (hit.within) { rules[rule.id].within = hit.within; rules[rule.id].withinVals = hit.withinVals; }
+          }
         }
         attrs[q.key] = {
           filled: a.filled, cov: rows ? Math.round((a.filled / rows) * 1000) / 10 : 0,
@@ -1551,7 +1577,7 @@ export function attrQuality(key, a) {
     broken.push({ id: rule.id, sev: rule.sev, label: rule.label, why: rule.why,
       n: hit.n, pct: hit.pct, eg: hit.eg || [], cost: Math.round(cost * 10) / 10,
       groups: hit.groups && hit.groups.length ? hit.groups : undefined,
-      vals: hit.vals || undefined });
+      vals: hit.vals || undefined, within: hit.within || undefined, withinVals: hit.withinVals || undefined });
   }
   broken.sort((x, y) => y.cost - x.cost);
   return { key, score: Math.max(0, Math.round((100 - pen) * 10) / 10), broken,

@@ -3924,8 +3924,14 @@ async function goldenRoutes(env, request, url) {
             v: String((g && g.v) || '').slice(0, 160),
             n: Math.max(0, parseInt(g && g.n, 10) || 0),
             ids: Array.isArray(g && g.ids) ? g.ids.slice(0, 4).map((x) => String(x).slice(0, 80)) : [],
+            x: g && g.x ? 1 : 0,        // shared with a DIFFERENT product, not just a variant
           })).filter((g) => g.v && g.n > 1);
           rules[rule.id].vals = Math.max(0, parseInt(hit.vals, 10) || 0);
+          // what the rule deliberately did NOT count, so the number is never a mystery
+          if (hit.within) {
+            rules[rule.id].within = Math.max(0, parseInt(hit.within, 10) || 0);
+            rules[rule.id].withinVals = Math.max(0, parseInt(hit.withinVals, 10) || 0);
+          }
         }
       }
       attrs[q.key] = { filled: Math.max(0, parseInt(a.filled, 10) || 0),
