@@ -30,7 +30,8 @@ t('wide tables and min-width workbenches get a scrolling frame from the sweep', 
 t('the sweep re-runs on DOM mutations and on resize, never inside the bar / sheets', /MutationObserver/.test(W) && /closest\('#tb-modules,#fcc-apps-menu,\.pz-pop'\)/.test(W));
 t('inputs render at 16px (no iOS zoom on focus) and buttons get a thumb-sized target', /select,textarea\{font-size:16px!important\}/.test(css) && /a\.btn\{min-height:36px\}/.test(css));
 console.log('· wiring');
-t('the worker injects the layer on app pages for EVERY signin (not owner-gated)', /if \(realOwner\(env, request\)\) html = inject\(html, LANGW\);\n[^\n]*\n\s*html = inject\(html, MOBILEW\);/.test(WK));
+t('the worker injects the layer on app pages for EVERY signin (not owner-gated)',
+  /^\s*html = inject\(html, MOBILEW\);$/m.test(WK) && !/realOwner\([^)]*\)\)[^\n]*MOBILEW/.test(WK));
 t('the worker imports the widget as a Text module', /import MOBILEW from "\.\.\/\.\.\/\.\.\/docs\/mobile_widget\.html";/.test(WK));
 t('the dark tripwire renders pages WITH the phone layer', /'apps_widget\.html', 'mobile_widget\.html'/.test(DARK));
 t('the phone tripwire renders every app page at 390px and fails on overflow / tall header / lost bar / hidden desktop controls', /devices\['iPhone 13'\]/.test(MOB) && /horizontal overflow/.test(MOB) && /topbar ' \+ m\.tbH \+ 'px tall/.test(MOB) && /hidden on the phone but visible on desktop/.test(MOB));

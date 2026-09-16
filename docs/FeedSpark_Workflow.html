@@ -262,6 +262,9 @@ window.addEventListener('load',restore);
   .tk-pri.hi{background:var(--orange-deep)}
   .tk-pri.ur{background:#C0392B}
   .tik .tk-age{font-size:9.5px;font-weight:900;padding:1px 6px;border-radius:100px;background:var(--wash);color:var(--muted);flex:none;white-space:nowrap}
+  .tm-h{font-variant-numeric:tabular-nums;font-weight:800;color:var(--navy)}
+  [data-theme=dark] .tm-h{color:#93B4E0}
+  .tm-none{color:var(--muted);font-weight:600}
   .tik .tk-hrs{font-size:9.5px;font-weight:900;padding:1px 6px;border-radius:100px;background:rgba(91,130,190,.14);color:#1A365D;flex:none;white-space:nowrap}
   [data-theme=dark] .tik .tk-hrs{background:rgba(91,130,190,.24);color:#93B4E0}
   .tmh-r{display:grid;grid-template-columns:78px 1fr auto auto 76px;gap:8px;font-size:11.5px;padding:4px 0;border-bottom:1px dashed var(--line);align-items:baseline}
@@ -1011,7 +1014,7 @@ window.addEventListener('load',restore);
     <div class="bl-bar"><input id="bl-search" type="search" placeholder="Search briefs — id, client, task, ASPL, stage, read-out…" aria-label="Search the brief ledger"><span class="it-n" id="bl-n"></span><button type="button" class="btn" id="bl-relabel" style="margin-left:auto;font-size:12px;padding:6px 11px" title="Re-read every reply on every brief and correct the stage — a pickup (“we will do the needful”) means In progress, only a confirmed completion means Done.">⟳ Re-read replies</button></div>
     <div class="it-scroll" style="max-height:56vh"><table class="itbl" id="bltbl">
       <colgroup><col style="width:118px"><col style="width:11%"><col><col style="width:9%"><col style="width:9%"><col style="width:84px"><col style="width:84px"><col style="width:120px"></colgroup>
-      <thead><tr><th data-k="id">Brief</th><th data-k="client">Client</th><th data-k="task">Task &amp; read-out</th><th data-k="by">Briefed by</th><th data-k="aspl">ASPL</th><th data-k="created">Sent</th><th data-k="due">Due</th><th data-k="status">Stage</th></tr></thead>
+      <thead><tr><th data-k="id">Brief</th><th data-k="client">Client</th><th data-k="task">Task &amp; read-out</th><th data-k="by">Briefed by</th><th data-k="aspl">ASPL</th><th data-k="created">Sent</th><th data-k="due">Due</th><th data-k="status">Stage</th><th data-k="tmh" class="num" title="Hours the Task Manager has booked against this ticket, matched on its [ibfref:] token — billable + non-billable">⏱ Hours</th></tr></thead>
       <tbody id="bl-rows"></tbody></table></div>
   </div>
 
@@ -3969,12 +3972,14 @@ window.addEventListener('load',restore);
     var q=blQuery(), rows=!q?all:all.filter(function(b){
       var hay=(b.id+' '+(b.client||'')+' '+(b.task||'')+' '+(b.aspl||asplOf(b)||'')+' '+briefedBy(b)+' '
         +(STAGE_LBL[b.status]||b.status||'')+' '+(lastResultTxt(b)||'')+' '+humanDD(b.due)+' '
+        +((TMH[b.id]&&TMH[b.id].o)||'')+' '
         +(b.created?new Date(b.created).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}):'')).toLowerCase();
       return hay.indexOf(q)>=0; });
     rows.sort(function(a,b2){ var k=blState.sort, va=a[k], vb=b2[k];
       if(k==='due'){ va=(ddmmyyyyToDate(a.due)||0)-0; vb=(ddmmyyyyToDate(b2.due)||0)-0; }
       if(k==='created'){ va=a.created||0; vb=b2.created||0; }
       if(k==='by'){ va=briefedBy(a); vb=briefedBy(b2); }
+      if(k==='tmh'){ va=blHoursVal(a); vb=blHoursVal(b2); }
       if(typeof va==='string')return String(va||'').localeCompare(String(vb||''))*blState.dir;
       return ((va||0)-(vb||0))*blState.dir; });
     var n=document.getElementById('bl-n'); if(n)n.textContent=rows.length+(rows.length===1?' brief':' briefs');
@@ -3986,10 +3991,32 @@ window.addEventListener('load',restore);
         +'<td class="c-owner">'+esc(b.aspl||asplOf(b)||'—')+'</td>'
         +'<td class="c-due">'+(b.created?new Date(b.created).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}):'—')+'</td>'
         +'<td class="c-due">'+humanDD(b.due)+'</td>'
-        +'<td><span class="bf-chip" style="background:'+(STAGE_COLOR[b.status]||'#8a94a0')+'">'+esc(STAGE_LBL[b.status]||b.status||'—')+'</span></td></tr>'; }).join('')
-      :'<tr><td colspan="8" class="it-empty">No briefs match.</td></tr>';
+        +'<td><span class="bf-chip" style="background:'+(STAGE_COLOR[b.status]||'#8a94a0')+'">'+esc(STAGE_LBL[b.status]||b.status||'—')+'</span></td>'
+        +'<td class="num">'+blHours(b)+'</td></tr>'; }).join('')
+      :'<tr><td colspan="9" class="it-empty">No briefs match.</td></tr>';
     body.querySelectorAll('tr[data-bid]').forEach(function(r){ r.onclick=function(){ openModal(r.getAttribute('data-bid')); }; });
   }
+  /* WHAT THE WORK ACTUALLY COST (Ray, 16 Sep 2026: "crawl the entire TM data, use the [ibfref] to
+     match with the tickets that have been raised and brief from the FCC workflow, and bring over
+     the billable, non-billable, and total hours to show case in either Brief Ledger and on
+     Workflow individual task").
+
+     The board card and the modal already wore this; the LEDGER — the flat register of every brief
+     ever sent, and the place you go to ask what a run of work came to — carried no hours at all.
+
+     Billable and non-billable are never merged: the cell shows the total, and its tooltip splits
+     it. A ticket the Task Manager has no task against shows a DASH, not a zero — nobody has
+     booked time to it yet, which is a different fact from "this was free", and on a ledger people
+     total by eye that difference matters. */
+  function blHours(b){
+    var h=TMH[b.id]; if(!h)return '<span class="tm-none" title="No Task Manager task carries this ticket\u2019s [ibfref:] token yet">\u2014</span>';
+    var bi=+h.h||0, nb=+h.nb||0, tot=Math.round((bi+nb)*100)/100;
+    return '<span class="tm-h" title="'+fmtH(bi)+' billable \u00b7 '+fmtH(nb)+' non-billable'
+      +(h.sc?' \u00b7 '+fmtH(h.sc)+' scheduled':'')+' \u00b7 '+(h.n||1)+' task'+((h.n||1)===1?'':'s')
+      +(h.o?' \u00b7 '+esc(h.o):'')+'">'+fmtH(tot)+'</span>';
+  }
+  function blHoursVal(b){ var h=TMH[b.id]; return h?((+h.h||0)+(+h.nb||0)):-1; }   // unbooked sorts below zero
+
   // The BOX ITSELF is the query's source of truth (Ray, 10 Sep 2026, second report: rows
   // still rendered unfiltered with "superdry" sitting in the search box) — every render
   // re-reads whatever is typed, so a rendered ledger can never disagree with the visible

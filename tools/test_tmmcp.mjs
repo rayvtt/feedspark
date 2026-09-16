@@ -80,6 +80,36 @@ t('summariseTasks: totals, per-ticket sums across BOTH tasks carrying the ref (t
 const H = {}; const c1 = TMM.mergeHours(H, sum, NOW);
 t('mergeHours writes each ref once, stamps the pull time, reports the change count', c1 === 3 && H['REIS-20260910-02'].client === 'Reiss' && H['REIS-20260910-02'].market === 'GB' && H['REIS-20260910-02'].updated === NOW);
 t('…an identical re-pull changes nothing; a moved figure replaces the record', TMM.mergeHours(H, sum, NOW + 1) === 0 && (() => { const s2 = JSON.parse(J(sum)); s2.byRef['REIS-20260910-01'].h = 6; return TMM.mergeHours(H, s2, NOW + 2) === 1 && H['REIS-20260910-01'].h === 6 && H['REIS-20260910-01'].updated === NOW + 2; })());
+// TWO LANES, ONE RECORD (Ray, 16 Sep 2026: "crawl the entire TM data, use the [ibfref] to match
+// with the tickets… and bring over the billable, non-billable and total hours"). tmPull looks back
+// 21 days so a brief raised this morning shows hours within the hour; tmBookPull crawls twelve
+// months. Without a rule they overwrite each other every firing and a ticket worked across months
+// reads as a fraction of itself half the time.
+{
+  const wide = JSON.parse(J(sum)); wide.byRef['REIS-20260910-02'].h = 40;      // the whole year
+  const narrow = JSON.parse(J(sum)); narrow.byRef['REIS-20260910-02'].h = 4.5; // the last 21 days
+  const W = {};
+  TMM.mergeHours(W, wide, NOW, TMM.TM_BOOK_DAYS);
+  t('the book crawl stamps its window on every ref it writes', W['REIS-20260910-02'].win === TMM.TM_BOOK_DAYS && W['REIS-20260910-02'].h === 40);
+  const c = TMM.mergeHours(W, narrow, NOW + 1, TMM.TM_TASK_DAYS);
+  t('…and the 21-day lane may NOT overwrite it — a ticket worked across months keeps its full sum',
+    c === 0 && W['REIS-20260910-02'].h === 40 && W['REIS-20260910-02'].win === TMM.TM_BOOK_DAYS);
+  const N = {};
+  TMM.mergeHours(N, narrow, NOW, TMM.TM_TASK_DAYS);
+  t('a ref the crawl has not reached yet is still filled fast, so a new brief shows hours at once',
+    N['REIS-20260910-02'].h === 4.5 && N['REIS-20260910-02'].win === TMM.TM_TASK_DAYS);
+  t('…and the crawl replaces it the moment it arrives',
+    TMM.mergeHours(N, wide, NOW + 2, TMM.TM_BOOK_DAYS) > 0
+    && N['REIS-20260910-02'].h === 40 && N['REIS-20260910-02'].win === TMM.TM_BOOK_DAYS);
+  t('the wider lane re-reading its own ref still updates it — the rule blocks narrower, not equal',
+    (() => { const w2 = JSON.parse(J(wide)); w2.byRef['REIS-20260910-02'].h = 41;
+      return TMM.mergeHours(N, w2, NOW + 3, TMM.TM_BOOK_DAYS) === 1 && N['REIS-20260910-02'].h === 41; })());
+  t('a record stored before the rule existed carries no window and is corrected by the first crawl',
+    (() => { const O = { 'REIS-20260910-02': { client: 'Reiss', h: 1, nb: 0, sc: 0, n: 1 } };
+      return TMM.mergeHours(O, wide, NOW + 4, TMM.TM_BOOK_DAYS) > 0 && O['REIS-20260910-02'].h === 40; })());
+  t('an unwindowed merge (the old signature) still works and claims no window',
+    (() => { const U = {}; TMM.mergeHours(U, wide, NOW); return U['REIS-20260910-02'].win === undefined; })());
+}
 t('sigOf is stable and blind to the updated stamp', TMM.sigOf({ a: 1, updated: 5 }) === TMM.sigOf({ a: 1, updated: 9 }) && TMM.sigOf({ a: 1 }) !== TMM.sigOf({ a: 2 }));
 
 // ---- the worker's own functions, lifted by name, against a stub MCP server ----------------------
@@ -174,6 +204,35 @@ t('Workflow: reads /api/tm?hours=1 at boot + every 5 min + on tab-visible, wears
   /fetch\('\/api\/tm\?hours=1'\)/.test(WF) && /setInterval\(tmLoad,300000\)/.test(WF) && /renderAll\(\); tmLoad\(\);/.test(WF) && /\+db\+ageChip\+tmChip\(b\)\+/.test(WF) && /function tmChip\(b\)/.test(WF) && /\+tmModalPill\(b\)/.test(WF) && /\+tmModalSec\(b\)/.test(WF) && /Hours logged in the Task Manager/.test(WF) && /\.tik \.tk-hrs\{/.test(WF) && /\[data-theme=dark\] \.tik \.tk-hrs\{/.test(WF));
 t('Leadership: the source line reports live / no_token / unauthorized / unreachable honestly and offers ⟳ Sync now (owner route)',
   /function tmLine\(d\)/.test(LEAD) && /st\.state==='no_token'/.test(LEAD) && /st\.state==='unauthorized'/.test(LEAD) && /st\.state==='unreachable'/.test(LEAD) && /id="tm-sync"/.test(LEAD) && /fetch\('\/api\/tm\?pull=1'\)/.test(LEAD) && /line\.innerHTML=tmLine\(d\)/.test(LEAD));
+// THE BOOK LANE HARVESTS THE SAME TOKENS (Ray, 16 Sep 2026: "crawl the entire TM data, use the
+// [ibfref] to match with the tickets that have been raised and brief from the FCC workflow, and
+// bring over the billable, non-billable, and total hours to show case in either Brief Ledger and
+// on Workflow individual task"). The crawl was already holding twelve months of rows for the
+// trail; harvesting the refs off them costs no extra MCP call.
+t('tmBookPull harvests ibfref hours off the rows it already pulled — no second call',
+  /const trows = TMM\.rowsOf\(payload\);/.test(WK) && /TMM\.mergeHours\(hours,\s*\n\s*TMM\.summariseTasks\(trows/.test(WK));
+t('…declaring the WIDE window, so the crawl owns a ref over the 21-day lane',
+  /now, TMM\.TM_BOOK_DAYS\)/.test(WK) && /TMM\.mergeHours\(hours, sum, now, TMM\.TM_TASK_DAYS\)/.test(WK));
+t('…and writes tmhours only when a figure actually moved',
+  /if \(hoursDirty\) \{ try \{ await env\.EDITS\.put\('tmhours'/.test(WK));
+t('the two look-backs are named constants, not literals buried at the call sites',
+  TMM.TM_BOOK_DAYS === 365 && TMM.TM_TASK_DAYS === 21 && TMM.TM_BOOK_DAYS > TMM.TM_TASK_DAYS);
+
+// the Brief Ledger — the register you go to for "what did this run of work come to"
+{
+  // WF is already read at module scope
+  t('Brief Ledger carries an hours column, sortable like every other',
+    /data-k="tmh"[^>]*>\u23f1 Hours</.test(WF) && /if\(k==='tmh'\)/.test(WF));
+  t('…reading the SAME brief-id map the board card and the modal read',
+    /function blHours\(b\)\{\s*\n?\s*var h=TMH\[b\.id\]/.test(WF));
+  t('…showing the TOTAL with the split in its tooltip — the two are never merged away',
+    /billable \\u00b7 '\+fmtH\(nb\)\+' non-billable/.test(WF));
+  t('…and a DASH, never a zero, when no task carries the token yet',
+    /class="tm-none"/.test(WF) && /\\u2014</.test(WF) && /token yet/.test(WF));
+  t('…with the colspan of the empty row widened to match the new column',
+    /colspan="9" class="it-empty"/.test(WF) && !/colspan="8" class="it-empty"/.test(WF));
+}
+
 t('gates: presync, qa_gate and validate.yml run this harness', /test_tmmcp\.mjs/.test(read('tools/presync.sh')) && /test_tmmcp\.mjs/.test(read('tools/qa_gate.sh')) && /test_tmmcp\.mjs/.test(read('.github/workflows/validate.yml')));
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

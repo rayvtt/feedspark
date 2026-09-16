@@ -504,3 +504,55 @@ QA: `tools/test_reporttasks.mjs` lifts `pqMatch` and `footHtml` out of the page 
 filter (case, multi-word AND, display-label matching on Type, per-tab fields) and the totals — in
 particular that 220 rows total 275 h while only 200 are painted, that the split is never merged, and
 that an empty list produces no totals row at all rather than a row of zeroes.
+
+
+---
+
+## Ticket hours off the whole book (Sep 2026)
+
+> Ray, 16 Sep 2026: *"crawl the entire TM data, use the [ibfref] to match with the tickets that have
+> been raised and brief from the FCC workflow, and bring over the billable, non-billable, and total
+> hours to show case in either Brief Ledger and on Workflow individual task"*
+
+The `[ibfref:]` match already existed and Workflow ticket cards already wore a `⏱` chip — but
+`tmhours` was built **only** from `tmPull`'s 21-day window, so a ticket worked across months
+reported a fraction of itself. Meanwhile `tmBookPull` was already holding **twelve months** of rows
+for the hours trail and doing nothing with the tokens in them.
+
+So the harvest rides those rows: `TMM.summariseTasks` over the same `trows` the crawl already
+fetched, merged into `tmhours`. **No extra MCP call.**
+
+### The two-lane rule
+
+Two lanes now read the same tasks, and left alone they would fight over one record:
+
+| Lane | Look-back | Why it exists |
+|---|---|---|
+| `tmPull` | 21 days (`TM_TASK_DAYS`) | a brief raised this morning shows hours within the hour |
+| `tmBookPull` | 12 months (`TM_BOOK_DAYS`) | even coverage of the whole estate |
+
+Whichever fired last would win, and the narrow lane would keep shrinking a ref back to just its
+recent tasks — a ticket's hours would flicker between the truth and a fraction of it every half
+hour. So **the window travels with the record and the wider read wins**: a narrower lane may
+*create* a ref the crawl has not reached yet, but never *overwrite* what it found. The fast lane
+still gives a brand-new brief its figure immediately; the crawl's fuller number replaces it as soon
+as it arrives, and nothing flickers afterwards.
+
+A record stored before this rule existed carries no window and is treated as the narrowest
+possible, so the first crawl to reach it corrects it.
+
+### The Brief Ledger
+
+The board card and the modal already showed hours; the **ledger** — the flat register of every brief
+ever sent, and the place you go to ask what a run of work came to — carried none. It now has a
+sortable `⏱ Hours` column showing the **total**, with billable · non-billable · scheduled · tasks ·
+owners in the tooltip. Billable and non-billable are never merged.
+
+A ticket with no Task Manager task against it shows a **dash, not a zero**. On a register people
+total by eye, "nobody has booked time to this yet" and "this cost nothing" are different facts, and
+a zero would state the second while meaning the first. Unbooked rows sort below zero.
+
+QA: `tools/test_tmmcp.mjs` (45 → 54) pins the window rule in both directions (the narrow lane
+blocked, the wide lane free, an equal re-read still updating, the pre-rule migration, and the old
+unwindowed signature still working), that the crawl harvests off rows it already holds, that the two
+look-backs are named constants, and the ledger column's shape — including the dash.

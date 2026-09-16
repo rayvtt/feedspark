@@ -136,6 +136,9 @@ import LANGW from "../../../docs/lang_widget.html";
 // the phone layer (Ray, 15 Sep 2026: "complete overhaul for UX UI for mobile version — MIRROR desktop setting")
 import MOBILEW from "../../../docs/mobile_widget.html";
 import HOURSW from "../../../docs/hours_widget.html";
+// the Build Log as a right-hand slide-over, so "what have I actually shipped" is answerable
+// without leaving the page you are working on. Owner-only, like the /activity board it mirrors
+import SHIPPEDW from "../../../docs/shipped_widget.html";
 import TOUCHW from "../../../docs/touch_widget.html";
 
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
@@ -2526,7 +2529,7 @@ export default {
           + '\n<script>window.__FCCMOD=' + JSON.stringify(modList) + ';</script>\n' + MODGATE);
         // the Vietnamese UI toggle is Ray's alone: injected only for the REAL owner identity
         // (never for another signin, never while previewing someone else's FCC via view-as)
-        if (realOwner(env, request)) html = inject(html, LANGW);
+        if (realOwner(env, request)) html = inject(html, LANGW + '\n' + SHIPPEDW);
         // the phone layer rides last so it sees every other widget's chrome (bar, sheets, bubble)
         html = inject(html, MOBILEW);
       }
@@ -2734,7 +2737,7 @@ async function tmPull(env, opts) {
       const book = (await env.EDITS.get(key, 'json')) || { client: m.client, markets: {} };
       book.markets = book.markets || {}; book.markets[m.market] = sum; book.updated = now;
       try { await env.EDITS.put(key, JSON.stringify(book)); } catch (e) {}
-      hoursChanged += TMM.mergeHours(hours, sum, now);
+      hoursChanged += TMM.mergeHours(hours, sum, now, TMM.TM_TASK_DAYS);
       st.rot[m.id] = now; tasksN += trows.length; pulled.push(m.client + ' ' + m.market + ' (' + trows.length + ')');
     }
     if (hoursChanged) { try { await env.EDITS.put('tmhours', JSON.stringify(hours)); } catch (e) {} }
@@ -2778,13 +2781,23 @@ async function tmBookPull(env, opts) {
     idx.accounts = roster.accounts; idx.roster = roster.markets; idx.queues = roster.queues;
     const trail = (await env.EDITS.get('tmtrail', 'json')) || {};
     let trailDirty = 0;
+    // TICKET HOURS OFF THE WHOLE BOOK. tmPull only ever saw 21 days, so a ticket worked across
+    // months reported a fraction of itself. These rows are already in hand — twelve months of
+    // them — so the [ibfref:] harvest costs no extra MCP call, and mergeHours' window rule keeps
+    // the wider read authoritative over the fast lane's.
+    const hours = (await env.EDITS.get('tmhours', 'json')) || {};
+    let hoursDirty = 0;
 
     const plan = TB.bookPlan(roster.markets, idx.rot, opts.pulls == null ? TB.BOOK_MARKETS : opts.pulls, now);
     for (const m of plan) {
       // `from_date` is NOT applied by the server (verified 16 Sep 2026) — it is passed because
       // the tool takes it, and the window is applied in packMarket regardless.
       const payload = await mcp.call('get_task_list_for_client', { client_id: m.id, from_date: win.from, limit: TB.BOOK_PULL_LIMIT });
-      const rec = TB.packMarket(TMM.rowsOf(payload), { client: m.client, market: m.market, am: m.am, cid: m.id }, win, now);
+      const trows = TMM.rowsOf(payload);
+      const rec = TB.packMarket(trows, { client: m.client, market: m.market, am: m.am, cid: m.id }, win, now);
+      hoursDirty += TMM.mergeHours(hours,
+        TMM.summariseTasks(trows, { client: m.client, market: m.market, id: m.id, now, total: payload && payload.total_count }),
+        now, TMM.TM_BOOK_DAYS);
       const key = 'tmbook:' + m.client;
       const book = (await env.EDITS.get(key, 'json')) || { client: m.client, markets: {} };
       book.markets = book.markets || {}; book.markets[m.market] = rec; book.updated = now;
@@ -2815,6 +2828,7 @@ async function tmBookPull(env, opts) {
     idx.at = now;
     try { await env.EDITS.put('tmbookidx', JSON.stringify(idx)); } catch (e) {}
     if (trailDirty) { try { await env.EDITS.put('tmtrail', JSON.stringify(trail)); } catch (e) {} }
+    if (hoursDirty) { try { await env.EDITS.put('tmhours', JSON.stringify(hours)); } catch (e) {} }
     st.read = Object.keys(idx.rot).length; st.total = roster.markets.length;
     return save(st);
   } catch (e) {

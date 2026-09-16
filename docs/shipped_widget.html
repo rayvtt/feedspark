@@ -1,0 +1,225 @@
+<!-- FCC-SHIPPED: the build log as a right-hand slide-over, on every app page (owner only).
+
+     Ray, 16 Sep 2026: "Build a new feature… a pop-up module (right hand panel slide) for the
+     activity build log that shows all the most recent build logs that have been completed,
+     because I'm working on multiple features across multiple modules, so sometimes I forget what
+     has actually been done. Bring the shipped PRs onto a right-hand side panel when each feature
+     is complete, and then prompt the user to close the tab."
+
+     THE PROBLEM IS NOT "WHERE IS THE BUILD LOG". It is already on /activity. The problem is that
+     the answer is needed WHILE working on something else, in one of a dozen open tabs, and
+     navigating away to find it loses the place. So this is the same data as the Build Log tab,
+     reachable without leaving the page — a handle on the right edge, a panel that slides over.
+
+     "PROMPT THE USER TO CLOSE THE TAB" is the part that earns the feature. A merged PR means the
+     session that raised it is finished, and its tab is dead weight Ray is still paying attention
+     to. The panel remembers which PR numbers he has already seen (per device — this describes one
+     screen, not the work, so it belongs in localStorage alongside the theme and the nav collapse)
+     and puts anything that shipped since then in its own band at the top, NAMING THE BRANCH, which
+     is what identifies the tab to close.
+
+     Two rules keep it from becoming noise:
+       1. FIRST RUN IS SILENT. Seeing forty historic PRs announced as "new" the first time the
+          widget loads would teach him to ignore the badge on day one, so the first read seeds the
+          seen-set and says nothing.
+       2. IT NEVER NAGS. The handle carries a count only while something is genuinely unseen;
+          opening the panel clears it. Nothing here closes a tab or navigates on its own.
+-->
+<style>
+#fcc-ship-h{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:70;display:flex;align-items:center;gap:6px;
+  writing-mode:vertical-rl;font:inherit;font-size:11.5px;font-weight:700;letter-spacing:.04em;
+  padding:13px 6px;border:1px solid var(--line,#E6E6E6);border-right:none;border-radius:10px 0 0 10px;
+  background:var(--paper,#fff);color:var(--muted,#8a94a0);cursor:pointer;box-shadow:-2px 0 10px rgba(16,24,40,.07)}
+#fcc-ship-h:hover{color:var(--orange-deep,#ED6F0B);border-color:var(--orange,#F5A623)}
+#fcc-ship-h .n{writing-mode:horizontal-tb;min-width:17px;height:17px;line-height:17px;border-radius:100px;
+  background:var(--orange-deep,#ED6F0B);color:#fff;font-size:10px;font-weight:900;text-align:center;padding:0 4px}
+#fcc-ship-h.has{color:var(--ink,#333);border-color:var(--orange,#F5A623)}
+@keyframes fcshp{0%,100%{box-shadow:-2px 0 10px rgba(16,24,40,.07)}50%{box-shadow:-2px 0 16px rgba(237,111,11,.4)}}
+#fcc-ship-h.has{animation:fcshp 2.8s ease-in-out 3}
+@media(prefers-reduced-motion:reduce){#fcc-ship-h.has{animation:none}}
+#fcc-ship{position:fixed;top:0;right:0;bottom:0;width:min(430px,100%);z-index:96;display:flex;flex-direction:column;
+  background:var(--paper,#fff);border-left:1px solid var(--line,#E6E6E6);box-shadow:-14px 0 44px rgba(16,24,40,.2);
+  transform:translateX(102%);transition:transform .22s ease}
+#fcc-ship.on{transform:none}
+#fcc-ship-dim{position:fixed;inset:0;background:rgba(16,24,40,.28);z-index:95;display:none}
+#fcc-ship-dim.on{display:block}
+#fcc-ship .sh-h{padding:15px 18px 12px;border-bottom:1px solid var(--line,#E6E6E6);display:flex;align-items:flex-start;gap:10px}
+#fcc-ship .sh-h h4{margin:0;font-size:15px;font-weight:800;letter-spacing:-.01em;color:var(--ink,#333)}
+#fcc-ship .sh-h .sub{display:block;margin-top:3px;font-size:11.5px;font-weight:600;color:var(--muted,#8a94a0)}
+#fcc-ship .sh-h .x{margin-left:auto;flex:none;width:30px;height:30px;border:1px solid var(--line,#E6E6E6);border-radius:9px;
+  background:var(--paper,#fff);color:var(--muted,#8a94a0);font-size:17px;font-weight:800;line-height:1;cursor:pointer}
+#fcc-ship .sh-b{flex:1;overflow:auto;padding:12px 18px 22px}
+#fcc-ship .sh-cap{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted,#8a94a0);margin:16px 0 7px}
+#fcc-ship .sh-cap:first-child{margin-top:2px}
+#fcc-ship .sh-new{border:1px solid rgba(21,128,61,.3);background:rgba(21,128,61,.06);border-radius:11px;padding:11px 13px;margin-bottom:9px}
+#fcc-ship .sh-new .t{font-size:13px;font-weight:700;color:var(--ink,#333);line-height:1.4}
+#fcc-ship .sh-new .br{display:block;margin-top:6px;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink-2,#555);
+  background:var(--wash,#F7F7F5);border-radius:6px;padding:3px 7px;word-break:break-all}
+#fcc-ship .sh-new .cl{display:block;margin-top:6px;font-size:11.5px;font-weight:700;color:#15803D}
+#fcc-ship .sh-r{display:flex;align-items:baseline;gap:9px;padding:7px 0;border-bottom:1px solid var(--line,#E6E6E6);font-size:12.5px}
+#fcc-ship .sh-r a{flex:none;font-weight:800;color:var(--orange-deep,#ED6F0B);text-decoration:none;font-variant-numeric:tabular-nums}
+#fcc-ship .sh-r .t{flex:1;min-width:0;font-weight:600;color:var(--ink-2,#555);line-height:1.4}
+#fcc-ship .sh-r .w{flex:none;font-size:11px;font-weight:600;color:var(--muted,#8a94a0);white-space:nowrap}
+#fcc-ship .sh-mod{display:inline-block;font-size:10px;font-weight:800;padding:1px 6px;border-radius:100px;
+  background:var(--wash,#F7F7F5);border:1px solid var(--line,#E6E6E6);color:var(--muted,#8a94a0);margin-right:6px;vertical-align:1px}
+#fcc-ship .sh-f{padding:11px 18px;border-top:1px solid var(--line,#E6E6E6);font-size:11.5px;font-weight:600;color:var(--muted,#8a94a0);
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#fcc-ship .sh-f a{color:var(--orange-deep,#ED6F0B);text-decoration:none;font-weight:700}
+#fcc-ship .sh-f button{font:inherit;font-size:11.5px;font-weight:600;color:var(--muted,#8a94a0);background:none;
+  border:1px solid var(--line,#E6E6E6);border-radius:100px;padding:4px 10px;cursor:pointer}
+#fcc-ship .sh-f button:hover{color:var(--orange-deep,#ED6F0B);border-color:var(--orange,#F5A623)}
+#fcc-ship .sh-e{font-size:12.5px;font-weight:600;color:var(--muted,#8a94a0);line-height:1.6;padding:8px 0}
+[data-theme=dark] #fcc-ship,[data-theme=dark] #fcc-ship-h{background:var(--paper,#1C1F27);border-color:var(--line,#2C3039)}
+[data-theme=dark] #fcc-ship .sh-h .x,[data-theme=dark] #fcc-ship .sh-f button{background:#20242E;border-color:var(--line,#2C3039)}
+[data-theme=dark] #fcc-ship .sh-new{border-color:rgba(72,208,126,.32);background:rgba(72,208,126,.09)}
+[data-theme=dark] #fcc-ship .sh-new .cl{color:#48D07E}
+[data-theme=dark] #fcc-ship .sh-new .br,[data-theme=dark] #fcc-ship .sh-mod{background:#20242E;border-color:var(--line,#2C3039)}
+@media(max-width:760px){
+  #fcc-ship{width:100%;border-left:none}
+  #fcc-ship-h{top:auto;bottom:calc(var(--fcc-bar,70px) + 12px);transform:none;writing-mode:horizontal-tb;
+    border-radius:10px 0 0 10px;padding:9px 12px}
+}
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__fccShip) return; window.__fccShip = 1;
+  if (/^\/deck\//.test(location.pathname)) return;
+  if (/[?&]embed=1/.test(location.search)) return;
+
+  var SEEN = 'fcc-shipped-seen';        // per DEVICE: which PR numbers this screen has been shown
+  var DATA = null, panel = null, dim = null, handle = null, booted = 0;
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+
+  function seen() { try { return JSON.parse(localStorage.getItem(SEEN) || 'null'); } catch (e) { return null; } }
+  function setSeen(ns) { try { localStorage.setItem(SEEN, JSON.stringify(ns.slice(-300))); } catch (e) {} }
+
+  function ago(iso) {
+    if (!iso) return '';
+    var ms = Date.now() - new Date(iso).getTime();
+    if (!isFinite(ms) || ms < 0) return '';
+    var m = Math.round(ms / 60000);
+    if (m < 60) return m + 'm ago';
+    var h = Math.round(m / 60); if (h < 24) return h + 'h ago';
+    var d = Math.round(h / 24); return d + 'd ago';
+  }
+  // the bracketed module prefix the repo's PR titles carry — "[Task Manager] …"
+  function modOf(t) { var m = /^\s*\[([^\]]{1,28})\]/.exec(String(t || '')); return m ? m[1] : ''; }
+  function cleanTitle(t) { return String(t || '').replace(/^\s*\[[^\]]{1,28}\]\s*/, '').replace(/\s*\(#\d+\)\s*$/, ''); }
+
+  function merged() {
+    return ((DATA && DATA.pulls) || []).filter(function (p) { return p.m; })
+      .sort(function (a, b) { return a.ma < b.ma ? 1 : -1; });
+  }
+  function freshOnes() {
+    var s = seen(); if (!s) return [];              // first run announces nothing
+    var have = {}; s.forEach(function (n) { have[n] = 1; });
+    return merged().filter(function (p) { return !have[p.n]; });
+  }
+
+  function load(then) {
+    fetch('/api/buildlog').then(function (r) { return r.json(); }).then(function (d) {
+      if (!d || d.error && !(d.pulls || []).length) { if (then) then(); return; }
+      DATA = d;
+      // FIRST RUN IS SILENT — seed the seen-set so historic work is not announced as new
+      if (!seen()) setSeen(merged().map(function (p) { return p.n; }));
+      paint();
+      if (then) then();
+    }).catch(function () { if (then) then(); });
+  }
+
+  function paint() {
+    if (!handle) return;
+    var n = freshOnes().length;
+    handle.classList.toggle('has', n > 0);
+    handle.querySelector('.lbl').textContent = n ? 'Shipped' : 'Build log';
+    var b = handle.querySelector('.n');
+    if (n) { b.textContent = n; b.hidden = false; } else { b.hidden = true; }
+    handle.title = n ? (n + ' feature' + (n === 1 ? '' : 's') + ' shipped since you last looked') : 'What has shipped recently';
+  }
+
+  function rowHtml(p) {
+    var mod = modOf(p.t);
+    return '<div class="sh-r"><a href="' + esc(p.u) + '" target="_blank" rel="noopener">#' + esc(p.n) + '</a>'
+      + '<span class="t">' + (mod ? '<span class="sh-mod">' + esc(mod) + '</span>' : '') + esc(cleanTitle(p.t)) + '</span>'
+      + '<span class="w">' + esc(ago(p.ma)) + '</span></div>';
+  }
+
+  function body() {
+    if (!DATA) return '<div class="sh-e">Loading the build log…</div>';
+    var all = merged();
+    if (!all.length) return '<div class="sh-e">No merged pull requests found. If GitHub was unreachable the worker serves its last snapshot — try again shortly.</div>';
+    var fresh = freshOnes(), h = '';
+    if (fresh.length) {
+      h += '<div class="sh-cap">Shipped since you last looked</div>';
+      h += fresh.map(function (p) {
+        var mod = modOf(p.t);
+        return '<div class="sh-new"><div class="t">'
+          + (mod ? '<span class="sh-mod">' + esc(mod) + '</span>' : '')
+          + esc(cleanTitle(p.t))
+          + ' <a href="' + esc(p.u) + '" target="_blank" rel="noopener" style="color:var(--orange-deep,#ED6F0B);text-decoration:none;font-weight:800">#' + esc(p.n) + '</a></div>'
+          + (p.b ? '<code class="br">' + esc(p.b) + '</code>' : '')
+          + '<span class="cl">✓ Done ' + esc(ago(p.ma)) + ' — that session is finished, you can close its tab.</span>'
+          + '</div>';
+      }).join('');
+    }
+    var rest = fresh.length ? all.filter(function (p) { return fresh.indexOf(p) < 0; }) : all;
+    h += '<div class="sh-cap">' + (fresh.length ? 'Shipped before that' : 'Recently shipped') + '</div>';
+    h += rest.slice(0, 25).map(rowHtml).join('') || '<div class="sh-e">Nothing else in the window.</div>';
+    return h;
+  }
+
+  function ensure() {
+    if (panel) return;
+    dim = document.createElement('div'); dim.id = 'fcc-ship-dim';
+    dim.addEventListener('click', close);
+    panel = document.createElement('div'); panel.id = 'fcc-ship';
+    panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Recently shipped');
+    document.body.appendChild(dim); document.body.appendChild(panel);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  }
+
+  function render() {
+    var open = ((DATA && DATA.pulls) || []).filter(function (p) { return p.s === 'open'; }).length;
+    var stamp = DATA && DATA.at ? ago(new Date(DATA.at).toISOString()) : '';
+    panel.innerHTML = '<div class="sh-h"><div><h4>Recently shipped</h4>'
+      + '<span class="sub">Every feature that has merged' + (stamp ? ' · synced ' + esc(stamp) : '')
+      + ((DATA && DATA.stale) ? ' · GitHub unreachable, last snapshot' : '') + '</span></div>'
+      + '<button class="x" id="sh-x" aria-label="Close">×</button></div>'
+      + '<div class="sh-b">' + body() + '</div>'
+      + '<div class="sh-f"><span>' + (open ? open + ' still in build' : 'nothing open') + '</span>'
+      + '<a href="/activity#build">Full build log →</a>'
+      + '<button type="button" id="sh-r">⟳ Refresh</button></div>';
+    panel.querySelector('#sh-x').onclick = close;
+    panel.querySelector('#sh-r').onclick = function () {
+      var b = panel.querySelector('#sh-r'); b.disabled = true; b.textContent = 'refreshing…';
+      load(function () { render(); });
+    };
+  }
+
+  function open() {
+    ensure(); render();
+    dim.classList.add('on'); panel.classList.add('on');
+    // opening IS the acknowledgement — the badge clears, and nothing nags again about this batch
+    setSeen(merged().map(function (p) { return p.n; }));
+    setTimeout(paint, 60);
+  }
+  function close() { if (panel) { panel.classList.remove('on'); dim.classList.remove('on'); } }
+
+  function boot() {
+    if (booted) return; booted = 1;
+    handle = document.createElement('button');
+    handle.id = 'fcc-ship-h'; handle.type = 'button';
+    handle.innerHTML = '<span class="n" hidden></span><span class="lbl">Build log</span>';
+    handle.addEventListener('click', open);
+    document.body.appendChild(handle);
+    load();
+    // a PR merged in another tab should surface here without a reload, but this is a GitHub read
+    // behind a 10-minute KV cache — polling faster would only re-read the same snapshot
+    setInterval(function () { if (!document.hidden) load(); }, 300000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+  }
+  if (document.readyState !== 'loading') boot(); else document.addEventListener('DOMContentLoaded', boot);
+  window.FCCShipped = { open: open, close: close, reload: load, fresh: freshOnes };
+})();
+</script>

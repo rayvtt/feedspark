@@ -92,6 +92,10 @@ echo "── validating: FS Task Manager (query grammar, billable split, page/en
 node tools/test_reporttasks.mjs >/dev/null
 echo "   ✓ the search grammar, the billable/non-billable maths and the baked snapshot hold"
 
+echo "── validating: the shipped panel (build log slide-over)"
+node tools/test_shipped.mjs >/dev/null
+echo "   ✓ silent on first run, announces only new merges, prompts to close the tab"
+
 echo "── validating: Excel exports (XLSX container, typed cells, the three tab exports)"
 node tools/test_xlsx.mjs >/dev/null
 echo "   ✓ a workbook Excel will actually open, with absent left absent"

@@ -4842,7 +4842,7 @@
     {
       "name": "…worker: the widget is injected only for the real owner identity",
       "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "if (realOwner(env, request)) html = inject(html, LANGW);",
+      "pattern": "realOwner(env, request)) html = inject(html, LANGW",
       "pr": 375,
       "min": 1
     },
@@ -5673,7 +5673,7 @@
     {
       "name": "…tmmcp: ref hours replace on re-read, keep when the window rolled past",
       "file": "cloudflare/feedspark-deck/src/tmmcp.js",
-      "pattern": "export function mergeHours(hours, sum, now)",
+      "pattern": "export function mergeHours(hours, sum, now",
       "pr": 399,
       "min": 1
     },
@@ -6119,6 +6119,31 @@
       "pr": 406
     },
     {
+      "name": "Shipped panel: the build log as a right-hand slide-over",
+      "file": "docs/shipped_widget.html",
+      "pattern": "fcc-ship-h",
+      "pr": 407
+    },
+    {
+      "name": "Shipped panel: first run is silent (seeds the seen-set rather than announcing history)",
+      "file": "docs/shipped_widget.html",
+      "pattern": "if (!seen()) setSeen(merged()",
+      "pr": 407
+    },
+    {
+      "name": "Shipped panel: names the branch, so the finished session's tab can be closed",
+      "file": "docs/shipped_widget.html",
+      "pattern": "you can close its tab",
+      "pr": 407
+    },
+    {
+      "name": "Shipped panel: owner-only injection",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "SHIPPEDW",
+      "min": 2,
+      "pr": 407
+    },
+    {
       "name": "Golden Record PDF = THE PAGE SCALED, not a second design (Ray 16 Sep 2026: 'PDF export still doesn't reflect exact same visual as FCC') — print lays out at the desktop width and zooms onto the 186mm column; zoom not transform, since transform is paint-time and Chrome paginates on the unscaled height",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "body.pdf{background:#fff!important;color:#333!important;width:960px;zoom:",
@@ -6156,6 +6181,36 @@
       "pattern": "document.dispatchEvent(new CustomEvent('fcc-clients'",
       "pr": 407,
       "min": 1
+    },
+    {
+      "name": "TM hours: the book crawl harvests [ibfref] off rows it already holds (no extra MCP call)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "TMM.summariseTasks(trows",
+      "pr": 409
+    },
+    {
+      "name": "TM hours: the wider look-back owns a ref — the 21-day lane can create but never overwrite",
+      "file": "cloudflare/feedspark-deck/src/tmmcp.js",
+      "pattern": "if (prev && (+prev.win || 0) > w) return;",
+      "pr": 409
+    },
+    {
+      "name": "TM hours: the two lanes' look-backs are named constants",
+      "file": "cloudflare/feedspark-deck/src/tmmcp.js",
+      "pattern": "export const TM_BOOK_DAYS",
+      "pr": 409
+    },
+    {
+      "name": "Brief Ledger: the hours column, total with the split in its tooltip",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function blHours",
+      "pr": 409
+    },
+    {
+      "name": "Brief Ledger: an unbooked ticket shows a dash, never a zero",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "tm-none",
+      "pr": 409
     },
     {
       "name": "dossier: running tests + pipeline read live from /api/briefs",
