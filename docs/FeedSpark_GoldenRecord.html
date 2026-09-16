@@ -456,7 +456,7 @@ window.addEventListener('load',restore);
         if (a.present) { ws += 2; sum += 2 * a.cov; }
         else if (bp) { ws += 2; }
       }
-      else { ws += 1; sum += 1 * (a.present ? a.cov : 0); }
+      else { var w = bp ? 2 : 1; ws += w; sum += w * (a.present ? a.cov : 0); }   // ★ rec = best-practice weight
     });
     ws += 2; sum += 2 * (idBest == null ? 0 : idBest);
     return ws ? Math.round((sum / ws) * 10) / 10 : 0;
@@ -523,7 +523,7 @@ window.addEventListener('load',restore);
   // industry scoring profiles: defaults + KV overrides from /api/golden/profile (the
   // engine's INDUSTRY_PROFILES/profileFor mirrored — expected counts-when-absent, waived
   // drops out; required + gtin/mpn untouchable). The profile IS the industry best practice.
-  var PROF = { defaults: {}, overrides: {}, industryMap: {} };
+  var PROF = { defaults: {}, overrides: {}, industryMap: {}, ready: false };
   function industryOfC(c) { return PROF.industryMap[c] || INDUSTRY[c] || 'Retail'; }
   function profOk(k) {
     var x = SPEC.filter(function (sp) { return sp.k === k; })[0];
@@ -539,6 +539,26 @@ window.addEventListener('load',restore);
     expected = expected.filter(profOk);
     waived = waived.filter(function (k2) { return profOk(k2) && expected.indexOf(k2) < 0; });
     return { industry: ind, expected: expected, waived: waived };
+  }
+  // live re-score (Ray, 16 Sep 2026): estate scores derive from each feed's stored
+  // per-attribute coverage map + the CURRENT profile, so editing a scoring profile
+  // re-runs the whole brand — every market, the dial, the estate card, the industry
+  // benchmark — instantly, client-side (industry scope re-scores every brand in it).
+  // No rescan: cov stores null for absent vs fill % (0 included) for present, which is
+  // exactly the attrs shape goldenScore needs. Feeds indexed before the cov map existed
+  // keep their scan-time score until their next scan.
+  function attrsFromCov(cov) {
+    var at = {};
+    SPEC.forEach(function (s) { var c = cov ? cov[s.k] : null; if (c != null) at[s.k] = { present: true, cov: c }; });
+    return at;
+  }
+  function rescoreEstate() {
+    if (!PROF.ready) return;   // first paint keeps the scan-time (already profiled) scores
+    feedList().forEach(function (f) {
+      if (!f.cov) return;
+      var sc = goldenScore(attrsFromCov(f.cov), profileForC(f.client));
+      if (sc != null) f.score = sc;
+    });
   }
   function b64url(o) { var b = new TextEncoder().encode(JSON.stringify(o)), s = ''; b.forEach(function (c) { s += String.fromCharCode(c); }); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
   function scoreCol(s) {
@@ -611,6 +631,7 @@ window.addEventListener('load',restore);
     return 'ok';
   }
   function renderEstate() {
+    rescoreEstate();
     var byClient = {};
     feedList().forEach(function (f) { (byClient[f.client] = byClient[f.client] || []).push(f); });
     Object.keys(byClient).forEach(function (c) {
@@ -849,6 +870,7 @@ window.addEventListener('load',restore);
 
   function renderDetail(k) {
     var d = CACHE[k]; if (!d) return;
+    rescoreEstate();   // benchmarks below read the estate scores — keep them profile-true
     var p = parts(k);
     var s = d.snapshot;
     var rf = refFor(d), ref = rf.ref, refLbl = rf.isDaily ? 'yesterday' : 'known-good';
@@ -1027,7 +1049,7 @@ window.addEventListener('load',restore);
     var h = '<div class="askp profp"><div style="font-size:13px;font-weight:900">⚖ Scoring profile — which attributes count' +
       '<span class="pseg"><button data-ps="client"' + (scope === 'client' ? ' class="on"' : '') + '>This brand</button>' +
       '<button data-ps="industry"' + (scope === 'industry' ? ' class="on"' : '') + '>All ' + esc(ind) + ' brands</button></span></div>' +
-      '<p class="hint muted" style="margin:6px 0 4px;font-size:11.5px">Click an attribute to cycle: <b>default</b> → <b style="color:var(--orange-deep)">★ scored</b> (counts even when absent — the best-practice bar) → <span style="text-decoration:line-through">waived</span> (excluded from the score). The required seven and gtin/mpn always score. Saving re-scores this view instantly; estate cards refresh as each feed rescans (⚡ applies it now).</p>';
+      '<p class="hint muted" style="margin:6px 0 4px;font-size:11.5px">Click an attribute to cycle: <b>default</b> → <b style="color:var(--orange-deep)">★ scored</b> (counts even when absent, and a recommended attribute weighs double — the best-practice bar) → <span style="text-decoration:line-through">waived</span> (excluded from the score). The required seven and gtin/mpn always score. Saving re-scores the whole brand instantly — dial, estate cards and industry benchmark; industry scope re-scores every brand in it.</p>';
     groups.forEach(function (g) {
       h += '<div class="pgrp">' + g[1] + '</div>';
       SPEC.filter(function (x) { return x.t === g[0] && profOk(x.k); }).forEach(function (x) {
@@ -1059,6 +1081,7 @@ window.addEventListener('load',restore);
           if (d2.error) { $('prof-msg').textContent = '✗ ' + d2.error; return; }
           PROF.overrides = d2.overrides || PROF.overrides;
           slot.innerHTML = ''; slot.__st = null;
+          renderEstate();   // re-scores the whole brand (industry scope: every brand in it)
           renderDetail(k);
         })
         .catch(function () { $('prof-msg').textContent = '✗ network'; });
@@ -1480,6 +1503,8 @@ window.addEventListener('load',restore);
     PROF.defaults = (d && d.defaults) || {};
     PROF.overrides = (d && d.overrides) || {};
     PROF.industryMap = (d && d.industryMap) || {};
+    PROF.ready = true;   // from here every render live-derives scores from cov + profile
+    if (Object.keys(ESTATE.feeds).length) renderEstate();
     if (SEL) renderDetail(SEL);
   }).catch(function () {});
 

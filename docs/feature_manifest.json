@@ -5234,6 +5234,24 @@
    "pattern": "un-scoped, that save would have wiped the rest",
    "pr": 381,
    "min": 1
+  },
+  {
+   "name": "Golden Record: \u2605 on a REC attribute lifts it to best-practice weight \u00d72 \u2014 profiling sale_price must move the number (Ray 16 Sep 2026)",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "w: bp ? 2 : 1",
+   "min": 1
+  },
+  {
+   "name": "Golden Record: profile edits re-score the WHOLE brand instantly \u2014 estate scores live-derive from the stored cov map + current profile, no rescan",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "function rescoreEstate",
+   "min": 1
+  },
+  {
+   "name": "Golden Record: profile save repaints estate + benchmark, not just the open detail card",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "re-scores the whole brand (industry scope: every brand in it)",
+   "min": 1
   }
  ]
 }

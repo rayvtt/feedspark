@@ -339,14 +339,22 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   defaults ← KV industry override ← KV brand override (`goldenprofiles`, GET/PUT
   `/api/golden/profile`); the required seven and the gtin/mpn pair can never be profiled.
   `goldenScore(attrs, profile)` scores to that profile — an expected conversational AI attr
-  joins at ×1, so a brand can opt the AI six into its number. The scan stores the industry +
-  a per-attribute coverage map on `goldenidx`, so the page computes **industry benchmarks
-  from the estate itself**: an "Industry benchmark — Fashion (N estate feeds): avg X ·
-  best Y (Brand)" line on the verdict and a best-practice tick on every fill bar at the
-  industry's best observed coverage. Page: ⚖ "<Industry> best practice" chip + ⚙ editor
-  (tri-state chips default → ★ scored → waived, brand vs whole-industry scope, reset to
-  defaults), ★ marks scored attrs, waived rows grey out, hard "not in feed" flags follow
-  the profile. Estate card scores refresh as each feed rescans (⚡ applies immediately).
+  joins at ×1, so a brand can opt the AI six into its number, and an **expected REC attr
+  lifts to weight ×2** (rec attrs always score, so without the weight lift ★ would be a
+  no-op — Ray, 16 Sep 2026: profiling sale_price "doesn't actually do anything"). The scan
+  stores the industry + a per-attribute coverage map on `goldenidx`, so the page computes
+  **industry benchmarks from the estate itself**: an "Industry benchmark — Fashion (N estate
+  feeds): avg X · best Y (Brand)" line on the verdict and a best-practice tick on every fill
+  bar at the industry's best observed coverage. Page: ⚖ "<Industry> best practice" chip + ⚙
+  editor (tri-state chips default → ★ scored → waived, brand vs whole-industry scope, reset
+  to defaults), ★ marks scored attrs, waived rows grey out, hard "not in feed" flags follow
+  the profile. **Profile edits re-score the whole brand instantly** (Ray, 16 Sep 2026): the
+  page live-derives every estate score from that same stored cov map + the *current* profile
+  (`rescoreEstate` — cov stores `null` for absent vs fill % for present, exactly the attrs
+  shape `goldenScore` needs), so saving a profile re-runs the dial, every market on the
+  brand's estate card and the industry benchmark in one paint — industry scope re-scores
+  every brand in the industry, no rescan; feeds indexed before the cov map existed keep
+  their scan-time score until their next scan.
 - No custom watch rules for PT v1 — estate alerts + badge + emails cover the drop-off case;
   watches can be extended to PT later on the same `labelwatch` rails.
 
