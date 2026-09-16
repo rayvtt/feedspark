@@ -407,7 +407,7 @@ export function skipDigest(cadence, now, opts) {
     if ((c.streak || 0) > e.maxStreak) e.maxStreak = c.streak || 0;
     if (c.lastDecided && (!e.lastDecided || c.lastDecided > e.lastDecided)) e.lastDecided = c.lastDecided;
     const s = stripOf(c, now, o.months || DIGEST_MONTHS);
-    e.rows.push({ mkt: c.mkt || '', kind: c.kind || '', streak: c.streak || 0,
+    e.rows.push({ mkt: c.mkt || '', kind: KIND_LABEL[c.kind] || c.kind || '', streak: c.streak || 0,
       hrsSkip: round1(c.hoursSkipped || 0), since: c.since || null, s });
   });
   Object.keys(by).forEach((k) => {

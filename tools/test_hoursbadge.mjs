@@ -227,7 +227,18 @@ ok(/function skipBlock/.test(WIDGET) && /fh-sr/.test(WIDGET),
 ok(/if \(!k \|\| !k\.rows \|\| !k\.rows\.length\) return ''/.test(WIDGET),
   'and shows nothing at all when the schedule store has not been read \u2014 absence, not "no skips"');
 ok(/rec\.skip/.test(WIDGET), 'read off the record /api/hours already serves, with no second fetch');
-ok(/max-height:calc\(100vh - 16px\);overflow:auto/.test(WIDGET),
+var BASE = /#fcc-hrs\{[\s\S]*?\}/.exec(WIDGET)[0];
+ok(/opacity:0/.test(BASE) && /pointer-events:none/.test(BASE),
+  'the base rule KEEPS the properties that hide the popover \u2014 without them it is permanently '
+  + 'on screen and permanently clickable, which reads as a frozen popup');
+ok(/box-sizing:border-box/.test(BASE) && /width:362px/.test(BASE),
+  'border-box caps the WHOLE card, and the width compensates so the CONTENT stays the 330px it has '
+  + 'always been \u2014 folding the padding in narrowed it and wrapped the posture buttons');
+ok(/padding:13px 15px 12px/.test(BASE),
+  'and its padding \u2014 losing it puts the chart and the links flush against the card edge');
+ok(!/\}[\s\S]*\{/.test(BASE.slice(BASE.indexOf('{') + 1, BASE.length - 1)),
+  'the rule is ONE block: a stray brace mid-rule silently discards everything after it');
+ok(/max-height:min\(660px,calc\(100vh - 24px\)\);overflow:auto/.test(WIDGET),
   'the taller popover scrolls inside itself rather than running off a short viewport');
 ok(/markets read, so these are a floor/.test(WIDGET),
   'a partly-read book is stated as a FLOOR, never implied to be the whole account');
