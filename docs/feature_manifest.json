@@ -6261,6 +6261,16 @@
       "name": "PT Guard: ?client= jumps to that brand's estate card",
       "file": "docs/FeedSpark_ProductTypeGuard.html",
       "pattern": "est-card\" data-client="
+    },
+    {
+      "name": "dossier: one merged active list, ranked running-first",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "var LW_RANK="
+    },
+    {
+      "name": "dossier: the stage chip mirrors Workflow's .bf-chip and cannot stretch",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": ".lw-item{grid-template-columns:1fr auto}"
     }
   ]
 }
