@@ -6181,6 +6181,36 @@
       "pattern": "document.dispatchEvent(new CustomEvent('fcc-clients'",
       "pr": 407,
       "min": 1
+    },
+    {
+      "name": "TM hours: the book crawl harvests [ibfref] off rows it already holds (no extra MCP call)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "TMM.summariseTasks(trows",
+      "pr": 409
+    },
+    {
+      "name": "TM hours: the wider look-back owns a ref — the 21-day lane can create but never overwrite",
+      "file": "cloudflare/feedspark-deck/src/tmmcp.js",
+      "pattern": "if (prev && (+prev.win || 0) > w) return;",
+      "pr": 409
+    },
+    {
+      "name": "TM hours: the two lanes' look-backs are named constants",
+      "file": "cloudflare/feedspark-deck/src/tmmcp.js",
+      "pattern": "export const TM_BOOK_DAYS",
+      "pr": 409
+    },
+    {
+      "name": "Brief Ledger: the hours column, total with the split in its tooltip",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function blHours",
+      "pr": 409
+    },
+    {
+      "name": "Brief Ledger: an unbooked ticket shows a dash, never a zero",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "tm-none",
+      "pr": 409
     }
   ]
 }

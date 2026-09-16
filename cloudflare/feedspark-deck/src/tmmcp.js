@@ -30,6 +30,7 @@ export const TM_PROTOCOL = '2025-06-18';
 export const TM_CRON = '15,45 * * * *';   // mirrored in wrangler.toml [triggers] and worker.js › scheduled()
 export const TM_TASK_PULLS = 4;           // task lists per firing (≤200 rows × ~1.9KB each)
 export const TM_TASK_DAYS = 21;           // from_date window per pull — briefs in flight live inside it
+export const TM_BOOK_DAYS = 365;          // the book crawl's look-back; the wider read owns a ref's hours
 export const TM_TASK_LIMIT = 200;
 export const TM_KEEP_TASKS = 60;          // compact task rows kept per market in tmtasks:<client>
 export const TM_HOT_DAYS = 60;            // a brief younger than this keeps its market "hot"
@@ -210,12 +211,33 @@ export function summariseTasks(rows, ctx) {
 // for every ref it saw; a ref the pull did not see keeps its last value (the window has rolled
 // past it — its hours are final). Returns how many refs actually changed, so the worker writes
 // the map only when something moved.
-export function mergeHours(hours, sum, now) {
+/**
+ * A ticket's hours are the SUM over every task carrying its [ibfref:] token — and a task list is
+ * read over a window, so how far back the lane looked decides whether that sum is the whole story.
+ *
+ * TWO LANES READ THE SAME TASKS. tmPull chases briefs in flight over 21 days so a ticket raised
+ * this morning shows hours within the hour; tmBookPull crawls twelve months for even coverage of
+ * the estate. Left alone they would fight over `tmhours`: whichever fired last would win, and the
+ * narrow lane would keep shrinking a ref back to just its recent tasks. A ticket worked across
+ * three months would read as a fraction of itself every other firing.
+ *
+ * So the window travels WITH the record and the wider read wins: a narrower lane may CREATE a ref
+ * the wider one has not reached yet, but never overwrite what it found. The fast lane still gives
+ * a brand-new brief its figure immediately; the book's fuller number replaces it as soon as the
+ * crawl arrives, and nothing flickers between them afterwards.
+ *
+ * `win` is the lane's look-back in days. A record stored before this rule existed carries none,
+ * and is treated as the narrowest possible — so the first crawl to reach it corrects it.
+ */
+export function mergeHours(hours, sum, now, win) {
   let changed = 0;
+  const w = +win || 0;
   Object.keys((sum && sum.byRef) || {}).forEach((ref) => {
     const r = sum.byRef[ref];
-    const rec = { client: sum.client, market: sum.market, mid: sum.id, h: r.h, nb: r.nb, sc: r.sc, n: r.n, dn: r.dn, st: r.st, o: r.o, tasks: r.tasks };
     const prev = hours[ref];
+    if (prev && (+prev.win || 0) > w) return;            // a narrower read never overwrites a wider one
+    const rec = { client: sum.client, market: sum.market, mid: sum.id, h: r.h, nb: r.nb, sc: r.sc, n: r.n, dn: r.dn, st: r.st, o: r.o, tasks: r.tasks };
+    if (w) rec.win = w;
     const same = prev && JSON.stringify(Object.assign({}, prev, { updated: 0 })) === JSON.stringify(Object.assign({}, rec, { updated: 0 }));
     if (!same) { rec.updated = now || Date.now(); hours[ref] = rec; changed++; }
   });

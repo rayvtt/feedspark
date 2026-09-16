@@ -2736,7 +2736,7 @@ async function tmPull(env, opts) {
       const book = (await env.EDITS.get(key, 'json')) || { client: m.client, markets: {} };
       book.markets = book.markets || {}; book.markets[m.market] = sum; book.updated = now;
       try { await env.EDITS.put(key, JSON.stringify(book)); } catch (e) {}
-      hoursChanged += TMM.mergeHours(hours, sum, now);
+      hoursChanged += TMM.mergeHours(hours, sum, now, TMM.TM_TASK_DAYS);
       st.rot[m.id] = now; tasksN += trows.length; pulled.push(m.client + ' ' + m.market + ' (' + trows.length + ')');
     }
     if (hoursChanged) { try { await env.EDITS.put('tmhours', JSON.stringify(hours)); } catch (e) {} }
@@ -2780,13 +2780,23 @@ async function tmBookPull(env, opts) {
     idx.accounts = roster.accounts; idx.roster = roster.markets; idx.queues = roster.queues;
     const trail = (await env.EDITS.get('tmtrail', 'json')) || {};
     let trailDirty = 0;
+    // TICKET HOURS OFF THE WHOLE BOOK. tmPull only ever saw 21 days, so a ticket worked across
+    // months reported a fraction of itself. These rows are already in hand — twelve months of
+    // them — so the [ibfref:] harvest costs no extra MCP call, and mergeHours' window rule keeps
+    // the wider read authoritative over the fast lane's.
+    const hours = (await env.EDITS.get('tmhours', 'json')) || {};
+    let hoursDirty = 0;
 
     const plan = TB.bookPlan(roster.markets, idx.rot, opts.pulls == null ? TB.BOOK_MARKETS : opts.pulls, now);
     for (const m of plan) {
       // `from_date` is NOT applied by the server (verified 16 Sep 2026) — it is passed because
       // the tool takes it, and the window is applied in packMarket regardless.
       const payload = await mcp.call('get_task_list_for_client', { client_id: m.id, from_date: win.from, limit: TB.BOOK_PULL_LIMIT });
-      const rec = TB.packMarket(TMM.rowsOf(payload), { client: m.client, market: m.market, am: m.am, cid: m.id }, win, now);
+      const trows = TMM.rowsOf(payload);
+      const rec = TB.packMarket(trows, { client: m.client, market: m.market, am: m.am, cid: m.id }, win, now);
+      hoursDirty += TMM.mergeHours(hours,
+        TMM.summariseTasks(trows, { client: m.client, market: m.market, id: m.id, now, total: payload && payload.total_count }),
+        now, TMM.TM_BOOK_DAYS);
       const key = 'tmbook:' + m.client;
       const book = (await env.EDITS.get(key, 'json')) || { client: m.client, markets: {} };
       book.markets = book.markets || {}; book.markets[m.market] = rec; book.updated = now;
@@ -2817,6 +2827,7 @@ async function tmBookPull(env, opts) {
     idx.at = now;
     try { await env.EDITS.put('tmbookidx', JSON.stringify(idx)); } catch (e) {}
     if (trailDirty) { try { await env.EDITS.put('tmtrail', JSON.stringify(trail)); } catch (e) {} }
+    if (hoursDirty) { try { await env.EDITS.put('tmhours', JSON.stringify(hours)); } catch (e) {} }
     st.read = Object.keys(idx.rot).length; st.total = roster.markets.length;
     return save(st);
   } catch (e) {
