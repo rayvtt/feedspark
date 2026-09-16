@@ -344,6 +344,13 @@ window.addEventListener('load',restore);
   .wl-t{font-size:13.5px;color:var(--ink);font-weight:600;display:block;line-height:1.35}
   .wl-meta{font-size:12px;color:var(--muted);font-weight:700}
   .wl-test{font-size:9.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--good);background:#EBF7EF;border:1px solid #CDE9D8;border-radius:5px;padding:1px 5px;margin-left:7px;vertical-align:middle}
+  /* live pipeline rows: the stage chip carries Workflow's own colour, so a ticket reads the
+     same on both pages and a leadership reader never has to translate between them */
+  .lw-item{align-items:center}
+  .lw-chip{flex:none;color:#fff;font-size:10.5px;font-weight:900;letter-spacing:.02em;
+    border-radius:100px;padding:3px 10px;text-decoration:none;white-space:nowrap}
+  .lw-chip:hover{filter:brightness(1.08)}
+  @media (max-width:720px){ .lw-item{flex-wrap:wrap} .lw-chip{margin-top:4px} }
   /* ---- log scaffold ---- */
   .logtable{width:100%;border-collapse:collapse;font-size:13.5px}
   .logtable th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
@@ -888,12 +895,18 @@ window.addEventListener('load',restore);
      the 2,000+ plan records (PLANTASKS), briefs in flight (/api/briefs), Feed Lab audits
      (/api/feed/audit per wired market), Label+PT Guard alerts (/api/labels/alerts?by=client)
      and Keyword Calendar saturation (/api/kwcal). All numbers computed, all £0. */
-  var BRIEFSC=null,ALERTC=null,KWC=null,AUDC={},PORTREQ=0;
+  var BRIEFSC=null,ALERTC=null,KWC=null,AUDC={},PORTREQ=0,BRIEFAT=0;
+  // The pipeline is the one source here that moves minute to minute — a colleague drags a
+  // ticket to Test running and this page should say so. It was fetched ONCE per page load and
+  // cached for the life of the tab, so a dossier left open on a leadership screen went stale
+  // and quietly stayed that way. 60s is the cadence Workflow's own poll uses.
+  var BRIEF_TTL=60000;
   function portShell(){ return '<div class="dz-port" id="dz-port"><div class="dzp-load">assembling live portfolio — briefs · audits · guards · keywords…</div></div>'; }
   function portData(cb){
     var need=1; function done(){ if(--need<=0)cb(); }
-    if(BRIEFSC===null){ need++; fetch(API+'/api/briefs').then(function(r){return r.json()})
-      .then(function(j){BRIEFSC=(j&&typeof j==='object'&&!j.error)?j:{}; done();},function(){BRIEFSC={}; done();}); }
+    if(BRIEFSC===null||(Date.now()-BRIEFAT)>BRIEF_TTL){ need++; fetch(API+'/api/briefs').then(function(r){return r.json()})
+      .then(function(j){BRIEFSC=(j&&typeof j==='object'&&!j.error)?j:(BRIEFSC||{}); BRIEFAT=Date.now(); done();},
+            function(){BRIEFSC=BRIEFSC||{}; done();}); }
     if(ALERTC===null){ need++; fetch(API+'/api/labels/alerts?by=client').then(function(r){return r.json()})
       .then(function(j){ALERTC=j||{}; done();},function(){ALERTC={}; done();}); }
     if(KWC===null){ need++; fetch(API+'/api/kwcal').then(function(r){return r.json()})
@@ -1438,8 +1451,10 @@ window.addEventListener('load',restore);
   function portModel(name,mkts){
     var p=PT[name]||null, od=(A.overdue&&A.overdue[name])||0;
     var inflight=0,briefN=0;
+    // `.status` — a brief has never carried `.st`, so this read was undefined for every ticket
+    // and EVERY brief the brand ever raised counted as in flight, closed ones included
     Object.keys(BRIEFSC||{}).forEach(function(k){ var x=BRIEFSC[k];
-      if(x&&x.client===name){ briefN++; if(['done','confirmed','dead','closed'].indexOf(String(x.st||'').toLowerCase())<0)inflight++; } });
+      if(x&&x.client===name&&!x.dup){ briefN++; if(!WF_SHUT[wfNorm(x.status)])inflight++; } });
     var done1=0; if(p&&p.catsw&&p.catsw['1']){ Object.keys(p.catsw['1']).forEach(function(c){done1+=(p.catsw['1'][c].done||0);}); }
     var kw=(KWC&&KWC[name])||{}, kev=(kw.events||[]).length;
     var satL=[]; mkts.forEach(function(m){ var ix=kw.ptidx&&kw.ptidx[m];
@@ -1658,6 +1673,91 @@ window.addEventListener('load',restore);
   function tzt(m){ var t=document.createElement('div'); t.className='fcc-toast'; t.textContent=m;
     t.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1A365D;color:#fff;padding:9px 15px;border-radius:8px;z-index:99999;font:700 13px sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.2)';
     document.body.appendChild(t); setTimeout(function(){t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(function(){t.remove();},300);},2200); }
+  /* ===== WHAT IS ACTUALLY HAPPENING RIGHT NOW ==========================================
+     Ray, 16 Sep 2026: "another section within the brand dossier — current running tests —
+     shows zero live. At least I can see that three keyword optimization tests are running in
+     the current workflow. So be more dynamic in our active tasks at the moment in the brand
+     dossier, because that will be the main interface for leadership and higher management."
+
+     The block read ONLY the project plan's own test rows (PLANTASKS `c==='test'`). Steven's
+     three keyword optimisations are PIPELINE TICKETS sitting at "Test running" in Workflow —
+     they have no test-flagged plan row, so the dossier said 0 live while three tests were
+     genuinely running. The pipeline was already fetched here (BRIEFSC) and spent on a COUNT.
+
+     Stage vocabulary mirrored from FeedSpark_Workflow.html; tools/test_dossierlive.mjs asserts
+     the two never drift, because a stage this page does not know becomes a silently missing row. */
+  var WF_STAGE={intake:'Intake',briefed:'Briefed to ASPL',progress:'In progress',blocked:'Blocked',
+    done:'Done — ASPL',running:'Test running ⏱',analysis:'Analysis 🧪',confirmed:'Client confirmed'};
+  var WF_COURT={intake:'AM',briefed:'ASPL',progress:'ASPL',blocked:'AM',done:'Client',running:'AM',analysis:'AM',confirmed:''};
+  var WF_COLOR={intake:'#8a94a0',briefed:'#B1550A',progress:'#2F6FB0',blocked:'#C0392B',
+    done:'#15803D',running:'#9D174D',analysis:'#7C3AED',confirmed:'#15803D'};
+  // a ticket is FINISHED at these stages — everything else is work in flight
+  var WF_SHUT={done:1,confirmed:1,dead:1,closed:1};
+  // …and these two ARE the test, which is what "currently running tests" means
+  var WF_TEST={running:1,analysis:1};
+  function wfNorm(s){ return String(s||'').trim().toLowerCase(); }
+  // fold wording so a ticket and its own plan row are recognised as one piece of work
+  function wkKey(s){ return String(s||'').toLowerCase().replace(/&amp;/g,'&')
+    .replace(/\[[^\]]*\]/g,' ').replace(/[^a-z0-9]+/g,' ').trim(); }
+
+  /* Every ticket this brand has in flight, newest first, split into the tests that are
+     running and the rest of the pipeline. Plan test rows join the tests list unless a ticket
+     already covers the same wording — the same work must never be listed twice. */
+  function liveWork(name,tasks){
+    var tests=[],flight=[],seen={};
+    var all=Object.keys(BRIEFSC||{}).map(function(k){return BRIEFSC[k];})
+      .filter(function(x){ return x&&x.client===name&&!x.dup; })
+      .sort(function(a,b){ return (b.updated||b.created||0)-(a.updated||a.created||0); });
+    all.forEach(function(x){
+      var st=wfNorm(x.status);
+      if(WF_SHUT[st])return;
+      var row={id:x.id,t:String(x.task||x.id||''),st:st,lbl:WF_STAGE[st]||x.status||'—',
+        court:WF_COURT[st]||'',col:WF_COLOR[st]||'#8a94a0',by:x.by||'',tkt:true};
+      seen[wkKey(row.t)]=1;
+      (WF_TEST[st]?tests:flight).push(row);
+    });
+    (tasks||[]).forEach(function(t){
+      if(!t.x||t.b==='done')return;
+      if(seen[wkKey(t.t)])return;                 // the ticket above already says this
+      tests.push({id:'',t:t.t,st:'',lbl:t.s||'Planned',court:'',col:'#8a94a0',by:t.ae||'',tkt:false});
+    });
+    return {tests:tests,flight:flight,n:all.length};
+  }
+  function liveRows(items,empty){
+    if(!items.length) return '<p class="dz-empty">'+empty+'</p>';
+    return '<ul class="worklist lw">'+items.map(function(r){
+      return '<li class="wl-item lw-item">'
+        // NOT opSafe'd: this is the internal leadership view, where ASPL and the tool names are
+        // the right words. The client-facing one-pager is the surface that sanitises them.
+        +'<span class="wl-body"><span class="wl-t">'+esc(r.t)+'</span>'
+        +'<span class="wl-meta">'+(r.id?esc(r.id)+' · ':'')+(r.by?esc(r.by):(r.tkt?'':'plan'))
+        +(r.court?' · ball with '+esc(r.court):'')+'</span></span>'
+        +'<a class="lw-chip" href="/workflow" title="Open in Workflow" style="background:'+r.col+'">'
+        +esc(r.lbl)+'</a></li>'; }).join('')+'</ul>';
+  }
+  function liveHtml(name,tasks){
+    var LW=liveWork(name,tasks);
+    return '<div class="dz-work-head"><h4>Currently running tests <span class="dz-histn">'+LW.tests.length+' live</span></h4>'
+      +'<a class="lnk dz-wf" href="/workflow" title="Full test register in Workflow" style="margin-left:auto;font-size:12px;font-weight:800">Workflow test register ↗</a></div>'
+      +liveRows(LW.tests,'No tests running right now — the full register lives in <a href="/workflow">Workflow</a>.')
+      +'<div class="dz-work-head" style="margin-top:16px"><h4>In the pipeline <span class="dz-histn">'+LW.flight.length+' in flight</span></h4></div>'
+      +liveRows(LW.flight,'Nothing in the pipeline for this brand right now.');
+  }
+  /* Keep the open dossier honest: re-read the pipeline and repaint ONLY this block, so a
+     leadership screen left open follows the board instead of freezing at page-load state. */
+  function liveFill(name){
+    var box=detail.querySelector('#dz-live'); if(!box||cur!==name)return;
+    var p=PT[name], tasks=p?planItems(p):((A.brands&&A.brands[name])||[]);
+    var ov=shStatus(); tasks.forEach(function(t){ var v=ov[name+'|'+t.t]; if(v){t.s=v;t.b=bucketOf(v);} });
+    box.innerHTML=liveHtml(name,tasks);
+  }
+  function livePoll(){
+    if(!cur||document.hidden)return;
+    BRIEFAT=0;                                   // force the next read past the TTL
+    portData(function(){ liveFill(cur); });
+  }
+  setInterval(livePoll,BRIEF_TTL);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden)livePoll(); });
   function planList(items){ if(!items.length) return '<p class="dz-empty">No tasks in the latest sections.</p>';
     return '<ul class="worklist">'+items.map(function(t){ var c=t.c||'opt';
       return '<li class="wl-item" data-b="'+esc(t.b)+'" data-task="'+esc(t.t)+'"><span class="wl-ic ic-'+c+'" title="'+(CATLBL[c]||c)+'">'+(ICONS[c]||ICONS.tech)+'</span>'
@@ -1772,11 +1872,9 @@ window.addEventListener('load',restore);
     var _ov=shStatus();
     tasks.forEach(function(t){ var v=_ov[name+'|'+t.t]; if(v){ t.s=v; t.b=bucketOf(v); } });
     var tst=tasks.filter(function(t){return t.x;}), od=A.overdue[name]||0;
-    // dossier now features only the brand's current running tests (full detail in Workflow)
-    var runTests=tst.filter(function(t){return t.b!=='done';});
-    var testsHtml='<div class="dz-work"><div class="dz-work-head"><h4>Current running tests <span class="dz-histn">'+runTests.length+' live</span></h4>'
-      +'<a class="lnk dz-wf" href="/workflow" title="Full test register in Workflow" style="margin-left:auto;font-size:12px;font-weight:800">Workflow test register ↗</a></div>'
-      +(runTests.length?planList(runTests):'<p class="dz-empty">No running tests right now — the full register lives in <a href="/workflow">Workflow</a>.</p>')+'</div>';
+    /* LIVE, not baked: the tests running and the pipeline behind them, read from the same
+       /api/briefs store Workflow writes, so a ticket a colleague moved shows here too. */
+    var testsHtml='<div class="dz-work" id="dz-live">'+liveHtml(name,tasks)+'</div>';
     var edA=function(f){return editMode?' contenteditable="true" data-ed="'+f+'" spellcheck="false"':'';};
     var ed=edA('top');
     var delBtn=editMode?'<button class="dz-x" title="Delete client">Delete</button>':'';

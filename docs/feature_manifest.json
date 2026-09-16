@@ -6069,6 +6069,21 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "idx[key].airP = pm",
       "min": 1
+    },
+    {
+      "name": "dossier: running tests + pipeline read live from /api/briefs",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function liveWork"
+    },
+    {
+      "name": "dossier: live block repaints on a poll instead of freezing at page load",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function livePoll"
+    },
+    {
+      "name": "abtests: Market/Region accepted as the archive's place column, not just Country",
+      "file": "cloudflare/feedspark-deck/src/abtests.js",
+      "pattern": "markets?|region"
     }
   ]
 }

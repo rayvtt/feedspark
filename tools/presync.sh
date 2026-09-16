@@ -100,6 +100,10 @@ echo "── validating: retainer hours (optimisation vs technical vs feature vs
 node tools/test_reporthours.mjs >/dev/null
 echo "   ✓ precedence traps hold; the baked snapshot reconciles to its own totals"
 
+echo "── validating: dossier live work (the tests actually running)"
+node tools/test_dossierlive.mjs >/dev/null
+echo "   ✓ pipeline tickets surface in the dossier; stages agree with Workflow"
+
 echo "── validating: live deck editor (real browser)"
 if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   NODE_PATH=$(npm root -g) node tools/test_editor.mjs || {
