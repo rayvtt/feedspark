@@ -338,3 +338,87 @@ export function brandSummary(cadence) {
 export function compactRow(r) {
   return { w: r.w, c: r.c, b: r.b, m: r.m, k: r.k, d: r.d, via: r.via, s: r.am || r.conf || '', h: r.h, t: r.t, dl: r.dl, n: r.n, r: r.r, rc: r.rc, fin: r.fin, tab: r.tab, mg: r.mg ? 1 : 0 };
 }
+
+// ---------------------------------------------------------------------------------------------
+// THE DIGEST THE HOURS POPOVER READS
+//
+// Ray, 16 Sep 2026: "This pop-up over retainer should also include the skipped schedule work, as
+// well as an indication of the last 12 months" — and then, on seeing the hours bars stretched to
+// twelve: "no i prefer the dotted green and orange bar for go and skip that you have, just try to
+// fit 3 at least in that popup."
+//
+// So the twelve-month indication is THIS module's own cadence strip, carried to the badge: one
+// cell per calendar month, green where the work went ahead, orange where the AM skipped it.
+//
+// Parsing the workbook costs a multi-tab walk the badge must never pay, so the strips are derived
+// once here and stored as a tiny record. Encoded a character per month:
+//   g go · s skipped · n scheduled but undecided · - not scheduled that month
+// Four codes, twelve characters, three tasks per brand — the whole estate is a couple of KB.
+// ---------------------------------------------------------------------------------------------
+
+export const DIGEST_MONTHS = 12;
+export const DIGEST_TASKS = 3;          // "fit 3 at least in that popup"
+const CODE = { go: 'g', skip: 's', none: 'n' };
+
+/** The last N calendar months ending with `now`'s month, oldest first, as 'YYYY-MM'. */
+export function digestMonths(now, n) {
+  const d = new Date(now || Date.now());
+  d.setUTCDate(1);
+  const out = [];
+  for (let i = (n || DIGEST_MONTHS) - 1; i >= 0; i--) {
+    const x = new Date(d.getTime());
+    x.setUTCMonth(x.getUTCMonth() - i);
+    out.push(x.toISOString().slice(0, 10).slice(0, 7));
+  }
+  return out;
+}
+
+/**
+ * One cadence entry → its last-N-month strip.
+ *
+ * A month the schedule never offered is '-', NOT a skip: nothing was declined because nothing was
+ * put forward. Conflating the two would turn every quiet summer into a skip streak.
+ */
+export function stripOf(entry, now, n) {
+  const keys = digestMonths(now, n);
+  const by = {};
+  ((entry && entry.months) || []).forEach((m) => { by[m.m] = m; });
+  return keys.map((k) => (by[k] ? (CODE[by[k].v] || 'n') : '-')).join('');
+}
+
+/**
+ * cadence → { <client>: { tasks, onStreak, maxStreak, hoursSkipped, lastDecided, months, rows } }
+ *
+ * `rows` are the DIGEST_TASKS worth showing: the ones on the longest current skip streak first,
+ * because those are what an AM needs to see beside a negative balance. A brand with nothing
+ * skipped still ships its rows — a strip of green is the answer to "are they taking the work",
+ * and an empty block would read as "no data" rather than "all good".
+ */
+export function skipDigest(cadence, now, opts) {
+  const o = opts || {};
+  const months = digestMonths(now, o.months || DIGEST_MONTHS);
+  const want = o.tasks || DIGEST_TASKS;
+  const by = {};
+  (cadence || []).forEach((c) => {
+    if (!c || !c.client) return;
+    const e = by[c.client] || (by[c.client] = { tasks: 0, onStreak: 0, maxStreak: 0, hoursSkipped: 0, lastDecided: null, months, rows: [] });
+    e.tasks++;
+    if (c.streak > 0) { e.onStreak++; e.hoursSkipped = round1(e.hoursSkipped + (c.hoursSkipped || 0)); }
+    if ((c.streak || 0) > e.maxStreak) e.maxStreak = c.streak || 0;
+    if (c.lastDecided && (!e.lastDecided || c.lastDecided > e.lastDecided)) e.lastDecided = c.lastDecided;
+    const s = stripOf(c, now, o.months || DIGEST_MONTHS);
+    e.rows.push({ mkt: c.mkt || '', kind: c.kind || '', streak: c.streak || 0,
+      hrsSkip: round1(c.hoursSkipped || 0), since: c.since || null, s });
+  });
+  Object.keys(by).forEach((k) => {
+    const e = by[k];
+    // longest streak first, then the strip with the most decided months (the fullest record),
+    // then alphabetically so the same three appear every time rather than shuffling on a tie
+    e.rows.sort((a, b) => (b.streak - a.streak)
+      || (b.s.replace(/-/g, '').length - a.s.replace(/-/g, '').length)
+      || (a.kind + a.mkt).localeCompare(b.kind + b.mkt));
+    e.more = Math.max(0, e.rows.length - want);
+    e.rows = e.rows.slice(0, want);
+  });
+  return by;
+}

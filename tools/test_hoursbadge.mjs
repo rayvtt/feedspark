@@ -42,6 +42,8 @@ console.log('── the three-month trail');
 
 const NOW = Date.UTC(2026, 8, 16, 12, 0, 0);          // 16 Sep 2026
 eq(M.trailMonths(NOW, 3), ['2026-07', '2026-08', '2026-09'], 'three months, oldest first');
+eq(M.TRAIL_MONTHS, 3, 'the hours trajectory stays THREE months — the twelve-month view Ray asked '
+  + 'for is the schedule\u2019s go/skip strip, not this chart');
 eq(M.trailMonths(Date.UTC(2026, 0, 4), 3), ['2025-11', '2025-12', '2026-01'],
   'and it rolls back over a year boundary');
 
@@ -220,6 +222,13 @@ ok(/fh-key/.test(WIDGET) && /Billable /.test(WIDGET) && /Non-billable /.test(WID
   'a legend names both series with their numbers — identity is never colour alone, and the light '
   + 'orange carries a contrast WARN that visible labels are what relieve');
 ok(/aria-label/.test(WIDGET), 'the dot names itself for a screen reader');
+ok(/function skipBlock/.test(WIDGET) && /fh-sr/.test(WIDGET),
+  'the popover carries the schedule\u2019s go/skip strips beside the balance');
+ok(/if \(!k \|\| !k\.rows \|\| !k\.rows\.length\) return ''/.test(WIDGET),
+  'and shows nothing at all when the schedule store has not been read \u2014 absence, not "no skips"');
+ok(/rec\.skip/.test(WIDGET), 'read off the record /api/hours already serves, with no second fetch');
+ok(/max-height:calc\(100vh - 16px\);overflow:auto/.test(WIDGET),
+  'the taller popover scrolls inside itself rather than running off a short viewport');
 ok(/markets read, so these are a floor/.test(WIDGET),
   'a partly-read book is stated as a FLOOR, never implied to be the whole account');
 ok(/not the same as zero/.test(WIDGET), 'and an unread client is never rendered as 0 hours');
