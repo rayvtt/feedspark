@@ -6056,37 +6056,55 @@
       "name": "Task Manager: Excel export on all three tabs",
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "id=\"pxlsx\"",
-      "pr": 404
+      "pr": 405
     },
     {
       "name": "Task Manager: the export follows the active tab's filtered view",
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "function xrows",
-      "pr": 404
+      "pr": 405
     },
     {
       "name": "Shared XLSX table writer",
       "file": "docs/xlsx_engine.js",
       "pattern": "FeedXlsx",
-      "pr": 404
+      "pr": 405
     },
     {
       "name": "XLSX writer: absent is absent, never a fabricated date",
       "file": "docs/xlsx_engine.js",
       "pattern": "function noDate",
-      "pr": 404
+      "pr": 405
     },
     {
       "name": "XLSX writer: served by the worker",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "/xlsx/engine.js",
-      "pr": 404
+      "pr": 405
     },
     {
       "name": "Task Manager chart: one vocabulary per screen (axis reads the same labels as the legend)",
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "function dimLabel",
-      "pr": 404
+      "pr": 405
+    },
+    {
+      "name": "Golden Record: PILLAR HEATMAP — this brand's analysed markets x the eight audit pillars, weakest cell ringed and named, row click opens that market (Ray 16 Sep 2026: 'the pillar heatmap is great too')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function pillarHeat",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: an analysed feed joins the heatmap immediately — the page mirrors onto its estate row exactly what the worker writes to goldenidx",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "mirror onto the estate row exactly what the worker just wrote",
+      "min": 1
+    },
+    {
+      "name": "Worker: per-pillar AI-readiness scores ride onto goldenidx (airP) so the estate can draw the heatmap without re-reading every feed's stored block",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "idx[key].airP = pm",
+      "min": 1
     }
   ]
 }

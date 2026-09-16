@@ -3913,7 +3913,14 @@ async function goldenRoutes(env, request, url) {
     const key = lgKey(client, mkt);
     if (idx[key] && (qs || ai)) {
       if (qs) { idx[key].q = qs.score; idx[key].qFails = qs.fails; }
-      if (ai) { idx[key].air = ai.total; idx[key].airTier = ai.tier; }
+      if (ai) {
+        idx[key].air = ai.total; idx[key].airTier = ai.tier;
+        // per-pillar scores too, so the estate can draw the markets × pillars heatmap
+        // without re-reading every feed's stored block (8 numbers per feed)
+        const pm = {};
+        ai.pillars.forEach((p) => { if (p.key) pm[p.key] = p.score; });
+        idx[key].airP = pm;
+      }
       idx[key].qT = rec.t;
       await env.EDITS.put('goldenidx', JSON.stringify(idx));
     }
