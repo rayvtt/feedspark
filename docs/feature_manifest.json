@@ -5648,6 +5648,21 @@
       "min": 1
     },
     {
+      "name": "one-pager: retainer hours pie (optimisation vs technical vs feature vs account)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function opPie"
+    },
+    {
+      "name": "one-pager: hours-by-task table from the reports database",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function opTaskHours"
+    },
+    {
+      "name": "one-pager: FSHOURS splice markers for the baked reports snapshot",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "HOURS:START"
+    },
+    {
       "name": "Golden Record: the Feed Lab AI-READINESS score rides the same stream as the content-quality read — ring, tier ladder and all eight weighted pillars on the scorecard (Ray 16 Sep 2026: 'the most important item is the AI readiness score')",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function airSection",

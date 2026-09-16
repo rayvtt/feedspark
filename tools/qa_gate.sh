@@ -75,6 +75,13 @@ else
   echo "   ✗ abtests harness FAILED — see node tools/test_abtests.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d2/7: retainer-hours classification (optimisation vs technical vs feature vs account)"
+if node tools/test_reporthours.mjs >/dev/null 2>&1; then
+  echo "   ✓ precedence traps hold; the baked snapshot reconciles"
+else
+  echo "   ✗ reporthours harness FAILED — see node tools/test_reporthours.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3e/7: overlay engine (URL-string classification + feed collector)"
 if node tools/test_overlays.mjs >/dev/null 2>&1; then
   echo "   ✓ overlay types read off the image_link URL; collector counts hold"
