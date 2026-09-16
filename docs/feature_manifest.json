@@ -6395,6 +6395,24 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "else each row stacks into three",
       "min": 1
+    },
+    {
+      "name": "Task Manager search: a COMMA is OR and a space is AND — the engine's shared orTerms/mergeCommaRuns, so `Febin,Vitus` and `Febin, Vitus` are one list",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function orTerms",
+      "min": 1
+    },
+    {
+      "name": "Task Manager search: the comma rule binds across a space, so a list typed with spaces after its commas is still one list",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function mergeCommaRuns",
+      "min": 1
+    },
+    {
+      "name": "Task Manager pane filter reads the ENGINE's comma rule rather than a second copy — one meaning across both search boxes",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "PQT = orTerms(PQ)",
+      "min": 1
     }
   ]
 }

@@ -209,11 +209,12 @@ all. The module is grantable per person (`taskmanager` in `access.js`'s `MODULES
 
 One bar, filtering the tasks, the tickets, the chart, the breakdown strip and every KPI at once.
 Bare words search the record; `field:value` narrows; `-` negates. Repeats of one field OR
-together, different fields AND.
+together, different fields AND. **A space means AND, a comma means OR.**
 
 | | |
 |---|---|
 | `keyword optimisation` | both words appear somewhere on the row (title, notes, owner, client, market, status) |
+| `Febin,Vitus` | **either** — every row naming one of them |
 | `"keyword optimisation"` | the exact phrase, not two loose words |
 | `client:` `brand:` `account:` | the brand. Exactly, **or by prefix of 2+ characters** — `client:rei` finds Reiss, `client:eiss` finds nothing (a mid-word substring is not a name) |
 | `owner:` `who:` `by:` | the person who did the work |
@@ -228,6 +229,42 @@ together, different fields AND.
 
 `/` focuses it, `?q=` deep-links a view, chips run the common ones, **＋ Save this view** keeps a
 query per device, and clicking a breakdown row toggles that filter in.
+
+### A comma is OR, a space is AND
+
+> Ray, 16 Sep 2026: *"This search bar allows multiple filters separated by commas. For example, I
+> want to filter Febin and Vitus. The search bar should accommodate `Febin,Vitus` with no space
+> after the comma."*
+
+Two names side by side already meant *rows naming **both***, which is the right default and has not
+changed. A **list** is the other question — *either of these people* — and there was no way to ask
+it. `Febin,Vitus` asks it.
+
+Four decisions inside that, each one a way it could have been annoying instead of useful:
+
+- **The comma binds across a space.** `Febin, Vitus` is the same list as `Febin,Vitus`. Half of us
+  type the space out of habit, and silently reading that as AND would answer *"no rows"* to a query
+  that plainly means two people — the worst possible failure, because it looks like an empty result
+  rather than a misunderstanding.
+- **A trailing comma is not a term yet.** `Febin,` — someone mid-typing — is just `Febin`, never a
+  filter that matches nothing.
+- **A lone `,` filters nothing**, rather than filtering everything out. The row count chip and the
+  footer label key on the *parsed terms*, not the raw box, so the page never says
+  *"45 of 45 matching ,"* — claiming a filter that is not narrowing anything.
+- **Inside `"quotes"` a comma is punctuation.** A quoted phrase is one literal, commas and all —
+  that is what quoting means. It rides through tokenisation on a sentinel character and comes back
+  out as a comma.
+
+On a **field** the comma is simply the shorthand for repeating it: `owner:Febin,Vitus` is exactly
+`owner:Febin owner:Vitus`, and each alternative goes through the category alias map
+(`cat:technical,feature` → `tech`, `feat`) rather than just the first. The **range and bound**
+fields — `from:` `to:` `min:` `max:` — and the two-state `bill:` keep their existing repeat
+behaviour instead of inventing an alternation nobody means: an "either 2 or 5 hours minimum" is not
+a question an AM asks.
+
+**One definition serves both boxes.** The plain-substring pane filter under the tab header reads the
+engine's own `orTerms`, so a comma cannot mean one thing there and another in the grammar bar above
+it — the same rule that keeps the two surfaces from naming one task two ways.
 
 **`bill:yes` and `bill:no` are not opposites.** Most of the book is part charged and part not, and
 such a row answers to *both*, because both are true of it. Reading `bill:no` as "nothing was
