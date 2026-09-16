@@ -6053,24 +6053,6 @@
       "pattern": "function abTabList"
     },
     {
-      "name": "Golden Record: PILLAR HEATMAP — this brand's analysed markets x the eight audit pillars, weakest cell ringed and named, row click opens that market (Ray 16 Sep 2026: 'the pillar heatmap is great too')",
-      "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "function pillarHeat",
-      "min": 1
-    },
-    {
-      "name": "Golden Record: an analysed feed joins the heatmap immediately — the page mirrors onto its estate row exactly what the worker writes to goldenidx",
-      "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "mirror onto the estate row exactly what the worker just wrote",
-      "min": 1
-    },
-    {
-      "name": "Worker: per-pillar AI-readiness scores ride onto goldenidx (airP) so the estate can draw the heatmap without re-reading every feed's stored block",
-      "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "idx[key].airP = pm",
-      "min": 1
-    },
-    {
       "name": "Task Manager: Excel export on all three tabs",
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "id=\"pxlsx\"",
@@ -6107,6 +6089,24 @@
       "pr": 405
     },
     {
+      "name": "Golden Record: PILLAR HEATMAP — this brand's analysed markets x the eight audit pillars, weakest cell ringed and named, row click opens that market (Ray 16 Sep 2026: 'the pillar heatmap is great too')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function pillarHeat",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: an analysed feed joins the heatmap immediately — the page mirrors onto its estate row exactly what the worker writes to goldenidx",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "mirror onto the estate row exactly what the worker just wrote",
+      "min": 1
+    },
+    {
+      "name": "Worker: per-pillar AI-readiness scores ride onto goldenidx (airP) so the estate can draw the heatmap without re-reading every feed's stored block",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "idx[key].airP = pm",
+      "min": 1
+    },
+    {
       "name": "Task Manager: the pane's own filter, under the tab header",
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "id=\"pq\"",
@@ -6123,6 +6123,24 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "function paneRows",
       "pr": 406
+    },
+    {
+      "name": "Golden Record PDF = THE PAGE SCALED, not a second design (Ray 16 Sep 2026: 'PDF export still doesn't reflect exact same visual as FCC') — print lays out at the desktop width and zooms onto the 186mm column; zoom not transform, since transform is paint-time and Chrome paginates on the unscaled height",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf{background:#fff!important;color:#333!important;width:960px;zoom:",
+      "min": 1
+    },
+    {
+      "name": "Golden Record PDF: print restores the page's own <=900px rules to their DESKTOP form (the print viewport is 703px and would otherwise hand the client a phone layout)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "the page's own ≤900px rules, put back to their DESKTOP form",
+      "min": 1
+    },
+    {
+      "name": "PDF tripwire asserts FIDELITY — the same type scale, padding and dial on screen and in print, so a compact print variant can never creep back",
+      "file": "tools/check_grpdf.js",
+      "pattern": "print does not restyle the page",
+      "min": 1
     },
     {
       "name": "dossier: running tests + pipeline read live from /api/briefs",
