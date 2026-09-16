@@ -176,11 +176,18 @@ window.addEventListener('load',restore);
   .vz-legend span{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
   .vz-legend span i{width:11px;height:11px;border-radius:3px;display:inline-block}
   .vz-legend span.off{opacity:.4;text-decoration:line-through}
-  table.vz-tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin:10px 0 4px}
-  table.vz-tbl th{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
-  table.vz-tbl th:first-child,table.vz-tbl td:first-child{text-align:left}
-  table.vz-tbl td{padding:6px 8px;border-bottom:1px solid var(--line);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+  table.vz-tbl{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12.5px;margin:10px 0 4px}
+  table.vz-tbl th{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;text-align:center;padding:6px 4px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  table.vz-tbl th:first-child,table.vz-tbl td:first-child{text-align:left;padding-left:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* a month's figure sits UNDER its bar, so both are centred on the same band; the Series and
+     Total columns keep their own alignment at the two ends */
+  table.vz-tbl td{padding:6px 4px;border-bottom:1px solid var(--line);font-weight:700;text-align:center;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis}
+  table.vz-tbl th:last-child,table.vz-tbl td:last-child{text-align:right;padding-right:8px}
   table.vz-tbl tr.tot td{font-weight:900;color:var(--ink)}
+  /* PHONE: alignment is a desktop affordance — a 12-month table squeezed into 390px would be
+     crushed to ~25px columns. Below the breakpoint the table claims its natural width so the
+     shared mobile layer PANS it instead (Ray's standing rule: pan, don't crush). */
+  @media (max-width:760px){ table.vz-tbl{min-width:var(--vz-minw,100%)} }
   .vz-notes{width:100%;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin-top:10px;resize:vertical;background:#fff}
   .vz-src{font-size:11.5px;font-weight:700;color:var(--muted);margin-top:8px;line-height:1.5}
   .vz-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
@@ -800,9 +807,26 @@ window.addEventListener('load',restore);
     }
     $('#vz-src').innerHTML='Source: '+esc(parts.join('  ·  '))+(notes.length?'<br>'+esc(notes.join(' · ')):'')+cline+(DATA.scoped?'<br>🔒 your client scope':'');
   }
+  // ---- ONE GEOMETRY, TWO MARKS (Ray, 16 Sep 2026: "can bar column and data table column below
+  // always correspond to same vertical for ease of tracking?"). The chart and the table were laid
+  // out independently — the chart reserved a 52/1000 gutter for its y-axis and the table sized its
+  // Series and Total columns to their own content — so a month's bar and its column drifted apart
+  // and the eye had to count across to check a figure. They now share the SAME two insets: the
+  // table's Series column is exactly the chart's left gutter and its Total column exactly the right
+  // one, so month i occupies the identical horizontal band in both. Both elements are full-width
+  // siblings in .vz-stage and the SVG is width:100% / height:auto (so viewBox units map linearly to
+  // CSS pixels) — the alignment is therefore exact, not approximate.
+  var GEO={ gut:0.118, tail:0.070 };            // Series column · Total column, as fractions of the width
+  function bandPct(n){ return (1-GEO.gut-GEO.tail)/Math.max(1,n)*100; }
   function renderTable(S,vis){
     var wrap=$('#vz-tblwrap'); wrap.hidden=!ST.table; if(!ST.table)return;
-    var h='<thead><tr><th>Series</th>'+S.months.map(function(m){return '<th>'+esc(mlbl(m))+'</th>'}).join('')+'<th>Total</th></tr></thead><tbody>';
+    // a colgroup carries the shared geometry; table-layout:fixed makes the browser honour it
+    var bw=bandPct(S.months.length);
+    $('#vz-tbl').style.setProperty('--vz-minw',(150+S.months.length*52)+'px');   // phone: pan, don't crush
+    var cols='<colgroup><col style="width:'+(GEO.gut*100).toFixed(4)+'%">'
+      +S.months.map(function(){return '<col style="width:'+bw.toFixed(4)+'%">'}).join('')
+      +'<col style="width:'+(GEO.tail*100).toFixed(4)+'%"></colgroup>';
+    var h=cols+'<thead><tr><th>Series</th>'+S.months.map(function(m){return '<th>'+esc(mlbl(m))+'</th>'}).join('')+'<th>Total</th></tr></thead><tbody>';
     vis.forEach(function(s){ h+='<tr><td>'+esc(s.name)+'</td>'+s.vals.map(function(v){return '<td>'+fmt(v)+'</td>'}).join('')+'<td>'+fmt(s.vals.reduce(function(a,b){return a+b},0))+'</td></tr>'; });
     var tot=S.months.map(function(m,i){return vis.reduce(function(a,s){return a+s.vals[i]},0)});
     h+='<tr class="tot"><td>Total</td>'+tot.map(function(v){return '<td>'+fmt(v)+'</td>'}).join('')+'<td>'+fmt(tot.reduce(function(a,b){return a+b},0))+'</td></tr></tbody>';
@@ -810,7 +834,7 @@ window.addEventListener('load',restore);
   }
   // SVG chart — viewBox 1000×380, thin marks, 2px gaps, direct labels ≤4 series, hover targets
   function draw(S,vis,form,labels,interactive){
-    var W=1000,H=380,L=52,R=16,T=18,B=40, months=S.months, n=months.length, k=vis.length;
+    var W=1000,H=380,L=Math.round(W*GEO.gut),R=Math.round(W*GEO.tail),T=18,B=40, months=S.months, n=months.length, k=vis.length;
     var pw=W-L-R, ph=H-T-B, out='', isDark=dark(), ink=isDark?'#E7E9ED':'#333', mut=isDark?'#828D9C':'#8a94a0', paper=isDark?'#1C1F27':'#fff';
     var X=function(i){return L+pw*(i+0.5)/n};
     if(form==='hbar'){
