@@ -5640,6 +5640,12 @@
       "file": "tools/presync.sh",
       "pattern": "tools/check_grpdf.js",
       "min": 1
+    },
+    {
+      "name": "Instructions widget: the ⓘ pass re-runs on late-rendered content (debounced MutationObserver) — a one-shot DOMContentLoaded pass made the control exist on one load and not the next, which is what flipped the phone tripwire on /kwcal",
+      "file": "docs/instr_collapse.html",
+      "pattern": "MutationObserver",
+      "min": 1
     }
   ]
 }
