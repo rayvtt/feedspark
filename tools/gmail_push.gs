@@ -158,7 +158,9 @@ function pushBriefReplies() {
         id: m.getId(),
         from: m.getFrom(),
         subject: m.getSubject(),
-        snippet: (m.getPlainBody() || '').slice(0, 1200),
+        // the brief email is the backup copy of the ticket, and the worker rebuilds a missing
+        // one from this body — 1200 chars cut it off mid-SCOPE, losing the DoD and the assets
+        snippet: (m.getPlainBody() || '').slice(0, 4000),
         date: when
       });
     });

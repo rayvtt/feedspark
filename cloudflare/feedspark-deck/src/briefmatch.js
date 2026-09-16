@@ -391,6 +391,111 @@ export function parseGeminiNotes(msg) {
 
 // briefs: the plain briefs map (will be mutated); messages: [{id, from, subject, snippet, date(ms)}]
 // opts: { selfRe?: RegExp (senders to skip, e.g. the account that SENDS the briefs), now?: ms, aspl?: [names] }
+/* ---- THE BRIEF EMAIL IS THE BACKUP COPY OF THE TICKET (Ray, 16 Sep 2026: "when Steven starts
+ * briefing using the FCC module, but also includes me in the brief email so I receive a copy —
+ * would you be able to scan that and log it back in the FCC from Steven's work?").
+ *
+ * Yes, and the pipe already existed: the Apps Script search is
+ *   newer_than:7d ("ibfcode:" OR subject:"[FS Brief]")
+ * so every [FS Brief] Ray is copied on already reaches /api/gmail/push. It was then dropped
+ * twice over — once because the message is from our own domain (the reply matcher skips our
+ * outgoing mail), and again because findBrief() returns nothing for a ticket that was never
+ * saved. So the one artefact that PROVED the work existed was the one thing nobody read.
+ *
+ * bodyOf() in the composer writes a fixed, machine-readable block, so an ORIGINAL brief email
+ * (never a reply — those are status updates the existing lane owns) carrying an ibfref rebuilds
+ * the ticket in full. It only ever CREATES: a brief already in the store is never touched, so an
+ * old email can't reset a ticket that has since moved to analysis. ---- */
+const BRIEF_SUBJ = /\[FS Brief\]/i;
+function sectionOf(body, head, stops) {
+  const lines = String(body || '').split(/\r?\n/);
+  let i = -1;
+  for (let j = 0; j < lines.length; j++) if (lines[j].trim().toUpperCase() === head) { i = j; break; }
+  if (i < 0) return '';
+  const out = [];
+  for (let j = i + 1; j < lines.length; j++) {
+    const t = lines[j].trim();
+    if (stops.indexOf(t.toUpperCase()) >= 0 || /^─+$/.test(t)) break;
+    out.push(lines[j]);
+  }
+  return out.join('\n').trim();
+}
+const HEADS = ['TASK', 'SCOPE / DETAIL', 'DEFINITION OF DONE', 'ASSETS / LINKS'];
+export function briefFromEmail(msg) {
+  const subject = String((msg && msg.subject) || '');
+  const body = String((msg && msg.snippet) || '');
+  if (!BRIEF_SUBJ.test(subject)) return null;
+  if (/^\s*(re|fw|fwd)\s*:/i.test(subject)) return null;     // a reply/forward is a status update, not the brief
+  const refs = refsIn(subject + ' ' + body);
+  if (refs.length !== 1) return null;                        // ambiguous or absent → never guess an id
+  const id = refs[0].toUpperCase();
+  const codeRaw = codeIn(subject + ' ' + body);
+  if (!codeRaw) return null;
+  // the code is "<client-slug>-<market>"; the market is its last segment
+  const parts = codeRaw.split('-');
+  const market = parts.length > 1 ? parts[parts.length - 1] : 'gb';
+
+  // the client NAME comes from the body's own "Client:" line (the slug can't be un-slugged),
+  // falling back to the subject's "[FS Brief] <Client> · …" segment
+  let client = '';
+  const cl = /^\s*Client:\s*(.+?)\s*(?:\[[^\]]*\])?\s*$/mi.exec(body);
+  if (cl) client = cl[1].trim();
+  if (!client) {
+    const sm = /\[FS Brief\]\s*([^·|]+?)\s*·/i.exec(subject);
+    if (sm) client = sm[1].trim();
+  }
+  if (!client) return null;
+
+  const task = sectionOf(body, 'TASK', HEADS) ||
+    (function () { const m = /\[FS Brief\][^·]*·\s*(.+?)\s*·\s*\[ibfcode:/i.exec(subject); return m ? m[1].trim() : ''; })();
+  if (!task) return null;
+
+  const dueM = /ibfdue:(\d{8})/i.exec(subject + ' ' + body);
+  const due = dueM && validDD(dueM[1]) ? dueM[1].slice(0, 2) + '/' + dueM[1].slice(2, 4) + '/' + dueM[1].slice(4) : '';
+  const prM = /^\s*Priority:\s*(.+?)\s*$/mi.exec(body);
+  const srcM = /^\s*Source:\s*(.+?)\s*$/mi.exec(body);
+  const nameM = /^\s*"?([^"<]+?)"?\s*</.exec(String((msg && msg.from) || ''));
+
+  return {
+    id, client, market, code: codeRaw, task,
+    scope: sectionOf(body, 'SCOPE / DETAIL', HEADS).replace(/^—$/, ''),
+    dod: sectionOf(body, 'DEFINITION OF DONE', HEADS).replace(/^—$/, ''),
+    assets: sectionOf(body, 'ASSETS / LINKS', HEADS).replace(/^—$/, ''),
+    due,
+    priority: prM ? prM[1].trim() : '',
+    source: srcM && /email/i.test(srcM[1]) ? 'email' : 'plan',
+    by: nameM ? nameM[1].trim() : '',
+    when: (msg && msg.date) || 0,
+    mid: (msg && msg.id) || '',
+  };
+}
+/* Rebuild every ticket whose brief email we can see and whose id the store does not have.
+   Returns what it created; the caller persists. CREATE-ONLY, and idempotent. */
+export function recoverBriefsFromEmail(briefs, messages, opts) {
+  opts = opts || {};
+  const now = opts.now || Date.now();
+  const made = [];
+  for (const msg of messages || []) {
+    const r = briefFromEmail(msg);
+    if (!r) continue;
+    if (briefs[r.id]) continue;                 // never touch a ticket that exists — it may have moved on
+    briefs[r.id] = {
+      id: r.id, client: r.client, code: r.code, task: r.task,
+      scope: r.scope, dod: r.dod, assets: r.assets, due: r.due,
+      source: r.source, priority: r.priority || 'Normal',
+      // the email going out IS the act of briefing, so it lands in ASPL's court, not intake
+      status: 'briefed',
+      created: r.when || now, updated: now,
+      by: r.by || '',
+      comms: [], hist: [{ s: 'briefed', t: r.when || now }],
+      rec: 'email',                              // provenance: rebuilt from the brief email
+      recmid: r.mid,
+    };
+    made.push({ id: r.id, client: r.client, task: r.task, by: r.by });
+  }
+  return made;
+}
+
 export function matchGmailToBriefs(briefs, messages, opts) {
   opts = opts || {};
   const now = opts.now || 0;

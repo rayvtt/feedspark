@@ -39,6 +39,7 @@ export const STATE_NS = {
   senderbrand: null,     // sender email -> brand (a learned mapping, house-wide)
   runsla:      null,     // stage -> days (the team's SLA, house-wide)
   pbtax:       null,     // Playbook category -> {name,kw,hide} — the AMs' shared taxonomy
+  rollout:     null,     // '<deck>:<market>' -> 1 — which markets a rollout checklist has launched
 };
 
 export function isStateNs(ns) { return Object.prototype.hasOwnProperty.call(STATE_NS, ns); }

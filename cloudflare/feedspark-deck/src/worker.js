@@ -26,7 +26,7 @@
 // (wrangler.toml declares rules = [{ type = "Text", globs = ["**/*.html"] }].)
 import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js";
 import { STATE_NS, isStateNs, scopeStateView, scopeStateIncoming } from "./sharedstate.js";
-import { matchGmailToBriefs, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
+import { matchGmailToBriefs, recoverBriefsFromEmail, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
 import { parseAbTests, abSummary, resolveAbTab, hasAbHeader, abClientKey } from "./abtests.js";
 // Scheduled Work (Ray, 15 Sep 2026): the content team's weekly schedule sheet (hidden weekly tabs
 // included) read as a skip cadence per dossier brand — live via the service account when the
@@ -903,11 +903,17 @@ export default {
       const briefs = envelopeToClient(envx, {});
       const selfSrc = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
       const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'], repair: true });   // ibfref repair self-heals mis-filed replies as the rolling window re-pushes
-      if (res.matched || (res.repaired && res.repaired.length)) {
+      // …and the brief EMAIL is the backup copy of the ticket (Ray, 16 Sep 2026): an original
+      // [FS Brief] whose ibfref the store has never heard of rebuilds it. Create-only, so a
+      // ticket that has since moved on is never reset by its own original email.
+      const made = recoverBriefsFromEmail(briefs, messages, { now });
+      if (res.matched || made.length || (res.repaired && res.repaired.length)) {
         mergeIntoEnvelope(envx, briefs, now, now, {});   // full map present → pure upserts, no deletions
         await env.EDITS.put('briefs', JSON.stringify(envx));
       }
-      logActivity(ctx, env, request, 'gmail-sync', res.matched + ' matched · ' + res.moved.length + ' moved' + ((res.repaired && res.repaired.length) ? (' · ' + res.repaired.length + ' repaired') : ''), 'gmail-sync');
+      logActivity(ctx, env, request, 'gmail-sync', res.matched + ' matched · ' + res.moved.length + ' moved'
+        + (made.length ? (' · ' + made.length + ' ticket' + (made.length === 1 ? '' : 's') + ' rebuilt from the brief email') : '')
+        + ((res.repaired && res.repaired.length) ? (' · ' + res.repaired.length + ' repaired') : ''), 'gmail-sync');
       // rolling run history for the Activity page's Gmail-sync panel (last 60 runs)
       try {
         const runlog = (await env.EDITS.get('gmailpushlog', 'json')) || [];
@@ -1949,12 +1955,13 @@ export default {
         const briefs = envelopeToClient(envx, {});
         const selfSrc = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
         const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'], repair: true });
-        if (res.matched || (res.repaired && res.repaired.length)) {
+        const made = recoverBriefsFromEmail(briefs, messages, { now });   // rebuild any ticket only its email remembers
+        if (res.matched || made.length || (res.repaired && res.repaired.length)) {
           mergeIntoEnvelope(envx, briefs, now, now, {});   // full map present → pure upserts
           await env.EDITS.put('briefs', JSON.stringify(envx));
         }
-        logActivity(ctx, env, request, 'gmail-rescan', messages.length + ' scanned · ' + res.matched + ' matched · ' + ((res.repaired || []).length) + ' repaired', 'gmail-sync');
-        return json({ ok: true, scanned: messages.length, matched: res.matched, moved: res.moved, repaired: res.repaired || [] });
+        logActivity(ctx, env, request, 'gmail-rescan', messages.length + ' scanned · ' + res.matched + ' matched · ' + made.length + ' rebuilt · ' + ((res.repaired || []).length) + ' repaired', 'gmail-sync');
+        return json({ ok: true, scanned: messages.length, matched: res.matched, moved: res.moved, rebuilt: made, repaired: res.repaired || [] });
       } catch (e) { return json({ ok: false, error: String((e && e.message) || e) }); }
     }
 
