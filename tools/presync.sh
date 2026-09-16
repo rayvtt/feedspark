@@ -112,6 +112,10 @@ echo "── validating: dossier live work (the tests actually running)"
 node tools/test_dossierlive.mjs >/dev/null
 echo "   ✓ pipeline tickets surface in the dossier; stages agree with Workflow"
 
+echo "── validating: suggested next moves arrive filtered"
+node tools/test_deeplink.mjs >/dev/null
+echo "   ✓ links carry their filter; Workflow, the guards, Feed Lab and the calendar read it"
+
 echo "── validating: live deck editor (real browser)"
 if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   NODE_PATH=$(npm root -g) node tools/test_editor.mjs || {

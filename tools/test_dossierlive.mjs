@@ -47,7 +47,7 @@ function liftVar(src, name) {
 // build a sandbox carrying the page's own vocabulary + functions
 const api = new Function('BRIEFSC', `
   ${liftVar(CC, 'WF_STAGE')} ${liftVar(CC, 'WF_COURT')} ${liftVar(CC, 'WF_COLOR')}
-  ${liftVar(CC, 'WF_SHUT')} ${liftVar(CC, 'WF_TEST')}
+  ${liftVar(CC, 'WF_SHUT')} ${liftVar(CC, 'WF_TEST')} ${liftVar(CC, 'LW_RANK')}
   ${lift(CC, 'wfNorm')} ${lift(CC, 'wkKey')} ${lift(CC, 'liveWork')}
   return { liveWork:liveWork, wkKey:wkKey, wfNorm:wfNorm,
            WF_STAGE:WF_STAGE, WF_COURT:WF_COURT, WF_SHUT:WF_SHUT, WF_TEST:WF_TEST };
@@ -153,6 +153,58 @@ ok('the pipeline section is rendered', CC.indexOf('In the pipeline') > 0);
 ok('rows link into Workflow', /class="lw-chip" href="\/workflow"/.test(CC));
 // the dossier is the INTERNAL view — the client-facing one-pager is what sanitises vocabulary
 ok('live rows are not run through the client-safe scrubber', !/liveRows[\s\S]{0,400}opSafe\(/.test(CC));
+
+console.log('\n-- ONE list, ranked (Ray: "why the two sections … basically merged together") --');
+{
+  const M = A.liveWork('Reiss', TASKS);
+  ok('tests and pipeline are merged into one list',
+     M.items.length === M.tests.length + M.flight.length, [M.items.length, M.tests.length, M.flight.length]);
+  ok('nothing is dropped by the merge',
+     M.items.length === 6, M.items.map((r) => r.lbl));
+  ok('running leads', M.items[0].st === 'running', M.items.map((r) => r.st));
+  const rank = M.items.map((r) => ({ running: 0, analysis: 1, progress: 2, briefed: 3, blocked: 4 }[r.st] ?? 5));
+  ok('the order never goes backwards', rank.every((v, i, a2) => !i || a2[i - 1] <= v), rank);
+  ok('the In progress ticket sits with its siblings, not under its own heading',
+     M.items.some((r) => r.st === 'progress'), M.items.map((r) => r.st));
+  ok('a plan-only row ranks last, after every live ticket',
+     rank[rank.length - 1] === 5, rank);
+  // the count beside the heading still says how many are genuinely TESTS
+  ok('the test count is still available for the heading', M.tests.length === 4, M.tests.length);
+}
+
+console.log('\n-- the chip mirrors Workflow, and stops stretching --');
+{
+  const bf = WF.match(/\.bf-chip\{([^}]*)\}/);
+  ok('Workflow\u2019s chip rule was found', !!bf);
+  const lw = CC.match(/\.lw-chip\{([^}]*)\}/);
+  ok('the dossier defines its own chip', !!lw);
+  if (bf && lw) {
+    ['padding:1px 8px', 'border-radius:100px', 'font-size:9.5px', 'font-weight:900', 'white-space:nowrap']
+      .forEach((d) => ok('chip matches Workflow on "' + d + '"',
+        bf[1].includes(d) && lw[1].includes(d), [d, lw[1]]));
+  }
+  // .wl-item is a 3-column grid; a 2-child row put the chip in the 1fr column and it stretched
+  ok('the live row overrides the grid so the chip cannot stretch',
+     /\.lw-item\{grid-template-columns:1fr auto\}/.test(CC));
+  ok('the chip is pinned to the end of its row', /justify-self:end/.test(CC));
+  // scoped to the live block — the one-pager has its own legitimate "In the pipeline" list
+  const lh = CC.slice(CC.indexOf('function liveHtml('), CC.indexOf('function liveHtml(') + 900);
+  ok('the live block renders ONE list, not two', (lh.match(/liveRows\(/g) || []).length === 1,
+     (lh.match(/liveRows\(/g) || []).length);
+  ok('…and no second heading inside it', !/In the pipeline/.test(lh));
+  ok('the heading names what it is', /Active right now/.test(CC));
+}
+
+console.log('\n-- the row reads cleanly with parts missing --');
+{
+  const rows = new Function('esc', `${lift(CC, 'liveRows')} return liveRows;`)((x) => String(x));
+  const h = rows([{ id: 'REIS-1', t: 'A task', st: 'running', lbl: 'Test running', court: 'AM', col: '#9D174D', by: '', tkt: true }], 'none');
+  ok('an absent author leaves no double separator', !/·\s*·/.test(h), h.match(/wl-meta">[^<]*/));
+  ok('…and the parts that exist still join', /REIS-1 · ball with AM/.test(h), h.match(/wl-meta">[^<]*/));
+  const h2 = rows([{ id: '', t: 'Plan row', st: '', lbl: 'Open', court: '', col: '#8a94a0', by: 'Ray', tkt: false }], 'none');
+  ok('a plan row with no ticket id starts at its owner', /wl-meta">Ray</.test(h2), h2.match(/wl-meta">[^<]*/));
+  ok('the heading counts do not run together', / live<\/span>/.test(CC) && /\\u00b7 '\+run/.test(CC));
+}
 
 console.log('\n-- the Activity ring (Ray: "use pie chart or some chart to break the text flow") --');
 const ring = new Function('fmtN', 'esc', `${lift(CC, 'actRing')} return actRing;`)(

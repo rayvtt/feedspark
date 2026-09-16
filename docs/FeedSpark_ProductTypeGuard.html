@@ -543,7 +543,7 @@ window.addEventListener('load',restore);
     if (!clients.length) { $('est-grid').innerHTML = '<div class="panel"><span class="muted">No Google Shopping feeds wired yet.</span></div>'; return; }
     var h = '';
     clients.forEach(function (c) {
-      h += '<div class="est-card"><h3>' + esc(c) + '</h3>';
+      h += '<div class="est-card" data-client="' + esc(c) + '"><h3>' + esc(c) + '</h3>';
       byClient[c].forEach(function (f) {
         var k = keyOf(f.client, f.mkt), st = statusOf(f);
         var cov = f.cov ? f.cov[PT] : null;
@@ -1240,4 +1240,31 @@ window.addEventListener('load',restore);
     if (k) select(k);
   });
 })();
+
+  /* deep-link: /labels?client=<Brand> (and /ptypes) jumps straight to that brand's card.
+     Ray, 16 Sep 2026 — the dossier's suggested next moves name a brand and a count, so the
+     module should open ON that brand rather than on the whole estate for the reader to find.
+     The estate is one page, so "filter" here means scroll to it and mark it; nothing is
+     hidden, because a guard page hiding feeds is how a real alert goes unseen. */
+  (function(){
+    var m=/[?&]client=([^&]+)/.exec(location.search); if(!m)return;
+    var want=decodeURIComponent(m[1].replace(/\+/g,' ')).toLowerCase().replace(/[^a-z0-9]/g,'');
+    if(!want)return;
+    var tries=0;
+    var go=function(){
+      var cards=document.querySelectorAll('.est-card[data-client]');
+      if(!cards.length){ if(++tries<20)return setTimeout(go,300); return; }
+      for(var i=0;i<cards.length;i++){
+        var c=cards[i].getAttribute('data-client')||'';
+        if(c.toLowerCase().replace(/[^a-z0-9]/g,'')===want){
+          cards[i].style.outline='2px solid var(--orange,#ED6F0B)';
+          cards[i].style.outlineOffset='3px';
+          if(cards[i].scrollIntoView)cards[i].scrollIntoView({behavior:'smooth',block:'center'});
+          return;
+        }
+      }
+      if(++tries<20)setTimeout(go,300);
+    };
+    setTimeout(go,400);
+  })();
 </script>

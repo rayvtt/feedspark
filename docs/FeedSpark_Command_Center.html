@@ -346,11 +346,14 @@ window.addEventListener('load',restore);
   .wl-test{font-size:9.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--good);background:#EBF7EF;border:1px solid #CDE9D8;border-radius:5px;padding:1px 5px;margin-left:7px;vertical-align:middle}
   /* live pipeline rows: the stage chip carries Workflow's own colour, so a ticket reads the
      same on both pages and a leadership reader never has to translate between them */
-  .lw-item{align-items:center}
-  .lw-chip{flex:none;color:#fff;font-size:10.5px;font-weight:900;letter-spacing:.02em;
-    border-radius:100px;padding:3px 10px;text-decoration:none;white-space:nowrap}
+  /* .wl-item is a grid of auto 1fr auto — a two-child row put the chip in the 1fr column and
+     it stretched, which is the ragged bar Ray saw. Two columns, and the chip is Workflow's own
+     .bf-chip verbatim (9.5px, 1px 8px, 100px radius) so a stage reads identically on both. */
+  .lw-item{grid-template-columns:1fr auto}
+  .lw-chip{justify-self:end;display:inline-block;padding:1px 8px;border-radius:100px;
+    font-size:9.5px;font-weight:900;color:#fff;white-space:nowrap;text-decoration:none}
   .lw-chip:hover{filter:brightness(1.08)}
-  @media (max-width:720px){ .lw-item{flex-wrap:wrap} .lw-chip{margin-top:4px} }
+  .lw-ct{font-size:10px;font-weight:800;color:var(--muted);margin-left:6px}
   /* ---- log scaffold ---- */
   .logtable{width:100%;border-collapse:collapse;font-size:13.5px}
   .logtable th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
@@ -1515,22 +1518,29 @@ window.addEventListener('load',restore);
     var band=h>=80?'good':h>=60?'watch':'risk', bandL=h>=80?'Good':h>=60?'Watch':'At risk';
     if(!fac.length)fac.push('<span class="dzp-f"><b class="up">✓</b>no health deductions — clean board</span>');
     /* suggestions: ranked, deterministic, each deep-links the module that fixes it */
-    var sug=[],FL='/feedlab?client='+encodeURIComponent(name),KWL='/kwcal?client='+encodeURIComponent(name);
-    if(crit)sug.push({p:1,t:'Resolve '+crit+' critical guard alert'+(crit===1?'':'s')+' — PMAX listing groups key on these exact values.',l:(al.crit?'/labels':'/ptypes'),ll:al.crit?'Label Guard':'PT Guard'});
-    if(od)sug.push({p:od>5?1:2,t:'Chase or reschedule the '+od+' overdue task'+(od===1?'':'s')+'.',l:'/workflow',ll:'Workflow'});
+    /* Every suggestion deep-links to the module ALREADY FILTERED to what it just counted
+       (Ray, 16 Sep 2026: "when you hit the workflow tab you open, it should auto-filter to
+       those four overdue tasks. So the same mechanism should be replicated everywhere").
+       A suggestion that names a number has done the counting; landing on an unfiltered board
+       makes the reader do it again by eye. */
+    var C=encodeURIComponent(name);
+    var sug=[],FL='/feedlab?client='+C,KWL='/kwcal?client='+C,
+        WF=function(f){ return '/workflow?client='+C+(f?('&f='+f):''); };
+    if(crit)sug.push({p:1,t:'Resolve '+crit+' critical guard alert'+(crit===1?'':'s')+' — PMAX listing groups key on these exact values.',l:(al.crit?'/labels':'/ptypes')+'?client='+C,ll:al.crit?'Label Guard':'PT Guard'});
+    if(od)sug.push({p:od>5?1:2,t:'Chase or reschedule the '+od+' overdue task'+(od===1?'':'s')+'.',l:WF('overdue'),ll:'Workflow'});
     var worstA=null; scored.forEach(function(a){ if(!worstA||a.score<worstA.score)worstA=a; });
-    if(worstA&&worstA.score<70)sug.push({p:2,t:worstA.m.toUpperCase()+' feed audit at '+worstA.score+'/100 — dissect the weak pillars.',l:FL,ll:'Feed Lab'});
+    if(worstA&&worstA.score<70)sug.push({p:2,t:worstA.m.toUpperCase()+' feed audit at '+worstA.score+'/100 — dissect the weak pillars.',l:FL+'&market='+encodeURIComponent(worstA.m),ll:'Feed Lab'});
     var unscanned=audL.filter(function(a){return a.score==null}).length;
     if(unscanned)sug.push({p:3,t:unscanned+' wired market'+(unscanned===1?'':'s')+' never scanned — run Feed Lab once for a baseline.',l:FL,ll:'Feed Lab'});
     var worstS=null; satL.forEach(function(x){ if(!worstS||x.pct<worstS.pct)worstS=x; });
-    if(worstS&&worstS.pct<85)sug.push({p:2,t:'Keyword saturation ('+worstS.m.toUpperCase()+') at '+worstS.pct+'% — every calendar moment is a step toward 100%.',l:KWL,ll:'Keyword Calendar'});
+    if(worstS&&worstS.pct<85)sug.push({p:2,t:'Keyword saturation ('+worstS.m.toUpperCase()+') at '+worstS.pct+'% — every calendar moment is a step toward 100%.',l:KWL+'&market='+encodeURIComponent(worstS.m),ll:'Keyword Calendar'});
     if(!kev)sug.push({p:3,t:'No marketing calendar seeded — transcribe the client planner and schedule keyword moments.',l:KWL,ll:'Keyword Calendar'});
-    if(!inflight&&p&&p.open>10)sug.push({p:2,t:p.open+' open tasks but no briefs in flight — brief the next batch.',l:'/workflow',ll:'Workflow'});
-    if(warn&&!crit)sug.push({p:3,t:'Review '+warn+' guard warning'+(warn===1?'':'s')+' before they turn critical.',l:'/labels',ll:'Label Guard'});
+    if(!inflight&&p&&p.open>10)sug.push({p:2,t:p.open+' open tasks but no briefs in flight — brief the next batch.',l:WF('open'),ll:'Workflow'});
+    if(warn&&!crit)sug.push({p:3,t:'Review '+warn+' guard warning'+(warn===1?'':'s')+' before they turn critical.',l:'/labels?client='+C,ll:'Label Guard'});
     if(p){ var worstL=null;
       CORDER.forEach(function(c){ var cc=p.cats&&p.cats[c]; if(!cc||cc.total<2)return;
         var pct=Math.round(cc.done/cc.total*100); if(pct<100&&(!worstL||pct<worstL.pct))worstL={c:c,pct:pct,left:cc.total-cc.done}; });
-      if(worstL)sug.push({p:3,t:'Weakest lane: '+(CLBL[worstL.c]||worstL.c)+' at '+worstL.pct+'% — '+worstL.left+' task'+(worstL.left===1?'':'s')+' to close.',l:'/workflow',ll:'Workflow'}); }
+      if(worstL)sug.push({p:3,t:'Weakest lane: '+(CLBL[worstL.c]||worstL.c)+' at '+worstL.pct+'% — '+worstL.left+' task'+(worstL.left===1?'':'s')+' to close.',l:WF('open')+'&q='+encodeURIComponent(CLBL[worstL.c]||worstL.c),ll:'Workflow'}); }
     sug.sort(function(a,b){return a.p-b.p}); sug=sug.slice(0,5);
     return {p:p,od:od,inflight:inflight,done1:done1,kev:kev,satL:satL,crit:crit,warn:warn,
       audL:audL,scored:scored,avgA:avgA,h:h,band:band,bandL:bandL,fac:fac,facR:facR,sug:sug};
@@ -1733,6 +1743,8 @@ window.addEventListener('load',restore);
   var WF_SHUT={done:1,confirmed:1,dead:1,closed:1};
   // …and these two ARE the test, which is what "currently running tests" means
   var WF_TEST={running:1,analysis:1};
+  // running and analysis ARE the test, so they lead; then the work moving toward one
+  var LW_RANK={running:0,analysis:1,progress:2,briefed:3,blocked:4,intake:6};
   function wfNorm(s){ return String(s||'').trim().toLowerCase(); }
   // fold wording so a ticket and its own plan row are recognised as one piece of work
   function wkKey(s){ return String(s||'').toLowerCase().replace(/&amp;/g,'&')
@@ -1759,7 +1771,15 @@ window.addEventListener('load',restore);
       if(seen[wkKey(t.t)])return;                 // the ticket above already says this
       tests.push({id:'',t:t.t,st:'',lbl:t.s||'Planned',court:'',col:'#8a94a0',by:t.ae||'',tkt:false});
     });
-    return {tests:tests,flight:flight,n:all.length};
+    /* ONE list (Ray, 16 Sep 2026: "why the two sections in the pipeline, one in flight and
+       currently running test? So it's basically merged together"). Splitting them put the
+       Gifting ticket — In progress — under a separate heading from its three siblings, which
+       reads as a different kind of work when it is the same work one stage earlier. Merged and
+       RANKED so running and analysis lead; nothing is dropped, because a ticket that vanishes
+       from the dossier is a ticket nobody chases. */
+    var items=tests.concat(flight).sort(function(a,b){
+      return (LW_RANK[a.st]==null?5:LW_RANK[a.st])-(LW_RANK[b.st]==null?5:LW_RANK[b.st]); });
+    return {items:items,tests:tests,flight:flight,n:all.length};
   }
   function liveRows(items,empty){
     if(!items.length) return '<p class="dz-empty">'+empty+'</p>';
@@ -1767,9 +1787,10 @@ window.addEventListener('load',restore);
       return '<li class="wl-item lw-item">'
         // NOT opSafe'd: this is the internal leadership view, where ASPL and the tool names are
         // the right words. The client-facing one-pager is the surface that sanitises them.
+        // built from the parts that EXIST — an absent author used to leave "REIS-… · · ball with AM"
         +'<span class="wl-body"><span class="wl-t">'+esc(r.t)+'</span>'
-        +'<span class="wl-meta">'+(r.id?esc(r.id)+' · ':'')+(r.by?esc(r.by):(r.tkt?'':'plan'))
-        +(r.court?' · ball with '+esc(r.court):'')+'</span></span>'
+        +'<span class="wl-meta">'+[r.id?esc(r.id):'', r.by?esc(r.by):(r.tkt?'':'plan'),
+           r.court?'ball with '+esc(r.court):''].filter(Boolean).join(' · ')+'</span></span>'
         +'<a class="lw-chip" href="/workflow" title="Open in Workflow" style="background:'+r.col+'">'
         +esc(r.lbl)+'</a></li>'; }).join('')+'</ul>';
   }
@@ -1814,11 +1835,12 @@ window.addEventListener('load',restore);
   }
   function liveHtml(name,tasks){
     var LW=liveWork(name,tasks);
-    return '<div class="dz-work-head"><h4>Currently running tests <span class="dz-histn">'+LW.tests.length+' live</span></h4>'
-      +'<a class="lnk dz-wf" href="/workflow" title="Full test register in Workflow" style="margin-left:auto;font-size:12px;font-weight:800">Workflow test register ↗</a></div>'
-      +liveRows(LW.tests,'No tests running right now — the full register lives in <a href="/workflow">Workflow</a>.')
-      +'<div class="dz-work-head" style="margin-top:16px"><h4>In the pipeline <span class="dz-histn">'+LW.flight.length+' in flight</span></h4></div>'
-      +liveRows(LW.flight,'Nothing in the pipeline for this brand right now.');
+    var run=LW.tests.length;
+    // "4" and "3 tests running" ran together as "43" — the badge carries its own noun now
+    return '<div class="dz-work-head"><h4>Active right now <span class="dz-histn">'+LW.items.length+' live</span>'
+      +(run?'<span class="lw-ct"> \u00b7 '+run+' test'+(run===1?'':'s')+' running</span>':'')+'</h4>'
+      +'<a class="lnk dz-wf" href="/workflow" title="The full board lives in Workflow" style="margin-left:auto;font-size:12px;font-weight:800">Open in Workflow ↗</a></div>'
+      +liveRows(LW.items,'Nothing active for this brand right now — the full board lives in <a href="/workflow">Workflow</a>.');
   }
   /* Keep the open dossier honest: re-read the pipeline and repaint ONLY this block, so a
      leadership screen left open follows the board instead of freezing at page-load state. */
