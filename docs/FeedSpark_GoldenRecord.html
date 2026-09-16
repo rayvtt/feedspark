@@ -210,6 +210,56 @@ window.addEventListener('load',restore);
   .q-in:focus{outline:none;border-color:var(--orange)}
   @keyframes lgspin{to{transform:rotate(360deg)}}
   .spin{display:inline-block;width:11px;height:11px;border:2px solid var(--orange);border-top-color:transparent;border-radius:50%;animation:lgspin .7s linear infinite;vertical-align:-1px;margin-right:5px}
+  /* content quality: how good the free-text data is, per Google's own spec pages */
+  .qz-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+  .qz-score{font-size:30px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+  .qz-of{font-size:11px;font-weight:900;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+  .qz-pill{font-size:11px;font-weight:900;border-radius:100px;padding:4px 11px;border:1px solid var(--line)}
+  .qz-pill.good{background:#EAF7EE;border-color:#BFE3CB;color:var(--good)}
+  .qz-pill.mid{background:#FDF3E3;border-color:#F3D9A8;color:var(--orange-deep)}
+  .qz-pill.poor{background:#FDEBEA;border-color:#F5C4C0;color:var(--risk)}
+  .qz-line{font-size:12.5px;color:var(--ink-2);margin:0 0 10px;line-height:1.55}
+  .qz-row{display:grid;grid-template-columns:186px 52px minmax(90px,1fr) minmax(190px,1.4fr) 152px;gap:10px;
+    align-items:center;padding:6px 0;border-top:1px dashed var(--line);font-size:12.5px}
+  .qz-row:first-of-type{border-top:none}
+  .qz-nm{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+  .qz-nm i{font-style:normal;color:var(--muted);font-weight:700}
+  .qz-nm .cx{color:var(--muted);font-weight:900;margin-right:4px;display:inline-block;width:9px}
+  .qz-n{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}
+  .qz-bar{height:9px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden;position:relative}
+  .qz-bar i{display:block;height:100%;background:var(--good)}
+  .qz-bar i.mid{background:var(--orange)}
+  .qz-bar i.poor{background:var(--risk)}
+  .qz-worst{font-size:11px;color:var(--muted);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qz-act{display:flex;gap:5px;align-items:center;justify-content:flex-end;flex-wrap:nowrap}
+  .qz-flag{font-size:10px;font-weight:900;border-radius:100px;padding:1px 7px;margin-left:5px}
+  .qz-flag.f{background:#FDEBEA;color:var(--risk)}
+  .qz-flag.w{background:#FDF3E3;color:var(--orange-deep)}
+  .qz-det{grid-column:1/-1;padding:4px 0 10px}
+  .qz-rule{display:grid;grid-template-columns:104px minmax(150px,1fr) 78px;gap:10px;align-items:start;
+    padding:7px 0;border-top:1px dotted var(--line);font-size:12px}
+  .qz-sev{font-size:9px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;border-radius:100px;
+    padding:3px 6px;text-align:center;white-space:nowrap;align-self:start}
+  .qz-sev.fail{background:#FDEBEA;color:var(--risk)}
+  .qz-sev.warn{background:#FDF3E3;color:var(--orange-deep)}
+  .qz-rl{font-weight:800;display:block}
+  .qz-why{display:block;font-weight:600;color:var(--muted);font-size:11.5px;margin-top:2px;line-height:1.5}
+  .qz-eg{margin-top:4px;font-size:11px;color:var(--ink-2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .qz-eg span{display:block;background:var(--wash);border:1px solid var(--line);border-radius:6px;
+    padding:3px 7px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qz-hit{text-align:right;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .qz-hit b{display:block;font-size:13px}
+  .qz-hit span{font-weight:700;color:var(--muted);font-size:10.5px}
+  .qz-empty{font-size:12.5px;color:var(--ink-2);line-height:1.6}
+  .qz-meta{font-size:11px;font-weight:700;color:var(--muted);margin-left:auto;display:flex;align-items:center;gap:8px}
+  body.demo .qz-act{display:none!important}
+  @media(max-width:900px){.qz-row{grid-template-columns:130px 46px 1fr}.qz-worst,.qz-act{display:none}
+    .qz-rule{grid-template-columns:92px 1fr}.qz-hit{display:none}}
+  [data-theme=dark] .qz-pill.good{background:#12281A;border-color:#1E4429}
+  [data-theme=dark] .qz-pill.mid{background:#2A2114;border-color:#4A3A1C}
+  [data-theme=dark] .qz-pill.poor{background:#2A1614;border-color:#4A2320}
+  [data-theme=dark] .qz-sev.fail{background:#2A1614}
+  [data-theme=dark] .qz-sev.warn{background:#2A2114}
   /* ⬇ PDF: the feed scorecard prints as a clean client-ready document — ONE CONTINUOUS
      VERTICAL PAGE (Ray, 16 Sep 2026: "should all fit in 1 vertical page"). exportPdf
      measures the laid-out scorecard and injects @page{size:210mm <content>mm}, so the
@@ -225,7 +275,8 @@ window.addEventListener('load',restore);
   body.pdf #theme-tgl,body.pdf .det-actions,body.pdf .at-act,body.pdf #askp-slot,body.pdf #profp-slot,
   body.pdf .refseg,body.pdf #sec-detail .cat-h,body.pdf #sec-detail .cat-sub,
   body.pdf #fcc-fcb,body.pdf #fcc-fcp,body.pdf #tky-fab,body.pdf #tky-scrim,body.pdf #tky-drawer,
-  body.pdf #fcc-viewas,body.pdf #fcc-apps,body.pdf #fcc-navcz,body.pdf #fcc-navcz-scrim{display:none!important}
+  body.pdf #fcc-viewas,body.pdf #fcc-apps,body.pdf #fcc-navcz,body.pdf #fcc-navcz-scrim,
+  body.pdf .qz-act,body.pdf #qz-run,body.pdf #qz-msg{display:none!important}
   body.pdf #sec-detail{border-top:none;padding:0}
   body.pdf #sec-detail .wrap{max-width:none;padding:0}
   body.pdf .panel,body.pdf .tier{box-shadow:none!important;border:1px solid #E6E6E6!important;background:#fff!important}
@@ -764,6 +815,8 @@ window.addEventListener('load',restore);
         CACHE[k] = d;
         if (!d.snapshot || (Date.now() - d.snapshot.t) > STALE_MS) { scan(k, true); }
         else renderDetail(k);
+        // the stored content-quality reading (non-blocking; the section fills in when it lands)
+        if (QUAL[k] === undefined) loadQuality(k).then(function () { if (SEL === k) renderDetail(k); });
         // the last PDP recovery sample (non-blocking; a chip appears when one exists)
         fetch(API + '/api/golden/pdp?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
           .then(function (r) { return r.json(); })
@@ -977,6 +1030,7 @@ window.addEventListener('load',restore);
       });
       h += '</div>';
     });
+    h += qualitySection(k, s);   // Ray's content-quality read, below the four spec tiers
     $('det-panel').innerHTML = h;
     wire(k, s);
   }
@@ -1131,6 +1185,7 @@ window.addEventListener('load',restore);
   }
 
   function wire(k, s) {
+    wireQuality(k);
     if ($('prof-edit')) $('prof-edit').onclick = function () { openProf(k); };
     Array.prototype.forEach.call(document.querySelectorAll('[data-ask]'), function (el) {
       el.onclick = function () { openAsk(k, el.getAttribute('data-ask')); };
@@ -1443,6 +1498,222 @@ window.addEventListener('load',restore);
     openAsk(R.k, 'pdp', t);
   }
 
+  /* ---------------- Content quality: is the data any GOOD? (docs/LABELGUARD.md §9.6) ----
+     Ray, 16 Sep 2026: "reviewing the data quality of each attribute, especially if they
+     contain free content … each has its own standard of what good quality must look like
+     (benchmark rating against Google's support page)."
+     Coverage says an attribute is THERE. This says what is in it is worth having: every
+     rule is one Google states on that attribute's own specification page, carried with the
+     answer id so each finding cites and links its source. The browser streams the feed once
+     through labelguard's qualityCollector (the worker never parses rows) and PUTs the
+     compact aggregate to /api/golden/quality, so it reloads with the scorecard. */
+  var LGQ = null;         // the labelguard engine module, loaded once for the rule library
+  var QUAL = {};          // key -> reading | null (null = asked the API, nothing stored)
+  var QOPEN = {};         // key|attr -> expanded rule detail
+  var QRUN = null;        // the analysis in flight, if any
+
+  function loadQuality(k) {
+    var p = parts(k);
+    return fetch(API + '/api/golden/quality?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
+      .then(function (r) { return r.json(); })
+      .then(function (d) { QUAL[k] = (d && d.quality) || null; })
+      .catch(function () { QUAL[k] = null; });
+  }
+  // stream the live feed once and score every row against the spec rules. Header handling
+  // mirrors xmlCollector: the first row IS the header, and an XML feed can grow its header
+  // mid-stream when a sparse tag debuts late (the Monsoon CL1 lesson) — re-resolve then.
+  function qualityRun(k, onState) {
+    var p = parts(k);
+    return Promise.all([loadFA(), loadLG()]).then(function (a) {
+      var FA = a[0], LG = a[1], col = null, cols = null, header = null, late = [];
+      function onRow(r, liveHeader) {
+        if (!col) { header = r.slice(); cols = LG.findAttrCols(header); col = LG.qualityCollector(cols); return; }
+        // an XML feed can GROW its header mid-stream when a sparse tag debuts late (the
+        // Monsoon custom_label_1 lesson). Growth only ever APPENDS, so every column we
+        // already resolved stays valid — but a free-text attribute that debuts after the
+        // first item was never in the collector, and back-filling it would mean re-reading
+        // the feed. Record it and say so rather than quietly scoring a partial column.
+        if (liveHeader && liveHeader.length !== header.length) {
+          header = liveHeader.slice();
+          var grown = LG.findAttrCols(header);
+          LG.QSPEC.forEach(function (q) {
+            if (grown[q.key] >= 0 && !(cols[q.key] >= 0) && late.indexOf(q.key) < 0) late.push(q.key);
+          });
+        }
+        col.onRow(r);
+      }
+      var parser = null, got = 0, next = 0;
+      return fetch('/api/feed/proxy?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
+        .then(function (res) {
+          if (!res.ok || !res.body) throw new Error('feed fetch failed (HTTP ' + res.status + ')');
+          var rd = res.body.getReader(), dec = new TextDecoder();
+          function pump() {
+            return rd.read().then(function (x) {
+              if (x.done) { if (parser) { parser.push(dec.decode()); parser.end(); } return; }
+              var chunk = dec.decode(x.value, { stream: true });
+              if (!parser) parser = /^\s*</.test(chunk) ? FA.createXmlParser(onRow) : FA.createParser(onRow);
+              got += x.value.length;
+              if (onState && got > next) {
+                next = got + 2 * 1048576;
+                onState('reading the live feed — ' + (got / 1048576).toFixed(1) + ' MB');
+              }
+              parser.push(chunk);
+              return pump();
+            });
+          }
+          return pump();
+        })
+        .then(function () {
+          if (!col) throw new Error('the feed produced no rows');
+          var snap = col.finish({ client: p.client, market: p.mkt, late: late.length ? late : undefined });
+          if (!snap.rows) throw new Error('the feed produced no rows');
+          return fetch(API + '/api/golden/quality?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt),
+            { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(snap) })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              if (d && d.error) throw new Error(d.error);
+              QUAL[k] = snap;
+              return snap;
+            });
+        });
+    });
+  }
+  function qualBand(s) { return s >= 90 ? 'good' : (s >= 75 ? 'mid' : 'poor'); }
+
+  function qualitySection(k, s) {
+    var q = (LGQ && QUAL[k]) ? LGQ.qualityScore(QUAL[k]) : null;
+    var h = '<div class="tier" id="qz-tier"><div class="tier-h">' +
+      '<span class="tbadge rec" style="background:#EDE9FE;color:#5B21B6">Content quality</span>' +
+      '<h4>Is the data any good?</h4>' +
+      '<span class="qz-meta">' +
+      (QUAL[k] ? '<span>' + fmt(QUAL[k].rows) + ' products read · ' + ago(QUAL[k].t) + '</span>' : '') +
+      '<button class="btn" id="qz-run">' + (QUAL[k] ? '⟳ Re-analyse' : '⚡ Analyse content quality') + '</button>' +
+      '<span class="scanmsg" id="qz-msg"></span></span></div>' +
+      '<p class="tier-sub">Coverage says an attribute is <i>there</i>. This reads what is actually <i>in</i> the free-text' +
+      ' fields — title, description, highlights, category, type, colour, material, pattern — against the rules Google' +
+      ' publishes on each attribute’s own specification page. Every finding below quotes the rule it comes from:' +
+      ' <b>requirement</b> means Google states it as a rule (disapproval or truncation risk), <b>best practice</b>' +
+      ' means it is guidance you are leaving on the table.</p>';
+    if (!q) {
+      h += '<p class="qz-empty">' + (QUAL[k]
+        ? (LGQ ? 'The last run found no free-text attribute in this feed to measure.'
+               : 'Loading the rule library…')
+        : 'Not analysed yet. <b>⚡ Analyse content quality</b> streams the live feed in your browser and scores every' +
+          ' product against the specification — nothing is parsed server-side, and the result is stored with the' +
+          ' scorecard so it is here next time.') + '</p></div>';
+      return h;
+    }
+    h += '<div class="qz-head"><span class="qz-score" style="color:' + scoreCol(q.score) + '">' + q.score + '</span>' +
+      '<span class="qz-of">Content quality<br>/ 100</span>' +
+      '<span class="qz-pill ' + q.verdict.band + '">' + esc(q.verdict.pill) + '</span></div>' +
+      '<p class="qz-line">' + esc(q.verdict.line) +
+      (q.fails ? ' <b>' + q.fails + ' stated requirement' + (q.fails === 1 ? '' : 's') + '</b> broken across the free-text attributes.' : '') +
+      '</p>';
+    if (QUAL[k].late && QUAL[k].late.length) {
+      h += '<p class="qz-line" style="color:var(--orange-deep)">Not measured this run: <b>g:' +
+        QUAL[k].late.map(esc).join('</b>, <b>g:') + '</b> — the column debuts deeper in the feed than the' +
+        ' first product, so it was not in the header when the read started. Coverage for it is still on the' +
+        ' scorecard above.</p>';
+    }
+    q.parts.forEach(function (r) {
+      var open = QOPEN[k + '|' + r.key];
+      var worst = r.broken[0];
+      h += '<div class="qz-row" data-qk="' + esc(r.key) + '">' +
+        '<span class="qz-nm" title="' + esc(r.spec) + '"><span class="cx">' + (open ? '▾' : '▸') + '</span><i>g:</i>' + esc(r.key) + '</span>' +
+        '<span class="qz-n" style="color:' + scoreCol(r.score) + '">' + r.score + '</span>' +
+        '<span class="qz-bar" title="' + r.score + '/100 across ' + fmt(r.filled) + ' products with a value">' +
+        '<i class="' + qualBand(r.score) + '" style="width:' + Math.max(1.5, Math.min(100, r.score)) + '%"></i></span>' +
+        '<span class="qz-worst" title="' + esc(worst ? worst.label + ' — ' + worst.pct + '% of products' : '') + '">' +
+        (worst ? esc(worst.label) + ' · ' + worst.pct + '%' : 'nothing flagged — meets the spec') +
+        (r.fails ? '<span class="qz-flag f">' + r.fails + ' req</span>' : '') +
+        (r.warns ? '<span class="qz-flag w">' + r.warns + ' bp</span>' : '') + '</span>' +
+        '<span class="qz-act">' +
+        (worst ? '<button class="abtn" data-qask="' + esc(r.key) + '">✉ Ask client</button>' +
+          '<button class="abtn" data-qbrief="' + esc(r.key) + '">→ Brief</button>' : '') + '</span>';
+      if (open) {
+        h += '<div class="qz-det">';
+        if (!r.broken.length) {
+          h += '<p class="qz-empty">Every rule Google states for <b>g:' + esc(r.key) + '</b> passes on all ' +
+            fmt(r.filled) + ' products that carry a value. Average length ' + r.avgLen + ' characters (' +
+            r.minLen + '–' + r.maxLen + ').</p>';
+        } else {
+          r.broken.forEach(function (b) {
+            h += '<div class="qz-rule"><span class="qz-sev ' + b.sev + '">' + (b.sev === 'fail' ? 'requirement' : 'best practice') + '</span>' +
+              '<span><span class="qz-rl">' + esc(b.label) + '</span>' +
+              '<span class="qz-why">' + esc(b.why) + '</span>' +
+              (b.eg && b.eg.length ? '<span class="qz-eg">' + b.eg.map(function (e) { return '<span title="' + esc(e) + '">' + esc(e) + '</span>'; }).join('') + '</span>' : '') +
+              '</span>' +
+              '<span class="qz-hit"><b>' + b.pct + '%</b><span>' + fmt(b.n) + ' products</span></span></div>';
+          });
+        }
+        h += '<p class="hint muted" style="margin:8px 0 0;font-size:11px">' + esc(r.spec) +
+          ' · <a href="https://support.google.com/merchants/answer/' + r.doc + '" target="_blank" rel="noopener">Google’s specification for g:' + esc(r.key) + '</a>' +
+          ' · average length ' + r.avgLen + ' chars (' + r.minLen + '–' + r.maxLen + ')</p></div>';
+      }
+      h += '</div>';
+    });
+    return h + '</div>';
+  }
+  function wireQuality(k) {
+    var btn = $('qz-run');
+    if (btn) btn.onclick = function () {
+      if (QRUN) return;
+      QRUN = k;
+      btn.disabled = true;
+      var msg = $('qz-msg');
+      var say = function (t) { if ($('qz-msg')) $('qz-msg').innerHTML = '<span class="spin"></span>' + esc(t); };
+      say('starting…');
+      qualityRun(k, say)
+        .then(function () { QRUN = null; if (SEL === k) renderDetail(k); })
+        .catch(function (e) {
+          QRUN = null;
+          if ($('qz-msg')) $('qz-msg').textContent = '✗ ' + (e && e.message ? e.message : 'analysis failed');
+          if ($('qz-run')) $('qz-run').disabled = false;
+        });
+    };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-qk]'), function (el) {
+      var nm = el.querySelector('.qz-nm');
+      if (nm) nm.onclick = function () {
+        var kk = k + '|' + el.getAttribute('data-qk');
+        QOPEN[kk] = !QOPEN[kk];
+        renderDetail(k);
+      };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-qask]'), function (el) {
+      el.onclick = function () { qualityAsk(k, el.getAttribute('data-qask')); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-qbrief]'), function (el) {
+      el.onclick = function () { qualityBrief(k, el.getAttribute('data-qbrief')); };
+    });
+  }
+  function qualityPart(k, attr) {
+    var q = QUAL[k] ? LGQ.qualityScore(QUAL[k]) : null;
+    if (!q) return null;
+    return q.parts.filter(function (p) { return p.key === attr; })[0] || null;
+  }
+  function qualityAsk(k, attr) {
+    var r = qualityPart(k, attr); if (!r) return;
+    var p = parts(k);
+    openAsk(k, attr, LGQ.qualityAskEmail(p.client, p.mkt, r));
+  }
+  function qualityBrief(k, attr) {
+    var r = qualityPart(k, attr); if (!r) return;
+    var p = parts(k), dt = new Date();
+    var mmyy = ('0' + (dt.getMonth() + 1)).slice(-2) + String(dt.getFullYear()).slice(2);
+    var lines = ['Attribute: g:' + attr + ' — content quality ' + r.score + '/100 vs Google’s specification',
+      'Measured: ' + fmt(r.filled) + ' products carry a value · average length ' + r.avgLen + ' chars (' + r.minLen + '–' + r.maxLen + ')'];
+    r.broken.slice(0, 5).forEach(function (b) {
+      lines.push((b.sev === 'fail' ? 'REQUIREMENT' : 'best practice') + ': ' + b.label + ' — ' + b.pct + '% (' + fmt(b.n) + ' products). ' + b.why);
+    });
+    lines.push('Spec: support.google.com/merchants/answer/' + (LGQ.qspecOf(attr) || {}).doc);
+    lines.push('Source: Golden Record content quality (/golden)');
+    try { fetch(API + '/api/golden/plantask?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt) +
+      '&attr=' + encodeURIComponent('quality-' + attr), { method: 'POST', keepalive: true }).catch(function () {}); } catch (e) {}
+    location.href = '/workflow?brief=' + b64url({ client: p.client,
+      task: 'Content Quality - g:' + attr + ' - ' + p.client + ' ' + p.mkt.toUpperCase() + ' - ' + mmyy,
+      cat: 'technical', scope: lines.join('\n') });
+  }
+
   /* ---------------- PDF export (print-to-PDF: branded header, scorecard only) --------
      ONE CONTINUOUS VERTICAL PAGE (Ray, 16 Sep 2026): the scorecard used to slice across
      A4 breaks — 5–9 sheets, the first mostly blank because a tier that would not fit was
@@ -1552,6 +1823,9 @@ window.addEventListener('load',restore);
     if (Object.keys(ESTATE.feeds).length) renderEstate();
     if (SEL) renderDetail(SEL);
   }).catch(function () {});
+
+  // the rule library for the content-quality section (same engine the guards share)
+  loadLG().then(function (m) { LGQ = m; if (SEL) renderDetail(SEL); }).catch(function () {});
 
   // ask-the-client state (contact memory + ✉ asked stamps — Label Guard's shared rails)
   fetch(API + '/api/labels/askdraft').then(function (r) { return r.json(); }).then(function (d) {

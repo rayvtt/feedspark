@@ -436,7 +436,55 @@ prep for client demo").
 
 Engine unit tests: `node tools/test_labelguard.mjs` (runs in `validate.yml` on every PR).
 
-### 9.5 PDP recovery scan — "missing data can be sourced from the PDP" (Ray, 14 Sep 2026)
+### 9.6 Content quality — is the data any GOOD? (`/golden`, the fifth section)
+
+Ray, 16 Sep 2026: *"what's missing is also reviewing the data quality of each attribute,
+especially if they contain free content (title, description, product highlight, GPC, product
+type, material, pattern…) — each of these has its own standard of what good quality must look
+like (benchmark rating against Google's support page)."*
+
+Golden Record's four tiers answer **is the attribute there, and how full is it**. This answers
+**is what's in it worth having** — and it is measured, not asserted: every rule is one Google
+states on that attribute's own specification page, carried in the engine with the answer id so
+each finding quotes and links its source.
+
+- **Roster (`QSPEC`, 8 attributes / 46 rules):** `title` (6324415), `description` (6324468),
+  `product_highlight` (9216100), `google_product_category` (6324436), `product_type` (6324406),
+  `color` (6324487), `material` (6324410), `pattern` (6324483).
+- **Two severities, never blurred:** `fail` = a stated REQUIREMENT (over the character limit,
+  promotional text, block capitals, HTML, links, placeholder values, a non-colour in `color`) —
+  disapproval or truncation risk; `warn` = a stated BEST PRACTICE (a title under 70 characters,
+  fewer than 4 highlights, a category under three levels, a single-level product_type,
+  duplicated copy) — legal, but performance left on the table.
+- **Judgement calls the rules make carefully:** capitals are read as *emphasis*, so the brand is
+  stripped first — HUGO BOSS is a logo, `SALE NOW ON` is a shout (`stripBrand` + `shoutyCaps`);
+  a bare top-level GPC name is *shallow*, never *invalid* (the full 5,500-value taxonomy is not
+  worth shipping into the page, so the rule tests the SHAPE Google specifies); `n/a` is caught
+  once, by the placeholder rule, and never double-counted as a multi-value pattern.
+- **Scoring:** a rule costs the share of *filled* products that break it, weighted by severity
+  (`QW` fail 1.0 / warn 0.4) — a requirement broken on 40% of products costs 40 points, the same
+  break on a best practice costs 16. Attributes weigh 3 (title, description) / 2 (highlights,
+  GPC, product type) / 1 (colour, material, pattern), the same shape as `goldenScore` so the two
+  numbers read alike. Bands: ≥90 ✓ meets the spec, 75–89 ⚠ below best practice, <75 🔻.
+- **Where the data comes from:** the BROWSER streams the feed once through `qualityCollector`
+  (the worker never parses a feed — the Feed Lab CPU rule), scoring every row as it arrives;
+  duplicate detection is a bounded value→count map and example offenders are capped at 4 per
+  rule, so a 125MB feed costs megabytes. What is stored (`PUT /api/golden/quality` →
+  `goldenqual:<client>:<mkt>`) is the compact aggregate — hit counts, percentages, a handful of
+  example values — and the worker keeps only attributes and rule ids the spec knows, so a client
+  cannot widen the store. The feed's quality score rides onto `goldenidx` (`q`, `qFails`, `qT`).
+- **Page:** a fifth section under the four tiers — headline score + plain-English verdict, a row
+  per attribute (score, bar, worst rule, requirement/best-practice counts), click a row to expand
+  every broken rule with Google's own wording, the offending values, the hit rate, and a link to
+  the specification page. Per attribute: **✉ Ask client** (`qualityAskEmail` on the shared
+  askdraft rails) and **→ Brief** (a Workflow deep-link that also files "Content Quality -
+  g:<attr>" into the client's Project Plan), hidden in 🎭 demo mode and in the PDF.
+- **Honest about what it did not read:** a free-text column that debuts deeper in an XML feed
+  than the first product was never in the header when the stream started (the Monsoon
+  `custom_label_1` lesson), so it is named as *not measured this run* rather than scored from a
+  partial column.
+
+## 9.5 PDP recovery scan — "missing data can be sourced from the PDP" (Ray, 14 Sep 2026)
 
 **Why.** The Golden Record gaps are rarely gaps on the client's site: a 14 Sep 2026 probe of the
 eight wired GB brands (three product pages each) found the composition, colour name, pattern,

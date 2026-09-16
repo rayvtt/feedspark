@@ -5431,6 +5431,60 @@
    "file": "docs/FeedSpark_GoldenRecord.html",
    "pattern": "body.pdf .at-note{display:block!important",
    "min": 1
+  },
+  {
+   "name": "Golden Record content quality: QSPEC — eight free-text attributes, 46 rules quoted from Google's own specification pages, fail=requirement vs warn=best practice (Ray 16 Sep 2026)",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "export const QSPEC",
+   "min": 1
+  },
+  {
+   "name": "Content quality: qualityCollector streams per-row in the browser (bounded dupe map, capped example offenders) — the worker never parses a feed",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "export function qualityCollector",
+   "min": 1
+  },
+  {
+   "name": "Content quality: attrQuality/qualityScore — a rule costs the share of products that break it, weighted fail 1.0 / warn 0.4, attributes weighted 3/2/1",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "export function qualityScore",
+   "min": 1
+  },
+  {
+   "name": "Content quality: shoutyCaps + stripBrand — capitals for emphasis is a violation, a brand STYLED in capitals is not",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "export function stripBrand",
+   "min": 1
+  },
+  {
+   "name": "Content quality: the per-attribute client ask on the shared askdraft rails",
+   "file": "cloudflare/feedspark-deck/src/labelguard.js",
+   "pattern": "export function qualityAskEmail",
+   "min": 1
+  },
+  {
+   "name": "Worker: GET/PUT /api/golden/quality — stores only spec-known attributes/rule shapes and annotates goldenidx with the feed's quality score",
+   "file": "cloudflare/feedspark-deck/src/worker.js",
+   "pattern": "goldenqual:",
+   "min": 2
+  },
+  {
+   "name": "Golden Record page: the Content quality section — stream, score, expand a rule to its Google quote + offending values, Ask client / Brief",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "function qualitySection",
+   "min": 1
+  },
+  {
+   "name": "Content quality: a free-text column that debuts deeper than the first product is reported as not measured, never scored partially",
+   "file": "docs/FeedSpark_GoldenRecord.html",
+   "pattern": "Not measured this run",
+   "min": 1
+  },
+  {
+   "name": "Content-quality harness: the eight attributes, every rule, the scoring maths and the clean-feed-scores-100 case in tools/test_labelguard.mjs",
+   "file": "tools/test_labelguard.mjs",
+   "pattern": "QSPEC: the eight free-text attributes",
+   "min": 1
   }
  ]
 }

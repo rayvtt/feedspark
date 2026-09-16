@@ -1199,3 +1199,388 @@ export function summarize(snap, alerts, baseT, keys) {
     baseT: baseT || snap.t,
   };
 }
+
+/* ---------------- Content quality: how GOOD the free-text data is ----------------------
+   Ray, 16 Sep 2026: "what's missing is also reviewing the data quality of each attribute,
+   especially if they contain free content (title, description, product highlight, GPC,
+   product type, material, pattern…) — each of these has its own standard of what good
+   quality must look like (benchmark rating against Google's support page)."
+
+   Golden Record answers "is the attribute THERE and how full is it". This answers "is what
+   is in it any GOOD" — every rule below is a rule Google states on the attribute's own
+   specification page, carried with the answer id so the page can cite and link it.
+
+     sev 'fail' = a stated REQUIREMENT — breaking it risks disapproval or truncation
+     sev 'warn' = a stated BEST PRACTICE — legal, but leaving performance on the table
+
+   Rules run per SKU in the browser over the streamed feed (the worker never parses rows,
+   per the Feed Lab CPU rule); qualityCollector aggregates hit counts + example offenders
+   as it streams, so a 125MB feed costs megabytes, not gigabytes. */
+
+const PROMO_RE = /\b(free\s+(?:shipping|delivery|p&p)|sale|best\s+price|lowest\s+price|cheap(?:est)?|discount(?:ed)?|clearance|buy\s+now|shop\s+now|order\s+now|limited\s+time|special\s+offer|bogof|\d+%\s*off|save\s*[£$€]\s*\d|now\s*only)\b/i;
+const HTML_RE = /<\s*\/?\s*[a-z][^>]*>|&(?:nbsp|amp|lt|gt|quot|#\d+);/i;
+const URL_RE = /(?:https?:\/\/|www\.)\S+/i;
+// gimmicks Google names explicitly: repeated punctuation, decorative symbols, emoji
+const GIMMICK_RE = /[!?]{2,}|\*{2,}|[★☆➤►◄♥♦●■→⇒✔✓✩✪]|[\u{1F000}-\u{1FAFF}]|[\u{2600}-\u{27BF}]/u;
+const PLACEHOLDER_RE = /^(?:n\/?a|none|null|nil|other|multi(?:colou?r)?|misc|unknown|tbc|-{1,}|\.+|0)$/i;
+const FANCY_RE = /[\u{1D400}-\u{1D7FF}]/u;   // maths-alphanumeric "fancy" letters
+const COLOUR_WORDS = /\b(black|white|red|blue|green|yellow|pink|purple|grey|gray|brown|beige|navy|cream|gold|silver|orange|ivory|tan|khaki|burgundy|teal|lilac)\b/i;
+const SIZE_WORDS = /\b(xxs|xs|small|medium|large|xl|xxl|xxxl|\d{1,2}(?:\.\d)?\s?(?:cm|mm|inch|in|ml|l|g|kg)|uk\s?\d{1,2}|eu\s?\d{2})\b/i;
+
+// "capital letters for emphasis" — 2+ consecutive shouty words, or a wholly-caps string.
+// Acronyms (UK, XL, USB, 2XL) are legitimate, so a single caps token never trips it, and
+// a brand that is simply STYLED in capitals (HUGO BOSS, DKNY, CALVIN KLEIN) is stripped
+// out before the test: the rule is about emphasis, not about someone's logo.
+export function stripBrand(v, brand) {
+  const b = String(brand || '').trim();
+  if (!b || b.length < 2) return String(v || '');
+  return String(v || '').replace(new RegExp(b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), ' ');
+}
+export function shoutyCaps(v) {
+  const s = String(v || '');
+  const letters = s.replace(/[^A-Za-z]/g, '');
+  if (letters.length >= 8 && letters === letters.toUpperCase()) return true;
+  const ws = s.split(/\s+/).filter((w) => /[A-Za-z]{3,}/.test(w));
+  let run = 0;
+  for (const w of ws) {
+    const l = w.replace(/[^A-Za-z]/g, '');
+    if (l.length >= 3 && l === l.toUpperCase()) { run++; if (run >= 2) return true; } else run = 0;
+  }
+  return false;
+}
+// a repeatable field (highlights, details) arrives from the parsers joined on |||
+export function multiVals(v) {
+  return String(v == null ? '' : v).split(/\s*\|\|\|\s*|\n+/).map((x) => x.trim()).filter(Boolean);
+}
+const words = (v) => String(v || '').trim().split(/\s+/).filter(Boolean);
+
+/* Per attribute: the spec limits Google publishes, the weight the attribute carries in the
+   content-quality score, and its rules. `doc` is the support.google.com/merchants answer. */
+export const QSPEC = [
+  { key: 'title', doc: 6324415, w: 3, max: 150, label: 'Product title',
+    spec: '1–150 characters · brand + product + distinguishing details, most important first',
+    rules: [
+      { id: 'len-over', sev: 'fail', label: 'over 150 characters',
+        why: 'Google’s limit for [title] is 1–150 characters — longer titles are truncated.',
+        test: (v) => v.length > 150 },
+      { id: 'caps', sev: 'fail', label: 'capital letters for emphasis',
+        why: '“Don’t use all caps” — Google names block capitals as a gimmicky way of drawing attention.',
+        test: (v, r) => shoutyCaps(stripBrand(v, r.brand)) },
+      { id: 'promo', sev: 'fail', label: 'promotional text',
+        why: '“Don’t include promotional text such as price, sale price, sale dates, shipping, delivery date.”',
+        test: (v) => PROMO_RE.test(v) },
+      { id: 'gimmick', sev: 'fail', label: 'symbols / HTML / emoji',
+        why: '“Don’t use gimmicky ways of drawing attention such as all caps, symbols, HTML tags.”',
+        test: (v) => GIMMICK_RE.test(v) || HTML_RE.test(v) || FANCY_RE.test(v) },
+      { id: 'thin', sev: 'warn', label: 'under 30 characters',
+        why: 'A title this short cannot carry brand + product + variant detail, so it matches far fewer queries.',
+        test: (v) => v.length < 30 },
+      { id: 'short', sev: 'warn', label: 'under 70 characters — room unused',
+        why: '“Use all 150 characters” and “put the most important details first” — users usually notice only the first 70.',
+        test: (v) => v.length >= 30 && v.length < 70 },
+      { id: 'no-brand', sev: 'warn', label: 'brand missing from the title',
+        why: 'Google asks for keywords like product name and brand; the title is the strongest matching signal you control.',
+        test: (v, r) => !!r.brand && v.toLowerCase().indexOf(String(r.brand).toLowerCase()) < 0 },
+      { id: 'space', sev: 'warn', label: 'extra white space',
+        why: '“Don’t include extra white spaces.”',
+        test: (v, r, raw) => /\s{2,}/.test(raw) || raw !== raw.trim() },
+      { id: 'dupe', sev: 'warn', label: 'title duplicated across products', dupe: true,
+        why: 'Google asks for “distinguishing details of each variant” — identical titles make variants compete as one.' },
+    ] },
+  { key: 'description', doc: 6324468, w: 3, max: 5000, label: 'Product description',
+    spec: '1–5,000 characters · the important details in the first 160–500',
+    rules: [
+      { id: 'len-over', sev: 'fail', label: 'over 5,000 characters',
+        why: 'Google’s limit for [description] is 1–5,000 characters.',
+        test: (v) => v.length > 5000 },
+      { id: 'html', sev: 'fail', label: 'HTML markup in the text',
+        why: 'Descriptions take plain text — “use XML entities or escaped characters instead of symbols”; raw tags render literally.',
+        test: (v) => HTML_RE.test(v) },
+      { id: 'links', sev: 'fail', label: 'links to a site',
+        why: '“Don’t include links to your store or other websites.”',
+        test: (v) => URL_RE.test(v) },
+      { id: 'promo', sev: 'fail', label: 'promotional text',
+        why: '“Don’t include promotional text such as price, sale price, sale dates, shipping, delivery date.”',
+        test: (v) => PROMO_RE.test(v) },
+      { id: 'caps', sev: 'warn', label: 'capital letters for emphasis',
+        why: '“Don’t use capital letters for emphasis.”',
+        test: (v) => shoutyCaps(v) },
+      { id: 'thin', sev: 'warn', label: 'under 160 characters',
+        why: '“List the most important details in the first 160–500 characters” — a shorter description cannot.',
+        test: (v) => v.length < 160 },
+      { id: 'taxonomy', sev: 'warn', label: 'category path pasted in',
+        why: '“Don’t include… categorization systems like Toys & Games > Dolls” — that belongs in product_type.',
+        test: (v) => /\s>\s/.test(v) },
+      { id: 'same-as-title', sev: 'warn', label: 'same as the title',
+        why: 'A description that repeats the title adds no new matching surface for Shopping or AI answers.',
+        test: (v, r) => !!r.title && v.toLowerCase() === String(r.title).trim().toLowerCase() },
+      { id: 'dupe', sev: 'warn', label: 'description duplicated across products', dupe: true,
+        why: '“Be specific and accurate… describe only the product itself” — boilerplate shared across products describes none of them.' },
+    ] },
+  { key: 'product_highlight', doc: 9216100, w: 2, max: 150, multi: true, label: 'Product highlights',
+    spec: '1–150 characters each · recommended 4–6, minimum 2, maximum 100',
+    rules: [
+      { id: 'len-over', sev: 'fail', label: 'a highlight over 150 characters',
+        why: 'The limit is 1–150 characters per highlight.',
+        test: (v) => multiVals(v).some((x) => x.length > 150) },
+      { id: 'count-min', sev: 'fail', label: 'fewer than 2 highlights',
+        why: 'Google’s stated minimum is 2 highlights per product (4–6 recommended).',
+        test: (v) => multiVals(v).length < 2 },
+      { id: 'promo', sev: 'fail', label: 'promotional text',
+        why: '“Don’t include promotional text… such as price, sale price, sale dates, shipping.”',
+        test: (v) => PROMO_RE.test(v) },
+      { id: 'links', sev: 'fail', label: 'links to a site',
+        why: '“Don’t include links to your store or other websites.”',
+        test: (v) => URL_RE.test(v) },
+      { id: 'count-low', sev: 'warn', label: 'fewer than 4 highlights',
+        why: 'Google recommends 4–6 highlights — AI and agentic surfaces read these as the product’s selling benefits.',
+        test: (v) => { const n = multiVals(v).length; return n >= 2 && n < 4; } },
+      { id: 'caps', sev: 'warn', label: 'capital letters for emphasis',
+        why: '“Don’t use capital letters for emphasis.”',
+        test: (v) => shoutyCaps(v) },
+      { id: 'dupe-in', sev: 'warn', label: 'the same highlight twice',
+        why: '“Don’t duplicate data within the attribute or data you have already submitted in other attributes.”',
+        test: (v) => { const a = multiVals(v).map((x) => x.toLowerCase()); return new Set(a).size < a.length; } },
+    ] },
+  { key: 'google_product_category', doc: 6324436, w: 2, label: 'Google product category',
+    spec: 'a predefined Google taxonomy value — the numeric ID or the full path, not both',
+    rules: [
+      // the full taxonomy is ~5,500 values and shipping it into the page would cost more
+      // than it is worth, so this tests the SHAPE Google specifies — an ID, or a path
+      // whose levels are separated by " > ". A bare top-level name ("Apparel &
+      // Accessories") is a legitimate category, so it is shallow, never invalid.
+      { id: 'not-taxonomy', sev: 'fail', label: 'not a Google taxonomy value',
+        why: '“Use only a predefined Google product category” — the numeric ID or the full path, “but not both”.',
+        test: (v) => PLACEHOLDER_RE.test(v) || /\|/.test(v) || /\//.test(v) ||
+          (/>/.test(v) && !/\s>\s/.test(v)) || (/^\d/.test(v) && !/^\d{2,8}$/.test(v)) },
+      { id: 'shallow', sev: 'warn', label: 'too broad — fewer than three levels',
+        why: '“Use the most specific category possible” — “broad categories such as Electronics are often too vague for effective automated bidding.”',
+        test: (v) => !/^\d{2,8}$/.test(v) && v.split(/\s>\s/).length < 3 },
+    ] },
+  { key: 'product_type', doc: 6324406, w: 2, max: 750, label: 'Product type',
+    spec: '0–750 characters · your own taxonomy, levels separated by “ > ”',
+    rules: [
+      { id: 'len-over', sev: 'fail', label: 'over 750 characters',
+        why: 'Google’s limit for [product_type] is 0–750 characters.',
+        test: (v) => v.length > 750 },
+      { id: 'sep', sev: 'fail', label: 'levels not separated by “ > ”',
+        why: '“Use > to separate multiple levels… include a space before and after the > symbol.”',
+        test: (v) => (/>/.test(v) && !/\s>\s/.test(v)) || (!/>/.test(v) && /\s\/\s|\||,/.test(v)) },
+      { id: 'single-level', sev: 'warn', label: 'a single level, no hierarchy',
+        why: '“If your own product categorization includes multiple levels, include all the levels” — “Books > Non-Fiction > Sports > Baseball” beats “Baseball”.',
+        test: (v) => !/>/.test(v) },
+    ] },
+  { key: 'color', doc: 6324487, w: 1, max: 100, label: 'Colour',
+    spec: '1–100 characters · 1 primary colour + up to 2 secondary, separated by “/”',
+    rules: [
+      { id: 'len-over', sev: 'fail', label: 'over 100 characters',
+        why: 'The limit is 1–100 characters total, 1–40 per colour.',
+        test: (v) => v.length > 100 },
+      { id: 'not-colour', sev: 'fail', label: 'not a colour value',
+        why: '“Don’t include a value that isn’t a colour such as variety, mens, womens, N/A”, and “don’t reference the product or image such as see image”.',
+        test: (v) => PLACEHOLDER_RE.test(v) || /\b(variety|mens|womens|assorted|see\s+image|as\s+shown)\b/i.test(v) },
+      { id: 'hex', sev: 'fail', label: 'hex code or number as a colour',
+        why: '“Don’t use characters that aren’t alphanumeric such as #fff000” and “don’t use a number as a colour”.',
+        test: (v) => /#/.test(v) || /^[\d\s]+$/.test(v) },
+      { id: 'one-letter', sev: 'fail', label: 'single-letter colour',
+        why: '“Include more than 1 letter and not values such as R.”',
+        test: (v) => v.split('/').some((x) => /^[A-Za-z]$/.test(x.trim())) },
+      { id: 'sep', sev: 'warn', label: 'colours not separated by “/”',
+        why: 'Multiple colours are “separated by a slash (/)” — commas or run-together values are not read as separate colours.',
+        test: (v) => /,|\s&\s|\s\+\s/.test(v) },
+      { id: 'too-many', sev: 'warn', label: 'more than 3 colours',
+        why: '“1 primary colour followed by up to 2 secondary colours.”',
+        test: (v) => v.split('/').filter((x) => x.trim()).length > 3 },
+    ] },
+  { key: 'material', doc: 6324410, w: 1, max: 200, label: 'Material',
+    spec: '0–200 characters · primary material + up to 2 secondary, separated by “/”',
+    rules: [
+      { id: 'len-over', sev: 'fail', label: 'over 200 characters',
+        why: 'Google’s limit for [material] is 0–200 characters.',
+        test: (v) => v.length > 200 },
+      { id: 'placeholder', sev: 'fail', label: 'placeholder value',
+        why: '“Don’t submit n/a, none, multi or other if material isn’t relevant to the product” — leave it out instead.',
+        test: (v) => PLACEHOLDER_RE.test(v) },
+      { id: 'cross-attr', sev: 'warn', label: 'a colour or size in the material field',
+        why: '“Don’t include values that belong in other attributes such as colour, size, or pattern.”',
+        test: (v) => COLOUR_WORDS.test(v) || SIZE_WORDS.test(v) },
+      { id: 'sentence', sev: 'warn', label: 'a sentence, not a material value',
+        why: 'Material takes a value like “cotton/polyester/elastane”, not prose — long strings do not match.',
+        test: (v) => words(v).length > 4 || /[.;:]/.test(v) },
+      { id: 'sep', sev: 'warn', label: 'materials not separated by “/”',
+        why: 'Secondary materials are “each separated by a slash (/)” — commas are not parsed as separate materials.',
+        test: (v) => /,|\s&\s|\s\+\s/.test(v) },
+    ] },
+  { key: 'pattern', doc: 6324483, w: 1, max: 100, label: 'Pattern',
+    spec: '0–100 characters · one value users understand',
+    rules: [
+      { id: 'len-over', sev: 'fail', label: 'over 100 characters',
+        why: 'Google’s limit for [pattern] is 0–100 characters.',
+        test: (v) => v.length > 100 },
+      { id: 'placeholder', sev: 'fail', label: 'placeholder value',
+        why: '“Don’t submit n/a, none, multi or other if the pattern isn’t relevant to the product.”',
+        test: (v) => PLACEHOLDER_RE.test(v) },
+      { id: 'multi', sev: 'warn', label: 'more than one value',
+        why: '“Submit only one value. Only one value will be accepted in the pattern field.”',
+        test: (v) => !PLACEHOLDER_RE.test(v) && /\/|,|\s&\s/.test(v) },   // "n/a" is the rule above's, not this one's
+      { id: 'cross-attr', sev: 'warn', label: 'a size value in the pattern field',
+        why: '“Don’t include values that belong in other attributes such as colour, size, or material.”',
+        test: (v) => SIZE_WORDS.test(v) },
+      { id: 'internal', sev: 'warn', label: 'abbreviation or internal term',
+        why: '“Use a value users will be able to understand” — “avoid abbreviations or internal terms.”',
+        test: (v) => /^[A-Z0-9_-]{2,}$/.test(v) || /\d{3,}/.test(v) },
+    ] },
+];
+export function qspecOf(key) { return QSPEC.filter((q) => q.key === key)[0] || null; }
+
+/* Streaming aggregator — the same shape as xmlCollector: feed it rows, ask for the result.
+   `cols` maps attribute key -> column index (findAttrCols output). Example offenders are
+   capped per rule, and duplicate detection keeps a bounded value->count map so a 2M-row
+   feed cannot blow the browser's memory. */
+const EG_CAP = 4, DUPE_CAP = 60000, EG_LEN = 140;
+export function qualityCollector(cols, opts) {
+  const o = opts || {};
+  const specs = QSPEC.filter((q) => cols && cols[q.key] != null && cols[q.key] >= 0);
+  const acc = {};
+  for (const q of specs) {
+    const r = { key: q.key, filled: 0, sum: 0, min: Infinity, max: 0, rules: {}, dupes: 0, over: false };
+    for (const rule of q.rules) r.rules[rule.id] = { n: 0, eg: [] };
+    if (q.rules.some((x) => x.dupe)) r.seen = new Map();
+    acc[q.key] = r;
+  }
+  let rows = 0;
+  const cut = (v) => (v.length > EG_LEN ? v.slice(0, EG_LEN - 1) + '…' : v);
+  return {
+    onRow(row) {
+      rows++;
+      const ctx = {
+        brand: cols.brand != null && cols.brand >= 0 ? String(row[cols.brand] || '').trim() : '',
+        title: cols.title != null && cols.title >= 0 ? String(row[cols.title] || '').trim() : '',
+      };
+      for (const q of specs) {
+        const raw = String(row[cols[q.key]] == null ? '' : row[cols[q.key]]);
+        const v = raw.trim();
+        const a = acc[q.key];
+        if (!v) continue;                     // emptiness is Golden Record's question, not this one
+        a.filled++;
+        a.sum += v.length;
+        if (v.length < a.min) a.min = v.length;
+        if (v.length > a.max) a.max = v.length;
+        for (const rule of q.rules) {
+          if (rule.dupe) continue;
+          let hit = false;
+          try { hit = !!rule.test(v, ctx, raw); } catch (e) { hit = false; }
+          if (!hit) continue;
+          const slot = a.rules[rule.id];
+          slot.n++;
+          if (slot.eg.length < EG_CAP) slot.eg.push(cut(v));
+        }
+        if (a.seen) {
+          const k = v.toLowerCase();
+          const prev = a.seen.get(k);
+          if (prev != null) {
+            a.seen.set(k, prev + 1);
+            a.dupes += prev === 1 ? 2 : 1;    // the first repeat implicates the original too
+            const dr = q.rules.filter((x) => x.dupe)[0];
+            const slot = dr && a.rules[dr.id];
+            if (slot && slot.eg.length < EG_CAP) slot.eg.push(cut(v));
+          } else if (a.seen.size < DUPE_CAP) a.seen.set(k, 1);
+          else a.over = true;
+        }
+      }
+    },
+    finish(meta) {
+      const attrs = {};
+      for (const q of specs) {
+        const a = acc[q.key];
+        const dr = q.rules.filter((x) => x.dupe)[0];
+        if (dr) a.rules[dr.id].n = a.dupes;
+        const pct = (n) => (a.filled ? Math.round((n / a.filled) * 1000) / 10 : 0);
+        const rules = {};
+        for (const rule of q.rules) rules[rule.id] = { n: a.rules[rule.id].n, pct: pct(a.rules[rule.id].n), eg: a.rules[rule.id].eg };
+        attrs[q.key] = {
+          filled: a.filled, cov: rows ? Math.round((a.filled / rows) * 1000) / 10 : 0,
+          avgLen: a.filled ? Math.round(a.sum / a.filled) : 0,
+          minLen: a.filled ? a.min : 0, maxLen: a.max,
+          rules, dupeCapped: a.over || undefined,
+        };
+      }
+      return Object.assign({ t: Date.now(), rows, attrs }, meta || {});
+    },
+  };
+}
+
+/* One 0–100 rating per attribute, and one for the feed. A rule's penalty is the share of
+   FILLED products that break it, weighted by severity — a requirement broken on 40% of
+   products costs 40 points, the same break on a best practice costs 16. Attributes weigh
+   by how much of the shop window they are (title/description 3, highlights/GPC/PT 2, the
+   variant trio 1) — the same shape as goldenScore, so the two numbers read alike. */
+export const QW = { fail: 1, warn: 0.4 };
+export function attrQuality(key, a) {
+  const q = qspecOf(key);
+  if (!q || !a || !a.filled) return null;
+  let pen = 0;
+  const broken = [];
+  for (const rule of q.rules) {
+    const hit = (a.rules || {})[rule.id];
+    if (!hit || !hit.n) continue;
+    const cost = (hit.pct / 100) * QW[rule.sev] * 100;
+    pen += cost;
+    broken.push({ id: rule.id, sev: rule.sev, label: rule.label, why: rule.why,
+      n: hit.n, pct: hit.pct, eg: hit.eg || [], cost: Math.round(cost * 10) / 10 });
+  }
+  broken.sort((x, y) => y.cost - x.cost);
+  return { key, score: Math.max(0, Math.round((100 - pen) * 10) / 10), broken,
+    filled: a.filled, cov: a.cov, avgLen: a.avgLen, minLen: a.minLen, maxLen: a.maxLen,
+    fails: broken.filter((b) => b.sev === 'fail').length,
+    warns: broken.filter((b) => b.sev === 'warn').length };
+}
+export function qualityScore(snap) {
+  if (!snap || !snap.attrs) return null;
+  const parts = [];
+  let ws = 0, sum = 0;
+  for (const q of QSPEC) {
+    const r = attrQuality(q.key, snap.attrs[q.key]);
+    if (!r) continue;
+    r.w = q.w; r.label = q.label; r.doc = q.doc; r.spec = q.spec;
+    parts.push(r); ws += q.w; sum += q.w * r.score;
+  }
+  if (!ws) return null;
+  const score = Math.round((sum / ws) * 10) / 10;
+  const fails = parts.reduce((n, p) => n + p.fails, 0);
+  return { score, parts, fails, verdict: qualityVerdict(score, fails) };
+}
+// plain-English band, said the way Ray says it to a client
+export function qualityVerdict(score, fails) {
+  if (fails && score < 75) return { band: 'poor', pill: '🔻 Spec violations',
+    line: 'Content breaks Google’s stated requirements on a material share of the catalogue — that is disapproval and truncation risk, not a nice-to-have.' };
+  if (score < 75) return { band: 'poor', pill: '🔻 Below standard',
+    line: 'The data is present but thin against Google’s own guidance — the matching surface is a fraction of what it could be.' };
+  if (score < 90) return { band: 'mid', pill: '⚠ Below best practice',
+    line: 'Nothing here risks disapproval, but the free-text fields are not being used the way Google asks — that is headroom, measurable per rule below.' };
+  return { band: 'good', pill: '✓ Meets the spec',
+    line: 'The free-text attributes read the way Google’s specification asks: within limits, no promotional copy, no gimmicks, hierarchy where hierarchy is expected.' };
+}
+
+/* The client ask for one content-quality attribute — the consultative voice of the other
+   composers: the rule, the number, the proposal, never an alarm. */
+export function qualityAskEmail(client, mkt, r) {
+  const loc = client + ' ' + String(mkt || '').toUpperCase();
+  const disp = 'g:' + r.key;
+  const n = (x) => Number(x).toLocaleString('en-GB');
+  const lines = r.broken.slice(0, 3).map((b) => '- ' + b.label + ' — ' + b.pct + '% of products (' + n(b.n) + '). ' + b.why);
+  return {
+    subject: loc + ' — feed data: ' + disp + ' quality against Google’s specification',
+    body: 'Hi team,\n\n'
+      + 'A finding from our feed monitoring, measured against Google’s product data specification for ' + disp + '.\n\n'
+      + 'Across the ' + loc + ' feed, ' + n(r.filled) + ' products carry a value and the content scores '
+      + r.score + '/100 against the specification’s own rules. The largest gaps:\n\n'
+      + lines.join('\n')
+      + '\n\nNone of this is about whether the field is filled — it is about what is in it. '
+      + (r.fails
+        ? 'The points above that Google states as requirements are the priority: products breaking them carry disapproval or truncation risk.'
+        : 'These are Google’s stated best practices rather than hard rules, so the gain here is matching and performance rather than compliance.')
+      + '\n\nWe would propose a structured pass from our side — we can share the affected product set and the proposed values for sign-off before anything changes in the live feed.'
+      + '\n\nBest regards,\nRay',
+  };
+}
