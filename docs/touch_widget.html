@@ -1,0 +1,50 @@
+<!-- FCC-TOUCH — one line of cross-tab plumbing, injected on every app page.
+
+     Ray, 16 Sep 2026: "when you follow the suggested next moves and work on, for example, go to
+     the workflow, go to Feed Lab, keyword calendar, and label guard, and once you have to check
+     and actioned … the brand dossier doesn't automatically update what the other module has
+     worked on unless you hit a refresh button. But it should be real time."
+
+     Same-tab navigation reloads the page, so the stale case is the one where the dossier sits in
+     ANOTHER TAB while the work happens here. `storage` fires only in other tabs, which is exactly
+     the audience: this writes one key when a module actually CHANGES something, and a listening
+     page refreshes itself.
+
+     Deliberately narrow:
+       - only a mutating method (POST / PUT / PATCH / DELETE) on this origin's /api/,
+       - only when the server said ok — a refused save has changed nothing,
+       - never the read-only and heartbeat routes (presence, activity, claude, version, the feed
+         proxy), which would otherwise fire this every minute on every open page,
+       - debounced, and wrapped so a storage exception in a private window cannot break the
+         fetch it is observing.
+     It never reads a response body and never inspects payloads. -->
+<script>
+(function(){
+  if(window.__fccTouch)return; window.__fccTouch=1;
+  var MUT=/^(POST|PUT|PATCH|DELETE)$/i;
+  // routes that fire constantly or change nothing a dossier shows
+  var QUIET=/\/api\/(presence|activity|claude|version|i18n|feed\/proxy|buildlog)/;
+  var last=0;
+  function touch(){
+    var now=Date.now(); if(now-last<1500)return; last=now;
+    try{ localStorage.setItem('fcc-touch',String(now)); }catch(e){}
+    try{ window.dispatchEvent(new CustomEvent('fcc-touch')); }catch(e){}
+  }
+  var of=window.fetch;
+  if(typeof of!=='function')return;
+  window.fetch=function(input,init){
+    var url='',method='GET';
+    try{
+      url=(typeof input==='string')?input:((input&&input.url)||'');
+      method=(init&&init.method)||(input&&input.method)||'GET';
+    }catch(e){}
+    var p=of.apply(this,arguments);
+    try{
+      if(MUT.test(method)&&url.indexOf('/api/')>=0&&!QUIET.test(url)){
+        p.then(function(r){ if(r&&r.ok)touch(); },function(){});
+      }
+    }catch(e){}
+    return p;
+  };
+})();
+</script>

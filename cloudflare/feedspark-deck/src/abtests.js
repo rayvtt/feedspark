@@ -64,7 +64,13 @@ export function resolveAbTab(titles, client) {
 // content detection stays as fail-closed as the name match while surviving any rename.
 export function hasAbHeader(values) { return !!findHeaderRow(values); }
 
-const HDR_COUNTRY = /^countr(y|ies)$/i;
+// The first column names the place the test ran, and the team does not spell that one way:
+// Reiss's archive heads it "Country", Superdry's heads it "Market" (Ray, 16 Sep 2026: "superdry
+// PP has got AB Test Archive tab too - with Market indication etc.."). Superdry's tab resolved
+// by name and then failed to PARSE, which is the same blank card by a different route — so the
+// header test accepts either word. It is still the PAIR that identifies an archive: the second
+// column must be Test Method, and no Project Plan has one of those.
+const HDR_COUNTRY = /^(countr(y|ies)|markets?|region)$/i;
 const HDR_METHOD = /^test\s*method$/i;
 // Only these count as a real archive row. The tab often continues into unrelated blocks below
 // (material lists, market tables) whose first columns look similar; keying on the method column
