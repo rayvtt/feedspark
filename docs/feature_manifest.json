@@ -5234,6 +5234,27 @@
    "pattern": "un-scoped, that save would have wiped the rest",
    "pr": 381,
    "min": 1
+  },
+  {
+   "name": "Volume chart: bars and table columns share ONE geometry, month by month (Ray 16 Sep 2026)",
+   "file": "docs/FeedSpark_DeckBuilder.html",
+   "pattern": "var GEO={ gut:0.118, tail:0.070 };",
+   "pr": 0,
+   "min": 1
+  },
+  {
+   "name": "…the table's colgroup is bound to the chart's bands (table-layout:fixed)",
+   "file": "docs/FeedSpark_DeckBuilder.html",
+   "pattern": "function bandPct(n){",
+   "pr": 0,
+   "min": 1
+  },
+  {
+   "name": "…and the phone pans the table rather than crushing 12 months into 390px",
+   "file": "docs/FeedSpark_DeckBuilder.html",
+   "pattern": "table.vz-tbl{min-width:var(--vz-minw,100%)}",
+   "pr": 0,
+   "min": 1
   }
  ]
 }
