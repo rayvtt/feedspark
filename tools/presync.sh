@@ -44,6 +44,10 @@ echo "── validating: shared working state (one team, one store)"
 node tools/test_sharedstate.mjs >/dev/null
 echo "   ✓ scoped views + the partial-save wipe trap hold on /api/state"
 
+echo "── validating: Feed Lab AI-readiness model (conversational weighting, labels unscored)"
+node tools/test_feedlab.mjs >/dev/null
+echo "   ✓ conversational attributes lead the score; custom labels never move it"
+
 echo "── validating: overlay engine (URL-string classification + collector)"
 node tools/test_overlays.mjs >/dev/null
 echo "   ✓ overlay types read off the image_link URL"
