@@ -6051,6 +6051,42 @@
       "name": "dossier: tab-list diagnostic declares when it is truncated",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function abTabList"
+    },
+    {
+      "name": "Task Manager: Excel export on all three tabs",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "id=\"pxlsx\"",
+      "pr": 404
+    },
+    {
+      "name": "Task Manager: the export follows the active tab's filtered view",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function xrows",
+      "pr": 404
+    },
+    {
+      "name": "Shared XLSX table writer",
+      "file": "docs/xlsx_engine.js",
+      "pattern": "FeedXlsx",
+      "pr": 404
+    },
+    {
+      "name": "XLSX writer: absent is absent, never a fabricated date",
+      "file": "docs/xlsx_engine.js",
+      "pattern": "function noDate",
+      "pr": 404
+    },
+    {
+      "name": "XLSX writer: served by the worker",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "/xlsx/engine.js",
+      "pr": 404
+    },
+    {
+      "name": "Task Manager chart: one vocabulary per screen (axis reads the same labels as the legend)",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function dimLabel",
+      "pr": 404
     }
   ]
 }

@@ -397,3 +397,75 @@ states, the trend's refusals, the wiring, and — because the widget cannot impo
 its hand-written engine twin out by name at `/* FCC-HOURS:ENGINE-END */` and runs it against the
 **same assertion table** as `src/taskbook.js`. `tools/check_mobile.js` renders the widget with every
 other injected layer at 390px.
+
+
+---
+
+## The card, read rather than shouted (Sep 2026)
+
+> Ray, 16 Sep 2026: *"fix the highlight / bold maybe? streamlines ux/ui and not too much trailing
+> buttons/texts please"*
+
+Every element on the chart card was set at weight 800–900 — the title, the control labels, the
+legend, the axis, the value labels, the breakdown rows. When everything is bold nothing leads, and
+the eye has no entry point. The card now has **three levels**, with weight rather than size doing
+the work:
+
+| Level | What | Weight |
+|---|---|---|
+| The finding | value labels, legend totals, breakdown numbers | 800, full ink |
+| The subject | series and group names | 600, `--ink-2` |
+| The scaffolding | control labels, axis ticks, percentages, captions | 600–700, `--muted` |
+
+**The trailing row is gone.** The four exits (PNG · Table · CSV · Link) moved into the card header,
+right-aligned beside the title, as quiet ghost buttons — exits belong beside the thing they export,
+not stacked under the verdict where they read as its conclusion. The verdict itself lost its filled
+banner and two thirds of its words: the legend already prints the split and its percentage an inch
+to the right, so the line now says only what nothing else does — how big the book in view is, and
+what the split *means*.
+
+**One vocabulary per screen.** `cols()` and `hbars()` printed the raw group key, so the axis read
+`opt · acct · tech · feat` while the legend beside it read *Optimisation · Account & support ·
+Technical fixes · Feature & set-up* — the same five groups, named two ways, on one card. A single
+`dimLabel()` now feeds the axis, the tooltips, the legend, the table, the TSV and the PNG.
+
+Two mark-spec corrections came with it: stacked segments gained the 2px surface gap (taken out of
+the upper segment, so the bar's top — the value the axis is read against — does not move), and the
+`% billable` column in the legend gained a caption, because it means *billable share within each
+group* while the two rows above it mean *share of the total*, and unlabelled the two read as one.
+
+## Excel downloads
+
+> Ray, 16 Sep 2026: *"allows excel downloads on Tasks / Client tickets / Account & hours balance"*
+
+A **⇩ Excel** button sits on the tab pane, so it always exports the tab you are looking at.
+
+`docs/xlsx_engine.js` (`FeedXlsx`, served at `/xlsx/engine.js`) is a minimal XLSX **table** writer —
+an .xlsx is a ZIP of XML parts, so there is no library. It is deliberately *not* the AI Quote's
+writer: that one is a replica of Finance's own quote book (fixed columns A–O, their widths, a
+drawing part, the wordmark). This one writes a table — arbitrary typed columns, a frozen filterable
+header, as many sheets as you hand it — so any page with rows can download one.
+
+Three rules, each a way a spreadsheet of commercial figures could otherwise mislead:
+
+1. **It exports what is on screen** — the same filtered, sorted population the table under the
+   button is showing, not the whole book and not the 200 rows the page happened to have painted.
+2. **Billable and non-billable stay split**, with the total beside them, so a column sums to
+   something true whichever one the reader drags into a pivot.
+3. **The search travels with it.** A second sheet records the query, the window, how many markets
+   had been read and how stale the oldest read was — these files get emailed on, and a figure cut
+   from a partly-read book needs to say so wherever it lands.
+
+**Types are the point.** A CSV hands Excel a wall of text and lets it guess. Here a date is a date
+serial, hours are numbers on a `#,##0.00` format, and text is an inline string — so the date column
+sorts and the hours column sums without anyone retyping it. And absence is absence: an empty value
+writes **no cell at all**, never a zero; the database's `0000-00-00` is dropped rather than kept as
+text (which would quietly turn a date column into a text column), while a date that merely cannot be
+parsed *is* kept as text rather than silently lost. Those are opposite cases and get opposite
+treatment.
+
+QA: `tools/test_xlsx.mjs` (qa_gate, presync, `validate.yml`) unzips the real bytes and pins the
+container, the part manifest, the sheet-name rules Excel enforces silently, the cell types, the
+absent-is-absent rule, XML escaping (a single control character refuses a whole workbook) and the
+page wiring. The three exports were also driven end-to-end in a real browser and the workbooks
+re-opened with `openpyxl`.

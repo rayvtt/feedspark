@@ -83,24 +83,33 @@ window.addEventListener('load',restore);
   .qres .bad{color:var(--risk)}
   /* chart */
   .cw-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-  .cw-head h3{margin:0;font-size:16px;font-weight:900}
+  .cw-head h3{margin:0;font-size:15.5px;font-weight:800;letter-spacing:-.01em}
   .cw-head .grow{flex:1}
   .cw-ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-  .cw-ctl label{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-  .cw-ctl select{font:inherit;font-size:13px;font-weight:800;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
-  .tog{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:var(--ink-2);cursor:pointer}
+  .cw-ctl label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .cw-ctl select{font:inherit;font-size:13px;font-weight:600;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
+  .tog{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer}
   .cbody{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
   .cstage{flex:1 1 460px;min-width:0}
   .cstage svg{display:block;width:100%;height:auto;overflow:visible}
   .clegend{flex:0 0 250px;min-width:0}
-  .lg-row{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;padding:6px 0;border-bottom:1px solid var(--line)}
+  .lg-row{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:6px 0;border-bottom:1px solid var(--line)}
+  .lg-row.hd{font-weight:800}
+  .lg-row .nm{color:var(--ink-2)}
+  .lg-row.hd .nm{color:var(--ink)}
   .lg-row i{width:12px;height:12px;border-radius:3px;flex:none}
   .lg-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .lg-row .v{font-variant-numeric:tabular-nums;color:var(--ink)}
-  .lg-row .p{font-size:11.5px;color:var(--muted);width:44px;text-align:right;font-variant-numeric:tabular-nums}
-  .verdict{margin-top:12px;font-size:13.5px;font-weight:700;color:var(--ink-2);background:var(--wash);border-radius:10px;padding:10px 13px}
-  .verdict b{color:var(--ink)}
-  .exits{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+  .lg-row .v{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:800}
+  .lg-row .p{font-size:11.5px;font-weight:600;color:var(--muted);width:44px;text-align:right;font-variant-numeric:tabular-nums}
+  /* the group header names what the % column means — it is billable share WITHIN each group,
+     not share of the total the two rows above report, and unlabelled the two read as one */
+  .lg-cap{display:flex;align-items:baseline;gap:8px;margin:14px 0 2px;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .lg-cap .u{margin-left:auto;text-transform:none;letter-spacing:0;font-size:10.5px}
+  .verdict{margin-top:14px;padding-top:11px;border-top:1px solid var(--line);font-size:13px;font-weight:600;color:var(--ink-2)}
+  .verdict b{color:var(--ink);font-weight:800}
+  .exits{display:flex;gap:4px;flex-wrap:wrap}
+  .exits .btn{font-weight:600;color:var(--muted);border-color:transparent;background:none;padding:4px 8px}
+  .exits .btn:hover{color:var(--orange-deep);background:var(--wash)}
   .ctab{margin-top:12px;max-height:280px;overflow:auto}
   /* tabs */
   .tabs{display:flex;gap:4px;flex-wrap:wrap;margin:20px 0 0;border-bottom:1px solid var(--line)}
@@ -144,14 +153,14 @@ window.addEventListener('load',restore);
   /* breakdown strip */
   .bd{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:11px;margin:12px 0}
   .bd .bx{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:13px 15px;min-width:0}
-  .bd .bx h4{margin:0 0 9px;font-size:11.5px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-  .bd .r{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;padding:3px 0;cursor:pointer;min-width:0}
+  .bd .bx h4{margin:0 0 9px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .bd .r{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;padding:3px 0;cursor:pointer;min-width:0}
   .bd .r:hover .nm{color:var(--orange-deep)}
-  .bd .r .nm{flex:1;min-width:0;display:flex;align-items:center}
+  .bd .r .nm{flex:1;min-width:0;display:flex;align-items:center;color:var(--ink-2)}
   .bd .r .nm .nmt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bd .r .bar{flex:0 0 74px;height:8px;border-radius:100px;background:var(--wash);overflow:hidden;display:flex}
   .bd .r .bar i{height:100%}.bd .r .bar i.b{background:var(--bil)}.bd .r .bar i.n{background:var(--nbil)}
-  .bd .r .v{flex:0 0 52px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .bd .r .v{flex:0 0 52px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:800}
   /* drawer */
   .dim{position:fixed;inset:0;background:rgba(16,24,40,.32);z-index:80;display:none}
   .dim.on{display:block}
@@ -280,8 +289,16 @@ window.addEventListener('load',restore);
   <section class="card" id="chartcard">
     <div class="cw-head">
       <h3>Billable vs non-billable</h3>
-      <span class="sub" id="cwsub" style="font-size:12px;color:var(--muted);font-weight:700"></span>
+      <span class="sub" id="cwsub" style="font-size:12px;color:var(--muted);font-weight:600"></span>
       <span class="grow"></span>
+      <!-- the exits belong beside the thing they export, not in a trailing row under it: four
+           buttons stacked below the verdict read as the card's conclusion rather than its tools -->
+      <div class="exits">
+        <button class="btn sm" id="xpng" type="button" title="Download this chart as a PNG, footer-stamped with the window and the query">⬇ PNG</button>
+        <button class="btn sm" id="xtsv" type="button" title="Copy the chart's own numbers as a table">⎘ Table</button>
+        <button class="btn sm" id="xcsv" type="button" title="Download every row behind this chart as CSV">⬇ CSV</button>
+        <button class="btn sm" id="xlink" type="button" title="Copy a link that reopens this exact view">🔗 Link</button>
+      </div>
     </div>
     <div class="cw-ctl">
       <label for="cdim">Split by</label>
@@ -301,16 +318,12 @@ window.addEventListener('load',restore);
       <div class="clegend" id="clegend"></div>
     </div>
     <div class="verdict" id="cverdict"></div>
-    <div class="exits">
-      <button class="btn sm" id="xpng" type="button">⬇ PNG</button>
-      <button class="btn sm" id="xtsv" type="button">⎘ Copy table</button>
-      <button class="btn sm" id="xcsv" type="button">⬇ CSV of these rows</button>
-      <button class="btn sm" id="xlink" type="button">🔗 Copy link</button>
-    </div>
     <div class="ctab" id="ctabbox" hidden></div>
   </section>
 
   <div class="bd" id="bd"></div>
+
+  <script src="/xlsx/engine.js" onerror="window.__xlsxFail=1"></script>
 
   <nav class="tabs" id="tabs">
     <button class="tab on" data-t="tasks" type="button">Tasks<span class="c" id="c-tasks"></span></button>
@@ -323,6 +336,7 @@ window.addEventListener('load',restore);
       <h3 id="pane-h">Tasks</h3>
       <span class="sub" id="pane-s"></span>
       <span class="grow"></span>
+      <button class="btn sm" id="pxlsx" type="button" title="Download these rows as an Excel workbook — typed columns, a frozen filterable header, and a sheet recording the search behind them">⇩ Excel</button>
       <button class="btn sm" id="pmore" type="button" hidden>Show more</button>
     </div>
     <div class="tscroll" id="pbody"></div>
@@ -834,9 +848,8 @@ window.addEventListener('load',restore);
     else if (form === 'bars') stage.innerHTML = hbars(g);
     else stage.innerHTML = cols(g, form === 'pct');
     legend(g, s);
-    $('cverdict').innerHTML = '<b>' + hrs(s.bill) + ' h billable</b> against <b>' + hrs(s.nonbill) + ' h non-billable</b>'
-      + ' — ' + s.billPct + '% of the ' + hrs(s.hours) + ' hours in view was charged for. ' + billVerdict(s.billPct)
-      + (s.undated ? ' <span style="color:var(--muted)">(' + s.undated + ' row' + (s.undated === 1 ? '' : 's') + ' carry no date and are counted in the totals but in no month.)</span>' : '');
+    $('cverdict').innerHTML = '<b>' + hrs(s.hours) + ' h</b> in view. ' + billVerdict(s.billPct)
+      + (s.undated ? ' <span style="color:var(--muted)">' + s.undated + ' row' + (s.undated === 1 ? '' : 's') + ' carry no date: in the totals, in no month.</span>' : '');
     ctable(g);
     wireTips();
   }
@@ -886,7 +899,7 @@ window.addEventListener('load',restore);
   }
 
   function cols(g, pct) {
-    var W = 720, H = 330, L = 46, Rp = 12, T = 14, B = 64;
+    var W = 720, H = 344, L = 46, Rp = 12, T = 14, B = 78;
     var iw = W - L - Rp, ih = H - T - B, n = g.length || 1;
     var step = iw / n, bw = Math.min(54, step * 0.62);
     var max = pct ? 100 : niceMax(Math.max.apply(null, g.map(function (x) { return x.hours; }).concat([1])));
@@ -894,7 +907,7 @@ window.addEventListener('load',restore);
     for (var i = 0; i <= ticks; i++) {
       var v = max * i / ticks, y = T + ih - (ih * i / ticks);
       s += '<line x1="' + L + '" y1="' + y.toFixed(1) + '" x2="' + (W - Rp) + '" y2="' + y.toFixed(1) + '" stroke="' + cvar('--grid') + '" stroke-width="1"/>';
-      s += '<text x="' + (L - 7) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" font-size="10.5" font-weight="700" fill="' + cvar('--muted') + '">' + (pct ? Math.round(v) + '%' : hrs(v)) + '</text>';
+      s += '<text x="' + (L - 7) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" font-size="10.5" font-weight="600" fill="' + cvar('--muted') + '">' + (pct ? Math.round(v) + '%' : hrs(v)) + '</text>';
     }
     g.forEach(function (x, i2) {
       var cx0 = L + step * i2 + (step - bw) / 2;
@@ -902,14 +915,15 @@ window.addEventListener('load',restore);
       var hb = (pct ? (x.bill / (x.hours || 1)) * 100 : x.bill) / (pct ? 100 : max) * ih;
       var hn = (pct ? (x.nonbill / (x.hours || 1)) * 100 : x.nonbill) / (pct ? 100 : max) * ih;
       var yb = T + ih - hb, yn = yb - hn;
-      var ttl = esc(x.k) + ' — ' + hrs(x.bill) + ' h billable, ' + hrs(x.nonbill) + ' h non-billable (' + x.billPct + '% billable, ' + x.n + ' tasks)';
+      var ttl = esc(dimLabel(x.k)) + ' — ' + hrs(x.bill) + ' h billable, ' + hrs(x.nonbill) + ' h non-billable (' + x.billPct + '% billable, ' + x.n + ' tasks)';
       s += '<g class="cg" data-t="' + ttl + '">';
+      var gap = (hb > 0 && hn > 3) ? 2 : 0;
       if (hb > 0) s += '<rect x="' + cx0.toFixed(1) + '" y="' + yb.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hb.toFixed(1) + '" fill="' + cvar('--bil') + '" rx="2"/>';
-      if (hn > 0) s += '<rect x="' + cx0.toFixed(1) + '" y="' + yn.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hn.toFixed(1) + '" fill="' + cvar('--nbil') + '" rx="2"/>';
-      if ($('clab').checked) s += '<text x="' + (cx0 + bw / 2).toFixed(1) + '" y="' + (yn - 5).toFixed(1) + '" text-anchor="middle" font-size="10.5" font-weight="900" fill="' + cvar('--ink-2') + '">' + (pct ? x.billPct + '%' : hrs(x.hours)) + '</text>';
+      if (hn > 0) s += '<rect x="' + cx0.toFixed(1) + '" y="' + yn.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (hn - gap).toFixed(1) + '" fill="' + cvar('--nbil') + '" rx="2"/>';
+      if ($('clab').checked) s += '<text x="' + (cx0 + bw / 2).toFixed(1) + '" y="' + (yn - 5).toFixed(1) + '" text-anchor="middle" font-size="11" font-weight="800" fill="' + cvar('--ink') + '">' + (pct ? x.billPct + '%' : hrs(x.hours)) + '</text>';
       s += '</g>';
-      var lab = String(x.k).length > 13 ? String(x.k).slice(0, 12) + '…' : String(x.k);
-      s += '<text x="' + (cx0 + bw / 2).toFixed(1) + '" y="' + (T + ih + 16) + '" text-anchor="end" font-size="10.5" font-weight="800" fill="' + cvar('--ink-2') + '" transform="rotate(-38 ' + (cx0 + bw / 2).toFixed(1) + ' ' + (T + ih + 16) + ')">' + esc(lab) + '</text>';
+      var full = dimLabel(x.k), lab = full.length > 19 ? full.slice(0, 18) + '…' : full;
+      s += '<text x="' + (cx0 + bw / 2).toFixed(1) + '" y="' + (T + ih + 16) + '" text-anchor="end" font-size="10.5" font-weight="600" fill="' + cvar('--ink-2') + '" transform="rotate(-38 ' + (cx0 + bw / 2).toFixed(1) + ' ' + (T + ih + 16) + ')">' + esc(lab) + '</text>';
     });
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Billable and non-billable hours by ' + esc(CDIM) + '">' + s + '</svg>';
   }
@@ -922,26 +936,33 @@ window.addEventListener('load',restore);
     g.forEach(function (x, i) {
       var y = T + i * rowH, h = 15;
       var wb = (x.bill / max) * iw, wn = (x.nonbill / max) * iw;
-      var lab = String(x.k).length > 22 ? String(x.k).slice(0, 21) + '…' : String(x.k);
-      var ttl = esc(x.k) + ' — ' + hrs(x.bill) + ' h billable, ' + hrs(x.nonbill) + ' h non-billable (' + x.billPct + '% billable, ' + x.n + ' tasks)';
-      s += '<text x="' + (L - 9) + '" y="' + (y + 12) + '" text-anchor="end" font-size="11.5" font-weight="800" fill="' + cvar('--ink') + '">' + esc(lab) + '</text>';
+      var full = dimLabel(x.k), lab = full.length > 22 ? full.slice(0, 21) + '…' : full;
+      var ttl = esc(full) + ' — ' + hrs(x.bill) + ' h billable, ' + hrs(x.nonbill) + ' h non-billable (' + x.billPct + '% billable, ' + x.n + ' tasks)';
+      s += '<text x="' + (L - 9) + '" y="' + (y + 12) + '" text-anchor="end" font-size="11.5" font-weight="600" fill="' + cvar('--ink-2') + '">' + esc(lab) + '</text>';
       s += '<g class="cg" data-t="' + ttl + '">';
+      var gap = (wb > 0 && wn > 3) ? 2 : 0;
       if (wb > 0) s += '<rect x="' + L + '" y="' + y + '" width="' + wb.toFixed(1) + '" height="' + h + '" fill="' + cvar('--bil') + '" rx="2"/>';
-      if (wn > 0) s += '<rect x="' + (L + wb).toFixed(1) + '" y="' + y + '" width="' + wn.toFixed(1) + '" height="' + h + '" fill="' + cvar('--nbil') + '" rx="2"/>';
+      if (wn > 0) s += '<rect x="' + (L + wb + gap).toFixed(1) + '" y="' + y + '" width="' + (wn - gap).toFixed(1) + '" height="' + h + '" fill="' + cvar('--nbil') + '" rx="2"/>';
       s += '<rect x="' + L + '" y="' + y + '" width="' + iw + '" height="' + h + '" fill="transparent"/></g>';
-      if ($('clab').checked) s += '<text x="' + (L + wb + wn + 7).toFixed(1) + '" y="' + (y + 12) + '" font-size="11" font-weight="900" fill="' + cvar('--ink-2') + '">' + hrs(x.hours) + ' h</text>';
+      if ($('clab').checked) s += '<text x="' + (L + wb + wn + 7).toFixed(1) + '" y="' + (y + 12) + '" font-size="11" font-weight="800" fill="' + cvar('--ink') + '">' + hrs(x.hours) + ' h</text>';
     });
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Billable and non-billable hours by ' + esc(CDIM) + '">' + s + '</svg>';
   }
 
+  // the ONE place a group key becomes a human label — axis, tooltip, legend and PNG all read it
+  function dimLabel(k) {
+    if (CDIM === 'cat') return CAT_LABEL[k] || k;
+    if (CDIM === 'bucket') return BUCKET_LABEL[k] || k;
+    return String(k == null ? '' : k);
+  }
+
   function legend(g, s) {
-    var h = '<div class="lg-row"><i style="background:' + cvar('--bil') + '"></i><span class="nm">Billable</span><span class="v">' + hrs(s.bill) + ' h</span><span class="p">' + s.billPct + '%</span></div>'
-      + '<div class="lg-row"><i style="background:' + cvar('--nbil') + '"></i><span class="nm">Non-billable</span><span class="v">' + hrs(s.nonbill) + ' h</span><span class="p">' + (Math.round((100 - s.billPct) * 10) / 10) + '%</span></div>';
+    var h = '<div class="lg-row hd"><i style="background:' + cvar('--bil') + '"></i><span class="nm">Billable</span><span class="v">' + hrs(s.bill) + ' h</span><span class="p">' + s.billPct + '%</span></div>'
+      + '<div class="lg-row hd"><i style="background:' + cvar('--nbil') + '"></i><span class="nm">Non-billable</span><span class="v">' + hrs(s.nonbill) + ' h</span><span class="p">' + (Math.round((100 - s.billPct) * 10) / 10) + '%</span></div>';
     if (CDIM !== 'total') {
-      h += '<div style="font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:12px 0 4px">' + esc((DIMS.filter(function (d) { return d.k === CDIM; })[0] || {}).label) + '</div>';
+      h += '<div class="lg-cap"><span>' + esc((DIMS.filter(function (d) { return d.k === CDIM; })[0] || {}).label) + '</span><span class="u">% billable</span></div>';
       h += g.slice(0, 12).map(function (x) {
-        var lbl = CDIM === 'cat' ? (CAT_LABEL[x.k] || x.k) : (CDIM === 'bucket' ? (BUCKET_LABEL[x.k] || x.k) : x.k);
-        return '<div class="lg-row" style="border:none;padding:3px 0"><span class="nm" style="font-weight:700">' + esc(lbl) + '</span><span class="v">' + hrs(x.hours) + ' h</span><span class="p">' + x.billPct + '%</span></div>';
+        return '<div class="lg-row" style="border:none;padding:3px 0"><span class="nm">' + esc(dimLabel(x.k)) + '</span><span class="v">' + hrs(x.hours) + ' h</span><span class="p">' + x.billPct + '%</span></div>';
       }).join('');
     }
     $('clegend').innerHTML = h;
@@ -951,20 +972,18 @@ window.addEventListener('load',restore);
     var box = $('ctabbox');
     box.hidden = !$('ctab').checked;
     if (box.hidden) return;
-    var lab = function (k) { return CDIM === 'cat' ? (CAT_LABEL[k] || k) : (CDIM === 'bucket' ? (BUCKET_LABEL[k] || k) : k); };
     box.innerHTML = '<table class="st"><thead><tr><th>' + esc((DIMS.filter(function (d) { return d.k === CDIM; })[0] || {}).label)
       + '</th><th class="num">Tasks</th><th class="num">Billable</th><th class="num">Non-billable</th><th class="num">Total</th><th class="num">% billable</th></tr></thead><tbody>'
       + g.map(function (x) {
-        return '<tr><td class="b">' + esc(lab(x.k)) + '</td><td class="num">' + num(x.n) + '</td><td class="num">' + hrs(x.bill)
+        return '<tr><td class="b">' + esc(dimLabel(x.k)) + '</td><td class="num">' + num(x.n) + '</td><td class="num">' + hrs(x.bill)
           + '</td><td class="num">' + hrs(x.nonbill) + '</td><td class="num b">' + hrs(x.hours) + '</td><td class="num">' + x.billPct + '%</td></tr>';
       }).join('') + '</tbody></table>';
   }
 
   function tsv() {
     var g = chartRows();
-    var lab = function (k) { return CDIM === 'cat' ? (CAT_LABEL[k] || k) : (CDIM === 'bucket' ? (BUCKET_LABEL[k] || k) : k); };
     return [(DIMS.filter(function (d) { return d.k === CDIM; })[0] || {}).label, 'Tasks', 'Billable h', 'Non-billable h', 'Total h', '% billable'].join('\t')
-      + '\n' + g.map(function (x) { return [lab(x.k), x.n, x.bill, x.nonbill, x.hours, x.billPct].join('\t'); }).join('\n');
+      + '\n' + g.map(function (x) { return [dimLabel(x.k), x.n, x.bill, x.nonbill, x.hours, x.billPct].join('\t'); }).join('\n');
   }
 
   /* SVG → PNG. Serialised with the computed colours already inlined (the chart draws with
@@ -1011,6 +1030,94 @@ window.addEventListener('load',restore);
     a.download = 'feedspark-tasks-' + D.at + (Q.raw.trim() ? '-filtered' : '') + '.csv';
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+
+  /* ---- Excel export, per tab (Ray, 16 Sep 2026: "allows excel downloads on Tasks / Client
+     tickets / Account & hours balance") ---------------------------------------------------------
+     Three rules, each one a way a spreadsheet of commercial figures could otherwise mislead:
+
+     1. IT EXPORTS WHAT IS ON SCREEN. The same filtered, sorted population the table under the
+        button is showing — not the whole book, and not the first 200 rows the page happened to
+        have painted. A download that quietly differs from the view is worse than no download.
+     2. BILLABLE AND NON-BILLABLE STAY SPLIT, and the total rides beside them, so a column sums to
+        something true whichever one the reader drags into a pivot.
+     3. THE SEARCH TRAVELS WITH IT. A second sheet records the query, the window, how much of the
+        book had been read and how stale the oldest read was — because these files get emailed on,
+        and a figure cut from a partly-read book needs to say so wherever it lands.
+  */
+  var XCOLS = {
+    tasks: [{ k: 'd', l: 'Date', t: 'date', w: 12 }, { k: 'client', l: 'Client', w: 18 },
+      { k: 'market', l: 'Market', w: 9 }, { k: 'title', l: 'Task', w: 52 },
+      { k: 'catL', l: 'Type of work', w: 20 }, { k: 'owner', l: 'Who did it', w: 16 },
+      { k: 'am', l: 'Account manager', w: 16 }, { k: 'status', l: 'Status', w: 15 },
+      { k: 'bucketL', l: 'Stage', w: 14 },
+      { k: 'bill', l: 'Billable h', t: 'hours', w: 12 }, { k: 'nonbill', l: 'Non-billable h', t: 'hours', w: 14 },
+      { k: 'hours', l: 'Total h', t: 'hours', w: 11 }, { k: 'sched', l: 'Scheduled h', t: 'hours', w: 12 },
+      { k: 'id', l: 'Task id', t: 'int', w: 10 }, { k: 'note', l: 'Notes', w: 50 }],
+    tickets: [{ k: 'd', l: 'Last activity', t: 'date', w: 13 }, { k: 'first', l: 'Opened', t: 'date', w: 12 },
+      { k: 'client', l: 'Client', w: 18 }, { k: 'subject', l: 'Subject', w: 56 },
+      { k: 'status', l: 'Status', w: 14 }, { k: 'origin', l: 'Origin', w: 12 },
+      { k: 'from', l: 'From', w: 28 }, { k: 'am', l: 'Account manager', w: 16 },
+      { k: 'age', l: 'Age (days)', t: 'int', w: 11 }, { k: 'idle', l: 'Idle (days)', t: 'int', w: 11 },
+      { k: 'msgs', l: 'Messages', t: 'int', w: 10 }, { k: 'tasks', l: 'Tasks spawned', t: 'int', w: 13 },
+      { k: 'hours', l: 'Hours consumed', t: 'hours', w: 14 }, { k: 'id', l: 'Ticket id', t: 'int', w: 10 }],
+    accounts: [{ k: 'client', l: 'Client', w: 20 }, { k: 'market', l: 'Market', w: 9 },
+      { k: 'name', l: 'Account', w: 26 }, { k: 'group', l: 'Group', w: 16 },
+      { k: 'type', l: 'Type', w: 10 }, { k: 'am', l: 'Account manager', w: 16 }, { k: 'am2', l: 'Second AM', w: 16 },
+      { k: 'allowance', l: 'Monthly allowance h', t: 'hours', w: 18 },
+      { k: 'used', l: 'Used this cycle h', t: 'hours', w: 17 },
+      { k: 'balance', l: 'Balance h', t: 'hours', w: 12 },
+      { k: 'health', l: 'Balance health', w: 15 }, { k: 'stateL', l: 'State', w: 12 },
+      { k: 'since', l: 'Since', t: 'date', w: 12 }]
+  };
+  var XNAME = { tasks: 'Tasks', tickets: 'Client tickets', accounts: 'Accounts & hours' };
+
+  // the rows the ACTIVE tab is showing, in the order it is showing them, with the page's own
+  // display labels resolved so the workbook reads in the same words the screen does
+  function xrows(tab) {
+    if (tab === 'tickets') return sortRows(FK, SORT.tickets.k, SORT.tickets.dir).map(function (t) {
+      return Object.assign({}, t, { status: TICKET_LIVE[t.status] ? t.status : (t.status || '') });
+    });
+    if (tab === 'accounts') return sortRows(ACCOUNTS, SORT.accounts.k, SORT.accounts.dir).map(function (a) {
+      return Object.assign({}, a, { stateL: a.flag === 0 ? 'live' : (a.status || 'stopped') });
+    });
+    return sortRows(FT, SORT.tasks.k, SORT.tasks.dir).map(function (t) {
+      return Object.assign({}, t, { catL: CAT_LABEL[t.cat] || t.cat, bucketL: BUCKET_LABEL[t.bucket] || t.bucket });
+    });
+  }
+
+  // provenance, as its own sheet — never mixed into the data grid, which people pivot
+  function xnotes(tab, n) {
+    var h = D.health || {}, r = [];
+    var add = function (f, v) { if (v != null && v !== '') r.push({ f: f, v: String(v) }); };
+    add('Export', XNAME[tab] + ' — FeedSpark Task Manager');
+    add('Taken', new Date().toLocaleString('en-GB'));
+    add('Rows in this export', n);
+    add('Search', Q.raw.trim() || '(no search — the whole book in scope)');
+    add('Window', (D.from || '?') + ' to ' + (D.to || '?') + ' (' + (D.months || 12) + ' months)');
+    if (tab === 'tickets') add('Ticket window', 'Tickets are windowed by LAST ACTIVITY, not by when they opened.');
+    add('Book read', (h.read || 0) + ' of ' + (h.total || 0) + ' markets'
+      + (h.complete ? '' : ' — the sync fills the book a few markets at a time, so what has not been read is ABSENT, not zero'));
+    if (h.staleHours) add('Oldest read', Math.round(h.staleHours) + ' hours ago');
+    if (D.scoped) add('Scope', 'This export carries only the clients this signin is allowed to see.');
+    if (tab === 'tasks') {
+      add('Hours', 'Billable (time_taken) and non-billable (time_taken_nonbill) are BOTH real delivered effort. '
+        + 'They are never merged: billable + non-billable = total on every row.');
+      add('Undated rows', 'A task the database dates 0000-00-00 has an empty Date cell. It is in the totals and in no month.');
+    }
+    add('Source', 'FeedSpark Command Center · /tasks · private & confidential');
+    return { name: 'About this export', cols: [{ k: 'f', l: 'Field', w: 22 }, { k: 'v', l: 'Value', w: 110 }], rows: r };
+  }
+
+  function xlsxExport() {
+    if (!window.FeedXlsx) { toast('Excel export needs the page served by the FCC — try again from the live dashboard'); return; }
+    var tab = TAB, rows = xrows(tab);
+    if (!rows.length) { toast('Nothing to export — no ' + (tab === 'accounts' ? 'account' : tab.replace(/s$/, '')) + ' matches this view'); return; }
+    var stem = 'feedspark-' + tab + '-' + new Date().toISOString().slice(0, 10) + (Q.raw.trim() ? '-filtered' : '');
+    try {
+      FeedXlsx.download([{ name: XNAME[tab], cols: XCOLS[tab], rows: rows }, xnotes(tab, rows.length)], stem);
+      toast(rows.length.toLocaleString('en-GB') + ' row' + (rows.length === 1 ? '' : 's') + ' exported to Excel');
+    } catch (e) { toast('Could not build the workbook — use the CSV instead'); }
   }
 
   function toast(msg) {
@@ -1343,6 +1450,7 @@ window.addEventListener('load',restore);
     $('cdim').onchange = function () { CDIM = $('cdim').value; if (CDIM !== 'total' && CFORM === 'donut') { CFORM = 'stack'; $('cform').value = 'stack'; } chart(); };
     $('cform').onchange = function () { CFORM = $('cform').value; if (CFORM === 'donut' && CDIM !== 'total') { CDIM = 'total'; $('cdim').value = 'total'; } chart(); };
     $('clab').onchange = chart; $('ctab').onchange = chart;
+    $('pxlsx').onclick = xlsxExport;
     $('xpng').onclick = png;
     $('xtsv').onclick = function () { copy(tsv(), 'Chart table copied'); };
     $('xcsv').onclick = csv;
