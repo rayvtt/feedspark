@@ -346,11 +346,14 @@ window.addEventListener('load',restore);
   .wl-test{font-size:9.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--good);background:#EBF7EF;border:1px solid #CDE9D8;border-radius:5px;padding:1px 5px;margin-left:7px;vertical-align:middle}
   /* live pipeline rows: the stage chip carries Workflow's own colour, so a ticket reads the
      same on both pages and a leadership reader never has to translate between them */
-  .lw-item{align-items:center}
-  .lw-chip{flex:none;color:#fff;font-size:10.5px;font-weight:900;letter-spacing:.02em;
-    border-radius:100px;padding:3px 10px;text-decoration:none;white-space:nowrap}
+  /* .wl-item is a grid of auto 1fr auto — a two-child row put the chip in the 1fr column and
+     it stretched, which is the ragged bar Ray saw. Two columns, and the chip is Workflow's own
+     .bf-chip verbatim (9.5px, 1px 8px, 100px radius) so a stage reads identically on both. */
+  .lw-item{grid-template-columns:1fr auto}
+  .lw-chip{justify-self:end;display:inline-block;padding:1px 8px;border-radius:100px;
+    font-size:9.5px;font-weight:900;color:#fff;white-space:nowrap;text-decoration:none}
   .lw-chip:hover{filter:brightness(1.08)}
-  @media (max-width:720px){ .lw-item{flex-wrap:wrap} .lw-chip{margin-top:4px} }
+  .lw-ct{font-size:10px;font-weight:800;color:var(--muted);margin-left:6px}
   /* ---- log scaffold ---- */
   .logtable{width:100%;border-collapse:collapse;font-size:13.5px}
   .logtable th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
@@ -1740,6 +1743,8 @@ window.addEventListener('load',restore);
   var WF_SHUT={done:1,confirmed:1,dead:1,closed:1};
   // …and these two ARE the test, which is what "currently running tests" means
   var WF_TEST={running:1,analysis:1};
+  // running and analysis ARE the test, so they lead; then the work moving toward one
+  var LW_RANK={running:0,analysis:1,progress:2,briefed:3,blocked:4,intake:6};
   function wfNorm(s){ return String(s||'').trim().toLowerCase(); }
   // fold wording so a ticket and its own plan row are recognised as one piece of work
   function wkKey(s){ return String(s||'').toLowerCase().replace(/&amp;/g,'&')
@@ -1766,7 +1771,15 @@ window.addEventListener('load',restore);
       if(seen[wkKey(t.t)])return;                 // the ticket above already says this
       tests.push({id:'',t:t.t,st:'',lbl:t.s||'Planned',court:'',col:'#8a94a0',by:t.ae||'',tkt:false});
     });
-    return {tests:tests,flight:flight,n:all.length};
+    /* ONE list (Ray, 16 Sep 2026: "why the two sections in the pipeline, one in flight and
+       currently running test? So it's basically merged together"). Splitting them put the
+       Gifting ticket — In progress — under a separate heading from its three siblings, which
+       reads as a different kind of work when it is the same work one stage earlier. Merged and
+       RANKED so running and analysis lead; nothing is dropped, because a ticket that vanishes
+       from the dossier is a ticket nobody chases. */
+    var items=tests.concat(flight).sort(function(a,b){
+      return (LW_RANK[a.st]==null?5:LW_RANK[a.st])-(LW_RANK[b.st]==null?5:LW_RANK[b.st]); });
+    return {items:items,tests:tests,flight:flight,n:all.length};
   }
   function liveRows(items,empty){
     if(!items.length) return '<p class="dz-empty">'+empty+'</p>';
@@ -1774,9 +1787,10 @@ window.addEventListener('load',restore);
       return '<li class="wl-item lw-item">'
         // NOT opSafe'd: this is the internal leadership view, where ASPL and the tool names are
         // the right words. The client-facing one-pager is the surface that sanitises them.
+        // built from the parts that EXIST — an absent author used to leave "REIS-… · · ball with AM"
         +'<span class="wl-body"><span class="wl-t">'+esc(r.t)+'</span>'
-        +'<span class="wl-meta">'+(r.id?esc(r.id)+' · ':'')+(r.by?esc(r.by):(r.tkt?'':'plan'))
-        +(r.court?' · ball with '+esc(r.court):'')+'</span></span>'
+        +'<span class="wl-meta">'+[r.id?esc(r.id):'', r.by?esc(r.by):(r.tkt?'':'plan'),
+           r.court?'ball with '+esc(r.court):''].filter(Boolean).join(' · ')+'</span></span>'
         +'<a class="lw-chip" href="/workflow" title="Open in Workflow" style="background:'+r.col+'">'
         +esc(r.lbl)+'</a></li>'; }).join('')+'</ul>';
   }
@@ -1821,11 +1835,12 @@ window.addEventListener('load',restore);
   }
   function liveHtml(name,tasks){
     var LW=liveWork(name,tasks);
-    return '<div class="dz-work-head"><h4>Currently running tests <span class="dz-histn">'+LW.tests.length+' live</span></h4>'
-      +'<a class="lnk dz-wf" href="/workflow" title="Full test register in Workflow" style="margin-left:auto;font-size:12px;font-weight:800">Workflow test register ↗</a></div>'
-      +liveRows(LW.tests,'No tests running right now — the full register lives in <a href="/workflow">Workflow</a>.')
-      +'<div class="dz-work-head" style="margin-top:16px"><h4>In the pipeline <span class="dz-histn">'+LW.flight.length+' in flight</span></h4></div>'
-      +liveRows(LW.flight,'Nothing in the pipeline for this brand right now.');
+    var run=LW.tests.length;
+    // "4" and "3 tests running" ran together as "43" — the badge carries its own noun now
+    return '<div class="dz-work-head"><h4>Active right now <span class="dz-histn">'+LW.items.length+' live</span>'
+      +(run?'<span class="lw-ct"> \u00b7 '+run+' test'+(run===1?'':'s')+' running</span>':'')+'</h4>'
+      +'<a class="lnk dz-wf" href="/workflow" title="The full board lives in Workflow" style="margin-left:auto;font-size:12px;font-weight:800">Open in Workflow ↗</a></div>'
+      +liveRows(LW.items,'Nothing active for this brand right now — the full board lives in <a href="/workflow">Workflow</a>.');
   }
   /* Keep the open dossier honest: re-read the pipeline and repaint ONLY this block, so a
      leadership screen left open follows the board instead of freezing at page-load state. */
