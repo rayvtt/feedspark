@@ -404,6 +404,26 @@ window.addEventListener('load',restore);
   .dzp-arow .mk{font-weight:900;text-transform:uppercase;font-size:10.5px;color:var(--muted);width:26px;flex:none}
   .dzp-as{font-weight:900}
   .dzp-as.good{color:var(--good)}.dzp-as.warn{color:var(--orange-deep)}.dzp-as.bad{color:var(--risk)}
+  /* Ray, 16 Sep 2026: "only Activity and Health actually look good. The other three tiles are not
+     well presented". Hours, Feed audit and Golden Record now carry a shape each, in Activity's and
+     Health's own language — a meter, per-market bars, a score ring — rather than a row of digits. */
+  .dzp-mrow{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;padding:3.5px 0}
+  .dzp-mrow .mk{font-weight:900;text-transform:uppercase;font-size:10.5px;color:var(--muted)}
+  .dzp-mrow .sc{font-size:12px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .dzp-mrow .sc em{font-style:normal;font-size:10px;font-weight:800;color:var(--muted);margin-left:4px}
+  .dzp-bar{position:relative;height:7px;border-radius:99px;background:var(--line);overflow:hidden;min-width:34px}
+  .dzp-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;display:block}
+  .dzp-bar.none{background:repeating-linear-gradient(135deg,var(--line) 0 4px,transparent 4px 8px);
+    box-shadow:inset 0 0 0 1px var(--line)}
+  /* the hours meter: the cap is the track when it is not yet spent, and a marked line once it is
+     — an over-run has to be visible as crossing something, not as a bar that is merely full */
+  .dzp-meter{margin:8px 0 2px}
+  .dzp-meter .dzp-bar{height:10px}
+  .dzp-meter u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.55;text-decoration:none}
+  .dzp-mcap{display:flex;justify-content:space-between;gap:8px;margin-top:5px;font-size:10px;
+    font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+  .dzp-band.served{background:#2F6FB0}
+  .dzp-why{margin-top:6px;font-size:11px;font-weight:700;color:var(--ink-2);font-style:italic}
   .dzp-al{font-size:10.5px;font-weight:900;border-radius:6px;padding:1px 6px;background:#FDF6F4;color:var(--risk);border:1px solid #EFC7BF}
   .dzp-sug{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px 15px;background:#fff}
   .dzp-sug h5{margin:0 0 7px;font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-deep)}
@@ -1576,19 +1596,47 @@ window.addEventListener('load',restore);
      carries the figures inline; the ⏱ dot beside the brand name opens the trajectory popover.
      The widget is injected by the worker, so on a bare file:// preview this simply renders
      nothing — never a fabricated zero. */
+  /* The retainer is a quantity being SPENT AGAINST A CAP, so it reads as a meter, not as three
+     loose figures. The track is scaled to whichever is larger, the block or what has been used —
+     so an over-run is drawn as the fill crossing the marked cap rather than as a bar that merely
+     sits full, which would look identical to spending the block exactly.
+     The balance takes Health's big-number-plus-band treatment because it is the one figure an AM
+     is deciding on; SERVED keeps its own colour rather than borrowing red, since a deliberate
+     decision to carry an account is not an unhandled alarm (the hours widget's own rule). */
+  var HRS_ST={ok:{b:'good',l:'Healthy',c:'#15803D'},tight:{b:'watch',l:'Running tight',c:'#ED6F0B'},
+    over:{b:'risk',l:'Negative',c:'#C0392B'},served:{b:'served',l:'Being served',c:'#2F6FB0'},
+    held:{b:'risk',l:'New work on hold',c:'#C0392B'}};
+  function hrsMeter(used,allow,col){
+    used=Math.max(0,Number(used)||0); allow=Math.max(0,Number(allow)||0);
+    var scale=Math.max(used,allow);
+    if(!scale) return '';
+    var fill=Math.round(used/scale*1000)/10, capAt=Math.round(allow/scale*1000)/10;
+    var over=used>allow+1e-9;
+    return '<div class="dzp-meter"><div class="dzp-bar" role="img" aria-label="'
+      +hrsN(used)+' hours used of a '+hrsN(allow)+' hour block">'
+      +'<i style="width:'+fill+'%;background:'+col+'"></i>'
+      +(over?'<u style="left:'+capAt+'%" title="Block: '+hrsN(allow)+'h"></u>':'')+'</div>'
+      +'<div class="dzp-mcap"><span>'+hrsN(used)+'h used</span><span>'+hrsN(allow)+'h block</span></div></div>';
+  }
+  function hrsN(v){ return (v==null||v!==v)?'—':String(Math.round(Number(v)*100)/100); }
   function portHours(name){
     var W=window.FCCHours, hit=W&&W.rec?W.rec(name):null;
     if(!hit||!hit.rec) return '';
-    var r=hit.rec, st=W.state(r), lbl={ok:'Healthy',tight:'Running tight',over:'Negative',
-      served:'Negative — being served',held:'Negative — new work on hold',none:'Not tracked'}[st]||st;
+    var r=hit.rec, st=W.state(r);
     if(st==='none') return '';
-    var cls=(st==='ok')?'good':(st==='tight')?'warn':'bad';
-    var h=function(v){ return (v==null||v!==v)?'—':(Math.round(v*100)/100)+'h'; };
-    return '<div class="dzp-card"><h5>Hours — '+esc(lbl)+'</h5><div class="dzp-tiles">'
-      +'<span class="dzp-t"><span class="n">'+h(r.allowance)+'</span><span class="l">block</span></span>'
-      +'<span class="dzp-t"><span class="n">'+h(r.used)+'</span><span class="l">used</span></span>'
-      +'<span class="dzp-t '+cls+'"><span class="n">'+h(r.balance)+'</span><span class="l">balance</span></span>'
-      +'</div><div class="dzp-hrsn" data-hrs="'+esc(name)+'">'+esc(W.verdict(r))+'</div></div>';
+    var S=HRS_ST[st]||HRS_ST.ok;
+    var bal=Number(r.balance)||0;
+    var why=(r.posture&&r.posture.note)||'';
+    return '<div class="dzp-card"><h5>Hours — retainer</h5>'
+      +'<div class="dzp-health"><span class="dzp-hn" style="color:'+S.c+'">'+hrsN(bal)+'h</span>'
+      +'<span class="dzp-band '+S.b+'">'+esc(S.l)+'</span></div>'
+      +hrsMeter(r.used,r.allowance,S.c)
+      +((r.markets||r.am)?('<div class="dzp-foot">'
+        +(r.markets?'<span><em>'+fmtN(r.markets)+'</em><span class="lb">market'+(r.markets===1?'':'s')+' synced</span></span>':'')
+        +(r.am?'<span><em style="font-size:11.5px">'+esc(r.am)+'</em><span class="lb">AM</span></span>':'')
+        +'</div>'):'')
+      +(why?'<div class="dzp-why">“'+esc(why)+'”</div>':'')
+      +'<div class="dzp-hrsn" data-hrs="'+esc(name)+'">'+esc(W.verdict(r))+'</div></div>';
   }
   function portHtml(name,mkts){
     var M=portModel(name,mkts);
@@ -1610,15 +1658,33 @@ window.addEventListener('load',restore);
       +'<span><em class="'+(done1?'':'')+'" style="'+(done1?'color:var(--good)':'')+'">'+(p?fmtN(done1):'—')+'</em><span class="lb">done · 30d</span></span>'
       +'</div></div>';
     var hl='<div class="dzp-card"><h5>Health</h5><div class="dzp-health"><span class="dzp-hn">'+h+'</span><span class="dzp-band '+band+'">'+bandL+'</span></div>'+fac.slice(0,4).join('')+'</div>';
+    /* Feed audit: one bar per market, so a brand's weakest feed is visible at a glance instead of
+       having to be found by reading numbers. An UNSCANNED market keeps its row — drawn as an empty
+       hatched track and named — rather than being dropped or drawn as a zero-length bar, which
+       would read as a score of 0. Keyword saturation rides the same row as a muted suffix; the
+       averages and the guard alerts sit under the rule, the way Activity's foot does. */
+    var satAvgA=satL.length?Math.round(satL.reduce(function(s,x){return s+x.pct;},0)/satL.length*10)/10:null;
     var arows=audL.map(function(a){
       var sat=null; satL.forEach(function(x){ if(x.m===a.m)sat=x.pct; });
-      var sc=a.score==null?'<span class="dzp-as" style="color:var(--muted)">not scanned</span>'
-        :'<span class="dzp-as '+(a.score>=80?'good':a.score>=65?'warn':'bad')+'">'+a.score+'/100</span>';
-      return '<div class="dzp-arow"><span class="mk">'+esc(a.m.toUpperCase())+'</span>'+sc
-        +(sat!=null?'<span style="color:var(--muted)">·</span><span>'+sat+'% keyworded</span>':'')+'</div>'; }).join('');
+      var b=a.score==null?'':(a.score>=80?'good':a.score>=65?'warn':'bad');
+      var col=b==='good'?'#15803D':b==='warn'?'#ED6F0B':'#C0392B';
+      var bar=a.score==null?'<span class="dzp-bar none" title="Never scanned — not a zero"></span>'
+        :'<span class="dzp-bar" title="'+esc(a.m.toUpperCase())+': '+a.score+'/100">'
+          +'<i style="width:'+a.score+'%;background:'+col+'"></i></span>';
+      var sc=a.score==null?'<span class="sc" style="color:var(--muted);font-size:10.5px;font-weight:800">not scanned</span>'
+        :'<span class="sc dzp-as '+b+'">'+a.score+(sat!=null?'<em>· '+sat+'% kw</em>':'')+'</span>';
+      return '<div class="dzp-mrow"><span class="mk">'+esc(a.m.toUpperCase())+'</span>'+bar+sc+'</div>'; }).join('');
+    /* the foot says what the rows can't: how much of the estate has actually been read, and the
+       one cross-market number. The average is already in the heading and the alerts get their own
+       pill, so neither is repeated here. */
+    var afoot=[];
+    if(audL.length)afoot.push('<span><em>'+audL.filter(function(a){return a.score!=null;}).length+'/'+audL.length
+      +'</em><span class="lb">scanned</span></span>');
+    if(satAvgA!=null)afoot.push('<span><em>'+satAvgA+'%</em><span class="lb">keyworded</span></span>');
     var aud='<div class="dzp-card"><h5>Feed audit'+(avgA!=null?' — avg '+avgA+'/100':'')+'</h5>'
       +(arows||'<div class="dzp-arow" style="color:var(--muted)">no feed markets wired</div>')
-      +((crit||warn)?'<div style="margin-top:6px"><span class="dzp-al">'+(crit?crit+' crit':'')+(crit&&warn?' · ':'')+(warn?warn+' warn':'')+' guard alerts</span></div>':'')
+      +(afoot.length?'<div class="dzp-foot">'+afoot.join('')+'</div>':'')
+      +((crit||warn)?'<div style="margin-top:7px"><span class="dzp-al">'+(crit?crit+' crit':'')+(crit&&warn?' · ':'')+(warn?warn+' warn':'')+' guard alerts</span></div>':'')
       +'</div>';
     var sh=sug.length?('<div class="dzp-sug"><h5>Suggested next moves</h5>'+sug.map(function(s){
         return '<div class="dzp-s"><span class="pri p'+s.p+'">P'+s.p+'</span><span>'+esc(s.t)+'</span><a href="'+esc(s.l)+'">→ '+esc(s.ll)+'</a></div>'; }).join('')+'</div>')
@@ -1656,23 +1722,45 @@ window.addEventListener('load',restore);
     return Math.round(v.reduce(function(s,r){return s+r[key];},0)/v.length);
   }
   function grBand(n){ return n==null?'':(n>=90?'good':n>=75?'warn':'bad'); }
+  var GR_COL={good:'#15803D',warn:'#ED6F0B',bad:'#C0392B'};
+  /* A completeness score is a proportion of a whole, so it takes the same ring Activity uses —
+     the filled arc is the score, the remainder is what is missing, and the gap is the thing the
+     reader is actually looking for. The legend carries the other two readings beside it rather
+     than under it, which is what keeps the card the same height as the ones next to it. */
+  function grRing(pct,col){
+    var S=76,R=S/2,r0=R-2,ri=R*0.62,p=Math.max(0,Math.min(100,Number(pct)||0));
+    var mid=(r0+ri)/2, C=2*Math.PI*mid;
+    return '<svg viewBox="0 0 '+S+' '+S+'" width="'+S+'" height="'+S+'" role="img" aria-label="Golden Record '+p+' out of 100">'
+      +'<circle cx="'+R+'" cy="'+R+'" r="'+mid.toFixed(2)+'" fill="none" stroke="#C9CDD4" stroke-opacity=".45" stroke-width="'+(r0-ri)+'"/>'
+      +'<circle cx="'+R+'" cy="'+R+'" r="'+mid.toFixed(2)+'" fill="none" stroke="'+col+'" stroke-width="'+(r0-ri)
+      +'" stroke-dasharray="'+(C*p/100).toFixed(2)+' '+C.toFixed(2)
+      +'" transform="rotate(-90 '+R+' '+R+')"/></svg>';
+  }
   function portGolden(name){
     var rows=grRows(name);
     if(!rows.length)return '';
     var scored=rows.filter(function(r){return r.score!=null;});
-    var avg=grAvg(rows,'score'), q=grAvg(rows,'q');
+    var avg=grAvg(rows,'score'), q=grAvg(rows,'q'), air=grAvg(rows,'air');
     var req=rows.reduce(function(s,r){return s+r.req;},0);
     var never=rows.length-scored.length;
     var h='<div class="dzp-card"><h5>Golden Record'+(avg!=null?' — avg '+avg+'/100':'')+'</h5>';
     if(!scored.length){
       h+='<div class="dzp-arow" style="color:var(--muted)">no market scanned yet — run the Golden Record scan</div>';
     }else{
-      h+='<div class="dzp-tiles">'
-        +'<span class="dzp-t '+grBand(avg)+'"><span class="n">'+avg+'</span><span class="l">record</span></span>'
-        +(q!=null?'<span class="dzp-t '+grBand(q)+'"><span class="n">'+q+'</span><span class="l">content</span></span>':'')
-        +'<span class="dzp-t'+(req?' bad':'')+'"><span class="n">'+req+'</span><span class="l">req missing</span></span>'
-        +'</div>';
-      if(never)h+='<div class="dzp-arow" style="color:var(--muted)">'+never+' market'+(never===1?'':'s')+' not scanned</div>';
+      var band=grBand(avg), col=GR_COL[band]||'#C9CDD4';
+      /* the legend sits in ~110px beside the ring, so the labels are short and each row carries
+         its full name as a tooltip — a truncated "content qu…" says less than a short word does */
+      var lr=function(col,n,short,full){
+        return '<span class="dzp-lr" title="'+esc(full)+'"><i style="background:'+col+'"></i><b>'+n
+          +'</b><span>'+esc(short)+'</span></span>'; };
+      var leg='';
+      if(q!=null)leg+=lr(GR_COL[grBand(q)]||'#C9CDD4',q,'quality','Content quality — what is IN the free-text fields, out of 100');
+      if(air!=null)leg+=lr('#2F6FB0',air,'AI ready','AI readiness score, out of 100');
+      leg+=lr(req?'#C0392B':'#C9CDD4',req,'req gaps','Required attributes missing across the brand’s markets');
+      if(never)leg+=lr('#C9CDD4',never,'unscanned',never+' market'+(never===1?'':'s')+' never scanned — never counted as zero');
+      h+='<div class="dzp-act"><div class="dzp-ring">'+grRing(avg,col)
+        +'<span class="mid"><b style="color:'+col+'">'+avg+'</b><span>record</span></span></div>'
+        +'<div class="dzp-leg">'+leg+'</div></div>';
     }
     h+='<button type="button" class="dzp-grbtn" data-gr="'+esc(name)+'">Full snapshot ↗</button></div>';
     return h;

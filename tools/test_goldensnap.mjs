@@ -28,6 +28,12 @@ const ok = (n, c, got) => {
   if (c) { pass++; console.log('  ✓ ' + n); }
   else { fail++; console.log('  ✗ ' + n + (got !== undefined ? '  got: ' + JSON.stringify(got) : '')); }
 };
+function liftVar(src, name) {
+  const re = new RegExp('var ' + name + '=\\{[\\s\\S]*?\\n?\\s*\\};');
+  const m = src.match(re);
+  if (!m) throw new Error('not found: var ' + name);
+  return m[0];
+}
 function lift(src, name) {
   const i = src.indexOf('function ' + name + '(');
   if (i < 0) throw new Error('not found: ' + name);
@@ -47,7 +53,8 @@ const FEEDS = {
   'Schuh|gb': { client: 'Schuh', mkt: 'gb', score: 95, q: 91, ai: 4, status: 'ok' },
 };
 const api = new Function('GRC', 'esc', 'fmtN', `
-  ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'grBand')} ${lift(CC, 'portGolden')}
+  ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'grBand')}
+  ${liftVar(CC, 'GR_COL')} ${lift(CC, 'grRing')} ${lift(CC, 'portGolden')}
   return { grRows:grRows, grAvg:grAvg, grBand:grBand, portGolden:portGolden };
 `)({ feeds: FEEDS }, (x) => String(x), (n) => String(n));
 
@@ -74,14 +81,16 @@ console.log('\n-- the band card --');
 const card = api.portGolden('Reiss');
 ok('the card renders', /Golden Record/.test(card));
 ok('it leads with the average', /avg 82\/100/.test(card), card.slice(0, 120));
-ok('it counts required attributes missing across the brand', />2<\/span><span class="l">req missing/.test(card),
-   card.match(/req missing/));
-ok('it says how many markets are unscanned', /1 market not scanned/.test(card));
+ok('it counts required attributes missing across the brand', /<b>2<\/b><span>req gaps/.test(card),
+   card.match(/req gaps/));
+ok('it says how many markets are unscanned', /<b>1<\/b><span>unscanned/.test(card)
+   && /1 market never scanned/.test(card));
 ok('it offers the full snapshot', /data-gr="Reiss"/.test(card));
 ok('a brand with no Golden Record feeds renders nothing at all', api.portGolden('Nobody') === '');
 {
   const none = new Function('GRC', 'esc', 'fmtN', `
-    ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'grBand')} ${lift(CC, 'portGolden')}
+    ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'grBand')}
+    ${liftVar(CC, 'GR_COL')} ${lift(CC, 'grRing')} ${lift(CC, 'portGolden')}
     return portGolden;`)({ feeds: { 'X|gb': { client: 'X', mkt: 'gb', status: 'never' } } },
     (x) => String(x), (n) => String(n))('X');
   ok('a brand wired but never scanned says so instead of showing a 0',

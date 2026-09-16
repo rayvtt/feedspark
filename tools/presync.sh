@@ -128,6 +128,10 @@ echo "── validating: Golden Record snapshot in the dossier"
 node tools/test_goldensnap.mjs >/dev/null
 echo "   ✓ averages exclude unscanned markets; popup + /golden?client= hold"
 
+echo "── validating: the dossier's portfolio tiles"
+node tools/test_dossiertiles.mjs >/dev/null
+echo "   ✓ hours meter, per-market audit bars, Golden Record ring — and what each refuses to fake"
+
 echo "── validating: live deck editor (real browser)"
 if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   NODE_PATH=$(npm root -g) node tools/test_editor.mjs || {
