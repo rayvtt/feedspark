@@ -6413,6 +6413,30 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "PQT = orTerms(PQ)",
       "min": 1
+    },
+    {
+      "name": "Golden Record: the scorecard header is PINNED while you scroll the attribute rows (Ray 16 Sep 2026: 'when using the Golden Score card and scrolling down to review the feed scorecard, make sure this section stays frozen when scrolling down')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": ".gr-sticky{position:sticky;top:var(--stick",
+      "min": 1
+    },
+    {
+      "name": "Golden Record pinned header: CONDENSES once pinned (dial 74px, verdict hidden) so it never freezes a 200px wall across the viewport — the feed, score, Δ reference and actions stay",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": ".gr-sticky.stuck .dial{width:74px",
+      "min": 1
+    },
+    {
+      "name": "Golden Record pinned header: the stuck state is read off the element itself each frame (a sentinel/observer goes stale the moment renderDetail rewrites the panel)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function grStick",
+      "min": 1
+    },
+    {
+      "name": "Golden Record pinned header: paper gets the page AT REST — body.pdf un-pins it and the condensing pass stands down while printing, else the PDF carries a shrunken dial",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf .gr-sticky{position:static!important",
+      "min": 1
     }
   ]
 }
