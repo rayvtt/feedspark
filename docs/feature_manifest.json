@@ -5312,6 +5312,48 @@
    "min": 0,
    "forbidden": true,
    "pr": 380
+  },
+  {
+   "name": "Workflow: a brief save RETRIES with backoff and flushes on reconnect — fire-and-forget left the ticket in one browser with the brief email already sent (Ray 16 Sep 2026, Cashmere/Merino + Gifting)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function bfPush(delay){",
+   "pr": 384,
+   "min": 1
+  },
+  {
+   "name": "Workflow: an unsaved brief stays on screen until it lands — never a toast nobody re-reads",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function bfWarn(on){",
+   "pr": 384,
+   "min": 1
+  },
+  {
+   "name": "Workflow: the composer no longer claims 'saved to pipeline' before the server has answered (bfConfirm)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function bfConfirm(id,existing){",
+   "pr": 384,
+   "min": 1
+  },
+  {
+   "name": "Workflow: the board POLLS /api/briefs (60s + tab-visible) — it read the pipeline once at boot and never again, so a colleague's ticket never arrived",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function bfPoll(){",
+   "pr": 384,
+   "min": 1
+  },
+  {
+   "name": "Workflow: the briefs poll never overwrites work this tab has not saved (BRIEFS_DIRTY guard)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "if(document.hidden||BRIEFS_DIRTY)return;",
+   "pr": 384,
+   "min": 1
+  },
+  {
+   "name": "Workflow: the briefs read-stamp only advances off a response actually adopted — a stale map with a fresh stamp deletes by absence",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "if(stamp)BRIEFS_BASE=stamp;",
+   "pr": 384,
+   "min": 1
   }
  ]
 }
