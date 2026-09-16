@@ -3943,7 +3943,11 @@ async function goldenRoutes(env, request, url) {
         avgLen: Math.max(0, parseInt(a.avgLen, 10) || 0),
         minLen: Math.max(0, parseInt(a.minLen, 10) || 0),
         maxLen: Math.max(0, parseInt(a.maxLen, 10) || 0),
-        rules, dupeCapped: a.dupeCapped === true || undefined };
+        rules, dupeCapped: a.dupeCapped === true || undefined,
+        // how many columns a repeatable attribute was read across, and values per product —
+        // the evidence behind a count-based finding like "fewer than 2 highlights"
+        cols: q.multi ? Math.max(1, Math.min(50, parseInt(a.cols, 10) || 1)) : undefined,
+        perProduct: q.multi ? Math.max(0, Math.round((Number(a.perProduct) || 0) * 10) / 10) : undefined };
     }
     if (!Object.keys(attrs).length) return json({ error: 'no known free-text attribute in this feed' }, 400);
     // the AI-Readiness reading the page computes on the SAME stream (Ray, 16 Sep 2026) —

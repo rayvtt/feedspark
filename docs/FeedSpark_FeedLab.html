@@ -525,7 +525,7 @@ window.addEventListener('load',restore);
 
 <section id="score" class="rv"><div class="wrap">
   <h2>AI-Readiness score</h2>
-  <p class="sub">Weighted across 8 pillars — the same FeedSpark AI-Readiness ladder the Readiness module and client decks speak.</p>
+  <p class="sub">Weighted across 8 pillars — the same FeedSpark AI-Readiness ladder the Readiness module and client decks speak. The heaviest is <b>conversational attributes</b>: the only fields in Google's specification whose stated purpose is AI comprehension.</p>
   <div class="fl-card">
     <div class="score-grid">
       <div class="big-ring" id="ring" role="img" aria-label="Overall AI-readiness score">
@@ -538,6 +538,7 @@ window.addEventListener('load',restore);
     </div>
   </div>
   <div class="pillars" id="pillars"></div>
+  <p class="sub" id="pill-foot" style="margin-top:12px"></p>
 </div></section>
 
 <section id="titles" class="rv"><div class="wrap">
@@ -921,8 +922,9 @@ function renderScore(a){
   }).join('');
   var host=$('#pillars');
   host.innerHTML=(s.pillars||[]).map(function(p){
-    var w=+p.weight||1,dots=w<1?1:w<1.4?2:3,dh='';
-    for(var i=0;i<3;i++)dh+='<i'+(i<dots?' class="on"':'')+'></i>';
+    // four dots, not three: the conversational pillar carries ×2.4 and has to look it
+    var w=+p.weight||1,dots=w>=2?4:(w<1?1:(w<1.4?2:3)),dh='';
+    for(var i=0;i<4;i++)dh+='<i'+(i<dots?' class="on"':'')+'></i>';
     return '<div class="pillar"><div class="ph"><span class="pl2">'+esc(p.label)+'</span><span class="pn" style="color:'+scoreColor(+p.score||0)+'">'+Math.round(+p.score||0)+'</span></div>'
       +'<div class="ptrack"><i class="pfill" data-w="'+Math.round(+p.score||0)+'"></i></div>'
       +'<div class="pf2"><span class="wdots" title="pillar weight ×'+w+'">'+dh+'</span><span class="psum">'+esc(p.summary||'')+'</span></div></div>';
@@ -936,6 +938,16 @@ function renderScore(a){
   if(!RM)host.querySelectorAll('.pillar').forEach(function(pl,i){ // shimmer as each bar lands
     setTimeout(function(){pl.classList.add('shine')},520+i*90);
   });
+  // what is measured but deliberately NOT scored, and why — Ray, 16 Sep 2026: "label
+  // architecture that involves custom labels is not necessarily usable for AI, so I don't
+  // know what's in there". Now it says what is in there, and where it belongs instead.
+  var la=a.labelArchitecture,foot=$('#pill-foot');
+  if(foot)foot.innerHTML='Pillars are weighted, so the headline is not their average — '
+    +'<b>conversational attributes</b> carry the most (×2.4), then title anatomy and attribute completeness. '
+    +'The four tiers are the ladder the readiness decks speak.'
+    +(la?' <b>Custom labels are measured but not scored</b>: label architecture reads '
+      +Math.round(la.score)+'/100 on this feed, and it is left out because '+esc(la.why)
+      +' — the detail lives in <a href="/labels">Label Guard</a>.':'');
 }
 function renderTitles(a){
   var t=a.titles||{},mask=t.mask||{},rc=+a.rowCount||0;
@@ -1130,7 +1142,7 @@ function renderAll(a,replay){
 }
 
 /* ============================ multi-market portal ============================ */
-var PILL_COLS=[['identity','Identity'],['titles','Titles'],['descriptions','Descr'],['attributes','Attrs'],['taxonomy','Taxo'],['media','Media'],['labels','Labels'],['ai','Agentic']];
+var PILL_COLS=[['conversational','Conv'],['identity','Identity'],['titles','Titles'],['descriptions','Descr'],['attributes','Attrs'],['taxonomy','Taxo'],['media','Media'],['ai','Detail']];
 function mkColor(v){return v==null?'#C9CDD4':v<40?'#D9534F':v<60?'#ED6F0B':v<80?'#F5A623':'#48A868'}
 function agoTxt(t){if(!t)return 'never scanned';var h=(Date.now()-t)/36e5;return h<1?Math.max(1,Math.round(h*60))+'m ago':h<48?Math.round(h)+'h ago':Math.round(h/24)+'d ago'}
 function mkUpdateFromAudit(mkt,a){

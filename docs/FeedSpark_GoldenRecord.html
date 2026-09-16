@@ -1088,7 +1088,7 @@ window.addEventListener('load',restore);
     { t: 'rec', badge: '<span class="tbadge rec">Recommended</span>', title: 'Recommended — the optimisation surface',
       sub: 'Optional per the spec but they drive performance: matching, PMAX segmentation, AI shopping surfaces. This is where FeedSpark lifts the score.' },
     { t: 'ai', badge: '<span class="tbadge ai">AI · conversational</span>', title: 'Conversational AI — the six Google asked for',
-      sub: 'The conversational attributes Google reads for AI Mode and agentic shopping (2026). Usually submitted via a supplemental data source, so “not in feed” is the expected start state — this tier is the AI-readiness frontier, tracked as its own KPI and never counted against the Golden Record score.' }
+      sub: 'The conversational attributes Google reads for AI Mode and agentic shopping (2026). Usually submitted via a supplemental data source, so “not in feed” is the expected start state — this tier is the AI-readiness frontier, tracked as its own KPI and never counted against the Golden Record score. It <b>is</b> the heaviest input to the AI-Readiness score below (×2.4): these are the only fields in the specification whose stated purpose is AI comprehension, so coverage here moves that number more than anything else in the feed.' }
   ];
 
   function renderDetail(k) {
@@ -1733,7 +1733,9 @@ window.addEventListener('load',restore);
       var FA = a[0], LG = a[1], col = null, cols = null, header = null, late = [];
       var sample = [], nRows = 0;          // a bounded slice for the Feed Lab audit
       function onRow(r, liveHeader) {
-        if (!col) { header = r.slice(); cols = LG.findAttrCols(header); col = LG.qualityCollector(cols); return; }
+        // the header goes in too: a repeatable attribute (product highlights) lives in several
+        // columns, and the collector needs them all or it reads one value out of four
+        if (!col) { header = r.slice(); cols = LG.findAttrCols(header); col = LG.qualityCollector(cols, { header: header }); return; }
         nRows++;
         if (sample.length < AUD_CAP) sample.push(r);
         // an XML feed can GROW its header mid-stream when a sparse tag debuts late (the
@@ -1889,7 +1891,10 @@ window.addEventListener('load',restore);
         if (r.key === 'title') h += titleAnatomy(k);   // the anatomy of what those rules just judged
         h += '<p class="hint muted" style="margin:8px 0 0;font-size:11px">' + esc(r.spec) +
           ' · <a href="https://support.google.com/merchants/answer/' + r.doc + '" target="_blank" rel="noopener">Google’s specification for g:' + esc(r.key) + '</a>' +
-          ' · average length ' + r.avgLen + ' chars (' + r.minLen + '–' + r.maxLen + ')</p></div>';
+          ' · average length ' + r.avgLen + ' chars (' + r.minLen + '–' + r.maxLen + ')' +
+          // a count-based finding has to show what it counted, or it cannot be checked
+          (r.perProduct ? ' · read across <b>' + r.cols + '</b> column' + (r.cols === 1 ? '' : 's') +
+            ' — <b>' + r.perProduct + '</b> values per product that has one' : '') + '</p></div>';
       }
       h += '</div>';
     });
@@ -2047,8 +2052,8 @@ window.addEventListener('load',restore);
   // is great too"). Feed Lab draws this per brand too; here it reads off the estate index,
   // which carries each analysed feed's per-pillar scores — so one analysed market shows its
   // own row and the rest say "—" rather than pretending to a number nobody measured.
-  var PILL_COLS = [['identity', 'Identity'], ['titles', 'Titles'], ['descriptions', 'Descr'], ['attributes', 'Attrs'],
-    ['taxonomy', 'Taxo'], ['media', 'Media'], ['labels', 'Labels'], ['ai', 'Agentic']];
+  var PILL_COLS = [['conversational', 'Conv'], ['identity', 'Identity'], ['titles', 'Titles'], ['descriptions', 'Descr'],
+    ['attributes', 'Attrs'], ['taxonomy', 'Taxo'], ['media', 'Media'], ['ai', 'Detail']];
   function heatCol(v) { return v == null ? '#C9CDD4' : (v < 40 ? '#D9534F' : (v < 60 ? '#ED6F0B' : (v < 80 ? '#F5A623' : '#48A868'))); }
   function pillarHeat(k) {
     var p = parts(k);
@@ -2108,8 +2113,9 @@ window.addEventListener('load',restore);
           '<span class="ln">' + x.l + '</span><span class="lr">' + x.r + '</span></div>';
       }).join('') + '</div></div></div></div>' +
       '<div class="pillars">' + a.pillars.map(function (p) {
-        var w = +p.weight || 1, dots = w < 1 ? 1 : (w < 1.4 ? 2 : 3), dh = '';
-        for (var i = 0; i < 3; i++) dh += '<i' + (i < dots ? ' class="on"' : '') + '></i>';
+        // four dots, not three: the conversational pillar carries ×2.4 and has to look it
+        var w = +p.weight || 1, dots = w >= 2 ? 4 : (w < 1 ? 1 : (w < 1.4 ? 2 : 3)), dh = '';
+        for (var i = 0; i < 4; i++) dh += '<i' + (i < dots ? ' class="on"' : '') + '></i>';
         return '<div class="pillar"><div class="ph"><span class="pl2">' + esc(p.label) + '</span>' +
           '<span class="pn" style="color:' + airCol(p.score) + '">' + p.score + '</span></div>' +
           '<div class="ptrack"><i class="pfill" data-w="' + p.score + '"></i></div>' +
@@ -2117,9 +2123,13 @@ window.addEventListener('load',restore);
           '<span class="psum">' + esc(p.summary) + '</span></div></div>';
       }).join('') + '</div>' +
       pillarHeat(k) +
-      '<p class="air-foot">Pillars are weighted, so the headline is not their average: title anatomy, attribute' +
-      ' completeness and agentic readiness carry the most (three dots), label architecture the least. The four' +
-      ' tiers are the same ladder used in the readiness decks — Foundational, Structured, Enriched, Agentic-ready.</p>' +
+      '<p class="air-foot">Pillars are weighted, so the headline is not their average: <b>conversational attributes</b>' +
+      ' carry the most (×2.4, four dots) — they are the only fields in Google’s specification whose stated purpose is' +
+      ' AI comprehension — then title anatomy and attribute completeness. The weight is set so everything else tops out' +
+      ' at 79: a feed carrying none of the attributes Google built for agentic surfaces cannot read as Agentic-ready.' +
+      ' <b>Custom labels are measured but not scored</b> — Google’s own specification says their values “won’t be shown' +
+      ' to customers”, so they are evidence of campaign structure, not of AI readiness; the detail is in' +
+      ' <a href="/labels">Label Guard</a>. The four tiers are the ladder the readiness decks speak.</p>' +
       '</div>';
     return h;
   }
@@ -2159,8 +2169,8 @@ window.addEventListener('load',restore);
       why: 'coverage and correctness are independent — a feed can fill every attribute with something unusable, or leave gaps that are impeccably written' },
     { q: ['product_highlight'], p: 'ai',
       qm: 'the stated rules for highlights — at least two, at most 100, 150 characters each, no repeats',
-      pm: 'agentic readiness overall: the conversational six, description depth, structured richness and identity — highlights are one input of several',
-      why: 'the highlights rule is pass/fail on this one field; the pillar is the whole agentic surface, so fixing highlights alone moves it only a little' },
+      pm: 'the structured detail an agent can quote back: how many highlights per product, and how deep product_type goes',
+      why: 'one is whether the highlights you have are legal, the other is whether there are enough of them to answer with — a feed can keep two perfect highlights and still have little to say' },
   ];
   var RECON_GAP = 15;     // the point at which two readings of one field are worth explaining
   function reconcileSection(k) {

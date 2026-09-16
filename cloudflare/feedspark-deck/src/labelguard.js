@@ -1437,13 +1437,45 @@ export function qspecOf(key) { return QSPEC.filter((q) => q.key === key)[0] || n
    `cols` maps attribute key -> column index (findAttrCols output). Example offenders are
    capped per rule, and duplicate detection keeps a bounded value->count map so a 2M-row
    feed cannot blow the browser's memory. */
+/* Every column a REPEATABLE attribute occupies. An XML feed that repeats an element expands
+   to `name`, `name(2)`, `name(3)`…, and a CSV may ship the same shape or a |||-joined cell —
+   so a quality read that resolves one column reads one value out of four. */
+export function findMultiCols(headerRow) {
+  const norm = (headerRow || []).map(normHeader);
+  const out = {};
+  for (const q of QSPEC) {
+    if (!q.multi) continue;
+    const hits = [];
+    for (let i = 0; i < norm.length; i++) {
+      if (norm[i] === q.key || new RegExp('^' + q.key + '\\((\\d+)\\)$').test(norm[i])) hits.push(i);
+    }
+    if (hits.length) out[q.key] = hits;
+  }
+  return out;
+}
+const joinSlots = (row, idx) => (idx || []).map((i) => String(row[i] == null ? '' : row[i]).trim())
+  .filter((x) => x).join('|||');
+
 const EG_CAP = 4, DUPE_CAP = 200000, GRP_CAP = 2000, ID_CAP = 4, EG_LEN = 140;
 export function qualityCollector(cols, opts) {
   const o = opts || {};
-  const specs = QSPEC.filter((q) => cols && cols[q.key] != null && cols[q.key] >= 0);
+  // the header is how a repeatable attribute's other columns are found; without it the read
+  // falls back to the single column and SAYS SO on the snapshot rather than under-counting
+  // silently (`multi` carries how many columns each repeatable attribute was read across)
+  const multi = o.header ? findMultiCols(o.header) : {};
+  const specs = QSPEC.filter((q) => (cols && cols[q.key] != null && cols[q.key] >= 0) ||
+    (multi[q.key] && multi[q.key].length));
+  // every column each attribute is read from — the slot set for a repeatable one, and the
+  // single resolved column otherwise (also the fallback when no header was handed in, so a
+  // caller on the old signature reads exactly what it always did)
+  const idxOf = {};
+  for (const q of specs) {
+    idxOf[q.key] = (q.multi && multi[q.key] && multi[q.key].length) ? multi[q.key]
+      : (cols && cols[q.key] != null && cols[q.key] >= 0 ? [cols[q.key]] : []);
+  }
   const acc = {};
   for (const q of specs) {
-    const r = { key: q.key, filled: 0, sum: 0, min: Infinity, max: 0, rules: {}, dupes: 0, over: false };
+    const r = { key: q.key, filled: 0, sum: 0, vals: 0, min: Infinity, max: 0, rules: {}, dupes: 0, over: false };
     for (const rule of q.rules) r.rules[rule.id] = { n: 0, eg: [] };
     // a duplicate is a GROUP, not a list of strings (Ray, 16 Sep 2026, reading Monsoon GB:
     // four unrelated titles under "title duplicated across products" reads as a false
@@ -1465,14 +1497,27 @@ export function qualityCollector(cols, opts) {
       // and what makes it the SAME product as another row: the variant family
       const fam = at('item_group_id') || who || 'r' + rows;
       for (const q of specs) {
-        const raw = String(row[cols[q.key]] == null ? '' : row[cols[q.key]]);
+        // A REPEATABLE ATTRIBUTE LIVES IN SEVERAL COLUMNS, and reading one of them is reading
+        // one of the values (Ray, 16 Sep 2026: "each product has at least four to five
+        // highlights, so why is it now showing as zero point?"). Monsoon GB ships four
+        // repeated <g:product_highlight> elements per item, which the XML parser expands to
+        // g:product_highlight, (2), (3), (4) — so the single-column read saw ONE value and
+        // "fewer than 2 highlights" fired on the whole catalogue. The slots are joined back
+        // into the ||| form every rule already splits on, so the rules are untouched.
+        const raw = q.multi ? joinSlots(row, idxOf[q.key])
+          : String(row[idxOf[q.key][0]] == null ? '' : row[idxOf[q.key][0]]);
         const v = raw.trim();
         const a = acc[q.key];
         if (!v) continue;                     // emptiness is Golden Record's question, not this one
         a.filled++;
-        a.sum += v.length;
-        if (v.length < a.min) a.min = v.length;
-        if (v.length > a.max) a.max = v.length;
+        // length is PER VALUE for a repeatable attribute — "average length" on a highlight
+        // means the length of a highlight, not of four of them glued together
+        const lens = q.multi ? multiVals(v).map((x) => x.length) : [v.length];
+        for (const L of lens) {
+          a.sum += L; a.vals++;
+          if (L < a.min) a.min = L;
+          if (L > a.max) a.max = L;
+        }
         for (const rule of q.rules) {
           if (rule.dupe) continue;
           let hit = false;
@@ -1548,9 +1593,14 @@ export function qualityCollector(cols, opts) {
         }
         attrs[q.key] = {
           filled: a.filled, cov: rows ? Math.round((a.filled / rows) * 1000) / 10 : 0,
-          avgLen: a.filled ? Math.round(a.sum / a.filled) : 0,
-          minLen: a.filled ? a.min : 0, maxLen: a.max,
+          avgLen: a.vals ? Math.round(a.sum / a.vals) : 0,
+          minLen: a.vals ? a.min : 0, maxLen: a.max,
           rules, dupeCapped: a.over || undefined,
+          // how many columns a repeatable attribute was read across, and how many values
+          // that came to per filled product — the number that makes "fewer than 2
+          // highlights" checkable rather than something to take on trust
+          cols: q.multi ? (idxOf[q.key].length || 1) : undefined,
+          perProduct: q.multi && a.filled ? Math.round((a.vals / a.filled) * 10) / 10 : undefined,
         };
       }
       return Object.assign({ t: Date.now(), rows, attrs }, meta || {});
@@ -1581,6 +1631,7 @@ export function attrQuality(key, a) {
   }
   broken.sort((x, y) => y.cost - x.cost);
   return { key, score: Math.max(0, Math.round((100 - pen) * 10) / 10), broken,
+    cols: a.cols, perProduct: a.perProduct,
     filled: a.filled, cov: a.cov, avgLen: a.avgLen, minLen: a.minLen, maxLen: a.maxLen,
     fails: broken.filter((b) => b.sev === 'fail').length,
     warns: broken.filter((b) => b.sev === 'warn').length };

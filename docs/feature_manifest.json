@@ -6439,6 +6439,78 @@
       "min": 1
     },
     {
+      "name": "AI-Readiness: CUSTOM LABELS ARE NOT SCORED — Google's own spec says their values 'won't be shown to customers' (bidding/reporting only), so label architecture carries no weight in an AI-readiness score (Ray 16 Sep 2026: 'label architecture that involves custom labels is not necessarily usable for AI')",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "CUSTOM LABELS LEFT THE SCORE",
+      "min": 1
+    },
+    {
+      "name": "AI-Readiness: the label reading is still RETURNED as labelArchitecture {score, scored:false, why} — measured, not scored, never silently dropped",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "labelArchitecture: { score: Math.round(sLabels), scored: false",
+      "min": 1
+    },
+    {
+      "name": "AI-Readiness: CONVERSATIONAL ATTRIBUTES are the heaviest pillar (x2.4) — the only fields in Google's spec whose stated purpose is AI comprehension (Ray 16 Sep 2026: 'the most important factor for AI readiness, probably the conversational attribute')",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "key: 'conversational', label: 'Conversational attributes', score: clamp(convScore), weight: 2.4",
+      "min": 1
+    },
+    {
+      "name": "AI-Readiness: conversational attributes score on COVERAGE not presence, and the two variant-only fields are excluded from a feed with no variants",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "if (!hasVariants && VARIANT_CONV[CONV_ATTRS[i]]) continue;",
+      "min": 1
+    },
+    {
+      "name": "AI-Readiness: the AI pillar no longer double-counts the conversational six — it reads only structured richness + description depth (renamed 'Structured detail')",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "var sAi = 0.55 * richScore + 0.45 * depthD;",
+      "min": 1
+    },
+    {
+      "name": "Feed Lab: the pillar grid states what is measured but NOT scored, with the reason and a link to Label Guard",
+      "file": "docs/FeedSpark_FeedLab.html",
+      "pattern": "Custom labels are measured but not scored",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: the AI-Readiness footnote names conversational attributes as the heaviest pillar and custom labels as measured-not-scored",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "Custom labels are measured but not scored",
+      "min": 1
+    },
+    {
+      "name": "Feed Lab + Golden Record: FOUR weight dots, so the x2.4 conversational pillar looks as heavy as it is",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "dots = w >= 2 ? 4 :",
+      "min": 1
+    },
+    {
+      "name": "Content quality: a REPEATABLE attribute is read across EVERY column it occupies — Monsoon GB ships four repeated <g:product_highlight> elements, the single-column read saw one and fired 'fewer than 2 highlights' on 100% of the catalogue (Ray 16 Sep 2026: 'each product has at least four to five highlights, so why is it now showing as zero point?'); live: 0/100 → 91.1/100",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function findMultiCols",
+      "min": 1
+    },
+    {
+      "name": "Content quality: length on a repeatable attribute is measured PER VALUE, not across the values glued together",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "length is PER VALUE for a repeatable attribute",
+      "min": 1
+    },
+    {
+      "name": "Content quality: the scan hands the collector the header, which is how the slot columns are found at all",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "qualityCollector(cols, { header: header })",
+      "min": 1
+    },
+    {
+      "name": "Content quality: a count-based finding shows what it counted — columns read and values per product",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "read across <b>' + r.cols",
+      "min": 1
+    },
+    {
       "name": "Playbook panel: the three sections Ray asked for — practices, new products, golden record",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "secPractice(BRAND)+secArrivals(BRAND)+secGolden(BRAND)",
