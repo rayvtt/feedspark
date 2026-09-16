@@ -110,6 +110,13 @@ else
   echo "   ✗ dossier-live harness FAILED — see node tools/test_dossierlive.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d5/7: suggested next moves arrive filtered (deep links + the targets honouring them)"
+if node tools/test_deeplink.mjs >/dev/null 2>&1; then
+  echo "   ✓ every suggestion carries its filter, and every target reads it"
+else
+  echo "   ✗ deep-link harness FAILED — see node tools/test_deeplink.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3e/7: overlay engine (URL-string classification + feed collector)"
 if node tools/test_overlays.mjs >/dev/null 2>&1; then
   echo "   ✓ overlay types read off the image_link URL; collector counts hold"

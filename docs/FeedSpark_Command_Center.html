@@ -1515,22 +1515,29 @@ window.addEventListener('load',restore);
     var band=h>=80?'good':h>=60?'watch':'risk', bandL=h>=80?'Good':h>=60?'Watch':'At risk';
     if(!fac.length)fac.push('<span class="dzp-f"><b class="up">✓</b>no health deductions — clean board</span>');
     /* suggestions: ranked, deterministic, each deep-links the module that fixes it */
-    var sug=[],FL='/feedlab?client='+encodeURIComponent(name),KWL='/kwcal?client='+encodeURIComponent(name);
-    if(crit)sug.push({p:1,t:'Resolve '+crit+' critical guard alert'+(crit===1?'':'s')+' — PMAX listing groups key on these exact values.',l:(al.crit?'/labels':'/ptypes'),ll:al.crit?'Label Guard':'PT Guard'});
-    if(od)sug.push({p:od>5?1:2,t:'Chase or reschedule the '+od+' overdue task'+(od===1?'':'s')+'.',l:'/workflow',ll:'Workflow'});
+    /* Every suggestion deep-links to the module ALREADY FILTERED to what it just counted
+       (Ray, 16 Sep 2026: "when you hit the workflow tab you open, it should auto-filter to
+       those four overdue tasks. So the same mechanism should be replicated everywhere").
+       A suggestion that names a number has done the counting; landing on an unfiltered board
+       makes the reader do it again by eye. */
+    var C=encodeURIComponent(name);
+    var sug=[],FL='/feedlab?client='+C,KWL='/kwcal?client='+C,
+        WF=function(f){ return '/workflow?client='+C+(f?('&f='+f):''); };
+    if(crit)sug.push({p:1,t:'Resolve '+crit+' critical guard alert'+(crit===1?'':'s')+' — PMAX listing groups key on these exact values.',l:(al.crit?'/labels':'/ptypes')+'?client='+C,ll:al.crit?'Label Guard':'PT Guard'});
+    if(od)sug.push({p:od>5?1:2,t:'Chase or reschedule the '+od+' overdue task'+(od===1?'':'s')+'.',l:WF('overdue'),ll:'Workflow'});
     var worstA=null; scored.forEach(function(a){ if(!worstA||a.score<worstA.score)worstA=a; });
-    if(worstA&&worstA.score<70)sug.push({p:2,t:worstA.m.toUpperCase()+' feed audit at '+worstA.score+'/100 — dissect the weak pillars.',l:FL,ll:'Feed Lab'});
+    if(worstA&&worstA.score<70)sug.push({p:2,t:worstA.m.toUpperCase()+' feed audit at '+worstA.score+'/100 — dissect the weak pillars.',l:FL+'&market='+encodeURIComponent(worstA.m),ll:'Feed Lab'});
     var unscanned=audL.filter(function(a){return a.score==null}).length;
     if(unscanned)sug.push({p:3,t:unscanned+' wired market'+(unscanned===1?'':'s')+' never scanned — run Feed Lab once for a baseline.',l:FL,ll:'Feed Lab'});
     var worstS=null; satL.forEach(function(x){ if(!worstS||x.pct<worstS.pct)worstS=x; });
-    if(worstS&&worstS.pct<85)sug.push({p:2,t:'Keyword saturation ('+worstS.m.toUpperCase()+') at '+worstS.pct+'% — every calendar moment is a step toward 100%.',l:KWL,ll:'Keyword Calendar'});
+    if(worstS&&worstS.pct<85)sug.push({p:2,t:'Keyword saturation ('+worstS.m.toUpperCase()+') at '+worstS.pct+'% — every calendar moment is a step toward 100%.',l:KWL+'&market='+encodeURIComponent(worstS.m),ll:'Keyword Calendar'});
     if(!kev)sug.push({p:3,t:'No marketing calendar seeded — transcribe the client planner and schedule keyword moments.',l:KWL,ll:'Keyword Calendar'});
-    if(!inflight&&p&&p.open>10)sug.push({p:2,t:p.open+' open tasks but no briefs in flight — brief the next batch.',l:'/workflow',ll:'Workflow'});
-    if(warn&&!crit)sug.push({p:3,t:'Review '+warn+' guard warning'+(warn===1?'':'s')+' before they turn critical.',l:'/labels',ll:'Label Guard'});
+    if(!inflight&&p&&p.open>10)sug.push({p:2,t:p.open+' open tasks but no briefs in flight — brief the next batch.',l:WF('open'),ll:'Workflow'});
+    if(warn&&!crit)sug.push({p:3,t:'Review '+warn+' guard warning'+(warn===1?'':'s')+' before they turn critical.',l:'/labels?client='+C,ll:'Label Guard'});
     if(p){ var worstL=null;
       CORDER.forEach(function(c){ var cc=p.cats&&p.cats[c]; if(!cc||cc.total<2)return;
         var pct=Math.round(cc.done/cc.total*100); if(pct<100&&(!worstL||pct<worstL.pct))worstL={c:c,pct:pct,left:cc.total-cc.done}; });
-      if(worstL)sug.push({p:3,t:'Weakest lane: '+(CLBL[worstL.c]||worstL.c)+' at '+worstL.pct+'% — '+worstL.left+' task'+(worstL.left===1?'':'s')+' to close.',l:'/workflow',ll:'Workflow'}); }
+      if(worstL)sug.push({p:3,t:'Weakest lane: '+(CLBL[worstL.c]||worstL.c)+' at '+worstL.pct+'% — '+worstL.left+' task'+(worstL.left===1?'':'s')+' to close.',l:WF('open')+'&q='+encodeURIComponent(CLBL[worstL.c]||worstL.c),ll:'Workflow'}); }
     sug.sort(function(a,b){return a.p-b.p}); sug=sug.slice(0,5);
     return {p:p,od:od,inflight:inflight,done1:done1,kev:kev,satL:satL,crit:crit,warn:warn,
       audL:audL,scored:scored,avgA:avgA,h:h,band:band,bandL:bandL,fac:fac,facR:facR,sug:sug};
