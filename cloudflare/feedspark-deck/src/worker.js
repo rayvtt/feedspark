@@ -94,10 +94,10 @@ import VOLUME_PAGE from "../../../docs/FeedSpark_Volume.html";
 // /overlays module (Ray, 10 Sep 2026): which FeedSpark image overlay is live on each feed,
 // read off the image_link URL string (dashboard.feedspark.com/image-creator/…)
 import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
-// Playbook — AM meeting copilot: crawls every client's plan tasks, classifies them into
-// feed-optimisation strategies, and surfaces "what's been done for brand X" + cross-brand
-// suggestions ("overlay is BAU on Accessorize → propose to Hobbycraft"). Page at /playbook.
-import PLAYBOOK_PAGE from "../../../docs/FeedSpark_Playbook.html";
+// Playbook — the AM meeting copilot. It is no longer a page of its own (Ray, 16 Sep 2026:
+// "Delete the separate playbook module and incorporate it into the workflow as the right-hand
+// panel"): the crawl below still serves /api/playbook, but the surface is Workflow's right rail.
+// /playbook 301s to /workflow?pb=1 so every old link and bookmark still lands on it.
 import SCHEDULE_PAGE from "../../../docs/FeedSpark_Schedule.html";
 import TASKMANAGER_PAGE from "../../../docs/FeedSpark_TaskManager.html";
 import APPSW from "../../../docs/apps_widget.html";
@@ -203,7 +203,6 @@ const PAGES = {
   '/aiquote':     { html: AIQUOTE,     slug: 'aiquote' },
   '/volume':      { html: VOLUME_PAGE, slug: 'volume' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
-  '/playbook':    { html: PLAYBOOK_PAGE, slug: 'playbook' },
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
   '/tasks':       { html: TASKMANAGER_PAGE, slug: 'taskmanager' },
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
@@ -473,6 +472,11 @@ export default {
     // the Build Log merged into /activity's 🔨 tab — keep the old URL working
     if (path === '/buildlog') {
       return new Response(null, { status: 301, headers: { Location: '/activity#build', ...CORS } });
+    }
+
+    // the Playbook is now Workflow's right-hand rail, not a module of its own — old links land on it
+    if (path === '/playbook') {
+      return new Response(null, { status: 301, headers: { Location: '/workflow?pb=1', ...CORS } });
     }
 
     // the activity PAGE is owner-only too (the link is visible to everyone; the data is not)
@@ -2893,7 +2897,7 @@ function moduleDeniedHtml(path) {
 // (not grantable), so a restricted signin sees only their modules + the always-present landing.
 // Runtime-only: the static .tb-modules markup stays byte-identical, so check_nav parity holds.
 const MODGATE = '<script>(function(){try{var m=window.__FCCMOD;if(!Array.isArray(m))return;var ok={};for(var i=0;i<m.length;i++)ok[m[i]]=1;'
-  + 'var links=document.querySelectorAll(".tb-modules a.tbm");for(var j=0;j<links.length;j++){var h=links[j].getAttribute("href")||"";if(h==="/"||h==="")continue;var slug=h.replace(/^\\//,"");if(!ok[slug])links[j].style.display="none";}'
+  + 'var links=document.querySelectorAll(".tb-modules a.tbm");for(var j=0;j<links.length;j++){var h=links[j].getAttribute("href")||"";if(h==="/"||h==="")continue;var slug=h.replace(/[?#].*$/,"").replace(/^\\//,"");if(!ok[slug])links[j].style.display="none";}'
   + '}catch(e){}})();</script>';
 // the caller's Workflow scope: owner -> full house; directory row (KV accessdir, git seed
 // until first save) or client-team alias (houseofbruar@ -> House of Bruar) -> that client's

@@ -67,6 +67,8 @@ jobs:
         run: node tools/test_reporttasks.mjs
       - name: FCC hours badge harness (three-month trail, posture, widget/engine parity)
         run: node tools/test_hoursbadge.mjs
+      - name: Playbook panel harness (practices, the 10–20% collection band, weak attributes)
+        run: node tools/test_playbook_panel.mjs
       - name: Excel export harness (XLSX container + the Task Manager's three tabs)
         run: node tools/test_xlsx.mjs
       - name: Shipped-panel harness (build log slide-over, first-run silence, close-the-tab prompt)

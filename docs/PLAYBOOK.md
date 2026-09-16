@@ -1,4 +1,67 @@
-# Playbook — the AM meeting copilot (`/playbook`)
+# Playbook — the AM meeting copilot (Workflow's right-hand rail)
+
+> **Moved, 16 Sep 2026.** The Playbook is no longer a module of its own. Ray: *"Let's elevate the
+> workflow like a playbook. The playbook should be part of the workflow module, with an icon next
+> to Build Log … Delete the separate playbook module and incorporate it into the workflow as the
+> right-hand panel."* `docs/FeedSpark_Playbook.html` is gone; `/playbook` **301s to
+> `/workflow?pb=1`**; the Playbook icon now sits beside Activity/Build Log in the module menu on
+> every page and opens the rail in place. `GET /api/playbook` is unchanged and still feeds it, and
+> the module is no longer separately grantable — it is reachable exactly when `workflow` is.
+
+## The cockpit — two rails, one account
+
+Workflow now opens onto an account cockpit. **Left rail = the retainer read-out**, docked rather
+than hovering (Ray: *"right now when you hover over the retainer pop-up, it covers all the tasks
+and brands in the workflow, making it less interactive and efficient. Show it only on the
+left-hand panel for the workflow module"*) — `docs/hours_widget.html` renders its usual body into
+`#fcc-hrs-dock` when a page mounts one, and once docked **hover opens nothing at all**; a click on
+an hours dot loads that client into the panel. **Right rail = the Playbook.** Both rails PUSH the
+page rather than sit on it; below 1360px only one is open at a time, and below 900px a rail is a
+full-width sheet. Both follow the same account, and one client selected in Intake moves them.
+
+Ray also asked that the two panels *"not be too text-heavy"*: every row is one line — a glyph, a
+name, a bar and a number — each section carries exactly one muted sentence, and anything longer
+lives behind the module link at the foot of the section.
+
+## The three sections (Ray, 16 Sep 2026)
+
+1. **Doing well · not doing.** The brand's plan tasks classified into the strategy taxonomy, split
+   three ways: **Landing** (3+ finished and 80%+ through), **Stalling** (2+ tasks, under 60%
+   through) and **Not on this account** — a play at least **two** peer brands actually run (2+
+   tasks each) that this one carries nothing of. One peer with one task is somebody trying
+   something once, not a practice; BAU admin (`tech`, `account`) is never cross-pollinated onto a
+   client call. Each gap carries a **→ Brief**.
+2. **New products.** Arrivals off each Shopping feed's `fs:date_of_birth` histogram
+   (`/api/volume/arrivals`), as a share of the live catalogue. **10–20% is a collection landing**
+   and is highlighted — Ray's rule verbatim; above 20% is the same signal louder ("major drop"),
+   so it is highlighted too rather than falling off the top of the band. The month read is the
+   last **complete** one: a part-month makes every account look like it fell off a cliff. A feed
+   nobody has scanned says *not scanned* — never 0%.
+3. **Golden Record — what is not working.** `/api/golden/estate` (`goldenidx`) per market:
+   attributes **missing** from the feed and attributes **present but thin**, kept apart because
+   they are different failures, ranked worst-first against Google's spec tiers (required < 99%,
+   conditional < 90%, recommended < 60%). The six conversational AI attributes are supplemental by
+   design and are never scored as a failure here.
+
+Refresh while the rail is open is every 120s and on tab-visible — "in real time" for a call.
+
+## ⚙ Tune
+
+The strategy taxonomy stays editable (rename / teach it words your plans use / hide), and stays
+the **team's**: it rides shared state `pbtax` through `/api/state`, mirrored to `localStorage`
+`fcc-pb-tax`. Retiring the editor with the old page would have frozen everyone's categories.
+
+## Harness
+
+`tools/test_playbook_panel.mjs` (qa_gate / presync / validate) lifts the engine out of the page
+between its `PBENGINE` markers and pins the judgements — what counts as landing, what "not doing"
+is allowed to mean, the 10–20% band's exact edges, which month arrivals read, which attributes
+count as not working — plus that the standalone module really went (page deleted, route
+redirected, nav swapped on every page, grant folded away).
+
+---
+
+## Original spec (the standalone module, 11 Sep 2026)
 
 Ray, 11 Sep 2026: *"a module for AMs to use during meetings … assimilate and assess all tasks
 across every brand for multiple clients from multiple industries … if there is an overlay BAU

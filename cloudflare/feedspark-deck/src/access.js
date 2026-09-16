@@ -33,6 +33,8 @@ export const ACCESS_SEED = {
 // slugs that signin may open; absent/null = ALL modules (backward compatible — every existing
 // signin keeps the full suite); [] = none (the landing page only). The owner always has all.
 // Leadership & Activity are deliberately NOT grantable here — they stay owner-only regardless.
+// The Playbook is NOT listed: since 16 Sep 2026 it is Workflow's right-hand rail, not a page,
+// so it is reachable exactly when `workflow` is — one surface, one grant.
 // The landing page (/) is always reachable, so a person is never fully locked out.
 export const MODULES = [
   { slug: 'workflow', label: 'Workflow', path: '/workflow' },
@@ -48,7 +50,6 @@ export const MODULES = [
   { slug: 'schedule', label: 'Scheduled work', path: '/schedule' },
   { slug: 'aiquote', label: 'AI Quote', path: '/aiquote' },
   { slug: 'pricer', label: 'Pricer', path: '/pricer' },
-  { slug: 'playbook', label: 'Playbook', path: '/playbook' },
 ];
 export const MODULE_PATHS = MODULES.reduce((m, x) => { m[x.path] = x.slug; return m; }, {});
 const MODULE_SLUGS = MODULES.map((x) => x.slug);
