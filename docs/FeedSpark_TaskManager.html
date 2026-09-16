@@ -147,7 +147,8 @@ window.addEventListener('load',restore);
   .bd .bx h4{margin:0 0 9px;font-size:11.5px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
   .bd .r{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;padding:3px 0;cursor:pointer;min-width:0}
   .bd .r:hover .nm{color:var(--orange-deep)}
-  .bd .r .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bd .r .nm{flex:1;min-width:0;display:flex;align-items:center}
+  .bd .r .nm .nmt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bd .r .bar{flex:0 0 74px;height:8px;border-radius:100px;background:var(--wash);overflow:hidden;display:flex}
   .bd .r .bar i{height:100%}.bd .r .bar i.b{background:var(--bil)}.bd .r .bar i.n{background:var(--nbil)}
   .bd .r .v{flex:0 0 52px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
@@ -1039,7 +1040,7 @@ window.addEventListener('load',restore);
       var lbl = dim === 'cat' ? (CAT_LABEL[x.k] || x.k) : x.k;
       var wb = (x.bill / max) * 100, wn = (x.nonbill / max) * 100;
       return '<div class="r" data-dim="' + esc(dim) + '" data-k="' + esc(x.k) + '" title="' + esc(lbl) + ' — ' + hrs(x.bill) + ' h billable, ' + hrs(x.nonbill) + ' h non-billable">'
-        + '<span class="nm">' + esc(lbl) + '</span>'
+        + '<span class="nm"' + (dim === 'client' && String(x.k).indexOf('Other (') !== 0 ? ' data-hrs="' + esc(x.k) + '"' : '') + '><span class="nmt">' + esc(lbl) + '</span></span>'
         + '<span class="bar"><i class="b" style="width:' + wb.toFixed(1) + '%"></i><i class="n" style="width:' + wn.toFixed(1) + '%"></i></span>'
         + '<span class="v">' + hrs(x.hours) + '</span></div>';
     }).join('') : '<div style="font-size:12.5px;font-weight:700;color:var(--muted)">Nothing in view.</div>') + '</div>';
@@ -1152,7 +1153,7 @@ window.addEventListener('load',restore);
       body.innerHTML = '<table class="st">' + th(AC_COLS, 'accounts') + '<tbody>' + ar.map(function (a, i) {
         var st = balanceState(a.allowance, a.balance);
         return '<tr data-i="' + i + '"' + (a.flag !== 0 ? ' style="opacity:.62"' : '') + '>'
-          + '<td class="b">' + esc(a.client) + '</td><td><span class="mk">' + esc(a.market) + '</span></td>'
+          + '<td class="b" data-hrs="' + esc(a.client) + '" data-hrs-flag>' + esc(a.client) + '</td><td><span class="mk">' + esc(a.market) + '</span></td>'
           + '<td>' + esc(a.group || '—') + '</td><td>' + esc(a.am || '—') + '</td><td>' + esc(a.am2 || '—') + '</td>'
           + '<td class="num">' + (a.allowance ? hrs(a.allowance) : '·') + '</td>'
           + '<td class="num">' + (a.used ? hrs(a.used) : '·') + '</td>'

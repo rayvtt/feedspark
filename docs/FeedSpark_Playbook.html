@@ -393,7 +393,7 @@ window.addEventListener('load',restore);
   function openBrand(name){
     if(!MODEL[name]){return;}
     CUR=name;
-    $('#p-name').innerHTML=esc(name)+'<span class="chip">'+esc(MODEL[name].industry||'brand')+'</span>';
+    $('#p-name').innerHTML='<span data-hrs="'+esc(name)+'">'+esc(name)+'</span><span class="chip">'+esc(MODEL[name].industry||'brand')+'</span>';
     var dn=doneCount(name),tot=MODEL[name].tasks.length,fl=tot-dn,la=lastActive(name);
     $('#p-sum').innerHTML=fmt(dn)+' completed of '+fmt(tot)+' logged'+(fl?' · '+fmt(fl)+' in flight':'')+(la?' · last active '+esc(monLbl(la)):'')+
       (MODEL[name].live?'':' · <span title="Showing the recent snapshot; live refresh pending">recent snapshot</span>');

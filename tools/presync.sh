@@ -92,6 +92,10 @@ echo "── validating: FS Task Manager (query grammar, billable split, page/en
 node tools/test_reporttasks.mjs >/dev/null
 echo "   ✓ the search grammar, the billable/non-billable maths and the baked snapshot hold"
 
+echo "── validating: the FCC-wide hours badge (trail, posture, widget/engine parity)"
+node tools/test_hoursbadge.mjs >/dev/null
+echo "   ✓ the three-month trail, relationship smoothing and the widget twin hold"
+
 echo "── validating: retainer hours (optimisation vs technical vs feature vs account)"
 node tools/test_reporthours.mjs >/dev/null
 echo "   ✓ precedence traps hold; the baked snapshot reconciles to its own totals"

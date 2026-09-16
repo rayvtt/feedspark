@@ -131,6 +131,7 @@ import LANGW from "../../../docs/lang_widget.html";
 // Task Manager hours seed (committed MCP snapshot; the /api/tm fallback until a live push lands)
 // the phone layer (Ray, 15 Sep 2026: "complete overhaul for UX UI for mobile version — MIRROR desktop setting")
 import MOBILEW from "../../../docs/mobile_widget.html";
+import HOURSW from "../../../docs/hours_widget.html";
 
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
@@ -1811,6 +1812,51 @@ export default {
       return json(payload);
     }
 
+    // ---- THE HOURS BADGE (Ray, 16 Sep 2026) ----------------------------------------------
+    // "this hour report should appear everywhere … flag whether the client is negative or not …
+    //  show the trajectory of the past three months of client activity per hour … a hovering
+    //  pop-up, so it doesn't clutter the current dashboard … display it within brand [dossier]
+    //  and other areas appropriate for an AM to decide whether to continue the task."
+    //
+    // ONE small payload for every client in scope, fetched once per page by the injected widget
+    // and shared across every badge on it. Three things are merged here and kept apart in the
+    // answer, because they are three different kinds of statement:
+    //   balance  — what the reports database says is true (tmidx, the hours lane)
+    //   trail    — what the last three months actually looked like (tmtrail, the book)
+    //   posture  — what the TEAM decided to do about it (shared state, hourspost)
+    // Deliberately tiny: no task rows, no market detail, no ticket data. A badge on every page
+    // must cost one KV get and a few KB, or it becomes the clutter it was meant to avoid.
+    if (path === '/api/hours' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const inScope = (name) => !acc.clients || (acc.clients || []).some((c) => clientMatch(c, name));
+      const idx = (await env.EDITS.get('tmidx', 'json')) || {};
+      const trail = (await env.EDITS.get('tmtrail', 'json')) || {};
+      const post = liftEnvelope(await env.EDITS.get('state:hourspost', 'json'), Date.now()).data || {};
+      const out = {};
+      const add = (name) => {
+        if (!name || out[name] || !inScope(name)) return;
+        const r = idx[name] || null, t = trail[name] || null, p = post[name] || null;
+        out[name] = {
+          tracked: !!r,
+          allowance: r ? r.allowance : null, used: r ? r.used : null,
+          balance: r ? r.balance : null, health: r ? r.health : null,
+          markets: r ? r.marketCount : null, am: r ? r.am : null, updated: r ? r.updated : null,
+          trail: t ? { m: t.m, months: t.months, current: t.current, read: t.read, total: t.total,
+            at: t.at, windowHours: t.windowHours } : null,
+          posture: p && p.state ? p : null,
+        };
+      };
+      Object.keys(idx).forEach(add);
+      Object.keys(trail).forEach(add);   // a book read before the hours lane saw the brand
+      Object.keys(post).forEach(add);    // and a posture set on a brand neither has reached yet
+      const st = (await env.EDITS.get('tmstatus', 'json')) || {};
+      const bst = (await env.EDITS.get('tmbookst', 'json')) || {};
+      return json({ ok: true, at: Date.now(), scoped: !!acc.clients, clients: out,
+        tracked: Object.keys(out).length,
+        status: { state: st.state || null, at: st.at || null, ok_at: st.ok_at || null },
+        book: { state: bst.state || null, at: bst.at || null, read: bst.read == null ? null : bst.read, total: bst.total == null ? null : bst.total } });
+    }
+
     // ---- FS TASK MANAGER (Ray, 16 Sep 2026) ----------------------------------------------
     // "a search bar for each AM to work inside the pull-in report via the MCP, and a quick
     //  pull-out report ... based on the hours of billable versus non-billable."
@@ -2462,6 +2508,7 @@ export default {
         }
         const modList = acc.owner ? null : (acc.modules || null);
         html = inject(html, INSTR + '\n' + LGBADGE + '\n' + PRESENCEW + '\n' + FEEDCHATW + '\n' + VIEWASW + '\n' + APPSW
+          + '\n' + HOURSW
           + '\n<script>window.__FCCMOD=' + JSON.stringify(modList) + ';</script>\n' + MODGATE);
         // the Vietnamese UI toggle is Ray's alone: injected only for the REAL owner identity
         // (never for another signin, never while previewing someone else's FCC via view-as)
@@ -2715,6 +2762,8 @@ async function tmBookPull(env, opts) {
     if (!rows.length) { const e = new Error('empty client list'); e.code = 'shape'; throw e; }
     const roster = TB.rosterOf(rows);
     idx.accounts = roster.accounts; idx.roster = roster.markets; idx.queues = roster.queues;
+    const trail = (await env.EDITS.get('tmtrail', 'json')) || {};
+    let trailDirty = 0;
 
     const plan = TB.bookPlan(roster.markets, idx.rot, opts.pulls == null ? TB.BOOK_MARKETS : opts.pulls, now);
     for (const m of plan) {
@@ -2728,6 +2777,14 @@ async function tmBookPull(env, opts) {
       try { await env.EDITS.put(key, JSON.stringify(book)); } catch (e) { st.error = 'kv put failed for ' + m.client; }
       idx.clients[m.client] = { at: now, markets: Object.keys(book.markets).length };
       idx.rot[m.id] = now;
+      // THE HOURS TRAIL, recomputed here rather than on read (Ray, 16 Sep 2026: "show the
+      // trajectory of the past three months of client activity per hour"). The popover appears
+      // on every page in the FCC, so it has to cost ONE small KV get — assembling twelve months
+      // of rows for every client on every page load would not. `total` is the client's whole
+      // market roster, so the trail can say "4 of 6 markets read" instead of implying the
+      // account entire.
+      trail[m.client] = TB.trailOf(book, roster.markets.filter((x) => x.client === m.client).length, now);
+      trailDirty = 1;
       st.pulled.push(m.client + ' ' + m.market + ' (' + rec.n + (rec.full ? '' : ', partial') + ')');
     }
 
@@ -2743,6 +2800,7 @@ async function tmBookPull(env, opts) {
 
     idx.at = now;
     try { await env.EDITS.put('tmbookidx', JSON.stringify(idx)); } catch (e) {}
+    if (trailDirty) { try { await env.EDITS.put('tmtrail', JSON.stringify(trail)); } catch (e) {} }
     st.read = Object.keys(idx.rot).length; st.total = roster.markets.length;
     return save(st);
   } catch (e) {
