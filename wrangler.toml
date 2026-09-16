@@ -26,9 +26,12 @@ OWNER_EMAIL = "ray@feedspark.com"
 # Crons (routed by event.cron in scheduled(); separate firings = separate subrequest
 # budgets): :00 = Label Guard estate sweep + hourly warm of the live plan-sync cache
 # (KV planlive:<id>); :30 = custom-watch pass for HOURLY-schedule rules; 07:00 & 17:00
-# UTC/GMT = custom-watch pass for TWICE-DAILY rules (Ray's morning / end-of-day checks).
+# UTC/GMT = custom-watch pass for TWICE-DAILY rules (Ray's morning / end-of-day checks);
+# :15 & :45 = Task Manager sync — worker.js › tmPull reads the feedspark-reports MCP itself
+# (client hours + per-ticket hours; Ray, Sep 2026: "that sync must be automatic"). Needs the
+# TM_MCP_TOKEN secret (+ TM_MCP_AUTH when the server reads a header other than Bearer).
 [triggers]
-crons = ["0 * * * *", "30 * * * *", "0 7,17 * * *"]
+crons = ["0 * * * *", "30 * * * *", "0 7,17 * * *", "15,45 * * * *"]
 
 # Ray's in-browser copy edits (data-eid patches) live here; they re-overlay client-side.
 [[kv_namespaces]]

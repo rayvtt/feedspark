@@ -5661,6 +5661,139 @@
       "name": "one-pager: FSHOURS splice markers for the baked reports snapshot",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "HOURS:START"
+    },
+    {
+      "name": "Task Manager AUTOMATIC sync: the pure MCP half — rotation of the markets worth reading (Ray 16 Sep 2026: 'that sync must be automatic')",
+      "file": "cloudflare/feedspark-deck/src/tmmcp.js",
+      "pattern": "export function planPulls(markets, rot, hot, k, now)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…tmmcp: a TM task's [ibfref:] token is the ONLY tie to a ticket",
+      "file": "cloudflare/feedspark-deck/src/tmmcp.js",
+      "pattern": "export function ibfrefOf(task)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…tmmcp: ref hours replace on re-read, keep when the window rolled past",
+      "file": "cloudflare/feedspark-deck/src/tmmcp.js",
+      "pattern": "export function mergeHours(hours, sum, now)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…worker: the cron pull itself (client list → rollup, task rotation → ticket hours, honest tmstatus)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function tmPull(env, opts)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…worker: tmStore is the one writer both lanes share (change-detected)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "async function tmStore(env, brands, opts)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…worker: the :15/:45 firing dispatches to tmPull",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "event.cron === '15,45 * * * *'",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…worker: owner-only sync-now on /api/tm",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "await tmPull(env, { pulls:",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…wrangler: the Task Manager cron trigger",
+      "file": "wrangler.toml",
+      "pattern": "\"15,45 * * * *\"",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Workflow: the ticket card wears the TM hours",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function tmChip(b)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Workflow: reads brief-id → hours from the worker",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "fetch('/api/tm?hours=1')",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Leadership: the source line tells the sync's truth",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "function tmLine(d)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Leadership: ⟳ Sync now",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "id=\"tm-sync\"",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Task Manager sync harness in the gates",
+      "file": "tools/test_tmmcp.mjs",
+      "pattern": "lift('tmPull')",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "Task Manager: shared normaliser rolls the MCP client list up per brand (Ray 16 Sep 2026)",
+      "file": "cloudflare/feedspark-deck/src/tmparse.js",
+      "pattern": "function aggregateClientList(rows, opts)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…worker: the tmpush lane (external producer) still lands",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "Array.isArray(body.tmpush)",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…worker: GET /api/tm is scoped per signin",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/api/tm' && request.method === 'GET'",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Leadership overlays real TM hours onto Used, hand-set wins",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "cm[b].used=row.used; cm[b].usedTM=true",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Leadership block ← allowance, hand-set wins",
+      "file": "docs/FeedSpark_Leadership.html",
+      "pattern": "cm[b].hours=row.allowance; cm[b].hoursTM=true",
+      "pr": 399,
+      "min": 1
+    },
+    {
+      "name": "…Task Manager rollup harness in the gates",
+      "file": "tools/test_tm.mjs",
+      "pattern": "aggregateClientList(rows)",
+      "pr": 399,
+      "min": 1
     }
   ]
 }

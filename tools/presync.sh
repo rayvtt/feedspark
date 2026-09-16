@@ -68,6 +68,14 @@ echo "── validating: Vietnamese UI toggle (engine + seed + owner gating)"
 node tools/test_i18n.mjs >/dev/null
 echo "   ✓ skip / keep rules, number templating, seed integrity, owner-only route + injection hold"
 
+echo "── validating: Task Manager integration (parser + agent + worker store + mapping)"
+node tools/test_tm.mjs >/dev/null
+echo "   ✓ column resolver, hours/date parsing, tmpush store + scoped read, Leadership overlay hold"
+
+echo "── validating: Task Manager AUTOMATIC sync (MCP transport + rotation + ticket hours + lifted tmPull)"
+node tools/test_tmmcp.mjs >/dev/null
+echo "   ✓ JSON/SSE parsing, auth modes, market rotation, ibfref hours, cron pull vs stub MCP + page wiring hold"
+
 echo "── validating: phone layer (bar, sheets, mirror rules, pan sweep, wiring)"
 node tools/test_mobile.mjs >/dev/null
 echo "   ✓ bottom bar, sheets, mirror rules, pan sweep + wiring hold"
