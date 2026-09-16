@@ -18,6 +18,7 @@
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
+import fsSync from 'node:fs';
 
 const PAGE = 'file://' + process.cwd() + '/docs/FeedSpark_Command_Center.html';
 const CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
@@ -152,15 +153,42 @@ ok('markets and feed quality sit together', /Markets live[\s\S]{0,120}Feed quali
 ok('a per-market table lists each market', /MARKET[\s\S]{0,200}\bGB\b[\s\S]{0,120}\bUS\b/i.test(A.text));
 
 console.log('\n-- the area mix carries percentages --');
-ok('a "where the work went" breakdown renders', /Where the work went/i.test(A.text));
+ok('a "which parts of the feed" breakdown renders', /Which parts of the feed/i.test(A.text));
 ok('areas are shown as percentages', /\d+(\.\d+)?%[\s\S]{0,30}\d+\/\d+ done/.test(A.text),
-   A.text.match(/Where the work went[\s\S]{0,160}/));
+   A.text.match(/Which parts of the feed[\s\S]{0,160}/));
 ok('the mix sums to about 100%', (function () {
-  const seg = (A.text.split(/where the work went/i)[1] || '').split(/by look-back/i)[0];
+  const seg = (A.text.split(/which parts of the feed/i)[1] || '').split(/by look-back/i)[0];
   const pcts = (seg.match(/(\d+(?:\.\d+)?)%/g) || []).map((x) => parseFloat(x));
   const sum = pcts.reduce((a, b) => a + b, 0);
   return sum > 97 && sum < 103;
 })());
+
+/* Ray, 16 Sep 2026: "a pie chart that highlights the importance of technical issue and feature
+   support versus optimization, and show the hours spent on each task for each client". The pie
+   is drawn from the baked snapshot, so these assertions run against Reiss's real numbers. */
+console.log('\n-- where the retainer went: the pie and the per-task hours --');
+const hrs = JSON.parse(fsSync.readFileSync(new URL('../docs/reports_hours.json', import.meta.url), 'utf8'));
+const RE = hrs.clients.Reiss;
+ok('the snapshot carries Reiss', !!RE && RE.hours > 0);
+ok('a retainer section renders', /Where the retainer went/i.test(A.text));
+ok('the pie is drawn as SVG arcs', /<path[^>]+d="M[\d.]+ [\d.]+A/.test(A.html));
+ok('every slice with hours is labelled', ['Optimisation', 'Technical fixes', 'Feature & set-up', 'Account & support']
+   .every((l) => A.text.includes(l)), A.text.match(/Where the retainer went[\s\S]{0,300}/));
+ok('the optimisation share is the brand’s real one',
+   A.text.includes(String(Math.round(RE.mix.opt)) + '%'), Math.round(RE.mix.opt));
+// read the legend's own cells rather than the section's prose: the optimisation share is also
+// printed in the donut's centre and again in the verdict line, so a text scrape triple-counts it
+ok('the legend sums to 100%', (function () {
+  const pcts = [...A.html.matchAll(/<span class="p">([\d.]+)%<\/span>/g)].map((m) => parseFloat(m[1]));
+  const sum = pcts.reduce((a, b) => a + b, 0);
+  return pcts.length >= 4 && sum > 99.4 && sum < 100.6;
+})(), [...A.html.matchAll(/<span class="p">([\d.]+)%<\/span>/g)].map((m) => m[1]));
+ok('non-billable hours are declared, not buried',
+   /delivered but not charged/i.test(A.text));
+ok('a per-task hours table renders', /Hours by task/i.test(A.text));
+ok('…naming real tasks with their hours', /Keyword optimisation/i.test(A.text));
+ok('the verdict is stated in words', /(Optimisation-led|Balanced|Running on fixes)/.test(A.text),
+   A.text.match(/.{0,60}(Optimisation-led|Balanced|Running on fixes).{0,40}/));
 
 console.log('\n-- the test record is itemised, not just counted --');
 ok('a test-record table renders', /THE TEST RECORD/i.test(A.text));
