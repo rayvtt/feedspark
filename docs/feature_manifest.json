@@ -6011,6 +6011,36 @@
       "pattern": "data-hrs",
       "min": 2,
       "pr": 401
+    },
+    {
+      "name": "Golden Record: the Feed Lab AI-READINESS score rides the same stream as the content-quality read — ring, tier ladder and all eight weighted pillars on the scorecard (Ray 16 Sep 2026: 'the most important item is the AI readiness score')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function airSection",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: one stream, two readings — FA.audit runs over a bounded sample with rowTotalEstimate so a 125MB feed costs a slice of memory, never the whole feed",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "rowTotalEstimate: nRows",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: title anatomy (MASK spectrum + length histogram) nests under the g:title content-quality row",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function titleAnatomy",
+      "min": 1
+    },
+    {
+      "name": "Golden Record print: the AI card pins its desktop geometry — the <=900px rules would stack the ring above the ladder and make the sheet shorter than the document",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf .score-grid{grid-template-columns:auto 1fr!important",
+      "min": 1
+    },
+    {
+      "name": "Worker: /api/golden/quality stores the AI-readiness block to the shape the card renders (pillars capped, numbers clamped) and puts air/airTier on goldenidx",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "idx[key].air = ai.total",
+      "min": 1
     }
   ]
 }

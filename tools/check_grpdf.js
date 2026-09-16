@@ -31,7 +31,9 @@ const PAGE = 'file://' + path.resolve(__dirname, '..', 'docs', 'FeedSpark_Golden
 const ENGINE_LG = path.resolve(__dirname, '..', 'docs', 'labelguard_engine.js');
 const ENGINE_FA = path.resolve(__dirname, '..', 'docs', 'feedlab_engine.js');
 const A4 = 297;                 // mm
-const MAX_A4 = 2.2;             // the collapsed scorecard must stay inside ~two A4 lengths
+// the collapsed scorecard — four spec tiers + content quality + AI-readiness — must stay
+// inside roughly two and a half A4 lengths on its single sheet (Ray: "one or two pages")
+const MAX_A4 = 2.4;
 
 let fail = 0;
 const ok = (name, cond, extra) => {
@@ -56,6 +58,23 @@ const QUALITY = {
       rules: { html: rule(50, 5), thin: rule(300, 30.3), dupe: rule(120, 12.1) } },
     material: { filled: 400, cov: 40, avgLen: 16, minLen: 4, maxLen: 45,
       rules: { placeholder: rule(40, 10), sentence: rule(20, 5) } },
+  },
+  // the Feed Lab reading that rides the same stream — the card the client actually reads
+  ai: {
+    total: 76, tier: 3, tierLabel: 'Enriched', sampled: 1000, rows: 1000,
+    pillars: [
+      { key: 'identity', label: 'Identity & trust', score: 100, weight: 1.2, summary: 'GTIN, brand, price, availability all present' },
+      { key: 'titles', label: 'Title anatomy', score: 62, weight: 1.6, summary: 'avg 60 chars — MASK window is 80–120' },
+      { key: 'descriptions', label: 'Descriptions', score: 90, weight: 1.3, summary: '100% coverage, avg 359 chars' },
+      { key: 'attributes', label: 'Attribute completeness', score: 92, weight: 1.5, summary: 'pattern 27%, rest strong' },
+      { key: 'taxonomy', label: 'Taxonomy depth', score: 51, weight: 1.0, summary: 'GPC 100%, product_type deep on 24%' },
+      { key: 'media', label: 'Media richness', score: 100, weight: 1.0, summary: 'multi-angle imagery on most items' },
+      { key: 'labels', label: 'Label architecture', score: 69, weight: 0.9, summary: 'label_1 nearly unused' },
+      { key: 'ai', label: 'Agentic readiness', score: 47, weight: 1.5, summary: 'no conversational attributes; highlights shallow' },
+    ],
+    titles: { avg: 60, min: 18, max: 140, dup: 12, allCaps: 3,
+      buckets: [{ b: '<50', n: 120 }, { b: '50–79', n: 380 }, { b: '80–119', n: 400 }, { b: '120–150', n: 80 }, { b: '>150', n: 20 }],
+      mask: { brand: 96, material: 41, fit: 28, colour: 88, use: 12 } },
   },
 };
 
@@ -116,6 +135,11 @@ const QUALITY = {
       page: pg ? pg.textContent : null,
       quality: vis('#qz-tier'),
       qScore: vis('#qz-tier .qz-score'),
+      air: vis('#air-tier'),
+      airScore: (document.querySelector('#air-tier .brv .bn') || {}).textContent,
+      rungs: document.querySelectorAll('#air-tier .lad').length,
+      here: !!document.querySelector('#air-tier .lad.on'),
+      pillars: document.querySelectorAll('#air-tier .pillar').length,
       worst: vis('.qz-row .qz-worst'),          // the finding itself
       flag: vis('.qz-row .qz-flag'),            // the requirement / best-practice counts
       note: vis('.at-row .at-note'),            // the spec note on the coverage rows
@@ -127,6 +151,9 @@ const QUALITY = {
   });
 
   ok('the content-quality section is in the PDF', m.quality && m.qScore);
+  ok('the AI-Readiness score prints with it', m.air && m.airScore === '76', m.airScore);
+  ok('its tier ladder prints — four rungs, current one marked', m.rungs === 4 && m.here);
+  ok('all eight pillars print', m.pillars === 8, m.pillars);
   ok('its findings print — the worst rule per attribute', m.worst);
   ok('its requirement / best-practice counts print', m.flag);
   ok('the coverage rows keep their spec note', m.note);
