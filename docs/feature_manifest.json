@@ -5564,6 +5564,52 @@
       "name": "one-pager: unreadable plan sheet names the remedy, never a missing tab",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "not_shared:"
+    },
+    {
+      "name": "Workflow: briefs ALREADY stranded in a browser are published on next open — the boot replaced BRIEFS with the server map, so the next load dropped them (Ray 16 Sep 2026, Steven's board showing RUNNING off tickets nobody else had)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function bfRescueLocal(){",
+      "pr": 392,
+      "min": 1
+    },
+    {
+      "name": "Workflow: a brief that reached the server once is stamped sv, so a LATER absence reads as someone's deletion, not a lost save — and is never resurrected",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function bfMarkSynced(){",
+      "pr": 392,
+      "min": 1
+    },
+    {
+      "name": "Workflow: the rescue runs on boot, before the first render",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "BRIEFS=d||{}; bfRescueLocal();",
+      "pr": 392,
+      "min": 1
+    },
+    {
+      "name": "Workflow: the plan-write resync is gated PER ROW, not once per tab session — a colleague's unconfirmed row arrives through shApply long after boot and is re-sent by whoever has the board open (Ray 16 Sep 2026, 'the 2 themes are not added as Task in Intake nor Reiss' GS Project Plan')",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "_planTried",
+      "min": 5,
+      "pr": 392
+    },
+    {
+      "name": "Workflow: shApply re-runs the plan-write resync when the shared store brings rows in",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "resyncPlanWrites==='function'",
+      "pr": 392
+    },
+    {
+      "name": "Workflow: 'the plan already carries it' settles w:1 on EXACT wording only — the fuzzy sameTask rule marked one keyword theme written against a sibling that dices at 0.615 and it never reached the sheet",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "normTask(p.task)===normTask(m.task)",
+      "pr": 392
+    },
+    {
+      "name": "team-sync browser tripwire: two real users on one pipeline (briefs, stranded briefs, a colleague's plan write, the exact-wording settle)",
+      "file": "tools/presync.sh",
+      "pattern": "test_teamsync",
+      "pr": 392
     }
   ]
 }
