@@ -972,6 +972,9 @@ export function profileFor(client, overrides) {
 // rec: weight 1, absent counts as 0 — that IS the optimisation surface.
 // With a profile (profileFor): `expected` attrs count-when-absent at their tier weight
 // (ai joins at weight 1 only when expected), `waived` attrs drop out of the score.
+// An expected REC attr also weighs 2 like the required-in-cases tier — rec attrs are
+// always scored, so without the weight lift starring one would not move the number
+// (Ray, 16 Sep 2026: profiling sale_price "doesn't actually do anything").
 export function goldenScore(attrs, profile) {
   if (!attrs) return null;
   const exp = new Set((profile && profile.expected) || []);
@@ -996,7 +999,7 @@ export function goldenScore(attrs, profile) {
       if (a.present) parts.push({ key: s.key, tier: s.req, cov: a.cov, w: 2, missing: false, bp: bp || undefined });
       else if (bp) parts.push({ key: s.key, tier: s.req, cov: 0, w: 2, missing: true, bp: true });
     }
-    else parts.push({ key: s.key, tier: s.req, cov: a.present ? a.cov : 0, w: 1, missing: !a.present, bp: bp || undefined });
+    else parts.push({ key: s.key, tier: s.req, cov: a.present ? a.cov : 0, w: bp ? 2 : 1, missing: !a.present, bp: bp || undefined });
   }
   parts.push({ key: 'gtin/mpn', tier: 'cond', cov: idBest == null ? 0 : idBest, w: 2, missing: idBest == null });
   let ws = 0, sum = 0;
