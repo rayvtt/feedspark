@@ -1389,15 +1389,47 @@ window.addEventListener('load',restore);
     fetch('/api/briefs',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(BRIEFS_BASE)},body:JSON.stringify(BRIEFS)})
       .then(function(r){ if(!r.ok)throw 0; stamp=+r.headers.get('X-Sync-Base')||0; return r.json(); })
       .then(function(m){ _bfBack=2000; BRIEFS_DIRTY=0; bfWarn(false);
-        if(!m||typeof m!=='object'||m.ok)return;   // old worker shape ({ok:true}) — don't adopt,
-        // and DON'T advance the base off a response we didn't adopt: the next whole-map save
-        // would then carry a stale map with a fresh read-stamp, and absence means deletion.
-        if(stamp)BRIEFS_BASE=stamp;
-        var merged=JSON.stringify(m); if(merged===JSON.stringify(BRIEFS))return;
-        BRIEFS=m; try{localStorage.setItem('fcc-briefs',merged);}catch(e){} renderAll(); })
+        if(m&&typeof m==='object'&&!m.ok){   // old worker shape ({ok:true}) — don't adopt, and
+          // DON'T advance the base off a response we didn't adopt: the next whole-map save would
+          // then carry a stale map with a fresh read-stamp, and absence means deletion.
+          if(stamp)BRIEFS_BASE=stamp;
+          var merged=JSON.stringify(m);
+          if(merged!==JSON.stringify(BRIEFS)){ BRIEFS=m; renderAll(); }
+        }
+        bfMarkSynced(); })
       .catch(function(){ bfPush(_bfBack); _bfBack=Math.min(_bfBack*2,60000); bfWarn(true); });
   },delay||250); }
   window.addEventListener('online',function(){ if(BRIEFS_DIRTY){ _bfBack=2000; bfPush(200); } });
+  /* Every brief in hand has now reached the server. The stamp is what lets a LATER absence be
+     read correctly: a brief carrying sv that the server no longer has was deleted by someone
+     else; one without it never got there at all. */
+  function bfMarkSynced(){
+    Object.keys(BRIEFS).forEach(function(k){ if(BRIEFS[k]&&!BRIEFS[k].sv)BRIEFS[k].sv=1; });
+    try{ localStorage.setItem('fcc-briefs',JSON.stringify(BRIEFS)); }catch(e){}
+  }
+  /* ---- AND THE ONES ALREADY STRANDED ----
+   * A brief whose save failed lives ONLY in this browser's mirror. The boot replaces BRIEFS with
+   * the SERVER's map, so the next load drops it and the next save overwrites the mirror — the
+   * retry above saves new work but would have quietly finished off the old. (Ray, 16 Sep 2026:
+   * Steven's board shows Cashmere/Merino and Gifting RUNNING off tickets nobody else's pipeline
+   * has.) Union them back in on boot and publish. Create-only: a brief the server HAS is never
+   * touched, and one this device already synced is not resurrected — that absence is somebody's
+   * deletion, not a lost save. */
+  function bfRescueLocal(){
+    var mine={}; try{ mine=JSON.parse(localStorage.getItem('fcc-briefs')||'{}')||{}; }catch(e){ return []; }
+    var out=[];
+    Object.keys(mine).forEach(function(id){
+      var b=mine[id];
+      if(!b||!b.id||BRIEFS[id])return;   // the server has it
+      if(b.sv)return;                    // it reached the server once and is gone → deleted elsewhere
+      BRIEFS[id]=b; out.push(b);
+    });
+    if(out.length){
+      persist();
+      toast(out.length+' brief'+(out.length===1?'':'s')+' held on this device published to the pipeline');
+    }
+    return out;
+  }
   // an unsaved brief is never left to a toast nobody re-reads — it stays on screen until it lands
   function bfWarn(on){
     if(!on){ if(_bfWarn){ _bfWarn.remove(); _bfWarn=null; } return; }
@@ -3865,7 +3897,7 @@ window.addEventListener('load',restore);
   // halves haven't loaded, and nothing re-rendered afterwards, so a colleague's status sat in
   // the store while the row on screen still read Open.
   var SHBOOT=shBoot().then(function(ok){ shStart(); return ok; });
-  apiGet().then(function(d){ BRIEFS=d||{}; _srB=true; _srTry(); renderAll();
+  apiGet().then(function(d){ BRIEFS=d||{}; bfRescueLocal(); _srB=true; _srTry(); renderAll();
     SHBOOT.then(function(){ renderAll(); });   // whichever lands last, the board ends up current
     // one-time repair of stages the old bare-word matcher closed on a pickup; the flag keeps
     // it to a single pass per browser, and the ⟳ button below re-runs it on demand

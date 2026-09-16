@@ -5534,6 +5534,27 @@
    "pattern": "both of the lost briefs come back in one pass",
    "pr": 390,
    "min": 1
+  },
+  {
+   "name": "Workflow: briefs ALREADY stranded in a browser are published on next open — the boot replaced BRIEFS with the server map, so the next load dropped them (Ray 16 Sep 2026, Steven's board showing RUNNING off tickets nobody else had)",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function bfRescueLocal(){",
+   "pr": 391,
+   "min": 1
+  },
+  {
+   "name": "Workflow: a brief that reached the server once is stamped sv, so a LATER absence reads as someone's deletion, not a lost save — and is never resurrected",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "function bfMarkSynced(){",
+   "pr": 391,
+   "min": 1
+  },
+  {
+   "name": "Workflow: the rescue runs on boot, before the first render",
+   "file": "docs/FeedSpark_Workflow.html",
+   "pattern": "BRIEFS=d||{}; bfRescueLocal();",
+   "pr": 391,
+   "min": 1
   }
  ]
 }
