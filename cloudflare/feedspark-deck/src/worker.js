@@ -45,7 +45,7 @@ import * as TMM from "./tmmcp.js";
 import INGEST_SUPERDRY_SVS_AUG26 from "../../../ops/ingest/superdry_svs_aug26.json";
 const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
-import { ACCESS_SEED, resolveAccess, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed } from "./access.js";
+import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
 import { QSPEC, qualityScore, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
@@ -622,7 +622,10 @@ export default {
     if (path === '/api/access') {
       const acc = await accessOf(env, request);
       if (request.method === 'GET' && url.searchParams.get('me')) {
-        return json({ email: acc.email, owner: !!acc.owner, clients: acc.clients, modules: acc.modules || null, name: acc.name || '', viewAs: acc.viewAs || null });
+        // ownerName rides along for EVERY signin: the Brief Ledger names the owner on briefs
+        // raised before the `by` field shipped (Ray, 16 Sep 2026: "any '-' brief by is
+        // obviously Ray - so add me name too"), and the whole team must read the same name.
+        return json({ email: acc.email, owner: !!acc.owner, clients: acc.clients, modules: acc.modules || null, name: acc.name || '', ownerName: displayName(ownerEmail(env)), viewAs: acc.viewAs || null });
       }
       if (!acc.owner) return json({ error: 'restricted to the account owner' }, 403);
       if (request.method === 'GET') {
@@ -2662,7 +2665,7 @@ const MODGATE = '<script>(function(){try{var m=window.__FCCMOD;if(!Array.isArray
 async function accessOf(env, request) {
   const email = who(request);
   const vs = viewAsOf(env, request);   // non-null only for the real owner
-  if (email === ownerEmail(env) && !vs) return { email, owner: true, clients: null, modules: null, name: 'Owner' };
+  if (email === ownerEmail(env) && !vs) return { email, owner: true, clients: null, modules: null, name: displayName(email) || 'Owner' };
   const dir = await env.EDITS.get('accessdir', 'json');
   let names = Object.keys(DEFAULT_FEEDS);
   try { names = names.concat(Object.keys(liftEnvelope(await env.EDITS.get('clients', 'json'), Date.now()).data)); } catch (e) {}
