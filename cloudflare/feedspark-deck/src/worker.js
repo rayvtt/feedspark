@@ -124,6 +124,10 @@ import ARRIVALS_ENGINE_SRC from "../../../docs/arrivals_engine.js";
 // details-text → g: attributes). The page runs it on HTML the worker only PROXIES
 // (host-allowlisted to the feed's own product host); tools/test_pdpharvest.mjs tests the same file
 import PDP_ENGINE_SRC from "../../../docs/pdp_engine.js";
+// /xlsx/engine.js — a minimal XLSX TABLE writer (typed cells, frozen filterable header, many
+// sheets). Distinct from the AI Quote's writer, which is a replica of Finance's own quote book:
+// that one writes a document, this one writes a table anything with rows can download
+import XLSX_ENGINE_SRC from "../../../docs/xlsx_engine.js";
 // /i18n/engine.js + /i18n/vi.json + the owner-only language widget (Ray's Vietnamese view)
 import I18N_ENGINE_SRC from "../../../docs/i18n_engine.js";
 import I18N_VI_SEED from "../../../docs/i18n/vi.json";
@@ -1224,6 +1228,9 @@ export default {
     }
     if (path === '/volume/engine.js' && request.method === 'GET') {
       return new Response(ARRIVALS_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
+    }
+    if (path === '/xlsx/engine.js' && request.method === 'GET') {
+      return new Response(XLSX_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
     }
     if (path === '/golden/pdp-engine.js' && request.method === 'GET') {
       return new Response(PDP_ENGINE_SRC, { headers: { 'content-type': 'application/javascript; charset=utf-8', 'cache-control': 'no-cache' } });
