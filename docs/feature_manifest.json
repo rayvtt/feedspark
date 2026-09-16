@@ -5610,6 +5610,36 @@
       "file": "tools/presync.sh",
       "pattern": "test_teamsync",
       "pr": 392
+    },
+    {
+      "name": "Golden Record PDF: the content-quality section prints with the scorecard, compacted so the document stays inside ~two A4 lengths (Ray 16 Sep 2026: 'make sure it is one or two pages')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf .tier{padding:9px 13px",
+      "min": 1
+    },
+    {
+      "name": "Golden Record PDF: the 703px printable column trips the page's own <=900px rules — print re-shows the worst-rule summary and the per-rule hit counts, not just the bars",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf .qz-worst{display:block!important}",
+      "min": 1
+    },
+    {
+      "name": "Golden Record PDF: a document past three A4 lengths paginates as ordinary A4 instead of becoming a metre-long sheet",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var PG_MAX = 3 * 297",
+      "min": 1
+    },
+    {
+      "name": "PDF tripwire tools/check_grpdf.js — renders the real PDF, measures AT THE PRINTABLE WIDTH (measuring at desktop width would miss the very responsive rules that empty its columns), asserts one page + every finding present",
+      "file": "tools/check_grpdf.js",
+      "pattern": "MEASURE AT THE PRINTABLE WIDTH",
+      "min": 1
+    },
+    {
+      "name": "presync runs the Golden Record PDF tripwire alongside the phone tripwire",
+      "file": "tools/presync.sh",
+      "pattern": "tools/check_grpdf.js",
+      "min": 1
     }
   ]
 }

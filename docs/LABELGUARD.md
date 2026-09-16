@@ -357,7 +357,20 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   writes ONE tall sheet at full legibility (no scaling); rows are single-line with the spec
   note beside them, a bare Ctrl+P gets the same document via `beforeprint`, `afterprint`
   tears it down, and an absurdly long document (>4800mm, PDF's own ceiling is 5080mm) falls
-  back to plain A4 pagination. **Profile edits re-score the whole brand instantly** (Ray, 16 Sep 2026): the
+  back to plain A4 pagination. **The content-quality read prints with it** (Ray, 16 Sep
+  2026: "ensure that PDF downloads include this after the Analyse Content Quality button is
+  clicked … make sure it is one or two pages"): the section is inside the scorecard, so it
+  flows into the same sheet — score, verdict, every attribute row with its worst rule, hit
+  rate and requirement/best-practice counts, plus any rule rows left expanded on screen, which
+  is the replication Ray asked for. Print COMPACTS chrome, never content (tier padding, the
+  dial, the type scale), which brought the document from 2.00 to ~1.5 A4 lengths WITH the new
+  section; past three A4 lengths — every rule expanded, say — it paginates as ordinary A4
+  rather than becoming a metre-long strip. Twice now the page's own ≤900px responsive rules
+  have silently emptied columns of the PDF (the spec note, then the worst-rule summary and hit
+  counts) because the printable column is 703px: `body.pdf` re-shows them, and
+  **`tools/check_grpdf.js`** (Playwright, in presync) is the tripwire — it renders the REAL
+  PDF, counts its pages, and measures AT THE PRINTABLE WIDTH, because measuring at desktop
+  width would pass on exactly the bug it exists to catch. **Profile edits re-score the whole brand instantly** (Ray, 16 Sep 2026): the
   page live-derives every estate score from that same stored cov map + the *current* profile
   (`rescoreEstate` — cov stores `null` for absent vs fill % for present, exactly the attrs
   shape `goldenScore` needs), so saving a profile re-runs the dial, every market on the

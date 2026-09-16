@@ -291,7 +291,34 @@ window.addEventListener('load',restore);
      column of its own and wrapped onto a second grid line, doubling every row (56px) and
      with it the whole document. Five columns, so a row is a row. */
   body.pdf .at-row{grid-template-columns:146px minmax(60px,.7fr) 44px 56px minmax(150px,1.3fr)!important;
-    gap:9px!important;padding:3.5px 0!important;font-size:11.5px}
+    gap:9px!important;padding:2.5px 0!important;font-size:11px}
+  /* COMPACT (Ray, 16 Sep 2026: "make sure it is one or two pages … easy to compact"): the
+     scorecard AND the content-quality read have to sit inside one or two A4 lengths, so the
+     print pass trims CHROME — padding, the dial, the type scale — and never the content.
+     What is on the page is what prints, including any rule rows left expanded. */
+  body.pdf .tier{padding:9px 13px;margin-top:9px}
+  body.pdf .tier-h{margin-bottom:3px}
+  body.pdf .tier-h h4{font-size:13.5px}
+  body.pdf .tier-sub{font-size:9.5px;line-height:1.42;margin:0 0 4px}
+  body.pdf .dial{width:104px;height:104px}
+  body.pdf .gr-top{gap:16px;margin-bottom:4px}
+  body.pdf .gr-verdict{font-size:11px;line-height:1.5;margin:6px 0 0}
+  body.pdf .det-stats{font-size:10px;gap:7px}
+  body.pdf .det-head{margin-bottom:2px}
+  /* the 703px printable column trips the ≤900px responsive rule that drops the worst-rule
+     summary and the per-rule hit counts — the very findings the client is reading — so the
+     print layout gives them their own columns instead (the action buttons stay hidden) */
+  body.pdf .qz-row{padding:3px 0;grid-template-columns:148px 36px minmax(44px,.45fr) minmax(215px,1.8fr)!important;gap:8px!important}
+  body.pdf .qz-flag{margin-left:4px;padding:1px 5px}
+  body.pdf .qz-worst{display:block!important}
+  body.pdf .qz-rule{grid-template-columns:100px minmax(150px,1fr) 72px!important}
+  body.pdf .qz-hit{display:block!important}
+  body.pdf .qz-head{margin-bottom:4px}
+  body.pdf .qz-score{font-size:25px}
+  body.pdf .qz-line{font-size:10.5px;line-height:1.45;margin-bottom:5px}
+  body.pdf .qz-rule{padding:5px 0}
+  body.pdf .qz-why{font-size:10.5px;line-height:1.42}
+  body.pdf .qz-eg{font-size:10px}
   /* the printable column is 703px, which trips the ≤900px responsive rule that drops the
      spec note — but the note is exactly the context a client needs, so keep it here */
   body.pdf .at-note{display:block!important;font-size:10px}
@@ -1721,7 +1748,9 @@ window.addEventListener('load',restore);
      out exactly as it prints (body.pdf), measure it, and write that height into @page. */
   var PG = { w: 210, mx: 12, my: 14, a4h: 297 };   // A4 portrait + the @page margins, mm
   var PX_MM = 25.4 / 96;                           // CSS px -> mm at the 96dpi print scale
-  var PG_MAX = 4800;                               // PDF's own ceiling is 200in/5080mm
+  // one sheet up to three A4 lengths; past that the document paginates as ordinary A4
+  // rather than becoming a metre-long strip nobody can print (Ray: "one or two pages").
+  var PG_MAX = 3 * 297;
   function pdfPage(mm) {
     var el = document.getElementById('pdf-page');
     if (!el) { el = document.createElement('style'); el.id = 'pdf-page'; document.head.appendChild(el); }
@@ -1732,8 +1761,8 @@ window.addEventListener('load',restore);
     var el = $('sec-detail');
     var h = el ? el.getBoundingClientRect().height : 0;   // reading it forces the reflow
     var mm = Math.ceil(h * PX_MM) + PG.my * 2 + 2;        // + both margins + a hair of slack
-    // an absurdly long document falls back to plain A4 pagination — a PDF the reader
-    // cannot open is worse than one that runs to two pages
+    // a document longer than the cap falls back to plain A4 pagination — several ordinary
+    // pages print and read better than one enormous sheet
     pdfPage(!h || mm > PG_MAX ? PG.a4h : mm);
     return true;
   }
