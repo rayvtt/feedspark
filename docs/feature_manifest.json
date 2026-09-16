@@ -6485,6 +6485,30 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "dots = w >= 2 ? 4 :",
       "min": 1
+    },
+    {
+      "name": "Content quality: a REPEATABLE attribute is read across EVERY column it occupies — Monsoon GB ships four repeated <g:product_highlight> elements, the single-column read saw one and fired 'fewer than 2 highlights' on 100% of the catalogue (Ray 16 Sep 2026: 'each product has at least four to five highlights, so why is it now showing as zero point?'); live: 0/100 → 91.1/100",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function findMultiCols",
+      "min": 1
+    },
+    {
+      "name": "Content quality: length on a repeatable attribute is measured PER VALUE, not across the values glued together",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "length is PER VALUE for a repeatable attribute",
+      "min": 1
+    },
+    {
+      "name": "Content quality: the scan hands the collector the header, which is how the slot columns are found at all",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "qualityCollector(cols, { header: header })",
+      "min": 1
+    },
+    {
+      "name": "Content quality: a count-based finding shows what it counted — columns read and values per product",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "read across <b>' + r.cols",
+      "min": 1
     }
   ]
 }

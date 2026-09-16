@@ -1028,6 +1028,64 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
 }
 
 {
+  // ---- A REPEATABLE ATTRIBUTE LIVES IN SEVERAL COLUMNS (Ray, 16 Sep 2026: "I don't think a
+  // highlight quality scan is accurate because when I look inside Monsoon Shopping UK, each
+  // product has at least four to five highlights, so why is it now showing as zero point?").
+  // Monsoon GB ships four repeated <g:product_highlight> elements per item; the XML parser
+  // expands them to g:product_highlight, (2), (3), (4); the quality read resolved ONE column,
+  // saw one value, and fired "fewer than 2 highlights" on 100% of the catalogue. Measured on
+  // the live feed: 0/100 before, 91.1/100 after, 4.1 highlights per product.
+  console.log('\n— repeatable attributes: every column, not the first one —');
+  const H = ['id', 'title', 'g:product_highlight', 'g:product_highlight(2)', 'g:product_highlight(3)', 'g:product_highlight(4)'];
+  const mc = LG.findMultiCols(H);
+  eq('findMultiCols: the whole slot set, namespace and (n) suffixes folded', mc.product_highlight, [2, 3, 4, 5]);
+  eq('findMultiCols: only repeatable attributes have slots', Object.keys(mc), ['product_highlight']);
+  const ROW = (a, b, c, d) => ['1', 'Monsoon Blue Arizona Halter Ruffle Prom Dress, in Size: 12', a, b || '', c || '', d || ''];
+  const four = [ROW('High neck', 'Outer: Polyester 100%', 'Short Sleeves', 'Button fastening'),
+    ROW('Square neck', 'Lining: Cotton 100%', 'Short Sleeves', 'Pull on')];
+  {
+    const c = LG.qualityCollector(LG.findAttrCols(H), { header: H });
+    four.forEach((r) => c.onRow(r));
+    const a = c.finish().attrs.product_highlight;
+    eq('four repeated highlights are read as four, not one', a.perProduct, 4);
+    eq('and the read says how many columns it covered', a.cols, 4);
+    eq('so "fewer than 2 highlights" does not fire', a.rules['count-min'].n, 0);
+    eq('nor "fewer than 4"', a.rules['count-low'].n, 0);
+    ok(LG.attrQuality('product_highlight', a).score === 100,
+      'a feed with four clean highlights scores 100, not 0', LG.attrQuality('product_highlight', a));
+    ok(a.avgLen > 0 && a.avgLen < 40 && a.maxLen < 40,
+      'length is measured PER HIGHLIGHT, not across four glued together', [a.avgLen, a.minLen, a.maxLen]);
+  }
+  {
+    // the bug, pinned: reading one column of four is what produced the wrong finding
+    const c = LG.qualityCollector(LG.findAttrCols(H));   // no header → single-column fallback
+    four.forEach((r) => c.onRow(r));
+    const a = c.finish().attrs.product_highlight;
+    eq('without the header the old single-column read is preserved exactly', a.perProduct, 1);
+    eq('…which is precisely what fired the wrong finding', a.rules['count-min'].n, 2);
+  }
+  {
+    // the ||| form still works, and mixes with slots
+    const c = LG.qualityCollector(LG.findAttrCols(H), { header: H });
+    c.onRow(ROW('One|||Two', 'Three', 'Three'));
+    const a = c.finish().attrs.product_highlight;
+    eq('a |||-joined cell and sibling columns are one list', a.perProduct, 4);
+    eq('duplicate detection works ACROSS the slots', a.rules['dupe-in'].n, 1);
+  }
+  {
+    // a feed that really does ship one highlight is still caught
+    const c = LG.qualityCollector(LG.findAttrCols(H), { header: H });
+    c.onRow(ROW('High neck'));
+    eq('one highlight is still one highlight', c.finish().attrs.product_highlight.rules['count-min'].n, 1);
+  }
+  const page = readFileSync(new URL('../docs/FeedSpark_GoldenRecord.html', import.meta.url), 'utf8');
+  ok(/qualityCollector\(cols, \{ header: header \}\)/.test(page),
+    'the page hands the collector the header, or the fix never reaches a real scan');
+  ok(/read across <b>' \+ r\.cols/.test(page),
+    'and the row shows what it counted across — a count nobody can check is a count nobody should trust');
+}
+
+{
   // ---- the scan's PROGRESS, wired end to end (Ray, 16 Sep 2026: "allow the user to see a
   // progress bar indicating how long it will take to scan the feed quality"). A bar needs the
   // size of the read up front, so the worker forwards the upstream length and the page reads

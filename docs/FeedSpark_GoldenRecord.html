@@ -1733,7 +1733,9 @@ window.addEventListener('load',restore);
       var FA = a[0], LG = a[1], col = null, cols = null, header = null, late = [];
       var sample = [], nRows = 0;          // a bounded slice for the Feed Lab audit
       function onRow(r, liveHeader) {
-        if (!col) { header = r.slice(); cols = LG.findAttrCols(header); col = LG.qualityCollector(cols); return; }
+        // the header goes in too: a repeatable attribute (product highlights) lives in several
+        // columns, and the collector needs them all or it reads one value out of four
+        if (!col) { header = r.slice(); cols = LG.findAttrCols(header); col = LG.qualityCollector(cols, { header: header }); return; }
         nRows++;
         if (sample.length < AUD_CAP) sample.push(r);
         // an XML feed can GROW its header mid-stream when a sparse tag debuts late (the
@@ -1889,7 +1891,10 @@ window.addEventListener('load',restore);
         if (r.key === 'title') h += titleAnatomy(k);   // the anatomy of what those rules just judged
         h += '<p class="hint muted" style="margin:8px 0 0;font-size:11px">' + esc(r.spec) +
           ' · <a href="https://support.google.com/merchants/answer/' + r.doc + '" target="_blank" rel="noopener">Google’s specification for g:' + esc(r.key) + '</a>' +
-          ' · average length ' + r.avgLen + ' chars (' + r.minLen + '–' + r.maxLen + ')</p></div>';
+          ' · average length ' + r.avgLen + ' chars (' + r.minLen + '–' + r.maxLen + ')' +
+          // a count-based finding has to show what it counted, or it cannot be checked
+          (r.perProduct ? ' · read across <b>' + r.cols + '</b> column' + (r.cols === 1 ? '' : 's') +
+            ' — <b>' + r.perProduct + '</b> values per product that has one' : '') + '</p></div>';
       }
       h += '</div>';
     });
