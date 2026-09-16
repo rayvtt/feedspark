@@ -71,8 +71,19 @@ scores ×2 and is read twice as often; a never-read market always leads, so noth
 endpoint answers `401 Unauthorized` with no OAuth discovery and no `WWW-Authenticate` — a custom
 check — so the header it reads must match: default `Authorization: Bearer <token>`; if the team's
 server reads something else, set the plain var `TM_MCP_AUTH` to the header name (e.g.
-`X-API-Key`), or `raw` when the secret already carries its scheme. `TM_MCP_URL` overrides the
-endpoint. None of these needs a redeploy. Not an IP allowlist — worker egress IPs are not pinnable.
+`X-API-Key`), or `raw` when the secret already carries its scheme. A secret pasted WITH its scheme
+(`Bearer abc…`, `Token abc…`) is sent as-is, never `Bearer Bearer …`. `TM_MCP_URL` overrides the
+endpoint — including a query-string token (`…/mcp?token=…`) if that is what the server reads; store
+it as a secret then. None of these needs a redeploy. Not an IP allowlist — worker egress IPs are
+not pinnable.
+
+**Reading the 401 (first live pull, 16 Sep 2026: "sync REFUSED … unauthorized (HTTP 401)"):** the
+server rejects the credential as sent, and from outside nothing says why — no `WWW-Authenticate`,
+no CORS header list, no OAuth metadata, the root redirects to `login.php`. Four causes, one
+question to the team: *which header/scheme (or query param) does `/mcp` check for a machine
+caller, is the token issued for that, and is there an IP allowlist?* Then: header name →
+`TM_MCP_AUTH`; scheme → the full value in `TM_MCP_TOKEN`; query param → `TM_MCP_URL` secret; IP
+allowlist → the team switches the FCC to token auth. ⟳ Sync now re-tests each change instantly.
 
 ### Task → ticket: the ibfref token
 

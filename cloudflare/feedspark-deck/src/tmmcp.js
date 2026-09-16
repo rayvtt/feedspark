@@ -49,6 +49,8 @@ export function isoDay(ms) { return new Date(ms).toISOString().slice(0, 10); }
 export function authHeader(token, mode) {
   const t = s0(token).trim(); if (!t) return null;
   const m = s0(mode).trim();
+  // a secret pasted WITH its scheme ("Bearer abc…", "Token abc…") is sent as-is — never "Bearer Bearer …"
+  if ((!m || /^bearer$/i.test(m)) && /^(bearer|token|basic|apikey|api-key)\s+\S/i.test(t)) return { name: 'Authorization', value: t.replace(/\s+/g, ' ') };
   if (!m || /^bearer$/i.test(m)) return { name: 'Authorization', value: 'Bearer ' + t };
   if (/^raw$/i.test(m)) return { name: 'Authorization', value: t };
   if (/^[A-Za-z][A-Za-z0-9-]*$/.test(m)) return { name: m, value: t };

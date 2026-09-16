@@ -21,6 +21,9 @@ console.log('· transport helpers');
 t('auth: Bearer by default, a named header on request, raw when the secret carries its scheme, none without a token',
   J(TMM.authHeader('abc')) === J({ name: 'Authorization', value: 'Bearer abc' }) && J(TMM.authHeader('abc', 'X-API-Key')) === J({ name: 'X-API-Key', value: 'abc' })
   && J(TMM.authHeader('Token abc', 'raw')) === J({ name: 'Authorization', value: 'Token abc' }) && TMM.authHeader('') === null);
+t('a secret pasted with its scheme already on it is never double-prefixed ("Bearer Bearer …")',
+  J(TMM.authHeader('Bearer abc123')) === J({ name: 'Authorization', value: 'Bearer abc123' }) && J(TMM.authHeader('  bearer   abc123 ')) === J({ name: 'Authorization', value: 'bearer abc123' })
+  && J(TMM.authHeader('Token abc123')) === J({ name: 'Authorization', value: 'Token abc123' }) && J(TMM.authHeader('abc123', 'X-API-Key')) === J({ name: 'X-API-Key', value: 'abc123' }));
 const okMsg = { jsonrpc: '2.0', id: 2, result: { content: [{ type: 'text', text: '[{"a":1}]' }] } };
 t('parseRpc reads plain JSON, a batch, and an SSE frame (picks the message carrying the result)',
   J(TMM.parseRpc(J(okMsg), 'application/json')) === J(okMsg)
