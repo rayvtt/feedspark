@@ -4116,6 +4116,53 @@ window.addEventListener('load',restore);
       pinClient(j.client||null);   // …and the brand it names can never be swapped for another
     },450);
   }catch(e){} })();
+  /* deep-link: /workflow?client=<Brand>&f=<filter> lands the board ALREADY FILTERED.
+     Ray, 16 Sep 2026: "within the suggested next moves, when you hit chase or reschedule the
+     four overdue tasks … when you hit the workflow tab you open, it should auto-filter to those
+     four overdue tasks. So the same mechanism should be replicated everywhere."
+     A suggestion that names a number has done the counting already; arriving at an unfiltered
+     board makes the reader redo it by eye. Every filter set here is one the board already has,
+     so this only PRESSES the controls — nothing renders differently from a hand-set filter,
+     and a banner says what was applied with one click to clear it. */
+  (function(){ try{
+    var qs=function(k){ var m=new RegExp('[?&]'+k+'=([^&]+)').exec(location.search);
+      return m?decodeURIComponent(m[1].replace(/\+/g,' ')):''; };
+    var cl=qs('client'), f=qs('f'), q=qs('q');
+    if(!cl&&!f&&!q)return;
+    var said=[];
+    if(cl){
+      // a dossier-only brand must not be filed under CLIENTS[0] — same rule as ?brief=
+      if(CLIENTS.indexOf(cl)<0){ CLIENTS.push(cl); CLIENTS.sort(); saveBrands(); fillClientSelect(); }
+      itState.clients=[cl]; said.push(cl);
+    }
+    if(f==='overdue'){ itState.overdue=true; said.push('overdue only'); }
+    else if(f==='open'){ itState.statuses=['open']; said.push('open tasks'); }
+    else if(f==='briefed'){ itState.statuses=['briefed']; said.push('briefed'); }
+    else if(f==='progress'){ itState.statuses=['progress']; said.push('in progress'); }
+    if(f==='overdue'||f==='open'){ itState.window=''; }   // the window must not hide what was counted
+    if(q){ itState.q=q.slice(0,120); said.push('“'+q.slice(0,40)+'”'); }
+    try{ history.replaceState(null,'',location.pathname); }catch(e2){}
+    setTimeout(function(){
+      try{ renderIntake(); }catch(e3){}
+      var band=document.getElementById('it-body');
+      var host=band&&band.closest?band.closest('.panel,section,div'):null;
+      if(host&&host.scrollIntoView)host.scrollIntoView({behavior:'smooth',block:'start'});
+      if(said.length&&host&&host.parentNode){
+        var n=document.createElement('div'); n.id='wf-dl';
+        n.style.cssText='margin:10px 0;padding:8px 12px;border:1px solid #F3D9A5;background:#FFF6E6;'
+          +'border-radius:8px;font:700 12.5px system-ui;color:#8A5A00;display:flex;gap:10px;align-items:center';
+        n.innerHTML='<span>Filtered from the brand dossier — '+said.join(' · ')+'</span>';
+        var b=document.createElement('button');
+        b.type='button'; b.textContent='Clear filter';
+        b.style.cssText='margin-left:auto;border:1px solid #E0C48A;background:#fff;border-radius:6px;'
+          +'padding:3px 9px;font:800 11.5px system-ui;cursor:pointer;color:#8A5A00';
+        b.onclick=function(){ itState.clients=[]; itState.overdue=false;
+          itState.statuses=['open','progress','briefed']; itState.q=''; itState.window='2m';
+          n.remove(); try{ renderIntake(); }catch(e4){} };
+        n.appendChild(b); host.parentNode.insertBefore(n,host);
+      }
+    },500);
+  }catch(e){} })();
   // pull the live Gmail intake (client task emails) once the service account is connected
   // Every pending email waits here (⚡ action requests first) until it's decided:
   // → Brief makes it a ticket (and clears it once the brief is saved); ✕ Not a task clears it.

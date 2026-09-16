@@ -6241,6 +6241,26 @@
       "name": "chrome: cross-tab change broadcaster (fcc-touch) injected on app pages",
       "file": "docs/touch_widget.html",
       "pattern": "__fccTouch"
+    },
+    {
+      "name": "dossier: suggested next moves deep-link with their own filter",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "WF=function(f)"
+    },
+    {
+      "name": "Workflow: ?client=&f= lands the board already filtered, with a clear-filter banner",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "Filtered from the brand dossier"
+    },
+    {
+      "name": "Label Guard: ?client= jumps to that brand's estate card",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "est-card\" data-client="
+    },
+    {
+      "name": "PT Guard: ?client= jumps to that brand's estate card",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "est-card\" data-client="
     }
   ]
 }
