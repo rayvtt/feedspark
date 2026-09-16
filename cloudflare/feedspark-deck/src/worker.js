@@ -1296,7 +1296,16 @@ export default {
         if (!upx.ok || !upx.body || !/xml|rss|octet-stream/i.test(ctx2)) {
           return json({ error: 'feed XML fetch failed (' + upx.status + ', ' + (ctx2.split(';')[0] || 'no type') + ')' }, 502);
         }
-        return new Response(upx.body, { headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'no-store' } });
+        // How long is this read? The Golden Record content-quality scan draws a real progress
+        // bar (Ray, 16 Sep 2026), which needs the size up front. FeedHero serves these
+        // uncompressed with a content-length, so forward it as an INFORMATIONAL header —
+        // never as content-length, which would truncate a decoded stream (the CSV lane below
+        // records that lesson) — and only when the upstream was not encoded, so the number
+        // always counts the same bytes the browser reads.
+        const xh = { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'no-store' };
+        const xlen = upx.headers.get('content-length') || '';
+        if (!upx.headers.get('content-encoding') && /^\d+$/.test(xlen)) xh['x-feed-bytes'] = xlen;
+        return new Response(upx.body, { headers: xh });
       }
       const up = await fetch('https://docs.google.com/spreadsheets/d/' + src.id + '/export?format=csv&gid=' + src.gid);
       // a non-link-shared sheet 307s to Google's LOGIN PAGE with a 200 — final content-type is
@@ -3907,6 +3916,17 @@ async function goldenRoutes(env, request, url) {
         rules[rule.id] = { n: Math.max(0, parseInt(hit.n, 10) || 0),
           pct: Math.round((Number(hit.pct) || 0) * 10) / 10,
           eg: Array.isArray(hit.eg) ? hit.eg.slice(0, 4).map((x) => String(x).slice(0, 160)) : [] };
+        // a duplicate rule carries its groups — the repeated value, how many products share
+        // it and which ones — so the finding can be verified on the page rather than taken
+        // on trust. Same discipline as everything else here: only the shape we render.
+        if (Array.isArray(hit.groups) && hit.groups.length) {
+          rules[rule.id].groups = hit.groups.slice(0, 4).map((g) => ({
+            v: String((g && g.v) || '').slice(0, 160),
+            n: Math.max(0, parseInt(g && g.n, 10) || 0),
+            ids: Array.isArray(g && g.ids) ? g.ids.slice(0, 4).map((x) => String(x).slice(0, 80)) : [],
+          })).filter((g) => g.v && g.n > 1);
+          rules[rule.id].vals = Math.max(0, parseInt(hit.vals, 10) || 0);
+        }
       }
       attrs[q.key] = { filled: Math.max(0, parseInt(a.filled, 10) || 0),
         cov: Math.round((Number(a.cov) || 0) * 10) / 10,

@@ -1437,7 +1437,7 @@ export function qspecOf(key) { return QSPEC.filter((q) => q.key === key)[0] || n
    `cols` maps attribute key -> column index (findAttrCols output). Example offenders are
    capped per rule, and duplicate detection keeps a bounded value->count map so a 2M-row
    feed cannot blow the browser's memory. */
-const EG_CAP = 4, DUPE_CAP = 60000, EG_LEN = 140;
+const EG_CAP = 4, DUPE_CAP = 200000, GRP_CAP = 2000, ID_CAP = 4, EG_LEN = 140;
 export function qualityCollector(cols, opts) {
   const o = opts || {};
   const specs = QSPEC.filter((q) => cols && cols[q.key] != null && cols[q.key] >= 0);
@@ -1445,7 +1445,12 @@ export function qualityCollector(cols, opts) {
   for (const q of specs) {
     const r = { key: q.key, filled: 0, sum: 0, min: Infinity, max: 0, rules: {}, dupes: 0, over: false };
     for (const rule of q.rules) r.rules[rule.id] = { n: 0, eg: [] };
-    if (q.rules.some((x) => x.dupe)) r.seen = new Map();
+    // a duplicate is a GROUP, not a list of strings (Ray, 16 Sep 2026, reading Monsoon GB:
+    // four unrelated titles under "title duplicated across products" reads as a false
+    // positive, because nothing on screen said each one appears TWICE). So each repeated
+    // value is kept with its repeat count and the ids of the products carrying it — the
+    // evidence a human needs to confirm the finding without re-reading the feed.
+    if (q.rules.some((x) => x.dupe)) { r.seen = new Map(); r.groups = new Map(); r.vals = 0; r.gover = false; }
     acc[q.key] = r;
   }
   let rows = 0;
@@ -1453,10 +1458,10 @@ export function qualityCollector(cols, opts) {
   return {
     onRow(row) {
       rows++;
-      const ctx = {
-        brand: cols.brand != null && cols.brand >= 0 ? String(row[cols.brand] || '').trim() : '',
-        title: cols.title != null && cols.title >= 0 ? String(row[cols.title] || '').trim() : '',
-      };
+      const at = (k) => (cols[k] != null && cols[k] >= 0 ? String(row[cols[k]] || '').trim() : '');
+      const ctx = { brand: at('brand'), title: at('title') };
+      // what names the product in a duplicate group — its id, or the page it points at
+      const who = at('id') || at('link').replace(/^https?:\/\/[^/]+\//, '').split('?')[0];
       for (const q of specs) {
         const raw = String(row[cols[q.key]] == null ? '' : row[cols[q.key]]);
         const v = raw.trim();
@@ -1478,13 +1483,17 @@ export function qualityCollector(cols, opts) {
         if (a.seen) {
           const k = v.toLowerCase();
           const prev = a.seen.get(k);
-          if (prev != null) {
-            a.seen.set(k, prev + 1);
-            a.dupes += prev === 1 ? 2 : 1;    // the first repeat implicates the original too
-            const dr = q.rules.filter((x) => x.dupe)[0];
-            const slot = dr && a.rules[dr.id];
-            if (slot && slot.eg.length < EG_CAP) slot.eg.push(cut(v));
-          } else if (a.seen.size < DUPE_CAP) a.seen.set(k, 1);
+          if (prev) {
+            a.dupes += prev[0] === 1 ? 2 : 1;   // the first repeat implicates the original too
+            if (prev[0] === 1) a.vals++;        // one more VALUE that products share
+            prev[0]++;
+            let g = a.groups.get(k);
+            if (!g) {
+              if (a.groups.size < GRP_CAP) { g = { v: cut(v), n: 1, ids: prev[1] ? [prev[1]] : [] }; a.groups.set(k, g); }
+              else a.gover = true;
+            }
+            if (g) { g.n++; if (who && g.ids.length < ID_CAP) g.ids.push(who); }
+          } else if (a.seen.size < DUPE_CAP) a.seen.set(k, [1, who]);
           else a.over = true;
         }
       }
@@ -1494,10 +1503,23 @@ export function qualityCollector(cols, opts) {
       for (const q of specs) {
         const a = acc[q.key];
         const dr = q.rules.filter((x) => x.dupe)[0];
-        if (dr) a.rules[dr.id].n = a.dupes;
+        if (dr) {
+          // biggest groups first — the ones worth looking at — and the example list becomes
+          // those same values, each named ONCE (it used to push the value again on every
+          // repeat, so one title could fill all four slots and look like four findings)
+          const gs = Array.from(a.groups.values()).sort((x, y) => y.n - x.n).slice(0, EG_CAP);
+          a.rules[dr.id].n = a.dupes;
+          a.rules[dr.id].groups = gs;
+          a.rules[dr.id].vals = a.vals;
+          a.rules[dr.id].eg = gs.map((g) => g.v);
+        }
         const pct = (n) => (a.filled ? Math.round((n / a.filled) * 1000) / 10 : 0);
         const rules = {};
-        for (const rule of q.rules) rules[rule.id] = { n: a.rules[rule.id].n, pct: pct(a.rules[rule.id].n), eg: a.rules[rule.id].eg };
+        for (const rule of q.rules) {
+          const hit = a.rules[rule.id];
+          rules[rule.id] = { n: hit.n, pct: pct(hit.n), eg: hit.eg };
+          if (hit.groups) { rules[rule.id].groups = hit.groups; rules[rule.id].vals = hit.vals; }
+        }
         attrs[q.key] = {
           filled: a.filled, cov: rows ? Math.round((a.filled / rows) * 1000) / 10 : 0,
           avgLen: a.filled ? Math.round(a.sum / a.filled) : 0,
@@ -1527,7 +1549,9 @@ export function attrQuality(key, a) {
     const cost = (hit.pct / 100) * QW[rule.sev] * 100;
     pen += cost;
     broken.push({ id: rule.id, sev: rule.sev, label: rule.label, why: rule.why,
-      n: hit.n, pct: hit.pct, eg: hit.eg || [], cost: Math.round(cost * 10) / 10 });
+      n: hit.n, pct: hit.pct, eg: hit.eg || [], cost: Math.round(cost * 10) / 10,
+      groups: hit.groups && hit.groups.length ? hit.groups : undefined,
+      vals: hit.vals || undefined });
   }
   broken.sort((x, y) => y.cost - x.cost);
   return { key, score: Math.max(0, Math.round((100 - pen) * 10) / 10), broken,

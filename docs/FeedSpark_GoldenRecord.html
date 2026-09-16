@@ -319,9 +319,30 @@ window.addEventListener('load',restore);
   .qz-eg{margin-top:4px;font-size:11px;color:var(--ink-2);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
   .qz-eg span{display:block;background:var(--wash);border:1px solid var(--line);border-radius:6px;
     padding:3px 7px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* a duplicate shown as what it IS — one repeated value, the products that share it */
+  .qz-egs{display:block;margin-top:4px}
+  .qz-cap{display:block;font-style:normal;font-size:10.5px;font-weight:700;color:var(--muted)}
+  .qz-grp{display:block;background:var(--wash);border:1px solid var(--line);border-radius:6px;
+    padding:4px 8px;margin-top:3px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
+  .qz-grp b{color:var(--orange-deep);font-weight:900;margin-right:6px;font-family:inherit}
+  .qz-grp em{display:block;font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qz-grp i{display:block;font-style:normal;color:var(--muted);font-size:10px;margin-top:2px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .qz-hit{text-align:right;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
   .qz-hit b{display:block;font-size:13px}
   .qz-hit span{font-weight:700;color:var(--muted);font-size:10.5px}
+  /* the scan's own progress — a real bar, because the read takes as long as the feed takes */
+  .qz-scan{display:none;margin:12px 0 2px}
+  .qz-scan.on{display:block}
+  .qz-pbar{height:9px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden;position:relative}
+  .qz-pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--orange),var(--orange-deep));
+    border-radius:100px;transition:width .3s linear}
+  .qz-pbar.indet i{width:32%;animation:qzslide 1.2s ease-in-out infinite;transition:none}
+  @keyframes qzslide{0%{transform:translateX(-110%)}100%{transform:translateX(330%)}}
+  .qz-pmeta{display:flex;justify-content:space-between;align-items:baseline;gap:14px;margin-top:6px;
+    font-size:11.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+  .qz-pmeta b{color:var(--ink-2);font-weight:800}
+  .qz-peta{white-space:nowrap}
   .qz-empty{font-size:12.5px;color:var(--ink-2);line-height:1.6}
   .qz-meta{font-size:11px;font-weight:700;color:var(--muted);margin-left:auto;display:flex;align-items:center;gap:8px}
   body.demo .qz-act{display:none!important}
@@ -361,7 +382,7 @@ window.addEventListener('load',restore);
   body.pdf .refseg,body.pdf #sec-detail .cat-h,body.pdf #sec-detail .cat-sub,
   body.pdf #fcc-fcb,body.pdf #fcc-fcp,body.pdf #tky-fab,body.pdf #tky-scrim,body.pdf #tky-drawer,
   body.pdf #fcc-viewas,body.pdf #fcc-apps,body.pdf #fcc-navcz,body.pdf #fcc-navcz-scrim,
-  body.pdf .qz-act,body.pdf #qz-run,body.pdf #qz-msg{display:none!important}
+  body.pdf .qz-act,body.pdf #qz-run,body.pdf #qz-msg,body.pdf .qz-scan{display:none!important}
   body.pdf #sec-detail{border-top:none;padding:0}
   body.pdf #sec-detail .wrap{max-width:none;padding:0}
   body.pdf .tier{break-inside:avoid;page-break-inside:avoid}   /* only bites in the A4 fallback */
@@ -794,7 +815,7 @@ window.addEventListener('load',restore);
     if (!clients.length) { $('est-grid').innerHTML = '<div class="panel"><span class="muted">No Google Shopping feeds wired yet.</span></div>'; return; }
     var h = '';
     clients.forEach(function (c) {
-      h += '<div class="est-card"><h3>' + esc(dispClient(c)) + '</h3>';
+      h += '<div class="est-card" data-client="' + esc(c) + '"><h3>' + esc(dispClient(c)) + '</h3>';
       byClient[c].forEach(function (f) {
         var k = keyOf(f.client, f.mkt), st = statusOf(f);
         var miss = (f.reqMissing || []).length;
@@ -1612,8 +1633,17 @@ window.addEventListener('load',restore);
   // stream the live feed once and score every row against the spec rules. Header handling
   // mirrors xmlCollector: the first row IS the header, and an XML feed can grow its header
   // mid-stream when a sparse tag debuts late (the Monsoon CL1 lesson) — re-resolve then.
+  // onState is handed a PROGRESS RECORD, not a sentence — bytes read, bytes expected, rows
+  // scored and the phase — so the caller can draw a real bar and an honest ETA (Ray, 16 Sep
+  // 2026: "allow the user to see a progress bar indicating how long it will take to scan").
+  // The read is never hurried or cut short: every product is scored, whatever the feed costs.
   function qualityRun(k, onState) {
     var p = parts(k);
+    var t0 = Date.now();
+    var tell = function (ph, got, total, rows) {
+      if (onState) onState({ phase: ph, got: got || 0, total: total || 0, rows: rows || 0, t0: t0 });
+    };
+    tell('connect', 0, 0, 0);
     return Promise.all([loadFA(), loadLG()]).then(function (a) {
       var FA = a[0], LG = a[1], col = null, cols = null, header = null, late = [];
       var sample = [], nRows = 0;          // a bounded slice for the Feed Lab audit
@@ -1635,10 +1665,13 @@ window.addEventListener('load',restore);
         }
         col.onRow(r);
       }
-      var parser = null, got = 0, next = 0;
+      var parser = null, got = 0, total = 0, last = 0;
       return fetch('/api/feed/proxy?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt))
         .then(function (res) {
           if (!res.ok || !res.body) throw new Error('feed fetch failed (HTTP ' + res.status + ')');
+          // the worker forwards the upstream size for XML feeds; a sheet export has none, and
+          // then the bar says so rather than inventing a percentage
+          total = (res.headers && parseInt(res.headers.get('x-feed-bytes') || '', 10)) || 0;
           var rd = res.body.getReader(), dec = new TextDecoder();
           function pump() {
             return rd.read().then(function (x) {
@@ -1646,10 +1679,8 @@ window.addEventListener('load',restore);
               var chunk = dec.decode(x.value, { stream: true });
               if (!parser) parser = /^\s*</.test(chunk) ? FA.createXmlParser(onRow) : FA.createParser(onRow);
               got += x.value.length;
-              if (onState && got > next) {
-                next = got + 2 * 1048576;
-                onState('reading the live feed — ' + (got / 1048576).toFixed(1) + ' MB');
-              }
+              var now = Date.now();
+              if (now - last > 180) { last = now; tell('read', got, total, nRows); }
               parser.push(chunk);
               return pump();
             });
@@ -1657,6 +1688,7 @@ window.addEventListener('load',restore);
           return pump();
         })
         .then(function () {
+          tell('score', got, total || got, nRows);
           if (!col) throw new Error('the feed produced no rows');
           var snap = col.finish({ client: p.client, market: p.mkt, late: late.length ? late : undefined });
           if (!snap.rows) throw new Error('the feed produced no rows');
@@ -1665,6 +1697,7 @@ window.addEventListener('load',restore);
             snap.ai = packAudit(FA.audit(header, sample, { client: p.client,
               rowTotalEstimate: nRows, channel: 'google' }));   // /golden is Google-channel only
           } catch (e) { snap.ai = null; }
+          tell('save', got, total || got, snap.rows);
           return fetch(API + '/api/golden/quality?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt),
             { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(snap) })
             .then(function (r) { return r.json(); })
@@ -1694,6 +1727,8 @@ window.addEventListener('load',restore);
       (QUAL[k] ? '<span>' + fmt(QUAL[k].rows) + ' products read · ' + ago(QUAL[k].t) + '</span>' : '') +
       '<button class="btn" id="qz-run">' + (QUAL[k] ? '⟳ Re-analyse' : '⚡ Analyse content quality') + '</button>' +
       '<span class="scanmsg" id="qz-msg"></span></span></div>' +
+      '<div class="qz-scan" id="qz-scan"><div class="qz-pbar" id="qz-pbar"><i id="qz-pfill"></i></div>' +
+      '<div class="qz-pmeta"><span id="qz-ptxt"></span><span class="qz-peta" id="qz-peta"></span></div></div>' +
       '<p class="tier-sub">Coverage says an attribute is <i>there</i>. This reads what is actually <i>in</i> the free-text' +
       ' fields — title, description, highlights, category, type, colour, material, pattern — against the rules Google' +
       ' publishes on each attribute’s own specification page. Every finding below quotes the rule it comes from:' +
@@ -1746,9 +1781,20 @@ window.addEventListener('load',restore);
             h += '<div class="qz-rule"><span class="qz-sev ' + b.sev + '">' + (b.sev === 'fail' ? 'requirement' : 'best practice') + '</span>' +
               '<span><span class="qz-rl">' + esc(b.label) + '</span>' +
               '<span class="qz-why">' + esc(b.why) + '</span>' +
-              (b.eg && b.eg.length ? '<span class="qz-eg">' + b.eg.map(function (e) { return '<span title="' + esc(e) + '">' + esc(e) + '</span>'; }).join('') + '</span>' : '') +
+              (b.groups && b.groups.length
+                // a duplicate is a GROUP: the shared value, how many products carry it and
+                // which ones. Four unrelated-looking strings read as a wrong finding (Ray on
+                // Monsoon GB) — "×2 · 1000945103, 1000944940" is the finding, verifiable.
+                ? '<span class="qz-egs"><i class="qz-cap">Each block is ONE value and the products sharing it — matched in' +
+                    ' full, case-insensitively' + (b.vals > b.groups.length ? '; ' + fmt(b.vals - b.groups.length) + ' more not shown' : '') + '.</i>' +
+                  b.groups.map(function (g) {
+                    return '<span class="qz-grp" title="' + esc(g.v) + '"><em><b>×' + g.n + '</b>' + esc(g.v) + '</em>' +
+                      (g.ids && g.ids.length ? '<i>' + esc(g.ids.join(' · ')) + (g.n > g.ids.length ? ' …' : '') + '</i>' : '') + '</span>';
+                  }).join('') + '</span>'
+                : (b.eg && b.eg.length ? '<span class="qz-eg">' + b.eg.map(function (e) { return '<span title="' + esc(e) + '">' + esc(e) + '</span>'; }).join('') + '</span>' : '')) +
               '</span>' +
-              '<span class="qz-hit"><b>' + b.pct + '%</b><span>' + fmt(b.n) + ' products</span></span></div>';
+              '<span class="qz-hit"><b>' + b.pct + '%</b><span>' + fmt(b.n) + ' products' +
+              (b.vals ? '<br>' + fmt(b.vals) + ' value' + (b.vals === 1 ? '' : 's') : '') + '</span></span></div>';
           });
         }
         if (r.key === 'title') h += titleAnatomy(k);   // the anatomy of what those rules just judged
@@ -1765,19 +1811,62 @@ window.addEventListener('load',restore);
       tr.onclick = function () { select(tr.getAttribute('data-hk')); };
     });
   }
+  // how long is left, said honestly: a rate measured over the read so far, never a guess
+  // before there is enough of one, and never a percentage when the size is unknown
+  function etaWords(s) {
+    if (!(s > 0)) return '';
+    if (s < 10) return 'a few seconds left';
+    if (s < 90) return '~' + (Math.ceil(s / 5) * 5) + 's left';
+    var m = Math.floor(s / 60);
+    return '~' + m + 'm ' + Math.round((s - m * 60) / 15) * 15 + 's left';
+  }
+  var MB = function (b) { return (b / 1048576).toFixed(1) + ' MB'; };
+  function drawScan(st) {
+    var band = $('qz-scan'), bar = $('qz-pbar'), fill = $('qz-pfill'), txt = $('qz-ptxt'), eta = $('qz-peta');
+    if (!band || !bar || !fill) return;
+    band.className = 'qz-scan on';
+    // a size we cannot trust (an encoded upstream, a feed that outgrew its header) must not
+    // drive a bar that sits at 100% while the read goes on — fall back to the moving bar
+    var known = st.total > 0 && st.got <= st.total * 1.02;
+    var elapsed = (Date.now() - st.t0) / 1000;
+    if (st.phase === 'connect') {
+      bar.className = 'qz-pbar indet'; fill.style.width = '';
+      if (txt) txt.innerHTML = '<b>Opening the live feed…</b>';
+      if (eta) eta.textContent = '';
+      return;
+    }
+    if (st.phase === 'score' || st.phase === 'save') {
+      bar.className = 'qz-pbar'; fill.style.width = '100%';
+      if (txt) txt.innerHTML = '<b>' + (st.phase === 'save' ? 'Saving the reading' : 'Scoring against the specification') +
+        '</b> · ' + fmt(st.rows) + ' products read';
+      if (eta) eta.textContent = 'read in ' + Math.round(elapsed) + 's';
+      return;
+    }
+    if (known) {
+      var pct = Math.min(99.5, (st.got / st.total) * 100);
+      bar.className = 'qz-pbar'; fill.style.width = pct.toFixed(1) + '%';
+      if (txt) txt.innerHTML = '<b>' + Math.floor(pct) + '%</b> · ' + MB(st.got) + ' of ' + MB(st.total) +
+        ' · ' + fmt(st.rows) + ' products scored';
+      if (eta) eta.textContent = elapsed > 1.5 && st.got > 0
+        ? etaWords((st.total - st.got) / (st.got / elapsed)) : 'measuring…';
+    } else {
+      bar.className = 'qz-pbar indet'; fill.style.width = '';
+      if (txt) txt.innerHTML = '<b>Reading the live feed</b> · ' + MB(st.got) + ' · ' + fmt(st.rows) + ' products scored';
+      if (eta) eta.textContent = Math.round(elapsed) + 's elapsed · size not declared';
+    }
+  }
   function wireQuality(k) {
     var btn = $('qz-run');
     if (btn) btn.onclick = function () {
       if (QRUN) return;
       QRUN = k;
       btn.disabled = true;
-      var msg = $('qz-msg');
-      var say = function (t) { if ($('qz-msg')) $('qz-msg').innerHTML = '<span class="spin"></span>' + esc(t); };
-      say('starting…');
-      qualityRun(k, say)
+      if ($('qz-msg')) $('qz-msg').innerHTML = '<span class="spin"></span>reading every product — this takes as long as the feed takes';
+      qualityRun(k, drawScan)
         .then(function () { QRUN = null; if (SEL === k) renderDetail(k); })
         .catch(function (e) {
           QRUN = null;
+          if ($('qz-scan')) $('qz-scan').className = 'qz-scan';
           if ($('qz-msg')) $('qz-msg').textContent = '✗ ' + (e && e.message ? e.message : 'analysis failed');
           if ($('qz-run')) $('qz-run').disabled = false;
         });
@@ -2125,4 +2214,28 @@ window.addEventListener('load',restore);
     if (k) select(k);
   });
 })();
+
+  /* deep-link: /golden?client=<Brand> jumps to that brand's estate card — the same mechanism
+     /labels and /ptypes carry, and what the dossier's Golden Record snapshot links into. */
+  (function(){
+    var m=/[?&]client=([^&]+)/.exec(location.search); if(!m)return;
+    var want=decodeURIComponent(m[1].replace(/\+/g,' ')).toLowerCase().replace(/[^a-z0-9]/g,'');
+    if(!want)return;
+    var tries=0;
+    var go=function(){
+      var cards=document.querySelectorAll('.est-card[data-client]');
+      if(!cards.length){ if(++tries<20)return setTimeout(go,300); return; }
+      for(var i=0;i<cards.length;i++){
+        var c=cards[i].getAttribute('data-client')||'';
+        if(c.toLowerCase().replace(/[^a-z0-9]/g,'')===want){
+          cards[i].style.outline='2px solid var(--orange,#ED6F0B)';
+          cards[i].style.outlineOffset='3px';
+          if(cards[i].scrollIntoView)cards[i].scrollIntoView({behavior:'smooth',block:'center'});
+          return;
+        }
+      }
+      if(++tries<20)setTimeout(go,300);
+    };
+    setTimeout(go,400);
+  })();
 </script>
