@@ -486,7 +486,20 @@ the same number on both pages.
   (one market is a card, not a heatmap). A finished analysis mirrors onto its own estate row
   exactly what the worker writes to `goldenidx`, so the feed joins the grid immediately rather
   than after a reload.
-- **In the PDF:** it prints with everything else. Print pins the card's desktop geometry
+- **In the PDF — the page SCALED, not a second design** (Ray, 16 Sep 2026: *"PDF export still
+  doesn't reflect exact same visual as FCC"*): print used to restyle twenty-odd properties on
+  the way to paper — smaller dial, tighter rows, cut type scale, different grid columns — which
+  made the download a compact variant of the scorecard rather than the scorecard. `body.pdf` now
+  lays the page out at its DESKTOP width (960px) and scales the whole document with `zoom` so
+  that width lands exactly on the 186mm printable column: every size, space, colour and column
+  ratio survives, only the ruler changes. `zoom` and not `transform:scale` — transform is
+  paint-time, so Chrome paginates on the unscaled height (the lesson the keyword-calendar PDF
+  already learned). The only print rules left hide interactive chrome, restore the page's own
+  ≤900px responsive rules to their desktop form (the print viewport is 703px, so they would
+  otherwise hand the client a phone layout on paper), and frame the document with its header and
+  footer. `tools/check_grpdf.js` reads the type scale, padding and dial on screen and again in
+  print mode and fails on any difference beyond zoom rounding, so a compact variant cannot creep
+  back. It prints with everything else. Print pins the card's desktop geometry
   (`body.pdf .score-grid`, `.ladder`): the ≤900px rules stack the ring above the ladder, which is
   right on a phone but would make the measured sheet shorter than the printed document — the same
   trap that had already eaten the spec note and the quality findings. The full document — four

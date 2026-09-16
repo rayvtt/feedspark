@@ -5612,12 +5612,6 @@
       "pr": 392
     },
     {
-      "name": "Golden Record PDF: the content-quality section prints with the scorecard, compacted so the document stays inside ~two A4 lengths (Ray 16 Sep 2026: 'make sure it is one or two pages')",
-      "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "body.pdf .tier{padding:9px 13px",
-      "min": 1
-    },
-    {
       "name": "Golden Record PDF: the 703px printable column trips the page's own <=900px rules — print re-shows the worst-rule summary and the per-rule hit counts, not just the bars",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "body.pdf .qz-worst{display:block!important}",
@@ -6068,6 +6062,24 @@
       "name": "Worker: per-pillar AI-readiness scores ride onto goldenidx (airP) so the estate can draw the heatmap without re-reading every feed's stored block",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "idx[key].airP = pm",
+      "min": 1
+    },
+    {
+      "name": "Golden Record PDF = THE PAGE SCALED, not a second design (Ray 16 Sep 2026: 'PDF export still doesn't reflect exact same visual as FCC') — print lays out at the desktop width and zooms onto the 186mm column; zoom not transform, since transform is paint-time and Chrome paginates on the unscaled height",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf{background:#fff!important;color:#333!important;width:960px;zoom:",
+      "min": 1
+    },
+    {
+      "name": "Golden Record PDF: print restores the page's own <=900px rules to their DESKTOP form (the print viewport is 703px and would otherwise hand the client a phone layout)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "the page's own ≤900px rules, put back to their DESKTOP form",
+      "min": 1
+    },
+    {
+      "name": "PDF tripwire asserts FIDELITY — the same type scale, padding and dial on screen and in print, so a compact print variant can never creep back",
+      "file": "tools/check_grpdf.js",
+      "pattern": "print does not restyle the page",
       "min": 1
     }
   ]
