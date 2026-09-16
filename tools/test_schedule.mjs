@@ -228,7 +228,12 @@ console.log('\n\u00b7 the badge renders it');
     /'-': \{ c: '', t: 'not scheduled' \}/.test(W) && /i\.off\{background:transparent/.test(W));
   ok('every cell names its month and outcome on hover', /title="' \+ esc\(moLabel\(k\) \+ ' \u2014 ' \+ sp\.t\)/.test(W));
   ok('a legend names all three states — identity is never colour alone', /went ahead/.test(W) && /skipped/.test(W) && /not scheduled/.test(W));
-  ok('the popover scrolls rather than running off a short viewport', /max-height:calc\(100vh - 16px\);overflow:auto/.test(W));
+  ok('a row is name + twelve cells + a SHORT tail, so it fits the card at 330px',
+    /flex:0 0 84px/.test(W) && /flex:0 0 32px/.test(W) && /row\.streak \? '<b>' \+ row\.streak \+ 'mo<\/b>'/.test(W));
+  ok('the hours a task skipped live in its tooltip, not in the row \u2014 the total is already in the summary line',
+    /var rt = kind \+[\s\S]{0,400}h not taken/.test(W)
+    && !/var tail = row\.streak[\s\S]{0,120}hrsSkip/.test(W));
+  ok('the popover scrolls rather than running off a short viewport', /max-height:min\(660px,calc\(100vh - 24px\)\);overflow:auto/.test(W));
   ok('and links through to the full cadence for that brand', /\/schedule\?b=/.test(W));
 }
 
