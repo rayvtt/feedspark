@@ -530,6 +530,9 @@ window.addEventListener('load',restore);
   .itbl .c-client{font-weight:800;white-space:nowrap;text-overflow:ellipsis}
   .itbl .c-task{color:var(--ink);line-height:1.3;white-space:normal;word-break:break-word}
   .itbl .c-owner{color:var(--muted);font-weight:700;white-space:nowrap;text-overflow:ellipsis}
+  /* an owner name shown because the ticket predates the `by` field — dotted, so it reads as
+     the inference it is rather than as something the ticket actually recorded */
+  .by-inf{border-bottom:1px dotted var(--line);cursor:help;opacity:.85}
   .itbl .c-due{color:var(--ink-2);font-weight:700;white-space:nowrap}
   .itbl .c-due-ed{cursor:pointer}
   .itbl .c-due-ed:hover{color:var(--orange-deep);text-decoration:underline}
@@ -2854,18 +2857,43 @@ window.addEventListener('load',restore);
   // most recently updated. Duplicates stay in the store — the primary's pop-up lists them for
   // one-click open/delete — but they never render as their own record anywhere.
   var BRIEF_DUP={}, BRIEF_ANCHOR={};
+  // SAME WORK, NOT MERELY SIMILAR (Ray, 16 Sep 2026, from the Brief Ledger: Cashmere/Merino and
+  // Gifting at Test running with no Intake row and no plan row — because both were collapsed as
+  // duplicates of another Reiss keyword ticket, and a collapsed duplicate is skipped by the
+  // reconcile and never rendered as its own record).
+  // taskDice measures word overlap, and on a module task family
+  // ("Keywords Optimisation - <theme> - Marketing Planner - <MMYY>") the shared scaffolding IS
+  // most of the words: two tickets whose entire difference is the theme — the one part that
+  // says what the work IS — score 0.6-0.8, sailing past both the .45 anchor bar and the .6
+  // loose bar. So every Reiss keyword optimisation collapsed into one.
+  // The rule now: two names are the same work only when NEITHER names something the other
+  // doesn't. Words unique to each side decide it, singular/plural-canonical so "Keyword" and
+  // "Keywords" aren't a difference. One name being a fuller version of the other still
+  // collapses (only one side has sole words); two that each carry their own subject never do.
+  // Deliberately conservative — a duplicate left showing twice is visible and one click to
+  // merge, whereas a wrongly collapsed ticket is work that silently ceases to exist.
+  function soleWords(a,b){
+    var A={},B={};
+    normTask(a).split(' ').forEach(function(w){ if(w.length>2)A[w.replace(/s$/,'')]=1; });
+    normTask(b).split(' ').forEach(function(w){ if(w.length>2)B[w.replace(/s$/,'')]=1; });
+    return [Object.keys(A).filter(function(w){ return !B[w]; }),
+            Object.keys(B).filter(function(w){ return !A[w]; })]; }
+  function sameWork(a,b){ var na=normTask(a), nb=normTask(b);
+    if(!na||!nb)return false; if(na===nb)return true;
+    var s=soleWords(a,b); return !(s[0].length&&s[1].length); }
   function refreshDupMap(){
     var rowSet={}, rows={}; allIntake().forEach(function(r){ var k=r.client+'|'+r.task; rowSet[k]=1; (rows[r.client]=rows[r.client]||[]).push({k:k,task:r.task}); });
     var groups={}, loose=[], anchors={};
     Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id]; if(!b||b.status==='confirmed')return;
       var an=null;
       if(b.taskKey&&rowSet[b.taskKey])an=b.taskKey;
-      else { var bs=0; (rows[b.client]||[]).forEach(function(r){ var s=taskDice(r.task,b.task); if(s>bs){bs=s;an=r.k;} }); if(bs<0.45)an=null; }
+      else { var bs=0; (rows[b.client]||[]).forEach(function(r){ if(!sameWork(r.task,b.task))return;   // a row that names other work is not this ticket's anchor, however much wording they share
+          var s=taskDice(r.task,b.task); if(s>bs){bs=s;an=r.k;} }); if(bs<0.45)an=null; }
       if(an){ anchors[id]=an; (groups[an]=groups[an]||[]).push(id); } else loose.push(id);
     });
     var lg=[];
     loose.forEach(function(id){ var b=BRIEFS[id], hit=null;
-      for(var i=0;i<lg.length&&!hit;i++){ var p=BRIEFS[lg[i][0]]; if(p.client===b.client&&taskDice(p.task,b.task)>=0.6)hit=lg[i]; }
+      for(var i=0;i<lg.length&&!hit;i++){ var p=BRIEFS[lg[i][0]]; if(p.client===b.client&&sameWork(p.task,b.task)&&taskDice(p.task,b.task)>=0.6)hit=lg[i]; }
       if(hit)hit.push(id); else lg.push([id]); });
     lg.forEach(function(g,i){ groups['loose|'+i]=g; });
     var dup={};
@@ -3119,7 +3147,16 @@ window.addEventListener('load',restore);
   // who is signed in (Cloudflare Access identity, already fetched for scoping)
   function meName(){ try{ if(!ACCESS_ME)return ''; return String(ACCESS_ME.name||'').trim()
     || String(ACCESS_ME.email||'').split('@')[0].replace(/[._-]+/g,' ').replace(/\b\w/g,function(x){return x.toUpperCase();}); }catch(e){ return ''; } }
-  function briefedBy(b){ return (b&&b.by)||'—'; }   // never guessed: briefs raised before this shipped show —
+  // Ray, 16 Sep 2026: "any '-' brief by is obviously Ray - so add me name too". Every brief
+  // raised before the `by` field shipped is the owner's, so the ledger names them instead of
+  // printing a dash. It is a DISPLAY fallback, not a backfill — nothing is written onto the
+  // stored ticket, so the day someone proves a dash was somebody else's, the record is intact.
+  // ownerName rides on /api/access?me=1 for every signin, so the whole team reads the same name.
+  function ownerName(){ try{ return String((ACCESS_ME&&ACCESS_ME.ownerName)||'').trim(); }catch(e){ return ''; } }
+  function briefedBy(b){ return (b&&b.by)||ownerName()||'—'; }
+  function briefedByCell(b){ if(b&&b.by)return esc(b.by);
+    var o=ownerName(); if(!o)return '—';
+    return '<span class="by-inf" title="Raised before the FCC recorded who briefed a ticket — those are '+esc(o)+'’s">'+esc(o)+'</span>'; }
   // a reply's chip states what it actually was: a completion, or a pickup that is not one
   function commChip(c){
     var v=classifyReply((c&&c.note)||'');
@@ -3292,21 +3329,35 @@ window.addEventListener('load',restore);
   // idempotent on task text, so even a simultaneous pair can't double-write.
   var STAGE_STATUS={intake:'Briefed',briefed:'Briefed',progress:'In Progress',blocked:'On Hold',
     done:'Done',running:'In Progress',analysis:'In Progress',confirmed:'Done'};
+  // EXACT wording only (Ray, 16 Sep 2026, from the Brief Ledger: Cashmere/Merino and Gifting
+  // sitting at Test running with no Intake row and no plan row). This asked "is the task
+  // already in Intake?" with the FUZZY sameTask — and module task families share a prefix, so
+  // Reiss's own "Keywords Optimisation - Leather & Suede - Marketing Planner - 0926" dices at
+  // 0.714 against "… - Cashmere/Merino - … - 0926". The reconcile therefore declared the
+  // ticket already present under other wording, stamped it planned, and never filed it. The
+  // same rule the worker's idempotent append uses is the only safe one here: a needless file
+  // is a no-op, a wrong "it's already there" is a task that never exists.
   function briefRow(b){   // the brief's task as it exists in Intake today, or null
-    var rows=allIntake(), hit=null;
+    var rows=allIntake(), hit=null, want=normTask(b.task);
     for(var i=0;i<rows.length&&!hit;i++){ var r=rows[i];
       if(r.client!==b.client)continue;
-      if(normTask(r.task)===normTask(b.task)||sameTask(r.task,b.task))hit=r; }
+      if(normTask(r.task)===want)hit=r; }
     return hit; }
   function reconcileBriefTasks(){
     if(!LIVE_CONN)return;   // without a live plan read every row would look missing
     var made=0, pend=[];
     Object.keys(BRIEFS).forEach(function(id){ var b=BRIEFS[id];
-      if(!b||!b.client||!b.task||b.planned||isDup(b))return;
+      if(!b||!b.client||!b.task||isDup(b))return;
       if(b.status==='confirmed')return;                     // closed work needs no plan row
       if(!inScopeClient(b.client))return;                   // a scoped signin can't file another book's task
       if(b.taskKey&&allIntake().some(function(r){ return rowKey(r)===b.taskKey; }))return;   // already tied to a live row
-      if(briefRow(b)){ b.planned=1; pend.push(b); return; } // it IS there under other wording — settle the flag, don't write
+      // b.planned is a HINT, never a veto. It used to skip the ticket outright, and it was
+      // stamped on the fuzzy match above AND on adoptIntoPlan's optimistic true — so a ticket
+      // wrongly marked filed, or one whose sheet write never landed, was stranded for good and
+      // no later open could heal it. The real veto is the row EXISTING: re-filing is safe
+      // because adoptIntoPlan strict-guards on exact wording and appendPlanRows skips a task
+      // already in the tab, so the worst case is a no-op.
+      if(briefRow(b)){ if(!b.planned){ b.planned=1; pend.push(b); } return; }   // it IS there — settle the flag, don't write
       if(!PLANSHEET[b.client])return;                       // no sheet to write to; the ticket stands alone
       if(adoptIntoPlan(b.client,b.task,STAGE_STATUS[b.status]||'Briefed',b.due,'',0,true)){
         b.planned=1; b.taskKey=b.client+'|'+b.task; pend.push(b); made++; }
@@ -3849,7 +3900,7 @@ window.addEventListener('load',restore);
       return '<tr data-bid="'+esc(b.id)+'" style="cursor:pointer"><td class="c-owner" style="white-space:nowrap">'+esc(b.id)+(isDup(b)?' <span title="Collapsed duplicate of '+esc(BRIEF_DUP[b.id])+'">👥</span>':'')+'</td>'
         +'<td class="c-client">'+esc(b.client||'—')+'</td>'
         +'<td class="c-task">'+esc(taskDisp(b.task)||'—')+(res?' <span class="src-tag" style="color:#15803D;background:rgba(21,128,61,.1);border-color:rgba(21,128,61,.3)" title="Recorded read-out">🧪 '+esc(res.slice(0,48))+'</span>':'')+'</td>'
-        +'<td class="c-owner">'+esc(briefedBy(b))+'</td>'
+        +'<td class="c-owner">'+briefedByCell(b)+'</td>'
         +'<td class="c-owner">'+esc(b.aspl||asplOf(b)||'—')+'</td>'
         +'<td class="c-due">'+(b.created?new Date(b.created).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'2-digit'}):'—')+'</td>'
         +'<td class="c-due">'+humanDD(b.due)+'</td>'
@@ -4276,6 +4327,9 @@ window.addEventListener('load',restore);
       document.getElementById('acl-save').onclick=saveAcl;
       document.getElementById('acl-scrim').addEventListener('click',function(e){ if(e.target===this)this.classList.remove('on'); }); }
     fetch('/api/access?me=1').then(function(r){return r.json();}).then(function(d){ ACCESS_ME=d||null;
+      // ownerName only exists once this resolves, and the first paint is long gone — without
+      // this the ledger keeps the dashes it drew before the answer arrived
+      if(d&&d.ownerName&&typeof renderAll==='function')renderAll();
       if(d&&d.owner){ mountOwnerBtn(); return; }
       if(d&&d.clients&&d.clients.length){ SCOPE=d.clients.slice();
         CLIENTS=CLIENTS.filter(inScopeClient); if(!CLIENTS.length)CLIENTS=SCOPE.slice();

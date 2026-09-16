@@ -5640,6 +5640,60 @@
       "file": "tools/presync.sh",
       "pattern": "tools/check_grpdf.js",
       "min": 1
+    },
+    {
+      "name": "Workflow: duplicate collapse needs SAME WORK, not similar wording — every 'Keywords Optimisation - <theme> - Marketing Planner' ticket anchored at dice>=.45 and collapsed into one, hiding Cashmere/Merino + Gifting from Intake, the plan, the board and the KPIs (Ray 16 Sep 2026, from the Brief Ledger)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function sameWork(",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: sole-words rule — two names are one record only when neither names something the other doesn't (singular/plural-canonical)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function soleWords(",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: the dup anchor refuses a row that names other work, however much wording they share",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(!sameWork(r.task,b.task))return;",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: briefRow (is the ticket's task already in Intake?) is EXACT wording — the fuzzy test matched a sibling theme and stranded the ticket",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var rows=allIntake(), hit=null, want=normTask(b.task);",
+      "pr": 0
+    },
+    {
+      "name": "Workflow: b.planned is a hint, never a veto — a ticket wrongly stamped filed can still be healed on a later open",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(briefRow(b)){ if(!b.planned){ b.planned=1; pend.push(b); } return; }",
+      "pr": 0
+    },
+    {
+      "name": "Brief ledger: an unattributed brief names the owner (display fallback, marked as inferred, never backfilled onto the ticket) — Ray 16 Sep 2026",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function briefedByCell(b)",
+      "pr": 0
+    },
+    {
+      "name": "access: displayName — the owner reads as their name, not the literal word Owner",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "export function displayName(",
+      "pr": 0
+    },
+    {
+      "name": "worker: ownerName ships on /api/access?me=1 so the whole team reads the same name in the ledger",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "ownerName: displayName(ownerEmail(env))",
+      "pr": 0
+    },
+    {
+      "name": "team-sync tripwire: a briefed ticket with no plan task is filed, no distinct theme is collapsed, the ledger names the owner",
+      "file": "tools/test_teamsync.mjs",
+      "pattern": "no distinct keyword theme is collapsed into another",
+      "pr": 0
     }
   ]
 }

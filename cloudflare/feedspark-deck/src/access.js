@@ -79,8 +79,17 @@ export function aliasClient(email, clientNames) {
 
 // one signin -> its scope. dir = stored directory (null -> git seed); clientNames = the
 // known client roster the alias rule matches against. clients:null = full house.
+// a person's display name from their address: ray@feedspark.com -> "Ray". Used for the owner,
+// whose row is implicit (they are never in the directory), so the ledger can name them instead
+// of printing the literal word "Owner" on their own briefs.
+export function displayName(email) {
+  const local = String(email || '').split('@')[0];
+  return local.replace(/[._-]+/g, ' ').replace(/\s+/g, ' ').trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export function resolveAccess(email, owner, dir, clientNames) {
-  if (owner) return { email, owner: true, clients: null, modules: null, name: 'Owner' };
+  if (owner) return { email, owner: true, clients: null, modules: null, name: displayName(email) || 'Owner' };
   const d = dir || ACCESS_SEED;
   const row = d[String(email || '').toLowerCase()];
   let clients = null, modules = null, name = '';
