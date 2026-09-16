@@ -2671,9 +2671,9 @@
    "pr": 298
   },
   {
-   "name": "aiquote: the dashboard page (8 core fields + rate card)",
+   "name": "aiquote: the dashboard page (8 core fields + rate card) — the empty-selection row still says so, in Finance's Performance Booster section",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "AI field quote",
+   "pattern": "Tick the optimisations you are proposing in the module",
    "min": 1,
    "pr": 298
   },
@@ -2919,9 +2919,9 @@
    "pr": 306
   },
   {
-   "name": "aiquote: quote CSV template sections (system / one-off / manpower)",
+   "name": "aiquote: quote CSV template sections (system / one-off / manpower) — repointed 16 Sep 2026: the export now replicates Finance's own book (FeedSpark_Reiss_Quote_Sept_26.xlsx), so this feature lives under their section names",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "Initial Data Optimisation - Initial (One-off)",
+   "pattern": "sect('Optional Costs: Performance Booster - Initial Issue Fix / Data Optimisation'",
    "min": 1,
    "pr": 306
   },
@@ -3287,9 +3287,9 @@
    "forbidden": true
   },
   {
-   "name": "AI Quote xlsx: ONE monthly totals chain (per month → 12 months → pro-rated) — no per-market twins (Ray 10 Sep 2026) — annual now reads off the block's inc/ex-VAT total (CFO layout, PR 379)",
+   "name": "AI Quote xlsx: ONE monthly totals chain (per month → 12 months → pro-rated) — no per-market twins (Ray 10 Sep 2026) — annual now reads off the block's inc/ex-VAT total (CFO layout, PR 379) — repointed 16 Sep 2026: the export now replicates Finance's own book (FeedSpark_Reiss_Quote_Sept_26.xlsx), so this feature lives under their section names",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "Total ongoing monthly × 12",
+   "pattern": "Total monthly cost × 12",
    "pr": 329,
    "min": 1
   },
@@ -3504,16 +3504,16 @@
    "pr": 340
   },
   {
-   "name": "AI Quote xlsx: 'New Product Arrivals - Monthly Tachyon Update' section written ONLY when the bundle is on (Ray 11 Sep 2026: not a platform cost)",
+   "name": "AI Quote xlsx: 'New Product Arrivals - Monthly Tachyon Update' section written ONLY when the bundle is on (Ray 11 Sep 2026: not a platform cost) — repointed 16 Sep 2026: the bundle is a ROW inside Finance's 'System / Platform Costs' section, written only when it is on",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "if(t.upd){ sect('New Product Arrivals - Monthly Tachyon Update'",
+   "pattern": "if(t.upd)costRow({name:'New Product Arrivals - Monthly Tachyon Update'",
    "pr": 339,
    "min": 1
   },
   {
-   "name": "AI Quote xlsx: 'Monthly Cost (New product arrivals)' totals row = the Tachyon monthly-update row, written only when it is on",
+   "name": "AI Quote xlsx: 'Monthly Cost (New product arrivals)' totals row = the Tachyon monthly-update row, written only when it is on — repointed 16 Sep 2026: Finance's book has ONE monthly platform subtotal (Total System Costs) that the bundle rides, not a per-line total row",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "if(platA)rTech=row({H:{v:'Monthly Cost (New product arrivals)'",
+   "pattern": "v:'Total System Costs'",
    "pr": 339,
    "min": 1
   },
@@ -3539,11 +3539,11 @@
    "min": 1
   },
   {
-   "name": "AI Quote xlsx: the platform-cost label must stay out of the export (Ray 11 Sep 2026: nothing here is a platform cost)",
+   "name": "AI Quote xlsx: the Tachyon monthly update is never labelled a platform cost (Ray 11 Sep 2026) — it is a NAMED ROW, 'New Product Arrivals - Monthly Tachyon Update'. UN-RETIRED 16 Sep 2026: Finance's own book heads the monthly platform section 'System / Platform Costs' and it holds the FeedHero dashboards and the feeds, which are exactly that; Ray's objection was to the bundle wearing the label, not to the section existing",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "v:'System / Platform Costs'",
+   "pattern": "New Product Arrivals - Monthly Tachyon Update",
    "pr": 340,
-   "forbidden": true
+   "min": 1
   },
   {
    "name": "AI Quote: section helper text hidden behind ⓘ per heading (fcc-aiq-help)",
@@ -3833,9 +3833,9 @@
    "min": 1
   },
   {
-   "name": "Quote generator xlsx: 'Setup Hours (One-off)' section — setup hours per service taken from the retainer (£0, default) or charged at the day rate (Ray 14 Sep 2026 'either from retainer OR one-off charge')",
+   "name": "Quote generator xlsx: 'Setup Hours (One-off)' section — setup hours per service taken from the retainer (£0, default) or charged at the day rate (Ray 14 Sep 2026 'either from retainer OR one-off charge') — repointed 16 Sep 2026: setup hours sit in Finance's own 'Core Set-Up & Initial Optimisation' section, still from the retainer (£0) or at the day rate",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "sect('Setup Hours (One-off)'",
+   "pattern": "sect('Core Set-Up & Initial Optimisation')",
    "pr": 363,
    "min": 1
   },
@@ -4245,16 +4245,16 @@
    "min": 1
   },
   {
-   "name": "Quote generator: NEW FEEDS ARE MONTHLY (Ray 14 Sep 2026 'feed cost is monthly') — one 'New Feeds (Monthly)' export section for generic + bespoke + local inventory, its own 'Monthly Cost (New feeds)' total",
+   "name": "Quote generator: NEW FEEDS ARE MONTHLY (Ray 14 Sep 2026 'feed cost is monthly') — one 'New Feeds (Monthly)' export section for generic + bespoke + local inventory, its own 'Monthly Cost (New feeds)' total — repointed 16 Sep 2026: feeds are still monthly, now inside Finance's 'System / Platform Costs' section",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "sect('New Feeds (Monthly)'",
+   "pattern": "sect('System / Platform Costs')",
    "pr": 362,
    "min": 1
   },
   {
-   "name": "Quote generator: NEW SYSTEMS ARE MONTHLY (Ray 14 Sep 2026 'same for system') — 'New Systems - FeedHero Dashboards (Monthly)' section + 'Monthly Cost (New systems)' total",
+   "name": "Quote generator: NEW SYSTEMS ARE MONTHLY (Ray 14 Sep 2026 'same for system') — 'New Systems - FeedHero Dashboards (Monthly)' section + 'Monthly Cost (New systems)' total — repointed 16 Sep 2026: systems are still monthly, now inside Finance's MONTHLY RECURRING COSTS band",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "sect('New Systems - FeedHero Dashboards (Monthly)'",
+   "pattern": "band('MONTHLY RECURRING COSTS'",
    "pr": 362,
    "min": 1
   },
@@ -5001,37 +5001,37 @@
    "min": 1
   },
   {
-   "name": "AI Quote — CFO rework (15 Sep 2026: 'mixing set-up costs with monthly costs … hard to see the initial one-off costs vs the ongoing costs'): xlsx export = INITIAL ONE-OFF COSTS block → ONGOING MONTHLY COSTS block → QUOTE SUMMARY",
+   "name": "AI Quote — CFO rework (15 Sep 2026: 'mixing set-up costs with monthly costs … hard to see the initial one-off costs vs the ongoing costs'): xlsx export = INITIAL ONE-OFF COSTS block → ONGOING MONTHLY COSTS block → QUOTE SUMMARY — superseded 16 Sep 2026 by Finance's own band names: MONTHLY RECURRING COSTS, ONE OFF OPTIONAL COSTS: PERFORMANCE BOOSTER PACK, ONE-OFF COSTS: SET-UP & CONFIGURATION",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "band('INITIAL ONE-OFF COSTS')",
+   "pattern": "band('ONE-OFF COSTS: SET-UP & CONFIGURATION'",
    "min": 1,
    "pr": 379
   },
   {
-   "name": "AI Quote xlsx: the ongoing block has its own band",
+   "name": "AI Quote xlsx: the ongoing block has its own band — superseded 16 Sep 2026 by Finance's own band names",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "band('ONGOING MONTHLY COSTS')",
+   "pattern": "band('ONE OFF OPTIONAL COSTS: PERFORMANCE BOOSTER PACK'",
    "min": 1,
    "pr": 379
   },
   {
-   "name": "AI Quote xlsx: QUOTE SUMMARY block — one-off · per month · annual · Year 1, live formulas off the two block totals",
+   "name": "AI Quote xlsx: QUOTE SUMMARY block — one-off · per month · annual · Year 1, live formulas off the two block totals — still the one figure Finance's book never adds up: monthly + one-off + Year 1",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "v:'QUOTE SUMMARY'",
+   "pattern": "sect('QUOTE SUMMARY'",
    "min": 1,
    "pr": 379
   },
   {
-   "name": "AI Quote xlsx: each block totals itself — TOTAL INITIAL ONE-OFF / TOTAL ONGOING MONTHLY",
+   "name": "AI Quote xlsx: each block totals itself — TOTAL INITIAL ONE-OFF / TOTAL ONGOING MONTHLY — each one-off band totals itself under Finance's names",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "TOTAL INITIAL ONE-OFF",
+   "pattern": "Total Performance Booster Costs",
    "min": 1,
    "pr": 379
   },
   {
-   "name": "AI Quote xlsx: TOTAL ONGOING MONTHLY",
+   "name": "AI Quote xlsx: TOTAL ONGOING MONTHLY — each one-off band totals itself under Finance's names",
    "file": "docs/FeedSpark_AIQuote.html",
-   "pattern": "TOTAL ONGOING MONTHLY",
+   "pattern": "Total Set-Up & Configuration Costs",
    "min": 1,
    "pr": 379
   },
@@ -5234,6 +5234,84 @@
    "pattern": "un-scoped, that save would have wiped the rest",
    "pr": 381,
    "min": 1
+  },
+  {
+   "name": "AI Quote xlsx — FINANCE'S OWN BOOK (Ray, 16 Sep 2026: 'this is the output excel that our Finance team wants to see — so stick as close to this format as possible — especially section that covers One-off section and Monthly cost'): the header block Finance writes, Client/URL/Contact down A with Created By/Date Created/Quote Valid/Reference/Reviewed down K",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "'Quote: Core Requirements'",
+   "min": 1,
+   "pr": 380
+  },
+  {
+   "name": "AI Quote xlsx: Finance's monthly band holds TWO sections — System / Platform Costs (dashboards, feeds, the Tachyon bundle) and ManPower (Days / Month)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "sect('Account Management & Data Optimisation - ManPower (Days / Month)')",
+   "min": 1,
+   "pr": 380
+  },
+  {
+   "name": "AI Quote xlsx: each section subtotals as Finance's book does — Total System Costs / Total Managed Service Time (pale-pink Net) → Total Monthly Cost (red)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "v:'Total Managed Service Time'",
+   "min": 1,
+   "pr": 380
+  },
+  {
+   "name": "AI Quote xlsx: man power is written as DAYS at the day rate, the value unrounded so D×E is exact (0.00\" Days\")",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "days:'0.00\" Days\"'",
+   "min": 1,
+   "pr": 380
+  },
+  {
+   "name": "AI Quote xlsx: `Dayrate` is a defined name holding the block rate, so Finance's =Dayrate cells resolve",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "<definedName name=\"Dayrate\">",
+   "min": 1,
+   "pr": 380
+  },
+  {
+   "name": "AI Quote xlsx: the tab is named '<Client> - Cost Detail', as Finance names it",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function xTabName()",
+   "min": 1,
+   "pr": 380
+  },
+  {
+   "name": "AI Quote xlsx: Finance's column widths — B is wide and EMPTY so the name in A spills across it, and the descriptor lives in M (Additional Notes, 86 wide)",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "64.42578125",
+   "min": 1,
+   "pr": 380
+  },
+  {
+   "name": "AI Quote xlsx: the descriptor + Ray's line note land in Finance's Additional Notes column",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function noteOf(l)",
+   "min": 1,
+   "pr": 380
+  },
+  {
+   "name": "AI Quote xlsx: Finance's pale-pink section subtotal fill",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "XSUB='FFE1E1'",
+   "min": 1,
+   "pr": 380
+  },
+  {
+   "name": "NO VAT ON THE QUOTE (Ray, 16 Sep 2026: 'just remove VAT in general, as it's known-given') — vatOn() is false, no VAT row on the page, the export, the copy text or the email; a saved snapshot keeps its own flag so the tracker never relabels a signed-off figure",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "function vatOn(){ return false; }",
+   "min": 1,
+   "pr": 380
+  },
+  {
+   "name": "AI Quote: no VAT checkbox and no Net row on the tiles — with VAT gone the net WAS the total",
+   "file": "docs/FeedSpark_AIQuote.html",
+   "pattern": "id=\"vat\"",
+   "min": 0,
+   "forbidden": true,
+   "pr": 380
   },
   {
    "name": "Volume chart: bars and table columns share ONE geometry, month by month (Ray 16 Sep 2026)",
