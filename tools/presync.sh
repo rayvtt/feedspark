@@ -132,6 +132,14 @@ echo "── validating: the dossier's portfolio tiles"
 node tools/test_dossiertiles.mjs >/dev/null
 echo "   ✓ hours meter, per-market audit bars, Golden Record ring — and what each refuses to fake"
 
+echo "── validating: 🎬 Present — the one-pager played"
+node tools/test_present.mjs >/dev/null
+echo "   ✓ one renderer, two presentations; the last frame is the sheet's own string"
+if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
+  NODE_PATH=$(npm root -g) node tools/check_present.js >/dev/null
+  echo "   ✓ every scene readable in a real browser — nothing clipped, pinned headers on top"
+fi
+
 echo "── validating: live deck editor (real browser)"
 if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   NODE_PATH=$(npm root -g) node tools/test_editor.mjs || {

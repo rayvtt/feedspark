@@ -152,6 +152,13 @@ else
   echo "   ✗ Feed Lab model harness FAILED — see node tools/test_feedlab.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d8/7: 🎬 Present (the one-pager played — one renderer, two presentations)"
+if node tools/test_present.mjs >/dev/null 2>&1; then
+  echo "   ✓ built from opHtml; a counted number ends on the one-pager's own string"
+else
+  echo "   ✗ present harness FAILED — see node tools/test_present.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3e/7: overlay engine (URL-string classification + feed collector)"
 if node tools/test_overlays.mjs >/dev/null 2>&1; then
   echo "   ✓ overlay types read off the image_link URL; collector counts hold"
