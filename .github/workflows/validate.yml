@@ -63,6 +63,8 @@ jobs:
         run: node tools/test_reporttasks.mjs
       - name: FCC hours badge harness (three-month trail, posture, widget/engine parity)
         run: node tools/test_hoursbadge.mjs
+      - name: Excel export harness (XLSX container + the Task Manager's three tabs)
+        run: node tools/test_xlsx.mjs
 
       - name: Shipped-feature markers (multi-session overwrite tripwire)
         run: node tools/check_markers.js

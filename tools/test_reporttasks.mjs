@@ -540,5 +540,94 @@ ok(/sync is owner-only/.test(worker), '?sync= is owner-only — it spends the MC
 const access = fs.readFileSync(path.join(ROOT, 'cloudflare', 'feedspark-deck', 'src', 'access.js'), 'utf8');
 ok(/slug: 'taskmanager'.*path: '\/tasks'/.test(access), 'the module is grantable per person');
 
+// ---------------------------------------------------------------------------------------------
+// the pane's own filter + totals footer, lifted out of the page by name
+//
+// Ray, 16 Sep 2026: "Under the task box, include a search bar. It should display the list of
+// tasks, and at the bottom show the total hours of billable and non-billable for filtered
+// searches."
+//
+// The trap worth pinning: the table paints 200 rows at a time, so a footer summed from what is
+// on screen would quietly report a fraction of the search as its total.
+// ---------------------------------------------------------------------------------------------
+console.log('── pane filter + totals footer (lifted from the page)');
+const PG = fs.readFileSync(PAGE, 'utf8');
+function liftPageSrc(name) {
+  const re = new RegExp('^  (?:var ' + name + ' = \\{|function ' + name + '\\()', 'm');
+  const m = re.exec(PG);
+  if (!m) throw new Error('page: ' + name + ' not found');
+  const end = PG.indexOf(name.charAt(0) === name.charAt(0).toUpperCase() && !/^[a-z]/.test(name) ? '\n  };\n' : '\n  }\n', m.index);
+  if (end < 0) throw new Error(name + ': no end');
+  return PG.slice(m.index, end + 4);
+}
+const PANE = new Function('CAT_LABEL', 'num', 'hrs', 'esc', 'SHOW',
+  'var PQ = "";\n'
+  + liftPageSrc('pqHay') + '\n' + liftPageSrc('pqMatch') + '\n'
+  + liftPageSrc('FOOT') + '\n' + liftPageSrc('footHtml') + '\n'
+  + 'return { setPQ: function (v) { PQ = v; }, pqMatch: pqMatch, footHtml: footHtml, FOOT: FOOT };'
+)(M.CAT_LABEL,
+  (n) => String(n),
+  (n) => String(Math.round((Number(n) || 0) * 100) / 100),
+  (s2) => String(s2 == null ? '' : s2).replace(/&/g, '&amp;').replace(/</g, '&lt;'),
+  200);
+
+const prow = (o) => Object.assign({ title: '', client: '', market: '', owner: '', am: '',
+  status: '', note: '', cat: 'opt', bill: 0, nonbill: 0, hours: 0 }, o);
+
+// --- the filter --------------------------------------------------------------------------------
+PANE.setPQ('');
+ok(PANE.pqMatch('tasks', prow({ title: 'anything' })), 'an empty filter keeps every row');
+PANE.setPQ('keyword');
+ok(PANE.pqMatch('tasks', prow({ title: 'Keyword optimisation' })), 'it is case-insensitive');
+ok(!PANE.pqMatch('tasks', prow({ title: 'Title optimisation' })), 'and it actually excludes');
+ok(PANE.pqMatch('tasks', prow({ title: 'x', note: 'keyword themes' })), 'the note is searched too');
+ok(PANE.pqMatch('tasks', prow({ title: 'x', owner: 'Keyword Bot' })), 'so is who did it');
+PANE.setPQ('optimisation');
+ok(PANE.pqMatch('tasks', prow({ title: 'x', cat: 'opt' })),
+  'the TYPE matches on its display label, not the internal slug — the column reads "Optimisation"');
+PANE.setPQ('reiss keyword');
+ok(PANE.pqMatch('tasks', prow({ title: 'Keyword optimisation', client: 'Reiss' })),
+  'every word must appear, but they may land in different columns');
+ok(!PANE.pqMatch('tasks', prow({ title: 'Keyword optimisation', client: 'Schuh' })),
+  'so a row carrying only one of the words is out');
+PANE.setPQ('israel');
+ok(PANE.pqMatch('tickets', prow({ subject: 'Israel Feed Set Up' })), 'tickets search their own fields');
+ok(PANE.pqMatch('accounts', prow({ client: 'x', name: 'Israel - GB' })), 'and so do accounts');
+
+// --- the totals --------------------------------------------------------------------------------
+PANE.setPQ('');
+const many = [];
+for (let i = 0; i < 220; i++) many.push(prow({ bill: 1, nonbill: 0.25, hours: 1.25 }));
+const capped = PANE.footHtml('tasks', many, new Array(9).fill({}), true);
+ok(capped.indexOf('>275<') >= 0, 'the TOTAL column sums all 220 rows (275 h), not the 200 painted');
+ok(capped.indexOf('>220<') >= 0 && capped.indexOf('>55<') >= 0,
+  'billable (220 h) and non-billable (55 h) are totalled SEPARATELY and never merged');
+ok(/totalled in full, not just the 200 shown/.test(capped),
+  'and the row says so, because a total beside a shorter list is otherwise ambiguous');
+ok(!/totalled in full/.test(PANE.footHtml('tasks', many.slice(0, 10), new Array(9).fill({}), false)),
+  'an uncapped list does not carry that caveat');
+eq(PANE.footHtml('tasks', [], new Array(9).fill({}), false), '',
+  'no rows means no totals row at all — a row of zeroes would read as a finding');
+
+PANE.setPQ('gmc');
+ok(/matching/.test(PANE.footHtml('tasks', many.slice(0, 4), new Array(9).fill({}), false)),
+  'when a filter is on, the label names it');
+PANE.setPQ('');
+
+// the columns a tab can honestly add up
+eq(PANE.FOOT.tasks.map((f) => f.k), ['bill', 'nonbill', 'hours'], 'tasks total the three hour columns');
+eq(PANE.FOOT.tickets.map((f) => f.k), ['tasks', 'hours'], 'tickets total what is summable');
+ok(PANE.FOOT.tickets.every((f) => f.k !== 'age' && f.k !== 'idle'),
+  'and never Age or Idle — adding those together is arithmetic on a meaningless number');
+eq(PANE.FOOT.accounts.map((f) => f.k), ['allowance', 'used', 'balance'], 'accounts total the hours columns');
+
+ok(/id="pq"/.test(PG), 'the filter input sits on the pane, under the tab header');
+ok(/function paneRows/.test(PG) && /var rows = paneRows\('tasks'\)/.test(PG),
+  'one resolver feeds the table');
+ok(/var rows = paneRows\(tab\);/.test(PG),
+  'and the Excel export reads the SAME one, so a download can never be a different population');
+ok(/runs on top of the search above/.test(PG),
+  'an empty result distinguishes "nothing matched at all" from "this filter narrowed it to nothing"');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

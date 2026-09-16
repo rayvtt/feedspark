@@ -6071,6 +6071,60 @@
       "min": 1
     },
     {
+      "name": "Task Manager: Excel export on all three tabs",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "id=\"pxlsx\"",
+      "pr": 405
+    },
+    {
+      "name": "Task Manager: the export follows the active tab's filtered view",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function xrows",
+      "pr": 405
+    },
+    {
+      "name": "Shared XLSX table writer",
+      "file": "docs/xlsx_engine.js",
+      "pattern": "FeedXlsx",
+      "pr": 405
+    },
+    {
+      "name": "XLSX writer: absent is absent, never a fabricated date",
+      "file": "docs/xlsx_engine.js",
+      "pattern": "function noDate",
+      "pr": 405
+    },
+    {
+      "name": "XLSX writer: served by the worker",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "/xlsx/engine.js",
+      "pr": 405
+    },
+    {
+      "name": "Task Manager chart: one vocabulary per screen (axis reads the same labels as the legend)",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function dimLabel",
+      "pr": 405
+    },
+    {
+      "name": "Task Manager: the pane's own filter, under the tab header",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "id=\"pq\"",
+      "pr": 406
+    },
+    {
+      "name": "Task Manager: totals footer sums the WHOLE filtered set, not the painted slice",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function footHtml",
+      "pr": 406
+    },
+    {
+      "name": "Task Manager: one row resolver feeds the table, the totals and the export",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function paneRows",
+      "pr": 406
+    },
+    {
       "name": "dossier: running tests + pipeline read live from /api/briefs",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function liveWork"

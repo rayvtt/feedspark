@@ -82,6 +82,13 @@ else
   echo "   ✗ task-manager harness FAILED — see node tools/test_reporttasks.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d2c/7: Excel exports (the XLSX writer + the Task Manager's three tabs)"
+if node tools/test_xlsx.mjs >/dev/null 2>&1; then
+  echo "   ✓ the ZIP parts, typed cells, absent-is-absent and the three tab exports hold"
+else
+  echo "   ✗ xlsx harness FAILED — see node tools/test_xlsx.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3d2b/7: FCC hours badge (trail maths, posture states, widget/engine parity)"
 if node tools/test_hoursbadge.mjs >/dev/null 2>&1; then
   echo "   ✓ the partial month is flagged, a served negative is not an alarm, the twin agrees"
