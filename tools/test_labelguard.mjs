@@ -721,6 +721,16 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   ok('goldenScore: an expected AI attr joins the score at weight 1',
     aiIn.parts.some((p) => p.key === 'question_and_answer' && p.w === 1 && p.bp) && aiIn.score !== LG.goldenScore(s.attrs).score);
   eq('goldenScore without profile unchanged', LG.goldenScore(s.attrs).score, 75.5);
+  // ★ on a REC attr must MOVE the number (Ray, 16 Sep 2026: sale_price "doesn't actually
+  // do anything") — rec attrs always score, so expected lifts them to weight 2.
+  const recStar = LG.goldenScore(s.attrs, { industry: 'Fashion', expected: ['sale_price'], waived: [] });
+  eq('goldenScore + ★ rec: sale_price at 24% weighs double, score drops', recStar.score, 74.3);
+  ok('★ rec part carries w:2 + bp', recStar.parts.some((p) => p.key === 'sale_price' && p.w === 2 && p.bp && !p.missing));
+  const recStarGone = LG.goldenScore(s.attrs, { industry: 'Fashion', expected: ['product_highlight'], waived: [] });
+  eq('goldenScore + ★ absent rec: the gap counts at weight 2', recStarGone.score, 73.7);
+  ok('★ absent rec part flagged missing at w:2', recStarGone.parts.some((p) => p.key === 'product_highlight' && p.w === 2 && p.bp && p.missing));
+  eq('goldenScore + waived rec: sale_price drops out and lifts the score',
+    LG.goldenScore(s.attrs, { industry: 'Fashion', expected: [], waived: ['sale_price'] }).score, 76.8);
 }
 {
   const mail = LG.goldenAlertEmail('Reiss · GB', [{ sev: 'crit', msg: 'availability coverage dropped 12pp' }], 'https://x/golden');
