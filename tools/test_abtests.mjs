@@ -13,6 +13,23 @@
  */
 import { parseAbTests, extractMetrics, abVerdict, abSummary, resolveAbTab, findHeaderRow, hasAbHeader, abClientKey }
   from '../cloudflare/feedspark-deck/src/abtests.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+// pull `function name(...){…}` out of a source file by brace matching, so the worker's own code
+// is what runs here rather than a copy of it that can drift
+function lift(src, name) {
+  const i = src.indexOf('function ' + name + '(');
+  if (i < 0) throw new Error('not found in source: ' + name);
+  let d = 0, j = src.indexOf('{', i);
+  for (let k = j; k < src.length; k++) {
+    if (src[k] === '{') d++;
+    else if (src[k] === '}' && --d === 0) return src.slice(i, k + 1);
+  }
+  throw new Error('unbalanced braces reading ' + name);
+}
 
 let pass = 0, fail = 0;
 const ok = (name, cond, got) => {
@@ -49,6 +66,14 @@ ok('exact name wins over a near-miss sibling',
 ok('two near-misses and no exact = ambiguous, not a guess',
    resolveAbTab(['Old AB Test Archive', 'AB Test Archive 2024']) === null,
    resolveAbTab(['Old AB Test Archive', 'AB Test Archive 2024']));
+// Reiss's tab is PLURAL and carries no brand suffix (Ray, 16 Sep 2026: "tab is: AB Test
+// Archives"). It always resolved — pinned here so the answer to "is the name the problem?"
+// is a test rather than a re-reading of the regex.
+ok('Reiss’s real tab name resolves',
+   resolveAbTab(['Project Plan', 'AB Test Archives', 'Scrape'], 'Reiss') === 'AB Test Archives',
+   resolveAbTab(['Project Plan', 'AB Test Archives', 'Scrape'], 'Reiss'));
+ok('… and without a client too',
+   resolveAbTab(['Project Plan', 'AB Test Archives']) === 'AB Test Archives');
 
 
 console.log('\n-- SHARED WORKBOOKS: Monsoon + Accessorize live in one sheet --');
@@ -206,6 +231,35 @@ ok('a Project Plan tab is NOT an archive',
 ok('an empty tab is not an archive', !hasAbHeader([]));
 ok('a lookalike without Test Method is not an archive',
    !hasAbHeader([['Country', 'Market', 'Currency', 'Feeds']]));
+
+// ---- what the read FAILED with, lifted out of the worker by name ---------------------------
+// The bug this pins: a workbook the service account cannot open returns an error and no `sheets`,
+// which read as "zero tabs" and were reported as `no_archive_tab` — the page then told Ray his
+// plan had no archive tab while he was looking straight at one. A sheet we cannot read says
+// NOTHING about what is in it.
+console.log('\n-- Sheets failures are classified, never inferred --');
+const wsrc = fs.readFileSync(path.join(root, 'cloudflare', 'feedspark-deck', 'src', 'worker.js'), 'utf8');
+const abReadError = new Function(`${lift(wsrc, 'abReadError')} return abReadError;`)();
+const ENV = { GOOGLE_SA_JSON: JSON.stringify({ client_email: 'fcc-reader@feedspark.iam.gserviceaccount.com' }) };
+
+const denied = abReadError({ code: 403, status: 'PERMISSION_DENIED', message: 'The caller does not have permission' }, ENV);
+ok('403 = not shared, not a missing tab', denied.error === 'not_shared', denied.error);
+ok('… and it names the address to share with',
+   denied.sa === 'fcc-reader@feedspark.iam.gserviceaccount.com', denied.sa);
+ok('… keeping Google’s own wording as the detail', /does not have permission/.test(denied.detail));
+ok('PERMISSION_DENIED without a numeric code still classifies',
+   abReadError({ status: 'PERMISSION_DENIED', message: 'x' }, ENV).error === 'not_shared');
+ok('a wrong sheet id is ours to fix, and says so',
+   abReadError({ code: 404, status: 'NOT_FOUND', message: 'Requested entity was not found.' }, ENV).error === 'bad_sheet_id');
+ok('anything else passes through verbatim rather than inventing a cause',
+   abReadError({ code: 500, status: 'INTERNAL', message: 'Internal error' }, ENV).error === 'Internal error');
+ok('every classification is a failure, never a silent ok',
+   [403, 404, 500].every((c) => abReadError({ code: c, message: 'm' }, ENV).ok === false));
+// the SA address is read from the secret, so a worker without one must not crash the handler
+ok('no service account configured = no address, no throw',
+   abReadError({ code: 403, status: 'PERMISSION_DENIED', message: 'm' }, {}).sa === '');
+ok('malformed GOOGLE_SA_JSON degrades instead of throwing',
+   abReadError({ code: 403, status: 'PERMISSION_DENIED', message: 'm' }, { GOOGLE_SA_JSON: '{oops' }).sa === '');
 
 console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' + pass + ' passed' : '✓ all green  ' + pass + ' passed, 0 failed') + '\n');
 process.exit(fail ? 1 : 0);

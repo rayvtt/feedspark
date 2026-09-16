@@ -1110,6 +1110,9 @@ window.addEventListener('load',restore);
       shCache(ns);
     });
     if(moved&&typeof loadManual==='function')loadManual();
+    // a colleague's row that never reached their plan sheet arrives HERE, long after this tab's
+    // boot resync ran — whoever has the board open re-sends it (per-row gated, so no storm)
+    if(moved&&typeof resyncPlanWrites==='function')resyncPlanWrites();
     return moved;
   }
   // synchronous seed from the offline mirror so the first paint never waits on the network
@@ -1389,15 +1392,47 @@ window.addEventListener('load',restore);
     fetch('/api/briefs',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(BRIEFS_BASE)},body:JSON.stringify(BRIEFS)})
       .then(function(r){ if(!r.ok)throw 0; stamp=+r.headers.get('X-Sync-Base')||0; return r.json(); })
       .then(function(m){ _bfBack=2000; BRIEFS_DIRTY=0; bfWarn(false);
-        if(!m||typeof m!=='object'||m.ok)return;   // old worker shape ({ok:true}) — don't adopt,
-        // and DON'T advance the base off a response we didn't adopt: the next whole-map save
-        // would then carry a stale map with a fresh read-stamp, and absence means deletion.
-        if(stamp)BRIEFS_BASE=stamp;
-        var merged=JSON.stringify(m); if(merged===JSON.stringify(BRIEFS))return;
-        BRIEFS=m; try{localStorage.setItem('fcc-briefs',merged);}catch(e){} renderAll(); })
+        if(m&&typeof m==='object'&&!m.ok){   // old worker shape ({ok:true}) — don't adopt, and
+          // DON'T advance the base off a response we didn't adopt: the next whole-map save would
+          // then carry a stale map with a fresh read-stamp, and absence means deletion.
+          if(stamp)BRIEFS_BASE=stamp;
+          var merged=JSON.stringify(m);
+          if(merged!==JSON.stringify(BRIEFS)){ BRIEFS=m; renderAll(); }
+        }
+        bfMarkSynced(); })
       .catch(function(){ bfPush(_bfBack); _bfBack=Math.min(_bfBack*2,60000); bfWarn(true); });
   },delay||250); }
   window.addEventListener('online',function(){ if(BRIEFS_DIRTY){ _bfBack=2000; bfPush(200); } });
+  /* Every brief in hand has now reached the server. The stamp is what lets a LATER absence be
+     read correctly: a brief carrying sv that the server no longer has was deleted by someone
+     else; one without it never got there at all. */
+  function bfMarkSynced(){
+    Object.keys(BRIEFS).forEach(function(k){ if(BRIEFS[k]&&!BRIEFS[k].sv)BRIEFS[k].sv=1; });
+    try{ localStorage.setItem('fcc-briefs',JSON.stringify(BRIEFS)); }catch(e){}
+  }
+  /* ---- AND THE ONES ALREADY STRANDED ----
+   * A brief whose save failed lives ONLY in this browser's mirror. The boot replaces BRIEFS with
+   * the SERVER's map, so the next load drops it and the next save overwrites the mirror — the
+   * retry above saves new work but would have quietly finished off the old. (Ray, 16 Sep 2026:
+   * Steven's board shows Cashmere/Merino and Gifting RUNNING off tickets nobody else's pipeline
+   * has.) Union them back in on boot and publish. Create-only: a brief the server HAS is never
+   * touched, and one this device already synced is not resurrected — that absence is somebody's
+   * deletion, not a lost save. */
+  function bfRescueLocal(){
+    var mine={}; try{ mine=JSON.parse(localStorage.getItem('fcc-briefs')||'{}')||{}; }catch(e){ return []; }
+    var out=[];
+    Object.keys(mine).forEach(function(id){
+      var b=mine[id];
+      if(!b||!b.id||BRIEFS[id])return;   // the server has it
+      if(b.sv)return;                    // it reached the server once and is gone → deleted elsewhere
+      BRIEFS[id]=b; out.push(b);
+    });
+    if(out.length){
+      persist();
+      toast(out.length+' brief'+(out.length===1?'':'s')+' held on this device published to the pipeline');
+    }
+    return out;
+  }
   // an unsaved brief is never left to a toast nobody re-reads — it stays on screen until it lands
   function bfWarn(on){
     if(!on){ if(_bfWarn){ _bfWarn.remove(); _bfWarn=null; } return; }
@@ -1931,6 +1966,10 @@ window.addEventListener('load',restore);
     });
     if(n)toast('📞 '+n+' call action'+(n===1?'':'s')+' written into the plan');
   }
+  // client|task rows whose plan-sheet write has already been attempted this session — set by
+  // adoptIntoPlan's own write and by resyncPlanWrites, cleared when that write fails, so one
+  // row is never sent twice at once and a failure is never stranded for the session.
+  var _planTried={};
   // adopt an email-sourced task into the brand's project plan — the SAME pipeline as ＋ Add task:
   // optimistic local row + /api/sheets/append write-back, duplicate-guarded against existing plan rows.
   function adoptIntoPlan(client,task,status,dueDD,owner,esrc,strict){
@@ -1947,10 +1986,12 @@ window.addEventListener('load',restore);
     if(esrc)markEsrc(client,task);   // survives the live-pull replacing the MANUAL row
     var id=PLANSHEET[client];
     if(id){ toast('Adding to '+client+'’s plan…');
+      _planTried[client+'|'+task]=1;                 // this write is in flight — the resync pass must not send the same row alongside it
       fetch('/api/sheets/append',{method:'POST',headers:{'content-type':'application/json'},
           body:JSON.stringify({id:id,tab:'Project Plan',rows:[{task:task,owner:owner||'',status:status||'Open',due:due}]})})
-        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok){ markWritten(client,task); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } })
-        .catch(function(){ toast('Saved locally — plan write failed (check the SA has Editor access)'); });
+        .then(function(r){return r.json();}).then(function(d){ toast(d&&d.ok?('✓ Written to '+client+'’s plan'+(d.atRow?(' · row '+d.atRow):'')):('Saved locally · sheet: '+((d&&d.error)||'write failed'))); if(d&&d.ok){ markWritten(client,task); if(LIVE[client])setTimeout(function(){fetchLive(true);},800); } else delete _planTried[client+'|'+task]; })
+        .catch(function(){ delete _planTried[client+'|'+task];   // hand it back to the resync pass rather than stranding it for the session
+          toast('Saved locally — plan write failed (check the SA has Editor access)'); });
     } else toast('Added to '+client+' locally · no plan sheet linked to write back');
     return true; }
   // w:1 on a MANUAL row = its sheet append CONFIRMED ok. A row without it is an optimistic local
@@ -1962,16 +2003,29 @@ window.addEventListener('load',restore);
   // ---- plan write RESYNC (Ray's 26 Aug report: call actions visible in Intake but missing from
   // the client's Project Plan sheet). An optimistic MANUAL row used to be the ONLY record of a
   // task whose sheet append failed or never fired — the dup-guard then blocked every later
-  // attempt, so the sheet stayed behind with no error anywhere. Once per session, rows still
-  // lacking w for a plan-linked client are re-sent, batched per client; the worker skips rows
-  // whose task already sits in the tab, so a lost response can never double-append.
+  // attempt, so the sheet stayed behind with no error anywhere. Rows still lacking w for a
+  // plan-linked client are re-sent, batched per client, ONE attempt per row per session; the
+  // worker skips rows whose task already sits in the tab, so a retry can never double-append.
+  //
+  // Ray, 16 Sep 2026 ("the 2 themes are not added as Task in Intake nor Reiss' GS Project
+  // Plan"): this ran ONCE at boot behind a sessionStorage flag, synchronously — BEFORE shBoot
+  // merged the team's shared rows in. So a colleague's unconfirmed row, which arrives seconds
+  // later through shApply, was never re-sent by anyone: only its own author's browser could
+  // ever heal it. The gate is now per ROW, not per session, and shApply re-runs the pass when
+  // the shared store brings rows in, so whoever has the board open closes the gap.
   function resyncPlanWrites(){
-    try{ if(sessionStorage.getItem('fcc-planq-run'))return; sessionStorage.setItem('fcc-planq-run','1'); }catch(e){}
+    if(typeof PLANSHEET==='undefined'||typeof MANUAL==='undefined')return;     // shApply can fire before these exist
     var ren=renameOverlay(), by={};
     MANUAL.forEach(function(m){ if(m.w||!m.client||!m.task)return;
-      var k=m.client+'|'+m.task; if(DELETED[k]||ren[k])return;                 // deleted rows stay deleted; renamed rows' truth lives under the new name
+      var k=m.client+'|'+m.task; if(DELETED[k]||ren[k]||_planTried[k])return;  // deleted rows stay deleted; renamed rows' truth lives under the new name
       if(!PLANSHEET[m.client])return;
-      if(planTasks().some(function(p){ return p.client===m.client&&sameTask(p.task,m.task); })){ m.w=1; return; }   // the plan already carries it — settle the flag
+      // EXACT wording only — the same normalised rule the worker's idempotent append uses.
+      // sameTask is FUZZY, and module task families share a prefix ("AI Keyword Optimisation
+      // — …"), so a near match settled the flag against a DIFFERENT family member and the row
+      // never reached the sheet at all, with nothing left to retry it. A needless re-send
+      // costs nothing: the worker skips a task already in the tab, so the sheet decides.
+      if(planTasks().some(function(p){ return p.client===m.client&&normTask(p.task)===normTask(m.task); })){ m.w=1; return; }   // the plan already carries it — settle the flag
+      _planTried[k]=1;                                                         // in flight — a poll-triggered pass must not race this same row
       (by[m.client]=by[m.client]||[]).push(m); });
     saveManual();
     Object.keys(by).forEach(function(c){ var rows=by[c];
@@ -1980,7 +2034,7 @@ window.addEventListener('load',restore);
         .then(function(r){return r.json();}).then(function(d){ if(!d||!d.ok)return;
           rows.forEach(function(m){ m.w=1; }); saveManual();
           if(d.appended)toast('⟲ '+d.appended+' unsynced task'+(d.appended===1?'':'s')+' written to '+c+'’s plan'); })
-        .catch(function(){}); }); }
+        .catch(function(){ rows.forEach(function(m){ delete _planTried[m.client+'|'+m.task]; }); }); }); }
   // ---- manually-added tasks: written into the plan sheet, shown here until live sync pulls them back ----
   // the page keeps MANUAL as an array; the shared store keys it per row so two people adding
   // different rows at once both survive the merge (an array would be last-writer-wins)
@@ -3865,7 +3919,7 @@ window.addEventListener('load',restore);
   // halves haven't loaded, and nothing re-rendered afterwards, so a colleague's status sat in
   // the store while the row on screen still read Open.
   var SHBOOT=shBoot().then(function(ok){ shStart(); return ok; });
-  apiGet().then(function(d){ BRIEFS=d||{}; _srB=true; _srTry(); renderAll();
+  apiGet().then(function(d){ BRIEFS=d||{}; bfRescueLocal(); _srB=true; _srTry(); renderAll();
     SHBOOT.then(function(){ renderAll(); });   // whichever lands last, the board ends up current
     // one-time repair of stages the old bare-word matcher closed on a pickup; the flag keeps
     // it to a single pass per browser, and the ⟳ button below re-runs it on demand
@@ -4140,8 +4194,8 @@ window.addEventListener('load',restore);
       }; });
     }).catch(function(){});
   })();
-  // resync BEFORE the intake fetch can resolve: it snapshots the pre-existing unconfirmed rows,
-  // so a call action adoptCalls files seconds later is covered by its own confirmed write alone
+  // first pass over whatever THIS browser was already holding; the gate is per row, so the pass
+  // shApply fires when the team's shared rows arrive picks up where this one left off
   resyncPlanWrites();
   (function(){ var dot=document.getElementById('gdot');
     fetch('/api/gmail/intake').then(function(r){return r.json();}).then(function(d){
