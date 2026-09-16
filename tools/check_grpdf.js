@@ -116,6 +116,28 @@ const QUALITY = {
   await page.waitForTimeout(1200);
   ok('the scorecard renders with a stored quality reading', await page.$('#qz-tier .qz-score') !== null);
 
+  // FIDELITY: the PDF is the page SCALED, never a second design (Ray, 16 Sep 2026: "PDF
+  // export still doesn't reflect exact same visual as FCC"). Print may hide interactive
+  // chrome and put the page's own ≤900px rules back to their desktop form — it may NOT
+  // restyle the design. These properties are read on screen and again in print mode, and
+  // must match: anything else is a compact variant creeping back in.
+  const PROBE = [['.tier', ['padding', 'marginTop', 'borderRadius']], ['.tier-h h4', ['fontSize']],
+    ['.tier-sub', ['fontSize']], ['.dial', ['width']], ['.gr-verdict', ['fontSize']],
+    ['.at-row', ['padding', 'fontSize']], ['.qz-row', ['padding', 'fontSize']], ['.qz-score', ['fontSize']],
+    ['.qz-line', ['fontSize']], ['.qz-why', ['fontSize']], ['.big-ring', ['width']], ['.brv .bn', ['fontSize']],
+    ['.air-card', ['padding']], ['.pillar', ['padding']], ['.psum', ['fontSize']], ['.pillars', ['gap']],
+    ['.lad .ln', ['fontSize']], ['.heat-card', ['padding']], ['.thist', ['height']]];
+  const readStyles = () => page.evaluate((P) => {
+    const out = {};
+    P.forEach(([sel, props]) => {
+      const el = document.querySelector(sel); if (!el) return;
+      const cs = getComputedStyle(el);
+      props.forEach((pr) => { out[sel + '{' + pr + '}'] = cs[pr]; });
+    });
+    return out;
+  }, PROBE);
+  const onScreen = await readStyles();
+
   await page.click('#det-pdf');
   await page.waitForTimeout(500);
   // MEASURE AT THE PRINTABLE WIDTH. The page's own responsive rules key on the VIEWPORT,
@@ -149,6 +171,17 @@ const QUALITY = {
       head: vis('#print-head'), foot: vis('#print-foot'),
     };
   });
+
+  // sub-pixel rounding from the zoom is expected; a restyle is not
+  const inPrint = await readStyles();
+  const drift = Object.keys(onScreen).filter((k) => {
+    if (!(k in inPrint)) return false;
+    const a = parseFloat(onScreen[k]), b = parseFloat(inPrint[k]);
+    if (isFinite(a) && isFinite(b)) return Math.abs(a - b) > 0.2;     // zoom rounding only
+    return onScreen[k] !== inPrint[k];
+  }).map((k) => k + ' screen=' + onScreen[k] + ' print=' + inPrint[k]);
+  ok('print does not restyle the page — same type scale, padding and dial as the FCC',
+    drift.length === 0 && Object.keys(onScreen).length >= 15, drift);
 
   ok('the content-quality section is in the PDF', m.quality && m.qScore);
   ok('the AI-Readiness score prints with it', m.air && m.airScore === '76', m.airScore);
