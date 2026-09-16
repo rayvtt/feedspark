@@ -449,7 +449,42 @@ prep for client demo").
 
 Engine unit tests: `node tools/test_labelguard.mjs` (runs in `validate.yml` on every PR).
 
-### 9.6 Content quality — is the data any GOOD? (`/golden`, the fifth section)
+### 9.7 AI-Readiness on the scorecard (`/golden`, under content quality)
+
+Ray, 16 Sep 2026: *"bring in the AI readiness score on the feed lab section … anything from the
+feed lab section that is colour-coded or nicely presented should be included … you can bring in
+title anatomy to be nested after title content quality scan … the most important item is the AI
+readiness score."*
+
+Feed Lab already computes this — one weighted score across eight pillars, the four-tier ladder,
+and the MASK title anatomy — so the scorecard **reuses that engine rather than growing a second
+opinion**: the same `feedlab_engine` `audit()` the `/feedlab` page calls, run on the SAME stream
+the content-quality read is already pulling. One fetch, two readings, and the same feed reports
+the same number on both pages.
+
+- **Sampling:** rows are collected to `AUD_CAP` (30,000) with `rowTotalEstimate` set to the true
+  row count — the contract `audit()` documents, so every count it reports is scaled back to the
+  whole feed and a 125MB feed costs a bounded slice of memory rather than all of it.
+- **Stored** with the quality reading (`goldenqual:`), trimmed by `packAudit` to what the card
+  renders — total, tier, the eight pillars, the title anatomy. The worker re-validates that shape
+  (pillars capped at 8, numbers clamped, strings cut) so the store cannot be widened from the
+  browser, and puts `air` / `airTier` on `goldenidx`.
+- **Card:** the Feed Lab visual language, same class names — the conic-gradient ring coloured by
+  band, the `Tier N · Label` pill with "+N points to Tier N+1", the four-rung ladder with YOU ARE
+  HERE, and the eight pillar cards (score, bar, weight dots, one-line rationale). A footnote says
+  plainly that the pillars are weighted, so the headline is not their average.
+- **Title anatomy** nests under the `g:title` row of the content-quality read — the MASK spectrum
+  (Brand / Material / Fit / Colour / Use-case, each with its share and SKU count) and the length
+  histogram with the 80–120 window marked — because that is the anatomy of the titles whose
+  CONTENT the rules directly above it just judged.
+- **In the PDF:** it prints with everything else. Print pins the card's desktop geometry
+  (`body.pdf .score-grid`, `.ladder`): the ≤900px rules stack the ring above the ladder, which is
+  right on a phone but would make the measured sheet shorter than the printed document — the same
+  trap that had already eaten the spec note and the quality findings. The full document — four
+  spec tiers, content quality, AI-readiness — lands at roughly two A4 lengths on its single sheet,
+  and `tools/check_grpdf.js` asserts the score, the ladder and all eight pillars are present.
+
+## 9.6 Content quality — is the data any GOOD? (`/golden`, the fifth section)
 
 Ray, 16 Sep 2026: *"what's missing is also reviewing the data quality of each attribute,
 especially if they contain free content (title, description, product highlight, GPC, product

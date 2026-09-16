@@ -3873,7 +3873,30 @@ async function goldenRoutes(env, request, url) {
         rules, dupeCapped: a.dupeCapped === true || undefined };
     }
     if (!Object.keys(attrs).length) return json({ error: 'no known free-text attribute in this feed' }, 400);
-    const rec = { t: Date.now(), client, market: mkt, rows, attrs, kind: String(b.kind || '').slice(0, 8) };
+    // the AI-Readiness reading the page computes on the SAME stream (Ray, 16 Sep 2026) —
+    // kept to the shape the card renders, so the store can't be widened from the browser
+    const num = (x, max) => Math.min(max, Math.max(0, Math.round(Number(x) || 0)));
+    let ai = null;
+    if (b.ai && typeof b.ai === 'object' && Number(b.ai.total) > 0) {
+      const t = b.ai.titles && typeof b.ai.titles === 'object' ? b.ai.titles : {};
+      const mask = t.mask && typeof t.mask === 'object' ? t.mask : {};
+      ai = {
+        total: num(b.ai.total, 100), tier: Math.min(4, Math.max(1, parseInt(b.ai.tier, 10) || 1)),
+        tierLabel: String(b.ai.tierLabel || '').slice(0, 40),
+        sampled: num(b.ai.sampled, 1e9), rows: num(b.ai.rows, 1e9),
+        pillars: Array.isArray(b.ai.pillars) ? b.ai.pillars.slice(0, 8).map((p) => ({
+          key: String(p.key || '').slice(0, 24), label: String(p.label || '').slice(0, 40),
+          score: num(p.score, 100), weight: Math.min(3, Math.max(0, Number(p.weight) || 1)),
+          summary: String(p.summary || '').slice(0, 160),
+        })) : [],
+        titles: { avg: num(t.avg, 1e4), min: num(t.min, 1e4), max: num(t.max, 1e4),
+          dup: num(t.dup, 1e9), allCaps: num(t.allCaps, 1e9),
+          buckets: Array.isArray(t.buckets) ? t.buckets.slice(0, 6).map((x) => ({ b: String(x.b || '').slice(0, 20), n: num(x.n, 1e9) })) : [],
+          mask: { brand: num(mask.brand, 100), material: num(mask.material, 100), fit: num(mask.fit, 100),
+            colour: num(mask.colour, 100), use: num(mask.use, 100) } },
+      };
+    }
+    const rec = { t: Date.now(), client, market: mkt, rows, attrs, ai, kind: String(b.kind || '').slice(0, 8) };
     const packed = JSON.stringify(rec);
     if (packed.length > 250000) return json({ error: 'quality reading too large' }, 413);
     await env.EDITS.put('goldenqual:' + client + ':' + mkt, packed);
@@ -3881,8 +3904,10 @@ async function goldenRoutes(env, request, url) {
     const qs = qualityScore(rec);
     const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
     const key = lgKey(client, mkt);
-    if (idx[key] && qs) {
-      idx[key].q = qs.score; idx[key].qFails = qs.fails; idx[key].qT = rec.t;
+    if (idx[key] && (qs || ai)) {
+      if (qs) { idx[key].q = qs.score; idx[key].qFails = qs.fails; }
+      if (ai) { idx[key].air = ai.total; idx[key].airTier = ai.tier; }
+      idx[key].qT = rec.t;
       await env.EDITS.put('goldenidx', JSON.stringify(idx));
     }
     return json({ ok: true, t: rec.t, score: qs ? qs.score : null });
