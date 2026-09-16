@@ -6437,6 +6437,30 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "body.pdf .gr-sticky{position:static!important",
       "min": 1
+    },
+    {
+      "name": "Dossier: hours tile — consumption meter with the block marked",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function hrsMeter",
+      "pr": 0
+    },
+    {
+      "name": "Dossier: hours tile — served keeps its own band colour",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "dzp-band.served",
+      "pr": 0
+    },
+    {
+      "name": "Dossier: feed-audit tile — a bar per market",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "dzp-mrow",
+      "pr": 0
+    },
+    {
+      "name": "Dossier: Golden Record tile — score ring",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function grRing",
+      "pr": 0
     }
   ]
 }
