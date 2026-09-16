@@ -235,7 +235,11 @@ grammar(P, 'page');
 console.log('── page / engine parity on every query shape');
 const QUERIES = ['', 'keyword', 'client:Reiss', 'client:rei owner:Feb', 'bill:no', 'bill:yes',
   'cat:opt -client:Schuh', '"keyword optimisation"', 'from:2026-01 to:2026-06', 'min:2 max:8',
-  'status:open', 'month:2026-05', 'am:Ray market:GB', '-call optimisation', 'who:Gary cat:tech'];
+  'status:open', 'month:2026-05', 'am:Ray market:GB', '-call optimisation', 'who:Gary cat:tech',
+  // the comma rule rides the parity sweep too — two surfaces, one meaning
+  'Gary,Steven', 'Gary, Steven', 'Gary ,Steven', 'Gary,', ',', 'keyword,feeds', '-Gary,Steven',
+  'owner:Gary,Steven', 'owner:Gary, Steven', 'market:GB,DE', 'cat:tech,feat', 'month:2026-05,2025-11',
+  'client:Reiss keyword,feeds', '"keyword optimisation",Feeds', 'min:2,5'];
 const SAMPLE = [
   T(), T({ client: 'Schuh', owner: 'Gary', cat: 'tech', bill: 0, nonbill: 1, hours: 1 }),
   T({ d: '', title: 'Client call', cat: 'acct', bill: 1, nonbill: 1, hours: 2 }),
@@ -247,6 +251,71 @@ for (const qs of QUERIES) {
   const b = SAMPLE.map((r) => P.matchTask(Object.assign({}, r), P.parseQuery(qs)));
   eq(b, a, `page and engine agree on "${qs}"`);
 }
+// ---------------------------------------------------------------------------------------------
+// a comma is OR, whitespace is AND
+//
+// Ray, 16 Sep 2026: "This search bar allows multiple filters separated by commas. For example, I
+// want to filter Febin and Vitus. The search bar should accommodate 'Febin,Vitus' with no space
+// after the comma."
+//
+// Two names side by side already meant "rows naming BOTH" and must keep meaning that — it is the
+// right default and AMs rely on it. The comma is the OTHER question.
+// ---------------------------------------------------------------------------------------------
+console.log('── the comma rule (OR) against the space rule (AND)');
+const PEOPLE = [
+  T({ owner: 'Febin', client: 'Reiss', market: 'GB', title: 'Plan Update', cat: 'acct' }),
+  T({ owner: 'Vitus', client: 'Reiss', market: 'US', title: 'Data request', cat: 'acct' }),
+  T({ owner: 'Steven Opuni', client: 'Monsoon', market: 'GB', title: 'Overview, all markets', cat: 'opt' }),
+];
+const who = (qs) => PEOPLE.filter((r) => M.matchTask(r, M.parseQuery(qs))).map((r) => r.owner);
+const whoPage = (qs) => PEOPLE.filter((r) => P.matchTask(r, P.parseQuery(qs))).map((r) => r.owner);
+
+eq(who('Febin,Vitus'), ['Febin', 'Vitus'], 'RAY\'S CASE: "Febin,Vitus", no space, returns both people');
+eq(who('Febin, Vitus'), ['Febin', 'Vitus'],
+  'and WITH the space, because half of us type it and reading that as AND would answer "no rows"');
+eq(who('Febin ,Vitus'), ['Febin', 'Vitus'], 'a space before the comma is the same list');
+eq(who('Febin Vitus'), [],
+  'while a SPACE still means AND — the old default is untouched, and no row names both people');
+eq(who('Febin'), ['Febin'], 'one name is still one name');
+eq(who('Febin,'), ['Febin'],
+  'a trailing comma is someone mid-type, not a term that matches nothing');
+eq(who(','), ['Febin', 'Vitus', 'Steven Opuni'],
+  'a bare comma is not a filter at all — it shows everything rather than nothing');
+eq(who('reiss Febin,Vitus'), ['Febin', 'Vitus'],
+  'groups AND across the spaces: Reiss AND (Febin OR Vitus)');
+eq(who('reiss Febin,steven'), ['Febin'],
+  'so a Reiss filter still excludes the Monsoon row the OR list would otherwise have let in');
+eq(who('-Febin,Vitus'), ['Steven Opuni'],
+  'negating a list excludes a row carrying EITHER, which is what "not these two" means');
+
+console.log('── the comma on a field is the shorthand for repeating it');
+eq(who('owner:Febin,Vitus'), who('owner:Febin owner:Vitus'),
+  'owner:Febin,Vitus is exactly owner:Febin owner:Vitus');
+eq(who('market:GB,US'), ['Febin', 'Vitus', 'Steven Opuni'], 'markets OR');
+eq(who('cat:acct,opt'), ['Febin', 'Vitus', 'Steven Opuni'], 'and so do categories, through their aliases');
+eq(M.parseQuery('cat:technical,feature').f.cat, ['tech', 'feat'],
+  'each alternative goes through the alias map, not just the first');
+eq(who('client:Reiss,Monsoon owner:Febin'), ['Febin'], 'a list on one field still ANDs with another field');
+eq(M.parseQuery('min:2,5').num, [{ k: 'min', v: 2 }],
+  'a BOUND takes the first value — an alternation of minimums is not a question anyone asks');
+eq(M.parseQuery('from:2026-01,2026-06').f.from[0], '2026-01',
+  'and a range keeps its first date, exactly as a repeated from: already did');
+
+console.log('── inside quotes a comma is punctuation, not syntax');
+eq(who('"Overview, all markets"'), ['Steven Opuni'],
+  'a quoted phrase keeps its own commas — it is one literal, which is what quoting means');
+eq(who('"Overview, all markets",Febin'), ['Febin', 'Steven Opuni'],
+  'and can still be one alternative in a list beside a bare word');
+eq(M.parseQuery('"a, b"').text, [['a, b']], 'the comma survives the parse rather than splitting the phrase');
+ok(M.parseQuery('"a, b"').text[0][0].indexOf('\u0000') < 0,
+  'and the sentinel it rode through tokenisation on never reaches a term');
+
+console.log('── the page agrees on every one of those');
+for (const qs of ['Febin,Vitus', 'Febin, Vitus', 'Febin Vitus', 'Febin,', ',', '-Febin,Vitus',
+  'reiss Febin,Vitus', 'owner:Febin,Vitus', 'cat:technical,feature', '"Overview, all markets",Febin']) {
+  eq(whoPage(qs), who(qs), `page and engine agree on "${qs}"`);
+}
+
 eq(P.DIMS.map((d) => d.k), M.DIMS.map((d) => d.k), 'the page offers exactly the engine\'s dimensions');
 eq(P.CATS, M.CATS, 'the page carries the same category keys');
 eq(Object.keys(P.CAT_LABEL).sort(), Object.keys(M.CAT_LABEL).sort(), 'the page carries the same category labels');
@@ -560,11 +629,15 @@ function liftPageSrc(name) {
   if (end < 0) throw new Error(name + ': no end');
   return PG.slice(m.index, end + 4);
 }
+// setPQ is lifted REAL, not stubbed: since the comma rule lives in the parse, a stand-in setter
+// would test a filter nobody runs. The comma helpers come with it, from the same page.
 const PANE = new Function('CAT_LABEL', 'num', 'hrs', 'esc', 'SHOW',
-  'var PQ = "";\n'
+  'var PQ = "", PQT = [], QCOMMA = "\\u0000";\n'
+  + liftPageSrc('mergeCommaRuns') + '\n' + liftPageSrc('splitAlts') + '\n'
+  + liftPageSrc('orTerms') + '\n' + liftPageSrc('setPQ') + '\n'
   + liftPageSrc('pqHay') + '\n' + liftPageSrc('pqMatch') + '\n'
   + liftPageSrc('FOOT') + '\n' + liftPageSrc('footHtml') + '\n'
-  + 'return { setPQ: function (v) { PQ = v; }, pqMatch: pqMatch, footHtml: footHtml, FOOT: FOOT };'
+  + 'return { setPQ: setPQ, pqMatch: pqMatch, footHtml: footHtml, FOOT: FOOT };'
 )(M.CAT_LABEL,
   (n) => String(n),
   (n) => String(Math.round((Number(n) || 0) * 100) / 100),
@@ -613,6 +686,34 @@ PANE.setPQ('gmc');
 ok(/matching/.test(PANE.footHtml('tasks', many.slice(0, 4), new Array(9).fill({}), false)),
   'when a filter is on, the label names it');
 PANE.setPQ('');
+
+// --- the comma rule, on the box Ray was actually pointing at ------------------------------------
+// This pane filter is the plain-substring box under the tab header. It reads the ENGINE's own
+// orTerms, so "Febin,Vitus" cannot mean one thing here and another in the grammar bar above it.
+console.log('── the comma rule on the pane filter');
+const PR = [prow({ owner: 'Febin', client: 'Reiss', title: 'Plan Update' }),
+  prow({ owner: 'Vitus', client: 'Reiss', title: 'Data request' }),
+  prow({ owner: 'Steven', client: 'Monsoon', title: 'Overview, all markets' })];
+const pwho = (q) => { PANE.setPQ(q); return PR.filter((r) => PANE.pqMatch('tasks', r)).map((r) => r.owner); };
+
+eq(pwho('Febin,Vitus'), ['Febin', 'Vitus'], 'RAY\'S CASE on the pane box: no space after the comma');
+eq(pwho('Febin, Vitus'), ['Febin', 'Vitus'], 'and with the space');
+eq(pwho('Febin Vitus'), [], 'a space is still AND here too — the default AMs already rely on');
+eq(pwho('Febin,'), ['Febin'], 'mid-type trailing comma is just the one name');
+eq(pwho(','), ['Febin', 'Vitus', 'Steven'], 'a bare comma filters nothing rather than everything out');
+eq(pwho('reiss febin,vitus'), ['Febin', 'Vitus'], 'and groups AND across the space');
+eq(pwho('reiss febin,steven'), ['Febin'], 'so the Reiss word still excludes the Monsoon row');
+eq(pwho('FEBIN,VITUS'), ['Febin', 'Vitus'], 'case-insensitive, like the rest of the box');
+PANE.setPQ('');
+eq(PR.filter((r) => PANE.pqMatch('tasks', r)).length, 3, 'and clearing it restores every row');
+
+ok(/PQT\.length \? \(num\(n\)/.test(PG) && /PQT\.length \? ' matching/.test(PG),
+  'and so does the "N of M" chip and the footer label — "45 of 45 matching ," would claim a filter '
+  + 'that is not narrowing anything');
+ok(/PQT\.length \? src\.filter/.test(PG),
+  'paneRows tests the PARSED terms, not the raw string — else a lone "," would filter to nothing');
+ok(/function orTerms/.test(PG) && /PQT = orTerms\(PQ\)/.test(PG),
+  'and the pane reads the engine\'s own comma rule rather than carrying a second copy of it');
 
 // the columns a tab can honestly add up
 eq(PANE.FOOT.tasks.map((f) => f.k), ['bill', 'nonbill', 'hours'], 'tasks total the three hour columns');
