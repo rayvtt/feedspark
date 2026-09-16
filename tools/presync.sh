@@ -80,6 +80,9 @@ echo "── validating: live deck editor (real browser)"
 if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   NODE_PATH=$(npm root -g) node tools/test_editor.mjs || {
     echo "✗ editor tests failed — the save/load guards are what stop edits landing on the wrong element"; exit 1; }
+  echo "── validating: brand one-pager (the client-facing sheet — real numbers, no leaks)"
+  NODE_PATH=$(npm root -g) node tools/test_onepager.mjs || {
+    echo "✗ one-pager tests failed — this is the sheet that leaves the building; a wrong number or an internal word on it is a client-facing error"; exit 1; }
   echo "── validating: dark view (every app page rendered dark — no light islands)"
   NODE_PATH=$(npm root -g) node tools/check_darkmode.js || {
     echo "✗ dark-view tripwire failed — a hard-coded light background slipped past the page's [data-theme=dark] block"; exit 1; }

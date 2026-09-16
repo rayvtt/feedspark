@@ -5395,6 +5395,26 @@
    "min": 1
   },
   {
+   "name": "one-pager: client-facing brand sheet in the dossier",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "function openOnePager"
+  },
+  {
+   "name": "one-pager: hours + emails summed per look-back window",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "function opHours"
+  },
+  {
+   "name": "one-pager: opens from the brand card",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": "dz-opb"
+  },
+  {
+   "name": "one-pager: prints as the whole document",
+   "file": "docs/FeedSpark_Command_Center.html",
+   "pattern": ".op-scrim"
+  },
+  {
    "name": "Golden Record PDF: ONE continuous vertical page — exportPdf measures the laid-out scorecard and writes @page{size:210mm <content>mm} (Ray 16 Sep 2026: 'should all fit in 1 vertical page')",
    "file": "docs/FeedSpark_GoldenRecord.html",
    "pattern": "function preparePdf",

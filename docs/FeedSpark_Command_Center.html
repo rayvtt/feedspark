@@ -218,6 +218,58 @@ window.addEventListener('load',restore);
   .dz-controls button:hover{border-color:var(--orange);color:var(--orange-deep)}
   .dz-controls .dz-edit.on{background:var(--navy);border-color:var(--navy);color:#fff}
   .dz-head-r{display:flex;align-items:center;gap:8px}
+  /* ---- brand one-pager: a client-facing sheet, printable to PDF (Ray, 16 Sep 2026) ---- */
+  .op-scrim{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:900;display:flex;
+    align-items:flex-start;justify-content:center;padding:28px 18px;overflow:auto}
+  .op-sheet{background:#fff;width:100%;max-width:880px;border-radius:14px;padding:34px 38px 26px;
+    box-shadow:0 24px 70px rgba(15,23,42,.3);position:relative}
+  .op-load{padding:40px 0;text-align:center;color:var(--muted);font-weight:700}
+  .op-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;
+    border-bottom:2px solid var(--ink-2);padding-bottom:14px}
+  .op-brand{display:flex;gap:12px;align-items:center}
+  .op-brand h2{margin:0;font-size:24px;font-weight:900;letter-spacing:-.02em}
+  .op-brand h2 span{color:var(--orange-deep)}
+  .op-sub{font-size:12px;color:var(--muted);font-weight:700;margin-top:3px}
+  .op-acts{display:flex;gap:8px;align-items:center}
+  .op-print,.op-x{font:inherit;font-size:12px;font-weight:800;padding:6px 13px;border-radius:100px;
+    border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer}
+  .op-print:hover{border-color:var(--orange);color:var(--orange-deep)}
+  .op-x{padding:6px 10px}
+  .op-thesis{font-size:14.5px;line-height:1.5;color:var(--ink-2);margin:16px 0 4px;font-weight:600}
+  .op-sec{margin-top:22px;break-inside:avoid}
+  .op-sech{display:flex;align-items:center;gap:10px}
+  .op-n{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;flex:none;
+    border-radius:100px;background:var(--orange-deep);color:#fff;font-size:11.5px;font-weight:900}
+  .op-sech h3{margin:0;font-size:15.5px;font-weight:900;letter-spacing:-.01em}
+  .op-lede{font-size:12.5px;line-height:1.55;color:var(--muted);margin:7px 0 0;max-width:72ch}
+  .op-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .op-stat{border:1px solid var(--line);border-radius:10px;padding:12px 13px;background:var(--wash)}
+  .op-stat.good{border-color:#bbf7d0;background:#f0fdf4}
+  .op-stat.warn{border-color:#fed7aa;background:#fff7ed}
+  .op-v{font-size:25px;font-weight:900;letter-spacing:-.02em;line-height:1.1;color:var(--ink-2)}
+  .op-l{font-size:12px;font-weight:800;margin-top:3px}
+  .op-s{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+  .op-tbl{width:100%;border-collapse:collapse;margin-top:12px;font-size:12.5px}
+  .op-tbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--muted);border-bottom:1px solid var(--line);padding:5px 8px}
+  .op-tbl td{padding:6px 8px;border-bottom:1px solid var(--line)}
+  .op-tbl td b{font-size:14px}
+  .op-na{color:var(--muted);font-style:italic}
+  .op-note{font-size:11px;color:var(--muted);margin:9px 0 0;line-height:1.5}
+  .op-quote{margin-top:11px;border-left:3px solid var(--orange);background:var(--wash);
+    padding:9px 13px;border-radius:0 8px 8px 0;font-size:12.5px}
+  .op-foot{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);
+    font-weight:700;border-top:1px solid var(--line);margin-top:24px;padding-top:11px}
+  @media (max-width:720px){ .op-stats{grid-template-columns:1fr} .op-sheet{padding:22px 18px} }
+  /* print: the sheet IS the document — everything else leaves the page */
+  @media print{
+    body>*{display:none!important}
+    .op-scrim{display:block!important;position:static;padding:0;background:#fff;overflow:visible}
+    .op-sheet{max-width:none;box-shadow:none;border-radius:0;padding:0}
+    .op-acts{display:none!important}
+    .op-stat{background:#fff!important}
+    @page{margin:14mm}
+  }
   .dz-x{font:inherit;font-size:11.5px;font-weight:800;padding:5px 10px;border-radius:8px;border:1px solid #F3C7C7;background:#FBEBEB;color:var(--risk);cursor:pointer}
   .dz-editing [data-ed]{outline:1px dashed rgba(245,166,35,.55);outline-offset:3px;border-radius:4px;cursor:text}
   .dz-editing [data-ed]:focus{outline:2px solid var(--orange)}
@@ -827,6 +879,224 @@ window.addEventListener('load',restore);
       var h2=detail.querySelector('#dz-port'); if(h2)h2.innerHTML=portHtml(name,mkts);
     });
   }
+  /* ===== BRAND ONE-PAGER (Ray, 16 Sep 2026) ==========================================
+   * "If a new marketing director joins the team, this will be a quick document to share
+   *  directly with that person… highlight key areas that are usually hidden from the brand
+   *  marketing team without actually getting into the nitty-gritty."
+   *
+   * So: the SCALE of the detail work, never the detail itself. A marketing director sees
+   * campaign performance; what they never see is that the feed behind it was rebuilt task by
+   * task, tested, and watched every day. Every number here is one they could not have known.
+   *
+   * Client-facing, so it obeys three rules the internal modules don't:
+   *   1. No FeedSpark-internal vocabulary — no module names, no KV, no ticket ids, no staff.
+   *   2. Never a task list. Counts and areas only; the nitty-gritty is the POINT but the
+   *      detail is the thing being spared.
+   *   3. An absent number says so. A dash that reads "not tracked" is defensible in front of
+   *      a client; a confident 0 invented from missing data is not.
+   * Built from data the page already holds (PLANTASKS + the portfolio caches) plus the test
+   * archive and results archive, so opening it costs two fetches, not a rebuild.
+   */
+  var OPW = ['12', '6', '3'];                   // look-back windows, longest first
+  function opSum(cw) {                          // {cat:{total,done}} -> {total,done,cats}
+    var t = 0, d = 0, n = 0;
+    Object.keys(cw || {}).forEach(function (c) { t += (cw[c].total || 0); d += (cw[c].done || 0); if (cw[c].total) n++; });
+    return { total: t, done: d, cats: n };
+  }
+  function opNum(v, dash) { return (v === null || v === undefined || v !== v) ? (dash || '—') : v; }
+  var OPCLBL = { title: 'Product titles', keyword: 'Search keywords', data: 'Product attributes',
+    image: 'Imagery', custom_label: 'Campaign segmentation', product_type: 'Category structure',
+    technical: 'Feed engineering', channel: 'Channel coverage', test: 'Testing', account: 'Strategy',
+    opt: 'Optimisation' };
+
+  // sum a stream's monthly map over the last N months of the volumes window
+  function opWin(vol, n, pick) {
+    if (!vol || !vol.months) return null;
+    var ms = vol.months.slice(-n), t = 0, seen = false;
+    ms.forEach(function (m) { var v = pick(m); if (typeof v === 'number') { t += v; seen = true; } });
+    return seen ? Math.round(t * 10) / 10 : null;
+  }
+  function opHours(vol, n) {
+    var sc = vol && vol.streams && vol.streams.schedule;
+    var h = sc && sc.sums && sc.sums.hours;
+    return h ? opWin(vol, n, function (m) { return h[m]; }) : null;
+  }
+  function opEmails(vol, n) {
+    var em = vol && vol.streams && vol.streams.emails;
+    return em && em.byMonth ? opWin(vol, n, function (m) { return em.byMonth[m]; }) : null;
+  }
+  function opShell(name) {
+    var w = document.createElement('div');
+    w.className = 'op-scrim'; w.id = 'op-scrim';
+    w.innerHTML = '<div class="op-sheet" id="op-sheet"><div class="op-load">Assembling ' + esc(name) + '’s one-pager…</div></div>';
+    w.addEventListener('click', function (e) { if (e.target === w) opClose(); });
+    document.body.appendChild(w);
+    document.addEventListener('keydown', opEsc);
+    return w;
+  }
+  function opEsc(e) { if (e.key === 'Escape') opClose(); }
+  function opClose() {
+    var s = document.getElementById('op-scrim'); if (s) s.remove();
+    document.removeEventListener('keydown', opEsc);
+  }
+
+  function openOnePager(name) {
+    opShell(name);
+    var b = B[name] || {}, p = PT[name] || null;
+    // the two archives the dossier doesn't already hold; both degrade to null rather than
+    // blocking the page — a one-pager missing its test section still beats no one-pager
+    var got = {};
+    function done(k, v) { got[k] = v; if ('ab' in got && 'kw' in got && 'em' in got) portLoad(name, function (mkts) { opRender(name, b, p, mkts, got); }); }
+    fetch(API + '/api/abtests?client=' + encodeURIComponent(name)).then(function (r) { return r.json(); })
+      .then(function (j) { done('ab', (j && j.ok) ? j : null); }, function () { done('ab', null); });
+    fetch(API + '/api/kwresults?client=' + encodeURIComponent(name)).then(function (r) { return r.json(); })
+      .then(function (j) { done('kw', (j && j.ok) ? j : null); }, function () { done('kw', null); });
+    // Hours and inbound email are the two figures Ray asked for that the plan snapshot cannot
+    // give: hours live on the content team's weekly schedule, email on the inbox capture. Both
+    // are bucketed by month by the volumes payload, so one call covers every look-back window.
+    // Client-scoped — a signin without access gets nothing and the cells read "—", not 0.
+    fetch(API + '/api/volumes?client=' + encodeURIComponent(name) + '&months=12')
+      .then(function (r) { return r.json(); })
+      .then(function (j) { done('em', (j && j.ok && j.streams) ? j : null); }, function () { done('em', null); });
+  }
+
+  function opRender(name, b, p, mkts, got) {
+    var sheet = document.getElementById('op-sheet'); if (!sheet) return;
+    var m = portModel(name, mkts);
+    var ab = got.ab, kwr = got.kw;
+    var today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    /* ---- 1. what's live (the part they already see) ---- */
+    var feeds = mkts.length;
+    var chans = (b.mk || '').split(/[·,]/).map(function (x) { return x.trim(); }).filter(Boolean);
+
+    /* ---- 2. the work behind it ---- */
+    var all = p ? opSum(p.catsw && p.catsw.all ? p.catsw.all : p.cats) : null;
+    var wins = OPW.map(function (w) {
+      var cw = p && p.catsw && p.catsw[w];
+      return { w: w, s: cw ? opSum(cw) : null };
+    });
+    // breadth: how many distinct areas of the feed have been worked, all-time
+    var areas = p ? Object.keys(p.cats || {}).filter(function (c) { return p.cats[c].total; }) : [];
+    var monthsRun = (p && p.vol && p.volkind === 'month') ? p.vol.length : null;
+
+    /* ---- 3. testing ---- */
+    var abN = ab && ab.summary ? ab.summary.total : null;
+    var abWin = ab && ab.summary ? ab.summary.winRate : null;
+    var best = null;
+    if (ab && ab.tests) {
+      ab.tests.forEach(function (t) {
+        var im = t.metrics && t.metrics.impressions;
+        if (typeof im === 'number' && im > 0 && (!best || im > best.v)) best = { v: im, t: t };
+      });
+    }
+    var kwN = kwr && typeof kwr.total === 'number' ? kwr.total : null;
+
+    /* ---- 4. the watch ---- */
+    var guarded = feeds;                         // every wired market is under the guards
+    var checks = guarded ? guarded * 4 : null;   // the estate scan lane runs 4× a day
+    var alerts = (m.crit || 0) + (m.warn || 0);
+    var satAvg = null;
+    if (m.satL && m.satL.length) {
+      satAvg = Math.round(m.satL.reduce(function (s, x) { return s + x.pct; }, 0) / m.satL.length);
+    }
+
+    function stat(v, l, sub, tone) {
+      return '<div class="op-stat' + (tone ? ' ' + tone : '') + '"><div class="op-v">' + v + '</div>'
+        + '<div class="op-l">' + l + '</div>' + (sub ? '<div class="op-s">' + sub + '</div>' : '') + '</div>';
+    }
+    function sec(n, title, lede) {
+      return '<div class="op-sec"><div class="op-sech"><span class="op-n">' + n + '</span>'
+        + '<h3>' + title + '</h3></div>' + (lede ? '<p class="op-lede">' + lede + '</p>' : '');
+    }
+
+    var h = '';
+    h += '<div class="op-top">'
+      + '<div class="op-brand">' + logo(b.dom, 34) + '<div><h2>' + esc(name) + ' <span>× FeedSpark</span></h2>'
+      + '<div class="op-sub">Account one-pager · ' + esc(today) + '</div></div></div>'
+      + '<div class="op-acts"><button class="op-print" type="button">Print / PDF</button>'
+      + '<button class="op-x" type="button" aria-label="Close">✕</button></div></div>';
+
+    /* the framing line — this is the argument the whole page makes */
+    h += '<p class="op-thesis">The feed is the quiet infrastructure behind every product you advertise. '
+      + 'This is what keeping it right actually takes — the work that never shows up in a campaign report.</p>';
+
+    /* 1 — what's live */
+    h += sec(1, 'What’s live today', 'The surface your team already sees.');
+    h += '<div class="op-stats">'
+      + stat(opNum(feeds), 'Markets live', feeds ? 'each with its own product feed' : 'no feed wired yet')
+      + stat(opNum(m.avgA), 'Feed quality score', m.avgA != null ? 'averaged across markets, out of 100' : 'not yet audited')
+      + stat(satAvg != null ? satAvg + '%' : '—', 'Search-term coverage', satAvg != null ? 'of the catalogue carries optimised keywords' : 'not yet measured')
+      + '</div></div>';
+
+    /* 2 — the work */
+    h += sec(2, 'The work behind it', 'Every change to a product feed is a task: written, checked, shipped, verified. This is the volume of that work — not a list of it.');
+    h += '<div class="op-stats">'
+      + stat(all ? all.done.toLocaleString() : '—', 'Tasks delivered', all ? 'across the life of the account' : 'no project plan wired')
+      + stat(areas.length ? areas.length : '—', 'Areas of the feed worked', areas.length ? 'titles, attributes, imagery, structure…' : '')
+      + stat(monthsRun ? monthsRun : '—', 'Consecutive months active', monthsRun ? 'continuous delivery, not a one-off project' : '')
+      + '</div>';
+    if (p && p.catsw) {
+      var vol = got.em;
+      h += '<table class="op-tbl"><thead><tr><th>Look-back</th><th>Tasks worked</th><th>Completed</th>'
+        + '<th>Hours delivered</th><th>Emails handled</th></tr></thead><tbody>';
+      wins.forEach(function (x) {
+        var n = +x.w, lbl = 'Last ' + x.w + ' months';
+        var hrs = opHours(vol, n), eml = opEmails(vol, n);
+        if (!x.s || !x.s.total) { h += '<tr><td>' + lbl + '</td><td colspan="4" class="op-na">no dated tasks in this window</td></tr>'; return; }
+        h += '<tr><td>' + lbl + '</td><td><b>' + x.s.total + '</b></td><td>' + x.s.done + '</td>'
+          + '<td>' + (hrs === null ? '<span class="op-na">—</span>' : hrs) + '</td>'
+          + '<td>' + (eml === null ? '<span class="op-na">—</span>' : eml) + '</td></tr>';
+      });
+      h += '</tbody></table>';
+      if (opHours(vol, 12) === null) {
+        h += '<p class="op-note">Hours are shown where the content team’s weekly schedule covers this brand; '
+          + 'a dash means no scheduled-work rows reached it, not zero effort.</p>';
+      }
+    }
+    h += '</div>';
+
+    /* 3 — testing */
+    h += sec(3, 'Nothing changes without a test', 'Feed changes are run as controlled tests against a held-back control group, so a change that doesn’t earn its place is reverted rather than kept on faith.');
+    h += '<div class="op-stats">'
+      + stat(opNum(abN), 'Tests run and read out', abN ? 'each with a written result' : 'test archive not wired for this brand')
+      + stat(abWin != null ? abWin + '%' : '—', 'Of decided tests won', abWin != null ? 'losers are reverted, not quietly kept' : '')
+      + stat(opNum(kwN), 'Optimisation read-outs filed', kwN ? 'scheduled keyword rounds, archived' : '')
+      + '</div>';
+    if (best) {
+      h += '<div class="op-quote"><b>Best result on record:</b> ' + esc(best.t.batch || best.t.type || 'test')
+        + ' — <b>+' + best.v + '%</b> impressions'
+        + (typeof best.t.metrics.clicks === 'number' ? ', ' + (best.t.metrics.clicks > 0 ? '+' : '') + best.t.metrics.clicks + '% clicks' : '')
+        + '.</div>';
+    }
+    h += '</div>';
+
+    /* 4 — the watch: the most invisible part, and the strongest card */
+    h += sec(4, 'Watched every day', 'A product feed breaks silently. A category value disappears, a price stops matching, an attribute empties — and spend keeps flowing against products that can no longer be served properly. These checks run whether or not anything is wrong.');
+    h += '<div class="op-stats">'
+      + stat(opNum(guarded), 'Feeds under monitoring', guarded ? 'structure, categories, attributes' : '')
+      + stat(opNum(checks), 'Automated checks per day', checks ? 'four passes over every feed' : '')
+      + stat(alerts ? alerts : '0', 'Issues open right now', alerts ? 'flagged and being worked' : 'nothing outstanding', alerts ? 'warn' : 'good')
+      + '</div></div>';
+
+    /* 5 — right now */
+    h += sec(5, 'Where the account stands',
+      p && p.score ? 'The plan sits at <b>' + p.score + '/100</b> for completion — breadth across the feed as well as depth in each area.' : '');
+    h += '<div class="op-stats">'
+      + stat(p ? p.open : '—', 'Tasks open', p ? 'in flight or scheduled' : '')
+      + stat(m.inflight || 0, 'Pieces of work in the pipeline', 'briefed and moving')
+      + (function () { var e12 = opEmails(got.em, 12);
+          return stat(e12 === null ? '—' : e12, 'Requests answered', e12 === null ? 'not visible from this signin' : 'inbound emails logged and actioned, 12 months'); })()
+      + '</div></div>';
+
+    h += '<div class="op-foot"><span>FeedSpark · Private &amp; Confidential</span>'
+      + '<span>Prepared for ' + esc(name) + ' · ' + esc(today) + '</span></div>';
+
+    sheet.innerHTML = h;
+    sheet.querySelector('.op-x').onclick = opClose;
+    sheet.querySelector('.op-print').onclick = function () { window.print(); };
+  }
+
   function portModel(name,mkts){
     var p=PT[name]||null, od=(A.overdue&&A.overdue[name])||0;
     var inflight=0,briefN=0;
@@ -1171,7 +1441,7 @@ window.addEventListener('load',restore);
       :(hasFeed?'<a class="lnk primary"'+wiredTip+' href="/feedlab?client='+encodeURIComponent(name)+'">Feed Lab ⚡'+(mktN>1?' · '+mktN+' markets':'')+'</a>':'');
     detail.innerHTML=
       '<div class="dz-head"><div class="dz-id">'+logo(b.dom,44)+'<div><h3>'+esc(name)+'</h3><div class="cat"><span'+edA('cat')+'>'+esc(b.cat||'')+'</span>'+((b.mk||editMode)?' · <span'+edA('mk')+'>'+esc(b.mk||'')+'</span>':'')+'</div></div></div>'
-      +'<div class="dz-head-r"><button class="lnk dz-showb" type="button" title="Play the cinematic brand intro — the live portfolio staged for a client call">🎬 Intro</button>'+(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+delBtn+'</div></div>'
+      +'<div class="dz-head-r"><button class="lnk dz-showb" type="button" title="Play the cinematic brand intro — the live portfolio staged for a client call">🎬 Intro</button><button class="lnk dz-opb" type="button" title="A client-safe one-pager for this brand — what is live, what the work has been, what is watched. Printable to PDF.">📄 One-pager</button>'+(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+delBtn+'</div></div>'
       +scorePanel(name)
       +portShell()
       +'<div class="dz-metrics"><span class="chip"><b>'+(p?p.open:tasks.length)+'</b> active</span>'
@@ -1188,6 +1458,8 @@ window.addEventListener('load',restore);
     loadKwResults(name);
     loadAbTests(name);
     portFill(name);
+    var opb=detail.querySelector('.dz-opb');
+    if(opb)opb.onclick=function(){ openOnePager(name); };
     var shb=detail.querySelector('.dz-showb');
     if(shb)shb.onclick=function(){ showOpen(name); };
     if(editMode){
