@@ -3,8 +3,13 @@
      beside its heading: default hidden (Ray's rule — no walls of explainer text), expanded
      blocks remembered per user in localStorage so Steven can keep guidance open while learning.
      Selector-driven: p.sub, .psub, .prev-sub, .em-sub and hero intros — add data-no-collapse
-     to any element that must stay visible. Elements rendered dynamically AFTER load (empty-state
-     messages etc.) are never touched: the pass runs once at DOMContentLoaded. -->
+     to any element that must stay visible. The pass also RE-RUNS when the page renders new
+     content (debounced MutationObserver, 16 Sep 2026): it used to run once at
+     DOMContentLoaded, so on a page whose body arrives with its data — the keyword calendar,
+     the guards — whether an instruction got its ⓘ depended on whether the render beat the
+     pass. That is a control that exists on one load and not the next, which is why the phone
+     tripwire kept flipping between 132 and 133 desktop controls on /kwcal. Already-processed
+     elements carry __instr and are skipped, so re-running is idempotent and cheap. -->
 <style>
 .instr-tgl{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;margin-left:7px;padding:0;
   border:1px solid var(--line,#E6E6E6);border-radius:100px;background:transparent;color:var(--muted,#8a94a0);
@@ -39,4 +44,11 @@ function apply(){
   });
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
+// late-rendered instructions (a board that paints after its data lands) get their toggle too:
+// one debounced pass per burst of DOM changes, and apply() skips anything already done.
+var t=null;
+function sched(){if(t)return;t=setTimeout(function(){t=null;apply()},120)}
+try{new MutationObserver(function(muts){
+  for(var i=0;i<muts.length;i++)if(muts[i].addedNodes&&muts[i].addedNodes.length){sched();return}
+}).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}
 })();</script>

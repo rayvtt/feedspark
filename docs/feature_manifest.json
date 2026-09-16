@@ -5642,6 +5642,27 @@
       "min": 1
     },
     {
+      "name": "Instructions widget: the ⓘ pass re-runs on late-rendered content (debounced MutationObserver) — a one-shot DOMContentLoaded pass made the control exist on one load and not the next, which is what flipped the phone tripwire on /kwcal",
+      "file": "docs/instr_collapse.html",
+      "pattern": "MutationObserver",
+      "min": 1
+    },
+    {
+      "name": "one-pager: retainer hours pie (optimisation vs technical vs feature vs account)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function opPie"
+    },
+    {
+      "name": "one-pager: hours-by-task table from the reports database",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function opTaskHours"
+    },
+    {
+      "name": "one-pager: FSHOURS splice markers for the baked reports snapshot",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "HOURS:START"
+    },
+    {
       "name": "Workflow: duplicate collapse needs SAME WORK, not similar wording — every 'Keywords Optimisation - <theme> - Marketing Planner' ticket anchored at dice>=.45 and collapsed into one, hiding Cashmere/Merino + Gifting from Intake, the plan, the board and the KPIs (Ray 16 Sep 2026, from the Brief Ledger)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function sameWork(",
