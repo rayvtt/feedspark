@@ -91,12 +91,18 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: brand one-pager (the client-facing sheet — real numbers, no leaks)"
   NODE_PATH=$(npm root -g) node tools/test_onepager.mjs || {
     echo "✗ one-pager tests failed — this is the sheet that leaves the building; a wrong number or an internal word on it is a client-facing error"; exit 1; }
+  echo "── validating: one team, one board (two real browsers on the same pipeline)"
+  NODE_PATH=$(npm root -g) node tools/test_teamsync.mjs || {
+    echo "✗ team-sync tests failed — this is the class of bug where one person's briefs, intake rows or plan writes stay invisible to everyone else"; exit 1; }
   echo "── validating: dark view (every app page rendered dark — no light islands)"
   NODE_PATH=$(npm root -g) node tools/check_darkmode.js || {
     echo "✗ dark-view tripwire failed — a hard-coded light background slipped past the page's [data-theme=dark] block"; exit 1; }
   echo "── validating: phone layout (every app page at 390px — one-row header, module bar, no overflow, desktop parity)"
   NODE_PATH=$(npm root -g) node tools/check_mobile.js || {
     echo "✗ phone tripwire failed — a page overflows sideways, hides a desktop control or lost its module bar"; exit 1; }
+  echo "── validating: Golden Record PDF (one sheet, scorecard + content quality, findings intact)"
+  NODE_PATH=$(npm root -g) node tools/check_grpdf.js || {
+    echo "✗ Golden Record PDF tripwire failed — the client scorecard lost a column, a section, or its single-sheet sizing"; exit 1; }
 else
   echo "   · playwright unavailable, skipped (run tools/test_editor.mjs before shipping editor changes)"
 fi
