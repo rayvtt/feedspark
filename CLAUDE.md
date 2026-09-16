@@ -237,6 +237,20 @@ GET|POST /api/i18n?lang=vi      → owner-only runtime lane for strings the seed
   8px retainer-state dot on any `data-hrs="<client>"` element plus its hovering popover, see
   /api/hours above; every signin, never on client decks) + the **Tachyon copilot**
   (`docs/tachyon_widget.html`, reads `window.PLANTASKS`, calls `/api/claude`).
+- **Shipped panel** (`docs/shipped_widget.html`, OWNER-ONLY like the /activity board it mirrors,
+  Ray 16 Sep 2026: "a pop-up module (right hand panel slide) for the activity build log … I'm
+  working on multiple features across multiple modules, so sometimes I forget what has actually
+  been done … then prompt the user to close the tab"): a handle on the RIGHT EDGE of every app page
+  opens a slide-over listing every merged PR, read from the SAME `/api/buildlog` the Build Log tab
+  uses (one source, two surfaces). Anything that shipped SINCE YOU LAST LOOKED gets its own band at
+  the top NAMING THE BRANCH — the thing that identifies which of a dozen open tabs is now finished —
+  with "that session is finished, you can close its tab"; it prompts, never closes or navigates.
+  TWO ANTI-NOISE RULES: the FIRST EVER load is SILENT (it seeds the seen-set rather than announcing
+  forty historic PRs, which would teach you to ignore the badge on day one), and OPENING THE PANEL
+  IS THE ACKNOWLEDGEMENT (no separate "mark read"; a re-read never re-announces the same batch). The
+  seen-set is localStorage `fcc-shipped-seen` — deliberately NOT shared state, since what one screen
+  has been shown is not a team fact. A stale GitHub read says so rather than implying nothing
+  shipped. Harness tools/test_shipped.mjs in qa_gate/presync/validate. Docs: docs/SHIPPED_PANEL.md
 - **Secrets**: `ANTHROPIC_API_KEY` powers Tachyon (`wrangler secret put ANTHROPIC_API_KEY`); both
   the copilot and Gmail/plan live-sync degrade gracefully until their credential is set.
 - **Pages = git**: `docs/FeedSpark_Command_Center.html` (`/`) and `docs/YuMOVE_Strategy_Review_Jul26.html`

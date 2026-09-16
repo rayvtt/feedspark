@@ -82,6 +82,13 @@ else
   echo "   ✗ task-manager harness FAILED — see node tools/test_reporttasks.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d2d/7: shipped panel (the build log as a right-hand slide-over)"
+if node tools/test_shipped.mjs >/dev/null 2>&1; then
+  echo "   ✓ first run silent, announces only what is new, names the branch to close"
+else
+  echo "   ✗ shipped-panel harness FAILED — see node tools/test_shipped.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3d2c/7: Excel exports (the XLSX writer + the Task Manager's three tabs)"
 if node tools/test_xlsx.mjs >/dev/null 2>&1; then
   echo "   ✓ the ZIP parts, typed cells, absent-is-absent and the three tab exports hold"

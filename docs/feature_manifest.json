@@ -4842,7 +4842,7 @@
     {
       "name": "…worker: the widget is injected only for the real owner identity",
       "file": "cloudflare/feedspark-deck/src/worker.js",
-      "pattern": "if (realOwner(env, request)) html = inject(html, LANGW);",
+      "pattern": "realOwner(env, request)) html = inject(html, LANGW",
       "pr": 375,
       "min": 1
     },
@@ -6123,6 +6123,31 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "function paneRows",
       "pr": 406
+    },
+    {
+      "name": "Shipped panel: the build log as a right-hand slide-over",
+      "file": "docs/shipped_widget.html",
+      "pattern": "fcc-ship-h",
+      "pr": 407
+    },
+    {
+      "name": "Shipped panel: first run is silent (seeds the seen-set rather than announcing history)",
+      "file": "docs/shipped_widget.html",
+      "pattern": "if (!seen()) setSeen(merged()",
+      "pr": 407
+    },
+    {
+      "name": "Shipped panel: names the branch, so the finished session's tab can be closed",
+      "file": "docs/shipped_widget.html",
+      "pattern": "you can close its tab",
+      "pr": 407
+    },
+    {
+      "name": "Shipped panel: owner-only injection",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "SHIPPEDW",
+      "min": 2,
+      "pr": 407
     }
   ]
 }

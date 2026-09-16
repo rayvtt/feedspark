@@ -63,6 +63,8 @@ jobs:
         run: node tools/test_hoursbadge.mjs
       - name: Excel export harness (XLSX container + the Task Manager's three tabs)
         run: node tools/test_xlsx.mjs
+      - name: Shipped-panel harness (build log slide-over, first-run silence, close-the-tab prompt)
+        run: node tools/test_shipped.mjs
 
       - name: Shipped-feature markers (multi-session overwrite tripwire)
         run: node tools/check_markers.js

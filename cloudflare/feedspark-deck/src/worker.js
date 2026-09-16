@@ -136,6 +136,9 @@ import LANGW from "../../../docs/lang_widget.html";
 // the phone layer (Ray, 15 Sep 2026: "complete overhaul for UX UI for mobile version — MIRROR desktop setting")
 import MOBILEW from "../../../docs/mobile_widget.html";
 import HOURSW from "../../../docs/hours_widget.html";
+// the Build Log as a right-hand slide-over, so "what have I actually shipped" is answerable
+// without leaving the page you are working on. Owner-only, like the /activity board it mirrors
+import SHIPPEDW from "../../../docs/shipped_widget.html";
 
 // Client materials bank -- binary Data module (ArrayBuffer), served by /api/materials/file.
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
@@ -2525,7 +2528,7 @@ export default {
           + '\n<script>window.__FCCMOD=' + JSON.stringify(modList) + ';</script>\n' + MODGATE);
         // the Vietnamese UI toggle is Ray's alone: injected only for the REAL owner identity
         // (never for another signin, never while previewing someone else's FCC via view-as)
-        if (realOwner(env, request)) html = inject(html, LANGW);
+        if (realOwner(env, request)) html = inject(html, LANGW + '\n' + SHIPPEDW);
         // the phone layer rides last so it sees every other widget's chrome (bar, sheets, bubble)
         html = inject(html, MOBILEW);
       }
