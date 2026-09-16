@@ -543,9 +543,31 @@
      * identity     = mean(id, brand, gtin|mpn, price, availability, condition)
      * taxonomy     = .5 GPC(coverage × min(depth/4,1)) + .5 product_type(coverage × deep≥3 share)
      * media        = .4 image + .4 min(addlAvg/3,1) + .2 https
-     * labels       = mean coverage of labels 0–4, single-value-on-everything halved
-     * ai           = .30 conversational + .25 desc depth + .20 structured richness
-     *                + .15 identity + .10 MASK   — the headline gap pillar
+     * conversational = mean COVERAGE of Google's six conversational attributes
+     *                (variant pair excluded when the feed carries no variants)
+     * ai           = .55 structured richness + .45 description depth
+     *
+     * WHAT CHANGED, AND WHY (Ray, 16 Sep 2026: "label architecture that involves
+     * custom labels is not necessarily usable for AI … include the most important
+     * factor for AI readiness, probably the conversational attribute"):
+     *
+     *  - CUSTOM LABELS LEFT THE SCORE. Google's own spec for [custom_label_0-4]
+     *    (answer 6324473) says they exist to "create specific filters to use in
+     *    your Performance Max, Shopping, or Demand Gen campaigns … for reporting
+     *    and bidding", and states plainly: "The information you include in this
+     *    attribute won't be shown to customers." A field no surface ever reads
+     *    cannot be evidence of readiness for those surfaces, so it no longer
+     *    scores. The reading itself is not lost — Label Guard (/labels) is a whole
+     *    module devoted to it, and audit() still returns `labels`.
+     *  - CONVERSATIONAL ATTRIBUTES BECAME THE HEAVIEST PILLAR (×2.4). They are the
+     *    only fields in the spec whose STATED purpose is AI comprehension: Google
+     *    (answer 17085370) ships them so "customers discover information about your
+     *    products across AI-driven surfaces, like AI Mode in Search". The weight is
+     *    set so the rest of the model tops out at 79 — a feed carrying NONE of the
+     *    attributes Google built for agentic surfaces cannot be called Agentic-ready.
+     *  - The AI pillar stopped double-counting them: it now reads only the
+     *    structured detail an agent can quote (highlights, product_type depth) and
+     *    how much description there is to quote.
      * -------------------------------------------------------------------- */
     var lenScore = tl.n ? (META ? 100 * (tl.b[1] + tl.b[2] + 0.5 * tl.b[3]) / tl.n
       : 100 * (tl.b[2] + tl.b[3] + 0.5 * tl.b[1]) / tl.n) : 0;
@@ -583,12 +605,23 @@
     }
     var sLabels = labels.length ? lbSum / labels.length : 0;
 
-    var convPresent = 0;
-    for (i = 0; i < CONV_ATTRS.length; i++) if (apct(CONV_ATTRS[i]) >= 5) convPresent++;
-    var hlBeyond2 = highlights.depth.length > 2 && highlights.depth[2] >= 25; // slot 3 in real use
-    var convScore = 100 * (convPresent + (hlBeyond2 ? 1 : 0)) / (CONV_ATTRS.length + 1);
+    // Google's six conversational attributes, scored on COVERAGE not mere presence —
+    // question_and_answer on 3% of the catalogue is a pilot, not a capability. Two of the
+    // six describe variants (item_group_title, variant_option), so a feed that carries no
+    // variants at all is judged on the other four rather than marked down for fields that
+    // cannot apply to it — the same "required in specific cases" logic as the spec itself.
+    var hasVariants = apct('item_group_id') >= 5;
+    var VARIANT_CONV = { item_group_title: 1, variant_option: 1 };
+    var convKeys = [], convPresent = 0, convSum = 0;
+    for (i = 0; i < CONV_ATTRS.length; i++) {
+      if (!hasVariants && VARIANT_CONV[CONV_ATTRS[i]]) continue;
+      convKeys.push(CONV_ATTRS[i]);
+      convSum += Math.min(100, apct(CONV_ATTRS[i]));
+      if (apct(CONV_ATTRS[i]) >= 5) convPresent++;
+    }
+    var convScore = convKeys.length ? convSum / convKeys.length : 0;
     var richScore = 50 * Math.min(highlights.avg / 4, 1) + 50 * Math.min(taxonomy.ptDepthAvg / 4, 1);
-    var sAi = 0.30 * convScore + 0.25 * depthD + 0.20 * richScore + 0.15 * sIdentity + 0.10 * maskScore;
+    var sAi = 0.55 * richScore + 0.45 * depthD;
 
     function idGaps() {
       var parts = [];
@@ -605,8 +638,22 @@
     var weakestLabel = null;
     for (i = 0; i < labels.length; i++) if (!weakestLabel || labels[i].pct < weakestLabel.pct) weakestLabel = labels[i];
 
+    // which of the six are actually live, named — "no conversational attributes" on its own
+    // never told an AM which field to go and get
+    var convLive = [], convGap = [];
+    for (i = 0; i < convKeys.length; i++) {
+      (apct(convKeys[i]) >= 5 ? convLive : convGap).push(convKeys[i].replace(/_/g, ' '));
+    }
+    var convSummary = convPresent === 0
+      ? 'none of the ' + convKeys.length + ' Google built for AI surfaces'
+      : convPresent + '/' + convKeys.length + ' live (' + convLive.join(', ') + ')' +
+        (convGap.length ? '; missing ' + convGap.join(', ') : '');
+    if (!hasVariants) convSummary += ' — no variants in this feed, so the variant pair is not counted';
+
     var pillars = [
-      { key: 'identity', label: 'Identity & trust', score: clamp(sIdentity), weight: 1.2,
+      { key: 'conversational', label: 'Conversational attributes', score: clamp(convScore), weight: 2.4,
+        summary: convSummary },
+      { key: 'identity', label: 'Identity & trust', score: clamp(sIdentity), weight: 1.4,
         summary: idGaps().length ? 'gaps: ' + idGaps().join(', ') : 'GTIN, brand, price, availability all present' },
       { key: 'titles', label: 'Title anatomy', score: clamp(sTitles), weight: 1.6,
         summary: 'avg ' + titles.avg + ' chars — ' + (META ? 'Meta window is 25–65 (truncates ~65)' : 'MASK window is 80–120') },
@@ -614,18 +661,14 @@
         summary: descriptions.pct + '% coverage, avg ' + descriptions.avg + ' chars' },
       { key: 'attributes', label: 'Attribute completeness', score: clamp(sAttrs), weight: 1.5,
         summary: weakAttrs.length ? weakAttrs.join(', ') + ', rest strong' : 'all core attributes strong' },
-      { key: 'taxonomy', label: 'Taxonomy depth', score: clamp(sTax), weight: 1.0,
+      { key: 'taxonomy', label: 'Taxonomy depth', score: clamp(sTax), weight: 1.2,
         summary: 'GPC ' + taxonomy.gpcPct + '%, product_type deep on ' + taxonomy.ptDeepPct + '%' },
       { key: 'media', label: 'Media richness', score: clamp(sMedia), weight: 1.0,
         summary: media.addlAvg >= 3 ? 'multi-angle imagery on most items'
           : 'avg ' + media.addlAvg + ' additional images per item' },
-      { key: 'labels', label: 'Label architecture', score: clamp(sLabels), weight: 0.9,
-        summary: weakestLabel && weakestLabel.pct < 15 ? weakestLabel.key.replace('custom_', '') + ' nearly unused'
-          : (weakestLabel && weakestLabel.pct < 50 ? weakestLabel.key.replace('custom_', '') + ' underused'
-            : 'labels 0–4 active') },
-      { key: 'ai', label: 'Agentic readiness', score: clamp(sAi), weight: 1.5,
-        summary: (convPresent === 0 ? 'no conversational attributes' : convPresent + '/6 conversational attributes')
-          + (highlights.avg < 3 ? '; highlights shallow' : '; highlights deep') }
+      { key: 'ai', label: 'Structured detail', score: clamp(sAi), weight: 1.2,
+        summary: 'highlights avg ' + highlights.avg + ' per item, product_type ' + taxonomy.ptDepthAvg +
+          ' levels deep — what an agent can quote back' }
     ];
     var wSum = 0, wTot = 0;
     for (i = 0; i < pillars.length; i++) { wSum += pillars[i].score * pillars[i].weight; wTot += pillars[i].weight; }
@@ -682,9 +725,16 @@
         detail: 'Non-HTTPS imagery risks fetch failures and disapprovals.', count: C(me.img - me.https) });
     }
     if (convPresent === 0) {
-      issues.push({ sev: 'warn', code: 'conv-missing',
-        title: 'No conversational attributes in the feed',
-        detail: 'question_and_answer, document_link, related_product, item_group_title, variant_option and popularity_rank are absent — the 2026 differentiator set for conversational and agentic surfaces, submitted via a supplemental data source.',
+      // the heaviest pillar at zero is the single biggest thing standing between this feed
+      // and the top of the ladder, so it is stated as a gap, not an aside
+      issues.push({ sev: 'crit', code: 'conv-missing',
+        title: 'None of Google’s conversational attributes are in the feed',
+        detail: convGap.join(', ') + ' are all absent. These are the only fields in the specification whose stated purpose is AI comprehension — Google ships them so “customers discover information about your products across AI-driven surfaces, like AI Mode in Search” — and they carry the heaviest weight in this score. They are optional, never affect product approval, and go in through a supplemental data source or the Merchant API.',
+        count: C(n) });
+    } else if (convGap.length) {
+      issues.push({ sev: 'warn', code: 'conv-partial',
+        title: convPresent + ' of ' + convKeys.length + ' conversational attributes live',
+        detail: 'Missing: ' + convGap.join(', ') + '. Coverage is what scores, not presence — an attribute on a slice of the catalogue answers questions for that slice only.',
         count: C(n) });
     }
     if (has('mpn') && apct('mpn') < 5 && apct('gtin') >= 95) {
@@ -742,12 +792,13 @@
         evidence: descriptions.pct + '% coverage · avg ' + descriptions.avg + ' chars vs 300+ target',
         brief: { client: client, task: 'Tachyon description enrichment — ' + fmtK(thin) + ' SKUs', cat: 'data' } });
     }
-    if (convPresent < 3) {
+    if (convPresent < convKeys.length) {
       recs.push({ impact: 3, effort: 'M', service: 'Conversational attributes supplemental feed', tachyon: true,
-        title: 'Ship conversational attributes via a supplemental feed',
-        detail: 'Generate question_and_answer, item_group_title, variant_option and popularity_rank with Tachyon and submit as a supplemental data source — the 2026 conversational-surface differentiator.',
-        evidence: convPresent + '/6 conversational attributes present · product_highlight avg ' + highlights.avg + ' per item',
-        brief: { client: client, task: 'Conversational attributes supplemental feed — ' + convPresent + '/6 live today', cat: 'data' } });
+        title: 'Ship ' + (convGap.length === convKeys.length ? 'conversational attributes' : convGap.join(', ')) + ' via a supplemental feed',
+        detail: 'Generate the missing attributes with Tachyon and submit them as a supplemental data source joined on id (or through the Merchant API). They are optional and never affect approval status, and they are the heaviest single input to this score — the one set of fields Google built for AI Mode and agentic surfaces.',
+        evidence: convPresent + '/' + convKeys.length + ' live' + (convLive.length ? ' (' + convLive.join(', ') + ')' : '') +
+          ' · conversational pillar ' + Math.round(convScore) + '/100' + (hasVariants ? '' : ' · no variants, so the variant pair is not counted'),
+        brief: { client: client, task: 'Conversational attributes supplemental feed — ' + convPresent + '/' + convKeys.length + ' live today', cat: 'data' } });
     }
     if (has('pattern') && apct('pattern') < 60) {
       recs.push({ impact: 2, effort: 'M', service: 'Tachyon visual attribute harvest', tachyon: true,
@@ -822,6 +873,14 @@
       media: media,
       highlights: highlights,
       labels: labels,
+      // MEASURED, NOT SCORED. Custom labels are a bidding and reporting tool — Google's spec
+      // says the values "won't be shown to customers" — so they carry no weight in an
+      // AI-readiness score. The reading is still returned, and Label Guard owns the detail.
+      labelArchitecture: { score: Math.round(sLabels), scored: false,
+        why: 'custom labels are campaign filters for bidding and reporting — never shown to shoppers, never read by an AI surface',
+        weakest: weakestLabel ? weakestLabel.key : null },
+      conversational: { present: convPresent, of: convKeys.length, live: convLive, gap: convGap,
+        hasVariants: hasVariants, score: Math.round(convScore) },
       taxonomy: taxonomy,
       pipeline: pipeline,
       issues: issues,

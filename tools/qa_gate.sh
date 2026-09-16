@@ -138,6 +138,13 @@ else
   echo "   ✗ dossier-tiles harness FAILED — see node tools/test_dossiertiles.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d2/7: Feed Lab AI-readiness model (conversational weighting, labels unscored)"
+if node tools/test_feedlab.mjs >/dev/null 2>&1; then
+  echo "   ✓ conversational attributes lead the score; custom labels never move it"
+else
+  echo "   ✗ Feed Lab model harness FAILED — see node tools/test_feedlab.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3e/7: overlay engine (URL-string classification + feed collector)"
 if node tools/test_overlays.mjs >/dev/null 2>&1; then
   echo "   ✓ overlay types read off the image_link URL; collector counts hold"

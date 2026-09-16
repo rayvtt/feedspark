@@ -157,14 +157,52 @@ engine's own comments. Worker-side validation on PUT: must have `score.pillars`,
 
 | Pillar | Weight | Measures |
 |---|---|---|
-| Identity & trust | 1.2 | id, brand, gtin\|mpn, price, availability, condition coverage |
+| **Conversational attributes** | **2.4** | mean COVERAGE of Google's six — `question_and_answer`, `document_link`, `related_product`, `item_group_title`, `variant_option`, `popularity_rank`. The variant pair is dropped from the denominator on a feed with no `item_group_id` |
 | Title anatomy | **1.6** | 0.40 length (full credit 80–150 chars) + 0.40 MASK coverage + 0.20 hygiene (dups/ALL-CAPS) |
-| Descriptions | 1.3 | 0.5 coverage + 0.3 depth (≥300 chars) + 0.2 uniqueness |
 | Attribute completeness | 1.5 | weighted coverage — color/size/item_group_id ×1.2, material/gender/age_group ×1, pattern ×0.8 |
-| Taxonomy depth | 1.0 | 0.5 GPC (coverage × depth/4) + 0.5 product_type (coverage × depth ≥3 share) |
+| Identity & trust | 1.4 | id, brand, gtin\|mpn, price, availability, condition coverage |
+| Descriptions | 1.3 | 0.5 coverage + 0.3 depth (≥300 chars) + 0.2 uniqueness |
+| Taxonomy depth | 1.2 | 0.5 GPC (coverage × depth/4) + 0.5 product_type (coverage × depth ≥3 share) |
+| Structured detail | 1.2 | 0.55 structured richness (highlights per item, product_type depth) + 0.45 description depth — what an agent can quote back |
 | Media richness | 1.0 | 0.4 image coverage + 0.4 min(addl imgs/3, 1) + 0.2 https |
-| Label architecture | 0.9 | labels 0–4 coverage with diversity sanity (one value on 100% of rows scores low) |
-| Agentic readiness | **1.5** | 0.30 conversational attrs + 0.25 desc depth + 0.20 structured richness + 0.15 identity + 0.10 MASK — **the headline gap pillar** |
+| ~~Label architecture~~ | **0 — measured, not scored** | still read and returned as `labelArchitecture`, and owned in full by Label Guard |
+
+### Why this model (Ray, 16 Sep 2026)
+
+*"Label architecture that involves custom labels is not necessarily usable for AI, so I don't know
+what's in there … include the most important factor for AI readiness, probably the conversational
+attribute that Google mentioned — when you fix this, obviously fix Feed Lab as well."*
+
+- **Custom labels left the score.** Google's specification for `[custom_label_0-4]`
+  ([answer 6324473](https://support.google.com/merchants/answer/6324473)) says they exist to
+  "create specific filters to use in your Performance Max, Shopping, or Demand Gen campaigns …
+  for reporting and bidding", and states plainly: **"The information you include in this attribute
+  won't be shown to customers."** A field no surface ever reads cannot be evidence of readiness for
+  those surfaces. The reading is not lost — it still comes back on `labelArchitecture`, both pages
+  print it as *measured, not scored* with the reason, and `/labels` owns the detail.
+- **Conversational attributes became the heaviest pillar.** They are the only fields in the spec
+  whose stated purpose is AI comprehension: Google ships them
+  ([answer 17085370](https://support.google.com/merchants/answer/17085370)) so "customers discover
+  information about your products across AI-driven surfaces, like AI Mode in Search". They are
+  optional, never affect approval, and go in via a supplemental data source or the Merchant API.
+  Search Engine Land's reporting on
+  [AI shopping and the feed](https://searchengineland.com/ai-shopping-product-feed-page-484060)
+  puts the same set alongside the non-negotiable basics (valid GTIN, accurate title, price and
+  availability matching the live site, clean image, brand, correct category) — which is why
+  identity and taxonomy went up too.
+- **Scored on coverage, not presence.** `question_and_answer` on 3% of the catalogue is a pilot,
+  not a capability.
+- **The ceiling is deliberate.** At ×2.4 the rest of the model tops out at **79.3**, so a feed
+  carrying none of the attributes Google built for agentic surfaces cannot read as *Agentic-ready*.
+- **No double counting.** The old "Agentic readiness" pillar folded the conversational six in
+  alongside identity and MASK, which both diluted them and counted other pillars twice. It is now
+  "Structured detail" and reads only highlights, product_type depth and description depth.
+
+Measured on live feeds the day it shipped: Superdry GB 73 → **59** (Tier 3 → Tier 2), Monsoon GB
+68 → **56** — both at 0/6 conversational attributes. The drop is the finding, not a regression.
+Harness: `tools/test_feedlab.mjs` (in qa_gate / presync / validate) pins the weighting, the
+coverage rule, the variant exclusion, the ceiling, and that emptying every custom label moves the
+headline by exactly nothing.
 
 | Total | Tier | Label |
 |---|---|---|

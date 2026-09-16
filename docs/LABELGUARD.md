@@ -635,6 +635,20 @@ each finding quotes and links its source.
   and not counted above"). Measured on the live Superdry GB feed: 99.7% of products before,
   81.0% after, with 4,858 products across 1,136 values correctly set aside. Every group is
   labelled *different products* or *variants of one product*.
+- **A repeatable attribute is read across EVERY column it occupies** (Ray, 16 Sep 2026: *"I
+  don't think a highlight quality scan is accurate because when I look inside Monsoon Shopping
+  UK, each product has at least four to five highlights, so why is it now showing as zero
+  point?"*). He was right. Monsoon GB ships four repeated `<g:product_highlight>` elements per
+  item; the Feed Lab XML parser expands them to `g:product_highlight`, `(2)`, `(3)`, `(4)`; and
+  the quality read resolved ONE column, saw one value, and fired *"fewer than 2 highlights"* on
+  100% of the catalogue — scoring the attribute 0/100 off a feed that meets the spec. The
+  collector now joins every slot column (plus any `|||` form) back into the list the rules
+  already split on, so no rule changed, and length is measured **per value** rather than across
+  four glued together. Each row prints what it counted — *"read across 10 columns — 4.1 values
+  per product"* — because a count nobody can check is a count nobody should trust. Live Monsoon
+  GB: `g:product_highlight` **0 → 91.1**, content quality **79.2 → 91.4**, 4.1 highlights per
+  product. Without a header the collector keeps the old single-column behaviour exactly, and
+  the harness pins both paths.
 - **The scan shows its progress** (Ray, same day: *"ensure this scanning is high quality and
   takes as long as needed, you don't need to rush it — allow the user to see a progress bar"*).
   Nothing is sampled or cut short: every product is scored. `qualityRun` hands its caller a
