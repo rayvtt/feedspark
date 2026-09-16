@@ -5673,7 +5673,7 @@
     {
       "name": "…tmmcp: ref hours replace on re-read, keep when the window rolled past",
       "file": "cloudflare/feedspark-deck/src/tmmcp.js",
-      "pattern": "export function mergeHours(hours, sum, now)",
+      "pattern": "export function mergeHours(hours, sum, now",
       "pr": 399,
       "min": 1
     },

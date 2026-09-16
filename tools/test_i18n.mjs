@@ -56,7 +56,9 @@ const wsrc = readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', 
 const wk = /const I18N_KEEP = (\[[\s\S]*?\]);/.exec(wsrc);
 t('worker carries I18N_KEEP identical to the engine KEEP list', !!wk && JSON.stringify(eval(wk[1])) === JSON.stringify(I.KEEP));
 t('the translation route is owner-gated', /path === '\/api\/i18n'[\s\S]{0,200}realOwner\(env, request\)/.test(wsrc));
-t('the widget is injected only for the real owner', /if \(realOwner\(env, request\)\) html = inject\(html, LANGW\);/.test(wsrc));
+t('the widget is injected only for the real owner', /realOwner\(env, request\)\) html = inject\(html, LANGW\b/.test(wsrc));
+t('…and LANGW is injected from nowhere else, so the gate cannot be bypassed by a second call site',
+  (wsrc.match(/inject\([^)]*\bLANGW\b/g) || []).length === 1);
 t('one KV key per language (no per-string KV traffic)', /const LK = 'i18n:' \+ lang;/.test(wsrc) && !/i18n:vi:' \+/.test(wsrc));
 const widget = readFileSync(new URL('../docs/lang_widget.html', import.meta.url), 'utf8');
 t('widget never touches inputs / textareas / contenteditable / data-ed fields', /textarea,input,select,option/.test(widget) && /\[contenteditable="true"\]/.test(widget) && /\[data-ed\]/.test(widget));
