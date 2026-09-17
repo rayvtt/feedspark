@@ -6841,6 +6841,54 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "soloModal('tle-scrim'); tleScrim.classList.add('on')",
       "min": 1
+    },
+    {
+      "name": "Workflow: 'Draft in Gmail' CCs the account's AM (Steven Opuni via Ray, 17 Sep 2026: 'Would it be possible for \"Draft in GMail\" button to automatically CC the AM of the account in the email draft?')",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function ccParam(clients)",
+      "min": 1
+    },
+    {
+      "name": "Workflow: never CC yourself — you are the AM on the account you are briefing",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(a.email===me)return;",
+      "min": 1
+    },
+    {
+      "name": "Workflow: the CC helper is accountAm(), NOT amOf() — the page already has an amOf(client)->AM name that the AM filter, workload panel and timeline call",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function accountAm(client)",
+      "min": 1
+    },
+    {
+      "name": "Workflow: the CC line states which of the three honest cases you are in (address / no address on file / you are the AM)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "no address on file",
+      "min": 1
+    },
+    {
+      "name": "Workflow: the CC line refreshes when /api/hours lands, so a composer opened before the hours arrive still carries the copy",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "document.addEventListener('fcc-hours',function()",
+      "min": 1
+    },
+    {
+      "name": "Access: an AM NAME resolves to an ADDRESS against the access directory + known addresses, and returns null rather than guessing <name>@feedspark.com",
+      "file": "cloudflare/feedspark-deck/src/access.js",
+      "pattern": "export function amEmail(name, opts)",
+      "min": 1
+    },
+    {
+      "name": "Worker: /api/hours serves the resolved AM address beside the AM name",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "amEmail: r ? amAddr(r.am) : null",
+      "min": 1
+    },
+    {
+      "name": "Workflow: soloModal is bridged as window.FCCSolo for openers in another <script> block (the cockpit tuner)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "window.FCCSolo = soloModal",
+      "min": 1
     }
   ]
 }
