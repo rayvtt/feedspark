@@ -969,6 +969,15 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
 
   eq('highlights: fewer than 2 caught', snap.attrs.product_highlight.rules['count-min'].n, 2);
   eq('highlights: the same highlight twice caught', snap.attrs.product_highlight.rules['dupe-in'].n, 1);
+  // HOW MANY HIGHLIGHTS SPOTTED, bucketed (Ray, 17 Sep 2026: "showcase what you have done ...
+  // how many highlights you have spotted within 100. So recommendation is from 6 to 10") —
+  // descriptive, alongside (never replacing) Google's own count-min/count-low rules above.
+  // 2 products at 0-1, 1 at 2-3, 7 at 4-5 (4 highlights each), none reach the 6-10 house target.
+  eq('highlights: distribution buckets one product into exactly one bucket',
+    snap.attrs.product_highlight.hlDist, { '0-1': 20, '2-3': 10, '4-5': 70, '6-10': 0, '11+': 0 });
+  eq('QSPEC: only product_highlight (the one multi:true attribute) carries a distribution',
+    LG.QSPEC.filter((q) => q.multi).map((q) => q.key), ['product_highlight']);
+  ok('an attribute without the multi flag never carries hlDist', snap.attrs.title.hlDist === undefined);
   eq('GPC: a bare numeric id is valid taxonomy', snap.attrs.google_product_category.rules['not-taxonomy'].n, 0);
   eq('GPC: a bare top-level name is shallow, not invalid', snap.attrs.google_product_category.rules.shallow.n, 1);
   eq('product_type: chevrons without spaces caught', snap.attrs.product_type.rules.sep.n, 1);
@@ -1011,6 +1020,9 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   const ptPart = q.parts.filter((p) => p.key === 'product_type')[0];
   eq('qualityScore: avgDepth rides through attrQuality onto the part the page renders',
     [gpcPart.avgDepth, ptPart.avgDepth], [2.7, 2.5]);
+  const hlPart = q.parts.filter((p) => p.key === 'product_highlight')[0];
+  eq('qualityScore: hlDist rides through attrQuality onto the part the page renders',
+    hlPart.hlDist, { '0-1': 20, '2-3': 10, '4-5': 70, '6-10': 0, '11+': 0 });
   ok('qualityScore: weighted by attribute, not a flat mean',
     Math.abs(q.score - q.parts.reduce((s, p) => s + p.score * p.w, 0) / q.parts.reduce((s, p) => s + p.w, 0)) < 0.06);
   ok('qualityScore: verdict names the band', q.verdict.pill.indexOf('Spec violations') >= 0 && q.verdict.line.length > 40);
@@ -1117,6 +1129,29 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
     /averaging <b>' \+ r\.avgDepth[\s\S]{0,20}levels deep' : ''\) \+ '\.<\/p>/.test(page));
   ok('worker: the PUT sanitizer allow-lists avgDepth like it does cols/perProduct',
     /avgDepth: q\.depth \?/.test(wk));
+}
+
+{
+  // ---- highlight-count distribution in Content Quality (Ray, 17 Sep 2026: "showcase what
+  // you have done ... how many highlights you have spotted within 100. So recommendation is
+  // from 6 to 10") — descriptive, alongside Google's own count-min/count-low rules, the same
+  // way PT Guard layers its 5-depth standard on top of Google's base spec.
+  console.log('\n— content quality: highlight-count distribution (6–10 house target) —');
+  const page = readFileSync(new URL('../docs/FeedSpark_GoldenRecord.html', import.meta.url), 'utf8');
+  const wk = readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', import.meta.url), 'utf8');
+  eq('engine: HL_BUCKETS is exported so the page and worker read the same shape',
+    LG.HL_BUCKETS, ['0-1', '2-3', '4-5', '6-10', '11+']);
+  eq('engine: HL_STD names Ray’s 6–10 house target', LG.HL_STD, { min: 6, max: 10 });
+  ok('page: a stacked bar renders the distribution, width-based (not the vertical .thist histogram)',
+    /class="hlbar"/.test(page) && /width:. \+ pct \+ '%;background:/.test(page));
+  ok('page: the 6–10 bucket is called out as the house target in the legend',
+    /\(our target\)/.test(page));
+  ok('page: honestly separates Google’s stated recommendation from FeedSpark’s own target',
+    /Google.s stated 4–6/.test(page) && /FeedSpark.s own house target/.test(page));
+  ok('worker: the PUT sanitizer allow-lists hlDist with fixed bucket keys, each independently clamped',
+    /hlDist: \(q\.multi && a\.hlDist/.test(wk) && /HL_BUCKETS\.reduce/.test(wk));
+  ok('worker: imports HL_BUCKETS from the engine rather than hard-coding the bucket keys twice',
+    /HL_BUCKETS \} from ".\/labelguard\.js"/.test(wk));
 }
 
 {

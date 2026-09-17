@@ -1456,6 +1456,27 @@ export function findMultiCols(headerRow) {
 const joinSlots = (row, idx) => (idx || []).map((i) => String(row[i] == null ? '' : row[i]).trim())
   .filter((x) => x).join('|||');
 
+// How many VALUES a repeatable attribute carries per product, bucketed — "how many
+// highlights spotted" (Ray, 17 Sep 2026: "showcase what you have done ... which is how
+// many highlights you have spotted within 100. So recommendation is from 6 to 10"). Google's
+// own spec (answer 9216100) is already enforced as rules above (fail <2, warn <4); this is a
+// separate, descriptive read of the SHAPE of the catalogue against Ray's own house target —
+// the same layering PT Guard uses for its 5-depth standard alongside Google's base spec.
+export const HL_BUCKETS = ['0-1', '2-3', '4-5', '6-10', '11+'];
+export const HL_STD = { min: 6, max: 10 };
+function hlBucket(n) {
+  if (n < 2) return '0-1';
+  if (n < 4) return '2-3';
+  if (n < 6) return '4-5';
+  if (n <= 10) return '6-10';
+  return '11+';
+}
+function hlDistOf(buckets, filled) {
+  const pct = {};
+  for (const b of HL_BUCKETS) pct[b] = Math.round(((buckets[b] || 0) / filled) * 1000) / 10;
+  return pct;
+}
+
 const EG_CAP = 4, DUPE_CAP = 200000, GRP_CAP = 2000, ID_CAP = 4, EG_LEN = 140;
 export function qualityCollector(cols, opts) {
   const o = opts || {};
@@ -1475,7 +1496,7 @@ export function qualityCollector(cols, opts) {
   }
   const acc = {};
   for (const q of specs) {
-    const r = { key: q.key, filled: 0, sum: 0, vals: 0, min: Infinity, max: 0, rules: {}, dupes: 0, over: false, depthSum: 0 };
+    const r = { key: q.key, filled: 0, sum: 0, vals: 0, min: Infinity, max: 0, rules: {}, dupes: 0, over: false, depthSum: 0, hlBuckets: {} };
     for (const rule of q.rules) r.rules[rule.id] = { n: 0, eg: [] };
     // a duplicate is a GROUP, not a list of strings (Ray, 16 Sep 2026, reading Monsoon GB:
     // four unrelated titles under "title duplicated across products" reads as a false
@@ -1518,6 +1539,9 @@ export function qualityCollector(cols, opts) {
           if (L < a.min) a.min = L;
           if (L > a.max) a.max = L;
         }
+        // how many VALUES this product carries, bucketed — one product, one bucket, so the
+        // distribution reads as a share of the catalogue rather than a share of values
+        if (q.multi) { const b = hlBucket(lens.length); a.hlBuckets[b] = (a.hlBuckets[b] || 0) + 1; }
         // taxonomy depth — the same " > "/"/" chevron read Product Type Guard's
         // depthProfile and Feed Lab's gpcDepthAvg already use, so this number can never
         // disagree with either (Ray, 17 Sep 2026: bring PT depth into Content Quality too)
@@ -1608,6 +1632,10 @@ export function qualityCollector(cols, opts) {
           // how many chevron levels the taxonomy value carries, on average — GPC and
           // product_type only (the two attributes with a hierarchical path shape)
           avgDepth: q.depth && a.filled ? Math.round((a.depthSum / a.filled) * 10) / 10 : undefined,
+          // the SHARE of products at each highlight-count bucket — "how many highlights
+          // you have spotted" — read against Ray's own 6–10 house standard, alongside
+          // (never replacing) Google's stated 2-minimum/4-recommended rules above
+          hlDist: q.multi && a.filled ? hlDistOf(a.hlBuckets, a.filled) : undefined,
         };
       }
       return Object.assign({ t: Date.now(), rows, attrs }, meta || {});
@@ -1638,7 +1666,7 @@ export function attrQuality(key, a) {
   }
   broken.sort((x, y) => y.cost - x.cost);
   return { key, score: Math.max(0, Math.round((100 - pen) * 10) / 10), broken,
-    cols: a.cols, perProduct: a.perProduct, avgDepth: a.avgDepth,
+    cols: a.cols, perProduct: a.perProduct, avgDepth: a.avgDepth, hlDist: a.hlDist,
     filled: a.filled, cov: a.cov, avgLen: a.avgLen, minLen: a.minLen, maxLen: a.maxLen,
     fails: broken.filter((b) => b.sev === 'fail').length,
     warns: broken.filter((b) => b.sev === 'warn').length };

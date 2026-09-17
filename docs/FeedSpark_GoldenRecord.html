@@ -312,6 +312,15 @@ window.addEventListener('load',restore);
   .thb.win i{background:linear-gradient(180deg,var(--orange),var(--orange-deep))}
   .thb .thn{font-size:10px;font-weight:900;font-variant-numeric:tabular-nums}
   .thb .thl{font-size:9.5px;font-weight:800;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  /* highlight-count distribution — a horizontal stacked bar (width-based, not the vertical
+     .thist histogram above) so segment sizes are never at the mercy of flex column height
+     resolution: a fixed-height row of width:X% segments always lays out exactly as measured */
+  .hlbar{display:flex;height:14px;border-radius:100px;overflow:hidden;border:1px solid var(--line);margin-top:9px}
+  .hlbar i{display:block;height:100%}
+  .hlkey{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:8px;font-size:11px;font-weight:800;color:var(--ink-2)}
+  .hlkey span{display:inline-flex;align-items:center;gap:5px}
+  .hlkey i{width:9px;height:9px;border-radius:3px;display:inline-block}
+  .hlkey .win{color:var(--ink)}
   [data-theme=dark] .ptrack,[data-theme=dark] .mseg .mt{background:#191C24}
   @media(max-width:900px){.score-grid{grid-template-columns:1fr}.ladder{flex-wrap:wrap}.lad{flex:1 1 44%}}
   /* content quality: how good the free-text data is, per Google's own spec pages */
@@ -1983,6 +1992,7 @@ window.addEventListener('load',restore);
           });
         }
         if (r.key === 'title') h += titleAnatomy(k);   // the anatomy of what those rules just judged
+        if (r.key === 'product_highlight') h += highlightProfile(k, r);   // the count distribution behind count-min/count-low
         // the spec on one line, what was measured on another — as one ·-chain this wrapped
         // into an unreadable run of grey text
         h += '<p class="qz-foot"><span>' + esc(r.spec) +
@@ -2125,6 +2135,10 @@ window.addEventListener('load',restore);
   var AUD_CAP = 30000;
   var MASKS = [['brand', 'Brand', '#1A365D'], ['material', 'Material', '#7A5AA8'], ['fit', 'Fit', '#2F6FB0'],
     ['colour', 'Colour', 'var(--orange-deep)'], ['use', 'Use-case', '#15803D']];
+  // how many highlights a product carries, bucketed — Google's spec (fail <2, warn <4 above)
+  // stays the rule; this is the descriptive shape of the catalogue against Ray's OWN house
+  // target of 6–10 (17 Sep 2026), the same layering PT Guard uses for its 5-depth standard
+  var HL_BUCKETS = [['0-1', '0–1'], ['2-3', '2–3'], ['4-5', '4–5'], ['6-10', '6–10'], ['11+', '11+']];
   var LADDER = [{ t: 1, l: 'Foundational', r: '< 40' }, { t: 2, l: 'Structured', r: '40–59' },
     { t: 3, l: 'Enriched', r: '60–79' }, { t: 4, l: 'Agentic-ready', r: '80+' }];
   function airCol(s) { return s < 40 ? 'var(--risk)' : (s < 60 ? 'var(--orange-deep)' : (s < 80 ? 'var(--orange)' : 'var(--good)')); }
@@ -2349,6 +2363,34 @@ window.addEventListener('load',restore);
         return '<div class="thb' + (win ? ' win' : '') + '" title="' + fmt(b.n) + ' titles at ' + esc(b.b) + ' characters' + (win ? ' — the MASK window' : '') + '">' +
           '<span class="thn">' + fmt(b.n) + '</span><i data-h="' + hh + '"></i><span class="thl">' + esc(b.b) + '</span></div>';
       }).join('') + '</div></div>';
+  }
+  // how many highlights were actually spotted, per product — the distribution behind the
+  // count-min/count-low rules above. Google's spec (2324473/9216100) states a 2-minimum and
+  // recommends 4–6, up to a ceiling of 100; Ray's own house target, layered on top the same
+  // way PT Guard layers its 5-depth standard on Google's base spec, is 6–10 (17 Sep 2026:
+  // "showcase what you have done ... how many highlights you have spotted within 100 ...
+  // recommendation is from 6 to 10").
+  var HL_COL = { '0-1': 'var(--risk)', '2-3': '#F5A623', '4-5': '#F2D9AE', '6-10': 'var(--good)', '11+': 'var(--navy)' };
+  function highlightProfile(k, r) {
+    var d = r.hlDist; if (!d) return '';
+    var idealPct = d['6-10'] || 0;
+    // width-based, not the vertical .thist histogram above — a fixed-height row of width:X%
+    // segments lays out exactly as measured, with no flex-column height resolution to fight
+    return '<div class="tanat"><div class="tanat-h">Highlights per product' +
+      '<span>Google’s ceiling is 100 · their own stated minimum is 2, recommended 4–6' +
+      (r.perProduct != null ? ' · this feed averages <b>' + r.perProduct + '</b> per product' : '') + '</span></div>' +
+      '<div class="hlbar" title="' + HL_BUCKETS.map(function (b) { return (d[b[0]] || 0) + '% carry ' + b[1] + ' highlights'; }).join(' · ') + '">' +
+      HL_BUCKETS.map(function (b) {
+        var pct = d[b[0]] || 0;
+        return pct > 0 ? '<i style="width:' + pct + '%;background:' + HL_COL[b[0]] + '"></i>' : '';
+      }).join('') + '</div>' +
+      '<div class="hlkey">' + HL_BUCKETS.map(function (b) {
+        var win = b[0] === '6-10';
+        return '<span' + (win ? ' class="win"' : '') + '><i style="background:' + HL_COL[b[0]] + '"></i>' + esc(b[1]) +
+          (win ? ' (our target)' : '') + ' <b>' + (d[b[0]] || 0) + '%</b></span>';
+      }).join('') + '</div>' +
+      '<p class="qz-empty" style="margin-top:8px"><b>' + idealPct + '%</b> of products sit in our recommended <b>6–10</b> highlight range' +
+      ' — FeedSpark’s own house target, above Google’s stated 4–6, for the fuller set of selling points AI and agentic shopping surfaces read.</p></div>';
   }
   // bars animate on the frame after paint, the way the Feed Lab cards do
   function airAnimate() {
