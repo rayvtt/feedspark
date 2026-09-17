@@ -634,6 +634,31 @@ filter (case, multi-word AND, display-label matching on Type, per-tab fields) an
 particular that 220 rows total 275 h while only 200 are painted, that the split is never merged, and
 that an empty list produces no totals row at all rather than a row of zeroes.
 
+### Decimal alignment in the hours columns
+
+> Ray, 17 Sep 2026: *"why these numbers are not aligned vertically, you kept making this issue btw."*
+
+`table.st td.num` was already `text-align:right` with `font-variant-numeric:tabular-nums`, so every
+digit is the same width and every cell's *right edge* lines up — that part was never the bug.
+Right-aligning stops there, though: it lines cells up on their **last character**, not on the ones
+digit, and `hrs()` prints a bare `1` for a whole hour but `0.5` for a half — three characters
+shorter. Stack those in one column and the "1" sits two character-widths to the right of where a
+"1.00" would put its ones digit, so the column reads crooked even though every cell is individually
+right-aligned correctly. It is the same shape of bug wherever an hours column stacks rows: the
+Tasks table, the ⊞ breakdown table (twice — the flat and the nested-split views), the Tickets and
+Accounts tables, and each one's totals footer.
+
+`hrsCell(n)` fixes every value to the quarter-hour grain the data is actually booked in
+(`.00`/`.25`/`.50`/`.75` via `.toFixed(2)`), so every value in a stacked column is the same width and
+the decimal points land in the same place — `0.50` under `1.00` under `0.75`. `hrs()` itself is
+unchanged and still used for one-off figures that never stack against a sibling (KPI tiles, chart
+labels, drawer stats, tooltips), where trimming the trailing zero reads better and there is no
+column to misalign. The `·` placeholder for an absent/zero value is deliberately a different glyph
+and does not try to match the digit columns — it means *no hours here*, not *zero hours here*.
+
+QA: `tools/test_reporttasks.mjs` lifts `hrsCell` out of the page by name and pins the fixed-decimal
+output, then asserts every `td.num` cell that prints an hours figure calls `hrsCell` rather than the
+bare `hrs()` — so the bug can't come back one column at a time the way it kept doing.
 
 ---
 
