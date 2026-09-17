@@ -7292,6 +7292,18 @@
       "pattern": "lift('sentences')",
       "pr": 443,
       "min": 1
+    },
+    {
+      "name": "Golden Record: the PDF is ONE CLICK — no print dialog. exportPdf rasterises the SAME body.pdf layout with html2canvas + jsPDF and saves directly, the old print dialog is the fallback if the CDN can't be reached — Ray, 17 Sep 2026: 'PDF download for Golden Record to shre to client still not seamless btw'",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function loadPdfLibs()",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: a self-contained ⬇ HTML download of the client-facing scorecard, zero dialog, clones the live page verbatim so it can never drift",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function exportHtml(k)",
+      "min": 1
     }
   ]
 }

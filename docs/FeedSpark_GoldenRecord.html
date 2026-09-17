@@ -465,6 +465,14 @@ window.addEventListener('load',restore);
      responsive rules (the print viewport is 703px, so they would otherwise fire and give a
      phone layout on paper), and frame the document with its header and footer. */
   body.pdf{background:#fff!important;color:#333!important;width:960px;zoom:.7327;margin:0 auto}
+  /* ⬇ PDF, one-click (Ray, 17 Sep 2026: "PDF download for Golden Record to shre to client still
+     not seamless btw" — window.print()'s native dialog was the remaining friction, not the
+     layout). html2canvas needs a REAL pixel size to rasterise, and CSS `zoom` support in
+     screenshot libraries is inconsistent, so the capture pass reuses every .pdf rule above
+     (same hidden chrome, same desktop-form responsive rules) but at its NATURAL 960px width —
+     .pdf.pdfshot (two classes; specificity beats .pdf alone) cancels the print zoom back to 1
+     for the instant the canvas is taken, then the page is restored immediately. */
+  body.pdf.pdfshot{zoom:1}
   body.pdf .topbar,body.pdf .demo-banner,body.pdf .hero,body.pdf .cat:not(#sec-detail),body.pdf .footmark,
   body.pdf #theme-tgl,body.pdf .det-actions,body.pdf .at-act,body.pdf #askp-slot,body.pdf #profp-slot,
   body.pdf .refseg,body.pdf #sec-detail .cat-h,body.pdf #sec-detail .cat-sub,
@@ -1220,7 +1228,8 @@ window.addEventListener('load',restore);
       '<div class="det-head"><h3>' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + '</h3>' + chChip() +
       '<span class="det-actions" style="margin-left:auto">' +
       '<button class="btn" id="det-csv" title="Download this scorecard as CSV">⬇ CSV</button>' +
-      '<button class="btn" id="det-pdf" title="Print-ready client presentation of this scorecard — save as PDF from the print dialog">⬇ PDF</button>' +
+      '<button class="btn" id="det-pdf" title="One-click client-ready PDF of this scorecard — downloads directly, no print dialog">⬇ PDF</button>' +
+      '<button class="btn" id="det-html" title="The same client-facing document as a self-contained HTML file — opens in any browser, no FCC login">⬇ HTML</button>' +
       '<button class="btn" id="det-ack" title="Adopt the current coverage as the new known-good">✓ Accept as known-good</button>' +
       '<button class="btn" id="det-pdp" title="Sample this feed\'s product pages and see which Golden Record gaps the site itself can fill">🔎 Scan PDPs</button>' +
       '<button class="btn pri" id="det-scan">⟳ Rescan now</button></span></div>';
@@ -1523,6 +1532,7 @@ window.addEventListener('load',restore);
     if ($('det-ack')) $('det-ack').onclick = function () { ack(k, $('det-ack')); };
     if ($('det-csv')) $('det-csv').onclick = function () { exportCsv(k); };
     if ($('det-pdf')) $('det-pdf').onclick = function () { exportPdf(k); };
+    if ($('det-html')) $('det-html').onclick = function () { exportHtml(k); };
     var rq = $('ref-yday'), rb = $('ref-base');
     if (rq) rq.onclick = function () {
       if (rq.disabled || REFMODE === 'yday') return;
@@ -2466,22 +2476,121 @@ window.addEventListener('load',restore);
   window.addEventListener('beforeprint', function () { if (!document.body.classList.contains('pdf')) preparePdf(); });
   window.addEventListener('afterprint', restorePdf);
 
-  function exportPdf(k) {
-    var d = CACHE[k]; if (!d || !d.snapshot) return;
-    var p = parts(k), s = d.snapshot;
+  // both exports (⬇ PDF, ⬇ HTML) share the SAME branded header — one place states what the
+  // client sees at the top of either document
+  function pdfHead(p, s) {
     var when = new Date(s.t).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
     var score = goldenScore(s.attrs, profileForC(p.client));
-    $('print-head').innerHTML =
-      '<div class="ph-brand">Feed<span>Spark</span></div>' +
+    return '<div class="ph-brand">Feed<span>Spark</span></div>' +
       '<div class="ph-title">Golden Record scorecard — ' + esc(dispClient(p.client)) + ' · ' + esc(p.mkt.toUpperCase()) + ' (Google Shopping)</div>' +
       '<div class="ph-meta">Attribute completeness vs Google’s product data specification · ' + fmt(s.rows) + ' products · scanned ' + esc(when) +
       (score != null ? ' · Golden Record score ' + score + '%' : '') + '</div>';
+  }
+  function pdfFilename(p, s, ext) {
+    return 'FeedSpark_GoldenRecord_' + dispClient(p.client).replace(/\W+/g, '') + '_' + p.mkt.toUpperCase() + '_' + new Date(s.t).toISOString().slice(0, 10) + '.' + ext;
+  }
+  // the OLD path (browser print, native dialog) — kept for a bare Ctrl+P (beforeprint above)
+  // and as the fallback ⬇ PDF itself falls back to when the CDN libraries can't be reached
+  function printPdf(k) {
+    var d = CACHE[k]; if (!d || !d.snapshot) return;
+    var p = parts(k), s = d.snapshot;
+    $('print-head').innerHTML = pdfHead(p, s);
     var t0 = document.title;
     document.title = 'FeedSpark Golden Record — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase() + ' — ' + new Date(s.t).toISOString().slice(0, 10);
     var done = function () { document.title = t0; window.removeEventListener('afterprint', done); };
     window.addEventListener('afterprint', done);
     preparePdf();      // lay out + measure, then size the sheet to the whole scorecard
     window.print();
+  }
+
+  /* ---------------- ⬇ PDF, one click (Ray, 17 Sep 2026: "PDF download for Golden Record to
+     shre to client still not seamless btw") ------------------------------------------------
+     window.print() always opens the browser's own dialog — there is no way for page JS to skip
+     it, so "Save as PDF" stayed a manual step (and could default to a physical printer). This
+     rasterises the SAME body.pdf layout with html2canvas and packages it into a real PDF with
+     jsPDF, both loaded from cdnjs on first use — a genuine one-click download, no dialog. If
+     either library can't be reached, printPdf() (the old dialog-based route) is the fallback,
+     so the button always produces SOMETHING rather than failing silently. */
+  var PDF_LIBS = null;
+  function loadPdfLibs() {
+    if (PDF_LIBS) return PDF_LIBS;
+    function loadScript(src, already) {
+      return new Promise(function (res, rej) {
+        if (already()) return res();
+        var el = document.createElement('script');
+        el.src = src;
+        el.onload = function () { res(); };
+        el.onerror = function () { rej(new Error('failed to load ' + src)); };
+        document.head.appendChild(el);
+      });
+    }
+    PDF_LIBS = Promise.all([
+      loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', function () { return !!window.html2canvas; }),
+      loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', function () { return !!(window.jspdf && window.jspdf.jsPDF); }),
+    ]).catch(function (e) { PDF_LIBS = null; throw e; });   // a transient CDN miss is retried next click, not remembered forever
+    return PDF_LIBS;
+  }
+  function exportPdf(k) {
+    var d = CACHE[k]; if (!d || !d.snapshot) return;
+    var p = parts(k), s = d.snapshot;
+    $('print-head').innerHTML = pdfHead(p, s);
+    var btn = $('det-pdf'), oldTxt = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Preparing PDF…'; }
+    loadPdfLibs().then(function () {
+      preparePdf();
+      document.body.classList.add('pdfshot');           // full-resolution for the capture, see CSS
+      return new Promise(function (res) { requestAnimationFrame(function () { requestAnimationFrame(res); }); });
+    }).then(function () {
+      // html2canvas measures text with its OWN font-loading state, separate from the browser's
+      // live layout — capturing before the Lato webfont finishes loading races the two apart
+      // and words run together with no space between them (a real bug caught in QA: the bold
+      // 900-weight headings, hidden until preparePdf()/pdfshot reveal them, hadn't even
+      // triggered their OWN font fetch yet by the time a bare document.fonts.ready resolved —
+      // it only reflects fonts already requested). Force every weight this page actually uses.
+      if (!document.fonts) return null;
+      return Promise.all(['400', '700', '900'].map(function (w) { return document.fonts.load(w + ' 16px Lato'); }))
+        .then(function () { return document.fonts.ready; });
+    }).then(function () {
+      return window.html2canvas(document.body, { scale: 2, backgroundColor: '#ffffff', useCORS: true });
+    }).then(function (canvas) {
+      document.body.classList.remove('pdfshot');
+      restorePdf();
+      var wMM = 210, hMM = Math.round((wMM * canvas.height / canvas.width) * 10) / 10;
+      var jsPDF = window.jspdf.jsPDF;
+      var pdf = new jsPDF({ unit: 'mm', format: [wMM, hMM] });
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, wMM, hMM);
+      pdf.save(pdfFilename(p, s, 'pdf'));
+      if (btn) { btn.disabled = false; btn.textContent = oldTxt; }
+    }).catch(function () {
+      document.body.classList.remove('pdfshot');
+      restorePdf();
+      if (btn) { btn.disabled = false; btn.textContent = oldTxt; }
+      printPdf(k);   // the CDN was unreachable — the print dialog still gets the client a PDF
+    });
+  }
+
+  /* ---------------- ⬇ HTML: the same client-facing document, self-contained ---------------
+     A genuinely zero-dialog alternative to ⬇ PDF — one file, opens in any browser, no FCC
+     login needed. Clones the WHOLE page (same <style> block the live view uses, so it can
+     never drift from what /golden itself renders), strips every <script> (a static snapshot
+     should not try to call the FCC's own APIs) and app-only chrome via the existing .pdf
+     print rules, laid out at natural size via .pdfshot rather than the print zoom — the same
+     combination exportPdf's capture pass uses, so both exports show the identical document. */
+  function exportHtml(k) {
+    var d = CACHE[k]; if (!d || !d.snapshot) return;
+    var p = parts(k), s = d.snapshot;
+    $('print-head').innerHTML = pdfHead(p, s);
+    var doc = document.documentElement.cloneNode(true);
+    Array.prototype.forEach.call(doc.querySelectorAll('script'), function (el) { el.parentNode.removeChild(el); });
+    doc.querySelector('body').className = 'pdf pdfshot';
+    var title = doc.querySelector('title') || doc.querySelector('head').appendChild(document.createElement('title'));
+    title.textContent = 'FeedSpark Golden Record — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase();
+    var html = '<!doctype html>\n' + doc.outerHTML;
+    var blob = new Blob([html], { type: 'text/html' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = pdfFilename(p, s, 'html');
+    a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
   }
 
   /* ---------------- CSV export ---------------- */
