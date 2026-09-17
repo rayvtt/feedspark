@@ -685,6 +685,26 @@ each finding quotes and links its source.
   *"Measured: average length 47 chars (47–47) · averaging 4 levels deep"* — in both the
   broken-rule state and the "every rule passes" state. A bare numeric GPC id or an unseparated
   product_type value reads as depth 1, matching how Feed Lab already treats them.
+- **How many highlights spotted, out of 100** (Ray, 17 Sep 2026: *"showcase what you have done ...
+  which is how many highlights you have spotted within 100. So recommendation is from 6 to 10"*).
+  Google's own spec (answer 9216100) is a 2-minimum with 4–6 recommended, up to a ceiling of 100 —
+  already enforced above as the `count-min` (fail, <2) and `count-low` (warn, <4) rules. This is a
+  separate, purely descriptive read of the SHAPE of the catalogue against Ray's own house target of
+  6–10, layered on top of Google's base spec the same way Product Type Guard layers its 5-depth
+  standard on top of Google's own required attributes — never replacing the base rule, never
+  inventing a pass/fail threshold Ray didn't give (he named a range, not a target coverage %, so the
+  card states the observed share rather than judging it ✓/⚠). `qualityCollector` buckets every
+  product's highlight COUNT (not each highlight value) into one of five bands — `0-1`, `2-3`, `4-5`,
+  `6-10`, `11+` — and reports the SHARE of the catalogue in each (`hlDist`), rounded to one decimal.
+  Rendered on the `product_highlight` row as a colour-ramped, WIDTH-based stacked bar (`.hlbar`) —
+  deliberately not the page's existing vertical `.thist`/`.thb` title-length histogram, which turned
+  out to render every bar at 0px height (a pre-existing, unrelated CSS bug: `.thb` never gets an
+  explicit height, so its children's percentage-height styles can't resolve — left alone here since
+  fixing it properly is a separate task and out of scope for this ask) — with a legend calling out
+  `6–10 (our target)` in green and a caption stating the observed share, honestly distinguishing
+  Google's stated 4–6 from FeedSpark's own 6–10. `hlDist` is allow-listed through the `/api/golden/
+  quality` PUT sanitizer with its five fixed bucket keys, each independently clamped, the same
+  discipline as `cols`/`perProduct`/`avgDepth`.
 
 ## 9.5 PDP recovery scan — "missing data can be sourced from the PDP" (Ray, 14 Sep 2026)
 

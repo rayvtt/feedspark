@@ -6993,6 +6993,24 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "hrsCell(",
       "min": 12
+    },
+    {
+      "name": "labelguard: highlight-count distribution (0-1/2-3/4-5/6-10/11+ buckets) computed per product, alongside Google's count-min/count-low rules (Ray, 17 Sep 2026: 'showcase what you have done ... how many highlights you have spotted within 100. So recommendation is from 6 to 10')",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export const HL_BUCKETS = ['0-1', '2-3', '4-5', '6-10', '11+'];",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: the product_highlight row shows a colour-ramped stacked bar of the highlight-count distribution, with 6-10 called out as FeedSpark's house target",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function highlightProfile(k, r)",
+      "min": 1
+    },
+    {
+      "name": "Worker: /api/golden/quality PUT sanitizer allow-lists hlDist with fixed bucket keys, each independently clamped",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "hlDist: (q.multi && a.hlDist && typeof a.hlDist === 'object') ? HL_BUCKETS.reduce((o, b) => {",
+      "min": 1
     }
   ]
 }

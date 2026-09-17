@@ -52,7 +52,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { QSPEC, qualityScore, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY } from "./labelguard.js";
+import { QSPEC, qualityScore, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -3959,7 +3959,12 @@ async function goldenRoutes(env, request, url) {
         cols: q.multi ? Math.max(1, Math.min(50, parseInt(a.cols, 10) || 1)) : undefined,
         perProduct: q.multi ? Math.max(0, Math.round((Number(a.perProduct) || 0) * 10) / 10) : undefined,
         // taxonomy depth (GPC / product_type only) — same allow-list discipline as cols/perProduct
-        avgDepth: q.depth ? Math.max(0, Math.round((Number(a.avgDepth) || 0) * 10) / 10) : undefined };
+        avgDepth: q.depth ? Math.max(0, Math.round((Number(a.avgDepth) || 0) * 10) / 10) : undefined,
+        // highlight-count distribution (product_highlight only) — fixed bucket keys, each
+        // independently clamped so a client cannot widen the shape of the store
+        hlDist: (q.multi && a.hlDist && typeof a.hlDist === 'object') ? HL_BUCKETS.reduce((o, b) => {
+          o[b] = Math.max(0, Math.min(100, Math.round((Number(a.hlDist[b]) || 0) * 10) / 10)); return o;
+        }, {}) : undefined };
     }
     if (!Object.keys(attrs).length) return json({ error: 'no known free-text attribute in this feed' }, 400);
     // the AI-Readiness reading the page computes on the SAME stream (Ray, 16 Sep 2026) —
