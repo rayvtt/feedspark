@@ -446,6 +446,19 @@ prep for client demo").
   demo mode is on), and the same 🎭 demo mode as
   §5b (industry aliases, gr-demo sessionStorage key) for client-facing screen shares. The
   policy page is cited in the hero and footer.
+- **Each estate card collapses on its own** (Ray, 17 Sep 2026: *"Golden record in the dossier
+  scorecard; allow button to expand or collapse 'all' or individual brand option"*) — a large
+  book means a long scroll of market rows for brands nobody is looking at right now. Clicking a
+  card's header (a whole 36px row — the chevron, the brand, and a summary that stays even when
+  the card is shut: score, market count, and any `N req` / `N crit` / `N warn`, so folding a
+  brand away can never hide a live alert) folds just that one card; **⊖ Collapse all / ⊕ Expand
+  all** in the section header does every card at once — the label is always the action still
+  available, matching the same toggle language as the AI Quote finance tracker's row detail. The
+  choice is a viewing preference for this screen, so it lives on the device (`localStorage
+  gr-collapse`) like `gr-ref`/`gr-demo`, never shared team state, and survives a reload. The
+  `?client=` deep-link the dossier's Golden Record snapshot and the other guard pages use opens a
+  folded card before scrolling to and outlining it — a link that exists to be looked at can never
+  land on a card closed shut.
 
 Engine unit tests: `node tools/test_labelguard.mjs` (runs in `validate.yml` on every PR).
 

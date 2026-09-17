@@ -1109,6 +1109,28 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   eq('etaWords: seconds', [etaWords(4), etaWords(23)], ['a few seconds left', '~25s left']);
   eq('etaWords: minutes', etaWords(200), '~3m 15s left');
 
+  // ---- the estate scorecard collapses per brand, and all at once (Ray, 17 Sep 2026: "Golden
+  // record in the dossier scorecard; allow button to expand or collapse 'all' or individual
+  // brand option"). Behaviour is covered end-to-end by the browser QA in the scratchpad; these
+  // are the structural guarantees a future refactor should not lose silently.
+  console.log('\n— estate scorecard: per-brand + collapse-all —');
+  ok('a device-scoped preference key, like the sibling gr-ref/gr-demo toggles',
+    /localStorage\.getItem\('gr-collapse'/.test(page) && /localStorage\.setItem\('gr-collapse'/.test(page));
+  ok('Array.from, not Array.prototype.slice — a Set has no indices to slice',
+    /Array\.from\(COLLAPSED\)/.test(page) && !/Array\.prototype\.slice\.call\(COLLAPSED\)/.test(page));
+  ok('a collapsed card still carries its score, market count and req/crit/warn — folding a brand can never hide a live alert',
+    /function estSummary/.test(page) && /est-flag crit/.test(page) && /est-flag warn/.test(page));
+  ok('the header click toggles ONE brand; the section button toggles every one',
+    /function toggleCollapse/.test(page) && /collapseAllEl\.onclick/.test(page));
+  ok('the global button always names the action still available (⊖ collapse vs ⊕ expand), not a fixed label',
+    /⊖ Collapse all/.test(page) && /⊕ Expand all/.test(page));
+  ok('a mixed state collapses the rest first, rather than picking arbitrarily',
+    /var allDown = clients\.length > 0 && clients\.every/.test(page));
+  ok('the ?client= deep-link opens a folded card via a cross-scope bridge, rather than landing on it shut',
+    /window\.__grExpand/.test(page) && /target\.classList\.contains\('collapsed'\)/.test(page));
+  ok('the header row is a real tap target on the phone floor (padding, not just line-height)',
+    /\.est-hd\{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 0/.test(page));
+
   // ---- the pinned scorecard header (Ray, 16 Sep 2026: "when using the Golden Score card and
   // scrolling down to review the feed scorecard, make sure this section stays frozen when
   // scrolling down"). Three things have to hold together or the header silently stops working.

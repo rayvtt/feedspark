@@ -6322,7 +6322,7 @@
     {
       "name": "Golden Record: ?client= jumps to that brand's estate card",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "est-card\" data-client="
+      "pattern": ".est-card[data-client]"
     },
     {
       "name": "Golden Record content quality: a DUPLICATE is reported as a GROUP — the repeated value, how many products carry it and which ones (Ray 16 Sep 2026, reading Monsoon GB: four unrelated titles under 'title duplicated across products' read as a wrong finding; the count was right, the evidence was unreadable)",
@@ -6767,6 +6767,36 @@
       "pattern": "'not on the board'",
       "min": 1,
       "pr": 425
+    },
+    {
+      "name": "Golden Record estate scorecard: each brand card collapses on its own header (Ray 17 Sep 2026: 'allow button to expand or collapse \"all\" or individual brand option')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function toggleCollapse",
+      "min": 1
+    },
+    {
+      "name": "Golden Record estate scorecard: a collapsed card still carries score, market count and req/crit/warn — folding a brand can never hide a live alert",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function estSummary",
+      "min": 1
+    },
+    {
+      "name": "Golden Record estate scorecard: Collapse all / Expand all in the section header, the label always naming the action still available",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function collapseAllBtn",
+      "min": 1
+    },
+    {
+      "name": "Golden Record estate scorecard: the collapse choice is a device preference (localStorage gr-collapse), never shared team state",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "localStorage.getItem('gr-collapse'",
+      "min": 1
+    },
+    {
+      "name": "Golden Record estate scorecard: the ?client= deep-link opens a folded card via the cross-scope bridge before scrolling to and outlining it",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "window.__grExpand",
+      "min": 1
     }
   ]
 }

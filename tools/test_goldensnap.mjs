@@ -122,7 +122,9 @@ ok('…and is expired by the refresh', /PSTAMP\.kw=PSTAMP\.gr=0/.test(CC));
 ok('a failed refresh keeps the last good data', /GRC\|\|\{feeds:\{\}\}/.test(CC));
 
 console.log('\n-- /golden honours ?client= like its sibling guards --');
-ok('estate cards carry their client', /est-card" data-client="/.test(GR));
+// the literal string used to run straight through; the per-brand collapse (17 Sep 2026) now
+// splices a conditional " collapsed" class in between the two halves — same markup, split source
+ok('estate cards carry their client', /class="est-card[\s\S]{0,60}" data-client="/.test(GR));
 ok('it reads ?client=', /\[\?&\]client=\(\[\^&\]\+\)/.test(GR));
 ok('it scrolls to the brand', /scrollIntoView/.test(GR));
 ok('the name is folded', /replace\(\/\[\^a-z0-9\]\/g,''\)/.test(GR));
