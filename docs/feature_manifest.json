@@ -6841,6 +6841,60 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "soloModal('tle-scrim'); tleScrim.classList.add('on')",
       "min": 1
+    },
+    {
+      "name": "Task Manager: a second and third NESTED split — AdWords nests rows, so the extra dims never become the series",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function groupNested",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the nested fold keeps its own children, so “Other” is never a dead end",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "function nodesAt",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: flattenNested marks leaves, so a pasted table cannot double every total",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function flattenNested",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the nested view is SVG like every other form, so PNG + tooltips work unchanged",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function nestBars",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: a hand-set Type lives OFF the record, so the 2x-daily MCP re-pull cannot overwrite it",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function typeOf",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: a rename in the reports database marks a Type override stale rather than dropping or silently keeping it",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "stale: !!was && was !== String(t.title",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the Type override overrides the FIELD, so search, grouping, chart and headline all follow it",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function decorateTypes",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: “Read from the title” DELETES the override rather than freezing the derived value",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function setType",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the export marks which Types were set by hand, so a round trip cannot launder a judgement",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "Type set by hand",
+      "min": 1
     }
   ]
 }
