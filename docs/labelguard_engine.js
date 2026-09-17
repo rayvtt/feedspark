@@ -1342,7 +1342,7 @@ export const QSPEC = [
         why: '“Don’t duplicate data within the attribute or data you have already submitted in other attributes.”',
         test: (v) => { const a = multiVals(v).map((x) => x.toLowerCase()); return new Set(a).size < a.length; } },
     ] },
-  { key: 'google_product_category', doc: 6324436, w: 2, label: 'Google product category',
+  { key: 'google_product_category', doc: 6324436, w: 2, depth: true, label: 'Google product category',
     spec: 'a predefined Google taxonomy value — the numeric ID or the full path, not both',
     rules: [
       // the full taxonomy is ~5,500 values and shipping it into the page would cost more
@@ -1357,7 +1357,7 @@ export const QSPEC = [
         why: '“Use the most specific category possible” — “broad categories such as Electronics are often too vague for effective automated bidding.”',
         test: (v) => !/^\d{2,8}$/.test(v) && v.split(/\s>\s/).length < 3 },
     ] },
-  { key: 'product_type', doc: 6324406, w: 2, max: 750, label: 'Product type',
+  { key: 'product_type', doc: 6324406, w: 2, max: 750, depth: true, label: 'Product type',
     spec: '0–750 characters · your own taxonomy, levels separated by “ > ”',
     rules: [
       { id: 'len-over', sev: 'fail', label: 'over 750 characters',
@@ -1475,7 +1475,7 @@ export function qualityCollector(cols, opts) {
   }
   const acc = {};
   for (const q of specs) {
-    const r = { key: q.key, filled: 0, sum: 0, vals: 0, min: Infinity, max: 0, rules: {}, dupes: 0, over: false };
+    const r = { key: q.key, filled: 0, sum: 0, vals: 0, min: Infinity, max: 0, rules: {}, dupes: 0, over: false, depthSum: 0 };
     for (const rule of q.rules) r.rules[rule.id] = { n: 0, eg: [] };
     // a duplicate is a GROUP, not a list of strings (Ray, 16 Sep 2026, reading Monsoon GB:
     // four unrelated titles under "title duplicated across products" reads as a false
@@ -1518,6 +1518,10 @@ export function qualityCollector(cols, opts) {
           if (L < a.min) a.min = L;
           if (L > a.max) a.max = L;
         }
+        // taxonomy depth — the same " > "/"/" chevron read Product Type Guard's
+        // depthProfile and Feed Lab's gpcDepthAvg already use, so this number can never
+        // disagree with either (Ray, 17 Sep 2026: bring PT depth into Content Quality too)
+        if (q.depth) a.depthSum += pathDepth(v);
         for (const rule of q.rules) {
           if (rule.dupe) continue;
           let hit = false;
@@ -1601,6 +1605,9 @@ export function qualityCollector(cols, opts) {
           // highlights" checkable rather than something to take on trust
           cols: q.multi ? (idxOf[q.key].length || 1) : undefined,
           perProduct: q.multi && a.filled ? Math.round((a.vals / a.filled) * 10) / 10 : undefined,
+          // how many chevron levels the taxonomy value carries, on average — GPC and
+          // product_type only (the two attributes with a hierarchical path shape)
+          avgDepth: q.depth && a.filled ? Math.round((a.depthSum / a.filled) * 10) / 10 : undefined,
         };
       }
       return Object.assign({ t: Date.now(), rows, attrs }, meta || {});
@@ -1631,7 +1638,7 @@ export function attrQuality(key, a) {
   }
   broken.sort((x, y) => y.cost - x.cost);
   return { key, score: Math.max(0, Math.round((100 - pen) * 10) / 10), broken,
-    cols: a.cols, perProduct: a.perProduct,
+    cols: a.cols, perProduct: a.perProduct, avgDepth: a.avgDepth,
     filled: a.filled, cov: a.cov, avgLen: a.avgLen, minLen: a.minLen, maxLen: a.maxLen,
     fails: broken.filter((b) => b.sev === 'fail').length,
     warns: broken.filter((b) => b.sev === 'warn').length };

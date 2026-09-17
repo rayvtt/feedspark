@@ -672,6 +672,19 @@ each finding quotes and links its source.
   *never* as `content-length`, which truncates a decoded stream). A sheet export declares no
   size, and a feed that outruns its declared size can't be trusted either, so both fall back to
   an indeterminate bar that says *size not declared* rather than inventing a percentage.
+- **Taxonomy depth for GPC and product_type** (Ray, 17 Sep 2026: *"bringing PT depth (seperated
+  by >) in the Content Quality for product type as well pls and GPC"*). Content Quality already
+  had a `shallow`/`single-level` warn rule for these two attributes (fewer than three levels, no
+  hierarchy at all), but that only says whether a path clears a threshold — not how deep the
+  catalogue actually goes. Both attributes now carry `depth: true` on their `QSPEC` entry, and
+  the collector accumulates each value's chevron/slash depth via the SAME `pathDepth` read
+  Product Type Guard's `depthProfile` and Feed Lab's `gpcDepthAvg` already use — so this number
+  can never disagree with either sibling surface. `avgDepth` (one decimal) rides through
+  `attrQuality`/`qualityScore` alongside `avgLen`, is allow-listed through the `/api/golden/
+  quality` PUT sanitizer the same way `cols`/`perProduct` are, and prints on the row's detail —
+  *"Measured: average length 47 chars (47–47) · averaging 4 levels deep"* — in both the
+  broken-rule state and the "every rule passes" state. A bare numeric GPC id or an unseparated
+  product_type value reads as depth 1, matching how Feed Lab already treats them.
 
 ## 9.5 PDP recovery scan — "missing data can be sourced from the PDP" (Ray, 14 Sep 2026)
 
