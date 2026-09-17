@@ -75,6 +75,8 @@ jobs:
         run: node tools/test_hoursbadge.mjs
       - name: Playbook panel harness (practices, the 10–20% collection band, weak attributes)
         run: node tools/test_playbook_panel.mjs
+      - name: One-modal-at-a-time guard (every overlay opener routes through soloModal)
+        run: node tools/test_modalsolo.mjs
       - name: Excel export harness (XLSX container + the Task Manager's three tabs)
         run: node tools/test_xlsx.mjs
       - name: Shipped-panel harness (build log slide-over, first-run silence, close-the-tab prompt)

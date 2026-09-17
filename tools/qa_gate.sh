@@ -104,6 +104,12 @@ else
 fi
 
 echo "── qa-gate 3d2c/7: Playbook panel (practices, the 10–20% collection band, weak attributes)"
+if node tools/test_modalsolo.mjs >/dev/null 2>&1; then
+  echo "   ✓ one-modal-at-a-time guard intact"
+else
+  echo "   ✗ modal-solo harness FAILED — see node tools/test_modalsolo.mjs"; FAIL=1
+fi
+
 if node tools/test_playbook_panel.mjs >/dev/null 2>&1; then
   echo "   ✓ landing vs stalling vs not-doing hold, 10–20% highlights, the retired module stays retired"
 else
