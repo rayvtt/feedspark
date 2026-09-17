@@ -380,7 +380,47 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   counts) because the printable column is 703px: `body.pdf` re-shows them, and
   **`tools/check_grpdf.js`** (Playwright, in presync) is the tripwire — it renders the REAL
   PDF, counts its pages, and measures AT THE PRINTABLE WIDTH, because measuring at desktop
-  width would pass on exactly the bug it exists to catch. **Profile edits re-score the whole brand instantly** (Ray, 16 Sep 2026): the
+  width would pass on exactly the bug it exists to catch. **⬇ PDF is one click, no dialog** (Ray,
+  17 Sep 2026: *"PDF download for Golden Record to shre to client still not seamless btw — shall
+  we also add html download while you fix pdf download?"*): the layout fix above solved
+  fidelity, but `⬇ PDF` still called `window.print()`, so "Save as PDF" stayed a manual step in
+  the browser's own dialog (and could default to a physical printer) — page JS has no way to
+  skip that dialog. `exportPdf` now rasterises the SAME `body.pdf` layout with `html2canvas`
+  and packages it into a real file with `jsPDF` (both loaded from cdnjs on first use, ~400KB
+  combined), then calls `.save()` — a genuine one-click download. The capture happens at the
+  page's NATURAL 960px width rather than the print zoom (a new `.pdf.pdfshot{zoom:1}` override
+  cancels it) since screenshot libraries' support for CSS `zoom` is inconsistent; the final PDF
+  page is sized to the captured image's own aspect ratio, so it stays the SAME one-continuous-
+  sheet document the print path already produces. **The real bug QA caught**: `html2canvas`
+  measures text against its OWN font-loading state, separate from the browser's live layout —
+  capturing before the Lato webfont's bold 900-weight (used only by headings hidden until
+  `preparePdf()` reveals them, so its fetch hadn't even started) finished loading ran every
+  word together with no space, readable in the visual QA pass but easy to miss in a structural
+  test; `exportPdf` now force-loads all three weights (`document.fonts.load()`) before
+  capturing. If the CDN can't be reached, the OLD dialog-based route is the fallback — the
+  button always produces something, never fails silently — and a failed load is never
+  remembered forever, so the next click retries fresh rather than assuming the CDN is still
+  down. **⬇ HTML** sits beside it: a genuinely zero-dialog alternative that clones the whole
+  page (same `<style>` block the live view uses, so it can never drift from what `/golden`
+  itself renders), strips every `<script>` (a static snapshot shouldn't call the FCC's own
+  APIs) and lays out at the same natural size — one self-contained file, opens in any browser,
+  no FCC login needed. Harness: the one-click-download and CDN-fallback blocks in
+  `tools/check_grpdf.js` (stubbed `html2canvas`/`jsPDF` pin the glue — button → libs → capture →
+  package → save → restore — a fidelity check on the real libraries is the separate PDF-content
+  QA pass, not a structural assertion). **⚡ Scan whole estate now scans content quality too**
+  (Ray, 17 Sep 2026: *"scan whole estate > will also scan content quality too for all
+  estate"*): the estate rescan already force-rescanned every feed's score, labels, product
+  types and attribute coverage in one gviz pass, but left content quality to per-feed manual
+  "Analyse Content Quality" clicks — a freshly force-rescanned estate could still show a stale
+  or entirely missing quality reading. Each feed in the `#scan-all` loop now runs `qualityRun()`
+  — the SAME in-browser stream + PUT the per-feed button uses — immediately after its
+  `/api/golden/scan` call, so a feed scanned from the estate button reads identically to one
+  scanned by hand; one feed's content-quality write failing never halts the rest of the
+  estate, matching the existing score-scan step's own silent-continue. Harness:
+  `tools/test_grscanall.mjs` (a genuine trap caught while writing it: the boot-time GET that
+  loads a feed's already-stored quality reading and the qualityRun PUT that saves a fresh one
+  share the exact same `/api/golden/quality` path — a test stub that doesn't check the HTTP
+  method miscounts the page's own unrelated boot read as a scan-all-triggered write). **Profile edits re-score the whole brand instantly** (Ray, 16 Sep 2026): the
   page live-derives every estate score from that same stored cov map + the *current* profile
   (`rescoreEstate` — cov stores `null` for absent vs fill % for present, exactly the attrs
   shape `goldenScore` needs), so saving a profile re-runs the dial, every market on the

@@ -138,7 +138,12 @@ const QUALITY = {
   }, PROBE);
   const onScreen = await readStyles();
 
-  await page.click('#det-pdf');
+  // The layout/CSS checks below are about preparePdf()'s print styling, unchanged by the
+  // 17 Sep 2026 one-click rework (#det-pdf now rasterises via html2canvas+jsPDF instead of
+  // calling window.print() — see the dedicated one-click-download block further down).
+  // preparePdf() lives in the page's own closure, not on window, so it's reached the same
+  // way a bare Ctrl+P reaches it: the beforeprint listener the page registers on window.
+  await page.evaluate(() => window.dispatchEvent(new Event('beforeprint')));
   await page.waitForTimeout(500);
   // MEASURE AT THE PRINTABLE WIDTH. The page's own responsive rules key on the VIEWPORT,
   // and when printing the viewport IS the page box (186mm = 703px) — so measuring at
@@ -207,7 +212,91 @@ const QUALITY = {
     getComputedStyle(document.querySelector('.topbar')).display !== 'none'));
 
   ok('no page errors', errs.length === 0, errs);
+
+  console.log('\n-- one-click PDF download (Ray, 17 Sep 2026: "still not seamless") --');
+  {
+    // html2canvas/jsPDF are real ~200KB CDN libraries — stubbed here so the tripwire pins the
+    // GLUE (button -> libs -> rasterise -> package -> save -> restore), not the libraries'
+    // own rendering, which a fidelity check does separately against the real thing.
+    await page.evaluate(() => {
+      window.__pdfSaved = null;
+      window.html2canvas = () => Promise.resolve({ width: 960, height: 1200, toDataURL: () => 'data:image/jpeg;base64,AAAA' });
+      window.jspdf = { jsPDF: function (opts) { this.opts = opts; this.addImage = () => {}; this.save = (name) => { window.__pdfSaved = name; }; } };
+    });
+    await page.click('#det-pdf');
+    await page.waitForTimeout(800);
+    const r = await page.evaluate(() => ({
+      saved: window.__pdfSaved,
+      stillCapturing: document.body.classList.contains('pdf') || document.body.classList.contains('pdfshot'),
+      chromeBack: getComputedStyle(document.querySelector('.topbar')).display !== 'none',
+      btnRestored: document.getElementById('det-pdf').textContent,
+    }));
+    ok('a one click produces a downloaded PDF file — no print dialog', !!r.saved && /\.pdf$/.test(r.saved), r.saved);
+    ok('the capture classes are removed once the download completes — no lingering print state', !r.stillCapturing);
+    ok('the app is back to normal immediately (no waiting on window.print’s afterprint)', r.chromeBack);
+    ok('the button label is restored', r.btnRestored === '⬇ PDF', r.btnRestored);
+  }
+
+  console.log('\n-- ⬇ HTML: the same document, self-contained, zero dialog --');
+  {
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('#det-html'),
+    ]);
+    const fs = require('fs');
+    const os = require('os');
+    const tmp = require('path').join(os.tmpdir(), 'grhtml-' + Date.now() + '.html');
+    await download.saveAs(tmp);
+    const html = fs.readFileSync(tmp, 'utf8');
+    fs.unlinkSync(tmp);
+    ok('downloads as .html, not .htm or extensionless', /\.html$/.test(download.suggestedFilename()), download.suggestedFilename());
+    ok('starts with a doctype — opens correctly standalone', /^<!doctype html>/i.test(html));
+    ok('carries no <script> — a static snapshot never calls the FCC\'s own APIs', !/<script/i.test(html));
+    ok('body is laid out chrome-free at natural size (pdf pdfshot)', /<body class="pdf pdfshot"/.test(html), html.match(/<body[^>]*>/));
+    ok('the branded header is baked in', /Golden Record scorecard/.test(html) && /Reiss/.test(html));
+    ok('the scorecard content itself is present', /Required.{0,5}every product/.test(html));
+  }
+
+  console.log('\n-- CDN unreachable: the old print dialog is the fallback, never a silent failure --');
+  {
+    const page2 = await browser.newPage();
+    const errs2 = [];
+    page2.on('pageerror', (e) => errs2.push(e.message));
+    await page2.route('**/labels/engine.js', (r) => r.fulfill({ path: ENGINE_LG, contentType: 'text/javascript' }));
+    await page2.route('**/feedlab/engine.js', (r) => r.fulfill({ path: ENGINE_FA, contentType: 'text/javascript' }));
+    await page2.route('**/html2canvas*', (r) => r.abort());
+    await page2.route('**/jspdf*', (r) => r.abort());
+    await page2.addInitScript(({ ATTRS, QUALITY }) => {
+      const NOW = Date.now();
+      const cov = {}, attrs = {};
+      ATTRS.forEach((k, i) => { cov[k] = 100; attrs[k] = { present: true, filled: 900, cov: 100 }; });
+      const feed = { client: 'Reiss', mkt: 'gb', status: 'ok', t: NOW, rows: 1000, score: 88, ai: { n: 0, of: 6 }, cov, reqMissing: [] };
+      const real = window.fetch.bind(window);
+      window.fetch = (url, opts) => {
+        const u = String(url);
+        const j = (o) => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(o) });
+        if (/engine\.js/.test(u)) return real(url, opts);
+        if (u.includes('/api/golden/estate')) return j({ feeds: { 'Reiss|gb': feed }, alerts: {} });
+        if (u.includes('/api/golden/quality')) return j({ quality: QUALITY });
+        if (u.includes('/api/golden/snapshot')) return j({ snapshot: { t: NOW, rows: 1000, client: 'Reiss', market: 'gb', attrs }, baseline: null, daily: null });
+        if (u.includes('/api/golden/profile')) return j({ defaults: {}, overrides: {}, industryMap: {} });
+        if (u.includes('/api/golden/alertcfg')) return j({ on: false, to: '' });
+        if (u.includes('/api/labels/askdraft')) return j({ cfg: { to: {} }, asked: {} });
+        return j({});
+      };
+      window.__printed = false;
+      window.print = function () { window.__printed = true; };
+    }, { ATTRS, QUALITY });
+    await page2.goto(PAGE);
+    await page2.waitForTimeout(1200);
+    await page2.click('#det-pdf');
+    await page2.waitForTimeout(800);
+    const printed = await page2.evaluate(() => window.__printed);
+    ok('the CDN being unreachable falls back to the print dialog, not a dead button', printed === true, printed);
+    await page2.close();
+  }
+
   await browser.close();
   if (fail) { console.log('\n✗ Golden Record PDF tripwire: ' + fail + ' check(s) failed'); process.exit(1); }
-  console.log('   ✓ Golden Record PDF: one page, scorecard + content quality intact');
+  console.log('   ✓ Golden Record PDF: one page, scorecard + content quality intact, one-click download works, CDN-miss falls back');
 })().catch((e) => { console.error(e); process.exit(1); });

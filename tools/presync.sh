@@ -174,6 +174,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record scoring-profile editor (always-required roster shown, locked)"
   NODE_PATH=$(npm root -g) node tools/test_grprofile.mjs || {
     echo "✗ scoring-profile editor tripwire failed — the always-required roster went missing or became clickable"; exit 1; }
+  echo "── validating: Golden Record scan-whole-estate (score AND content quality per feed)"
+  NODE_PATH=$(npm root -g) node tools/test_grscanall.mjs || {
+    echo "✗ scan-whole-estate tripwire failed — a feed stopped getting a content-quality scan, or one failure halted the run"; exit 1; }
 else
   echo "   · playwright unavailable, skipped (run tools/test_editor.mjs before shipping editor changes)"
 fi
