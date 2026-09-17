@@ -1954,7 +1954,8 @@ window.addEventListener('load',restore);
         if (!r.broken.length) {
           h += '<p class="qz-empty">Every rule Google states for <b>g:' + esc(r.key) + '</b> passes on all ' +
             fmt(r.filled) + ' products that carry a value. Average length ' + r.avgLen + ' characters (' +
-            r.minLen + '–' + r.maxLen + ').</p>';
+            r.minLen + '–' + r.maxLen + ')' +
+            (r.avgDepth != null ? ', averaging <b>' + r.avgDepth + '</b> levels deep' : '') + '.</p>';
         } else {
           r.broken.forEach(function (b) {
             h += '<div class="qz-rule"><span class="qz-sev ' + b.sev + '">' + (b.sev === 'fail' ? 'requirement' : 'best practice') + '</span>' +
@@ -1989,7 +1990,11 @@ window.addEventListener('load',restore);
           '<span>Measured: average length <b>' + r.avgLen + '</b> chars (' + r.minLen + '–' + r.maxLen + ')' +
           // a count-based finding has to show what it counted, or it cannot be checked
           (r.perProduct ? ' · read across <b>' + r.cols + '</b> column' + (r.cols === 1 ? '' : 's') +
-            ', <b>' + r.perProduct + '</b> values per product' : '') + '</span></p></div>';
+            ', <b>' + r.perProduct + '</b> values per product' : '') +
+          // GPC / product_type only — the same chevron read PT Guard and Feed Lab already
+          // report, so this number can never disagree with either (Ray, 17 Sep 2026)
+          (r.avgDepth != null ? ' · averaging <b>' + r.avgDepth + '</b> levels deep' : '') +
+          '</span></p></div>';
       }
       h += '</div>';
     });

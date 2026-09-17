@@ -52,13 +52,16 @@ function liftPage() {
     'ticketStats', 'billVerdict', 'balanceState', 'taskBlob', 'ticketBlob',
     'CATS', 'CAT_LABEL', 'DIMS', 'BUCKET_LABEL', 'STATUS_BUCKET',
     'TAG_SEED', 'normTagSlug', 'taggable', 'ruleHits', 'tagsOf', 'decorateTags',
-    'displacement', 'rulePreview'];
+    'displacement', 'rulePreview', 'groupNested', 'flattenNested', 'NEST_CAPS',
+    'typeOf', 'decorateTypes'];
   // eslint-disable-next-line no-new-func
   const f = new Function(body + '\nreturn {' + names.join(',') + '};');
   return f();
 }
 const P = liftPage();
 const PAGE_SRC = fs.readFileSync(PAGE, 'utf8');
+const ENG = fs.readFileSync(path.join(ROOT, 'cloudflare', 'feedspark-deck', 'src', 'taskbook.js'), 'utf8');
+const SS = fs.readFileSync(path.join(ROOT, 'cloudflare', 'feedspark-deck', 'src', 'sharedstate.js'), 'utf8');
 
 // ---------------------------------------------------------------------------------------------
 // the assertion table — run against BOTH implementations
@@ -255,6 +258,110 @@ for (const qs of QUERIES) {
   eq(b, a, `page and engine agree on "${qs}"`);
 }
 // ---------------------------------------------------------------------------------------------
+// A SECOND AND THIRD SPLIT, NESTED
+//
+// Ray, 17 Sep 2026: "allow secondary and tertiary axis split as well, so you can see more granular
+// breakdown, almost like AdWord campaigns."
+//
+// AdWords nests ROWS (Campaign > Ad group > Keyword) and keeps the metrics in the columns. The
+// rules worth pinning are the ones that keep the numbers readable: the extra dimensions must not
+// become the series, children must add up to their parent EXCEPT where a multi-valued dimension
+// makes that impossible (and then it must say so), and the cross product must be capped without
+// the fold becoming a dead end.
+// ---------------------------------------------------------------------------------------------
+console.log('── a second and third split, nested');
+const NT = (o) => Object.assign({ id: 1, d: '2026-08-01', client: 'Reiss', market: 'GB', am: 'Ray',
+  title: 't', note: '', cat: 'opt', owner: 'Febin', status: 'DONE', bucket: 'done',
+  bill: 0, nonbill: 0, hours: 0, sched: 0, ticket: 0, tags: [] }, o);
+const BOOK3 = [
+  NT({ id: 1, client: 'Reiss', owner: 'Febin', cat: 'opt', bill: 4, hours: 4 }),
+  NT({ id: 2, client: 'Reiss', owner: 'Febin', cat: 'tech', bill: 1, nonbill: 1, hours: 2 }),
+  NT({ id: 3, client: 'Reiss', owner: 'Vitus', cat: 'opt', bill: 3, hours: 3 }),
+  NT({ id: 4, client: 'Monsoon', owner: 'Febin', cat: 'acct', nonbill: 5, hours: 5 }),
+  NT({ id: 5, client: 'Monsoon', owner: 'Steven', cat: 'opt', bill: 1, hours: 1, tags: ['urgent', 'technical'] }),
+];
+
+const T3 = M.groupNested(BOOK3, ['client', 'owner', 'cat']);
+eq(T3.dims, ['client', 'owner', 'cat'], 'the tree records the levels it actually used');
+eq(T3.map((x) => x.k), ['Reiss', 'Monsoon'], 'top level is biggest-hours first, like the flat chart');
+eq(T3[0].hours, 9, 'a parent carries its own total');
+eq(T3[0].kids.map((x) => x.k), ['Febin', 'Vitus'], 'and its children, also biggest-first');
+eq(T3[0].kids[0].kids.map((x) => x.k), ['opt', 'tech'], 'to a third level');
+eq(T3[0].kids.reduce((a, x) => a + x.hours, 0), T3[0].hours,
+  'CHILDREN ADD UP TO THEIR PARENT — the one thing that makes a hierarchy readable at all');
+ok(T3[0].kids[0].bill + T3[0].kids[0].nonbill === T3[0].kids[0].hours,
+  'and every node at every depth keeps its OWN billable/non-billable split, because the nesting '
+  + 'is the rows — the series is never handed to a second dimension');
+eq(T3[0].kids[0].billPct, 83.3, 'each node carries its own share, not the parent\'s');
+
+console.log('── the shape of the request is honoured, and its edges refused');
+eq(M.groupNested(BOOK3, ['client']).dims, ['client'], 'one dimension still works — nesting is opt-in');
+eq(M.groupNested(BOOK3, []).length, 0, 'no dimension yields no tree rather than a guess');
+eq(M.groupNested(BOOK3, ['total', 'client']).dims, ['client'],
+  '"Everything" is one bucket, so it is dropped rather than making a level that says nothing');
+eq(M.groupNested(BOOK3, ['owner', 'owner', 'cat']).dims, ['owner', 'cat'],
+  'a dimension repeated deeper is dropped — owner within owner is one child per parent');
+eq(M.groupNested(BOOK3, ['client', 'owner', 'cat', 'month']).dims, ['client', 'owner', 'cat'],
+  'and a fourth level is refused: three is what the view can render');
+
+console.log('── the cross product is capped, and the fold is not a dead end');
+const WIDE = [];
+for (let i = 0; i < 40; i++) WIDE.push(NT({ id: 100 + i, client: 'C' + i, owner: 'O' + (i % 3), hours: 40 - i, bill: 40 - i }));
+const TW = M.groupNested(WIDE, ['client', 'owner'], [5, 8]);
+eq(TW.length, 5, 'the level is capped');
+ok(/^Other \(36 more\)$/.test(TW[4].k), 'and the tail is named honestly, with its count');
+eq(TW.folded, 36, 'the tree reports how many were folded so the surface can say so');
+eq(TW[4].hours, WIDE.slice(4).reduce((a, x) => a + x.hours, 0),
+  'the fold carries the folded HOURS, so the column still totals the book');
+ok(TW[4].kids.length > 0,
+  'AND ITS OWN CHILDREN — folding must not turn "Other" into a dead end you cannot look inside');
+eq(TW[4].kids.reduce((a, x) => a + x.hours, 0), TW[4].hours, 'which still add up to it');
+ok(M.groupNested(WIDE, ['client']).length <= M.NEST_CAPS[0], 'the default caps apply when none are given');
+
+console.log('── where the rows CANNOT add up, it says so rather than hiding it');
+const TAGTREE = M.groupNested(BOOK3, ['client', 'tag']);
+ok(TAGTREE.multi === true,
+  'nesting through the multi-valued tag dimension sets `multi`: one task carrying two tags is '
+  + 'counted under each, so the children exceed the parent and the page must say so');
+ok(M.groupNested(BOOK3, ['client', 'owner']).multi === false,
+  'while an ordinary pair of dimensions never double-counts');
+const mon = TAGTREE.find((x) => x.k === 'Monsoon');
+eq(mon.kids.reduce((a, x) => a + x.hours, 0), 7,
+  'and the excess is real arithmetic (5 untagged + 1 urgent + 1 technical), not a rounding artefact');
+
+console.log('── flattened for the table and the export');
+const FL = M.flattenNested(T3);
+eq(FL.length, 2 + 4 + 5, 'every node appears once (2 clients, 4 client-owners, 5 leaves)');
+eq(FL[0].depth, 0, 'parents come before their children');
+eq(FL[1].depth, 1, 'in reading order');
+eq(FL[0].path, ['Reiss'], 'each row carries its full path…');
+eq(FL[2].path, ['Reiss', 'Febin', 'opt'], '…so an export can give every level its own column');
+ok(FL[0].leaf === false && FL[2].leaf === true,
+  'and marks leaves, because a pasted table that mixed parents with children would double every '
+  + 'total the moment anyone summed the column');
+eq(FL.filter((r) => r.leaf).reduce((a, r) => a + r.hours, 0), 15,
+  'the leaves alone total the book exactly once');
+
+console.log('── the page nests identically');
+for (const fn of ['groupNested', 'flattenNested']) ok(typeof P[fn] === 'function', `the page exposes ${fn}`);
+{
+  const A = M.groupNested(BOOK3.map((r) => Object.assign({}, r)), ['client', 'owner', 'cat']);
+  const B = P.groupNested(BOOK3.map((r) => Object.assign({}, r)), ['client', 'owner', 'cat']);
+  eq(P.flattenNested(B).map((r) => r.path.join('>') + '=' + r.hours),
+     M.flattenNested(A).map((r) => r.path.join('>') + '=' + r.hours),
+     'node for node, hour for hour');
+  eq(P.groupNested(BOOK3, ['client', 'tag']).multi, M.groupNested(BOOK3, ['client', 'tag']).multi,
+     'and agrees about when the rows stop adding up');
+  eq(P.NEST_CAPS, M.NEST_CAPS, 'with the same caps');
+}
+ok(/id="cdim2"/.test(PAGE_SRC) && /id="cdim3"/.test(PAGE_SRC), 'the page offers both extra splits');
+ok(/no further split/.test(PAGE_SRC), 'each defaulting to none, so the existing single split is untouched');
+ok(/function nestBars/.test(PAGE_SRC) && /viewBox/.test(PAGE_SRC),
+  'the nested view is SVG like every other form, so the PNG export and the hover tooltip work unchanged');
+ok(/Nested breakdown/.test(PAGE_SRC),
+  'and the form selector NAMES the nested reading rather than sitting greyed out on a stale label');
+
+// ---------------------------------------------------------------------------------------------
 // TAGS — the judgement layer, and the number it exists to produce
 //
 // Ray, 17 Sep 2026: "there will be a tagging system, a labeling system of which task is urgent,
@@ -394,6 +501,86 @@ eq(P.TAG_SEED.map((t) => t.slug), M.TAG_SEED.map((t) => t.slug), 'with the same 
 // Two names side by side already meant "rows naming BOTH" and must keep meaning that — it is the
 // right default and AMs rely on it. The comma is the OTHER question.
 // ---------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------
+// A HAND-SET TYPE THAT SURVIVES THE SYNC
+//
+// Ray, 17 Sep 2026: "Can Type also be edited on FCC and made changed data sticky from either tag
+// or excel import too?, because the daily report fetched from the MCP will actually overwrite?"
+//
+// He is right about the mechanism: `cat` is derived by classifyTask(title) inside normTask and
+// PACKED INTO the KV row, so every tmBookPull re-derives it. Anything written onto the record is
+// gone within about twelve hours. These assertions pin the shape that survives it.
+// ---------------------------------------------------------------------------------------------
+console.log('── a hand-set Type, and the re-pull that would have overwritten it');
+const CT = (o) => Object.assign({ id: 9, title: 'Disapprovals', cat: 'tech', client: 'Reiss',
+  bill: 1, nonbill: 0, hours: 1 }, o);
+
+ok(/cat: classifyTask\(title\)/.test(ENG) && /CATS\.indexOf\(t\.cat\)/.test(ENG),
+  'THE PREMISE: cat is derived from the title AND packed into the stored row, which is exactly '
+  + 'why an edit written onto the record cannot survive the next pull');
+
+eq(M.typeOf(CT(), {}).cat, 'tech', 'with no override the derived value stands');
+eq(M.typeOf(CT(), {}).src, 'auto', 'and says where it came from');
+eq(M.typeOf(CT(), { 9: { cat: 'opt', t: 'Disapprovals' } }).cat, 'opt', 'an override wins');
+eq(M.typeOf(CT(), { 9: { cat: 'opt', t: 'Disapprovals' } }).auto, 'tech',
+  'and keeps the derived value alongside it, so the row can say what the database reads');
+eq(M.typeOf(CT(), { 9: { cat: 'not-a-category' } }).src, 'auto',
+  'a category the engine does not know is ignored rather than rendering an empty chip');
+eq(M.typeOf(CT({ id: 0 }), { 0: { cat: 'opt' } }).src, 'auto',
+  'a row with NO task id cannot be overridden: id 0 is not an id, and every such row would '
+  + 'otherwise share the key "0" so one override would leak onto all of them');
+eq(M.tagsOf(CT({ id: 0 }), { 0: { tags: ['urgent'] } }, []).tags, [],
+  'and the same guard holds on tags, where the leak would have been just as quiet');
+
+console.log('── the re-pull, simulated');
+{
+  const before = [CT({ id: 9 })];
+  M.decorateTypes(before, { 9: { cat: 'opt', t: 'Disapprovals' } });
+  eq(before[0].cat, 'opt', 'the override is applied…');
+  // the rotation re-packs the row from scratch: cat comes back as the classifier's reading
+  const repacked = M.unpackRow(M.packRow(M.normTask(
+    { list_id: 9, title: 'Disapprovals', created_on: '2026-08-01', status: 'done', raw: { time_taken: 1 } },
+    { client: 'Reiss', market: 'GB' })), 'Reiss', 'GB', 'Ray');
+  eq(repacked.cat, 'tech', '…and the freshly pulled row carries the DERIVED value again, as Ray said');
+  M.decorateTypes([repacked], { 9: { cat: 'opt', t: 'Disapprovals' } });
+  eq(repacked.cat, 'opt',
+    'but the override is applied AFTER unpack from a store the pull never writes, so it survives');
+}
+
+console.log('── a rename in the reports database is flagged, not silently obeyed or silently dropped');
+{
+  const r = M.typeOf(CT({ title: 'Disapprovals - full account sweep' }), { 9: { cat: 'opt', t: 'Disapprovals' } });
+  eq(r.cat, 'opt', 'the override still applies — it is keyed on the id, not the wording');
+  ok(r.stale === true,
+    'but is marked STALE: dropping it silently loses a judgement, keeping it silently hides that '
+    + 'it was made about a different task name');
+  eq(M.typeOf(CT(), { 9: { cat: 'opt', t: 'Disapprovals' } }).stale, false, 'an unchanged title is not stale');
+  eq(M.typeOf(CT(), { 9: { cat: 'opt' } }).stale, false,
+    'and an override stored before this field existed is not retrospectively called stale');
+}
+
+console.log('── overriding the FIELD keeps every reader telling one story');
+{
+  const rows = [CT({ id: 9, cat: 'tech', hours: 3, bill: 3 }), CT({ id: 10, title: 'Keyword optimisation', cat: 'opt', hours: 5, bill: 5 })];
+  M.decorateTypes(rows, { 9: { cat: 'opt', t: 'Disapprovals' } });
+  rows.forEach((t) => { t.tags = []; });
+  eq(M.displacement(rows, M.TAG_SEED).optHours, 8,
+    'the displacement headline follows the override, because `cat` IS the field the search, the '
+    + 'grouping and the headline all read — no reader needs teaching about overrides');
+  eq(rows.filter((t) => M.matchTask(t, M.parseQuery('cat:opt'))).length, 2, 'and so does cat: in the search');
+  eq(M.groupBy(rows, 'cat').length, 1, 'and the chart');
+}
+
+console.log('── a tag never drives the Type');
+ok(!/tagsOf[\s\S]{0,400}setType|tag[\s\S]{0,80}->[\s\S]{0,40}cat =/.test(ENG),
+  'Type is what the work WAS and a tag is why it happened; the displacement figure compares one '
+  + 'against the other, so wiring them together would make the comparison measure itself');
+ok(/tmtype:\s*'field'/.test(SS), 'the override is client-scoped shared state, like every other team judgement');
+ok(/id="ptagimp"/.test(PAGE_SRC) && /Type of work/.test(PAGE_SRC), 'the spreadsheet round trip carries it');
+ok(/Type set by hand/.test(PAGE_SRC),
+  'and the export marks which Types were hand-set, so a round trip cannot launder a judgement into '
+  + 'something that looks derived');
+
 console.log('── the comma rule (OR) against the space rule (AND)');
 const PEOPLE = [
   T({ owner: 'Febin', client: 'Reiss', market: 'GB', title: 'Plan Update', cat: 'acct' }),
@@ -743,6 +930,33 @@ const access = fs.readFileSync(path.join(ROOT, 'cloudflare', 'feedspark-deck', '
 ok(/slug: 'taskmanager'.*path: '\/tasks'/.test(access), 'the module is grantable per person');
 
 // ---------------------------------------------------------------------------------------------
+// DECIMAL ALIGNMENT in stacked hour columns (Ray, 17 Sep 2026: "why these numbers are not
+// aligned vertically, you kept making this issue btw"). Right-aligning "1" and "0.5" in the
+// same column only lines up their LAST character, not the ones digit — "1" sits two characters
+// short of where "1.00" would put it, so a column reads crooked even though every cell is
+// individually right-aligned correctly. hrsCell() fixes every value to the quarter-hour grain
+// the data is actually booked in (.00/.25/.50/.75), so every value in a table column is the
+// same width and the decimal points line up.
+// ---------------------------------------------------------------------------------------------
+console.log('── decimal alignment: every stacked hours column uses hrsCell, not hrs');
+const hrsCellSrc = /^  function hrsCell\([^)]*\) \{.*\}$/m.exec(page);
+if (!hrsCellSrc) throw new Error('page: hrsCell (one-liner) not found');
+const HC = new Function('return (' + hrsCellSrc[0].replace(/^  function/, 'function') + ')')();
+eq(HC(0.5), '0.50', 'a half hour is fixed to two decimals');
+eq(HC(1), '1.00', 'a whole hour gets its decimals too — this is exactly what the bare "1" was missing');
+eq(HC(1.25), '1.25', 'quarter-hour values are unaffected — they already carried two decimals');
+eq(HC(13.5), '13.50', 'a footer sum is fixed the same way as the rows above it');
+{
+  // every td.num cell that prints an hrs()-style figure inside a table (Tasks / the ⊞ breakdown
+  // table / Tickets / Accounts / the totals footer) must call hrsCell, or the fix regresses one
+  // column at a time exactly the way Ray flagged it happening
+  const numCellHrs = [...page.matchAll(/<td class="num[^"]*"[^>]*>[^<]*?\bhrs\(/g)];
+  eq(numCellHrs.length, 0, 'no table cell calls the bare hrs() formatter — every stacked column uses hrsCell');
+  ok((page.match(/hrsCell\(/g) || []).length >= 12,
+    'hrsCell is actually wired into every stacked hours column (tasks, breakdown table x2, tickets, accounts, the totals footer)');
+}
+
+// ---------------------------------------------------------------------------------------------
 // the pane's own filter + totals footer, lifted out of the page by name
 //
 // Ray, 16 Sep 2026: "Under the task box, include a search bar. It should display the list of
@@ -764,7 +978,7 @@ function liftPageSrc(name) {
 }
 // setPQ is lifted REAL, not stubbed: since the comma rule lives in the parse, a stand-in setter
 // would test a filter nobody runs. The comma helpers come with it, from the same page.
-const PANE = new Function('CAT_LABEL', 'num', 'hrs', 'esc', 'SHOW',
+const PANE = new Function('CAT_LABEL', 'num', 'hrs', 'hrsCell', 'esc', 'SHOW',
   'var PQ = "", PQT = [], QCOMMA = "\\u0000";\n'
   + liftPageSrc('mergeCommaRuns') + '\n' + liftPageSrc('splitAlts') + '\n'
   + liftPageSrc('orTerms') + '\n' + liftPageSrc('setPQ') + '\n'
@@ -773,6 +987,7 @@ const PANE = new Function('CAT_LABEL', 'num', 'hrs', 'esc', 'SHOW',
   + 'return { setPQ: setPQ, pqMatch: pqMatch, footHtml: footHtml, FOOT: FOOT };'
 )(M.CAT_LABEL,
   (n) => String(n),
+  (n) => String(Math.round((Number(n) || 0) * 100) / 100),
   (n) => String(Math.round((Number(n) || 0) * 100) / 100),
   (s2) => String(s2 == null ? '' : s2).replace(/&/g, '&amp;').replace(/</g, '&lt;'),
   200);
@@ -862,6 +1077,214 @@ ok(/var rows = paneRows\(tab\);/.test(PG),
   'and the Excel export reads the SAME one, so a download can never be a different population');
 ok(/runs on top of the search above/.test(PG),
   'an empty result distinguishes "nothing matched at all" from "this filter narrowed it to nothing"');
+
+// ---------------------------------------------------------------------------------------------
+// MASS TAGGING ACTS ON THE ROWS ON SCREEN (Ray, 17 Sep 2026: "this button Tag all: > should only
+// tag the filtered row instead of all rows"). There are TWO filters on this page and the bulk bar
+// read the top one, so a pane search narrowed to 12 rows offered — and would have written — 660.
+// The functions are lifted REAL, with the real tag store, so what is asserted is the row set the
+// button actually writes to, not a re-implementation of it.
+// ---------------------------------------------------------------------------------------------
+console.log('\n── mass tagging: the bulk bar writes to exactly what is painted');
+function liftLine(name) {
+  const re = new RegExp('^  function ' + name + '\\([^)]*\\) \\{.*\\}$', 'm');
+  const m = re.exec(PG);
+  if (!m) throw new Error('page: ' + name + ' (one-liner) not found');
+  return m[0];
+}
+const BAR = { hidden: true, innerHTML: '' };
+const SEEN = { saves: 0, toasts: [], undo: null };
+const TAGDEFS = [{ slug: 'urgent', label: 'Urgent', color: '#B42318', displaces: true },
+  { slug: 'agency', label: 'Agency work', color: '#2563EB', displaces: false }];
+const BULK = new Function('CAT_LABEL', 'sortRows', 'SORT', 'tagSave', 'toast', 'toastAct', 'defOf',
+  'DEFS', 'tagColor', 'esc', 'num', 'hrs', '$',
+  'var PQ = "", PQT = [], QCOMMA = "\\u0000", ME = "tester";\n'
+  + 'var TAB = "tasks", FT = [], FK = [], ACCOUNTS = [], TAGS = {}, Q = { raw: "" };\n'
+  + liftPageSrc('mergeCommaRuns') + '\n' + liftPageSrc('splitAlts') + '\n'
+  + liftPageSrc('orTerms') + '\n' + liftPageSrc('setPQ') + '\n'
+  + liftPageSrc('pqHay') + '\n' + liftPageSrc('pqMatch') + '\n'
+  + liftPageSrc('paneRows') + '\n'
+  + liftLine('taggable') + '\n' + liftPageSrc('setTags') + '\n' + liftLine('clearTags') + '\n'
+  + liftLine('bulkSrc') + '\n' + liftPageSrc('bulkRender') + '\n'
+  + liftPageSrc('bulkSnapshot') + '\n' + liftPageSrc('bulkUndo') + '\n' + liftPageSrc('bulkApply') + '\n'
+  + 'return { setPQ: setPQ, bulkSrc: bulkSrc, bulkRender: bulkRender, bulkApply: bulkApply,'
+  + ' tags: function () { return TAGS; },'
+  + ' set: function (o) {'
+  + '   if (o.TAB !== undefined) TAB = o.TAB;'
+  + '   if (o.FT) FT = o.FT;'
+  + '   if (o.q !== undefined) Q = { raw: o.q };'
+  + '   if (o.TAGS) TAGS = o.TAGS; } };'
+)(
+  M.CAT_LABEL,
+  (rows) => rows,
+  { tasks: { k: 'd', dir: -1 }, tickets: { k: 'd', dir: -1 }, accounts: { k: 'c', dir: 1 } },
+  () => { SEEN.saves++; },
+  (m) => SEEN.toasts.push(m),
+  (m, label, fn) => { SEEN.toasts.push(m); SEEN.undo = fn; },
+  (slug) => TAGDEFS.filter((d) => d.slug === slug)[0] || { slug, label: slug },
+  () => TAGDEFS,
+  (d) => d.color,
+  (x) => String(x == null ? '' : x),
+  (n) => String(n),
+  (n) => String(Math.round((Number(n) || 0) * 100) / 100),
+  () => BAR
+);
+
+const brow = (o) => Object.assign({ id: 0, title: '', client: 'Reiss', market: 'GB', owner: 'Febin',
+  am: 'Ray', status: 'Done', note: '', cat: 'opt', hours: 1, tags: [] }, o);
+const BROWS = [];
+for (let i = 1; i <= 12; i++) BROWS.push(brow({ id: i, title: 'GMC disapproval fix ' + i }));
+for (let i = 13; i <= 60; i++) BROWS.push(brow({ id: i, title: 'Keyword optimisation ' + i }));
+
+BULK.set({ TAB: 'tasks', FT: BROWS, q: 'client:reiss', TAGS: {} });
+BULK.setPQ('gmc');
+eq(BULK.bulkSrc().length, 12,
+  'the bulk action reads the rows the TABLE is showing (12), not the grammar bar\'s 60');
+eq(BULK.bulkSrc().map((t) => t.id).slice(0, 3), [1, 2, 3], 'and they are the matching rows themselves');
+BULK.bulkRender();
+ok(!BAR.hidden && /<b>12<\/b>/.test(BAR.innerHTML),
+  'the bar states 12 — the count and the write can never be two different row sets');
+ok(/matching/.test(BAR.innerHTML) && /gmc/.test(BAR.innerHTML),
+  'and NAMES the filter that produced it: "660 rows in this search" beside a table showing 12 is '
+  + 'how the wrong row set went unnoticed');
+ok(/Tag these rows/.test(BAR.innerHTML) && !/Tag all/.test(BAR.innerHTML),
+  'the label no longer says "Tag all" — the words were part of the promise it broke');
+
+BULK.bulkApply('urgent');
+eq(Object.keys(BULK.tags()).length, 12, 'applying it writes 12 records, not 60');
+ok(Object.keys(BULK.tags()).every((k) => Number(k) <= 12), 'and only the rows that matched');
+eq(SEEN.saves, 1, 'one save for the batch');
+
+ok(typeof SEEN.undo === 'function', 'a bulk write to the team\'s shared state offers an undo');
+SEEN.undo();
+eq(Object.keys(BULK.tags()).length, 0,
+  'which puts back exactly what was there — an absent record is restored as ABSENT, never as an '
+  + 'empty list, which would record a judgement nobody made');
+
+// row 5 already carries a person's judgement — the record AND the decorated row, exactly as
+// decorateTags hands it to the render
+BROWS[4].tags = ['agency'];
+BULK.set({ TAGS: { 5: { client: 'Reiss', tags: ['agency'], by: 'ray', at: 1 } } });
+BULK.bulkApply('urgent');
+eq(BULK.tags()['5'].tags, ['agency', 'urgent'], 'a bulk tag ADDS to what a person already set');
+SEEN.undo();
+eq(BULK.tags()['5'].tags, ['agency'], 'and the undo restores their record rather than clearing it');
+eq(Object.keys(BULK.tags()), ['5'], 'leaving the rows that had nothing with nothing');
+
+BULK.setPQ('');
+eq(BULK.bulkSrc().length, 60, 'with no pane filter it is the grammar bar\'s result, as before');
+BULK.bulkRender();
+ok(!BAR.hidden && / in this search/.test(BAR.innerHTML), 'and the wording says so');
+
+BULK.set({ q: '' });
+BULK.setPQ('gmc');
+BULK.bulkRender();
+ok(!BAR.hidden && /<b>12<\/b>/.test(BAR.innerHTML),
+  'a PANE-ONLY filter shows the bar — Ray\'s own case, where keying on the top bar alone showed '
+  + 'nothing at all');
+BULK.setPQ('');
+BULK.bulkRender();
+ok(BAR.hidden, 'and with neither filter set there is nothing to bulk-tag, so no bar');
+
+BULK.set({ TAB: 'tickets', q: 'client:reiss' });
+BULK.setPQ('gmc');
+eq(BULK.bulkSrc().length, 0, 'off the Tasks tab there are no taggable rows on screen');
+BULK.bulkRender();
+ok(BAR.hidden, 'so the bar is not offered there at all');
+
+ok(/function pane\(\)[\s\S]{0,400}bulkRender\(\);/.test(PG),
+  'pane() refreshes the bar — a tab switch or a change to the pane filter never reaches apply()');
+const BULKSRC = PG.slice(PG.indexOf('function bulkSrc'), PG.indexOf('function rulesOpen'));
+ok(!/FT\.filter\(taggable\)/.test(BULKSRC),
+  'and nothing in the bulk block reads FT directly any more — one row resolver, paneRows');
+
+// ---------------------------------------------------------------------------------------------
+// THE TAGS & RULES PANEL, REORGANISED (Ray, 17 Sep 2026: "love this, reorganise and make the tab
+// cleaner pls"). Two columns, one line per row, and the labels that were repeated on every row
+// promoted to column headings. The assertions that matter are the CLASS COLLISION (the table
+// already owns .tg-add and .tg-cell — inheriting the latter's 210px cap is what wrapped every
+// rule onto two lines) and that nothing was quietly dropped on the way.
+// ---------------------------------------------------------------------------------------------
+console.log('\n── the Tags & rules panel');
+const PANEL = PG.slice(PG.indexOf("var TG_KEY = 'fcc-tg-rail'"), PG.indexOf('var TAG_COLORS = TAG_PAL'));
+ok(PANEL.length > 1000, 'the panel builder is where it was');
+
+ok(!/class="tg-(add|cell|grid|cols|sec|hint|k|n|ln|nm|note|empty|tags|rules|src|w)"/.test(PANEL)
+  && !/class="tg-\w+ /.test(PANEL),
+  'every class the panel paints is tgd-, never tg- — the TABLE owns .tg-add (the row\'s "+ tag" '
+  + 'pill) and .tg-cell (capped at 210px), and borrowing those names styled the panel as pills '
+  + 'and wrapped every rule onto two lines');
+ok(/#tgbd \.tgd-cols\{display:grid;grid-template-columns:minmax\(0,1fr\)/.test(PG)
+  && /@container \(min-width:560px\)\{#tgbd \.tgd-cols\{grid-template-columns:minmax\(0,1fr\) minmax/.test(PG),
+  'tags and rules go side by side on the PANEL\'s own width, not the window\'s — it lives in a rail, '
+  + 'and a viewport media query would have put two 200px columns inside a 420px rail on a wide monitor');
+ok(/#tgbd \.bd-b\{[\s\S]{0,160}container-type:inline-size/.test(PG),
+  'which is only true because the panel body declares itself the container');
+ok(/#tgbd \.tgd-add select\{min-width:0;max-width:100%\}/.test(PG),
+  'a select sizes to its widest OPTION unless told not to — 99px of sideways overflow on a phone');
+
+eq((PANEL.match(/displaces the plan<\/label>/g) || []).length, 0,
+  'the words "displaces the plan" are no longer printed once per tag');
+ok(/class="tgd-k">Displaces</.test(PANEL), 'they are the column heading, said once');
+ok(/aria-label="' \+ esc\(d\.label\) \+ ' displaces the plan"/.test(PANEL),
+  'but each checkbox keeps its own accessible name — a column heading is not read out per row');
+ok(/class="tgd-k">Matches<\/div><div class="tgd-k">By hand</.test(PANEL),
+  'the two rule counts became headed columns, so the numbers line up and can be compared');
+ok(/tgd-n" title="Already tagged by a person/.test(PANEL),
+  'and "set by hand, untouched" survives as the column\'s tooltip rather than prose on every row');
+ok(/pv\.held \? num\(pv\.held\) : '—'/.test(PANEL), 'a rule holding nothing back reads — , not 0');
+
+ok(/<select id="tg-sugg" class="tgd-src">/.test(PANEL) && /Start from a common title/.test(PANEL),
+  'the twelve common titles are the rule builder\'s own source list, not a wall of chips below it');
+ok(/tot\.slice\(0, 12\)/.test(PANEL), 'all twelve are still offered — nothing was dropped to save room');
+ok(/x\.n\) \+ ' tasks · ' \+ hrs\(x\.h\)/.test(PANEL), 'each still carries its task count and hours');
+ok(/el\.selectedIndex = 0;/.test(PANEL), 'picking one fills the word box and resets: it is a source list, not a setting');
+ok(/\$\('tg-q'\)\.value = String\(el\.value\)\.replace\(\/:\$\/, ''\);/.test(PANEL),
+  'and it fills the box rather than creating a rule, so the preview is seen before anything is saved');
+ok(!/data-sugg/.test(PANEL), 'the old chip handler went with the chips — no dead branch left behind');
+
+ok(/id="tg-list"/.test(PANEL) && /id="tg-rules"/.test(PANEL) && /id="tg-new"/.test(PANEL)
+  && /id="tg-addtag"/.test(PANEL) && /id="tg-q"/.test(PANEL) && /id="tg-on"/.test(PANEL)
+  && /id="tg-tag"/.test(PANEL) && /id="tg-addrule"/.test(PANEL) && /id="tg-prev"/.test(PANEL),
+  'every control the panel had is still there — this was a reorganisation, not a cut');
+
+// ---------------------------------------------------------------------------------------------
+// ...AND IT IS A RAIL, NOT A MODAL (Ray, 17 Sep 2026: "can it also popup as on the right panel
+// similar to build log so i can also work simultaneously"). Simultaneously is the requirement, so
+// the assertions are about what the panel does NOT do: dim the page, block it, or cover the
+// columns being judged.
+// ---------------------------------------------------------------------------------------------
+console.log('\n── the panel as a right-hand rail');
+ok(!/bd-dim/.test(PANEL) && !/#tgbd \.bd-dim/.test(PG),
+  'no dim layer anywhere — the board behind the rail stays live, which is the whole request');
+ok(/#tgbd \.bd-box\{position:fixed;z-index:70;top:0;right:0;bottom:0;width:var\(--tgd-w\)/.test(PG),
+  'the panel is docked to the right edge, full height');
+ok(/body\.tgd-on\{padding-right:var\(--tgd-w\)\}/.test(PG),
+  'and it PUSHES the page rather than sitting on it — the columns it would otherwise cover on this '
+  + 'page are the hours, which is the thing being judged while you tag');
+ok(/max-width:900px\)\{[\s\S]{0,220}body\.tgd-on\{padding-right:0\}/.test(PG),
+  'below 900px there is no room to push, so it overlays');
+ok(/max-width:760px\)\{#tgbd \.bd-box\{width:100vw/.test(PG), 'and on a phone it is a full sheet');
+
+ok(/if \(!host\.querySelector\('\.bd-box'\)\) \{/.test(PANEL) && /\$\('tg-body'\)\.innerHTML = ''/.test(PANEL),
+  'the shell is built once and only the body is redrawn — rewriting the host on every edit would '
+  + 'restart the slide-in, so adding a rule would make the rail flinch');
+ok(/function rulesToggle\(\)/.test(PANEL) && /dt\.onclick = rulesToggle;/.test(PG),
+  'the toolbar button toggles it, because a rail you cannot put away is worse than a modal');
+ok(/aria-pressed/.test(PANEL), 'and says whether it is open');
+ok(/role="complementary"/.test(PANEL) && !/role="dialog"/.test(PANEL),
+  'the rail is a landmark, not a dialog: it sits beside the work rather than trapping focus in '
+  + 'front of it, and "dialog" would tell a screen-reader user the opposite');
+ok(/e\.key === 'Escape' && tgIsOpen\(\)\) rulesClose\(\)/.test(PANEL), 'Esc closes it');
+ok(!/bd-dim'\) \{ host\.innerHTML/.test(PANEL) && !/className === 'bd-dim'/.test(PANEL),
+  'clicking the page does NOT close it: on a modal that is how you dismiss it, here clicking away '
+  + 'is the work');
+ok(/localStorage\.setItem\(TG_KEY/.test(PANEL) && /var TG_KEY = 'fcc-tg-rail'/.test(PANEL),
+  'the open state is remembered per DEVICE — a panel being open describes one screen, not the team');
+ok(/if \(want === '1'\) rulesOpen\(\);/.test(PG) && PG.indexOf("if (want === '1') rulesOpen();") > PG.indexOf('tagLoad(function () {'),
+  'and it reopens AFTER the tags land, so it never paints an empty vocabulary and then fills itself in');
+ok(/setTimeout\(function \(\) \{ if \(!tgIsOpen\(\)\) host\.innerHTML = ''; \}, 260\)/.test(PANEL),
+  'closing clears the host only once it has slid out, and only if nobody re-opened it meanwhile');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

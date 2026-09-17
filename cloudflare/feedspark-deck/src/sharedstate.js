@@ -53,6 +53,14 @@ export const STATE_NS = {
   // the task is in, so 'field' scoping is what keeps a scoped signin inside their own clients.
   //   taskId -> {client, tags:[slug], by, at}
   tmtags:      'field',
+  // TYPE OVERRIDES (Ray, 17 Sep 2026: "Can Type also be edited on FCC and made changed data sticky
+  // … because the daily report fetched from the MCP will actually overwrite?"). He is right: `cat`
+  // is DERIVED from the title in normTask and PACKED INTO the KV record, so every tmBookPull
+  // re-derives it — an edit written onto the record is gone within about twelve hours. So the
+  // override is never written onto the record. It lives here, keyed on the task's own list_id, and
+  // is applied as a decoration after unpack — the pull can rewrite the row as often as it likes.
+  //   taskId -> {client, cat, t (the title it was judged against), by, at}
+  tmtype:      'field',
   // The tag vocabulary and the keyword rules — house-wide, like the SLA and the Playbook taxonomy.
   // A tag that meant Urgent on one person's screen and something else on another's would make
   // every number built on it meaningless.  'tags' -> [def], 'rules' -> [rule]

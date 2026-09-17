@@ -339,6 +339,12 @@ window.addEventListener('load',restore);
     <div class="cw-ctl">
       <label for="cdim">Split by</label>
       <select id="cdim"></select>
+      <!-- the second and third splits NEST the rows (AdWords' Campaign > Ad group > Keyword), they
+           never become the series: colour already means billable vs non-billable here -->
+      <label for="cdim2" class="thn">then</label>
+      <select id="cdim2"></select>
+      <label for="cdim3" class="thn">then</label>
+      <select id="cdim3"></select>
       <label for="cform">Show as</label>
       <select id="cform">
         <option value="donut">Donut</option>
@@ -377,6 +383,11 @@ window.addEventListener('load',restore);
   #dispcard .dp-cov{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55}
   #dispcard .dp-cov b{color:var(--ink)}
   /* tag chips on a task row */
+  /* a Type that somebody set by hand says so — an edited value that looks identical to a derived
+     one is a number nobody can audit */
+  .cat.ed{cursor:pointer}
+  .cat.setby{box-shadow:inset 0 0 0 1px currentColor}
+  .cat.stale .stl{margin-left:4px;color:var(--risk);font-weight:800}
   .tg{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;line-height:1;
       padding:3px 7px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
   .tg.rule{border-style:dashed;opacity:.85}
@@ -389,26 +400,97 @@ window.addEventListener('load',restore);
   #bulkbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0 0;padding:9px 11px;
            border:1px solid var(--line,#E6E6E6);border-radius:10px;background:var(--wash);font-size:13px}
   #bulkbar .grow{flex:1 1 auto}
-  /* the Tags & rules dialog */
+  /* THE TAGS & RULES RAIL (Ray, 17 Sep 2026: "can it also popup as on the right panel similar to
+     build log so i can also work simultaneously"). It was a centred modal over a dimmed page: to
+     read a rule's effect you closed it, looked, and opened it again. It is a right-hand rail now,
+     the same shape as Workflow's cockpit — and like those rails it PUSHES the page rather than
+     sitting on top of it, because the columns it would cover on this page are the hours, which is
+     the thing you are judging while you tag. No dim: the table stays live, and a rule added here
+     re-renders the rows behind it as you watch. Below 900px it overlays (there is no room to
+     push); below 760px it is a full sheet, the phone layer's convention. */
+  :root{--tgd-w:clamp(380px,32vw,640px)}
   #tgbd:empty{display:none}
-  #tgbd .bd-dim{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:130}
-  #tgbd .bd-box{position:fixed;z-index:131;top:50%;left:50%;transform:translate(-50%,-50%);
-    width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 48px);display:flex;flex-direction:column;
-    background:var(--paper,#fff);border:1px solid var(--line,#E6E6E6);border-radius:14px;
-    box-shadow:0 18px 60px rgba(16,24,40,.26)}
-  #tgbd .bd-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line,#E6E6E6)}
-  #tgbd .bd-b{padding:14px;overflow:auto}
+  #tgbd .bd-box{position:fixed;z-index:70;top:0;right:0;bottom:0;width:var(--tgd-w);
+    display:flex;flex-direction:column;background:var(--paper,#fff);
+    border-left:1px solid var(--line,#E6E6E6);box-shadow:0 0 34px rgba(16,24,40,.12);
+    transform:translateX(102%);transition:transform .2s ease}
+  #tgbd .bd-box.on{transform:none}
+  body.tgd-on{padding-right:var(--tgd-w)}
+  @media (max-width:900px){
+    #tgbd .bd-box{width:min(420px,100vw);box-shadow:0 0 44px rgba(16,24,40,.28)}
+    body.tgd-on{padding-right:0}
+  }
+  @media (max-width:760px){#tgbd .bd-box{width:100vw;left:0;border-left:none}}
+  @media (prefers-reduced-motion:reduce){#tgbd .bd-box{transition:none}}
+  #tgbd .bd-h{display:flex;align-items:center;gap:8px;padding:12px 14px;flex:none;
+    border-bottom:1px solid var(--line,#E6E6E6)}
+  #tgbd .bd-b{padding:14px 14px 26px;overflow:auto;overscroll-behavior:contain;flex:1;
+    container-type:inline-size}
   #tgbd .bd-b h4{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
   #tgbd .bd-b code{background:var(--wash);padding:2px 6px;border-radius:5px;font-size:12px}
   #tgbd .bd-b input,#tgbd .bd-b select{padding:7px 9px;border:1px solid var(--line,#E6E6E6);border-radius:8px;
     background:var(--paper,#fff);color:var(--ink,#333);font:inherit;font-size:13px}
+  /* ONE ROW EACH, AND TWO COLUMNS WHEN THERE IS ROOM FOR THEM (Ray, 17 Sep 2026: "love this,
+     reorganise and make the tab cleaner pls"). Tags and rules were stacked down a 640px column
+     with a paragraph over each and the same words repeated on every row — 1,000px of panel for
+     four tags and seven rules. The repeated labels are column headings now, so each row is a dot,
+     a name and a number. The split keys on the PANEL'S OWN WIDTH, not the window's: it lives in a
+     rail whose width follows the screen, and a viewport media query would have put two 200px
+     columns inside a 420px rail on a wide monitor. */
+  #tgbd .tgd-cols{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+  @container (min-width:560px){#tgbd .tgd-cols{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:22px}}
+  #tgbd .tgd-sec{min-width:0}
+  #tgbd .tgd-hint{font-size:12px;color:var(--muted);margin:0 0 9px;line-height:1.45}
+  #tgbd .tgd-grid{display:grid;align-items:center;gap:0 10px;font-size:13px}
+  #tgbd .tgd-tags{grid-template-columns:minmax(0,1fr) auto auto}
+  #tgbd .tgd-rules{grid-template-columns:minmax(0,1fr) auto auto auto}
+  #tgbd .tgd-k{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--muted);padding-bottom:5px;white-space:nowrap}
+  #tgbd .tgd-n{text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:var(--ink-2)}
+  #tgbd .tgd-grid>*{padding:5px 0}
+  #tgbd .tgd-grid .tgd-k{padding-top:0}
+  #tgbd .tgd-ln{grid-column:1/-1;height:1px;padding:0;background:var(--line,#E6E6E6);opacity:.7}
+  #tgbd .tgd-nm{display:flex;align-items:center;gap:7px;min-width:0}
+  #tgbd .tgd-nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #tgbd .tgd-cell{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+  #tgbd .tgd-note{grid-column:1/-1;font-size:11.5px;color:var(--muted);padding:0 0 6px 18px;line-height:1.4}
+  #tgbd .tgd-add{display:flex;gap:6px;margin:10px 0 0;flex-wrap:wrap}
+  #tgbd .tgd-add input{flex:1 1 140px;min-width:0}
+  #tgbd .tgd-add select{min-width:0;max-width:100%}
+  /* the word takes its own line so the three controls that qualify it sit together underneath,
+     rather than Add rule being orphaned onto a line of its own */
+  #tgbd .tgd-add .tgd-w{flex:1 1 100%}
+  #tgbd .tgd-src{flex:1 1 100%;width:100%;text-overflow:ellipsis}
+  #tgbd .tgd-empty{font-size:12.5px;color:var(--muted);padding:6px 0}
   .mut{color:var(--muted)}
   #tagwarn{margin:8px 0 0;padding:7px 10px;border-radius:9px;font-size:12.5px;font-weight:600;
     background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C}
   :root:not([data-theme="light"]) #tagwarn{background:#3B1111;border-color:#7F1D1D;color:#FCA5A5}
   @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #tagwarn{background:#3B1111;border-color:#7F1D1D;color:#FCA5A5}}
   :root[data-theme="dark"] #tagwarn{background:#3B1111;border-color:#7F1D1D;color:#FCA5A5}
-  @media (max-width:760px){ #dispcard .dp-t{flex:1 1 100%} .tg-cell{max-width:none} }
+  /* the nested (AdWords-style) breakdown */
+  .cw-ctl .thn{opacity:.7}
+  .nst{display:flex;flex-direction:column;gap:2px;padding:2px 0}
+  .nst .nr{display:flex;align-items:center;gap:8px;padding:2px 0;min-width:0}
+  .nst .nr .nm{flex:0 0 auto;width:var(--nw,190px);display:flex;align-items:center;gap:6px;min-width:0;
+    font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nst .nr.d0 .nm{font-weight:800}
+  .nst .nr.d1 .nm{font-weight:600;color:var(--ink-2,var(--ink))}
+  .nst .nr.d2 .nm{font-weight:400;color:var(--muted)}
+  .nst .nr .tw{flex:1 1 auto;display:flex;height:var(--bh,15px);min-width:0;gap:2px}
+  .nst .nr.d1 .tw{--bh:13px}
+  .nst .nr.d2 .tw{--bh:11px}
+  .nst .nr .tw i{display:block;border-radius:2px;min-width:0}
+  .nst .nr .vl{flex:0 0 70px;text-align:right;font-size:12px;font-variant-numeric:tabular-nums;color:var(--muted)}
+  .nst .nr .vl b{color:var(--ink)}
+  .nst .gap{height:5px}
+  .nst .fold{font-style:italic}
+  /* the table view keeps the same hierarchy, indented */
+  .ctab .lvl0 td:first-child{font-weight:800}
+  .ctab .lvl1 td:first-child{padding-left:22px}
+  .ctab .lvl2 td:first-child{padding-left:42px;color:var(--muted)}
+  @media (max-width:760px){ #dispcard .dp-t{flex:1 1 100%} .tg-cell{max-width:none}
+    .nst .nr .nm{width:120px} .nst .nr .vl{flex:0 0 58px} }
   </style>
 
   <script src="/xlsx/engine.js" onerror="window.__xlsxFail=1"></script>
@@ -425,7 +507,7 @@ window.addEventListener('load',restore);
       <span class="sub" id="pane-s"></span>
       <span class="grow"></span>
       <button class="btn sm" id="pxlsx" type="button" title="Download these rows as an Excel workbook — typed columns, a frozen filterable header, and a sheet recording the search behind them">⇩ Excel</button>
-      <button class="btn sm" id="ptagimp" type="button" title="Import tags from a spreadsheet — export these rows, fill in the Tags column, bring it back">⇧ Import tags</button>
+      <button class="btn sm" id="ptagimp" type="button" title="Import Tags and Type of work from a spreadsheet — export these rows, edit either column, bring it back">⇧ Import edits</button>
       <input type="file" id="ptagfile" accept=".csv,.xlsx" hidden>
       <button class="btn sm" id="pmore" type="button" hidden>Show more</button>
     </div>
@@ -761,6 +843,35 @@ window.addEventListener('load',restore);
       .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24);
   }
   function taggable(t) { return !!(t && t.id); }
+
+  /* A HAND-SET TYPE (Ray, 17 Sep 2026: "Can Type also be edited on FCC and made changed data
+     sticky … because the daily report fetched from the MCP will actually overwrite?"). He is
+     right: `cat` is DERIVED from the title and PACKED INTO the KV row, so the 2x-daily rotation
+     re-derives it and anything written onto the record is gone within about twelve hours. So the
+     override never touches the record — it is keyed on the task's list_id and applied after
+     unpack, the same shape the tags use and the only one that survives the sync.
+
+     IT DOES NOT FOLLOW A TAG. Type is what the work WAS; a tag is why it happened; the
+     displacement figure compares one against the other. Wire them together and the comparison
+     measures itself. The title it was judged against travels with it, so a rename in the reports
+     database marks the override STALE rather than silently dropping or silently keeping it. */
+  function typeOf(t, over) {
+    // taggable(), NOT `id != null`: a row whose id is 0 has no id, and every such row would
+    // otherwise share the key '0' — one override would leak onto all of them
+    var rec = over && taggable(t) ? over[String(t.id)] : null;
+    if (!rec || !rec.cat || CATS.indexOf(rec.cat) < 0) return { cat: t.cat, src: 'auto', stale: false };
+    var was = String(rec.t == null ? '' : rec.t);
+    return { cat: rec.cat, src: 'manual', auto: t.cat,
+      stale: !!was && was !== String(t.title || ''), wasTitle: was };
+  }
+  function decorateTypes(rows, over) {
+    for (var i = 0; i < (rows || []).length; i++) {
+      var t = rows[i], r = typeOf(t, over);
+      t.catAuto = r.src === 'manual' ? r.auto : t.cat;
+      t.cat = r.cat; t.catSrc = r.src; t.catStale = r.stale;
+    }
+    return rows;
+  }
   function ruleHits(rule, t) {
     var q = String((rule && rule.q) || '').toLowerCase().replace(/^\s+|\s+$/g, '');
     if (!q) return false;
@@ -773,7 +884,7 @@ window.addEventListener('load',restore);
   // A HUMAN ALWAYS WINS — including an empty list, which means "I looked, none of these apply".
   // Without that a rule would re-apply its tag every render and nobody could ever take one off.
   function tagsOf(t, assign, rules) {
-    var rec = assign && t && t.id != null ? assign[String(t.id)] : null;
+    var rec = assign && taggable(t) ? assign[String(t.id)] : null;   // see typeOf: id 0 is no id
     if (rec && Object.prototype.toString.call(rec.tags) === '[object Array]') {
       return { tags: rec.tags.slice(), src: 'manual' };
     }
@@ -831,7 +942,7 @@ window.addEventListener('load',restore);
       var t = rows[i];
       if (!ruleHits(rule, t)) continue;
       hits++;
-      var rec = assign && t.id != null ? assign[String(t.id)] : null;
+      var rec = assign && taggable(t) ? assign[String(t.id)] : null;
       if (rec && Object.prototype.toString.call(rec.tags) === '[object Array]') held++;
       else hours += t.hours;
     }
@@ -868,6 +979,83 @@ window.addEventListener('load',restore);
     var tags = (t && t.tags) || [];
     return tags.length ? tags.slice() : ['(untagged)'];
   }
+  /* A SECOND AND THIRD SPLIT, nested (Ray, 17 Sep 2026: "allow secondary and tertiary axis split
+     as well … almost like AdWord campaigns"). AdWords nests ROWS — Campaign > Ad group > Keyword —
+     and keeps the metrics in the columns, which decides the one thing that could have gone wrong:
+     the extra dimensions nest the rows, they do NOT become the series. Colour already means
+     billable vs non-billable everywhere in this module, so every node at every depth keeps its own
+     split. Caps per level, because client x owner x task is thousands of rows; the tail folds into
+     one "Other (N more)" that KEEPS ITS OWN CHILDREN. And children do not always sum to their
+     parent — `tag` is multi-valued — so `multi` rides on the tree and the page says so. */
+  var NEST_CAPS = [12, 8, 6];
+  function tally(rows) {
+    var bill = 0, nonbill = 0, hours = 0, i;
+    for (i = 0; i < rows.length; i++) { bill += rows[i].bill; nonbill += rows[i].nonbill; hours += rows[i].hours; }
+    return { n: rows.length, bill: r2(bill), nonbill: r2(nonbill), hours: r2(hours),
+      billPct: hours ? Math.round((bill / hours) * 1000) / 10 : 0 };
+  }
+  function nodesAt(rows, dim, cap) {
+    var m = {}, keys = [], placements = 0, i, x;
+    for (i = 0; i < rows.length; i++) {
+      var ks = dimKeys(rows[i], dim);
+      for (x = 0; x < ks.length; x++) {
+        placements++;
+        if (!m[ks[x]]) { m[ks[x]] = []; keys.push(ks[x]); }
+        m[ks[x]].push(rows[i]);
+      }
+    }
+    var out = keys.map(function (k) {
+      var t = tally(m[k]); t.k = k; t.rows = m[k]; return t;
+    });
+    if (dim === 'month') out.sort(function (a, b) { return String(a.k) < String(b.k) ? -1 : String(a.k) > String(b.k) ? 1 : 0; });
+    else out.sort(function (a, b) { return (b.hours - a.hours) || (b.n - a.n) || (String(a.k) < String(b.k) ? -1 : 1); });
+    if (cap && out.length > cap && dim !== 'month') {
+      var keep = out.slice(0, cap - 1), rest = out.slice(cap - 1), rws = [], j, y;
+      for (j = 0; j < rest.length; j++) for (y = 0; y < rest[j].rows.length; y++) rws.push(rest[j].rows[y]);
+      var f = tally(rws); f.k = 'Other (' + rest.length + ' more)'; f.rows = rws; f.fold = rest.length;
+      keep.push(f); out = keep;
+    }
+    return { nodes: out, placements: placements };
+  }
+  function groupNested(rows, dims, caps) {
+    var use = [], i;
+    for (i = 0; i < (dims || []).length; i++) {
+      var d = dims[i];
+      if (!d || d === 'total' || use.indexOf(d) >= 0) continue;
+      use.push(d);
+      if (use.length === 3) break;
+    }
+    var tree = [];
+    tree.dims = use; tree.multi = false; tree.folded = 0;
+    if (!use.length) return tree;
+    var cap = caps || NEST_CAPS, multi = false, folded = 0;
+    function build(rws, depth) {
+      var r = nodesAt(rws, use[depth], cap[depth] || 0), k;
+      if (r.placements > rws.length) multi = true;
+      for (k = 0; k < r.nodes.length; k++) {
+        var nd = r.nodes[k];
+        if (nd.fold) folded += nd.fold;
+        nd.depth = depth;
+        nd.kids = depth + 1 < use.length ? build(nd.rows, depth + 1) : [];
+        delete nd.rows;
+      }
+      return r.nodes;
+    }
+    tree = build(rows, 0);
+    tree.dims = use; tree.multi = multi; tree.folded = folded;
+    return tree;
+  }
+  function flattenNested(tree, out, trail) {
+    out = out || []; trail = trail || [];
+    for (var i = 0; i < (tree || []).length; i++) {
+      var nd = tree[i], path = trail.concat([nd.k]);
+      out.push({ k: nd.k, path: path, depth: nd.depth || 0, n: nd.n, bill: nd.bill, nonbill: nd.nonbill,
+        hours: nd.hours, billPct: nd.billPct, fold: nd.fold || 0, leaf: !(nd.kids && nd.kids.length) });
+      if (nd.kids && nd.kids.length) flattenNested(nd.kids, out, path);
+    }
+    return out;
+  }
+
   function groupBy(rows, dim, cap) {
     var m = {}, keys = [], i, x, placements = 0;
     for (i = 0; i < rows.length; i++) {
@@ -933,7 +1121,9 @@ window.addEventListener('load',restore);
   window.FSTM = { parseQuery: parseQuery, matchTask: matchTask, matchTicket: matchTicket,
     bucketOf: bucketOf, summarise: summarise, groupBy: groupBy, ticketStats: ticketStats,
     billVerdict: billVerdict, balanceState: balanceState, taskBlob: taskBlob, ticketBlob: ticketBlob,
-    CATS: CATS, CAT_LABEL: CAT_LABEL, DIMS: DIMS, BUCKET_LABEL: BUCKET_LABEL };
+    CATS: CATS, CAT_LABEL: CAT_LABEL, DIMS: DIMS, BUCKET_LABEL: BUCKET_LABEL,
+    groupNested: groupNested, flattenNested: flattenNested, NEST_CAPS: NEST_CAPS,
+    tagsOf: tagsOf, displacement: displacement, TAG_SEED: TAG_SEED };
 
   /* ------------------------------------------------------------------------------------------
      page
@@ -941,6 +1131,12 @@ window.addEventListener('load',restore);
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function hrs(n) { return (Math.round(n * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
+  // a column of hours has to line up on the decimal point, not just the right edge — "1" and
+  // "0.5" both right-align fine on their OWN, but stacked in one column the bare "1" sits two
+  // characters short of where "1.00" would put its ones digit, so the column reads crooked even
+  // though every cell is correctly right-aligned. Fixed to the quarter-hour grain the data is
+  // actually booked in (.00/.25/.50/.75), every value in a table column is the same width.
+  function hrsCell(n) { return (Math.round(n * 100) / 100).toFixed(2); }
   function num(n) { return Number(n || 0).toLocaleString(); }
   function cvar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888'; }
 
@@ -1042,6 +1238,7 @@ window.addEventListener('load',restore);
      of pretending.
   ============================================================================================= */
   var TAGS = {};            // taskId -> {client, tags:[slug], by, at}
+  var TYPES = {};           // taskId -> {client, cat, t, by, at} — the hand-set Type
   var TAGDEF = {};          // 'tags' -> [def], 'rules' -> [rule]
   var TAGBASE = 0, TAGDIRTY = false, TAGTIMER = null;
 
@@ -1072,21 +1269,22 @@ window.addEventListener('load',restore);
 
   // ---- reading and writing the store ----------------------------------------------------------
   function tagLoad(then) {
-    fetch('/api/state?ns=tmtags,tmtagdef')
+    fetch('/api/state?ns=tmtags,tmtagdef,tmtype')
       .then(function (r) { TAGBASE = Number(r.headers.get('X-Sync-Base') || 0) || Date.now(); return r.json(); })
       .then(function (d) {
         TAGS = (d && d.tmtags) || {};
         TAGDEF = (d && d.tmtagdef) || {};
+        TYPES = (d && d.tmtype) || {};
         if (then) then();
       })
-      .catch(function () { TAGS = {}; TAGDEF = {}; if (then) then(); });
+      .catch(function () { TAGS = {}; TAGDEF = {}; TYPES = {}; if (then) then(); });
   }
   /* A failed save RETRIES rather than being dropped: the tag is somebody's judgement about work
      that already happened, and losing it silently is how a team stops trusting the column. The
      same rule the brief pipeline learned the hard way. */
   function tagPush() {
     if (TAGTIMER) { clearTimeout(TAGTIMER); TAGTIMER = null; }
-    var body = { tmtags: TAGS, tmtagdef: TAGDEF };
+    var body = { tmtags: TAGS, tmtagdef: TAGDEF, tmtype: TYPES };
     fetch('/api/state', {
       method: 'PUT',
       headers: { 'content-type': 'application/json', 'X-Sync-Base': String(TAGBASE || 0) },
@@ -1098,6 +1296,7 @@ window.addEventListener('load',restore);
     }).then(function (d) {
       if (d && d.tmtags) TAGS = d.tmtags;
       if (d && d.tmtagdef) TAGDEF = d.tmtagdef;
+      if (d && d.tmtype) TYPES = d.tmtype;
       TAGDIRTY = false;
       tagWarn(false);
       apply();
@@ -1124,6 +1323,18 @@ window.addEventListener('load',restore);
     return true;
   }
   function clearTags(t) { if (taggable(t)) delete TAGS[String(t.id)]; }
+
+  /* Setting a Type STORES THE TITLE IT WAS JUDGED AGAINST, so a later rename in the reports
+     database can be surfaced rather than silently inherited. Choosing the auto value is a DELETE,
+     not a write of that value — otherwise the row would stop following an improved classifier
+     forever, for no reason anybody recorded. */
+  function setType(t, cat) {
+    if (!taggable(t)) return false;
+    if (!cat || cat === '__auto') { delete TYPES[String(t.id)]; return true; }
+    if (CATS.indexOf(cat) < 0) return false;
+    TYPES[String(t.id)] = { client: t.client || '', cat: cat, t: String(t.title || ''), by: ME || '', at: Date.now() };
+    return true;
+  }
 
   // ---- THE HEADLINE ----------------------------------------------------------------------------
   function dispRender() {
@@ -1201,6 +1412,53 @@ window.addEventListener('load',restore);
       + RULES().length + ' keyword rule' + (RULES().length === 1 ? '' : 's');
   }
 
+  function typeCell(t) {
+    var set = t.catSrc === 'manual';
+    var tip = !taggable(t) ? 'This row arrived without a task id, so a Type set here could not be kept against it'
+      : set ? ('Set by hand' + (t.by ? '' : '') + ' \u2014 the reports database reads this as \u201c'
+        + (CAT_LABEL[t.catAuto] || t.catAuto) + '\u201d'
+        + (t.catStale ? '. The task has been RENAMED since, so this judgement was made about different wording.' : ''))
+      : 'Read from the task title. Click to set it by hand.';
+    return '<span class="cat ' + t.cat + (set ? ' setby' : '') + (t.catStale ? ' stale' : '')
+      + (taggable(t) ? ' ed' : '') + '"' + (taggable(t) ? ' data-typeid="' + esc(String(t.id)) + '"' : '')
+      + ' title="' + esc(tip) + '"><i></i>' + esc(CAT_LABEL[t.cat] || t.cat)
+      + (t.catStale ? '<b class="stl">!</b>' : '') + '</span>';
+  }
+
+  /* The Type menu. "Read from the title" is a DELETE of the override rather than a write of the
+     automatic value — otherwise the row would stop following an improved classifier forever, for
+     a reason nobody recorded. */
+  function typeMenuOpen(el, t) {
+    tagMenuClose();
+    var m = document.createElement('div');
+    m.className = 'pop';
+    m.setAttribute('style', 'position:fixed;z-index:120;min-width:206px;background:var(--paper,#fff);'
+      + 'border:1px solid var(--line,#E6E6E6);border-radius:12px;box-shadow:0 10px 40px rgba(16,24,40,.18);padding:8px;font-size:13px');
+    m.innerHTML = '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:2px 6px 6px">Type of work</div>'
+      + CATS.map(function (c) {
+        return '<button type="button" data-cat="' + esc(c) + '" style="display:flex;width:100%;align-items:center;gap:8px;'
+          + 'padding:5px 6px;border:0;background:' + (t.cat === c ? 'var(--wash)' : 'transparent')
+          + ';border-radius:7px;cursor:pointer;font:inherit;color:inherit;text-align:left">'
+          + '<span class="cat ' + c + '"><i></i>' + esc(CAT_LABEL[c] || c) + '</span></button>';
+      }).join('')
+      + '<div style="border-top:1px solid var(--line,#E6E6E6);margin:6px 0 4px"></div>'
+      + '<button type="button" class="btn sm" data-cat="__auto" style="width:100%">Read from the title'
+      + (t.catSrc === 'manual' ? ' (' + esc(CAT_LABEL[t.catAuto] || t.catAuto) + ')' : ' \u2713') + '</button>'
+      + (t.catStale ? '<div style="font-size:11.5px;color:var(--risk);padding:6px 6px 2px;line-height:1.45">'
+        + 'This task was renamed after the Type was set \u2014 worth a second look.</div>' : '');
+    document.body.appendChild(m);
+    var r = el.getBoundingClientRect();
+    m.style.left = Math.max(8, Math.min(r.left, window.innerWidth - m.offsetWidth - 8)) + 'px';
+    m.style.top = (r.bottom + 6 + m.offsetHeight > window.innerHeight ? Math.max(8, r.top - m.offsetHeight - 6) : r.bottom + 6) + 'px';
+    TAGMENU = m;
+    m.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('[data-cat]') : null;
+      if (!b) return;
+      if (setType(t, b.getAttribute('data-cat'))) tagSave();
+      tagMenuClose();
+    });
+  }
+
   function tagCell(t) {
     if (!taggable(t)) return '<span class="tg-none" title="This row arrived without a task id, so a tag could not be kept against it">no id</span>';
     var tags = t.tags || [];
@@ -1250,34 +1508,61 @@ window.addEventListener('load',restore);
     });
   }
 
-  /* MASS TAGGING (Ray: "mass tagging across all rows if possible"). The search already resolves a
-     row set, so the bulk bar simply acts on WHATEVER IS ON SCREEN — no separate selection model to
-     get out of step with the filter. It states the count and the hours before doing anything, and
-     it never silently reaches past the rows in view. */
+  /* MASS TAGGING (Ray: "mass tagging across all rows if possible"). It acts on EXACTLY THE ROWS ON
+     SCREEN and nothing else — bulkSrc is paneRows('tasks'), the same call the table, the totals and
+     the Excel export make, so there is still only one row set and no second selection model to
+     drift out of step with the filter. THERE ARE TWO FILTERS on this page (the grammar bar and the
+     plain filter above the table) and this bar read the first one alone, so a search narrowed to 12
+     rows offered to tag 660 (Ray, 17 Sep 2026: "this button Tag all: > should only tag the filtered
+     row instead of all rows"). EITHER filter now counts — a pane-only search was Ray's own case and
+     did not even show the bar — the bar NAMES the filter that produced its count, and it appears
+     only on the Tasks tab: tickets and accounts carry no taggable rows, so a bar there was the same
+     mistake wearing different clothes.
+     A bulk write lands in the team's shared state and nothing else on this page takes one back, so
+     the last one is reversible for as long as its toast is up. */
+  function bulkSrc() { return TAB === 'tasks' ? paneRows('tasks').filter(taggable) : []; }
   function bulkRender() {
     var bar = $('bulkbar'); if (!bar) return;
-    var can = FT.filter(taggable);
+    var can = bulkSrc();
     var s = 0; can.forEach(function (t) { s += t.hours; });
-    var live = Q.raw.trim();
-    if (!live || !can.length) { bar.hidden = true; return; }
+    if ((!Q.raw.trim() && !PQT.length) || !can.length) { bar.hidden = true; return; }
     bar.hidden = false;
+    // name the filter that produced the count: "660 rows in this search" printed beside a table
+    // showing 12 is how the wrong row set went unnoticed in the first place
+    var scope = PQT.length ? 'matching \u201c' + esc(PQ) + '\u201d' : 'in this search';
+    var these = 'the ' + num(can.length) + ' row' + (can.length === 1 ? '' : 's') + ' shown';
     bar.innerHTML = '<b>' + num(can.length) + '</b> row' + (can.length === 1 ? '' : 's')
-      + ' in this search · ' + hrs(s) + ' h'
-      + '<span class="grow"></span><span style="color:var(--muted)">Tag all:</span>'
+      + ' ' + scope + ' \u00b7 ' + hrs(s) + ' h'
+      + '<span class="grow"></span><span style="color:var(--muted)">Tag these rows:</span>'
       + DEFS().map(function (d) {
-        return '<button type="button" class="btn sm" data-bulk="' + esc(d.slug) + '" title="Add “'
-          + esc(d.label) + '” to every row in this search">'
+        return '<button type="button" class="btn sm" data-bulk="' + esc(d.slug) + '" title="Add \u201c'
+          + esc(d.label) + '\u201d to ' + these + '">'
           + '<i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + esc(tagColor(d)) + ';margin-right:5px"></i>'
           + esc(d.label) + '</button>';
       }).join('')
-      + '<button type="button" class="btn sm" data-bulk="__clear" title="Remove the tags from every row in this search">Clear tags</button>';
+      + '<button type="button" class="btn sm" data-bulk="__clear" title="Remove the tags from ' + these + '">Clear tags</button>';
+  }
+  // the records of exactly the rows about to change. An absent record is snapshotted as null and
+  // restored by DELETING the key — putting back an empty tag list would record a judgement
+  // ("I looked, none apply") that nobody ever made.
+  function bulkSnapshot(rows) {
+    return rows.map(function (t) {
+      var k = String(t.id), r = TAGS[k];
+      return { k: k, rec: r ? JSON.parse(JSON.stringify(r)) : null };
+    });
+  }
+  function bulkUndo(snap) {
+    snap.forEach(function (p) { if (p.rec) TAGS[p.k] = p.rec; else delete TAGS[p.k]; });
+    tagSave();
+    toast('Undone \u2014 ' + num(snap.length) + ' row' + (snap.length === 1 ? '' : 's') + ' put back');
   }
   function bulkApply(slug) {
-    var can = FT.filter(taggable);
+    var can = bulkSrc();
     if (!can.length) return;
+    var snap = bulkSnapshot(can), msg;
     if (slug === '__clear') {
       can.forEach(function (t) { clearTags(t); });
-      toast('Cleared tags on ' + num(can.length) + ' rows');
+      msg = 'Cleared tags on ' + num(can.length) + ' row' + (can.length === 1 ? '' : 's');
     } else {
       var n = 0;
       can.forEach(function (t) {
@@ -1285,65 +1570,118 @@ window.addEventListener('load',restore);
         if (next.indexOf(slug) < 0) { next.push(slug); n++; }
         setTags(t, next);
       });
-      toast('Tagged ' + num(n) + ' row' + (n === 1 ? '' : 's') + ' “' + defOf(slug).label + '”');
+      msg = 'Tagged ' + num(n) + ' row' + (n === 1 ? '' : 's') + ' \u201c' + defOf(slug).label + '\u201d';
     }
     tagSave();
+    toastAct(msg, 'Undo', function () { bulkUndo(snap); });
   }
 
   /* KEYWORD RULES (Ray: "by either keyword"). A rule is a plain substring, never a regex from the
      page: an AM typing "(" would otherwise throw inside the render loop and blank the table. Each
      rule PREVIEWS what it would touch before it is saved, and says how many rows it will NOT touch
      because a person already decided those. */
+  /* THE RAIL (Ray, 17 Sep 2026: "can it also popup as on the right panel similar to build log so
+     i can also work simultaneously"). Three consequences, and they are the whole design:
+       1. NO DIM and no modal — the board behind it stays live, which is the point. Clicking away
+          does not close it either: on a modal that is how you dismiss it, but here clicking away
+          IS the work.
+       2. THE SHELL IS BUILT ONCE and only the body is redrawn. Rewriting the whole host on every
+          edit would restart the slide-in animation, so adding a rule would make the rail flinch.
+       3. IT REMEMBERS per device — a panel being open describes one screen, not the team's state,
+          the same line every other toggle on the FCC sits on. */
+  var TG_KEY = 'fcc-tg-rail';
+  function tgIsOpen() { return document.body.classList.contains('tgd-on'); }
+  function tgBtn(on) {
+    var b = $('dp-tags'); if (!b) return;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.classList.toggle('on', !!on);
+  }
+  function tgRemember(on) { try { localStorage.setItem(TG_KEY, on ? '1' : '0'); } catch (e) {} }
+  function rulesClose() {
+    var host = $('tgbd'); if (!host) return;
+    var box = host.querySelector('.bd-box');
+    document.body.classList.remove('tgd-on');
+    tgBtn(false); tgRemember(false);
+    if (box) box.classList.remove('on');
+    // cleared only once it has slid out, and only if nobody re-opened it in the meantime
+    setTimeout(function () { if (!tgIsOpen()) host.innerHTML = ''; }, 260);
+  }
+  function rulesToggle() { if (tgIsOpen()) rulesClose(); else rulesOpen(); }
   function rulesOpen() {
     var host = $('tgbd'); if (!host) return;
     var draw = function () {
       var defs = DEFS(), rules = RULES();
-      host.innerHTML = '<div class="bd-dim"></div><div class="bd-box" role="dialog" aria-label="Tags and keyword rules">'
-        + '<div class="bd-h"><b>Tags &amp; keyword rules</b><span class="grow"></span>'
-        + '<button class="btn sm" id="tg-x" type="button">✕</button></div>'
-        + '<div class="bd-b">'
-        + '<p class="mut" style="margin:0 0 10px">A tag records <b>why</b> a task happened. The <b>Type</b> column already says what the work was — these are different questions, and a task can be optimisation work that was also urgent.</p>'
-        + '<h4 style="margin:10px 0 6px">Tags</h4>'
-        + '<div id="tg-list"></div>'
-        + '<div style="display:flex;gap:6px;margin:8px 0 2px;flex-wrap:wrap">'
-        + '<input id="tg-new" placeholder="New tag name" style="flex:1 1 150px;min-width:0">'
-        + '<button class="btn sm" id="tg-addtag" type="button">Add tag</button></div>'
-        + '<h4 style="margin:18px 0 6px">Keyword rules</h4>'
-        + '<p class="mut" style="margin:0 0 8px">Any task whose title contains the word gets the tag — unless someone has set that task’s tags by hand, which always wins.</p>'
-        + '<div id="tg-rules"></div>'
-        + '<div style="display:flex;gap:6px;margin:8px 0 2px;flex-wrap:wrap">'
-        + '<input id="tg-q" placeholder="Word in the task title, e.g. disapproval" style="flex:1 1 170px;min-width:0">'
-        + '<select id="tg-on"><option value="title">title</option><option value="note">notes</option><option value="both">title + notes</option></select>'
-        + '<select id="tg-tag">' + defs.map(function (d) { return '<option value="' + esc(d.slug) + '">' + esc(d.label) + '</option>'; }).join('') + '</select>'
-        + '<button class="btn sm" id="tg-addrule" type="button">Add rule</button></div>'
-        + '<div id="tg-prev" class="mut" style="font-size:12px;margin-top:6px"></div>'
-        + '<h4 style="margin:18px 0 6px">Common tasks in this book</h4>'
-        + '<p class="mut" style="margin:0 0 8px">The titles that carry the most hours right now — a rule straight off your own book rather than a guess.</p>'
-        + '<div id="tg-sugg"></div>'
-        + '</div></div>';
+      /* ONE sentence at the top, then two columns where the rail is wide enough for them. The
+         three section paragraphs said much the same thing three times over, and "displaces the
+         plan" was printed once per tag — both are now column headings that say it once. */
+      if (!host.querySelector('.bd-box')) {
+        // a landmark, not a dialog: it stays open beside the work rather than trapping focus in
+        // front of it, and calling it a dialog would tell a screen-reader user the opposite
+        host.innerHTML = '<div class="bd-box" role="complementary" aria-label="Tags and keyword rules">'
+          + '<div class="bd-h"><b>Tags &amp; keyword rules</b><span class="grow"></span>'
+          + '<button class="btn sm" id="tg-x" type="button" title="Close the panel (Esc)">✕</button></div>'
+          + '<div class="bd-b" id="tg-body"></div></div>';
+      }
+      $('tg-body').innerHTML = ''
+        + '<p class="tgd-hint" style="margin:0 0 14px">A tag records <b>why</b> a task happened — the <b>Type</b> column already says what the work was, so one task can be optimisation work that was also urgent.</p>'
+        + '<div class="tgd-cols">'
+        + '<div class="tgd-sec">'
+        +   '<h4 style="margin:0 0 6px">Tags</h4>'
+        +   '<p class="tgd-hint">Ticked tags count as work that displaced the optimisation plan.</p>'
+        +   '<div id="tg-list" class="tgd-grid tgd-tags"></div>'
+        +   '<div class="tgd-add">'
+        +     '<input id="tg-new" placeholder="New tag name">'
+        +     '<button class="btn sm" id="tg-addtag" type="button">Add tag</button></div>'
+        + '</div>'
+        + '<div class="tgd-sec">'
+        +   '<h4 style="margin:0 0 6px">Keyword rules</h4>'
+        +   '<p class="tgd-hint">A word in the task’s title (or notes) tags every task carrying it — unless someone set that task’s tags by hand, which always wins.</p>'
+        +   '<div id="tg-rules" class="tgd-grid tgd-rules"></div>'
+        +   '<div class="tgd-add">'
+        +     '<input id="tg-q" class="tgd-w" placeholder="Word in the title, e.g. disapproval">'
+        +     '<select id="tg-on"><option value="title">title</option><option value="note">notes</option><option value="both">title + notes</option></select>'
+        +     '<select id="tg-tag">' + defs.map(function (d) { return '<option value="' + esc(d.slug) + '">' + esc(d.label) + '</option>'; }).join('') + '</select>'
+        +     '<button class="btn sm" id="tg-addrule" type="button">Add rule</button></div>'
+        +   '<div class="tgd-add"><select id="tg-sugg" class="tgd-src"></select></div>'
+        +   '<div id="tg-prev" class="tgd-hint" style="margin:7px 0 0"></div>'
+        + '</div>'
+        + '</div>';
 
-      $('tg-list').innerHTML = defs.map(function (d, i) {
-        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0">'
-          + '<i style="width:11px;height:11px;border-radius:50%;background:' + esc(tagColor(d)) + '"></i>'
-          + '<b style="flex:0 0 130px">' + esc(d.label) + '</b>'
-          + '<label class="tog" title="Hours with this tag are counted as work that displaced the optimisation plan">'
-          + '<input type="checkbox" data-disp="' + i + '"' + (d.displaces ? ' checked' : '') + '> displaces the plan</label>'
-          + '<span class="grow"></span>'
-          + (defs.length > 1 ? '<button class="btn sm" data-deltag="' + i + '" title="Remove this tag">✕</button>' : '')
-          + '</div>' + (d.note ? '<div class="mut" style="font-size:12px;margin:-2px 0 6px 19px">' + esc(d.note) + '</div>' : '');
-      }).join('');
+      // a tag is a dot, a name and one tick; its note spans the row underneath rather than
+      // pushing a third column nobody can read at this width
+      $('tg-list').innerHTML = '<div class="tgd-k"></div><div class="tgd-k">Displaces</div><div class="tgd-k"></div>'
+        + defs.map(function (d, i) {
+          return '<div class="tgd-ln"></div>'
+            + '<div class="tgd-nm"><i style="flex:0 0 auto;width:10px;height:10px;border-radius:50%;background:' + esc(tagColor(d)) + '"></i>'
+            + '<b title="' + esc(d.label) + '">' + esc(d.label) + '</b></div>'
+            + '<label class="tog" style="justify-content:center" title="Hours with this tag are counted as work that displaced the optimisation plan">'
+            + '<input type="checkbox" data-disp="' + i + '"' + (d.displaces ? ' checked' : '')
+            + ' aria-label="' + esc(d.label) + ' displaces the plan"></label>'
+            + '<div>' + (defs.length > 1 ? '<button class="btn sm" data-deltag="' + i + '" title="Remove the tag “' + esc(d.label) + '”">✕</button>' : '') + '</div>'
+            + (d.note ? '<div class="tgd-note">' + esc(d.note) + '</div>' : '');
+        }).join('');
 
-      $('tg-rules').innerHTML = rules.length ? rules.map(function (r, i) {
-        var pv = rulePreview(TASKS, r, TAGS);
-        return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px">'
-          + '<code>' + esc(r.q) + '</code><span class="mut">in ' + esc(r.on || 'title') + ' →</span>'
-          + tagChip(r.tag, 'rule')
-          + '<span class="grow"></span><span class="mut" style="font-size:12px">' + num(pv.hits) + ' row'
-          + (pv.hits === 1 ? '' : 's')
-          + (pv.held ? ' · ' + num(pv.held) + ' set by hand, untouched' : '') + '</span>'
-          + '<button class="btn sm" data-delrule="' + i + '">✕</button></div>';
-      }).join('') : '<div class="mut" style="font-size:13px">No rules yet.</div>';
+      // the two counts were prose on every row ("20 rows · 20 set by hand, untouched"), each a
+      // different length, so nothing lined up and the numbers could not be compared. They are
+      // columns now, headed once.
+      $('tg-rules').innerHTML = rules.length
+        ? ('<div class="tgd-k"></div><div class="tgd-k">Matches</div><div class="tgd-k">By hand</div><div class="tgd-k"></div>'
+          + rules.map(function (r, i) {
+            var pv = rulePreview(TASKS, r, TAGS);
+            return '<div class="tgd-ln"></div>'
+              + '<div class="tgd-cell"><code>' + esc(r.q) + '</code><span class="mut">→</span>'
+              + tagChip(r.tag, 'rule')
+              + '<span class="mut" style="font-size:11.5px" title="Where the word is looked for">'
+              + esc(r.on === 'both' ? 'title + notes' : (r.on === 'note' ? 'notes' : 'title')) + '</span></div>'
+              + '<div class="tgd-n" title="Tasks carrying this word">' + num(pv.hits) + '</div>'
+              + '<div class="tgd-n" title="Already tagged by a person, so this rule leaves them alone">' + (pv.held ? num(pv.held) : '—') + '</div>'
+              + '<div><button class="btn sm" data-delrule="' + i + '" title="Remove this rule">✕</button></div>';
+          }).join(''))
+        : '<div class="tgd-empty" style="grid-column:1/-1">No rules yet — add one below, or start from a common title.</div>';
 
+      // the twelve "common tasks in this book" were a wall of chips at the BOTTOM, below the
+      // builder they exist to fill. Same titles, same counts, now the rule box's own source
+      // list — nobody has to scroll past the control to find what feeds it.
       var by = {}, tot = [];
       TASKS.forEach(function (t) {
         var k = /^email ticket/i.test(t.title) ? 'Email ticket:' : String(t.title || '').slice(0, 42);
@@ -1352,28 +1690,28 @@ window.addEventListener('load',restore);
         by[k].n++; by[k].h += t.hours;
       });
       tot.sort(function (a, b) { return b.h - a.h; });
-      $('tg-sugg').innerHTML = tot.slice(0, 12).map(function (x) {
-        return '<button type="button" class="btn sm" data-sugg="' + esc(x.k) + '" style="margin:0 5px 5px 0">'
-          + esc(x.k) + ' <span class="mut">' + num(x.n) + ' · ' + hrs(x.h) + 'h</span></button>';
-      }).join('') || '<div class="mut" style="font-size:13px">No tasks in the book yet.</div>';
+      $('tg-sugg').innerHTML = '<option value="">' + (tot.length ? 'Start from a common title in this book…' : 'No tasks in the book yet') + '</option>'
+        + tot.slice(0, 12).map(function (x) {
+          return '<option value="' + esc(x.k) + '">' + esc(x.k) + ' — ' + num(x.n) + ' tasks · ' + hrs(x.h) + ' h</option>';
+        }).join('');
 
       var prev = function () {
         var q = $('tg-q').value, on = $('tg-on').value;
         if (!q.trim()) { $('tg-prev').textContent = ''; return; }
         var pv = rulePreview(TASKS, { q: q, on: on }, TAGS);
-        $('tg-prev').innerHTML = 'Would tag <b>' + num(pv.hits - pv.held) + '</b> row'
-          + ((pv.hits - pv.held) === 1 ? '' : 's') + ' (' + hrs(pv.hours) + ' h)'
-          + (pv.held ? ' · <b>' + num(pv.held) + '</b> already set by hand and left alone' : '');
+        $('tg-prev').innerHTML = 'Would tag <b>' + num(pv.hits - pv.held) + '</b> task'
+          + ((pv.hits - pv.held) === 1 ? '' : 's') + ' · ' + hrs(pv.hours) + ' h'
+          + (pv.held ? ' · <b>' + num(pv.held) + '</b> left alone, set by hand' : '');
       };
       $('tg-q').addEventListener('input', prev);
       $('tg-on').addEventListener('change', prev);
 
       if (host.__w) return;                     // listeners bind ONCE, not once per redraw
       host.__w = 1;
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && tgIsOpen()) rulesClose(); });
       host.addEventListener('click', function (e) {
         var el = e.target, a;
-        if (el.id === 'tg-x' || el.className === 'bd-dim') { host.innerHTML = ''; return; }
-        if ((a = el.getAttribute && el.getAttribute('data-sugg')) != null && a !== '') { $('tg-q').value = a.replace(/:$/, ''); prev(); $('tg-q').focus(); return; }
+        if (el.id === 'tg-x') { rulesClose(); return; }
         if ((a = el.getAttribute && el.getAttribute('data-deltag')) != null && a !== '') {
           var dd = DEFS().slice(); dd.splice(Number(a), 1); TAGDEF.tags = dd; tagSave(); draw(); return;
         }
@@ -1398,14 +1736,27 @@ window.addEventListener('load',restore);
         }
       });
       host.addEventListener('change', function (e) {
-        var i = e.target && e.target.getAttribute && e.target.getAttribute('data-disp');
+        var el = e.target;
+        // picking a common title FILLS the word box rather than creating a rule: the point is to
+        // see what it would touch, with the tag and the preview still yours to set
+        if (el && el.id === 'tg-sugg') {
+          if (!el.value) return;
+          $('tg-q').value = String(el.value).replace(/:$/, '');
+          el.selectedIndex = 0;                  // it is a source list, not a setting
+          prev(); $('tg-q').focus(); return;
+        }
+        var i = el && el.getAttribute && el.getAttribute('data-disp');
         if (i == null || i === '') return;
         var dd = DEFS().slice();
-        dd[Number(i)] = Object.assign({}, dd[Number(i)], { displaces: !!e.target.checked });
+        dd[Number(i)] = Object.assign({}, dd[Number(i)], { displaces: !!el.checked });
         TAGDEF.tags = dd; tagSave(); draw();
       });
     };
     draw();
+    document.body.classList.add('tgd-on');
+    tgBtn(true); tgRemember(true);
+    var box = host.querySelector('.bd-box');
+    if (box) requestAnimationFrame(function () { box.classList.add('on'); });
   }
   var TAG_COLORS = TAG_PAL;
 
@@ -1422,8 +1773,13 @@ window.addEventListener('load',restore);
   function tagImport(file) {
     if (!window.FeedXlsx || window.__xlsxFail) { toast('The spreadsheet engine did not load — reload the page'); return; }
     FeedXlsx.readFile(file).then(function (rows) {
-      var t = FeedXlsx.table(rows, ['Task id', 'Tags']);
-      if (t.header < 0) throw new Error('no header row with both "Task id" and "Tags" — export these rows first, then fill the Tags column in');
+      var t = FeedXlsx.table(rows, ['Task id']);
+      if (t.header < 0) throw new Error('no header row carrying "Task id" — export these rows first, then edit the Tags and/or Type of work column');
+      var hasTags = t.cols.indexOf('Tags') >= 0, hasType = t.cols.indexOf('Type of work') >= 0;
+      if (!hasTags && !hasType) throw new Error('that sheet has neither a "Tags" nor a "Type of work" column to read');
+      // Type arrives as the WORD the export wrote ("Technical fixes"), not the internal key
+      var catByLabel = {};
+      CATS.forEach(function (c) { catByLabel[String(CAT_LABEL[c] || c).toLowerCase()] = c; catByLabel[c] = c; });
       var byId = {};
       TASKS.forEach(function (x) { if (x.id) byId[String(x.id)] = x; });
       var known = {}; DEFS().forEach(function (d) { known[normTagSlug(d.slug)] = d; known[normTagSlug(d.label)] = d; });
@@ -1441,9 +1797,19 @@ window.addEventListener('load',restore);
           if (d) { var sl = normTagSlug(d.slug); if (mapped.indexOf(sl) < 0) mapped.push(sl); }
           else unknownTag[w] = (unknownTag[w] || 0) + 1;
         });
-        var cur = (task.tags || []).slice().sort().join('|');
-        if (cur === mapped.slice().sort().join('|')) { same++; return; }
-        plan.push({ task: task, tags: mapped, was: task.tags || [] });
+        var wantCat = null;
+        if (hasType) {
+          var raw = String(r['Type of work'] || '').trim();
+          if (raw) {
+            wantCat = catByLabel[raw.toLowerCase()] || null;
+            if (!wantCat) unknownTag['Type “' + raw + '”'] = 1;
+          }
+        }
+        var tagsSame = !hasTags || (task.tags || []).slice().sort().join('|') === mapped.slice().sort().join('|');
+        var catSame = !wantCat || wantCat === task.cat;
+        if (tagsSame && catSame) { same++; return; }
+        plan.push({ task: task, tags: hasTags ? mapped : null, was: task.tags || [],
+          cat: catSame ? null : wantCat, wasCat: task.cat });
       });
       var host = $('tgbd');
       var unknownList = Object.keys(unknownTag);
@@ -1461,9 +1827,13 @@ window.addEventListener('load',restore);
           + '<table class="st" style="margin:0"><tbody>' + plan.slice(0, 200).map(function (x) {
             return '<tr><td style="max-width:290px">' + esc(x.task.title || '(untitled)')
               + '<div class="mut" style="font-size:11px">' + esc(x.task.client + ' ' + x.task.market) + '</div></td>'
-              + '<td>' + (x.was.length ? x.was.map(function (g) { return tagChip(g); }).join(' ') : '<span class="tg-none">none</span>')
-              + ' <span class="mut">→</span> '
-              + (x.tags.length ? x.tags.map(function (g) { return tagChip(g); }).join(' ') : '<span class="tg-none">none</span>')
+              + '<td>'
+              + (x.tags ? ((x.was.length ? x.was.map(function (g) { return tagChip(g); }).join(' ') : '<span class="tg-none">none</span>')
+                + ' <span class="mut">→</span> '
+                + (x.tags.length ? x.tags.map(function (g) { return tagChip(g); }).join(' ') : '<span class="tg-none">none</span>')) : '')
+              + (x.cat ? '<div style="margin-top:3px"><span class="cat ' + x.wasCat + '"><i></i>'
+                + esc(CAT_LABEL[x.wasCat] || x.wasCat) + '</span> <span class="mut">→</span> <span class="cat '
+                + x.cat + '"><i></i>' + esc(CAT_LABEL[x.cat] || x.cat) + '</span></div>' : '')
               + '</td></tr>';
           }).join('') + '</tbody></table></div>'
           + (plan.length > 200 ? '<div class="mut" style="font-size:12px;margin-top:6px">showing the first 200 of ' + num(plan.length) + '</div>' : '')
@@ -1476,9 +1846,12 @@ window.addEventListener('load',restore);
       host.addEventListener('click', function (e) {
         if (e.target.id === 'im-x' || e.target.id === 'im-no' || e.target.className === 'bd-dim') return close();
         if (e.target.id === 'im-yes') {
-          plan.forEach(function (x) { setTags(x.task, x.tags); });
+          plan.forEach(function (x) {
+            if (x.tags) setTags(x.task, x.tags);
+            if (x.cat) setType(x.task, x.cat);
+          });
           tagSave(); close();
-          toast('Imported tags on ' + num(plan.length) + ' row' + (plan.length === 1 ? '' : 's'));
+          toast('Imported edits on ' + num(plan.length) + ' row' + (plan.length === 1 ? '' : 's'));
         }
       });
     }).catch(function (e) { toast('Could not read that file — ' + ((e && e.message) || e)); });
@@ -1496,12 +1869,18 @@ window.addEventListener('load',restore);
         if (t) { e.stopPropagation(); tagMenuOpen(el, t); }
         return;
       }
+      var ty = el && el.closest ? el.closest('[data-typeid]') : null;
+      if (ty) {
+        var tid = ty.getAttribute('data-typeid'), tt = null;
+        for (var j = 0; j < TASKS.length; j++) if (String(TASKS[j].id) === tid) { tt = TASKS[j]; break; }
+        if (tt) { e.stopPropagation(); typeMenuOpen(ty, tt); return; }
+      }
       var b = el && el.getAttribute && el.getAttribute('data-bulk');
       if (b) { bulkApply(b); return; }
       if (TAGMENU && !TAGMENU.contains(el)) tagMenuClose();
     });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') tagMenuClose(); });
-    var dt = $('dp-tags'); if (dt) dt.onclick = rulesOpen;
+    var dt = $('dp-tags'); if (dt) dt.onclick = rulesToggle;
     var ti = $('ptagimp'), tf = $('ptagfile');
     if (ti && tf) {
       ti.onclick = function () { tf.value = ''; tf.click(); };
@@ -1580,6 +1959,9 @@ window.addEventListener('load',restore);
     Q = parseQuery($('q').value);
     // tags are decorated onto EVERY row before the filter runs, because `tag:urgent` is a query
     // term like any other — the search must be able to read what the tagging produced
+    // the Type override runs FIRST: `cat` is read by the search, every grouping, the chart and the
+    // displacement headline, so overriding the field itself keeps all of them telling one story
+    decorateTypes(TASKS, TYPES);
     decorateTags(TASKS, TAGS, RULES());
     FT = TASKS.filter(function (t) { return matchTask(t, Q); });
     FK = TICKETS.filter(function (t) { return matchTicket(t, Q); });
@@ -1595,7 +1977,6 @@ window.addEventListener('load',restore);
       + (s.n === 0 && live ? ' <span class="bad">— nothing matches; try fewer words, or a shorter <code>client:</code></span>' : '');
     $('c-tasks').textContent = ' ' + num(FT.length);
     dispRender();
-    bulkRender();
     $('c-tickets').textContent = ' ' + num(FK.length);
     $('c-accounts').textContent = ' ' + num(ACCOUNTS.length);
     try {
@@ -1607,31 +1988,144 @@ window.addEventListener('load',restore);
   }
 
   /* ---- chart ----------------------------------------------------------------------------- */
-  var CDIM = 'total', CFORM = 'donut';
+  var CDIM = 'total', CDIM2 = '', CDIM3 = '', CFORM = 'donut';
   function chartRows() { return groupBy(FT, CDIM, CDIM === 'total' ? 0 : 12); }
+  // the split is NESTED the moment a second dimension is chosen; 'total' can only ever be level 1
+  function nested() { return CDIM !== 'total' && !!CDIM2; }
+  function nestTree() { return groupNested(FT, [CDIM, CDIM2, CDIM3]); }
+  function dimName(k) {
+    for (var i = 0; i < DIMS.length; i++) if (DIMS[i].k === k) return DIMS[i].label;
+    return k;
+  }
+  // a level's own value labels — 'cat' and 'bucket' store keys, not words
+  function nodeLabel(k, dim) {
+    if (dim === 'cat') return CAT_LABEL[k] || k;
+    if (dim === 'bucket') return BUCKET_LABEL[k] || k;
+    return k;
+  }
+
+  /* The two extra selects offer every dimension EXCEPT 'total' (one bucket splits into nothing)
+     and except the ones already used above them — splitting owner within owner gives one child per
+     parent and says nothing. The third is disabled until the second is chosen, so the control can
+     never be in a state the chart cannot draw. */
+  function fillSubDims() {
+    [['cdim2', CDIM2, [CDIM]], ['cdim3', CDIM3, [CDIM, CDIM2]]].forEach(function (spec) {
+      var el = $(spec[0]); if (!el) return;
+      var taken = spec[2];
+      el.innerHTML = '<option value="">\u2014 no further split \u2014</option>'
+        + DIMS.filter(function (d) { return d.k !== 'total' && taken.indexOf(d.k) < 0; })
+          .map(function (d) { return '<option value="' + esc(d.k) + '">' + esc(d.label) + '</option>'; }).join('');
+      el.value = spec[1] || '';
+      if (el.value !== (spec[1] || '')) el.value = '';            // the stored pick is no longer offered
+    });
+    $('cdim2').disabled = CDIM === 'total';
+    $('cdim3').disabled = CDIM === 'total' || !CDIM2;
+    if ($('cdim2').disabled) CDIM2 = '';
+    if ($('cdim3').disabled) CDIM3 = '';
+    /* The form selector must NAME what is on screen. A greyed-out select still reading
+       "Stacked columns" over an indented breakdown is a label describing something else, so the
+       nested reading gets its own option that exists only while it applies. */
+    var fs = $('cform'), has = fs.querySelector('option[value="nest"]');
+    if (nested()) {
+      if (!has) {
+        has = document.createElement('option');
+        has.value = 'nest'; has.textContent = 'Nested breakdown';
+        fs.appendChild(has);
+      }
+      fs.value = 'nest';
+      fs.disabled = true;
+      fs.title = 'A nested split reads as one indented breakdown \u2014 a donut or a column cannot show three levels honestly';
+    } else {
+      if (has) has.remove();
+      fs.value = CFORM;
+      fs.disabled = false;
+      fs.title = '';
+    }
+  }
 
   function chart() {
-    var g = chartRows(), s = summarise(FT);
-    $('cwsub').textContent = (DIMS.filter(function (d) { return d.k === CDIM; })[0] || {}).label
-      + (CDIM === 'total' ? '' : ' · ' + g.length + ' ' + (g.length === 1 ? 'group' : 'groups'));
-    var stage = $('cstage');
+    var s = summarise(FT), stage = $('cstage');
+    var tree = nested() ? nestTree() : null;
+    var g = tree ? [] : chartRows();
+    $('cwsub').textContent = nested()
+      ? tree.dims.map(dimName).join(' › ') + ' · ' + tree.length + ' top-level '
+        + (tree.length === 1 ? 'group' : 'groups')
+      : dimName(CDIM) + (CDIM === 'total' ? '' : ' · ' + g.length + ' ' + (g.length === 1 ? 'group' : 'groups'));
     if (!FT.length) {
       var hh = D.health || {};
       stage.innerHTML = '<div class="empty">' + (!hh.read
         ? 'The book has not been read yet, so there is nothing to chart.'
         : 'No task matches this search, so there is nothing to chart.') + '</div>';
-      $('clegend').innerHTML = ''; $('cverdict').textContent = ''; ctable(g); return;
+      $('clegend').innerHTML = ''; $('cverdict').textContent = ''; ctable(g, tree); return;
     }
-    var form = (CDIM === 'total' && CFORM !== 'donut') ? 'bars' : CFORM;
-    if (CDIM === 'total' && CFORM === 'donut') stage.innerHTML = donut(s);
-    else if (form === 'donut') stage.innerHTML = donut(s);
-    else if (form === 'bars') stage.innerHTML = hbars(g);
-    else stage.innerHTML = cols(g, form === 'pct');
+    if (tree) {
+      stage.innerHTML = nestBars(tree);
+    } else {
+      var form = (CDIM === 'total' && CFORM !== 'donut') ? 'bars' : CFORM;
+      if (CDIM === 'total' && CFORM === 'donut') stage.innerHTML = donut(s);
+      else if (form === 'donut') stage.innerHTML = donut(s);
+      else if (form === 'bars') stage.innerHTML = hbars(g);
+      else stage.innerHTML = cols(g, form === 'pct');
+    }
     legend(g, s);
     $('cverdict').innerHTML = '<b>' + hrs(s.hours) + ' h</b> in view. ' + billVerdict(s.billPct)
+      + (tree ? ' ' + nestNote(tree) : '')
       + (s.undated ? ' <span style="color:var(--muted)">' + s.undated + ' row' + (s.undated === 1 ? '' : 's') + ' carry no date: in the totals, in no month.</span>' : '');
-    ctable(g);
+    ctable(g, tree);
     wireTips();
+  }
+
+  /* What the nesting did to the numbers, said out loud. A capped level and a multi-valued level
+     both make the rows stop adding up to the book, in opposite directions — silence on either
+     would leave someone reconciling a total that cannot reconcile. */
+  function nestNote(tree) {
+    var bits = [];
+    if (tree.folded) bits.push('the smallest <b>' + num(tree.folded) + '</b> folded into “Other” to keep this readable');
+    if (tree.multi) bits.push('a task with several tags is counted under each, so the rows sum to <b>more</b> than the total above');
+    return bits.length ? '<span style="color:var(--muted)">' + bits.join('; ') + '.</span>' : '';
+  }
+
+  /* The nested view. SVG, like every other form here — so the PNG export, the shared hover
+     tooltip and the resolved theme colours all work exactly as they do on the flat charts rather
+     than needing a second code path that would drift.
+
+     BARS ARE SCALED TO THE WHOLE VIEW, not to each parent. A child bar and a top-level bar of the
+     same length therefore mean the same hours, which is the only way an eye can compare across the
+     hierarchy; per-parent scaling would make a 20-minute child of a small parent look like a
+     40-hour one. */
+  function nestBars(tree) {
+    var flat = flattenNested(tree), i, max = 0;
+    for (i = 0; i < flat.length; i++) if (flat[i].hours > max) max = flat[i].hours;
+    if (!max) return '<div class="empty">These rows carry no hours at all.</div>';
+    var W = 720, L = 210, Rp = 62, T = 8, iw = W - L - Rp;
+    var rowH = [24, 21, 19], y = T, s2 = '', showLab = $('clab').checked;
+    for (i = 0; i < flat.length; i++) {
+      var r = flat[i], d = Math.min(r.depth, 2);
+      if (d === 0 && i > 0) y += 7;                      // one breath between top-level groups
+      var bh = [15, 13, 11][d], ind = d * 13;
+      var wb = (r.bill / max) * iw, wn = (r.nonbill / max) * iw;
+      var full = nodeLabel(r.k, tree.dims[d]);
+      var room = Math.floor((L - 12 - ind) / 6.2);
+      var lab = full.length > room ? full.slice(0, Math.max(3, room - 1)) + '\u2026' : full;
+      var ttl = esc(r.path.map(function (x, n) { return nodeLabel(x, tree.dims[n]); }).join(' \u203a '))
+        + ' \u2014 ' + hrs(r.bill) + ' h billable, ' + hrs(r.nonbill) + ' h non-billable ('
+        + r.billPct + '% billable, ' + num(r.n) + ' task' + (r.n === 1 ? '' : 's') + ')';
+      s2 += '<text x="' + (ind + 2) + '" y="' + (y + bh - 3) + '" font-size="'
+        + [12, 11.5, 11][d] + '" font-weight="' + [800, 600, 400][d] + '" fill="'
+        + cvar(d === 2 ? '--muted' : d === 1 ? '--ink-2' : '--ink') + '"'
+        + (r.fold ? ' font-style="italic"' : '') + '>' + esc(lab) + '</text>';
+      s2 += '<g class="cg" data-t="' + ttl + '">';
+      var gap = (wb > 0 && wn > 3) ? 2 : 0;
+      if (wb > 0) s2 += '<rect x="' + L + '" y="' + y + '" width="' + wb.toFixed(1) + '" height="' + bh + '" fill="' + cvar('--bil') + '" rx="2"/>';
+      if (wn > 0) s2 += '<rect x="' + (L + wb + gap).toFixed(1) + '" y="' + y + '" width="' + (wn - gap).toFixed(1) + '" height="' + bh + '" fill="' + cvar('--nbil') + '" rx="2"/>';
+      s2 += '<rect x="' + L + '" y="' + y + '" width="' + iw + '" height="' + bh + '" fill="transparent"/></g>';
+      // the value label rides only on the levels that have room for it
+      if (showLab && d < 2) s2 += '<text x="' + (L + wb + wn + 7).toFixed(1) + '" y="' + (y + bh - 3)
+        + '" font-size="' + [11, 10.5][d] + '" font-weight="' + [800, 600][d] + '" fill="' + cvar('--ink') + '">' + hrs(r.hours) + ' h</text>';
+      y += rowH[d];
+    }
+    return '<svg viewBox="0 0 ' + W + ' ' + (y + 6) + '" role="img" aria-label="Billable and non-billable hours by '
+      + esc(tree.dims.join(' then ')) + '">' + s2 + '</svg>';
   }
 
   function donut(s) {
@@ -1740,7 +2234,9 @@ window.addEventListener('load',restore);
     var h = '<div class="lg-row hd"><i style="background:' + cvar('--bil') + '"></i><span class="nm">Billable</span><span class="v">' + hrs(s.bill) + ' h</span><span class="p">' + s.billPct + '%</span></div>'
       + '<div class="lg-row hd"><i style="background:' + cvar('--nbil') + '"></i><span class="nm">Non-billable</span><span class="v">' + hrs(s.nonbill) + ' h</span><span class="p">' + (Math.round((100 - s.billPct) * 10) / 10) + '%</span></div>';
     if (CDIM !== 'total') {
-      h += '<div class="lg-cap"><span>' + esc((DIMS.filter(function (d) { return d.k === CDIM; })[0] || {}).label) + '</span><span class="u">% billable</span></div>';
+      h += '<div class="lg-cap"><span>' + esc(nested()
+        ? [CDIM, CDIM2, CDIM3].filter(Boolean).map(dimName).join(' \u203a ')
+        : dimName(CDIM)) + '</span><span class="u">% billable</span></div>';
       h += g.slice(0, 12).map(function (x) {
         return '<div class="lg-row" style="border:none;padding:3px 0"><span class="nm">' + esc(dimLabel(x.k)) + '</span><span class="v">' + hrs(x.hours) + ' h</span><span class="p">' + x.billPct + '%</span></div>';
       }).join('');
@@ -1748,21 +2244,48 @@ window.addEventListener('load',restore);
     $('clegend').innerHTML = h;
   }
 
-  function ctable(g) {
+  function ctable(g, tree) {
     var box = $('ctabbox');
     box.hidden = !$('ctab').checked;
     if (box.hidden) return;
-    box.innerHTML = '<table class="st"><thead><tr><th>' + esc((DIMS.filter(function (d) { return d.k === CDIM; })[0] || {}).label)
-      + '</th><th class="num">Tasks</th><th class="num">Billable</th><th class="num">Non-billable</th><th class="num">Total</th><th class="num">% billable</th></tr></thead><tbody>'
+    var head = '<th class="num">Tasks</th><th class="num">Billable</th><th class="num">Non-billable</th>'
+      + '<th class="num">Total</th><th class="num">% billable</th>';
+    if (tree) {
+      // the AdWords reading: one indented row per node, parents before their children
+      var flat = flattenNested(tree);
+      box.innerHTML = '<table class="st ctab"><thead><tr><th>' + esc(tree.dims.map(dimName).join(' › '))
+        + '</th>' + head + '</tr></thead><tbody>'
+        + flat.map(function (r) {
+          var d = Math.min(r.depth, 2);
+          return '<tr class="lvl' + d + '"><td>' + esc(nodeLabel(r.k, tree.dims[d])) + '</td>'
+            + '<td class="num">' + num(r.n) + '</td><td class="num">' + hrsCell(r.bill) + '</td>'
+            + '<td class="num">' + hrsCell(r.nonbill) + '</td><td class="num b">' + hrsCell(r.hours) + '</td>'
+            + '<td class="num">' + r.billPct + '%</td></tr>';
+        }).join('') + '</tbody></table>';
+      return;
+    }
+    box.innerHTML = '<table class="st"><thead><tr><th>' + esc(dimName(CDIM))
+      + '</th>' + head + '</tr></thead><tbody>'
       + g.map(function (x) {
-        return '<tr><td class="b">' + esc(dimLabel(x.k)) + '</td><td class="num">' + num(x.n) + '</td><td class="num">' + hrs(x.bill)
-          + '</td><td class="num">' + hrs(x.nonbill) + '</td><td class="num b">' + hrs(x.hours) + '</td><td class="num">' + x.billPct + '%</td></tr>';
+        return '<tr><td class="b">' + esc(dimLabel(x.k)) + '</td><td class="num">' + num(x.n) + '</td><td class="num">' + hrsCell(x.bill)
+          + '</td><td class="num">' + hrsCell(x.nonbill) + '</td><td class="num b">' + hrsCell(x.hours) + '</td><td class="num">' + x.billPct + '%</td></tr>';
       }).join('') + '</tbody></table>';
   }
 
   function tsv() {
+    if (nested()) {
+      // ONE COLUMN PER LEVEL and LEAF ROWS ONLY — a pasted table whose parent rows sit beside its
+      // children would double every total the moment anyone summed the column
+      var tree = nestTree(), flat = flattenNested(tree).filter(function (r) { return r.leaf; });
+      return tree.dims.map(dimName).concat(['Tasks', 'Billable h', 'Non-billable h', 'Total h', '% billable']).join('\t')
+        + '\n' + flat.map(function (r) {
+          var cells = [];
+          for (var i = 0; i < tree.dims.length; i++) cells.push(nodeLabel(r.path[i] == null ? '' : r.path[i], tree.dims[i]));
+          return cells.concat([r.n, r.bill, r.nonbill, r.hours, r.billPct]).join('\t');
+        }).join('\n');
+    }
     var g = chartRows();
-    return [(DIMS.filter(function (d) { return d.k === CDIM; })[0] || {}).label, 'Tasks', 'Billable h', 'Non-billable h', 'Total h', '% billable'].join('\t')
+    return [dimName(CDIM), 'Tasks', 'Billable h', 'Non-billable h', 'Total h', '% billable'].join('\t')
       + '\n' + g.map(function (x) { return [dimLabel(x.k), x.n, x.bill, x.nonbill, x.hours, x.billPct].join('\t'); }).join('\n');
   }
 
@@ -1784,14 +2307,16 @@ window.addEventListener('load',restore);
       cx.fillStyle = cvar('--paper') || '#fff'; cx.fillRect(0, 0, W, H);
       cx.drawImage(img, 0, 0, W, H - 96);
       cx.fillStyle = cvar('--ink') || '#333'; cx.font = '900 34px Lato, sans-serif';
-      cx.fillText('Billable vs non-billable · ' + ((DIMS.filter(function (d) { return d.k === CDIM; })[0] || {}).label), 40, H - 56);
+      cx.fillText('Billable vs non-billable · ' + (nested()
+        ? [CDIM, CDIM2, CDIM3].filter(Boolean).map(dimName).join(' \u203a ')
+        : dimName(CDIM)), 40, H - 56);
       cx.fillStyle = cvar('--muted') || '#888'; cx.font = '700 22px Lato, sans-serif';
       cx.fillText('FeedSpark · Private & Confidential · reports database ' + D.from + ' → ' + D.to
         + (Q.raw.trim() ? ' · query: ' + Q.raw.trim() : ''), 40, H - 22);
       URL.revokeObjectURL(url);
       var a = document.createElement('a');
       a.href = cv.toDataURL('image/png');
-      a.download = 'feedspark-billable-' + CDIM + '-' + D.at + '.png';
+      a.download = 'feedspark-billable-' + [CDIM, CDIM2, CDIM3].filter(Boolean).join('-') + '-' + D.at + '.png';
       a.click();
     };
     img.onerror = function () { URL.revokeObjectURL(url); toast('Could not render the PNG — use ⎘ Copy table instead'); };
@@ -1828,7 +2353,8 @@ window.addEventListener('load',restore);
   var XCOLS = {
     tasks: [{ k: 'd', l: 'Date', t: 'date', w: 12 }, { k: 'client', l: 'Client', w: 18 },
       { k: 'market', l: 'Market', w: 9 }, { k: 'title', l: 'Task', w: 52 },
-      { k: 'catL', l: 'Type of work', w: 20 }, { k: 'tagsL', l: 'Tags', w: 22 },
+      { k: 'catL', l: 'Type of work', w: 20 }, { k: 'catSet', l: 'Type set by hand', w: 16 },
+      { k: 'tagsL', l: 'Tags', w: 22 },
       { k: 'owner', l: 'Who did it', w: 16 },
       { k: 'am', l: 'Account manager', w: 16 }, { k: 'status', l: 'Status', w: 15 },
       { k: 'bucketL', l: 'Stage', w: 14 },
@@ -1864,7 +2390,7 @@ window.addEventListener('load',restore);
       return Object.assign({}, a, { stateL: a.flag === 0 ? 'live' : (a.status || 'stopped') });
     });
     return rows.map(function (t) {
-      return Object.assign({}, t, { catL: CAT_LABEL[t.cat] || t.cat, tagsL: (t.tags || []).map(function (g) { return defOf(g).label; }).join('; '), bucketL: BUCKET_LABEL[t.bucket] || t.bucket });
+      return Object.assign({}, t, { catL: CAT_LABEL[t.cat] || t.cat, catSet: t.catSrc === 'manual' ? (t.catStale ? 'yes (renamed since)' : 'yes') : '', tagsL: (t.tags || []).map(function (g) { return defOf(g).label; }).join('; '), bucketL: BUCKET_LABEL[t.bucket] || t.bucket });
     });
   }
 
@@ -1908,6 +2434,20 @@ window.addEventListener('load',restore);
     t.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#1A365D;color:#fff;font:800 13px Lato,sans-serif;padding:10px 16px;border-radius:10px;z-index:120;box-shadow:0 8px 28px rgba(16,24,40,.28)';
     t.textContent = msg; document.body.appendChild(t);
     setTimeout(function () { t.remove(); }, 2200);
+  }
+  /* A toast that carries ONE action, used where a single click writes to the team's shared state
+     in bulk. The action lives exactly as long as the message does: an undo that is still sitting
+     there ten minutes later would take back work somebody has since done on top of it. */
+  function toastAct(msg, label, fn, ms) {
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);display:flex;align-items:center;gap:12px;max-width:calc(100vw - 24px);background:#1A365D;color:#fff;font:800 13px Lato,sans-serif;padding:9px 10px 9px 16px;border-radius:10px;z-index:120;box-shadow:0 8px 28px rgba(16,24,40,.28)';
+    var s = document.createElement('span'); s.textContent = msg; t.appendChild(s);
+    var b = document.createElement('button');
+    b.type = 'button'; b.textContent = label;
+    b.style.cssText = 'flex:0 0 auto;font:800 12px Lato,sans-serif;color:#1A365D;background:#fff;border:0;border-radius:7px;padding:7px 12px;cursor:pointer';
+    var tm = setTimeout(function () { t.remove(); }, ms || 9000);
+    b.onclick = function () { clearTimeout(tm); t.remove(); fn(); };
+    t.appendChild(b); document.body.appendChild(t);
   }
   function copy(text, msg) {
     try {
@@ -2060,7 +2600,7 @@ window.addEventListener('load',restore);
       var f = byIdx[i];
       td += f
         ? ('<td class="num"' + (f.c ? ' style="color:' + f.c + '"' : '') + '>'
-            + (f.n ? num(Math.round(sum[f.k])) : hrs(Math.round(sum[f.k] * 100) / 100)) + '</td>')
+            + (f.n ? num(Math.round(sum[f.k])) : hrsCell(sum[f.k])) + '</td>')
         : '<td></td>';
     }
     return '<tfoot><tr>' + td + '</tr></tfoot>';
@@ -2095,6 +2635,10 @@ window.addEventListener('load',restore);
   function pane() {
     var body = $('pbody');
     pqWire();
+    // the bulk bar counts the rows this call is about to paint, so it is refreshed here rather
+    // than in apply() alone — a tab switch or a change to the filter above the table never reaches
+    // apply(), and a stale count on a bar that writes to the whole team is the bug itself
+    bulkRender();
     if (TAB === 'tasks') {
       $('pane-h').textContent = 'Tasks';
       $('pane-s').textContent = 'Every piece of work the reports database recorded against the book in this window. Click a row for the full record.';
@@ -2106,13 +2650,13 @@ window.addEventListener('load',restore);
           + '<td>' + esc(t.d || '—') + '</td>'
           + '<td><span class="b">' + esc(t.client) + '</span> <span class="mk">' + esc(t.market) + '</span></td>'
           + '<td class="ttl"><span class="tt b">' + esc(t.title) + '</span>' + (t.note ? '<span class="nt">' + esc(t.note) + '</span>' : '') + '</td>'
-          + '<td><span class="cat ' + t.cat + '"><i></i>' + esc(CAT_LABEL[t.cat] || t.cat) + '</span></td>'
+          + '<td>' + typeCell(t) + '</td>'
           + '<td>' + tagCell(t) + '</td>'
           + '<td>' + esc(t.owner || '—') + '</td>'
           + '<td><span class="st-p ' + t.bucket + '">' + esc(t.status || t.bucket) + '</span></td>'
-          + '<td class="num" style="color:var(--bil)">' + (t.bill ? hrs(t.bill) : '·') + '</td>'
-          + '<td class="num" style="color:var(--nbil)">' + (t.nonbill ? hrs(t.nonbill) : '·') + '</td>'
-          + '<td class="num b">' + (t.hours ? hrs(t.hours) : '·') + '</td></tr>';
+          + '<td class="num" style="color:var(--bil)">' + (t.bill ? hrsCell(t.bill) : '·') + '</td>'
+          + '<td class="num" style="color:var(--nbil)">' + (t.nonbill ? hrsCell(t.nonbill) : '·') + '</td>'
+          + '<td class="num b">' + (t.hours ? hrsCell(t.hours) : '·') + '</td></tr>';
       }).join('') + '</tbody>' + footHtml('tasks', rows, TASK_COLS, rows.length > SHOW) + '</table>';
       $('pmore').hidden = rows.length <= SHOW;
       $('pmore').textContent = 'Show more (' + num(rows.length - SHOW) + ' left)';
@@ -2137,7 +2681,7 @@ window.addEventListener('load',restore);
           + '<td><span class="st-p ' + (t.status === 'closed' ? 'done' : t.status === 'ignored' ? 'cancelled' : 'open') + '">' + esc(t.status) + '</span></td>'
           + '<td class="num"><span class="age ' + esc(t.level || 'ok') + '">' + num(t.age) + '</span></td>'
           + '<td class="num">' + num(t.idle) + '</td><td class="num">' + num(t.msgs) + '</td>'
-          + '<td class="num">' + num(t.tasks) + '</td><td class="num b">' + (t.hours ? hrs(t.hours) : '·') + '</td></tr>';
+          + '<td class="num">' + num(t.tasks) + '</td><td class="num b">' + (t.hours ? hrsCell(t.hours) : '·') + '</td></tr>';
       }).join('') + '</tbody>' + footHtml('tickets', kr, TK_COLS, false) + '</table>';
       $('pmore').hidden = true;
       pqCount(kr.length);
@@ -2155,9 +2699,9 @@ window.addEventListener('load',restore);
         return '<tr data-i="' + i + '"' + (a.flag !== 0 ? ' style="opacity:.62"' : '') + '>'
           + '<td class="b" data-hrs="' + esc(a.client) + '" data-hrs-flag>' + esc(a.client) + '</td><td><span class="mk">' + esc(a.market) + '</span></td>'
           + '<td>' + esc(a.group || '—') + '</td><td>' + esc(a.am || '—') + '</td><td>' + esc(a.am2 || '—') + '</td>'
-          + '<td class="num">' + (a.allowance ? hrs(a.allowance) : '·') + '</td>'
-          + '<td class="num">' + (a.used ? hrs(a.used) : '·') + '</td>'
-          + '<td class="num b" style="color:' + (st === 'over' ? 'var(--risk)' : st === 'banked' ? 'var(--navy)' : 'var(--ink)') + '">' + hrs(a.balance) + '</td>'
+          + '<td class="num">' + (a.allowance ? hrsCell(a.allowance) : '·') + '</td>'
+          + '<td class="num">' + (a.used ? hrsCell(a.used) : '·') + '</td>'
+          + '<td class="num b" style="color:' + (st === 'over' ? 'var(--risk)' : st === 'banked' ? 'var(--navy)' : 'var(--ink)') + '">' + hrsCell(a.balance) + '</td>'
           + '<td><span class="st-p ' + (a.flag === 0 ? 'done' : 'cancelled') + '">' + esc(a.flag === 0 ? 'live' : a.status || 'stopped') + '</span></td></tr>';
       }).join('') + '</tbody>' + footHtml('accounts', ar, AC_COLS, false) + '</table>';
       $('pmore').hidden = true;
@@ -2322,13 +2866,17 @@ window.addEventListener('load',restore);
     DIMS.forEach(function (x) {
       var o = document.createElement('option'); o.value = x.k; o.textContent = x.label; $('cdim').appendChild(o);
     });
+    fillSubDims();
     srcLine();
     try {
       var qp = new URL(location.href).searchParams;
       if (qp.get('q')) $('q').value = qp.get('q');
       if (qp.get('dim')) { CDIM = qp.get('dim'); $('cdim').value = CDIM; }
+      if (qp.get('dim2')) CDIM2 = qp.get('dim2');
+      if (qp.get('dim3')) CDIM3 = qp.get('dim3');
       if (qp.get('form')) { CFORM = qp.get('form'); $('cform').value = CFORM; }
     } catch (e) {}
+    fillSubDims();
     var t = null;
     $('q').oninput = function () { if (t) clearTimeout(t); t = setTimeout(function () { t = null; apply(); }, 160); };
     $('qx').onclick = function () { $('q').value = ''; apply(); $('q').focus(); };
@@ -2341,8 +2889,19 @@ window.addEventListener('load',restore);
         apply();
       };
     });
-    $('cdim').onchange = function () { CDIM = $('cdim').value; if (CDIM !== 'total' && CFORM === 'donut') { CFORM = 'stack'; $('cform').value = 'stack'; } chart(); };
-    $('cform').onchange = function () { CFORM = $('cform').value; if (CFORM === 'donut' && CDIM !== 'total') { CDIM = 'total'; $('cdim').value = 'total'; } chart(); };
+    $('cdim').onchange = function () {
+      CDIM = $('cdim').value;
+      if (CDIM === 'total') { CDIM2 = ''; CDIM3 = ''; }          // 'total' is one bucket — nothing to nest under
+      if (CDIM !== 'total' && CFORM === 'donut') { CFORM = 'stack'; $('cform').value = 'stack'; }
+      fillSubDims(); chart();
+    };
+    $('cdim2').onchange = function () {
+      CDIM2 = $('cdim2').value;
+      if (!CDIM2) CDIM3 = '';                                     // no second split, no third
+      fillSubDims(); chart();
+    };
+    $('cdim3').onchange = function () { CDIM3 = $('cdim3').value; fillSubDims(); chart(); };
+    $('cform').onchange = function () { CFORM = $('cform').value; if (CFORM === 'donut' && CDIM !== 'total') { CDIM = 'total'; CDIM2 = ''; CDIM3 = ''; $('cdim').value = 'total'; fillSubDims(); } chart(); };
     $('clab').onchange = chart; $('ctab').onchange = chart;
     $('pxlsx').onclick = xlsxExport;
     $('xpng').onclick = png;
@@ -2351,6 +2910,8 @@ window.addEventListener('load',restore);
     $('xlink').onclick = function () {
       var u = new URL(location.href);
       u.searchParams.set('dim', CDIM); u.searchParams.set('form', CFORM);
+      if (CDIM2) u.searchParams.set('dim2', CDIM2); else u.searchParams.delete('dim2');
+      if (CDIM3) u.searchParams.set('dim3', CDIM3); else u.searchParams.delete('dim3');
       if (Q.raw.trim()) u.searchParams.set('q', Q.raw.trim()); else u.searchParams.delete('q');
       copy(u.toString(), 'Link copied — it reopens this exact view');
     };
@@ -2373,7 +2934,13 @@ window.addEventListener('load',restore);
     fetch('/api/access?me=1').then(function (r) { return r.json(); })
       .then(function (a) { ME = (a && (a.name || a.ownerName || a.email)) || ''; }).catch(function () {});
     // the first paint must not show every row as untagged and then flip — chain it on the load
-    tagLoad(function () { apply(); });
+    tagLoad(function () {
+      apply();
+      // reopen the rail this screen left open — after the tags land, so it never paints an empty
+      // vocabulary and then fills itself in
+      var want = '0'; try { want = localStorage.getItem(TG_KEY) || '0'; } catch (e) {}
+      if (want === '1') rulesOpen();
+    });
     apply();
   }
 
