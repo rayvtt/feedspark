@@ -173,6 +173,7 @@ export const FIELDS = {
   status: 'status', state: 'status',
   cat: 'cat', category: 'cat', type: 'cat',
   bill: 'bill', billable: 'bill',
+  tag: 'tag', label: 'tag', tagged: 'tag',
   month: 'month',
   from: 'from', since: 'from', after: 'from',
   to: 'to', until: 'to', before: 'to',
@@ -274,6 +275,21 @@ const fieldHit = (val, want) => {
 };
 const anyHit = (val, wants) => wants.some((w) => fieldHit(val, w));
 
+/**
+ * `tag:` reads a LIST, not a value — a task can carry several.
+ *
+ * `tag:none` (and `tag:untagged`) asks the opposite question: what has nobody judged yet. That is
+ * the one an AM actually needs before trusting the displacement figure, so it is part of the
+ * grammar rather than something you can only see by eye.
+ */
+const tagHit = (tags, wants) => wants.some((w) => {
+  const b = fold(w);
+  if (b === 'none' || b === 'untagged' || b === 'any') {
+    return b === 'any' ? (tags || []).length > 0 : !(tags || []).length;
+  }
+  return (tags || []).some((g) => fieldHit(g, w));
+});
+
 /** The text a bare word searches. */
 export function taskBlob(t) {
   return fold([t.title, t.note, t.owner, t.client, t.market, t.status].join('  '));
@@ -302,6 +318,7 @@ export function matchTask(t, q) {
   if (f.market && !anyHit(t.market, f.market)) return false;
   if (f.am && !anyHit(t.am, f.am)) return false;
   if (f.cat && !anyHit(t.cat, f.cat)) return false;
+  if (f.tag && !tagHit(t.tags, f.tag)) return false;
   if (f.status && !(anyHit(t.status, f.status) || anyHit(t.bucket, f.status))) return false;
   if (f.month && !f.month.some((m) => monthOf(t.d) === m)) return false;
   if (f.bill) {
@@ -317,6 +334,7 @@ export function matchTask(t, q) {
   if (nf.client && anyHit(t.client, nf.client)) return false;
   if (nf.market && anyHit(t.market, nf.market)) return false;
   if (nf.cat && anyHit(t.cat, nf.cat)) return false;
+  if (nf.tag && tagHit(t.tags, nf.tag)) return false;
   if (nf.status && (anyHit(t.status, nf.status) || anyHit(t.bucket, nf.status))) return false;
   if (!numOk(t, q)) return false;
   return true;
@@ -339,7 +357,7 @@ export function matchTicket(t, q) {
   if (nf.status && anyHit(t.status, nf.status)) return false;
   // owner/market/cat/bill are task dimensions; a ticket query carrying one simply has no
   // tickets to offer rather than silently ignoring the filter.
-  if (f.owner || f.market || f.cat || f.bill) return false;
+  if (f.owner || f.market || f.cat || f.bill || f.tag) return false;
   return true;
 }
 
@@ -375,6 +393,165 @@ export function summarise(rows) {
   return s;
 }
 
+// ---------------------------------------------------------------------------------------------
+// TAGS — what forced the work, which is not what the work was
+//
+// Ray, 17 Sep 2026: "there will be a tagging system, a labeling system of which task is urgent,
+// which task is from agency work, and which task is technical … the goal is to highlight how many
+// hours are spent on urgent stuff that should have been spent on optimisation."
+//
+// This is a SECOND AXIS, deliberately not folded into `cat`. `cat` is derived from the title and
+// answers WHAT THE WORK WAS (optimisation, a technical fix, set-up, account admin). A tag is a
+// human's judgement about WHY IT HAPPENED and whether it should have. The two are independent:
+// an urgent job can be optimisation work, and most reactive work classifies as something useful —
+// which is exactly why the displacement never shows up in `cat` alone and needs its own axis.
+//
+// Checked against the real book before building this (Reiss GB, 1,200 rows): `priority` is the
+// constant 20 on every row and `task_source` is empty, so the database does NOT already carry
+// urgency. Nothing here duplicates a field that exists.
+//
+// KEYED ON THE TASK'S OWN list_id, never on its wording. The rotation re-reads each market about
+// twice a day and re-packs every row, so a tag keyed on a title would come unstuck the first time
+// anyone edited one. A row that arrives WITHOUT an id cannot be tagged — taggable() says so and
+// the page shows it as such, rather than keying on something that drifts.
+
+/** The tags a fresh FCC starts with — Ray's three. Everything else is added in the page. */
+// The colours are the repo's VALIDATED categorical set (the one the Deck Generator charts use),
+// in an order checked with the dataviz validator against BOTH surfaces — the first pick was two
+// hues apart by ΔE 0.4 under deuteranopia, and they were Agency and Technical: Ray's two
+// non-urgent tags, side by side on the same row, indistinguishable to a red-green colourblind
+// reader. Urgent keeps the red because that one hue is carrying meaning.
+export const TAG_PAL = ['#e34948', '#4a3aa7', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#2a78d6', '#eb6834'];
+export const TAG_PAL_DARK = ['#e66767', '#9085e9', '#199e70', '#c98500', '#d55181', '#008300', '#3987e5', '#d95926'];
+
+export const TAG_SEED = [
+  { slug: 'urgent', label: 'Urgent', color: TAG_PAL[0], displaces: true,
+    note: 'Dropped on us and done now. These are the hours the optimisation plan lost.' },
+  { slug: 'agency', label: 'Agency work', color: TAG_PAL[1], displaces: false,
+    note: 'Asked for by the agency rather than the client or our own plan.' },
+  { slug: 'technical', label: 'Technical', color: TAG_PAL[2], displaces: false,
+    note: 'Something broke or needed engineering, as opposed to optimising what works.' },
+];
+
+/** The dark-surface step for a light-surface tag colour (the validator wants its own steps). */
+export function tagDark(hex) {
+  const i = TAG_PAL.indexOf(String(hex || '').toLowerCase());
+  return i >= 0 ? TAG_PAL_DARK[i] : hex;
+}
+
+export function normTagSlug(s) {
+  return String(s == null ? '' : s).toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24);
+}
+
+/** A row can only carry a tag if the source gave it a stable id. */
+export function taggable(t) { return !!(t && t.id); }
+
+/**
+ * Does one keyword rule match this task?
+ *
+ * Plain case-insensitive substring over the chosen field — the same thing an AM means by "tag
+ * everything with 'disapproval' in it". Never a regex from the page: an AM typing `(` would
+ * otherwise throw inside the render loop and blank the table.
+ */
+export function ruleHits(rule, t) {
+  const q = String((rule && rule.q) || '').toLowerCase().trim();
+  if (!q) return false;
+  const on = (rule && rule.on) || 'title';
+  const hay = (on === 'note' ? String(t.note || '')
+    : on === 'both' ? String(t.title || '') + '  ' + String(t.note || '')
+      : String(t.title || '')).toLowerCase();
+  return hay.indexOf(q) >= 0;
+}
+
+/**
+ * This task's tags, and where they came from.
+ *
+ * A HUMAN ALWAYS WINS. If someone has set this task's tags, that record IS the answer — including
+ * an empty list, which means "I looked, and none of these apply". Without that rule a keyword rule
+ * would re-apply its tag every render and a person could never take one off; the tag they removed
+ * would silently come back and they would stop trusting the whole column.
+ */
+export function tagsOf(t, assign, rules) {
+  const rec = assign && t && t.id != null ? assign[String(t.id)] : null;
+  if (rec && Array.isArray(rec.tags)) return { tags: rec.tags.slice(), src: 'manual' };
+  const out = [];
+  for (const r of (rules || [])) {
+    const slug = normTagSlug(r && r.tag);
+    if (slug && out.indexOf(slug) < 0 && ruleHits(r, t)) out.push(slug);
+  }
+  return { tags: out, src: out.length ? 'rule' : 'none' };
+}
+
+/** Stamp `tags`/`tagSrc` onto rows so the search, the chart and the table all read one answer. */
+export function decorateTags(rows, assign, rules) {
+  for (const t of (rows || [])) {
+    const r = tagsOf(t, assign, rules);
+    t.tags = r.tags; t.tagSrc = r.src;
+  }
+  return rows;
+}
+
+/**
+ * THE HEADLINE Ray asked for: how much of this book went to work that displaced the plan.
+ *
+ * `displaced` is the hours carrying any tag flagged `displaces` (seeded: Urgent). It is set
+ * against `opt` — the hours whose *work* classified as optimisation — because that is the thing
+ * being crowded out, and `cat` already computes it from the title with no extra judgement needed.
+ *
+ * THE UNTAGGED SHARE TRAVELS WITH IT, always. A book that is 4% tagged would otherwise report
+ * "2.1h urgent" and read like good news, when the honest reading is "2.1h of the 6% we have
+ * looked at". Nothing here treats untagged as "not urgent" — untagged is UNKNOWN.
+ */
+export function displacement(rows, defs) {
+  const disp = {};
+  for (const d of (defs || [])) if (d && d.displaces) disp[normTagSlug(d.slug)] = 1;
+  const o = {
+    hours: 0, n: 0, dispHours: 0, dispBill: 0, dispNonbill: 0, dispN: 0,
+    optHours: 0, optN: 0, taggedHours: 0, taggedN: 0, untaggedHours: 0, untaggedN: 0,
+    pct: 0, coverage: 0, ratio: 0, byTag: {},
+  };
+  for (const t of (rows || [])) {
+    const tags = (t && t.tags) || [];
+    o.hours += t.hours; o.n++;
+    if (tags.length) { o.taggedHours += t.hours; o.taggedN++; } else { o.untaggedHours += t.hours; o.untaggedN++; }
+    if (t.cat === 'opt') { o.optHours += t.hours; o.optN++; }
+    let isDisp = false;
+    for (const g of tags) {
+      const k = normTagSlug(g);
+      const b = o.byTag[k] || (o.byTag[k] = { hours: 0, n: 0, bill: 0, nonbill: 0 });
+      b.hours += t.hours; b.n++; b.bill += t.bill; b.nonbill += t.nonbill;
+      if (disp[k]) isDisp = true;
+    }
+    if (isDisp) { o.dispHours += t.hours; o.dispBill += t.bill; o.dispNonbill += t.nonbill; o.dispN++; }
+  }
+  o.hours = r2(o.hours); o.dispHours = r2(o.dispHours); o.dispBill = r2(o.dispBill);
+  o.dispNonbill = r2(o.dispNonbill); o.optHours = r2(o.optHours);
+  o.taggedHours = r2(o.taggedHours); o.untaggedHours = r2(o.untaggedHours);
+  for (const k of Object.keys(o.byTag)) {
+    const b = o.byTag[k];
+    b.hours = r2(b.hours); b.bill = r2(b.bill); b.nonbill = r2(b.nonbill);
+  }
+  // share of the WHOLE book, and how much of the book has been judged at all
+  o.pct = o.hours ? Math.round((o.dispHours / o.hours) * 1000) / 10 : 0;
+  o.coverage = o.hours ? Math.round((o.taggedHours / o.hours) * 1000) / 10 : 0;
+  o.ratio = o.optHours ? Math.round((o.dispHours / o.optHours) * 100) / 100 : 0;
+  return o;
+}
+
+/** Rows a rule would newly touch — what the rule builder previews before anything is saved. */
+export function rulePreview(rows, rule, assign) {
+  let hits = 0, held = 0, hours = 0;
+  for (const t of (rows || [])) {
+    if (!ruleHits(rule, t)) continue;
+    hits++;
+    const rec = assign && t.id != null ? assign[String(t.id)] : null;
+    if (rec && Array.isArray(rec.tags)) held++;            // a human already decided this one
+    else hours += t.hours;
+  }
+  return { hits: hits, held: held, hours: r2(hours) };
+}
+
 // The dimensions the chart and the breakdown panels can split by. `total` is the single-bucket
 // case — that is the donut.
 export const DIMS = [
@@ -387,6 +564,7 @@ export const DIMS = [
   { k: 'am', label: 'Account manager' },
   { k: 'bucket', label: 'Status' },
   { k: 'task', label: 'Task' },
+  { k: 'tag', label: 'Tag' },
 ];
 
 function dimKey(t, dim) {
@@ -399,17 +577,36 @@ function dimKey(t, dim) {
 }
 
 /**
+ * The buckets one task falls in. Every dimension but `tag` puts a task in exactly one — a task has
+ * one owner, one month, one client. TAGS ARE THE EXCEPTION: a job can be both urgent and technical,
+ * and forcing a primary tag would quietly drop the second fact the person recorded.
+ *
+ * So a multi-tagged task lands in EVERY one of its buckets, its hours counted in each. The bucket
+ * hours therefore sum to more than the book, and groupBy reports that as `multi` so the surface
+ * reading it can say so. Silently double-counted hours under a chart titled "hours" is the kind of
+ * number someone takes into a client conversation.
+ */
+function dimKeys(t, dim) {
+  if (dim !== 'tag') return [dimKey(t, dim)];
+  const tags = (t && t.tags) || [];
+  return tags.length ? tags.slice() : ['(untagged)'];
+}
+
+/**
  * Split rows by one dimension into billable / non-billable hour pairs, biggest first.
  * `cap` folds the tail into one honest "Other (N more)" row rather than hiding it — a chart
  * that drops its tail overstates every bar left standing.
  */
 export function groupBy(rows, dim, cap) {
   const m = new Map();
+  let placements = 0;
   for (const t of rows) {
-    const k = dimKey(t, dim);
-    let g = m.get(k);
-    if (!g) { g = { k, n: 0, bill: 0, nonbill: 0, hours: 0 }; m.set(k, g); }
-    g.n++; g.bill += t.bill; g.nonbill += t.nonbill; g.hours += t.hours;
+    for (const k of dimKeys(t, dim)) {
+      placements++;
+      let g = m.get(k);
+      if (!g) { g = { k, n: 0, bill: 0, nonbill: 0, hours: 0 }; m.set(k, g); }
+      g.n++; g.bill += t.bill; g.nonbill += t.nonbill; g.hours += t.hours;
+    }
   }
   let out = [...m.values()].map((g) => ({
     k: g.k, n: g.n, bill: r2(g.bill), nonbill: r2(g.nonbill), hours: r2(g.hours),
@@ -418,6 +615,10 @@ export function groupBy(rows, dim, cap) {
   // months read in time order; everything else reads biggest-first
   if (dim === 'month') out.sort((a, b) => String(a.k).localeCompare(String(b.k)));
   else out.sort((a, b) => (b.hours - a.hours) || (b.n - a.n) || String(a.k).localeCompare(String(b.k)));
+  // a tag dimension can place one task in several buckets, so the bucket hours legitimately sum
+  // to more than the book. Say so rather than letting a chart imply otherwise.
+  out.multi = placements > rows.length;
+  out.placements = placements;
   if (cap && out.length > cap && dim !== 'month') {
     const keep = out.slice(0, cap - 1), rest = out.slice(cap - 1);
     const fold0 = rest.reduce((s, x) => ({

@@ -50,12 +50,15 @@ function liftPage() {
   const body = src.slice(a + A.length, b);
   const names = ['parseQuery', 'matchTask', 'matchTicket', 'bucketOf', 'summarise', 'groupBy',
     'ticketStats', 'billVerdict', 'balanceState', 'taskBlob', 'ticketBlob',
-    'CATS', 'CAT_LABEL', 'DIMS', 'BUCKET_LABEL', 'STATUS_BUCKET'];
+    'CATS', 'CAT_LABEL', 'DIMS', 'BUCKET_LABEL', 'STATUS_BUCKET',
+    'TAG_SEED', 'normTagSlug', 'taggable', 'ruleHits', 'tagsOf', 'decorateTags',
+    'displacement', 'rulePreview'];
   // eslint-disable-next-line no-new-func
   const f = new Function(body + '\nreturn {' + names.join(',') + '};');
   return f();
 }
 const P = liftPage();
+const PAGE_SRC = fs.readFileSync(PAGE, 'utf8');
 
 // ---------------------------------------------------------------------------------------------
 // the assertion table — run against BOTH implementations
@@ -251,6 +254,136 @@ for (const qs of QUERIES) {
   const b = SAMPLE.map((r) => P.matchTask(Object.assign({}, r), P.parseQuery(qs)));
   eq(b, a, `page and engine agree on "${qs}"`);
 }
+// ---------------------------------------------------------------------------------------------
+// TAGS — the judgement layer, and the number it exists to produce
+//
+// Ray, 17 Sep 2026: "there will be a tagging system, a labeling system of which task is urgent,
+// which task is from agency work, and which task is technical … the goal is to highlight how many
+// hours are spent on urgent stuff that should have been spent on optimisation."
+//
+// The rules worth pinning are the ones that decide whether anyone trusts the number: a human
+// always beats a keyword rule, an untagged row is UNKNOWN rather than "not urgent", and a
+// multi-tagged task must not silently double-count its hours under a heading that says "hours".
+// ---------------------------------------------------------------------------------------------
+console.log('── tags: a second axis, keyed on the task id');
+const TT = (o) => Object.assign({ id: 1, d: '2026-08-01', client: 'Reiss', market: 'GB', am: 'Ray',
+  title: '', note: '', cat: 'other', owner: 'Febin', status: 'DONE', bucket: 'done',
+  bill: 0, nonbill: 0, hours: 0, sched: 0, ticket: 0 }, o);
+
+eq(M.TAG_SEED.map((t) => t.slug), ['urgent', 'agency', 'technical'],
+  "the seeded vocabulary is Ray's three, in his order");
+ok(M.TAG_SEED.filter((t) => t.displaces).map((t) => t.slug).join() === 'urgent',
+  'and only Urgent is marked as displacing the plan — the others are context, not a verdict');
+eq(M.normTagSlug('Agency Work!'), 'agency-work', 'a tag name slugs down to something storable');
+eq(M.normTagSlug('  '), '', 'and an empty name yields no slug rather than a blank tag');
+ok(M.taggable(TT({ id: 7 })) && !M.taggable(TT({ id: 0 })),
+  'a row without the source\'s own task id CANNOT be tagged — the key would have to be its wording, '
+  + 'and the rotation re-packs every row about twice a day');
+
+console.log('── the tag palette is the validated one, with its own dark steps');
+eq(M.TAG_PAL.length, M.TAG_PAL_DARK.length, 'every light step has a dark counterpart');
+eq(M.TAG_SEED.map((t) => t.color), M.TAG_PAL.slice(0, 3),
+  'the seeded three take the first three slots of the validated set rather than hand-picked hues');
+eq(M.tagDark('#e34948'), '#e66767', 'a light step resolves to its dark counterpart');
+eq(M.tagDark('#123456'), '#123456', 'and an unknown colour is passed through rather than mangled');
+ok(M.TAG_PAL.indexOf('#7c3aed') < 0 && M.TAG_PAL.indexOf('#2563EB'.toLowerCase()) < 0,
+  'the ΔE-0.4-under-deuteranopia pair that the first draft gave Agency and Technical is gone — '
+  + 'those are Ray\'s two non-urgent tags and they sit side by side on the same row');
+ok(/dp-leg/.test(PAGE_SRC) && /Not yet tagged/.test(PAGE_SRC),
+  'and the bar carries a LEGEND with its numbers, so identity is never colour alone');
+
+console.log('── keyword rules read the field they were pointed at');
+ok(M.ruleHits({ q: 'disapprov', on: 'title' }, TT({ title: 'Disapprovals' })), 'title match is case-insensitive substring');
+ok(!M.ruleHits({ q: 'disapprov', on: 'note' }, TT({ title: 'Disapprovals' })), 'on:note does not read the title');
+ok(M.ruleHits({ q: 'chase', on: 'both' }, TT({ title: 'Data request', note: 'had to chase' })), 'on:both reads either');
+ok(!M.ruleHits({ q: '', on: 'title' }, TT({ title: 'anything' })), 'an empty rule matches nothing rather than everything');
+ok(M.ruleHits({ q: '(', on: 'title' }, TT({ title: 'Email ticket: [x] (y)' })),
+  'a rule is a plain SUBSTRING, never a regex — an AM typing "(" would otherwise throw inside the render loop');
+
+console.log('── a human always beats a rule');
+const RULES = [{ q: 'disapprov', on: 'title', tag: 'urgent' }, { q: 'disapprov', on: 'title', tag: 'technical' }];
+eq(M.tagsOf(TT({ title: 'Disapprovals' }), {}, RULES).tags, ['urgent', 'technical'],
+  'with nothing set by hand, every matching rule contributes its tag');
+eq(M.tagsOf(TT({ title: 'Disapprovals' }), {}, RULES).src, 'rule', 'and the row says where that came from');
+eq(M.tagsOf(TT({ id: 5, title: 'Disapprovals' }), { 5: { tags: ['agency'] } }, RULES).tags, ['agency'],
+  'a hand-set record REPLACES the rules rather than merging with them');
+eq(M.tagsOf(TT({ id: 5, title: 'Disapprovals' }), { 5: { tags: [] } }, RULES).tags, [],
+  'AN EMPTY HAND-SET LIST STICKS — it means "I looked, none of these apply". Without this rule a '
+  + 'keyword rule would re-apply its tag every render and nobody could ever take one off');
+eq(M.tagsOf(TT({ title: 'Disapprovals' }), {}, [RULES[0], RULES[0]]).tags, ['urgent'],
+  'two rules pointing at one tag do not double it');
+eq(M.tagsOf(TT({ title: 'Keyword optimisation' }), {}, RULES).src, 'none', 'a row no rule matches says so');
+
+console.log('── the displacement figure, and what it refuses to imply');
+const BOOK = [
+  TT({ id: 1, title: 'Disapprovals', cat: 'tech', hours: 3, bill: 3 }),
+  TT({ id: 2, title: 'Email ticket: x', cat: 'acct', hours: 2, bill: 1, nonbill: 1 }),
+  TT({ id: 3, title: 'Keyword optimisation', cat: 'opt', hours: 10, bill: 10 }),
+  TT({ id: 4, title: 'Title optimisation', cat: 'opt', hours: 5, bill: 5 }),
+];
+M.decorateTags(BOOK, {}, [{ q: 'disapprov', on: 'title', tag: 'urgent' },
+  { q: 'email ticket', on: 'title', tag: 'urgent' }, { q: 'disapprov', on: 'title', tag: 'technical' }]);
+const D = M.displacement(BOOK, M.TAG_SEED);
+eq(D.dispHours, 5, 'the displacing tag\'s hours are summed');
+eq(D.optHours, 15, 'against the hours whose WORK classified as optimisation');
+eq(D.pct, 25, 'reported as a share of the whole book in view, not of the tagged part');
+eq(D.ratio, 0.33, 'and as reactive hours per hour of optimisation');
+eq(D.coverage, 25, 'COVERAGE TRAVELS WITH IT — 25% of these hours have been judged at all');
+eq([D.untaggedN, D.untaggedHours], [2, 15], 'the untagged remainder is counted, never assumed innocent');
+eq(D.byTag.technical.hours, 3, 'each tag keeps its own hours');
+eq(D.dispN, 2, 'and the row count behind the figure');
+const D0 = M.displacement(BOOK, M.TAG_SEED.map((t) => Object.assign({}, t, { displaces: false })));
+eq(D0.dispHours, 0, 'with nothing marked as displacing, the headline is zero rather than a guess');
+eq(M.displacement([], M.TAG_SEED).pct, 0, 'an empty view divides by nothing and says 0, not NaN');
+
+console.log('── one task, several tags: counted in each bucket, and SAID so');
+const G = M.groupBy(BOOK, 'tag');
+const gk = {}; G.forEach((g) => { gk[g.k] = g.hours; });
+eq(gk.urgent, 5, 'the urgent bucket carries both urgent rows');
+eq(gk.technical, 3, 'and the technical bucket carries the row that is also technical');
+eq(gk['(untagged)'], 15, 'UNTAGGED IS ITS OWN BUCKET — the gap is never invisible on the chart');
+ok(G.multi === true && G.placements === 5,
+  'and groupBy reports that it placed 5 times across 4 rows, so the surface can say the hours '
+  + 'legitimately sum to more than the book rather than quietly double-counting');
+ok(M.groupBy(BOOK, 'owner').multi === false, 'every other dimension puts a task in exactly one bucket');
+ok(M.DIMS.some((d) => d.k === 'tag'), 'tag is offered as a chart dimension');
+
+console.log('── tag: in the search grammar');
+const tq = (s2) => BOOK.filter((r) => M.matchTask(r, M.parseQuery(s2))).map((r) => r.id);
+eq(tq('tag:urgent'), [1, 2], 'tag: matches a row carrying it');
+eq(tq('tag:technical'), [1], 'including one of several on the same row');
+eq(tq('tag:urgent,technical'), [1, 2], 'the comma rule works on tags like any other field');
+eq(tq('tag:none'), [3, 4], 'tag:none asks the question an AM needs before trusting the figure');
+eq(tq('tag:any'), [1, 2], 'tag:any is its opposite');
+eq(tq('-tag:urgent'), [3, 4], 'and it negates');
+eq(tq('tag:urgent cat:tech'), [1], 'tags AND with every other field, being a separate axis');
+ok(!M.matchTicket({ subject: 'x', client: 'Reiss', status: 'open', d: '2026-08-01' }, M.parseQuery('tag:urgent')),
+  'a ticket carries no tags, so a tag query returns none rather than ignoring the filter');
+
+console.log('── the rule preview tells you what it will NOT touch');
+const pv = M.rulePreview(BOOK, { q: 'disapprov', on: 'title' }, { 1: { tags: ['agency'] } });
+eq([pv.hits, pv.held], [1, 1],
+  'a row whose tags were set by hand is counted as a hit but HELD BACK — the rule builder says '
+  + '"N already set by hand and left alone" rather than promising to tag rows it will not touch');
+const pv2 = M.rulePreview(BOOK, { q: 'optimisation', on: 'title' }, {});
+eq([pv2.hits, pv2.hours], [2, 15], 'and an untouched match reports the hours it would tag');
+
+console.log('── the page carries the same tag engine');
+for (const fn of ['tagsOf', 'displacement', 'ruleHits', 'rulePreview', 'taggable', 'normTagSlug']) {
+  ok(typeof P[fn] === 'function', `the page exposes ${fn}`);
+}
+eq(P.TAG_SEED.map((t) => t.slug), M.TAG_SEED.map((t) => t.slug), 'with the same seeded vocabulary');
+{
+  const A = BOOK.map((r) => Object.assign({}, r)), B = BOOK.map((r) => Object.assign({}, r));
+  const rules = [{ q: 'disapprov', on: 'title', tag: 'urgent' }, { q: 'email ticket', on: 'title', tag: 'urgent' }];
+  M.decorateTags(A, { 1: { tags: [] } }, rules);
+  P.decorateTags(B, { 1: { tags: [] } }, rules);
+  eq(B.map((r) => r.tags.join('+')), A.map((r) => r.tags.join('+')), 'and agrees row for row, including the hand-cleared one');
+  eq(P.displacement(B, P.TAG_SEED).dispHours, M.displacement(A, M.TAG_SEED).dispHours,
+    'and reaches the same displacement figure');
+  eq(P.groupBy(B, 'tag').multi, M.groupBy(A, 'tag').multi, 'and owns up to the same double count');
+}
+
 // ---------------------------------------------------------------------------------------------
 // a comma is OR, whitespace is AND
 //

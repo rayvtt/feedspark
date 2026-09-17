@@ -300,6 +300,28 @@ window.addEventListener('load',restore);
     <div class="qres" id="qres"></div>
   </section>
 
+  <!-- THE HEADLINE (Ray, 17 Sep 2026): "the goal is to highlight how many hours are spent on
+       urgent stuff that should have been spent on optimisation." It sits ABOVE the chart because
+       it is the answer, not one more way to slice the data — and it reads the current search, so
+       narrowing to a client or a quarter re-asks the question of that slice. -->
+  <section class="card" id="dispcard" hidden>
+    <div class="cw-head">
+      <h3>Where the hours went</h3>
+      <span class="sub" id="dpsub"></span>
+      <span class="grow"></span>
+      <div class="exits">
+        <button class="btn sm" id="dp-tags" type="button" title="Edit the tag vocabulary and the keyword rules">🏷 Tags &amp; rules</button>
+      </div>
+    </div>
+    <div class="dp-row" id="dprow"></div>
+    <div class="dp-bar" id="dpbar"></div>
+    <!-- a legend is not optional: three segments identified by colour alone is identity-by-colour,
+         which fails the moment anyone prints it, or reads it with red-green colour blindness -->
+    <div class="dp-leg" id="dpleg"></div>
+    <div class="verdict" id="dpverdict"></div>
+    <div class="dp-cov" id="dpcov"></div>
+  </section>
+
   <section class="card" id="chartcard">
     <div class="cw-head">
       <h3>Billable vs non-billable</h3>
@@ -337,6 +359,58 @@ window.addEventListener('load',restore);
 
   <div class="bd" id="bd"></div>
 
+  <style>
+  /* the displacement headline */
+  #dispcard .dp-row{display:flex;flex-wrap:wrap;gap:10px;margin:2px 0 12px}
+  #dispcard .dp-t{flex:1 1 150px;min-width:0;background:var(--wash);border:1px solid var(--line,#E6E6E6);border-radius:12px;padding:10px 12px}
+  #dispcard .dp-t .lb{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px}
+  #dispcard .dp-t .vl{font-size:23px;font-weight:800;line-height:1.15;margin-top:3px;font-variant-numeric:tabular-nums}
+  #dispcard .dp-t .sb{font-size:12px;color:var(--muted);margin-top:1px}
+  #dispcard .dp-t .dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
+  /* one 100%-wide bar: the book split by tag, untagged included so the gap is never invisible */
+  #dispcard .dp-bar{display:flex;height:16px;border-radius:5px;overflow:hidden;gap:2px;background:transparent}
+  #dispcard .dp-bar i{display:block;min-width:2px;border-radius:3px}
+  #dispcard .dp-leg{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px;font-size:12px;color:var(--ink-2,var(--muted))}
+  #dispcard .dp-leg span{display:inline-flex;align-items:center;gap:6px}
+  #dispcard .dp-leg i{width:9px;height:9px;border-radius:2px;flex:0 0 9px}
+  #dispcard .dp-leg b{font-variant-numeric:tabular-nums}
+  #dispcard .dp-cov{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55}
+  #dispcard .dp-cov b{color:var(--ink)}
+  /* tag chips on a task row */
+  .tg{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;line-height:1;
+      padding:3px 7px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+  .tg.rule{border-style:dashed;opacity:.85}
+  .tg-none{color:var(--muted);font-size:11px}
+  .tg-cell{display:flex;flex-wrap:wrap;gap:4px;align-items:center;max-width:210px}
+  .tg-add{border:1px dashed var(--line,#E6E6E6);background:transparent;color:var(--muted);cursor:pointer;
+          font-size:11px;font-weight:700;border-radius:999px;padding:3px 7px;line-height:1}
+  .tg-add:hover{color:var(--ink);border-color:var(--muted)}
+  /* the bulk bar — appears only when a search has narrowed the book */
+  #bulkbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0 0;padding:9px 11px;
+           border:1px solid var(--line,#E6E6E6);border-radius:10px;background:var(--wash);font-size:13px}
+  #bulkbar .grow{flex:1 1 auto}
+  /* the Tags & rules dialog */
+  #tgbd:empty{display:none}
+  #tgbd .bd-dim{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:130}
+  #tgbd .bd-box{position:fixed;z-index:131;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 48px);display:flex;flex-direction:column;
+    background:var(--paper,#fff);border:1px solid var(--line,#E6E6E6);border-radius:14px;
+    box-shadow:0 18px 60px rgba(16,24,40,.26)}
+  #tgbd .bd-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line,#E6E6E6)}
+  #tgbd .bd-b{padding:14px;overflow:auto}
+  #tgbd .bd-b h4{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  #tgbd .bd-b code{background:var(--wash);padding:2px 6px;border-radius:5px;font-size:12px}
+  #tgbd .bd-b input,#tgbd .bd-b select{padding:7px 9px;border:1px solid var(--line,#E6E6E6);border-radius:8px;
+    background:var(--paper,#fff);color:var(--ink,#333);font:inherit;font-size:13px}
+  .mut{color:var(--muted)}
+  #tagwarn{margin:8px 0 0;padding:7px 10px;border-radius:9px;font-size:12.5px;font-weight:600;
+    background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C}
+  :root:not([data-theme="light"]) #tagwarn{background:#3B1111;border-color:#7F1D1D;color:#FCA5A5}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #tagwarn{background:#3B1111;border-color:#7F1D1D;color:#FCA5A5}}
+  :root[data-theme="dark"] #tagwarn{background:#3B1111;border-color:#7F1D1D;color:#FCA5A5}
+  @media (max-width:760px){ #dispcard .dp-t{flex:1 1 100%} .tg-cell{max-width:none} }
+  </style>
+
   <script src="/xlsx/engine.js" onerror="window.__xlsxFail=1"></script>
 
   <nav class="tabs" id="tabs">
@@ -351,6 +425,8 @@ window.addEventListener('load',restore);
       <span class="sub" id="pane-s"></span>
       <span class="grow"></span>
       <button class="btn sm" id="pxlsx" type="button" title="Download these rows as an Excel workbook — typed columns, a frozen filterable header, and a sheet recording the search behind them">⇩ Excel</button>
+      <button class="btn sm" id="ptagimp" type="button" title="Import tags from a spreadsheet — export these rows, fill in the Tags column, bring it back">⇧ Import tags</button>
+      <input type="file" id="ptagfile" accept=".csv,.xlsx" hidden>
       <button class="btn sm" id="pmore" type="button" hidden>Show more</button>
     </div>
     <div class="pq-bar">
@@ -358,6 +434,12 @@ window.addEventListener('load',restore);
       <span class="pq-n" id="pq-n"></span>
       <button type="button" class="pq-x" id="pq-x" hidden aria-label="Clear this filter">Clear</button>
     </div>
+    <!-- MASS TAGGING acts on whatever the search has already resolved, so there is no separate
+         selection model to drift out of step with the filter -->
+    <div id="bulkbar" hidden></div>
+    <div id="tagwarn" hidden></div>
+    <!-- its OWN host: #bd is the breakdown panel, which apply() re-renders on every keystroke -->
+    <div id="tgbd"></div>
     <div class="tscroll" id="pbody"></div>
   </section>
 
@@ -455,6 +537,7 @@ window.addEventListener('load',restore);
     status: 'status', state: 'status',
     cat: 'cat', category: 'cat', type: 'cat',
     bill: 'bill', billable: 'bill',
+    tag: 'tag', label: 'tag', tagged: 'tag',
     month: 'month',
     from: 'from', since: 'from', after: 'from',
     to: 'to', until: 'to', before: 'to',
@@ -542,6 +625,19 @@ window.addEventListener('load',restore);
     for (var i = 0; i < wants.length; i++) if (fieldHit(val, wants[i])) return true;
     return false;
   }
+  /* `tag:` reads a LIST, not a value — a task can carry several. `tag:none` asks the opposite
+     question, what nobody has judged yet, which is the one an AM needs before trusting the
+     displacement figure. */
+  function tagHit(tags, wants) {
+    tags = tags || [];
+    for (var i = 0; i < wants.length; i++) {
+      var b = fold(wants[i]);
+      if (b === 'none' || b === 'untagged') { if (!tags.length) return true; continue; }
+      if (b === 'any') { if (tags.length) return true; continue; }
+      for (var j = 0; j < tags.length; j++) if (fieldHit(tags[j], wants[i])) return true;
+    }
+    return false;
+  }
   function taskBlob(t) { return fold([t.title, t.note, t.owner, t.client, t.market, t.status].join('  ')); }
   function ticketBlob(t) { return fold([t.subject, t.client, t.from, t.status, t.by, t.origin].join('  ')); }
 
@@ -566,6 +662,7 @@ window.addEventListener('load',restore);
     if (f.market && !anyHit(t.market, f.market)) return false;
     if (f.am && !anyHit(t.am, f.am)) return false;
     if (f.cat && !anyHit(t.cat, f.cat)) return false;
+    if (f.tag && !tagHit(t.tags, f.tag)) return false;
     if (f.status && !(anyHit(t.status, f.status) || anyHit(t.bucket, f.status))) return false;
     if (f.month && f.month.indexOf(monthOf(t.d)) < 0) return false;
     if (f.bill) {
@@ -579,6 +676,7 @@ window.addEventListener('load',restore);
     if (nf.client && anyHit(t.client, nf.client)) return false;
     if (nf.market && anyHit(t.market, nf.market)) return false;
     if (nf.cat && anyHit(t.cat, nf.cat)) return false;
+    if (nf.tag && tagHit(t.tags, nf.tag)) return false;
     if (nf.status && (anyHit(t.status, nf.status) || anyHit(t.bucket, nf.status))) return false;
     if (!numOk(t, q)) return false;
     return true;
@@ -599,7 +697,7 @@ window.addEventListener('load',restore);
     if (f.to && !(t.d && t.d <= (f.to[0].length === 7 ? f.to[0] + '-31' : f.to[0]))) return false;
     if (nf.client && anyHit(t.client, nf.client)) return false;
     if (nf.status && anyHit(t.status, nf.status)) return false;
-    if (f.owner || f.market || f.cat || f.bill) return false;
+    if (f.owner || f.market || f.cat || f.bill || f.tag) return false;
     return true;
   }
 
@@ -630,6 +728,116 @@ window.addEventListener('load',restore);
     return s;
   }
 
+  /* TAGS — what forced the work, which is not what the work was (Ray, 17 Sep 2026: "a tagging
+     system, a labeling system of which task is urgent, which task is from agency work, and which
+     task is technical … highlight how many hours are spent on urgent stuff that should have been
+     spent on optimisation").
+
+     A SECOND AXIS, deliberately not folded into `cat`. `cat` is read off the title and says WHAT
+     THE WORK WAS; a tag is a person's judgement about WHY IT HAPPENED. They are independent — an
+     urgent job is usually still useful work, which is exactly why the displacement never shows up
+     in `cat` alone. Keyed on the task's own list_id, never its wording, because the rotation
+     re-packs every row about twice a day. */
+  /* The repo's VALIDATED categorical set, in an order checked against BOTH surfaces with the
+     dataviz validator. The first pick had Agency and Technical ΔE 0.4 apart under deuteranopia —
+     Ray's two non-urgent tags, side by side on a row, indistinguishable to a colourblind reader.
+     Urgent keeps the red, because that hue is the one carrying meaning. */
+  var TAG_PAL = ['#e34948', '#4a3aa7', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#2a78d6', '#eb6834'];
+  var TAG_PAL_DARK = ['#e66767', '#9085e9', '#199e70', '#c98500', '#d55181', '#008300', '#3987e5', '#d95926'];
+  function tagDark(hex) {
+    var i = TAG_PAL.indexOf(String(hex || '').toLowerCase());
+    return i >= 0 ? TAG_PAL_DARK[i] : hex;
+  }
+  var TAG_SEED = [
+    { slug: 'urgent', label: 'Urgent', color: TAG_PAL[0], displaces: true,
+      note: 'Dropped on us and done now. These are the hours the optimisation plan lost.' },
+    { slug: 'agency', label: 'Agency work', color: TAG_PAL[1], displaces: false,
+      note: 'Asked for by the agency rather than the client or our own plan.' },
+    { slug: 'technical', label: 'Technical', color: TAG_PAL[2], displaces: false,
+      note: 'Something broke or needed engineering, as opposed to optimising what works.' }
+  ];
+  function normTagSlug(s) {
+    return String(s == null ? '' : s).toLowerCase().trim()
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24);
+  }
+  function taggable(t) { return !!(t && t.id); }
+  function ruleHits(rule, t) {
+    var q = String((rule && rule.q) || '').toLowerCase().replace(/^\s+|\s+$/g, '');
+    if (!q) return false;
+    var on = (rule && rule.on) || 'title';
+    var hay = on === 'note' ? String(t.note || '')
+      : on === 'both' ? String(t.title || '') + '  ' + String(t.note || '')
+        : String(t.title || '');
+    return hay.toLowerCase().indexOf(q) >= 0;
+  }
+  // A HUMAN ALWAYS WINS — including an empty list, which means "I looked, none of these apply".
+  // Without that a rule would re-apply its tag every render and nobody could ever take one off.
+  function tagsOf(t, assign, rules) {
+    var rec = assign && t && t.id != null ? assign[String(t.id)] : null;
+    if (rec && Object.prototype.toString.call(rec.tags) === '[object Array]') {
+      return { tags: rec.tags.slice(), src: 'manual' };
+    }
+    var out = [], i, slug;
+    for (i = 0; i < (rules || []).length; i++) {
+      slug = normTagSlug(rules[i] && rules[i].tag);
+      if (slug && out.indexOf(slug) < 0 && ruleHits(rules[i], t)) out.push(slug);
+    }
+    return { tags: out, src: out.length ? 'rule' : 'none' };
+  }
+  function decorateTags(rows, assign, rules) {
+    for (var i = 0; i < (rows || []).length; i++) {
+      var r = tagsOf(rows[i], assign, rules);
+      rows[i].tags = r.tags; rows[i].tagSrc = r.src;
+    }
+    return rows;
+  }
+  /* THE HEADLINE. `displaced` is the hours carrying any tag flagged `displaces`, set against the
+     hours whose WORK classified as optimisation — the thing being crowded out. THE UNTAGGED SHARE
+     TRAVELS WITH IT: a 4%-tagged book would otherwise report "2.1h urgent" and read like good
+     news. Untagged is UNKNOWN, never "not urgent". */
+  function displacement(rows, defs) {
+    var disp = {}, i, j;
+    for (i = 0; i < (defs || []).length; i++) if (defs[i] && defs[i].displaces) disp[normTagSlug(defs[i].slug)] = 1;
+    var o = { hours: 0, n: 0, dispHours: 0, dispBill: 0, dispNonbill: 0, dispN: 0,
+      optHours: 0, optN: 0, taggedHours: 0, taggedN: 0, untaggedHours: 0, untaggedN: 0,
+      pct: 0, coverage: 0, ratio: 0, byTag: {} };
+    for (i = 0; i < (rows || []).length; i++) {
+      var t = rows[i], tags = t.tags || [], isDisp = false;
+      o.hours += t.hours; o.n++;
+      if (tags.length) { o.taggedHours += t.hours; o.taggedN++; } else { o.untaggedHours += t.hours; o.untaggedN++; }
+      if (t.cat === 'opt') { o.optHours += t.hours; o.optN++; }
+      for (j = 0; j < tags.length; j++) {
+        var k = normTagSlug(tags[j]), b = o.byTag[k] || (o.byTag[k] = { hours: 0, n: 0, bill: 0, nonbill: 0 });
+        b.hours += t.hours; b.n++; b.bill += t.bill; b.nonbill += t.nonbill;
+        if (disp[k]) isDisp = true;
+      }
+      if (isDisp) { o.dispHours += t.hours; o.dispBill += t.bill; o.dispNonbill += t.nonbill; o.dispN++; }
+    }
+    o.hours = r2(o.hours); o.dispHours = r2(o.dispHours); o.dispBill = r2(o.dispBill);
+    o.dispNonbill = r2(o.dispNonbill); o.optHours = r2(o.optHours);
+    o.taggedHours = r2(o.taggedHours); o.untaggedHours = r2(o.untaggedHours);
+    for (var kk in o.byTag) if (Object.prototype.hasOwnProperty.call(o.byTag, kk)) {
+      o.byTag[kk].hours = r2(o.byTag[kk].hours); o.byTag[kk].bill = r2(o.byTag[kk].bill);
+      o.byTag[kk].nonbill = r2(o.byTag[kk].nonbill);
+    }
+    o.pct = o.hours ? Math.round((o.dispHours / o.hours) * 1000) / 10 : 0;
+    o.coverage = o.hours ? Math.round((o.taggedHours / o.hours) * 1000) / 10 : 0;
+    o.ratio = o.optHours ? Math.round((o.dispHours / o.optHours) * 100) / 100 : 0;
+    return o;
+  }
+  function rulePreview(rows, rule, assign) {
+    var hits = 0, held = 0, hours = 0;
+    for (var i = 0; i < (rows || []).length; i++) {
+      var t = rows[i];
+      if (!ruleHits(rule, t)) continue;
+      hits++;
+      var rec = assign && t.id != null ? assign[String(t.id)] : null;
+      if (rec && Object.prototype.toString.call(rec.tags) === '[object Array]') held++;
+      else hours += t.hours;
+    }
+    return { hits: hits, held: held, hours: r2(hours) };
+  }
+
   var DIMS = [
     { k: 'total', label: 'Everything' },
     { k: 'client', label: 'Client' },
@@ -639,7 +847,8 @@ window.addEventListener('load',restore);
     { k: 'market', label: 'Market' },
     { k: 'am', label: 'Account manager' },
     { k: 'bucket', label: 'Status' },
-    { k: 'task', label: 'Task' }
+    { k: 'task', label: 'Task' },
+    { k: 'tag', label: 'Tag' }
   ];
   function dimKey(t, dim) {
     if (dim === 'total') return 'All work';
@@ -649,18 +858,36 @@ window.addEventListener('load',restore);
     if (dim === 'task') return t.title || '(untitled)';
     return t[dim] || '(none)';
   }
+  /* Every dimension but `tag` puts a task in exactly one bucket. TAGS ARE THE EXCEPTION: a job can
+     be both urgent and technical, and forcing a primary tag would drop the second fact the person
+     recorded. So a multi-tagged task lands in EVERY one of its buckets — the bucket hours then sum
+     to more than the book, and groupBy reports `multi` so the chart can say so rather than quietly
+     double-counting hours under a heading that reads "hours". */
+  function dimKeys(t, dim) {
+    if (dim !== 'tag') return [dimKey(t, dim)];
+    var tags = (t && t.tags) || [];
+    return tags.length ? tags.slice() : ['(untagged)'];
+  }
   function groupBy(rows, dim, cap) {
-    var m = {}, keys = [], i;
+    var m = {}, keys = [], i, x, placements = 0;
     for (i = 0; i < rows.length; i++) {
-      var t = rows[i], k = dimKey(t, dim), g = m[k];
-      if (!g) { g = m[k] = { k: k, n: 0, bill: 0, nonbill: 0, hours: 0 }; keys.push(k); }
-      g.n++; g.bill += t.bill; g.nonbill += t.nonbill; g.hours += t.hours;
+      var t = rows[i], ks = dimKeys(t, dim);
+      for (x = 0; x < ks.length; x++) {
+        var k = ks[x], g = m[k];
+        placements++;
+        if (!g) { g = m[k] = { k: k, n: 0, bill: 0, nonbill: 0, hours: 0 }; keys.push(k); }
+        g.n++; g.bill += t.bill; g.nonbill += t.nonbill; g.hours += t.hours;
+      }
     }
     var out = keys.map(function (k) {
       var g = m[k];
       return { k: g.k, n: g.n, bill: r2(g.bill), nonbill: r2(g.nonbill), hours: r2(g.hours),
         billPct: g.hours ? Math.round((g.bill / g.hours) * 1000) / 10 : 0 };
     });
+    // a tag dimension can place one task in several buckets, so the bucket hours legitimately sum
+    // to more than the book. Say so rather than letting a chart imply otherwise.
+    out.multi = placements > rows.length;
+    out.placements = placements;
     if (dim === 'month') out.sort(function (a, b) { return String(a.k) < String(b.k) ? -1 : String(a.k) > String(b.k) ? 1 : 0; });
     else out.sort(function (a, b) { return (b.hours - a.hours) || (b.n - a.n) || (String(a.k) < String(b.k) ? -1 : 1); });
     if (cap && out.length > cap && dim !== 'month') {
@@ -717,6 +944,7 @@ window.addEventListener('load',restore);
   function num(n) { return Number(n || 0).toLocaleString(); }
   function cvar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888'; }
 
+  var ME = '';
   var D = null, STATUS = {}, OWNER = false, TASKS = [], TICKETS = [], ACCOUNTS = [], Q = parseQuery(''),
       FT = [], FK = [], TAB = 'tasks', SHOW = 200,
       SORT = { tasks: { k: 'd', dir: -1 }, tickets: { k: 'd', dir: -1 }, accounts: { k: 'used', dir: -1 } };
@@ -795,6 +1023,492 @@ window.addEventListener('load',restore);
     step();
   }
 
+  /* =============================================================================================
+     TAGS — the judgement layer (Ray, 17 Sep 2026)
+
+       "within the task manager hours, there will be a tagging system, a labeling system of which
+        task is urgent, which task is from agency work, and which task is technical … the goal is
+        to highlight how many hours are spent on urgent stuff that should have been spent on
+        optimisation. Later on, I will do mass tagging across all rows if possible or by either
+        keyword or using Excel that I can import and export."
+
+     THE TAG STORE IS THE TEAM'S, NOT THIS BROWSER'S. Everything here rides /api/state (kvmerge,
+     X-Sync-Base) exactly as the Workflow overlays and the hours posture do. A displacement figure
+     that differed per screen would be worse than none.
+
+     TAGS KEY ON THE TASK'S OWN id. The rotation re-reads each market roughly twice a day and
+     re-packs every row from scratch; a tag keyed on wording would come unstuck the first time a
+     title was edited. A row whose source gave no id cannot be tagged, and the cell says so instead
+     of pretending.
+  ============================================================================================= */
+  var TAGS = {};            // taskId -> {client, tags:[slug], by, at}
+  var TAGDEF = {};          // 'tags' -> [def], 'rules' -> [rule]
+  var TAGBASE = 0, TAGDIRTY = false, TAGTIMER = null;
+
+  function DEFS() {
+    var d = TAGDEF && TAGDEF.tags;
+    return (Object.prototype.toString.call(d) === '[object Array]' && d.length) ? d : TAG_SEED;
+  }
+  function RULES() {
+    var r = TAGDEF && TAGDEF.rules;
+    return Object.prototype.toString.call(r) === '[object Array]' ? r : [];
+  }
+  function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+  function defOf(slug) {
+    var d = DEFS(), i;
+    for (i = 0; i < d.length; i++) if (normTagSlug(d[i].slug) === normTagSlug(slug)) return d[i];
+    return { slug: slug, label: slug, color: '#8a94a0', displaces: false };
+  }
+  // ONE place resolves a tag's colour, so the dark steps can never be applied to some surfaces
+  // and not others — the chips, the bar, the legend and the bulk bar all come through here
+  function tagColor(d) { return isDark() ? tagDark(d.color) : d.color; }
+  function tagChip(slug, src) {
+    var d = defOf(slug), c = tagColor(d);
+    return '<span class="tg' + (src === 'rule' ? ' rule' : '') + '" style="color:' + esc(c)
+      + ';background:' + esc(c) + '1F;border-color:' + esc(c) + '66"'
+      + (src === 'rule' ? ' title="Added by a keyword rule — click to set it by hand"' : '')
+      + '>' + esc(d.label) + '</span>';
+  }
+
+  // ---- reading and writing the store ----------------------------------------------------------
+  function tagLoad(then) {
+    fetch('/api/state?ns=tmtags,tmtagdef')
+      .then(function (r) { TAGBASE = Number(r.headers.get('X-Sync-Base') || 0) || Date.now(); return r.json(); })
+      .then(function (d) {
+        TAGS = (d && d.tmtags) || {};
+        TAGDEF = (d && d.tmtagdef) || {};
+        if (then) then();
+      })
+      .catch(function () { TAGS = {}; TAGDEF = {}; if (then) then(); });
+  }
+  /* A failed save RETRIES rather than being dropped: the tag is somebody's judgement about work
+     that already happened, and losing it silently is how a team stops trusting the column. The
+     same rule the brief pipeline learned the hard way. */
+  function tagPush() {
+    if (TAGTIMER) { clearTimeout(TAGTIMER); TAGTIMER = null; }
+    var body = { tmtags: TAGS, tmtagdef: TAGDEF };
+    fetch('/api/state', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', 'X-Sync-Base': String(TAGBASE || 0) },
+      body: JSON.stringify(body)
+    }).then(function (r) {
+      if (!r.ok) throw new Error('save refused');
+      TAGBASE = Number(r.headers.get('X-Sync-Base') || 0) || Date.now();
+      return r.json();
+    }).then(function (d) {
+      if (d && d.tmtags) TAGS = d.tmtags;
+      if (d && d.tmtagdef) TAGDEF = d.tmtagdef;
+      TAGDIRTY = false;
+      tagWarn(false);
+      apply();
+    }).catch(function () {
+      TAGDIRTY = true; tagWarn(true);
+      TAGTIMER = setTimeout(tagPush, 4000);
+    });
+  }
+  function tagWarn(on) {
+    var el = $('tagwarn');
+    if (!el) return;
+    el.hidden = !on;
+    el.textContent = on ? '⚠ Tags not saved to the team yet — still on this device. Retrying…' : '';
+  }
+  function tagSave() { TAGDIRTY = true; tagPush(); }
+
+  // ---- setting a task's tags -------------------------------------------------------------------
+  /* Writing an EMPTY list is meaningful and is kept: it records "a person looked and none of these
+     apply", which is what stops a keyword rule re-applying its tag forever. Only clearing the
+     record entirely hands the task back to the rules. */
+  function setTags(t, tags) {
+    if (!taggable(t)) return false;
+    TAGS[String(t.id)] = { client: t.client || '', tags: tags.slice(), by: ME || '', at: Date.now() };
+    return true;
+  }
+  function clearTags(t) { if (taggable(t)) delete TAGS[String(t.id)]; }
+
+  // ---- THE HEADLINE ----------------------------------------------------------------------------
+  function dispRender() {
+    var card = $('dispcard'); if (!card) return;
+    var defs = DEFS(), d = displacement(FT, defs);
+    card.hidden = false;
+    var dispDefs = defs.filter(function (x) { return x.displaces; });
+    var dispLabel = dispDefs.length ? dispDefs.map(function (x) { return x.label; }).join(' + ') : 'Urgent';
+    var dispColor = dispDefs.length ? tagColor(dispDefs[0]) : tagColor({ color: TAG_PAL[0] });
+
+    var tiles = [
+      { lb: dispLabel, dot: dispColor, vl: hrs(d.dispHours) + '<small> h</small>',
+        sb: d.hours ? d.pct + '% of the hours in view' : 'no hours in view' },
+      { lb: 'Optimisation', dot: isDark() ? '#199e70' : '#1baf7a', vl: hrs(d.optHours) + '<small> h</small>',
+        sb: d.optN + ' task' + (d.optN === 1 ? '' : 's') + ' classified as optimisation' },
+      { lb: 'Ratio', vl: d.optHours ? d.ratio + '×' : '—',
+        sb: d.optHours ? 'reactive hours per hour of optimisation' : 'no optimisation hours to compare' },
+      { lb: 'Judged', vl: d.coverage + '%', sb: num(d.taggedN) + ' of ' + num(d.n) + ' rows tagged' }
+    ];
+    $('dprow').innerHTML = tiles.map(function (k) {
+      return '<div class="dp-t"><div class="lb">' + (k.dot ? '<i class="dot" style="background:' + esc(k.dot) + '"></i>' : '')
+        + esc(k.lb) + '</div><div class="vl">' + k.vl + '</div><div class="sb">' + esc(k.sb) + '</div></div>';
+    }).join('');
+
+    // one bar: the book split by tag, with untagged ALWAYS drawn — the gap is the honest part
+    var segs = [], total = d.hours || 1;
+    defs.forEach(function (x) {
+      var b = d.byTag[normTagSlug(x.slug)];
+      if (b && b.hours > 0) segs.push({ c: tagColor(x), h: b.hours, l: x.label });
+    });
+    if (d.untaggedHours > 0) segs.push({ c: 'var(--line,#E6E6E6)', h: d.untaggedHours, l: 'Not yet tagged' });
+    $('dpbar').innerHTML = segs.map(function (g) {
+      return '<i style="flex:' + (g.h / total) + ' 1 0;background:' + g.c + '" title="' + esc(g.l + ' · ' + hrs(g.h) + ' h') + '"></i>';
+    }).join('') || '<i style="flex:1;background:var(--line,#E6E6E6)" title="nothing to show"></i>';
+    // the legend carries the NUMBER as well as the name, so the bar never has to be measured by eye
+    $('dpleg').innerHTML = segs.map(function (g) {
+      return '<span><i style="background:' + g.c + '"></i>' + esc(g.l) + ' <b>' + hrs(g.h) + ' h</b></span>';
+    }).join('');
+
+    /* THE VERDICT IS HONEST ABOUT COVERAGE. With a mostly-untagged book the displacement figure is
+       a FLOOR, not a finding, and saying "3% urgent" over a 6%-judged book would be the most
+       misleading number on the page. */
+    var v;
+    if (!d.n) v = 'No tasks in view.';
+    else if (!d.taggedN) {
+      v = '<b>Nothing is tagged yet.</b> Tag a few rows, or set a keyword rule, and this card will '
+        + 'show how much of the ' + hrs(d.hours) + ' h went to work that displaced the plan.';
+    } else if (d.coverage < 50) {
+      v = '<b>' + hrs(d.dispHours) + ' h</b> of reactive work so far — but only <b>' + d.coverage
+        + '%</b> of these hours have been judged, so that is a <b>floor</b>, not the answer. '
+        + 'The untagged ' + hrs(d.untaggedHours) + ' h could move it either way.';
+    } else if (!d.dispHours) {
+      v = 'Of the ' + hrs(d.taggedHours) + ' h judged, <b>none</b> was tagged as displacing the plan.';
+    } else {
+      v = '<b>' + hrs(d.dispHours) + ' h</b> — ' + d.pct + '% of the hours in view — went to '
+        + esc(dispLabel.toLowerCase()) + ' work'
+        + (d.optHours ? ', against <b>' + hrs(d.optHours) + ' h</b> of optimisation. '
+          + (d.ratio >= 1
+            ? 'That is <b>' + d.ratio + '× more reactive work than optimisation</b> — the plan is losing.'
+            : 'Optimisation is still ahead, at ' + Math.round((1 / (d.ratio || 1)) * 10) / 10 + '× the reactive hours.')
+          : '.');
+    }
+    $('dpverdict').innerHTML = v;
+
+    var covBits = [];
+    if (d.untaggedN) covBits.push('<b>' + num(d.untaggedN) + '</b> rows (' + hrs(d.untaggedHours)
+      + ' h) carry no tag — <a href="#" id="dp-untag">show them</a>');
+    var noId = FT.filter(function (t) { return !taggable(t); }).length;
+    if (noId) covBits.push('<b>' + num(noId) + '</b> of these rows arrived without a task id and cannot be tagged');
+    covBits.push('Tags are the team’s, not this screen’s. Untagged means <b>not yet judged</b>, never “not urgent”.');
+    $('dpcov').innerHTML = covBits.join(' &nbsp;·&nbsp; ');
+    var ut = $('dp-untag');
+    if (ut) ut.onclick = function (e) { e.preventDefault(); $('q').value = (Q.raw.trim() + ' tag:none').trim(); apply(); };
+    $('dpsub').textContent = DEFS().length + ' tag' + (DEFS().length === 1 ? '' : 's') + ' · '
+      + RULES().length + ' keyword rule' + (RULES().length === 1 ? '' : 's');
+  }
+
+  function tagCell(t) {
+    if (!taggable(t)) return '<span class="tg-none" title="This row arrived without a task id, so a tag could not be kept against it">no id</span>';
+    var tags = t.tags || [];
+    var chips = tags.map(function (g) { return tagChip(g, t.tagSrc); }).join('');
+    return '<span class="tg-cell" data-tagid="' + esc(String(t.id)) + '">' + chips
+      + '<button type="button" class="tg-add" data-tagid="' + esc(String(t.id)) + '">'
+      + (tags.length ? '✎' : '+ tag') + '</button></span>';
+  }
+
+  /* The per-row editor. A checkbox per tag, plus "clear" — which REMOVES the record rather than
+     writing an empty list, handing the row back to the keyword rules. Those are different
+     intentions and the menu keeps them apart. */
+  var TAGMENU = null;
+  function tagMenuClose() { if (TAGMENU) { TAGMENU.remove(); TAGMENU = null; } }
+  function tagMenuOpen(btn, t) {
+    tagMenuClose();
+    var defs = DEFS(), cur = (t.tags || []).slice();
+    var el = document.createElement('div');
+    el.className = 'pop';
+    el.setAttribute('style', 'position:fixed;z-index:120;min-width:216px;max-width:280px;background:var(--paper,#fff);'
+      + 'border:1px solid var(--line,#E6E6E6);border-radius:12px;box-shadow:0 10px 40px rgba(16,24,40,.18);padding:8px;font-size:13px');
+    el.innerHTML = '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:2px 6px 6px">Tag this task</div>'
+      + defs.map(function (d) {
+        return '<label style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:7px;cursor:pointer">'
+          + '<input type="checkbox" data-slug="' + esc(d.slug) + '"' + (cur.indexOf(normTagSlug(d.slug)) >= 0 ? ' checked' : '') + '>'
+          + '<i style="width:9px;height:9px;border-radius:50%;background:' + esc(tagColor(d)) + '"></i>'
+          + '<span>' + esc(d.label) + '</span></label>';
+      }).join('')
+      + '<div style="border-top:1px solid var(--line,#E6E6E6);margin:6px 0 4px"></div>'
+      + '<button type="button" class="btn sm" data-act="clear" style="width:100%">Clear — let rules decide</button>';
+    document.body.appendChild(el);
+    var r = btn.getBoundingClientRect();
+    el.style.left = Math.max(8, Math.min(r.left, window.innerWidth - el.offsetWidth - 8)) + 'px';
+    el.style.top = (r.bottom + 6 + el.offsetHeight > window.innerHeight ? Math.max(8, r.top - el.offsetHeight - 6) : r.bottom + 6) + 'px';
+    TAGMENU = el;
+    el.addEventListener('change', function (e) {
+      var cb = e.target;
+      if (!cb || cb.type !== 'checkbox') return;
+      var slug = normTagSlug(cb.getAttribute('data-slug'));
+      var next = (t.tags || []).slice(), i = next.indexOf(slug);
+      if (cb.checked && i < 0) next.push(slug);
+      if (!cb.checked && i >= 0) next.splice(i, 1);
+      setTags(t, next); tagSave();
+    });
+    el.addEventListener('click', function (e) {
+      if (e.target && e.target.getAttribute('data-act') === 'clear') { clearTags(t); tagSave(); tagMenuClose(); }
+    });
+  }
+
+  /* MASS TAGGING (Ray: "mass tagging across all rows if possible"). The search already resolves a
+     row set, so the bulk bar simply acts on WHATEVER IS ON SCREEN — no separate selection model to
+     get out of step with the filter. It states the count and the hours before doing anything, and
+     it never silently reaches past the rows in view. */
+  function bulkRender() {
+    var bar = $('bulkbar'); if (!bar) return;
+    var can = FT.filter(taggable);
+    var s = 0; can.forEach(function (t) { s += t.hours; });
+    var live = Q.raw.trim();
+    if (!live || !can.length) { bar.hidden = true; return; }
+    bar.hidden = false;
+    bar.innerHTML = '<b>' + num(can.length) + '</b> row' + (can.length === 1 ? '' : 's')
+      + ' in this search · ' + hrs(s) + ' h'
+      + '<span class="grow"></span><span style="color:var(--muted)">Tag all:</span>'
+      + DEFS().map(function (d) {
+        return '<button type="button" class="btn sm" data-bulk="' + esc(d.slug) + '" title="Add “'
+          + esc(d.label) + '” to every row in this search">'
+          + '<i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + esc(tagColor(d)) + ';margin-right:5px"></i>'
+          + esc(d.label) + '</button>';
+      }).join('')
+      + '<button type="button" class="btn sm" data-bulk="__clear" title="Remove the tags from every row in this search">Clear tags</button>';
+  }
+  function bulkApply(slug) {
+    var can = FT.filter(taggable);
+    if (!can.length) return;
+    if (slug === '__clear') {
+      can.forEach(function (t) { clearTags(t); });
+      toast('Cleared tags on ' + num(can.length) + ' rows');
+    } else {
+      var n = 0;
+      can.forEach(function (t) {
+        var next = (t.tags || []).slice();
+        if (next.indexOf(slug) < 0) { next.push(slug); n++; }
+        setTags(t, next);
+      });
+      toast('Tagged ' + num(n) + ' row' + (n === 1 ? '' : 's') + ' “' + defOf(slug).label + '”');
+    }
+    tagSave();
+  }
+
+  /* KEYWORD RULES (Ray: "by either keyword"). A rule is a plain substring, never a regex from the
+     page: an AM typing "(" would otherwise throw inside the render loop and blank the table. Each
+     rule PREVIEWS what it would touch before it is saved, and says how many rows it will NOT touch
+     because a person already decided those. */
+  function rulesOpen() {
+    var host = $('tgbd'); if (!host) return;
+    var draw = function () {
+      var defs = DEFS(), rules = RULES();
+      host.innerHTML = '<div class="bd-dim"></div><div class="bd-box" role="dialog" aria-label="Tags and keyword rules">'
+        + '<div class="bd-h"><b>Tags &amp; keyword rules</b><span class="grow"></span>'
+        + '<button class="btn sm" id="tg-x" type="button">✕</button></div>'
+        + '<div class="bd-b">'
+        + '<p class="mut" style="margin:0 0 10px">A tag records <b>why</b> a task happened. The <b>Type</b> column already says what the work was — these are different questions, and a task can be optimisation work that was also urgent.</p>'
+        + '<h4 style="margin:10px 0 6px">Tags</h4>'
+        + '<div id="tg-list"></div>'
+        + '<div style="display:flex;gap:6px;margin:8px 0 2px;flex-wrap:wrap">'
+        + '<input id="tg-new" placeholder="New tag name" style="flex:1 1 150px;min-width:0">'
+        + '<button class="btn sm" id="tg-addtag" type="button">Add tag</button></div>'
+        + '<h4 style="margin:18px 0 6px">Keyword rules</h4>'
+        + '<p class="mut" style="margin:0 0 8px">Any task whose title contains the word gets the tag — unless someone has set that task’s tags by hand, which always wins.</p>'
+        + '<div id="tg-rules"></div>'
+        + '<div style="display:flex;gap:6px;margin:8px 0 2px;flex-wrap:wrap">'
+        + '<input id="tg-q" placeholder="Word in the task title, e.g. disapproval" style="flex:1 1 170px;min-width:0">'
+        + '<select id="tg-on"><option value="title">title</option><option value="note">notes</option><option value="both">title + notes</option></select>'
+        + '<select id="tg-tag">' + defs.map(function (d) { return '<option value="' + esc(d.slug) + '">' + esc(d.label) + '</option>'; }).join('') + '</select>'
+        + '<button class="btn sm" id="tg-addrule" type="button">Add rule</button></div>'
+        + '<div id="tg-prev" class="mut" style="font-size:12px;margin-top:6px"></div>'
+        + '<h4 style="margin:18px 0 6px">Common tasks in this book</h4>'
+        + '<p class="mut" style="margin:0 0 8px">The titles that carry the most hours right now — a rule straight off your own book rather than a guess.</p>'
+        + '<div id="tg-sugg"></div>'
+        + '</div></div>';
+
+      $('tg-list').innerHTML = defs.map(function (d, i) {
+        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0">'
+          + '<i style="width:11px;height:11px;border-radius:50%;background:' + esc(tagColor(d)) + '"></i>'
+          + '<b style="flex:0 0 130px">' + esc(d.label) + '</b>'
+          + '<label class="tog" title="Hours with this tag are counted as work that displaced the optimisation plan">'
+          + '<input type="checkbox" data-disp="' + i + '"' + (d.displaces ? ' checked' : '') + '> displaces the plan</label>'
+          + '<span class="grow"></span>'
+          + (defs.length > 1 ? '<button class="btn sm" data-deltag="' + i + '" title="Remove this tag">✕</button>' : '')
+          + '</div>' + (d.note ? '<div class="mut" style="font-size:12px;margin:-2px 0 6px 19px">' + esc(d.note) + '</div>' : '');
+      }).join('');
+
+      $('tg-rules').innerHTML = rules.length ? rules.map(function (r, i) {
+        var pv = rulePreview(TASKS, r, TAGS);
+        return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px">'
+          + '<code>' + esc(r.q) + '</code><span class="mut">in ' + esc(r.on || 'title') + ' →</span>'
+          + tagChip(r.tag, 'rule')
+          + '<span class="grow"></span><span class="mut" style="font-size:12px">' + num(pv.hits) + ' row'
+          + (pv.hits === 1 ? '' : 's')
+          + (pv.held ? ' · ' + num(pv.held) + ' set by hand, untouched' : '') + '</span>'
+          + '<button class="btn sm" data-delrule="' + i + '">✕</button></div>';
+      }).join('') : '<div class="mut" style="font-size:13px">No rules yet.</div>';
+
+      var by = {}, tot = [];
+      TASKS.forEach(function (t) {
+        var k = /^email ticket/i.test(t.title) ? 'Email ticket:' : String(t.title || '').slice(0, 42);
+        if (!k) return;
+        if (!by[k]) { by[k] = { k: k, n: 0, h: 0 }; tot.push(by[k]); }
+        by[k].n++; by[k].h += t.hours;
+      });
+      tot.sort(function (a, b) { return b.h - a.h; });
+      $('tg-sugg').innerHTML = tot.slice(0, 12).map(function (x) {
+        return '<button type="button" class="btn sm" data-sugg="' + esc(x.k) + '" style="margin:0 5px 5px 0">'
+          + esc(x.k) + ' <span class="mut">' + num(x.n) + ' · ' + hrs(x.h) + 'h</span></button>';
+      }).join('') || '<div class="mut" style="font-size:13px">No tasks in the book yet.</div>';
+
+      var prev = function () {
+        var q = $('tg-q').value, on = $('tg-on').value;
+        if (!q.trim()) { $('tg-prev').textContent = ''; return; }
+        var pv = rulePreview(TASKS, { q: q, on: on }, TAGS);
+        $('tg-prev').innerHTML = 'Would tag <b>' + num(pv.hits - pv.held) + '</b> row'
+          + ((pv.hits - pv.held) === 1 ? '' : 's') + ' (' + hrs(pv.hours) + ' h)'
+          + (pv.held ? ' · <b>' + num(pv.held) + '</b> already set by hand and left alone' : '');
+      };
+      $('tg-q').addEventListener('input', prev);
+      $('tg-on').addEventListener('change', prev);
+
+      if (host.__w) return;                     // listeners bind ONCE, not once per redraw
+      host.__w = 1;
+      host.addEventListener('click', function (e) {
+        var el = e.target, a;
+        if (el.id === 'tg-x' || el.className === 'bd-dim') { host.innerHTML = ''; return; }
+        if ((a = el.getAttribute && el.getAttribute('data-sugg')) != null && a !== '') { $('tg-q').value = a.replace(/:$/, ''); prev(); $('tg-q').focus(); return; }
+        if ((a = el.getAttribute && el.getAttribute('data-deltag')) != null && a !== '') {
+          var dd = DEFS().slice(); dd.splice(Number(a), 1); TAGDEF.tags = dd; tagSave(); draw(); return;
+        }
+        if ((a = el.getAttribute && el.getAttribute('data-delrule')) != null && a !== '') {
+          var rr = RULES().slice(); rr.splice(Number(a), 1); TAGDEF.rules = rr; tagSave(); draw(); return;
+        }
+        if (el.id === 'tg-addtag') {
+          var nm = $('tg-new').value.trim(); if (!nm) return;
+          var slug = normTagSlug(nm); if (!slug) return;
+          var dd2 = DEFS().slice();
+          if (!dd2.some(function (x) { return normTagSlug(x.slug) === slug; })) {
+            dd2.push({ slug: slug, label: nm.slice(0, 28), color: TAG_COLORS[dd2.length % TAG_COLORS.length], displaces: false });
+            TAGDEF.tags = dd2; tagSave();
+          }
+          draw(); return;
+        }
+        if (el.id === 'tg-addrule') {
+          var q = $('tg-q').value.trim(); if (!q) return;
+          var rr2 = RULES().slice();
+          rr2.push({ q: q, on: $('tg-on').value, tag: normTagSlug($('tg-tag').value) });
+          TAGDEF.rules = rr2; tagSave(); draw(); return;
+        }
+      });
+      host.addEventListener('change', function (e) {
+        var i = e.target && e.target.getAttribute && e.target.getAttribute('data-disp');
+        if (i == null || i === '') return;
+        var dd = DEFS().slice();
+        dd[Number(i)] = Object.assign({}, dd[Number(i)], { displaces: !!e.target.checked });
+        TAGDEF.tags = dd; tagSave(); draw();
+      });
+    };
+    draw();
+  }
+  var TAG_COLORS = TAG_PAL;
+
+  /* IMPORT (Ray: "using Excel that I can import and export"). The export already carries the
+     task id, so the round trip keys on THAT — never on the title, which a person editing the sheet
+     may well reword.
+
+     IT PREVIEWS BEFORE IT WRITES. A spreadsheet coming back from someone's laptop can carry a
+     stale copy of the book, a filtered subset, or a column of typos; applying it blind would
+     overwrite the team's judgements with no way back. So the file is read, matched, and the diff
+     is SHOWN — added, changed, cleared, unknown ids and unknown tag names — and nothing is saved
+     until it is confirmed. Rows the file does not mention are never touched, so importing a
+     filtered sheet cannot wipe the rest of the book. */
+  function tagImport(file) {
+    if (!window.FeedXlsx || window.__xlsxFail) { toast('The spreadsheet engine did not load — reload the page'); return; }
+    FeedXlsx.readFile(file).then(function (rows) {
+      var t = FeedXlsx.table(rows, ['Task id', 'Tags']);
+      if (t.header < 0) throw new Error('no header row with both "Task id" and "Tags" — export these rows first, then fill the Tags column in');
+      var byId = {};
+      TASKS.forEach(function (x) { if (x.id) byId[String(x.id)] = x; });
+      var known = {}; DEFS().forEach(function (d) { known[normTagSlug(d.slug)] = d; known[normTagSlug(d.label)] = d; });
+      var plan = [], unknownId = 0, unknownTag = {}, same = 0;
+      t.rows.forEach(function (r) {
+        var id = String(r['Task id'] || '').replace(/[^0-9]/g, '');
+        if (!id) return;
+        var task = byId[id];
+        if (!task) { unknownId++; return; }
+        var want = String(r.Tags || '').split(/[;,|]/).map(function (x) { return normTagSlug(x); })
+          .filter(function (x) { return x; });
+        var mapped = [];
+        want.forEach(function (w) {
+          var d = known[w];
+          if (d) { var sl = normTagSlug(d.slug); if (mapped.indexOf(sl) < 0) mapped.push(sl); }
+          else unknownTag[w] = (unknownTag[w] || 0) + 1;
+        });
+        var cur = (task.tags || []).slice().sort().join('|');
+        if (cur === mapped.slice().sort().join('|')) { same++; return; }
+        plan.push({ task: task, tags: mapped, was: task.tags || [] });
+      });
+      var host = $('tgbd');
+      var unknownList = Object.keys(unknownTag);
+      host.innerHTML = '<div class="bd-dim"></div><div class="bd-box" role="dialog" aria-label="Import tags">'
+        + '<div class="bd-h"><b>Import tags</b><span class="grow"></span><button class="btn sm" id="im-x" type="button">✕</button></div>'
+        + '<div class="bd-b">'
+        + '<p style="margin:0 0 10px"><b>' + num(plan.length) + '</b> row' + (plan.length === 1 ? '' : 's')
+        + ' would change. Nothing is saved until you confirm.</p>'
+        + '<div class="mut" style="font-size:12.5px;line-height:1.7;margin-bottom:10px">'
+        + num(t.rows.length) + ' rows read · ' + num(same) + ' already match'
+        + (unknownId ? ' · <b>' + num(unknownId) + '</b> task ids not in this book (ignored)' : '')
+        + (unknownList.length ? ' · <b>' + esc(unknownList.join(', ')) + '</b> ' + (unknownList.length === 1 ? 'is not a tag' : 'are not tags') + ' here (ignored — add them first)' : '')
+        + '<br>Rows this file does not mention are left exactly as they are.</div>'
+        + (plan.length ? '<div style="max-height:min(46vh,340px);overflow:auto;border:1px solid var(--line,#E6E6E6);border-radius:9px">'
+          + '<table class="st" style="margin:0"><tbody>' + plan.slice(0, 200).map(function (x) {
+            return '<tr><td style="max-width:290px">' + esc(x.task.title || '(untitled)')
+              + '<div class="mut" style="font-size:11px">' + esc(x.task.client + ' ' + x.task.market) + '</div></td>'
+              + '<td>' + (x.was.length ? x.was.map(function (g) { return tagChip(g); }).join(' ') : '<span class="tg-none">none</span>')
+              + ' <span class="mut">→</span> '
+              + (x.tags.length ? x.tags.map(function (g) { return tagChip(g); }).join(' ') : '<span class="tg-none">none</span>')
+              + '</td></tr>';
+          }).join('') + '</tbody></table></div>'
+          + (plan.length > 200 ? '<div class="mut" style="font-size:12px;margin-top:6px">showing the first 200 of ' + num(plan.length) + '</div>' : '')
+          : '')
+        + '<div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">'
+        + '<button class="btn sm" id="im-no" type="button">Cancel</button>'
+        + (plan.length ? '<button class="btn sm" id="im-yes" type="button" style="background:var(--accent,#F5A623);border-color:var(--accent,#F5A623);color:#fff">Apply ' + num(plan.length) + ' change' + (plan.length === 1 ? '' : 's') + '</button>' : '')
+        + '</div></div>';
+      var close = function () { host.innerHTML = ''; };
+      host.addEventListener('click', function (e) {
+        if (e.target.id === 'im-x' || e.target.id === 'im-no' || e.target.className === 'bd-dim') return close();
+        if (e.target.id === 'im-yes') {
+          plan.forEach(function (x) { setTags(x.task, x.tags); });
+          tagSave(); close();
+          toast('Imported tags on ' + num(plan.length) + ' row' + (plan.length === 1 ? '' : 's'));
+        }
+      });
+    }).catch(function (e) { toast('Could not read that file — ' + ((e && e.message) || e)); });
+  }
+
+  // ---- wiring ------------------------------------------------------------------------------------
+  function tagWire() {
+    // delegated, because the table is re-rendered on every keystroke and bound handlers would die
+    document.addEventListener('click', function (e) {
+      var el = e.target;
+      if (el && el.classList && el.classList.contains('tg-add')) {
+        var id = el.getAttribute('data-tagid');
+        var t = null;
+        for (var i = 0; i < TASKS.length; i++) if (String(TASKS[i].id) === id) { t = TASKS[i]; break; }
+        if (t) { e.stopPropagation(); tagMenuOpen(el, t); }
+        return;
+      }
+      var b = el && el.getAttribute && el.getAttribute('data-bulk');
+      if (b) { bulkApply(b); return; }
+      if (TAGMENU && !TAGMENU.contains(el)) tagMenuClose();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') tagMenuClose(); });
+    var dt = $('dp-tags'); if (dt) dt.onclick = rulesOpen;
+    var ti = $('ptagimp'), tf = $('ptagfile');
+    if (ti && tf) {
+      ti.onclick = function () { tf.value = ''; tf.click(); };
+      tf.onchange = function () { if (tf.files && tf.files[0]) tagImport(tf.files[0]); };
+    }
+  }
+
   function kpis() {
     var s = summarise(FT), ts = ticketStats(FK);
     var live = ACCOUNTS.filter(function (a) { return a.flag === 0; });
@@ -864,6 +1578,9 @@ window.addEventListener('load',restore);
 
   function apply() {
     Q = parseQuery($('q').value);
+    // tags are decorated onto EVERY row before the filter runs, because `tag:urgent` is a query
+    // term like any other — the search must be able to read what the tagging produced
+    decorateTags(TASKS, TAGS, RULES());
     FT = TASKS.filter(function (t) { return matchTask(t, Q); });
     FK = TICKETS.filter(function (t) { return matchTicket(t, Q); });
     SHOW = 200;
@@ -877,6 +1594,8 @@ window.addEventListener('load',restore);
       + (live ? ' <span class="sep">·</span> <span style="color:var(--muted)">matching <b>' + esc(live) + '</b></span>' : '')
       + (s.n === 0 && live ? ' <span class="bad">— nothing matches; try fewer words, or a shorter <code>client:</code></span>' : '');
     $('c-tasks').textContent = ' ' + num(FT.length);
+    dispRender();
+    bulkRender();
     $('c-tickets').textContent = ' ' + num(FK.length);
     $('c-accounts').textContent = ' ' + num(ACCOUNTS.length);
     try {
@@ -1109,7 +1828,8 @@ window.addEventListener('load',restore);
   var XCOLS = {
     tasks: [{ k: 'd', l: 'Date', t: 'date', w: 12 }, { k: 'client', l: 'Client', w: 18 },
       { k: 'market', l: 'Market', w: 9 }, { k: 'title', l: 'Task', w: 52 },
-      { k: 'catL', l: 'Type of work', w: 20 }, { k: 'owner', l: 'Who did it', w: 16 },
+      { k: 'catL', l: 'Type of work', w: 20 }, { k: 'tagsL', l: 'Tags', w: 22 },
+      { k: 'owner', l: 'Who did it', w: 16 },
       { k: 'am', l: 'Account manager', w: 16 }, { k: 'status', l: 'Status', w: 15 },
       { k: 'bucketL', l: 'Stage', w: 14 },
       { k: 'bill', l: 'Billable h', t: 'hours', w: 12 }, { k: 'nonbill', l: 'Non-billable h', t: 'hours', w: 14 },
@@ -1144,7 +1864,7 @@ window.addEventListener('load',restore);
       return Object.assign({}, a, { stateL: a.flag === 0 ? 'live' : (a.status || 'stopped') });
     });
     return rows.map(function (t) {
-      return Object.assign({}, t, { catL: CAT_LABEL[t.cat] || t.cat, bucketL: BUCKET_LABEL[t.bucket] || t.bucket });
+      return Object.assign({}, t, { catL: CAT_LABEL[t.cat] || t.cat, tagsL: (t.tags || []).map(function (g) { return defOf(g).label; }).join('; '), bucketL: BUCKET_LABEL[t.bucket] || t.bucket });
     });
   }
 
@@ -1259,8 +1979,11 @@ window.addEventListener('load',restore);
     });
   }
 
+  /* TAG sits beside TYPE deliberately: Type is what the work WAS (read off the title), Tag is why
+     it happened (a person's call). Side by side they read as the two different questions they are,
+     rather than one looking like a refinement of the other. */
   var TASK_COLS = [{ k: 'd', l: 'Date' }, { k: 'client', l: 'Client' }, { k: 'title', l: 'Task' },
-    { k: 'cat', l: 'Type' }, { k: 'owner', l: 'Who' }, { k: 'bucket', l: 'Status' },
+    { k: 'cat', l: 'Type' }, { k: 'tag', l: 'Tag' }, { k: 'owner', l: 'Who' }, { k: 'bucket', l: 'Status' },
     { k: 'bill', l: 'Billable', num: 1 }, { k: 'nonbill', l: 'Non-bill', num: 1 }, { k: 'hours', l: 'Total', num: 1 }];
   var TK_COLS = [{ k: 'd', l: 'Last activity' }, { k: 'client', l: 'Client' }, { k: 'subject', l: 'Subject' },
     { k: 'status', l: 'Status' }, { k: 'age', l: 'Age', num: 1 }, { k: 'idle', l: 'Idle', num: 1 },
@@ -1384,6 +2107,7 @@ window.addEventListener('load',restore);
           + '<td><span class="b">' + esc(t.client) + '</span> <span class="mk">' + esc(t.market) + '</span></td>'
           + '<td class="ttl"><span class="tt b">' + esc(t.title) + '</span>' + (t.note ? '<span class="nt">' + esc(t.note) + '</span>' : '') + '</td>'
           + '<td><span class="cat ' + t.cat + '"><i></i>' + esc(CAT_LABEL[t.cat] || t.cat) + '</span></td>'
+          + '<td>' + tagCell(t) + '</td>'
           + '<td>' + esc(t.owner || '—') + '</td>'
           + '<td><span class="st-p ' + t.bucket + '">' + esc(t.status || t.bucket) + '</span></td>'
           + '<td class="num" style="color:var(--bil)">' + (t.bill ? hrs(t.bill) : '·') + '</td>'
@@ -1644,6 +2368,12 @@ window.addEventListener('load',restore);
     });
     window.__tmTheme = function () { chart(); breakdown(); };
     $('fm-r').textContent = 'Reports database · live · ' + D.from + ' → ' + D.to;
+    tagWire();
+    // the identity only labels who made a call; the board must not wait on it
+    fetch('/api/access?me=1').then(function (r) { return r.json(); })
+      .then(function (a) { ME = (a && (a.name || a.ownerName || a.email)) || ''; }).catch(function () {});
+    // the first paint must not show every row as untagged and then flip — chain it on the load
+    tagLoad(function () { apply(); });
     apply();
   }
 

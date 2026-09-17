@@ -215,5 +215,179 @@
     return bytes.length;
   }
 
-  return { build: build, download: download, serial: serial, noDate: noDate, colName: colName, safeName: safeName, xesc: xesc };
+  /* ---------------------------------------------------------------------------------------------
+   * READING one back (Ray, 17 Sep 2026: "using Excel that I can import and export").
+   *
+   * An export nobody can send back is half a round trip, so this reads the same shape it writes.
+   * No library: a .xlsx is a ZIP, and the browser can inflate a raw deflate stream itself
+   * (DecompressionStream 'deflate-raw'), so unzip the two parts that matter — the shared string
+   * table and the first worksheet — and read the cells.
+   *
+   * CSV IS READ TOO, and is the format the button offers first. Excel writes it natively, it
+   * survives being emailed and pasted, and it cannot carry a macro. The .xlsx path exists because
+   * Ray will have the file open in Excel and "Save As CSV" is one more step to forget.
+   * ------------------------------------------------------------------------------------------ */
+
+  function u16(b, o) { return b[o] | (b[o + 1] << 8); }
+  function u32(b, o) { return (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24)) >>> 0; }
+
+  /** Entries of a ZIP, read from its CENTRAL DIRECTORY rather than by scanning for local headers —
+   *  a local header may declare sizes of 0 and defer them to a data descriptor, which is exactly
+   *  what several writers do, and scanning would then read the wrong number of bytes. */
+  function zipEntries(buf) {
+    var b = new Uint8Array(buf), i, eocd = -1;
+    for (i = b.length - 22; i >= 0 && i > b.length - 66000; i--) {
+      if (b[i] === 80 && b[i + 1] === 75 && b[i + 2] === 5 && b[i + 3] === 6) { eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error('not a zip file');
+    var n = u16(b, eocd + 10), off = u32(b, eocd + 16), out = [], p = off;
+    for (i = 0; i < n; i++) {
+      if (b[p] !== 80 || b[p + 1] !== 75 || b[p + 2] !== 1 || b[p + 3] !== 2) break;
+      var method = u16(b, p + 10), csize = u32(b, p + 20), usize = u32(b, p + 24);
+      var nlen = u16(b, p + 28), elen = u16(b, p + 30), clen = u16(b, p + 32), lho = u32(b, p + 42);
+      var name = '';
+      for (var j = 0; j < nlen; j++) name += String.fromCharCode(b[p + 46 + j]);
+      var lnlen = u16(b, lho + 26), lelen = u16(b, lho + 28);
+      out.push({ name: name, method: method, csize: csize, usize: usize, at: lho + 30 + lnlen + lelen });
+      p += 46 + nlen + elen + clen;
+    }
+    return { bytes: b, entries: out };
+  }
+
+  function inflateRaw(slice) {
+    if (typeof DecompressionStream === 'undefined') return Promise.reject(new Error('this browser cannot unzip .xlsx — save the file as CSV and import that'));
+    var ds = new DecompressionStream('deflate-raw');
+    return new Response(new Blob([slice]).stream().pipeThrough(ds)).arrayBuffer();
+  }
+
+  function partText(z, name) {
+    var e = null;
+    for (var i = 0; i < z.entries.length; i++) if (z.entries[i].name === name) { e = z.entries[i]; break; }
+    if (!e) return Promise.resolve('');
+    var slice = z.bytes.subarray(e.at, e.at + (e.method === 0 ? e.usize : e.csize));
+    var dec = function (ab) { return new TextDecoder('utf-8').decode(ab); };
+    if (e.method === 0) return Promise.resolve(dec(slice));
+    return inflateRaw(slice).then(dec);
+  }
+
+  function unesc(x) {
+    return String(x).replace(/&#(\d+);/g, function (m, d) { return String.fromCharCode(+d); })
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+  }
+  // <si> can be one <t> or several <r><t> runs; joining the runs is the difference between
+  // reading "Urgent" and reading "Urg" when Excel has split a cell's formatting mid-word
+  function sharedStrings(xml) {
+    var out = [], re = /<si\b[^>]*>([\s\S]*?)<\/si>/g, m;
+    while ((m = re.exec(xml))) {
+      var txt = '', tre = /<t[^>]*>([\s\S]*?)<\/t>/g, t;
+      while ((t = tre.exec(m[1]))) txt += unesc(t[1]);
+      out.push(txt);
+    }
+    return out;
+  }
+
+  function colOf(ref) {
+    var c = 0, i;
+    for (i = 0; i < ref.length; i++) {
+      var ch = ref.charCodeAt(i);
+      if (ch < 65 || ch > 90) break;
+      c = c * 26 + (ch - 64);
+    }
+    return c - 1;
+  }
+
+  function sheetRows(xml, ss) {
+    var rows = [], rre = /<row\b[^>]*>([\s\S]*?)<\/row>/g, rm;
+    while ((rm = rre.exec(xml))) {
+      var cells = [], cre = /<c\b([^>]*)(?:\/>|>([\s\S]*?)<\/c>)/g, cm;
+      while ((cm = cre.exec(rm[1]))) {
+        var attr = cm[1] || '', body = cm[2] || '';
+        var ref = (attr.match(/r="([A-Z]+)\d+"/) || [])[1] || '';
+        var ty = (attr.match(/t="([^"]+)"/) || [])[1] || 'n';
+        var v = '';
+        if (ty === 'inlineStr') { var im = body.match(/<t[^>]*>([\s\S]*?)<\/t>/); v = im ? unesc(im[1]) : ''; }
+        else {
+          var vm = body.match(/<v>([\s\S]*?)<\/v>/);
+          v = vm ? unesc(vm[1]) : '';
+          if (ty === 's') v = ss[Number(v)] != null ? ss[Number(v)] : '';
+        }
+        var at = ref ? colOf(ref) : cells.length;
+        while (cells.length < at) cells.push('');
+        cells[at] = v;
+      }
+      rows.push(cells);
+    }
+    return rows;
+  }
+
+  /** .xlsx bytes -> array of row arrays (first worksheet). */
+  function readXlsx(buf) {
+    var z;
+    try { z = zipEntries(buf); } catch (e) { return Promise.reject(e); }
+    return partText(z, 'xl/sharedStrings.xml').then(function (ssXml) {
+      var ss = ssXml ? sharedStrings(ssXml) : [];
+      return partText(z, 'xl/worksheets/sheet1.xml').then(function (sh) {
+        if (!sh) throw new Error('no worksheet found in that file');
+        return sheetRows(sh, ss);
+      });
+    });
+  }
+
+  /** CSV text -> array of row arrays. Quotes, doubled quotes and embedded newlines all honoured. */
+  function readCsv(text) {
+    var s = String(text || '').replace(/^\ufeff/, ''), rows = [], row = [], cur = '', q = false, i;
+    for (i = 0; i < s.length; i++) {
+      var c = s.charAt(i);
+      if (q) {
+        if (c === '"') { if (s.charAt(i + 1) === '"') { cur += '"'; i++; } else q = false; }
+        else cur += c;
+      } else if (c === '"') q = true;
+      else if (c === ',') { row.push(cur); cur = ''; }
+      else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+      else if (c === '\r') { /* CRLF — the \n does the work */ }
+      else cur += c;
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    return rows;
+  }
+
+  /** One File (.xlsx or .csv) -> rows. The extension decides; the content is not sniffed. */
+  function readFile(file) {
+    var name = String((file && file.name) || '');
+    if (/\.xlsx$/i.test(name)) return file.arrayBuffer().then(readXlsx);
+    return file.text().then(readCsv);
+  }
+
+  /**
+   * Rows -> objects, keyed by the HEADER TEXT, matched case- and space-insensitively.
+   * The header may sit below a title row, so the first row carrying every required label wins.
+   */
+  function table(rows, required) {
+    var need = (required || []).map(function (x) { return String(x).toLowerCase().replace(/\s+/g, ''); });
+    var norm = function (x) { return String(x == null ? '' : x).toLowerCase().replace(/\s+/g, ''); };
+    var hi = -1, i, j;
+    for (i = 0; i < Math.min(rows.length, 25); i++) {
+      var have = (rows[i] || []).map(norm);
+      var ok = need.every(function (n) { return have.indexOf(n) >= 0; });
+      if (ok) { hi = i; break; }
+    }
+    if (hi < 0) return { header: -1, cols: [], rows: [] };
+    var head = (rows[hi] || []).map(function (x) { return String(x == null ? '' : x).trim(); });
+    var out = [];
+    for (i = hi + 1; i < rows.length; i++) {
+      var r = rows[i] || {}, o = {}, any = false;
+      for (j = 0; j < head.length; j++) {
+        if (!head[j]) continue;
+        var v = (rows[i] || [])[j];
+        o[head[j]] = v == null ? '' : String(v);
+        if (o[head[j]] !== '') any = true;
+      }
+      if (any) out.push(o);
+    }
+    return { header: hi, cols: head, rows: out };
+  }
+
+  return { build: build, download: download, serial: serial, noDate: noDate, colName: colName, safeName: safeName, xesc: xesc,
+    readXlsx: readXlsx, readCsv: readCsv, readFile: readFile, table: table, zipEntries: zipEntries, sharedStrings: sharedStrings, sheetRows: sheetRows };
 }));
