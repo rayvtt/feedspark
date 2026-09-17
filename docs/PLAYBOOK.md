@@ -69,6 +69,23 @@ first-seen cohort, since a product returning to stock arrives too — so the pan
 it counts rather than borrowing the cohort's name. Top five plus `Other`; one `/api/volume` call
 per market, on demand in Review and filled automatically in the New products panel.
 
+### One brand filter, written from both ends
+
+Ray, 17 Sep 2026: *"when the playbook is surfaced, there's a brand filter on top. If the brand is
+selected, can the filter also be applied in the intake and vice versa?"*
+
+The **board → panel** direction already existed (`renderClientChips` dispatches `fcc-clients`; the
+rail follows when exactly one client is selected). The **panel → board** direction now writes the
+same `itState.clients` the chips and the ▾ menu write, through one named entry point
+(`window.FCCFilterClient`) — so there is one client filter on the page, not a second that can
+disagree with it. Two rules keep it from surprising anyone:
+
+- **Only a real pick propagates.** The rail choosing its own default account when it opens, or
+  following the board's own chips, never reaches round and re-filters the board behind the reader.
+- **A brand the board does not carry is refused and named.** The filter control self-cleans an
+  option that isn't there, so filtering to a brand with no Intake rows would quietly do nothing and
+  read as broken; the panel's subtitle says **"not on the board"** instead.
+
 ### One way into the composer
 
 Every **→ Brief** in the rail calls `window.FCCBrief` — the same function module deep links

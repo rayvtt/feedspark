@@ -6686,6 +6686,27 @@
       "pattern": "function openBrief(){",
       "min": 1,
       "pr": 424
+    },
+    {
+      "name": "Cockpit: ONE client filter — the panel's brand picker writes itState.clients, the board's chips move the panel",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "window.FCCFilterClient=filterToClient",
+      "min": 1,
+      "pr": 425
+    },
+    {
+      "name": "Cockpit: only a real pick propagates — opening the rail never re-filters the board",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "BRAND=sel.value; render(); syncBoard();",
+      "min": 1,
+      "pr": 425
+    },
+    {
+      "name": "Cockpit: a brand the board does not carry is refused and named, not silently self-cleaned",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "'not on the board'",
+      "min": 1,
+      "pr": 425
     }
   ]
 }
