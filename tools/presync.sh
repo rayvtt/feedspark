@@ -112,6 +112,10 @@ echo "── validating: the Playbook panel inside Workflow (practices, arrivals
 node tools/test_playbook_panel.mjs >/dev/null
 echo "   ✓ 10–20% reads as a collection landing, and the standalone module stays retired"
 
+echo "── validating: one modal at a time (no overlay can be added that stacks on another)"
+node tools/test_modalsolo.mjs >/dev/null
+echo "   ✓ every overlay opener clears the others; the composer is never auto-closed"
+
 echo "── validating: retainer hours (optimisation vs technical vs feature vs account)"
 node tools/test_reporthours.mjs >/dev/null
 echo "   ✓ precedence traps hold; the baked snapshot reconciles to its own totals"

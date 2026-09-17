@@ -3277,9 +3277,31 @@ body.ck-r-on{padding-right:var(--ck-w)}
   scrim.addEventListener('click',function(e){ if(e.target===scrim) closeModal(); });
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ if(typeof tleClose==='function'&&tleClose())return; closeModal(); closeBrief(); } });
   function closeModal(){ scrim.classList.remove('on'); }
+  /* ONE MODAL AT A TIME (Ray, 17 Sep 2026, on a ticket opened from the Brief ledger: "what
+     happened to brief ledger view"). The task-edit pop-up has to clear Focus mode's full-screen
+     overlay, so .tle-scrim sits at z-index 9500 while every other scrim is 200 — open both and the
+     460px edit card paints straight across the middle of the ticket, which reads as a broken page
+     rather than two windows. The equal-z pairs stack just as badly, just less obviously: the later
+     one in the DOM wins and the backdrop dims twice. So opening any overlay closes the others.
+
+     ONE EXCEPTION, and it is not symmetry for its own sake: closeBrief() drops the draft's email
+     context and unpins the client, so auto-closing the COMPOSER would silently destroy a
+     half-written brief — a real loss, where the stacking it prevents is only cosmetic. Every other
+     overlay is a view of something already stored and costs nothing to reopen, so the composer is
+     never closed for someone else, while opening it does clear the cheap views behind it. */
+  var SOLO_NEVER = 'bg-scrim';   // the composer — holds unsaved work; see above
+  function soloModal(keep){
+    var keepEl = typeof keep === 'string' ? document.getElementById(keep) : keep;
+    var open = document.querySelectorAll('.scrim.on');
+    for(var i=0;i<open.length;i++){
+      var s=open[i];
+      if(s===keepEl || s.id===SOLO_NEVER) continue;
+      s.classList.remove('on');
+    }
+  }
   // ---- new-brief popup (the composer lives in #bg-scrim; prefill() + the openers route here) ----
   var bgScrim=document.getElementById('bg-scrim');
-  function openBrief(){ if(!bgScrim)return; bgScrim.classList.add('on');
+  function openBrief(){ if(!bgScrim)return; soloModal('bg-scrim'); bgScrim.classList.add('on');
     setTimeout(function(){ var t=document.getElementById('bg-task'); if(t)t.focus(); },60); }
   function closeBrief(){ if(!bgScrim)return; bgScrim.classList.remove('on'); window.__emailId=null; window.__emailIds=null;
     pinClient(null); }   // the pin belongs to the link that opened this draft, nothing after it
@@ -3333,7 +3355,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
         +'<a class="btn" id="m-chasec" target="_blank" rel="noopener">⏰ Chase client</a>'
         +'<a class="btn navy'+(doneNote?'':' ')+'" id="m-confirm" target="_blank" rel="noopener">✓ Draft client confirmation</a>'
         +'<span class="grow"></span><button class="btn" id="m-del" style="border-color:#F3C9BC;color:#C0392B">Delete</button></div>';
-    scrim.classList.add('on');
+    soloModal('scrim'); scrim.classList.add('on');
     document.getElementById('m-x').onclick=closeModal;
     document.getElementById('m-del').onclick=function(){ if(confirm('Delete brief '+b.id+'?')){ delete BRIEFS[b.id]; persist(); renderAll(); closeModal(); } };
     modalEl.querySelectorAll('.xl-dup').forEach(function(x){ x.onclick=function(){ openModal(x.getAttribute('data-dup')); }; });
@@ -3944,7 +3966,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
       +'<div class="tle-foot"><button type="button" class="tle-open" id="tle-open">Open in Intake ↗</button>'
       +'<button type="button" class="btn sm" id="tle-cancel">Cancel</button>'
       +'<button type="button" class="btn sm navy" id="tle-save">Save</button></div>';
-    tleScrim.classList.add('on');
+    soloModal('tle-scrim'); tleScrim.classList.add('on');
     document.getElementById('tle-cancel').onclick=tleClose;
     document.getElementById('tle-open').onclick=function(){ tleClose(); if(document.body.classList.contains('tl-focus'))tlFocus(false); revealInIntake(t.client,key); };
     document.getElementById('tle-save').onclick=function(){
@@ -4082,7 +4104,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
     modalEl.innerHTML='<div style="display:flex;align-items:flex-start"><div><h3>Week-ahead digest</h3><div class="mc">Review, then copy or draft it</div></div><button class="x" id="dg-x">×</button></div>'
       +'<pre class="brief" style="max-height:52vh;overflow:auto">'+esc(body)+'</pre>'
       +'<div class="m-act"><button class="btn navy" id="dg-copy">⧉ Copy</button><a class="btn pri" id="dg-mail" target="_blank" rel="noopener">✉ Draft in Gmail</a><span class="grow"></span><button class="btn" id="dg-notify">🔔 Desktop alerts</button></div>';
-    scrim.classList.add('on');
+    soloModal('scrim'); scrim.classList.add('on');
     document.getElementById('dg-x').onclick=closeModal;
     document.getElementById('dg-copy').onclick=function(){ copy(body,'Digest copied'); };
     document.getElementById('dg-mail').href='https://mail.google.com/mail/?view=cm&fs=1&su='+encodeURIComponent('FeedSpark — Week ahead')+'&body='+encodeURIComponent(body);
@@ -4677,7 +4699,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
       syncAll(); d.appendChild(md);
       return d; }
     function openAcl(){ var host=document.getElementById('acl-rows'); host.innerHTML='';
-      DIRSTAT.textContent='Loading…'; document.getElementById('acl-scrim').classList.add('on');
+      DIRSTAT.textContent='Loading…'; soloModal('acl-scrim'); document.getElementById('acl-scrim').classList.add('on');
       fetch('/api/access').then(function(r){return r.json();}).then(function(d){
         ACL_MODULES=(d&&d.modules)||[];
         var dir=(d&&d.users)||{}; host.innerHTML='';
@@ -5512,7 +5534,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
   }
   function tuneOpen(on){
     var sc=$('#ck-tune-scrim'); if(!sc)return;
-    if(on){ tuneRows(); $('#ck-tune-stat').textContent=''; sc.classList.add('on'); }
+    if(on){ tuneRows(); $('#ck-tune-stat').textContent=''; soloModal('ck-tune-scrim'); sc.classList.add('on'); }
     else sc.classList.remove('on');
   }
 

@@ -215,3 +215,37 @@ Account, Feed Health, General — does not).
 intercept file:// fetches): book render, meeting-phrasing search, retrospective checklist +
 window toggle, prospective suggestions + → Brief deep-links, taxonomy tuner, live roster union.
 Scope filtering rides the shared `clientMatch` (pinned by `tools/test_access.mjs`).
+
+## One modal at a time
+
+Ray, 17 Sep 2026, on a ticket opened from the Brief ledger: *"what happened to brief ledger
+view"*.
+
+Nothing had happened to it. The ledger rendered correctly and the ticket opened correctly — what
+Ray was looking at was **two overlays open at once**. The task-edit pop-up has to clear Focus
+mode's full-screen overlay, so `.tle-scrim` sits at `z-index: 9500` while every other scrim is
+`200`; open both and the 460px edit card paints straight across the middle of the ticket, with the
+ticket's left and right edges still visible either side. That reads as a broken page, not as two
+windows.
+
+The equal-`z` pairs stack just as badly and less obviously — the later one in the DOM wins, and the
+backdrop dims twice. So the rule is now general: **opening any overlay closes the others**.
+`soloModal(keep)` sweeps `.scrim.on` rather than naming the overlays it knows about, so a scrim
+added later is covered without anyone having to remember this file.
+
+### The one exception, and why it is earned
+
+`closeBrief()` drops the draft's email context (`__emailId`, `__emailIds`) and unpins the client.
+Auto-closing the **composer** would therefore silently destroy a half-written brief — a real loss,
+where the stacking it would prevent is only cosmetic. Every other overlay is a view of something
+already stored and costs nothing to reopen.
+
+So the composer is never closed for someone else, while opening it *does* clear the cheap views
+behind it. The asymmetry is deliberate: closing a ticket is free, closing a draft is not.
+
+### Tripwire
+
+`tools/test_modalsolo.mjs` (qa_gate / presync / validate) reads the page and fails if any overlay
+opener skips `soloModal`, or names the wrong overlay to keep — the way this bug comes back is a
+*seventh* scrim added without the guard, not a regression in the six that have it. It also checks
+the exception is still earned, by asserting `closeBrief()` really does discard that context.
