@@ -646,7 +646,7 @@ window.addEventListener('load',restore);
     <span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="scanmsg" id="scan-all-msg"></span>
     <button class="btn" id="collapse-all" title="Collapse or expand every brand card — a single card still opens or closes on its own header">⊖ Collapse all</button>
     <button class="btn" id="demo-tgl" title="Mask every client identity for a client-facing screen share">🎭 Demo mode</button>
-    <button class="btn pri" id="scan-all" title="Force-rescans every feed now (no freshness skip) — labels, product types and attribute coverage land in the same pass">⚡ Scan whole estate</button></span></div>
+    <button class="btn pri" id="scan-all" title="Force-rescans every feed now (no freshness skip) — labels, product types, attribute coverage AND content quality land in the same pass">⚡ Scan whole estate</button></span></div>
   <p class="cat-sub"><span class="chip-ch chip-g">G</span> <b>Google Shopping feeds only</b> — the score is each
   feed’s weighted attribute completeness (required ×3 · conditional ×2 · recommended ×1). FeedSpark’s Golden
   Record target: <b>99.9%</b>. Click a market for the full scorecard below. Coverage rides the same scan
@@ -2623,22 +2623,35 @@ window.addEventListener('load',restore);
     }).catch(function () {});
   }
 
+  // Ray, 17 Sep 2026: "scan whole estate > will also scan content quality too for all estate" —
+  // the estate rescan used to leave content quality to per-feed manual "Analyse Content
+  // Quality" clicks, so a freshly force-rescanned estate could still show stale (or no)
+  // quality readings. Each feed now gets BOTH passes back to back: the worker gviz scan
+  // (score, labels, product types, attribute coverage) it already ran, then qualityRun — the
+  // SAME in-browser stream + PUT the per-feed button uses, so a feed scanned from here reads
+  // identically to one scanned by hand. One feed's content-quality failure never halts the
+  // estate run, matching the existing score-scan step's own silent-continue.
   $('scan-all').onclick = function () {
     var feeds = feedList(); if (!feeds.length) return;
     var btn = $('scan-all'); btn.disabled = true;
     var i = 0;
     function step() {
       if (i >= feeds.length) {
-        $('scan-all-msg').textContent = 'Done — ' + feeds.length + ' scanned';
+        $('scan-all-msg').textContent = 'Done — ' + feeds.length + ' scanned (score + content quality)';
         btn.disabled = false;
         return refreshEstate().then(function () { if (SEL) select(SEL); });
       }
-      var f = feeds[i++];
+      var f = feeds[i++], k = f.client + '|' + f.mkt;
       // no freshness skip — the estate catch-up: labels, product types and attribute
       // coverage all land in the same forced pass
-      $('scan-all-msg').innerHTML = '<span class="spin"></span>' + esc(dispClient(f.client)) + ' · ' + esc(String(f.mkt).toUpperCase()) + ' (' + i + '/' + feeds.length + ')';
+      $('scan-all-msg').innerHTML = '<span class="spin"></span>' + esc(dispClient(f.client)) + ' · ' + esc(String(f.mkt).toUpperCase()) + ' — score (' + i + '/' + feeds.length + ')';
       return fetch(API + '/api/golden/scan?client=' + encodeURIComponent(f.client) + '&market=' + encodeURIComponent(f.mkt), { method: 'POST' })
-        .then(function (r) { return r.json(); }).catch(function () {}).then(step);
+        .then(function (r) { return r.json(); }).catch(function () {})
+        .then(function () {
+          $('scan-all-msg').innerHTML = '<span class="spin"></span>' + esc(dispClient(f.client)) + ' · ' + esc(String(f.mkt).toUpperCase()) + ' — content quality (' + i + '/' + feeds.length + ')';
+          return qualityRun(k).catch(function () {});
+        })
+        .then(step);
     }
     step();
   };

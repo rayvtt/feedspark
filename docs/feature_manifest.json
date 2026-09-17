@@ -7304,6 +7304,12 @@
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function exportHtml(k)",
       "min": 1
+    },
+    {
+      "name": "Golden Record: Scan whole estate ALSO runs content quality for every feed, not just score/labels/PT/attribute coverage — Ray, 17 Sep 2026: 'scan whole estate > will also scan content quality too for all estate'",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "return qualityRun(k).catch(function () {});",
+      "min": 1
     }
   ]
 }

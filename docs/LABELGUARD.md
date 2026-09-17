@@ -407,7 +407,20 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   no FCC login needed. Harness: the one-click-download and CDN-fallback blocks in
   `tools/check_grpdf.js` (stubbed `html2canvas`/`jsPDF` pin the glue — button → libs → capture →
   package → save → restore — a fidelity check on the real libraries is the separate PDF-content
-  QA pass, not a structural assertion). **Profile edits re-score the whole brand instantly** (Ray, 16 Sep 2026): the
+  QA pass, not a structural assertion). **⚡ Scan whole estate now scans content quality too**
+  (Ray, 17 Sep 2026: *"scan whole estate > will also scan content quality too for all
+  estate"*): the estate rescan already force-rescanned every feed's score, labels, product
+  types and attribute coverage in one gviz pass, but left content quality to per-feed manual
+  "Analyse Content Quality" clicks — a freshly force-rescanned estate could still show a stale
+  or entirely missing quality reading. Each feed in the `#scan-all` loop now runs `qualityRun()`
+  — the SAME in-browser stream + PUT the per-feed button uses — immediately after its
+  `/api/golden/scan` call, so a feed scanned from the estate button reads identically to one
+  scanned by hand; one feed's content-quality write failing never halts the rest of the
+  estate, matching the existing score-scan step's own silent-continue. Harness:
+  `tools/test_grscanall.mjs` (a genuine trap caught while writing it: the boot-time GET that
+  loads a feed's already-stored quality reading and the qualityRun PUT that saves a fresh one
+  share the exact same `/api/golden/quality` path — a test stub that doesn't check the HTTP
+  method miscounts the page's own unrelated boot read as a scan-all-triggered write). **Profile edits re-score the whole brand instantly** (Ray, 16 Sep 2026): the
   page live-derives every estate score from that same stored cov map + the *current* profile
   (`rescoreEstate` — cov stores `null` for absent vs fill % for present, exactly the attrs
   shape `goldenScore` needs), so saving a profile re-runs the dial, every market on the
