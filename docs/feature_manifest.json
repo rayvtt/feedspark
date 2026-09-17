@@ -7228,6 +7228,30 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "function decorateAccountType()",
       "min": 1
+    },
+    {
+      "name": "Feed Lab: the Attribute completeness pillar respects the SAME industry scoring profile as goldenScore (cond-tier attrs excluded unless expected, rec-tier attrs excluded only when waived) — Ray, 17 Sep 2026: 'make sure all scoring (AI readiness, content quality) always refer back to the industry best practice that had been set'",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "function attrCounted(ak)",
+      "min": 1
+    },
+    {
+      "name": "Content quality: qualityScore(snap, profile) drops an industry-waived QSPEC attribute from the score entirely, same rule goldenScore already applies",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function qualityScore(snap, profile)",
+      "min": 1
+    },
+    {
+      "name": "Feed Lab (/feedlab): the front-door page fetches the same /api/golden/profile industry profile the nested /golden reading uses, so the two never disagree",
+      "file": "docs/FeedSpark_FeedLab.html",
+      "pattern": "function profileForFL(client)",
+      "min": 1
+    },
+    {
+      "name": "Command Center dossier: the Golden Record card shows TWO labelled scores per market (feed scorecard + content quality), capped at 8 markets with the overflow named — Ray, 17 Sep 2026: 'carefully label them so we don't mistake'",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function grMiniRow(r)",
+      "min": 1
     }
   ]
 }

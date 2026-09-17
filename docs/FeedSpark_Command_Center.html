@@ -411,6 +411,17 @@ window.addEventListener('load',restore);
   .dzp-mrow .mk{font-weight:900;text-transform:uppercase;font-size:10.5px;color:var(--muted)}
   .dzp-mrow .sc{font-size:12px;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
   .dzp-mrow .sc em{font-style:normal;font-size:10px;font-weight:800;color:var(--muted);margin-left:4px}
+  /* Golden Record per-market rows: two LABELLED scores side by side (feed scorecard, content
+     quality) — Ray, 17 Sep 2026: "carefully label them so we don't mistake". Mirrors the /golden
+     Estate scorecard's own .est-scores/.est-su pairing so the same brand reads the same way in
+     both places, in this card's own .dzp- naming. */
+  .dzp-gmkts{margin-top:4px;border-top:1px solid var(--line);padding-top:2px}
+  .dzp-grow{display:flex;align-items:center;gap:8px;padding:3.5px 0}
+  .dzp-grow .mk{font-weight:900;text-transform:uppercase;font-size:10.5px;color:var(--muted);width:22px;flex:none}
+  .dzp-gsc{display:flex;gap:13px;margin-left:auto}
+  .dzp-gsu{display:flex;flex-direction:column;align-items:flex-end;min-width:34px}
+  .dzp-gsu b{font-size:12px;font-weight:900;line-height:1.15;font-variant-numeric:tabular-nums}
+  .dzp-gsu i{font-style:normal;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
   .dzp-bar{position:relative;height:7px;border-radius:99px;background:var(--line);overflow:hidden;min-width:34px}
   .dzp-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:99px;display:block}
   .dzp-bar.none{background:repeating-linear-gradient(135deg,var(--line) 0 4px,transparent 4px 8px);
@@ -1858,6 +1869,27 @@ window.addEventListener('load',restore);
       +'" stroke-dasharray="'+(C*p/100).toFixed(2)+' '+C.toFixed(2)
       +'" transform="rotate(-90 '+R+' '+R+')"/></svg>';
   }
+  // per-market row: feed scorecard + content quality, both LABELLED (Ray, 17 Sep 2026: "Surface
+  // content quality score directly in the dossier scorecard as well, next to the normal score.
+  // So there should be two scores appearing for each market, each brand. Obviously, carefully
+  // label them so we don't mistake. Feed scorecard and content quality score.") — the aggregate
+  // ring above already carried an averaged "quality" figure for the whole brand; this is the
+  // per-market breakdown the ring can't show, capped the SAME way Feed audit's own per-market
+  // rows are (portMkts, max 8) so a 28-market brand like Reiss can't turn the card into a wall.
+  var GR_MROWS=8;
+  function grPill(n,label,title){
+    if(n==null)return '';
+    var col=GR_COL[grBand(n)]||'#C9CDD4';
+    return '<span class="dzp-gsu" title="'+esc(title)+'"><b style="color:'+col+'">'+n+'</b><i>'+esc(label)+'</i></span>';
+  }
+  function grMiniRow(r){
+    return '<div class="dzp-grow"><span class="mk">'+esc(r.m.toUpperCase())+'</span><span class="dzp-gsc">'
+      +(r.score!=null||r.q!=null
+        ? grPill(r.score,'feed','Feed scorecard — attribute completeness vs Google’s product data spec, out of 100')
+          +grPill(r.q,'content','Content quality score — what is actually IN the free-text fields, out of 100')
+        : '<i style="color:var(--muted);font-weight:700;font-style:normal">not scanned</i>')
+      +'</span></div>';
+  }
   function portGolden(name){
     var rows=grRows(name);
     if(!rows.length)return '';
@@ -1883,6 +1915,11 @@ window.addEventListener('load',restore);
       h+='<div class="dzp-act"><div class="dzp-ring">'+grRing(avg,col)
         +'<span class="mid"><b style="color:'+col+'">'+avg+'</b><span>record</span></span></div>'
         +'<div class="dzp-leg">'+leg+'</div></div>';
+      // per-market breakdown — only worth a row list once there is more than one market to break down
+      if(rows.length>1){
+        h+='<div class="dzp-gmkts">'+rows.slice(0,GR_MROWS).map(grMiniRow).join('')+'</div>';
+        if(rows.length>GR_MROWS)h+='<div class="dzp-hrsn">+'+(rows.length-GR_MROWS)+' more market'+(rows.length-GR_MROWS===1?'':'s')+' — see Full snapshot</div>';
+      }
     }
     h+='<button type="button" class="dzp-grbtn" data-gr="'+esc(name)+'">Full snapshot ↗</button></div>';
     return h;

@@ -718,6 +718,25 @@ each finding quotes and links its source.
   Google's stated 4–6 from FeedSpark's own 6–10. `hlDist` is allow-listed through the `/api/golden/
   quality` PUT sanitizer with its five fixed bucket keys, each independently clamped, the same
   discipline as `cols`/`perProduct`/`avgDepth`.
+- **Content quality follows the same industry profile as `goldenScore`** (Ray, 17 Sep 2026,
+  screenshot of a Pet Care brand's AI-Readiness pillar scoring 30/100 off empty apparel fields:
+  *"make sure all scoring (AI readiness, content quality) always refer back to the industry best
+  practice that had been set"*). `qualityScore(snap, profile)` now takes the same `profile` shape
+  `goldenScore` already consults (§8's industry scoring profiles) and skips any `QSPEC` attribute
+  named in `profile.waived` before scoring it — dropped from both the numerator and denominator,
+  same as `goldenScore`'s own waived attributes. An attribute nobody fills already scored `null`
+  (excluded) before this change — the fix only matters when an industry-waived attribute (`pattern`
+  for Pet Care) carries a handful of stray values that would otherwise still be judged by
+  apparel-oriented rules. Every page call site now threads `profileForC(client)` through: the three
+  `LGQ.qualityScore(...)` calls (the scorecard section, the per-attribute ask/brief lookup, the
+  quality↔AI reconciliation band) and the nested Feed Lab `audit()` call that produces the AI-
+  Readiness card also pass `expected`/`waived` — see `FEEDLAB.md`'s "Attribute completeness follows
+  the industry best-practice profile" for the AI-Readiness half of this fix (cond-tier vs rec-tier
+  attributes are excluded by two different rules, not one blanket waive-list check), which applies
+  identically whether that engine is reached nested inside `/golden` or from `/feedlab` itself.
+  Harness: the industry-profile block in `tools/test_labelguard.mjs` (a waived attribute drops from
+  `qualityScore`'s parts entirely; the other parts are untouched; no profile passed keeps the old
+  behaviour byte-for-byte) and `tools/test_feedlab.mjs`.
 
 ## 9.5 PDP recovery scan — "missing data can be sourced from the PDP" (Ray, 14 Sep 2026)
 

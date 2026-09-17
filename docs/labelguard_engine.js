@@ -1671,11 +1671,19 @@ export function attrQuality(key, a) {
     fails: broken.filter((b) => b.sev === 'fail').length,
     warns: broken.filter((b) => b.sev === 'warn').length };
 }
-export function qualityScore(snap) {
+// `profile` (profileFor()'s shape, optional) waives an attribute from the score entirely —
+// Ray, 17 Sep 2026: "make sure all scoring (AI readiness, content quality) always refer back
+// to the industry best practice that had been set." Pet Care waives pattern/size_type/
+// size_system for goldenScore; a Pet Care feed with a handful of stray `pattern` values would
+// otherwise still be judged by apparel-oriented pattern rules here. Waived attributes drop out
+// of both the numerator and denominator, same as goldenScore's own waived attributes.
+export function qualityScore(snap, profile) {
   if (!snap || !snap.attrs) return null;
+  const waived = (profile && profile.waived) || [];
   const parts = [];
   let ws = 0, sum = 0;
   for (const q of QSPEC) {
+    if (waived.indexOf(q.key) >= 0) continue;
     const r = attrQuality(q.key, snap.attrs[q.key]);
     if (!r) continue;
     r.w = q.w; r.label = q.label; r.doc = q.doc; r.spec = q.spec;

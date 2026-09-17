@@ -630,6 +630,27 @@ var FRESH_MS=20*3600*1000, CAP=8000;
 var CLIENT='', MARKET='gb', MKTS={}, META={'Reiss':REISS_FEED}, AUDIT=null, SCANID=0, ctrl=null, SCANALL=false;
 var HEATWAVE=false; // one-shot: next renderPortal animates the heatmap in (set on load / estate-scan done / demo)
 
+// industry scoring profile (Ray, 17 Sep 2026: "make sure all scoring (AI readiness, content
+// quality) always refer back to the industry best practice that had been set") — /golden's
+// nested reading of this SAME engine already passes this through; /feedlab is the front door
+// for the identical audit() call and must never disagree with it, so a Pet Care brand's
+// "Attribute completeness" pillar reads the same waivers here as it does inside the dossier.
+// Read directly (never via a promise the two scan call sites would have to await) — the
+// profile fetch is one small KV read, the feed scan is a full stream, so it is settled by
+// the time an audit actually runs; before it lands, expected/waived are simply empty, same
+// as before this fix existed.
+var PROF={defaults:{},overrides:{},industryMap:{}};
+fetch('/api/golden/profile').then(function(r){return r.json()}).then(function(d){
+  PROF.defaults=(d&&d.defaults)||{};PROF.overrides=(d&&d.overrides)||{};PROF.industryMap=(d&&d.industryMap)||{};
+}).catch(function(){});
+function profileForFL(client){
+  var ind=PROF.industryMap[client]||'Retail';
+  var base=((PROF.overrides.industries||{})[ind])||PROF.defaults[ind]||{expected:[],waived:[]};
+  var cl=(PROF.overrides.clients||{})[client];
+  function pick(src,k){return src&&Object.prototype.toString.call(src[k])==='[object Array]'?src[k]:null}
+  return {expected:pick(cl,'expected')||pick(base,'expected')||[], waived:pick(cl,'waived')||pick(base,'waived')||[]};
+}
+
 /* display-only lexicons for per-token MASK highlighting in samples/dissect cards —
    scoring lives in the engine; these just paint the tokens the same language. */
 var LEXCOL=['black','white','navy','blue','red','green','pink','grey','gray','brown','beige','cream','tan','camel','charcoal','ivory','stone','khaki','burgundy','rust','orange','yellow','purple','lilac','teal','olive','silver','gold','neutral','ecru','sand','chocolate','wine','multi'];
@@ -841,7 +862,8 @@ function scanLive(){
     // mid-scan label fallback (the proxy usually omits it — Google gzips the export)
     var meta=META[client]||{};
     // -fb markets are Meta catalogue feeds — titles score against Meta's ~65-char truncation, not the Google MASK window
-    var a=FeedAudit.audit(header,rows,{client:client,sheetId:meta.id||'',gid:meta.gid||'0',rowTotalEstimate:total,channel:/-fb$/.test(mkt)?'meta':'google'});
+    var prof=profileForFL(client);
+    var a=FeedAudit.audit(header,rows,{client:client,sheetId:meta.id||'',gid:meta.gid||'0',rowTotalEstimate:total,channel:/-fb$/.test(mkt)?'meta':'google',expected:prof.expected,waived:prof.waived});
     a.fetchedAt=Date.now();
     AUDIT=a;scStop();
     renderAll(a,false);
@@ -877,7 +899,8 @@ function scanLive(){
       try{
         var est=(clen&&bytes)?Math.max(total,Math.round(total*(clen/bytes))):total;
         var meta=META[client]||{};
-        var a=FeedAudit.audit(header,rows,{client:client,sheetId:meta.id||'',gid:meta.gid||'0',rowTotalEstimate:est,channel:/-fb$/.test(mkt)?'meta':'google'});
+        var prof=profileForFL(client);
+        var a=FeedAudit.audit(header,rows,{client:client,sheetId:meta.id||'',gid:meta.gid||'0',rowTotalEstimate:est,channel:/-fb$/.test(mkt)?'meta':'google',expected:prof.expected,waived:prof.waived});
         a.fetchedAt=Date.now();AUDIT=a;scStop();renderAll(a,false);
         setMsg('partial scan — stream ended early at '+fmt(total)+' products',false);
         mkUpdateFromAudit(mkt,a);

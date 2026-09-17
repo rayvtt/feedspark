@@ -1030,6 +1030,18 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   eq('qualityVerdict: best-practice gap is its own band', LG.qualityVerdict(82, 0).band, 'mid');
   ok('attrQuality: an attribute nobody fills scores nothing', LG.attrQuality('title', { filled: 0 }) === null);
 
+  // industry profile consistency (Ray, 17 Sep 2026, YuMOVE/Pet Care screenshot: "make sure
+  // all scoring (AI readiness, content quality) always refer back to the industry best
+  // practice that had been set") — a waived attribute (Pet Care waives pattern) drops out of
+  // content quality exactly as it drops out of goldenScore, same key, same shape
+  const qWaived = LG.qualityScore(snap, { industry: 'Pet Care', expected: [], waived: ['pattern'] });
+  ok('qualityScore: a waived attribute is dropped from parts entirely',
+    !qWaived.parts.some((p) => p.key === 'pattern'), qWaived.parts.map((p) => p.key));
+  eq('qualityScore: the other seven parts are untouched by waiving one',
+    qWaived.parts.length, q.parts.length - 1);
+  ok('qualityScore: with no profile passed at all, behaviour is unchanged (waived defaults to none)',
+    LG.qualityScore(snap).parts.length === q.parts.length);
+
   // a perfect feed must actually reach 100 — no rule fires on compliant content
   const clean = LG.qualityCollector(cols);
   // titles padded past 70 chars: the clean feed must trip nothing at all, 'short' included

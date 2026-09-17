@@ -215,6 +215,40 @@ This is the FeedSpark AI-Readiness ladder — same language as the Readiness mod
 FeedHero working columns (`c:base_title`, `c:auto_optimised_title`…) detected → positive
 "pipeline live" issue entry + before/after title recs.
 
+### Attribute completeness follows the industry best-practice profile
+
+Ray, 17 Sep 2026 (screenshot, YuMOVE/Pet Care — the "Attribute completeness" pillar scoring 30/100
+on "color 0%, material 0%, gender 0%, age_group 0%, pattern 0%, rest strong"): *"make sure all
+scoring (AI readiness, content quality) always refer back to the industry best practice that had
+been set."* This pillar checked every brand against the apparel five (`color`, `size`,
+`item_group_id`, `material`, `gender`, `age_group`, `pattern`) with no awareness of the SAME
+industry scoring profile `goldenScore` already consults (`INDUSTRY_PROFILES`/`profileFor` in
+`labelguard.js` — see `LABELGUARD.md` §Industry scoring profiles) — a Pet Care brand read as
+incomplete for lacking attributes Golden Record itself never expects from it.
+
+`audit(header, rows, opts)` now takes two optional attribute-key arrays mirroring
+`profileFor()`'s own shape, `opts.expected` and `opts.waived`, and applies the SAME two rules
+`goldenScore` applies:
+- `color` / `size` / `gender` / `age_group` / `item_group_id` are ATTR_SPEC **cond**-tier — counted
+  only when the column is present, or absent but named in `opts.expected` (an apparel-five gap is
+  real for Fashion/Footwear, who expect it by default; a Pet Care feed carrying none of them is not
+  incomplete, no waiving needed).
+- `material` / `pattern` are ATTR_SPEC **rec**-tier — always counted (the optimisation surface)
+  unless the industry profile explicitly names them in `opts.waived` (Pet Care's own default
+  profile waives `pattern` only; `material` still counts everywhere — it stays a genuine
+  cross-industry opportunity, not an apparel-only field).
+
+The engine stays industry-agnostic — it only ever reads the two arrays it's handed. The caller
+resolves the actual profile: `/golden`'s nested reading passes `profileForC(client)` (the page's
+own mirror of `profileFor`) into the same `FA.audit()` call that produces `snap.ai`, and `/feedlab`
+itself fetches `/api/golden/profile` directly (`profileForFL()`) so the front-door reading can
+never disagree with the one nested inside a Golden Record scorecard — "ONE engine, so /feedlab and
+/golden move together" holds for the industry profile too, not just the scoring code. Live effect
+on the YuMOVE scenario above: "Attribute completeness" 40 → **100**, "all core attributes strong".
+Harness: the profile-consistency block in `tools/test_feedlab.mjs` (cond-tier exclusion, rec-tier
+waiving, material deliberately NOT exempted, an industry that `expected`s the apparel five still
+marking its absence as a real gap).
+
 ---
 
 ## 6. Troubleshooting (runbook)

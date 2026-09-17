@@ -1892,8 +1892,10 @@ window.addEventListener('load',restore);
           if (!snap.rows) throw new Error('the feed produced no rows');
           // the SAME read, scored on the AI-Readiness ladder — one stream, two readings
           try {
+            var wProf = profileForC(p.client);
             snap.ai = packAudit(FA.audit(header, sample, { client: p.client,
-              rowTotalEstimate: nRows, channel: 'google' }));   // /golden is Google-channel only
+              rowTotalEstimate: nRows, channel: 'google',       // /golden is Google-channel only
+              expected: wProf.expected, waived: wProf.waived })); // same industry profile as goldenScore
           } catch (e) { snap.ai = null; }
           tell('save', got, total || got, snap.rows);
           return fetch(API + '/api/golden/quality?client=' + encodeURIComponent(p.client) + '&market=' + encodeURIComponent(p.mkt),
@@ -1917,7 +1919,7 @@ window.addEventListener('load',restore);
   function qualBand(s) { return s >= 90 ? 'good' : (s >= 75 ? 'mid' : 'poor'); }
 
   function qualitySection(k, s) {
-    var q = (LGQ && QUAL[k]) ? LGQ.qualityScore(QUAL[k]) : null;
+    var q = (LGQ && QUAL[k]) ? LGQ.qualityScore(QUAL[k], profileForC(parts(k).client)) : null;
     var h = '<div class="tier" id="qz-tier"><div class="tier-h">' +
       '<span class="tbadge rec" style="background:#EDE9FE;color:#5B21B6">Content quality</span>' +
       '<h4>Is the data any good?</h4>' +
@@ -2101,7 +2103,7 @@ window.addEventListener('load',restore);
     });
   }
   function qualityPart(k, attr) {
-    var q = QUAL[k] ? LGQ.qualityScore(QUAL[k]) : null;
+    var q = QUAL[k] ? LGQ.qualityScore(QUAL[k], profileForC(parts(k).client)) : null;
     if (!q) return null;
     return q.parts.filter(function (p) { return p.key === attr; })[0] || null;
   }
@@ -2298,7 +2300,7 @@ window.addEventListener('load',restore);
   function reconcileSection(k) {
     var qd = QUAL[k], a = qd && qd.ai;
     if (!a || !a.total || !LGQ) return '';
-    var qs = LGQ.qualityScore(qd);
+    var qs = LGQ.qualityScore(qd, profileForC(parts(k).client));
     if (!qs || !qs.parts || !qs.parts.length) return '';
     var byQ = {}; qs.parts.forEach(function (p) { byQ[p.key] = p; });
     var byP = {}; (a.pillars || []).forEach(function (p) { byP[p.key] = p; });
