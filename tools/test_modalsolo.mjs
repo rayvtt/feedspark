@@ -48,19 +48,20 @@ lines.forEach((ln, i) => {
 });
 ok(openers.length >= 6, 'found ' + openers.length + ' overlay-opening sites');
 
-const missing = openers.filter((o) => !/soloModal\(/.test(o.text));
+const GUARD = /(?:soloModal|FCCSolo)\(/;
+const missing = openers.filter((o) => !GUARD.test(o.text));
 ok(missing.length === 0,
   missing.length ? 'these openers skip soloModal — an overlay added without the guard stacks: '
     + missing.map((o) => o.id + ' @ line ' + o.line).join(', ')
     : 'every opener calls soloModal on the same statement');
 
 const mislabelled = openers.filter((o) => {
-  const call = o.text.match(/soloModal\('([^']+)'\)/);
+  const call = o.text.match(/(?:soloModal|FCCSolo)\('([^']+)'\)/);
   return call && call[1] !== o.id;
 });
 ok(mislabelled.length === 0,
   mislabelled.length ? 'an opener keeps the WRONG overlay (it would close itself): '
-    + mislabelled.map((o) => o.id + ' keeps ' + o.text.match(/soloModal\('([^']+)'\)/)[1]).join(', ')
+    + mislabelled.map((o) => o.id + ' keeps ' + o.text.match(/(?:soloModal|FCCSolo)\('([^']+)'\)/)[1]).join(', ')
     : 'each opener names itself as the one to keep');
 
 console.log('\n── the guard closes others, never the one being opened');
@@ -71,6 +72,20 @@ ok(/s\.id\s*===?\s*SOLO_NEVER/.test(fn), 'it skips the composer');
 ok(/classList\.remove\('on'\)/.test(fn), 'and closes the rest');
 ok(/querySelectorAll\('\.scrim\.on'\)/.test(fn),
   'it sweeps the OPEN overlays generically — a new scrim is covered without touching it');
+
+console.log('\n── the guard is reachable from every script block');
+/* The cockpit tuner lives in its OWN <script>, so it cannot see the closure soloModal is declared
+   in — it threw "soloModal is not defined" and took the panel down. The bridge is what makes the
+   rule enforceable page-wide rather than closure-wide. */
+ok(/window\.FCCSolo\s*=\s*soloModal/.test(html), 'soloModal is exported as window.FCCSolo');
+const blocks = [...html.matchAll(/<script[^>]*>/g)].map((m) => html.slice(0, m.index).split('\n').length);
+const blockOf = (line) => blocks.filter((b) => b <= line).length;
+const defBlock = blockOf(html.slice(0, html.indexOf('function soloModal(keep)')).split('\n').length);
+const strays = openers.filter((o) => blockOf(o.line) !== defBlock && !/FCCSolo\(/.test(o.text));
+ok(strays.length === 0,
+  strays.length ? 'these openers are in another <script> and call soloModal directly — it is not in scope there: '
+    + strays.map((o) => o.id + ' @ line ' + o.line).join(', ')
+    : 'an opener outside the declaring block goes through the bridge');
 
 console.log('\nRESULT: ' + (fail ? 'FAIL' : 'PASS') + ' — ' + (pass + fail) + ' assertions');
 process.exit(fail ? 1 : 0);

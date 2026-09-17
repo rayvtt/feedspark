@@ -249,3 +249,62 @@ behind it. The asymmetry is deliberate: closing a ticket is free, closing a draf
 opener skips `soloModal`, or names the wrong overlay to keep — the way this bug comes back is a
 *seventh* scrim added without the guard, not a regression in the six that have it. It also checks
 the exception is still earned, by asserting `closeBrief()` really does discard that context.
+
+## CC the account's AM on a brief draft
+
+Steven Opuni via Ray, 17 Sep 2026: *"Would it be possible for 'Draft in GMail' button to
+automatically CC the AM of the account in the email draft?"*
+
+This is worth more than the courtesy it looks like. A `[FS Brief]` sent from an `@feedspark.com`
+address is excluded from the Gmail capture by the internal-sender carve-out, so when a colleague
+briefs, the work reaches the FCC through the pipeline alone — the failure mode documented at
+`/api/briefs`, where Steven's two themes were briefed and Ray's board still read NOT BRIEFED.
+CC'ing the account's AM puts that email in a mailbox the push **does** read, where
+`recoverBriefsFromEmail()` rebuilds the ticket from the brief's own machine-readable block. That
+path exists precisely because Ray gets copied on briefs today; this makes it deliberate instead of
+incidental.
+
+### Name → address, or nothing
+
+The Task Manager states the AM as a **name** (`primary_am: "Ray"`), never an address. `amEmail()`
+in `src/access.js` resolves it against the access directory the owner already maintains, then
+against the addresses the worker holds for certain (the owner, the due-reminder roster), and
+returns **null** otherwise.
+
+It deliberately does not fall back to `<name>@feedspark.com`. Nearly every FeedSpark address fits
+that shape — but `andrew@aroxo.com` doesn't, and "Tech-am" plainly doesn't, and the cost of being
+wrong is a real brief copied to an address that doesn't exist or belongs to someone else.
+
+The resolved address rides `/api/hours`, which the hours badge already fetches on every page, so
+the composer costs no extra request.
+
+### Three honest states, always stated
+
+| What is true | What the composer says | What the draft does |
+|---|---|---|
+| AM resolved, not you | `CC Ray — the AM on Monsoon  ray@feedspark.com` | `&cc=` on the Gmail URL |
+| AM known, no address on file | *"Michel is the AM on YuMOVE, but there's no address on file — nobody is CC'd."* | no CC |
+| You are the AM | *"You're the AM on Monsoon — nobody to copy."* | no CC |
+| Brand's hours never read | *(nothing)* | no CC |
+
+On by default — "automatically", as asked — with a tickbox to drop it, remembered per device
+(`fcc-bg-cc`, a preference about one screen, so it stays local). Nobody is ever copied silently:
+the address is visible here and again in Gmail before anything sends.
+
+Batch drafts span brands, so they copy the **union** of their AMs, deduped, minus you. The chase
+link is deliberately excluded — it re-opens an existing ASPL thread rather than drafting a brief,
+so it isn't the button Steven named.
+
+### Two traps this hit, both pinned
+
+- **`amOf` was already taken.** The page has `amOf(client) → the AM's NAME`, called by the AM
+  filter, the workload panel and the timeline. Declarations hoist, so a second `amOf` silently
+  replaced it and handed eight callers an object where they expect a string. The helper is
+  `accountAm()`, and `tools/test_amcc.mjs` asserts there is exactly one `amOf` on the page.
+- **The cockpit tuner is in its own `<script>`**, so it could not see `soloModal` and threw
+  `soloModal is not defined`. It goes through the `window.FCCSolo` bridge, and
+  `tools/test_modalsolo.mjs` fails any opener that calls the closure directly from another block.
+
+Harness: `tools/test_amcc.mjs` (34 assertions, qa_gate / presync / validate) — the resolver against
+the real AM roster, and the page's own `ccOn`/`accountAm`/`ccList`/`ccParam` **lifted by name** and
+run against the same table, so the two can't drift.

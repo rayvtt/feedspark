@@ -90,6 +90,37 @@ export function displayName(email) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/*
+ * THE ACCOUNT'S AM, AS AN ADDRESS (Steven Opuni via Ray, 17 Sep 2026: "Would it be possible for
+ * 'Draft in GMail' button to automatically CC the AM of the account in the email draft?").
+ *
+ * The Task Manager states the AM as a NAME ("Ray", "Steven"), never an address, so something has
+ * to turn one into the other. This resolves it from what the FCC already KNOWS — the access
+ * directory (the maintained person→address map) and the addresses the worker holds for certain —
+ * and returns null otherwise.
+ *
+ * It deliberately does NOT fall back to guessing <name>@feedspark.com. Nearly every FeedSpark
+ * address fits that shape, but andrew@aroxo.com doesn't and "Tech-am" plainly doesn't, and the
+ * cost of being wrong here is a real brief CC'd to an address that doesn't exist or belongs to
+ * someone else. An unresolved AM is named on screen without an address, which is a question the
+ * reader can answer; a fabricated one is a mistake they can't see.
+ */
+export function amEmail(name, opts) {
+  opts = opts || {};
+  const want = clientSlug(name);
+  if (!want) return null;
+  const localOf = (e) => clientSlug(String(e || '').split('@')[0]);
+  // 1. the access directory — owner-maintained, and the only place a non-obvious address lives
+  const dir = opts.dir || ACCESS_SEED;
+  for (const email of Object.keys(dir || {})) {
+    const row = dir[email] || {};
+    if (clientSlug(row.name) === want || localOf(email) === want) return email;
+  }
+  // 2. addresses the FCC holds for certain (the owner; the due-reminder roster)
+  for (const email of opts.known || []) { if (localOf(email) === want) return email; }
+  return null;
+}
+
 export function resolveAccess(email, owner, dir, clientNames) {
   if (owner) return { email, owner: true, clients: null, modules: null, name: displayName(email) || 'Owner' };
   const d = dir || ACCESS_SEED;
