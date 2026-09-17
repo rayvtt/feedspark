@@ -6981,6 +6981,24 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "avgDepth: q.depth ? Math.max(0, Math.round((Number(a.avgDepth) || 0) * 10) / 10) : undefined",
       "min": 1
+    },
+    {
+      "name": "Task Manager: the Tags & rules panel is two columns that stack (Ray, 17 Sep 2026: 'love this, reorganise and make the tab cleaner pls')",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "#tgbd .tgd-cols{display:grid",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the panel's own classes are tgd-prefixed — the table already owns .tg-add and .tg-cell",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "class=\"tgd-grid tgd-rules\"",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the common titles are the rule builder's source list, not a wall of chips under it",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "Start from a common title in this book",
+      "min": 1
     }
   ]
 }

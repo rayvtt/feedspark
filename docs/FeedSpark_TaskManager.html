@@ -404,7 +404,7 @@ window.addEventListener('load',restore);
   #tgbd:empty{display:none}
   #tgbd .bd-dim{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:130}
   #tgbd .bd-box{position:fixed;z-index:131;top:50%;left:50%;transform:translate(-50%,-50%);
-    width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 48px);display:flex;flex-direction:column;
+    width:min(880px,calc(100vw - 24px));max-height:calc(100vh - 48px);display:flex;flex-direction:column;
     background:var(--paper,#fff);border:1px solid var(--line,#E6E6E6);border-radius:14px;
     box-shadow:0 18px 60px rgba(16,24,40,.26)}
   #tgbd .bd-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line,#E6E6E6)}
@@ -413,6 +413,36 @@ window.addEventListener('load',restore);
   #tgbd .bd-b code{background:var(--wash);padding:2px 6px;border-radius:5px;font-size:12px}
   #tgbd .bd-b input,#tgbd .bd-b select{padding:7px 9px;border:1px solid var(--line,#E6E6E6);border-radius:8px;
     background:var(--paper,#fff);color:var(--ink,#333);font:inherit;font-size:13px}
+  /* TWO COLUMNS, ONE ROW EACH (Ray, 17 Sep 2026: "love this, reorganise and make the tab
+     cleaner pls"). Tags and rules were stacked down a 640px column with a paragraph over each
+     and the same words repeated on every row — the panel was 1,000px tall for four tags and
+     seven rules. Side by side they are both on screen at once; the repeated labels became
+     column headings, so each row is a dot, a name and a number. It stacks under 880px. */
+  #tgbd .tgd-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:22px}
+  @media (max-width:880px){#tgbd .tgd-cols{grid-template-columns:minmax(0,1fr);gap:16px}}
+  #tgbd .tgd-sec{min-width:0}
+  #tgbd .tgd-hint{font-size:12px;color:var(--muted);margin:0 0 9px;line-height:1.45}
+  #tgbd .tgd-grid{display:grid;align-items:center;gap:0 10px;font-size:13px}
+  #tgbd .tgd-tags{grid-template-columns:minmax(0,1fr) auto auto}
+  #tgbd .tgd-rules{grid-template-columns:minmax(0,1fr) auto auto auto}
+  #tgbd .tgd-k{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--muted);padding-bottom:5px;white-space:nowrap}
+  #tgbd .tgd-n{text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:var(--ink-2)}
+  #tgbd .tgd-grid>*{padding:5px 0}
+  #tgbd .tgd-grid .tgd-k{padding-top:0}
+  #tgbd .tgd-ln{grid-column:1/-1;height:1px;padding:0;background:var(--line,#E6E6E6);opacity:.7}
+  #tgbd .tgd-nm{display:flex;align-items:center;gap:7px;min-width:0}
+  #tgbd .tgd-nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #tgbd .tgd-cell{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+  #tgbd .tgd-note{grid-column:1/-1;font-size:11.5px;color:var(--muted);padding:0 0 6px 18px;line-height:1.4}
+  #tgbd .tgd-add{display:flex;gap:6px;margin:10px 0 0;flex-wrap:wrap}
+  #tgbd .tgd-add input{flex:1 1 140px;min-width:0}
+  #tgbd .tgd-add select{min-width:0;max-width:100%}
+  /* the word takes its own line so the three controls that qualify it sit together underneath,
+     rather than Add rule being orphaned onto a line of its own */
+  #tgbd .tgd-add .tgd-w{flex:1 1 100%}
+  #tgbd .tgd-src{flex:1 1 100%;width:100%;text-overflow:ellipsis}
+  #tgbd .tgd-empty{font-size:12.5px;color:var(--muted);padding:6px 0}
   .mut{color:var(--muted)}
   #tagwarn{margin:8px 0 0;padding:7px 10px;border-radius:9px;font-size:12.5px;font-weight:600;
     background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C}
@@ -1529,52 +1559,72 @@ window.addEventListener('load',restore);
     var host = $('tgbd'); if (!host) return;
     var draw = function () {
       var defs = DEFS(), rules = RULES();
+      /* ONE sentence at the top, then two columns. The three section paragraphs said much the
+         same thing three times over, and "displaces the plan" was printed once per tag — both
+         are now column headings that say it once. */
       host.innerHTML = '<div class="bd-dim"></div><div class="bd-box" role="dialog" aria-label="Tags and keyword rules">'
         + '<div class="bd-h"><b>Tags &amp; keyword rules</b><span class="grow"></span>'
         + '<button class="btn sm" id="tg-x" type="button">✕</button></div>'
         + '<div class="bd-b">'
-        + '<p class="mut" style="margin:0 0 10px">A tag records <b>why</b> a task happened. The <b>Type</b> column already says what the work was — these are different questions, and a task can be optimisation work that was also urgent.</p>'
-        + '<h4 style="margin:10px 0 6px">Tags</h4>'
-        + '<div id="tg-list"></div>'
-        + '<div style="display:flex;gap:6px;margin:8px 0 2px;flex-wrap:wrap">'
-        + '<input id="tg-new" placeholder="New tag name" style="flex:1 1 150px;min-width:0">'
-        + '<button class="btn sm" id="tg-addtag" type="button">Add tag</button></div>'
-        + '<h4 style="margin:18px 0 6px">Keyword rules</h4>'
-        + '<p class="mut" style="margin:0 0 8px">Any task whose title contains the word gets the tag — unless someone has set that task’s tags by hand, which always wins.</p>'
-        + '<div id="tg-rules"></div>'
-        + '<div style="display:flex;gap:6px;margin:8px 0 2px;flex-wrap:wrap">'
-        + '<input id="tg-q" placeholder="Word in the task title, e.g. disapproval" style="flex:1 1 170px;min-width:0">'
-        + '<select id="tg-on"><option value="title">title</option><option value="note">notes</option><option value="both">title + notes</option></select>'
-        + '<select id="tg-tag">' + defs.map(function (d) { return '<option value="' + esc(d.slug) + '">' + esc(d.label) + '</option>'; }).join('') + '</select>'
-        + '<button class="btn sm" id="tg-addrule" type="button">Add rule</button></div>'
-        + '<div id="tg-prev" class="mut" style="font-size:12px;margin-top:6px"></div>'
-        + '<h4 style="margin:18px 0 6px">Common tasks in this book</h4>'
-        + '<p class="mut" style="margin:0 0 8px">The titles that carry the most hours right now — a rule straight off your own book rather than a guess.</p>'
-        + '<div id="tg-sugg"></div>'
-        + '</div></div>';
+        + '<p class="tgd-hint" style="margin:0 0 14px">A tag records <b>why</b> a task happened — the <b>Type</b> column already says what the work was, so one task can be optimisation work that was also urgent.</p>'
+        + '<div class="tgd-cols">'
+        + '<div class="tgd-sec">'
+        +   '<h4 style="margin:0 0 6px">Tags</h4>'
+        +   '<p class="tgd-hint">Ticked tags count as work that displaced the optimisation plan.</p>'
+        +   '<div id="tg-list" class="tgd-grid tgd-tags"></div>'
+        +   '<div class="tgd-add">'
+        +     '<input id="tg-new" placeholder="New tag name">'
+        +     '<button class="btn sm" id="tg-addtag" type="button">Add tag</button></div>'
+        + '</div>'
+        + '<div class="tgd-sec">'
+        +   '<h4 style="margin:0 0 6px">Keyword rules</h4>'
+        +   '<p class="tgd-hint">A word in the task’s title (or notes) tags every task carrying it — unless someone set that task’s tags by hand, which always wins.</p>'
+        +   '<div id="tg-rules" class="tgd-grid tgd-rules"></div>'
+        +   '<div class="tgd-add">'
+        +     '<input id="tg-q" class="tgd-w" placeholder="Word in the title, e.g. disapproval">'
+        +     '<select id="tg-on"><option value="title">title</option><option value="note">notes</option><option value="both">title + notes</option></select>'
+        +     '<select id="tg-tag">' + defs.map(function (d) { return '<option value="' + esc(d.slug) + '">' + esc(d.label) + '</option>'; }).join('') + '</select>'
+        +     '<button class="btn sm" id="tg-addrule" type="button">Add rule</button></div>'
+        +   '<div class="tgd-add"><select id="tg-sugg" class="tgd-src"></select></div>'
+        +   '<div id="tg-prev" class="tgd-hint" style="margin:7px 0 0"></div>'
+        + '</div>'
+        + '</div></div></div>';
 
-      $('tg-list').innerHTML = defs.map(function (d, i) {
-        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0">'
-          + '<i style="width:11px;height:11px;border-radius:50%;background:' + esc(tagColor(d)) + '"></i>'
-          + '<b style="flex:0 0 130px">' + esc(d.label) + '</b>'
-          + '<label class="tog" title="Hours with this tag are counted as work that displaced the optimisation plan">'
-          + '<input type="checkbox" data-disp="' + i + '"' + (d.displaces ? ' checked' : '') + '> displaces the plan</label>'
-          + '<span class="grow"></span>'
-          + (defs.length > 1 ? '<button class="btn sm" data-deltag="' + i + '" title="Remove this tag">✕</button>' : '')
-          + '</div>' + (d.note ? '<div class="mut" style="font-size:12px;margin:-2px 0 6px 19px">' + esc(d.note) + '</div>' : '');
-      }).join('');
+      // a tag is a dot, a name and one tick; its note spans the row underneath rather than
+      // pushing a third column nobody can read at this width
+      $('tg-list').innerHTML = '<div class="tgd-k"></div><div class="tgd-k">Displaces</div><div class="tgd-k"></div>'
+        + defs.map(function (d, i) {
+          return '<div class="tgd-ln"></div>'
+            + '<div class="tgd-nm"><i style="flex:0 0 auto;width:10px;height:10px;border-radius:50%;background:' + esc(tagColor(d)) + '"></i>'
+            + '<b title="' + esc(d.label) + '">' + esc(d.label) + '</b></div>'
+            + '<label class="tog" style="justify-content:center" title="Hours with this tag are counted as work that displaced the optimisation plan">'
+            + '<input type="checkbox" data-disp="' + i + '"' + (d.displaces ? ' checked' : '')
+            + ' aria-label="' + esc(d.label) + ' displaces the plan"></label>'
+            + '<div>' + (defs.length > 1 ? '<button class="btn sm" data-deltag="' + i + '" title="Remove the tag “' + esc(d.label) + '”">✕</button>' : '') + '</div>'
+            + (d.note ? '<div class="tgd-note">' + esc(d.note) + '</div>' : '');
+        }).join('');
 
-      $('tg-rules').innerHTML = rules.length ? rules.map(function (r, i) {
-        var pv = rulePreview(TASKS, r, TAGS);
-        return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px">'
-          + '<code>' + esc(r.q) + '</code><span class="mut">in ' + esc(r.on || 'title') + ' →</span>'
-          + tagChip(r.tag, 'rule')
-          + '<span class="grow"></span><span class="mut" style="font-size:12px">' + num(pv.hits) + ' row'
-          + (pv.hits === 1 ? '' : 's')
-          + (pv.held ? ' · ' + num(pv.held) + ' set by hand, untouched' : '') + '</span>'
-          + '<button class="btn sm" data-delrule="' + i + '">✕</button></div>';
-      }).join('') : '<div class="mut" style="font-size:13px">No rules yet.</div>';
+      // the two counts were prose on every row ("20 rows · 20 set by hand, untouched"), each a
+      // different length, so nothing lined up and the numbers could not be compared. They are
+      // columns now, headed once.
+      $('tg-rules').innerHTML = rules.length
+        ? ('<div class="tgd-k"></div><div class="tgd-k">Matches</div><div class="tgd-k">By hand</div><div class="tgd-k"></div>'
+          + rules.map(function (r, i) {
+            var pv = rulePreview(TASKS, r, TAGS);
+            return '<div class="tgd-ln"></div>'
+              + '<div class="tgd-cell"><code>' + esc(r.q) + '</code><span class="mut">→</span>'
+              + tagChip(r.tag, 'rule')
+              + '<span class="mut" style="font-size:11.5px" title="Where the word is looked for">'
+              + esc(r.on === 'both' ? 'title + notes' : (r.on === 'note' ? 'notes' : 'title')) + '</span></div>'
+              + '<div class="tgd-n" title="Tasks carrying this word">' + num(pv.hits) + '</div>'
+              + '<div class="tgd-n" title="Already tagged by a person, so this rule leaves them alone">' + (pv.held ? num(pv.held) : '—') + '</div>'
+              + '<div><button class="btn sm" data-delrule="' + i + '" title="Remove this rule">✕</button></div>';
+          }).join(''))
+        : '<div class="tgd-empty" style="grid-column:1/-1">No rules yet — add one below, or start from a common title.</div>';
 
+      // the twelve "common tasks in this book" were a wall of chips at the BOTTOM, below the
+      // builder they exist to fill. Same titles, same counts, now the rule box's own source
+      // list — nobody has to scroll past the control to find what feeds it.
       var by = {}, tot = [];
       TASKS.forEach(function (t) {
         var k = /^email ticket/i.test(t.title) ? 'Email ticket:' : String(t.title || '').slice(0, 42);
@@ -1583,18 +1633,18 @@ window.addEventListener('load',restore);
         by[k].n++; by[k].h += t.hours;
       });
       tot.sort(function (a, b) { return b.h - a.h; });
-      $('tg-sugg').innerHTML = tot.slice(0, 12).map(function (x) {
-        return '<button type="button" class="btn sm" data-sugg="' + esc(x.k) + '" style="margin:0 5px 5px 0">'
-          + esc(x.k) + ' <span class="mut">' + num(x.n) + ' · ' + hrs(x.h) + 'h</span></button>';
-      }).join('') || '<div class="mut" style="font-size:13px">No tasks in the book yet.</div>';
+      $('tg-sugg').innerHTML = '<option value="">' + (tot.length ? 'Start from a common title in this book…' : 'No tasks in the book yet') + '</option>'
+        + tot.slice(0, 12).map(function (x) {
+          return '<option value="' + esc(x.k) + '">' + esc(x.k) + ' — ' + num(x.n) + ' tasks · ' + hrs(x.h) + ' h</option>';
+        }).join('');
 
       var prev = function () {
         var q = $('tg-q').value, on = $('tg-on').value;
         if (!q.trim()) { $('tg-prev').textContent = ''; return; }
         var pv = rulePreview(TASKS, { q: q, on: on }, TAGS);
-        $('tg-prev').innerHTML = 'Would tag <b>' + num(pv.hits - pv.held) + '</b> row'
-          + ((pv.hits - pv.held) === 1 ? '' : 's') + ' (' + hrs(pv.hours) + ' h)'
-          + (pv.held ? ' · <b>' + num(pv.held) + '</b> already set by hand and left alone' : '');
+        $('tg-prev').innerHTML = 'Would tag <b>' + num(pv.hits - pv.held) + '</b> task'
+          + ((pv.hits - pv.held) === 1 ? '' : 's') + ' · ' + hrs(pv.hours) + ' h'
+          + (pv.held ? ' · <b>' + num(pv.held) + '</b> left alone, set by hand' : '');
       };
       $('tg-q').addEventListener('input', prev);
       $('tg-on').addEventListener('change', prev);
@@ -1604,7 +1654,6 @@ window.addEventListener('load',restore);
       host.addEventListener('click', function (e) {
         var el = e.target, a;
         if (el.id === 'tg-x' || el.className === 'bd-dim') { host.innerHTML = ''; return; }
-        if ((a = el.getAttribute && el.getAttribute('data-sugg')) != null && a !== '') { $('tg-q').value = a.replace(/:$/, ''); prev(); $('tg-q').focus(); return; }
         if ((a = el.getAttribute && el.getAttribute('data-deltag')) != null && a !== '') {
           var dd = DEFS().slice(); dd.splice(Number(a), 1); TAGDEF.tags = dd; tagSave(); draw(); return;
         }
@@ -1629,10 +1678,19 @@ window.addEventListener('load',restore);
         }
       });
       host.addEventListener('change', function (e) {
-        var i = e.target && e.target.getAttribute && e.target.getAttribute('data-disp');
+        var el = e.target;
+        // picking a common title FILLS the word box rather than creating a rule: the point is to
+        // see what it would touch, with the tag and the preview still yours to set
+        if (el && el.id === 'tg-sugg') {
+          if (!el.value) return;
+          $('tg-q').value = String(el.value).replace(/:$/, '');
+          el.selectedIndex = 0;                  // it is a source list, not a setting
+          prev(); $('tg-q').focus(); return;
+        }
+        var i = el && el.getAttribute && el.getAttribute('data-disp');
         if (i == null || i === '') return;
         var dd = DEFS().slice();
-        dd[Number(i)] = Object.assign({}, dd[Number(i)], { displaces: !!e.target.checked });
+        dd[Number(i)] = Object.assign({}, dd[Number(i)], { displaces: !!el.checked });
         TAGDEF.tags = dd; tagSave(); draw();
       });
     };
