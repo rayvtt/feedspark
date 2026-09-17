@@ -473,7 +473,7 @@ export function ruleHits(rule, t) {
  * would silently come back and they would stop trusting the whole column.
  */
 export function tagsOf(t, assign, rules) {
-  const rec = assign && t && t.id != null ? assign[String(t.id)] : null;
+  const rec = assign && taggable(t) ? assign[String(t.id)] : null;   // see typeOf: id 0 is no id
   if (rec && Array.isArray(rec.tags)) return { tags: rec.tags.slice(), src: 'manual' };
   const out = [];
   for (const r of (rules || [])) {
@@ -481,6 +481,52 @@ export function tagsOf(t, assign, rules) {
     if (slug && out.indexOf(slug) < 0 && ruleHits(r, t)) out.push(slug);
   }
   return { tags: out, src: out.length ? 'rule' : 'none' };
+}
+
+/**
+ * A HAND-SET TYPE, and why it cannot live on the record (Ray, 17 Sep 2026).
+ *
+ * `cat` is derived — classifyTask(title) in normTask — and packed into the KV row, so the 2x-daily
+ * rotation re-derives it every time. Anything written onto the record is overwritten by the next
+ * pull. The override therefore lives in its own store keyed on the task's list_id and is applied
+ * AFTER unpack, which is the same shape the tags use and the only shape that survives the sync.
+ *
+ * IT DOES NOT FOLLOW A TAG, deliberately. Tagging something "technical" must not set its Type to
+ * Technical fixes: Type is what the work WAS and a tag is why it happened, and the displacement
+ * figure compares one against the other. Wire them together and the comparison measures itself —
+ * urgent-tagged work would stop counting as optimisation by construction.
+ *
+ * THE TITLE IT WAS JUDGED AGAINST travels with it. If someone renames the task in the reports
+ * database the override still applies (it is keyed on the id, not the wording) but is marked
+ * STALE, because the rename may mean the work changed. Dropping it silently loses a judgement;
+ * keeping it silently hides that it was made about something else. Flagging it does neither.
+ */
+export function typeOf(t, over) {
+  // taggable(), NOT `id != null`: a row whose id is 0 has no id, and every such row would
+  // otherwise share the key '0' — one override would leak onto all of them
+  const rec = over && taggable(t) ? over[String(t.id)] : null;
+  if (!rec || !rec.cat || CATS.indexOf(rec.cat) < 0) return { cat: t.cat, src: 'auto', stale: false };
+  const was = String(rec.t == null ? '' : rec.t);
+  return {
+    cat: rec.cat, src: 'manual', auto: t.cat,
+    stale: !!was && was !== String(t.title || ''), wasTitle: was,
+  };
+}
+
+/**
+ * Apply the overrides in place. `cat` is read by the search (`cat:`), every grouping, the chart and
+ * the displacement headline — so overriding the field ITSELF, rather than teaching each reader
+ * about overrides, is what keeps all of them telling one story.
+ */
+export function decorateTypes(rows, over) {
+  for (const t of (rows || [])) {
+    const r = typeOf(t, over);
+    t.catAuto = r.src === 'manual' ? r.auto : t.cat;
+    t.cat = r.cat;
+    t.catSrc = r.src;
+    t.catStale = r.stale;
+  }
+  return rows;
 }
 
 /** Stamp `tags`/`tagSrc` onto rows so the search, the chart and the table all read one answer. */
@@ -545,7 +591,7 @@ export function rulePreview(rows, rule, assign) {
   for (const t of (rows || [])) {
     if (!ruleHits(rule, t)) continue;
     hits++;
-    const rec = assign && t.id != null ? assign[String(t.id)] : null;
+    const rec = assign && taggable(t) ? assign[String(t.id)] : null;
     if (rec && Array.isArray(rec.tags)) held++;            // a human already decided this one
     else hours += t.hours;
   }
@@ -597,6 +643,110 @@ function dimKeys(t, dim) {
  * `cap` folds the tail into one honest "Other (N more)" row rather than hiding it — a chart
  * that drops its tail overstates every bar left standing.
  */
+/**
+ * A SECOND AND THIRD SPLIT, nested (Ray, 17 Sep 2026: "allow secondary and tertiary axis split as
+ * well, so you can see more granular breakdown, almost like AdWord campaigns").
+ *
+ * AdWords nests ROWS — Campaign → Ad group → Keyword — and keeps the metrics in the columns. That
+ * is the shape copied here, and it decides the one thing that could have gone wrong: the extra
+ * dimensions nest the rows, they do NOT become the series. Colour already means billable vs
+ * non-billable on every surface of this module; handing level 2 a colour ramp would overload the
+ * one encoding the whole chart is about. So every node, at every depth, still carries its own
+ * billable/non-billable split.
+ *
+ * CAPS PER LEVEL, because the cross product is what kills a view like this: client × owner × task
+ * is thousands of rows, and a chart that renders them all is unreadable before it is slow. Each
+ * level keeps its biggest and folds the rest into one honest "Other (N more)" node — which keeps
+ * ITS OWN CHILDREN, so drilling into Other is still truthful.
+ *
+ * CHILDREN DO NOT ALWAYS SUM TO THEIR PARENT, and that is not a bug to paper over: `tag` is
+ * multi-valued (a task can be urgent AND technical), so nesting through it places one task in
+ * several children. `multi` rides on the tree so the surface can say so.
+ */
+export const NEST_CAPS = [12, 8, 6];
+
+function tally(rows) {
+  let bill = 0, nonbill = 0, hours = 0;
+  for (const t of rows) { bill += t.bill; nonbill += t.nonbill; hours += t.hours; }
+  return {
+    n: rows.length, bill: r2(bill), nonbill: r2(nonbill), hours: r2(hours),
+    billPct: hours ? Math.round((bill / hours) * 1000) / 10 : 0,
+  };
+}
+
+/** One level: bucket the rows by `dim`, biggest first, the tail folded into one node. */
+function nodesAt(rows, dim, cap) {
+  const m = new Map();
+  let placements = 0;
+  for (const t of rows) {
+    for (const k of dimKeys(t, dim)) {
+      placements++;
+      let b = m.get(k);
+      if (!b) { b = { k, rows: [] }; m.set(k, b); }
+      b.rows.push(t);
+    }
+  }
+  let out = [...m.values()].map((b) => Object.assign(tally(b.rows), { k: b.k, rows: b.rows }));
+  if (dim === 'month') out.sort((a, b) => String(a.k).localeCompare(String(b.k)));
+  else out.sort((a, b) => (b.hours - a.hours) || (b.n - a.n) || String(a.k).localeCompare(String(b.k)));
+  if (cap && out.length > cap && dim !== 'month') {
+    const keep = out.slice(0, cap - 1), rest = out.slice(cap - 1);
+    // the fold keeps the folded rows, so its own children stay real rather than a dead end
+    const rws = [];
+    for (const x of rest) for (const t of x.rows) rws.push(t);
+    keep.push(Object.assign(tally(rws), {
+      k: 'Other (' + rest.length + ' more)', rows: rws, fold: rest.length,
+    }));
+    out = keep;
+  }
+  return { nodes: out, placements };
+}
+
+/**
+ * The tree. `dims` is 1–3 dimension keys; 'total' and blanks are ignored, and a dimension repeated
+ * at a deeper level is dropped (splitting owner within owner yields one child per parent and says
+ * nothing).
+ */
+export function groupNested(rows, dims, caps) {
+  const use = [];
+  for (const d of (dims || [])) {
+    if (!d || d === 'total' || use.indexOf(d) >= 0) continue;
+    use.push(d);
+    if (use.length === 3) break;
+  }
+  if (!use.length) return Object.assign([], { dims: [], multi: false, folded: 0 });
+  const cap = caps || NEST_CAPS;
+  let multi = false, folded = 0;
+
+  const build = (rws, depth) => {
+    const { nodes, placements } = nodesAt(rws, use[depth], cap[depth] || 0);
+    if (placements > rws.length) multi = true;
+    for (const nd of nodes) {
+      if (nd.fold) folded += nd.fold;
+      nd.depth = depth;
+      nd.kids = depth + 1 < use.length ? build(nd.rows, depth + 1) : [];
+      delete nd.rows;                       // the tree is read, not carried around
+    }
+    return nodes;
+  };
+  const tree = build(rows, 0);
+  return Object.assign(tree, { dims: use, multi, folded });
+}
+
+/** The tree flattened for a table or an export: one row per node, parents before their children. */
+export function flattenNested(tree, out, trail) {
+  out = out || []; trail = trail || [];
+  for (const nd of (tree || [])) {
+    const path = trail.concat([nd.k]);
+    out.push({
+      k: nd.k, path, depth: nd.depth || 0, n: nd.n, bill: nd.bill, nonbill: nd.nonbill,
+      hours: nd.hours, billPct: nd.billPct, fold: nd.fold || 0, leaf: !(nd.kids && nd.kids.length),
+    });
+    if (nd.kids && nd.kids.length) flattenNested(nd.kids, out, path);
+  }
+  return out;
+}
+
 export function groupBy(rows, dim, cap) {
   const m = new Map();
   let placements = 0;

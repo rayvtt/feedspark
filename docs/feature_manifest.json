@@ -6816,36 +6816,85 @@
       "name": "Workflow: one modal at a time — every overlay opener routes through soloModal (Ray 17 Sep 2026: 'what happened to brief ledger view' — the ledger was intact, the ticket was covered by the z-9500 task editor)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "function soloModal(keep)",
-      "min": 1,
-      "pr": 429
+      "min": 1
     },
     {
       "name": "Workflow: the guard sweeps the OPEN overlays generically, so a scrim added later is covered without touching it",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "querySelectorAll('.scrim.on')",
-      "min": 1,
-      "pr": 429
+      "min": 1
     },
     {
       "name": "Workflow: the composer is the one overlay never auto-closed — closeBrief() drops the draft's email context and unpins the client",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "SOLO_NEVER = 'bg-scrim'",
-      "min": 1,
-      "pr": 429
+      "min": 1
     },
     {
       "name": "Workflow: opening the composer clears the cheap views behind it",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "soloModal('bg-scrim'); bgScrim.classList.add('on')",
-      "min": 1,
-      "pr": 429
+      "min": 1
     },
     {
       "name": "Workflow: the ticket modal and the task editor displace each other (the two views of one row)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "soloModal('tle-scrim'); tleScrim.classList.add('on')",
-      "min": 1,
-      "pr": 429
+      "min": 1
+    },
+    {
+      "name": "Task Manager: a second and third NESTED split — AdWords nests rows, so the extra dims never become the series",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function groupNested",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the nested fold keeps its own children, so “Other” is never a dead end",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "function nodesAt",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: flattenNested marks leaves, so a pasted table cannot double every total",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function flattenNested",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the nested view is SVG like every other form, so PNG + tooltips work unchanged",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function nestBars",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: a hand-set Type lives OFF the record, so the 2x-daily MCP re-pull cannot overwrite it",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function typeOf",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: a rename in the reports database marks a Type override stale rather than dropping or silently keeping it",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "stale: !!was && was !== String(t.title",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the Type override overrides the FIELD, so search, grouping, chart and headline all follow it",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function decorateTypes",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: “Read from the title” DELETES the override rather than freezing the derived value",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function setType",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the export marks which Types were set by hand, so a round trip cannot launder a judgement",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "Type set by hand",
+      "min": 1
     },
     {
       "name": "Workflow: 'Draft in Gmail' CCs the account's AM (Steven Opuni via Ray, 17 Sep 2026: 'Would it be possible for \"Draft in GMail\" button to automatically CC the AM of the account in the email draft?')",

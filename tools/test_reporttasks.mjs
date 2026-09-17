@@ -52,13 +52,16 @@ function liftPage() {
     'ticketStats', 'billVerdict', 'balanceState', 'taskBlob', 'ticketBlob',
     'CATS', 'CAT_LABEL', 'DIMS', 'BUCKET_LABEL', 'STATUS_BUCKET',
     'TAG_SEED', 'normTagSlug', 'taggable', 'ruleHits', 'tagsOf', 'decorateTags',
-    'displacement', 'rulePreview'];
+    'displacement', 'rulePreview', 'groupNested', 'flattenNested', 'NEST_CAPS',
+    'typeOf', 'decorateTypes'];
   // eslint-disable-next-line no-new-func
   const f = new Function(body + '\nreturn {' + names.join(',') + '};');
   return f();
 }
 const P = liftPage();
 const PAGE_SRC = fs.readFileSync(PAGE, 'utf8');
+const ENG = fs.readFileSync(path.join(ROOT, 'cloudflare', 'feedspark-deck', 'src', 'taskbook.js'), 'utf8');
+const SS = fs.readFileSync(path.join(ROOT, 'cloudflare', 'feedspark-deck', 'src', 'sharedstate.js'), 'utf8');
 
 // ---------------------------------------------------------------------------------------------
 // the assertion table — run against BOTH implementations
@@ -255,6 +258,110 @@ for (const qs of QUERIES) {
   eq(b, a, `page and engine agree on "${qs}"`);
 }
 // ---------------------------------------------------------------------------------------------
+// A SECOND AND THIRD SPLIT, NESTED
+//
+// Ray, 17 Sep 2026: "allow secondary and tertiary axis split as well, so you can see more granular
+// breakdown, almost like AdWord campaigns."
+//
+// AdWords nests ROWS (Campaign > Ad group > Keyword) and keeps the metrics in the columns. The
+// rules worth pinning are the ones that keep the numbers readable: the extra dimensions must not
+// become the series, children must add up to their parent EXCEPT where a multi-valued dimension
+// makes that impossible (and then it must say so), and the cross product must be capped without
+// the fold becoming a dead end.
+// ---------------------------------------------------------------------------------------------
+console.log('── a second and third split, nested');
+const NT = (o) => Object.assign({ id: 1, d: '2026-08-01', client: 'Reiss', market: 'GB', am: 'Ray',
+  title: 't', note: '', cat: 'opt', owner: 'Febin', status: 'DONE', bucket: 'done',
+  bill: 0, nonbill: 0, hours: 0, sched: 0, ticket: 0, tags: [] }, o);
+const BOOK3 = [
+  NT({ id: 1, client: 'Reiss', owner: 'Febin', cat: 'opt', bill: 4, hours: 4 }),
+  NT({ id: 2, client: 'Reiss', owner: 'Febin', cat: 'tech', bill: 1, nonbill: 1, hours: 2 }),
+  NT({ id: 3, client: 'Reiss', owner: 'Vitus', cat: 'opt', bill: 3, hours: 3 }),
+  NT({ id: 4, client: 'Monsoon', owner: 'Febin', cat: 'acct', nonbill: 5, hours: 5 }),
+  NT({ id: 5, client: 'Monsoon', owner: 'Steven', cat: 'opt', bill: 1, hours: 1, tags: ['urgent', 'technical'] }),
+];
+
+const T3 = M.groupNested(BOOK3, ['client', 'owner', 'cat']);
+eq(T3.dims, ['client', 'owner', 'cat'], 'the tree records the levels it actually used');
+eq(T3.map((x) => x.k), ['Reiss', 'Monsoon'], 'top level is biggest-hours first, like the flat chart');
+eq(T3[0].hours, 9, 'a parent carries its own total');
+eq(T3[0].kids.map((x) => x.k), ['Febin', 'Vitus'], 'and its children, also biggest-first');
+eq(T3[0].kids[0].kids.map((x) => x.k), ['opt', 'tech'], 'to a third level');
+eq(T3[0].kids.reduce((a, x) => a + x.hours, 0), T3[0].hours,
+  'CHILDREN ADD UP TO THEIR PARENT — the one thing that makes a hierarchy readable at all');
+ok(T3[0].kids[0].bill + T3[0].kids[0].nonbill === T3[0].kids[0].hours,
+  'and every node at every depth keeps its OWN billable/non-billable split, because the nesting '
+  + 'is the rows — the series is never handed to a second dimension');
+eq(T3[0].kids[0].billPct, 83.3, 'each node carries its own share, not the parent\'s');
+
+console.log('── the shape of the request is honoured, and its edges refused');
+eq(M.groupNested(BOOK3, ['client']).dims, ['client'], 'one dimension still works — nesting is opt-in');
+eq(M.groupNested(BOOK3, []).length, 0, 'no dimension yields no tree rather than a guess');
+eq(M.groupNested(BOOK3, ['total', 'client']).dims, ['client'],
+  '"Everything" is one bucket, so it is dropped rather than making a level that says nothing');
+eq(M.groupNested(BOOK3, ['owner', 'owner', 'cat']).dims, ['owner', 'cat'],
+  'a dimension repeated deeper is dropped — owner within owner is one child per parent');
+eq(M.groupNested(BOOK3, ['client', 'owner', 'cat', 'month']).dims, ['client', 'owner', 'cat'],
+  'and a fourth level is refused: three is what the view can render');
+
+console.log('── the cross product is capped, and the fold is not a dead end');
+const WIDE = [];
+for (let i = 0; i < 40; i++) WIDE.push(NT({ id: 100 + i, client: 'C' + i, owner: 'O' + (i % 3), hours: 40 - i, bill: 40 - i }));
+const TW = M.groupNested(WIDE, ['client', 'owner'], [5, 8]);
+eq(TW.length, 5, 'the level is capped');
+ok(/^Other \(36 more\)$/.test(TW[4].k), 'and the tail is named honestly, with its count');
+eq(TW.folded, 36, 'the tree reports how many were folded so the surface can say so');
+eq(TW[4].hours, WIDE.slice(4).reduce((a, x) => a + x.hours, 0),
+  'the fold carries the folded HOURS, so the column still totals the book');
+ok(TW[4].kids.length > 0,
+  'AND ITS OWN CHILDREN — folding must not turn "Other" into a dead end you cannot look inside');
+eq(TW[4].kids.reduce((a, x) => a + x.hours, 0), TW[4].hours, 'which still add up to it');
+ok(M.groupNested(WIDE, ['client']).length <= M.NEST_CAPS[0], 'the default caps apply when none are given');
+
+console.log('── where the rows CANNOT add up, it says so rather than hiding it');
+const TAGTREE = M.groupNested(BOOK3, ['client', 'tag']);
+ok(TAGTREE.multi === true,
+  'nesting through the multi-valued tag dimension sets `multi`: one task carrying two tags is '
+  + 'counted under each, so the children exceed the parent and the page must say so');
+ok(M.groupNested(BOOK3, ['client', 'owner']).multi === false,
+  'while an ordinary pair of dimensions never double-counts');
+const mon = TAGTREE.find((x) => x.k === 'Monsoon');
+eq(mon.kids.reduce((a, x) => a + x.hours, 0), 7,
+  'and the excess is real arithmetic (5 untagged + 1 urgent + 1 technical), not a rounding artefact');
+
+console.log('── flattened for the table and the export');
+const FL = M.flattenNested(T3);
+eq(FL.length, 2 + 4 + 5, 'every node appears once (2 clients, 4 client-owners, 5 leaves)');
+eq(FL[0].depth, 0, 'parents come before their children');
+eq(FL[1].depth, 1, 'in reading order');
+eq(FL[0].path, ['Reiss'], 'each row carries its full path…');
+eq(FL[2].path, ['Reiss', 'Febin', 'opt'], '…so an export can give every level its own column');
+ok(FL[0].leaf === false && FL[2].leaf === true,
+  'and marks leaves, because a pasted table that mixed parents with children would double every '
+  + 'total the moment anyone summed the column');
+eq(FL.filter((r) => r.leaf).reduce((a, r) => a + r.hours, 0), 15,
+  'the leaves alone total the book exactly once');
+
+console.log('── the page nests identically');
+for (const fn of ['groupNested', 'flattenNested']) ok(typeof P[fn] === 'function', `the page exposes ${fn}`);
+{
+  const A = M.groupNested(BOOK3.map((r) => Object.assign({}, r)), ['client', 'owner', 'cat']);
+  const B = P.groupNested(BOOK3.map((r) => Object.assign({}, r)), ['client', 'owner', 'cat']);
+  eq(P.flattenNested(B).map((r) => r.path.join('>') + '=' + r.hours),
+     M.flattenNested(A).map((r) => r.path.join('>') + '=' + r.hours),
+     'node for node, hour for hour');
+  eq(P.groupNested(BOOK3, ['client', 'tag']).multi, M.groupNested(BOOK3, ['client', 'tag']).multi,
+     'and agrees about when the rows stop adding up');
+  eq(P.NEST_CAPS, M.NEST_CAPS, 'with the same caps');
+}
+ok(/id="cdim2"/.test(PAGE_SRC) && /id="cdim3"/.test(PAGE_SRC), 'the page offers both extra splits');
+ok(/no further split/.test(PAGE_SRC), 'each defaulting to none, so the existing single split is untouched');
+ok(/function nestBars/.test(PAGE_SRC) && /viewBox/.test(PAGE_SRC),
+  'the nested view is SVG like every other form, so the PNG export and the hover tooltip work unchanged');
+ok(/Nested breakdown/.test(PAGE_SRC),
+  'and the form selector NAMES the nested reading rather than sitting greyed out on a stale label');
+
+// ---------------------------------------------------------------------------------------------
 // TAGS — the judgement layer, and the number it exists to produce
 //
 // Ray, 17 Sep 2026: "there will be a tagging system, a labeling system of which task is urgent,
@@ -394,6 +501,86 @@ eq(P.TAG_SEED.map((t) => t.slug), M.TAG_SEED.map((t) => t.slug), 'with the same 
 // Two names side by side already meant "rows naming BOTH" and must keep meaning that — it is the
 // right default and AMs rely on it. The comma is the OTHER question.
 // ---------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------
+// A HAND-SET TYPE THAT SURVIVES THE SYNC
+//
+// Ray, 17 Sep 2026: "Can Type also be edited on FCC and made changed data sticky from either tag
+// or excel import too?, because the daily report fetched from the MCP will actually overwrite?"
+//
+// He is right about the mechanism: `cat` is derived by classifyTask(title) inside normTask and
+// PACKED INTO the KV row, so every tmBookPull re-derives it. Anything written onto the record is
+// gone within about twelve hours. These assertions pin the shape that survives it.
+// ---------------------------------------------------------------------------------------------
+console.log('── a hand-set Type, and the re-pull that would have overwritten it');
+const CT = (o) => Object.assign({ id: 9, title: 'Disapprovals', cat: 'tech', client: 'Reiss',
+  bill: 1, nonbill: 0, hours: 1 }, o);
+
+ok(/cat: classifyTask\(title\)/.test(ENG) && /CATS\.indexOf\(t\.cat\)/.test(ENG),
+  'THE PREMISE: cat is derived from the title AND packed into the stored row, which is exactly '
+  + 'why an edit written onto the record cannot survive the next pull');
+
+eq(M.typeOf(CT(), {}).cat, 'tech', 'with no override the derived value stands');
+eq(M.typeOf(CT(), {}).src, 'auto', 'and says where it came from');
+eq(M.typeOf(CT(), { 9: { cat: 'opt', t: 'Disapprovals' } }).cat, 'opt', 'an override wins');
+eq(M.typeOf(CT(), { 9: { cat: 'opt', t: 'Disapprovals' } }).auto, 'tech',
+  'and keeps the derived value alongside it, so the row can say what the database reads');
+eq(M.typeOf(CT(), { 9: { cat: 'not-a-category' } }).src, 'auto',
+  'a category the engine does not know is ignored rather than rendering an empty chip');
+eq(M.typeOf(CT({ id: 0 }), { 0: { cat: 'opt' } }).src, 'auto',
+  'a row with NO task id cannot be overridden: id 0 is not an id, and every such row would '
+  + 'otherwise share the key "0" so one override would leak onto all of them');
+eq(M.tagsOf(CT({ id: 0 }), { 0: { tags: ['urgent'] } }, []).tags, [],
+  'and the same guard holds on tags, where the leak would have been just as quiet');
+
+console.log('── the re-pull, simulated');
+{
+  const before = [CT({ id: 9 })];
+  M.decorateTypes(before, { 9: { cat: 'opt', t: 'Disapprovals' } });
+  eq(before[0].cat, 'opt', 'the override is applied…');
+  // the rotation re-packs the row from scratch: cat comes back as the classifier's reading
+  const repacked = M.unpackRow(M.packRow(M.normTask(
+    { list_id: 9, title: 'Disapprovals', created_on: '2026-08-01', status: 'done', raw: { time_taken: 1 } },
+    { client: 'Reiss', market: 'GB' })), 'Reiss', 'GB', 'Ray');
+  eq(repacked.cat, 'tech', '…and the freshly pulled row carries the DERIVED value again, as Ray said');
+  M.decorateTypes([repacked], { 9: { cat: 'opt', t: 'Disapprovals' } });
+  eq(repacked.cat, 'opt',
+    'but the override is applied AFTER unpack from a store the pull never writes, so it survives');
+}
+
+console.log('── a rename in the reports database is flagged, not silently obeyed or silently dropped');
+{
+  const r = M.typeOf(CT({ title: 'Disapprovals - full account sweep' }), { 9: { cat: 'opt', t: 'Disapprovals' } });
+  eq(r.cat, 'opt', 'the override still applies — it is keyed on the id, not the wording');
+  ok(r.stale === true,
+    'but is marked STALE: dropping it silently loses a judgement, keeping it silently hides that '
+    + 'it was made about a different task name');
+  eq(M.typeOf(CT(), { 9: { cat: 'opt', t: 'Disapprovals' } }).stale, false, 'an unchanged title is not stale');
+  eq(M.typeOf(CT(), { 9: { cat: 'opt' } }).stale, false,
+    'and an override stored before this field existed is not retrospectively called stale');
+}
+
+console.log('── overriding the FIELD keeps every reader telling one story');
+{
+  const rows = [CT({ id: 9, cat: 'tech', hours: 3, bill: 3 }), CT({ id: 10, title: 'Keyword optimisation', cat: 'opt', hours: 5, bill: 5 })];
+  M.decorateTypes(rows, { 9: { cat: 'opt', t: 'Disapprovals' } });
+  rows.forEach((t) => { t.tags = []; });
+  eq(M.displacement(rows, M.TAG_SEED).optHours, 8,
+    'the displacement headline follows the override, because `cat` IS the field the search, the '
+    + 'grouping and the headline all read — no reader needs teaching about overrides');
+  eq(rows.filter((t) => M.matchTask(t, M.parseQuery('cat:opt'))).length, 2, 'and so does cat: in the search');
+  eq(M.groupBy(rows, 'cat').length, 1, 'and the chart');
+}
+
+console.log('── a tag never drives the Type');
+ok(!/tagsOf[\s\S]{0,400}setType|tag[\s\S]{0,80}->[\s\S]{0,40}cat =/.test(ENG),
+  'Type is what the work WAS and a tag is why it happened; the displacement figure compares one '
+  + 'against the other, so wiring them together would make the comparison measure itself');
+ok(/tmtype:\s*'field'/.test(SS), 'the override is client-scoped shared state, like every other team judgement');
+ok(/id="ptagimp"/.test(PAGE_SRC) && /Type of work/.test(PAGE_SRC), 'the spreadsheet round trip carries it');
+ok(/Type set by hand/.test(PAGE_SRC),
+  'and the export marks which Types were hand-set, so a round trip cannot launder a judgement into '
+  + 'something that looks derived');
+
 console.log('── the comma rule (OR) against the space rule (AND)');
 const PEOPLE = [
   T({ owner: 'Febin', client: 'Reiss', market: 'GB', title: 'Plan Update', cat: 'acct' }),
