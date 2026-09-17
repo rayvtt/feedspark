@@ -2,14 +2,29 @@
      (never client decks). Every instructional subtext across the FCC collapses to a small ⓘ
      beside its heading: default hidden (Ray's rule — no walls of explainer text), expanded
      blocks remembered per user in localStorage so Steven can keep guidance open while learning.
-     Selector-driven: p.sub, .psub, .prev-sub, .em-sub and hero intros — add data-no-collapse
-     to any element that must stay visible. The pass also RE-RUNS when the page renders new
+     Selector-driven: p.sub, .psub, .prev-sub, .em-sub, hero intros and anything marked
+     data-instr — add data-no-collapse to any element that must stay visible.
+
+     ONE ⓘ PER CARD, NOT PER LINE (Ray, 17 Sep 2026, crossing out the explainer under a chart:
+     "the red-crossed text is not needed at all - so hide it (same thing for rest of FCC module)
+     in a [i] icon"): a card whose verdict and its caveat are two elements would otherwise grow
+     two toggles in one header. Collapsible elements are grouped by the card they sit in, the
+     toggle rides that card's own heading, and it opens or closes the group as one.
+
+     THE KEY IS STABLE, NOT THE TEXT. These lines carry live numbers — "1,254.5 h in view …" —
+     so hashing the text, as this did, minted a new key on every render and the remembered state
+     was lost the moment the figure moved. The key is now the card's id (or its heading), scoped
+     to the page.
+
+     The pass also RE-RUNS when the page renders new
      content (debounced MutationObserver, 16 Sep 2026): it used to run once at
      DOMContentLoaded, so on a page whose body arrives with its data — the keyword calendar,
      the guards — whether an instruction got its ⓘ depended on whether the render beat the
      pass. That is a control that exists on one load and not the next, which is why the phone
-     tripwire kept flipping between 132 and 133 desktop controls on /kwcal. Already-processed
-     elements carry __instr and are skipped, so re-running is idempotent and cheap. -->
+     tripwire kept flipping between 132 and 133 desktop controls on /kwcal. A card that already
+     carries its toggle keeps it, and each pass re-applies the group's state — because a card
+     that re-renders replaces these elements, and a new node without the class would come back
+     visible. -->
 <style>
 .instr-tgl{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;margin-left:7px;padding:0;
   border:1px solid var(--line,#E6E6E6);border-radius:100px;background:transparent;color:var(--muted,#8a94a0);
@@ -26,22 +41,63 @@ function hash(s){s=String(s||'');var h=5381,i;for(i=0;i<s.length&&i<80;i++)h=(h*
 var KEY='fcc-instr-open',open={};
 try{JSON.parse(localStorage.getItem(KEY)||'[]').forEach(function(k){open[k]=1})}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(Object.keys(open)))}catch(e){}}
+var SEL='p.sub,.psub,.prev-sub,.em-sub,header.hero p,.hero>.wrap>p,[data-instr]';
+function box(el){
+  var c=el.closest?el.closest('section,.card,header,article'):null;
+  return c||el.parentNode||el;
+}
+function head(c){
+  // the card's own heading, never one belonging to something nested deeper inside it
+  var h=c.querySelector?c.querySelector('h1,h2,h3,h4'):null;
+  return h&&box(h)===c?h:null;
+}
+function keyOf(c,el){
+  var base=c.id||(head(c)&&(head(c).textContent||'').trim())||el.id||hash((el.textContent||'').trim());
+  return location.pathname+'#'+base;
+}
+function parts(c){
+  var out=[],i,els=c.querySelectorAll(SEL);
+  for(i=0;i<els.length;i++){
+    var el=els[i];
+    if(el.hasAttribute('data-no-collapse'))continue;
+    if(box(el)!==c)continue;                         // a nested card keeps its own toggle
+    if((el.textContent||'').trim().length<30)continue;  // real prose, not a short data line
+    out.push(el);
+  }
+  return out;
+}
+function state(c,on){
+  var els=parts(c),i;
+  for(i=0;i<els.length;i++)els[i].classList.toggle('instr-hide',!on);
+  if(c.__instrBtn){c.__instrBtn.classList.toggle('on',!!on);c.__instrBtn.setAttribute('aria-expanded',on?'true':'false')}
+}
+// its own function, because a handler closing over a loop's `var` would see the LAST card
+function mount(c,el){
+  var b=document.createElement('button');b.type='button';b.className='instr-tgl';
+  b.title='Instructions';b.setAttribute('aria-label','Toggle instructions');b.textContent='ⓘ';
+  var h=head(c);
+  if(h)h.appendChild(b);
+  else{b.classList.add('instr-solo');el.parentNode.insertBefore(b,el)}
+  c.__instrBtn=b;c.__instrKey=keyOf(c,el);
+  b.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();
+    var on=!open[c.__instrKey];
+    if(on)open[c.__instrKey]=1;else delete open[c.__instrKey];
+    save();state(c,on)});
+}
 function apply(){
-  var els=document.querySelectorAll('p.sub,.psub,.prev-sub,.em-sub,header.hero p,.hero>.wrap>p');
-  Array.prototype.forEach.call(els,function(el){
-    if(el.__instr||el.hasAttribute('data-no-collapse'))return;el.__instr=1;
-    var txt=(el.textContent||'').trim();if(txt.length<30)return;   // real instructions only, not short data lines
-    var id=hash(txt);
-    var b=document.createElement('button');b.type='button';b.className='instr-tgl';
-    b.title='Instructions';b.setAttribute('aria-label','Toggle instructions');b.textContent='ⓘ';
-    var prev=el.previousElementSibling;
-    if(prev&&/^H[1-4]$/.test(prev.tagName))prev.appendChild(b);
-    else{b.classList.add('instr-solo');el.parentNode.insertBefore(b,el);}
-    function set(on){el.classList.toggle('instr-hide',!on);b.classList.toggle('on',!!on);b.setAttribute('aria-expanded',on?'true':'false')}
-    set(!!open[id]);
-    b.addEventListener('click',function(ev){ev.preventDefault();ev.stopPropagation();
-      var on=el.classList.contains('instr-hide');set(on);if(on)open[id]=1;else delete open[id];save()});
-  });
+  var els=document.querySelectorAll(SEL),seen=[],i;
+  for(i=0;i<els.length;i++){
+    var el=els[i];
+    if(el.hasAttribute('data-no-collapse'))continue;
+    if((el.textContent||'').trim().length<30)continue;
+    var c=box(el);
+    if(!c||seen.indexOf(c)>=0)continue;
+    seen.push(c);
+    if(!c.__instrBtn)mount(c,el);
+    // re-applied on every pass, not just at birth: a card that re-renders replaces these
+    // elements, and a new node without the class would come back visible
+    state(c,!!open[c.__instrKey]);
+  }
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply);else apply();
 // late-rendered instructions (a board that paints after its data lands) get their toggle too:

@@ -318,8 +318,8 @@ window.addEventListener('load',restore);
     <!-- a legend is not optional: three segments identified by colour alone is identity-by-colour,
          which fails the moment anyone prints it, or reads it with red-green colour blindness -->
     <div class="dp-leg" id="dpleg"></div>
-    <div class="verdict" id="dpverdict"></div>
-    <div class="dp-cov" id="dpcov"></div>
+    <div class="verdict" id="dpverdict" data-instr></div>
+    <div class="dp-cov" id="dpcov" data-instr></div>
   </section>
 
   <section class="card" id="chartcard">
@@ -359,7 +359,7 @@ window.addEventListener('load',restore);
       <div class="cstage" id="cstage"></div>
       <div class="clegend" id="clegend"></div>
     </div>
-    <div class="verdict" id="cverdict"></div>
+    <div class="verdict" id="cverdict" data-instr></div>
     <div class="ctab" id="ctabbox" hidden></div>
   </section>
 

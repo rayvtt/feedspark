@@ -7156,6 +7156,24 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "function byIdentity()",
       "min": 1
+    },
+    {
+      "name": "Chrome: the explainer prose collapses behind ONE ⓘ per card (Ray, 17 Sep 2026: 'the red-crossed text is not needed at all - so hide it (same thing for rest of FCC module) in a [i] icon')",
+      "file": "docs/instr_collapse.html",
+      "pattern": "if(!c.__instrBtn)mount(c,el);",
+      "min": 1
+    },
+    {
+      "name": "Chrome: the collapse key is the card, not the prose — these lines carry live numbers",
+      "file": "docs/instr_collapse.html",
+      "pattern": "function keyOf(c,el)",
+      "min": 1
+    },
+    {
+      "name": "Chrome: a page opts a line in with data-instr, so Feed Chat's answer is never swept up",
+      "file": "docs/instr_collapse.html",
+      "pattern": "[data-instr]",
+      "min": 1
     }
   ]
 }
