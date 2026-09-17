@@ -3961,6 +3961,26 @@ body.ck-r-on{padding-right:var(--ck-w)}
     };
     setTimeout(function(){ var f=document.getElementById('tle-task'); if(f)f.focus(); },60);
   }
+  /* THE BOARD FOLLOWS THE PANEL, as it already follows the board (Ray, 17 Sep 2026: "when the
+     playbook is surfaced, there's a brand filter on top. If the brand is selected, can the filter
+     also be applied in the intake and vice versa?"). The reverse direction has existed since the
+     Scheduled-work band — renderClientChips dispatches `fcc-clients` and the rail moves — so this
+     is the same link the other way, writing the SAME itState.clients the chips and the ▾ menu
+     write. One client filter on this page, never a second one that can disagree with it.
+
+     It reports whether it could: setupMulti's options() self-cleans a client the board does not
+     carry, so filtering to a brand with no Intake rows would quietly do nothing and read as
+     broken. The panel says "not on the board" instead. */
+  function filterToClient(name){
+    if(!name)return false;
+    if(!allIntake().some(function(r){ return r.client===name; }))return false;
+    if(itState.clients.length===1&&itState.clients[0]===name)return true;   // already there
+    itState.clients=[name];
+    renderIntake();
+    return true;
+  }
+  window.FCCFilterClient=filterToClient;
+
   // focus the Intake on one brand and scroll its row into view (the un-briefed timeline click-through)
   function revealInIntake(client, key){
     if(client){ itState.clients=[client]; itState.q=''; var s=document.getElementById('it-search'); if(s)s.value=''; }
@@ -5429,14 +5449,29 @@ body.ck-r-on{padding-right:var(--ck-w)}
     body.innerHTML=(RTAB==='volume')?secArrivals(BRAND,true):(secPractice(BRAND)+secArrivals(BRAND)+secGolden(BRAND));
     wireArrivals(BRAND); wireBriefLinks();
     if(RTAB==='volume')openAllMix(BRAND);
-    if(sub){
-      var m=MODEL[BRAND],parts=[];
-      parts.push(m&&m.tasks?fmt(m.tasks.length)+' plan tasks':'no plan read');
-      parts.push(arrOf(BRAND).length+' Shopping feed'+(arrOf(BRAND).length===1?'':'s'));
-      if(!LOADED)parts.push('still loading');
-      sub.innerHTML='<b>'+esc(BRAND)+'</b> · '+esc(parts.join(' · '));
-    }
+    subLine();
     if(window.FCCHours&&window.FCCHours.dock)window.FCCHours.dock(BRAND);
+  }
+
+  var NOBOARD=false;              // this account has no Intake rows, so the board cannot follow
+  function subLine(){
+    var sub=$('#ck-sub'); if(!sub)return;
+    if(!BRAND){ sub.textContent=''; return; }
+    var m=MODEL[BRAND],parts=[],nf=arrOf(BRAND).length;
+    parts.push(m&&m.tasks?fmt(m.tasks.length)+' plan tasks':'no plan read');
+    parts.push(nf+' Shopping feed'+(nf===1?'':'s'));
+    if(NOBOARD)parts.push('not on the board');
+    if(!LOADED)parts.push('still loading');
+    sub.innerHTML='<b>'+esc(BRAND)+'</b> · '+esc(parts.join(' · '));
+  }
+  /* Picking the account here filters Intake to it — the same link the board already has back to
+     this panel. Only on a REAL change of the picker: the rail choosing its own default on open,
+     or following the board's own chips, must never reach round and re-filter the board behind
+     the reader. */
+  function syncBoard(){
+    if(!window.FCCFilterClient){ NOBOARD=false; return; }
+    NOBOARD=!window.FCCFilterClient(BRAND);
+    subLine();
   }
 
   function fillBrands(){
@@ -5518,7 +5553,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
   function go(){
     ingestBaked();
     var sel=$('#ck-brand');
-    if(sel)sel.addEventListener('change',function(){BRAND=sel.value;render();});
+    if(sel)sel.addEventListener('change',function(){ BRAND=sel.value; render(); syncBoard(); });
     var tb=$('#ck-tabs');
     if(tb)Array.prototype.forEach.call(tb.querySelectorAll('[data-tab]'),function(b){
       b.onclick=function(){ setTab(b.getAttribute('data-tab')); };
@@ -5549,7 +5584,8 @@ body.ck-r-on{padding-right:var(--ck-w)}
     /* follow the board: one client selected in Intake IS the account under review */
     document.addEventListener('fcc-clients',function(e){
       var cs=(e.detail&&e.detail.clients)||[];
-      if(cs.length===1&&cs[0]!==BRAND){BRAND=cs[0];fillBrands();render();}
+      // the board moved: follow it, and clear any stale "not on the board" — it plainly is
+      if(cs.length===1&&cs[0]!==BRAND){ BRAND=cs[0]; NOBOARD=false; fillBrands(); render(); }
     });
     /* the retainer read-out is docked, so a dot click lands in the left rail — open it */
     document.addEventListener('fcc-hours-dock',function(e){
