@@ -6963,6 +6963,24 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "function bulkSnapshot",
       "min": 1
+    },
+    {
+      "name": "labelguard: taxonomy depth (GPC / product_type) computed via the shared pathDepth read, same as PT Guard's depthProfile and Feed Lab's gpcDepthAvg (Ray, 17 Sep 2026: 'bringing PT depth (seperated by >) in the Content Quality for product type as well pls and GPC')",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "avgDepth: q.depth && a.filled ? Math.round((a.depthSum / a.filled) * 10) / 10 : undefined",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: Content Quality shows average taxonomy depth for GPC / product_type",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "averaging <b>' + r.avgDepth",
+      "min": 2
+    },
+    {
+      "name": "Worker: /api/golden/quality PUT sanitizer allow-lists avgDepth like cols/perProduct",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "avgDepth: q.depth ? Math.max(0, Math.round((Number(a.avgDepth) || 0) * 10) / 10) : undefined",
+      "min": 1
     }
   ]
 }

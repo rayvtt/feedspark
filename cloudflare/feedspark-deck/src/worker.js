@@ -3957,7 +3957,9 @@ async function goldenRoutes(env, request, url) {
         // how many columns a repeatable attribute was read across, and values per product —
         // the evidence behind a count-based finding like "fewer than 2 highlights"
         cols: q.multi ? Math.max(1, Math.min(50, parseInt(a.cols, 10) || 1)) : undefined,
-        perProduct: q.multi ? Math.max(0, Math.round((Number(a.perProduct) || 0) * 10) / 10) : undefined };
+        perProduct: q.multi ? Math.max(0, Math.round((Number(a.perProduct) || 0) * 10) / 10) : undefined,
+        // taxonomy depth (GPC / product_type only) — same allow-list discipline as cols/perProduct
+        avgDepth: q.depth ? Math.max(0, Math.round((Number(a.avgDepth) || 0) * 10) / 10) : undefined };
     }
     if (!Object.keys(attrs).length) return json({ error: 'no known free-text attribute in this feed' }, 400);
     // the AI-Readiness reading the page computes on the SAME stream (Ray, 16 Sep 2026) —

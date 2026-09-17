@@ -973,6 +973,21 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   eq('GPC: a bare top-level name is shallow, not invalid', snap.attrs.google_product_category.rules.shallow.n, 1);
   eq('product_type: chevrons without spaces caught', snap.attrs.product_type.rules.sep.n, 1);
   eq('product_type: single level caught', snap.attrs.product_type.rules['single-level'].n, 2);
+  // TAXONOMY DEPTH (Ray, 17 Sep 2026: "bringing PT depth (seperated by >) in the Content
+  // Quality for product type as well pls and GPC") — the same chevron/slash read Product
+  // Type Guard's depthProfile and Feed Lab's gpcDepthAvg already use (pathDepth), so this
+  // number can never disagree with either surface. 4+3+1+1+3+3×5=27 over 10 rows = 2.7;
+  // PT 3+3+1+1+2+3×5=25 over 10 = 2.5 ("Women>Dresses" still counts 2 levels on the bare
+  // ">" even though it also fails the "properly separated" rule — two different questions).
+  eq('QSPEC: google_product_category and product_type are flagged for depth', [
+    LG.qspecOf('google_product_category').depth, LG.qspecOf('product_type').depth,
+  ], [true, true]);
+  ok('QSPEC: no other attribute carries the depth flag',
+    LG.QSPEC.every((q) => ['google_product_category', 'product_type'].includes(q.key) || !q.depth));
+  eq('GPC: average chevron depth across the feed', snap.attrs.google_product_category.avgDepth, 2.7);
+  eq('product_type: average chevron depth across the feed', snap.attrs.product_type.avgDepth, 2.5);
+  ok('an attribute without the depth flag never carries avgDepth',
+    snap.attrs.color.avgDepth === undefined && snap.attrs.title.avgDepth === undefined);
   eq('colour: hex code caught', snap.attrs.color.rules.hex.n, 1);
   eq('colour: "variety" is not a colour', snap.attrs.color.rules['not-colour'].n, 1);
   eq('colour: more than three colours caught', snap.attrs.color.rules['too-many'].n, 1);
@@ -992,6 +1007,10 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   eq('attrQuality: title scores 100 − fail% − 0.4×warn%', ti.score, 20);
   ok('attrQuality: worst rule sorts first', ti.broken[0].cost >= ti.broken[1].cost);
   eq('attrQuality: fail/warn counts', [ti.fails, ti.warns], [4, 3]);
+  const gpcPart = q.parts.filter((p) => p.key === 'google_product_category')[0];
+  const ptPart = q.parts.filter((p) => p.key === 'product_type')[0];
+  eq('qualityScore: avgDepth rides through attrQuality onto the part the page renders',
+    [gpcPart.avgDepth, ptPart.avgDepth], [2.7, 2.5]);
   ok('qualityScore: weighted by attribute, not a flat mean',
     Math.abs(q.score - q.parts.reduce((s, p) => s + p.score * p.w, 0) / q.parts.reduce((s, p) => s + p.w, 0)) < 0.06);
   ok('qualityScore: verdict names the band', q.verdict.pill.indexOf('Spec violations') >= 0 && q.verdict.line.length > 40);
@@ -1083,6 +1102,21 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
     'the page hands the collector the header, or the fix never reaches a real scan');
   ok(/read across <b>' \+ r\.cols/.test(page),
     'and the row shows what it counted across — a count nobody can check is a count nobody should trust');
+}
+
+{
+  // ---- taxonomy depth in Content Quality (Ray, 17 Sep 2026: "bringing PT depth (seperated
+  // by >) in the Content Quality for product type as well pls and GPC") — surfaced on the
+  // page next to the existing "average length" measure, for GPC and product_type only.
+  console.log('\n— content quality: taxonomy depth for GPC / product_type —');
+  const page = readFileSync(new URL('../docs/FeedSpark_GoldenRecord.html', import.meta.url), 'utf8');
+  const wk = readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', import.meta.url), 'utf8');
+  ok('page: the expanded-row detail states the average depth',
+    /averaging <b>' \+ r\.avgDepth/.test(page));
+  ok('page: the "nothing flagged" state states it too, not just the broken-rule one',
+    /averaging <b>' \+ r\.avgDepth[\s\S]{0,20}levels deep' : ''\) \+ '\.<\/p>/.test(page));
+  ok('worker: the PUT sanitizer allow-lists avgDepth like it does cols/perProduct',
+    /avgDepth: q\.depth \?/.test(wk));
 }
 
 {
