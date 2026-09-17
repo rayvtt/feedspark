@@ -7222,6 +7222,34 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "function decorateAccountType()",
       "min": 1
+    },
+    {
+      "name": "ⓘ collapse: the rule is the sentence count (Ray 17 Sep 2026: 'if any subtext is longer than 1 sentence - hide with [i]')",
+      "file": "docs/instr_collapse.html",
+      "pattern": "function sentences(txt)",
+      "pr": 431,
+      "min": 1
+    },
+    {
+      "name": "…ⓘ collapse: an explicit opt-in always collapses, prose of more than one sentence collapses, one sentence stays",
+      "file": "docs/instr_collapse.html",
+      "pattern": "function qualifies(el)",
+      "pr": 431,
+      "min": 1
+    },
+    {
+      "name": "…ⓘ collapse: content is excluded by ancestry (table/form/modal/chat log/ticket card)",
+      "file": "docs/instr_collapse.html",
+      "pattern": "function excluded(el)",
+      "pr": 431,
+      "min": 1
+    },
+    {
+      "name": "…ⓘ collapse harness pins the sentence rule on the real Golden Record specimen",
+      "file": "tools/test_instr.mjs",
+      "pattern": "lift('sentences')",
+      "pr": 431,
+      "min": 1
     }
   ]
 }
