@@ -77,6 +77,8 @@ jobs:
         run: node tools/test_playbook_panel.mjs
       - name: One-modal-at-a-time guard (every overlay opener routes through soloModal)
         run: node tools/test_modalsolo.mjs
+      - name: AM CC harness (name→address resolution, dedupe, never yourself, never guessed)
+        run: node tools/test_amcc.mjs
       - name: Excel export harness (XLSX container + the Task Manager's three tabs)
         run: node tools/test_xlsx.mjs
       - name: Shipped-panel harness (build log slide-over, first-run silence, close-the-tab prompt)

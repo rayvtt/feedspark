@@ -37,7 +37,7 @@ import SCHEDULE_SNAPSHOT from "../../../ops/schedule/scheduled_work_2026-09-15.j
 // Work volumes (Ray, 15 Sep 2026): every workstream on an account bucketed by month for the
 // Deck Generator's chart workbench — plan tasks, emails, calls, briefs, scheduled work, results.
 import { buildVolumes, monthKey as volMonthKey, monthRange as volMonthRange } from "./volumes.js";
-import { buildDueReminders, dd8 as remDay } from "./taskremind.js";
+import { buildDueReminders, dd8 as remDay, OWNER_EMAILS } from "./taskremind.js";
 import { aggregateClientList } from "./tmparse.js";
 import * as TMM from "./tmmcp.js";
 // FS TASK MANAGER (/tasks, Ray 16 Sep 2026) — the query engine and the book store behind the
@@ -50,7 +50,7 @@ import * as TB from "./taskbook.js";
 import INGEST_SUPERDRY_SVS_AUG26 from "../../../ops/ingest/superdry_svs_aug26.json";
 const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
-import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed } from "./access.js";
+import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
 import { QSPEC, qualityScore, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
@@ -1874,6 +1874,16 @@ export default {
       // SKIPPED SCHEDULED WORK (Ray, 16 Sep 2026). Written by /api/schedule from an unscoped read
       // — see there. One KV get; absent simply means the popover says nothing about it.
       const skip = (await env.EDITS.get('schedskip', 'json')) || { clients: {} };
+      /* THE AM AS AN ADDRESS (Steven via Ray, 17 Sep 2026: "Would it be possible for 'Draft in
+         GMail' button to automatically CC the AM of the account in the email draft?"). The Task
+         Manager states the AM as a name, so resolve it here — one place, against the access
+         directory the owner already maintains — rather than leaving each page to guess. These
+         are internal FeedSpark addresses of the AM on an account the caller is already scoped
+         to; no client contact data rides along. amEmail() returns null rather than fabricating,
+         and the page then names the AM without CC'ing anyone. */
+      const amDir = (await env.EDITS.get('accessdir', 'json')) || ACCESS_SEED;
+      const amKnown = [ownerEmail(env), ...Object.values(OWNER_EMAILS || {})];
+      const amAddr = (n) => (n ? amEmail(n, { dir: amDir, known: amKnown }) : null);
       const out = {};
       const add = (name) => {
         if (!name || out[name] || !inScope(name)) return;
@@ -1882,7 +1892,7 @@ export default {
           tracked: !!r,
           allowance: r ? r.allowance : null, used: r ? r.used : null,
           balance: r ? r.balance : null, health: r ? r.health : null,
-          markets: r ? r.marketCount : null, am: r ? r.am : null, updated: r ? r.updated : null,
+          markets: r ? r.marketCount : null, am: r ? r.am : null, amEmail: r ? amAddr(r.am) : null, updated: r ? r.updated : null,
           trail: t ? { m: t.m, months: t.months, current: t.current, read: t.read, total: t.total,
             at: t.at, windowHours: t.windowHours } : null,
           posture: p && p.state ? p : null,

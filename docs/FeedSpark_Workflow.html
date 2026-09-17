@@ -484,6 +484,7 @@ window.addEventListener('load',restore);
       <div class="bs-check" id="bs-check" title="What ASPL needs to execute without a follow-up question — all green = send it"></div>
       <div class="prev-subj" id="prev-subj"></div>
       <pre class="brief" id="prev-body" contenteditable="true" spellcheck="false"></pre>
+      <div class="cc-line" id="bg-cc-line"></div>
       <div class="gen-act">
         <a class="btn pri" id="bg-gmail" target="_blank" rel="noopener">✉ Draft in Gmail</a>
         <button class="btn" id="bg-copy">⧉ Copy brief</button>
@@ -494,6 +495,13 @@ window.addEventListener('load',restore);
   </div></div>
 
   <style>
+  .cc-line{margin:8px 0 0;font-size:12.5px;line-height:1.5;min-height:0}
+  .cc-line:empty{display:none}
+  .cc-pick{display:inline-flex;align-items:center;gap:7px;cursor:pointer;color:var(--ink-2)}
+  .cc-pick input{width:15px;height:15px;accent-color:var(--orange);cursor:pointer;flex:none}
+  .cc-pick b{color:var(--ink)}
+  .cc-addr{color:var(--ink-3,#8a8a8a);font-variant-numeric:tabular-nums}
+  .cc-note{color:var(--ink-3,#8a8a8a)}
   .it-ctl{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:2px 0 12px}
   .it-src{display:flex;gap:5px}
   .it-src button{font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer}
@@ -1785,13 +1793,74 @@ body.ck-r-on{padding-right:var(--ck-w)}
     bodyOverride=pv.body.innerText;
     var rb=document.getElementById('prev-reset'); if(rb)rb.hidden=false;
   });
+  /* CC THE ACCOUNT'S AM (Steven Opuni via Ray, 17 Sep 2026: "Would it be possible for 'Draft in
+     GMail' button to automatically CC the AM of the account in the email draft?").
+
+     This is worth more than the courtesy it looks like. A [FS Brief] sent from an @feedspark.com
+     address is excluded from the Gmail capture by the internal-sender carve-out, so when a
+     colleague briefs, the work reaches the FCC through the pipeline alone. CC'ing the account's
+     AM puts that email in a mailbox the push DOES read, where recoverBriefsFromEmail() rebuilds
+     the ticket from the brief's own machine-readable block — the exact path that exists because
+     Ray gets copied on briefs today.
+
+     The AM's NAME comes from the Task Manager (via /api/hours, already on the page for the hours
+     badge — no extra fetch); the worker resolves it to an ADDRESS against the access directory and
+     refuses to guess. So there are three honest states and the line says which one you are in:
+     an address to CC, an AM with no address on file, or you are the AM yourself. Nobody is ever
+     CC'd silently, and the address is visible here and again in Gmail before anything sends. */
+  /* NOT named amOf: the page already has one (client -> AM NAME, used by the AM filter, the
+     workload panel and the timeline). Function declarations hoist, so a second amOf here would
+     silently replace it and every one of those callers would get an object where they expect a
+     string. tools/test_amcc.mjs lifts this by name and would trip on the collision. */
+  var CC_KEY='fcc-bg-cc';
+  function ccOn(){ try{ return localStorage.getItem(CC_KEY)!=='0'; }catch(e){ return true; } }
+  function ccSet(v){ try{ localStorage.setItem(CC_KEY, v?'1':'0'); }catch(e){} }
+  function meEmail(){ try{ return String((ACCESS_ME&&ACCESS_ME.email)||'').trim().toLowerCase(); }catch(e){ return ''; } }
+  function accountAm(client){
+    if(!client)return null;
+    var W=window.FCCHours, hit=(W&&W.rec)?W.rec(client):null, r=hit&&hit.rec;
+    if(!r||!r.am)return null;   // the brand's hours have never been read — say nothing rather than guess
+    return { name:String(r.am), email:String(r.amEmail||'').trim().toLowerCase()||null };
+  }
+  // the addresses to CC for one or more clients: deduped, never yourself, empty when switched off
+  function ccList(clients){
+    if(!ccOn())return [];
+    var me=meEmail(), seen={}, out=[];
+    (clients||[]).forEach(function(c){
+      var a=accountAm(c); if(!a||!a.email)return;
+      if(a.email===me)return;              // you are the AM — there is nobody to copy
+      if(seen[a.email])return; seen[a.email]=1; out.push(a.email); });
+    return out;
+  }
+  function ccParam(clients){ var l=ccList(clients); return l.length?'&cc='+encodeURIComponent(l.join(',')):''; }
+  /* /api/hours lands after the first paint, so a composer opened straight away would show no CC
+     line at all and the draft would go out without the copy. Re-read when the hours arrive —
+     only while the composer is actually open, so this costs nothing the rest of the time. */
+  document.addEventListener('fcc-hours',function(){
+    try{ if(bgScrim&&bgScrim.classList.contains('on'))refreshPreview(); }catch(e){}
+  });
+  function renderCcLine(client){
+    var host=document.getElementById('bg-cc-line'); if(!host)return;
+    var a=accountAm(client);
+    if(!a){ host.innerHTML=''; return; }
+    if(a.email&&a.email===meEmail()){
+      host.innerHTML='<span class="cc-note">You\u2019re the AM on '+esc(client)+' \u2014 nobody to copy.</span>'; return; }
+    if(!a.email){
+      host.innerHTML='<span class="cc-note"><b>'+esc(a.name)+'</b> is the AM on '+esc(client)
+        +', but there\u2019s no address on file \u2014 nobody is CC\u2019d.</span>'; return; }
+    host.innerHTML='<label class="cc-pick"><input type="checkbox" id="bg-cc"'+(ccOn()?' checked':'')
+      +'> CC <b>'+esc(a.name)+'</b> \u2014 the AM on '+esc(client)+' <span class="cc-addr">'+esc(a.email)+'</span></label>';
+    var cb=document.getElementById('bg-cc');
+    if(cb)cb.onchange=function(){ ccSet(cb.checked); refreshPreview(); };
+  }
   function refreshPreview(){
     var f=fields(); var id=window.__editId||newId(f.client);
     var subj=subjectOf(f,id), body=bodyOf(f,id);
     pv.subj.innerHTML=highlightTokens(subj);
     if(bodyOverride===null) pv.body.innerHTML=highlightTokens(body);
     var effBody=bodyOverride!==null?bodyOverride:body;
-    pv.gmail.href='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(subj)+'&body='+encodeURIComponent(effBody);
+    pv.gmail.href='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+ccParam([f.client])+'&su='+encodeURIComponent(subj)+'&body='+encodeURIComponent(effBody);
+    renderCcLine(f.client);
     bsChecklist(); renderSched();   // studio panels track every form change
     return {f:f,id:id,subj:subj,body:effBody};
   }
@@ -2819,10 +2888,11 @@ body.ck-r-on{padding-right:var(--ck-w)}
       var opened=0;
       ASPL.forEach(function(a){ var g=groups[a]; if(!g.length)return; opened++;
         var body=asplBatchBody(a,g); var subj='[FS Brief] '+g.length+' tasks · '+a+' · ASPL batch';
-        window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body),'_blank','noopener'); });
+        // a batch can span brands, so copy the union of their AMs — ccList dedupes and drops you
+        window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+ccParam(g.map(function(t){return t.client;}))+'&su='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body),'_blank','noopener'); });
       toast(opened+' brief draft'+(opened===1?'':'s')+' opened — one per ASPL owner');
     } else { var body=asplBatchBody('ASPL team',items); var subj='[FS Brief] '+items.length+' tasks · batch';
-      window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body),'_blank','noopener');
+      window.open('https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+ccParam(items.map(function(t){return t.client;}))+'&su='+encodeURIComponent(subj)+'&body='+encodeURIComponent(body),'_blank','noopener');
       toast('Batched brief draft opened'); }
     var mb=0; items.forEach(function(t){ if(markBriefed(t))mb++; }); if(mb)renderAll();
   }
@@ -3290,6 +3360,9 @@ body.ck-r-on{padding-right:var(--ck-w)}
      overlay is a view of something already stored and costs nothing to reopen, so the composer is
      never closed for someone else, while opening it does clear the cheap views behind it. */
   var SOLO_NEVER = 'bg-scrim';   // the composer — holds unsaved work; see above
+  /* The cockpit's tuner lives in its OWN <script> block, so it cannot see this closure — the same
+     bridge the Playbook rail already uses for the brief composer (window.FCCBrief). Without it the
+     tuner's opener threw "soloModal is not defined" and took the whole panel down with it. */
   function soloModal(keep){
     var keepEl = typeof keep === 'string' ? document.getElementById(keep) : keep;
     var open = document.querySelectorAll('.scrim.on');
@@ -3299,6 +3372,8 @@ body.ck-r-on{padding-right:var(--ck-w)}
       s.classList.remove('on');
     }
   }
+  window.FCCSolo = soloModal;   // cross-block bridge (the cockpit tuner)
+
   // ---- new-brief popup (the composer lives in #bg-scrim; prefill() + the openers route here) ----
   var bgScrim=document.getElementById('bg-scrim');
   function openBrief(){ if(!bgScrim)return; soloModal('bg-scrim'); bgScrim.classList.add('on');
@@ -3362,7 +3437,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
     document.querySelectorAll('#m-stat button').forEach(function(btn){ btn.onclick=function(){
       setStage(b,btn.getAttribute('data-s')); persist(); renderAll(); openModal(b.id); }; });
     // brief re-draft link
-    document.getElementById('m-brief').href='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+'&su='+encodeURIComponent(b.subject||('[FS Brief] '+b.client))+'&body='+encodeURIComponent(b.body||'');
+    document.getElementById('m-brief').href='https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(BRIEF_TO)+ccParam([b.client])+'&su='+encodeURIComponent(b.subject||('[FS Brief] '+b.client))+'&body='+encodeURIComponent(b.body||'');
     // completion scan on new note
     var noteEl=document.getElementById('m-note'), scanEl=document.getElementById('m-scan');
     noteEl.addEventListener('input',function(){
@@ -5534,7 +5609,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
   }
   function tuneOpen(on){
     var sc=$('#ck-tune-scrim'); if(!sc)return;
-    if(on){ tuneRows(); $('#ck-tune-stat').textContent=''; soloModal('ck-tune-scrim'); sc.classList.add('on'); }
+    if(on){ tuneRows(); $('#ck-tune-stat').textContent=''; if(window.FCCSolo)window.FCCSolo('ck-tune-scrim'); sc.classList.add('on'); }
     else sc.classList.remove('on');
   }
 

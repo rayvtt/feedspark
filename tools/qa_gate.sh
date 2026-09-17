@@ -104,6 +104,12 @@ else
 fi
 
 echo "── qa-gate 3d2c/7: Playbook panel (practices, the 10–20% collection band, weak attributes)"
+if node tools/test_amcc.mjs >/dev/null 2>&1; then
+  echo "   ✓ the account's AM is CC'd on brief drafts, and never guessed"
+else
+  echo "   ✗ AM-CC harness FAILED — see node tools/test_amcc.mjs"; FAIL=1
+fi
+
 if node tools/test_modalsolo.mjs >/dev/null 2>&1; then
   echo "   ✓ one-modal-at-a-time guard intact"
 else

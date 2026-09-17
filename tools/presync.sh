@@ -116,6 +116,10 @@ echo "── validating: one modal at a time (no overlay can be added that stack
 node tools/test_modalsolo.mjs >/dev/null
 echo "   ✓ every overlay opener clears the others; the composer is never auto-closed"
 
+echo "── validating: the account's AM is CC'd on brief drafts"
+node tools/test_amcc.mjs >/dev/null
+echo "   ✓ the AM's name resolves to a real address or none — never a guessed one"
+
 echo "── validating: retainer hours (optimisation vs technical vs feature vs account)"
 node tools/test_reporthours.mjs >/dev/null
 echo "   ✓ precedence traps hold; the baked snapshot reconciles to its own totals"
