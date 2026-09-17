@@ -268,11 +268,17 @@ window.addEventListener('load',restore);
   var enc=encodeURIComponent, MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var monLbl=function(k){ return MON[+k.slice(5,7)-1]+' '+k.slice(2,4); };
 
+  /* DEEP LINK (?client= / ?b= and ?market= / ?m=): the Workflow new-products card and the AI Quote's
+     new-products chart both link here naming a brand — the link used to land on whichever client
+     sorted first, so "Open product volume →" quietly showed the wrong feed. */
+  var Q=new URLSearchParams(location.search||'');
+  var WANTC=(Q.get('client')||Q.get('b')||'').trim(), WANTM=(Q.get('market')||Q.get('m')||'').trim().toLowerCase();
   fetch('/api/feed/clients').then(function(r){return r.json()}).then(function(d){
     var cs=Object.keys((d&&d.clients)||{}).sort();
     var sel=$('#brand'); sel.innerHTML=cs.map(function(c){return '<option>'+esc(c)+'</option>'}).join('');
-    CLIENT=cs[0]||''; if(CLIENT)sel.value=CLIENT;
-    loadMkts(); loadEstate();
+    var hit=WANTC&&cs.filter(function(c){ return c.toLowerCase()===WANTC.toLowerCase(); })[0];
+    CLIENT=hit||cs[0]||''; if(CLIENT)sel.value=CLIENT;
+    loadMkts(WANTM||undefined); loadEstate();
   }).catch(function(){ $('#mstate').textContent='Could not load the client list — this needs the live worker.'; });
   $('#arr-scan').addEventListener('click',scanNow);
   document.addEventListener('click',function(e){ var tr=e.target.closest&&e.target.closest('#esttbl tr[data-c]'); if(!tr)return;
