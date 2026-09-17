@@ -53,7 +53,7 @@ function liftPage() {
     'CATS', 'CAT_LABEL', 'DIMS', 'BUCKET_LABEL', 'STATUS_BUCKET',
     'TAG_SEED', 'normTagSlug', 'taggable', 'ruleHits', 'tagsOf', 'decorateTags',
     'displacement', 'rulePreview', 'groupNested', 'flattenNested', 'NEST_CAPS',
-    'typeOf', 'decorateTypes'];
+    'typeOf', 'decorateTypes', 'seriesByMonth', 'monthOf', 'isoOf'];
   // eslint-disable-next-line no-new-func
   const f = new Function(body + '\nreturn {' + names.join(',') + '};');
   return f();
@@ -1285,6 +1285,106 @@ ok(/if \(want === '1'\) rulesOpen\(\);/.test(PG) && PG.indexOf("if (want === '1'
   'and it reopens AFTER the tags land, so it never paints an empty vocabulary and then fills itself in');
 ok(/setTimeout\(function \(\) \{ if \(!tgIsOpen\(\)\) host\.innerHTML = ''; \}, 260\)/.test(PANEL),
   'closing clears the host only once it has slid out, and only if nobody re-opened it meanwhile');
+
+// ---------------------------------------------------------------------------------------------
+// MORE FORMS (Ray, 17 Sep 2026: "Can you allow more different types of charts? I like pie charts,
+// donut charts, and line charts. What I want to see is merge the lines together and dissect them
+// more easily side by side"). The line's cross-tab is engine work and is asserted as such; the
+// forms matrix and the colour rules are asserted on the page that draws them.
+// ---------------------------------------------------------------------------------------------
+console.log('\n── the line form: month × category, in the engine and on the page');
+const LR = (d, h, nb, client, cat) => ({
+  d, client, market: 'GB', am: 'Ray', owner: 'Febin', title: 't', status: 'done',
+  cat: cat || 'opt', bucket: 'done', bill: h, nonbill: nb || 0, hours: h + (nb || 0), id: 1, tags: [],
+});
+const LROWS = [
+  LR('2026-01-10', 4, 1, 'Reiss'), LR('2026-01-20', 2, 0, 'Reiss'),
+  LR('2026-03-05', 6, 2, 'Reiss'),                       // February is a HOLE for Reiss
+  LR('2026-02-14', 3, 0, 'Schuh'), LR('2026-03-02', 1, 0, 'Schuh'),
+  LR('0000-00-00', 9, 9, 'Reiss'), LR('', 5, 0, 'Schuh'), // undated, both shapes
+];
+for (const impl of [['engine', M], ['page', P]]) {
+  const [who, mod] = impl;
+  const sm = mod.seriesByMonth(LROWS, 'client', 6);
+  eq(sm.months, ['2026-01', '2026-02', '2026-03'], `${who}: the months are the whole view's, in order`);
+  eq(sm.undated, 2, `${who}: undated rows are counted back, never plotted`);
+  eq(sm.series.map((x) => x.k), ['Reiss', 'Schuh'], `${who}: series read biggest-first`);
+  const reiss = sm.series[0];
+  eq(reiss.points.map((p) => p.hours), [7, 0, 8],
+    `${who}: a month a series MISSED is a ZERO, not a gap — two lines with different gaps would `
+    + 'otherwise read as the same shape at different speeds');
+  eq(reiss.points.map((p) => p.m), ['2026-01', '2026-02', '2026-03'], `${who}: every series is read against the same x`);
+  eq(reiss.hours, 15, `${who}: the series total is its plotted hours`);
+  eq([reiss.points[0].bill, reiss.points[0].nonbill], [6, 1],
+    `${who}: every point keeps its own billable split — the colour stops carrying it, the number never does`);
+  eq(mod.monthOf('0000-00-00'), '', `${who}: 0000-00-00 is undated, not a month called "0000-00"`);
+  eq(mod.monthOf('2026-04-01'), '2026-04', `${who}: and a real date still reads as its month`);
+}
+
+// the fold, so the lines stay readable and the total still reconciles
+const MANY = [];
+for (let i = 0; i < 9; i++) MANY.push(LR('2026-01-0' + ((i % 8) + 1), 9 - i, 0, 'C' + i));
+const lineCap = M.seriesByMonth(MANY, 'client', 4);
+eq(lineCap.series.length, 4, 'past the cap the tail folds into ONE line');
+eq(lineCap.folded, 6, 'and says how many it folded');
+ok(/^Other \(6 more\)$/.test(lineCap.series[3].k), 'named for what it is');
+eq(lineCap.series.reduce((a, x) => a + x.hours, 0), MANY.reduce((a, r) => a + r.hours, 0),
+  'the folded line keeps its hours, so a total read off the lines matches the book');
+eq(P.seriesByMonth(MANY, 'client', 4).series.map((x) => [x.k, x.hours]),
+  lineCap.series.map((x) => [x.k, x.hours]), 'the page folds identically');
+
+const TAGROWS = [
+  Object.assign(LR('2026-01-02', 2, 0, 'Reiss'), { tags: ['urgent', 'technical'] }),
+  Object.assign(LR('2026-01-03', 1, 0, 'Reiss'), { tags: [] }),
+];
+const tagSm = M.seriesByMonth(TAGROWS, 'tag', 6);
+ok(tagSm.multi, 'a task with several tags lands on several lines, and the record says so');
+eq(tagSm.series.reduce((a, x) => a + x.hours, 0), 5,
+  'so those lines legitimately sum to more than the book — stated, never silently drawn');
+
+console.log('\n── which form each split can honestly carry');
+ok(/var FORMS = \[/.test(PAGE_SRC) && /\{ v: 'pie', label: 'Pie' \}/.test(PAGE_SRC)
+  && /\{ v: 'line', label: 'Line over months' \}/.test(PAGE_SRC)
+  && /\{ v: 'small', label: 'Side by side' \}/.test(PAGE_SRC),
+  'pie, line and side-by-side joined donut, columns and bars');
+ok(/if \(nested\(\)\) return \['nest', 'small'\];/.test(PAGE_SRC),
+  'a nested split reads as the indented breakdown OR side by side — nothing else can show three '
+  + 'levels honestly');
+ok(/if \(CDIM === 'total'\) return \['donut', 'line'\];/.test(PAGE_SRC),
+  'and "Everything" has nothing to divide into slices, so it keeps the donut and gains the line');
+ok(/return \['stack', 'pct', 'bars', 'donut', 'pie', 'line', 'small'\];/.test(PAGE_SRC),
+  'every other split offers all seven');
+ok(/fs\.innerHTML = FORMS\.filter/.test(PAGE_SRC) && /if \(allow\.indexOf\(CFORM\) < 0\) CFORM = allow\[0\]/.test(PAGE_SRC),
+  'the selector is REBUILT from what applies rather than greyed out over a stale label');
+ok(!/fs\.disabled = true/.test(PAGE_SRC), 'so no form ever sits disabled while naming something else');
+
+ok(/function byIdentity\(\)/.test(PAGE_SRC),
+  'the page knows which forms colour by identity and which keep billable vs non-billable');
+ok(/var ident = byIdentity\(\), sw = function/.test(PAGE_SRC) && /\(ident \? '' : sw\(cvar\('--bil'\)\)\)/.test(PAGE_SRC),
+  'when colour carries identity the swatches move to the categories and the two figures stay as '
+  + 'plain rows — the split is never dropped, it just stops being the colour');
+ok(/Colour \\u00b7 /.test(PAGE_SRC) || /Colour · /.test(PAGE_SRC),
+  'and the legend names the encoding out loud');
+
+const SMALL = PAGE_SRC.slice(PAGE_SRC.indexOf('function smallCells'), PAGE_SRC.indexOf('function niceMax'));
+ok(/COLOUR FOLLOWS THE CHILD, NEVER ITS RANK INSIDE ITS PARENT/.test(SMALL)
+  && /top\.forEach\(function \(k, i\) \{ col\[k\] = serCol\(i, false\); \}\)/.test(SMALL),
+  'side by side ranks the children ONCE across the whole tree: colouring each ring by position '
+  + 'would make Reiss blue in one donut and Superdry blue in the next');
+ok(/parts\.sort\(function \(a, b\) \{ return a\.rank - b\.rank; \}\)/.test(SMALL),
+  'and every ring reads its slices in the same order, so the eye compares like with like');
+ok(/var SER_PAL = \['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'\]/.test(PAGE_SRC),
+  'the categorical palette is the repo\'s validated set in the Deck Generator\'s order — one rank, '
+  + 'one colour, across the FCC');
+ok(/SER_OTHER = \{ light: '#9aa3ad', dark: '#6b7482' \}/.test(PAGE_SRC),
+  'and a fold is grey, because a remainder is not a category and should not be in the race');
+
+ok(/if \(sm && CFORM === 'line'\)/.test(PAGE_SRC) && /a line chart's table is the CROSS-TAB/.test(PAGE_SRC),
+  'the table under a line chart is the cross-tab it was drawn from, not the split\'s totals');
+ok(/if \(CFORM === 'line'\) \{\n      var sm = lineData\(\);/.test(PAGE_SRC),
+  'and so is the copied / exported one');
+ok(/cannot sit on a time axis and is/.test(PAGE_SRC) && /cannot sit on a time axis and are/.test(PAGE_SRC),
+  'the verdict names the undated rows the line could not plot, in the right number');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

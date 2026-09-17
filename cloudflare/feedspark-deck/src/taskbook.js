@@ -747,6 +747,74 @@ export function flattenNested(tree, out, trail) {
   return out;
 }
 
+/* MONTH x CATEGORY, for the line form (Ray, 17 Sep 2026: "I like pie charts, donut charts, and
+   line charts … merge the lines together and dissect them more easily side by side").
+
+   A line needs an ORDERED x, and month is the only ordered dimension in this book — so the line
+   form always reads months across the bottom and puts the chosen split in the SERIES. That makes
+   it the one form here where colour means IDENTITY rather than billable vs non-billable, which is
+   why the page says so in the legend and every point keeps its own billable split in the tooltip:
+   the module's rule is that the two never MERGE, not that they must always be the colours.
+
+   UNDATED ROWS ARE NOT PLOTTED, and are counted back. A task with no date has no place on a time
+   axis, and dropping it silently would leave the lines summing to less than the book with nothing
+   on screen saying why.
+
+   A MONTH A SERIES MISSED IS A ZERO, NOT A GAP. The months come from the whole view, so every
+   series is read against the same x — two lines with different gaps would otherwise read as the
+   same shape at different speeds. */
+export function seriesByMonth(rows, dim, cap = 6) {
+  const months = new Set();
+  const byKey = new Map();
+  let undated = 0, placements = 0, dated = 0;
+  for (const t of rows) {
+    const m = monthOf(t.d);
+    if (!m) { undated++; continue; }
+    dated++;
+    months.add(m);
+    for (const k of dimKeys(t, dim)) {
+      placements++;
+      let s = byKey.get(k);
+      if (!s) { s = { k, hours: 0, bill: 0, nonbill: 0, n: 0, pts: new Map() }; byKey.set(k, s); }
+      s.hours += t.hours; s.bill += t.bill; s.nonbill += t.nonbill; s.n++;
+      let p = s.pts.get(m);
+      if (!p) { p = { hours: 0, bill: 0, nonbill: 0, n: 0 }; s.pts.set(m, p); }
+      p.hours += t.hours; p.bill += t.bill; p.nonbill += t.nonbill; p.n++;
+    }
+  }
+  const ms = [...months].sort();
+  let all = [...byKey.values()]
+    .sort((a, b) => (b.hours - a.hours) || (b.n - a.n) || String(a.k).localeCompare(String(b.k)));
+  let folded = 0;
+  // the tail folds into ONE line rather than being dropped — the same rule the bars follow, so a
+  // total read off the lines still matches the total read off the columns
+  if (cap && all.length > cap) {
+    const keep = all.slice(0, cap - 1), rest = all.slice(cap - 1);
+    folded = rest.length;
+    const o = { k: `Other (${rest.length} more)`, hours: 0, bill: 0, nonbill: 0, n: 0, pts: new Map(), fold: rest.length };
+    for (const s of rest) {
+      o.hours += s.hours; o.bill += s.bill; o.nonbill += s.nonbill; o.n += s.n;
+      for (const [m, p] of s.pts) {
+        let q = o.pts.get(m);
+        if (!q) { q = { hours: 0, bill: 0, nonbill: 0, n: 0 }; o.pts.set(m, q); }
+        q.hours += p.hours; q.bill += p.bill; q.nonbill += p.nonbill; q.n += p.n;
+      }
+    }
+    all = keep.concat([o]);
+  }
+  const series = all.map((s) => ({
+    k: s.k, hours: r2(s.hours), bill: r2(s.bill), nonbill: r2(s.nonbill), n: s.n, fold: s.fold || 0,
+    billPct: s.hours ? Math.round((s.bill / s.hours) * 1000) / 10 : 0,
+    points: ms.map((m) => {
+      const p = s.pts.get(m);
+      return p
+        ? { m, hours: r2(p.hours), bill: r2(p.bill), nonbill: r2(p.nonbill), n: p.n }
+        : { m, hours: 0, bill: 0, nonbill: 0, n: 0 };
+    }),
+  }));
+  return { months: ms, series, undated, folded, multi: placements > dated, placements };
+}
+
 export function groupBy(rows, dim, cap) {
   const m = new Map();
   let placements = 0;
