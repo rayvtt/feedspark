@@ -1050,5 +1050,125 @@ ok(/var rows = paneRows\(tab\);/.test(PG),
 ok(/runs on top of the search above/.test(PG),
   'an empty result distinguishes "nothing matched at all" from "this filter narrowed it to nothing"');
 
+// ---------------------------------------------------------------------------------------------
+// MASS TAGGING ACTS ON THE ROWS ON SCREEN (Ray, 17 Sep 2026: "this button Tag all: > should only
+// tag the filtered row instead of all rows"). There are TWO filters on this page and the bulk bar
+// read the top one, so a pane search narrowed to 12 rows offered — and would have written — 660.
+// The functions are lifted REAL, with the real tag store, so what is asserted is the row set the
+// button actually writes to, not a re-implementation of it.
+// ---------------------------------------------------------------------------------------------
+console.log('\n── mass tagging: the bulk bar writes to exactly what is painted');
+function liftLine(name) {
+  const re = new RegExp('^  function ' + name + '\\([^)]*\\) \\{.*\\}$', 'm');
+  const m = re.exec(PG);
+  if (!m) throw new Error('page: ' + name + ' (one-liner) not found');
+  return m[0];
+}
+const BAR = { hidden: true, innerHTML: '' };
+const SEEN = { saves: 0, toasts: [], undo: null };
+const TAGDEFS = [{ slug: 'urgent', label: 'Urgent', color: '#B42318', displaces: true },
+  { slug: 'agency', label: 'Agency work', color: '#2563EB', displaces: false }];
+const BULK = new Function('CAT_LABEL', 'sortRows', 'SORT', 'tagSave', 'toast', 'toastAct', 'defOf',
+  'DEFS', 'tagColor', 'esc', 'num', 'hrs', '$',
+  'var PQ = "", PQT = [], QCOMMA = "\\u0000", ME = "tester";\n'
+  + 'var TAB = "tasks", FT = [], FK = [], ACCOUNTS = [], TAGS = {}, Q = { raw: "" };\n'
+  + liftPageSrc('mergeCommaRuns') + '\n' + liftPageSrc('splitAlts') + '\n'
+  + liftPageSrc('orTerms') + '\n' + liftPageSrc('setPQ') + '\n'
+  + liftPageSrc('pqHay') + '\n' + liftPageSrc('pqMatch') + '\n'
+  + liftPageSrc('paneRows') + '\n'
+  + liftLine('taggable') + '\n' + liftPageSrc('setTags') + '\n' + liftLine('clearTags') + '\n'
+  + liftLine('bulkSrc') + '\n' + liftPageSrc('bulkRender') + '\n'
+  + liftPageSrc('bulkSnapshot') + '\n' + liftPageSrc('bulkUndo') + '\n' + liftPageSrc('bulkApply') + '\n'
+  + 'return { setPQ: setPQ, bulkSrc: bulkSrc, bulkRender: bulkRender, bulkApply: bulkApply,'
+  + ' tags: function () { return TAGS; },'
+  + ' set: function (o) {'
+  + '   if (o.TAB !== undefined) TAB = o.TAB;'
+  + '   if (o.FT) FT = o.FT;'
+  + '   if (o.q !== undefined) Q = { raw: o.q };'
+  + '   if (o.TAGS) TAGS = o.TAGS; } };'
+)(
+  M.CAT_LABEL,
+  (rows) => rows,
+  { tasks: { k: 'd', dir: -1 }, tickets: { k: 'd', dir: -1 }, accounts: { k: 'c', dir: 1 } },
+  () => { SEEN.saves++; },
+  (m) => SEEN.toasts.push(m),
+  (m, label, fn) => { SEEN.toasts.push(m); SEEN.undo = fn; },
+  (slug) => TAGDEFS.filter((d) => d.slug === slug)[0] || { slug, label: slug },
+  () => TAGDEFS,
+  (d) => d.color,
+  (x) => String(x == null ? '' : x),
+  (n) => String(n),
+  (n) => String(Math.round((Number(n) || 0) * 100) / 100),
+  () => BAR
+);
+
+const brow = (o) => Object.assign({ id: 0, title: '', client: 'Reiss', market: 'GB', owner: 'Febin',
+  am: 'Ray', status: 'Done', note: '', cat: 'opt', hours: 1, tags: [] }, o);
+const BROWS = [];
+for (let i = 1; i <= 12; i++) BROWS.push(brow({ id: i, title: 'GMC disapproval fix ' + i }));
+for (let i = 13; i <= 60; i++) BROWS.push(brow({ id: i, title: 'Keyword optimisation ' + i }));
+
+BULK.set({ TAB: 'tasks', FT: BROWS, q: 'client:reiss', TAGS: {} });
+BULK.setPQ('gmc');
+eq(BULK.bulkSrc().length, 12,
+  'the bulk action reads the rows the TABLE is showing (12), not the grammar bar\'s 60');
+eq(BULK.bulkSrc().map((t) => t.id).slice(0, 3), [1, 2, 3], 'and they are the matching rows themselves');
+BULK.bulkRender();
+ok(!BAR.hidden && /<b>12<\/b>/.test(BAR.innerHTML),
+  'the bar states 12 — the count and the write can never be two different row sets');
+ok(/matching/.test(BAR.innerHTML) && /gmc/.test(BAR.innerHTML),
+  'and NAMES the filter that produced it: "660 rows in this search" beside a table showing 12 is '
+  + 'how the wrong row set went unnoticed');
+ok(/Tag these rows/.test(BAR.innerHTML) && !/Tag all/.test(BAR.innerHTML),
+  'the label no longer says "Tag all" — the words were part of the promise it broke');
+
+BULK.bulkApply('urgent');
+eq(Object.keys(BULK.tags()).length, 12, 'applying it writes 12 records, not 60');
+ok(Object.keys(BULK.tags()).every((k) => Number(k) <= 12), 'and only the rows that matched');
+eq(SEEN.saves, 1, 'one save for the batch');
+
+ok(typeof SEEN.undo === 'function', 'a bulk write to the team\'s shared state offers an undo');
+SEEN.undo();
+eq(Object.keys(BULK.tags()).length, 0,
+  'which puts back exactly what was there — an absent record is restored as ABSENT, never as an '
+  + 'empty list, which would record a judgement nobody made');
+
+// row 5 already carries a person's judgement — the record AND the decorated row, exactly as
+// decorateTags hands it to the render
+BROWS[4].tags = ['agency'];
+BULK.set({ TAGS: { 5: { client: 'Reiss', tags: ['agency'], by: 'ray', at: 1 } } });
+BULK.bulkApply('urgent');
+eq(BULK.tags()['5'].tags, ['agency', 'urgent'], 'a bulk tag ADDS to what a person already set');
+SEEN.undo();
+eq(BULK.tags()['5'].tags, ['agency'], 'and the undo restores their record rather than clearing it');
+eq(Object.keys(BULK.tags()), ['5'], 'leaving the rows that had nothing with nothing');
+
+BULK.setPQ('');
+eq(BULK.bulkSrc().length, 60, 'with no pane filter it is the grammar bar\'s result, as before');
+BULK.bulkRender();
+ok(!BAR.hidden && / in this search/.test(BAR.innerHTML), 'and the wording says so');
+
+BULK.set({ q: '' });
+BULK.setPQ('gmc');
+BULK.bulkRender();
+ok(!BAR.hidden && /<b>12<\/b>/.test(BAR.innerHTML),
+  'a PANE-ONLY filter shows the bar — Ray\'s own case, where keying on the top bar alone showed '
+  + 'nothing at all');
+BULK.setPQ('');
+BULK.bulkRender();
+ok(BAR.hidden, 'and with neither filter set there is nothing to bulk-tag, so no bar');
+
+BULK.set({ TAB: 'tickets', q: 'client:reiss' });
+BULK.setPQ('gmc');
+eq(BULK.bulkSrc().length, 0, 'off the Tasks tab there are no taggable rows on screen');
+BULK.bulkRender();
+ok(BAR.hidden, 'so the bar is not offered there at all');
+
+ok(/function pane\(\)[\s\S]{0,400}bulkRender\(\);/.test(PG),
+  'pane() refreshes the bar — a tab switch or a change to the pane filter never reaches apply()');
+const BULKSRC = PG.slice(PG.indexOf('function bulkSrc'), PG.indexOf('function rulesOpen'));
+ok(!/FT\.filter\(taggable\)/.test(BULKSRC),
+  'and nothing in the bulk block reads FT directly any more — one row resolver, paneRows');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
