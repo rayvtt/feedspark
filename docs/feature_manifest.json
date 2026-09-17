@@ -6951,6 +6951,18 @@
       "pattern": "window.FCCSolo = soloModal",
       "min": 1,
       "pr": 430
+    },
+    {
+      "name": "Task Manager: mass tagging acts on the rows ON SCREEN (paneRows), not the grammar bar's wider result (Ray, 17 Sep 2026: 'this button Tag all: > should only tag the filtered row instead of all rows')",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function bulkSrc() { return TAB === 'tasks' ? paneRows('tasks').filter(taggable) : []; }",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: a bulk tag write is undoable for as long as its toast is up, and restores an absent record as ABSENT",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function bulkSnapshot",
+      "min": 1
     }
   ]
 }

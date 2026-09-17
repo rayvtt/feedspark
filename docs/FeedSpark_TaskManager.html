@@ -1453,34 +1453,61 @@ window.addEventListener('load',restore);
     });
   }
 
-  /* MASS TAGGING (Ray: "mass tagging across all rows if possible"). The search already resolves a
-     row set, so the bulk bar simply acts on WHATEVER IS ON SCREEN — no separate selection model to
-     get out of step with the filter. It states the count and the hours before doing anything, and
-     it never silently reaches past the rows in view. */
+  /* MASS TAGGING (Ray: "mass tagging across all rows if possible"). It acts on EXACTLY THE ROWS ON
+     SCREEN and nothing else — bulkSrc is paneRows('tasks'), the same call the table, the totals and
+     the Excel export make, so there is still only one row set and no second selection model to
+     drift out of step with the filter. THERE ARE TWO FILTERS on this page (the grammar bar and the
+     plain filter above the table) and this bar read the first one alone, so a search narrowed to 12
+     rows offered to tag 660 (Ray, 17 Sep 2026: "this button Tag all: > should only tag the filtered
+     row instead of all rows"). EITHER filter now counts — a pane-only search was Ray's own case and
+     did not even show the bar — the bar NAMES the filter that produced its count, and it appears
+     only on the Tasks tab: tickets and accounts carry no taggable rows, so a bar there was the same
+     mistake wearing different clothes.
+     A bulk write lands in the team's shared state and nothing else on this page takes one back, so
+     the last one is reversible for as long as its toast is up. */
+  function bulkSrc() { return TAB === 'tasks' ? paneRows('tasks').filter(taggable) : []; }
   function bulkRender() {
     var bar = $('bulkbar'); if (!bar) return;
-    var can = FT.filter(taggable);
+    var can = bulkSrc();
     var s = 0; can.forEach(function (t) { s += t.hours; });
-    var live = Q.raw.trim();
-    if (!live || !can.length) { bar.hidden = true; return; }
+    if ((!Q.raw.trim() && !PQT.length) || !can.length) { bar.hidden = true; return; }
     bar.hidden = false;
+    // name the filter that produced the count: "660 rows in this search" printed beside a table
+    // showing 12 is how the wrong row set went unnoticed in the first place
+    var scope = PQT.length ? 'matching \u201c' + esc(PQ) + '\u201d' : 'in this search';
+    var these = 'the ' + num(can.length) + ' row' + (can.length === 1 ? '' : 's') + ' shown';
     bar.innerHTML = '<b>' + num(can.length) + '</b> row' + (can.length === 1 ? '' : 's')
-      + ' in this search · ' + hrs(s) + ' h'
-      + '<span class="grow"></span><span style="color:var(--muted)">Tag all:</span>'
+      + ' ' + scope + ' \u00b7 ' + hrs(s) + ' h'
+      + '<span class="grow"></span><span style="color:var(--muted)">Tag these rows:</span>'
       + DEFS().map(function (d) {
-        return '<button type="button" class="btn sm" data-bulk="' + esc(d.slug) + '" title="Add “'
-          + esc(d.label) + '” to every row in this search">'
+        return '<button type="button" class="btn sm" data-bulk="' + esc(d.slug) + '" title="Add \u201c'
+          + esc(d.label) + '\u201d to ' + these + '">'
           + '<i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + esc(tagColor(d)) + ';margin-right:5px"></i>'
           + esc(d.label) + '</button>';
       }).join('')
-      + '<button type="button" class="btn sm" data-bulk="__clear" title="Remove the tags from every row in this search">Clear tags</button>';
+      + '<button type="button" class="btn sm" data-bulk="__clear" title="Remove the tags from ' + these + '">Clear tags</button>';
+  }
+  // the records of exactly the rows about to change. An absent record is snapshotted as null and
+  // restored by DELETING the key — putting back an empty tag list would record a judgement
+  // ("I looked, none apply") that nobody ever made.
+  function bulkSnapshot(rows) {
+    return rows.map(function (t) {
+      var k = String(t.id), r = TAGS[k];
+      return { k: k, rec: r ? JSON.parse(JSON.stringify(r)) : null };
+    });
+  }
+  function bulkUndo(snap) {
+    snap.forEach(function (p) { if (p.rec) TAGS[p.k] = p.rec; else delete TAGS[p.k]; });
+    tagSave();
+    toast('Undone \u2014 ' + num(snap.length) + ' row' + (snap.length === 1 ? '' : 's') + ' put back');
   }
   function bulkApply(slug) {
-    var can = FT.filter(taggable);
+    var can = bulkSrc();
     if (!can.length) return;
+    var snap = bulkSnapshot(can), msg;
     if (slug === '__clear') {
       can.forEach(function (t) { clearTags(t); });
-      toast('Cleared tags on ' + num(can.length) + ' rows');
+      msg = 'Cleared tags on ' + num(can.length) + ' row' + (can.length === 1 ? '' : 's');
     } else {
       var n = 0;
       can.forEach(function (t) {
@@ -1488,9 +1515,10 @@ window.addEventListener('load',restore);
         if (next.indexOf(slug) < 0) { next.push(slug); n++; }
         setTags(t, next);
       });
-      toast('Tagged ' + num(n) + ' row' + (n === 1 ? '' : 's') + ' “' + defOf(slug).label + '”');
+      msg = 'Tagged ' + num(n) + ' row' + (n === 1 ? '' : 's') + ' \u201c' + defOf(slug).label + '\u201d';
     }
     tagSave();
+    toastAct(msg, 'Undo', function () { bulkUndo(snap); });
   }
 
   /* KEYWORD RULES (Ray: "by either keyword"). A rule is a plain substring, never a regex from the
@@ -1829,7 +1857,6 @@ window.addEventListener('load',restore);
       + (s.n === 0 && live ? ' <span class="bad">— nothing matches; try fewer words, or a shorter <code>client:</code></span>' : '');
     $('c-tasks').textContent = ' ' + num(FT.length);
     dispRender();
-    bulkRender();
     $('c-tickets').textContent = ' ' + num(FK.length);
     $('c-accounts').textContent = ' ' + num(ACCOUNTS.length);
     try {
@@ -2288,6 +2315,20 @@ window.addEventListener('load',restore);
     t.textContent = msg; document.body.appendChild(t);
     setTimeout(function () { t.remove(); }, 2200);
   }
+  /* A toast that carries ONE action, used where a single click writes to the team's shared state
+     in bulk. The action lives exactly as long as the message does: an undo that is still sitting
+     there ten minutes later would take back work somebody has since done on top of it. */
+  function toastAct(msg, label, fn, ms) {
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);display:flex;align-items:center;gap:12px;max-width:calc(100vw - 24px);background:#1A365D;color:#fff;font:800 13px Lato,sans-serif;padding:9px 10px 9px 16px;border-radius:10px;z-index:120;box-shadow:0 8px 28px rgba(16,24,40,.28)';
+    var s = document.createElement('span'); s.textContent = msg; t.appendChild(s);
+    var b = document.createElement('button');
+    b.type = 'button'; b.textContent = label;
+    b.style.cssText = 'flex:0 0 auto;font:800 12px Lato,sans-serif;color:#1A365D;background:#fff;border:0;border-radius:7px;padding:7px 12px;cursor:pointer';
+    var tm = setTimeout(function () { t.remove(); }, ms || 9000);
+    b.onclick = function () { clearTimeout(tm); t.remove(); fn(); };
+    t.appendChild(b); document.body.appendChild(t);
+  }
   function copy(text, msg) {
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(function () { toast(msg); }, function () { fallbackCopy(text, msg); }); return; }
@@ -2474,6 +2515,10 @@ window.addEventListener('load',restore);
   function pane() {
     var body = $('pbody');
     pqWire();
+    // the bulk bar counts the rows this call is about to paint, so it is refreshed here rather
+    // than in apply() alone — a tab switch or a change to the filter above the table never reaches
+    // apply(), and a stale count on a bar that writes to the whole team is the bug itself
+    bulkRender();
     if (TAB === 'tasks') {
       $('pane-h').textContent = 'Tasks';
       $('pane-s').textContent = 'Every piece of work the reports database recorded against the book in this window. Click a row for the full record.';
