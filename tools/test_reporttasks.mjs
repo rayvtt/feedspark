@@ -1198,5 +1198,52 @@ const BULKSRC = PG.slice(PG.indexOf('function bulkSrc'), PG.indexOf('function ru
 ok(!/FT\.filter\(taggable\)/.test(BULKSRC),
   'and nothing in the bulk block reads FT directly any more — one row resolver, paneRows');
 
+// ---------------------------------------------------------------------------------------------
+// THE TAGS & RULES PANEL, REORGANISED (Ray, 17 Sep 2026: "love this, reorganise and make the tab
+// cleaner pls"). Two columns, one line per row, and the labels that were repeated on every row
+// promoted to column headings. The assertions that matter are the CLASS COLLISION (the table
+// already owns .tg-add and .tg-cell — inheriting the latter's 210px cap is what wrapped every
+// rule onto two lines) and that nothing was quietly dropped on the way.
+// ---------------------------------------------------------------------------------------------
+console.log('\n── the Tags & rules panel');
+const PANEL = PG.slice(PG.indexOf('function rulesOpen'), PG.indexOf('var TAG_COLORS = TAG_PAL'));
+ok(PANEL.length > 1000, 'the panel builder is where it was');
+
+ok(!/class="tg-(add|cell|grid|cols|sec|hint|k|n|ln|nm|note|empty|tags|rules|src|w)"/.test(PANEL)
+  && !/class="tg-\w+ /.test(PANEL),
+  'every class the panel paints is tgd-, never tg- — the TABLE owns .tg-add (the row\'s "+ tag" '
+  + 'pill) and .tg-cell (capped at 210px), and borrowing those names styled the panel as pills '
+  + 'and wrapped every rule onto two lines');
+ok(/#tgbd \.tgd-cols\{display:grid/.test(PG) && /max-width:880px\)\{#tgbd \.tgd-cols\{grid-template-columns:minmax\(0,1fr\)/.test(PG),
+  'tags and rules sit side by side, and stack on a narrow screen');
+ok(/#tgbd \.bd-box\{[\s\S]{0,200}width:min\(880px/.test(PG), 'the panel widened to hold both columns');
+ok(/#tgbd \.tgd-add select\{min-width:0;max-width:100%\}/.test(PG),
+  'a select sizes to its widest OPTION unless told not to — 99px of sideways overflow on a phone');
+
+eq((PANEL.match(/displaces the plan<\/label>/g) || []).length, 0,
+  'the words "displaces the plan" are no longer printed once per tag');
+ok(/class="tgd-k">Displaces</.test(PANEL), 'they are the column heading, said once');
+ok(/aria-label="' \+ esc\(d\.label\) \+ ' displaces the plan"/.test(PANEL),
+  'but each checkbox keeps its own accessible name — a column heading is not read out per row');
+ok(/class="tgd-k">Matches<\/div><div class="tgd-k">By hand</.test(PANEL),
+  'the two rule counts became headed columns, so the numbers line up and can be compared');
+ok(/tgd-n" title="Already tagged by a person/.test(PANEL),
+  'and "set by hand, untouched" survives as the column\'s tooltip rather than prose on every row');
+ok(/pv\.held \? num\(pv\.held\) : '—'/.test(PANEL), 'a rule holding nothing back reads — , not 0');
+
+ok(/<select id="tg-sugg" class="tgd-src">/.test(PANEL) && /Start from a common title/.test(PANEL),
+  'the twelve common titles are the rule builder\'s own source list, not a wall of chips below it');
+ok(/tot\.slice\(0, 12\)/.test(PANEL), 'all twelve are still offered — nothing was dropped to save room');
+ok(/x\.n\) \+ ' tasks · ' \+ hrs\(x\.h\)/.test(PANEL), 'each still carries its task count and hours');
+ok(/el\.selectedIndex = 0;/.test(PANEL), 'picking one fills the word box and resets: it is a source list, not a setting');
+ok(/\$\('tg-q'\)\.value = String\(el\.value\)\.replace\(\/:\$\/, ''\);/.test(PANEL),
+  'and it fills the box rather than creating a rule, so the preview is seen before anything is saved');
+ok(!/data-sugg/.test(PANEL), 'the old chip handler went with the chips — no dead branch left behind');
+
+ok(/id="tg-list"/.test(PANEL) && /id="tg-rules"/.test(PANEL) && /id="tg-new"/.test(PANEL)
+  && /id="tg-addtag"/.test(PANEL) && /id="tg-q"/.test(PANEL) && /id="tg-on"/.test(PANEL)
+  && /id="tg-tag"/.test(PANEL) && /id="tg-addrule"/.test(PANEL) && /id="tg-prev"/.test(PANEL),
+  'every control the panel had is still there — this was a reorganisation, not a cut');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
