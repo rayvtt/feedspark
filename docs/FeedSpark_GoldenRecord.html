@@ -85,6 +85,13 @@ window.addEventListener('load',restore);
   .st-unreachable{background:#FDECEC;color:var(--risk);border:1px dashed var(--risk)}
   .est-score{font-size:15px;font-weight:900;flex:none;min-width:44px;text-align:right;font-variant-numeric:tabular-nums}
   .est-meta{font-size:11px;color:var(--muted);font-weight:700;margin-left:auto;text-align:right;line-height:1.35}
+  /* two scores per market, carefully told apart (Ray, 17 Sep 2026: "carefully label them so we
+     don't mistake. Feed scorecard and content quality score") — a bare pair of numbers side by
+     side reads as one confusing figure, so each carries its own short caption underneath */
+  .est-scores{display:flex;gap:10px;flex:none}
+  .est-su{display:flex;flex-direction:column;align-items:flex-end;min-width:40px;cursor:default}
+  .est-su b{font-size:15px;font-weight:900;line-height:1.15;font-variant-numeric:tabular-nums}
+  .est-su span{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
   /* alerts */
   .al-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-top:1px dashed var(--line);flex-wrap:wrap}
   .al-row:first-child{border-top:none}
@@ -950,7 +957,10 @@ window.addEventListener('load',restore);
           h += '<div class="est-mkt' + (SEL === k ? ' sel' : '') + '" data-k="' + esc(k) + '">' +
             '<span class="mkt-code">' + chChip() + esc(String(f.mkt).toUpperCase()) + '</span>' +
             '<span class="st-pill st-' + st + '">' + (st === 'never' ? 'not scanned' : st) + '</span>' +
-            (f.score != null ? '<span class="est-score" style="color:' + scoreCol(f.score) + '" title="Golden Record score — weighted attribute completeness">' + f.score + '</span>' : '') +
+            '<span class="est-scores">' +
+            (f.score != null ? '<span class="est-su" title="Feed scorecard — weighted attribute completeness against Google’s product data spec, out of 100"><b style="color:' + scoreCol(f.score) + '">' + f.score + '</b><span>feed</span></span>' : '') +
+            (f.q != null ? '<span class="est-su" title="Content quality score — what is actually IN the free-text fields (title, description, highlights…), out of 100"><b style="color:' + scoreCol(f.q) + '">' + f.q + '</b><span>content</span></span>' : '') +
+            '</span>' +
             (miss ? '<span class="st-pill st-crit" title="Required attributes missing from the feed: ' + esc((f.reqMissing || []).join(', ')) + '">' + miss + ' req missing</span>' : '') +
             '<span class="est-meta">' + (f.t ? fmt(f.rows) + ' rows · ' + ago(f.t) : (f.err ? esc(f.err).slice(0, 40) : '—')) +
             ((f.nCrit || f.nWarn) ? '<br>' + (f.nCrit ? f.nCrit + ' crit ' : '') + (f.nWarn ? f.nWarn + ' warn' : '') : '') + '</span>' +

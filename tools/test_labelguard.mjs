@@ -1155,6 +1155,28 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
 }
 
 {
+  // ---- two scores per market on the Estate scorecard (Ray, 17 Sep 2026: "Surface content
+  // quality score directly in the dossier scorecard as well, next to the normal score. So
+  // there should be two scores appearing for each market, each brand. Obviously, carefully
+  // label them so we don't mistake. Feed scorecard and content quality score."). The estate
+  // grid previously showed only f.score (Golden Record completeness); the same /api/golden/
+  // estate payload already carries f.q (content quality, written by the PUT /api/golden/
+  // quality handler onto goldenidx) — this only wires up a read the page already had access to.
+  console.log('\n— estate scorecard: two labelled scores per market —');
+  const page2 = readFileSync(new URL('../docs/FeedSpark_GoldenRecord.html', import.meta.url), 'utf8');
+  ok('the feed score is captioned, not a bare number', /<span>feed<\/span>/.test(page2));
+  ok('the content-quality score is captioned as a different thing entirely', /<span>content<\/span>/.test(page2));
+  ok('each score names itself in full on hover, so the short caption is never the only explanation',
+    /Feed scorecard — weighted attribute completeness/.test(page2) && /Content quality score — what is actually IN the free-text fields/.test(page2));
+  ok('the two scores read the SAME estate payload — f.score and f.q side by side, never a second fetch',
+    /f\.score != null \? '<span class="est-su"/.test(page2) && /f\.q != null \? '<span class="est-su"/.test(page2));
+  ok('a market not yet analysed for quality shows only the feed score, never a fabricated content figure',
+    /'<span class="est-su" title="Content quality score/.test(page2));
+  ok('both scores use the SAME colour bands (scoreCol) — a reader learns one legend, not two',
+    (page2.match(/scoreCol\(f\.score\)/g) || []).length >= 1 && (page2.match(/scoreCol\(f\.q\)/g) || []).length >= 1);
+}
+
+{
   // ---- the scan's PROGRESS, wired end to end (Ray, 16 Sep 2026: "allow the user to see a
   // progress bar indicating how long it will take to scan the feed quality"). A bar needs the
   // size of the read up front, so the worker forwards the upstream length and the page reads

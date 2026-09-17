@@ -459,6 +459,19 @@ prep for client demo").
   `?client=` deep-link the dossier's Golden Record snapshot and the other guard pages use opens a
   folded card before scrolling to and outlining it — a link that exists to be looked at can never
   land on a card closed shut.
+- **Two scores per market, carefully told apart** (Ray, 17 Sep 2026: *"Surface content quality
+  score directly in the dossier scorecard as well, next to the normal score. So there should be
+  two scores appearing for each market, each brand. Obviously, carefully label them so we don't
+  mistake. Feed scorecard and content quality score"*). Each `.est-mkt` row previously showed only
+  `f.score` (the Golden Record completeness score); the SAME `/api/golden/estate` payload already
+  carries `f.q` (content quality, written onto `goldenidx` by the `/api/golden/quality` PUT
+  handler this section §9.6 describes) — nothing new to fetch, just a read the row wasn't using.
+  Both now render side by side as a captioned pair — a bold number over a short uppercase label
+  (`feed` / `content`), each with its own full-sentence tooltip on hover — rather than two bare
+  numbers a reader could swap by mistake. Both use the same `scoreCol()` bands the rest of the
+  page already uses for these two figures, so there is one colour legend to learn, not two. A
+  market not yet analysed for content quality shows only the feed score (never a fabricated
+  content figure); a market never scanned at all shows neither.
 
 Engine unit tests: `node tools/test_labelguard.mjs` (runs in `validate.yml` on every PR).
 

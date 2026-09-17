@@ -7192,6 +7192,12 @@
       "file": "docs/instr_collapse.html",
       "pattern": "[data-instr]",
       "min": 1
+    },
+    {
+      "name": "Golden Record: the Estate scorecard shows TWO labelled scores per market — feed scorecard and content quality — never a bare unlabelled pair (Ray, 17 Sep 2026: 'Obviously, carefully label them so we don't mistake. Feed scorecard and content quality score')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "class=\"est-scores\"",
+      "min": 1
     }
   ]
 }
