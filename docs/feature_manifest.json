@@ -6713,14 +6713,14 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "e.detail&&e.detail.user&&!isOpen('l')",
       "min": 1,
-      "pr": 0
+      "pr": 427
     },
     {
       "name": "Cockpit: the hours widget marks which dock calls came from a click",
       "file": "docs/hours_widget.html",
       "pattern": "user: !!(opts && opts.user)",
       "min": 1,
-      "pr": 0
+      "pr": 427
     }
   ]
 }
