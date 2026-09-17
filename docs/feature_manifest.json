@@ -6698,6 +6698,75 @@
       "file": "docs/xlsx_engine.js",
       "pattern": "function readCsv",
       "min": 1
+    },
+    {
+      "name": "Present: ONE RENDERER — the deck is built from opHtml, the sheet's and the PDF's own document",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "doc.innerHTML=opHtml(name,b,p,mkts,got)",
+      "pr": 0
+    },
+    {
+      "name": "Present: the one-pager's data load is shared with the sheet, never a second set of endpoints",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function opLoad",
+      "pr": 0
+    },
+    {
+      "name": "Present: opHtml RETURNS the document so two surfaces can render it",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function opHtml",
+      "pr": 0
+    },
+    {
+      "name": "Present: THE ANIMATION MAY NOT COMPUTE — a counted number ends on the one-pager's own string",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function showNum",
+      "pr": 0
+    },
+    {
+      "name": "Present: a long section pans rather than being clipped, and its dwell grows to cover the pan",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "return 3600+Math.min(9000",
+      "pr": 0
+    },
+    {
+      "name": "Present: sections split on the one-pager's OWN sub-headings, never on a height guess",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "subs=sec.querySelectorAll('.op-h4')",
+      "pr": 0
+    },
+    {
+      "name": "Present: pinned-header offsets are measured, not hard-coded",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function showStick",
+      "pr": 0
+    },
+    {
+      "name": "Present: the pinned header's stacking context outranks the transformed body rows",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "#dz-show .op-tbl thead{position:relative;z-index:5}",
+      "pr": 0
+    },
+    {
+      "name": "Cockpit: ONE client filter — the panel's brand picker writes itState.clients, the board's chips move the panel",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "window.FCCFilterClient=filterToClient",
+      "min": 1,
+      "pr": 425
+    },
+    {
+      "name": "Cockpit: only a real pick propagates — opening the rail never re-filters the board",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "BRAND=sel.value; render(); syncBoard();",
+      "min": 1,
+      "pr": 425
+    },
+    {
+      "name": "Cockpit: a brand the board does not carry is refused and named, not silently self-cleaned",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "'not on the board'",
+      "min": 1,
+      "pr": 425
     }
   ]
 }

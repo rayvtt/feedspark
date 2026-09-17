@@ -199,6 +199,18 @@ ok(/function openBrief\(\)\{/.test(WF),
   'and it did not shadow the composer\u2019s own opener (a second openBrief silently broke ＋ New brief)');
 ok(/data-brief="title"/.test(WF) && /data-brief="keyword"/.test(WF),
   'a raised market is briefed for titles or keywords straight from the row');
+// Ray, 17 Sep 2026: "if the brand is selected, can the filter also be applied in the intake and
+// vice versa?" — ONE client filter on the page, written from both ends, never a second one.
+ok(/window\.FCCFilterClient\s*=\s*filterToClient/.test(WF),
+  'the panel filters Intake through one named entry point');
+ok(/function filterToClient\(name\)\{[\s\S]{0,420}itState\.clients=\[name\]/.test(WF),
+  'and it writes the SAME itState.clients the chips and the \u25be menu write');
+ok(/if\(!allIntake\(\)\.some\(function\(r\)\{ return r\.client===name; \}\)\)return false;/.test(WF),
+  'a brand the board does not carry is refused, not silently self-cleaned by the filter control');
+ok(/sel\.addEventListener\('change',function\(\)\{ BRAND=sel\.value; render\(\); syncBoard\(\); \}\)/.test(WF),
+  'only a REAL pick propagates — opening the rail must not re-filter the board behind the reader');
+ok(/NOBOARD\)parts\.push\('not on the board'\)/.test(WF),
+  'and when the board cannot follow, the panel says so');
 
 console.log('\n── the standalone module is really gone');
 ok(!fs.existsSync(path.join(root, 'docs/FeedSpark_Playbook.html')), 'the /playbook page is deleted');
