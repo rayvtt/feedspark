@@ -6589,6 +6589,55 @@
       "pattern": "var slug=h.replace(/[?#].*$/,\"\")",
       "min": 1,
       "pr": 420
+    },
+    {
+      "name": "Volume panel: New products is its own right-rail panel beside the review",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "data-tab=\"volume\"",
+      "min": 1,
+      "pr": 0
+    },
+    {
+      "name": "Volume panel: the raise is a BACKLOG since the last title/keyword work, not a calendar cohort",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function pbRaise(",
+      "min": 1,
+      "pr": 0
+    },
+    {
+      "name": "Volume panel: the running month is never counted into a backlog",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function pbLastOpt(",
+      "min": 1,
+      "pr": 0
+    },
+    {
+      "name": "Volume panel: the product-type breakdown of feed arrivals",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function pbCatMix(",
+      "min": 1,
+      "pr": 0
+    },
+    {
+      "name": "Volume panel: a raised market briefs titles or keywords straight into Intake",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function briefCohort(",
+      "min": 1,
+      "pr": 0
+    },
+    {
+      "name": "Cockpit: ONE entry into the brief composer, shared by the rail and every module deep link",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "window.FCCBrief=briefFromModule",
+      "min": 1,
+      "pr": 0
+    },
+    {
+      "name": "Cockpit: the composer's own opener is not shadowed (a second openBrief broke + New brief)",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function openBrief(){",
+      "min": 1,
+      "pr": 0
     }
   ]
 }

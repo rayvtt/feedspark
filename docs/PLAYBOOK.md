@@ -31,6 +31,52 @@ lives behind the module link at the foot of the section.
    tasks each) that this one carries nothing of. One peer with one task is somebody trying
    something once, not a practice; BAU admin (`tech`, `account`) is never cross-pollinated onto a
    client call. Each gap carries a **→ Brief**.
+> **The right rail has two panels (17 Sep 2026).** Ray: *"bring the same new product volume data
+> into the Workflow module as well and appears on the right (almost like Retainer) which doesn't
+> cover any text of the Workflow module."* **🧭 Review** is the three-section account read below;
+> **📦 New products** is the volume data given the whole rail — every wired Shopping feed, each
+> market's product-type breakdown open, and the raises with their briefs. Both are the same rail,
+> so both push the page and neither covers the board. The tab choice is per device
+> (`fcc-ck-tab`).
+
+### The raise — "a certain amount of time passes and a new product needs looking at"
+
+A cohort is raised once products have **piled up past a threshold with no title or keyword work
+since**. The obvious rule — age the last complete month's cohort — is a calendar artefact: that
+cohort is between 0 and 30 days old *by definition*, so a 30-day threshold would fire on one day a
+month and never again. So the raise measures the **backlog**: every arrival month after the month
+of the brand's last title/keyword plan task, aged from the oldest of them.
+
+- Default **21 days**, because that is the FCC's own keyword lead time (KWCal `LEAD_DAYS=21`) — a
+  backlog older than one lead time has already missed the cycle it belonged in. Chips offer
+  14 / 21 / 30 (`fcc-pb-raise`, per device).
+- The **running month is never counted** — a part-month is not a finished one.
+- Only the last **6 months** count; older than that is a catalogue rewrite, not new-product work,
+  and calling it new would inflate the brief.
+- A brand with **no plan read** is raised with *"none on record"*, never quietly assumed covered.
+- A market can be **both** a collection landing and a backlog — different statements, so it keeps
+  both marks.
+
+Each raised market carries **→ Titles** and **→ Keywords**, which open the Workflow composer
+prefilled with the cohort, its age and the product-type breakdown, and save through the ordinary
+brief path into Intake and the client's Project Plan.
+
+### Where they landed — the product-type breakdown
+
+Per market, from the daily churn history (`volhist.cats`, the first chevron level of each product's
+primary `g:product_type`). **This counts products *entering the feed*** — a wider measure than the
+first-seen cohort, since a product returning to stock arrives too — so the panel labels it for what
+it counts rather than borrowing the cohort's name. Top five plus `Other`; one `/api/volume` call
+per market, on demand in Review and filled automatically in the New products panel.
+
+### One way into the composer
+
+Every **→ Brief** in the rail calls `window.FCCBrief` — the same function module deep links
+(`/workflow?brief=`) land in. A brief raised here is a brief raised in Workflow: same draft, same
+`[ibfcode]` tokens, same save, same row filed into Intake and the plan. (Reloading the page to hand
+ourselves a query string would reach the identical function having thrown away the rail, the
+board's filters and the scroll position.)
+
 2. **New products.** Arrivals off each Shopping feed's `fs:date_of_birth` histogram
    (`/api/volume/arrivals`), as a share of the live catalogue. **10–20% is a collection landing**
    and is highlighted — Ray's rule verbatim; above 20% is the same signal louder ("major drop"),

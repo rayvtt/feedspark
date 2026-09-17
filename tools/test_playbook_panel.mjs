@@ -35,9 +35,11 @@ const eq = (a, b, m) => ok(a === b, m + '  (got ' + JSON.stringify(a) + ', want 
 const S = WF.indexOf('/* PBENGINE:START'), E = WF.indexOf('/* PBENGINE:END */');
 if (S < 0 || E < 0 || E < S) { console.error('✗ PBENGINE markers missing from docs/FeedSpark_Workflow.html'); process.exit(1); }
 const block = WF.slice(S, E);
-const names = ['pbClassify', 'pbCats', 'pbIndex', 'pbPractice', 'pbBand', 'pbArrivals', 'pbWeak', 'PB_TAX', 'PB_TIER'];
+const names = ['pbClassify', 'pbCats', 'pbIndex', 'pbPractice', 'pbBand', 'pbArrivals', 'pbWeak', 'PB_TAX', 'PB_TIER',
+  'pbRaise', 'pbCatMix', 'pbLastOpt', 'pbAgeDays', 'PB_RAISE_OPTS', 'PB_RAISE_DEF', 'PB_BACKLOG_MONTHS'];
 const EN = new Function(block + '\n;return {' + names.map((n) => n + ':' + n).join(',') + '};')();
-const { pbClassify, pbCats, pbIndex, pbPractice, pbBand, pbArrivals, pbWeak, PB_TAX, PB_TIER } = EN;
+const { pbClassify, pbCats, pbIndex, pbPractice, pbBand, pbArrivals, pbWeak, PB_TAX, PB_TIER,
+  pbRaise, pbCatMix, pbLastOpt, pbAgeDays, PB_RAISE_OPTS, PB_RAISE_DEF, PB_BACKLOG_MONTHS } = EN;
 
 console.log('\n── the classifier');
 eq(pbClassify('Keywords Optimisation - Cashmere - Marketing Planner - 0926'), 'keyword', 'a keyword optimisation is a keyword task');
@@ -120,6 +122,67 @@ eq(keys.filter((k) => k === 'image_link').length, 1, 'a missing attribute is lis
 ok(pbWeak(null).length === 0, 'an unscanned feed yields nothing — absent is not zero');
 ok(Object.keys(PB_TIER).filter((k) => PB_TIER[k] === 'req').length === 7, 'Google’s seven always-required attributes');
 
+console.log('\n\u2500\u2500 the raise: a backlog, not a calendar artefact');
+// Ray, 17 Sep 2026: "raise when a certain amount of time passes and a new product comes into the
+// feed and need to be looked at / briefed directly into Intake for optimisation such as (titles,
+// keywords)". The tempting rule — age the last complete month's cohort — can only ever be 0–30
+// days old, so a 30-day threshold would fire on one day a month. These pin the rule that replaced it.
+const FEED = (m, rows) => ({ client: 'Reiss', mkt: 'gb', dob: { rows: rows || 10000, m } });
+const MONTHS = { '2026-05': 200, '2026-06': 300, '2026-07': 400, '2026-08': 1500, '2026-09': 90 };
+eq(pbLastOpt([{ t: 'Title rewrite GB', d: '2026-06' }, { t: 'Overlay refresh', d: '2026-08' }]), '2026-06',
+  'the anchor is the last TITLE or KEYWORD task — overlay work is not title work');
+eq(pbLastOpt([{ t: 'Keywords Optimisation - Cashmere', d: '2026-07-14' }, { t: 'Title sweep', d: '2026-05' }]), '2026-07',
+  'a full date resolves to its month, and the newest wins');
+eq(pbLastOpt([]), '', 'a brand with no plan read has no anchor');
+
+const R = pbRaise(FEED(MONTHS), [{ t: 'Title rewrite', d: '2026-06' }], 21, NOW);
+eq(R.n, 1900, 'the backlog is every month AFTER the last optimisation — Jul + Aug, not one cohort');
+eq(R.from, '2026-07', 'aged from the OLDEST month still unworked');
+eq(R.to, '2026-08', 'up to the last complete one');
+eq(R.age, pbAgeDays('2026-07', NOW), 'and the age is how long that oldest month has been waiting');
+ok(R.age > 30, 'which can exceed a month — the whole point of not using the calendar cohort');
+eq(R.since, '2026-06', 'the raise names what it is measured against');
+ok(R.months.indexOf('2026-09') < 0, 'the RUNNING month is never counted — a part-month is not a finished one');
+ok(pbRaise(FEED(MONTHS), [{ t: 'Keyword sweep', d: '2026-09' }], 21, NOW) === null,
+  'work done this month clears the backlog — nothing to raise');
+ok(pbRaise(FEED(MONTHS), [{ t: 'Title rewrite', d: '2026-08' }], 21, NOW) === null,
+  'and work in the last complete month leaves nothing after it');
+const NOPLAN = pbRaise(FEED(MONTHS), [], 21, NOW);
+ok(NOPLAN && NOPLAN.since === '' && NOPLAN.n > 0,
+  'a brand with NO title or keyword task on record is raised, never quietly assumed covered');
+ok(pbRaise(FEED({ '2026-08': 1500 }), [], 30, NOW) === null,
+  'a cohort younger than the threshold is not raised');
+ok(pbRaise(FEED({ '2019-04': 9000 }), [], 21, NOW) === null,
+  'arrivals older than the backlog window are a catalogue rewrite, not new-product work');
+ok(pbRaise({ client: 'Reiss', mkt: 'gb' }, [], 21, NOW) === null, 'an unscanned feed raises nothing');
+eq(PB_RAISE_DEF, 21, 'the default threshold is the FCC\u2019s own keyword lead time');
+ok(PB_RAISE_OPTS.indexOf(PB_RAISE_DEF) >= 0 && PB_BACKLOG_MONTHS >= 3, 'the offered thresholds include the default');
+// monotonic: a longer threshold can only ever raise fewer markets, so the chips cannot surprise
+ok(PB_RAISE_OPTS.slice().sort((a, b) => a - b).every((d, i, arr) =>
+  i === 0 || !pbRaise(FEED(MONTHS), [], d, NOW) || !!pbRaise(FEED(MONTHS), [], arr[i - 1], NOW)),
+  'raising at a longer threshold implies raising at a shorter one');
+
+console.log('\n\u2500\u2500 where they landed: the product-type breakdown');
+const day = (back) => new Date(NOW - back * 86400000).toISOString().slice(0, 10);
+const HIST = [
+  { d: day(40), cats: [{ c: 'Ancient', in: 999 }] },                       // outside the window
+  { d: day(5), cats: [{ c: 'Dresses', in: 60 }, { c: 'Knitwear', in: 30 }, { c: 'Bags', in: 10 }] },
+  { d: day(2), cats: [{ c: 'Dresses', in: 40 }, { c: 'Shoes', in: 20 }, { c: 'Denim', in: 5 },
+    { c: 'Hats', in: 4 }, { c: 'Belts', in: 3 }, { c: 'Scarves', in: 2 }] },
+];
+const MIX = pbCatMix(HIST, 30, NOW);
+eq(MIX.total, 174, 'arrivals are summed across the window');
+ok(!MIX.rows.some((r) => r.c === 'Ancient'), 'and only inside it — a day older than the window is not counted');
+eq(MIX.rows[0].c, 'Dresses', 'biggest category first');
+eq(MIX.rows[0].n, 100, 'summed across days, not taken from the latest one');
+eq(Math.round(MIX.rows[0].share), 57, 'with its share of the window');
+eq(MIX.rows[MIX.rows.length - 1].c, 'Other', 'the tail folds into Other rather than running to 40 rows');
+ok(MIX.rows[MIX.rows.length - 1].other === true, 'and says so, so nobody reads it as a real category');
+eq(MIX.rows.length, 6, 'five named categories plus Other');
+eq(MIX.rows.reduce((a, r) => a + r.n, 0), MIX.total, 'Other carries the remainder exactly — the shares still add up');
+ok(pbCatMix([], 30, NOW) === null, 'no history is no answer (never an empty chart implying zero)');
+ok(pbCatMix([{ d: day(1), cats: [{ c: 'X', in: 0 }] }], 30, NOW) === null, 'and a window with no arrivals is the same');
+
 console.log('\n── the panel is wired into Workflow');
 ok(/id="fcc-hrs-dock"/.test(WF), 'the retainer read-out has a home in the LEFT rail');
 ok(/id="ck-r-body"/.test(WF) && /id="ck-brand"/.test(WF), 'the playbook is the RIGHT rail, with its own account picker');
@@ -128,6 +191,14 @@ ok(/body\.ck-l-on\{padding-left/.test(WF) && /body\.ck-r-on\{padding-right/.test
 ok(/\/api\/playbook/.test(WF) && /\/api\/volume\/arrivals/.test(WF) && /\/api\/golden\/estate/.test(WF),
   'all three sections read live routes, not baked figures');
 ok(PB_TAX.length >= 16, 'the strategy taxonomy came across whole');
+ok(/id="ck-tabs"/.test(WF) && /data-tab="volume"/.test(WF),
+  'New products is a panel of its own beside the review, in the rail that already pushes the page');
+ok(/window\.FCCBrief\s*=\s*briefFromModule/.test(WF),
+  'one entry into the composer — the rail and the module deep links call the same function');
+ok(/function openBrief\(\)\{/.test(WF),
+  'and it did not shadow the composer\u2019s own opener (a second openBrief silently broke ＋ New brief)');
+ok(/data-brief="title"/.test(WF) && /data-brief="keyword"/.test(WF),
+  'a raised market is briefed for titles or keywords straight from the row');
 
 console.log('\n── the standalone module is really gone');
 ok(!fs.existsSync(path.join(root, 'docs/FeedSpark_Playbook.html')), 'the /playbook page is deleted');
