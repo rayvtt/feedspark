@@ -78,8 +78,43 @@ ok(/class="ch" style="margin:0" data-instr/.test(read('FeedSpark_AIQuote.html'))
 
 // what must NOT be swept up: the chatbot's verdict is the answer to the question asked
 ok(!/data-instr/.test(read('FeedSpark_FeedChat.html')),
-  'Feed Chat\'s .verdict is the ANSWER, not an explainer — nothing there is collapsed, which is '
-  + 'why the opt-in is explicit rather than a class-wide rule');
+  'Feed Chat\'s .verdict is the ANSWER, not an explainer — nothing there is opted in');
+ok(/var SKIP='[^']*\.chat-log[^']*\.msg[^']*\.verdict[^']*'/.test(W),
+  'and the sentence rule can never reach it: the chat log, its messages and the verdict are excluded by class');
+
+console.log('-- the rule is the sentence count (Ray, 17 Sep 2026: "if any subtext is longer than 1 sentence - hide with [i] button pls across the platform")');
+// lift the counter and the rule out of the widget by name and run them on real specimens
+function lift(name) {
+  const re = new RegExp('^function ' + name + '\\(', 'm'); const m = re.exec(W);
+  if (!m) throw new Error('widget: ' + name + ' not found');
+  const end = W.indexOf('\n}\n', m.index); return W.slice(m.index, end + 3);
+}
+const R = new Function(lift('sentences') + lift('words') + lift('qualifies') + '\nreturn { sentences, words, qualifies };')();
+const el = (txt, attrs) => ({ textContent: txt, hasAttribute: (a) => !!(attrs && attrs[a]) });
+const GR = read('FeedSpark_GoldenRecord.html');
+const catSub = /<p class="cat-sub">([\s\S]*?)<\/p>/.exec(GR.slice(GR.indexOf('Feed scorecard')))[1].replace(/<[^>]+>/g, '');
+ok(R.sentences(catSub) === 3 && R.qualifies(el(catSub)),
+  'the Golden Record "03 Feed scorecard" subtext Ray pointed at is three sentences (the long "Every attribute carries … supplemental feed." is one) — it collapses (got ' + R.sentences(catSub) + ')');
+ok(R.sentences('Retainer burn-down and a profitability read per client.') === 1 && !R.qualifies(el('Retainer burn-down and a profitability read per client, with the block, the rate and the hours used side by side.')),
+  'one sentence stays visible, however long — a subtitle is a design element, not a wall of prose');
+ok(R.sentences('Sorted by open load and lowest score. Flagged rows are below the book average.') === 2,
+  'two sentences count as two');
+ok(R.sentences('Attributes e.g. colour, size — i.e. the apparel five vs. the rest, etc. — scored at 99.9% against Google\'s spec.') === 1,
+  'e.g. / i.e. / vs. / etc. / a decimal never end a sentence');
+ok(R.sentences('Step 1. Pick the client. Step 2. Run the scan.') === 2 && R.sentences('Reviewed by J. Smith on 16 Sep. 2026 for Dr. Jones.') === 1,
+  'numbered steps, initials, months and titles are not terminators');
+ok(R.sentences('Total: 42h. Used: 30h.') === 2 && !R.qualifies(el('Total: 42h. Used: 30h.')),
+  'a two-clause DATA line is two "sentences" but under a dozen words — never treated as an explainer');
+ok(R.qualifies(el('', { 'data-instr': true })) && R.qualifies(el('One short verdict line.', { 'data-instr': true })),
+  'data-instr collapses regardless of length — the lines Ray crossed out are explicit opt-ins');
+ok(/var SEL='[^']*p\.cat-sub[^']*p\.hint[^']*\.cat-h\+p[^']*h2\+p[^']*\[data-instr\]'/.test(W),
+  'the candidate set is every explainer position, not a class list: section subtexts, hints, the paragraph under a heading, the opt-in');
+ok(/if\(!qualifies\(el\)\)continue;/.test(W) && !/textContent\|\|''\)\.trim\(\)\.length<30\)continue/.test(W),
+  'the 30-character threshold is gone — the sentence rule decides, in both the sweep and the per-card grouping');
+ok(/function excluded\(el\)\{return !!\(el\.closest&&el\.closest\(SKIP\)\)\}/.test(W) && /if\(excluded\(el\)\)continue;/.test(W),
+  'content is excluded by ancestry — a table, form, list item, modal, chat log, ticket card or answer bubble is never collapsed');
+ok(/\[data-no-collapse\]'/.test(W), 'and data-no-collapse on an element OR any ancestor opts the whole subtree out');
+ok(!/location\.pathname\)\)return;/.test(W), 'no page is skipped wholesale — the rule is platform-wide, the exclusions are by class');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
