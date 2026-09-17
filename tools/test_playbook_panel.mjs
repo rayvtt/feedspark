@@ -36,8 +36,9 @@ const S = WF.indexOf('/* PBENGINE:START'), E = WF.indexOf('/* PBENGINE:END */');
 if (S < 0 || E < 0 || E < S) { console.error('✗ PBENGINE markers missing from docs/FeedSpark_Workflow.html'); process.exit(1); }
 const block = WF.slice(S, E);
 const names = ['pbClassify', 'pbCats', 'pbIndex', 'pbPractice', 'pbBand', 'pbArrivals', 'pbWeak', 'PB_TAX', 'PB_TIER',
-  'pbRaise', 'pbCatMix', 'pbLastOpt', 'pbAgeDays', 'PB_RAISE_OPTS', 'PB_RAISE_DEF', 'PB_BACKLOG_MONTHS'];
+  'pbRaise', 'pbCatMix', 'pbLastOpt', 'pbAgeDays', 'PB_RAISE_OPTS', 'PB_RAISE_DEF', 'PB_BACKLOG_MONTHS', 'pbSpark'];
 const EN = new Function(block + '\n;return {' + names.map((n) => n + ':' + n).join(',') + '};')();
+const { pbSpark } = EN;
 const { pbClassify, pbCats, pbIndex, pbPractice, pbBand, pbArrivals, pbWeak, PB_TAX, PB_TIER,
   pbRaise, pbCatMix, pbLastOpt, pbAgeDays, PB_RAISE_OPTS, PB_RAISE_DEF, PB_BACKLOG_MONTHS } = EN;
 
@@ -121,6 +122,58 @@ ok(!keys.includes('question_and_answer'), 'the conversational AI six are supplem
 eq(keys.filter((k) => k === 'image_link').length, 1, 'a missing attribute is listed once, not again from the coverage map');
 ok(pbWeak(null).length === 0, 'an unscanned feed yields nothing — absent is not zero');
 ok(Object.keys(PB_TIER).filter((k) => PB_TIER[k] === 'req').length === 7, 'Google’s seven always-required attributes');
+
+console.log('\n\u2500\u2500 the 12-month sparkline, and the red that left with it');
+/* Ray, 17 Sep 2026, sending the Volume module's own estate sparkline: "these new products alert
+   on the Playbook banner - can you replace with these bar chart instead and no need red
+   highlights". The rows used to be an amber wash, a red wash over it for a backlog, and a filled
+   NEW COLLECTION pill — which on a 28-market brand all sitting at 12-13% painted EVERY row the
+   same colour, so the highlight discriminated nothing. */
+{
+  const N = Date.UTC(2026, 8, 17);                       // 17 Sep 2026
+  const sp = pbSpark({ rows: 10000, m: { '2026-09': 90, '2026-08': 1500, '2026-06': 300 } }, N);
+  eq(sp.months.length, 12, 'twelve months come back');
+  eq(sp.months[11].k, '2026-09', 'the last one is the running month');
+  ok(sp.months[11].cur === true, 'and it is flagged as running, never plotted as finished');
+  ok(sp.months.slice(0, 11).every((x) => !x.cur), 'no other month is');
+  eq(sp.months[0].k, '2025-10', 'the window opens 11 months back');
+
+  // THE TRAP: dob.m only holds months that HAD arrivals. Slicing its keys would draw twelve bars
+  // that look consecutive and are not — July is missing here, and must still take a slot.
+  const keys = sp.months.map((x) => x.k);
+  eq(keys.indexOf('2026-07') >= 0, true, 'a month absent from the histogram still gets its slot');
+  eq(sp.months[keys.indexOf('2026-07')].n, 0, 'and reads zero, not a gap that closes up');
+  eq(sp.months[keys.indexOf('2026-08')].n, 1500, 'a month that had arrivals carries its count');
+  eq(sp.peak, 1500, 'the peak scales the bars');
+
+  // a window that crosses the year boundary
+  const y = pbSpark({ m: { '2025-12': 40 } }, Date.UTC(2026, 1, 3));
+  eq(y.months.map((x) => x.k).join(','),
+    '2025-03,2025-04,2025-05,2025-06,2025-07,2025-08,2025-09,2025-10,2025-11,2025-12,2026-01,2026-02',
+    'the calendar walk crosses a year end correctly');
+  eq(y.peak, 40, 'peak still found across the boundary');
+
+  ok(pbSpark(null, N) === null && pbSpark({}, N) === null,
+    'a feed with no first-seen histogram draws nothing rather than an empty chart');
+  const zero = pbSpark({ m: {} }, N);
+  eq(zero.peak, 0, 'an all-zero feed has no peak to divide by — the renderer floors it at 1');
+}
+
+console.log('\n\u2500\u2500 the red highlights really are gone');
+ok(!/\.ck-row\.hot\b/.test(WF), 'no .ck-row.hot rule survives');
+ok(!/\.ck-row\.raise\{/.test(WF), 'no .ck-row.raise wash survives');
+ok(!/ck-raised[^}]*color:var\(--risk/.test(WF), 'the cohort summary is no longer red');
+ok(!/ck-why\{[^}]*--risk/.test(WF), 'nor is the per-market backlog line');
+ok(!/class="ck-pill '\+\(a\.band/.test(WF), 'the per-row band pill is gone from the arrivals row');
+ok(/ck-spark/.test(WF) && /sparkHtml\(sp\)/.test(WF), 'the row draws the sparkline instead');
+/* ONE arrivals visual across the FCC: the rail borrows the Volume module's marks rather than
+   inventing a second set that could disagree with the page it links to. */
+const VOL = rd('docs/FeedSpark_Volume.html');
+ok(/\.ck-spark i\{[^}]*#2563EB/.test(WF) && /--vin[^;]*:\s*#2563EB/i.test(VOL) || /#2563EB/.test(VOL),
+  'it uses the Volume module\'s validated blue');
+ok(/\[data-theme=dark\] \.ck-spark i\{[^}]*#4C82E0/.test(WF), 'and its validated dark step');
+ok(/\.ck-spark i\.cur\{opacity:\.45\}/.test(WF), 'running month at the same .45 the estate table uses');
+ok(/still running/.test(WF), 'and the copy says the current month is still running');
 
 console.log('\n\u2500\u2500 the raise: a backlog, not a calendar artefact');
 // Ray, 17 Sep 2026: "raise when a certain amount of time passes and a new product comes into the

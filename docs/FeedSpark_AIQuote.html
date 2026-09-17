@@ -26,7 +26,9 @@ window.addEventListener('load',restore);
   @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
   :root{--orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;--ink:#333;--ink-2:#4a4a4a;
     --muted:#8a94a0;--line:#E6E6E6;--paper:#fff;--wash:#F7F7F5;--navy:#1A365D;--good:#15803D;--risk:#C0392B;
-    --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);--radius:14px}
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06);--radius:14px;
+    /* the Product Volume module's own validated pair — one arrivals blue across the FCC */
+    --vin:#2563EB;--grid:#ECECEA}
   *{box-sizing:border-box}
   body{margin:0;font-family:Lato,system-ui,sans-serif;color:var(--ink);background:var(--wash);line-height:1.5}
   .wrap{max-width:1280px;margin:0 auto;padding:0 22px}
@@ -246,7 +248,7 @@ window.addEventListener('load',restore);
 :root[data-theme=light]{color-scheme:light}
 :root[data-theme=dark]{color-scheme:dark;
   --ink:#E7E9ED;--ink-2:#B9BEC7;--muted:#828D9C;--line:#2C3039;--paper:#1C1F27;--wash:#101218;
-  --navy:#5B82BE;--orange-ink:#F0A44E;--good:#48D07E;--risk:#F1707A;
+  --navy:#5B82BE;--orange-ink:#F0A44E;--good:#48D07E;--risk:#F1707A;--vin:#4C82E0;--grid:#262A33;
   --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.42)}
 [data-theme=dark] body{background:var(--wash);color:var(--ink)}
 [data-theme=dark] .topbar{background:rgba(18,20,26,.9)}
@@ -377,6 +379,29 @@ window.addEventListener('load',restore);
   .tier.on{border-color:var(--orange);box-shadow:0 0 0 2px rgba(245,166,35,.25)}
   .tier .tag{position:absolute;top:-8px;right:8px;font-size:9.5px;font-weight:900;background:var(--orange);color:#fff;border-radius:100px;padding:1px 7px}
   .upd-sum{font-size:12.5px;font-weight:700;color:var(--ink-2)}
+  /* THE PRODUCT VOLUME BAR CHART, INSIDE THE QUOTE (Ray, 17 Sep 2026: "within AI quote the new
+     products — pull in the product volume bar chart pls to make it easier to convince for client —
+     make sure its organised"). The card used to be one column of text: a forecast sentence, an
+     override box and five price bands. A client cannot be talked out of "we don't get that many new
+     products" by a sentence, so the card is now TWO named halves — the EVIDENCE (what this feed has
+     actually done, month by month, drawn exactly as /volume draws it) and the COMMERCIAL (forecast,
+     override, bands, bundle). Proof on the left, price on the right; stacked under 880px. */
+  .upd-grid{display:grid;grid-template-columns:1fr;gap:12px;align-items:start}
+  @media (min-width:880px){ .upd-grid{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)} }
+  .upd-box{border:1px solid var(--line);border-radius:12px;padding:10px 14px 12px;background:var(--wash);min-width:0}
+  .upd-box.ucm{background:var(--paper)}
+  .upd-box .upd-fc{margin:0;border:0;background:transparent;padding:0} .upd-box .upd-tiers{margin:11px 0 8px}
+  .upd-kpis{display:flex;flex-wrap:wrap;gap:4px 20px;margin:7px 0 4px}
+  .upd-kpi b{display:block;font-size:17px;font-weight:900;line-height:1.2;color:var(--vin);font-variant-numeric:tabular-nums}
+  .upd-kpi span{display:block;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .upd-ch{display:block;width:100%;height:auto;margin-top:2px}
+  .upd-ch text{font-family:Lato,system-ui,sans-serif;fill:var(--muted);font-size:10px;font-weight:700}
+  .upd-ch .grid{stroke:var(--grid);stroke-width:1} .upd-ch .axis{stroke:var(--muted);stroke-width:1.2}
+  .upd-ch .bar{fill:var(--vin)} .upd-ch .bar.part{opacity:.45}
+  .upd-ch .val{font-size:9px;fill:var(--ink-2)}
+  .upd-foot{font-size:10.5px;font-weight:700;color:var(--muted);margin-top:7px;line-height:1.45}
+  .upd-foot a{color:var(--orange-ink);text-decoration:none;font-weight:900;white-space:nowrap}
+  .upd-foot code{font-size:10px;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:0 4px}
   /* quote types (UX pass — Ray, 11 Sep 2026: "the boxes are sized incorrectly and the details are
      probably too much"): the picker is an even grid; every service card is three rows — the choice
      (market chips / feed rows / hours), ONE muted settings strip (rate · setup · ✎ note) where every
@@ -667,7 +692,7 @@ window.addEventListener('load',restore);
 
   <div class="card" style="background:var(--wash)">
     <h3>How the numbers work</h3>
-    <div class="ch" style="margin:0">Volumes are pulled live from the client's Google feed and counted in <b>variant SKUs</b> — every SKU row in the feed, per product type (the product scope is always SKU level). Nothing is estimated. £ rates seed from the Tachyon catalogue (the same figures the Pricer uses) and save to your rate card; they are never invented and you can change any. The quote stays hidden until you reveal it, so you can screen-share the scope safely. The full hourly/retainer commercial model lives in the Pricer (▦ apps icon).</div>
+    <div class="ch" style="margin:0" data-instr>Volumes are pulled live from the client's Google feed and counted in <b>variant SKUs</b> — every SKU row in the feed, per product type (the product scope is always SKU level). Nothing is estimated. £ rates seed from the Tachyon catalogue (the same figures the Pricer uses) and save to your rate card; they are never invented and you can change any. The quote stays hidden until you reveal it, so you can screen-share the scope safely. The full hourly/retainer commercial model lives in the Pricer (▦ apps icon).</div>
   </div>
 </main>
 
@@ -938,13 +963,16 @@ window.addEventListener('load',restore);
   function ensureVolume(){ var k=volKey(); if(!CLIENT||VOL[k])return; VOL[k]={pending:true};
     fetch('/api/volume?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT)).then(function(r){return r.json()}).catch(function(){return null})
       .then(function(d){ var h=(d&&d.hist)||[], days=h.length, inS=0, outS=0; h.forEach(function(e){ inS+=+e.in||0; outS+=+e.out||0; });
-        VOL[k]=days?{days:days,inS:inS,outS:outS,perDay:inS/days,monthly:Math.round(inS/days*30.4),outMonthly:Math.round(outS/days*30.4),from:h[0].d,to:h[days-1].d,tracked:d&&d.tracked,basis:'churn'}
-                   :{days:0,tracked:d&&d.tracked};
+        /* the daily series is kept too (last 30 days, in/out only) — it is the chart the card falls
+           back to when a feed has no first-seen dates yet, and it costs nothing: same response */
+        var hist=h.slice(-30).map(function(e){ return {d:e.d,in:+e.in||0,out:+e.out||0}; });
+        VOL[k]=days?{days:days,inS:inS,outS:outS,perDay:inS/days,monthly:Math.round(inS/days*30.4),outMonthly:Math.round(outS/days*30.4),from:h[0].d,to:h[days-1].d,tracked:d&&d.tracked,basis:'churn',hist:hist}
+                   :{days:0,tracked:d&&d.tracked,hist:hist};
         /* FIRST-SEEN DATES WIN (Ray, 15 Sep 2026): the feed's own c:fs_date_of_birth histogram (voldob, read
            by the arrivals engine) gives a run-rate over complete months — steadier than a few days of churn */
         var st=null; try{ st=(d&&d.dob&&typeof FeedArrivals!=='undefined')?FeedArrivals.stats(d.dob,new Date(),d.dob.rows):null; }catch(e){ st=null; }
         if(st&&st.forecast&&st.forecast.month>0){ var v0=VOL[k]; VOL[k]={days:v0.days||1,inS:v0.inS||0,outS:v0.outS||0,perDay:v0.perDay||0,monthly:st.forecast.month,outMonthly:v0.outMonthly||0,from:v0.from||null,to:v0.to||null,tracked:d&&d.tracked,
-          basis:'dob',basisTxt:'the feed’s first-seen dates ('+st.forecast.basis+')',quarter:st.forecast.quarter,year:st.forecast.year}; }
+          basis:'dob',basisTxt:'the feed’s first-seen dates ('+st.forecast.basis+')',quarter:st.forecast.quarter,year:st.forecast.year,hist:v0.hist,stats:st}; }
         if(volKey()===k){ renderUpd(); foot(); } }); }
   function updForecast(){ var v=VOL[volKey()]; return (v&&v.days)?v:null; }
   function updExpected(){ var u=updRec(); if(u.est!=null&&u.est!=='')return +u.est||0; var f=updForecast(); return f?f.monthly:null; }
@@ -960,18 +988,79 @@ window.addEventListener('load',restore);
   function updWord(u,withP){ if(!u)return ''; var w='bundle '+u.label+' new SKUs / month'+(withP&&u.gbp!=null?' — '+money(u.gbp)+' / month':'');
     if(u.exp!=null)w+=' · '+(u.src==='estimate'?'estimate':'forecast')+' ~'+fmt(u.exp)+' new SKUs / month ('+fmt(u.exp*12)+' a year'+(u.fc&&u.src!=='estimate'?', from '+(u.fc.basisTxt||(u.fc.days+' days of feed arrivals'+(u.fc.days<14?' — indicative':''))):'')+')';
     return w+' — every new product is updated the month it lands, no quarterly re-quote'; }
+  function moLbl(k){ return QMON[+String(k).slice(5,7)-1]+' '+String(k).slice(2,4); }
+  /* ONE BAR CHART, DRAWN THE WAY /volume DRAWS IT (Ray, 17 Sep 2026) — same series, same peak
+     scaling, same validated blue, same translucent part-month, so the quote can never show a
+     client a shape the Product Volume module would disagree with. `rows` is [{lab,n,part,tip}];
+     a month with no arrivals is a REAL zero (the histogram is every live product's first-seen
+     month), so it draws as a minimum-height bar, never as a gap. */
+  function updBars(rows,every){
+    if(!rows.length)return '';
+    var W=600,H=150,T=17,B=H-24,L=4,R=4, peak=1;
+    rows.forEach(function(x){ if(x.n>peak)peak=x.n; });
+    var slot=(W-L-R)/rows.length, bw=Math.max(3,Math.min(34,slot-5)), s='', lab=every||Math.ceil(rows.length/6);
+    var y=B-(B-T);   // the peak gridline, labelled at the top so the bars keep the height
+    s+='<line class="grid" x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'"/>';
+    s+='<line class="axis" x1="'+L+'" y1="'+B+'" x2="'+(W-R)+'" y2="'+B+'"/>';
+    rows.forEach(function(x,i){
+      var cx=L+slot*i+(slot-bw)/2, h=Math.max(x.n?2:1,x.n/peak*(B-T));
+      s+='<rect class="bar'+(x.part?' part':'')+'" x="'+n2(cx)+'" y="'+n2(B-h)+'" width="'+n2(bw)+'" height="'+n2(h)+'" rx="2"><title>'+esc(x.tip||(x.lab+': +'+fmt(x.n)))+'</title></rect>';
+      if(x.n&&(rows.length<=13||i%lab===0))s+='<text class="val" x="'+n2(cx+bw/2)+'" y="'+n2(B-h-4)+'" text-anchor="middle">'+fmt(x.n)+'</text>';
+      if(i%lab===0||i===rows.length-1)s+='<text x="'+n2(L+slot*i+slot/2)+'" y="'+(H-9)+'" text-anchor="middle">'+esc(x.lab)+'</text>';
+    });
+    return '<svg class="upd-ch" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img" aria-label="New products per month">'+s+'</svg>';
+  }
+  function updKpi(v,l){ return '<div class="upd-kpi"><b>'+v+'</b><span>'+esc(l)+'</span></div>'; }
+  /* the EVIDENCE half: what this feed has actually done. First-seen months when the feed carries
+     fs:date_of_birth (the real answer), the daily in-flow when it does not (honest, and labelled
+     as the different measure it is), and a plain sentence when there is nothing yet. */
+  function updEvidence(){
+    var v=VOL[volKey()], st=v&&v.stats, hd='<div class="upd-fl">New products · '+esc(MKT.toUpperCase())+' · Product Volume module</div>';
+    if(st&&st.months&&st.months.length){
+      var ms=st.months.slice(-12).map(function(x){ return {lab:moLbl(x.k),n:x.n,part:!x.complete,
+        tip:moLbl(x.k)+': +'+fmt(x.n)+' new products'+(x.complete?'':' so far — the month is still running')}; });
+      var cov=st.coverage!=null?Math.round(st.coverage*100):null;
+      return hd+'<div class="upd-kpis">'
+        +updKpi(st.lastFull?('+'+fmt(st.lastFull.n)):'—',st.lastFull?('Last full month · '+moLbl(st.lastFull.k)):'No complete month yet')
+        +updKpi(st.m3!=null?fmt(Math.round(st.m3)):'—','Run-rate / month')
+        +updKpi(st.y12!=null?fmt(st.y12):'—','Last '+st.y12Months+' complete month'+(st.y12Months===1?'':'s'))
+        +'</div>'+updBars(ms,2)
+        /* THREE headline numbers, and the caveat where caveats belong. Coverage was a fourth KPI,
+           which put a data-quality figure in a client's eyeline as if it were a selling point and
+           wrapped the row onto two lines; it now sits in the foot, and only when it is low enough
+           to matter — the same 90% line the Product Volume module warns at. */
+        +'<div class="upd-foot">New products a month, from the feed\u2019s own <code>fs:date_of_birth</code> stamps'
+        +(st.first?(' · '+esc(moLbl(st.first))+' \u2192 '+esc(moLbl(st.last))):'')
+        +'. The last bar is this month, still running.'
+        +((cov!=null&&cov<90)?(' Only '+cov+'% of products carry a first-seen date, so these are the ones that do.'):'')
+        +' <a href="/volume?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT)+'">Open Product volume \u2192</a></div>';
+    }
+    if(v&&v.hist&&v.hist.length>1){
+      var hs=v.hist.map(function(e){ return {lab:String(+e.d.slice(8,10)),n:e.in,part:false,
+        tip:e.d+': +'+fmt(e.in)+' in · \u2212'+fmt(e.out)+' out}'.replace('}','')}; });
+      return hd+'<div class="upd-kpis">'+updKpi(fmt(v.monthly||0),'\u2248 new SKUs / month')+updKpi(fmt(v.inS||0),'In over '+v.days+' day'+(v.days===1?'':'s'))+'</div>'
+        +updBars(hs,5)
+        +'<div class="upd-foot">Products <b>entering the feed</b> each day \u2014 this feed carries no first-seen dates yet, so the daily in-flow stands in for them. <a href="/volume?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT)+'">Open Product volume \u2192</a></div>';
+    }
+    return hd+'<div class="upd-foot" style="margin-top:4px">'+((v&&v.pending)?'Reading the feed\u2019s arrivals history\u2026'
+      :'No arrivals history for this feed yet'+((v&&v.tracked==='sheet')?' \u2014 a sheet-backed feed is not on the daily XML scan':'')+'. Type an estimate on the right and the bundle prices from that.')+'</div>';
+  }
   function renderUpd(){ var el=$('#upd-body'); if(!el)return; var u=updRec(), T=updTiers(), f=updForecast(), v=VOL[volKey()], i=updTierIdx(), ai=updAutoIdx();
-    var fc=f?(f.basis==='dob'?('<b>'+fmt(f.monthly)+'</b> new SKUs / month expected — from '+esc(f.basisTxt)+' · ≈ '+fmt(f.quarter)+' a quarter · ≈ '+fmt(f.year)+' a year <span class="hint">· read off the feed’s fs_date_of_birth stamps (see /volume)</span>')
+    var fc=f?(f.basis==='dob'?('<b>'+fmt(f.monthly)+'</b> new SKUs / month priced — from '+esc(f.basisTxt)+' · ≈ '+fmt(f.quarter)+' a quarter · ≈ '+fmt(f.year)+' a year <span class="hint">· the arrivals chart in this card is where this comes from</span>')
       :('<b>'+fmt(f.monthly)+'</b> new SKUs / month expected — from '+f.days+' day'+(f.days===1?'':'s')+' of feed arrivals ('+esc(f.from)+' → '+esc(f.to)+': '+fmt(f.inS)+' in · '+fmt(f.outS)+' out, avg '+(Math.round(f.perDay*10)/10)+' a day) · ≈ '+fmt(f.monthly*12)+' a year'
         +(f.days<14?' <span class="hint">· only '+f.days+' day'+(f.days===1?'':'s')+' of history — indicative; type an estimate if you know the run-rate</span>':'')))
       :((v&&v.pending)?'Reading the feed’s arrivals history…':'No arrivals history for this feed yet'+((v&&v.tracked==='sheet')?' — a sheet-backed feed is not on the daily XML scan':'')+' — type an estimate');
     el.innerHTML='<label class="qopt upd-on"><input type="checkbox" class="cbx" id="upd-on"'+(u.on?' checked':'')+'> <b>Include monthly new-product updates</b> — every new product is updated the month it lands, instead of a quarterly re-quote</label>'
-      +'<div class="upd-fc"><div class="upd-fl">Forecast · '+esc(MKT.toUpperCase())+' · Product Volume module</div><div class="upd-ft" id="upd-ftxt">'+fc+'</div>'
+      +'<div class="upd-grid">'
+      +'<div class="upd-box">'+updEvidence()+'</div>'
+      +'<div class="upd-box ucm">'
+      +'<div class="upd-fc"><div class="upd-fl">The bundle · what we charge</div><div class="upd-ft" id="upd-ftxt">'+fc+'</div>'
       +'<div class="upd-est">Estimate / override <input type="text" id="upd-est" inputmode="numeric" placeholder="'+(f?fmt(f.monthly):'SKUs / month')+'" value="'+((u.est!=null&&u.est!=='')?esc(String(u.est)):'')+'"> new SKUs / month'
       +' <button type="button" class="pt-act" id="upd-est-x"'+((u.est!=null&&u.est!=='')?'':' hidden')+'>use the forecast</button></div></div>'
       +'<div class="upd-tiers" id="upd-tiers">'+T.map(function(t,j){ return '<div class="tier'+(j===i?' on':'')+(j===ai?' auto':'')+'" data-tier="'+j+'" title="'+(j===ai?'Auto from the '+(updSrc()==='estimate'?'estimate':'forecast')+' · ':'')+'click to pin this band">'
           +'<span class="tl">'+esc(updLabel(j))+'</span><span class="tp">£<input class="tgbp" data-tier="'+j+'" inputmode="numeric" value="'+esc(String(t.gbp))+'"> / month</span>'+(j===ai?'<span class="tag">auto</span>':'')+'</div>'; }).join('')+'</div>'
-      +'<div class="upd-sum" id="upd-sum"></div>';
+      +'<div class="upd-sum" id="upd-sum"></div>'
+      +'</div></div>';
     updRefresh(); }
   function updRefresh(){ var el=$('#upd-sum'); if(!el)return; var u=updRec(), i=updTierIdx(), ai=updAutoIdx();
     document.querySelectorAll('#upd-tiers .tier').forEach(function(d){ var j=+d.getAttribute('data-tier'); d.classList.toggle('on',j===i); d.classList.toggle('auto',j===ai); var tg=d.querySelector('.tag'); if(tg)tg.hidden=(j!==ai); });

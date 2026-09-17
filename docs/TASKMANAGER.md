@@ -364,11 +364,46 @@ billed" would hide the majority of the very thing the module exists to show.
 
 ## The chart
 
-The series is always **billable vs non-billable**; the axis is whatever you split by — everything
-(a donut), client, who did it, type of work, month, market, AM, status, task — in four forms
-(donut, stacked columns, 100% stacked, horizontal bars). It reads the **current search result**,
-so it is never a different population from the table under it, and it states its conclusion in
-words rather than leaving the reader to do the division.
+The axis is whatever you split by — everything, client, who did it, type of work, month, market,
+AM, status, task, tag — and it reads the **current search result**, so it is never a different
+population from the table under it, and it states its conclusion in words rather than leaving the
+reader to do the division.
+
+### Seven forms, each offered only where it tells the truth
+
+> Ray, 17 Sep 2026: *"Can you allow more different types of charts? I like pie charts, donut
+> charts, and line charts. What I want to see is merge the lines together and dissect them more
+> easily side by side."*
+
+| Form | Reads | Offered on |
+|---|---|---|
+| Stacked columns · 100% · Horizontal bars | billable vs non-billable per group | any split |
+| **Donut** | on *Everything*, the billable share; on a split, each group's share of the hours | any split |
+| **Pie** | share of the hours, biggest first from twelve o'clock, tail folded to `Other` | a split |
+| **Line over months** | every series on ONE set of axes — "merge the lines together" | any split |
+| **Side by side** | small multiples: one donut per group, compared at a glance | a split, or a nested one |
+| Nested breakdown | the indented AdWords reading | a nested split |
+
+The selector is **rebuilt** from what the current split can carry rather than greyed out over a
+stale label, so no form ever names something other than what is on screen.
+
+**The line** needs an ordered x, and month is the only ordered dimension in this book — so it
+always reads months across the bottom and puts the split in the series. Undated rows are **not
+plotted** and the verdict says how many; a month a series missed is drawn as a **zero, not a
+gap**, or two lines with different gaps would read as the same shape at different speeds. There is
+**one y-axis**, never two. Its table and its CSV are the **cross-tab it was drawn from**, not the
+split's totals.
+
+**Side by side** ranks the children **once across the whole tree** and every ring reads that map,
+so a client is the same colour in every donut — colouring each ring by position would make Reiss
+blue in one and Superdry blue in the next, which is the one thing a side-by-side comparison must
+not do.
+
+**Colour:** bars, columns and the total donut keep the rule that colour means billable vs
+non-billable. Pie, line and the nested comparison colour by **identity** — there is no other way
+to tell two lines apart — so the legend names the encoding, the swatches move to the categories,
+and the two figures stay as plain rows. The two numbers still never merge; only the encoding
+changes, and every hover keeps the billable split in words.
 
 **Pull-out exits:** `⬇ PNG` (2000px, footer-stamped with the window and the query), `⎘ Copy table`
 (TSV), `⬇ CSV of these rows` (every matching task with both hour columns and its notes),
@@ -376,7 +411,11 @@ words rather than leaving the reader to do the division.
 
 Colours are the validated pairs: billable `#2563EB` / non-billable `#ED6F0B` on light,
 `#4C82E0` / `#C67B28` on dark — the pair the Product Volume module uses, so billable is the same
-blue everywhere. Type-of-work dots reuse the retainer donut's palette, and the categories come
+blue everywhere. The categorical set the identity forms use is the repo's validated eight in the
+Deck Generator's order (`#2a78d6 #eb6834 #1baf7a #eda100 #e87ba4 #008300 #4a3aa7 #e34948`, with
+its own dark steps), so one rank means one colour across the FCC; a fold is grey, because a
+remainder is not a category. Both sets pass the dataviz validator in both themes — the light set's
+contrast warning is answered by the value labels, the legend and the ⊞ table. Type-of-work dots reuse the retainer donut's palette, and the categories come
 from `tools/reporthours.mjs`, so this module and the brand one-pager can never disagree about
 what a task was.
 

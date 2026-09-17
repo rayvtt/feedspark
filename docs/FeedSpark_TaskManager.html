@@ -318,8 +318,8 @@ window.addEventListener('load',restore);
     <!-- a legend is not optional: three segments identified by colour alone is identity-by-colour,
          which fails the moment anyone prints it, or reads it with red-green colour blindness -->
     <div class="dp-leg" id="dpleg"></div>
-    <div class="verdict" id="dpverdict"></div>
-    <div class="dp-cov" id="dpcov"></div>
+    <div class="verdict" id="dpverdict" data-instr></div>
+    <div class="dp-cov" id="dpcov" data-instr></div>
   </section>
 
   <section class="card" id="chartcard">
@@ -359,7 +359,7 @@ window.addEventListener('load',restore);
       <div class="cstage" id="cstage"></div>
       <div class="clegend" id="clegend"></div>
     </div>
-    <div class="verdict" id="cverdict"></div>
+    <div class="verdict" id="cverdict" data-instr></div>
     <div class="ctab" id="ctabbox" hidden></div>
   </section>
 
@@ -400,19 +400,68 @@ window.addEventListener('load',restore);
   #bulkbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0 0;padding:9px 11px;
            border:1px solid var(--line,#E6E6E6);border-radius:10px;background:var(--wash);font-size:13px}
   #bulkbar .grow{flex:1 1 auto}
-  /* the Tags & rules dialog */
+  /* THE TAGS & RULES RAIL (Ray, 17 Sep 2026: "can it also popup as on the right panel similar to
+     build log so i can also work simultaneously"). It was a centred modal over a dimmed page: to
+     read a rule's effect you closed it, looked, and opened it again. It is a right-hand rail now,
+     the same shape as Workflow's cockpit — and like those rails it PUSHES the page rather than
+     sitting on top of it, because the columns it would cover on this page are the hours, which is
+     the thing you are judging while you tag. No dim: the table stays live, and a rule added here
+     re-renders the rows behind it as you watch. Below 900px it overlays (there is no room to
+     push); below 760px it is a full sheet, the phone layer's convention. */
+  :root{--tgd-w:clamp(380px,32vw,640px)}
   #tgbd:empty{display:none}
-  #tgbd .bd-dim{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:130}
-  #tgbd .bd-box{position:fixed;z-index:131;top:50%;left:50%;transform:translate(-50%,-50%);
-    width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 48px);display:flex;flex-direction:column;
-    background:var(--paper,#fff);border:1px solid var(--line,#E6E6E6);border-radius:14px;
-    box-shadow:0 18px 60px rgba(16,24,40,.26)}
-  #tgbd .bd-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line,#E6E6E6)}
-  #tgbd .bd-b{padding:14px;overflow:auto}
+  #tgbd .bd-box{position:fixed;z-index:70;top:0;right:0;bottom:0;width:var(--tgd-w);
+    display:flex;flex-direction:column;background:var(--paper,#fff);
+    border-left:1px solid var(--line,#E6E6E6);box-shadow:0 0 34px rgba(16,24,40,.12);
+    transform:translateX(102%);transition:transform .2s ease}
+  #tgbd .bd-box.on{transform:none}
+  body.tgd-on{padding-right:var(--tgd-w)}
+  @media (max-width:900px){
+    #tgbd .bd-box{width:min(420px,100vw);box-shadow:0 0 44px rgba(16,24,40,.28)}
+    body.tgd-on{padding-right:0}
+  }
+  @media (max-width:760px){#tgbd .bd-box{width:100vw;left:0;border-left:none}}
+  @media (prefers-reduced-motion:reduce){#tgbd .bd-box{transition:none}}
+  #tgbd .bd-h{display:flex;align-items:center;gap:8px;padding:12px 14px;flex:none;
+    border-bottom:1px solid var(--line,#E6E6E6)}
+  #tgbd .bd-b{padding:14px 14px 26px;overflow:auto;overscroll-behavior:contain;flex:1;
+    container-type:inline-size}
   #tgbd .bd-b h4{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
   #tgbd .bd-b code{background:var(--wash);padding:2px 6px;border-radius:5px;font-size:12px}
   #tgbd .bd-b input,#tgbd .bd-b select{padding:7px 9px;border:1px solid var(--line,#E6E6E6);border-radius:8px;
     background:var(--paper,#fff);color:var(--ink,#333);font:inherit;font-size:13px}
+  /* ONE ROW EACH, AND TWO COLUMNS WHEN THERE IS ROOM FOR THEM (Ray, 17 Sep 2026: "love this,
+     reorganise and make the tab cleaner pls"). Tags and rules were stacked down a 640px column
+     with a paragraph over each and the same words repeated on every row — 1,000px of panel for
+     four tags and seven rules. The repeated labels are column headings now, so each row is a dot,
+     a name and a number. The split keys on the PANEL'S OWN WIDTH, not the window's: it lives in a
+     rail whose width follows the screen, and a viewport media query would have put two 200px
+     columns inside a 420px rail on a wide monitor. */
+  #tgbd .tgd-cols{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+  @container (min-width:560px){#tgbd .tgd-cols{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:22px}}
+  #tgbd .tgd-sec{min-width:0}
+  #tgbd .tgd-hint{font-size:12px;color:var(--muted);margin:0 0 9px;line-height:1.45}
+  #tgbd .tgd-grid{display:grid;align-items:center;gap:0 10px;font-size:13px}
+  #tgbd .tgd-tags{grid-template-columns:minmax(0,1fr) auto auto}
+  #tgbd .tgd-rules{grid-template-columns:minmax(0,1fr) auto auto auto}
+  #tgbd .tgd-k{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--muted);padding-bottom:5px;white-space:nowrap}
+  #tgbd .tgd-n{text-align:right;font-variant-numeric:tabular-nums;font-size:12px;color:var(--ink-2)}
+  #tgbd .tgd-grid>*{padding:5px 0}
+  #tgbd .tgd-grid .tgd-k{padding-top:0}
+  #tgbd .tgd-ln{grid-column:1/-1;height:1px;padding:0;background:var(--line,#E6E6E6);opacity:.7}
+  #tgbd .tgd-nm{display:flex;align-items:center;gap:7px;min-width:0}
+  #tgbd .tgd-nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #tgbd .tgd-cell{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+  #tgbd .tgd-note{grid-column:1/-1;font-size:11.5px;color:var(--muted);padding:0 0 6px 18px;line-height:1.4}
+  #tgbd .tgd-add{display:flex;gap:6px;margin:10px 0 0;flex-wrap:wrap}
+  #tgbd .tgd-add input{flex:1 1 140px;min-width:0}
+  #tgbd .tgd-add select{min-width:0;max-width:100%}
+  /* the word takes its own line so the three controls that qualify it sit together underneath,
+     rather than Add rule being orphaned onto a line of its own */
+  #tgbd .tgd-add .tgd-w{flex:1 1 100%}
+  #tgbd .tgd-src{flex:1 1 100%;width:100%;text-overflow:ellipsis}
+  #tgbd .tgd-empty{font-size:12.5px;color:var(--muted);padding:6px 0}
   .mut{color:var(--muted)}
   #tagwarn{margin:8px 0 0;padding:7px 10px;border-radius:9px;font-size:12.5px;font-weight:600;
     background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C}
@@ -560,7 +609,15 @@ window.addEventListener('load',restore);
     var k = String(s || '').toLowerCase().replace(/[\s_-]/g, '');
     return STATUS_BUCKET[k] || 'open';
   }
-  function monthOf(d) { return d ? String(d).slice(0, 7) : ''; }
+  /* The engine's isoOf rule, mirrored: the worker already empties a 0000-00-00 date at pack
+     time, so on real data this changes nothing — but a laxer twin would invent a month called
+     "0000-00" the first time anything handed the page a raw date, and a chart with a phantom
+     month at the front of its axis is worse than one that says a row is undated. */
+  function isoOf(v) {
+    var x = String(v == null ? '' : v).slice(0, 10);
+    return (/^\d{4}-\d{2}-\d{2}$/.test(x) && x.slice(0, 4) !== '0000') ? x : '';
+  }
+  function monthOf(d) { var x = isoOf(d); return x ? x.slice(0, 7) : ''; }
 
   var FIELDS = {
     owner: 'owner', who: 'owner', by: 'owner',
@@ -1005,6 +1062,69 @@ window.addEventListener('load',restore);
       if (nd.kids && nd.kids.length) flattenNested(nd.kids, out, path);
     }
     return out;
+  }
+
+  /* MONTH x CATEGORY, for the line form (Ray, 17 Sep 2026: "I like pie charts, donut charts, and
+     line charts … merge the lines together"). A line needs an ORDERED x and month is the only
+     ordered dimension here, so the months run across the bottom and the chosen split becomes the
+     SERIES — the one form where colour means identity, which the legend says out loud while every
+     point keeps its own billable split in the tooltip. Undated rows are never plotted and are
+     counted back; a month a series missed is a ZERO, not a gap, so every line is read against the
+     same x. Mirrors src/taskbook.js seriesByMonth. */
+  function seriesByMonth(rows, dim, cap) {
+    cap = cap == null ? 6 : cap;
+    var months = {}, mlist = [], byKey = {}, keys = [], undated = 0, placements = 0, dated = 0, i, j;
+    for (i = 0; i < rows.length; i++) {
+      var t = rows[i], m = monthOf(t.d);
+      if (!m) { undated++; continue; }
+      dated++;
+      if (!months[m]) { months[m] = 1; mlist.push(m); }
+      var ks = dimKeys(t, dim);
+      for (j = 0; j < ks.length; j++) {
+        var k = ks[j];
+        placements++;
+        var sr = byKey[k];
+        if (!sr) { sr = byKey[k] = { k: k, hours: 0, bill: 0, nonbill: 0, n: 0, pts: {} }; keys.push(k); }
+        sr.hours += t.hours; sr.bill += t.bill; sr.nonbill += t.nonbill; sr.n++;
+        var p = sr.pts[m];
+        if (!p) { p = sr.pts[m] = { hours: 0, bill: 0, nonbill: 0, n: 0 }; }
+        p.hours += t.hours; p.bill += t.bill; p.nonbill += t.nonbill; p.n++;
+      }
+    }
+    mlist.sort();
+    var all = keys.map(function (k) { return byKey[k]; }).sort(function (a, b) {
+      return (b.hours - a.hours) || (b.n - a.n) || String(a.k).localeCompare(String(b.k));
+    });
+    var folded = 0;
+    if (cap && all.length > cap) {
+      var keep = all.slice(0, cap - 1), rest = all.slice(cap - 1);
+      folded = rest.length;
+      var o = { k: 'Other (' + rest.length + ' more)', hours: 0, bill: 0, nonbill: 0, n: 0, pts: {}, fold: rest.length };
+      rest.forEach(function (sr2) {
+        o.hours += sr2.hours; o.bill += sr2.bill; o.nonbill += sr2.nonbill; o.n += sr2.n;
+        Object.keys(sr2.pts).forEach(function (m2) {
+          var q = o.pts[m2]; if (!q) q = o.pts[m2] = { hours: 0, bill: 0, nonbill: 0, n: 0 };
+          q.hours += sr2.pts[m2].hours; q.bill += sr2.pts[m2].bill;
+          q.nonbill += sr2.pts[m2].nonbill; q.n += sr2.pts[m2].n;
+        });
+      });
+      all = keep.concat([o]);
+    }
+    var series = all.map(function (sr3) {
+      return {
+        k: sr3.k, hours: r2(sr3.hours), bill: r2(sr3.bill), nonbill: r2(sr3.nonbill), n: sr3.n,
+        fold: sr3.fold || 0,
+        billPct: sr3.hours ? Math.round((sr3.bill / sr3.hours) * 1000) / 10 : 0,
+        points: mlist.map(function (m3) {
+          var p3 = sr3.pts[m3];
+          return p3
+            ? { m: m3, hours: r2(p3.hours), bill: r2(p3.bill), nonbill: r2(p3.nonbill), n: p3.n }
+            : { m: m3, hours: 0, bill: 0, nonbill: 0, n: 0 };
+        })
+      };
+    });
+    return { months: mlist, series: series, undated: undated, folded: folded,
+      multi: placements > dated, placements: placements };
   }
 
   function groupBy(rows, dim, cap) {
@@ -1531,56 +1651,108 @@ window.addEventListener('load',restore);
      page: an AM typing "(" would otherwise throw inside the render loop and blank the table. Each
      rule PREVIEWS what it would touch before it is saved, and says how many rows it will NOT touch
      because a person already decided those. */
+  /* THE RAIL (Ray, 17 Sep 2026: "can it also popup as on the right panel similar to build log so
+     i can also work simultaneously"). Three consequences, and they are the whole design:
+       1. NO DIM and no modal — the board behind it stays live, which is the point. Clicking away
+          does not close it either: on a modal that is how you dismiss it, but here clicking away
+          IS the work.
+       2. THE SHELL IS BUILT ONCE and only the body is redrawn. Rewriting the whole host on every
+          edit would restart the slide-in animation, so adding a rule would make the rail flinch.
+       3. IT REMEMBERS per device — a panel being open describes one screen, not the team's state,
+          the same line every other toggle on the FCC sits on. */
+  var TG_KEY = 'fcc-tg-rail';
+  function tgIsOpen() { return document.body.classList.contains('tgd-on'); }
+  function tgBtn(on) {
+    var b = $('dp-tags'); if (!b) return;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.classList.toggle('on', !!on);
+  }
+  function tgRemember(on) { try { localStorage.setItem(TG_KEY, on ? '1' : '0'); } catch (e) {} }
+  function rulesClose() {
+    var host = $('tgbd'); if (!host) return;
+    var box = host.querySelector('.bd-box');
+    document.body.classList.remove('tgd-on');
+    tgBtn(false); tgRemember(false);
+    if (box) box.classList.remove('on');
+    // cleared only once it has slid out, and only if nobody re-opened it in the meantime
+    setTimeout(function () { if (!tgIsOpen()) host.innerHTML = ''; }, 260);
+  }
+  function rulesToggle() { if (tgIsOpen()) rulesClose(); else rulesOpen(); }
   function rulesOpen() {
     var host = $('tgbd'); if (!host) return;
     var draw = function () {
       var defs = DEFS(), rules = RULES();
-      host.innerHTML = '<div class="bd-dim"></div><div class="bd-box" role="dialog" aria-label="Tags and keyword rules">'
-        + '<div class="bd-h"><b>Tags &amp; keyword rules</b><span class="grow"></span>'
-        + '<button class="btn sm" id="tg-x" type="button">✕</button></div>'
-        + '<div class="bd-b">'
-        + '<p class="mut" style="margin:0 0 10px">A tag records <b>why</b> a task happened. The <b>Type</b> column already says what the work was — these are different questions, and a task can be optimisation work that was also urgent.</p>'
-        + '<h4 style="margin:10px 0 6px">Tags</h4>'
-        + '<div id="tg-list"></div>'
-        + '<div style="display:flex;gap:6px;margin:8px 0 2px;flex-wrap:wrap">'
-        + '<input id="tg-new" placeholder="New tag name" style="flex:1 1 150px;min-width:0">'
-        + '<button class="btn sm" id="tg-addtag" type="button">Add tag</button></div>'
-        + '<h4 style="margin:18px 0 6px">Keyword rules</h4>'
-        + '<p class="mut" style="margin:0 0 8px">Any task whose title contains the word gets the tag — unless someone has set that task’s tags by hand, which always wins.</p>'
-        + '<div id="tg-rules"></div>'
-        + '<div style="display:flex;gap:6px;margin:8px 0 2px;flex-wrap:wrap">'
-        + '<input id="tg-q" placeholder="Word in the task title, e.g. disapproval" style="flex:1 1 170px;min-width:0">'
-        + '<select id="tg-on"><option value="title">title</option><option value="note">notes</option><option value="both">title + notes</option></select>'
-        + '<select id="tg-tag">' + defs.map(function (d) { return '<option value="' + esc(d.slug) + '">' + esc(d.label) + '</option>'; }).join('') + '</select>'
-        + '<button class="btn sm" id="tg-addrule" type="button">Add rule</button></div>'
-        + '<div id="tg-prev" class="mut" style="font-size:12px;margin-top:6px"></div>'
-        + '<h4 style="margin:18px 0 6px">Common tasks in this book</h4>'
-        + '<p class="mut" style="margin:0 0 8px">The titles that carry the most hours right now — a rule straight off your own book rather than a guess.</p>'
-        + '<div id="tg-sugg"></div>'
-        + '</div></div>';
+      /* ONE sentence at the top, then two columns where the rail is wide enough for them. The
+         three section paragraphs said much the same thing three times over, and "displaces the
+         plan" was printed once per tag — both are now column headings that say it once. */
+      if (!host.querySelector('.bd-box')) {
+        // a landmark, not a dialog: it stays open beside the work rather than trapping focus in
+        // front of it, and calling it a dialog would tell a screen-reader user the opposite
+        host.innerHTML = '<div class="bd-box" role="complementary" aria-label="Tags and keyword rules">'
+          + '<div class="bd-h"><b>Tags &amp; keyword rules</b><span class="grow"></span>'
+          + '<button class="btn sm" id="tg-x" type="button" title="Close the panel (Esc)">✕</button></div>'
+          + '<div class="bd-b" id="tg-body"></div></div>';
+      }
+      $('tg-body').innerHTML = ''
+        + '<p class="tgd-hint" style="margin:0 0 14px">A tag records <b>why</b> a task happened — the <b>Type</b> column already says what the work was, so one task can be optimisation work that was also urgent.</p>'
+        + '<div class="tgd-cols">'
+        + '<div class="tgd-sec">'
+        +   '<h4 style="margin:0 0 6px">Tags</h4>'
+        +   '<p class="tgd-hint">Ticked tags count as work that displaced the optimisation plan.</p>'
+        +   '<div id="tg-list" class="tgd-grid tgd-tags"></div>'
+        +   '<div class="tgd-add">'
+        +     '<input id="tg-new" placeholder="New tag name">'
+        +     '<button class="btn sm" id="tg-addtag" type="button">Add tag</button></div>'
+        + '</div>'
+        + '<div class="tgd-sec">'
+        +   '<h4 style="margin:0 0 6px">Keyword rules</h4>'
+        +   '<p class="tgd-hint">A word in the task’s title (or notes) tags every task carrying it — unless someone set that task’s tags by hand, which always wins.</p>'
+        +   '<div id="tg-rules" class="tgd-grid tgd-rules"></div>'
+        +   '<div class="tgd-add">'
+        +     '<input id="tg-q" class="tgd-w" placeholder="Word in the title, e.g. disapproval">'
+        +     '<select id="tg-on"><option value="title">title</option><option value="note">notes</option><option value="both">title + notes</option></select>'
+        +     '<select id="tg-tag">' + defs.map(function (d) { return '<option value="' + esc(d.slug) + '">' + esc(d.label) + '</option>'; }).join('') + '</select>'
+        +     '<button class="btn sm" id="tg-addrule" type="button">Add rule</button></div>'
+        +   '<div class="tgd-add"><select id="tg-sugg" class="tgd-src"></select></div>'
+        +   '<div id="tg-prev" class="tgd-hint" style="margin:7px 0 0"></div>'
+        + '</div>'
+        + '</div>';
 
-      $('tg-list').innerHTML = defs.map(function (d, i) {
-        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0">'
-          + '<i style="width:11px;height:11px;border-radius:50%;background:' + esc(tagColor(d)) + '"></i>'
-          + '<b style="flex:0 0 130px">' + esc(d.label) + '</b>'
-          + '<label class="tog" title="Hours with this tag are counted as work that displaced the optimisation plan">'
-          + '<input type="checkbox" data-disp="' + i + '"' + (d.displaces ? ' checked' : '') + '> displaces the plan</label>'
-          + '<span class="grow"></span>'
-          + (defs.length > 1 ? '<button class="btn sm" data-deltag="' + i + '" title="Remove this tag">✕</button>' : '')
-          + '</div>' + (d.note ? '<div class="mut" style="font-size:12px;margin:-2px 0 6px 19px">' + esc(d.note) + '</div>' : '');
-      }).join('');
+      // a tag is a dot, a name and one tick; its note spans the row underneath rather than
+      // pushing a third column nobody can read at this width
+      $('tg-list').innerHTML = '<div class="tgd-k"></div><div class="tgd-k">Displaces</div><div class="tgd-k"></div>'
+        + defs.map(function (d, i) {
+          return '<div class="tgd-ln"></div>'
+            + '<div class="tgd-nm"><i style="flex:0 0 auto;width:10px;height:10px;border-radius:50%;background:' + esc(tagColor(d)) + '"></i>'
+            + '<b title="' + esc(d.label) + '">' + esc(d.label) + '</b></div>'
+            + '<label class="tog" style="justify-content:center" title="Hours with this tag are counted as work that displaced the optimisation plan">'
+            + '<input type="checkbox" data-disp="' + i + '"' + (d.displaces ? ' checked' : '')
+            + ' aria-label="' + esc(d.label) + ' displaces the plan"></label>'
+            + '<div>' + (defs.length > 1 ? '<button class="btn sm" data-deltag="' + i + '" title="Remove the tag “' + esc(d.label) + '”">✕</button>' : '') + '</div>'
+            + (d.note ? '<div class="tgd-note">' + esc(d.note) + '</div>' : '');
+        }).join('');
 
-      $('tg-rules').innerHTML = rules.length ? rules.map(function (r, i) {
-        var pv = rulePreview(TASKS, r, TAGS);
-        return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px">'
-          + '<code>' + esc(r.q) + '</code><span class="mut">in ' + esc(r.on || 'title') + ' →</span>'
-          + tagChip(r.tag, 'rule')
-          + '<span class="grow"></span><span class="mut" style="font-size:12px">' + num(pv.hits) + ' row'
-          + (pv.hits === 1 ? '' : 's')
-          + (pv.held ? ' · ' + num(pv.held) + ' set by hand, untouched' : '') + '</span>'
-          + '<button class="btn sm" data-delrule="' + i + '">✕</button></div>';
-      }).join('') : '<div class="mut" style="font-size:13px">No rules yet.</div>';
+      // the two counts were prose on every row ("20 rows · 20 set by hand, untouched"), each a
+      // different length, so nothing lined up and the numbers could not be compared. They are
+      // columns now, headed once.
+      $('tg-rules').innerHTML = rules.length
+        ? ('<div class="tgd-k"></div><div class="tgd-k">Matches</div><div class="tgd-k">By hand</div><div class="tgd-k"></div>'
+          + rules.map(function (r, i) {
+            var pv = rulePreview(TASKS, r, TAGS);
+            return '<div class="tgd-ln"></div>'
+              + '<div class="tgd-cell"><code>' + esc(r.q) + '</code><span class="mut">→</span>'
+              + tagChip(r.tag, 'rule')
+              + '<span class="mut" style="font-size:11.5px" title="Where the word is looked for">'
+              + esc(r.on === 'both' ? 'title + notes' : (r.on === 'note' ? 'notes' : 'title')) + '</span></div>'
+              + '<div class="tgd-n" title="Tasks carrying this word">' + num(pv.hits) + '</div>'
+              + '<div class="tgd-n" title="Already tagged by a person, so this rule leaves them alone">' + (pv.held ? num(pv.held) : '—') + '</div>'
+              + '<div><button class="btn sm" data-delrule="' + i + '" title="Remove this rule">✕</button></div>';
+          }).join(''))
+        : '<div class="tgd-empty" style="grid-column:1/-1">No rules yet — add one below, or start from a common title.</div>';
 
+      // the twelve "common tasks in this book" were a wall of chips at the BOTTOM, below the
+      // builder they exist to fill. Same titles, same counts, now the rule box's own source
+      // list — nobody has to scroll past the control to find what feeds it.
       var by = {}, tot = [];
       TASKS.forEach(function (t) {
         var k = /^email ticket/i.test(t.title) ? 'Email ticket:' : String(t.title || '').slice(0, 42);
@@ -1589,28 +1761,28 @@ window.addEventListener('load',restore);
         by[k].n++; by[k].h += t.hours;
       });
       tot.sort(function (a, b) { return b.h - a.h; });
-      $('tg-sugg').innerHTML = tot.slice(0, 12).map(function (x) {
-        return '<button type="button" class="btn sm" data-sugg="' + esc(x.k) + '" style="margin:0 5px 5px 0">'
-          + esc(x.k) + ' <span class="mut">' + num(x.n) + ' · ' + hrs(x.h) + 'h</span></button>';
-      }).join('') || '<div class="mut" style="font-size:13px">No tasks in the book yet.</div>';
+      $('tg-sugg').innerHTML = '<option value="">' + (tot.length ? 'Start from a common title in this book…' : 'No tasks in the book yet') + '</option>'
+        + tot.slice(0, 12).map(function (x) {
+          return '<option value="' + esc(x.k) + '">' + esc(x.k) + ' — ' + num(x.n) + ' tasks · ' + hrs(x.h) + ' h</option>';
+        }).join('');
 
       var prev = function () {
         var q = $('tg-q').value, on = $('tg-on').value;
         if (!q.trim()) { $('tg-prev').textContent = ''; return; }
         var pv = rulePreview(TASKS, { q: q, on: on }, TAGS);
-        $('tg-prev').innerHTML = 'Would tag <b>' + num(pv.hits - pv.held) + '</b> row'
-          + ((pv.hits - pv.held) === 1 ? '' : 's') + ' (' + hrs(pv.hours) + ' h)'
-          + (pv.held ? ' · <b>' + num(pv.held) + '</b> already set by hand and left alone' : '');
+        $('tg-prev').innerHTML = 'Would tag <b>' + num(pv.hits - pv.held) + '</b> task'
+          + ((pv.hits - pv.held) === 1 ? '' : 's') + ' · ' + hrs(pv.hours) + ' h'
+          + (pv.held ? ' · <b>' + num(pv.held) + '</b> left alone, set by hand' : '');
       };
       $('tg-q').addEventListener('input', prev);
       $('tg-on').addEventListener('change', prev);
 
       if (host.__w) return;                     // listeners bind ONCE, not once per redraw
       host.__w = 1;
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && tgIsOpen()) rulesClose(); });
       host.addEventListener('click', function (e) {
         var el = e.target, a;
-        if (el.id === 'tg-x' || el.className === 'bd-dim') { host.innerHTML = ''; return; }
-        if ((a = el.getAttribute && el.getAttribute('data-sugg')) != null && a !== '') { $('tg-q').value = a.replace(/:$/, ''); prev(); $('tg-q').focus(); return; }
+        if (el.id === 'tg-x') { rulesClose(); return; }
         if ((a = el.getAttribute && el.getAttribute('data-deltag')) != null && a !== '') {
           var dd = DEFS().slice(); dd.splice(Number(a), 1); TAGDEF.tags = dd; tagSave(); draw(); return;
         }
@@ -1635,14 +1807,27 @@ window.addEventListener('load',restore);
         }
       });
       host.addEventListener('change', function (e) {
-        var i = e.target && e.target.getAttribute && e.target.getAttribute('data-disp');
+        var el = e.target;
+        // picking a common title FILLS the word box rather than creating a rule: the point is to
+        // see what it would touch, with the tag and the preview still yours to set
+        if (el && el.id === 'tg-sugg') {
+          if (!el.value) return;
+          $('tg-q').value = String(el.value).replace(/:$/, '');
+          el.selectedIndex = 0;                  // it is a source list, not a setting
+          prev(); $('tg-q').focus(); return;
+        }
+        var i = el && el.getAttribute && el.getAttribute('data-disp');
         if (i == null || i === '') return;
         var dd = DEFS().slice();
-        dd[Number(i)] = Object.assign({}, dd[Number(i)], { displaces: !!e.target.checked });
+        dd[Number(i)] = Object.assign({}, dd[Number(i)], { displaces: !!el.checked });
         TAGDEF.tags = dd; tagSave(); draw();
       });
     };
     draw();
+    document.body.classList.add('tgd-on');
+    tgBtn(true); tgRemember(true);
+    var box = host.querySelector('.bd-box');
+    if (box) requestAnimationFrame(function () { box.classList.add('on'); });
   }
   var TAG_COLORS = TAG_PAL;
 
@@ -1766,7 +1951,7 @@ window.addEventListener('load',restore);
       if (TAGMENU && !TAGMENU.contains(el)) tagMenuClose();
     });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') tagMenuClose(); });
-    var dt = $('dp-tags'); if (dt) dt.onclick = rulesOpen;
+    var dt = $('dp-tags'); if (dt) dt.onclick = rulesToggle;
     var ti = $('ptagimp'), tf = $('ptagfile');
     if (ti && tf) {
       ti.onclick = function () { tf.value = ''; tf.click(); };
@@ -1875,7 +2060,28 @@ window.addEventListener('load',restore);
 
   /* ---- chart ----------------------------------------------------------------------------- */
   var CDIM = 'total', CDIM2 = '', CDIM3 = '', CFORM = 'donut';
+  // on 'Everything' the line has no categories to draw, so it draws the module's own pair:
+  // billable and non-billable, month by month
+  var LINEMODE = '';
+  function lineData() {
+    var sm = seriesByMonth(FT, CDIM, 6);
+    if (CDIM !== 'total') { LINEMODE = ''; return sm; }
+    LINEMODE = 'bill';
+    var all = sm.series[0] || { points: [] };
+    var mk = function (key, f) {
+      var pts = all.points.map(function (p) {
+        return { m: p.m, hours: p[f], bill: f === 'bill' ? p.bill : 0, nonbill: f === 'nonbill' ? p.nonbill : 0, n: p.n };
+      });
+      var tot = 0; pts.forEach(function (p) { tot += p.hours; });
+      return { k: key, hours: r2(tot), points: pts, fold: 0, n: all.n || 0 };
+    };
+    return { months: sm.months, series: [mk('Billable', 'bill'), mk('Non-billable', 'nonbill')],
+      undated: sm.undated, folded: 0, multi: false };
+  }
   function chartRows() { return groupBy(FT, CDIM, CDIM === 'total' ? 0 : 12); }
+  // a pie can hold about eight slices before the tail becomes slivers nobody can point at, so it
+  // folds harder than the bars do — the fold keeps its hours either way
+  function pieSlices() { return groupBy(FT, CDIM, 8); }
   // the split is NESTED the moment a second dimension is chosen; 'total' can only ever be level 1
   function nested() { return CDIM !== 'total' && !!CDIM2; }
   function nestTree() { return groupNested(FT, [CDIM, CDIM2, CDIM3]); }
@@ -1888,6 +2094,55 @@ window.addEventListener('load',restore);
     if (dim === 'cat') return CAT_LABEL[k] || k;
     if (dim === 'bucket') return BUCKET_LABEL[k] || k;
     return k;
+  }
+
+  /* THE FORMS, and which reading each one can honestly carry (Ray, 17 Sep 2026: "Can you allow
+     more different types of charts? I like pie charts, donut charts, and line charts. What I want
+     to see is merge the lines together and dissect them more easily side by side").
+
+     Every form is offered only where it TELLS THE TRUTH, so the selector can never be in a state
+     the chart has to fake:
+       · pie / donut answer "what share of the hours", so they need a split to divide (on
+         'Everything' the donut keeps its own reading: billable vs non-billable).
+       · line needs an ORDERED x. Month is the only ordered dimension here, so a line always reads
+         months across the bottom and puts the split in the series — "merge the lines together".
+       · side by side is the small-multiples reading — one small donut per group, so two groups are
+         compared at a glance instead of down a scrolling list. It is the only extra form a NESTED
+         split can carry: each donut then holds that group's children.
+     COLOUR: bars, columns and the total donut keep the module's rule that colour means billable
+     vs non-billable. Pie, line and the nested small multiples colour by IDENTITY — there is no
+     other way to tell two lines apart — so they say so in the legend and every hover keeps the
+     billable split in words. The two numbers still never merge; only the encoding changes. */
+  var FORMS = [
+    { v: 'stack', label: 'Stacked columns' },
+    { v: 'pct', label: '100% stacked' },
+    { v: 'bars', label: 'Horizontal bars' },
+    { v: 'donut', label: 'Donut' },
+    { v: 'pie', label: 'Pie' },
+    { v: 'line', label: 'Line over months' },
+    { v: 'small', label: 'Side by side' },
+    { v: 'nest', label: 'Nested breakdown' }
+  ];
+  function formsFor() {
+    if (nested()) return ['nest', 'small'];
+    if (CDIM === 'total') return ['donut', 'line'];
+    return ['stack', 'pct', 'bars', 'donut', 'pie', 'line', 'small'];
+  }
+  // colour means IDENTITY on these, and billable-vs-non-billable on the rest
+  function byIdentity() {
+    return CFORM === 'pie' || CFORM === 'line' || (CFORM === 'small' && nested())
+      || (CFORM === 'donut' && CDIM !== 'total');
+  }
+  function fillForms() {
+    var fs = $('cform'), allow = formsFor();
+    if (allow.indexOf(CFORM) < 0) CFORM = allow[0];
+    fs.innerHTML = FORMS.filter(function (f) { return allow.indexOf(f.v) >= 0; })
+      .map(function (f) { return '<option value="' + f.v + '">' + esc(f.label) + '</option>'; }).join('');
+    fs.value = CFORM;
+    fs.disabled = false;
+    fs.title = nested()
+      ? 'A three-level split reads as one indented breakdown, or as one donut per group side by side'
+      : '';
   }
 
   /* The two extra selects offer every dimension EXCEPT 'total' (one bucket splits into nothing)
@@ -1908,25 +2163,10 @@ window.addEventListener('load',restore);
     $('cdim3').disabled = CDIM === 'total' || !CDIM2;
     if ($('cdim2').disabled) CDIM2 = '';
     if ($('cdim3').disabled) CDIM3 = '';
-    /* The form selector must NAME what is on screen. A greyed-out select still reading
-       "Stacked columns" over an indented breakdown is a label describing something else, so the
-       nested reading gets its own option that exists only while it applies. */
-    var fs = $('cform'), has = fs.querySelector('option[value="nest"]');
-    if (nested()) {
-      if (!has) {
-        has = document.createElement('option');
-        has.value = 'nest'; has.textContent = 'Nested breakdown';
-        fs.appendChild(has);
-      }
-      fs.value = 'nest';
-      fs.disabled = true;
-      fs.title = 'A nested split reads as one indented breakdown \u2014 a donut or a column cannot show three levels honestly';
-    } else {
-      if (has) has.remove();
-      fs.value = CFORM;
-      fs.disabled = false;
-      fs.title = '';
-    }
+    // the form selector must NAME what is on screen, so it is rebuilt from what this split can
+    // honestly carry rather than greyed out over a stale label
+    if (nested() && CFORM !== 'small') CFORM = 'nest';
+    fillForms();
   }
 
   function chart() {
@@ -1944,20 +2184,24 @@ window.addEventListener('load',restore);
         : 'No task matches this search, so there is nothing to chart.') + '</div>';
       $('clegend').innerHTML = ''; $('cverdict').textContent = ''; ctable(g, tree); return;
     }
-    if (tree) {
-      stage.innerHTML = nestBars(tree);
-    } else {
-      var form = (CDIM === 'total' && CFORM !== 'donut') ? 'bars' : CFORM;
-      if (CDIM === 'total' && CFORM === 'donut') stage.innerHTML = donut(s);
-      else if (form === 'donut') stage.innerHTML = donut(s);
-      else if (form === 'bars') stage.innerHTML = hbars(g);
-      else stage.innerHTML = cols(g, form === 'pct');
-    }
-    legend(g, s);
+    var sm = null, sc = null;
+    if (CFORM === 'line') { sm = lineData(); stage.innerHTML = lineChart(sm); }
+    else if (CFORM === 'small') { sc = smallCells(); stage.innerHTML = smallMult(sc.cells, sc.colourBy); }
+    else if (tree) stage.innerHTML = nestBars(tree);
+    else if (CDIM === 'total') stage.innerHTML = donut(s);
+    else if (CFORM === 'pie' || CFORM === 'donut') stage.innerHTML = pieChart(pieSlices(), CFORM === 'donut' ? 0.58 : 0);
+    else if (CFORM === 'bars') stage.innerHTML = hbars(g);
+    else stage.innerHTML = cols(g, CFORM === 'pct');
+    legend(g, s, sm);
     $('cverdict').innerHTML = '<b>' + hrs(s.hours) + ' h</b> in view. ' + billVerdict(s.billPct)
-      + (tree ? ' ' + nestNote(tree) : '')
-      + (s.undated ? ' <span style="color:var(--muted)">' + s.undated + ' row' + (s.undated === 1 ? '' : 's') + ' carry no date: in the totals, in no month.</span>' : '');
-    ctable(g, tree);
+      + (tree && CFORM !== 'small' ? ' ' + nestNote(tree) : '')
+      + (sm && sm.undated ? ' <span style="color:var(--muted)">' + num(sm.undated) + ' undated row'
+          + (sm.undated === 1 ? ' cannot sit on a time axis and is' : 's cannot sit on a time axis and are')
+          + ' not plotted.</span>' : '')
+      + (sm && sm.folded ? ' <span style="color:var(--muted)">The smallest <b>' + num(sm.folded)
+          + '</b> are folded into one “Other” line.</span>' : '')
+      + (s.undated && CFORM !== 'line' ? ' <span style="color:var(--muted)">' + s.undated + ' row' + (s.undated === 1 ? '' : 's') + ' carry no date: in the totals, in no month.</span>' : '');
+    ctable(g, tree, sm);
     wireTips();
   }
 
@@ -2012,6 +2256,230 @@ window.addEventListener('load',restore);
     }
     return '<svg viewBox="0 0 ' + W + ' ' + (y + 6) + '" role="img" aria-label="Billable and non-billable hours by '
       + esc(tree.dims.join(' then ')) + '">' + s2 + '</svg>';
+  }
+
+  /* THE CATEGORICAL PALETTE — the repo's validated set, in the Deck Generator's order, so a
+     series here and a series on a work-volume chart are the same colour for the same rank. Other
+     is grey on purpose: a fold is not a category, and giving it a hue would put it in the race. */
+  var SER_PAL = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'];
+  var SER_PAL_DARK = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'];
+  var SER_OTHER = { light: '#9aa3ad', dark: '#6b7482' };
+  function serCol(i, fold) {
+    var d = isDark();
+    if (fold) return d ? SER_OTHER.dark : SER_OTHER.light;
+    var pal = d ? SER_PAL_DARK : SER_PAL;
+    return pal[i % pal.length];
+  }
+
+  /* PIE / DONUT BY CATEGORY. Share of the hours in view, biggest first from twelve o'clock, the
+     tail already folded by groupBy so a hundred clients can never become a hundred slivers.
+     A slice's tooltip keeps its billable split in words — the share is what the shape says, the
+     split is what this module is about, and losing the second to draw the first would be the one
+     thing the encoding must not do. */
+  function pieChart(g, hole) {
+    var S = 250, R = S / 2, r0 = R - 6, ri = hole ? R * hole : 0, cx = R, cy = R;
+    var tot = 0, i;
+    for (i = 0; i < g.length; i++) tot += g[i].hours;
+    if (!tot) return '<div class="empty">These rows carry no hours at all.</div>';
+    var a = -Math.PI / 2, out = '', showLab = $('clab').checked;
+    function pt(rad, ang) { return [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)]; }
+    for (i = 0; i < g.length; i++) {
+      var x = g[i], sweep = (x.hours / tot) * Math.PI * 2, a2 = a + sweep;
+      var big = sweep > Math.PI ? 1 : 0, col = serCol(i, x.fold);
+      var pct = Math.round((x.hours / tot) * 1000) / 10;
+      var ttl = esc(dimLabel(x.k)) + ' — ' + hrs(x.hours) + ' h (' + pct + '% of the view), '
+        + hrs(x.bill) + ' h billable + ' + hrs(x.nonbill) + ' h non-billable, ' + num(x.n) + ' task' + (x.n === 1 ? '' : 's');
+      if (g.length === 1) {
+        out += '<circle class="cg" data-t="' + ttl + '" cx="' + cx + '" cy="' + cy + '" r="'
+          + (ri ? (r0 + ri) / 2 : r0) + '" fill="' + (ri ? 'none' : col) + '"'
+          + (ri ? ' stroke="' + col + '" stroke-width="' + (r0 - ri) + '"' : '') + '/>';
+      } else {
+        var p1 = pt(r0, a), p2 = pt(r0, a2), d;
+        if (ri) {
+          var p3 = pt(ri, a2), p4 = pt(ri, a);
+          d = 'M' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2)
+            + 'A' + r0 + ' ' + r0 + ' 0 ' + big + ' 1 ' + p2[0].toFixed(2) + ' ' + p2[1].toFixed(2)
+            + 'L' + p3[0].toFixed(2) + ' ' + p3[1].toFixed(2)
+            + 'A' + ri + ' ' + ri + ' 0 ' + big + ' 0 ' + p4[0].toFixed(2) + ' ' + p4[1].toFixed(2) + 'Z';
+        } else {
+          d = 'M' + cx + ' ' + cy + 'L' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2)
+            + 'A' + r0 + ' ' + r0 + ' 0 ' + big + ' 1 ' + p2[0].toFixed(2) + ' ' + p2[1].toFixed(2) + 'Z';
+        }
+        out += '<path class="cg" data-t="' + ttl + '" d="' + d + '" fill="' + col
+          + '" stroke="' + cvar('--paper') + '" stroke-width="2"/>';
+      }
+      // a label only where the slice can hold it — a 2% wedge cannot, and a leader line into a
+      // pie this size is more chrome than reading
+      if (showLab && sweep > 0.42) {
+        var mid = pt(ri ? (r0 + ri) / 2 : r0 * 0.62, a + sweep / 2);
+        out += '<text x="' + mid[0].toFixed(1) + '" y="' + mid[1].toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" font-size="11.5" font-weight="900" fill="#fff">' + pct + '%</text>';
+      }
+      a = a2;
+    }
+    if (ri) {
+      out += '<text x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle" font-size="21" font-weight="900" fill="' + cvar('--ink') + '">' + hrs(tot) + '</text>';
+      out += '<text x="' + cx + '" y="' + (cy + 15) + '" text-anchor="middle" font-size="10.5" font-weight="800" letter-spacing="1" fill="' + cvar('--muted') + '">HOURS</text>';
+    }
+    return '<svg viewBox="0 0 ' + S + ' ' + S + '" style="max-width:300px;margin:0 auto" role="img" aria-label="Share of hours by '
+      + esc(dimName(CDIM)) + '">' + out + '</svg>';
+  }
+
+  /* THE LINE FORM — every series on ONE set of axes, which is what "merge the lines together"
+     asks for and also the only honest way to draw it: two y-scales would let any pair of lines be
+     made to cross wherever the reader's eye wanted them to.
+     Months run across the bottom (the only ordered dimension in this book). A month a series
+     missed is drawn as ZERO, not skipped, so two lines are never read as the same shape at
+     different speeds. Undated rows are not plotted and the verdict says how many. */
+  function lineChart(sm) {
+    var ms = sm.months, ser = sm.series;
+    if (!ms.length) return '<div class="empty">No task in view carries a date, so there is nothing to plot over time.</div>';
+    var W = 720, H = 344, L = 50, Rp = 16, T = 14, B = 48;
+    var iw = W - L - Rp, ih = H - T - B;
+    var max = 0, i, j;
+    for (i = 0; i < ser.length; i++) for (j = 0; j < ser[i].points.length; j++) if (ser[i].points[j].hours > max) max = ser[i].points[j].hours;
+    max = niceMax(max || 1);
+    var stepX = ms.length > 1 ? iw / (ms.length - 1) : 0;
+    var xAt = function (n) { return ms.length > 1 ? L + stepX * n : L + iw / 2; };
+    var yAt = function (v) { return T + ih - (v / max) * ih; };
+    var out = '', ticks = 4;
+    for (i = 0; i <= ticks; i++) {
+      var v = max * i / ticks, y = yAt(v);
+      out += '<line x1="' + L + '" y1="' + y.toFixed(1) + '" x2="' + (W - Rp) + '" y2="' + y.toFixed(1) + '" stroke="' + cvar('--grid') + '" stroke-width="1"/>';
+      out += '<text x="' + (L - 7) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end" font-size="10.5" font-weight="600" fill="' + cvar('--muted') + '">' + hrs(v) + '</text>';
+    }
+    for (i = 0; i < ms.length; i++) {
+      // every month is a gridline, but only every other label once the axis gets busy
+      if (ms.length <= 14 || i % 2 === 0 || i === ms.length - 1) {
+        out += '<text x="' + xAt(i).toFixed(1) + '" y="' + (T + ih + 17) + '" text-anchor="middle" font-size="10.5" font-weight="600" fill="' + cvar('--ink-2') + '">' + esc(monthLabel(ms[i])) + '</text>';
+      }
+    }
+    for (i = 0; i < ser.length; i++) {
+      var sr = ser[i], col = serCol(i, sr.fold), d = '';
+      for (j = 0; j < sr.points.length; j++) d += (j ? 'L' : 'M') + xAt(j).toFixed(1) + ' ' + yAt(sr.points[j].hours).toFixed(1);
+      out += '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+      for (j = 0; j < sr.points.length; j++) {
+        var p = sr.points[j];
+        var ttl = esc(seriesLabel(sr.k)) + ' · ' + esc(monthLabel(p.m)) + ' — ' + hrs(p.hours) + ' h ('
+          + hrs(p.bill) + ' h billable + ' + hrs(p.nonbill) + ' h non-billable, ' + num(p.n) + ' task' + (p.n === 1 ? '' : 's') + ')';
+        // a 4px radius is an 8px target — the smallest mark a hand can hit — with a surface ring
+        // so two lines crossing at a point stay two points
+        out += '<circle class="cg" data-t="' + ttl + '" cx="' + xAt(j).toFixed(1) + '" cy="' + yAt(p.hours).toFixed(1)
+          + '" r="4" fill="' + col + '" stroke="' + cvar('--paper') + '" stroke-width="2"/>';
+      }
+      // ≤4 lines are labelled where they end, so the eye never has to travel to the legend
+      if (ser.length <= 4 && sr.points.length) {
+        var last = sr.points[sr.points.length - 1];
+        out += '<text x="' + (xAt(sr.points.length - 1) - 6).toFixed(1) + '" y="' + (yAt(last.hours) - 9).toFixed(1)
+          + '" text-anchor="end" font-size="11" font-weight="800" fill="' + col + '">' + esc(seriesLabel(sr.k)) + '</text>';
+      }
+    }
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Hours per month by '
+      + esc(dimName(CDIM)) + '">' + out + '</svg>';
+  }
+  function monthLabel(m) {
+    var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var p = String(m).split('-');
+    return (M[(+p[1] || 1) - 1] || p[1]) + ' ' + String(p[0]).slice(2);
+  }
+  function seriesLabel(k) {
+    if (LINEMODE === 'bill') return k;
+    return dimLabel(k);
+  }
+
+  /* SIDE BY SIDE — the small-multiples reading (Ray: "dissect them more easily side by side").
+     One small donut per group in a grid, every donut on the SAME hours scale by area is a lie
+     nobody can read, so each is drawn the same size and carries its own total in words: the
+     comparison people actually make here is of the MIX, and a ring shows a mix at a glance.
+     With a second split each donut holds that group's children (colour = child); with none it
+     holds billable vs non-billable, and the module's own two colours stay. */
+  function smallMult(cells, colourBy) {
+    if (!cells.length) return '<div class="empty">Nothing to compare here yet.</div>';
+    var cols = cells.length <= 2 ? cells.length : cells.length <= 6 ? 3 : 4;
+    var W = 720, cw = W / cols, ch = 148, R = 40, rows = Math.ceil(cells.length / cols);
+    var out = '', showLab = $('clab').checked;
+    cells.forEach(function (c, idx) {
+      var cx = (idx % cols) * cw + cw / 2, cy = Math.floor(idx / cols) * ch + 60;
+      var tot = 0;
+      c.parts.forEach(function (x) { tot += x.v; });
+      var a = -Math.PI / 2, r0 = R, ri = R * 0.56;
+      function pt(rad, ang) { return [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)]; }
+      if (!tot) {
+        out += '<circle cx="' + cx + '" cy="' + cy + '" r="' + ((r0 + ri) / 2) + '" fill="none" stroke="' + cvar('--grid') + '" stroke-width="' + (r0 - ri) + '"/>';
+      }
+      c.parts.forEach(function (x, pi) {
+        if (!x.v) return;
+        var sweep = (x.v / (tot || 1)) * Math.PI * 2, a2 = a + sweep, big = sweep > Math.PI ? 1 : 0;
+        var pct = Math.round((x.v / (tot || 1)) * 1000) / 10;
+        var ttl = esc(c.label) + ' · ' + esc(x.l) + ' — ' + hrs(x.v) + ' h (' + pct + '%)';
+        if (sweep >= Math.PI * 2 - 1e-6) {
+          out += '<circle class="cg" data-t="' + ttl + '" cx="' + cx + '" cy="' + cy + '" r="' + ((r0 + ri) / 2)
+            + '" fill="none" stroke="' + x.c + '" stroke-width="' + (r0 - ri) + '"/>';
+        } else {
+          var p1 = pt(r0, a), p2 = pt(r0, a2), p3 = pt(ri, a2), p4 = pt(ri, a);
+          out += '<path class="cg" data-t="' + ttl + '" d="M' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2)
+            + 'A' + r0 + ' ' + r0 + ' 0 ' + big + ' 1 ' + p2[0].toFixed(2) + ' ' + p2[1].toFixed(2)
+            + 'L' + p3[0].toFixed(2) + ' ' + p3[1].toFixed(2)
+            + 'A' + ri + ' ' + ri + ' 0 ' + big + ' 0 ' + p4[0].toFixed(2) + ' ' + p4[1].toFixed(2) + 'Z"'
+            + ' fill="' + x.c + '" stroke="' + cvar('--paper') + '" stroke-width="2"/>';
+        }
+        a = a2;
+      });
+      if (showLab) out += '<text x="' + cx + '" y="' + (cy + 4) + '" text-anchor="middle" font-size="12" font-weight="900" fill="' + cvar('--ink') + '">' + hrs(c.hours) + '</text>';
+      var lab = c.label.length > 17 ? c.label.slice(0, 16) + '…' : c.label;
+      out += '<text x="' + cx + '" y="' + (cy + R + 20) + '" text-anchor="middle" font-size="11.5" font-weight="800" fill="' + cvar('--ink') + '">' + esc(lab) + '</text>';
+      // the hours sit in the ring when labels are on, so the caption does not print the same
+      // total a second time — in a grid of twelve cells that duplication reads as noise
+      out += '<text x="' + cx + '" y="' + (cy + R + 35) + '" text-anchor="middle" font-size="10.5" font-weight="600" fill="' + cvar('--muted') + '">'
+        + (showLab ? '' : hrs(c.hours) + ' h · ') + c.billPct + '% billable</text>';
+    });
+    return '<svg viewBox="0 0 ' + W + ' ' + (rows * ch + 16) + '" role="img" aria-label="'
+      + esc(colourBy) + ' compared side by side">' + out + '</svg>';
+  }
+
+  /* The cells the side-by-side view draws. A nested split puts that group's CHILDREN in its ring
+     (identity colours, capped by the engine's own fold); a flat split puts billable vs
+     non-billable in it, which keeps the module's two colours where they can be kept. */
+  function smallCells() {
+    if (nested()) {
+      var tree = nestTree();
+      /* COLOUR FOLLOWS THE CHILD, NEVER ITS RANK INSIDE ITS PARENT. Colouring each ring by the
+         child's position would make "Reiss" blue in one donut and "Superdry" blue in the next —
+         the one thing a side-by-side comparison must not do. So the children are ranked ONCE
+         across the whole tree and every cell reads that map; anything past the eighth is the
+         same grey "Other" everywhere, which is honest about being a remainder. */
+      var tot = {}, keys = [];
+      tree.forEach(function (nd) {
+        (nd.kids || []).forEach(function (kd) {
+          if (tot[kd.k] == null) { tot[kd.k] = 0; keys.push(kd.k); }
+          tot[kd.k] += kd.hours;
+        });
+      });
+      keys.sort(function (a, b) { return (tot[b] - tot[a]) || String(a).localeCompare(String(b)); });
+      var top = keys.slice(0, 8), col = {};
+      top.forEach(function (k, i) { col[k] = serCol(i, false); });
+      var grey = serCol(0, true), rest = keys.length - top.length;
+      return {
+        colourBy: dimName(CDIM2),
+        keys: top.map(function (k) { return { k: k, label: nodeLabel(k, tree.dims[1]), c: col[k], hours: r2(tot[k]) }; })
+          .concat(rest > 0 ? [{ k: '__other', label: 'Other (' + rest + ' more)', c: grey,
+            hours: r2(keys.slice(8).reduce(function (a, k2) { return a + tot[k2]; }, 0)) }] : []),
+        cells: tree.map(function (nd) {
+          var parts = [], other = 0;
+          (nd.kids || []).forEach(function (kd) {
+            if (col[kd.k]) parts.push({ l: nodeLabel(kd.k, tree.dims[1]), v: kd.hours, c: col[kd.k], rank: top.indexOf(kd.k) });
+            else other += kd.hours;
+          });
+          parts.sort(function (a, b) { return a.rank - b.rank; });
+          if (other > 0) parts.push({ l: 'Other', v: r2(other), c: grey });
+          return { label: nodeLabel(nd.k, tree.dims[0]), hours: nd.hours, billPct: nd.billPct, parts: parts };
+        })
+      };
+    }
+    var g = chartRows();
+    return { colourBy: 'Billable and non-billable', cells: g.map(function (x) {
+      return { label: dimLabel(x.k), hours: x.hours, billPct: x.billPct,
+        parts: [{ l: 'Billable', v: x.bill, c: cvar('--bil') }, { l: 'Non-billable', v: x.nonbill, c: cvar('--nbil') }] };
+    }) };
   }
 
   function donut(s) {
@@ -2116,24 +2584,66 @@ window.addEventListener('load',restore);
     return String(k == null ? '' : k);
   }
 
-  function legend(g, s) {
-    var h = '<div class="lg-row hd"><i style="background:' + cvar('--bil') + '"></i><span class="nm">Billable</span><span class="v">' + hrs(s.bill) + ' h</span><span class="p">' + s.billPct + '%</span></div>'
-      + '<div class="lg-row hd"><i style="background:' + cvar('--nbil') + '"></i><span class="nm">Non-billable</span><span class="v">' + hrs(s.nonbill) + ' h</span><span class="p">' + (Math.round((100 - s.billPct) * 10) / 10) + '%</span></div>';
-    if (CDIM !== 'total') {
-      h += '<div class="lg-cap"><span>' + esc(nested()
-        ? [CDIM, CDIM2, CDIM3].filter(Boolean).map(dimName).join(' \u203a ')
-        : dimName(CDIM)) + '</span><span class="u">% billable</span></div>';
-      h += g.slice(0, 12).map(function (x) {
-        return '<div class="lg-row" style="border:none;padding:3px 0"><span class="nm">' + esc(dimLabel(x.k)) + '</span><span class="v">' + hrs(x.hours) + ' h</span><span class="p">' + x.billPct + '%</span></div>';
+  /* THE LEGEND CARRIES THE ENCODING, because on this card it changes with the form. When the
+     marks are billable vs non-billable the two head rows wear the swatches; when the marks carry
+     IDENTITY (pie, line, a nested comparison) the swatches move to the categories and the two
+     figures stay as plain rows — the split is never dropped, it just stops being the colour. */
+  function legend(g, s, sm) {
+    var ident = byIdentity(), sw = function (c) { return '<i style="background:' + c + '"></i>'; };
+    var h = '<div class="lg-row hd">' + (ident ? '' : sw(cvar('--bil'))) + '<span class="nm">Billable</span><span class="v">' + hrs(s.bill) + ' h</span><span class="p">' + s.billPct + '%</span></div>'
+      + '<div class="lg-row hd">' + (ident ? '' : sw(cvar('--nbil'))) + '<span class="nm">Non-billable</span><span class="v">' + hrs(s.nonbill) + ' h</span><span class="p">' + (Math.round((100 - s.billPct) * 10) / 10) + '%</span></div>';
+    var rows = null, cap = '';
+    if (CFORM === 'line' && sm) {
+      cap = LINEMODE === 'bill' ? 'Colour · the two lines' : 'Colour · ' + dimName(CDIM);
+      rows = sm.series.map(function (x, i) {
+        return { c: serCol(i, x.fold), label: LINEMODE === 'bill' ? x.k : dimLabel(x.k),
+          hours: x.hours, pct: x.billPct == null ? null : x.billPct };
+      });
+    } else if (CFORM === 'small' && nested()) {
+      var sc = smallCells();
+      cap = 'Colour · ' + sc.colourBy;
+      rows = sc.keys.map(function (k) { return { c: k.c, label: k.label, hours: k.hours, pct: null }; });
+    } else if (ident) {
+      cap = 'Colour · ' + dimName(CDIM);
+      rows = pieSlices().map(function (x, i) {
+        return { c: serCol(i, x.fold), label: dimLabel(x.k), hours: x.hours, pct: x.billPct };
+      });
+    } else if (CDIM !== 'total') {
+      cap = nested() ? [CDIM, CDIM2, CDIM3].filter(Boolean).map(dimName).join(' › ') : dimName(CDIM);
+      rows = g.slice(0, 12).map(function (x) {
+        return { c: null, label: dimLabel(x.k), hours: x.hours, pct: x.billPct };
+      });
+    }
+    if (rows) {
+      h += '<div class="lg-cap"><span>' + esc(cap) + '</span><span class="u">'
+        + (rows.length && rows[0].pct == null ? 'hours' : '% billable') + '</span></div>';
+      h += rows.map(function (r) {
+        return '<div class="lg-row" style="border:none;padding:3px 0">' + (r.c ? sw(r.c) : '')
+          + '<span class="nm">' + esc(r.label) + '</span><span class="v">' + hrs(r.hours) + ' h</span>'
+          + '<span class="p">' + (r.pct == null ? '' : r.pct + '%') + '</span></div>';
       }).join('');
     }
     $('clegend').innerHTML = h;
   }
 
-  function ctable(g, tree) {
+  function ctable(g, tree, sm) {
     var box = $('ctabbox');
     box.hidden = !$('ctab').checked;
     if (box.hidden) return;
+    // a line chart's table is the CROSS-TAB it was drawn from — reading the split's totals under
+    // a chart about months would answer a different question from the one on screen
+    if (sm && CFORM === 'line') {
+      box.innerHTML = '<table class="st ctab"><thead><tr><th>'
+        + esc(LINEMODE === 'bill' ? 'Hours' : dimName(CDIM)) + '</th>'
+        + sm.months.map(function (m) { return '<th class="num">' + esc(monthLabel(m)) + '</th>'; }).join('')
+        + '<th class="num">Total</th></tr></thead><tbody>'
+        + sm.series.map(function (x) {
+          return '<tr><td class="b">' + esc(LINEMODE === 'bill' ? x.k : dimLabel(x.k)) + '</td>'
+            + x.points.map(function (p) { return '<td class="num">' + hrsCell(p.hours) + '</td>'; }).join('')
+            + '<td class="num b">' + hrsCell(x.hours) + '</td></tr>';
+        }).join('') + '</tbody></table>';
+      return;
+    }
     var head = '<th class="num">Tasks</th><th class="num">Billable</th><th class="num">Non-billable</th>'
       + '<th class="num">Total</th><th class="num">% billable</th>';
     if (tree) {
@@ -2159,6 +2669,14 @@ window.addEventListener('load',restore);
   }
 
   function tsv() {
+    if (CFORM === 'line') {
+      var sm = lineData();
+      return [LINEMODE === 'bill' ? 'Hours' : dimName(CDIM)].concat(sm.months.map(monthLabel)).concat(['Total h']).join('\t')
+        + '\n' + sm.series.map(function (x) {
+          return [LINEMODE === 'bill' ? x.k : dimLabel(x.k)]
+            .concat(x.points.map(function (p) { return p.hours; })).concat([x.hours]).join('\t');
+        }).join('\n');
+    }
     if (nested()) {
       // ONE COLUMN PER LEVEL and LEAF ROWS ONLY — a pasted table whose parent rows sit beside its
       // children would double every total the moment anyone summed the column
@@ -2778,7 +3296,8 @@ window.addEventListener('load',restore);
     $('cdim').onchange = function () {
       CDIM = $('cdim').value;
       if (CDIM === 'total') { CDIM2 = ''; CDIM3 = ''; }          // 'total' is one bucket — nothing to nest under
-      if (CDIM !== 'total' && CFORM === 'donut') { CFORM = 'stack'; $('cform').value = 'stack'; }
+      // fillSubDims rebuilds the form list for the new split and keeps the current form if it
+      // still reads honestly, so no form has to be coerced behind the reader's back
       fillSubDims(); chart();
     };
     $('cdim2').onchange = function () {
@@ -2787,7 +3306,7 @@ window.addEventListener('load',restore);
       fillSubDims(); chart();
     };
     $('cdim3').onchange = function () { CDIM3 = $('cdim3').value; fillSubDims(); chart(); };
-    $('cform').onchange = function () { CFORM = $('cform').value; if (CFORM === 'donut' && CDIM !== 'total') { CDIM = 'total'; CDIM2 = ''; CDIM3 = ''; $('cdim').value = 'total'; fillSubDims(); } chart(); };
+    $('cform').onchange = function () { CFORM = $('cform').value; chart(); };
     $('clab').onchange = chart; $('ctab').onchange = chart;
     $('pxlsx').onclick = xlsxExport;
     $('xpng').onclick = png;
@@ -2820,7 +3339,13 @@ window.addEventListener('load',restore);
     fetch('/api/access?me=1').then(function (r) { return r.json(); })
       .then(function (a) { ME = (a && (a.name || a.ownerName || a.email)) || ''; }).catch(function () {});
     // the first paint must not show every row as untagged and then flip — chain it on the load
-    tagLoad(function () { apply(); });
+    tagLoad(function () {
+      apply();
+      // reopen the rail this screen left open — after the tags land, so it never paints an empty
+      // vocabulary and then fills itself in
+      var want = '0'; try { want = localStorage.getItem(TG_KEY) || '0'; } catch (e) {}
+      if (want === '1') rulesOpen();
+    });
     apply();
   }
 

@@ -6953,6 +6953,41 @@
       "pr": 430
     },
     {
+      "name": "Playbook New products: each market's last 12 months of arrivals as a sparkline, not a highlight (Ray, 17 Sep 2026: 'can you replace with these bar chart instead and no need red highlights')",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function pbSpark(dob,nowMs,months)",
+      "min": 1,
+      "pr": 431
+    },
+    {
+      "name": "Playbook New products: the series is walked from the CALENDAR, so a month absent from the histogram keeps its slot instead of closing the gap",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var dt=new Date(Date.UTC(y,m-i,1));",
+      "min": 1,
+      "pr": 431
+    },
+    {
+      "name": "Playbook New products: the running month is flagged, never plotted as a finished one",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "out.push({k:k,n:n,cur:i===0});",
+      "min": 1,
+      "pr": 431
+    },
+    {
+      "name": "Playbook New products: the sparkline borrows the Volume module's own marks and validated blue pair so the two surfaces cannot disagree",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": ".ck-spark i.cur{opacity:.45}",
+      "min": 1,
+      "pr": 431
+    },
+    {
+      "name": "Playbook New products: no row wash and no filled band pill — on a 28-market brand every row read the same highlight, so it discriminated nothing",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "sparkHtml(sp)",
+      "min": 1,
+      "pr": 431
+    },
+    {
       "name": "Task Manager: mass tagging acts on the rows ON SCREEN (paneRows), not the grammar bar's wider result (Ray, 17 Sep 2026: 'this button Tag all: > should only tag the filtered row instead of all rows')",
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "function bulkSrc() { return TAB === 'tasks' ? paneRows('tasks').filter(taggable) : []; }",
@@ -6983,6 +7018,24 @@
       "min": 1
     },
     {
+      "name": "Task Manager: the Tags & rules panel is two columns that stack (Ray, 17 Sep 2026: 'love this, reorganise and make the tab cleaner pls')",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "#tgbd .tgd-cols{display:grid",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the panel's own classes are tgd-prefixed — the table already owns .tg-add and .tg-cell",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "class=\"tgd-grid tgd-rules\"",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the common titles are the rule builder's source list, not a wall of chips under it",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "Start from a common title in this book",
+      "min": 1
+    },
+    {
       "name": "Task Manager: hrsCell fixes every stacked hours column to two decimals so the decimal point lines up (Ray, 17 Sep 2026: 'why these numbers are not aligned vertically, you kept making this issue')",
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "function hrsCell(n) { return (Math.round(n * 100) / 100).toFixed(2); }",
@@ -7010,6 +7063,134 @@
       "name": "Worker: /api/golden/quality PUT sanitizer allow-lists hlDist with fixed bucket keys, each independently clamped",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "hlDist: (q.multi && a.hlDist && typeof a.hlDist === 'object') ? HL_BUCKETS.reduce((o, b) => {",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: Tags & rules is a right-hand RAIL that pushes the page, not a modal over a dimmed one (Ray, 17 Sep 2026: 'can it also popup as on the right panel similar to build log so i can also work simultaneously')",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "body.tgd-on{padding-right:var(--tgd-w)}",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the rail's shell is built once and only its body redrawn, so an edit never restarts the slide-in",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "$('tg-body').innerHTML = ''",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the rail toggles from its own button, closes on Esc, and is remembered per device",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "var TG_KEY = 'fcc-tg-rail'",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the panel's two-column split keys on its OWN width (container query), since it lives in a rail",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "@container (min-width:560px){#tgbd .tgd-cols",
+      "min": 1
+    },
+    {
+      "name": "AI Quote — THE PRODUCT VOLUME BAR CHART IN THE NEW-PRODUCTS CARD (Ray, 17 Sep 2026: 'within AI quote the new products — pull in the product volume bar chart pls to make it easier to convince for client — make sure its organised'): the card is two named halves, EVIDENCE (what the feed has actually done) and COMMERCIAL (forecast, override, bands, bundle)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "class=\"upd-grid\"",
+      "min": 1,
+      "pr": 438
+    },
+    {
+      "name": "AI Quote: the evidence half — 12 monthly arrival bars drawn as /volume draws them, KPIs and the fs:date_of_birth foot",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function updEvidence()",
+      "min": 1,
+      "pr": 438
+    },
+    {
+      "name": "AI Quote: the bar renderer — series built from the CALENDAR so a month with no arrivals is a real zero in its own slot, never a closed-up gap; the running month translucent",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function updBars(rows,every)",
+      "min": 1,
+      "pr": 438
+    },
+    {
+      "name": "AI Quote: the card's KPI helper has its OWN name — a second kpi() in the same IIFE silently re-points the hero row too",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function updKpi(v,l)",
+      "min": 1,
+      "pr": 438
+    },
+    {
+      "name": "AI Quote: the commercial half wears .ucm, never .cm — .cm is the charge-mode toggle (inline-flex, nowrap) and threw the column's children out of the grid",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "upd-box ucm",
+      "min": 1,
+      "pr": 438
+    },
+    {
+      "name": "AI Quote: the daily in-flow stands in when a feed carries no first-seen dates, labelled as the different measure it is",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "entering the feed</b> each day",
+      "min": 1,
+      "pr": 438
+    },
+    {
+      "name": "AI Quote: the arrivals series and the daily history are kept on VOL so the card can draw them",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "hist:v0.hist,stats:st",
+      "min": 1,
+      "pr": 438
+    },
+    {
+      "name": "Volume page: ?client= / ?market= deep link — the Workflow new-products card and the AI Quote chart both link here naming a brand",
+      "file": "docs/FeedSpark_Volume.html",
+      "pattern": "Q.get('client')||Q.get('b')",
+      "min": 1,
+      "pr": 438
+    },
+    {
+      "name": "Task Manager: pie, line and side-by-side joined the chart forms (Ray, 17 Sep 2026: 'I like pie charts, donut charts, and line charts … dissect them more easily side by side')",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "{ v: 'small', label: 'Side by side' }",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the form selector is rebuilt from what the split can honestly carry, never greyed over a stale label",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function formsFor()",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the line form is one cross-tab of month x category, undated rows counted back not plotted",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function seriesByMonth",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: side-by-side colours follow the CHILD across the whole tree, never its rank inside its parent",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "COLOUR FOLLOWS THE CHILD, NEVER ITS RANK INSIDE ITS PARENT",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the legend carries the encoding — swatches move to the categories when colour means identity",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function byIdentity()",
+      "min": 1
+    },
+    {
+      "name": "Chrome: the explainer prose collapses behind ONE ⓘ per card (Ray, 17 Sep 2026: 'the red-crossed text is not needed at all - so hide it (same thing for rest of FCC module) in a [i] icon')",
+      "file": "docs/instr_collapse.html",
+      "pattern": "if(!c.__instrBtn)mount(c,el);",
+      "min": 1
+    },
+    {
+      "name": "Chrome: the collapse key is the card, not the prose — these lines carry live numbers",
+      "file": "docs/instr_collapse.html",
+      "pattern": "function keyOf(c,el)",
+      "min": 1
+    },
+    {
+      "name": "Chrome: a page opts a line in with data-instr, so Feed Chat's answer is never swept up",
+      "file": "docs/instr_collapse.html",
+      "pattern": "[data-instr]",
       "min": 1
     }
   ]
