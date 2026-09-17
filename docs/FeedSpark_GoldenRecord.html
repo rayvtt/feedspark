@@ -56,7 +56,21 @@ window.addEventListener('load',restore);
   /* estate grid */
   .est-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
   .est-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
-  .est-card h3{margin:0 0 8px;font-size:16px;font-weight:900}
+  /* the card header IS the per-brand collapse toggle (Ray, 17 Sep 2026: "allow button to expand
+     or collapse 'all' or individual brand option") — a chevron + name + a summary that stays
+     visible collapsed or not, so closing a card never hides a critical alert */
+  /* padding, not just the text's own line-height, gets the tap target to the phone floor
+     (docs/MOBILE.md: buttons >=36px); negative margins keep the visible gaps — 8px above the
+     chevron, 8px before the first market row — the same as before this row became clickable */
+  .est-hd{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 0;margin:-6px 0 2px}
+  .est-card.collapsed .est-hd{margin-bottom:-6px}
+  .est-hd h3{margin:0;font-size:16px;font-weight:900;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .est-hd .cx{color:var(--muted);font-weight:900;width:10px;flex:none;font-size:12px}
+  .est-sum{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;color:var(--muted);flex:none;white-space:nowrap}
+  .est-sum b{font-size:13.5px;font-variant-numeric:tabular-nums}
+  .est-flag{font-size:10px;font-weight:900;border-radius:100px;padding:1.5px 7px;white-space:nowrap}
+  .est-flag.crit{background:#FDEBEA;color:var(--risk)}
+  .est-flag.warn{background:#FDF3E3;color:var(--orange-deep)}
   .est-mkt{display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px dashed var(--line);cursor:pointer}
   .est-mkt:hover .mkt-code{color:var(--orange-deep)}
   .est-mkt.sel{background:rgba(245,166,35,.08);border-radius:8px;margin:0 -8px;padding:7px 8px}
@@ -601,6 +615,7 @@ window.addEventListener('load',restore);
 <section class="cat"><div class="wrap">
   <div class="cat-h"><span class="k">02</span><h2>Estate scorecard</h2>
     <span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="scanmsg" id="scan-all-msg"></span>
+    <button class="btn" id="collapse-all" title="Collapse or expand every brand card — a single card still opens or closes on its own header">⊖ Collapse all</button>
     <button class="btn" id="demo-tgl" title="Mask every client identity for a client-facing screen share">🎭 Demo mode</button>
     <button class="btn pri" id="scan-all" title="Force-rescans every feed now (no freshness skip) — labels, product types and attribute coverage land in the same pass">⚡ Scan whole estate</button></span></div>
   <p class="cat-sub"><span class="chip-ch chip-g">G</span> <b>Google Shopping feeds only</b> — the score is each
@@ -867,6 +882,35 @@ window.addEventListener('load',restore);
     if (Date.now() - f.t > 26 * 3600 * 1000) return 'stale';
     return 'ok';
   }
+  // per-brand collapse (Ray, 17 Sep 2026: "allow button to expand or collapse 'all' or individual
+  // brand option") — a viewing preference for THIS screen, so it lives on the device like the
+  // other density/reference toggles (gr-demo, gr-ref), never shared team state.
+  var COLLAPSED = (function () {
+    try { return new Set(JSON.parse(localStorage.getItem('gr-collapse') || '[]')); } catch (e) { return new Set(); }
+  })();
+  function saveCollapsed() {
+    try { localStorage.setItem('gr-collapse', JSON.stringify(Array.from(COLLAPSED))); } catch (e) {}
+  }
+  function toggleCollapse(c) {
+    if (COLLAPSED.has(c)) COLLAPSED.delete(c); else COLLAPSED.add(c);
+    saveCollapsed(); renderEstate();
+  }
+  // what a collapsed card still says out loud — the summary travels WITH the card, not only
+  // in its rows, so folding a brand away can never hide a live alert
+  function estSummary(rows) {
+    var scored = rows.filter(function (f) { return f.score != null; });
+    var avg = scored.length ? Math.round(scored.reduce(function (s, f) { return s + f.score; }, 0) / scored.length * 10) / 10 : null;
+    var crit = 0, warn = 0, req = 0;
+    rows.forEach(function (f) { crit += f.nCrit || 0; warn += f.nWarn || 0; req += (f.reqMissing || []).length; });
+    return { avg: avg, crit: crit, warn: warn, req: req, n: rows.length };
+  }
+  function collapseAllBtn() {
+    var b = $('collapse-all'); if (!b) return;
+    var clients = Object.keys(byClientCache || {});
+    var allDown = clients.length > 0 && clients.every(function (c) { return COLLAPSED.has(c); });
+    b.textContent = allDown ? '⊕ Expand all' : '⊖ Collapse all';
+  }
+  var byClientCache = {};
   function renderEstate() {
     rescoreEstate();
     var byClient = {};
@@ -874,30 +918,62 @@ window.addEventListener('load',restore);
     Object.keys(byClient).forEach(function (c) {
       byClient[c].sort(function (a, b) { return String(a.mkt).localeCompare(String(b.mkt)); });
     });
+    byClientCache = byClient;
     var clients = Object.keys(byClient).sort();
-    if (!clients.length) { $('est-grid').innerHTML = '<div class="panel"><span class="muted">No Google Shopping feeds wired yet.</span></div>'; return; }
+    if (!clients.length) { $('est-grid').innerHTML = '<div class="panel"><span class="muted">No Google Shopping feeds wired yet.</span></div>'; collapseAllBtn(); return; }
     var h = '';
     clients.forEach(function (c) {
-      h += '<div class="est-card" data-client="' + esc(c) + '"><h3>' + esc(dispClient(c)) + '</h3>';
-      byClient[c].forEach(function (f) {
-        var k = keyOf(f.client, f.mkt), st = statusOf(f);
-        var miss = (f.reqMissing || []).length;
-        h += '<div class="est-mkt' + (SEL === k ? ' sel' : '') + '" data-k="' + esc(k) + '">' +
-          '<span class="mkt-code">' + chChip() + esc(String(f.mkt).toUpperCase()) + '</span>' +
-          '<span class="st-pill st-' + st + '">' + (st === 'never' ? 'not scanned' : st) + '</span>' +
-          (f.score != null ? '<span class="est-score" style="color:' + scoreCol(f.score) + '" title="Golden Record score — weighted attribute completeness">' + f.score + '</span>' : '') +
-          (miss ? '<span class="st-pill st-crit" title="Required attributes missing from the feed: ' + esc((f.reqMissing || []).join(', ')) + '">' + miss + ' req missing</span>' : '') +
-          '<span class="est-meta">' + (f.t ? fmt(f.rows) + ' rows · ' + ago(f.t) : (f.err ? esc(f.err).slice(0, 40) : '—')) +
-          ((f.nCrit || f.nWarn) ? '<br>' + (f.nCrit ? f.nCrit + ' crit ' : '') + (f.nWarn ? f.nWarn + ' warn' : '') : '') + '</span>' +
-          '</div>';
-      });
+      var collapsed = COLLAPSED.has(c), sum = estSummary(byClient[c]);
+      h += '<div class="est-card' + (collapsed ? ' collapsed' : '') + '" data-client="' + esc(c) + '">' +
+        '<div class="est-hd" data-toggle="' + esc(c) + '" title="' + (collapsed ? 'Expand' : 'Collapse') + ' ' + esc(dispClient(c)) + '">' +
+        '<span class="cx">' + (collapsed ? '▸' : '▾') + '</span><h3>' + esc(dispClient(c)) + '</h3>' +
+        '<span class="est-sum">' +
+        (sum.avg != null ? '<b style="color:' + scoreCol(sum.avg) + '">' + sum.avg + '</b>' : '<b class="muted">—</b>') +
+        '<span>' + sum.n + ' market' + (sum.n === 1 ? '' : 's') + '</span>' +
+        (sum.req ? '<span class="est-flag crit">' + sum.req + ' req</span>' : '') +
+        (sum.crit ? '<span class="est-flag crit">' + sum.crit + ' crit</span>' : '') +
+        (sum.warn ? '<span class="est-flag warn">' + sum.warn + ' warn</span>' : '') +
+        '</span></div>';
+      if (!collapsed) {
+        byClient[c].forEach(function (f) {
+          var k = keyOf(f.client, f.mkt), st = statusOf(f);
+          var miss = (f.reqMissing || []).length;
+          h += '<div class="est-mkt' + (SEL === k ? ' sel' : '') + '" data-k="' + esc(k) + '">' +
+            '<span class="mkt-code">' + chChip() + esc(String(f.mkt).toUpperCase()) + '</span>' +
+            '<span class="st-pill st-' + st + '">' + (st === 'never' ? 'not scanned' : st) + '</span>' +
+            (f.score != null ? '<span class="est-score" style="color:' + scoreCol(f.score) + '" title="Golden Record score — weighted attribute completeness">' + f.score + '</span>' : '') +
+            (miss ? '<span class="st-pill st-crit" title="Required attributes missing from the feed: ' + esc((f.reqMissing || []).join(', ')) + '">' + miss + ' req missing</span>' : '') +
+            '<span class="est-meta">' + (f.t ? fmt(f.rows) + ' rows · ' + ago(f.t) : (f.err ? esc(f.err).slice(0, 40) : '—')) +
+            ((f.nCrit || f.nWarn) ? '<br>' + (f.nCrit ? f.nCrit + ' crit ' : '') + (f.nWarn ? f.nWarn + ' warn' : '') : '') + '</span>' +
+            '</div>';
+        });
+      }
       h += '</div>';
     });
     $('est-grid').innerHTML = h;
     Array.prototype.forEach.call(document.querySelectorAll('.est-mkt'), function (el) {
       el.onclick = function () { select(el.getAttribute('data-k')); };
     });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-toggle]'), function (el) {
+      el.onclick = function () { toggleCollapse(el.getAttribute('data-toggle')); };
+    });
+    collapseAllBtn();
   }
+  var collapseAllEl = $('collapse-all');
+  if (collapseAllEl) collapseAllEl.onclick = function () {
+    var clients = Object.keys(byClientCache);
+    var allDown = clients.length > 0 && clients.every(function (c) { return COLLAPSED.has(c); });
+    // a toggle, not two buttons: collapse everything, or — from anywhere, even a mixed state —
+    // open everything back up. Mixed always resolves to "collapse the rest" first.
+    COLLAPSED = new Set(allDown ? [] : clients);
+    saveCollapsed(); renderEstate();
+  };
+  // the ?client= deep-link (below, its OWN top-level IIFE, outside this closure) needs to open
+  // a card this viewer — or a standing "collapse all" — had folded shut, before it can highlight
+  // and scroll to it; a bridge is the minimal reach across the boundary
+  window.__grExpand = function (c) {
+    if (COLLAPSED.has(c)) { COLLAPSED.delete(c); saveCollapsed(); renderEstate(); }
+  };
 
   /* ---------------- alerts panel ---------------- */
   function renderAlerts() {
@@ -2444,9 +2520,20 @@ window.addEventListener('load',restore);
       for(var i=0;i<cards.length;i++){
         var c=cards[i].getAttribute('data-client')||'';
         if(c.toLowerCase().replace(/[^a-z0-9]/g,'')===want){
-          cards[i].style.outline='2px solid var(--orange,#ED6F0B)';
-          cards[i].style.outlineOffset='3px';
-          if(cards[i].scrollIntoView)cards[i].scrollIntoView({behavior:'smooth',block:'center'});
+          // a deep link exists to be looked at — never land on a card folded shut, whether by
+          // this viewer's own collapse or a standing "collapse all". This IIFE sits OUTSIDE the
+          // page's main closure, so __grExpand is the bridge into it; it re-renders the whole
+          // grid (a NodeList's own entries are read-only), so the target has to be looked up
+          // again rather than reused.
+          var target=cards[i];
+          if(target.classList.contains('collapsed')&&window.__grExpand){
+            window.__grExpand(c);
+            var fresh=document.querySelectorAll('.est-card[data-client]');
+            for(var j=0;j<fresh.length;j++)if(fresh[j].getAttribute('data-client')===c){target=fresh[j];break;}
+          }
+          target.style.outline='2px solid var(--orange,#ED6F0B)';
+          target.style.outlineOffset='3px';
+          if(target.scrollIntoView)target.scrollIntoView({behavior:'smooth',block:'center'});
           return;
         }
       }
