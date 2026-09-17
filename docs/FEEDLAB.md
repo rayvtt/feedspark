@@ -158,14 +158,66 @@ engine's own comments. Worker-side validation on PUT: must have `score.pillars`,
 | Pillar | Weight | Measures |
 |---|---|---|
 | **Conversational attributes** | **2.4** | mean COVERAGE of Google's six — `question_and_answer`, `document_link`, `related_product`, `item_group_title`, `variant_option`, `popularity_rank`. The variant pair is dropped from the denominator on a feed with no `item_group_id` |
-| Title anatomy | **1.6** | 0.40 length (full credit 80–150 chars) + 0.40 MASK coverage + 0.20 hygiene (dups/ALL-CAPS) |
-| Attribute completeness | 1.5 | weighted coverage — color/size/item_group_id ×1.2, material/gender/age_group ×1, pattern ×0.8 |
-| Identity & trust | 1.4 | id, brand, gtin\|mpn, price, availability, condition coverage |
-| Descriptions | 1.3 | 0.5 coverage + 0.3 depth (≥300 chars) + 0.2 uniqueness |
-| Taxonomy depth | 1.2 | 0.5 GPC (coverage × depth/4) + 0.5 product_type (coverage × depth ≥3 share) |
-| Structured detail | 1.2 | 0.55 structured richness (highlights per item, product_type depth) + 0.45 description depth — what an agent can quote back |
-| Media richness | 1.0 | 0.4 image coverage + 0.4 min(addl imgs/3, 1) + 0.2 https |
+| Title anatomy | **1.6** | 0.40 length (full credit 70–150 chars, half 30–69 — Google's own edges) + 0.40 MASK coverage + 0.20 hygiene (dups/ALL-CAPS) |
+| Attribute completeness | 1.5 | weighted coverage — color/size/item_group_id ×1.2, material/gender/age_group ×1, pattern ×0.8 — under the industry profile |
+| Identity & trust | 1.4 | id, link, brand, gtin\|mpn, price, availability coverage (condition measured, not scored — optional for new goods) |
+| Descriptions | 1.3 | 0.5 coverage + 0.3 length credit (0 under 160 chars, linear to full at 500 — Google's "first 160–500 characters") + 0.2 uniqueness |
+| Taxonomy depth | 1.2 | 0.5 mean GPC credit (numeric ID / 3+ levels / a 2-level branch Google's taxonomy ends at = 1, other 2-level = ½, 1 level = ¼, missing 0) + 0.5 mean PRIMARY product_type depth credit (3+ = 1, 2 = ½, 1 = ¼) — `pathDepth`, the same read as content quality and PT Guard |
+| Structured detail | 1.2 | 0.4 highlights min(avg/4, 1) + 0.3 product_detail coverage + 0.3 description length credit — product_type depth is NOT read here (Taxonomy owns it) |
+| Media richness | 1.0 | 0.5 image coverage + 0.5 min(addl imgs/3, 1) — https measured, not scored |
 | ~~Label architecture~~ | **0 — measured, not scored** | still read and returned as `labelArchitecture`, and owned in full by Label Guard |
+
+### Every pillar vetted against the published specs (Ray, 17 Sep 2026)
+
+*"The scoring and logic between content quality and AI readiness that I have spotted is still not
+consistent. For example, taking Schuh GB. product type is after scan for content quality; it says
+average 3.3 level depth while AI readiness in structured detail tiles only says product type 2.2
+level depth … Please also continue to vet every single tile of AI readiness against what the
+current industry or high-authoritative platforms such as Google, ChatGPT, or Claude recommend, and
+remove all the subtext underneath."*
+
+- **One depth, everywhere.** The tile's "product_type 2.2 levels deep" was a count of FILLED
+  KEYWORD SLOTS (`product_type(2..10)` — FeedSpark keyword injection), averaged over every row, and
+  the category column itself had been dropped: `slots()` started at `(1)`, and the XML parser names
+  the first repeat of a tag bare, so on every FeedHero XML feed the primary `g:product_type` was
+  not in the slot list at all. The engine now resolves the PRIMARY product_type exactly as
+  labelguard's `KEY_ALIASES` does (bare `product_type`, else `product_type(1)`) and counts its
+  chevron depth with `pathDepth` ported verbatim — `tools/test_feedlab.mjs` runs the same rows
+  through `qualityCollector` and `audit()` and asserts `avgDepth === taxonomy.ptDepthAvg` for both
+  product_type and GPC. Keyword assignments are still reported (`taxonomy.ptSlotsAvg`), named as
+  assignments.
+- **Slot one is the bare column** — the same bug had Monsoon GB's four repeated
+  `<g:product_highlight>` read as three and dropped the first `additional_image_link` on every
+  XML feed. Bare and `(1)` are one slot, never both.
+- **GPC credit knows Google's taxonomy.** A numeric ID or a two-level branch Google's own export
+  ends at (the 52-entry `GPC_LEAF2`, identical in both engines and asserted so) is "the most
+  specific category possible" ([answer 6324436](https://support.google.com/merchants/answer/6324436)).
+  Previously `Apparel & Accessories > Shoes` earned half credit on the tile while passing the
+  content-quality "too broad" rule.
+- **`condition` left Identity & trust; `link` joined it.** Google
+  ([answer 7052112](https://support.google.com/merchants/answer/7052112)) requires condition only
+  for used/refurbished goods and the OpenAI feed spec lists it optional — a feed of new products
+  was docked a sixth of the pillar for an attribute neither platform asks of it. `link` is
+  required by both.
+- **https left Media richness.** Google's image_link page
+  ([answer 6324350](https://support.google.com/merchants/answer/6324350)) accepts "http or https";
+  the `img-http` finding is gone and `media.httpsPct` stays as a reading.
+- **`product_detail` joined Structured detail.** Google names it beside highlights as what AI
+  surfaces read ([answer 9218260](https://support.google.com/merchants/answer/9218260): so customers
+  "discover information about your products across AI-driven surfaces"); product_type depth left the
+  pillar so nothing is counted twice.
+- **Description length is Google's 160–500** ([answer 6324468](https://support.google.com/merchants/answer/6324468)),
+  not a house 300: no credit under 160 (the content-quality "thin" rule fires at the same line),
+  linear to full at 500. **Title length is Google's 30 / 70 / 150** ([answer 6324415](https://support.google.com/merchants/answer/6324415)):
+  the MASK 80–120 window stays as the house target on the histogram, labelled as such.
+- **The subtext is gone; the logic is a click away.** Every pillar tile on `/feedlab` and `/golden`
+  is a name, a number, a bar and its weight; clicking it opens the scoring pop-up — the formula
+  (`FeedAudit.BASIS[key].f`), this feed's live components (`pillar.reads`, stored with the
+  analysis and allow-listed by the worker), the published sources (`BASIS[key].src` — Google
+  answer pages, the [OpenAI product feed spec](https://developers.openai.com/commerce/specs/feed),
+  Anthropic's [anatomy of effective commerce agents](https://claude.com/blog/the-anatomy-of-effective-commerce-agents))
+  and, where a threshold is FeedSpark's own rather than a platform's, a box saying so. One
+  object in the engine, so the two pages cannot drift.
 
 ### Why this model (Ray, 16 Sep 2026)
 

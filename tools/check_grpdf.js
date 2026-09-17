@@ -122,10 +122,10 @@ const QUALITY = {
   // restyle the design. These properties are read on screen and again in print mode, and
   // must match: anything else is a compact variant creeping back in.
   const PROBE = [['.tier', ['padding', 'marginTop', 'borderRadius']], ['.tier-h h4', ['fontSize']],
-    ['.tier-sub', ['fontSize']], ['.dial', ['width']], ['.gr-verdict', ['fontSize']],
+    ['.qz-i', ['fontSize']], ['.dial', ['width']], ['.gr-verdict', ['fontSize']],
     ['.at-row', ['padding', 'fontSize']], ['.qz-row', ['padding', 'fontSize']], ['.qz-score', ['fontSize']],
     ['.qz-line', ['fontSize']], ['.qz-why', ['fontSize']], ['.big-ring', ['width']], ['.brv .bn', ['fontSize']],
-    ['.air-card', ['padding']], ['.pillar', ['padding']], ['.psum', ['fontSize']], ['.pillars', ['gap']],
+    ['.air-card', ['padding']], ['.pillar', ['padding']], ['.pq', ['fontSize']], ['.pillars', ['gap']],
     ['.lad .ln', ['fontSize']], ['.heat-card', ['padding']], ['.thist', ['height']]];
   const readStyles = () => page.evaluate((P) => {
     const out = {};

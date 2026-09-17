@@ -626,11 +626,26 @@ pillar's own summary on the other — and flags any gap of 15 points or more:
 
 | pair | quality measures | the pillar measures |
 | --- | --- | --- |
-| `g:title` ↔ Title anatomy | the stated rules (150-char cap, capitals, promotional copy, a shared title) | the 80–120 window and the MASK slots the title carries |
-| `g:description` ↔ Descriptions | the share of PRODUCTS sharing copy with a different product | the share of DISTINCT copy reused — and only a fifth of the pillar, next to coverage (½) and length (³⁄₁₀) |
-| `g:google_product_category` + `g:product_type` ↔ Taxonomy depth | whether the value is SHAPED as Google specifies (≥3 levels, never single-level) | how DEEP the tree goes — GPC toward four levels, ≥3 product_type assignments |
+| `g:title` ↔ Title anatomy | the stated rules (150-char cap, capitals, promotional copy, a shared title) | length against Google's 70/150 edges and the MASK slots the title carries |
+| `g:description` ↔ Descriptions | the share of PRODUCTS sharing copy with a different product | the share of DISTINCT copy reused — and only a fifth of the pillar, next to coverage (½) and length against Google's 160–500 (³⁄₁₀) |
+| `g:google_product_category` + `g:product_type` ↔ Taxonomy depth | whether each value is SHAPED as Google specifies (a taxonomy value, a " > " path, not too broad) | the SAME chevron depth (`pathDepth`), graded per product — an ID, 3+ levels or a branch Google ends at is full credit, two levels half, one a quarter, missing nothing |
 | `g:color` `g:material` `g:pattern` ↔ Attribute completeness | whether the values that are there are usable | weighted COVERAGE of the variant attributes |
-| `g:product_highlight` ↔ Agentic readiness | the stated highlight rules (≥2, ≤100, 150 chars each) | the whole agentic surface, of which highlights are one input |
+| `g:product_highlight` ↔ Structured detail | the stated highlight rules (≥2, ≤100, 150 chars each) | highlights per product against Google's recommended four, product_detail coverage, description length against 160–500 |
+
+**17 Sep 2026 — the two sections read depth with ONE function.** Ray, on Schuh GB: *"product type is
+after scan for content quality; it says average 3.3 level depth while AI readiness in structured
+detail tiles only says product type 2.2 level depth so consistency is not adhered."* The tile was
+counting filled keyword slots (`product_type(2..10)`) and had lost the category column altogether
+on XML feeds; the Feed Lab engine now resolves the primary column exactly as `KEY_ALIASES` does and
+counts levels with `pathDepth` ported verbatim, `tools/test_feedlab.mjs` asserts the two engines
+return the same `avgDepth` on the same rows, and the Structured detail tile no longer states a
+product_type depth of its own (Taxonomy depth owns it). Every other pillar was vetted against the
+published specs at the same time — `docs/FEEDLAB.md` §5 has the per-pillar account — and the
+explanatory subtext under both sections is gone: a pillar tile and a content-quality row are a
+name, a number and a bar, and each opens a **scoring pop-up** (the formula, this feed's own
+readings, the rules with their severities and hit rates, the Google / OpenAI / Anthropic page each
+threshold comes from, and a box naming anything that is FeedSpark's own standard). Both sections
+carry an **ⓘ Scoring logic** button for the headline.
 
 Superdry GB, as it stands: description 67.6 vs 89 (different denominators — one boilerplate
 paragraph on thousands of products is thousands of products but a single value); GPC + product

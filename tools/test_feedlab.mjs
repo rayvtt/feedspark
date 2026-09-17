@@ -223,5 +223,114 @@ console.log('  (Ray, 17 Sep 2026, YuMOVE/Pet Care screenshot: "make sure all sco
     [pillarsOf(fashionProfiled).attributes.score, pillarsOf(petCare).attributes.score]);
 }
 
+console.log('\n— ONE depth, two sections (Ray, 17 Sep 2026: Schuh GB content quality 3.3 levels vs the tile’s "2.2") —');
+{
+  // the SAME rows through both engines: labelguard's content-quality collector and this audit.
+  // XML-shaped header — the first product_type is BARE and the keyword slots are (2), (3):
+  // that is exactly how the FeedHero feeds (Schuh, Reiss, Superdry…) arrive, and exactly the
+  // shape on which the tile used to count filled slots and call it depth
+  const LG = await import('../cloudflare/feedspark-deck/src/labelguard.js');
+  const XH = ['id', 'title', 'description', 'link', 'image_link', 'brand', 'price', 'availability', 'google_product_category',
+    'product_type', 'product_type(2)', 'product_type(3)', 'product_type(4)', 'product_highlight', 'product_highlight(2)', 'product_highlight(3)', 'product_highlight(4)',
+    'additional_image_link', 'additional_image_link(2)', 'item_group_id'];
+  const xc = {}; XH.forEach((h, i) => { xc[h] = i; });
+  const PATHS = ['Womens > Shoes > Trainers', 'Mens > Boots > Chelsea Boots > Leather', 'Kids > Shoes', 'Womens > Shoes > Trainers > Low Top > Canvas', 'Accessories'];
+  const xrows = [];
+  for (let i = 0; i < 100; i++) {
+    const r = new Array(XH.length).fill('');
+    r[xc.id] = 'X' + i; r[xc.title] = 'Schuh Converse Chuck Taylor All Star Ox Canvas Trainers in White, Low Top, UK ' + (3 + (i % 9));
+    r[xc.description] = DESC; r[xc.link] = 'https://x.com/' + i; r[xc.image_link] = 'https://x.com/' + i + '.jpg';
+    r[xc.brand] = 'Converse'; r[xc.price] = '60.00 GBP'; r[xc.availability] = 'in stock';
+    r[xc.google_product_category] = 'Apparel & Accessories > Shoes';
+    r[xc.product_type] = PATHS[i % PATHS.length];            // the category tree
+    r[xc['product_type(2)']] = 'chuck taylor'; r[xc['product_type(3)']] = 'white trainers';   // keyword injection
+    if (i % 2) r[xc['product_type(4)']] = 'canvas shoes';
+    r[xc.product_highlight] = 'Canvas upper'; r[xc['product_highlight(2)']] = 'Rubber sole';
+    r[xc['product_highlight(3)']] = 'Lace fastening'; r[xc['product_highlight(4)']] = 'Ortholite insole';
+    r[xc.additional_image_link] = 'https://x.com/' + i + '-b.jpg'; r[xc['additional_image_link(2)']] = 'https://x.com/' + i + '-c.jpg';
+    r[xc.item_group_id] = 'G' + Math.floor(i / 9);
+    xrows.push(r);
+  }
+  const X = FA.audit(XH, xrows, { client: 'Schuh', channel: 'google' });
+  const cols = LG.findCols(XH, ['product_type', 'google_product_category', 'title', 'description', 'brand', 'id', 'link', 'item_group_id']).labels;
+  const qc = LG.qualityCollector(cols, { header: XH });
+  xrows.forEach((r) => qc.onRow(r));
+  const snap = qc.finish({ client: 'Schuh', market: 'gb' });
+  eq('product_type depth: the AI-readiness tile and the content-quality row read the SAME number off the same rows',
+    X.taxonomy.ptDepthAvg, snap.attrs.product_type.avgDepth);
+  eq('and so does GPC depth', X.taxonomy.gpcDepthAvg, snap.attrs.google_product_category.avgDepth);
+  ok(X.taxonomy.ptDepthAvg > 2.5 && X.taxonomy.ptDepthAvg < 3.5, 'it is the chevron depth of the PRIMARY path (3.2 here), not a count of keyword slots', X.taxonomy.ptDepthAvg);
+  ok(X.taxonomy.ptSlotsAvg > 3, 'the keyword-slot count is still reported, named as assignments', X.taxonomy.ptSlotsAvg);
+  eq('the primary column resolved is the bare g:product_type, as labelguard resolves it', X.taxonomy.ptPrimary, 'product_type');
+  eq('pathDepth is labelguard’s, verbatim (chevron, slash fallback, bare = 1)',
+    ['a > b > c', 'a / b', 'a', ' x > > y ', ''].map(FA.pathDepth), ['a > b > c', 'a / b', 'a', ' x > > y ', ''].map(LG.pathDepth));
+  eq('the 52 terminal two-level GPC branches are the SAME list in both engines', FA.GPC_LEAF2.slice().sort(), Array.from(LG.GPC_LEAF2).sort());
+  ok(!/product_type/.test(pillarsOf(X).ai.summary) && !/levels deep/.test(pillarsOf(X).ai.summary),
+    'the Structured detail tile no longer states a product_type depth of its own — Taxonomy depth owns it', pillarsOf(X).ai.summary);
+  ok(pillarsOf(X).taxonomy.summary.indexOf('avg ' + snap.attrs.product_type.avgDepth + ' levels') >= 0 &&
+    (pillarsOf(X).taxonomy.reads || []).join(' ').indexOf('averaging ' + snap.attrs.product_type.avgDepth + ' levels') >= 0,
+    'the Taxonomy tile states the shared number — the one the content-quality row prints', [pillarsOf(X).taxonomy.summary, pillarsOf(X).taxonomy.reads]);
+
+  // slot one is the BARE column: the four highlights Monsoon ships are four, not three
+  eq('a bare first column counts as slot one — four highlights read as four', X.highlights.avg, 4);
+  eq('and two additional images read as two', X.media.addlAvg, 2);
+}
+
+console.log('\n— every tile vetted against the published specs —');
+{
+  const V = pillarsOf(A);
+  ok(FA.BASIS && ['conversational', 'identity', 'titles', 'descriptions', 'attributes', 'taxonomy', 'media', 'ai'].every((k) => FA.BASIS[k] && FA.BASIS[k].f.length && FA.BASIS[k].src.length),
+    'every pillar carries a formula and at least one published source in the engine', Object.keys(FA.BASIS || {}));
+  ok(Object.keys(FA.BASIS).every((k) => FA.BASIS[k].src.every((s) => /^https:\/\/(support\.google\.com|developers\.openai\.com|claude\.com)\//.test(s[1]))),
+    'every source is Google, OpenAI or Anthropic — no unsourced claim', Object.keys(FA.BASIS).map((k) => FA.BASIS[k].src.map((s) => s[1])));
+  ok(A.score.pillars.every((p) => Array.isArray(p.reads) && p.reads.length >= 2 && p.reads.every((x) => typeof x === 'string' && x.length <= 140)),
+    'every pillar hands the pop-up its live reads — short strings, never HTML', A.score.pillars.map((p) => p.reads));
+  // identity: condition is optional for new goods (Google 6324469, OpenAI feed) — measured, not scored
+  const noCond = bare.map((r) => { const c = r.slice(); c[col.condition] = ''; return c; });
+  eq('emptying condition on every product moves Identity & trust by nothing', pillarsOf(run(noCond)).identity.score, V.identity.score);
+  const noLink = bare.map((r) => { const c = r.slice(); c[col.link] = ''; return c; });
+  ok(pillarsOf(run(noLink)).identity.score < V.identity.score, 'while emptying link — required by both — costs it', [pillarsOf(run(noLink)).identity.score, V.identity.score]);
+  ok(/condition .*measured, not scored/.test(V.identity.reads.join(' | ')), 'and the pop-up says so', V.identity.reads);
+  // media: Google accepts http or https — not a score input, not an issue
+  const http = bare.map((r) => { const c = r.slice(); c[col.image_link] = c[col.image_link].replace('https://', 'http://'); return c; });
+  const H = run(http);
+  eq('http image links move Media richness by nothing', pillarsOf(H).media.score, V.media.score);
+  ok(!H.issues.some((x) => x.code === 'img-http'), 'and raise no finding', H.issues.map((x) => x.code));
+  ok(H.media.httpsPct === 0, 'the reading is still there for anyone who wants it', H.media.httpsPct);
+  // taxonomy: a numeric GPC ID and a terminal two-level branch are the MOST specific value Google offers
+  const gpcId = bare.map((r) => { const c = r.slice(); c[col.google_product_category] = '5322'; return c; });
+  const gpcLeaf = bare.map((r) => { const c = r.slice(); c[col.google_product_category] = 'Apparel & Accessories > Shoes'; return c; });
+  const gpcTwo = bare.map((r) => { const c = r.slice(); c[col.google_product_category] = 'Apparel & Accessories > Clothing'; return c; });
+  const gpcOne = bare.map((r) => { const c = r.slice(); c[col.google_product_category] = 'Apparel & Accessories'; return c; });
+  const tx = (rows) => pillarsOf(run(rows)).taxonomy.score;
+  eq('a numeric GPC ID earns full credit (Google resolves it to its exact node)', tx(gpcId), V.taxonomy.score);
+  eq('"Apparel & Accessories > Shoes" — a branch Google’s taxonomy ends at — earns full credit, as it passes the content-quality "too broad" rule', tx(gpcLeaf), V.taxonomy.score);
+  ok(tx(gpcTwo) < tx(gpcLeaf) && tx(gpcOne) < tx(gpcTwo), 'a two-level path with a deeper option is half, a bare top-level a quarter', [tx(gpcOne), tx(gpcTwo), tx(gpcLeaf)]);
+  // structured detail: product_detail — the attribute Google names beside highlights for AI surfaces — now counts
+  const withPd = bare.map((r) => r.concat(['Composition:Outer:100% wool'])), HPD = HEAD.concat(['product_detail']);
+  const D = FA.audit(HPD, withPd, { client: 'Reiss', channel: 'google' });
+  ok(pillarsOf(D).ai.score > V.ai.score, 'adding product_detail lifts Structured detail', [V.ai.score, pillarsOf(D).ai.score]);
+  ok(D.attributes.some((x) => x.key === 'product_detail' && x.pct === 100), 'and it appears in attribute coverage', D.attributes.filter((x) => x.key === 'product_detail'));
+  ok(pillarsOf(D).taxonomy.score === V.taxonomy.score && pillarsOf(D).descriptions.score === V.descriptions.score, 'moving nothing else');
+  // descriptions: Google's own 160–500, not a house 300
+  const d150 = bare.map((r) => { const c = r.slice(); c[col.description] = DESC.slice(0, 150); return c; });
+  const d300 = bare.map((r) => { const c = r.slice(); c[col.description] = DESC.slice(0, 300); return c; });
+  const d500 = bare.map((r) => { const c = r.slice(); c[col.description] = (DESC + ' ' + DESC).slice(0, 520); return c; });
+  const ds = (rows) => pillarsOf(run(rows)).descriptions.score;
+  ok(ds(d150) < ds(d300) && ds(d300) < ds(d500), 'length credit is nothing under 160, growing to full at 500', [ds(d150), ds(d300), ds(d500)]);
+  ok(run(d150).issues.some((x) => x.code === 'desc-thin' && /160/.test(x.title)), 'the thin-description finding names Google’s 160', run(d150).issues.filter((x) => x.code === 'desc-thin').map((x) => x.title));
+  // titles: Google's edges — 150 max, first 70 noticed, under 30 cannot carry the essentials
+  const t60 = bare.map((r) => { const c = r.slice(); c[col.title] = c[col.title].slice(0, 60); return c; });
+  const t100 = bare.map((r) => { const c = r.slice(); c[col.title] = c[col.title].slice(0, 100); return c; });
+  const PAD = ' with a great many extra words appended to carry this title well past the one hundred and fifty character limit Google states';
+  const t160 = bare.map((r) => { const c = r.slice(); c[col.title] = (c[col.title] + PAD).slice(0, 160); return c; });
+  const ts = (rows) => pillarsOf(run(rows)).titles.score;
+  ok(ts(t60) < ts(t100) && ts(t160) < ts(t100), 'full credit 70–150, half 30–69, none over 150', [ts(t60), ts(t100), ts(t160)]);
+  // the ceiling still holds under the vetted model
+  let wTot = 0, wConv = 0;
+  A.score.pillars.forEach((p) => { wTot += p.weight; if (p.key === 'conversational') wConv = p.weight; });
+  ok(100 * (wTot - wConv) / wTot < 80, 'weights unchanged: everything but the conversational six still tops out under 80', 100 * (wTot - wConv) / wTot);
+}
+
 console.log(`\nFeed Lab AI-readiness model: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

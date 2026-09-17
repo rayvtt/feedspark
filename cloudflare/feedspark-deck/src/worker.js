@@ -3982,6 +3982,9 @@ async function goldenRoutes(env, request, url) {
           key: String(p.key || '').slice(0, 24), label: String(p.label || '').slice(0, 40),
           score: num(p.score, 100), weight: Math.min(3, Math.max(0, Number(p.weight) || 1)),
           summary: String(p.summary || '').slice(0, 160),
+          // the live components behind the number, for the scoring pop-up (Ray, 17 Sep
+          // 2026) — a bounded list of short strings, never HTML
+          reads: Array.isArray(p.reads) ? p.reads.slice(0, 8).map((x) => String(x || '').slice(0, 140)) : [],
         })) : [],
         titles: { avg: num(t.avg, 1e4), min: num(t.min, 1e4), max: num(t.max, 1e4),
           dup: num(t.dup, 1e9), allCaps: num(t.allCaps, 1e9),
