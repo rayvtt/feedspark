@@ -6769,6 +6769,20 @@
       "pr": 425
     },
     {
+      "name": "Cockpit: the two rails are independent — only a user-initiated dock request opens the retainer",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "e.detail&&e.detail.user&&!isOpen('l')",
+      "min": 1,
+      "pr": 427
+    },
+    {
+      "name": "Cockpit: the hours widget marks which dock calls came from a click",
+      "file": "docs/hours_widget.html",
+      "pattern": "user: !!(opts && opts.user)",
+      "min": 1,
+      "pr": 427
+    },
+    {
       "name": "Golden Record estate scorecard: each brand card collapses on its own header (Ray 17 Sep 2026: 'allow button to expand or collapse \"all\" or individual brand option')",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function toggleCollapse",

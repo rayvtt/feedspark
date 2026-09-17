@@ -211,6 +211,19 @@ ok(/sel\.addEventListener\('change',function\(\)\{ BRAND=sel\.value; render\(\);
   'only a REAL pick propagates — opening the rail must not re-filter the board behind the reader');
 ok(/NOBOARD\)parts\.push\('not on the board'\)/.test(WF),
   'and when the board cannot follow, the panel says so');
+// Ray, 17 Sep 2026: "2 panels button should be independent of each other — when a tab is clicked
+// on Playbook the Retainer panel popped up again even though [I] clicked ✕ to close". render()
+// refreshes the dock's contents on every tab click; treating that as a request to OPEN re-opened
+// a rail the reader had just shut, and persisted it.
+ok(/e\.detail&&e\.detail\.user&&!isOpen\('l'\)\)openRail\('l',true\)/.test(WF),
+  'only a user-initiated dock request may open the retainer rail');
+const HW2 = rd('docs/hours_widget.html');
+ok(/function dockShow\(name, opts\)/.test(HW2) && /user: !!\(opts && opts\.user\)/.test(HW2),
+  'the widget marks which dock calls came from a click');
+ok(/if \(dockShow\(name, \{ user: true \}\)\) return;/.test(HW2),
+  'a dot click is the one that carries it');
+ok(!/dockShow\(nm, ?\{ ?user/.test(HW2) && !/dockShow\(key, ?\{ ?user/.test(HW2),
+  'the refresh and posture-save paths stay housekeeping, so neither re-opens a closed rail');
 
 console.log('\n── the standalone module is really gone');
 ok(!fs.existsSync(path.join(root, 'docs/FeedSpark_Playbook.html')), 'the /playbook page is deleted');

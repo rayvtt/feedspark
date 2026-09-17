@@ -5588,9 +5588,17 @@ body.ck-r-on{padding-right:var(--ck-w)}
       if(cs.length===1&&cs[0]!==BRAND){ BRAND=cs[0]; NOBOARD=false; fillBrands(); render(); }
     });
     /* the retainer read-out is docked, so a dot click lands in the left rail — open it */
+    /* THE TWO RAILS ARE INDEPENDENT (Ray, 17 Sep 2026: "2 panels button should be independent of
+       each other — when a tab is clicked on Playbook the Retainer panel popped up again even
+       though [I] clicked ✕ to close"). The retainer opens when somebody ASKS for it — a click on
+       an hours dot — and never as a side effect of the Playbook re-rendering. render() refreshes
+       the dock's contents on every tab click, brand change and 120s poll; treating that as a
+       request re-opened a rail the reader had just shut AND wrote it back to the remembered
+       state, so it stayed open. The content still refreshes while it is closed, so it is current
+       the moment it is opened again. */
     document.addEventListener('fcc-hours-dock',function(e){
       var c=(e.detail&&e.detail.client)||'';
-      if(!isOpen('l'))openRail('l',true);
+      if(e.detail&&e.detail.user&&!isOpen('l'))openRail('l',true);
       syncDockEmpty();
       if(c&&c!==BRAND&&roster().indexOf(c)>=0){BRAND=c;fillBrands();render();}
     });

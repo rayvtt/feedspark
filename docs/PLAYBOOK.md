@@ -69,6 +69,20 @@ first-seen cohort, since a product returning to stock arrives too — so the pan
 it counts rather than borrowing the cohort's name. Top five plus `Other`; one `/api/volume` call
 per market, on demand in Review and filled automatically in the New products panel.
 
+### The two rails are independent
+
+Ray, 17 Sep 2026: *"2 panels button should be independent of each other — when a tab is clicked on
+Playbook the Retainer panel popped up again even though [I] clicked ✕ to close."*
+
+`render()` refreshes the docked retainer's contents on every tab click, brand change and 120s poll.
+The dock event that carries that refresh was being read as a **request to open**, so the rail
+re-appeared each time — and `openRail` persisted it, so the ✕ was undone in the remembered state too.
+
+The dock event now says which calls came from a **click on an hours dot** (`detail.user`), and only
+those may open the rail. Everything else — the host re-rendering, the five-minute reload, a posture
+save — is housekeeping. The contents still refresh while the rail is closed, so it is current the
+moment it is opened again, and each rail keeps its own remembered state (`fcc-ck-l`, `fcc-ck-r`).
+
 ### One brand filter, written from both ends
 
 Ray, 17 Sep 2026: *"when the playbook is surfaced, there's a brand filter on top. If the brand is
