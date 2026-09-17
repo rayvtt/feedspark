@@ -235,6 +235,26 @@ window.addEventListener('load',restore);
   .wdots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
   .wdots i.on{background:var(--orange-deep)}
   .psum{font-size:12px;font-weight:700;color:var(--muted);line-height:1.55;overflow-wrap:anywhere}
+  /* scoring pop-up — the tile is a name, a number, a bar and the weight; the formula, this
+     feed's readings and the published source open on click (Ray, 17 Sep 2026: "remove all the
+     subtext underneath … pop up there"). Same BASIS as /golden: FeedAudit.BASIS is the engine's */
+  .pillar{cursor:pointer;transition:border-color .15s,box-shadow .15s}
+  .pillar:hover,.pillar:focus-visible{border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.14);outline:none}
+  .pq{margin-left:auto;font-size:10.5px;font-weight:900;color:var(--muted);border:1px solid var(--line);border-radius:100px;padding:1px 8px;line-height:1.5;white-space:nowrap}
+  .pillar:hover .pq{color:var(--orange-deep);border-color:var(--orange)}
+  .scm{position:fixed;inset:0;z-index:9600;background:rgba(15,23,42,.42);display:flex;align-items:center;justify-content:center;padding:16px}
+  .sc-box{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.22);width:min(660px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:18px 22px 20px;font-size:12.5px;line-height:1.55}
+  .sc-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .sc-h h3{margin:0;font-size:16px;font-weight:900}
+  .sc-n{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}
+  .sc-w{font-size:11px;font-weight:800;color:var(--muted)}
+  .sc-k{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:13px 0 5px}
+  .sc-box ul{margin:0;padding-left:18px}
+  .sc-box li{margin-bottom:4px;font-weight:600}
+  .sc-reads li{font-variant-numeric:tabular-nums}
+  .sc-src a{color:var(--navy);font-weight:700}
+  .sc-house{background:var(--wash);border:1px dashed var(--line);border-radius:8px;padding:8px 10px;margin-top:12px;font-weight:700;color:var(--ink-2)}
+  [data-theme=dark] .sc-box{background:var(--paper);border-color:var(--line);box-shadow:0 18px 50px rgba(0,0,0,.6)}
   /* ---------------- title anatomy ---------------- */
   .mask-row{display:grid;grid-template-columns:repeat(5,minmax(118px,1fr));gap:9px;min-width:620px}
   .mseg{background:var(--paper);border:1px solid var(--line);border-radius:11px;padding:10px 12px}
@@ -525,7 +545,7 @@ window.addEventListener('load',restore);
 
 <section id="score" class="rv"><div class="wrap">
   <h2>AI-Readiness score</h2>
-  <p class="sub">Weighted across 8 pillars — the same FeedSpark AI-Readiness ladder the Readiness module and client decks speak. The heaviest is <b>conversational attributes</b>: the only fields in Google's specification whose stated purpose is AI comprehension.</p>
+  <p class="sub">Weighted across 8 pillars, each vetted against Google’s and OpenAI’s published specifications — click any pillar for how it is scored.</p>
   <div class="fl-card">
     <div class="score-grid">
       <div class="big-ring" id="ring" role="img" aria-label="Overall AI-readiness score">
@@ -948,10 +968,14 @@ function renderScore(a){
     // four dots, not three: the conversational pillar carries ×2.4 and has to look it
     var w=+p.weight||1,dots=w>=2?4:(w<1?1:(w<1.4?2:3)),dh='';
     for(var i=0;i<4;i++)dh+='<i'+(i<dots?' class="on"':'')+'></i>';
-    return '<div class="pillar"><div class="ph"><span class="pl2">'+esc(p.label)+'</span><span class="pn" style="color:'+scoreColor(+p.score||0)+'">'+Math.round(+p.score||0)+'</span></div>'
+    return '<div class="pillar" data-scpop="'+esc(p.key)+'" role="button" tabindex="0" title="'+esc(p.label)+' — click for how it is scored"><div class="ph"><span class="pl2">'+esc(p.label)+'</span><span class="pn" style="color:'+scoreColor(+p.score||0)+'">'+Math.round(+p.score||0)+'</span></div>'
       +'<div class="ptrack"><i class="pfill" data-w="'+Math.round(+p.score||0)+'"></i></div>'
-      +'<div class="pf2"><span class="wdots" title="pillar weight ×'+w+'">'+dh+'</span><span class="psum">'+esc(p.summary||'')+'</span></div></div>';
+      +'<div class="pf2"><span class="wdots" title="pillar weight ×'+w+'">'+dh+'</span><span class="pq">how it’s scored</span></div></div>';
   }).join('');
+  host.querySelectorAll('[data-scpop]').forEach(function(el){
+    el.onclick=function(){scorePop(a,el.getAttribute('data-scpop'))};
+    el.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();scorePop(a,el.getAttribute('data-scpop'))}};
+  });
   requestAnimationFrame(function(){requestAnimationFrame(function(){
     host.querySelectorAll('.pfill').forEach(function(f,i){
       f.style.transitionDelay=(RM?0:i*90)+'ms';   // cascade: bars land one after another
@@ -965,11 +989,32 @@ function renderScore(a){
   // architecture that involves custom labels is not necessarily usable for AI, so I don't
   // know what's in there". Now it says what is in there, and where it belongs instead.
   var la=a.labelArchitecture,foot=$('#pill-foot');
-  if(foot)foot.innerHTML='<b>Conversational attributes carry the most</b> (×2.4), then title anatomy and '
-    +'attribute completeness — the headline is weighted, not an average.'
-    +(la?'<br><b>Custom labels are measured but not scored</b> — this feed reads '+Math.round(la.score)
-      +'/100. They are campaign filters, never shown to shoppers. Detail in <a href="/labels">Label Guard</a>.':'');
+  if(foot)foot.innerHTML='Weighted, not an average — conversational attributes ×2.4.'
+    +(la?' <b>Custom labels are measured but not scored</b> ('+Math.round(la.score)+'/100 — campaign filters, never shown to shoppers): <a href="/labels">Label Guard</a>.':'');
 }
+// the scoring pop-up: the engine's own BASIS (formula + published sources) and this feed's
+// live reads per pillar — the same text /golden opens, from the same object
+function scorePop(a,key){
+  var p=null;(a.score.pillars||[]).forEach(function(x){if(x.key===key)p=x});
+  if(!p)return;
+  var b=(window.FeedAudit&&FeedAudit.BASIS&&FeedAudit.BASIS[key])||{};
+  var li=function(items,cls){return '<ul'+(cls?' class="'+cls+'"':'')+'>'+items.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>'};
+  closeScPop();
+  var m=document.createElement('div');m.className='scm';m.id='scm';
+  m.innerHTML='<div class="sc-box" role="dialog" aria-label="'+esc(p.label)+'"><div class="sc-h"><h3>'+esc(p.label)+'</h3>'
+    +'<span class="sc-n" style="color:'+scoreColor(+p.score||0)+'">'+Math.round(+p.score||0)+'</span><span class="sc-w">weight ×'+(+p.weight||1)+'</span>'
+    +'<button class="btn" id="sc-x" title="Close" style="margin-left:auto">✕</button></div>'
+    +'<div class="sc-k">What it reads</div>'+li(b.f&&b.f.length?b.f:[p.summary||''])
+    +'<div class="sc-k">This feed</div>'+li(p.reads&&p.reads.length?p.reads:[p.summary||''],'sc-reads')
+    +(b.src&&b.src.length?'<div class="sc-k">Source</div><ul class="sc-src">'+b.src.map(function(s){return '<li><a href="'+esc(s[1])+'" target="_blank" rel="noopener">'+esc(s[0])+'</a></li>'}).join('')+'</ul>':'')
+    +(b.house?'<div class="sc-house">FeedSpark’s own standard: '+esc(b.house)+'</div>':'')+'</div>';
+  document.body.appendChild(m);
+  $('#sc-x').onclick=closeScPop;
+  m.onclick=function(e){if(e.target===m)closeScPop()};
+  document.addEventListener('keydown',scEsc);
+}
+function scEsc(e){if(e.key==='Escape')closeScPop()}
+function closeScPop(){var m=$('#scm');if(m)m.parentNode.removeChild(m);document.removeEventListener('keydown',scEsc)}
 function renderTitles(a){
   var t=a.titles||{},mask=t.mask||{},rc=+a.rowCount||0;
   var MASKS=[['brand','Brand','m-brand'],['material','Material','m-material'],['fit','Fit','m-fit'],['colour','Colour','m-colour'],['use','Use-case','m-use']];

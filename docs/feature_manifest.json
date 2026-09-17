@@ -6487,9 +6487,9 @@
       "min": 1
     },
     {
-      "name": "AI-Readiness: the AI pillar no longer double-counts the conversational six — it reads only structured richness + description depth (renamed 'Structured detail')",
+      "name": "AI-Readiness: the AI pillar no longer double-counts the conversational six — 'Structured detail' reads highlights + product_detail + description length (vetted 17 Sep 2026; product_type depth moved to Taxonomy so nothing is counted twice)",
       "file": "docs/feedlab_engine.js",
-      "pattern": "var sAi = 0.55 * richScore + 0.45 * depthD;",
+      "pattern": "var sAi = 0.4 * hlPart + 0.3 * details.pct + 0.3 * depthD;",
       "min": 1
     },
     {
@@ -7309,6 +7309,108 @@
       "name": "Golden Record: Scan whole estate ALSO runs content quality for every feed, not just score/labels/PT/attribute coverage — Ray, 17 Sep 2026: 'scan whole estate > will also scan content quality too for all estate'",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "return qualityRun(k).catch(function () {});",
+      "min": 1
+    },
+    {
+      "name": "Feed Lab engine: product_type depth is the PRIMARY path's chevron depth via pathDepth ported verbatim from labelguard — the SAME number the content-quality row prints (Ray, 17 Sep 2026: Schuh GB 3.3 vs '2.2')",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "function pathDepth(v)",
+      "min": 1
+    },
+    {
+      "name": "Feed Lab engine: slot one is the BARE column — bare and (1) are one slot, so XML feeds no longer lose the primary product_type, the first highlight or the first additional image",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "if (has(prefix)) out.push(prefix); else if (has(prefix + '(1)')) out.push(prefix + '(1)');",
+      "min": 1
+    },
+    {
+      "name": "Feed Lab engine: GPC credit knows a numeric ID and Google's 52 terminal two-level branches (GPC_LEAF2, parity with labelguard asserted)",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "function gpcCredit(v, depth)",
+      "min": 1
+    },
+    {
+      "name": "Feed Lab engine: every pillar's formula + published sources live in ONE object (BASIS) that both pages render as the scoring pop-up",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "var BASIS = {",
+      "min": 1
+    },
+    {
+      "name": "Feed Lab engine: identity = id, link, brand, gtin|mpn, price, availability — condition measured, not scored (optional for new goods on Google + OpenAI)",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "(idOk + linkOk + brandOk + gmOk + priceOk + availOk) / 6",
+      "min": 1
+    },
+    {
+      "name": "Feed Lab engine: Structured detail = highlights + product_detail + description length; product_type depth lives in Taxonomy only",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "var sAi = 0.4 * hlPart + 0.3 * details.pct + 0.3 * depthD;",
+      "min": 1
+    },
+    {
+      "name": "Feed Lab engine: description length credit against Google's stated 160–500, not a house 300",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "function descCredit(len)",
+      "min": 1
+    },
+    {
+      "name": "Feed Lab engine: every pillar hands the pop-up its live reads",
+      "file": "docs/feedlab_engine.js",
+      "pattern": "reads: [",
+      "min": 3
+    },
+    {
+      "name": "Feed Lab harness: the same rows through labelguard's qualityCollector and audit() must read the same avgDepth",
+      "file": "tools/test_feedlab.mjs",
+      "pattern": "X.taxonomy.ptDepthAvg, snap.attrs.product_type.avgDepth",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: the AI-readiness pillar tiles carry no subtext — name, number, bar, weight, and a click opens the scoring pop-up",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function scorePop(k, key)",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: every content-quality row's ⓘ opens its scoring pop-up — every rule, severity, hit rate, cost, weight and Google's page",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function qualityPop(k, attr)",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: packAudit stores each pillar's live reads with the analysis",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "reads: (p.reads || []).slice(0, 8)",
+      "min": 1
+    },
+    {
+      "name": "Worker: /api/golden/quality PUT allow-lists pillar.reads (bounded strings, never HTML)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "reads: Array.isArray(p.reads) ? p.reads.slice(0, 8)",
+      "min": 1
+    },
+    {
+      "name": "Feed Lab page: pillar tiles carry no subtext and open the same BASIS pop-up as /golden",
+      "file": "docs/FeedSpark_FeedLab.html",
+      "pattern": "function scorePop(a,key)",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: the attribute row is FLUID under 900px (minmax columns, a truncating pill) so a scanned feed's rows fit a 390px screen even WITHOUT the worker's phone layer — the ⬇ HTML export opened on a phone, and the 761–900px band",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": ".at-row{grid-template-columns:minmax(92px,1.1fr) minmax(0,1fr) 44px 60px;gap:8px}",
+      "min": 1
+    },
+    {
+      "name": "Golden Record phone tripwire WITH DATA: renders a scanned feed + content quality + AI-readiness + the pop-ups at 390px with the worker's widgets injected, and fails on any sideways overflow or rescue frame",
+      "file": "tools/check_grmobile.js",
+      "pattern": "const panned = () =>",
+      "min": 1
+    },
+    {
+      "name": "presync runs the Golden Record 390px-with-data tripwire",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grmobile.js",
       "min": 1
     }
   ]

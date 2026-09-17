@@ -152,7 +152,18 @@ window.addEventListener('load',restore);
   .tbadge.ai{background:#F1EBFD;color:#6D28D9}
   .at-row{display:grid;grid-template-columns:200px minmax(120px,1fr) 62px 74px minmax(140px,.85fr) 212px;gap:10px;align-items:center;padding:5px 0;border-top:1px dashed var(--line);font-size:12.5px}
   .at-row:first-of-type{border-top:none}
-  @media(max-width:900px){.at-row{grid-template-columns:150px 1fr 56px 64px;}.at-note,.at-act{display:none}}
+  /* Under 900px the row is FLUID: minmax(0,…) columns and a pill that may truncate, so the
+     grid's minimum width can never exceed the screen. It used to be 150px + 1fr + 56px + 64px,
+     and a "NOT IN FEED" pill in the 1fr column set that column's minimum at its own width —
+     the row's minimum came to ~438px. On the LIVE page the phone layer (mobile_widget.html,
+     injected by the worker under 760px) re-lays the row itself, so /golden never showed it;
+     this rule is what holds WITHOUT that layer — the ⬇ HTML export opened on a phone (scripts
+     and widgets stripped by design), and the 761–900px band — where a phone's layout viewport
+     zoomed out to 438px and the whole page panned sideways (tools/check_grmobile.js, which
+     renders a SCANNED feed; the default-state phone tripwire never sees an attribute row).
+     Nothing is hidden: the Δ and the pill are still there, narrower. */
+  @media(max-width:900px){.at-row{grid-template-columns:minmax(92px,1.1fr) minmax(0,1fr) 44px 60px;gap:8px}.at-note,.at-act{display:none}
+    .at-miss{max-width:100%;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 7px}.at-delta{font-size:10.5px}}
   .at-act{display:flex;gap:5px;align-items:center;justify-content:flex-end;flex-wrap:nowrap}
   .abtn{border:1px solid var(--line);background:#fff;color:var(--ink-2);font:inherit;font-size:10.5px;font-weight:800;border-radius:7px;padding:3px 8px;cursor:pointer;white-space:nowrap}
   .abtn:hover{border-color:var(--orange);color:var(--orange-deep)}
@@ -293,6 +304,35 @@ window.addEventListener('load',restore);
   ul.air-foot{padding-left:16px;margin-top:14px}
   ul.air-foot li{margin-bottom:5px}
   ul.air-foot li::marker{color:var(--line)}
+  /* SCORING POP-UPS (Ray, 17 Sep 2026: "remove all the subtext underneath. You don't need
+     that. Review every single attribute scoring logic and pop up there in these 2 sections"):
+     a pillar tile and a content-quality row carry a name, a number and a bar — the formula,
+     this feed's own readings and the published source live one click away */
+  .pillar{cursor:pointer;transition:border-color .15s,box-shadow .15s}
+  .pillar:hover,.pillar:focus-visible{border-color:var(--orange);box-shadow:0 0 0 3px rgba(245,166,35,.14);outline:none}
+  .pq{margin-left:auto;font-size:10.5px;font-weight:900;color:var(--muted);border:1px solid var(--line);border-radius:100px;padding:1px 8px;line-height:1.5;white-space:nowrap}
+  .pillar:hover .pq{color:var(--orange-deep);border-color:var(--orange)}
+  .qz-i{font-size:10.5px;font-weight:900;color:var(--muted);border:1px solid var(--line);border-radius:100px;padding:0 7px;margin-left:6px;cursor:pointer;background:none;line-height:1.5;vertical-align:1px;font-family:inherit}
+  .qz-i:hover{color:var(--orange-deep);border-color:var(--orange)}
+  .scm{position:fixed;inset:0;z-index:9600;background:rgba(15,23,42,.42);display:flex;align-items:center;justify-content:center;padding:16px}
+  .sc-box{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.22);width:min(660px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:18px 22px 20px;font-size:12.5px;line-height:1.55}
+  .sc-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .sc-h h3{margin:0;font-size:16px;font-weight:900}
+  .sc-n{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}
+  .sc-w{font-size:11px;font-weight:800;color:var(--muted)}
+  .sc-k{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:13px 0 5px}
+  .sc-box ul{margin:0;padding-left:18px}
+  .sc-box li{margin-bottom:4px;font-weight:600}
+  .sc-reads li{font-variant-numeric:tabular-nums}
+  .sc-src a{color:var(--navy);font-weight:700}
+  .sc-house{background:var(--wash);border:1px dashed var(--line);border-radius:8px;padding:8px 10px;margin-top:12px;font-weight:700;color:var(--ink-2)}
+  .sc-rule{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:start;padding:7px 0;border-top:1px dashed var(--line)}
+  .sc-rule:first-child{border-top:0}
+  .sc-rule .rl{font-weight:800}
+  .sc-rule .rw{color:var(--muted);font-weight:600;display:block;margin-top:2px}
+  .sc-rule .rn{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .sc-rule .rn.ok{color:var(--good)}
+  body.pdf .scm,body.pdf .pq,body.pdf .qz-i{display:none!important}
   /* pillar heatmap — the Feed Lab grid, scoped to this brand's markets */
   .heat-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:13px 15px;margin-top:12px}
   .heat-h{font-size:12.5px;font-weight:900;margin-bottom:8px}
@@ -586,6 +626,7 @@ window.addEventListener('load',restore);
 [data-theme=dark] .dial .dial-n{fill:var(--ink)}
 [data-theme=dark] .pdpm{background:rgba(0,0,0,.62)}
 [data-theme=dark] .pdp-box{background:var(--paper);border-color:var(--line);box-shadow:0 18px 50px rgba(0,0,0,.6)}
+[data-theme=dark] .sc-box{background:var(--paper);border-color:var(--line);box-shadow:0 18px 50px rgba(0,0,0,.6)}
 [data-theme=dark] .pdp-cfg,[data-theme=dark] .pdp-kpi{background:#181B22;border-color:var(--line)}
 [data-theme=dark] .pdp-cfg select{background:#161922;color:var(--ink);border-color:var(--line)}
 [data-theme=dark] .pdp-kpi.up b{color:#6FE0A0}
@@ -1950,14 +1991,10 @@ window.addEventListener('load',restore);
       '<span class="qz-meta">' +
       (QUAL[k] ? '<span>' + fmt(QUAL[k].rows) + ' products read · ' + ago(QUAL[k].t) + '</span>' : '') +
       '<button class="btn" id="qz-run">' + (QUAL[k] ? '⟳ Re-analyse' : '⚡ Analyse content quality') + '</button>' +
+      (q ? '<button class="btn" data-qinfo="_" title="How the content-quality score is put together">ⓘ Scoring logic</button>' : '') +
       '<span class="scanmsg" id="qz-msg"></span></span></div>' +
       '<div class="qz-scan" id="qz-scan"><div class="qz-pbar" id="qz-pbar"><i id="qz-pfill"></i></div>' +
-      '<div class="qz-pmeta"><span id="qz-ptxt"></span><span class="qz-peta" id="qz-peta"></span></div></div>' +
-      '<p class="tier-sub">Coverage says an attribute is <i>there</i>. This reads what is actually <i>in</i> the free-text' +
-      ' fields — title, description, highlights, category, type, colour, material, pattern — against the rules Google' +
-      ' publishes on each attribute’s own specification page. Every finding below quotes the rule it comes from:' +
-      ' <b>requirement</b> means Google states it as a rule (disapproval or truncation risk), <b>best practice</b>' +
-      ' means it is guidance you are leaving on the table.</p>';
+      '<div class="qz-pmeta"><span id="qz-ptxt"></span><span class="qz-peta" id="qz-peta"></span></div></div>';
     if (!q) {
       h += '<p class="qz-empty">' + (QUAL[k]
         ? (LGQ ? 'The last run found no free-text attribute in this feed to measure.'
@@ -1983,7 +2020,8 @@ window.addEventListener('load',restore);
       var open = QOPEN[k + '|' + r.key];
       var worst = r.broken[0];
       h += '<div class="qz-row" data-qk="' + esc(r.key) + '">' +
-        '<span class="qz-nm" title="' + esc(r.spec) + '"><span class="cx">' + (open ? '▾' : '▸') + '</span><i>g:</i>' + esc(r.key) + '</span>' +
+        '<span class="qz-nm" title="' + esc(r.spec) + '"><span class="cx">' + (open ? '▾' : '▸') + '</span><i>g:</i>' + esc(r.key) +
+        '<button class="qz-i" data-qinfo="' + esc(r.key) + '" title="How g:' + esc(r.key) + ' is scored — every rule, its weight and Google’s page">ⓘ</button></span>' +
         '<span class="qz-n" style="color:' + scoreCol(r.score) + '">' + r.score + '</span>' +
         '<span class="qz-bar" title="' + r.score + '/100 across ' + fmt(r.filled) + ' products with a value">' +
         '<i class="' + qualBand(r.score) + '" style="width:' + Math.max(1.5, Math.min(100, r.score)) + '%"></i></span>' +
@@ -2113,11 +2151,21 @@ window.addEventListener('load',restore);
     };
     Array.prototype.forEach.call(document.querySelectorAll('[data-qk]'), function (el) {
       var nm = el.querySelector('.qz-nm');
-      if (nm) nm.onclick = function () {
+      if (nm) nm.onclick = function (e) {
+        if (e && e.target && e.target.closest && e.target.closest('[data-qinfo]')) return;   // the ⓘ opens the pop-up, not the row
         var kk = k + '|' + el.getAttribute('data-qk');
         QOPEN[kk] = !QOPEN[kk];
         renderDetail(k);
       };
+    });
+    // the scoring pop-ups — one per content-quality row, one per AI-readiness pillar, and a
+    // headline one for each section (Ray, 17 Sep 2026)
+    Array.prototype.forEach.call(document.querySelectorAll('[data-qinfo]'), function (el) {
+      el.onclick = function (e) { if (e) e.stopPropagation(); qualityPop(k, el.getAttribute('data-qinfo')); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-scpop]'), function (el) {
+      el.onclick = function () { scorePop(k, el.getAttribute('data-scpop')); };
+      el.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); scorePop(k, el.getAttribute('data-scpop')); } };
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-qask]'), function (el) {
       el.onclick = function () { qualityAsk(k, el.getAttribute('data-qask')); };
@@ -2188,7 +2236,9 @@ window.addEventListener('load',restore);
       sampled: +a.sampled || 0, rows: +a.rowCount || 0,
       pillars: (s.pillars || []).slice(0, 8).map(function (p) {
         return { key: String(p.key || ''), label: String(p.label || ''), score: Math.round(+p.score || 0),
-          weight: +p.weight || 1, summary: String(p.summary || '').slice(0, 160) };
+          weight: +p.weight || 1, summary: String(p.summary || '').slice(0, 160),
+          // the live components behind the number, for the scoring pop-up
+          reads: (p.reads || []).slice(0, 8).map(function (x) { return String(x || '').slice(0, 140); }) };
       }),
       titles: { avg: +t.avg || 0, min: +t.min || 0, max: +t.max || 0, dup: +t.dup || 0, allCaps: +t.allCaps || 0,
         buckets: (t.buckets || []).slice(0, 6).map(function (b) { return { b: String(b.b || ''), n: +b.n || 0 }; }),
@@ -2249,9 +2299,8 @@ window.addEventListener('load',restore);
       '<span class="tbadge rec" style="background:#FDF0DC;color:var(--orange-deep)">AI-Readiness</span>' +
       '<h4>How ready this feed is for agentic commerce</h4>' +
       '<span class="qz-meta"><span>' + fmt(a.rows) + ' products' +
-      (a.sampled && a.sampled < a.rows ? ' · ' + fmt(a.sampled) + ' sampled' : '') + ' · ' + ago(q.t) + '</span></span></div>' +
-      '<p class="tier-sub">The FeedSpark AI-Readiness ladder — the same weighted score, pillars and tiers the' +
-      ' Feed Lab module and the client decks speak, computed on the same read as the content quality above.</p>' +
+      (a.sampled && a.sampled < a.rows ? ' · ' + fmt(a.sampled) + ' sampled' : '') + ' · ' + ago(q.t) + '</span>' +
+      '<button class="btn" data-scpop="_" title="How the headline is put together — weights, the ceiling, what is measured but not scored">ⓘ Scoring logic</button></span></div>' +
       '<div class="air-card"><div class="score-grid">' +
       '<div class="big-ring" style="--c:' + col + ';--p:' + a.total + '" role="img" aria-label="AI-readiness score ' + a.total + ' out of 100">' +
       '<div class="brv"><span class="bn" style="color:' + col + '">' + a.total + '</span><em>/100</em><i>AI-readiness</i></div></div>' +
@@ -2266,20 +2315,104 @@ window.addEventListener('load',restore);
         // four dots, not three: the conversational pillar carries ×2.4 and has to look it
         var w = +p.weight || 1, dots = w >= 2 ? 4 : (w < 1 ? 1 : (w < 1.4 ? 2 : 3)), dh = '';
         for (var i = 0; i < 4; i++) dh += '<i' + (i < dots ? ' class="on"' : '') + '></i>';
-        return '<div class="pillar"><div class="ph"><span class="pl2">' + esc(p.label) + '</span>' +
+        // a name, a number, a bar and the weight — the formula, this feed's readings and the
+        // published source are one click away (no subtext: Ray, 17 Sep 2026)
+        return '<div class="pillar" data-scpop="' + esc(p.key) + '" role="button" tabindex="0" title="' + esc(p.label) + ' — click for how it is scored">' +
+          '<div class="ph"><span class="pl2">' + esc(p.label) + '</span>' +
           '<span class="pn" style="color:' + airCol(p.score) + '">' + p.score + '</span></div>' +
           '<div class="ptrack"><i class="pfill" data-w="' + p.score + '"></i></div>' +
           '<div class="pf2"><span class="wdots" title="pillar weight ×' + w + '">' + dh + '</span>' +
-          '<span class="psum">' + esc(p.summary) + '</span></div></div>';
+          '<span class="pq">how it’s scored</span></div></div>';
       }).join('') + '</div>' +
       pillarHeat(k) +
-      '<ul class="air-foot"><li><b>Conversational attributes carry the most</b> (×2.4) — the only fields Google built' +
-      ' for AI surfaces. Everything else tops out at 79, so a feed with none of them cannot read as Agentic-ready.</li>' +
-      '<li><b>Custom labels are measured but not scored.</b> Google’s spec says their values “won’t be shown to' +
-      ' customers” — campaign structure, not AI readiness. Detail in <a href="/labels">Label Guard</a>.</li>' +
-      '<li>The four tiers are the ladder the readiness decks speak.</li></ul>' +
       '</div>';
     return h;
+  }
+  /* ---- the scoring pop-ups (Ray, 17 Sep 2026: "vet every single tile of AI readiness against
+     what the current industry or high-authoritative platforms such as Google, ChatGPT, or Claude
+     recommend, and remove all the subtext underneath … Review every single attribute scoring
+     logic and pop up there in these 2 sections"). The formula and the sources are the ENGINE's
+     (FeedAudit.BASIS / labelguard's QSPEC), so /feedlab and /golden can never explain the same
+     number two different ways; the readings are the ones stored with the analysis. */
+  function openScPop(title, num, w, body, colFn) {
+    closeScPop();
+    var m = document.createElement('div'); m.className = 'scm'; m.id = 'scm';
+    m.innerHTML = '<div class="sc-box" role="dialog" aria-label="' + esc(title) + '"><div class="sc-h"><h3>' + esc(title) + '</h3>' +
+      (num != null && num !== '' ? '<span class="sc-n" style="color:' + (colFn || airCol)(+num) + '">' + num + '</span>' : '') +
+      (w ? '<span class="sc-w">' + esc(w) + '</span>' : '') +
+      '<button class="btn" id="sc-x" title="Close" style="margin-left:auto">✕</button></div>' + body + '</div>';
+    document.body.appendChild(m);
+    $('sc-x').onclick = closeScPop;
+    m.onclick = function (e) { if (e.target === m) closeScPop(); };
+    document.addEventListener('keydown', scEsc);
+  }
+  function scEsc(e) { if (e.key === 'Escape') closeScPop(); }
+  function closeScPop() { var m = $('scm'); if (m) m.parentNode.removeChild(m); document.removeEventListener('keydown', scEsc); }
+  function scList(items, cls) { return '<ul' + (cls ? ' class="' + cls + '"' : '') + '>' + items.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>'; }
+  function scSrc(src) {
+    return '<div class="sc-k">Source</div><ul class="sc-src">' + src.map(function (s) {
+      return '<li><a href="' + esc(s[1]) + '" target="_blank" rel="noopener">' + esc(s[0]) + '</a></li>';
+    }).join('') + '</ul>';
+  }
+  var G_ANS = 'https://support.google.com/merchants/answer/';
+  function scorePop(k, key) {
+    var q = QUAL[k], a = q && q.ai; if (!a) return;
+    var BASIS = (window.FeedAudit && window.FeedAudit.BASIS) || {};
+    if (key === '_') {
+      openScPop('AI-readiness — the headline', a.total, 'Tier ' + a.tier + ' · ' + a.tierLabel,
+        '<div class="sc-k">How it is put together</div>' + scList([
+          'Weighted mean of eight pillars: ' + a.pillars.map(function (p) { return p.label + ' ×' + p.weight; }).join(', ') + '.',
+          'Conversational attributes carry ×2.4 — set so that every other pillar together tops out at 79, and a feed with none of the fields Google built for AI surfaces cannot read as Agentic-ready.',
+          'Tiers: Foundational under 40 · Structured 40–59 · Enriched 60–79 · Agentic-ready 80 and over.',
+          'Custom labels are measured but not scored: Google’s specification says their values “won’t be shown to customers” — campaign structure, not readiness. Label Guard owns them.',
+          'Same engine, same read as Feed Lab — one fetch of the live feed, scored beside the content-quality rows above. Click any pillar for what it reads and where each threshold comes from.']) +
+        scSrc([['Google · custom_label (answer 6324473): “won’t be shown to customers”', G_ANS + '6324473'],
+          ['Google · conversational attributes (answer 17085370): for “AI-driven surfaces, like AI Mode in Search”', G_ANS + '17085370']]));
+      return;
+    }
+    var p = null; a.pillars.forEach(function (x) { if (x.key === key) p = x; });
+    if (!p) return;
+    var b = BASIS[key] || {};
+    openScPop(p.label, p.score, 'weight ×' + p.weight,
+      '<div class="sc-k">What it reads</div>' + scList(b.f && b.f.length ? b.f : [p.summary]) +
+      '<div class="sc-k">This feed</div>' + scList(p.reads && p.reads.length ? p.reads : [p.summary], 'sc-reads') +
+      (b.src && b.src.length ? scSrc(b.src) : '') +
+      (b.house ? '<div class="sc-house">FeedSpark’s own standard: ' + esc(b.house) + '</div>' : ''));
+  }
+  function qualityPop(k, attr) {
+    if (!LGQ) return;
+    if (attr === '_') {
+      var qs = QUAL[k] ? LGQ.qualityScore(QUAL[k], profileForC(parts(k).client)) : null;
+      if (!qs) return;
+      openScPop('Content quality — the headline', qs.score, qs.verdict.pill,
+        '<div class="sc-k">How it is put together</div>' + scList([
+          'Coverage says an attribute is there; this reads what is IN it. Every product with a value is tested against the rules on that attribute’s own Google specification page — nothing sampled, nothing parsed server-side.',
+          'A rule costs the share of products breaking it: a stated requirement at full cost (×1.0 — disapproval or truncation risk), a stated best practice at ×0.4. An attribute’s score is 100 minus its costs.',
+          'Attributes are weighted by how much of the shop window they are: title and description ×3, highlights, category and type ×2, colour, material and pattern ×1 — the same shape as the Golden Record score.',
+          'An attribute the industry profile waives is left out entirely, numerator and denominator.',
+          'Bands: 90 and over meets the spec · 75–89 below best practice · under 75 spec violations.',
+          'Reading now: ' + qs.parts.map(function (p) { return 'g:' + p.key + ' ' + p.score + ' (×' + p.w + ')'; }).join(' · ') + '.']) +
+        scSrc(qs.parts.map(function (p) { return ['Google · ' + p.label + ' (answer ' + p.doc + ')', G_ANS + p.doc]; })), scoreCol);
+      return;
+    }
+    var r = qualityPart(k, attr); if (!r) return;
+    var spec = LGQ.qspecOf(attr) || { rules: [] };
+    var broken = {}; (r.broken || []).forEach(function (bb) { broken[bb.id] = bb; });
+    var rules = spec.rules.map(function (rule) {
+      var bb = broken[rule.id];
+      return '<div class="sc-rule"><span class="qz-sev ' + rule.sev + '">' + (rule.sev === 'fail' ? 'requirement' : 'best practice') + '</span>' +
+        '<span><span class="rl">' + esc(rule.label) + '</span><span class="rw">' + esc(rule.why) + '</span></span>' +
+        '<span class="rn' + (bb ? '' : ' ok') + '">' + (bb ? bb.pct + '% · −' + bb.cost : '✓ passes') + '</span></div>';
+    }).join('');
+    openScPop('g:' + attr + ' — content quality', r.score, 'weight ×' + (r.w || 1),
+      '<div class="sc-k">How it is scored</div>' + scList([
+        'Each rule below is a sentence from Google’s specification for g:' + attr + '. It costs the share of the ' + fmt(r.filled) +
+          ' products with a value that break it — a requirement at ×1.0, a best practice at ×0.4 — and the score is 100 minus the costs.',
+        'Measured: average length ' + r.avgLen + ' characters (' + r.minLen + '–' + r.maxLen + ')' +
+          (r.perProduct ? ', read across ' + r.cols + ' column' + (r.cols === 1 ? '' : 's') + ', ' + r.perProduct + ' values per product' : '') +
+          (r.avgDepth != null ? ', averaging ' + r.avgDepth + ' levels deep — the same chevron read as the Taxonomy depth pillar' : '') + '.']) +
+      '<div class="sc-k">The rules (' + spec.rules.length + ')</div><div>' + rules + '</div>' +
+      scSrc([['Google · ' + (spec.label || attr) + ' (answer ' + r.doc + ') — ' + r.spec, G_ANS + r.doc]]), scoreCol);
   }
   /* ---- Two scores, two questions (Ray, 16 Sep 2026: "there's definitely a discrepancy between
      the scoring of content quality versus AI readiness … g:description content quality 60.1 but
@@ -2301,23 +2434,23 @@ window.addEventListener('load',restore);
   var RECON = [
     { q: ['title'], p: 'titles',
       qm: 'the stated rules — length cap, capitals, promo copy, repeats',
-      pm: 'the 80–120 window and how many MASK slots the title carries',
+      pm: 'length against Google’s 70/150 edges and how many MASK slots the title carries',
       why: 'a title can break no rule and still be short and bare' },
     { q: ['description'], p: 'descriptions',
       qm: 'share of PRODUCTS sharing copy with a different product',
       pm: 'share of DISTINCT copy reused — a fifth of the pillar, beside coverage and length',
       why: 'different denominators — one boilerplate paragraph on 4,000 products is one value' },
     { q: ['google_product_category', 'product_type'], p: 'taxonomy',
-      qm: 'whether the path is SHAPED as Google specifies — three levels or more',
-      pm: 'how DEEP the tree goes — GPC toward four, product_type 3+ assignments',
-      why: 'floor against ceiling — every path can clear the minimum while the catalogue stays shallow' },
+      qm: 'whether each value is SHAPED as Google specifies — a taxonomy value, a “ > ” path, not too broad',
+      pm: 'the SAME chevron depth, graded — an ID, 3+ levels or a branch Google ends at is full credit, two levels half, one a quarter, missing nothing',
+      why: 'a rule passes or fails; the pillar grades every product and counts the missing ones — a catalogue that passes the rule on the products that have a value can still sit shallow or thin' },
     { q: ['color', 'material', 'pattern'], p: 'attributes',
       qm: 'whether the values that are there are usable',
       pm: 'weighted COVERAGE of the variant attributes',
       why: 'coverage and correctness are independent' },
     { q: ['product_highlight'], p: 'ai',
       qm: 'the stated rules — two minimum, 150 characters each, no repeats',
-      pm: 'highlights per product and how deep product_type goes',
+      pm: 'highlights per product against Google’s recommended four, product_detail coverage, and description length against Google’s 160–500',
       why: 'legal against enough — two perfect highlights still say little' },
   ];
   var RECON_GAP = 15;     // the point at which two readings of one field are worth explaining
@@ -2386,7 +2519,7 @@ window.addEventListener('load',restore);
     var rows = a.rows || 0, bks = t.buckets || [], max = 1;
     bks.forEach(function (b) { if (b.n > max) max = b.n; });
     return '<div class="tanat"><div class="tanat-h">Title anatomy — MASK structure' +
-      '<span>avg ' + t.avg + ' chars (' + t.min + '–' + t.max + ') · the 80–120 window is where Shopping and AI surfaces read most' +
+      '<span>avg ' + t.avg + ' chars (' + t.min + '–' + t.max + ') · Google reads the first 70 and allows 150 · 80–120 is the MASK house window' +
       (t.dup ? ' · ' + fmt(t.dup) + ' duplicated' : '') + '</span></div>' +
       '<div class="mask-row">' + MASKS.map(function (m) {
         var pct = Math.round(+t.mask[m[0]] || 0);
