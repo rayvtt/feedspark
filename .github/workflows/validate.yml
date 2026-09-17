@@ -83,6 +83,8 @@ jobs:
         run: node tools/test_xlsx.mjs
       - name: Shipped-panel harness (build log slide-over, first-run silence, close-the-tab prompt)
         run: node tools/test_shipped.mjs
+      - name: Instructions-collapse harness (one ⓘ per card, stable key, the marked lines)
+        run: node tools/test_instr.mjs
 
       - name: Shipped-feature markers (multi-session overwrite tripwire)
         run: node tools/check_markers.js

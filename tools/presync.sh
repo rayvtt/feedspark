@@ -100,6 +100,10 @@ echo "── validating: the shipped panel (build log slide-over)"
 node tools/test_shipped.mjs >/dev/null
 echo "   ✓ silent on first run, announces only new merges, prompts to close the tab"
 
+echo "── validating: the ⓘ collapse (explainer prose behind one icon per card)"
+node tools/test_instr.mjs >/dev/null
+echo "   ✓ one toggle per card, a stable key, the marked lines across the modules"
+
 echo "── validating: Excel exports (XLSX container, typed cells, the three tab exports)"
 node tools/test_xlsx.mjs >/dev/null
 echo "   ✓ a workbook Excel will actually open, with absent left absent"

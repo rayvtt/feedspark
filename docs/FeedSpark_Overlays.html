@@ -315,8 +315,8 @@ window.addEventListener('load',restore);
     <div>
       <div class="card meth" id="meth">
         <h3>How overlays are detected</h3>
-        <div class="ch">The quick breakdown behind every figure on this page.</div>
-        <ol>
+        <div class="ch" data-instr>The quick breakdown behind every figure on this page.</div>
+        <ol data-instr>
           <li><b>Every feed scan reads the image field.</b> The 4×-daily monitor (and ⚡ Scan live here) streams the feed and looks at each product's <code>image_link</code> and <code>additional_image_link</code>.</li>
           <li><b>Our images are unmistakable.</b> A link served from <code>dashboard.feedspark.com</code> (or the <code>lia.</code> / <code>feed5.com</code> sibling hosts) is a FeedSpark-generated creative — the client's own CDN never appears there. That is what "overlay service on" looks like in the data.</li>
           <li><b>The URL string names the overlay.</b> The engine path is the type (<code>image_process_products_lifestyle.php</code> = product × lifestyle split), the parameters are the recipe (<code>img_url_left</code> / <code>img_url_right</code> = the two source images, <code>img_ver</code> = the version, <code>show_price</code> / tag colours = a price tag, <code>overlay_frame</code> = the frame asset).</li>

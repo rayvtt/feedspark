@@ -89,6 +89,13 @@ else
   echo "   ✗ shipped-panel harness FAILED — see node tools/test_shipped.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d2e/7: the ⓘ collapse (explainer prose behind one icon per card)"
+if node tools/test_instr.mjs >/dev/null 2>&1; then
+  echo "   ✓ one toggle per card, a key that survives a re-render, and the marked lines hold"
+else
+  echo "   ✗ instructions-collapse harness FAILED — see node tools/test_instr.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3d2c/7: Excel exports (the XLSX writer + the Task Manager's three tabs)"
 if node tools/test_xlsx.mjs >/dev/null 2>&1; then
   echo "   ✓ the ZIP parts, typed cells, absent-is-absent and the three tab exports hold"
