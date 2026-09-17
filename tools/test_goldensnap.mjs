@@ -54,7 +54,9 @@ const FEEDS = {
 };
 const api = new Function('GRC', 'esc', 'fmtN', `
   ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'grBand')}
-  ${liftVar(CC, 'GR_COL')} ${lift(CC, 'grRing')} ${lift(CC, 'portGolden')}
+  ${liftVar(CC, 'GR_COL')} ${lift(CC, 'grRing')}
+  ${(CC.match(/var GR_MROWS=\d+;/) || [''])[0]}
+  ${lift(CC, 'grPill')} ${lift(CC, 'grMiniRow')} ${lift(CC, 'portGolden')}
   return { grRows:grRows, grAvg:grAvg, grBand:grBand, portGolden:portGolden };
 `)({ feeds: FEEDS }, (x) => String(x), (n) => String(n));
 
@@ -90,7 +92,9 @@ ok('a brand with no Golden Record feeds renders nothing at all', api.portGolden(
 {
   const none = new Function('GRC', 'esc', 'fmtN', `
     ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'grBand')}
-    ${liftVar(CC, 'GR_COL')} ${lift(CC, 'grRing')} ${lift(CC, 'portGolden')}
+    ${liftVar(CC, 'GR_COL')} ${lift(CC, 'grRing')}
+  ${(CC.match(/var GR_MROWS=\d+;/) || [''])[0]}
+  ${lift(CC, 'grPill')} ${lift(CC, 'grMiniRow')} ${lift(CC, 'portGolden')}
     return portGolden;`)({ feeds: { 'X|gb': { client: 'X', mkt: 'gb', status: 'never' } } },
     (x) => String(x), (n) => String(n))('X');
   ok('a brand wired but never scanned says so instead of showing a 0',

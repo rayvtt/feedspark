@@ -348,7 +348,17 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   bar at the industry's best observed coverage. Page: ⚖ "<Industry> best practice" chip + ⚙
   editor (tri-state chips default → ★ scored → waived, brand vs whole-industry scope, reset
   to defaults), ★ marks scored attrs, waived rows grey out, hard "not in feed" flags follow
-  the profile. **⬇ PDF = one continuous vertical page** (Ray, 16 Sep 2026: "should all fit
+  the profile. **The always-required roster is shown, not just stated** (Ray, 17 Sep 2026:
+  "update scoring profile too pls ? gtin not on there and dont know what else"): the editor's
+  own hint text already said "the required seven and gtin/mpn always score", but `profOk()`
+  deliberately excludes those from every toggleable tier — which meant the UI never actually
+  showed them, reading as an omission rather than a deliberate rule. A new "Always required —
+  never toggleable" section lists the required seven plus a merged `gtin / mpn` chip (the same
+  best-of-two pairing `goldenScore` itself scores) as locked `<span>` chips — dashed border,
+  no pointer cursor, no click handler — so nothing in the score can read as silently missing
+  from its own editor, and nothing invites a click that would silently do nothing. Harness:
+  `tools/test_grprofile.mjs` (Playwright, in presync — renders the real editor and asserts the
+  roster is present, correctly named, and genuinely non-interactive). **⬇ PDF = one continuous vertical page** (Ray, 16 Sep 2026: "should all fit
   in 1 vertical page"): the scorecard used to slice across A4 breaks — 5–9 sheets, the first
   mostly blank because a tier that would not fit was pushed whole, and every attribute row
   double-height because the spec note had no print column and wrapped. `exportPdf` now lays
@@ -459,6 +469,19 @@ prep for client demo").
   `?client=` deep-link the dossier's Golden Record snapshot and the other guard pages use opens a
   folded card before scrolling to and outlining it — a link that exists to be looked at can never
   land on a card closed shut.
+- **Two scores per market, carefully told apart** (Ray, 17 Sep 2026: *"Surface content quality
+  score directly in the dossier scorecard as well, next to the normal score. So there should be
+  two scores appearing for each market, each brand. Obviously, carefully label them so we don't
+  mistake. Feed scorecard and content quality score"*). Each `.est-mkt` row previously showed only
+  `f.score` (the Golden Record completeness score); the SAME `/api/golden/estate` payload already
+  carries `f.q` (content quality, written onto `goldenidx` by the `/api/golden/quality` PUT
+  handler this section §9.6 describes) — nothing new to fetch, just a read the row wasn't using.
+  Both now render side by side as a captioned pair — a bold number over a short uppercase label
+  (`feed` / `content`), each with its own full-sentence tooltip on hover — rather than two bare
+  numbers a reader could swap by mistake. Both use the same `scoreCol()` bands the rest of the
+  page already uses for these two figures, so there is one colour legend to learn, not two. A
+  market not yet analysed for content quality shows only the feed score (never a fabricated
+  content figure); a market never scanned at all shows neither.
 
 Engine unit tests: `node tools/test_labelguard.mjs` (runs in `validate.yml` on every PR).
 
@@ -685,6 +708,21 @@ each finding quotes and links its source.
   *"Measured: average length 47 chars (47–47) · averaging 4 levels deep"* — in both the
   broken-rule state and the "every rule passes" state. A bare numeric GPC id or an unseparated
   product_type value reads as depth 1, matching how Feed Lab already treats them.
+- **GPC's "too broad" rule knows which branches actually end** (Ray, 17 Sep 2026, uploading
+  Google's official `taxonomy-with-ids.en-US` export after a live scorecard flagged "Apparel &
+  Accessories > Shoes" "too broad — fewer than three levels": *"if the final GPC (Shoes) which
+  has no further clarification from Google, then that's already optimal"*). The `shallow` rule
+  tested only the STRING SHAPE — fewer than three `" > "`-separated levels — with no way to know
+  whether Google's fixed taxonomy actually offers a third level under that branch; Shoes has
+  none, so choosing it correctly still read as a merchant stopping short. `GPC_LEAF2` (a Set of
+  52 lowercased `"top > second"` strings, derived once from the official export by finding every
+  second-level node with zero third-level descendants — Google's 21 top-level categories all
+  branch further, so a bare one-level value still always warns) is consulted before the rule
+  fires: a two-level value only warns when a deeper option genuinely exists. Snapshot, not
+  live-fetched, for the same reason the rule's own comment already gives for not shipping the
+  full ~5,500-row taxonomy — re-derive the list if Ray supplies a refreshed export. Harness: the
+  GPC "too broad" block in `tools/test_labelguard.mjs` (Shoes exempted case-insensitively,
+  Clothing — a real non-leaf — still caught, a bare top-level value still caught).
 - **How many highlights spotted, out of 100** (Ray, 17 Sep 2026: *"showcase what you have done ...
   which is how many highlights you have spotted within 100. So recommendation is from 6 to 10"*).
   Google's own spec (answer 9216100) is a 2-minimum with 4–6 recommended, up to a ceiling of 100 —
@@ -705,6 +743,25 @@ each finding quotes and links its source.
   Google's stated 4–6 from FeedSpark's own 6–10. `hlDist` is allow-listed through the `/api/golden/
   quality` PUT sanitizer with its five fixed bucket keys, each independently clamped, the same
   discipline as `cols`/`perProduct`/`avgDepth`.
+- **Content quality follows the same industry profile as `goldenScore`** (Ray, 17 Sep 2026,
+  screenshot of a Pet Care brand's AI-Readiness pillar scoring 30/100 off empty apparel fields:
+  *"make sure all scoring (AI readiness, content quality) always refer back to the industry best
+  practice that had been set"*). `qualityScore(snap, profile)` now takes the same `profile` shape
+  `goldenScore` already consults (§8's industry scoring profiles) and skips any `QSPEC` attribute
+  named in `profile.waived` before scoring it — dropped from both the numerator and denominator,
+  same as `goldenScore`'s own waived attributes. An attribute nobody fills already scored `null`
+  (excluded) before this change — the fix only matters when an industry-waived attribute (`pattern`
+  for Pet Care) carries a handful of stray values that would otherwise still be judged by
+  apparel-oriented rules. Every page call site now threads `profileForC(client)` through: the three
+  `LGQ.qualityScore(...)` calls (the scorecard section, the per-attribute ask/brief lookup, the
+  quality↔AI reconciliation band) and the nested Feed Lab `audit()` call that produces the AI-
+  Readiness card also pass `expected`/`waived` — see `FEEDLAB.md`'s "Attribute completeness follows
+  the industry best-practice profile" for the AI-Readiness half of this fix (cond-tier vs rec-tier
+  attributes are excluded by two different rules, not one blanket waive-list check), which applies
+  identically whether that engine is reached nested inside `/golden` or from `/feedlab` itself.
+  Harness: the industry-profile block in `tools/test_labelguard.mjs` (a waived attribute drops from
+  `qualityScore`'s parts entirely; the other parts are untouched; no profile passed keeps the old
+  behaviour byte-for-byte) and `tools/test_feedlab.mjs`.
 
 ## 9.5 PDP recovery scan — "missing data can be sourced from the PDP" (Ray, 14 Sep 2026)
 

@@ -583,9 +583,25 @@
     var uniqD = de.filled ? (100 - descDupPct) : 0;
     var sDesc = 0.5 * covD + 0.3 * depthD + 0.2 * uniqD;
 
+    // Ray, 17 Sep 2026 (screenshot, YuMOVE/Pet Care): "make sure all scoring (AI readiness,
+    // content quality) always refer back to the industry best practice that had been set" —
+    // this pillar scored EVERY brand against the apparel five with no awareness of the SAME
+    // industry profile goldenScore already consults. Mirrors goldenScore's own two rules
+    // (labelguard.js): color/size/gender/age_group/item_group_id are ATTR_SPEC `cond` tier —
+    // counted only when PRESENT, or when absent but industry-`expected` (an apparel-five gap
+    // is real; a Pet Care feed carrying none of them is not incomplete, no waiving needed).
+    // material/pattern are `rec` tier — always counted (the optimisation surface) UNLESS the
+    // profile explicitly `waived` them (Pet Care waives pattern only; material still counts —
+    // Ray's own default profile keeps it as a cross-industry opportunity). opts.expected /
+    // opts.waived are plain attribute-key arrays — this engine stays industry-agnostic, the
+    // caller (which already has profileFor()) decides what to expect or waive.
     var AW = { color: 1.2, size: 1.2, item_group_id: 1.2, material: 1, gender: 1, age_group: 1, pattern: 0.8 };
+    var CONDW = { color: 1, size: 1, gender: 1, age_group: 1, item_group_id: 1 };
+    var attrExpected = {}; (opts.expected || []).forEach(function (wk) { attrExpected[wk] = 1; });
+    var attrWaived = {}; (opts.waived || []).forEach(function (wk) { attrWaived[wk] = 1; });
+    function attrCounted(ak) { return CONDW[ak] ? (has(ak) || attrExpected[ak]) : !attrWaived[ak]; }
     var awSum = 0, awTot = 0;
-    for (k in AW) { awSum += AW[k] * apct(k); awTot += AW[k]; }
+    for (k in AW) { if (!attrCounted(k)) continue; awSum += AW[k] * apct(k); awTot += AW[k]; }
     var sAttrs = awTot ? awSum / awTot : 0;
 
     var sIdentity = n ? (100 / n) * (idOk + brandOk + gmOk + priceOk + availOk + condOk) / 6 : 0;
@@ -634,7 +650,7 @@
       return parts;
     }
     var weakAttrs = [];
-    for (k in AW) if (apct(k) < 60) weakAttrs.push(k + ' ' + apct(k) + '%');
+    for (k in AW) if (attrCounted(k) && apct(k) < 60) weakAttrs.push(k + ' ' + apct(k) + '%');
     var weakestLabel = null;
     for (i = 0; i < labels.length; i++) if (!weakestLabel || labels[i].pct < weakestLabel.pct) weakestLabel = labels[i];
 
@@ -713,7 +729,7 @@
         title: fmtN(C(tl.caps)) + ' ALL-CAPS titles',
         detail: 'ALL-CAPS titles violate Shopping editorial rules and risk disapproval.', count: C(tl.caps) });
     }
-    if (has('pattern') && apct('pattern') < 60) {
+    if (has('pattern') && attrCounted('pattern') && apct('pattern') < 60) {
       issues.push({ sev: 'warn', code: 'attr-pattern',
         title: 'pattern missing on ' + fmtN(C(n - attrFill.pattern)) + ' products',
         detail: 'pattern is a visual attribute Google matches on for apparel — harvestable from product imagery.',
@@ -800,7 +816,7 @@
           ' · conversational pillar ' + Math.round(convScore) + '/100' + (hasVariants ? '' : ' · no variants, so the variant pair is not counted'),
         brief: { client: client, task: 'Conversational attributes supplemental feed — ' + convPresent + '/' + convKeys.length + ' live today', cat: 'data' } });
     }
-    if (has('pattern') && apct('pattern') < 60) {
+    if (has('pattern') && attrCounted('pattern') && apct('pattern') < 60) {
       recs.push({ impact: 2, effort: 'M', service: 'Tachyon visual attribute harvest', tachyon: true,
         title: 'Harvest pattern from imagery for ' + fmtN(C(n - attrFill.pattern)) + ' products',
         detail: 'Tachyon reads product imagery and returns the missing visual attributes (pattern first) as feed-ready values.',

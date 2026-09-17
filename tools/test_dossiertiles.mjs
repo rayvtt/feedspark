@@ -196,7 +196,9 @@ const GRC = {
 };
 const G = new Function('GRC', 'esc', 'fmtN', `
   ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'grBand')}
-  ${liftVar(CC, 'GR_COL')} ${lift(CC, 'grRing')} ${lift(CC, 'portGolden')}
+  ${liftVar(CC, 'GR_COL')} ${lift(CC, 'grRing')}
+  ${(CC.match(/var GR_MROWS=\d+;/) || [''])[0]}
+  ${lift(CC, 'grPill')} ${lift(CC, 'grMiniRow')} ${lift(CC, 'portGolden')}
   return { grRing:grRing, portGolden:portGolden };
 `)(GRC, (x) => String(x == null ? '' : x), (n) => String(n));
 
@@ -223,6 +225,44 @@ console.log('\n-- golden record: the score as a ring, the rest as its legend --'
   ok('a brand with nothing missing says 0 gaps in grey, not in red',
      /background:#C9CDD4"><\/i><b>0<\/b><span>req gaps/.test(clean));
   ok('…and prints no unscanned row at all', !/unscanned/.test(clean));
+  ok('a single-market brand carries no per-market row list — the ring above already IS that market',
+     !/dzp-gmkts/.test(clean));
+}
+
+console.log('\n-- golden record: two LABELLED scores per market (Ray, 17 Sep 2026) --');
+{
+  const card = G.portGolden('Reiss');
+  const rowFor = (mk) => { const m = new RegExp('<div class="dzp-grow"><span class="mk">' + mk + '</span>([\\s\\S]*?)</div>').exec(card); return m ? m[1] : ''; };
+  ok('a per-market row list is drawn once a brand has more than one market', /dzp-gmkts/.test(card));
+  const gb = rowFor('GB');
+  ok('GB carries its own feed + content pair, not the brand average',
+     /<b[^>]*>92<\/b><i>feed<\/i>/.test(gb) && /<b[^>]*>84<\/b><i>content<\/i>/.test(gb), gb);
+  const us = rowFor('US');
+  ok('US carries its own pair too — different numbers from GB, never repeated',
+     /<b[^>]*>84<\/b><i>feed<\/i>/.test(us) && /<b[^>]*>76<\/b><i>content<\/i>/.test(us), us);
+  const de = rowFor('DE');
+  ok('DE (never scanned) reads "not scanned", never a blank or a zero', /not scanned/.test(de), de);
+  ok('both scores name themselves so they can never be mistaken for each other',
+     /<i>feed<\/i>/.test(card) && /<i>content<\/i>/.test(card));
+  ok('the full meaning rides as a tooltip on each pill, same discipline as the legend above',
+     /title="Feed scorecard/.test(card) && /title="Content quality score/.test(card));
+}
+{
+  // a Reiss-sized estate (28 markets) must never turn the compact card into a wall
+  const MANY = { feeds: {} };
+  const codes = ['gb','us','ie','de','nl','au','ca','eu','fr','uae','at','be','ch','cz','dk','es','fi','gr','hk','it','kw','pl','pt','ro','sa','se','sg','sk'];
+  codes.forEach(function (m, i) { MANY.feeds['Big|' + m] = { client: 'Big', mkt: m, score: 80 + (i % 10), q: 70 + (i % 10), air: 60, reqMissing: [], status: 'ok' }; });
+  const G2 = new Function('GRC', 'esc', 'fmtN', `
+    ${lift(CC, 'grRows')} ${lift(CC, 'grAvg')} ${lift(CC, 'grBand')}
+    ${liftVar(CC, 'GR_COL')} ${lift(CC, 'grRing')}
+    ${(CC.match(/var GR_MROWS=\d+;/) || [''])[0]}
+    ${lift(CC, 'grPill')} ${lift(CC, 'grMiniRow')} ${lift(CC, 'portGolden')}
+    return { portGolden:portGolden };
+  `)(MANY, (x) => String(x == null ? '' : x), (n) => String(n));
+  const big = G2.portGolden('Big');
+  const shown = (big.match(/class="dzp-grow"/g) || []).length;
+  ok('the row list caps at 8 markets, matching Feed audit’s own per-market cap', shown === 8, shown);
+  ok('what got cut is NAMED, not silently dropped', /\+20 more markets — see Full snapshot/.test(big));
 }
 
 console.log('\n-- the ring is an honest proportion --');

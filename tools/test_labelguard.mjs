@@ -1007,6 +1007,33 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   eq('pattern: two values caught', snap.attrs.pattern.rules.multi.n, 1);
   eq('pattern: placeholder caught', snap.attrs.pattern.rules.placeholder.n, 1);
 
+  // GPC "too broad": a two-level value only warns if Google's OWN taxonomy actually offers a
+  // third level under it — Ray, 17 Sep 2026, uploading Google's official taxonomy export after
+  // "Apparel & Accessories > Shoes" (a genuine dead end — Google ships no third level anywhere
+  // under Shoes) was flagged "too broad — fewer than three levels" on a live scorecard: "if the
+  // final GPC (Shoes) which has no further clarification from Google, then that's already
+  // optimal." GPC_LEAF2 is the derived list of every such terminal branch (52 of Google's 192
+  // second-level nodes carry no children at all).
+  {
+    const gpcCols = { google_product_category: 0 };
+    const gpc = LG.qualityCollector(gpcCols);
+    const rows = [
+      ['Apparel & Accessories > Shoes'],          // genuine leaf — nothing deeper exists
+      ['Apparel & Accessories > Clothing'],        // NOT a leaf — Clothing branches into 18 more
+      ['Electronics'],                             // bare top-level — always has somewhere deeper
+      ['apparel & accessories > shoes'],           // same leaf, different case — still exempt
+    ];
+    rows.forEach((r) => gpc.onRow(r));
+    const gs = gpc.finish({ client: 'Test', market: 'gb' });
+    eq('GPC: a genuine two-level DEAD END (Shoes) does not warn "too broad"',
+      gs.attrs.google_product_category.rules.shallow.n, 2, gs.attrs.google_product_category.rules.shallow);
+    ok('…specifically, it is the two non-leaf/one-level rows that are caught, not Shoes',
+      gs.attrs.google_product_category.rules.shallow.eg.every((v) => !/shoes/i.test(v)));
+    ok('GPC_LEAF2 carries Ray’s own example', LG.GPC_LEAF2.has('apparel & accessories > shoes'));
+    eq('GPC_LEAF2: exactly the 52 terminal second-level branches Google’s export actually has',
+      LG.GPC_LEAF2.size, 52);
+  }
+
   // scoring: a rule costs the share of products that break it, fails at full weight
   const q = LG.qualityScore(snap);
   ok('qualityScore: parts for every measured attribute', q.parts.length === 8);
@@ -1029,6 +1056,18 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   eq('qualityVerdict: a clean feed reads as meeting the spec', LG.qualityVerdict(96, 0).band, 'good');
   eq('qualityVerdict: best-practice gap is its own band', LG.qualityVerdict(82, 0).band, 'mid');
   ok('attrQuality: an attribute nobody fills scores nothing', LG.attrQuality('title', { filled: 0 }) === null);
+
+  // industry profile consistency (Ray, 17 Sep 2026, YuMOVE/Pet Care screenshot: "make sure
+  // all scoring (AI readiness, content quality) always refer back to the industry best
+  // practice that had been set") — a waived attribute (Pet Care waives pattern) drops out of
+  // content quality exactly as it drops out of goldenScore, same key, same shape
+  const qWaived = LG.qualityScore(snap, { industry: 'Pet Care', expected: [], waived: ['pattern'] });
+  ok('qualityScore: a waived attribute is dropped from parts entirely',
+    !qWaived.parts.some((p) => p.key === 'pattern'), qWaived.parts.map((p) => p.key));
+  eq('qualityScore: the other seven parts are untouched by waiving one',
+    qWaived.parts.length, q.parts.length - 1);
+  ok('qualityScore: with no profile passed at all, behaviour is unchanged (waived defaults to none)',
+    LG.qualityScore(snap).parts.length === q.parts.length);
 
   // a perfect feed must actually reach 100 — no rule fires on compliant content
   const clean = LG.qualityCollector(cols);
@@ -1152,6 +1191,28 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
     /hlDist: \(q\.multi && a\.hlDist/.test(wk) && /HL_BUCKETS\.reduce/.test(wk));
   ok('worker: imports HL_BUCKETS from the engine rather than hard-coding the bucket keys twice',
     /HL_BUCKETS \} from ".\/labelguard\.js"/.test(wk));
+}
+
+{
+  // ---- two scores per market on the Estate scorecard (Ray, 17 Sep 2026: "Surface content
+  // quality score directly in the dossier scorecard as well, next to the normal score. So
+  // there should be two scores appearing for each market, each brand. Obviously, carefully
+  // label them so we don't mistake. Feed scorecard and content quality score."). The estate
+  // grid previously showed only f.score (Golden Record completeness); the same /api/golden/
+  // estate payload already carries f.q (content quality, written by the PUT /api/golden/
+  // quality handler onto goldenidx) — this only wires up a read the page already had access to.
+  console.log('\n— estate scorecard: two labelled scores per market —');
+  const page2 = readFileSync(new URL('../docs/FeedSpark_GoldenRecord.html', import.meta.url), 'utf8');
+  ok('the feed score is captioned, not a bare number', /<span>feed<\/span>/.test(page2));
+  ok('the content-quality score is captioned as a different thing entirely', /<span>content<\/span>/.test(page2));
+  ok('each score names itself in full on hover, so the short caption is never the only explanation',
+    /Feed scorecard — weighted attribute completeness/.test(page2) && /Content quality score — what is actually IN the free-text fields/.test(page2));
+  ok('the two scores read the SAME estate payload — f.score and f.q side by side, never a second fetch',
+    /f\.score != null \? '<span class="est-su"/.test(page2) && /f\.q != null \? '<span class="est-su"/.test(page2));
+  ok('a market not yet analysed for quality shows only the feed score, never a fabricated content figure',
+    /'<span class="est-su" title="Content quality score/.test(page2));
+  ok('both scores use the SAME colour bands (scoreCol) — a reader learns one legend, not two',
+    (page2.match(/scoreCol\(f\.score\)/g) || []).length >= 1 && (page2.match(/scoreCol\(f\.q\)/g) || []).length >= 1);
 }
 
 {

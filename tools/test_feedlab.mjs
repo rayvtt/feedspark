@@ -177,5 +177,51 @@ ok(P.ai.label === 'Structured detail' && /highlights/.test(P.ai.summary),
   ok(pillarsOf(M).conversational, 'and still weighs conversational attributes');
 }
 
+console.log('\n— Attribute completeness follows the SAME industry profile as goldenScore —');
+console.log('  (Ray, 17 Sep 2026, YuMOVE/Pet Care screenshot: "make sure all scoring … always refer back to the industry best practice")');
+{
+  // a Pet Care-shaped feed: the apparel-five COLUMNS genuinely don't exist (not merely blank —
+  // has() reads column presence, matching a real feed that never ships g:color at all), pattern
+  // dropped too — but item_group_id and material (Pet Care's own default profile: expected: [],
+  // waived: [size_type, size_system, pattern]) are still shipped
+  const dropped = ['color', 'size', 'gender', 'age_group', 'pattern'];
+  const keepIdx = []; HEAD.forEach((h, i) => { if (dropped.indexOf(h) < 0) keepIdx.push(i); });
+  const petHeader = keepIdx.map((i) => HEAD[i]);
+  const project = (rows) => rows.map((r) => keepIdx.map((i) => r[i]));
+  const petRows = project(bare);
+  const petCare = FA.audit(petHeader, petRows, { client: 'YuMOVE', channel: 'google', expected: [], waived: ['size_type', 'size_system', 'pattern'] });
+  const unprofiled = FA.audit(petHeader, petRows, { client: 'YuMOVE', channel: 'google' });
+  ok(pillarsOf(unprofiled).attributes.score >= 70,
+    'even with no profile passed at all, the cond-tier apparel five are excluded by default (goldenScore\'s own baseline for an unprofiled/Retail client — never expected unless an industry says so)',
+    pillarsOf(unprofiled).attributes);
+  ok(pillarsOf(unprofiled).attributes.score < pillarsOf(petCare).attributes.score,
+    'but pattern (rec-tier) is only excluded once a profile actually waives it — an unprofiled call still dings the un-waived rec gap',
+    [pillarsOf(unprofiled).attributes.score, pillarsOf(petCare).attributes.score]);
+  ok(pillarsOf(petCare).attributes.score >= 90,
+    'with Pet Care\'s own profile, the same feed reads as complete — color/size/gender/age_group are cond-tier and simply not expected, pattern is waived', pillarsOf(petCare).attributes);
+  ok(!/color|size(?!_)|gender|age_group|pattern/.test(pillarsOf(petCare).attributes.summary),
+    'the pillar summary stops naming gaps the profile does not consider gaps', pillarsOf(petCare).attributes.summary);
+  ok(!petCare.issues.some((x) => x.code === 'attr-pattern'), 'the pattern issue is silenced once it is waived', petCare.issues.map((x) => x.code));
+  ok(!petCare.recs.some((x) => /pattern/i.test(x.title)), 'and so is the pattern recommendation', petCare.recs.map((x) => x.title));
+
+  // material is deliberately NOT in Pet Care's waived list (Ray's own default profile keeps
+  // it as a cross-industry optimisation surface) — a Pet Care feed missing it should still
+  // be marked down, proving the fix does not over-exempt
+  const noMatIdx = []; petHeader.forEach((h, i) => { if (h !== 'material') noMatIdx.push(i); });
+  const petHeaderNoMaterial = noMatIdx.map((i) => petHeader[i]);
+  const petRowsNoMaterial = petRows.map((r) => noMatIdx.map((i) => r[i]));
+  const petCareNoMaterial = FA.audit(petHeaderNoMaterial, petRowsNoMaterial, { client: 'YuMOVE', channel: 'google', expected: [], waived: ['size_type', 'size_system', 'pattern'] });
+  ok(pillarsOf(petCareNoMaterial).attributes.score < pillarsOf(petCare).attributes.score,
+    'material is NOT waived for Pet Care — losing it still costs the pillar, even under the profile',
+    [pillarsOf(petCareNoMaterial).attributes.score, pillarsOf(petCare).attributes.score]);
+
+  // a profile that EXPECTS one of the apparel five (Fashion's own default) still marks it
+  // missing when the feed has none of it — expected attrs count-when-absent, never a free pass
+  const fashionProfiled = FA.audit(petHeader, petRows, { client: 'Reiss', channel: 'google', expected: ['color', 'size', 'gender', 'age_group', 'item_group_id'], waived: [] });
+  ok(pillarsOf(fashionProfiled).attributes.score < pillarsOf(petCare).attributes.score,
+    'an industry that EXPECTS the apparel five still scores their absence as a real gap',
+    [pillarsOf(fashionProfiled).attributes.score, pillarsOf(petCare).attributes.score]);
+}
+
 console.log(`\nFeed Lab AI-readiness model: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
