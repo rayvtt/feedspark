@@ -400,26 +400,45 @@ window.addEventListener('load',restore);
   #bulkbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0 0;padding:9px 11px;
            border:1px solid var(--line,#E6E6E6);border-radius:10px;background:var(--wash);font-size:13px}
   #bulkbar .grow{flex:1 1 auto}
-  /* the Tags & rules dialog */
+  /* THE TAGS & RULES RAIL (Ray, 17 Sep 2026: "can it also popup as on the right panel similar to
+     build log so i can also work simultaneously"). It was a centred modal over a dimmed page: to
+     read a rule's effect you closed it, looked, and opened it again. It is a right-hand rail now,
+     the same shape as Workflow's cockpit — and like those rails it PUSHES the page rather than
+     sitting on top of it, because the columns it would cover on this page are the hours, which is
+     the thing you are judging while you tag. No dim: the table stays live, and a rule added here
+     re-renders the rows behind it as you watch. Below 900px it overlays (there is no room to
+     push); below 760px it is a full sheet, the phone layer's convention. */
+  :root{--tgd-w:clamp(380px,32vw,640px)}
   #tgbd:empty{display:none}
-  #tgbd .bd-dim{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:130}
-  #tgbd .bd-box{position:fixed;z-index:131;top:50%;left:50%;transform:translate(-50%,-50%);
-    width:min(880px,calc(100vw - 24px));max-height:calc(100vh - 48px);display:flex;flex-direction:column;
-    background:var(--paper,#fff);border:1px solid var(--line,#E6E6E6);border-radius:14px;
-    box-shadow:0 18px 60px rgba(16,24,40,.26)}
-  #tgbd .bd-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line,#E6E6E6)}
-  #tgbd .bd-b{padding:14px;overflow:auto}
+  #tgbd .bd-box{position:fixed;z-index:70;top:0;right:0;bottom:0;width:var(--tgd-w);
+    display:flex;flex-direction:column;background:var(--paper,#fff);
+    border-left:1px solid var(--line,#E6E6E6);box-shadow:0 0 34px rgba(16,24,40,.12);
+    transform:translateX(102%);transition:transform .2s ease}
+  #tgbd .bd-box.on{transform:none}
+  body.tgd-on{padding-right:var(--tgd-w)}
+  @media (max-width:900px){
+    #tgbd .bd-box{width:min(420px,100vw);box-shadow:0 0 44px rgba(16,24,40,.28)}
+    body.tgd-on{padding-right:0}
+  }
+  @media (max-width:760px){#tgbd .bd-box{width:100vw;left:0;border-left:none}}
+  @media (prefers-reduced-motion:reduce){#tgbd .bd-box{transition:none}}
+  #tgbd .bd-h{display:flex;align-items:center;gap:8px;padding:12px 14px;flex:none;
+    border-bottom:1px solid var(--line,#E6E6E6)}
+  #tgbd .bd-b{padding:14px 14px 26px;overflow:auto;overscroll-behavior:contain;flex:1;
+    container-type:inline-size}
   #tgbd .bd-b h4{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
   #tgbd .bd-b code{background:var(--wash);padding:2px 6px;border-radius:5px;font-size:12px}
   #tgbd .bd-b input,#tgbd .bd-b select{padding:7px 9px;border:1px solid var(--line,#E6E6E6);border-radius:8px;
     background:var(--paper,#fff);color:var(--ink,#333);font:inherit;font-size:13px}
-  /* TWO COLUMNS, ONE ROW EACH (Ray, 17 Sep 2026: "love this, reorganise and make the tab
-     cleaner pls"). Tags and rules were stacked down a 640px column with a paragraph over each
-     and the same words repeated on every row — the panel was 1,000px tall for four tags and
-     seven rules. Side by side they are both on screen at once; the repeated labels became
-     column headings, so each row is a dot, a name and a number. It stacks under 880px. */
-  #tgbd .tgd-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:22px}
-  @media (max-width:880px){#tgbd .tgd-cols{grid-template-columns:minmax(0,1fr);gap:16px}}
+  /* ONE ROW EACH, AND TWO COLUMNS WHEN THERE IS ROOM FOR THEM (Ray, 17 Sep 2026: "love this,
+     reorganise and make the tab cleaner pls"). Tags and rules were stacked down a 640px column
+     with a paragraph over each and the same words repeated on every row — 1,000px of panel for
+     four tags and seven rules. The repeated labels are column headings now, so each row is a dot,
+     a name and a number. The split keys on the PANEL'S OWN WIDTH, not the window's: it lives in a
+     rail whose width follows the screen, and a viewport media query would have put two 200px
+     columns inside a 420px rail on a wide monitor. */
+  #tgbd .tgd-cols{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+  @container (min-width:560px){#tgbd .tgd-cols{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:22px}}
   #tgbd .tgd-sec{min-width:0}
   #tgbd .tgd-hint{font-size:12px;color:var(--muted);margin:0 0 9px;line-height:1.45}
   #tgbd .tgd-grid{display:grid;align-items:center;gap:0 10px;font-size:13px}
@@ -1561,17 +1580,49 @@ window.addEventListener('load',restore);
      page: an AM typing "(" would otherwise throw inside the render loop and blank the table. Each
      rule PREVIEWS what it would touch before it is saved, and says how many rows it will NOT touch
      because a person already decided those. */
+  /* THE RAIL (Ray, 17 Sep 2026: "can it also popup as on the right panel similar to build log so
+     i can also work simultaneously"). Three consequences, and they are the whole design:
+       1. NO DIM and no modal — the board behind it stays live, which is the point. Clicking away
+          does not close it either: on a modal that is how you dismiss it, but here clicking away
+          IS the work.
+       2. THE SHELL IS BUILT ONCE and only the body is redrawn. Rewriting the whole host on every
+          edit would restart the slide-in animation, so adding a rule would make the rail flinch.
+       3. IT REMEMBERS per device — a panel being open describes one screen, not the team's state,
+          the same line every other toggle on the FCC sits on. */
+  var TG_KEY = 'fcc-tg-rail';
+  function tgIsOpen() { return document.body.classList.contains('tgd-on'); }
+  function tgBtn(on) {
+    var b = $('dp-tags'); if (!b) return;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.classList.toggle('on', !!on);
+  }
+  function tgRemember(on) { try { localStorage.setItem(TG_KEY, on ? '1' : '0'); } catch (e) {} }
+  function rulesClose() {
+    var host = $('tgbd'); if (!host) return;
+    var box = host.querySelector('.bd-box');
+    document.body.classList.remove('tgd-on');
+    tgBtn(false); tgRemember(false);
+    if (box) box.classList.remove('on');
+    // cleared only once it has slid out, and only if nobody re-opened it in the meantime
+    setTimeout(function () { if (!tgIsOpen()) host.innerHTML = ''; }, 260);
+  }
+  function rulesToggle() { if (tgIsOpen()) rulesClose(); else rulesOpen(); }
   function rulesOpen() {
     var host = $('tgbd'); if (!host) return;
     var draw = function () {
       var defs = DEFS(), rules = RULES();
-      /* ONE sentence at the top, then two columns. The three section paragraphs said much the
-         same thing three times over, and "displaces the plan" was printed once per tag — both
-         are now column headings that say it once. */
-      host.innerHTML = '<div class="bd-dim"></div><div class="bd-box" role="dialog" aria-label="Tags and keyword rules">'
-        + '<div class="bd-h"><b>Tags &amp; keyword rules</b><span class="grow"></span>'
-        + '<button class="btn sm" id="tg-x" type="button">✕</button></div>'
-        + '<div class="bd-b">'
+      /* ONE sentence at the top, then two columns where the rail is wide enough for them. The
+         three section paragraphs said much the same thing three times over, and "displaces the
+         plan" was printed once per tag — both are now column headings that say it once. */
+      if (!host.querySelector('.bd-box')) {
+        // a landmark, not a dialog: it stays open beside the work rather than trapping focus in
+        // front of it, and calling it a dialog would tell a screen-reader user the opposite
+        host.innerHTML = '<div class="bd-box" role="complementary" aria-label="Tags and keyword rules">'
+          + '<div class="bd-h"><b>Tags &amp; keyword rules</b><span class="grow"></span>'
+          + '<button class="btn sm" id="tg-x" type="button" title="Close the panel (Esc)">✕</button></div>'
+          + '<div class="bd-b" id="tg-body"></div></div>';
+      }
+      $('tg-body').innerHTML = ''
         + '<p class="tgd-hint" style="margin:0 0 14px">A tag records <b>why</b> a task happened — the <b>Type</b> column already says what the work was, so one task can be optimisation work that was also urgent.</p>'
         + '<div class="tgd-cols">'
         + '<div class="tgd-sec">'
@@ -1594,7 +1645,7 @@ window.addEventListener('load',restore);
         +   '<div class="tgd-add"><select id="tg-sugg" class="tgd-src"></select></div>'
         +   '<div id="tg-prev" class="tgd-hint" style="margin:7px 0 0"></div>'
         + '</div>'
-        + '</div></div></div>';
+        + '</div>';
 
       // a tag is a dot, a name and one tick; its note spans the row underneath rather than
       // pushing a third column nobody can read at this width
@@ -1657,9 +1708,10 @@ window.addEventListener('load',restore);
 
       if (host.__w) return;                     // listeners bind ONCE, not once per redraw
       host.__w = 1;
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && tgIsOpen()) rulesClose(); });
       host.addEventListener('click', function (e) {
         var el = e.target, a;
-        if (el.id === 'tg-x' || el.className === 'bd-dim') { host.innerHTML = ''; return; }
+        if (el.id === 'tg-x') { rulesClose(); return; }
         if ((a = el.getAttribute && el.getAttribute('data-deltag')) != null && a !== '') {
           var dd = DEFS().slice(); dd.splice(Number(a), 1); TAGDEF.tags = dd; tagSave(); draw(); return;
         }
@@ -1701,6 +1753,10 @@ window.addEventListener('load',restore);
       });
     };
     draw();
+    document.body.classList.add('tgd-on');
+    tgBtn(true); tgRemember(true);
+    var box = host.querySelector('.bd-box');
+    if (box) requestAnimationFrame(function () { box.classList.add('on'); });
   }
   var TAG_COLORS = TAG_PAL;
 
@@ -1824,7 +1880,7 @@ window.addEventListener('load',restore);
       if (TAGMENU && !TAGMENU.contains(el)) tagMenuClose();
     });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') tagMenuClose(); });
-    var dt = $('dp-tags'); if (dt) dt.onclick = rulesOpen;
+    var dt = $('dp-tags'); if (dt) dt.onclick = rulesToggle;
     var ti = $('ptagimp'), tf = $('ptagfile');
     if (ti && tf) {
       ti.onclick = function () { tf.value = ''; tf.click(); };
@@ -2878,7 +2934,13 @@ window.addEventListener('load',restore);
     fetch('/api/access?me=1').then(function (r) { return r.json(); })
       .then(function (a) { ME = (a && (a.name || a.ownerName || a.email)) || ''; }).catch(function () {});
     // the first paint must not show every row as untagged and then flip — chain it on the load
-    tagLoad(function () { apply(); });
+    tagLoad(function () {
+      apply();
+      // reopen the rail this screen left open — after the tags land, so it never paints an empty
+      // vocabulary and then fills itself in
+      var want = '0'; try { want = localStorage.getItem(TG_KEY) || '0'; } catch (e) {}
+      if (want === '1') rulesOpen();
+    });
     apply();
   }
 
