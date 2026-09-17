@@ -291,10 +291,15 @@
   // nothing ever covers the page: hoverOpen becomes a no-op and a click loads that client into
   // the panel. Both homes render the same body() and are wired by the same wire().
   function dockEl() { return document.getElementById('fcc-hrs-dock'); }
-  function dockShow(name) {
+  // `user` separates the two reasons this runs. A CLICK on an hours dot is somebody asking for the
+  // retainer, so the host page may open its panel. Every other call — the host refreshing the
+  // dock's contents on a re-render, the 5-minute reload, a posture save — is housekeeping, and a
+  // host that opened its panel on those would re-open a panel the reader had just closed
+  // (Ray, 17 Sep 2026: "2 panels button should be independent of each other").
+  function dockShow(name, opts) {
     var d = dockEl(); if (!d || !name) return !!d;
     if (d.__fh !== name) { d.__fh = name; openFor = ''; HOST = d; d.innerHTML = body(name); wire(name); }
-    try { document.dispatchEvent(new CustomEvent('fcc-hours-dock', { detail: { client: name } })); } catch (e) {}
+    try { document.dispatchEvent(new CustomEvent('fcc-hours-dock', { detail: { client: name, user: !!(opts && opts.user) } })); } catch (e) {}
     who();
     return true;
   }
@@ -324,7 +329,7 @@
 
   function show(b, pin) {
     var name = b.getAttribute('data-fh');
-    if (dockShow(name)) return;
+    if (dockShow(name, { user: true })) return;      // a dot was clicked — the panel may open
     ensure();
     HOST = pop;
     if (pin) pinned = true;
