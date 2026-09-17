@@ -6638,6 +6638,66 @@
       "pattern": "function openBrief(){",
       "min": 1,
       "pr": 424
+    },
+    {
+      "name": "Task Manager tags: a SECOND axis (why the work happened) kept apart from `cat` (what the work was)",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function displacement",
+      "min": 1
+    },
+    {
+      "name": "Task Manager tags: a human's hand-set list ALWAYS beats a keyword rule, including an empty list",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function tagsOf",
+      "min": 1
+    },
+    {
+      "name": "Task Manager tags: the tag dimension is multi-valued and groupBy owns up to the double count",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "function dimKeys",
+      "min": 1
+    },
+    {
+      "name": "Task Manager tags: keyed on the source's own task id, never on wording the rotation re-packs",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function taggable",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the displacement headline reads the current search and carries its own coverage",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function dispRender",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: mass tagging acts on whatever the search resolved — no second selection model",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function bulkApply",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: keyword rules preview what they would touch AND what they leave alone",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function rulesOpen",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: tag import previews the diff and saves nothing until confirmed",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function tagImport",
+      "min": 1
+    },
+    {
+      "name": "XLSX engine reads a workbook back (ZIP central directory + deflate-raw), closing the round trip",
+      "file": "docs/xlsx_engine.js",
+      "pattern": "function readXlsx",
+      "min": 1
+    },
+    {
+      "name": "XLSX engine reads the CSV Excel writes — quoted commas, doubled quotes, CRLF",
+      "file": "docs/xlsx_engine.js",
+      "pattern": "function readCsv",
+      "min": 1
     }
   ]
 }

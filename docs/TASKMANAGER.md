@@ -205,6 +205,97 @@ The page is **served scoped**, not filtered in the browser: `/api/taskmanager` r
 client records the signin is allowed, so a client-scoped AM never receives another AM's rows at
 all. The module is grantable per person (`taskmanager` in `access.js`'s `MODULES`).
 
+## Tags — why the work happened
+
+> Ray, 17 Sep 2026: *"within the task manager hours, there will be a tagging system, a labeling
+> system of which task is urgent, which task is from agency work, and which task is technical …
+> the goal is to highlight how many hours are spent on urgent stuff that should have been spent on
+> optimisation. Later on, I will do mass tagging across all rows if possible or by either keyword
+> or using Excel that I can import and export."*
+
+**This is a second axis, and keeping it apart from `cat` is the whole point.** The **Type** column
+is read off the title and says *what the work was* — optimisation, a technical fix, set-up, account
+admin. A **tag** is a person's judgement about *why it happened*. They are independent: an urgent
+job is usually still useful work, which is exactly why the displacement never shows up in `cat`
+alone and needs its own column.
+
+**Nothing here duplicates a field the database already has.** Checked first, against Reiss GB over
+1,200 rows: `priority` is the constant `20` on every row and `task_source` is empty. The reports
+database does not record urgency, so the judgement has to come from a person.
+
+**Tags key on the task's own `list_id`** (100% populated and unique in the live book), never on its
+wording. The rotation re-reads each market about twice a day and re-packs every row from scratch, so
+a tag keyed on a title would come unstuck the first time anyone edited one. A row that arrives
+without an id reads **`no id`** rather than being keyed on something that drifts.
+
+### The headline
+
+*Where the hours went* sits above the chart and reads the **current search**, so narrowing to a
+client or a quarter re-asks the question of that slice:
+
+| | |
+|---|---|
+| **Urgent** | hours carrying any tag flagged *displaces the plan* |
+| **Optimisation** | hours whose *work* classified as optimisation (`cat:opt`) |
+| **Ratio** | reactive hours per hour of optimisation |
+| **Judged** | how much of the book anyone has actually tagged |
+
+**Coverage travels with every figure.** A book that is 4% tagged would otherwise report "2.1 h
+urgent" and read like good news. Under 50% coverage the verdict says the number is a **floor, not
+the answer**, and untagged is always stated as **not yet judged** — never as "not urgent".
+
+### A human always beats a rule
+
+Set a task's tags by hand and that record *is* the answer — **including an empty list**, which means
+"I looked, and none of these apply". Without that rule a keyword rule would re-apply its tag on
+every render and nobody could ever take one off; the tag they removed would quietly come back and
+they would stop trusting the column.
+
+**Clear** is therefore a separate control from unticking: it removes the record entirely and hands
+the row back to the rules. Those are different intentions and the menu keeps them apart.
+
+### Mass tagging
+
+- **From the search.** The search already resolves a row set, so the bulk bar acts on **whatever is
+  on screen** — there is no second selection model to drift out of step with the filter. It states
+  the row count and the hours before doing anything.
+- **By keyword.** A rule is a plain substring over the title, the notes, or both — *never* a regex
+  typed into the page, since an AM entering `(` would throw inside the render loop and blank the
+  table. Every rule previews what it would tag **and how many rows it will leave alone** because a
+  person already decided them. The dialog also lists the book's own highest-hour task titles, so a
+  rule comes off real vocabulary rather than a guess.
+- **By spreadsheet.** See below.
+
+### One task, several tags
+
+A job can be both urgent and technical, and forcing a primary tag would drop the second fact the
+person recorded. So the `tag` chart dimension is **multi-valued**: a task lands in every one of its
+buckets, untagged gets its own bucket, and `groupBy` returns `multi`/`placements` so the surface can
+say the hours legitimately sum to more than the book. Silently double-counted hours under a heading
+that reads "hours" is the kind of number someone takes into a client conversation.
+
+### The Excel round trip
+
+The export already carried **Task id**; it now carries **Tags** too, and the import keys on the id —
+never the title, which whoever edits the sheet may well reword.
+
+`⇧ Import tags` reads **.xlsx** (the engine gained a reader: ZIP central directory, `deflate-raw`
+via `DecompressionStream`, shared and inline strings) or **.csv** (quoted commas, doubled quotes,
+CRLF, and a header row sitting below a title row).
+
+**It previews before it writes.** A sheet coming back from someone's laptop can hold a stale copy of
+the book, a filtered subset, or a column of typos, and applying it blind would overwrite the team's
+judgements with no way back. The diff is shown — what changes, which task ids are not in this book,
+which tag names do not exist here — and nothing is saved until it is confirmed. **Rows the file does
+not mention are never touched**, so importing a filtered sheet cannot wipe the rest of the book.
+
+### Where tags live
+
+Shared state, like every other team-visible decision: `tmtags` (`taskId → {client, tags, by, at}`,
+`field`-scoped so a client-scoped signin stays inside their own clients) and the house-wide
+`tmtagdef` (the vocabulary and the rules), over `/api/state` with kvmerge, `X-Sync-Base` and a
+retrying push. A displacement figure that differed from screen to screen would be worse than none.
+
 ## The search bar
 
 One bar, filtering the tasks, the tickets, the chart, the breakdown strip and every KPI at once.
@@ -215,6 +306,7 @@ together, different fields AND. **A space means AND, a comma means OR.**
 |---|---|
 | `keyword optimisation` | both words appear somewhere on the row (title, notes, owner, client, market, status) |
 | `Febin,Vitus` | **either** — every row naming one of them |
+| `tag:` `label:` | the judgement tag — `tag:urgent,agency`, `tag:none` (nobody has judged it), `tag:any` |
 | `"keyword optimisation"` | the exact phrase, not two loose words |
 | `client:` `brand:` `account:` | the brand. Exactly, **or by prefix of 2+ characters** — `client:rei` finds Reiss, `client:eiss` finds nothing (a mid-word substring is not a name) |
 | `owner:` `who:` `by:` | the person who did the work |

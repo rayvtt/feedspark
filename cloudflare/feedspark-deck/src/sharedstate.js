@@ -45,6 +45,18 @@ export const STATE_NS = {
   // reports database states; this is the team's DECISION about it, and the two are never merged.
   // client -> {state:'continue'|'hold'|'watch', note, by, at}
   hourspost:   'self',
+  // TASK TAGS (Ray, 17 Sep 2026: "a tagging system … which task is urgent, which task is from
+  // agency work, and which task is technical"). One AM's judgement about a task is the TEAM's
+  // record of it — two people reading the same book must see the same displacement figure, so
+  // this can never be a per-browser note. Keyed on the reports database's own task id (`list_id`),
+  // which is why the value has to carry its client: the key alone says nothing about whose book
+  // the task is in, so 'field' scoping is what keeps a scoped signin inside their own clients.
+  //   taskId -> {client, tags:[slug], by, at}
+  tmtags:      'field',
+  // The tag vocabulary and the keyword rules — house-wide, like the SLA and the Playbook taxonomy.
+  // A tag that meant Urgent on one person's screen and something else on another's would make
+  // every number built on it meaningless.  'tags' -> [def], 'rules' -> [rule]
+  tmtagdef:    null,
 };
 
 export function isStateNs(ns) { return Object.prototype.hasOwnProperty.call(STATE_NS, ns); }
