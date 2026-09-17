@@ -6902,6 +6902,41 @@
       "pattern": "window.FCCSolo = soloModal",
       "min": 1,
       "pr": 430
+    },
+    {
+      "name": "Playbook New products: each market's last 12 months of arrivals as a sparkline, not a highlight (Ray, 17 Sep 2026: 'can you replace with these bar chart instead and no need red highlights')",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function pbSpark(dob,nowMs,months)",
+      "min": 1,
+      "pr": 431
+    },
+    {
+      "name": "Playbook New products: the series is walked from the CALENDAR, so a month absent from the histogram keeps its slot instead of closing the gap",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var dt=new Date(Date.UTC(y,m-i,1));",
+      "min": 1,
+      "pr": 431
+    },
+    {
+      "name": "Playbook New products: the running month is flagged, never plotted as a finished one",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "out.push({k:k,n:n,cur:i===0});",
+      "min": 1,
+      "pr": 431
+    },
+    {
+      "name": "Playbook New products: the sparkline borrows the Volume module's own marks and validated blue pair so the two surfaces cannot disagree",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": ".ck-spark i.cur{opacity:.45}",
+      "min": 1,
+      "pr": 431
+    },
+    {
+      "name": "Playbook New products: no row wash and no filled band pill — on a 28-market brand every row read the same highlight, so it discriminated nothing",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "sparkHtml(sp)",
+      "min": 1,
+      "pr": 431
     }
   ]
 }

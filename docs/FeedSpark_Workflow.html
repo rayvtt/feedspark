@@ -954,13 +954,14 @@ body.ck-r-on{padding-right:var(--ck-w)}
 .ck-chip.on{background:var(--navy,#1A365D);border-color:var(--navy,#1A365D);color:#fff}
 .ck-exp{flex:none;border:none;background:none;color:var(--muted,#8a94a0);cursor:pointer;font-size:11px;font-weight:900;padding:0 2px;line-height:1;transition:transform .15s}
 .ck-exp[aria-expanded=true]{transform:rotate(180deg);color:var(--orange-deep,#ED6F0B)}
-.ck-row.raise{background:linear-gradient(90deg,rgba(192,57,43,.12),transparent 78%);border-radius:7px;padding-left:5px;margin-left:-5px}
+/* the arrivals rows carry no wash any more — see secArrivals. Kept as a no-op-free rule for any
+   future row that genuinely needs to stand out on its own, rather than every row at once. */
 .ck-raiserow{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:0 0 7px 5px;margin:-1px 0 5px}
-.ck-why{flex:1 1 100%;font-size:10.5px;font-weight:700;color:var(--risk,#C0392B)}
+.ck-why{flex:1 1 100%;font-size:10.5px;font-weight:700;color:var(--muted,#8a94a0)}
 .ck-brief.go{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B);font-weight:800}
 .ck-brief.go:hover{background:var(--orange,#F5A623);color:#14161C}
 .ck-brief[disabled]{opacity:.55;cursor:default}
-.ck-raised{margin:0 0 8px;font-size:11px;font-weight:800;color:var(--risk,#C0392B)}
+.ck-raised{margin:0 0 8px;font-size:11px;font-weight:700;color:var(--muted,#8a94a0)}
 .ck-mix{border-left:2px solid var(--line,#E6E6E6);padding:2px 0 6px 9px;margin:2px 0 6px 4px}
 .ck-mix .ck-lbl{margin:2px 0 3px}
 .ck-mix .ck-row{padding:3px 0;border-bottom:none}
@@ -971,9 +972,9 @@ body.ck-r-on{padding-right:var(--ck-w)}
 [data-theme=dark] .ck-tab-b.on{background:var(--paper,#1C1F27)}
 [data-theme=dark] .ck-chip{background:#20242E}
 [data-theme=dark] .ck-chip.on{background:#4C82E0;border-color:#4C82E0;color:#0F1218}
-[data-theme=dark] .ck-row.raise{background:linear-gradient(90deg,rgba(241,112,122,.20),transparent 78%)}
-[data-theme=dark] .ck-why{color:#F1707A}
-[data-theme=dark] .ck-raised{color:#F1707A}
+
+
+
 .ck-s{margin:0 0 16px}
 .ck-s>h4{margin:0 0 2px;font-size:12.5px;font-weight:900;display:flex;align-items:center;gap:6px}
 .ck-s>h4 .n{margin-left:auto;font-size:10px;font-weight:800;color:var(--muted,#8a94a0);letter-spacing:.03em}
@@ -987,6 +988,13 @@ body.ck-r-on{padding-right:var(--ck-w)}
 .ck-row .mk{flex:none;font-size:9.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#8a94a0);
   background:var(--wash,#F7F7F5);border-radius:100px;padding:2px 6px}
 .ck-row .num{flex:none;font-size:11px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink-2,#4a4a4a);white-space:nowrap}
+/* ARRIVALS SPARKLINE — the same marks as the Volume module's estate table (docs/FeedSpark_Volume.html
+   .spark), down to the validated blue pair (#2563EB light / #4C82E0 dark) and the .45 running
+   month, so the two surfaces can never draw the same series two different ways. */
+.ck-spark{display:inline-flex;align-items:flex-end;gap:1px;height:16px;flex:none}
+.ck-spark i{display:block;width:4px;background:#2563EB;border-radius:1px 1px 0 0;min-height:1px}
+.ck-spark i.cur{opacity:.45}
+[data-theme=dark] .ck-spark i{background:#4C82E0}
 .ck-bar{flex:none;width:52px;height:7px;border-radius:4px;background:var(--wash,#F7F7F5);overflow:hidden;box-shadow:inset 0 0 0 1px var(--line,#E6E6E6)}
 .ck-bar i{display:block;height:100%;border-radius:4px;background:#2563EB}
 .ck-bar.good i{background:#15803D}
@@ -1000,8 +1008,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
 .ck-pill.mute{color:var(--muted,#8a94a0);background:var(--wash,#F7F7F5)}
 /* the one flag Ray asked for by name: a new-product share in the 10–20% band is a collection
    landing, and it gets a mark you cannot scroll past */
-.ck-row.hot{background:linear-gradient(90deg,rgba(245,166,35,.16),transparent 78%);border-radius:7px;padding-left:5px;margin-left:-5px}
-.ck-row.hot .nm{color:var(--ink,#333)}
+
 .ck-tune-modal{max-width:720px;width:min(720px,96vw)}
 .ck-tune-rows{display:flex;flex-direction:column;gap:7px;max-height:54vh;overflow:auto;padding:2px}
 .ck-tune-row{display:grid;grid-template-columns:22px 180px 1fr 74px;gap:8px;align-items:center;padding:8px 10px;
@@ -1026,7 +1033,6 @@ body.ck-r-on{padding-right:var(--ck-w)}
 [data-theme=dark] .ck-pill.good{color:#48D07E;background:rgba(72,208,126,.16)}
 [data-theme=dark] .ck-pill.warn{color:#F0A44E;background:rgba(240,164,78,.16)}
 [data-theme=dark] .ck-pill.info{color:#8FB4F0;background:rgba(76,130,224,.16)}
-[data-theme=dark] .ck-row.hot{background:linear-gradient(90deg,rgba(198,123,40,.28),transparent 78%)}
 /* One rail at a time once the page can no longer spare two — the script enforces it; these rules
    just make the single open rail behave. */
 @media(max-width:900px){
@@ -5205,6 +5211,33 @@ body.ck-r-on{padding-right:var(--ck-w)}
     });
     return out;
   }
+  /* THE LAST 12 MONTHS, DRAWN THE WAY THE VOLUME MODULE DRAWS THEM (Ray, 17 Sep 2026, sending
+     the estate table's own sparkline: "can you replace with these bar chart instead and no need
+     red highlights"). Same twelve bars, same peak scaling, same translucent running month — one
+     arrivals visual across the FCC rather than a second one that could quietly disagree with it.
+
+     THE SERIES IS BUILT FROM THE CALENDAR, never from the keys present in dob.m. That map only
+     carries months that had arrivals, so slicing its keys would draw twelve bars that LOOK
+     consecutive and are not — a gap month would silently close up and every bar after it would
+     sit under the wrong label. A month with nothing is a real zero here (the histogram is every
+     live product's first-seen month, so an empty month means none survive from it), which is a
+     bar of minimum height, not an absence.
+
+     The running month is returned flagged, never as a finished one: it is a part-month by
+     definition and plotting it solid makes every account look like it fell off a cliff. */
+  function pbSpark(dob,nowMs,months){
+    if(!dob||!dob.m)return null;
+    var N=months||12, d=new Date(nowMs||Date.now());
+    var y=d.getUTCFullYear(), m=d.getUTCMonth(), out=[], pk=0;
+    for(var i=N-1;i>=0;i--){
+      var dt=new Date(Date.UTC(y,m-i,1));
+      var k=dt.getUTCFullYear()+'-'+('0'+(dt.getUTCMonth()+1)).slice(-2);
+      var n=Number(dob.m[k])||0;
+      if(n>pk)pk=n;
+      out.push({k:k,n:n,cur:i===0});
+    }
+    return {months:out,peak:pk};
+  }
 /* PBENGINE:END */
 
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -5279,6 +5312,17 @@ body.ck-r-on{padding-right:var(--ck-w)}
 
   /* ---- render ---------------------------------------------------------------------------- */
   function row(cls,inner){return '<div class="ck-row'+(cls?' '+cls:'')+'">'+inner+'</div>';}
+  /* 16px tall so the row keeps its 4px line-height budget; 4px bars + 1px gaps = 59px, which is
+     what dropping the repeated band pill paid for. */
+  function sparkHtml(sp){
+    if(!sp)return '';
+    var pk=Math.max(1,sp.peak);
+    return '<span class="ck-spark" title="'+sp.months.map(function(x){
+        return moLbl(x.k)+' +'+fmt(x.n)+(x.cur?' — this month, still running':''); }).join(' \u00b7 ')+'">'
+      +sp.months.map(function(x){
+        return '<i'+(x.cur?' class="cur"':'')+' style="height:'+Math.max(1,Math.round(x.n/pk*16))+'px"></i>'; }).join('')
+      +'</span>';
+  }
   function bar(pctVal,cls){
     var w=Math.max(0,Math.min(100,pctVal||0));
     return '<span class="ck-bar'+(cls?' '+cls:'')+'"><i style="width:'+w.toFixed(1)+'%"></i></span>';
@@ -5391,8 +5435,8 @@ body.ck-r-on{padding-right:var(--ck-w)}
       +PB_RAISE_OPTS.map(function(d){return '<button type="button" class="ck-chip'+(d===RAISE_DAYS?' on':'')+'" data-raise="'+d+'" title="Raise a cohort left unoptimised for '+d+' days">'+d+'d</button>';}).join('')
       +'</span></h4>';
     h+=full
-      ? '<p class="ck-h">Every wired Shopping feed. A market is <b>raised</b> when products have piled up past the threshold with no title or keyword work since — brief them straight into Intake.</p>'
-      : '<p class="ck-h">First seen last complete month, as a share of the catalogue. <b>10–20% = a collection landing.</b></p>';
+      ? '<p class="ck-h">Every wired Shopping feed. Bars are the last 12 months of arrivals, the current month still running. A market is <b>raised</b> when products have piled up past the threshold with no title or keyword work since — brief them straight into Intake.</p>'
+      : '<p class="ck-h">Bars are the last 12 months of arrivals, the current month still running. The figures are last complete month, as a share of the catalogue — <b>10–20% = a collection landing</b>.</p>';
     if(!feeds.length){ h+='<div class="ck-none">No Shopping feed wired for this account.</div></section>'; return h; }
     var rows='',any=false,raised=0,now=Date.now();
     feeds.forEach(function(f){
@@ -5403,17 +5447,20 @@ body.ck-r-on{padding-right:var(--ck-w)}
       }
       any=true;
       var r=pbRaise(f,tasks,RAISE_DAYS,now,OV);
-      var hot=(a.band==='collection'||a.band==='major');
-      // no bar on this row: the share and its band pill already encode it, and a third mark
-      // squeezed the count into an ellipsis ("+1,500 of 10,…"), which is the one number the AM
-      // reads out loud
-      // a market can be BOTH a collection landing and a backlog — they are different statements
-      // (one about this month's size, one about what nobody has worked), so it keeps both marks;
-      // .raise is defined after .hot, so the red reading wins where they overlap
-      rows+=row((hot?'hot':'')+(r?' raise':''),'<span class="mk">'+esc(f.mkt)+'</span>'
-        +'<span class="nm" title="'+fmt(a.n)+' of '+fmt(a.rows)+' products first seen in '+esc(moLbl(a.month))+'">+'+fmt(a.n)+' <small>of '+fmt(a.rows)+'</small></span>'
+      /* THE ROW IS A CHART NOW, NOT A HIGHLIGHT (Ray, 17 Sep 2026). What was here — an amber row
+         wash, a red one over it for a backlog, and a filled band pill — painted every market the
+         same colour: on a 28-market brand sitting at 12–13% EVERY row read NEW COLLECTION in
+         orange, so the highlight carried no information and read as alarm. The twelve-month
+         sparkline discriminates where the pill could not: a market whose arrivals just spiked
+         looks nothing like one that has trickled all year, and the shape says which without a
+         word. So the tint, the ⚠ and the filled pill are gone, and the band verdict moved into
+         the row's own tooltip, where it is still a fact and no longer a klaxon. */
+      var sp=pbSpark(f.dob,now);
+      rows+=row('','<span class="mk">'+esc(f.mkt)+'</span>'
+        +sparkHtml(sp)
+        +'<span class="nm" title="'+fmt(a.n)+' of '+fmt(a.rows)+' products first seen in '+esc(moLbl(a.month))
+          +' — '+esc(PB_BANDL[a.band]||'')+'">+'+fmt(a.n)+' <small>of '+fmt(a.rows)+'</small></span>'
         +'<span class="num">'+pc(a.pct)+'</span>'
-        +'<span class="ck-pill '+(a.band==='major'?'crit':a.band==='collection'?'warn':a.band==='watch'?'info':'mute')+'">'+PB_BANDL[a.band]+'</span>'
         +'<button type="button" class="ck-exp" data-mix="'+esc(f.mkt)+'" aria-expanded="'+(full?'true':'false')+'" title="Product type breakdown">⌄</button>');
       if(r){
         raised++;
@@ -5426,7 +5473,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
       }
       rows+='<div class="ck-mixwrap" id="mix-'+esc(f.mkt)+'"'+(full?'':' hidden')+'></div>';
     });
-    if(raised)h+='<p class="ck-raised">⚠ '+raised+' cohort'+(raised===1?'':'s')+' past '+RAISE_DAYS+' days with nothing briefed.</p>';
+    if(raised)h+='<p class="ck-raised">'+raised+' market'+(raised===1?'':'s')+' carrying products past '+RAISE_DAYS+' days with no title or keyword work since.</p>';
     h+=rows;
     if(any&&full)h+='<p class="ck-h" style="margin-top:9px">Breakdowns count products <b>entering the feed</b> over the last '+MIX_DAYS+' days — a wider measure than the first-seen cohort, since a product returning to stock arrives too.</p>';
     if(any)h+='<p class="ck-h" style="margin-top:7px">'+esc(moLbl((feeds.filter(function(f){return f.dob;})[0]&&pbArrivals(feeds.filter(function(f){return f.dob;})[0].dob,now)||{}).month))+' · first-seen from <code>fs:date_of_birth</code>.</p>';

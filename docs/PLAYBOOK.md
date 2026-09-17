@@ -308,3 +308,47 @@ so it isn't the button Steven named.
 Harness: `tools/test_amcc.mjs` (34 assertions, qa_gate / presync / validate) — the resolver against
 the real AM roster, and the page's own `ccOn`/`accountAm`/`ccList`/`ccParam` **lifted by name** and
 run against the same table, so the two can't drift.
+
+
+## New products: a chart per market, not a highlight on every row
+
+Ray, 17 Sep 2026, sending the Volume module's own estate sparkline: *"these new products alert on
+the Playbook banner - can you replace with these bar chart instead and no need red highlights"*.
+
+### What was wrong with the highlight
+
+Each market row carried an amber wash, a red wash over it when there was a backlog, a filled
+`NEW COLLECTION` pill and a red `⚠ N cohorts … with nothing briefed` banner above the lot.
+
+On a 28-market brand that is the problem: every market sat between 12% and 13.4%, so **every row
+was highlighted, in the same colour, saying the same word**. A highlight that fires on everything
+discriminates nothing — it reads as alarm and gets ignored, which is the opposite of what an alert
+is for.
+
+### What replaced it
+
+The row is now the rail's own stated shape — a name, a bar, a number:
+
+```
+AT  ▁▃▅▂▇▆▃▁▂▄▆▏  +2,928 of 23,409   12.5%   ⌄
+```
+
+The bar is the market's **last 12 months of arrivals**, and it discriminates where the pill could
+not: a market whose arrivals just spiked looks nothing like one that has trickled all year, and the
+shape says which without a word. The band verdict (`new collection`) moved into the row's tooltip —
+still a fact, no longer a klaxon — and the cohort summary and per-market backlog line are ordinary
+muted copy. The `→ Titles` / `→ Keywords` briefs are untouched.
+
+### Two things it is careful about
+
+**The series is walked from the calendar, never from the histogram's keys.** `dob.m` only carries
+months that had arrivals, so slicing its keys would draw twelve bars that *look* consecutive and
+are not — a gap month would close up and every bar after it would sit under the wrong label. A
+month with nothing is a real zero here (the histogram is every live product's first-seen month), so
+it gets a minimum-height bar. `tools/test_playbook_panel.mjs` fails the naive version.
+
+**The running month is flagged, never plotted as finished.** It is a part-month by definition;
+drawing it solid makes every account look like it fell off a cliff. It renders at `.45` — the same
+treatment, in the same validated blue (`#2563EB` / `#4C82E0` dark), as the Volume module's estate
+table. One arrivals visual across the FCC, not a second one that could quietly disagree with the
+page the row links to.
