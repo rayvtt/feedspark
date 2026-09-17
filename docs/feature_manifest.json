@@ -7192,6 +7192,36 @@
       "file": "docs/instr_collapse.html",
       "pattern": "[data-instr]",
       "min": 1
+    },
+    {
+      "name": "Task Manager: one colour per thing — a tag keeps its vocabulary colour, a type of work its chip token (Ray, 17 Sep 2026: 'urgent in green versus urgent in red')",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function keyColour(dim, k, rank, fold)",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: untagged is dotted, dimmed and never takes a hue",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "pattern id=\"tmUntag\"",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the legend can ride ON the chart, so the PNG export carries it too",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function legendRows(items, W)",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: one key list feeds the rail legend and the in-chart legend",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function chartKeys(sm)",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: Account type joins Split by, joined from the accounts read (Ray, 17 Sep 2026: 'add \"type\" in the SPLIT BY too')",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function decorateAccountType()",
+      "min": 1
     }
   ]
 }

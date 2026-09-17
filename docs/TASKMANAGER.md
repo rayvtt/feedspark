@@ -405,6 +405,45 @@ to tell two lines apart — so the legend names the encoding, the swatches move 
 and the two figures stay as plain rows. The two numbers still never merge; only the encoding
 changes, and every hover keeps the billable split in words.
 
+### One colour per thing, everywhere
+
+> Ray, 17 Sep 2026: *"Make sure legend colors are consistent across sections of the task
+> manager—for example, urgent in green versus urgent in red—and allow an option to show the legend
+> directly on the chart as well, so I don't have to do side by side. Anything untagged could be a
+> dotted line, dimmed and slightly more hidden."*
+
+`keyColour(dim, key, rank, fold)` decides every mark, and **rank is the last resort**:
+
+| The thing | Its colour | Where it already had one |
+|---|---|---|
+| A **tag** | the colour its vocabulary gives it | the *Where the hours went* bar and legend |
+| A **type of work** | `--c-opt … --c-other` | the Type chip on every table row |
+| A client, owner, market | the validated categorical set, by rank | nowhere — it has no colour of its own |
+| A **fold** | one grey | a remainder is not a category |
+
+A tag also reads as its **name**, not its slug ("Urgent", not `urgent`), because a chart under a
+card saying "Urgent" is the same inconsistency in words that the rank palette was in colour.
+
+**Untagged is drawn as the gap it is** — never a hue: a dotted pattern on rings and slices, a
+**dashed, dimmed line** on the time chart, a dotted swatch and a faded row in both legends. It
+keeps its true size, because shrinking the part nobody has judged would be the dishonest kind of
+hiding.
+
+**Legend on chart** (toggle, default on, remembered per device) draws the key *inside* the SVG, so
+the eye never travels to the rail — and so the **⬇ PNG carries it**, which it never did before: a
+downloaded pie used to be a set of unnamed wedges. One list feeds both legends, so the rail and the
+chart can never name the same colour differently; with the legend on the chart, the end-of-line
+labels stand down (the same names twice is clutter) and when they are drawn, two lines finishing
+together are pushed apart rather than printed on top of each other.
+
+### Account type
+
+**Split by → Account type** is the *other* type the database holds: `client_type` from the accounts
+read, the shape of the engagement, as distinct from *Type of work* (what the job was, read off its
+title). A task carries no such field, so it is joined on: the exact client × market first, then the
+brand when only one type is on record for it, then an honest `(not set)` — never guessed from a
+sibling market that disagrees.
+
 **Pull-out exits:** `⬇ PNG` (2000px, footer-stamped with the window and the query), `⎘ Copy table`
 (TSV), `⬇ CSV of these rows` (every matching task with both hour columns and its notes),
 `🔗 Copy link`.
