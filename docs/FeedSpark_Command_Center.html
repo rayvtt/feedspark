@@ -478,50 +478,162 @@ window.addEventListener('load',restore);
   [data-theme=dark] .tag.sc-mid{background:rgba(245,166,35,.15);border-color:rgba(245,166,35,.35);color:#F0A44E}
   [data-theme=dark] .tag.sc-low{background:rgba(241,112,122,.13);border-color:rgba(241,112,122,.35);color:#F3868F}
   [data-theme=dark] .pill.live,[data-theme=dark] .wl-test,[data-theme=dark] .tag-test,[data-theme=dark] .tag-done{background:rgba(72,208,126,.14);border-color:rgba(72,208,126,.35);color:#6FE0A0}
-  /* dossier: 🎬 brand showcase — cinematic full-screen intro (luxury-listing pacing) */
+  /* dossier: 🎬 PRESENT — the one-pager played as a deck (Ray, 16 Sep 2026: "instead of the
+     video intro, you can make the one pager have the same animation at the video intro with as
+     much granular data that you see in the one pager").
+     The markup inside is the ONE-PAGER'S OWN (.op-*), so this is a dark SKIN over it rather than
+     a second set of components — a table that gains a column in the sheet gains it here too. */
   #dz-show{position:fixed;inset:0;z-index:9998;background:radial-gradient(120% 120% at 20% 0%,#22314e 0%,#101828 45%,#0a0f1a 100%);color:#fff;overflow:hidden;font-family:Lato,system-ui,sans-serif}
-  #dz-show::after{content:'';position:absolute;inset:-40%;background:linear-gradient(115deg,transparent 42%,rgba(245,166,35,.06) 50%,transparent 58%);animation:dzsheen 7s linear infinite}
+  #dz-show::after{content:'';position:absolute;inset:-40%;background:linear-gradient(115deg,transparent 42%,rgba(245,166,35,.06) 50%,transparent 58%);animation:dzsheen 7s linear infinite;pointer-events:none}
   @keyframes dzsheen{from{transform:translateX(-30%)}to{transform:translateX(30%)}}
-  .dzs-x{position:absolute;top:18px;right:22px;z-index:3;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:#fff;font:800 13px Lato;border-radius:999px;padding:7px 14px;cursor:pointer}
+  .dzsx-boot{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font:800 15px Lato;letter-spacing:.06em;color:rgba(255,255,255,.62)}
+  .dzs-x{position:absolute;top:18px;right:22px;z-index:5;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:#fff;font:800 13px Lato;border-radius:999px;padding:7px 14px;cursor:pointer}
   .dzs-x:hover{background:rgba(255,255,255,.15)}
   .dzs-skip{position:absolute;bottom:18px;right:22px;z-index:3;color:rgba(255,255,255,.45);font:700 11.5px Lato;letter-spacing:.06em}
-  .dzs-scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:0;pointer-events:none;transition:opacity .9s ease;padding:40px}
-  .dzs-scene.on{opacity:1;pointer-events:auto}
+  /* the stage: one scene at a time, each scene its own scroll box so a long section PANS
+     rather than being clipped or shrunk (the granularity is the point) */
+  .dzsx-stage{position:absolute;inset:0}
+  .dzsx-scene{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .75s ease;
+    display:flex;align-items:center;justify-content:center;padding:58px 40px 64px}
+  .dzsx-scene.on{opacity:1;pointer-events:auto}
+  /* scrollTop is not a CSS-animatable property, so the pan is driven frame by frame in JS —
+     the box just has to be a scroll container that shows no bar during a presentation */
+  .dzsx-body{width:100%;max-width:940px;max-height:100%;overflow:hidden;scrollbar-width:none}
+  .dzsx-body::-webkit-scrollbar{display:none}
+  .dzsx-card .dzsx-body{display:flex;align-items:center;justify-content:center;text-align:center}
+  .dzsx-title-card{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .dzsx-date{font-size:12.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(255,255,255,.4);margin-top:20px;opacity:0;transform:translateY(12px)}
+  .dzsx-end{font-size:min(5vw,34px);font-weight:900;letter-spacing:-.01em;margin:14px 0 12px;
+    opacity:0;transform:translateY(18px);max-width:20ch;line-height:1.2}
   .dzs-eyebrow{font-size:12px;font-weight:900;letter-spacing:.34em;text-transform:uppercase;color:#F5A623;opacity:0;transform:translateY(14px)}
   .dzs-title{font-size:min(9vw,84px);font-weight:900;letter-spacing:.02em;line-height:1.04;margin:14px 0 10px;opacity:0;transform:translateY(18px)}
-  .dzs-sub{font-size:16px;font-weight:700;color:rgba(255,255,255,.72);opacity:0;transform:translateY(12px)}
+  .dzs-sub{font-size:16px;font-weight:700;color:rgba(255,255,255,.72);opacity:0;transform:translateY(12px);max-width:62ch;line-height:1.55}
   .dzs-logo{width:74px;height:74px;border-radius:18px;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:18px;opacity:0;transform:scale(.7);box-shadow:0 18px 60px rgba(0,0,0,.5)}
   .dzs-logo img{width:46px;height:46px}
   .on .dzs-rise{animation:dzrise 1.1s cubic-bezier(.16,.8,.3,1) forwards}
   .on .dzs-rise2{animation:dzrise 1.1s .35s cubic-bezier(.16,.8,.3,1) forwards}
   .on .dzs-rise3{animation:dzrise 1.1s .7s cubic-bezier(.16,.8,.3,1) forwards}
   @keyframes dzrise{to{opacity:1;transform:translateY(0) scale(1)}}
-  .dzs-stats{display:flex;gap:min(6vw,64px);flex-wrap:wrap;justify-content:center}
-  .dzs-st{opacity:0;transform:translateY(16px)}
-  .on .dzs-st{animation:dzrise .9s cubic-bezier(.16,.8,.3,1) forwards}
-  .on .dzs-st:nth-child(2){animation-delay:.3s}.on .dzs-st:nth-child(3){animation-delay:.6s}.on .dzs-st:nth-child(4){animation-delay:.9s}
-  .dzs-st .n{font-size:min(10vw,74px);font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
-  .dzs-st .l{font-size:12px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:8px}
-  .dzs-health .n{font-size:min(22vw,150px)}
-  .dzs-stamp{display:inline-block;margin-top:16px;font-size:20px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;padding:10px 30px;border-radius:14px;border:3px solid;opacity:0;transform:scale(2.4) rotate(-7deg)}
-  .on .dzs-stamp{animation:dzstamp .55s .9s cubic-bezier(.2,1.4,.4,1) forwards}
-  @keyframes dzstamp{to{opacity:1;transform:scale(1) rotate(-3deg)}}
-  .dzs-stamp.good{color:#4ade80;border-color:#4ade80}.dzs-stamp.watch{color:#F5A623;border-color:#F5A623}.dzs-stamp.risk{color:#f87171;border-color:#f87171}
-  .dzs-rows{min-width:min(560px,88vw)}
-  .dzs-row{display:flex;align-items:center;gap:16px;padding:10px 0;opacity:0;transform:translateX(-26px)}
-  .on .dzs-row{animation:dzslide .8s cubic-bezier(.16,.8,.3,1) forwards}
-  .on .dzs-row:nth-child(2){animation-delay:.25s}.on .dzs-row:nth-child(3){animation-delay:.5s}.on .dzs-row:nth-child(4){animation-delay:.75s}.on .dzs-row:nth-child(5){animation-delay:1s}
-  @keyframes dzslide{to{opacity:1;transform:translateX(0)}}
-  .dzs-row .mk{font-weight:900;letter-spacing:.1em;width:44px;text-align:left;color:rgba(255,255,255,.6)}
-  .dzs-bar{flex:1;height:10px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
-  .dzs-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#F5A623,#ED6F0B);width:0;transition:width 1.4s cubic-bezier(.16,.8,.3,1)}
-  .dzs-row .v{font-weight:900;width:74px;text-align:right;font-variant-numeric:tabular-nums}
-  .dzs-moves{max-width:720px;text-align:left}
-  .dzs-mv{font-size:min(4.2vw,22px);font-weight:800;line-height:1.5;padding:10px 0;opacity:0;transform:translateY(14px);display:flex;gap:14px;align-items:baseline}
-  .on .dzs-mv{animation:dzrise .9s cubic-bezier(.16,.8,.3,1) forwards}
-  .on .dzs-mv:nth-child(2){animation-delay:.55s}.on .dzs-mv:nth-child(3){animation-delay:1.1s}
-  .dzs-mv .k{color:#F5A623;font-weight:900;flex:none}
-  @media (prefers-reduced-motion:reduce){#dz-show *{animation:none!important;transition:none!important}#dz-show .dzs-scene{position:static;opacity:1;pointer-events:auto;padding:20px}#dz-show{overflow:auto}}
+  /* presenter chrome */
+  .dzsx-rail{position:absolute;left:0;right:0;bottom:0;height:3px;display:flex;gap:2px;z-index:4;padding:0 22px 0}
+  .dzsx-dot{flex:1;height:3px;border:0;padding:0;border-radius:99px;cursor:pointer;
+    background:rgba(255,255,255,.14);transition:background .4s ease}
+  .dzsx-dot.on{background:#F5A623}
+  .dzsx-meta{position:absolute;bottom:16px;left:24px;z-index:3;color:rgba(255,255,255,.45);
+    font:800 11.5px Lato;letter-spacing:.14em}
+  /* ---- the dark skin over the one-pager's own markup ---- */
+  #dz-show .op-sec{margin:0}
+  /* a section that pans must keep saying which section it is, and a 14-row table must keep its
+     column names — otherwise halfway through the pan the audience is reading unlabelled numbers */
+  /* the pinned bars are SOLID, not translucent: a row sliding under a semi-transparent header
+     shows through it, and two sets of numbers on one line is worse than no pinning at all.
+     (A cell in a border-collapse table also paints unreliably under backdrop-filter.) */
+  #dz-show .op-sech{gap:12px;position:sticky;top:0;z-index:4;padding:10px 0;background:#0d1320}
+  #dz-show .op-h4.dzsx-stick{position:sticky;z-index:3;padding:9px 0;margin-top:0;background:#0d1320}
+  /* the reveal animation leaves a transform on BOTH thead and every tbody row, so each becomes
+     its own stacking context and z-index on the cell is scoped inside it — DOM order then wins
+     and the body rows paint over the pinned header. The header's own context has to outrank
+     them, which is what this does. */
+  #dz-show .op-tbl thead{position:relative;z-index:5}
+  #dz-show .op-tbl th{position:sticky;z-index:2;background:#0d1320}
+  #dz-show .op-n{width:28px;height:28px;font-size:13px;background:#F5A623;color:#101828}
+  #dz-show .op-sech h3{font-size:min(4.2vw,27px);color:#fff;letter-spacing:-.015em}
+  #dz-show .op-lede{font-size:13.5px;color:rgba(255,255,255,.6);max-width:78ch;margin-top:9px}
+  #dz-show .op-stats{gap:14px;margin-top:20px}
+  #dz-show .op-stat{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);
+    border-radius:13px;padding:17px 18px}
+  #dz-show .op-stat.good{background:rgba(74,222,128,.09);border-color:rgba(74,222,128,.32)}
+  #dz-show .op-stat.warn{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.34)}
+  #dz-show .op-v{font-size:min(6vw,40px);color:#fff;font-variant-numeric:tabular-nums}
+  #dz-show .op-l{font-size:12.5px;color:rgba(255,255,255,.88)}
+  #dz-show .op-s{font-size:11.5px;color:rgba(255,255,255,.45)}
+  #dz-show .op-h4{color:#F5A623;margin-top:22px;font-size:11.5px}
+  #dz-show .op-tbl{font-size:13px;margin-top:13px}
+  #dz-show .op-tbl th{color:rgba(255,255,255,.42);border-bottom-color:rgba(255,255,255,.16);padding:9px}
+  #dz-show .op-tbl td{border-bottom-color:rgba(255,255,255,.08);padding:8px 9px;color:rgba(255,255,255,.9)}
+  #dz-show .op-na{color:rgba(255,255,255,.35)}
+  #dz-show .op-note{color:rgba(255,255,255,.45);font-size:12px}
+  #dz-show .op-list li{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.12);
+    font-size:13px;padding:8px 12px}
+  #dz-show .op-li-m{color:rgba(255,255,255,.45)}
+  #dz-show .op-mixl{color:rgba(255,255,255,.85)}
+  #dz-show .op-mixb{background:rgba(255,255,255,.12)}
+  #dz-show .op-mixb i{background:linear-gradient(90deg,#F5A623,#ED6F0B);
+    transition:width 1.2s cubic-bezier(.16,.8,.3,1)}
+  #dz-show .op-mixp{color:rgba(255,255,255,.45)}
+  #dz-show .op-mixp b{color:#fff}
+  #dz-show .op-pie,#dz-show .op-chart{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+  #dz-show .op-pie-mid b{color:#fff}
+  #dz-show .op-pie-mid span,#dz-show .op-pie-l .h{color:rgba(255,255,255,.45)}
+  #dz-show .op-pie-l li{border-bottom-color:rgba(255,255,255,.1);font-size:13px}
+  #dz-show .op-pie-l .n{color:rgba(255,255,255,.9)}
+  #dz-show .op-pie-l .p{color:#fff}
+  #dz-show .op-pie svg path{stroke:#101828}
+  #dz-show .op-chart text{fill:rgba(255,255,255,.5)}
+  #dz-show .op-chart line{stroke:rgba(255,255,255,.12)}
+  #dz-show .op-keys{color:rgba(255,255,255,.5)}
+  #dz-show .op-verdict{border-color:rgba(255,255,255,.18)}
+  #dz-show .op-verdict.good{background:rgba(74,222,128,.14);color:#86efac;border-color:rgba(74,222,128,.34)}
+  #dz-show .op-verdict.ok{background:rgba(245,166,35,.14);color:#fcd34d;border-color:rgba(245,166,35,.34)}
+  #dz-show .op-verdict.warn{background:rgba(248,113,113,.14);color:#fca5a5;border-color:rgba(248,113,113,.34)}
+  /* ---- the reveal: parts arrive in the order a presenter would talk through them ---- */
+  .dzsx-scene .op-sech,.dzsx-scene .op-lede,.dzsx-scene .op-h4,.dzsx-scene .op-note,
+  .dzsx-scene .op-verdict,.dzsx-scene .op-tbl thead{opacity:0;transform:translateY(14px)}
+  .dzsx-scene.on .op-sech{animation:dzrise .85s cubic-bezier(.16,.8,.3,1) forwards}
+  .dzsx-scene.on .op-lede{animation:dzrise .85s .18s cubic-bezier(.16,.8,.3,1) forwards}
+  .dzsx-scene.on .op-h4,.dzsx-scene.on .op-tbl thead{animation:dzrise .8s .3s cubic-bezier(.16,.8,.3,1) forwards}
+  .dzsx-scene.on .op-note,.dzsx-scene.on .op-verdict{animation:dzrise .8s .5s cubic-bezier(.16,.8,.3,1) forwards}
+  .dzsx-scene .op-stat,.dzsx-scene .op-tbl tbody tr,.dzsx-scene .op-list li,.dzsx-scene .op-pie-l li{
+    opacity:0;transform:translateY(12px)}
+  .dzsx-scene.on .op-stat{animation:dzrise .8s cubic-bezier(.16,.8,.3,1) forwards;
+    animation-delay:calc(.22s + var(--i,0)*.11s)}
+  .dzsx-scene.on .op-tbl tbody tr,.dzsx-scene.on .op-list li,.dzsx-scene.on .op-pie-l li{
+    animation:dzrise .6s cubic-bezier(.16,.8,.3,1) forwards;
+    animation-delay:calc(.34s + var(--i,0)*.055s)}
+  /* every chart bar shares one baseline (the chart's own y=180), so one origin grows them all */
+  .dzsx-scene .op-chart rect{transform:scaleY(0);transform-box:view-box;transform-origin:0 180px}
+  .dzsx-scene.on .op-chart rect{animation:dzxgrow .9s .3s cubic-bezier(.16,.8,.3,1) forwards}
+  @keyframes dzxgrow{to{transform:scaleY(1)}}
+  .dzsx-scene .op-pie-c svg{opacity:0;transform:scale(.55) rotate(-110deg);transform-origin:50% 50%}
+  .dzsx-scene.on .op-pie-c svg{animation:dzxpie 1.1s .2s cubic-bezier(.16,.8,.3,1) forwards}
+  @keyframes dzxpie{to{opacity:1;transform:scale(1) rotate(0)}}
+  /* reduced motion / static: the deck stands up at once as an ordinary scrollable document */
+  #dz-show.dzsx-static{overflow:auto}
+  #dz-show.dzsx-static .dzsx-stage{position:static}
+  #dz-show.dzsx-static .dzsx-scene{position:static;opacity:1;pointer-events:auto;padding:30px 22px;
+    display:block;border-bottom:1px solid rgba(255,255,255,.08)}
+  #dz-show.dzsx-static .dzsx-body{max-height:none;overflow:visible;margin:0 auto}
+  #dz-show.dzsx-static .dzsx-rail{display:none}
+  @media (prefers-reduced-motion:reduce){
+    #dz-show *{animation:none!important;transition:none!important}
+    #dz-show .dzsx-scene .op-sech,#dz-show .dzsx-scene .op-lede,#dz-show .dzsx-scene .op-h4,
+    #dz-show .dzsx-scene .op-note,#dz-show .dzsx-scene .op-verdict,#dz-show .dzsx-scene .op-tbl thead,
+    #dz-show .dzsx-scene .op-stat,#dz-show .dzsx-scene .op-tbl tbody tr,#dz-show .dzsx-scene .op-list li,
+    #dz-show .dzsx-scene .op-pie-l li,#dz-show .dzsx-scene .op-pie-c svg,
+    #dz-show .dzs-eyebrow,#dz-show .dzs-title,#dz-show .dzs-sub,#dz-show .dzs-logo,
+    #dz-show .dzsx-date,#dz-show .dzsx-end{opacity:1;transform:none}
+    #dz-show .dzsx-scene .op-chart rect{transform:none}
+    #dz-show::after{display:none}
+  }
+  @media (max-width:760px){
+    .dzsx-scene{padding:54px 16px 58px}
+    #dz-show .op-stats{grid-template-columns:1fr}
+    #dz-show .op-sech h3{font-size:20px}
+    #dz-show .op-v{font-size:30px}
+    .dzs-skip{display:none}
+    /* A table here WRAPS rather than panning sideways. The rest of the FCC pans a wide table
+       inside its own frame, but a horizontal scroller is a vertical one too (CSS will not give
+       you overflow-x:auto with overflow-y:visible) — and that would take the vertical pin off
+       the section header and the column names, which is the one thing a panning scene needs.
+       Nothing is hidden: the cells wrap, and every column is still on screen. */
+    #dz-show .op-tbl{font-size:11.5px;table-layout:auto;word-break:break-word}
+    #dz-show .op-tbl th,#dz-show .op-tbl td{padding:6px 5px}
+    #dz-show .op-tbl td b{font-size:12.5px}
+    #dz-show .op-list li{flex-direction:column;align-items:flex-start;gap:2px}
+    #dz-show .op-li-t{white-space:normal;overflow:visible;text-overflow:clip}
+  }
   /* dossier: active-work filter + volume chart */
   .dz-work-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:8px}
   .dz-work-head>h4{margin:0}
@@ -1268,13 +1380,15 @@ window.addEventListener('load',restore);
     return h;
   }
 
-  function openOnePager(name) {
-    opShell(name);
+  /* The one-pager's data load, separated from the sheet that displays it — because the
+     PRESENTATION (🎬) plays the same document, and a second loader would eventually read a
+     different set of endpoints and quietly show a client different figures to the PDF. */
+  function opLoad(name, cb) {
     var b = B[name] || {}, p = PT[name] || null;
     var need = ['ab', 'kw', 'em', 'ar', 'in'], got = {};
     function done(k, v) {
       got[k] = v;
-      if (need.every(function (x) { return x in got; })) portLoad(name, function (mkts) { opRender(name, b, p, mkts, got); });
+      if (need.every(function (x) { return x in got; })) portLoad(name, function (mkts) { cb(b, p, mkts, got); });
     }
     var grab = function (k, u, pick) {
       fetch(API + u).then(function (r) { return r.json(); })
@@ -1289,9 +1403,19 @@ window.addEventListener('load',restore);
     // the actual recent emails, for the five-most-recent list
     grab('in', '/api/gmail/intake', function (j) { return (j && j.items) ? j.items : null; });
   }
+  function openOnePager(name) {
+    opShell(name);
+    opLoad(name, function (b, p, mkts, got) { opRender(name, b, p, mkts, got); });
+  }
 
   function opRender(name, b, p, mkts, got) {
     var sheet = document.getElementById('op-sheet'); if (!sheet) return;
+    sheet.innerHTML = opHtml(name, b, p, mkts, got);
+    sheet.querySelector('.op-x').onclick = opClose;
+    sheet.querySelector('.op-print').onclick = function () { window.print(); };
+  }
+
+  function opHtml(name, b, p, mkts, got) {
     var m = portModel(name, mkts);
     var ab = got.ab, kwr = got.kw, vol = got.em;
     var today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -1522,9 +1646,7 @@ window.addEventListener('load',restore);
     h += '<div class="op-foot"><span>FeedSpark · Private &amp; Confidential</span>'
       + '<span>Prepared for ' + esc(name) + ' · ' + esc(today) + '</span></div>';
 
-    sheet.innerHTML = h;
-    sheet.querySelector('.op-x').onclick = opClose;
-    sheet.querySelector('.op-print').onclick = function () { window.print(); };
+    return h;
   }
 
   function portModel(name,mkts){
@@ -1817,14 +1939,42 @@ window.addEventListener('load',restore);
     if(b){ ev.preventDefault(); grOpen(b.getAttribute('data-gr')); }
   });
   function fmtN(n){ n=+n; return isFinite(n)?n.toLocaleString('en-GB'):'0'; }
-  /* ---- 🎬 brand showcase: cinematic full-screen intro over the live portfolio model ----
-     Luxury-listing pacing: title reveal → numbers counting up → health stamp → market audit
-     sweep → the next moves. Same computed data as the band, staged for a client call.
-     Esc / ✕ / backdrop click exits; prefers-reduced-motion shows the whole story statically. */
-  var SHOWT=[];
+  /* ---- 🎬 PRESENT: the one-pager, played (Ray, 16 Sep 2026) -------------------------------
+
+     "instead of the video intro, you can make the one pager have the same animation at the
+      video intro with as much granular data that you see in the one pager."
+
+     The old intro was five hand-written scenes over five headline numbers — a trailer for a
+     document nobody watched. It also had its own copy of the story, so it could drift from the
+     one-pager and show a client a different figure to the PDF sitting next to it.
+
+     So the intro no longer HAS a story. It plays the one-pager: opLoad + opHtml build the exact
+     document the sheet and the printed PDF are built from, and this splits it into scenes and
+     paces them. ONE renderer, two presentations — nothing here can say anything the PDF doesn't.
+
+     WHAT THE ANIMATION MAY AND MAY NOT DO. It may reveal, count, grow and pan. It may not
+     compute: every number is counted UP TO the string the one-pager already rendered and then
+     REPLACED BY THAT EXACT STRING on the final frame, so "88/100", "42.5%" and "1,204" land
+     with their own formatting and a rounding artefact can never be the thing left on screen.
+
+     NOTHING IS CUT OFF, which is the whole point of "as much granular data as you see in the
+     one pager": a section taller than the screen is not clipped or scaled down to fit — it PANS,
+     and its dwell time grows to cover the pan, so a 14-row test record reads at full size.
+
+     Presenter controls, because this is shown live to a client: click / → next, ← back, space
+     pauses, the rail jumps, Esc exits. prefers-reduced-motion stands the whole deck up at once
+     as an ordinary scrollable document. */
+  var SHOWT=[], SHOWST=null;
   function showClose(){ var el=document.getElementById('dz-show'); if(el)el.remove();
-    SHOWT.forEach(clearTimeout); SHOWT=[]; document.removeEventListener('keydown',showKey); }
-  function showKey(ev){ if(ev.key==='Escape')showClose(); }
+    SHOWT.forEach(clearTimeout); SHOWT=[]; SHOWST=null;
+    document.removeEventListener('keydown',showKey); }
+  function showKey(ev){
+    if(ev.key==='Escape'){ showClose(); return; }
+    if(!SHOWST)return;
+    if(ev.key==='ArrowRight'||ev.key==='PageDown'){ ev.preventDefault(); SHOWST.go(SHOWST.i+1); }
+    else if(ev.key==='ArrowLeft'||ev.key==='PageUp'){ ev.preventDefault(); SHOWST.go(SHOWST.i-1); }
+    else if(ev.key===' '||ev.key==='Spacebar'){ ev.preventDefault(); SHOWST.pause(); }
+  }
   function countUp(el,target,ms){
     var t0=null; target=+target||0;
     function step(ts){ if(t0===null)t0=ts; var k=Math.min(1,(ts-t0)/ms);
@@ -1832,70 +1982,190 @@ window.addEventListener('load',restore);
       if(k<1)requestAnimationFrame(step); }
     requestAnimationFrame(step);
   }
+  /* Read a number OUT of what the one-pager already wrote, so the animation can count to it and
+     then hand the original string back. The element's own text is the source of truth — this
+     never re-derives the figure from the data. */
+  function showNum(el){
+    var raw=el.textContent, m=/-?\d[\d,]*(?:\.\d+)?/.exec(raw);
+    if(!m)return null;
+    var target=parseFloat(m[0].replace(/,/g,''));
+    if(!isFinite(target)||Math.abs(target)<2)return null;   // 0 and 1 have nowhere to count from
+    var dec=(m[0].split('.')[1]||'').length;
+    return {el:el, raw:raw, pre:raw.slice(0,m.index), post:raw.slice(m.index+m[0].length),
+      target:target, dec:dec};
+  }
+  function showCount(n,ms){
+    var t0=null;
+    function step(ts){ if(t0===null)t0=ts; var k=Math.min(1,(ts-t0)/ms);
+      var v=n.target*(1-Math.pow(1-k,3));
+      if(k>=1){ n.el.textContent=n.raw; return; }        // the LAST frame is the real string
+      n.el.textContent=n.pre+(n.dec?v.toFixed(n.dec):fmtN(Math.round(v)))+n.post;
+      requestAnimationFrame(step); }
+    requestAnimationFrame(step);
+  }
   function showOpen(name){
     showClose();
-    portLoad(name,function(mkts){
-      if(cur!==name||document.getElementById('dz-show'))return;
-      var M=portModel(name,mkts), b=B[name]||{}, p=M.p;
-      var d=document.createElement('div'); d.id='dz-show';
-      var lg=b.dom?'<div class="dzs-logo dzs-rise"><img alt="" src="https://www.google.com/s2/favicons?domain='+esc(b.dom)+'&sz=128"></div>':'';
-      var mkLine=(mkts.length?mkts.length+' live market'+(mkts.length===1?'':'s'):'')+(b.cat?(mkts.length?' · ':'')+b.cat:'');
-      var scenes=[
-        '<div class="dzs-scene" data-sc="1">'+lg+'<div class="dzs-eyebrow dzs-rise">FeedSpark · Brand portfolio</div>'
-          +'<div class="dzs-title dzs-rise2">'+esc(name)+'</div>'
-          +'<div class="dzs-sub dzs-rise3">'+esc(mkLine||'the live picture, assembled from every module')+'</div></div>',
-        '<div class="dzs-scene" data-sc="2"><div class="dzs-eyebrow dzs-rise">The work, to date</div><div class="dzs-stats" style="margin-top:26px">'
-          +'<div class="dzs-st"><div class="n" data-ct="'+(p?p.total:0)+'">0</div><div class="l">tasks tracked</div></div>'
-          +'<div class="dzs-st"><div class="n" data-ct="'+(p?p.done:0)+'">0</div><div class="l">delivered</div></div>'
-          +'<div class="dzs-st"><div class="n" data-ct="'+(p?p.open:0)+'">0</div><div class="l">in motion</div></div>'
-          +'<div class="dzs-st"><div class="n" data-ct="'+(M.inflight||0)+'">0</div><div class="l">briefs live</div></div>'
-          +'</div></div>',
-        '<div class="dzs-scene dzs-health" data-sc="3"><div class="dzs-eyebrow dzs-rise">Account health</div>'
-          +'<div class="dzs-st on" style="opacity:1;transform:none;margin-top:10px"><div class="n" data-ct="'+M.h+'">0</div></div>'
-          +'<span class="dzs-stamp '+M.band+'">'+esc(M.bandL)+'</span>'
-          +(M.facR.length?'<div class="dzs-sub dzs-rise3" style="margin-top:22px">'+esc(M.facR.slice(0,2).map(function(f){return '−'+f.pts+' '+f.txt}).join('  ·  '))+'</div>':'')
-          +'</div>',
-        '<div class="dzs-scene" data-sc="4"><div class="dzs-eyebrow dzs-rise">Feed estate</div><div class="dzs-rows" style="margin-top:26px">'
-          +M.audL.slice(0,5).map(function(a){ var sat=null; M.satL.forEach(function(x){if(x.m===a.m)sat=x.pct;});
-            return '<div class="dzs-row"><span class="mk">'+esc(a.m.toUpperCase())+'</span>'
-              +'<span class="dzs-bar"><span class="dzs-fill" data-w="'+(a.score||0)+'"></span></span>'
-              +'<span class="v">'+(a.score!=null?a.score+'/100':'—')+'</span>'
-              +(sat!=null?'<span class="v" style="width:96px;color:rgba(255,255,255,.6)">'+sat+'% kw</span>':'')+'</div>'; }).join('')
-          +'</div></div>',
-        '<div class="dzs-scene" data-sc="5"><div class="dzs-eyebrow dzs-rise">The next moves</div><div class="dzs-moves" style="margin-top:22px">'
-          +(M.sug.length?M.sug.slice(0,3).map(function(s,i){return '<div class="dzs-mv"><span class="k">0'+(i+1)+'</span><span>'+esc(s.t)+'</span></div>';}).join('')
-            :'<div class="dzs-mv"><span class="k">✓</span><span>Clean board — keep the testing cadence going.</span></div>')
-          +'</div><div class="dzs-sub dzs-rise3" style="margin-top:26px">FeedSpark · Private &amp; Confidential</div></div>'
-      ];
-      d.innerHTML=scenes.join('')+'<button class="dzs-x" type="button">✕ Close</button><span class="dzs-skip">Esc to exit · click to skip</span>';
-      document.body.appendChild(d);
-      document.addEventListener('keydown',showKey);
-      d.querySelector('.dzs-x').onclick=showClose;
-      var reduced=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-      var els=d.querySelectorAll('.dzs-scene'), idx=0;
-      function fills(sc){ Array.prototype.forEach.call(sc.querySelectorAll('.dzs-fill'),function(f){ f.style.width=(+f.getAttribute('data-w'))+'%'; }); }
-      function counts(sc){ Array.prototype.forEach.call(sc.querySelectorAll('[data-ct]'),function(n){ countUp(n,+n.getAttribute('data-ct'),1400); }); }
-      if(reduced){
-        Array.prototype.forEach.call(els,function(sc){ sc.classList.add('on');
-          Array.prototype.forEach.call(sc.querySelectorAll('[data-ct]'),function(n){ n.textContent=fmtN(+n.getAttribute('data-ct')); });
-          fills(sc); });
-        return;
-      }
-      function play(i){
-        idx=i;
-        Array.prototype.forEach.call(els,function(s){s.classList.remove('on');});
-        if(i>=els.length){ SHOWT.push(setTimeout(showClose,600)); return; }
-        els[i].classList.add('on'); counts(els[i]); SHOWT.push(setTimeout(function(){fills(els[i]);},350));
-        SHOWT.push(setTimeout(function(){play(i+1);},i===0?3400:3800));
-      }
-      d.addEventListener('click',function(ev){
-        if(ev.target.closest('.dzs-x'))return;
-        SHOWT.forEach(clearTimeout); SHOWT=[];
-        if(idx+1>=els.length){ showClose(); return; }
-        play(idx+1);
-      });
-      play(0);
+    var d=document.createElement('div'); d.id='dz-show';
+    d.innerHTML='<div class="dzsx-boot">Assembling '+esc(name)+'’s presentation…</div>'
+      +'<button class="dzs-x" type="button">✕ Close</button>';
+    document.body.appendChild(d);
+    document.addEventListener('keydown',showKey);
+    d.querySelector('.dzs-x').onclick=showClose;
+    opLoad(name,function(b,p,mkts,got){
+      if(document.getElementById('dz-show')!==d)return;   // closed, or reopened, while loading
+      showBuild(d,name,b,p,mkts,got);
     });
+  }
+  /* split the one-pager document into scenes: a title card, one per numbered section, a sign-off */
+  function showScenes(name,b,p,mkts,got){
+    var doc=document.createElement('div');
+    doc.innerHTML=opHtml(name,b,p,mkts,got);
+    var acts=doc.querySelector('.op-acts'); if(acts)acts.remove();  // Print / ✕ belong to the sheet
+    var out=[];
+    var top=doc.querySelector('.op-top'), thesis=doc.querySelector('.op-thesis');
+    var title='<div class="dzsx-title-card">'
+      +(b.dom?'<div class="dzs-logo dzs-rise"><img alt="" src="https://www.google.com/s2/favicons?domain='+esc(b.dom)+'&sz=128"></div>':'')
+      +'<div class="dzs-eyebrow dzs-rise">FeedSpark · Account one-pager</div>'
+      +'<div class="dzs-title dzs-rise2">'+esc(name)+'</div>'
+      +(thesis?'<div class="dzs-sub dzs-rise3">'+thesis.innerHTML+'</div>':'')
+      +(top?'<div class="dzsx-date dzs-rise3">'+esc((top.querySelector('.op-sub')||{}).textContent||'')+'</div>':'')
+      +'</div>';
+    out.push({k:'title', h:title});
+    /* A section is a scene — UNLESS it carries several sub-blocks, in which case each gets its
+       own beat. "The work behind it" is the pie, the area mix, the look-back table AND the
+       hours-by-task table: presented whole it is a 2,000px pan nobody can read, and presented
+       as four scenes it is four things a presenter actually says one at a time. The split is
+       structural (the one-pager's own .op-h4 headings), never a height guess, and every part
+       carries the section header so the audience never loses which section they are in. */
+    Array.prototype.forEach.call(doc.querySelectorAll('.op-sec'),function(sec){
+      var head=sec.querySelector('.op-sech h3'), t=head?head.textContent:'';
+      var sech=sec.querySelector('.op-sech'), subs=sec.querySelectorAll('.op-h4');
+      if(subs.length<2){ out.push({k:'sec', t:t, h:sec.outerHTML}); return; }
+      var lead='', parts=[], cur=null;
+      Array.prototype.forEach.call(sec.children,function(node){
+        if(node.classList&&node.classList.contains('op-h4')){
+          cur={t:node.textContent, h:node.outerHTML}; parts.push(cur); return;
+        }
+        if(cur)cur.h+=node.outerHTML; else lead+=node.outerHTML;
+      });
+      out.push({k:'sec', t:t, h:'<div class="op-sec">'+lead+'</div>'});
+      parts.forEach(function(x){
+        out.push({k:'sec', t:t+' · '+x.t,
+          h:'<div class="op-sec">'+(sech?sech.outerHTML:'')+x.h+'</div>'});
+      });
+    });
+    var foot=doc.querySelector('.op-foot');
+    out.push({k:'end', h:'<div class="dzsx-title-card">'
+      +'<div class="dzs-eyebrow dzs-rise">'+esc(name)+' × FeedSpark</div>'
+      +'<div class="dzsx-end dzs-rise2">Every figure here is the one-pager’s own.</div>'
+      +'<div class="dzs-sub dzs-rise3">'+(foot?esc(foot.textContent.replace(/\s+/g,' ').trim()):'FeedSpark · Private &amp; Confidential')+'</div></div>'});
+    return out;
+  }
+  function showBuild(d,name,b,p,mkts,got){
+    var scenes=showScenes(name,b,p,mkts,got);
+    var reduced=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    d.innerHTML='<div class="dzsx-stage">'
+      +scenes.map(function(s,i){ return '<section class="dzsx-scene'+(s.k!=='sec'?' dzsx-card':'')
+        +'" data-i="'+i+'"><div class="dzsx-body">'+s.h+'</div></section>'; }).join('')
+      +'</div>'
+      +'<div class="dzsx-rail">'+scenes.map(function(s,i){
+        return '<button type="button" class="dzsx-dot" data-go="'+i+'" title="'+esc(s.t||(i?'Sign-off':'Title'))+'"></button>'; }).join('')+'</div>'
+      +'<div class="dzsx-meta"><span class="dzsx-pos"></span></div>'
+      +'<button class="dzs-x" type="button">✕ Close</button>'
+      +'<span class="dzs-skip">Esc exits · click or → next · ← back · space pauses</span>';
+    d.querySelector('.dzs-x').onclick=showClose;
+    var els=d.querySelectorAll('.dzsx-scene'), dots=d.querySelectorAll('.dzsx-dot'),
+      pos=d.querySelector('.dzsx-pos');
+
+    // every bar starts flat and is handed back its OWN width — the value is never recomputed
+    Array.prototype.forEach.call(d.querySelectorAll('.op-mixb i'),function(i){
+      i.setAttribute('data-w',i.style.width||''); i.style.width='0%'; });
+    // the stagger index restarts per SCENE — counted across the whole deck, scene four would
+    // begin its reveal after a delay earned by scenes one to three
+    Array.prototype.forEach.call(els,function(sc){
+      Array.prototype.forEach.call(sc.querySelectorAll('.op-stat, .op-tbl tbody tr, .op-list li, .op-pie-l li'),
+        function(el,k){ el.style.setProperty('--i',Math.min(k,14)); });
+      showStick(sc);
+    });
+
+    if(reduced){
+      d.classList.add('dzsx-static');
+      Array.prototype.forEach.call(els,function(sc){ sc.classList.add('on'); showFill(sc); });
+      pos.textContent=scenes.length+' sections';
+      return;
+    }
+    var state={i:-1, paused:false, go:null, pause:null};
+    function dwell(sc){
+      var body=sc.querySelector('.dzsx-body');
+      var over=Math.max(0,body.scrollHeight-body.clientHeight);
+      // a section taller than the screen is PANNED, not clipped, and gets the time to do it
+      return 3600+Math.min(9000,Math.round(over/90*1000));
+    }
+    /* scrollTop cannot be transitioned in CSS, so the pan is driven frame by frame; it checks
+       it still owns the scene each frame, so advancing mid-pan doesn't drag the next one */
+    function pan(sc){
+      var body=sc.querySelector('.dzsx-body');
+      var over=body.scrollHeight-body.clientHeight;
+      if(over<8)return;
+      var ms=Math.min(9000,Math.round(over/90*1000)), t0=null;
+      SHOWT.push(setTimeout(function(){
+        function step(ts){
+          if(!sc.classList.contains('on'))return;
+          if(t0===null)t0=ts;
+          var k=Math.min(1,(ts-t0)/ms);
+          body.scrollTop=over*(k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2);
+          if(k<1)requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      },1500));
+    }
+    function go(i){
+      SHOWT.forEach(clearTimeout); SHOWT=[];
+      if(i<0)i=0;
+      if(i>=els.length){ showClose(); return; }
+      state.i=i;
+      Array.prototype.forEach.call(els,function(s){ s.classList.remove('on');
+        s.querySelector('.dzsx-body').scrollTop=0; });
+      Array.prototype.forEach.call(dots,function(x,k){ x.classList.toggle('on',k<=i); });
+      var sc=els[i]; sc.classList.add('on');
+      pos.textContent=(i+1)+' / '+els.length+(state.paused?' · paused':'');
+      showFill(sc);
+      pan(sc);
+      if(!state.paused)SHOWT.push(setTimeout(function(){ go(i+1); },dwell(sc)));
+    }
+    state.go=go;
+    state.pause=function(){
+      state.paused=!state.paused;
+      if(state.paused){ SHOWT.forEach(clearTimeout); SHOWT=[]; }
+      else SHOWT.push(setTimeout(function(){ go(state.i+1); },1200));
+      pos.textContent=(state.i+1)+' / '+els.length+(state.paused?' · paused':'');
+    };
+    SHOWST=state;
+    d.addEventListener('click',function(ev){
+      if(ev.target.closest('.dzs-x'))return;
+      var dot=ev.target.closest('.dzsx-dot');
+      if(dot){ state.paused=true; go(+dot.getAttribute('data-go')); return; }
+      go(state.i+1);
+    });
+    go(0);
+  }
+  /* Stack what must stay put while a scene pans: the section name, the sub-block name, then the
+     column names. The offsets are MEASURED rather than guessed — a hard-coded top left the
+     pinned header sitting on top of the table's first row, since the heading's height depends on
+     the viewport (its font-size is a vw clamp) and on whether the scene has a sub-heading. */
+  function showStick(sc){
+    var head=sc.querySelector('.op-sech'), h4=sc.querySelector('.op-h4'), top=0;
+    if(head)top+=head.getBoundingClientRect().height;
+    if(h4){ h4.classList.add('dzsx-stick'); h4.style.top=top+'px';
+      top+=h4.getBoundingClientRect().height; }
+    Array.prototype.forEach.call(sc.querySelectorAll('.op-tbl th'),function(th){ th.style.top=top+'px'; });
+  }
+  /* reveal one scene's live parts: counters, bar widths. Charts and the pie are pure CSS. */
+  function showFill(sc){
+    Array.prototype.forEach.call(sc.querySelectorAll('.op-v, .op-pie-mid b'),function(el){
+      var n=showNum(el); if(n)showCount(n,1500); });
+    Array.prototype.forEach.call(sc.querySelectorAll('.op-mixb i'),function(i){
+      var w=i.getAttribute('data-w'); if(w!==null)setTimeout(function(){ i.style.width=w; },260); });
   }
   var PCAT={technical:'tech',test:'test',account:'account',image:'creative',custom_label:'creative',channel:'creative',title:'opt',keyword:'opt',data:'opt',product_type:'opt',opt:'opt'};
   var CLBL={title:'Titles',keyword:'Keywords',data:'Data fields',image:'Imagery',custom_label:'Custom labels',product_type:'Product type',technical:'Feed & technical',channel:'Channels',test:'Testing',account:'Account & strategy',opt:'Optimisation'};
@@ -2219,7 +2489,7 @@ window.addEventListener('load',restore);
       :(hasFeed?'<a class="lnk primary"'+wiredTip+' href="/feedlab?client='+encodeURIComponent(name)+'">Feed Lab ⚡'+(mktN>1?' · '+mktN+' markets':'')+'</a>':'');
     detail.innerHTML=
       '<div class="dz-head"><div class="dz-id">'+logo(b.dom,44)+'<div><h3 data-hrs="'+esc(name)+'">'+esc(name)+'</h3><div class="cat"><span'+edA('cat')+'>'+esc(b.cat||'')+'</span>'+((b.mk||editMode)?' · <span'+edA('mk')+'>'+esc(b.mk||'')+'</span>':'')+'</div></div></div>'
-      +'<div class="dz-head-r"><button class="lnk dz-showb" type="button" title="Play the cinematic brand intro — the live portfolio staged for a client call">🎬 Intro</button><button class="lnk dz-opb" type="button" title="A client-safe one-pager for this brand — what is live, what the work has been, what is watched. Printable to PDF.">📄 One-pager</button>'+(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+delBtn+'</div></div>'
+      +'<div class="dz-head-r"><button class="lnk dz-showb" type="button" title="Play the one-pager as a presentation — the same document, the same figures, paced for a client call">🎬 Present</button><button class="lnk dz-opb" type="button" title="A client-safe one-pager for this brand — what is live, what the work has been, what is watched. Printable to PDF.">📄 One-pager</button>'+(b.st?'<span class="pill '+(b.sc||'active')+'">'+esc(b.st)+'</span>':'')+delBtn+'</div></div>'
       +scorePanel(name)
       +portShell()
       +'<div class="dz-metrics"><span class="chip"><b>'+(p?p.open:tasks.length)+'</b> active</span>'

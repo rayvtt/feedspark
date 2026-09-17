@@ -65,6 +65,8 @@ jobs:
         run: node tools/test_deeplink.mjs
       - name: Golden Record snapshot harness (dossier popup; unscanned never counted as zero)
         run: node tools/test_goldensnap.mjs
+      - name: Present harness (the one-pager played — one renderer, the number rule)
+        run: node tools/test_present.mjs
       - name: Dossier tiles harness (hours meter, feed-audit bars, Golden Record ring)
         run: node tools/test_dossiertiles.mjs
       - name: FS Task Manager harness (search grammar, billable split, page/engine parity)
