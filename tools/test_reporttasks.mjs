@@ -930,6 +930,33 @@ const access = fs.readFileSync(path.join(ROOT, 'cloudflare', 'feedspark-deck', '
 ok(/slug: 'taskmanager'.*path: '\/tasks'/.test(access), 'the module is grantable per person');
 
 // ---------------------------------------------------------------------------------------------
+// DECIMAL ALIGNMENT in stacked hour columns (Ray, 17 Sep 2026: "why these numbers are not
+// aligned vertically, you kept making this issue btw"). Right-aligning "1" and "0.5" in the
+// same column only lines up their LAST character, not the ones digit — "1" sits two characters
+// short of where "1.00" would put it, so a column reads crooked even though every cell is
+// individually right-aligned correctly. hrsCell() fixes every value to the quarter-hour grain
+// the data is actually booked in (.00/.25/.50/.75), so every value in a table column is the
+// same width and the decimal points line up.
+// ---------------------------------------------------------------------------------------------
+console.log('── decimal alignment: every stacked hours column uses hrsCell, not hrs');
+const hrsCellSrc = /^  function hrsCell\([^)]*\) \{.*\}$/m.exec(page);
+if (!hrsCellSrc) throw new Error('page: hrsCell (one-liner) not found');
+const HC = new Function('return (' + hrsCellSrc[0].replace(/^  function/, 'function') + ')')();
+eq(HC(0.5), '0.50', 'a half hour is fixed to two decimals');
+eq(HC(1), '1.00', 'a whole hour gets its decimals too — this is exactly what the bare "1" was missing');
+eq(HC(1.25), '1.25', 'quarter-hour values are unaffected — they already carried two decimals');
+eq(HC(13.5), '13.50', 'a footer sum is fixed the same way as the rows above it');
+{
+  // every td.num cell that prints an hrs()-style figure inside a table (Tasks / the ⊞ breakdown
+  // table / Tickets / Accounts / the totals footer) must call hrsCell, or the fix regresses one
+  // column at a time exactly the way Ray flagged it happening
+  const numCellHrs = [...page.matchAll(/<td class="num[^"]*"[^>]*>[^<]*?\bhrs\(/g)];
+  eq(numCellHrs.length, 0, 'no table cell calls the bare hrs() formatter — every stacked column uses hrsCell');
+  ok((page.match(/hrsCell\(/g) || []).length >= 12,
+    'hrsCell is actually wired into every stacked hours column (tasks, breakdown table x2, tickets, accounts, the totals footer)');
+}
+
+// ---------------------------------------------------------------------------------------------
 // the pane's own filter + totals footer, lifted out of the page by name
 //
 // Ray, 16 Sep 2026: "Under the task box, include a search bar. It should display the list of
@@ -951,7 +978,7 @@ function liftPageSrc(name) {
 }
 // setPQ is lifted REAL, not stubbed: since the comma rule lives in the parse, a stand-in setter
 // would test a filter nobody runs. The comma helpers come with it, from the same page.
-const PANE = new Function('CAT_LABEL', 'num', 'hrs', 'esc', 'SHOW',
+const PANE = new Function('CAT_LABEL', 'num', 'hrs', 'hrsCell', 'esc', 'SHOW',
   'var PQ = "", PQT = [], QCOMMA = "\\u0000";\n'
   + liftPageSrc('mergeCommaRuns') + '\n' + liftPageSrc('splitAlts') + '\n'
   + liftPageSrc('orTerms') + '\n' + liftPageSrc('setPQ') + '\n'
@@ -960,6 +987,7 @@ const PANE = new Function('CAT_LABEL', 'num', 'hrs', 'esc', 'SHOW',
   + 'return { setPQ: setPQ, pqMatch: pqMatch, footHtml: footHtml, FOOT: FOOT };'
 )(M.CAT_LABEL,
   (n) => String(n),
+  (n) => String(Math.round((Number(n) || 0) * 100) / 100),
   (n) => String(Math.round((Number(n) || 0) * 100) / 100),
   (s2) => String(s2 == null ? '' : s2).replace(/&/g, '&amp;').replace(/</g, '&lt;'),
   200);

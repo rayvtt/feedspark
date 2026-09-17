@@ -1082,6 +1082,12 @@ window.addEventListener('load',restore);
   var $ = function (id) { return document.getElementById(id); };
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function hrs(n) { return (Math.round(n * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
+  // a column of hours has to line up on the decimal point, not just the right edge — "1" and
+  // "0.5" both right-align fine on their OWN, but stacked in one column the bare "1" sits two
+  // characters short of where "1.00" would put its ones digit, so the column reads crooked even
+  // though every cell is correctly right-aligned. Fixed to the quarter-hour grain the data is
+  // actually booked in (.00/.25/.50/.75), every value in a table column is the same width.
+  function hrsCell(n) { return (Math.round(n * 100) / 100).toFixed(2); }
   function num(n) { return Number(n || 0).toLocaleString(); }
   function cvar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#888'; }
 
@@ -2138,8 +2144,8 @@ window.addEventListener('load',restore);
         + flat.map(function (r) {
           var d = Math.min(r.depth, 2);
           return '<tr class="lvl' + d + '"><td>' + esc(nodeLabel(r.k, tree.dims[d])) + '</td>'
-            + '<td class="num">' + num(r.n) + '</td><td class="num">' + hrs(r.bill) + '</td>'
-            + '<td class="num">' + hrs(r.nonbill) + '</td><td class="num b">' + hrs(r.hours) + '</td>'
+            + '<td class="num">' + num(r.n) + '</td><td class="num">' + hrsCell(r.bill) + '</td>'
+            + '<td class="num">' + hrsCell(r.nonbill) + '</td><td class="num b">' + hrsCell(r.hours) + '</td>'
             + '<td class="num">' + r.billPct + '%</td></tr>';
         }).join('') + '</tbody></table>';
       return;
@@ -2147,8 +2153,8 @@ window.addEventListener('load',restore);
     box.innerHTML = '<table class="st"><thead><tr><th>' + esc(dimName(CDIM))
       + '</th>' + head + '</tr></thead><tbody>'
       + g.map(function (x) {
-        return '<tr><td class="b">' + esc(dimLabel(x.k)) + '</td><td class="num">' + num(x.n) + '</td><td class="num">' + hrs(x.bill)
-          + '</td><td class="num">' + hrs(x.nonbill) + '</td><td class="num b">' + hrs(x.hours) + '</td><td class="num">' + x.billPct + '%</td></tr>';
+        return '<tr><td class="b">' + esc(dimLabel(x.k)) + '</td><td class="num">' + num(x.n) + '</td><td class="num">' + hrsCell(x.bill)
+          + '</td><td class="num">' + hrsCell(x.nonbill) + '</td><td class="num b">' + hrsCell(x.hours) + '</td><td class="num">' + x.billPct + '%</td></tr>';
       }).join('') + '</tbody></table>';
   }
 
@@ -2480,7 +2486,7 @@ window.addEventListener('load',restore);
       var f = byIdx[i];
       td += f
         ? ('<td class="num"' + (f.c ? ' style="color:' + f.c + '"' : '') + '>'
-            + (f.n ? num(Math.round(sum[f.k])) : hrs(Math.round(sum[f.k] * 100) / 100)) + '</td>')
+            + (f.n ? num(Math.round(sum[f.k])) : hrsCell(sum[f.k])) + '</td>')
         : '<td></td>';
     }
     return '<tfoot><tr>' + td + '</tr></tfoot>';
@@ -2534,9 +2540,9 @@ window.addEventListener('load',restore);
           + '<td>' + tagCell(t) + '</td>'
           + '<td>' + esc(t.owner || '—') + '</td>'
           + '<td><span class="st-p ' + t.bucket + '">' + esc(t.status || t.bucket) + '</span></td>'
-          + '<td class="num" style="color:var(--bil)">' + (t.bill ? hrs(t.bill) : '·') + '</td>'
-          + '<td class="num" style="color:var(--nbil)">' + (t.nonbill ? hrs(t.nonbill) : '·') + '</td>'
-          + '<td class="num b">' + (t.hours ? hrs(t.hours) : '·') + '</td></tr>';
+          + '<td class="num" style="color:var(--bil)">' + (t.bill ? hrsCell(t.bill) : '·') + '</td>'
+          + '<td class="num" style="color:var(--nbil)">' + (t.nonbill ? hrsCell(t.nonbill) : '·') + '</td>'
+          + '<td class="num b">' + (t.hours ? hrsCell(t.hours) : '·') + '</td></tr>';
       }).join('') + '</tbody>' + footHtml('tasks', rows, TASK_COLS, rows.length > SHOW) + '</table>';
       $('pmore').hidden = rows.length <= SHOW;
       $('pmore').textContent = 'Show more (' + num(rows.length - SHOW) + ' left)';
@@ -2561,7 +2567,7 @@ window.addEventListener('load',restore);
           + '<td><span class="st-p ' + (t.status === 'closed' ? 'done' : t.status === 'ignored' ? 'cancelled' : 'open') + '">' + esc(t.status) + '</span></td>'
           + '<td class="num"><span class="age ' + esc(t.level || 'ok') + '">' + num(t.age) + '</span></td>'
           + '<td class="num">' + num(t.idle) + '</td><td class="num">' + num(t.msgs) + '</td>'
-          + '<td class="num">' + num(t.tasks) + '</td><td class="num b">' + (t.hours ? hrs(t.hours) : '·') + '</td></tr>';
+          + '<td class="num">' + num(t.tasks) + '</td><td class="num b">' + (t.hours ? hrsCell(t.hours) : '·') + '</td></tr>';
       }).join('') + '</tbody>' + footHtml('tickets', kr, TK_COLS, false) + '</table>';
       $('pmore').hidden = true;
       pqCount(kr.length);
@@ -2579,9 +2585,9 @@ window.addEventListener('load',restore);
         return '<tr data-i="' + i + '"' + (a.flag !== 0 ? ' style="opacity:.62"' : '') + '>'
           + '<td class="b" data-hrs="' + esc(a.client) + '" data-hrs-flag>' + esc(a.client) + '</td><td><span class="mk">' + esc(a.market) + '</span></td>'
           + '<td>' + esc(a.group || '—') + '</td><td>' + esc(a.am || '—') + '</td><td>' + esc(a.am2 || '—') + '</td>'
-          + '<td class="num">' + (a.allowance ? hrs(a.allowance) : '·') + '</td>'
-          + '<td class="num">' + (a.used ? hrs(a.used) : '·') + '</td>'
-          + '<td class="num b" style="color:' + (st === 'over' ? 'var(--risk)' : st === 'banked' ? 'var(--navy)' : 'var(--ink)') + '">' + hrs(a.balance) + '</td>'
+          + '<td class="num">' + (a.allowance ? hrsCell(a.allowance) : '·') + '</td>'
+          + '<td class="num">' + (a.used ? hrsCell(a.used) : '·') + '</td>'
+          + '<td class="num b" style="color:' + (st === 'over' ? 'var(--risk)' : st === 'banked' ? 'var(--navy)' : 'var(--ink)') + '">' + hrsCell(a.balance) + '</td>'
           + '<td><span class="st-p ' + (a.flag === 0 ? 'done' : 'cancelled') + '">' + esc(a.flag === 0 ? 'live' : a.status || 'stopped') + '</span></td></tr>';
       }).join('') + '</tbody>' + footHtml('accounts', ar, AC_COLS, false) + '</table>';
       $('pmore').hidden = true;

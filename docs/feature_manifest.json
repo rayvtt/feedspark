@@ -6981,6 +6981,18 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "avgDepth: q.depth ? Math.max(0, Math.round((Number(a.avgDepth) || 0) * 10) / 10) : undefined",
       "min": 1
+    },
+    {
+      "name": "Task Manager: hrsCell fixes every stacked hours column to two decimals so the decimal point lines up (Ray, 17 Sep 2026: 'why these numbers are not aligned vertically, you kept making this issue')",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function hrsCell(n) { return (Math.round(n * 100) / 100).toFixed(2); }",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: every stacked hours column (tasks, breakdown table, tickets, accounts, totals footer) calls hrsCell, not the bare hrs formatter",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "hrsCell(",
+      "min": 12
     }
   ]
 }
