@@ -1206,7 +1206,7 @@ ok(!/FT\.filter\(taggable\)/.test(BULKSRC),
 // rule onto two lines) and that nothing was quietly dropped on the way.
 // ---------------------------------------------------------------------------------------------
 console.log('\n── the Tags & rules panel');
-const PANEL = PG.slice(PG.indexOf('function rulesOpen'), PG.indexOf('var TAG_COLORS = TAG_PAL'));
+const PANEL = PG.slice(PG.indexOf("var TG_KEY = 'fcc-tg-rail'"), PG.indexOf('var TAG_COLORS = TAG_PAL'));
 ok(PANEL.length > 1000, 'the panel builder is where it was');
 
 ok(!/class="tg-(add|cell|grid|cols|sec|hint|k|n|ln|nm|note|empty|tags|rules|src|w)"/.test(PANEL)
@@ -1214,9 +1214,12 @@ ok(!/class="tg-(add|cell|grid|cols|sec|hint|k|n|ln|nm|note|empty|tags|rules|src|
   'every class the panel paints is tgd-, never tg- — the TABLE owns .tg-add (the row\'s "+ tag" '
   + 'pill) and .tg-cell (capped at 210px), and borrowing those names styled the panel as pills '
   + 'and wrapped every rule onto two lines');
-ok(/#tgbd \.tgd-cols\{display:grid/.test(PG) && /max-width:880px\)\{#tgbd \.tgd-cols\{grid-template-columns:minmax\(0,1fr\)/.test(PG),
-  'tags and rules sit side by side, and stack on a narrow screen');
-ok(/#tgbd \.bd-box\{[\s\S]{0,200}width:min\(880px/.test(PG), 'the panel widened to hold both columns');
+ok(/#tgbd \.tgd-cols\{display:grid;grid-template-columns:minmax\(0,1fr\)/.test(PG)
+  && /@container \(min-width:560px\)\{#tgbd \.tgd-cols\{grid-template-columns:minmax\(0,1fr\) minmax/.test(PG),
+  'tags and rules go side by side on the PANEL\'s own width, not the window\'s — it lives in a rail, '
+  + 'and a viewport media query would have put two 200px columns inside a 420px rail on a wide monitor');
+ok(/#tgbd \.bd-b\{[\s\S]{0,160}container-type:inline-size/.test(PG),
+  'which is only true because the panel body declares itself the container');
 ok(/#tgbd \.tgd-add select\{min-width:0;max-width:100%\}/.test(PG),
   'a select sizes to its widest OPTION unless told not to — 99px of sideways overflow on a phone');
 
@@ -1244,6 +1247,44 @@ ok(/id="tg-list"/.test(PANEL) && /id="tg-rules"/.test(PANEL) && /id="tg-new"/.te
   && /id="tg-addtag"/.test(PANEL) && /id="tg-q"/.test(PANEL) && /id="tg-on"/.test(PANEL)
   && /id="tg-tag"/.test(PANEL) && /id="tg-addrule"/.test(PANEL) && /id="tg-prev"/.test(PANEL),
   'every control the panel had is still there — this was a reorganisation, not a cut');
+
+// ---------------------------------------------------------------------------------------------
+// ...AND IT IS A RAIL, NOT A MODAL (Ray, 17 Sep 2026: "can it also popup as on the right panel
+// similar to build log so i can also work simultaneously"). Simultaneously is the requirement, so
+// the assertions are about what the panel does NOT do: dim the page, block it, or cover the
+// columns being judged.
+// ---------------------------------------------------------------------------------------------
+console.log('\n── the panel as a right-hand rail');
+ok(!/bd-dim/.test(PANEL) && !/#tgbd \.bd-dim/.test(PG),
+  'no dim layer anywhere — the board behind the rail stays live, which is the whole request');
+ok(/#tgbd \.bd-box\{position:fixed;z-index:70;top:0;right:0;bottom:0;width:var\(--tgd-w\)/.test(PG),
+  'the panel is docked to the right edge, full height');
+ok(/body\.tgd-on\{padding-right:var\(--tgd-w\)\}/.test(PG),
+  'and it PUSHES the page rather than sitting on it — the columns it would otherwise cover on this '
+  + 'page are the hours, which is the thing being judged while you tag');
+ok(/max-width:900px\)\{[\s\S]{0,220}body\.tgd-on\{padding-right:0\}/.test(PG),
+  'below 900px there is no room to push, so it overlays');
+ok(/max-width:760px\)\{#tgbd \.bd-box\{width:100vw/.test(PG), 'and on a phone it is a full sheet');
+
+ok(/if \(!host\.querySelector\('\.bd-box'\)\) \{/.test(PANEL) && /\$\('tg-body'\)\.innerHTML = ''/.test(PANEL),
+  'the shell is built once and only the body is redrawn — rewriting the host on every edit would '
+  + 'restart the slide-in, so adding a rule would make the rail flinch');
+ok(/function rulesToggle\(\)/.test(PANEL) && /dt\.onclick = rulesToggle;/.test(PG),
+  'the toolbar button toggles it, because a rail you cannot put away is worse than a modal');
+ok(/aria-pressed/.test(PANEL), 'and says whether it is open');
+ok(/role="complementary"/.test(PANEL) && !/role="dialog"/.test(PANEL),
+  'the rail is a landmark, not a dialog: it sits beside the work rather than trapping focus in '
+  + 'front of it, and "dialog" would tell a screen-reader user the opposite');
+ok(/e\.key === 'Escape' && tgIsOpen\(\)\) rulesClose\(\)/.test(PANEL), 'Esc closes it');
+ok(!/bd-dim'\) \{ host\.innerHTML/.test(PANEL) && !/className === 'bd-dim'/.test(PANEL),
+  'clicking the page does NOT close it: on a modal that is how you dismiss it, here clicking away '
+  + 'is the work');
+ok(/localStorage\.setItem\(TG_KEY/.test(PANEL) && /var TG_KEY = 'fcc-tg-rail'/.test(PANEL),
+  'the open state is remembered per DEVICE — a panel being open describes one screen, not the team');
+ok(/if \(want === '1'\) rulesOpen\(\);/.test(PG) && PG.indexOf("if (want === '1') rulesOpen();") > PG.indexOf('tagLoad(function () {'),
+  'and it reopens AFTER the tags land, so it never paints an empty vocabulary and then fills itself in');
+ok(/setTimeout\(function \(\) \{ if \(!tgIsOpen\(\)\) host\.innerHTML = ''; \}, 260\)/.test(PANEL),
+  'closing clears the host only once it has slid out, and only if nobody re-opened it meanwhile');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

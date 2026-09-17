@@ -7011,6 +7011,30 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "hrsCell(",
       "min": 12
+    },
+    {
+      "name": "Task Manager: Tags & rules is a right-hand RAIL that pushes the page, not a modal over a dimmed one (Ray, 17 Sep 2026: 'can it also popup as on the right panel similar to build log so i can also work simultaneously')",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "body.tgd-on{padding-right:var(--tgd-w)}",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the rail's shell is built once and only its body redrawn, so an edit never restarts the slide-in",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "$('tg-body').innerHTML = ''",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the rail toggles from its own button, closes on Esc, and is remembered per device",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "var TG_KEY = 'fcc-tg-rail'",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the panel's two-column split keys on its OWN width (container query), since it lives in a rail",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "@container (min-width:560px){#tgbd .tgd-cols",
+      "min": 1
     }
   ]
 }
