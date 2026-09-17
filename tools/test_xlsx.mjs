@@ -134,5 +134,48 @@ ok(/import XLSX_ENGINE_SRC from "\.\.\/\.\.\/\.\.\/docs\/xlsx_engine\.js"/.test(
 ok(/\*\*\/xlsx_engine\.js/.test(fs.readFileSync(path.join(ROOT, 'wrangler.toml'), 'utf8')),
   'wrangler treats it as a Text module like its sibling engines');
 
+// ---------------------------------------------------------------------------------------------
+// READING one back (Ray, 17 Sep 2026: "using Excel that I can import and export")
+//
+// An export nobody can send back is half a round trip. The reader is exercised against a workbook
+// THIS WRITER PRODUCED, so the two can never drift apart, and against the CSV shapes Excel emits.
+// ---------------------------------------------------------------------------------------------
+console.log('-- reading a workbook back');
+const RT = X.build([{ name: 'Tasks',
+  cols: [{ k: 'id', l: 'Task id', t: 'int' }, { k: 'title', l: 'Task' }, { k: 'tagsL', l: 'Tags' }],
+  rows: [{ id: 220082, title: 'Disapprovals & "urgent", today', tagsL: 'Urgent; Technical' },
+    { id: 219998, title: 'Keyword optimisation', tagsL: '' }] }]);
+const back = await X.readXlsx(RT.buffer.slice(RT.byteOffset, RT.byteOffset + RT.length));
+eq(back[0], ['Task id', 'Task', 'Tags'], 'the header row reads back as written');
+eq(back[1][0], '220082', 'and the task id survives, which is what the round trip keys on');
+eq(back[1][1], 'Disapprovals & "urgent", today',
+  'XML-escaped ampersands and quotes come back as themselves, not as entities');
+eq(back[1][2], 'Urgent; Technical', 'and the tags column round-trips');
+const tb = X.table(back, ['Task id', 'Tags']);
+eq(tb.header, 0, 'the header row is found by its labels');
+eq(tb.rows.length, 2, 'and every data row below it is returned');
+eq(tb.rows[1].Tags, '', 'a cleared tag cell reads as empty, not as missing');
+
+console.log('-- and the CSV Excel writes');
+const csv = X.readCsv('Task id,Task,Tags\r\n220082,"Disapprovals, urgent","urgent; technical"\r\n219998,plain,\r\n');
+eq(csv[1], ['220082', 'Disapprovals, urgent', 'urgent; technical'],
+  'a quoted comma inside a cell does not split the row — the single most common way a CSV import corrupts data');
+eq(csv[2], ['219998', 'plain', ''], 'CRLF line endings are handled');
+eq(X.readCsv('a,b\n"he said ""hi""",2')[1][0], 'he said "hi"', 'doubled quotes unescape');
+eq(X.table([['report', ''], ['Task id', 'Tags'], ['1', 'urgent']], ['Task id', 'Tags']).header, 1,
+  'a header sitting BELOW a title row is still found — people add titles to spreadsheets');
+eq(X.table([['Nope']], ['Task id', 'Tags']).header, -1,
+  'and a file with no such header is refused rather than read as if column 1 were ids');
+
+const PGT = fs.readFileSync(path.join(ROOT, 'docs', 'FeedSpark_TaskManager.html'), 'utf8');
+ok(/id="ptagimp"/.test(PGT) && /accept=".csv,.xlsx"/.test(PGT), 'the page offers the import beside the export');
+ok(/Nothing is saved until you confirm/.test(PGT),
+  'IT PREVIEWS BEFORE IT WRITES — a sheet off someone\'s laptop can be stale, filtered or full of typos');
+ok(/Rows this file does not mention are left exactly as they are/.test(PGT),
+  'and importing a FILTERED sheet cannot wipe the rest of the book');
+ok(/task ids not in this book \(ignored\)/.test(PGT), 'unknown ids are reported, not silently applied');
+ok(/are not tags/.test(PGT), 'and so are tag names the vocabulary does not have');
+ok(/\{ k: 'tagsL', l: 'Tags'/.test(PGT), 'the export carries the Tags column the import reads back');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

@@ -1951,14 +1951,14 @@
       "pr": 257
     },
     {
-      "name": "CC dossier: 🎬 Present — the one-pager played as a deck (replaces the hand-written intro)",
+      "name": "CC dossier: 🎬 cinematic brand showcase (luxury-intro overlay)",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "dz-show",
       "min": 3,
       "pr": 257
     },
     {
-      "name": "CC dossier: the presentation player, built from the one-pager's own document",
+      "name": "CC dossier: showcase player over the portfolio model",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "showOpen",
       "min": 2,
@@ -6322,7 +6322,7 @@
     {
       "name": "Golden Record: ?client= jumps to that brand's estate card",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "est-card\" data-client="
+      "pattern": ".est-card[data-client]"
     },
     {
       "name": "Golden Record content quality: a DUPLICATE is reported as a GROUP — the repeated value, how many products carry it and which ones (Ray 16 Sep 2026, reading Monsoon GB: four unrelated titles under 'title duplicated across products' read as a wrong finding; the count was right, the evidence was unreadable)",
@@ -6591,54 +6591,6 @@
       "pr": 420
     },
     {
-      "name": "Present: ONE RENDERER — the deck is built from opHtml, the sheet's and the PDF's own document",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "doc.innerHTML=opHtml(name,b,p,mkts,got)",
-      "pr": 0
-    },
-    {
-      "name": "Present: the one-pager's data load is shared with the sheet, never a second set of endpoints",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "function opLoad",
-      "pr": 0
-    },
-    {
-      "name": "Present: opHtml RETURNS the document so two surfaces can render it",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "function opHtml",
-      "pr": 0
-    },
-    {
-      "name": "Present: THE ANIMATION MAY NOT COMPUTE — a counted number ends on the one-pager's own string",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "function showNum",
-      "pr": 0
-    },
-    {
-      "name": "Present: a long section pans rather than being clipped, and its dwell grows to cover the pan",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "return 3600+Math.min(9000",
-      "pr": 0
-    },
-    {
-      "name": "Present: sections split on the one-pager's OWN sub-headings, never on a height guess",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "subs=sec.querySelectorAll('.op-h4')",
-      "pr": 0
-    },
-    {
-      "name": "Present: pinned-header offsets are measured, not hard-coded",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "function showStick",
-      "pr": 0
-    },
-    {
-      "name": "Present: the pinned header's stacking context outranks the transformed body rows",
-      "file": "docs/FeedSpark_Command_Center.html",
-      "pattern": "#dz-show .op-tbl thead{position:relative;z-index:5}",
-      "pr": 0
-    },
-    {
       "name": "Volume panel: New products is its own right-rail panel beside the review",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "data-tab=\"volume\"",
@@ -6688,6 +6640,114 @@
       "pr": 424
     },
     {
+      "name": "Task Manager tags: a SECOND axis (why the work happened) kept apart from `cat` (what the work was)",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function displacement",
+      "min": 1
+    },
+    {
+      "name": "Task Manager tags: a human's hand-set list ALWAYS beats a keyword rule, including an empty list",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function tagsOf",
+      "min": 1
+    },
+    {
+      "name": "Task Manager tags: the tag dimension is multi-valued and groupBy owns up to the double count",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "function dimKeys",
+      "min": 1
+    },
+    {
+      "name": "Task Manager tags: keyed on the source's own task id, never on wording the rotation re-packs",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function taggable",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the displacement headline reads the current search and carries its own coverage",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function dispRender",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: mass tagging acts on whatever the search resolved — no second selection model",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function bulkApply",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: keyword rules preview what they would touch AND what they leave alone",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function rulesOpen",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: tag import previews the diff and saves nothing until confirmed",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function tagImport",
+      "min": 1
+    },
+    {
+      "name": "XLSX engine reads a workbook back (ZIP central directory + deflate-raw), closing the round trip",
+      "file": "docs/xlsx_engine.js",
+      "pattern": "function readXlsx",
+      "min": 1
+    },
+    {
+      "name": "XLSX engine reads the CSV Excel writes — quoted commas, doubled quotes, CRLF",
+      "file": "docs/xlsx_engine.js",
+      "pattern": "function readCsv",
+      "min": 1
+    },
+    {
+      "name": "Present: ONE RENDERER — the deck is built from opHtml, the sheet's and the PDF's own document",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "doc.innerHTML=opHtml(name,b,p,mkts,got)",
+      "pr": 0
+    },
+    {
+      "name": "Present: the one-pager's data load is shared with the sheet, never a second set of endpoints",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function opLoad",
+      "pr": 0
+    },
+    {
+      "name": "Present: opHtml RETURNS the document so two surfaces can render it",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function opHtml",
+      "pr": 0
+    },
+    {
+      "name": "Present: THE ANIMATION MAY NOT COMPUTE — a counted number ends on the one-pager's own string",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function showNum",
+      "pr": 0
+    },
+    {
+      "name": "Present: a long section pans rather than being clipped, and its dwell grows to cover the pan",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "return 3600+Math.min(9000",
+      "pr": 0
+    },
+    {
+      "name": "Present: sections split on the one-pager's OWN sub-headings, never on a height guess",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "subs=sec.querySelectorAll('.op-h4')",
+      "pr": 0
+    },
+    {
+      "name": "Present: pinned-header offsets are measured, not hard-coded",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function showStick",
+      "pr": 0
+    },
+    {
+      "name": "Present: the pinned header's stacking context outranks the transformed body rows",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "#dz-show .op-tbl thead{position:relative;z-index:5}",
+      "pr": 0
+    },
+    {
       "name": "Cockpit: ONE client filter — the panel's brand picker writes itState.clients, the board's chips move the panel",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "window.FCCFilterClient=filterToClient",
@@ -6721,6 +6781,36 @@
       "pattern": "user: !!(opts && opts.user)",
       "min": 1,
       "pr": 427
+    },
+    {
+      "name": "Golden Record estate scorecard: each brand card collapses on its own header (Ray 17 Sep 2026: 'allow button to expand or collapse \"all\" or individual brand option')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function toggleCollapse",
+      "min": 1
+    },
+    {
+      "name": "Golden Record estate scorecard: a collapsed card still carries score, market count and req/crit/warn — folding a brand can never hide a live alert",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function estSummary",
+      "min": 1
+    },
+    {
+      "name": "Golden Record estate scorecard: Collapse all / Expand all in the section header, the label always naming the action still available",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function collapseAllBtn",
+      "min": 1
+    },
+    {
+      "name": "Golden Record estate scorecard: the collapse choice is a device preference (localStorage gr-collapse), never shared team state",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "localStorage.getItem('gr-collapse'",
+      "min": 1
+    },
+    {
+      "name": "Golden Record estate scorecard: the ?client= deep-link opens a folded card via the cross-scope bridge before scrolling to and outlining it",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "window.__grExpand",
+      "min": 1
     }
   ]
 }
