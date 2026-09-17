@@ -2,8 +2,21 @@
      (never client decks). Every instructional subtext across the FCC collapses to a small ⓘ
      beside its heading: default hidden (Ray's rule — no walls of explainer text), expanded
      blocks remembered per user in localStorage so Steven can keep guidance open while learning.
-     Selector-driven: p.sub, .psub, .prev-sub, .em-sub, hero intros and anything marked
-     data-instr — add data-no-collapse to any element that must stay visible.
+
+     THE RULE IS THE SENTENCE COUNT, NOT A CLASS LIST (Ray, 17 Sep 2026, pointing at the
+     four-sentence subtext under "03 Feed scorecard": "if any subtext is longer than 1 sentence -
+     hide with [i] button pls across the platform"). The first cut collapsed the classes somebody
+     had listed (p.sub, hero intros …) and nothing else, so a section subtext on the Golden Record
+     page — p.cat-sub, four sentences — sat in the open while a one-line p.sub hid. Now ANY
+     explainer element on an app page is judged the same way: a paragraph or subtext line of
+     MORE THAN ONE SENTENCE collapses behind the ⓘ; one sentence stays visible (a subtitle is a
+     design element, a wall of prose is not). data-instr still collapses regardless of length —
+     the lines Ray crossed out under the charts are explicit opt-ins — and data-no-collapse on an
+     element or any ancestor is the opt-out. What is never touched: anything inside a table,
+     form, list item, modal, chat log, ticket card or answer bubble (those are content, not
+     instruction — Feed Chat's .verdict IS the reply to a question, so its log is excluded by
+     class while the page's own explainers collapse like everyone else's). Prose only: an element also needs a dozen words, so a two-clause data line ("Total: 42h.
+     Used: 30h.") is never mistaken for an explainer.
 
      ONE ⓘ PER CARD, NOT PER LINE (Ray, 17 Sep 2026, crossing out the explainer under a chart:
      "the red-crossed text is not needed at all - so hide it (same thing for rest of FCC module)
@@ -41,7 +54,31 @@ function hash(s){s=String(s||'');var h=5381,i;for(i=0;i<s.length&&i<80;i++)h=(h*
 var KEY='fcc-instr-open',open={};
 try{JSON.parse(localStorage.getItem(KEY)||'[]').forEach(function(k){open[k]=1})}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(Object.keys(open)))}catch(e){}}
-var SEL='p.sub,.psub,.prev-sub,.em-sub,header.hero p,.hero>.wrap>p,[data-instr]';
+// every explainer position an app page uses: the listed subtext classes, hero intros, a
+// paragraph directly under a heading or directly inside a card/section, and the explicit opt-in
+var SEL='p.sub,p.cat-sub,p.hint,p.note,p.desc,p.lead,p.intro,p.muted,.psub,.prev-sub,.em-sub,header.hero p,.hero>.wrap>p,.wrap>p,.card>p,section>p,.cat-h+p,h1+p,h2+p,h3+p,h4+p,[data-instr]';
+// content, not instruction: never collapsed, whatever it says
+var SKIP='table,form,li,button,a,label,.modal,.modal-card,.m-sec,.scrim,[role=dialog],.chat,.chat-log,#log,.msgs,.msg,.bubble,.verdict,.tik,.tmh,[contenteditable],[data-no-collapse]';
+// how many sentences a line carries. Abbreviations (e.g. / i.e. / vs. / etc. / No. / an
+// initial / a month), decimals (99.9%), versions and paths (g:product_type) never end one; a
+// terminator counts only when whitespace or the end of the text follows it.
+function sentences(txt){
+  var s=String(txt||'').replace(/\s+/g,' ').trim(); if(!s)return 0;
+  s=s.replace(/\b(e\.g|i\.e|etc|vs|cf|approx|incl|excl|min|max|avg|no|nos|fig|ref|vol|st|mr|mrs|ms|dr|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec|[A-Za-z])\./gi,'$1');
+  s=s.replace(/(\d)\.(\d)/g,'$1$2').replace(/\b\d{1,2}\.\s/g,' ');
+  var parts=s.split(/[.!?…]+(?:\s+|$)/),n=0,i;
+  for(i=0;i<parts.length;i++)if(parts[i].replace(/[^A-Za-z0-9À-ɏ]/g,'').length>=3)n++;
+  return n;
+}
+function words(txt){return String(txt||'').trim().split(/\s+/).filter(Boolean).length}
+// the rule: an explicit opt-in always collapses; anything else collapses only when it is prose
+// of more than one sentence (a dozen words at least — a two-clause data line is not an explainer)
+function qualifies(el){
+  if(el.hasAttribute('data-instr'))return true;
+  var t=el.textContent||'';
+  return words(t)>=12&&sentences(t)>1;
+}
+function excluded(el){return !!(el.closest&&el.closest(SKIP))}
 function box(el){
   var c=el.closest?el.closest('section,.card,header,article'):null;
   return c||el.parentNode||el;
@@ -59,10 +96,10 @@ function parts(c){
   var out=[],i,els=c.querySelectorAll(SEL);
   for(i=0;i<els.length;i++){
     var el=els[i];
-    if(el.hasAttribute('data-no-collapse'))continue;
+    if(excluded(el))continue;
     if(box(el)!==c)continue;                         // a nested card keeps its own toggle
-    if((el.textContent||'').trim().length<30)continue;  // real prose, not a short data line
-    out.push(el);
+    if(!qualifies(el))continue;
+    if(out.indexOf(el)<0)out.push(el);               // an element may match the selector twice (h2+p and p.sub)
   }
   return out;
 }
@@ -88,8 +125,8 @@ function apply(){
   var els=document.querySelectorAll(SEL),seen=[],i;
   for(i=0;i<els.length;i++){
     var el=els[i];
-    if(el.hasAttribute('data-no-collapse'))continue;
-    if((el.textContent||'').trim().length<30)continue;
+    if(excluded(el))continue;
+    if(!qualifies(el))continue;
     var c=box(el);
     if(!c||seen.indexOf(c)>=0)continue;
     seen.push(c);

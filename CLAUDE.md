@@ -222,7 +222,18 @@ GET  /api/tm  (+POST /api/gmail/push {tmpush}) → TASK MANAGER hours (Ray, 16 S
 GET  /i18n/engine.js · /i18n/vi.json → UI LANGUAGE (Ray, 15 Sep 2026: "build completely a VI (Vietnamese) toggle for my view only"): the DOM-translation engine (docs/i18n_engine.js, UMD, node-tested) + the hand-written seed dictionary (docs/i18n/vi.json — ~1,800 entries covering every app page's chrome, numbers templated as {n} so one entry answers every count; protected tokens = brand/client/platform/product names + SKU/AM-style acronyms, never translated, plural-canon SKUs≡SKU). The widget (docs/lang_widget.html, `#lang-tgl` EN/VI pill in the topbar) translates every text node + title/placeholder/aria-label/alt in place, MutationObserver keeps re-rendered content translated, exact originals restored on the way back; never touches inputs' values, textareas, contenteditable, the dossier's data-ed fields, code, the Templates copy bodies (the Copy button reads them) or the wordmark. Widget injected ONLY for the real owner identity (realOwner — never another signin, never under view-as)
 GET|POST /api/i18n?lang=vi      → owner-only runtime lane for strings the seed cannot answer: GET = the learned map (ONE KV key i18n:vi — no per-string KV traffic); POST {lang,strings≤80} = translate the misses via Tachyon (Claude, glossary system prompt, whole-word protected tokens enforced server-side by i18nKeeps), cache into the same key, return the map; no ANTHROPIC_API_KEY → error:'no_key' and the widget degrades to seed-only (title says so, zero further POSTs). Harness tools/test_i18n.mjs (engine rules, seed integrity, worker parity + gating) in qa_gate/presync/validate; docs/I18N.md
 ```
-- **Injected on app pages** (not client decks): the live editor widget, **FCC-PRESENCE**
+- **Injected on app pages** (not client decks): the **ⓘ COLLAPSE** (`docs/instr_collapse.html` —
+  Ray, 17 Sep 2026: "if any subtext is longer than 1 sentence - hide with [i] button pls across the
+  platform": EVERY explainer element on an app page — the subtext classes, hero intros, a paragraph
+  under a heading or directly inside a card/section — is judged by SENTENCE COUNT, not by a class
+  list: more than one sentence (and a dozen words, so a two-clause data line never counts) collapses
+  behind ONE ⓘ per card riding the card's own heading, one sentence stays visible; `data-instr` = an
+  explicit opt-in that collapses regardless (the chart verdict lines Ray crossed out), `data-no-collapse`
+  on an element or ancestor = the opt-out; never inside a table/form/list item/modal/chat stream/ticket
+  card/answer bubble; the `sentences()` counter protects e.g./i.e./vs./etc./initials/months/decimals/
+  numbered steps; remembered per device (localStorage fcc-instr-open) under a STABLE key = the card's
+  id or heading, re-applied on every DOM mutation pass; harness tools/test_instr.mjs in
+  qa_gate/presync/validate), the live editor widget, **FCC-PRESENCE**
   (`docs/presence_widget.html` — Google-Docs-style live avatars in the topbar: each open page
   heartbeats `POST /api/presence` per minute while visible, worker stamps the Access identity
   into KV `presence`, avatars = active ≤3min with green dot + name·page·ago tooltip; popover
