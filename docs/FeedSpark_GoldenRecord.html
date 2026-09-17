@@ -152,7 +152,18 @@ window.addEventListener('load',restore);
   .tbadge.ai{background:#F1EBFD;color:#6D28D9}
   .at-row{display:grid;grid-template-columns:200px minmax(120px,1fr) 62px 74px minmax(140px,.85fr) 212px;gap:10px;align-items:center;padding:5px 0;border-top:1px dashed var(--line);font-size:12.5px}
   .at-row:first-of-type{border-top:none}
-  @media(max-width:900px){.at-row{grid-template-columns:150px 1fr 56px 64px;}.at-note,.at-act{display:none}}
+  /* Under 900px the row is FLUID: minmax(0,…) columns and a pill that may truncate, so the
+     grid's minimum width can never exceed the screen. It used to be 150px + 1fr + 56px + 64px,
+     and a "NOT IN FEED" pill in the 1fr column set that column's minimum at its own width —
+     the row's minimum came to ~438px. On the LIVE page the phone layer (mobile_widget.html,
+     injected by the worker under 760px) re-lays the row itself, so /golden never showed it;
+     this rule is what holds WITHOUT that layer — the ⬇ HTML export opened on a phone (scripts
+     and widgets stripped by design), and the 761–900px band — where a phone's layout viewport
+     zoomed out to 438px and the whole page panned sideways (tools/check_grmobile.js, which
+     renders a SCANNED feed; the default-state phone tripwire never sees an attribute row).
+     Nothing is hidden: the Δ and the pill are still there, narrower. */
+  @media(max-width:900px){.at-row{grid-template-columns:minmax(92px,1.1fr) minmax(0,1fr) 44px 60px;gap:8px}.at-note,.at-act{display:none}
+    .at-miss{max-width:100%;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 7px}.at-delta{font-size:10.5px}}
   .at-act{display:flex;gap:5px;align-items:center;justify-content:flex-end;flex-wrap:nowrap}
   .abtn{border:1px solid var(--line);background:#fff;color:var(--ink-2);font:inherit;font-size:10.5px;font-weight:800;border-radius:7px;padding:3px 8px;cursor:pointer;white-space:nowrap}
   .abtn:hover{border-color:var(--orange);color:var(--orange-deep)}

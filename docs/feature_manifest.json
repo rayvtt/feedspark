@@ -7394,6 +7394,24 @@
       "file": "docs/FeedSpark_FeedLab.html",
       "pattern": "function scorePop(a,key)",
       "min": 1
+    },
+    {
+      "name": "Golden Record: the attribute row is FLUID under 900px (minmax columns, a truncating pill) so a scanned feed's rows fit a 390px screen even WITHOUT the worker's phone layer — the ⬇ HTML export opened on a phone, and the 761–900px band",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": ".at-row{grid-template-columns:minmax(92px,1.1fr) minmax(0,1fr) 44px 60px;gap:8px}",
+      "min": 1
+    },
+    {
+      "name": "Golden Record phone tripwire WITH DATA: renders a scanned feed + content quality + AI-readiness + the pop-ups at 390px with the worker's widgets injected, and fails on any sideways overflow or rescue frame",
+      "file": "tools/check_grmobile.js",
+      "pattern": "const panned = () =>",
+      "min": 1
+    },
+    {
+      "name": "presync runs the Golden Record 390px-with-data tripwire",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/check_grmobile.js",
+      "min": 1
     }
   ]
 }
