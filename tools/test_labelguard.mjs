@@ -1007,6 +1007,33 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   eq('pattern: two values caught', snap.attrs.pattern.rules.multi.n, 1);
   eq('pattern: placeholder caught', snap.attrs.pattern.rules.placeholder.n, 1);
 
+  // GPC "too broad": a two-level value only warns if Google's OWN taxonomy actually offers a
+  // third level under it — Ray, 17 Sep 2026, uploading Google's official taxonomy export after
+  // "Apparel & Accessories > Shoes" (a genuine dead end — Google ships no third level anywhere
+  // under Shoes) was flagged "too broad — fewer than three levels" on a live scorecard: "if the
+  // final GPC (Shoes) which has no further clarification from Google, then that's already
+  // optimal." GPC_LEAF2 is the derived list of every such terminal branch (52 of Google's 192
+  // second-level nodes carry no children at all).
+  {
+    const gpcCols = { google_product_category: 0 };
+    const gpc = LG.qualityCollector(gpcCols);
+    const rows = [
+      ['Apparel & Accessories > Shoes'],          // genuine leaf — nothing deeper exists
+      ['Apparel & Accessories > Clothing'],        // NOT a leaf — Clothing branches into 18 more
+      ['Electronics'],                             // bare top-level — always has somewhere deeper
+      ['apparel & accessories > shoes'],           // same leaf, different case — still exempt
+    ];
+    rows.forEach((r) => gpc.onRow(r));
+    const gs = gpc.finish({ client: 'Test', market: 'gb' });
+    eq('GPC: a genuine two-level DEAD END (Shoes) does not warn "too broad"',
+      gs.attrs.google_product_category.rules.shallow.n, 2, gs.attrs.google_product_category.rules.shallow);
+    ok('…specifically, it is the two non-leaf/one-level rows that are caught, not Shoes',
+      gs.attrs.google_product_category.rules.shallow.eg.every((v) => !/shoes/i.test(v)));
+    ok('GPC_LEAF2 carries Ray’s own example', LG.GPC_LEAF2.has('apparel & accessories > shoes'));
+    eq('GPC_LEAF2: exactly the 52 terminal second-level branches Google’s export actually has',
+      LG.GPC_LEAF2.size, 52);
+  }
+
   // scoring: a rule costs the share of products that break it, fails at full weight
   const q = LG.qualityScore(snap);
   ok('qualityScore: parts for every measured attribute', q.parts.length === 8);

@@ -348,7 +348,17 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   bar at the industry's best observed coverage. Page: ⚖ "<Industry> best practice" chip + ⚙
   editor (tri-state chips default → ★ scored → waived, brand vs whole-industry scope, reset
   to defaults), ★ marks scored attrs, waived rows grey out, hard "not in feed" flags follow
-  the profile. **⬇ PDF = one continuous vertical page** (Ray, 16 Sep 2026: "should all fit
+  the profile. **The always-required roster is shown, not just stated** (Ray, 17 Sep 2026:
+  "update scoring profile too pls ? gtin not on there and dont know what else"): the editor's
+  own hint text already said "the required seven and gtin/mpn always score", but `profOk()`
+  deliberately excludes those from every toggleable tier — which meant the UI never actually
+  showed them, reading as an omission rather than a deliberate rule. A new "Always required —
+  never toggleable" section lists the required seven plus a merged `gtin / mpn` chip (the same
+  best-of-two pairing `goldenScore` itself scores) as locked `<span>` chips — dashed border,
+  no pointer cursor, no click handler — so nothing in the score can read as silently missing
+  from its own editor, and nothing invites a click that would silently do nothing. Harness:
+  `tools/test_grprofile.mjs` (Playwright, in presync — renders the real editor and asserts the
+  roster is present, correctly named, and genuinely non-interactive). **⬇ PDF = one continuous vertical page** (Ray, 16 Sep 2026: "should all fit
   in 1 vertical page"): the scorecard used to slice across A4 breaks — 5–9 sheets, the first
   mostly blank because a tier that would not fit was pushed whole, and every attribute row
   double-height because the spec note had no print column and wrapped. `exportPdf` now lays
@@ -698,6 +708,21 @@ each finding quotes and links its source.
   *"Measured: average length 47 chars (47–47) · averaging 4 levels deep"* — in both the
   broken-rule state and the "every rule passes" state. A bare numeric GPC id or an unseparated
   product_type value reads as depth 1, matching how Feed Lab already treats them.
+- **GPC's "too broad" rule knows which branches actually end** (Ray, 17 Sep 2026, uploading
+  Google's official `taxonomy-with-ids.en-US` export after a live scorecard flagged "Apparel &
+  Accessories > Shoes" "too broad — fewer than three levels": *"if the final GPC (Shoes) which
+  has no further clarification from Google, then that's already optimal"*). The `shallow` rule
+  tested only the STRING SHAPE — fewer than three `" > "`-separated levels — with no way to know
+  whether Google's fixed taxonomy actually offers a third level under that branch; Shoes has
+  none, so choosing it correctly still read as a merchant stopping short. `GPC_LEAF2` (a Set of
+  52 lowercased `"top > second"` strings, derived once from the official export by finding every
+  second-level node with zero third-level descendants — Google's 21 top-level categories all
+  branch further, so a bare one-level value still always warns) is consulted before the rule
+  fires: a two-level value only warns when a deeper option genuinely exists. Snapshot, not
+  live-fetched, for the same reason the rule's own comment already gives for not shipping the
+  full ~5,500-row taxonomy — re-derive the list if Ray supplies a refreshed export. Harness: the
+  GPC "too broad" block in `tools/test_labelguard.mjs` (Shoes exempted case-insensitively,
+  Clothing — a real non-leaf — still caught, a bare top-level value still caught).
 - **How many highlights spotted, out of 100** (Ray, 17 Sep 2026: *"showcase what you have done ...
   which is how many highlights you have spotted within 100. So recommendation is from 6 to 10"*).
   Google's own spec (answer 9216100) is a 2-minimum with 4–6 recommended, up to a ceiling of 100 —

@@ -1254,6 +1254,43 @@ export function multiVals(v) {
 }
 const words = (v) => String(v || '').trim().split(/\s+/).filter(Boolean);
 
+// Ray, 17 Sep 2026 (uploaded Google's official taxonomy-with-ids.en-US export, pointing at
+// "Apparel & Accessories > Shoes" flagged "too broad — fewer than three levels" on a live
+// scorecard): "if the final GPC (Shoes) which has no further clarification from Google, then
+// that's already optimal." The shallow-GPC rule below tested only the STRING SHAPE (fewer than
+// three " > "-separated levels), with no idea whether Google's fixed taxonomy actually offers a
+// third level under that branch — Shoes has none, so a merchant who chose it correctly was
+// scored as if a more specific option existed and they had ignored it. Google's taxonomy has 21
+// top-level categories (every one branches further, so a bare top-level value always has a more
+// specific option and always warns), and 192 second-level nodes, of which exactly these 52 are
+// TERMINAL — no third level exists anywhere under them — derived once from the official export
+// (depth-2 nodes with zero depth-3 descendants) rather than guessed. A depth-2 value NOT in this
+// list still warns, because a deeper option genuinely exists there. Snapshot, not live-fetched —
+// the full ~5,500-row taxonomy costs more to ship than the 192 second-level shapes are worth
+// (see the rule's own comment below); re-derive this list if Ray supplies a refreshed export.
+export const GPC_LEAF2 = new Set([
+  'animals & pet supplies > live animals', 'apparel & accessories > shoes',
+  'arts & entertainment > event tickets', 'baby & toddler > baby gift sets',
+  'business & industrial > film & television', 'business & industrial > forestry & logging',
+  'business & industrial > hotel & hospitality', 'business & industrial > industrial storage accessories',
+  'business & industrial > janitorial carts & caddies', 'business & industrial > manufacturing',
+  'business & industrial > mining & quarrying', 'electronics > gps navigation systems',
+  'electronics > gps tracking devices', 'electronics > radar detectors', 'electronics > speed radars',
+  'electronics > toll collection devices', 'electronics > video game consoles',
+  'furniture > entertainment centers & tv stands', 'furniture > futon frames', 'furniture > futon pads',
+  'furniture > futons', 'furniture > ottomans', 'furniture > room divider accessories',
+  'furniture > room dividers', 'furniture > sofas', 'hardware > fuel containers & tanks',
+  'hardware > small engines', 'hardware > storage tanks', 'home & garden > fireplaces',
+  'home & garden > parasols & rain umbrellas', 'home & garden > umbrella sleeves & cases',
+  'home & garden > wood stoves', 'luggage & bags > backpacks', 'luggage & bags > briefcases',
+  'luggage & bags > cosmetic & toiletry bags', 'luggage & bags > diaper bags', 'luggage & bags > dry boxes',
+  'luggage & bags > duffel bags', 'luggage & bags > fanny packs', 'luggage & bags > garment bags',
+  'luggage & bags > messenger bags', 'luggage & bags > shopping totes', 'luggage & bags > suitcases',
+  'luggage & bags > train cases', 'media > carpentry & woodworking project plans', 'media > sheet music',
+  'office supplies > desk pads & blotters', 'office supplies > impulse sealers', 'office supplies > lap desks',
+  'office supplies > name plates', 'software > video game software', 'toys & games > game timers',
+]);
+
 /* Per attribute: the spec limits Google publishes, the weight the attribute carries in the
    content-quality score, and its rules. `doc` is the support.google.com/merchants answer. */
 export const QSPEC = [
@@ -1355,7 +1392,18 @@ export const QSPEC = [
           (/>/.test(v) && !/\s>\s/.test(v)) || (/^\d/.test(v) && !/^\d{2,8}$/.test(v)) },
       { id: 'shallow', sev: 'warn', label: 'too broad — fewer than three levels',
         why: '“Use the most specific category possible” — “broad categories such as Electronics are often too vague for effective automated bidding.”',
-        test: (v) => !/^\d{2,8}$/.test(v) && v.split(/\s>\s/).length < 3 },
+        // a two-level value is only "too broad" if Google's own taxonomy actually offers a
+        // third level under it — Apparel & Accessories > Shoes has none, so choosing it IS
+        // the most specific category possible, not a merchant stopping short (Ray, 17 Sep
+        // 2026; GPC_LEAF2 above). A one-level value always warns — every top-level category
+        // branches further, so a deeper option always exists there.
+        test: (v) => {
+          if (/^\d{2,8}$/.test(v)) return false;
+          const levels = v.split(/\s>\s/).map((x) => x.trim());
+          if (levels.length >= 3) return false;
+          if (levels.length === 2 && GPC_LEAF2.has(levels.join(' > ').toLowerCase())) return false;
+          return true;
+        } },
     ] },
   { key: 'product_type', doc: 6324406, w: 2, max: 750, depth: true, label: 'Product type',
     spec: '0–750 characters · your own taxonomy, levels separated by “ > ”',

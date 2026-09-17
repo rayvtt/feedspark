@@ -7252,6 +7252,18 @@
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function grMiniRow(r)",
       "min": 1
+    },
+    {
+      "name": "Golden Record scoring-profile editor: the always-required roster (id/title/description/link/image_link/availability/price + gtin/mpn) is shown as locked, non-clickable chips — Ray, 17 Sep 2026: 'gtin not on there and dont know what else'",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "Always required — never toggleable",
+      "min": 1
+    },
+    {
+      "name": "Content quality: GPC's too-broad rule exempts a genuine taxonomy dead end (e.g. Apparel & Accessories > Shoes) via GPC_LEAF2, derived from Google's official taxonomy export — Ray, 17 Sep 2026: 'if the final GPC (Shoes) which has no further clarification from Google, then that's already optimal'",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export const GPC_LEAF2",
+      "min": 1
     }
   ]
 }

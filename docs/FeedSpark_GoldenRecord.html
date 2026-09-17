@@ -175,6 +175,11 @@ window.addEventListener('load',restore);
   .pchip{border:1px solid var(--line);background:#fff;color:var(--ink-2);font:inherit;font-size:11px;font-weight:800;border-radius:100px;padding:4px 11px;cursor:pointer;margin:0 5px 6px 0}
   .pchip.exp{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}
   .pchip.wav{background:var(--wash);color:var(--muted);text-decoration:line-through}
+  /* the always-required roster (Ray, 17 Sep 2026: "gtin not on there and dont know what else") —
+     a lock icon + no-pointer cursor + a span, not a button, so it reads as stated fact rather
+     than an invitation to click something that would do nothing */
+  .pchip.locked{cursor:default;background:var(--wash);color:var(--muted);border-style:dashed}
+  .pchip.locked b{margin-right:3px}
   .pgrp{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:8px 0 5px}
   .pseg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-left:8px}
   .pseg button{border:0;background:#fff;color:var(--muted);font:inherit;font-size:11px;font-weight:800;padding:4px 10px;cursor:pointer}
@@ -1392,6 +1397,15 @@ window.addEventListener('load',restore);
       '<span class="pseg"><button data-ps="client"' + (scope === 'client' ? ' class="on"' : '') + '>This brand</button>' +
       '<button data-ps="industry"' + (scope === 'industry' ? ' class="on"' : '') + '>All ' + esc(ind) + ' brands</button></span></div>' +
       '<p class="hint muted" style="margin:6px 0 4px;font-size:11.5px">Click an attribute to cycle: <b>default</b> → <b style="color:var(--orange-deep)">★ scored</b> (counts even when absent, and a recommended attribute weighs double — the best-practice bar) → <span style="text-decoration:line-through">waived</span> (excluded from the score). The required seven and gtin/mpn always score. Saving re-scores the whole brand instantly — dial, estate cards and industry benchmark; industry scope re-scores every brand in it.</p>';
+    // the always-required roster (Ray, 17 Sep 2026: "gtin not on there and dont know what else")
+    // — SPEC's required tier plus gtin/mpn are deliberately untouchable (profOk excludes them
+    // from every group below), which the hint text above SAYS but never SHOWS. Named here as
+    // locked, non-clickable chips so nothing in the score reads as silently missing from the editor.
+    h += '<div class="pgrp">Always required — never toggleable</div>';
+    SPEC.filter(function (x) { return x.t === 'req'; }).forEach(function (x) {
+      h += '<span class="pchip locked" title="' + esc(x.n) + '"><b>🔒</b>' + esc(x.k) + '</span>';
+    });
+    h += '<span class="pchip locked" title="Google requires one identifier or the other — goldenScore takes the best of the two"><b>🔒</b>gtin / mpn</span>';
     groups.forEach(function (g) {
       h += '<div class="pgrp">' + g[1] + '</div>';
       SPEC.filter(function (x) { return x.t === g[0] && profOk(x.k); }).forEach(function (x) {

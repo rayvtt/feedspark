@@ -171,6 +171,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record PDF (one sheet, scorecard + content quality, findings intact)"
   NODE_PATH=$(npm root -g) node tools/check_grpdf.js || {
     echo "✗ Golden Record PDF tripwire failed — the client scorecard lost a column, a section, or its single-sheet sizing"; exit 1; }
+  echo "── validating: Golden Record scoring-profile editor (always-required roster shown, locked)"
+  NODE_PATH=$(npm root -g) node tools/test_grprofile.mjs || {
+    echo "✗ scoring-profile editor tripwire failed — the always-required roster went missing or became clickable"; exit 1; }
 else
   echo "   · playwright unavailable, skipped (run tools/test_editor.mjs before shipping editor changes)"
 fi
