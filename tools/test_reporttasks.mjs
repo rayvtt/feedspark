@@ -1368,7 +1368,7 @@ ok(/Colour \\u00b7 /.test(PAGE_SRC) || /Colour · /.test(PAGE_SRC),
 
 const SMALL = PAGE_SRC.slice(PAGE_SRC.indexOf('function smallCells'), PAGE_SRC.indexOf('function niceMax'));
 ok(/COLOUR FOLLOWS THE CHILD, NEVER ITS RANK INSIDE ITS PARENT/.test(SMALL)
-  && /top\.forEach\(function \(k, i\) \{ col\[k\] = serCol\(i, false\); \}\)/.test(SMALL),
+  && /top\.forEach\(function \(k, i\) \{ col\[k\] = keyColour\(CDIM2, k, i, false\);/.test(SMALL),
   'side by side ranks the children ONCE across the whole tree: colouring each ring by position '
   + 'would make Reiss blue in one donut and Superdry blue in the next');
 ok(/parts\.sort\(function \(a, b\) \{ return a\.rank - b\.rank; \}\)/.test(SMALL),
@@ -1385,6 +1385,86 @@ ok(/if \(CFORM === 'line'\) \{\n      var sm = lineData\(\);/.test(PAGE_SRC),
   'and so is the copied / exported one');
 ok(/cannot sit on a time axis and is/.test(PAGE_SRC) && /cannot sit on a time axis and are/.test(PAGE_SRC),
   'the verdict names the undated rows the line could not plot, in the right number');
+
+// ---------------------------------------------------------------------------------------------
+// ONE COLOUR PER THING, EVERYWHERE (Ray, 17 Sep 2026: "Make sure legend colors are consistent
+// across sections of the task manager—for example, urgent in green versus urgent in red—and allow
+// an option to show the legend directly on the chart as well, so I don't have to do side by side.
+// Anything untagged could be a dotted line, dimmed and slightly more hidden").
+// ---------------------------------------------------------------------------------------------
+console.log('\n── colour follows the thing, not its rank');
+ok(/function keyColour\(dim, k, rank, fold\)/.test(PAGE_SRC),
+  'one resolver decides every mark\'s colour');
+ok(/if \(dim === 'tag'\) \{[\s\S]{0,220}return d && d\.color \? tagColor\(d\) : serCol\(rank, false\);/.test(PAGE_SRC),
+  'a TAG wears the colour its vocabulary gives it — the same red the displacement card paints, '
+  + 'which is exactly the "urgent in green versus urgent in red" Ray was reading');
+ok(/var CAT_VAR = \{ opt: '--c-opt'/.test(PAGE_SRC) && /if \(dim === 'cat'\) return cvar\(CAT_VAR\[k\]/.test(PAGE_SRC),
+  'and a TYPE OF WORK wears the token its chip in the table already uses');
+ok(/if \(fold\) return serCol\(0, true\);/.test(PAGE_SRC),
+  'a fold is always the same grey — a remainder is not a category and does not join the race');
+ok(/return serCol\(rank, false\);\n  \}/.test(PAGE_SRC),
+  'a client, an owner, a market have no colour of their own, so those keep the rank palette');
+
+ok(/function keyLabel\(dim, k\)/.test(PAGE_SRC) && /if \(isUntag\(k\)\) return 'Not yet tagged';/.test(PAGE_SRC)
+  && /return \(d && d\.label\) \|\| k;/.test(PAGE_SRC),
+  'a tag reads as its NAME, not its slug — "urgent" under a card saying "Urgent" is the same '
+  + 'inconsistency in words that the rank palette was in colour');
+ok(/function dimLabel\(k\) \{ return keyLabel\(CDIM, k\); \}/.test(PAGE_SRC)
+  && /function nodeLabel\(k, dim\) \{ return keyLabel\(dim, k\); \}/.test(PAGE_SRC),
+  'and the flat and nested readings share that one definition');
+
+console.log('\n── untagged is drawn as the gap it is');
+ok(/var UNTAG = '\(untagged\)'/.test(PAGE_SRC) && /function isUntag\(k\)/.test(PAGE_SRC),
+  'the untagged bucket is named once');
+ok(/function untagDefs\(\)[\s\S]{0,400}pattern id="tmUntag"/.test(PAGE_SRC),
+  'it fills with a dotted pattern rather than a hue');
+ok(/function fillFor\(dim, k, rank, fold\) \{\n    return \(dim === 'tag' && isUntag\(k\)\) \? 'url\(#tmUntag\)'/.test(PAGE_SRC),
+  'which every ring and slice reads through one call');
+ok(/the untagged line is DASHED and recessive/.test(PAGE_SRC)
+  && /\(untag \? ' stroke-dasharray="5 4" opacity="\.6"' : ''\)/.test(PAGE_SRC),
+  'and on the time chart it is a DASHED, dimmed line — Ray\'s own words');
+ok(/border:1px dotted/.test(PAGE_SRC) && /opacity:\.62/.test(PAGE_SRC),
+  'the legend row is dotted and dimmed to match');
+ok(!/if \(isUntag\(k\)\) return[^;]*serCol/.test(PAGE_SRC),
+  'it never takes a palette slot');
+ok(/keeps its true size/.test(PAGE_SRC),
+  'but it keeps its true SIZE — shrinking the part nobody has judged would be the dishonest kind '
+  + 'of hiding');
+
+console.log('\n── the legend, on the chart');
+ok(/id="cleg" checked> Legend on chart/.test(PAGE_SRC), 'a toggle, default on');
+ok(/function legendRows\(items, W\)/.test(PAGE_SRC) && /function legendOn\(\)/.test(PAGE_SRC),
+  'drawn INSIDE the svg');
+ok(/the ⬇ PNG\n     carries it/.test(PAGE_SRC) || /it rides the PNG export too/.test(PAGE_SRC),
+  'which is also how the PNG export stopped being a set of unnamed wedges');
+ok(/localStorage\.setItem\('fcc-tm-cleg'/.test(PAGE_SRC),
+  'remembered per DEVICE, like the theme — it describes one screen');
+ok(/function chartKeys\(sm\)/.test(PAGE_SRC) && /rows = chartKeys\(sm\) \|\| \[\];/.test(PAGE_SRC),
+  'and ONE list feeds both legends, so the rail and the chart can never name the same colour '
+  + 'differently');
+ok(/ser\.length <= 4 && sr\.points\.length && !legendOn\(\)/.test(PAGE_SRC),
+  'the end-of-line labels stand down when the legend is already on the chart — the same names '
+  + 'twice is clutter');
+ok(/if \(ends\[i\]\.y - ends\[i - 1\]\.y < 13\) ends\[i\]\.y = ends\[i - 1\]\.y \+ 13;/.test(PAGE_SRC),
+  'and when they are drawn, two lines finishing together are pushed apart rather than printed '
+  + 'one over the other');
+
+console.log('\n── the account\'s own type, as a split');
+eq(M.DIMS.map((d) => d.k), P.DIMS.map((d) => d.k), 'engine and page offer the same dimensions');
+ok(M.DIMS.some((d) => d.k === 'atype' && d.label === 'Account type'),
+  'Account type joins the split list (Ray, 17 Sep 2026: "add \"type\" in the SPLIT BY too")');
+ok(M.DIMS.some((d) => d.k === 'cat' && d.label === 'Type of work'),
+  'beside Type of work, which is a different question: what the JOB was, read off its title');
+ok(/function decorateAccountType\(\)/.test(PAGE_SRC),
+  'a task carries no account type, so it is joined on from the accounts the page already read');
+ok(/byClient\[a\.client\] = null;   \/\/ the brand disagrees with itself/.test(PAGE_SRC),
+  'and a brand whose markets disagree falls back to "(not set)" rather than picking one of them');
+ok(/t\.atype = byMkt\[t\.client \+ '\|' \+ t\.market\] \|\| byClient\[t\.client\] \|\| '\(not set\)';/.test(PAGE_SRC),
+  'exact market first, then the brand, then an honest blank');
+// dimKey falls through to the decorated field, so nothing in the engine had to learn about it
+eq(M.groupBy([{ atype: 'FM', bill: 2, nonbill: 0, hours: 2, tags: [] },
+  { atype: '', bill: 1, nonbill: 0, hours: 1, tags: [] }], 'atype').map((g) => g.k),
+  ['FM', '(none)'], 'and the engine groups it like any other field');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
