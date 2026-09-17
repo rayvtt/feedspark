@@ -603,6 +603,9 @@ export function rulePreview(rows, rule, assign) {
 export const DIMS = [
   { k: 'total', label: 'Everything' },
   { k: 'client', label: 'Client' },
+  // the ACCOUNT's type (client_type in the reports database), carried onto each task by the page
+  // from the accounts read — distinct from 'cat', which is the type of WORK the title describes
+  { k: 'atype', label: 'Account type' },
   { k: 'owner', label: 'Who did it' },
   { k: 'cat', label: 'Type of work' },
   { k: 'month', label: 'Month' },

@@ -353,6 +353,9 @@ window.addEventListener('load',restore);
         <option value="bars">Horizontal bars</option>
       </select>
       <label class="tog"><input type="checkbox" id="clab" checked> Value labels</label>
+      <!-- the legend ON the chart, so the eye never has to travel to the rail — and so the PNG
+           export carries it, which it never did before -->
+      <label class="tog" title="Draw the key on the chart itself — it rides the PNG export too"><input type="checkbox" id="cleg" checked> Legend on chart</label>
       <label class="tog"><input type="checkbox" id="ctab"> Table</label>
     </div>
     <div class="cbody">
@@ -960,6 +963,7 @@ window.addEventListener('load',restore);
   var DIMS = [
     { k: 'total', label: 'Everything' },
     { k: 'client', label: 'Client' },
+    { k: 'atype', label: 'Account type' },
     { k: 'owner', label: 'Who did it' },
     { k: 'cat', label: 'Type of work' },
     { k: 'month', label: 'Month' },
@@ -2034,6 +2038,7 @@ window.addEventListener('load',restore);
     // displacement headline, so overriding the field itself keeps all of them telling one story
     decorateTypes(TASKS, TYPES);
     decorateTags(TASKS, TAGS, RULES());
+    decorateAccountType();
     FT = TASKS.filter(function (t) { return matchTask(t, Q); });
     FK = TICKETS.filter(function (t) { return matchTicket(t, Q); });
     SHOW = 200;
@@ -2078,6 +2083,30 @@ window.addEventListener('load',restore);
     return { months: sm.months, series: [mk('Billable', 'bill'), mk('Non-billable', 'nonbill')],
       undated: sm.undated, folded: 0, multi: false };
   }
+  /* THE ACCOUNT'S OWN TYPE (Ray, 17 Sep 2026: "add \"type\" in the SPLIT BY too"). 'Type of work'
+     was already there — it is read off the title and says what the job WAS. This is the other
+     type the Task Manager holds: client_type on the accounts read, the shape of the engagement.
+     A task carries no such field, so it is joined on here from the accounts the page already has:
+     the exact client × market first, then the brand when only one type is on record for it, and
+     '(not set)' when the database does not say — never guessed from a sibling market that
+     disagrees. Decorated onto the row like the hand-set Type, so `dimKey` falls straight through
+     to it and the search, the chart and the table all read the one field. */
+  function decorateAccountType() {
+    var byMkt = {}, byClient = {}, i, a;
+    for (i = 0; i < ACCOUNTS.length; i++) {
+      a = ACCOUNTS[i];
+      var ty = String(a.type || '').trim();
+      if (!ty) continue;
+      byMkt[a.client + '|' + a.market] = ty;
+      if (byClient[a.client] === undefined) byClient[a.client] = ty;
+      else if (byClient[a.client] !== ty) byClient[a.client] = null;   // the brand disagrees with itself
+    }
+    for (i = 0; i < TASKS.length; i++) {
+      var t = TASKS[i];
+      t.atype = byMkt[t.client + '|' + t.market] || byClient[t.client] || '(not set)';
+    }
+  }
+
   function chartRows() { return groupBy(FT, CDIM, CDIM === 'total' ? 0 : 12); }
   // a pie can hold about eight slices before the tail becomes slivers nobody can point at, so it
   // folds harder than the bars do — the fold keeps its hours either way
@@ -2090,11 +2119,7 @@ window.addEventListener('load',restore);
     return k;
   }
   // a level's own value labels — 'cat' and 'bucket' store keys, not words
-  function nodeLabel(k, dim) {
-    if (dim === 'cat') return CAT_LABEL[k] || k;
-    if (dim === 'bucket') return BUCKET_LABEL[k] || k;
-    return k;
-  }
+  function nodeLabel(k, dim) { return keyLabel(dim, k); }
 
   /* THE FORMS, and which reading each one can honestly carry (Ray, 17 Sep 2026: "Can you allow
      more different types of charts? I like pie charts, donut charts, and line charts. What I want
@@ -2271,6 +2296,92 @@ window.addEventListener('load',restore);
     return pal[i % pal.length];
   }
 
+  /* A THING THAT ALREADY HAS A COLOUR KEEPS IT (Ray, 17 Sep 2026: "Make sure legend colors are
+     consistent across sections of the task manager—for example, urgent in green versus urgent in
+     red"). He was reading Urgent as RED in the displacement card, which paints every tag in the
+     colour the vocabulary gives it, and as GREEN two inches below, because the chart was handing
+     out palette slots BY RANK. Rank is the wrong key for anything that owns a colour elsewhere on
+     this page:
+       · a TAG carries its own colour, set in Tags & rules and drawn by the card above;
+       · a TYPE OF WORK has had one since the table's chips (--c-opt … --c-other, its own dark
+         steps), so Optimisation is the same orange in the chip, the donut and the line.
+     Everything else — a client, an owner, a market — has no colour of its own anywhere, so those
+     keep the validated categorical set in rank order. A FOLD is always the same grey: a remainder
+     is not a category and does not belong in the race. */
+  var CAT_VAR = { opt: '--c-opt', tech: '--c-tech', feat: '--c-feat', acct: '--c-acct', other: '--c-other' };
+  var UNTAG = '(untagged)';
+  function isUntag(k) { return String(k) === UNTAG; }
+  function keyColour(dim, k, rank, fold) {
+    if (fold) return serCol(0, true);
+    if (dim === 'tag') {
+      if (isUntag(k)) return cvar('--muted');
+      var d = defOf(normTagSlug(k));
+      return d && d.color ? tagColor(d) : serCol(rank, false);
+    }
+    if (dim === 'cat') return cvar(CAT_VAR[k] || '--muted');
+    return serCol(rank, false);
+  }
+
+  /* UNTAGGED IS DRAWN AS THE GAP IT IS (Ray, same note: "Anything untagged could be a dotted line,
+     dimmed and slightly more hidden, if that makes sense"). It is not a category anybody chose —
+     it is the part of the book nobody has judged — so it never takes a hue: a dotted fill on the
+     rings and a DASHED muted line on the time chart, at reduced opacity. It keeps its true size,
+     because shrinking it would be the dishonest kind of hiding. */
+  function untagDefs() {
+    var c = cvar('--muted');
+    return '<defs><pattern id="tmUntag" width="6" height="6" patternUnits="userSpaceOnUse">'
+      + '<rect width="6" height="6" fill="' + c + '" opacity=".16"/>'
+      + '<circle cx="1.5" cy="1.5" r="1.1" fill="' + c + '" opacity=".75"/></pattern></defs>';
+  }
+  function fillFor(dim, k, rank, fold) {
+    return (dim === 'tag' && isUntag(k)) ? 'url(#tmUntag)' : keyColour(dim, k, rank, fold);
+  }
+
+  /* THE LEGEND, ON THE CHART (Ray: "allow an option to show the legend directly on the chart as
+     well, so I don't have to do side by side"). Drawn INSIDE the svg, which also means the ⬇ PNG
+     carries it — the export used to lose the side rail entirely, so a downloaded pie was a set of
+     unnamed wedges. Wraps onto as many rows as it needs and reports the height it used, so every
+     form can offset its own drawing by exactly that much. */
+  function legendRows(items, W) {
+    var pad = 4, x = pad, y = 11, rows = 1, out = '', i;
+    for (i = 0; i < items.length; i++) {
+      var it = items[i], w = 16 + Math.min(22, String(it.label).length) * 6.1 + 14;
+      if (x + w > W && x > pad) { x = pad; y += 17; rows++; }
+      var lab = String(it.label).length > 22 ? String(it.label).slice(0, 21) + '\u2026' : String(it.label);
+      out += '<g opacity="' + (it.untag ? '.62' : '1') + '"><rect x="' + x + '" y="' + (y - 8) + '" width="10" height="10" rx="2" fill="'
+        + (it.untag ? 'url(#tmUntag)' : esc(it.c)) + '"'
+        + (it.untag ? ' stroke="' + cvar('--muted') + '" stroke-width="1" stroke-dasharray="2 2"' : '') + '/>'
+        + '<text x="' + (x + 15) + '" y="' + y + '" font-size="11" font-weight="' + (it.untag ? 600 : 700)
+        + '" fill="' + cvar(it.untag ? '--muted' : '--ink-2') + '">' + esc(lab) + '</text></g>';
+      x += w;
+    }
+    return { svg: out, h: rows * 17 + 6 };
+  }
+  function legendOn() { var el = $('cleg'); return !!(el && el.checked); }
+  // what the marks mean, in the order they are drawn — one list, read by the side rail and by the
+  // in-chart legend, so the two can never name the same colour differently
+  function chartKeys(sm) {
+    if (CFORM === 'line' && sm) {
+      return sm.series.map(function (x, i) {
+        return { k: x.k, label: LINEMODE === 'bill' ? x.k : dimLabel(x.k),
+          c: LINEMODE === 'bill' ? (x.k === 'Billable' ? cvar('--bil') : cvar('--nbil')) : keyColour(CDIM, x.k, i, x.fold),
+          untag: LINEMODE !== 'bill' && CDIM === 'tag' && isUntag(x.k), hours: x.hours, pct: x.billPct };
+      });
+    }
+    if (CFORM === 'small' && nested()) {
+      return smallCells().keys.map(function (k) {
+        return { k: k.k, label: k.label, c: k.c, untag: k.untag, hours: k.hours, pct: null };
+      });
+    }
+    if (byIdentity()) {
+      return pieSlices().map(function (x, i) {
+        return { k: x.k, label: dimLabel(x.k), c: keyColour(CDIM, x.k, i, x.fold),
+          untag: CDIM === 'tag' && isUntag(x.k), hours: x.hours, pct: x.billPct };
+      });
+    }
+    return null;
+  }
+
   /* PIE / DONUT BY CATEGORY. Share of the hours in view, biggest first from twelve o'clock, the
      tail already folded by groupBy so a hundred clients can never become a hundred slivers.
      A slice's tooltip keeps its billable split in words — the share is what the shape says, the
@@ -2285,14 +2396,16 @@ window.addEventListener('load',restore);
     function pt(rad, ang) { return [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)]; }
     for (i = 0; i < g.length; i++) {
       var x = g[i], sweep = (x.hours / tot) * Math.PI * 2, a2 = a + sweep;
-      var big = sweep > Math.PI ? 1 : 0, col = serCol(i, x.fold);
+      var big = sweep > Math.PI ? 1 : 0, col = fillFor(CDIM, x.k, i, x.fold);
+      var dim = CDIM === 'tag' && isUntag(x.k);
       var pct = Math.round((x.hours / tot) * 1000) / 10;
       var ttl = esc(dimLabel(x.k)) + ' — ' + hrs(x.hours) + ' h (' + pct + '% of the view), '
         + hrs(x.bill) + ' h billable + ' + hrs(x.nonbill) + ' h non-billable, ' + num(x.n) + ' task' + (x.n === 1 ? '' : 's');
       if (g.length === 1) {
         out += '<circle class="cg" data-t="' + ttl + '" cx="' + cx + '" cy="' + cy + '" r="'
           + (ri ? (r0 + ri) / 2 : r0) + '" fill="' + (ri ? 'none' : col) + '"'
-          + (ri ? ' stroke="' + col + '" stroke-width="' + (r0 - ri) + '"' : '') + '/>';
+          + (ri ? ' stroke="' + col + '" stroke-width="' + (r0 - ri) + '"' : '')
+          + (dim ? ' opacity=".75"' : '') + '/>';
       } else {
         var p1 = pt(r0, a), p2 = pt(r0, a2), d;
         if (ri) {
@@ -2306,13 +2419,15 @@ window.addEventListener('load',restore);
             + 'A' + r0 + ' ' + r0 + ' 0 ' + big + ' 1 ' + p2[0].toFixed(2) + ' ' + p2[1].toFixed(2) + 'Z';
         }
         out += '<path class="cg" data-t="' + ttl + '" d="' + d + '" fill="' + col
-          + '" stroke="' + cvar('--paper') + '" stroke-width="2"/>';
+          + '" stroke="' + cvar('--paper') + '" stroke-width="2"'
+          + (dim ? ' opacity=".75"' : '') + '/>';
       }
       // a label only where the slice can hold it — a 2% wedge cannot, and a leader line into a
       // pie this size is more chrome than reading
       if (showLab && sweep > 0.42) {
         var mid = pt(ri ? (r0 + ri) / 2 : r0 * 0.62, a + sweep / 2);
-        out += '<text x="' + mid[0].toFixed(1) + '" y="' + mid[1].toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" font-size="11.5" font-weight="900" fill="#fff">' + pct + '%</text>';
+        out += '<text x="' + mid[0].toFixed(1) + '" y="' + mid[1].toFixed(1) + '" text-anchor="middle" dominant-baseline="middle" font-size="11.5" font-weight="900" fill="'
+          + (dim ? cvar('--ink-2') : '#fff') + '">' + pct + '%</text>';
       }
       a = a2;
     }
@@ -2320,8 +2435,16 @@ window.addEventListener('load',restore);
       out += '<text x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle" font-size="21" font-weight="900" fill="' + cvar('--ink') + '">' + hrs(tot) + '</text>';
       out += '<text x="' + cx + '" y="' + (cy + 15) + '" text-anchor="middle" font-size="10.5" font-weight="800" letter-spacing="1" fill="' + cvar('--muted') + '">HOURS</text>';
     }
-    return '<svg viewBox="0 0 ' + S + ' ' + S + '" style="max-width:300px;margin:0 auto" role="img" aria-label="Share of hours by '
-      + esc(dimName(CDIM)) + '">' + out + '</svg>';
+    var LW = 560, lg = legendOn() ? legendRows(chartKeys(null) || [], LW - 8) : { svg: '', h: 0 };
+    if (!lg.h) {
+      return '<svg viewBox="0 0 ' + S + ' ' + S + '" style="max-width:300px;margin:0 auto" role="img" aria-label="Share of hours by '
+        + esc(dimName(CDIM)) + '">' + untagDefs() + out + '</svg>';
+    }
+    // with the legend on the chart the ring is centred under it, so the two read as one figure
+    return '<svg viewBox="0 0 ' + LW + ' ' + (S + lg.h) + '" style="max-width:' + (LW > 420 ? 520 : LW)
+      + 'px;margin:0 auto" role="img" aria-label="Share of hours by ' + esc(dimName(CDIM)) + '">'
+      + untagDefs() + lg.svg + '<g transform="translate(' + ((LW - S) / 2).toFixed(1) + ',' + lg.h + ')">'
+      + out + '</g></svg>';
   }
 
   /* THE LINE FORM — every series on ONE set of axes, which is what "merge the lines together"
@@ -2334,6 +2457,9 @@ window.addEventListener('load',restore);
     var ms = sm.months, ser = sm.series;
     if (!ms.length) return '<div class="empty">No task in view carries a date, so there is nothing to plot over time.</div>';
     var W = 720, H = 344, L = 50, Rp = 16, T = 14, B = 48;
+    var lg = legendOn() ? legendRows(chartKeys(sm) || [], W - 8) : { svg: '', h: 0 };
+    T += lg.h;
+    H += lg.h;
     var iw = W - L - Rp, ih = H - T - B;
     var max = 0, i, j;
     for (i = 0; i < ser.length; i++) for (j = 0; j < ser[i].points.length; j++) if (ser[i].points[j].hours > max) max = ser[i].points[j].hours;
@@ -2353,10 +2479,18 @@ window.addEventListener('load',restore);
         out += '<text x="' + xAt(i).toFixed(1) + '" y="' + (T + ih + 17) + '" text-anchor="middle" font-size="10.5" font-weight="600" fill="' + cvar('--ink-2') + '">' + esc(monthLabel(ms[i])) + '</text>';
       }
     }
+    var ends = [];
     for (i = 0; i < ser.length; i++) {
-      var sr = ser[i], col = serCol(i, sr.fold), d = '';
+      var sr = ser[i];
+      var untag = LINEMODE !== 'bill' && CDIM === 'tag' && isUntag(sr.k);
+      var col = LINEMODE === 'bill'
+        ? (sr.k === 'Billable' ? cvar('--bil') : cvar('--nbil'))
+        : keyColour(CDIM, sr.k, i, sr.fold);
+      var d = '';
       for (j = 0; j < sr.points.length; j++) d += (j ? 'L' : 'M') + xAt(j).toFixed(1) + ' ' + yAt(sr.points[j].hours).toFixed(1);
-      out += '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+      // the untagged line is DASHED and recessive — the gap in the judging, drawn as a gap
+      out += '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"'
+        + (untag ? ' stroke-dasharray="5 4" opacity=".6"' : '') + '/>';
       for (j = 0; j < sr.points.length; j++) {
         var p = sr.points[j];
         var ttl = esc(seriesLabel(sr.k)) + ' · ' + esc(monthLabel(p.m)) + ' — ' + hrs(p.hours) + ' h ('
@@ -2364,17 +2498,26 @@ window.addEventListener('load',restore);
         // a 4px radius is an 8px target — the smallest mark a hand can hit — with a surface ring
         // so two lines crossing at a point stay two points
         out += '<circle class="cg" data-t="' + ttl + '" cx="' + xAt(j).toFixed(1) + '" cy="' + yAt(p.hours).toFixed(1)
-          + '" r="4" fill="' + col + '" stroke="' + cvar('--paper') + '" stroke-width="2"/>';
+          + '" r="4" fill="' + col + '" stroke="' + cvar('--paper') + '" stroke-width="2"'
+          + (untag ? ' opacity=".6"' : '') + '/>';
       }
-      // ≤4 lines are labelled where they end, so the eye never has to travel to the legend
-      if (ser.length <= 4 && sr.points.length) {
+      // ≤4 lines are labelled where they END, so the eye never travels to a legend — unless the
+      // legend is already ON the chart, in which case the same names twice is clutter, and two
+      // lines finishing close together would print one over the other
+      if (ser.length <= 4 && sr.points.length && !legendOn()) {
         var last = sr.points[sr.points.length - 1];
-        out += '<text x="' + (xAt(sr.points.length - 1) - 6).toFixed(1) + '" y="' + (yAt(last.hours) - 9).toFixed(1)
-          + '" text-anchor="end" font-size="11" font-weight="800" fill="' + col + '">' + esc(seriesLabel(sr.k)) + '</text>';
+        ends.push({ y: yAt(last.hours) - 9, c: col, t: seriesLabel(sr.k), u: untag });
       }
     }
+    // two lines can finish a pixel apart; the labels are pushed apart rather than stacked
+    ends.sort(function (a, b) { return a.y - b.y; });
+    for (i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 13) ends[i].y = ends[i - 1].y + 13;
+    for (i = 0; i < ends.length; i++) {
+      out += '<text x="' + (W - Rp - 6) + '" y="' + ends[i].y.toFixed(1) + '" text-anchor="end" font-size="11" font-weight="800" fill="'
+        + ends[i].c + '"' + (ends[i].u ? ' opacity=".7"' : '') + '>' + esc(ends[i].t) + '</text>';
+    }
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Hours per month by '
-      + esc(dimName(CDIM)) + '">' + out + '</svg>';
+      + esc(dimName(CDIM)) + '">' + untagDefs() + lg.svg + out + '</svg>';
   }
   function monthLabel(m) {
     var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -2396,9 +2539,10 @@ window.addEventListener('load',restore);
     if (!cells.length) return '<div class="empty">Nothing to compare here yet.</div>';
     var cols = cells.length <= 2 ? cells.length : cells.length <= 6 ? 3 : 4;
     var W = 720, cw = W / cols, ch = 148, R = 40, rows = Math.ceil(cells.length / cols);
+    var lg = (legendOn() && nested()) ? legendRows(chartKeys(null) || [], W - 8) : { svg: '', h: 0 };
     var out = '', showLab = $('clab').checked;
     cells.forEach(function (c, idx) {
-      var cx = (idx % cols) * cw + cw / 2, cy = Math.floor(idx / cols) * ch + 60;
+      var cx = (idx % cols) * cw + cw / 2, cy = Math.floor(idx / cols) * ch + 60 + lg.h;
       var tot = 0;
       c.parts.forEach(function (x) { tot += x.v; });
       var a = -Math.PI / 2, r0 = R, ri = R * 0.56;
@@ -2413,14 +2557,16 @@ window.addEventListener('load',restore);
         var ttl = esc(c.label) + ' · ' + esc(x.l) + ' — ' + hrs(x.v) + ' h (' + pct + '%)';
         if (sweep >= Math.PI * 2 - 1e-6) {
           out += '<circle class="cg" data-t="' + ttl + '" cx="' + cx + '" cy="' + cy + '" r="' + ((r0 + ri) / 2)
-            + '" fill="none" stroke="' + x.c + '" stroke-width="' + (r0 - ri) + '"/>';
+            + '" fill="none" stroke="' + x.c + '" stroke-width="' + (r0 - ri) + '"'
+            + (x.untag ? ' opacity=".7"' : '') + '/>';
         } else {
           var p1 = pt(r0, a), p2 = pt(r0, a2), p3 = pt(ri, a2), p4 = pt(ri, a);
           out += '<path class="cg" data-t="' + ttl + '" d="M' + p1[0].toFixed(2) + ' ' + p1[1].toFixed(2)
             + 'A' + r0 + ' ' + r0 + ' 0 ' + big + ' 1 ' + p2[0].toFixed(2) + ' ' + p2[1].toFixed(2)
             + 'L' + p3[0].toFixed(2) + ' ' + p3[1].toFixed(2)
             + 'A' + ri + ' ' + ri + ' 0 ' + big + ' 0 ' + p4[0].toFixed(2) + ' ' + p4[1].toFixed(2) + 'Z"'
-            + ' fill="' + x.c + '" stroke="' + cvar('--paper') + '" stroke-width="2"/>';
+            + ' fill="' + x.c + '" stroke="' + cvar('--paper') + '" stroke-width="2"'
+            + (x.untag ? ' opacity=".7"' : '') + '/>';
         }
         a = a2;
       });
@@ -2432,8 +2578,8 @@ window.addEventListener('load',restore);
       out += '<text x="' + cx + '" y="' + (cy + R + 35) + '" text-anchor="middle" font-size="10.5" font-weight="600" fill="' + cvar('--muted') + '">'
         + (showLab ? '' : hrs(c.hours) + ' h · ') + c.billPct + '% billable</text>';
     });
-    return '<svg viewBox="0 0 ' + W + ' ' + (rows * ch + 16) + '" role="img" aria-label="'
-      + esc(colourBy) + ' compared side by side">' + out + '</svg>';
+    return '<svg viewBox="0 0 ' + W + ' ' + (rows * ch + 16 + lg.h) + '" role="img" aria-label="'
+      + esc(colourBy) + ' compared side by side">' + untagDefs() + lg.svg + out + '</svg>';
   }
 
   /* The cells the side-by-side view draws. A nested split puts that group's CHILDREN in its ring
@@ -2455,18 +2601,22 @@ window.addEventListener('load',restore);
         });
       });
       keys.sort(function (a, b) { return (tot[b] - tot[a]) || String(a).localeCompare(String(b)); });
-      var top = keys.slice(0, 8), col = {};
-      top.forEach(function (k, i) { col[k] = serCol(i, false); });
+      var top = keys.slice(0, 8), col = {}, fill = {};
+      // the child's OWN colour where it has one (a tag, a type of work), rank only where it does not
+      top.forEach(function (k, i) { col[k] = keyColour(CDIM2, k, i, false); fill[k] = fillFor(CDIM2, k, i, false); });
       var grey = serCol(0, true), rest = keys.length - top.length;
+      var isU = function (k) { return CDIM2 === 'tag' && isUntag(k); };
       return {
         colourBy: dimName(CDIM2),
-        keys: top.map(function (k) { return { k: k, label: nodeLabel(k, tree.dims[1]), c: col[k], hours: r2(tot[k]) }; })
-          .concat(rest > 0 ? [{ k: '__other', label: 'Other (' + rest + ' more)', c: grey,
+        keys: top.map(function (k) {
+          return { k: k, label: nodeLabel(k, tree.dims[1]), c: col[k], untag: isU(k), hours: r2(tot[k]) };
+        }).concat(rest > 0 ? [{ k: '__other', label: 'Other (' + rest + ' more)', c: grey,
             hours: r2(keys.slice(8).reduce(function (a, k2) { return a + tot[k2]; }, 0)) }] : []),
         cells: tree.map(function (nd) {
           var parts = [], other = 0;
           (nd.kids || []).forEach(function (kd) {
-            if (col[kd.k]) parts.push({ l: nodeLabel(kd.k, tree.dims[1]), v: kd.hours, c: col[kd.k], rank: top.indexOf(kd.k) });
+            if (col[kd.k]) parts.push({ l: nodeLabel(kd.k, tree.dims[1]), v: kd.hours, c: fill[kd.k],
+              untag: isU(kd.k), rank: top.indexOf(kd.k) });
             else other += kd.hours;
           });
           parts.sort(function (a, b) { return a.rank - b.rank; });
@@ -2577,12 +2727,21 @@ window.addEventListener('load',restore);
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Billable and non-billable hours by ' + esc(CDIM) + '">' + s + '</svg>';
   }
 
-  // the ONE place a group key becomes a human label — axis, tooltip, legend and PNG all read it
-  function dimLabel(k) {
-    if (CDIM === 'cat') return CAT_LABEL[k] || k;
-    if (CDIM === 'bucket') return BUCKET_LABEL[k] || k;
+  // the ONE place a group key becomes a human label — axis, tooltip, legend and PNG all read it.
+  // A TAG READS AS ITS NAME, not its slug: the card above says "Urgent" and "Not yet tagged", and
+  // a chart under it saying "urgent" / "(untagged)" is the same inconsistency in words that the
+  // rank palette was in colour.
+  function keyLabel(dim, k) {
+    if (dim === 'cat') return CAT_LABEL[k] || k;
+    if (dim === 'bucket') return BUCKET_LABEL[k] || k;
+    if (dim === 'tag') {
+      if (isUntag(k)) return 'Not yet tagged';
+      var d = defOf(normTagSlug(k));
+      return (d && d.label) || k;
+    }
     return String(k == null ? '' : k);
   }
+  function dimLabel(k) { return keyLabel(CDIM, k); }
 
   /* THE LEGEND CARRIES THE ENCODING, because on this card it changes with the form. When the
      marks are billable vs non-billable the two head rows wear the swatches; when the marks carry
@@ -2593,21 +2752,12 @@ window.addEventListener('load',restore);
     var h = '<div class="lg-row hd">' + (ident ? '' : sw(cvar('--bil'))) + '<span class="nm">Billable</span><span class="v">' + hrs(s.bill) + ' h</span><span class="p">' + s.billPct + '%</span></div>'
       + '<div class="lg-row hd">' + (ident ? '' : sw(cvar('--nbil'))) + '<span class="nm">Non-billable</span><span class="v">' + hrs(s.nonbill) + ' h</span><span class="p">' + (Math.round((100 - s.billPct) * 10) / 10) + '%</span></div>';
     var rows = null, cap = '';
-    if (CFORM === 'line' && sm) {
-      cap = LINEMODE === 'bill' ? 'Colour · the two lines' : 'Colour · ' + dimName(CDIM);
-      rows = sm.series.map(function (x, i) {
-        return { c: serCol(i, x.fold), label: LINEMODE === 'bill' ? x.k : dimLabel(x.k),
-          hours: x.hours, pct: x.billPct == null ? null : x.billPct };
-      });
-    } else if (CFORM === 'small' && nested()) {
-      var sc = smallCells();
-      cap = 'Colour · ' + sc.colourBy;
-      rows = sc.keys.map(function (k) { return { c: k.c, label: k.label, hours: k.hours, pct: null }; });
-    } else if (ident) {
-      cap = 'Colour · ' + dimName(CDIM);
-      rows = pieSlices().map(function (x, i) {
-        return { c: serCol(i, x.fold), label: dimLabel(x.k), hours: x.hours, pct: x.billPct };
-      });
+    if (ident) {
+      // ONE list feeds both legends — the rail and the chart can never name the same colour
+      // differently, which is the whole of Ray's "urgent in green versus urgent in red"
+      rows = chartKeys(sm) || [];
+      cap = 'Colour \u00b7 ' + (CFORM === 'line' && LINEMODE === 'bill' ? 'the two lines'
+        : (CFORM === 'small' && nested()) ? dimName(CDIM2) : dimName(CDIM));
     } else if (CDIM !== 'total') {
       cap = nested() ? [CDIM, CDIM2, CDIM3].filter(Boolean).map(dimName).join(' › ') : dimName(CDIM);
       rows = g.slice(0, 12).map(function (x) {
@@ -2618,8 +2768,12 @@ window.addEventListener('load',restore);
       h += '<div class="lg-cap"><span>' + esc(cap) + '</span><span class="u">'
         + (rows.length && rows[0].pct == null ? 'hours' : '% billable') + '</span></div>';
       h += rows.map(function (r) {
-        return '<div class="lg-row" style="border:none;padding:3px 0">' + (r.c ? sw(r.c) : '')
-          + '<span class="nm">' + esc(r.label) + '</span><span class="v">' + hrs(r.hours) + ' h</span>'
+        // untagged reads as the gap it is: a dotted swatch and a dimmed row, never a hue
+        var swatch = r.untag
+          ? '<i style="background:transparent;border:1px dotted ' + cvar('--muted') + '"></i>'
+          : (r.c ? sw(r.c) : '');
+        return '<div class="lg-row" style="border:none;padding:3px 0' + (r.untag ? ';opacity:.62' : '') + '">'
+          + swatch + '<span class="nm">' + esc(r.label) + '</span><span class="v">' + hrs(r.hours) + ' h</span>'
           + '<span class="p">' + (r.pct == null ? '' : r.pct + '%') + '</span></div>';
       }).join('');
     }
@@ -3308,6 +3462,12 @@ window.addEventListener('load',restore);
     $('cdim3').onchange = function () { CDIM3 = $('cdim3').value; fillSubDims(); chart(); };
     $('cform').onchange = function () { CFORM = $('cform').value; chart(); };
     $('clab').onchange = chart; $('ctab').onchange = chart;
+    // a per-DEVICE preference, like the theme and the density toggles — it describes one screen
+    try { var lgv = localStorage.getItem('fcc-tm-cleg'); if (lgv !== null) $('cleg').checked = lgv === '1'; } catch (e) {}
+    $('cleg').onchange = function () {
+      try { localStorage.setItem('fcc-tm-cleg', $('cleg').checked ? '1' : '0'); } catch (e) {}
+      chart();
+    };
     $('pxlsx').onclick = xlsxExport;
     $('xpng').onclick = png;
     $('xtsv').onclick = function () { copy(tsv(), 'Chart table copied'); };
