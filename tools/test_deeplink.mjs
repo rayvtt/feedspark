@@ -74,7 +74,8 @@ ok('the existing ?brief= deep link still stands', /\[\?&\]brief=/.test(WF));
 
 console.log('\n-- the guards honour it --');
 [['Label Guard', LG], ['PT Guard', PT]].forEach(([n, src]) => {
-  ok(n + ': estate cards carry their client', /est-card" data-client="/.test(src));
+  // the card may carry a ' collapsed' class between the two (the per-brand fold, 18 Sep 2026)
+  ok(n + ': estate cards carry their client', /est-card[^"]*" data-client="/.test(src));
   ok(n + ': it reads ?client=', /\[\?&\]client=\(\[\^&\]\+\)/.test(src));
   ok(n + ': it scrolls to the brand', /scrollIntoView/.test(src));
   ok(n + ': the name is folded, so "House of Bruar" matches',

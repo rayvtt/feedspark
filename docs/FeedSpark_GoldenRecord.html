@@ -367,12 +367,20 @@ window.addEventListener('load',restore);
   /* highlight-count distribution — a horizontal stacked bar (width-based, not the vertical
      .thist histogram above) so segment sizes are never at the mercy of flex column height
      resolution: a fixed-height row of width:X% segments always lays out exactly as measured */
-  .hlbar{display:flex;height:14px;border-radius:100px;overflow:hidden;border:1px solid var(--line);margin-top:9px}
-  .hlbar i{display:block;height:100%}
-  .hlkey{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:8px;font-size:11px;font-weight:800;color:var(--ink-2)}
-  .hlkey span{display:inline-flex;align-items:center;gap:5px}
-  .hlkey i{width:9px;height:9px;border-radius:3px;display:inline-block}
-  .hlkey .win{color:var(--ink)}
+  /* POPULATION card — the PT depth table's row format (label · bar · %), inline (Ray, 18 Sep
+     2026: "the table breakdown for highlight population (1, 2, 3, 4, 5, >5)") */
+  .pop{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:10px 0 2px;max-width:560px}
+  .pop h4{margin:0 0 7px;font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .pop .pr{display:flex;align-items:center;gap:8px;padding:2px 0;font-size:11.5px;font-weight:700;color:var(--muted)}
+  .pop .pr.hi{color:var(--ink);font-weight:900}
+  .pop .pl{width:112px;flex:none}
+  .pop .pb{flex:1;height:7px;border-radius:100px;background:#E3E6EB;overflow:hidden;min-width:0}
+  .pop .pb i{display:block;height:100%;border-radius:100px}
+  .pop .pv{width:50px;text-align:right;flex:none;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+  .pop .pf{margin-top:7px;color:var(--muted);font-size:10.5px;font-weight:700;line-height:1.55}
+  .pop .pf b{color:var(--ink)}
+  [data-theme=dark] .pop{background:#181B22}
+  [data-theme=dark] .pop .pb{background:#242833}
   [data-theme=dark] .ptrack,[data-theme=dark] .mseg .mt{background:#191C24}
   @media(max-width:900px){.score-grid{grid-template-columns:1fr}.ladder{flex-wrap:wrap}.lad{flex:1 1 44%}}
   /* content quality: how good the free-text data is, per Google's own spec pages */
@@ -2222,7 +2230,25 @@ window.addEventListener('load',restore);
   // how many highlights a product carries, bucketed — Google's spec (fail <2, warn <4 above)
   // stays the rule; this is the descriptive shape of the catalogue against Ray's OWN house
   // target of 6–10 (17 Sep 2026), the same layering PT Guard uses for its 5-depth standard
-  var HL_BUCKETS = [['0-1', '0–1'], ['2-3', '2–3'], ['4-5', '4–5'], ['6-10', '6–10'], ['11+', '11+']];
+  // the POPULATION card (Ray, 18 Sep 2026): the PT depth table's rows — label · bar · % —
+  // here for how many highlights each product carries; the same popCard() /labels and
+  // /ptypes draw, the same colour ramp as Product Type Guard's depth bar
+  var POP_COL = { '1': '#E3E6EB', '2': '#F2D9AE', '3': '#F5A623', '4': '#ED6F0B', '5': '#B1550A', '6+': '#6E3405' };
+  function popCard(title, pop, o) {
+    o = o || {};
+    if (!pop) return '';
+    var keys = o.keys || ['1', '2', '3', '4', '5', '6+'];
+    var h = '<div class="pop' + (o.cls ? ' ' + o.cls : '') + '"><h4>' + esc(title) + ' · SKU-weighted</h4>';
+    keys.forEach(function (b) {
+      var pct = pop.pct[b] || 0, hi = o.hi ? o.hi.indexOf(b) >= 0 : false;
+      h += '<div class="pr' + (hi ? ' hi' : '') + '"><span class="pl">' + b + ' ' + (b === '1' ? o.one : o.many) + (o.mark === b ? ' (our target)' : '') + '</span>' +
+        '<span class="pb"><i style="width:' + Math.min(100, pct) + '%;background:' + POP_COL[b] + '"></i></span><span class="pv">' + pct + '%</span></div>';
+    });
+    h += '<div class="pf">avg <b>' + pop.avg + '</b> ' + o.many + ' per product · <b>' + fmt(pop.skus) + '</b> products profiled' +
+      (pop.zero ? ' · <b>' + fmt(pop.zero) + '</b> carry none' : '') + '</div>' +
+      (o.foot ? '<div class="pf">' + o.foot + '</div>' : '') + '</div>';
+    return h;
+  }
   var LADDER = [{ t: 1, l: 'Foundational', r: '< 40' }, { t: 2, l: 'Structured', r: '40–59' },
     { t: 3, l: 'Enriched', r: '60–79' }, { t: 4, l: 'Agentic-ready', r: '80+' }];
   function airCol(s) { return s < 40 ? 'var(--risk)' : (s < 60 ? 'var(--orange-deep)' : (s < 80 ? 'var(--orange)' : 'var(--good)')); }
@@ -2539,27 +2565,17 @@ window.addEventListener('load',restore);
   // way PT Guard layers its 5-depth standard on Google's base spec, is 6–10 (17 Sep 2026:
   // "showcase what you have done ... how many highlights you have spotted within 100 ...
   // recommendation is from 6 to 10").
-  var HL_COL = { '0-1': 'var(--risk)', '2-3': '#F5A623', '4-5': '#F2D9AE', '6-10': 'var(--good)', '11+': 'var(--navy)' };
   function highlightProfile(k, r) {
     var d = r.hlDist; if (!d) return '';
-    var idealPct = d['6-10'] || 0;
-    // width-based, not the vertical .thist histogram above — a fixed-height row of width:X%
-    // segments lays out exactly as measured, with no flex-column height resolution to fight
-    return '<div class="tanat"><div class="tanat-h">Highlights per product' +
-      '<span>Google’s ceiling is 100 · their own stated minimum is 2, recommended 4–6' +
-      (r.perProduct != null ? ' · this feed averages <b>' + r.perProduct + '</b> per product' : '') + '</span></div>' +
-      '<div class="hlbar" title="' + HL_BUCKETS.map(function (b) { return (d[b[0]] || 0) + '% carry ' + b[1] + ' highlights'; }).join(' · ') + '">' +
-      HL_BUCKETS.map(function (b) {
-        var pct = d[b[0]] || 0;
-        return pct > 0 ? '<i style="width:' + pct + '%;background:' + HL_COL[b[0]] + '"></i>' : '';
-      }).join('') + '</div>' +
-      '<div class="hlkey">' + HL_BUCKETS.map(function (b) {
-        var win = b[0] === '6-10';
-        return '<span' + (win ? ' class="win"' : '') + '><i style="background:' + HL_COL[b[0]] + '"></i>' + esc(b[1]) +
-          (win ? ' (our target)' : '') + ' <b>' + (d[b[0]] || 0) + '%</b></span>';
-      }).join('') + '</div>' +
-      '<p class="qz-empty" style="margin-top:8px"><b>' + idealPct + '%</b> of products sit in our recommended <b>6–10</b> highlight range' +
-      ' — FeedSpark’s own house target, above Google’s stated 4–6, for the fuller set of selling points AI and agentic shopping surfaces read.</p></div>';
+    // the distribution is a share of FILLED products per exact count (1..5, 6+) — the shape
+    // popCard draws; avg = the collector's values-per-product read, profiled = filled
+    var pop = { pct: d, avg: r.perProduct != null ? r.perProduct : 0, skus: r.filled || 0, zero: 0 };
+    var at4 = Math.round(((d['4'] || 0) + (d['5'] || 0) + (d['6+'] || 0)) * 10) / 10, at6 = d['6+'] || 0;
+    return popCard('Highlight population — highlights carried per product', pop, {
+      cls: 'hlpop', one: 'highlight', many: 'highlights', hi: ['4', '5', '6+'], mark: '6+',
+      foot: 'Google’s stated 4–6 recommendation: <b>' + at4 + '%</b> of products carry 4 or more · FeedSpark’s own house target of 6–10: <b>' + at6 +
+        '%</b> carry 6 or more — the fuller set of selling points AI and agentic shopping surfaces read (Google’s ceiling is 100, stated minimum 2)',
+    });
   }
   // bars animate on the frame after paint, the way the Feed Lab cards do
   function airAnimate() {

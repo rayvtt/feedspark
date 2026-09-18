@@ -174,6 +174,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record at 390px WITH a scanned feed (rows fit, no rescue frames, pop-ups on screen)"
   NODE_PATH=$(npm root -g) node tools/check_grmobile.js || {
     echo "✗ Golden Record phone tripwire failed — a scanned attribute row, a section or a pop-up runs past a 390px screen"; exit 1; }
+  echo "── validating: guard cards — population tables on /labels /ptypes /golden, collapse all + individual"
+  NODE_PATH=$(npm root -g) node tools/test_guardcards.mjs || {
+    echo "✗ guard-cards tripwire failed — a population table, a sheet-backed note, or the brand-card collapse regressed"; exit 1; }
   echo "── validating: Golden Record scoring-profile editor (always-required roster shown, locked)"
   NODE_PATH=$(npm root -g) node tools/test_grprofile.mjs || {
     echo "✗ scoring-profile editor tripwire failed — the always-required roster went missing or became clickable"; exit 1; }

@@ -729,8 +729,57 @@ export function depthProfile(values) {
   }
   if (!total) return null;
   const pct = {};
-  for (const b of ['1', '2', '3', '4', '5', '6+']) pct[b] = counts[b] ? Math.round((counts[b] / total) * 1000) / 10 : 0;
+  for (const b of POP_KEYS) pct[b] = counts[b] ? Math.round((counts[b] / total) * 1000) / 10 : 0;
   return { pct, avg: Math.round((wsum / total) * 10) / 10, skus: total };
+}
+
+/* ---------------- POPULATION — how many VALUES a SKU carries (Ray, 18 Sep 2026) --------
+   "I want this feature [the PT depth granularity table] to be the table breakdown for
+   highlight population (1, 2, 3, 4, 5, >5) applied to label cards and product types as well."
+   depthProfile answers "how deep is the path"; this answers "how many of the thing does a
+   SKU carry" — custom labels populated per SKU (0–5), product_type values per SKU (the
+   category tree plus every keyword slot), highlights per product — in the SAME shape
+   (pct per bucket 1..5 / 6+, avg, skus profiled) so the three cards read alike. A SKU with
+   NONE is not profiled (coverage is the other question) but is counted in `zero` so the
+   card can say so out loud rather than quietly leaving it out of the denominator. */
+export const POP_KEYS = ['1', '2', '3', '4', '5', '6+'];
+export function popBucket(n) { return n >= 6 ? '6+' : String(n); }
+export function popProfile(hist) {
+  const counts = {};
+  let total = 0, wsum = 0, zero = 0, max = 0;
+  for (const k of Object.keys(hist || {})) {
+    const c = Math.max(0, Math.round(+k || 0)), n = Math.max(0, Math.round(+hist[k] || 0));
+    if (!n) continue;
+    if (!c) { zero += n; continue; }
+    const b = popBucket(c);
+    counts[b] = (counts[b] || 0) + n;
+    total += n; wsum += c * n;
+    if (c > max) max = c;
+  }
+  if (!total) return null;
+  const pct = {};
+  for (const b of POP_KEYS) pct[b] = counts[b] ? Math.round((counts[b] / total) * 1000) / 10 : 0;
+  return { pct, avg: Math.round((wsum / total) * 10) / 10, skus: total, zero, max };
+}
+// the push lanes (the 4x-daily agent, the page's live rescan) hand the worker a profile
+// they computed — this keeps it to the exact shape, every number clamped, or drops it
+export function cleanPop(p) {
+  if (!p || typeof p !== 'object' || !p.pct || typeof p.pct !== 'object') return null;
+  const num = (v, cap) => Math.max(0, Math.min(cap, Math.round((Number(v) || 0) * 10) / 10));
+  const pct = {};
+  for (const b of POP_KEYS) pct[b] = num(p.pct[b], 100);
+  const skus = Math.max(0, Math.round(Number(p.skus) || 0));
+  if (!skus) return null;
+  return { pct, avg: num(p.avg, 1e4), skus, zero: Math.max(0, Math.round(Number(p.zero) || 0)), max: Math.max(0, Math.round(Number(p.max) || 0)) };
+}
+// every column a repeatable attribute occupies — bare `key`, or `key(n)` — the XML parser's
+// shape for a repeated tag and the sheet exports' |||n shape after normHeader
+export function slotCols(headerRow, key) {
+  const norm = (headerRow || []).map(normHeader);
+  const re = new RegExp('^' + key + '\\((\\d+)\\)$');
+  const hits = [];
+  for (let i = 0; i < norm.length; i++) if (norm[i] === key || re.test(norm[i])) hits.push(i);
+  return hits;
 }
 
 /* ---------------- Golden Record: attribute coverage (module /golden) ------------------- */
@@ -842,10 +891,15 @@ export function xmlCollector(meta) {
   let dobCol = -1; const dob = { n: 0, bad: 0, m: {}, min: null, max: null };
   const filled = {}, maps = {};          // per key: filled count + value->n map
   let attrFilled = null;                 // per attr key: filled count
+  // population (Ray, 18 Sep 2026): how many custom labels a SKU carries, and how many
+  // product_type VALUES (the tree + every keyword slot) — histograms of count -> SKUs
+  let ptSlots = [];
+  const lblHist = {}, ptHist = {};
   const resolveCols = () => {
     cols = findCols(header, keys);
     // -fb feeds don't carry PT in `keys` — resolve the category column separately
     ptCol = wantPT ? cols.labels.product_type : findCols(header, PT_KEYS).labels.product_type;
+    ptSlots = wantPT ? slotCols(header, 'product_type') : [];
     dobCol = wantPT ? findCols(header, [DOB_KEY]).labels[DOB_KEY] : -1;
     for (const k of keys) if (cols.labels[k] >= 0 && !maps[k]) { filled[k] = 0; maps[k] = new Map(); }
     if (wantPT) {
@@ -871,6 +925,15 @@ export function xmlCollector(meta) {
     const idv = String(r[cols.id] == null ? '' : r[cols.id]).trim();
     if (idv !== '') {
       rows++;
+      // population: one SKU, one bucket each — labels carried, product_type values carried
+      let ln = 0;
+      for (const k of LABEL_KEYS) { const ci = cols.labels[k]; if (ci >= 0 && String(r[ci] == null ? '' : r[ci]).trim() !== '') ln++; }
+      lblHist[ln] = (lblHist[ln] || 0) + 1;
+      if (wantPT) {
+        let pn = 0;
+        for (const ci of ptSlots) if (String(r[ci] == null ? '' : r[ci]).trim() !== '') pn++;
+        ptHist[pn] = (ptHist[pn] || 0) + 1;
+      }
       if (vids.length < VOLCAP) {
         const pv = ptCol >= 0 ? String(r[ptCol] == null ? '' : r[ptCol]) : '';
         vids.push(idv.replace(/[|\n]/g, ' ') + '|' + pv.split('>')[0].trim().slice(0, 60));
@@ -921,6 +984,10 @@ export function xmlCollector(meta) {
     }
     const snap = snapshotFromParts({ client: meta.client, market: meta.market, fetchedAt: Date.now() }, cols, countsRow, groupRowsByKey, keys);
     if (attrCols) snap.attrs = attrsFromCounts(attrCols, attrPos, countsRow, snap.rows);
+    // per-SKU population — only a full read can say it, so only this lane carries it (the
+    // gviz lane counts columns, never rows; a sheet-backed feed's card says so)
+    snap.labelPop = popProfile(lblHist);
+    if (wantPT) snap.ptPop = popProfile(ptHist);
     return { snap, vol: { ids: vids.join('\n'), trunc: volTrunc, dob: dobCol >= 0 ? dob : null } };
   };
   return { onRow, finish };
@@ -1489,14 +1556,10 @@ export function qspecOf(key) { return QSPEC.filter((q) => q.key === key)[0] || n
    to `name`, `name(2)`, `name(3)`…, and a CSV may ship the same shape or a |||-joined cell —
    so a quality read that resolves one column reads one value out of four. */
 export function findMultiCols(headerRow) {
-  const norm = (headerRow || []).map(normHeader);
   const out = {};
   for (const q of QSPEC) {
     if (!q.multi) continue;
-    const hits = [];
-    for (let i = 0; i < norm.length; i++) {
-      if (norm[i] === q.key || new RegExp('^' + q.key + '\\((\\d+)\\)$').test(norm[i])) hits.push(i);
-    }
+    const hits = slotCols(headerRow, q.key);
     if (hits.length) out[q.key] = hits;
   }
   return out;
@@ -1510,15 +1573,12 @@ const joinSlots = (row, idx) => (idx || []).map((i) => String(row[i] == null ? '
 // own spec (answer 9216100) is already enforced as rules above (fail <2, warn <4); this is a
 // separate, descriptive read of the SHAPE of the catalogue against Ray's own house target —
 // the same layering PT Guard uses for its 5-depth standard alongside Google's base spec.
-export const HL_BUCKETS = ['0-1', '2-3', '4-5', '6-10', '11+'];
+// The buckets are the POPULATION keys (Ray, 18 Sep 2026: "the table breakdown for highlight
+// population (1, 2, 3, 4, 5, >5)") — one product, one exact count, so the row reads like the
+// PT depth table; a product with no highlight is not filled and never enters the read.
+export const HL_BUCKETS = POP_KEYS;
 export const HL_STD = { min: 6, max: 10 };
-function hlBucket(n) {
-  if (n < 2) return '0-1';
-  if (n < 4) return '2-3';
-  if (n < 6) return '4-5';
-  if (n <= 10) return '6-10';
-  return '11+';
-}
+function hlBucket(n) { return popBucket(Math.max(1, n)); }
 function hlDistOf(buckets, filled) {
   const pct = {};
   for (const b of HL_BUCKETS) pct[b] = Math.round(((buckets[b] || 0) / filled) * 1000) / 10;

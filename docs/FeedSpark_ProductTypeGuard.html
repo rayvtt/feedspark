@@ -57,6 +57,32 @@ window.addEventListener('load',restore);
   .est-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
   .est-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
   .est-card h3{margin:0 0 8px;font-size:16px;font-weight:900}
+  /* the card header IS the per-brand collapse toggle (Ray, 18 Sep 2026: the Golden Record
+     scorecard's "expand and collapse, all and individual" on the product-type cards too) */
+  .est-hd{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 0;margin:-6px 0 2px}
+  .est-card.collapsed .est-hd{margin-bottom:-6px}
+  .est-hd h3{margin:0;font-size:16px;font-weight:900;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .est-hd .cx{color:var(--muted);font-weight:900;width:10px;flex:none;font-size:12px}
+  .est-sum{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;color:var(--muted);flex:none;white-space:nowrap}
+  .est-sum b{font-size:13.5px;font-variant-numeric:tabular-nums}
+  .est-flag{font-size:10px;font-weight:900;border-radius:100px;padding:1.5px 7px;white-space:nowrap}
+  .est-flag.crit{background:#FDEBEA;color:var(--risk)}
+  .est-flag.warn{background:#FDF3E3;color:var(--orange-deep)}
+  /* POPULATION card — the depth table's row format (label · bar · %), inline, for how many
+     product_type VALUES a SKU carries: the category tree plus every keyword slot (Ray, 18 Sep 2026) */
+  .pop{background:var(--wash,#F7F7F5);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:10px 0 2px;max-width:560px}
+  .pop h4{margin:0 0 7px;font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .pop .pr{display:flex;align-items:center;gap:8px;padding:2px 0;font-size:11.5px;font-weight:700;color:var(--muted)}
+  .pop .pr.hi{color:var(--ink);font-weight:900}
+  .pop .pl{width:96px;flex:none}
+  .pop .pb{flex:1;height:7px;border-radius:100px;background:#E3E6EB;overflow:hidden;min-width:0}
+  .pop .pb i{display:block;height:100%;border-radius:100px}
+  .pop .pv{width:50px;text-align:right;flex:none;font-variant-numeric:tabular-nums;color:var(--ink-2,#4a4a4a)}
+  .pop .pf{margin-top:7px;color:var(--muted);font-size:10.5px;font-weight:700;line-height:1.55}
+  .pop .pf b{color:var(--ink)}
+  .pop.na{font-size:11.5px;font-weight:700;color:var(--muted)}
+  [data-theme=dark] .pop{background:#181B22}
+  [data-theme=dark] .pop .pb{background:#242833}
   .est-mkt{display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px dashed var(--line);cursor:pointer}
   .est-mkt:hover .mkt-code{color:var(--orange-deep)}
   .est-mkt.sel{background:rgba(245,166,35,.08);border-radius:8px;margin:0 -8px;padding:7px 8px}
@@ -332,6 +358,7 @@ window.addEventListener('load',restore);
 <section class="cat"><div class="wrap">
   <div class="cat-h"><span class="k">02</span><h2>Estate health</h2>
     <span style="margin-left:auto;display:flex;gap:8px;align-items:center"><span class="scanmsg" id="scan-all-msg"></span>
+    <button class="btn" id="collapse-all" title="Collapse or expand every brand card — a single card still opens or closes on its own header">⊖ Collapse all</button>
     <button class="btn pri" id="scan-all" title="Force-rescans every feed now (no freshness skip) — labels and product types land in the same pass">⚡ Scan whole estate</button></span></div>
   <p class="cat-sub"><span class="chip-ch chip-g">G</span> <b>Google Shopping feeds only</b> — Meta catalogues
   segment differently, so they stay on <a href="/labels">Label Guard</a>. Bar = product_type coverage.
@@ -452,6 +479,45 @@ window.addEventListener('load',restore);
   var DCOL = { '1': '#E3E6EB', '2': '#F2D9AE', '3': '#F5A623', '4': '#ED6F0B', '5': '#B1550A', '6+': '#6E3405' };
   var DKEYS = ['1', '2', '3', '4', '5', '6+'];
   // data-dp carries the profile for the styled hover card; aria-label keeps the chevron text form
+  (function () {
+    var b = $('collapse-all'); if (!b) return;
+    b.onclick = function () {
+      var allDown = estClients.length > 0 && estClients.every(function (c) { return COLLAPSED.has(c); });
+      if (allDown) COLLAPSED.clear(); else estClients.forEach(function (c) { COLLAPSED.add(c); });
+      saveCollapsed(); renderEstate();
+    };
+  })();
+
+  /* ---- POPULATION card (Ray, 18 Sep 2026): the depth table's row format — label · bar · % —
+     for how many product_type VALUES each SKU carries: the category tree (bare g:product_type
+     or slot 1) plus every keyword slot 2–10, the FeedSpark keyword injection. One value = the
+     tree only; 2+ = keywords live on that SKU. Read per SKU on the XML lanes; a sheet-backed
+     (gviz) feed cannot say it and says so. Same colour ramp as the depth bar (DCOL). */
+  function popCard(title, pop, o) {
+    o = o || {};
+    if (!pop) return '<div class="pop na"><h4>' + esc(title) + '</h4>' + (o.none || 'Not profiled yet.') + '</div>';
+    var keys = o.keys || DKEYS;
+    var h = '<div class="pop"><h4>' + esc(title) + ' · SKU-weighted</h4>';
+    keys.forEach(function (b) {
+      var pct = pop.pct[b] || 0, hi = o.hi ? o.hi.indexOf(b) >= 0 : false;
+      h += '<div class="pr' + (hi ? ' hi' : '') + '"><span class="pl">' + b + ' ' + (b === '1' ? o.one : o.many) + '</span>' +
+        '<span class="pb"><i style="width:' + Math.min(100, pct) + '%;background:' + DCOL[b] + '"></i></span><span class="pv">' + pct + '%</span></div>';
+    });
+    var all = pop.skus + (pop.zero || 0);
+    h += '<div class="pf">avg <b>' + pop.avg + '</b> ' + o.many + ' per SKU · <b>' + fmt(pop.skus) + '</b> SKUs profiled' +
+      (pop.zero ? ' · <b>' + fmt(pop.zero) + '</b> carry none (' + (all ? Math.round(pop.zero / all * 1000) / 10 : 0) + '%)' : '') + '</div>' +
+      (o.foot ? '<div class="pf">' + o.foot + '</div>' : '') + '</div>';
+    return h;
+  }
+  function ptPopCard(s) {
+    var pop = s.ptPop;
+    var kw = pop ? Math.round((100 - (pop.pct['1'] || 0)) * 10) / 10 : 0;
+    return popCard('product_type population — values carried per SKU', pop, {
+      one: 'value', many: 'values', hi: ['2', '3', '4', '5', '6+'],
+      foot: '1 value = the category tree only · 2+ = keyword slots live on the SKU — <b>' + kw + '%</b> of profiled SKUs are keyworded (max ' + (pop ? pop.max : 0) + ' values on one SKU)',
+      none: 'Per-SKU population needs a full read of the feed. This snapshot came from <b>column counts</b> (a Google Sheet scanned through gviz), which say how full the column is but not how many values one SKU carries — wire the FeedHero XML for this market, or run <b>↻ Scan live feed</b> on an XML feed, and the table appears here.',
+    });
+  }
   function dpAttr(dp, truncated) {
     if (!dp) return '';
     return ' data-dp="' + esc(JSON.stringify({ p: dp, tr: truncated ? 1 : 0 })) + '"' +
@@ -533,6 +599,27 @@ window.addEventListener('load',restore);
     if (Date.now() - f.t > 26 * 3600 * 1000) return 'stale';
     return 'ok';
   }
+  // per-brand collapse (Ray, 18 Sep 2026: the Golden Record scorecard's "expand and collapse,
+  // all and individual" on the product-type cards too) — a device preference like pt-ref,
+  // never shared team state
+  var COLLAPSED = (function () {
+    try { return new Set(JSON.parse(localStorage.getItem('pt-collapse') || '[]')); } catch (e) { return new Set(); }
+  })();
+  function saveCollapsed() { try { localStorage.setItem('pt-collapse', JSON.stringify(Array.from(COLLAPSED))); } catch (e) {} }
+  function toggleCollapse(c) { if (COLLAPSED.has(c)) COLLAPSED.delete(c); else COLLAPSED.add(c); saveCollapsed(); renderEstate(); }
+  window.__estUncollapse = function (c) { if (COLLAPSED.has(c)) { COLLAPSED.delete(c); saveCollapsed(); renderEstate(); return true; } return false; };
+  // what a collapsed card still says: markets, live alerts, the brand's average tree depth
+  function estSummary(rows) {
+    var crit = 0, warn = 0, scanned = 0, dsum = 0, dn = 0;
+    rows.forEach(function (f) { crit += f.nCrit || 0; warn += f.nWarn || 0; if (f.t) scanned++; if (f.depth && f.depth.avg) { dsum += f.depth.avg; dn++; } });
+    return { n: rows.length, crit: crit, warn: warn, scanned: scanned, depth: dn ? Math.round(dsum / dn * 10) / 10 : null };
+  }
+  var estClients = [];
+  function collapseAllBtn() {
+    var b = $('collapse-all'); if (!b) return;
+    var allDown = estClients.length > 0 && estClients.every(function (c) { return COLLAPSED.has(c); });
+    b.textContent = allDown ? '⊕ Expand all' : '⊖ Collapse all';
+  }
   function renderEstate() {
     var byClient = {};
     feedList().forEach(function (f) { (byClient[f.client] = byClient[f.client] || []).push(f); });
@@ -540,11 +627,20 @@ window.addEventListener('load',restore);
       byClient[c].sort(function (a, b) { return String(a.mkt).localeCompare(String(b.mkt)); });
     });
     var clients = Object.keys(byClient).sort();
-    if (!clients.length) { $('est-grid').innerHTML = '<div class="panel"><span class="muted">No Google Shopping feeds wired yet.</span></div>'; return; }
+    estClients = clients;
+    if (!clients.length) { $('est-grid').innerHTML = '<div class="panel"><span class="muted">No Google Shopping feeds wired yet.</span></div>'; collapseAllBtn(); return; }
     var h = '';
     clients.forEach(function (c) {
-      h += '<div class="est-card" data-client="' + esc(c) + '"><h3>' + esc(c) + '</h3>';
-      byClient[c].forEach(function (f) {
+      var collapsed = COLLAPSED.has(c), sum = estSummary(byClient[c]);
+      h += '<div class="est-card' + (collapsed ? ' collapsed' : '') + '" data-client="' + esc(c) + '">' +
+        '<div class="est-hd" data-toggle="' + esc(c) + '" title="' + (collapsed ? 'Expand' : 'Collapse') + ' ' + esc(c) + '">' +
+        '<span class="cx">' + (collapsed ? '▸' : '▾') + '</span><h3>' + esc(c) + '</h3>' +
+        '<span class="est-sum">' + (sum.depth != null ? '<b title="average category-path depth across the scanned markets">' + sum.depth + '</b>' : '') +
+        '<span>' + sum.n + ' market' + (sum.n === 1 ? '' : 's') + (sum.scanned < sum.n ? ' · ' + sum.scanned + ' scanned' : '') + '</span>' +
+        (sum.crit ? '<span class="est-flag crit">' + sum.crit + ' crit</span>' : '') +
+        (sum.warn ? '<span class="est-flag warn">' + sum.warn + ' warn</span>' : '') +
+        '</span></div>';
+      if (!collapsed) byClient[c].forEach(function (f) {
         var k = keyOf(f.client, f.mkt), st = statusOf(f);
         var cov = f.cov ? f.cov[PT] : null;
         h += '<div class="est-mkt' + (SEL === k ? ' sel' : '') + '" data-k="' + esc(k) + '"' + dpAttr(f.depth) + '>' +
@@ -561,6 +657,10 @@ window.addEventListener('load',restore);
       h += '</div>';
     });
     $('est-grid').innerHTML = h;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-toggle]'), function (el) {
+      el.onclick = function () { toggleCollapse(el.getAttribute('data-toggle')); };
+    });
+    collapseAllBtn();
     Array.prototype.forEach.call(document.querySelectorAll('.est-mkt'), function (el) {
       el.onclick = function () { select(el.getAttribute('data-k')); };
     });
@@ -937,6 +1037,7 @@ window.addEventListener('load',restore);
       (dp ? dpBar(dp, false, L.truncated) + dpChips(dp, L.truncated) + stdBadge(p, dp) : '') +
       (dcov != null && dcov !== 0 ? '<span class="delta ' + (dcov > 0 ? 'up' : 'down') + '">' + (dcov > 0 ? '▲ +' : '▼ ') + dcov + 'pp vs ' + refLbl + '</span>' : '') +
       '</div>';
+    h += ptPopCard(s);
     h += '<div id="askp-slot"></div>';
 
     var bm = refMap(ref), seen = {};
@@ -1257,6 +1358,8 @@ window.addEventListener('load',restore);
       for(var i=0;i<cards.length;i++){
         var c=cards[i].getAttribute('data-client')||'';
         if(c.toLowerCase().replace(/[^a-z0-9]/g,'')===want){
+          // a folded card opens first — the reader was sent to THIS brand, not to a chevron
+          if(window.__estUncollapse&&window.__estUncollapse(c)){ cards=document.querySelectorAll('.est-card[data-client]'); for(var j=0;j<cards.length;j++){ if((cards[j].getAttribute('data-client')||'')===c){ cards[i]=cards[j]; break; } } }
           cards[i].style.outline='2px solid var(--orange,#ED6F0B)';
           cards[i].style.outlineOffset='3px';
           if(cards[i].scrollIntoView)cards[i].scrollIntoView({behavior:'smooth',block:'center'});
