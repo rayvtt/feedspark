@@ -53,7 +53,7 @@ function liftPage() {
     'CATS', 'CAT_LABEL', 'DIMS', 'BUCKET_LABEL', 'STATUS_BUCKET',
     'TAG_SEED', 'normTagSlug', 'taggable', 'ruleHits', 'tagsOf', 'decorateTags',
     'displacement', 'rulePreview', 'groupNested', 'flattenNested', 'NEST_CAPS',
-    'typeOf', 'decorateTypes', 'seriesByMonth', 'monthOf', 'isoOf'];
+    'typeOf', 'decorateTypes', 'seriesByMonth', 'monthOf', 'isoOf', 'MEASURES', 'mOf'];
   // eslint-disable-next-line no-new-func
   const f = new Function(body + '\nreturn {' + names.join(',') + '};');
   return f();
@@ -1360,7 +1360,9 @@ ok(!/fs\.disabled = true/.test(PAGE_SRC), 'so no form ever sits disabled while n
 
 ok(/function byIdentity\(\)/.test(PAGE_SRC),
   'the page knows which forms colour by identity and which keep billable vs non-billable');
-ok(/var ident = byIdentity\(\), sw = function/.test(PAGE_SRC) && /\(ident \? '' : sw\(cvar\('--bil'\)\)\)/.test(PAGE_SRC),
+ok(/var ident = byIdentity\(\), sw = function/.test(PAGE_SRC)
+  && /hd\('Billable', showBill\(\), cvar\('--bil'\), s\.bill, s\.billPct\)/.test(PAGE_SRC)
+  && /return '<div class="lg-row hd"[\s\S]{0,400}\(ident \? '' : \(on \? sw\(col\)/.test(PAGE_SRC),
   'when colour carries identity the swatches move to the categories and the two figures stay as '
   + 'plain rows — the split is never dropped, it just stops being the colour');
 ok(/Colour \\u00b7 /.test(PAGE_SRC) || /Colour · /.test(PAGE_SRC),
@@ -1530,6 +1532,135 @@ ok(/localStorage\.setItem\('fcc-tm-untag'/.test(PAGE_SRC),
   'remembered per DEVICE, like the theme and the legend toggle — not a team fact');
 ok(!/groupBy\(FT, CDIM|groupNested\(FT,|seriesByMonth\(FT,/.test(PAGE_SRC),
   'ONE population feeds every form: no chart function reads FT behind chartPop\'s back');
+
+console.log('\n── the measure: hiding a series re-ranks, it does not repaint (Ray, 18 Sep 2026: "then option to hide non-billable also from dissectment")');
+// the engine, run for real
+const mrow = (k, bill, nonbill) => ({ cat: k, client: k, task: k, title: k, d: '2026-03-01',
+  bill, nonbill, hours: r2b(bill + nonbill), tags: [] });
+function r2b(n) { return Math.round(n * 100) / 100; }
+const MB = [mrow('a', 1, 9), mrow('b', 5, 0), mrow('c', 3, 3)];
+
+eq(M.MEASURES, ['hours', 'bill', 'nonbill'], 'three measures, and only three');
+eq([M.mOf({ hours: 10, bill: 1, nonbill: 9 }, 'hours'), M.mOf({ hours: 10, bill: 1, nonbill: 9 }, 'bill'),
+  M.mOf({ hours: 10, bill: 1, nonbill: 9 }, 'nonbill'), M.mOf({ hours: 10, bill: 1, nonbill: 9 })],
+  [10, 1, 9, 10], 'mOf picks the number, and an absent measure is the total — every existing caller unchanged');
+eq(M.mOf(null, 'bill'), 0, 'and a missing node is 0, never a throw inside a render loop');
+
+eq(M.groupBy(MB, 'cat').map((g) => g.k), ['a', 'c', 'b'], 'by total, a (10h) leads');
+eq(M.groupBy(MB, 'cat', 0, 'bill').map((g) => g.k), ['b', 'c', 'a'],
+  'THE RE-RANK IS THE POINT: on billable the order reverses, so the bars are never ordered by a '
+  + 'number the chart no longer draws — a row with 5 h of it sitting under one with 1 h that '
+  + 'happened to carry more non-billable is worse than no ordering at all');
+eq(M.groupBy(MB, 'cat', 0, 'nonbill').map((g) => g.k), ['a', 'c', 'b'], 'and non-billable ranks on its own');
+const mGb = M.groupBy(MB, 'cat', 0, 'bill')[0];
+eq([mGb.bill, mGb.nonbill, mGb.hours], [5, 0, 5],
+  'NOTHING IS DISCARDED — every node still carries all three, so the tooltip, the table and the '
+  + 'CSV can state the split the chart put away');
+
+// the cap keeps the biggest OF WHAT IS DRAWN, which is the trap a visual-only hide would spring
+const mCap = [mrow('keep', 40, 0), mrow('drop', 1, 39), mrow('x', 2, 0)];
+eq(M.groupBy(mCap, 'cat', 2, 'bill').map((g) => g.k), ['keep', 'Other (2 more)'],
+  'and the fold keeps the biggest by the MEASURE, not the biggest by a total nobody asked for');
+
+const mTree = M.groupNested(MB, ['cat'], null, 'bill');
+eq(mTree.map((n) => n.k), ['b', 'c', 'a'], 'the nested mTree ranks on it at every level');
+eq(M.seriesByMonth(MB, 'cat', 6, 'bill').series.map((x) => x.k), ['b', 'c', 'a'],
+  'and so does the line, so its fold and the bars\' fold keep the same rows');
+
+// engine and the page twin agree, as they must for every other function here
+eq(P.MEASURES, M.MEASURES, 'the page twin carries the same measures');
+eq([P.mOf({ hours: 9, bill: 4, nonbill: 5 }, 'bill'), P.mOf({ hours: 9, bill: 4, nonbill: 5 }, 'nonbill')],
+  [4, 5], 'and the same mOf');
+eq(P.groupBy(MB, 'cat', 0, 'bill').map((g) => g.k), M.groupBy(MB, 'cat', 0, 'bill').map((g) => g.k),
+  'so a re-rank reads identically in the worker and on the page');
+
+console.log('\n── percentage labels, and what they are a share of (Ray: "percentage of which attributes")');
+// the label rules, lifted out of the page by name and run
+const LB = new Function('CMEAS', 'CLAB', 'nested', 'hrs', 'mOf',
+  liftPageSrc('mv') + '\n' + liftPageSrc('showBill') + '\n' + liftPageSrc('showNon') + '\n'
+  + liftPageSrc('hiddenSeries') + '\n' + liftPageSrc('measWord') + '\n' + liftPageSrc('labMode') + '\n'
+  + liftPageSrc('pctOf') + '\n' + liftPageSrc('labText') + '\n' + liftPageSrc('labOn') + '\n'
+  + liftPageSrc('labBasis') + '\n'
+  + 'return { mv, showBill, showNon, hiddenSeries, measWord, labMode, pctOf, labText, labOn, labBasis };');
+const lb = (meas, lab, isNested) => LB(meas, lab, () => !!isNested,
+  (n) => String(Math.round(n * 100) / 100), M.mOf);
+
+const KWO = { hours: 110, bill: 63.75, nonbill: 46.25 };       // his row
+const OPT = { hours: 562.25, bill: 312.5, nonbill: 249.75 };   // its parent
+
+eq(lb('hours', 'hours', true).labText(KWO, OPT.hours), '110 h', 'hours is still hours — the default is untouched');
+eq(lb('bill', 'pparent', true).labText(KWO, OPT.bill), '20.4%',
+  'RAY\'S OWN NUMBER: Include → Billable only, Labels → % of its parent reads 63.75 of 312.5 — '
+  + '"how mCap out of 63.75 hours of keywords optimisation are accumulated to the total of '
+  + 'billable optimisation work type"');
+eq(lb('hours', 'pparent', true).labText(KWO, OPT.hours), '19.6%',
+  'and with both series in, the same label is the row\'s total against its parent\'s total — one '
+  + 'measure drives the mark AND its denominator, so the two can never be taken from different numbers');
+eq(lb('bill', 'hours', true).labText(KWO, 0), '63.75 h', 'hours under a single measure shows THAT series\' hours');
+eq(lb('bill', 'off', true).labText(KWO, 1), '', 'and None draws nothing');
+eq(lb('nonbill', 'pview', false).labText(KWO, 800), '5.8%', '% of the whole chart divides by the view');
+
+eq(lb('hours', 'pparent', false).labMode(), 'pview',
+  '"% of its parent" on a FLAT split falls back to the share of the chart — the same question one '
+  + 'level up — rather than dividing by a parent that does not exist');
+eq(lb('bill', 'pparent', true).pctOf(5, 0), '0%', 'a zero denominator is 0%, never NaN% on a live chart');
+eq([lb('bill', 'hours', true).hiddenSeries(), lb('nonbill', 'hours', true).hiddenSeries(),
+  lb('hours', 'hours', true).hiddenSeries()], ['Non-billable', 'Billable', ''],
+  'the series put away is named, so the verdict and the legend can say which');
+ok(/share of their parent/.test(lb('bill', 'pparent', true).labBasis())
+  && /billable hours/.test(lb('bill', 'pparent', true).labBasis()),
+  'and the basis is a full sentence: which hours, and a share of what');
+eq(lb('hours', 'hours', true).labBasis(), '',
+  'with nothing to explain it says nothing — the subtitle is not padded with a restatement of the default');
+
+console.log('\n── the page wiring');
+ok(/<select id="cmeas">/.test(PAGE_SRC) && /<option value="bill">Billable only<\/option>/.test(PAGE_SRC)
+  && /<option value="nonbill">Non-billable only<\/option>/.test(PAGE_SRC),
+  'the Include control ships with both single-series readings');
+ok(/<label for="cmeas">Include<\/label>/.test(PAGE_SRC),
+  'and it is NOT called "Show" — "Show as" is the form selector inches away, and two controls one '
+  + 'word apart is a misread waiting to happen');
+ok(/\{ v: 'pparent', label: '% of its parent', nest: true \}/.test(PAGE_SRC) && /function fillLabs\(\)/.test(PAGE_SRC),
+  'the Labels list is rebuilt with the split, so % of its parent is only offered where there is one');
+ok(/CLAB = CLAB === 'pparent' \? 'pview' : 'hours'/.test(PAGE_SRC),
+  'and a pick that stops being offered falls back to the nearest true question, not silently to hours');
+ok(/return !\(f === 'pct' && CMEAS !== 'hours'\)/.test(PAGE_SRC),
+  '100% stacked IS the billable split, so it leaves the form list while a series is hidden rather '
+  + 'than drawing every column full and saying nothing');
+ok(/groupBy\(chartPop\(\), CDIM, CDIM === 'total' \? 0 : 12, CMEAS\)/.test(PAGE_SRC)
+  && /groupNested\(chartPop\(\), \[CDIM, CDIM2, CDIM3\], null, CMEAS\)/.test(PAGE_SRC)
+  && /seriesByMonth\(chartPop\(\), CDIM, 6, CMEAS\)/.test(PAGE_SRC)
+  && /groupBy\(chartPop\(\), CDIM, 8, CMEAS\)/.test(PAGE_SRC),
+  'every grouping call carries the measure — one population, one ranking, all four forms');
+ok(/var SEP = '\\u0000', own = \{\}, viewTot = 0;/.test(PAGE_SRC)
+  && /own\[flat\[i\]\.path\.join\(SEP\)\] = mv\(flat\[i\]\);/.test(PAGE_SRC)
+  && /own\[r\.path\.slice\(0, r\.depth\)\.join\(SEP\)\]/.test(PAGE_SRC),
+  'a nested child divides by the parent it actually hangs under — keyed on the FULL PATH, never on '
+  + 'a node name that can repeat elsewhere in the mTree');
+ok(/\$\('cwsub'\)\.textContent = \(nested\(\)/.test(PAGE_SRC) && /if \(labBasis\(\)\) basis\.push\(labBasis\(\)\);/.test(PAGE_SRC),
+  'the basis rides the SUBTITLE, not the verdict: the verdict collapses behind the card\'s ⓘ, and a '
+  + 'percentage whose meaning can be folded away is one someone will read wrong');
+ok(/esc\(hiddenSeries\(\)\) \+ ' is hidden: <b>'/.test(PAGE_SRC) && /ranked on '\s*\+ measWord\(\) \+ ' hours/.test(PAGE_SRC),
+  'the verdict names the hidden series, its hours, and that the rows were re-ranked');
+ok(/· hidden<\/span>/.test(PAGE_SRC) && /var hd = function \(name, on, col, val, pct\)/.test(PAGE_SRC),
+  'the hidden series KEEPS its legend row — dimmed, marked, with its hours — so the two head rows '
+  + 'still add up to the book and the number nobody looked at is not lost');
+ok(/localStorage\.setItem\('fcc-tm-meas'/.test(PAGE_SRC) && /localStorage\.setItem\('fcc-tm-lab'/.test(PAGE_SRC),
+  'both are per DEVICE, like the theme and the legend toggle — one screen\'s reading, not a team fact');
+ok(/qp\.get\('meas'\) \|\| localStorage\.getItem\('fcc-tm-meas'\)/.test(PAGE_SRC),
+  'and a link that names them BEATS the remembered pick, or a shared view opens as something else '
+  + 'on every screen');
+ok(/if \(showBill\(\)\) ser\.push\(mk\('Billable', 'bill'\)\);/.test(PAGE_SRC),
+  'on Everything the two lines ARE the two series, so hiding one leaves one line, not an empty chart');
+ok(/\(CMEAS !== 'hours' \? ' · ' \+ measWord\(\) \+ ' hours only' : ''\)/.test(PAGE_SRC),
+  'and the PNG stamps the same basis, so a shared image cannot imply it is the whole book');
+
+ok(/\$\('cwh'\)\.textContent = CMEAS === 'hours' \? 'Billable vs non-billable'/.test(PAGE_SRC),
+  'the card HEADING follows the measure too — it is the first thing read, and "Billable vs '
+  + 'non-billable" over a chart with non-billable put away is the heading contradicting the chart');
+ok(/\.cw-ctl \.cwp\{display:inline-flex/.test(PAGE_SRC) && /<span class="cwp"><label for="cmeas">/.test(PAGE_SRC),
+  'and a label wraps WITH its control — the row wraps, and "INCLUDE" stranded at the end of one '
+  + 'line with its select on the next names nothing');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

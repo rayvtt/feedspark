@@ -668,6 +668,25 @@ function dimKeys(t, dim) {
  */
 export const NEST_CAPS = [12, 8, 6];
 
+/**
+ * THE MEASURE — which of a node's three numbers the chart is actually about (Ray, 18 Sep 2026:
+ * "then option to hide non-billable also from dissectment").
+ *
+ * Every node carries bill, nonbill and hours whatever the measure is: nothing is discarded, and a
+ * tooltip or a table can still state the split. What the measure decides is which number RANKS
+ * the rows and therefore which of them survive the cap.
+ *
+ * That re-ranking is the whole point and not a detail: leave the order on `hours` while drawing
+ * only the billable segment and the bars come out shuffled — a row with 40 h of it sitting below
+ * a row with 4 h that happened to carry more non-billable — and the fold keeps the wrong twelve.
+ * A chart ordered by a number it does not draw is worse than no ordering at all.
+ */
+export const MEASURES = ['hours', 'bill', 'nonbill'];
+export function mOf(x, m) {
+  if (!x) return 0;
+  return m === 'bill' ? x.bill : m === 'nonbill' ? x.nonbill : x.hours;
+}
+
 function tally(rows) {
   let bill = 0, nonbill = 0, hours = 0;
   for (const t of rows) { bill += t.bill; nonbill += t.nonbill; hours += t.hours; }
@@ -678,7 +697,7 @@ function tally(rows) {
 }
 
 /** One level: bucket the rows by `dim`, biggest first, the tail folded into one node. */
-function nodesAt(rows, dim, cap) {
+function nodesAt(rows, dim, cap, measure) {
   const m = new Map();
   let placements = 0;
   for (const t of rows) {
@@ -691,7 +710,7 @@ function nodesAt(rows, dim, cap) {
   }
   let out = [...m.values()].map((b) => Object.assign(tally(b.rows), { k: b.k, rows: b.rows }));
   if (dim === 'month') out.sort((a, b) => String(a.k).localeCompare(String(b.k)));
-  else out.sort((a, b) => (b.hours - a.hours) || (b.n - a.n) || String(a.k).localeCompare(String(b.k)));
+  else out.sort((a, b) => (mOf(b, measure) - mOf(a, measure)) || (b.n - a.n) || String(a.k).localeCompare(String(b.k)));
   if (cap && out.length > cap && dim !== 'month') {
     const keep = out.slice(0, cap - 1), rest = out.slice(cap - 1);
     // the fold keeps the folded rows, so its own children stay real rather than a dead end
@@ -710,7 +729,7 @@ function nodesAt(rows, dim, cap) {
  * at a deeper level is dropped (splitting owner within owner yields one child per parent and says
  * nothing).
  */
-export function groupNested(rows, dims, caps) {
+export function groupNested(rows, dims, caps, measure) {
   const use = [];
   for (const d of (dims || [])) {
     if (!d || d === 'total' || use.indexOf(d) >= 0) continue;
@@ -722,7 +741,7 @@ export function groupNested(rows, dims, caps) {
   let multi = false, folded = 0;
 
   const build = (rws, depth) => {
-    const { nodes, placements } = nodesAt(rws, use[depth], cap[depth] || 0);
+    const { nodes, placements } = nodesAt(rws, use[depth], cap[depth] || 0, measure);
     if (placements > rws.length) multi = true;
     for (const nd of nodes) {
       if (nd.fold) folded += nd.fold;
@@ -766,7 +785,7 @@ export function flattenNested(tree, out, trail) {
    A MONTH A SERIES MISSED IS A ZERO, NOT A GAP. The months come from the whole view, so every
    series is read against the same x — two lines with different gaps would otherwise read as the
    same shape at different speeds. */
-export function seriesByMonth(rows, dim, cap = 6) {
+export function seriesByMonth(rows, dim, cap = 6, measure) {
   const months = new Set();
   const byKey = new Map();
   let undated = 0, placements = 0, dated = 0;
@@ -787,7 +806,7 @@ export function seriesByMonth(rows, dim, cap = 6) {
   }
   const ms = [...months].sort();
   let all = [...byKey.values()]
-    .sort((a, b) => (b.hours - a.hours) || (b.n - a.n) || String(a.k).localeCompare(String(b.k)));
+    .sort((a, b) => (mOf(b, measure) - mOf(a, measure)) || (b.n - a.n) || String(a.k).localeCompare(String(b.k)));
   let folded = 0;
   // the tail folds into ONE line rather than being dropped — the same rule the bars follow, so a
   // total read off the lines still matches the total read off the columns
@@ -818,7 +837,7 @@ export function seriesByMonth(rows, dim, cap = 6) {
   return { months: ms, series, undated, folded, multi: placements > dated, placements };
 }
 
-export function groupBy(rows, dim, cap) {
+export function groupBy(rows, dim, cap, measure) {
   const m = new Map();
   let placements = 0;
   for (const t of rows) {
@@ -835,7 +854,7 @@ export function groupBy(rows, dim, cap) {
   }));
   // months read in time order; everything else reads biggest-first
   if (dim === 'month') out.sort((a, b) => String(a.k).localeCompare(String(b.k)));
-  else out.sort((a, b) => (b.hours - a.hours) || (b.n - a.n) || String(a.k).localeCompare(String(b.k)));
+  else out.sort((a, b) => (mOf(b, measure) - mOf(a, measure)) || (b.n - a.n) || String(a.k).localeCompare(String(b.k)));
   // a tag dimension can place one task in several buckets, so the bucket hours legitimately sum
   // to more than the book. Say so rather than letting a chart imply otherwise.
   out.multi = placements > rows.length;

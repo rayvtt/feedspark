@@ -86,6 +86,9 @@ window.addEventListener('load',restore);
   .cw-head h3{margin:0;font-size:15.5px;font-weight:800;letter-spacing:-.01em}
   .cw-head .grow{flex:1}
   .cw-ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  /* a label and its select wrap together or not at all — the row wraps, and "INCLUDE" left
+     stranded at the end of one line with its control on the next names nothing */
+  .cw-ctl .cwp{display:inline-flex;align-items:center;gap:8px}
   .cw-ctl label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
   .cw-ctl select{font:inherit;font-size:13px;font-weight:600;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
   .tog{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer}
@@ -324,7 +327,7 @@ window.addEventListener('load',restore);
 
   <section class="card" id="chartcard">
     <div class="cw-head">
-      <h3>Billable vs non-billable</h3>
+      <h3 id="cwh">Billable vs non-billable</h3>
       <span class="sub" id="cwsub" style="font-size:12px;color:var(--muted);font-weight:600"></span>
       <span class="grow"></span>
       <!-- the exits belong beside the thing they export, not in a trailing row under it: four
@@ -352,7 +355,17 @@ window.addEventListener('load',restore);
         <option value="pct">100% stacked</option>
         <option value="bars">Horizontal bars</option>
       </select>
-      <label class="tog"><input type="checkbox" id="clab" checked> Value labels</label>
+      <!-- WHICH SERIES the chart is about. Hiding one re-ranks the rows on the one that is left,
+           so the bars can never be ordered by a number the chart no longer draws -->
+      <span class="cwp"><label for="cmeas">Include</label>
+        <select id="cmeas">
+          <option value="hours">Billable + non-billable</option>
+          <option value="bill">Billable only</option>
+          <option value="nonbill">Non-billable only</option>
+        </select></span>
+      <!-- and what a value label SAYS: hours, or a share — of its parent, or of the whole chart -->
+      <span class="cwp"><label for="clab">Labels</label>
+        <select id="clab"></select></span>
       <!-- the legend ON the chart, so the eye never has to travel to the rail — and so the PNG
            export carries it, which it never did before -->
       <label class="tog" title="Draw the key on the chart itself — it rides the PNG export too"><input type="checkbox" id="cleg" checked> Legend on chart</label>
@@ -1003,13 +1016,24 @@ window.addEventListener('load',restore);
      one "Other (N more)" that KEEPS ITS OWN CHILDREN. And children do not always sum to their
      parent — `tag` is multi-valued — so `multi` rides on the tree and the page says so. */
   var NEST_CAPS = [12, 8, 6];
+  /* THE MEASURE — which of a node's three numbers the chart is about (Ray, 18 Sep 2026: "then
+     option to hide non-billable also from dissectment"). Every node keeps bill, nonbill AND hours
+     whatever it is set to; the measure only decides which number RANKS the rows and so which of
+     them survive the cap. That re-ranking is the point: leave the order on `hours` while drawing
+     only the billable segment and a row with 40 h of it sits below one with 4 h that happened to
+     carry more non-billable, and the fold keeps the wrong twelve. */
+  var MEASURES = ['hours', 'bill', 'nonbill'];
+  function mOf(x, m) {
+    if (!x) return 0;
+    return m === 'bill' ? x.bill : m === 'nonbill' ? x.nonbill : x.hours;
+  }
   function tally(rows) {
     var bill = 0, nonbill = 0, hours = 0, i;
     for (i = 0; i < rows.length; i++) { bill += rows[i].bill; nonbill += rows[i].nonbill; hours += rows[i].hours; }
     return { n: rows.length, bill: r2(bill), nonbill: r2(nonbill), hours: r2(hours),
       billPct: hours ? Math.round((bill / hours) * 1000) / 10 : 0 };
   }
-  function nodesAt(rows, dim, cap) {
+  function nodesAt(rows, dim, cap, measure) {
     var m = {}, keys = [], placements = 0, i, x;
     for (i = 0; i < rows.length; i++) {
       var ks = dimKeys(rows[i], dim);
@@ -1023,7 +1047,7 @@ window.addEventListener('load',restore);
       var t = tally(m[k]); t.k = k; t.rows = m[k]; return t;
     });
     if (dim === 'month') out.sort(function (a, b) { return String(a.k) < String(b.k) ? -1 : String(a.k) > String(b.k) ? 1 : 0; });
-    else out.sort(function (a, b) { return (b.hours - a.hours) || (b.n - a.n) || (String(a.k) < String(b.k) ? -1 : 1); });
+    else out.sort(function (a, b) { return (mOf(b, measure) - mOf(a, measure)) || (b.n - a.n) || (String(a.k) < String(b.k) ? -1 : 1); });
     if (cap && out.length > cap && dim !== 'month') {
       var keep = out.slice(0, cap - 1), rest = out.slice(cap - 1), rws = [], j, y;
       for (j = 0; j < rest.length; j++) for (y = 0; y < rest[j].rows.length; y++) rws.push(rest[j].rows[y]);
@@ -1032,7 +1056,7 @@ window.addEventListener('load',restore);
     }
     return { nodes: out, placements: placements };
   }
-  function groupNested(rows, dims, caps) {
+  function groupNested(rows, dims, caps, measure) {
     var use = [], i;
     for (i = 0; i < (dims || []).length; i++) {
       var d = dims[i];
@@ -1045,7 +1069,7 @@ window.addEventListener('load',restore);
     if (!use.length) return tree;
     var cap = caps || NEST_CAPS, multi = false, folded = 0;
     function build(rws, depth) {
-      var r = nodesAt(rws, use[depth], cap[depth] || 0), k;
+      var r = nodesAt(rws, use[depth], cap[depth] || 0, measure), k;
       if (r.placements > rws.length) multi = true;
       for (k = 0; k < r.nodes.length; k++) {
         var nd = r.nodes[k];
@@ -1078,7 +1102,7 @@ window.addEventListener('load',restore);
      point keeps its own billable split in the tooltip. Undated rows are never plotted and are
      counted back; a month a series missed is a ZERO, not a gap, so every line is read against the
      same x. Mirrors src/taskbook.js seriesByMonth. */
-  function seriesByMonth(rows, dim, cap) {
+  function seriesByMonth(rows, dim, cap, measure) {
     cap = cap == null ? 6 : cap;
     var months = {}, mlist = [], byKey = {}, keys = [], undated = 0, placements = 0, dated = 0, i, j;
     for (i = 0; i < rows.length; i++) {
@@ -1100,7 +1124,7 @@ window.addEventListener('load',restore);
     }
     mlist.sort();
     var all = keys.map(function (k) { return byKey[k]; }).sort(function (a, b) {
-      return (b.hours - a.hours) || (b.n - a.n) || String(a.k).localeCompare(String(b.k));
+      return (mOf(b, measure) - mOf(a, measure)) || (b.n - a.n) || String(a.k).localeCompare(String(b.k));
     });
     var folded = 0;
     if (cap && all.length > cap) {
@@ -1134,7 +1158,7 @@ window.addEventListener('load',restore);
       multi: placements > dated, placements: placements };
   }
 
-  function groupBy(rows, dim, cap) {
+  function groupBy(rows, dim, cap, measure) {
     var m = {}, keys = [], i, x, placements = 0;
     for (i = 0; i < rows.length; i++) {
       var t = rows[i], ks = dimKeys(t, dim);
@@ -1155,7 +1179,7 @@ window.addEventListener('load',restore);
     out.multi = placements > rows.length;
     out.placements = placements;
     if (dim === 'month') out.sort(function (a, b) { return String(a.k) < String(b.k) ? -1 : String(a.k) > String(b.k) ? 1 : 0; });
-    else out.sort(function (a, b) { return (b.hours - a.hours) || (b.n - a.n) || (String(a.k) < String(b.k) ? -1 : 1); });
+    else out.sort(function (a, b) { return (mOf(b, measure) - mOf(a, measure)) || (b.n - a.n) || (String(a.k) < String(b.k) ? -1 : 1); });
     if (cap && out.length > cap && dim !== 'month') {
       var keep = out.slice(0, cap - 1), rest = out.slice(cap - 1);
       var f = { n: 0, bill: 0, nonbill: 0, hours: 0 };
@@ -1201,7 +1225,8 @@ window.addEventListener('load',restore);
     billVerdict: billVerdict, balanceState: balanceState, taskBlob: taskBlob, ticketBlob: ticketBlob,
     CATS: CATS, CAT_LABEL: CAT_LABEL, DIMS: DIMS, BUCKET_LABEL: BUCKET_LABEL,
     groupNested: groupNested, flattenNested: flattenNested, NEST_CAPS: NEST_CAPS,
-    tagsOf: tagsOf, displacement: displacement, TAG_SEED: TAG_SEED };
+    tagsOf: tagsOf, displacement: displacement, TAG_SEED: TAG_SEED,
+    MEASURES: MEASURES, mOf: mOf, seriesByMonth: seriesByMonth };
 
   /* ------------------------------------------------------------------------------------------
      page
@@ -2068,6 +2093,8 @@ window.addEventListener('load',restore);
 
   /* ---- chart ----------------------------------------------------------------------------- */
   var CDIM = 'total', CDIM2 = '', CDIM3 = '', CFORM = 'donut';
+  // which series the chart draws, and what a value label says about it
+  var CMEAS = 'hours', CLAB = 'hours';
   // on 'Everything' the line has no categories to draw, so it draws the module's own pair:
   // billable and non-billable, month by month
   var LINEMODE = '';
@@ -2113,8 +2140,69 @@ window.addEventListener('load',restore);
     return out.n ? out : null;
   }
 
+  /* ONE SERIES, AND A LABEL THAT SAYS WHAT IT IS A SHARE OF ----------------------------------
+     Ray, 18 Sep 2026, over a Type of work › Task chart: "Allow percentage labels to be changed
+     from numbers to percentages as well, and then percentage of which attributes. For example …
+     I want to see how many out of 63.75 hours of keywords optimisation are accumulated to the
+     total of billable optimisation work type", then "then option to hide non-billable also from
+     dissectment".
+
+     Those are one feature, because a percentage is meaningless until you name its denominator and
+     the denominator is exactly what the second ask changes. So there is ONE measure — what the
+     chart is about — and the label is a share OF THAT:
+
+       Show: Billable + non-billable   →  labels are the row's total against a total
+       Show: Billable only             →  labels are the row's BILLABLE against a billable total
+
+     which makes his example two picks: Show → Billable only, Labels → % of its parent, and
+     Keyword optimisation reads as its share of billable Optimisation, exactly the number he drew
+     a ring around.
+
+     THE MEASURE IS NOT A COAT OF PAINT. It re-ranks the rows (engine `mOf`), so hiding
+     non-billable never leaves the bars in an order taken from a number nobody can see, and the
+     cap keeps the biggest twelve OF WHAT IS DRAWN. What it never does is discard the other
+     number: every tooltip, the table, the CSV and the legend still carry both, and the hidden
+     series keeps its row in the legend — dimmed, with its hours, marked hidden — because a
+     figure that vanishes from the screen is a figure someone will go looking for.
+
+     A BARE PERCENTAGE IS A TRAP, so the basis is never left to be inferred: the card's subtitle
+     (always on screen, never behind the ⓘ) spells out what the labels are a share of, the PNG
+     footer stamps the same sentence, and every hover keeps the raw hours. */
+  function mv(x) { return mOf(x, CMEAS); }
+  function showBill() { return CMEAS !== 'nonbill'; }
+  function showNon() { return CMEAS !== 'bill'; }
+  // the series the reader chose to put away, by name — '' when both are drawn
+  function hiddenSeries() { return CMEAS === 'bill' ? 'Non-billable' : CMEAS === 'nonbill' ? 'Billable' : ''; }
+  function measWord() { return CMEAS === 'bill' ? 'billable' : CMEAS === 'nonbill' ? 'non-billable' : 'total'; }
+  // 'off' | 'hours' | 'pparent' | 'pview'; % of parent only means something under a nested split
+  function labMode() {
+    if (CLAB === 'pparent' && !nested()) return 'pview';
+    return CLAB;
+  }
+  function pctOf(v, base) {
+    if (!base) return '0%';
+    return (Math.round((v / base) * 1000) / 10) + '%';
+  }
+  // the text on a mark. `base` is the denominator this mark is measured against — its parent's
+  // value under a nested split, the whole view otherwise
+  function labText(x, base) {
+    var m = labMode();
+    if (m === 'off') return '';
+    if (m === 'hours') return hrs(mv(x)) + ' h';
+    return pctOf(mv(x), base);
+  }
+  function labOn() { return labMode() !== 'off'; }
+  // said in full under the chart title, because a bare "11.3%" names no denominator
+  function labBasis() {
+    var m = labMode();
+    if (m === 'off') return '';
+    var of = CMEAS === 'hours' ? 'hours' : measWord() + ' hours';
+    if (m === 'hours') return CMEAS === 'hours' ? '' : 'labels show ' + measWord() + ' hours';
+    return 'labels show ' + of + ' as a share of ' + (m === 'pparent' ? 'their parent' : 'the whole chart');
+  }
+
   function lineData() {
-    var sm = seriesByMonth(chartPop(), CDIM, 6);
+    var sm = seriesByMonth(chartPop(), CDIM, 6, CMEAS);
     if (CDIM !== 'total') { LINEMODE = ''; return sm; }
     LINEMODE = 'bill';
     var all = sm.series[0] || { points: [] };
@@ -2125,8 +2213,11 @@ window.addEventListener('load',restore);
       var tot = 0; pts.forEach(function (p) { tot += p.hours; });
       return { k: key, hours: r2(tot), points: pts, fold: 0, n: all.n || 0 };
     };
-    return { months: sm.months, series: [mk('Billable', 'bill'), mk('Non-billable', 'nonbill')],
-      undated: sm.undated, folded: 0, multi: false };
+    // the two lines ARE the two series here, so hiding one leaves one line, not an empty chart
+    var ser = [];
+    if (showBill()) ser.push(mk('Billable', 'bill'));
+    if (showNon()) ser.push(mk('Non-billable', 'nonbill'));
+    return { months: sm.months, series: ser, undated: sm.undated, folded: 0, multi: false };
   }
   /* THE ACCOUNT'S OWN TYPE (Ray, 17 Sep 2026: "add \"type\" in the SPLIT BY too"). 'Type of work'
      was already there — it is read off the title and says what the job WAS. This is the other
@@ -2152,13 +2243,13 @@ window.addEventListener('load',restore);
     }
   }
 
-  function chartRows() { return groupBy(chartPop(), CDIM, CDIM === 'total' ? 0 : 12); }
+  function chartRows() { return groupBy(chartPop(), CDIM, CDIM === 'total' ? 0 : 12, CMEAS); }
   // a pie can hold about eight slices before the tail becomes slivers nobody can point at, so it
   // folds harder than the bars do — the fold keeps its hours either way
-  function pieSlices() { return groupBy(chartPop(), CDIM, 8); }
+  function pieSlices() { return groupBy(chartPop(), CDIM, 8, CMEAS); }
   // the split is NESTED the moment a second dimension is chosen; 'total' can only ever be level 1
   function nested() { return CDIM !== 'total' && !!CDIM2; }
-  function nestTree() { return groupNested(chartPop(), [CDIM, CDIM2, CDIM3]); }
+  function nestTree() { return groupNested(chartPop(), [CDIM, CDIM2, CDIM3], null, CMEAS); }
   function dimName(k) {
     for (var i = 0; i < DIMS.length; i++) if (DIMS[i].k === k) return DIMS[i].label;
     return k;
@@ -2204,7 +2295,9 @@ window.addEventListener('load',restore);
       || (CFORM === 'donut' && CDIM !== 'total');
   }
   function fillForms() {
-    var fs = $('cform'), allow = formsFor();
+    // 100% stacked IS the billable/non-billable split, so with one series put away it would
+    // draw every column full and say nothing — it leaves the list rather than lying
+    var fs = $('cform'), allow = formsFor().filter(function (f) { return !(f === 'pct' && CMEAS !== 'hours'); });
     if (allow.indexOf(CFORM) < 0) CFORM = allow[0];
     fs.innerHTML = FORMS.filter(function (f) { return allow.indexOf(f.v) >= 0; })
       .map(function (f) { return '<option value="' + f.v + '">' + esc(f.label) + '</option>'; }).join('');
@@ -2237,6 +2330,27 @@ window.addEventListener('load',restore);
     // honestly carry rather than greyed out over a stale label
     if (nested() && CFORM !== 'small') CFORM = 'nest';
     fillForms();
+    fillLabs();
+  }
+
+  /* The Labels list is rebuilt with the split because "% of its parent" only exists when there IS
+     one — offering it on a flat chart would either mean the whole view (already its own option)
+     or nothing at all. A pick that stops being offered falls back to the share of the chart,
+     which is the same question one level up, rather than silently reverting to hours. */
+  var LABS = [
+    { v: 'hours', label: 'Hours' },
+    { v: 'pparent', label: '% of its parent', nest: true },
+    { v: 'pview', label: '% of the whole chart' },
+    { v: 'off', label: 'None' }
+  ];
+  function fillLabs() {
+    var el = $('clab'); if (!el) return;
+    var allow = LABS.filter(function (o) { return !o.nest || nested(); });
+    if (!allow.some(function (o) { return o.v === CLAB; })) CLAB = CLAB === 'pparent' ? 'pview' : 'hours';
+    el.innerHTML = allow.map(function (o) {
+      return '<option value="' + o.v + '">' + esc(o.label) + '</option>';
+    }).join('');
+    el.value = CLAB;
   }
 
   function chart() {
@@ -2246,10 +2360,20 @@ window.addEventListener('load',restore);
     var s = summarise(POP), stage = $('cstage');
     var tree = nested() ? nestTree() : null;
     var g = tree ? [] : chartRows();
-    $('cwsub').textContent = nested()
+    /* A BARE "11.3%" NAMES NO DENOMINATOR, so the basis rides the subtitle rather than the
+       verdict — the verdict collapses behind the card's ⓘ, and a percentage whose meaning can be
+       folded away is a percentage someone will read wrong. */
+    // the heading is the first thing read, so it can never claim a series the chart put away
+    $('cwh').textContent = CMEAS === 'hours' ? 'Billable vs non-billable'
+      : (measWord().charAt(0).toUpperCase() + measWord().slice(1)) + ' hours';
+    var basis = [];
+    if (CMEAS !== 'hours') basis.push(measWord() + ' hours only');
+    if (labBasis()) basis.push(labBasis());
+    $('cwsub').textContent = (nested()
       ? tree.dims.map(dimName).join(' › ') + ' · ' + tree.length + ' top-level '
         + (tree.length === 1 ? 'group' : 'groups')
-      : dimName(CDIM) + (CDIM === 'total' ? '' : ' · ' + g.length + ' ' + (g.length === 1 ? 'group' : 'groups'));
+      : dimName(CDIM) + (CDIM === 'total' ? '' : ' · ' + g.length + ' ' + (g.length === 1 ? 'group' : 'groups')))
+      + (basis.length ? ' · ' + basis.join(' · ') : '');
     if (!POP.length) {
       var hh = D.health || {};
       stage.innerHTML = '<div class="empty">' + (!hh.read
@@ -2277,6 +2401,10 @@ window.addEventListener('load',restore);
           + '</b> are folded into one “Other” line.</span>' : '')
       + (s.undated && CFORM !== 'line' ? ' <span style="color:var(--muted)">' + s.undated + ' row' + (s.undated === 1 ? '' : 's') + ' carry no date: in the totals, in no month.</span>' : '')
       // hidden, never dropped: the figure someone would otherwise go looking for
+      // put away, not thrown away: the number someone would otherwise go looking for
+      + (hiddenSeries() ? ' <span style="color:var(--muted)">' + esc(hiddenSeries()) + ' is hidden: <b>'
+          + hrs(CMEAS === 'bill' ? s.nonbill : s.bill) + ' h</b> is not drawn, and the rows are ranked on '
+          + measWord() + ' hours.</span>' : '')
       + (left ? ' <span style="color:var(--muted)">Not yet tagged is hidden: <b>' + num(left.n) + '</b> row'
           + (left.n === 1 ? '' : 's') + ' (<b>' + hrs(left.hours) + ' h</b>) are not in this split.</span>' : '');
     ctable(g, tree, sm);
@@ -2303,15 +2431,23 @@ window.addEventListener('load',restore);
      40-hour one. */
   function nestBars(tree) {
     var flat = flattenNested(tree), i, max = 0;
-    for (i = 0; i < flat.length; i++) if (flat[i].hours > max) max = flat[i].hours;
+    for (i = 0; i < flat.length; i++) if (mv(flat[i]) > max) max = mv(flat[i]);
     if (!max) return '<div class="empty">These rows carry no hours at all.</div>';
+    /* THE DENOMINATOR FOR "% of its parent" — every node's own value, keyed by its full path, so
+       a child divides by the parent it actually hangs under rather than by whatever node happens
+       to share its name somewhere else in the tree. A top-level row's parent is the whole view. */
+    var SEP = '\u0000', own = {}, viewTot = 0;
+    for (i = 0; i < flat.length; i++) {
+      own[flat[i].path.join(SEP)] = mv(flat[i]);
+      if (flat[i].depth === 0) viewTot += mv(flat[i]);
+    }
     var W = 720, L = 210, Rp = 62, T = 8, iw = W - L - Rp;
-    var rowH = [24, 21, 19], y = T, s2 = '', showLab = $('clab').checked;
+    var rowH = [24, 21, 19], y = T, s2 = '', showLab = labOn();
     for (i = 0; i < flat.length; i++) {
       var r = flat[i], d = Math.min(r.depth, 2);
       if (d === 0 && i > 0) y += 7;                      // one breath between top-level groups
       var bh = [15, 13, 11][d], ind = d * 13;
-      var wb = (r.bill / max) * iw, wn = (r.nonbill / max) * iw;
+      var wb = showBill() ? (r.bill / max) * iw : 0, wn = showNon() ? (r.nonbill / max) * iw : 0;
       var full = nodeLabel(r.k, tree.dims[d]);
       var room = Math.floor((L - 12 - ind) / 6.2);
       var lab = full.length > room ? full.slice(0, Math.max(3, room - 1)) + '\u2026' : full;
@@ -2328,8 +2464,11 @@ window.addEventListener('load',restore);
       if (wn > 0) s2 += '<rect x="' + (L + wb + gap).toFixed(1) + '" y="' + y + '" width="' + (wn - gap).toFixed(1) + '" height="' + bh + '" fill="' + cvar('--nbil') + '" rx="2"/>';
       s2 += '<rect x="' + L + '" y="' + y + '" width="' + iw + '" height="' + bh + '" fill="transparent"/></g>';
       // the value label rides only on the levels that have room for it
-      if (showLab && d < 2) s2 += '<text x="' + (L + wb + wn + 7).toFixed(1) + '" y="' + (y + bh - 3)
-        + '" font-size="' + [11, 10.5][d] + '" font-weight="' + [800, 600][d] + '" fill="' + cvar('--ink') + '">' + hrs(r.hours) + ' h</text>';
+      if (showLab && d < 2) {
+        var base = r.depth === 0 ? viewTot : (own[r.path.slice(0, r.depth).join(SEP)] || 0);
+        s2 += '<text x="' + (L + wb + wn + 7).toFixed(1) + '" y="' + (y + bh - 3)
+          + '" font-size="' + [11, 10.5][d] + '" font-weight="' + [800, 600][d] + '" fill="' + cvar('--ink') + '">' + labText(r, base) + '</text>';
+      }
       y += rowH[d];
     }
     return '<svg viewBox="0 0 ' + W + ' ' + (y + 6) + '" role="img" aria-label="Billable and non-billable hours by '
@@ -2418,7 +2557,7 @@ window.addEventListener('load',restore);
       return sm.series.map(function (x, i) {
         return { k: x.k, label: LINEMODE === 'bill' ? x.k : dimLabel(x.k),
           c: LINEMODE === 'bill' ? (x.k === 'Billable' ? cvar('--bil') : cvar('--nbil')) : keyColour(CDIM, x.k, i, x.fold),
-          untag: LINEMODE !== 'bill' && CDIM === 'tag' && isUntag(x.k), hours: x.hours, pct: x.billPct };
+          untag: LINEMODE !== 'bill' && CDIM === 'tag' && isUntag(x.k), hours: mv(x), pct: x.billPct };
       });
     }
     if (CFORM === 'small' && nested()) {
@@ -2429,7 +2568,7 @@ window.addEventListener('load',restore);
     if (byIdentity()) {
       return pieSlices().map(function (x, i) {
         return { k: x.k, label: dimLabel(x.k), c: keyColour(CDIM, x.k, i, x.fold),
-          untag: CDIM === 'tag' && isUntag(x.k), hours: x.hours, pct: x.billPct };
+          untag: CDIM === 'tag' && isUntag(x.k), hours: mv(x), pct: x.billPct };
       });
     }
     return null;
@@ -2443,16 +2582,16 @@ window.addEventListener('load',restore);
   function pieChart(g, hole) {
     var S = 250, R = S / 2, r0 = R - 6, ri = hole ? R * hole : 0, cx = R, cy = R;
     var tot = 0, i;
-    for (i = 0; i < g.length; i++) tot += g[i].hours;
-    if (!tot) return '<div class="empty">These rows carry no hours at all.</div>';
-    var a = -Math.PI / 2, out = '', showLab = $('clab').checked;
+    for (i = 0; i < g.length; i++) tot += mv(g[i]);
+    if (!tot) return '<div class="empty">These rows carry no ' + (CMEAS === 'hours' ? '' : measWord() + ' ') + 'hours at all.</div>';
+    var a = -Math.PI / 2, out = '', showLab = labOn();
     function pt(rad, ang) { return [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)]; }
     for (i = 0; i < g.length; i++) {
-      var x = g[i], sweep = (x.hours / tot) * Math.PI * 2, a2 = a + sweep;
+      var x = g[i], sweep = (mv(x) / tot) * Math.PI * 2, a2 = a + sweep;
       var big = sweep > Math.PI ? 1 : 0, col = fillFor(CDIM, x.k, i, x.fold);
       var dim = CDIM === 'tag' && isUntag(x.k);
-      var pct = Math.round((x.hours / tot) * 1000) / 10;
-      var ttl = esc(dimLabel(x.k)) + ' — ' + hrs(x.hours) + ' h (' + pct + '% of the view), '
+      var pct = Math.round((mv(x) / tot) * 1000) / 10;
+      var ttl = esc(dimLabel(x.k)) + ' — ' + hrs(mv(x)) + ' h ' + (CMEAS === 'hours' ? '' : measWord() + ' ') + '(' + pct + '% of the view), '
         + hrs(x.bill) + ' h billable + ' + hrs(x.nonbill) + ' h non-billable, ' + num(x.n) + ' task' + (x.n === 1 ? '' : 's');
       if (g.length === 1) {
         out += '<circle class="cg" data-t="' + ttl + '" cx="' + cx + '" cy="' + cy + '" r="'
@@ -2486,7 +2625,8 @@ window.addEventListener('load',restore);
     }
     if (ri) {
       out += '<text x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle" font-size="21" font-weight="900" fill="' + cvar('--ink') + '">' + hrs(tot) + '</text>';
-      out += '<text x="' + cx + '" y="' + (cy + 15) + '" text-anchor="middle" font-size="10.5" font-weight="800" letter-spacing="1" fill="' + cvar('--muted') + '">HOURS</text>';
+      out += '<text x="' + cx + '" y="' + (cy + 15) + '" text-anchor="middle" font-size="10.5" font-weight="800" letter-spacing="1" fill="' + cvar('--muted') + '">'
+        + (CMEAS === 'hours' ? 'HOURS' : measWord().toUpperCase() + ' H') + '</text>';
     }
     var LW = 560, lg = legendOn() ? legendRows(chartKeys(null) || [], LW - 8) : { svg: '', h: 0 };
     if (!lg.h) {
@@ -2515,7 +2655,7 @@ window.addEventListener('load',restore);
     H += lg.h;
     var iw = W - L - Rp, ih = H - T - B;
     var max = 0, i, j;
-    for (i = 0; i < ser.length; i++) for (j = 0; j < ser[i].points.length; j++) if (ser[i].points[j].hours > max) max = ser[i].points[j].hours;
+    for (i = 0; i < ser.length; i++) for (j = 0; j < ser[i].points.length; j++) if (mv(ser[i].points[j]) > max) max = mv(ser[i].points[j]);
     max = niceMax(max || 1);
     var stepX = ms.length > 1 ? iw / (ms.length - 1) : 0;
     var xAt = function (n) { return ms.length > 1 ? L + stepX * n : L + iw / 2; };
@@ -2540,7 +2680,7 @@ window.addEventListener('load',restore);
         ? (sr.k === 'Billable' ? cvar('--bil') : cvar('--nbil'))
         : keyColour(CDIM, sr.k, i, sr.fold);
       var d = '';
-      for (j = 0; j < sr.points.length; j++) d += (j ? 'L' : 'M') + xAt(j).toFixed(1) + ' ' + yAt(sr.points[j].hours).toFixed(1);
+      for (j = 0; j < sr.points.length; j++) d += (j ? 'L' : 'M') + xAt(j).toFixed(1) + ' ' + yAt(mv(sr.points[j])).toFixed(1);
       // the untagged line is DASHED and recessive — the gap in the judging, drawn as a gap
       out += '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"'
         + (untag ? ' stroke-dasharray="5 4" opacity=".6"' : '') + '/>';
@@ -2550,7 +2690,7 @@ window.addEventListener('load',restore);
           + hrs(p.bill) + ' h billable + ' + hrs(p.nonbill) + ' h non-billable, ' + num(p.n) + ' task' + (p.n === 1 ? '' : 's') + ')';
         // a 4px radius is an 8px target — the smallest mark a hand can hit — with a surface ring
         // so two lines crossing at a point stay two points
-        out += '<circle class="cg" data-t="' + ttl + '" cx="' + xAt(j).toFixed(1) + '" cy="' + yAt(p.hours).toFixed(1)
+        out += '<circle class="cg" data-t="' + ttl + '" cx="' + xAt(j).toFixed(1) + '" cy="' + yAt(mv(p)).toFixed(1)
           + '" r="4" fill="' + col + '" stroke="' + cvar('--paper') + '" stroke-width="2"'
           + (untag ? ' opacity=".6"' : '') + '/>';
       }
@@ -2559,7 +2699,7 @@ window.addEventListener('load',restore);
       // lines finishing close together would print one over the other
       if (ser.length <= 4 && sr.points.length && !legendOn()) {
         var last = sr.points[sr.points.length - 1];
-        ends.push({ y: yAt(last.hours) - 9, c: col, t: seriesLabel(sr.k), u: untag });
+        ends.push({ y: yAt(mv(last)) - 9, c: col, t: seriesLabel(sr.k), u: untag });
       }
     }
     // two lines can finish a pixel apart; the labels are pushed apart rather than stacked
@@ -2593,7 +2733,7 @@ window.addEventListener('load',restore);
     var cols = cells.length <= 2 ? cells.length : cells.length <= 6 ? 3 : 4;
     var W = 720, cw = W / cols, ch = 148, R = 40, rows = Math.ceil(cells.length / cols);
     var lg = (legendOn() && nested()) ? legendRows(chartKeys(null) || [], W - 8) : { svg: '', h: 0 };
-    var out = '', showLab = $('clab').checked;
+    var out = '', showLab = labOn();
     cells.forEach(function (c, idx) {
       var cx = (idx % cols) * cw + cw / 2, cy = Math.floor(idx / cols) * ch + 60 + lg.h;
       var tot = 0;
@@ -2650,7 +2790,7 @@ window.addEventListener('load',restore);
       tree.forEach(function (nd) {
         (nd.kids || []).forEach(function (kd) {
           if (tot[kd.k] == null) { tot[kd.k] = 0; keys.push(kd.k); }
-          tot[kd.k] += kd.hours;
+          tot[kd.k] += mv(kd);
         });
       });
       keys.sort(function (a, b) { return (tot[b] - tot[a]) || String(a).localeCompare(String(b)); });
@@ -2668,26 +2808,31 @@ window.addEventListener('load',restore);
         cells: tree.map(function (nd) {
           var parts = [], other = 0;
           (nd.kids || []).forEach(function (kd) {
-            if (col[kd.k]) parts.push({ l: nodeLabel(kd.k, tree.dims[1]), v: kd.hours, c: fill[kd.k],
+            if (col[kd.k]) parts.push({ l: nodeLabel(kd.k, tree.dims[1]), v: mv(kd), c: fill[kd.k],
               untag: isU(kd.k), rank: top.indexOf(kd.k) });
-            else other += kd.hours;
+            else other += mv(kd);
           });
           parts.sort(function (a, b) { return a.rank - b.rank; });
           if (other > 0) parts.push({ l: 'Other', v: r2(other), c: grey });
-          return { label: nodeLabel(nd.k, tree.dims[0]), hours: nd.hours, billPct: nd.billPct, parts: parts };
+          return { label: nodeLabel(nd.k, tree.dims[0]), hours: mv(nd), billPct: nd.billPct, parts: parts };
         })
       };
     }
     var g = chartRows();
-    return { colourBy: 'Billable and non-billable', cells: g.map(function (x) {
-      return { label: dimLabel(x.k), hours: x.hours, billPct: x.billPct,
-        parts: [{ l: 'Billable', v: x.bill, c: cvar('--bil') }, { l: 'Non-billable', v: x.nonbill, c: cvar('--nbil') }] };
-    }) };
+    return { colourBy: CMEAS === 'hours' ? 'Billable and non-billable' : (measWord().charAt(0).toUpperCase() + measWord().slice(1)),
+      cells: g.map(function (x) {
+        return { label: dimLabel(x.k), hours: mv(x), billPct: x.billPct,
+          parts: [{ l: 'Billable', v: showBill() ? x.bill : 0, c: cvar('--bil') },
+            { l: 'Non-billable', v: showNon() ? x.nonbill : 0, c: cvar('--nbil') }]
+            .filter(function (pp) { return pp.v > 0; }) };
+      }) };
   }
 
   function donut(s) {
     var S = 250, R = S / 2, r0 = R - 6, ri = R * 0.6, cx = R, cy = R;
-    var segs = [{ l: 'Billable', v: s.bill, c: cvar('--bil') }, { l: 'Non-billable', v: s.nonbill, c: cvar('--nbil') }]
+    // the ring IS the split, so putting a series away leaves the one ring the reader asked for
+    var segs = [{ l: 'Billable', v: showBill() ? s.bill : 0, c: cvar('--bil') },
+      { l: 'Non-billable', v: showNon() ? s.nonbill : 0, c: cvar('--nbil') }]
       .filter(function (x) { return x.v > 0; });
     var tot = segs.reduce(function (a, x) { return a + x.v; }, 0);
     if (!tot) return '<div class="empty">These rows carry no hours at all.</div>';
@@ -2733,7 +2878,8 @@ window.addEventListener('load',restore);
     var W = 720, H = 344, L = 46, Rp = 12, T = 14, B = 78;
     var iw = W - L - Rp, ih = H - T - B, n = g.length || 1;
     var step = iw / n, bw = Math.min(54, step * 0.62);
-    var max = pct ? 100 : niceMax(Math.max.apply(null, g.map(function (x) { return x.hours; }).concat([1])));
+    var max = pct ? 100 : niceMax(Math.max.apply(null, g.map(mv).concat([1])));
+    var viewTot = g.reduce(function (a2, x) { return a2 + mv(x); }, 0);
     var ticks = 4, s = '';
     for (var i = 0; i <= ticks; i++) {
       var v = max * i / ticks, y = T + ih - (ih * i / ticks);
@@ -2743,15 +2889,15 @@ window.addEventListener('load',restore);
     g.forEach(function (x, i2) {
       var cx0 = L + step * i2 + (step - bw) / 2;
       var tot = pct ? (x.hours || 1) : max;
-      var hb = (pct ? (x.bill / (x.hours || 1)) * 100 : x.bill) / (pct ? 100 : max) * ih;
-      var hn = (pct ? (x.nonbill / (x.hours || 1)) * 100 : x.nonbill) / (pct ? 100 : max) * ih;
+      var hb = showBill() ? (pct ? (x.bill / (x.hours || 1)) * 100 : x.bill) / (pct ? 100 : max) * ih : 0;
+      var hn = showNon() ? (pct ? (x.nonbill / (x.hours || 1)) * 100 : x.nonbill) / (pct ? 100 : max) * ih : 0;
       var yb = T + ih - hb, yn = yb - hn;
       var ttl = esc(dimLabel(x.k)) + ' — ' + hrs(x.bill) + ' h billable, ' + hrs(x.nonbill) + ' h non-billable (' + x.billPct + '% billable, ' + x.n + ' tasks)';
       s += '<g class="cg" data-t="' + ttl + '">';
       var gap = (hb > 0 && hn > 3) ? 2 : 0;
       if (hb > 0) s += '<rect x="' + cx0.toFixed(1) + '" y="' + yb.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hb.toFixed(1) + '" fill="' + cvar('--bil') + '" rx="2"/>';
       if (hn > 0) s += '<rect x="' + cx0.toFixed(1) + '" y="' + yn.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (hn - gap).toFixed(1) + '" fill="' + cvar('--nbil') + '" rx="2"/>';
-      if ($('clab').checked) s += '<text x="' + (cx0 + bw / 2).toFixed(1) + '" y="' + (yn - 5).toFixed(1) + '" text-anchor="middle" font-size="11" font-weight="800" fill="' + cvar('--ink') + '">' + (pct ? x.billPct + '%' : hrs(x.hours)) + '</text>';
+      if (labOn()) s += '<text x="' + (cx0 + bw / 2).toFixed(1) + '" y="' + (yn - 5).toFixed(1) + '" text-anchor="middle" font-size="11" font-weight="800" fill="' + cvar('--ink') + '">' + (pct ? x.billPct + '%' : labText(x, viewTot)) + '</text>';
       s += '</g>';
       var full = dimLabel(x.k), lab = full.length > 19 ? full.slice(0, 18) + '…' : full;
       s += '<text x="' + (cx0 + bw / 2).toFixed(1) + '" y="' + (T + ih + 16) + '" text-anchor="end" font-size="10.5" font-weight="600" fill="' + cvar('--ink-2') + '" transform="rotate(-38 ' + (cx0 + bw / 2).toFixed(1) + ' ' + (T + ih + 16) + ')">' + esc(lab) + '</text>';
@@ -2762,11 +2908,12 @@ window.addEventListener('load',restore);
   function hbars(g) {
     var W = 720, rowH = 26, T = 8, L = 150, Rp = 58;
     var H = T + g.length * rowH + 8, iw = W - L - Rp;
-    var max = Math.max.apply(null, g.map(function (x) { return x.hours; }).concat([1]));
+    var max = Math.max.apply(null, g.map(mv).concat([1]));
+    var viewTot = g.reduce(function (a2, x) { return a2 + mv(x); }, 0);
     var s = '';
     g.forEach(function (x, i) {
       var y = T + i * rowH, h = 15;
-      var wb = (x.bill / max) * iw, wn = (x.nonbill / max) * iw;
+      var wb = showBill() ? (x.bill / max) * iw : 0, wn = showNon() ? (x.nonbill / max) * iw : 0;
       var full = dimLabel(x.k), lab = full.length > 22 ? full.slice(0, 21) + '…' : full;
       var ttl = esc(full) + ' — ' + hrs(x.bill) + ' h billable, ' + hrs(x.nonbill) + ' h non-billable (' + x.billPct + '% billable, ' + x.n + ' tasks)';
       s += '<text x="' + (L - 9) + '" y="' + (y + 12) + '" text-anchor="end" font-size="11.5" font-weight="600" fill="' + cvar('--ink-2') + '">' + esc(lab) + '</text>';
@@ -2775,7 +2922,7 @@ window.addEventListener('load',restore);
       if (wb > 0) s += '<rect x="' + L + '" y="' + y + '" width="' + wb.toFixed(1) + '" height="' + h + '" fill="' + cvar('--bil') + '" rx="2"/>';
       if (wn > 0) s += '<rect x="' + (L + wb + gap).toFixed(1) + '" y="' + y + '" width="' + (wn - gap).toFixed(1) + '" height="' + h + '" fill="' + cvar('--nbil') + '" rx="2"/>';
       s += '<rect x="' + L + '" y="' + y + '" width="' + iw + '" height="' + h + '" fill="transparent"/></g>';
-      if ($('clab').checked) s += '<text x="' + (L + wb + wn + 7).toFixed(1) + '" y="' + (y + 12) + '" font-size="11" font-weight="800" fill="' + cvar('--ink') + '">' + hrs(x.hours) + ' h</text>';
+      if (labOn()) s += '<text x="' + (L + wb + wn + 7).toFixed(1) + '" y="' + (y + 12) + '" font-size="11" font-weight="800" fill="' + cvar('--ink') + '">' + labText(x, viewTot) + '</text>';
     });
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Billable and non-billable hours by ' + esc(CDIM) + '">' + s + '</svg>';
   }
@@ -2802,8 +2949,17 @@ window.addEventListener('load',restore);
      figures stay as plain rows — the split is never dropped, it just stops being the colour. */
   function legend(g, s, sm) {
     var ident = byIdentity(), sw = function (c) { return '<i style="background:' + c + '"></i>'; };
-    var h = '<div class="lg-row hd">' + (ident ? '' : sw(cvar('--bil'))) + '<span class="nm">Billable</span><span class="v">' + hrs(s.bill) + ' h</span><span class="p">' + s.billPct + '%</span></div>'
-      + '<div class="lg-row hd">' + (ident ? '' : sw(cvar('--nbil'))) + '<span class="nm">Non-billable</span><span class="v">' + hrs(s.nonbill) + ' h</span><span class="p">' + (Math.round((100 - s.billPct) * 10) / 10) + '%</span></div>';
+    /* The series put away KEEPS ITS ROW — dimmed, with its hours, marked "hidden". Dropping it
+       would make the two head rows stop adding up to the book with nothing on screen saying why,
+       and the hours someone chose not to look at are still hours the account cost. */
+    var hd = function (name, on, col, val, pct) {
+      return '<div class="lg-row hd"' + (on ? '' : ' style="opacity:.5"') + '>'
+        + (ident ? '' : (on ? sw(col) : '<i style="background:transparent;border:1px dashed ' + cvar('--muted') + '"></i>'))
+        + '<span class="nm">' + name + (on ? '' : ' <span style="font-weight:600;color:var(--muted)">· hidden</span>') + '</span>'
+        + '<span class="v">' + hrs(val) + ' h</span><span class="p">' + pct + '%</span></div>';
+    };
+    var h = hd('Billable', showBill(), cvar('--bil'), s.bill, s.billPct)
+      + hd('Non-billable', showNon(), cvar('--nbil'), s.nonbill, Math.round((100 - s.billPct) * 10) / 10);
     var rows = null, cap = '';
     if (ident) {
       // ONE list feeds both legends — the rail and the chart can never name the same colour
@@ -2814,7 +2970,7 @@ window.addEventListener('load',restore);
     } else if (CDIM !== 'total') {
       cap = nested() ? [CDIM, CDIM2, CDIM3].filter(Boolean).map(dimName).join(' › ') : dimName(CDIM);
       rows = g.slice(0, 12).map(function (x) {
-        return { c: null, label: dimLabel(x.k), hours: x.hours, pct: x.billPct };
+        return { c: null, label: dimLabel(x.k), hours: mv(x), pct: x.billPct };
       });
     }
     if (rows) {
@@ -2918,12 +3074,14 @@ window.addEventListener('load',restore);
       cx.fillStyle = cvar('--paper') || '#fff'; cx.fillRect(0, 0, W, H);
       cx.drawImage(img, 0, 0, W, H - 96);
       cx.fillStyle = cvar('--ink') || '#333'; cx.font = '900 34px Lato, sans-serif';
-      cx.fillText('Billable vs non-billable · ' + (nested()
+      cx.fillText((CMEAS === 'hours' ? 'Billable vs non-billable' : (measWord().charAt(0).toUpperCase() + measWord().slice(1)) + ' hours') + ' · ' + (nested()
         ? [CDIM, CDIM2, CDIM3].filter(Boolean).map(dimName).join(' \u203a ')
         : dimName(CDIM)), 40, H - 56);
       cx.fillStyle = cvar('--muted') || '#888'; cx.font = '700 22px Lato, sans-serif';
       cx.fillText('FeedSpark · Private & Confidential · reports database ' + D.from + ' → ' + D.to
         + (Q.raw.trim() ? ' · query: ' + Q.raw.trim() : '')
+        + (CMEAS !== 'hours' ? ' · ' + measWord() + ' hours only' : '')
+        + (labBasis() ? ' · ' + labBasis() : '')
         + (hideUntag() ? ' · untagged rows not shown' : ''), 40, H - 22);
       URL.revokeObjectURL(url);
       var a = document.createElement('a');
@@ -3489,6 +3647,13 @@ window.addEventListener('load',restore);
       if (qp.get('dim2')) CDIM2 = qp.get('dim2');
       if (qp.get('dim3')) CDIM3 = qp.get('dim3');
       if (qp.get('form')) { CFORM = qp.get('form'); $('cform').value = CFORM; }
+      // the device's own reading preference, unless the link names one — an explicit link beats a
+      // remembered pick, or a shared view would open as something else on every screen
+      var mvv = qp.get('meas') || localStorage.getItem('fcc-tm-meas');
+      if (mvv && MEASURES.indexOf(mvv) >= 0) CMEAS = mvv;
+      var lvv = qp.get('lab') || localStorage.getItem('fcc-tm-lab');
+      if (lvv && LABS.some(function (o) { return o.v === lvv; })) CLAB = lvv;
+      $('cmeas').value = CMEAS;
     } catch (e) {}
     fillSubDims();
     var t = null;
@@ -3517,7 +3682,19 @@ window.addEventListener('load',restore);
     };
     $('cdim3').onchange = function () { CDIM3 = $('cdim3').value; fillSubDims(); chart(); };
     $('cform').onchange = function () { CFORM = $('cform').value; chart(); };
-    $('clab').onchange = chart; $('ctab').onchange = chart;
+    $('ctab').onchange = chart;
+    // both describe one screen's reading of the same data, so both are per DEVICE like the theme
+    $('cmeas').onchange = function () {
+      CMEAS = $('cmeas').value;
+      try { localStorage.setItem('fcc-tm-meas', CMEAS); } catch (e) {}
+      fillForms(); chart();
+    };
+    $('clab').onchange = function () {
+      CLAB = $('clab').value;
+      try { localStorage.setItem('fcc-tm-lab', CLAB); } catch (e) {}
+      chart();
+    };
+
     // a per-DEVICE preference, like the theme and the density toggles — it describes one screen
     try { var lgv = localStorage.getItem('fcc-tm-cleg'); if (lgv !== null) $('cleg').checked = lgv === '1'; } catch (e) {}
     $('cleg').onchange = function () {
@@ -3537,6 +3714,8 @@ window.addEventListener('load',restore);
     $('xlink').onclick = function () {
       var u = new URL(location.href);
       u.searchParams.set('dim', CDIM); u.searchParams.set('form', CFORM);
+      if (CMEAS !== 'hours') u.searchParams.set('meas', CMEAS); else u.searchParams.delete('meas');
+      if (CLAB !== 'hours') u.searchParams.set('lab', CLAB); else u.searchParams.delete('lab');
       if (CDIM2) u.searchParams.set('dim2', CDIM2); else u.searchParams.delete('dim2');
       if (CDIM3) u.searchParams.set('dim3', CDIM3); else u.searchParams.delete('dim3');
       if (Q.raw.trim()) u.searchParams.set('q', Q.raw.trim()); else u.searchParams.delete('q');
