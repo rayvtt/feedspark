@@ -7924,6 +7924,42 @@
       "file": "docs/MOBILE.md",
       "pattern": "## The skim view",
       "pr": 456
+    },
+    {
+      "name": "AI Mode: the arrivals chart is here too (Ray, 18 Sep 2026: 'bring the new product volume arrival bar chart that looks really beautiful over to this section too'), drawn by the Monthly update card's own updBars",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function aimChart(nn)",
+      "pr": 457
+    },
+    {
+      "name": "Arrivals series: ONE builder for both cards, walked off the CALENDAR so a gap month is a real zero and never shifts the labels",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function updMonthRows()",
+      "pr": 457
+    },
+    {
+      "name": "Arrivals series: the daily in-flow fallback shares the same builder",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function updDayRows()",
+      "pr": 457
+    },
+    {
+      "name": "AI Mode: an unsized card prints a dash, never the whole-market figure under a 0-in-scope line (Ray, 18 Sep 2026 screenshot)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "unsized=(!ix&&sc.mode!=='manual')",
+      "pr": 457
+    },
+    {
+      "name": "AI Mode: the pull action sits in the card, not only in the hero (Ray, 18 Sep 2026: “I don't see the pull live feed selected from here”)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "id=\"aim-pull\"",
+      "pr": 457
+    },
+    {
+      "name": "AI Mode: the arrivals load redraws BOTH cards, or the chart never appears until something else re-renders",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "renderUpd(); try{ renderAim(); }catch(e){} foot();",
+      "pr": 457
     }
   ]
 }

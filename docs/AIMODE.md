@@ -83,9 +83,9 @@ has no groups to charge per, so the toggle is refused rather than faked.
 
 1. **The Monthly update — new products card** above it (Ray, 17 Sep 2026: *"only thing to keep is
    our monthly update - new products view, it looks better"*). That card already reads the feed's
-   own `fs:date_of_birth` arrivals and draws the history, so AI Mode does not import the builder's
-   own newness step and draws no second chart. Its figure is for the whole market in SKUs, so it is
-   taken down to this card's scope and unit by the scope's share of the feed.
+   own `fs:date_of_birth` arrivals, so AI Mode does not import the builder's own newness step. Its
+   figure is for the whole market in SKUs, so it is taken down to this card's scope and unit by the
+   scope's share of the feed.
 2. **The feed's own first-seen dates**, read on the same stream as the product-type pull: how much
    of the catalogue in scope was first seen in the last twelve months, as a share of the items
    carrying a usable date. Undated items are left out of **both** sides — counting them as old
@@ -95,6 +95,34 @@ has no groups to charge per, so the toggle is refused rather than faked.
 
 A number typed into the card beats all three. Whatever the read, the volume buffer goes on top and
 the result is rounded **up** — a part product is a whole product.
+
+### The chart, and what the bars are
+
+Ray, 18 Sep 2026: *"why don't you bring the new product volume arrival bar chart that looks really
+beautiful over to this section too?"* — so the card draws it, through the Monthly update card's own
+`updBars` off **one** shared series builder (`updMonthRows`). Same validated blue, same value
+labels, same translucent running month, same calendar walk. There is no second bar renderer and no
+second series, so the quote, the Monthly update card and `/volume` cannot draw one feed three ways.
+
+What the bars *are* is stated under them, because the chart is the whole market's arrivals while the
+card may be pricing a product-type subset at item-group level:
+
+| Scope and unit | The caption says |
+|---|---|
+| whole catalogue, per product ID | "This card prices on these products." |
+| anything narrower, or per item group | "These are the whole market; the rows below take them down to this scope and unit." |
+| no feed pulled yet | "…pull the feed and the rows below take them down to this scope and unit." |
+
+The chart does **not** need the feed pull — arrivals come from `/api/volume`, so the evidence is
+there on open. The three scoped rows underneath do need it, and until it happens they read a dash
+rather than the market figure: printing "1,534 / month **at this scope**" under "**0** products in
+scope" is the card contradicting itself on screen, which is what Ray screenshotted. The **⟳ Pull
+live feed** button therefore sits in the card itself — it was only in the hero, several screens up,
+so the card was giving an instruction with no action beside it. It calls the hero's own `pullFeed()`.
+
+One trap worth naming: the arrivals fetch resolves once and **both** cards read that record, so both
+are redrawn when it lands. Redrawing only the Monthly update card left AI Mode sitting on its
+"Reading this feed's arrivals history…" placeholder while the card above it already had twelve bars.
 
 ---
 
