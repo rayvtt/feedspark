@@ -208,6 +208,7 @@ GET  /feedchat                  → Feed Chat ENGINE page — OUT of the module 
 GET|POST /api/tasks/remind      → due-today task reminders (owner-only): the 12:00 GMT cron firing emails each owner (ray/steven — OWNER_EMAILS in taskremind.js) their plan tasks due TODAY whose status is still Open-bucket (taskremind.js mirrors the PAGE's bucketOf — Briefed ≠ open; month-section yyyy-mm-01 dates are never deadlines); runs off the plan warm's freshly parsed tasks, once per UTC day (KV taskremday), delivered via the Label Guard outbox/Gmail bridge with day-scoped ids (double-send impossible) + `sig` field. GET = dry preview, POST = fire now ({force} re-runs)
 GET  /api/buildlog              → Build Log feed (GitHub PRs/branches/overlap, KV-cached 10 min; optional GITHUB_TOKEN secret)
 GET|PUT /api/buildqueue         → Build Log "not built yet" queue (kvmerge-backed, concurrency-safe)
+GET  /api/news                  → industry news digest, git-bundled from `docs/news_digest.json` (Text module). The Command Center pops it to the AM once per digest `id` (read state in localStorage `fcc-news-read`); the 📣 topbar button reopens it. Rewritten every weekday morning by the news Routine, which follows `.claude/skills/feedspark-news-digest/SKILL.md` — that skill (not this file) holds the source list and the editorial bar
 GET  /deck/yumove               → YuMOVE strategy deck (git-bundled + injected editor)
 GET  /api/edits?page=<slug>     → return a page's saved edits as JSON
 PUT  /api/edits?page=<slug>     → save an edit patch (merges with existing)

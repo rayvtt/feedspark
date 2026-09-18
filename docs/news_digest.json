@@ -1,0 +1,99 @@
+{
+  "_comment": "Industry news digest shown as a pop-up on the FCC. REGENERATED DAILY by the news-digest Routine — see .claude/skills/feedspark-news-digest/SKILL.md. Nothing else writes this file. 'id' drives the read/unread pop-up: change it and every AM gets prompted once.",
+  "id": "2026-09-18",
+  "generated": "2026-09-18T06:00:00Z",
+  "headline": "Content API for Shopping is now erroring — migrations are overdue",
+  "intro": "First edition — catching up on the last few weeks. From here this runs every weekday morning and only carries what actually changed.",
+  "items": [
+    {
+      "title": "Content API for Shopping now returns progressive errors",
+      "source": "Google for Developers",
+      "url": "https://developers.google.com/merchant/api/latest-updates",
+      "date": "2026-09-01",
+      "impact": "high",
+      "tags": ["Google", "Feed pipeline"],
+      "what": "As of 1 September, requests to the legacy Content API for Shopping started failing progressively. The replacement is the Merchant API.",
+      "sowhat": "Any client still integrated on the legacy API has a feed pipeline that is degrading right now, not at some future cut-off. Worth an integration audit across the book this week — this is the one item on this list with a live blast radius."
+    },
+    {
+      "title": "Merchant Center Next rollout completes — 'Feeds' are now 'Data sources'",
+      "source": "Google Merchant Center Help",
+      "url": "https://support.google.com/merchants/answer/15285007?hl=en-GB",
+      "date": "2026-09-01",
+      "impact": "med",
+      "tags": ["Google", "Terminology"],
+      "what": "All retailers are now upgraded to Merchant Center Next. 'Destinations' are renamed 'Marketing methods' and 'Feeds' are renamed 'Data sources'.",
+      "sowhat": "Every onboarding deck, audit template and screenshot we use says 'Feeds'. Client-facing language needs a pass or we look a version behind in the next QBR."
+    },
+    {
+      "title": "Anthropic open-sources Claude Commerce Agents — with no catalogue layer",
+      "source": "PYMNTS",
+      "url": "https://www.pymnts.com/news/artificial-intelligence/2026/anthropic-built-the-shopping-brain-and-skipped-the-wallet/",
+      "date": "2026-09-02",
+      "impact": "high",
+      "tags": ["Claude", "Agentic"],
+      "what": "Apache-2.0 blueprints for a shopper agent and a merchant agent, deployable on Claude API, Bedrock, Microsoft Foundry and Vertex AI. The release explicitly excludes payments, catalogue and advertising.",
+      "sowhat": "'No catalogue' is the tell. The blueprint assumes somebody else supplies clean, structured product data for the agent to reason over — that is precisely our lane, and it is a strong hook for the AI-Ready Feeds pitch."
+    },
+    {
+      "title": "Meta Advantage+ allocates budget at SKU level, not set level",
+      "source": "Meta / Shoptalk announcement coverage",
+      "url": "https://adadvisor.ai/blog/meta-ads-updates-2026",
+      "date": "2026-03-01",
+      "impact": "med",
+      "tags": ["Meta", "DPA"],
+      "what": "Spend can now be allocated per product within a set rather than per set, so broad sets can be left to Advantage+ to distribute.",
+      "sowhat": "The old technique of building narrow 20–50 SKU sets purely to steer budget is now counterproductive. Monsoon/Accessorize DPA structures were built that way and are worth revisiting."
+    },
+    {
+      "title": "Google Ads opens Product Value Optimization beta",
+      "source": "Search Engine Land",
+      "url": "https://searchengineland.com/library/platforms/google/google-ads/google-shopping",
+      "date": "2026-09-01",
+      "impact": "med",
+      "tags": ["Google", "Bidding"],
+      "what": "A new beta letting advertisers apply value adjustments so automated bidding optimises toward the products that matter commercially, not just the ones that convert most.",
+      "sowhat": "A real margin lever rather than a volume one. Good candidate to trial on a retainer account where product-level profitability varies a lot — Reiss or Schuh would show the effect fastest."
+    },
+    {
+      "title": "Amazon extends Price History from 90 days to 365",
+      "source": "Amazon seller news roundup",
+      "url": "https://stackinfluence.com/blog/september-2026-ecommerce-news-and-updates-for-sellers",
+      "date": "2026-09-01",
+      "impact": "med",
+      "tags": ["Amazon", "Pricing"],
+      "what": "Temporary discounts and pre-event markups now sit next to a full year of everyday-price history rather than 90 days.",
+      "sowhat": "Pre-Black-Friday markup tactics are now visible for a whole year. Anyone planning Q4 promo pricing on Amazon needs to know the reference window changed before they set it."
+    },
+    {
+      "title": "Meta guidance: refresh catalogues daily, or hourly for fast inventory",
+      "source": "Meta catalog documentation",
+      "url": "https://www.feedarc.com/channels/meta-catalog",
+      "date": "2026-09-01",
+      "impact": "med",
+      "tags": ["Meta", "Feed cadence"],
+      "what": "Meta's stated guidance is a minimum of one catalogue update per day, moving to every few hours where inventory or pricing moves quickly.",
+      "sowhat": "Useful third-party backing for the refresh-cadence conversation. Anyone still on a nightly batch for fast-moving stock is below the platform's own published floor — that is an easier sell than an opinion."
+    },
+    {
+      "title": "Stripe extends Shared Payment Tokens to Visa and Mastercard agent rails",
+      "source": "Stripe",
+      "url": "https://stripe.com/blog/supporting-additional-payment-methods-for-agentic-commerce",
+      "date": "2026-09-01",
+      "impact": "watch",
+      "tags": ["Payments", "Agentic"],
+      "what": "Shared Payment Tokens now reach Mastercard Agent Pay and Visa Intelligent Commerce, plus BNPL methods including Affirm and Klarna.",
+      "sowhat": "The payment rails for agentic checkout are consolidating faster than the discovery layer is. Context for any client asking when they need to be ready — the plumbing will be there before the demand is."
+    },
+    {
+      "title": "AI Overviews appear in 24% of shopping queries — and have started softening",
+      "source": "Search Engine Land",
+      "url": "https://searchengineland.com/library/seo/ecommerce",
+      "date": "2026-09-03",
+      "impact": "watch",
+      "tags": ["Google", "AI search"],
+      "what": "AI Overviews were measured on 24% of shopping queries, with presence declining slightly over recent weeks as Google appears to pull back on some product queries.",
+      "sowhat": "A good QBR stat, with the honest caveat attached: this is not a straight line up. Worth quoting with the softening included — it reads as credible rather than hype."
+    }
+  ]
+}

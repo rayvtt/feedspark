@@ -110,6 +110,10 @@ import GPC_TAXONOMY from "../../../docs/gpc_taxonomy.txt";
 // the Feed Lab audit engine, bundled verbatim (wrangler Text rule) and served at
 // /feedlab/engine.js so the page and its node tests run the exact same code
 import FEEDLAB_ENGINE from "../../../docs/feedlab_engine.js";
+// Industry news digest — rewritten every weekday by the news Routine
+// (.claude/skills/feedspark-news-digest), bundled as Text and served at /api/news. The
+// Command Center pops it to the AM once per digest id.
+import NEWS_DIGEST from "../../../docs/news_digest.json";
 // the labelguard engine's BROWSER copy (kept byte-identical to src/labelguard.js by
 // tools/check_lgcopy.js — wrangler can't serve a bundled module's own source), served at
 // /labels/engine.js for the guard pages' in-browser XML live rescan
@@ -501,6 +505,18 @@ export default {
     // in one request instead of guessing whether CF is serving a stale build.
     if (path === '/api/version') {
       return json({ worker: 'feedspark', sha: env.GIT_SHA || 'dev', ref: env.GIT_REF || '', builtAt: env.BUILT_AT || '' });
+    }
+
+    // ---- industry news digest (git-bundled; the weekday news Routine rewrites the file).
+    // Read defensively: the file is declared a Text module in wrangler.toml (so it arrives as a
+    // string), but esbuild's own json loader would hand back an object — accept either, and let a
+    // malformed digest degrade this one route rather than the whole worker.
+    if (path === '/api/news') {
+      try {
+        return json(typeof NEWS_DIGEST === 'string' ? JSON.parse(NEWS_DIGEST) : NEWS_DIGEST);
+      } catch (e) {
+        return json({ id: '', items: [], error: 'digest unavailable' });
+      }
     }
 
     // ---- edits (content layer: Ray, in-browser) — namespaced per page by ?page=<slug> ----
