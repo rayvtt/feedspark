@@ -177,3 +177,94 @@ also pins that the block stays free of page globals, since anything it reached f
 It exists because the model arrived from a builder Ray had already signed off on: the numbers it
 produces are the contract, and a later tidy-up must not quietly move a rate, drop the scrape-once
 rule, lose the AI floor or start rounding mid-calculation.
+
+---
+
+## Saving an AI Mode quote
+
+> Ray, 18 Sep 2026: *"i cannot save AI Mode quote btw"*
+
+The save guard asked two questions — are any Tachyon catalogue fields ticked (`t.inc`), and are
+there any system / feed / retainer lines (`t.x`)? Those were the only two line types the day it was
+written. A quote made **entirely** of routed AI Mode attributes is neither, so it counted as empty:
+the save refused, and the refusal told Ray to add a line he had already added. A quote carrying only
+the monthly new-product bundle failed in exactly the same way.
+
+`qLineN(t)` now counts every line type in one place:
+
+| counted | what it is |
+|---|---|
+| `t.inc` | ticked Tachyon catalogue fields |
+| `t.x.length` | systems, feeds, retainer hours |
+| `t.aim.lines.length` | routed AI Mode attributes (the shared scrape run included) |
+| `t.upd ? 1 : 0` | the monthly new-product bundle |
+
+Two deliberate choices. It is asked in **lines, never in money** — a £0 line is still a line
+somebody put on the quote, and an unpriced quote is allowed to be saved (it already says "rates
+incomplete" everywhere it appears). And it is **one function**, so a fifth line type cannot be
+forgotten here again; the refusal on a genuinely empty quote names every way to fill it.
+
+## Rewording the card
+
+> Ray, same message: *"also allows all text can be edited please"*
+
+The injected editor is the FCC's own text rail: `✎ Edit` makes copy contenteditable, keys each
+element, and saves the patch to KV per page. Its default selector is written for the decks —
+`h1-h5, p, li, td, th, .lede, .callout, .note …` — and **every explanation on this page is a `.ch`
+block under a card heading**, which that list does not name. The one thing Ray reads before showing
+a quote to a client was the one thing he could not reword.
+
+Two rules govern the fix.
+
+**The selector is declared per page, not widened globally.** `window.DECK_EDITOR_SELECTOR` on this
+page is the default plus `.card > .ch, .qs-h, .aim-note, .aim-lbl`. The editor's keys are
+*positional*, so broadening the shared default would renumber every deck's saved edits at once.
+
+**Only prose is listed.** No line that carries a live figure joins it — not `#aim-srcline`, not
+`#aim-word`, not the `.hint` counts, not the `b` values beside the labels. An edited sentence
+freezes the number inside it, and a frozen number on a client quote is a wrong figure. The row
+*labels* are editable; the numbers beside them are not.
+
+And because the editor keys each element **once at load**, copy that a render redraws could never
+hold an edit — it would be wiped by the next keystroke on a rate box. So the card's prose moved into
+the template: the scrape note, both box headings and all ten foot row labels are now markup, and
+
+- `aimFoot(q)` writes only the **structural** choices — which newness row applies, the chart, the
+  buffer figure inside its own span — and leaves the newness input alone while it has the cursor;
+- `aimNums(q)` writes every **figure** by id, one writer that both the full render and the
+  numbers-only refresh call.
+
+The per-row route sentences (`.aim-why`) are deliberately *not* in the selector: they are drawn per
+attribute by the render, so a key given to them at load would attach to an element the next render
+replaces — listing them would offer an edit that quietly does not stick.
+
+## Delivered
+
+> Ray, 18 Sep 2026: *"Can we also put in a button for 'Delivered' meaning work delivered — And
+> obviously, if it had been added to the plan, then it can follow the tracking of the whole workflow
+> intake, right? When you have a confirmation from ASPL, you know this work has been delivered."*
+
+A stage between **In action** and **Billed** — the real order: the work lands, then it is invoiced.
+Anyone can press it, and where the quote has a ticket it moves itself.
+
+**The tie.** `→ Intake` writes a plan task titled `AI Field Quote — <REF> — <Brand> <MKT> — …` and
+the Workflow composer saves a brief with that same task, so the quote's own ref is already in the
+ticket. `loadQBriefs()` matches on that machine-shaped **token** and nothing else — the same rule
+`briefmatch.js`'s `ibfcode` follows for unattended matching; no wording is read. Refs nest, so the
+**longest** ref that fits claims the ticket (`QT500-2` is never taken for `QT500`), a foreign
+`b.client` breaks the match outright, and the newest ticket wins when a quote has been briefed twice.
+
+**What counts as delivered.** `WF_DELIVERED` = `done`, `running`, `analysis`, `confirmed`. ASPL have
+confirmed the work from *Done — ASPL* onwards, and Test running / Analysis / Client confirmed all
+come after it, so each of them means the work landed too.
+
+**Why it only ever moves once.** A finance stage is a person's record. `autoDeliver()` stamps
+`q.aspl = {id, status, by, t, from}` the first time the pipeline has its say, and then stands down —
+so a human who moves the quote back afterwards is not overruled on the next poll. It never touches a
+quote already **Billed** (ASPL finishing does not un-bill an invoice) or **Declined** (it is not a
+vote on a quote finance turned down), and never moves one backwards.
+
+The row wears a live `.t-wf` chip — the ticket's stage and **whose court** it sits in, linking to
+`/workflow`, because the stage moves there and never on this page — or an honest `🎫 no ticket yet`
+on a filed quote nothing matches. Finance gets the figure the rail exists for: **Delivered · not
+billed**. The pipeline is re-read every 120s and on tab-visible.
