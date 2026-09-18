@@ -28,6 +28,7 @@ import { liftEnvelope, mergeIntoEnvelope, envelopeToClient } from "./kvmerge.js"
 import { STATE_NS, isStateNs, scopeStateView, scopeStateIncoming } from "./sharedstate.js";
 import { matchGmailToBriefs, recoverBriefsFromEmail, classifyInbound, detectClient, detectClientEx, mailThreadKey, parseGeminiNotes, parseKwResult } from "./briefmatch.js";
 import { parseAbTests, abSummary, resolveAbTab, hasAbHeader, abClientKey } from "./abtests.js";
+const AB_SHAPE = 2;   // bump when parseAbTests grows a field the page reads (2 = winner/title)
 // Scheduled Work (Ray, 15 Sep 2026): the content team's weekly schedule sheet (hidden weekly tabs
 // included) read as a skip cadence per dossier brand — live via the service account when the
 // sheet is shared with it, else the committed snapshot. Engine: src/schedwork.js; page /schedule.
@@ -1985,7 +1986,10 @@ export default {
       const ck = 'abtests:' + client;
       if (url.searchParams.get('refresh') !== '1') {
         const hit = await env.EDITS.get(ck, 'json');
-        if (hit && (Date.now() - (hit.at || 0)) < 6 * 60 * 60 * 1000) return json({ ...hit, cached: true });
+        // AB_SHAPE stamps the parsed shape: a cache written before the winner read (17 Sep 2026)
+        // has no t.winner / t.title, and serving it for six more hours would keep the old
+        // won / lost pills on screen after the deploy
+        if (hit && hit.v === AB_SHAPE && (Date.now() - (hit.at || 0)) < 6 * 60 * 60 * 1000) return json({ ...hit, cached: true });
       }
       if (!env.GOOGLE_SA_JSON) return json({ ok: false, error: 'no_sa', client, tests: [] });
       try {
@@ -2035,7 +2039,7 @@ export default {
         if (r.error) return json({ ...abReadError(r.error, env), client, tab, tests: [] });
         const p = parseAbTests(r.values || []);
         if (!p.ok) return json({ ok: false, error: p.error, client, tab, tests: [] });
-        const payload = { ok: true, client, tab, at: Date.now(), tests: p.tests, summary: abSummary(p.tests) };
+        const payload = { ok: true, v: AB_SHAPE, client, tab, at: Date.now(), tests: p.tests, summary: abSummary(p.tests) };
         await env.EDITS.put(ck, JSON.stringify(payload));
         return json(payload);
       } catch (e) { return json({ ok: false, error: String((e && e.message) || e), client, tests: [] }); }

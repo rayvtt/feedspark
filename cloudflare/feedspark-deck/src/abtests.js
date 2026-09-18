@@ -142,6 +142,88 @@ export function abVerdict(metrics, report) {
   return 'inconclusive';                       // every figure was exactly 0
 }
 
+/* WHO WON — read off the write-up, not off the sign of a number (Ray, 17 Sep 2026: "When it
+   comes to A/B title test, there is no 'loss' or 'won'. If you scan the body of the result, you
+   should be able to tell which product group is 'won' — the control group or the test group. It
+   will also say specifically what is being tested … 'control group without item type descriptor
+   is stronger performance' — so conclusion should say 'Without Item Type Description won'").
+
+   An A/B test pits two groups against each other, and its result is WHICH ONE WON, named by what
+   made it different — "Without Item Type Descriptor won" is a finding; "lost" is a mood. So this
+   reads the prose for (1) the two groups and the descriptor each carries ("control group (without
+   item type descriptor)", "test group with keyword optimisation") and (2) the sentence that calls
+   the winner — a group named beside a WIN cue (stronger, outperformed, above, uplift…) wins; a
+   group named beside a LOSS cue (lowered, below, weaker, negative impact…) loses, so the OTHER
+   group wins. Only when the prose says nothing either way does it fall back to the sign of the
+   figures, and it says which of the two it used. A single-group test has no opponent and gets no
+   winner at all — there is nothing to have beaten. */
+const GROUP_RE = /\b(control|test)\s+group\b/gi;
+const WIN_CUE = /\b(stronger|outperform\w*|better|higher|superior|won|winner|winning|above|uplift\w*|improv\w*|increas\w*|positive impact|positive effect|consistently (?:trends? |maintain\w* )?(?:above|higher)|more (?:impressions|clicks|conversions|revenue))\b/i;
+const LOSS_CUE = /\b(weaker|underperform\w*|worse|lower(?:ed)?|below|decreas\w*|declin\w*|dropp?e?d?|fell|negative impact|negative effect|less (?:impressions|clicks|conversions|revenue))\b/i;
+// a group's descriptor: "(without item type descriptor)" or "with keyword optimisation" right
+// after the group word, cut at the first verb / punctuation so a whole clause is never taken
+const DESC_PAREN = /\b(control|test)\s+group\s*\(\s*([^)]{2,80}?)\s*\)/gi;
+const DESC_INLINE = /\b(control|test)\s+group\s+(with(?:out)?\s+[a-z0-9][^.,;:()]{1,60}?)(?=\s+(?:is|was|were|has|had|shows?|showed|consistently|outperform|perform|deliver|trend|maintain|experienc|record|saw|got|generat)\b|[.,;:)]|$)/gi;
+
+function titleCase(s) {
+  return String(s || '').trim().replace(/\s+/g, ' ')
+    .replace(/\b([a-z])/g, (m) => m.toUpperCase());
+}
+function sentences(txt) {
+  return String(txt || '').split(/(?<=[.!?])\s+|\n+/).map((s) => s.trim()).filter(Boolean);
+}
+export function abGroups(report) {
+  const txt = String(report || '');
+  const out = { control: null, test: null };
+  for (const re of [DESC_PAREN, DESC_INLINE]) {
+    re.lastIndex = 0; let m;
+    while ((m = re.exec(txt))) {
+      const g = m[1].toLowerCase();
+      if (!out[g]) out[g] = titleCase(m[2]);
+    }
+  }
+  // one descriptor implies the other: "test group (with X)" makes the control "Without X"
+  const flip = (d) => (/^with\s/i.test(d) ? d.replace(/^with\s/i, 'Without ')
+    : /^without\s/i.test(d) ? d.replace(/^without\s/i, 'With ') : null);
+  if (out.test && !out.control) out.control = flip(out.test);
+  if (out.control && !out.test) out.test = flip(out.control);
+  return out;
+}
+export function abWinner(report, metrics) {
+  const txt = String(report || '');
+  GROUP_RE.lastIndex = 0;
+  const groupsNamed = new Set((txt.match(GROUP_RE) || []).map((g) => g.toLowerCase().split(/\s+/)[0]));
+  if (!groupsNamed.has('control')) return null;     // no opponent named = not a two-group result
+  const groups = abGroups(txt);
+  let winner = null, how = null;
+  for (const s of sentences(txt)) {
+    if (!/\b(control|test)\s+group\b/i.test(s)) continue;
+    // "the test group … lowered … compared to the control group" names both — the SUBJECT is the
+    // first group in the sentence, and the cue describes it
+    // …unless the sentence OPENS by naming the opponent ("Compared to the control group, the
+    // test group saw higher…"): that first mention is the yardstick, not the subject
+    const body = s.replace(/^\s*(?:compared\s+(?:to|with)|than|versus|vs\.?)\s+the\s+(?:control|test)\s+group,?\s*/i, '');
+    const subj = (/\b(control|test)\s+group\b/i.exec(body) || [])[1];
+    if (!subj) continue;
+    const sub = subj.toLowerCase();
+    if (WIN_CUE.test(s) && !LOSS_CUE.test(s)) { winner = sub; how = 'prose'; break; }
+    if (LOSS_CUE.test(s) && !WIN_CUE.test(s)) { winner = sub === 'test' ? 'control' : 'test'; how = 'prose'; break; }
+  }
+  if (!winner) {
+    const vals = Object.values(metrics || {}).filter((v) => typeof v === 'number' && v !== 0);
+    if (!vals.length) return null;
+    const good = vals.filter((v) => v > 0).length, bad = vals.length - good;
+    if (good === bad) return null;                    // split figures: no call
+    winner = good > bad ? 'test' : 'control'; how = 'metrics';
+  }
+  const label = groups[winner] || (winner === 'control' ? 'Control group' : 'Test group');
+  return { group: winner, label, how };
+}
+// the row shape Ray was looking at: "A/B Title Test - Item Type Descriptor - UK - 18/03/2026"
+export function isTitleTest(t) {
+  return /\btitle/i.test(String((t && t.type) || '')) || /\btitle/i.test(String((t && t.batch) || ''));
+}
+
 export function parseAbTests(values, opts) {
   const o = opts || {};
   const head = findHeaderRow(values);
@@ -174,7 +256,9 @@ export function parseAbTests(values, opts) {
   }
   const out = tests.map((t) => {
     const metrics = extractMetrics(t.report);
-    return { ...t, metrics, verdict: abVerdict(metrics, t.report),
+    // only an A/B method has an opponent; a single-group or holdout run never gets a winner
+    const winner = /^a\/?b\b/i.test(String(t.method || '')) ? abWinner(t.report, metrics) : null;
+    return { ...t, metrics, verdict: abVerdict(metrics, t.report), winner, title: isTitleTest(t),
       report: String(t.report || '').slice(0, o.reportChars || 3000) };
   });
   return { ok: true, tests: out };

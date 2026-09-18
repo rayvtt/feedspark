@@ -7574,6 +7574,36 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "project-plan tasks in this practice are done",
       "min": 1
+    },
+    {
+      "name": "abtests: WHO WON — an A/B title test names its winning group off the write-up, never 'lost' (Ray 17 Sep 2026)",
+      "file": "cloudflare/feedspark-deck/src/abtests.js",
+      "pattern": "export function abWinner",
+      "pr": 0
+    },
+    {
+      "name": "abtests: the other group's descriptor is inferred (with ↔ without) from the one the prose described",
+      "file": "cloudflare/feedspark-deck/src/abtests.js",
+      "pattern": "export function abGroups",
+      "pr": 0
+    },
+    {
+      "name": "abtests: a title test is recognised by type or batch name",
+      "file": "cloudflare/feedspark-deck/src/abtests.js",
+      "pattern": "export function isTitleTest",
+      "pr": 0
+    },
+    {
+      "name": "CmdCenter: one abResult for the dossier pill AND the one-pager column — control win is navy, test win green",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function abResult(t)",
+      "pr": 0
+    },
+    {
+      "name": "Worker: the abtests cache is shape-versioned so a redeploy re-reads the archive",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "hit.v === AB_SHAPE",
+      "pr": 0
     }
   ]
 }
