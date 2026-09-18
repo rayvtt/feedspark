@@ -7526,6 +7526,24 @@
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "Confidential · July 2026",
       "forbidden": true
+    },
+    {
+      "name": "Task Manager: 'Hide Not yet tagged' — one population feeds the chart, its legend, table, CSV and PNG (Ray, 17 Sep 2026: 'btw [Not yet tagged] can be excluded from showing when dissect by Tag')",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function chartPop()",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the exclusion is only offered where a tag split makes it mean something",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "id=\"cuntag-l\" hidden",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: hidden, never dropped — the verdict names the rows and hours left out",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "Not yet tagged is hidden:",
+      "min": 1
     }
   ]
 }

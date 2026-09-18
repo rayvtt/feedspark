@@ -1466,5 +1466,70 @@ eq(M.groupBy([{ atype: 'FM', bill: 2, nonbill: 0, hours: 2, tags: [] },
   { atype: '', bill: 1, nonbill: 0, hours: 1, tags: [] }], 'atype').map((g) => g.k),
   ['FM', '(none)'], 'and the engine groups it like any other field');
 
+console.log('\n── Not yet tagged, left out of a tag split (Ray, 17 Sep 2026: "btw [Not yet tagged] can be excluded from showing when dissect by Tag")');
+// the predicate and the population are lifted out of the page by name and run for real
+const UT = new Function('$', 'FT', 'CDIM', 'CDIM2', 'CDIM3',
+  'function r2(n){return Math.round(n*100)/100}\n'
+  + liftPageSrc('tagged') + '\n' + liftPageSrc('tagDim') + '\n' + liftPageSrc('hideUntag') + '\n'
+  + 'var POP_SRC = null, POP_FLAG = null, POP_OUT = null;\n'
+  + liftPageSrc('chartPop') + '\n' + liftPageSrc('untagLeft') + '\n'
+  + 'return { tagged: tagged, tagDim: tagDim, hideUntag: hideUntag, chartPop: chartPop, untagLeft: untagLeft };');
+const utrun = (rows, dims, checked) => UT(
+  (id) => (id === 'cuntag' ? { checked } : null), rows, dims[0], dims[1] || '', dims[2] || '');
+
+const utrow = (tags, hours) => ({ tags, hours, bill: hours, nonbill: 0 });
+const UBOOK = [utrow(['urgent'], 4), utrow(['agency', 'tech'], 2), utrow([], 6), utrow([], 1)];
+
+ok(!utrun(UBOOK, ['client'], true).hideUntag(),
+  'on a split that has no untagged bucket the exclusion never applies — every other dimension puts '
+  + 'a task in exactly one bucket');
+ok(utrun(UBOOK, ['tag'], true).hideUntag() && utrun(UBOOK, ['client', 'tag'], true).hideUntag()
+  && utrun(UBOOK, ['client', 'owner', 'tag'], true).hideUntag(),
+  'it applies wherever a TAG is one of the three levels, not only the first');
+ok(!utrun(UBOOK, ['tag'], false).hideUntag(), 'and the tickbox turns it off');
+
+eq(utrun(UBOOK, ['tag'], true).chartPop().length, 2,
+  'THE ROW LEAVES, NOT THE BUCKET: the untagged rows are out of the population the chart, its '
+  + 'legend, its table, its CSV and its PNG all read — a dropped slice would leave a nested parent '
+  + 'its children no longer sum to, and a headline counting hours that are not on the chart');
+eq(utrun(UBOOK, ['tag'], false).chartPop().length, 4, 'untick and the whole search is back');
+eq(utrun(UBOOK, ['client'], true).chartPop().length, 4, 'a non-tag split is never filtered');
+ok(utrun(UBOOK, ['client'], true).chartPop() === UBOOK,
+  'and is handed the very array it was given, never a copy that could drift');
+
+const ULEFT = utrun(UBOOK, ['tag'], true).untagLeft();
+eq([ULEFT.n, ULEFT.hours], [2, 7],
+  'what was left out is counted so the verdict line can name it — hidden, never dropped');
+eq(utrun(UBOOK, ['tag'], false).untagLeft(), null, 'nothing to say when nothing is hidden');
+eq(utrun([utrow(['urgent'], 4)], ['tag'], true).untagLeft(), null,
+  'and nothing to say on a fully-judged search, rather than a "0 rows" line nobody needs');
+
+// the engine's own rule, which is what makes the row filter equal to dropping the bucket: a task
+// is in `(untagged)` exactly when it carries no tags, and in its real tags otherwise — never both
+eq(M.groupBy(UBOOK.filter((t) => t.tags.length), 'tag').map((g) => g.k).sort(),
+  ['agency', 'tech', 'urgent'], 'dropping the untagged ROWS leaves exactly the tag buckets');
+ok(!M.groupBy(UBOOK.filter((t) => t.tags.length), 'tag').some((g) => g.k === '(untagged)'),
+  'and no untagged bucket can survive it');
+
+ok(/id="cuntag-l" hidden/.test(PAGE_SRC) && /id="cuntag" checked/.test(PAGE_SRC),
+  'the control ships in the chart\'s own control row, hidden until a tag split is on screen');
+ok(/var cul = \$\('cuntag-l'\); if \(cul\) cul\.hidden = !tagDim\(\);/.test(PAGE_SRC),
+  'and every render decides that again — a control that does nothing is a control that lies');
+ok(/Not yet tagged is hidden: <b>' \+ num\(left\.n\)/.test(PAGE_SRC),
+  'the verdict line names the rows and the hours that are not in the split');
+ok(/var s = summarise\(POP\)/.test(PAGE_SRC),
+  'the "N h in view" headline is summarised from the CHARTED population, so it can never count '
+  + 'hours that are not drawn');
+ok(/Every row in this search is still untagged/.test(PAGE_SRC),
+  'and a search that empties itself says WHY, with the way back');
+ok(/var body = chartPop\(\)\.map/.test(PAGE_SRC) && /hideUntag\(\) \? '-tagged' : ''/.test(PAGE_SRC),
+  'the CSV is "every row behind this chart", so it follows — and its filename says it is a cut');
+ok(/hideUntag\(\) \? ' · untagged rows not shown' : ''/.test(PAGE_SRC),
+  'the PNG stamps it too, so a shared image cannot imply it is the whole book');
+ok(/localStorage\.setItem\('fcc-tm-untag'/.test(PAGE_SRC),
+  'remembered per DEVICE, like the theme and the legend toggle — not a team fact');
+ok(!/groupBy\(FT, CDIM|groupNested\(FT,|seriesByMonth\(FT,/.test(PAGE_SRC),
+  'ONE population feeds every form: no chart function reads FT behind chartPop\'s back');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
