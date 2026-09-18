@@ -192,6 +192,39 @@ proxy: sheet ids never come from the query — only roster clients resolve, exac
   row and its own CSV export. Every click is a fresh gviz query — never cached.
 - Opening a feed auto-rescans when its snapshot is older than 20h (Feed Lab's refresh model).
 
+### 5a. Label population — labels carried per SKU, and cards that fold (18 Sep 2026)
+
+Ray, sending the PT depth granularity card: *"I want this feature to be the table breakdown for
+highlight population (1, 2, 3, 4, 5, >5) applied to label cards and product types as well, and
+the [Golden Record scorecard's expand and collapse — all and individual] too."*
+
+- **The population card.** Above the CL0–4 cards the feed dissection now opens with *Label
+  population — labels carried per SKU · SKU-weighted*: one row per bucket (1 … 5 labels),
+  the share of profiled SKUs as a bar and a number, then *avg N labels per SKU · N SKUs
+  profiled · N carry none (x%)* and the share carrying 3+ of the five — the segmentation PMAX
+  listing groups can split on. It is the depth card's own row format (`popCard()`), the same
+  colour ramp, so the three surfaces read alike.
+- **Where the number comes from.** `xmlCollector` counts, per SKU, how many of
+  `custom_label_0..4` are filled and hands `popProfile()` the histogram → `snap.labelPop`
+  `{pct{1..5,6+}, avg, skus, zero, max}`. Only a full read can say it, so it rides the XML lanes
+  (the 4x-daily agent, ↻ Scan live feed) — the gviz lane counts columns, never rows, so a
+  sheet-backed feed's card says *"this snapshot came from column counts … wire the FeedHero
+  XML"* rather than drawing a table nobody measured. The worker's `splitRaw` keeps `labelPop`
+  on the `labels:` store (and `ptPop` on the `ptype:` store), each through `cleanPop()` — fixed
+  bucket keys, every number clamped — since the push lanes hand over a profile a browser computed.
+- **Every brand card folds on its own.** The card header is a 36px clickable row — chevron,
+  brand, and a summary that survives the fold (feeds, scanned count, crit/warn flags, so closing
+  a brand can never hide a live drop-off); **⊖ Collapse all / ⊕ Expand all** in the section
+  header does every card at once, the button always naming the action still available;
+  remembered per device in `localStorage lg-collapse` (a viewing preference, never shared state);
+  the `?client=` deep link opens a folded card before it scrolls to and outlines it.
+
+Harness: `tools/test_guardcards.mjs` (Playwright, presync) renders both guard pages against a
+stubbed estate — the table's rows, shares and footer, the sheet-backed note, the individual and
+all-cards fold, the reload, the deep link — and `/golden`'s highlight row; `tools/test_labelguard.mjs`
+pins `popProfile`/`cleanPop`/`slotCols`, the collector's `labelPop`/`ptPop` on a real XML stream,
+and the worker split.
+
 ## 5b. Demo mode — the anonymised client-facing view
 
 **🎭 Demo mode** (toggle in §02, sticky sessionStorage) turns `/labels` into a screen-shareable
@@ -429,6 +462,21 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   their scan-time score until their next scan.
 - No custom watch rules for PT v1 — estate alerts + badge + emails cover the drop-off case;
   watches can be extended to PT later on the same `labelwatch` rails.
+
+### 8a. product_type population — values carried per SKU, and cards that fold (18 Sep 2026)
+
+The same ask as §5a, on the product-type page. The depth card says how DEEP the primary path
+goes; the population card beside it says how MANY product_type values a SKU carries — the
+category tree (bare `g:product_type` or slot 1) plus every keyword slot 2–10, FeedSpark's
+keyword injection — one row per bucket (1 … 5, 6+ values), the footer *avg N values per SKU ·
+N profiled · N carry none*, and the verdict line *1 value = the category tree only · 2+ =
+keyword slots live on the SKU — x% of profiled SKUs are keyworded (max N values on one SKU)*.
+`xmlCollector` resolves every product_type column through `slotCols()` (the read
+`findMultiCols` now shares) and counts the filled ones per SKU → `snap.ptPop`; Google feeds only
+(the collector never profiles product types on a Meta feed), XML lanes only (a sheet-backed feed
+gets the honest note). The estate cards fold exactly as on `/labels` — header row, ⊖/⊕ all,
+`localStorage pt-collapse`, the deep link opens a folded card — and the folded summary carries
+the brand's average tree depth beside its markets and flags.
 
 ## 9. Golden Record (`/golden`) — attribute coverage vs Google's product data spec
 
@@ -787,17 +835,18 @@ each finding quotes and links its source.
   standard on top of Google's own required attributes — never replacing the base rule, never
   inventing a pass/fail threshold Ray didn't give (he named a range, not a target coverage %, so the
   card states the observed share rather than judging it ✓/⚠). `qualityCollector` buckets every
-  product's highlight COUNT (not each highlight value) into one of five bands — `0-1`, `2-3`, `4-5`,
-  `6-10`, `11+` — and reports the SHARE of the catalogue in each (`hlDist`), rounded to one decimal.
-  Rendered on the `product_highlight` row as a colour-ramped, WIDTH-based stacked bar (`.hlbar`) —
-  deliberately not the page's existing vertical `.thist`/`.thb` title-length histogram, which turned
-  out to render every bar at 0px height (a pre-existing, unrelated CSS bug: `.thb` never gets an
-  explicit height, so its children's percentage-height styles can't resolve — left alone here since
-  fixing it properly is a separate task and out of scope for this ask) — with a legend calling out
-  `6–10 (our target)` in green and a caption stating the observed share, honestly distinguishing
-  Google's stated 4–6 from FeedSpark's own 6–10. `hlDist` is allow-listed through the `/api/golden/
-  quality` PUT sanitizer with its five fixed bucket keys, each independently clamped, the same
-  discipline as `cols`/`perProduct`/`avgDepth`.
+  product's highlight COUNT (not each highlight value) — **exact counts since 18 Sep 2026**: `1`,
+  `2`, `3`, `4`, `5`, `6+`, the population keys (Ray: *"the table breakdown for highlight population
+  (1, 2, 3, 4, 5, >5)"*; the five coarse bands 0-1/2-3/4-5/6-10/11+ are gone) — and reports the
+  SHARE of filled products in each (`hlDist`), rounded to one decimal. Rendered on the
+  `product_highlight` row as the **population table** — `popCard()`, the PT depth card's own row
+  format (one row per bucket, label · bar · %), the same card `/labels` and `/ptypes` draw — with
+  `6+ highlights (our target)` marked, a footer of avg per product · products profiled, and a
+  verdict line separating Google's stated 4–6 (the share at 4+) from FeedSpark's own 6–10 house
+  target (the share at 6+). (The earlier stacked bar was a workaround for the page's vertical
+  `.thist`/`.thb` histogram rendering at 0px — a pre-existing CSS bug, still left alone.) `hlDist`
+  is allow-listed through the `/api/golden/quality` PUT sanitizer with its fixed bucket keys, each
+  independently clamped, the same discipline as `cols`/`perProduct`/`avgDepth`.
 - **Content quality follows the same industry profile as `goldenScore`** (Ray, 17 Sep 2026,
   screenshot of a Pet Care brand's AI-Readiness pillar scoring 30/100 off empty apparel fields:
   *"make sure all scoring (AI readiness, content quality) always refer back to the industry best

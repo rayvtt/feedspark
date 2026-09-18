@@ -6292,12 +6292,12 @@
     {
       "name": "Label Guard: ?client= jumps to that brand's estate card",
       "file": "docs/FeedSpark_LabelGuard.html",
-      "pattern": "est-card\" data-client="
+      "pattern": ".est-card[data-client]"
     },
     {
       "name": "PT Guard: ?client= jumps to that brand's estate card",
       "file": "docs/FeedSpark_ProductTypeGuard.html",
-      "pattern": "est-card\" data-client="
+      "pattern": ".est-card[data-client]"
     },
     {
       "name": "dossier: one merged active list, ranked running-first",
@@ -7048,9 +7048,9 @@
       "min": 12
     },
     {
-      "name": "labelguard: highlight-count distribution (0-1/2-3/4-5/6-10/11+ buckets) computed per product, alongside Google's count-min/count-low rules (Ray, 17 Sep 2026: 'showcase what you have done ... how many highlights you have spotted within 100. So recommendation is from 6 to 10')",
+      "name": "labelguard: highlight-count distribution computed per product — EXACT counts 1..5/6+ since 18 Sep 2026 (was 0-1/2-3/4-5/6-10/11+) — alongside Google's count-min/count-low rules (Ray, 17 Sep 2026: 'showcase what you have done ... how many highlights you have spotted within 100. So recommendation is from 6 to 10')",
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "export const HL_BUCKETS = ['0-1', '2-3', '4-5', '6-10', '11+'];",
+      "pattern": "export const HL_BUCKETS = POP_KEYS;",
       "min": 1
     },
     {
@@ -7411,6 +7411,90 @@
       "name": "presync runs the Golden Record 390px-with-data tripwire",
       "file": "tools/presync.sh",
       "pattern": "node tools/check_grmobile.js",
+      "min": 1
+    },
+    {
+      "name": "Label Guard engine: popProfile — how many of the thing a SKU carries, in the depth table's shape (pct per bucket 1..5/6+, avg, skus profiled, zero, max) — Ray, 18 Sep 2026",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function popProfile(hist)",
+      "min": 1
+    },
+    {
+      "name": "Label Guard engine: cleanPop — the push lanes' computed profile kept to fixed keys, every number clamped",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function cleanPop(p)",
+      "min": 1
+    },
+    {
+      "name": "Label Guard engine: slotCols — every column a repeatable attribute occupies (bare, (n), |||n), shared by findMultiCols and the product_type population read",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function slotCols(headerRow, key)",
+      "min": 1
+    },
+    {
+      "name": "Label Guard engine: xmlCollector profiles labels per SKU (labelPop) and product_type values per SKU (ptPop) off the same stream",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "snap.labelPop = popProfile(lblHist);",
+      "min": 1
+    },
+    {
+      "name": "Label Guard engine: the highlight distribution is the POPULATION keys (exact 1..5, 6+), never coarse bands",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export const HL_BUCKETS = POP_KEYS;",
+      "min": 1
+    },
+    {
+      "name": "Worker: splitRaw files labelPop on the labels store and ptPop on the ptype store, each cleaned",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const lp = cleanPop(raw.labelPop), pp = cleanPop(raw.ptPop);",
+      "min": 1
+    },
+    {
+      "name": "Label Guard page: the label population card (the PT depth table's row format) + the honest sheet-backed note",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "function labelPopCard(s)",
+      "min": 1
+    },
+    {
+      "name": "Label Guard page: every brand card folds on its own header, ⊖ Collapse all / ⊕ Expand all, remembered per device (lg-collapse)",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "localStorage.getItem('lg-collapse')",
+      "min": 1
+    },
+    {
+      "name": "Label Guard page: the ?client= deep link opens a folded card first",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "window.__estUncollapse&&window.__estUncollapse(c)",
+      "min": 1
+    },
+    {
+      "name": "PT Guard page: the product_type population card (values per SKU — tree + keyword slots)",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "function ptPopCard(s)",
+      "min": 1
+    },
+    {
+      "name": "PT Guard page: brand cards fold individually and all at once (pt-collapse)",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "localStorage.getItem('pt-collapse')",
+      "min": 1
+    },
+    {
+      "name": "Golden Record: the highlight row draws the population table (popCard, 6+ marked as our target) instead of a stacked bar",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "cls: 'hlpop', one: 'highlight', many: 'highlights'",
+      "min": 1
+    },
+    {
+      "name": "Guard-cards tripwire: population tables + sheet-backed note + collapse on /labels, /ptypes and /golden's highlight row",
+      "file": "tools/test_guardcards.mjs",
+      "pattern": "the population card draws one row per bucket",
+      "min": 1
+    },
+    {
+      "name": "presync runs the guard-cards tripwire",
+      "file": "tools/presync.sh",
+      "pattern": "node tools/test_guardcards.mjs",
       "min": 1
     }
   ]

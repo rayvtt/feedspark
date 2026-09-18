@@ -52,7 +52,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { QSPEC, qualityScore, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS } from "./labelguard.js";
+import { QSPEC, qualityScore, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -3178,13 +3178,18 @@ async function processScanSnapshot(env, client, mkt, rawSnap, opts) {
   let snapIn = rawSnap;
   // split: PT + Golden Record go to their own stores; the label stores keep their exact
   // historical shape (attrs never ride into the labels:/ptype: snapshots)
+  // the per-SKU POPULATION profiles (Ray, 18 Sep 2026) ride the XML lanes only and are
+  // cleaned here — the push lanes hand over what a browser or the agent computed, so the
+  // stored shape is fixed and every number clamped (cleanPop); labels keep theirs, the
+  // product-type store keeps its own, never both
   const splitRaw = (raw) => {
-    if (!wantPT) return { lbl: raw, pt: null, gr: null };
+    const lp = cleanPop(raw.labelPop), pp = cleanPop(raw.ptPop);
+    if (!wantPT) return { lbl: Object.assign({}, raw, { labelPop: lp, ptPop: undefined }), pt: null, gr: null };
     const lblOnly = {};
     LABEL_KEYS.forEach((k) => { lblOnly[k] = (raw.labels || {})[k]; });
     return {
-      lbl: Object.assign({}, raw, { labels: lblOnly, attrs: undefined }),
-      pt: Object.assign({}, raw, { labels: { product_type: (raw.labels || {}).product_type || { present: false } }, attrs: undefined }),
+      lbl: Object.assign({}, raw, { labels: lblOnly, attrs: undefined, labelPop: lp, ptPop: undefined }),
+      pt: Object.assign({}, raw, { labels: { product_type: (raw.labels || {}).product_type || { present: false } }, attrs: undefined, labelPop: undefined, ptPop: pp }),
       gr: raw.attrs ? { v: 1, t: raw.t, client: raw.client, market: raw.market, rows: raw.rows, attrs: raw.attrs } : null,
     };
   };

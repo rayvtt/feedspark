@@ -972,9 +972,10 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   // HOW MANY HIGHLIGHTS SPOTTED, bucketed (Ray, 17 Sep 2026: "showcase what you have done ...
   // how many highlights you have spotted within 100. So recommendation is from 6 to 10") —
   // descriptive, alongside (never replacing) Google's own count-min/count-low rules above.
-  // 2 products at 0-1, 1 at 2-3, 7 at 4-5 (4 highlights each), none reach the 6-10 house target.
+  // EXACT counts since 18 Sep 2026 (Ray: "the table breakdown for highlight population (1, 2,
+  // 3, 4, 5, >5)"): 2 products carry 1, 1 carries 2, 7 carry 4 — none reach the 6–10 house target.
   eq('highlights: distribution buckets one product into exactly one bucket',
-    snap.attrs.product_highlight.hlDist, { '0-1': 20, '2-3': 10, '4-5': 70, '6-10': 0, '11+': 0 });
+    snap.attrs.product_highlight.hlDist, { '1': 20, '2': 10, '3': 0, '4': 70, '5': 0, '6+': 0 });
   eq('QSPEC: only product_highlight (the one multi:true attribute) carries a distribution',
     LG.QSPEC.filter((q) => q.multi).map((q) => q.key), ['product_highlight']);
   ok('an attribute without the multi flag never carries hlDist', snap.attrs.title.hlDist === undefined);
@@ -1049,7 +1050,7 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
     [gpcPart.avgDepth, ptPart.avgDepth], [2.7, 2.5]);
   const hlPart = q.parts.filter((p) => p.key === 'product_highlight')[0];
   eq('qualityScore: hlDist rides through attrQuality onto the part the page renders',
-    hlPart.hlDist, { '0-1': 20, '2-3': 10, '4-5': 70, '6-10': 0, '11+': 0 });
+    hlPart.hlDist, { '1': 20, '2': 10, '3': 0, '4': 70, '5': 0, '6+': 0 });
   ok('qualityScore: weighted by attribute, not a flat mean',
     Math.abs(q.score - q.parts.reduce((s, p) => s + p.score * p.w, 0) / q.parts.reduce((s, p) => s + p.w, 0)) < 0.06);
   ok('qualityScore: verdict names the band', q.verdict.pill.indexOf('Spec violations') >= 0 && q.verdict.line.length > 40);
@@ -1178,19 +1179,84 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   console.log('\n— content quality: highlight-count distribution (6–10 house target) —');
   const page = readFileSync(new URL('../docs/FeedSpark_GoldenRecord.html', import.meta.url), 'utf8');
   const wk = readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', import.meta.url), 'utf8');
-  eq('engine: HL_BUCKETS is exported so the page and worker read the same shape',
-    LG.HL_BUCKETS, ['0-1', '2-3', '4-5', '6-10', '11+']);
+  eq('engine: HL_BUCKETS is exported so the page and worker read the same shape — the POPULATION keys (1..5, 6+)',
+    LG.HL_BUCKETS, ['1', '2', '3', '4', '5', '6+']);
   eq('engine: HL_STD names Ray’s 6–10 house target', LG.HL_STD, { min: 6, max: 10 });
-  ok('page: a stacked bar renders the distribution, width-based (not the vertical .thist histogram)',
-    /class="hlbar"/.test(page) && /width:. \+ pct \+ '%;background:/.test(page));
-  ok('page: the 6–10 bucket is called out as the house target in the legend',
+  ok('page: the highlight row renders the population TABLE (the PT depth card’s row format), not a stacked bar',
+    /cls: 'hlpop'/.test(page) && /function popCard\(/.test(page) && /highlights carried per product/.test(page) && !/class="hlbar"/.test(page));
+  ok('page: the 6+ bucket is called out as the house target',
     /\(our target\)/.test(page));
   ok('page: honestly separates Google’s stated recommendation from FeedSpark’s own target',
     /Google.s stated 4–6/.test(page) && /FeedSpark.s own house target/.test(page));
   ok('worker: the PUT sanitizer allow-lists hlDist with fixed bucket keys, each independently clamped',
     /hlDist: \(q\.multi && a\.hlDist/.test(wk) && /HL_BUCKETS\.reduce/.test(wk));
   ok('worker: imports HL_BUCKETS from the engine rather than hard-coding the bucket keys twice',
-    /HL_BUCKETS \} from ".\/labelguard\.js"/.test(wk));
+    /HL_BUCKETS, cleanPop \} from ".\/labelguard\.js"/.test(wk));
+}
+
+/* ---------- POPULATION: how many of the thing a SKU carries (Ray, 18 Sep 2026) ----------
+   "I want this feature [the PT depth granularity table] to be the table breakdown for
+   highlight population (1, 2, 3, 4, 5, >5) applied to label cards and product types as well" */
+{
+  console.log('\n— population profile: labels per SKU, product_type values per SKU, highlights per product —');
+  eq('POP_KEYS are the depth table’s own buckets', LG.POP_KEYS, ['1', '2', '3', '4', '5', '6+']);
+  const p = LG.popProfile({ 0: 5, 1: 10, 2: 20, 3: 5, 7: 2 });
+  eq('popProfile: share of PROFILED SKUs per bucket (a SKU with none is not profiled)', p.pct, { '1': 27, '2': 54.1, '3': 13.5, '4': 0, '5': 0, '6+': 5.4 });
+  eq('popProfile: avg is SKU-weighted over the profiled set', p.avg, 2.1);
+  eq('popProfile: profiled count, the none count kept beside it, and the most any SKU carries', [p.skus, p.zero, p.max], [37, 5, 7]);
+  ok('popProfile: nothing profiled reads null, never a fake 0% table', LG.popProfile({ 0: 12 }) === null && LG.popProfile({}) === null && LG.popProfile(null) === null);
+  eq('popProfile: string keys and counts are tolerated (a JSON round trip)', LG.popProfile({ '2': '3', '6': '1' }).pct['2'], 75);
+  eq('popBucket: 6 and above fold into 6+', [1, 5, 6, 40].map(LG.popBucket), ['1', '5', '6+', '6+']);
+  // cleanPop — the push lanes hand the worker a computed profile: fixed keys, clamped numbers
+  eq('cleanPop: fixed keys, each number clamped, junk dropped',
+    LG.cleanPop({ pct: { '1': 150, '2': -3, '6+': 'x', bogus: 9 }, avg: '2.4', skus: '12', zero: -1, max: 9 }),
+    { pct: { '1': 100, '2': 0, '3': 0, '4': 0, '5': 0, '6+': 0 }, avg: 2.4, skus: 12, zero: 0, max: 9 });
+  ok('cleanPop: a profile with nothing profiled, or no pct map, is dropped',
+    LG.cleanPop({ pct: { '1': 50 }, skus: 0 }) === null && LG.cleanPop({ avg: 2 }) === null && LG.cleanPop(null) === null);
+  eq('cleanPop: a clean profile passes through unchanged', LG.cleanPop(p), p);
+  // slotCols — every column a repeatable attribute occupies, bare or (n), g: and ||| forms
+  eq('slotCols: bare + (n) + |||n, never a prefix match', LG.slotCols(['g:id', 'g:product_type', 'g:product_type(2)', 'g:product_type(10)', 'product_type|||3', 'g:product_typex'], 'product_type'), [1, 2, 3, 4]);
+  eq('findMultiCols still resolves the highlight slots through the same read', LG.findMultiCols(['id', 'product_highlight', 'product_highlight(2)']).product_highlight, [1, 2]);
+
+  // the XML lane carries it: labels per SKU + product_type values per SKU, off the same stream
+  const { createRequire } = await import('node:module');
+  const FA = createRequire(import.meta.url)('../docs/feedlab_engine.js');
+  const item = (id, labels, pts) => '<item><g:id>' + id + '</g:id><g:title>T</g:title>' +
+    labels.map((l, i) => '<g:custom_label_' + i + '>' + l + '</g:custom_label_' + i + '>').join('') +
+    pts.map((v) => '<g:product_type>' + v + '</g:product_type>').join('') + '</item>';
+  let xml = '<?xml version="1.0"?><rss xmlns:g="http://base.google.com/ns/1.0"><channel>';
+  for (let i = 1; i <= 40; i++) xml += item('a' + i, ['x', 'y'], ['Women &gt; Dresses']);                 // 2 labels · 1 type
+  for (let i = 1; i <= 40; i++) xml += item('b' + i, ['x', 'y', 'z'], ['Women &gt; Dresses', 'midi', 'wrap']); // 3 labels · 3 types
+  for (let i = 1; i <= 20; i++) xml += item('c' + i, [], ['Men &gt; Shirts', 'oxford', 'slim', 'blue', 'cotton', 'work', 'smart']); // none · 7 types
+  xml += '</channel></rss>';
+  const col = LG.xmlCollector({ client: 'Reiss', market: 'gb' });
+  const parser = FA.createXmlParser(col.onRow);
+  for (let o = 0; o < xml.length; o += 501) parser.push(xml.slice(o, o + 501));
+  parser.end();
+  const { snap } = col.finish();
+  eq('xml pipe: labels per SKU — 40 SKUs at 2, 40 at 3, 20 carry none', [snap.labelPop.pct['2'], snap.labelPop.pct['3'], snap.labelPop.skus, snap.labelPop.zero], [50, 50, 80, 20]);
+  eq('xml pipe: product_type VALUES per SKU count the tree AND every keyword slot — 40 at 1, 40 at 3, 20 at 6+',
+    [snap.ptPop.pct['1'], snap.ptPop.pct['3'], snap.ptPop.pct['6+'], snap.ptPop.skus, snap.ptPop.zero, snap.ptPop.max], [40, 40, 20, 100, 0, 7]);
+  eq('xml pipe: the primary product_type pivot is untouched by the slot read (bare column = the tree)', snap.labels.product_type.filled, 100);
+  const fb = LG.xmlCollector({ client: 'Reiss', market: 'gb-fb' });
+  const pfb = FA.createXmlParser(fb.onRow); pfb.push(xml); pfb.end();
+  const sfb = fb.finish().snap;
+  ok('xml pipe: a Meta feed profiles its labels but never product types (PT Guard is Google-only)', sfb.labelPop && sfb.labelPop.skus === 80 && sfb.ptPop === undefined);
+  // the gviz lane cannot say it — no per-row read — so a sheet-backed snapshot carries no profile
+  ok('gviz lane: snapshotFromParts never invents a population', LG.snapshotFromParts({ client: 'x', market: 'gb' }, { id: 0, labels: { custom_label_0: -1 } }, ['10'], {}, ['custom_label_0']).labelPop === undefined);
+  // the worker keeps labels’ profile on the labels store and product types’ on the ptype store, cleaned
+  const wk2 = readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', import.meta.url), 'utf8');
+  ok('worker: splitRaw cleans both profiles and files each on its own store', /const lp = cleanPop\(raw\.labelPop\), pp = cleanPop\(raw\.ptPop\)/.test(wk2) &&
+    /labelPop: lp, ptPop: undefined/.test(wk2) && /labelPop: undefined, ptPop: pp/.test(wk2));
+  // the three pages render the SAME card
+  const pages = ['LabelGuard', 'ProductTypeGuard', 'GoldenRecord'].map((n) => readFileSync(new URL('../docs/FeedSpark_' + n + '.html', import.meta.url), 'utf8'));
+  ok('pages: /labels, /ptypes and /golden each carry popCard() — the one row format (label · bar · %)',
+    pages.every((s) => /function popCard\(/.test(s) && /<div class="pr'/.test(s) && /class="pb"><i style="width:/.test(s)));
+  ok('page /labels: the label card reads labelPop and says so when a sheet-backed feed cannot carry it', /s\.labelPop/.test(pages[0]) && /column counts/.test(pages[0]));
+  ok('page /ptypes: the product-type card reads ptPop', /s\.ptPop/.test(pages[1]));
+  ok('pages /labels + /ptypes: every brand card collapses on its own header and ⊖ Collapse all / ⊕ Expand all does them all',
+    pages.slice(0, 2).every((s) => /id="collapse-all"/.test(s) && /data-toggle=/.test(s) && /Expand all/.test(s)));
+  ok('pages /labels + /ptypes: the fold is a device preference, never shared state', /lg-collapse/.test(pages[0]) && /pt-collapse/.test(pages[1]));
 }
 
 {
