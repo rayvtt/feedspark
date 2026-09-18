@@ -6703,49 +6703,49 @@
       "name": "Present: ONE RENDERER — the deck is built from opHtml, the sheet's and the PDF's own document",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "doc.innerHTML=opHtml(name,b,p,mkts,got)",
-      "pr": 458
+      "pr": 0
     },
     {
       "name": "Present: the one-pager's data load is shared with the sheet, never a second set of endpoints",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function opLoad",
-      "pr": 458
+      "pr": 0
     },
     {
       "name": "Present: opHtml RETURNS the document so two surfaces can render it",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function opHtml",
-      "pr": 458
+      "pr": 0
     },
     {
       "name": "Present: THE ANIMATION MAY NOT COMPUTE — a counted number ends on the one-pager's own string",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function showNum",
-      "pr": 458
+      "pr": 0
     },
     {
       "name": "Present: a long section pans rather than being clipped, and its dwell grows to cover the pan",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "return 3600+Math.min(9000",
-      "pr": 458
+      "pr": 0
     },
     {
       "name": "Present: sections split on the one-pager's OWN sub-headings, never on a height guess",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "subs=sec.querySelectorAll('.op-h4')",
-      "pr": 458
+      "pr": 0
     },
     {
       "name": "Present: pinned-header offsets are measured, not hard-coded",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function showStick",
-      "pr": 458
+      "pr": 0
     },
     {
       "name": "Present: the pinned header's stacking context outranks the transformed body rows",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "#dz-show .op-tbl thead{position:relative;z-index:5}",
-      "pr": 458
+      "pr": 0
     },
     {
       "name": "Cockpit: ONE client filter — the panel's brand picker writes itState.clients, the board's chips move the panel",
@@ -7579,31 +7579,31 @@
       "name": "abtests: WHO WON — an A/B title test names its winning group off the write-up, never 'lost' (Ray 17 Sep 2026)",
       "file": "cloudflare/feedspark-deck/src/abtests.js",
       "pattern": "export function abWinner",
-      "pr": 458
+      "pr": 0
     },
     {
       "name": "abtests: the other group's descriptor is inferred (with ↔ without) from the one the prose described",
       "file": "cloudflare/feedspark-deck/src/abtests.js",
       "pattern": "export function abGroups",
-      "pr": 458
+      "pr": 0
     },
     {
       "name": "abtests: a title test is recognised by type or batch name",
       "file": "cloudflare/feedspark-deck/src/abtests.js",
       "pattern": "export function isTitleTest",
-      "pr": 458
+      "pr": 0
     },
     {
       "name": "CmdCenter: one abResult for the dossier pill AND the one-pager column — control win is navy, test win green",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function abResult(t)",
-      "pr": 458
+      "pr": 0
     },
     {
       "name": "Worker: the abtests cache is shape-versioned so a redeploy re-reads the archive",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "hit.v === AB_SHAPE",
-      "pr": 458
+      "pr": 0
     },
     {
       "name": "Task Manager: 'Hide Not yet tagged' — one population feeds the chart, its legend, table, CSV and PNG (Ray, 17 Sep 2026: 'btw [Not yet tagged] can be excluded from showing when dissect by Tag')",
