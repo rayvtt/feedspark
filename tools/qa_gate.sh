@@ -261,6 +261,16 @@ else
   echo "   ✗ volumes harness FAILED — see node tools/test_volumes.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3k/7: Label Guard engine (/labels /ptypes /golden — 380 assertions)"
+# CLAUDE.md has claimed this suite was "in qa_gate/presync/validate" for a while; it was only ever
+# in validate.yml, so every session touching those three pages got its first signal from CI. One
+# stray selector in a body.pdf hide list cost a red run on PR #458 to learn that.
+if node tools/test_labelguard.mjs >/dev/null 2>&1; then
+  echo "   ✓ population profiles, content-quality rules, the print hide list + the worker split hold"
+else
+  echo "   ✗ Label Guard harness FAILED — see node tools/test_labelguard.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 4/7: shipped-feature markers"
 if node tools/check_markers.js >/dev/null 2>&1; then
   echo "   ✓ no shipped feature regressed"

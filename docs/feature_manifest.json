@@ -7960,6 +7960,102 @@
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "renderUpd(); try{ renderAim(); }catch(e){} foot();",
       "pr": 457
+    },
+    {
+      "name": "Golden Record ⬇ HTML: the download is foldable — <details>, not click handlers, because the file has no scripts (Ray, 18 Sep 2026)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function htmlifyExport(doc, pops)",
+      "pr": 458
+    },
+    {
+      "name": "Golden Record ⬇ HTML: the scoring prose comes from the SAME pop-up builders the AM reads, captured not re-written",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var SCCAP = null;",
+      "pr": 458
+    },
+    {
+      "name": "Golden Record ⬇ HTML: capture mode on the ONE opener, so a rule change can never drift the export's copy",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "if (SCCAP) { SCCAP.push(",
+      "pr": 458
+    },
+    {
+      "name": "Golden Record ⬇ HTML: every analysed attribute is opened before the clone, or its findings are not in the file at all",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "qualKeys(k).forEach(function (key) { var kk = k + '|' + key;",
+      "pr": 458
+    },
+    {
+      "name": "Golden Record ⬇ HTML: .qz-det is a CHILD of the row — lifted out BEFORE the summary is built, else the findings end up inside the summary",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "row.querySelector(':scope > .qz-det')",
+      "pr": 458
+    },
+    {
+      "name": "Golden Record ⬇ HTML: the ⓘ Scoring logic button becomes the disclosure it was a door to (Ray: 'remove the Scoring section')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "How the content-quality score is put together",
+      "pr": 458
+    },
+    {
+      "name": "Golden Record ⬇ HTML: every AI-readiness pillar carries its own formula and readings",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'How this is scored', 'xd-in'",
+      "pr": 458
+    },
+    {
+      "name": "Golden Record ⬇ HTML: the injected FCC layers are stripped — a client's document carries no editor toolbar or panel handle",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'.de-bar', '.de-dot', '#fs-editor-css'",
+      "pr": 458
+    },
+    {
+      "name": "Golden Record ⬇ HTML: and no internal Ask-client / Brief action rides along",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'.qz-act', '[data-qask]', '[data-qbrief]'",
+      "pr": 458
+    },
+    {
+      "name": "Golden Record ⬇ HTML: the export has its own body scope, so the PDF rasteriser never picks the disclosure layout up",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'pdf pdfshot xhtml'",
+      "pr": 458
+    },
+    {
+      "name": "Golden Record ⬇ HTML: the page is put back exactly as it was afterwards",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "Object.keys(was).forEach(function (kk) { if (was[kk]) QOPEN[kk] = true; else delete QOPEN[kk]; });",
+      "pr": 458
+    },
+    {
+      "name": "Golden Record: the PDF hides the injected layers too — a client-facing sheet carries no dead FCC chrome",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf button[data-qinfo],body.pdf button[data-scpop]",
+      "pr": 458
+    },
+    {
+      "name": "Golden Record ⬇ HTML tripwire wired into presync",
+      "file": "tools/presync.sh",
+      "pattern": "tools/check_grhtml.js",
+      "pr": 458
+    },
+    {
+      "name": "Golden Record: the injected-chrome hide list is its OWN rule — appending to the page's own body.pdf list breaks test_labelguard's shape read of it",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf .qz-act,body.pdf #qz-run,body.pdf #qz-msg,body.pdf .qz-scan{display:none!important}",
+      "pr": 458
+    },
+    {
+      "name": "Label Guard engine suite wired into qa_gate — it was validate-only, so /labels /ptypes /golden had no local signal",
+      "file": "tools/qa_gate.sh",
+      "pattern": "tools/test_labelguard.mjs",
+      "pr": 458
+    },
+    {
+      "name": "Label Guard engine suite wired into presync",
+      "file": "tools/presync.sh",
+      "pattern": "tools/test_labelguard.mjs",
+      "pr": 458
     }
   ]
 }

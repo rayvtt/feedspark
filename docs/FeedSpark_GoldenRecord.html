@@ -527,6 +527,46 @@ window.addEventListener('load',restore);
   body.pdf #fcc-fcb,body.pdf #fcc-fcp,body.pdf #tky-fab,body.pdf #tky-scrim,body.pdf #tky-drawer,
   body.pdf #fcc-viewas,body.pdf #fcc-apps,body.pdf #fcc-navcz,body.pdf #fcc-navcz-scrim,
   body.pdf .qz-act,body.pdf #qz-run,body.pdf #qz-msg,body.pdf .qz-scan{display:none!important}
+  /* A SEPARATE RULE, deliberately: the list above is what the PAGE hides on paper and
+     tools/test_labelguard.mjs reads it by shape (.qz-scan immediately before the brace), so
+     appending to it breaks a tripwire that has nothing to do with this. These are the INJECTED
+     layers - cloned into the download with the rest of the DOM but with their scripts left
+     behind, so they arrive as dead furniture on a client-facing document: the editor toolbar
+     (✎ Edit / 🎨 Design / 🧹 Reset page), the Shipped panel's edge handle, the presence avatars,
+     the EN/VI pill, the hours dots, the phone bar. The PDF wants them gone for the same reason.
+     Plus the ⓘ Scoring logic buttons: a door to a pop-up no script can open - the HTML export
+     replaces them with the disclosure itself, and the PDF prints that prose under each section. */
+  body.pdf .de-bar,body.pdf .de-dot,body.pdf #fcc-ship,body.pdf #fcc-ship-dim,body.pdf #fcc-ship-h,
+  body.pdf #fcc-hrs,body.pdf .fh-dot,body.pdf #lang-tgl,body.pdf #fcc-presence,
+  body.pdf #fcc-mall,body.pdf .fcc-mpan,
+  body.pdf button[data-qinfo],body.pdf button[data-scpop]{display:none!important}
+  /* the download's disclosures. The two section headlines open by default, so a client meets the
+     method rather than having to go looking for it; each attribute and each pillar starts folded,
+     because eight attributes' worth of findings expanded at once is a wall, and the summary row
+     already carries the score and the worst-breaking rule. */
+  body.xhtml details.xd{border:1px solid var(--line);border-radius:10px;background:var(--wash);margin:8px 0}
+  body.xhtml details.xd>summary{cursor:pointer;padding:9px 12px;font-size:12.5px;font-weight:900;color:var(--ink);
+    list-style:none;display:flex;align-items:center;gap:10px}
+  body.xhtml details.xd>summary::-webkit-details-marker{display:none}
+  body.xhtml details.xd>summary::after{content:"\25be";margin-left:auto;color:var(--muted);font-weight:900}
+  body.xhtml details.xd[open]>summary::after{content:"\25b4"}
+  body.xhtml details.xd[open]>summary{border-bottom:1px solid var(--line)}
+  body.xhtml details.xd>.xd-b{padding:10px 12px 12px}
+  body.xhtml details.xd .xd-n{font-weight:900;font-variant-numeric:tabular-nums}
+  body.xhtml details.xd .xd-w{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  body.xhtml details.xd.xd-in{margin:8px 0 0;background:var(--paper)}
+  /* an attribute row IS the summary, so it keeps the row grid it had as a div */
+  body.xhtml details.xd-q{border:0;border-radius:0;background:none;margin:0}
+  body.xhtml details.xd-q>summary.xd-sum{padding:0;display:grid;gap:10px;
+    grid-template-columns:186px 52px minmax(90px,1fr) minmax(190px,1.4fr)}
+  body.xhtml details.xd-q[open]>summary.xd-sum{border-bottom:0}
+  body.xhtml details.xd-q>summary::after,
+  body.xhtml details.xd-q[open]>summary::after{content:none}
+  body.xhtml summary.xd-sum .qz-nm::before{content:"\25b8";display:inline-block;width:13px;
+    color:var(--muted);font-weight:900}
+  body.xhtml details.xd-q[open]>summary .qz-nm::before{content:"\25be"}
+  body.xhtml details.xd-q>.xd-b{padding:0}
+  body.xhtml .xd-wrap{margin:0 0 10px}
   body.pdf #sec-detail{border-top:none;padding:0}
   body.pdf #sec-detail .wrap{max-width:none;padding:0}
   body.pdf .tier{break-inside:avoid;page-break-inside:avoid}   /* only bites in the A4 fallback */
@@ -2360,7 +2400,16 @@ window.addEventListener('load',restore);
      logic and pop up there in these 2 sections"). The formula and the sources are the ENGINE's
      (FeedAudit.BASIS / labelguard's QSPEC), so /feedlab and /golden can never explain the same
      number two different ways; the readings are the ones stored with the analysis. */
+  /* CAPTURE MODE (Ray, 18 Sep 2026: "allow the HTML file downloaded to be expandable and
+     collapsible on every section … so my client can read the scoring logic and the detail of each
+     content quality scoring"). The download strips every <script>, so the ⓘ pop-ups are dead in it
+     and the scoring logic a client is being asked to trust is unreachable. Rather than write a
+     second copy of that prose for the export - which would drift the first time a rule changed -
+     SCCAP turns this one opener into a recorder: the export calls the SAME five builders and gets
+     back exactly what the AM reads on screen, to inline inside <details>. */
+  var SCCAP = null;
   function openScPop(title, num, w, body, colFn) {
+    if (SCCAP) { SCCAP.push({ title: title, num: num, w: w, body: body, col: (colFn || airCol) }); return; }
     closeScPop();
     var m = document.createElement('div'); m.className = 'scm'; m.id = 'scm';
     m.innerHTML = '<div class="sc-box" role="dialog" aria-label="' + esc(title) + '"><div class="sc-h"><h3>' + esc(title) + '</h3>' +
@@ -2725,13 +2774,114 @@ window.addEventListener('load',restore);
      should not try to call the FCC's own APIs) and app-only chrome via the existing .pdf
      print rules, laid out at natural size via .pdfshot rather than the print zoom — the same
      combination exportPdf's capture pass uses, so both exports show the identical document. */
+  /* every scoring pop-up on the page, captured through its own builder */
+  /* the analysed attributes, derived the way the renderer derives them - QUAL[k] is the RAW
+     stored reading and has no .parts; those come out of qualityScore against the live profile */
+  function qualKeys(k) {
+    if (!(LGQ && QUAL[k])) return [];
+    try {
+      var qs = LGQ.qualityScore(QUAL[k], profileForC(parts(k).client));
+      return ((qs && qs.parts) || []).map(function (r) { return r.key; });
+    } catch (e) { return []; }
+  }
+  function grabPops(k) {
+    var out = { q: {}, s: {} }, one = function (fn) {
+      SCCAP = []; try { fn(); } catch (e) {} var r = SCCAP[0] || null; SCCAP = null; return r;
+    };
+    out.q._ = one(function () { qualityPop(k, '_'); });
+    qualKeys(k).forEach(function (key) { out.q[key] = one(function () { qualityPop(k, key); }); });
+    out.s._ = one(function () { scorePop(k, '_'); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-scpop]'), function (el) {
+      var key = el.getAttribute('data-scpop'); if (key === '_' || out.s[key]) return;
+      out.s[key] = one(function () { scorePop(k, key); });
+    });
+    return out;
+  }
+  /* one captured pop-up as a no-JS disclosure. <details> is the whole point: the download has no
+     scripts, so a chevron wired to a click handler is a chevron that does nothing. */
+  function popDet(cap, label, cls, open) {
+    if (!cap) return '';
+    return '<details class="xd' + (cls ? ' ' + cls : '') + '"' + (open ? ' open' : '') + '><summary>' + esc(label || cap.title) +
+      (cap.num != null && cap.num !== '' ? '<span class="xd-n" style="color:' + cap.col(+cap.num) + '">' + cap.num + '</span>' : '') +
+      (cap.w ? '<span class="xd-w">' + esc(cap.w) + '</span>' : '') + '</summary><div class="xd-b">' + cap.body + '</div></details>';
+  }
+  /* turn the cloned document into something a client can actually read offline */
+  function htmlifyExport(doc, pops) {
+    // 1. every content-quality row becomes a disclosure carrying its detail AND its scoring logic
+    Array.prototype.forEach.call(doc.querySelectorAll('.qz-row[data-qk]'), function (row) {
+      var key = row.getAttribute('data-qk');
+      /* .qz-det is a CHILD of the row, not its sibling (renderQuality closes .qz-row after it),
+         so it has to come out BEFORE the row's children are moved into the summary - otherwise the
+         whole findings block ends up inside the summary and clicking the row does nothing useful. */
+      var det = row.querySelector(':scope > .qz-det') || row.querySelector('.qz-det');
+      if (det && det.parentNode) det.parentNode.removeChild(det);
+      var d = doc.ownerDocument ? doc.ownerDocument.createElement('details') : document.createElement('details');
+      d.className = 'xd xd-q';
+      var sum = document.createElement('summary');
+      sum.className = 'qz-row xd-sum';
+      while (row.firstChild) sum.appendChild(row.firstChild);
+      d.appendChild(sum);
+      var body = document.createElement('div');
+      body.className = 'xd-b';
+      /* how it is scored, then what was found - the order Ray asked for, and the order a client
+         meeting the method for the first time needs: the long evidence makes sense after it */
+      if (pops.q[key]) { var w = document.createElement('div'); w.innerHTML = popDet(pops.q[key], 'How g:' + key + ' is scored', 'xd-in'); if (w.firstChild) body.appendChild(w.firstChild); }
+      if (det) body.appendChild(det);
+      d.appendChild(body);
+      /* the live page's own ▸/▾ span is a lie in the export: the rows were force-opened to get
+         their detail into the file, so every one of them would read ▾ while its <details> is shut.
+         The disclosure draws its own marker (CSS, in the column the span used to hold). */
+      Array.prototype.forEach.call(sum.querySelectorAll('.cx'), function (c) { c.parentNode.removeChild(c); });
+      row.parentNode.replaceChild(d, row);
+    });
+    // 2. each section's ⓘ Scoring logic button becomes the disclosure it was only ever a door to
+    var secs = [['[data-qinfo="_"]', pops.q._, 'How the content-quality score is put together'],
+                ['button[data-scpop="_"]', pops.s._, 'How the AI-readiness score is put together']];
+    secs.forEach(function (x) {
+      Array.prototype.forEach.call(doc.querySelectorAll(x[0]), function (btn) {
+        // both buttons sit in .qz-meta inside .tier-h, so the disclosure goes directly under the
+        // section header - inside the tier, above the section's own content
+        var head = btn.closest ? btn.closest('.tier-h') : null;
+        var w = document.createElement('div'); w.className = 'xd-wrap'; w.innerHTML = popDet(x[1], x[2], null, true);
+        if (w.firstChild) {
+          if (head && head.parentNode) head.parentNode.insertBefore(w, head.nextSibling);
+          else btn.parentNode.insertBefore(w, btn.nextSibling);
+        }
+        if (btn.parentNode) btn.parentNode.removeChild(btn);
+      });
+    });
+    // 3. every AI-readiness pillar carries its own formula and this feed's readings
+    Array.prototype.forEach.call(doc.querySelectorAll('.pillar[data-scpop]'), function (p) {
+      var cap = pops.s[p.getAttribute('data-scpop')]; if (!cap) return;
+      var w = document.createElement('div'); w.innerHTML = popDet(cap, 'How this is scored', 'xd-in');
+      if (w.firstChild) p.appendChild(w.firstChild);
+      p.removeAttribute('role'); p.removeAttribute('tabindex'); p.removeAttribute('title');
+    });
+    // 4. nothing that needs JavaScript survives in a file that has none
+    ['.de-bar', '.de-dot', '#fs-editor-css', '#fcc-ship', '#fcc-ship-dim', '#fcc-ship-h', '#fcc-hrs',
+     '.fh-dot', '#lang-tgl', '#fcc-presence', '#fcc-mall', '.fcc-mpan', '#theme-tgl', '#scm',
+     '[data-qinfo]', '[data-scpop]', '.qz-i', '.qz-act', '[data-qask]', '[data-qbrief]',
+     '.at-act', '.det-actions', '.refseg'].forEach(function (sel) {
+      Array.prototype.forEach.call(doc.querySelectorAll(sel), function (el) {
+        if (el.classList && el.classList.contains('pillar')) { el.removeAttribute('data-scpop'); return; }
+        if (el.parentNode) el.parentNode.removeChild(el);
+      });
+    });
+  }
   function exportHtml(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
     var p = parts(k), s = d.snapshot;
+    /* open every content-quality row first: a closed row's detail is never rendered, so without
+       this the download would carry chevrons over nothing. The reader can still fold them. */
+    var was = {};
+    qualKeys(k).forEach(function (key) { var kk = k + '|' + key; was[kk] = !!QOPEN[kk]; QOPEN[kk] = true; });
+    renderDetail(k);
+    var pops = grabPops(k);
     $('print-head').innerHTML = pdfHead(p, s);
     var doc = document.documentElement.cloneNode(true);
     Array.prototype.forEach.call(doc.querySelectorAll('script'), function (el) { el.parentNode.removeChild(el); });
-    doc.querySelector('body').className = 'pdf pdfshot';
+    doc.querySelector('body').className = 'pdf pdfshot xhtml';
+    try { htmlifyExport(doc, pops); } catch (e) { if (window.__grthrow) window.__grthrow = String(e && e.stack || e); }
     var title = doc.querySelector('title') || doc.querySelector('head').appendChild(document.createElement('title'));
     title.textContent = 'FeedSpark Golden Record — ' + dispClient(p.client) + ' ' + p.mkt.toUpperCase();
     var html = '<!doctype html>\n' + doc.outerHTML;
@@ -2740,6 +2890,9 @@ window.addEventListener('load',restore);
     a.href = URL.createObjectURL(blob);
     a.download = pdfFilename(p, s, 'html');
     a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    // and put the page back exactly as it was
+    Object.keys(was).forEach(function (kk) { if (was[kk]) QOPEN[kk] = true; else delete QOPEN[kk]; });
+    renderDetail(k);
   }
 
   /* ---------------- CSV export ---------------- */
