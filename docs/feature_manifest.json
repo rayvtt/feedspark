@@ -7693,135 +7693,135 @@
       "name": "AI Mode: the builder's engine, liftable by name for tools/test_aimode.mjs",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "/* AIMODE:ENGINE-START",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode: the rate card is the builder's own — £695 day rate, £0.10/field, £100 scrape run, £100 AI floor",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "AIM_RATE_DEFAULT={dayRate:695,hoursPerDay:8,hoursSupplied:2,hoursScrape:2,scrapeMonthly:100",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode: the scrape run is charged ONCE across every scraped field, never per field",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "covers every scraped field, charged once",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode: the monthly minimum is its own line, never folded into another field's charge",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "label:'AI minimum monthly'",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode: the seven attributes and the routes each can honestly take (AI can't invent a document link)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "key:'popularity_rank',     routes:['feedhero']",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode: new products a month come from OUR Monthly update card, not a second newness step (Ray, 17 Sep 2026: 'only thing to keep is our monthly update - new products view, it looks better')",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function aimPerMonth()",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode: and the card draws no second arrivals chart — the Monthly update card owns that view",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "id=\"aim-chart\"",
-      "pr": 0,
+      "pr": 455,
       "forbidden": true
     },
     {
       "name": "AI Mode: the live pull captures the feed's own first-seen date column on the SAME stream",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "AIM_DOB_PATS",
-      "pr": 0,
+      "pr": 455,
       "min": 2
     },
     {
       "name": "AI Mode: its own unit — charged per item group, not the page's SKU rule",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function aimUnit()",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode: man power split from the per-product generation, because Discount % excludes man power",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "man:hoursN*hr,gen:gen",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode: the card is a quote TYPE, so it rides the same sections / export / tracker as the rest",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "['aim','AI Mode attributes'",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode: its set-up and monthly reach the quote totals on the right sides",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "aim:aq,aimOne:aimOne,aimMon:aimMon",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode: the Finance workbook splits it across THREE bands (generation / configuration / recurring), never one",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "Tachyon AI generation",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode: the configuration hours land in SET-UP & CONFIGURATION as days at the Dayrate",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "configuration)'",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode: a saved quote freezes its routes, so ✎ Edit reproduces what finance signed off",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "if(!l.shared&&l.id)r.aim.src[l.id]=l.route;",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode: the card always names WHICH read the new-products figure came from",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function aimSrcLine(nn)",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode: on a phone the table stacks into cards — the prices must not sit off the right edge",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "table.aim td.num::before{content:attr(data-l)",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "Quote scope: .qp is a shared pill LOOK — the quick-pick handler answers only to data-qp, or every type button and market chip zeroes the product scope",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "var q=b.getAttribute('data-qp'); if(q==null)return;",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "Quote summary: the subgrid track count matches the LONGEST column, or an added row prints through the one below",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "grid-template-rows:repeat(8,auto)",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode harness wired into the gate",
       "file": "tools/qa_gate.sh",
       "pattern": "tools/test_aimode.mjs",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode harness wired into presync",
       "file": "tools/presync.sh",
       "pattern": "tools/test_aimode.mjs",
-      "pr": 0
+      "pr": 455
     },
     {
       "name": "AI Mode harness wired into CI",
       "file": ".github/workflows/validate.yml",
       "pattern": "tools/test_aimode.mjs",
-      "pr": 0
+      "pr": 455
     }
   ]
 }
