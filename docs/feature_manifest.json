@@ -7622,6 +7622,42 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "Not yet tagged is hidden:",
       "min": 1
+    },
+    {
+      "name": "Task Manager: the measure — hiding a series re-ranks the rows (Ray, 18 Sep 2026: 'then option to hide non-billable also from dissectment')",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function mOf(x, m)",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: Include control — billable only / non-billable only",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "<select id=\"cmeas\">",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: percentage labels, % of its parent vs % of the whole chart (Ray, 18 Sep 2026: 'percentage of which attributes')",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function labText(x, base)",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: a nested child's denominator is keyed on its FULL PATH, never a repeatable node name",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "own[r.path.slice(0, r.depth).join(SEP)]",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the label basis rides the subtitle, never the collapsible verdict",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "if (labBasis()) basis.push(labBasis());",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the hidden series keeps its legend row, dimmed and marked",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "var hd = function (name, on, col, val, pct)",
+      "min": 1
     }
   ]
 }

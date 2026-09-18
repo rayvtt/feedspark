@@ -436,6 +436,56 @@ chart can never name the same colour differently; with the legend on the chart, 
 labels stand down (the same names twice is clutter) and when they are drawn, two lines finishing
 together are pushed apart rather than printed on top of each other.
 
+### Include, and what a percentage is a share of
+
+> Ray, 18 Sep 2026, over a Type of work › Task chart: *"Allow percentage labels to be changed from
+> numbers to percentages as well, and then percentage of which attributes. For example … I want to
+> see how many out of 63.75 hours of keywords optimisation are accumulated to the total of billable
+> optimisation work type"*, then *"then option to hide non-billable also from dissectment"*.
+
+Those are **one feature**, because a percentage means nothing until you name its denominator — and
+the denominator is exactly what the second ask changes. So there is one **measure**, and the label
+is a share of that:
+
+| Include | The marks are | A label reads |
+|---|---|---|
+| Billable + non-billable *(default)* | the stacked pair, as before | the row's **total** against a total |
+| Billable only | the blue segment | the row's **billable** against a billable total |
+| Non-billable only | the orange segment | the row's **non-billable** against a non-billable total |
+
+**Labels**: `Hours` · `% of its parent` · `% of the whole chart` · `None`.
+
+Ray's question is therefore two picks — **Include → Billable only**, **Labels → % of its parent** —
+and Keyword optimisation reads **20.4%**: its 63.75 billable hours as a share of billable
+Optimisation. `% of its parent` is offered only under a nested split (on a flat one it would mean
+the whole view, which is already its own option); a pick that stops being offered falls back to
+`% of the whole chart`, the same question one level up, never silently to hours.
+
+Four rules keep it honest:
+
+1. **The measure re-ranks — it is not a coat of paint.** `mOf` in `src/taskbook.js` decides which
+   number sorts the rows and therefore which survive the cap. Paint over a series without
+   re-ranking and a row with 40 h of it sits below one with 4 h that happened to carry more
+   non-billable, and the fold keeps the wrong twelve. A chart ordered by a number it does not draw
+   is worse than no ordering at all.
+2. **Nothing is discarded.** Every node still carries `bill`, `nonbill` and `hours`, so the
+   tooltips, the ⊞ table, the CSV and the legend all still state the split. The hidden series
+   **keeps its legend row** — dimmed, marked *· hidden*, with its hours — because a figure that
+   vanishes from the screen is a figure someone goes looking for.
+3. **The basis is never left to be inferred.** It rides the card **subtitle** (*"billable hours
+   only · labels show billable hours as a share of their parent"*) rather than the verdict, because
+   the verdict collapses behind the card's ⓘ and a percentage whose meaning can be folded away is
+   one someone will read wrong. The PNG footer stamps the same sentence; every hover keeps the raw
+   hours.
+4. **A nested child divides by the parent it actually hangs under**, keyed on its full path — never
+   on a node name that can repeat elsewhere in the tree. Top-level rows divide by the view, so they
+   sum to 100%, and each parent's children sum to 100% of it.
+
+**100% stacked** leaves the form list while a series is hidden: that form *is* the billable split,
+so with one series put away it would draw every column full and say nothing. Both picks are
+remembered per device (`fcc-tm-meas`, `fcc-tm-lab`) and ride `🔗 Copy link` as `?meas=&lab=`, where
+an explicit link beats the remembered preference.
+
 ### Hide Not yet tagged
 
 > Ray, 17 Sep 2026: *"btw [Not yet tagged] can be excluded from showing when dissect by Tag"*
