@@ -1,9 +1,9 @@
 {
-  "_comment": "Industry news digest shown as a pop-up on the FCC. REGENERATED DAILY by the news-digest Routine — see .claude/skills/feedspark-news-digest/SKILL.md. Nothing else writes this file. 'id' drives the read/unread pop-up: change it and every AM gets prompted once.",
-  "id": "2026-09-18",
-  "generated": "2026-09-18T06:00:00Z",
+  "_comment": "Industry news digest shown as a pop-up on the FCC. REGENERATED DAILY by the news-digest Routine — see .claude/skills/feedspark-news-digest/SKILL.md. Nothing else writes this file. 'id' drives the read/unread pop-up: change it and every AM gets prompted once. Every item must be dated within the last 3 months (Ray's rule, 18 Sep 2026).",
+  "id": "2026-09-18-2",
+  "generated": "2026-09-18T09:10:00Z",
   "headline": "Content API for Shopping is now erroring — migrations are overdue",
-  "intro": "First edition — catching up on the last few weeks. From here this runs every weekday morning and only carries what actually changed.",
+  "intro": "First edition, re-cut to the last three months only.",
   "items": [
     {
       "title": "Content API for Shopping now returns progressive errors",
@@ -36,16 +36,6 @@
       "sowhat": "'No catalogue' is the tell. The blueprint assumes somebody else supplies clean, structured product data for the agent to reason over — that is precisely our lane, and it is a strong hook for the AI-Ready Feeds pitch."
     },
     {
-      "title": "Meta Advantage+ allocates budget at SKU level, not set level",
-      "source": "Meta / Shoptalk announcement coverage",
-      "url": "https://adadvisor.ai/blog/meta-ads-updates-2026",
-      "date": "2026-03-01",
-      "impact": "med",
-      "tags": ["Meta", "DPA"],
-      "what": "Spend can now be allocated per product within a set rather than per set, so broad sets can be left to Advantage+ to distribute.",
-      "sowhat": "The old technique of building narrow 20–50 SKU sets purely to steer budget is now counterproductive. Monsoon/Accessorize DPA structures were built that way and are worth revisiting."
-    },
-    {
       "title": "Google Ads opens Product Value Optimization beta",
       "source": "Search Engine Land",
       "url": "https://searchengineland.com/library/platforms/google/google-ads/google-shopping",
@@ -64,16 +54,6 @@
       "tags": ["Amazon", "Pricing"],
       "what": "Temporary discounts and pre-event markups now sit next to a full year of everyday-price history rather than 90 days.",
       "sowhat": "Pre-Black-Friday markup tactics are now visible for a whole year. Anyone planning Q4 promo pricing on Amazon needs to know the reference window changed before they set it."
-    },
-    {
-      "title": "Meta guidance: refresh catalogues daily, or hourly for fast inventory",
-      "source": "Meta catalog documentation",
-      "url": "https://www.feedarc.com/channels/meta-catalog",
-      "date": "2026-09-01",
-      "impact": "med",
-      "tags": ["Meta", "Feed cadence"],
-      "what": "Meta's stated guidance is a minimum of one catalogue update per day, moving to every few hours where inventory or pricing moves quickly.",
-      "sowhat": "Useful third-party backing for the refresh-cadence conversation. Anyone still on a nightly batch for fast-moving stock is below the platform's own published floor — that is an easier sell than an opinion."
     },
     {
       "title": "Stripe extends Shared Payment Tokens to Visa and Mastercard agent rails",
