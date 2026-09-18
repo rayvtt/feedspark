@@ -956,6 +956,22 @@ body.ck-r-on{padding-right:var(--ck-w)}
 .ck-exp[aria-expanded=true]{transform:rotate(180deg);color:var(--orange-deep,#ED6F0B)}
 /* the arrivals rows carry no wash any more — see secArrivals. Kept as a no-op-free rule for any
    future row that genuinely needs to stand out on its own, rather than every row at once. */
+/* THE BOTTOM LINE. Same row grammar as every other section — a pill, a name, a number — with the
+   evidence, the client line and the buttons hung beneath, exactly as .ck-raiserow already does. */
+.ck-act h4{border-top:2px solid var(--ink,#333);padding-top:9px;margin-top:4px}
+.ck-act .ck-row{border-bottom:none;padding-bottom:2px}
+.ck-act .ck-row .nm{color:var(--ink,#333);white-space:normal;overflow:visible;text-overflow:clip;line-height:1.35}
+.ck-actrow{padding:0 0 9px 5px;margin:-1px 0 7px;border-bottom:1px dashed var(--line,#E6E6E6);
+  display:flex;flex-direction:column;gap:5px}
+.ck-act section:last-child .ck-actrow:last-of-type{border-bottom:none}
+.ck-ev{font-size:10.5px;font-weight:700;color:var(--muted,#8a94a0);font-variant-numeric:tabular-nums}
+.ck-say{font-size:11.5px;line-height:1.5;color:var(--ink-2,#4a4a4a);font-style:italic;
+  border-left:2px solid var(--orange,#F5A623);padding-left:8px}
+.ck-actbtn{display:flex;gap:5px;flex-wrap:wrap}
+.ck-actfoot{padding-top:2px}
+.ck-pill.p1{color:#fff;background:#C0392B}
+.ck-pill.p2{color:#B1550A;background:rgba(245,166,35,.2)}
+.ck-pill.p3{color:var(--muted,#8a94a0);background:var(--wash,#F7F7F5)}
 .ck-raiserow{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:0 0 7px 5px;margin:-1px 0 5px}
 .ck-why{flex:1 1 100%;font-size:10.5px;font-weight:700;color:var(--muted,#8a94a0)}
 .ck-brief.go{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B);font-weight:800}
@@ -5238,6 +5254,125 @@ body.ck-r-on{padding-right:var(--ck-w)}
     }
     return {months:out,peak:pk};
   }
+  /* THE BOTTOM LINE (Ray, 18 Sep 2026: "when you say completeness across ten markets is 76.7%,
+     that's great, but at the bottom line, nominate the top three actions you would potentially
+     take for each account, and then have AM talk to the clients about it").
+
+     Everything above this states a FACT. None of it says what to DO, which is the thing an AM
+     needs walking into a call. So the panel closes with at most THREE actions, ranked by what it
+     COSTS TO IGNORE them rather than by how bad the number looks:
+
+       P1  products are being refused TODAY — a REQUIRED attribute absent or under Google's bar.
+           Items without it can be disapproved, so this is revenue lost every day it stands.
+       P2  work is piling up — new stock arriving unoptimised, or a conditional attribute below
+           spec. Nothing is broken yet; it compounds every month nobody acts.
+       P3  a capability gap — a play the rest of the book runs that this account carries none of,
+           or a practice that has stalled. Worth raising, never urgent.
+
+     THREE, AND NO MORE. A ranked list of eleven is the same as no ranking — the AM reads the top
+     and the rest is decoration. Nothing is padded in to reach three: an account with one real
+     action gets one.
+
+     Every action carries THE NUMBER IT CAME FROM (an AM asked "why?" mid-call needs the evidence,
+     not the verdict) and a CLIENT LINE — the same point in the words you would actually say to a
+     client, with no g: field names and no tier jargon, because that sentence is the deliverable. */
+  var PB_FIELDW={
+    gtin:'the barcode (GTIN)', mpn:'the manufacturer part number', brand:'the brand name',
+    gender:'gender', age_group:'age group', color:'colour', size:'size',
+    description:'the product description', image_link:'the main product image',
+    availability:'stock availability', price:'price', product_type:'your own product categories',
+    google_product_category:'the Google product category', item_group_id:'the variant grouping id',
+    material:'material', pattern:'pattern', sale_price:'sale price',
+    additional_image_link:'extra product images', product_highlight:'product highlights'
+  };
+  function pbFieldW(k){ return PB_FIELDW[k]||('the '+String(k).replace(/_/g,' ')+' field'); }
+  function pbActions(gold,raises,practice,brand,opts){
+    opts=opts||{}; brand=brand||'this account';
+    // self-contained: fmt() lives outside the PBENGINE block, and the harness lifts this block alone
+    var nf=function(n){ return (n==null||isNaN(n))?'–':Number(n).toLocaleString('en-GB'); };
+    var cand=[],pr=practice||{};
+
+    /* ---- attributes, worst tier first. Grouped BY ATTRIBUTE, not by market: "g:mpn absent in 4
+       markets" is one conversation with the client, four rows is four. */
+    var by={};
+    (gold||[]).forEach(function(f){
+      (pbWeak(f)||[]).forEach(function(w){
+        if(w.tier!=='req'&&w.tier!=='cond')return;
+        var e=by[w.k]||(by[w.k]={k:w.k,tier:w.tier,gone:[],thin:[],worst:1});
+        if(w.tier==='req')e.tier='req';
+        /* the two populations are kept APART: a market missing the field entirely and one that
+           has it at 71% are different problems with different fixes, and an action that counts
+           them together can't state either honestly. */
+        if(w.missing)e.gone.push(f.mkt);
+        else { e.thin.push(f.mkt); e.worst=Math.min(e.worst,w.cov==null?1:w.cov); }
+      });
+    });
+    Object.keys(by).forEach(function(k){
+      var e=by[k],req=e.tier==='req';
+      /* ONE COUNT, SAID ONCE. The evidence line and the client line are built from the SAME
+         number — an earlier cut derived them separately and produced "2 markets missing it
+         entirely" over "missing on 5 of your markets", which is the kind of contradiction that
+         ends an AM's credibility mid-call. `absent` and `thin` are different populations, so the
+         action names whichever one it is actually about and never mixes them. */
+      var absent=e.gone.length>0, list=absent?e.gone:e.thin, n=list.length;
+      var mk=n+' market'+(n===1?'':'s');
+      cand.push({
+        /* mkts is the SAME population the count and the sentence describe, so the chip can never
+           name five markets beside the words "2 markets". */
+        p:req?1:2, key:'attr:'+k, kind:'attr', mkts:list,
+        title:'Fix g:'+k+(req?' — Google requires it':' — required when it applies'),
+        ev:absent?(mk+' missing it entirely')
+                 :(mk+' below spec, worst '+Math.round(e.worst*100)+'%'),
+        /* a conditional attribute is only required WHERE IT APPLIES, so it never gets the flat
+           "can be refused" a required one earns — that would be overclaiming to a client. */
+        say:absent
+          ? (req
+              ? 'Products without '+pbFieldW(k)+' can be refused by Google, and it is missing entirely on '+mk+'. Can your team supply it, or shall we source it?'
+              : 'Google asks for '+pbFieldW(k)+' on products where it applies, and we have none of it on '+mk+'. Worth checking whether it exists your side before we fill the gap.')
+          : (req
+              ? pbFieldW(k).charAt(0).toUpperCase()+pbFieldW(k).slice(1)+' is required by Google but only partly filled across '+mk+' — as low as '+Math.round(e.worst*100)+'%. The unfilled products are the ones at risk.'
+              : pbFieldW(k).charAt(0).toUpperCase()+pbFieldW(k).slice(1)+' is thin across '+mk+', as low as '+Math.round(e.worst*100)+'%. Filling it is one of the cheaper ways to lift how well your products match.'),
+        brief:{cat:'technical',task:'Golden Record Fix - g:'+k+' - '+brand},
+        rank:(absent?1000:500)+n
+      });
+    });
+
+    /* ---- new stock nobody has optimised. Biggest backlog first. */
+    (raises||[]).forEach(function(r){
+      if(!r)return;
+      cand.push({
+        p:2, key:'raise:'+r.mkt, kind:'raise', mkts:[r.mkt],
+        title:'Optimise the new-product backlog in '+String(r.mkt).toUpperCase(),
+        ev:nf(r.n)+' product'+(r.n===1?'':'s')+' arrived with no title or keyword work since, oldest '+r.age+' days',
+        say:nf(r.n)+' new products have gone live in '+String(r.mkt).toUpperCase()
+            +' without optimised titles or keywords, the oldest '+r.age+' days ago. They are competing'
+            +' on data we have not touched — shall we put them through the next round?',
+        brief:{cat:'keyword',raise:r},
+        rank:r.n
+      });
+    });
+
+    /* ---- capability gaps and stalls: worth saying, never urgent. */
+    (pr.gap||[]).forEach(function(g){
+      cand.push({ p:3, key:'gap:'+g.k, kind:'gap', mkts:[],
+        title:'Propose '+pbName(g.k,opts.ov)+' — not running here',
+        ev:g.peers+' other account'+(g.peers===1?'':'s')+' in the book run it',
+        say:'We run '+pbName(g.k,opts.ov)+' for '+g.peers+' other brand'+(g.peers===1?'':'s')
+            +' and it is not part of your programme yet — worth a look at what it would add.',
+        brief:{cat:'opt',task:pbName(g.k,opts.ov)+' — '+brand}, rank:g.peers });
+    });
+    (pr.slip||[]).forEach(function(sl){
+      cand.push({ p:3, key:'slip:'+sl.k, kind:'slip', mkts:[],
+        title:'Unblock '+pbName(sl.k,opts.ov)+' — stalled',
+        ev:sl.open+' task'+(sl.open===1?'':'s')+' open, '+Math.round((sl.rate||0)*100)+'% through',
+        say:pbName(sl.k,opts.ov)+' has '+sl.open+' piece'+(sl.open===1?'':'s')
+            +' of work part-finished — is anything blocking it your end?',
+        brief:{cat:'opt',task:pbName(sl.k,opts.ov)+' — unblock — '+brand}, rank:sl.open });
+    });
+
+    cand.sort(function(a,b){ return a.p-b.p || b.rank-a.rank || a.key.localeCompare(b.key); });
+    return cand.slice(0,3);
+  }
 /* PBENGINE:END */
 
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -5349,6 +5484,29 @@ body.ck-r-on{padding-right:var(--ck-w)}
     });
   }
 
+  /* The action buttons route through the page's own composer like every other → Brief in this
+     rail, so an action raised here is a brief raised in Workflow — same draft, same [ibfcode],
+     same save into Intake and the Project Plan. A backlog action reuses briefCohort so the draft
+     carries the cohort, its age and the product-type breakdown, exactly as the New products row
+     would have filled it. */
+  function wireActions(brand){
+    var body=$('#ck-r-body'); if(!body)return;
+    Array.prototype.forEach.call(body.querySelectorAll('[data-act]'),function(b){
+      b.onclick=function(){
+        var a=ACTLIST[+b.getAttribute('data-act')]; if(!a||!window.FCCBrief)return;
+        if(a.brief&&a.brief.raise){ briefCohort(brand,a.brief.raise,'keyword'); return; }
+        window.FCCBrief({client:brand,task:a.brief.task,cat:a.brief.cat,source:'plan',
+          scope:a.ev+(a.mkts&&a.mkts.length?'\n\nMarkets: '+a.mkts.join(', ').toUpperCase():'')});
+      };
+    });
+    var c=$('#ck-act-copy');
+    if(c)c.onclick=function(){
+      var t=brand+' — top actions\n\n'+ACTSAY.join('\n\n');
+      try{ navigator.clipboard.writeText(t); c.textContent='⧉ Copied'; setTimeout(function(){c.textContent='⧉ Copy talking points';},1400); }
+      catch(e){ toast&&toast('Copy failed'); }
+    };
+  }
+
   function secPractice(brand){
     var m=MODEL[brand];
     if(!m||!m.tasks||!m.tasks.length){
@@ -5362,7 +5520,12 @@ body.ck-r-on{padding-right:var(--ck-w)}
     h+=p.well.length?p.well.slice(0,5).map(function(r){
       var c=pbCat(r.k);
       return row('','<i class="em">'+c.e+'</i><span class="nm">'+esc(pbName(r.k,OV))+'</span>'
-        +bar(r.rate*100,'good')+'<span class="num">'+r.done+'/'+r.all+'</span>');
+        /* NAME THE UNIT (Ray, 18 Sep 2026: "the enterprise channels market 18 to 18 — what does
+           that mean?"). A bare pair on a row called "Channels & Markets" reads as MARKETS, which
+           is the one thing it is not. Its siblings already say their unit ("3 open", "5 peers") —
+           this row was the only one that didn't. */
+        +bar(r.rate*100,'good')+'<span class="num" title="'+r.done+' of '+r.all
+          +' project-plan tasks in this practice are done">'+r.done+'/'+r.all+' <small>tasks</small></span>');
     }).join(''):'<div class="ck-none">Nothing has 3+ finished tasks in one practice yet.</div>';
     h+='<div class="ck-lbl">Stalling</div>';
     h+=p.slip.length?p.slip.slice(0,4).map(function(r){
@@ -5570,6 +5733,44 @@ body.ck-r-on{padding-right:var(--ck-w)}
     return h;
   }
 
+  /* THE BOTTOM LINE — see pbActions for the ranking and why there are only three.
+     Each action keeps the rail's own row grammar (Ray, same day: "I like the pristine look of the
+     structure lines, so that should be kept as a theme across the whole playbook") — a pill, a
+     name, a number — and hangs the evidence, the client line and the buttons beneath it, the way
+     the New products rows already hang their raise line. */
+  function secActions(brand){
+    var gold=goldOf(brand).filter(function(f){return f.score!=null;});
+    var tasks=(MODEL[brand]||{}).tasks||[];
+    var now=Date.now();
+    var raises=arrOf(brand).map(function(f){ return f.dob?pbRaise(f,tasks,RAISE_DAYS,now,OV):null; })
+                           .filter(Boolean);
+    var pr=tasks.length?pbPractice(pbCats(tasks,OV),idx(),brand):{};
+    var acts=pbActions(gold,raises,pr,brand,{ov:OV});
+
+    var h='<section class="ck-s ck-act"><h4>🎯 Top 3 actions<span class="n">'
+      +(acts.length?'talk to the client':'')+'</span></h4>';
+    if(!acts.length){
+      h+='<p class="ck-h">Nothing is being refused, no backlog past the threshold, and every practice is moving. There is no action to raise on this account today.</p></section>';
+      return h;
+    }
+    h+='<p class="ck-h">Ranked by what it costs to ignore, not by how bad the number looks. Each one carries the figure it came from and the line to say.</p>';
+    ACTSAY=[]; ACTLIST=acts;
+    h+=acts.map(function(a,i){
+      ACTSAY.push((i+1)+'. '+a.title+'\n   '+a.ev+'\n   Say: '+a.say);
+      var mk=a.mkts&&a.mkts.length?'<span class="mk">'+esc(a.mkts.slice(0,3).join(' ').toUpperCase())
+        +(a.mkts.length>3?' +'+(a.mkts.length-3):'')+'</span>':'';
+      return row('','<span class="ck-pill p'+a.p+'">P'+a.p+'</span>'+mk
+          +'<span class="nm">'+esc(a.title)+'</span>')
+        +'<div class="ck-actrow"><span class="ck-ev">'+esc(a.ev)+'</span>'
+        +'<span class="ck-say">“'+esc(a.say)+'”</span>'
+        +'<span class="ck-actbtn"><button type="button" class="ck-brief go" data-act="'+i+'">→ Brief</button></span></div>';
+    }).join('');
+    h+='<div class="ck-actfoot"><button type="button" class="ck-brief" id="ck-act-copy">⧉ Copy talking points</button></div>';
+    h+='</section>';
+    return h;
+  }
+  var ACTSAY=[],ACTLIST=[];
+
   /* which panel the right rail is showing. On the device, like every other panel toggle. */
   var RTAB='review';
   try{ var rt=localStorage.getItem('fcc-ck-tab'); if(rt==='review'||rt==='volume')RTAB=rt; }catch(e){}
@@ -5590,8 +5791,8 @@ body.ck-r-on{padding-right:var(--ck-w)}
     if(!BRAND){ body.innerHTML='<p class="ck-empty">Pick an account above.</p>'; if(sub)sub.textContent=''; return; }
     // the volume panel is the SAME data the review section carries, given the whole rail — every
     // scanned market's breakdown open, nothing to scroll past to reach it
-    body.innerHTML=(RTAB==='volume')?secArrivals(BRAND,true):(secPractice(BRAND)+secArrivals(BRAND)+secGolden(BRAND));
-    wireArrivals(BRAND); wireBriefLinks();
+    body.innerHTML=(RTAB==='volume')?secArrivals(BRAND,true):(secPractice(BRAND)+secArrivals(BRAND)+secGolden(BRAND)+secActions(BRAND));
+    wireArrivals(BRAND); wireBriefLinks(); wireActions(BRAND);
     if(RTAB==='volume')openAllMix(BRAND);
     subLine();
     if(window.FCCHours&&window.FCCHours.dock)window.FCCHours.dock(BRAND);
