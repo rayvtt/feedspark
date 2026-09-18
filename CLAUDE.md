@@ -234,7 +234,25 @@ GET|POST /api/i18n?lang=vi      → owner-only runtime lane for strings the seed
   card/answer bubble; the `sentences()` counter protects e.g./i.e./vs./etc./initials/months/decimals/
   numbered steps; remembered per device (localStorage fcc-instr-open) under a STABLE key = the card's
   id or heading, re-applied on every DOM mutation pass; harness tools/test_instr.mjs in
-  qa_gate/presync/validate), the live editor widget, **FCC-PRESENCE**
+  qa_gate/presync/validate), the **SKIM VIEW** (`docs/digest_widget.html` — Ray, 18 Sep 2026,
+  holding up the Meta Ads Manager app on an iPhone 16 Pro: "the whole dashboard is not functional on
+  mobile users … it only shows what necessary to be shown … only necessary information for AM to make
+  decisions while using mobile phone and make it as on the go as possible … if you go on the desktop view
+  that would be more if needed. Allow using a lot of collapse and expand feature": under 760px every page
+  opens as a digest — the hero + a 3-up KPI band stay, and EVERY section below becomes one tap row (its own
+  heading restyled: chevron · title · a digest read off the content — the page's `data-m-digest` word, else
+  KPI headlines, `.al-row` alert counts, table rows, repeated items) with the content folded behind it. Two
+  shapes, one mechanism: a block that CONTAINS its heading (section.cat/.card/.panel) and a heading above
+  its SIBLINGS (Workflow's h2s, Leadership); nothing removed, no node moved — the fold is a class the desktop
+  media query never applies, the heading keeps its buttons (i-popover, ⓘ, the page's own ▸ Show — a heading
+  that already toggles is left to the page and styled into the row rhythm). Closed by default when the page
+  has ≥2 sections (one is nothing to skim among), a section appearing AFTER boot opens (it arrived because
+  the reader did something), per-device memory (localStorage fcc-m-open), #hash opens its fold, tables show
+  8 rows behind "Show all N", Expand all / Collapse all above the first row, `window.FCCDigest`
+  state/expandAll/collapseAll. Census at ship: Leadership 5,694→979px, Roadmap 9,862→844, Readiness
+  6,332→844. Tripwire: tools/check_mobile.js rule 6 asserts the fold at first paint on a fresh device, then
+  expands everything before its desktop-parity count; pins in tools/test_mobile.mjs. Docs: docs/MOBILE.md),
+  the live editor widget, **FCC-PRESENCE**
   (`docs/presence_widget.html` — Google-Docs-style live avatars in the topbar: each open page
   heartbeats `POST /api/presence` per minute while visible, worker stamps the Access identity
   into KV `presence`, avatars = active ≤3min with green dot + name·page·ago tooltip; popover

@@ -140,6 +140,8 @@ import LANGW from "../../../docs/lang_widget.html";
 // Task Manager hours seed (committed MCP snapshot; the /api/tm fallback until a live push lands)
 // the phone layer (Ray, 15 Sep 2026: "complete overhaul for UX UI for mobile version — MIRROR desktop setting")
 import MOBILEW from "../../../docs/mobile_widget.html";
+// the skim view — its second half (Ray, 18 Sep 2026: "only necessary information for AM to make decisions while using mobile phone … a lot of collapse and expand")
+import DIGESTW from "../../../docs/digest_widget.html";
 import HOURSW from "../../../docs/hours_widget.html";
 // the Build Log as a right-hand slide-over, so "what have I actually shipped" is answerable
 // without leaving the page you are working on. Owner-only, like the /activity board it mirrors
@@ -2596,6 +2598,9 @@ export default {
         if (realOwner(env, request)) html = inject(html, LANGW + '\n' + SHIPPEDW);
         // the phone layer rides last so it sees every other widget's chrome (bar, sheets, bubble)
         html = inject(html, MOBILEW);
+        // the skim view folds every section behind its heading under 760px — after the layer,
+        // since it reads the phone chrome the layer builds
+        html = inject(html, DIGESTW);
       }
       return new Response(html, { headers: { 'Content-Type': 'text/html;charset=utf-8', 'Cache-Control': 'no-store, must-revalidate', ...CORS } });
     }

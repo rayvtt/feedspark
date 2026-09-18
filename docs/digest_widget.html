@@ -1,0 +1,358 @@
+<!-- FCC-DIGEST: the SKIM VIEW — the phone layer's second half (Ray, 18 Sep 2026, holding up the
+     Meta Ads Manager app on an iPhone 16 Pro: "the whole dashboard is not functional on mobile
+     users … it only shows what necessary to be shown … only necessary information for AM to make
+     decisions while using mobile phone and make it as on the go as possible … if you go on the
+     desktop view that would be more if needed. Allow using a lot of collapse and expand feature").
+     Under 760px every page opens as a DIGEST: the hero + its KPI strip stay, and every section
+     below becomes ONE tap row — its own heading, restyled (chevron · title · a digest read off the
+     section's content: KPI headlines, alert counts, row counts) — with the content folded behind
+     it. Two shapes, one mechanism: a block that CONTAINS its heading (section.cat, .card, .panel —
+     Golden Record, Command Center, Volume) and a heading that sits as a SIBLING above its content
+     (Workflow's h2s, Leadership, KWCal). Nothing is removed and no node moves: the heading keeps
+     its own buttons (the page's i-popover, the ⓘ explainer toggle, the page's own ▸ Show — a heading
+     that already carries a toggle is left to the page), content is hidden by a class the desktop
+     media query never applies, so the desktop is byte-identical and the phone MIRRORS it one tap
+     down. Default = every section closed when the page has two or more (one section is nothing to
+     skim among); a section that appears AFTER boot opens (it arrived because the reader did
+     something); a device remembers what its reader opened (localStorage fcc-m-open); a #hash link
+     into a folded section opens it; tables show 8 rows with "Show all N". Expand all / Collapse all
+     sit above the first row. window.FCCDigest exposes state/expandAll/collapseAll for the phone
+     tripwire (tools/check_mobile.js), which asserts the fold at first paint and then expands
+     everything before its desktop-parity count. Injected worker-side after the phone layer. -->
+<style>
+.fcc-dg-ch,.fcc-dg-dg,.fcc-dg-bar,.fcc-dg-more{display:none}
+@media (max-width:760px){
+  .fcc-dg-x,.fcc-dg-r{display:none!important}
+  /* the tap row: the section's own heading, restyled */
+  .fcc-dg-hd{display:flex!important;align-items:center;gap:8px;flex-wrap:nowrap;min-height:46px;margin:0!important;padding:10px 0!important;font-size:16px!important;line-height:1.2!important;letter-spacing:0!important;text-transform:none!important;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;position:relative;width:100%;box-sizing:border-box}
+  .fcc-dg-hd:active{background:rgba(245,166,35,.08)}
+  .fcc-dg-hd::before,.fcc-dg-hd::after{display:none!important}
+  .fcc-dg-hd .fcc-dg-ch{flex:none;width:20px;height:20px;border-radius:50%;background:rgba(245,166,35,.16);color:var(--orange-deep,#ED6F0B);font-size:11px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;transition:transform .18s;line-height:1}
+  /* a heading that already carries the page's own ▸ Show button keeps it — same row, no second chevron */
+  .fcc-dg-hd.fcc-dg-own{cursor:default}
+  .fcc-dg-hd.fcc-dg-own .sec-tog{margin-left:auto;font-size:12px!important;padding:6px 10px!important;min-height:32px!important}
+  .fcc-dg-hd.open .fcc-dg-ch{transform:rotate(90deg)}
+  .fcc-dg-hd .fcc-dg-dg{display:block;margin-left:auto;flex:0 0 auto;max-width:44%;font-size:11.5px;font-weight:800;color:var(--muted,#8a94a0);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0;text-transform:none;line-height:1.2}
+  .fcc-dg-hd .fcc-dg-dg b{font-weight:900;color:inherit}
+  .fcc-dg-hd.open .fcc-dg-dg{max-width:36%}
+  /* a folded section is a plain list row: its card chrome and section padding stand down */
+  .fcc-dg-c{padding-top:0!important;padding-bottom:0!important;margin-top:0!important;margin-bottom:0!important;min-height:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;border-bottom:0!important;border-left:0!important;border-right:0!important;border-top:1px solid var(--line,#E6E6E6)!important}
+  .fcc-dg-c .fcc-dg-c{border-top:0!important}
+  .fcc-dg-c.fcc-dg-hd{border-top:1px solid var(--line,#E6E6E6)!important;padding:10px 0!important}
+  .fcc-dg-c .fcc-dg-hd{border-top:0!important}
+  /* expand all / collapse all */
+  .fcc-dg-bar{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--muted,#8a94a0);padding:6px 0 4px;box-sizing:border-box}
+  .fcc-dg-bar .fcc-dg-all{margin-left:auto;font:inherit;font-size:12px;font-weight:800;padding:6px 12px;border-radius:999px;border:1px solid var(--line,#E6E6E6);background:var(--paper,#fff);color:var(--ink-2,#4a4a4a);min-height:32px;cursor:pointer}
+  /* a long table shows its first rows; the rest is one tap away */
+  .fcc-dg-more{display:block;width:100%;margin:6px 0 10px;padding:9px;border-radius:9px;border:1px dashed var(--line,#E6E6E6);background:transparent;color:var(--orange-deep,#ED6F0B);font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+  /* the KPI strip reads as a summary band, not a column of tiles */
+  .kpis,.statstrip{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+  .kpis .kpi,.statstrip .s{padding:9px 8px!important;border-radius:10px!important}
+  .kpis .kpi .n,.statstrip .s .n{font-size:21px!important;line-height:1!important}
+  .kpis .kpi .l,.statstrip .s .l{font-size:10px!important;letter-spacing:.03em!important;margin-top:3px!important;line-height:1.15!important}
+  /* Leadership's three hub cards read as one row of tiles: icon + name, the sentence under it is the desktop's */
+  .hub{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;margin:10px 0 2px!important}
+  .hub-card{flex-direction:column!important;align-items:center!important;text-align:center;padding:10px 6px!important;gap:6px!important}
+  .hub-card b{font-size:12px!important;line-height:1.15}
+  .hub-card>span:last-child>span{display:none}
+  [data-theme=dark] .fcc-dg-hd .fcc-dg-ch{background:rgba(240,164,78,.18);color:var(--orange-ink,#F0A44E)}
+  [data-theme=dark] .fcc-dg-bar .fcc-dg-all{background:#1C1F27;border-color:#2C3039;color:#B9BEC7}
+  [data-theme=dark] .fcc-dg-c{border-top-color:#2C3039!important}
+  [data-theme=dark] .fcc-dg-c.fcc-dg-hd{border-top-color:#2C3039!important}
+}
+</style>
+<script>/* FCC-DIGEST */(function () {
+  'use strict';
+  if (window.FCCDigest) return;
+  var MQ = window.matchMedia('(max-width:760px)');
+  var isMob = function () { return MQ.matches; };
+  var PAGE = (location.pathname.replace(/\/+$/, '') || '/');
+  var KEY = 'fcc-m-open', BOOT_MS = 3000, ROWS_SHOW = 8, ROWS_CAP = 10;
+  var bootAt = Date.now(), mem = {}, digests = [], shown = {}, bar = null, t = null;
+  try { mem = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { mem = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(mem)); } catch (e) {} }
+  // a block that CONTAINS its heading; a heading that already toggles something is the page's
+  var CAND = 'section,.card,.panel,.cat,.grp,.band,.box', H3_MIN = 90;
+  // never inside chrome, a dialog, a rail, a print sheet or the chat
+  var SKIP = '.topbar,#tb-modules,.scrim,.modal,[role=dialog],.drawer,.ck-rail,.ck-s,.tle,.ptp,.pdpm,.fg,.ask-box,#lb,.info-pop,#pdf-doc,.print-only,#fcc-fcp,.pz-pop,#fcc-apps-menu,#fcc-navcz-scrim,.chat-card,[data-embed],[data-no-digest],template,.slide,.hero,.footmark,.fcc-dg-bar,.tl-focus,.hub';
+  var STRIP = 'button,.info-pop,.instr-tgl,.sec-tog,.fcc-dg-ch,.fcc-dg-dg,[hidden],.k,.badge,.pill,.chip,small';
+  function inSkip(el) { return !!(el.closest && el.closest(SKIP)); }
+  function txt(el) { return el ? String(el.textContent || '').replace(/\s+/g, ' ').trim() : ''; }
+  function titleOf(h) {
+    var c = h.cloneNode(true), rm = c.querySelectorAll(STRIP), i;
+    for (i = 0; i < rm.length; i++) if (rm[i].parentNode) rm[i].parentNode.removeChild(rm[i]);
+    return txt(c);
+  }
+  function slug(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40); }
+  function insideDigested(el) { var a = el.parentElement; while (a) { if (a.__fccDg) return true; a = a.parentElement; } return false; }
+  function height(el) { var r = el.getBoundingClientRect(); return r.height; }
+  // the block's OWN heading: the first h2/h3 with no other candidate between it and the block
+  function ownHeads(b) {
+    var hs = b.querySelectorAll('h2,h3'), out = [], i;
+    for (i = 0; i < hs.length; i++) {
+      var h = hs[i], a = h.parentElement, ok = true;
+      if (inSkip(h)) continue;
+      while (a && a !== b) { if (a.matches(CAND)) { ok = false; break; } a = a.parentElement; }
+      if (ok) out.push(h);
+    }
+    return out;
+  }
+  function ownToggle(h) { var b = h.querySelector('[aria-expanded]'); return !!(b && !b.classList.contains('instr-tgl')); }
+  // the elements a fold hides: for a block, everything off the heading's own line of descent;
+  // for a sibling heading, what follows it until the next heading or folded block
+  function partsA(d) {
+    var chain = [], e = d.heading, out = [], i, j;
+    while (e && e !== d.block) { chain.push(e); e = e.parentElement; }
+    chain.push(d.block);
+    for (i = 1; i < chain.length; i++) {
+      var kids = chain[i].children;
+      for (j = 0; j < kids.length; j++) { var k = kids[j]; if (chain.indexOf(k) < 0 && !k.classList.contains('fcc-dg-bar') && k.tagName !== 'SCRIPT' && k.tagName !== 'STYLE') out.push(k); }
+    }
+    d.chain = chain;
+    return out;
+  }
+  function partsB(d) {
+    var out = [], s = d.heading.nextElementSibling;
+    while (s) {
+      if (/^H[1-3]$/.test(s.tagName) || s.__fccDg || s.classList.contains('fcc-dg-bar')) break;
+      if (s.tagName !== 'SCRIPT' && s.tagName !== 'STYLE') out.push(s);
+      s = s.nextElementSibling;
+    }
+    d.chain = [d.heading];
+    return out;
+  }
+  function parts(d) { return d.block ? partsA(d) : partsB(d); }
+  function visible(el) { return !el.hidden && el.style.display !== 'none' && !el.closest('[hidden]'); }
+  function collect(list, sel, cap) {
+    var out = [], i, j;
+    for (i = 0; i < list.length; i++) {
+      var p = list[i];
+      if (p.matches && p.matches(sel) && visible(p)) out.push(p);
+      var q = p.querySelectorAll ? p.querySelectorAll(sel) : [];
+      for (j = 0; j < q.length && out.length < (cap || 400); j++) if (visible(q[j]) && !q[j].closest('.fcc-dg-more')) out.push(q[j]);
+    }
+    return out;
+  }
+  var bodyColor = null;
+  function colorOf(el) {
+    try {
+      if (bodyColor === null) bodyColor = getComputedStyle(document.body).color;
+      var c = getComputedStyle(el).color;
+      return (c && c !== bodyColor && c !== 'rgb(51, 51, 51)' && c !== 'rgb(230, 232, 236)') ? c : '';
+    } catch (e) { return ''; }
+  }
+  function rowsOf(tbl) {
+    var out = [], tb = tbl.tBodies, i, j;
+    for (i = 0; i < tb.length; i++) for (j = 0; j < tb[i].rows.length; j++) { var r = tb[i].rows[j]; if (r.closest('table') === tbl && r.style.display !== 'none' && !r.hidden) out.push(r); }
+    return out;
+  }
+  // the largest run of look-alike siblings — a list of cards, items, rows
+  function repeated(list) {
+    var best = 0, seen = 0, i, j;
+    for (i = 0; i < list.length && seen < 2500; i++) {
+      var all = list[i].querySelectorAll('*');
+      for (j = 0; j < all.length && seen < 2500; j++, seen++) {
+        var p = all[j]; if (p.children.length < 3 || p.closest('table,select,ul.tabs,.tabs,nav')) continue;
+        var groups = {}, k;
+        for (k = 0; k < p.children.length; k++) {
+          var c = p.children[k], cls = (typeof c.className === 'string' ? c.className.trim().split(/\s+/)[0] : '') || '';
+          if (!cls || !/^(DIV|LI|ARTICLE|SECTION|A|TR)$/.test(c.tagName) || txt(c).length < 8 || !visible(c)) continue;
+          var g = c.tagName + '.' + cls; groups[g] = (groups[g] || 0) + 1; if (groups[g] > best) best = groups[g];
+        }
+      }
+    }
+    return best;
+  }
+  // what the row says: the page's own word first, then KPI headlines, alerts, rows, items
+  function digestOf(d) {
+    var a = (d.block && d.block.getAttribute('data-m-digest')) || d.heading.getAttribute('data-m-digest');
+    if (a) return [{ v: '', l: a }];
+    var list = d.parts, out = [], i;
+    var kp = collect(list, '.kpi', 12);
+    for (i = 0; i < kp.length && out.length < 3; i++) {
+      var v = kp[i].querySelector('.n,.v,.num,.big,b,strong'), l = kp[i].querySelector('.l,.lbl,.k,small');
+      var vt = txt(v); if (!vt || vt.length > 9) continue;
+      out.push({ v: vt, l: txt(l).toLowerCase().slice(0, 22), c: colorOf(v) });
+    }
+    if (out.length) return out;
+    var al = collect(list, '.al-row', 400);
+    if (al.length) {
+      var cr = 0; for (i = 0; i < al.length; i++) if (/\b(crit|critical|sev-crit)\b/.test(al[i].className)) cr++;
+      out.push({ v: String(al.length), l: al.length === 1 ? 'alert' : 'alerts' });
+      if (cr) out.push({ v: String(cr), l: 'critical', c: '#B42318' });
+      return out;
+    }
+    var tbl = collect(list, 'table', 40), rows = 0;
+    for (i = 0; i < tbl.length; i++) rows += rowsOf(tbl[i]).length;
+    if (rows) return [{ v: String(rows), l: rows === 1 ? 'row' : 'rows' }];
+    var n = repeated(list);
+    if (n >= 3) return [{ v: String(n), l: 'items' }];
+    return null;
+  }
+  function renderDigest(d) {
+    var items = digestOf(d), html = '';
+    if (items) html = items.map(function (it) { return (it.v ? '<b' + (it.c ? ' style="color:' + it.c + '"' : '') + '>' + esc(it.v) + '</b> ' : '') + esc(it.l); }).join(' · ');
+    var s = d.heading.querySelector(':scope > .fcc-dg-dg');
+    if (!s) { s = document.createElement('span'); s.className = 'fcc-dg-dg'; d.heading.appendChild(s); }
+    if (s.innerHTML !== html) s.innerHTML = html;
+    if (d.heading.lastElementChild !== s) d.heading.appendChild(s);
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function sweep() { try { if (window.__fccMobileSweep) window.__fccMobileSweep(); } catch (e) {} }
+  // a long table in an open section shows its first rows; "Show all" lifts the cap for good
+  function capTables(d) {
+    var tbl = collect(d.parts, 'table', 40), i;
+    for (i = 0; i < tbl.length; i++) (function (tb, idx) {
+      if (inSkip(tb)) return;
+      var key = tb.id ? '#' + tb.id : d.key + '#t' + idx, rows = rowsOf(tb), j;
+      var host = tb.closest('.fcc-mpan') || tb, btn = host.nextElementSibling && host.nextElementSibling.classList && host.nextElementSibling.classList.contains('fcc-dg-more') ? host.nextElementSibling : null;
+      if (!d.open || shown[key] || rows.length <= ROWS_CAP) {
+        for (j = 0; j < rows.length; j++) rows[j].classList.remove('fcc-dg-r');
+        if (btn) btn.parentNode.removeChild(btn);
+        return;
+      }
+      for (j = 0; j < rows.length; j++) rows[j].classList.toggle('fcc-dg-r', j >= ROWS_SHOW);
+      if (!btn) {
+        btn = document.createElement('button'); btn.type = 'button'; btn.className = 'fcc-dg-more';
+        btn.addEventListener('click', function () { shown[key] = 1; for (var k = 0; k < rows.length; k++) rows[k].classList.remove('fcc-dg-r'); var r2 = rowsOf(tb); for (k = 0; k < r2.length; k++) r2[k].classList.remove('fcc-dg-r'); if (btn.parentNode) btn.parentNode.removeChild(btn); sweep(); });
+        host.parentNode.insertBefore(btn, host.nextSibling);
+      }
+      var label = 'Show all ' + rows.length + ' rows'; if (btn.textContent !== label) btn.textContent = label;
+    })(tbl[i], i);
+  }
+  function setOpen(d, on) {
+    d.open = !!on;
+    d.heading.classList.toggle('open', d.open);
+    d.parts = parts(d);
+    var i, now = d.parts;
+    if (d.hid) for (i = 0; i < d.hid.length; i++) if (now.indexOf(d.hid[i]) < 0) d.hid[i].classList.remove('fcc-dg-x');
+    for (i = 0; i < now.length; i++) now[i].classList.toggle('fcc-dg-x', !d.open);
+    d.hid = d.open ? [] : now.slice();
+    for (i = 0; i < d.chain.length; i++) d.chain[i].classList.toggle('fcc-dg-c', !d.open);
+    capTables(d);
+    renderDigest(d);
+    if (d.open) sweep();
+  }
+  function toggle(d, ev) {
+    if (ev && ev.target && ev.target.closest && ev.target.closest('button,a,input,select,label,textarea,.info-pop')) return;
+    setOpen(d, !d.open); d.pinned = true; mem[d.key] = d.open ? 1 : 0; save(); renderBar();
+  }
+  // a heading the page already folds (its own ▸ Show) joins the row rhythm and hands a tap to its button
+  function decorateOwn(h) {
+    if (h.__fccDgOwn) return; h.__fccDgOwn = 1;
+    h.classList.add('fcc-dg-hd', 'fcc-dg-own');
+    h.addEventListener('click', function (ev) {
+      if (!isMob() || (ev.target && ev.target.closest && ev.target.closest('button,a,input,select,label,textarea,.info-pop'))) return;
+      var b = h.querySelector('[aria-expanded]:not(.instr-tgl)'); if (b) b.click();
+    });
+  }
+  function decorate(d) {
+    var h = d.heading;
+    h.__fccDgH = d; if (d.block) d.block.__fccDg = d;
+    h.classList.add('fcc-dg-hd');
+    if (!h.querySelector(':scope > .fcc-dg-ch')) { var ch = document.createElement('span'); ch.className = 'fcc-dg-ch'; ch.setAttribute('aria-hidden', 'true'); ch.textContent = '▸'; h.insertBefore(ch, h.firstChild); }
+    h.addEventListener('click', function (ev) { if (isMob()) toggle(d, ev); });
+  }
+  function keyOf(d) { return PAGE + '|' + ((d.block && d.block.id) || d.heading.id || slug(titleOf(d.heading))); }
+  function register(d, late) {
+    d.key = keyOf(d); d.late = late; d.decided = false;
+    var i; for (i = 0; i < digests.length; i++) if (digests[i].key === d.key) d.key += '~' + i;
+    decorate(d); digests.push(d);
+  }
+  function firstNode() { var d = digests[0]; return d ? (d.block || d.heading) : null; }
+  function renderBar() {
+    var n = digests.length, closed = 0, i;
+    for (i = 0; i < n; i++) if (!digests[i].open) closed++;
+    if (!bar) {
+      bar = document.createElement('div'); bar.className = 'fcc-dg-bar';
+      var s = document.createElement('span'); s.className = 'fcc-dg-n'; bar.appendChild(s);
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'fcc-dg-all';
+      b.addEventListener('click', function () { var anyClosed = false, j; for (j = 0; j < digests.length; j++) if (!digests[j].open) anyClosed = true; if (anyClosed) expandAll(); else collapseAll(); });
+      bar.appendChild(b);
+    }
+    var first = firstNode();
+    if (n < 2 || !first) { if (bar.parentNode) bar.parentNode.removeChild(bar); return; }
+    if (bar.nextElementSibling !== first || bar.parentNode !== first.parentNode) first.parentNode.insertBefore(bar, first);
+    bar.style.padding = bar.parentNode.closest('.wrap,main') ? '' : '6px 14px 4px';
+    var lbl = n + ' sections · ' + (closed === n ? 'skim view' : closed ? closed + ' folded' : 'all open'); if (bar.firstChild.textContent !== lbl) bar.firstChild.textContent = lbl;
+    var bl = closed ? 'Expand all' : 'Collapse all'; if (bar.lastChild.textContent !== bl) bar.lastChild.textContent = bl;
+  }
+  function expandAll(opts) { var i; for (i = 0; i < digests.length; i++) { setOpen(digests[i], true); digests[i].pinned = true; if (!(opts && opts.silent)) mem[digests[i].key] = 1; } if (opts && opts.caps) { for (var k in shown) delete shown[k]; liftAll(); } if (!(opts && opts.silent)) save(); renderBar(); }
+  function liftAll() { var i, r = document.querySelectorAll('.fcc-dg-r'), m = document.querySelectorAll('.fcc-dg-more'); for (i = 0; i < r.length; i++) r[i].classList.remove('fcc-dg-r'); for (i = 0; i < m.length; i++) if (m[i].parentNode) m[i].parentNode.removeChild(m[i]); for (i = 0; i < digests.length; i++) { var tb = collect(digests[i].parts, 'table', 40), j; for (j = 0; j < tb.length; j++) shown[tb[j].id ? '#' + tb[j].id : digests[i].key + '#t' + j] = 1; } }
+  function collapseAll() { var i; for (i = 0; i < digests.length; i++) { setOpen(digests[i], false); digests[i].pinned = true; mem[digests[i].key] = 0; } save(); renderBar(); }
+  function openFor(el) { var i; for (i = 0; i < digests.length; i++) { var d = digests[i]; if (d.open) continue; var j; for (j = 0; j < d.parts.length; j++) if (d.parts[j] === el || d.parts[j].contains(el)) { setOpen(d, true); renderBar(); return d; } } return null; }
+  function hashOpen() {
+    var h = location.hash; if (!h || h.length < 2) return;
+    var el = null; try { el = document.getElementById(decodeURIComponent(h.slice(1))); } catch (e) {}
+    if (el && openFor(el)) setTimeout(function () { try { el.scrollIntoView({ block: 'start' }); } catch (e) {} }, 60);
+  }
+  function apply() {
+    if (!isMob()) return;
+    var late = Date.now() - bootAt > BOOT_MS, i, j;
+    // records whose heading left the DOM (a re-render replaced it) are dropped; the new one re-registers
+    for (i = digests.length - 1; i >= 0; i--) if (!document.contains(digests[i].heading)) { var gone = digests[i]; if (gone.block) delete gone.block.__fccDg; digests.splice(i, 1); }
+    // A — blocks that contain their heading (never nested inside another folded block)
+    var cands = document.querySelectorAll(CAND);
+    for (i = 0; i < cands.length; i++) {
+      var c = cands[i];
+      if (c.__fccDg || c.hidden || inSkip(c) || insideDigested(c) || c.closest('table,form,ul,ol,li')) continue;
+      var heads = ownHeads(c), h2s = 0;
+      for (j = 0; j < heads.length; j++) if (heads[j].tagName === 'H2') h2s++;
+      if (!heads.length || h2s > 1) continue;          // several h2s = a container of sections, left to B
+      var h = heads[0];
+      if (h.__fccDgH || !titleOf(h) || height(c) === 0) continue;
+      if (ownToggle(h)) { decorateOwn(h); continue; }
+      if (h.tagName === 'H3' && height(c) < H3_MIN) continue; // a short card is not worth a fold
+      register({ block: c, heading: h }, late);
+    }
+    // B — headings that sit above their content as siblings
+    var hs = document.querySelectorAll('h2,main>h3,.wrap>h3');
+    for (i = 0; i < hs.length; i++) {
+      var hh = hs[i], p = hh.parentElement;
+      if (hh.__fccDgH || !p || inSkip(hh) || insideDigested(hh) || p.__fccDg) continue;
+      if (!/^(MAIN|BODY|DIV|SECTION|ARTICLE)$/.test(p.tagName) || hh.closest('table,form,ul,ol,li')) continue;
+      if (!titleOf(hh) || height(hh) === 0) continue;
+      if (ownToggle(hh)) { decorateOwn(hh); continue; }
+      var d = { heading: hh }, ps = partsB(d), hgt = 0;
+      for (j = 0; j < ps.length; j++) hgt += height(ps[j]);
+      if (!ps.length || hgt < 80) continue;
+      register(d, late);
+    }
+    // rows in DOCUMENT order, whichever pass found them (the bar sits above the first row)
+    digests.sort(function (a, b) { var x = a.block || a.heading, y = b.block || b.heading; return x === y ? 0 : (x.compareDocumentPosition(y) & 4) ? -1 : 1; });
+    // the fold: memory wins; an expand/collapse made this visit holds; else closed while the page
+    // is booting and has ≥2 sections, open when it arrived late
+    var n = digests.length;
+    for (i = 0; i < n; i++) {
+      var g = digests[i], m = mem[g.key];
+      if (m === 1 || m === 0) { if (!g.decided || (!g.pinned && g.open !== !!m)) setOpen(g, !!m); g.decided = true; continue; }
+      if (g.pinned) { g.decided = true; continue; }
+      var want = g.late ? true : n < 2;
+      if (!g.decided || (!late && g.open !== want)) setOpen(g, want);
+      g.decided = true;
+    }
+    // re-applied on every pass: a re-render adds children a fold must hide, rows a cap must count
+    for (i = 0; i < n; i++) setOpen(digests[i], digests[i].open);
+    renderBar();
+  }
+  function later() { if (t) clearTimeout(t); t = setTimeout(function () { t = null; apply(); }, 300); }
+  function state() { var n = digests.length, closed = 0, i; for (i = 0; i < n; i++) if (!digests[i].open) closed++; return { n: n, closed: closed, h: document.documentElement.scrollHeight, keys: digests.map(function (d) { return d.key.split('|')[1]; }) }; }
+  function boot() {
+    apply(); hashOpen();
+    setTimeout(apply, 700); setTimeout(apply, 2200);
+    try {
+      new MutationObserver(function (m) {
+        for (var i = 0; i < m.length; i++) {
+          var tg = m[i].target; if (!tg || !tg.closest) continue;
+          if (tg.closest('.fcc-dg-dg,.fcc-dg-bar,.fcc-dg-more,#tb-modules,#fcc-apps-menu,.pz-pop,.topbar')) continue;
+          if (tg.__fccDgH && m[i].type === 'childList') continue;
+          later(); return;
+        }
+      }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+    } catch (e) {}
+    window.addEventListener('hashchange', hashOpen);
+    if (MQ.addEventListener) MQ.addEventListener('change', function () { if (isMob()) apply(); });
+  }
+  if (document.readyState !== 'loading') boot(); else document.addEventListener('DOMContentLoaded', boot);
+  window.FCCDigest = { state: state, expandAll: expandAll, collapseAll: collapseAll, apply: apply, open: openFor };
+})();</script>

@@ -39,3 +39,34 @@ Nothing to do for the bar: it is the nav-parity node, so a module added to every
 appears on the phone bar automatically. A new page only needs the shared chrome (`.topbar-in`,
 `#tb-modules`) — the layer does the rest. If a page grows a wide workbench, let the sweep pan it; if it
 grows a two-column split, add its class to the one-column list in the layer.
+
+## The skim view — every section one tap row (Sep 2026)
+
+Ray's ask (18 Sep 2026, holding up the Meta Ads Manager app on an iPhone 16 Pro): *"the whole dashboard is
+not functional on mobile users … it only shows what necessary to be shown … only necessary information for AM
+to make decisions while using mobile phone and make it as on the go as possible … if you go on the desktop
+view that would be more if needed. Allow using a lot of collapse and expand feature."* The mirror rule stands
+(nothing is removed); what changes is the DEPTH at which the desktop's content sits: one tap down.
+
+`docs/digest_widget.html` (`FCC-DIGEST`), injected after the phone layer for every signin. Under 760px:
+
+| | |
+|---|---|
+| What stays on the first screen | the hero (eyebrow, title, its ⓘ), the KPI strip as a **3-up summary band** (`.kpis` on every module, the home `.statstrip`, Leadership's hub as one row of tiles), any status card without a heading (Workflow's Gmail sync panel) |
+| What folds | **every section** — a block that contains its heading (`section.cat`, `.card`, `.panel`: Golden Record, Command Center, Volume, Task Manager) and a heading that sits above its content as siblings (Workflow's h2s, Leadership, KWCal). The section's OWN heading becomes the tap row: chevron · title · a **digest** read off the content (the page's `data-m-digest` word if set, else KPI headlines with their colour, `.al-row` alert counts, table rows, repeated items). Its buttons (the page's `i` popover, the ⓘ explainer, a `▸ Show` the page already owns) stay in the row and never toggle the fold. A heading the page already folds keeps its own button — styled into the row rhythm, a tap on the row forwards to it |
+| Default | **closed** when the page has two or more sections (one section is nothing to skim among); a section that appears **after** boot opens — it arrived because the reader did something (Feed Lab's post-scan sections, AI Quote's chosen types); a `#hash` into a folded section opens it |
+| Memory | per device, `localStorage fcc-m-open` (what one screen opened is not a team fact); an expand/collapse made this visit holds through the boot window |
+| Long tables | 8 rows behind **Show all N rows** (cap at 10), lifted for good once tapped |
+| Controls | **Expand all / Collapse all** above the first row; `window.FCCDigest` = `state() · expandAll() · collapseAll() · apply() · open(el)` |
+| Never | inside the topbar/bar, a dialog or rail, the print sheet, the chat card / embed, the hero; `data-no-digest` on an element opts its subtree out |
+
+Nothing moves in the DOM and the fold is a class the desktop media query never applies, so the desktop is
+byte-identical. Census at ship (390px, folded → open): Leadership 979px → 5,694px, Roadmap 844 → 9,862,
+Task Library 909 → 9,822, Readiness 844 → 6,332, Workflow one screen with five rows (Intake · 113 rows,
+Timeline · 44 items …); KWCal, Feed Lab (pre-scan), Schedule and Templates carry one section and stay open.
+
+Tripwire: `tools/check_mobile.js` rule 6 — on a fresh device every page with ≥2 sections opens with all of
+them folded (asserted at first paint); it then calls `FCCDigest.expandAll({silent:true,caps:true})` before
+the desktop-parity count, so the fold can never hide a control from rule 4. `tools/test_mobile.mjs` pins the
+rules above. Adding a page: nothing — a section with an h2/h3 folds; give a block `data-m-digest="…"` to
+say what its row should read, `data-no-digest` to keep it open.
