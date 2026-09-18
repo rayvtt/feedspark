@@ -436,6 +436,67 @@ chart can never name the same colour differently; with the legend on the chart, 
 labels stand down (the same names twice is clutter) and when they are drawn, two lines finishing
 together are pushed apart rather than printed on top of each other.
 
+### Side by side, expanded
+
+> Ray, 18 Sep 2026: *"when our side by side donut chart, clicking on any chart will expand it as
+> the main chart on the screen and showcase the different split legend in animation pls"*
+
+A grid of 40px rings answers *"which of these is different"*; it cannot answer *"what is IN this
+one"*, because at that size the slices carry no labels and several are a pixel wide. **Clicking any
+cell** promotes it to the whole stage at a size where every slice has its name, hours and share —
+and the legend arrives as the ring draws, so the eye is led from the shape to the names instead of
+hunting for them. `← All groups` or **Esc** returns.
+
+- **The whole cell is the target**, not the ring: a 12px slice is not something a hand can hit, and
+  the label under it is part of the thing being pointed at. The arcs keep their own hover tooltips.
+- **The animation is a class on the wrapper, and every animated element also carries its final
+  state as an ordinary SVG attribute.** `⬇ PNG` serialises the node away from the page's stylesheet
+  where no keyframe can run — without that rule the export would rasterise frame zero, a ring
+  hidden behind its own dash offset, and hand someone a blank donut. `prefers-reduced-motion` gets
+  the finished figure, not a slower one.
+- **Narrow cards get their own geometry** — ring above, legend across the full width beneath —
+  because a 720-wide viewBox on a 360px screen halves every font and lands the legend at ~6px.
+- **It is a view, not a preference.** The split, the form, the measure or the untagged rule drop
+  it; the search deliberately does not (narrowing while reading one group is staying on that
+  group), and a key that no longer exists falls back to the grid rather than erroring.
+
+The expansion also surfaced a collision worth naming: a cell can carry both the engine's own
+`Other (N more)` fold *and* the children that fell outside the shared colour key. Invisible in a
+40px ring; unanswerable once every slice is labelled. The second is now **"Everything else here"**.
+
+### One control scale
+
+> Ray, 18 Sep 2026: *"the box and button in the task manager are not equal size, so it looks messy
+> … when we improve any feature or develop a certain module, review the entire page UX/UI and
+> ensure these elements are not outdated. It should stay consistent."*
+
+Measured before the fix, this one page carried **ten distinct control heights** and three pill
+styles differing only by a pixel of padding (`.btn.sm` 4⁄9, `.chip` 5⁄10, `.pq-x` 4⁄10). Nobody
+chose those differences — they are what a page accumulates when each feature styles its own
+control, and an eye reads them as mess long before it can name why.
+
+Two roles, two sizes:
+
+| Role | Height | What wears it |
+|---|---|---|
+| **Field** | 34px | `select`, text input, full-size `.btn` — something you open, type in or press |
+| **Pill** | 30px | `.btn.sm`, `.chip`, `.pq-x` — a small toggle or an exit |
+
+Height is set **explicitly**, not left to padding: padding + line-height + font-size lands on a
+different total for every font size, which is precisely how ten heights happened. Legitimately
+distinct components are exempt **by name** — `.tab` (a tab bar is its own component), `#q` (the
+page's one hero field), the 34px icon buttons, and the small marks that are not controls at all
+(`.fh-dot`, `.instr-tgl`, `.tg-add`), which the phone layer also exempts from its 36px tap-target
+rule. Under 760px that rule wins, as it should.
+
+**The tripwire keeps it that way.** `tools/check_mobile.js` already renders every app page at
+1400px, so its desktop pass now also measures control geometry and fails when a page carries more
+than the two sizes. It is enforced on the pages whose scale has been set (`SCALED` in that file —
+add a page there in the PR that tidies it) and **reported** for the rest with each page's own
+number, so the next module worked on has a target rather than a surprise failure about somebody
+else's change. Today's map: Task Manager 2 · Workflow 5 · FeedChat / Label Guard / Pricer / Task
+Library 3 · Golden Record / PT Guard / Schedule / Templates / Volume 1.
+
 ### Include, and what a percentage is a share of
 
 > Ray, 18 Sep 2026, over a Type of work › Task chart: *"Allow percentage labels to be changed from
