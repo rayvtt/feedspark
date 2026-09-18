@@ -7,7 +7,12 @@
  *   3. the module bar is visible and carries EVERY module the desktop menu carries;
  *   4. MIRROR: every control visible on the desktop render (1400px) is visible on the phone —
  *      nothing is hidden under a max-width rule (the old .at-act / .bs-ctx / .wf-go regressions);
- *   5. (reported, not failed) tap targets under 30px and the count of <11px text nodes.
+ *   5. (reported, not failed) tap targets under 30px and the count of <11px text nodes;
+ *   6. SKIM VIEW (Ray, 18 Sep 2026, holding up the Meta Ads Manager app: "only necessary
+ *      information for AM to make decisions while using mobile phone … a lot of collapse and
+ *      expand"): a page with two or more sections opens with EVERY section folded behind its
+ *      heading (docs/digest_widget.html) — asserted at first paint, on a fresh device; then
+ *      everything is expanded before rule 4 counts, so the fold can never hide a control from it.
  * Usage: node tools/check_mobile.js [--shots <dir>]   (screenshots per page when a dir is given)
  * Lives in presync (like the dark tripwire); CI has no browsers. */
 'use strict';
@@ -18,7 +23,7 @@ const SHOTS = process.argv.indexOf('--shots') >= 0 ? process.argv[process.argv.i
 // pages whose control scale has been set — add a page here in the PR that tidies it
 const SCALED = /^(TaskManager)$/;
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
-const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html']
+const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html', 'digest_widget.html']
   .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
 const PAGES = fs.readdirSync(D).filter((f) => /^FeedSpark_.*\.html$/.test(f) && !/Strategy_Review|Deck/.test(f))
   .filter((f) => fs.readFileSync(path.join(D, f), 'utf8').indexOf('tb-modules') >= 0 || f === 'FeedSpark_Command_Center.html');
@@ -102,8 +107,17 @@ const COLLECT = `(() => {
       const ctx = await b.newContext(mode === 'desk' ? { viewport: { width: 1400, height: 900 } } : { ...devices['iPhone 13'], viewport: { width: 390, height: 844 } });
       const p = await ctx.newPage(); await p.addInitScript(STUB);
       try { await p.goto('file://' + tmp, { timeout: 20000 }); await p.waitForTimeout(mode === 'mob' ? 1500 : 900); } catch (e) {}
+      let skim = null;
+      if (mode === 'mob') {
+        // the skim view as the reader meets it (fresh device = every section folded), then the
+        // whole page opened out so the parity count below sees every control the desktop has
+        skim = await p.evaluate('window.FCCDigest ? FCCDigest.state() : null').catch(() => null);
+        if (SHOTS) { try { await p.screenshot({ path: path.join(SHOTS, name + '.png'), fullPage: false }); } catch (e) {} }
+        await p.evaluate('window.FCCDigest && FCCDigest.expandAll({ silent: true, caps: true })').catch(() => {});
+        await p.waitForTimeout(500);
+      }
       res[mode] = await p.evaluate(COLLECT).catch((e) => ({ err: String(e).slice(0, 100) }));
-      if (mode === 'mob' && SHOTS) { try { await p.screenshot({ path: path.join(SHOTS, name + '.png'), fullPage: false }); await p.screenshot({ path: path.join(SHOTS, name + '_full.png'), fullPage: true, clip: { x: 0, y: 0, width: 390, height: Math.min(3000, res.mob.sh || 3000) } }); } catch (e) {} }
+      if (mode === 'mob') { res.mob.skim = skim; if (SHOTS) { try { await p.screenshot({ path: path.join(SHOTS, name + '_full.png'), fullPage: true, clip: { x: 0, y: 0, width: 390, height: Math.min(3000, res.mob.sh || 3000) } }); } catch (e) {} } }
       await ctx.close();
     }
     try { fs.unlinkSync(tmp); } catch (e) {}
@@ -120,6 +134,9 @@ const COLLECT = `(() => {
     if (!m.navVis || !m.navFixed) bad.push('module bar not shown as the fixed bottom bar');
     if (m.navLinks + m.napps < d.navAll) bad.push('module bar + ▦ sheet carry ' + (m.navLinks + m.napps) + ' of ' + d.navAll + ' modules');
     if (hidden.length) bad.push('hidden on the phone but visible on desktop: ' + hidden.slice(0, 8).join(' | ') + (hidden.length > 8 ? ' +' + (hidden.length - 8) : ''));
+    const sk = m.skim;
+    if (sk && sk.n >= 2 && sk.closed < sk.n) bad.push('skim view: ' + (sk.n - sk.closed) + ' of ' + sk.n + ' sections open at first paint on a fresh device (' + sk.keys.join(', ') + ')');
+    const skimTxt = sk ? ' · skim ' + sk.closed + '/' + sk.n + ' ' + Math.round(sk.h / 844 * 10) / 10 + '→' + Math.round(m.sh / 844 * 10) / 10 + 'scr' : ' · skim —';
     /* CONTROL SCALE. Two sizes are the whole vocabulary: a FIELD you open or type in, and a PILL
        you press. More than two means a feature styled its own control and the row stops lining
        up. Enforced where the scale has been set, REPORTED elsewhere with the page's own number,
@@ -133,7 +150,7 @@ const COLLECT = `(() => {
     }
     if (bad.length) fail++;
     console.log((bad.length ? '  ✗ ' : '  ✓ ') + name.padEnd(17) + ' ctl ' + String(m.nCtl).padStart(4) + '/' + String(d.nCtl).padEnd(4) + ' tb ' + String(m.tbH).padStart(3) + 'px · bar ' + m.navLinks + '/' + d.navAll + ' · tiny ' + String(m.tiny).padStart(3) + ' · <11px ' + String(m.small).padStart(3)
-      + ' · scale ' + nScale + (SCALED.test(name) ? '' : '*') + (bad.length ? '\n      ' + bad.join('\n      ') : ''));
+      + ' · scale ' + nScale + (SCALED.test(name) ? '' : '*') + skimTxt + (bad.length ? '\n      ' + bad.join('\n      ') : ''));
   }
   await b.close();
   console.log('\n' + PAGES.length + ' app pages at 390px' + (fail ? ' — ' + fail + ' failing the phone rules' : ' — phone rules hold'));
