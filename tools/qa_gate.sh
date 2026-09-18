@@ -205,6 +205,13 @@ else
   echo "   ✗ arrivals harness FAILED — see node tools/test_arrivals.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3g''/7: AI Mode attributes (the builder's own pricing model, unchanged)"
+if node tools/test_aimode.mjs >/dev/null 2>&1; then
+  echo "   ✓ rates, routes, the scrape-once rule, the AI monthly floor + the page wiring hold"
+else
+  echo "   ✗ AI Mode harness FAILED — see node tools/test_aimode.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h/7: Golden Record PDP harvest (page extraction + host allowlist + sampler)"
 if node tools/test_pdpharvest.mjs >/dev/null 2>&1; then
   echo "   ✓ details-text rules, variant-only identifiers, evidence-gated AI merge + the proxy allowlist hold"

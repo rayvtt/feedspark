@@ -64,6 +64,10 @@ echo "── validating: new-product arrivals (first-seen dates → forecast)"
 node tools/test_arrivals.mjs >/dev/null
 echo "   ✓ engine maths + collector capture + worker store hold"
 
+echo "── validating: AI Mode attributes (priced by data source)"
+node tools/test_aimode.mjs >/dev/null
+echo "   ✓ rates, routes, scrape-once, the AI floor + the page wiring hold"
+
 echo "── validating: Golden Record PDP harvest (extraction + allowlist + sampler)"
 node tools/test_pdpharvest.mjs >/dev/null
 echo "   ✓ details-text rules, variant-only identifiers + the proxy allowlist hold"

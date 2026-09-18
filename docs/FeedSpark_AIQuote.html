@@ -358,7 +358,10 @@ window.addEventListener('load',restore);
      both the One-off and the Monthly tile, so a wrapped hint or the setup-fee box above them can no longer
      push one tile's Net / VAT / total below the other's. Stacked (narrow), the tiles flow as before. */
   @media (min-width:900px){ @supports (grid-template-rows:subgrid){
-    .qsum{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(7,auto)}
+    /* the track count is the LONGEST column's row count - a row added to a tile without adding a
+       track here lands on top of the one below it, which is how the AI Mode row first read as a
+       total printed through a hint. Both AI Mode rows hide together, so the tiles stay aligned. */
+    .qsum{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(8,auto)}
     .qs-col{display:grid;grid-template-rows:subgrid;grid-row:1/-1;align-content:start}
     .qs-col>.qs-r{align-self:stretch} } }
   .qs-col{border:1px solid var(--line);border-radius:12px;padding:10px 14px 8px;background:#fff}
@@ -386,6 +389,82 @@ window.addEventListener('load',restore);
      products" by a sentence, so the card is now TWO named halves — the EVIDENCE (what this feed has
      actually done, month by month, drawn exactly as /volume draws it) and the COMMERCIAL (forecast,
      override, bands, bundle). Proof on the left, price on the right; stacked under 880px. */
+  /* ============ AI Mode - the conversational attributes, priced by data source ============ */
+  /* the route colours are the FCC's own: Tachyon AI wears the brand orange because it IS the
+     differentiator on this quote, the master feed the good-green, a scrape the validated
+     arrivals blue, a FeedHero rule the navy. Never the builder's purple/green/blue set. */
+  .aim-bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:10px 12px;background:var(--wash);
+    border:1px solid var(--line);border-radius:12px;margin-bottom:14px}
+  .aim-bar .aim-l{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .aim-bar .hint{font-size:12px}
+  .aim-u{font-size:12.5px}
+  .aim-u b{display:block;font-weight:900}
+  .aim-u small{display:block;font-weight:700;color:var(--muted);font-size:10.5px;margin-top:1px}
+  .aim-u.on small{color:#fff;opacity:.92}
+  .aim-tw{overflow-x:auto}
+  table.aim{width:100%;border-collapse:collapse;font-size:13.5px;min-width:680px}
+  table.aim th{text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);padding:0 9px 8px;border-bottom:1px solid var(--line)}
+  table.aim th.num,table.aim td.num{text-align:right}
+  table.aim td{padding:10px 9px;border-bottom:1px solid var(--wash);vertical-align:middle}
+  table.aim tr:last-child td{border-bottom:0}
+  .aim-n{font-weight:900;color:var(--ink);font-size:13.5px}
+  .aim-k{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-top:1px}
+  .aim-rt{display:flex;gap:5px;flex-wrap:wrap}
+  .aim-b{font:inherit;font-size:11.5px;font-weight:800;padding:5px 8px;border-radius:8px;cursor:pointer;
+    border:1px solid var(--line);background:#fff;color:var(--muted);white-space:nowrap}
+  .aim-b:hover{border-color:var(--muted);color:var(--ink-2)}
+  .aim-b.on[data-r=feed]{background:#EAF7EF;border-color:var(--good);color:var(--good)}
+  .aim-b.on[data-r=scrape]{background:#E8EFFC;border-color:var(--vin);color:#1D4FBF}
+  .aim-b.on[data-r=ai]{background:#FDF0DE;border-color:var(--orange);color:var(--orange-ink)}
+  .aim-b.on[data-r=feedhero]{background:#E9EEF5;border-color:var(--navy);color:var(--navy)}
+  .aim-b.on[data-r=off]{background:var(--wash);border-color:var(--muted);color:var(--ink-2)}
+  .aim-why{font-size:11px;font-weight:700;color:var(--muted);margin-top:6px;line-height:1.4}
+  .aim-m{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:900;color:var(--ink)}
+  .aim-m.zero{color:var(--muted);font-weight:700}
+  .aim-d{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-top:3px;line-height:1.4;white-space:normal}
+  .aim-note{font-size:11.5px;font-weight:700;color:var(--muted);margin-top:11px;line-height:1.45}
+  .aim-foot{display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px}
+  @media (min-width:880px){ .aim-foot{grid-template-columns:minmax(0,1fr) minmax(0,.88fr)} }
+  .aim-box{border:1px solid var(--line);border-radius:12px;background:var(--wash);padding:11px 14px 12px;min-width:0}
+  .aim-box h4{margin:0 0 7px;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .aim-r{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;font-weight:700;padding:4px 0;color:var(--ink-2)}
+  .aim-r b{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:900;white-space:nowrap}
+  .aim-r.hi{border-top:1px solid var(--line);margin-top:4px;padding-top:7px}
+  .aim-r.hi b{color:var(--orange-ink);font-size:14.5px}
+  .aim-src{font-size:11px;font-weight:700;color:var(--muted);margin-top:7px;line-height:1.45}
+  .aim-src a{color:var(--orange-ink);text-decoration:none;font-weight:900}
+  .aim-src code{font-size:10px;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:0 4px}
+  .aim-pct{width:64px;font:inherit;font-size:12.5px;font-weight:800;padding:4px 6px;border:1px solid var(--line);border-radius:7px;text-align:right}
+  /* on a phone the four columns become a stack of cards rather than a table you have to pan:
+     the prices are the whole point of the row, so they must not sit off the right edge */
+  @media (max-width:720px){
+    table.aim{min-width:0}
+    table.aim thead{display:none}
+    table.aim, table.aim tbody, table.aim tr, table.aim td{display:block;width:100%}
+    table.aim tr{border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:10px;background:var(--wash)}
+    table.aim tr:last-child td{border-bottom:0}
+    table.aim td{border:0;padding:4px 0}
+    table.aim td.num{display:flex;justify-content:space-between;align-items:baseline;text-align:left;
+      border-top:1px solid var(--line);margin-top:6px;padding-top:7px}
+    table.aim td.num + td.num{border-top:0;margin-top:0;padding-top:2px}
+    table.aim td.num::before{content:attr(data-l);font-size:10.5px;font-weight:900;letter-spacing:.06em;
+      text-transform:uppercase;color:var(--muted)}
+    .aim-b{font-size:12px;padding:6px 10px}
+    .aim-bar .aim-u{flex:1 1 42%}
+  }
+  details.aim-rates{border:1px solid var(--line);border-radius:12px;background:var(--paper);margin-top:14px}
+  details.aim-rates>summary{padding:10px 14px;cursor:pointer;font-size:12.5px;font-weight:900;color:var(--ink-2);list-style:none}
+  details.aim-rates>summary::-webkit-details-marker{display:none}
+  details.aim-rates>summary::after{content:"\25be";float:right;color:var(--muted)}
+  details.aim-rates[open]>summary{border-bottom:1px solid var(--line)}
+  .aim-rg{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:11px;padding:13px 14px}
+  .aim-rg label{display:block;font-size:10.5px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .aim-rg input{width:100%;margin-top:4px;font:inherit;font-size:13px;font-weight:800;padding:7px 9px;
+    border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+  .aim-rg input.seeded{border-style:dashed}
+  .aim-rf{grid-column:1/-1;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;
+    border-top:1px solid var(--line);padding-top:11px;font-size:11.5px;font-weight:700;color:var(--muted)}
   .upd-grid{display:grid;grid-template-columns:1fr;gap:12px;align-items:start}
   @media (min-width:880px){ .upd-grid{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)} }
   .upd-box{border:1px solid var(--line);border-radius:12px;padding:10px 14px 12px;background:var(--wash);min-width:0}
@@ -633,12 +712,19 @@ window.addEventListener('load',restore);
     <div id="upd-body"></div>
   </div>
 
+  <div class="card" id="aim-card" data-tp="aim">
+    <h3>AI Mode attributes &mdash; priced by data source</h3>
+    <div class="ch">Google&rsquo;s six <b>conversational attributes</b> plus product highlights, priced the way they are actually delivered: pick <b>where each field&rsquo;s data comes from</b> and the cost follows the route. A field <b>added to the master feed</b> is configuration hours and nothing monthly. A <b>scraped</b> field is configuration hours plus <b>one</b> scrape run a month that covers <b>every</b> scraped field &mdash; charged once, not per field. A field generated by <b>Tachyon AI</b> is a per-field set-up plus &pound; per product across the range once, then &pound; per product on the new ones each month, with a monthly minimum. A <b>FeedHero rule</b> is the hours to build it. Volumes come from the product scope above, and new products a month from the <b>Monthly update</b> card &mdash; one arrivals figure on this quote, not two.</div>
+    <div id="aim-body"></div>
+  </div>
+
   <div class="card priceless" id="total-card">
     <h3>Quote total</h3>
     <div class="qsum col-rate" id="qsum">
       <div class="qs-col">
         <div class="qs-h">Initial · one-off <span class="qs-sub">paid once, on acceptance</span></div>
         <div class="qs-r"><span>Initial data optimisation <span class="hint" id="qs-linesn"></span></span><b id="qs-lines"></b></div>
+        <div class="qs-r" id="qs-aim-w" hidden><span>AI Mode attributes <span class="hint" id="qs-aimn"></span></span><b id="qs-aim"></b></div>
         <div class="qs-r"><span>Retainer hours · setup hours <span class="hint" id="qs-xonen"></span></span><b id="qs-xone"></b></div>
         <div class="qs-r"><span>Setup fee <input type="text" id="setup" inputmode="decimal" placeholder="£ —" title="Flat one-off setup / onboarding fee"> <label class="qopt dscw" id="discsetup-w" hidden title="Partner discount on the setup fee"><input type="checkbox" class="cbx" id="discsetup"> disc.</label></span><b id="qs-setup"></b></div>
         <div class="qs-r"><span>Partner discount <input type="text" id="disc" inputmode="decimal" placeholder="0" style="width:52px" title="Rides the template's own Discount % column in the Excel export, so the formulas carry it"> % <select id="discscope" title="Where the partner discount applies"><option value="all">all lines</option><option value="oneoff">one-off only</option><option value="monthly">monthly only</option><option value="lines">selected lines</option></select> <label class="qopt dscw" id="discman-w" title="The Discount % column excludes man power — hours at the day rate (retainer, setup hours, one-off / monthly hours lines, maintenance). Tick to discount those too on this quote"><input type="checkbox" class="cbx" id="discman"> + man power</label></span><b id="qs-disc"></b></div>
@@ -648,6 +734,7 @@ window.addEventListener('load',restore);
       <div class="qs-col">
         <div class="qs-h">Ongoing · monthly <span class="qs-sub">recurring, for the life of the service</span></div>
         <div class="qs-r"><span>New-product updates <span class="hint" id="qs-updn"></span></span><b id="qs-upd"></b></div>
+        <div class="qs-r" id="qs-aimm-w" hidden><span>AI Mode attributes <span class="hint" id="qs-aimmn"></span></span><b id="qs-aimm"></b></div>
         <div class="qs-r"><span>Systems · feeds · retainer <span class="hint" id="qs-xmonn"></span></span><b id="qs-xmon"></b></div>
         <div class="qs-r"><span>All ongoing lines <span class="hint" id="qs-monn"></span></span><b id="qs-mon"></b></div>
         <div class="qs-r"><span>Partner discount</span><b id="qs-mondisc"></b></div>
@@ -792,34 +879,51 @@ window.addEventListener('load',restore);
     if(window.__engineFail||!window.FeedAudit||!FeedAudit.createParser){ err('The feed parser is unavailable (engine failed to load) — pulling needs the live worker.'); return; }
     var key=CLIENT+'|'+MKT; if(CACHING[key])return; CACHING[key]=1;
     $('#mstate').textContent='Pulling '+CLIENT+' '+MKT.toUpperCase()+'…';
-    var header=null,cands=[],kwc=[],buf=[],parser=null,igc=-1,idc=-1;
+    var header=null,cands=[],kwc=[],buf=[],parser=null,igc=-1,idc=-1,dbc=-1,dbName='';
     function onRow(r){
       if(!header){ header=r;
+        var keys=[];
         for(var i=0;i<r.length;i++){ var k=FeedAudit.normKey(r[i]), kk=k.replace(/[^a-z0-9]/g,'');
+          keys.push(k);
           var kd=kk.match(/^producttype([0-9]{1,2})$/);
           if(kd&&+kd[1]>=2){ kwc.push(i); }
           else if(k==='product_type'||k.indexOf('product_type')===0||kk==='producttype')cands.push(i);
           if(igc<0&&kk==='itemgroupid')igc=i; if(idc<0&&kk==='id')idc=i; }
+        /* the FIRST-SEEN date column, for AI Mode's new-products fallback. FeedHero stamps every
+           product with fs:date_of_birth; the rest of the list is what other feeds call the same
+           thing. Patterns are tried in order, so date_of_birth always wins over date_added. */
+        AIM_DOB_PATS.some(function(p){ for(var j=0;j<keys.length;j++){ if(p.test(keys[j].replace(/^g:/,''))){ dbc=j; dbName=keys[j]; return true; } } return false; });
         return; }
       /* the PARENT key — still indexed but HIDDEN and never priced since Ray's 10 Sep 2026 rule
          "product scope is always SKU variant" (unique products by g:item_group_id,
          the same rule as PricerEngine.parentCounter): a row with no group is its own product,
          keyed on its id (else the row number), so a variant-less catalogue counts 1:1 */
       var g=igc>=0?String(r[igc]||'').trim():'', id=idc>=0?String(r[idc]||'').trim():'';
-      buf.push({pt:cands.map(function(i2){return String(r[i2]||'').trim()}),pk:g?'g:'+g:(id?'i:'+id:'r:'+buf.length),g:!!g});
+      var dt=dbc>=0?aimParseDate(r[dbc]):null;
+      buf.push({pt:cands.map(function(i2){return String(r[i2]||'').trim()}),pk:g?'g:'+g:(id?'i:'+id:'r:'+buf.length),g:!!g,d:dt?dt.getTime():0});
     }
     function mkParser(t){ if(/^\s*</.test(t)){ if(!FeedAudit.createXmlParser)throw new Error('XML feed but the cached engine predates XML support — hard-refresh'); return FeedAudit.createXmlParser(onRow); } return FeedAudit.createParser(onRow); }
     function finish(){
       var best=-1,wci=0; cands.forEach(function(ci,j){ var n=0; buf.forEach(function(b){ if(b.pt[j])n++; }); if(n>best){best=n;wci=j} });
       var map={},pmap={},pkeys={},seenAll={},prod=0,grouped=0,tot=buf.length;
+      /* AI Mode's first-seen roll-up, on this same pass: per row, per product type, and per
+         parent (dated by its FIRST row in the feed, which is the row a per-group charge covers) */
+      var cutD=new Date(); cutD.setFullYear(cutD.getFullYear()-1); var cut=cutD.getTime();
+      var dRowD=0,dRowR=0,dParD=0,dParR=0,dPt={},dPk={};
       buf.forEach(function(b){ var pt=b.pt[wci]||'(no product_type)'; map[pt]=(map[pt]||0)+1;
         if(b.g)grouped++;
-        if(!seenAll[b.pk]){ seenAll[b.pk]=1; prod++; }
+        if(dbc>=0){ var pb=dPt[pt]||(dPt[pt]=[0,0]);
+          if(b.d){ dRowD++; pb[0]++; if(b.d>=cut){ dRowR++; pb[1]++; } } }
+        if(!seenAll[b.pk]){ seenAll[b.pk]=1; prod++;
+          if(dbc>=0&&b.d){ dParD++; if(b.d>=cut)dParR++; dPk[b.pk]=b.d; } }
         var ks=pkeys[pt]||(pkeys[pt]={}); if(!ks[b.pk]){ ks[b.pk]=1; pmap[pt]=(pmap[pt]||0)+1; } });
       /* pkeys = per product type, its parent keys as an ARRAY: a scope's unique-product count is
          the UNION across its types, so a parent split over two types is never counted twice */
       Object.keys(pkeys).forEach(function(pt){ pkeys[pt]=Object.keys(pkeys[pt]); });
-      IDX[MKT]={map:map,pmap:pmap,pkeys:pkeys,total:tot,prod:prod,grouped:grouped,hasGroups:igc>=0,when:Date.now()};
+      IDX[MKT]={map:map,pmap:pmap,pkeys:pkeys,total:tot,prod:prod,grouped:grouped,hasGroups:igc>=0,when:Date.now(),
+        dob:(dbc>=0?{col:dbName,cut:cut,rows:{total:tot,dated:dRowD,recent:dRowR},
+          pars:{total:prod,dated:dParD,recent:dParR},pt:dPt,pk:dPk}:null)};
+      _aimDob={};
       delete CACHING[key];
       $('#mstate').textContent=fmt(tot)+' SKUs · '+Object.keys(map).length+' product types';
       render();
@@ -1082,10 +1186,333 @@ window.addEventListener('load',restore);
               the Monthly side; only the setup pre-charge is one-off (or from the retainer)
        ret  — retainer hours: one-off hours and / or hours per month at the day rate (£595 / 8h)
      Every £ is a changeable rate on the shared rate card (rc.rates); the day rate is blockGBP(). */
+  /* =====================================================================
+     AI MODE — Google's conversational attributes, priced by DATA SOURCE
+     Ray, 17 Sep 2026 ("mirror this artifact to import inside the quote
+     generator for AI, using the exact same calculation logic … adapt to our
+     FCC colour thematic & text & branding & emoji").
+
+     This is NOT the per-SKU catalogue above it. Each attribute is routed to
+     where its data actually comes from — the master feed, a scrape, Tachyon
+     AI or a FeedHero rule — and every route has its own cost shape:
+       master feed  hours to configure the field, nothing monthly
+       scrape       hours to configure it, plus ONE scrape run a month that
+                    covers every scraped field (charged once, not per field)
+       AI           a per-field set-up in days, plus £/field × the whole range
+                    once, then £/field × the new products each month
+       FeedHero     hours to build the rule, nothing monthly
+     Then a floor: if the AI months come to less than the minimum, the
+     difference is added as its own line rather than hidden inside another.
+
+     Every constant and every step below is the builder's own, unchanged —
+     only the £ display differs (the FCC shows pence; a rounded block total
+     reads as if it does not add up). The sentences under each line are the
+     builder's too, so aimMoney/aimInt/aimHrsW round the way it rounded.
+     ===================================================================== */
+  /* AIMODE:ENGINE-START — tools/test_aimode.mjs lifts this block BY NAME and runs
+     the artifact's own worked figures through it; keep it free of page globals. */
+  var AIM_RATE_DEFAULT={dayRate:695,hoursPerDay:8,hoursSupplied:2,hoursScrape:2,scrapeMonthly:100,
+    aiSetupDays:2,aiPerField:0.10,aiMinMonthly:100,hoursFeedHero:2,buffer:10};
+  var AIM_NEWNESS_DEFAULT=10.5;
+  /* the six conversational attributes plus product_highlight — with the routes each one can
+     honestly take. AI cannot invent a document link, a related product or a variant option, and
+     popularity rank is computed in FeedHero from the brand's own Google Ads data, nowhere else. */
+  var AIM_ATTRS=[
+    {id:'qa',   name:'Question and answer', key:'question_and_answer', routes:['feed','scrape','ai','feedhero']},
+    {id:'doc',  name:'Document link',       key:'document_link',       routes:['feed','scrape','feedhero']},
+    {id:'rel',  name:'Related product',     key:'related_product',     routes:['feed','scrape','feedhero']},
+    {id:'igt',  name:'Item group title',    key:'item_group_title',    routes:['feed','scrape','ai','feedhero']},
+    {id:'vopt', name:'Variant option',      key:'variant_option',      routes:['feed','scrape','feedhero']},
+    {id:'hi',   name:'Product highlight',   key:'product_highlight',   routes:['feed','scrape','ai','feedhero']},
+    {id:'pop',  name:'Popularity rank',     key:'popularity_rank',     routes:['feedhero']}
+  ];
+  var AIM_ROUTE_LABEL={off:'Ignore',feed:'Add to master feed',scrape:'Scrape',ai:'Tachyon AI',feedhero:'FeedHero rule'};
+  var AIM_RATE_LABEL={dayRate:'Day rate (£)',hoursPerDay:'Hours in a day',hoursSupplied:'Hours to add a feed field',
+    hoursScrape:'Hours per scraped field',scrapeMonthly:'Scrape run (£ / month)',aiSetupDays:'AI set-up (days per field)',
+    aiPerField:'AI cost per field (£)',hoursFeedHero:'Hours for a FeedHero rule',aiMinMonthly:'AI minimum (£ / month)',
+    buffer:'Volume buffer (%)'};
+  var AIM_RATE_ORDER=['dayRate','hoursPerDay','hoursSupplied','hoursScrape','scrapeMonthly','aiSetupDays','aiPerField','hoursFeedHero','aiMinMonthly','buffer'];
+
+  function aimMoney(n){ if(!isFinite(n))n=0; return '£'+Math.round(n).toLocaleString('en-GB'); }
+  function aimMoney2(n){ return '£'+(Math.round((+n||0)*100)/100).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function aimInt(n){ return Math.round(+n||0).toLocaleString('en-GB'); }
+  function aimHrsW(n){ if(!n)return '—'; return (Math.round(n*10)/10)+'h'; }
+  function aimHourly(r){ var hpd=+r.hoursPerDay||8; return (+r.dayRate||0)/hpd; }
+  var AIM_DOB_PATS=[/date_?of_?birth/,/^dob$/,/date_?added/,/date_?created/,/^created/,/first_?seen/,/launch_?date/,/^added/,/on_?sale_?since/];
+
+  /* a feed's date field, read the way feeds actually write one: dd/mm/yyyy (UK order unless the
+     day is plainly the month), bare YYYYMMDD, or anything Date.parse understands. */
+  function aimParseDate(v){
+    if(!v)return null; v=String(v).trim(); if(!v)return null;
+    var m=v.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+    if(m){ var d1=+m[1],m1=+m[2];
+      if(d1>12&&m1<=12)return new Date(+m[3],m1-1,d1);
+      if(m1>12&&d1<=12)return new Date(+m[3],d1-1,m1);
+      return new Date(+m[3],m1-1,d1); }
+    if(/^\d{8}$/.test(v))return new Date(+v.slice(0,4),+v.slice(4,6)-1,+v.slice(6,8));
+    var t=Date.parse(v); return isNaN(t)?null:new Date(t);
+  }
+
+  /* newness: the share of the catalogue that turns over in a year, spread over twelve months and
+     lifted by the volume buffer. perMonthRaw is the plain twelfth; perMonth is what we quote on. */
+  function aimNewness(units,pct,buffer){
+    if(!isFinite(pct)||pct<0)pct=0;
+    var perYear=units*pct/100, perMonthRaw=perYear/12;
+    return {units:units,pct:pct,perYear:perYear,perMonthRaw:perMonthRaw,perMonth:perMonthRaw*(1+(+buffer||0)/100)};
+  }
+
+  /* the quote itself. sources = {attrId: route}; units = the catalogue in scope at the chosen
+     unit; perMonth = aimNewness().perMonth. Returns exact numbers — rounding is display only. */
+  function aimBuild(sources,rates,units,perMonth){
+    var r=rates, hr=aimHourly(r), lines=[], setup=0, monthly=0, totalHours=0;
+    var counts={ai:0,scrape:0,feed:0,fh:0};
+    AIM_ATTRS.forEach(function(a){ var s=sources[a.id];
+      if(s==='ai')counts.ai++; else if(s==='scrape')counts.scrape++;
+      else if(s==='feed')counts.feed++; else if(s==='feedhero')counts.fh++; });
+    var newPer=Math.ceil(perMonth||0), scrapeSeen=0;
+    AIM_ATTRS.forEach(function(a){
+      var s=sources[a.id]; if(!s||s==='off')return;
+      var hoursN=0,setupN=0,monthlyN=0,gen=0,detail='',monthlyNote=null;
+      if(s==='feed'){
+        hoursN=+r.hoursSupplied||0; setupN=hoursN*hr;
+        detail='Configure the field in the master feed · '+aimHrsW(hoursN)+' at '+aimMoney(hr)+'/h · no monthly time';
+      } else if(s==='scrape'){
+        hoursN=+r.hoursScrape||0; setupN=hoursN*hr; scrapeSeen++;
+        if(scrapeSeen===1){ monthlyN=+r.scrapeMonthly||0;
+          detail='Configure the scrape · '+aimHrsW(hoursN)+' at '+aimMoney(hr)+'/h · the '+aimMoney(monthlyN)+'/month covers every scraped field, charged once';
+        } else { monthlyNote='Included';
+          detail='Configure the scrape · '+aimHrsW(hoursN)+' at '+aimMoney(hr)+'/h · covered by the scrape running cost above'; }
+      } else if(s==='ai'){
+        hoursN=(+r.aiSetupDays||0)*(+r.hoursPerDay||8);
+        gen=units*(+r.aiPerField||0);
+        setupN=hoursN*hr+gen;
+        monthlyN=newPer*(+r.aiPerField||0);
+        detail=(+r.aiSetupDays||0)+' day set-up for this field ('+aimMoney(hoursN*hr)+') plus '+aimInt(units)+' × '+aimMoney2(r.aiPerField)+' ('+aimMoney(gen)+') to generate the range · then '+aimInt(newPer)+' new a month';
+      } else if(s==='feedhero'){
+        hoursN=+r.hoursFeedHero||0; setupN=hoursN*hr;
+        detail=(a.id==='pop'?'Calculated in FeedHero from the brand’s own Google Ads data · ':'Built as a FeedHero rule from data we already hold · ')+aimHrsW(hoursN)+' at '+aimMoney(hr)+'/h · no monthly time';
+      }
+      /* man = hours at the day rate, gen = the per-product AI charge. They are split because the
+         Discount % column excludes man power unless "+ man power" is ticked on this quote. */
+      lines.push({label:a.name,key:a.key,id:a.id,route:s,detail:detail,hours:hoursN,
+                  setup:setupN,man:hoursN*hr,gen:gen,monthly:monthlyN,monthlyNote:monthlyNote});
+      totalHours+=hoursN; setup+=setupN; monthly+=monthlyN;
+    });
+    if(counts.ai){
+      var floor=+r.aiMinMonthly||0, aiMonthly=0;
+      lines.forEach(function(l){ if(l.route==='ai')aiMonthly+=l.monthly; });
+      if(aiMonthly<floor){ var topUp=floor-aiMonthly;
+        lines.push({label:'AI minimum monthly',key:'minimum',id:'min',route:'ai',shared:true,
+          detail:'AI generation across '+counts.ai+' field'+(counts.ai>1?'s':'')+' comes to '+aimMoney(aiMonthly)+' a month, under the '+aimMoney(floor)+' minimum · tops it up by '+aimMoney(topUp),
+          hours:0,setup:0,man:0,gen:0,monthly:topUp,monthlyNote:null});
+        monthly+=topUp; }
+    }
+    return {lines:lines,setup:setup,monthly:monthly,hours:totalHours,units:units,
+            perMonth:perMonth,newPer:newPer,counts:counts,year1:setup+monthly*12};
+  }
+  /* AIMODE:ENGINE-END */
+
+  /* ---- AI Mode, the page side: scope, the new-products read, the rate card ----
+     The builder loaded a file and asked which columns to read; the FCC already knows the
+     brand's feed, so step 1 is the page's own "Pull live feed" and the category picker is
+     the page's own product-type scope. One scope per quote, never two that can disagree.
+     The UNIT is this card's own: AI generation is normally charged per item group (one set
+     of values shared by every variant), which is not the SKU rule the catalogue above runs on.
+     And the builder's whole "keeping it up to date" step is NOT imported (Ray, 17 Sep 2026:
+     "only thing to keep is our monthly update - new products view, it looks better") - the
+     number of new products a month comes from the Monthly update card above, which already
+     reads it off the feed's own fs:date_of_birth arrivals and shows the history. One figure
+     for new products on this quote; change it there and every AI line follows. */
+  function aimRec(){ var r=rec(); if(!r.aim||typeof r.aim!=='object')r.aim={src:{},unit:'group',pct:null,note:''};
+    if(!r.aim.src||typeof r.aim.src!=='object')r.aim.src={}; return r.aim; }
+  function aimOnType(){ return !!typesRec().aim; }
+  function aimSrc(id){ var v=aimRec().src[id]; return (v==='feed'||v==='scrape'||v==='ai'||v==='feedhero')?v:'off'; }
+  function aimRate(k){ var rc=STORE[RCKEY]||{}; var v=rc.aim&&rc.aim[k]; return (v!=null&&v!==''&&isFinite(+v))?+v:AIM_RATE_DEFAULT[k]; }
+  function aimRates(){ var o={}; AIM_RATE_ORDER.forEach(function(k){ o[k]=aimRate(k); }); return o; }
+  function setAimRate(k,v){ var rc=STORE[RCKEY]||(STORE[RCKEY]={fields:{}}); rc.aim=rc.aim||{}; rc.aim[k]=(v===''||v==null)?null:+v; rc.updated=Date.now(); }
+  /* a feed with no item_group_id has no groups to charge per - the toggle is refused, not faked */
+  function aimUnit(){ var ix=idx(); if(ix&&!ix.hasGroups)return 'product';
+    return aimRec().unit==='product'?'product':'group'; }
+  function aimManual(){ return ((rec().scope||{}).mode==='manual'); }
+  function aimUnitWord(){ return aimManual()?'products (headline figure)':(aimUnit()==='group'?'item groups':'products'); }
+  function aimUnits(){ var r=rec(), sc=r.scope||{mode:'all'}, ix=idx();
+    if(sc.mode==='manual')return +sc.manual||0;
+    if(!ix)return 0;
+    var sel=(sc.mode==='pts')?selPts():[];
+    if(aimUnit()==='product'){ if(!sel.length)return ix.total||0; var v=0; sel.forEach(function(pt){ v+=ix.map[pt]||0; }); return v; }
+    if(!sel.length)return ix.prod||0;
+    return unionProds(ix,sel); }
+  /* NEW PRODUCTS A MONTH, from the Monthly update card's own figure (its arrivals run-rate, or
+     Ray's typed estimate). That figure is the WHOLE market's catalogue in SKUs, so it is taken
+     down to this card's scope and unit by the scope's share of the feed - e x units / totalSKUs,
+     which reads as SKUs when the unit is products and as groups when it is item groups, because
+     units is already counted at the chosen unit. Then the volume buffer, as the builder applies it.
+     No arrivals figure anywhere (a feed with no first-seen dates and nothing typed) falls back to
+     the builder's newness share, the one input this card keeps. */
+  /* the newness READ off the live feed, for when the Monthly update card has no figure: how much
+     of the catalogue in scope was first seen in the last twelve months, as a share of the items
+     that carry a usable date. Undated items are left out of BOTH sides rather than counted as
+     old - a feed that dates half its rows would otherwise report half the newness it has. At
+     item-group level a parent is dated by its first row, which is the row a per-group charge covers. */
+  var _aimDob={};
+  function aimAuto(){ var ix=idx(); if(!ix||!ix.dob)return null;
+    var r=rec(), sc=r.scope||{mode:'all'}, sel=(sc.mode==='pts')?selPts():[], unit=aimUnit();
+    var sig=(ix.when||0)+'|'+unit+'|'+(sc.mode==='pts'?sel.join('~'):sc.mode);
+    if(_aimDob.sig===sig)return _aimDob.v;
+    var D=ix.dob, raw=null;
+    if(sc.mode!=='pts'||!sel.length){ raw=(unit==='product')?D.rows:D.pars; }
+    else if(unit==='product'){ var tot=0,dd=0,rr=0;
+      sel.forEach(function(pt){ tot+=(ix.map[pt]||0); var b=D.pt[pt]; if(b){ dd+=b[0]; rr+=b[1]; } });
+      raw={total:tot,dated:dd,recent:rr}; }
+    else { var seen={},t2=0,d2=0,r2=0;
+      sel.forEach(function(pt){ ((ix.pkeys&&ix.pkeys[pt])||[]).forEach(function(k){ if(seen[k])return; seen[k]=1; t2++;
+        var ts=D.pk[k]; if(ts){ d2++; if(ts>=D.cut)r2++; } }); });
+      raw={total:t2,dated:d2,recent:r2}; }
+    var out=(raw&&raw.dated>0)?{total:raw.total,dated:raw.dated,recent:raw.recent,pct:(raw.recent/raw.dated)*100,col:D.col}:null;
+    _aimDob={sig:sig,v:out}; return out; }
+  /* THREE reads, strongest first, and the card always names which one it used: the Monthly update
+     card's own figure; then the feed's own first-seen dates; then FeedSpark's 10.5% working
+     estimate. A number typed here beats all three. */
+  function aimPerMonth(){
+    var buf=1+(+aimRate('buffer')||0)/100, u=aimUnits(), ix=idx(), m=aimRec(), typed=(m.pct!=null&&m.pct!=='');
+    var e=updExpected();
+    if(e!=null&&!typed){ var raw=(ix&&ix.total>0)?(e*u/ix.total):e;
+      return {raw:raw,perMonth:raw*buf,src:updSrc()==='estimate'?'estimate':'arrivals',e:e,buffer:aimRate('buffer')}; }
+    var a=aimAuto(), nn=aimNewness(u,aimPct(),aimRate('buffer'));
+    return {raw:nn.perMonthRaw,perMonth:nn.perMonth,pct:nn.pct,auto:a,buffer:aimRate('buffer'),
+      src:typed?'typed':(a?'feed':'pct')}; }
+  function aimPct(){ var m=aimRec(); if(m.pct!=null&&m.pct!=='')return +m.pct||0;
+    var a=aimAuto(); return a?a.pct:AIM_NEWNESS_DEFAULT; }
+  function aimInfo(){ if(!aimOnType())return null;
+    var units=aimUnits(), nn=aimPerMonth();
+    var q=aimBuild(aimRec().src,aimRates(),units,nn.perMonth);
+    q.nn=nn; q.unit=aimUnit(); q.unitWord=aimUnitWord(); return q; }
+  /* the sentence that travels - the copy text, the client email and the brief all say it once */
+  function aimWord(q){ if(!q||!q.lines.length)return '';
+    var c=q.counts, p=[];
+    if(c.feed)p.push(c.feed+' in the master feed');
+    if(c.scrape)p.push(c.scrape+' scraped');
+    if(c.ai)p.push(c.ai+' by Tachyon AI');
+    if(c.fh)p.push(c.fh+' as a FeedHero rule');
+    return p.join(' · '); }
+
+  /* ---- AI Mode: the card ----
+     renderAim() draws it; aimRefresh() only moves the NUMBERS, so a rate keystroke never
+     rewrites the box the cursor is sitting in. Every derived figure has its own id for that. */
+  var AIM_GLYPH={off:'',feed:'⊞ ',scrape:'⇩ ',ai:'✦ ',feedhero:'⚙ '};
+  var AIM_OPEN=false;
+  function aimRouteBtns(a){ var cur=aimSrc(a.id);
+    return ['off'].concat(a.routes).map(function(rt){
+      return '<button type="button" class="aim-b'+(cur===rt?' on':'')+'" data-r="'+rt+'" data-aimr="'+a.id+'"'
+        +' aria-pressed="'+(cur===rt?'true':'false')+'">'+AIM_GLYPH[rt]+esc(AIM_ROUTE_LABEL[rt])+'</button>'; }).join(''); }
+  function aimScopeWord(q){ var sc=rec().scope||{mode:'all'}, sel=(sc.mode==='pts')?selPts():[], ix=idx();
+    if(!ix&&sc.mode!=='manual')return 'Pull the live feed to size this';
+    var where=sc.mode==='manual'?'headline figure':(sel.length?(sel.length+' product type'+(sel.length===1?'':'s')):'whole live catalogue');
+    return '<b id="aim-scope-n">'+fmt(q.units)+' '+esc(q.unitWord)+'</b> in scope · '+where; }
+  /* three reads, and the card always says which one it used - a figure whose origin is not on
+     screen is a figure nobody can check before it goes to a client */
+  function aimSrcLine(nn){
+    if(nn.src==='arrivals')return 'Read off the <b>Monthly update — new products</b> card above, which sizes it from the feed’s own <code>fs:date_of_birth</code> arrivals. Change it there and every AI line here follows.';
+    if(nn.src==='estimate')return 'Your typed estimate on the <b>Monthly update — new products</b> card above. Clear it there to go back to the feed’s own arrivals run-rate.';
+    if(nn.src==='feed'&&nn.auto)return 'From this feed’s own <code>'+esc(nn.auto.col)+'</code>: <b>'+fmt(nn.auto.recent)+'</b> of <b>'+fmt(nn.auto.dated)+'</b> dated '+esc(aimUnitWord())+' in scope were first seen in the last twelve months'+(nn.auto.total>nn.auto.dated?(' ('+fmt(nn.auto.total-nn.auto.dated)+' carry no usable date and are left out of both sides)'):'')+'. The <b>Monthly update</b> card has no figure yet — give it one and it wins.';
+    if(nn.src==='typed')return 'Your figure, and it beats every read. Clear it to go back to '+(nn.auto?'this feed’s own first-seen dates':'the Monthly update card, or FeedSpark’s '+AIM_NEWNESS_DEFAULT+'% working estimate')+'.';
+    return 'This feed carries no first-seen dates and the Monthly update card has no figure, so the share of the catalogue that turns over in a year is the input here. FeedSpark’s working estimate is <b>'+AIM_NEWNESS_DEFAULT+'%</b>.'; }
+  function renderAim(){
+    var el=$('#aim-body'); if(!el||!aimOnType())return;
+    var q=aimInfo(); if(!q)return;
+    var ix=idx(), byId={}, minL=null;
+    q.lines.forEach(function(l){ if(l.shared)minL=l; else byId[l.id]=l; });
+    var noGroups=!!(ix&&!ix.hasGroups), nn=q.nn, on=q.counts.feed+q.counts.scrape+q.counts.ai+q.counts.fh;
+
+    var h='<div class="aim-bar"><span class="aim-l">Charged per</span>'
+      +'<button type="button" class="qp aim-u'+(aimUnit()==='group'?' on':'')+'" data-aimu="group"'
+        +(noGroups?' disabled title="This feed carries no g:item_group_id, so there are no item groups to charge per"':'')
+        +'><b>Item group</b><small>one set of values shared by every variant</small></button>'
+      +'<button type="button" class="qp aim-u'+(aimUnit()==='product'?' on':'')+'" data-aimu="product"><b>Product ID</b><small>every variant gets its own values</small></button>'
+      +'<span class="hint">'+aimScopeWord(q)+'</span></div>';
+
+    h+='<div class="aim-tw"><table class="aim"><thead><tr><th style="width:17%">Attribute</th><th style="width:53%">Data source</th>'
+      +'<th class="num" style="width:16%">Set-up</th><th class="num" style="width:16%">Per month</th></tr></thead><tbody>';
+    AIM_ATTRS.forEach(function(a){ var l=byId[a.id];
+      var why=(a.id==='pop')?'Only FeedHero can build this — it is computed from the brand’s own Google Ads performance.'
+        :((a.routes.indexOf('ai')<0)?'Tachyon cannot invent this one — it has to come from the master feed or a scrape.':'');
+      h+='<tr><td><span class="aim-n">'+esc(a.name)+'</span><code class="aim-k">g:'+esc(a.key)+'</code></td>'
+        +'<td><div class="aim-rt">'+aimRouteBtns(a)+'</div>'
+        +(why?'<div class="aim-why">'+why+'</div>':'')
+        +'<span class="aim-d" data-aimd="'+a.id+'">'+esc(l&&l.detail?l.detail:'')+'</span></td>'
+        +'<td class="num" data-l="Set-up"><span class="aim-m'+(l&&l.setup?'':' zero')+'" data-aims="'+a.id+'">'+(l&&l.setup?money(l.setup):'—')+'</span></td>'
+        +'<td class="num" data-l="Per month"><span class="aim-m'+(l&&l.monthly?'':' zero')+'" data-aimm="'+a.id+'">'+(l?(l.monthlyNote||(l.monthly?money(l.monthly):'—')):'—')+'</span></td></tr>';
+    });
+    h+='</tbody></table></div>';
+    h+='<div class="aim-note">The scrape charge covers <b>every</b> scraped field — one full pass over the catalogue, then the new products after that. We do not re-scrape every product every day, so a second scraped field adds configuration time and nothing monthly.</div>';
+
+    h+='<div class="aim-foot"><div class="aim-box"><h4>New products a month</h4>'
+      +'<div class="aim-r"><span>Catalogue in scope</span><b id="aim-u">'+fmt(q.units)+' '+esc(q.unitWord)+'</b></div>'
+      +((nn.src==='arrivals'||nn.src==='estimate')
+        ? '<div class="aim-r"><span>Arrivals '+(nn.src==='estimate'?'estimate':'run-rate')+' · whole market</span><b id="aim-e">'+fmt(Math.round(nn.e||0))+' / month</b></div>'
+        : '<div class="aim-r"><span>Newness a year</span><b><input class="aim-pct" data-aimpct="1" inputmode="decimal" value="'+esc(aimRec().pct!=null&&aimRec().pct!==''?String(aimRec().pct):'')+'" placeholder="'+(Math.round(nn.pct*10)/10)+'"> %</b></div>')
+      +'<div class="aim-r"><span>At this scope, before the buffer</span><b id="aim-raw">'+fmt(Math.round(nn.raw))+' / month</b></div>'
+      +'<div class="aim-r hi"><span>Plus '+(nn.buffer||0)+'% volume buffer</span><b id="aim-per">'+fmt(q.newPer)+' / month</b></div>'
+      +'<div class="aim-src" id="aim-srcline">'+aimSrcLine(nn)+'</div></div>';
+
+    h+='<div class="aim-box"><h4>What AI Mode adds to this quote</h4>'
+      +'<div class="aim-r"><span>Attributes routed</span><b id="aim-on">'+(on?(on+' of '+AIM_ATTRS.length):'none yet')+'</b></div>'
+      +'<div class="aim-r"><span>Our time</span><b id="aim-hrs">'+aimHrsW(q.hours)+'</b></div>'
+      +'<div class="aim-r"><span>Set-up · one-off</span><b id="aim-setup">'+money(q.setup)+'</b></div>'
+      +'<div class="aim-r"><span>Per month · ongoing</span><b id="aim-mon">'+money(q.monthly)+'</b></div>'
+      +'<div class="aim-r hi"><span>Year one</span><b id="aim-y1">'+money(q.year1)+'</b></div>'
+      +'<div class="aim-src" id="aim-word">'+(on?esc(aimWord(q))+(minL?' · '+esc(minL.detail):''):'Nothing routed yet — pick a data source on a row above and it prices here.')+'</div></div></div>';
+
+    h+='<details class="aim-rates"'+(AIM_OPEN?' open':'')+'><summary>⚙ Rates &amp; assumptions — saved to your rate card</summary><div class="aim-rg">'
+      +AIM_RATE_ORDER.map(function(k){ var rc=STORE[RCKEY]||{}, own=rc.aim&&rc.aim[k]!=null&&rc.aim[k]!=='';
+        return '<label>'+esc(AIM_RATE_LABEL[k])+'<input data-aimrate="'+k+'" inputmode="decimal" class="'+(own?'':'seeded')+'" value="'+esc(String(aimRate(k)))+'"></label>'; }).join('')
+      +'<div class="aim-rf"><span>Effective hourly rate <b id="aim-hr">'+money(aimHourly(aimRates()))+' / hour</b> · dashed = the default; type over any and it saves for every client</span>'
+      +'<button type="button" class="btn quiet" id="aim-reset" style="margin-left:0">reset to defaults</button></div></div></details>';
+
+    el.innerHTML=h;
+  }
+  /* numbers only - never the containers holding an input */
+  function aimRefresh(){ var q=aimInfo(); if(!q||!$('#aim-body'))return;
+    var byId={}, minL=null; q.lines.forEach(function(l){ if(l.shared)minL=l; else byId[l.id]=l; });
+    AIM_ATTRS.forEach(function(a){ var l=byId[a.id];
+      var se=document.querySelector('[data-aims="'+a.id+'"]');
+      if(se){ se.textContent=(l&&l.setup)?money(l.setup):'—'; se.className='aim-m'+((l&&l.setup)?'':' zero'); }
+      var me=document.querySelector('[data-aimm="'+a.id+'"]');
+      if(me){ me.textContent=l?(l.monthlyNote||(l.monthly?money(l.monthly):'—')):'—'; me.className='aim-m'+((l&&l.monthly)?'':' zero'); }
+      var de=document.querySelector('[data-aimd="'+a.id+'"]'); if(de)de.textContent=(l&&l.detail)?l.detail:''; });
+    var nn=q.nn, on=q.counts.feed+q.counts.scrape+q.counts.ai+q.counts.fh;
+    var T=function(id,v){ var e=$(id); if(e)e.textContent=v; };
+    T('#aim-u',fmt(q.units)+' '+q.unitWord); T('#aim-scope-n',fmt(q.units)+' '+q.unitWord);
+    if($('#aim-e'))T('#aim-e',fmt(Math.round(nn.e||0))+' / month');
+    T('#aim-raw',fmt(Math.round(nn.raw))+' / month'); T('#aim-per',fmt(q.newPer)+' / month');
+    T('#aim-on',on?(on+' of '+AIM_ATTRS.length):'none yet'); T('#aim-hrs',aimHrsW(q.hours));
+    T('#aim-setup',money(q.setup)); T('#aim-mon',money(q.monthly)); T('#aim-y1',money(q.year1));
+    var w=$('#aim-word'); if(w)w.textContent=on?(aimWord(q)+(minL?' · '+minL.detail:'')):'Nothing routed yet — pick a data source on a row above and it prices here.';
+    var sl=$('#aim-srcline'); if(sl)sl.innerHTML=aimSrcLine(nn);
+    T('#aim-hr',money(aimHourly(aimRates()))+' / hour');
+    foot(); }
+
+  document.addEventListener('click',function(e){
+    var t=e.target.closest?e.target.closest('[data-aimu],[data-aimr],#aim-reset'):null; if(!t)return;
+    if(t.id==='aim-reset'){ var rc=STORE[RCKEY]||(STORE[RCKEY]={fields:{}}); rc.aim={}; rc.updated=Date.now(); AIM_OPEN=true; renderAim(); foot(); saveSoon(); return; }
+    var u=t.getAttribute('data-aimu');
+    if(u){ if(t.disabled)return; aimRec().unit=(u==='product'?'product':'group'); renderAim(); foot(); saveSoon(); return; }
+    var id=t.getAttribute('data-aimr'); if(!id)return;
+    aimRec().src[id]=t.getAttribute('data-r')||'off'; renderAim(); foot(); saveSoon();
+  });
+  document.addEventListener('input',function(e){
+    var n=e.target; if(!n||!n.getAttribute)return;
+    var k=n.getAttribute('data-aimrate');
+    if(k){ setAimRate(k,n.value); n.classList.toggle('seeded',n.value===''); aimRefresh(); saveSoon(); return; }
+    if(n.getAttribute('data-aimpct')){ var v=n.value; aimRec().pct=(v===''?null:(isFinite(+v)?+v:0)); aimRefresh(); saveSoon(); }
+  });
+  document.addEventListener('toggle',function(e){ if(e.target&&e.target.classList&&e.target.classList.contains('aim-rates'))AIM_OPEN=e.target.open; },true);
+
   var TYPES=[['ai','AI feed generation','Tachyon fields on the live feed'],
              ['sys','New system','Per market per month — FeedHero dashboard'],
              ['feed','New feed','Per feed per month — generic, bespoke, LIA'],
-             ['ret','Retainer hours','One-off or monthly, at the day rate']];
+             ['ret','Retainer hours','One-off or monthly, at the day rate'],
+             ['aim','AI Mode attributes','Conversational six, priced by data source']];
   var RATE_DEFAULT={sys:500,feed:150,lia:250};
   function rateOf(k){ var rc=STORE[RCKEY]||{}; var v=rc.rates&&rc.rates[k]; return (v!=null&&v!==''&&isFinite(+v))?+v:RATE_DEFAULT[k]; }
   function setRate(k,v){ var rc=STORE[RCKEY]||(STORE[RCKEY]={fields:{}}); rc.rates=rc.rates||{}; rc.rates[k]=(v===''||v==null)?null:+v; rc.updated=Date.now(); }
@@ -1207,12 +1634,21 @@ window.addEventListener('load',restore);
     // the other quote types: systems, feeds and one-off retainer hours on the one-off side; local inventory feeds and monthly retainer hours on the Monthly side
     var X=extraLines(), xOne=0, xMon=0, tbcN=0;
     X.forEach(function(l){ if(l.tbc){ tbcN++; return; } if(l.side==='monthly'){ monN++; monSub+=l.amount; xMon+=l.amount; if(l.disc)monDiscBase+=l.amount; } else { xOne+=l.amount; if(l.disc)discBase+=l.amount; } });
-    var sub=linesSub+xOne+setupFee(); if(discOn('oneoff','__setup'))discBase+=setupFee();
+    /* AI MODE: the set-up lands on the one-off side, the scrape run and the AI months on the
+       ongoing side. The Discount % column excludes MAN POWER, so only the per-product AI
+       generation (l.gen) is discountable one-off unless "+ man power" is ticked on this quote -
+       the configuration hours are hours at the day rate like any other. */
+    var aq=aimInfo(), aimOne=0, aimMon=0, aimHrs=0;
+    if(aq)aq.lines.forEach(function(l){ var lid='aim:'+l.id;
+      if(l.setup){ aimOne+=l.setup; aimHrs+=l.hours; if(discOn('oneoff',lid))discBase+=(discMan()?l.setup:l.gen); }
+      if(l.monthly){ aimMon+=l.monthly; monN++; monSub+=l.monthly; if(discOn('monthly',lid))monDiscBase+=l.monthly; } });
+    var sub=linesSub+xOne+aimOne+setupFee(); if(discOn('oneoff','__setup'))discBase+=setupFee();
     // the partner discount applies to whatever its SCOPE covers (all / one-off / monthly / selected lines)
     var disc=discPct(), discAmt=discBase*disc/100, net=sub-discAmt; var vat=vatOn()?net*0.2:0;
     var monDisc=monDiscBase*disc/100, monNet=monSub-monDisc, monVat=vatOn()?monNet*0.2:0;
     return {inc:inc,tp:tp,gens:gens,linesSub:linesSub,sub:sub,disc:disc,discAmt:discAmt,net:net,vat:vat,gross:net+vat,miss:miss,
       discScope:discScope(),discBase:discBase,monDiscBase:monDiscBase,x:X,xOne:xOne,xMon:xMon,tbcN:tbcN,types:typesRec(),
+      aim:aq,aimOne:aimOne,aimMon:aimMon,aimHrs:aimHrs,
       monN:monN,monSub:monSub,monDisc:monDisc,monNet:monNet,monVat:monVat,monGross:monNet+monVat,upd:ui}; }
 
   /* ---------- render ---------- */
@@ -1271,7 +1707,7 @@ window.addEventListener('load',restore);
     var anyCard=CAT.some(function(f){return rateSrc(f.id)==='card'||rateSrc(f.id)==='cat'}); var rn=$('#rc-note');
     rn.hidden=!anyCard; if(anyCard)rn.textContent='Dashed rates seed from the catalogue / your rate card — edit any to override for '+CLIENT+' only.';
     // each section draws on its own — a bad record in one must never freeze the others (the strip names the failure)
-    [ensureVolume,renderUpd,renderTypes,renderX].forEach(function(fn){ try{ fn(); }catch(e){ err('Part of the page failed to draw ('+(fn.name||'section')+'): '+(e&&e.message||e)); } });
+    [ensureVolume,renderUpd,renderTypes,renderX,renderAim].forEach(function(fn){ try{ fn(); }catch(e){ err('Part of the page failed to draw ('+(fn.name||'section')+'): '+(e&&e.message||e)); } });
   }
   function kpi(n,l){ return '<div class="kpi"><div class="n">'+n+'</div><div class="l">'+esc(l)+'</div></div>'; }
   function lineHtml(c,rt,ch,h,mh,id){ var mon=(ch!=='monthly'&&mh>0)?'<span class="lmon">+ '+money(monCost(mh))+' /mo</span>':'';
@@ -1291,10 +1727,14 @@ window.addEventListener('load',restore);
     var one=t.miss?'<span class="gline"><b class="grand unset">set every rate to total</b></span>':'<span class="gline"><b class="grand">'+money(t.gross)+'</b> initial one-off</span>';
     var mon=(t.monGross>0)?'<span class="gline"><b class="grand">'+money(t.monGross)+'</b> / month ongoing <span class="hint">('+money(t.monGross*12)+' a year)</span></span>':'';
     var yr=(!t.miss&&t.monGross>0)?'<span class="gyear">Year 1 · '+money(t.gross+t.monGross*12)+' <span class="hint">(one-off + 12 months'+(vatOn()?', inc VAT':', ex VAT')+')</span></span>':'';
-    $('#qtot').innerHTML='<span>Quote summary</span><span class="hint">'+(t.inc?(t.inc+' AI field'+(t.inc===1?'':'s')+' · '+fmt(t.tp)+' SKUs · '+modeWord(lines())):'no AI fields')+(t.x.length?' · '+xWord(t.x):'')+(t.monN?' · '+t.monN+' monthly line'+(t.monN===1?'':'s'):'')+(t.disc>0?' · partner discount '+t.disc+'%'+(t.discScope!=='all'?' ('+discScopeWord(t.discScope)+')':''):'')+(vatOn()?' · inc VAT':' · ex VAT')+'</span>'
+    $('#qtot').innerHTML='<span>Quote summary</span><span class="hint">'+(t.inc?(t.inc+' AI field'+(t.inc===1?'':'s')+' · '+fmt(t.tp)+' SKUs · '+modeWord(lines())):'no AI fields')+(t.x.length?' · '+xWord(t.x):'')+((t.aim&&t.aim.lines.length)?' · AI Mode '+aimWord(t.aim):'')+(t.monN?' · '+t.monN+' monthly line'+(t.monN===1?'':'s'):'')+(t.disc>0?' · partner discount '+t.disc+'%'+(t.discScope!=='all'?' ('+discScopeWord(t.discScope)+')':''):'')+(vatOn()?' · inc VAT':' · ex VAT')+'</span>'
       +'<span class="gtot col-line">'+one+mon+yr+'</span>';
     var S1=function(id,v){ var e=$(id); if(e)e.innerHTML=v; };
     S1('#qs-linesn','· '+t.inc+' line'+(t.inc===1?'':'s')+' · '+fmt(t.tp)+' SKUs');
+    var aw=$('#qs-aim-w'), amw=$('#qs-aimm-w'), aOn=!!(t.aim&&t.aim.lines.length);
+    if(aw)aw.hidden=!aOn; if(amw)amw.hidden=!aOn;
+    if(aOn){ S1('#qs-aimn','\u00b7 '+aimWord(t.aim)+' \u00b7 '+aimHrsW(t.aimHrs)); S1('#qs-aim',money(t.aimOne));
+      S1('#qs-aimmn','\u00b7 '+fmt(t.aim.newPer)+' new '+(t.aim.unit==='group'?'groups':'products')+' a month'); S1('#qs-aimm',money(t.aimMon)); }
     var xo=t.x.filter(function(l){return l.side==='oneoff'}), xm=t.x.filter(function(l){return l.side==='monthly'});
     S1('#qs-xonen',xo.length?'· '+xWord(xo):'· none'); S1('#qs-xone',money(t.xOne));
     S1('#qs-xmonn',xm.length?'· '+xWord(xm):'· none'); S1('#qs-xmon',money(t.xMon)+(t.tbcN?' <span class="hint">+ '+t.tbcN+' TBC</span>':''));
@@ -1309,7 +1749,9 @@ window.addEventListener('load',restore);
     S1('#qs-mondisc',t.disc>0?(t.monDiscBase>0?'−'+money(t.monDisc):'<span class="hint">not on monthly</span>'):'—');
     S1('#qs-mongross',money(t.monGross)+' <span class="per">/ month</span>');
     S1('#qs-annual',money(t.monGross*12));
+    var aimN=(t.aim&&t.aim.lines.length)?(t.aim.counts.feed+t.aim.counts.scrape+t.aim.counts.ai+t.aim.counts.fh):0;
     $('#kpis').innerHTML=kpi(fmt(baseVol()),'SKUs in scope')+kpi(t.inc+' / '+CAT.length,'Fields selected')+kpi(fmt(t.tp),'SKUs quoted')
+      +(aimN?kpi(aimN+' / '+AIM_ATTRS.length,'AI Mode attributes'):'')
       +(SHOWP?(kpi(t.miss?'—':money(t.gross),'Initial one-off'+(t.miss?' (set rates)':(vatOn()?' inc VAT':'')))+kpi(money(t.monGross)+'<span class="kpu"> / mo</span>','Ongoing monthly'+(vatOn()?' inc VAT':''))):kpi('£ hidden','Quote (tap £ Show)'));
     $('#scope-sum').innerHTML=scopeSummary();
   }
@@ -1317,8 +1759,13 @@ window.addEventListener('load',restore);
 
 
   /* ---------- edits ---------- */
+  /* .qp is the page's shared pill LOOK, not a scope button - the quote-type buttons, the market
+     chips and AI Mode's unit toggle all wear it. Without this guard every one of them fell
+     through to the else branch and set scope={mode:'manual',manual:NaN}, so picking a quote type
+     or ticking a market silently zeroed the product scope and every SKU count with it. */
   document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('.qp'); if(!b)return;
-    var q=b.getAttribute('data-qp'), r=rec();
+    var q=b.getAttribute('data-qp'); if(q==null)return;
+    var r=rec();
     if(q==='all')r.scope={mode:'all'}; else if(q==='pts'){ r.scope={mode:'pts'}; openPicker(); } else r.scope={mode:'manual',manual:+q};
     render(); saveSoon();
   });
@@ -1534,8 +1981,11 @@ window.addEventListener('load',restore);
     if(oneL.length){ var lastG=''; oneL.forEach(function(l){ if(l.grp!==lastG){ out.push('  '+l.grp+':'); lastG=l.grp; }
       out.push('    • '+l.name+' — '+fmt(l.c)+' SKUs · '+MODE_WORD[l.mode||'ai']+(P&&l.rt!=null?('  '+lineMoneyOne(l)):'')+(l.note?('  — '+l.note):'')); }); }
     ['pre','ret'].forEach(function(k){ var g=xo.filter(function(l){return l.kind===k}); if(!g.length)return; out.push('  '+KIND_HEAD[k]+':'); g.forEach(function(l){ out.push(xrow(l)); }); });
+    var aL=(t.aim&&t.aim.lines)?t.aim.lines.filter(function(l){return !l.shared&&l.setup}):[];
+    if(aL.length){ out.push('  AI Mode attributes (Google conversational attributes):');
+      aL.forEach(function(l){ out.push('    • '+l.label+' ('+AIM_ROUTE_LABEL[l.route]+')'+(P?('  '+money(l.setup)):'')); out.push('        '+l.detail); }); }
     if(setupFee())out.push('  One-off setup & onboarding'+(P?': '+money(setupFee()):''));
-    if(!oneL.length&&!xo.length&&!setupFee())out.push('  (none — everything quoted is an ongoing charge)');
+    if(!oneL.length&&!xo.length&&!aL.length&&!setupFee())out.push('  (none — everything quoted is an ongoing charge)');
     if(P){ if(t.miss)out.push('  One-off total: (set every rate to total)');
       else { if(t.discAmt>0){ out.push('  Subtotal: '+money(t.sub)); out.push('  Partner discount '+t.disc+'%'+discWord(t.discScope)+': −'+money(t.discAmt)); }
         out.push('  ONE-OFF TOTAL'+V+': '+money(t.gross)); } }
@@ -1547,7 +1997,10 @@ window.addEventListener('load',restore);
     if(monL.length||retM.length){ out.push('  Monitoring & account management (hours per month):');
       monL.forEach(function(l){ out.push('    • '+l.name+(l.charge==='monthly'?' — monthly':' — maintenance')+' · '+l.mon+'h / month'+(P?('  '+money(l.monGBP)+'/month'):'')); });
       retM.forEach(function(l){ out.push(xrow(l)); }); }
-    if(!xm.length&&!t.upd&&!monL.length)out.push('  (none — everything quoted is a one-off charge)');
+    var aM=(t.aim&&t.aim.lines)?t.aim.lines.filter(function(l){return l.monthly}):[];
+    if(aM.length){ out.push('  AI Mode attributes — keeping them current ('+fmt(t.aim.newPer)+' new '+(t.aim.unit==='group'?'item groups':'products')+' a month):');
+      aM.forEach(function(l){ out.push('    • '+l.label+(P?('  '+money(l.monthly)+'/month'):'')); }); }
+    if(!xm.length&&!t.upd&&!monL.length&&!aM.length)out.push('  (none — everything quoted is a one-off charge)');
     if(P&&!t.miss){ if(t.monDisc>0){ out.push('  Subtotal: '+money(t.monSub)+' / month'); out.push('  Partner discount '+t.disc+'%'+discWord(t.discScope)+': −'+money(t.monDisc)+' / month'); }
       out.push('  MONTHLY TOTAL'+V+': '+money(t.monGross)+' / month · '+money(t.monGross*12)+' a year'); }
     // ---- 3 · SUMMARY ----
@@ -1800,13 +2253,26 @@ window.addEventListener('load',restore);
     var oneL=L.filter(function(l){return l.charge!=='monthly'}), monL=L.filter(function(l){return l.mon>0});
     var monH=0; monL.forEach(function(l){ monH+=+l.mon; });
     var updDsc=(t.upd&&discOn('monthly','__bundle'))?dsc:0;
+    /* AI MODE splits across all three bands, because its three costs are three different things:
+       the per-product generation is initial DATA OPTIMISATION (band 2), the configuration time is
+       SET-UP (band 3) and the scrape run / monthly generation are RECURRING (band 1). Writing the
+       whole card into one band would put set-up back inside the monthly cost, which is the exact
+       thing the CFO asked us to stop doing. Man power is discounted only when "+ man power" is on. */
+    var AIM=(t.aim&&t.aim.lines)?t.aim.lines:[];
+    var aimMonL=AIM.filter(function(l){return l.monthly>0});
+    var aimGenL=AIM.filter(function(l){return l.gen>0});
+    var aimHrL=AIM.filter(function(l){return l.hours>0});
+    var aimU=t.aim?t.aim.units:0, aimUW=t.aim?t.aim.unitWord:'products', aimPF=aimRate('aiPerField');
+    function aimDsc(side,l){ var on=discOn(side,'aim:'+l.id); if(!on)return 0;
+      if(side==='oneoff'&&!discMan())return 0;   /* the hours rows; the gen rows pass their own */
+      return dsc; }
 
     /* ============ BAND 1 — MONTHLY RECURRING COSTS ============ */
     band('MONTHLY RECURRING COSTS',27);
     /* System / Platform costs: the FeedHero dashboards, the feeds and the monthly Tachyon update —
        everything bought per month that is NOT man power */
     var sysRows=[], rSys=0, sysA={net:0,disc:0,days:0}, tbcN=0;
-    if(sysL.length||allF.length||t.upd){
+    if(sysL.length||allF.length||t.upd||aimMonL.length){
       sect('System / Platform Costs');
       sysL.forEach(function(l){ costRow({name:l.name,qty:1,rate:n2(l.rate),note:noteOf(l),dsc:l.disc?dsc:0,into:sysRows,acc:sysA}); });
       allF.forEach(function(l){ if(l.tbc)tbcN++; costRow({name:l.name,qty:(l.qty||1),rate:(l.tbc?'':n2(l.rate)),qs:'count',
@@ -1814,6 +2280,9 @@ window.addEventListener('load',restore);
       if(t.upd)costRow({name:'New Product Arrivals - Monthly Tachyon Update',qty:1,rate:n2(t.upd.gbp),dsc:updDsc,into:sysRows,acc:sysA,
         note:'Every new product updated the month it lands — bundle '+t.upd.label+' new SKUs / month'
           +(t.upd.exp!=null?(' · '+(t.upd.src==='estimate'?'estimate':'forecast')+' ~'+fmt(t.upd.exp)+' / month, ≈ '+fmt(t.upd.exp*12)+' a year'):'')});
+      aimMonL.forEach(function(l){
+        costRow({name:'AI Mode - '+l.label+(l.shared?'':' ('+(AIM_ROUTE_LABEL[l.route]||l.route)+')'),
+          qty:1,rate:n2(l.monthly),dsc:(discOn('monthly','aim:'+l.id)?dsc:0),into:sysRows,acc:sysA,note:l.detail}); });
       gap();
       rSys=row({A:{v:'Total System Costs',s:S.totl},
         I:{f:'+SUM('+ranges('I',sysRows)+')',v:n2(sysA.disc),s:S.discv},
@@ -1854,12 +2323,16 @@ window.addEventListener('load',restore);
     band('ONE OFF OPTIONAL COSTS: PERFORMANCE BOOSTER PACK',24.6);
     var bstRows=[], rBst=0, bstA={net:0,disc:0,days:0};
     sect('Optional Costs: Performance Booster - Initial Issue Fix / Data Optimisation',scopeTextPlain());
-    if(!oneL.length){ row({A:{v:(L.length?'No one-off optimisation lines':'No optimisations selected'),s:S.lbl},B:{v:'',s:S.lblq},
+    if(!oneL.length&&!aimGenL.length){ row({A:{v:(L.length?'No one-off optimisation lines':'No optimisations selected'),s:S.lbl},B:{v:'',s:S.lblq},
       M:{v:(L.length?'Every optimisation on this quote is a monthly charge — see the ManPower section above':'Tick the optimisations you are proposing in the module and re-export'),s:S.note}},17.1); }
     oneL.forEach(function(l){ var flat=l.charge==='flat', d=flat?((l.hours!=null?+l.hours:0)/BLOCK_H):0;
       costRow({name:l.name,qty:flat?d:l.c,qs:flat?'days':'count',per:!flat,
         rate:(l.rt==null?'':(flat?day:l.rt)),dayrate:flat?1:0,dsc:l.disc?dsc:0,into:(l.rt==null?[]:bstRows),acc:bstA,
         note:[l.grp,MODE_WORD[l.mode||'ai'],(flat?(l.hours+'h one-off'):(fmt(l.c)+' SKUs at £'+l.rt+' / SKU')),l.note].filter(Boolean).join(' · ')}); });
+    aimGenL.forEach(function(l){
+      costRow({name:'AI Mode - '+l.label+' (Tachyon AI generation)',qty:aimU,qs:'count',per:true,rate:aimPF,
+        dsc:(discOn('oneoff','aim:'+l.id)?dsc:0),into:bstRows,acc:bstA,
+        note:'g:'+l.key+' generated across '+fmt(aimU)+' '+aimUW+' at '+money(aimPF)+' each - one pass over the range'}); });
     gap();
     rBst=row({A:{v:'Total Performance Booster Costs',s:S.totl},
       I:bstRows.length?{f:'+SUM('+ranges('I',bstRows)+')',v:n2(bstA.disc),s:S.discv}:{v:'',s:S.discv},
@@ -1878,6 +2351,10 @@ window.addEventListener('load',restore);
       dsc:l.disc?dsc:0,into:setRows,acc:setA,note:l.n+' × '+l.per+'h = '+l.hours+'h'+(l.free?' — taken from the retainer, not charged':' at £'+day+' per '+BLOCK_H+'h')}); });
     if(retOne)costRow({name:retOne.name,qty:(+retOne.hours)/BLOCK_H,qs:'days',rate:day,dayrate:1,
       dsc:retOne.disc?dsc:0,into:setRows,acc:setA,note:[retOne.hours+'h one-off at £'+day+' per '+BLOCK_H+'h',retOne.note].filter(Boolean).join(' · ')});
+    aimHrL.forEach(function(l){
+      costRow({name:'AI Mode - '+l.label+' ('+(AIM_ROUTE_LABEL[l.route]||l.route)+' configuration)',
+        qty:(+l.hours)/BLOCK_H,qs:'days',rate:day,dayrate:1,dsc:aimDsc('oneoff',l),into:setRows,acc:setA,
+        note:'g:'+l.key+' - '+l.hours+'h at \u00a3'+day+' per '+BLOCK_H+'h'+(discMan()?'':' - man power, not discounted')}); });
     if(!setRows.length)row({A:{v:'No set-up or configuration cost on this quote',s:S.lbl},B:{v:'',s:S.lblq},
       M:{v:'No set-up fee, no automatic setup hours and no one-off retainer hours',s:S.note}},17.1);
     gap();
@@ -2197,6 +2674,12 @@ window.addEventListener('load',restore);
       setup:setupFee(), disc:t.disc, discAmt:t.discAmt, discScope:t.discScope, discSetup:!!r.discSetup, discMan:discMan(), sub:t.sub, vat:vatOn(), valid:(r.valid!=null?r.valid:null), blockGBP:blockGBP(),
       net:t.net, vatAmt:t.vat, gross:t.gross, miss:t.miss, fields:t.inc, prods:t.tp,
       monN:t.monN, monSub:t.monSub, monDisc:t.monDisc, monNet:t.monNet, monVat:t.monVat, monGross:t.monGross, upd:t.upd||null,
+      aim:(t.aim&&t.aim.lines.length)?{unit:t.aim.unit,unitWord:t.aim.unitWord,units:t.aim.units,newPer:t.aim.newPer,
+        perMonth:t.aim.perMonth,src:(t.aim.nn||{}).src||null,counts:t.aim.counts,hours:t.aim.hours,
+        setup:t.aim.setup,monthly:t.aim.monthly,year1:t.aim.year1,rates:aimRates(),
+        lines:t.aim.lines.map(function(l){ return {id:l.id,key:l.key,label:l.label,route:l.route,detail:l.detail,
+          hours:l.hours,setup:l.setup,man:l.man,gen:l.gen,monthly:l.monthly,monthlyNote:l.monthlyNote||null,shared:!!l.shared}; })}:null,
+      aimOne:t.aimOne, aimMon:t.aimMon,
       types:JSON.parse(JSON.stringify(t.types)), xlines:t.x.map(function(l){ return {kind:l.kind,id:l.id,name:l.name,qual:l.qual,qty:l.qty,rate:l.rate,amount:l.amount,side:l.side,tbc:l.tbc,note:l.note,hours:l.hours,disc:l.disc,free:!!l.free,of:l.of||null,per:l.per||null,n:l.n||null}; }),
       xOne:t.xOne, xMon:t.xMon, tbcN:t.tbcN, cfg:JSON.parse(JSON.stringify({sys:r.sys||null,feeds:r.feeds||[],lia:r.lia||null,ret:r.ret||null,dflags:r.dflags||{},pre:r.pre||{}})),
       stage:'Saved', owner:'', hist:[{s:'Saved',t:now,by:ME}] };
@@ -2228,6 +2711,12 @@ window.addEventListener('load',restore);
     r.setup=(q.setup!=null&&q.setup!==''&&+q.setup>0)?q.setup:null; r.disc=(+q.disc>0)?q.disc:null; r.vat=!!q.vat; r.valid=(q.valid!=null)?q.valid:null; r.blockGBP=q.blockGBP||null;
     // the new-products bundle as saved: on, the estimate, and the band PINNED so the saved figure is reproduced
     r.upd=q.upd?{on:true,est:(q.upd.est!=null?q.upd.est:null),tier:(q.upd.tier!=null?q.upd.tier:null),disc:!!q.upd.disc}:{on:false,est:null,tier:null};
+    /* AI Mode as saved: the ROUTES come back, so re-pricing reproduces the quote finance signed
+       off. The rates on the snapshot are NOT written back over the rate card - that is a shared
+       figure for every client, and one edit of an old quote must not move it for the whole book. */
+    r.aim={src:{},unit:'group',pct:null,note:''};
+    if(q.aim){ r.aim.unit=(q.aim.unit==='product')?'product':'group';
+      (q.aim.lines||[]).forEach(function(l){ if(!l.shared&&l.id)r.aim.src[l.id]=l.route; }); }
     EDITING={id:k,ref:q.ref};
     loadMkts(); render(); saveSoon();
     toast('Editing '+q.ref+' — Save stores a new version');
@@ -2286,6 +2775,16 @@ window.addEventListener('load',restore);
   function qDiscWord(q){ return (q.discScope&&q.discScope!=='all')?' ('+discScopeWord(q.discScope)+')':''; }
   /* CFO, 15 Sep 2026: INITIAL ONE-OFF and ONGOING MONTHLY read as two blocks, each with its own discount, VAT and
      total, then one SUMMARY line — the client email and the brief say exactly what the sheet says */
+  /* the AI Mode block for the client email and the brief — read off a SAVED snapshot's own
+     aim record, so a quote signed off last month keeps the routes and figures it was signed off on */
+  function qAimBlock(q,P,side){ var a=q.aim; if(!a||!a.lines||!a.lines.length)return [];
+    var L=a.lines.filter(function(l){ return side==='oneoff'?(!l.shared&&l.setup):l.monthly; });
+    if(!L.length)return [];
+    var out=[side==='oneoff'?'  AI Mode attributes (Google conversational attributes):'
+      :('  AI Mode attributes — keeping them current ('+fmt(a.newPer)+' new '+(a.unit==='group'?'item groups':'products')+' a month):')];
+    L.forEach(function(l){ out.push('    • '+l.label+(side==='oneoff'?(' ('+(AIM_ROUTE_LABEL[l.route]||l.route)+')'):'')
+      +(P?('  '+money(side==='oneoff'?l.setup:l.monthly)+(side==='oneoff'?'':'/month')):'')); });
+    return out; }
   function qBlock(q,withP){ var L=q.lines||[], XL=q.xlines||[], d=new Date(+q.t||Date.now()), out=[], P=withP, V=q.vat?' (inc VAT)':' (ex VAT)';
     var missN=L.filter(function(l){return l.rt==null}).length;
     out.push('Reference: '+q.ref+' · '+qLoc(q)+' · issued '+dmy(d));
@@ -2297,8 +2796,9 @@ window.addEventListener('load',restore);
     if(oneL.length){ out.push('Initial data optimisation ('+oneL.length+'):');
       oneL.forEach(function(l){ out.push('• '+l.name+' — '+fmt(l.c)+' SKUs · '+MODE_WORD[l.mode||'ai']+(P&&l.rt!=null?(' '+lineMoneyOne(l)):'')+(l.note?(' — '+l.note):'')); }); }
     ['pre','ret'].forEach(function(k){ var g=xo.filter(function(l){return l.kind===k}); if(!g.length)return; out.push(KIND_HEAD[k]+' ('+g.length+'):'); g.forEach(function(l){ out.push(xrow(l)); }); });
+    var aO=qAimBlock(q,P,'oneoff'); aO.forEach(function(x){ out.push(x.replace(/^  /,'').replace(/^    /,'')); });
     if(+q.setup)out.push('One-off setup & onboarding'+(P?': '+money(q.setup):''));
-    if(!oneL.length&&!xo.length&&!(+q.setup))out.push('None — everything quoted is an ongoing charge.');
+    if(!oneL.length&&!xo.length&&!aO.length&&!(+q.setup))out.push('None — everything quoted is an ongoing charge.');
     if(P){ if(q.miss)out.push('One-off total: rates incomplete — '+missN+' of '+L.length+' line'+(L.length===1?'':'s')+' still to be priced; a fully priced quote follows under separate cover.');
       else { if(+q.discAmt>0){ out.push('Subtotal (ex VAT): '+money(q.sub)); out.push('Partner discount '+q.disc+'%'+qDiscWord(q)+': −'+money(q.discAmt)); }
         out.push('Net (ex VAT): '+money(q.net)); if(q.vat)out.push('VAT 20%: '+money(q.vatAmt)); out.push('ONE-OFF TOTAL'+V+': '+money(q.gross)); } }
@@ -2310,7 +2810,8 @@ window.addEventListener('load',restore);
       monL.forEach(function(l){ out.push('• '+l.name+(l.charge==='monthly'?' — monthly':' — maintenance')+' · '+l.mon+'h / month'+(P?(' '+money(l.monGBP)+'/month'):'')); });
       retM.forEach(function(l){ out.push(xrow(l)); }); }
     if(+q.tbcN>0)out.push(q.tbcN+' bespoke feed'+(q.tbcN===1?'':'s')+' priced separately by ASPL once the requirements are costed.');
-    if(!xm.length&&!q.upd&&!monL.length)out.push('None — everything quoted is a one-off charge.');
+    var aM=qAimBlock(q,P,'monthly'); aM.forEach(function(x){ out.push(x.replace(/^  /,'').replace(/^    /,'')); });
+    if(!xm.length&&!q.upd&&!monL.length&&!aM.length)out.push('None — everything quoted is a one-off charge.');
     if(P&&!q.miss){ if(+q.monDisc>0){ out.push('Subtotal (ex VAT): '+money(q.monSub)+' / month'); out.push('Partner discount '+q.disc+'%'+qDiscWord(q)+': −'+money(q.monDisc)+' / month'); }
       out.push('Net (ex VAT): '+money(q.monNet)+' / month'); if(q.vat)out.push('VAT 20%: '+money(q.monVat)+' / month'); out.push('MONTHLY TOTAL'+V+': '+money(q.monGross)+' / month — '+money(q.monGross*12)+' a year'); }
     if(P){ if(!q.miss)out.push('','SUMMARY'+V+': initial one-off '+money(q.gross)+' · ongoing '+money(q.monGross)+' / month ('+money(q.monGross*12)+' a year) · Year 1 '+money(q.gross+q.monGross*12)+'.');
