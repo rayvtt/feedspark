@@ -7528,6 +7528,54 @@
       "forbidden": true
     },
     {
+      "name": "Playbook: the bottom line — top 3 actions ranked by what it costs to ignore (Ray, 18 Sep 2026: 'nominate the top three actions you would potentially take for each account, and then have AM talk to the clients about it')",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function pbActions(gold,raises,practice,brand,opts)",
+      "min": 1
+    },
+    {
+      "name": "Playbook actions: ONE count, said once — the evidence line, the client line and the market chip all describe the same population",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var absent=e.gone.length>0, list=absent?e.gone:e.thin, n=list.length;",
+      "min": 1
+    },
+    {
+      "name": "Playbook actions: absent and thin are kept apart as the different problems they are",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "if(w.missing)e.gone.push(f.mkt);",
+      "min": 1
+    },
+    {
+      "name": "Playbook actions: every action carries a CLIENT LINE in words an AM can say — no g: names, no tier jargon",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function pbFieldW(k)",
+      "min": 1
+    },
+    {
+      "name": "Playbook actions: a conditional attribute never inherits the 'can be refused' a required one earns",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "Google asks for '+pbFieldW(k)+' on products where it applies",
+      "min": 1
+    },
+    {
+      "name": "Playbook actions: routed through the page's own composer like every other → Brief in the rail",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "function wireActions(brand)",
+      "min": 1
+    },
+    {
+      "name": "Playbook: ⧉ Copy talking points — the three client lines, ready to paste into an agenda",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "ck-act-copy",
+      "min": 1
+    },
+    {
+      "name": "Playbook: the Landing counter names its unit — a bare 18/18 on a row called 'Channels & Markets' reads as markets (Ray, 18 Sep 2026: 'the enterprise channels market 18 to 18 — what does that mean?')",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "project-plan tasks in this practice are done",
+      "min": 1
+    },
+    {
       "name": "Task Manager: 'Hide Not yet tagged' — one population feeds the chart, its legend, table, CSV and PNG (Ray, 17 Sep 2026: 'btw [Not yet tagged] can be excluded from showing when dissect by Tag')",
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "function chartPop()",
