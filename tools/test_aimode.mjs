@@ -217,7 +217,27 @@ ok(/data-tp="aim"/.test(src), 'the card is wired to the AI Mode quote type');
 ok(/\['aim','AI Mode attributes'/.test(src), 'and the type is offered in "What are you quoting?"');
 ok(/function aimPerMonth\(\)/.test(src) && /updExpected\(\)/.test(src),
   'new products a month come from the Monthly update card, not a second newness step');
-ok(!/id="aim-chart"/.test(src), 'and the card draws no second arrivals chart (Ray: keep ours)');
+/* Ray, 18 Sep 2026: "why don't you bring the new product volume arrival bar chart that looks
+   really beautiful over to this section too?" — so the chart IS here now, but drawn by the
+   Monthly update card's own updBars off ONE shared series builder, never a second implementation
+   that could show a client a shape /volume would disagree with. */
+ok(/function aimChart\(nn\)/.test(src), 'the card draws the arrivals chart');
+ok(/function updMonthRows\(\)/.test(src) && /function updDayRows\(\)/.test(src),
+  'off ONE series builder shared with the Monthly update card');
+ok((src.match(/updMonthRows\(\)/g) || []).length >= 3, 'and both cards call it rather than building their own');
+ok(/aimChart\(nn\)[\s\S]{0,400}Catalogue in scope/.test(src), 'the chart sits above the scoped rows it is evidence for');
+ok(!/function aimBars\(/.test(src), 'and there is no second bar renderer');
+/* the contradiction Ray screenshotted: "0 products in scope" over "1,534 / month at this scope" */
+ok(/unsized=\(!ix&&sc\.mode!=='manual'\)/.test(src),
+  'an unsized card knows it is unsized');
+ok(/nn\.unsized\?'\u2014 pull the feed'/.test(src),
+  'and prints a dash rather than a scoped figure it cannot know');
+ok(/id="aim-pull"/.test(src) && /if\(t\.id==='aim-pull'\)\{ pullFeed\(\); return; \}/.test(src),
+  'the pull action sits in the card, on the hero\'s own pullFeed()');
+/* the arrivals fetch resolves once; BOTH cards read that record, so both must be redrawn or the
+   AI Mode chart never appears until something else re-renders the page */
+ok(/renderUpd\(\); try\{ renderAim\(\); \}catch\(e\)\{\} foot\(\);/.test(src),
+  'and the arrivals load redraws both cards, not just the Monthly update one');
 ok(/AIM_DOB_PATS/.test(src) && /dob:\(dbc>=0\?/.test(src),
   'the live pull captures the feed\'s first-seen date column on the same stream');
 ok(/function aimRefresh\(\)/.test(src), 'aimRefresh() moves the numbers without rewriting an input');

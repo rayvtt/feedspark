@@ -401,6 +401,7 @@ window.addEventListener('load',restore);
   .aim-u b{display:block;font-weight:900}
   .aim-u small{display:block;font-weight:700;color:var(--muted);font-size:10.5px;margin-top:1px}
   .aim-u.on small{color:#fff;opacity:.92}
+  .aim-pull{margin-left:auto;align-self:center}
   .aim-tw{overflow-x:auto}
   table.aim{width:100%;border-collapse:collapse;font-size:13.5px;min-width:680px}
   table.aim th{text-align:left;font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;
@@ -1077,7 +1078,11 @@ window.addEventListener('load',restore);
         var st=null; try{ st=(d&&d.dob&&typeof FeedArrivals!=='undefined')?FeedArrivals.stats(d.dob,new Date(),d.dob.rows):null; }catch(e){ st=null; }
         if(st&&st.forecast&&st.forecast.month>0){ var v0=VOL[k]; VOL[k]={days:v0.days||1,inS:v0.inS||0,outS:v0.outS||0,perDay:v0.perDay||0,monthly:st.forecast.month,outMonthly:v0.outMonthly||0,from:v0.from||null,to:v0.to||null,tracked:d&&d.tracked,
           basis:'dob',basisTxt:'the feed’s first-seen dates ('+st.forecast.basis+')',quarter:st.forecast.quarter,year:st.forecast.year,hist:v0.hist,stats:st}; }
-        if(volKey()===k){ renderUpd(); foot(); } }); }
+        /* BOTH cards read this record, so both are redrawn when it lands. renderUpd alone left the
+           AI Mode card sitting on its "Reading this feed's arrivals history…" placeholder while the
+           Monthly update card above it already had twelve bars — the chart simply never appeared
+           until something else re-rendered the page. */
+        if(volKey()===k){ renderUpd(); try{ renderAim(); }catch(e){} foot(); } }); }
   function updForecast(){ var v=VOL[volKey()]; return (v&&v.days)?v:null; }
   function updExpected(){ var u=updRec(); if(u.est!=null&&u.est!=='')return +u.est||0; var f=updForecast(); return f?f.monthly:null; }
   function updSrc(){ var u=updRec(); return (u.est!=null&&u.est!=='')?'estimate':(updForecast()?'forecast':'none'); }
@@ -1115,14 +1120,26 @@ window.addEventListener('load',restore);
     return '<svg class="upd-ch" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img" aria-label="New products per month">'+s+'</svg>';
   }
   function updKpi(v,l){ return '<div class="upd-kpi"><b>'+v+'</b><span>'+esc(l)+'</span></div>'; }
+  /* ONE series builder, so this card and the AI Mode card below can never draw the same feed two
+     different ways. The months come off the CALENDAR the arrivals engine walked - never from the
+     keys present in dob.m, which holds only months that HAD arrivals, so slicing that map would
+     draw twelve bars that look consecutive and are not, with every bar after a gap under the
+     wrong label. A month with nothing is a real zero here and gets a minimum-height bar. */
+  function updMonthRows(){ var v=VOL[volKey()], st=v&&v.stats;
+    if(!(st&&st.months&&st.months.length))return null;
+    return st.months.slice(-12).map(function(x){ return {lab:moLbl(x.k),n:x.n,part:!x.complete,
+      tip:moLbl(x.k)+': +'+fmt(x.n)+' new products'+(x.complete?'':' so far \u2014 the month is still running')}; }); }
+  function updDayRows(){ var v=VOL[volKey()];
+    if(!(v&&v.hist&&v.hist.length>1))return null;
+    return v.hist.map(function(e){ return {lab:String(+e.d.slice(8,10)),n:e.in,part:false,
+      tip:e.d+': +'+fmt(e.in)+' in \u00b7 \u2212'+fmt(e.out)+' out'}; }); }
   /* the EVIDENCE half: what this feed has actually done. First-seen months when the feed carries
      fs:date_of_birth (the real answer), the daily in-flow when it does not (honest, and labelled
      as the different measure it is), and a plain sentence when there is nothing yet. */
   function updEvidence(){
     var v=VOL[volKey()], st=v&&v.stats, hd='<div class="upd-fl">New products · '+esc(MKT.toUpperCase())+' · Product Volume module</div>';
-    if(st&&st.months&&st.months.length){
-      var ms=st.months.slice(-12).map(function(x){ return {lab:moLbl(x.k),n:x.n,part:!x.complete,
-        tip:moLbl(x.k)+': +'+fmt(x.n)+' new products'+(x.complete?'':' so far — the month is still running')}; });
+    var ms=updMonthRows();
+    if(st&&ms){
       var cov=st.coverage!=null?Math.round(st.coverage*100):null;
       return hd+'<div class="upd-kpis">'
         +updKpi(st.lastFull?('+'+fmt(st.lastFull.n)):'—',st.lastFull?('Last full month · '+moLbl(st.lastFull.k)):'No complete month yet')
@@ -1139,9 +1156,8 @@ window.addEventListener('load',restore);
         +((cov!=null&&cov<90)?(' Only '+cov+'% of products carry a first-seen date, so these are the ones that do.'):'')
         +' <a href="/volume?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT)+'">Open Product volume \u2192</a></div>';
     }
-    if(v&&v.hist&&v.hist.length>1){
-      var hs=v.hist.map(function(e){ return {lab:String(+e.d.slice(8,10)),n:e.in,part:false,
-        tip:e.d+': +'+fmt(e.in)+' in · \u2212'+fmt(e.out)+' out}'.replace('}','')}; });
+    var hs=updDayRows();
+    if(hs){
       return hd+'<div class="upd-kpis">'+updKpi(fmt(v.monthly||0),'\u2248 new SKUs / month')+updKpi(fmt(v.inS||0),'In over '+v.days+' day'+(v.days===1?'':'s'))+'</div>'
         +updBars(hs,5)
         +'<div class="upd-foot">Products <b>entering the feed</b> each day \u2014 this feed carries no first-seen dates yet, so the daily in-flow stands in for them. <a href="/volume?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT)+'">Open Product volume \u2192</a></div>';
@@ -1375,11 +1391,16 @@ window.addEventListener('load',restore);
      estimate. A number typed here beats all three. */
   function aimPerMonth(){
     var buf=1+(+aimRate('buffer')||0)/100, u=aimUnits(), ix=idx(), m=aimRec(), typed=(m.pct!=null&&m.pct!=='');
+    /* UNSIZED: no feed pulled and no headline figure typed, so the catalogue in scope is unknown.
+       The arrivals run-rate is still a real number for the whole market, but taking it "down to
+       this scope" needs the scope - and printing the market figure under a "0 in scope" line is
+       the card contradicting itself on screen (Ray, 18 Sep 2026, screenshotting exactly that). */
+    var sc=rec().scope||{mode:'all'}, unsized=(!ix&&sc.mode!=='manual');
     var e=updExpected();
-    if(e!=null&&!typed){ var raw=(ix&&ix.total>0)?(e*u/ix.total):e;
-      return {raw:raw,perMonth:raw*buf,src:updSrc()==='estimate'?'estimate':'arrivals',e:e,buffer:aimRate('buffer')}; }
+    if(e!=null&&!typed){ var raw=unsized?0:((ix&&ix.total>0)?(e*u/ix.total):e);
+      return {raw:raw,perMonth:raw*buf,src:updSrc()==='estimate'?'estimate':'arrivals',e:e,buffer:aimRate('buffer'),unsized:unsized}; }
     var a=aimAuto(), nn=aimNewness(u,aimPct(),aimRate('buffer'));
-    return {raw:nn.perMonthRaw,perMonth:nn.perMonth,pct:nn.pct,auto:a,buffer:aimRate('buffer'),
+    return {raw:nn.perMonthRaw,perMonth:nn.perMonth,pct:nn.pct,auto:a,buffer:aimRate('buffer'),unsized:unsized,
       src:typed?'typed':(a?'feed':'pct')}; }
   function aimPct(){ var m=aimRec(); if(m.pct!=null&&m.pct!=='')return +m.pct||0;
     var a=aimAuto(); return a?a.pct:AIM_NEWNESS_DEFAULT; }
@@ -1417,6 +1438,28 @@ window.addEventListener('load',restore);
     if(nn.src==='feed'&&nn.auto)return 'From this feed’s own <code>'+esc(nn.auto.col)+'</code>: <b>'+fmt(nn.auto.recent)+'</b> of <b>'+fmt(nn.auto.dated)+'</b> dated '+esc(aimUnitWord())+' in scope were first seen in the last twelve months'+(nn.auto.total>nn.auto.dated?(' ('+fmt(nn.auto.total-nn.auto.dated)+' carry no usable date and are left out of both sides)'):'')+'. The <b>Monthly update</b> card has no figure yet — give it one and it wins.';
     if(nn.src==='typed')return 'Your figure, and it beats every read. Clear it to go back to '+(nn.auto?'this feed’s own first-seen dates':'the Monthly update card, or FeedSpark’s '+AIM_NEWNESS_DEFAULT+'% working estimate')+'.';
     return 'This feed carries no first-seen dates and the Monthly update card has no figure, so the share of the catalogue that turns over in a year is the input here. FeedSpark’s working estimate is <b>'+AIM_NEWNESS_DEFAULT+'%</b>.'; }
+  /* THE ARRIVALS CHART, HERE TOO (Ray, 18 Sep 2026: "why don't you bring the new product volume
+     arrival bar chart that looks really beautiful over to this section too?"). Same updBars, same
+     series builder, same validated blue and same translucent running month as the Monthly update
+     card and /volume - so the quote can never show a client a shape any of them would disagree
+     with. What the bars are is stated, because they are the WHOLE market's arrivals while this
+     card may be pricing a product-type subset at item-group level: the chart is the evidence, the
+     rows beneath it are what that comes to at this scope and unit. When the scope IS the whole
+     catalogue at product level the two are the same number, and it says so. */
+  function aimChart(nn){
+    var ms=updMonthRows(), ix=idx(), sc=rec().scope||{mode:'all'}, v=VOL[volKey()];
+    var whole=(sc.mode!=='pts'||!selPts().length)&&aimUnit()==='product';
+    if(ms)return updBars(ms,2)
+      +'<div class="upd-foot" style="margin-bottom:8px">New products a month, from the feed\u2019s own <code>fs:date_of_birth</code> stamps \u00b7 last bar is this month, still running. '
+      +(nn.unsized?'These are the whole market — pull the feed and the rows below take them down to this scope and unit.'
+        :(whole?'This card prices on these products.':'These are the whole market; the rows below take them down to this scope and unit.'))
+      +' <a href="/volume?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT)+'">Open Product volume \u2192</a></div>';
+    var hs=updDayRows();
+    if(hs)return updBars(hs,5)
+      +'<div class="upd-foot" style="margin-bottom:8px">Products <b>entering the feed</b> each day \u2014 this feed carries no first-seen dates yet, so the daily in-flow stands in for them. <a href="/volume?client='+encodeURIComponent(CLIENT)+'&market='+encodeURIComponent(MKT)+'">Open Product volume \u2192</a></div>';
+    return '<div class="upd-foot" style="margin-bottom:8px">'+((v&&v.pending)?'Reading this feed\u2019s arrivals history\u2026'
+      :'No arrivals history for this feed yet'+((v&&v.tracked==='sheet')?' \u2014 a sheet-backed feed is not on the daily XML scan':'')+'.')+'</div>';
+  }
   function renderAim(){
     var el=$('#aim-body'); if(!el||!aimOnType())return;
     var q=aimInfo(); if(!q)return;
@@ -1429,7 +1472,14 @@ window.addEventListener('load',restore);
         +(noGroups?' disabled title="This feed carries no g:item_group_id, so there are no item groups to charge per"':'')
         +'><b>Item group</b><small>one set of values shared by every variant</small></button>'
       +'<button type="button" class="qp aim-u'+(aimUnit()==='product'?' on':'')+'" data-aimu="product"><b>Product ID</b><small>every variant gets its own values</small></button>'
-      +'<span class="hint">'+aimScopeWord(q)+'</span></div>';
+      +'<span class="hint">'+aimScopeWord(q)+'</span>'
+      /* THE PULL LIVES HERE TOO (Ray, 18 Sep 2026: "I don't see the pull live feed selected from
+         here"). The card was telling him to pull the feed while the only button that does it sat
+         in the hero, several screens up - an instruction with no action beside it. Same pullFeed()
+         the hero calls, never a second implementation. */
+      +'<button type="button" class="btn'+(ix?'':' pri')+' aim-pull" id="aim-pull" title="Stream '+esc(CLIENT||'this brand')+' '+esc(MKT.toUpperCase())+' and size the catalogue">'
+        +(ix?'\u27f3 Re-pull feed':'\u27f3 Pull live feed')+'</button>'
+      +'</div>';
 
     h+='<div class="aim-tw"><table class="aim"><thead><tr><th style="width:17%">Attribute</th><th style="width:53%">Data source</th>'
       +'<th class="num" style="width:16%">Set-up</th><th class="num" style="width:16%">Per month</th></tr></thead><tbody>';
@@ -1447,12 +1497,13 @@ window.addEventListener('load',restore);
     h+='<div class="aim-note">The scrape charge covers <b>every</b> scraped field — one full pass over the catalogue, then the new products after that. We do not re-scrape every product every day, so a second scraped field adds configuration time and nothing monthly.</div>';
 
     h+='<div class="aim-foot"><div class="aim-box"><h4>New products a month</h4>'
-      +'<div class="aim-r"><span>Catalogue in scope</span><b id="aim-u">'+fmt(q.units)+' '+esc(q.unitWord)+'</b></div>'
+      +aimChart(nn)
+      +'<div class="aim-r"><span>Catalogue in scope</span><b id="aim-u">'+(nn.unsized?'— pull the feed':(fmt(q.units)+' '+esc(q.unitWord)))+'</b></div>'
       +((nn.src==='arrivals'||nn.src==='estimate')
         ? '<div class="aim-r"><span>Arrivals '+(nn.src==='estimate'?'estimate':'run-rate')+' · whole market</span><b id="aim-e">'+fmt(Math.round(nn.e||0))+' / month</b></div>'
         : '<div class="aim-r"><span>Newness a year</span><b><input class="aim-pct" data-aimpct="1" inputmode="decimal" value="'+esc(aimRec().pct!=null&&aimRec().pct!==''?String(aimRec().pct):'')+'" placeholder="'+(Math.round(nn.pct*10)/10)+'"> %</b></div>')
-      +'<div class="aim-r"><span>At this scope, before the buffer</span><b id="aim-raw">'+fmt(Math.round(nn.raw))+' / month</b></div>'
-      +'<div class="aim-r hi"><span>Plus '+(nn.buffer||0)+'% volume buffer</span><b id="aim-per">'+fmt(q.newPer)+' / month</b></div>'
+      +'<div class="aim-r"><span>At this scope, before the buffer</span><b id="aim-raw">'+(nn.unsized?'—':(fmt(Math.round(nn.raw))+' / month'))+'</b></div>'
+      +'<div class="aim-r hi"><span>Plus '+(nn.buffer||0)+'% volume buffer</span><b id="aim-per">'+(nn.unsized?'—':(fmt(q.newPer)+' / month'))+'</b></div>'
       +'<div class="aim-src" id="aim-srcline">'+aimSrcLine(nn)+'</div></div>';
 
     h+='<div class="aim-box"><h4>What AI Mode adds to this quote</h4>'
@@ -1482,9 +1533,10 @@ window.addEventListener('load',restore);
       var de=document.querySelector('[data-aimd="'+a.id+'"]'); if(de)de.textContent=(l&&l.detail)?l.detail:''; });
     var nn=q.nn, on=q.counts.feed+q.counts.scrape+q.counts.ai+q.counts.fh;
     var T=function(id,v){ var e=$(id); if(e)e.textContent=v; };
-    T('#aim-u',fmt(q.units)+' '+q.unitWord); T('#aim-scope-n',fmt(q.units)+' '+q.unitWord);
+    T('#aim-u',nn.unsized?'— pull the feed':(fmt(q.units)+' '+q.unitWord)); T('#aim-scope-n',fmt(q.units)+' '+q.unitWord);
     if($('#aim-e'))T('#aim-e',fmt(Math.round(nn.e||0))+' / month');
-    T('#aim-raw',fmt(Math.round(nn.raw))+' / month'); T('#aim-per',fmt(q.newPer)+' / month');
+    T('#aim-raw',nn.unsized?'—':(fmt(Math.round(nn.raw))+' / month'));
+    T('#aim-per',nn.unsized?'—':(fmt(q.newPer)+' / month'));
     T('#aim-on',on?(on+' of '+AIM_ATTRS.length):'none yet'); T('#aim-hrs',aimHrsW(q.hours));
     T('#aim-setup',money(q.setup)); T('#aim-mon',money(q.monthly)); T('#aim-y1',money(q.year1));
     var w=$('#aim-word'); if(w)w.textContent=on?(aimWord(q)+(minL?' · '+minL.detail:'')):'Nothing routed yet — pick a data source on a row above and it prices here.';
@@ -1493,7 +1545,8 @@ window.addEventListener('load',restore);
     foot(); }
 
   document.addEventListener('click',function(e){
-    var t=e.target.closest?e.target.closest('[data-aimu],[data-aimr],#aim-reset'):null; if(!t)return;
+    var t=e.target.closest?e.target.closest('[data-aimu],[data-aimr],#aim-reset,#aim-pull'):null; if(!t)return;
+    if(t.id==='aim-pull'){ pullFeed(); return; }
     if(t.id==='aim-reset'){ var rc=STORE[RCKEY]||(STORE[RCKEY]={fields:{}}); rc.aim={}; rc.updated=Date.now(); AIM_OPEN=true; renderAim(); foot(); saveSoon(); return; }
     var u=t.getAttribute('data-aimu');
     if(u){ if(t.disabled)return; aimRec().unit=(u==='product'?'product':'group'); renderAim(); foot(); saveSoon(); return; }
