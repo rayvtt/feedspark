@@ -356,6 +356,9 @@ window.addEventListener('load',restore);
       <!-- the legend ON the chart, so the eye never has to travel to the rail — and so the PNG
            export carries it, which it never did before -->
       <label class="tog" title="Draw the key on the chart itself — it rides the PNG export too"><input type="checkbox" id="cleg" checked> Legend on chart</label>
+      <!-- only ever shown when a tag split is on screen: on every other dimension there is no
+           untagged bucket to leave out, and a control that does nothing is a control that lies -->
+      <label class="tog" id="cuntag-l" hidden title="Leave the rows nobody has judged yet out of a tag split — the verdict line still names them and their hours"><input type="checkbox" id="cuntag" checked> Hide Not yet tagged</label>
       <label class="tog"><input type="checkbox" id="ctab"> Table</label>
     </div>
     <div class="cbody">
@@ -2068,8 +2071,50 @@ window.addEventListener('load',restore);
   // on 'Everything' the line has no categories to draw, so it draws the module's own pair:
   // billable and non-billable, month by month
   var LINEMODE = '';
+
+  /* NOT YET TAGGED, LEFT OUT OF A TAG SPLIT (Ray, 17 Sep 2026: "btw [Not yet tagged] can be
+     excluded from showing when dissect by Tag").
+
+     On a book that is only part-judged the untagged bucket is usually the biggest thing on the
+     chart, and it is the one bucket that says nothing about the work — it says nobody has looked
+     yet. It swamps the tags either side of it and the split stops answering the question it was
+     asked. So when a TAG is one of the split levels, those rows come out.
+
+     Three rules keep this from becoming a number that quietly went missing:
+
+       1. THE ROW LEAVES, NOT THE BUCKET. Dropping only the `(untagged)` slice would leave a
+          nested parent whose children no longer sum to it, and a "42 h in view" headline counting
+          hours that are not on the chart. One population feeds the chart, its legend, its table,
+          its CSV and its PNG, so all six can never disagree.
+       2. IT IS SAID OUT LOUD. The verdict line under the chart always names how many rows and how
+          many hours were left out, and the checkbox sits in the control row, labelled.
+       3. IT IS ONLY EVER OFFERED ON A TAG SPLIT. Every other dimension puts a task in exactly one
+          bucket and has no untagged remainder, so the control is hidden rather than inert.
+
+     The displacement card above is untouched — coverage, and what has not been judged, is the
+     question that card exists to answer. */
+  function tagged(t) { return !!((t && t.tags) || []).length; }
+  function tagDim() { return CDIM === 'tag' || CDIM2 === 'tag' || CDIM3 === 'tag'; }
+  function hideUntag() { var el = $('cuntag'); return tagDim() && !!(el && el.checked); }
+  var POP_SRC = null, POP_FLAG = null, POP_OUT = null;
+  function chartPop() {
+    var flag = hideUntag();
+    if (POP_SRC === FT && POP_FLAG === flag) return POP_OUT;      // one filter per render, not one per form
+    POP_SRC = FT; POP_FLAG = flag;
+    POP_OUT = flag ? FT.filter(tagged) : FT;
+    return POP_OUT;
+  }
+  // what chartPop left behind, for the sentence that names it
+  function untagLeft() {
+    if (!hideUntag()) return null;
+    var out = { n: 0, hours: 0 };
+    for (var i = 0; i < FT.length; i++) if (!tagged(FT[i])) { out.n++; out.hours += FT[i].hours || 0; }
+    out.hours = r2(out.hours);
+    return out.n ? out : null;
+  }
+
   function lineData() {
-    var sm = seriesByMonth(FT, CDIM, 6);
+    var sm = seriesByMonth(chartPop(), CDIM, 6);
     if (CDIM !== 'total') { LINEMODE = ''; return sm; }
     LINEMODE = 'bill';
     var all = sm.series[0] || { points: [] };
@@ -2107,13 +2152,13 @@ window.addEventListener('load',restore);
     }
   }
 
-  function chartRows() { return groupBy(FT, CDIM, CDIM === 'total' ? 0 : 12); }
+  function chartRows() { return groupBy(chartPop(), CDIM, CDIM === 'total' ? 0 : 12); }
   // a pie can hold about eight slices before the tail becomes slivers nobody can point at, so it
   // folds harder than the bars do — the fold keeps its hours either way
-  function pieSlices() { return groupBy(FT, CDIM, 8); }
+  function pieSlices() { return groupBy(chartPop(), CDIM, 8); }
   // the split is NESTED the moment a second dimension is chosen; 'total' can only ever be level 1
   function nested() { return CDIM !== 'total' && !!CDIM2; }
-  function nestTree() { return groupNested(FT, [CDIM, CDIM2, CDIM3]); }
+  function nestTree() { return groupNested(chartPop(), [CDIM, CDIM2, CDIM3]); }
   function dimName(k) {
     for (var i = 0; i < DIMS.length; i++) if (DIMS[i].k === k) return DIMS[i].label;
     return k;
@@ -2195,18 +2240,23 @@ window.addEventListener('load',restore);
   }
 
   function chart() {
-    var s = summarise(FT), stage = $('cstage');
+    // the control only exists where it means something, and is never left ticked-but-inert
+    var cul = $('cuntag-l'); if (cul) cul.hidden = !tagDim();
+    var POP = chartPop(), left = untagLeft();
+    var s = summarise(POP), stage = $('cstage');
     var tree = nested() ? nestTree() : null;
     var g = tree ? [] : chartRows();
     $('cwsub').textContent = nested()
       ? tree.dims.map(dimName).join(' › ') + ' · ' + tree.length + ' top-level '
         + (tree.length === 1 ? 'group' : 'groups')
       : dimName(CDIM) + (CDIM === 'total' ? '' : ' · ' + g.length + ' ' + (g.length === 1 ? 'group' : 'groups'));
-    if (!FT.length) {
+    if (!POP.length) {
       var hh = D.health || {};
       stage.innerHTML = '<div class="empty">' + (!hh.read
         ? 'The book has not been read yet, so there is nothing to chart.'
-        : 'No task matches this search, so there is nothing to chart.') + '</div>';
+        : FT.length
+          ? 'Every row in this search is still untagged, and untagged rows are hidden on a tag split \u2014 untick \u201cHide Not yet tagged\u201d to see them.'
+          : 'No task matches this search, so there is nothing to chart.') + '</div>';
       $('clegend').innerHTML = ''; $('cverdict').textContent = ''; ctable(g, tree); return;
     }
     var sm = null, sc = null;
@@ -2225,7 +2275,10 @@ window.addEventListener('load',restore);
           + ' not plotted.</span>' : '')
       + (sm && sm.folded ? ' <span style="color:var(--muted)">The smallest <b>' + num(sm.folded)
           + '</b> are folded into one “Other” line.</span>' : '')
-      + (s.undated && CFORM !== 'line' ? ' <span style="color:var(--muted)">' + s.undated + ' row' + (s.undated === 1 ? '' : 's') + ' carry no date: in the totals, in no month.</span>' : '');
+      + (s.undated && CFORM !== 'line' ? ' <span style="color:var(--muted)">' + s.undated + ' row' + (s.undated === 1 ? '' : 's') + ' carry no date: in the totals, in no month.</span>' : '')
+      // hidden, never dropped: the figure someone would otherwise go looking for
+      + (left ? ' <span style="color:var(--muted)">Not yet tagged is hidden: <b>' + num(left.n) + '</b> row'
+          + (left.n === 1 ? '' : 's') + ' (<b>' + hrs(left.hours) + ' h</b>) are not in this split.</span>' : '');
     ctable(g, tree, sm);
     wireTips();
   }
@@ -2870,7 +2923,8 @@ window.addEventListener('load',restore);
         : dimName(CDIM)), 40, H - 56);
       cx.fillStyle = cvar('--muted') || '#888'; cx.font = '700 22px Lato, sans-serif';
       cx.fillText('FeedSpark · Private & Confidential · reports database ' + D.from + ' → ' + D.to
-        + (Q.raw.trim() ? ' · query: ' + Q.raw.trim() : ''), 40, H - 22);
+        + (Q.raw.trim() ? ' · query: ' + Q.raw.trim() : '')
+        + (hideUntag() ? ' · untagged rows not shown' : ''), 40, H - 22);
       URL.revokeObjectURL(url);
       var a = document.createElement('a');
       a.href = cv.toDataURL('image/png');
@@ -2884,13 +2938,15 @@ window.addEventListener('load',restore);
   function csv() {
     var head = ['Date', 'Client', 'Market', 'Task', 'Type', 'Owner', 'Account manager', 'Status', 'Billable h', 'Non-billable h', 'Total h', 'Scheduled h', 'Task id', 'Notes'];
     var q = function (v) { var s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-    var body = FT.map(function (t) {
+    // "every row behind this chart" — so a hidden untagged bucket is out of the file too, and the
+    // name says the file is a cut rather than the whole search
+    var body = chartPop().map(function (t) {
       return [t.d, t.client, t.market, t.title, CAT_LABEL[t.cat] || t.cat, t.owner, t.am, t.status, t.bill, t.nonbill, t.hours, t.sched, t.id, t.note].map(q).join(',');
     });
     var blob = new Blob([head.join(',') + '\n' + body.join('\n')], { type: 'text/csv;charset=utf-8' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'feedspark-tasks-' + D.at + (Q.raw.trim() ? '-filtered' : '') + '.csv';
+    a.download = 'feedspark-tasks-' + D.at + (Q.raw.trim() ? '-filtered' : '') + (hideUntag() ? '-tagged' : '') + '.csv';
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   }
@@ -3466,6 +3522,12 @@ window.addEventListener('load',restore);
     try { var lgv = localStorage.getItem('fcc-tm-cleg'); if (lgv !== null) $('cleg').checked = lgv === '1'; } catch (e) {}
     $('cleg').onchange = function () {
       try { localStorage.setItem('fcc-tm-cleg', $('cleg').checked ? '1' : '0'); } catch (e) {}
+      chart();
+    };
+    // likewise per device: which rows one screen wants to look at is not a team fact
+    try { var uv = localStorage.getItem('fcc-tm-untag'); if (uv !== null) $('cuntag').checked = uv === '1'; } catch (e) {}
+    $('cuntag').onchange = function () {
+      try { localStorage.setItem('fcc-tm-untag', $('cuntag').checked ? '1' : '0'); } catch (e) {}
       chart();
     };
     $('pxlsx').onclick = xlsxExport;

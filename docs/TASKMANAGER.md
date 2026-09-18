@@ -436,6 +436,29 @@ chart can never name the same colour differently; with the legend on the chart, 
 labels stand down (the same names twice is clutter) and when they are drawn, two lines finishing
 together are pushed apart rather than printed on top of each other.
 
+### Hide Not yet tagged
+
+> Ray, 17 Sep 2026: *"btw [Not yet tagged] can be excluded from showing when dissect by Tag"*
+
+On a part-judged book the untagged bucket is usually the biggest thing on the chart, and it is the
+one bucket that says nothing about the work — it says nobody has looked yet. It swamps the tags
+either side of it and the split stops answering the question it was asked. **Hide Not yet tagged**
+(tickbox, default on, remembered per device) takes those rows out, and appears **only when a tag is
+one of the three split levels** — every other dimension puts a task in exactly one bucket and has no
+untagged remainder, so on those the control is hidden rather than sitting there inert.
+
+Three rules keep it from becoming a number that quietly went missing:
+
+1. **The row leaves, not the bucket.** `chartPop()` filters the population once, and the chart, its
+   legend, its table, the TSV, the CSV and the PNG all read it — so a nested parent still sums to
+   its children, and the "N h in view" headline can never count hours that are not drawn.
+2. **It is said out loud.** The verdict line always names what was left out — *"Not yet tagged is
+   hidden: 57 rows (108 h) are not in this split"* — the PNG footer stamps *untagged rows not
+   shown*, and the CSV filename gains `-tagged`. A search that has nothing but untagged rows says
+   so, with the way back.
+3. **The displacement card is untouched.** Coverage, and what has not been judged, is the question
+   that card exists to answer; this toggle governs the chart below it and nothing else.
+
 ### Account type
 
 **Split by → Account type** is the *other* type the database holds: `client_type` from the accounts
