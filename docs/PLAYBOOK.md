@@ -352,3 +352,48 @@ drawing it solid makes every account look like it fell off a cliff. It renders a
 treatment, in the same validated blue (`#2563EB` / `#4C82E0` dark), as the Volume module's estate
 table. One arrivals visual across the FCC, not a second one that could quietly disagree with the
 page the row links to.
+
+## The bottom line: top 3 actions
+
+Ray, 18 Sep 2026: *"When you say completeness across ten markets is 76.7%, that's great, but at the
+bottom line, nominate the top three actions you would potentially take for each account, and then
+have AM talk to the clients about it."*
+
+Everything above the fold states a **fact**. None of it said what to **do**, which is what an AM
+needs walking into a call. The rail now closes with at most three actions.
+
+### Ranked by what it costs to ignore
+
+Not by how bad the number looks:
+
+| | | |
+|---|---|---|
+| **P1** | products are being refused today | a REQUIRED attribute absent or under Google's bar — revenue lost every day it stands |
+| **P2** | work is piling up | new stock arriving unoptimised, or a conditional attribute below spec — nothing broken yet, compounds monthly |
+| **P3** | a capability gap | a play ≥2 peers run that this account carries none of, or a stalled practice — worth raising, never urgent |
+
+**Three, and no more.** A ranked list of eleven is the same as no ranking. Nothing is padded to
+reach three either — an account with one real action gets one, a clean account gets none.
+
+### One count, said once
+
+Each action carries the figure it came from *and* a client line in the words an AM would actually
+use — no `g:` field names, no tier jargon.
+
+The evidence line, the client line and the market chip are all built from **the same population**.
+An earlier cut derived them separately and produced *"2 markets missing it entirely"* over *"missing
+on 5 of your markets"*, with a chip naming five — read out on a client call, that ends the AM's
+credibility. `absent` and `thin` are kept apart as the different problems they are, and an action
+names whichever one it is about.
+
+A conditional attribute never inherits the flat *"can be refused"* a required one earns; it's
+required only where it applies, and claiming otherwise is overclaiming to a client.
+
+### Exits
+
+Each action's **→ Brief** routes through `window.FCCBrief` like every other brief in the rail — a
+backlog action reuses `briefCohort`, so the draft carries the cohort, its age and the product-type
+breakdown. **⧉ Copy talking points** lifts all three lines for an agenda or an email.
+
+Harness: `tools/test_playbook_panel.mjs` — the ranking across kinds, the count/sentence/chip
+agreement, absent-vs-thin, the conditional wording, and that nothing is padded to three.

@@ -36,9 +36,9 @@ const S = WF.indexOf('/* PBENGINE:START'), E = WF.indexOf('/* PBENGINE:END */');
 if (S < 0 || E < 0 || E < S) { console.error('✗ PBENGINE markers missing from docs/FeedSpark_Workflow.html'); process.exit(1); }
 const block = WF.slice(S, E);
 const names = ['pbClassify', 'pbCats', 'pbIndex', 'pbPractice', 'pbBand', 'pbArrivals', 'pbWeak', 'PB_TAX', 'PB_TIER',
-  'pbRaise', 'pbCatMix', 'pbLastOpt', 'pbAgeDays', 'PB_RAISE_OPTS', 'PB_RAISE_DEF', 'PB_BACKLOG_MONTHS', 'pbSpark'];
+  'pbRaise', 'pbCatMix', 'pbLastOpt', 'pbAgeDays', 'PB_RAISE_OPTS', 'PB_RAISE_DEF', 'PB_BACKLOG_MONTHS', 'pbSpark', 'pbActions'];
 const EN = new Function(block + '\n;return {' + names.map((n) => n + ':' + n).join(',') + '};')();
-const { pbSpark } = EN;
+const { pbSpark, pbActions } = EN;
 const { pbClassify, pbCats, pbIndex, pbPractice, pbBand, pbArrivals, pbWeak, PB_TAX, PB_TIER,
   pbRaise, pbCatMix, pbLastOpt, pbAgeDays, PB_RAISE_OPTS, PB_RAISE_DEF, PB_BACKLOG_MONTHS } = EN;
 
@@ -122,6 +122,74 @@ ok(!keys.includes('question_and_answer'), 'the conversational AI six are supplem
 eq(keys.filter((k) => k === 'image_link').length, 1, 'a missing attribute is listed once, not again from the coverage map');
 ok(pbWeak(null).length === 0, 'an unscanned feed yields nothing — absent is not zero');
 ok(Object.keys(PB_TIER).filter((k) => PB_TIER[k] === 'req').length === 7, 'Google’s seven always-required attributes');
+
+console.log('\n\u2500\u2500 the bottom line: top 3 actions');
+/* Ray, 18 Sep 2026: "when you say completeness across ten markets is 76.7%, that's great, but at
+   the bottom line, nominate the top three actions you would potentially take for each account,
+   and then have AM talk to the clients about it." */
+{
+  const G = (mkt, req, cond, cov) => ({ mkt, score: 70, reqMissing: req || [], condMissing: cond || [], cov: cov || {} });
+  const gold = [
+    G('gb', ['mpn'], [], { gtin: 0.42, item_group_id: 0.71 }),
+    G('de', ['mpn'], [], { gtin: 0.55, item_group_id: 0.80 }),
+    G('fr', [], [], { gtin: 0.60, item_group_id: 0.88 }),
+  ];
+  const raises = [{ mkt: 'us', n: 7049, age: 78, since: true, rows: 23409, pct: 30 }];
+  const practice = { gap: [{ k: 'golden', peers: 5 }], slip: [{ k: 'test', open: 3, rate: 0.4 }] };
+
+  const a = pbActions(gold, raises, practice, 'Superdry', {});
+  eq(a.length, 3, 'three actions, never more');
+  eq(a[0].p, 1, 'a REQUIRED attribute outranks everything — products are refused today');
+  ok(/mpn/.test(a[0].title), 'and it names the attribute: ' + a[0].title);
+  eq(a[1].kind, 'raise', 'the new-product backlog comes next, ahead of a conditional attribute');
+  ok(a.every((x) => x.p <= 3), 'nothing ranks outside P1-P3');
+  ok(a.map((x) => x.p).join('') === '122', 'ranked by cost of ignoring: ' + a.map((x) => 'P' + x.p).join(' '));
+
+  /* THE TRAP THIS EXISTS TO CATCH. An earlier cut derived the evidence line and the client line
+     from different counts and produced "2 markets missing it entirely" over "missing on 5 of your
+     markets" — read out on a client call, that ends the AM's credibility. Count, sentence and the
+     market chip must all describe ONE population. */
+  a.forEach((x) => {
+    const evN = (x.ev.match(/^([\d,]+)/) || [])[1];
+    if (!evN) return;
+    ok(x.say.indexOf(evN) >= 0,
+      x.key + ': the client line quotes the same figure as the evidence (' + evN + ')');
+  });
+  const mpn = a.find((x) => x.key === 'attr:mpn');
+  eq(mpn.mkts.length, 2, 'the market chip names exactly the markets the count is about');
+  ok(mpn.mkts.join(',') === 'gb,de', 'and they are the ones actually missing it: ' + mpn.mkts.join(','));
+
+  console.log('\n\u2500\u2500 absent and thin are different problems');
+  const thin = pbActions([G('gb', [], [], { gtin: 0.42 }), G('de', [], [], { gtin: 0.7 })], [], {}, 'X', {});
+  ok(/below spec, worst 42%/.test(thin[0].ev), 'a thin attribute reports its worst coverage: ' + thin[0].ev);
+  ok(!/missing/.test(thin[0].ev), 'and is never described as missing');
+  eq(thin[0].mkts.length, 2, 'both thin markets are named');
+  /* a conditional attribute is required only WHERE IT APPLIES, so it must not inherit the flat
+     "can be refused" a required one earns — that is overclaiming to a client. */
+  ok(!/can be refused/.test(thin[0].say), 'a conditional attribute never claims products "can be refused"');
+  const req = pbActions([G('gb', ['title'], [], {})], [], {}, 'X', {});
+  ok(/can be refused/.test(req[0].say), 'a REQUIRED one does say so — that is the whole point');
+
+  console.log('\n\u2500\u2500 nothing is padded to reach three');
+  eq(pbActions([], [], {}, 'X', {}).length, 0, 'a clean account gets no actions at all');
+  eq(pbActions([G('gb', ['mpn'], [], {})], [], {}, 'X', {}).length, 1, 'one real action stays one');
+  const gapOnly = pbActions([], [], { gap: [{ k: 'golden', peers: 5 }] }, 'X', {});
+  eq(gapOnly[0].p, 3, 'a capability gap is P3 — worth raising, never urgent');
+
+  console.log('\n\u2500\u2500 every action is actionable');
+  a.forEach((x) => {
+    ok(!!x.brief, x.key + ' carries a brief');
+    ok(typeof x.say === 'string' && x.say.length > 30, x.key + ' carries a client line');
+    ok(!/\bg:/.test(x.say), x.key + ': the client line has no g: field names in it');
+    ok(!/\breq\b|\bcond\b|tier/.test(x.say), x.key + ': nor tier jargon');
+  });
+}
+
+console.log('\n\u2500\u2500 the counters name their unit');
+/* Ray, same day: "the enterprise channels market 18 to 18 — what does that mean?" A bare pair on
+   a row called "Channels & Markets" reads as MARKETS, which is the one thing it is not. */
+ok(WF.indexOf("+r.done+'/'+r.all+' <small>tasks</small>") >= 0, 'the Landing row says what 18/18 counts');
+ok(/project-plan tasks in this practice are done/.test(WF), 'and spells it out in full on hover');
 
 console.log('\n\u2500\u2500 the 12-month sparkline, and the red that left with it');
 /* Ray, 17 Sep 2026, sending the Volume module's own estate sparkline: "these new products alert
