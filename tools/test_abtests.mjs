@@ -11,7 +11,8 @@
  *      naively that is +17.67% and a losing test reports as a win.
  * Run: node tools/test_abtests.mjs
  */
-import { parseAbTests, extractMetrics, abVerdict, abSummary, resolveAbTab, findHeaderRow, hasAbHeader, abClientKey }
+import { parseAbTests, extractMetrics, abVerdict, abSummary, resolveAbTab, findHeaderRow, hasAbHeader, abClientKey,
+  abWinner, abGroups, isTitleTest }
   from '../cloudflare/feedspark-deck/src/abtests.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -237,6 +238,91 @@ console.log('\n-- summary --');
   ok('no decided tests = null win rate', abSummary([{ verdict: 'inconclusive' }]).winRate === null);
 }
 
+
+console.log('\n-- WHO WON: an A/B title test names its winning group, not "lost" (Ray, 17 Sep 2026) --');
+// the shape Ray described off the Superdry archive: the write-up names the control group by what
+// it lacks and calls it the stronger performer, and the figures are (slightly) negative
+const ITEM = 'A/B Title Test on the item type descriptor. The Batch Size was containing 400 products (50% Test Group | 50% Control Group). '
+  + 'Results: The control group without item type descriptor is stronger performance than the test group. '
+  + 'The test group experienced a -0.26% lowered in impressions and a -1.2% lowered in clicks compared to the control group.';
+{
+  const w = abWinner(ITEM, extractMetrics(ITEM));
+  ok('the control group is read as the winner', w && w.group === 'control', w);
+  ok('…named by what made it different', w && w.label === 'Without Item Type Descriptor', w && w.label);
+  ok('…and the call came from the prose, not the sign of a number', w && w.how === 'prose', w && w.how);
+  const g = abGroups(ITEM);
+  ok('the other group is inferred from the one that was described', g.test === 'With Item Type Descriptor', g);
+}
+{
+  // the same test written the other way round — parenthetical descriptors, the test group as subject
+  const r = 'The test group (with item type descriptor) consistently trends below the control group (without item type descriptor).';
+  const w = abWinner(r, {});
+  ok('a losing cue on the test group hands the win to the control group', w && w.group === 'control' && w.label === 'Without Item Type Descriptor', w);
+}
+{
+  const r = 'Compared to the control group, the test group (with item type descriptor) saw higher impressions and clicks.';
+  const w = abWinner(r, {});
+  ok('"compared to the control group, the test group…" — the yardstick is not the subject',
+     w && w.group === 'test' && w.label === 'With Item Type Descriptor', w);
+}
+{
+  const w = abWinner(JAN2, extractMetrics(JAN2));
+  ok('Reiss’s real winning write-up: the test group, named by its optimisation',
+     w && w.group === 'test' && /Keyword Optimization/i.test(w.label) && w.how === 'prose', w);
+  const l = abWinner(JAN1, extractMetrics(JAN1));
+  ok('Reiss’s real losing write-up: the control group wins', l && l.group === 'control' && l.how === 'prose', l);
+}
+ok('a single-group test has no opponent and no winner',
+   abWinner('We conducted an Single group test. The test group experienced a 668% uplift in impressions.', { impressions: 668 }) === null);
+ok('no data, no winner', abWinner(TITLE, {}) === null);
+{
+  const w = abWinner('Batch of 500 (50% Test Group | 50% Control Group). Impressions of 12.5% and clicks of 3%.', { impressions: 12.5, clicks: 3 });
+  ok('prose that never calls it falls back to the figures — and SAYS so', w && w.group === 'test' && w.how === 'metrics', w);
+  ok('…with the plain group name when nothing described it', w && w.label === 'Test group', w && w.label);
+  ok('split figures and no call in the prose = no winner, not a guess',
+     abWinner('Batch of 500 (50% Test Group | 50% Control Group).', { impressions: 12.5, clicks: -3 }) === null);
+}
+ok('a title test is recognised by its type', isTitleTest({ type: 'Title Optimisation' }));
+ok('…or by its batch name', isTitleTest({ type: 'Keyword Optimisation', batch: 'A/B Title Test - Item Type Descriptor - UK' }));
+ok('a keyword batch is not one', !isTitleTest({ type: 'Keyword Optimisation', batch: 'Jan II - Keyword Optimisation' }));
+{
+  const values = [
+    HDR,
+    ['UK', 'AB Test', 'Title Optimisation', 'A/B Title Test - Item Type Descriptor - UK - 18/03/2026', '18/03/2026', '15/04/2026', '', ITEM],
+    ...Array.from({ length: 12 }, () => blank(8)),
+    ['GB', 'Single Group', 'Title Optimisation', 'Data field and title optimisation', 'NA', 'NA', '', TITLE],
+    ...Array.from({ length: 12 }, () => blank(8)),
+  ];
+  const r = parseAbTests(values);
+  ok('the parsed row carries the winner', r.tests[0].winner && r.tests[0].winner.label === 'Without Item Type Descriptor', r.tests[0].winner);
+  ok('…and is flagged as a title test', r.tests[0].title === true);
+  ok('the verdict is still kept for the win-rate', r.tests[0].verdict === 'negative', r.tests[0].verdict);
+  ok('a single-group row carries no winner even when it is a title test', r.tests[1].winner === null && r.tests[1].title === true, r.tests[1]);
+}
+
+console.log('\n-- the page says the same thing on both surfaces --');
+{
+  const CC = fs.readFileSync(path.join(root, 'docs', 'FeedSpark_Command_Center.html'), 'utf8');
+  const abResult = new Function('ABV', 'esc', lift(CC, 'abResult') + '; return abResult;')(
+    { positive: ['#15803d', '▲', 'won'], negative: ['#b91c1c', '▼', 'lost'], mixed: ['#b45309', '◆', 'mixed'],
+      inconclusive: ['#64748b', '–', 'inconclusive'], unknown: ['#64748b', '?', 'no read'] }, (x) => String(x));
+  const ctl = abResult({ title: true, verdict: 'negative', winner: { group: 'control', label: 'Without Item Type Descriptor', how: 'prose' } });
+  ok('a control-group win reads as the conclusion, not as "lost"', ctl.text === 'Without Item Type Descriptor won', ctl.text);
+  ok('…in navy — a finding, not a failure', ctl.color === '#2F6FB0', ctl.color);
+  ok('…and the tooltip says which group and how it was read', /Control group won/.test(ctl.title) && /write-up/.test(ctl.title), ctl.title);
+  const tst = abResult({ title: true, verdict: 'positive', winner: { group: 'test', label: 'With Item Type Descriptor', how: 'metrics' } });
+  ok('a test-group win is green', tst.color === '#15803d' && tst.text === 'With Item Type Descriptor won', tst);
+  ok('…and says it was read from the figures', /figures/.test(tst.title), tst.title);
+  const kw = abResult({ title: false, verdict: 'negative', winner: { group: 'control', label: 'Control group', how: 'prose' } });
+  ok('a keyword A/B keeps won / lost — only title tests change wording', kw.text === 'lost' && kw.color === '#b91c1c', kw);
+  const none = abResult({ title: true, verdict: 'inconclusive', winner: null });
+  ok('a title test with no winner falls back to the verdict', none.text === 'inconclusive', none.text);
+  ok('the dossier pill and the one-pager column both go through it',
+     /function abPill\(t\)\{\s*var r=abResult\(t\)/.test(CC) && /var mt = t\.metrics \|\| \{\}, rs = abResult\(t\)/.test(CC));
+  const WK = fs.readFileSync(path.join(root, 'cloudflare', 'feedspark-deck', 'src', 'worker.js'), 'utf8');
+  ok('the worker versions the archive cache so the old pills do not outlive the deploy',
+     /hit\.v === AB_SHAPE/.test(WK) && /v: AB_SHAPE/.test(WK) && /const AB_SHAPE = 2/.test(WK));
+}
 
 console.log('\n-- content probe: the archive found by its header, whatever the tab is called --');
 // Schuh and Hobbycraft both carry this archive with the identical layout; if the feature hangs

@@ -1532,12 +1532,12 @@ window.addEventListener('load',restore);
       h += '<h4 class="op-h4">The test record</h4>';
       h += '<table class="op-tbl"><thead><tr><th>Test</th><th>Live</th><th>Impressions</th><th>Clicks</th><th>Result</th></tr></thead><tbody>';
       ab.tests.slice(0, 14).forEach(function (t) {
-        var mt = t.metrics || {}, v = ABV[t.verdict] || ABV.unknown;
+        var mt = t.metrics || {}, rs = abResult(t);
         var pc = function (x) { return typeof x === 'number' ? '<b style="color:' + (x > 0 ? '#15803d' : x < 0 ? '#b91c1c' : '#64748b') + '">' + (x > 0 ? '+' : '') + x + '%</b>' : '<span class="op-na">—</span>'; };
         h += '<tr><td>' + esc(opSafe(t.batch || t.type) || 'Test') + '</td>'
           + '<td>' + (t.live && t.live !== 'NA' ? esc(t.live) : '<span class="op-na">—</span>') + '</td>'
           + '<td>' + pc(mt.impressions) + '</td><td>' + pc(mt.clicks) + '</td>'
-          + '<td><span style="color:' + v[0] + ';font-weight:800">' + v[2] + '</span></td></tr>';
+          + '<td><span style="color:' + rs.color + ';font-weight:800">' + esc(rs.text) + '</span></td></tr>';
       });
       h += '</tbody></table>';
     } else if (ab && !ab.ok) {
@@ -2691,10 +2691,29 @@ window.addEventListener('load',restore);
   var ABV={positive:['#15803d','▲','won'],negative:['#b91c1c','▼','lost'],
            mixed:['#b45309','◆','mixed'],inconclusive:['#64748b','–','inconclusive'],
            unknown:['#64748b','?','no read']};
+  /* An A/B TITLE test is not won or lost — it is a contest between two groups, and its result is
+     WHICH GROUP WON, named by what made it different (Ray, 17 Sep 2026: "there is no 'loss' or
+     'won' … the conclusion should say 'Without Item Type Description won'"). The worker reads
+     that off the write-up (t.winner); this turns it into the one row of colour + words BOTH
+     surfaces use — the archive pill here and the one-pager's Result column — so the dossier and
+     the PDF can never call the same test two different things. The test group winning is green
+     (the change worked); the control group winning is navy, a finding rather than a failure —
+     red would say the test failed, and a test that answered its question did not. Every other
+     row keeps won / lost. */
+  function abResult(t){
+    var w=t&&t.winner;
+    if(w&&t.title&&w.label){
+      var ctl=w.group==='control';
+      return {color:ctl?'#2F6FB0':'#15803d', glyph:ctl?'◆':'▲', text:w.label+' won',
+        title:(ctl?'Control group won':'Test group won')+' · '+(w.how==='prose'?'read from the write-up':'read from the figures')};
+    }
+    var v=ABV[(t&&t.verdict)]||ABV.unknown;
+    return {color:v[0], glyph:v[1], text:v[2], title:''};
+  }
   function abPill(t){
-    var v=ABV[t.verdict]||ABV.unknown;
-    return '<span style="display:inline-block;font-size:9.5px;font-weight:900;color:#fff;background:'+v[0]
-      +';border-radius:100px;padding:0 6px;vertical-align:1px">'+v[1]+' '+v[2]+'</span>';
+    var r=abResult(t);
+    return '<span style="display:inline-block;font-size:9.5px;font-weight:900;color:#fff;background:'+r.color
+      +';border-radius:100px;padding:0 6px;vertical-align:1px"'+(r.title?' title="'+esc(r.title)+'"':'')+'>'+r.glyph+' '+esc(r.text)+'</span>';
   }
   function abMetrics(m){
     var out=[];
@@ -2747,7 +2766,7 @@ window.addEventListener('load',restore);
           var when=[t.country,t.live&&t.live!=='NA'?t.live:''].filter(Boolean).join(' · ');
           var mt=abMetrics(t.metrics);
           body+='<div class="dz-mat-i dz-ab-i" style="cursor:pointer" title="Click to open the team’s write-up">'
-            +'<span class="ic">'+(ABV[t.verdict]||ABV.unknown)[1]+'</span>'
+            +'<span class="ic">'+abResult(t).glyph+'</span>'
             +'<span class="tx"><span class="tt">'+esc(t.batch||t.type||'Test')+(when?' · '+esc(when):'')+' '+abPill(t)+'</span>'
             +'<span class="mt">'+(mt||'no uplift figures in the write-up')+'</span>'
             +'<span class="mt dz-ab-raw" hidden style="opacity:.75">'+esc(String(t.report||'').slice(0,1500))+'</span></span></div>';
