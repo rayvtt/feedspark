@@ -851,7 +851,7 @@ window.addEventListener('load',restore);
 <!-- ===== HERO ===== -->
 <header class="hero">
   <div class="wrap">
-    <div class="eyebrow">Private &amp; Confidential · July 2026</div>
+    <div class="eyebrow">Private &amp; Confidential</div>
     <h1>The operating hub for FeedSpark account management.</h1>
     <p class="lede">One place to run the accounts — strategy decks, project plans, the team, and the
       time we spend. Built to run lean now and grow into an automated command center: client comms,
@@ -3062,6 +3062,106 @@ window.addEventListener('load',restore);
     // and the AM opens it when they are ready. 1200ms clears the Monday panel's own 800ms check.
     if(last!==d.id){ btn.classList.add('unread'); if(!otherOpen()) setTimeout(function(){ if(!otherOpen()) op(); },1200); }
   }).catch(function(){});
+})();</script>
+<style>/* FCC-HERO — landing banner: live month, aurora wash, a travelling edge, count-up KPIs.
+   Appended at the END of <body> so it restyles the hero without touching the markup above it
+   (data-eid keys are positional). Colours are theme vars, so dark view needs no overrides; every
+   animation stands down under prefers-reduced-motion; with no JS the banner is simply static. */
+.hero{position:relative;overflow:hidden;isolation:isolate}
+/* aurora — two slow brand blooms plus a cool counterweight, well under the text's contrast floor */
+.hero::before{content:'';position:absolute;inset:-40% -20% auto -20%;height:180%;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(38% 46% at 18% 22%,rgba(245,166,35,.20),transparent 70%),
+    radial-gradient(34% 42% at 82% 8%,rgba(237,111,11,.14),transparent 72%),
+    radial-gradient(30% 38% at 62% 88%,rgba(26,54,93,.07),transparent 70%);
+  animation:heroAurora 26s ease-in-out infinite alternate}
+@keyframes heroAurora{
+  0%{transform:translate3d(0,0,0) scale(1)}
+  50%{transform:translate3d(-2.5%,1.5%,0) scale(1.08)}
+  100%{transform:translate3d(2%,-1%,0) scale(1.04)}}
+/* the edge: a lit strip travelling along the hero's own bottom rule */
+.hero::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;z-index:1;pointer-events:none;
+  background:linear-gradient(90deg,transparent 0 18%,var(--orange) 34%,var(--orange-deep) 50%,var(--orange) 66%,transparent 82% 100%);
+  background-size:220% 100%;opacity:.85;animation:heroEdge 7.5s linear infinite}
+@keyframes heroEdge{from{background-position:120% 0}to{background-position:-120% 0}}
+/* entrance — one stagger down the banner, fast enough to never feel like a page load */
+.hero .eyebrow,.hero h1,.hero .lede,.hero .statstrip,.hero .synced{animation:heroRise .62s cubic-bezier(.22,.68,.32,1) both}
+.hero h1{animation-delay:.07s}
+.hero .lede{animation-delay:.13s}
+.hero .statstrip{animation-delay:.19s}
+.hero .synced{animation-delay:.25s}
+@keyframes heroRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.hero .eyebrow{letter-spacing:.2em}
+.hero h1{font-size:46px;letter-spacing:-.025em;max-width:620px}
+/* the figures become cards that answer to the pointer */
+.statstrip{gap:14px!important;margin-top:26px!important}
+.statstrip .s{position:relative;padding:13px 17px 12px;border:1px solid var(--line);border-radius:14px;
+  background:var(--paper);box-shadow:var(--shadow);min-width:116px;overflow:hidden;
+  transition:transform .18s cubic-bezier(.22,.68,.32,1),border-color .18s,box-shadow .18s}
+.statstrip .s:hover{transform:translateY(-3px);border-color:var(--orange);box-shadow:0 10px 26px rgba(237,111,11,.16)}
+.statstrip .s .n{font-variant-numeric:tabular-nums}
+.statstrip .s::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;
+  background:linear-gradient(90deg,var(--orange),var(--orange-deep));transform:scaleX(0);transform-origin:left;
+  transition:transform .3s cubic-bezier(.22,.68,.32,1)}
+.statstrip .s:hover::after{transform:scaleX(1)}
+/* the theme block lists .statstrip among its card surfaces, which was right when the strip WAS the
+   card; now each figure carries its own, so the parent band shows as a stray lighter rectangle
+   running past the last card. Hand the surface to the children. */
+[data-theme=dark] .statstrip{background:transparent;border-color:transparent}
+/* the sync line earns a live pip — it is the one genuinely live thing on the banner */
+.hero .synced::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);
+  margin-right:8px;vertical-align:1px;animation:heroPulse 2.4s ease-out infinite}
+@keyframes heroPulse{
+  0%{box-shadow:0 0 0 0 rgba(21,128,61,.45)}
+  70%{box-shadow:0 0 0 7px rgba(21,128,61,0)}
+  100%{box-shadow:0 0 0 0 rgba(21,128,61,0)}}
+@media(max-width:760px){
+  .hero{padding:34px 0 24px}
+  .hero h1{font-size:30px}
+  .statstrip{gap:10px!important}
+  .statstrip .s{flex:1 1 calc(50% - 5px);min-width:0;padding:10px 12px}
+}
+@media(prefers-reduced-motion:reduce){
+  .hero::before,.hero::after,.hero .synced::before,
+  .hero .eyebrow,.hero h1,.hero .lede,.hero .statstrip,.hero .synced{animation:none!important}
+  .hero .eyebrow,.hero h1,.hero .lede,.hero .statstrip,.hero .synced{opacity:1;transform:none}
+  .statstrip .s{transition:none}
+}
+</style>
+<script>/* FCC-HERO */(function(){
+  var hero=document.querySelector('.hero'); if(!hero) return;
+  var reduce=false; try{ reduce=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches); }catch(e){}
+
+  // The month was hard-coded and went stale — it still read "July 2026" in September. Render it
+  // from the clock instead. Only rewritten while the line is still the default, so a hand-edited
+  // eyebrow (or a saved live edit) is left exactly as it is.
+  var eb=hero.querySelector('.eyebrow');
+  if(eb){
+    var t=(eb.textContent||'').replace(/\s+/g,' ').trim();
+    if(/^Private & Confidential(\s*·.*)?$/i.test(t)){
+      var m=''; try{ m=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',month:'long',year:'numeric'}).format(new Date()); }catch(e){}
+      if(m) eb.textContent='Private & Confidential · '+m;
+    }
+  }
+
+  // Count the figures up. They live inside the ATRT splice markers, so they are READ from the DOM
+  // and never written back into the page source — sync_atrt.py stays the only writer.
+  if(reduce) return;
+  Array.prototype.forEach.call(hero.querySelectorAll('.statstrip .s .n'),function(el,i){
+    var raw=(el.textContent||'').trim();
+    if(!/^\d{1,6}$/.test(raw)) return;          // plain integers only; anything richer is left alone
+    var to=parseInt(raw,10); if(!to) return;
+    var dur=760+Math.min(i,4)*70, t0=0;
+    el.textContent='0';
+    (function run(){
+      requestAnimationFrame(function step(ts){
+        if(!t0) t0=ts;
+        var p=Math.min(1,(ts-t0)/dur);
+        el.textContent=String(Math.round(to*(1-Math.pow(1-p,3))));
+        if(p<1) requestAnimationFrame(step); else el.textContent=raw;
+      });
+    })();
+  });
 })();</script>
 </body>
 </html>

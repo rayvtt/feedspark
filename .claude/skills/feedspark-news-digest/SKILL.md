@@ -53,6 +53,18 @@ Keep an item only if an AM could act on it or a client could raise it. Drop vend
 listicles, "X predictions for next year", and anything already carried in a previous digest
 (read the existing `docs/news_digest.json` first and dedupe against it).
 
+**Nothing older than three months** (Ray's rule, 18 Sep 2026). Check every item's own publication
+or effective date against today minus 90 days and drop it if it falls outside, however important it
+still seems — something that mattered and is older than that has either been carried already or
+belongs in a briefing, not a daily digest. Two corollaries worth stating, because the first edition
+broke both:
+
+- **Evergreen documentation guidance is not news.** If a page has no date of its own, it does not
+  go in. Stamping today's date on a platform's standing advice to make it qualify is the same
+  dishonesty as inventing a figure.
+- **Date the item, not the day you found it.** A March announcement rediscovered in September is a
+  March item, and it fails the bar.
+
 Rank by what it does to *our* work, not by how big the headline is:
 - `high` — something is breaking, a deadline has passed or is imminent, or it changes what we sell
 - `med` — changes how we execute, or what we say to clients

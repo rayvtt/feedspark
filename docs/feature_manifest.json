@@ -7514,6 +7514,18 @@
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "FCC-NEWS",
       "min": 2
+    },
+    {
+      "name": "CmdCenter: hero banner — live month, aurora + travelling edge, count-up KPIs",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "FCC-HERO",
+      "min": 2
+    },
+    {
+      "name": "CmdCenter: hard-coded hero month RETIRED (renders from the clock, must stay gone)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "Confidential · July 2026",
+      "forbidden": true
     }
   ]
 }
