@@ -8145,13 +8145,6 @@
       "pr": 0
     },
     {
-      "name": "AI Mode: and the card draws no second arrivals chart — the Monthly update card owns that view",
-      "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "id=\"aim-chart\"",
-      "pr": 455,
-      "forbidden": true
-    },
-    {
       "name": "Golden Record client documents: the scoring descriptions are written WITHOUT their weight factors while the export records the pop-ups (Ray, 18 Sep 2026: 'Keep the content quality score description, but remove the weight')",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "function clientCopy() { return !!SCCAP; }"
