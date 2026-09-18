@@ -8056,6 +8056,51 @@
       "file": "tools/presync.sh",
       "pattern": "tools/test_labelguard.mjs",
       "pr": 458
+    },
+    {
+      "name": "Golden Record client documents: the scoring descriptions are written WITHOUT their weight factors while the export records the pop-ups (Ray, 18 Sep 2026: 'Keep the content quality score description, but remove the weight')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function clientCopy() { return !!SCCAP; }"
+    },
+    {
+      "name": "Golden Record: the pillar bar carries its width and band colour INLINE so the script-less ⬇ HTML draws it (Ray, 18 Sep 2026: 'show the scoring bars in green, yellow, and red, because now they're empty')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "<i class=\"pfill\" style=\"width:' + p.score + '%;background:' + airCol(p.score)"
+    },
+    {
+      "name": "Golden Record: the bar's grow-in is a CSS animation, not script — and stands down on paper because html2canvas renders a fresh clone",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf .pfill,body.pdf .mseg .mf{animation:none!important}"
+    },
+    {
+      "name": "Golden Record client documents (PDF + HTML share body.pdf): no pillar weights, no pillar heatmap, no 'Two scores, two questions' band (Ray, 18 Sep 2026)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf .pillar .pf2,body.pdf .heat-card,body.pdf #rec-tier{display:none!important}"
+    },
+    {
+      "name": "Golden Record ⬇ HTML: the heatmap, the reconciliation band and the weight dots are REMOVED from the file, not hidden",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'.pillar .pf2', '.heat-card', '#rec-tier'].forEach"
+    },
+    {
+      "name": "Golden Record ⬇ HTML: the live editor (✎ handle, 'Send an element to Claude Code' panel, Feedback panel), Tachyon, Feed Chat and the rest of the injected chrome are removed from the file (Ray, 18 Sep 2026: 'remove the element that sends code or feedback to Claude. I'm sending this to my clients')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'.de-handle', '.de-panel', '.de-props'"
+    },
+    {
+      "name": "Golden Record ⬇ HTML: HTML comments (the injected layers' own notes) never reach the client file",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "NodeFilter.SHOW_COMMENT"
+    },
+    {
+      "name": "Golden Record tripwire: the ⬇ HTML export block renders the page AS SERVED (widgets injected) and asserts the client-simplification list",
+      "file": "tools/check_grpdf.js",
+      "pattern": "simpler than the AM"
+    },
+    {
+      "name": "Golden Record tripwire: the client file never mentions Claude",
+      "file": "tools/check_grpdf.js",
+      "pattern": "nothing in the file mentions Claude at all"
     }
   ]
 }
