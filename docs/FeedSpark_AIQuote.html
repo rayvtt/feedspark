@@ -367,7 +367,6 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
      and easy to use"): One-off | Monthly | Settings, every input on the row it affects */
   .qtot .gtot{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:1px;text-align:right}
   .qtot .gline{font-size:12.5px;font-weight:800;color:var(--ink-2);white-space:nowrap} .qtot .gline .grand{margin-right:5px}
-  .qtot .gyear{font-size:11.5px;font-weight:800;color:var(--muted);white-space:nowrap} .qtot .gyear .hint{font-weight:700}
   .kpi .kpu{font-size:13px;color:var(--muted);font-weight:800}
   .qsum{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:12px}
   /* Ray, 11 Sep 2026: "align it so that net ex VAT and one-off total appear on the same horizontal line" —
@@ -451,9 +450,18 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   .aim-box{border:1px solid var(--line);border-radius:12px;background:var(--wash);padding:11px 14px 12px;min-width:0}
   .aim-box h4{margin:0 0 7px;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .aim-r{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;font-weight:700;padding:4px 0;color:var(--ink-2)}
+  /* A FLEX ROW IGNORES `hidden` — the UA's [hidden]{display:none} loses to any class that sets
+     display, so `el.hidden=true` on one of these left the row on screen with an empty value in it.
+     Two rows were affected: the newness pair here (the shell shows whichever applies, so BOTH were
+     drawn — "Arrivals run-rate 0 / month" above the typed % box) and the AI Mode rows in the quote
+     summary, which had been showing empty since they shipped. Stated once, for every such row. */
+  .aim-r[hidden],.qs-r[hidden]{display:none}
   .aim-r b{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:900;white-space:nowrap}
   .aim-r.hi{border-top:1px solid var(--line);margin-top:4px;padding-top:7px}
-  .aim-r.hi b{color:var(--orange-ink);font-size:14.5px}
+  .aim-r.hi b,.aim-r.hib b{color:var(--orange-ink);font-size:14.5px}
+  /* the two answers - charged once, charged monthly - read as a pair under one rule, never as
+     one total with a second figure under it (there is no annual figure on any quote surface) */
+  .aim-r.hib{padding-top:2px}
   .aim-src{font-size:11px;font-weight:700;color:var(--muted);margin-top:7px;line-height:1.45}
   .aim-src a{color:var(--orange-ink);text-decoration:none;font-weight:900}
   .aim-src code{font-size:10px;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:0 4px}
@@ -757,9 +765,12 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       <div class="aim-box"><h4>What AI Mode adds to this quote</h4>
         <div class="aim-r"><span class="aim-lbl">Attributes routed</span><b id="aim-on">none yet</b></div>
         <div class="aim-r"><span class="aim-lbl">Our time</span><b id="aim-hrs">&mdash;</b></div>
-        <div class="aim-r"><span class="aim-lbl">Set-up &middot; one-off</span><b id="aim-setup">&mdash;</b></div>
-        <div class="aim-r"><span class="aim-lbl">Per month &middot; ongoing</span><b id="aim-mon">&mdash;</b></div>
-        <div class="aim-r hi"><span class="aim-lbl">Year one</span><b id="aim-y1">&mdash;</b></div>
+        <div class="aim-r hi"><span class="aim-lbl">Set-up &middot; one-off</span><b id="aim-setup">&mdash;</b></div>
+        <div class="aim-r hib"><span class="aim-lbl">Per month &middot; ongoing</span><b id="aim-mon">&mdash;</b></div>
+        <!-- NO ANNUAL FIGURE (Ray, 18 Sep 2026: "move annual cost lines or anything related to
+             annual cost (pro-rata) not neccessary (Across all quotes)"). A Year-one total adds a
+             one-off to twelve months, which is the very mixing the CFO rework separated out. The
+             two figures a quote answers are what it costs ONCE and what it costs A MONTH. -->
         <div class="aim-src" id="aim-word"></div></div>
     </div>
   </div>
@@ -785,7 +796,6 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
         <div class="qs-r"><span>All ongoing lines <span class="hint" id="qs-monn"></span></span><b id="qs-mon"></b></div>
         <div class="qs-r"><span>Partner discount</span><b id="qs-mondisc"></b></div>
         <div class="qs-r tot"><span>Ongoing monthly total <span class="per">ex VAT</span></span><b id="qs-mongross"></b></div>
-        <div class="qs-r"><span>Annual (× 12)</span><b id="qs-annual"></b></div>
       </div>
       <div class="qs-col set">
         <div class="qs-h">Settings</div>
@@ -1191,7 +1201,9 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       var cov=st.coverage!=null?Math.round(st.coverage*100):null;
       return hd+'<div class="upd-kpis">'
         +updKpi(st.lastFull?('+'+fmt(st.lastFull.n)):'—',st.lastFull?('Last full month · '+moLbl(st.lastFull.k)):'No complete month yet')
-        +updKpi(st.m3!=null?fmt(Math.round(st.m3)):'—','Run-rate / month')
+        /* the PRICED figure, not the 3-month average - a KPI that disagreed with the line it sits
+           above is how a quote gets argued about in front of a client */
+        +updKpi(st.forecast?fmt(st.forecast.month):'—','Run-rate / month')
         +updKpi(st.y12!=null?fmt(st.y12):'—','Last '+st.y12Months+' complete month'+(st.y12Months===1?'':'s'))
         +'</div>'+updBars(ms,2)
         /* THREE headline numbers, and the caveat where caveats belong. Coverage was a fourth KPI,
@@ -1372,7 +1384,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
         monthly+=topUp; }
     }
     return {lines:lines,setup:setup,monthly:monthly,hours:totalHours,units:units,
-            perMonth:perMonth,newPer:newPer,counts:counts,year1:setup+monthly*12};
+            perMonth:perMonth,newPer:newPer,counts:counts};
   }
   /* AIMODE:ENGINE-END */
 
@@ -1588,7 +1600,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     T('#aim-raw',nn.unsized?'—':(fmt(Math.round(nn.raw))+' / month'));
     T('#aim-per',nn.unsized?'—':(fmt(q.newPer)+' / month'));
     T('#aim-on',on?(on+' of '+AIM_ATTRS.length):'none yet'); T('#aim-hrs',aimHrsW(q.hours));
-    T('#aim-setup',money(q.setup)); T('#aim-mon',money(q.monthly)); T('#aim-y1',money(q.year1));
+    T('#aim-setup',money(q.setup)); T('#aim-mon',money(q.monthly));
     var w=$('#aim-word'); if(w)w.textContent=on?(aimWord(q)+(minL?' · '+minL.detail:'')):'Nothing routed yet — pick a data source on a row above and it prices here.';
     var sl=$('#aim-srcline'); if(sl)sl.innerHTML=aimSrcLine(nn);
     T('#aim-hr',money(aimHourly(aimRates()))+' / hour'); }
@@ -1824,13 +1836,14 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       var gc=document.querySelector('.qgrp[data-g="'+cssEsc(g)+'"] .gcount'); if(gc){gc.textContent=onN?onN+' selected':items.length+' fields'; gc.className='gcount'+(onN?' has':'');} });
     /* the bottom line reads BOTH sides (Ray, 14 Sep 2026: "the number doesn't add up properly at the bottom" —
        with systems and feeds monthly, a one-off-only headline moved for nothing when they were added): monthly
-       first when there is one, then one-off, then Year 1 = one-off + 12 months */
-    /* CFO, 15 Sep 2026: initial one-off costs and ongoing costs must read apart — INITIAL first, ONGOING second, Year 1 last */
+       first when there is one, then one-off */
+    /* CFO, 15 Sep 2026: initial one-off costs and ongoing costs must read apart — INITIAL first,
+       ONGOING second, and (Ray, 18 Sep 2026) NOTHING ANNUAL after them: a Year-1 line adds a
+       one-off to twelve months, re-mixing what that rework pulled apart. */
     var one=t.miss?'<span class="gline"><b class="grand unset">set every rate to total</b></span>':'<span class="gline"><b class="grand">'+money(t.gross)+'</b> initial one-off</span>';
-    var mon=(t.monGross>0)?'<span class="gline"><b class="grand">'+money(t.monGross)+'</b> / month ongoing <span class="hint">('+money(t.monGross*12)+' a year)</span></span>':'';
-    var yr=(!t.miss&&t.monGross>0)?'<span class="gyear">Year 1 · '+money(t.gross+t.monGross*12)+' <span class="hint">(one-off + 12 months'+(vatOn()?', inc VAT':', ex VAT')+')</span></span>':'';
+    var mon=(t.monGross>0)?'<span class="gline"><b class="grand">'+money(t.monGross)+'</b> / month ongoing</span>':'';
     $('#qtot').innerHTML='<span>Quote summary</span><span class="hint">'+(t.inc?(t.inc+' AI field'+(t.inc===1?'':'s')+' · '+fmt(t.tp)+' SKUs · '+modeWord(lines())):'no AI fields')+(t.x.length?' · '+xWord(t.x):'')+((t.aim&&t.aim.lines.length)?' · AI Mode '+aimWord(t.aim):'')+(t.monN?' · '+t.monN+' monthly line'+(t.monN===1?'':'s'):'')+(t.disc>0?' · partner discount '+t.disc+'%'+(t.discScope!=='all'?' ('+discScopeWord(t.discScope)+')':''):'')+(vatOn()?' · inc VAT':' · ex VAT')+'</span>'
-      +'<span class="gtot col-line">'+one+mon+yr+'</span>';
+      +'<span class="gtot col-line">'+one+mon+'</span>';
     var S1=function(id,v){ var e=$(id); if(e)e.innerHTML=v; };
     S1('#qs-linesn','· '+t.inc+' line'+(t.inc===1?'':'s')+' · '+fmt(t.tp)+' SKUs');
     var aw=$('#qs-aim-w'), amw=$('#qs-aimm-w'), aOn=!!(t.aim&&t.aim.lines.length);
@@ -1850,7 +1863,6 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     S1('#qs-mon',money(t.monSub));
     S1('#qs-mondisc',t.disc>0?(t.monDiscBase>0?'−'+money(t.monDisc):'<span class="hint">not on monthly</span>'):'—');
     S1('#qs-mongross',money(t.monGross)+' <span class="per">/ month</span>');
-    S1('#qs-annual',money(t.monGross*12));
     var aimN=(t.aim&&t.aim.lines.length)?(t.aim.counts.feed+t.aim.counts.scrape+t.aim.counts.ai+t.aim.counts.fh):0;
     $('#kpis').innerHTML=kpi(fmt(baseVol()),'SKUs in scope')+kpi(t.inc+' / '+CAT.length,'Fields selected')+kpi(fmt(t.tp),'SKUs quoted')
       +(aimN?kpi(aimN+' / '+AIM_ATTRS.length,'AI Mode attributes'):'')
@@ -2070,7 +2082,8 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   function discWord(sc){ return (sc&&sc!=='all')?' ('+discScopeWord(sc)+')':''; }
   /* CFO, 15 Sep 2026 ("it's mixing set-up costs with monthly costs so it's hard to easily see the initial one-off
      costs vs the ongoing costs"): the text reads as TWO blocks — INITIAL ONE-OFF, then ONGOING MONTHLY, each with
-     its own lines, discount, VAT and total — and a one-line SUMMARY (one-off · monthly · annual · Year 1) */
+     its own lines, discount, VAT and total — and a one-line SUMMARY (one-off · monthly; nothing
+     annual, per Ray 18 Sep 2026) */
   $('#copy').addEventListener('click',function(){
     var L=lines(), t=totals(), r=rec(), P=SHOWP, V=vatOn()?' (inc VAT)':' (ex VAT)';
     var out=['FeedSpark — '+(t.x.length?'quote':'AI field generation quote'),'Client: '+CLIENT+'   Market: '+MKT.toUpperCase(),'Date: '+new Date().toLocaleDateString('en-GB')];
@@ -2104,11 +2117,10 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       aM.forEach(function(l){ out.push('    • '+l.label+(P?('  '+money(l.monthly)+'/month'):'')); }); }
     if(!xm.length&&!t.upd&&!monL.length&&!aM.length)out.push('  (none — everything quoted is a one-off charge)');
     if(P&&!t.miss){ if(t.monDisc>0){ out.push('  Subtotal: '+money(t.monSub)+' / month'); out.push('  Partner discount '+t.disc+'%'+discWord(t.discScope)+': −'+money(t.monDisc)+' / month'); }
-      out.push('  MONTHLY TOTAL'+V+': '+money(t.monGross)+' / month · '+money(t.monGross*12)+' a year'); }
+      out.push('  MONTHLY TOTAL'+V+': '+money(t.monGross)+' / month'); }
     // ---- 3 · SUMMARY ----
     if(P){ out.push('','SUMMARY'+V); out.push('  Initial one-off: '+(t.miss?'(rates incomplete)':money(t.gross)));
-      out.push('  Ongoing: '+money(t.monGross)+' / month · '+money(t.monGross*12)+' a year');
-      if(!t.miss)out.push('  Year 1 total: '+money(t.gross+t.monGross*12)+' (one-off + 12 months)');
+      out.push('  Ongoing: '+money(t.monGross)+' / month');
       if(t.disc>0&&!discMan())out.push('  The partner discount excludes man power (hours at the day rate).');
       if(r.valid)out.push('','Quote valid for '+r.valid+' days.');
     } else { out.push('','(Commercials on request.)'); }
@@ -2257,8 +2269,9 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
                                                     block total               (RED Net)
        BAND 3  ONE-OFF COSTS: SET-UP & CONFIGURATION
                  Core Set-Up & Initial Optimisation block total               (RED Net)
-       BAND 4  QUOTE SUMMARY — monthly, one-off, annual, Year 1 (ours: their book never adds the two
-               one-off bands together, which is the one number the CFO asked to see)
+       BAND 4  QUOTE SUMMARY — monthly and one-off, and NOTHING ANNUAL (ours: their book never adds
+               the two one-off bands together, which is the one number the CFO asked to see; Ray,
+               18 Sep 2026, took the annual, pro-rated and Year-1 rows out of every quote surface)
 
      Every band repeats the same column head: A:B the band name · D:F "Quantity / Cost / Total Cost"
      under "<MKT> Market" · H "Discount % (Exc Man Power)" · I "Discount £ (Exc Man Power)" · K
@@ -2276,10 +2289,6 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     var validDays=(r.valid!=null&&r.valid!=='')?+r.valid:30;
     var vTo=new Date(now.getTime()); vTo.setDate(vTo.getDate()+validDays);
     var missN=0; L.forEach(function(l){ if(l.rt==null)missN++; });
-    // pro-rated window: rest of the run to the next January contract year-end
-    var pf=new Date(now.getFullYear(),now.getMonth()+1,1);
-    var pt=new Date(pf.getMonth()===0?pf.getFullYear():pf.getFullYear()+1,0,1);
-    var pmo=(pt.getFullYear()-pf.getFullYear())*12+(pt.getMonth()-pf.getMonth())+1;
     /* the partner discount rides the template's OWN Discount % column on every priced line, so
        the sheet's formulas (I = F×H, K = F−I, the =SUM over K) carry it — nothing bespoke */
     var dsc=t.disc>0?t.disc/100:0;
@@ -2472,19 +2481,16 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     var oneParts=[]; if(rBst&&!t.miss)oneParts.push('K'+rBst); if(rSet)oneParts.push('K'+rSet);
     var oneF=oneParts.length?oneParts.join('+'):'0', live=!t.miss;
     sect('QUOTE SUMMARY','Ongoing cost and one-off cost side by side');
-    var oneNet=n2(bstA.net+setA.net), monInc=monNet, oneInc=oneNet;
-    var rSM=row({A:{v:'Total Monthly Cost (ex VAT)',s:S.totl},K:{f:'K'+rMonG,v:monNet,s:S.subnet},
+    var oneNet=n2(bstA.net+setA.net);   // no annual or Year-1 figure to derive from these any more
+    row({A:{v:'Total Monthly Cost (ex VAT)',s:S.totl},K:{f:'K'+rMonG,v:monNet,s:S.subnet},
       M:{v:'Recurring every month for the life of the service',s:S.note}});
-    var rSO=row({A:{v:'Total One-Off Costs (ex VAT)',s:S.totl},K:live?{f:oneF,v:oneNet,s:S.subnet}:{v:'',s:S.totgap},
+    row({A:{v:'Total One-Off Costs (ex VAT)',s:S.totl},K:live?{f:oneF,v:oneNet,s:S.subnet}:{v:'',s:S.totgap},
       M:{v:live?'Performance booster + set-up & configuration — paid once':'Rates incomplete — see the Performance Booster block',s:S.note}});
-    var monG='K'+rSM, oneG='K'+rSO;   // no VAT line anywhere — every figure on the sheet is ex VAT
-    row({A:{v:'Total Annual'+(vatOn()?' (inc VAT)':' (ex VAT)'),s:S.totl},K:{f:'('+monG+')*12',v:n2(monInc*12),s:S.sube},
-      M:{v:'Total monthly cost × 12',s:S.note}});
-    row({A:{v:'Pro-rated '+monY(pf)+' to '+monY(pt),s:S.totli},K:{f:'('+monG+')*'+pmo,v:n2(monInc*pmo),s:S.sube},
-      M:{v:pmo+' month'+(pmo===1?'':'s')+' — contract year assumed to end in January, adjust to the client’s',s:S.note}});
-    row({A:{v:'Year 1 Total'+(vatOn()?' (inc VAT)':' (ex VAT)'),s:S.totl},
-      K:live?{f:'('+oneG+')+('+monG+')*12',v:n2(oneInc+monInc*12),s:S.totred}:{v:'',s:S.totgap},
-      M:{v:live?'One-off costs + 12 months of monthly cost':'Set every rate in the module to total this quote',s:S.noteb}});
+    /* NO ANNUAL, PRO-RATED OR YEAR-1 ROW (Ray, 18 Sep 2026: "move annual cost lines or anything
+       related to annual cost (pro-rata) not neccessary (Across all quotes)"). The band answers the
+       two questions the CFO rework exists to keep apart — what recurs, and what is paid once. The
+       pro-rated row also ASSUMED a January contract year-end, so on any other client it was a
+       figure nobody had agreed; there is no reason to keep guessing it. */
     row(); row();
 
     /* 8 — the five standing commercial notes, in the template's framed box */
@@ -2520,7 +2526,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     /* the note describes the ManPower section only, so it quotes THAT section's own total — it used to
        quote the whole monthly net, which read as if maintenance cost what systems and feeds cost too */
     if(mpRows.length)notes.push({t:'Man power: '+mpRows.length+' line'+(mpRows.length===1?'':'s')+', '+n2(mpA.days*BLOCK_H)+'h per month at £'+blockGBP()+' per '+BLOCK_H+'h = '+money(mpA.net)+' / month ex VAT — the ManPower (Days / Month) section above.'});
-    notes.push({t:'Monthly recurring: '+money(monNet)+' / month — '+money(monNet*12)+' a year. One-off: '+(t.miss?'rates incomplete':money(oneNet))+'. Year 1: '+(t.miss?'rates incomplete':money(oneNet+monNet*12))+'.'});
+    notes.push({t:'Monthly recurring: '+money(monNet)+' / month. One-off: '+(t.miss?'rates incomplete':money(oneNet))+'.'});
     if(dsc)notes.push({t:'Partner discount: '+t.disc+'% off '+(t.discScope==='oneoff'?'the one-off lines':t.discScope==='monthly'?'the monthly lines':t.discScope==='lines'?'the selected lines':'every line')+' (the Discount % column)'+(discMan()?'':' — man power (hours at the day rate) excluded')
       +(t.miss?'.':' — '+(t.discAmt>0?(money(t.discAmt)+' off the one-off subtotal of '+money(t.sub)+', net '+money(t.net)+' ex VAT'):'no one-off discount')+(t.monDisc>0?'; '+money(t.monDisc)+' / month off the monthly lines':'')+'.')});
     notes.push({t:'All figures are ex VAT.'});
@@ -2811,7 +2817,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       monN:t.monN, monSub:t.monSub, monDisc:t.monDisc, monNet:t.monNet, monVat:t.monVat, monGross:t.monGross, upd:t.upd||null,
       aim:(t.aim&&t.aim.lines.length)?{unit:t.aim.unit,unitWord:t.aim.unitWord,units:t.aim.units,newPer:t.aim.newPer,
         perMonth:t.aim.perMonth,src:(t.aim.nn||{}).src||null,counts:t.aim.counts,hours:t.aim.hours,
-        setup:t.aim.setup,monthly:t.aim.monthly,year1:t.aim.year1,rates:aimRates(),
+        setup:t.aim.setup,monthly:t.aim.monthly,rates:aimRates(),
         lines:t.aim.lines.map(function(l){ return {id:l.id,key:l.key,label:l.label,route:l.route,detail:l.detail,
           hours:l.hours,setup:l.setup,man:l.man,gen:l.gen,monthly:l.monthly,monthlyNote:l.monthlyNote||null,shared:!!l.shared}; })}:null,
       aimOne:t.aimOne, aimMon:t.aimMon,
@@ -2948,8 +2954,8 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     var aM=qAimBlock(q,P,'monthly'); aM.forEach(function(x){ out.push(x.replace(/^  /,'').replace(/^    /,'')); });
     if(!xm.length&&!q.upd&&!monL.length&&!aM.length)out.push('None — everything quoted is a one-off charge.');
     if(P&&!q.miss){ if(+q.monDisc>0){ out.push('Subtotal (ex VAT): '+money(q.monSub)+' / month'); out.push('Partner discount '+q.disc+'%'+qDiscWord(q)+': −'+money(q.monDisc)+' / month'); }
-      out.push('Net (ex VAT): '+money(q.monNet)+' / month'); if(q.vat)out.push('VAT 20%: '+money(q.monVat)+' / month'); out.push('MONTHLY TOTAL'+V+': '+money(q.monGross)+' / month — '+money(q.monGross*12)+' a year'); }
-    if(P){ if(!q.miss)out.push('','SUMMARY'+V+': initial one-off '+money(q.gross)+' · ongoing '+money(q.monGross)+' / month ('+money(q.monGross*12)+' a year) · Year 1 '+money(q.gross+q.monGross*12)+'.');
+      out.push('Net (ex VAT): '+money(q.monNet)+' / month'); if(q.vat)out.push('VAT 20%: '+money(q.monVat)+' / month'); out.push('MONTHLY TOTAL'+V+': '+money(q.monGross)+' / month'); }
+    if(P){ if(!q.miss)out.push('','SUMMARY'+V+': initial one-off '+money(q.gross)+' · ongoing '+money(q.monGross)+' / month.');
       if(+q.disc>0&&q.discMan===false)out.push('The partner discount excludes man power (hours at the day rate).');
       out.push('This quotation is valid for '+qValid(q)+' days from the date of issue & prices as at '+monY(d)+'.');
     } else {
@@ -2991,7 +2997,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     if(+q.disc>0&&!q.miss)out.push('Partner discount '+q.disc+'%'+(q.discScope&&q.discScope!=='all'?' ('+discScopeWord(q.discScope)+')':'')+': −'+money(q.discAmt)+' one-off (subtotal '+money(q.sub)+' → net '+money(q.net)+' ex VAT)'+(+q.monDisc>0?' · −'+money(q.monDisc)+' / month':''));
     out.push(q.miss?'Commercials: rates incomplete — the quote cannot total until every line carries a £/SKU or one-off rate'
       :('One-off total'+(q.vat?' (inc VAT 20%)':' (ex VAT)')+': '+money(q.gross)+(q.vat?' · VAT '+money(q.vatAmt):'')));
-    if(+q.monN>0)out.push((q.upd?'Monthly recurring':'Monthly maintenance')+(q.vat?' (inc VAT)':' (ex VAT)')+': '+money(q.monGross)+' / month on '+q.monN+' line'+(q.monN===1?'':'s')+' — '+money(q.monGross*12)+' a year');
+    if(+q.monN>0)out.push((q.upd?'Monthly recurring':'Monthly maintenance')+(q.vat?' (inc VAT)':' (ex VAT)')+': '+money(q.monGross)+' / month on '+q.monN+' line'+(q.monN===1?'':'s'));
     if(q.prev)out.push('Version of '+q.prev);
     out.push('Valid '+qValid(q)+' days from the save date');
     out.push('Source: AI Field Quote finance tracker (/aiquote)');
@@ -3199,8 +3205,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
           +((+q.disc>0)?'<div class="dl"><span>Partner discount '+esc(String(q.disc))+'%'+(q.discScope&&q.discScope!=='all'?' <span style="color:var(--muted)">· '+esc(discScopeWord(q.discScope))+'</span>':'')+(q.discMan===false?' <span style="color:var(--muted)">· excl. man power</span>':'')+' <span style="color:var(--muted)">· one-off</span></span><span class="tk-money'+(SHOWP?'':' hid')+'">'+(q.miss?'—':(+q.discAmt>0?'−'+money(q.discAmt):'—'))+'</span></div>':'')
           +'<div class="dl" style="border-top:1px solid var(--line);margin-top:5px;padding-top:5px"><span><b>Initial one-off total'+(q.vat?' (inc VAT 20%)':' (ex VAT)')+'</b> <span style="color:var(--muted)">· paid once</span></span><span class="tk-money'+(SHOWP?'':' hid')+'"><b>'+(q.miss?'rates incomplete':money(q.gross))+'</b></span></div>'
           +((+q.disc>0&&+q.monDisc>0)?'<div class="dl"><span>Partner discount '+esc(String(q.disc))+'% <span style="color:var(--muted)">· monthly</span></span><span class="tk-money'+(SHOWP?'':' hid')+'">−'+money(q.monDisc)+' / month</span></div>':'')
-          +((+q.monGross>0)?'<div class="dl"><span><b>Ongoing monthly total'+(q.vat?' (inc VAT 20%)':' (ex VAT)')+'</b> <span style="color:var(--muted)">· '+q.monN+' line'+(q.monN===1?'':'s')+' · '+money(q.monGross*12)+' a year</span></span><span class="tk-money'+(SHOWP?'':' hid')+'"><b>'+money(q.monGross)+' / month</b></span></div>':'')
-          +((+q.monGross>0&&!q.miss)?'<div class="dl"><span><b>Year 1</b> <span style="color:var(--muted)">· one-off + 12 months</span></span><span class="tk-money'+(SHOWP?'':' hid')+'"><b>'+money(q.gross+q.monGross*12)+'</b></span></div>':'');
+          +((+q.monGross>0)?'<div class="dl"><span><b>Ongoing monthly total'+(q.vat?' (inc VAT 20%)':' (ex VAT)')+'</b> <span style="color:var(--muted)">· '+q.monN+' line'+(q.monN===1?'':'s')+'</span></span><span class="tk-money'+(SHOWP?'':' hid')+'"><b>'+money(q.monGross)+' / month</b></span></div>':'');
         var hist=(q.hist||[]).map(function(h){ return '<b>'+esc(h.s)+'</b> — '+tkWhen(h.t)+' · '+esc(tkWho(h.by)); }).join('<br>');
         row+='<tr class="t-det"><td colspan="10">'
           +'<div class="dh">Lines as saved</div>'+dl

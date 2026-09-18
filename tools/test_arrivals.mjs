@@ -1,6 +1,7 @@
 /*
  * New-product ARRIVALS harness (Ray, 15 Sep 2026): first-seen dates (c:fs_date_of_birth) →
- * per month / quarter / year + the run-rate forecast. Pins (1) the engine's maths on a fixed
+ * per month / quarter / year + the run-rate forecast (a YEAR of complete months ÷ 12 since Ray's
+ * 18 Sep 2026 note). Pins (1) the engine's maths on a fixed
  * clock, (2) that labelguard's xmlCollector histograms the field off a real XML stream with the
  * SAME parsing as the engine (Shopping feeds only — a -fb market captures nothing), (3) the
  * worker's dobStore (lifted by name) — sanitising, the per-feed record, the estate index, the
@@ -34,12 +35,40 @@ ok('observed starts at the first first-seen month (Dec 2025 unobserved, Jan 2026
 eq('lastFull = Aug 2026 (330); fullMonths = 8', [st.lastFull.k, st.lastFull.n, st.fullMonths], ['2026-08', 330, 8]);
 ok('m3 = mean(Jun, Jul, Aug) = 276.67 · m6 = mean(Mar..Aug) = 221.67', Math.abs(st.m3 - 830 / 3) < 0.01 && Math.abs(st.m6 - 1330 / 6) < 0.01, st.m3 + ' ' + st.m6);
 eq('y12 = the 8 complete months (1,530) — y12Months says 8, never a fake 12', [st.y12, st.y12Months], [1530, 8]);
-eq('forecast = round(m3) per month, ×3, ×12, basis "the last 3 complete months"', st.forecast, { month: 277, quarter: 830, year: 3320, basis: 'the last 3 complete months' });
+/* THE RUN-RATE IS A YEAR, ÷ 12 (Ray, 18 Sep 2026). This fixture has only EIGHT complete months,
+   so there is no year to look back on: dividing 1,530 by 12 would report 128 a month against a
+   book actually running at 191, under-reading by a third. It divides by the months there are and
+   the basis SAYS it is short of a year - stated, never padded out with months of zeros. */
+eq('forecast on a short history = y12 ÷ the 8 months there are, and says so', st.forecast,
+  { month: 191, quarter: 574, year: 2295, basis: 'the last 8 complete months — short of a year' });
+ok('m3 (277) is still reported, and is NOT what the year is priced on', Math.round(st.m3) === 277 && st.forecast.month === 191, st.m3 + ' / ' + st.forecast.month);
+
+/* A FULL YEAR, and the case Ray sent: Monsoon GB, 10,298 products, reading 1,534 new a month.
+   Its Jul and Aug (1,741 / 2,221) run three to five times its spring months, so the old 3-month
+   mean × 12 forecast 18,408 arrivals a year onto a 10,298-product catalogue - the whole shop
+   twice over, on a figure that goes to a client in a quote. */
+const MON = { '2025-09': 130, '2025-10': 152, '2025-11': 44, '2025-12': 460, '2026-01': 406, '2026-02': 242,
+  '2026-03': 503, '2026-04': 420, '2026-05': 286, '2026-06': 639, '2026-07': 1741, '2026-08': 2221, '2026-09': 1471 };
+const stM = AR.stats({ n: 8715, m: MON }, NOW, 10298);
+eq('12 complete months observed, y12 = 7,244', [stM.y12Months, stM.y12], [12, 7244]);
+ok('the 3-month mean is the 1,534 Ray screenshotted', Math.round(stM.m3) === 1534, stM.m3);
+eq('the run-rate is a year ÷ 12 — 604 a month, not 1,534', stM.forecast,
+  { month: 604, quarter: 1811, year: 7244, basis: 'a year of complete months ÷ 12' });
+ok('…and × 12 no longer forecasts more than the whole catalogue', stM.forecast.year < 10298, stM.forecast.year);
+/* a month inside the window with no arrivals is a REAL zero and must be divided by, not skipped */
+const stZ = AR.stats({ n: 1100, m: { '2025-09': 100, '2025-10': 100, '2025-11': 100, '2025-12': 100, '2026-01': 100,
+  '2026-02': 100, '2026-03': 100, '2026-05': 100, '2026-06': 100, '2026-07': 100, '2026-08': 100 } }, NOW, 5000);
+eq('an empty month inside the year counts as a zero (1,100 ÷ 12 = 92)', [stZ.y12Months, stZ.forecast.month], [12, 92]);
+/* 13+ months of history: only the last twelve count, so a distant spike cannot inflate the year */
+const stL = AR.stats({ n: 9000, m: { '2024-06': 5000, '2025-09': 100, '2025-10': 100, '2025-11': 100, '2025-12': 100,
+  '2026-01': 100, '2026-02': 100, '2026-03': 100, '2026-04': 100, '2026-05': 100, '2026-06': 100, '2026-07': 100,
+  '2026-08': 100 } }, NOW, 9000);
+eq('only the last 12 complete months are looked back on (the 2024 spike is outside)', [stL.y12Months, stL.forecast.month], [12, 100]);
 eq('quarters: calendar, current flagged partial', st.quarters, [{ q: '2026 Q1', n: 300, partial: false }, { q: '2026 Q2', n: 600, partial: false }, { q: '2026 Q3', n: 720, partial: true }]);
 eq('years: 2026 partial', st.years, [{ y: '2026', n: 1620, partial: true }]);
 ok('coverage = n / rows = 54%', Math.abs(st.coverage - 0.54) < 0.001, st.coverage);
 const st2 = AR.stats({ n: 40, m: { '2026-09': 40 } }, NOW, 40);
-eq('a feed with only the current (partial) month forecasts off "the current month so far"', [st2.forecast.month, st2.forecast.basis, st2.lastFull, st2.m3], [40, 'the current month so far', null, null]);
+eq('a feed with only the current (partial) month forecasts off "the current month so far"', [st2.forecast.month, st2.forecast.basis, st2.lastFull, st2.m3, st2.m12], [40, 'the current month so far', null, null, null]);
 eq('no data → no forecast, honest nulls', [AR.stats(null, NOW, 0).forecast, AR.stats({ m: {} }, NOW, 10).y12], [null, null]);
 
 console.log('\n— collector inside labelguard.xmlCollector over a real XML stream —');

@@ -268,3 +268,67 @@ The row wears a live `.t-wf` chip — the ticket's stage and **whose court** it 
 `/workflow`, because the stage moves there and never on this page — or an honest `🎫 no ticket yet`
 on a filed quote nothing matches. Finance gets the figure the rail exists for: **Delivered · not
 billed**. The pipeline is re-read every 120s and on tab-visible.
+
+---
+
+## The run-rate is a year, divided by twelve
+
+> Ray, 18 Sep 2026: *"The logic for new products a month is not accurate. For example, Monsoon had
+> 10,298 divided by 12. It's not 1,534. Let's use the logic of the current calendar year, looking
+> back one year and divide by 12."*
+
+It was the **mean of the last 3 complete months**, which reads whatever the catalogue did most
+recently rather than what it does in a year. Monsoon GB's July and August (1,741 and 2,221 new
+products) run three to five times its spring months, so × 12 forecast **18,408 arrivals a year onto
+a 10,298-product catalogue** — the whole shop arriving twice over, on a figure that goes to a client
+in a quote. Twelve months average the seasonality out, which is what a quote needs. The same feed
+now reads **604 a month**.
+
+**Divided by 12 whenever there is a year to look back on.** A feed monitored for five months has no
+year, and dividing those five by 12 would under-read by more than half — so it divides by the months
+actually observed and the basis says how many. *Short of a year* is stated, never padded out with
+months of zeros. An empty month **inside** the window is a real zero and is divided by.
+
+`m3` and `m6` are still reported, and `/volume` prints the 3-month average beside the run-rate,
+because a recent burst is worth *seeing* — it just is not what the year is priced on.
+
+It is **one engine** (`docs/arrivals_engine.js`), so `/volume`, the Monthly update card, the AI Quote
+and the Playbook cannot quote two different rates. `tools/test_arrivals.mjs` pins it on Ray's exact
+Monsoon numbers: the 3-month mean still computes to the 1,534 he screenshotted, and the forecast
+reads 604.
+
+## Nothing annual, on any quote
+
+> Ray, 18 Sep 2026: *"move annual cost lines or anything related to annual cost (pro-rata) not
+> neccessary (Across all quotes)"*
+
+A **Year-1 total adds a one-off to twelve months** — re-mixing exactly what the CFO rework pulled
+apart (*"it's mixing set-up costs with monthly costs so it's hard to easily see the initial one-off
+costs vs the ongoing costs"*). Every annual and pro-rated **cost** figure is gone:
+
+| surface | what went |
+|---|---|
+| AI Mode card | the **Year one** row |
+| Quote total tile | **Annual (× 12)** |
+| bottom line | the **Year 1 ·** span and the *(x a year)* hint beside the monthly |
+| ⧉ Copy text | *· x a year* and *Year 1 total* |
+| client email | the same two |
+| brief | *— x a year* |
+| finance tracker | the *· x a year* hint and the **Year 1** row |
+| finance workbook, BAND 4 | **Total Annual**, **Pro-rated**, **Year 1 Total** and the notes line |
+
+`year1` left the engine too, so no surface can quietly print one again — a forbidden marker and a
+harness assertion pin that nothing multiplies a monthly figure by twelve.
+
+Two notes. The pro-rated row **assumed a January contract year-end**, so on any client whose year
+ends elsewhere it printed a figure nobody had agreed; there is no reason to keep guessing it. And
+what survives is **new products a year** — that is a count of products, not a cost.
+
+### A flex row ignores `hidden`
+
+Found while checking the card on screen rather than in the code. The UA's `[hidden]{display:none}`
+loses to any class that sets `display`, so `el.hidden = true` on a `.aim-r` or `.qs-r` left the row
+**on screen with an empty value in it**. Two rows were affected: the newness pair, where the shell
+shows whichever read applies and so drew *both* ("Arrivals run-rate 0 / month" above the typed %
+box), and the quote summary's AI Mode rows, which had been showing empty since they shipped.
+`.aim-r[hidden],.qs-r[hidden]{display:none}` states it once, for every such row.
