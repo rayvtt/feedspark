@@ -7822,6 +7822,108 @@
       "file": ".github/workflows/validate.yml",
       "pattern": "tools/test_aimode.mjs",
       "pr": 455
+    },
+    {
+      "name": "Skim view: a block that CONTAINS its heading folds behind that heading (pattern A)",
+      "file": "docs/digest_widget.html",
+      "pattern": "function partsA(d)",
+      "pr": 456
+    },
+    {
+      "name": "Skim view: a heading that sits ABOVE its content as siblings folds what follows it (pattern B)",
+      "file": "docs/digest_widget.html",
+      "pattern": "function partsB(d)",
+      "pr": 456
+    },
+    {
+      "name": "Skim view: the block's OWN heading — never one belonging to a nested block",
+      "file": "docs/digest_widget.html",
+      "pattern": "function ownHeads(b)",
+      "pr": 456
+    },
+    {
+      "name": "Skim view: closed by default only when the page has two or more sections; a late arrival opens",
+      "file": "docs/digest_widget.html",
+      "pattern": "var want = g.late ? true : n < 2;",
+      "pr": 456
+    },
+    {
+      "name": "Skim view: what a device opened is remembered per device, never shared state",
+      "file": "docs/digest_widget.html",
+      "pattern": "KEY = 'fcc-m-open'",
+      "pr": 456
+    },
+    {
+      "name": "Skim view: a heading the page already toggles is left to the page (styled into the row rhythm)",
+      "file": "docs/digest_widget.html",
+      "pattern": "function decorateOwn(h)",
+      "pr": 456
+    },
+    {
+      "name": "Skim view: rows in DOCUMENT order whichever pass found them (the bar above the first)",
+      "file": "docs/digest_widget.html",
+      "pattern": "compareDocumentPosition(y) & 4",
+      "pr": 456
+    },
+    {
+      "name": "Skim view: a long table shows 8 rows behind Show all (cap 10)",
+      "file": "docs/digest_widget.html",
+      "pattern": "ROWS_SHOW = 8, ROWS_CAP = 10",
+      "pr": 456
+    },
+    {
+      "name": "Skim view: the widget's own nodes are invisible outside the phone width",
+      "file": "docs/digest_widget.html",
+      "pattern": ".fcc-dg-ch,.fcc-dg-dg,.fcc-dg-bar,.fcc-dg-more{display:none}",
+      "pr": 456
+    },
+    {
+      "name": "worker: the skim view is injected after the phone layer for every signin",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "html = inject(html, DIGESTW);",
+      "pr": 456
+    },
+    {
+      "name": "worker: the skim view imported as a Text module",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "import DIGESTW from \"../../../docs/digest_widget.html\";",
+      "pr": 456
+    },
+    {
+      "name": "Phone tripwire: the fold is asserted at first paint, then everything expanded before the parity count",
+      "file": "tools/check_mobile.js",
+      "pattern": "FCCDigest.expandAll({ silent: true, caps: true })",
+      "pr": 456
+    },
+    {
+      "name": "Phone tripwire: rule 6 names the sections left open on a fresh device",
+      "file": "tools/check_mobile.js",
+      "pattern": "sections open at first paint",
+      "pr": 456
+    },
+    {
+      "name": "Phone tripwire renders pages WITH the skim layer",
+      "file": "tools/check_mobile.js",
+      "pattern": "'digest_widget.html'",
+      "pr": 456
+    },
+    {
+      "name": "Dark tripwire renders pages WITH the skim layer",
+      "file": "tools/check_darkmode.js",
+      "pattern": "'digest_widget.html'",
+      "pr": 456
+    },
+    {
+      "name": "Phone-layer harness pins the skim view",
+      "file": "tools/test_mobile.mjs",
+      "pattern": "read('docs/digest_widget.html')",
+      "pr": 456
+    },
+    {
+      "name": "MOBILE.md documents the skim view",
+      "file": "docs/MOBILE.md",
+      "pattern": "## The skim view",
+      "pr": 456
     }
   ]
 }
