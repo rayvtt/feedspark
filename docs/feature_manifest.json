@@ -7658,6 +7658,36 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "var hd = function (name, on, col, val, pct)",
       "min": 1
+    },
+    {
+      "name": "Task Manager: a side-by-side cell expands to fill the stage, legend animated in (Ray, 18 Sep 2026)",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function smallOne(c, colourBy)",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the expanded ring's final state rides SVG attributes so the PNG never rasterises frame zero",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "@keyframes tmarc{from{stroke-dashoffset:var(--arclen)}to{stroke-dashoffset:0}}",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the expansion is a view — dropped by the split, form, measure or untagged rule",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function expReset()",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: ONE control scale — field 34px, pill 30px (Ray, 18 Sep 2026: 'box and button ... not equal size, so it looks messy')",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": ":root{--h-field:34px;--h-pill:30px}",
+      "min": 1
+    },
+    {
+      "name": "Control-scale tripwire: enforced where set, reported elsewhere",
+      "file": "tools/check_mobile.js",
+      "pattern": "control scale fragmented",
+      "min": 1
     }
   ]
 }

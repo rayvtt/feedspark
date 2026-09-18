@@ -15,6 +15,8 @@ const fs = require('fs'), path = require('path'), os = require('os');
 let chromium, devices; try { ({ chromium, devices } = require('playwright')); } catch (e) { console.log('· playwright not installed — mobile tripwire skipped'); process.exit(0); }
 const ROOT = path.join(__dirname, '..'), D = path.join(ROOT, 'docs');
 const SHOTS = process.argv.indexOf('--shots') >= 0 ? process.argv[process.argv.indexOf('--shots') + 1] : null;
+// pages whose control scale has been set — add a page here in the PR that tidies it
+const SCALED = /^(TaskManager)$/;
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html', 'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html']
   .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
@@ -67,7 +69,25 @@ const COLLECT = `(() => {
   const navAll = nav ? nav.querySelectorAll('a.tbm').length + napps : 0;
   const tb = document.querySelector('.topbar-in'); const tbH = tb ? Math.round(tb.getBoundingClientRect().height) : 0;
   const navFixed = nav ? getComputedStyle(nav).position === 'fixed' : false;
-  return { W, sw: document.documentElement.scrollWidth, sh: document.documentElement.scrollHeight, nCtl: ctl.length, counts, over, tiny, small, navVis, navLinks, napps, navAll, navFixed, tbH };
+  /* CONTROL SCALE (Ray, 18 Sep 2026: "the box and button in the task manager are not equal size,
+     so it looks messy … review the entire page UX/UI and ensure these elements are not outdated.
+     It should stay consistent"). A page accumulates a bespoke height per feature until an eye
+     reads the row as mess before it can name why; measured on /tasks before the fix, ONE page
+     carried ten control heights and three pill styles differing only by a pixel of padding.
+     Measured on the DESKTOP pass only — under 760px the phone layer's own 36px tap-target rule
+     governs, as it should. Components that are legitimately their own size are exempt BY NAME,
+     never by being quietly rounded into a bucket. */
+  const SKIP = '.tab,.fh-dot,.instr-tgl,.info-btn,.tg-add,.nav-collapse,.tbm,#tb-modules,.topbar-in,#q,.hero,.dz-x,.chipx,.tag,.pz-av,.cz-move,.close,.x';
+  const scale = {};
+  Array.from(document.querySelectorAll('select,input[type=text],input[type=search],button.btn,button.chip,.pq-x')).filter(vis).forEach((el) => {
+    if (el.closest(SKIP) || el.matches(SKIP)) return;
+    const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+    // a square control is an icon button — its size is its glyph, not the text scale
+    if (Math.abs(r.width - r.height) < 3) return;
+    const k = Math.round(r.height) + '|' + cs.paddingLeft + '|' + cs.borderRadius.split(' ')[0] + '|' + cs.fontSize;
+    (scale[k] = scale[k] || []).push(el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (typeof el.className === 'string' && el.className.trim() ? '.' + el.className.trim().split(/\s+/)[0] : ''));
+  });
+  return { W, sw: document.documentElement.scrollWidth, sh: document.documentElement.scrollHeight, nCtl: ctl.length, counts, over, tiny, small, navVis, navLinks, napps, navAll, navFixed, tbH, scale };
 })()`;
 (async () => {
   const b = await chromium.launch({ headless: true });
@@ -100,10 +120,24 @@ const COLLECT = `(() => {
     if (!m.navVis || !m.navFixed) bad.push('module bar not shown as the fixed bottom bar');
     if (m.navLinks + m.napps < d.navAll) bad.push('module bar + ▦ sheet carry ' + (m.navLinks + m.napps) + ' of ' + d.navAll + ' modules');
     if (hidden.length) bad.push('hidden on the phone but visible on desktop: ' + hidden.slice(0, 8).join(' | ') + (hidden.length > 8 ? ' +' + (hidden.length - 8) : ''));
+    /* CONTROL SCALE. Two sizes are the whole vocabulary: a FIELD you open or type in, and a PILL
+       you press. More than two means a feature styled its own control and the row stops lining
+       up. Enforced where the scale has been set, REPORTED elsewhere with the page's own number,
+       so the next module to be worked on has a target rather than a surprise failure that is not
+       about the change in hand. */
+    const scl = Object.keys(d.scale || {}).sort((a2, b2) => d.scale[b2].length - d.scale[a2].length);
+    const nScale = scl.length;
+    if (SCALED.test(name)) {
+      if (nScale > 2) bad.push('control scale fragmented — ' + nScale + ' distinct sizes where there should be 2 (field + pill): '
+        + scl.map((k) => k.split('|')[0] + 'px ×' + d.scale[k].length + ' ' + Array.from(new Set(d.scale[k])).slice(0, 3).join(',')).join('  |  '));
+    }
     if (bad.length) fail++;
-    console.log((bad.length ? '  ✗ ' : '  ✓ ') + name.padEnd(17) + ' ctl ' + String(m.nCtl).padStart(4) + '/' + String(d.nCtl).padEnd(4) + ' tb ' + String(m.tbH).padStart(3) + 'px · bar ' + m.navLinks + '/' + d.navAll + ' · tiny ' + String(m.tiny).padStart(3) + ' · <11px ' + String(m.small).padStart(3) + (bad.length ? '\n      ' + bad.join('\n      ') : ''));
+    console.log((bad.length ? '  ✗ ' : '  ✓ ') + name.padEnd(17) + ' ctl ' + String(m.nCtl).padStart(4) + '/' + String(d.nCtl).padEnd(4) + ' tb ' + String(m.tbH).padStart(3) + 'px · bar ' + m.navLinks + '/' + d.navAll + ' · tiny ' + String(m.tiny).padStart(3) + ' · <11px ' + String(m.small).padStart(3)
+      + ' · scale ' + nScale + (SCALED.test(name) ? '' : '*') + (bad.length ? '\n      ' + bad.join('\n      ') : ''));
   }
   await b.close();
   console.log('\n' + PAGES.length + ' app pages at 390px' + (fail ? ' — ' + fail + ' failing the phone rules' : ' — phone rules hold'));
+  console.log('control scale: enforced on ' + SCALED.source.replace(/[^A-Za-z|]/g, '').split('|').join(', ')
+    + ' · * = reported only, tidy it when you next work that page');
   process.exit(fail ? 1 : 0);
 })();

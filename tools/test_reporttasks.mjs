@@ -1662,5 +1662,67 @@ ok(/\.cw-ctl \.cwp\{display:inline-flex/.test(PAGE_SRC) && /<span class="cwp"><l
   'and a label wraps WITH its control — the row wraps, and "INCLUDE" stranded at the end of one '
   + 'line with its select on the next names nothing');
 
+console.log('\n── side by side, expanded (Ray, 18 Sep 2026: "clicking on any chart will expand it as the main chart on the screen and showcase the different split legend in animation pls")');
+ok(/function smallOne\(c, colourBy\)/.test(PAGE_SRC), 'a cell can fill the stage on its own');
+ok(/out \+= '<rect class="smx" data-k="'/.test(PAGE_SRC) && /click to expand/.test(PAGE_SRC),
+  'the whole CELL is the click target, not the ring — a 12px slice is not something a hand can '
+  + 'reliably hit, and the label under it is part of the thing being pointed at');
+ok(/It goes LAST\n         so it sits above the arcs/.test(PAGE_SRC),
+  'and it is drawn last so it sits over the arcs, which keep their own hover tooltips');
+ok(/r\.onclick = function \(\) \{ CEXP = r\.getAttribute\('data-k'\); chart\(\); \};/.test(PAGE_SRC)
+  && /if \(b\) b\.onclick = function \(\) \{ CEXP = null; chart\(\); \};/.test(PAGE_SRC),
+  'a click expands, the ← All groups button returns');
+ok(/if \(e\.key === 'Escape' && CEXP != null && CFORM === 'small'\) \{ CEXP = null; chart\(\); return; \}/.test(PAGE_SRC),
+  'Esc closes the expansion BEFORE it reaches the drawer — the nearest thing closes first');
+ok(/if \(CEXP != null && !one\) CEXP = null;/.test(PAGE_SRC),
+  'a key that no longer exists is a stale view, not an error: it falls back to the grid');
+ok(/function expReset\(\)/.test(PAGE_SRC)
+  && /\$\('cform'\)\.onchange = function \(\) \{ expReset\(\);/.test(PAGE_SRC)
+  && /\$\('cmeas'\)\.onchange = function \(\) \{\n      expReset\(\);/.test(PAGE_SRC),
+  'and anything that changes what the CELLS ARE — split, form, measure, the untagged rule — drops it');
+ok(/The SEARCH deliberately does not drop it/.test(PAGE_SRC),
+  'the search deliberately does not, and says so where someone would look for it');
+
+console.log('   the animation, and the export it must survive');
+ok(/@keyframes tmarc\{from\{stroke-dashoffset:var\(--arclen\)\}to\{stroke-dashoffset:0\}\}/.test(PAGE_SRC)
+  && /@keyframes tmlgi\{/.test(PAGE_SRC),
+  'the ring draws itself and the legend rows arrive with it');
+ok(/stroke-dashoffset="0"/.test(PAGE_SRC) && /style="--arclen:' \+ draw\.toFixed\(2\) \+ 'px;animation-delay:/.test(PAGE_SRC),
+  'EVERY animated element also carries its FINAL state as an SVG attribute — the ⬇ PNG serialises '
+  + 'the node away from this stylesheet, where no keyframe can run, so without that rule the '
+  + 'export would rasterise frame zero: a ring hidden behind its own dash offset');
+ok(/<g class="lgi" style="animation-delay:[^"]*" opacity="1">/.test(PAGE_SRC),
+  'the legend rows likewise default to visible and are only animated by the wrapper class');
+ok(/@media\(prefers-reduced-motion:reduce\)\{\.tm-exp \.arc,\.tm-exp \.lgi,\.tm-exp \.ctr\{animation:none\}\}/.test(PAGE_SRC),
+  'and a reader who asked for less motion gets the finished figure, not a slower one');
+ok(/var narrow = \(\(\$\('cstage'\) && \$\('cstage'\)\.clientWidth\) \|\| 720\) < 560;/.test(PAGE_SRC),
+  'a narrow card gets its OWN geometry — ring above, legend across the full width — because a '
+  + '720-wide viewBox on a 360px screen halves every font and lands the legend at ~6px');
+ok(/l: 'Everything else here'/.test(PAGE_SRC),
+  'and the cell\'s out-of-key remainder is no longer a second row reading "Other" beside the '
+  + 'engine\'s own "Other (N more)" fold — invisible in a 40px ring, unanswerable once expanded');
+
+console.log('\n── one control scale (Ray, 18 Sep 2026: "the box and button in the task manager are not equal size, so it looks messy")');
+ok(/:root\{--h-field:34px;--h-pill:30px\}/.test(PAGE_SRC),
+  'two roles, two sizes: a FIELD you open or type in, a PILL you press');
+ok(/\.btn\.sm,\.chip,\.pq-x\{height:var\(--h-pill\)/.test(PAGE_SRC),
+  'the three pill styles that differed only by a pixel of padding (.btn.sm 4⁄9, .chip 5⁄10, '
+  + '.pq-x 4⁄10) are now one');
+ok(/\.cw-ctl select,\.pq-bar input\{height:var\(--h-field\)/.test(PAGE_SRC),
+  'and the select and the text input stop being 33px and 37.5px');
+ok(/HEIGHT IS SET EXPLICITLY, not left to padding/.test(PAGE_SRC),
+  'height is set outright: padding + line-height + font-size lands somewhere different for every '
+  + 'font size, which is exactly how one page reached ten heights');
+ok(/Deliberately NOT normalised: \.tab/.test(PAGE_SRC),
+  'and what is legitimately its own size is exempt BY NAME, never quietly rounded into a bucket');
+const MOB = fs.readFileSync(path.join(ROOT, 'tools', 'check_mobile.js'), 'utf8');
+ok(/const SCALED = \/\^\(TaskManager\)\$\//.test(MOB) && /control scale fragmented/.test(MOB),
+  'the tripwire enforces it where the scale is set and REPORTS every other page\'s number, so the '
+  + 'next module to be worked on has a target rather than a surprise failure about someone else\'s change');
+ok(/if \(Math\.abs\(r\.width - r\.height\) < 3\) return;/.test(MOB),
+  'a square control is an icon button — its size is its glyph, not the text scale');
+ok(/Measured on the DESKTOP pass only/.test(MOB),
+  'and it measures desktop only: under 760px the phone layer\'s 36px tap-target rule governs');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

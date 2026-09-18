@@ -89,6 +89,22 @@ window.addEventListener('load',restore);
   /* a label and its select wrap together or not at all — the row wraps, and "INCLUDE" left
      stranded at the end of one line with its control on the next names nothing */
   .cw-ctl .cwp{display:inline-flex;align-items:center;gap:8px}
+  /* SIDE BY SIDE, EXPANDED (Ray, 18 Sep 2026: "clicking on any chart will expand it as the main
+     chart on the screen and showcase the different split legend in animation pls").
+     The reveal is driven by a CLASS ON THE WRAPPER, and every animated element also carries its
+     FINAL state as an SVG attribute — so the ⬇ PNG, which serialises the node away from this
+     stylesheet, rasterises the finished ring rather than frame zero of an animation it cannot run. */
+  .smx{cursor:pointer}
+  .sm-bar{display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap}
+  .sm-bar b{font-size:14px}
+  .sm-bar .hint{font-size:11.5px;color:var(--muted)}
+  @keyframes tmarc{from{stroke-dashoffset:var(--arclen)}to{stroke-dashoffset:0}}
+  @keyframes tmlgi{from{opacity:0;transform:translateX(-9px)}to{opacity:1;transform:none}}
+  @keyframes tmfade{from{opacity:0}to{opacity:1}}
+  .tm-exp .arc{animation:tmarc .62s cubic-bezier(.22,.61,.36,1) backwards}
+  .tm-exp .lgi{animation:tmlgi .4s ease backwards}
+  .tm-exp .ctr{animation:tmfade .45s .2s ease backwards}
+  @media(prefers-reduced-motion:reduce){.tm-exp .arc,.tm-exp .lgi,.tm-exp .ctr{animation:none}}
   .cw-ctl label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
   .cw-ctl select{font:inherit;font-size:13px;font-weight:600;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink)}
   .tog{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer}
@@ -127,6 +143,33 @@ window.addEventListener('load',restore);
   .pq-bar input:focus{outline:none;border-color:var(--orange)}
   .pq-n{font-size:11.5px;font-weight:700;color:var(--muted);white-space:nowrap}
   .pq-x{font:inherit;font-size:11.5px;font-weight:600;color:var(--muted);background:none;border:1px solid var(--line);border-radius:100px;padding:4px 10px;cursor:pointer}
+
+  /* ── CONTROL SCALE ────────────────────────────────────────────────────────────────────────
+     Ray, 18 Sep 2026: "the box and button in the task manager are not equal size, so it looks
+     messy … when we improve any feature or develop a certain module, review the entire page
+     UX/UI and ensure these elements are not outdated. It should stay consistent."
+
+     Measured before this: TEN distinct control heights on one page, and three pill styles that
+     differ only by a pixel of padding — .btn.sm 4/9, .chip 5/10, .pq-x 4/10. Nobody chose those
+     differences; they are what a page accumulates when each feature styles its own control, and
+     an eye reads them as mess long before it can name why.
+
+     Two roles, two sizes:
+       FIELD  select, text input, full-size button  34px — something you open, type in or press
+       PILL   .btn.sm, .chip, .pq-x                 30px — a small toggle or an exit
+
+     HEIGHT IS SET EXPLICITLY, not left to padding: padding + line-height + font-size lands on a
+     different total for every font size, which is precisely how ten heights happened. A control
+     that changes font keeps its box.
+
+     Deliberately NOT normalised: .tab (43px — a tab bar is its own component), #q (52px — the
+     page's one hero field), the 34px icon buttons (already on the field height), and the small
+     marks that are not controls at all (.fh-dot, .instr-tgl, .tg-add), which the phone layer
+     also exempts from its 36px tap-target rule. Under 760px that rule wins, as it should. */
+  :root{--h-field:34px;--h-pill:30px}
+  .btn{height:var(--h-field);padding:0 12px;line-height:1;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+  .btn.sm,.chip,.pq-x{height:var(--h-pill);padding:0 12px;border-radius:100px;font-size:11.5px;line-height:1;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+  .cw-ctl select,.pq-bar input{height:var(--h-field);padding:0 10px;border-radius:9px;font-size:13px;line-height:1}
   .pq-x:hover{color:var(--orange-deep);border-color:var(--orange)}
   /* the totals row stays put while the list scrolls — the whole point is that you can read what
      the rows add up to without arriving at the end of them */
@@ -2095,6 +2138,9 @@ window.addEventListener('load',restore);
   var CDIM = 'total', CDIM2 = '', CDIM3 = '', CFORM = 'donut';
   // which series the chart draws, and what a value label says about it
   var CMEAS = 'hours', CLAB = 'hours';
+  // which side-by-side cell is expanded to fill the stage — a transient view, never a saved
+  // preference, and dropped the moment the split it belongs to changes
+  var CEXP = null;
   // on 'Everything' the line has no categories to draw, so it draws the module's own pair:
   // billable and non-billable, month by month
   var LINEMODE = '';
@@ -2367,6 +2413,7 @@ window.addEventListener('load',restore);
     $('cwh').textContent = CMEAS === 'hours' ? 'Billable vs non-billable'
       : (measWord().charAt(0).toUpperCase() + measWord().slice(1)) + ' hours';
     var basis = [];
+    if (CFORM === 'small' && CEXP != null) basis.push('one group expanded');
     if (CMEAS !== 'hours') basis.push(measWord() + ' hours only');
     if (labBasis()) basis.push(labBasis());
     $('cwsub').textContent = (nested()
@@ -2385,7 +2432,13 @@ window.addEventListener('load',restore);
     }
     var sm = null, sc = null;
     if (CFORM === 'line') { sm = lineData(); stage.innerHTML = lineChart(sm); }
-    else if (CFORM === 'small') { sc = smallCells(); stage.innerHTML = smallMult(sc.cells, sc.colourBy); }
+    else if (CFORM === 'small') {
+      sc = smallCells();
+      // a key that no longer exists is not an error, it is a stale view — fall back to the grid
+      var one = CEXP == null ? null : sc.cells.filter(function (x) { return String(x.k) === String(CEXP); })[0];
+      if (CEXP != null && !one) CEXP = null;
+      stage.innerHTML = one ? smallOne(one, sc.colourBy) : smallMult(sc.cells, sc.colourBy);
+    }
     else if (tree) stage.innerHTML = nestBars(tree);
     else if (CDIM === 'total') stage.innerHTML = donut(s);
     else if (CFORM === 'pie' || CFORM === 'donut') stage.innerHTML = pieChart(pieSlices(), CFORM === 'donut' ? 0.58 : 0);
@@ -2409,6 +2462,7 @@ window.addEventListener('load',restore);
           + (left.n === 1 ? '' : 's') + ' (<b>' + hrs(left.hours) + ' h</b>) are not in this split.</span>' : '');
     ctable(g, tree, sm);
     wireTips();
+    wireSmall();
   }
 
   /* What the nesting did to the numbers, said out loud. A capped level and a multi-valued level
@@ -2770,9 +2824,113 @@ window.addEventListener('load',restore);
       // total a second time — in a grid of twelve cells that duplication reads as noise
       out += '<text x="' + cx + '" y="' + (cy + R + 35) + '" text-anchor="middle" font-size="10.5" font-weight="600" fill="' + cvar('--muted') + '">'
         + (showLab ? '' : hrs(c.hours) + ' h · ') + c.billPct + '% billable</text>';
+      /* the whole cell is the target, not the ring: a 12px-wide slice is not something a hand can
+         reliably hit, and the label under it is part of the thing being pointed at. It goes LAST
+         so it sits above the arcs — the arcs keep their own hover tooltips, this only takes the
+         click. */
+      out += '<rect class="smx" data-k="' + esc(String(c.k)) + '" x="' + (cx - cw / 2 + 4) + '" y="' + (cy - R - 14)
+        + '" width="' + (cw - 8) + '" height="' + (R * 2 + 56) + '" fill="transparent"><title>'
+        + esc(c.label) + ' \u2014 click to expand</title></rect>';
     });
     return '<svg viewBox="0 0 ' + W + ' ' + (rows * ch + 16 + lg.h) + '" role="img" aria-label="'
       + esc(colourBy) + ' compared side by side">' + untagDefs() + lg.svg + out + '</svg>';
+  }
+
+  /* ONE CELL, FILLING THE STAGE (Ray, 18 Sep 2026: "when our side by side donut chart, clicking
+     on any chart will expand it as the main chart on the screen and showcase the different split
+     legend in animation pls").
+
+     A grid of 40px rings answers "which of these is different"; it cannot answer "what is IN this
+     one", because at that size the slices have no labels and several are a pixel wide. So a click
+     promotes the cell to the whole stage, at a size where every slice can carry its own name,
+     hours and share — and the legend arrives as the ring draws, so the eye is led from the shape
+     to the names rather than having to find them.
+
+     THE ANIMATION IS A CLASS ON THE WRAPPER, and every animated element also carries its FINAL
+     state as an ordinary SVG attribute. The ⬇ PNG serialises this node away from the page's
+     stylesheet, where no keyframe can run: without that rule the export would rasterise frame
+     zero — a ring hidden behind its own dash offset — and hand someone a blank donut.
+
+     It is a VIEW, not a preference: it is dropped whenever the split, the form, the measure or
+     the search changes, because a cell that no longer exists cannot be expanded, and reopening a
+     stale group would be worse than reopening none. */
+  function smallOne(c, colourBy) {
+    /* SIDE BY SIDE on a wide card, STACKED on a phone. The SVG scales to its container, so a
+       720-wide viewBox on a 360px screen halves every font: a 12.5px legend row lands at ~6px,
+       which is the feature present and unreadable. Narrow gets its own geometry — ring above,
+       legend across the full width beneath — rather than the same drawing shrunk. */
+    var narrow = (($('cstage') && $('cstage').clientWidth) || 720) < 560;
+    var W = narrow ? 360 : 720, R = narrow ? 86 : 108, ri = R * 0.6;
+    var cx = narrow ? W / 2 : 186, cy = narrow ? R + 16 : 150;
+    var Rm = (R + ri) / 2, C = 2 * Math.PI * Rm;
+    var tot = 0, i;
+    for (i = 0; i < c.parts.length; i++) tot += c.parts[i].v;
+    var live = c.parts.filter(function (x) { return x.v > 0; });
+    var arcs = '', acc = 0;
+    if (!tot) {
+      arcs = '<circle cx="' + cx + '" cy="' + cy + '" r="' + Rm + '" fill="none" stroke="'
+        + cvar('--grid') + '" stroke-width="' + (R - ri) + '"/>';
+    }
+    live.forEach(function (x, idx) {
+      var len = (x.v / tot) * C;
+      // the 2px surface gap every stacked mark on this page keeps, so two slices never touch
+      var draw = Math.max(1, len - 2);
+      var deg = (acc / tot) * 360 - 90;
+      var pct = Math.round((x.v / tot) * 1000) / 10;
+      arcs += '<circle class="cg arc" data-t="' + esc(c.label) + ' · ' + esc(x.l) + ' \u2014 ' + hrs(x.v)
+        + ' h (' + pct + '%)" cx="' + cx + '" cy="' + cy + '" r="' + Rm + '" fill="none" stroke="' + x.c
+        + '" stroke-width="' + (R - ri) + '" stroke-dasharray="' + draw.toFixed(2) + ' ' + (C - draw).toFixed(2)
+        + '" stroke-dashoffset="0" transform="rotate(' + deg.toFixed(2) + ' ' + cx + ' ' + cy + ')"'
+        + (x.untag ? ' opacity=".7"' : '')
+        + ' style="--arclen:' + draw.toFixed(2) + 'px;animation-delay:' + (idx * 0.075).toFixed(3) + 's"/>';
+      acc += x.v;
+    });
+    // the centre states the measured total, in the same words the grid used
+    var ctr = '<g class="ctr"><text x="' + cx + '" y="' + (cy - 2) + '" text-anchor="middle" font-size="30" font-weight="900" fill="'
+      + cvar('--ink') + '">' + hrs(c.hours) + '</text>'
+      + '<text x="' + cx + '" y="' + (cy + 20) + '" text-anchor="middle" font-size="10.5" font-weight="800" letter-spacing="1" fill="'
+      + cvar('--muted') + '">' + esc((CMEAS === 'hours' ? 'HOURS' : measWord().toUpperCase() + ' H')) + '</text>'
+      + '<text x="' + cx + '" y="' + (cy + 38) + '" text-anchor="middle" font-size="11" font-weight="700" fill="'
+      + cvar('--muted') + '">' + num(c.n || 0) + ' task' + ((c.n || 0) === 1 ? '' : 's') + '</text></g>';
+    // the legend arrives WITH the ring, one row per slice, each carrying its own share of THIS group
+    /* the legend is CENTRED ON THE RING, not pinned to the top: with two slices a top-aligned
+       block leaves the whole lower half of the card empty and the two things stop reading as one
+       figure */
+    var rowH = live.length > 8 ? 26 : 30, shown = Math.min(live.length, 10);
+    var lx = narrow ? 6 : 372;
+    var ly = narrow ? cy + R + 34 : Math.max(44, Math.round(cy - (shown * rowH) / 2 + rowH * 0.35));
+    var leg = '';
+    leg += '<text x="' + lx + '" y="' + (ly - 14) + '" font-size="10.5" font-weight="800" letter-spacing=".05em" fill="'
+      + cvar('--muted') + '">' + esc(String(colourBy).toUpperCase()) + '</text>';
+    live.slice(0, 10).forEach(function (x, idx) {
+      var y = ly + idx * rowH, pct = Math.round((x.v / (tot || 1)) * 1000) / 10;
+      var nm = x.l.length > 24 ? x.l.slice(0, 23) + '\u2026' : x.l;
+      leg += '<g class="lgi" style="animation-delay:' + (0.18 + idx * 0.055).toFixed(3) + 's" opacity="1">'
+        + '<rect x="' + lx + '" y="' + (y - 9) + '" width="11" height="11" rx="3" fill="'
+        + (x.untag ? 'url(#tmUntag)' : x.c) + '"'
+        + (x.untag ? ' stroke="' + cvar('--muted') + '" stroke-width="1" stroke-dasharray="2 2"' : '') + '/>'
+        + '<text x="' + (lx + 19) + '" y="' + y + '" font-size="12.5" font-weight="700" fill="'
+        + cvar(x.untag ? '--muted' : '--ink') + '">' + esc(nm) + '</text>'
+        + '<text x="' + (W - (narrow ? 54 : 96)) + '" y="' + y + '" text-anchor="end" font-size="12.5" font-weight="800" fill="'
+        + cvar('--ink') + '">' + hrs(x.v) + ' h</text>'
+        + '<text x="' + (W - 8) + '" y="' + y + '" text-anchor="end" font-size="12" font-weight="700" fill="'
+        + cvar('--muted') + '">' + pct + '%</text></g>';
+    });
+    if (live.length > 10) {
+      leg += '<text x="' + lx + '" y="' + (ly + 10 * rowH + 4) + '" font-size="11.5" font-weight="600" fill="'
+        + cvar('--muted') + '">+ ' + num(live.length - 10) + ' smaller, in the ring</text>';
+    }
+    if (!live.length) {
+      leg += '<text x="' + lx + '" y="' + ly + '" font-size="12.5" font-weight="600" fill="' + cvar('--muted')
+        + '">This group carries no ' + esc(CMEAS === 'hours' ? '' : measWord() + ' ') + 'hours.</text>';
+    }
+    var H = Math.max(cy + R + 30, ly + shown * rowH + (live.length > 10 ? 30 : 16));
+    return '<div class="sm-bar"><button class="btn sm" id="sm-back" type="button">\u2190 All groups</button>'
+      + '<b>' + esc(c.label) + '</b>'
+      + '<span class="hint">' + esc(colourBy) + ' \u00b7 ' + hrs(c.hours) + ' h \u00b7 '
+      + c.billPct + '% billable \u00b7 press Esc to go back</span></div>'
+      + '<svg class="tm-exp" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="'
+      + esc(c.label) + ' broken down by ' + esc(colourBy) + '">' + untagDefs() + arcs + ctr + leg + '</svg>';
   }
 
   /* The cells the side-by-side view draws. A nested split puts that group's CHILDREN in its ring
@@ -2813,15 +2971,21 @@ window.addEventListener('load',restore);
             else other += mv(kd);
           });
           parts.sort(function (a, b) { return a.rank - b.rank; });
-          if (other > 0) parts.push({ l: 'Other', v: r2(other), c: grey });
-          return { label: nodeLabel(nd.k, tree.dims[0]), hours: mv(nd), billPct: nd.billPct, parts: parts };
+          /* NOT "Other" — the engine's OWN fold of a parent's children is already named
+             "Other (N more)", and a cell can carry both. In the 40px grid neither is labelled so
+             the collision was invisible; expanded, the legend names every slice and two rows
+             reading "Other" in one key is a question nobody can answer. This one is this cell's
+             children that fell outside the key, which is a different statement. */
+          if (other > 0) parts.push({ l: 'Everything else here', v: r2(other), c: grey });
+          return { k: nd.k, label: nodeLabel(nd.k, tree.dims[0]), hours: mv(nd), billPct: nd.billPct,
+            n: nd.n, parts: parts };
         })
       };
     }
     var g = chartRows();
     return { colourBy: CMEAS === 'hours' ? 'Billable and non-billable' : (measWord().charAt(0).toUpperCase() + measWord().slice(1)),
       cells: g.map(function (x) {
-        return { label: dimLabel(x.k), hours: mv(x), billPct: x.billPct,
+        return { k: x.k, label: dimLabel(x.k), hours: mv(x), billPct: x.billPct, n: x.n,
           parts: [{ l: 'Billable', v: showBill() ? x.bill : 0, c: cvar('--bil') },
             { l: 'Non-billable', v: showNon() ? x.nonbill : 0, c: cvar('--nbil') }]
             .filter(function (pp) { return pp.v > 0; }) };
@@ -3074,7 +3238,8 @@ window.addEventListener('load',restore);
       cx.fillStyle = cvar('--paper') || '#fff'; cx.fillRect(0, 0, W, H);
       cx.drawImage(img, 0, 0, W, H - 96);
       cx.fillStyle = cvar('--ink') || '#333'; cx.font = '900 34px Lato, sans-serif';
-      cx.fillText((CMEAS === 'hours' ? 'Billable vs non-billable' : (measWord().charAt(0).toUpperCase() + measWord().slice(1)) + ' hours') + ' · ' + (nested()
+      cx.fillText((CFORM === 'small' && CEXP != null ? String(CEXP) + ' · ' : '')
+        + (CMEAS === 'hours' ? 'Billable vs non-billable' : (measWord().charAt(0).toUpperCase() + measWord().slice(1)) + ' hours') + ' · ' + (nested()
         ? [CDIM, CDIM2, CDIM3].filter(Boolean).map(dimName).join(' \u203a ')
         : dimName(CDIM)), 40, H - 56);
       cx.fillStyle = cvar('--muted') || '#888'; cx.font = '700 22px Lato, sans-serif';
@@ -3617,6 +3782,21 @@ window.addEventListener('load',restore);
   }
 
   /* ---- hover tips on chart marks ---- */
+  /* The grid's click targets, and the way back. Bound after every render because the stage is
+     replaced wholesale — an listener kept from the last pass would be watching detached nodes. */
+  function wireSmall() {
+    Array.prototype.forEach.call($('cstage').querySelectorAll('.smx'), function (r) {
+      r.onclick = function () { CEXP = r.getAttribute('data-k'); chart(); };
+    });
+    var b = $('sm-back');
+    if (b) b.onclick = function () { CEXP = null; chart(); };
+  }
+  /* The expanded cell is a VIEW, dropped by anything that changes what the cells ARE — the split,
+     the form, the measure, the untagged rule. The SEARCH deliberately does not drop it: narrowing
+     while reading one group is the reader staying on that group, and if the group leaves the
+     result entirely the stale-key fallback in chart() returns them to the grid anyway. */
+  function expReset() { CEXP = null; }
+
   function wireTips() {
     var tip = $('tip');
     Array.prototype.forEach.call($('cstage').querySelectorAll('.cg'), function (g) {
@@ -3669,6 +3849,7 @@ window.addEventListener('load',restore);
       };
     });
     $('cdim').onchange = function () {
+      expReset();
       CDIM = $('cdim').value;
       if (CDIM === 'total') { CDIM2 = ''; CDIM3 = ''; }          // 'total' is one bucket — nothing to nest under
       // fillSubDims rebuilds the form list for the new split and keeps the current form if it
@@ -3676,15 +3857,17 @@ window.addEventListener('load',restore);
       fillSubDims(); chart();
     };
     $('cdim2').onchange = function () {
+      expReset();
       CDIM2 = $('cdim2').value;
       if (!CDIM2) CDIM3 = '';                                     // no second split, no third
       fillSubDims(); chart();
     };
-    $('cdim3').onchange = function () { CDIM3 = $('cdim3').value; fillSubDims(); chart(); };
-    $('cform').onchange = function () { CFORM = $('cform').value; chart(); };
+    $('cdim3').onchange = function () { expReset(); CDIM3 = $('cdim3').value; fillSubDims(); chart(); };
+    $('cform').onchange = function () { expReset(); CFORM = $('cform').value; chart(); };
     $('ctab').onchange = chart;
     // both describe one screen's reading of the same data, so both are per DEVICE like the theme
     $('cmeas').onchange = function () {
+      expReset();
       CMEAS = $('cmeas').value;
       try { localStorage.setItem('fcc-tm-meas', CMEAS); } catch (e) {}
       fillForms(); chart();
@@ -3704,6 +3887,7 @@ window.addEventListener('load',restore);
     // likewise per device: which rows one screen wants to look at is not a team fact
     try { var uv = localStorage.getItem('fcc-tm-untag'); if (uv !== null) $('cuntag').checked = uv === '1'; } catch (e) {}
     $('cuntag').onchange = function () {
+      expReset();
       try { localStorage.setItem('fcc-tm-untag', $('cuntag').checked ? '1' : '0'); } catch (e) {}
       chart();
     };
@@ -3730,6 +3914,7 @@ window.addEventListener('load',restore);
     });
     $('dr-x').onclick = closeDrawer; $('dim').onclick = closeDrawer;
     document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && CEXP != null && CFORM === 'small') { CEXP = null; chart(); return; }
       if (e.key === 'Escape') closeDrawer();
       if (e.key === '/' && document.activeElement !== $('q') && !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); $('q').focus(); $('q').select(); }
     });
