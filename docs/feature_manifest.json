@@ -7726,10 +7726,10 @@
       "pr": 455
     },
     {
-      "name": "AI Mode: and the card draws no second arrivals chart — the Monthly update card owns that view",
+      "name": "AI Mode: no second arrivals renderer — the Monthly update card's own updBars draws the chart",
       "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "id=\"aim-chart\"",
-      "pr": 455,
+      "pattern": "function aimBars(",
+      "pr": 0,
       "forbidden": true
     },
     {
@@ -8056,6 +8056,100 @@
       "file": "tools/presync.sh",
       "pattern": "tools/test_labelguard.mjs",
       "pr": 458
+    },
+    {
+      "name": "AI Quote: every line type counted in one place, so an AI Mode-only quote saves",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "AIQUOTE-LINECOUNT",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: qLineN counts the routed AI Mode attributes",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "t.aim&&t.aim.lines)?t.aim.lines.length",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: …and the monthly new-product bundle",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "+ (t.upd?1:0)",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: the two-type save guard is RETIRED (must stay gone)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "if(!t.inc&&!t.x.length)",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: the page declares its own editable surface (✎ Edit reaches the copy)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "FCC-EDITSEL",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: card explanations and AI Mode row labels are editable",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": ".card > .ch,.qs-h,.aim-note,.aim-lbl",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: the card's prose lives in the template, not in a render",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "<div class=\"aim-note\">",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: …including every foot row label",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "<span class=\"aim-lbl\">Catalogue in scope</span>",
+      "min": 1,
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: aimFoot fills that shell; aimNums writes the figures",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function aimFoot(q){",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: the prose is NEVER rebuilt as HTML again (must stay gone)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "h+='<div class=\"aim-foot\">",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: Delivered sits between In action and Billed",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "'In action','Delivered','Billed'",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: ASPL's confirmation delivers the quote (once, never over a later call)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function autoDeliver()",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: the quote ⇄ ticket tie is the REF token, longest ref first",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "return b.ref.length-a.ref.length",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: Delivered · not billed — the figure finance asked for",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "Delivered · not billed",
+      "pr": 0
+    },
+    {
+      "name": "AI Mode: and the card draws no second arrivals chart — the Monthly update card owns that view",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "id=\"aim-chart\"",
+      "pr": 455,
+      "forbidden": true
     },
     {
       "name": "Golden Record client documents: the scoring descriptions are written WITHOUT their weight factors while the export records the pop-ups (Ray, 18 Sep 2026: 'Keep the content quality score description, but remove the weight')",

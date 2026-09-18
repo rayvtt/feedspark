@@ -225,7 +225,7 @@ ok(/function aimChart\(nn\)/.test(src), 'the card draws the arrivals chart');
 ok(/function updMonthRows\(\)/.test(src) && /function updDayRows\(\)/.test(src),
   'off ONE series builder shared with the Monthly update card');
 ok((src.match(/updMonthRows\(\)/g) || []).length >= 3, 'and both cards call it rather than building their own');
-ok(/aimChart\(nn\)[\s\S]{0,400}Catalogue in scope/.test(src), 'the chart sits above the scoped rows it is evidence for');
+ok(/id="aim-chart"[\s\S]{0,300}Catalogue in scope/.test(src), 'the chart sits above the scoped rows it is evidence for');
 ok(!/function aimBars\(/.test(src), 'and there is no second bar renderer');
 /* the contradiction Ray screenshotted: "0 products in scope" over "1,534 / month at this scope" */
 ok(/unsized=\(!ix&&sc\.mode!=='manual'\)/.test(src),
@@ -247,6 +247,60 @@ ok(/function aimRefresh\(\)/.test(src), 'aimRefresh() moves the numbers without 
    scope and every SKU count with it. Pinned because the guard is one line and looks removable. */
 ok(/var q=b\.getAttribute\('data-qp'\); if\(q==null\)return;/.test(src),
   'the scope quick-pick handler answers only to buttons that carry data-qp');
+
+/* ---------- 11. Ray, 18 Sep 2026: "i cannot save AI Mode quote btw" ---------- */
+console.log('\n  an AI Mode quote can be saved');
+ok(/function qLineN\(t\)\{/.test(src), 'the quote\'s lines are counted in ONE named place');
+ok(/if\(!qLineN\(t\)\)\{ err\(/.test(src), 'and the save guard asks that count, not two of the four line types');
+const ln = (src.match(/function qLineN\(t\)\{[\s\S]*?\n  \}/) || [''])[0];
+ok(/\(\+t\.inc\|\|0\)/.test(ln), 'it counts the ticked Tachyon fields');
+ok(/t\.x&&t\.x\.length/.test(ln), '…the system / feed / retainer lines');
+ok(/t\.aim&&t\.aim\.lines/.test(ln), '…every routed AI Mode attribute');
+ok(/t\.upd\?1:0/.test(ln), '…and the monthly new-product bundle');
+ok(!/if\(!t\.inc&&!t\.x\.length\)/.test(src), 'the old two-type guard is gone');
+ok(/route an AI Mode attribute to a data source/.test(src) && /new-product bundle/.test(src),
+  'and the refusal on a genuinely empty quote names every way to fill it');
+
+/* ---------- 12. Ray, same message: "also allows all text can be edited please" ---------- */
+console.log('\n  and every word on the card can be reworded');
+ok(/window\.DECK_EDITOR_SELECTOR=/.test(src), 'the page declares its own editable surface');
+const sel = (src.match(/window\.DECK_EDITOR_SELECTOR=[\s\S]*?;/) || [''])[0];
+ok(/\.card > \.ch/.test(sel), 'every card explanation is in it');
+ok(/\.aim-lbl/.test(sel), 'so is every AI Mode row label');
+ok(/\.aim-note/.test(sel) && /\.qs-h/.test(sel), '…the scrape note and the summary column headings');
+/* a derived sentence must NEVER be editable: the edit freezes the number inside it, and a frozen
+   number on a client quote is a wrong number. */
+ok(!/aim-srcline/.test(sel) && !/aim-word/.test(sel) && !/\.hint/.test(sel),
+  'and no line that carries a live figure is - an edited sentence would freeze it');
+/* the editor keys each element ONCE at load, so copy a render redraws can never hold an edit */
+ok(/<div class="aim-note">/.test(src), 'the scrape note lives in the template, not in a render');
+ok(/<span class="aim-lbl">Catalogue in scope<\/span>/.test(src), 'and so does every foot row label');
+ok(/function aimFoot\(q\)\{/.test(src), 'aimFoot() fills that shell');
+ok(/el\.innerHTML=h;\s*\n\s*aimFoot\(q\);/.test(src), 'and the render calls it');
+ok(/function aimNums\(q\)\{/.test(src) && (src.match(/aimNums\(q\)/g) || []).length >= 3,
+  'one place writes the figures, and both the render and the refresh use it');
+ok(!/h\+='<div class="aim-note">/.test(src) && !/h\+='<div class="aim-foot">/.test(src),
+  'nothing rebuilds the prose as HTML any more');
+ok(/pi&&pi!==document\.activeElement/.test(src),
+  'and the newness box is left alone while somebody is typing in it');
+
+/* ---------- 13. Delivered — Ray, 18 Sep 2026 ---------- */
+console.log('\n  Delivered, and ASPL\'s own confirmation');
+ok(/'In action','Delivered','Billed'/.test(src), 'Delivered sits between In action and Billed');
+ok(/var WF_DELIVERED=\{done:1,running:1,analysis:1,confirmed:1\}/.test(src),
+  'every Workflow stage from "Done — ASPL" on means the work was delivered');
+ok(/function loadQBriefs\(\)/.test(src) && /fetch\('\/api\/briefs'\)/.test(src),
+  'the tracker reads the brief pipeline');
+ok(/refs\.sort\(function\(a,b\)\{ return b\.ref\.length-a\.ref\.length; \}\)/.test(src),
+  'the LONGEST quote ref claims a ticket, so QT500-2 is never taken for QT500');
+ok(/if\(b\.client&&r\.client&&String\(b\.client\)!==String\(r\.client\)\)break;/.test(src),
+  'and another brand\'s ticket can never land on this quote');
+ok(/function autoDeliver\(\)/.test(src) && /if\(q\.aspl\)return;/.test(src),
+  'the pipeline moves a quote once and then stands down - a human\'s later call stands');
+ok(/if\(q\.stage==='Declined'\|\|si<0\|\|si>=di\)return;/.test(src),
+  'and never moves a Billed or Declined quote, or moves one backwards');
+ok(/Delivered · not billed/.test(src), 'finance gets the figure it exists for: delivered, not yet billed');
+ok(/no ticket yet/.test(src), 'and a filed quote with no matching ticket says so');
 
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);
