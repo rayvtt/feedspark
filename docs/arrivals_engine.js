@@ -12,7 +12,7 @@
  * SURVIVORS ONLY — the caveat every number carries: a month counts the products STILL in the
  * feed today whose ID was born that month. Recent months are therefore complete; older months
  * are lower bounds (whatever has since sold through or been delisted is gone from the count).
- * The forecast rests on the last COMPLETE months (a month counts once it is over), never on
+ * The forecast rests on a YEAR of COMPLETE months (a month counts once it is over), never on
  * the current partial month.
  */
 (function (root, factory) {
@@ -59,8 +59,9 @@
   //   lastFull — the most recent complete observed month; m3 / m6 — mean of the last 3 / 6 of them
   //   y12      — total over the last 12 complete observed months (y12Months says how many there were)
   //   quarters — calendar quarters (last 8, current flagged partial); years — calendar years
-  //   forecast — {month, quarter, year, basis}: the run-rate is m3 (or, with no complete month yet, the
-  //              current month so far), × 3 and × 12 — transparent, never a fitted curve
+  //   m12      — THE RUN-RATE: y12 ÷ 12 (÷ the months observed when short of a year)
+  //   forecast — {month, quarter, year, basis}: the run-rate is m12 (or, with no complete month yet,
+  //              the current month so far), × 3 and × 12 — transparent, never a fitted curve
   function stats(dob, now, rows) {
     var m = (dob && dob.m) || {};
     var keys = Object.keys(m).filter(function (k) { return /^\d{4}-\d{2}$/.test(k); }).sort();
@@ -79,13 +80,30 @@
     var yr = {}, yorder = [];
     keys.forEach(function (k) { var y = k.slice(0, 4); if (!yr[y]) { yr[y] = { y: y, n: 0 }; yorder.push(y); } yr[y].n += +m[k] || 0; });
     var years = yorder.map(function (y) { return { y: y, n: yr[y].n, partial: y === cur.slice(0, 4) }; });
-    var rate = m3 != null ? m3 : (thisMonth.observed && thisMonth.n > 0 ? thisMonth.n : null);
+    /* A YEAR'S LOOK-BACK, DIVIDED BY 12 (Ray, 18 Sep 2026: "The logic for new products a month
+       is not accurate. For example, Monsoon had 10,298 divided by 12. It's not 1,534. Let's use
+       the logic of the current calendar year, looking back one year and divide by 12.")
+       It was the mean of the last 3 COMPLETE months, which reads whatever the catalogue did most
+       recently rather than what it does in a year: Monsoon GB's Jul and Aug (1,741 and 2,221) run
+       three to five times its spring months, so × 12 forecast 18,408 new products a year onto a
+       10,298-product catalogue - the whole shop arriving twice over, on a figure that goes to a
+       client in a quote. Twelve months average the seasonality out, which is what a quote needs.
+       DIVIDED BY 12 whenever there IS a year to look back on. A feed monitored for five months has
+       no year, and dividing those five by 12 would under-read by more than half - so it is divided
+       by the months actually observed and the basis SAYS how many. Short of a year is stated as
+       such, never quietly padded out with months of zeros.
+       m3 and m6 are still reported: /volume shows the 3-month average beside this, because the
+       recent burst is worth SEEING - it just is not what the year gets priced on. */
+    var m12 = l12.length ? (y12 / (l12.length >= 12 ? 12 : l12.length)) : null;
+    var rate = m12 != null ? m12 : (thisMonth.observed && thisMonth.n > 0 ? thisMonth.n : null);
     var forecast = rate == null ? null : { month: Math.round(rate), quarter: Math.round(rate * 3), year: Math.round(rate * 12),
-      basis: l3.length ? ('the last ' + l3.length + ' complete month' + (l3.length === 1 ? '' : 's')) : 'the current month so far' };
+      basis: l12.length >= 12 ? 'a year of complete months ÷ 12'
+        : l12.length ? ('the last ' + l12.length + ' complete month' + (l12.length === 1 ? '' : 's') + ' — short of a year')
+        : 'the current month so far' };
     var total = 0; keys.forEach(function (k) { total += +m[k] || 0; });
     var n = (dob && dob.n != null) ? +dob.n : total;
     var coverage = (rows > 0 && n != null) ? n / rows : null;
-    return { field: FIELD, months: months, lastFull: lastFull, thisMonth: thisMonth, m3: m3, m6: m6, y12: y12, y12Months: l12.length,
+    return { field: FIELD, months: months, lastFull: lastFull, thisMonth: thisMonth, m3: m3, m6: m6, m12: m12, y12: y12, y12Months: l12.length,
       quarters: quarters, years: years, forecast: forecast, first: first, last: keys.length ? keys[keys.length - 1] : null,
       n: n, rows: rows || null, coverage: coverage, fullMonths: full.length };
   }

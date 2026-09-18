@@ -186,7 +186,11 @@ near(q.monthly, 200, 'the monthly is the AI side at its floor plus one scrape ru
 near(q.lines.filter(l => l.shared)[0].monthly, 25, 'the top-up lifts £75 of generation to £100');
 near(q.lines.filter(l => l.route === 'ai').reduce((a, l) => a + l.monthly, 0), 100,
   'the floor is measured across the AI fields only, never across the scrape');
-near(q.year1, q.setup + q.monthly * 12, 'year one is the set-up plus twelve months');
+/* NO ANNUAL FIGURE ANYWHERE (Ray, 18 Sep 2026: "move annual cost lines or anything related to
+   annual cost (pro-rata) not neccessary (Across all quotes)"). A Year-1 total adds a one-off to
+   twelve months, which re-mixes exactly what the CFO rework pulled apart. The engine no longer
+   computes one, so no surface can quietly print one again. */
+ok(q.year1 === undefined, 'the engine carries no year-one total', q.year1);
 eq(q.hours, 3 * 16 + 2 * 2 + 2 + 2, 'and our time is every route’s hours');
 
 /* the man-power split the FCC's discount rule needs */
@@ -301,6 +305,35 @@ ok(/if\(q\.stage==='Declined'\|\|si<0\|\|si>=di\)return;/.test(src),
   'and never moves a Billed or Declined quote, or moves one backwards');
 ok(/Delivered · not billed/.test(src), 'finance gets the figure it exists for: delivered, not yet billed');
 ok(/no ticket yet/.test(src), 'and a filed quote with no matching ticket says so');
+
+/* ---------- 14. nothing annual, on any surface (Ray, 18 Sep 2026) ---------- */
+console.log('\n  and no quote surface carries an annual or pro-rated figure');
+ok(!/year1/.test(src), 'the page computes no year-one total');
+ok(!/id="aim-y1"|id="qs-annual"/.test(src), 'the AI Mode card and the summary tile have no annual row');
+ok(!/Year 1 Total|Total Annual|Pro-rated /.test(src), 'the finance workbook has no Annual, Pro-rated or Year 1 row');
+ok(!/monGross\*12|monNet\*12|monGross \* 12/.test(src),
+  'and nothing multiplies a monthly figure by twelve — not the bottom line, the copy text, the email, the brief or the tracker');
+/* the pro-rated row assumed a January contract year-end, so on any other client it printed a
+   figure nobody had agreed - it is gone, not re-derived */
+ok(!/contract year assumed to end in January/.test(src), 'and the assumed January contract year-end is gone with it');
+/* what MUST survive: the arrivals figures are counts of PRODUCTS, not money */
+ok(/a year/.test(src), 'new products a year still reads — it is a count, not a cost');
+
+/* ---------- 15. a flex row ignores `hidden` ---------- */
+/* The UA's [hidden]{display:none} loses to any class that sets display, so el.hidden=true on one
+   of these rows left it ON SCREEN with an empty value in it - the newness pair drew BOTH ("Arrivals
+   run-rate 0 / month" above the typed % box) and the quote summary's AI Mode rows had been showing
+   empty since they shipped. Caught by looking at the render, not the code. */
+ok(/\.aim-r\[hidden\],\.qs-r\[hidden\]\{display:none\}/.test(src),
+  'the rows the page hides by attribute are actually hidden');
+
+/* ---------- 16. the run-rate a quote is priced on ---------- */
+/* Ray, 18 Sep 2026: "The logic for new products a month is not accurate. For example, Monsoon had
+   10,298 divided by 12. It's not 1,534." The engine's own rule is pinned by tools/test_arrivals.mjs
+   on Ray's exact numbers; what this pins is that the card's KPI reads the PRICED figure. A KPI
+   disagreeing with the line under it is how a quote gets argued about in front of a client. */
+ok(/updKpi\(st\.forecast\?fmt\(st\.forecast\.month\):'—','Run-rate \/ month'\)/.test(src),
+  'the Monthly update KPI reads the forecast, not a second average of its own');
 
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);

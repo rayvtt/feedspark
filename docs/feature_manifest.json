@@ -3287,11 +3287,11 @@
       "forbidden": true
     },
     {
-      "name": "AI Quote xlsx: ONE monthly totals chain (per month → 12 months → pro-rated) — no per-market twins (Ray 10 Sep 2026) — annual now reads off the block's inc/ex-VAT total (CFO layout, PR 379) — repointed 16 Sep 2026: the export now replicates Finance's own book (FeedSpark_Reiss_Quote_Sept_26.xlsx), so this feature lives under their section names",
-      "file": "docs/FeedSpark_AIQuote.html",
+      "name": "AI Quote xlsx: ONE monthly totals chain, and NO annual / pro-rated / Year-1 row — RETIRED 18 Sep 2026 (Ray: \"move annual cost lines or anything related to annual cost (pro-rata) not neccessary (Across all quotes)\"); the rule is now that NOTHING annual appears on any quote surface, pinned as the forbidden pattern below",
       "pattern": "Total monthly cost × 12",
+      "forbidden": true,
       "pr": 329,
-      "min": 1
+      "file": "docs/FeedSpark_AIQuote.html"
     },
     {
       "name": "AI Quote xlsx: '1 market (GB)' duplicate monthly rows must stay gone",
@@ -4266,11 +4266,11 @@
       "forbidden": true
     },
     {
-      "name": "Quote generator: the bottom line reads monthly FIRST, then one-off, then Year 1 (Ray 14 Sep 2026 'the number doesn't add up at the bottom'); KPI row shows Monthly total + One-off total",
-      "file": "docs/FeedSpark_AIQuote.html",
+      "name": "Quote generator: the bottom line reads initial one-off then ongoing per month — RETIRED 18 Sep 2026 (Ray: \"move annual cost lines or anything related to annual cost (pro-rata) not neccessary (Across all quotes)\"); the rule is now that NOTHING annual appears on any quote surface, pinned as the forbidden pattern below",
       "pattern": "Year 1 · ",
+      "forbidden": true,
       "pr": 363,
-      "min": 1
+      "file": "docs/FeedSpark_AIQuote.html"
     },
     {
       "name": "Quote generator: service cards (system · feed · retainer) sit directly under the picker; a switched-on type scrolls its card into view and flashes it",
@@ -5064,11 +5064,10 @@
       "pr": 379
     },
     {
-      "name": "AI Quote page: the bottom line reads initial one-off → ongoing per month (a year) → Year 1",
-      "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "'+one+mon+yr+'",
-      "min": 1,
-      "pr": 379
+      "name": "AI Quote page: the bottom line is one-off + monthly, with no Year-1 span after them",
+      "pattern": "'+one+mon+'",
+      "pr": 379,
+      "file": "docs/FeedSpark_AIQuote.html"
     },
     {
       "name": "AI Quote copy text: INITIAL ONE-OFF COSTS block → ONGOING MONTHLY COSTS block → SUMMARY",
@@ -8142,6 +8141,76 @@
       "name": "AI Quote: Delivered · not billed — the figure finance asked for",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "Delivered · not billed",
+      "pr": 0
+    },
+    {
+      "name": "Arrivals: the run-rate is a YEAR of complete months ÷ 12, not the last three",
+      "file": "docs/arrivals_engine.js",
+      "pattern": "a year of complete months ÷ 12",
+      "pr": 0
+    },
+    {
+      "name": "Arrivals: m12 is the rate; m3 stays reported but is not what the year is priced on",
+      "file": "docs/arrivals_engine.js",
+      "pattern": "m12: m12",
+      "pr": 0
+    },
+    {
+      "name": "Arrivals: short of a year is stated, never padded out with months of zeros",
+      "file": "docs/arrivals_engine.js",
+      "pattern": "— short of a year",
+      "pr": 0
+    },
+    {
+      "name": "Arrivals: the 3-month mean is RETIRED as the forecast basis (must stay gone)",
+      "file": "docs/arrivals_engine.js",
+      "pattern": "basis: l3.length ?",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Volume: the run-rate KPI reads the year, not the 3-month mean",
+      "file": "docs/FeedSpark_Volume.html",
+      "pattern": "st.m12!=null?fmt(Math.round(st.m12))",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: the arrivals KPI reads the PRICED forecast, not a second average",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "updKpi(st.forecast?fmt(st.forecast.month)",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: no annual, pro-rated or Year-1 cost line on any surface",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "NO ANNUAL, PRO-RATED OR YEAR-1 ROW",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: the Year-1 total is RETIRED (must stay gone)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "year1",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: nothing multiplies a monthly figure by twelve (must stay gone)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "monGross*12",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: the assumed January contract year-end is gone with the pro-rated row",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "contract year assumed to end in January",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: a row hidden by attribute is actually hidden (flex beats the UA rule)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": ".aim-r[hidden],.qs-r[hidden]{display:none}",
       "pr": 0
     }
   ]
