@@ -8038,6 +8038,24 @@
       "file": "tools/presync.sh",
       "pattern": "tools/check_grhtml.js",
       "pr": 458
+    },
+    {
+      "name": "Golden Record: the injected-chrome hide list is its OWN rule — appending to the page's own body.pdf list breaks test_labelguard's shape read of it",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf .qz-act,body.pdf #qz-run,body.pdf #qz-msg,body.pdf .qz-scan{display:none!important}",
+      "pr": 458
+    },
+    {
+      "name": "Label Guard engine suite wired into qa_gate — it was validate-only, so /labels /ptypes /golden had no local signal",
+      "file": "tools/qa_gate.sh",
+      "pattern": "tools/test_labelguard.mjs",
+      "pr": 458
+    },
+    {
+      "name": "Label Guard engine suite wired into presync",
+      "file": "tools/presync.sh",
+      "pattern": "tools/test_labelguard.mjs",
+      "pr": 458
     }
   ]
 }

@@ -526,16 +526,19 @@ window.addEventListener('load',restore);
   body.pdf .refseg,body.pdf #sec-detail .cat-h,body.pdf #sec-detail .cat-sub,
   body.pdf #fcc-fcb,body.pdf #fcc-fcp,body.pdf #tky-fab,body.pdf #tky-scrim,body.pdf #tky-drawer,
   body.pdf #fcc-viewas,body.pdf #fcc-apps,body.pdf #fcc-navcz,body.pdf #fcc-navcz-scrim,
-  body.pdf .qz-act,body.pdf #qz-run,body.pdf #qz-msg,body.pdf .qz-scan,
-  /* the injected layers are cloned into the download with the rest of the DOM but their scripts
-     are not, so they arrive as dead furniture on a client-facing document - the editor toolbar
+  body.pdf .qz-act,body.pdf #qz-run,body.pdf #qz-msg,body.pdf .qz-scan{display:none!important}
+  /* A SEPARATE RULE, deliberately: the list above is what the PAGE hides on paper and
+     tools/test_labelguard.mjs reads it by shape (.qz-scan immediately before the brace), so
+     appending to it breaks a tripwire that has nothing to do with this. These are the INJECTED
+     layers - cloned into the download with the rest of the DOM but with their scripts left
+     behind, so they arrive as dead furniture on a client-facing document: the editor toolbar
      (✎ Edit / 🎨 Design / 🧹 Reset page), the Shipped panel's edge handle, the presence avatars,
-     the EN/VI pill, the hours dots and the phone bar. The PDF wants them gone for the same reason. */
+     the EN/VI pill, the hours dots, the phone bar. The PDF wants them gone for the same reason.
+     Plus the ⓘ Scoring logic buttons: a door to a pop-up no script can open - the HTML export
+     replaces them with the disclosure itself, and the PDF prints that prose under each section. */
   body.pdf .de-bar,body.pdf .de-dot,body.pdf #fcc-ship,body.pdf #fcc-ship-dim,body.pdf #fcc-ship-h,
   body.pdf #fcc-hrs,body.pdf .fh-dot,body.pdf #lang-tgl,body.pdf #fcc-presence,
   body.pdf #fcc-mall,body.pdf .fcc-mpan,
-  /* and the ⓘ Scoring logic buttons: a door to a pop-up no script can open. The export replaces
-     them with the disclosure itself; the PDF prints that prose under each section already. */
   body.pdf button[data-qinfo],body.pdf button[data-scpop]{display:none!important}
   /* the download's disclosures. The two section headlines open by default, so a client meets the
      method rather than having to go looking for it; each attribute and each pillar starts folded,
