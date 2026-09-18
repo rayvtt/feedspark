@@ -37,6 +37,8 @@ jobs:
         run: node tools/test_volume.mjs
       - name: New-product arrivals harness (first-seen dates → month / quarter / year + forecast)
         run: node tools/test_arrivals.mjs
+      - name: AI Mode harness (conversational attributes priced by data source)
+        run: node tools/test_aimode.mjs
       - name: Access scoping harness (per-user Workflow views)
         run: node tools/test_access.mjs
       - name: Shared working state harness (one team, one store)
