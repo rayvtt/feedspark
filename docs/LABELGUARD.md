@@ -437,7 +437,43 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   page (same `<style>` block the live view uses, so it can never drift from what `/golden`
   itself renders), strips every `<script>` (a static snapshot shouldn't call the FCC's own
   APIs) and lays out at the same natural size — one self-contained file, opens in any browser,
-  no FCC login needed. Harness: the one-click-download and CDN-fallback blocks in
+  no FCC login needed. **The client documents are simpler than the AM's screen** (Ray, 18 Sep
+  2026, reading the ⬇ HTML before sending it to a client: *"Let's remove a few things so it's
+  not too complicated for the client to read. Keep the content quality score description, but
+  remove the weight. The 1.4 × 1.6 factor is not necessary. Also, within AI readiness, show the
+  scoring bars in green, yellow, and red, because now they're empty. Remove the pillar heat map
+  for now; it's too complicated for multi-market clients. Also remove the 'two scores' question
+  from every HTML, and remove the element that sends code or feedback to Claude"*). Both client
+  documents — the PDF and the HTML — share `body.pdf`, so ONE rule drops the pillar **weights**
+  (the dots under each tile; the WEIGHT chip is simply never written), the **pillar heatmap**
+  and the **"Two scores, two questions"** reconciliation band; the live page keeps all three
+  (they are the AM's tools). The HTML export goes further and REMOVES those nodes, so the file
+  carries no hidden copy of what the client was not meant to read. The scoring **descriptions
+  are kept without their factors**: `clientCopy()` is true only while the export is recording
+  the pop-ups (SCCAP), and every builder reads it — "weight ×1.6" is not passed, the weighted
+  list of pillars and the "×3 / ×2 / ×1" attribute weights are written as an ordering in words,
+  "×1.0 / ×0.4" as "full cost / a fraction of it", and the conversational tier's sub no longer
+  carries "(×2.4)" on any surface (the pop-up has it). **The bars were empty** because their
+  width was set by `airAnimate()` — script, which the file has none of. The pillar and MASK
+  bars now carry their width INLINE and the pillar bar's background is the number's own band
+  (`airCol`: green ≥80, amber 60–79, deep orange 40–59, red under 40, so bar and figure can
+  never disagree); the grow-in became a CSS `@keyframes pgrow` from 0, which needs no script
+  either, and `body.pdf` sets `animation:none` because html2canvas renders a FRESH clone where
+  the animation would restart from 0 and the capture would take every bar mid-grow. **The
+  injected chrome is removed, not hidden**: the live editor's ✎ handle, its "Send an element to
+  Claude Code" panel and 💬 Feedback panel (the element Ray saw), the Tachyon copilot, the Feed
+  Chat bubble, the view-as pill, the app switcher, the nav customiser and the ⓘ instruction
+  toggles were all cloned into the file with their scripts left behind — `body.pdf` hid most of
+  them, but a hidden panel is still in the source of a document a client opens and the ✎ handle
+  was not hidden at all. Every HTML comment goes too (each injected layer opens with a note on
+  what it is and what it talks to). Harness: `tools/check_grpdf.js` now renders the page AS
+  THE WORKER SERVES IT (the widgets injected, like check_mobile) for the export block and
+  asserts every item above — descriptions kept, no `weight ×`/`×n.n`/`(×` anywhere, eight
+  inline-width bars in the right band, no heatmap, no reconciliation band, no editor/Tachyon/
+  Feed Chat/instruction chrome, no comments, and that the file never mentions Claude at all —
+  while the print measurements stay on the bare page (the phone layer's ≤760px rules would
+  fire on the 703px print viewport, a resize the real one-click PDF never makes).
+  `GRPDF_KEEP=/path.html` keeps the export for a visual pass. Harness: the one-click-download and CDN-fallback blocks in
   `tools/check_grpdf.js` (stubbed `html2canvas`/`jsPDF` pin the glue — button → libs → capture →
   package → save → restore — a fidelity check on the real libraries is the separate PDF-content
   QA pass, not a structural assertion). **⚡ Scan whole estate now scans content quality too**

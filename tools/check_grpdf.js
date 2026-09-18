@@ -27,7 +27,27 @@ try { ({ chromium } = req('playwright')); } catch (e) {
   console.log('· playwright unavailable — skipped'); process.exit(0);
 }
 
-const PAGE = 'file://' + path.resolve(__dirname, '..', 'docs', 'FeedSpark_GoldenRecord.html');
+const fs = require('fs');
+const os = require('os');
+const D = path.resolve(__dirname, '..', 'docs');
+// THE PAGE AS THE WORKER SERVES IT — with the injected layers (the ⓘ instruction toggles, the
+// Tachyon copilot, the Feed Chat bubble, the presence avatars, the phone bar …). The ⬇ HTML
+// export clones the live DOM, so what those layers leave behind is exactly what a client
+// receives; a check that renders the bare file never sees it (Ray, 18 Sep 2026: "remove the
+// element that sends code or feedback to Claude. I'm sending this to my clients").
+const WIDGETS = ['instr_collapse.html', 'presence_widget.html', 'feedchat_widget.html', 'viewas_widget.html', 'apps_widget.html',
+  'lang_widget.html', 'hours_widget.html', 'shipped_widget.html', 'mobile_widget.html', 'tachyon_widget.html']
+  .filter((f) => fs.existsSync(path.join(D, f)))
+  .map((f) => fs.readFileSync(path.join(D, f), 'utf8')).join('\n');
+const SRC = fs.readFileSync(path.join(D, 'FeedSpark_GoldenRecord.html'), 'utf8');
+const TMP = path.join(os.tmpdir(), '_grpdfcheck_FeedSpark_GoldenRecord.html');
+// same injection as check_mobile.js: before </body> when the page has one, appended otherwise
+fs.writeFileSync(TMP, SRC.indexOf('</body>') >= 0 ? SRC.replace('</body>', WIDGETS + '\n</body>') : SRC + '\n' + WIDGETS);
+// The PRINT measurements stay on the bare page: the print viewport is 703px, and the phone
+// layer's own ≤760px rules + pan-frame sweep would fire on a resize the real print path never
+// makes (the one-click PDF captures at 960px). The ⬇ HTML export is exercised on the served page.
+const PAGE = 'file://' + path.join(D, 'FeedSpark_GoldenRecord.html');
+const PAGE_W = 'file://' + TMP;
 const ENGINE_LG = path.resolve(__dirname, '..', 'docs', 'labelguard_engine.js');
 const ENGINE_FA = path.resolve(__dirname, '..', 'docs', 'feedlab_engine.js');
 const A4 = 297;                 // mm
@@ -80,8 +100,9 @@ const QUALITY = {
 
 (async () => {
   const browser = await chromium.launch({ executablePath: process.env.PW_CHROMIUM || '/opt/pw-browsers/chromium' });
-  const page = await browser.newPage({ viewport: { width: 1360, height: 950 } });
   const errs = [];
+  // the same stubbed FCC behind every page this check opens
+  const arm = async (page) => {
   page.on('pageerror', (e) => errs.push(e.message));
   await page.route('**/labels/engine.js', (r) => r.fulfill({ path: ENGINE_LG, contentType: 'text/javascript' }));
   await page.route('**/feedlab/engine.js', (r) => r.fulfill({ path: ENGINE_FA, contentType: 'text/javascript' }));
@@ -96,12 +117,17 @@ const QUALITY = {
     });
     const feed = { client: 'Reiss', mkt: 'gb', status: 'ok', t: NOW, rows: 1000, score: 88,
       ai: { n: 0, of: 6 }, cov, reqMissing: [] };
+    // a second analysed market, so the brand's PILLAR HEATMAP renders on the live page — the
+    // export check below has to prove it was taken OUT, which it can only do if it was there
+    const airP = { conversational: 10, identity: 100, titles: 62, descriptions: 90, attributes: 92, taxonomy: 51, media: 100, ai: 47 };
+    const feedDe = Object.assign({}, feed, { mkt: 'de', air: 74, airTier: 3, airP });
+    const feedGb = Object.assign({}, feed, { air: 76, airTier: 3, airP: Object.assign({}, airP, { titles: 58 }) });
     const real = window.fetch.bind(window);
     window.fetch = (url, opts) => {
       const u = String(url);
       const j = (o) => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(o) });
       if (/engine\.js/.test(u)) return real(url, opts);
-      if (u.includes('/api/golden/estate')) return j({ feeds: { 'Reiss|gb': feed }, alerts: {} });
+      if (u.includes('/api/golden/estate')) return j({ feeds: { 'Reiss|gb': feedGb, 'Reiss|de': feedDe }, alerts: {} });
       if (u.includes('/api/golden/quality')) return j({ quality: QUALITY });
       if (u.includes('/api/golden/snapshot')) return j({ snapshot: { t: NOW, rows: 1000, client: 'Reiss', market: 'gb', attrs }, baseline: { t: NOW - 7e6, attrs }, daily: null });
       if (u.includes('/api/golden/profile')) return j({ defaults: {}, overrides: {}, industryMap: {} });
@@ -111,10 +137,25 @@ const QUALITY = {
     };
     window.print = function () {};
   }, { ATTRS, QUALITY });
+  };
+  const page = await browser.newPage({ viewport: { width: 1360, height: 950 } });
+  await arm(page);
 
   await page.goto(PAGE);
   await page.waitForTimeout(1200);
   ok('the scorecard renders with a stored quality reading', await page.$('#qz-tier .qz-score') !== null);
+  // the AM's screen keeps its tools — what the client documents drop must exist here first
+  const live = await page.evaluate(() => ({
+    heat: !!document.querySelector('#air-tier .heat-card'),
+    rec: !!document.querySelector('#rec-tier'),
+    dots: document.querySelectorAll('#air-tier .pillar .wdots').length,
+    fillW: Array.from(document.querySelectorAll('#air-tier .pfill')).map((f) => f.style.width),
+  }));
+  ok('the live page shows the pillar heatmap (two analysed markets)', live.heat);
+  ok('the live page shows the "Two scores, two questions" band', live.rec);
+  ok('the live page shows a weight under every pillar', live.dots === 8, live.dots);
+  ok('every pillar bar carries its width inline — the file with no scripts draws it too',
+    live.fillW.length === 8 && live.fillW.every((w) => /^\d+%$/.test(w) && parseInt(w, 10) > 0), live.fillW);
 
   // FIDELITY: the PDF is the page SCALED, never a second design (Ray, 16 Sep 2026: "PDF
   // export still doesn't reflect exact same visual as FCC"). Print may hide interactive
@@ -174,6 +215,10 @@ const QUALITY = {
       runBtn: vis('#qz-run'),
       chrome: vis('.topbar') || vis('.hero') || vis('#sec-estate'),
       head: vis('#print-head'), foot: vis('#print-foot'),
+      // the client documents are simpler than the AM's screen (Ray, 18 Sep 2026)
+      heat: vis('.heat-card'), rec: vis('#rec-tier'), dots: vis('#air-tier .pillar .pf2'),
+      fillPx: Array.from(document.querySelectorAll('#air-tier .pfill')).map((f) => f.getBoundingClientRect().width),
+      fillAnim: Array.from(document.querySelectorAll('#air-tier .pfill')).map((f) => getComputedStyle(f).animationName),
     };
   });
 
@@ -197,6 +242,12 @@ const QUALITY = {
   ok('the coverage rows keep their spec note', m.note);
   ok('the branded header and footer frame it', m.head && m.foot);
   ok('app chrome and buttons stay out of the document', !m.chrome && !m.actions && !m.runBtn);
+  ok('the pillar heatmap stays out of the client document (Ray: "too complicated for multi-market clients")', !m.heat);
+  ok('the "Two scores, two questions" band stays out of it', !m.rec);
+  ok('the pillar weights stay out of it', !m.dots);
+  ok('every pillar bar has a real width on paper', m.fillPx.length === 8 && m.fillPx.every((w) => w > 4), m.fillPx);
+  ok('…and its grow-in animation stands down for the capture (html2canvas renders a fresh clone)',
+    m.fillAnim.every((a) => a === 'none'), m.fillAnim);
   ok('a sized sheet is written into @page', /@page\{size:210mm \d+mm/.test(m.page || ''), m.page);
   ok('the document stays inside ' + MAX_A4 + ' A4 lengths (' + m.mm + 'mm = ' +
     (m.mm / A4).toFixed(2) + ')', m.mm > 0 && m.mm / A4 <= MAX_A4, m.mm);
@@ -239,15 +290,35 @@ const QUALITY = {
 
   console.log('\n-- ⬇ HTML: the same document, self-contained, zero dialog --');
   {
+    // the live editor is injected by the worker as an inline script (not a docs/ widget), so
+    // its boot-time furniture is stood up here by hand: the ✎ handle, the "Send an element to
+    // Claude Code" panel and the 💬 Feedback panel — the element Ray saw in the file he was
+    // about to send a client
+    const pageW = await browser.newPage({ viewport: { width: 1360, height: 950 } });
+    await arm(pageW);
+    await pageW.goto(PAGE_W);
+    await pageW.waitForTimeout(1500);
+    await pageW.evaluate(() => {
+      const mk = (cls, txt) => { const d = document.createElement('div'); d.className = cls; d.textContent = txt; document.body.appendChild(d); };
+      mk('de-handle', '✎'); mk('de-panel', 'Send an element to Claude Code'); mk('de-fbpanel', '💬 Feedback (0)');
+      mk('de-bar', '✎ Edit');
+    });
+    const seen = await pageW.evaluate(() => ({
+      tky: !!document.getElementById('tky-fab'), chat: !!document.getElementById('fcc-fcb'),
+      heat: !!document.querySelector('#air-tier .heat-card'), rec: !!document.querySelector('#rec-tier'),
+    }));
+    ok('the served page carries the Tachyon copilot, the Feed Chat bubble, the heatmap and the reconciliation band (so their absence below is a removal, not a no-op)',
+      seen.tky && seen.chat && seen.heat && seen.rec, seen);
     const [download] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('#det-html'),
+      pageW.waitForEvent('download'),
+      pageW.click('#det-html'),
     ]);
-    const fs = require('fs');
-    const os = require('os');
     const tmp = require('path').join(os.tmpdir(), 'grhtml-' + Date.now() + '.html');
     await download.saveAs(tmp);
+    await pageW.close();
     const html = fs.readFileSync(tmp, 'utf8');
+    // GRPDF_KEEP=/path/to/file.html keeps the export for a visual pass
+    if (process.env.GRPDF_KEEP) fs.copyFileSync(tmp, process.env.GRPDF_KEEP);
     fs.unlinkSync(tmp);
     ok('downloads as .html, not .htm or extensionless', /\.html$/.test(download.suggestedFilename()), download.suggestedFilename());
     ok('starts with a doctype — opens correctly standalone', /^<!doctype html>/i.test(html));
@@ -260,6 +331,44 @@ const QUALITY = {
       /<body class="pdf pdfshot xhtml"/.test(html), html.match(/<body[^>]*>/));
     ok('the branded header is baked in', /Golden Record scorecard/.test(html) && /Reiss/.test(html));
     ok('the scorecard content itself is present', /Required.{0,5}every product/.test(html));
+
+    // THE CLIENT COPY (Ray, 18 Sep 2026: "Let's remove a few things so it's not too complicated
+    // for the client to read … I'm sending this to my clients")
+    console.log('\n-- ⬇ HTML: simpler than the AM\'s screen --');
+    // 1. "Keep the content quality score description, but remove the weight"
+    ok('the content-quality description is kept', /How the content-quality score is put together/.test(html) &&
+      /How g:title is scored/.test(html) && /How g:description is scored/.test(html));
+    ok('every pillar keeps its "How this is scored" disclosure', (html.match(/How this is scored/g) || []).length === 8,
+      (html.match(/How this is scored/g) || []).length);
+    ok('the AI-readiness headline keeps its description', /How the AI-readiness score is put together/.test(html));
+    ok('no weight factor anywhere — no "weight ×", no ×1.6, no (×3)', !/weight ×/i.test(html) && !/×\d\.\d/.test(html) && !/\(×/.test(html),
+      (html.match(/.{30}(weight ×|×\d\.\d|\(×).{20}/gi) || []).slice(0, 4));
+    // the summary chip still carries the tier and the verdict on the two headlines — only a
+    // weight is never written into it
+    ok('no weight chip on a disclosure, no weight dots under a tile',
+      !/class="xd-w">[^<]*weight/i.test(html) && !/class="wdots"/.test(html) && !/class="pf2"/.test(html),
+      (html.match(/class="xd-w">[^<]*/g) || []));
+    ok('no HTML comments — the injected layers\' own notes stay with the team', !/<!--/.test(html), (html.match(/<!--.{0,60}/g) || []).slice(0, 3));
+    // 2. "show the scoring bars in green, yellow, and red, because now they're empty"
+    const fills = (html.match(/<i class="pfill" style="width:(\d+)%;background:var\(--([a-z-]+)\)/g) || [])
+      .map((s) => { const mm = s.match(/width:(\d+)%;background:var\(--([a-z-]+)\)/); return [+mm[1], mm[2]]; });
+    const band = (s) => (s < 40 ? 'risk' : s < 60 ? 'orange-deep' : s < 80 ? 'orange' : 'good');
+    ok('all eight pillar bars carry an inline width — never empty in a file with no scripts', fills.length === 8 && fills.every((f) => f[0] > 0), fills);
+    ok('…coloured by the number\'s own band: green ≥80, amber 60–79, deep orange 40–59, red under 40',
+      fills.length === 8 && fills.every((f) => f[1] === band(f[0])), fills);
+    ok('the MASK bars carry their width inline too', /<i class="mf" style="width:\d+%;background:/.test(html));
+    // 3. "Remove the pillar heat map for now; it's too complicated for multi-market clients"
+    ok('the pillar heatmap is gone — removed, not hidden', !/heat-card/.test(html.replace(/<style[\s\S]*?<\/style>/g, '')) && !/Pillar heatmap/.test(html));
+    // 4. 'remove the "two scores" question'
+    ok('the "Two scores, two questions" band is gone', !/rec-tier/.test(html.replace(/<style[\s\S]*?<\/style>/g, '')) && !/Two scores, two questions/.test(html));
+    // 5. "remove the element that sends code or feedback to Claude"
+    const body = html.replace(/<style[\s\S]*?<\/style>/g, '');
+    ok('the live editor is gone — handle, "Send an element to Claude Code" panel, Feedback panel, toolbar',
+      !/de-handle|de-panel|de-fbpanel|de-bar/.test(body) && !/Claude Code/.test(html) && !/Feedback/.test(html));
+    ok('the Tachyon copilot and the Feed Chat bubble are gone', !/tky-fab|tky-drawer|tky-scrim|fcc-fcb|fcc-fcp/.test(body) && !/Tachyon/.test(html));
+    ok('the view-as pill, app switcher, nav customiser and ⓘ instruction toggles are gone',
+      !/fcc-viewas|fcc-apps|fcc-navcz|instr-tgl|instr-hide/.test(body));
+    ok('nothing in the file mentions Claude at all', !/Claude/.test(html), (html.match(/.{40}Claude.{40}/g) || []).slice(0, 3));
   }
 
   console.log('\n-- CDN unreachable: the old print dialog is the fallback, never a silent failure --');

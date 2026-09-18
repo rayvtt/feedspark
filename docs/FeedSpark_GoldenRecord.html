@@ -294,7 +294,13 @@ window.addEventListener('load',restore);
   .pillar .pl2{font-size:12.5px;font-weight:900}
   .pillar .pn{font-size:18px;font-weight:900;font-variant-numeric:tabular-nums}
   .ptrack{height:8px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden}
-  .pfill{display:block;height:100%;width:0;border-radius:100px;background:linear-gradient(90deg,var(--orange),var(--orange-deep));transition:width .9s cubic-bezier(.25,.6,.3,1)}
+  /* the bar's width and colour are INLINE (Ray, 18 Sep 2026, reading the ⬇ HTML: "show the
+     scoring bars in green, yellow, and red, because now they're empty") — a width set by
+     script is an empty bar in a file that has no scripts, and the colour is the number's own
+     band (airCol), so the bar and the figure beside it can never disagree. The grow-in is a
+     CSS animation from 0 to that inline width, which needs no JavaScript either. */
+  @keyframes pgrow{from{width:0}}
+  .pfill{display:block;height:100%;border-radius:100px;background:var(--orange);animation:pgrow .9s cubic-bezier(.25,.6,.3,1) both}
   .pillar .pf2{display:flex;align-items:center;gap:9px;margin-top:7px}
   .wdots{display:inline-flex;gap:3px;flex:none}
   .wdots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
@@ -353,7 +359,7 @@ window.addEventListener('load',restore);
   .mseg .mh b{margin-left:auto;font-size:12.5px;font-variant-numeric:tabular-nums}
   .mdot{width:8px;height:8px;border-radius:3px;flex:none}
   .mseg .mt{height:7px;border-radius:100px;background:#EFEFEC;overflow:hidden}
-  .mseg .mf{display:block;height:100%;width:0;border-radius:100px;transition:width .9s cubic-bezier(.25,.6,.3,1)}
+  .mseg .mf{display:block;height:100%;border-radius:100px;animation:pgrow .9s cubic-bezier(.25,.6,.3,1) both}
   .mseg .ms{display:block;font-size:10px;font-weight:800;color:var(--muted);margin-top:5px}
   .tanat{margin-top:9px;padding-top:9px;border-top:1px dotted var(--line)}
   .tanat-h{font-size:11.5px;font-weight:900;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -540,6 +546,22 @@ window.addEventListener('load',restore);
   body.pdf #fcc-hrs,body.pdf .fh-dot,body.pdf #lang-tgl,body.pdf #fcc-presence,
   body.pdf #fcc-mall,body.pdf .fcc-mpan,
   body.pdf button[data-qinfo],body.pdf button[data-scpop]{display:none!important}
+  /* THE CLIENT DOCUMENT IS SIMPLER THAN THE AM'S SCREEN (Ray, 18 Sep 2026, sending the ⬇ HTML
+     to clients: "Let's remove a few things so it's not too complicated for the client to read.
+     Keep the content quality score description, but remove the weight. The 1.4 × 1.6 factor
+     is not necessary … Remove the pillar heat map for now; it's too complicated for
+     multi-market clients … remove the 'two scores' question"). Both client documents — the
+     PDF and the HTML — share body.pdf, so ONE rule drops the pillar weights (the dots under
+     each tile, the WEIGHT chip on a disclosure), the pillar heatmap and the "Two scores, two
+     questions" reconciliation band; the live page keeps all three, they are the AM's tools.
+     The HTML export also REMOVES these nodes (htmlifyExport), so the file carries no hidden
+     copy of what the client was not meant to read. And the grow-in animation stands down on
+     paper: html2canvas renders a fresh clone, where a CSS animation would restart from 0 and
+     the capture would take every bar at whatever width the clone had reached. (The WEIGHT chip
+     on a disclosure is not hidden here — it is simply never written into the client copy,
+     see clientCopy(); the same chip carries the tier and the verdict on the two headlines.) */
+  body.pdf .pillar .pf2,body.pdf .heat-card,body.pdf #rec-tier{display:none!important}
+  body.pdf .pfill,body.pdf .mseg .mf{animation:none!important}
   /* the download's disclosures. The two section headlines open by default, so a client meets the
      method rather than having to go looking for it; each attribute and each pillar starts folded,
      because eight attributes' worth of findings expanded at once is a wall, and the summary row
@@ -1301,7 +1323,7 @@ window.addEventListener('load',restore);
     { t: 'rec', badge: '<span class="tbadge rec">Recommended</span>', title: 'Recommended — the optimisation surface',
       sub: 'Optional per the spec but they drive performance: matching, PMAX segmentation, AI shopping surfaces. This is where FeedSpark lifts the score.' },
     { t: 'ai', badge: '<span class="tbadge ai">AI · conversational</span>', title: 'Conversational AI — the six Google asked for',
-      sub: 'The conversational attributes Google reads for AI Mode and agentic shopping (2026). Usually submitted via a supplemental data source, so “not in feed” is the expected start state — this tier is the AI-readiness frontier, tracked as its own KPI and never counted against the Golden Record score. It <b>is</b> the heaviest input to the AI-Readiness score below (×2.4): these are the only fields in the specification whose stated purpose is AI comprehension, so coverage here moves that number more than anything else in the feed.' }
+      sub: 'The conversational attributes Google reads for AI Mode and agentic shopping (2026). Usually submitted via a supplemental data source, so “not in feed” is the expected start state — this tier is the AI-readiness frontier, tracked as its own KPI and never counted against the Golden Record score. It <b>is</b> the heaviest input to the AI-Readiness score below: these are the only fields in the specification whose stated purpose is AI comprehension, so coverage here moves that number more than anything else in the feed.' }
   ];
 
   function renderDetail(k) {
@@ -2377,16 +2399,17 @@ window.addEventListener('load',restore);
         return '<div class="lad' + cls + '"><span class="lt">TIER ' + x.t + (x.t === a.tier ? ' · YOU ARE HERE' : '') + '</span>' +
           '<span class="ln">' + x.l + '</span><span class="lr">' + x.r + '</span></div>';
       }).join('') + '</div></div></div></div>' +
-      '<div class="pillars">' + a.pillars.map(function (p) {
+      '<div class="pillars">' + a.pillars.map(function (p, pi) {
         // four dots, not three: the conversational pillar carries ×2.4 and has to look it
         var w = +p.weight || 1, dots = w >= 2 ? 4 : (w < 1 ? 1 : (w < 1.4 ? 2 : 3)), dh = '';
         for (var i = 0; i < 4; i++) dh += '<i' + (i < dots ? ' class="on"' : '') + '></i>';
         // a name, a number, a bar and the weight — the formula, this feed's readings and the
-        // published source are one click away (no subtext: Ray, 17 Sep 2026)
+        // published source are one click away (no subtext: Ray, 17 Sep 2026). The bar's width
+        // and band colour are inline so the script-less ⬇ HTML draws it (Ray, 18 Sep 2026).
         return '<div class="pillar" data-scpop="' + esc(p.key) + '" role="button" tabindex="0" title="' + esc(p.label) + ' — click for how it is scored">' +
           '<div class="ph"><span class="pl2">' + esc(p.label) + '</span>' +
           '<span class="pn" style="color:' + airCol(p.score) + '">' + p.score + '</span></div>' +
-          '<div class="ptrack"><i class="pfill" data-w="' + p.score + '"></i></div>' +
+          '<div class="ptrack"><i class="pfill" style="width:' + p.score + '%;background:' + airCol(p.score) + ';animation-delay:' + (pi * 70) + 'ms"></i></div>' +
           '<div class="pf2"><span class="wdots" title="pillar weight ×' + w + '">' + dh + '</span>' +
           '<span class="pq">how it’s scored</span></div></div>';
       }).join('') + '</div>' +
@@ -2408,6 +2431,11 @@ window.addEventListener('load',restore);
      SCCAP turns this one opener into a recorder: the export calls the SAME five builders and gets
      back exactly what the AM reads on screen, to inline inside <details>. */
   var SCCAP = null;
+  /* THE CLIENT COPY CARRIES NO WEIGHTS (Ray, 18 Sep 2026: "Keep the content quality score
+     description, but remove the weight. The 1.4 × 1.6 factor is not necessary"). The builders
+     below read this flag: on screen the AM sees every ×factor, in the download the same
+     description is written without them. It is true only while the export is recording. */
+  function clientCopy() { return !!SCCAP; }
   function openScPop(title, num, w, body, colFn) {
     if (SCCAP) { SCCAP.push({ title: title, num: num, w: w, body: body, col: (colFn || airCol) }); return; }
     closeScPop();
@@ -2432,12 +2460,13 @@ window.addEventListener('load',restore);
   var G_ANS = 'https://support.google.com/merchants/answer/';
   function scorePop(k, key) {
     var q = QUAL[k], a = q && q.ai; if (!a) return;
-    var BASIS = (window.FeedAudit && window.FeedAudit.BASIS) || {};
+    var BASIS = (window.FeedAudit && window.FeedAudit.BASIS) || {}, cc = clientCopy();
     if (key === '_') {
       openScPop('AI-readiness — the headline', a.total, 'Tier ' + a.tier + ' · ' + a.tierLabel,
         '<div class="sc-k">How it is put together</div>' + scList([
-          'Weighted mean of eight pillars: ' + a.pillars.map(function (p) { return p.label + ' ×' + p.weight; }).join(', ') + '.',
-          'Conversational attributes carry ×2.4 — set so that every other pillar together tops out at 79, and a feed with none of the fields Google built for AI surfaces cannot read as Agentic-ready.',
+          'Weighted mean of eight pillars: ' + a.pillars.map(function (p) { return p.label + (cc ? '' : ' ×' + p.weight); }).join(', ') + '.',
+          cc ? 'Conversational attributes carry the most weight — a feed with none of the fields Google built for AI surfaces cannot read as Agentic-ready.'
+             : 'Conversational attributes carry ×2.4 — set so that every other pillar together tops out at 79, and a feed with none of the fields Google built for AI surfaces cannot read as Agentic-ready.',
           'Tiers: Foundational under 40 · Structured 40–59 · Enriched 60–79 · Agentic-ready 80 and over.',
           'Custom labels are measured but not scored: Google’s specification says their values “won’t be shown to customers” — campaign structure, not readiness. Label Guard owns them.',
           'Same engine, same read as Feed Lab — one fetch of the live feed, scored beside the content-quality rows above. Click any pillar for what it reads and where each threshold comes from.']) +
@@ -2448,7 +2477,7 @@ window.addEventListener('load',restore);
     var p = null; a.pillars.forEach(function (x) { if (x.key === key) p = x; });
     if (!p) return;
     var b = BASIS[key] || {};
-    openScPop(p.label, p.score, 'weight ×' + p.weight,
+    openScPop(p.label, p.score, cc ? '' : 'weight ×' + p.weight,
       '<div class="sc-k">What it reads</div>' + scList(b.f && b.f.length ? b.f : [p.summary]) +
       '<div class="sc-k">This feed</div>' + scList(p.reads && p.reads.length ? p.reads : [p.summary], 'sc-reads') +
       (b.src && b.src.length ? scSrc(b.src) : '') +
@@ -2456,17 +2485,20 @@ window.addEventListener('load',restore);
   }
   function qualityPop(k, attr) {
     if (!LGQ) return;
+    var cc = clientCopy();
     if (attr === '_') {
       var qs = QUAL[k] ? LGQ.qualityScore(QUAL[k], profileForC(parts(k).client)) : null;
       if (!qs) return;
       openScPop('Content quality — the headline', qs.score, qs.verdict.pill,
         '<div class="sc-k">How it is put together</div>' + scList([
           'Coverage says an attribute is there; this reads what is IN it. Every product with a value is tested against the rules on that attribute’s own Google specification page — nothing sampled, nothing parsed server-side.',
-          'A rule costs the share of products breaking it: a stated requirement at full cost (×1.0 — disapproval or truncation risk), a stated best practice at ×0.4. An attribute’s score is 100 minus its costs.',
-          'Attributes are weighted by how much of the shop window they are: title and description ×3, highlights, category and type ×2, colour, material and pattern ×1 — the same shape as the Golden Record score.',
+          cc ? 'A rule costs the share of products breaking it: a stated requirement at full cost (disapproval or truncation risk), a stated best practice at a fraction of it. An attribute’s score is 100 minus its costs.'
+             : 'A rule costs the share of products breaking it: a stated requirement at full cost (×1.0 — disapproval or truncation risk), a stated best practice at ×0.4. An attribute’s score is 100 minus its costs.',
+          cc ? 'Attributes are weighted by how much of the shop window they are: title and description most, then highlights, category and type, then colour, material and pattern — the same shape as the Golden Record score.'
+             : 'Attributes are weighted by how much of the shop window they are: title and description ×3, highlights, category and type ×2, colour, material and pattern ×1 — the same shape as the Golden Record score.',
           'An attribute the industry profile waives is left out entirely, numerator and denominator.',
           'Bands: 90 and over meets the spec · 75–89 below best practice · under 75 spec violations.',
-          'Reading now: ' + qs.parts.map(function (p) { return 'g:' + p.key + ' ' + p.score + ' (×' + p.w + ')'; }).join(' · ') + '.']) +
+          'Reading now: ' + qs.parts.map(function (p) { return 'g:' + p.key + ' ' + p.score + (cc ? '' : ' (×' + p.w + ')'); }).join(' · ') + '.']) +
         scSrc(qs.parts.map(function (p) { return ['Google · ' + p.label + ' (answer ' + p.doc + ')', G_ANS + p.doc]; })), scoreCol);
       return;
     }
@@ -2479,10 +2511,11 @@ window.addEventListener('load',restore);
         '<span><span class="rl">' + esc(rule.label) + '</span><span class="rw">' + esc(rule.why) + '</span></span>' +
         '<span class="rn' + (bb ? '' : ' ok') + '">' + (bb ? bb.pct + '% · −' + bb.cost : '✓ passes') + '</span></div>';
     }).join('');
-    openScPop('g:' + attr + ' — content quality', r.score, 'weight ×' + (r.w || 1),
+    openScPop('g:' + attr + ' — content quality', r.score, cc ? '' : 'weight ×' + (r.w || 1),
       '<div class="sc-k">How it is scored</div>' + scList([
         'Each rule below is a sentence from Google’s specification for g:' + attr + '. It costs the share of the ' + fmt(r.filled) +
-          ' products with a value that break it — a requirement at ×1.0, a best practice at ×0.4 — and the score is 100 minus the costs.',
+          ' products with a value that break it — ' + (cc ? 'a requirement at full cost, a best practice at a fraction of it' : 'a requirement at ×1.0, a best practice at ×0.4') +
+          ' — and the score is 100 minus the costs.',
         'Measured: average length ' + r.avgLen + ' characters (' + r.minLen + '–' + r.maxLen + ')' +
           (r.perProduct ? ', read across ' + r.cols + ' column' + (r.cols === 1 ? '' : 's') + ', ' + r.perProduct + ' values per product' : '') +
           (r.avgDepth != null ? ', averaging ' + r.avgDepth + ' levels deep — the same chevron read as the Taxonomy depth pillar' : '') + '.']) +
@@ -2599,7 +2632,7 @@ window.addEventListener('load',restore);
       '<div class="mask-row">' + MASKS.map(function (m) {
         var pct = Math.round(+t.mask[m[0]] || 0);
         return '<div class="mseg"><div class="mh"><i class="mdot" style="background:' + m[2] + '"></i><span>' + m[1] + '</span><b>' + pct + '%</b></div>' +
-          '<div class="mt"><i class="mf" data-w="' + pct + '" style="background:' + m[2] + '"></i></div>' +
+          '<div class="mt"><i class="mf" style="width:' + pct + '%;background:' + m[2] + '"></i></div>' +
           '<span class="ms">in ' + fmt(Math.round(rows * pct / 100)) + ' titles</span></div>';
       }).join('') + '</div>' +
       '<div class="thist">' + bks.map(function (b) {
@@ -2626,14 +2659,12 @@ window.addEventListener('load',restore);
         '%</b> carry 6 or more — the fuller set of selling points AI and agentic shopping surfaces read (Google’s ceiling is 100, stated minimum 2)',
     });
   }
-  // bars animate on the frame after paint, the way the Feed Lab cards do
+  // the histogram bars animate on the frame after paint, the way the Feed Lab cards do. The
+  // pillar and MASK bars no longer go through here: their width is inline and the grow-in is
+  // a CSS animation, so the ⬇ HTML (which has no scripts) draws them too (Ray, 18 Sep 2026).
   function airAnimate() {
-    if (!document.querySelector('.pfill,.mseg .mf,.thb i')) return;
+    if (!document.querySelector('.thb i')) return;
     requestAnimationFrame(function () { requestAnimationFrame(function () {
-      Array.prototype.forEach.call(document.querySelectorAll('.pfill'), function (f, i) {
-        f.style.transitionDelay = (i * 70) + 'ms'; f.style.width = f.getAttribute('data-w') + '%';
-      });
-      Array.prototype.forEach.call(document.querySelectorAll('.mseg .mf'), function (f) { f.style.width = f.getAttribute('data-w') + '%'; });
       Array.prototype.forEach.call(document.querySelectorAll('.thb i'), function (f) { f.style.height = f.getAttribute('data-h') + '%'; });
     }); });
   }
@@ -2861,12 +2892,31 @@ window.addEventListener('load',restore);
     ['.de-bar', '.de-dot', '#fs-editor-css', '#fcc-ship', '#fcc-ship-dim', '#fcc-ship-h', '#fcc-hrs',
      '.fh-dot', '#lang-tgl', '#fcc-presence', '#fcc-mall', '.fcc-mpan', '#theme-tgl', '#scm',
      '[data-qinfo]', '[data-scpop]', '.qz-i', '.qz-act', '[data-qask]', '[data-qbrief]',
-     '.at-act', '.det-actions', '.refseg'].forEach(function (sel) {
+     '.at-act', '.det-actions', '.refseg',
+     /* THE REST OF THE INJECTED CHROME, REMOVED NOT HIDDEN (Ray, 18 Sep 2026: "remove the
+        element that sends code or feedback to Claude. I'm sending this to my clients"): the
+        live editor's ✎ handle, its "Send an element to Claude Code" panel and 💬 Feedback
+        panel, the Tachyon copilot, the Feed Chat bubble, the view-as pill, the app switcher,
+        the nav customiser and the ⓘ instruction toggles were CLONED into the file with their
+        scripts left behind — body.pdf hid most of them, but a hidden panel is still in the
+        source of a document a client opens, and the ✎ handle was not hidden at all. */
+     '.de-handle', '.de-panel', '.de-props', '.de-toast', '.de-warn', '.de-ctxmenu', '.de-resize',
+     '.de-rtbar', '.de-collapse', '.de-fbpanel', '.de-fbnote', '.de-fbmark',
+     '#tky-fab', '#tky-scrim', '#tky-drawer', '#fcc-fcb', '#fcc-fcp', '#fcc-viewas', '#fcc-apps',
+     '#fcc-navcz', '#fcc-navcz-scrim', '.instr-tgl', '.instr-hide', '#askp-slot', '#profp-slot',
+     /* and the AM-only reads a client is not asked to follow (Ray, same note): the pillar
+        weights under each tile, the pillar heatmap, the "Two scores, two questions" band */
+     '.pillar .pf2', '.heat-card', '#rec-tier'].forEach(function (sel) {
       Array.prototype.forEach.call(doc.querySelectorAll(sel), function (el) {
         if (el.classList && el.classList.contains('pillar')) { el.removeAttribute('data-scpop'); return; }
         if (el.parentNode) el.parentNode.removeChild(el);
       });
     });
+    // 5. and no HTML comments: every injected layer opens with a note on what it is and what it
+    //    talks to, which is documentation for the team, not for a client reading the source
+    var walker = document.createTreeWalker(doc, NodeFilter.SHOW_COMMENT, null, false), drop = [], c;
+    while ((c = walker.nextNode())) drop.push(c);
+    drop.forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
   }
   function exportHtml(k) {
     var d = CACHE[k]; if (!d || !d.snapshot) return;
