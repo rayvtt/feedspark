@@ -2982,5 +2982,86 @@ window.addEventListener('load',restore);
   if(lon({weekday:'short'})==='Mon'){ var key='mc-'+lon({year:'numeric',month:'2-digit',day:'2-digit'});
     try{ if(localStorage.getItem(key)!=='1'){ setTimeout(op,800); localStorage.setItem(key,'1'); } }catch(e){ setTimeout(op,800); } }
 })();</script>
+<style>/* FCC-NEWS — industry digest pop-up. Self-contained and appended at the END of <body> so it
+   never shifts the positional data-eid order of the content above it. Reuses the .pm-* modal
+   chrome (dark theme already covers .pm-card). Data: /api/news <- docs/news_digest.json. */
+#nw-btn{margin-left:8px;flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--line,#E6E6E6);background:transparent;color:var(--ink-2,#4a4a4a);cursor:pointer;display:none;align-items:center;justify-content:center;position:relative;transition:background .15s,color .15s,border-color .15s}
+#nw-btn.on{display:inline-flex}
+#nw-btn:hover{border-color:var(--orange,#F5A623);color:var(--orange-deep,#ED6F0B)}
+#nw-btn .nw-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--orange-deep,#ED6F0B);display:none}
+#nw-btn.unread .nw-dot{display:block}
+.nw{position:fixed;inset:0;z-index:210;display:flex;align-items:center;justify-content:center;padding:22px}
+.nw[hidden]{display:none}
+.nw-eyebrow{font-size:11px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--orange-deep)}
+.nw-intro{color:var(--muted);font-size:13px;margin:6px 0 2px}
+.nw-item{border-top:1px solid var(--line);padding:14px 0}
+.nw-item:last-of-type{border-bottom:1px solid var(--line)}
+.nw-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.nw-h h4{margin:0;font-size:14.5px;font-weight:900;flex:1;min-width:180px}
+.nw-imp{font-size:9.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;border-radius:100px;padding:2px 8px;border:1px solid var(--line);background:var(--wash);color:var(--muted);flex:none}
+.nw-imp.high{background:#FDEEE9;color:var(--risk);border-color:#F3C9BC}
+.nw-imp.med{background:#FCF1E3;color:var(--orange-ink);border-color:#F3D9B8}
+.nw-meta{font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px}
+.nw-what{font-size:13px;color:var(--ink-2);margin:0 0 8px}
+.nw-so{font-size:13px;color:var(--ink);background:var(--wash);border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:9px 12px;margin:0}
+.nw-so span{font-weight:900;color:var(--orange-ink);letter-spacing:.04em;font-size:10px;text-transform:uppercase;display:block;margin-bottom:3px}
+.nw-foot{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:18px;flex-wrap:wrap}
+.nw-foot .nw-note{font-size:11.5px;color:var(--muted);font-weight:700;margin:0}
+.nw-ok{border:none;border-radius:100px;padding:10px 18px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;background:var(--orange-deep);color:#fff}
+.nw-ok:hover{background:var(--orange)}
+/* the two tinted chips are the only hard-coded light surfaces here — give them the same
+   rgba treatment the theme block gives .mchip, or they read as light islands in dark view */
+[data-theme=dark] .nw-imp.high{background:rgba(241,112,122,.13)!important;border-color:rgba(241,112,122,.3)!important;color:#F3868F!important}
+[data-theme=dark] .nw-imp.med{background:rgba(245,166,35,.15)!important;border-color:rgba(245,166,35,.32)!important;color:#F0A44E!important}
+</style>
+<div class="nw" id="nw-modal" hidden><div class="pm-bg"></div><div class="pm-card">
+  <button class="pm-x" id="nw-x" aria-label="Close">×</button>
+  <div class="nw-eyebrow">Industry digest</div>
+  <h2 id="nw-title" style="margin:4px 0 0;font-size:21px">Industry news</h2>
+  <p class="nw-intro" id="nw-sub"></p>
+  <div id="nw-body"></div>
+  <div class="nw-foot"><p class="nw-note">Refreshed every weekday morning · every item links its source</p><button class="nw-ok" id="nw-ok" type="button">Got it — mark as read</button></div>
+</div></div>
+<script>/* FCC-NEWS */(function(){
+  var KEY='fcc-news-read', modal=document.getElementById('nw-modal');
+  if(!modal) return;
+  var body=document.getElementById('nw-body'), ttl=document.getElementById('nw-title'),
+      sub=document.getElementById('nw-sub'), cur=null;
+  function esc(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function safe(u){return /^https:\/\//i.test(u||'')?esc(u):'';}
+  var btn=document.createElement('button');
+  btn.id='nw-btn'; btn.type='button'; btn.title='Industry news'; btn.setAttribute('aria-label','Industry news');
+  btn.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.2L13 5.5v13l-5.8-4H4Z"/><path d="M16.5 9.6a3.6 3.6 0 0 1 0 4.8"/><path d="M19 7.2a7 7 0 0 1 0 9.6"/></svg><span class="nw-dot"></span>';
+  var tb=document.querySelector('.topbar-in'); if(tb) tb.appendChild(btn);
+  // One overlay at a time. This page already auto-opens the Monday catch-up panel at 800ms, and a
+  // second card landing on top of it is exactly the stacking bug that hid the Workflow ledger.
+  function otherOpen(){ return !!document.querySelector('.scrim.on, .mc-panel.open, .pm:not([hidden]), .modal:not([hidden])'); }
+  function op(){ var m=document.getElementById('mc-panel'); if(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); } modal.hidden=false; }
+  function cl(){ modal.hidden=true; if(cur&&cur.id){ try{ localStorage.setItem(KEY,cur.id); }catch(e){} btn.classList.remove('unread'); } }
+  btn.onclick=op;
+  document.getElementById('nw-x').onclick=cl;
+  document.getElementById('nw-ok').onclick=cl;
+  modal.querySelector('.pm-bg').onclick=cl;
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!modal.hidden) cl(); });
+  fetch('/api/news').then(function(r){ return r.ok?r.json():null; }).then(function(d){
+    if(!d||!d.items||!d.items.length) return;
+    cur=d; btn.classList.add('on');
+    if(d.headline) ttl.textContent=d.headline;
+    var when=''; try{ when=new Intl.DateTimeFormat('en-GB',{weekday:'short',day:'numeric',month:'short'}).format(new Date(d.generated||d.id)); }catch(e){}
+    sub.textContent=(d.intro?d.intro+' ':'')+(when?'· '+when+' ':'')+'· '+d.items.length+' update'+(d.items.length>1?'s':'');
+    body.innerHTML=d.items.map(function(it){
+      var imp=(it.impact==='high'||it.impact==='med')?it.impact:'watch',
+          lbl=(imp==='high'?'Act now':imp==='med'?'Changes our work':'Watch'), u=safe(it.url);
+      return '<div class="nw-item"><div class="nw-h"><h4>'+esc(it.title)+'</h4><span class="nw-imp '+imp+'">'+lbl+'</span></div>'
+        +'<div class="nw-meta">'+esc(it.source||'')+(it.date?' · '+esc(it.date):'')+(u?' · <a href="'+u+'" target="_blank" rel="noopener">Read source &rarr;</a>':'')+'</div>'
+        +'<p class="nw-what">'+esc(it.what||'')+'</p>'
+        +(it.sowhat?'<p class="nw-so"><span>What it means for us</span>'+esc(it.sowhat)+'</p>':'')+'</div>';
+    }).join('');
+    var last=''; try{ last=localStorage.getItem(KEY)||''; }catch(e){}
+    // Auto-prompt only into a clear screen — otherwise the dot on the topbar button carries it
+    // and the AM opens it when they are ready. 1200ms clears the Monday panel's own 800ms check.
+    if(last!==d.id){ btn.classList.add('unread'); if(!otherOpen()) setTimeout(function(){ if(!otherOpen()) op(); },1200); }
+  }).catch(function(){});
+})();</script>
 </body>
 </html>
