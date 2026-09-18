@@ -175,6 +175,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record PDF (one sheet, scorecard + content quality, findings intact)"
   NODE_PATH=$(npm root -g) node tools/check_grpdf.js || {
     echo "✗ Golden Record PDF tripwire failed — the client scorecard lost a column, a section, or its single-sheet sizing"; exit 1; }
+  echo "── validating: Golden Record ⬇ HTML export (foldable, scoring logic inline, no dead chrome)"
+  NODE_PATH=$(npm root -g) node tools/check_grhtml.js || {
+    echo "✗ Golden Record HTML tripwire failed — the download lost a disclosure, its scoring logic, or kept dead FCC chrome"; exit 1; }
   echo "── validating: Golden Record at 390px WITH a scanned feed (rows fit, no rescue frames, pop-ups on screen)"
   NODE_PATH=$(npm root -g) node tools/check_grmobile.js || {
     echo "✗ Golden Record phone tripwire failed — a scanned attribute row, a section or a pop-up runs past a 390px screen"; exit 1; }

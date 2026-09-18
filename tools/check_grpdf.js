@@ -252,7 +252,12 @@ const QUALITY = {
     ok('downloads as .html, not .htm or extensionless', /\.html$/.test(download.suggestedFilename()), download.suggestedFilename());
     ok('starts with a doctype — opens correctly standalone', /^<!doctype html>/i.test(html));
     ok('carries no <script> — a static snapshot never calls the FCC\'s own APIs', !/<script/i.test(html));
-    ok('body is laid out chrome-free at natural size (pdf pdfshot)', /<body class="pdf pdfshot"/.test(html), html.match(/<body[^>]*>/));
+    // `xhtml` joined the pair on 18 Sep 2026: the download rewrites its clone into <details>
+    // disclosures (the file has no scripts, so a click-handler chevron does nothing) and that
+    // layout needs its own scope — the PDF rasteriser must NOT pick it up, which is exactly what
+    // a class only the HTML export sets buys us.
+    ok('body is laid out chrome-free at natural size (pdf pdfshot), with the export\'s own xhtml scope',
+      /<body class="pdf pdfshot xhtml"/.test(html), html.match(/<body[^>]*>/));
     ok('the branded header is baked in', /Golden Record scorecard/.test(html) && /Reiss/.test(html));
     ok('the scorecard content itself is present', /Required.{0,5}every product/.test(html));
   }
