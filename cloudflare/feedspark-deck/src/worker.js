@@ -5204,7 +5204,18 @@ function getEditorScript(slug) {
     if(d) d.onclick=function(){ if(confirm('Discard '+n+' unsaved edit'+(n===1?'':'s')+'? This cannot be undone.')){ clearBackup(); hideWarn(); } };
   }
   // Normalised text of an element — the signature every patch is validated against.
-  function sigOf(el){ return (el.textContent||'').replace(/\s+/g,' ').trim().slice(0,120); }
+  // Double-escaped \\s ON PURPOSE (same trap as the confirm() string in reportStale): this
+  // lives inside getEditorScript's template literal, which eats one backslash. Written with a
+  // single one it cooked to /s+/g in the served script — collapsing runs of the LETTER s into
+  // a space and never normalising whitespace — so a line break moved in the template marked a
+  // good edit stale, and "Reiss" / "Accessorize" hashed off a mangled string.
+  function sigOf(el){ return (el.textContent||'').replace(/\\s+/g,' ').trim().slice(0,120); }
+  // What the served sigOf ACTUALLY computed before the fix above. Every sig and ck already
+  // saved in KV edits:<slug> was written with it, so replay accepts either form — a stored
+  // signature matches when it equals the corrected sigOf OR this; a content key resolves
+  // against either hash. New saves write the corrected form only, so the legacy form ages out
+  // of the store edit by edit rather than in one migration nobody can verify.
+  function sigLegacy(el){ return (el.textContent||'').replace(/s+/g,' ').trim().slice(0,120); }
 
   // ---- Staleness detection ------------------------------------------------------------
   // data-eid is POSITIONAL (chapter + index), so any template push that changes how many
@@ -5226,17 +5237,29 @@ function getEditorScript(slug) {
   //     saved edits keep working untouched. When a positional key goes stale, the content key
   //     finds where that element actually went and the edit follows it, instead of being
   //     skipped and reported as a loss. That turns the Reiss failure into a self-healing case.
-  var baseSig={}, ckeyOf={}, byCkey={};
+  // baseSigL / byCkeyL are the LEGACY-form twins (sigLegacy above): read on replay, never
+  // written into a new patch. The legacy occurrence index is counted separately, because two
+  // elements byte-identical under one form need not be under the other.
+  var baseSig={}, ckeyOf={}, byCkey={}, baseSigL={}, byCkeyL={};
   function captureBaseSigs(){
-    var seen={};
+    var seen={}, seenL={};
     editable().forEach(function(el){
       var id=el.getAttribute('data-eid'); if(!id) return;
       var s=sigOf(el); baseSig[id]=s;
       var base='k'+hashStr(el.tagName+'|'+s);
       seen[base]=(seen[base]||0); var ck=base+(seen[base]?'.'+seen[base]:''); seen[base]++;
       ckeyOf[id]=ck; byCkey[ck]=el; el.setAttribute('data-ck',ck);
+      var sL=sigLegacy(el); baseSigL[id]=sL;
+      var baseL='k'+hashStr(el.tagName+'|'+sL);
+      seenL[baseL]=(seenL[baseL]||0); var ckL=baseL+(seenL[baseL]?'.'+seenL[baseL]:''); seenL[baseL]++;
+      byCkeyL[ckL]=el;
     });
   }
+  // A stored signature is accepted in either form; a stored content key resolves against
+  // either index (corrected form first). Both are the migration for pre-fix saves.
+  function sigMatches(sig,id){ return sig===baseSig[id] || sig===baseSigL[id]; }
+  function sigMatchesEl(sig,el){ return sig===sigOf(el) || sig===sigLegacy(el); }
+  function byAnyCkey(ck){ return byCkey[ck] || byCkeyL[ck] || null; }
   function hashStr(s){ var h=5381; for(var i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))>>>0; } return h.toString(36); }
   function shapeOf(){
     var counts={}; editable().forEach(function(el){ var k=chapterKeyFor(el); counts[k]=(counts[k]||0)+1; });
@@ -5383,9 +5406,9 @@ function getEditorScript(slug) {
       // travels with its paragraph instead of being skipped or landing on a stranger.
       var relocated=false;
       if(v && typeof v==='object' && v.ck){
-        var stale = !el || (v.sig!=null && baseSig[k]!=null && v.sig!==baseSig[k]);
+        var stale = !el || (v.sig!=null && baseSig[k]!=null && !sigMatches(v.sig,k));
         if(stale){
-          var alt=byCkey[v.ck];
+          var alt=byAnyCkey(v.ck);
           if(alt && alt!==el){ el=alt; relocated=true; recovered++; }
         }
       }
@@ -5398,7 +5421,7 @@ function getEditorScript(slug) {
         // signature of what it removed; replay only when that still matches. Legacy tombstones
         // carry no signature and are never replayed — a deletion that stops applying is a
         // visible, fixable annoyance; one that removes the wrong thing is not.
-        if(v.sig && v.sig===sigOf(el)){ el.remove(); } else { skipped++; staleKeys.push(k); }
+        if(v.sig && sigMatchesEl(v.sig,el)){ el.remove(); } else { skipped++; staleKeys.push(k); }
         return;
       }
       // Same guard, now for CONTENT and STYLE patches. It used to apply only to deletions,
@@ -5409,7 +5432,7 @@ function getEditorScript(slug) {
       // being guarded against.
       // relocated means the content key already proved this is the right element, so the
       // positional signature check has nothing left to say.
-      if(!relocated && v && typeof v==='object' && v.sig && baseSig[k]!=null && v.sig!==baseSig[k]){
+      if(!relocated && v && typeof v==='object' && v.sig && baseSig[k]!=null && !sigMatches(v.sig,k)){
         mismatched++; staleKeys.push(k); return;
       }
       var h=(typeof v==='string')?v:v.html; if(h!=null) el.innerHTML=h;
