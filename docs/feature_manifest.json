@@ -8731,6 +8731,43 @@
       "name": "presync runs the Golden Record waiver tripwire",
       "file": "tools/presync.sh",
       "pattern": "tools/check_grwaive.js"
+    },
+    {
+      "name": "AI Quote export: a saved quote exports ITS OWN LINES — the sheet builder reads the frozen snapshot (Ray, 21 Sep 2026: 'the number is not matching')",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "var fz=FROZEN, L=fz?snapLines(fz):lines(), t=fz?snapTotals(fz):totals()",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote export: withSnap freezes the snapshot in for the length of the call",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "FROZEN=q; out=fn(); }",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote export: every saved option's tab is its snapshot, the one under Edit included (snapTab)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function snapTab(q,nm){ return withSnap(q,function(){ var sh=quoteSheet({ref:q.ref,at:q.t}); return {name:nm,sh:sh,day:sh.day}; }); }",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote export: the option under Edit is never rendered off the live builder",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "if(EDITING&&EDITING.id===k)tabs.push({name:nm,sh:quoteSheet({ref:q.ref}),day:blockGBP()});",
+      "pr": 0,
+      "forbidden": true
+    },
+    {
+      "name": "AI Quote export: Spark AI configuration hours at the Spark AI day rate as a value, never =Dayrate",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "qty:(+l.hours)/aimHPD,qs:'days',rate:aimDay,dsc:aimDsc('oneoff',l)",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: Edit keeps the saved Spark AI sizing on screen while the feed is not pulled (aimFz)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function aimFz(){ if(idx())return null; var fz=aimRec().fz; return (fz&&fz.sig===aimSig())?fz:null; }",
+      "pr": 0
     }
   ]
 }
