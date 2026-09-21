@@ -8060,88 +8060,88 @@
       "name": "AI Quote: every line type counted in one place, so an AI Mode-only quote saves",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "AIQUOTE-LINECOUNT",
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: qLineN counts the routed AI Mode attributes",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "t.aim&&t.aim.lines)?t.aim.lines.length",
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: …and the monthly new-product bundle",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "+ (t.upd?1:0)",
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: the two-type save guard is RETIRED (must stay gone)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "if(!t.inc&&!t.x.length)",
       "forbidden": true,
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: the page declares its own editable surface (✎ Edit reaches the copy)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "FCC-EDITSEL",
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: card explanations and AI Mode row labels are editable",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": ".card > .ch,.qs-h,.aim-note,.aim-lbl",
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: the card's prose lives in the template, not in a render",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "<div class=\"aim-note\">",
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: …including every foot row label",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "<span class=\"aim-lbl\">Catalogue in scope</span>",
       "min": 1,
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: aimFoot fills that shell; aimNums writes the figures",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function aimFoot(q){",
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: the prose is NEVER rebuilt as HTML again (must stay gone)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "h+='<div class=\"aim-foot\">",
       "forbidden": true,
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: Delivered sits between In action and Billed",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "'In action','Delivered','Billed'",
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: ASPL's confirmation delivers the quote (once, never over a later call)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function autoDeliver()",
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: the quote ⇄ ticket tie is the REF token, longest ref first",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "return b.ref.length-a.ref.length",
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: Delivered · not billed — the figure finance asked for",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "Delivered · not billed",
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "Arrivals: the run-rate is a YEAR of complete months ÷ 12, not the last three",
@@ -8178,40 +8178,40 @@
       "name": "AI Quote: the arrivals KPI reads the PRICED forecast, not a second average",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "updKpi(st.forecast?fmt(st.forecast.month)",
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: no annual, pro-rated or Year-1 cost line on any surface",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "NO ANNUAL, PRO-RATED OR YEAR-1 ROW",
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: the Year-1 total is RETIRED (must stay gone)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "year1",
       "forbidden": true,
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: nothing multiplies a monthly figure by twelve (must stay gone)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "monGross*12",
       "forbidden": true,
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: the assumed January contract year-end is gone with the pro-rated row",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "contract year assumed to end in January",
       "forbidden": true,
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "AI Quote: a row hidden by attribute is actually hidden (flex beats the UA rule)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": ".aim-r[hidden],.qs-r[hidden]{display:none}",
-      "pr": 465
+      "pr": 0
     },
     {
       "name": "Golden Record client documents: the scoring descriptions are written WITHOUT their weight factors while the export records the pop-ups (Ray, 18 Sep 2026: 'Keep the content quality score description, but remove the weight')",
