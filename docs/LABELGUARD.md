@@ -265,6 +265,13 @@ export time). Harness `tools/check_lgexport.js` (presync) drives the real page, 
 downloaded file in a second page and uses it as a client would; `LGX_KEEP=1` keeps the file for
 a visual pass.
 
+**Every closing tag in the file builder is escaped** (`<\/script><\/body><\/html>`). The worker
+injects its widgets and the live editor at the FIRST `</body>` it finds in the served page, so a
+literal one inside the builder's string put the injection in the middle of it and took the whole
+page's script down — `/labels` shipped dead for an hour on 21 Sep 2026 while every block parsed on
+its own. `tools/check_inline_scripts.js` now parses each app page as the worker serves it and
+refuses a `</body>` that is not the document's own closing tag.
+
 ## 5b. Demo mode — the anonymised client-facing view
 
 **🎭 Demo mode** (toggle in §02, sticky sessionStorage) turns `/labels` into a screen-shareable
