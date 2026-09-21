@@ -186,5 +186,11 @@ any exported file.
 2. **Before calling any deck final:** `deck_audit.py` on the template *and* on a fresh
    Download-HTML export. The export is what the client gets.
 3. **Never two sessions on one deck file.** Presync enforces it.
-4. **A red banner is information, not damage.** Every guard skips and reports; none of them
+4. **A staleness report is information, not damage.** Every guard skips and reports; none of them
    destroys anything. The Clear button removes only what it names, after a backup.
+   Since 21 Sep 2026 that report is a **chip on the editor toolbar** (grey when everything still
+   applied, orange when entries were skipped, with a dot on the ✎ handle so a collapsed toolbar
+   still hints at it) — never the red top banner, which Ray asked to be gone: the shape moves on
+   every push that changes an editable count and an app page ships several times a day, so "the
+   deck template has changed … everything was applied" fired on every load about nothing. The red
+   banner is now only the voice of a save that failed or edits about to be lost.

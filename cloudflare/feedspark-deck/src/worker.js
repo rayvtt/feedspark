@@ -4874,6 +4874,9 @@ function getEditorScript(slug) {
   // explicit close it had no way to end: e.g. a standalone offline export (no backend to fetch
   // from) always fires the "could not load saved edits" message, permanently covering the topbar
   // and blocking the very Download HTML button someone would use to save their work.
+  // IT IS THE VOICE OF A SAVE THAT FAILED OR EDITS ABOUT TO BE LOST — nothing else. A template
+  // that changed underneath edits that still applied is a note for the person editing, and it
+  // lives on the editor toolbar (showStale below), never here.
   function showWarn(html){ warnEl.innerHTML=html+'<button class="de-w-x" title="Dismiss" aria-label="Dismiss">&#10005;</button>';
     warnEl.hidden=false; warnEl.querySelector('.de-w-x').onclick=hideWarn; }
   function hideWarn(){ warnEl.hidden=true; }
@@ -4966,9 +4969,21 @@ function getEditorScript(slug) {
     + '.de-bar button{background:#1A365D;color:#fff;border:0;border-radius:8px;padding:9px 13px;cursor:pointer;font:inherit}'
     + '.de-bar button.on{background:#ED6F0B}'
     + '.de-bar span{color:#6b7a8d;min-width:60px}'
+    // The staleness note: a chip on the toolbar (grey = nothing lost, orange = entries skipped)
+    // that opens a small card with the detail and the Clear button; the ✎ handle carries a dot
+    // only when there is something to act on. Toolbar-scoped on purpose — see reportStale.
+    + '.de-bar button.de-stale{background:#F7F7F5;color:#6b7a8d;border:1px solid #E6E6E6;border-radius:100px;padding:7px 11px;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+    + '.de-bar button.de-stale.act{background:#FFF3E6;color:#B3540B;border-color:#F5C89A;font-weight:700}'
+    + '.de-stalepanel{position:fixed;right:16px;bottom:130px;z-index:99999;width:400px;max-width:92vw;background:#fff;border:1px solid #E6E6E6;border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.18);padding:14px;display:none;font:13px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;color:#333}'
+    + '.de-stalepanel.show{display:block}'
+    + '.de-stalepanel p{margin:8px 0 0}'
+    + '.de-stalepanel .row{display:flex;gap:8px;margin-top:12px}'
+    + '.de-stalepanel .row button{flex:1;border:0;border-radius:8px;padding:9px 12px;cursor:pointer;font:inherit;font-weight:700;background:#EEE;color:#333}'
+    + '.de-stalepanel .row button.de-st-drop{background:#ED6F0B;color:#fff}'
+    + '.de-handle.de-hb::after{content:"";position:absolute;top:-1px;right:-1px;width:11px;height:11px;border-radius:50%;background:#ED6F0B;border:2px solid #fff}'
     // Save/load failure banner. Deliberately NOT inside .de-bar and NOT hidden by Present mode:
     // the old "save failed" text lived in the toolbar, so presenting hid the one signal that
-    // your edits were not reaching the server.
+    // your edits were not reaching the server. Failures ONLY — a changed template is not one.
     + '.de-warn{position:fixed;top:0;left:0;right:0;z-index:100000;background:#C0392B;color:#fff;font:13px/1.45 -apple-system,Segoe UI,Roboto,sans-serif;padding:10px 16px;box-shadow:0 2px 12px rgba(0,0,0,.25);text-align:center}'
     + '.de-warn[hidden]{display:none}'
     + '.de-warn button{margin-left:8px;background:#fff;color:#C0392B;border:0;border-radius:6px;padding:5px 11px;font:inherit;font-weight:800;cursor:pointer}'
@@ -4980,7 +4995,7 @@ function getEditorScript(slug) {
     // still see which chapter they're on and jump around — it already highlights the current
     // section on scroll on its own, no extra wiring needed here. .de-handle stays visible (very
     // dim) so there's always a way back in.
-    + 'body.de-present .topbar,body.de-present .footmark,body.de-present .scrollcue,body.de-present .progress,body.de-present .de-bar,body.de-present .de-panel,body.de-present .de-props,body.de-present .de-toast,body.de-present .de-resize,body.de-present .de-warn,body.de-present [id^="tky-"]{display:none!important}'
+    + 'body.de-present .topbar,body.de-present .footmark,body.de-present .scrollcue,body.de-present .progress,body.de-present .de-bar,body.de-present .de-panel,body.de-present .de-props,body.de-present .de-toast,body.de-present .de-resize,body.de-present .de-warn,body.de-present .de-stalepanel,body.de-present [id^="tky-"]{display:none!important}'
     // .de-bar.de-show + .de-handle{display:none} (above) would otherwise hide this escape
     // hatch whenever Present was entered while the toolbar was already open — force it back.
     + 'body.de-present .de-handle{display:block!important;opacity:.18}'
@@ -5236,60 +5251,91 @@ function getEditorScript(slug) {
   var TABID = (function(){ try{ return Math.random().toString(36).slice(2,10); }catch(e){ return 'tab'; } })();
   var skipped=0, mismatched=0, orderSkipped=0, recovered=0, unresolved=0, staleKeys=[];
 
-  // One banner for every kind of staleness, with a button that drops EXACTLY the keys that
-  // went stale. Reset was previously the only way to clear them, and Reset destroys the whole
-  // overlay — so clearing 14 dead tombstones cost 122 good edits, which is why the banner
-  // kept coming back: the safe action was too expensive to take.
-  function reportStale(ed){
-    var meta = ed && ed.__meta, shapeChanged = !!(meta && meta.shape && SHAPE && meta.shape!==SHAPE);
-    // Another tab/browser wrote this overlay recently. Not an error — but if you now edit the
-    // same elements, one of you silently loses, and previously nothing said so at all.
-    if(meta && meta.writer && meta.writer!==TABID && meta.ts && (Date.now()-meta.ts) < 30*60*1000){
-      showWarn('&#9888; <b>Another session edited this deck '
-        + Math.max(1,Math.round((Date.now()-meta.ts)/60000)) + ' min ago.</b> Your edits merge per element, '
-        + 'so if you both change the same text one of you will overwrite the other. Reload before editing '
-        + 'if someone else is working on it right now.');
+  // Staleness is a NOTE ON THE EDITOR TOOLBAR, never the red banner (Ray, 21 Sep 2026: "can you
+  // please remove the red banner on top on the dashboard pls - i hate that it always appear
+  // (the deck template has changed)"). The shape moves on every push that changes how many
+  // editable elements a chapter has, and an app page ships several times a day — so on any
+  // page carrying saved edits, "The deck template has changed … everything was applied" fired
+  // on EVERY load, pinned over the topbar at the highest z-index, about something that needed
+  // no action. The banner is the voice of a save that failed or edits about to be lost; a
+  // template that changed underneath edits is information for the person EDITING, so it lives
+  // where editing happens: a chip on the toolbar — grey when nothing was lost, orange when
+  // entries were skipped — that opens the detail and the button that drops EXACTLY the keys
+  // that went stale (Reset was once the only way to clear them, and Reset destroys the whole
+  // overlay — clearing 14 dead tombstones cost 122 good edits). When there IS something to act
+  // on, the ✎ handle carries a dot so a collapsed toolbar still hints at it; when there is not,
+  // a collapsed toolbar shows nothing at all — which is the point.
+  var stChip=null, stPanel=null;
+  function showStale(act, short, notes, keys){
+    if(!stChip){
+      stChip=document.createElement('button'); stChip.type='button'; stChip.className='de-stale';
+      bar.insertBefore(stChip, bHide);
+      stPanel=document.createElement('div'); stPanel.className='de-stalepanel';
+      document.body.appendChild(stPanel);
+      stChip.addEventListener('click',function(){ stPanel.classList.toggle('show'); });
     }
-    var n = skipped + mismatched + orderSkipped + unresolved;
-    if(!n && !recovered && !shapeChanged) return;
-    if(!n && recovered){
-      showWarn('&#10003; <b>The deck template changed</b> &mdash; <b>'+recovered+'</b> of your saved edit'
-        + (recovered===1?' was':'s were')+' matched to their content in its new position and applied normally. '
-        + 'Nothing was lost.');
-      return;
-    }
-    var bits=[];
-    if(skipped) bits.push('<b>'+skipped+'</b> deletion'+(skipped===1?'':'s'));
-    if(mismatched) bits.push('<b>'+mismatched+'</b> text/style edit'+(mismatched===1?'':'s'));
-    if(orderSkipped) bits.push('<b>'+orderSkipped+'</b> reorder'+(orderSkipped===1?'':'s'));
-    if(unresolved) bits.push('<b>'+unresolved+'</b> edit'+(unresolved===1?'':'s')+' whose content is gone from the deck');
-    var msg;
-    if(n){
-      msg = '&#9888; '+bits.join(', ')+' could not be replayed &mdash; the template changed underneath them, '
-        + 'so they were <b>skipped, not applied</b>. Nothing on this page has been deleted or overwritten by them.';
-      if(recovered) msg += ' <b>'+recovered+'</b> other edit'+(recovered===1?' was':'s were')
-        + ' matched to their content in its new position and applied normally.';
-    } else {
-      msg = '&#9888; <b>The deck template has changed</b> since your saved edits were made. '
-        + 'They all still matched their content, so everything was applied &mdash; but keep an eye out.';
-    }
-    if(staleKeys.length) msg += '<button class="de-w-drop-stale">Clear the '+staleKeys.length+' stale entr'
-      +(staleKeys.length===1?'y':'ies')+'</button>';
-    showWarn(msg);
-    var b=warnEl.querySelector('.de-w-drop-stale');
+    stChip.classList.toggle('act',!!act); stChip.textContent=short;
+    var tmp=document.createElement('div'); tmp.innerHTML=notes.join(' ');
+    stChip.title=(tmp.textContent||'').replace(/\\s+/g,' ').trim()+' — click for the detail';
+    handle.classList.toggle('de-hb',!!act);
+    stPanel.innerHTML='<strong>'+(act?'Saved edits that could not be applied':'A note on your saved edits')+'</strong>'
+      + notes.map(function(x){ return '<p>'+x+'</p>'; }).join('')
+      + '<div class="row">'
+      + (keys && keys.length ? '<button class="de-st-drop">Clear the '+keys.length+' stale entr'+(keys.length===1?'y':'ies')+'</button>' : '')
+      + '<button class="de-st-x">Close</button></div>';
+    stPanel.querySelector('.de-st-x').onclick=function(){ stPanel.classList.remove('show'); };
+    var b=stPanel.querySelector('.de-st-drop');
     if(b) b.onclick=function(){
       // Double-escaped newline on purpose: this string lives inside getEditorScript's own
       // template literal, which eats a single escape and emits a raw newline, breaking the
       // quoted string in the served script ("Invalid or unexpected token"). Applies to
       // comments here too — an escape sequence written in a comment breaks the comment.
-      if(!confirm('Remove '+staleKeys.length+' stale entr'+(staleKeys.length===1?'y':'ies')+' from your saved edits?\\n\\n'
+      if(!confirm('Remove '+keys.length+' stale entr'+(keys.length===1?'y':'ies')+' from your saved edits?\\n\\n'
         + 'Only these are removed — every edit that still applies is kept. A backup is taken first.')) return;
       b.disabled=true; b.textContent='Clearing…';
-      fetch(API+'/api/edits?page='+PAGE+'&drop='+encodeURIComponent(staleKeys.join(',')),{method:'PUT',
+      fetch(API+'/api/edits?page='+PAGE+'&drop='+encodeURIComponent(keys.join(',')),{method:'PUT',
         headers:{'content-type':'application/json'},body:'{}'})
         .then(deJSON).then(function(){ toast('Cleared — reloading'); setTimeout(function(){ location.reload(); },500); })
         .catch(function(e){ b.disabled=false; b.textContent='Clear failed — retry'; });
     };
+    try{ console.info('[live editor] '+short+' — '+stChip.title); }catch(e){}
+  }
+  function reportStale(ed){
+    var meta = ed && ed.__meta, shapeChanged = !!(meta && meta.shape && SHAPE && meta.shape!==SHAPE);
+    var notes=[], short=[];
+    // Another tab/browser wrote this overlay recently. Not an error — but if you now edit the
+    // same elements, one of you silently loses, and previously nothing said so at all.
+    if(meta && meta.writer && meta.writer!==TABID && meta.ts && (Date.now()-meta.ts) < 30*60*1000){
+      notes.push('&#9888; <b>Another session edited this page '
+        + Math.max(1,Math.round((Date.now()-meta.ts)/60000)) + ' min ago.</b> Your edits merge per element, '
+        + 'so if you both change the same text one of you will overwrite the other. Reload before editing '
+        + 'if someone else is working on it right now.');
+      short.push('edited elsewhere');
+    }
+    var n = skipped + mismatched + orderSkipped + unresolved;
+    var bits=[];
+    if(skipped) bits.push('<b>'+skipped+'</b> deletion'+(skipped===1?'':'s'));
+    if(mismatched) bits.push('<b>'+mismatched+'</b> text/style edit'+(mismatched===1?'':'s'));
+    if(orderSkipped) bits.push('<b>'+orderSkipped+'</b> reorder'+(orderSkipped===1?'':'s'));
+    if(unresolved) bits.push('<b>'+unresolved+'</b> edit'+(unresolved===1?'':'s')+' whose content is gone from the page');
+    if(n){
+      notes.push('&#9888; '+bits.join(', ')+' could not be replayed &mdash; the template changed underneath them, '
+        + 'so they were <b>skipped, not applied</b>. Nothing on this page has been deleted or overwritten by them.'
+        + (recovered ? ' <b>'+recovered+'</b> other edit'+(recovered===1?' was':'s were')
+          + ' matched to their content in its new position and applied normally.' : ''));
+      short.push(n+' stale');
+    } else if(recovered){
+      notes.push('&#10003; <b>The template changed</b> &mdash; <b>'+recovered+'</b> of your saved edit'
+        + (recovered===1?' was':'s were')+' matched to their content in its new position and applied normally. '
+        + 'Nothing was lost.');
+      short.push(recovered+' recovered');
+    } else if(shapeChanged){
+      notes.push('<b>The template has changed</b> since your saved edits were made. '
+        + 'They all still matched their content, so everything was applied.');
+      short.push('template changed');
+    }
+    if(!notes.length) return;
+    showStale(n>0, short.join(' · '), notes, staleKeys);
   }
   function loadEdits(){ fetch(API+'/api/edits?page='+PAGE).then(deJSON).then(function(ed){
     offerRestore();
