@@ -8629,19 +8629,19 @@
       "name": "AI Quote tracker: the scope column names the quote types (qTypesWord) then market · product scope",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function qTypesWord(q){",
-      "pr": 0
+      "pr": 470
     },
     {
       "name": "AI Quote export: one tab per option (exportTabs → xlsxBytes(tabs), Dayrate per sheet)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function exportTabs(){ var pid=propInPlay(), tabs=[];",
-      "pr": 0
+      "pr": 470
     },
     {
       "name": "AI Quote: withSnap runs a builder read against a saved snapshot and restores the live state",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function withSnap(q,fn){",
-      "pr": 0
+      "pr": 470
     },
     {
       "name": "Task Manager: a totals footer resolves its column BY KEY, never a hard-coded index (Ray, 21 Sep 2026: 'total row is not in line with rest')",
