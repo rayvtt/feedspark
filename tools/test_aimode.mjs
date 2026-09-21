@@ -618,7 +618,7 @@ ok(!/ks\.push\('AI'\)/.test(src), 'the duplicate type chips under the client nam
 console.log('\nthe Excel export: one tab per option');
 ok(/function applySnap\(q,r\)\{ r\.mkt=q\.mkt\|\|'gb';/.test(src) && /var r=rec\(\); applySnap\(q,r\); MKT=r\.mkt;/.test(src),
   'the snapshot → record mapping is its own function, and ✎ Edit uses it');
-ok(/function withSnap\(q,fn\)/.test(src) && /finally\{ CLIENT=c0; MKT=m0; if\(had\)STORE\[q\.client\]=r0; else delete STORE\[q\.client\]; EDITING=e0; PENDING_OPT=p0; \}/.test(src),
+ok(/function withSnap\(q,fn\)/.test(src) && /finally\{ CLIENT=c0; MKT=m0; if\(had\)STORE\[q\.client\]=r0; else delete STORE\[q\.client\]; EDITING=e0; PENDING_OPT=p0; FROZEN=f0; \}/.test(src),
   'withSnap swaps a snapshot into the builder for the call and restores everything after — no render, no save');
 ok(/function quoteSheet\(opts\)\{ opts=opts\|\|\{\};/.test(src) && /\['Agency','-','Reference',opts\.ref\|\|quoteRef\(now\),'t'\]/.test(src) && /now=opts\.at\?new Date\(\+opts\.at\):new Date\(\)/.test(src),
   'the sheet builder takes the option\'s own reference and save date');
@@ -626,11 +626,13 @@ ok(/function xlsxBytes\(tabs\)\{/.test(src) && /var sxs=tabs\.map\(function\(t\)
   'the workbook takes N tabs and renders every sheet against ONE style table before styles.xml is written');
 ok(/'<definedName name="Dayrate" localSheetId="'\+i\+'">'\+n2\(t\.day\)\+'<\/definedName>'/.test(src), 'Dayrate is defined per sheet');
 ok(/files\.push\(\{n:'xl\/drawings\/drawing'\+k\+'\.xml',s:drawingXml\(\)\}\);/.test(src), 'each sheet carries its own wordmark drawing');
-ok(/function exportTabs\(\)\{ var pid=propInPlay\(\), tabs=\[\];/.test(src) && /tabs\.push\(withSnap\(q,function\(\)\{ return \{name:nm,sh:quoteSheet\(\{ref:q\.ref,at:q\.t\}\),day:blockGBP\(\)\}; \}\)\)/.test(src),
+ok(/function exportTabs\(\)\{ var pid=propInPlay\(\), tabs=\[\];/.test(src) && /optsFor\(pid\)\.forEach\(function\(k\)\{ var q=SAVED\[k\]; tabs\.push\(snapTab\(q,'Option '\+q\.prop\.n\+' \\u00b7 '\+q\.ref\)\); \}\);/.test(src),
   'every option of the proposal in play gets a tab built off its own snapshot');
-ok(/if\(EDITING&&EDITING\.id===k\)tabs\.push\(\{name:nm,sh:quoteSheet\(\{ref:q\.ref\}\),day:blockGBP\(\)\}\);/.test(src), '…the option under ✎ Edit off the live builder, with its saved ref');
-ok(/if\(PENDING_OPT\)tabs\.push\(\{name:'Option '\+PENDING_OPT\.n\+' \\u00b7 this build'/.test(src), '…and the unsaved build being added gets its own tab');
-ok(/if\(!tabs\.length\)tabs\.push\(\{name:xTabName\(\),sh:quoteSheet\(\),day:blockGBP\(\)\}\);/.test(src), 'a quote outside a proposal exports as it always did');
+ok(/function snapTab\(q,nm\)\{ return withSnap\(q,function\(\)\{ var sh=quoteSheet\(\{ref:q\.ref,at:q\.t\}\); return \{name:nm,sh:sh,day:sh\.day\}; \}\); \}/.test(src) && !/if\(EDITING&&EDITING\.id===k\)tabs\.push/.test(src),
+  '…the option under ✎ Edit too — its SNAPSHOT, never the live builder that ✎ Edit left without a feed index');
+ok(/if\(PENDING_OPT\)\{ var lv=quoteSheet\(\); tabs\.push\(\{name:'Option '\+PENDING_OPT\.n\+' \\u00b7 this build',sh:lv,day:lv\.day\}\); \}/.test(src), '…and the unsaved build being added gets its own tab, off the live builder');
+ok(/else if\(EDITING&&SAVED\[EDITING\.id\]\)tabs\.push\(snapTab\(SAVED\[EDITING\.id\],xTabName\(\)\)\);/.test(src) && /if\(!tabs\.length\)\{ var l0=quoteSheet\(\); tabs\.push\(\{name:xTabName\(\),sh:l0,day:l0\.day\}\); \}/.test(src),
+  'a quote outside a proposal: its snapshot under ✎ Edit, the live builder otherwise');
 ok(/function xTab\(n\)\{ return String\(n\)\.replace\(\/\[\\\[\\\]:\*\?\\\/\\\\\]\/g,' '\)\.slice\(0,31\); \}/.test(src), 'tab names are Excel-safe (31 chars, no []:*?/\\)');
 
 /* ---------- EVERY SAVED LINE IN THE BREAKDOWN (Ray, 21 Sep 2026, sending the expanded row of a Reiss GB
@@ -648,6 +650,38 @@ const alm = (src.match(/function aimLineMoney\(l\)\{[\s\S]*?return s\|\|'\\u2014
 ok(/if\(l\.setup\)o\.push\(money\(l\.setup\)/.test(alm) && /if\(l\.monthly\)o\.push\(money\(l\.monthly\)\+'\/month'\)/.test(alm) && /l\.monthlyNote/.test(alm), 'one-off (with hours), monthly, or the saved "Included" note — the three ways a line is charged');
 ok(/subtotal '\+money\(a\.setup\|\|0\)\+\(a\.monthly\?' \+ '\+money\(a\.monthly\)\+'\/month':''\)/.test(adr) && /a\.since\?' \\u00b7 arrivals since '\+esc\(aimMonWord\(a\.since\)\)/.test(adr), 'the caption names the basis (units · cohort · new a month) and the Spark AI subtotal');
 ok(/\.t-det \.dl\.ai>\.tk-money\{white-space:nowrap;text-align:right;flex-shrink:0\}/.test(src), 'the money stays on one line, as in Ray\'s example');
+
+/* ---------- A SAVED QUOTE EXPORTS ITS OWN LINES (Ray, 21 Sep 2026, on the most recent Reiss option:
+   "the downloaded Excel … the number is not matching"): withSnap restored the snapshot's settings and
+   then let the sheet re-derive every line from live state — 0 Spark AI units after ✎ Edit, today's rate
+   card for the dashboards / feeds / setup hours / Spark AI rates, configuration hours at the block rate.
+   Reproduced: £1,785 one-off / £200 a month against £2,856.25 / £1,085.90 in the tracker. ---------- */
+console.log('\nthe Excel export reads the saved snapshot, not the live page');
+const qsh = (src.match(/function quoteSheet\(opts\)\{[\s\S]*?\n    function costRow\(o\)\{/) || [''])[0];
+ok(/var FROZEN=null;/.test(src) && /FROZEN=q; out=fn\(\); \}/.test(src), 'withSnap freezes the snapshot in for the length of the call');
+ok(/var fz=FROZEN, L=fz\?snapLines\(fz\):lines\(\), t=fz\?snapTotals\(fz\):totals\(\)/.test(qsh), 'the sheet builder reads the snapshot\'s own lines and totals when one is frozen in');
+ok(/day=fz\?snapDay\(fz\):blockGBP\(\); sh\.day=day;/.test(qsh), '…and the block rate the quote was priced at, handed back on the sheet for its Dayrate');
+ok(/function snapTotals\(q\)\{ var a=q\.aim;/.test(src) && /x:\(q\.xlines\|\|\[\]\)\.slice\(\),disc:\+q\.disc\|\|0,discScope:q\.discScope\|\|'all',miss:!!q\.miss,monDisc:\+q\.monDisc\|\|0,upd:qUpd\(q\)/.test(src)
+  && /aim:\(a&&a\.lines&&a\.lines\.length\)\?\{lines:a\.lines,units:\+a\.units\|\|0,newPer:\+a\.newPer\|\|0,rates:a\.rates\|\|null/.test(src),
+  'snapTotals hands over the frozen extra lines, the bundle, the discount and the Spark AI lines with their units and rates');
+ok(/function snapDay\(q\)\{ if\(\+q\.blockGBP>0\)return \+q\.blockGBP;/.test(src) && /\(l\.kind==='ret'\|\|l\.kind==='pre'\)&&\+l\.rate>0/.test(src), 'the saved block rate: the record\'s, else read off a retainer / setup line');
+ok(/var aimR=\(t\.aim&&t\.aim\.rates\)\|\|aimRates\(\);/.test(src) && /var aimPF=isFinite\(\+aimR\.aiPerField\)\?\+aimR\.aiPerField:aimRate\('aiPerField'\);/.test(src),
+  'the Spark AI rates are the snapshot\'s own, the rate card only for a live build');
+const hrRow = (src.match(/aimHrL\.forEach\(function\(l\)\{[\s\S]*?\}\); \}\);/) || [''])[0];
+ok(/qty:\(\+l\.hours\)\/aimHPD,qs:'days',rate:aimDay,dsc:aimDsc\('oneoff',l\)/.test(hrRow) && !/dayrate:1/.test(hrRow),
+  'Spark AI configuration hours are priced at the Spark AI day rate as a value — never =Dayrate, which is the retainer block rate');
+ok(/\(Spark AI day rate\)/.test(hrRow), '…and the row says so');
+ok(/fz\?scopeTextSnap\(fz\):scopeTextPlain\(\)/.test(src) && /function scopeTextSnap\(q\)\{/.test(src), 'the booster section note states the SAVED scope, never "pull the feed"');
+ok(/var csv=toCsv\(csvRows\(sheetForExport\(\)\)\);/.test(src) && /function sheetForExport\(\)\{ var q=EDITING&&SAVED\[EDITING\.id\]; return q\?withSnap\(q,function\(\)\{ return quoteSheet\(\{ref:q\.ref,at:q\.t\}\); \}\):quoteSheet\(\); \}/.test(src),
+  '⇩ CSV follows the same rule');
+ok(/saved figures; Save your edit to export it/.test(src), 'the toast under ✎ Edit says the workbook carries the saved figures');
+/* and on screen: ✎ Edit no longer re-prices a signed-off Spark AI quote on 0 items */
+ok(/r\.aim\.fz=\{units:\+q\.aim\.units\|\|0,perMonth:\+\(q\.aim\.perMonth!=null\?q\.aim\.perMonth:q\.aim\.newPer\)\|\|0,newPer:\+q\.aim\.newPer\|\|0,\n\s+sig:aimSig\(r\)\};/.test(src),
+  '✎ Edit keeps the saved units and new-a-month on the record, keyed to the scope · unit · cohort they were read for');
+ok(/function aimFz\(\)\{ if\(idx\(\)\)return null; var fz=aimRec\(\)\.fz; return \(fz&&fz\.sig===aimSig\(\)\)\?fz:null; \}/.test(src), '…used ONLY while there is no live index and the scope has not moved');
+ok(/if\(!ix\)\{ var fz=aimFz\(\); return fz\?fz\.units:0; \}/.test(src), 'aimScopeUnits stands the saved units in');
+ok(/var fz=unsized\?aimFz\(\):null;\n\s+if\(fz\)return \{raw:fz\.perMonth\/buf,perMonth:fz\.perMonth,src:'saved',buffer:aimRate\('buffer'\),unsized:false,saved:true\};/.test(src), 'aimPerMonth stands the saved new-a-month in, named as such');
+ok(/if\(nn\.src==='saved'\)return 'As <b>saved on this quote<\/b>/.test(src) && /if\(ew\)ew\.hidden=!known\|\|saved; if\(pw\)pw\.hidden=known\|\|saved;/.test(src), 'the card says the figure is the saved one and offers the feed pull to re-size');
 
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);

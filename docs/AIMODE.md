@@ -665,9 +665,8 @@ The sheet builder reads the live builder, so each option's tab is produced by `w
 option's snapshot is read into a temporary client record through the same `applySnap` mapping ✎ Edit
 uses, `quoteSheet({ref, at})` renders it with the option's own reference and save date, and the live
 record, client, market and edit state come back exactly as they were — no render, no save, no toast.
-The option under ✎ Edit is rendered off the live builder with its saved ref. As with ✎ Edit, routes,
-lines, the frozen bundle price and the block rate are the snapshot's; Spark AI rates are today's rate
-card. `xlsxBytes(tabs)` renders every sheet against one style table before `styles.xml` is written,
+~~The option under ✎ Edit is rendered off the live builder~~ — superseded the same day, see *A saved
+quote exports its own lines* below. `xlsxBytes(tabs)` renders every sheet against one style table before `styles.xml` is written,
 gives each sheet its own wordmark drawing, and defines `Dayrate` per sheet (`localSheetId`) since two
 options can carry two block rates. Tab names are Excel-safe (31 chars, no `[]:*?/\`).
 
@@ -691,3 +690,38 @@ card — the tracker shows what finance signed off, the same rule the rest of th
 money cell is gated on £ like the rest of the tracker, and the money stays on one line as in Ray's
 example. Harness: `tools/test_aimode.mjs` (the builder reads the snapshot and nothing live, the route
 table, the £ gate, the three ways a line is charged).
+
+## A saved quote exports its own lines
+
+Ray, 21 Sep 2026, on the most recent Reiss option: *"the downloaded Excel … is still not smart, and the
+number is not matching."*
+
+He was right, and the cause was structural. `withSnap` restored the snapshot's **settings** (routes,
+discount scope, flags, block rate) into a temporary record and then let the sheet builder **re-derive
+every line from live page state**: the Spark AI units off the feed index — which ✎ Edit clears and a
+fresh session never has, so generation was priced on **0 items** and the AI floor read as the whole
+monthly; the dashboards, feeds and setup hours off **today's** rate card rather than the rate they were
+sold at; the Spark AI rates likewise; and Spark AI configuration hours at the retainer **block rate**
+(`=Dayrate`, £595 / 8h) where the card prices them at the Spark AI day rate (£695 / 8h). Reproduced on a
+Reiss proposal: the workbook read **£1,785 one-off / £200 a month** against **£3,070.90 / £200** in the
+tracker for the Spark AI option, and **£473.75** against **£486.25** a month for the Reiss GB option.
+
+The snapshot already carries every line frozen at save — `lines`, `xlines`, `aim.lines` with their
+setup / gen / monthly, the bundle's £, `blockGBP` — so the sheet now reads **those**. `withSnap` sets
+`FROZEN` for the length of the call; `quoteSheet` takes `snapLines` / `snapTotals` / `snapDay` /
+`scopeTextSnap` when one is frozen in and the live builder otherwise. `exportTabs` renders **every
+saved option from its snapshot, the one under ✎ Edit included** (`snapTab`); only a build nobody has
+saved — ➕ Add option's "this build", or a quote outside any proposal — is the live one. ⇩ CSV follows
+the same rule (`sheetForExport`), and the toast under ✎ Edit says the workbook carries the saved
+figures. Spark AI configuration hours are written as days at the **Spark AI day rate as a value**,
+never `=Dayrate`: the retainer block rate is a different figure and one defined name cannot be both.
+
+**On screen too.** ✎ Edit cleared the feed index and the card re-priced a signed-off Spark AI quote on
+0 items until somebody pulled the feed again. `applySnap` now keeps the saved units and new-a-month on
+the record (`r.aim.fz`, keyed to the scope · unit · cohort they were read for) and `aimScopeUnits` /
+`aimPerMonth` stand them in **only while there is no live index and the scope has not moved**; the
+source line reads *"As saved on this quote … pull the live feed to re-size"*, and pulling the feed
+hands the sizing back to the live read.
+
+Harness: `tools/test_aimode.mjs` (309) and a browser round trip — build with the feed pulled, save,
+reopen in a fresh session, export: the workbook equals the saved quote to the penny.
