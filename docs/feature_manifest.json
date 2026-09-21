@@ -8568,62 +8568,62 @@
       "name": "AI Quote tracker: the last-update stamp is q.lu, never q.upd (the bundle's field)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "q.lu=Date.now(); }",
-      "pr": 0
+      "pr": 468
     },
     {
       "name": "AI Quote tracker: the stamp never writes the bundle field",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "q.upd=Date.now()",
-      "pr": 0,
+      "pr": 468,
       "forbidden": true
     },
     {
       "name": "AI Quote tracker: qUpd() is the one reader of a saved quote's bundle",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function qUpd(q){ return (q&&q.upd&&typeof q.upd==='object')?q.upd:null; }",
-      "pr": 0
+      "pr": 468
     },
     {
       "name": "AI Quote tracker: the stage rail is a stepper (one word, dots for the rest)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "class=\"st '+(done?'done':'todo')+'\" data-st=",
-      "pr": 0
+      "pr": 468
     },
     {
       "name": "AI Quote tracker: the actions are one row of icons (icoBtn / t-grp / legend)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function icoBtn(cls,attrs,title,glyph)",
-      "pr": 0
+      "pr": 468
     },
     {
       "name": "AI Quote tracker: steps out of the column on a wide screen",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "@media (min-width:1400px){ #tracker-card{margin-left:calc(50% - 50vw + 30px)",
-      "pr": 0
+      "pr": 468
     },
     {
       "name": "AI Quote options: what sets each option apart (optDelta vs the option before)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function optDelta(q,b){",
-      "pr": 0
+      "pr": 468
     },
     {
       "name": "AI Quote options: the client comparison carries the delta line",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "if(pv)out.push('  Compared with option '+pv.prop.n+': '+optDeltaText(o,pv,P));",
-      "pr": 0
+      "pr": 468
     },
     {
       "name": "AI Quote: a hidden card never prices — fOn is gated on the legacy type",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "return !!(f&&f.on)&&typeOn('ai'); }",
-      "pr": 0
+      "pr": 468
     },
     {
       "name": "AI Quote: ↺ Start fresh resets the client record",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "$('#fresh').addEventListener('click'",
-      "pr": 0
+      "pr": 468
     }
   ]
 }
