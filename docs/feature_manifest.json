@@ -9085,25 +9085,25 @@
       "name": "Golden Record: the content-quality / AI-readiness headlines survive a scan that rebuilds the goldenidx entry (Ray, 21 Sep 2026)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "function keepQual(prev) {",
-      "pr": 0
+      "pr": 480
     },
     {
       "name": "Golden Record: the scan lane carries q/qFails/qT/air/airTier/airP forward",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "keepQual(gidx[lgKey(client, mkt)]));",
-      "pr": 0
+      "pr": 480
     },
     {
       "name": "Golden Record: accepting a coverage change never forgets the content score",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "keepQual(idx[lgKey(client, mkt)]));",
-      "pr": 0
+      "pr": 480
     },
     {
       "name": "test_labelguard pins that both goldenidx rebuilders keep the quality headlines",
       "file": "tools/test_labelguard.mjs",
       "pattern": "keepQual",
-      "pr": 0
+      "pr": 480
     }
   ]
 }
