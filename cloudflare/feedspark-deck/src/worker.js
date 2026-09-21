@@ -3018,6 +3018,20 @@ async function runLabelScan(env, client, mkt) {
     rescan: async () => { try { return await scanFeed(fetch, src, { client, market: mkt }, keys, scanOpts); } catch (e) { return null; } } });
 }
 
+// The content-quality and AI-readiness headlines on a goldenidx entry (q / qFails / qT, air /
+// airTier / airP) are written by the /api/golden/quality PUT — an in-browser analysis of the
+// same feed — never by the scan. A scan that REBUILDS the entry must carry them forward, or
+// every cron / agent / estate pass wipes the estate's content score: Ray, 21 Sep 2026, on the
+// dossier scorecard reading FEED only for Schuh's three markets an hour after the agent's pass
+// — "why content quality score isn't saved?". The reading stays what it was until the next
+// analysis; qT dates it. Shared by the scan lane (processScanSnapshot) and the ack.
+const QUAL_KEEP = ['q', 'qFails', 'qT', 'air', 'airTier', 'airP'];
+function keepQual(prev) {
+  const out = {};
+  if (prev) QUAL_KEEP.forEach((k) => { if (prev[k] !== undefined && prev[k] !== null) out[k] = prev[k]; });
+  return out;
+}
+
 // a feed that could not be read: index it unreachable + raise the fetch-fail warn — shared
 // by the gviz path above and the xml-scan push (whose agent reports its own fetch failures)
 async function markScanUnreachable(env, client, mkt, msg, wantPT) {
@@ -3364,11 +3378,14 @@ async function processScanSnapshot(env, client, mkt, rawSnap, opts) {
     const covMap = {};
     ATTR_SPEC.forEach((sp) => { const a = grSnap.attrs[sp.key]; covMap[sp.key] = a && a.present ? a.cov : null; });
     const gidx = (await env.EDITS.get('goldenidx', 'json')) || {};
-    gidx[lgKey(client, mkt)] = { client, mkt, t: grSnap.t, rows: grSnap.rows, baseT: gBase.t,
+    // rebuilt from the scan, but the content-quality / AI-readiness headlines ride along
+    // (keepQual) — the scan never measures them and used to wipe them on every pass
+    gidx[lgKey(client, mkt)] = Object.assign({ client, mkt, t: grSnap.t, rows: grSnap.rows, baseT: gBase.t,
       score: gs ? gs.score : null, ai: gs ? gs.ai : null, ind: gProf.industry, cov: covMap,
       reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
       status: gActive.some((a) => a.sev === 'crit') ? 'crit' : (gActive.length ? 'warn' : 'ok'),
-      nCrit: gActive.filter((a) => a.sev === 'crit').length, nWarn: gActive.filter((a) => a.sev === 'warn').length };
+      nCrit: gActive.filter((a) => a.sev === 'crit').length, nWarn: gActive.filter((a) => a.sev === 'warn').length },
+      keepQual(gidx[lgKey(client, mkt)]));
     await env.EDITS.put('goldenidx', JSON.stringify(gidx));
     const gMap = (await env.EDITS.get('goldenalerts', 'json')) || {};
     const gPlan = estateMailPlan(gMap[lgKey(client, mkt)], gActive);
@@ -4104,10 +4121,10 @@ async function goldenRoutes(env, request, url) {
     const ackCov = {};
     ATTR_SPEC.forEach((sp) => { const a = snap.attrs[sp.key]; ackCov[sp.key] = a && a.present ? a.cov : null; });
     const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
-    idx[lgKey(client, mkt)] = { client, mkt, t: snap.t, rows: snap.rows, baseT: snap.t,
+    idx[lgKey(client, mkt)] = Object.assign({ client, mkt, t: snap.t, rows: snap.rows, baseT: snap.t,
       score: gs ? gs.score : null, ai: gs ? gs.ai : null, ind: ackProf.industry, cov: ackCov,
       reqMissing: gs ? gs.reqMissing : [], condMissing: gs ? gs.condMissing : [], recMissing: gs ? gs.recMissing : [],
-      status: 'ok', nCrit: 0, nWarn: 0 };
+      status: 'ok', nCrit: 0, nWarn: 0 }, keepQual(idx[lgKey(client, mkt)]));   // accepting a coverage change never forgets the content score
     await env.EDITS.put('goldenidx', JSON.stringify(idx));
     const alertsMap = (await env.EDITS.get('goldenalerts', 'json')) || {};
     delete alertsMap[lgKey(client, mkt)];

@@ -1427,5 +1427,28 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
     /const qs = qualityScore\(rec, profileFor\(client, await env\.EDITS\.get\('goldenprofiles', 'json'\)\)\);/.test(wk3));
 }
 
+{
+  // ---- the content score survives the next scan (Ray, 21 Sep 2026, on the dossier scorecard
+  // reading FEED only for Schuh's three markets an hour after the agent's pass: "why content
+  // quality score isn't saved?"). q / qFails / qT / air / airTier / airP are written onto the
+  // goldenidx entry by the /api/golden/quality PUT and by nothing else; the scan lane and the
+  // ack REBUILT the entry from the scan alone, so every cron / agent / estate pass wiped them.
+  console.log('\n— the content score survives the next scan —');
+  const wk4 = readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', import.meta.url), 'utf8');
+  const lift = (re) => { const m = wk4.match(re); if (!m) throw new Error('not found: ' + re); return m[0]; };
+  const keepQual = new Function(lift(/const QUAL_KEEP = \[[^\]]+\];/) + lift(/function keepQual\(prev\) \{[\s\S]*?\n\}/) + '; return keepQual;')();
+  const prev = { client: 'Schuh', mkt: 'gb', t: 1, rows: 20401, score: 79.1, q: 71.4, qFails: 3, qT: 2, air: 61, airTier: 2, airP: { identity: 90 }, status: 'warn', nWarn: 1 };
+  const kept = keepQual(prev);
+  ok('keepQual lifts exactly the six analysis headlines off the previous entry — nothing the scan measures itself',
+    Object.keys(kept).sort().join(',') === 'air,airP,airTier,q,qFails,qT' && kept.q === 71.4 && kept.qFails === 3 && kept.qT === 2 && kept.air === 61 && kept.airP.identity === 90, kept);
+  ok('an entry never analysed yields nothing — a scan cannot invent a content score', Object.keys(keepQual({ client: 'Schuh', mkt: 'de', score: 75.1 })).length === 0 && Object.keys(keepQual(undefined)).length === 0);
+  ok('a null headline is not carried (the PUT writes null for an analysis that scored nothing)', Object.keys(keepQual({ q: null, qT: 5 })).join(',') === 'qT');
+  const rebuilt = Object.assign({ client: 'Schuh', mkt: 'gb', t: 9, rows: 20390, score: 79.3, status: 'ok', nWarn: 0 }, keepQual(prev));
+  ok('the rebuilt entry reads the fresh scan AND the last analysis — score moved, q and qT untouched', rebuilt.score === 79.3 && rebuilt.t === 9 && rebuilt.q === 71.4 && rebuilt.qT === 2 && rebuilt.status === 'ok');
+  ok('worker: the scan lane rebuilds the goldenidx entry WITH keepQual', /gidx\[lgKey\(client, mkt\)\] = Object\.assign\(\{ client, mkt, t: grSnap\.t,[\s\S]*?keepQual\(gidx\[lgKey\(client, mkt\)\]\)\);/.test(wk4));
+  ok('worker: the ack rebuilds it WITH keepQual too', /idx\[lgKey\(client, mkt\)\] = Object\.assign\(\{ client, mkt, t: snap\.t,[\s\S]*?keepQual\(idx\[lgKey\(client, mkt\)\]\)\);/.test(wk4));
+  ok('worker: no goldenidx writer is left that replaces the entry bare', !/gidx\[lgKey\(client, mkt\)\] = \{ client, mkt, t: grSnap\.t/.test(wk4) && !/idx\[lgKey\(client, mkt\)\] = \{ client, mkt, t: snap\.t/.test(wk4));
+}
+
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
