@@ -319,6 +319,29 @@ const QUALITY = {
     const html = fs.readFileSync(tmp, 'utf8');
     // GRPDF_KEEP=/path/to/file.html keeps the export for a visual pass
     if (process.env.GRPDF_KEEP) fs.copyFileSync(tmp, process.env.GRPDF_KEEP);
+    // THE EXPORT, RENDERED (Ray, 21 Sep 2026: "the text on the downloaded html … is strangely
+    // bigger than rest — can you mirror the same text size/font as rest of audit"): the inlined
+    // pop-up prose must read at the pop-up's own 12.5px, never the browser's 16px default
+    const pageX = await browser.newPage({ viewport: { width: 1000, height: 900 } });
+    await pageX.goto('file://' + tmp);
+    await pageX.waitForTimeout(400);
+    const type = await pageX.evaluate(() => {
+      const fs = (el) => el ? getComputedStyle(el).fontSize : null;
+      const q = (s) => document.querySelector(s);
+      return {
+        section: fs(q('.xd-wrap details.xd .xd-pop li')),           // the section headline's method
+        pillar: fs(q('#air-tier .pillar details.xd .xd-pop li')),  // a pillar's "How this is scored"
+        attr: fs(q('#qz-tier details.xd-q .xd-pop li')),           // an attribute's "How g:x is scored"
+        row: fs(q('#qz-tier .qz-nm')),                             // the audit row it sits beside
+        srcLink: fs(q('.xd-wrap details.xd .xd-pop .sc-src a')),
+        rule: fs(q('#qz-tier details.xd-q .xd-pop .sc-rule .rl')),
+      };
+    });
+    await pageX.close();
+    ok('the inlined method reads at the pop-up\'s own 12.5px — section, pillar and attribute alike',
+      type.section === '12.5px' && type.pillar === '12.5px' && type.attr === '12.5px', type);
+    ok('…no larger than the audit row it sits beside', parseFloat(type.section) <= parseFloat(type.row) + 0.6, type);
+    ok('…and its source links and rule rows too', type.srcLink && parseFloat(type.srcLink) <= 13 && type.rule && parseFloat(type.rule) <= 13, type);
     fs.unlinkSync(tmp);
     ok('downloads as .html, not .htm or extensionless', /\.html$/.test(download.suggestedFilename()), download.suggestedFilename());
     ok('starts with a doctype — opens correctly standalone', /^<!doctype html>/i.test(html));
