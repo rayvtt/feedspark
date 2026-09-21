@@ -7999,7 +7999,7 @@
     {
       "name": "Golden Record ⬇ HTML: every AI-readiness pillar carries its own formula and readings",
       "file": "docs/FeedSpark_GoldenRecord.html",
-      "pattern": "'How this is scored', 'xd-in'",
+      "pattern": "popDet(cap, null, 'xd-in xd-chip', false, 'chip')",
       "pr": 458
     },
     {
@@ -8472,6 +8472,36 @@
       "name": "Golden Record tripwire: the RENDERED export's inlined method reads at 12.5px, never the browser default",
       "file": "tools/check_grpdf.js",
       "pattern": "the inlined method reads at the pop-up"
+    },
+    {
+      "name": "Golden Record ⬇ HTML: every inlined scoring box IS the pop-up card — popDet writes the pop-up's own header into the summary, mode 'chip' for the pillar tiles (Ray, 21 Sep 2026: 'just follow the audit golden score interface exactly for the download')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function popDet(cap, label, cls, open, mode)"
+    },
+    {
+      "name": "Golden Record ⬇ HTML: the page keeps the screen's own look — wash background, the 1180px column (Ray, 21 Sep 2026)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.xhtml{background:var(--wash)!important;width:auto;max-width:none}"
+    },
+    {
+      "name": "Golden Record ⬇ HTML: a pillar's card folds behind the tile's own 'how it's scored' chip",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.xhtml details.xd-chip{"
+    },
+    {
+      "name": "Golden Record ⬇ HTML: the active Δ reference stays as a static chip; the other toggle button goes",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "doc.querySelectorAll('.refseg button')"
+    },
+    {
+      "name": "Golden Record tripwire: the RENDERED export wears the pop-up card — 16px title, 22px score, white card on the wash page",
+      "file": "tools/check_grpdf.js",
+      "pattern": "each box wears the pop-up"
+    },
+    {
+      "name": "Golden Record HTML tripwire: the section boxes carry the pop-up's own titles",
+      "file": "tools/check_grhtml.js",
+      "pattern": "titled as its pop-up is"
     }
   ]
 }
