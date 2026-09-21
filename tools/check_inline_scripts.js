@@ -17,6 +17,27 @@ let failed = 0, checked = 0;
 for (const f of files) {
   const html = fs.readFileSync(path.join(dir, f), 'utf8');
   let ok = true, n = 0;
+  // THE PAGE AS THE WORKER SERVES IT: worker.js › inject() puts every widget + the live editor
+  // at the FIRST "</body>" the page contains (appending when there is none). A closing tag
+  // written inside a script — an export builder's '…</body></html>' string — is where that
+  // injection then lands, splitting the string and taking the whole page's script down.
+  // /labels shipped dead that way on 21 Sep 2026 (PR #479) while every block parsed on its
+  // own. So: the first </body> in an app page must be the document's own closing tag, and a
+  // page must still parse with the worker's injection applied.
+  const bi = html.indexOf('</body>');
+  if (bi >= 0 && !/^<\/body>\s*(<\/html>)?\s*$/.test(html.slice(bi))) {
+    ok = false; failed++;
+    console.error(`  ✗ ${f}: a "</body>" that is not the document's closing tag (offset ${bi}) — the worker injects its widgets there; escape it as <\\/body> inside scripts`);
+  }
+  const served = bi >= 0 ? html.replace('</body>', '<script>/* injected */</script>\n</body>') : html + '\n<script>/* injected */</script>';
+  for (const m of served.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    const attrs = m[1] || '', body = m[2] || '';
+    if (/\bsrc\s*=/.test(attrs) || !body.trim()) continue;
+    const type = (attrs.match(/type\s*=\s*["']([^"']+)["']/i) || [])[1];
+    if (type && !/javascript|ecmascript/i.test(type)) continue;
+    try { new vm.Script(body); }
+    catch (e) { ok = false; failed++; console.error(`  ✗ ${f}  as served (widgets injected): ${e.message}`); break; }
+  }
   for (const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
     const attrs = m[1] || '', body = m[2] || '';
     if (/\bsrc\s*=/.test(attrs)) continue;                       // external script, no inline body

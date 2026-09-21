@@ -1761,7 +1761,11 @@ window.addEventListener('load',restore);
     return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
       '<title>' + esc(rec.brand) + ' · custom labels across ' + n + ' market' + (n === 1 ? '' : 's') + '</title>' +
       '<style>' + LGX_CSS + '</style></head><body><div class="wrap" id="app"></div>' +
-      '<script>window.LGX=' + data + ';<\/script><script>(' + LGX_APP.toString() + ')();<\/script></body></html>';
+      // every closing tag ESCAPED — in this string AND in this comment: the worker injects its
+      // widgets at the FIRST closing body tag it finds in the served page, and a literal one in
+      // here put them in the middle of the string — /labels shipped dead for an hour on
+      // 21 Sep 2026 (tools/check_inline_scripts.js parses the page as served and pins it)
+      '<script>window.LGX=' + data + ';<\/script><script>(' + LGX_APP.toString() + ')();<\/script><\/body><\/html>';
   }
   function brandExport(client, btn) {
     var feeds = feedList().filter(function (f) { return f.client === client; });
