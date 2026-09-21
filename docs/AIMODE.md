@@ -485,3 +485,62 @@ themselves, so it can never drift from what the tracker shows.
 
 **⧉ Options** copies every option as one document — what each one *includes*, not just a price, ex
 VAT with the validity, on the same footing as every other client-facing exit on this card.
+
+## The new-product bundle: a typed band price, and the quote says so
+
+Ray, 21 Sep 2026, reading QT261571: *"i think this feature is not smart yet, also, i dont understand —
+at which point the new-product updates for this quote gets to 15,100/ month ?"*
+
+**Nothing computed it.** The Monthly update bundle is a flat monthly charge read off a band table on
+the rate card — `totals()` does `monSub += updGBP()` and `updGBP()` is whatever sits in the band box.
+The `~570 / mo` arrivals figure only picks *which* band applies; it never multiplies the price. The
+FeedSpark band for "up to 1,000" is £100.
+
+**How £15,100 got there.** The band box is pre-filled with `100`. Click into it and type `15` without
+clearing and the box reads `15100` — saved on the keystroke, with no ceiling, into a 58px box too narrow
+to show five digits, onto a rate card that is `mapStoreRoute('aiquote')`: **shared across every client
+and every colleague**. One slip re-priced the bundle on every quote in the house, and the quote total
+printed the number with nothing about where it came from.
+
+What changed (none of it arithmetic):
+
+- **The total line names the figure** — `up to 1,000 band · £100.00/mo flat · ~570 new SKUs/mo`, the
+  tooltip stating it is a flat charge typed on the shared rate card and that the SKU count picks the
+  band, never multiplies it. `updInfo()` now carries `band / frozen / off / def` for every surface.
+- **The prepend trap is closed** — the band boxes (and the estimate) select their value on focus so the
+  first keystroke replaces. Focus alone is not enough: a click is mousedown → focus → mouseup and the
+  mouseup collapses the selection to a caret again, so the mouseup that completes the focusing click is
+  swallowed. A second click in an already-focused box places the caret normally.
+- **Off-scale is flagged, not silent** — a band priced at more than 5× its FeedSpark default rings the
+  chip orange, prints `⚠ was £100 ↺` on it, warns under the bands naming the default, and puts ⚠ on the
+  quote-total row. `↺` puts the default back through `setBandGBP`, the one writer every band edit uses.
+- **A saved quote reproduces its own price.** `loadSaved` restored the band *index* and trusted the
+  rate card to still hold the same £ — so ✎ Edit on a signed-off quote silently re-priced it at today's
+  band. The snapshot's `upd.gbp` is now frozen onto the record (`updFrozen`) and wins; pinning another
+  band, ↺ auto, editing a band price or moving the estimate thaws it (`updThaw`) — those are new
+  decisions — and the card says "Frozen at £X … the band costs £Y today" when they differ.
+- **"draft prices" means what it says** — it used to read "the rate card has no tiers key", so editing
+  one band retired the badge for the four untouched placeholders. Now: no band priced yet. Each edited
+  band carries its own "was £X".
+- **The blur must not eat the click.** Snapping the box to the stored (floor-clamped) price on blur must
+  not rebuild the card: blur fires as part of the click that moved the focus, and rebuilding `#upd-body`
+  destroys the ↺ button or band chip under the pointer. `paintTiers()` repaints classes and the "was"
+  marker in place.
+
+Two neighbours fixed in the same pass:
+
+- **A discount that discounts nothing says why.** The same screenshot had 100% typed in and £0 taken
+  off — scope "selected lines", no line ticked — and the row said "not on one-off" in grey, which reads
+  like a rule of the template. `discNil(side, t)` now prints `⚠ £0.00 · no line ticked` / `man power
+  only` / `nothing to discount` when the scope covers the side, and stays quiet when the scope simply
+  excludes it (that one *is* the setting). The value cell stays short; the full reason is the tooltip.
+- **The quote-total tiles could not shrink** — pre-existing, verified on pristine `main`: each `.qs-col`
+  is a subgrid whose single implicit column sized to max-content, so every row was ~10px wider than its
+  tile and the longest clipped at the right edge. `grid-template-columns:minmax(0,1fr)` + `min-width:0`,
+  and the `.tot` row (whose label is deliberately nowrap) drops its figure onto its own line rather than
+  overlapping. `.pt-act` was scoped to the product-type picker, so the bundle card's own small buttons
+  were bare browser chrome — styled.
+
+Harness: `tools/test_aimode.mjs` (27 new assertions). Browser-level QA (scratchpad, not CI): 30
+assertions across the trap, the flag, ↺, the freeze/thaw, the discount wording.
+

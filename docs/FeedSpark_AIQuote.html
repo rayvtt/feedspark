@@ -378,13 +378,17 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
        track here lands on top of the one below it, which is how the Spark AI row first read as a
        total printed through a hint. Both Spark AI rows hide together, so the tiles stay aligned. */
     .qsum{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(8,auto)}
-    .qs-col{display:grid;grid-template-rows:subgrid;grid-row:1/-1;align-content:start}
-    .qs-col>.qs-r{align-self:stretch} } }
+    /* the tile is a grid, so its ONE implicit column sizes to max-content and the rows run wider
+       than the tile that holds them — every row in the middle tile was already ~10px over its own
+       box on main, clipping the right edge of the longest one. minmax(0,1fr) lets the column shrink;
+       min-width:0 lets the flex row inside it shrink too. */
+    .qs-col{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:subgrid;grid-row:1/-1;align-content:start}
+    .qs-col>.qs-r{align-self:stretch;min-width:0} } }
   .qs-col{border:1px solid var(--line);border-radius:12px;padding:10px 14px 8px;background:#fff}
   .qs-col.set{background:var(--wash)}
   .qs-h{font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px}
   .qs-h .qs-sub{text-transform:none;letter-spacing:0;font-weight:700;color:var(--muted);margin-left:6px}
-  .qs-r{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0;border-top:1px solid var(--wash);font-size:12.5px;font-weight:700;color:var(--ink-2)}
+  .qs-r{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0;border-top:1px solid var(--wash);font-size:12.5px;font-weight:700;color:var(--ink-2);min-width:0}
   .qs-h+.qs-r{border-top:0}
   /* monthly update — new products (bundle card) */
   .upd-on{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:10px;cursor:pointer}
@@ -394,10 +398,23 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   .upd-tiers{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
   .tier{position:relative;border:1px solid var(--line);border-radius:12px;padding:8px 12px;background:#fff;cursor:pointer;font-size:12px;font-weight:800;color:var(--ink-2);min-width:150px}
   .tier .tl{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
-  .tier .tp{white-space:nowrap} .tier input.tgbp{width:58px;font:inherit;font-weight:900;padding:2px 5px;border:1px dashed var(--line);border-radius:6px;text-align:right;background:#fff;color:var(--ink)}
+  .tier .tp{white-space:nowrap} .tier input.tgbp{width:78px;font:inherit;font-weight:900;padding:2px 5px;border:1px dashed var(--line);border-radius:6px;text-align:right;background:#fff;color:var(--ink)}
+  /* a band priced away from its FeedSpark default says so, and hands the default back in one click */
+  .tier .twas{display:block;margin-top:4px;font-size:10px;font-weight:800;color:var(--muted);text-transform:none;letter-spacing:0}
+  .tier .twx{font:inherit;font-size:10px;font-weight:900;border:0;background:transparent;color:var(--orange-ink);cursor:pointer;padding:0 2px}
+  .tier.off{border-color:var(--orange-deep);background:rgba(237,111,11,.06)} .tier.off .twas{color:var(--orange-deep)}
+  .tier.off input.tgbp{border-color:var(--orange-deep);border-style:solid}
+  /* the card's own small buttons - .pt-act is scoped to the product-type picker, so these were
+     rendering as bare browser chrome inside the bundle card */
+  #upd-card .pt-act{font:inherit;font-size:11px;font-weight:900;padding:3px 9px;border-radius:100px;border:1px solid var(--line);background:#fff;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  #upd-card .pt-act:hover{border-color:var(--orange);color:var(--orange-deep);background:rgba(245,166,35,.07)}
+  [data-theme=dark] #upd-card .pt-act{background:#20242E;color:var(--ink-2)}
   .tier.on{border-color:var(--orange);box-shadow:0 0 0 2px rgba(245,166,35,.25)}
   .tier .tag{position:absolute;top:-8px;right:8px;font-size:9.5px;font-weight:900;background:var(--orange);color:#fff;border-radius:100px;padding:1px 7px}
   .upd-sum{font-size:12.5px;font-weight:700;color:var(--ink-2)}
+  .updwhy{margin-top:5px;font-size:11.5px;font-weight:700;color:var(--muted);line-height:1.5}
+  .updwarn{margin-top:6px;font-size:11.5px;font-weight:800;color:var(--orange-deep);line-height:1.55;border-left:3px solid var(--orange-deep);padding-left:9px}
+  .updwarn .pt-act{margin-left:2px}
   /* THE PRODUCT VOLUME BAR CHART, INSIDE THE QUOTE (Ray, 17 Sep 2026: "within AI quote the new
      products — pull in the product volume bar chart pls to make it easier to convince for client —
      make sure its organised"). The card used to be one column of text: a forecast sentence, an
@@ -554,14 +571,20 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   [data-theme=dark] #discscope,[data-theme=dark] .dsc{background:#20242E}
   .draft{font-size:10px;font-weight:900;color:var(--orange-ink);border:1px dashed var(--orange);border-radius:100px;padding:1px 7px;margin-left:6px}
   [data-theme=dark] .tier,[data-theme=dark] .tier input.tgbp,[data-theme=dark] .upd-est input{background:#20242E;color:var(--ink)} [data-theme=dark] .upd-fc{background:#1C1F27}
-  .qs-r>span:first-child{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .qs-r>span:first-child{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
   .qs-r b{font-variant-numeric:tabular-nums;white-space:nowrap}
   .qs-r.net{color:var(--ink)}
   .qs-r.tot{border-top:2px solid var(--line);font-size:14px;font-weight:900;color:var(--ink)}
   .qs-r.tot>span:first-child{flex-wrap:nowrap;white-space:nowrap}   /* "Ongoing monthly total  ex VAT" stays on one line */
+  /* …so the FIGURE is what gives way: on a tight tile it drops onto its own line, right-aligned,
+     rather than sitting on top of the label (which it did once the tile could shrink) */
+  .qs-r.tot{flex-wrap:wrap} .qs-r.tot>b{margin-left:auto}
   .qs-r.tot b{color:var(--orange-deep);font-size:18px}
   .qs-r .per{font-size:11px;color:var(--muted);font-weight:800}
   .qs-r .unset{color:var(--muted);font-weight:700;font-size:12px}
+  /* .qs-r b is nowrap (a money figure must never break); a short reason in the value cell is
+     allowed to wrap instead of forcing the column wide and clipping the total beside it */
+  .qs-r .warn{color:var(--orange-deep);font-weight:900;font-size:12px;white-space:normal;text-align:right}
   .qs-r input[type=text]{font:inherit;font-size:13px;font-weight:800;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;width:84px;text-align:right}
   .qs-in{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
   .edit-bar[hidden]{display:none}
@@ -1146,6 +1169,18 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       var f=rec().fields[id]; return !!(f&&f.disc); }
     return sc===side; }
   function discScopeWord(sc){ return sc==='oneoff'?'one-off lines only':sc==='monthly'?'monthly lines only':sc==='lines'?'selected lines only':''; }
+  /* A DISCOUNT THAT DISCOUNTS NOTHING SAYS WHY (Ray, 21 Sep 2026, with 100% typed in and £19,000 of
+     quote untouched): "not on one-off" reads like a rule of the template rather than a consequence of
+     this quote's own settings, and a 100% partner discount taking £0 off is never what anyone meant.
+     When the scope covers this side but nothing on it is ticked, the row names the reason and goes
+     orange; when the scope simply excludes this side, it stays quiet — that one IS the setting. */
+  function discNil(side,t){ var sc=t.discScope, why='', full='', loud=false;
+    if(sc==='lines'){ why='no line ticked'; full='the scope is "selected lines" and no line on this side is ticked'+(!discMan()?'; man power is excluded from the discount, so hours lines cannot be ticked at all':''); loud=true; }
+    else if(sc===side||sc==='all'){ loud=true;
+      if(discMan()){ why='nothing to discount'; full='the scope covers this side, but there is nothing on it'; }
+      else { why='man power only'; full='every line on this side is man power — hours at the day rate — which the quote sheet\u2019s own Discount % column excludes. Tick "+ man power" to discount them on this quote'; } }
+    else { why=(side==='oneoff'?'not on one-off':'not on monthly'); full='the scope is '+discScopeWord(sc); }
+    return '<span class="'+(loud?'warn':'hint')+'" title="'+esc(discPct()+'% is set but takes £0 off the '+(side==='oneoff'?'one-off':'monthly')+' side: '+full+'.')+'">'+(loud?'\u26a0 £0.00 \u00b7 ':'')+esc(why)+'</span>'; }
   function dscChip(id){ if(discScope()!=='lines'||!id)return ''; if(!discMan()&&manLine(id))return '<span class="dsc man" title="Man power — hours at the day rate — is not discounted. Tick “+ man power” beside the discount to include it on this quote">man power · no discount</span>'; var on=discOn('oneoff',id);
     return '<button type="button" class="dsc'+(on?' on':'')+'" data-dsc="'+id+'" title="Partner discount on this line (its one-off part and its maintenance)">'+(on?'−'+discPct()+'%':'no discount')+'</button>'; }
   /* ---------- monthly update — new products (Ray, 11 Sep 2026: "update this monthly … all new
@@ -1161,8 +1196,34 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   var UPD_MIN=100, UPD_DEFAULT_TIERS=[{upTo:1000,gbp:100},{upTo:5000,gbp:200},{upTo:10000,gbp:350},{upTo:20000,gbp:600},{upTo:null,gbp:1000}];
   function updTiers(){ var rc=STORE[RCKEY]||{}, t=rc.upd&&rc.upd.tiers;
     return (t&&t.length?t:UPD_DEFAULT_TIERS).map(function(x){ return {upTo:(x.upTo==null?null:+x.upTo),gbp:Math.max(UPD_MIN,+x.gbp||0)}; }); }
-  function updDraft(){ var rc=STORE[RCKEY]||{}; return !(rc.upd&&rc.upd.tiers&&rc.upd.tiers.length); }
+  /* WHERE THE MONTHLY FIGURE COMES FROM (Ray, 21 Sep 2026: "at which point the new-product updates
+     for this quote gets to 15,100/month?") - nothing computes it. totals() does monSub += updGBP(),
+     and updGBP() is whatever sits in the band box. The £15,100 on QT261571 was two characters typed
+     in front of a pre-filled "100" in the "up to 1,000" box: the input saved on the keystroke, onto
+     the rate card SHARED by every client and every colleague, with no ceiling, in a 58px box too
+     narrow to read five digits, under a total line that printed the number and nothing about it.
+     Four changes, none of them arithmetic: the boxes select on focus so typing REPLACES, a band away
+     from its FeedSpark default carries "was £X" and hands the default back, a band priced more than
+     5x its default is flagged off-scale on the chip AND on the quote total, and the total line now
+     NAMES the band price it is reading. */
+  function updDefGBP(j){ var d=UPD_DEFAULT_TIERS[j]; return d?d.gbp:UPD_MIN; }
+  /* "draft prices" used to mean "the rate card has no tiers key", so editing ONE band silently
+     retired the badge for the other four placeholders. It now means what it says: nothing has been
+     priced yet. Each edited band carries its own "was £X" instead. */
+  function updDraft(){ return !updTiers().some(function(x,j){ return +x.gbp!==updDefGBP(j); }); }
+  function updOffScale(j){ var T=updTiers(); return !!(T[j]&&(+T[j].gbp||0)>updDefGBP(j)*5); }
+  /* ONE writer for a band price — the input handler and both ↺ buttons go through it, so a band can
+     never be written one way here and another way there. The rate card is SHARED (mapStoreRoute
+     'aiquote', house-wide): this £ moves every quote for every client, for everyone. */
+  function setBandGBP(j,v){ var rc=STORE[RCKEY]||(STORE[RCKEY]={fields:{}}); rc.upd=rc.upd||{}; rc.upd.tiers=updTiers();
+    if(!rc.upd.tiers[j])return; rc.upd.tiers[j].gbp=Math.max(UPD_MIN,+v||0); rc.updated=Date.now(); updThaw(); }
   function updRec(){ var r=rec(); if(!r.upd||typeof r.upd!=='object')r.upd={on:false,est:null,tier:null}; return r.upd; }
+  /* A SAVED QUOTE REPRODUCES ITS OWN PRICE. loadSaved restored the band INDEX and trusted the rate
+     card to still hold the same price - so reopening a signed-off quote re-priced it at whatever the
+     band costs today, silently. The snapshot's own £ is frozen onto the record and wins; touching the
+     bands, pinning another one or moving the estimate are new decisions and clear the freeze. */
+  function updFrozen(){ var u=updRec(); return (u.gbp!=null&&u.gbp!==''&&isFinite(+u.gbp)&&+u.gbp>0)?+u.gbp:null; }
+  function updThaw(){ var u=updRec(); if(u.gbp!=null){ delete u.gbp; return true; } return false; }
   var VOL={};   // client|market -> arrivals forecast read from /api/volume
   function volKey(){ return CLIENT+'|'+MKT; }
   function ensureVolume(){ var k=volKey(); if(!CLIENT||VOL[k])return; VOL[k]={pending:true};
@@ -1189,9 +1250,11 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   function updAutoIdx(){ var T=updTiers(), e=updExpected(); if(e==null)return 0; for(var i=0;i<T.length;i++){ if(T[i].upTo==null||e<=T[i].upTo)return i; } return T.length-1; }
   function updTierIdx(){ var u=updRec(), T=updTiers(); if(u.tier!=null&&u.tier!==''&&T[+u.tier])return +u.tier; return updAutoIdx(); }
   function updLabel(i){ var T=updTiers(); if(!T[i])return ''; var lo=i?(+T[i-1].upTo+1):0, hi=T[i].upTo; return hi==null?fmt(lo)+'+':(i?fmt(lo)+'–'+fmt(hi):'up to '+fmt(hi)); }
-  function updGBP(){ var T=updTiers(); return Math.max(UPD_MIN,+T[updTierIdx()].gbp||0); }
+  function updBandGBP(){ var T=updTiers(); return Math.max(UPD_MIN,+T[updTierIdx()].gbp||0); }
+  function updGBP(){ var f=updFrozen(); return f!=null?f:updBandGBP(); }
   function updInfo(){ var u=updRec(); if(!u.on)return null; var i=updTierIdx(), f=updForecast();
-    return {on:true,gbp:updGBP(),tier:i,label:updLabel(i),exp:updExpected(),src:updSrc(),est:(u.est!=null&&u.est!=='')?+u.est:null,pinned:(u.tier!=null&&u.tier!==''),disc:!!u.disc,
+    return {on:true,gbp:updGBP(),band:updBandGBP(),frozen:updFrozen(),off:updOffScale(i),def:updDefGBP(i),
+      tier:i,label:updLabel(i),exp:updExpected(),src:updSrc(),est:(u.est!=null&&u.est!=='')?+u.est:null,pinned:(u.tier!=null&&u.tier!==''),disc:!!u.disc,
       fc:f?{monthly:f.monthly,outMonthly:f.outMonthly,days:f.days,from:f.from,to:f.to,basis:f.basis||'churn',basisTxt:f.basisTxt||null,quarter:f.quarter||null,year:f.year||null}:null}; }
   // one wording for the copy text, the email, the brief, the tracker and the export notes
   function updWord(u,withP){ if(!u)return ''; var w='bundle '+u.label+' new SKUs / month'+(withP&&u.gbp!=null?' — '+money(u.gbp)+' / month':'');
@@ -1279,15 +1342,35 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       +'<div class="upd-fc"><div class="upd-fl">The bundle · what we charge</div><div class="upd-ft" id="upd-ftxt">'+fc+'</div>'
       +'<div class="upd-est">Estimate / override <input type="text" id="upd-est" inputmode="numeric" placeholder="'+(f?fmt(f.monthly):'SKUs / month')+'" value="'+((u.est!=null&&u.est!=='')?esc(String(u.est)):'')+'"> new SKUs / month'
       +' <button type="button" class="pt-act" id="upd-est-x"'+((u.est!=null&&u.est!=='')?'':' hidden')+'>use the forecast</button></div></div>'
-      +'<div class="upd-tiers" id="upd-tiers">'+T.map(function(t,j){ return '<div class="tier'+(j===i?' on':'')+(j===ai?' auto':'')+'" data-tier="'+j+'" title="'+(j===ai?'Auto from the '+(updSrc()==='estimate'?'estimate':'forecast')+' · ':'')+'click to pin this band">'
-          +'<span class="tl">'+esc(updLabel(j))+'</span><span class="tp">£<input class="tgbp" data-tier="'+j+'" inputmode="numeric" value="'+esc(String(t.gbp))+'"> / month</span>'+(j===ai?'<span class="tag">auto</span>':'')+'</div>'; }).join('')+'</div>'
+      +'<div class="upd-tiers" id="upd-tiers">'+T.map(function(t,j){ var dg=updDefGBP(j), off=updOffScale(j), moved=(+t.gbp!==dg);
+          return '<div class="tier'+(j===i?' on':'')+(j===ai?' auto':'')+(off?' off':'')+'" data-tier="'+j+'" title="'+(off?'£'+fmt(+t.gbp)+' a month is more than five times the FeedSpark band price of £'+fmt(dg)+' — check it before this quote goes out · ':(j===ai?'Auto from the '+(updSrc()==='estimate'?'estimate':'forecast')+' · ':''))+'click to pin this band">'
+          +'<span class="tl">'+esc(updLabel(j))+'</span><span class="tp">£<input class="tgbp" data-tier="'+j+'" inputmode="numeric" value="'+esc(String(t.gbp))+'"> / month</span>'
+          +(moved?'<span class="twas">'+(off?'⚠ ':'')+'was £'+fmt(dg)+' <button type="button" class="twx" data-def="'+j+'" title="Put the FeedSpark band price back">↺</button></span>':'')
+          +(j===ai?'<span class="tag">auto</span>':'')+'</div>'; }).join('')+'</div>'
       +'<div class="upd-sum" id="upd-sum"></div>'
       +'</div></div>';
     updRefresh(); }
+  /* repaint the chips WITHOUT rebuilding them — the price box is being typed into, and replacing
+     the row's innerHTML would take the caret out of it mid-number */
+  function paintTiers(){ var i=updTierIdx(), ai=updAutoIdx(), T=updTiers();
+    document.querySelectorAll('#upd-tiers .tier').forEach(function(d){ var j=+d.getAttribute('data-tier');
+      d.classList.toggle('on',j===i); d.classList.toggle('auto',j===ai);
+      var off=updOffScale(j); d.classList.toggle('off',off);
+      var tg=d.querySelector('.tag'); if(tg)tg.hidden=(j!==ai);
+      var dg=updDefGBP(j), moved=T[j]&&(+T[j].gbp!==dg), w=d.querySelector('.twas');
+      if(!moved){ if(w)w.remove(); return; }
+      var html=(off?'\u26a0 ':'')+'was \u00a3'+fmt(dg)+' <button type="button" class="twx" data-def="'+j+'" title="Put the FeedSpark band price back">\u21ba</button>';
+      if(w){ if(w.innerHTML!==html)w.innerHTML=html; }
+      else { var sp=document.createElement('span'); sp.className='twas'; sp.innerHTML=html; d.appendChild(sp); } }); }
   function updRefresh(){ var el=$('#upd-sum'); if(!el)return; var u=updRec(), i=updTierIdx(), ai=updAutoIdx();
-    document.querySelectorAll('#upd-tiers .tier').forEach(function(d){ var j=+d.getAttribute('data-tier'); d.classList.toggle('on',j===i); d.classList.toggle('auto',j===ai); var tg=d.querySelector('.tag'); if(tg)tg.hidden=(j!==ai); });
+    paintTiers();
     var ex=$('#upd-est-x'); if(ex)ex.hidden=!(u.est!=null&&u.est!=='');
-    el.innerHTML=(u.on?('<b>'+esc(updLabel(i))+'</b> new SKUs / month → <b>'+money(updGBP())+' / month</b>'+((u.tier!=null&&u.tier!=='')?' · pinned <button type="button" class="pt-act" id="upd-auto">↺ auto</button>':' · auto from the '+updSrc())+' · minimum £'+UPD_MIN+' a month')
+    var fz=updFrozen(), bd=updBandGBP();
+    el.innerHTML=(u.on?('<b>'+esc(updLabel(i))+'</b> new SKUs / month → <b>'+money(updGBP())+' / month</b>'+((u.tier!=null&&u.tier!=='')?' · pinned <button type="button" class="pt-act" id="upd-auto">↺ auto</button>':' · auto from the '+updSrc())+' · minimum £'+UPD_MIN+' a month'
+      /* the whole point of Ray's question: say what the figure IS, not only how big it is */
+      +'<div class="updwhy">This is the <b>'+esc(updLabel(i))+'</b> band price typed on your shared rate card — a flat monthly charge, not the '+(updExpected()!=null?fmt(updExpected())+' new SKUs':'arrivals')+' multiplied by anything.</div>'
+      +(updOffScale(i)?'<div class="updwarn">⚠ '+money(bd)+' a month is more than five times the FeedSpark band price of '+money(updDefGBP(i))+'. Check the band box above before this quote goes out — <button type="button" class="pt-act twx" data-def="'+i+'">↺ put £'+fmt(updDefGBP(i))+' back</button></div>':'')
+      +((fz!=null&&Math.abs(fz-bd)>0.005)?'<div class="updwarn">Frozen at '+money(fz)+' — the figure this quote was signed off at. The band costs '+money(bd)+' today; touch the bands or pin another to re-price it.</div>':''))
       :'<span class="hint">Off — tick to add the bundle to the Monthly side of the quote</span>')
       +((u.on&&discScope()==='lines')?' <label class="qopt dscw" title="Partner discount on the bundle"><input type="checkbox" class="cbx" id="upd-disc"'+(u.disc?' checked':'')+'> partner discount</label>':'')
       +(updDraft()?' <span class="draft" title="Band prices are draft placeholders — only the £100 floor is confirmed. Edit them here; they save with your rate card.">draft prices</span>':''); }
@@ -1993,13 +2076,21 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     S1('#qs-xmonn',xm.length?'· '+xWord(xm):'· none'); S1('#qs-xmon',money(t.xMon)+(t.tbcN?' <span class="hint">+ '+t.tbcN+' TBC</span>':''));
     S1('#qs-lines',t.miss?'<span class="unset">set every rate</span>':money(t.linesSub));
     S1('#qs-setup',money(setupFee()));
-    S1('#qs-disc',t.disc>0?(t.miss?'—':(t.discBase>0?'−'+money(t.discAmt):'<span class="hint">not on one-off</span>')):'—');
+    S1('#qs-disc',t.disc>0?(t.miss?'—':(t.discBase>0?'−'+money(t.discAmt):discNil('oneoff',t))):'—');
     S1('#qs-gross',t.miss?'<span class="unset">rates incomplete</span>':money(t.gross));
-    S1('#qs-updn',t.upd?('· '+esc(t.upd.label)+(t.upd.exp!=null?' · ~'+fmt(t.upd.exp)+'/mo':'')):'· off');
+    /* Ray, 21 Sep 2026 — "at which point the new-product updates for this quote gets to 15,100/month?":
+       the row printed the number and the band NAME and nothing about where the money came from. It now
+       says the band price is a flat typed figure, and shouts when that figure is off-scale. */
+    S1('#qs-updn',t.upd?('· '+esc(t.upd.label)+' band · <span class="'+(t.upd.off?'warn':'')+'" title="'
+        +esc(t.upd.off?('£'+fmt(t.upd.band)+' a month is more than five times the FeedSpark band price of £'+fmt(t.upd.def)+'. It is a figure somebody typed into the band box on the shared rate card — check it before this quote goes out.')
+          :(t.upd.frozen!=null?('Frozen at the price this quote was signed off at. Today the band costs £'+fmt(t.upd.band)+' a month.')
+            :'A flat monthly charge typed into the band box on your shared rate card — the new-SKU figure picks the band, it never multiplies the price.'))+'">'
+        +(t.upd.off?'\u26a0 ':'')+money(t.upd.gbp)+'/mo flat'+(t.upd.off?(' · band is £'+fmt(t.upd.def)):(t.upd.frozen!=null?' as signed off':''))+'</span>'
+        +(t.upd.exp!=null?' · ~'+fmt(t.upd.exp)+' new SKUs/mo':'')):'· off');
     S1('#qs-upd',t.upd?money(t.upd.gbp):'—');
     S1('#qs-monn',t.monN?('· '+t.monN+' line'+(t.monN===1?'':'s')):'· none yet');
     S1('#qs-mon',money(t.monSub));
-    S1('#qs-mondisc',t.disc>0?(t.monDiscBase>0?'−'+money(t.monDisc):'<span class="hint">not on monthly</span>'):'—');
+    S1('#qs-mondisc',t.disc>0?(t.monDiscBase>0?'−'+money(t.monDisc):discNil('monthly',t)):'—');
     S1('#qs-mongross',money(t.monGross)+' <span class="per">/ month</span>');
     var aimN=(t.aim&&t.aim.lines.length)?(t.aim.counts.feed+t.aim.counts.scrape+t.aim.counts.ai+t.aim.counts.fh):0;
     $('#kpis').innerHTML=kpi(fmt(baseVol()),'SKUs in scope')+kpi(t.inc+' / '+CAT.length,'Fields selected')+kpi(fmt(t.tp),'SKUs quoted')
@@ -2137,15 +2228,43 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   })();
   $('#valid').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9]/g,''); rec().valid=v===''?null:+v; saveSoon(); });
   $('#upd-card').addEventListener('change',function(e){ if(e.target.id==='upd-on'){ updRec().on=e.target.checked; updRefresh(); foot(); saveSoon(); }
-    else if(e.target.id==='upd-disc'){ updRec().disc=e.target.checked; foot(); saveSoon(); } });
+    else if(e.target.id==='upd-disc'){ updRec().disc=e.target.checked; foot(); saveSoon(); }
+    /* on blur the box snaps to the price that was actually stored — the £100 floor clamps on the way
+       in, so a box reading "15" beside a line reading £100 is the page disagreeing with itself.
+       ONLY when they actually differ, and never by re-rendering the card: blur fires as part of the
+       click that MOVED the focus, so rebuilding #upd-body (or #upd-sum) here destroys the ↺ button
+       or the band chip under the pointer and the click lands on nothing. paintTiers touches the
+       chips' classes and their "was £X" marker only, so whatever is being clicked survives. */
+    else if(e.target.classList&&e.target.classList.contains('tgbp')){
+      var j=+e.target.getAttribute('data-tier'), T=updTiers();
+      if(T[j]&&String(T[j].gbp)!==String(e.target.value)){ e.target.value=String(T[j].gbp); paintTiers(); }
+      foot(); saveSoon(); } });
+  /* THE PREPEND TRAP (Ray's £15,100): the band box is pre-filled, so clicking into "100" and typing
+     "15" leaves 15100 — saved on the keystroke, house-wide. Selecting the value on focus makes the
+     first keystroke replace it, which is what anyone typing a price means.
+     focus alone is NOT enough: a click is mousedown → focus → mouseup, and the mouseup collapses the
+     selection to a caret again, so the trap survived a selectOnFocus that only listened for focus.
+     The mouseup that COMPLETES the focusing click is swallowed; a second click in an already-focused
+     box places the caret normally, because by then you are editing, not replacing. */
+  var _selFx=null;
+  $('#upd-card').addEventListener('focusin',function(e){ var t=e.target;
+    if(t&&t.classList&&(t.classList.contains('tgbp')||t.id==='upd-est')){ _selFx=t; try{ t.select(); }catch(x){} } });
+  $('#upd-card').addEventListener('focusout',function(){ _selFx=null; });
+  $('#upd-card').addEventListener('mouseup',function(e){ if(e.target===_selFx){ e.preventDefault(); try{ _selFx.select(); }catch(x){} _selFx=null; } },true);
   $('#upd-card').addEventListener('input',function(e){ var t=e.target;
-    if(t.id==='upd-est'){ var v=String(t.value).replace(/[^0-9]/g,''); updRec().est=v===''?null:+v; updRefresh(); foot(); saveSoon(); }
-    else if(t.classList.contains('tgbp')){ var g=String(t.value).replace(/[^0-9.]/g,''); var rc=STORE[RCKEY]||(STORE[RCKEY]={fields:{}}); rc.upd=rc.upd||{}; rc.upd.tiers=updTiers();
-      rc.upd.tiers[+t.getAttribute('data-tier')].gbp=(g===''?UPD_MIN:+g); rc.updated=Date.now(); updRefresh(); foot(); saveSoon(); } });
+    if(t.id==='upd-est'){ var v=String(t.value).replace(/[^0-9]/g,''); updRec().est=v===''?null:+v; updThaw(); updRefresh(); foot(); saveSoon(); }
+    else if(t.classList.contains('tgbp')){ var g=String(t.value).replace(/[^0-9.]/g,''); setBandGBP(+t.getAttribute('data-tier'),g===''?UPD_MIN:+g);
+      /* the chips carry "was £X" and the off-scale ring, so they are redrawn as the price is typed —
+         re-render only the chip row, never the whole card, or the caret leaves the box mid-number */
+      paintTiers(); updRefresh(); foot(); saveSoon(); } });
   $('#upd-card').addEventListener('click',function(e){ var t=e.target;
-    if(t.id==='upd-auto'){ updRec().tier=null; updRefresh(); foot(); saveSoon(); return; }
+    if(t.id==='upd-auto'){ updRec().tier=null; updThaw(); updRefresh(); foot(); saveSoon(); return; }
+    /* ↺ — hand the FeedSpark band price back. Sits on the chip and inside the off-scale warning,
+       and must be read BEFORE the .tier branch below or it would pin the band instead. */
+    if(t.hasAttribute&&t.hasAttribute('data-def')){ var dj=+t.getAttribute('data-def'); setBandGBP(dj,updDefGBP(dj));
+      renderUpd(); foot(); saveSoon(); toast('Band '+updLabel(dj)+' back to '+money(updDefGBP(dj))+' / month'); return; }
     if(t.id==='upd-est-x'){ updRec().est=null; renderUpd(); foot(); saveSoon(); return; }
-    var d=t.closest&&t.closest('.tier'); if(d&&!(t.classList&&t.classList.contains('tgbp'))){ updRec().tier=+d.getAttribute('data-tier'); updRefresh(); foot(); saveSoon(); } });
+    var d=t.closest&&t.closest('.tier'); if(d&&!(t.classList&&t.classList.contains('tgbp'))){ updRec().tier=+d.getAttribute('data-tier'); updThaw(); updRefresh(); foot(); saveSoon(); } });
   $('#savecard').addEventListener('click',function(){ var rc=STORE[RCKEY]||{fields:{}}; rc.fields=rc.fields||{};
     CAT.forEach(function(f){ var ch=fCharge(f.id), hb=(ch==='flat'||ch==='monthly'), rt=hb?null:fRate(f.id), h=hb?fHours(f.id):null;
       if(rt!=null||h!=null)rc.fields[f.id]={rate:rt,charge:ch,hours:h,mode:fMode(f.id)}; });
@@ -3063,7 +3182,11 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     r.lia=cf.lia?JSON.parse(JSON.stringify(cf.lia)):{mkts:{},extra:[],note:''}; r.ret=cf.ret?JSON.parse(JSON.stringify(cf.ret)):{one:null,mon:null,note:''}; r.dflags=cf.dflags?JSON.parse(JSON.stringify(cf.dflags)):{}; r.pre=cf.pre?JSON.parse(JSON.stringify(cf.pre)):{};
     r.setup=(q.setup!=null&&q.setup!==''&&+q.setup>0)?q.setup:null; r.disc=(+q.disc>0)?q.disc:null; r.vat=!!q.vat; r.valid=(q.valid!=null)?q.valid:null; r.blockGBP=q.blockGBP||null;
     // the new-products bundle as saved: on, the estimate, and the band PINNED so the saved figure is reproduced
-    r.upd=q.upd?{on:true,est:(q.upd.est!=null?q.upd.est:null),tier:(q.upd.tier!=null?q.upd.tier:null),disc:!!q.upd.disc}:{on:false,est:null,tier:null};
+    r.upd=q.upd?{on:true,est:(q.upd.est!=null?q.upd.est:null),tier:(q.upd.tier!=null?q.upd.tier:null),disc:!!q.upd.disc,
+      /* the snapshot's OWN £, frozen: the band index alone trusted the shared rate card to still hold
+         the same price, so reopening a signed-off quote silently re-priced it at today's band.
+         Touching the bands, pinning another or moving the estimate clears the freeze. */
+      gbp:((q.upd.gbp!=null&&isFinite(+q.upd.gbp)&&+q.upd.gbp>0)?+q.upd.gbp:null)}:{on:false,est:null,tier:null};
     /* Spark AI as saved: the ROUTES come back, so re-pricing reproduces the quote finance signed
        off. The rates on the snapshot are NOT written back over the rate card - that is a shared
        figure for every client, and one edit of an old quote must not move it for the whole book. */

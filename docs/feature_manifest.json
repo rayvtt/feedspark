@@ -8457,6 +8457,42 @@
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function optionsText(k)",
       "pr": 0
+    },
+    {
+      "name": "AI Quote: the band price is a typed figure and the quote says so",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function updBandGBP(){ var T=updTiers(); return Math.max(UPD_MIN,+T[updTierIdx()].gbp||0); }",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: band boxes select on focus and swallow the click's mouseup (the £15,100 prepend trap)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "addEventListener('mouseup',function(e){ if(e.target===_selFx){ e.preventDefault();",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: an off-scale band is flagged on the chip, the card and the quote total",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function updOffScale(j){ var T=updTiers(); return !!(T[j]&&(+T[j].gbp||0)>updDefGBP(j)*5); }",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: a saved quote reproduces its own bundle price (frozen gbp)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function updGBP(){ var f=updFrozen(); return f!=null?f:updBandGBP(); }",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: a discount that discounts nothing says why",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function discNil(side,t){",
+      "pr": 0
+    },
+    {
+      "name": "AI Quote: quote-total tiles can shrink (minmax(0,1fr) on the subgrid column)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": ".qs-col{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:subgrid",
+      "pr": 0
     }
   ]
 }
