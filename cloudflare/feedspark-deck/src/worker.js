@@ -53,7 +53,7 @@ const INGEST_BATCHES = { superdry_svs_aug26: INGEST_SUPERDRY_SVS_AUG26 };
 // Per-user access scoping: directory + client-team alias rule -> a scoped Workflow view
 import { ACCESS_SEED, resolveAccess, displayName, clientMatch, clientSlug, scopeBriefsView, scopeBriefsIncoming, scopeRows, sanitizeDir, viewAsEmail, MODULES, MODULE_PATHS, moduleAllowed, amEmail } from "./access.js";
 // Label Guard: custom_label_0..4 drop-off monitoring (gviz pivots, baseline diff -> alerts)
-import { QSPEC, qualityScore, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
+import { QSPEC, qualityScore, qruleKnown, LABEL_KEYS, PT_KEYS, scanFeed, diffSnapshots, summarize, crossFeed, labelPivot, evalWatch, alertDigest, buildReport, isImplausible, dispFeed, estateMailPlan, estateAlertEmail, estateRecoveryEmail, depthProfile, diffCoverage, goldenScore, goldenAlertEmail, goldenRecoveryEmail, ATTR_SPEC, profileFor, industryOf, INDUSTRY_PROFILES, INDUSTRY, HL_BUCKETS, cleanPop } from "./labelguard.js";
 import LANDING from "../../../docs/FeedSpark_Command_Center.html";
 import DECK_YUMOVE from "../../../docs/YuMOVE_Strategy_Review_Jul26.html";
 import TASKLIB from "../../../docs/FeedSpark_Task_Library.html";
@@ -3840,14 +3840,57 @@ async function goldenRoutes(env, request, url) {
       if (!scope || !name) return json({ error: 'scope (client|industry) + name required' }, 400);
       const overrides = (await env.EDITS.get('goldenprofiles', 'json')) || {};
       overrides[scope] = overrides[scope] || {};
-      if (b.reset) { delete overrides[scope][name]; }
-      else {
+      const prev = overrides[scope][name] || {};
+      // the content-quality rules this scope has set aside ride the SAME record as the
+      // attribute profile, and survive the ⚙ editor's whole-record save and its reset: the
+      // editor never sees them, so it can never silently wipe a decision made row by row
+      const keepQ = (Array.isArray(prev.qwaived) ? prev.qwaived : []).map(String).filter(qruleKnown);
+      if (b.qrule != null) {
+        // ONE content-quality rule set aside for (waive:true) or restored to (waive:false)
+        // this brand / industry (Ray, 21 Sep 2026: "allow a button to indicate whether the
+        // issue actually applies for the brand … remove the issue and have the overall score
+        // reanalyzed"). Validated against the spec: a token naming no rule is refused.
+        const tok = String(b.qrule).slice(0, 80);
+        if (!qruleKnown(tok)) return json({ error: 'unknown rule' }, 400);
+        const next = keepQ.filter((t) => t !== tok);
+        if (b.waive !== false) next.push(tok);
+        const cur = {};
+        if (Array.isArray(prev.expected)) cur.expected = prev.expected;
+        if (Array.isArray(prev.waived)) cur.waived = prev.waived;
+        if (next.length) cur.qwaived = next.slice(0, 200);
+        if (Object.keys(cur).length) overrides[scope][name] = cur; else delete overrides[scope][name];
+      } else if (b.reset) {
+        if (keepQ.length) overrides[scope][name] = { qwaived: keepQ }; else delete overrides[scope][name];
+      } else {
         const clean = (v) => (Array.isArray(v) ? v : []).map(String)
           .filter((k) => ATTR_SPEC.some((sp) => sp.key === k && sp.req !== 'required' && k !== 'gtin' && k !== 'mpn')).slice(0, 40);
         overrides[scope][name] = { expected: clean(b.expected), waived: clean(b.waived) };
+        if (keepQ.length) overrides[scope][name].qwaived = keepQ;
       }
       await env.EDITS.put('goldenprofiles', JSON.stringify(overrides));
-      return json({ ok: true, overrides, effective: scope === 'clients' ? profileFor(name, overrides) : null });
+      // RE-ANALYSE THE STORED HEADLINE: the estate index carries each feed's content-quality
+      // score (written by the /api/golden/quality PUT), and a profile change — a rule set
+      // aside, an attribute waived — changes that number for every market of the brand (or
+      // every brand in the industry). Re-score each stored reading against the CURRENT
+      // profile so /golden's estate, the dossier and the one-pager never show a client a
+      // figure the page itself no longer agrees with. Bounded by the estate: one KV read per
+      // affected feed, one write.
+      const affects = (c) => (scope === 'clients' ? c === name : industryOf(c) === name);
+      const requal = {};
+      const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
+      let moved = false;
+      for (const key of Object.keys(idx)) {
+        const f = idx[key];
+        if (!f || !f.client || !affects(f.client) || f.q == null) continue;
+        const rec = await env.EDITS.get('goldenqual:' + f.client + ':' + f.mkt, 'json');
+        if (!rec) continue;
+        const qs = qualityScore(rec, profileFor(f.client, overrides));
+        if (!qs) continue;
+        if (f.q !== qs.score || f.qFails !== qs.fails) { f.q = qs.score; f.qFails = qs.fails; moved = true; }
+        requal[key] = { q: f.q, qFails: f.qFails };
+      }
+      if (moved) await env.EDITS.put('goldenidx', JSON.stringify(idx));
+      return json({ ok: true, overrides, effective: scope === 'clients' ? profileFor(name, overrides) : null, requal });
     }
   }
 
@@ -4027,8 +4070,11 @@ async function goldenRoutes(env, request, url) {
     const packed = JSON.stringify(rec);
     if (packed.length > 250000) return json({ error: 'quality reading too large' }, 413);
     await env.EDITS.put('goldenqual:' + client + ':' + mkt, packed);
-    // surface the headline on the estate index (never invents a row — only annotates one)
-    const qs = qualityScore(rec);
+    // surface the headline on the estate index (never invents a row — only annotates one).
+    // Scored against the brand's CURRENT profile — attribute waivers and the rules set aside
+    // for the brand — so the stored figure is the one the page computes (before 21 Sep 2026
+    // the index carried the unprofiled score while /golden showed the profiled one)
+    const qs = qualityScore(rec, profileFor(client, await env.EDITS.get('goldenprofiles', 'json')));
     const idx = (await env.EDITS.get('goldenidx', 'json')) || {};
     const key = lgKey(client, mkt);
     if (idx[key] && (qs || ai)) {

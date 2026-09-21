@@ -344,6 +344,7 @@ window.addEventListener('load',restore);
   .sc-rule .rw{color:var(--muted);font-weight:600;display:block;margin-top:2px}
   .sc-rule .rn{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
   .sc-rule .rn.ok{color:var(--good)}
+  .sc-rule .rn.na{color:var(--muted);font-weight:700;white-space:normal;text-align:right}
   body.pdf .scm,body.pdf .pq,body.pdf .qz-i{display:none!important}
   /* pillar heatmap — the Feed Lab grid, scoped to this brand's markets */
   .heat-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:13px 15px;margin-top:12px}
@@ -420,6 +421,18 @@ window.addEventListener('load',restore);
   .qz-flag{font-size:10px;font-weight:900;border-radius:100px;padding:1px 7px;margin-left:5px}
   .qz-flag.f{background:#FDEBEA;color:var(--risk)}
   .qz-flag.w{background:#FDF3E3;color:var(--orange-deep)}
+  .qz-flag.n{background:var(--wash);color:var(--muted);border:1px solid var(--line)}
+  /* "Doesn't apply to <brand>" — the per-rule waiver (Ray, 21 Sep 2026); the set-aside rule
+     stays listed, struck through, with its share, so the decision is visible and reversible */
+  .qz-na{display:inline-block;margin-top:5px;font-size:10.5px;font-weight:800;color:var(--muted);border:1px solid var(--line);
+    border-radius:100px;padding:0 8px;line-height:1.7;background:none;cursor:pointer;font-family:inherit}
+  .qz-na:hover{color:var(--risk);border-color:var(--risk)}
+  .qz-na[disabled]{opacity:.6;cursor:default}
+  .qz-rule.waived{opacity:.72}
+  .qz-rule.waived .qz-rl{text-decoration:line-through}
+  .qz-rule.waived .qz-na:hover{color:var(--good);border-color:var(--good)}
+  .qz-waived{margin-top:8px;padding-top:6px;border-top:1px dashed var(--line)}
+  body.demo .qz-na{display:none!important}
   .qz-det{grid-column:1/-1;padding:4px 0 10px}
   .qz-rule{display:grid;grid-template-columns:104px minmax(150px,1fr) 78px;gap:12px;align-items:start;
     padding:12px 0;border-top:1px dotted var(--line);font-size:12.5px}
@@ -551,7 +564,7 @@ window.addEventListener('load',restore);
   body.pdf .de-bar,body.pdf .de-dot,body.pdf #fcc-ship,body.pdf #fcc-ship-dim,body.pdf #fcc-ship-h,
   body.pdf #fcc-hrs,body.pdf .fh-dot,body.pdf #lang-tgl,body.pdf #fcc-presence,
   body.pdf #fcc-mall,body.pdf .fcc-mpan,
-  body.pdf button[data-qinfo],body.pdf button[data-scpop]{display:none!important}
+  body.pdf button[data-qinfo],body.pdf button[data-scpop],body.pdf .qz-na{display:none!important}
   /* THE CLIENT DOCUMENT IS SIMPLER THAN THE AM'S SCREEN (Ray, 18 Sep 2026, sending the ⬇ HTML
      to clients: "Let's remove a few things so it's not too complicated for the client to read.
      Keep the content quality score description, but remove the weight. The 1.4 × 1.6 factor
@@ -956,7 +969,11 @@ window.addEventListener('load',restore);
     var waived = pick(cl, 'waived') || pick(base, 'waived') || [];
     expected = expected.filter(profOk);
     waived = waived.filter(function (k2) { return profOk(k2) && expected.indexOf(k2) < 0; });
-    return { industry: ind, expected: expected, waived: waived };
+    // content-quality rules set aside for this brand ('<attr>:<ruleId>' tokens, industry ∪
+    // brand — the engine's own profileFor rule; Ray, 21 Sep 2026)
+    var qw = (pick(base, 'qwaived') || []).concat(pick(cl, 'qwaived') || []).map(String);
+    qw = qw.filter(function (t, i) { return qw.indexOf(t) === i && (!LGQ || !LGQ.qruleKnown || LGQ.qruleKnown(t)); });
+    return { industry: ind, expected: expected, waived: waived, qwaived: qw };
   }
   // live re-score (Ray, 16 Sep 2026): estate scores derive from each feed's stored
   // per-attribute coverage map + the CURRENT profile, so editing a scoring profile
@@ -2112,9 +2129,43 @@ window.addEventListener('load',restore);
         ' first product, so it was not in the header when the read started. Coverage for it is still on the' +
         ' scorecard above.</p>';
     }
+    var brand = dispClient(parts(k).client);
+    // one rule row — the finding as found; `na` = a rule the brand set aside (Ray, 21 Sep 2026)
+    function ruleRow(r, b, na) {
+      return '<div class="qz-rule' + (na ? ' waived' : '') + '"><span class="qz-sev ' + b.sev + '">' + (b.sev === 'fail' ? 'requirement' : 'best practice') + '</span>' +
+        '<span><span class="qz-rl">' + esc(b.label) + '</span>' +
+        '<span class="qz-why">' + esc(b.why) + '</span>' +
+        (na ? '' : (b.groups && b.groups.length
+          // a duplicate is a GROUP: the shared value, how many products carry it and
+          // which ones. Four unrelated-looking strings read as a wrong finding (Ray on
+          // Monsoon GB) — "×2 · 1000945103, 1000944940" is the finding, verifiable.
+          // two separate statements, on two lines — as one sentence this was a wall
+          ? '<span class="qz-egs"><i class="qz-cap">One block = one value, matched in full' +
+              (b.vals > b.groups.length ? ' · ' + fmt(b.vals - b.groups.length) + ' more not shown' : '') + '</i>' +
+              (b.within ? '<i class="qz-cap">Not counted: <b>' + fmt(b.within) + '</b> products share copy only with' +
+                ' variants of the same product (' + fmt(b.withinVals) + ' value' + (b.withinVals === 1 ? '' : 's') + ')</i>' : '') +
+            b.groups.map(function (g) {
+              return '<span class="qz-grp" title="' + esc(g.v) + '"><em><b>×' + g.n + '</b>' + esc(g.v) + '</em>' +
+                (g.ids && g.ids.length ? '<i>' + esc(g.ids.join(' · ')) +
+                  (g.n > g.ids.length ? ' …' : '') +
+                  '<span class="qz-vc">' + (g.x ? 'different products' : 'variants of one product') + '</span></i>' : '') + '</span>';
+            }).join('') + '</span>'
+          : (b.eg && b.eg.length ? '<span class="qz-eg">' + b.eg.map(function (e) { return '<span title="' + esc(e) + '">' + esc(e) + '</span>'; }).join('') + '</span>' : ''))) +
+        // DOES THIS ISSUE APPLY TO THE BRAND? (Ray, 21 Sep 2026: "Reiss, brand not in title
+        // — it should be possible to remove the issue and have the overall score reanalyzed")
+        // — one click sets the rule aside for the brand (or puts it back); the score, the
+        // verdict, the estate and the dossier re-analyse without it
+        (na ? '<button class="qz-na" data-qna="' + esc(r.key + ':' + b.id) + '" data-restore="1" title="Count this rule for ' + esc(brand) + ' again — the score re-analyses with it">↩ Applies to ' + esc(brand) + ' again</button>'
+            : '<button class="qz-na" data-qna="' + esc(r.key + ':' + b.id) + '" title="This issue does not apply to ' + esc(brand) + ' — set the rule aside for the brand and re-analyse the score without it">✕ Doesn’t apply to ' + esc(brand) + '</button>') +
+        '</span>' +
+        '<span class="qz-hit"><b>' + b.pct + '%</b><span>' + fmt(b.n) + ' products' +
+        (b.vals ? '<br>' + fmt(b.vals) + ' value' + (b.vals === 1 ? '' : 's') : '') +
+        (na ? '<br>not counted' : '') + '</span></span></div>';
+    }
     q.parts.forEach(function (r) {
       var open = QOPEN[k + '|' + r.key];
       var worst = r.broken[0];
+      var nWav = (r.waived || []).length;
       h += '<div class="qz-row" data-qk="' + esc(r.key) + '">' +
         '<span class="qz-nm" title="' + esc(r.spec) + '"><span class="cx">' + (open ? '▾' : '▸') + '</span><i>g:</i>' + esc(r.key) +
         '<button class="qz-i" data-qinfo="' + esc(r.key) + '" title="How g:' + esc(r.key) + ' is scored — every rule, its weight and Google’s page">ⓘ</button></span>' +
@@ -2124,7 +2175,8 @@ window.addEventListener('load',restore);
         '<span class="qz-worst" title="' + esc(worst ? worst.label + ' — ' + worst.pct + '% of products' : '') + '">' +
         (worst ? esc(worst.label) + ' · ' + worst.pct + '%' : 'nothing flagged — meets the spec') +
         (r.fails ? '<span class="qz-flag f">' + r.fails + ' req</span>' : '') +
-        (r.warns ? '<span class="qz-flag w">' + r.warns + ' bp</span>' : '') + '</span>' +
+        (r.warns ? '<span class="qz-flag w">' + r.warns + ' bp</span>' : '') +
+        (nWav ? '<span class="qz-flag n" title="' + nWav + ' rule' + (nWav === 1 ? '' : 's') + ' set aside as not applicable to ' + esc(brand) + ' — not counted in the score">' + nWav + ' set aside</span>' : '') + '</span>' +
         '<span class="qz-act">' +
         (worst ? '<button class="abtn" data-qask="' + esc(r.key) + '">✉ Ask client</button>' +
           '<button class="abtn" data-qbrief="' + esc(r.key) + '">→ Brief</button>' : '') + '</span>';
@@ -2136,30 +2188,14 @@ window.addEventListener('load',restore);
             r.minLen + '–' + r.maxLen + ')' +
             (r.avgDepth != null ? ', averaging <b>' + r.avgDepth + '</b> levels deep' : '') + '.</p>';
         } else {
-          r.broken.forEach(function (b) {
-            h += '<div class="qz-rule"><span class="qz-sev ' + b.sev + '">' + (b.sev === 'fail' ? 'requirement' : 'best practice') + '</span>' +
-              '<span><span class="qz-rl">' + esc(b.label) + '</span>' +
-              '<span class="qz-why">' + esc(b.why) + '</span>' +
-              (b.groups && b.groups.length
-                // a duplicate is a GROUP: the shared value, how many products carry it and
-                // which ones. Four unrelated-looking strings read as a wrong finding (Ray on
-                // Monsoon GB) — "×2 · 1000945103, 1000944940" is the finding, verifiable.
-                // two separate statements, on two lines — as one sentence this was a wall
-                ? '<span class="qz-egs"><i class="qz-cap">One block = one value, matched in full' +
-                    (b.vals > b.groups.length ? ' · ' + fmt(b.vals - b.groups.length) + ' more not shown' : '') + '</i>' +
-                    (b.within ? '<i class="qz-cap">Not counted: <b>' + fmt(b.within) + '</b> products share copy only with' +
-                      ' variants of the same product (' + fmt(b.withinVals) + ' value' + (b.withinVals === 1 ? '' : 's') + ')</i>' : '') +
-                  b.groups.map(function (g) {
-                    return '<span class="qz-grp" title="' + esc(g.v) + '"><em><b>×' + g.n + '</b>' + esc(g.v) + '</em>' +
-                      (g.ids && g.ids.length ? '<i>' + esc(g.ids.join(' · ')) +
-                        (g.n > g.ids.length ? ' …' : '') +
-                        '<span class="qz-vc">' + (g.x ? 'different products' : 'variants of one product') + '</span></i>' : '') + '</span>';
-                  }).join('') + '</span>'
-                : (b.eg && b.eg.length ? '<span class="qz-eg">' + b.eg.map(function (e) { return '<span title="' + esc(e) + '">' + esc(e) + '</span>'; }).join('') + '</span>' : '')) +
-              '</span>' +
-              '<span class="qz-hit"><b>' + b.pct + '%</b><span>' + fmt(b.n) + ' products' +
-              (b.vals ? '<br>' + fmt(b.vals) + ' value' + (b.vals === 1 ? '' : 's') : '') + '</span></span></div>';
-          });
+          r.broken.forEach(function (b) { h += ruleRow(r, b, false); });
+        }
+        // what the brand set aside stays visible — struck through, its share shown, never
+        // counted — so a client (and the next AM) can see the decision and reverse it
+        if (nWav) {
+          h += '<div class="qz-waived"><i class="qz-cap">Set aside for ' + esc(brand) + ' as not applicable — ' + nWav + ' rule' + (nWav === 1 ? '' : 's') +
+            ' the team judged not to apply to this brand, not counted in the score</i>' +
+            r.waived.map(function (b) { return ruleRow(r, b, true); }).join('') + '</div>';
         }
         if (r.key === 'title') h += titleAnatomy(k);   // the anatomy of what those rules just judged
         if (r.key === 'product_highlight') h += highlightProfile(k, r);   // the count distribution behind count-min/count-low
@@ -2269,6 +2305,37 @@ window.addEventListener('load',restore);
     Array.prototype.forEach.call(document.querySelectorAll('[data-qbrief]'), function (el) {
       el.onclick = function () { qualityBrief(k, el.getAttribute('data-qbrief')); };
     });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-qna]'), function (el) {
+      el.onclick = function (e) { if (e) e.stopPropagation(); qualityWaive(k, el.getAttribute('data-qna'), !!el.getAttribute('data-restore'), el); };
+    });
+  }
+  /* DOES THIS ISSUE APPLY TO THE BRAND? (Ray, 21 Sep 2026: "for each problem, for example under
+     Title, allow a button to indicate whether the issue actually applies for the brand … Reiss,
+     brand not in title — it should be possible to remove the issue and have the overall score
+     reanalyzed"). One click writes ONE '<attr>:<ruleId>' token onto the brand's scoring profile
+     (the same KV record the ⚙ editor keeps, brand scope, shared by the whole team) and the
+     worker re-scores every stored reading of the brand against it — so the row, the headline,
+     the verdict, the estate scorecard and the dossier all move together, and the exports carry
+     the decision. Reversible from the same place: the rule stays listed, struck through. */
+  function qualityWaive(k, tok, restore, btn) {
+    var p = parts(k);
+    if (btn) { btn.disabled = true; btn.textContent = restore ? 'restoring…' : 'setting aside…'; }
+    fetch(API + '/api/golden/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scope: 'client', name: p.client, qrule: tok, waive: !restore }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d || d.error) { if (btn) { btn.disabled = false; btn.textContent = '✗ ' + ((d && d.error) || 'failed'); } return; }
+        PROF.overrides = d.overrides || PROF.overrides;
+        // the worker re-analysed every stored reading of the brand — mirror it onto the estate
+        Object.keys(d.requal || {}).forEach(function (key) {
+          if (ESTATE.feeds[key]) { ESTATE.feeds[key].q = d.requal[key].q; ESTATE.feeds[key].qFails = d.requal[key].qFails; }
+        });
+        renderEstate();
+        renderDetail(k);
+        var m = $('qz-msg');
+        if (m) m.textContent = restore ? 'rule counts again — score re-analysed' : 'set aside for ' + dispClient(p.client) + ' — score re-analysed';
+      })
+      .catch(function () { if (btn) { btn.disabled = false; btn.textContent = '✗ network'; } });
   }
   function qualityPart(k, attr) {
     var q = QUAL[k] ? LGQ.qualityScore(QUAL[k], profileForC(parts(k).client)) : null;
@@ -2523,6 +2590,8 @@ window.addEventListener('load',restore);
           cc ? 'Attributes are weighted by how much of the shop window they are: title and description most, then highlights, category and type, then colour, material and pattern — the same shape as the Golden Record score.'
              : 'Attributes are weighted by how much of the shop window they are: title and description ×3, highlights, category and type ×2, colour, material and pattern ×1 — the same shape as the Golden Record score.',
           'An attribute the industry profile waives is left out entirely, numerator and denominator.',
+          (qs.setAside ? qs.setAside + ' rule' + (qs.setAside === 1 ? '' : 's') + ' the team judged not to apply to ' + dispClient(parts(k).client) +
+            ' are set aside — listed under the attribute, struck through, never counted.' : 'No rule has been set aside for this brand — every finding below counts.'),
           'Bands: 90 and over meets the spec · 75–89 below best practice · under 75 spec violations.',
           'Reading now: ' + qs.parts.map(function (p) { return 'g:' + p.key + ' ' + p.score + (cc ? '' : ' (×' + p.w + ')'); }).join(' · ') + '.']) +
         scSrc(qs.parts.map(function (p) { return ['Google · ' + p.label + ' (answer ' + p.doc + ')', G_ANS + p.doc]; })), scoreCol);
@@ -2531,11 +2600,14 @@ window.addEventListener('load',restore);
     var r = qualityPart(k, attr); if (!r) return;
     var spec = LGQ.qspecOf(attr) || { rules: [] };
     var broken = {}; (r.broken || []).forEach(function (bb) { broken[bb.id] = bb; });
+    var naRule = {}; (r.waived || []).forEach(function (bb) { naRule[bb.id] = bb; });
+    var brandName = dispClient(parts(k).client);
     var rules = spec.rules.map(function (rule) {
-      var bb = broken[rule.id];
+      var bb = broken[rule.id], na = naRule[rule.id];
       return '<div class="sc-rule"><span class="qz-sev ' + rule.sev + '">' + (rule.sev === 'fail' ? 'requirement' : 'best practice') + '</span>' +
         '<span><span class="rl">' + esc(rule.label) + '</span><span class="rw">' + esc(rule.why) + '</span></span>' +
-        '<span class="rn' + (bb ? '' : ' ok') + '">' + (bb ? bb.pct + '% · −' + bb.cost : '✓ passes') + '</span></div>';
+        '<span class="rn' + (bb ? '' : (na ? ' na' : ' ok')) + '">' +
+        (bb ? bb.pct + '% · −' + bb.cost : (na ? 'set aside for ' + esc(brandName) + ' · ' + na.pct + '% not counted' : '✓ passes')) + '</span></div>';
     }).join('');
     openScPop('g:' + attr + ' — content quality', r.score, cc ? '' : 'weight ×' + (r.w || 1),
       '<div class="sc-k">How it is scored</div>' + scList([
@@ -2934,7 +3006,7 @@ window.addEventListener('load',restore);
     // 4. nothing that needs JavaScript survives in a file that has none
     ['.de-bar', '.de-dot', '#fs-editor-css', '#fcc-ship', '#fcc-ship-dim', '#fcc-ship-h', '#fcc-hrs',
      '.fh-dot', '#lang-tgl', '#fcc-presence', '#fcc-mall', '.fcc-mpan', '#theme-tgl', '#scm',
-     '[data-qinfo]', '[data-scpop]', '.qz-i', '.qz-act', '[data-qask]', '[data-qbrief]',
+     '[data-qinfo]', '[data-scpop]', '.qz-i', '.qz-act', '[data-qask]', '[data-qbrief]', '.qz-na',
      '.at-act', '.det-actions', '#pdp-last', '#prof-edit',
      /* THE REST OF THE INJECTED CHROME, REMOVED NOT HIDDEN (Ray, 18 Sep 2026: "remove the
         element that sends code or feedback to Claude. I'm sending this to my clients"): the

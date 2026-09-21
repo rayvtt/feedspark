@@ -181,6 +181,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record ⬇ HTML export (foldable, scoring logic inline, no dead chrome)"
   NODE_PATH=$(npm root -g) node tools/check_grhtml.js || {
     echo "✗ Golden Record HTML tripwire failed — the download lost a disclosure, its scoring logic, or kept dead FCC chrome"; exit 1; }
+  echo "── validating: Golden Record per-rule waiver (one click sets a rule aside, the score re-analyses, undo restores)"
+  NODE_PATH=$(npm root -g) node tools/check_grwaive.js || {
+    echo "✗ Golden Record waiver tripwire failed — the 'Doesn't apply to <Brand>' button, the re-analysis, the undo or the client file regressed"; exit 1; }
   echo "── validating: Golden Record at 390px WITH a scanned feed (rows fit, no rescue frames, pop-ups on screen)"
   NODE_PATH=$(npm root -g) node tools/check_grmobile.js || {
     echo "✗ Golden Record phone tripwire failed — a scanned attribute row, a section or a pop-up runs past a 390px screen"; exit 1; }

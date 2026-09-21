@@ -929,6 +929,45 @@ each finding quotes and links its source.
   `qualityScore`'s parts entirely; the other parts are untouched; no profile passed keeps the old
   behaviour byte-for-byte) and `tools/test_feedlab.mjs`.
 
+- **Does this issue apply to the brand? — per-rule waivers** (Ray, 21 Sep 2026: *"within golden
+  record content quality analysis. For each problem, for example under Title, allow a button to
+  indicate whether the issue actually applies for the brand. For instance, I'm looking at Reiss,
+  brand not in title mistake where the title is not applicable, so it should be possible to remove
+  the issue and have the overall score reanalyzed"*). An attribute waiver drops a whole attribute;
+  this drops ONE of its rules for ONE brand, and keeps the decision visible. **Store**: the brand's
+  scoring profile — the same `goldenprofiles` KV record the ⚙ editor keeps — gains `qwaived`, a
+  list of `<attr>:<ruleId>` tokens (`title:no-brand`). `profileFor` unions the industry-level and
+  brand-level lists (a brand can add to what its industry set aside, never un-set it) and validates
+  every token with `qruleKnown` against `QSPEC`, so a token naming no rule never reaches a score;
+  `qwaivedFor(profile, key)` hands an attribute its own rule ids. **Engine**: `attrQuality(key, a,
+  qwaived)` costs a set-aside rule nothing and drops it from `broken`, `fails` and `warns`, but
+  reports it APART under `waived` with the share it would have cost — the issue does not silently
+  disappear from a score a client is shown. `qualityScore(snap, profile)` threads the profile's
+  tokens through and carries `setAside` (how many rules were set aside across the feed). **Route**:
+  `PUT /api/golden/profile {scope:'client', name, qrule:'title:no-brand', waive:true|false}` toggles
+  one token; the ⚙ editor's whole-record save and its ↺ reset both PRESERVE `qwaived`, since the
+  editor never sees it (a decision made row by row cannot be wiped by a control that never showed
+  it). **The stored headline follows**: on every profile PUT the worker re-scores each stored
+  `goldenqual:<c>:<m>` reading of the affected brand(s) — the whole industry for an industry-scope
+  save — against the new profile and rewrites `goldenidx` `q`/`qFails`, returning the moved figures
+  as `requal`, which the page mirrors onto the estate in place; and the `/api/golden/quality` PUT
+  now scores with `profileFor` too (before this the index carried the unprofiled score while the
+  page showed the profiled one — the dossier and the one-pager read the index). **Page**: every
+  rule row in an expanded attribute carries `✕ Doesn't apply to <Brand>` (`qualityWaive`); the
+  set-aside rules sit under the findings in a dashed block "Set aside for <Brand> as not applicable
+  — N rules the team judged not to apply, not counted in the score", struck through, each with
+  `↩ Applies to <Brand> again`; the row's summary gains an "N set aside" chip; the attribute pop-up
+  reads "set aside for <Brand> · x% not counted" on that rule instead of pretending it passes, and
+  the headline pop-up says how many rules were set aside (or that none were). The button is an AM
+  action — hidden in demo, hidden in the PDF and removed from the ⬇ HTML — while the set-aside block
+  itself stays in the client copy, because the score it explains is the one the client reads. The
+  Ask-client email and the → Brief read `broken`, so neither raises a rule the brand set aside.
+  Harness: `tools/test_labelguard.mjs` — the engine (cost comes back at 0.4 × share for a best
+  practice, reported apart, counts exclude it, a waived rule the feed does not break is nothing, no
+  third argument = old behaviour, the profile reaches the attribute, the headline re-analyses,
+  nothing else moves, a waived attribute still wins, the client email never names it; `profileFor`
+  unions/dedupes/validates; `qruleKnown` + `qwaivedFor`) and the page/worker wiring.
+
 ## 9.5 PDP recovery scan — "missing data can be sourced from the PDP" (Ray, 14 Sep 2026)
 
 **Why.** The Golden Record gaps are rarely gaps on the client's site: a 14 Sep 2026 probe of the
