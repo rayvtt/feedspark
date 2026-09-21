@@ -551,12 +551,12 @@ ok(/class="st on" data-st=/.test(src) && /class="st '\+\(done\?'done':'todo'\)\+
   'the stage rail is a stepper: the current stage is the only word, the others are dots');
 ok(/\.st\.done,\.st\.todo\{width:12px;height:12px;padding:0;border-radius:50%/.test(src), '…12px dots');
 ok(/aria-label="Mark '\+esc\(s\)\+'"/.test(src) && /aria-label="Mark Declined"/.test(src), '…every dot names its stage for a screen reader');
-ok(/Stage — click a dot to move it/.test(src), '…and the header says so');
+ok(/Stage · click a dot<\/th>/.test(src), '…and the header says so');
 ok(/function icoBtn\(cls,attrs,title,glyph\)/.test(src) && /function icoSpan\(cls,title,glyph\)/.test(src), 'the actions are icons');
-ok(/\.tk \.t-act\{[^}]*width:26px;height:26px;padding:0/.test(src), '…26px each');
+ok(/\.tk \.t-act\{[^}]*width:24px;height:24px;padding:0/.test(src), '…24px each');
 ok(/<span class="t-grp">'\+g\+'<\/span>/.test(src), '…the three proposal actions grouped');
 ok(/icoBtn\('done','data-draft=/.test(src) && /icoSpan\('done','Filed into the '/.test(src), '…a done state is the icon in green with the who/when in its tooltip');
-ok(/\.tk \.t-acts\{display:flex;flex-direction:row;flex-wrap:wrap/.test(src) && /\.tk \.t-ico\{display:inline-flex;gap:5px;align-items:center;flex:none;white-space:nowrap\}/.test(src),
+ok(/\.tk \.t-acts\{display:flex;flex-direction:row;flex-wrap:wrap/.test(src) && /\.tk \.t-ico\{display:inline-flex;gap:4px;align-items:center;flex:none;white-space:nowrap\}/.test(src),
   '…the six icons never wrap; only the live ticket chip may drop a line');
 ok(/<div class="tk-legend">/.test(src) && /Compare options<\/span>/.test(src), 'a legend under the table names every icon once');
 ok(/<th style="text-align:right" class="tk-money">Total · ex VAT<\/th>/.test(src) && !/font-size:10px">ex VAT<\/span>'\)\+'<\/span>'\)/.test(src),
@@ -600,6 +600,38 @@ ok(/function fOn\(id\)\{ var f=rec\(\)\.fields\[id\]; return !!\(f&&f\.on\)&&typ
 ok(/id="fresh"/.test(src) && /STORE\[CLIENT\]=\{mkt:MKT,scope:\{mode:'all'\},pts:\{\},fields:\{\}\}; EDITING=null; PENDING_OPT=null;/.test(src),
   '↺ Start fresh puts the client record back to blank — saved quotes and the rate card untouched');
 ok(/if\(!confirm\('Start a fresh '\+CLIENT\+' quote\?/.test(src), '…behind a confirm');
+
+/* ---------- THE SCOPE COLUMN SAYS WHAT WAS QUOTED (Ray, 21 Sep 2026: "can scope be more details
+   (should be market + quote type "Spark AI + New dashboard + new feed.. etc from selection)") ---------- */
+console.log('\nthe tracker scope column: what was quoted, then market · product scope');
+ok(/function qTypesWord\(q\)/.test(src) && /p\.push\('Spark AI \\u00d7'\+n\)/.test(src) && /p\.push\('New dashboard'\+\(c\.sys>1\?' \\u00d7'\+c\.sys:''\)\)/.test(src)
+  && /p\.push\('New feed'\+\(c\.feed>1\?' \\u00d7'\+c\.feed:''\)\)/.test(src) && /p\.push\('Retainer '\+ret\.join\(' \+ '\)\)/.test(src) && /p\.push\('New products bundle'\)/.test(src),
+  'line one names the quote types off the frozen lines, in Ray\'s words');
+ok(/<td class="t-when t-scope" title="'\+esc\(qt\+' \\u2014 '\+optWhat\(q\)\)\+'"><span class="t-qt">'\+esc\(show\)\+'<\/span><br>/.test(src) && /show=qp\.length>3\?\(qp\.slice\(0,3\)\.join\(' \\u00b7 '\)\+' \+'\+\(qp\.length-3\)\+' more'\):qt/.test(src),
+  '…three types on the row, the rest behind "+N more", the full list + includes line in the tooltip');
+ok(/\(qOnProducts\(q\)\?\(' · '\+scopeTxt\+' · '\+fmt\(scope\.vol\|\|q\.prods\|\|0\)/.test(src), 'line two = market · product scope, only when a line is priced on products');
+ok(/<th>Quoted · scope<\/th>/.test(src), 'the header says so');
+ok(!/ks\.push\('AI'\)/.test(src), 'the duplicate type chips under the client name are gone');
+
+/* ---------- ONE TAB PER OPTION IN THE EXPORT (Ray, 21 Sep 2026: "when export quote - export Option
+   on seperate tab in the same excel") ---------- */
+console.log('\nthe Excel export: one tab per option');
+ok(/function applySnap\(q,r\)\{ r\.mkt=q\.mkt\|\|'gb';/.test(src) && /var r=rec\(\); applySnap\(q,r\); MKT=r\.mkt;/.test(src),
+  'the snapshot → record mapping is its own function, and ✎ Edit uses it');
+ok(/function withSnap\(q,fn\)/.test(src) && /finally\{ CLIENT=c0; MKT=m0; if\(had\)STORE\[q\.client\]=r0; else delete STORE\[q\.client\]; EDITING=e0; PENDING_OPT=p0; \}/.test(src),
+  'withSnap swaps a snapshot into the builder for the call and restores everything after — no render, no save');
+ok(/function quoteSheet\(opts\)\{ opts=opts\|\|\{\};/.test(src) && /\['Agency','-','Reference',opts\.ref\|\|quoteRef\(now\),'t'\]/.test(src) && /now=opts\.at\?new Date\(\+opts\.at\):new Date\(\)/.test(src),
+  'the sheet builder takes the option\'s own reference and save date');
+ok(/function xlsxBytes\(tabs\)\{/.test(src) && /var sxs=tabs\.map\(function\(t\)\{ return sheetXml\(t\.sh,st\); \}\);/.test(src),
+  'the workbook takes N tabs and renders every sheet against ONE style table before styles.xml is written');
+ok(/'<definedName name="Dayrate" localSheetId="'\+i\+'">'\+n2\(t\.day\)\+'<\/definedName>'/.test(src), 'Dayrate is defined per sheet');
+ok(/files\.push\(\{n:'xl\/drawings\/drawing'\+k\+'\.xml',s:drawingXml\(\)\}\);/.test(src), 'each sheet carries its own wordmark drawing');
+ok(/function exportTabs\(\)\{ var pid=propInPlay\(\), tabs=\[\];/.test(src) && /tabs\.push\(withSnap\(q,function\(\)\{ return \{name:nm,sh:quoteSheet\(\{ref:q\.ref,at:q\.t\}\),day:blockGBP\(\)\}; \}\)\)/.test(src),
+  'every option of the proposal in play gets a tab built off its own snapshot');
+ok(/if\(EDITING&&EDITING\.id===k\)tabs\.push\(\{name:nm,sh:quoteSheet\(\{ref:q\.ref\}\),day:blockGBP\(\)\}\);/.test(src), '…the option under ✎ Edit off the live builder, with its saved ref');
+ok(/if\(PENDING_OPT\)tabs\.push\(\{name:'Option '\+PENDING_OPT\.n\+' \\u00b7 this build'/.test(src), '…and the unsaved build being added gets its own tab');
+ok(/if\(!tabs\.length\)tabs\.push\(\{name:xTabName\(\),sh:quoteSheet\(\),day:blockGBP\(\)\}\);/.test(src), 'a quote outside a proposal exports as it always did');
+ok(/function xTab\(n\)\{ return String\(n\)\.replace\(\/\[\\\[\\\]:\*\?\\\/\\\\\]\/g,' '\)\.slice\(0,31\); \}/.test(src), 'tab names are Excel-safe (31 chars, no []:*?/\\)');
 
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);

@@ -5263,9 +5263,9 @@
       "pr": 380
     },
     {
-      "name": "AI Quote xlsx: `Dayrate` is a defined name holding the block rate, so Finance's =Dayrate cells resolve",
+      "name": "AI Quote xlsx: `Dayrate` is a defined name holding the block rate, so Finance's =Dayrate cells resolve — per sheet since the one-tab-per-option export",
       "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "<definedName name=\"Dayrate\">",
+      "pattern": "<definedName name=\"Dayrate\" localSheetId=\"",
       "min": 1,
       "pr": 380
     },
@@ -8624,6 +8624,24 @@
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "$('#fresh').addEventListener('click'",
       "pr": 468
+    },
+    {
+      "name": "AI Quote tracker: the scope column names the quote types (qTypesWord) then market · product scope",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function qTypesWord(q){",
+      "pr": 470
+    },
+    {
+      "name": "AI Quote export: one tab per option (exportTabs → xlsxBytes(tabs), Dayrate per sheet)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function exportTabs(){ var pid=propInPlay(), tabs=[];",
+      "pr": 470
+    },
+    {
+      "name": "AI Quote: withSnap runs a builder read against a saved snapshot and restores the live state",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function withSnap(q,fn){",
+      "pr": 470
     },
     {
       "name": "Task Manager: a totals footer resolves its column BY KEY, never a hard-coded index (Ray, 21 Sep 2026: 'total row is not in line with rest')",

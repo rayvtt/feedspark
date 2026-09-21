@@ -659,7 +659,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   .tk-scroll{overflow-x:auto}
   .tk{width:100%;border-collapse:collapse;font-size:12.5px;min-width:1000px}
   .tk th{text-align:left;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:0 8px 7px;white-space:nowrap}
-  .tk td{padding:7px 8px;border-top:1px solid var(--wash);vertical-align:middle}
+  .tk td{padding:7px 7px;border-top:1px solid var(--wash);vertical-align:middle}
   /* "expand horizontally if needed": on a wide screen the tracker card steps out of the 1280px
      column to the viewport, leaving the page gutter; every other card keeps the column */
   @media (min-width:1400px){ #tracker-card{margin-left:calc(50% - 50vw + 30px);margin-right:calc(50% - 50vw + 30px)} }
@@ -669,27 +669,30 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   .tk .t-cl{font-weight:800}
   .tk .t-mk{font-size:10px;font-weight:900;color:var(--orange-ink);letter-spacing:.04em}
   .tk .t-when{color:var(--muted);font-weight:700;white-space:nowrap;font-size:11.5px}
+  /* the one wrappable column — without a floor the auto layout hands it whatever is left and the
+     types line wraps four deep; 200px is two lines for four types at this size */
+  .tk .t-scope{white-space:normal;min-width:216px;max-width:280px;line-height:1.35} .tk .t-scope .t-qt{color:var(--ink-2);font-weight:800}
   .tk .t-tot{font-weight:900;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
   .tk .t-tot.unset{color:var(--muted);font-weight:700;font-size:11px}
   /* stage rail: every stage visible so the whole lifecycle reads at a glance, current one lit */
-  .st-rail{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;white-space:nowrap}
+  .st-rail{display:inline-flex;align-items:center;gap:3px;flex-wrap:nowrap;white-space:nowrap}
   .st{font:inherit;font-size:10.5px;font-weight:900;padding:3px 9px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer;white-space:nowrap}
   .st:hover{border-color:var(--orange);color:var(--orange-deep)}
   /* the stepper: dots for every stage that is not the current one */
   .st.done,.st.todo{width:12px;height:12px;padding:0;border-radius:50%;border:2px solid var(--line);background:var(--paper);flex:none;transition:transform .12s}
   .st.done{background:var(--good);border-color:var(--good)}
   .st.done:hover,.st.todo:hover{border-color:var(--orange);transform:scale(1.3)}
-  .st.on{background:linear-gradient(135deg,var(--orange),var(--orange-deep));border-color:transparent;color:#fff}
-  .st.dec{color:var(--muted);border-color:transparent;padding:2px 6px;margin-left:2px;font-size:11px}
+  .st.on{background:linear-gradient(135deg,var(--orange),var(--orange-deep));border-color:transparent;color:#fff;padding:2px 8px}
+  .st.dec{color:var(--muted);border-color:transparent;padding:2px 5px;margin-left:0;font-size:11px}
   .st.dec:hover{color:var(--risk);border-color:var(--risk)}
   .st.dec.on{background:var(--risk);border-color:transparent;color:#fff;padding:3px 9px;font-size:10.5px}
   [data-theme=dark] .st{background:#20242E} [data-theme=dark] .st.done{background:var(--good)}
-  .tk select.t-own{font:inherit;font-size:11.5px;font-weight:800;padding:4px 5px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);width:104px}
+  .tk select.t-own{font:inherit;font-size:11.5px;font-weight:800;padding:4px 5px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);width:82px}
   [data-theme=dark] .tk select.t-own{background:#161922;color:var(--ink)}
-  .tk .t-x{font:inherit;font-size:11px;font-weight:900;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--muted);cursor:pointer;padding:2px 8px;opacity:0;transition:opacity .12s}
+  .tk .t-x{font:inherit;font-size:11px;font-weight:900;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--muted);cursor:pointer;padding:2px 6px;opacity:0;transition:opacity .12s}
   .tk tbody tr:hover .t-x,.tk .t-x:focus-visible{opacity:1}
   .tk .t-x:hover{border-color:var(--risk);color:var(--risk)}
-  .tk .t-exp{font:inherit;font-size:11px;font-weight:900;border:0;background:none;color:var(--muted);cursor:pointer;padding:2px 4px}
+  .tk .t-exp{font:inherit;font-size:11px;font-weight:900;border:0;background:none;color:var(--muted);cursor:pointer;padding:2px 2px}
   .tk .t-exp:hover{color:var(--orange-deep)}
   .tk tr.t-det td{background:var(--wash);font-size:11.5px;color:var(--ink-2)}
   [data-theme=dark] .tk tr.t-det td{background:#181B22}
@@ -702,8 +705,8 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   /* per-row actions — ✉ Draft email + → Intake — each a button UNTIL used, then a state chip
      (stamped who/when) so neither can be fired twice by accident */
   .tk .t-acts{display:flex;flex-direction:row;flex-wrap:wrap;gap:4px 6px;align-items:center;min-width:0}
-  .tk .t-ico{display:inline-flex;gap:5px;align-items:center;flex:none;white-space:nowrap}
-  .tk .t-act{font:inherit;font-size:13px;font-weight:900;line-height:1;width:26px;height:26px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap;flex:none}
+  .tk .t-ico{display:inline-flex;gap:4px;align-items:center;flex:none;white-space:nowrap}
+  .tk .t-act{font:inherit;font-size:12.5px;font-weight:900;line-height:1;width:24px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap;flex:none}
   .tk .t-act:hover{border-color:var(--orange);color:var(--orange-deep)}
   .tk .t-act.warn{border-color:rgba(237,111,11,.5);color:var(--orange-ink)}
   .tk .t-act.done{border-color:#BFE3C8;background:#EAF7EF;color:var(--good);cursor:default}
@@ -910,9 +913,9 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     <div class="opt-f" id="tk-opt" style="border:0;padding:0 0 4px"></div>
     <div class="tk-scroll"><table class="tk" id="tk">
       <thead><tr>
-        <th>Ref</th><th>Client</th><th>Saved</th><th>Scope</th>
+        <th>Ref</th><th>Client</th><th>Saved</th><th>Quoted · scope</th>
         <th style="text-align:right" class="tk-money">Total · ex VAT</th>
-        <th>Stage — click a dot to move it</th><th>Finance owner</th><th>Last update</th><th>Actions</th><th></th>
+        <th title="Every stage is one click — the current one is the word, the dots are the others">Stage · click a dot</th><th>Finance owner</th><th>Updated</th><th>Actions</th><th></th>
       </tr></thead>
       <tbody id="tk-body"></tbody>
     </table></div>
@@ -2195,6 +2198,30 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     if(!p.length)return 'no lines';
     p.push(optScopeWord(q));
     return p.join(' \u00b7 '); }
+  /* WHAT WAS QUOTED, IN THE TRACKER'S SCOPE COLUMN (Ray, 21 Sep 2026, liking the new tracker: "can
+     scope be more details (should be market + quote type "Spark AI + New dashboard + new feed.. etc
+     from selection)"): the column read "whole catalogue · 20,128 SKUs" for every quote, which is the
+     product scope and nothing about the service. Line one now names the quote types on the snapshot
+     — Spark AI ×6 · New dashboard ×2 · New feed · LIA feed · Retainer 10h/mo · New products bundle ·
+     Setup fee — read off the frozen lines, so a quote saved with three types always says three; line
+     two is the market and the product scope, and only when a line is priced on products (a retainer
+     alone has no catalogue to name). The orange type chips that sat under the client name said the
+     same thing in fewer words and are gone. */
+  function qTypesWord(q){ var p=[], n=Object.keys(optAimMap(q)).length;
+    if(n)p.push('Spark AI \u00d7'+n);
+    if(+q.fields>0)p.push(q.fields+' AI field'+(q.fields===1?'':'s'));
+    var c={sys:0,feed:0,lia:0}, ret=[];
+    (q.xlines||[]).forEach(function(l){ if(l.kind==='pre')return;
+      if(l.kind==='sys')c.sys++; else if(l.kind==='feed')c.feed+=Math.max(1,+l.qty||1); else if(l.kind==='lia')c.lia+=Math.max(1,+l.qty||1);
+      else if(l.kind==='ret')ret.push((+l.hours||0)+'h'+(l.side==='monthly'?'/mo':' one-off')); });
+    if(c.sys)p.push('New dashboard'+(c.sys>1?' \u00d7'+c.sys:''));
+    if(c.feed)p.push('New feed'+(c.feed>1?' \u00d7'+c.feed:''));
+    if(c.lia)p.push('LIA feed'+(c.lia>1?' \u00d7'+c.lia:''));
+    if(ret.length)p.push('Retainer '+ret.join(' + '));
+    if(qUpd(q))p.push('New products bundle');
+    if(+q.setup>0)p.push('Setup fee');
+    return p.join(' \u00b7 ')||'no lines'; }
+  function qOnProducts(q){ return !!(Object.keys(optAimMap(q)).length||+q.fields>0||qUpd(q)); }
   function optDelta(q,b){ if(!q||!b)return null; var it=[], A=optAimMap(b), B=optAimMap(q), rw=function(r){ return AIM_ROUTE_SHORT[r]||r; };
     Object.keys(B).forEach(function(id){ if(!A[id])it.push({s:'+',t:B[id].label}); else if(A[id].route!==B[id].route)it.push({s:'~',t:B[id].label+': '+rw(A[id].route)+' \u2192 '+rw(B[id].route)}); });
     Object.keys(A).forEach(function(id){ if(!B[id])it.push({s:'\u2212',t:A[id].label}); });
@@ -2713,8 +2740,8 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
      TWO deliberate departures, both for accuracy: money shows pence ("£"#,##0.00 — their "£"#,##0
      prints £446.25 as "£446", so a block total would look like it did not add up) and the date
      reads dd/mm/yyyy, not their mm-dd-yy. */
-  function quoteSheet(){
-    var L=lines(), t=totals(), r=rec(), ix=idx(), now=new Date(), X=t.x||[];
+  function quoteSheet(opts){ opts=opts||{};
+    var L=lines(), t=totals(), r=rec(), ix=idx(), now=opts.at?new Date(+opts.at):new Date(), X=t.x||[];
     var sh={rows:[],merges:[],h:{}};
     function row(cells,ht){ sh.rows.push(cells||{}); if(ht)sh.h[sh.rows.length]=ht; return sh.rows.length; }
     function mg(a){ sh.merges.push(a); }
@@ -2731,7 +2758,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     var HDR=[['Client',(CLIENT||'-'),'Created By',xInit(ME),'t'],
              ['URL','-','Date Created',null,'d'],
              ['Client Contact','-','Quote Valid',null,'v'],
-             ['Agency','-','Reference',quoteRef(now),'t'],
+             ['Agency','-','Reference',opts.ref||quoteRef(now),'t'],
              ['Contact','-','Reviewed','-','t']];
     var hA=0,hB=0,dRow=0;
     HDR.forEach(function(h,rr){
@@ -3099,45 +3126,56 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       +'<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic>'
       +'<xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>';
   }
-  function xlsxBytes(sh){
-    var st=xStyler(), sx=sheetXml(sh,st), REL='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  function xTab(n){ return String(n).replace(/[\[\]:*?\/\\]/g,' ').slice(0,31); }
+  /* ONE WORKBOOK, ONE TAB PER OPTION (Ray, 21 Sep 2026: "when export quote - export Option on
+     seperate tab in the same excel"): tabs = [{name, sh, day}]. Every sheet is rendered against ONE
+     style table before styles.xml is written (a style registered by sheet 3 must exist when sheet 1
+     is read), each sheet carries its own drawing part for the wordmark, and `Dayrate` is defined
+     PER SHEET (localSheetId) since two options can be priced at two block rates. A bare sheet model
+     still works — one tab, the old name. */
+  function xlsxBytes(tabs){
+    if(!Array.isArray(tabs))tabs=[{name:xTabName(),sh:tabs,day:blockGBP()}];
+    var st=xStyler(), REL='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    var sxs=tabs.map(function(t){ return sheetXml(t.sh,st); });
+    var XH='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
     var files=[
-      {n:'[Content_Types].xml',s:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      {n:'[Content_Types].xml',s:XH
         +'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
         +'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
         +'<Default Extension="xml" ContentType="application/xml"/>'
         +'<Default Extension="png" ContentType="image/png"/>'
         +'<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
-        +'<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+        +tabs.map(function(t,i){ return '<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+          +'<Override PartName="/xl/drawings/drawing'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>'; }).join('')
         +'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
-        +'<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>'
         +'</Types>'},
-      {n:'_rels/.rels',s:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      {n:'_rels/.rels',s:XH
         +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
         +'<Relationship Id="rId1" Type="'+REL+'/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
-      {n:'xl/workbook.xml',s:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      {n:'xl/workbook.xml',s:XH
         +'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="'+REL+'">'
-        +'<workbookPr/><sheets><sheet name="'+xesc(xTabName())+'" sheetId="1" r:id="rId1"/></sheets>'
+        +'<workbookPr/><sheets>'+tabs.map(function(t,i){ return '<sheet name="'+xesc(xTab(t.name))+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>'; }).join('')+'</sheets>'
         /* `Dayrate` is a DEFINED NAME in Finance's book (their E cells read =Dayrate) — carried here
-           as a constant name holding this quote's block rate, so one edit moves every hours line */
-        +'<definedNames><definedName name="Dayrate">'+n2(blockGBP())+'</definedName></definedNames>'
+           per sheet as a constant holding that tab's block rate, so one edit moves every hours line */
+        +'<definedNames>'+tabs.map(function(t,i){ return '<definedName name="Dayrate" localSheetId="'+i+'">'+n2(t.day)+'</definedName>'; }).join('')+'</definedNames>'
         /* fullCalcOnLoad: Excel recalculates the whole chain the moment the file opens */
         +'<calcPr calcId="171027" fullCalcOnLoad="1"/></workbook>'},
-      {n:'xl/_rels/workbook.xml.rels',s:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      {n:'xl/_rels/workbook.xml.rels',s:XH
         +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-        +'<Relationship Id="rId1" Type="'+REL+'/worksheet" Target="worksheets/sheet1.xml"/>'
-        +'<Relationship Id="rId2" Type="'+REL+'/styles" Target="styles.xml"/></Relationships>'},
+        +tabs.map(function(t,i){ return '<Relationship Id="rId'+(i+1)+'" Type="'+REL+'/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>'; }).join('')
+        +'<Relationship Id="rId'+(tabs.length+1)+'" Type="'+REL+'/styles" Target="styles.xml"/></Relationships>'},
       {n:'xl/styles.xml',s:st.xml()},
-      {n:'xl/worksheets/sheet1.xml',s:sx},
-      {n:'xl/worksheets/_rels/sheet1.xml.rels',s:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-        +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-        +'<Relationship Id="rId1" Type="'+REL+'/drawing" Target="../drawings/drawing1.xml"/></Relationships>'},
-      {n:'xl/drawings/drawing1.xml',s:drawingXml()},
-      {n:'xl/drawings/_rels/drawing1.xml.rels',s:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-        +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-        +'<Relationship Id="rId1" Type="'+REL+'/image" Target="../media/feedspark.png"/></Relationships>'},
       {n:'xl/media/feedspark.png',b:FSMARK}
     ];
+    tabs.forEach(function(t,i){ var k=i+1;
+      files.push({n:'xl/worksheets/sheet'+k+'.xml',s:sxs[i]});
+      files.push({n:'xl/worksheets/_rels/sheet'+k+'.xml.rels',s:XH
+        +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        +'<Relationship Id="rId1" Type="'+REL+'/drawing" Target="../drawings/drawing'+k+'.xml"/></Relationships>'});
+      files.push({n:'xl/drawings/drawing'+k+'.xml',s:drawingXml()});
+      files.push({n:'xl/drawings/_rels/drawing'+k+'.xml.rels',s:XH
+        +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        +'<Relationship Id="rId1" Type="'+REL+'/image" Target="../media/feedspark.png"/></Relationships>'}); });
     return zipStore(files.map(function(f){ return {name:f.n,data:f.b?b64bytes(f.b):utf8Bytes(f.s)}; }));
   }
   function utf8Bytes(s){ if(window.TextEncoder)return new TextEncoder().encode(s);
@@ -3177,12 +3215,22 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   function download(blob,name){ var url=URL.createObjectURL(blob), a=document.createElement('a');
     a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function(){ try{URL.revokeObjectURL(url)}catch(e){} },4000); }
+  /* the tabs: every option of the proposal in play, each built off its own frozen snapshot (the
+     option under ✎ Edit off the live builder, with its saved ref), plus the unsaved build if one is
+     being added; a quote outside a proposal exports as it always did — one tab */
+  function exportTabs(){ var pid=propInPlay(), tabs=[];
+    if(pid){ optsFor(pid).forEach(function(k){ var q=SAVED[k], nm='Option '+q.prop.n+' \u00b7 '+q.ref;
+        if(EDITING&&EDITING.id===k)tabs.push({name:nm,sh:quoteSheet({ref:q.ref}),day:blockGBP()});
+        else tabs.push(withSnap(q,function(){ return {name:nm,sh:quoteSheet({ref:q.ref,at:q.t}),day:blockGBP()}; })); });
+      if(PENDING_OPT)tabs.push({name:'Option '+PENDING_OPT.n+' \u00b7 this build',sh:quoteSheet(),day:blockGBP()}); }
+    if(!tabs.length)tabs.push({name:xTabName(),sh:quoteSheet(),day:blockGBP()});
+    return tabs; }
   $('#xlsx').addEventListener('click',function(){
     try{
-      var bytes=xlsxBytes(quoteSheet());
+      var tabs=exportTabs(), bytes=xlsxBytes(tabs);
       download(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),
         fileStem()+'.xlsx');
-      toast('Excel quote downloaded');
+      toast(tabs.length>1?('Excel quote downloaded \u2014 '+tabs.length+' options, one tab each'):'Excel quote downloaded');
     }catch(e){ err('Could not build the Excel file: '+((e&&e.message)||e)); }
   });
   $('#csv').addEventListener('click',function(){
@@ -3287,12 +3335,11 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     render();
     toast('Building option '+n+' — Save stores it alongside the others'); }
   function stopOption(){ PENDING_OPT=null; render(); }
-  function loadSaved(k){ var q=SAVED[k]; if(!q)return;
-    var sel=$('#brand'); if(!Array.prototype.some.call(sel.options,function(o){return o.value===q.client})){ var o=document.createElement('option'); o.value=q.client; o.textContent=q.client; sel.appendChild(o); }
-    sel.value=q.client; CLIENT=q.client; IDX={};
-    var r=rec(); r.mkt=q.mkt||'gb'; MKT=r.mkt;
+  /* the snapshot → builder-record mapping, on its own so a snapshot can be read into a TEMPORARY
+     record (withSnap, below) as well as into the live one (✎ Edit) */
+  function applySnap(q,r){ r.mkt=q.mkt||'gb';
     var sc=q.scope||{}; r.scope={mode:sc.mode||'all'}; if(sc.mode==='manual')r.scope.manual=+(sc.manual!=null?sc.manual:sc.vol)||0;
-    if(sc.mode==='pts'){ r.pts=r.pts||{}; r.pts[MKT]=(sc.pts||[]).slice(); }
+    if(sc.mode==='pts'){ r.pts=r.pts||{}; r.pts[r.mkt]=(sc.pts||[]).slice(); }
     CAT.forEach(function(f){ r.fields[f.id]={on:false,count:null,rate:null}; });
     (q.lines||[]).forEach(function(l){ if(!CMAP[l.id])return; var ch=l.charge||'unit', hb=(ch==='flat'||ch==='monthly');
       r.fields[l.id]={on:true,count:l.c,rate:(hb?null:l.rt),charge:ch,mode:(MODE_WORD[l.mode]?l.mode:'ai'),hours:(hb?l.hours:null),mon:(ch!=='monthly'&&l.mon>0?l.mon:null),note:l.note||'',disc:!!l.disc}; });
@@ -3317,6 +3364,18 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     if(q.aim){ r.aim.unit=(q.aim.unit==='product')?'product':'group';
       r.aim.since=(typeof q.aim.since==='string')?q.aim.since:null;
       (q.aim.lines||[]).forEach(function(l){ if(!l.shared&&l.id)r.aim.src[l.id]=l.route; }); }
+  }
+  /* run fn() with the builder momentarily holding a saved snapshot — every helper the sheet
+     builder reads (rec, lines, totals, blockGBP, discOn …) sees that option, then the live record,
+     client, market and edit state come back exactly as they were. No render, no save, no toast. */
+  function withSnap(q,fn){ var c0=CLIENT,m0=MKT,had=Object.prototype.hasOwnProperty.call(STORE,q.client),r0=STORE[q.client],e0=EDITING,p0=PENDING_OPT,out;
+    try{ CLIENT=q.client; STORE[CLIENT]={mkt:q.mkt||'gb',scope:{mode:'all'},pts:{},fields:{}}; applySnap(q,STORE[CLIENT]); MKT=STORE[CLIENT].mkt; EDITING=null; PENDING_OPT=null; out=fn(); }
+    finally{ CLIENT=c0; MKT=m0; if(had)STORE[q.client]=r0; else delete STORE[q.client]; EDITING=e0; PENDING_OPT=p0; }
+    return out; }
+  function loadSaved(k){ var q=SAVED[k]; if(!q)return;
+    var sel=$('#brand'); if(!Array.prototype.some.call(sel.options,function(o){return o.value===q.client})){ var o=document.createElement('option'); o.value=q.client; o.textContent=q.client; sel.appendChild(o); }
+    sel.value=q.client; CLIENT=q.client; IDX={};
+    var r=rec(); applySnap(q,r); MKT=r.mkt;
     EDITING={id:k,ref:q.ref};
     loadMkts(); render(); saveSoon();
     toast('Editing '+q.ref+' — Save stores a new version');
@@ -3799,10 +3858,13 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
               :(ost==='chosen'?'The client chose this option':(ost==='nottaken'?'The client chose another option — kept as the record of what was offered':'Offered as one of several options; no choice recorded yet')))
             +'">'+esc(optGlyph(op.n))+' '+esc(op.label||('Option '+op.n))
             +(q.superseded?' · earlier version':(ost==='chosen'?' ✓':(ost==='nottaken'?' · not taken':'')))+'</span>'):'')+'</td>'
-        +'<td><span class="t-cl">'+esc(q.client||'—')+'</span> <span class="t-mk">'+esc(String(q.mkt||'').toUpperCase())+'</span>'
-          +(function(){ var ks=[]; if((q.lines||[]).length||qUpd(q))ks.push('AI'); (q.xlines||[]).forEach(function(l){ if(l.kind==='pre')return; var w=l.kind==='sys'?'System':l.kind==='feed'?'Feed':l.kind==='lia'?'LIA':'Retainer'; if(ks.indexOf(w)<0)ks.push(w); }); return ks.length>1||(ks.length===1&&ks[0]!=='AI')?'<br>'+ks.map(function(k){return '<span class="t-mk">'+esc(k)+'</span>'}).join(' '):''; })()+'</td>'
+        +'<td><span class="t-cl">'+esc(q.client||'—')+'</span> <span class="t-mk">'+esc(String(q.mkt||'').toUpperCase())+'</span></td>'
         +'<td class="t-when">'+tkWhenC(q.t,tkWho(q.by))+'</td>'
-        +'<td class="t-when">'+esc(scopeTxt)+'<br><span style="font-size:10px">'+fmt(scope.vol||q.prods||0)+((+scope.skus>+scope.vol)?' products':' SKUs')+((+q.fields>0)?' · '+q.fields+' field'+(q.fields===1?'':'s'):'')+'</span></td>'
+        /* four types on the row, the rest behind "+N more" — a seven-type quote is rare and the full
+           list is one hover away; the row stays a row */
+        +(function(){ var qt=qTypesWord(q), qp=qt.split(' \u00b7 '), show=qp.length>3?(qp.slice(0,3).join(' \u00b7 ')+' +'+(qp.length-3)+' more'):qt;
+          return '<td class="t-when t-scope" title="'+esc(qt+' \u2014 '+optWhat(q))+'"><span class="t-qt">'+esc(show)+'</span><br><span style="font-size:10px">'+esc(String(q.mkt||'').toUpperCase()); })()
+          +(qOnProducts(q)?(' · '+scopeTxt+' · '+fmt(scope.vol||q.prods||0)+((+scope.skus>+scope.vol)?' products':' SKUs')):'')+'</span></td>'
         +'<td style="text-align:right" class="tk-money'+(SHOWP?'':' hid')+'">'+tot+'</td>'
         +'<td><span class="st-rail">'+rail+'</span></td>'
         +'<td><select class="t-own" data-own="'+esc(k)+'"><option value="">— unassigned</option>'

@@ -641,3 +641,33 @@ old snapshot brings the type and the card back together), the figure follows the
 bundle, discount, setup — behind a confirm; the market and the pulled feed index are kept, and the
 saved quotes on the tracker and the shared rate card are never touched.
 
+### The scope column says what was quoted
+
+Ray, 21 Sep 2026, liking the new tracker: *"can scope be more details (should be market + quote type
+'Spark AI + New dashboard + new feed.. etc from selection)"*. The column read "whole catalogue · 20,128
+SKUs" for every quote — the product scope and nothing about the service. Line one now names the quote
+types on the snapshot, read off the frozen lines (`qTypesWord`): `Spark AI ×6 · New dashboard ×2 · New
+feed · LIA feed · Retainer 10h/mo · New products bundle · Setup fee`; line two is the market and the
+product scope, printed only when a line is priced on products (a retainer alone has no catalogue to
+name). The full includes line (route mix, cohort, discount) is the cell's tooltip. The orange type chips
+under the client name said the same in fewer words and are gone; header reads *Quoted · scope*.
+
+## One tab per option in the Excel export
+
+Ray, 21 Sep 2026: *"when export quote - export Option on seperate tab in the same excel."*
+
+⇩ Export quote on a build that belongs to a proposal writes **one workbook with one tab per option** —
+`Option 1 · QT261571`, `Option 2 · QT261571-2`, … — each tab the full Finance-format cost detail for that
+option, plus `Option N · this build` when an option is being added and not yet saved. A quote outside a
+proposal exports as it always did (one tab, `<Client> - Cost Detail`).
+
+The sheet builder reads the live builder, so each option's tab is produced by `withSnap(q, fn)`: the
+option's snapshot is read into a temporary client record through the same `applySnap` mapping ✎ Edit
+uses, `quoteSheet({ref, at})` renders it with the option's own reference and save date, and the live
+record, client, market and edit state come back exactly as they were — no render, no save, no toast.
+The option under ✎ Edit is rendered off the live builder with its saved ref. As with ✎ Edit, routes,
+lines, the frozen bundle price and the block rate are the snapshot's; Spark AI rates are today's rate
+card. `xlsxBytes(tabs)` renders every sheet against one style table before `styles.xml` is written,
+gives each sheet its own wordmark drawing, and defines `Dayrate` per sheet (`localSheetId`) since two
+options can carry two block rates. Tab names are Excel-safe (31 chars, no `[]:*?/\`).
+
