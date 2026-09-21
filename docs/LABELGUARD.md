@@ -473,7 +473,16 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   Feed Chat/instruction chrome, no comments, and that the file never mentions Claude at all —
   while the print measurements stay on the bare page (the phone layer's ≤760px rules would
   fire on the 703px print viewport, a resize the real one-click PDF never makes).
-  `GRPDF_KEEP=/path.html` keeps the export for a visual pass. Harness: the one-click-download and CDN-fallback blocks in
+  `GRPDF_KEEP=/path.html` keeps the export for a visual pass. **The inlined method reads at the
+  pop-up's own size** (Ray, 21 Sep 2026, on the downloaded HTML: *"the text … is strangely bigger
+  than rest — can you mirror the same text size/font as rest of audit"*): the pop-up's type scale
+  lives on `.sc-box` (12.5px / 1.55, `ul`/`li` rules scoped to it), and the body element sets no
+  font-size — so the same prose inlined by `popDet` as a `<details>` body fell back to the
+  browser's 16px beside a 12px audit. `popDet` now stamps the body `xd-pop`, which carries the
+  pop-up's scale (`.xd-pop{font-size:12.5px;line-height:1.55}` + the shared `ul`/`li` rules) so
+  it reads identically wherever it is inlined — section headline, pillar tile, attribute row.
+  `tools/check_grpdf.js` RENDERS the exported file and asserts the computed size at all three
+  places is 12.5px and no larger than the audit row beside it. Harness: the one-click-download and CDN-fallback blocks in
   `tools/check_grpdf.js` (stubbed `html2canvas`/`jsPDF` pin the glue — button → libs → capture →
   package → save → restore — a fidelity check on the real libraries is the separate PDF-content
   QA pass, not a structural assertion). **⚡ Scan whole estate now scans content quality too**

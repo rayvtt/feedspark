@@ -327,8 +327,14 @@ window.addEventListener('load',restore);
   .sc-n{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}
   .sc-w{font-size:11px;font-weight:800;color:var(--muted)}
   .sc-k{font-size:10.5px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:13px 0 5px}
-  .sc-box ul{margin:0;padding-left:18px}
-  .sc-box li{margin-bottom:4px;font-weight:600}
+  /* .xd-pop = the SAME pop-up body inlined into the ⬇ HTML as a disclosure (popDet). It carries
+     the pop-up's own type scale with it, because the body element sets no font-size and the
+     inlined prose otherwise fell back to the browser's 16px against a 12px audit (Ray, 21 Sep
+     2026: "the text on the downloaded html … is strangely bigger than rest — can you mirror the
+     same text size/font as rest of audit"). */
+  .xd-pop{font-size:12.5px;line-height:1.55}
+  .sc-box ul,.xd-pop ul{margin:0;padding-left:18px}
+  .sc-box li,.xd-pop li{margin-bottom:4px;font-weight:600}
   .sc-reads li{font-variant-numeric:tabular-nums}
   .sc-src a{color:var(--navy);font-weight:700}
   .sc-house{background:var(--wash);border:1px dashed var(--line);border-radius:8px;padding:8px 10px;margin-top:12px;font-weight:700;color:var(--ink-2)}
@@ -2834,7 +2840,7 @@ window.addEventListener('load',restore);
     if (!cap) return '';
     return '<details class="xd' + (cls ? ' ' + cls : '') + '"' + (open ? ' open' : '') + '><summary>' + esc(label || cap.title) +
       (cap.num != null && cap.num !== '' ? '<span class="xd-n" style="color:' + cap.col(+cap.num) + '">' + cap.num + '</span>' : '') +
-      (cap.w ? '<span class="xd-w">' + esc(cap.w) + '</span>' : '') + '</summary><div class="xd-b">' + cap.body + '</div></details>';
+      (cap.w ? '<span class="xd-w">' + esc(cap.w) + '</span>' : '') + '</summary><div class="xd-b xd-pop">' + cap.body + '</div></details>';
   }
   /* turn the cloned document into something a client can actually read offline */
   function htmlifyExport(doc, pops) {

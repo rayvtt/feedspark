@@ -8457,6 +8457,21 @@
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function optionsText(k)",
       "pr": 0
+    },
+    {
+      "name": "Golden Record ⬇ HTML: the inlined pop-up prose carries the pop-up's own 12.5px type scale (Ray, 21 Sep 2026: 'the text on the downloaded html … is strangely bigger than rest')",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": ".xd-pop{font-size:12.5px;line-height:1.55}"
+    },
+    {
+      "name": "Golden Record ⬇ HTML: popDet stamps the inlined body with xd-pop so the disclosure reads at the pop-up's size",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "<div class=\"xd-b xd-pop\">"
+    },
+    {
+      "name": "Golden Record tripwire: the RENDERED export's inlined method reads at 12.5px, never the browser default",
+      "file": "tools/check_grpdf.js",
+      "pattern": "the inlined method reads at the pop-up"
     }
   ]
 }
