@@ -6702,49 +6702,49 @@
       "name": "Present: ONE RENDERER — the deck is built from opHtml, the sheet's and the PDF's own document",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "doc.innerHTML=opHtml(name,b,p,mkts,got)",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Present: the one-pager's data load is shared with the sheet, never a second set of endpoints",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function opLoad",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Present: opHtml RETURNS the document so two surfaces can render it",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function opHtml",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Present: THE ANIMATION MAY NOT COMPUTE — a counted number ends on the one-pager's own string",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function showNum",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Present: a long section pans rather than being clipped, and its dwell grows to cover the pan",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "return 3600+Math.min(9000",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Present: sections split on the one-pager's OWN sub-headings, never on a height guess",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "subs=sec.querySelectorAll('.op-h4')",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Present: pinned-header offsets are measured, not hard-coded",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function showStick",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Present: the pinned header's stacking context outranks the transformed body rows",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "#dz-show .op-tbl thead{position:relative;z-index:5}",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Cockpit: ONE client filter — the panel's brand picker writes itState.clients, the board's chips move the panel",
@@ -7578,31 +7578,31 @@
       "name": "abtests: WHO WON — an A/B title test names its winning group off the write-up, never 'lost' (Ray 17 Sep 2026)",
       "file": "cloudflare/feedspark-deck/src/abtests.js",
       "pattern": "export function abWinner",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "abtests: the other group's descriptor is inferred (with ↔ without) from the one the prose described",
       "file": "cloudflare/feedspark-deck/src/abtests.js",
       "pattern": "export function abGroups",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "abtests: a title test is recognised by type or batch name",
       "file": "cloudflare/feedspark-deck/src/abtests.js",
       "pattern": "export function isTitleTest",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "CmdCenter: one abResult for the dossier pill AND the one-pager column — control win is navy, test win green",
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "function abResult(t)",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Worker: the abtests cache is shape-versioned so a redeploy re-reads the archive",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "hit.v === AB_SHAPE",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Task Manager: 'Hide Not yet tagged' — one population feeds the chart, its legend, table, CSV and PNG (Ray, 17 Sep 2026: 'btw [Not yet tagged] can be excluded from showing when dissect by Tag')",
@@ -7728,7 +7728,7 @@
       "name": "AI Mode: no second arrivals renderer — the Monthly update card's own updBars draws the chart",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function aimBars(",
-      "pr": 0,
+      "pr": 473,
       "forbidden": true
     },
     {
@@ -8060,158 +8060,158 @@
       "name": "AI Quote: every line type counted in one place, so an AI Mode-only quote saves",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "AIQUOTE-LINECOUNT",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: qLineN counts the routed AI Mode attributes",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "t.aim&&t.aim.lines)?t.aim.lines.length",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: …and the monthly new-product bundle",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "+ (t.upd?1:0)",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: the two-type save guard is RETIRED (must stay gone)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "if(!t.inc&&!t.x.length)",
       "forbidden": true,
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: the page declares its own editable surface (✎ Edit reaches the copy)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "FCC-EDITSEL",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: card explanations and AI Mode row labels are editable",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": ".card > .ch,.qs-h,.aim-note,.aim-lbl",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: the card's prose lives in the template, not in a render",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "<div class=\"aim-note\">",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: …including every foot row label",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "<span class=\"aim-lbl\">Catalogue in scope</span>",
       "min": 1,
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: aimFoot fills that shell; aimNums writes the figures",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function aimFoot(q){",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: the prose is NEVER rebuilt as HTML again (must stay gone)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "h+='<div class=\"aim-foot\">",
       "forbidden": true,
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: Delivered sits between In action and Billed",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "'In action','Delivered','Billed'",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: ASPL's confirmation delivers the quote (once, never over a later call)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function autoDeliver()",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: the quote ⇄ ticket tie is the REF token, longest ref first",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "return b.ref.length-a.ref.length",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: Delivered · not billed — the figure finance asked for",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "Delivered · not billed",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Arrivals: the run-rate is a YEAR of complete months ÷ 12, not the last three",
       "file": "docs/arrivals_engine.js",
       "pattern": "a year of complete months ÷ 12",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Arrivals: m12 is the rate; m3 stays reported but is not what the year is priced on",
       "file": "docs/arrivals_engine.js",
       "pattern": "m12: m12",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Arrivals: short of a year is stated, never padded out with months of zeros",
       "file": "docs/arrivals_engine.js",
       "pattern": "— short of a year",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Arrivals: the 3-month mean is RETIRED as the forecast basis (must stay gone)",
       "file": "docs/arrivals_engine.js",
       "pattern": "basis: l3.length ?",
       "forbidden": true,
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Volume: the run-rate KPI reads the year, not the 3-month mean",
       "file": "docs/FeedSpark_Volume.html",
       "pattern": "st.m12!=null?fmt(Math.round(st.m12))",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: the arrivals KPI reads the PRICED forecast, not a second average",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "updKpi(st.forecast?fmt(st.forecast.month)",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: no annual, pro-rated or Year-1 cost line on any surface",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "NO ANNUAL, PRO-RATED OR YEAR-1 ROW",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: the Year-1 total is RETIRED (must stay gone)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "year1",
       "forbidden": true,
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: nothing multiplies a monthly figure by twelve (must stay gone)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "monGross*12",
       "forbidden": true,
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: the assumed January contract year-end is gone with the pro-rated row",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "contract year assumed to end in January",
       "forbidden": true,
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: a row hidden by attribute is actually hidden (flex beats the UA rule)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": ".aim-r[hidden],.qs-r[hidden]{display:none}",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Golden Record client documents: the scoring descriptions are written WITHOUT their weight factors while the export records the pop-ups (Ray, 18 Sep 2026: 'Keep the content quality score description, but remove the weight')",
@@ -8262,201 +8262,201 @@
       "name": "Spark AI: the section carries Ray's name for it",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "<h3>Spark AI &mdash; priced by data source</h3>",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Spark AI: the old label is RETIRED from the page (must stay gone)",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "AI Mode",
       "forbidden": true,
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Spark AI: the arrival cohort is one named, documented block",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "AIQUOTE-COHORT",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Spark AI: the feed pull buckets first-seen dates by MONTH — rows, parents, per product type",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "rowsM:dRowM,parsM:dParM,ptM:dPtM",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Spark AI: one month key, so a cutoff is a string compare and never a timezone",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function aimYm(ms)",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Spark AI: ONE pass builds the months, the options and the selected count",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function aimCoSeries()",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Spark AI: the Generate-for control is on the card",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "id=\"aim-since\"",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Spark AI: a cohort narrows the ONE-OFF range",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function aimUnits(){ var c=aimCohort(); return c?c.units:aimScopeUnits(); }",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Spark AI: …and NEVER the per-month figure, which reads the product-type scope alone",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "u=aimScopeUnits(), ix=idx(), m=aimRec()",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Spark AI: an undated product is counted out of the cohort, and the card says how many",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "carry no first-seen date and are left out",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Spark AI: the on-screen statement that the monthly figure is untouched",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "per-month figure below is untouched",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Spark AI: a month the current scope cannot reach is shown reading 0, never silently cleared",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "months.push({ym:since,n:0,cum:(c?c.units:0)})",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Spark AI: the cohort travels with the snapshot, the email, the brief and the workbook",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "Generated for products that arrived since",
       "min": 2,
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Spark AI: …and the finance workbook names it, since a quantity does not say which products",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "Spark AI cohort: generated for products that arrived since",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: one named, documented block",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "AIQUOTE-OPTIONS",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: an option IS a quote — prop {id,n,label} on the saved record",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function qProp(q){ return (q&&q.prop&&q.prop.id)?q.prop:null; }",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: an edited option leaves the proposal as an earlier version, never counted twice",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "!q.superseded&&qProp(q)",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: …and its replacement inherits the option number",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "if(qProp(old))snap.prop={id:old.prop.id,n:old.prop.n",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: the NEWEST choice wins on read, so two AMs never leave two winners",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function propChosenId(pid)",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: choosing one un-chooses its siblings",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "optsFor(p.id).forEach(function(x){ if(SAVED[x].chosen)delete SAVED[x].chosen; })",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: a sibling reads NOT TAKEN, never Declined — the client's call is not finance's",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "not taken — client chose ",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: a proposal contributes ONE quote to every money figure",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function countedIds(ids)",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: …the chosen option, or the lowest until the client picks",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "out[ch||optsFor(p.id)[0]||k]=1",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: the KPI loop honours it",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "if(!CNT[k])return;",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: and the board states the rule, so nobody reads it as three deals",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "counts a proposal once, at its chosen option",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: ➕ Add option is its own mode, and clears EDITING so a save stores a SIBLING",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "EDITING=null; PENDING_OPT={pid:p.id,n:n,label:''};",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: the strip sits right after the quote summary",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "<div id=\"opt-strip\"></div>",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: …and stays up after a save — 'after each generated quote'",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "LAST_SAVED&&SAVED[LAST_SAVED]&&qProp(SAVED[LAST_SAVED])",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: every write to the saved store redraws the strip",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "renderTracker(); renderOptStrip();",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: the tracker chip, and the analysis the data is for",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "Proposals decided",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: an earlier version offers no ✓ Chosen",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "ost&&ost!=='super'",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: ASPL never auto-delivers an option the client did not buy",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "if(optState(k)==='nottaken')return;",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "Quote options: the client-facing comparison of every option",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "function optionsText(k)",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "AI Quote: the band price is a typed figure and the quote says so",
@@ -8736,49 +8736,49 @@
       "name": "read-out: figures are collected BEFORE the 'results:' prose grab — the heading used to short-circuit and return one line, so a bulleted read-out reported its impressions and dropped its clicks (Ray 21 Sep 2026, Vimalesh on the Silk brief)",
       "file": "cloudflare/feedspark-deck/src/briefmatch.js",
       "pattern": "function collectFigures(",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "read-out: '<Metric>: 4.63% Increase' — the metric sits BEFORE the figure, which neither 'in X' form can see",
       "file": "cloudflare/feedspark-deck/src/briefmatch.js",
       "pattern": "const UPLIFT_LABEL_RE",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "read-out: the page mirror collects figures first too — worker and page must answer identically",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "var lab=/\\b([A-Za-z]{2,20}(?:\\s+rates?)?)",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "KWCal: a moment shows the read-out filed on its OWN ticket, which beats the fortnight round the period-window join ties to it",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "function ticketRes(",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "KWCal: resFor prefers the ticket result, roundRes keeps the archive join",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "return ticketRes(brand,e)||roundRes(brand,e);",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "KWCal: a ticket-carried result never prints the fortnight caveat — those figures are that moment's",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "own brief thread",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "read-out parity harness (worker + page, the real Silk specimen) wired into presync",
       "file": "tools/presync.sh",
       "pattern": "test_readout",
-      "pr": 0
+      "pr": 473
     },
     {
       "name": "read-out parity harness in CI",
       "file": ".github/workflows/validate.yml",
       "pattern": "test_readout",
-      "pr": 0
+      "pr": 473
     }
   ]
 }
