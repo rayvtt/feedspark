@@ -8983,6 +8983,84 @@
       "pr": 477
     },
     {
+      "name": "Label Guard: ⬇ HTML · all markets — one self-contained file per brand (Ray, 21 Sep 2026)",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "function brandExport(client, btn) {",
+      "pr": 479
+    },
+    {
+      "name": "Label Guard export: the file's script is serialised from the page, parsed code not a string",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "LGX_APP.toString()",
+      "pr": 479
+    },
+    {
+      "name": "Label Guard export: lgxRecord reduces every market to exactly what the dissection draws, the reference named per market",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "kind: rf.isDaily ? 'yesterday' : 'last known-good'",
+      "pr": 479
+    },
+    {
+      "name": "Label Guard export: values across markets keyed by POSITION — GB and GB-FB share a code",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "byV[r.v].tot += r.n; byV[r.v].per[si] = r.n;",
+      "pr": 479
+    },
+    {
+      "name": "Label Guard export: CSV inside the file — the page's columns plus market + channel",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "market,channel,label,value,skus,share_pct,reference,reference_skus,delta",
+      "pr": 479
+    },
+    {
+      "name": "Label Guard export: only scanned markets the page does not hold are fetched",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "return f.t && !(d && d.snapshot); });",
+      "pr": 479
+    },
+    {
+      "name": "Label Guard export: the brand-card door never folds the card",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "ev.stopPropagation(); brandExport(el.getAttribute('data-dl'), el);",
+      "pr": 479
+    },
+    {
+      "name": "Label Guard export: the dissection header door",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "id=\"det-html\"",
+      "pr": 479
+    },
+    {
+      "name": "Label Guard export: a value carrying a closing script tag can never end the block",
+      "file": "docs/FeedSpark_LabelGuard.html",
+      "pattern": "replace(/<\\//g, '<\\\\/')",
+      "pr": 479
+    },
+    {
+      "name": "Label Guard export tripwire drives the REAL page and uses the downloaded file as a client would",
+      "file": "tools/check_lgexport.js",
+      "pattern": "GB and GB-FB told apart although they share a code",
+      "pr": 479
+    },
+    {
+      "name": "Label Guard export tripwire in presync",
+      "file": "tools/presync.sh",
+      "pattern": "tools/check_lgexport.js",
+      "pr": 479
+    },
+    {
+      "name": "LABELGUARD.md §5c documents the multi-market export",
+      "file": "docs/LABELGUARD.md",
+      "pattern": "### 5c. ⬇ HTML · all markets",
+      "pr": 479
+    },
+    {
+      "name": "CLAUDE.md records the multi-market export",
+      "file": "CLAUDE.md",
+      "pattern": "⬇ HTML · ALL MARKETS — ONE FILE PER BRAND",
+      "pr": 479
+    },
+    {
       "name": "Deck editor: the SERVED sigOf normalises whitespace — \\\\s double-escaped inside getEditorScript's template literal (a single backslash cooked to /s+/g and collapsed runs of the letter s)",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "function sigOf(el){ return (el.textContent||'').replace(/\\\\s+/g,' ').trim().slice(0,120); }"

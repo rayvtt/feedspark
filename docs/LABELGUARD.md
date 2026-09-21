@@ -225,6 +225,46 @@ all-cards fold, the reload, the deep link — and `/golden`'s highlight row; `to
 pins `popProfile`/`cleanPop`/`slotCols`, the collector's `labelPop`/`ptPop` on a real XML stream,
 and the worker split.
 
+### 5c. ⬇ HTML · all markets — one file per brand (21 Sep 2026)
+
+Ray: *"Is there a way to get data shown for clients with multi-market such as Schuh, Superdry,
+or Reiss? A downloaded CSV or HTML would be fine, but not too techy. I like the current filter
+section view … HTML would be best because it can be interactive."*
+
+The dissection (§03) reads one feed; a 28-market brand is 28 clicks and nothing side by side.
+Two doors open the same export — `⬇ HTML` on every brand card in the estate, and
+`⬇ HTML · all markets` beside `⤓ CSV` in the dissection header — and `brandExport(client)`
+gathers every market's snapshot (the ones the page already holds, plus one
+`/api/labels/snapshot` fetch per scanned market it does not; a never-scanned market has nothing
+to fetch and is listed as such), `lgxRecord()` reduces them to exactly what the dissection
+draws, and `lgxHtml()` writes **one self-contained file**:
+
+- the data embedded (`window.LGX`), a small script (`LGX_APP`, serialised from the page with
+  `.toString()` so it is real, parsed code rather than a string) drawing it — no fetch, no FCC
+  chrome, no module nav, nothing of the worker; labels are spoken as CL0–CL4, never as
+  `custom_label_n`; the FeedSpark · Private & Confidential footer;
+- **Across markets** — one row per market: SKUs, coverage per label side by side (green ≥95 /
+  amber ≥60 / red), labels per SKU, scanned date, flags; a row click opens that market;
+- **Values across markets** — pick a label, see every value as a column per market (SKUs and
+  share of that market, a dash where a market lacks the value) with a total; biggest first, 25
+  then show-all. Per-market counts are keyed by the market's POSITION, never its code — GB and
+  GB-FB share "GB";
+- **market tabs** in the estate's own order (Google A→Z, then Facebook) with a flag dot, the
+  never-scanned market present but disabled; each market = the dissection as on the page: the
+  label population card (or the honest sheet-backed note), the five panes as value · SKUs ·
+  share · Δ with the share bar, GONE rows struck through, the market's live alerts, and the
+  reference the Δ reads — named per market (`yesterday` where a daily capture exists, else
+  `last known-good`, following the page's toggle);
+- the same 🔍 filter across every pane AND the matrix, sortable headers, show-all;
+- **⤓ CSV inside the file** — this market / all markets — the page's own CSV columns plus
+  `market` and `channel` (`market,channel,label,value,skus,share_pct,reference,reference_skus,delta`),
+  so one download gives both formats; 🖨 Print.
+
+Demo mode masks the file exactly as it masks the screen (`dispClient` / `maskText` run at
+export time). Harness `tools/check_lgexport.js` (presync) drives the real page, opens the
+downloaded file in a second page and uses it as a client would; `LGX_KEEP=1` keeps the file for
+a visual pass.
+
 ## 5b. Demo mode — the anonymised client-facing view
 
 **🎭 Demo mode** (toggle in §02, sticky sessionStorage) turns `/labels` into a screen-shareable
