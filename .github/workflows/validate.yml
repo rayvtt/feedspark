@@ -33,6 +33,8 @@ jobs:
         run: node tools/test_overlays.mjs
       - name: KWCal tie + result-window harness (event ⇄ Workflow ticket)
         run: node tools/test_kwcal_tie.mjs
+      - name: KWCal KPI band + market list
+        run: node tools/test_kwcal_kpis.mjs
       - name: Product-volume churn harness (running close-to-close baseline)
         run: node tools/test_volume.mjs
       - name: New-product arrivals harness (first-seen dates → month / quarter / year + forecast)

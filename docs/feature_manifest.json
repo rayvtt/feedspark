@@ -8779,6 +8779,60 @@
       "file": ".github/workflows/validate.yml",
       "pattern": "test_readout",
       "pr": 473
+    },
+    {
+      "name": "KWCal: the stage tiles are a PARTITION of every stage stOf can return — running/analysis/blocked had no bucket, so a Test-running moment counted as briefed and appeared in no tile (Ray 21 Sep 2026: 14 scheduled over 1+1+9)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "var bAspl=(st.briefed||0)+(st.progress||0)+(st.running||0);",
+      "pr": 474
+    },
+    {
+      "name": "KWCal: a stage the band has no bucket for is SHOWN as 'Other stage', never dropped from the count",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "var bOther=E.length-acc;",
+      "pr": 474
+    },
+    {
+      "name": "KWCal: the band is two labelled rows (Plan / Measures), each filling its own width, instead of one nine-tile wall that orphans tiles",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "kgrp-h\">Measures",
+      "pr": 474
+    },
+    {
+      "name": "KWCal: -fb Meta markets never reach the keyword calendar's chips — the numbered g:product_type slots keywords live in are not in the Meta catalogue spec",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "return !/-fb$/i.test(m);",
+      "pr": 474
+    },
+    {
+      "name": "KWCal: the dropped Meta feeds are COUNTED on screen, not silently removed",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "MKTFB=all.length-ks.length",
+      "pr": 474
+    },
+    {
+      "name": "KWCal: a long market list folds behind one button and never folds away the board's own market",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "if(!MKTALL&&show.indexOf(MKT)<0)",
+      "pr": 474
+    },
+    {
+      "name": "KWCal: saturation carries its evidence — n of total on the tile, keyword columns read, the date measured, and a CHECK flag when every SKU has exactly one extra product_type value",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "var thin=(sp>=99&&cols<=1);",
+      "pr": 474
+    },
+    {
+      "name": "KWCal KPI band + market list harness wired into presync",
+      "file": "tools/presync.sh",
+      "pattern": "test_kwcal_kpis",
+      "pr": 474
+    },
+    {
+      "name": "KWCal KPI band harness in CI",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "test_kwcal_kpis",
+      "pr": 474
     }
   ]
 }
