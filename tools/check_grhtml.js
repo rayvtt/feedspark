@@ -216,10 +216,12 @@ const QUALITY = {
 
   /* the two section headlines */
   const secs = await out.$$eval('details.xd', (e) => e.map((x) => (x.querySelector('summary') || {}).textContent || ''));
-  ok('the content-quality method is readable under its section',
-    secs.some((t) => /content-quality score is put together/.test(t)), secs.slice(0, 8));
-  ok('the AI-readiness method is readable under its section',
-    secs.some((t) => /AI-readiness score is put together/.test(t)), secs.slice(0, 8));
+  // the boxes wear the pop-up's own titles (Ray, 21 Sep 2026: "follow the audit golden score
+  // interface exactly for the download")
+  ok('the content-quality method is readable under its section, titled as its pop-up is',
+    secs.some((t) => /Content quality — the headline/.test(t)), secs.slice(0, 8));
+  ok('the AI-readiness method is readable under its section, titled as its pop-up is',
+    secs.some((t) => /AI-readiness — the headline/.test(t)), secs.slice(0, 8));
   ok('and both carry their prose, not just a heading',
     /Coverage says an attribute is there/.test(html) && /weighted/.test(html));
 

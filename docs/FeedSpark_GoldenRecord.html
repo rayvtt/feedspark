@@ -137,7 +137,7 @@ window.addEventListener('load',restore);
   .det-actions{display:flex;gap:8px;flex-wrap:wrap}
   .refseg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
   .refseg button{border:0;background:#fff;color:var(--muted);font:inherit;font-size:10.5px;font-weight:800;padding:3px 8px;cursor:pointer}
-  .refseg button.on{background:var(--orange-deep);color:#fff;cursor:default}
+  .refseg button.on,.refseg span.on{background:var(--orange-deep);color:#fff;cursor:default;font-size:10.5px;font-weight:800;padding:3px 8px}
   .refseg button[disabled]{opacity:.45;cursor:default}
   /* tier sections */
   .tier{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 18px;margin-top:14px}
@@ -568,23 +568,43 @@ window.addEventListener('load',restore);
      see clientCopy(); the same chip carries the tier and the verdict on the two headlines.) */
   body.pdf .pillar .pf2,body.pdf .heat-card,body.pdf #rec-tier{display:none!important}
   body.pdf .pfill,body.pdf .mseg .mf{animation:none!important}
-  /* the download's disclosures. The two section headlines open by default, so a client meets the
-     method rather than having to go looking for it; each attribute and each pillar starts folded,
-     because eight attributes' worth of findings expanded at once is a wall, and the summary row
-     already carries the score and the worst-breaking rule. */
-  body.xhtml details.xd{border:1px solid var(--line);border-radius:10px;background:var(--wash);margin:8px 0}
-  body.xhtml details.xd>summary{cursor:pointer;padding:9px 12px;font-size:12.5px;font-weight:900;color:var(--ink);
-    list-style:none;display:flex;align-items:center;gap:10px}
+  /* THE DOWNLOAD FOLLOWS THE INTERFACE EXACTLY (Ray, 21 Sep 2026, sending the on-screen scoring
+     pop-up: "just follow the audit golden score interface exactly for the download (i like
+     this)"): the page keeps the screen's own look — the wash background, the 1180px column, the
+     white header band with its dial and chips — and every inlined scoring box IS the pop-up card
+     the AM clicks open on /golden: the same white card, the same header (the pop-up's own title,
+     the score at 22px, the tier / verdict chip beside it), the same body. The two section
+     headlines open by default so a client meets the method; each attribute and each pillar starts
+     folded, because eight attributes' worth of findings expanded at once is a wall. */
+  body.xhtml{background:var(--wash)!important;width:auto;max-width:none}
+  body.xhtml #sec-detail{padding:24px 0 36px}
+  body.xhtml #sec-detail .wrap{max-width:1180px;padding:0 28px}
+  body.xhtml #print-head,body.xhtml #print-foot{max-width:1180px;margin-left:auto;margin-right:auto;padding-left:28px;padding-right:28px;box-sizing:border-box}
+  body.xhtml #print-head{margin-top:22px}
+  /* the header band sits flush in the panel card exactly as on screen (the panel pads 18px 20px) */
+  body.xhtml .gr-sticky{background:#fff;padding:18px 20px 0!important;margin:-18px -20px 0!important;border-radius:12px 12px 0 0}
+  body.xhtml .refseg{display:inline-flex!important}   /* the active Δ reference, as the chip it is on screen */
+  body.xhtml details.xd{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);margin:10px 0;padding:0}
+  body.xhtml details.xd>summary{cursor:pointer;padding:14px 22px;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--ink)}
   body.xhtml details.xd>summary::-webkit-details-marker{display:none}
   body.xhtml details.xd>summary::after{content:"\25be";margin-left:auto;color:var(--muted);font-weight:900}
   body.xhtml details.xd[open]>summary::after{content:"\25b4"}
-  body.xhtml details.xd[open]>summary{border-bottom:1px solid var(--line)}
-  body.xhtml details.xd>.xd-b{padding:10px 12px 12px}
-  body.xhtml details.xd .xd-n{font-weight:900;font-variant-numeric:tabular-nums}
-  body.xhtml details.xd .xd-w{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-  body.xhtml details.xd.xd-in{margin:8px 0 0;background:var(--paper)}
+  body.xhtml details.xd .xd-t{margin:0;font-size:16px;font-weight:900}     /* = .sc-h h3 */
+  body.xhtml details.xd .xd-n{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}   /* = .sc-n */
+  body.xhtml details.xd .xd-w{font-size:11px;font-weight:800;color:var(--muted)}   /* = .sc-w */
+  body.xhtml details.xd>.xd-b{padding:0 22px 20px}
+  body.xhtml details.xd.xd-in{margin:8px 0 0}
+  /* a pillar's card opens from the tile's own "how it's scored" chip, the way the pop-up does */
+  body.xhtml details.xd-chip{background:none;border:0;box-shadow:none;border-radius:0;margin:7px 0 0;text-align:right}
+  body.xhtml details.xd-chip>summary{display:inline-block;padding:1px 8px;font-size:10.5px;font-weight:900;color:var(--muted);
+    border:1px solid var(--line);border-radius:100px;line-height:1.5;white-space:nowrap}
+  body.xhtml details.xd-chip>summary::after,body.xhtml details.xd-chip[open]>summary::after{content:none}
+  body.xhtml details.xd-chip[open]{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:10px 12px 12px}
+  body.xhtml details.xd-chip>.xd-b{padding:8px 0 0;text-align:left}
+  /* an opened card grows its own tile only — on screen the pop-up floats, so no neighbour moves */
+  body.xhtml .pillars{align-items:start}
   /* an attribute row IS the summary, so it keeps the row grid it had as a div */
-  body.xhtml details.xd-q{border:0;border-radius:0;background:none;margin:0}
+  body.xhtml details.xd-q{border:0;border-radius:0;background:none;box-shadow:none;margin:0;padding:0}
   body.xhtml details.xd-q>summary.xd-sum{padding:0;display:grid;gap:10px;
     grid-template-columns:186px 52px minmax(90px,1fr) minmax(190px,1.4fr)}
   body.xhtml details.xd-q[open]>summary.xd-sum{border-bottom:0}
@@ -2836,11 +2856,20 @@ window.addEventListener('load',restore);
   }
   /* one captured pop-up as a no-JS disclosure. <details> is the whole point: the download has no
      scripts, so a chevron wired to a click handler is a chevron that does nothing. */
-  function popDet(cap, label, cls, open) {
+  /* …and it IS the pop-up card (Ray, 21 Sep 2026: "just follow the audit golden score interface
+     exactly for the download (i like this)"): the summary is the pop-up's own header — its title,
+     the score at 22px, the tier / verdict chip — and the body is the pop-up's body, so a client
+     reads exactly what the AM clicks open on /golden. mode 'chip' (the pillar tiles) folds the
+     card behind the tile's own "how it's scored" chip and carries the header inside instead. */
+  function popDet(cap, label, cls, open, mode) {
     if (!cap) return '';
-    return '<details class="xd' + (cls ? ' ' + cls : '') + '"' + (open ? ' open' : '') + '><summary>' + esc(label || cap.title) +
-      (cap.num != null && cap.num !== '' ? '<span class="xd-n" style="color:' + cap.col(+cap.num) + '">' + cap.num + '</span>' : '') +
-      (cap.w ? '<span class="xd-w">' + esc(cap.w) + '</span>' : '') + '</summary><div class="xd-b xd-pop">' + cap.body + '</div></details>';
+    var chip = mode === 'chip';
+    var num = cap.num != null && cap.num !== '' ? '<span class="' + (chip ? 'sc-n' : 'xd-n') + '" style="color:' + cap.col(+cap.num) + '">' + cap.num + '</span>' : '';
+    var w = cap.w ? '<span class="' + (chip ? 'sc-w' : 'xd-w') + '">' + esc(cap.w) + '</span>' : '';
+    var head = chip
+      ? '<summary class="xd-pq">how it’s scored</summary><div class="xd-b xd-pop"><div class="sc-h"><h3>' + esc(label || cap.title) + '</h3>' + num + w + '</div>'
+      : '<summary><h3 class="xd-t">' + esc(label || cap.title) + '</h3>' + num + w + '</summary><div class="xd-b xd-pop">';
+    return '<details class="xd' + (cls ? ' ' + cls : '') + '"' + (open ? ' open' : '') + '>' + head + cap.body + '</div></details>';
   }
   /* turn the cloned document into something a client can actually read offline */
   function htmlifyExport(doc, pops) {
@@ -2862,7 +2891,7 @@ window.addEventListener('load',restore);
       body.className = 'xd-b';
       /* how it is scored, then what was found - the order Ray asked for, and the order a client
          meeting the method for the first time needs: the long evidence makes sense after it */
-      if (pops.q[key]) { var w = document.createElement('div'); w.innerHTML = popDet(pops.q[key], 'How g:' + key + ' is scored', 'xd-in'); if (w.firstChild) body.appendChild(w.firstChild); }
+      if (pops.q[key]) { var w = document.createElement('div'); w.innerHTML = popDet(pops.q[key], null, 'xd-in'); if (w.firstChild) body.appendChild(w.firstChild); }
       if (det) body.appendChild(det);
       d.appendChild(body);
       /* the live page's own ▸/▾ span is a lie in the export: the rows were force-opened to get
@@ -2872,14 +2901,14 @@ window.addEventListener('load',restore);
       row.parentNode.replaceChild(d, row);
     });
     // 2. each section's ⓘ Scoring logic button becomes the disclosure it was only ever a door to
-    var secs = [['[data-qinfo="_"]', pops.q._, 'How the content-quality score is put together'],
-                ['button[data-scpop="_"]', pops.s._, 'How the AI-readiness score is put together']];
+    var secs = [['[data-qinfo="_"]', pops.q._], ['button[data-scpop="_"]', pops.s._]];
     secs.forEach(function (x) {
       Array.prototype.forEach.call(doc.querySelectorAll(x[0]), function (btn) {
         // both buttons sit in .qz-meta inside .tier-h, so the disclosure goes directly under the
-        // section header - inside the tier, above the section's own content
+        // section header - inside the tier, above the section's own content; it wears the
+        // pop-up's own title ("Content quality — the headline", "AI-readiness — the headline")
         var head = btn.closest ? btn.closest('.tier-h') : null;
-        var w = document.createElement('div'); w.className = 'xd-wrap'; w.innerHTML = popDet(x[1], x[2], null, true);
+        var w = document.createElement('div'); w.className = 'xd-wrap'; w.innerHTML = popDet(x[1], null, null, true);
         if (w.firstChild) {
           if (head && head.parentNode) head.parentNode.insertBefore(w, head.nextSibling);
           else btn.parentNode.insertBefore(w, btn.nextSibling);
@@ -2890,15 +2919,23 @@ window.addEventListener('load',restore);
     // 3. every AI-readiness pillar carries its own formula and this feed's readings
     Array.prototype.forEach.call(doc.querySelectorAll('.pillar[data-scpop]'), function (p) {
       var cap = pops.s[p.getAttribute('data-scpop')]; if (!cap) return;
-      var w = document.createElement('div'); w.innerHTML = popDet(cap, 'How this is scored', 'xd-in');
+      var w = document.createElement('div'); w.innerHTML = popDet(cap, null, 'xd-in xd-chip', false, 'chip');
       if (w.firstChild) p.appendChild(w.firstChild);
       p.removeAttribute('role'); p.removeAttribute('tabindex'); p.removeAttribute('title');
+    });
+    // 3b. the Δ reference the rows read stays, as the chip it is on screen: the active choice
+    //     becomes a plain span, the other button — a toggle no script can flip — goes
+    Array.prototype.forEach.call(doc.querySelectorAll('.refseg button'), function (b) {
+      if (!b.parentNode) return;
+      if (!b.classList.contains('on')) { b.parentNode.removeChild(b); return; }
+      var s = document.createElement('span'); s.className = 'on'; s.textContent = b.textContent;
+      b.parentNode.replaceChild(s, b);
     });
     // 4. nothing that needs JavaScript survives in a file that has none
     ['.de-bar', '.de-dot', '#fs-editor-css', '#fcc-ship', '#fcc-ship-dim', '#fcc-ship-h', '#fcc-hrs',
      '.fh-dot', '#lang-tgl', '#fcc-presence', '#fcc-mall', '.fcc-mpan', '#theme-tgl', '#scm',
      '[data-qinfo]', '[data-scpop]', '.qz-i', '.qz-act', '[data-qask]', '[data-qbrief]',
-     '.at-act', '.det-actions', '.refseg',
+     '.at-act', '.det-actions', '#pdp-last', '#prof-edit',
      /* THE REST OF THE INJECTED CHROME, REMOVED NOT HIDDEN (Ray, 18 Sep 2026: "remove the
         element that sends code or feedback to Claude. I'm sending this to my clients"): the
         live editor's ✎ handle, its "Send an element to Claude Code" panel and 💬 Feedback

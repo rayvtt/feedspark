@@ -482,7 +482,24 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
   pop-up's scale (`.xd-pop{font-size:12.5px;line-height:1.55}` + the shared `ul`/`li` rules) so
   it reads identically wherever it is inlined — section headline, pillar tile, attribute row.
   `tools/check_grpdf.js` RENDERS the exported file and asserts the computed size at all three
-  places is 12.5px and no larger than the audit row beside it. Harness: the one-click-download and CDN-fallback blocks in
+  places is 12.5px and no larger than the audit row beside it. **The download follows the
+  interface exactly** (Ray, 21 Sep 2026, sending the on-screen scoring pop-up: *"just follow the
+  audit golden score interface exactly for the download (i like this)"*): the export had its own
+  fold-out styling — wash-coloured bars labelled "How g:title is scored" on a white, 960px print
+  layout — where the screen has a wash background, a 1180px column, the white header band with
+  its dial and chips, and a pop-up CARD. Now `body.xhtml` keeps the screen's own look (wash
+  background, the `.wrap` column, the header band flush in the panel card exactly as on screen,
+  the active Δ-reference as the chip it is — the other toggle button goes, since no script can
+  flip it; the PDP-sample and ⚙ profile buttons go too) and every inlined scoring box IS the
+  pop-up card: `popDet` writes the pop-up's OWN header into the summary — its own title
+  ("Content quality — the headline", "AI-readiness — the headline", "g:title — content quality"),
+  the score at 22px, the tier / verdict chip — over the pop-up's body, on a white 14px-radius
+  card with the card shadow. A pillar tile folds its card behind the tile's own 10.5px "how it's
+  scored" chip (`mode 'chip'`: the header moves inside, `.pillars{align-items:start}` so an opened
+  card grows its own tile only, the way a floating pop-up moves nothing). The rendered-export
+  block in `tools/check_grpdf.js` asserts the header sizes (16px title, 22px score), the white
+  card on the wash page, the attribute card's title, the chip, the single Δ chip and the absent
+  buttons; `tools/check_grhtml.js` looks for the pop-up titles. Harness: the one-click-download and CDN-fallback blocks in
   `tools/check_grpdf.js` (stubbed `html2canvas`/`jsPDF` pin the glue — button → libs → capture →
   package → save → restore — a fidelity check on the real libraries is the separate PDF-content
   QA pass, not a structural assertion). **⚡ Scan whole estate now scans content quality too**

@@ -328,13 +328,25 @@ const QUALITY = {
     const type = await pageX.evaluate(() => {
       const fs = (el) => el ? getComputedStyle(el).fontSize : null;
       const q = (s) => document.querySelector(s);
+      const probe = document.createElement('i'); probe.style.background = 'var(--wash)'; document.body.appendChild(probe);
+      const wash = getComputedStyle(probe).backgroundColor; probe.remove();
       return {
         section: fs(q('.xd-wrap details.xd .xd-pop li')),           // the section headline's method
-        pillar: fs(q('#air-tier .pillar details.xd .xd-pop li')),  // a pillar's "How this is scored"
-        attr: fs(q('#qz-tier details.xd-q .xd-pop li')),           // an attribute's "How g:x is scored"
+        pillar: fs(q('#air-tier .pillar details.xd .xd-pop li')),  // a pillar's card
+        attr: fs(q('#qz-tier details.xd-q .xd-pop li')),           // an attribute's card
         row: fs(q('#qz-tier .qz-nm')),                             // the audit row it sits beside
         srcLink: fs(q('.xd-wrap details.xd .xd-pop .sc-src a')),
         rule: fs(q('#qz-tier details.xd-q .xd-pop .sc-rule .rl')),
+        // THE POP-UP CARD, EXACTLY (Ray, 21 Sep 2026): its header sizes, the page's own wash
+        title: fs(q('.xd-wrap details.xd > summary .xd-t')), num: fs(q('.xd-wrap details.xd > summary .xd-n')),
+        attrTitle: (q('#qz-tier details.xd-q details.xd-in > summary .xd-t') || {}).textContent,
+        chip: fs(q('#air-tier .pillar details.xd-chip > summary')),
+        chipHead: !!q('#air-tier .pillar details.xd-chip .sc-h h3'),
+        bodyBg: getComputedStyle(document.body).backgroundColor, wash,
+        cardBg: q('.xd-wrap details.xd') ? getComputedStyle(q('.xd-wrap details.xd')).backgroundColor : null,
+        refChips: document.querySelectorAll('.refseg .on').length, refButtons: document.querySelectorAll('.refseg button').length,
+        refVisible: q('.refseg') ? getComputedStyle(q('.refseg')).display !== 'none' : false,
+        dead: document.querySelectorAll('#pdp-last, #prof-edit').length,
       };
     });
     await pageX.close();
@@ -342,6 +354,14 @@ const QUALITY = {
       type.section === '12.5px' && type.pillar === '12.5px' && type.attr === '12.5px', type);
     ok('…no larger than the audit row it sits beside', parseFloat(type.section) <= parseFloat(type.row) + 0.6, type);
     ok('…and its source links and rule rows too', type.srcLink && parseFloat(type.srcLink) <= 13 && type.rule && parseFloat(type.rule) <= 13, type);
+    ok('each box wears the pop-up\'s header — 16px title, 22px score — on a white card',
+      type.title === '16px' && type.num === '22px' && type.cardBg === 'rgb(255, 255, 255)', type);
+    ok('an attribute\'s card is titled as its pop-up is ("g:title — content quality")', /^g:title — content quality$/.test(type.attrTitle || ''), type.attrTitle);
+    ok('a pillar\'s card folds behind the tile\'s own 10.5px "how it’s scored" chip and carries the pop-up header inside',
+      type.chip === '10.5px' && type.chipHead, type);
+    ok('the page keeps the screen\'s wash background behind the cards', type.bodyBg === type.wash && type.wash !== 'rgb(255, 255, 255)', type);
+    ok('the Δ reference reads as one static chip; the PDP-sample and profile buttons are gone',
+      type.refVisible && type.refChips === 1 && type.refButtons === 0 && type.dead === 0, type);
     fs.unlinkSync(tmp);
     ok('downloads as .html, not .htm or extensionless', /\.html$/.test(download.suggestedFilename()), download.suggestedFilename());
     ok('starts with a doctype — opens correctly standalone', /^<!doctype html>/i.test(html));
@@ -359,11 +379,12 @@ const QUALITY = {
     // for the client to read … I'm sending this to my clients")
     console.log('\n-- ⬇ HTML: simpler than the AM\'s screen --');
     // 1. "Keep the content quality score description, but remove the weight"
-    ok('the content-quality description is kept', /How the content-quality score is put together/.test(html) &&
-      /How g:title is scored/.test(html) && /How g:description is scored/.test(html));
-    ok('every pillar keeps its "How this is scored" disclosure', (html.match(/How this is scored/g) || []).length === 8,
-      (html.match(/How this is scored/g) || []).length);
-    ok('the AI-readiness headline keeps its description', /How the AI-readiness score is put together/.test(html));
+    // the boxes wear the POP-UP's own titles — the interface, exactly (Ray, 21 Sep 2026)
+    ok('the content-quality description is kept, under the pop-up\'s own titles', /Content quality — the headline/.test(html) &&
+      /g:title — content quality/.test(html) && /g:description — content quality/.test(html));
+    ok('every pillar keeps its "how it’s scored" chip and card', (html.match(/class="xd-pq"/g) || []).length === 8,
+      (html.match(/class="xd-pq"/g) || []).length);
+    ok('the AI-readiness headline keeps its description', /AI-readiness — the headline/.test(html));
     ok('no weight factor anywhere — no "weight ×", no ×1.6, no (×3)', !/weight ×/i.test(html) && !/×\d\.\d/.test(html) && !/\(×/.test(html),
       (html.match(/.{30}(weight ×|×\d\.\d|\(×).{20}/gi) || []).slice(0, 4));
     // the summary chip still carries the tier and the verdict on the two headlines — only a
