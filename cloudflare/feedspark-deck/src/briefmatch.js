@@ -79,18 +79,38 @@ const RESULT_CTX_RE = /\b(results?|read-?out|came out|we saw)\b/i;
 // A bare % with no direction word ("50% tested") never counts.
 const UPLIFT_ALL_RE = /(\d+(?:\.\d+)?)\s*%\s*(?:up-?lift|lift|increase|improvement|growth|gain|drop|decrease|decline)(?:\s+in\s+([a-z]{2,20}(?:\s+rate)?))?/gi;
 const UPLIFT_OF_RE = /(?:up-?lift|lift|increase|improvement|gain|drop|decrease|decline)\s+of\s+(\d+(?:\.\d+)?)\s*%(?:\s+in\s+([a-z]{2,20}(?:\s+rate)?))?/gi;
-function extractResult(text) {
+// "Impressions: 4.63% Increase" — the ASPL result emails that come back as a REPLY on the
+// brief thread put the metric BEFORE the figure, in a bullet list, so neither "in X" form
+// above can see the label and both figures land bare (Ray, 21 Sep 2026: Vimalesh's read-out
+// on the Silk brief REIS-20260811-02).
+const UPLIFT_LABEL_RE = /\b([A-Za-z]{2,20}(?:\s+rates?)?)\s*[:\-–]\s*(\d+(?:\.\d+)?)\s*%\s*(up-?lift|lift|increase|improvement|growth|gain|drop|decrease|decline)/gi;
+// every %-figure in the text, each keeping the metric it names. Deduped on sign+number so the
+// same figure seen twice (labelled once, bare once) is reported ONCE, with its label.
+function collectFigures(text) {
+  const by = new Map();
+  const push = (dir, num, label) => {
+    const key = (/(drop|decrease|decline)/i.test(dir) ? '-' : '+') + num;
+    const lbl = label ? String(label).trim().toLowerCase() : '';
+    if (!by.has(key)) by.set(key, lbl);
+    else if (lbl && !by.get(key)) by.set(key, lbl);   // a labelled sighting beats a bare one
+  };
+  let u;
+  UPLIFT_LABEL_RE.lastIndex = 0; while ((u = UPLIFT_LABEL_RE.exec(text))) push(u[3], u[2], u[1]);
+  UPLIFT_ALL_RE.lastIndex = 0;   while ((u = UPLIFT_ALL_RE.exec(text)))   push(u[0], u[1], u[2]);
+  UPLIFT_OF_RE.lastIndex = 0;    while ((u = UPLIFT_OF_RE.exec(text)))    push(u[0], u[1], u[2]);
+  const out = [];
+  for (const [k, lbl] of by) { if (out.length >= 4) break; out.push(k + '%' + (lbl ? ' ' + lbl : '')); }
+  return out;
+}
+export function extractResult(text) {
   text = String(text || '');
+  // FIGURES FIRST. RESULT_RE used to run ahead of this and short-circuit on the heading
+  // "The optimised SKUs results:", returning the one line after it — so a bulleted read-out
+  // reported its impressions and silently dropped its clicks. Prose is the fallback now, for
+  // a read-out that carries no figure at all ("no lift — rolled back").
+  const figs = collectFigures(text);
+  if (figs.length) return figs.join(' · ');
   let m = RESULT_RE.exec(text); if (m) return m[1].trim();
-  const parts = [];
-  for (const re of [UPLIFT_ALL_RE, UPLIFT_OF_RE]) {
-    re.lastIndex = 0; let u;
-    while ((u = re.exec(text)) && parts.length < 4) {
-      const sign = /(drop|decrease|decline)/i.test(u[0]) ? '-' : '+';
-      parts.push(sign + u[1] + '%' + (u[2] ? (' ' + u[2].trim()) : ''));
-    }
-  }
-  if (parts.length) return parts.join(' · ');
   m = UPLIFT_RE.exec(text); if (m) return m[1].replace(/\s+/g, ' ').trim();
   m = NOLIFT_RE.exec(text); if (m) return m[0].trim();
   return '';
