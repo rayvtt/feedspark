@@ -2085,7 +2085,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
         +esc(t.upd.off?('£'+fmt(t.upd.band)+' a month is more than five times the FeedSpark band price of £'+fmt(t.upd.def)+'. It is a figure somebody typed into the band box on the shared rate card — check it before this quote goes out.')
           :(t.upd.frozen!=null?('Frozen at the price this quote was signed off at. Today the band costs £'+fmt(t.upd.band)+' a month.')
             :'A flat monthly charge typed into the band box on your shared rate card — the new-SKU figure picks the band, it never multiplies the price.'))+'">'
-        +(t.upd.off?'\u26a0 ':'')+money(t.upd.gbp)+'/mo flat'+(t.upd.off?(' · band is £'+fmt(t.upd.def)):(t.upd.frozen!=null?' as signed off':''))+'</span>'
+        +(t.upd.off?'\u26a0 ':'')+money(t.upd.gbp)+'/mo band price'+(t.upd.off?(' · band is £'+fmt(t.upd.def)):(t.upd.frozen!=null?' as signed off':''))+'</span>'
         +(t.upd.exp!=null?' · ~'+fmt(t.upd.exp)+' new SKUs/mo':'')):'· off');
     S1('#qs-upd',t.upd?money(t.upd.gbp):'—');
     S1('#qs-monn',t.monN?('· '+t.monN+' line'+(t.monN===1?'':'s')):'· none yet');

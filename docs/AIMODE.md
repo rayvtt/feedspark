@@ -504,7 +504,7 @@ printed the number with nothing about where it came from.
 
 What changed (none of it arithmetic):
 
-- **The total line names the figure** — `up to 1,000 band · £100.00/mo flat · ~570 new SKUs/mo`, the
+- **The total line names the figure** — `up to 1,000 band · £100.00/mo band price · ~570 new SKUs/mo`, the
   tooltip stating it is a flat charge typed on the shared rate card and that the SKU count picks the
   band, never multiplies it. `updInfo()` now carries `band / frozen / off / def` for every surface.
 - **The prepend trap is closed** — the band boxes (and the estimate) select their value on focus so the

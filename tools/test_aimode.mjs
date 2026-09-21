@@ -485,7 +485,7 @@ ok(/class="updwarn">⚠ '\+money\(bd\)\+' a month is more than five times the Fe
   'the card warns under the bands, naming the FeedSpark price');
 ok(/'A flat monthly charge typed into the band box on your shared rate card — the new-SKU figure picks the band, it never multiplies the price\.'/.test(src),
   'the QUOTE TOTAL row says what the figure is');
-ok(/\(t\.upd\.off\?'\\u26a0 ':''\)\+money\(t\.upd\.gbp\)\+'\/mo flat'\+\(t\.upd\.off\?\(' · band is £'\+fmt\(t\.upd\.def\)\)/.test(src),
+ok(/\(t\.upd\.off\?'\\u26a0 ':''\)\+money\(t\.upd\.gbp\)\+'\/mo band price'\+\(t\.upd\.off\?\(' · band is £'\+fmt\(t\.upd\.def\)\)/.test(src),
   '…and shouts on the total when the band is off-scale');
 ok(/band:updBandGBP\(\),frozen:updFrozen\(\),off:updOffScale\(i\),def:updDefGBP\(i\)/.test(src),
   'updInfo carries band / frozen / off / default for every surface that renders the bundle');
