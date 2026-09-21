@@ -8731,6 +8731,54 @@
       "name": "presync runs the Golden Record waiver tripwire",
       "file": "tools/presync.sh",
       "pattern": "tools/check_grwaive.js"
+    },
+    {
+      "name": "read-out: figures are collected BEFORE the 'results:' prose grab — the heading used to short-circuit and return one line, so a bulleted read-out reported its impressions and dropped its clicks (Ray 21 Sep 2026, Vimalesh on the Silk brief)",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "function collectFigures(",
+      "pr": 0
+    },
+    {
+      "name": "read-out: '<Metric>: 4.63% Increase' — the metric sits BEFORE the figure, which neither 'in X' form can see",
+      "file": "cloudflare/feedspark-deck/src/briefmatch.js",
+      "pattern": "const UPLIFT_LABEL_RE",
+      "pr": 0
+    },
+    {
+      "name": "read-out: the page mirror collects figures first too — worker and page must answer identically",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var lab=/\\b([A-Za-z]{2,20}(?:\\s+rates?)?)",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a moment shows the read-out filed on its OWN ticket, which beats the fortnight round the period-window join ties to it",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function ticketRes(",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: resFor prefers the ticket result, roundRes keeps the archive join",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "return ticketRes(brand,e)||roundRes(brand,e);",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a ticket-carried result never prints the fortnight caveat — those figures are that moment's",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "own brief thread",
+      "pr": 0
+    },
+    {
+      "name": "read-out parity harness (worker + page, the real Silk specimen) wired into presync",
+      "file": "tools/presync.sh",
+      "pattern": "test_readout",
+      "pr": 0
+    },
+    {
+      "name": "read-out parity harness in CI",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "test_readout",
+      "pr": 0
     }
   ]
 }

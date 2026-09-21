@@ -79,7 +79,8 @@ let ROSTER = null;
 const body = [liftVar('MONI'), liftDecl('TASK_STOP'), liftLine('WFC'),
   lift('normTask'), lift('kwTask'), lift('taskWords'), lift('sigWords'), lift('nameScore'),
   lift('wfReset'), lift('wfBuild'), lift('wfAll'), lift('wfFor'), lift('wfHow'),
-  lift('isKwTicket'), lift('looseKw'), lift('periodWin'), lift('resFor')].join('\n');
+  lift('isKwTicket'), lift('looseKw'), lift('periodWin'),
+  lift('ticketRes'), lift('roundRes'), lift('resFor')].join('\n');
 const api = new Function('MON', 'LEAD_DAYS', 'evMkt', 'schedDate', 'getB', 'getR', 'getEvs',
   `${body}
    var BRIEFS, KWRES;
@@ -87,7 +88,7 @@ const api = new Function('MON', 'LEAD_DAYS', 'evMkt', 'schedDate', 'getB', 'getR
    return { wfFor:function(b,e){ BRIEFS=getB(); wfReset(); return wfFor(b,e); },
             wfHow:function(b,e){ BRIEFS=getB(); wfReset(); return wfHow(b,e); },
             looseKw:function(b){ BRIEFS=getB(); wfReset(); return looseKw(b); },
-            resFor:function(b,e){ KWRES=getR(); return resFor(b,e); },
+            resFor:function(b,e){ BRIEFS=getB(); KWRES=getR(); wfReset(); return resFor(b,e); },
             periodWin:periodWin, kwTask:kwTask, normTask:normTask };`
 )(MON, LEAD_DAYS, evMkt, schedDate, () => BRIEFS, () => KWRES,
   (brand) => ROSTER || (QUERY ? [QUERY] : []));
@@ -154,6 +155,42 @@ is('a later moment lands in the later batch', resFor('Reiss', coats)?.id, 'r2');
 is('a moment outside every window gets nothing', resFor('Reiss', ev('x', 'X', '2026-08-21')), null); // live-by 31 Jul
 is('a market-pinned moment takes its own market’s batch', resFor('Reiss', ev('y', 'Y', '2026-10-12', 'us'))?.id, 'r3');
 is('a brand with no archive gets nothing', resFor('Schuh', aw26), null);
+
+// ---------- the moment's OWN read-out beats the fortnight round ----------
+// Ray, 21 Sep 2026: Vimalesh answered the Silk brief on its own thread with the numbers.
+// /api/kwresults reports a whole fortnight; the ticket reports THIS optimisation.
+const silk = ev('silk', 'Silk', '2026-09-09');            // live-by 19 Aug -> inside batch r1
+BRIEFS.silk1 = { id: 'REIS-20260811-02', client: 'Reiss', kw: 'silk', status: 'confirmed', updated: 5,
+  task: 'Keywords Optimisation - Silk - Marketing Planner - 0826',
+  comms: [{ note: 'Thanks, live now', when: 1 },
+          { note: 'Result: +4.63% impressions · +5.18% clicks', when: 2 }] };
+is('the ticket’s own read-out wins over the round', resFor('Reiss', silk)?.txt, '+4.63% impressions · +5.18% clicks');
+is('…and is marked as the moment’s own, not a batch', resFor('Reiss', silk)?.own, 1);
+is('…carrying the ticket it came from', resFor('Reiss', silk)?.id, 'REIS-20260811-02');
+is('…its metric lines split out for the popover', resFor('Reiss', silk)?.metrics,
+   ['+4.63% impressions', '+5.18% clicks']);
+is('all-positive figures read Positive', resFor('Reiss', silk)?.verdict, 'positive');
+
+BRIEFS.silk1.comms.push({ note: 'Result: +9% impressions · -2% clicks', when: 3 });
+is('the NEWEST read-out on the ticket wins', resFor('Reiss', silk)?.txt, '+9% impressions · -2% clicks');
+is('a mixed read-out reads Mixed', resFor('Reiss', silk)?.verdict, 'mixed');
+
+BRIEFS.silk1.comms = [{ note: 'Result: down 3% — rolled back', when: 2 }];
+is('a prose read-out with no signed figure is Reported, never guessed',
+   resFor('Reiss', silk)?.verdict, 'unknown');
+
+// a reply that is NOT a read-out must not become one
+BRIEFS.silk1.comms = [{ note: 'We will do the needful', when: 2 }];
+is('a plain reply is not a result — the round answers again', resFor('Reiss', silk)?.id, 'r1');
+
+// and another moment's ticket can never supply this one's result. BRIEFS.f already owns the
+// Coats moment (newest on a tie), so the read-out goes on the ticket that actually holds it —
+// anything else would be asserting against a ticket the calendar never claimed.
+delete BRIEFS.silk1;
+BRIEFS.f.comms = [{ note: 'Result: +99% impressions', when: 2 }];
+is('a different moment’s read-out never leaks onto this card', resFor('Reiss', silk)?.id, 'r1');
+is('…while its own moment does get it', resFor('Reiss', coats)?.txt, '+99% impressions');
+delete BRIEFS.f.comms;
 
 // ---------- the canonical task name (what the brief is raised as) ----------
 is('house task name', api.kwTask('Reiss', ev('k', 'Coats', '2026-10-12')), 'Keywords Optimisation - Coats - Marketing Planner - 1026');
