@@ -69,6 +69,7 @@ window.addEventListener('load',restore);
   .est-flag{font-size:10px;font-weight:900;border-radius:100px;padding:1.5px 7px;white-space:nowrap}
   .est-flag.crit{background:#FDEBEA;color:var(--risk)}
   .est-flag.warn{background:#FDF3E3;color:var(--orange-deep)}
+  .est-hd .est-dl{flex:none;font-size:10.5px;padding:4px 9px;margin-left:4px}
   /* POPULATION card — the PT depth table's row format (label · bar · %), inline (Ray, 18 Sep
      2026: "the table breakdown for highlight population (1, 2, 3, 4, 5, >5) applied to label
      cards and product types as well") — here: how many of the five labels each SKU carries */
@@ -583,7 +584,7 @@ window.addEventListener('load',restore);
         '<span class="est-sum"><span>' + sum.n + ' feed' + (sum.n === 1 ? '' : 's') + (sum.scanned < sum.n ? ' · ' + sum.scanned + ' scanned' : '') + '</span>' +
         (sum.crit ? '<span class="est-flag crit">' + sum.crit + ' crit</span>' : '') +
         (sum.warn ? '<span class="est-flag warn">' + sum.warn + ' warn</span>' : '') +
-        '</span></div>';
+        '</span><button class="btn est-dl" data-dl="' + esc(c) + '" title="Every market of ' + esc(dispClient(c)) + ' in one interactive HTML file — each market’s dissection as shown below, coverage per label side by side, any label’s values compared across markets; CSV inside">⬇ HTML</button></div>';
       if (!collapsed) byClient[c].forEach(function (f) {
         var k = keyOf(f.client, f.mkt), st = statusOf(f);
         h += '<div class="est-mkt' + (SEL === k ? ' sel' : '') + '" data-k="' + esc(k) + '">' +
@@ -602,6 +603,9 @@ window.addEventListener('load',restore);
     });
     Array.prototype.forEach.call(document.querySelectorAll('[data-toggle]'), function (el) {
       el.onclick = function () { toggleCollapse(el.getAttribute('data-toggle')); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.est-dl'), function (el) {
+      el.onclick = function (ev) { ev.stopPropagation(); brandExport(el.getAttribute('data-dl'), el); };
     });
     collapseAllBtn();
   }
@@ -1150,6 +1154,7 @@ window.addEventListener('load',restore);
       '<span class="det-actions">' +
       '<input class="q-in" id="lg-q" placeholder="🔍 filter values" value="' + esc(QUERY) + '">' +
       '<button class="btn" id="det-csv">⤓ CSV</button>' +
+      '<button class="btn" id="det-html" title="Every market of ' + esc(dispClient(s.client)) + ' in one interactive HTML file — this view per market, coverage per label side by side, any label’s values compared across markets; CSV inside">⬇ HTML · all markets</button>' +
       '<button class="btn" id="det-ack" title="Accept the current feed as the new known-good reference and clear this feed’s flags">✓ Accept as known-good</button>' +
       '<button class="btn pri" id="det-scan">↻ Scan live feed</button></span></div>';
     h += labelPopCard(s);
@@ -1215,6 +1220,7 @@ window.addEventListener('load',restore);
     $('det-scan').onclick = function () { scan(k); };
     $('det-ack').onclick = function () { ack(k, $('det-ack')); };
     $('det-csv').onclick = function () { exportCsv(k); };
+    $('det-html').onclick = function () { brandExport(p.client, $('det-html')); };
     var rq = $('ref-yday'), rb = $('ref-base');
     if (rq) rq.onclick = function () {
       if (rq.disabled || REFMODE === 'yday') return;
@@ -1476,6 +1482,308 @@ window.addEventListener('load',restore);
     a.href = URL.createObjectURL(blob);
     a.download = 'labelguard_' + s.client.replace(/\W+/g, '') + '_' + (s.market || 'gb') + '_' + new Date(s.t).toISOString().slice(0, 10) + '.csv';
     a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  }
+
+  /* ---------------- ⬇ HTML · all markets — one file per brand ----------------
+     Ray, 21 Sep 2026: "Is there a way to get data shown for clients with multi-market such as
+     Schuh, Superdry, or Reiss? A downloaded CSV or HTML would be fine, but not too techy. I like
+     the current filter section view … HTML would be best because it can be interactive."
+     The dissection above reads ONE feed; a 28-market brand is 28 clicks and nothing side by
+     side. brandExport() gathers every market's snapshot (the ones this page already holds plus
+     a fetch for the rest), lgxRecord() reduces them to exactly what the dissection draws — the
+     population, the five panes as value · SKUs · share · Δ (vs the reference this page is set
+     to, named per market), the flags — and lgxHtml() writes ONE self-contained file: the data
+     embedded, a small script (LGX_APP, serialised from this page so it is real, parsed code)
+     drawing it, no fetch, nothing of the FCC in it. Inside the file: the same 🔍 filter across
+     every pane, sortable headers, show-all, market tabs — and the two views one feed can never
+     give: coverage per label per market side by side, and any label's values compared across
+     markets. ⤓ CSV lives INSIDE the file (this market / all markets — the page's own CSV
+     columns plus market + channel), so one download gives both formats. Demo mode masks the
+     file exactly as it masks the screen. */
+  function lgxPivot(s, ref, key) {
+    var L = s.labels && s.labels[key];
+    if (!L || !L.present) return null;
+    var bm = baseMap(ref, key), seen = {}, rows = [];
+    (L.values || []).forEach(function (pr) {
+      seen[pr[0]] = 1;
+      rows.push({ v: maskText(pr[0]), n: pr[1], was: bm[pr[0]] != null ? bm[pr[0]] : null, gone: false });
+    });
+    Object.keys(bm).forEach(function (v) { if (!seen[v]) rows.push({ v: maskText(v), n: 0, was: bm[v], gone: true }); });
+    return rows;
+  }
+  function lgxRecord(client, feeds) {
+    var markets = feeds.map(function (f) {
+      var k = keyOf(f.client, f.mkt), d = CACHE[k];
+      var m = { mkt: f.mkt, code: mktBase(f.mkt).toUpperCase(), ch: chOf(f.mkt), status: statusOf(f), nCrit: f.nCrit || 0, nWarn: f.nWarn || 0,
+        alerts: ((ESTATE.alerts[k] || {}).alerts || []).filter(function (a) { return a.sev !== 'info'; })
+          .map(function (a) { return { sev: a.sev, msg: maskText(a.msg || '') }; }) };
+      if (!d || !d.snapshot) { m.scanned = false; return m; }
+      var s = d.snapshot, rf = refFor(d), ref = rf.ref;
+      m.scanned = true; m.rows = s.rows; m.t = s.t;
+      m.ref = ref ? { t: ref.t, rows: ref.rows, kind: rf.isDaily ? 'yesterday' : 'last known-good' } : null;
+      m.baseT = d.baseline ? d.baseline.t : null;
+      m.pop = s.labelPop || null;
+      m.labels = LK.map(function (key, i) {
+        var L = s.labels && s.labels[key], B = (ref && ref.labels && ref.labels[key]) || null;
+        if (!L || !L.present) return { i: i, present: false, was: (B && B.present) ? B.cov : null };
+        return { i: i, present: true, cov: L.cov, filled: L.filled, distinct: L.distinct, truncated: !!L.truncated,
+          dcov: (B && B.present) ? Math.round((L.cov - B.cov) * 10) / 10 : null, rows: lgxPivot(s, ref, key) };
+      });
+      return m;
+    });
+    return { brand: dispClient(client), made: Date.now(), refMode: REFMODE === 'base' ? 'last known-good' : 'yesterday', markets: markets };
+  }
+  var LGX_CSS = '@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap");' +
+    ':root{--orange:#F5A623;--orange-deep:#ED6F0B;--orange-ink:#B1550A;--ink:#333;--ink-2:#4a4a4a;--muted:#8a94a0;--line:#E6E6E6;--wash:#F7F7F5;--good:#15803D;--risk:#C0392B;--shadow:0 1px 2px rgba(16,24,40,.04),0 6px 20px rgba(16,24,40,.06)}' +
+    '*{box-sizing:border-box}body{margin:0;font-family:Lato,system-ui,sans-serif;color:var(--ink);background:var(--wash);line-height:1.5;font-size:13px}' +
+    '.wrap{max-width:1720px;margin:0 auto;padding:0 24px}h1{margin:0;font-size:26px;font-weight:900}h2{margin:0;font-size:16px;font-weight:900}' +
+    '.hd{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;padding:26px 0 12px}.hd .k{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-deep)}' +
+    '.hd .sub{margin:4px 0 0;color:var(--muted);font-weight:700;font-size:12px}.tools{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}' +
+    '.lede{margin:0 0 14px;color:var(--ink-2);font-size:13.5px;max-width:960px}' +
+    '.btn{border:1px solid var(--line);background:#fff;color:var(--ink-2);font:inherit;font-size:12px;font-weight:800;border-radius:9px;padding:7px 12px;cursor:pointer}.btn:hover{border-color:var(--orange);color:var(--orange-deep)}' +
+    '.q{font:inherit;font-size:12px;font-weight:700;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);width:190px}.q:focus{outline:none;border-color:var(--orange)}' +
+    '.card{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px;margin-bottom:16px}.ch{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}' +
+    '.ch .n{color:var(--muted);font-weight:700;font-size:12px}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:#fff;border-radius:100px;padding:4px 11px;font:inherit;font-size:11.5px;font-weight:800;color:var(--ink-2);cursor:pointer}' +
+    '.chip.on{background:var(--orange-deep);border-color:var(--orange-deep);color:#fff}.chip[disabled]{opacity:.45;cursor:default}.chip .fl{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:5px;vertical-align:middle}.fl.crit{background:var(--risk)}.fl.warn{background:var(--orange)}' +
+    '.cc{display:inline-block;font-size:9.5px;font-weight:900;border-radius:4px;padding:0 4px;margin-right:5px;vertical-align:1px}.cc.g{background:#E3F4E9;color:var(--good)}.cc.fb{background:#E4ECFA;color:#1A56DB}' +
+    '.tw{overflow:auto}table{border-collapse:collapse;width:100%;font-size:12px}th{font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}' +
+    'td{padding:5px 8px;border-bottom:1px solid #F0F0F0;vertical-align:middle;font-variant-numeric:tabular-nums}.r{text-align:right}th.s{cursor:pointer}th.s:hover{color:var(--orange-deep)}td.v{font-weight:700;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+    '.ov tbody tr{cursor:pointer}.ov tbody tr:hover td{background:#FFF8EE}.ov tr.cur td{background:#FDF3E3}.cov{font-weight:900;border-radius:6px;padding:1px 7px;display:inline-block;min-width:52px;text-align:right}.cov.g{background:#E3F4E9;color:var(--good)}.cov.a{background:#FDF3E3;color:var(--orange-ink)}.cov.r{background:#FDEBEA;color:var(--risk)}' +
+    '.up{color:var(--good);font-weight:800}.down{color:var(--risk);font-weight:800}.muted{color:var(--muted)}tr.gone td{color:var(--risk);text-decoration:line-through}tr.gone td.r{text-decoration:none}' +
+    '.shbar{display:block;height:6px;border-radius:100px;background:var(--wash);border:1px solid var(--line);overflow:hidden;min-width:26px}.shbar i{display:block;height:100%;background:var(--orange);border-radius:100px}' +
+    '.more{font-size:11px;font-weight:800;color:var(--orange-deep);cursor:pointer;padding:6px 4px 1px;display:inline-block}' +
+    '.mh{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}.mh .st{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);font-weight:700}.mh .st b{color:var(--ink)}' +
+    '.al{margin:6px 0 4px;padding:0;list-style:none}.al li{font-size:12px;font-weight:700;padding:4px 0}.al .sev{display:inline-block;font-size:9.5px;font-weight:900;text-transform:uppercase;border-radius:100px;padding:1px 7px;margin-right:7px}.al .sev.crit{background:#FDEBEA;color:var(--risk)}.al .sev.warn{background:#FDF3E3;color:var(--orange-deep)}' +
+    '.pop{background:var(--wash);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:10px 0 2px;max-width:560px}.pop h4{margin:0 0 7px;font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}' +
+    '.pop .pr{display:flex;align-items:center;gap:8px;padding:2px 0;font-size:11.5px;font-weight:700;color:var(--muted)}.pop .pr.hi{color:var(--ink);font-weight:900}.pop .pl{width:96px;flex:none}.pop .pb{flex:1;height:7px;border-radius:100px;background:#E3E6EB;overflow:hidden}.pop .pb i{display:block;height:100%;border-radius:100px}.pop .pv{width:50px;text-align:right;flex:none}' +
+    '.pop .pf{margin-top:7px;color:var(--muted);font-size:10.5px;font-weight:700;line-height:1.55}.pop .pf b{color:var(--ink)}.pop.na{font-size:11.5px;font-weight:700;color:var(--muted)}' +
+    '.lg{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px;margin-top:14px}.lc{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:12px;min-width:0;overflow:auto}.lc.absent{opacity:.62}.lc td,.lc th{padding-left:5px;padding-right:5px}.lc td.v{max-width:150px}' +
+    '.lh{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin-bottom:7px}.lh .nm{font-size:14px;font-weight:900}.lh .cv{font-size:12.5px;font-weight:900;color:var(--orange-deep)}.lh .sub{font-size:10.5px;color:var(--muted);font-weight:700}.lh .dl{font-size:10.5px;font-weight:900;margin-left:auto}' +
+    '.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 12px}.foot{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;font-weight:700;padding:10px 0 26px}' +
+    '@media(max-width:600px){.wrap{padding:0 14px}.lg{grid-template-columns:1fr}.tools{margin-left:0}}' +
+    '@media print{.tools,.tabs,.more,.chips{display:none}.card{box-shadow:none;break-inside:avoid}body{background:#fff}}';
+  /* The script inside the file — serialised with .toString(), so it is parsed and checked as
+     part of THIS page rather than living in a string. Reads only window.LGX. No fetch, no FCC. */
+  function LGX_APP() {
+    var D = window.LGX;
+    function $(id) { return document.getElementById(id); }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function fmt(n) { return (n == null || isNaN(n)) ? '—' : Number(n).toLocaleString('en-GB'); }
+    function dstr(t) { return t ? new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'; }
+    function cc(m) { return m.ch === 'fb' ? '<span class="cc fb" title="Facebook catalogue feed">f</span>' : '<span class="cc g" title="Google Shopping feed">G</span>'; }
+    function covBand(c) { return c == null ? '' : c >= 95 ? 'g' : c >= 60 ? 'a' : 'r'; }
+    var scanned = D.markets.filter(function (m) { return m.scanned; });
+    var S = { tab: scanned.length ? D.markets.indexOf(scanned[0]) : -1, q: '', sorts: {}, more: {}, cmp: 0, cmpAll: false };
+    function qm(v) { return !S.q || String(v).toLowerCase().indexOf(S.q.toLowerCase()) >= 0; }
+    function sortOf(id) { return S.sorts[id] || { col: 'n', dir: -1 }; }
+    function arr(st, col) { return st.col === col ? (st.dir < 0 ? ' ▼' : ' ▲') : ''; }
+    function dKey(r) { if (r.gone) return -(r.was || 0); if (r.was == null) return r.n; return r.n - r.was; }
+    function cmpBy(st) {
+      return function (a, b) {
+        var d;
+        if (st.col === 'v') d = String(a.v).toLowerCase().localeCompare(String(b.v).toLowerCase());
+        else if (st.col === 'd') d = dKey(a) - dKey(b);
+        else d = a.n - b.n;
+        return (d * st.dir) || (b.n - a.n) || ((b.was || 0) - (a.was || 0));
+      };
+    }
+    function head() {
+      var n = D.markets.length, cur = S.tab >= 0 ? D.markets[S.tab] : null;
+      return '<header class="hd"><div><div class="k">Custom labels · every market</div><h1>' + esc(D.brand) + '</h1>' +
+        '<p class="sub">' + n + ' market' + (n === 1 ? '' : 's') + ' · ' + scanned.length + ' scanned · Δ = change in SKUs vs ' + esc(D.refMode) + ' (dated per market) · file made ' + dstr(D.made) + '</p></div>' +
+        '<div class="tools"><input class="q" id="q" placeholder="🔍 filter values" value="' + esc(S.q) + '">' +
+        '<button class="btn" id="csv1"' + (cur ? '' : ' disabled') + '>⤓ CSV · this market</button><button class="btn" id="csv0">⤓ CSV · all markets</button><button class="btn" id="prn">🖨 Print</button></div></header>' +
+        '<p class="lede">Custom labels are the values your Performance Max listing groups split on, so a value that shrinks or disappears moves budget — each market below is read exactly as Label Guard reads it.</p>';
+    }
+    function overview() {
+      var h = '<section class="card" id="ov"><div class="ch"><h2>Across markets</h2><span class="n">coverage per label · click a market to open it</span></div><div class="tw"><table class="ov"><thead><tr><th>Market</th><th class="r">SKUs</th>';
+      for (var i = 0; i < 5; i++) h += '<th class="r">CL' + i + '</th>';
+      h += '<th class="r">Labels / SKU</th><th>Scanned</th><th>Flags</th></tr></thead><tbody>';
+      D.markets.forEach(function (m, mi) {
+        h += '<tr data-mi="' + mi + '"' + (mi === S.tab ? ' class="cur"' : '') + '><td>' + cc(m) + '<b>' + esc(m.code) + '</b></td>';
+        if (!m.scanned) { h += '<td colspan="9" class="muted">not scanned yet</td></tr>'; return; }
+        h += '<td class="r">' + fmt(m.rows) + '</td>';
+        m.labels.forEach(function (L) {
+          h += '<td class="r">' + (L.present ? '<span class="cov ' + covBand(L.cov) + '">' + L.cov + '%</span>' : '<span class="muted">' + (L.was != null ? 'gone' : '—') + '</span>') + '</td>';
+        });
+        h += '<td class="r">' + (m.pop ? '<b>' + m.pop.avg + '</b>' : '<span class="muted">—</span>') + '</td><td>' + dstr(m.t) + '</td>' +
+          '<td>' + (m.nCrit ? '<span class="down">' + m.nCrit + ' crit</span> ' : '') + (m.nWarn ? '<span style="color:var(--orange-deep);font-weight:800">' + m.nWarn + ' warn</span>' : '') + (!m.nCrit && !m.nWarn ? '<span class="up">✓</span>' : '') + '</td></tr>';
+      });
+      return h + '</tbody></table></div></section>';
+    }
+    function compare() {
+      if (scanned.length < 2) return '<section class="card" id="cmp"><div class="ch"><h2>Values across markets</h2><span class="n">' + (scanned.length ? 'one market scanned — nothing to compare yet' : 'no market scanned yet') + '</span></div></section>';
+      var have = [0, 1, 2, 3, 4].filter(function (i) { return scanned.some(function (m) { return m.labels[i].present; }); });
+      if (have.indexOf(S.cmp) < 0) S.cmp = have.length ? have[0] : 0;
+      var h = '<section class="card" id="cmp"><div class="ch"><h2>Values across markets</h2><div class="chips">';
+      have.forEach(function (i) { h += '<button class="chip' + (i === S.cmp ? ' on' : '') + '" data-cmp="' + i + '">CL' + i + '</button>'; });
+      h += '</div><span class="n">SKUs (share of the market) per value · biggest first</span></div>';
+      // per-market counts keyed by the market's POSITION, never its code — GB and GB-FB share "GB"
+      var byV = {}, order = [];
+      scanned.forEach(function (m, si) {
+        var L = m.labels[S.cmp]; if (!L.present) return;
+        (L.rows || []).forEach(function (r) {
+          if (r.gone) return;
+          if (!byV[r.v]) { byV[r.v] = { v: r.v, tot: 0, per: {} }; order.push(byV[r.v]); }
+          byV[r.v].tot += r.n; byV[r.v].per[si] = r.n;
+        });
+      });
+      order.sort(function (a, b) { return b.tot - a.tot || String(a.v).localeCompare(String(b.v)); });
+      var rows = order.filter(function (r) { return qm(r.v); });
+      var lim = (S.q || S.cmpAll) ? rows.length : 25;
+      h += '<div class="tw"><table><thead><tr><th>Value</th>';
+      scanned.forEach(function (m) { h += '<th class="r">' + cc(m) + esc(m.code) + '</th>'; });
+      h += '<th class="r">Total</th></tr></thead><tbody>';
+      if (!rows.length) h += '<tr><td colspan="' + (scanned.length + 2) + '" class="muted">' + (S.q ? 'no values match “' + esc(S.q) + '”' : 'no values') + '</td></tr>';
+      rows.slice(0, lim).forEach(function (r) {
+        h += '<tr><td class="v" title="' + esc(r.v) + '">' + esc(r.v) + '</td>';
+        scanned.forEach(function (m, si) {
+          var n = r.per[si];
+          h += '<td class="r">' + (n == null ? '<span class="muted">—</span>' : fmt(n) + ' <span class="muted">' + (m.rows ? Math.round(n / m.rows * 1000) / 10 : 0) + '%</span>') + '</td>';
+        });
+        h += '<td class="r"><b>' + fmt(r.tot) + '</b></td></tr>';
+      });
+      h += '</tbody></table></div>';
+      if (rows.length > lim) h += '<span class="more" id="cmp-more">show all ' + rows.length + ' values ▾</span>';
+      return h + '</section>';
+    }
+    function tabs() {
+      var h = '<div class="tabs" id="tabs">';
+      D.markets.forEach(function (m, mi) {
+        h += '<button class="chip' + (mi === S.tab ? ' on' : '') + '" data-tab="' + mi + '"' + (m.scanned ? '' : ' disabled title="not scanned yet"') + '>' + cc(m) + esc(m.code) +
+          (m.nCrit ? '<span class="fl crit"></span>' : (m.nWarn ? '<span class="fl warn"></span>' : '')) + '</button>';
+      });
+      return h + '</div>';
+    }
+    function popCard(pop) {
+      if (!pop) return '<div class="pop na">Per-SKU population is not profiled for this market — it needs a full read of the feed (a FeedHero XML feed), not column counts.</div>';
+      var col = { '1': '#E3E6EB', '2': '#F2D9AE', '3': '#F5A623', '4': '#ED6F0B', '5': '#B1550A' };
+      var h = '<div class="pop"><h4>Label population — labels carried per SKU · SKU-weighted</h4>';
+      ['1', '2', '3', '4', '5'].forEach(function (b) {
+        var pct = pop.pct[b] || 0;
+        h += '<div class="pr' + (+b >= 3 ? ' hi' : '') + '"><span class="pl">' + b + ' label' + (b === '1' ? '' : 's') + '</span><span class="pb"><i style="width:' + Math.min(100, pct) + '%;background:' + col[b] + '"></i></span><span class="pv">' + pct + '%</span></div>';
+      });
+      var all = pop.skus + (pop.zero || 0), three = Math.round(((pop.pct['3'] || 0) + (pop.pct['4'] || 0) + (pop.pct['5'] || 0)) * 10) / 10;
+      h += '<div class="pf">avg <b>' + pop.avg + '</b> labels per SKU · <b>' + fmt(pop.skus) + '</b> SKUs profiled' +
+        (pop.zero ? ' · <b>' + fmt(pop.zero) + '</b> carry none (' + (all ? Math.round(pop.zero / all * 1000) / 10 : 0) + '%)' : '') + '</div>' +
+        '<div class="pf"><b>' + three + '%</b> of profiled SKUs carry 3+ of the five labels — the segmentation Performance Max listing groups can split on</div></div>';
+      return h;
+    }
+    function market(m, mi) {
+      var h = '<section class="card" id="mk"><div class="mh"><h2>' + esc(D.brand) + ' · ' + esc(m.code) + '</h2>' + cc(m) +
+        '<span class="st"><span><b>' + fmt(m.rows) + '</b> SKUs</span><span>scanned <b>' + dstr(m.t) + '</b></span>' +
+        (m.ref ? '<span>Δ vs <b>' + esc(m.ref.kind) + '</b> (' + dstr(m.ref.t) + (m.ref.rows !== m.rows ? ', ' + fmt(m.ref.rows) + ' SKUs' : '') + ')</span>' : '<span>no reference yet — Δ needs a second scan</span>') +
+        (m.baseT && m.ref && m.ref.kind === 'yesterday' ? '<span>flags vs known-good <b>' + dstr(m.baseT) + '</b></span>' : '') + '</span></div>';
+      if (m.alerts.length) {
+        h += '<ul class="al">';
+        m.alerts.forEach(function (a) { h += '<li><span class="sev ' + a.sev + '">' + a.sev + '</span>' + esc(a.msg) + '</li>'; });
+        h += '</ul>';
+      }
+      h += popCard(m.pop) + '<div class="lg">';
+      m.labels.forEach(function (L) {
+        if (!L.present) {
+          h += '<div class="lc absent"><div class="lh"><span class="nm">CL' + L.i + '</span><span class="sub">' + (L.was != null ? '<b style="color:var(--risk)">column vanished — was ' + L.was + '% filled</b>' : 'not in this feed') + '</span></div></div>';
+          return;
+        }
+        var id = mi + ':' + L.i, st = sortOf(id);
+        var rows = (L.rows || []).filter(function (r) { return qm(r.v); }).sort(cmpBy(st));
+        var maxN = rows.length ? Math.max.apply(null, rows.map(function (r) { return Math.max(r.n, r.was || 0); })) : 1;
+        var lim = (S.q || S.more[id]) ? rows.length : 12;
+        h += '<div class="lc"><div class="lh"><span class="nm">CL' + L.i + '</span><span class="cv">' + L.cov + '%</span>' +
+          '<span class="sub">' + fmt(L.filled) + ' SKUs · ' + L.distinct + (L.truncated ? '+' : '') + ' values</span>' +
+          (L.dcov != null && L.dcov !== 0 ? '<span class="dl ' + (L.dcov > 0 ? 'up' : 'down') + '">' + (L.dcov > 0 ? '▲ +' : '▼ ') + L.dcov + 'pp</span>' : '') + '</div>' +
+          '<table><thead><tr><th class="s" data-s="v" data-id="' + id + '">value' + arr(st, 'v') + '</th><th class="r s" data-s="n" data-id="' + id + '">skus' + arr(st, 'n') + '</th><th class="r">share</th><th class="r s" data-s="d" data-id="' + id + '">Δ' + arr(st, 'd') + '</th><th></th></tr></thead><tbody>';
+        if (!rows.length) h += '<tr><td colspan="5" class="muted">' + (S.q ? 'no values match “' + esc(S.q) + '”' : 'no values') + '</td></tr>';
+        rows.slice(0, lim).forEach(function (r) {
+          var share = m.rows ? Math.round((r.n / m.rows) * 1000) / 10 : 0, delta = '';
+          if (r.was != null) { var dn = r.n - r.was; delta = dn === 0 ? '<span class="muted">=</span>' : '<span class="' + (dn > 0 ? 'up' : 'down') + '">' + (dn > 0 ? '+' : '') + fmt(dn) + '</span>'; }
+          else if (m.ref) delta = '<span class="up">new</span>';
+          h += '<tr' + (r.gone ? ' class="gone" title="gone — was on ' + fmt(r.was) + ' SKUs"' : '') + '><td class="v" title="' + esc(r.v) + '">' + esc(r.v) + '</td><td class="r">' + (r.gone ? '<b>GONE</b>' : fmt(r.n)) + '</td><td class="r">' + (r.gone ? '—' : share + '%') + '</td>' +
+            '<td class="r">' + (r.gone ? '<span class="down">−100%</span>' : delta) + '</td><td><span class="shbar"><i style="width:' + Math.max(2, Math.round((Math.max(r.n, r.was || 0) / maxN) * 100)) + '%' + (r.gone ? ';background:var(--risk)' : '') + '"></i></span></td></tr>';
+        });
+        h += '</tbody></table>';
+        if (rows.length > lim) h += '<span class="more" data-more="' + id + '">show all ' + rows.length + ' values ▾</span>';
+        h += '</div>';
+      });
+      return h + '</div></section>';
+    }
+    function foot() { return '<div class="foot"><span>FeedSpark · Private &amp; Confidential</span><span>Label Guard · ' + esc(D.brand) + '</span></div>'; }
+    function csv(all) {
+      var ms = all ? scanned : (S.tab >= 0 ? [D.markets[S.tab]] : []);
+      var out = ['market,channel,label,value,skus,share_pct,reference,reference_skus,delta'];
+      ms.forEach(function (m) {
+        m.labels.forEach(function (L) {
+          if (!L.present) return;
+          (L.rows || []).forEach(function (r) {
+            out.push([m.code, m.ch === 'fb' ? 'facebook' : 'google', 'CL' + L.i, '"' + String(r.v).replace(/"/g, '""') + '"', r.n,
+              m.rows ? Math.round((r.n / m.rows) * 1000) / 10 : 0, m.ref ? m.ref.kind : '', r.was == null ? '' : r.was, r.was == null ? '' : r.n - r.was].join(','));
+          });
+        });
+      });
+      var blob = new Blob([out.join('\n')], { type: 'text/csv' });
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = 'labelguard_' + D.brand.replace(/\W+/g, '') + '_' + (all ? 'all-markets' : ms[0].code.toLowerCase() + (ms[0].ch === 'fb' ? '-fb' : '')) + '_' + new Date().toISOString().slice(0, 10) + '.csv';
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    }
+    function paint() {
+      $('cmp').outerHTML = compare();
+      $('tabs').outerHTML = tabs();
+      var mk = $('mk'); if (mk) mk.outerHTML = S.tab >= 0 ? market(D.markets[S.tab], S.tab) : '<section id="mk"></section>';
+      Array.prototype.forEach.call(document.querySelectorAll('#ov tbody tr'), function (tr) { tr.classList.toggle('cur', +tr.getAttribute('data-mi') === S.tab); });
+      var c1 = $('csv1'); if (c1) c1.disabled = S.tab < 0;
+      wire();
+    }
+    function wire() {
+      Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function (b) { b.onclick = function () { if (b.disabled) return; S.tab = +b.getAttribute('data-tab'); paint(); }; });
+      Array.prototype.forEach.call(document.querySelectorAll('#ov tbody tr'), function (tr) { tr.onclick = function () { var mi = +tr.getAttribute('data-mi'); if (!D.markets[mi].scanned) return; S.tab = mi; paint(); var mk = $('mk'); if (mk) mk.scrollIntoView({ behavior: 'smooth', block: 'start' }); }; });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-cmp]'), function (b) { b.onclick = function () { S.cmp = +b.getAttribute('data-cmp'); S.cmpAll = false; paint(); }; });
+      var cm = $('cmp-more'); if (cm) cm.onclick = function () { S.cmpAll = true; paint(); };
+      Array.prototype.forEach.call(document.querySelectorAll('[data-more]'), function (el) { el.onclick = function () { S.more[el.getAttribute('data-more')] = true; paint(); }; });
+      Array.prototype.forEach.call(document.querySelectorAll('th.s[data-id]'), function (th) {
+        th.onclick = function () {
+          var id = th.getAttribute('data-id'), col = th.getAttribute('data-s'), st = sortOf(id);
+          S.sorts[id] = st.col === col ? { col: col, dir: -st.dir } : { col: col, dir: col === 'v' ? 1 : -1 };
+          paint();
+        };
+      });
+    }
+    $('app').innerHTML = head() + overview() + compare() + tabs() + (S.tab >= 0 ? market(D.markets[S.tab], S.tab) : '<section id="mk"></section>') + foot();
+    wire();
+    var q = $('q');
+    q.oninput = function () { clearTimeout(q.__t); q.__t = setTimeout(function () { S.q = q.value.trim(); paint(); }, 120); };
+    $('csv0').onclick = function () { csv(true); };
+    $('csv1').onclick = function () { csv(false); };
+    $('prn').onclick = function () { window.print(); };
+  }
+  function lgxHtml(rec) {
+    var data = JSON.stringify(rec).replace(/<\//g, '<\\/');   // a value carrying a closing script tag can never end the block
+    var n = rec.markets.length;
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>' + esc(rec.brand) + ' · custom labels across ' + n + ' market' + (n === 1 ? '' : 's') + '</title>' +
+      '<style>' + LGX_CSS + '</style></head><body><div class="wrap" id="app"></div>' +
+      '<script>window.LGX=' + data + ';<\/script><script>(' + LGX_APP.toString() + ')();<\/script></body></html>';
+  }
+  function brandExport(client, btn) {
+    var feeds = feedList().filter(function (f) { return f.client === client; });
+    feeds.sort(function (a, b) { return (chOf(a.mkt) === 'fb' ? 1 : 0) - (chOf(b.mkt) === 'fb' ? 1 : 0) || mktBase(a.mkt).localeCompare(mktBase(b.mkt)); });
+    if (!feeds.length) return;
+    // every market this page does not already hold — scanned ones only; a never-scanned market has no snapshot to fetch
+    var need = feeds.filter(function (f) { var d = CACHE[keyOf(f.client, f.mkt)]; return f.t && !(d && d.snapshot); });
+    var label = btn ? btn.textContent : '', done = 0;
+    if (btn) { btn.disabled = true; btn.textContent = need.length ? '⬇ 0/' + need.length + '…' : '⬇ building…'; }
+    Promise.all(need.map(function (f) {
+      var k = keyOf(f.client, f.mkt);
+      return fetch(API + '/api/labels/snapshot?client=' + encodeURIComponent(f.client) + '&market=' + encodeURIComponent(f.mkt))
+        .then(function (r) { return r.json(); }).then(function (d) { if (d && d.snapshot) CACHE[k] = d; }).catch(function () {})
+        .then(function () { done++; if (btn) btn.textContent = '⬇ ' + done + '/' + need.length + '…'; });
+    })).then(function () {
+      var rec = lgxRecord(client, feeds);
+      var blob = new Blob([lgxHtml(rec)], { type: 'text/html' });
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = 'labelguard_' + rec.brand.replace(/\W+/g, '') + '_all-markets_' + new Date().toISOString().slice(0, 10) + '.html';
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      if (btn) { btn.disabled = false; btn.textContent = label; }
+    });
   }
 
   /* ---------------- alert routing: destinations + watch rules ---------------- */
