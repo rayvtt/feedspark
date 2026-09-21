@@ -564,7 +564,7 @@ window.addEventListener('load',restore);
   body.pdf .de-bar,body.pdf .de-dot,body.pdf #fcc-ship,body.pdf #fcc-ship-dim,body.pdf #fcc-ship-h,
   body.pdf #fcc-hrs,body.pdf .fh-dot,body.pdf #lang-tgl,body.pdf #fcc-presence,
   body.pdf #fcc-mall,body.pdf .fcc-mpan,
-  body.pdf button[data-qinfo],body.pdf button[data-scpop],body.pdf .qz-na{display:none!important}
+  body.pdf button[data-qinfo],body.pdf button[data-scpop],body.pdf .qz-na,body.pdf .de-stalepanel{display:none!important}
   /* THE CLIENT DOCUMENT IS SIMPLER THAN THE AM'S SCREEN (Ray, 18 Sep 2026, sending the ⬇ HTML
      to clients: "Let's remove a few things so it's not too complicated for the client to read.
      Keep the content quality score description, but remove the weight. The 1.4 × 1.6 factor
@@ -3015,7 +3015,7 @@ window.addEventListener('load',restore);
         the nav customiser and the ⓘ instruction toggles were CLONED into the file with their
         scripts left behind — body.pdf hid most of them, but a hidden panel is still in the
         source of a document a client opens, and the ✎ handle was not hidden at all. */
-     '.de-handle', '.de-panel', '.de-props', '.de-toast', '.de-warn', '.de-ctxmenu', '.de-resize',
+     '.de-handle', '.de-panel', '.de-props', '.de-toast', '.de-warn', '.de-stalepanel', '.de-ctxmenu', '.de-resize',
      '.de-rtbar', '.de-collapse', '.de-fbpanel', '.de-fbnote', '.de-fbmark',
      '#tky-fab', '#tky-scrim', '#tky-drawer', '#fcc-fcb', '#fcc-fcp', '#fcc-viewas', '#fcc-apps',
      '#fcc-navcz', '#fcc-navcz-scrim', '.instr-tgl', '.instr-hide', '#askp-slot', '#profp-slot',

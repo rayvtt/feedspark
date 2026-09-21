@@ -252,7 +252,16 @@ GET|POST /api/i18n?lang=vi      → owner-only runtime lane for strings the seed
   state/expandAll/collapseAll. Census at ship: Leadership 5,694→979px, Roadmap 9,862→844, Readiness
   6,332→844. Tripwire: tools/check_mobile.js rule 6 asserts the fold at first paint on a fresh device, then
   expands everything before its desktop-parity count; pins in tools/test_mobile.mjs. Docs: docs/MOBILE.md),
-  the live editor widget, **FCC-PRESENCE**
+  the live editor widget (its STALENESS REPORT IS A TOOLBAR NOTE, NEVER THE RED BANNER — Ray, 21 Sep
+  2026: "remove the red banner on top on the dashboard pls - i hate that it always appear (the deck
+  template has changed)": the shape fingerprint moves on every push that changes an editable count
+  and an app page ships several times a day, so "the deck template has changed … everything was
+  applied" fired on EVERY load about nothing; `reportStale` → `showStale` now renders a `.de-stale`
+  chip on the editor toolbar — grey when everything still applied, orange when entries were skipped,
+  opening a `.de-stalepanel` card with the detail + the Clear-stale-entries button — and a dot on the
+  ✎ handle ONLY when there is something to act on; `.de-warn` stays the voice of a save that failed or
+  edits about to be lost (NOT_SAVED, unsaved-work restore, load failure, failed reset, ?raw=1);
+  pinned in tools/test_editor.mjs), **FCC-PRESENCE**
   (`docs/presence_widget.html` — Google-Docs-style live avatars in the topbar: each open page
   heartbeats `POST /api/presence` per minute while visible, worker stamps the Access identity
   into KV `presence`, avatars = active ≤3min with green dot + name·page·ago tooltip; popover

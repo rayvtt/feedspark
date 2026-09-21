@@ -8779,6 +8779,98 @@
       "file": ".github/workflows/validate.yml",
       "pattern": "test_readout",
       "pr": 473
+    },
+    {
+      "name": "Live editor: staleness renders through showStale — a chip on the editor toolbar, never the red banner (Ray, 21 Sep 2026)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "function showStale(",
+      "pr": 0
+    },
+    {
+      "name": "Live editor: reportStale routes every staleness class (edited elsewhere / skipped / recovered / shape changed) through the toolbar chip",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "showStale(n>0, short.join(' · '), notes, staleKeys);",
+      "pr": 0
+    },
+    {
+      "name": "Live editor: the staleness chip is grey for information, orange when entries were skipped",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": ".de-bar button.de-stale.act{",
+      "pr": 0
+    },
+    {
+      "name": "Live editor: the ✎ handle carries a dot only when there is something to act on",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": ".de-handle.de-hb::after{",
+      "pr": 0
+    },
+    {
+      "name": "Live editor: Present mode hides the staleness card like the rest of the editor chrome",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "body.de-present .de-stalepanel",
+      "pr": 0
+    },
+    {
+      "name": "Live editor: the red banner never carries the template-changed notice (forbidden)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "showWarn('&#9888; <b>The deck template has changed</b>",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Live editor: the Clear-stale-entries button left the banner (forbidden)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "de-w-drop-stale",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Golden Record export removes the live editor's staleness card",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'.de-stalepanel', '.de-ctxmenu'",
+      "pr": 0
+    },
+    {
+      "name": "Golden Record PDF hides the staleness card",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf .de-stalepanel",
+      "pr": 0
+    },
+    {
+      "name": "check_grpdf asserts the staleness card is stripped from the client file",
+      "file": "tools/check_grpdf.js",
+      "pattern": "de-stale/.test(body)",
+      "pr": 0
+    },
+    {
+      "name": "test_editor: a shape change alone is a grey toolbar note with the banner silent",
+      "file": "tools/test_editor.mjs",
+      "pattern": "C5: a shape change alone is a grey note on the toolbar",
+      "pr": 0
+    },
+    {
+      "name": "test_editor: a refused save still raises the NOT SAVED banner",
+      "file": "tools/test_editor.mjs",
+      "pattern": "the red banner is still the voice of a save the server refused",
+      "pr": 0
+    },
+    {
+      "name": "test_editor: skipped edits = orange chip + dot on ✎, Clear drops exactly those keys",
+      "file": "tools/test_editor.mjs",
+      "pattern": "C13: skipped edits are an orange chip",
+      "pr": 0
+    },
+    {
+      "name": "CLAUDE.md records the toolbar-note rule for the live editor",
+      "file": "CLAUDE.md",
+      "pattern": "STALENESS REPORT IS A TOOLBAR NOTE",
+      "pr": 0
+    },
+    {
+      "name": "Live-editor platform notes: the red banner is for a save that failed",
+      "file": ".claude/skills/feedspark-deck-generator/references/live-editor-platform-notes.md",
+      "pattern": "The red banner is for a save that failed",
+      "pr": 0
     }
   ]
 }

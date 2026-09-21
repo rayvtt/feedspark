@@ -114,6 +114,23 @@ save their work from that same offline copy. **Any persistent, high-priority UI 
 needs an explicit way to close it — "it'll go away once the underlying problem is fixed"
 is not good enough when the banner itself is blocking the fix.**
 
+## The red banner is for a save that failed — never for a template that changed
+
+`.de-warn` used to carry every kind of staleness too: "the deck template has changed since your
+saved edits were made — they all still matched, so everything was applied". True, and useless:
+the shape fingerprint moves on every push that changes how many editable elements a chapter
+has, and an FCC app page ships several times a day, so on any page carrying saved edits the
+banner fired on **every load**, pinned over the topbar, about something with no action in it.
+Ray (21 Sep 2026): "remove the red banner on top on the dashboard pls - i hate that it always
+appear". Staleness now reports through `showStale` — a chip on the editor toolbar (grey =
+nothing lost, orange = entries skipped, opening a card with the detail and the Clear button)
+plus a dot on the ✎ handle only when there is something to act on. **A notice that needs no
+action must not live at the highest z-index; put it where the person who would act on it
+already is.** `showWarn` remains for NOT_SAVED, the unsaved-work restore, a load that could
+not reach the server, a failed reset and the `?raw=1` view — each one a fact about loss.
+`tools/test_editor.mjs` pins both halves (a shape change is a grey chip with the banner silent;
+a refused PUT still raises NOT SAVED).
+
 ## Cloudflare KV's free-tier write cap is real, silent, and account-wide
 
 The Workers **Free** plan caps KV at **1,000 writes/day, shared across every worker on the
