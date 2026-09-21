@@ -8779,6 +8779,27 @@
       "file": ".github/workflows/validate.yml",
       "pattern": "test_readout",
       "pr": 473
+    },
+    {
+      "name": "Deck editor: the SERVED sigOf normalises whitespace — \\\\s double-escaped inside getEditorScript's template literal (a single backslash cooked to /s+/g and collapsed runs of the letter s)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "function sigOf(el){ return (el.textContent||'').replace(/\\\\s+/g,' ').trim().slice(0,120); }"
+    },
+    {
+      "name": "Deck editor: the single-escaped sigOf form never returns (it served /s+/g)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "replace(/\\s+/g,' ').trim().slice(0,120)",
+      "forbidden": true
+    },
+    {
+      "name": "Deck editor: legacy-form signatures and content keys (every sig/ck saved before the \\\\s fix) still replay — sigLegacy + baseSigL/byCkeyL twins, accepted on every replay path, never written by a new save",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "function sigMatches(sig,id){ return sig===baseSig[id] || sig===baseSigL[id]; }"
+    },
+    {
+      "name": "Deck editor harness: served sigOf form asserted on the cooked script, legacy overlays replay (S1), whitespace-only template change no longer stale (S2), new saves write the corrected form (S3)",
+      "file": "tools/test_editor.mjs",
+      "pattern": "S2: a whitespace-only template change no longer marks an edit stale"
     }
   ]
 }

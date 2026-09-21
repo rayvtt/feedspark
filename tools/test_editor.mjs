@@ -47,17 +47,40 @@ function loadEditorScriptFn() {
 
 const getEditorScript = loadEditorScriptFn();
 
-function composePage(slug) {
-  const deck = readFileSync(DECK, 'utf8');
+function composePage(slug, mutateDeck = null) {
+  let deck = readFileSync(DECK, 'utf8');
+  if (mutateDeck) deck = mutateDeck(deck);
   return deck.replace('</body>', getEditorScript(slug) + '\n</body>');
 }
+
+/** The signature formula as the served script now computes it, and as it computed it before
+ *  the /\s+/ fix (a single-escaped \s cooked to /s+/ inside the template literal, collapsing
+ *  runs of the LETTER s). Every sig/ck saved to KV before the fix carries the legacy form. */
+const sigNew = (t) => (t || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+const sigLegacy = (t) => (t || '').replace(/s+/g, ' ').trim().slice(0, 120);
+// Same in-page helpers as a string, for page.evaluate() — the editor's are closed over.
+const SIG_HELPERS = `
+  var sigNew=function(t){ return (t||'').replace(/\\s+/g,' ').trim().slice(0,120); };
+  var sigLegacy=function(t){ return (t||'').replace(/s+/g,' ').trim().slice(0,120); };
+  var hashStr=function(s){ var h=5381; for(var i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))>>>0; } return h.toString(36); };
+  // The legacy content-key index exactly as captureBaseSigs built it before the fix: hash of
+  // tag + legacy sig, plus an occurrence index among elements identical under THAT form.
+  var legacyCkOf=(function(){ var seen={}, map=new Map();
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ck]'), function(el){
+      var base='k'+hashStr(el.tagName+'|'+sigLegacy(el.textContent));
+      seen[base]=(seen[base]||0); var ck=base+(seen[base]?'.'+seen[base]:''); seen[base]++;
+      map.set(el, ck); });
+    return function(el){ return map.get(el); }; })();
+`;
+// page.evaluate(string) evaluates an EXPRESSION, so a body with `return` needs a wrapper.
+const inPage = (body) => '(function(){' + SIG_HELPERS + body + '})()';
 
 /* ------------------------------------------------------------------ harness */
 
 const results = [];
 function record(name, ok, detail) { results.push({ name, ok, detail }); }
 
-async function withPage(fn, { initialEdits = {}, deriveEdits = null, version = null, headed = false } = {}) {
+async function withPage(fn, { initialEdits = {}, deriveEdits = null, deckOnReload = null, version = null, headed = false } = {}) {
   const browser = await chromium.launch({
     headless: !headed,
     executablePath: '/opt/pw-browsers/chromium/chrome-linux/chrome',
@@ -70,8 +93,12 @@ async function withPage(fn, { initialEdits = {}, deriveEdits = null, version = n
   // A REAL origin, not setContent(). With about:blank the page has an opaque origin, so
   // localStorage throws SecurityError AND every relative fetch fails — which made loadEdits()
   // bail to its catch on every test and handed back false passes for the guard tests.
+  // deckOnReload: a transform applied to the deck on every load AFTER the first — how a
+  // template push is simulated between "the edit was saved" and "the edit is replayed".
+  let loads = 0;
   await page.route('https://deck.test/deck/reiss', (route) => route.fulfill({
-    status: 200, contentType: 'text/html; charset=utf-8', body: composePage('reiss') }));
+    status: 200, contentType: 'text/html; charset=utf-8',
+    body: composePage('reiss', (++loads > 1 && deckOnReload) ? deckOnReload : null) }));
 
   await page.route('**/api/edits**', async (route) => {
     const req = route.request();
@@ -144,6 +171,22 @@ function syntaxCheck() {
     try { new Function(b); } catch (e) { throw new Error('block ' + (i + 1) + ': ' + e.message); }
   });
   return blocks.length + ' blocks parse';
+}
+
+/* Also static: the SERVED signature function must normalise whitespace. Written with a single
+ * backslash inside getEditorScript's template literal, \s cooks to a bare s and the served
+ * script collapses runs of the letter s instead — every stored sig and ck was computed that
+ * way until the fix, which is why the served script must ALSO keep the legacy twin around
+ * for replay. Both are asserted on the cooked output, not on worker.js source. */
+function sigFormCheck() {
+  const s = getEditorScript('reiss');
+  const fixed = "function sigOf(el){ return (el.textContent||'').replace(/\\s+/g,' ').trim().slice(0,120); }";
+  const legacy = "function sigLegacy(el){ return (el.textContent||'').replace(/s+/g,' ').trim().slice(0,120); }";
+  if (!s.includes(fixed)) throw new Error('served sigOf does not normalise whitespace (\\s cooked away in the template literal?)');
+  if (!s.includes(legacy)) throw new Error('served script lost sigLegacy — pre-fix saved edits would stop replaying');
+  if (!/sig===baseSig\[id\] \|\| sig===baseSigL\[id\]/.test(s)) throw new Error('replay no longer accepts the legacy signature form');
+  if (!/byCkey\[ck\] \|\| byCkeyL\[ck\]/.test(s)) throw new Error('content keys no longer resolve against the legacy hash');
+  return 'served sigOf uses /\\s+/, legacy twin kept for replay';
 }
 
 test('eids are assigned at load for read-only viewers', async (page) => {
@@ -348,6 +391,108 @@ test('C2: a saved edit whose content no longer exists is reported, not applied b
   },
 });
 
+/* ---- sigOf migration: the served signature collapsed runs of the letter s instead of
+ * whitespace until PR (this one). Every sig and ck in KV was computed with that form. The
+ * three cases below store LEGACY-form overlays against the real deck and assert they still
+ * replay through every path — positional key, content-key relocation, and a tombstone. */
+test('S1: overlays saved with legacy-form signatures and content keys still replay', async (page) => {
+  const r = await page.evaluate(() => {
+    var ids = JSON.parse(localStorage.getItem('__S1') || '{}');
+    var a = document.querySelector('[data-eid="' + ids.a + '"]');
+    return {
+      text: a ? a.innerHTML : null,
+      relocated: Array.prototype.filter.call(document.querySelectorAll('[data-eid]'),
+        function(e){ return e.innerHTML === 'LEGACY CK RELOCATED'; }).length,
+      tombstoned: !document.querySelector('[data-eid="' + ids.c + '"]'),
+      warn: (function(){ var w=document.querySelector('.de-warn'); return (w && !w.hidden && getComputedStyle(w).display!=='none') ? w.textContent : ''; })(),
+    };
+  });
+  if (r.text !== 'LEGACY SIG APPLIED') throw new Error('positional patch with a legacy sig was not applied (got ' + JSON.stringify(r.text) + ')');
+  if (r.relocated !== 1) throw new Error('legacy content key did not relocate the edit (landed ' + r.relocated + ' times)');
+  if (!r.tombstoned) throw new Error('legacy tombstone was not replayed');
+  if (/could not be replayed|content is gone/i.test(r.warn)) throw new Error('legacy overlays reported stale: ' + r.warn.slice(0, 160));
+  return 'positional + relocated + tombstone, all legacy-form';
+}, {
+  deriveEdits: async (page) => page.evaluate(inPage(`
+    // Leaf editable elements whose text contains an s — where the legacy and corrected forms
+    // DIFFER, so accepting the legacy form is actually exercised, not trivially equal.
+    var cands = Array.prototype.filter.call(document.querySelectorAll('[data-ck]'), function(el){
+      var id=el.getAttribute('data-eid');
+      return id && id!=='c1-e0' && !el.querySelector('[data-eid]')
+        && sigNew(el.textContent)!==sigLegacy(el.textContent); });
+    if (cands.length < 6) throw new Error('fixture: too few candidate elements (' + cands.length + ')');
+    var a=cands[Math.floor(cands.length/4)], b=cands[Math.floor(cands.length/2)], c=cands[Math.floor(cands.length*3/4)];
+    var out={};
+    // (a) positional key intact, legacy sig, no ck — the plain "still matches" path.
+    out[a.getAttribute('data-eid')] = { html:'LEGACY SIG APPLIED', sig:sigLegacy(a.textContent) };
+    // (b) wrong positional key + legacy sig + LEGACY content key — relocation via byCkeyL.
+    out['c1-e0'] = { html:'LEGACY CK RELOCATED', sig:sigLegacy(b.textContent), ck:legacyCkOf(b) };
+    // (c) a tombstone carrying the legacy sig of what it removed.
+    out[c.getAttribute('data-eid')] = { deleted:true, sig:sigLegacy(c.textContent) };
+    // Remember which elements so the assertion can find them after the reload (ids are
+    // positional and the deck is unchanged, so they resolve to the same elements).
+    localStorage.setItem('__S1', JSON.stringify({ a:a.getAttribute('data-eid'), c:c.getAttribute('data-eid') }));
+    return out;
+  `)),
+});
+
+// The whitespace case needs the SAME element's markup on both sides of the reload.
+let S2_HTML = null, S2_MUTATED = 0;
+test('S2: a whitespace-only template change no longer marks an edit stale', async (page) => {
+  if (S2_MUTATED !== 1) throw new Error('fixture: the reload did not serve a whitespace-altered template (' + S2_MUTATED + ')');
+  const r = await page.evaluate(() => ({
+    text: (function(){ var el=document.querySelector('[data-eid="c1-e1"]'); return el ? el.innerHTML : null; })(),
+    warn: (function(){ var w=document.querySelector('.de-warn'); return (w && !w.hidden && getComputedStyle(w).display!=='none') ? w.textContent : ''; })(),
+  }));
+  if (r.text !== 'WHITESPACE SURVIVOR') throw new Error('edit was not replayed after a whitespace-only template change (got ' + JSON.stringify(r.text) + ')');
+  if (/could not be replayed|text\/style edit/i.test(r.warn)) throw new Error('edit reported stale: ' + r.warn.slice(0, 160));
+  return 'replayed, no stale report';
+}, {
+  deriveEdits: async (page) => {
+    const d = await page.evaluate(inPage(`
+      var el=document.querySelector('[data-eid="c1-e1"]');
+      return { html: el.innerHTML, sig: sigNew(el.textContent), legacy: sigLegacy(el.textContent) };`));
+    if (!d.html.includes(' ')) throw new Error('fixture: c1-e1 has no space to break');
+    S2_HTML = d.html;
+    // Saved with the CORRECTED form, as every save now writes it.
+    return { 'c1-e1': { html: 'WHITESPACE SURVIVOR', sig: d.sig } };
+  },
+  deckOnReload: (deck) => {
+    // Move a line break into the paragraph — a reformat, not a content change. Under the
+    // legacy form this changed the signature (no whitespace normalisation) and the edit
+    // read as stale; under the corrected form it is the same text.
+    if (!S2_HTML || !deck.includes(S2_HTML)) { S2_MUTATED = -1; return deck; }
+    const broken = S2_HTML.replace(' ', '\n            ');
+    if (sigNew(broken) !== sigNew(S2_HTML) || sigLegacy(broken) === sigLegacy(S2_HTML)) { S2_MUTATED = -2; return deck; }
+    S2_MUTATED++;
+    return deck.replace(S2_HTML, broken);
+  },
+});
+
+test('S3: a new save writes the corrected signature and content key, never the legacy form', async (page, kv) => {
+  const before = await page.evaluate(inPage(`
+    var el=document.querySelector('[data-eid="c1-e1"]');
+    return { sig:sigNew(el.textContent), legacy:sigLegacy(el.textContent), ck:el.getAttribute('data-ck'),
+             ckNew:'k'+hashStr(el.tagName+'|'+sigNew(el.textContent)), ckLegacy:legacyCkOf(el) };`));
+  if (before.sig === before.legacy) throw new Error('fixture: c1-e1 text has no run of s — forms would not differ');
+  if (before.ck !== before.ckNew) throw new Error('data-ck is not the corrected-form hash: ' + before.ck + ' vs ' + before.ckNew);
+  if (before.ck === before.ckLegacy) throw new Error('data-ck still carries the legacy hash');
+  await page.evaluate(() => {
+    var b=Array.prototype.find.call(document.querySelectorAll('.de-bar button'),
+      function(x){ return /Edit/.test(x.textContent); });
+    if(b) b.click();
+    const el = document.querySelector('[data-eid="c1-e1"]');
+    el.focus(); el.textContent = 'S3 EDIT'; el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await sleep(page, 1800);
+  const saved = kv.store['c1-e1'];
+  if (!saved || saved.html !== 'S3 EDIT') throw new Error('edit never reached the server: ' + JSON.stringify(kv.store).slice(0, 200));
+  if (saved.sig !== before.sig) throw new Error('saved sig is not the corrected form: ' + JSON.stringify(saved.sig));
+  if (saved.sig === before.legacy) throw new Error('saved sig is the legacy form');
+  if (saved.ck !== before.ckNew) throw new Error('saved ck is not the corrected form: ' + saved.ck);
+  return 'sig + ck corrected-form';
+});
+
 /* --------------------------------------------------------------------- run */
 
 const args = process.argv.slice(2);
@@ -356,11 +501,13 @@ const onlyIx = args.indexOf('--only');
 const only = onlyIx >= 0 ? args[onlyIx + 1] : null;
 
 let pass = 0, fail = 0;
-try {
-  const d = syntaxCheck();
-  console.log('  ✓ served editor script parses  (%s)', d); pass++;
-} catch (e) {
-  console.log('  ✗ served editor script parses\n      %s', e.message); fail++;
+for (const [label, check] of [['served editor script parses', syntaxCheck], ['served sigOf normalises whitespace', sigFormCheck]]) {
+  try {
+    const d = check();
+    console.log('  ✓ %s  (%s)', label, d); pass++;
+  } catch (e) {
+    console.log('  ✗ %s\n      %s', label, e.message); fail++;
+  }
 }
 for (const t of TESTS) {
   if (only && !t.name.includes(only)) continue;
