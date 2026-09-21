@@ -74,6 +74,14 @@ const SIG_HELPERS = `
 `;
 // page.evaluate(string) evaluates an EXPRESSION, so a body with `return` needs a wrapper.
 const inPage = (body) => '(function(){' + SIG_HELPERS + body + '})()';
+// Every surface a staleness report can land on — the red banner, and (since PR #475) the
+// toolbar chip's detail card. The S cases assert NOTHING was reported stale, so they read both.
+const STALE_REPORT = `
+  var staleReport=function(){ var out=''; var w=document.querySelector('.de-warn');
+    if(w && !w.hidden && getComputedStyle(w).display!=='none') out+=w.textContent;
+    var p=document.querySelector('.de-stalepanel'); if(p) out+=' '+p.textContent;
+    var c=document.querySelector('.de-bar .de-stale'); if(c) out+=' '+c.textContent+' '+c.title;
+    return out; };`;
 
 /* ------------------------------------------------------------------ harness */
 
@@ -396,7 +404,7 @@ test('C2: a saved edit whose content no longer exists is reported, not applied b
  * three cases below store LEGACY-form overlays against the real deck and assert they still
  * replay through every path — positional key, content-key relocation, and a tombstone. */
 test('S1: overlays saved with legacy-form signatures and content keys still replay', async (page) => {
-  const r = await page.evaluate(() => {
+  const r = await page.evaluate('(function(){' + STALE_REPORT + `
     var ids = JSON.parse(localStorage.getItem('__S1') || '{}');
     var a = document.querySelector('[data-eid="' + ids.a + '"]');
     return {
@@ -404,9 +412,9 @@ test('S1: overlays saved with legacy-form signatures and content keys still repl
       relocated: Array.prototype.filter.call(document.querySelectorAll('[data-eid]'),
         function(e){ return e.innerHTML === 'LEGACY CK RELOCATED'; }).length,
       tombstoned: !document.querySelector('[data-eid="' + ids.c + '"]'),
-      warn: (function(){ var w=document.querySelector('.de-warn'); return (w && !w.hidden && getComputedStyle(w).display!=='none') ? w.textContent : ''; })(),
+      warn: staleReport(),
     };
-  });
+  })()`);
   if (r.text !== 'LEGACY SIG APPLIED') throw new Error('positional patch with a legacy sig was not applied (got ' + JSON.stringify(r.text) + ')');
   if (r.relocated !== 1) throw new Error('legacy content key did not relocate the edit (landed ' + r.relocated + ' times)');
   if (!r.tombstoned) throw new Error('legacy tombstone was not replayed');
@@ -440,10 +448,10 @@ test('S1: overlays saved with legacy-form signatures and content keys still repl
 let S2_HTML = null, S2_MUTATED = 0;
 test('S2: a whitespace-only template change no longer marks an edit stale', async (page) => {
   if (S2_MUTATED !== 1) throw new Error('fixture: the reload did not serve a whitespace-altered template (' + S2_MUTATED + ')');
-  const r = await page.evaluate(() => ({
-    text: (function(){ var el=document.querySelector('[data-eid="c1-e1"]'); return el ? el.innerHTML : null; })(),
-    warn: (function(){ var w=document.querySelector('.de-warn'); return (w && !w.hidden && getComputedStyle(w).display!=='none') ? w.textContent : ''; })(),
-  }));
+  const r = await page.evaluate('(function(){' + STALE_REPORT + `
+    var el=document.querySelector('[data-eid="c1-e1"]');
+    return { text: el ? el.innerHTML : null, warn: staleReport() };
+  })()`);
   if (r.text !== 'WHITESPACE SURVIVOR') throw new Error('edit was not replayed after a whitespace-only template change (got ' + JSON.stringify(r.text) + ')');
   if (/could not be replayed|text\/style edit/i.test(r.warn)) throw new Error('edit reported stale: ' + r.warn.slice(0, 160));
   return 'replayed, no stale report';
