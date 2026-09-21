@@ -217,6 +217,29 @@ is('P3 · 1 – 28 Nov', per('2026-11-01', '2026-11-28'), 5);
 is('the corrected / unconfirmed dates carry their reason', ACC.filter((e) => e.note).map((e) => e.id).sort(),
   ['acc_country', 'acc_halloween', 'acc_sparkle', 'acc_xmaslaunch']);
 
+// ---------- YuMOVE: a PRICING calendar, not a product one ----------
+const YM = seedApi.YuMOVE && seedApi.YuMOVE.events;
+is('YuMOVE is seeded', Array.isArray(YM), true);
+is('seven moments across the promo window', YM.length, 7);
+is('ids unique and brand-prefixed', new Set(YM.map((e) => e.id)).size === 7 && YM.every((e) => e.id.startsWith('ym_')), true);
+is('every moment carries keyword themes', YM.every((e) => Array.isArray(e.terms) && e.terms.length), true);
+is('every moment has a real ISO date', YM.every((e) => /^\d{4}-\d{2}-\d{2}$/.test(e.date)), true);
+// discount mechanics apply to the whole catalogue, so every one of these is a brand-wide window
+// — a scoped sale moment would ask the AM to set a product scope that does not exist
+is('every moment is brand-wide', YM.every((e) => e.brandwide === 1), true);
+is('every moment is on the sale lane', YM.every((e) => e.lane === 'sale'), true);
+is('the window runs 16 Nov – 1 Dec 2026',
+  [YM.map((e) => e.date).sort()[0], YM.map((e) => e.date).sort().slice(-1)[0]], ['2026-11-16', '2026-12-01']);
+// the source sheet prints two "30th Nov" columns; 30 Nov 2026 is the Monday, so the Sunday
+// column is the 29th. The corrected moment must SAY it was corrected.
+is('no moment sits on the sheet’s duplicated 30 Nov Sunday', YM.some((e) => e.date === '2026-11-29'), true);
+is('…and it carries the correction on the card', /30 Nov 2026 is the Monday/.test((YM.find((e) => e.date === '2026-11-29') || {}).note || ''), true);
+// the PDP default flip is a FEED fact (which price the page leads with), not just site wording
+const flips = YM.filter((e) => /DEFAULT PDP OPTION FLIPS/.test(e.note || ''));
+is('both PDP-default flips are called out', flips.map((e) => e.date).sort(), ['2026-11-27', '2026-12-01']);
+// an inferred band start must never read as a confirmed date
+is('the inferred band starts say so', YM.filter((e) => /read off the chart/.test(e.note || '')).length >= 2, true);
+
 // ---------- the mis-file repair ----------
 /* importEvents used to honour the JSON's own "client" only when that brand already had a record,
  * so a calendar for a brand the board had never stored filed itself into whatever was ON SCREEN.
