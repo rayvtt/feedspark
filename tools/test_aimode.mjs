@@ -218,7 +218,7 @@ console.log('\n  the page still uses it');
 ok(/function aimInfo\(\)/.test(src), 'aimInfo() — the page\'s entry into the engine');
 ok(/aim:aq,aimOne:aimOne,aimMon:aimMon/.test(src), 'totals() carries the AI Mode figures');
 ok(/data-tp="aim"/.test(src), 'the card is wired to the AI Mode quote type');
-ok(/\['aim','AI Mode attributes'/.test(src), 'and the type is offered in "What are you quoting?"');
+ok(/\['aim','Spark AI'/.test(src), 'and the type is offered in "What are you quoting?" as Spark AI');
 ok(/function aimPerMonth\(\)/.test(src) && /updExpected\(\)/.test(src),
   'new products a month come from the Monthly update card, not a second newness step');
 /* Ray, 18 Sep 2026: "why don't you bring the new product volume arrival bar chart that looks
@@ -262,7 +262,7 @@ ok(/t\.x&&t\.x\.length/.test(ln), '…the system / feed / retainer lines');
 ok(/t\.aim&&t\.aim\.lines/.test(ln), '…every routed AI Mode attribute');
 ok(/t\.upd\?1:0/.test(ln), '…and the monthly new-product bundle');
 ok(!/if\(!t\.inc&&!t\.x\.length\)/.test(src), 'the old two-type guard is gone');
-ok(/route an AI Mode attribute to a data source/.test(src) && /new-product bundle/.test(src),
+ok(/route a Spark AI attribute to a data source/.test(src) && /new-product bundle/.test(src),
   'and the refusal on a genuinely empty quote names every way to fill it');
 
 /* ---------- 12. Ray, same message: "also allows all text can be edited please" ---------- */
@@ -334,6 +334,61 @@ ok(/\.aim-r\[hidden\],\.qs-r\[hidden\]\{display:none\}/.test(src),
    disagreeing with the line under it is how a quote gets argued about in front of a client. */
 ok(/updKpi\(st\.forecast\?fmt\(st\.forecast\.month\):'—','Run-rate \/ month'\)/.test(src),
   'the Monthly update KPI reads the forecast, not a second average of its own');
+
+/* ---------- 17. Ray, 21 Sep 2026: the section is Spark AI ---------- */
+console.log('\n  the section is called Spark AI');
+ok(/<h3>Spark AI &mdash; priced by data source<\/h3>/.test(src), 'the card heading');
+ok(!/AI Mode/.test(src), 'and nothing on the page still says "AI Mode"');
+/* the KEY is untouched - a saved quote carries types.aim and q.aim, so renaming the label must
+   never rename the record, or every quote finance already signed off would read as empty */
+ok(/\['aim','Spark AI'/.test(src) && /data-tp="aim"/.test(src) && /typesRec\(\)\.aim/.test(src),
+  'the record key stays `aim`, so every saved quote still reads');
+
+/* ---------- 18. the arrival cohort ---------- */
+/* Ray: "within the charge per product ID, allow selection - for example, if clients only want to
+   optimize for new collections ... based on date of birth ... any product that arrives after
+   August 2026." */
+console.log('\n  and it generates for the cohort you pick');
+ok(/AIQUOTE-COHORT/.test(src), 'the cohort is one named, documented block');
+ok(/rowsM:dRowM,parsM:dParM,ptM:dPtM/.test(src),
+  'the pull buckets first-seen dates by MONTH - rows, parents and per product type');
+ok(/function aimYm\(ms\)/.test(src), 'with one month key, so a cutoff is a string compare and never a timezone');
+ok(/function aimCoSeries\(\)/.test(src) && /function aimCoMonths\(\)/.test(src) && /function aimCohort\(\)/.test(src),
+  'ONE pass builds the months, the options and the selected count');
+ok(/id="aim-since"/.test(src), 'the control is on the card');
+ok(/function aimCoWhy\(\)/.test(src) && /carries no first-seen date column/.test(src),
+  'and says why it cannot be offered rather than sitting dead');
+
+/* THE RULE THAT KEEPS THE QUOTE HONEST: a cohort narrows what is generated ONCE, never the
+   monthly flow - every product that arrives next month is in the cohort by definition, so
+   scaling the ongoing figure down by the cohort's share would undercharge the part of the
+   service that never ends. */
+ok(/function aimUnits\(\)\{ var c=aimCohort\(\); return c\?c\.units:aimScopeUnits\(\); \}/.test(src),
+  'the ONE-OFF range is the cohort');
+ok(/function aimScopeUnits\(\)/.test(src), 'the product-type scope is its own count');
+/* pinned on the declaration line rather than by brace-matching the body: `u` is the one figure
+   the whole monthly read is built from, and it must be the SCOPE count */
+ok(/function aimPerMonth\(\)\{\s*\n\s*var buf=[^\n]*u=aimScopeUnits\(\)/.test(src),
+  'and the PER-MONTH figure reads the scope, never the cohort');
+ok(/nn=aimNewness\(u,aimPct\(\),aimRate\('buffer'\)\)/.test(src),
+  '…including the newness fallback, which is fed the same scope figure');
+
+/* an undated product cannot be shown to have arrived after the cutoff */
+ok(/undated:Math\.max\(0,s\.scope-s\.dated\)/.test(src), 'undated products are counted out');
+ok(/carry no first-seen date and are left out/.test(src), '…and the card says how many');
+ok(/per-month figure below is untouched/.test(src), 'the hint states the monthly rule on screen');
+
+/* a selection made on the whole catalogue must survive narrowing the product-type scope */
+ok(/months\.push\(\{ym:since,n:0,cum:\(c\?c\.units:0\)\}\)/.test(src),
+  'a month the current scope cannot reach is still shown, reading 0, rather than silently cleared');
+
+/* it changes what the client is buying, so it leaves the page with every figure */
+ok(/since:t\.aim\.since\|\|null/.test(src), 'the snapshot records it');
+ok(/r\.aim\.since=\(typeof q\.aim\.since==='string'\)/.test(src), '…and ✎ Edit restores it');
+ok((src.match(/Generated for products that arrived since/g) || []).length >= 2,
+  'the copy text, the client email and the brief all name the cohort');
+ok(/Spark AI cohort: generated for products that arrived since/.test(src),
+  'and so does the finance workbook, where the quantity alone would not say which products');
 
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);
