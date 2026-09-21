@@ -968,6 +968,16 @@ eq(HC(13.5), '13.50', 'a footer sum is fixed the same way as the rows above it')
 // ---------------------------------------------------------------------------------------------
 console.log('── pane filter + totals footer (lifted from the page)');
 const PG = fs.readFileSync(PAGE, 'utf8');
+// the column arrays are `var NAME = [ … ];` — lifted whole so the footer tests read the SAME
+// list the table's own header does
+function liftArr(name) {
+  const re = new RegExp('^  var ' + name + ' = \\[', 'm');
+  const m = re.exec(PG);
+  if (!m) throw new Error('page: ' + name + ' array not found');
+  const end = PG.indexOf('];', m.index);
+  if (end < 0) throw new Error(name + ': no end');
+  return PG.slice(m.index, end + 2);
+}
 function liftPageSrc(name) {
   const re = new RegExp('^  (?:var ' + name + ' = \\{|function ' + name + '\\()', 'm');
   const m = re.exec(PG);
@@ -983,8 +993,10 @@ const PANE = new Function('CAT_LABEL', 'num', 'hrs', 'hrsCell', 'esc', 'SHOW',
   + liftPageSrc('mergeCommaRuns') + '\n' + liftPageSrc('splitAlts') + '\n'
   + liftPageSrc('orTerms') + '\n' + liftPageSrc('setPQ') + '\n'
   + liftPageSrc('pqHay') + '\n' + liftPageSrc('pqMatch') + '\n'
-  + liftPageSrc('FOOT') + '\n' + liftPageSrc('footHtml') + '\n'
-  + 'return { setPQ: setPQ, pqMatch: pqMatch, footHtml: footHtml, FOOT: FOOT };'
+  + liftArr('TASK_COLS') + '\n' + liftArr('TK_COLS') + '\n' + liftArr('AC_COLS') + '\n'
+  + liftPageSrc('FOOT') + '\n' + liftPageSrc('colIdx') + '\n' + liftPageSrc('footHtml') + '\n'
+  + 'return { setPQ: setPQ, pqMatch: pqMatch, footHtml: footHtml, FOOT: FOOT, colIdx: colIdx,'
+  + ' COLS: { tasks: TASK_COLS, tickets: TK_COLS, accounts: AC_COLS } };'
 )(M.CAT_LABEL,
   (n) => String(n),
   (n) => String(Math.round((Number(n) || 0) * 100) / 100),
@@ -1019,19 +1031,19 @@ ok(PANE.pqMatch('accounts', prow({ client: 'x', name: 'Israel - GB' })), 'and so
 PANE.setPQ('');
 const many = [];
 for (let i = 0; i < 220; i++) many.push(prow({ bill: 1, nonbill: 0.25, hours: 1.25 }));
-const capped = PANE.footHtml('tasks', many, new Array(9).fill({}), true);
+const capped = PANE.footHtml('tasks', many, PANE.COLS.tasks, true);
 ok(capped.indexOf('>275<') >= 0, 'the TOTAL column sums all 220 rows (275 h), not the 200 painted');
 ok(capped.indexOf('>220<') >= 0 && capped.indexOf('>55<') >= 0,
   'billable (220 h) and non-billable (55 h) are totalled SEPARATELY and never merged');
 ok(/totalled in full, not just the 200 shown/.test(capped),
   'and the row says so, because a total beside a shorter list is otherwise ambiguous');
-ok(!/totalled in full/.test(PANE.footHtml('tasks', many.slice(0, 10), new Array(9).fill({}), false)),
+ok(!/totalled in full/.test(PANE.footHtml('tasks', many.slice(0, 10), PANE.COLS.tasks, false)),
   'an uncapped list does not carry that caveat');
-eq(PANE.footHtml('tasks', [], new Array(9).fill({}), false), '',
+eq(PANE.footHtml('tasks', [], PANE.COLS.tasks, false), '',
   'no rows means no totals row at all — a row of zeroes would read as a finding');
 
 PANE.setPQ('gmc');
-ok(/matching/.test(PANE.footHtml('tasks', many.slice(0, 4), new Array(9).fill({}), false)),
+ok(/matching/.test(PANE.footHtml('tasks', many.slice(0, 4), PANE.COLS.tasks, false)),
   'when a filter is on, the label names it');
 PANE.setPQ('');
 
@@ -1723,6 +1735,77 @@ ok(/if \(Math\.abs\(r\.width - r\.height\) < 3\) return;/.test(MOB),
   'a square control is an icon button — its size is its glyph, not the text scale');
 ok(/Measured on the DESKTOP pass only/.test(MOB),
   'and it measures desktop only: under 760px the phone layer\'s 36px tap-target rule governs');
+
+console.log('\n── a total sits under its own column (Ray, 21 Sep 2026: "total row is not in line with rest")');
+/* The footer carried each total's column as a HARD-CODED INDEX. When the Tag column was inserted
+   at position 4 by the tagging system, nothing tied the two facts together, so every tasks total
+   moved one column left: 216.00 printed under Status, 54.00 under Billable, 270.00 under
+   Non-bill, and Total got an empty cell. Arithmetic right, every number under the wrong heading.
+
+   These assertions test the STRUCTURE, not today's numbers — the old footer tests passed
+   `new Array(9).fill({})` as the column list, a list with no column NAMES in it, which is exactly
+   why a shifted footer could ship green. They now read the table's own arrays. */
+const SLOTS = (html) => {
+  // expand colspans so a slot index is a real column index
+  const cells = [...html.matchAll(/<td([^>]*)>([\s\S]*?)<\/td>/g)];
+  const out = [];
+  cells.forEach(([, attrs, inner]) => {
+    const cs = /colspan="(\d+)"/.exec(attrs);
+    const n = cs ? +cs[1] : 1;
+    for (let i = 0; i < n; i++) out.push(i === 0 ? inner.replace(/<[^>]+>/g, '').trim() : '');
+  });
+  return out;
+};
+const FROWS = [{ bill: 1.5, nonbill: 0.5, hours: 2, tasks: 3, allowance: 10, used: 4, balance: 6 },
+  { bill: 2.5, nonbill: 1.5, hours: 4, tasks: 1, allowance: 20, used: 6, balance: 14 }];
+
+['tasks', 'tickets', 'accounts'].forEach((tab) => {
+  const cols = PANE.COLS[tab];
+  // 1. every total names a column this table actually has
+  PANE.FOOT[tab].forEach((f) => {
+    ok(PANE.colIdx(cols, f.k) >= 0,
+      tab + ': the "' + f.k + '" total names a real column — a key the header does not carry is a '
+      + 'total with nowhere to sit');
+  });
+  const html = PANE.footHtml(tab, FROWS, cols, false);
+  const slots = SLOTS(html);
+  // 2. the footer occupies exactly as many columns as the table has
+  eq(slots.length, cols.length,
+    tab + ': the footer spans exactly ' + cols.length + ' columns — one short and every total '
+    + 'after it slides left, which is the bug Ray ringed');
+  // 3. and each total sits at the index of the column with the SAME key
+  PANE.FOOT[tab].forEach((f) => {
+    const i = PANE.colIdx(cols, f.k);
+    ok(slots[i] !== '' && /[\d]/.test(slots[i]),
+      tab + ': the "' + f.k + '" total lands in the "' + cols[i].l + '" column (slot ' + i + '), '
+      + 'not one to its left');
+  });
+  // 4. nothing numeric leaks into a column that has no total
+  cols.forEach((c, i) => {
+    if (PANE.FOOT[tab].some((f) => f.k === c.k)) return;
+    if (i < PANE.colIdx(cols, PANE.FOOT[tab].map((f) => f.k).reduce((a2, k) => (PANE.colIdx(cols, k) < PANE.colIdx(cols, a2) ? k : a2)))) return;  // inside the label span
+    eq(slots[i], '', tab + ': "' + c.l + '" totals nothing, so its footer cell stays empty');
+  });
+});
+
+/* The regression, stated as a RULE rather than today's column numbers — "Billable is the eighth
+   column" would fail the next time somebody legitimately adds a column, which is the very change
+   this fix exists to make safe. What is actually true is that the totalled columns are the last
+   ones, and that the footer agrees with the header about where they are. */
+eq(PANE.FOOT.tasks.map((f) => PANE.colIdx(PANE.COLS.tasks, f.k)),
+  [PANE.COLS.tasks.length - 3, PANE.COLS.tasks.length - 2, PANE.COLS.tasks.length - 1],
+  'the three hour totals are the last three tasks columns, wherever the columns before them move');
+PANE.FOOT.tasks.forEach((f) => {
+  eq(PANE.colIdx(PANE.COLS.tasks, f.k), PANE.COLS.tasks.findIndex((c) => c.k === f.k),
+    '"' + f.k + '": the footer and the header resolve the same column, which is the whole fix');
+});
+ok(PANE.FOOT.tasks.every((f) => f.i === undefined),
+  'no total carries a hard-coded index any more: the column is resolved BY KEY from the table\'s '
+  + 'own list, so a column inserted anywhere can never desync the footer again');
+eq(PANE.colIdx(PANE.COLS.tasks, 'nope'), -1, 'an unknown key resolves to -1 rather than column 0');
+eq(PANE.footHtml('tasks', FROWS, [{ k: 'a', l: 'A' }], false), '',
+  'and a table carrying none of the totalled columns prints no footer at all, rather than one '
+  + 'whose numbers sit under whatever happens to be there');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

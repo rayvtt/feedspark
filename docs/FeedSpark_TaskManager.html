@@ -3518,17 +3518,38 @@ window.addEventListener('load',restore);
   }
   // which columns a tab can honestly add up. Summing "Age" across tickets would be arithmetic on
   // a number that means nothing added together, so those columns simply have no total.
+  /* A TOTAL SITS UNDER ITS OWN COLUMN (Ray, 21 Sep 2026, ringing the Tasks footer: "total row is
+     not in line with rest").
+
+     It had carried each total's column as a HARD-CODED INDEX, and the Tag column was inserted at
+     position 4 when the tagging system shipped. Nothing pointed at the two facts to keep them in
+     step, so every tasks total moved one column left — 9.50 printed under Status, 2.00 under
+     Billable, 11.50 under Non-bill, and Total got an empty cell. Arithmetic all correct; every
+     number under the wrong heading, which is worse than no footer.
+
+     So the column is resolved BY KEY from the table's own column list. The footer and the header
+     now read the SAME array, and a column inserted anywhere can never desync them again — the
+     class of bug this was, not just the instance. */
   var FOOT = {
-    tasks: [{ i: 6, k: 'bill', c: 'var(--bil)' }, { i: 7, k: 'nonbill', c: 'var(--nbil)' }, { i: 8, k: 'hours', b: 1 }],
-    tickets: [{ i: 7, k: 'tasks', n: 1 }, { i: 8, k: 'hours', b: 1 }],
-    accounts: [{ i: 5, k: 'allowance' }, { i: 6, k: 'used' }, { i: 7, k: 'balance', b: 1 }]
+    tasks: [{ k: 'bill', c: 'var(--bil)' }, { k: 'nonbill', c: 'var(--nbil)' }, { k: 'hours', b: 1 }],
+    tickets: [{ k: 'tasks', n: 1 }, { k: 'hours', b: 1 }],
+    accounts: [{ k: 'allowance' }, { k: 'used' }, { k: 'balance', b: 1 }]
   };
+  function colIdx(cols, k) {
+    for (var i = 0; i < cols.length; i++) if (cols[i].k === k) return i;
+    return -1;
+  }
   function footHtml(tab, rows, cols, capped) {
     var spec = FOOT[tab]; if (!spec || !rows.length) return '';
-    var sum = {}, byIdx = {};
-    spec.forEach(function (f) { sum[f.k] = 0; byIdx[f.i] = f; });
-    rows.forEach(function (r) { spec.forEach(function (f) { sum[f.k] += (Number(r[f.k]) || 0); }); });
-    var first = spec[0].i;                       // the label spans everything before the first total
+    var sum = {}, byIdx = {}, first = cols.length;
+    spec.forEach(function (f) {
+      var i = colIdx(cols, f.k);
+      if (i < 0) return;                         // a total for a column this table does not show
+      sum[f.k] = 0; byIdx[i] = f;
+      if (i < first) first = i;                  // the label spans everything before the FIRST total
+    });
+    if (first >= cols.length) return '';
+    rows.forEach(function (r) { spec.forEach(function (f) { if (sum[f.k] != null) sum[f.k] += (Number(r[f.k]) || 0); }); });
     var lbl = num(rows.length) + (rows.length === 1 ? ' row' : ' rows')
       + (PQT.length ? ' matching \u201c' + esc(PQ) + '\u201d' : '')
       + (capped ? ' \u2014 totalled in full, not just the ' + num(SHOW) + ' shown' : '');
