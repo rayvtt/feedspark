@@ -436,6 +436,36 @@ chart can never name the same colour differently; with the legend on the chart, 
 labels stand down (the same names twice is clutter) and when they are drawn, two lines finishing
 together are pushed apart rather than printed on top of each other.
 
+### A total sits under its own column
+
+> Ray, 21 Sep 2026, ringing the Tasks footer: *"total row is not in line with rest"*
+
+The totals row carried each total's column as a **hard-coded index**. The `Tag` column was inserted
+at position 4 when the tagging system shipped, and nothing tied the two facts together — so every
+Tasks total moved one column left:
+
+| | Billable | Non-bill | Total |
+|---|---|---|---|
+| **was** | 54.00 | 270.00 | *(empty)* |
+| | *…and 216.00 printed under **Status*** | | |
+| **now** | 216.00 | 54.00 | 270.00 |
+
+The arithmetic was right the whole time; every number was under the wrong heading, which is worse
+than no footer. Tickets and Accounts were unaffected — their indices happened to still be correct —
+which is why it only ever showed on one tab.
+
+The column is now resolved **by key** from the table's own column list, so the footer and the
+header read the same array and a column inserted anywhere can never desync them again. That is the
+class of bug, not just the instance.
+
+The old footer tests passed `new Array(9).fill({})` as the column list — a list with no column
+*names* in it — which is precisely why a shifted footer could ship green. They now read the real
+arrays and assert the structure: every total names a column the table has, the footer spans exactly
+as many columns as the table, each total lands at the index of the column with the same key, and a
+column that totals nothing keeps an empty cell. The positional check is stated as a rule ("the
+hour totals are the last three columns, wherever the columns before them move") rather than
+today's numbers, so the next legitimate column does not fail CI for no reason.
+
 ### Side by side, expanded
 
 > Ray, 18 Sep 2026: *"when our side by side donut chart, clicking on any chart will expand it as

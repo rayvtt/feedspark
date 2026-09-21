@@ -8624,6 +8624,18 @@
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "$('#fresh').addEventListener('click'",
       "pr": 468
+    },
+    {
+      "name": "Task Manager: a totals footer resolves its column BY KEY, never a hard-coded index (Ray, 21 Sep 2026: 'total row is not in line with rest')",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function colIdx(cols, k)",
+      "min": 1
+    },
+    {
+      "name": "Task Manager: the footer label spans everything before the FIRST total, computed not assumed",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "if (i < first) first = i;",
+      "min": 1
     }
   ]
 }
