@@ -8538,6 +8538,31 @@
       "name": "Golden Record HTML tripwire: the section boxes carry the pop-up's own titles",
       "file": "tools/check_grhtml.js",
       "pattern": "titled as its pop-up is"
+    },
+    {
+      "name": "AI Quote: the AI feed generation type button is gone — kept only as a legacy button while a record carries types.ai",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "TYPES.concat(ty.ai?[TYPE_LEGACY_AI]:[])",
+      "pr": 467
+    },
+    {
+      "name": "AI Quote: the picker never offers AI feed generation as a fresh type",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "['ai','AI feed generation','Tachyon fields on the live feed']",
+      "pr": 467,
+      "forbidden": true
+    },
+    {
+      "name": "AI Quote: a fresh record opens on Spark AI",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "r.types={aim:true}; migrateLia(r)",
+      "pr": 467
+    },
+    {
+      "name": "AI Quote: the scope card and the Monthly update bundle ride Spark AI (multi-type data-tp)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "id=\"upd-card\" data-tp=\"ai aim\"",
+      "pr": 467
     }
   ]
 }

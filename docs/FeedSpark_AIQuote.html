@@ -391,6 +391,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   .qs-r{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:5px 0;border-top:1px solid var(--wash);font-size:12.5px;font-weight:700;color:var(--ink-2);min-width:0}
   .qs-h+.qs-r{border-top:0}
   /* monthly update — new products (bundle card) */
+  .types .tp.legacy{border-style:dashed;opacity:.85}
   .upd-on{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:10px;cursor:pointer}
   .upd-fc{border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--wash);margin-bottom:10px;font-size:12.5px;font-weight:700;color:var(--ink-2)}
   .upd-fl{font-size:10.5px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:3px}
@@ -724,7 +725,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
 <header class="hero"><div class="wrap">
   <div class="eyebrow">Private &amp; Confidential · Quote generator</div>
   <h1>Quote generator</h1>
-  <p class="sub">Scope an <b>AI field-generation</b> engagement off the client's <b>live feed</b>. The six Google <b>conversational attributes</b> sit on top; below them is the full <b>Tachyon optimisation catalogue</b> (titles, descriptions, highlights, keywords, attributes, GPC/PT) — the same library as the Pricer, grouped and collapsible. Tick what you're proposing, and each is priced at its rate × the <b>variant SKUs</b> in scope (every SKU row in the live feed — the product scope is always counted at SKU level) or as a one-off charge for the line. Volumes are live; the £ rates seed from the catalogue and are yours to change.</p>
+  <p class="sub">Quote an engagement off the client's <b>live feed</b>. <b>Spark AI</b> prices the six Google <b>conversational attributes</b> plus product highlights by where each field's data comes from — master feed, scrape, Tachyon AI or a FeedHero rule — on the <b>product-type scope</b> you set; the <b>Monthly update</b> bundle keeps every new product covered the month it lands. Systems, feeds and retainer hours sit alongside. Volumes are live; every £ is a rate on the shared rate card and yours to change.</p>
   <div class="ctl">
     <label for="brand">Client</label>
     <select id="brand" aria-label="Choose a client"></select>
@@ -766,7 +767,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     <div id="ret-body"></div>
   </div>
 
-  <div class="card" id="scope-card" data-tp="ai">
+  <div class="card" id="scope-card" data-tp="ai aim">
     <h3>Product scope</h3>
     <div class="ch">The base volume every ticked field is quoted against — counted in <b>variant SKUs</b> (every SKU row in the live feed — the product scope is always SKU level). Pick a headline number, choose exact product types from the live feed, or cover the whole catalogue. Each field can be overridden below.</div>
     <div class="scope-row">
@@ -786,7 +787,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     <div id="qgroups"></div>
   </div>
 
-  <div class="card" id="upd-card" data-tp="ai">
+  <div class="card" id="upd-card" data-tp="ai aim">
     <h3>Monthly update — new products</h3>
     <div class="ch"><b>Key message:</b> every new product is updated the month it lands — no waiting for a quarterly catch-up. Priced as a monthly bundle by expected new SKUs per month (minimum £100 a month), sized from the feed's own arrivals history so the forecast pulls straight into the quote.</div>
     <div id="upd-body"></div>
@@ -1843,15 +1844,23 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   });
   document.addEventListener('toggle',function(e){ if(e.target&&e.target.classList&&e.target.classList.contains('aim-rates'))AIM_OPEN=e.target.open; },true);
 
-  var TYPES=[['ai','AI feed generation','Tachyon fields on the live feed'],
-             ['sys','New system','Per market per month — FeedHero dashboard'],
+  /* THE AI FEED GENERATION BUTTON IS GONE (Ray, 21 Sep 2026: "remove AI feed generation Quoting
+     button -- we have Spark AI now"). The per-SKU Tachyon field catalogue was the original module;
+     Spark AI is the AI quote now. The type itself survives as LEGACY so nothing already saved goes
+     dark: a client record or a ✎ Edit'd snapshot that carries types.ai still shows its fields card
+     and gets the button back — labelled legacy — until it is unticked, after which it never returns.
+     The product-type scope card and the Monthly update bundle used to ride the ai type; both now show
+     for Spark AI too (data-tp lists every type a card belongs to), since Spark AI prices on the same
+     scope and Ray asked on the 17th for the new-products view to be the one that stays. */
+  var TYPES=[['sys','New system','Per market per month — FeedHero dashboard'],
              ['feed','New feed','Per feed per month — generic, bespoke, LIA'],
              ['ret','Retainer hours','One-off or monthly, at the day rate'],
              ['aim','Spark AI','Conversational six, priced by data source']];
+  var TYPE_LEGACY_AI=['ai','AI feed generation','Legacy — per-SKU Tachyon fields, superseded by Spark AI'];
   var RATE_DEFAULT={sys:500,feed:150,lia:250};
   function rateOf(k){ var rc=STORE[RCKEY]||{}; var v=rc.rates&&rc.rates[k]; return (v!=null&&v!==''&&isFinite(+v))?+v:RATE_DEFAULT[k]; }
   function setRate(k,v){ var rc=STORE[RCKEY]||(STORE[RCKEY]={fields:{}}); rc.rates=rc.rates||{}; rc.rates[k]=(v===''||v==null)?null:+v; rc.updated=Date.now(); }
-  function typesRec(){ var r=rec(); if(!r.types||typeof r.types!=='object')r.types={ai:true}; migrateLia(r); return r.types; }
+  function typesRec(){ var r=rec(); if(!r.types||typeof r.types!=='object')r.types={aim:true}; migrateLia(r); return r.types; }   // a fresh record opens on Spark AI
   function typeOn(k){ return !!typesRec()[k]; }
   function sysRec(){ var r=rec(); if(!r.sys||typeof r.sys!=='object')r.sys={mkts:{},extra:[],note:''}; r.sys.mkts=r.sys.mkts||{}; if(!Array.isArray(r.sys.extra))r.sys.extra=[]; return r.sys; }
   function feedsRec(){ var r=rec(); migrateLia(r); if(!Array.isArray(r.feeds))r.feeds=[]; return r.feeds; }
@@ -1917,9 +1926,10 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     var p=[]; if(n.sys)p.push(n.sys+' system'+(n.sys===1?'':'s')); if(n.feed)p.push(n.feed+' feed'+(n.feed===1?'':'s')); if(n.tbc)p.push(n.tbc+' bespoke feed'+(n.tbc===1?'':'s')+' (ASPL)'); if(n.lia)p.push(n.lia+' local inventory feed'+(n.lia===1?'':'s')); if(ret.length)p.push('retainer '+ret.join(' + '));
     if(preH)p.push('setup '+preH+'h'); if(preR)p.push('setup '+preR+'h from the retainer'); return p.join(' · '); }
   // ---- the picker + the section cards ----
-  function renderTypes(){ var ty=typesRec();
-    $('#types').innerHTML=TYPES.map(function(x){ return '<button type="button" class="qp tp'+(ty[x[0]]?' on':'')+'" data-tp="'+x[0]+'" aria-pressed="'+(ty[x[0]]?'true':'false')+'"><span>'+(ty[x[0]]?'✓ ':'')+esc(x[1])+'</span><small>'+esc(x[2])+'</small></button>'; }).join('');
-    document.querySelectorAll('.card[data-tp]').forEach(function(c){ c.hidden=!ty[c.getAttribute('data-tp')]; }); }
+  function renderTypes(){ var ty=typesRec(), list=TYPES.concat(ty.ai?[TYPE_LEGACY_AI]:[]);
+    $('#types').innerHTML=list.map(function(x){ return '<button type="button" class="qp tp'+(ty[x[0]]?' on':'')+(x[0]==='ai'?' legacy':'')+'" data-tp="'+x[0]+'" aria-pressed="'+(ty[x[0]]?'true':'false')+'"><span>'+(ty[x[0]]?'✓ ':'')+esc(x[1])+'</span><small>'+esc(x[2])+'</small></button>'; }).join('');
+    // a card lists every type it belongs to ("ai aim"): shown while ANY of them is on
+    document.querySelectorAll('.card[data-tp]').forEach(function(c){ c.hidden=!c.getAttribute('data-tp').split(/\s+/).some(function(k){ return !!ty[k]; }); }); }
   function chipRow(o,key){ return '<div class="xm-row">'+mktsAll(o).map(function(m){ return '<button type="button" class="qp xm'+(o.mkts[m]?' on':'')+'" data-xm="'+key+'" data-m="'+esc(m)+'">'+esc(m.toUpperCase())+'</button>'; }).join('')
       +'<input type="text" class="xm-new" data-xmnew="'+key+'" placeholder="+ add" maxlength="8" title="Another market — type its code (e.g. ch) and press Enter"></div>'; }
   function dscLbl(id){ return discScope()==='lines'?'<span class="dsl">'+esc(String(id).split(':')[1]||'').toUpperCase()+'</span>':''; }
@@ -2093,7 +2103,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     S1('#qs-mondisc',t.disc>0?(t.monDiscBase>0?'−'+money(t.monDisc):discNil('monthly',t)):'—');
     S1('#qs-mongross',money(t.monGross)+' <span class="per">/ month</span>');
     var aimN=(t.aim&&t.aim.lines.length)?(t.aim.counts.feed+t.aim.counts.scrape+t.aim.counts.ai+t.aim.counts.fh):0;
-    $('#kpis').innerHTML=kpi(fmt(baseVol()),'SKUs in scope')+kpi(t.inc+' / '+CAT.length,'Fields selected')+kpi(fmt(t.tp),'SKUs quoted')
+    $('#kpis').innerHTML=kpi(fmt(baseVol()),'SKUs in scope')+(typeOn('ai')?kpi(t.inc+' / '+CAT.length,'Fields selected')+kpi(fmt(t.tp),'SKUs quoted'):'')
       +(aimN?kpi(aimN+' / '+AIM_ATTRS.length,'Spark AI attributes'):'')
       +(SHOWP?(kpi(t.miss?'—':money(t.gross),'Initial one-off'+(t.miss?' (set rates)':(vatOn()?' inc VAT':'')))+kpi(money(t.monGross)+'<span class="kpu"> / mo</span>','Ongoing monthly'+(vatOn()?' inc VAT':''))):kpi('£ hidden','Quote (tap £ Show)'));
     $('#scope-sum').innerHTML=scopeSummary();

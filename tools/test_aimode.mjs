@@ -517,5 +517,23 @@ ok(/\.qs-r\.tot\{flex-wrap:wrap\} \.qs-r\.tot>b\{margin-left:auto\}/.test(src),
   '…and a wide total drops onto its own line instead of overlapping its nowrap label');
 ok(/#upd-card \.pt-act\{/.test(src), 'the bundle card\'s own small buttons are styled (.pt-act was scoped to the PT picker)');
 
+/* ---------- THE AI FEED GENERATION BUTTON IS GONE (Ray, 21 Sep 2026: "remove AI feed generation
+   Quoting button -- we have Spark AI now") ---------- */
+console.log('\nthe AI feed generation button is gone; Spark AI is the AI quote');
+ok(!/\['ai','AI feed generation','Tachyon fields on the live feed'\]/.test(src), 'the picker no longer offers it');
+ok(/var TYPE_LEGACY_AI=\['ai','AI feed generation','Legacy/.test(src) && /TYPES\.concat\(ty\.ai\?\[TYPE_LEGACY_AI\]:\[\]\)/.test(src),
+  '…but a record that still carries types.ai gets it back, labelled legacy, until unticked');
+ok(/r\.types=\{aim:true\}; migrateLia\(r\)/.test(src), 'a fresh record opens on Spark AI');
+ok(/r\.types=q\.types\?JSON\.parse\(JSON\.stringify\(q\.types\)\):\{ai:true\};/.test(src),
+  'an old snapshot with no types is still an AI-only quote — its field lines must render');
+ok(/id="scope-card" data-tp="ai aim"/.test(src) && /id="upd-card" data-tp="ai aim"/.test(src),
+  'the product-type scope and the Monthly update bundle ride Spark AI too');
+ok(/c\.getAttribute\('data-tp'\)\.split\(\/\\s\+\/\)\.some\(function\(k\)\{ return !!ty\[k\]; \}\)/.test(src),
+  'a card lists every type it belongs to and shows while any is on');
+ok(/\(typeOn\('ai'\)\?kpi\(t\.inc\+' \/ '\+CAT\.length,'Fields selected'\)\+kpi\(fmt\(t\.tp\),'SKUs quoted'\):''\)/.test(src),
+  'the per-SKU field KPIs only show with the legacy type on — never a dead "0 SKUs quoted"');
+ok(/<b>Spark AI<\/b> prices the six Google/.test(src) && !/Scope an <b>AI field-generation<\/b> engagement/.test(src),
+  'the hero leads with Spark AI');
+
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);
