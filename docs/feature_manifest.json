@@ -4385,9 +4385,9 @@
       "min": 1
     },
     {
-      "name": "Quote generator: the Quote summary band (monthly · one-off · Year 1) sits BELOW the tiles — the final numbers close the card (Ray 15 Sep 2026)",
+      "name": "Quote generator: the Quote summary band (monthly · one-off · Year 1) sits BELOW the tiles — the final numbers close the card (Ray 15 Sep 2026) — re-cut 21 Sep 2026 when the options strip took the line beneath it",
       "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "</div>\n    <div class=\"qtot\" id=\"qtot\"></div>\n    <div class=\"edit-bar\"",
+      "pattern": "</div>\n    <div class=\"qtot\" id=\"qtot\"></div>",
       "pr": 366,
       "min": 1
     },
@@ -8342,6 +8342,120 @@
       "name": "Spark AI: …and the finance workbook names it, since a quantity does not say which products",
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "Spark AI cohort: generated for products that arrived since",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: one named, documented block",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "AIQUOTE-OPTIONS",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: an option IS a quote — prop {id,n,label} on the saved record",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function qProp(q){ return (q&&q.prop&&q.prop.id)?q.prop:null; }",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: an edited option leaves the proposal as an earlier version, never counted twice",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "!q.superseded&&qProp(q)",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: …and its replacement inherits the option number",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "if(qProp(old))snap.prop={id:old.prop.id,n:old.prop.n",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: the NEWEST choice wins on read, so two AMs never leave two winners",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function propChosenId(pid)",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: choosing one un-chooses its siblings",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "optsFor(p.id).forEach(function(x){ if(SAVED[x].chosen)delete SAVED[x].chosen; })",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: a sibling reads NOT TAKEN, never Declined — the client's call is not finance's",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "not taken — client chose ",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: a proposal contributes ONE quote to every money figure",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function countedIds(ids)",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: …the chosen option, or the lowest until the client picks",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "out[ch||optsFor(p.id)[0]||k]=1",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: the KPI loop honours it",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "if(!CNT[k])return;",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: and the board states the rule, so nobody reads it as three deals",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "counts a proposal once, at its chosen option",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: ➕ Add option is its own mode, and clears EDITING so a save stores a SIBLING",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "EDITING=null; PENDING_OPT={pid:p.id,n:n,label:''};",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: the strip sits right after the quote summary",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "<div id=\"opt-strip\"></div>",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: …and stays up after a save — 'after each generated quote'",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "LAST_SAVED&&SAVED[LAST_SAVED]&&qProp(SAVED[LAST_SAVED])",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: every write to the saved store redraws the strip",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "renderTracker(); renderOptStrip();",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: the tracker chip, and the analysis the data is for",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "Proposals decided",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: an earlier version offers no ✓ Chosen",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "ost&&ost!=='super'",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: ASPL never auto-delivers an option the client did not buy",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "if(optState(k)==='nottaken')return;",
+      "pr": 0
+    },
+    {
+      "name": "Quote options: the client-facing comparison of every option",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function optionsText(k)",
       "pr": 0
     }
   ]

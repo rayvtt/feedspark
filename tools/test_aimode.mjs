@@ -390,5 +390,69 @@ ok((src.match(/Generated for products that arrived since/g) || []).length >= 2,
 ok(/Spark AI cohort: generated for products that arrived since/.test(src),
   'and so does the finance workbook, where the quantity alone would not say which products');
 
+/* ---------- 19. Ray, 21 Sep 2026: a proposal is 1–4 options, and one of them wins ---------- */
+console.log('\n  a quote can be one option of a proposal');
+ok(/AIQUOTE-OPTIONS/.test(src), 'options are one named, documented block');
+/* AN OPTION IS A QUOTE - no parallel record type, so it keeps its own ref, email, brief and rail */
+ok(/function qProp\(q\)/.test(src) && /q\.prop\.id===pid/.test(src),
+  'an option is a saved quote carrying prop {id,n,label}');
+ok(/!q\.superseded&&qProp\(q\)/.test(src),
+  'an edited option leaves the proposal as an EARLIER VERSION, so it is never counted twice');
+ok(/if\(qProp\(old\)\)snap\.prop=\{id:old\.prop\.id,n:old\.prop\.n/.test(src),
+  'and its replacement inherits the option, so ✎ Edit of option 2 stays option 2');
+
+/* THE CHOICE, and who it belongs to */
+ok(/function propChosenId\(pid\)\{ var win=null,wt=-1;/.test(src) && /if\(c&&\+c\.t>wt\)/.test(src),
+  'the NEWEST choice wins on read, so two AMs clicking before a merge settle on one answer');
+ok(/optsFor\(p\.id\)\.forEach\(function\(x\)\{ if\(SAVED\[x\]\.chosen\)delete SAVED\[x\]\.chosen; \}\)/.test(src),
+  'choosing one option un-chooses its siblings — never two winners');
+const ch = (src.match(/function chooseOpt\(k\)\{[\s\S]*?putSaved\([^\n]*\n/) || [''])[0];
+ok(!/stage/.test(ch),
+  'and choosing NEVER touches the stage rail — the client\'s decision is not finance\'s');
+ok(/was===k/.test(ch), 'it is a toggle, because a client may change their mind');
+ok(/not taken — client chose/.test(src) && !/stage='Declined'/.test(ch),
+  'a sibling reads NOT TAKEN, never Declined — different facts about different people');
+
+/* THE MONEY: three options at £5k are one £5k opportunity, not £15k */
+ok(/function countedIds\(ids\)/.test(src), 'a proposal contributes ONE quote to every money figure');
+ok(/out\[ch\|\|optsFor\(p\.id\)\[0\]\|\|k\]=1/.test(src),
+  '…the chosen option, or the lowest-numbered one until the client picks');
+ok(/if\(!CNT\[k\]\)return;/.test(src), 'and the KPI loop honours it');
+ok(/counts a proposal once, at its chosen option/.test(src), 'the board says so, so nobody reads it as three deals');
+
+/* BUILDING THE NEXT ONE is a different mode from editing this one */
+ok(/var PENDING_OPT=null;/.test(src) && /function addOption\(k\)/.test(src),
+  '➕ Add option is its own mode');
+ok(/EDITING=null; PENDING_OPT=\{pid:p\.id,n:n,label:''\};/.test(src),
+  '…and it clears EDITING, so a save stores a SIBLING rather than a new version');
+ok(/while\(used\[n\]\)n\+\+;/.test(src), 'the next free option number is taken, never a duplicate');
+ok(/p=\{id:newPropId\(\),n:1,label:''\}; src\.prop=p;/.test(src),
+  'a standalone quote becomes option 1 the moment a second option is wanted');
+
+/* THE STRIP, where Ray asked for it */
+ok(/<div id="opt-strip"><\/div>[\s\S]{0,200}edit-bar/.test(src),
+  'the options sit right after the quote summary');
+ok(/function renderOptStrip\(\)/.test(src) && /function propInPlay\(\)/.test(src),
+  'and render from the proposal in play, never guessed from the client');
+ok(/LAST_SAVED&&SAVED\[LAST_SAVED\]&&qProp\(SAVED\[LAST_SAVED\]\)/.test(src),
+  '…staying up after a save, which is "after each generated quote"');
+ok(/renderTracker\(\); renderOptStrip\(\);/.test(src),
+  'every write to the saved store redraws the strip, or it reads one option behind');
+
+/* THE TRACKER, and the analysis Ray asked the data for */
+ok(/class="t-opt/.test(src), 'each row carries its option chip');
+ok(/Proposals decided/.test(src) && /is chosen most often/.test(src),
+  'and the rail reports what the options are teaching us');
+ok(/ost&&ost!=='super'/.test(src),
+  'an earlier version offers no ✓ Chosen — a button that silently did nothing');
+ok(/if\(optState\(k\)==='nottaken'\)return;/.test(src),
+  'and ASPL never auto-delivers an option the client did not buy');
+
+/* THE CLIENT-FACING COMPARISON - the thing the feature exists for */
+ok(/function optionsText\(k\)/.test(src), 'the options copy as ONE client document');
+ok(/'  Includes: '\+optWhat\(o\)/.test(src), '…saying what each one contains, not just a price');
+ok(/Every figure is ex VAT\. Valid '\+qValid\(q\)/.test(src),
+  '…on the same ex-VAT + validity footing as every other client exit');
+
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);
