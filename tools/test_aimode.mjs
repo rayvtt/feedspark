@@ -454,5 +454,68 @@ ok(/'  Includes: '\+optWhat\(o\)/.test(src), '…saying what each one contains, 
 ok(/Every figure is ex VAT\. Valid '\+qValid\(q\)/.test(src),
   '…on the same ex-VAT + validity footing as every other client exit');
 
+/* ---------- THE BAND PRICE IS A TYPED FIGURE (Ray, 21 Sep 2026: "at which point the new-product
+   updates for this quote gets to 15,100/month?") — nothing multiplies to reach it; it was two
+   characters typed in front of a pre-filled "100" on the SHARED rate card ---------- */
+console.log('\nthe new-product bundle: a typed band price, and the quote says so');
+ok(/monSub\+=ui\.gbp;/.test(src) && /function updGBP\(\)\{ var f=updFrozen\(\); return f!=null\?f:updBandGBP\(\); \}/.test(src),
+  'the monthly figure is the band price and nothing else — no SKU count ever multiplies it');
+ok(/function updBandGBP\(\)\{ var T=updTiers\(\); return Math\.max\(UPD_MIN,\+T\[updTierIdx\(\)\]\.gbp\|\|0\); \}/.test(src),
+  'the band price is read straight off the rate card');
+ok(/function setBandGBP\(j,v\)/.test(src) && (src.match(/setBandGBP\(/g)||[]).length>=3,
+  'ONE writer for a band price, used by the input and both ↺ buttons');
+ok(!/rc\.upd\.tiers\[\+t\.getAttribute\('data-tier'\)\]\.gbp=/.test(src),
+  '…so the input handler no longer writes the tier itself');
+/* the prepend trap */
+ok(/addEventListener\('focusin'/.test(src) && /_selFx=t; try\{ t\.select\(\); \}/.test(src),
+  'the band box selects its value on focus, so the first keystroke REPLACES');
+ok(/addEventListener\('mouseup',function\(e\)\{ if\(e\.target===_selFx\)\{ e\.preventDefault\(\);/.test(src),
+  '…and the mouseup that completes the click is swallowed, or it collapses the selection back to a caret');
+ok(/input\.tgbp\{width:78px/.test(src), 'the box is wide enough to read five digits');
+/* off-scale */
+ok(/function updOffScale\(j\)\{ var T=updTiers\(\); return !!\(T\[j\]&&\(\+T\[j\]\.gbp\|\|0\)>updDefGBP\(j\)\*5\); \}/.test(src),
+  'a band more than 5× its FeedSpark default is off-scale');
+ok(/function updDefGBP\(j\)\{ var d=UPD_DEFAULT_TIERS\[j\]; return d\?d\.gbp:UPD_MIN; \}/.test(src),
+  'the default is read off the same table the placeholders come from');
+ok(/\(off\?' off':''\)/.test(src) && /\.tier\.off\{border-color:var\(--orange-deep\)/.test(src),
+  'the chip is ringed');
+ok(/'was £'\+fmt\(dg\)\+' <button type="button" class="twx" data-def="'\+j\+'"/.test(src),
+  '…carries "was £X" and hands the default back in one click');
+ok(/class="updwarn">⚠ '\+money\(bd\)\+' a month is more than five times the FeedSpark band price of '\+money\(updDefGBP\(i\)\)/.test(src),
+  'the card warns under the bands, naming the FeedSpark price');
+ok(/'A flat monthly charge typed into the band box on your shared rate card — the new-SKU figure picks the band, it never multiplies the price\.'/.test(src),
+  'the QUOTE TOTAL row says what the figure is');
+ok(/\(t\.upd\.off\?'\\u26a0 ':''\)\+money\(t\.upd\.gbp\)\+'\/mo band price'\+\(t\.upd\.off\?\(' · band is £'\+fmt\(t\.upd\.def\)\)/.test(src),
+  '…and shouts on the total when the band is off-scale');
+ok(/band:updBandGBP\(\),frozen:updFrozen\(\),off:updOffScale\(i\),def:updDefGBP\(i\)/.test(src),
+  'updInfo carries band / frozen / off / default for every surface that renders the bundle');
+/* the blur must not eat the click */
+ok(/if\(T\[j\]&&String\(T\[j\]\.gbp\)!==String\(e\.target\.value\)\)\{ e\.target\.value=String\(T\[j\]\.gbp\); paintTiers\(\); \}/.test(src),
+  'on blur the box snaps to the stored price WITHOUT rebuilding the card — a rebuild destroys the button being clicked');
+ok(/function paintTiers\(\)/.test(src) && !/contains\('tgbp'\)\)\{ renderUpd\(\);/.test(src),
+  'the chips repaint in place while a price is being typed');
+/* a saved quote reproduces its own price */
+ok(/gbp:\(\(q\.upd\.gbp!=null&&isFinite\(\+q\.upd\.gbp\)&&\+q\.upd\.gbp>0\)\?\+q\.upd\.gbp:null\)/.test(src),
+  '✎ Edit freezes the snapshot\'s own £ — the band index alone trusted the rate card to still hold it');
+ok(/function updThaw\(\)/.test(src) && (src.match(/updThaw\(\)/g)||[]).length>=5,
+  'pinning a band, ↺ auto, editing a price or moving the estimate thaws it — those are new decisions');
+ok(/Frozen at '\+money\(fz\)\+' — the figure this quote was signed off at\. The band costs '\+money\(bd\)\+' today/.test(src),
+  '…and the card says so when today\'s band differs');
+/* draft prices means what it says */
+ok(/function updDraft\(\)\{ return !updTiers\(\)\.some\(function\(x,j\)\{ return \+x\.gbp!==updDefGBP\(j\); \}\); \}/.test(src),
+  '"draft prices" = no band priced yet, not "the rate card has a tiers key"');
+/* a discount that discounts nothing says why */
+ok(/function discNil\(side,t\)/.test(src) && /discNil\('oneoff',t\)/.test(src) && /discNil\('monthly',t\)/.test(src),
+  'a £0 discount names its reason on both sides');
+ok(/why='no line ticked'/.test(src) && /why='man power only'/.test(src) && /why='nothing to discount'/.test(src),
+  '…in three short words that fit the value cell');
+ok(/\(loud\?'\\u26a0 £0\.00 \\u00b7 ':''\)/.test(src), '…loud when the scope covers this side, quiet when it simply excludes it');
+/* the tiles could not shrink */
+ok(/\.qs-col\{display:grid;grid-template-columns:minmax\(0,1fr\);grid-template-rows:subgrid/.test(src),
+  'the quote-total tiles can shrink — every row was ~10px wider than its tile on main');
+ok(/\.qs-r\.tot\{flex-wrap:wrap\} \.qs-r\.tot>b\{margin-left:auto\}/.test(src),
+  '…and a wide total drops onto its own line instead of overlapping its nowrap label');
+ok(/#upd-card \.pt-act\{/.test(src), 'the bundle card\'s own small buttons are styled (.pt-act was scoped to the PT picker)');
+
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);
