@@ -8838,20 +8838,20 @@
       "name": "KWCal: YuMOVE seeded from the brand's own promotional calendar (Ray 21 Sep 2026) — a PRICING calendar, so every moment is sale-lane and brand-wide",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "YuMOVE:{events:[",
-      "pr": 0
+      "pr": 477
     },
     {
       "name": "KWCal: YuMOVE's two DEFAULT PDP OPTION flips are called out as feed facts — the feed must lead with the one-off price across Black Friday or it mismatches the landing page",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "DEFAULT PDP OPTION FLIPS",
       "min": 2,
-      "pr": 0
+      "pr": 477
     },
     {
       "name": "KWCal: the source sheet's duplicated 30 Nov is corrected to 29 Nov and the moment says why",
       "file": "docs/FeedSpark_KWCal.html",
       "pattern": "30 Nov 2026 is the Monday",
-      "pr": 0
+      "pr": 477
     }
   ]
 }
