@@ -544,3 +544,21 @@ Two neighbours fixed in the same pass:
 Harness: `tools/test_aimode.mjs` (27 new assertions). Browser-level QA (scratchpad, not CI): 30
 assertions across the trap, the flag, ↺, the freeze/thaw, the discount wording.
 
+## The AI feed generation button is gone
+
+Ray, 21 Sep 2026: *"remove AI feed generation Quoting button -- we have Spark AI now."*
+
+The per-SKU Tachyon field catalogue was the original module; Spark AI is the AI quote now, so the
+"What are you quoting?" picker offers **New system · New feed · Retainer hours · Spark AI** and a fresh
+client record opens on Spark AI. The type itself survives as **legacy** so nothing already saved goes
+dark: a client record, or a ✎ Edit'd snapshot, that still carries `types.ai` shows its fields card and
+gets the button back — dashed, labelled *Legacy — per-SKU Tachyon fields, superseded by Spark AI* —
+until it is unticked, after which it never returns. A pre-11-Sep snapshot with no `types` at all is
+still read as an AI-only quote (`{ai:true}`), because its field lines are the quote.
+
+Two cards used to ride the `ai` type and now list every type they belong to (`data-tp="ai aim"`,
+shown while any is on): the **product-type scope** card, since Spark AI prices on the same scope, and
+the **Monthly update — new products** bundle, the view Ray asked on the 17th to keep. The "Fields
+selected" / "SKUs quoted" KPIs show only with the legacy type on — a Spark AI quote never reads
+"0 SKUs quoted". The hero copy leads with Spark AI.
+
