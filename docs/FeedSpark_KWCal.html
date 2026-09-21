@@ -680,6 +680,42 @@ Accessorize:{events:[
   {id:'acc_coldweather',name:'Cold Weather Push',                 lane:'studio',   date:'2026-11-15', terms:['cold weather','gloves','hats','scarves','cosy']},
   {id:'acc_specialbuys',name:'Black Friday Special Buys',         lane:'sale',     date:'2026-11-17', terms:['special buy','black friday','deal','offer']},
   {id:'acc_blackfriday',name:'Black Friday — 25% off Everything', lane:'sale',     date:'2026-11-27', brandwide:1, terms:['black friday','sale','25% off','cyber monday']}
+]},
+/* ---- YuMOVE seed — the brand's OWN promotional calendar (Ray, 21 Sep 2026), 14 Nov – 2 Dec
+   2026. Unlike Reiss and Accessorize this is a PRICING calendar, not a product one: it schedules
+   discount mechanics per customer cohort — SUB (subscription) vs OTP/PAYG (one-time purchase,
+   pay-as-you-go) — so every moment is brand-wide by nature, which is how the board already
+   treats a sale window.
+   THE ONE THING THAT MOVES THE FEED, not just the site: the DEFAULT PDP OPTION flips from
+   Subscription to Single Purchase on 27 Nov and back on 1 Dec. That changes which price the
+   landing page leads with, so a feed still advertising the subscription price across Black
+   Friday is a price-mismatch disapproval, not just a wording problem — the two flip moments
+   carry that in their note.
+   Every column in the source matches the real 2026 calendar EXCEPT a duplicated "30th Nov":
+   the sheet has 30th/Sun followed by 30th/Mon, and 30 Nov 2026 is the Monday, so the Sunday
+   column is 29 Nov. Corrected here, with a note on the moment that turns on it.
+   Band START dates are read off the chart's coloured runs; the four that are inferred rather
+   than printed say so, so nobody briefs an inferred date as a confirmed one. ---- */
+YuMOVE:{events:[
+  {id:'ym_subearly', name:'Subscription offer — 605040 on 2nd or 3rd Sub', lane:'sale', date:'2026-11-16', brandwide:1,
+   note:'Active Subs band opens here — start read off the chart, not printed. Confirm with YuMOVE before the brief goes out.',
+   terms:['subscription','subscribe and save','bundle','multi buy']},
+  {id:'ym_lead60',   name:'Lead message — Up to 60% Off Everything',       lane:'sale', date:'2026-11-20', brandwide:1,
+   note:'Lead-message band start read off the chart (19–20 Nov). Default PDP stays Subscription through this phase.',
+   terms:['sale','60% off','offer','black friday']},
+  {id:'ym_newsub',   name:'New customers — 605020 subscription offer',     lane:'sale', date:'2026-11-20', brandwide:1,
+   terms:['subscription','new customer','starter','first order']},
+  {id:'ym_paygsale', name:'PAYG — Up to 40% Off Everything',                lane:'sale', date:'2026-11-20', brandwide:1,
+   terms:['one off','single purchase','pay as you go','40% off']},
+  {id:'ym_blackfri', name:'Black Friday — further reductions, PDP to Single Purchase', lane:'sale', date:'2026-11-27', brandwide:1,
+   note:'DEFAULT PDP OPTION FLIPS to Single Purchase. The feed must lead with the one-off price from here or it mismatches the landing page. PAYG moves to 40% off (almost) everything.',
+   terms:['black friday','further reductions','60% off','single purchase']},
+  {id:'ym_cyber',    name:'Cyber weekend — 20% off selected for active subs', lane:'sale', date:'2026-11-29', brandwide:1,
+   note:'Source sheet prints this column as "30th Nov / Sun"; 30 Nov 2026 is the Monday, so the Sunday column is 29 Nov. Date corrected.',
+   terms:['cyber monday','cyber weekend','20% off','selected products']},
+  {id:'ym_subback',  name:'Back to Subscription — default PDP reverts',   lane:'sale', date:'2026-12-01', brandwide:1,
+   note:'DEFAULT PDP OPTION FLIPS BACK to Subscription. The Black Friday one-off pricing and sale wording come out of the feed here — the step most likely to be forgotten.',
+   terms:['subscription','subscribe and save','auto delivery']}
 ]}};
 
 var CLIENT='Reiss', STORE={}, BASE=0, editMode=false, saveT=null, MEASURING=false;

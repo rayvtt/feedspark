@@ -8733,43 +8733,6 @@
       "pattern": "tools/check_grwaive.js"
     },
     {
-      "name": "AI Quote export: a saved quote exports ITS OWN LINES — the sheet builder reads the frozen snapshot (Ray, 21 Sep 2026: 'the number is not matching')",
-      "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "var fz=FROZEN, L=fz?snapLines(fz):lines(), t=fz?snapTotals(fz):totals()",
-      "pr": 476
-    },
-    {
-      "name": "AI Quote export: withSnap freezes the snapshot in for the length of the call",
-      "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "FROZEN=q; out=fn(); }",
-      "pr": 476
-    },
-    {
-      "name": "AI Quote export: every saved option's tab is its snapshot, the one under Edit included (snapTab)",
-      "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "function snapTab(q,nm){ return withSnap(q,function(){ var sh=quoteSheet({ref:q.ref,at:q.t}); return {name:nm,sh:sh,day:sh.day}; }); }",
-      "pr": 476
-    },
-    {
-      "name": "AI Quote export: the option under Edit is never rendered off the live builder",
-      "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "if(EDITING&&EDITING.id===k)tabs.push({name:nm,sh:quoteSheet({ref:q.ref}),day:blockGBP()});",
-      "pr": 476,
-      "forbidden": true
-    },
-    {
-      "name": "AI Quote export: Spark AI configuration hours at the Spark AI day rate as a value, never =Dayrate",
-      "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "qty:(+l.hours)/aimHPD,qs:'days',rate:aimDay,dsc:aimDsc('oneoff',l)",
-      "pr": 476
-    },
-    {
-      "name": "AI Quote: Edit keeps the saved Spark AI sizing on screen while the feed is not pulled (aimFz)",
-      "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "function aimFz(){ if(idx())return null; var fz=aimRec().fz; return (fz&&fz.sig===aimSig())?fz:null; }",
-      "pr": 476
-    },
-    {
       "name": "read-out: figures are collected BEFORE the 'results:' prose grab — the heading used to short-circuit and return one line, so a bulleted read-out reported its impressions and dropped its clicks (Ray 21 Sep 2026, Vimalesh on the Silk brief)",
       "file": "cloudflare/feedspark-deck/src/briefmatch.js",
       "pattern": "function collectFigures(",
@@ -8816,6 +8779,135 @@
       "file": ".github/workflows/validate.yml",
       "pattern": "test_readout",
       "pr": 473
+    },
+    {
+      "name": "Live editor: staleness renders through showStale — a chip on the editor toolbar, never the red banner (Ray, 21 Sep 2026)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "function showStale(",
+      "pr": 475
+    },
+    {
+      "name": "Live editor: reportStale routes every staleness class (edited elsewhere / skipped / recovered / shape changed) through the toolbar chip",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "showStale(n>0, short.join(' · '), notes, staleKeys);",
+      "pr": 475
+    },
+    {
+      "name": "Live editor: the staleness chip is grey for information, orange when entries were skipped",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": ".de-bar button.de-stale.act{",
+      "pr": 475
+    },
+    {
+      "name": "Live editor: the ✎ handle carries a dot only when there is something to act on",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": ".de-handle.de-hb::after{",
+      "pr": 475
+    },
+    {
+      "name": "Live editor: Present mode hides the staleness card like the rest of the editor chrome",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "body.de-present .de-stalepanel",
+      "pr": 475
+    },
+    {
+      "name": "Live editor: the red banner never carries the template-changed notice (forbidden)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "showWarn('&#9888; <b>The deck template has changed</b>",
+      "forbidden": true,
+      "pr": 475
+    },
+    {
+      "name": "Live editor: the Clear-stale-entries button left the banner (forbidden)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "de-w-drop-stale",
+      "forbidden": true,
+      "pr": 475
+    },
+    {
+      "name": "Golden Record export removes the live editor's staleness card",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'.de-stalepanel', '.de-ctxmenu'",
+      "pr": 475
+    },
+    {
+      "name": "Golden Record PDF hides the staleness card",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "body.pdf .de-stalepanel",
+      "pr": 475
+    },
+    {
+      "name": "check_grpdf asserts the staleness card is stripped from the client file",
+      "file": "tools/check_grpdf.js",
+      "pattern": "de-stale/.test(body)",
+      "pr": 475
+    },
+    {
+      "name": "test_editor: a shape change alone is a grey toolbar note with the banner silent",
+      "file": "tools/test_editor.mjs",
+      "pattern": "C5: a shape change alone is a grey note on the toolbar",
+      "pr": 475
+    },
+    {
+      "name": "test_editor: a refused save still raises the NOT SAVED banner",
+      "file": "tools/test_editor.mjs",
+      "pattern": "the red banner is still the voice of a save the server refused",
+      "pr": 475
+    },
+    {
+      "name": "test_editor: skipped edits = orange chip + dot on ✎, Clear drops exactly those keys",
+      "file": "tools/test_editor.mjs",
+      "pattern": "C13: skipped edits are an orange chip",
+      "pr": 475
+    },
+    {
+      "name": "CLAUDE.md records the toolbar-note rule for the live editor",
+      "file": "CLAUDE.md",
+      "pattern": "STALENESS REPORT IS A TOOLBAR NOTE",
+      "pr": 475
+    },
+    {
+      "name": "Live-editor platform notes: the red banner is for a save that failed",
+      "file": ".claude/skills/feedspark-deck-generator/references/live-editor-platform-notes.md",
+      "pattern": "The red banner is for a save that failed",
+      "pr": 475
+    },
+    {
+      "name": "AI Quote export: a saved quote exports ITS OWN LINES — the sheet builder reads the frozen snapshot (Ray, 21 Sep 2026: 'the number is not matching')",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "var fz=FROZEN, L=fz?snapLines(fz):lines(), t=fz?snapTotals(fz):totals()",
+      "pr": 476
+    },
+    {
+      "name": "AI Quote export: withSnap freezes the snapshot in for the length of the call",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "FROZEN=q; out=fn(); }",
+      "pr": 476
+    },
+    {
+      "name": "AI Quote export: every saved option's tab is its snapshot, the one under Edit included (snapTab)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function snapTab(q,nm){ return withSnap(q,function(){ var sh=quoteSheet({ref:q.ref,at:q.t}); return {name:nm,sh:sh,day:sh.day}; }); }",
+      "pr": 476
+    },
+    {
+      "name": "AI Quote export: the option under Edit is never rendered off the live builder",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "if(EDITING&&EDITING.id===k)tabs.push({name:nm,sh:quoteSheet({ref:q.ref}),day:blockGBP()});",
+      "pr": 476,
+      "forbidden": true
+    },
+    {
+      "name": "AI Quote export: Spark AI configuration hours at the Spark AI day rate as a value, never =Dayrate",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "qty:(+l.hours)/aimHPD,qs:'days',rate:aimDay,dsc:aimDsc('oneoff',l)",
+      "pr": 476
+    },
+    {
+      "name": "AI Quote: Edit keeps the saved Spark AI sizing on screen while the feed is not pulled (aimFz)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function aimFz(){ if(idx())return null; var fz=aimRec().fz; return (fz&&fz.sig===aimSig())?fz:null; }",
+      "pr": 476
     },
     {
       "name": "KWCal: the stage tiles are a PARTITION of every stage stOf can return — running/analysis/blocked had no bucket, so a Test-running moment counted as briefed and appeared in no tile (Ray 21 Sep 2026: 14 scheduled over 1+1+9)",
@@ -8870,6 +8962,25 @@
       "file": ".github/workflows/validate.yml",
       "pattern": "test_kwcal_kpis",
       "pr": 474
+    },
+    {
+      "name": "KWCal: YuMOVE seeded from the brand's own promotional calendar (Ray 21 Sep 2026) — a PRICING calendar, so every moment is sale-lane and brand-wide",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "YuMOVE:{events:[",
+      "pr": 477
+    },
+    {
+      "name": "KWCal: YuMOVE's two DEFAULT PDP OPTION flips are called out as feed facts — the feed must lead with the one-off price across Black Friday or it mismatches the landing page",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "DEFAULT PDP OPTION FLIPS",
+      "min": 2,
+      "pr": 477
+    },
+    {
+      "name": "KWCal: the source sheet's duplicated 30 Nov is corrected to 29 Nov and the moment says why",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "30 Nov 2026 is the Monday",
+      "pr": 477
     },
     {
       "name": "Deck editor: the SERVED sigOf normalises whitespace — \\\\s double-escaped inside getEditorScript's template literal (a single backslash cooked to /s+/g and collapsed runs of the letter s)",

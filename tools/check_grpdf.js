@@ -301,7 +301,7 @@ const QUALITY = {
     await pageW.evaluate(() => {
       const mk = (cls, txt) => { const d = document.createElement('div'); d.className = cls; d.textContent = txt; document.body.appendChild(d); };
       mk('de-handle', '✎'); mk('de-panel', 'Send an element to Claude Code'); mk('de-fbpanel', '💬 Feedback (0)');
-      mk('de-bar', '✎ Edit');
+      mk('de-bar', '✎ Edit'); mk('de-stalepanel', 'A note on your saved edits');
     });
     const seen = await pageW.evaluate(() => ({
       tky: !!document.getElementById('tky-fab'), chat: !!document.getElementById('fcc-fcb'),
@@ -407,8 +407,8 @@ const QUALITY = {
     ok('the "Two scores, two questions" band is gone', !/rec-tier/.test(html.replace(/<style[\s\S]*?<\/style>/g, '')) && !/Two scores, two questions/.test(html));
     // 5. "remove the element that sends code or feedback to Claude"
     const body = html.replace(/<style[\s\S]*?<\/style>/g, '');
-    ok('the live editor is gone — handle, "Send an element to Claude Code" panel, Feedback panel, toolbar',
-      !/de-handle|de-panel|de-fbpanel|de-bar/.test(body) && !/Claude Code/.test(html) && !/Feedback/.test(html));
+    ok('the live editor is gone — handle, "Send an element to Claude Code" panel, Feedback panel, toolbar, saved-edits note',
+      !/de-handle|de-panel|de-fbpanel|de-bar|de-stale/.test(body) && !/Claude Code/.test(html) && !/Feedback/.test(html) && !/note on your saved edits/.test(html));
     ok('the Tachyon copilot and the Feed Chat bubble are gone', !/tky-fab|tky-drawer|tky-scrim|fcc-fcb|fcc-fcp/.test(body) && !/Tachyon/.test(html));
     ok('the view-as pill, app switcher, nav customiser and ⓘ instruction toggles are gone',
       !/fcc-viewas|fcc-apps|fcc-navcz|instr-tgl|instr-hide/.test(body));

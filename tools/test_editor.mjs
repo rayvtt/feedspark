@@ -88,7 +88,7 @@ const STALE_REPORT = `
 const results = [];
 function record(name, ok, detail) { results.push({ name, ok, detail }); }
 
-async function withPage(fn, { initialEdits = {}, deriveEdits = null, deckOnReload = null, version = null, headed = false } = {}) {
+async function withPage(fn, { initialEdits = {}, deriveEdits = null, deckOnReload = null, version = null, headed = false, putStatus = 200 } = {}) {
   const browser = await chromium.launch({
     headless: !headed,
     executablePath: '/opt/pw-browsers/chromium/chrome-linux/chrome',
@@ -116,6 +116,8 @@ async function withPage(fn, { initialEdits = {}, deriveEdits = null, deckOnReloa
         body: JSON.stringify(kv.store) });
     }
     if (req.method() === 'PUT') {
+      // putStatus ≠ 200 = the server refuses every save (signed out of Access, KV cap…)
+      if (putStatus !== 200) return route.fulfill({ status: putStatus, contentType: 'text/plain', body: 'refused' });
       const incoming = JSON.parse(req.postData() || '{}');
       kv.puts.push({ replace: url.searchParams.get('replace') === '1', body: incoming,
         dropKeys: url.searchParams.get('drop') });
@@ -290,31 +292,91 @@ test('C7: a stale __order list is not replayed', async (page) => {
   return 'order intact';
 }, { initialEdits: { '__order:top-g0': ['nope-1', 'nope-2', 'nope-3'] } });
 
-test('C5: a shape change alone warns, even when every patch still applies', async (page) => {
-  const warned = await page.evaluate(() => {
-    const w = document.querySelector('.de-warn');
-    // NOT offsetParent — .de-warn is position:fixed, whose offsetParent is always null.
-    const vis = w && !w.hidden && getComputedStyle(w).display !== 'none';
-    return vis ? w.textContent : null;
-  });
-  if (!warned) throw new Error('no banner shown for a changed template shape');
-  if (!/template has changed/i.test(warned)) {
-    throw new Error('banner shown but wrong message: ' + warned.slice(0, 120));
-  }
-  return 'warned';
+// NOT offsetParent — .de-warn is position:fixed, whose offsetParent is always null.
+const bannerUp = () => {
+  const w = document.querySelector('.de-warn');
+  return !!(w && !w.hidden && getComputedStyle(w).display !== 'none');
+};
+const readStale = () => {
+  const chip = document.querySelector('.de-bar .de-stale');
+  const panel = document.querySelector('.de-stalepanel');
+  return {
+    chip: chip ? chip.textContent : null,
+    act: chip ? chip.classList.contains('act') : false,
+    title: chip ? chip.title : '',
+    badge: document.querySelector('.de-handle').classList.contains('de-hb'),
+    panelOpen: !!(panel && panel.classList.contains('show')),
+    panelText: panel ? panel.textContent : '',
+  };
+};
+
+/* Ray, 21 Sep 2026: "can you please remove the red banner on top on the dashboard pls - i hate
+ * that it always appear (the deck template has changed)". The shape moves on every push that
+ * changes an editable count, and an app page ships several times a day — so the banner fired on
+ * every load about something that needed no action. Staleness is now a note ON THE TOOLBAR. */
+test('C5: a shape change alone is a grey note on the toolbar — never the red banner', async (page) => {
+  const s = await page.evaluate(`(${readStale.toString()})()`);
+  const banner = await page.evaluate(`(${bannerUp.toString()})()`);
+  if (banner) throw new Error('the red banner fired for a template change — the thing Ray asked to be gone');
+  if (!s.chip || !/template changed/i.test(s.chip)) throw new Error('no toolbar note for a changed template shape: ' + JSON.stringify(s));
+  if (s.act || s.badge) throw new Error('nothing was lost, so the note reads as information — grey chip, no dot on ✎: ' + JSON.stringify(s));
+  if (!/template has changed/i.test(s.title)) throw new Error('the chip carries no explanation: ' + s.title);
+  if (s.panelOpen) throw new Error('the detail card opened on its own — it waits for a click');
+  return 'grey chip, banner silent';
 }, { initialEdits: { __meta: { shape: 'OLDSHAPE99' }, 'c1-e1': { html: 'legacy, no sig' } } });
 
-test('C13: a stale patch offers a Clear button that drops only those keys', async (page, kv) => {
+test('a clean overlay puts nothing on the toolbar, nothing on ✎, and no banner', async (page) => {
+  const s = await page.evaluate(`(${readStale.toString()})()`);
+  const banner = await page.evaluate(`(${bannerUp.toString()})()`);
+  if (s.chip !== null || s.badge || banner) throw new Error('noise on a clean load: ' + JSON.stringify(s) + ' banner=' + banner);
+  return 'silent';
+});
+
+test('the red banner is still the voice of a save the server refused', async (page) => {
+  await page.evaluate(() => {
+    var b=Array.prototype.find.call(document.querySelectorAll('.de-bar button'),
+      function(x){ return /Edit/.test(x.textContent); });
+    if(b) b.click();
+  });
+  await page.evaluate(() => {
+    const el = document.querySelector('[data-eid="c1-e1"]') || document.querySelector('[data-eid]');
+    el.focus();
+    el.textContent = 'WILL NOT SAVE';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await sleep(page, 1800);
+  const r = await page.evaluate(() => {
+    const w = document.querySelector('.de-warn');
+    return { up: !!(w && !w.hidden && getComputedStyle(w).display !== 'none'), text: w ? w.textContent : '' };
+  });
+  if (!r.up || !/NOT SAVED/.test(r.text)) throw new Error('a refused save must still raise the banner: ' + JSON.stringify(r).slice(0, 200));
+  return 'NOT SAVED banner up';
+}, { putStatus: 500 });
+
+test('C13: skipped edits are an orange chip + a dot on ✎, and the Clear button drops only those keys', async (page, kv) => {
+  const s = await page.evaluate(`(${readStale.toString()})()`);
+  const banner = await page.evaluate(`(${bannerUp.toString()})()`);
+  if (banner) throw new Error('the red banner fired for skipped edits');
+  if (!s.act || !/2 stale/.test(s.chip || '')) throw new Error('expected an orange "2 stale" chip: ' + JSON.stringify(s));
+  if (!s.badge) throw new Error('the ✎ handle carries no dot although two edits were skipped — a collapsed toolbar would hide them');
+  if (s.panelOpen) throw new Error('the detail card opened on its own — it waits for a click');
+  // open the toolbar (the ✎ handle), click the chip, take the Clear button
+  await page.click('.de-handle');
+  await page.waitForTimeout(150);
+  await page.click('.de-bar .de-stale');
+  await page.waitForTimeout(150);
   const btn = await page.evaluate(() => {
-    const b = document.querySelector('.de-w-drop-stale');
+    const p = document.querySelector('.de-stalepanel.show');
+    const b = p && p.querySelector('.de-st-drop');
     return b ? b.textContent : null;
   });
-  if (!btn) throw new Error('no "clear stale entries" button offered');
+  if (!btn) throw new Error('no "clear stale entries" button in the detail card');
   page.on('dialog', (d) => d.accept());
-  await page.click('.de-w-drop-stale');
+  await page.click('.de-st-drop');
   await page.waitForTimeout(600);
-  const dropUrls = kv.puts.filter((p) => p.dropKeys);
-  return btn.trim();
+  const drops = kv.puts.filter((p) => p.dropKeys).map((p) => p.dropKeys);
+  if (!drops.length || !/c1-e1/.test(drops[0]) || !/c2-e1/.test(drops[0])) throw new Error('Clear did not drop exactly the stale keys: ' + JSON.stringify(drops));
+  return btn.trim() + ' → dropped ' + drops[0];
 }, {
   initialEdits: {
     'c1-e1': { html: 'WRONG', sig: 'does not match' },
@@ -384,14 +446,12 @@ test('C2: an edit follows its content when a chapter deletion shifts every key',
 test('C2: a saved edit whose content no longer exists is reported, not applied blind', async (page) => {
   const stray = await page.evaluate(() => document.body.textContent.includes('GHOST EDIT'));
   if (stray) throw new Error('an edit whose content is gone was applied to some other element');
-  const warned = await page.evaluate(() => {
-    const w = document.querySelector('.de-warn');
-    return w && !w.hidden ? w.textContent : '';
-  });
-  if (!/content is gone|could not be replayed/i.test(warned)) {
-    throw new Error('no report for an edit whose content is gone: ' + warned.slice(0, 120));
+  const s = await page.evaluate(`(${readStale.toString()})()`);
+  if (!/content is gone|could not be replayed/i.test(s.panelText)) {
+    throw new Error('no report for an edit whose content is gone: ' + s.panelText.slice(0, 120));
   }
-  return 'reported';
+  if (!s.act || !s.badge) throw new Error('an edit that cannot be applied is something to act on — orange chip + dot on ✎ expected: ' + JSON.stringify(s));
+  return 'reported on the toolbar';
 }, {
   initialEdits: {
     'c9-e99': { html: 'GHOST EDIT', sig: 'text that is not in this deck anywhere',
