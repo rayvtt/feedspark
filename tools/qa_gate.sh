@@ -291,6 +291,12 @@ else
   echo "   ✗ reply classifier FAILED (node tools/test_replyclass.mjs)"; FAIL=1
 fi
 
+if node tools/test_readout.mjs >/dev/null 2>&1; then
+  echo "   ✓ read-out extraction agrees across worker + page (both figures, both labelled)"
+else
+  echo "   ✗ read-out extraction FAILED (node tools/test_readout.mjs)"; FAIL=1
+fi
+
 if node tools/test_running_stage.mjs >/dev/null 2>&1; then
   echo "   ✓ Test running ⏱ stage: worker lane matches the page"
 else

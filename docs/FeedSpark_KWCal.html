@@ -977,7 +977,30 @@ function periodWin(r){
   return { a:Date.UTC(y,mo,half===2?16:1), b:Date.UTC(y,mo,half===1?15:eom,23,59,59),
            label:MON[mo]+' '+y+(half?(half===1?' · 1st half':' · 2nd half'):'') };
 }
-function resFor(brand,e){
+/* THE MOMENT'S OWN READ-OUT (Ray, 21 Sep 2026: Vimalesh answered the Silk brief
+ * REIS-20260811-02 on its own thread with the numbers — "can you update the result directly in
+ * Keywords Calendar and Intake also?").
+ * /api/kwresults is Dino's SCHEDULED archive: one round reports a whole FORTNIGHT, so the
+ * window join below ties it to every optimisation that went live inside it — right, but
+ * approximate, and it prints a caveat saying so. A read-out filed on the moment's OWN ticket
+ * is this optimisation and nothing else, so when one exists it wins outright. Same ticket =
+ * same work; there is nothing left to infer. The tie itself is wfFor's, already resolved for
+ * the whole brand in one pass, so a foreign brand's ticket can never leak in here. */
+function ticketRes(brand,e){
+  var b=wfFor(brand,e); if(!b||!b.comms||!b.comms.length)return null;
+  for(var i=b.comms.length-1;i>=0;i--){                       // newest read-out wins
+    var n=String((b.comms[i]&&b.comms[i].note)||'');
+    if(!/^\s*result\s*:/i.test(n))continue;
+    var txt=n.replace(/^\s*result\s*:\s*/i,'').trim(); if(!txt)continue;
+    var up=/\+\s?\d/.test(txt), dn=/-\s?\d/.test(txt);
+    return { own:1, id:b.id, txt:txt, when:b.comms[i].when||b.updated||0,
+      mkt:evMkt(brand,e), metrics:txt.split(' · '),
+      verdict:(up&&dn)?'mixed':up?'positive':dn?'negative':'unknown' };
+  }
+  return null;
+}
+function resFor(brand,e){ return ticketRes(brand,e)||roundRes(brand,e); }
+function roundRes(brand,e){
   var rs=KWRES[brand]; if(!rs||!rs.length)return null;
   var mk=evMkt(brand,e), t=schedDate(e).getTime(), out=null;
   for(var i=0;i<rs.length;i++){ var r=rs[i];
@@ -992,12 +1015,19 @@ function resPop(btn,brand,e,r){
   popClose();
   var w=r.__w, ms=(r.metrics||[]);
   var d=document.createElement('div'); d.className='pop'; d.id='kw-pop'; d.style.maxWidth='420px';
+  var when=esc(new Date(r.when||Date.now()).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}));
   d.innerHTML='<b>📈 '+esc(e.name)+' — result</b>'
-    +'<div class="pm">'+esc(resLbl(r))+' · '+esc((r.mkt||evMkt(brand,e)).toUpperCase())+' batch '+esc(w?w.label:(r.period||''))
-    +' · reported '+esc(new Date(r.when||Date.now()).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}))+'</div>'
+    +(r.own
+      ? '<div class="pm">'+esc(resLbl(r))+' · '+esc((r.mkt||evMkt(brand,e)).toUpperCase())
+        +' · from its own ticket <b>'+esc(r.id)+'</b> · reported '+when+'</div>'
+      : '<div class="pm">'+esc(resLbl(r))+' · '+esc((r.mkt||evMkt(brand,e)).toUpperCase())+' batch '+esc(w?w.label:(r.period||''))
+        +' · reported '+when+'</div>')
     +(ms.length?'<div class="rlines">'+ms.map(function(l){return '<div>'+esc(l)+'</div>'}).join('')+'</div>'
       :'<div class="pm">No metric lines parsed from the report — open the archive for the full email.</div>')
-    +'<div class="pm" style="margin:8px 0 0">This batch reports every optimisation that went live in that window, not this moment alone.</div>';
+    +(r.own
+      // never the fortnight caveat here: this read-out answers THIS optimisation's own brief
+      ? '<div class="pm" style="margin:8px 0 0">Reported on this optimisation\u2019s own brief thread — these figures are this moment\u2019s, not a batch average. <a href="/workflow" style="color:var(--orange-ink)">Open the ticket</a></div>'
+      : '<div class="pm" style="margin:8px 0 0">This batch reports every optimisation that went live in that window, not this moment alone.</div>');
   document.body.appendChild(d);
   var q=btn.getBoundingClientRect();
   d.style.left=Math.min(window.scrollX+q.left,window.scrollX+document.documentElement.clientWidth-d.offsetWidth-14)+'px';
