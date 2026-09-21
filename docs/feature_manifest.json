@@ -7751,9 +7751,9 @@
       "pr": 455
     },
     {
-      "name": "AI Mode: the card is a quote TYPE, so it rides the same sections / export / tracker as the rest",
+      "name": "Spark AI: the card is a quote TYPE, so it rides the same sections / export / tracker as the rest (renamed from 'AI Mode attributes' 21 Sep 2026 — the KEY `aim` is untouched)",
       "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "['aim','AI Mode attributes'",
+      "pattern": "['aim','Spark AI'",
       "pr": 455
     },
     {
@@ -8257,6 +8257,92 @@
       "name": "Golden Record tripwire: the client file never mentions Claude",
       "file": "tools/check_grpdf.js",
       "pattern": "nothing in the file mentions Claude at all"
+    },
+    {
+      "name": "Spark AI: the section carries Ray's name for it",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "<h3>Spark AI &mdash; priced by data source</h3>",
+      "pr": 0
+    },
+    {
+      "name": "Spark AI: the old label is RETIRED from the page (must stay gone)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "AI Mode",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "Spark AI: the arrival cohort is one named, documented block",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "AIQUOTE-COHORT",
+      "pr": 0
+    },
+    {
+      "name": "Spark AI: the feed pull buckets first-seen dates by MONTH — rows, parents, per product type",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "rowsM:dRowM,parsM:dParM,ptM:dPtM",
+      "pr": 0
+    },
+    {
+      "name": "Spark AI: one month key, so a cutoff is a string compare and never a timezone",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function aimYm(ms)",
+      "pr": 0
+    },
+    {
+      "name": "Spark AI: ONE pass builds the months, the options and the selected count",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function aimCoSeries()",
+      "pr": 0
+    },
+    {
+      "name": "Spark AI: the Generate-for control is on the card",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "id=\"aim-since\"",
+      "pr": 0
+    },
+    {
+      "name": "Spark AI: a cohort narrows the ONE-OFF range",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function aimUnits(){ var c=aimCohort(); return c?c.units:aimScopeUnits(); }",
+      "pr": 0
+    },
+    {
+      "name": "Spark AI: …and NEVER the per-month figure, which reads the product-type scope alone",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "u=aimScopeUnits(), ix=idx(), m=aimRec()",
+      "pr": 0
+    },
+    {
+      "name": "Spark AI: an undated product is counted out of the cohort, and the card says how many",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "carry no first-seen date and are left out",
+      "pr": 0
+    },
+    {
+      "name": "Spark AI: the on-screen statement that the monthly figure is untouched",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "per-month figure below is untouched",
+      "pr": 0
+    },
+    {
+      "name": "Spark AI: a month the current scope cannot reach is shown reading 0, never silently cleared",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "months.push({ym:since,n:0,cum:(c?c.units:0)})",
+      "pr": 0
+    },
+    {
+      "name": "Spark AI: the cohort travels with the snapshot, the email, the brief and the workbook",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "Generated for products that arrived since",
+      "min": 2,
+      "pr": 0
+    },
+    {
+      "name": "Spark AI: …and the finance workbook names it, since a quantity does not say which products",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "Spark AI cohort: generated for products that arrived since",
+      "pr": 0
     }
   ]
 }

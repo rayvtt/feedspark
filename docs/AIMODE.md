@@ -332,3 +332,83 @@ loses to any class that sets `display`, so `el.hidden = true` on a `.aim-r` or `
 shows whichever read applies and so drew *both* ("Arrivals run-rate 0 / month" above the typed %
 box), and the quote summary's AI Mode rows, which had been showing empty since they shipped.
 `.aim-r[hidden],.qs-r[hidden]{display:none}` states it once, for every such row.
+
+---
+
+## It is called Spark AI
+
+> Ray, 21 Sep 2026: *"can you rename the section into Spark AI"*
+
+Every label follows: the card heading, the quote-type button, both quote-summary rows, the KPI,
+⧉ Copy text, the client email, the brief and the workbook's row names.
+
+**The record key is untouched.** `types.aim`, `q.aim`, `data-tp="aim"`, `AIM_*` and the `aim`
+namespace all stay exactly as they were — renaming a label must never rename a record, or every
+quote finance has already signed off would read as empty. A `forbidden` marker keeps the old label
+from creeping back into the page.
+
+## Generate for — the arrival cohort
+
+> Ray, same message: *"within the charge per product ID, allow selection — for example, if clients
+> only want to optimize for new collections … add manual selection of products to be generated,
+> optimized based on date of birth as well. For example, any product that arrives after August
+> 2026."*
+
+**CHARGED PER** answers what *one unit* is — an item group or a product. Which of them we actually
+generate is a different question, so it gets its own control, and it applies **on top of** the
+product-type scope rather than replacing it.
+
+`GENERATE FOR` is one select, because it is one decision. The months come from the feed's own
+`fs:date_of_birth`, and each option carries what picking it would leave in scope:
+
+```
+Every product in scope
+Arrived since Sep 2026 — 60
+Arrived since Aug 2026 — 180
+Arrived since Jun 2025 — 360
+```
+
+A month the catalogue does not reach cannot be picked. Where the control cannot be offered at all —
+no feed pulled, no first-seen column, or a typed headline figure that carries no dates — it says
+which, rather than sitting dead.
+
+### How it is counted
+
+The pull already read first-seen dates, but only as one fixed twelve-month count, which answers one
+question. It now also buckets them by **month** — `rowsM` (SKUs), `parsM` (item groups) and `ptM`
+(per product type) — the same shape `/volume`'s arrivals engine keeps, bounded by the months the
+feed spans rather than by its row count. `aimCoSeries()` builds the month series **once** for the
+current unit + product-type scope, and the options *and* the selected figure both read it, so the
+list can never disagree with the number it produces. The cutoff is a `YYYY-MM` string compare —
+never a timestamp, so never a timezone.
+
+### Three rules that keep the quote honest
+
+**1. A cohort narrows the one-off, never the monthly.** The range is generated once, so a cohort
+makes it smaller. But every product that arrives *next* month is in the cohort by definition, so the
+ongoing figure is the full flow into the product-type scope:
+
+| | reads |
+|---|---|
+| `aimUnits()` — what is generated once | the cohort |
+| `aimScopeUnits()` — what flows in monthly | the product-type scope alone |
+
+Scaling the ongoing figure down by the cohort's share would undercharge the part of the service that
+never ends. The card states this on screen, because a reader would reasonably expect both sides to
+shrink together.
+
+**2. An undated product is not in the cohort.** It cannot be *shown* to have arrived after the
+cutoff, so it is left out — and the hint names how many, the same rule the newness read follows.
+Silently counting them in would sell work on products nobody selected.
+
+**3. A selection is never silently cleared.** Narrowing to a product type the cohort does not reach
+keeps the month in the list, reading 0. A select showing "Every product in scope" while a cohort of
+0 is applied would be the card lying about what it priced; 0 is a true answer, and the choice stays
+with the reader.
+
+### Where it travels
+
+A cohort quote is a different deliverable from a whole-catalogue one, so it goes wherever the
+figures go: the saved snapshot (and back through ✎ Edit), ⧉ Copy text, the client email, the brief,
+and the finance workbook's notes — there especially, because the quantity on a line does not say
+*which* products it covers. The monthly block deliberately does not carry it.
