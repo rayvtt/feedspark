@@ -596,10 +596,22 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   .opt-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--line);font-size:12.5px;font-weight:700}
   .opt-row.here{background:#FFF8EE}
   .opt-row.win{background:#EAF7EF}
+  /* the light washes kept their hex in dark mode, so "This build" and its £ were near-white on cream */
+  [data-theme=dark] .opt-row.here{background:rgba(245,166,35,.13)} [data-theme=dark] .opt-row.win{background:rgba(21,128,61,.16)}
+  [data-theme=dark] .opt-tag.here{background:rgba(245,166,35,.18);border-color:rgba(245,166,35,.4)}
   .opt-row.out{opacity:.62}
   .opt-n{font-size:16px;font-weight:900;color:var(--navy);min-width:20px;text-align:center}
   .opt-nm{flex:1 1 auto;min-width:0}
   .opt-nm .r{font-size:10.5px;font-weight:800;color:var(--muted)}
+  /* the delta line: + green, − deep orange, ~ navy, so the eye finds what moved before reading it */
+  .opt-nm .od-l{display:block;margin-top:4px;font-size:10.5px;font-weight:800;color:var(--ink-2);line-height:1.9}
+  .od{display:inline-block;padding:0 6px;border-radius:6px;border:1px solid var(--line);background:var(--wash);font-weight:800;line-height:1.7;white-space:nowrap}
+  .od.add{color:var(--good);border-color:#BFE3C8;background:#EAF7EF}
+  .od.rem{color:var(--orange-deep);border-color:rgba(237,111,11,.35);background:rgba(237,111,11,.07)}
+  .od.chg{color:var(--navy);border-color:#C7D7F5;background:#EEF4FF}
+  .od.same,.od.more{color:var(--muted)}
+  .od.money{border:0;background:transparent;color:var(--muted);padding-left:2px;white-space:normal}
+  [data-theme=dark] .od.add{background:rgba(21,128,61,.18);border-color:rgba(21,128,61,.4)} [data-theme=dark] .od.chg{background:rgba(59,91,219,.18);border-color:rgba(59,91,219,.4)}
   .opt-m{white-space:nowrap;font-weight:900}
   .opt-m .mo{font-weight:800;color:var(--muted);font-size:11.5px}
   .opt-tag{font-size:10px;font-weight:900;padding:2px 7px;border-radius:999px;white-space:nowrap}
@@ -645,9 +657,12 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   .tk-kpi .l{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:2px}
   [data-theme=dark] .tk-kpi{background:#181B22}
   .tk-scroll{overflow-x:auto}
-  .tk{width:100%;border-collapse:collapse;font-size:12.5px;min-width:1200px}
-  .tk th{text-align:left;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:0 9px 7px;white-space:nowrap}
-  .tk td{padding:9px;border-top:1px solid var(--wash);vertical-align:middle}
+  .tk{width:100%;border-collapse:collapse;font-size:12.5px;min-width:1000px}
+  .tk th{text-align:left;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:0 8px 7px;white-space:nowrap}
+  .tk td{padding:7px 8px;border-top:1px solid var(--wash);vertical-align:middle}
+  /* "expand horizontally if needed": on a wide screen the tracker card steps out of the 1280px
+     column to the viewport, leaving the page gutter; every other card keeps the column */
+  @media (min-width:1400px){ #tracker-card{margin-left:calc(50% - 50vw + 30px);margin-right:calc(50% - 50vw + 30px)} }
   [data-theme=dark] .tk td{border-top-color:#181B22}
   .tk tbody tr:hover td{background:rgba(245,166,35,.05)}
   .tk .t-ref{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -657,15 +672,19 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   .tk .t-tot{font-weight:900;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
   .tk .t-tot.unset{color:var(--muted);font-weight:700;font-size:11px}
   /* stage rail: every stage visible so the whole lifecycle reads at a glance, current one lit */
-  .st-rail{display:inline-flex;gap:3px;flex-wrap:wrap}
+  .st-rail{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;white-space:nowrap}
   .st{font:inherit;font-size:10.5px;font-weight:900;padding:3px 9px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--muted);cursor:pointer;white-space:nowrap}
   .st:hover{border-color:var(--orange);color:var(--orange-deep)}
-  .st.done{background:rgba(21,128,61,.09);border-color:rgba(21,128,61,.3);color:var(--good)}
+  /* the stepper: dots for every stage that is not the current one */
+  .st.done,.st.todo{width:12px;height:12px;padding:0;border-radius:50%;border:2px solid var(--line);background:var(--paper);flex:none;transition:transform .12s}
+  .st.done{background:var(--good);border-color:var(--good)}
+  .st.done:hover,.st.todo:hover{border-color:var(--orange);transform:scale(1.3)}
   .st.on{background:linear-gradient(135deg,var(--orange),var(--orange-deep));border-color:transparent;color:#fff}
-  .st.dec{color:var(--risk)}
-  .st.dec.on{background:var(--risk);border-color:transparent;color:#fff}
-  [data-theme=dark] .st{background:#20242E}
-  .tk select.t-own{font:inherit;font-size:11.5px;font-weight:800;padding:4px 7px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+  .st.dec{color:var(--muted);border-color:transparent;padding:2px 6px;margin-left:2px;font-size:11px}
+  .st.dec:hover{color:var(--risk);border-color:var(--risk)}
+  .st.dec.on{background:var(--risk);border-color:transparent;color:#fff;padding:3px 9px;font-size:10.5px}
+  [data-theme=dark] .st{background:#20242E} [data-theme=dark] .st.done{background:var(--good)}
+  .tk select.t-own{font:inherit;font-size:11.5px;font-weight:800;padding:4px 5px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);width:104px}
   [data-theme=dark] .tk select.t-own{background:#161922;color:var(--ink)}
   .tk .t-x{font:inherit;font-size:11px;font-weight:900;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--muted);cursor:pointer;padding:2px 8px;opacity:0;transition:opacity .12s}
   .tk tbody tr:hover .t-x,.tk .t-x:focus-visible{opacity:1}
@@ -682,10 +701,20 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   .tk-money.hid{visibility:hidden}
   /* per-row actions — ✉ Draft email + → Intake — each a button UNTIL used, then a state chip
      (stamped who/when) so neither can be fired twice by accident */
-  .tk .t-acts{display:flex;flex-direction:column;gap:4px;align-items:flex-start;min-width:132px}
-  .tk .t-act{font:inherit;font-size:11px;font-weight:900;border:1px solid var(--line);border-radius:100px;background:var(--paper);color:var(--ink-2);cursor:pointer;padding:3px 10px;white-space:nowrap}
+  .tk .t-acts{display:flex;flex-direction:row;flex-wrap:wrap;gap:4px 6px;align-items:center;min-width:0}
+  .tk .t-ico{display:inline-flex;gap:5px;align-items:center;flex:none;white-space:nowrap}
+  .tk .t-act{font:inherit;font-size:13px;font-weight:900;line-height:1;width:26px;height:26px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap;flex:none}
   .tk .t-act:hover{border-color:var(--orange);color:var(--orange-deep)}
   .tk .t-act.warn{border-color:rgba(237,111,11,.5);color:var(--orange-ink)}
+  .tk .t-act.done{border-color:#BFE3C8;background:#EAF7EF;color:var(--good);cursor:default}
+  .tk button.t-act.done{cursor:pointer}
+  .tk .t-act.busy{opacity:.55;cursor:default}
+  .tk .t-act.on{background:linear-gradient(135deg,var(--orange),var(--orange-deep));border-color:transparent;color:#fff}
+  .tk .t-grp{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+  .tk .t-grp .t-act{border:0;border-radius:0;border-right:1px solid var(--line)} .tk .t-grp .t-act:last-child{border-right:0}
+  .tk .t-wf.none{color:var(--muted);border-style:dashed}
+  .tk-legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:9px;font-size:10.5px;font-weight:800;color:var(--muted)}
+  .tk-legend b{display:inline-block;min-width:16px;text-align:center;color:var(--ink-2);font-weight:900} .tk-legend .lg-done b{color:var(--good)}
   .tk .t-act[disabled]{opacity:.55;cursor:default}
   .tk .t-done{display:inline-block;font-size:10.5px;font-weight:800;color:var(--good);line-height:1.35}
   .tk .t-done.busy{color:var(--muted)}
@@ -732,6 +761,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     <button class="btn pri" id="pull" type="button">⟳ Pull live feed (product types)</button>
     <button class="btn" id="ptpick" type="button">⚙ Choose product types</button>
     <button class="btn" id="showp" type="button" aria-pressed="false" title="Reveal / hide the £ quote — hidden by default so the scope is safe to screen-share">£ Show quote</button>
+    <button class="btn quiet" id="fresh" type="button" title="Start this client's quote again from a blank record — scope, lines, Spark AI routes, bundle, discount and setup all cleared. Saved quotes on the tracker and the shared rate card are untouched">↺ Start fresh</button>
     <span class="mstate" id="mstate"></span>
   </div>
   <div class="ctl" id="mkt-row" style="margin-top:10px" hidden>
@@ -881,12 +911,13 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     <div class="tk-scroll"><table class="tk" id="tk">
       <thead><tr>
         <th>Ref</th><th>Client</th><th>Saved</th><th>Scope</th>
-        <th style="text-align:right" class="tk-money">Total</th>
-        <th>Stage — click to move it</th><th>Finance owner</th><th>Last update</th><th>Client email · Intake</th><th></th>
+        <th style="text-align:right" class="tk-money">Total · ex VAT</th>
+        <th>Stage — click a dot to move it</th><th>Finance owner</th><th>Last update</th><th>Actions</th><th></th>
       </tr></thead>
       <tbody id="tk-body"></tbody>
     </table></div>
-    <div class="hint" id="tk-state" style="margin-top:10px"></div>
+    <div class="tk-legend"><span><b>✉</b> Draft email</span><span><b>→</b> Intake</span><span><b>✓</b> Chosen</span><span><b>＋</b> Add option</span><span><b>❐</b> Compare options</span><span><b>✎</b> Edit</span><span class="lg-done"><b>●</b> done</span><span><b>🎫</b> live Workflow ticket</span></div>
+    <div class="hint" id="tk-state" style="margin-top:6px"></div>
   </div>
 
   <div class="card" style="background:var(--wash)">
@@ -1138,7 +1169,15 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   function rateSrc(id){ var ch=fCharge(id); if(ch==='flat'||ch==='monthly')return fHours(id)!=null?'hours':'none';
     var f=rec().fields[id]; if(f&&f.rate!=null&&f.rate!=='')return 'own';
     var c=card()[id]; if(c&&c.rate!=null&&c.rate!=='')return 'card'; return catUnit(id)!=null?'cat':'none'; }
-  function fOn(id){ var f=rec().fields[id]; return !!(f&&f.on); }
+  /* A HIDDEN CARD NEVER PRICES (Ray, 21 Sep 2026, a fresh Reiss quote reading £1,818.14 one-off +
+     £260.31 a month with nothing ticked on screen): the per-SKU field lines are summed wherever
+     fields[id].on is set, and until #467 that always matched the fields card being on screen,
+     because every record opened with the legacy type on. A client record from before the quote
+     types existed now opens on Spark AI — the card is gone but its ticked lines were still in the
+     total, so the hero priced lines nobody could see or untick. A line is ON only while its quote
+     type is: the record keeps the ticks (✎ Edit of an old snapshot brings the type and the card
+     back together), the figure follows what is on screen. */
+  function fOn(id){ var f=rec().fields[id]; return !!(f&&f.on)&&typeOn('ai'); }
   /* NO VAT ON THE QUOTE (Ray, 16 Sep 2026: "just remove VAT in general, as it's known-given") — the same
      rule Finance's own book follows: every figure is ex VAT and nothing computes or prints a VAT line.
      The function stays so every "ex VAT" wording downstream keeps reading off one place, and a SAVED
@@ -2122,15 +2161,73 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
        quotes, and a reload starts clean because the tracker is the durable view. */
     if(LAST_SAVED&&SAVED[LAST_SAVED]&&qProp(SAVED[LAST_SAVED]))return SAVED[LAST_SAVED].prop.id;
     return null; }
-  function optWhat(q){ var p=[];
+  /* ---- WHAT SETS EACH OPTION APART — AIQUOTE-OPTDELTA ----------------------------------
+     Ray, 21 Sep 2026: "the summaries below each option should be clearer - to easier identify -
+     ensure AI writing here to provide both details (delta changes between option) but not too
+     cluttered". Two lines under every option, both WRITTEN BY THE PAGE off the frozen snapshots
+     and never by Tachyon — a difference stated here must be one the quotes actually carry, and the
+     strip has to read the same with the API key absent. Line one = what the option INCLUDES, in one
+     compact clause per thing (Spark AI with its route mix, the bundle and its band, the cohort, the
+     unit, the discount, the scope). Line two = what changed AGAINST THE OPTION BEFORE IT: attributes
+     added, dropped or re-routed, the bundle on or off, scope, cohort, unit, discount, then the £
+     movement — capped at four clauses with the rest in the tooltip, and "same lines" when nothing
+     differs, because a duplicate option is a finding, not a blank. Options read as a ladder, so
+     each is compared with its predecessor rather than every one with option 1: the third line then
+     says only what the third step adds. */
+  var AIM_ROUTE_SHORT={feed:'feed',scrape:'scrape',ai:'Tachyon AI',feedhero:'FeedHero rule',off:'off'};
+  function qUpd(q){ return (q&&q.upd&&typeof q.upd==='object')?q.upd:null; }
+  function optAimMap(q){ var m={}; ((q&&q.aim&&q.aim.lines)||[]).forEach(function(l){ if(l.shared||!l.id)return; m[l.id]={label:l.label||l.id,route:l.route||'?'}; }); return m; }
+  function optScopeWord(q){ var sc=(q&&q.scope)||{}, vol=+sc.vol||+q.prods||0, n=(sc.pts||[]).length;
+    if(sc.mode==='manual')return 'headline '+fmt(vol)+' SKUs';
+    if(sc.mode==='pts'&&n)return n+' product type'+(n===1?'':'s')+' · '+fmt(vol)+' SKUs';
+    return 'whole catalogue'+(vol?' · '+fmt(vol)+' SKUs':''); }
+  function optWhat(q){ var p=[], am=optAimMap(q), ids=Object.keys(am);
+    if(ids.length){ var mix={}; ids.forEach(function(id){ var r=am[id].route; mix[r]=(mix[r]||0)+1; });
+      p.push('Spark AI \u00d7'+ids.length+' ('+['ai','scrape','feed','feedhero'].filter(function(r){ return mix[r]; }).map(function(r){ return mix[r]+' '+(AIM_ROUTE_SHORT[r]||r); }).join(' \u00b7 ')+')'); }
     if(+q.fields>0)p.push(q.fields+' AI field'+(q.fields===1?'':'s'));
-    var an=(q.aim&&q.aim.lines)?q.aim.lines.filter(function(l){return !l.shared}).length:0;
-    if(an)p.push('Spark AI '+an);
     var ks={}; (q.xlines||[]).forEach(function(l){ if(l.kind==='pre')return;
       ks[l.kind==='sys'?'system':l.kind==='feed'?'feed':l.kind==='lia'?'LIA feed':'retainer']=1; });
     Object.keys(ks).forEach(function(w){ p.push(w); });
-    if(q.upd)p.push('monthly new products');
-    return p.join(' · ')||'no lines'; }
+    var u=qUpd(q); if(u)p.push('monthly new products'+(u.label?' ('+u.label+')':''));
+    if(q.aim&&q.aim.since)p.push('arrivals since '+moLbl(q.aim.since));
+    if(ids.length&&q.aim&&q.aim.unit==='product')p.push('per product');
+    if(+q.disc>0)p.push(q.disc+'% discount');
+    if(!p.length)return 'no lines';
+    p.push(optScopeWord(q));
+    return p.join(' \u00b7 '); }
+  function optDelta(q,b){ if(!q||!b)return null; var it=[], A=optAimMap(b), B=optAimMap(q), rw=function(r){ return AIM_ROUTE_SHORT[r]||r; };
+    Object.keys(B).forEach(function(id){ if(!A[id])it.push({s:'+',t:B[id].label}); else if(A[id].route!==B[id].route)it.push({s:'~',t:B[id].label+': '+rw(A[id].route)+' \u2192 '+rw(B[id].route)}); });
+    Object.keys(A).forEach(function(id){ if(!B[id])it.push({s:'\u2212',t:A[id].label}); });
+    var ua=qUpd(b), ub=qUpd(q);
+    if(ub&&!ua)it.push({s:'+',t:'monthly new products'}); else if(ua&&!ub)it.push({s:'\u2212',t:'monthly new products'});
+    else if(ua&&ub&&(ua.label||'')!==(ub.label||''))it.push({s:'~',t:'new-products band '+(ua.label||'?')+' \u2192 '+(ub.label||'?')});
+    var fa=+b.fields||0, fb=+q.fields||0;
+    if(fb>fa)it.push({s:'+',t:(fb-fa)+' AI field'+(fb-fa===1?'':'s')}); else if(fa>fb)it.push({s:'\u2212',t:(fa-fb)+' AI field'+(fa-fb===1?'':'s')});
+    var xa={}, xb={}; (b.xlines||[]).forEach(function(l){ if(l.kind!=='pre')xa[l.name]=1; }); (q.xlines||[]).forEach(function(l){ if(l.kind!=='pre')xb[l.name]=1; });
+    Object.keys(xb).forEach(function(nm){ if(!xa[nm])it.push({s:'+',t:nm}); }); Object.keys(xa).forEach(function(nm){ if(!xb[nm])it.push({s:'\u2212',t:nm}); });
+    /* the scope's SHAPE (whole / N product types / headline) is a real difference; the SKU count
+       is compared only when both sides know it — a build whose feed is not pulled yet reads 0, and
+       "0 SKUs (was 9,859)" would be the strip inventing a difference */
+    var shp=function(x){ var sc=(x&&x.scope)||{}; return sc.mode==='manual'?'headline':(sc.mode==='pts'&&(sc.pts||[]).length)?((sc.pts||[]).length+' product type'+((sc.pts||[]).length===1?'':'s')):'whole catalogue'; };
+    var va=+((b.scope||{}).vol)||+b.prods||0, vb=+((q.scope||{}).vol)||+q.prods||0;
+    if(shp(b)!==shp(q))it.push({s:'~',t:'scope '+shp(q)+(vb?' · '+fmt(vb)+' SKUs':'')+' (was '+shp(b)+(va?' · '+fmt(va)+' SKUs':'')+')'});
+    else if(va&&vb&&va!==vb)it.push({s:'~',t:fmt(vb)+' SKUs in scope (was '+fmt(va)+')'});
+    var ca=(b.aim&&b.aim.since)||null, cb=(q.aim&&q.aim.since)||null;
+    if(ca!==cb)it.push({s:'~',t:cb?('arrivals since '+moLbl(cb)+(ca?' (was '+moLbl(ca)+')':' (was every product)')):('every product (was arrivals since '+moLbl(ca)+')')});
+    var uA=(b.aim&&b.aim.unit)||'group', uB=(q.aim&&q.aim.unit)||'group';
+    if(Object.keys(A).length&&Object.keys(B).length&&uA!==uB)it.push({s:'~',t:'per '+(uB==='product'?'product':'item group')+' (was per '+(uA==='product'?'product':'item group')+')'});
+    var da=+b.disc||0, db=+q.disc||0; if(da!==db)it.push({s:'~',t:(db?db+'% discount':'no discount')+' (was '+(da?da+'%':'none')+')'});
+    var dg=(+q.gross||0)-(+b.gross||0), dm=(+q.monGross||0)-(+b.monGross||0), mon=[];
+    var sg=function(v){ return (v<0?'\u2212':'+')+money(Math.abs(v)); };
+    if(Math.abs(dg)>=0.005)mon.push(sg(dg)+' one-off'); if(Math.abs(dm)>=0.005)mon.push(sg(dm)+' / month');
+    return {items:it,money:mon.length?mon.join(' \u00b7 '):'same price'}; }
+  function optDeltaText(q,b,P){ var d=optDelta(q,b); if(!d)return '';
+    return (d.items.length?d.items.map(function(x){ return x.s+' '+x.t; }).join(' \u00b7 '):'same lines')+(P?' \u00b7 '+d.money:''); }
+  function optDeltaHtml(q,b,bn,P){ var d=optDelta(q,b); if(!d)return '';
+    var cap=4, shown=d.items.slice(0,cap), more=d.items.length-shown.length;
+    var body=shown.length?shown.map(function(x){ return '<span class="od '+(x.s==='+'?'add':(x.s==='~'?'chg':'rem'))+'">'+esc(x.s+' '+x.t)+'</span>'; }).join(' ')+(more>0?' <span class="od more">+'+more+' more</span>':'')
+      :'<span class="od same">same lines</span>';
+    return '<span class="od-l" title="'+esc('vs option '+bn+': '+optDeltaText(q,b,P))+'">vs option '+esc(String(bn))+': '+body+(P?' <span class="od money">'+esc(d.money)+'</span>':'')+'</span>'; }
   function renderOptStrip(){
     var el=$('#opt-strip'), bar=$('#opt-bar'); if(!el)return;
     var pid=propInPlay();
@@ -2140,19 +2237,26 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       else bar.hidden=true; }
     if(!pid){ el.innerHTML=''; return; }
     var ks=optsFor(pid), ch=propChosenId(pid), t=SHOWP?totals():null;
-    var rows=ks.map(function(k){ var q=SAVED[k], st=optState(k);
+    var rows=ks.map(function(k,i){ var q=SAVED[k], st=optState(k), prev=i?SAVED[ks[i-1]]:null;
       var tag=st==='chosen'?'<span class="opt-tag win">✓ client chose this</span>'
         :st==='nottaken'?'<span class="opt-tag out">not taken</span>'
         :(EDITING&&EDITING.id===k?'<span class="opt-tag here">editing</span>':'');
       return '<div class="opt-row'+(st==='chosen'?' win':(st==='nottaken'?' out':''))+'">'
         +'<span class="opt-n">'+optGlyph(q.prop.n)+'</span>'
         +'<span class="opt-nm">'+esc(q.prop.label||('Option '+q.prop.n))
-          +'<br><span class="r">'+esc(q.ref)+' · '+esc(optWhat(q))+'</span></span>'
+          +'<br><span class="r">'+esc(q.ref)+' · '+esc(optWhat(q))+'</span>'
+          +(prev?optDeltaHtml(q,prev,prev.prop.n,SHOWP):'')+'</span>'
         +tag
         +'<span class="opt-m tk-money'+(SHOWP?'':' hid')+'">'+(q.miss?'rates incomplete':money(q.gross))
           +(+q.monGross>0?'<br><span class="mo">+ '+money(q.monGross)+' / month</span>':'')+'</span></div>'; }).join('');
+    /* the build in progress is compared with the LAST saved option, so the AM sees what the next
+       step adds while still assembling it */
+    var live=t?{fields:t.inc,aim:t.aim,xlines:t.x,upd:t.upd,gross:t.gross,monGross:t.monGross,disc:t.disc,
+      scope:{mode:(rec().scope||{}).mode||'all',pts:((rec().pts||{})[MKT]||[]).slice(),vol:baseVol()}}:null;
+    var lastK=ks.length?ks[ks.length-1]:null;
     if(PENDING_OPT)rows+='<div class="opt-row here"><span class="opt-n">'+optGlyph(PENDING_OPT.n)+'</span>'
-      +'<span class="opt-nm">This build<br><span class="r">not saved yet · '+esc(t?optWhat({fields:t.inc,aim:t.aim,xlines:t.x,upd:t.upd}):'—')+'</span></span>'
+      +'<span class="opt-nm">This build<br><span class="r">not saved yet · '+esc(live?optWhat(live):'—')+'</span>'
+      +((live&&lastK)?optDeltaHtml(live,SAVED[lastK],SAVED[lastK].prop.n,true):'')+'</span>'
       +'<span class="opt-tag here">building now</span>'
       +'<span class="opt-m tk-money'+(SHOWP?'':' hid')+'">'+(t?(t.miss?'rates incomplete':money(t.gross)):'£ hidden')
         +((t&&+t.monGross>0)?'<br><span class="mo">+ '+money(t.monGross)+' / month</span>':'')+'</span></div>';
@@ -2177,6 +2281,14 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   });
   $('#ptpick').addEventListener('click',function(){ rec().scope={mode:'pts'}; openPicker(); render(); });
   // £ Show/Hide covers the tracker too — the whole page has to stay safe to screen-share
+  /* ↺ START FRESH (Ray, 21 Sep 2026: "a fresh Reiss quote still have these numbers - refresh it?"):
+     the builder's per-client record is shared and persists between sessions, so a client whose
+     quote was built weeks ago opens on that build. One click puts the record back to blank — the
+     market kept, the pulled feed index kept, the saved quotes and the house rate card untouched. */
+  $('#fresh').addEventListener('click',function(){ if(!CLIENT)return;
+    if(!confirm('Start a fresh '+CLIENT+' quote? Every line, route, scope, discount and setup on this build is cleared. Saved quotes on the tracker and the rate card are not touched.'))return;
+    STORE[CLIENT]={mkt:MKT,scope:{mode:'all'},pts:{},fields:{}}; EDITING=null; PENDING_OPT=null; VOL={};
+    render(); saveSoon(); toast('Fresh '+CLIENT+' quote — nothing on it yet'); });
   $('#showp').addEventListener('click',function(){ SHOWP=!SHOWP; try{localStorage.setItem('fcc-aiq-showp',SHOWP?'1':'0')}catch(e){} render(); renderTracker(); });
   $('#expand').addEventListener('click',function(){ var anyClosed=GROUPS.some(function(g){return !grpOpen(g)}); GROUPS.forEach(function(g){OPEN[g]=anyClosed;}); saveOpen(); render(); $('#expand').textContent=anyClosed?'⊖ Collapse all':'⊕ Expand all'; });
   function saveOpen(){ try{localStorage.setItem('fcc-aiq-open',JSON.stringify(OPEN))}catch(e){} }
@@ -3192,11 +3304,12 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     r.lia=cf.lia?JSON.parse(JSON.stringify(cf.lia)):{mkts:{},extra:[],note:''}; r.ret=cf.ret?JSON.parse(JSON.stringify(cf.ret)):{one:null,mon:null,note:''}; r.dflags=cf.dflags?JSON.parse(JSON.stringify(cf.dflags)):{}; r.pre=cf.pre?JSON.parse(JSON.stringify(cf.pre)):{};
     r.setup=(q.setup!=null&&q.setup!==''&&+q.setup>0)?q.setup:null; r.disc=(+q.disc>0)?q.disc:null; r.vat=!!q.vat; r.valid=(q.valid!=null)?q.valid:null; r.blockGBP=q.blockGBP||null;
     // the new-products bundle as saved: on, the estimate, and the band PINNED so the saved figure is reproduced
-    r.upd=q.upd?{on:true,est:(q.upd.est!=null?q.upd.est:null),tier:(q.upd.tier!=null?q.upd.tier:null),disc:!!q.upd.disc,
+    var qu=qUpd(q);
+    r.upd=qu?{on:true,est:(qu.est!=null?qu.est:null),tier:(qu.tier!=null?qu.tier:null),disc:!!qu.disc,
       /* the snapshot's OWN £, frozen: the band index alone trusted the shared rate card to still hold
          the same price, so reopening a signed-off quote silently re-priced it at today's band.
          Touching the bands, pinning another or moving the estimate clears the freeze. */
-      gbp:((q.upd.gbp!=null&&isFinite(+q.upd.gbp)&&+q.upd.gbp>0)?+q.upd.gbp:null)}:{on:false,est:null,tier:null};
+      gbp:((qu.gbp!=null&&isFinite(+qu.gbp)&&+qu.gbp>0)?+qu.gbp:null)}:{on:false,est:null,tier:null};
     /* Spark AI as saved: the ROUTES come back, so re-pricing reproduces the quote finance signed
        off. The rates on the snapshot are NOT written back over the rate card - that is a shared
        figure for every client, and one edit of an old quote must not move it for the whole book. */
@@ -3208,6 +3321,11 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     loadMkts(); render(); saveSoon();
     toast('Editing '+q.ref+' — Save stores a new version');
     var el=$('#fields-card'); if(el&&el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'start'}); }
+  /* the table's two date columns: day on one line, time · who on the next — the year and the
+     long month were 40px of every row that the tooltip carries just as well */
+  function tkWhenC(ts,who){ if(!ts)return '—'; var d=new Date(+ts), y=(d.getFullYear()!==new Date().getFullYear())?' '+String(d.getFullYear()).slice(2):'';
+    return '<span title="'+esc(tkWhen(ts))+'">'+esc(d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}).replace('Sept','Sep')+y)+'</span><br><span style="font-size:10px">'
+      +esc(d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}))+(who?' · '+esc(who):'')+'</span>'; }
   function tkWhen(ts){ if(!ts)return '—'; var d=new Date(+ts);
     return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
   function tkWho(w){ return w?String(w).split('@')[0]:'—'; }
@@ -3273,8 +3391,17 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     stamp(k,'client chose this option ('+optWord(q)+')');
     if(was&&SAVED[was])stamp(was,'not taken — client chose '+q.ref);
     putSaved(q.ref+' — marked as the client\u2019s choice'); }
+  /* LAST UPDATE IS `lu`, NEVER `upd` (Ray, 21 Sep 2026, QT263819-4 reading "Invalid Date Invalid
+     Date" in the tracker): the snapshot keeps the new-products BUNDLE on q.upd, and this stamp was
+     writing the last-update TIME onto the same field — so the tracker printed +bundleObject as a
+     date on any quote carrying the bundle, and every stage move / owner change / → Intake on such a
+     quote overwrote its bundle record with a number (the detail row then read "undefined new SKUs",
+     ✎ Edit restored a bundle with no estimate and no frozen price). tkLast() reads lu, then a
+     legacy numeric upd, then the save time; qUpd() is the ONE reader of the bundle and only ever
+     hands back an object. */
   function stamp(id,label){ var q=SAVED[id]; if(!q)return;
-    q.hist=(q.hist||[]).concat([{s:label,t:Date.now(),by:ME}]); q.upd=Date.now(); }
+    q.hist=(q.hist||[]).concat([{s:label,t:Date.now(),by:ME}]); q.lu=Date.now(); }
+  function tkLast(q){ return +q.lu||((typeof q.upd==='number')?+q.upd:0)||+q.t||0; }
   function setStage(id,st){ var q=SAVED[id]; if(!q||q.stage===st)return;
     q.stage=st; stamp(id,st); putSaved(q.ref+' → '+st); }
   function setOwner(id,o){ var q=SAVED[id]; if(!q||(q.owner||'')===o)return;
@@ -3347,10 +3474,11 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     out.push('FeedSpark — '+qLoc(q));
     out.push(ks.length+' option'+(ks.length===1?'':'s')+' · issued '+dmy(new Date(+q.t||Date.now())));
     out.push('');
-    ks.forEach(function(x){ var o=SAVED[x];
+    ks.forEach(function(x,i){ var o=SAVED[x], pv=i?SAVED[ks[i-1]]:null;
       out.push('OPTION '+o.prop.n+(o.prop.label?(' · '+o.prop.label):'')+(ch===x?'   ✓ selected':''));
       out.push('  Reference: '+o.ref);
       out.push('  Includes: '+optWhat(o));
+      if(pv)out.push('  Compared with option '+pv.prop.n+': '+optDeltaText(o,pv,P));
       if(P){ out.push('  Initial one-off: '+(o.miss?'rates incomplete':money(o.gross)));
         if(+o.monGross>0)out.push('  Ongoing: '+money(o.monGross)+' / month'); }
       else out.push('  Figures on request');
@@ -3360,7 +3488,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   function qBlock(q,withP){ var L=q.lines||[], XL=q.xlines||[], d=new Date(+q.t||Date.now()), out=[], P=withP, V=q.vat?' (inc VAT)':' (ex VAT)';
     var missN=L.filter(function(l){return l.rt==null}).length;
     out.push('Reference: '+q.ref+' · '+qLoc(q)+' · issued '+dmy(d));
-    if(L.length||q.upd)out.push('Scope: '+qScopeLine(q));
+    if(L.length||qUpd(q))out.push('Scope: '+qScopeLine(q));
     var oneL=L.filter(function(l){return l.charge!=='monthly'}), monL=L.filter(function(l){return l.mon>0});
     var xo=XL.filter(function(l){return l.side==='oneoff'}), xm=XL.filter(function(l){return l.side!=='oneoff'});
     var xrow=function(l){ return '• '+l.name+' — '+l.qual+(P?(' '+xLineMoney(l)):'')+(l.note?(' — '+l.note):''); };
@@ -3376,14 +3504,14 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
         out.push('Net (ex VAT): '+money(q.net)); if(q.vat)out.push('VAT 20%: '+money(q.vatAmt)); out.push('ONE-OFF TOTAL'+V+': '+money(q.gross)); } }
     out.push('','ONGOING MONTHLY COSTS — recurring');
     ['sys','feed','lia'].forEach(function(k){ var g=xm.filter(function(l){return l.kind===k}); if(!g.length)return; out.push(KIND_HEAD[k]+' ('+g.length+'):'); g.forEach(function(l){ out.push(xrow(l)); }); });
-    if(q.upd)out.push('Monthly update — new products: '+updWord(q.upd,P));
+    if(qUpd(q))out.push('Monthly update — new products: '+updWord(qUpd(q),P));
     var retM=xm.filter(function(l){return l.kind==='ret'});
     if(monL.length||retM.length){ out.push('Monitoring & account management (hours per month):');
       monL.forEach(function(l){ out.push('• '+l.name+(l.charge==='monthly'?' — monthly':' — maintenance')+' · '+l.mon+'h / month'+(P?(' '+money(l.monGBP)+'/month'):'')); });
       retM.forEach(function(l){ out.push(xrow(l)); }); }
     if(+q.tbcN>0)out.push(q.tbcN+' bespoke feed'+(q.tbcN===1?'':'s')+' priced separately by ASPL once the requirements are costed.');
     var aM=qAimBlock(q,P,'monthly'); aM.forEach(function(x){ out.push(x.replace(/^  /,'').replace(/^    /,'')); });
-    if(!xm.length&&!q.upd&&!monL.length&&!aM.length)out.push('None — everything quoted is a one-off charge.');
+    if(!xm.length&&!qUpd(q)&&!monL.length&&!aM.length)out.push('None — everything quoted is a one-off charge.');
     if(P&&!q.miss){ if(+q.monDisc>0){ out.push('Subtotal (ex VAT): '+money(q.monSub)+' / month'); out.push('Partner discount '+q.disc+'%'+qDiscWord(q)+': −'+money(q.monDisc)+' / month'); }
       out.push('Net (ex VAT): '+money(q.monNet)+' / month'); if(q.vat)out.push('VAT 20%: '+money(q.monVat)+' / month'); out.push('MONTHLY TOTAL'+V+': '+money(q.monGross)+' / month'); }
     if(P){ if(!q.miss)out.push('','SUMMARY'+V+': initial one-off '+money(q.gross)+' · ongoing '+money(q.monGross)+' / month.');
@@ -3416,11 +3544,11 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     return 'Quote — '+q.ref+' — '+qLoc(q)+' — '+(n?(n+' AI field'+(n===1?'':'s')+' · '):'')+xWord(XT)+' · '+qTotalWord(q); }
   function quoteBriefScope(q){ var L=q.lines||[], out=[];
     out.push('Saved quote '+q.ref+' — '+qLoc(q)+' — saved '+tkWhen(q.t)+' by '+tkWho(q.by));
-    if(L.length||q.upd)out.push('Scope: '+qScopeLine(q));
+    if(L.length||qUpd(q))out.push('Scope: '+qScopeLine(q));
     if(L.length){ out.push('Fields ('+L.length+'):');
       L.forEach(function(l){ out.push('• '+l.name+' ('+(l.grp||'')+') — '+fmt(l.c)+' SKUs · '+MODE_WORD[l.mode||'ai']+(l.rt==null?' — rate not set':(' '+lineMoney(l)))+(l.note?(' — '+l.note):'')); });
       out.push('Generation methods: '+modeWord(L)+' — sizes the work per field (manual = written by hand; rules = FeedHero rules built for the brand; predefined rules = off-the-shelf rule set; AI + script = Tachyon with our scripts).'); }
-    if(q.upd)out.push('Monthly update — new products: '+updWord(q.upd,true));
+    if(qUpd(q))out.push('Monthly update — new products: '+updWord(qUpd(q),true));
     var XB=q.xlines||[]; ['sys','feed','lia','ret','pre'].forEach(function(k){ var g=XB.filter(function(l){return l.kind===k}); if(!g.length)return; out.push(KIND_HEAD[k]+' ('+g.length+'):');
       g.forEach(function(l){ out.push('• '+l.name+' — '+l.qual+' '+xLineMoney(l)+(l.note?(' — '+l.note):'')); }); });
     if(+q.tbcN>0)out.push(q.tbcN+' bespoke feed'+(q.tbcN===1?'':'s')+' to ASPL for costing — requirements above; priced separately.');
@@ -3428,40 +3556,47 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     if(+q.disc>0&&!q.miss)out.push('Partner discount '+q.disc+'%'+(q.discScope&&q.discScope!=='all'?' ('+discScopeWord(q.discScope)+')':'')+': −'+money(q.discAmt)+' one-off (subtotal '+money(q.sub)+' → net '+money(q.net)+' ex VAT)'+(+q.monDisc>0?' · −'+money(q.monDisc)+' / month':''));
     out.push(q.miss?'Commercials: rates incomplete — the quote cannot total until every line carries a £/SKU or one-off rate'
       :('One-off total'+(q.vat?' (inc VAT 20%)':' (ex VAT)')+': '+money(q.gross)+(q.vat?' · VAT '+money(q.vatAmt):'')));
-    if(+q.monN>0)out.push((q.upd?'Monthly recurring':'Monthly maintenance')+(q.vat?' (inc VAT)':' (ex VAT)')+': '+money(q.monGross)+' / month on '+q.monN+' line'+(q.monN===1?'':'s'));
+    if(+q.monN>0)out.push((qUpd(q)?'Monthly recurring':'Monthly maintenance')+(q.vat?' (inc VAT)':' (ex VAT)')+': '+money(q.monGross)+' / month on '+q.monN+' line'+(q.monN===1?'':'s'));
     if(q.prev)out.push('Version of '+q.prev);
     out.push('Valid '+qValid(q)+' days from the save date');
     out.push('Source: AI Field Quote finance tracker (/aiquote)');
     return out.join('\n'); }
 
-  function actsCell(k,q){ var h='<div class="t-acts">';
-    if(q.draft){ h+='<span class="t-done" data-draft="'+esc(k)+'" title="Gmail draft '+(q.draft.via==='gmail'?'composed':'queued')+' '+esc(tkWhenS(q.draft.t))+' by '+esc(tkWho(q.draft.by))+' → '+esc(q.draft.to||'')+(q.draft.figures?' (with £)':' (£ hidden — volumes only)')+' — click to compose another">✉ drafted · '+esc(tkWhenS(q.draft.t))+' · '+esc(tkWho(q.draft.by))+'</span>'; }
-    else h+='<button type="button" class="t-act" data-draft="'+esc(k)+'" title="Compose the client email (two tones) and queue it into Gmail Drafts — never sends itself">✉ Draft email</button>';
+  /* THE ACTIONS ARE ONE ROW OF ICONS (Ray, 21 Sep 2026, the same message): six word-pills stacked
+     down every row made each one 150px tall. Each action is now a 26px icon with its full label and
+     its state in the tooltip — ✉ email, → intake, ✓ chosen, ➕ add option, ⧉ compare, ✎ edit — a
+     DONE state is the icon in green (the drafted / filed date and who sits in its tooltip, exactly
+     what the old text said), and the three proposal actions sit together in one segmented group so
+     they read as the family they are. The live 🎫 ticket chip keeps its words: it is a read-out of
+     another module's state, not a button. The legend under the table names every icon once. */
+  function icoBtn(cls,attrs,title,glyph){ return '<button type="button" class="t-act'+(cls?' '+cls:'')+'" '+attrs+' title="'+esc(title)+'" aria-label="'+esc(title)+'">'+glyph+'</button>'; }
+  function icoSpan(cls,title,glyph){ return '<span class="t-act '+cls+'" title="'+esc(title)+'" aria-label="'+esc(title)+'">'+glyph+'</span>'; }
+  function actsCell(k,q){ var h='<div class="t-acts"><span class="t-ico">';
+    if(q.draft)h+=icoBtn('done','data-draft="'+esc(k)+'"','Client email drafted — '+(q.draft.via==='gmail'?'composed in Gmail':'queued into Gmail Drafts')+' '+tkWhenS(q.draft.t)+' by '+tkWho(q.draft.by)+' → '+(q.draft.to||'')+(q.draft.figures?' (with £)':' (£ hidden — volumes only)')+'. Click to compose another.','\u2709');
+    else h+=icoBtn('','data-draft="'+esc(k)+'"','Draft the client email — two tones, queued into Gmail Drafts, never sends itself','\u2709');
     if(q.intake){ var it=q.intake;
-      if(it.busy)h+='<span class="t-done busy">→ filing…</span>';
-      else{ h+='<span class="t-done" title="Filed into the '+esc(q.client)+' Project Plan + brief opened '+esc(tkWhenS(it.t))+' by '+esc(tkWho(it.by))+' — plan task '+(it.planOk?'filed':(it.planOk===false?('failed: '+esc(it.err||'?')):'unconfirmed'))+'">→ Intake · '+esc(tkWhenS(it.t))+' · '+esc(tkWho(it.by))+'</span>';
-        if(!it.planOk)h+='<button type="button" class="t-act warn" data-retry="'+esc(k)+'" title="The Project Plan write '+(it.planOk===false?('failed ('+esc(it.err||'?')+')'):'was not confirmed')+' — retry it (the sheet write is idempotent, so this can never double-file)">↻ plan</button>'; } }
-    else h+='<button type="button" class="t-act" data-intake="'+esc(k)+'" title="File this quote into the client’s Project Plan and open the brief in the Workflow pipeline">→ Intake</button>';
+      if(it.busy)h+=icoSpan('busy','Filing into the Project Plan…','\u2192');
+      else{ h+=icoSpan('done','Filed into the '+q.client+' Project Plan and the brief opened — '+tkWhenS(it.t)+' by '+tkWho(it.by)+' — plan task '+(it.planOk?'filed':(it.planOk===false?('failed: '+(it.err||'?')):'unconfirmed')),'\u2192');
+        if(!it.planOk)h+=icoBtn('warn','data-retry="'+esc(k)+'"','The Project Plan write '+(it.planOk===false?('failed ('+(it.err||'?')+')'):'was not confirmed')+' — retry it (the sheet write is idempotent, so this can never double-file)','\u21bb'); } }
+    else h+=icoBtn('','data-intake="'+esc(k)+'"','→ Intake — file this quote into the client’s Project Plan and open the brief in the Workflow pipeline','\u2192');
     /* THE CLIENT'S DECISION, kept apart from finance's: choosing an option never touches the
        stage rail, and it is a toggle, because a client who changes their mind should not need
        the quote rebuilding */
-    var ost=optState(k);
-    if(ost&&ost!=='super')h+='<button type="button" class="t-act'+(ost==='chosen'?' on':'')+'" data-choose="'+esc(k)+'" title="'
-      +(ost==='chosen'?'The client chose this option — click to clear the choice':'Mark this as the option the client chose; its siblings become "not taken"')
-      +'">'+(ost==='chosen'?'✓ chosen':'✓ Chosen')+'</button>';
-    h+='<button type="button" class="t-act" data-addopt="'+esc(k)+'" title="'
-      +(ost?'Load this option into the builder and save the next option of the same proposal':'Load this quote into the builder and save a SIBLING option beside it — this quote becomes option 1')
-      +'">➕ Add option</button>';
-    if(ost&&ost!=='super')h+='<button type="button" class="t-act" data-copyopt="'+esc(k)+'" title="Copy every option of this proposal as one client-facing comparison">⧉ Options</button>';
+    var ost=optState(k), g='';
+    if(ost&&ost!=='super')g+=icoBtn(ost==='chosen'?'on':'','data-choose="'+esc(k)+'"',
+      ost==='chosen'?'✓ Chosen — the client chose this option. Click to clear the choice':'✓ Chosen — mark this as the option the client chose; its siblings become "not taken"','\u2713');
+    g+=icoBtn('','data-addopt="'+esc(k)+'"',
+      ost?'➕ Add option — load this option into the builder and save the next option of the same proposal':'➕ Add option — load this quote into the builder and save a sibling option beside it; this quote becomes option 1','\uff0b');
+    if(ost&&ost!=='super')g+=icoBtn('','data-copyopt="'+esc(k)+'"','⧉ Compare options — copy every option of this proposal as one client-facing comparison','\u2750');
+    h+='<span class="t-grp">'+g+'</span>';
+    h+=icoBtn('','data-edit="'+esc(k)+'"','✎ Edit — load this quote back into the builder; saving again stores a new version and this one stays for finance','\u270e')+'</span>';
     /* the ticket, LIVE from the pipeline - the stage moves in Workflow, never here, so this is a
        read-out and a link, not a control (the same rule the Keyword Calendar follows) */
     var tk=qTicket(q);
     if(tk){ var dn=!!WF_DELIVERED[tk.status];
       h+='<a class="t-wf'+(dn?' dn':'')+'" href="/workflow" title="'+esc(tk.task)+(tk.by?' · briefed by '+esc(tkWho(tk.by)):'')
         +' · matched on the quote ref in the ticket’s task">🎫 '+esc(WF_LBL[tk.status]||tk.status)+' · '+esc(WF_COURT[tk.status]||'—')+'</a>'; }
-    else if(q.intake&&!q.intake.busy&&QBR_AT)h+='<span class="t-sup" title="Filed into the plan, but no Workflow ticket carries this quote’s ref yet — the brief may not have been saved, or its task was renamed">🎫 no ticket yet</span>';
-    h+='<button type="button" class="t-act" data-edit="'+esc(k)+'" title="Load this quote back into the builder — saving again stores a new version; this one stays for finance">✎ Edit</button>';
-    if(q.superseded)h+='<span class="t-sup" title="Edited '+esc(tkWhenS(q.superseded.t))+' by '+esc(tkWho(q.superseded.by))+'">↻ newer version: '+esc(q.superseded.ref)+'</span>';
+    else if(q.intake&&!q.intake.busy&&QBR_AT)h+='<span class="t-wf none" title="Filed into the plan, but no Workflow ticket carries this quote’s ref yet — the brief may not have been saved, or its task was renamed">🎫 no ticket</span>';
     return h+'</div>'; }
   function askRow(k,q){ var a=TKASK, t=quoteEmail(q,a.tone);
     var to=(a.to!=null)?a.to:(ASK.cfg.to[q.client]||''), subject=(a.subject!=null)?a.subject:t.subject, body=(a.body!=null)?a.body:t.body;
@@ -3635,20 +3770,28 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     if(!ids.length){ $('#tk-body').innerHTML='<tr><td colspan="10"><div class="tk-empty">No saved quotes yet — build one above and hit 💾 Save quote. Each save freezes its numbers and lands here with a timestamp.</div></td></tr>'; return; }
     $('#tk-body').innerHTML=ids.map(function(k){
       var q=SAVED[k], si=STAGES.indexOf(q.stage);
+      /* THE RAIL IS A STEPPER (Ray, 21 Sep 2026: "the saved quotes getting super cluttered …
+         buttons should be presented cleaner - maybe in a different format to save space"): seven
+         word-pills wrapped onto two lines in every row. Every stage is still there and still one
+         click — the current one is the only pill, the ones behind it are filled dots, the ones ahead
+         hollow, each named in its tooltip; Declined is the ✕ at the end, red only when it is the
+         stage. One line, a third of the width. */
       var rail=STAGES.map(function(s,i){
-        var cls=(q.stage===s)?'st on':((si>=0&&i<si)?'st done':'st');
-        return '<button type="button" class="'+cls+'" data-st="'+esc(s)+'" data-id="'+esc(k)+'" title="Mark '+esc(s)+'">'+esc(s)+'</button>'; }).join('')
-        +'<button type="button" class="st dec'+(q.stage==='Declined'?' on':'')+'" data-st="Declined" data-id="'+esc(k)+'" title="Mark Declined">Declined</button>';
+        if(q.stage===s)return '<button type="button" class="st on" data-st="'+esc(s)+'" data-id="'+esc(k)+'" title="'+esc(s)+' — the current stage">'+esc(s)+'</button>';
+        var done=(si>=0&&i<si);
+        return '<button type="button" class="st '+(done?'done':'todo')+'" data-st="'+esc(s)+'" data-id="'+esc(k)+'" title="Mark '+esc(s)+(done?' (behind the current stage)':'')+'" aria-label="Mark '+esc(s)+'"></button>'; }).join('')
+        +'<button type="button" class="st dec'+(q.stage==='Declined'?' on':'')+'" data-st="Declined" data-id="'+esc(k)+'" title="'+(q.stage==='Declined'?'Declined — finance turned this quote down':'Mark Declined')+'" aria-label="Mark Declined">'+(q.stage==='Declined'?'Declined':'\u2715')+'</button>';
       var tot=(q.miss?'<span class="t-tot unset">rates incomplete</span>'
-              :'<span class="t-tot">'+money(q.gross)+(q.vat?'':' <span style="font-weight:700;color:var(--muted);font-size:10px">ex VAT</span>')+'</span>')
+              :'<span class="t-tot">'+money(q.gross)+(q.vat?' <span style="font-weight:700;color:var(--muted);font-size:10px">inc VAT</span>':'')+'</span>')
               +(+q.monGross>0?'<span class="t-sup">+ '+money(q.monGross)+' / month</span>':'');
       var scope=q.scope||{};
       var scopeTxt=(scope.mode==='pts'&&(scope.pts||[]).length)?((scope.pts||[]).length+' product types')
                   :(scope.mode==='manual'?'headline figure':'whole catalogue');
-      var last=q.upd||q.t, lastBy=(q.hist&&q.hist.length)?q.hist[q.hist.length-1].by:q.by;
+      var last=tkLast(q), lastBy=(q.hist&&q.hist.length)?q.hist[q.hist.length-1].by:q.by;
       var ost=optState(k), op=qProp(q);
       var row='<tr'+(ost==='nottaken'?' class="tk-out"':'')+'>'
         +'<td class="t-ref">'+esc(q.ref||'—')+(q.prev?'<span class="t-sup" title="Edited from '+esc(q.prev)+'">v'+esc(String(q.ver||2))+' of '+esc(q.prev)+'</span>':'')
+          +(q.superseded?'<span class="t-sup" title="Edited '+esc(tkWhenS(q.superseded.t))+' by '+esc(tkWho(q.superseded.by))+'">↻ newer: '+esc(q.superseded.ref)+'</span>':'')
           /* a SUPERSEDED option is an earlier version of one, not a live option: it is already out
              of optsFor(), so it must not read on the board as if it were still on the table */
           +(op?('<br><span class="t-opt'+(q.superseded?' out':(ost==='chosen'?' win':(ost==='nottaken'?' out':'')))+'" title="'
@@ -3657,14 +3800,14 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
             +'">'+esc(optGlyph(op.n))+' '+esc(op.label||('Option '+op.n))
             +(q.superseded?' · earlier version':(ost==='chosen'?' ✓':(ost==='nottaken'?' · not taken':'')))+'</span>'):'')+'</td>'
         +'<td><span class="t-cl">'+esc(q.client||'—')+'</span> <span class="t-mk">'+esc(String(q.mkt||'').toUpperCase())+'</span>'
-          +(function(){ var ks=[]; if((q.lines||[]).length||q.upd)ks.push('AI'); (q.xlines||[]).forEach(function(l){ if(l.kind==='pre')return; var w=l.kind==='sys'?'System':l.kind==='feed'?'Feed':l.kind==='lia'?'LIA':'Retainer'; if(ks.indexOf(w)<0)ks.push(w); }); return ks.length>1||(ks.length===1&&ks[0]!=='AI')?'<br>'+ks.map(function(k){return '<span class="t-mk">'+esc(k)+'</span>'}).join(' '):''; })()+'</td>'
-        +'<td class="t-when">'+tkWhen(q.t)+'<br><span style="font-size:10px">by '+esc(tkWho(q.by))+'</span></td>'
-        +'<td class="t-when">'+esc(scopeTxt)+'<br><span style="font-size:10px">'+fmt(scope.vol||q.prods||0)+((+scope.skus>+scope.vol)?' products · ':' SKUs · ')+(q.fields||0)+' field'+((q.fields||0)===1?'':'s')+'</span></td>'
+          +(function(){ var ks=[]; if((q.lines||[]).length||qUpd(q))ks.push('AI'); (q.xlines||[]).forEach(function(l){ if(l.kind==='pre')return; var w=l.kind==='sys'?'System':l.kind==='feed'?'Feed':l.kind==='lia'?'LIA':'Retainer'; if(ks.indexOf(w)<0)ks.push(w); }); return ks.length>1||(ks.length===1&&ks[0]!=='AI')?'<br>'+ks.map(function(k){return '<span class="t-mk">'+esc(k)+'</span>'}).join(' '):''; })()+'</td>'
+        +'<td class="t-when">'+tkWhenC(q.t,tkWho(q.by))+'</td>'
+        +'<td class="t-when">'+esc(scopeTxt)+'<br><span style="font-size:10px">'+fmt(scope.vol||q.prods||0)+((+scope.skus>+scope.vol)?' products':' SKUs')+((+q.fields>0)?' · '+q.fields+' field'+(q.fields===1?'':'s'):'')+'</span></td>'
         +'<td style="text-align:right" class="tk-money'+(SHOWP?'':' hid')+'">'+tot+'</td>'
         +'<td><span class="st-rail">'+rail+'</span></td>'
         +'<td><select class="t-own" data-own="'+esc(k)+'"><option value="">— unassigned</option>'
           +FINANCE.map(function(f){ return '<option'+((q.owner||'')===f?' selected':'')+'>'+esc(f)+'</option>'; }).join('')+'</select></td>'
-        +'<td class="t-when">'+tkWhen(last)+'<br><span style="font-size:10px">'+esc(tkWho(lastBy))+'</span></td>'
+        +'<td class="t-when">'+tkWhenC(last,tkWho(lastBy))+'</td>'
         +'<td>'+actsCell(k,q)+'</td>'
         +'<td style="white-space:nowrap"><button class="t-exp" type="button" data-exp="'+esc(k)+'" title="Line detail + audit trail">'+(TKOPEN[k]?'⌃':'⌄')+'</button>'
           +'<button class="t-x" type="button" data-x="'+esc(k)+'" title="Remove this saved quote">✕</button></td>'
@@ -3678,7 +3821,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
               :(fmt(l.c)+' × '+(l.rt==null?'rate not set':('£'+l.rt))+(l.rt==null?'':' = '+money(l.c*l.rt))))
               +(l.charge!=='monthly'&&l.mon>0?' <span style="color:var(--muted)">+ '+money(l.monGBP)+'/mo · '+esc(String(l.mon))+'h</span>':'')+'</span></div>'; }).join('')
           +(q.xlines||[]).map(function(l){ return '<div class="dl"><span>'+esc(l.name)+' <span style="color:var(--muted)">· '+esc(l.qual)+'</span>'+(l.note?'<br><span style="color:var(--muted);font-weight:600">'+esc(l.note)+'</span>':'')+'</span><span class="tk-money'+(SHOWP?'':' hid')+'">'+esc(xLineMoney(l))+'</span></div>'; }).join('')
-          +(q.upd?('<div class="dl"><span>Monthly update — new products <span style="color:var(--muted)">· '+esc(q.upd.label||'')+' new SKUs / month'+(q.upd.exp!=null?' · ~'+fmt(q.upd.exp)+'/mo '+esc(q.upd.src||''):'')+'</span></span><span class="tk-money'+(SHOWP?'':' hid')+'">'+money(q.upd.gbp)+'/mo</span></div>'):'')
+          +(qUpd(q)?('<div class="dl"><span>Monthly update — new products <span style="color:var(--muted)">· '+esc(qUpd(q).label||'')+' new SKUs / month'+(qUpd(q).exp!=null?' · ~'+fmt(qUpd(q).exp)+'/mo '+esc(qUpd(q).src||''):'')+'</span></span><span class="tk-money'+(SHOWP?'':' hid')+'">'+money(qUpd(q).gbp)+'/mo</span></div>'):'')
           +((+q.setup)?'<div class="dl"><span>One-off setup</span><span class="tk-money'+(SHOWP?'':' hid')+'">'+money(q.setup)+'</span></div>':'')
           +((+q.disc>0)?'<div class="dl"><span>Partner discount '+esc(String(q.disc))+'%'+(q.discScope&&q.discScope!=='all'?' <span style="color:var(--muted)">· '+esc(discScopeWord(q.discScope))+'</span>':'')+(q.discMan===false?' <span style="color:var(--muted)">· excl. man power</span>':'')+' <span style="color:var(--muted)">· one-off</span></span><span class="tk-money'+(SHOWP?'':' hid')+'">'+(q.miss?'—':(+q.discAmt>0?'−'+money(q.discAmt):'—'))+'</span></div>':'')
           +'<div class="dl" style="border-top:1px solid var(--line);margin-top:5px;padding-top:5px"><span><b>Initial one-off total'+(q.vat?' (inc VAT 20%)':' (ex VAT)')+'</b> <span style="color:var(--muted)">· paid once</span></span><span class="tk-money'+(SHOWP?'':' hid')+'"><b>'+(q.miss?'rates incomplete':money(q.gross))+'</b></span></div>'
@@ -3741,7 +3884,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
          silently dropping it out of the proposal it was written for */
       if(qProp(old))snap.prop={id:old.prop.id,n:old.prop.n,label:old.prop.label||''};
       if(old.chosen)snap.chosen={t:old.chosen.t,by:old.chosen.by};
-      old.superseded={ref:snap.ref,t:Date.now(),by:ME}; old.hist=(old.hist||[]).concat([{s:'edited → '+snap.ref,t:Date.now(),by:ME}]); old.upd=Date.now();
+      old.superseded={ref:snap.ref,t:Date.now(),by:ME}; old.hist=(old.hist||[]).concat([{s:'edited → '+snap.ref,t:Date.now(),by:ME}]); old.lu=Date.now();
       EDITING=null; render(); }
     else if(PENDING_OPT){ snap.prop={id:PENDING_OPT.pid,n:PENDING_OPT.n,label:PENDING_OPT.label||''};
       snap.hist[0].s='Saved as option '+PENDING_OPT.n;

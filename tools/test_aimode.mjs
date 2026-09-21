@@ -304,7 +304,7 @@ ok(/function autoDeliver\(\)/.test(src) && /if\(q\.aspl\)return;/.test(src),
 ok(/if\(q\.stage==='Declined'\|\|si<0\|\|si>=di\)return;/.test(src),
   'and never moves a Billed or Declined quote, or moves one backwards');
 ok(/Delivered · not billed/.test(src), 'finance gets the figure it exists for: delivered, not yet billed');
-ok(/no ticket yet/.test(src), 'and a filed quote with no matching ticket says so');
+ok(/🎫 no ticket/.test(src) && /no Workflow ticket carries this quote/.test(src), 'and a filed quote with no matching ticket says so');
 
 /* ---------- 14. nothing annual, on any surface (Ray, 18 Sep 2026) ---------- */
 console.log('\n  and no quote surface carries an annual or pro-rated figure');
@@ -495,7 +495,7 @@ ok(/if\(T\[j\]&&String\(T\[j\]\.gbp\)!==String\(e\.target\.value\)\)\{ e\.target
 ok(/function paintTiers\(\)/.test(src) && !/contains\('tgbp'\)\)\{ renderUpd\(\);/.test(src),
   'the chips repaint in place while a price is being typed');
 /* a saved quote reproduces its own price */
-ok(/gbp:\(\(q\.upd\.gbp!=null&&isFinite\(\+q\.upd\.gbp\)&&\+q\.upd\.gbp>0\)\?\+q\.upd\.gbp:null\)/.test(src),
+ok(/gbp:\(\(qu\.gbp!=null&&isFinite\(\+qu\.gbp\)&&\+qu\.gbp>0\)\?\+qu\.gbp:null\)/.test(src),
   '✎ Edit freezes the snapshot\'s own £ — the band index alone trusted the rate card to still hold it');
 ok(/function updThaw\(\)/.test(src) && (src.match(/updThaw\(\)/g)||[]).length>=5,
   'pinning a band, ↺ auto, editing a price or moving the estimate thaws it — those are new decisions');
@@ -534,6 +534,72 @@ ok(/\(typeOn\('ai'\)\?kpi\(t\.inc\+' \/ '\+CAT\.length,'Fields selected'\)\+kpi\
   'the per-SKU field KPIs only show with the legacy type on — never a dead "0 SKUs quoted"');
 ok(/<b>Spark AI<\/b> prices the six Google/.test(src) && !/Scope an <b>AI field-generation<\/b> engagement/.test(src),
   'the hero leads with Spark AI');
+
+/* ---------- THE TRACKER DECLUTTERS (Ray, 21 Sep 2026: "the saved quotes getting super cluttered -
+   expand horizontally if needed, buttons should be presented cleaner - maybe in a different format
+   to save space") ---------- */
+console.log('\nthe finance tracker: one line per quote');
+ok(/q\.lu=Date\.now\(\); \}/.test(src) && !/q\.upd=Date\.now\(\)/.test(src) && !/old\.upd=Date\.now\(\)/.test(src),
+  'the last-update stamp is q.lu — it was q.upd, the field the snapshot keeps the new-products BUNDLE on');
+ok(/function tkLast\(q\)\{ return \+q\.lu\|\|\(\(typeof q\.upd==='number'\)\?\+q\.upd:0\)\|\|\+q\.t\|\|0; \}/.test(src),
+  'tkLast reads lu, then a legacy numeric upd, then the save time — never an object as a date');
+ok(/function qUpd\(q\)\{ return \(q&&q\.upd&&typeof q\.upd==='object'\)\?q\.upd:null; \}/.test(src),
+  'qUpd is the one reader of the bundle and only ever returns an object');
+ok(!/[^a-zA-Z_.]q\.upd\?/.test(src.replace(/typeof q\.upd/g,'')) && (src.match(/qUpd\(q\)/g)||[]).length>=8,
+  '…and every bundle read on a saved quote goes through it');
+ok(/class="st on" data-st=/.test(src) && /class="st '\+\(done\?'done':'todo'\)\+'" data-st=/.test(src),
+  'the stage rail is a stepper: the current stage is the only word, the others are dots');
+ok(/\.st\.done,\.st\.todo\{width:12px;height:12px;padding:0;border-radius:50%/.test(src), '…12px dots');
+ok(/aria-label="Mark '\+esc\(s\)\+'"/.test(src) && /aria-label="Mark Declined"/.test(src), '…every dot names its stage for a screen reader');
+ok(/Stage — click a dot to move it/.test(src), '…and the header says so');
+ok(/function icoBtn\(cls,attrs,title,glyph\)/.test(src) && /function icoSpan\(cls,title,glyph\)/.test(src), 'the actions are icons');
+ok(/\.tk \.t-act\{[^}]*width:26px;height:26px;padding:0/.test(src), '…26px each');
+ok(/<span class="t-grp">'\+g\+'<\/span>/.test(src), '…the three proposal actions grouped');
+ok(/icoBtn\('done','data-draft=/.test(src) && /icoSpan\('done','Filed into the '/.test(src), '…a done state is the icon in green with the who/when in its tooltip');
+ok(/\.tk \.t-acts\{display:flex;flex-direction:row;flex-wrap:wrap/.test(src) && /\.tk \.t-ico\{display:inline-flex;gap:5px;align-items:center;flex:none;white-space:nowrap\}/.test(src),
+  '…the six icons never wrap; only the live ticket chip may drop a line');
+ok(/<div class="tk-legend">/.test(src) && /Compare options<\/span>/.test(src), 'a legend under the table names every icon once');
+ok(/<th style="text-align:right" class="tk-money">Total · ex VAT<\/th>/.test(src) && !/font-size:10px">ex VAT<\/span>'\)\+'<\/span>'\)/.test(src),
+  '"ex VAT" is said once in the header, not on every row');
+ok(/function tkWhenC\(ts,who\)/.test(src) && /tkWhenC\(q\.t,tkWho\(q\.by\)\)/.test(src) && /tkWhenC\(last,tkWho\(lastBy\)\)/.test(src),
+  'the two date columns are compact: day, then time · who');
+ok(/\.tk\{width:100%;border-collapse:collapse;font-size:12\.5px;min-width:1000px\}/.test(src), 'the table fits the 1280px column without a scrollbar');
+ok(/@media \(min-width:1400px\)\{ #tracker-card\{margin-left:calc\(50% - 50vw \+ 30px\);margin-right:calc\(50% - 50vw \+ 30px\)\} \}/.test(src),
+  '…and steps out to the viewport on a wide screen ("expand horizontally if needed")');
+ok(/'<span class="t-sup" title="Edited '\+esc\(tkWhenS\(q\.superseded\.t\)\)[\s\S]{0,80}?'">↻ newer: '/.test(src) && !/newer version: '/.test(src), 'the superseded notice sits under the ref, not among the buttons');
+
+/* ---------- WHAT SETS EACH OPTION APART (Ray, 21 Sep 2026: "the summaries below each option should be
+   clearer - to easier identify - ensure AI writting here to provide both details (delta chagnes
+   between option) but not too cluttered") ---------- */
+console.log('\nthe option strip: what each option includes, and what changed against the one before');
+ok(/AIQUOTE-OPTDELTA/.test(src), 'one named block');
+ok(/function optDelta\(q,b\)/.test(src) && /function optDeltaHtml\(q,b,bn,P\)/.test(src) && /function optDeltaText\(q,b,P\)/.test(src), 'the delta writer, in HTML and in text');
+ok(/never by Tachyon/.test(src) && !/\/api\/claude[^\n]*optDelta/.test(src), 'written by the page off the snapshots — never a model call');
+ok(/'Spark AI \\u00d7'\+ids\.length\+' \('/.test(src), 'includes: Spark AI with its route mix');
+ok(/p\.push\('monthly new products'\+\(u\.label\?' \('\+u\.label\+'\)':''\)\)/.test(src), '…the bundle with its band');
+ok(/if\(q\.aim&&q\.aim\.since\)p\.push\('arrivals since '\+moLbl\(q\.aim\.since\)\)/.test(src), '…the cohort');
+ok(/p\.push\(optScopeWord\(q\)\)/.test(src), '…the scope, last');
+ok(/it\.push\(\{s:'~',t:B\[id\]\.label\+': '\+rw\(A\[id\]\.route\)\+' \\u2192 '\+rw\(B\[id\]\.route\)\}\)/.test(src), 'delta: an attribute re-routed reads "label: A → B"');
+ok(/if\(ub&&!ua\)it\.push\(\{s:'\+',t:'monthly new products'\}\); else if\(ua&&!ub\)it\.push\(\{s:'\\u2212',t:'monthly new products'\}\)/.test(src), '…the bundle on or off');
+ok(/if\(shp\(b\)!==shp\(q\)\)it\.push/.test(src) && /else if\(va&&vb&&va!==vb\)it\.push/.test(src),
+  '…the scope by SHAPE, and the SKU count only when both sides know it (an unpulled build is not a difference)');
+ok(/return \{items:it,money:mon\.length\?mon\.join\(' \\u00b7 '\):'same price'\}/.test(src), '…and the £ movement, one-off and monthly apart');
+ok(/var cap=4, shown=d\.items\.slice\(0,cap\)/.test(src) && /<span class="od more">\+'\+more\+' more<\/span>/.test(src), 'four clauses on screen, the rest in the tooltip');
+ok(/'<span class="od same">same lines<\/span>'/.test(src), 'nothing different says so — a duplicate option is a finding');
+ok(/var rows=ks\.map\(function\(k,i\)\{ var q=SAVED\[k\], st=optState\(k\), prev=i\?SAVED\[ks\[i-1\]\]:null;/.test(src) && /\(prev\?optDeltaHtml\(q,prev,prev\.prop\.n,SHOWP\):''\)/.test(src),
+  'each option is compared with the one BEFORE it — a ladder, not everything against option 1');
+ok(/optDeltaHtml\(live,SAVED\[lastK\],SAVED\[lastK\]\.prop\.n,true\)/.test(src), 'the build in progress is compared with the last saved option');
+ok(/if\(pv\)out\.push\('  Compared with option '\+pv\.prop\.n\+': '\+optDeltaText\(o,pv,P\)\)/.test(src), 'the client comparison carries the same line');
+ok(/\.od\.add\{color:var\(--good\)/.test(src) && /\.od\.rem\{color:var\(--orange-deep\)/.test(src) && /\.od\.chg\{color:var\(--navy\)/.test(src), '+ green · − deep orange · ~ navy');
+
+/* ---------- A HIDDEN CARD NEVER PRICES (Ray, 21 Sep 2026: "a fresh Reiss quote still have these
+   numbers - refresh it ?") ---------- */
+console.log('\na hidden card never prices');
+ok(/function fOn\(id\)\{ var f=rec\(\)\.fields\[id\]; return !!\(f&&f\.on\)&&typeOn\('ai'\); \}/.test(src),
+  'a per-SKU field line is ON only while the legacy type is — the record keeps its ticks, the total follows the screen');
+ok(/id="fresh"/.test(src) && /STORE\[CLIENT\]=\{mkt:MKT,scope:\{mode:'all'\},pts:\{\},fields:\{\}\}; EDITING=null; PENDING_OPT=null;/.test(src),
+  '↺ Start fresh puts the client record back to blank — saved quotes and the rate card untouched');
+ok(/if\(!confirm\('Start a fresh '\+CLIENT\+' quote\?/.test(src), '…behind a confirm');
 
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);

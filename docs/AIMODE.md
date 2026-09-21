@@ -562,3 +562,82 @@ the **Monthly update — new products** bundle, the view Ray asked on the 17th t
 selected" / "SKUs quoted" KPIs show only with the legacy type on — a Spark AI quote never reads
 "0 SKUs quoted". The hero copy leads with Spark AI.
 
+## The finance tracker declutters
+
+Ray, 21 Sep 2026, sending the tracker: *"the saved quotes getting super cluttered - expand horizontally
+if needed, buttons should be presented cleaner - maybe in a different format to save space."*
+
+Every row was ~150px tall: seven stage word-pills wrapped onto two lines, and six action pills
+stacked down the right. Each row is now one line (~48px):
+
+- **The stage rail is a stepper.** The current stage is the only word; the stages behind it are
+  filled green dots, the ones ahead hollow, Declined is the ✕ at the end (red only when it is the
+  stage). Every stage is still one click and named in its tooltip and `aria-label`; the header
+  reads *Stage — click a dot to move it*.
+- **The actions are one row of 26px icons** — ✉ draft email · → intake · ✓ chosen · ＋ add option ·
+  ❐ compare options · ✎ edit — with the full label and state in each tooltip. A **done** state is the
+  icon in green (the drafted / filed date and who sits in its tooltip, exactly what the old text
+  said); the three proposal actions sit in one segmented group; the six icons never wrap, only the
+  live 🎫 ticket chip may drop a line (it keeps its words — it is a read-out of Workflow's state, not
+  a button). A legend under the table names every icon once. The "↻ newer version" notice moved
+  under the ref beside "v2 of …".
+- **Dates are compact** (day · then time · who; the full timestamp in the tooltip), the Scope cell
+  drops "· 0 fields" on a Spark AI quote, and **"ex VAT" is said once in the Total header** rather
+  than on every row (every figure on the page is ex VAT — Ray, 16 Sep). The table fits the 1280px
+  column without a scrollbar, and on a screen wider than 1400px the tracker card steps out of the
+  column to the viewport gutter — "expand horizontally if needed", taken literally, for that card
+  only.
+
+**A field collision fixed on the way (the "Invalid Date Invalid Date" row).** The snapshot keeps the
+new-products bundle on `q.upd`; `stamp()` was writing the last-update TIME onto the same field. So
+the tracker printed `+bundleObject` as a date on any quote carrying the bundle, and — worse — every
+stage move, owner change or → Intake on such a quote **overwrote its bundle record with a number**
+(the detail row then read "undefined new SKUs", ✎ Edit restored a bundle with no estimate and no
+frozen price). The stamp is now `q.lu`; `tkLast(q)` reads `lu`, then a legacy numeric `upd`, then
+the save time; `qUpd(q)` is the one reader of the bundle and only ever returns an object. A quote
+whose bundle was already clobbered keeps its frozen `monGross` — the money was never wrong, only the
+record of what it was for.
+
+## What sets each option apart
+
+Ray, 21 Sep 2026: *"the summaries below each option should be clearer - to easier identify - ensure
+AI writing here to provide both details (delta changes between option) but not too cluttered."*
+
+Two lines under every option in the strip, both **written by the page off the frozen snapshots and
+never by Tachyon** — a difference stated here must be one the quotes actually carry, and the strip
+reads the same with the API key absent:
+
+- **Line one — what it includes**, one compact clause per thing: `Spark AI ×6 (2 Tachyon AI · 1
+  scrape · 2 feed · 1 FeedHero rule) · monthly new products (up to 1,000) · arrivals since Aug 26 ·
+  per product · 10% discount · whole catalogue · 9,859 SKUs`.
+- **Line two — what changed against the option before it**: attributes added (`+ Popularity rank`,
+  green), dropped (`− monthly new products`, deep orange) or re-routed (`~ Question and answer:
+  Tachyon AI → scrape`, navy); the bundle on/off or its band; the scope by **shape** (whole / N
+  product types / headline) with the SKU count compared only when both sides know it — a build whose
+  feed is not pulled yet reads 0, and "0 SKUs (was 9,859)" would be the strip inventing a difference;
+  the cohort; the unit; the discount; then the £ movement, one-off and monthly apart. Four clauses
+  on screen, the rest behind `+N more` with the full list in the tooltip; `same lines` when nothing
+  differs, because a duplicate option is a finding, not a blank.
+
+Options read as a **ladder**, so each is compared with its predecessor rather than every one with
+option 1 — the third line then says only what the third step adds. The build in progress is compared
+with the last saved option, so the AM sees what the next step adds while still assembling it. ⧉
+Options (the client comparison) carries the same line: `Compared with option 1: − monthly new
+products · −£752.60 one-off`.
+
+## A hidden card never prices
+
+Ray, 21 Sep 2026, a fresh Reiss quote reading £1,818.14 one-off + £260.31 a month with nothing ticked
+on screen: *"a fresh Reiss quote still have these numbers - refresh it?"*
+
+The per-SKU field lines are summed wherever `fields[id].on` is set, and until #467 that always matched
+the fields card being on screen, because every record opened with the legacy type on. A client
+record from before the quote types existed now opens on Spark AI — the card is gone but its ticked
+lines (and the maintenance hours on them) were still in the total. `fOn(id)` is now gated on
+`typeOn('ai')`: a line is ON only while its quote type is; the record keeps its ticks (✎ Edit of an
+old snapshot brings the type and the card back together), the figure follows the screen.
+
+**↺ Start fresh** in the hero puts the client record back to blank — scope, lines, Spark AI routes,
+bundle, discount, setup — behind a confirm; the market and the pulled feed index are kept, and the
+saved quotes on the tracker and the shared rate card are never touched.
+
