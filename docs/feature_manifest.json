@@ -9109,20 +9109,20 @@
       "name": "Label Guard export: every closing tag in the file builder is escaped — the worker injects at the page's first </body> (21 Sep 2026 outage)",
       "file": "docs/FeedSpark_LabelGuard.html",
       "pattern": "<\\/script><\\/body><\\/html>';",
-      "pr": 0
+      "pr": 481
     },
     {
       "name": "Label Guard export: a literal closing body tag inside the page's script is forbidden",
       "file": "docs/FeedSpark_LabelGuard.html",
       "pattern": "<\\/script></body></html>",
       "forbidden": true,
-      "pr": 0
+      "pr": 481
     },
     {
       "name": "check_inline_scripts parses every app page AS THE WORKER SERVES IT and refuses a </body> that is not the closing tag",
       "file": "tools/check_inline_scripts.js",
       "pattern": "a \"</body>\" that is not the document's closing tag",
-      "pr": 0
+      "pr": 481
     }
   ]
 }
