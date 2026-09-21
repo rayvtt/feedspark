@@ -412,3 +412,76 @@ A cohort quote is a different deliverable from a whole-catalogue one, so it goes
 figures go: the saved snapshot (and back through ✎ Edit), ⧉ Copy text, the client email, the brief,
 and the finance workbook's notes — there especially, because the quantity on a line does not say
 *which* products it covers. The monthly block deliberately does not carry it.
+
+---
+
+## Quote options — 1, 2, 3, 4
+
+> Ray, 21 Sep 2026: *"each piece of quote presented should be selectable as an option (1,2,3...).
+> When asking a client to buy a service, you need to provide one, two, three, or four options …
+> after the quote summary section, if the proposal has three options, showcase the three lines of
+> options after each generated quote. AM can continue to build different quote as additional
+> options … especially in the saved quote / finance tracker, highlight which option the client has
+> chosen and approved. and use that data for future analysis."*
+
+**An option is a quote.** Nothing new was invented to hold one: a saved quote carries
+`prop {id, n, label}`, and a proposal is simply every live quote sharing that id. So an option keeps
+its own reference, its own lines, its own client email, its own brief and its own place on the
+finance rail — and ✎ Edit still versions it, because a v2 of option 2 is an ordinary thing to want.
+The superseded version leaves the proposal as an *earlier version*, and its replacement **inherits**
+the option number, so an edited option is counted once rather than twice.
+
+### Building them
+
+**＋ Add option** on any tracker row loads that quote into the builder and makes the next Save a
+**sibling** — deliberately not ✎ Edit's mode, which would version it. A standalone quote becomes
+option 1 the moment a second one is wanted, and the next free number is taken.
+
+| mode | what Save does |
+|---|---|
+| ✎ Edit | a new **version** of this quote |
+| ＋ Add option | a new **option** beside it |
+
+### The strip
+
+Right after the quote summary, as asked: one line per option — glyph, label, reference, what it
+includes, one-off and monthly — plus the build in progress. It **stays up after a save**, because
+the moment you have just added an option is the moment you want to read the set.
+
+The proposal shown is the one *in play*: being added to, under ✎ Edit, or just saved this session.
+Never inferred from the client — a strip that appeared because a proposal exists somewhere for this
+brand would turn up on unrelated quotes. Every write to the saved store redraws it, or it renders
+one option behind (a save-while-editing paints mid-flight, before the new option is in the store).
+
+### The choice
+
+It lives on the winner, and the **newest stamp wins on read** — two AMs can each click before their
+stores merge, and resolving by time settles the board on one answer instead of showing two chosen
+options. Choosing un-chooses the siblings, and it is a toggle, because a client may change their
+mind and that should not need the quote rebuilding.
+
+**Not taken is not Declined.** Declined is finance's word for a quote they turned down; not taken is
+the client picking a sibling. Different facts about different people — so the choice is its own
+field and the stage rail is left exactly as it was.
+
+### The money
+
+Three options at £5k each are one £5k opportunity, not £15k. `countedIds` gives every figure on the
+rail exactly **one quote per proposal**: the chosen option, or the lowest-numbered one until the
+client picks. The board states the rule under its KPIs. Without it the pipeline would have read as
+three deals the day the feature shipped.
+
+Two consequences follow: an option the client did not buy is never auto-delivered by the ASPL
+ticket match, and an earlier version offers no ✓ Chosen — it is out of the proposal already, so the
+button would silently do nothing.
+
+### What the options teach us
+
+A line under the KPIs reads proposals decided against still open, which option **number** is chosen
+most often, and the chosen value against the top option of each. It is computed from the quotes
+themselves, so it can never drift from what the tracker shows.
+
+### For the client
+
+**⧉ Options** copies every option as one document — what each one *includes*, not just a price, ex
+VAT with the validity, on the same footing as every other client-facing exit on this card.

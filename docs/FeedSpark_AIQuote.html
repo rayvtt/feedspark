@@ -565,6 +565,29 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   .qs-r input[type=text]{font:inherit;font-size:13px;font-weight:800;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;width:84px;text-align:right}
   .qs-in{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
   .edit-bar[hidden]{display:none}
+  .opt-bar{background:#EEF4FF;border-color:#C7D7F5;color:var(--navy)}
+  .opt-strip{margin-top:12px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .opt-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;background:var(--wash);
+    font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .opt-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--line);font-size:12.5px;font-weight:700}
+  .opt-row.here{background:#FFF8EE}
+  .opt-row.win{background:#EAF7EF}
+  .opt-row.out{opacity:.62}
+  .opt-n{font-size:16px;font-weight:900;color:var(--navy);min-width:20px;text-align:center}
+  .opt-nm{flex:1 1 auto;min-width:0}
+  .opt-nm .r{font-size:10.5px;font-weight:800;color:var(--muted)}
+  .opt-m{white-space:nowrap;font-weight:900}
+  .opt-m .mo{font-weight:800;color:var(--muted);font-size:11.5px}
+  .opt-tag{font-size:10px;font-weight:900;padding:2px 7px;border-radius:999px;white-space:nowrap}
+  .opt-tag.win{background:#EAF7EF;color:var(--good);border:1px solid #BFE3C8}
+  .opt-tag.out{background:var(--wash);color:var(--muted);border:1px solid var(--line)}
+  .opt-tag.here{background:#FFF1DC;color:var(--orange-ink);border:1px solid #F3D3A6}
+  .opt-f{padding:8px 12px;border-top:1px solid var(--line);font-size:11px;font-weight:700;color:var(--muted);line-height:1.45}
+  .t-opt{display:inline-block;font-size:10px;font-weight:900;color:var(--navy);background:#EEF4FF;border:1px solid #C7D7F5;
+    border-radius:999px;padding:1px 7px;margin-top:3px;white-space:nowrap}
+  .t-opt.win{background:#EAF7EF;color:var(--good);border-color:#BFE3C8}
+  .t-opt.out{background:var(--wash);color:var(--muted);border-color:var(--line)}
+  tr.tk-out>td{opacity:.6}
   .edit-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:9px 12px;border:1px dashed var(--orange);border-radius:10px;background:rgba(245,166,35,.08);font-size:12.5px;font-weight:800;color:var(--orange-ink)}
   .t-sup{display:block;font-size:10px;font-weight:800;color:var(--muted)}
   [data-theme=dark] .qs-col{background:#1C1F27}
@@ -809,6 +832,10 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       </div>
     </div>
     <div class="qtot" id="qtot"></div>
+    <!-- THE OPTIONS, right after the quote summary (Ray: "after the quote summary section, if
+         the proposal has three options, showcase the three lines of options") -->
+    <div id="opt-strip"></div>
+    <div class="edit-bar opt-bar" id="opt-bar" hidden></div>
     <div class="edit-bar" id="edit-bar" hidden>✎ Editing <b id="edit-ref"></b> — Save stores a <b>new version</b> linked to it; the original stays on the tracker for finance. Quantities are as saved; ⟳ Pull live feed again for fresh volumes. <button class="btn quiet" id="edit-stop" type="button" style="margin-left:0">stop editing</button></div>
     <div class="qactions">
       <button class="btn pri" id="savequote" type="button" title="Freeze this quote as a dated snapshot and put it on the finance tracker">💾 Save quote</button>
@@ -826,6 +853,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     <h3>Saved quotes — finance tracker <span class="hint" id="tk-n"></span></h3>
     <div class="ch">Every saved quote is frozen with its numbers, its scope and the moment it was saved — editing the live quote above can never rewrite a figure finance has already signed off. Walk each one along the rail as it moves: <b>Approved → Greenlight → In action → Delivered → Billed</b>, with <b>Andy or Jackie</b> on the finance owner. <b>Delivered</b> means the work is done and the invoice is outstanding — press it yourself, or let it move itself: a quote filed with <b>→ Intake</b> carries its ref into the Workflow ticket, so when ASPL mark that ticket <b>Done</b> the quote follows and the trail records which ticket said so. It never moves a quote already <b>Billed</b> or <b>Declined</b>, and never twice — your call after that stands. Every stage change is stamped with who did it and when; click ⌄ for the line detail and the full audit trail. Two actions per quote: <b>✉ Draft email</b> composes the client email (two tones) and queues it into the ray@feedspark.com <b>Gmail Drafts</b> — it never sends itself; <b>→ Intake</b> files the quote into the client's <b>Project Plan</b> and opens the <b>brief</b> in the Workflow pipeline, like any other intake. <b>✎ Edit</b> loads a saved quote back into the builder; saving again stores a <b>new version</b> linked to it and the original stays put for finance.</div>
     <div class="tk-kpis" id="tk-kpis"></div>
+    <div class="opt-f" id="tk-opt" style="border:0;padding:0 0 4px"></div>
     <div class="tk-scroll"><table class="tk" id="tk">
       <thead><tr>
         <th>Ref</th><th>Client</th><th>Saved</th><th>Scope</th>
@@ -1710,6 +1738,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     T('#aim-hr',money(aimHourly(aimRates()))+' / hour'); }
 
   document.addEventListener('click',function(e){
+    if(e.target&&e.target.id==='opt-stop'){ stopOption(); return; }
     var t=e.target.closest?e.target.closest('[data-aimu],[data-aimr],#aim-reset,#aim-pull'):null; if(!t)return;
     if(t.id==='aim-pull'){ pullFeed(); return; }
     if(t.id==='aim-reset'){ var rc=STORE[RCKEY]||(STORE[RCKEY]={fields:{}}); rc.aim={}; rc.updated=Date.now(); AIM_OPEN=true; renderAim(); foot(); saveSoon(); return; }
@@ -1977,7 +2006,60 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       +(aimN?kpi(aimN+' / '+AIM_ATTRS.length,'Spark AI attributes'):'')
       +(SHOWP?(kpi(t.miss?'—':money(t.gross),'Initial one-off'+(t.miss?' (set rates)':(vatOn()?' inc VAT':'')))+kpi(money(t.monGross)+'<span class="kpu"> / mo</span>','Ongoing monthly'+(vatOn()?' inc VAT':''))):kpi('£ hidden','Quote (tap £ Show)'));
     $('#scope-sum').innerHTML=scopeSummary();
+    renderOptStrip();
   }
+  /* the proposal IN PLAY: the one being added to, or the one the quote under ✎ Edit belongs to.
+     Never guessed from the client - a strip that appeared because a proposal exists somewhere for
+     this brand would keep re-appearing on unrelated quotes. */
+  var LAST_SAVED=null;
+  function propInPlay(){ if(PENDING_OPT)return PENDING_OPT.pid;
+    if(EDITING&&SAVED[EDITING.id]&&qProp(SAVED[EDITING.id]))return SAVED[EDITING.id].prop.id;
+    /* "showcase the three lines of options after each generated quote" - the strip stays up after
+       a save, because the moment you have just added an option is the moment you want to read the
+       set. Keyed on the quote THIS session saved, never inferred from the client: a strip that
+       appeared because a proposal exists somewhere for this brand would turn up on unrelated
+       quotes, and a reload starts clean because the tracker is the durable view. */
+    if(LAST_SAVED&&SAVED[LAST_SAVED]&&qProp(SAVED[LAST_SAVED]))return SAVED[LAST_SAVED].prop.id;
+    return null; }
+  function optWhat(q){ var p=[];
+    if(+q.fields>0)p.push(q.fields+' AI field'+(q.fields===1?'':'s'));
+    var an=(q.aim&&q.aim.lines)?q.aim.lines.filter(function(l){return !l.shared}).length:0;
+    if(an)p.push('Spark AI '+an);
+    var ks={}; (q.xlines||[]).forEach(function(l){ if(l.kind==='pre')return;
+      ks[l.kind==='sys'?'system':l.kind==='feed'?'feed':l.kind==='lia'?'LIA feed':'retainer']=1; });
+    Object.keys(ks).forEach(function(w){ p.push(w); });
+    if(q.upd)p.push('monthly new products');
+    return p.join(' · ')||'no lines'; }
+  function renderOptStrip(){
+    var el=$('#opt-strip'), bar=$('#opt-bar'); if(!el)return;
+    var pid=propInPlay();
+    if(bar){ if(PENDING_OPT){ bar.hidden=false;
+      bar.innerHTML='◈ Building <b>option '+PENDING_OPT.n+'</b> — Save stores it <b>alongside</b> the other options, not as a new version of one. '
+        +'<button class="btn quiet" id="opt-stop" type="button" style="margin-left:0">stop</button>'; }
+      else bar.hidden=true; }
+    if(!pid){ el.innerHTML=''; return; }
+    var ks=optsFor(pid), ch=propChosenId(pid), t=SHOWP?totals():null;
+    var rows=ks.map(function(k){ var q=SAVED[k], st=optState(k);
+      var tag=st==='chosen'?'<span class="opt-tag win">✓ client chose this</span>'
+        :st==='nottaken'?'<span class="opt-tag out">not taken</span>'
+        :(EDITING&&EDITING.id===k?'<span class="opt-tag here">editing</span>':'');
+      return '<div class="opt-row'+(st==='chosen'?' win':(st==='nottaken'?' out':''))+'">'
+        +'<span class="opt-n">'+optGlyph(q.prop.n)+'</span>'
+        +'<span class="opt-nm">'+esc(q.prop.label||('Option '+q.prop.n))
+          +'<br><span class="r">'+esc(q.ref)+' · '+esc(optWhat(q))+'</span></span>'
+        +tag
+        +'<span class="opt-m tk-money'+(SHOWP?'':' hid')+'">'+(q.miss?'rates incomplete':money(q.gross))
+          +(+q.monGross>0?'<br><span class="mo">+ '+money(q.monGross)+' / month</span>':'')+'</span></div>'; }).join('');
+    if(PENDING_OPT)rows+='<div class="opt-row here"><span class="opt-n">'+optGlyph(PENDING_OPT.n)+'</span>'
+      +'<span class="opt-nm">This build<br><span class="r">not saved yet · '+esc(t?optWhat({fields:t.inc,aim:t.aim,xlines:t.x,upd:t.upd}):'—')+'</span></span>'
+      +'<span class="opt-tag here">building now</span>'
+      +'<span class="opt-m tk-money'+(SHOWP?'':' hid')+'">'+(t?(t.miss?'rates incomplete':money(t.gross)):'£ hidden')
+        +((t&&+t.monGross>0)?'<br><span class="mo">+ '+money(t.monGross)+' / month</span>':'')+'</span></div>';
+    var n=ks.length+(PENDING_OPT?1:0);
+    el.innerHTML='<div class="opt-strip"><div class="opt-h"><span>Proposal · '+n+' option'+(n===1?'':'s')+'</span>'
+      +'<span>'+(ch?'client chose '+esc(SAVED[ch].prop.label||('option '+SAVED[ch].prop.n)):'no choice yet')+'</span></div>'
+      +rows
+      +'<div class="opt-f">These are the lines the client picks between. Each option is its own quote — its own reference, email and brief — so marking one as chosen on the tracker leaves the others intact as the record of what was offered.</div></div>'; }
   function cssEsc(s){ return String(s).replace(/["\\]/g,'\\$&'); }
 
 
@@ -2903,7 +2985,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   function putSaved(msg){
     return fetch('/api/aiquote/saved',{method:'PUT',headers:{'content-type':'application/json','X-Sync-Base':String(SAVED_BASE)},body:JSON.stringify(SAVED)})
       .then(function(res){ SAVED_BASE=+res.headers.get('X-Sync-Base')||SAVED_BASE; return res.json(); })
-      .then(function(m){ if(m&&typeof m==='object'&&!m.ok)SAVED=m; renderTracker();
+      .then(function(m){ if(m&&typeof m==='object'&&!m.ok)SAVED=m; renderTracker(); renderOptStrip();
         if(msg){ $('#tk-state').textContent=msg; setTimeout(function(){ if($('#tk-state').textContent===msg)$('#tk-state').textContent=''; },2800); } })
       .catch(function(){ $('#tk-state').textContent='save failed — offline?'; });
   }
@@ -2947,6 +3029,23 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
      rate. Saving again stores a NEW version (its own ref, linked to the original); the original
      stays on the tracker untouched, stamped "edited → <new ref>", so finance's paper trail holds. */
   var EDITING=null;
+  /* the option being built right now. Deliberately NOT the same mode as EDITING: ✎ Edit means
+     "save a new VERSION of this quote", ➕ Add option means "save a SIBLING of it", and a Save
+     that confused the two would either overwrite an option or fork a proposal. */
+  var PENDING_OPT=null;
+  function newPropId(){ return 'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+  function addOption(k){ var src=SAVED[k]; if(!src)return;
+    loadSaved(k);                       // same builder state; what Save MEANS is what changes
+    var p=qProp(src);
+    if(!p){ /* a standalone quote becomes option 1 the moment a second option is wanted */
+      p={id:newPropId(),n:1,label:''}; src.prop=p; stamp(k,'Option 1 of a new proposal'); }
+    var used={}; optsFor(p.id).forEach(function(x){ used[+SAVED[x].prop.n||0]=1; });
+    var n=1; while(used[n])n++;
+    EDITING=null; PENDING_OPT={pid:p.id,n:n,label:''};
+    putSaved('');                       // persist the proposal we may have just created
+    render();
+    toast('Building option '+n+' — Save stores it alongside the others'); }
+  function stopOption(){ PENDING_OPT=null; render(); }
   function loadSaved(k){ var q=SAVED[k]; if(!q)return;
     var sel=$('#brand'); if(!Array.prototype.some.call(sel.options,function(o){return o.value===q.client})){ var o=document.createElement('option'); o.value=q.client; o.textContent=q.client; sel.appendChild(o); }
     sel.value=q.client; CLIENT=q.client; IDX={};
@@ -2979,6 +3078,68 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   function tkWhen(ts){ if(!ts)return '—'; var d=new Date(+ts);
     return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
   function tkWho(w){ return w?String(w).split('@')[0]:'—'; }
+  /* ---- PROPOSAL OPTIONS — AIQUOTE-OPTIONS ---------------------------------------------
+     Ray, 21 Sep 2026: "each piece of quote presented should be selectable as an option
+     (1,2,3...). When asking a client to buy a service, you need to provide one, two, three, or
+     four options … after the quote summary section, if the proposal has three options, showcase
+     the three lines of options after each generated quote. AM can continue to build different
+     quote as additional options … especially in the saved quote / finance tracker, highlight
+     which option the client has chosen and approved. and use that data for future analysis."
+
+     AN OPTION IS A QUOTE. Nothing new was invented to hold one: a saved quote carries
+     `prop {id,n,label}` and a proposal is simply every live quote sharing that id. So an option
+     keeps its own ref, its own lines, its own client email, its own brief and its own place on
+     the finance rail — and ✎ Edit still versions it, because a v2 of option 2 is an ordinary
+     thing to want. A superseded version drops out of the proposal, so an edited option is
+     counted once, not twice.
+
+     THE CHOICE LIVES ON THE WINNER, and the NEWEST stamp wins on read. Two AMs can each click
+     before their stores merge, and resolving by time means the board settles on one answer
+     rather than rendering two chosen options and leaving the reader to guess.
+
+     NOT TAKEN IS NOT DECLINED. Declined is finance's word for a quote they turned down; not
+     taken is the client picking a sibling. Different facts about different people, so the choice
+     is its own field and the stage rail is left exactly as it was — and reversible, because a
+     client who changes their mind should not need the quote rebuilding. */
+  function qProp(q){ return (q&&q.prop&&q.prop.id)?q.prop:null; }
+  function optsFor(pid){ if(!pid)return [];
+    return Object.keys(SAVED).filter(function(k){ var q=SAVED[k];
+      return q&&typeof q==='object'&&!q.deleted&&q.ref&&!q.superseded&&qProp(q)&&q.prop.id===pid; })
+      .sort(function(a,b){ return ((+SAVED[a].prop.n||0)-(+SAVED[b].prop.n||0))||((+SAVED[a].t||0)-(+SAVED[b].t||0)); }); }
+  function propChosenId(pid){ var win=null,wt=-1;
+    optsFor(pid).forEach(function(k){ var c=SAVED[k].chosen; if(c&&+c.t>wt){ wt=+c.t; win=k; } });
+    return win; }
+  /* 'chosen' · 'nottaken' · 'open' · 'super' (an earlier version of an option) · null when the
+     quote is not an option at all. 'super' is its own answer because a superseded version is out
+     of optsFor(), so offering ✓ Chosen on it would be a button that silently does nothing. */
+  function optState(k){ var q=SAVED[k], p=qProp(q); if(!p)return null;
+    if(q.superseded)return 'super';
+    var ch=propChosenId(p.id); if(!ch)return 'open';
+    return ch===k?'chosen':'nottaken'; }
+  function optLabel(q){ var p=qProp(q); if(!p)return ''; return p.label||''; }
+  function optWord(q){ var p=qProp(q); if(!p)return '';
+    var all=optsFor(p.id), i=all.indexOf(Object.keys(SAVED).filter(function(k){return SAVED[k]===q;})[0]);
+    return 'Option '+(p.n||'?')+(all.length>1?(' of '+all.length):''); }
+  var OPTG=['\u2460','\u2461','\u2462','\u2463','\u2464','\u2465'];
+  function optGlyph(n){ return OPTG[(+n||1)-1]||('#'+n); }
+  /* WHAT A PROPOSAL IS WORTH, ONCE. Three options at £5k each are one £5k opportunity, not
+     £15k - so a proposal contributes exactly ONE quote to every money figure on this rail: the
+     option the client chose, or, until they choose, the one the AM leads with (the lowest
+     option number). Summing all three would have read as three times the business. */
+  function countedIds(ids){ var seen={}, out={};
+    ids.forEach(function(k){ var p=qProp(SAVED[k]);
+      if(!p){ out[k]=1; return; }
+      if(seen[p.id])return; seen[p.id]=1;
+      var ch=propChosenId(p.id); out[ch||optsFor(p.id)[0]||k]=1; });
+    return out; }
+  function chooseOpt(k){ var q=SAVED[k], p=qProp(q); if(!q||!p)return;
+    var was=propChosenId(p.id);
+    if(was===k){ delete q.chosen; stamp(k,'choice cleared — no option marked'); putSaved(q.ref+' — choice cleared'); return; }
+    optsFor(p.id).forEach(function(x){ if(SAVED[x].chosen)delete SAVED[x].chosen; });
+    q.chosen={t:Date.now(),by:ME};
+    stamp(k,'client chose this option ('+optWord(q)+')');
+    if(was&&SAVED[was])stamp(was,'not taken — client chose '+q.ref);
+    putSaved(q.ref+' — marked as the client\u2019s choice'); }
   function stamp(id,label){ var q=SAVED[id]; if(!q)return;
     q.hist=(q.hist||[]).concat([{s:label,t:Date.now(),by:ME}]); q.upd=Date.now(); }
   function setStage(id,st){ var q=SAVED[id]; if(!q||q.stage===st)return;
@@ -3044,6 +3205,25 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     L.forEach(function(l){ out.push('    • '+l.label+(side==='oneoff'?(' ('+(AIM_ROUTE_LABEL[l.route]||l.route)+')'):'')
       +(P?('  '+money(side==='oneoff'?l.setup:l.monthly)+(side==='oneoff'?'':'/month')):'')); });
     return out; }
+  /* THE OPTIONS AS THE CLIENT READS THEM — one document, the options side by side, because that
+     is the thing being asked for: "when asking a client to buy a service, you need to provide
+     one, two, three, or four options". Figures only while £ is revealed on the page, the same
+     rule every other client-facing exit on this card follows. */
+  function optionsText(k){ var q=SAVED[k], p=qProp(q); if(!p)return '';
+    var ks=optsFor(p.id), P=SHOWP, ch=propChosenId(p.id), out=[];
+    out.push('FeedSpark — '+qLoc(q));
+    out.push(ks.length+' option'+(ks.length===1?'':'s')+' · issued '+dmy(new Date(+q.t||Date.now())));
+    out.push('');
+    ks.forEach(function(x){ var o=SAVED[x];
+      out.push('OPTION '+o.prop.n+(o.prop.label?(' · '+o.prop.label):'')+(ch===x?'   ✓ selected':''));
+      out.push('  Reference: '+o.ref);
+      out.push('  Includes: '+optWhat(o));
+      if(P){ out.push('  Initial one-off: '+(o.miss?'rates incomplete':money(o.gross)));
+        if(+o.monGross>0)out.push('  Ongoing: '+money(o.monGross)+' / month'); }
+      else out.push('  Figures on request');
+      out.push(''); });
+    out.push('Every figure is ex VAT. Valid '+qValid(q)+' days from issue.');
+    return out.join('\n'); }
   function qBlock(q,withP){ var L=q.lines||[], XL=q.xlines||[], d=new Date(+q.t||Date.now()), out=[], P=withP, V=q.vat?' (inc VAT)':' (ex VAT)';
     var missN=L.filter(function(l){return l.rt==null}).length;
     out.push('Reference: '+q.ref+' · '+qLoc(q)+' · issued '+dmy(d));
@@ -3129,6 +3309,17 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       else{ h+='<span class="t-done" title="Filed into the '+esc(q.client)+' Project Plan + brief opened '+esc(tkWhenS(it.t))+' by '+esc(tkWho(it.by))+' — plan task '+(it.planOk?'filed':(it.planOk===false?('failed: '+esc(it.err||'?')):'unconfirmed'))+'">→ Intake · '+esc(tkWhenS(it.t))+' · '+esc(tkWho(it.by))+'</span>';
         if(!it.planOk)h+='<button type="button" class="t-act warn" data-retry="'+esc(k)+'" title="The Project Plan write '+(it.planOk===false?('failed ('+esc(it.err||'?')+')'):'was not confirmed')+' — retry it (the sheet write is idempotent, so this can never double-file)">↻ plan</button>'; } }
     else h+='<button type="button" class="t-act" data-intake="'+esc(k)+'" title="File this quote into the client’s Project Plan and open the brief in the Workflow pipeline">→ Intake</button>';
+    /* THE CLIENT'S DECISION, kept apart from finance's: choosing an option never touches the
+       stage rail, and it is a toggle, because a client who changes their mind should not need
+       the quote rebuilding */
+    var ost=optState(k);
+    if(ost&&ost!=='super')h+='<button type="button" class="t-act'+(ost==='chosen'?' on':'')+'" data-choose="'+esc(k)+'" title="'
+      +(ost==='chosen'?'The client chose this option — click to clear the choice':'Mark this as the option the client chose; its siblings become "not taken"')
+      +'">'+(ost==='chosen'?'✓ chosen':'✓ Chosen')+'</button>';
+    h+='<button type="button" class="t-act" data-addopt="'+esc(k)+'" title="'
+      +(ost?'Load this option into the builder and save the next option of the same proposal':'Load this quote into the builder and save a SIBLING option beside it — this quote becomes option 1')
+      +'">➕ Add option</button>';
+    if(ost&&ost!=='super')h+='<button type="button" class="t-act" data-copyopt="'+esc(k)+'" title="Copy every option of this proposal as one client-facing comparison">⧉ Options</button>';
     /* the ticket, LIVE from the pipeline - the stage moves in Workflow, never here, so this is a
        read-out and a link, not a control (the same rule the Keyword Calendar follows) */
     var tk=qTicket(q);
@@ -3240,6 +3431,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     Object.keys(SAVED).forEach(function(k){
       var q=SAVED[k]; if(!q||typeof q!=='object'||q.deleted||!q.ref)return;
       if(q.aspl)return;
+      if(optState(k)==='nottaken')return;      // the client bought a sibling; this is not work in flight
       var b=QBR[String(q.ref)]; if(!b||!WF_DELIVERED[b.status])return;
       var si=STAGES.indexOf(q.stage);
       if(q.stage==='Declined'||si<0||si>=di)return;
@@ -3261,16 +3453,37 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   }
   function renderTracker(){
     var ids=Object.keys(SAVED).filter(function(k){ return SAVED[k]&&typeof SAVED[k]==='object'&&!SAVED[k].deleted&&SAVED[k].ref; });
-    ids.sort(function(a,b){ return (+SAVED[b].t||0)-(+SAVED[a].t||0); });
+    /* OPTIONS OF ONE PROPOSAL SIT TOGETHER, in their own order, and the group takes the position
+       of its most recent activity - scattering three options down a date-sorted list is exactly
+       the comparison the feature exists to make easy */
+    var grpT={}; ids.forEach(function(k){ var p=qProp(SAVED[k]); if(!p)return;
+      grpT[p.id]=Math.max(grpT[p.id]||0,+SAVED[k].t||0); });
+    ids.sort(function(a,b){ var pa=qProp(SAVED[a]), pb=qProp(SAVED[b]);
+      var ta=pa?grpT[pa.id]:(+SAVED[a].t||0), tb=pb?grpT[pb.id]:(+SAVED[b].t||0);
+      if(tb!==ta)return tb-ta;
+      if(pa&&pb&&pa.id===pb.id)return (+pa.n||0)-(+pb.n||0);
+      return (+SAVED[b].t||0)-(+SAVED[a].t||0); });
     $('#tk-n').textContent=ids.length?'· '+ids.length+' saved':'';
+    /* every money figure counts a proposal ONCE - see AIQUOTE-OPTIONS */
+    var CNT=countedIds(ids);
     var pipe=0,billed=0,withFin=0,incomplete=0,monthly=0,deliv=0,delivN=0;
     ids.forEach(function(k){ var q=SAVED[k],g=+q.gross||0;
       if(q.miss)incomplete++;
+      if(!CNT[k])return;                       // a sibling option is not extra business
       if(q.stage==='Billed')billed+=g;
       else if(q.stage!=='Declined'){ pipe+=g; if(q.stage!=='Saved')withFin++;
         // work done, invoice outstanding - the one figure this rail exists to surface
         if(q.stage==='Delivered'){ deliv+=g; delivN++; } }
       if(q.stage!=='Declined'&&!q.superseded)monthly+=(+q.monGross||0); });
+    /* WHAT THE OPTIONS ARE TEACHING US (Ray: "use that data for future analysis") - read off the
+       quotes themselves, so it can never drift from what the tracker shows */
+    var props={}; ids.forEach(function(k){ var p=qProp(SAVED[k]); if(p)props[p.id]=1; });
+    var pIds=Object.keys(props), pDone=0, winN={}, wonV=0, offV=0;
+    pIds.forEach(function(pid){ var ks=optsFor(pid), ch=propChosenId(pid);
+      var hi=0; ks.forEach(function(k){ hi=Math.max(hi,+SAVED[k].gross||0); });
+      offV+=hi;
+      if(ch){ pDone++; var n=+SAVED[ch].prop.n||0; winN[n]=(winN[n]||0)+1; wonV+=(+SAVED[ch].gross||0); } });
+    var topN=null; Object.keys(winN).forEach(function(n){ if(topN===null||winN[n]>winN[topN])topN=n; });
     var m=function(v){ return SHOWP?money(v):'£ hidden'; };
     $('#tk-kpis').innerHTML=
        '<div class="tk-kpi"><div class="v">'+ids.length+'</div><div class="l">Saved quotes</div></div>'
@@ -3279,7 +3492,13 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       +'<div class="tk-kpi"><div class="v">'+m(billed)+'</div><div class="l">Billed</div></div>'
       +(monthly>0?'<div class="tk-kpi"><div class="v">'+m(monthly)+'<span style="font-size:11px;color:var(--muted)"> /mo</span></div><div class="l">Monthly recurring quoted</div></div>':'')
       +'<div class="tk-kpi"><div class="v">'+withFin+'</div><div class="l">Moving with finance</div></div>'
+      +(pIds.length?'<div class="tk-kpi" title="A proposal counts ONCE in every figure above — at the option the client chose, or the lowest-numbered option until they choose"><div class="v">'+pDone+' / '+pIds.length+'</div><div class="l">Proposals decided</div></div>':'')
       +(incomplete?'<div class="tk-kpi"><div class="v" style="color:var(--orange-ink)">'+incomplete+'</div><div class="l">Rates incomplete</div></div>':'');
+    var ol=$('#tk-opt');
+    if(ol)ol.innerHTML=pIds.length?('<b>'+pIds.length+'</b> proposal'+(pIds.length===1?'':'s')+' with options · <b>'+pDone+'</b> decided, '+(pIds.length-pDone)+' still open'
+      +(topN!==null?(' · <b>option '+topN+'</b> is chosen most often ('+winN[topN]+' of '+pDone+')'):'')
+      +(SHOWP&&pDone?(' · chosen <b>'+money(wonV)+'</b> against <b>'+money(offV)+'</b> at the top option of each'):'')
+      +' <span style="color:var(--muted)">— every figure above counts a proposal once, at its chosen option (or the lowest until the client picks)</span>'):'';
     if(!ids.length){ $('#tk-body').innerHTML='<tr><td colspan="10"><div class="tk-empty">No saved quotes yet — build one above and hit 💾 Save quote. Each save freezes its numbers and lands here with a timestamp.</div></td></tr>'; return; }
     $('#tk-body').innerHTML=ids.map(function(k){
       var q=SAVED[k], si=STAGES.indexOf(q.stage);
@@ -3294,8 +3513,16 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       var scopeTxt=(scope.mode==='pts'&&(scope.pts||[]).length)?((scope.pts||[]).length+' product types')
                   :(scope.mode==='manual'?'headline figure':'whole catalogue');
       var last=q.upd||q.t, lastBy=(q.hist&&q.hist.length)?q.hist[q.hist.length-1].by:q.by;
-      var row='<tr>'
-        +'<td class="t-ref">'+esc(q.ref||'—')+(q.prev?'<span class="t-sup" title="Edited from '+esc(q.prev)+'">v'+esc(String(q.ver||2))+' of '+esc(q.prev)+'</span>':'')+'</td>'
+      var ost=optState(k), op=qProp(q);
+      var row='<tr'+(ost==='nottaken'?' class="tk-out"':'')+'>'
+        +'<td class="t-ref">'+esc(q.ref||'—')+(q.prev?'<span class="t-sup" title="Edited from '+esc(q.prev)+'">v'+esc(String(q.ver||2))+' of '+esc(q.prev)+'</span>':'')
+          /* a SUPERSEDED option is an earlier version of one, not a live option: it is already out
+             of optsFor(), so it must not read on the board as if it were still on the table */
+          +(op?('<br><span class="t-opt'+(q.superseded?' out':(ost==='chosen'?' win':(ost==='nottaken'?' out':'')))+'" title="'
+            +(q.superseded?'An earlier version of this option — kept for finance, not part of what is on the table'
+              :(ost==='chosen'?'The client chose this option':(ost==='nottaken'?'The client chose another option — kept as the record of what was offered':'Offered as one of several options; no choice recorded yet')))
+            +'">'+esc(optGlyph(op.n))+' '+esc(op.label||('Option '+op.n))
+            +(q.superseded?' · earlier version':(ost==='chosen'?' ✓':(ost==='nottaken'?' · not taken':'')))+'</span>'):'')+'</td>'
         +'<td><span class="t-cl">'+esc(q.client||'—')+'</span> <span class="t-mk">'+esc(String(q.mkt||'').toUpperCase())+'</span>'
           +(function(){ var ks=[]; if((q.lines||[]).length||q.upd)ks.push('AI'); (q.xlines||[]).forEach(function(l){ if(l.kind==='pre')return; var w=l.kind==='sys'?'System':l.kind==='feed'?'Feed':l.kind==='lia'?'LIA':'Retainer'; if(ks.indexOf(w)<0)ks.push(w); }); return ks.length>1||(ks.length===1&&ks[0]!=='AI')?'<br>'+ks.map(function(k){return '<span class="t-mk">'+esc(k)+'</span>'}).join(' '):''; })()+'</td>'
         +'<td class="t-when">'+tkWhen(q.t)+'<br><span style="font-size:10px">by '+esc(tkWho(q.by))+'</span></td>'
@@ -3338,6 +3565,9 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   $('#tk-body').addEventListener('click',function(e){
     var c=function(sel){ return e.target.closest&&e.target.closest(sel); };
     var ed=c('[data-edit]'); if(ed){ loadSaved(ed.getAttribute('data-edit')); return; }
+    var ao=c('[data-addopt]'); if(ao){ addOption(ao.getAttribute('data-addopt')); return; }
+    var co=c('[data-choose]'); if(co){ chooseOpt(co.getAttribute('data-choose')); return; }
+    var cp=c('[data-copyopt]'); if(cp){ copy(optionsText(cp.getAttribute('data-copyopt')),'Options copied — paste into the client email'); return; }
     var st=c('[data-st]');
     if(st){ setStage(st.getAttribute('data-id'),st.getAttribute('data-st')); return; }
     var ex=c('[data-exp]');
@@ -3374,9 +3604,16 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     // saving while editing = a NEW version linked to the original, which is stamped, never rewritten
     if(EDITING&&SAVED[EDITING.id]){ var old=SAVED[EDITING.id]; snap.prev=old.ref; snap.prevId=EDITING.id; snap.ver=(+old.ver||1)+1;
       snap.hist[0].s='Saved as v'+snap.ver+' of '+old.ref;
+      /* a version INHERITS its option, so editing option 2 keeps it option 2 rather than
+         silently dropping it out of the proposal it was written for */
+      if(qProp(old))snap.prop={id:old.prop.id,n:old.prop.n,label:old.prop.label||''};
+      if(old.chosen)snap.chosen={t:old.chosen.t,by:old.chosen.by};
       old.superseded={ref:snap.ref,t:Date.now(),by:ME}; old.hist=(old.hist||[]).concat([{s:'edited → '+snap.ref,t:Date.now(),by:ME}]); old.upd=Date.now();
       EDITING=null; render(); }
-    SAVED[id]=snap; TKOPEN[id]=false;
+    else if(PENDING_OPT){ snap.prop={id:PENDING_OPT.pid,n:PENDING_OPT.n,label:PENDING_OPT.label||''};
+      snap.hist[0].s='Saved as option '+PENDING_OPT.n;
+      PENDING_OPT=null; }
+    SAVED[id]=snap; TKOPEN[id]=false; LAST_SAVED=id; renderOptStrip();
     putSaved('Saved '+SAVED[id].ref+(snap.prev?' (new version of '+snap.prev+')':'')+(t.miss?' — note: some rates are still unset':''));
     toast('Quote saved · '+SAVED[id].ref);
     var el=$('#tracker-card'); if(el&&el.scrollIntoView)setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'start'})},140);
