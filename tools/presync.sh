@@ -52,6 +52,10 @@ echo "── validating: overlay engine (URL-string classification + collector)"
 node tools/test_overlays.mjs >/dev/null
 echo "   ✓ overlay types read off the image_link URL"
 
+echo "── validating: KWCal KPI band partition + market list"
+node tools/test_kwcal_kpis.mjs >/dev/null
+echo "   ✓ every stage lands in a bucket, the tiles sum, and -fb never reaches the chips"
+
 echo "── validating: KWCal event ⇄ ticket tie + result-window join"
 node tools/test_kwcal_tie.mjs >/dev/null
 echo "   ✓ stamped-id precedence + the half-month result join hold"

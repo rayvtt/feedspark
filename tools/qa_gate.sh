@@ -191,6 +191,12 @@ if node tools/test_kwcal_tie.mjs >/dev/null 2>&1; then
 else
   echo "   ✗ KWCal tie harness FAILED — see node tools/test_kwcal_tie.mjs"; FAIL=1
 fi
+
+if node tools/test_kwcal_kpis.mjs >/dev/null 2>&1; then
+  echo "   ✓ KWCal KPI band partitions every stage; -fb markets never reach the chips"
+else
+  echo "   ✗ KWCal KPI band FAILED (node tools/test_kwcal_kpis.mjs)"; FAIL=1
+fi
 echo "── qa-gate 3g/7: product-volume churn (running close-to-close baseline)"
 if node tools/test_volume.mjs >/dev/null 2>&1; then
   echo "   ✓ intraday movement lands in the day's in/out; baseline rolls at midnight; truncation stays rows-only"
