@@ -844,7 +844,12 @@ each finding quotes and links its source.
   rule, so a 125MB feed costs megabytes. What is stored (`PUT /api/golden/quality` →
   `goldenqual:<client>:<mkt>`) is the compact aggregate — hit counts, percentages, a handful of
   example values — and the worker keeps only attributes and rule ids the spec knows, so a client
-  cannot widen the store. The feed's quality score rides onto `goldenidx` (`q`, `qFails`, `qT`).
+  cannot widen the store. The feed's quality score rides onto `goldenidx` (`q`, `qFails`, `qT`) —
+  and **every scan that rebuilds the entry carries it forward** (`keepQual`, with `air` /
+  `airTier` / `airP`): before 21 Sep 2026 `processScanSnapshot` and the ack rebuilt the entry
+  from the scan alone, so each cron / agent / estate pass wiped the content score and the dossier
+  scorecard read FEED only within an hour (Ray: "why content quality score isn't saved?"). The
+  reading stays what it was until the next analysis; `qT` dates it.
 - **Page:** a fifth section under the four tiers — headline score + plain-English verdict, a row
   per attribute (score, bar, worst rule, requirement/best-practice counts), click a row to expand
   every broken rule with Google's own wording, the offending values, the hit rate, and a link to
