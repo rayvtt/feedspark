@@ -685,13 +685,25 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
     ['Fashion', ['color', 'size', 'gender', 'age_group', 'item_group_id']]);
   const pY = LG.profileFor('YuMOVE', null);
   eq('profileFor: Pet Care waives apparel-only recs', [pY.industry, pY.waived], ['Pet Care', ['size_type', 'size_system', 'pattern']]);
-  eq('profileFor: unknown brand -> Retail, empty profile', LG.profileFor('Acme', null), { industry: 'Retail', expected: [], waived: [] });
+  eq('profileFor: unknown brand -> Retail, empty profile', LG.profileFor('Acme', null), { industry: 'Retail', expected: [], waived: [], qwaived: [] });
   const ov = { industries: { Fashion: { expected: ['color'], waived: ['pattern'] } },
     clients: { Reiss: { expected: ['color', 'question_and_answer'] } } };
   eq('profileFor: brand override beats industry override beats default',
     LG.profileFor('Reiss', ov).expected, ['color', 'question_and_answer']);
   eq('profileFor: industry override applies to sibling brands', LG.profileFor('Superdry', ov),
-    { industry: 'Fashion', expected: ['color'], waived: ['pattern'] });
+    { industry: 'Fashion', expected: ['color'], waived: ['pattern'], qwaived: [] });
+  // per-RULE waivers (Ray, 21 Sep 2026: "Reiss, brand not in title — it should be possible to
+  // remove the issue and have the overall score reanalyzed"): '<attr>:<ruleId>' tokens, brand
+  // ∪ industry, each validated against the spec so a token naming no rule never reaches a score
+  const ovq = { industries: { Fashion: { qwaived: ['title:promo', 'title:promo', 'title:nope'] } },
+    clients: { Reiss: { qwaived: ['title:no-brand', 'bogus', 'description:dupe'] } } };
+  eq('profileFor: rule waivers union industry + brand, deduped, unknown tokens dropped',
+    LG.profileFor('Reiss', ovq).qwaived, ['title:promo', 'title:no-brand', 'description:dupe']);
+  eq('profileFor: a sibling brand carries only the industry-level rule waivers', LG.profileFor('Superdry', ovq).qwaived, ['title:promo']);
+  ok('qruleKnown: names a rule the spec states, and nothing else',
+    LG.qruleKnown('title:no-brand') && LG.qruleKnown('description:dupe') && !LG.qruleKnown('title:zzz') && !LG.qruleKnown('nope') && !LG.qruleKnown(':dupe') && !LG.qruleKnown('color:no-brand'));
+  eq('qwaivedFor: the rule ids for ONE attribute, prefix stripped', LG.qwaivedFor(LG.profileFor('Reiss', ovq), 'title'), ['promo', 'no-brand']);
+  eq('qwaivedFor: nothing for an attribute with no waiver, and nothing without a profile', [LG.qwaivedFor(LG.profileFor('Reiss', ovq), 'color'), LG.qwaivedFor(null, 'title')], [[], []]);
   eq('profileFor: required + identifier attrs can never be profiled',
     LG.profileFor('Reiss', { clients: { Reiss: { expected: ['title', 'gtin', 'color'], waived: [] } } }).expected, ['color']);
   eq('profileFor: expected beats waived on a clash',
@@ -1070,6 +1082,37 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   ok('qualityScore: with no profile passed at all, behaviour is unchanged (waived defaults to none)',
     LG.qualityScore(snap).parts.length === q.parts.length);
 
+  // A RULE THE BRAND SET ASIDE (Ray, 21 Sep 2026: "for each problem … allow a button to indicate
+  // whether the issue actually applies for the brand … Reiss, brand not in title — remove the
+  // issue and have the overall score reanalyzed"): it costs nothing, it is not a finding, and it
+  // is reported APART so the decision stays visible and reversible
+  {
+    const base = LG.attrQuality('title', snap.attrs.title);
+    const nb = base.broken.filter((b) => b.id === 'no-brand')[0];
+    ok('fixture: the title read carries a no-brand finding to set aside', !!nb && nb.pct > 0);
+    const back = Math.round(nb.pct * 0.4 * 10) / 10;          // a best practice costs 0.4 × its share
+    const wv = LG.attrQuality('title', snap.attrs.title, ['no-brand']);
+    eq('attrQuality: the set-aside rule leaves the score — 0.4 × its share comes back', wv.score, Math.round((base.score + back) * 10) / 10);
+    ok('attrQuality: …it is no longer a finding', !wv.broken.some((b) => b.id === 'no-brand'));
+    eq('attrQuality: …but it is reported apart, with the share it would have cost', wv.waived.map((b) => [b.id, b.pct, b.cost]), [['no-brand', nb.pct, back]]);
+    eq('attrQuality: fail/warn counts exclude what was set aside', [wv.fails, wv.warns], [base.fails, base.warns - 1]);
+    ok('attrQuality: a waived rule the feed does not break is simply nothing — never a phantom row',
+      LG.attrQuality('title', snap.attrs.title, ['dupe']).waived.length === 0);
+    ok('attrQuality: with no third argument, nothing is set aside and `waived` is an empty list', Array.isArray(base.waived) && base.waived.length === 0);
+    const prof = { industry: 'Fashion', expected: [], waived: [], qwaived: ['title:no-brand'] };
+    const qw = LG.qualityScore(snap, prof);
+    const tw = qw.parts.filter((p) => p.key === 'title')[0];
+    eq('qualityScore: the profile’s rule waiver reaches the attribute through qwaivedFor', tw.score, wv.score);
+    ok('qualityScore: the headline re-analyses with it — higher than before, weighted', qw.score > q.score);
+    eq('qualityScore: setAside counts the rules set aside across the feed', qw.setAside, 1);
+    eq('qualityScore: no other attribute moved', qw.parts.filter((p) => p.key !== 'title').map((p) => p.score),
+      q.parts.filter((p) => p.key !== 'title').map((p) => p.score));
+    ok('qualityScore: a waived ATTRIBUTE still wins — its rule waivers have nothing left to act on',
+      !LG.qualityScore(snap, { waived: ['title'], qwaived: ['title:no-brand'] }).parts.some((p) => p.key === 'title'));
+    ok('qualityAskEmail: the client is not asked about a rule the brand set aside',
+      LG.qualityAskEmail('Reiss', 'gb', tw).body.indexOf('brand missing') < 0);
+  }
+
   // a perfect feed must actually reach 100 — no rule fires on compliant content
   const clean = LG.qualityCollector(cols);
   // titles padded past 70 chars: the clean feed must trip nothing at all, 'short' included
@@ -1346,6 +1389,42 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
     /body\.pdf \.gr-sticky\{position:static!important/.test(page) &&
     /!document\.body\.classList\.contains\('pdf'\) &&\s*\n\s*el\.getBoundingClientRect\(\)\.top <= GR_TOP/.test(page) &&
     /gs\.className = 'gr-sticky'/.test(page));
+
+  // ---- does this issue apply to the brand? (Ray, 21 Sep 2026: "for each problem … allow a
+  // button to indicate whether the issue actually applies for the brand … remove the issue and
+  // have the overall score reanalyzed") — the page, the worker and the export, wired together
+  console.log('\n— per-rule waivers: does this issue apply to the brand? —');
+  const wk3 = readFileSync(new URL('../cloudflare/feedspark-deck/src/worker.js', import.meta.url), 'utf8');
+  ok('every rule row carries the brand-named button, and a set-aside row carries its undo',
+    /data-qna="' \+ esc\(r\.key \+ ':' \+ b\.id\)/.test(page) && /Doesn’t apply to ' \+ esc\(brand\)/.test(page) &&
+    /data-restore="1"[^>]*>↩ Applies to ' \+ esc\(brand\) \+ ' again/.test(page));
+  ok('one click = one PUT of one token onto the brand’s own profile (client scope), then a re-render',
+    /function qualityWaive\(k, tok, restore, btn\)/.test(page) &&
+    /scope: 'client', name: p\.client, qrule: tok, waive: !restore/.test(page) &&
+    /renderEstate\(\);\s*\n\s*renderDetail\(k\);/.test(page));
+  ok('the worker’s re-analysed headlines are mirrored onto the estate in place',
+    /ESTATE\.feeds\[key\]\.q = d\.requal\[key\]\.q; ESTATE\.feeds\[key\]\.qFails = d\.requal\[key\]\.qFails/.test(page));
+  ok('the set-aside rules stay LISTED — struck through, in their own block, never silently gone',
+    /class="qz-waived"><i class="qz-cap">Set aside for/.test(page) && /\.qz-rule\.waived \.qz-rl\{text-decoration:line-through\}/.test(page) &&
+    /r\.waived\.map\(function \(b\) \{ return ruleRow\(r, b, true\); \}\)/.test(page));
+  ok('the row summary says how many were set aside, and the pop-up never pretends a set-aside rule passes',
+    /' set aside<\/span>'/.test(page) && /'set aside for ' \+ esc\(brandName\) \+ ' · ' \+ na\.pct \+ '% not counted'/.test(page) &&
+    /qs\.setAside \+ ' rule'/.test(page));
+  ok('the page mirror of profileFor carries qwaived exactly as the engine does (industry ∪ brand, validated)',
+    /var qw = \(pick\(base, 'qwaived'\) \|\| \[\]\)\.concat\(pick\(cl, 'qwaived'\) \|\| \[\]\)/.test(page) && /LGQ\.qruleKnown\(t\)/.test(page) &&
+    /return \{ industry: ind, expected: expected, waived: waived, qwaived: qw \}/.test(page));
+  ok('the button is an AM action: hidden in demo, hidden in the PDF, REMOVED from the client HTML',
+    /body\.demo \.qz-na\{display:none!important\}/.test(page) && /body\.pdf \.qz-na\{display:none!important\}/.test(page) &&
+    /'\[data-qbrief\]', '\.qz-na',/.test(page));
+  ok('worker: the profile PUT toggles one validated token and never lets the editor’s save or reset wipe qwaived',
+    /if \(b\.qrule != null\) \{/.test(wk3) && /if \(!qruleKnown\(tok\)\) return json\(\{ error: 'unknown rule' \}, 400\)/.test(wk3) &&
+    /if \(keepQ\.length\) overrides\[scope\]\[name\] = \{ qwaived: keepQ \}; else delete overrides\[scope\]\[name\]/.test(wk3) &&
+    /if \(keepQ\.length\) overrides\[scope\]\[name\]\.qwaived = keepQ;/.test(wk3));
+  ok('worker: a profile change re-scores every stored reading of the brand (the whole industry for industry scope) onto goldenidx',
+    /const affects = \(c\) => \(scope === 'clients' \? c === name : industryOf\(c\) === name\)/.test(wk3) &&
+    /const qs = qualityScore\(rec, profileFor\(f\.client, overrides\)\)/.test(wk3) && /requal\[key\] = \{ q: f\.q, qFails: f\.qFails \}/.test(wk3));
+  ok('worker: the stored headline written by the quality PUT is scored against the profile, like the page',
+    /const qs = qualityScore\(rec, profileFor\(client, await env\.EDITS\.get\('goldenprofiles', 'json'\)\)\);/.test(wk3));
 }
 
 console.log(`\nLabel Guard engine: ${pass} passed, ${fail} failed`);

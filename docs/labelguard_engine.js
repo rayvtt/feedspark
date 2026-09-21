@@ -1028,7 +1028,27 @@ export function profileFor(client, overrides) {
   const expected = pick(cl, 'expected') || pick(base, 'expected') || [];
   const waived = pick(cl, 'waived') || pick(base, 'waived') || [];
   const ok = (k) => ATTR_SPEC.some((s) => s.key === k && s.req !== 'required' && k !== 'gtin' && k !== 'mpn');
-  return { industry: ind, expected: expected.filter(ok), waived: waived.filter((k) => ok(k) && expected.indexOf(k) < 0) };
+  // CONTENT-QUALITY RULES SET ASIDE FOR THIS BRAND (Ray, 21 Sep 2026: "for each problem …
+  // allow a button to indicate whether the issue actually applies for the brand … Reiss,
+  // brand not in title — remove the issue and have the overall score reanalyzed"): a list of
+  // '<attr>:<ruleId>' tokens, brand-level and industry-level UNIONED (a brand can add to what
+  // its industry set aside, never un-set it), each validated against QSPEC so a token that
+  // names no rule can never reach the score. Distinct from `waived`, which drops a whole
+  // attribute: this keeps the attribute in the score and drops ONE of its rules.
+  const qw = [].concat(pick(base, 'qwaived') || [], pick(cl, 'qwaived') || []).map(String);
+  const qwaived = qw.filter((t, i) => qw.indexOf(t) === i && qruleKnown(t));
+  return { industry: ind, expected: expected.filter(ok), waived: waived.filter((k) => ok(k) && expected.indexOf(k) < 0), qwaived };
+}
+// '<attr>:<ruleId>' names a rule the spec actually states
+export function qruleKnown(token) {
+  const i = String(token).indexOf(':');
+  if (i <= 0) return false;
+  const q = qspecOf(String(token).slice(0, i));
+  return !!q && q.rules.some((r) => r.id === String(token).slice(i + 1));
+}
+// the rule ids set aside for one attribute, from a profile's qwaived tokens
+export function qwaivedFor(profile, key) {
+  return ((profile && profile.qwaived) || []).filter((t) => String(t).indexOf(key + ':') === 0).map((t) => String(t).slice(key.length + 1));
 }
 
 // The Golden Record score — one weighted completeness number per feed, transparent parts.
@@ -1757,23 +1777,30 @@ export function qualityCollector(cols, opts) {
    by how much of the shop window they are (title/description 3, highlights/GPC/PT 2, the
    variant trio 1) — the same shape as goldenScore, so the two numbers read alike. */
 export const QW = { fail: 1, warn: 0.4 };
-export function attrQuality(key, a) {
+// `qwaived` (optional): rule ids the brand's profile set aside as NOT APPLICABLE (Ray, 21 Sep
+// 2026). A waived rule costs nothing and is not a finding — it is reported apart, under
+// `waived`, with the share it would have cost, so the decision stays visible and reversible
+// rather than the issue silently disappearing from a score a client is shown.
+export function attrQuality(key, a, qwaived) {
   const q = qspecOf(key);
   if (!q || !a || !a.filled) return null;
+  const off = new Set(qwaived || []);
   let pen = 0;
-  const broken = [];
+  const broken = [], waived = [];
   for (const rule of q.rules) {
     const hit = (a.rules || {})[rule.id];
     if (!hit || !hit.n) continue;
     const cost = (hit.pct / 100) * QW[rule.sev] * 100;
-    pen += cost;
-    broken.push({ id: rule.id, sev: rule.sev, label: rule.label, why: rule.why,
+    const row = { id: rule.id, sev: rule.sev, label: rule.label, why: rule.why,
       n: hit.n, pct: hit.pct, eg: hit.eg || [], cost: Math.round(cost * 10) / 10,
       groups: hit.groups && hit.groups.length ? hit.groups : undefined,
-      vals: hit.vals || undefined, within: hit.within || undefined, withinVals: hit.withinVals || undefined });
+      vals: hit.vals || undefined, within: hit.within || undefined, withinVals: hit.withinVals || undefined };
+    if (off.has(rule.id)) { waived.push(row); continue; }
+    pen += cost;
+    broken.push(row);
   }
   broken.sort((x, y) => y.cost - x.cost);
-  return { key, score: Math.max(0, Math.round((100 - pen) * 10) / 10), broken,
+  return { key, score: Math.max(0, Math.round((100 - pen) * 10) / 10), broken, waived,
     cols: a.cols, perProduct: a.perProduct, avgDepth: a.avgDepth, hlDist: a.hlDist,
     filled: a.filled, cov: a.cov, avgLen: a.avgLen, minLen: a.minLen, maxLen: a.maxLen,
     fails: broken.filter((b) => b.sev === 'fail').length,
@@ -1789,18 +1816,20 @@ export function qualityScore(snap, profile) {
   if (!snap || !snap.attrs) return null;
   const waived = (profile && profile.waived) || [];
   const parts = [];
-  let ws = 0, sum = 0;
+  let ws = 0, sum = 0, setAside = 0;
   for (const q of QSPEC) {
     if (waived.indexOf(q.key) >= 0) continue;
-    const r = attrQuality(q.key, snap.attrs[q.key]);
+    // per-rule waivers ride the same profile: the attribute stays in the score, the rule
+    // the brand set aside does not (Ray, 21 Sep 2026)
+    const r = attrQuality(q.key, snap.attrs[q.key], qwaivedFor(profile, q.key));
     if (!r) continue;
     r.w = q.w; r.label = q.label; r.doc = q.doc; r.spec = q.spec;
-    parts.push(r); ws += q.w; sum += q.w * r.score;
+    parts.push(r); ws += q.w; sum += q.w * r.score; setAside += r.waived.length;
   }
   if (!ws) return null;
   const score = Math.round((sum / ws) * 10) / 10;
   const fails = parts.reduce((n, p) => n + p.fails, 0);
-  return { score, parts, fails, verdict: qualityVerdict(score, fails) };
+  return { score, parts, fails, setAside, verdict: qualityVerdict(score, fails) };
 }
 // plain-English band, said the way Ray says it to a client
 export function qualityVerdict(score, fails) {

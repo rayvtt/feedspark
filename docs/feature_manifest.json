@@ -8654,6 +8654,71 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "if (i < first) first = i;",
       "min": 1
+    },
+    {
+      "name": "Content quality: a rule the brand set aside costs nothing and is reported APART (Ray, 21 Sep 2026: 'allow a button to indicate whether the issue actually applies for the brand')",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function attrQuality(key, a, qwaived)"
+    },
+    {
+      "name": "Content quality: '<attr>:<ruleId>' waiver tokens are validated against the spec",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function qruleKnown(token)"
+    },
+    {
+      "name": "Content quality: profileFor carries qwaived (industry ∪ brand)",
+      "file": "cloudflare/feedspark-deck/src/labelguard.js",
+      "pattern": "export function qwaivedFor(profile, key)"
+    },
+    {
+      "name": "Worker: PUT /api/golden/profile toggles ONE content-quality rule waiver and preserves qwaived across the editor's save/reset",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "if (b.qrule != null) {"
+    },
+    {
+      "name": "Worker: a profile change re-scores every stored content-quality reading of the brand onto goldenidx (requal)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const requal = {};"
+    },
+    {
+      "name": "Worker: the stored content-quality headline is scored against the brand's profile, like the page",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "const qs = qualityScore(rec, profileFor(client, await env.EDITS.get('goldenprofiles', 'json')));"
+    },
+    {
+      "name": "Golden Record: '✕ Doesn't apply to <Brand>' on every rule row — one click sets the rule aside and re-analyses",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "function qualityWaive(k, tok, restore, btn)"
+    },
+    {
+      "name": "Golden Record: the set-aside rule stays listed, struck through, with '↩ Applies again'",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "data-restore=\"1\""
+    },
+    {
+      "name": "Golden Record: the waiver button is an AM action — never in the client HTML, hidden in the PDF and in demo",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'[data-qbrief]', '.qz-na',"
+    },
+    {
+      "name": "Golden Record: the pop-up marks a set-aside rule instead of pretending it passes",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "'set aside for ' + esc(brandName)"
+    },
+    {
+      "name": "Label Guard suite: per-rule waivers pinned (cost back, reported apart, headline re-analysed)",
+      "file": "tools/test_labelguard.mjs",
+      "pattern": "attrQuality: the set-aside rule leaves the score"
+    },
+    {
+      "name": "Golden Record waiver tripwire drives the REAL page: one click, one token, score re-analysed, undo restores, client file carries the decision",
+      "file": "tools/check_grwaive.js",
+      "pattern": "one click sent ONE token to the brand"
+    },
+    {
+      "name": "presync runs the Golden Record waiver tripwire",
+      "file": "tools/presync.sh",
+      "pattern": "tools/check_grwaive.js"
     }
   ]
 }
