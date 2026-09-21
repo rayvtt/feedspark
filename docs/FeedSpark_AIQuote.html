@@ -1642,7 +1642,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   /* WHAT FLOWS IN EVERY MONTH is sized on the product-type scope ALONE - see AIQUOTE-COHORT rule 1 */
   function aimScopeUnits(){ var r=rec(), sc=r.scope||{mode:'all'}, ix=idx();
     if(sc.mode==='manual')return +sc.manual||0;
-    if(!ix)return 0;
+    if(!ix){ var fz=aimFz(); return fz?fz.units:0; }
     var sel=(sc.mode==='pts')?selPts():[];
     if(aimUnit()==='product'){ if(!sel.length)return ix.total||0; var v=0; sel.forEach(function(pt){ v+=ix.map[pt]||0; }); return v; }
     if(!sel.length)return ix.prod||0;
@@ -1685,6 +1685,8 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
        this scope" needs the scope - and printing the market figure under a "0 in scope" line is
        the card contradicting itself on screen (Ray, 18 Sep 2026, screenshotting exactly that). */
     var sc=rec().scope||{mode:'all'}, unsized=(!ix&&sc.mode!=='manual');
+    var fz=unsized?aimFz():null;
+    if(fz)return {raw:fz.perMonth/buf,perMonth:fz.perMonth,src:'saved',buffer:aimRate('buffer'),unsized:false,saved:true};
     var e=updExpected();
     if(e!=null&&!typed){ var raw=unsized?0:((ix&&ix.total>0)?(e*u/ix.total):e);
       return {raw:raw,perMonth:raw*buf,src:updSrc()==='estimate'?'estimate':'arrivals',e:e,buffer:aimRate('buffer'),unsized:unsized}; }
@@ -1724,6 +1726,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   /* three reads, and the card always says which one it used - a figure whose origin is not on
      screen is a figure nobody can check before it goes to a client */
   function aimSrcLine(nn){
+    if(nn.src==='saved')return 'As <b>saved on this quote</b> — the catalogue in scope and the new products a month it was priced on. Pull the live feed to re-size it from today\u2019s catalogue.';
     if(nn.src==='arrivals')return 'Read off the <b>Monthly update — new products</b> card above, which sizes it from the feed’s own <code>fs:date_of_birth</code> arrivals. Change it there and every AI line here follows.';
     if(nn.src==='estimate')return 'Your typed estimate on the <b>Monthly update — new products</b> card above. Clear it there to go back to the feed’s own arrivals run-rate.';
     if(nn.src==='feed'&&nn.auto)return 'From this feed’s own <code>'+esc(nn.auto.col)+'</code>: <b>'+fmt(nn.auto.recent)+'</b> of <b>'+fmt(nn.auto.dated)+'</b> dated '+esc(aimUnitWord())+' in scope were first seen in the last twelve months'+(nn.auto.total>nn.auto.dated?(' ('+fmt(nn.auto.total-nn.auto.dated)+' carry no usable date and are left out of both sides)'):'')+'. The <b>Monthly update</b> card has no figure yet — give it one and it wins.';
@@ -1801,9 +1804,9 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   function aimFoot(q){
     if(!q)return; var nn=q.nn, c=$('#aim-chart');
     if(c)c.innerHTML=aimChart(nn);
-    var known=(nn.src==='arrivals'||nn.src==='estimate');
+    var known=(nn.src==='arrivals'||nn.src==='estimate'), saved=(nn.src==='saved');
     var ew=$('#aim-e-w'), pw=$('#aim-pct-w');
-    if(ew)ew.hidden=!known; if(pw)pw.hidden=known;
+    if(ew)ew.hidden=!known||saved; if(pw)pw.hidden=known||saved;
     var el=$('#aim-e-l'); if(el)el.textContent='Arrivals '+(nn.src==='estimate'?'estimate':'run-rate')+' · whole market';
     var b=$('#aim-buf'); if(b)b.textContent=String(nn.buffer||0);
     var pi=document.querySelector('[data-aimpct]');
@@ -2766,12 +2769,37 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
      TWO deliberate departures, both for accuracy: money shows pence ("£"#,##0.00 — their "£"#,##0
      prints £446.25 as "£446", so a block total would look like it did not add up) and the date
      reads dd/mm/yyyy, not their mm-dd-yy. */
+  /* SNAPSHOT:EXPORT — A SAVED QUOTE EXPORTS ITS OWN LINES (Ray, 21 Sep 2026, on the most recent Reiss
+     option: "the downloaded Excel … the number is not matching"). withSnap restored the snapshot's
+     SETTINGS into a temporary record and then let the sheet builder re-derive every line from live
+     state: the Spark AI units off the feed index (which ✎ Edit clears and a fresh session never has —
+     so generation was priced on 0 items and the AI floor read as the whole monthly), the dashboards,
+     feeds and setup hours off TODAY's rate card, the Spark AI rates likewise, and its configuration
+     hours at the retainer block rate. On the Reiss option that read £1,785 one-off / £200 a month
+     against £2,856.25 / £1,085.90 in the tracker. The snapshot already carries every line frozen at
+     save (lines, xlines, aim.lines with setup/gen/monthly, the bundle's £, the block rate), so the
+     sheet now reads THOSE — the tracker, the client email and the workbook are one set of figures.
+     The live builder is still what a quote nobody has saved exports. */
+  function snapLines(q){ return (q.lines||[]).slice(); }
+  function snapTotals(q){ var a=q.aim;
+    return {x:(q.xlines||[]).slice(),disc:+q.disc||0,discScope:q.discScope||'all',miss:!!q.miss,monDisc:+q.monDisc||0,upd:qUpd(q),
+      aim:(a&&a.lines&&a.lines.length)?{lines:a.lines,units:+a.units||0,newPer:+a.newPer||0,rates:a.rates||null,
+        unitWord:a.unitWord||(a.unit==='group'?'item groups':'products')}:null}; }
+  /* the block rate the snapshot was priced at: saved on the record, else read off a retainer /
+     setup line (they carry it as their rate), else a legacy line's block — the rate card last */
+  function snapDay(q){ if(+q.blockGBP>0)return +q.blockGBP;
+    var l=(q.xlines||[]).filter(function(l){ return (l.kind==='ret'||l.kind==='pre')&&+l.rate>0; })[0]; if(l)return +l.rate;
+    var g=(q.lines||[]).filter(function(l){ return +l.block>0; })[0]; return g?+g.block:blockGBP(); }
+  function scopeTextSnap(q){ var sc=q.scope||{}, n=+(sc.vol!=null?sc.vol:sc.skus)||0;
+    if(sc.mode==='manual')return 'Scope: headline figure of '+fmt(+sc.manual||n)+' SKUs';
+    if(sc.mode==='pts'&&(sc.pts||[]).length)return 'Scope: '+fmt(n)+' SKUs across '+sc.pts.length+' product type'+(sc.pts.length===1?'':'s')+' (as saved)';
+    return n?('Scope: whole catalogue, '+fmt(n)+' SKUs (as saved)'):'Scope: whole catalogue (as saved)'; }
   function quoteSheet(opts){ opts=opts||{};
-    var L=lines(), t=totals(), r=rec(), ix=idx(), now=opts.at?new Date(+opts.at):new Date(), X=t.x||[];
+    var fz=FROZEN, L=fz?snapLines(fz):lines(), t=fz?snapTotals(fz):totals(), r=rec(), ix=idx(), now=opts.at?new Date(+opts.at):new Date(), X=t.x||[];
     var sh={rows:[],merges:[],h:{}};
     function row(cells,ht){ sh.rows.push(cells||{}); if(ht)sh.h[sh.rows.length]=ht; return sh.rows.length; }
     function mg(a){ sh.merges.push(a); }
-    var mkt=MKT.toUpperCase(), day=blockGBP();
+    var mkt=MKT.toUpperCase(), day=fz?snapDay(fz):blockGBP(); sh.day=day;
     var validDays=(r.valid!=null&&r.valid!=='')?+r.valid:30;
     var vTo=new Date(now.getTime()); vTo.setDate(vTo.getDate()+validDays);
     var missN=0; L.forEach(function(l){ if(l.rt==null)missN++; });
@@ -2859,7 +2887,11 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     var aimMonL=AIM.filter(function(l){return l.monthly>0});
     var aimGenL=AIM.filter(function(l){return l.gen>0});
     var aimHrL=AIM.filter(function(l){return l.hours>0});
-    var aimU=t.aim?t.aim.units:0, aimUW=t.aim?t.aim.unitWord:'products', aimPF=aimRate('aiPerField');
+    var aimU=t.aim?t.aim.units:0, aimUW=t.aim?t.aim.unitWord:'products';
+    /* the Spark AI rates the quote was PRICED at — the snapshot's own, else today's rate card */
+    var aimR=(t.aim&&t.aim.rates)||aimRates();
+    var aimPF=isFinite(+aimR.aiPerField)?+aimR.aiPerField:aimRate('aiPerField');
+    var aimDay=(+aimR.dayRate>0)?+aimR.dayRate:aimRate('dayRate'), aimHPD=((+aimR.hoursPerDay>0)?+aimR.hoursPerDay:aimRate('hoursPerDay'))||8;
     function aimDsc(side,l){ var on=discOn(side,'aim:'+l.id); if(!on)return 0;
       if(side==='oneoff'&&!discMan())return 0;   /* the hours rows; the gen rows pass their own */
       return dsc; }
@@ -2919,7 +2951,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
        the initial data optimisation: the AI field generation this quote is really about */
     band('ONE OFF OPTIONAL COSTS: PERFORMANCE BOOSTER PACK',24.6);
     var bstRows=[], rBst=0, bstA={net:0,disc:0,days:0};
-    sect('Optional Costs: Performance Booster - Initial Issue Fix / Data Optimisation',scopeTextPlain());
+    sect('Optional Costs: Performance Booster - Initial Issue Fix / Data Optimisation',fz?scopeTextSnap(fz):scopeTextPlain());
     if(!oneL.length&&!aimGenL.length){ row({A:{v:(L.length?'No one-off optimisation lines':'No optimisations selected'),s:S.lbl},B:{v:'',s:S.lblq},
       M:{v:(L.length?'Every optimisation on this quote is a monthly charge — see the ManPower section above':'Tick the optimisations you are proposing in the module and re-export'),s:S.note}},17.1); }
     oneL.forEach(function(l){ var flat=l.charge==='flat', d=flat?((l.hours!=null?+l.hours:0)/BLOCK_H):0;
@@ -2949,9 +2981,12 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     if(retOne)costRow({name:retOne.name,qty:(+retOne.hours)/BLOCK_H,qs:'days',rate:day,dayrate:1,
       dsc:retOne.disc?dsc:0,into:setRows,acc:setA,note:[retOne.hours+'h one-off at £'+day+' per '+BLOCK_H+'h',retOne.note].filter(Boolean).join(' · ')});
     aimHrL.forEach(function(l){
+      /* at the SPARK AI DAY RATE, as a value — never =Dayrate. The card prices configuration hours off
+         its own rate card (£695 / 8h); the retainer block rate is a different figure, and one defined
+         name cannot be both: written at the block rate a 2h row read £148.75 against £173.75 on the quote */
       costRow({name:'Spark AI - '+l.label+' ('+(AIM_ROUTE_LABEL[l.route]||l.route)+' configuration)',
-        qty:(+l.hours)/BLOCK_H,qs:'days',rate:day,dayrate:1,dsc:aimDsc('oneoff',l),into:setRows,acc:setA,
-        note:'g:'+l.key+' - '+l.hours+'h at \u00a3'+day+' per '+BLOCK_H+'h'+(discMan()?'':' - man power, not discounted')}); });
+        qty:(+l.hours)/aimHPD,qs:'days',rate:aimDay,dsc:aimDsc('oneoff',l),into:setRows,acc:setA,
+        note:'g:'+l.key+' - '+l.hours+'h at \u00a3'+aimDay+' per '+aimHPD+'h (Spark AI day rate)'+(discMan()?'':' - man power, not discounted')}); });
     if(!setRows.length)row({A:{v:'No set-up or configuration cost on this quote',s:S.lbl},B:{v:'',s:S.lblq},
       M:{v:'No set-up fee, no automatic setup hours and no one-off retainer hours',s:S.note}},17.1);
     gap();
@@ -3244,23 +3279,29 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   /* the tabs: every option of the proposal in play, each built off its own frozen snapshot (the
      option under ✎ Edit off the live builder, with its saved ref), plus the unsaved build if one is
      being added; a quote outside a proposal exports as it always did — one tab */
+  /* a saved option's tab is ITS SNAPSHOT — the figures finance signed off — the option under ✎ Edit
+     included (the live builder after ✎ Edit has no feed index, so it would export 0 units); a build
+     nobody has saved (➕ Add option's "this build", or a quote outside any proposal) is the live one */
+  function snapTab(q,nm){ return withSnap(q,function(){ var sh=quoteSheet({ref:q.ref,at:q.t}); return {name:nm,sh:sh,day:sh.day}; }); }
   function exportTabs(){ var pid=propInPlay(), tabs=[];
-    if(pid){ optsFor(pid).forEach(function(k){ var q=SAVED[k], nm='Option '+q.prop.n+' \u00b7 '+q.ref;
-        if(EDITING&&EDITING.id===k)tabs.push({name:nm,sh:quoteSheet({ref:q.ref}),day:blockGBP()});
-        else tabs.push(withSnap(q,function(){ return {name:nm,sh:quoteSheet({ref:q.ref,at:q.t}),day:blockGBP()}; })); });
-      if(PENDING_OPT)tabs.push({name:'Option '+PENDING_OPT.n+' \u00b7 this build',sh:quoteSheet(),day:blockGBP()}); }
-    if(!tabs.length)tabs.push({name:xTabName(),sh:quoteSheet(),day:blockGBP()});
+    if(pid){ optsFor(pid).forEach(function(k){ var q=SAVED[k]; tabs.push(snapTab(q,'Option '+q.prop.n+' \u00b7 '+q.ref)); });
+      if(PENDING_OPT){ var lv=quoteSheet(); tabs.push({name:'Option '+PENDING_OPT.n+' \u00b7 this build',sh:lv,day:lv.day}); } }
+    else if(EDITING&&SAVED[EDITING.id])tabs.push(snapTab(SAVED[EDITING.id],xTabName()));
+    if(!tabs.length){ var l0=quoteSheet(); tabs.push({name:xTabName(),sh:l0,day:l0.day}); }
     return tabs; }
+  /* what ⇩ CSV and any single-sheet exit render: the saved snapshot under ✎ Edit, else the live build */
+  function sheetForExport(){ var q=EDITING&&SAVED[EDITING.id]; return q?withSnap(q,function(){ return quoteSheet({ref:q.ref,at:q.t}); }):quoteSheet(); }
   $('#xlsx').addEventListener('click',function(){
     try{
       var tabs=exportTabs(), bytes=xlsxBytes(tabs);
       download(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),
         fileStem()+'.xlsx');
-      toast(tabs.length>1?('Excel quote downloaded \u2014 '+tabs.length+' options, one tab each'):'Excel quote downloaded');
+      toast((tabs.length>1?('Excel quote downloaded \u2014 '+tabs.length+' options, one tab each'):'Excel quote downloaded')
+        +(EDITING?' \u2014 saved figures; Save your edit to export it':''));
     }catch(e){ err('Could not build the Excel file: '+((e&&e.message)||e)); }
   });
   $('#csv').addEventListener('click',function(){
-    var csv=toCsv(csvRows(quoteSheet()));
+    var csv=toCsv(csvRows(sheetForExport()));
     /* the BOM is what stops Excel decoding UTF-8 as Windows-1252 (the â€" / Â· mojibake) */
     download(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}), fileStem()+'.csv');
   });
@@ -3389,14 +3430,25 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     r.aim={src:{},unit:'group',pct:null,note:'',since:null};
     if(q.aim){ r.aim.unit=(q.aim.unit==='product')?'product':'group';
       r.aim.since=(typeof q.aim.since==='string')?q.aim.since:null;
-      (q.aim.lines||[]).forEach(function(l){ if(!l.shared&&l.id)r.aim.src[l.id]=l.route; }); }
+      (q.aim.lines||[]).forEach(function(l){ if(!l.shared&&l.id)r.aim.src[l.id]=l.route; });
+      /* THE SAVED SIZING STANDS IN WHILE THE FEED IS NOT PULLED: ✎ Edit clears the feed index, so the
+         card re-priced every Spark AI line on 0 items the moment a signed-off quote was reopened. The
+         snapshot's units and new-a-month are kept on the record, keyed to the scope · unit · cohort
+         they were read for, and used ONLY while there is no live index for the market; pulling the
+         feed, or changing what is in scope, hands the figures back to the live read. */
+      r.aim.fz={units:+q.aim.units||0,perMonth:+(q.aim.perMonth!=null?q.aim.perMonth:q.aim.newPer)||0,newPer:+q.aim.newPer||0,
+        sig:aimSig(r)}; }
   }
+  function aimSig(r){ r=r||rec(); var a=(r.aim&&typeof r.aim==='object')?r.aim:{};
+    return JSON.stringify([r.scope||{mode:'all'},(r.pts&&r.pts[r.mkt||MKT])||[],a.unit||'group',a.since||null]); }
+  function aimFz(){ if(idx())return null; var fz=aimRec().fz; return (fz&&fz.sig===aimSig())?fz:null; }
   /* run fn() with the builder momentarily holding a saved snapshot — every helper the sheet
      builder reads (rec, lines, totals, blockGBP, discOn …) sees that option, then the live record,
      client, market and edit state come back exactly as they were. No render, no save, no toast. */
-  function withSnap(q,fn){ var c0=CLIENT,m0=MKT,had=Object.prototype.hasOwnProperty.call(STORE,q.client),r0=STORE[q.client],e0=EDITING,p0=PENDING_OPT,out;
-    try{ CLIENT=q.client; STORE[CLIENT]={mkt:q.mkt||'gb',scope:{mode:'all'},pts:{},fields:{}}; applySnap(q,STORE[CLIENT]); MKT=STORE[CLIENT].mkt; EDITING=null; PENDING_OPT=null; out=fn(); }
-    finally{ CLIENT=c0; MKT=m0; if(had)STORE[q.client]=r0; else delete STORE[q.client]; EDITING=e0; PENDING_OPT=p0; }
+  var FROZEN=null;   /* the saved snapshot the sheet builder is reading, for the length of a withSnap call */
+  function withSnap(q,fn){ var c0=CLIENT,m0=MKT,had=Object.prototype.hasOwnProperty.call(STORE,q.client),r0=STORE[q.client],e0=EDITING,p0=PENDING_OPT,f0=FROZEN,out;
+    try{ CLIENT=q.client; STORE[CLIENT]={mkt:q.mkt||'gb',scope:{mode:'all'},pts:{},fields:{}}; applySnap(q,STORE[CLIENT]); MKT=STORE[CLIENT].mkt; EDITING=null; PENDING_OPT=null; FROZEN=q; out=fn(); }
+    finally{ CLIENT=c0; MKT=m0; if(had)STORE[q.client]=r0; else delete STORE[q.client]; EDITING=e0; PENDING_OPT=p0; FROZEN=f0; }
     return out; }
   function loadSaved(k){ var q=SAVED[k]; if(!q)return;
     var sel=$('#brand'); if(!Array.prototype.some.call(sel.options,function(o){return o.value===q.client})){ var o=document.createElement('option'); o.value=q.client; o.textContent=q.client; sel.appendChild(o); }
