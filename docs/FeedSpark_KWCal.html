@@ -48,7 +48,21 @@ window.addEventListener('load',restore);
   .btn.on{background:var(--orange);border-color:var(--orange);color:#fff}
   .btn[disabled]{opacity:.55;cursor:default}
   .mstate{font-size:12.5px;font-weight:700;color:var(--muted)}
+  .kpi .kq2{font-size:10.5px;font-weight:700;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
+  .kpi .kq{font-size:13px;color:var(--orange-ink);cursor:help;vertical-align:super}
+  .mkc-more{font-style:italic;opacity:.85}
+  .mkc-note{font-size:11px;color:var(--muted);align-self:center;margin-left:6px;cursor:help}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:11px;margin:18px 0 4px}
+  /* ONE UNDIFFERENTIATED WALL OF TILES IS WHAT "MESSY" MEANT (Ray, 21 Sep 2026). Nine tiles
+     auto-fit into 7 + 2 orphans and nothing says which of them answer the same question, so
+     the band reads as noise. Stacked, it is two labelled rows: the PLAN (a partition that
+     sums to the total) and the MEASURES beside it. Each row fills its own width, so neither
+     can orphan a tile. */
+  .kpis.stacked{display:block}
+  .kgrp{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:11px}
+  .kgrp+.kgrp{margin-top:11px}
+  .kgrp-h{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0 0 7px}
+  .kgrp+.kgrp .kgrp-h{margin-top:4px}
   .kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px}
   .kpi .n{font-size:26px;font-weight:900;line-height:1}
   .kpi .l{font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:5px}
@@ -671,7 +685,7 @@ Accessorize:{events:[
 var CLIENT='Reiss', STORE={}, BASE=0, editMode=false, saveT=null, MEASURING=false;
 var LIVESIG='', LIVET=null;   // live-refresh signature + interval (briefs + results)
 var BRIEFS={};
-var MKT='gb', MKTLIST=['gb']; // board market — scopes, volumes, sync and briefs follow it (events may pin their own) // Workflow pipeline (read-only) — live stages auto-badge matching KW tasks
+var MKT='gb', MKTLIST=['gb'], MKTFB=0, MKTALL=false; // board market — scopes, volumes, sync and briefs follow it (events may pin their own) // Workflow pipeline (read-only) — live stages auto-badge matching KW tasks
 // keyword-generation resourcing roster (assignable in the hours rail; "＋ add person" extends it, remembered per client)
 var KW_PEOPLE=['Ray','Steven','Matt','Radostina','ASPL','TechAM'];
 // attribute step-filter — the feed columns a scope can narrow on (Google spec keys; normKey strips g:/c:)
@@ -691,7 +705,7 @@ function dLbl(e){ var d=new Date(e.date+'T12:00:00Z'); return (e.wc?'w/c ':'')+d
 /* ---------------- KPIs + calendar render ---------------- */
 function kpis(){
   var E=evs();
-  var st={planned:0,intake:0,briefed:0,live:0,done:0}, vol=0, scoped=0, unset=0;
+  var st={planned:0,intake:0,briefed:0,progress:0,running:0,analysis:0,blocked:0,live:0,done:0,confirmed:0}, vol=0, scoped=0, unset=0;
   var resIn=0, briefed=0, ghosts=0, misf=0;
   E.forEach(function(e){ var wf=wfFor(CLIENT,e); var k=stOf(wf,e); st[k]=(st[k]||0)+1;
     if(wf)briefed++; else if(misfiledFor(CLIENT,e))misf++; else if(isGhost(e,wf))ghosts++;
@@ -700,20 +714,65 @@ function kpis(){
     if(v&&!v.unset&&!v.wide){vol+=v.vol;scoped++} else if(!e.brandwide&&(!v||v.unset))unset++; });
   // the live saturation audit — keywords land in g:product_type2..10, and every brand/market
   // board always shows how much of the feed already carries them (each event lifts it toward 100%)
+  // SATURATION, WITH ITS EVIDENCE (Ray, 21 Sep 2026: "Why the 100% keyword saturation?").
+  // The tile asserted a headline with the counts hidden in a tooltip and no date, so a reading
+  // taken weeks ago read as today's and a suspicious one could not be told from a real one.
+  // It now carries what it counted, how many keyword columns it read and when — and it stops
+  // short of claiming a finished job when the shape of the reading cannot support it: keyword
+  // injection fills a VARYING number of the numbered g:product_type slots per SKU, so a feed
+  // where every SKU has exactly one extra value is far more likely carrying a second CATEGORY
+  // path than a keyworded catalogue. That is named as something to check, never as an error —
+  // the only thing that can settle it is looking at the feed.
   var idxS=ptidxFor(CLIENT,MKT), satK='';
-  if(idxS&&idxS.sat&&idxS.__total){ var sp=Math.round(idxS.sat.n/idxS.__total*1000)/10;
-    satK='<div class="kpi '+(sp>=85?'good':(sp<60?'warn':''))+'" title="'+fmt(idxS.sat.n)+' of '+fmt(idxS.__total)+' live '+MKT.toUpperCase()+' SKUs carry keywords in g:product_type2–10'+(idxS.sat.cols?'':' — no keyword fields found in this feed yet')+'"><div class="n">'+sp+'%</div><div class="l">Keyword saturation · '+MKT.toUpperCase()+'</div></div>'; }
+  if(idxS&&idxS.sat&&idxS.__total){
+    var sp=Math.round(idxS.sat.n/idxS.__total*1000)/10;
+    var cols=idxS.sat.cols||0, age=idxS.t?Math.floor((Date.now()-idxS.t)/86400000):null;
+    var thin=(sp>=99&&cols<=1);                                  // every SKU, one slot — check the feed
+    var stale=(age!=null&&age>14);
+    var sub=fmt(idxS.sat.n)+' of '+fmt(idxS.__total);
+    var tip=fmt(idxS.sat.n)+' of '+fmt(idxS.__total)+' live '+MKT.toUpperCase()+' SKUs carry a value in the numbered g:product_type slots (2–10), read across '+cols+' keyword column'+(cols===1?'':'s')
+      +(age!=null?' · measured '+(age===0?'today':age+' day'+(age===1?'':'s')+' ago'):'')
+      +(!cols?' — no keyword fields found in this feed yet':'')
+      +(thin?' — CHECK: every SKU carries exactly one extra product_type value. Keyword injection varies per SKU, so this is more likely a second category path than keyword coverage. Open the feed before reporting it as optimised.':'')
+      +(stale?' — this reading is '+age+' days old; ⟳ Sync product types to refresh it':'');
+    satK='<div class="kpi '+(thin||stale?'warn':(sp>=85?'good':(sp<60?'warn':'')))+'" title="'+esc(tip)+'">'
+      +'<div class="n">'+sp+'%'+(thin?' <span class="kq" title="Check the feed — see the tooltip">?</span>':'')+'</div>'
+      +'<div class="l">Keyword saturation · '+MKT.toUpperCase()+'</div>'
+      +'<div class="kq2">'+esc(sub)+(stale?' · '+age+'d old':'')+'</div></div>'; }
+  // WHOSE DESK IS IT ON — AND IT ADDS UP (Ray, 21 Sep 2026: "the numbers also don't make
+  // sense"). The band showed 14 scheduled over 1 briefed + 1 live/done + 9 not briefed = 11,
+  // and the missing three were real: the tiles covered intake/briefed/progress and
+  // live/done/confirmed, while COURTM's own vocabulary also has RUNNING, ANALYSIS and
+  // BLOCKED — so an optimisation at Test running or Analysis, which is where most of Reiss's
+  // sit, counted as briefed (and so left "not yet briefed") while appearing in no tile at all.
+  // The four buckets below are a PARTITION of every stage stOf can return, so they always sum
+  // to the total beside them, and each names the court the work is sitting in rather than a
+  // pipeline word only the pipeline uses.
+  var bNot=(st.planned||0);
+  var bAspl=(st.briefed||0)+(st.progress||0)+(st.running||0);
+  var bAm=(st.intake||0)+(st.analysis||0)+(st.blocked||0);
+  var bDone=(st.live||0)+(st.done||0)+(st.confirmed||0);
+  var acc=bNot+bAspl+bAm+bDone;
+  // a stage nobody has taught this band about must be VISIBLE, not silently dropped — that is
+  // the exact failure this replaces
+  var bOther=E.length-acc;
+  $('#kpis').className='kpis stacked';
   $('#kpis').innerHTML=
-    '<div class="kpi"><div class="n">'+E.length+'</div><div class="l">Optimisations scheduled</div></div>'
-    +'<div class="kpi warn"><div class="n">'+((st.intake||0)+(st.briefed||0)+(st.progress||0))+'</div><div class="l">In intake / briefed</div></div>'
-    +'<div class="kpi good"><div class="n">'+((st.live||0)+(st.done||0)+(st.confirmed||0))+'</div><div class="l">Live / done</div></div>'
+    '<div class="kgrp-h">Plan — whose desk each optimisation is on</div><div class="kgrp">'
+    +'<div class="kpi" title="'+esc('Every optimisation on the board in this window. The four tiles beside it are a partition of this number: '+bNot+' not briefed + '+bAspl+' with ASPL + '+bAm+' with the AM + '+bDone+' complete'+(bOther?' + '+bOther+' in a stage this band does not yet name':'')+'.')+'"><div class="n">'+E.length+'</div><div class="l">Optimisations scheduled</div></div>'
+    +'<div class="kpi'+(bNot?'':' good')+'" title="No ticket raised yet — nobody is carrying these."><div class="n">'+bNot+'</div><div class="l">Not briefed</div></div>'
+    +'<div class="kpi warn" title="Briefed, in progress or test running — the ball is with ASPL."><div class="n">'+bAspl+'</div><div class="l">With ASPL</div></div>'
+    +'<div class="kpi'+(bAm?' warn':'')+'" title="In intake, in analysis awaiting a read-out, or blocked — the ball is with the AM."><div class="n">'+bAm+'</div><div class="l">With the AM</div></div>'
+    +'<div class="kpi good" title="Live, done or confirmed by the client."><div class="n">'+bDone+'</div><div class="l">Complete</div></div>'
+    +(bOther?'<div class="kpi warn" title="These carry a pipeline stage this band has no bucket for, so they are shown rather than quietly left out of the count. Tell Claude Code which stage and it gets a home."><div class="n">'+bOther+'</div><div class="l">Other stage</div></div>':'')
+    +'</div><div class="kgrp-h">Measures</div><div class="kgrp">'
     +'<div class="kpi"><div class="n">'+(scoped?fmt(vol):'—')+'</div><div class="l">SKUs in scope</div></div>'
     +satK
     +'<div class="kpi'+(resIn?' good':'')+'"><div class="n">'+resIn+'</div><div class="l">Results reported</div></div>'
     +(unset?'<div class="kpi warn"><div class="n">'+unset+'</div><div class="l">Scopes to set</div></div>':'')
-    +((E.length-briefed)?'<div class="kpi"><div class="n">'+(E.length-briefed)+'</div><div class="l">Not yet briefed</div></div>':'')
     +(misf?'<div class="kpi warn" title="Briefed for real, but the ticket saved under a different brand — it never reached this board, this brand\u2019s Intake or its plan. Click the chip on the card to move it."><div class="n">'+misf+'</div><div class="l">Filed under the wrong brand</div></div>':'')
-    +(ghosts?'<div class="kpi warn" title="Marked briefed/live/done on this calendar, but no ticket exists behind them — nobody is carrying the work. Open each one and raise the brief."><div class="n">'+ghosts+'</div><div class="l">Claimed, never briefed</div></div>':'');
+    +(ghosts?'<div class="kpi warn" title="Marked briefed/live/done on this calendar, but no ticket exists behind them — nobody is carrying the work. Open each one and raise the brief."><div class="n">'+ghosts+'</div><div class="l">Claimed, never briefed</div></div>':'')
+    +'</div>';
 }
 /* ---- The board is a ROLLING PLAN, not the span of whatever moments happen to exist
    (Ray, 14 Sep 2026: "where is December and onwards? Please show six months from the current
@@ -1074,6 +1133,7 @@ function renderOverview(){
       }).join('')+'</div></div>';
   });
   $('#ov').innerHTML=h||'<p class="sub">No brand calendars yet — pick a brand and add its marketing moments.</p>';
+  $('#kpis').className='kpis';   // the all-brands band is a flat row; only the per-brand band stacks
   $('#kpis').innerHTML=
     '<div class="kpi"><div class="n">'+brands.length+'</div><div class="l">Brands scheduled</div></div>'
     +'<div class="kpi"><div class="n">'+tot+'</div><div class="l">KW optimisations</div></div>'
@@ -1258,17 +1318,37 @@ $('#win-row').addEventListener('click',function(ev){
   try{ localStorage.setItem('fcc-kw-win',b.getAttribute('data-win')); }catch(e){}
   render();
 });
+var MKT_SHOW=12;   // GB + eleven = two rows at most; the rest fold behind one button
 function renderMkts(){
   var row=$('#mkt-row');
   row.hidden=MKTLIST.length<2;
-  $('#mkt-chips').innerHTML=MKTLIST.map(function(m){
-    return '<button type="button" class="mkc'+(m===MKT?' on':'')+'" data-mkc="'+esc(m)+'">'+esc(m.toUpperCase())+'</button>';}).join('');
+  // 28 chips in an undifferentiated wall is a list nobody reads (Ray, 21 Sep 2026: "the list
+  // of market should be cleaned up"). The board's own market is ALWAYS rendered even when the
+  // list is folded — a chip row that hides the market you are looking at is worse than long.
+  var show=MKTALL?MKTLIST:MKTLIST.slice(0,MKT_SHOW);
+  if(!MKTALL&&show.indexOf(MKT)<0)show=show.slice(0,MKT_SHOW-1).concat([MKT]);
+  var hid=MKTLIST.length-show.length;
+  $('#mkt-chips').innerHTML=show.map(function(m){
+    return '<button type="button" class="mkc'+(m===MKT?' on':'')+'" data-mkc="'+esc(m)+'">'+esc(m.toUpperCase())+'</button>';}).join('')
+    +(hid>0?'<button type="button" class="mkc mkc-more" data-mkall="1" title="Show every market wired for this brand">+'+hid+' more</button>':'')
+    +(MKTALL&&MKTLIST.length>MKT_SHOW?'<button type="button" class="mkc mkc-more" data-mkall="0">Show fewer</button>':'')
+    +(MKTFB?'<span class="mkc-note" title="Optimised keywords land in the numbered g:product_type slots, which the Meta catalogue spec does not have — so scope, volumes and saturation cannot be measured on a Meta feed. They stay on Feed Lab and Overlays.">'+MKTFB+' Meta feed'+(MKTFB===1?'':'s')+' not shown</span>':'');
 }
 function loadMkts(){
-  MKT='gb'; MKTLIST=['gb'];
+  MKT='gb'; MKTLIST=['gb']; MKTFB=0;
   fetch('/api/feed/markets?client='+encodeURIComponent(CLIENT)).then(function(r){return r.json()}).catch(function(){return null}).then(function(d){
-    var ks=Object.keys((d&&d.markets)||{});
-    if(ks.length){ MKTLIST=ks.sort(function(a,b){return a==='gb'?-1:b==='gb'?1:a.localeCompare(b)}); if(MKTLIST.indexOf(MKT)<0)MKT=MKTLIST[0]; }
+    // GOOGLE SHOPPING FEEDS ONLY (Ray, 21 Sep 2026: "the list of market should be cleaned up").
+    // /api/feed/markets serves every WIRED feed, which is right for Feed Lab and Overlays and
+    // wrong here: optimised keywords land in the numbered g:product_type slots, a field the
+    // Meta catalogue spec does not have — so on a `-fb` market ⚡ Measure impact, the scope
+    // picker and the saturation KPI are all measuring something that cannot exist. Reiss
+    // listed 42 chips of which 14 could never be keyword-optimised. Same rule /ptypes and
+    // /volume already apply; the count of what was dropped is SHOWN, never silently removed.
+    var all=Object.keys((d&&d.markets)||{});
+    var ks=all.filter(function(m){ return !/-fb$/i.test(m); });
+    MKTFB=all.length-ks.length;
+    if(ks.length){ MKTLIST=ks.sort(function(a,b){return a==='gb'?-1:b==='gb'?1:a.localeCompare(b)});
+      if(MKTLIST.indexOf(MKT)<0)MKT=MKTLIST[0]; }
     if(CLIENT!=='*')render();
   });
 }
@@ -1975,6 +2055,8 @@ function ptOpen(e){
 }
 function ptPlace(d){ d.style.left='50%';d.style.top='50%';d.style.transform='translate(-50%,-50%)'; }   // a tall panel centres; drag moves it off the board
 document.addEventListener('click',function(ev){
+  var mka=ev.target.closest('[data-mkall]');
+  if(mka){ MKTALL=mka.getAttribute('data-mkall')==='1'; renderMkts(); return; }
   var mc=ev.target.closest('[data-mkc]');
   if(mc){ MKT=mc.getAttribute('data-mkc'); ptClose(); render();
     try{history.replaceState(null,'',location.pathname+'?client='+encodeURIComponent(CLIENT)+(MKT!=='gb'?'&market='+encodeURIComponent(MKT):''))}catch(e2){} return; }

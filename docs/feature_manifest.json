@@ -8733,6 +8733,43 @@
       "pattern": "tools/check_grwaive.js"
     },
     {
+      "name": "AI Quote export: a saved quote exports ITS OWN LINES — the sheet builder reads the frozen snapshot (Ray, 21 Sep 2026: 'the number is not matching')",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "var fz=FROZEN, L=fz?snapLines(fz):lines(), t=fz?snapTotals(fz):totals()",
+      "pr": 476
+    },
+    {
+      "name": "AI Quote export: withSnap freezes the snapshot in for the length of the call",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "FROZEN=q; out=fn(); }",
+      "pr": 476
+    },
+    {
+      "name": "AI Quote export: every saved option's tab is its snapshot, the one under Edit included (snapTab)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function snapTab(q,nm){ return withSnap(q,function(){ var sh=quoteSheet({ref:q.ref,at:q.t}); return {name:nm,sh:sh,day:sh.day}; }); }",
+      "pr": 476
+    },
+    {
+      "name": "AI Quote export: the option under Edit is never rendered off the live builder",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "if(EDITING&&EDITING.id===k)tabs.push({name:nm,sh:quoteSheet({ref:q.ref}),day:blockGBP()});",
+      "pr": 476,
+      "forbidden": true
+    },
+    {
+      "name": "AI Quote export: Spark AI configuration hours at the Spark AI day rate as a value, never =Dayrate",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "qty:(+l.hours)/aimHPD,qs:'days',rate:aimDay,dsc:aimDsc('oneoff',l)",
+      "pr": 476
+    },
+    {
+      "name": "AI Quote: Edit keeps the saved Spark AI sizing on screen while the feed is not pulled (aimFz)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function aimFz(){ if(idx())return null; var fz=aimRec().fz; return (fz&&fz.sig===aimSig())?fz:null; }",
+      "pr": 476
+    },
+    {
       "name": "read-out: figures are collected BEFORE the 'results:' prose grab — the heading used to short-circuit and return one line, so a bulleted read-out reported its impressions and dropped its clicks (Ray 21 Sep 2026, Vimalesh on the Silk brief)",
       "file": "cloudflare/feedspark-deck/src/briefmatch.js",
       "pattern": "function collectFigures(",
@@ -8779,6 +8816,60 @@
       "file": ".github/workflows/validate.yml",
       "pattern": "test_readout",
       "pr": 473
+    },
+    {
+      "name": "KWCal: the stage tiles are a PARTITION of every stage stOf can return — running/analysis/blocked had no bucket, so a Test-running moment counted as briefed and appeared in no tile (Ray 21 Sep 2026: 14 scheduled over 1+1+9)",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "var bAspl=(st.briefed||0)+(st.progress||0)+(st.running||0);",
+      "pr": 474
+    },
+    {
+      "name": "KWCal: a stage the band has no bucket for is SHOWN as 'Other stage', never dropped from the count",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "var bOther=E.length-acc;",
+      "pr": 474
+    },
+    {
+      "name": "KWCal: the band is two labelled rows (Plan / Measures), each filling its own width, instead of one nine-tile wall that orphans tiles",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "kgrp-h\">Measures",
+      "pr": 474
+    },
+    {
+      "name": "KWCal: -fb Meta markets never reach the keyword calendar's chips — the numbered g:product_type slots keywords live in are not in the Meta catalogue spec",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "return !/-fb$/i.test(m);",
+      "pr": 474
+    },
+    {
+      "name": "KWCal: the dropped Meta feeds are COUNTED on screen, not silently removed",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "MKTFB=all.length-ks.length",
+      "pr": 474
+    },
+    {
+      "name": "KWCal: a long market list folds behind one button and never folds away the board's own market",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "if(!MKTALL&&show.indexOf(MKT)<0)",
+      "pr": 474
+    },
+    {
+      "name": "KWCal: saturation carries its evidence — n of total on the tile, keyword columns read, the date measured, and a CHECK flag when every SKU has exactly one extra product_type value",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "var thin=(sp>=99&&cols<=1);",
+      "pr": 474
+    },
+    {
+      "name": "KWCal KPI band + market list harness wired into presync",
+      "file": "tools/presync.sh",
+      "pattern": "test_kwcal_kpis",
+      "pr": 474
+    },
+    {
+      "name": "KWCal KPI band harness in CI",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "test_kwcal_kpis",
+      "pr": 474
     },
     {
       "name": "Deck editor: the SERVED sigOf normalises whitespace — \\\\s double-escaped inside getEditorScript's template literal (a single backslash cooked to /s+/g and collapsed runs of the letter s)",
