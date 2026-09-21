@@ -8656,6 +8656,18 @@
       "min": 1
     },
     {
+      "name": "AI Quote tracker: the breakdown row lists the Spark AI lines (Ray, 21 Sep 2026: 'each quote breakdown should have every line saved')",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "+aimDetailRows(q)",
+      "pr": 472
+    },
+    {
+      "name": "AI Quote tracker: aimDetailRows renders the snapshot's own Spark AI lines, never re-priced",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "function aimDetailRows(q){ var a=q&&q.aim, L=(a&&a.lines)||[]; if(!L.length)return '';",
+      "pr": 472
+    },
+    {
       "name": "Content quality: a rule the brand set aside costs nothing and is reported APART (Ray, 21 Sep 2026: 'allow a button to indicate whether the issue actually applies for the brand')",
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
       "pattern": "export function attrQuality(key, a, qwaived)"

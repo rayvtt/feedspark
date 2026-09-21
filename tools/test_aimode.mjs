@@ -633,5 +633,21 @@ ok(/if\(PENDING_OPT\)tabs\.push\(\{name:'Option '\+PENDING_OPT\.n\+' \\u00b7 thi
 ok(/if\(!tabs\.length\)tabs\.push\(\{name:xTabName\(\),sh:quoteSheet\(\),day:blockGBP\(\)\}\);/.test(src), 'a quote outside a proposal exports as it always did');
 ok(/function xTab\(n\)\{ return String\(n\)\.replace\(\/\[\\\[\\\]:\*\?\\\/\\\\\]\/g,' '\)\.slice\(0,31\); \}/.test(src), 'tab names are Excel-safe (31 chars, no []:*?/\\)');
 
+/* ---------- EVERY SAVED LINE IN THE BREAKDOWN (Ray, 21 Sep 2026, sending the expanded row of a Reiss GB
+   quote: "each quote breakdown should have every line saved as this example") — the ⌄ row listed the
+   legacy fields, the extra lines, the bundle, the setup and the discount, and not the Spark AI attributes. */
+console.log('\nthe tracker breakdown: every saved line, the Spark AI attributes included');
+const adr = (src.match(/function aimDetailRows\(q\)\{[\s\S]*?\n  function xLineMoney\(l\)/) || [''])[0];
+ok(/\+aimDetailRows\(q\)\n\s+\+\(qUpd\(q\)\?\(/.test(src), 'the Spark AI rows sit between the extra lines and the bundle in the detail row');
+ok(adr.length > 200 && /L=\(a&&a\.lines\)\|\|\[\]/.test(adr), 'aimDetailRows reads the SNAPSHOT\'s own lines (q.aim.lines)');
+ok(!/aimInfo\(|aimRate\(|rec\(\)|aimRates\(/.test(adr), '…and never re-prices them off the live rate card or record');
+ok(/AIM_ROUTE_LABEL\[l\.route\]/.test(adr) && /l\.shared\?'monthly minimum'/.test(adr), 'the route word comes from the ONE label table; the AI floor reads as the monthly minimum');
+ok(/l\.detail\?'<br><span style="color:var\(--muted\);font-weight:600">'\+esc\(l\.detail\)/.test(adr), 'the saved detail sentence travels with each line');
+ok((adr.match(/class="tk-money'\+\(SHOWP\?'':' hid'\)\+'"/g) || []).length === 2 && !/class="tk-money"/.test(adr), 'every money cell in it is gated on £, like the rest of the tracker');
+const alm = (src.match(/function aimLineMoney\(l\)\{[\s\S]*?return s\|\|'\\u2014'; \}/) || [''])[0];
+ok(/if\(l\.setup\)o\.push\(money\(l\.setup\)/.test(alm) && /if\(l\.monthly\)o\.push\(money\(l\.monthly\)\+'\/month'\)/.test(alm) && /l\.monthlyNote/.test(alm), 'one-off (with hours), monthly, or the saved "Included" note — the three ways a line is charged');
+ok(/subtotal '\+money\(a\.setup\|\|0\)\+\(a\.monthly\?' \+ '\+money\(a\.monthly\)\+'\/month':''\)/.test(adr) && /a\.since\?' \\u00b7 arrivals since '\+esc\(aimMonWord\(a\.since\)\)/.test(adr), 'the caption names the basis (units · cohort · new a month) and the Spark AI subtotal');
+ok(/\.t-det \.dl\.ai>\.tk-money\{white-space:nowrap;text-align:right;flex-shrink:0\}/.test(src), 'the money stays on one line, as in Ray\'s example');
+
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);
