@@ -90,6 +90,7 @@ echo "   ✓ JSON/SSE parsing, auth modes, market rotation, ibfref hours, cron p
 
 echo "── validating: phone layer (bar, sheets, mirror rules, pan sweep, wiring)"
 node tools/test_mobile.mjs >/dev/null
+node tools/test_buildsuggest.mjs >/dev/null
 echo "   ✓ bottom bar, sheets, mirror rules, pan sweep + wiring hold"
 
 echo "── validating: Scheduled Work (sheet → skip cadence per brand)"
