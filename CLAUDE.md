@@ -363,15 +363,20 @@ pills, a market never scanned reads "not scanned". Same numbers as the Estate sc
 figure everywhere. Rendered only for brands with more than one market — a single-market brand's
 ring above already IS that market. Harness: `tools/test_dossiertiles.mjs`.
 
-### Command center data — ATRT Tracker
-- The command center (`/`) shows **live workload**, **tests running** and **accounts & project plans**
-  sourced from the **ATRT Tracker** (Google Sheet `1p_cPSRjmK16CDpLryoOBaOUjG3ZvnL-k4ORHhaHI5AE`):
-  tab 1 = task/interaction log (per client, task, AM, AE, due, status; arrives by email/ad-hoc or monthly call),
-  tab 2 = accounts & project-plan links.
-- Committed record: `docs/atrt_data.json`. Sync tool: `tools/sync_atrt.py` splices the `<!-- ATRT:LOG -->`,
-  `<!-- ATRT:TESTS -->`, `<!-- ATRT:PLANS -->` marked regions in `docs/FeedSpark_Command_Center.html`.
-- **Refresh:** re-pull the sheet (Google Drive `read_file_content`) → save as a `.txt` →
-  `python tools/sync_atrt.py <txt>` → commit → push (auto-deploys). Only the marked regions change.
+### Command center data — the project plans (ATRT tracker DISCONNECTED, 22 Sep 2026)
+- Ray: "Can you disconnect the ATRT checker entirely from FCC? … I just use Workflow to monitor the
+  tasks across all clients from their own project plan. So the number that you showed there should
+  also reflect it from Workflow, not ATRT." The tracker export (`docs/atrt_data.json`), its splice
+  tool (`tools/sync_atrt.py`), the `window.ATRT` global and every spliced region are GONE.
+- The hero strip on `/` (Active tasks · Overdue · Due next 7 days · Tests running · Accounts) is
+  computed in the page by `renderHero()` from `PT` — `window.PLANTASKS` baked at build, replaced
+  brand by brand as `/api/plan/live` lands — under **Workflow's own rules**: `wfDate` is Workflow's
+  `parseUKDate` ported verbatim (`tools/test_hero.mjs` asserts the bodies identical), overdue = dated
+  before today and not Done, the team's shared overlays (`/api/state` taskstatus / taskdue / deleted /
+  hidden) applied first. Overdue and due-soon need the live due column, so they read "—" until the
+  first plan syncs; the synced line says "live HH:MM · N of M plans live". The dossier list, health
+  model, Monday catch-up and the Project plans modal read the same `PT` (`p.open`, `p.over`).
+- Harness `tools/test_hero.mjs` in qa_gate / presync / validate.
 
 ---
 

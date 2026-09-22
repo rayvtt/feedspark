@@ -277,7 +277,7 @@ if(document.readyState!=='loading')mk();else document.addEventListener('DOMConte
 /* Build Log tab — the derived board over the Claude Code sessions (was /buildlog, merged here). */
 (function(){
   var esc=function(s){return (s==null?'':''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
-  var HOT=/^(cloudflare\/feedspark-deck\/src\/worker\.js|wrangler\.toml|CLAUDE\.md|docs\/FeedSpark_Command_Center\.html|docs\/FeedSpark_Workflow\.html|docs\/atrt_data\.json)$/;
+  var HOT=/^(cloudflare\/feedspark-deck\/src\/worker\.js|wrangler\.toml|CLAUDE\.md|docs\/FeedSpark_Command_Center\.html|docs\/FeedSpark_Workflow\.html)$/;
   var MODRE=/^\[([^\]]+)\]\s*/;
   function modOf(t){ var m=MODRE.exec(t||''); return m?m[1]:''; }
   function cleanTitle(t){ return (t||'').replace(MODRE,''); }
