@@ -572,18 +572,30 @@ the one `/api/ptypes/snapshot` call. Differences from Label Guard, everything el
 - No custom watch rules for PT v1 — estate alerts + badge + emails cover the drop-off case;
   watches can be extended to PT later on the same `labelwatch` rails.
 
-### 8a. product_type population — values carried per SKU, and cards that fold (18 Sep 2026)
+### 8a. product_type depth card, and cards that fold (18 Sep 2026; card swapped 22 Sep 2026)
 
-The same ask as §5a, on the product-type page. The depth card says how DEEP the primary path
-goes; the population card beside it says how MANY product_type values a SKU carries — the
-category tree (bare `g:product_type` or slot 1) plus every keyword slot 2–10, FeedSpark's
-keyword injection — one row per bucket (1 … 5, 6+ values), the footer *avg N values per SKU ·
-N profiled · N carry none*, and the verdict line *1 value = the category tree only · 2+ =
-keyword slots live on the SKU — x% of profiled SKUs are keyworded (max N values on one SKU)*.
-`xmlCollector` resolves every product_type column through `slotCols()` (the read
-`findMultiCols` now shares) and counts the filled ones per SKU → `snap.ptPop`; Google feeds only
-(the collector never profiles product types on a Meta feed), XML lanes only (a sheet-backed feed
-gets the honest note). The estate cards fold exactly as on `/labels` — header row, ⊖/⊕ all,
+The same fold-behaviour ask as §5a, on the product-type page — but not the same card. It
+shipped 18 Sep 2026 as a population card (how MANY product_type values a SKU carries: the
+category tree plus every keyword slot 2–10, one row per bucket 1…5/6+, `snap.ptPop`), the same
+shape as Label Guard's own §5a card. Ray, 22 Sep 2026, screenshotting it: *"PT guard does not
+need this breakdown. It doesn't make sense anyway. Instead, replace it with the PT depth
+granularity chart."* Keyword-slot population is a keyword-saturation question (KWCal already
+owns it), not a product-type-tree question — so the full-width card in that slot was retired
+and replaced with `ptDepthCard(dp)`: the SAME `depthProfile()` SKU-weighted read already driving
+the compact header bar/chips (§ above), rendered full-width in the shared `popCard()` row
+format — one row per chevron-depth bucket (1…5, 6+ levels), buckets 3/4/5 highlighted (the
+depths the compact chips already call out), footer stating the 5-level share against the
+30–40% industry standard and the 1–2-level shallow share. No *carry none* line: a present
+`product_type` column always resolves to a depth of at least 1, unlike a population count.
+
+Because `depthProfile()` reads the value/count PIVOT every scan already carries (`L.values`)
+rather than a separately-pushed per-SKU field, a sheet-backed (gviz) feed now gets the FULL
+depth card too — no "wire the FeedHero XML" fallback, unlike Label Guard's population card
+which stays XML-only (`labelPop` is never captured off a gviz read). `ptPopCard()` and its
+call site are gone from the page; the underlying capture — `xmlCollector` resolving every
+product_type column through `slotCols()` into `snap.ptPop`, and the worker's `splitRaw` filing
+it onto the `ptype:` store — is UNTOUCHED, since Ray's ask named the card, not the data
+pipeline. The estate cards still fold exactly as on `/labels` — header row, ⊖/⊕ all,
 `localStorage pt-collapse`, the deep link opens a folded card — and the folded summary carries
 the brand's average tree depth beside its markets and flags.
 

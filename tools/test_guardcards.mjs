@@ -6,12 +6,16 @@
 
    Renders the REAL /labels and /ptypes pages through Chromium against a stubbed estate and
    snapshots (one feed carrying the per-SKU population profile, one sheet-backed feed without
-   it) and asserts: the population card draws one row per bucket with the share, the footer
-   states avg / profiled / none, a sheet-backed feed gets the honest note rather than an empty
-   table; every brand card folds on its own header, ⊖ Collapse all / ⊕ Expand all does them
-   all with the button naming the action still available, the fold survives a reload (a device
-   preference), and the ?client= deep link opens a folded card. Then /golden's highlight row
-   draws the same card off a real in-browser analysis.
+   it) and asserts: on /labels the per-SKU label-population card draws one row per bucket with
+   the share, the footer states avg / profiled / none, and a sheet-backed feed gets the honest
+   note rather than an empty table (labelPop is XML-only). On /ptypes (Ray, 22 Sep 2026: "PT
+   guard does not need this breakdown ... replace it with the PT depth granularity chart") the
+   SAME card slot instead draws category-path DEPTH — read off the value/count pivot every scan
+   carries, XML or sheet-backed alike, so a gviz feed gets the full card too, not a fallback.
+   Both pages also assert: every brand card folds on its own header, ⊖ Collapse all / ⊕ Expand
+   all does them all with the button naming the action still available, the fold survives a
+   reload (a device preference), and the ?client= deep link opens a folded card. Then /golden's
+   highlight row draws the shared population card off a real in-browser analysis.
 
    Run: NODE_PATH=$(npm root -g) node tools/test_guardcards.mjs   (presync) */
 import { createRequire } from 'node:module';
@@ -34,7 +38,8 @@ const lblPop = { pct: { '1': 12.3, '2': 21.4, '3': 40.1, '4': 18.2, '5': 8, '6+'
 const ptPop = { pct: { '1': 30.5, '2': 10.2, '3': 24.1, '4': 15, '5': 9.2, '6+': 11 }, avg: 3.3, skus: 20500, zero: 300, max: 9 };
 const lbl = () => ({ present: true, filled: 20000, cov: 95.2, distinct: 2, truncated: false, values: [['a', 12000], ['b', 8000]] });
 const labels = { custom_label_0: lbl(), custom_label_1: lbl(), custom_label_2: lbl(), custom_label_3: { present: false }, custom_label_4: lbl() };
-const pt = { present: true, filled: 20800, cov: 98.9, distinct: 3, truncated: false, values: [['Womens > Shoes > Trainers', 5000], ['Mens > Boots > Chelsea Boots > Leather', 4000], ['Kids > Shoes', 3000]] };
+// depth: 4000@4-level, 3000@5-level, 2000@2-level, 1000@1-level -> pct {1:10,2:20,3:0,4:40,5:30,6+:0}, avg 3.6, skus 10000
+const pt = { present: true, filled: 10000, cov: 98.9, distinct: 4, truncated: false, values: [['Womens > Shoes > Trainers > Canvas', 4000], ['Mens > Boots > Chelsea Boots > Leather > Formal', 3000], ['Kids > Shoes', 2000], ['Womens', 1000]] };
 const idx = (client, mkt, extra) => Object.assign({ client, mkt, t: NOW, rows: 22235, cov: { custom_label_0: 95, custom_label_1: 95, custom_label_2: 95, custom_label_3: null, custom_label_4: 95, product_type: 98.9 }, present: 4, nCrit: 0, nWarn: 1, status: 'warn', baseT: NOW }, extra || {});
 const feeds = { 'Schuh|gb': idx('Schuh', 'gb', { depth: { pct: { '1': 0, '2': 0.1, '3': 11.6, '4': 50.8, '5': 36.9, '6+': 0.6 }, avg: 4.3, skus: 21020 } }), 'Schuh|de': idx('Schuh', 'de'), 'House of Bruar|gb': idx('House of Bruar', 'gb'), 'Reiss|gb': idx('Reiss', 'gb', { nCrit: 1, status: 'crit' }) };
 const snapOf = (kind, hob) => {
@@ -94,23 +99,36 @@ const initFor = (kind) => 'window.__D=' + JSON.stringify({ kind, feeds, snap: sn
     await page.goto(url + '?client=Schuh'); await page.waitForTimeout(1600);
     ok('the ?client= deep link opens a folded card before scrolling to it', await page.evaluate(() => { const c = document.querySelector('.est-card[data-client="Schuh"]'); return c && !c.classList.contains('collapsed') && c.style.outline !== ''; }));
 
-    // the population card
+    // the population / depth card
     await page.evaluate(() => document.querySelector('.est-mkt[data-k="Schuh|gb"]').click());
     await page.waitForTimeout(700);
     const rows = await page.evaluate(() => Array.from(document.querySelectorAll('.pop .pr')).map((r) => [r.querySelector('.pl').textContent.trim(), r.querySelector('.pv').textContent.trim(), r.querySelector('.pb i').style.width]));
-    const want = kind === 'lbl' ? ['1 label', '2 labels', '3 labels', '4 labels', '5 labels'] : ['1 value', '2 values', '3 values', '4 values', '5 values', '6+ values'];
-    ok('the population card draws one row per bucket — ' + want.join(' / '), rows.map((r) => r[0]).join('|') === want.join('|'), rows);
+    const want = kind === 'lbl' ? ['1 label', '2 labels', '3 labels', '4 labels', '5 labels'] : ['1 level', '2 levels', '3 levels', '4 levels', '5 levels', '6+ levels'];
+    ok('the ' + (kind === 'lbl' ? 'population' : 'depth') + ' card draws one row per bucket — ' + want.join(' / '), rows.map((r) => r[0]).join('|') === want.join('|'), rows);
     ok('each row states its share and draws it as a bar of that width', rows.every((r) => /^[\d.]+%$/.test(r[1]) && r[2] === r[1]), rows);
     const foot = await page.evaluate(() => Array.from(document.querySelectorAll('.pop .pf')).map((p) => p.textContent.replace(/\s+/g, ' ')).join(' ¦ '));
-    ok('the footer states the SKU-weighted average, how many SKUs were profiled and how many carry none',
-      new RegExp('avg ' + (kind === 'lbl' ? '2\\.9 labels' : '3\\.3 values') + ' per SKU').test(foot) && /21,020 SKUs profiled|20,500 SKUs profiled/.test(foot) && /carry none \(/.test(foot), foot);
-    ok(kind === 'lbl' ? 'labels: the verdict line reads the share carrying 3+ of the five' : 'product types: the verdict line reads the keyworded share (2+ values)',
-      kind === 'lbl' ? /66\.3% of profiled SKUs carry 3\+/.test(foot) : /69\.5% of profiled SKUs are keyworded/.test(foot), foot);
-    // sheet-backed → honest note, never an empty table
+    if (kind === 'lbl') {
+      ok('the footer states the SKU-weighted average, how many SKUs were profiled and how many carry none',
+        /avg 2\.9 labels per SKU/.test(foot) && /21,020 SKUs profiled/.test(foot) && /carry none \(/.test(foot), foot);
+      ok('labels: the verdict line reads the share carrying 3+ of the five', /66\.3% of profiled SKUs carry 3\+/.test(foot), foot);
+    } else {
+      ok('the footer states the SKU-weighted average category-path depth and how many SKUs were profiled — no "carry none" line (a present product_type column always has a depth)',
+        /avg 3\.6 levels per SKU/.test(foot) && /10,000 SKUs profiled/.test(foot) && !/carry none/.test(foot), foot);
+      ok('product types: the verdict line reads the 5-level share against the 30–40% industry standard',
+        /30% of product volume sits at 5-level paths — the industry standard is 30–40%/.test(foot) && /30% sits at 1–2 levels/.test(foot), foot);
+    }
+    // labels: sheet-backed → honest note, never an empty table (labelPop is XML-only).
+    // ptypes: depth reads the value/count pivot every scan carries, so a sheet-backed feed
+    // gets the SAME full card — no fallback needed, unlike the per-SKU population it replaced.
     await page.evaluate(() => document.querySelector('.est-mkt[data-k="House of Bruar|gb"]').click());
     await page.waitForTimeout(700);
-    ok('a sheet-backed feed (no per-SKU read) says so instead of drawing an empty table',
-      await page.evaluate(() => { const p = document.querySelector('.pop'); return !!p && p.classList.contains('na') && /column counts/.test(p.textContent) && !p.querySelector('.pr'); }));
+    if (kind === 'lbl') {
+      ok('a sheet-backed feed (no per-SKU read) says so instead of drawing an empty table',
+        await page.evaluate(() => { const p = document.querySelector('.pop'); return !!p && p.classList.contains('na') && /column counts/.test(p.textContent) && !p.querySelector('.pr'); }));
+    } else {
+      ok('a sheet-backed (gviz) feed still gets the full depth card — depth comes from the category pivot, not a per-SKU-only field',
+        await page.evaluate(() => { const p = document.querySelector('.pop'); return !!p && !p.classList.contains('na') && document.querySelectorAll('.pop .pr').length === 6; }));
+    }
     ok('no page errors', errs.length === 0, errs);
     await ctx.close();
   }

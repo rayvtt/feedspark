@@ -1296,7 +1296,12 @@ eq('depthProfile zero-count rows -> null', LG.depthProfile([['A > B', 0]]), null
   ok('pages: /labels, /ptypes and /golden each carry popCard() — the one row format (label · bar · %)',
     pages.every((s) => /function popCard\(/.test(s) && /<div class="pr'/.test(s) && /class="pb"><i style="width:/.test(s)));
   ok('page /labels: the label card reads labelPop and says so when a sheet-backed feed cannot carry it', /s\.labelPop/.test(pages[0]) && /column counts/.test(pages[0]));
-  ok('page /ptypes: the product-type card reads ptPop', /s\.ptPop/.test(pages[1]));
+  // (Ray, 22 Sep 2026: "PT guard does not need this breakdown ... replace it with the PT depth
+  // granularity chart") — the /ptypes card slot no longer reads ptPop; it renders depth off the
+  // same value/count pivot every scan carries (depthProfile), so it works on sheet-backed feeds
+  // too. ptPop itself is untouched above — the capture pipeline outlives this one UI consumer.
+  ok('page /ptypes: the card slot renders depth (depthProfile), not the retired per-SKU ptPop read',
+    /function ptDepthCard\(/.test(pages[1]) && /h \+= ptDepthCard\(dp\)/.test(pages[1]) && !/s\.ptPop/.test(pages[1]));
   ok('pages /labels + /ptypes: every brand card collapses on its own header and ⊖ Collapse all / ⊕ Expand all does them all',
     pages.slice(0, 2).every((s) => /id="collapse-all"/.test(s) && /data-toggle=/.test(s) && /Expand all/.test(s)));
   ok('pages /labels + /ptypes: the fold is a device preference, never shared state', /lg-collapse/.test(pages[0]) && /pt-collapse/.test(pages[1]));

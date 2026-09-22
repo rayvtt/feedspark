@@ -68,8 +68,9 @@ window.addEventListener('load',restore);
   .est-flag{font-size:10px;font-weight:900;border-radius:100px;padding:1.5px 7px;white-space:nowrap}
   .est-flag.crit{background:#FDEBEA;color:var(--risk)}
   .est-flag.warn{background:#FDF3E3;color:var(--orange-deep)}
-  /* POPULATION card — the depth table's row format (label · bar · %), inline, for how many
-     product_type VALUES a SKU carries: the category tree plus every keyword slot (Ray, 18 Sep 2026) */
+  /* Shared row-format card (label · bar · %) — used here for PT depth granularity, the
+     category-path LEVELS a SKU's product_type reaches (Ray, 22 Sep 2026: the per-SKU value-count
+     population card it replaced "doesn't make sense" for a PT audit) */
   .pop{background:var(--wash,#F7F7F5);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin:10px 0 2px;max-width:560px}
   .pop h4{margin:0 0 7px;font-size:10.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
   .pop .pr{display:flex;align-items:center;gap:8px;padding:2px 0;font-size:11.5px;font-weight:700;color:var(--muted)}
@@ -488,11 +489,9 @@ window.addEventListener('load',restore);
     };
   })();
 
-  /* ---- POPULATION card (Ray, 18 Sep 2026): the depth table's row format — label · bar · % —
-     for how many product_type VALUES each SKU carries: the category tree (bare g:product_type
-     or slot 1) plus every keyword slot 2–10, the FeedSpark keyword injection. One value = the
-     tree only; 2+ = keywords live on that SKU. Read per SKU on the XML lanes; a sheet-backed
-     (gviz) feed cannot say it and says so. Same colour ramp as the depth bar (DCOL). */
+  /* ---- shared row-format card: label · bar · % + an avg/footer line. Originally built (Ray,
+     18 Sep 2026) for per-SKU population counts; now renders PT depth granularity here (Ray,
+     22 Sep 2026 — see ptDepthCard below). Same colour ramp as the depth bar (DCOL). */
   function popCard(title, pop, o) {
     o = o || {};
     if (!pop) return '<div class="pop na"><h4>' + esc(title) + '</h4>' + (o.none || 'Not profiled yet.') + '</div>';
@@ -509,13 +508,19 @@ window.addEventListener('load',restore);
       (o.foot ? '<div class="pf">' + o.foot + '</div>' : '') + '</div>';
     return h;
   }
-  function ptPopCard(s) {
-    var pop = s.ptPop;
-    var kw = pop ? Math.round((100 - (pop.pct['1'] || 0)) * 10) / 10 : 0;
-    return popCard('product_type population — values carried per SKU', pop, {
-      one: 'value', many: 'values', hi: ['2', '3', '4', '5', '6+'],
-      foot: '1 value = the category tree only · 2+ = keyword slots live on the SKU — <b>' + kw + '%</b> of profiled SKUs are keyworded (max ' + (pop ? pop.max : 0) + ' values on one SKU)',
-      none: 'Per-SKU population needs a full read of the feed. This snapshot came from <b>column counts</b> (a Google Sheet scanned through gviz), which say how full the column is but not how many values one SKU carries — wire the FeedHero XML for this market, or run <b>↻ Scan live feed</b> on an XML feed, and the table appears here.',
+  // (Ray, 22 Sep 2026: "PT guard does not need this breakdown. It doesn't make sense anyway.
+  // Instead, replace it with the PT depth granularity chart.") — the per-SKU population count
+  // (how many product_type VALUES, i.e. keyword slots, a SKU carries) never told the AM anything
+  // a PT audit runs on; depth (how many chevron LEVELS the category path itself reaches) is the
+  // real KPI here and already has a header-row compact readout (dpBar/dpChips/stdBadge) — this is
+  // the same depthProfile reading full-width, in the shared population-card row format.
+  function ptDepthCard(dp) {
+    var std = depthStandard(dp);
+    return popCard('product_type depth — category-path granularity', dp, {
+      one: 'level', many: 'levels', hi: ['3', '4', '5'],
+      foot: std ? ('<b>' + std.pct5 + '%</b> of product volume sits at 5-level paths — the industry standard is 30–40% · <b>' + std.shallow + '%</b> sits at 1–2 levels')
+        : '',
+      none: 'No product-type depth data yet — scan the feed.',
     });
   }
   function dpAttr(dp, truncated) {
@@ -1037,7 +1042,7 @@ window.addEventListener('load',restore);
       (dp ? dpBar(dp, false, L.truncated) + dpChips(dp, L.truncated) + stdBadge(p, dp) : '') +
       (dcov != null && dcov !== 0 ? '<span class="delta ' + (dcov > 0 ? 'up' : 'down') + '">' + (dcov > 0 ? '▲ +' : '▼ ') + dcov + 'pp vs ' + refLbl + '</span>' : '') +
       '</div>';
-    h += ptPopCard(s);
+    h += ptDepthCard(dp);
     h += '<div id="askp-slot"></div>';
 
     var bm = refMap(ref), seen = {};
