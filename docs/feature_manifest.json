@@ -7505,7 +7505,7 @@
       "file": "docs/FeedSpark_ProductTypeGuard.html",
       "pattern": "function ptPopCard(s)",
       "forbidden": true,
-      "pr": 0
+      "pr": 492
     },
     {
       "name": "PT Guard page: brand cards fold individually and all at once (pt-collapse)",
