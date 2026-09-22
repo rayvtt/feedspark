@@ -192,6 +192,12 @@ else
   echo "   ✗ KWCal tie harness FAILED — see node tools/test_kwcal_tie.mjs"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/test_kwcal_pdf.mjs >/dev/null 2>&1; then
+  echo "   ✓ the client PDF downloads in one click and carries its reported results"
+else
+  echo "   ✗ KWCal client-PDF harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_pdf.mjs"; FAIL=1
+fi
+
 if node tools/test_kwcal_kpis.mjs >/dev/null 2>&1; then
   echo "   ✓ KWCal KPI band partitions every stage; -fb markets never reach the chips"
 else
