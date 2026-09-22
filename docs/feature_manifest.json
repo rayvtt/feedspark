@@ -9214,6 +9214,49 @@
       "file": "tools/test_kwcal_tie.mjs",
       "pattern": "the Schuh FY27 ingest",
       "pr": 0
+    },
+    {
+      "name": "KWCal: ⬇ Client PDF downloads in ONE CLICK (Ray 22 Sep 2026 \"downloaded clietn PDF is not print pls, download directly\") — html2canvas + jsPDF .save(), the print dialog only as the CDN fallback",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function loadPdfLibs()",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the client PDF re-pulls the pipeline and the results archive BEFORE it builds, so the file is never a stale read",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "wfReset(); renderPdfDoc();",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the client PDF prints the REPORTED RESULTS, not just a verdict pip (Ray 22 Sep 2026 \"add results in where test has recorded\")",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function pdfResults(",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: an own-ticket read-out is named by its moment; a shared fortnightly round prints ONCE with a Covers: line, never per moment",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": ">Covers: ",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a result and its Covers line are ONE grid item — a column break between them reads as another round's coverage",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "pd-rg",
+      "min": 2,
+      "pr": 0
+    },
+    {
+      "name": "KWCal client-PDF harness (one click, no dialog; results on the file; CDN fallback)",
+      "file": "tools/test_kwcal_pdf.mjs",
+      "pattern": "one click, no dialog",
+      "pr": 0
+    },
+    {
+      "name": "KWCal client-PDF harness in CI",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "test_kwcal_pdf",
+      "pr": 0
     }
   ]
 }

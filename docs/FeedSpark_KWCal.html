@@ -462,6 +462,25 @@ window.addEventListener('load',restore);
   #pdf-doc .pd-ag .an i{font-style:normal;font-weight:700;color:#8a94a0}
   #pdf-doc .pd-ag .av{flex:none;font-weight:800;color:#8a94a0;font-variant-numeric:tabular-nums}
   #pdf-doc .pd-ag .rp{flex:none;font-size:8px;font-weight:900;line-height:1}
+  /* RESULTS REPORTED — the figures, not just the verdict pip (Ray, 22 Sep 2026: "add results in
+     where test has recorded"). A result from the moment's OWN brief thread is that moment's
+     alone; a shared fortnightly round reports every optimisation that went live in its window,
+     so its numbers print ONCE with the moments they cover named under them. */
+  #pdf-doc .pd-res{margin-top:8px;border-top:1px solid #E6E6E6;padding-top:6px}
+  #pdf-doc .pd-res h4{margin:0 0 4px;font-size:8.5px;font-weight:900;letter-spacing:.06em;
+    text-transform:uppercase;color:#ED6F0B}
+  /* the grid item is a whole RESULT — its row AND its Covers line — never a loose line: an
+     auto-fit column break between the two put "Covers: Denim" alongside a DIFFERENT round, which
+     reads as that round's coverage. A client cannot tell that is wrong, which is the worst kind. */
+  #pdf-doc .pd-rrows{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:3px 16px}
+  #pdf-doc .pd-rg{min-width:0;break-inside:avoid}
+  #pdf-doc .pd-rr{display:flex;align-items:baseline;gap:5px;font-size:8.5px;font-weight:700;color:#4a4a4a;min-width:0}
+  #pdf-doc .pd-rr .rv{flex:none;font-size:8px;font-weight:900;line-height:1}
+  #pdf-doc .pd-rr .rn{flex:none;font-weight:900;color:#333}
+  #pdf-doc .pd-rr .rm{flex:1 1 0;min-width:0;color:#4a4a4a}
+  #pdf-doc .pd-rr .rm b{font-weight:900;color:#333}
+  #pdf-doc .pd-rr .rw{flex:none;color:#8a94a0;font-weight:700}
+  #pdf-doc .pd-rc{margin:0 0 2px 14px;font-size:8px;font-weight:700;color:#8a94a0;line-height:1.4}
   /* legend + the one explanatory line that replaces the old methodology card */
   #pdf-doc .pd-legend{display:flex;align-items:center;flex-wrap:wrap;gap:4px 13px;margin-top:8px;font-size:8px;font-weight:700;color:#4a4a4a}
   #pdf-doc .pd-legend>span{display:inline-flex;align-items:center;gap:4px}
@@ -571,7 +590,7 @@ window.addEventListener('load',restore);
     <select id="brand" aria-label="Choose a brand"></select>
     <button class="btn pri" id="measure" type="button">⟳ Sync product types (live feed)</button>
     <button class="btn" id="sbs" type="button">🗂 Client calendar</button>
-    <button class="btn" id="pdf" type="button" title="One-page calendar of this roadmap, client-ready — save as PDF from the print dialog">⬇ Client PDF</button>
+    <button class="btn" id="pdf" type="button" title="One-page calendar of this roadmap, client-ready — downloads straight away, with any reported results on it">⬇ Client PDF</button>
     <button class="btn" id="edit" type="button">✎ Edit calendar</button>
     <button class="btn" id="add" type="button" hidden>＋ Add event</button>
     <button class="btn" id="import" type="button" hidden>⤓ Import events</button>
@@ -1789,6 +1808,42 @@ function monthCells(y,mo){ // Monday-first day grid, padded to whole weeks
 }
 var SRANK={Scheduled:0,'In progress':1,Live:2,Complete:3};              // a day shows its furthest-along optimisation
 var RPIP={positive:['▲','#15803D'],negative:['▼','#C0392B'],mixed:['◆','#B1550A'],unknown:['•','#8a94a0']};
+/* The results section of the client PDF. Own-ticket read-outs first (they are the sharpest
+   evidence we have — this moment, these numbers), then each shared round once with the moments
+   it covers. Metric lines are printed as the report itself worded them; nothing is re-derived,
+   averaged or rounded here, because a figure a client can check against the email we sent them
+   is worth more than a tidier one they cannot. */
+// the document's OWN month names — en-GB's short form prints "Sept" beside "Aug", and an ICU
+// upgrade would silently change what a client PDF says
+function pdfDate(t){ if(!t)return ''; var d=new Date(t);
+  return isFinite(d.getTime())?(d.getDate()+' '+MON[d.getMonth()]):''; }
+function pdfResults(E){
+  var own=[], rounds={}, order=[];
+  E.forEach(function(e){
+    var r=resFor(CLIENT,e); if(!r)return;
+    if(r.own){ own.push([e,r]); return; }
+    var k=(r.id||r.when||'')+'|'+(r.period||'')+'|'+(r.mkt||'');
+    if(!rounds[k]){ rounds[k]={r:r,evs:[]}; order.push(k); }
+    rounds[k].evs.push(e);
+  });
+  if(!own.length&&!order.length)return '';
+  var pipOf=function(r){ var p=RPIP[r.verdict]||RPIP.unknown;
+    return '<span class="rv" style="color:'+p[1]+'">'+p[0]+'</span>'; };
+  // a report with no parseable metric line still belongs in the section — the verdict and the
+  // date are a real finding, and saying "reported, figures in the email" is honest where an
+  // invented number would not be
+  var metrics=function(r){ var ms=(r.metrics||[]).filter(Boolean);
+    return ms.length?ms.map(function(m){ return '<b>'+esc(m)+'</b>'; }).join(' &middot; ')
+                    :'reported — figures in the report email'; };
+  var line=function(r,name){ return '<div class="pd-rr">'+pipOf(r)
+    +'<span class="rn">'+esc(name)+'</span><span class="rm">'+metrics(r)+'</span>'
+    +'<span class="rw">'+esc(pdfDate(r.when))+'</span></div>'; };
+  var rows=own.map(function(p){ return '<div class="pd-rg">'+line(p[1],p[0].name)+'</div>'; });
+  order.forEach(function(k){ var g=rounds[k], r=g.r, w=r.__w;
+    rows.push('<div class="pd-rg">'+line(r,(w&&w.label)?w.label:(r.period||'Batch'))
+      +'<div class="pd-rc">Covers: '+esc(g.evs.map(function(e){return e.name}).join(', '))+'</div></div>'); });
+  return '<div class="pd-res"><h4>Results reported</h4><div class="pd-rrows">'+rows.join('')+'</div></div>';
+}
 function renderPdfDoc(){
   if(CLIENT==='*'){ pdfNote('Open a brand’s board to export its keyword calendar — the all-brands overview is internal.'); return; }
   var E=evs();
@@ -1847,6 +1902,18 @@ function renderPdfDoc(){
         +'</div></div>';
     }).join('')+'</div>';
 
+  // RESULTS REPORTED (Ray, 22 Sep 2026: "add results in where test has recorded (right now silk &
+  // satin / denim are done and results are captured)"). The agenda row already carried a verdict
+  // pip and nothing else, so a client read "▲" with no idea what moved or by how much — the one
+  // number the whole calendar exists to produce was the one number it did not print.
+  // The two kinds of result are NOT merged, because they are answers to different questions: a
+  // read-out filed on a moment's OWN brief thread is that optimisation and nothing else, while a
+  // fortnightly round reports every optimisation that went live in its window. So an own-ticket
+  // result is named by its moment, and a round's figures print ONCE with a "Covers:" line naming
+  // the moments that share them — printing them per moment would read as several separate wins
+  // off one measurement.
+  h+=pdfResults(E);
+
   h+='<div class="pd-legend">'
     +'<span><i class="sw s-sched"></i>Scheduled</span><span><i class="sw s-prog"></i>In progress</span>'
     +'<span><i class="sw s-live"></i>Live</span><span><i class="sw s-done"></i>Complete</span>'
@@ -1885,15 +1952,82 @@ function fitPdf(){
   return k;
 }
 window.addEventListener('beforeprint',fitPdf);
-function exportPdf(){
-  if(CLIENT==='*'){ err('Open a brand’s board to export a client PDF — the all-brands overview mixes clients.'); return; }
-  if(!evs().length){ err('Nothing to export yet — add '+CLIENT+'’s marketing moments first.'); return; }
-  hideErr(); renderPdfDoc(); fitPdf();   // measure + scale so it lands on exactly one page
-  var t0=document.title; // Chrome seeds the saved filename from the title
-  document.title='FeedSpark - '+CLIENT+' keyword calendar - '+MKT.toUpperCase()+' - '+new Date().toISOString().slice(0,10);
+function pdfName(){ return 'FeedSpark - '+CLIENT+' keyword calendar - '+MKT.toUpperCase()
+  +' - '+new Date().toISOString().slice(0,10); }
+/* The print dialog, kept as the fallback route only — window.print() ALWAYS opens the browser's
+   own dialog, and Chrome can be sitting on a physical printer, so this is never the happy path. */
+function printPdf(){
+  var t0=document.title;                      // Chrome seeds the saved filename from the title
+  document.title=pdfName();
   var done=function(){ document.title=t0; window.removeEventListener('afterprint',done); };
   window.addEventListener('afterprint',done);
   window.print();
+}
+/* ⬇ Client PDF, ONE CLICK (Ray, 22 Sep 2026: "downloaded clietn PDF is not print pls, download
+   directly … ensure the download button always reflect the latest updated calendar").
+   Page JS cannot suppress the print dialog, so the same route /golden took: rasterise the
+   client document with html2canvas and package it with jsPDF, both from cdnjs on first use, then
+   .save() straight to the downloads folder. The CDN failing is not remembered as permanent — the
+   next click retries, and printPdf() still gets the client a file in the meantime.
+   ALWAYS THE LATEST: the export re-pulls the pipeline and the results archive BEFORE it builds,
+   and rebuilds the tie from that pull (wfReset), so a result captured minutes ago is in the file.
+   Without it the download was only ever as fresh as the last 90-second poll — and the moment a
+   client is most likely to ask for the PDF is right after a result lands. */
+var PDF_LIBS=null;
+function loadPdfLibs(){
+  if(PDF_LIBS)return PDF_LIBS;
+  function one(src,already){ return new Promise(function(res,rej){
+    if(already())return res();
+    var el=document.createElement('script'); el.src=src;
+    el.onload=function(){ res(); }; el.onerror=function(){ rej(new Error('cdn: '+src)); };
+    document.head.appendChild(el); }); }
+  PDF_LIBS=Promise.all([
+    one('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',function(){return !!window.html2canvas}),
+    one('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',function(){return !!(window.jspdf&&window.jspdf.jsPDF)})
+  ]).catch(function(e){ PDF_LIBS=null; throw e; });
+  return PDF_LIBS;
+}
+function exportPdf(){
+  if(CLIENT==='*'){ err('Open a brand’s board to export a client PDF — the all-brands overview mixes clients.'); return; }
+  if(!evs().length){ err('Nothing to export yet — add '+CLIENT+'’s marketing moments first.'); return; }
+  hideErr();
+  var btn=$('#pdf'), t0=btn?btn.textContent:'';
+  var restore=function(){ if(btn){ btn.disabled=false; btn.textContent=t0; } };
+  if(btn){ btn.disabled=true; btn.textContent='↓ Preparing…'; }
+  var doc=$('#pdf-doc'), keep=doc?(doc.getAttribute('style')||''):'';
+  var undo=function(){ if(doc)doc.setAttribute('style',keep); };
+  // the freshest calendar this browser can get, then build from it
+  Promise.resolve(typeof loadLive==='function'?loadLive():null).catch(function(){}).then(function(){
+    wfReset(); renderPdfDoc();
+    var k=fitPdf();                       // the width the one-page fit chose
+    return loadPdfLibs().then(function(){ return k; });
+  }).then(function(k){
+    // rasterise at the fitted layout's OWN width: html2canvas needs real pixels, and the PDF page
+    // is then cut to the capture's aspect ratio, so it is one page by construction rather than by
+    // a paginator's opinion
+    doc.style.cssText='display:block;position:fixed;left:-10000px;top:0;z-index:-1;'
+      +'font-family:Lato,system-ui,sans-serif;line-height:1.35;background:#fff;width:'+Math.round(1047/k)+'px';
+    if(!document.fonts)return null;
+    // html2canvas measures text against its OWN font-loading state; capturing before Lato's
+    // weights land runs words together (the bug QA caught on /golden's export)
+    return Promise.all(['400','700','900'].map(function(w){ return document.fonts.load(w+' 16px Lato'); }))
+      .then(function(){ return document.fonts.ready; });
+  }).then(function(){
+    return new Promise(function(res){ requestAnimationFrame(function(){ requestAnimationFrame(res); }); });
+  }).then(function(){
+    return window.html2canvas(doc,{scale:2,backgroundColor:'#ffffff',useCORS:true});
+  }).then(function(canvas){
+    undo();
+    var wMM=297, hMM=Math.round((wMM*canvas.height/canvas.width)*10)/10;   // A4 landscape width
+    var pdf=new window.jspdf.jsPDF({unit:'mm',format:[wMM,hMM],orientation:'landscape'});
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,wMM,hMM);
+    pdf.save(pdfName()+'.pdf');
+    restore();
+  }).catch(function(){
+    undo(); restore();
+    renderPdfDoc(); fitPdf();
+    printPdf();     // the CDN was unreachable — the dialog still gets the client a file
+  });
 }
 function addMonthsISO(ds,delta){ var d=new Date(ds+'T12:00:00Z'), day=d.getUTCDate(), mm=d.getUTCMonth()+delta;
   var y=d.getUTCFullYear()+Math.floor(mm/12), m=((mm%12)+12)%12, last=new Date(Date.UTC(y,m+1,0)).getUTCDate();
