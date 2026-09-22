@@ -725,3 +725,18 @@ hands the sizing back to the live read.
 
 Harness: `tools/test_aimode.mjs` (309) and a browser round trip — build with the feed pulled, save,
 reopen in a fresh session, export: the workbook equals the saved quote to the penny.
+
+## One block per unique quote
+
+Ray, 22 Sep 2026: *"can you add rows between unique quote so its easy for me to recognise — also, 2
+options within 1 quote is considered unique."*
+
+The tracker reads as **blocks**, one per unique quote, with a spacer row between them. A proposal's
+options — and every version of them — are one quote; a standalone quote and its ✎ Edit versions are one
+quote. `tkGid` names the block: the proposal id when there is one, else the root of the version chain
+(`q.prev` walked back to the earliest ref still on the rail, cycle-safe), else the quote itself. A block
+takes the position of its most recent activity (the sort the options already used, widened to versions),
+its rows sit together — options in option order, versions newest first — and the spacer (`tr.t-gap`, a
+14px band of page background, no hairline, no hover wash, hidden from readers) is written only where the
+block changes, so it is never inside a block and never the first row. An expanded ⌄ detail row stays inside
+its block; the gap follows it.
