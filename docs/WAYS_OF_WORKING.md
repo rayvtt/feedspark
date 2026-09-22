@@ -33,7 +33,7 @@ Default each session to one module so parallel edits land in different files:
 | Session lane | Owns (default) |
 |---|---|
 | Workflow | `docs/FeedSpark_Workflow.html` |
-| Command Center | `docs/FeedSpark_Command_Center.html` (+ `atrt_data.json` via `sync_atrt.py`) |
+| Command Center | `docs/FeedSpark_Command_Center.html` |
 | Deck Generator | `docs/FeedSpark_DeckBuilder.html`, deck templates, the deck-generator skill |
 | Worker / API | `cloudflare/feedspark-deck/src/worker.js`, `wrangler.toml` |
 | Other modules | Readiness / Leadership / Task Library / Roadmap pages |
@@ -71,8 +71,9 @@ No separate board/issue tracker to maintain.
 - **`wrangler.toml` + DO migrations** — migration tags are **append-only and incrementing**
   (`v2` is taken). If two sessions need a migration, coordinate the tag; never reuse or reorder.
 - **`worker.js`** — one session at a time; it's one file serving every module. Sequence.
-- **`atrt_data.json` / Command Center ATRT regions** — regenerate via `tools/sync_atrt.py`, never
-  hand-edit the spliced regions; sequence with any other Command Center work.
+- **Command Center hero / dossier figures** — computed in the page from the project plans (see
+  CLAUDE.md "Command center data"); nothing is spliced into the source any more. Sequence with any
+  other Command Center work.
 - **CLAUDE.md / this doc** — docs-only PRs, merge fast to minimise the window.
 
 ## Anti-patterns
@@ -113,7 +114,7 @@ that shipped it**. Duties:
 ### 2. Overlap detector (`tools/overlap.sh`)
 Diffs your branch against every **active** `claude/*` branch (merged-into-main ones are skipped)
 and lists common files, flagging 🔥 hot files (worker.js, wrangler.toml, CLAUDE.md, the app-page
-monoliths, atrt_data.json). Runs automatically in `presync.sh`; run it standalone when you START
+monoliths). Runs automatically in `presync.sh`; run it standalone when you START
 a task, before writing code. On a 🔥 hit: **sequence** — check the open-PR list, agree order,
 wait for the other merge, then presync.
 

@@ -4322,13 +4322,6 @@
       "min": 1
     },
     {
-      "name": "Dark view: the ATRT splice emits score-tag classes, not inline backgrounds",
-      "file": "tools/sync_atrt.py",
-      "pattern": "\"sc-good\" if s[\"total\"]>=66",
-      "pr": 364,
-      "min": 1
-    },
-    {
       "name": "Dark view: leadership risk flag + selected sentiment readable",
       "file": "docs/FeedSpark_Leadership.html",
       "pattern": "[data-theme=dark] .who .flag{",
@@ -7548,6 +7541,38 @@
       "file": "docs/FeedSpark_Command_Center.html",
       "pattern": "FCC-NEWS",
       "min": 2
+    },
+    {
+      "name": "CmdCenter: hero KPIs computed from the project plans (Workflow's source), never spliced",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "FCC-HERO-KPI",
+      "pr": 0
+    },
+    {
+      "name": "CmdCenter: the hero date rule IS Workflow's parseUKDate (ported verbatim)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function wfDate(s)",
+      "pr": 0
+    },
+    {
+      "name": "CmdCenter: ATRT tracker global RETIRED (must stay gone)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "window.ATRT",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "CmdCenter: ATRT splice markers RETIRED (must stay gone)",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "ATRT:KPI",
+      "forbidden": true,
+      "pr": 0
+    },
+    {
+      "name": "CmdCenter: hero KPI harness",
+      "file": "tools/test_hero.mjs",
+      "pattern": "wfDate",
+      "pr": 0
     },
     {
       "name": "CmdCenter: hero banner — live month, aurora + travelling edge, count-up KPIs",

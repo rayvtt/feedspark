@@ -77,6 +77,8 @@ jobs:
         run: node tools/test_present.mjs
       - name: Dossier tiles harness (hours meter, feed-audit bars, Golden Record ring)
         run: node tools/test_dossiertiles.mjs
+      - name: Hero KPI harness (project plans are the source; one date rule with Workflow)
+        run: node tools/test_hero.mjs
       - name: FS Task Manager harness (search grammar, billable split, page/engine parity)
         run: node tools/test_reporttasks.mjs
       - name: FCC hours badge harness (three-month trail, posture, widget/engine parity)
