@@ -694,8 +694,9 @@ ok(/var grpT=\{\}; ids\.forEach\(function\(k\)\{ var g=tkGid\(k\); grpT\[g\]=Mat
 ok(/if\(ga!==gb\)return ga<gb\?-1:1;/.test(rt) && /if\(pa&&pb&&\(\+pa\.n\|\|0\)!==\(\+pb\.n\|\|0\)\)return \(\+pa\.n\|\|0\)-\(\+pb\.n\|\|0\);/.test(rt), '…its rows sit together, options in option order, versions newest first');
 ok(/var gap=\(i&&tkGid\(k\)!==tkGid\(ids\[i-1\]\)\)\?'<tr class="t-gap" aria-hidden="true"><td colspan="10"><\/td><\/tr>':'';/.test(src) && /return gap\+row;\n\s+\}\)\.join\(''\);/.test(src),
   'a spacer row is written where the block changes — never inside one, never first');
-ok(/\.tk tr\.t-gap td,\.tk tbody tr\.t-gap:hover td\{padding:0;height:4px;line-height:4px;font-size:0;background:var\(--wash\);border-top:0\}/.test(src) && /\.tk tr\.t-gap\+tr td\{border-top:0\}/.test(src),
-  'the spacer is a 4px band of page background with no hairline and no hover wash (Ray, 22 Sep 2026: "line doesnt have to be too big, reduce the height by 75%")');
+ok(/\.tk tr\.t-gap td,\.tk tbody tr\.t-gap:hover td\{padding:2px 0;height:auto;line-height:0;font-size:0;background:transparent;border-top:0\}/.test(src)
+  && /\.tk tr\.t-gap td::before\{content:'';display:block;border-top:1px dotted rgba\(51,51,51,\.28\)\}/.test(src) && /\[data-theme=dark\] \.tk tr\.t-gap td::before\{border-top-color:rgba\(255,255,255,\.2\)\}/.test(src) && /\.tk tr\.t-gap\+tr td\{border-top:0\}/.test(src),
+  'the spacer is a subtle 1px dotted rule on a transparent row, no hover wash, its own dark-mode tone (Ray, 22 Sep 2026: "replace it with dotted lines instead and make it just subtle")');
 
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);

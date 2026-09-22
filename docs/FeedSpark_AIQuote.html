@@ -665,7 +665,12 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   @media (min-width:1400px){ #tracker-card{margin-left:calc(50% - 50vw + 30px);margin-right:calc(50% - 50vw + 30px)} }
   [data-theme=dark] .tk td{border-top-color:#181B22}
   .tk tbody tr:hover td{background:rgba(245,166,35,.05)}
-  .tk tr.t-gap td,.tk tbody tr.t-gap:hover td{padding:0;height:4px;line-height:4px;font-size:0;background:var(--wash);border-top:0}
+  /* the block separator is a 1px DOTTED rule, not a band (Ray, 22 Sep 2026: "looks weird and uneven … replace it
+     with dotted lines instead and make it just subtle") — a band of page background read as a thick, uneven strip
+     against the white card; the rule is drawn by the cell's ::before so the row itself stays transparent */
+  .tk tr.t-gap td,.tk tbody tr.t-gap:hover td{padding:2px 0;height:auto;line-height:0;font-size:0;background:transparent;border-top:0}
+  .tk tr.t-gap td::before{content:'';display:block;border-top:1px dotted rgba(51,51,51,.28)}
+  [data-theme=dark] .tk tr.t-gap td::before{border-top-color:rgba(255,255,255,.2)}
   .tk tr.t-gap+tr td{border-top:0}
   .tk .t-ref{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
   .tk .t-cl{font-weight:800}

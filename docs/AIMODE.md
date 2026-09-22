@@ -737,6 +737,7 @@ quote. `tkGid` names the block: the proposal id when there is one, else the root
 (`q.prev` walked back to the earliest ref still on the rail, cycle-safe), else the quote itself. A block
 takes the position of its most recent activity (the sort the options already used, widened to versions),
 its rows sit together — options in option order, versions newest first — and the spacer (`tr.t-gap`, a
-4px band of page background, no hairline, no hover wash, hidden from readers) is written only where the
+subtle 1px dotted rule on a transparent row — Ray, 22 Sep 2026: *"replace it with dotted lines instead and
+make it just subtle"* — no hover wash, its own dark-mode tone, hidden from readers) is written only where the
 block changes, so it is never inside a block and never the first row. An expanded ⌄ detail row stays inside
 its block; the gap follows it.
