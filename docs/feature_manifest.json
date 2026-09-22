@@ -7369,12 +7369,6 @@
       "min": 1
     },
     {
-      "name": "Feed Lab engine: Structured detail = highlights + product_detail + description length; product_type depth lives in Taxonomy only",
-      "file": "docs/feedlab_engine.js",
-      "pattern": "var sAi = 0.4 * hlPart + 0.3 * details.pct + 0.3 * depthD;",
-      "min": 1
-    },
-    {
       "name": "Feed Lab engine: description length credit against Google's stated 160–500, not a house 300",
       "file": "docs/feedlab_engine.js",
       "pattern": "function descCredit(len)",
@@ -7462,12 +7456,6 @@
       "name": "Label Guard engine: xmlCollector profiles labels per SKU (labelPop) and product_type values per SKU (ptPop) off the same stream",
       "file": "cloudflare/feedspark-deck/src/labelguard.js",
       "pattern": "snap.labelPop = popProfile(lblHist);",
-      "min": 1
-    },
-    {
-      "name": "Label Guard engine: the highlight distribution is the POPULATION keys (exact 1..5, 6+), never coarse bands",
-      "file": "cloudflare/feedspark-deck/src/labelguard.js",
-      "pattern": "export const HL_BUCKETS = POP_KEYS;",
       "min": 1
     },
     {
@@ -9342,6 +9330,60 @@
       "name": "Task Manager import tripwire in presync",
       "file": "tools/presync.sh",
       "pattern": "check_tmimport",
+      "pr": 0
+    },
+    {
+      "name": "is_urgent: its own rotation, because it is its own MCP call",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function urgPlan",
+      "pr": 0
+    },
+    {
+      "name": "is_urgent: the store keeps the flag and nothing else from the detail answer",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function urgApply",
+      "pr": 0
+    },
+    {
+      "name": "is_urgent: two readings, never reconciled — a tag is on a task, the flag is on a ticket",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "export function urgencyCheck",
+      "pr": 0
+    },
+    {
+      "name": "is_urgent: merged on READ, never folded into the queue record the queue pull rewrites",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "tmurg:",
+      "pr": 0
+    },
+    {
+      "name": "is_urgent: the ticket-detail lane in tmBookPull",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "get_ticket_detail",
+      "pr": 0
+    },
+    {
+      "name": "is_urgent: three states on the Tickets tab — flagged, calm, not read yet",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function urgCell",
+      "pr": 0
+    },
+    {
+      "name": "is_urgent: the cross-check band under Where the hours went",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "id=\"dpxchk\"",
+      "pr": 0
+    },
+    {
+      "name": "is_urgent: the page states why the two are not one figure",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "two readings, not one figure",
+      "pr": 0
+    },
+    {
+      "name": "is_urgent: urgent: in the search grammar",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "urgent: 'urgent', urgency: 'urgent'",
       "pr": 0
     },
     {
