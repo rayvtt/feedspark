@@ -124,9 +124,10 @@ echo "── validating: the Playbook panel inside Workflow (practices, arrivals
 node tools/test_playbook_panel.mjs >/dev/null
 echo "   ✓ 10–20% reads as a collection landing, and the standalone module stays retired"
 
-echo "── validating: one modal at a time (no overlay can be added that stacks on another)"
-node tools/test_modalsolo.mjs >/dev/null
+echo "── validating: one modal at a time, and none of them lands on an open rail"
+NODE_PATH=$(npm root -g) node tools/test_modalsolo.mjs >/dev/null
 echo "   ✓ every overlay opener clears the others; the composer is never auto-closed"
+echo "   ✓ and a ticket modal measured against the open Playbook rail clears it at 1100–1500px"
 
 echo "── validating: the account's AM is CC'd on brief drafts"
 node tools/test_amcc.mjs >/dev/null

@@ -159,7 +159,9 @@ window.addEventListener('load',restore);
   .em-dis-h{font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:9px 0 3px}
   .em-zero{font-size:12.5px;color:var(--muted);font-style:italic;padding:6px 0}
   /* new-brief popup (reuses .scrim/.modal, wider for the 2-col composer) */
-  .modal.bg-modal{width:min(1460px,96vw)}   /* must out-rank the generic .modal width cap, which comes later in the sheet */
+  /* 100%, never vw: a vw width is measured against the VIEWPORT, so it would step straight back
+     out of the column the scrim reserves for the open rails and re-create the clipped-panel bug. */
+  .modal.bg-modal{width:min(1460px,100%)}   /* must out-rank the generic .modal width cap, which comes later in the sheet */
   /* Briefing Studio: context rail + workload scheduler + completeness checklist around the composer.
      minmax(0,·) matters: without it the preview pre forces the column wide and the grid overflows,
      squeezing the others until the preview wraps one word per line. */
@@ -377,7 +379,7 @@ window.addEventListener('load',restore);
 <style>
 /* ---- individual access: scope badge + owner panel (Ray, Aug 2026) ---- */
 .wf-scope{display:inline-flex;align-items:center;gap:6px;margin-left:10px;padding:4px 11px;border-radius:999px;background:rgba(245,166,35,.14);border:1px solid rgba(237,111,11,.35);color:var(--orange-deep,#ED6F0B);font-size:12px;font-weight:800;white-space:nowrap;cursor:default}
-.acl-modal{max-width:780px;width:min(780px,96vw)}
+.acl-modal{max-width:780px;width:min(780px,100%)}   /* 100% of the scrim's column, never vw — see .bg-modal */
 .acl-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:12px}
 .acl-head h3{margin:0 0 6px}
 .acl-head .mc{font-size:12.5px;color:var(--muted,#8a94a0);line-height:1.55;max-width:580px}
@@ -918,6 +920,24 @@ window.addEventListener('load',restore);
 @media(max-width:1500px){:root{--ck-w:336px}}
 body.ck-l-on{padding-left:var(--ck-w)}
 body.ck-r-on{padding-right:var(--ck-w)}
+/* A MODAL NEVER LANDS ON AN OPEN RAIL (Ray, 18 Sep 2026, opening a brief ticket with the
+   Playbook up: "workflow still have this issue when clickign on brief ticket" — a screenshot of
+   two cards, the right one sliced down its left edge). The page is already padded for the rail
+   (the two rules above), but .scrim is position:fixed;inset:0 and centres its modal on the
+   VIEWPORT, so the centre it aimed at was under the rail: the ticket card's right edge crossed
+   the rail's left edge on any window narrower than ~1400px (a 1280px laptop clipped 36px off
+   it — enough to cut "Accessorize" to "essorize" and "NOT ON THIS ACCOUNT" to "ON THIS
+   ACCOUNT", which reads as a broken panel, not a covered one). Only the CENTRING moves: the
+   scrim mirrors the body's own padding, so the modal centres in the column the rails leave
+   while the dim stays full-bleed and the rail stays inert behind it. Stands down at 900px, and
+   that is a decision rather than an oversight: below it a rail stops being a dock the page is
+   padded for and becomes an overlay sheet, and reserving 420px of an 880px window would leave
+   the ticket a 428px card — trading a covered rail for an unreadable modal. Above 900px both
+   genuinely fit, so both are shown whole. Pinned by tools/test_modalsolo.mjs. */
+@media(min-width:901px){
+  body.ck-l-on .scrim{padding-left:calc(var(--ck-w) + 16px)}
+  body.ck-r-on .scrim{padding-right:calc(var(--ck-w) + 16px)}
+}
 .ck{position:fixed;top:0;bottom:0;width:var(--ck-w);z-index:70;display:flex;flex-direction:column;
   background:var(--paper,#fff);border-left:1px solid var(--line,#E6E6E6);border-right:1px solid var(--line,#E6E6E6);
   box-shadow:0 0 34px rgba(16,24,40,.10)}
@@ -1025,7 +1045,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
 /* the one flag Ray asked for by name: a new-product share in the 10–20% band is a collection
    landing, and it gets a mark you cannot scroll past */
 
-.ck-tune-modal{max-width:720px;width:min(720px,96vw)}
+.ck-tune-modal{max-width:720px;width:min(720px,100%)}   /* 100% of the scrim's column, never vw — see .bg-modal */
 .ck-tune-rows{display:flex;flex-direction:column;gap:7px;max-height:54vh;overflow:auto;padding:2px}
 .ck-tune-row{display:grid;grid-template-columns:22px 180px 1fr 74px;gap:8px;align-items:center;padding:8px 10px;
   border:1px solid var(--line,#E6E6E6);border-radius:10px;background:var(--wash,#F7F7F5)}
