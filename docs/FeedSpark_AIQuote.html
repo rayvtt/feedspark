@@ -665,6 +665,8 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   @media (min-width:1400px){ #tracker-card{margin-left:calc(50% - 50vw + 30px);margin-right:calc(50% - 50vw + 30px)} }
   [data-theme=dark] .tk td{border-top-color:#181B22}
   .tk tbody tr:hover td{background:rgba(245,166,35,.05)}
+  .tk tr.t-gap td,.tk tbody tr.t-gap:hover td{padding:0;height:14px;background:var(--wash);border-top:0}
+  .tk tr.t-gap+tr td{border-top:0}
   .tk .t-ref{font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
   .tk .t-cl{font-weight:800}
   .tk .t-mk{font-size:10px;font-weight:900;color:var(--orange-ink);letter-spacing:.04em}
@@ -3861,12 +3863,23 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     /* OPTIONS OF ONE PROPOSAL SIT TOGETHER, in their own order, and the group takes the position
        of its most recent activity - scattering three options down a date-sorted list is exactly
        the comparison the feature exists to make easy */
-    var grpT={}; ids.forEach(function(k){ var p=qProp(SAVED[k]); if(!p)return;
-      grpT[p.id]=Math.max(grpT[p.id]||0,+SAVED[k].t||0); });
-    ids.sort(function(a,b){ var pa=qProp(SAVED[a]), pb=qProp(SAVED[b]);
-      var ta=pa?grpT[pa.id]:(+SAVED[a].t||0), tb=pb?grpT[pb.id]:(+SAVED[b].t||0);
+    /* TRACKER:GROUPS — ONE BLOCK PER UNIQUE QUOTE (Ray, 22 Sep 2026: "add rows between unique quote
+       so its easy for me to recognise — also, 2 options within 1 quote is considered unique"): a
+       proposal's options (and every version of them) are ONE quote, a standalone quote and its ✎ Edit
+       versions are ONE quote, so each such block sits together, takes the position of its most recent
+       activity, and a spacer row separates it from the next. tkGid names the block: the proposal id,
+       else the root of the version chain (q.prev walked back to the earliest ref still on the rail),
+       else the quote itself. */
+    var byRef={}; ids.forEach(function(k){ if(SAVED[k].ref)byRef[SAVED[k].ref]=k; });
+    var GID={}; function tkGid(k){ if(GID[k])return GID[k]; var q=SAVED[k], p=qProp(q), g;
+      if(p)g='p:'+p.id; else { var r=k, seen={}, n=0; while(n++<50){ var pq=SAVED[r]; if(!pq||!pq.prev||!byRef[pq.prev]||seen[pq.prev])break; seen[pq.prev]=1; r=byRef[pq.prev]; } g='q:'+r; }
+      GID[k]=g; return g; }
+    var grpT={}; ids.forEach(function(k){ var g=tkGid(k); grpT[g]=Math.max(grpT[g]||0,+SAVED[k].t||0); });
+    ids.sort(function(a,b){ var ga=tkGid(a), gb=tkGid(b), ta=grpT[ga], tb=grpT[gb];
       if(tb!==ta)return tb-ta;
-      if(pa&&pb&&pa.id===pb.id)return (+pa.n||0)-(+pb.n||0);
+      if(ga!==gb)return ga<gb?-1:1;
+      var pa=qProp(SAVED[a]), pb=qProp(SAVED[b]);
+      if(pa&&pb&&(+pa.n||0)!==(+pb.n||0))return (+pa.n||0)-(+pb.n||0);
       return (+SAVED[b].t||0)-(+SAVED[a].t||0); });
     $('#tk-n').textContent=ids.length?'· '+ids.length+' saved':'';
     /* every money figure counts a proposal ONCE - see AIQUOTE-OPTIONS */
@@ -3905,8 +3918,10 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       +(SHOWP&&pDone?(' · chosen <b>'+money(wonV)+'</b> against <b>'+money(offV)+'</b> at the top option of each'):'')
       +' <span style="color:var(--muted)">— every figure above counts a proposal once, at its chosen option (or the lowest until the client picks)</span>'):'';
     if(!ids.length){ $('#tk-body').innerHTML='<tr><td colspan="10"><div class="tk-empty">No saved quotes yet — build one above and hit 💾 Save quote. Each save freezes its numbers and lands here with a timestamp.</div></td></tr>'; return; }
-    $('#tk-body').innerHTML=ids.map(function(k){
+    $('#tk-body').innerHTML=ids.map(function(k,i){
       var q=SAVED[k], si=STAGES.indexOf(q.stage);
+      /* a spacer row between one unique quote and the next — never inside a block */
+      var gap=(i&&tkGid(k)!==tkGid(ids[i-1]))?'<tr class="t-gap" aria-hidden="true"><td colspan="10"></td></tr>':'';
       /* THE RAIL IS A STEPPER (Ray, 21 Sep 2026: "the saved quotes getting super cluttered …
          buttons should be presented cleaner - maybe in a different format to save space"): seven
          word-pills wrapped onto two lines in every row. Every stage is still there and still one
@@ -3976,7 +3991,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
           +(q.valid?('<br><span style="color:var(--muted)">Quote valid '+q.valid+' days from the save date</span>'):'')+'</div>'
           +'</td></tr>';
       }
-      return row;
+      return gap+row;
     }).join('');
   }
   $('#tk-body').addEventListener('click',function(e){

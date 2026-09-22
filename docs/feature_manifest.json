@@ -9158,6 +9158,18 @@
       "file": "tools/check_inline_scripts.js",
       "pattern": "a \"</body>\" that is not the document's closing tag",
       "pr": 481
+    },
+    {
+      "name": "AI Quote tracker: one block per unique quote — tkGid names the block (proposal, version chain, or the quote)",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "var GID={}; function tkGid(k){ if(GID[k])return GID[k]; var q=SAVED[k], p=qProp(q), g;",
+      "pr": 484
+    },
+    {
+      "name": "AI Quote tracker: a spacer row between blocks (Ray, 22 Sep 2026: 'add rows between unique quote')",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "var gap=(i&&tkGid(k)!==tkGid(ids[i-1]))?'<tr class=\"t-gap\" aria-hidden=\"true\"><td colspan=\"10\"></td></tr>':'';",
+      "pr": 484
     }
   ]
 }

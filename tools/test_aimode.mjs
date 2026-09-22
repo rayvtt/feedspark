@@ -683,5 +683,19 @@ ok(/if\(!ix\)\{ var fz=aimFz\(\); return fz\?fz\.units:0; \}/.test(src), 'aimSco
 ok(/var fz=unsized\?aimFz\(\):null;\n\s+if\(fz\)return \{raw:fz\.perMonth\/buf,perMonth:fz\.perMonth,src:'saved',buffer:aimRate\('buffer'\),unsized:false,saved:true\};/.test(src), 'aimPerMonth stands the saved new-a-month in, named as such');
 ok(/if\(nn\.src==='saved'\)return 'As <b>saved on this quote<\/b>/.test(src) && /if\(ew\)ew\.hidden=!known\|\|saved; if\(pw\)pw\.hidden=known\|\|saved;/.test(src), 'the card says the figure is the saved one and offers the feed pull to re-size');
 
+/* ---------- ONE BLOCK PER UNIQUE QUOTE (Ray, 22 Sep 2026: "add rows between unique quote so its easy
+   for me to recognise — also, 2 options within 1 quote is considered unique") ---------- */
+console.log('\nthe tracker: one block per unique quote, a spacer row between blocks');
+const rt = (src.match(/function renderTracker\(\)\{[\s\S]*?\$\('#tk-kpis'\)\.innerHTML=/) || [''])[0];
+ok(/function tkGid\(k\)\{ if\(GID\[k\]\)return GID\[k\]; var q=SAVED\[k\], p=qProp\(q\), g;/.test(rt) && /if\(p\)g='p:'\+p\.id;/.test(rt), 'a block is named by its proposal when it has one');
+ok(/while\(n\+\+<50\)\{ var pq=SAVED\[r\]; if\(!pq\|\|!pq\.prev\|\|!byRef\[pq\.prev\]\|\|seen\[pq\.prev\]\)break; seen\[pq\.prev\]=1; r=byRef\[pq\.prev\]; \} g='q:'\+r;/.test(rt),
+  '…else by the root of its version chain (q.prev walked back, cycle-safe), else itself');
+ok(/var grpT=\{\}; ids\.forEach\(function\(k\)\{ var g=tkGid\(k\); grpT\[g\]=Math\.max\(grpT\[g\]\|\|0,\+SAVED\[k\]\.t\|\|0\); \}\);/.test(rt), 'a block takes the position of its most recent activity');
+ok(/if\(ga!==gb\)return ga<gb\?-1:1;/.test(rt) && /if\(pa&&pb&&\(\+pa\.n\|\|0\)!==\(\+pb\.n\|\|0\)\)return \(\+pa\.n\|\|0\)-\(\+pb\.n\|\|0\);/.test(rt), '…its rows sit together, options in option order, versions newest first');
+ok(/var gap=\(i&&tkGid\(k\)!==tkGid\(ids\[i-1\]\)\)\?'<tr class="t-gap" aria-hidden="true"><td colspan="10"><\/td><\/tr>':'';/.test(src) && /return gap\+row;\n\s+\}\)\.join\(''\);/.test(src),
+  'a spacer row is written where the block changes — never inside one, never first');
+ok(/\.tk tr\.t-gap td,\.tk tbody tr\.t-gap:hover td\{padding:0;height:14px;background:var\(--wash\);border-top:0\}/.test(src) && /\.tk tr\.t-gap\+tr td\{border-top:0\}/.test(src),
+  'the spacer is a band of page background with no hairline and no hover wash');
+
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);
