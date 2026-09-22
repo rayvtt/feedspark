@@ -6846,35 +6846,35 @@
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "body.ck-r-on .scrim{padding-right:calc(var(--ck-w) + 16px)}",
       "min": 1,
-      "pr": 0
+      "pr": 483
     },
     {
       "name": "Workflow: the same rule for the left rail (the docked retainer read-out)",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "body.ck-l-on .scrim{padding-left:calc(var(--ck-w) + 16px)}",
       "min": 1,
-      "pr": 0
+      "pr": 483
     },
     {
       "name": "Workflow: the rail-aware centring stands down at 900px, where a rail stops being a dock the page is padded for",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": "@media(min-width:901px){",
       "min": 1,
-      "pr": 0
+      "pr": 483
     },
     {
       "name": "Workflow: the composer measures its scrim's column, never the viewport — a vw width would step straight back out of the space reserved for the rails",
       "file": "docs/FeedSpark_Workflow.html",
       "pattern": ".modal.bg-modal{width:min(1460px,100%)}",
       "min": 1,
-      "pr": 0
+      "pr": 483
     },
     {
       "name": "Workflow: the rail-clearance geometry is measured, not assumed — the tripwire opens a ticket beside the rail at 1100-1500px",
       "file": "tools/test_modalsolo.mjs",
       "pattern": "IT LANDS ON THE RAIL",
       "min": 1,
-      "pr": 0
+      "pr": 483
     },
     {
       "name": "Task Manager: a second and third NESTED split — AdWords nests rows, so the extra dims never become the series",
