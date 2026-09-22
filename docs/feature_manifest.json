@@ -9313,6 +9313,36 @@
       "file": ".github/workflows/validate.yml",
       "pattern": "test_kwcal_stages",
       "pr": 0
+    },
+    {
+      "name": "Task Manager import preview: its OWN host, so the tags rail can never park it off-screen",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "<div id=\"impbd\"></div>",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager import preview: a centred modal with its own scrim, not the rail's slide-in box",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "#impbd .im-scrim",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager import preview: Esc closes the topmost thing on screen first",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "IMPCLOSE",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager import tripwire — renders the real dialog and fails it off-screen",
+      "file": "tools/check_tmimport.js",
+      "pattern": "every edge of the dialog is inside the viewport",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager import tripwire in presync",
+      "file": "tools/presync.sh",
+      "pattern": "check_tmimport",
+      "pr": 0
     }
   ]
 }

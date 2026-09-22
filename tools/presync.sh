@@ -202,6 +202,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: KWCal client PDF — one click (no dialog), and the reported results are on it"
   NODE_PATH=$(npm root -g) node tools/test_kwcal_pdf.mjs || {
     echo "✗ KWCal client-PDF tripwire failed — the print dialog came back, or a result went missing from the file"; exit 1; }
+  echo "── validating: Task Manager ⇧ Import edits (the preview reaches the screen and applies)"
+  NODE_PATH=$(npm root -g) node tools/check_tmimport.js || {
+    echo "✗ import-preview tripwire failed — the Import edits dialog is off-screen, on the tags rail's host, or no longer applies"; exit 1; }
   echo "── validating: guard cards — population tables on /labels /ptypes /golden, collapse all + individual"
   NODE_PATH=$(npm root -g) node tools/test_guardcards.mjs || {
     echo "✗ guard-cards tripwire failed — a population table, a sheet-backed note, or the brand-card collapse regressed"; exit 1; }

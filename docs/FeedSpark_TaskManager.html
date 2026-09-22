@@ -524,6 +524,35 @@ window.addEventListener('load',restore);
   #tgbd .tgd-add .tgd-w{flex:1 1 100%}
   #tgbd .tgd-src{flex:1 1 100%;width:100%;text-overflow:ellipsis}
   #tgbd .tgd-empty{font-size:12.5px;color:var(--muted);padding:6px 0}
+
+  /* THE IMPORT PREVIEW IS ITS OWN MODAL, ON ITS OWN HOST (#impbd), never #tgbd's.
+     It used to share the tags host, and when that host became a right-hand RAIL (#436) the
+     preview kept emitting the old centred-modal markup — a .bd-dim whose CSS went with the
+     rewrite, and a .bd-box that the rail parks at translateX(102%) until something adds .on.
+     Nothing did, so the dialog was built, correctly, 9px past the right edge of a 1440px
+     window: the file read, the diff computed, Apply waiting, and not one pixel on screen.
+     A shared host also meant rulesOpen() could find the import's .bd-box, skip building
+     #tg-body and throw on the line after.
+     It is a MODAL rather than a rail on purpose: the rail is a landmark you work beside while
+     you tag, this is a decision — read the diff, apply or cancel, gone. */
+  #impbd:empty{display:none}
+  #impbd .im-scrim{position:fixed;inset:0;z-index:100;background:rgba(16,24,40,.32);
+    display:flex;align-items:center;justify-content:center;padding:24px;
+    opacity:0;transition:opacity .16s ease}
+  #impbd .im-scrim.on{opacity:1}
+  #impbd .im-card{display:flex;flex-direction:column;width:min(620px,100%);max-height:min(82vh,720px);
+    background:var(--paper,#fff);border:1px solid var(--line,#E6E6E6);border-radius:14px;
+    box-shadow:0 18px 48px rgba(16,24,40,.24);overflow:hidden;
+    transform:translateY(8px) scale(.985);transition:transform .16s ease}
+  #impbd .im-scrim.on .im-card{transform:none}
+  #impbd .im-h{display:flex;align-items:center;gap:8px;padding:12px 14px;flex:none;
+    border-bottom:1px solid var(--line,#E6E6E6)}
+  #impbd .im-b{padding:14px;overflow:auto;overscroll-behavior:contain;flex:1}
+  @media (prefers-reduced-motion:reduce){#impbd .im-scrim,#impbd .im-card{transition:none}}
+  @media (max-width:760px){
+    #impbd .im-scrim{padding:0;align-items:stretch}
+    #impbd .im-card{width:100%;max-height:none;border-radius:0;border:none}
+  }
   .mut{color:var(--muted)}
   #tagwarn{margin:8px 0 0;padding:7px 10px;border-radius:9px;font-size:12.5px;font-weight:600;
     background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C}
@@ -584,6 +613,8 @@ window.addEventListener('load',restore);
     <div id="tagwarn" hidden></div>
     <!-- its OWN host: #bd is the breakdown panel, which apply() re-renders on every keystroke -->
     <div id="tgbd"></div>
+    <!-- the import preview: its own host, so the tags rail can never park it off-screen -->
+    <div id="impbd"></div>
     <div class="tscroll" id="pbody"></div>
   </section>
 
@@ -1916,6 +1947,8 @@ window.addEventListener('load',restore);
      is SHOWN — added, changed, cleared, unknown ids and unknown tag names — and nothing is saved
      until it is confirmed. Rows the file does not mention are never touched, so importing a
      filtered sheet cannot wipe the rest of the book. */
+  // set while the preview is up, so Esc closes it and nothing else has to know it exists
+  var IMPCLOSE = null;
   function tagImport(file) {
     if (!window.FeedXlsx || window.__xlsxFail) { toast('The spreadsheet engine did not load — reload the page'); return; }
     FeedXlsx.readFile(file).then(function (rows) {
@@ -1957,11 +1990,11 @@ window.addEventListener('load',restore);
         plan.push({ task: task, tags: hasTags ? mapped : null, was: task.tags || [],
           cat: catSame ? null : wantCat, wasCat: task.cat });
       });
-      var host = $('tgbd');
+      var host = $('impbd');
       var unknownList = Object.keys(unknownTag);
-      host.innerHTML = '<div class="bd-dim"></div><div class="bd-box" role="dialog" aria-label="Import tags">'
-        + '<div class="bd-h"><b>Import tags</b><span class="grow"></span><button class="btn sm" id="im-x" type="button">✕</button></div>'
-        + '<div class="bd-b">'
+      host.innerHTML = '<div class="im-scrim"><div class="im-card" role="dialog" aria-modal="true" aria-label="Import edits">'
+        + '<div class="im-h"><b>Import edits</b><span class="grow"></span><button class="btn sm" id="im-x" type="button" title="Close (Esc)">✕</button></div>'
+        + '<div class="im-b">'
         + '<p style="margin:0 0 10px"><b>' + num(plan.length) + '</b> row' + (plan.length === 1 ? '' : 's')
         + ' would change. Nothing is saved until you confirm.</p>'
         + '<div class="mut" style="font-size:12.5px;line-height:1.7;margin-bottom:10px">'
@@ -1987,19 +2020,25 @@ window.addEventListener('load',restore);
         + '<div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">'
         + '<button class="btn sm" id="im-no" type="button">Cancel</button>'
         + (plan.length ? '<button class="btn sm" id="im-yes" type="button" style="background:var(--accent,#F5A623);border-color:var(--accent,#F5A623);color:#fff">Apply ' + num(plan.length) + ' change' + (plan.length === 1 ? '' : 's') + '</button>' : '')
-        + '</div></div>';
-      var close = function () { host.innerHTML = ''; };
-      host.addEventListener('click', function (e) {
-        if (e.target.id === 'im-x' || e.target.id === 'im-no' || e.target.className === 'bd-dim') return close();
+        + '</div></div></div>';
+      var scrim = host.querySelector('.im-scrim');
+      // one frame, so the card animates in rather than appearing mid-transition
+      requestAnimationFrame(function () { if (scrim) scrim.classList.add('on'); });
+      var btn = $('im-yes') || $('im-no'); if (btn) btn.focus();
+      IMPCLOSE = function () { IMPCLOSE = null; host.innerHTML = ''; };
+      host.onclick = function (e) {
+        // the scrim IS the backdrop, so a click that lands on it (never on the card inside it)
+        // is a click outside the dialog
+        if (e.target.id === 'im-x' || e.target.id === 'im-no' || e.target === scrim) return IMPCLOSE && IMPCLOSE();
         if (e.target.id === 'im-yes') {
           plan.forEach(function (x) {
             if (x.tags) setTags(x.task, x.tags);
             if (x.cat) setType(x.task, x.cat);
           });
-          tagSave(); close();
+          tagSave(); IMPCLOSE && IMPCLOSE();
           toast('Imported edits on ' + num(plan.length) + ' row' + (plan.length === 1 ? '' : 's'));
         }
-      });
+      };
     }).catch(function (e) { toast('Could not read that file — ' + ((e && e.message) || e)); });
   }
 
@@ -3935,6 +3974,8 @@ window.addEventListener('load',restore);
     });
     $('dr-x').onclick = closeDrawer; $('dim').onclick = closeDrawer;
     document.addEventListener('keydown', function (e) {
+      // the import preview is the topmost thing on screen, so it takes Esc before anything under it
+      if (e.key === 'Escape' && IMPCLOSE) { IMPCLOSE(); return; }
       if (e.key === 'Escape' && CEXP != null && CFORM === 'small') { CEXP = null; chart(); return; }
       if (e.key === 'Escape') closeDrawer();
       if (e.key === '/' && document.activeElement !== $('q') && !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); $('q').focus(); $('q').select(); }

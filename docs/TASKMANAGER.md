@@ -600,6 +600,44 @@ Three rules keep it from becoming a number that quietly went missing:
 3. **The displacement card is untouched.** Coverage, and what has not been judged, is the question
    that card exists to answer; this toggle governs the chart below it and nothing else.
 
+### The import preview has to be on screen
+
+Ray, 22 Sep 2026: *"import edits dont do anything anymore."*
+
+It wasn't the reader. `⇧ Import edits` read the file, matched every row on its `Task id`, built the
+whole before → after diff and the Apply button — at `x: 1449` in a 1440px window. Nothing about the
+import had changed; **its host had.** The preview was written into `#tgbd`, which PR #436 turned
+from a centred modal into the right-hand **tags rail**: a `.bd-box` parked at `translateX(102%)`
+until something adds `.on`, with the old `.bd-dim` backdrop rule deleted in the same rewrite. The
+preview still emitted the pre-#436 markup, nothing added `.on`, and so a correct dialog was painted
+just past the edge of the screen. Clicking the button and picking a file did, visibly, nothing.
+
+Sharing that host cost a second thing nobody had noticed: `host.innerHTML = …` wiped the rail. Open
+**Tags & rules**, import a sheet, and the panel you were working in was gone — and `rulesOpen()`
+reuses an existing `.bd-box` rather than rebuilding the shell, so it could find the *import's* box,
+skip building `#tg-body`, and throw on the next line.
+
+So the preview now has **its own host, `#impbd`**, and its own form. It is a **modal**, deliberately,
+where the rail is a landmark: the rail is something you work beside while you tag, this is a
+decision — read the diff, apply or cancel, gone. A scrim with the card nested inside it (so a click
+on the backdrop is unambiguously a click outside the dialog), `Esc` closes it *before* anything
+underneath, focus lands on the button you are being asked to press, and under 760px it is a full
+sheet rather than a card cropped by the gutter — the phone convention every other overlay on the
+FCC follows. Nothing about the matching, the diff or the apply changed.
+
+**The tripwire renders it** (`tools/check_tmimport.js`, in presync). A source-level assertion could
+not have caught this bug: the markup was in one file, the rule that hid it in another, shipped by a
+different PR months apart, and every string involved still looked right. So the check drives the
+real page through Chromium — imports a real CSV, asserts **every edge of the dialog is inside the
+viewport**, that the card is inside its scrim, that the tags rail is still whole underneath it,
+that Apply actually writes the judgements onto the rows, that `Esc` closes it, and that it fits a
+390px screen. On the pre-fix page six of those fail, the first with Playwright's own words:
+*element is outside of the viewport*.
+
+One trap the harness itself had to learn: the real `/api/state` PUT echoes the **merged** map back
+and the page adopts what it returns, so a stub answering `{}` wipes every tag the instant it is
+saved — and the test would have reported the product broken when it was the fixture.
+
 ### Account type
 
 **Split by → Account type** is the *other* type the database holds: `client_type` from the accounts
