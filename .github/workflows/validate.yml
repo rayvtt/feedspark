@@ -37,6 +37,8 @@ jobs:
         run: node tools/test_kwcal_kpis.mjs
       - name: KWCal client PDF (one-click download + the reported results on it)
         run: NODE_PATH=$(npm root -g) node tools/test_kwcal_pdf.mjs
+      - name: KWCal stage map (every Workflow stage has a client word)
+        run: NODE_PATH=$(npm root -g) node tools/test_kwcal_stages.mjs
       - name: Product-volume churn harness (running close-to-close baseline)
         run: node tools/test_volume.mjs
       - name: New-product arrivals harness (first-seen dates → month / quarter / year + forecast)

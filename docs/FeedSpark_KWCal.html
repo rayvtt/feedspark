@@ -1786,10 +1786,30 @@ function renderHours(){
  * browser's own print-to-PDF, the same route as the Golden Record scorecard.
  * renderPdfDoc() runs on every render so a native Cmd/Ctrl+P gives the client doc too. */
 var MONF=['January','February','March','April','May','June','July','August','September','October','November','December'];
-// internal stages (ours + the Workflow pipeline's) collapse to four words a client reads
+/* Internal stages (ours + the Workflow pipeline's) collapse to four words a client reads.
+   EVERY STAGE THE PIPELINE CAN PRODUCE MUST BE HERE (Ray, 22 Sep 2026, reading his own client
+   PDF: "isn't cashmere/merino and leather & suede also 'Live' - so shouldn't the box be
+   orange?"). They were, and it was not: `running` — Workflow's "Test running ⏱", where an
+   optimisation is live in the feed and being measured — was simply absent from this map, so
+   CST[...] came back undefined and the ||'Scheduled' below painted it grey. Both of Ray's
+   moments sat there, and the Live / complete KPI counted neither. The same shape of bug as the
+   KPI band's missing buckets (PR #474): a stage falls out of a map and silently defaults to the
+   most innocuous word.
+   `live` is the calendar's OWN legacy manual word and is kept only for an old stored value —
+   stOf can never return it from a ticket (no pipeline stage is called that) and GHOST_STATES
+   blocks it on the manual branch. An unreachable key is exactly what made this map look
+   complete; tools/test_kwcal_stages.mjs now lifts STAGES out of the Workflow page and fails if
+   any pipeline stage is missing here, so the two files cannot drift again. */
 var CST={planned:'Scheduled',intake:'Scheduled',briefed:'In progress',progress:'In progress',
-  blocked:'In progress',live:'Live',analysis:'Live',done:'Complete',confirmed:'Complete'};
+  blocked:'In progress',running:'Live',analysis:'Live',live:'Live',
+  done:'Complete',confirmed:'Complete'};
 var CSTC={Scheduled:'sched','In progress':'prog',Live:'live',Complete:'done'};
+/* The client word for a moment. A stage this map has never been taught can only have come from
+   a TICKET — stOf returns a pipeline stage only when one exists — so somebody is working it,
+   and "Scheduled" would tell the client nothing has started. That is the one answer that is
+   wrong in the direction that matters on a document we send out, so an unknown pipeline stage
+   reads In progress and only a moment with no ticket at all reads Scheduled. */
+function cstOf(e){ var wf=wfFor(CLIENT,e); return CST[stOf(wf,e)]||(wf?'In progress':'Scheduled'); }
 function pdfNote(msg){ $('#pdf-doc').innerHTML='<div class="pd-head"><div class="pd-brand">Feed<span>Spark</span></div>'
   +'<div class="pd-h1">Keyword optimisation roadmap</div></div><p class="pd-intro">'+esc(msg)+'</p>'; }
 /* ---- the client export is a CALENDAR, on ONE page (Ray, 11 Sep 2026: "downloading a client PDF
@@ -1856,7 +1876,7 @@ function renderPdfDoc(){
 
   var vol=0,scoped=0,liveDone=0,resIn=0;
   E.forEach(function(e){ var v=volOf(CLIENT,e); if(v&&!v.unset&&!v.wide){vol+=v.vol;scoped++}
-    var c=CST[stOf(wfFor(CLIENT,e),e)]; if(c==='Live'||c==='Complete')liveDone++;
+    var c=cstOf(e); if(c==='Live'||c==='Complete')liveDone++;
     if(resFor(CLIENT,e))resIn++; });
   var idxS=ptidxFor(CLIENT,MKT), sat=(idxS&&idxS.sat&&idxS.__total)?Math.round(idxS.sat.n/idxS.__total*1000)/10:null;
   var today=new Date(), mk=MKT.toUpperCase();
@@ -1878,7 +1898,7 @@ function renderPdfDoc(){
     +mons.map(function(k){
       var y=Math.floor(k/12), mo=k%12, items=byMon[k], byDay={};
       items.forEach(function(it){
-        it.st=CST[stOf(wfFor(CLIENT,it.e),it.e)]||'Scheduled';
+        it.st=cstOf(it.e);
         it.cls='s-'+(CSTC[it.st]||'sched');
         var cur=byDay[it.day];
         if(!cur||(SRANK[it.st]||0)>(SRANK[cur.st]||0))byDay[it.day]=it; });

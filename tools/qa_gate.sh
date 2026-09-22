@@ -192,6 +192,12 @@ else
   echo "   ✗ KWCal tie harness FAILED — see node tools/test_kwcal_tie.mjs"; FAIL=1
 fi
 
+if NODE_PATH=$(npm root -g) node tools/test_kwcal_stages.mjs >/dev/null 2>&1; then
+  echo "   ✓ every Workflow stage collapses to a client word on the PDF"
+else
+  echo "   ✗ KWCal stage-map harness FAILED — see NODE_PATH=\$(npm root -g) node tools/test_kwcal_stages.mjs"; FAIL=1
+fi
+
 if NODE_PATH=$(npm root -g) node tools/test_kwcal_pdf.mjs >/dev/null 2>&1; then
   echo "   ✓ the client PDF downloads in one click and carries its reported results"
 else

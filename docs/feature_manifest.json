@@ -9257,6 +9257,30 @@
       "file": ".github/workflows/validate.yml",
       "pattern": "test_kwcal_pdf",
       "pr": 0
+    },
+    {
+      "name": "KWCal: the client PDF's stage map covers EVERY Workflow pipeline stage — `running` (Test running) reads Live, not Scheduled (Ray 22 Sep 2026: \"isn't cashmere/merino and leather & suede also 'Live'\")",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "running:'Live'",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: an unknown pipeline stage on the client PDF reads In progress, never Scheduled — a ticket existing is proof work began",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "function cstOf(e)",
+      "pr": 0
+    },
+    {
+      "name": "KWCal stage-map tripwire — lifts STAGES from the Workflow page and CST from KWCal so the two files cannot drift",
+      "file": "tools/test_kwcal_stages.mjs",
+      "pattern": "the two files agree on the vocabulary",
+      "pr": 0
+    },
+    {
+      "name": "KWCal stage-map tripwire in CI",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "test_kwcal_stages",
+      "pr": 0
     }
   ]
 }
