@@ -9343,6 +9343,90 @@
       "file": "tools/presync.sh",
       "pattern": "check_tmimport",
       "pr": 0
+    },
+    {
+      "name": "Build suggestions: an unread signal is listed as unread, never scored as a zero",
+      "file": "cloudflare/feedspark-deck/src/buildsuggest.js",
+      "pattern": "unread: 'the Task Manager has not synced a balance yet'",
+      "pr": 494
+    },
+    {
+      "name": "Build suggestions: the ranking formula is one shared object, printed in the panel",
+      "file": "cloudflare/feedspark-deck/src/buildsuggest.js",
+      "pattern": "score = lever weight × evidence size × effort factor",
+      "pr": 494
+    },
+    {
+      "name": "Build suggestions: Ray's six levers, and only those",
+      "file": "cloudflare/feedspark-deck/src/buildsuggest.js",
+      "pattern": "export const LEVERS",
+      "pr": 494
+    },
+    {
+      "name": "Build suggestions: a play already queued, in build or shipped is never suggested again",
+      "file": "cloudflare/feedspark-deck/src/buildsuggest.js",
+      "pattern": "export function alreadyOn(rule, done)",
+      "pr": 494
+    },
+    {
+      "name": "Build suggestions: arrivals read the last COMPLETE month, never the running one",
+      "file": "cloudflare/feedspark-deck/src/buildsuggest.js",
+      "pattern": "export function lastCompleteMonth(now)",
+      "pr": 494
+    },
+    {
+      "name": "worker: the suggestion route is owner-only like the rest of the Build Log",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/api/buildsuggest'",
+      "pr": 494
+    },
+    {
+      "name": "worker: suggestions read the live stores, never a committed snapshot",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "BSG.suggest({ tm, skip, quotes, briefs, golden: gi, arrivals, feeds, clients, now }, done)",
+      "pr": 494
+    },
+    {
+      "name": "Build Log: the suggestions panel sits above the queue it feeds",
+      "file": "docs/FeedSpark_Activity.html",
+      "pattern": "id=\"sg-panel\"",
+      "pr": 494
+    },
+    {
+      "name": "Build Log: ＋ Queue it writes the play into the same buildqueue store",
+      "file": "docs/FeedSpark_Activity.html",
+      "pattern": "function sgQueue(id)",
+      "pr": 494
+    },
+    {
+      "name": "Build Log: the panel names what it did NOT rank (clear / unread / already taken)",
+      "file": "docs/FeedSpark_Activity.html",
+      "pattern": "function sgFoot(d)",
+      "pr": 494
+    },
+    {
+      "name": "Build suggestion harness wired into the gate",
+      "file": "tools/qa_gate.sh",
+      "pattern": "tools/test_buildsuggest.mjs",
+      "pr": 494
+    },
+    {
+      "name": "Build suggestion harness wired into presync",
+      "file": "tools/presync.sh",
+      "pattern": "tools/test_buildsuggest.mjs",
+      "pr": 494
+    },
+    {
+      "name": "Build suggestion harness wired into CI",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "tools/test_buildsuggest.mjs",
+      "pr": 494
+    },
+    {
+      "name": "BUILDSUGGEST.md documents the engine",
+      "file": "docs/BUILDSUGGEST.md",
+      "pattern": "## The three rules that make it trustworthy",
+      "pr": 494
     }
   ]
 }

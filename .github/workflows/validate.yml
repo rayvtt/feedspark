@@ -61,6 +61,9 @@ jobs:
         run: node tools/test_tmmcp.mjs
       - name: Phone-layer harness (bottom bar, sheets, mirror rules, pan sweep, wiring)
         run: node tools/test_mobile.mjs
+
+      - name: Build Log suggestion engine (evidence-led, unread is never a zero)
+        run: node tools/test_buildsuggest.mjs
       - name: Scheduled Work harness (the content team's sheet → skip cadence per brand)
         run: node tools/test_schedule.mjs
       - name: Work-volumes harness (every workstream bucketed by month)

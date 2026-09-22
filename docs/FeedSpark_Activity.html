@@ -111,6 +111,43 @@ if(document.readyState!=='loading')mk();else document.addEventListener('DOMConte
   .stamp{font-size:11.5px;color:var(--muted);font-weight:700}
   .tiny{font-size:11.5px}.muted{color:var(--muted)}
   .empty{color:var(--muted);font-size:13px;padding:12px 4px}
+  /* ---- suggested next builds: one row per play — rank, lever, the evidence, the score ---- */
+  .sg-row{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 0;border-bottom:1px dashed var(--line)}
+  .sg-row:last-child{border-bottom:none}
+  .sg-n{font-size:18px;font-weight:900;color:var(--muted);line-height:1.15;text-align:center}
+  .sg-t{font-size:13.5px;font-weight:900;color:var(--ink);line-height:1.35}
+  .sg-w{font-size:12.5px;color:var(--ink-2);font-weight:600;margin-top:3px;line-height:1.5}
+  .sg-ev{font-size:12.5px;font-weight:800;color:var(--ink);margin-top:5px;line-height:1.5}
+  .sg-ev .sg-src{font-weight:700;color:var(--muted)}
+  .sg-meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:7px}
+  .sg-lev{display:inline-block;font-size:10.5px;font-weight:900;padding:2px 9px;border-radius:100px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+  .lev-revenue{color:var(--good);background:rgba(21,128,61,.1);border:1px solid rgba(21,128,61,.3)}
+  .lev-churn{color:#B42318;background:rgba(180,35,24,.09);border:1px solid rgba(180,35,24,.28)}
+  .lev-retention{color:var(--purple);background:rgba(122,90,168,.1);border:1px solid rgba(122,90,168,.3)}
+  .lev-billable{color:var(--orange-deep);background:rgba(237,111,11,.09);border:1px solid rgba(237,111,11,.3)}
+  .lev-efficiency{color:var(--navy);background:rgba(26,54,93,.08);border:1px solid rgba(26,54,93,.25)}
+  .lev-time{color:var(--ink-2);background:var(--wash);border:1px solid var(--line)}
+  .sg-side{text-align:right;min-width:104px}
+  .sg-score{font-size:11px;font-weight:900;color:var(--muted);letter-spacing:.03em}
+  .sg-track{height:5px;border-radius:100px;background:var(--wash);border:1px solid var(--line);margin:5px 0 8px;overflow:hidden}
+  .sg-fill{height:100%;background:linear-gradient(90deg,#F5A623,#ED6F0B)}
+  .sg-q{font:inherit;font-size:11.5px;font-weight:900;padding:5px 10px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+  .sg-q:hover{border-color:var(--orange-deep);color:var(--orange-deep)}
+  .sg-foot{font-size:11.5px;color:var(--muted);font-weight:700;margin-top:12px;line-height:1.6}
+  /* under 760px the three-column row squeezes the text to ~140px and every title wraps to five
+     lines — the score and the button drop to their own line under the play instead */
+  @media (max-width:760px){
+    .sg-row{grid-template-columns:22px minmax(0,1fr);gap:8px 10px}
+    .sg-side{grid-column:2;grid-row:2;text-align:left;min-width:0;display:flex;align-items:center;gap:10px;margin-top:8px}
+    .sg-track{flex:1 1 auto;margin:0}
+    .sg-q{flex:none}
+  }
+  [data-theme=dark] .sg-t,[data-theme=dark] .sg-ev{color:#E6E9ED}
+  [data-theme=dark] .sg-w{color:#B9BEC7}
+  [data-theme=dark] .sg-n{color:#8a94a0}
+  [data-theme=dark] .sg-track{background:#22262F;border-color:#2a313a}
+  [data-theme=dark] .sg-q{background:#14181d;border-color:#2a313a;color:#B9BEC7}
+  [data-theme=dark] .sg-q:hover{border-color:var(--orange-ink);color:var(--orange-ink)}
   .restricted{border:1px solid rgba(192,57,43,.3);background:rgba(192,57,43,.06);color:var(--risk);border-radius:12px;padding:14px 18px;font-weight:700}
   .duo{display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start}
   @media(max-width:980px){.duo{grid-template-columns:1fr}}
@@ -171,6 +208,11 @@ if(document.readyState!=='loading')mk();else document.addEventListener('DOMConte
       <span class="stamp" id="bl-live"></span>
     </div>
     <div class="kpis" id="bl-kpis"></div>
+    <div class="panel" id="sg-panel">
+      <h2>Suggested next builds — ranked by commercial impact</h2>
+      <div class="sub">The five plays with the strongest live evidence behind them right now — queue one and it drops into the backlog below.</div>
+      <div id="sg-list"><div class="empty">Loading…</div></div>
+    </div>
     <div class="panel">
       <h2>Queue — not built yet</h2>
       <div class="sub">Your backlog: add what you want built; a session picks it up and it moves right. Saved shared (concurrency-safe KV).</div>
@@ -385,9 +427,60 @@ if(document.readyState!=='loading')mk();else document.addEventListener('DOMConte
     host.querySelectorAll('.qact').forEach(function(b){ b.onclick=function(){ qDel(b.getAttribute('data-id')); }; });
   }
 
+  /* ---- suggested next builds (SUGGEST:PANEL) -------------------------------------------------
+     The worker scores the plays; this only draws them. Queueing one writes into the SAME
+     buildqueue store the board below reads, and the rule's own words are the queue title — which
+     is what makes the suggestion disappear on the next load rather than nagging about work that
+     is now somebody's job. */
+  var SG=null;
+  function sgLoad(){ fetch('/api/buildsuggest').then(function(r){return r.json();}).then(function(d){ SG=d; sgRender(); })
+    .catch(function(){ var h=document.getElementById('sg-list'); if(h)h.innerHTML='<div class="empty">Offline — serve via the worker to see suggestions.</div>'; }); }
+  function sgQueue(id){
+    var r=null,i; for(i=0;i<((SG&&SG.top)||[]).length;i++)if(SG.top[i].id===id)r=SG.top[i];
+    if(!r)return;
+    var qid='q'+Date.now().toString(36);
+    Q[qid]={id:qid,title:r.title,mod:'Other',status:'queued',at:new Date().toISOString(),why:r.why||'',lever:r.lever||''};
+    qSave(); renderQueue(); sgLoad();          // re-read: the play it just queued now drops off
+  }
+  function sgRender(){
+    var host=document.getElementById('sg-list'); if(!host)return;
+    var d=SG||{}; var top=d.top||[];
+    if(d.error){ host.innerHTML='<div class="empty">'+esc(d.error)+'</div>'; return; }
+    if(!top.length){
+      host.innerHTML='<div class="empty">Nothing to suggest — every play with live evidence behind it is already queued, in build or shipped.</div>'+sgFoot(d);
+      return;
+    }
+    var max=top[0].score||1;
+    host.innerHTML=top.map(function(r,i){
+      var pct=Math.max(6,Math.round((r.score/max)*100));
+      return '<div class="sg-row">'
+        +'<div class="sg-n">'+(i+1)+'</div>'
+        +'<div><div class="sg-t">'+esc(r.title)+'</div>'
+          +'<div class="sg-w">'+esc(r.what)+'</div>'
+          +'<div class="sg-ev">'+esc(r.why)+' <span class="sg-src">· '+esc(r.src)+'</span></div>'
+          +'<div class="sg-meta"><span class="sg-lev lev-'+esc(r.lever)+'">'+esc(r.leverLabel)+'</span>'
+          +'<span class="mod">'+esc(r.effort)+' · '+esc(r.effortLabel)+'</span></div></div>'
+        +'<div class="sg-side"><div class="sg-score">'+(Math.round(r.score*100)/100).toFixed(2)+'</div>'
+          +'<div class="sg-track"><div class="sg-fill" style="width:'+pct+'%"></div></div>'
+          +'<button class="sg-q" data-sg="'+esc(r.id)+'">＋ Queue it</button></div>'
+        +'</div>'; }).join('')+sgFoot(d);
+    host.querySelectorAll('.sg-q').forEach(function(b){ b.onclick=function(){ sgQueue(b.getAttribute('data-sg')); }; });
+  }
+  function sgFoot(d){
+    var bits=[];
+    bits.push((d.candidates||0)+' candidate plays ranked');
+    if((d.taken||[]).length)bits.push((d.taken||[]).length+' already queued, in build or shipped');
+    if((d.clear||[]).length)bits.push((d.clear||[]).length+' with nothing to act on');
+    if((d.unread||[]).length)bits.push((d.unread||[]).length+' waiting on a signal that has never synced');
+    var f='<div class="sg-foot">'+esc(bits.join(' · '))+'.';
+    if((d.unread||[]).length)f+='<br>Unread: '+(d.unread||[]).map(function(u){return esc(u.title.split('—')[0].trim())+' ('+esc(u.why)+')';}).join(' · ')+'.';
+    if(d.basis)f+='<br>'+esc(d.basis.formula)+'. '+esc(d.basis.levers)+'; effort '+esc(d.basis.effort)+'.';
+    return f+'</div>';
+  }
+
   document.getElementById('q-add').onclick=qAdd;
   document.getElementById('q-title').addEventListener('keydown',function(e){ if(e.key==='Enter')qAdd(); });
-  document.getElementById('bl-refresh').onclick=function(){ load(true); };
-  window.__blInit=function(){ qGet(); load(false); };   // lazy: first open of the Build Log tab
+  document.getElementById('bl-refresh').onclick=function(){ load(true); sgLoad(); };
+  window.__blInit=function(){ qGet(); load(false); sgLoad(); };   // lazy: first open of the Build Log tab
 })();
 </script>
