@@ -716,6 +716,155 @@ YuMOVE:{events:[
   {id:'ym_subback',  name:'Back to Subscription — default PDP reverts',   lane:'sale', date:'2026-12-01', brandwide:1,
    note:'DEFAULT PDP OPTION FLIPS BACK to Subscription. The Black Friday one-off pricing and sale wording come out of the feed here — the step most likely to be forgotten.',
    terms:['subscription','subscribe and save','auto delivery']}
+]},
+/* ---- Schuh seed — the brand's OWN Customer Marketing Calendar FY27 (Ray, 22 Sep 2026:
+   "Schuh's marketing calendar - import anyhting from Aug/26 onwards"), tab "FY27", which runs
+   one COLUMN PER DAY from 28 Dec 2025 to 30 Jan 2027 with each activity as a merged block.
+   THE RULE: everything whose block touches 1 Aug 2026 or later is here, dated at its own start —
+   a moment that opened earlier (the two Back to School campaigns, the bundling offer, Nike Kids,
+   Kickers) is kept rather than dropped for starting in July, and its note says so.
+   THE DATES ARE THE SHEET'S OWN, and unlike the Accessorize workbook they needed no correcting:
+   all 57 W/C Sunday dates and all 399 day letters agree with the column mapping, and 22 of the 23
+   weekdays the cells state in words check out against the real 2026/27 calendar. The exception is
+   an END date on the Jan-2027 student promo, flagged on that moment; no start date moved.
+   WHERE A CELL NAMES ITS OWN DATE ("20.8", "7.10", "16th Sept.") that date wins over the grid
+   block, which is a content window drawn to fit the row — the five that differ say both.
+   FOUR LANES, FOUR ROW-GROUPS of the workbook: sale = PROMOTIONS, campaign = SCHUH CAMPAIGNS ·
+   Full Price, studio = BRAND PARTNERSHIP CAMPAIGNS + NEW BRANDS, location = the calendar's own
+   weekly demand forecast (BRAND SEARCHES + CATEGORY SEARCH TERMS), consolidated to ONE moment per
+   week rather than one per brand word. That last lane is a FORECAST, not a commitment — and it is
+   mostly out of phase with the launches, which is the finding: Crocs peaks six weeks before the
+   Crocs campaign, Dr. Martens twice with the campaign in between, Puma peaks with no activity at
+   all anywhere in FY27.
+   MARKETS: this is a UK & ROI customer calendar (£/€ pricing, ROI bank holidays, "Rest of the UK
+   & ROI"). Nothing in it is German, so no moment is pinned and they all follow the board market —
+   do NOT brief Schuh DE off this calendar.
+   NOT IMPORTED, deliberately: pay days and bank holidays, the Do More Good purpose months, the
+   store events and store openings, the Manchester Community Window installs, the shoot schedule,
+   "NB ALWAYS ON S2" (the cell states NO FIXED LAUNCH DATE), the Proud Trust charity partnership,
+   and the Summer Sale, whose seven markdown phases are all dated June or July and which closed on
+   2 Aug. Full record + everything left out: ops/calendars/Schuh_FY27_calendar_ingest.md ---- */
+Schuh:{events:[
+  {id:'sch_btsbundle', name:'Back to School — Bundling', lane:'sale', date:'2026-07-27',
+   note:'Runs 27 Jul – 6 Sep, so it covers the whole of August. Opened before this import window. Scoped to the BTS range, not the catalogue. Contingency in the calendar: up to 30% off, pending how bundling performs after the first fortnight.',
+   terms:['back to school','school shoes','kids','bundle','black shoes']},
+  {id:'sch_student20', name:'Student 20% off', lane:'sale', date:'2026-09-13', brandwide:1,
+   note:'Online 13 Sep 19:00, stores 14 Sep 00:00, ends 27 Sep 23:59 — the feed carries the offer a day before the stores do.',
+   terms:['student','student discount','20% off']},
+  {id:'sch_studnights', name:'Student Nights', lane:'sale', date:'2026-09-16', brandwide:1,
+   note:'The calendar block starts 17 Sep but its own text reads “16th Sept. – 8th Oct.”; the stated start wins.',
+   terms:['student','student night','student discount']},
+  {id:'sch_mss', name:'Mid Season Sale — up to 50% off', lane:'sale', date:'2026-10-18', brandwide:1,
+   note:'Loyalty 18 Oct 09:00, online 18 Oct 19:00, stores 19 Oct 09:00, ends 1 Nov 23:59. Extension marked TBC pending performance — check before the sale wording comes back out of the feed.',
+   terms:['sale','mid season sale','50% off']},
+  {id:'sch_sel30', name:'Up to 30% off selected lines', lane:'sale', date:'2026-11-08',
+   note:'8–21 Nov. SELECTED LINES — the calendar does not say which, so this moment is deliberately left unscoped rather than counted brand-wide. Set the scope from Schuh’s promo list before briefing.',
+   terms:['sale','30% off','offer']},
+  {id:'sch_blackfri', name:'Black Friday — 22–30 Nov', lane:'sale', date:'2026-11-22', brandwide:1,
+   note:'Schuh opens Black Friday five days before the day itself (Black Friday 2026 is Fri 27 Nov). Online and stores together, Sun 22 Nov 09:00; ends Mon 30 Nov 23:59, so Cyber Monday sits inside the window.',
+   terms:['black friday','sale','cyber monday']},
+  {id:'sch_b1g10', name:'Buy 1 pair, get £/€10 off your 2nd item', lane:'sale', date:'2026-12-01', brandwide:1,
+   note:'Online Tue 1 Dec 22:00, stores Wed 2 Dec 09:00, ends Sat 12 Dec 23:59 — the feed leads the stores by a day. Priced in both £ and €, so it applies to GB and IE.',
+   terms:['2 for','multibuy','offer','second pair']},
+  {id:'sch_winter', name:'Winter Sale', lane:'sale', date:'2026-12-13', brandwide:1,
+   note:'Loyalty 13 Dec 09:00, online 13 Dec 20:00, stores 14 Dec 00:00. Runs to 31 Jan 2027, past the end of the workbook.',
+   terms:['winter sale','sale','up to 50% off']},
+  {id:'sch_refresher', name:'Student Re-fresher 20%', lane:'sale', date:'2027-01-15', brandwide:1,
+   note:'Starts Fri 15 Jan 2027. The end date needs confirming: the calendar says “Ends: Sun. 25th Jan.” but 25 Jan 2027 is a Monday, and the grid block ends Sat 24 Jan. The start is not in doubt.',
+   terms:['student','student discount','20% off']},
+  {id:'sch_btsscot', name:'Back to School — Scotland (Kids)', lane:'campaign', date:'2026-06-29',
+   note:'Scotland goes back to school before the rest of the UK, so it gets its own campaign. Store & digital, internal shoot; runs to 15 Aug. Opened before this import window, in June.',
+   terms:['back to school','school shoes','kids school shoes']},
+  {id:'sch_btsuk', name:'Back to School — Rest of UK & ROI (Kids)', lane:'campaign', date:'2026-07-20',
+   note:'Covers GB and IE together; runs to 6 Sep. Store & digital, internal shoot. Opened before this import window.',
+   terms:['back to school','school shoes','kids school shoes']},
+  {id:'sch_aw26', name:'AW’26 Campaign — Adults & Kids', lane:'campaign', date:'2026-09-21',
+   note:'Internal shoot, Mon 21 Sep, running to 1 Nov — the season handover into Festive Peak.',
+   terms:['autumn','aw26','new season','boots']},
+  {id:'sch_peak', name:'Festive Peak Campaign', lane:'campaign', date:'2026-11-02',
+   note:'Mon 2 Nov to 25 Dec. The Peak shoot and post-production ran 31 Aug – 1 Nov, so assets exist before the campaign opens.',
+   terms:['christmas','gift','festive','party']},
+  {id:'sch_nikekids', name:'Nike Kids — Moto & P-6000', lane:'studio', date:'2026-07-27',
+   note:'Marked GOLD and TBC in the calendar. Launch named as 27.7; the content block ran 5 Jul – 1 Aug. Opened before this import window.',
+   terms:['nike','moto','p-6000','kids']},
+  {id:'sch_kickers', name:'Kickers — Back to School', lane:'studio', date:'2026-07-20',
+   note:'Marked SILVER. Named 20.7, block 21 Jul – 7 Aug. Opened before this import window.',
+   terms:['kickers','back to school','school shoes']},
+  {id:'sch_converse', name:'Converse RS Crush', lane:'studio', date:'2026-08-06',
+   note:'Embargo lifts 6.8 — that is the date in the cell. The grid block sits 11–22 Aug, which is the content roll-out, not the launch. Converse is also the predicted top brand search in w/c 2 Aug.',
+   terms:['converse','rs crush','trainers']},
+  {id:'sch_keen', name:'Keen AW — ‘Common Ground’ content roll-out', lane:'studio', date:'2026-08-09',
+   note:'Named 9.8, block 10–29 Aug. The Common Ground event itself runs 12–15 Aug; this is the content that follows it.',
+   terms:['keen','common ground','hiking','outdoor','sandal']},
+  {id:'sch_uggevelina', name:'UGG Evelina Clog launch', lane:'studio', date:'2026-08-20',
+   note:'Named 20.8; the grid block sits 23 Aug – 10 Sep. Lands with the calendar’s own “CLOGS — SECOND PEAK” category-search call in w/c 23 Aug.',
+   terms:['ugg','evelina','clog']},
+  {id:'sch_adiadults', name:'adidas Originals — Adults', lane:'studio', date:'2026-09-01',
+   note:'Marked GOLD (IMA), 1 Sep – 1 Oct. adidas is the predicted top brand search in w/c 23 Aug, a week ahead of the launch.',
+   terms:['adidas','adidas originals','originals']},
+  {id:'sch_aditote', name:'adidas Originals — Tote Bag launch', lane:'studio', date:'2026-09-01',
+   note:'1–28 Sep, alongside the Originals adults launch.',
+   terms:['adidas','adidas originals','tote','bag']},
+  {id:'sch_drmartens', name:'Dr. Martens Buzz', lane:'studio', date:'2026-09-07',
+   note:'Named 7.9, runs to 22 Sep. Dr. Martens is the predicted top brand search in w/c 16 Aug AND w/c 27 Sep — both outside this window, so the keyword work is worth holding either side of it.',
+   terms:['dr martens','dr. martens','boots']},
+  {id:'sch_adikids', name:'adidas Originals Kids — always-on AW', lane:'studio', date:'2026-09-07',
+   note:'Always-on content for the season, 7 Sep – 25 Oct: the 7.9 start is the only fixed date, there is no single launch beyond it.',
+   terms:['adidas','adidas originals','kids']},
+  {id:'sch_crocs', name:'Crocs — Trend / Student Nights', lane:'studio', date:'2026-09-23',
+   note:'Named 23.9, runs to 7 Oct, deliberately inside the Student Nights window. Crocs is the predicted top brand search in w/c 9 Aug.',
+   terms:['crocs','clog','crep']},
+  {id:'sch_nikeholiday', name:'Nike Adults — Holiday', lane:'studio', date:'2026-10-01',
+   note:'Named 1.10; the grid block sits 2–24 Oct.',
+   terms:['nike','holiday','gifting']},
+  {id:'sch_timberland', name:'Timberland A/W campaign', lane:'studio', date:'2026-10-07',
+   note:'Named 7.10; block 8–31 Oct. Timberland is the predicted brand search in w/c 20 Sep, two and a half weeks before the campaign opens.',
+   terms:['timberland','boots','autumn']},
+  {id:'sch_vansfran', name:'Vans — key franchises', lane:'studio', date:'2026-10-12',
+   note:'12–31 Oct. Vans is the predicted brand search in w/c 23 Aug. The calendar does not name which franchises — confirm before briefing so the themes point at the right silhouettes.',
+   terms:['vans','skate','trainers']},
+  {id:'sch_uggheritage', name:'UGG Heritage Pack', lane:'studio', date:'2026-10-19',
+   note:'Named 19.10, 19–24 Oct. UGG is the predicted brand search in w/c 20 Sep, a month earlier.',
+   terms:['ugg','heritage','boots','slippers']},
+  {id:'sch_nbabzorb', name:'New Balance Abzorb 2010', lane:'studio', date:'2026-10-26',
+   note:'Marked GOLD, named 26.10 (grid block opens 25 Oct), running to 21 Nov. The green colourway carries its own embargo on 2.11. New Balance is the predicted brand search in w/c 2 Aug and again w/c 30 Aug.',
+   terms:['new balance','abzorb','2010']},
+  {id:'sch_vanssza', name:'Vans x SZA', lane:'studio', date:'2026-10-26',
+   note:'26.10, marked TBC in the calendar — confirm it is still on before the brief goes out.',
+   terms:['vans','sza','collaboration']},
+  {id:'sch_sperry1', name:'Sperry — brand launch', lane:'studio', date:'2026-08-16',
+   note:'New brand. A single-day marker in the calendar rather than a window; a second Sperry push follows 19–25 Sep.',
+   terms:['sperry','boat shoe','loafer']},
+  {id:'sch_blundstone', name:'Blundstone — brand launch', lane:'studio', date:'2026-09-06',
+   note:'New brand, 6–15 Sep. A brand landing in the feed for the first time needs its titles, product types and identifiers right before any keyword work on it is worth much.',
+   terms:['blundstone','chelsea boot','boots']},
+  {id:'sch_sperry2', name:'Sperry — phase 2', lane:'studio', date:'2026-09-19',
+   note:'New brand, second push, 19–25 Sep — the follow-up to the single-day 16 Aug arrival.',
+   terms:['sperry','boat shoe','loafer']},
+  {id:'sch_caterpillar', name:'Caterpillar — brand launch', lane:'studio', date:'2026-09-27',
+   note:'New brand, 27 Sep – 10 Oct. The terms carry both spellings, Caterpillar and CAT, because the brand ships footwear under both.',
+   terms:['caterpillar','cat','boots','work boots']},
+  {id:'sch_pk0802', name:'Predicted search peak — Converse, New Balance', lane:'location', date:'2026-08-02', wc:1,
+   note:'The calendar’s own demand forecast for this week, not a campaign. Converse pairs with the RS Crush embargo on 6 Aug; New Balance has no launch until 26 Oct.',
+   terms:['converse','new balance']},
+  {id:'sch_pk0809', name:'Predicted search peak — Crocs', lane:'location', date:'2026-08-09', wc:1,
+   note:'Demand forecast. No Crocs activity is planned until 23 Sep — the peak is six weeks ahead of the campaign.',
+   terms:['crocs','clog']},
+  {id:'sch_pk0816', name:'Predicted search peak — Dr. Martens', lane:'location', date:'2026-08-16', wc:1,
+   note:'Demand forecast. Dr. Martens Buzz does not open until 7 Sep.',
+   terms:['dr martens','dr. martens','boots']},
+  {id:'sch_pk0823', name:'Predicted search peak — adidas, Vans, Nike + clogs', lane:'location', date:'2026-08-23', wc:1,
+   note:'The busiest forecast week in the calendar: three brand searches plus “CLOGS — SECOND PEAK” as a category call. Only the UGG Evelina clog launch (20 Aug) is actually live against it.',
+   terms:['adidas','vans','nike','clogs']},
+  {id:'sch_pk0830', name:'Predicted search peak — New Balance, Puma', lane:'location', date:'2026-08-30', wc:1,
+   note:'Demand forecast. Puma carries no activity anywhere in the FY27 calendar.',
+   terms:['new balance','puma']},
+  {id:'sch_pk0920', name:'Predicted search peak — UGG, Timberland', lane:'location', date:'2026-09-20', wc:1,
+   note:'Demand forecast. Timberland’s campaign opens 7 Oct and UGG’s Heritage Pack 19 Oct — both after the peak.',
+   terms:['ugg','timberland']},
+  {id:'sch_pk0927', name:'Predicted search peak — Dr. Martens', lane:'location', date:'2026-09-27', wc:1,
+   note:'Demand forecast, and the last week the calendar fills these rows. Dr. Martens Buzz closed 22 Sep, five days earlier.',
+   terms:['dr martens','dr. martens','boots']}
 ]}};
 
 var CLIENT='Reiss', STORE={}, BASE=0, editMode=false, saveT=null, MEASURING=false;
@@ -1755,19 +1904,23 @@ function rescheduleToMonth(id,targetKey){ var e=findEv(id); if(!e)return; // dro
 function laneKey(l){ l=String(l||'').toLowerCase();
   return l.indexOf('camp')>=0?'campaign':l.indexOf('sale')>=0?'sale':l.indexOf('location')>=0?'location':'studio'; }
 var LANE_LGND={campaign:['lc','Campaign'],location:['ll','Location'],studio:['ls','Studio'],sale:['lx','Sale']};
+// The four lane words are Reiss's vocabulary — a campaign, a location shoot, a studio shoot, a
+// sale. A brand whose calendar groups its work differently reads wrong under them: a Nike drop is
+// not a “studio moment” and a predicted search week is not a “location”. LANE_NAMES lets a brand
+// name its own four lanes for DISPLAY only — the keys, the colours, the tie-matching and every
+// stored event are untouched, so nothing downstream can tell the difference.
+var LANE_NAMES={Schuh:{campaign:'Schuh campaign',studio:'Brand launch',location:'Search peak',sale:'Promotion'}};
+function laneName(k){ var m=LANE_NAMES[CLIENT]; return (m&&m[k])||(LANE_LGND[k]?LANE_LGND[k][1]:''); }
 function renderLegend(E){   // one line, instead of a lane word repeated on every card
   var el=$('#lgnd'); if(!el)return;
   var seen={}; E.forEach(function(e){ seen[laneKey(e.lane)]=1; });
   var ks=Object.keys(LANE_LGND).filter(function(k){return seen[k]});
   el.hidden=ks.length<2;
-  el.innerHTML=ks.map(function(k){ return '<span><i class="'+LANE_LGND[k][0]+'"></i>'+LANE_LGND[k][1]+'</span>'; }).join('');
+  el.innerHTML=ks.map(function(k){ return '<span><i class="'+LANE_LGND[k][0]+'"></i>'+esc(laneName(k))+'</span>'; }).join('');
 }
-function laneLbl(l){ l=String(l||'').toLowerCase();
-  if(l.indexOf('camp')>=0)return '📣 Campaign';
-  if(l.indexOf('sale')>=0)return '🏷 Sale';
-  if(l.indexOf('studio')>=0)return '📸 Studio';
-  if(l.indexOf('location')>=0)return '📍 Location';
-  return l?('✦ '+l.charAt(0).toUpperCase()+l.slice(1)):''; }
+var LANE_GLYPH={campaign:'📣',location:'📍',studio:'📸',sale:'🏷'};
+function laneLbl(l){ if(!String(l||'').trim())return '';
+  var k=laneKey(l); return (LANE_GLYPH[k]||'✦')+' '+laneName(k); }
 function render(){
   popClose(); wfReset();   // one ticket⇄moment resolution pass per render, for every brand on screen
   if(CLIENT==='*'){ $('#split').hidden=true; $('#pdf').hidden=true; if($('#lgnd'))$('#lgnd').hidden=true;

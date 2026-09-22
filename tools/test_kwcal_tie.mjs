@@ -240,6 +240,84 @@ is('both PDP-default flips are called out', flips.map((e) => e.date).sort(), ['2
 // an inferred band start must never read as a confirmed date
 is('the inferred band starts say so', YM.filter((e) => /read off the chart/.test(e.note || '')).length >= 2, true);
 
+// ---------- the Schuh FY27 ingest (Ray, 22 Sep 2026) ----------
+/* "Schuh's marketing calendar - import anyhting from Aug/26 onwards". The workbook is a
+ * DAY-COLUMN grid — every activity a merged block — so an import turns on two judgements that
+ * are easy to lose later: which grid block becomes which dated moment, and what was deliberately
+ * left out. Both are pinned here. */
+const SCH = seedApi.Schuh && seedApi.Schuh.events;
+is('Schuh is seeded', Array.isArray(SCH), true);
+is('40 moments', SCH.length, 40);
+is('ids unique and brand-prefixed', new Set(SCH.map((e) => e.id)).size === 40 && SCH.every((e) => e.id.startsWith('sch_')), true);
+is('every moment carries keyword themes', SCH.every((e) => Array.isArray(e.terms) && e.terms.length), true);
+is('every moment has a real ISO date', SCH.every((e) => /^\d{4}-\d{2}-\d{2}$/.test(e.date)), true);
+is('every moment says where it came from', SCH.every((e) => e.note && e.note.length > 20), true);
+is('every lane is one the board renders', SCH.every((e) => ['campaign','location','studio','sale'].includes(e.lane)), true);
+// four lanes = four row-groups of the workbook; a moment drifting between them is a silent
+// re-reading of the source
+const lanes = SCH.reduce((o, e) => (o[e.lane] = (o[e.lane] || 0) + 1, o), {});
+is('PROMOTIONS → sale', lanes.sale, 9);
+is('SCHUH CAMPAIGNS · Full Price → campaign', lanes.campaign, 4);
+is('BRAND PARTNERSHIPS + NEW BRANDS → studio', lanes.studio, 20);
+is('BRAND / CATEGORY SEARCHES → location, one per week not one per brand word', lanes.location, 7);
+
+// THE IMPORT WINDOW: everything whose block touches 1 Aug 2026, dated at its OWN start. A moment
+// that opened earlier is kept rather than dropped — and must say so, or its date reads as the
+// whole story.
+const early = SCH.filter((e) => e.date < '2026-08-01');
+is('the five moments that opened before August are kept', early.map((e) => e.id).sort(),
+  ['sch_btsbundle', 'sch_btsscot', 'sch_btsuk', 'sch_kickers', 'sch_nikekids']);
+is('…and every one of them says it opened before the window', early.every((e) => /Opened before this import window/.test(e.note)), true);
+is('nothing is dated before the earliest block that reaches August', SCH.map((e) => e.date).sort()[0], '2026-06-29');
+
+// WHERE A CELL NAMES ITS OWN DATE that date wins over the grid block, which is a content window
+// drawn to fit the row. The five that differ by more than a day must report BOTH.
+const named = { sch_nikekids: '2026-07-27', sch_converse: '2026-08-06', sch_uggevelina: '2026-08-20', sch_studnights: '2026-09-16', sch_nbabzorb: '2026-10-26' };
+Object.keys(named).forEach((id) => {
+  const e = SCH.find((x) => x.id === id) || {};
+  is(`${id} sits on the date the cell names`, e.date, named[id]);
+  is(`…and its note reports the grid block too`, /block|grid|reads/i.test(e.note || ''), true);
+});
+
+// BRAND-WIDE is a claim about the catalogue. The catalogue-wide offers carry it; the two scoped
+// ones deliberately do not — "selected lines" is left unset rather than counted as everything.
+is('only sale moments are ever brand-wide', SCH.every((e) => !e.brandwide || e.lane === 'sale'), true);
+is('the catalogue-wide offers are brand-wide', SCH.filter((e) => e.brandwide).map((e) => e.id).sort(),
+  ['sch_b1g10', 'sch_blackfri', 'sch_mss', 'sch_refresher', 'sch_student20', 'sch_studnights', 'sch_winter']);
+is('the two scoped offers are not', SCH.filter((e) => e.lane === 'sale' && !e.brandwide).map((e) => e.id).sort(), ['sch_btsbundle', 'sch_sel30']);
+is('…and the unscoped one says the calendar never named the lines',
+  /does not say which/.test((SCH.find((e) => e.id === 'sch_sel30') || {}).note || ''), true);
+
+// Black Friday 2026 is Fri 27 Nov, but Schuh opens FIVE DAYS EARLY — the feed date is Schuh's,
+// not the cultural one, and a later "correction" to 27 Nov would be wrong.
+const bf = SCH.find((e) => e.id === 'sch_blackfri') || {};
+is('Black Friday sits on Schuh’s own start, not the cultural date', bf.date, '2026-11-22');
+is('…and the card says why it is early', /five days before/.test(bf.note || ''), true);
+
+// The search-peak lane is a FORECAST. It must read as a week, and never as a commitment.
+const peaks = SCH.filter((e) => e.lane === 'location');
+is('every search peak is a week-commencing moment', peaks.every((e) => e.wc === 1), true);
+is('…and only they are', SCH.filter((e) => e.wc).length, peaks.length);
+is('…and each says it is a forecast', peaks.every((e) => /forecast/i.test(e.note)), true);
+
+// A UK & ROI calendar: nothing in it is German. A pinned market would brief the wrong feed.
+is('no moment pins a market — they follow the board', SCH.some((e) => e.mkt), false);
+
+// ---------- lane names are a brand's own words, and DISPLAY ONLY ----------
+/* "Moments · Studio" is the wrong phrase for a Nike drop. A brand may rename its four lanes; the
+ * KEYS must not move, or the colours, the stored events and the tie-matching all follow. */
+let LN_CLIENT = 'Schuh';
+const laneName = new Function('getC', `${liftDecl('LANE_LGND')} ${liftDecl('LANE_NAMES')} ${lift('laneName')}
+   var CLIENT; return function(c, k){ CLIENT = c; return laneName(k); };`)();
+is('Schuh names its own lanes', ['campaign','studio','location','sale'].map((k) => laneName('Schuh', k)),
+  ['Schuh campaign', 'Brand launch', 'Search peak', 'Promotion']);
+is('a brand with no map keeps the generic words', ['campaign','studio','location','sale'].map((k) => laneName('Reiss', k)),
+  ['Campaign', 'Studio', 'Location', 'Sale']);
+is('the all-brands overview keeps them too', laneName('*', 'studio'), 'Studio');
+is('an unknown lane key never returns undefined', laneName('Schuh', 'nope'), '');
+is('the lane KEYS on Schuh’s moments are the board’s own four',
+  [...new Set(SCH.map((e) => e.lane))].sort(), ['campaign', 'location', 'sale', 'studio']);
+
 // ---------- the mis-file repair ----------
 /* importEvents used to honour the JSON's own "client" only when that brand already had a record,
  * so a calendar for a brand the board had never stored filed itself into whatever was ON SCREEN.

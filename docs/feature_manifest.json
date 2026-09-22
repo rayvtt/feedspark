@@ -9170,6 +9170,50 @@
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "var gap=(i&&tkGid(k)!==tkGid(ids[i-1]))?'<tr class=\"t-gap\" aria-hidden=\"true\"><td colspan=\"10\"></td></tr>':'';",
       "pr": 484
+    },
+    {
+      "name": "KWCal: Schuh seeded from the brand's own Customer Marketing Calendar FY27 (Ray 22 Sep 2026, \"import anyhting from Aug/26 onwards\") — 40 moments off a day-column grid",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Schuh:{events:[",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a Schuh moment that opened before the Aug-2026 import window is KEPT and says so, rather than dropped for starting in July",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Opened before this import window",
+      "min": 5,
+      "pr": 0
+    },
+    {
+      "name": "KWCal: where a calendar cell names its own launch date it wins over the merged grid block, which is a content window drawn to fit the row",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "that date wins over the grid",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: the Schuh search-peak lane is the calendar's own weekly demand FORECAST, not a commitment — and it is out of phase with the launches",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "Predicted search peak",
+      "min": 7,
+      "pr": 0
+    },
+    {
+      "name": "KWCal: Schuh FY27 is a UK & ROI calendar — no moment pins a market, and nothing in it is German",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "do NOT brief Schuh DE off this calendar",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: a brand names its own four lanes for DISPLAY only (LANE_NAMES) — the keys, colours, stored events and tie-matching never move",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "var LANE_NAMES=",
+      "pr": 0
+    },
+    {
+      "name": "KWCal: Schuh seed + lane-name assertions in the tie harness",
+      "file": "tools/test_kwcal_tie.mjs",
+      "pattern": "the Schuh FY27 ingest",
+      "pr": 0
     }
   ]
 }
