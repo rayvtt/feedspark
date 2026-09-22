@@ -192,6 +192,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Golden Record at 390px WITH a scanned feed (rows fit, no rescue frames, pop-ups on screen)"
   NODE_PATH=$(npm root -g) node tools/check_grmobile.js || {
     echo "✗ Golden Record phone tripwire failed — a scanned attribute row, a section or a pop-up runs past a 390px screen"; exit 1; }
+  echo "── validating: KWCal client PDF — every Workflow stage collapses to a client word"
+  NODE_PATH=$(npm root -g) node tools/test_kwcal_stages.mjs || {
+    echo "✗ KWCal stage-map tripwire failed — a pipeline stage has no client word, so the PDF paints live work as Scheduled"; exit 1; }
   echo "── validating: KWCal client PDF — one click (no dialog), and the reported results are on it"
   NODE_PATH=$(npm root -g) node tools/test_kwcal_pdf.mjs || {
     echo "✗ KWCal client-PDF tripwire failed — the print dialog came back, or a result went missing from the file"; exit 1; }
