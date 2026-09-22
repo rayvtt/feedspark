@@ -427,68 +427,150 @@ window.addEventListener('load',restore);
      nothing there, but fitPdf() can un-hide it for a moment and MEASURE the real laid-out height.
      With them print-only, the measurement saw unstyled content and shrank the page to two-thirds.
      Colours are hard-coded (never var()) so the PDF is on-brand whichever theme Ray is in. */
-  #pdf-doc{display:none;font-family:Lato,system-ui,sans-serif;color:#333;line-height:1.35}
-  #pdf-doc .pd-head{display:flex;align-items:flex-end;gap:14px;border-bottom:2.5px solid #ED6F0B;padding-bottom:7px;margin-bottom:9px}
-  #pdf-doc .pd-brand{font-size:16px;font-weight:900;color:#333;flex:none;line-height:1.1}
+  /* ---- THE CLIENT DOCUMENT'S DESIGN SCALE (Ray, 22 Sep 2026: "redesign it so the headlines and
+     the footer have a bit more margin and look more premium … Use an Apple design scale or design
+     theory") -------------------------------------------------------------------------------
+     Three Apple HIG principles, applied as TOKENS rather than as a pass of nudged numbers, so the
+     next person can read the system off the stylesheet instead of guessing which 8.5px mattered:
+
+     1. A 4pt SPACING GRID. Every margin, pad and gap below is a multiple of --u. The old sheet ran
+        on 1, 1.5, 2, 3, 4, 5, 6, 7, 9, 13, 14px — no rhythm, so nothing lined up and the eye had
+        nothing to rest on.
+     2. A MODULAR TYPE SCALE, six steps, each a clear jump from the last (ratios 1.15–1.54). The old
+        sheet had ELEVEN sizes between 6.5 and 16px, several a half-pixel apart: at print size a
+        7.5px label and an 8px label are the same size, so the hierarchy was doing no work.
+     3. TRACKING, Apple's signature: large type is set TIGHT (negative) and small uppercase labels
+        are set LOOSE. It is most of why a headline reads as designed rather than merely bold.
+
+     And WEIGHT RESTRAINT, which is the other half of "premium": the old document set almost every
+     element at 700–900, so nothing stood out because everything shouted. There are TWO weights here,
+     400 and 700, and that is not a compromise — it is the principle, and it is also the only honest
+     option, because the page loads Lato at 400/700/900 ONLY. A 500 or 600 anywhere in this sheet
+     would be SYNTHESISED by the browser, and html2canvas rasterises a synthetic weight
+     unpredictably, so the downloaded file would not match the screen. Everything the extra weights
+     were doing is done by size, tracking and the ink ramp instead.
+
+     THE MARGIN RAY ASKED FOR IS A REAL BUG, not just taste: ⬇ Client PDF rasterises #pdf-doc
+     ITSELF (html2canvas) and sizes the page to that capture, so @page margin — the only margin
+     this document had — never applied to the downloaded file at all. It printed edge to edge.
+     --pad gives the element its own page margin, which the capture therefore includes; the print
+     fallback keeps @page on top, which only makes paper roomier. */
+  #pdf-doc{
+    /* 4pt grid */
+    --u:4px;
+    --pad:calc(var(--u) * 7);      /* 28 — the page margin */
+    --gap:calc(var(--u) * 5);      /* 20 — between month blocks */
+    --rule:calc(var(--u) * 5);     /* 20 — space around a section rule */
+    /* type scale: 20 / 13 / 10.5 / 9 / 7.5 / 6.5 */
+    --t-display:20px; --t-title:13px; --t-head:10.5px;
+    --t-body:9px; --t-cap:7.5px; --t-micro:6.5px;
+    /* tracking */
+    --tr-tight:-.022em; --tr-label:.08em;
+    /* ink ramp — primary, secondary, tertiary, quaternary */
+    --ink:#333; --ink-2:#4a4a4a; --ink-3:#8a94a0; --ink-4:#c3c8d0;
+    --line:#E6E6E6; --hair:#F0F0EE;
+    display:none;box-sizing:border-box;padding:var(--pad);background:#fff;
+    font-family:Lato,system-ui,sans-serif;color:var(--ink);line-height:1.45;font-weight:400}
+  #pdf-doc *{box-sizing:border-box}
+
+  /* ---- masthead: the wordmark and the title share a baseline, the rule sits well clear of both */
+  #pdf-doc .pd-head{display:flex;align-items:center;gap:calc(var(--u) * 5);
+    border-bottom:1.5px solid #ED6F0B;padding-bottom:var(--rule);margin-bottom:var(--rule)}
+  #pdf-doc .pd-brand{font-size:var(--t-title);font-weight:700;letter-spacing:var(--tr-tight);
+    color:var(--ink);flex:none;line-height:1}
   #pdf-doc .pd-brand span{color:#ED6F0B}
   #pdf-doc .pd-htxt{flex:1;min-width:0}
-  #pdf-doc .pd-h1{font-size:15px;font-weight:900;letter-spacing:-.01em;line-height:1.15}
-  #pdf-doc .pd-h2{font-size:10.5px;font-weight:800;color:#4a4a4a;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #pdf-doc .pd-kpis{display:flex;gap:6px;flex:none}
-  #pdf-doc .pd-kpi{background:#F7F7F5;border:1px solid #E6E6E6;border-radius:7px;padding:4px 7px;text-align:right;white-space:nowrap}
-  #pdf-doc .pd-kpi .n{font-size:13px;font-weight:900;line-height:1.1;color:#333}
-  #pdf-doc .pd-kpi .l{font-size:7px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#8a94a0;margin-top:1px}
-  /* the calendar — a month block per month, Google-Calendar shaped */
-  #pdf-doc .pd-cal{display:grid;gap:7px}
-  #pdf-doc .pd-m{border:1px solid #E6E6E6;border-radius:8px;padding:6px 7px 5px;background:#fff;break-inside:avoid;min-width:0;overflow:hidden}
-  #pdf-doc .pd-mh{display:flex;align-items:baseline;gap:6px;margin-bottom:4px}
-  #pdf-doc .pd-mh b{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#ED6F0B}
-  #pdf-doc .pd-mh i{font-style:normal;font-size:7.5px;font-weight:700;color:#8a94a0;margin-left:auto}
+  #pdf-doc .pd-h1{font-size:var(--t-display);font-weight:700;letter-spacing:var(--tr-tight);
+    line-height:1.08;color:var(--ink)}
+  #pdf-doc .pd-h2{font-size:var(--t-cap);font-weight:400;color:var(--ink-3);
+    letter-spacing:.01em;margin-top:calc(var(--u) * 1.5);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* a filled chip needs no border as well as a fill — one or the other, never both */
+  #pdf-doc .pd-kpis{display:flex;gap:calc(var(--u) * 1.5);flex:none;align-items:stretch}
+  #pdf-doc .pd-kpi{background:#F7F7F5;border-radius:calc(var(--u) * 2.5);
+    padding:calc(var(--u) * 2) calc(var(--u) * 3);text-align:right;white-space:nowrap}
+  #pdf-doc .pd-kpi .n{font-size:var(--t-title);font-weight:700;line-height:1.1;
+    letter-spacing:var(--tr-tight);color:var(--ink);font-variant-numeric:tabular-nums}
+  #pdf-doc .pd-kpi .l{font-size:var(--t-micro);font-weight:700;text-transform:uppercase;
+    letter-spacing:var(--tr-label);color:var(--ink-3);margin-top:var(--u)}
+
+  /* ---- the calendar. The month blocks lost their boxes: twelve bordered cards is twelve frames
+     competing with the content inside them, and the grid's own gap groups them perfectly well.
+     What is left is a tracked label over a hairline — the month reads as a heading, not a panel. */
+  #pdf-doc .pd-cal{display:grid;gap:var(--gap)}
+  #pdf-doc .pd-m{break-inside:avoid;min-width:0;overflow:hidden}
+  #pdf-doc .pd-mh{display:flex;align-items:baseline;gap:calc(var(--u) * 2);
+    padding-bottom:calc(var(--u) * 1.5);margin-bottom:calc(var(--u) * 2);
+    border-bottom:1px solid var(--line)}
+  #pdf-doc .pd-mh b{font-size:var(--t-head);font-weight:700;text-transform:uppercase;
+    letter-spacing:var(--tr-label);color:#ED6F0B}
+  #pdf-doc .pd-mh i{font-style:normal;font-size:var(--t-cap);font-weight:400;
+    color:var(--ink-3);margin-left:auto}
   #pdf-doc .pd-dow,#pdf-doc .pd-days{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
-  #pdf-doc .pd-dow span{font-size:6.5px;font-weight:900;color:#8a94a0;text-align:center;text-transform:uppercase;padding-bottom:1px}
-  #pdf-doc .pd-d{font-size:7.5px;font-weight:700;color:#c3c8d0;text-align:center;padding:1.5px 0;border-radius:3px}
-  #pdf-doc .pd-d.has{color:#4a4a4a}
-  #pdf-doc .pd-d.on{font-weight:900;color:#fff}
+  #pdf-doc .pd-dow span{font-size:var(--t-micro);font-weight:700;color:var(--ink-4);
+    text-align:center;text-transform:uppercase;letter-spacing:var(--tr-label);
+    padding-bottom:var(--u)}
+  #pdf-doc .pd-d{font-size:var(--t-cap);font-weight:400;color:var(--ink-4);text-align:center;
+    padding:calc(var(--u) * .5) 0;border-radius:calc(var(--u) * 1.5);
+    font-variant-numeric:tabular-nums}
+  #pdf-doc .pd-d.has{color:var(--ink-2)}
+  #pdf-doc .pd-d.on{font-weight:700;color:#fff}
   /* one status palette, shared by the day marks, the agenda dots and the legend swatches */
   #pdf-doc .s-sched{background:#8a94a0}
   #pdf-doc .s-prog{background:#F5A623}
   #pdf-doc .s-live{background:#ED6F0B}
   #pdf-doc .s-done{background:#15803D}
-  #pdf-doc .pd-ags{margin-top:5px;border-top:1px solid #F0F0EE;padding-top:4px;display:flex;flex-direction:column;gap:2px}
-  #pdf-doc .pd-ag{display:flex;align-items:center;gap:5px;font-size:8.5px;font-weight:700;color:#4a4a4a;min-width:0;overflow:hidden}
-  #pdf-doc .pd-ag .ad{flex:none;width:13px;text-align:right;font-weight:900;color:#333;font-variant-numeric:tabular-nums}
+  #pdf-doc .pd-ags{margin-top:calc(var(--u) * 2.5);border-top:1px solid var(--hair);
+    padding-top:calc(var(--u) * 2);display:flex;flex-direction:column;gap:calc(var(--u) * 1.5)}
+  #pdf-doc .pd-ag{display:flex;align-items:center;gap:calc(var(--u) * 1.5);
+    font-size:var(--t-body);font-weight:400;color:var(--ink-2);min-width:0;overflow:hidden}
+  #pdf-doc .pd-ag .ad{flex:none;width:calc(var(--u) * 3.5);text-align:right;font-weight:700;
+    color:var(--ink-3);font-variant-numeric:tabular-nums}
   #pdf-doc .pd-ag .dot{flex:none;width:5px;height:5px;border-radius:50%;display:inline-block}
-  #pdf-doc .pd-ag .an{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800;color:#333}
-  #pdf-doc .pd-ag .an i{font-style:normal;font-weight:700;color:#8a94a0}
-  #pdf-doc .pd-ag .av{flex:none;font-weight:800;color:#8a94a0;font-variant-numeric:tabular-nums}
-  #pdf-doc .pd-ag .rp{flex:none;font-size:8px;font-weight:900;line-height:1}
-  /* RESULTS REPORTED — the figures, not just the verdict pip (Ray, 22 Sep 2026: "add results in
-     where test has recorded"). A result from the moment's OWN brief thread is that moment's
-     alone; a shared fortnightly round reports every optimisation that went live in its window,
-     so its numbers print ONCE with the moments they cover named under them. */
-  #pdf-doc .pd-res{margin-top:8px;border-top:1px solid #E6E6E6;padding-top:6px}
-  #pdf-doc .pd-res h4{margin:0 0 4px;font-size:8.5px;font-weight:900;letter-spacing:.06em;
-    text-transform:uppercase;color:#ED6F0B}
+  #pdf-doc .pd-ag .an{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap;font-weight:700;color:var(--ink)}
+  #pdf-doc .pd-ag .an i{font-style:normal;font-weight:400;color:var(--ink-3)}
+  #pdf-doc .pd-ag .av{flex:none;font-weight:700;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  #pdf-doc .pd-ag .rp{flex:none;font-size:var(--t-cap);font-weight:700;line-height:1}
+
+  /* ---- RESULTS REPORTED — the figures, not just the verdict pip (Ray, 22 Sep 2026: "add results
+     in where test has recorded"). A result from the moment's OWN brief thread is that moment's
+     alone; a shared fortnightly round reports every optimisation that went live in its window, so
+     its numbers print ONCE with the moments they cover named under them. */
+  #pdf-doc .pd-res{margin-top:var(--rule);border-top:1px solid var(--line);padding-top:var(--rule)}
+  #pdf-doc .pd-res h4{margin:0 0 calc(var(--u) * 2);font-size:var(--t-cap);font-weight:700;
+    letter-spacing:var(--tr-label);text-transform:uppercase;color:#ED6F0B}
   /* the grid item is a whole RESULT — its row AND its Covers line — never a loose line: an
      auto-fit column break between the two put "Covers: Denim" alongside a DIFFERENT round, which
      reads as that round's coverage. A client cannot tell that is wrong, which is the worst kind. */
-  #pdf-doc .pd-rrows{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:3px 16px}
+  #pdf-doc .pd-rrows{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:calc(var(--u) * 2) calc(var(--u) * 6)}
   #pdf-doc .pd-rg{min-width:0;break-inside:avoid}
-  #pdf-doc .pd-rr{display:flex;align-items:baseline;gap:5px;font-size:8.5px;font-weight:700;color:#4a4a4a;min-width:0}
-  #pdf-doc .pd-rr .rv{flex:none;font-size:8px;font-weight:900;line-height:1}
-  #pdf-doc .pd-rr .rn{flex:none;font-weight:900;color:#333}
-  #pdf-doc .pd-rr .rm{flex:1 1 0;min-width:0;color:#4a4a4a}
-  #pdf-doc .pd-rr .rm b{font-weight:900;color:#333}
-  #pdf-doc .pd-rr .rw{flex:none;color:#8a94a0;font-weight:700}
-  #pdf-doc .pd-rc{margin:0 0 2px 14px;font-size:8px;font-weight:700;color:#8a94a0;line-height:1.4}
-  /* legend + the one explanatory line that replaces the old methodology card */
-  #pdf-doc .pd-legend{display:flex;align-items:center;flex-wrap:wrap;gap:4px 13px;margin-top:8px;font-size:8px;font-weight:700;color:#4a4a4a}
-  #pdf-doc .pd-legend>span{display:inline-flex;align-items:center;gap:4px}
+  #pdf-doc .pd-rr{display:flex;align-items:baseline;gap:calc(var(--u) * 1.5);
+    font-size:var(--t-body);font-weight:400;color:var(--ink-2);min-width:0}
+  #pdf-doc .pd-rr .rv{flex:none;font-size:var(--t-cap);font-weight:700;line-height:1}
+  #pdf-doc .pd-rr .rn{flex:none;font-weight:700;color:var(--ink)}
+  #pdf-doc .pd-rr .rm{flex:1 1 0;min-width:0;color:var(--ink-2)}
+  #pdf-doc .pd-rr .rm b{font-weight:700;color:var(--ink)}
+  #pdf-doc .pd-rr .rw{flex:none;color:var(--ink-3);font-weight:400;font-variant-numeric:tabular-nums}
+  #pdf-doc .pd-rc{margin:calc(var(--u) * .5) 0 0 calc(var(--u) * 3.5);font-size:var(--t-cap);
+    font-weight:400;color:var(--ink-3);line-height:1.5}
+
+  /* ---- legend + the one explanatory line that replaces the old methodology card */
+  #pdf-doc .pd-legend{display:flex;align-items:center;flex-wrap:wrap;
+    gap:calc(var(--u) * 1.5) calc(var(--u) * 5);margin-top:var(--rule);
+    font-size:var(--t-cap);font-weight:700;color:var(--ink-2)}
+  #pdf-doc .pd-legend>span{display:inline-flex;align-items:center;gap:calc(var(--u) * 1.5)}
   #pdf-doc .pd-legend .sw{width:7px;height:7px;border-radius:2px;display:inline-block}
-  #pdf-doc .pd-legend .ln{display:block;color:#8a94a0;flex:1;min-width:200px;line-height:1.45}
-  #pdf-doc .pd-foot{margin-top:7px;padding-top:5px;border-top:1px solid #E6E6E6;font-size:8px;font-weight:700;color:#8a94a0;
-    display:flex;justify-content:space-between;gap:14px}
-  #pdf-doc .pd-intro{font-size:11.5px;color:#4a4a4a;line-height:1.6;margin:0}
+  #pdf-doc .pd-legend .ln{display:block;color:var(--ink-3);flex:1;min-width:200px;
+    font-weight:400;line-height:1.55}
+  /* the footer gets the most air in the document: it is the last thing before the page edge, and
+     a signature line crowded against the paper's edge is the single clearest tell of a document
+     nobody laid out */
+  #pdf-doc .pd-foot{margin-top:calc(var(--u) * 7);padding-top:calc(var(--u) * 3);
+    border-top:1px solid var(--line);font-size:var(--t-cap);font-weight:400;color:var(--ink-3);
+    letter-spacing:.01em;display:flex;justify-content:space-between;gap:calc(var(--u) * 5)}
+  #pdf-doc .pd-intro{font-size:var(--t-head);color:var(--ink-2);line-height:1.6;margin:0}
   @page{size:A4 landscape;margin:9mm 10mm}
   @media print{
     html,body{background:#fff!important;color:#333!important}
@@ -1956,8 +2038,11 @@ function fitPdf(){
   var keep=doc.getAttribute('style')||'';
   function fits(k){                        // widen by 1/k, scale by k — so the sheet is still filled
     var w=Math.round(W/k);
-    doc.style.cssText='display:block;position:fixed;left:-10000px;top:0;visibility:hidden;'
-      +'font-family:Lato,system-ui,sans-serif;line-height:1.35;width:'+w+'px';
+    // ONLY what measuring requires — never typography. Re-stating font-family/line-height here
+    // duplicated the stylesheet, and the two drifted the moment the document's leading changed:
+    // fitPdf measured a 1.35 document, the page rendered at 1.45, so the scale it chose was too
+    // large and the print fallback silently paginated. The stylesheet is the one source of truth.
+    doc.style.cssText='display:block;position:fixed;left:-10000px;top:0;visibility:hidden;width:'+w+'px';
     return doc.scrollHeight*k<=H && doc.scrollWidth<=w+1; }
   // Monotonic in k (smaller k = more width, less height), so binary-search the LARGEST scale that
   // still fits. The range goes ABOVE 1 deliberately: a sparse calendar that merely "fits" left a
@@ -2025,8 +2110,9 @@ function exportPdf(){
     // rasterise at the fitted layout's OWN width: html2canvas needs real pixels, and the PDF page
     // is then cut to the capture's aspect ratio, so it is one page by construction rather than by
     // a paginator's opinion
-    doc.style.cssText='display:block;position:fixed;left:-10000px;top:0;z-index:-1;'
-      +'font-family:Lato,system-ui,sans-serif;line-height:1.35;background:#fff;width:'+Math.round(1047/k)+'px';
+    // as in fitPdf: position and width only. Typography restated here would be captured INTO the
+    // downloaded file, so the client's PDF would not match the document this stylesheet describes.
+    doc.style.cssText='display:block;position:fixed;left:-10000px;top:0;z-index:-1;width:'+Math.round(1047/k)+'px';
     if(!document.fonts)return null;
     // html2canvas measures text against its OWN font-loading state; capturing before Lato's
     // weights land runs words together (the bug QA caught on /golden's export)

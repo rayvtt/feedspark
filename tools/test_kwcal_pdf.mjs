@@ -17,6 +17,7 @@
  *
  * Run: NODE_PATH=$(npm root -g) node tools/test_kwcal_pdf.mjs   (presync) */
 import { createRequire } from 'node:module';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -24,6 +25,7 @@ const req = createRequire(path.join(process.env.NODE_PATH || '/usr/lib/node_modu
 let chromium;
 try { ({ chromium } = req('playwright')); } catch { console.log('· playwright unavailable — skipped'); process.exit(0); }
 const D = path.resolve(__dirname, '..', 'docs');
+const root = path.resolve(__dirname, '..');
 
 let fail = 0;
 const ok = (n, c, x) => { if (c) console.log('   ✓ ' + n); else { fail++; console.log('   ✗ ' + n + (x !== undefined ? ' — ' + JSON.stringify(x) : '')); } };
@@ -159,6 +161,90 @@ const retry = await page.evaluate(async () => {
   return { printed: window.__printed, saved: window.__saved };
 });
 ok('the next click tries the download again rather than staying on the dialog forever', !!retry.saved && retry.printed === 0, retry);
+
+console.log('-- the design scale holds --');
+/* Ray, 22 Sep 2026: "redesign it so the headlines and the footer have a bit more margin and look
+ * more premium … Use an Apple design scale or design theory". Three things below are the system,
+ * and one is the bug the redesign uncovered. */
+const src = fs.readFileSync(path.join(root, 'docs', 'FeedSpark_KWCal.html'), 'utf8');
+const css = src.slice(src.indexOf("THE CLIENT DOCUMENT'S DESIGN SCALE"), src.indexOf('.pd-intro{font-size'));
+const tok = (n) => { const m = new RegExp('--' + n + ':\\s*([^;]+);').exec(css); return m && m[1].trim(); };
+
+// 1. THE 4pt GRID. Every space is a multiple of the unit — that is what makes things line up.
+ok('the document declares a spacing unit', tok('u') === '4px', tok('u'));
+const spaces = [...css.matchAll(/calc\(var\(--u\)\s*\*\s*([0-9.]+)\)/g)].map((m) => parseFloat(m[1]));
+ok('every space is expressed in units of that grid, not hand-picked pixels', spaces.length > 20, spaces.length);
+const offGrid = spaces.filter((n) => (n * 4) % 2 !== 0);
+ok('…and every one lands on the 4pt grid or its half-step', offGrid.length === 0, offGrid);
+// a raw px margin/padding/gap is how the old sheet's 1/1.5/3/5/7/9/13px soup got in
+// NB the value must stop at `}` as well as `;` — the last declaration in a rule has no
+// semicolon, so [^;]+ ran straight into the next rule and reported its width as a raw margin
+const raw = [...css.matchAll(/(?:margin|padding|gap)[a-z-]*:\s*([^;}]+)[;}]/g)]
+  .flatMap((m) => m[1].match(/(?<![-\w.])\d*\.?\d+px/g) || []).filter((v) => v !== '1px');
+ok('no hand-picked pixel spacing survives (1px hairlines aside)', raw.length === 0, raw);
+
+// 2. THE TYPE SCALE. Six steps, each a real jump — the old sheet had eleven sizes, several a half
+// pixel apart, which at print size is no hierarchy at all.
+const scale = ['t-display', 't-title', 't-head', 't-body', 't-cap', 't-micro'].map((n) => parseFloat(tok(n)));
+ok('six type steps, all declared', scale.filter((n) => n > 0).length === 6, scale);
+ok('strictly descending', scale.every((n, i) => !i || n < scale[i - 1]), scale);
+const ratios = scale.slice(1).map((n, i) => +(scale[i] / n).toFixed(3));
+const flat = ratios.filter((r) => r < 1.1);
+ok('every step is a jump the eye can read at print size (≥1.1×)', flat.length === 0, { ratios, flat });
+ok('tracking is set tight on large type and loose on small labels',
+  parseFloat(tok('tr-tight')) < 0 && parseFloat(tok('tr-label')) > 0, [tok('tr-tight'), tok('tr-label')]);
+
+// 3. TWO WEIGHTS, and not by taste: the page loads Lato 400/700/900, so a 500 or 600 anywhere in
+// this sheet is SYNTHESISED, and html2canvas rasterises a synthetic weight unpredictably — the
+// downloaded file would not match the screen.
+const weights = [...new Set([...css.matchAll(/font-weight:(\d+)/g)].map((m) => m[1]))].sort();
+ok('the client document uses exactly two weights', weights.join() === '400,700', weights);
+const imp = /family=Lato:wght@([0-9;]+)/.exec(src);
+ok('…and the font actually loads both', imp && weights.every((w) => imp[1].split(';').includes(w)), true);
+
+// 4. THE MARGIN RAY ASKED FOR — and it was a bug, not a preference: ⬇ Client PDF rasterises
+// #pdf-doc itself, so @page margin never reached the downloaded file. It printed edge to edge.
+ok('the page margin is expressed on the grid', /calc\(var\(--u\)/.test(tok('pad')), tok('pad'));
+ok('…and it is box-sizing:border-box, so the fit still measures the printable column',
+  /#pdf-doc\{[^}]*box-sizing:border-box/.test(css), true);
+
+// 5. THE TRAP THE REDESIGN FOUND. fitPdf measured, and exportPdf captured, with their OWN
+// `line-height:1.35` restated inline — so when the stylesheet's leading changed they measured a
+// document that no longer existed, the chosen scale was too large, and the print fallback
+// silently paginated. Typography belongs in the stylesheet and nowhere else.
+const overrides = [...src.matchAll(/doc\.style\.cssText\s*=\s*'([^']*(?:'\s*\+[^']*'[^']*)*)/g)].map((m) => m[0]);
+ok('fitPdf and exportPdf both override the document', overrides.length >= 2, overrides.length);
+const typo = overrides.filter((o) => /line-height|font-family/.test(o));
+ok('neither restates the document’s typography', typo.length === 0, typo);
+
+// 6. …and the constraint it exists to enforce actually holds on the real document. This is the
+// assertion that fails on the pre-fix page.
+const fit = await (async () => {
+  const p2 = await ctx.newPage();
+  await p2.goto('file://' + path.join(D, 'FeedSpark_KWCal.html'));
+  await p2.waitForTimeout(1200);
+  const r = await p2.evaluate(async () => {
+    window.print = function () {};
+    let capW = null;
+    window.html2canvas = function (el) { capW = Math.round(el.getBoundingClientRect().width);
+      return Promise.resolve({ width: 1400, height: 960, toDataURL: () => 'data:image/jpeg;base64,AAA' }); };
+    window.jspdf = { jsPDF: function () { this.addImage = function () {}; this.save = function () {}; } };
+    document.getElementById('pdf').click();
+    await new Promise((r) => setTimeout(r, 1500));
+    const d = document.getElementById('pdf-doc'), k = 1047 / capW, keep = d.getAttribute('style') || '';
+    d.style.cssText = 'display:block;position:fixed;left:-10000px;top:0;visibility:hidden;width:' + capW + 'px';
+    const H = d.scrollHeight, W = d.scrollWidth;
+    d.setAttribute('style', keep);
+    return { k, H, W, capW, hxk: H * k, pad: parseFloat(getComputedStyle(d).paddingLeft) };
+  });
+  await p2.close();
+  return r;
+})();
+ok('the document carries a real page margin — the one the download never had',
+  fit.pad >= 24, fit.pad);
+ok('the scale fitPdf chose really does fit the page box it measures against',
+  fit.hxk <= 718, { ...fit, box: 718 });
+ok('…and does not overflow its own width', fit.W <= fit.capW + 1, fit);
 
 ok('no page errors throughout', errs.length === 0, errs);
 await browser.close();

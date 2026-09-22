@@ -9469,6 +9469,36 @@
       "file": "docs/BUILDSUGGEST.md",
       "pattern": "## The three rules that make it trustworthy",
       "pr": 494
+    },
+    {
+      "name": "KWCal client PDF: a 4pt spacing grid + a six-step modular type scale + tracking, as TOKENS (Ray 22 Sep 2026: \"more margin and look more premium … Use an Apple design scale\")",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "--u:4px;",
+      "pr": 0
+    },
+    {
+      "name": "KWCal client PDF: the document carries its OWN page margin — the download rasterises #pdf-doc, so @page never reached it and it printed edge to edge",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "--pad:calc(var(--u) * 7)",
+      "pr": 0
+    },
+    {
+      "name": "KWCal client PDF: TWO Lato weights only (400/700) — the page loads 400/700/900, so a 500 or 600 would be synthesised and html2canvas rasterises those unpredictably",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "--t-display:20px;",
+      "pr": 0
+    },
+    {
+      "name": "KWCal client PDF: fitPdf and exportPdf override position and width ONLY — restating line-height made the fit measure a document that no longer existed and the print fallback paginate",
+      "file": "docs/FeedSpark_KWCal.html",
+      "pattern": "ONLY what measuring requires",
+      "pr": 0
+    },
+    {
+      "name": "KWCal client-PDF design-scale assertions (grid, type scale, two weights, page margin, no typography in the overrides, and the fit constraint actually holding)",
+      "file": "tools/test_kwcal_pdf.mjs",
+      "pattern": "the design scale holds",
+      "pr": 0
     }
   ]
 }
