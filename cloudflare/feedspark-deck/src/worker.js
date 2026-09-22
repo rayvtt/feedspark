@@ -152,6 +152,7 @@ import TOUCHW from "../../../docs/touch_widget.html";
 import MAT_SUPERDRY_SR2426 from "../../../docs/materials/Superdry_FeedSpark_Strategy_Review_2024-2026.pptx";
 import MAT_REISS_INTRO_AUG26 from "../../../docs/materials/Reiss_Introduction_Aug26.pptx";
 import MAT_MONSOON_INTRO_AUG26 from "../../../docs/materials/Monsoon_Introduction_Aug26.pptx";
+import MAT_SCHUH_SR_SEP26 from "../../../docs/materials/Schuh_Strategy_Review_Sep26.pptx";
 
 // KWCal client-calendar seeds (docs/calseed/) -- each brand's shared marketing-planner slide,
 // bundled as a Data module and served at /kwcal/cal/<file>. The KWCal page falls back to these
@@ -185,6 +186,12 @@ const SEED_MATERIALS = [
     file: 'Monsoon_Introduction_Aug26.pptx',
     mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     at: '2026-08-21', body: MAT_MONSOON_INTRO_AUG26 },
+  { id: 'schuh-sr-sep26', client: 'Schuh',
+    title: 'Schuh \u00d7 FeedSpark \u2014 Strategy Review, Sep 2026',
+    cat: 'marketing', occasion: 'Strategy Review Sep-26',
+    file: 'Schuh_Strategy_Review_Sep26.pptx',
+    mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    at: '2026-09-22', body: MAT_SCHUH_SR_SEP26 },
 ];
 
 const PAGES = {
