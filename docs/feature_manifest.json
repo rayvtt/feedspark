@@ -7495,10 +7495,17 @@
       "min": 1
     },
     {
-      "name": "PT Guard page: the product_type population card (values per SKU — tree + keyword slots)",
+      "name": "PT Guard page: the product_type depth card (category-path levels, full-width popCard) — replaced the per-SKU population card, Ray 22 Sep 2026",
+      "file": "docs/FeedSpark_ProductTypeGuard.html",
+      "pattern": "function ptDepthCard(dp)",
+      "min": 1
+    },
+    {
+      "name": "PT Guard page: the retired per-SKU population card RETIRED (must stay gone — depth replaced it, Ray 22 Sep 2026)",
       "file": "docs/FeedSpark_ProductTypeGuard.html",
       "pattern": "function ptPopCard(s)",
-      "min": 1
+      "forbidden": true,
+      "pr": 492
     },
     {
       "name": "PT Guard page: brand cards fold individually and all at once (pt-collapse)",
@@ -7513,9 +7520,9 @@
       "min": 1
     },
     {
-      "name": "Guard-cards tripwire: population tables + sheet-backed note + collapse on /labels, /ptypes and /golden's highlight row",
+      "name": "Guard-cards tripwire: population/depth tables + sheet-backed note + collapse on /labels, /ptypes and /golden's highlight row",
       "file": "tools/test_guardcards.mjs",
-      "pattern": "the population card draws one row per bucket",
+      "pattern": "card draws one row per bucket",
       "min": 1
     },
     {
