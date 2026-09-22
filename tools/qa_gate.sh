@@ -272,6 +272,12 @@ else
   echo "   ✗ phone-layer harness FAILED — see node tools/test_mobile.mjs"; FAIL=1
 fi
 
+if node tools/test_buildsuggest.mjs >/dev/null 2>&1; then
+  echo "   ✓ Build Log suggestion engine"
+else
+  echo "   ✗ Build Log suggestion harness FAILED — see node tools/test_buildsuggest.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3i/7: Scheduled Work (the content team's sheet → skip cadence per brand)"
 if node tools/test_schedule.mjs >/dev/null 2>&1; then
   echo "   ✓ header layouts, DDMM tab dating, the AM's word + month streaks hold; the snapshot still reads"
