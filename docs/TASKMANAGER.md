@@ -638,6 +638,71 @@ One trap the harness itself had to learn: the real `/api/state` PUT echoes the *
 and the page adopts what it returns, so a stub answering `{}` wipes every tag the instant it is
 saved — and the test would have reported the product broken when it was the fixture.
 
+### is_urgent — the Task Manager's own judgement, beside the tag
+
+Ray, 22 Sep 2026: *"can you bring in the is_urgent from FR mcp? it'll be used to cross-check with
+my tag."*
+
+**The live book was checked before a line was written, and it is not the shape either of us
+assumed:**
+
+| what we expected | what the MCP actually has |
+|---|---|
+| `is_urgent` on a task row | **not there.** 18,000+ task rows across every worked market carry `priority: "20"` and nothing resembling urgency |
+| or at least on the ticket list | **not there.** `get_tickets_for_client` returns 19 fields; urgency is not one |
+| a task → ticket join to hang it on | **not there.** `ticket_id` is **0 on every one** of those 18,000 rows |
+
+`is_urgent` exists in exactly one place: **`get_ticket_detail`** — one call, one ticket.
+
+That last row is the one that decides the design. The link does exist in the source database (a
+ticket row states its own `task_count`), but the task payload does not carry it, so **a task
+cannot be asked whether its ticket was urgent.** Matching them on title or wording would be
+precisely the fuzzy-unattended matching every other lane in the FCC refuses.
+
+**So the two readings are shown side by side and never reconciled.** The cross-check band under
+*Where the hours went* prints:
+
+- **the tag** — your judgement, on **tasks**, in task hours, with the share of those hours judged
+  at all; and
+- **the Task Manager's flag** — on **tickets**, in the hours the TM itself attributes to them,
+  with how many tickets have been read and how many have not.
+
+…then says in words why there is no third number: *"a tag is your judgement about a task,
+`is_urgent` is a flag on a ticket, and the reports database carries no ticket id on a task row —
+so nothing here adds them together or scores them for agreement."* What the pair is genuinely good
+for is the thing the tag was built for: **a second opinion on how reactive an account is, from a
+source that has no idea what you tagged.** A wide gap means one of the two is seeing work the
+other is not, and that is the finding.
+
+**Reading it costs a call per ticket**, so it rides a rotation of its own (`urgPlan`), right after
+the queue pull, on the queue that firing just read — `URG_TICKETS` (12) at a time, never-read
+tickets first so a queue's tail cannot starve. A **closed** ticket read once is never re-read (its
+urgency is final); an open one comes round again after `URG_TTL_DAYS` (21), because anyone can
+flag a live ticket at any point.
+
+**Only the flag is stored.** The same call also answers with `body_plain` — the whole client email
+thread — plus `to` and `cc`. None of it is read and none of it is written: `tmurg:<client>` holds
+ticket ids, read timestamps and a boolean, and the harness asserts that no email body, no client
+address and not even a ticket subject reaches KV. It is its **own key**, not folded onto
+`tmtick:<client>`, because the queue pull rewrites that record wholesale and folding would wipe
+the flags every time the queue came round — the lesson `keepQual` learned on the Golden Record.
+It merges back on **read**.
+
+**Three states, never two.** Flagged, read-and-not-flagged, and **not read yet**. The Tickets tab
+prints *"not read"* rather than a calm dash for the third, and `urgent:` joins the search grammar
+with all three answers — `urgent:yes`, `urgent:no` (read **and** not flagged), `urgent:none` (not
+read). Unlike two-state `bill:`, a list here is a real question: `urgent:yes,none` is *everything
+I have not ruled out*. A **task** query naming `urgent:` returns nothing rather than ignoring the
+filter — the same rule `matchTicket` already follows for `owner:`/`market:`/`cat:`.
+
+The share the band prints is of hours on tickets **actually read** — putting unread tickets in the
+denominator would make the figure fall every time the queue grew.
+
+Harness: `tools/test_reporttasks.mjs` pins the rotation (never-read first, closed-never-again, the
+TTL, the cap), the three states through both the engine and the page twin, the grammar, and —
+against the in-process stub MCP — that the worker calls `get_ticket_detail`, stores the flag, and
+stores **nothing else** from an answer that also carried an email body and two client addresses.
+
 ### Account type
 
 **Split by → Account type** is the *other* type the database holds: `client_type` from the accounts

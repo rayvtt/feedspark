@@ -41,6 +41,8 @@ import { buildVolumes, monthKey as volMonthKey, monthRange as volMonthRange } fr
 import { buildDueReminders, dd8 as remDay, OWNER_EMAILS } from "./taskremind.js";
 import { aggregateClientList } from "./tmparse.js";
 import * as TMM from "./tmmcp.js";
+// Build Log suggestions — the candidate plays ranked against the FCC's own live signals
+import * as BSG from "./buildsuggest.js";
 // FS TASK MANAGER (/tasks, Ray 16 Sep 2026) — the query engine and the book store behind the
 // module: normalising a pulled task or ticket row, the 12-month window, the market rotation,
 // and the search grammar the page carries a twin of. Pure; tmBookPull does the I/O around it.
@@ -1505,6 +1507,39 @@ export default {
       return json({ ...data, live: { sha: env.GIT_SHA || '' } });
     }
 
+    // ---- Build Log SUGGESTIONS (Ray, 22 Sep 2026: "within Build Log also start suggesting the
+    // top five new features to build for FCC to improve revenue, churn, client retention, AM
+    // efficiency, increase billable hours, or reduce the time taken for each account work").
+    // Every candidate play is scored against a number read off the live stores here and handed to
+    // the pure engine; a store that has never synced comes back as UNREAD, never as a zero. Owner
+    // only, like the rest of the Build Log — these figures are the whole book at once.
+    if (path === '/api/buildsuggest' && request.method === 'GET') {
+      if (!realOwner(env, request)) return json({ error: 'restricted to the account owner' }, 403);
+      const now = Date.now();
+      const [tm, skip, golden, arrivals] = await Promise.all([
+        env.EDITS.get('tmidx', 'json'), env.EDITS.get('schedskip', 'json'),
+        env.EDITS.get('goldenidx', 'json'), env.EDITS.get('voldobidx', 'json'),
+      ]);
+      const briefs = liftEnvelope(await env.EDITS.get('briefs', 'json'), now).data || {};
+      const quotes = liftEnvelope(await env.EDITS.get('aiquotesaved', 'json'), now).data || {};
+      // wired Google Shopping feeds vs the ones the Golden Record index has ever scored
+      const roster = await feedRoster(env);
+      const wiredKeys = roster.filter((f) => f.src && (f.src.id || f.src.xml) && !/-fb$/.test(String(f.mkt || '')))
+        .map((f) => lgKey(f.client, f.mkt));
+      const gi = golden || {};
+      const feeds = { wired: wiredKeys.length, scanned: wiredKeys.filter((k) => gi[k] && gi[k].t).length };
+      // the roster the quiet-account rule measures against: brands carrying a wired feed or a plan
+      const clients = Array.from(new Set(roster.map((f) => f.client).filter(Boolean)));
+      // what is already somebody's job: the queue, the open PRs and everything merged
+      const queue = liftEnvelope(await env.EDITS.get('buildqueue', 'json'), now).data || {};
+      const bl = (await env.EDITS.get('buildlog:gh', 'json')) || (await env.EDITS.get('buildlog:gh:stale', 'json')) || {};
+      const done = Object.keys(queue).filter((k) => queue[k] && queue[k].status !== 'dropped')
+        .map((k) => ({ title: queue[k].title || '', where: 'queue' }))
+        .concat(((bl.pulls) || []).map((p) => ({ title: p.t || '', where: p.m ? 'shipped' : 'in build' })));
+      const out = BSG.suggest({ tm, skip, quotes, briefs, golden: gi, arrivals, feeds, clients, now }, done);
+      return json(out);
+    }
+
     // ---- test & experiment register (Workflow) — a single JSON array of test cards ----
     if (path === '/api/tests') {
       if (request.method === 'GET') return json((await env.EDITS.get('tests', 'json')) || []);
@@ -1967,7 +2002,13 @@ export default {
       const books = [], queues = [];
       for (const n of names) {
         const b = await env.EDITS.get('tmbook:' + n, 'json'); if (b) books.push(b);
-        const q = await env.EDITS.get('tmtick:' + n, 'json'); if (q) queues.push(Object.assign({ client: n }, q));
+        const q = await env.EDITS.get('tmtick:' + n, 'json');
+        if (q) {
+          // the is_urgent flags live in their own key (their own MCP call writes them); merged
+          // here so the queue record itself stays exactly what packQueue produced
+          const u = await env.EDITS.get('tmurg:' + n, 'json');
+          queues.push(Object.assign({ client: n }, q, u ? { urg: u } : {}));
+        }
       }
       const accounts = (idx.accounts || []).filter((a) => clientMatch(acc.clients, a.client));
       const data = TB.assembleBook(books, queues, accounts, Date.now());
@@ -2899,6 +2940,37 @@ async function tmBookPull(env, opts) {
       if (!idx.clients[q.client]) idx.clients[q.client] = { at: now, markets: 0 };
       idx.qrot[q.tid] = now;
       st.queues.push(q.client + ' (' + rec.n + ')');
+    }
+
+    /* IS_URGENT — its own lane, because it is its own CALL. The flag exists nowhere but
+       get_ticket_detail: one request, one ticket (verified against the live book 22 Sep 2026 —
+       it is on neither the task rows nor the ticket list). So it rides a rotation of its own,
+       URG_TICKETS at a time on the queue this firing just read, never-read tickets first.
+
+       WHAT IS KEPT IS THE FLAG AND NOTHING ELSE. get_ticket_detail also answers with
+       `body_plain` — the whole client email thread — plus `to` and `cc`. None of that is read
+       here and none of it is written anywhere: this store holds ticket ids and a boolean. */
+    const uplan = qplan.length ? qplan : [];
+    for (const q of uplan) {
+      const tickRec = (await env.EDITS.get('tmtick:' + q.client, 'json')) || null;
+      if (!tickRec || !tickRec.rows || !tickRec.rows.length) continue;
+      let urg = (await env.EDITS.get('tmurg:' + q.client, 'json')) || { client: q.client, read: {}, urgent: {} };
+      const tickets = tickRec.rows.map((a) => TB.unpackTicket(a, q.client, ''));
+      const want = TB.urgPlan(tickets, urg, opts.details == null ? TB.URG_TICKETS : opts.details, now);
+      let read = 0;
+      for (const t of want) {
+        let det = null;
+        try { det = await mcp.call('get_ticket_detail', { client_id: q.tid, ticket_id: t.id }); } catch (e) { break; }
+        const row = (det && det.ticket_id != null) ? det : (TMM.rowsOf(det) || [])[0];
+        if (!row || row.ticket_id == null) continue;
+        urg = TB.urgApply(urg, row.ticket_id, !!row.is_urgent, now);
+        read++;
+      }
+      if (read) {
+        urg.total = tickets.length;
+        try { await env.EDITS.put('tmurg:' + q.client, JSON.stringify(urg)); } catch (e) {}
+        st.urgent = (st.urgent || []).concat(q.client + ' (' + read + ' read, ' + Object.keys(urg.urgent || {}).length + ' urgent of ' + urg.n + ')');
+      }
     }
 
     idx.at = now;

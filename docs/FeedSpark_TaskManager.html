@@ -338,7 +338,7 @@ window.addEventListener('load',restore);
       <span>Narrow it:</span>
       <code data-ins="client:">client:</code><code data-ins="owner:">owner:</code><code data-ins="market:">market:</code>
       <code data-ins="cat:opt">cat:opt</code><code data-ins="status:open">status:open</code>
-      <code data-ins="bill:no">bill:no</code><code data-ins="from:2026-04">from:</code><code data-ins="min:2">min:</code>
+      <code data-ins="bill:no">bill:no</code><code data-ins="urgent:yes">urgent:yes</code><code data-ins="from:2026-04">from:</code><code data-ins="min:2">min:</code>
       <span>· <code data-ins="&quot;&quot;">"exact phrase"</code> · <code data-ins="-call">-exclude</code>
         · <code data-ins=",">a,b</code> either</span>
     </div>
@@ -366,6 +366,9 @@ window.addEventListener('load',restore);
     <div class="dp-leg" id="dpleg"></div>
     <div class="verdict" id="dpverdict" data-instr></div>
     <div class="dp-cov" id="dpcov" data-instr></div>
+    <!-- THE CROSS-CHECK (Ray, 22 Sep 2026): the Task Manager's own is_urgent, beside the tag.
+         Two rows, never one number — they are not two measurements of one quantity. -->
+    <div class="xchk" id="dpxchk" hidden></div>
   </section>
 
   <section class="card" id="chartcard">
@@ -442,6 +445,21 @@ window.addEventListener('load',restore);
   #dispcard .dp-leg span{display:inline-flex;align-items:center;gap:6px}
   #dispcard .dp-leg i{width:9px;height:9px;border-radius:2px;flex:0 0 9px}
   #dispcard .dp-leg b{font-variant-numeric:tabular-nums}
+  /* the cross-check: two labelled readings on one rule, and the sentence that says why they are
+     not added together */
+  .xchk{margin-top:12px;border-top:1px solid var(--line,#E6E6E6);padding-top:10px}
+  .xchk .xh{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:8px}
+  .xchk .xr{display:flex;align-items:baseline;gap:10px;padding:5px 0;font-size:13px;flex-wrap:wrap}
+  .xchk .xr .xn{font-weight:900;font-variant-numeric:tabular-nums;min-width:74px}
+  .xchk .xr .xl{font-weight:700}
+  .xchk .xr .xs{color:var(--muted);font-size:12px}
+  .xchk .xwhy{margin-top:8px;font-size:12px;color:var(--muted);line-height:1.5}
+  .u-yes{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:100px;
+    font-size:11px;font-weight:800;background:#FEE2E2;border:1px solid #FCA5A5;color:#B91C1C}
+  .u-no{color:var(--muted)}
+  .u-none{font-size:11.5px;color:var(--muted);font-style:italic}
+  [data-theme=dark] .u-yes{background:#3A1D1D;border-color:#7F3030;color:#F7A9A9}
   #dispcard .dp-cov{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.55}
   #dispcard .dp-cov b{color:var(--ink)}
   /* tag chips on a task row */
@@ -720,6 +738,7 @@ window.addEventListener('load',restore);
     status: 'status', state: 'status',
     cat: 'cat', category: 'cat', type: 'cat',
     bill: 'bill', billable: 'bill',
+    urgent: 'urgent', urgency: 'urgent',
     tag: 'tag', label: 'tag', tagged: 'tag',
     month: 'month',
     from: 'from', since: 'from', after: 'from',
@@ -785,6 +804,10 @@ window.addEventListener('load',restore);
           v = vals[j];
           if (k === 'cat') v = CAT_ALIAS[v.toLowerCase()] || v.toLowerCase();
           else if (k === 'bill') v = /^(no|non|nonbill|non-billable|nonbillable|false|0)$/i.test(v) ? 'no' : 'yes';
+          // urgent:none is a THIRD answer, not a synonym for no — a ticket nobody has read yet is
+          // not a ticket somebody looked at and called calm
+          else if (k === 'urgent') v = /^(none|unread|unknown|notread|not-read)$/i.test(v) ? 'none'
+            : /^(no|not|false|0|calm)$/i.test(v) ? 'no' : 'yes';
           (bag[k] = bag[k] || []).push(v);
         }
         continue;
@@ -861,6 +884,9 @@ window.addEventListener('load',restore);
     if (nf.cat && anyHit(t.cat, nf.cat)) return false;
     if (nf.tag && tagHit(t.tags, nf.tag)) return false;
     if (nf.status && (anyHit(t.status, nf.status) || anyHit(t.bucket, nf.status))) return false;
+    // urgency is flagged on a TICKET and this feed carries no ticket id on a task row, so a task
+    // query naming it has no tasks to offer rather than quietly ignoring the filter
+    if (f.urgent || nf.urgent) return false;
     if (!numOk(t, q)) return false;
     return true;
   }
@@ -881,6 +907,11 @@ window.addEventListener('load',restore);
     if (nf.client && anyHit(t.client, nf.client)) return false;
     if (nf.status && anyHit(t.status, nf.status)) return false;
     if (f.owner || f.market || f.cat || f.bill || f.tag) return false;
+    // THREE states, so a list is a real question ("flagged, or not yet looked at" = everything
+    // I have not ruled out) — unlike two-state bill:, where an alternation means nothing
+    var us = t.urgent == null ? 'none' : t.urgent ? 'yes' : 'no';
+    if (f.urgent && f.urgent.indexOf(us) < 0) return false;
+    if (nf.urgent && nf.urgent.indexOf(us) >= 0) return false;
     return true;
   }
 
@@ -1037,6 +1068,36 @@ window.addEventListener('load',restore);
     o.ratio = o.optHours ? Math.round((o.dispHours / o.optHours) * 100) / 100 : 0;
     return o;
   }
+
+  /* IS_URGENT — THE TASK MANAGER'S OWN JUDGEMENT, KEPT APART FROM THE TAG (Ray, 22 Sep 2026:
+     "can you bring in the is_urgent from FR mcp? it'll be used to cross-check with my tag").
+
+     The live book decides the shape: `is_urgent` is on NEITHER a task row nor the ticket list —
+     only on get_ticket_detail, one call per ticket — and `ticket_id` is 0 on every one of the
+     18,000+ task rows checked, so a task cannot be asked whether its ticket was urgent.
+
+     So this returns TWO readings and never one: `tag` is judged on TASKS, `tm` is flagged on
+     TICKETS. Nothing subtracts one from the other, because they do not count the same objects. */
+  function urgencyCheck(tasks, tickets, defs) {
+    var tag = displacement(tasks || [], defs || []);
+    var tm = { n: 0, hours: 0, tasks: 0, read: 0, total: 0, unread: 0, pct: 0, readPct: 0, readHours: 0 };
+    var readHours = 0, i, t;
+    for (i = 0; i < (tickets || []).length; i++) {
+      t = tickets[i]; if (!t) continue;
+      tm.total++;
+      if (t.urgent == null) { tm.unread++; continue; }
+      tm.read++; readHours += (t.hours || 0);
+      if (t.urgent) { tm.n++; tm.hours += (t.hours || 0); tm.tasks += (t.tasks || 0); }
+    }
+    tm.hours = r2(tm.hours);
+    // the share is of the hours on tickets actually READ — an unread ticket in the denominator
+    // would make the figure fall every time the queue grew
+    tm.pct = readHours ? Math.round((tm.hours / readHours) * 1000) / 10 : 0;
+    tm.readHours = r2(readHours);
+    tm.readPct = tm.total ? Math.round((tm.read / tm.total) * 1000) / 10 : 0;
+    return { tag: tag, tm: tm, joinable: false };
+  }
+
   function rulePreview(rows, rule, assign) {
     var hits = 0, held = 0, hours = 0;
     for (var i = 0; i < (rows || []).length; i++) {
@@ -1587,6 +1648,38 @@ window.addEventListener('load',restore);
     if (ut) ut.onclick = function (e) { e.preventDefault(); $('q').value = (Q.raw.trim() + ' tag:none').trim(); apply(); };
     $('dpsub').textContent = DEFS().length + ' tag' + (DEFS().length === 1 ? '' : 's') + ' · '
       + RULES().length + ' keyword rule' + (RULES().length === 1 ? '' : 's');
+
+    /* THE CROSS-CHECK (Ray, 22 Sep 2026: "bring in the is_urgent … it'll be used to cross-check
+       with my tag"). The two readings sit on one rule and are NEVER added, differenced or scored
+       for agreement — the live book does not allow it:
+
+         · is_urgent is flagged on a TICKET; the tag is judged on a TASK.
+         · a task row carries no ticket id (0 on every one of 18,000 checked), so no task can be
+           asked whether its ticket was urgent.
+
+       What the pair IS good for is the thing Ray built the tag for: a second opinion on how much
+       of an account is reactive, from a source that has no idea what he tagged. When they
+       disagree badly, one of them is missing something — and that is the finding. */
+    var xc = urgencyCheck(FT, FK, DEFS()), xw = $('dpxchk');
+    if (!xc.tm.total) { xw.hidden = true; } else {
+      xw.hidden = false;
+      var tmLine = xc.tm.read
+        ? '<span class="xn">' + hrs(xc.tm.hours) + ' h</span><span class="xl">flagged urgent in the Task Manager</span>'
+          + '<span class="xs">' + num(xc.tm.n) + ' of ' + num(xc.tm.read) + ' tickets read'
+          + (xc.tm.unread ? ' · ' + num(xc.tm.unread) + ' not read yet' : '')
+          + (xc.tm.tasks ? ' · ' + num(xc.tm.tasks) + ' tasks sit under them' : '') + '</span>'
+        : '<span class="xn">—</span><span class="xl">flagged urgent in the Task Manager</span>'
+          + '<span class="xs">none of these ' + num(xc.tm.total) + ' tickets has been read yet — the flag is fetched one ticket at a time</span>';
+      xw.innerHTML = '<div class="xh">Cross-check · the Task Manager\u2019s own urgency</div>'
+        + '<div class="xr"><span class="xn">' + hrs(xc.tag.dispHours) + ' h</span>'
+        + '<span class="xl">judged ' + esc(dispLabel.toLowerCase()) + ' by the team</span>'
+        + '<span class="xs">' + num(xc.tag.dispN) + ' tasks · ' + xc.tag.coverage + '% of these hours judged at all</span></div>'
+        + '<div class="xr">' + tmLine + '</div>'
+        + '<div class="xwhy">These are <b>two readings, not one figure</b>: a tag is your judgement about a '
+        + '<b>task</b>, <code>is_urgent</code> is a flag on a <b>ticket</b>, and the reports database carries '
+        + 'no ticket id on a task row — so nothing here adds them together or scores them for agreement. '
+        + 'Read them side by side: a gap means one of the two is seeing work the other is not.</div>';
+    }
   }
 
   function typeCell(t) {
@@ -3502,8 +3595,16 @@ window.addEventListener('load',restore);
     { k: 'cat', l: 'Type' }, { k: 'tag', l: 'Tag' }, { k: 'owner', l: 'Who' }, { k: 'bucket', l: 'Status' },
     { k: 'bill', l: 'Billable', num: 1 }, { k: 'nonbill', l: 'Non-bill', num: 1 }, { k: 'hours', l: 'Total', num: 1 }];
   var TK_COLS = [{ k: 'd', l: 'Last activity' }, { k: 'client', l: 'Client' }, { k: 'subject', l: 'Subject' },
-    { k: 'status', l: 'Status' }, { k: 'age', l: 'Age', num: 1 }, { k: 'idle', l: 'Idle', num: 1 },
+    { k: 'status', l: 'Status' }, { k: 'urgent', l: 'Urgent' }, { k: 'age', l: 'Age', num: 1 }, { k: 'idle', l: 'Idle', num: 1 },
     { k: 'msgs', l: 'Msgs', num: 1 }, { k: 'tasks', l: 'Tasks', num: 1 }, { k: 'hours', l: 'Hours', num: 1 }];
+  /* THREE states, not two: flagged, read-and-not-flagged, and NOT READ YET. is_urgent comes from
+     get_ticket_detail — one call per ticket, on its own rotation — so a ticket the rotation has
+     not reached has no answer, and printing a calm dash there would be the page inventing one. */
+  function urgCell(t) {
+    if (t.urgent == null) return '<span class="u-none" title="the urgency flag for this ticket has not been read yet — it is fetched one ticket at a time">not read</span>';
+    if (t.urgent) return '<span class="u-yes" title="flagged urgent in the Task Manager">Urgent</span>';
+    return '<span class="u-no" title="read, and not flagged urgent in the Task Manager">\u2014</span>';
+  }
   var AC_COLS = [{ k: 'client', l: 'Client' }, { k: 'market', l: 'Market' }, { k: 'group', l: 'Group' },
     { k: 'am', l: 'AM' }, { k: 'am2', l: 'Second' }, { k: 'allowance', l: 'Allowance', num: 1 },
     { k: 'used', l: 'Used', num: 1 }, { k: 'balance', l: 'Balance', num: 1 }, { k: 'status', l: 'State' }];
@@ -3676,6 +3777,7 @@ window.addEventListener('load',restore);
           + '<td>' + esc(t.d) + '</td><td class="b">' + esc(t.client) + '</td>'
           + '<td class="ttl"><span class="tt b">' + esc(t.subject) + '</span><span class="nt">' + esc(t.from) + '</span></td>'
           + '<td><span class="st-p ' + (t.status === 'closed' ? 'done' : t.status === 'ignored' ? 'cancelled' : 'open') + '">' + esc(t.status) + '</span></td>'
+          + '<td>' + urgCell(t) + '</td>'
           + '<td class="num"><span class="age ' + esc(t.level || 'ok') + '">' + num(t.age) + '</span></td>'
           + '<td class="num">' + num(t.idle) + '</td><td class="num">' + num(t.msgs) + '</td>'
           + '<td class="num">' + num(t.tasks) + '</td><td class="num b">' + (t.hours ? hrsCell(t.hours) : '·') + '</td></tr>';
