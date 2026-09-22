@@ -1967,7 +1967,13 @@ export default {
       const books = [], queues = [];
       for (const n of names) {
         const b = await env.EDITS.get('tmbook:' + n, 'json'); if (b) books.push(b);
-        const q = await env.EDITS.get('tmtick:' + n, 'json'); if (q) queues.push(Object.assign({ client: n }, q));
+        const q = await env.EDITS.get('tmtick:' + n, 'json');
+        if (q) {
+          // the is_urgent flags live in their own key (their own MCP call writes them); merged
+          // here so the queue record itself stays exactly what packQueue produced
+          const u = await env.EDITS.get('tmurg:' + n, 'json');
+          queues.push(Object.assign({ client: n }, q, u ? { urg: u } : {}));
+        }
       }
       const accounts = (idx.accounts || []).filter((a) => clientMatch(acc.clients, a.client));
       const data = TB.assembleBook(books, queues, accounts, Date.now());
@@ -2899,6 +2905,37 @@ async function tmBookPull(env, opts) {
       if (!idx.clients[q.client]) idx.clients[q.client] = { at: now, markets: 0 };
       idx.qrot[q.tid] = now;
       st.queues.push(q.client + ' (' + rec.n + ')');
+    }
+
+    /* IS_URGENT — its own lane, because it is its own CALL. The flag exists nowhere but
+       get_ticket_detail: one request, one ticket (verified against the live book 22 Sep 2026 —
+       it is on neither the task rows nor the ticket list). So it rides a rotation of its own,
+       URG_TICKETS at a time on the queue this firing just read, never-read tickets first.
+
+       WHAT IS KEPT IS THE FLAG AND NOTHING ELSE. get_ticket_detail also answers with
+       `body_plain` — the whole client email thread — plus `to` and `cc`. None of that is read
+       here and none of it is written anywhere: this store holds ticket ids and a boolean. */
+    const uplan = qplan.length ? qplan : [];
+    for (const q of uplan) {
+      const tickRec = (await env.EDITS.get('tmtick:' + q.client, 'json')) || null;
+      if (!tickRec || !tickRec.rows || !tickRec.rows.length) continue;
+      let urg = (await env.EDITS.get('tmurg:' + q.client, 'json')) || { client: q.client, read: {}, urgent: {} };
+      const tickets = tickRec.rows.map((a) => TB.unpackTicket(a, q.client, ''));
+      const want = TB.urgPlan(tickets, urg, opts.details == null ? TB.URG_TICKETS : opts.details, now);
+      let read = 0;
+      for (const t of want) {
+        let det = null;
+        try { det = await mcp.call('get_ticket_detail', { client_id: q.tid, ticket_id: t.id }); } catch (e) { break; }
+        const row = (det && det.ticket_id != null) ? det : (TMM.rowsOf(det) || [])[0];
+        if (!row || row.ticket_id == null) continue;
+        urg = TB.urgApply(urg, row.ticket_id, !!row.is_urgent, now);
+        read++;
+      }
+      if (read) {
+        urg.total = tickets.length;
+        try { await env.EDITS.put('tmurg:' + q.client, JSON.stringify(urg)); } catch (e) {}
+        st.urgent = (st.urgent || []).concat(q.client + ' (' + read + ' read, ' + Object.keys(urg.urgent || {}).length + ' urgent of ' + urg.n + ')');
+      }
     }
 
     idx.at = now;

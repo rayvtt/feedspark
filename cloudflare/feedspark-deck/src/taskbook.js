@@ -157,6 +157,8 @@ export function normTicket(row) {
     msgs: num(row.message_count),
     tasks: num(row.task_count),
     hours: r2(num(row.hours_spent)),
+    // only get_ticket_detail states it; on a list row it is absent, and absent is NOT false
+    urgent: row.is_urgent == null ? null : !!row.is_urgent,
   };
 }
 
@@ -173,6 +175,7 @@ export const FIELDS = {
   status: 'status', state: 'status',
   cat: 'cat', category: 'cat', type: 'cat',
   bill: 'bill', billable: 'bill',
+  urgent: 'urgent', urgency: 'urgent',
   tag: 'tag', label: 'tag', tagged: 'tag',
   month: 'month',
   from: 'from', since: 'from', after: 'from',
@@ -255,6 +258,10 @@ export function parseQuery(q) {
       for (let v of vals) {
         if (k === 'cat') v = CAT_ALIAS[v.toLowerCase()] || v.toLowerCase();
         else if (k === 'bill') v = /^(no|non|nonbill|non-billable|nonbillable|false|0)$/i.test(v) ? 'no' : 'yes';
+        // urgent:none is a THIRD answer, not a synonym for no — a ticket nobody has read yet is
+        // not a ticket somebody looked at and called calm
+        else if (k === 'urgent') v = /^(none|unread|unknown|notread|not-read)$/i.test(v) ? 'none'
+          : /^(no|not|false|0|calm)$/i.test(v) ? 'no' : 'yes';
         (bag[k] = bag[k] || []).push(v);
       }
       continue;
@@ -330,6 +337,10 @@ export function matchTask(t, q) {
   }
   if (f.from && !(t.d && t.d >= f.from[0])) return false;
   if (f.to && !(t.d && t.d <= (f.to[0].length === 7 ? f.to[0] + '-31' : f.to[0]))) return false;
+  // urgency is flagged on a TICKET and this feed carries no ticket id on a task row, so a task
+  // query naming it has no tasks to offer rather than quietly ignoring the filter — the rule
+  // matchTicket already follows for owner/market/cat/bill/tag
+  if (f.urgent || nf.urgent) return false;
   if (nf.owner && anyHit(t.owner, nf.owner)) return false;
   if (nf.client && anyHit(t.client, nf.client)) return false;
   if (nf.market && anyHit(t.market, nf.market)) return false;
@@ -358,6 +369,12 @@ export function matchTicket(t, q) {
   // owner/market/cat/bill are task dimensions; a ticket query carrying one simply has no
   // tickets to offer rather than silently ignoring the filter.
   if (f.owner || f.market || f.cat || f.bill || f.tag) return false;
+  // THREE states, so a list is a real question ("flagged, or not yet looked at" = everything I
+  // have not ruled out) — unlike two-state bill:, where an alternation means nothing. urgent:no
+  // is READ AND NOT FLAGGED; an unread ticket answers only to urgent:none.
+  const us = t.urgent == null ? 'none' : t.urgent ? 'yes' : 'no';
+  if (f.urgent && f.urgent.indexOf(us) < 0) return false;
+  if (nf.urgent && nf.urgent.indexOf(us) >= 0) return false;
   return true;
 }
 
@@ -1001,11 +1018,119 @@ export function packQueue(rows, client, win, now) {
       t.origin, t.from, t.age, t.level, t.idle, t.msgs, t.tasks, Math.round(t.hours * 4)]),
   };
 }
-export function unpackTicket(a, client, am) {
-  return { id: a[0], client: client, subject: a[1] || '', status: a[2] || '', d: a[3] || '',
+export function unpackTicket(a, client, am, urg) {
+  const id = a[0];
+  // urgency is written by its OWN lane (the ticket-detail rotation) and merged on READ — the
+  // queue pull rewrites this record wholesale, so folding the flag into it would wipe the flag
+  // every time the queue came round again. The same rule keepQual learned on the Golden Record.
+  const u = urg && urg.read && urg.read[id] != null ? !!(urg.urgent && urg.urgent[id]) : null;
+  return { id: id, client: client, subject: a[1] || '', status: a[2] || '', d: a[3] || '',
     first: a[4] || '', by: a[5] || '', origin: a[6] || '', from: a[7] || '', age: a[8] || 0,
     level: a[9] || '', idle: a[10] || 0, msgs: a[11] || 0, tasks: a[12] || 0,
-    hours: (a[13] || 0) / 4, am: am || '' };
+    hours: (a[13] || 0) / 4, am: am || '', urgent: u };
+}
+
+/* ---------------------------------------------------------------------------------------------
+   IS_URGENT — THE TASK MANAGER'S OWN JUDGEMENT (Ray, 22 Sep 2026: "can you bring in the is_urgent
+   from FR mcp? it'll be used to cross-check with my tag")
+
+   Checked against the live book before a line was written, and the shape is not what either of us
+   assumed:
+
+     · `is_urgent` is NOT on a task row. 18,000+ task rows across every worked market carry
+       `priority: "20"` and nothing else resembling urgency.
+     · It is NOT on the ticket LIST either — get_tickets_for_client returns 19 fields and urgency
+       is not among them.
+     · It exists ONLY on get_ticket_detail: one call, one ticket.
+     · And the join a cross-check would want does not exist: `ticket_id` is **0 on every one** of
+       those 18,000 task rows. The link is in the source database (a ticket row states its own
+       task_count) but the task payload does not carry it.
+
+   So a task cannot be asked whether its ticket was urgent, and the two readings are kept APART
+   rather than reconciled: Ray's tag is a judgement about a TASK, is_urgent is a flag on a TICKET,
+   and the honest thing a surface can do is show both with what each is measured on. Inventing the
+   join by matching titles would be exactly the fuzzy-unattended matching every other lane in the
+   FCC refuses.
+--------------------------------------------------------------------------------------------- */
+
+/** Ticket details to read per firing, and how long a flag stands before it is re-read. */
+export const URG_TICKETS = 12;
+export const URG_TTL_DAYS = 21;
+
+/**
+ * Which ticket details to read next.
+ *
+ * Never-read first (else a queue's tail starves behind whatever the rotation keeps choosing),
+ * then the stalest. A CLOSED ticket read once is never re-read — its urgency is final and
+ * re-reading it would spend the budget on a question already answered; an open one is re-read
+ * after URG_TTL_DAYS because somebody can flag a live ticket at any point.
+ */
+export function urgPlan(tickets, urg, n, now) {
+  const seen = (urg && urg.read) || {};
+  const t = now || Date.now();
+  const ttl = URG_TTL_DAYS * 864e5;
+  const closed = (x) => /closed/i.test(String((x && x.status) || ''));
+  const due = [];
+  for (const x of (Array.isArray(tickets) ? tickets : [])) {
+    if (!x || !x.id) continue;
+    const at = seen[x.id];
+    if (at == null) { due.push({ t: x, at: 0 }); continue; }
+    if (closed(x)) continue;
+    if (t - at >= ttl) due.push({ t: x, at: at });
+  }
+  due.sort((a, b) => (a.at - b.at) || (a.t.id - b.t.id));
+  return due.slice(0, Math.max(0, n | 0)).map((d) => d.t);
+}
+
+/** Fold one detail answer into the store. Only the FLAG is kept — never a body, never an address. */
+export function urgApply(urg, ticketId, isUrgent, now) {
+  const o = urg && typeof urg === 'object' ? urg : {};
+  o.read = o.read || {}; o.urgent = o.urgent || {};
+  const id = Number(ticketId) || 0;
+  if (!id) return o;
+  o.read[id] = now || Date.now();
+  if (isUrgent) o.urgent[id] = 1; else delete o.urgent[id];
+  o.at = now || Date.now();
+  o.n = Object.keys(o.read).length;
+  return o;
+}
+
+/**
+ * The cross-check itself — TWO readings, never one number.
+ *
+ * `tag` is Ray's judgement, on TASKS, in task hours. `tm` is the Task Manager's own flag, on
+ * TICKETS, in the hours the TM itself attributes to those tickets. They are not two measurements
+ * of one quantity, so nothing here subtracts one from the other or reports agreement: a ticket
+ * carries N tasks and this feed will not say which, so a per-row comparison is not available and
+ * claiming one would be a fabrication.
+ *
+ * Coverage travels with BOTH, for the same reason the displacement card carries it: an unread
+ * ticket is not a calm one, and an untagged task is not a routine one.
+ */
+export function urgencyCheck(tasks, tickets, defs) {
+  const tag = displacement(tasks || [], defs || []);
+  const tm = { n: 0, hours: 0, tasks: 0, read: 0, total: 0, unread: 0, pct: 0, readPct: 0 };
+  let readHours = 0;
+  for (const t of (Array.isArray(tickets) ? tickets : [])) {
+    if (!t) continue;
+    tm.total++;
+    if (t.urgent == null) { tm.unread++; continue; }
+    tm.read++; readHours += (t.hours || 0);
+    if (t.urgent) { tm.n++; tm.hours += (t.hours || 0); tm.tasks += (t.tasks || 0); }
+  }
+  tm.hours = r2(tm.hours);
+  // the share is of the hours on tickets we have actually READ — a denominator including
+  // unread tickets would report a number that falls every time the queue grows
+  tm.pct = readHours ? Math.round((tm.hours / readHours) * 1000) / 10 : 0;
+  tm.readHours = r2(readHours);
+  tm.readPct = tm.total ? Math.round((tm.read / tm.total) * 1000) / 10 : 0;
+  return {
+    tag: tag, tm: tm,
+    // stated, not implied: why there is no single reconciled figure
+    joinable: false,
+    why: 'a tag is judged on a task, is_urgent is flagged on a ticket, and this feed carries no '
+      + 'ticket id on a task row — so the two are counted side by side, never against each other',
+  };
 }
 
 /**
@@ -1087,9 +1212,13 @@ export function assembleBook(books, queues, accounts, now) {
   (queues || []).forEach((q) => {
     if (!q) return;
     const client = name(q.client);
-    tcov.push({ client: client, at: q.at || 0, n: q.n || 0, pulled: q.pulled || 0, deepest: q.deepest || '' });
+    const u = q.urg || null;
+    tcov.push({ client: client, at: q.at || 0, n: q.n || 0, pulled: q.pulled || 0, deepest: q.deepest || '',
+      urgAt: (u && u.at) || 0, urgRead: (u && u.n) || 0, urgN: u ? Object.keys(u.urgent || {}).length : 0 });
     const am = (accounts || []).filter((a) => a.client === client)[0];
-    (q.rows || []).forEach((r) => tickets.push(unpackTicket(r, client, am ? am.am : '')));
+    // the urgency store rides in beside the queue record and is merged on READ, never folded
+    // into it — the queue pull rewrites that record wholesale
+    (q.rows || []).forEach((r) => tickets.push(unpackTicket(r, client, am ? am.am : '', q.urg)));
   });
   rows.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : b.id - a.id));
   tickets.sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : b.id - a.id));
