@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the FeedSpark Task Library page — categorise every task type FeedSpark handles,
-counted from the ATRT Tracker. Re-run to refresh counts:
-    python tools/build_task_library.py <atrt_source.txt>
+counted from the historical task log export. Re-run to refresh counts:
+    python tools/build_task_library.py <task_log_source.txt>
 Writes docs/FeedSpark_Task_Library.html (editable in place via the worker editor).
 """
 import re, sys, os, html
@@ -161,10 +161,10 @@ def page(cards_by_cat, matched, ncats):
 </style></head><body>
 <div class="topbar"><div class="topbar-in"><div class="brand">Feed<span>Spark</span></div><div class="tb-tag">Task Library</div>
 <nav class="tb-nav">{nav}</nav><a class="tb-back" href="/">← Command center</a></div></div>
-<header class="hero"><div class="wrap"><div class="eyebrow">Private &amp; Confidential · categorised from the ATRT Tracker</div>
+<header class="hero"><div class="wrap"><div class="eyebrow">Private &amp; Confidential · categorised from the historical task log</div>
 <h1>Task library</h1>
 <p>Every type of work FeedSpark handles, grouped and defined — from technical (scraping, CSS, migrations) to
-optimisation (titles, keywords, AI, visual enrichment, overlays, AOT). Counts are drawn from the ATRT Tracker.
+optimisation (titles, keywords, AI, visual enrichment, overlays, AOT). Counts are drawn from the historical task log (2024–25).
 This is the base taxonomy: incoming tasks map to a type here, so briefs, hours and reporting stay consistent. Editable in place (⌘/Ctrl+Shift+E).</p>
 <div class="stat3"><div><div class="n">{ntypes}</div><div class="l">Task types</div></div>
 <div><div class="n">{ncats}</div><div class="l">Categories</div></div>
@@ -175,7 +175,7 @@ This is the base taxonomy: incoming tasks map to a type here, so briefs, hours a
 
 def main(argv):
     if len(argv)<2:
-        print("usage: build_task_library.py <atrt_source.txt>"); return 1
+        print("usage: build_task_library.py <task_log_source.txt>"); return 1
     tasks=parse(argv[1])
     cards, matched, ncats=build(tasks)
     open(OUT,"w",encoding="utf-8").write(page(cards,matched,ncats))

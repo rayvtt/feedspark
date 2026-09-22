@@ -153,6 +153,10 @@ echo "── validating: the dossier's portfolio tiles"
 node tools/test_dossiertiles.mjs >/dev/null
 echo "   ✓ hours meter, per-market audit bars, Golden Record ring — and what each refuses to fake"
 
+echo "── validating: hero KPIs from the project plans"
+node tools/test_hero.mjs >/dev/null
+echo "   ✓ tracker gone; wfDate IS parseUKDate; overdue = the board's rule with the team's overlays"
+
 echo "── validating: 🎬 Present — the one-pager played"
 node tools/test_present.mjs >/dev/null
 echo "   ✓ one renderer, two presentations; the last frame is the sheet's own string"

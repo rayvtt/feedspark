@@ -171,6 +171,13 @@ else
   echo "   ✗ Feed Lab model harness FAILED — see node tools/test_feedlab.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3d9/7: hero KPIs from the project plans (Workflow's source — tracker disconnected)"
+if node tools/test_hero.mjs >/dev/null 2>&1; then
+  echo "   ✓ one date rule on both pages; overdue is the board's rule; a baked plan offers no due dates"
+else
+  echo "   ✗ hero KPI harness FAILED — see node tools/test_hero.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3d8/7: 🎬 Present (the one-pager played — one renderer, two presentations)"
 if node tools/test_present.mjs >/dev/null 2>&1; then
   echo "   ✓ built from opHtml; a counted number ends on the one-pager's own string"
