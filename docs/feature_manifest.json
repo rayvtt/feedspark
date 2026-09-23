@@ -9748,6 +9748,36 @@
       "file": "docs/image_engine.js",
       "pattern": "function snapStem",
       "pr": 0
+    },
+    {
+      "name": "ROAS: worker pulls the FeedHero_reports MCP itself (its own secret, its own cron firing)",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "ROAS_MCP_TOKEN not set",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: roasidx is the one KV index the /api/roas rollup reads",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "env.EDITS.put('roasidx'",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: GET /api/roas is scoped per signin like every other Workflow-adjacent route",
+      "file": "cloudflare/feedspark-deck/src/worker.js",
+      "pattern": "path === '/api/roas' && request.method === 'GET'",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: the roster is FeedSpark's own seven brands, never the whole FeedHero book",
+      "file": "cloudflare/feedspark-deck/src/roas.js",
+      "pattern": "export const ROAS_ROSTER",
+      "pr": 0
+    },
+    {
+      "name": "ROAS: money is never summed across currency symbols in the brand rollup",
+      "file": "cloudflare/feedspark-deck/src/roas.js",
+      "pattern": "function blendedRoas",
+      "pr": 0
     }
   ]
 }

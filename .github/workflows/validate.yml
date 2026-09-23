@@ -61,6 +61,8 @@ jobs:
         run: node tools/test_tm.mjs
       - name: Task Manager automatic sync harness (MCP transport, rotation, ticket hours, lifted tmPull vs a stub MCP)
         run: node tools/test_tmmcp.mjs
+      - name: ROAS harness (FeedHero_reports MCP — currency-safe rollup, FeedSpark-only roster, worker wiring)
+        run: node tools/test_roas.mjs
       - name: Phone-layer harness (bottom bar, sheets, mirror rules, pan sweep, wiring)
         run: node tools/test_mobile.mjs
 

@@ -41,6 +41,7 @@ import { buildVolumes, monthKey as volMonthKey, monthRange as volMonthRange } fr
 import { buildDueReminders, dd8 as remDay, OWNER_EMAILS } from "./taskremind.js";
 import { aggregateClientList } from "./tmparse.js";
 import * as TMM from "./tmmcp.js";
+import * as ROAS from "./roas.js";
 // Build Log suggestions — the candidate plays ranked against the FCC's own live signals
 import * as BSG from "./buildsuggest.js";
 // FS TASK MANAGER (/tasks, Ray 16 Sep 2026) — the query engine and the book store behind the
@@ -95,6 +96,7 @@ import KWCAL from "../../../docs/FeedSpark_KWCal.html";
 import AIQUOTE from "../../../docs/FeedSpark_AIQuote.html";
 // Product Volume — daily in/out churn per feed from the xml-scan id sets (page at /volume)
 import VOLUME_PAGE from "../../../docs/FeedSpark_Volume.html";
+import ROAS_PAGE from "../../../docs/FeedSpark_ROAS.html";
 // /overlays module (Ray, 10 Sep 2026): which FeedSpark image overlay is live on each feed,
 // read off the image_link URL string (dashboard.feedspark.com/image-creator/…)
 import OVERLAYS_PAGE from "../../../docs/FeedSpark_Overlays.html";
@@ -224,6 +226,7 @@ const PAGES = {
   '/kwcal':       { html: KWCAL,       slug: 'kwcal' },
   '/aiquote':     { html: AIQUOTE,     slug: 'aiquote' },
   '/volume':      { html: VOLUME_PAGE, slug: 'volume' },
+  '/roas':        { html: ROAS_PAGE,   slug: 'roas' },
   '/overlays':    { html: OVERLAYS_PAGE, slug: 'overlays' },
   '/images':      { html: IMAGES_PAGE, slug: 'images' },
   '/schedule':    { html: SCHEDULE_PAGE, slug: 'schedule' },
@@ -2217,6 +2220,40 @@ export default {
       return json({ ok: true, clients: out, tracked: Object.keys(out).length, updated: updated || null, source: src, status });
     }
 
+    // ROAS (working name) — FeedHero_reports MCP's roas_dashboard, FeedSpark's own roster only
+    // (Ray, 23 Sep 2026 — see src/roas.js's header for the scope call). Scoped like /api/tm:
+    // owner sees the whole roster, a client-scoped signin only their clients. Bare GET = the
+    // per-brand rollup (money kept apart by currency — never summed across symbols) + book KPIs
+    // + `status`; ?client=<brand> = that brand's per-market Total row + top categories; ?pull=1
+    // = OWNER-ONLY sync-now, the same rotation the cron runs.
+    if (path === '/api/roas' && request.method === 'GET') {
+      const acc = await accessOf(env, request);
+      const pubStatus = (s) => (s ? { state: s.state || null, at: s.at || null, ok_at: s.ok_at || null, fails: s.fails | 0, error: s.error || null, auth: s.auth || null, url: s.url || null, pulled: s.pulled || null, read: s.read == null ? null : s.read, total: s.total == null ? null : s.total } : null);
+      if (url.searchParams.get('pull')) {
+        if (!realOwner(env, request)) return json({ ok: false, error: 'owner only' }, 403);
+        const s = await roasPull(env, { pulls: Math.min(20, Math.max(0, +url.searchParams.get('pulls') || ROAS.ROAS_PULLS)) });
+        logActivity(ctx, env, request, 'roas-sync-now', s.state + (s.error ? ' — ' + s.error : '') + (s.pulled && s.pulled.length ? ' · ' + s.pulled.join(', ') : ''));
+        return json({ ok: s.state === 'ok', status: pubStatus(s) });
+      }
+      const status = pubStatus(await env.EDITS.get('roasstatus', 'json'));
+      const one = url.searchParams.get('client');
+      if (one) {
+        if (!(acc.owner || clientMatch(acc.clients, one))) return json({ ok: false, error: 'out of scope' }, 403);
+        const markets = ROAS.rosterOf(one);
+        if (!markets.length) return json({ ok: false, error: 'not on the ROAS roster' }, 404);
+        const recs = {};
+        for (const m of markets) { const r = await env.EDITS.get('roas:' + m.cmpid, 'json'); if (r) recs[m.market] = r; }
+        return json({ ok: true, client: one, roster: markets.length, read: Object.keys(recs).length, markets: recs, status });
+      }
+      const idx = (await env.EDITS.get('roasidx', 'json')) || {};
+      const inScope = (name) => acc.owner || clientMatch(acc.clients, name);
+      const rows = Object.keys(idx).map((k) => idx[k]).filter((r) => r && inScope(r.client));
+      const brands = ROAS.brandRollup(rows);
+      const book = ROAS.bookKpis(brands);
+      const rosterN = ROAS.rosterList().filter((m) => inScope(m.client)).length;
+      return json({ ok: true, brands, book, tracked: rows.length, roster: rosterN, status });
+    }
+
     if (path === '/api/gmail/intake' && request.method === 'GET') {
       // primary source: the Apps Script inbox push (no-admin path) — classified + stored in KV.
       // Each item carries its triage decision (dismissed + decidedAs) so the panel can split
@@ -2759,6 +2796,14 @@ export default {
       await tmBookPull(env);
       return;
     }
+    // ROAS sync — its OWN firing (a different MCP server, FeedHero's own) so it never competes
+    // with the TM pull's subrequest budget. 6 clients off the 57-market roster, stalest first —
+    // the whole roster turns over roughly every 5 hours, well inside the ~daily refresh the
+    // source data itself carries.
+    if (event && event.cron === '10,40 * * * *') {
+      await roasPull(env);
+      return;
+    }
     // Custom-watch passes (Ray's alert builder) with their OWN subrequest budget: the :30
     // firing checks hourly-schedule rules; 07:00/17:00 GMT checks twice-daily rules.
     if (event && event.cron === '30 * * * *') {
@@ -3028,6 +3073,90 @@ async function tmBookPull(env, opts) {
     if (hoursDirty) { try { await env.EDITS.put('tmhours', JSON.stringify(hours)); } catch (e) {} }
     st.read = Object.keys(idx.rot).length; st.total = roster.markets.length;
     return save(st);
+  } catch (e) {
+    const msg = String((e && e.message) || e).slice(0, 160);
+    const code = e && e.code;
+    return save(Object.assign(st, {
+      state: code === 'unauthorized' ? 'unauthorized' : (code === 'unreachable' || /fetch failed|network|ECONN|ENOTFOUND|timed? ?out|aborted|HTTP 5\d\d/i.test(msg) ? 'unreachable' : 'error'),
+      error: msg,
+    }));
+  }
+}
+
+// ---- ROAS: the worker pulls the FeedHero_reports MCP itself (same shape as tmMcp/tmPull, a
+// DIFFERENT server — FeedHero's own Google Ads reporting, not the reports-database Task Manager
+// MCP). ROAS_MCP_TOKEN secret — `Authorization: Bearer` unless ROAS_MCP_AUTH names the header
+// the server reads; ROAS_MCP_URL overrides the endpoint (the default in src/roas.js is a
+// best guess pending confirmation against the live server). roasStore = the one writer of
+// roas:<cmpid> + roasidx; roasPull = one firing: a rotation of ROAS_PULLS clients off
+// ROAS_ROSTER (src/roas.js — FeedSpark's own roster only, stalest cmpid first), each read via
+// roas_dashboard(company=<cmpid>) and split into its Total row + top categories by spend.
+function roasMcp(env, fetchFn) {
+  const url = String(env.ROAS_MCP_URL || ROAS.ROAS_MCP_URL);
+  const auth = TMM.authHeader(env.ROAS_MCP_TOKEN, env.ROAS_MCP_AUTH);
+  let sid = null, n = 0;
+  const post = async (body) => {
+    const h = { 'content-type': 'application/json', accept: 'application/json, text/event-stream' };
+    if (auth) h[auth.name] = auth.value;
+    if (sid) h['Mcp-Session-Id'] = sid;
+    const init = { method: 'POST', headers: h, body: JSON.stringify(body) };
+    if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) init.signal = AbortSignal.timeout(25000);
+    const r = await fetchFn(url, init);
+    const s = r.headers.get('Mcp-Session-Id') || r.headers.get('mcp-session-id'); if (s) sid = s;
+    const text = await r.text();
+    if (r.status === 401 || r.status === 403) { const e = new Error('unauthorized (HTTP ' + r.status + ')'); e.code = 'unauthorized'; throw e; }
+    if (r.status === 202 || !text) return null;
+    if (!r.ok) { const e = new Error('HTTP ' + r.status + (/json/i.test(r.headers.get('content-type') || '') ? '' : ' (non-JSON — Access login page? wrong URL?)')); e.code = r.status >= 500 ? 'unreachable' : 'http'; throw e; }
+    return TMM.parseRpc(text, r.headers.get('content-type') || '');
+  };
+  return {
+    async init() {
+      const m = await post(TMM.rpc(++n, 'initialize', { protocolVersion: ROAS.ROAS_PROTOCOL, capabilities: {}, clientInfo: { name: 'feedspark-command-center', version: '1' } }));
+      if (m && m.error) { const e = new Error('initialize: ' + String(m.error.message || m.error.code)); e.code = 'init'; throw e; }
+      try { await post({ jsonrpc: '2.0', method: 'notifications/initialized' }); } catch (e) {}
+      return m;
+    },
+    async call(name, args) { return TMM.toolPayload(await post(TMM.rpc(++n, 'tools/call', { name, arguments: args || {} }))); },
+    auth: auth ? auth.name : null,
+    host: url.replace(/^https?:\/\//, '').split('/')[0],
+  };
+}
+
+async function roasStore(env, cmpid, client, market, normalized) {
+  const idx = (await env.EDITS.get('roasidx', 'json')) || {};
+  const rec = Object.assign({ client, market, cmpid, updated: Date.now() }, normalized.total || {});
+  const sig = ROAS.sigOf(Object.assign({}, rec, { updated: 0 }));
+  if (idx[cmpid] && idx[cmpid].sig === sig) return { changed: false };
+  try { await env.EDITS.put('roas:' + cmpid, JSON.stringify({ client, market, cmpid, total: normalized.total, categories: normalized.categories, updated: rec.updated })); }
+  catch (e) { return { changed: false, error: 'kv put failed' }; }
+  idx[cmpid] = Object.assign({}, rec, { sig });
+  try { await env.EDITS.put('roasidx', JSON.stringify(idx)); } catch (e) {}
+  return { changed: true };
+}
+
+async function roasPull(env, opts) {
+  opts = opts || {};
+  const now = opts.now || Date.now();
+  const fetchFn = opts.fetch || fetch;
+  const prev = (await env.EDITS.get('roasstatus', 'json')) || {};
+  const st = { at: now, ok_at: prev.ok_at || null, fails: prev.fails | 0, rot: prev.rot || {}, auth: null, url: null, pulled: [] };
+  const save = async (s) => { try { await env.EDITS.put('roasstatus', JSON.stringify(s)); } catch (e) {} return s; };
+  if (!env.ROAS_MCP_TOKEN) return save(Object.assign(st, { state: 'no_token', error: 'ROAS_MCP_TOKEN not set — wrangler secret put ROAS_MCP_TOKEN' }));
+  const mcp = opts.mcp || roasMcp(env, fetchFn); st.auth = mcp.auth; st.url = mcp.host;
+  try {
+    if (!opts.mcp) { try { await mcp.init(); } catch (e) { if (e && e.code === 'unauthorized') throw e; } }
+    const roster = ROAS.rosterList();
+    const plan = ROAS.planPulls(roster, st.rot, opts.pulls == null ? ROAS.ROAS_PULLS : opts.pulls, now);
+    let changed = 0;
+    for (const m of plan) {
+      const payload = await mcp.call('roas_dashboard', { company: m.cmpid, page_size: 200, sort: 'spend', order: 'desc' });
+      const rows = TMM.rowsOf(payload);
+      const split = ROAS.splitClientRows(rows);
+      const r = await roasStore(env, m.cmpid, m.client, m.market, split);
+      if (r.changed) changed++;
+      st.rot[m.cmpid] = now; st.pulled.push(m.client + ' ' + m.market + (split.total ? '' : ' (no Total row)'));
+    }
+    return save(Object.assign(st, { state: 'ok', ok_at: now, fails: 0, error: null, read: Object.keys(st.rot).length, total: roster.length, changed }));
   } catch (e) {
     const msg = String((e && e.message) || e).slice(0, 160);
     const code = e && e.code;
