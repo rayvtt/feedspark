@@ -1034,6 +1034,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
 .ck-bar{flex:none;width:52px;height:7px;border-radius:4px;background:var(--wash,#F7F7F5);overflow:hidden;box-shadow:inset 0 0 0 1px var(--line,#E6E6E6)}
 .ck-bar i{display:block;height:100%;border-radius:4px;background:#2563EB}
 .ck-bar.good i{background:#15803D}
+.ck-bar.mid i{background:#F5A623}
 .ck-bar.warn i{background:#ED6F0B}
 .ck-bar.crit i{background:#C0392B}
 .ck-pill{flex:none;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.05em;padding:2px 6px;border-radius:100px;white-space:nowrap}
@@ -1064,6 +1065,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
 [data-theme=dark] .ck-tab{background:var(--paper,#1C1F27)}
 [data-theme=dark] .ck-bar i{background:#4C82E0}
 [data-theme=dark] .ck-bar.good i{background:#48D07E}
+[data-theme=dark] .ck-bar.mid i{background:#E0A94A}
 [data-theme=dark] .ck-bar.warn i{background:#C67B28}
 [data-theme=dark] .ck-bar.crit i{background:#F1707A}
 [data-theme=dark] .ck-pill.good{color:#48D07E;background:rgba(72,208,126,.16)}
@@ -5234,7 +5236,10 @@ body.ck-r-on{padding-right:var(--ck-w)}
     google_product_category:'rec',product_type:'rec',sale_price:'rec',additional_image_link:'rec',product_highlight:'rec',
     product_detail:'rec',material:'rec',pattern:'rec',size_type:'rec',size_system:'rec',
     question_and_answer:'ai',document_link:'ai',related_product:'ai',item_group_title:'ai',variant_option:'ai',popularity_rank:'ai'};
-  var PB_FLOOR={req:0.99,cond:0.9,rec:0.6};
+  /* goldenidx carries coverage as a PERCENTAGE (0–100, straight off the scan), so the floors are
+     percentages too. They were written as fractions, so every real reading cleared them (47.9 >=
+     0.6) and "Weakest first" only ever listed an attribute under 1% — printed as cov × 100. */
+  var PB_FLOOR={req:99,cond:90,rec:60};
   function pbWeak(rec){
     if(!rec)return [];
     var out=[],seen={};
@@ -5330,13 +5335,13 @@ body.ck-r-on{padding-right:var(--ck-w)}
     (gold||[]).forEach(function(f){
       (pbWeak(f)||[]).forEach(function(w){
         if(w.tier!=='req'&&w.tier!=='cond')return;
-        var e=by[w.k]||(by[w.k]={k:w.k,tier:w.tier,gone:[],thin:[],worst:1});
+        var e=by[w.k]||(by[w.k]={k:w.k,tier:w.tier,gone:[],thin:[],worst:100});
         if(w.tier==='req')e.tier='req';
         /* the two populations are kept APART: a market missing the field entirely and one that
            has it at 71% are different problems with different fixes, and an action that counts
            them together can't state either honestly. */
         if(w.missing)e.gone.push(f.mkt);
-        else { e.thin.push(f.mkt); e.worst=Math.min(e.worst,w.cov==null?1:w.cov); }
+        else { e.thin.push(f.mkt); e.worst=Math.min(e.worst,w.cov==null?100:w.cov); }
       });
     });
     Object.keys(by).forEach(function(k){
@@ -5354,7 +5359,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
         p:req?1:2, key:'attr:'+k, kind:'attr', mkts:list,
         title:'Fix g:'+k+(req?' — Google requires it':' — required when it applies'),
         ev:absent?(mk+' missing it entirely')
-                 :(mk+' below spec, worst '+Math.round(e.worst*100)+'%'),
+                 :(mk+' below spec, worst '+Math.round(e.worst)+'%'),
         /* a conditional attribute is only required WHERE IT APPLIES, so it never gets the flat
            "can be refused" a required one earns — that would be overclaiming to a client. */
         say:absent
@@ -5362,8 +5367,8 @@ body.ck-r-on{padding-right:var(--ck-w)}
               ? 'Products without '+pbFieldW(k)+' can be refused by Google, and it is missing entirely on '+mk+'. Can your team supply it, or shall we source it?'
               : 'Google asks for '+pbFieldW(k)+' on products where it applies, and we have none of it on '+mk+'. Worth checking whether it exists your side before we fill the gap.')
           : (req
-              ? pbFieldW(k).charAt(0).toUpperCase()+pbFieldW(k).slice(1)+' is required by Google but only partly filled across '+mk+' — as low as '+Math.round(e.worst*100)+'%. The unfilled products are the ones at risk.'
-              : pbFieldW(k).charAt(0).toUpperCase()+pbFieldW(k).slice(1)+' is thin across '+mk+', as low as '+Math.round(e.worst*100)+'%. Filling it is one of the cheaper ways to lift how well your products match.'),
+              ? pbFieldW(k).charAt(0).toUpperCase()+pbFieldW(k).slice(1)+' is required by Google but only partly filled across '+mk+' — as low as '+Math.round(e.worst)+'%. The unfilled products are the ones at risk.'
+              : pbFieldW(k).charAt(0).toUpperCase()+pbFieldW(k).slice(1)+' is thin across '+mk+', as low as '+Math.round(e.worst)+'%. Filling it is one of the cheaper ways to lift how well your products match.'),
         brief:{cat:'technical',task:'Golden Record Fix - g:'+k+' - '+brand},
         rank:(absent?1000:500)+n
       });
@@ -5490,6 +5495,13 @@ body.ck-r-on{padding-right:var(--ck-w)}
         return '<i'+(x.cur?' class="cur"':'')+' style="height:'+Math.max(1,Math.round(x.n/pk*16))+'px"></i>'; }).join('')
       +'</span>';
   }
+  // ONE colour legend for every completeness / coverage / content-quality number on the FCC
+  // (Ray, 23 Sep 2026, on this rail's 76.7% painted red: "<70 red, 70-85 orange, 85-95 yellow,
+  // 95-100 green — apply across all audit"): the same auditBand on /golden, /feedlab, the dossier
+  // and here, lifted and run through one table by tools/test_bands.mjs; pbBand maps it onto the
+  // rail's own bar classes (good / mid / warn / crit).
+  function auditBand(v) { return v == null || isNaN(v) ? '' : (v >= 95 ? 'green' : (v >= 85 ? 'yellow' : (v >= 70 ? 'orange' : 'red'))); }
+  function pbBand(v){ return ({green:'good',yellow:'mid',orange:'warn',red:'crit'})[auditBand(v)]||''; }
   function bar(pctVal,cls){
     var w=Math.max(0,Math.min(100,pctVal||0));
     return '<span class="ck-bar'+(cls?' '+cls:'')+'"><i style="width:'+w.toFixed(1)+'%"></i></span>';
@@ -5742,7 +5754,7 @@ body.ck-r-on{padding-right:var(--ck-w)}
     }
     var avg=scored.reduce(function(a,f){return a+f.score;},0)/scored.length;
     h+=row('','<span class="nm">Completeness across '+scored.length+' market'+(scored.length===1?'':'s')+'</span>'
-      +bar(avg,avg>=95?'good':avg>=85?'warn':'crit')+'<span class="num">'+pc(avg)+'</span>');
+      +bar(avg,pbBand(avg))+'<span class="num">'+pc(avg)+'</span>');
     var all=[];
     scored.forEach(function(f){
       pbWeak(f).forEach(function(w){ all.push({w:w,mkt:f.mkt}); });
@@ -5755,8 +5767,8 @@ body.ck-r-on{padding-right:var(--ck-w)}
         var w=r.w,sev=w.tier==='req'?'crit':w.tier==='cond'?'warn':'info';
         return row('','<span class="mk">'+esc(r.mkt)+'</span>'
           +'<span class="nm">g:'+esc(w.k)+'</span>'
-          +(w.missing?'':bar(w.cov*100,w.tier==='rec'?'':'warn'))
-          +'<span class="num">'+(w.missing?'absent':pc(w.cov*100))+'</span>'
+          +(w.missing?'':bar(w.cov,pbBand(w.cov)))
+          +'<span class="num">'+(w.missing?'absent':pc(w.cov))+'</span>'
           +'<span class="ck-pill '+sev+'">'+(w.tier==='req'?'required':w.tier==='cond'?'if applies':'recommended')+'</span>');
       }).join('');
       if(all.length>8)h+='<div class="ck-none">+'+(all.length-8)+' more on the scorecard</div>';

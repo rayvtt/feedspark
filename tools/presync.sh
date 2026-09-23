@@ -150,6 +150,10 @@ echo "── validating: Golden Record snapshot in the dossier"
 node tools/test_goldensnap.mjs >/dev/null
 echo "   ✓ averages exclude unscanned markets; popup + /golden?client= hold"
 
+echo "── validating: one audit colour legend across every page"
+node tools/test_bands.mjs >/dev/null
+echo "   ✓ <70 red · 70–85 orange · 85–95 yellow · 95+ green on /golden, /feedlab, the dossier, the Playbook rail"
+
 echo "── validating: the dossier's portfolio tiles"
 node tools/test_dossiertiles.mjs >/dev/null
 echo "   ✓ hours meter, per-market audit bars, Golden Record ring — and what each refuses to fake"

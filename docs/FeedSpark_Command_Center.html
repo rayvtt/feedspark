@@ -403,7 +403,7 @@ window.addEventListener('load',restore);
   .dzp-arow{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;padding:3px 0;color:var(--ink-2)}
   .dzp-arow .mk{font-weight:900;text-transform:uppercase;font-size:10.5px;color:var(--muted);width:26px;flex:none}
   .dzp-as{font-weight:900}
-  .dzp-as.good{color:var(--good)}.dzp-as.warn{color:var(--orange-deep)}.dzp-as.bad{color:var(--risk)}
+  .dzp-as.good{color:var(--good)}.dzp-as.mid{color:#F5A623}.dzp-as.warn{color:var(--orange-deep)}.dzp-as.bad{color:var(--risk)}
   /* Ray, 16 Sep 2026: "only Activity and Health actually look good. The other three tiles are not
      well presented". Hours, AI Readiness and Golden Record now carry a shape each, in Activity's and
      Health's own language — a meter, per-market bars, a score ring — rather than a row of digits. */
@@ -461,7 +461,7 @@ window.addEventListener('load',restore);
   .grm-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:6px}
   .grm-k{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--wash)}
   .grm-k b{display:block;font-size:24px;font-weight:900;line-height:1;letter-spacing:-.02em}
-  .grm-k b.good{color:var(--good)}.grm-k b.warn{color:var(--orange-deep)}.grm-k b.bad{color:var(--risk)}
+  .grm-k b.good{color:var(--good)}.grm-k b.mid{color:#F5A623}.grm-k b.warn{color:var(--orange-deep)}.grm-k b.bad{color:var(--risk)}
   .grm-k b small{font-size:13px;font-weight:800;color:var(--muted)}
   .grm-k span{display:block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
     color:var(--muted);margin-top:4px}
@@ -1835,8 +1835,14 @@ window.addEventListener('load',restore);
     if(!v.length)return null;
     return Math.round(v.reduce(function(s,r){return s+r[key];},0)/v.length);
   }
-  function grBand(n){ return n==null?'':(n>=90?'good':n>=75?'warn':'bad'); }
-  var GR_COL={good:'#15803D',warn:'#ED6F0B',bad:'#C0392B'};
+  // ONE colour legend for every completeness / coverage / content-quality number on the FCC
+  // (Ray, 23 Sep 2026: "<70 red, 70-85 orange, 85-95 yellow, 95-100 green — apply across all
+  // audit"): the same auditBand on /golden, /feedlab, the dossier and the Playbook rail, lifted and
+  // run through one table by tools/test_bands.mjs. grBand keeps its class names (good / mid /
+  // warn / bad = green / yellow / orange / red) because the dossier's CSS and harnesses read them.
+  function auditBand(v) { return v == null || isNaN(v) ? '' : (v >= 95 ? 'green' : (v >= 85 ? 'yellow' : (v >= 70 ? 'orange' : 'red'))); }
+  function grBand(n){ return ({green:'good',yellow:'mid',orange:'warn',red:'bad'})[auditBand(n)]||''; }
+  var GR_COL={good:'#15803D',mid:'#F5A623',warn:'#ED6F0B',bad:'#C0392B'};
   /* A completeness score is a proportion of a whole, so it takes the same ring Activity uses —
      the filled arc is the score, the remainder is what is missing, and the gap is the thing the
      reader is actually looking for. The legend carries the other two readings beside it rather

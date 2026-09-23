@@ -758,6 +758,33 @@ collector on a real XML stream, the not-applicable / share / known-gap rules, th
 the /golden page's twin scoring every case exactly as the engine does — directly and through the
 estate index round trip.
 
+### 9.10 One audit colour legend (23 Sep 2026)
+
+Ray, on the Playbook rail painting 76.7% completeness red: *"golden record and bar color should be
+a bit more forgiving (< 70 red, 70-85 orange, 85 - 95 yellow, 95-100 green) - apply across all
+audit."* Every completeness, coverage and content-quality number on the FCC now uses one function,
+`auditBand(v)`:
+
+| Band | Range |
+|---|---|
+| green | 95 and above |
+| yellow | 85 to under 95 |
+| orange | 70 to under 85 |
+| red | under 70 |
+
+It sits on `/golden` (the dial, estate cards, attribute fill bars, content-quality score and bars),
+`/feedlab` (attribute coverage), the dossier's Golden Record card and the Playbook rail inside
+Workflow. Pages cannot import each other, so `tools/test_bands.mjs` lifts every copy and runs one
+boundary table through them.
+
+AI-readiness keeps its own ladder on purpose. Its colours are its tiers (40 / 60 / 80), and a feed
+without the conversational six tops out at 79.3, so the 95-green legend would turn the whole estate
+red. The harness pins that scale unchanged.
+
+The same Playbook panel read coverage as a fraction (floors 0.99 / 0.9 / 0.6) while the index stores
+percentages. Every real reading cleared the floors, so "Weakest first" only ever listed an attribute
+under 1%, printed ×100. The floors, the bars and the "worst N%" figure now read percentages.
+
 ### 9.7 AI-Readiness on the scorecard (`/golden`, under content quality)
 
 Ray, 16 Sep 2026: *"bring in the AI readiness score on the feed lab section … anything from the

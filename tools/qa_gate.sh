@@ -157,6 +157,13 @@ else
   echo "   ✗ golden-snapshot harness FAILED — see node tools/test_goldensnap.mjs"; FAIL=1
 fi
 
+echo "── qa-gate: one audit colour legend (<70 red · 70–85 orange · 85–95 yellow · 95+ green)"
+if node tools/test_bands.mjs >/dev/null 2>&1; then
+  echo "   ✓ /golden, /feedlab, the dossier and the Playbook rail band every audit number the same way"
+else
+  echo "   ✗ audit-bands harness FAILED — see node tools/test_bands.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3d7/7: dossier portfolio tiles (meter, per-market bars, score ring)"
 if node tools/test_dossiertiles.mjs >/dev/null 2>&1; then
   echo "   ✓ an over-run crosses the block; served keeps its own colour; unscanned is not a zero"

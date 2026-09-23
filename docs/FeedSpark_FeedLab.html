@@ -300,8 +300,10 @@ window.addEventListener('load',restore);
   .arow{display:grid;grid-template-columns:minmax(96px,150px) 1fr auto auto;gap:10px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
   .arow .al{font-size:12.5px;font-weight:800;overflow-wrap:anywhere}
   .arow .apc{font-size:13px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--orange-deep);min-width:42px;text-align:right}
-  .arow.bad .apc{color:var(--risk)}
-  .arow.bad .afill{background:var(--risk)}
+  .arow.b-green .apc{color:var(--good)}.arow.b-green .afill{background:var(--good)}
+  .arow.b-yellow .apc{color:#F5A623}.arow.b-yellow .afill{background:#F5A623}
+  .arow.b-orange .apc{color:var(--orange-deep)}.arow.b-orange .afill{background:#ED6F0B}
+  .arow.b-red .apc{color:var(--risk)}.arow.b-red .afill{background:var(--risk)}
   .amiss{font-size:10px;font-weight:900;color:var(--risk);background:#FDEEE9;border:1px solid #F3C9BC;border-radius:100px;padding:1px 8px;white-space:nowrap}
   .arow .ptrack{min-width:60px}
   .solid{margin-top:10px;border:1px solid var(--line);border-radius:11px;background:var(--paper)}
@@ -1054,6 +1056,12 @@ function renderTitles(a){
   }).join('')||'<p class="sub">no samples in this audit</p>';
   $('#mask-lgd').innerHTML=MASKS.map(function(m){return '<span><i class="mdot '+m[2]+'"></i>'+m[1]+'</span>'}).join('');
 }
+// ONE colour legend for every completeness / coverage / content-quality number on the FCC
+// (Ray, 23 Sep 2026: "<70 red, 70-85 orange, 85-95 yellow, 95-100 green — apply across all
+// audit"). The same function with the same thresholds sits on /golden, /feedlab, the dossier
+// and the Playbook rail; tools/test_bands.mjs lifts every copy and runs one table through them.
+// AI-readiness keeps its own ladder colours (40/60/80 = its tiers) — a different scale.
+function auditBand(v) { return v == null || isNaN(v) ? '' : (v >= 95 ? 'green' : (v >= 85 ? 'yellow' : (v >= 70 ? 'orange' : 'red'))); }
 function renderAttrs(a){
   var rc=+a.rowCount||0,rows=(a.attributes||[]).slice();
   var gaps=rows.filter(function(x){return +x.pct<100}).sort(function(x,y){return (+x.pct)-(+y.pct)});
@@ -1061,7 +1069,7 @@ function renderAttrs(a){
   $('#attr-list').innerHTML=gaps.map(function(x){
     var pct=Math.round(+x.pct||0);
     var miss=(x.n!=null&&rc)?Math.max(0,rc-(+x.n||0)):Math.round(rc*(100-pct)/100);
-    return '<div class="arow'+(pct<40?' bad':'')+'"><span class="al">'+esc(x.label||x.key)+'</span>'
+    return '<div class="arow b-'+auditBand(pct)+'"><span class="al">'+esc(x.label||x.key)+'</span>'
       +'<span class="ptrack"><i class="afill" data-w="'+pct+'"></i></span>'
       +'<span class="apc">'+pct+'%</span>'
       +(miss>0?'<span class="amiss">'+fmt(miss)+' missing</span>':'<span></span>')+'</div>';

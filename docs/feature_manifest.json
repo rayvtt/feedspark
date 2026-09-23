@@ -9559,6 +9559,61 @@
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "TMVIEW-ACCOUNT-ON-SCREEN",
       "pr": 0
+    },
+    {
+      "name": "Audit colour legend on /golden (dial, estate, fill + content-quality bars)",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "return BAND_COL[auditBand(s)];",
+      "pr": 507
+    },
+    {
+      "name": "Audit colour legend on /golden attribute fill bars",
+      "file": "docs/FeedSpark_GoldenRecord.html",
+      "pattern": "var cls = ' class=\"b-' + auditBand(a.cov) + '\"';",
+      "pr": 507
+    },
+    {
+      "name": "Audit colour legend on /feedlab attribute coverage",
+      "file": "docs/FeedSpark_FeedLab.html",
+      "pattern": "class=\"arow b-'+auditBand(pct)+'\"",
+      "pr": 507
+    },
+    {
+      "name": "Audit colour legend on the dossier Golden Record card",
+      "file": "docs/FeedSpark_Command_Center.html",
+      "pattern": "function grBand(n){ return ({green:'good',yellow:'mid',orange:'warn',red:'bad'})[auditBand(n)]||''; }",
+      "pr": 507
+    },
+    {
+      "name": "Audit colour legend on the Playbook rail",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "+bar(avg,pbBand(avg))",
+      "pr": 507
+    },
+    {
+      "name": "Playbook reads Golden Record coverage as the percentage goldenidx stores",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var PB_FLOOR={req:99,cond:90,rec:60};",
+      "pr": 507
+    },
+    {
+      "name": "Audit colour bands harness",
+      "file": "tools/test_bands.mjs",
+      "pattern": "76.7% completeness is ORANGE, not red",
+      "pr": 507
+    },
+    {
+      "name": "Audit colour bands harness in CI",
+      "file": ".github/workflows/validate.yml",
+      "pattern": "node tools/test_bands.mjs",
+      "pr": 507
+    },
+    {
+      "name": "Playbook: the Golden Record floors were fractions against a percentage store — RETIRED",
+      "file": "docs/FeedSpark_Workflow.html",
+      "pattern": "var PB_FLOOR={req:0.99,cond:0.9,rec:0.6};",
+      "forbidden": true,
+      "pr": 507
     }
   ]
 }
