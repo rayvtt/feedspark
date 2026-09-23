@@ -36,6 +36,21 @@ var ENDPOINT = 'https://feedspark.ray-vtt.workers.dev/api/gmail/push';
 var KEY = 'PASTE_THE_GMAIL_PUSH_KEY_VALUE_HERE';
 var QUERY = 'newer_than:7d ("ibfcode:" OR subject:"[FS Brief]")';
 var MAX_THREADS = 50, MAX_MESSAGES = 150, MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+// A BRIEF ORIGINAL IS NOT AGED OUT WHILE ITS THREAD IS LIVE (Ray, 23 Sep 2026: a brief Steven
+// sent through the module on 8 Sep, with Ray copied, was not in the Brief Ledger). QUERY is a
+// THREAD search, so a reply today pulls the whole thread back — including the one message that
+// carries the machine-readable block the worker rebuilds a missing ticket from. MAX_AGE_MS then
+// threw that message away per-message, so the only survivor was the reply, which briefFromEmail
+// refuses by design (a reply is a status update, not the brief). The ticket was in our hands and
+// discarded. The age gate is what stops ancient REPLIES being re-applied; it was never meant to
+// gate the brief itself, whose liveness Gmail has already judged at the thread level. Bounded
+// anyway, so reviving a years-old thread does not push a huge body: recovery is create-only and
+// message ids are deduped server-side, so a re-send costs payload and nothing else.
+var BRIEF_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000;
+function isBriefOriginal(subject) {
+  var s = String(subject || '');
+  return /\[FS Brief\]/i.test(s) && !/^\s*(re|fw|fwd)\s*:/i.test(s);   // mirrors briefmatch.js briefFromEmail
+}
 
 // Run ALL feeds (point the 5-min trigger at THIS): brief-reply sync + inbox intake
 // + Label Guard alert-email drain.
@@ -152,12 +167,13 @@ function pushBriefReplies() {
   threads.forEach(function (t) {
     t.getMessages().forEach(function (m) {
       if (out.length >= MAX_MESSAGES) return;
-      var when = m.getDate().getTime();
-      if (Date.now() - when > MAX_AGE_MS) return;
+      var when = m.getDate().getTime(), subj = m.getSubject() || '';
+      var age = Date.now() - when;
+      if (age > (isBriefOriginal(subj) ? BRIEF_MAX_AGE_MS : MAX_AGE_MS)) return;
       out.push({
         id: m.getId(),
         from: m.getFrom(),
-        subject: m.getSubject(),
+        subject: subj,
         // the brief email is the backup copy of the ticket, and the worker rebuilds a missing
         // one from this body — 1200 chars cut it off mid-SCOPE, losing the DoD and the assets
         snippet: (m.getPlainBody() || '').slice(0, 4000),
@@ -183,6 +199,85 @@ function pushBriefReplies() {
   } else {
     console.error('✗ FCC push failed: HTTP ' + code + ' ' + body.slice(0, 300) + (code === 401 ? '  → KEY here does not match the GMAIL_PUSH_KEY secret' : code === 503 ? '  → GMAIL_PUSH_KEY secret not set on the worker yet' : ''));
   }
+}
+
+// ---- ONE-OFF BACKFILL: every brief ever sent, into the Brief Ledger -------------------
+// Ray (23 Sep 2026), on a brief Steven sent through the module that his ledger never showed:
+// "every brief sent out by anyone using FCC have to be documented in my view brief ledger."
+//
+// Two fixes make that true GOING FORWARD — the composer's save now retries until the server
+// has it (16 Sep), and a brief original is no longer aged out while its thread is live (above).
+// Neither reaches BACKWARDS. A brief raised before the durability fix whose save failed exists
+// only in the browser that raised it; its own [FS Brief] email is the only other copy, and once
+// that email passed the live window nothing was ever going to look at it again. This is the
+// path that looks.
+//
+// It sweeps `subject:"[FS Brief]"` from BRIEF_BACKFILL_FROM and pushes the ORIGINALS — the
+// worker rebuilds any ticket whose ibfref the store has never heard of, CREATE-ONLY, so a
+// ticket that exists is never touched and a re-run costs nothing. It pushes each thread's
+// REPLIES alongside, which is the whole point of sending them together: the worker recovers
+// before it matches, so a rebuilt ticket takes its real stage and read-out from its own thread
+// instead of landing at "Briefed to ASPL" as though nothing had happened since.
+//
+// HOW TO RUN (script.google.com, same project as the rest of this file):
+//  1. Run > backfillBriefs  — sweeps for ~4 minutes, then stops and saves its place.
+//  2. Check the log: it prints "... resume by running again" or "BACKFILL COMPLETE".
+//  3. Re-run until it says COMPLETE. Message ids are deduped server-side, so a double-run is safe.
+// To sweep a different window, change BRIEF_BACKFILL_FROM and run resetBriefBackfill() first.
+var BRIEF_BACKFILL_FROM  = '2026/01/01';   // Gmail date syntax, yyyy/mm/dd
+var BRIEF_BATCH_THREADS  = 25;
+var BRIEF_TIME_BUDGET_MS = 4 * 60 * 1000;  // stop well inside the 6-minute execution ceiling
+var BRIEF_BACKFILL_PROP  = 'BRIEF_BACKFILL_OFFSET';
+
+function backfillBriefs() {
+  var props = PropertiesService.getScriptProperties();
+  var offset = parseInt(props.getProperty(BRIEF_BACKFILL_PROP) || '0', 10) || 0;
+  var query = 'subject:"[FS Brief]" after:' + BRIEF_BACKFILL_FROM, t0 = Date.now();
+  var scanned = 0, pushed = 0, briefs = 0, complete = false;
+
+  while (Date.now() - t0 < BRIEF_TIME_BUDGET_MS) {
+    var threads = GmailApp.search(query, offset, BRIEF_BATCH_THREADS);
+    if (!threads.length) { complete = true; break; }
+    var out = [];
+    threads.forEach(function (t) {
+      t.getMessages().forEach(function (m) {
+        var subj = m.getSubject() || '';
+        // the ORIGINAL rebuilds the ticket; its replies carry the stage and the read-out, and
+        // the worker needs both in one batch to land the ticket where the work actually is
+        if (!/ibfref:/i.test(subj) && !/\[FS Brief\]/i.test(subj)) return;
+        if (isBriefOriginal(subj)) briefs++;
+        out.push({ id: m.getId(), from: m.getFrom(), subject: subj,
+          snippet: (m.getPlainBody() || '').slice(0, 4000), date: m.getDate().getTime() });
+      });
+    });
+    scanned += threads.length; offset += threads.length;
+    if (out.length && pushBriefBackfill(out)) pushed += out.length;
+    // save the cursor after EVERY page: a timeout or quota stop mid-sweep must not restart from zero
+    props.setProperty(BRIEF_BACKFILL_PROP, String(offset));
+    if (threads.length < BRIEF_BATCH_THREADS) { complete = true; break; }
+  }
+  console.log('Brief backfill: ' + scanned + ' threads this run · ' + briefs + ' brief originals · '
+    + pushed + ' messages pushed · cursor ' + offset
+    + (complete ? '  — BACKFILL COMPLETE' : '  — time budget reached, resume by running again'));
+  if (complete) props.deleteProperty(BRIEF_BACKFILL_PROP);
+}
+
+function pushBriefBackfill(out) {
+  var res = UrlFetchApp.fetch(ENDPOINT, { method: 'post', contentType: 'application/json',
+    headers: { 'X-FCC-Push-Key': KEY }, payload: JSON.stringify({ messages: out }), muteHttpExceptions: true });
+  var body = res.getContentText(); var p = null; try { p = JSON.parse(body); } catch (e) {}
+  if (p && p.ok) {
+    if ((p.rebuilt || []).length) console.log('   + rebuilt ' + p.rebuilt.length + ': '
+      + p.rebuilt.map(function (r) { return r.id + ' ' + r.client; }).join(', '));
+    return true;
+  }
+  console.error('x brief backfill push failed: HTTP ' + res.getResponseCode() + ' ' + body.slice(0, 200));
+  return false;
+}
+
+function resetBriefBackfill() {
+  PropertiesService.getScriptProperties().deleteProperty(BRIEF_BACKFILL_PROP);
+  console.log('Brief backfill cursor cleared - the next backfillBriefs() starts from the top.');
 }
 
 // ---- ONE-OFF BACKFILL: the whole keyword-optimisation result history -----------------
