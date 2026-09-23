@@ -46,6 +46,7 @@ export const MODULES = [
   { slug: 'golden', label: 'Golden Record', path: '/golden' },
   { slug: 'volume', label: 'Product volume', path: '/volume' },
   { slug: 'overlays', label: 'Overlays', path: '/overlays' },
+  { slug: 'images', label: 'Image library', path: '/images' },
   { slug: 'kwcal', label: 'Keyword calendar', path: '/kwcal' },
   { slug: 'schedule', label: 'Scheduled work', path: '/schedule' },
   { slug: 'aiquote', label: 'AI Quote', path: '/aiquote' },
