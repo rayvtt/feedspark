@@ -274,7 +274,10 @@ if [ -n "$DECKS_CHANGED" ]; then
     python3 tools/deck_audit.py "$d" --shape > "${TMPDIR:-/tmp}/presync-new.shape" 2>/dev/null || continue
     if ! diff -q "${TMPDIR:-/tmp}/presync-base.shape" "${TMPDIR:-/tmp}/presync-new.shape" >/dev/null; then
       echo "   ⚠ $d — editable-element shape CHANGED vs main:"
-      diff "${TMPDIR:-/tmp}/presync-base.shape" "${TMPDIR:-/tmp}/presync-new.shape" | sed 's/^/       /' | head -20
+      # informational: diff exits 1 when the files differ, which under `set -e -o pipefail`
+      # aborted the whole presync at this WARNING — the overlap check and the final verdict
+      # never ran. First tripped the day a tracked deck gained a chapter.
+      diff "${TMPDIR:-/tmp}/presync-base.shape" "${TMPDIR:-/tmp}/presync-new.shape" | sed 's/^/       /' | head -20 || true
       echo "       Saved live edits in these chapters shift position. The editor recovers them by"
       echo "       content and reports the rest — but tell Ray before pushing if he is mid-edit."
     fi
