@@ -526,6 +526,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   .upd-binfo{margin-left:6px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--muted);font-size:12px;cursor:pointer;vertical-align:middle;padding:0}
   .upd-binfo.on{border-color:var(--orange,#F5A623);color:var(--ink)}
   .upd-box .upd-on{margin:10px 0 0}
+  .upd-box.upd-tickonly{border:0;background:transparent;padding:0} .upd-box.upd-tickonly .upd-on{margin:0}
   .upd-box .upd-fc{margin:0;border:0;background:transparent;padding:0} .upd-box .upd-tiers{margin:11px 0 8px}
   .upd-kpis{display:flex;flex-wrap:wrap;gap:4px 20px;margin:7px 0 4px}
   .upd-kpi b{display:block;font-size:17px;font-weight:900;line-height:1.2;color:var(--vin);font-variant-numeric:tabular-nums}
@@ -1388,7 +1389,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   }
   function updBundleOpen(){ try{ return localStorage.getItem('fcc-upd-bundle')==='1'; }catch(e){ return false; } }
   function renderUpd(){ var el=$('#upd-body'); if(!el)return; var u=updRec(), T=updTiers(), f=updForecast(), v=VOL[volKey()], i=updTierIdx(), ai=updAutoIdx();
-    var fc=f?(f.basis==='dob'?('<b>'+fmt(f.monthly)+'</b> new SKUs / month priced — from '+esc(f.basisTxt)+' · ≈ '+fmt(f.quarter)+' a quarter · ≈ '+fmt(f.year)+' a year <span class="hint">· the arrivals chart in this card is where this comes from</span>')
+    var fc=f?(f.basis==='dob'?('<b>'+fmt(f.monthly)+'</b> new SKUs / month priced — from '+esc(f.basisTxt)+' · ≈ '+fmt(f.quarter)+' a quarter · ≈ '+fmt(f.year)+' a year <span class="hint">· the arrivals chart '+(aimOnType()?'in Spark AI below':'in this card')+' is where this comes from</span>')
       :('<b>'+fmt(f.monthly)+'</b> new SKUs / month expected — from '+f.days+' day'+(f.days===1?'':'s')+' of feed arrivals ('+esc(f.from)+' → '+esc(f.to)+': '+fmt(f.inS)+' in · '+fmt(f.outS)+' out, avg '+(Math.round(f.perDay*10)/10)+' a day) · ≈ '+fmt(f.monthly*12)+' a year'
         +(f.days<14?' <span class="hint">· only '+f.days+' day'+(f.days===1?'':'s')+' of history — indicative; type an estimate if you know the run-rate</span>':'')))
       :((v&&v.pending)?'Reading the feed’s arrivals history…':'No arrivals history for this feed yet'+((v&&v.tracked==='sheet')?' — a sheet-backed feed is not on the daily XML scan':'')+' — type an estimate');
@@ -1398,8 +1399,13 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
        half folds behind the heading's ⓘ, closed by default, per device (fcc-upd-bundle). */
     var bOpen=updBundleOpen(); $('#upd-card').classList.toggle('upd-bopen',bOpen);
     var bb=$('#upd-binfo'); if(bb){ bb.setAttribute('aria-expanded',bOpen?'true':'false'); bb.classList.toggle('on',bOpen); }
+    /* UPD-NO-DUP-CHART (Ray, 23 Sep 2026, crossing the chart out: "just remove this block - it's
+       duplicated"): the Spark AI card below draws the SAME arrivals chart off the same series, so
+       while Spark AI is on this card carries only the tick. With Spark AI off (the legacy AI type)
+       nothing else draws the chart, so it stays. */
+    var dupChart=aimOnType();
     el.innerHTML='<div class="upd-grid">'
-      +'<div class="upd-box">'+updEvidence()
+      +'<div class="upd-box'+(dupChart?' upd-tickonly':'')+'">'+(dupChart?'':updEvidence())
       +'<label class="qopt upd-on"><input type="checkbox" class="cbx" id="upd-on"'+(u.on?' checked':'')+'> <b>Include monthly new-product updates</b> — every new product is updated the month it lands, instead of a quarterly re-quote</label></div>'
       +'<div class="upd-box ucm">'
       +'<div class="upd-fc"><div class="upd-fl">The bundle · what we charge</div><div class="upd-ft" id="upd-ftxt">'+fc+'</div>'
