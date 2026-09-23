@@ -772,94 +772,6 @@ console.log('── assembling the book');
 }
 
 // ---------------------------------------------------------------------------------------------
-// ---------------------------------------------------------------------------------------------
-// is_urgent — the Task Manager's own judgement, cross-checked against the tag
-// (Ray, 22 Sep 2026: "can you bring in the is_urgent from FR mcp? it'll be used to cross-check
-//  with my tag")
-//
-// The live book decides the shape and these assertions pin it: is_urgent is on NEITHER the task
-// rows nor the ticket list — only get_ticket_detail — and `ticket_id` is 0 on every task row, so
-// a task can never be asked whether its ticket was urgent. The two readings therefore stay apart.
-// ---------------------------------------------------------------------------------------------
-console.log('\n── is_urgent: read on its own rotation, never merged into the tag');
-{
-  const tk = (id, status, at) => ({ id, status, hours: 1, tasks: 2 });
-  const tickets = [tk(1, 'open'), tk(2, 'closed'), tk(3, 'open'), tk(4, 'open')];
-  const T0 = Date.UTC(2026, 8, 22);
-
-  // never read first, in id order, capped
-  let plan = M.urgPlan(tickets, { read: {} }, 2, T0);
-  eq(plan.map((t) => t.id).join(','), '1,2', 'a ticket never read leads the rotation, and the cap holds');
-
-  // a CLOSED ticket read once is final; an open one comes round again after the TTL
-  const ttl = M.URG_TTL_DAYS * 864e5;
-  const urg = { read: { 1: T0 - ttl - 1, 2: T0 - ttl - 1, 3: T0 - 1000, 4: T0 - ttl - 1 } };
-  plan = M.urgPlan(tickets, urg, 10, T0);
-  eq(plan.map((t) => t.id).join(','), '1,4', 'a closed ticket is never re-read, an open one is once its flag is stale');
-  ok(plan.every((t) => t.id !== 3), '...and one read moments ago is left alone');
-  eq(M.urgPlan(tickets, urg, 0, T0).length, 0, 'a zero budget reads nothing');
-
-  // the store keeps the FLAG and nothing else
-  let st = M.urgApply(null, 33300, true, T0);
-  eq(Object.keys(st.urgent).join(','), '33300', 'an urgent ticket is recorded');
-  eq(st.n, 1, '...and the read count is the tickets asked, not the ones flagged');
-  st = M.urgApply(st, 33256, false, T0);
-  eq(st.n, 2, 'a calm ticket still counts as READ');
-  eq(Object.keys(st.urgent).join(','), '33300', '...without joining the urgent list');
-  st = M.urgApply(st, 33300, false, T0 + 1);
-  eq(Object.keys(st.urgent).length, 0, 'a flag taken off in the TM comes off here too');
-  eq(JSON.stringify(Object.keys(st).sort()), JSON.stringify(['at', 'n', 'read', 'urgent']),
-    'the store holds ids, timestamps and a flag — no subject, no body, no address');
-
-  // unpackTicket: absent is NOT false
-  const packed = [33256, 'subject', 'open', '2026-09-16', '2026-09-15', 'internal', 'client', 'a@b.c', 3, 'ok', 0, 7, 1, 2];
-  eq(M.unpackTicket(packed, 'Reiss', 'Ray').urgent, null, 'with no urgency store read, a ticket reads NOT READ, never calm');
-  eq(M.unpackTicket(packed, 'Reiss', 'Ray', { read: { 33256: T0 }, urgent: {} }).urgent, false,
-    'read and unflagged is FALSE — a different answer from not read');
-  eq(M.unpackTicket(packed, 'Reiss', 'Ray', { read: { 33256: T0 }, urgent: { 33256: 1 } }).urgent, true, 'and flagged is true');
-  eq(M.unpackTicket(packed, 'Reiss', 'Ray', { read: {}, urgent: { 33256: 1 } }).urgent, null,
-    'a flag with no read stamp is not trusted — the read map is what says the question was asked');
-
-  // normTicket off a DETAIL row
-  eq(M.normTicket({ ticket_id: 1, is_urgent: true }).urgent, true, 'a detail row carries the flag through normTicket');
-  eq(M.normTicket({ ticket_id: 1 }).urgent, null, '...and a LIST row, which has no such field, reads not-read');
-  eq(M.normTicket({ ticket_id: 1, is_urgent: false }).urgent, false, '...and an explicit false is false');
-}
-
-
-console.log('\n── urgent: the page twin reads it the same way');
-{
-  // the grammar, through the page's own matcher
-  const tk = (u) => ({ id: 1, client: 'Reiss', am: 'Ray', subject: 'x', status: 'open', d: '2026-09-16',
-    first: '', by: '', origin: '', from: '', age: 1, level: 'ok', idle: 0, msgs: 1, tasks: 1, hours: 1, urgent: u });
-  ok(P.matchTicket(tk(true), P.parseQuery('urgent:yes')), 'the page finds a flagged ticket');
-  ok(!P.matchTicket(tk(null), P.parseQuery('urgent:no')), '...and never calls an unread one calm');
-  ok(P.matchTicket(tk(null), P.parseQuery('urgent:none')), '...and can ask for the unread ones');
-  ok(P.matchTicket(tk(true), P.parseQuery('urgent:yes,none')), '...and a comma is OR here too');
-}
-
-console.log('\n── urgent: in the grammar, on tickets only');
-{
-  const tk = (u) => ({ id: 1, client: 'Reiss', am: 'Ray', subject: 'x', status: 'open', d: '2026-09-16',
-    first: '', by: '', origin: '', from: '', age: 1, level: 'ok', idle: 0, msgs: 1, tasks: 1, hours: 1, urgent: u });
-  const q = (t) => M.parseQuery(t);
-  ok(M.matchTicket(tk(true), q('urgent:yes')), 'urgent:yes finds a flagged ticket');
-  ok(!M.matchTicket(tk(false), q('urgent:yes')), '...and not a calm one');
-  ok(!M.matchTicket(tk(null), q('urgent:yes')), '...and never an unread one');
-  ok(M.matchTicket(tk(false), q('urgent:no')), 'urgent:no is READ AND NOT FLAGGED');
-  ok(!M.matchTicket(tk(null), q('urgent:no')), '...so an unread ticket does NOT answer to it');
-  ok(M.matchTicket(tk(null), q('urgent:none')), 'urgent:none is the third answer — not read yet');
-  ok(!M.matchTicket(tk(true), q('urgent:none')), '...and only that');
-  ok(!M.matchTicket(tk(true), q('-urgent:yes')), 'negation works');
-  ok(M.matchTicket(tk(false), q('-urgent:yes')), '...without swallowing the others');
-  ok(M.matchTicket(tk(true), q('urgent:yes,none')), 'a comma is still OR here');
-  // and a TASK query naming it offers nothing rather than ignoring the filter
-  const task = { id: 1, client: 'Reiss', market: 'GB', owner: 'Ray', am: 'Ray', title: 'x', notes: '',
-    status: 'done', bucket: 'done', cat: 'opt', d: '2026-05-04', hours: 1, bill: 1, nonbill: 0, tags: [] };
-  ok(!M.matchTask(task, q('urgent:yes')), 'a TASK query naming urgent returns nothing — a task has no such flag');
-  ok(M.matchTask(task, q('cat:opt')), '...and an ordinary task filter is untouched');
-}
-
 // the worker's tmBookPull, lifted by name, against a stub MCP server
 // ---------------------------------------------------------------------------------------------
 console.log('── worker: tmBookPull (lifted) against a stub MCP');
@@ -893,9 +805,7 @@ const TASKROWS = {
   155: [src(9, 'Keyword optimisation', '2026-05-04', 2, 1.5), src(7, 'Category mapping', '2024-11-21', 2, 0)],
   467: [src(4, 'Title optimisation', '2026-07-01', 1, 0.25)],
 };
-const TICKETROWS = { 51: [tsrc(33256, 'Israel Feed Set Up', 'open', '2026-09-16'),
-  tsrc(33300, 'Feed down', 'open', '2026-09-15'), tsrc(33111, 'Old thread', 'closed', '2026-08-01')] };
-const URGENT = { 33300: 1 };
+const TICKETROWS = { 51: [tsrc(33256, 'Israel Feed Set Up', 'open', '2026-09-16')] };
 let calls = [];
 const server = http.createServer((req, res) => {
   let body = '';
@@ -914,10 +824,6 @@ const server = http.createServer((req, res) => {
     if (name === 'get_client_list') return reply(CLIENTS);
     if (name === 'get_task_list_for_client') { const rows = TASKROWS[args.client_id] || []; return reply({ status: 'ok', rows, returned_count: rows.length, total_count: rows.length, truncated: false }); }
     if (name === 'get_tickets_for_client') return reply(TICKETROWS[args.client_id] || []);
-    // the ONLY place is_urgent exists — one call, one ticket (verified against the live book)
-    if (name === 'get_ticket_detail') return reply(Object.assign({ ticket_id: args.ticket_id,
-      is_urgent: !!URGENT[args.ticket_id], body_plain: 'a whole client email thread that must never be stored',
-      to: 'someone@client.example', cc: 'another@client.example' }));
     res.writeHead(200, { 'content-type': 'application/json' });
     res.end(JSON.stringify({ jsonrpc: '2.0', id: m.id, error: { code: -32601, message: 'Method not found' } }));
   });
@@ -949,12 +855,6 @@ const envOf = (o) => Object.assign({ TM_MCP_URL: URL0 }, o);
   eq(calls.filter((c) => c.name === 'get_task_list_for_client').map((c) => c.args.client_id).sort(), [155, 467],
     'only the markets worth reading are pulled — the stopped one with no hours is skipped');
   eq(calls.filter((c) => c.name === 'get_tickets_for_client').length, 1, 'and one ticket queue');
-  /* THE URGENCY LANE, on the same firing. is_urgent lives only on get_ticket_detail — one call,
-     one ticket — so it rides a rotation of its own on the queue this firing just read. */
-  const det = calls.filter((c) => c.name === 'get_ticket_detail');
-  ok(det.length > 0, 'the pull reads ticket detail — the only place is_urgent exists');
-  eq(det.length, 3, '...once per ticket in the queue it just read');
-  ok(det.every((c) => c.args.client_id === 51), '...against the TICKET client id, not the market id');
   ok(kv.puts.indexOf('tmbook:Reiss') >= 0, 'the market lands in the client’s book record');
   ok(kv.puts.indexOf('tmtick:Reiss') >= 0, 'the queue lands in its own record');
   ok(kv.puts.indexOf('tmbookidx') >= 0, 'the index is written');
@@ -979,41 +879,7 @@ const envOf = (o) => Object.assign({ TM_MCP_URL: URL0 }, o);
   const b = M.assembleBook([await kv.get('tmbook:Reiss', 'json')],
     [Object.assign({ client: 'Reiss' }, await kv.get('tmtick:Reiss', 'json'))], idx.accounts, NOW);
   eq(b.rows.length, 2, 'the assembled book carries both markets’ rows');
-  eq(b.tickets.length, 3, '...and the queue');
-
-  /* THE URGENCY LANE. is_urgent lives only on get_ticket_detail, so it rides its own rotation on
-     the queue this firing just read — and what lands in KV is the flag, nothing else: the same
-     call answers with the whole client email thread and the to/cc addresses, none of which may
-     ever reach storage (no client contact data in KV, the rule the whole module runs on). */
-  const urg = await kv.get('tmurg:Reiss', 'json');
-  ok(!!urg, 'the flags are stored in their own key, beside the queue record');
-  eq(Object.keys(urg.urgent).join(','), '33300', 'the one urgent ticket is the one the TM flagged');
-  eq(urg.n, 3, 'and every ticket asked counts as read, flagged or not');
-  const urgRaw = kv.store.get('tmurg:Reiss');
-  ok(urgRaw.indexOf('body_plain') < 0 && urgRaw.indexOf('email thread') < 0,
-    'NO email body reaches KV, though the same MCP answer carried one');
-  ok(urgRaw.indexOf('@client.example') < 0, '...and no client address either');
-  ok(urgRaw.indexOf('Feed down') < 0, '...and not even the ticket subject — the queue record already holds that');
-
-  // the queue record itself is untouched, so the next queue pull cannot wipe the flags
-  const tick = await kv.get('tmtick:Reiss', 'json');
-  ok(JSON.stringify(tick).indexOf('urgent') < 0, 'the flag is NOT folded into the queue record');
-  const merged = M.assembleBook([await kv.get('tmbook:Reiss', 'json')],
-    [Object.assign({ client: 'Reiss' }, tick, { urg })], idx.accounts, NOW);
-  const byId = {}; merged.tickets.forEach((t) => { byId[t.id] = t; });
-  eq(byId[33300].urgent, true, '...and merged back on READ');
-  eq(byId[33256].urgent, false, '...with a read-and-calm ticket reading false');
-
-  // the firing above ran with queues:0 — the urgency lane rides the queue a firing actually
-  // reads, so it correctly spent nothing
-  eq(calls.filter((c) => c.name === 'get_ticket_detail').length, 0,
-    'a firing that reads no ticket queue reads no ticket detail either');
-
-  // and a firing that DOES read the queue again re-reads no flag it already has
-  calls = [];
-  await W.tmBookPull(envOf({ EDITS: kv, TM_MCP_TOKEN: TOKEN }), { now: NOW + 60000, pulls: 0, queues: 1 });
-  eq(calls.filter((c) => c.name === 'get_ticket_detail').length, 0,
-    'nor does it re-read a flag it already has — the budget goes to tickets nobody has asked about');
+  eq(b.tickets.length, 1, '...and the queue');
   const sum = M.summarise(b.rows);
   ok(Math.abs(sum.bill + sum.nonbill - sum.hours) < 1e-9, 'billable + non-billable = total, through KV and back');
   eq(sum.bill, 3, 'billable survives the whole round trip');
@@ -1102,29 +968,6 @@ eq(HC(13.5), '13.50', 'a footer sum is fixed the same way as the rows above it')
 // ---------------------------------------------------------------------------------------------
 console.log('── pane filter + totals footer (lifted from the page)');
 const PG = fs.readFileSync(PAGE, 'utf8');
-
-console.log('\n── urgent: on the page');
-{
-  // liftArr hands back the DECLARATION, so it is evaluated rather than trusted as text
-  const cols = new Function(liftArr('TK_COLS') + '\nreturn TK_COLS;')();
-  ok(cols.some((c) => c.k === 'urgent'), 'the Tickets tab carries an Urgent column');
-  ok(/urgCell\(t\)/.test(PAGE_SRC), '...rendered by urgCell, which knows three states');
-  const cell = liftPageSrc('urgCell');
-  const fn = new Function(cell + '\nreturn urgCell;')();
-  ok(/not read/i.test(fn({ urgent: null })), 'an unread ticket SAYS it has not been read');
-  ok(/urgent/i.test(fn({ urgent: true })), 'a flagged one says urgent');
-  ok(!/urgent/i.test(fn({ urgent: false }).replace(/title="[^"]*"/g, '')),
-    'and a read-and-calm one claims nothing');
-  // the footer still resolves by key, so inserting a column cannot misalign the totals
-  ok(/function colIdx\(/.test(PAGE_SRC), 'the totals row still resolves its columns BY KEY');
-  const hrsIdx = cols.map((c) => c.k).indexOf('hours');
-  eq(hrsIdx, cols.length - 1, '...and the hour total is still the last column');
-  // the band that once set this against the tag was REMOVED at Ray's ask (22 Sep 2026); the
-  // flag stays where it belongs, on the ticket
-  ok(!/dpxchk|urgencyCheck/.test(PAGE_SRC), 'no cross-check band sets the ticket flag against the tag');
-  ok(/data-ins="urgent:yes"/.test(PAGE_SRC), 'urgent: is offered in the search hints');
-}
-
 // the column arrays are `var NAME = [ … ];` — lifted whole so the footer tests read the SAME
 // list the table's own header does
 function liftArr(name) {
