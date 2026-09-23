@@ -279,6 +279,13 @@ else
   echo "   ✗ Task Manager sync harness FAILED — see node tools/test_tmmcp.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3h6/7: ROAS (FeedHero_reports MCP — currency-safe rollup, FeedSpark-only roster, worker wiring)"
+if node tools/test_roas.mjs >/dev/null 2>&1; then
+  echo "   ✓ parsing, roster scope, rotation, currency-safe brandRollup/bookKpis, route + cron wiring hold"
+else
+  echo "   ✗ ROAS harness FAILED — see node tools/test_roas.mjs"; FAIL=1
+fi
+
 echo "── qa-gate 3h3/7: phone layer (the module bar, mirror rules, pan sweep, wiring)"
 if node tools/test_mobile.mjs >/dev/null 2>&1; then
   echo "   ✓ bottom bar, sheets, mirror rules, pan sweep + worker/tripwire wiring hold"

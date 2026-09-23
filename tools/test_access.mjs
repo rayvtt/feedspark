@@ -115,7 +115,7 @@ ok(Array.isArray(dm['c@d.com'].modules) && dm['c@d.com'].modules.length === 0, '
 ok(dm['e@f.com'].modules === undefined, 'sanitizer: a row with no modules key stays unrestricted (all)');
 ok(MODULE_PATHS['/labels'] === 'labels' && MODULE_PATHS['/kwcal'] === 'kwcal', 'MODULE_PATHS maps a route to its slug');
 ok(MODULE_PATHS['/leadership'] === undefined && MODULE_PATHS['/activity'] === undefined && MODULE_PATHS['/'] === undefined, 'leadership / activity / landing are NOT grantable modules');
-ok(MODULES.length === 14 && MODULES.every((m) => m.slug && m.label && m.path), 'fourteen grantable modules, each {slug,label,path}');
+ok(MODULES.length === 15 && MODULES.every((m) => m.slug && m.label && m.path), 'fifteen grantable modules, each {slug,label,path}');
 ok(MODULE_PATHS['/images'] === 'images', 'the Image Library is a grantable module of its own');
 // the Playbook stopped being a module of its own on 16 Sep 2026 — it is Workflow's right-hand
 // rail, so it is reachable exactly when `workflow` is. A leftover slug would grant a page that

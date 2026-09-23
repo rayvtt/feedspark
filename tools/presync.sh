@@ -92,6 +92,10 @@ echo "── validating: Task Manager AUTOMATIC sync (MCP transport + rotation +
 node tools/test_tmmcp.mjs >/dev/null
 echo "   ✓ JSON/SSE parsing, auth modes, market rotation, ibfref hours, cron pull vs stub MCP + page wiring hold"
 
+echo "── validating: ROAS (FeedHero_reports MCP — currency-safe rollup, FeedSpark-only roster)"
+node tools/test_roas.mjs >/dev/null
+echo "   ✓ parsing, roster scope, rotation, currency-safe brandRollup/bookKpis, route + cron wiring hold"
+
 echo "── validating: phone layer (bar, sheets, mirror rules, pan sweep, wiring)"
 node tools/test_mobile.mjs >/dev/null
 node tools/test_buildsuggest.mjs >/dev/null

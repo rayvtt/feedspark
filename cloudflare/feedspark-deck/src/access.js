@@ -45,6 +45,7 @@ export const MODULES = [
   { slug: 'ptypes', label: 'PT Guard', path: '/ptypes' },
   { slug: 'golden', label: 'Golden Record', path: '/golden' },
   { slug: 'volume', label: 'Product volume', path: '/volume' },
+  { slug: 'roas', label: 'ROAS', path: '/roas' },
   { slug: 'overlays', label: 'Overlays', path: '/overlays' },
   { slug: 'images', label: 'Image library', path: '/images' },
   { slug: 'kwcal', label: 'Keyword calendar', path: '/kwcal' },
