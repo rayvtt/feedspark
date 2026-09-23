@@ -741,3 +741,6 @@ subtle 1px dotted rule on a transparent row — Ray, 22 Sep 2026: *"replace it w
 make it just subtle"* — no hover wash, its own dark-mode tone, hidden from readers) is written only where the
 block changes, so it is never inside a block and never the first row. An expanded ⌄ detail row stays inside
 its block; the gap follows it.
+
+## Monthly update card — bundle price folds away (23 Sep 2026)
+Ray: "this section is doubled, move the checkbox to below the new arrival chart and hide the bundle price in an [i] icon for AM to adjust and hide when doing the quote live with client". The "Include monthly new-product updates" tick now sits under the arrivals chart. The priced half (estimate/override, band prices, bundle summary) folds behind the ⓘ beside the card heading. It is closed by default and remembered per device (localStorage `fcc-upd-bundle`). Pricing is unchanged whether it is open or closed. Marker `UPD-BUNDLE-FOLD`.
