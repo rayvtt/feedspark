@@ -115,6 +115,40 @@ h2.sec{font-size:clamp(28px,3.6vw,40px);margin-bottom:10px}
 .legend{display:flex;gap:20px;margin-top:16px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
 .legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:7px;vertical-align:-1px}
 
+/* ---------- scenarios: what it costs when nobody sees it ---------- */
+.scn{position:relative;margin-top:4px}
+.scn::before{content:"";position:absolute;left:19px;top:28px;bottom:28px;width:2px;background:var(--line)}
+.scn::after{content:"";position:absolute;left:19px;top:28px;width:2px;height:0;background:linear-gradient(180deg,var(--orange),var(--orange-deep));transition:height 1.9s var(--ease) .25s}
+.scn.in::after{height:calc(100% - 56px)}
+.scn-row{display:grid;grid-template-columns:40px 1fr;gap:24px;padding:14px 0;align-items:start}
+.scn-n{width:40px;height:40px;border-radius:50%;background:#fff;border:2px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:900;color:var(--muted);position:relative;z-index:2;transition:.55s var(--ease) .25s;margin-top:14px}
+.scn-row.in .scn-n{border-color:var(--orange);color:var(--orange-deep)}
+.scn-c{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px 22px;box-shadow:var(--shadow);transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
+.scn-c:hover{transform:translateY(-3px);box-shadow:var(--shadow-lift)}
+.scn-h{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:9px}
+.scn-h h4{font-size:17.5px;letter-spacing:-.015em}
+.tag{font-size:9.5px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;padding:5px 10px;border-radius:5px;white-space:nowrap;flex-shrink:0;margin-top:2px}
+.tag.rev{background:#FCE9DA;color:#A8450A}
+.tag.ret{background:#F8E1E1;color:#96201F}
+.scn-c>p{font-size:14px;color:var(--ink-2);margin-bottom:13px;line-height:1.55}
+.scn-l{display:grid;grid-template-columns:132px 1fr;gap:14px;font-size:13.5px;padding:9px 0;border-top:1px solid var(--line);align-items:baseline}
+.scn-l b{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:900}
+.scn-l.on b{color:var(--orange-deep)}
+.scn-l span{color:var(--ink-2)}
+
+/* ---------- per-job detail table ---------- */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.jobs{width:100%;border-collapse:collapse;font-size:13.5px;min-width:660px}
+.jobs th{text-align:left;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:900;padding:0 16px 11px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+.jobs td{padding:12px 16px 12px 0;border-bottom:1px solid var(--line);vertical-align:middle;color:var(--ink-2)}
+.jobs td:first-child{color:var(--ink);font-weight:700}
+.jobs .n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.jobs .sv{font-weight:900;color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+.jb{height:7px;background:#EDEDEA;border-radius:4px;overflow:hidden;min-width:80px}
+.jb i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--orange),var(--orange-deep));border-radius:4px;transition:width 1.05s var(--ease);transition-delay:var(--d,0ms)}
+.in .jb i{width:var(--w)}
+.jobs tfoot td{border-bottom:0;border-top:2px solid var(--ink);font-weight:900;color:var(--ink);padding-top:14px}
+
 /* ---------- mechanism cards ---------- */
 .mech{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
 .mcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:28px 24px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform .4s var(--ease),box-shadow .4s var(--ease)}
@@ -169,6 +203,10 @@ footer b{color:#fff}
   .step{text-align:left;padding:0 0 26px}
   .step .dot{margin:0 0 12px}
   .cue{display:none}
+  .scn-row{grid-template-columns:1fr;gap:12px}
+  .scn::before,.scn::after{display:none}
+  .scn-n{margin-top:0}
+  .scn-l{grid-template-columns:1fr;gap:3px;padding:8px 0}
   .hero-kpi>div{padding:16px 0}
   .scatter{height:auto;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding-bottom:64px}
   .chip{position:static !important;transform:none !important;opacity:1 !important}
@@ -194,16 +232,17 @@ footer b{color:#fff}
 <div class="prog" id="prog"></div>
 <nav class="rail" id="rail">
   <a href="#s1" data-l="The problem"></a>
-  <a href="#s2" data-l="The build"></a>
-  <a href="#s3" data-l="The return"></a>
-  <a href="#s4" data-l="The team"></a>
-  <a href="#s5" data-l="The ask"></a>
+  <a href="#s2" data-l="What it costs"></a>
+  <a href="#s3" data-l="The build"></a>
+  <a href="#s4" data-l="The return"></a>
+  <a href="#s5" data-l="The team"></a>
+  <a href="#s6" data-l="The ask"></a>
 </nav>
 
 <!-- ================= HERO ================= -->
 <header class="hero">
   <div class="wrap">
-    <span class="pill"><i></i>Business case · 5 minute read</span>
+    <span class="pill"><i></i>Business case · 6 minute read</span>
     <h1 id="h1">The FeedSpark Command Center</h1>
     <p class="lede">Nine clients, 52 markets, 62 feeds and 13 project plans — on one screen, built in six weeks, on £0 of infrastructure.</p>
     <div class="hero-kpi rv" style="--d:900ms">
@@ -239,14 +278,78 @@ footer b{color:#fff}
       <div class="stat rv" style="--d:110ms"><div class="n" data-cu="2750">0</div><div class="l">Hours of scheduled optimisation skipped, because skip streaks were never tracked</div></div>
       <div class="stat rv" style="--d:220ms"><div class="n" data-cu="62">0</div><div class="l">Live feeds, spot-checked one at a time when somebody remembered</div></div>
     </div>
-    <p class="kicker rv" style="--d:300ms">None of these was a surprise anybody could act on. <b>They were invisible</b> — not because the team was careless, but because no screen anywhere put them together.</p>
+    <p class="kicker rv" style="--d:300ms">None of these was a surprise anybody could act on. <b>They were invisible</b> — not for want of care, but because no screen put them together. Here is what that costs.</p>
   </div>
 </section>
 
 <!-- ================= 2 · THE BUILD ================= -->
+<!-- ================= 2 · WHAT IT COSTS ================= -->
 <section class="band" id="s2">
   <div class="wrap">
-    <div class="eyebrow rv">02 — The build</div>
+    <div class="eyebrow rv">02 — What it costs</div>
+    <h2 class="sec rv" style="--d:60ms">Five ways an unseen problem turns into money</h2>
+    <p class="sub rv" style="--d:110ms">Each of these happened on the book. None was anybody’s mistake — each was simply invisible until it was expensive.</p>
+
+    <div class="scn" id="scn">
+
+      <div class="scn-row rv">
+        <div class="scn-n">01</div>
+        <div class="scn-c">
+          <div class="scn-h"><h4>A custom label empties on Monday</h4><span class="tag rev">Revenue</span></div>
+          <p>Performance Max listing groups key on the exact values in the feed. One re-export with a label blank and every group built on it stops matching — the products still there, still approved, and quietly outside the structure that bids on them.</p>
+          <div class="scn-l"><b>Without the FCC</b><span>Found at the next spot-check, or when the client asks why that group’s spend fell away.</span></div>
+          <div class="scn-l on"><b>With it</b><span>Every feed read four times a day against a known-good baseline; the alert arrives with the client email already drafted.</span></div>
+        </div>
+      </div>
+
+      <div class="scn-row rv">
+        <div class="scn-n">02</div>
+        <div class="scn-c">
+          <div class="scn-h"><h4>The landing page changes price, the feed doesn’t</h4><span class="tag rev">Revenue</span></div>
+          <p>A brand flips its default product option — subscription to single purchase — for Black Friday, and back four days later. A feed still carrying the old price is a price-mismatch disapproval, in the busiest fortnight of the year.</p>
+          <div class="scn-l"><b>Without the FCC</b><span>Merchant Center tells us, days later, by suspending the products.</span></div>
+          <div class="scn-l on"><b>With it</b><span>Both the flip and the revert sit on the keyword calendar as feed facts, with the revert named as the step most likely to be forgotten.</span></div>
+        </div>
+      </div>
+
+      <div class="scn-row rv">
+        <div class="scn-n">03</div>
+        <div class="scn-c">
+          <div class="scn-h"><h4>Three months of skipped optimisation, found at the review</h4><span class="tag ret">Retention</span></div>
+          <p>The content team schedules keyword and title work weekly; the account manager answers go-ahead or skip. Every skip is reasonable in the week it is made, and nobody was counting the streak — 2,750 hours of scheduled work went unspent across the book.</p>
+          <div class="scn-l"><b>Without the FCC</b><span>The account reads flat, and the first person to notice the pattern is the client.</span></div>
+          <div class="scn-l on"><b>With it</b><span>Skip streaks per task and per brand, with the hours attached, on one screen — so it becomes a conversation, not a discovery.</span></div>
+        </div>
+      </div>
+
+      <div class="scn-row rv">
+        <div class="scn-n">04</div>
+        <div class="scn-c">
+          <div class="scn-h"><h4>378 hours delivered and never charged for</h4><span class="tag rev">Revenue</span></div>
+          <p>Work carries on past the retainer because the relationship matters. Often the right call — but only when somebody makes it. Across the live book, 378 hours sat beyond the block, uncounted.</p>
+          <div class="scn-l"><b>Without the FCC</b><span>It surfaces at renewal, as a cost overrun rather than as the case for a bigger retainer.</span></div>
+          <div class="scn-l on"><b>With it</b><span>The balance sits on every task, ticket and brand — with the team’s decision to keep going recorded beside it.</span></div>
+        </div>
+      </div>
+
+      <div class="scn-row rv">
+        <div class="scn-n">05</div>
+        <div class="scn-c">
+          <div class="scn-h"><h4>A brief that exists in one browser</h4><span class="tag ret">Retention</span></div>
+          <p>A colleague raises two briefs, the emails go out, the delivery team picks them up — and the board still reads <b>not briefed</b>, because the save never reached the shared store.</p>
+          <div class="scn-l"><b>Without the FCC</b><span>The work is invisible to everyone else. It gets chased, duplicated, or promised to the client a second time.</span></div>
+          <div class="scn-l on"><b>With it</b><span>The pipeline is the record: a failed save retries and says so on screen until it lands.</span></div>
+        </div>
+      </div>
+
+    </div>
+    <p class="kicker rv" style="--d:200ms">Three cost revenue, two cost trust, and <b>none announces itself</b>. That is the argument for a dashboard rather than more diligence — you cannot be more careful about something no screen is showing you.</p>
+  </div>
+</section>
+
+<section id="s3">
+  <div class="wrap">
+    <div class="eyebrow rv">03 — The build</div>
     <h2 class="sec rv" style="--d:60ms">Twenty modules in six weeks, on the tools we already run</h2>
     <p class="sub rv" style="--d:110ms">Nothing new to log into, nothing re-keyed. It reads Google Sheets, Gmail, the feeds and the Task Manager, and puts the answer where the decision happens.</p>
 
@@ -267,9 +370,9 @@ footer b{color:#fff}
 </section>
 
 <!-- ================= 3 · THE RETURN ================= -->
-<section id="s3">
+<section class="band" id="s4">
   <div class="wrap">
-    <div class="eyebrow rv">03 — The return</div>
+    <div class="eyebrow rv">04 — The return</div>
     <h2 class="sec rv" style="--d:60ms">Eleven hours a week, back to the client</h2>
     <p class="sub rv" style="--d:110ms">Per account manager, on monitoring, coordination and reporting — the work that never appeared on an invoice.</p>
 
@@ -293,6 +396,24 @@ footer b{color:#fff}
       </div>
     </div>
 
+    <div class="eyebrow solo rv" style="margin-top:58px">Job by job, per account manager, per week</div>
+    <div class="tbl-wrap rv" id="jobs">
+      <table class="jobs">
+        <thead><tr><th style="width:30%">The job</th><th>Without</th><th>With</th><th>Saved</th><th style="width:16%"></th><th style="width:28%">What does it instead</th></tr></thead>
+        <tbody>
+          <tr><td>Feed health across all markets</td><td class="n">3.5 h</td><td class="n">0.5 h</td><td class="sv">3.0 h</td><td><div class="jb"><i style="--w:100%;--d:0ms"></i></div></td><td>Four guards scanning 62 feeds, alerts with the client email drafted</td></tr>
+          <tr><td>Task capture from email and calls</td><td class="n">2.0 h</td><td class="n">0.5 h</td><td class="sv">1.5 h</td><td><div class="jb"><i style="--w:50%;--d:90ms"></i></div></td><td>Gmail push, call-note parsing, one-click filing to the plan</td></tr>
+          <tr><td>Briefs: writing, coding, chasing</td><td class="n">2.5 h</td><td class="n">1.0 h</td><td class="sv">1.5 h</td><td><div class="jb"><i style="--w:50%;--d:180ms"></i></div></td><td>Brief composer, automatic stage moves, the SLA board</td></tr>
+          <tr><td>Retainer checks and hours reporting</td><td class="n">1.0 h</td><td class="n">0.25 h</td><td class="sv">0.75 h</td><td><div class="jb"><i style="--w:25%;--d:270ms"></i></div></td><td>Task Manager sync, the balance dot on every page</td></tr>
+          <tr><td>Client reporting and review decks</td><td class="n">3.0 h</td><td class="n">1.0 h</td><td class="sv">2.0 h</td><td><div class="jb"><i style="--w:67%;--d:360ms"></i></div></td><td>One-click scorecards, decks generated on the template</td></tr>
+          <tr><td>Quotes, proposals, keyword planning</td><td class="n">1.5 h</td><td class="n">0.5 h</td><td class="sv">1.0 h</td><td><div class="jb"><i style="--w:33%;--d:450ms"></i></div></td><td>AI Quote with the finance workbook; the keyword calendar</td></tr>
+          <tr><td>Monday call and status chasing</td><td class="n">1.5 h</td><td class="n">0.25 h</td><td class="sv">1.25 h</td><td><div class="jb"><i style="--w:42%;--d:540ms"></i></div></td><td>Leadership, the Playbook, the activity log</td></tr>
+        </tbody>
+        <tfoot><tr><td>Total per account manager</td><td class="n">15.0 h</td><td class="n">4.0 h</td><td class="sv">11.0 h</td><td></td><td>of a 37.5-hour week</td></tr></tfoot>
+      </table>
+    </div>
+    <p class="kicker rv" style="--d:150ms">These are estimates against the live book, not a time log — which is why the rollout opens with <b>a one-week diary</b> and closes by re-running it.</p>
+
     <div class="stats" style="margin-top:56px">
       <div class="stat rv"><div class="n" data-cu="3450" data-suf=" h">0</div><div class="l">A year of finding out, without the FCC, across five AMs</div></div>
       <div class="stat rv" style="--d:110ms"><div class="n" data-cu="2530" data-suf=" h">0</div><div class="l">Saved a year with it — 316 account-manager days back</div></div>
@@ -303,9 +424,9 @@ footer b{color:#fff}
 </section>
 
 <!-- ================= 4 · THE TEAM ================= -->
-<section class="warm" id="s4">
+<section class="warm" id="s5">
   <div class="wrap">
-    <div class="eyebrow rv">04 — The team</div>
+    <div class="eyebrow rv">05 — The team</div>
     <h2 class="sec rv" style="--d:60ms">Three mechanisms, not twenty modules</h2>
     <p class="sub rv" style="--d:110ms">Each one takes a judgement out of the account manager's head — which is exactly what makes it an onboarding tool.</p>
 
@@ -332,15 +453,15 @@ footer b{color:#fff}
         <div class="step"><div class="dot">3</div><h4>Week two — own</h4><p>Monday call prepared from Leadership. A scorecard exported to the client. A quote on the shared rate card.</p></div>
       </div>
       <p class="kicker rv" style="--d:200ms">And for whoever runs the team: coach from the same screen the AM sees, one standard applied evenly, and a live handover document per brand — so <b>the floor rises while the ceiling is still the account manager</b>.</p>
-      <div class="note rv" style="--d:260ms"><b>Said plainly:</b> this shortens the mechanical half of the apprenticeship — where the data lives, what good looks like, what a brief must contain. Not the relational half. Which is why every figure on every screen states its source, and every alert opens down to the products behind it.</div>
+      <div class="note rv" style="--d:260ms"><b>Said plainly:</b> this shortens the mechanical half of the apprenticeship — where the data lives, what good looks like, what a brief must contain. Not the relational half. Which is why every figure states its source and every alert opens to its evidence.</div>
     </div>
   </div>
 </section>
 
 <!-- ================= 5 · THE ASK ================= -->
-<section id="s5">
+<section id="s6">
   <div class="wrap">
-    <div class="eyebrow rv">05 — Going forward</div>
+    <div class="eyebrow rv">06 — Going forward</div>
     <h2 class="sec rv" style="--d:60ms">Ninety days to make it how the team works</h2>
     <p class="sub rv" style="--d:110ms">Days 0–30 everyone in and a baseline diary measured · 30–60 every brief, quote and deck generated from it · 60–90 the diary re-run, the result reported, the next team chosen. Nothing in the first thirty days needs a developer.</p>
 
@@ -418,7 +539,7 @@ footer b{color:#fff}
   }, { threshold: 0.2, rootMargin: '0px 0px -8% 0px' });
 
   Array.prototype.forEach.call(
-    document.querySelectorAll('.rv, .scatter, .mech, .trk, #mods, #week, .hero-kpi'),
+    document.querySelectorAll('.rv, .scatter, .mech, .trk, .scn, #mods, #week, #jobs, .hero-kpi'),
     function(el){ io.observe(el); }
   );
 
