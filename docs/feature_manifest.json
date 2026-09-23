@@ -5511,56 +5511,56 @@
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "const made = recoverBriefsFromEmail(briefs, messages, { now });\n      const res = matchGmailToBriefs",
       "min": 1,
-      "pr": 0
+      "pr": 512
     },
     {
       "name": "Workflow/Gmail: the same order on the rescan lane",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "recoverBriefsFromEmail(briefs, messages, { now });   // rebuild any ticket only its email remembers — BEFORE the matcher",
       "min": 1,
-      "pr": 0
+      "pr": 512
     },
     {
       "name": "Workflow/Gmail: the live push reports which tickets it rebuilt, so the backfill sweep can log them per page",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "tickets: res.loggedTo, rebuilt: made",
       "min": 1,
-      "pr": 0
+      "pr": 512
     },
     {
       "name": "Gmail push: a [FS Brief] ORIGINAL is not aged out while its thread is live — the one message that can rebuild a ticket was being discarded after 7 days",
       "file": "tools/gmail_push.gs",
       "pattern": "isBriefOriginal(subj) ? BRIEF_MAX_AGE_MS : MAX_AGE_MS",
       "min": 1,
-      "pr": 0
+      "pr": 512
     },
     {
       "name": "Gmail push: the original/reply gate mirrors briefmatch.js briefFromEmail",
       "file": "tools/gmail_push.gs",
       "pattern": "function isBriefOriginal(subject)",
       "min": 1,
-      "pr": 0
+      "pr": 512
     },
     {
       "name": "Gmail push: backfillBriefs() — the resumable sweep that reaches the briefs stranded before the save-durability fix",
       "file": "tools/gmail_push.gs",
       "pattern": "function backfillBriefs()",
       "min": 1,
-      "pr": 0
+      "pr": 512
     },
     {
       "name": "Gmail push: the brief backfill saves its cursor every page, so a timeout never restarts the year",
       "file": "tools/gmail_push.gs",
       "pattern": "props.setProperty(BRIEF_BACKFILL_PROP, String(offset))",
       "min": 1,
-      "pr": 0
+      "pr": 512
     },
     {
       "name": "Harness: the 8 Sep Superdry brief — a 15-day-old original plus today's reply, recovered then matched",
       "file": "tools/test_briefrecover.mjs",
       "pattern": "SUPE-20260908-01",
       "min": 1,
-      "pr": 0
+      "pr": 512
     },
     {
       "name": "gmail_push.gs: the pushed snippet carries the whole brief body (1200 chars cut off the DoD and assets)",
