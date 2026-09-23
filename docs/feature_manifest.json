@@ -9523,6 +9523,12 @@
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "UPD-BUNDLE-FOLD",
       "pr": 0
+    },
+    {
+      "name": "AI Quote Monthly update card drops its arrivals chart while Spark AI draws the same one",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "UPD-NO-DUP-CHART",
+      "pr": 0
     }
   ]
 }
