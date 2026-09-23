@@ -9535,6 +9535,30 @@
       "file": "docs/FeedSpark_AIQuote.html",
       "pattern": "UPD-IN-SPARK",
       "pr": 0
+    },
+    {
+      "name": "Task Manager: the account clause is lifted out of a query and put back (saved views travel between clients)",
+      "file": "cloudflare/feedspark-deck/src/taskbook.js",
+      "pattern": "TMVIEW-LIFT",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: a saved chart view is kept per device, never shared state",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "TMVIEW-SHELF",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: the account picker follows the query wherever the query came from",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "TMVIEW-PICKER-FOLLOWS",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: a restored view runs against the account on screen, not the one it was saved from",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "TMVIEW-ACCOUNT-ON-SCREEN",
+      "pr": 0
     }
   ]
 }

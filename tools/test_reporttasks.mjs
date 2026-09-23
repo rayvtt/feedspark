@@ -53,7 +53,8 @@ function liftPage() {
     'CATS', 'CAT_LABEL', 'DIMS', 'BUCKET_LABEL', 'STATUS_BUCKET',
     'TAG_SEED', 'normTagSlug', 'taggable', 'ruleHits', 'tagsOf', 'decorateTags',
     'displacement', 'rulePreview', 'groupNested', 'flattenNested', 'NEST_CAPS',
-    'typeOf', 'decorateTypes', 'seriesByMonth', 'monthOf', 'isoOf', 'MEASURES', 'mOf'];
+    'typeOf', 'decorateTypes', 'seriesByMonth', 'monthOf', 'isoOf', 'MEASURES', 'mOf',
+    'liftClient', 'withClient', 'accountPick', 'packView', 'viewQuery', 'sanitizeViews', 'VIEW_MAX'];
   // eslint-disable-next-line no-new-func
   const f = new Function(body + '\nreturn {' + names.join(',') + '};');
   return f();
@@ -229,6 +230,119 @@ function grammar(E, tag) {
   eq(ts.stale, 1, tag + ': only a LIVE thread idle 30 days is stale — a closed one is finished');
   eq(ts.hours, 3, tag + ': hours booked through tickets add up');
 }
+
+// ---------------------------------------------------------------------------------------------
+// SAVED CHART VIEWS — the shape, never the account
+// (Ray, 23 Sep 2026: "in this chart dissection > allow option to save a view and that same view
+//  can be applied across different client")
+// ---------------------------------------------------------------------------------------------
+function views(E, tag) {
+  const L = (q) => E.liftClient(q);
+
+  // --- the account clause comes out WHOLE ------------------------------------------------------
+  eq(L('client:Superdry cat:opt min:4'), { rest: 'cat:opt min:4', was: ['Superdry'] },
+    tag + ': the client term is lifted out and the rest of the query survives it');
+  eq(L('cat:opt client:Superdry'), { rest: 'cat:opt', was: ['Superdry'] },
+    tag + ': lifted wherever in the query it sits');
+  eq(L('brand:Reiss keyword'), { rest: 'keyword', was: ['Reiss'] },
+    tag + ': brand: is the same field and is lifted too');
+  eq(L('BRAND:Reiss'), { rest: '', was: ['Reiss'] }, tag + ': the field name is case-blind');
+  eq(L('client:"House of Bruar" keyword'), { rest: 'keyword', was: ['House of Bruar'] },
+    tag + ': a quoted multi-word account is lifted as one name');
+  eq(L('keyword "client call"'), { rest: 'keyword "client call"', was: [] },
+    tag + ': a quoted phrase that merely CONTAINS the word client is text, not an account');
+  eq(L('client:Reiss client:Schuh'), { rest: '', was: ['Reiss', 'Schuh'] },
+    tag + ': every account named is lifted, not just the first');
+  // a NEGATED account goes too: left in place, applying the view TO Superdry would return
+  // nothing and read as a view that is broken rather than one that was re-pointed
+  eq(L('-client:Superdry cat:opt'), { rest: 'cat:opt', was: ['-Superdry'] },
+    tag + ': a negated account is lifted as well, and says it was negated');
+  eq(L(''), { rest: '', was: [] }, tag + ': an empty query lifts nothing');
+  eq(L('  cat:opt   bill:no '), { rest: 'cat:opt bill:no', was: [] },
+    tag + ': nothing to lift leaves the query tidied but intact');
+  // `client:` with no value is not a filter at all — parseQuery ignores it, so lifting it would
+  // silently delete something the reader can still see in the box
+  eq(L('client: cat:opt'), { rest: 'client: cat:opt', was: [] },
+    tag + ': a bare client: names no account and is left where it is');
+
+  // --- and goes back in ------------------------------------------------------------------------
+  eq(E.withClient('cat:opt', 'Reiss'), 'client:Reiss cat:opt', tag + ': the account leads the query');
+  eq(E.withClient('', 'Reiss'), 'client:Reiss', tag + ': an account on its own');
+  eq(E.withClient('cat:opt', ''), 'cat:opt', tag + ': no account means no term — every account');
+  eq(E.withClient('cat:opt', 'House of Bruar'), 'client:"House of Bruar" cat:opt',
+    tag + ': a name with a space is quoted, or the grammar reads it as three terms');
+  eq(E.withClient('', 'Monsoon, Accessorize'), 'client:"Monsoon, Accessorize"',
+    tag + ': a name with a comma is quoted, or the grammar reads it as a LIST of accounts');
+
+  // --- a round trip is lossless, which is what makes a view portable ---------------------------
+  for (const [q, c] of [['client:Superdry cat:opt', 'Reiss'], ['bill:no min:2', 'Schuh'],
+    ['client:"House of Bruar" keyword', 'House of Bruar'], ['cat:tech', '']]) {
+    const back = E.withClient(L(q).rest, c);
+    eq(E.accountPick(back).v, c, tag + `: "${q}" re-pointed at "${c}" reads back as that account`);
+    eq(L(back).rest, L(q).rest, tag + `: "${q}" re-pointed keeps every other term`);
+  }
+
+  // --- what the picker reads -------------------------------------------------------------------
+  eq(E.accountPick('client:Reiss cat:opt'), { v: 'Reiss', multi: false, was: ['Reiss'] },
+    tag + ': one account reads as that account');
+  eq(E.accountPick('cat:opt'), { v: '', multi: false, was: [] },
+    tag + ': no account reads as every account');
+  // the honest third state: "every account" over a query naming two would be the control lying
+  eq(E.accountPick('client:Reiss client:Schuh').multi, true,
+    tag + ': two accounts is neither one account nor every account');
+  eq(E.accountPick('client:Reiss client:Schuh').v, '',
+    tag + ': and it names none of them as THE account');
+  eq(E.accountPick('-client:Superdry').multi, true,
+    tag + ': excluding an account is not "every account" either');
+  eq(E.accountPick('client:Reiss -client:Schuh').multi, true,
+    tag + ': one account and one exclusion is still not a single pick');
+
+  // --- packing a view --------------------------------------------------------------------------
+  const st = { q: 'client:Superdry bill:no', dim: 'owner', dim2: 'cat', dim3: '', form: 'bars',
+    meas: 'bill', lab: 'pview', leg: false, untag: false, table: true };
+  const v = E.packView('  Billable by owner  ', st);
+  eq(v.name, 'Billable by owner', tag + ': the name is trimmed');
+  eq(v.q, 'bill:no', tag + ': a packed view carries the query WITHOUT its account');
+  eq(v.was, ['Superdry'], tag + ': and records the account it was saved from');
+  eq([v.dim, v.dim2, v.dim3, v.form, v.meas, v.lab], ['owner', 'cat', '', 'bars', 'bill', 'pview'],
+    tag + ': the whole shape is carried');
+  eq([v.leg, v.untag, v.table], [false, false, true], tag + ': and the three toggles, false included');
+  eq(E.packView('', {}).name, 'Untitled view', tag + ': a nameless view is never stored nameless');
+  eq(E.packView('x'.repeat(80), {}).name.length, 40, tag + ': the name is bounded');
+  eq(E.packView('d', {}).dim, 'total', tag + ': an empty state packs as the default reading');
+
+  // --- and running it --------------------------------------------------------------------------
+  eq(E.viewQuery(v, 'Reiss'), 'client:Reiss bill:no',
+    tag + ': THE POINT — a view saved on Superdry runs against Reiss');
+  eq(E.viewQuery(v, ''), 'bill:no', tag + ': or against every account');
+  eq(E.viewQuery(v, 'Superdry'), 'client:Superdry bill:no',
+    tag + ': including the one it came from');
+  eq(E.viewQuery({ q: '' }, 'Reiss'), 'client:Reiss', tag + ': a view with no other terms is just the account');
+  ok(E.viewQuery(v, 'Reiss').indexOf('Superdry') < 0,
+    tag + ': and the account it was saved from is nowhere in it');
+
+  // --- reading the shelf back off the device ---------------------------------------------------
+  const kept = E.sanitizeViews([
+    { name: 'A', q: 'bill:no', was: ['Superdry'], dim: 'owner', at: 5 },
+    { name: 'a', q: 'other' },          // the same name once, whatever its case
+    null, 'nope', { q: 'nameless' }, { name: '   ' },
+    { name: 'B', q: 'cat:opt' },
+  ]);
+  eq(kept.map((x) => x.name), ['A', 'B'], tag + ': junk, duplicates and nameless entries are dropped');
+  eq(kept[0].was, ['Superdry'],
+    tag + ': `was` survives the round trip — repacking would report the view never had an account');
+  eq(kept[0].at, 5, tag + ': and so does when it was saved');
+  eq(E.sanitizeViews(null), [], tag + ': a corrupted store reads as no views, never a throw');
+  eq(E.sanitizeViews('[]'), [], tag + ': and so does a store holding the wrong type');
+  const many = [];
+  for (let i = 0; i < 40; i++) many.push({ name: 'v' + i, q: '' });
+  eq(E.sanitizeViews(many).length, E.VIEW_MAX, tag + ': the shelf is bounded');
+}
+
+console.log('── saved chart views: the shape, never the account');
+views(M, 'engine');
+console.log('── the same table against the page\'s own copy');
+views(P, 'page');
 
 console.log('── query grammar + aggregation (tools/reporttasks.mjs)');
 grammar(M, 'engine');
@@ -1720,8 +1834,15 @@ ok(/:root\{--h-field:34px;--h-pill:30px\}/.test(PAGE_SRC),
 ok(/\.btn\.sm,\.chip,\.pq-x\{height:var\(--h-pill\)/.test(PAGE_SRC),
   'the three pill styles that differed only by a pixel of padding (.btn.sm 4⁄9, .chip 5⁄10, '
   + '.pq-x 4⁄10) are now one');
-ok(/\.cw-ctl select,\.pq-bar input\{height:var\(--h-field\)/.test(PAGE_SRC),
+ok(/\.cw-ctl select,[^{]*\.pq-bar input\{height:var\(--h-field\)/.test(PAGE_SRC),
   'and the select and the text input stop being 33px and 37.5px');
+// a control added later is a control that drifts off the scale unless it joins the rule — the
+// views row is two selects, a text input and three buttons directly under the control block
+ok(/\.cw-ctl select,\.cw-views select,\.cw-views input,\.pq-bar input\{height:var\(--h-field\)/.test(PAGE_SRC),
+  'the saved-views row rides the same field height rather than opening a sixth size');
+ok(/\.cw-ctl label,\.cw-views label\{font-size:11px/.test(PAGE_SRC)
+  && /\.cw-ctl select,\.cw-views select,\.cw-views input\{font:inherit/.test(PAGE_SRC),
+  'and the same label type and field chrome, so one band of controls reads as one component');
 ok(/HEIGHT IS SET EXPLICITLY, not left to padding/.test(PAGE_SRC),
   'height is set outright: padding + line-height + font-size lands somewhere different for every '
   + 'font size, which is exactly how one page reached ten heights');
