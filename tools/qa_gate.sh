@@ -323,6 +323,13 @@ else
   echo "   ✗ Label Guard harness FAILED — see node tools/test_labelguard.mjs"; FAIL=1
 fi
 
+echo "── qa-gate 3z/7: text modules (every served engine bundles as a string)"
+if node tools/check_textmodules.js >/dev/null 2>&1; then
+  echo "   ✓ no worker-served engine can bundle as code and serve an empty body"
+else
+  echo "   ✗ a served docs/*.js is NOT a Text module — see node tools/check_textmodules.js"; FAIL=1
+fi
+
 echo "── qa-gate 4/7: shipped-feature markers"
 if node tools/check_markers.js >/dev/null 2>&1; then
   echo "   ✓ no shipped feature regressed"

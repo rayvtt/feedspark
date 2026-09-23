@@ -121,6 +121,19 @@ POST /api/images/scanpush?client=&market=   the page's ⚡ live scan posts its c
 
 Module slug `images`, grantable in the access directory like every other module.
 
+## Serving the engine
+
+`docs/image_engine.js` is served verbatim at `/images/engine.js`, which only works because
+`wrangler.toml`'s `rules` marks it as a **Text** module. That list used to name each engine by
+filename and `image_engine.js` was missing from it, so esbuild bundled the file as an ES module,
+`IMAGE_ENGINE_SRC` resolved to `undefined`, and the route answered **200 with an empty body** — a
+`<script>` tag loads that without firing `onerror` and without a parse error, so the page saw no
+global and no failure, and the live scan failed with "engines not ready".
+
+The glob is now a pattern (`**/*_engine.js`) and `tools/check_textmodules.js` fails the build if
+any `docs/*.js` the worker imports escapes it. `.json` is deliberately exempt: it has a real
+parsed default export and `docs/i18n/vi.json` is correctly served with `JSON.stringify`.
+
 ## Harness
 
 `node tools/test_images.mjs` — 61 assertions over the real URL shapes of all five brands: the
@@ -130,3 +143,8 @@ refusal on opaque filenames, the per-grouping overflow regression, tag precedenc
 Wired into `qa_gate.sh`, `presync.sh` and `validate.yml`.
 `IMAGE_FIXTURE=/path/to/feed.xml node tools/test_images.mjs` streams a real export and prints
 its summary.
+
+`tools/check_images.js` (presync) drives the real page in Chromium and lets its own
+`<script src>` tags fetch both engines, so the serving path is exercised rather than stubbed —
+the gap that let the empty-body bug reach the live site. Point `IMG_FIXTURES` at a directory
+holding `probe_monsoon_gb.xml` + `probe_superdry_gb.xml`; without them it skips.

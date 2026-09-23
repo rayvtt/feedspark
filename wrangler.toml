@@ -4,10 +4,17 @@ compatibility_date = "2024-12-01"
 
 # Bundle the deck HTML as a Text module so `import DECK from "...html"` in the worker
 # inlines the deck at build time. Push to main -> Cloudflare rebuilds -> new deck live.
-# feedlab_engine.js is ALSO a Text module: the worker serves it verbatim at
-# /feedlab/engine.js (the Feed Lab page and its node tests share the same file).
+# EVERY docs/*_engine.js is ALSO a Text module: the worker serves it verbatim at
+# /<module>/engine.js, so the page, the node tests and the scan agent share one file.
+# The glob is a PATTERN, not a list of filenames (Ray, 23 Sep 2026, "/images … scan failed:
+# engines not ready"): image_engine.js was simply missing from the list of eight, so esbuild
+# bundled it as an ES MODULE instead of a string, IMAGE_ENGINE_SRC came out `undefined`, and
+# /images/engine.js served an EMPTY 200 — which a <script> tag loads without firing onerror
+# and without a parse error, so the page saw no global and no failure. Adding the ninth name
+# would have fixed that one module and left the tenth to find the same trap; the pattern
+# closes it, and tools/check_textmodules.js fails the build if a docs import escapes it.
 rules = [
-  { type = "Text", globs = ["**/*.html", "**/feedlab_engine.js", "**/pricer_engine.js", "**/labelguard_engine.js", "**/overlay_engine.js", "**/arrivals_engine.js", "**/pdp_engine.js", "**/i18n_engine.js", "**/xlsx_engine.js", "**/gpc_taxonomy.txt", "**/news_digest.json"], fallthrough = true },
+  { type = "Text", globs = ["**/*.html", "**/*_engine.js", "**/gpc_taxonomy.txt", "**/news_digest.json"], fallthrough = true },
   # Client materials bank (docs/materials/): flagship decks/one-pagers are git-bundled as
   # binary Data modules so they are live the moment they merge -- a session cannot write a
   # blob into KV (Access blocks HTTP writes and there is no key-level API here). Everything

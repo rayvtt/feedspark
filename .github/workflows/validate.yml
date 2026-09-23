@@ -31,6 +31,8 @@ jobs:
         run: node tools/test_feedlab.mjs
       - name: Overlays engine unit tests (URL-string classification + collector)
         run: node tools/test_overlays.mjs
+      - name: Text-module tripwire (a served engine must bundle as a string)
+        run: node tools/check_textmodules.js
       - name: Image library engine unit tests (shot tokens off the URL + collector)
         run: node tools/test_images.mjs
       - name: KWCal tie + result-window harness (event ⇄ Workflow ticket)
