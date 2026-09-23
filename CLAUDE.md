@@ -382,6 +382,46 @@ ring above already IS that market. Harness: `tools/test_dossiertiles.mjs`.
 
 ---
 
+## Two brains: Claude for judgement, Jev for volume (Ray, 23 Sep 2026)
+
+Ray's rule, as he drew it: **Claude is the main brain; when a decision is simple, hand it to
+Jev, take back a YES/NO/SCORE/CHOICE, and keep working.** Jev is TypeSafe AI's System One
+model (`jev-latest`, `POST https://api.typesafe.ai/v1/systemone`, `Authorization: Bearer`) — it
+returns typed judgements and calibrated probabilities instead of prose. Three primitives, which
+are exactly the four answers Ray named: **noul** (probability a condition holds), **choice** (one
+of a defined set, with a distribution), **score** (position on ordered levels).
+
+**Why it changes what we build, not just what it costs.** Jev is **$0.042 per million input
+tokens with output free** — ~24× under Haiku 4.5, ~120× under Opus 5. Nearly every classifier in
+this codebase is a hand-rolled keyword heuristic standing in for a judgement, written that way
+because calling an LLM per row was unaffordable: `classifyTask`, `detectClient`'s cue ladder, the
+Playbook's 16-strategy taxonomy, Feed Chat's `bankRoute` rare-token scoring, KWCal's
+`sigWords`/`nameScore` harmonic mean, Golden Record's `stripBrand`/`shoutyCaps`. At this price
+that constraint is gone: a whole Reiss GB content-quality pass over 20,588 products costs about
+**£0.35**.
+
+**The routing rule, for every FCC session:**
+
+| Decision | Goes to |
+|---|---|
+| Deterministic — a count, a lookup, a date, does a file exist | **Code.** A `grep` beats a model, every time |
+| Yes/no, pick-one or a rating **over text**, happening more than once | **Jev** — and when about to hand-write a keyword classifier, call Jev instead |
+| A hand-set threshold standing in for confidence | **Jev** — its probability is calibrated; ours was guessed |
+| Root cause, code correctness, design, anything needing an explanation | **Claude.** Never delegate the reasoning |
+| Anything with an image | **Claude.** Jev is text-only — no image, audio or video input |
+
+Design rules that matter (docs are the source of truth — `https://docs.typesafe.ai/llms.txt`,
+Mintlify serves any page as Markdown by appending `.md`): ask **independent questions over one
+state together** — they run in parallel and the state is charged once; put the judgement in
+`instructions` and the possible answers in `criteria`; always include a **no-match outcome**;
+64k per request, 32k for state plus the longest question. Typed output guarantees the interface,
+**not the truth** — validate on our own feeds before trusting a threshold, exactly as every other
+FCC engine is pinned by a harness.
+
+**Not wired yet:** needs the secret `TYPESAFE_API_KEY` (Worker secret for runtime use;
+an env var for session use). Until it is set, nothing routes to Jev and the hand-rolled
+classifiers stand. Keep the credential server-side — never in a page, never in git.
+
 ## Key technical concepts
 
 - **Conversational attributes** (Google, 2026): question_and_answer, document_link, related_product, item_group_title, variant_option, popularity_rank — submitted via supplemental data source
