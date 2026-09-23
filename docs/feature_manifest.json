@@ -459,9 +459,9 @@
       "pr": 109
     },
     {
-      "name": "wrangler: feedlab engine bundled as Text module",
+      "name": "wrangler: feedlab engine bundled as Text module (now covered by the **/*_engine.js pattern, not its own filename)",
       "file": "wrangler.toml",
-      "pattern": "feedlab_engine.js",
+      "pattern": "**/*_engine.js",
       "pr": 109
     },
     {
@@ -637,9 +637,9 @@
       "pr": 141
     },
     {
-      "name": "wrangler: pricer engine bundled as Text",
+      "name": "wrangler: pricer engine bundled as Text (now covered by the **/*_engine.js pattern, not its own filename)",
       "file": "wrangler.toml",
-      "pattern": "pricer_engine.js",
+      "pattern": "**/*_engine.js",
       "pr": 141
     },
     {
@@ -3119,9 +3119,9 @@
       "pr": 317
     },
     {
-      "name": "wrangler: overlay_engine.js bundled as a Text module",
+      "name": "wrangler: overlay_engine.js bundled as a Text module (now covered by the **/*_engine.js pattern, not its own filename)",
       "file": "wrangler.toml",
-      "pattern": "overlay_engine.js",
+      "pattern": "**/*_engine.js",
       "min": 1,
       "pr": 317
     },
@@ -4203,9 +4203,9 @@
       "min": 1
     },
     {
-      "name": "wrangler: pdp_engine.js bundled as a Text module",
+      "name": "wrangler: pdp_engine.js bundled as a Text module (now covered by the **/*_engine.js pattern, not its own filename)",
       "file": "wrangler.toml",
-      "pattern": "pdp_engine.js",
+      "pattern": "**/*_engine.js",
       "pr": 361,
       "min": 1
     },
@@ -4476,9 +4476,9 @@
       "pr": 369
     },
     {
-      "name": "wrangler: arrivals_engine.js imported as a Text module",
+      "name": "wrangler: arrivals_engine.js imported as a Text module (now covered by the **/*_engine.js pattern, not its own filename)",
       "file": "wrangler.toml",
-      "pattern": "arrivals_engine.js",
+      "pattern": "**/*_engine.js",
       "min": 1,
       "pr": 369
     },
@@ -9747,6 +9747,18 @@
       "name": "Image library: a shot keeps its code however deep the product's gallery is",
       "file": "docs/image_engine.js",
       "pattern": "function snapStem",
+      "pr": 0
+    },
+    {
+      "name": "Text modules: a served engine is matched by pattern, never by a list of filenames",
+      "file": "wrangler.toml",
+      "pattern": "**/*_engine.js",
+      "pr": 0
+    },
+    {
+      "name": "Tripwire: a worker-served docs/*.js that is not a Text module fails the build",
+      "file": "tools/check_textmodules.js",
+      "pattern": "will bundle as an ES module",
       "pr": 0
     }
   ]

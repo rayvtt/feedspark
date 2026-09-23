@@ -233,6 +233,14 @@ else
   echo "   · playwright unavailable, skipped (run tools/test_editor.mjs before shipping editor changes)"
 fi
 
+echo "── validating: the /images page loads its engines through its own script tags"
+node tools/check_images.js >/dev/null
+echo "   ✓ real script-tag path exercised (skips without IMG_FIXTURES)"
+
+echo "── validating: text modules (every served engine bundles as a string)"
+node tools/check_textmodules.js >/dev/null
+echo "   ✓ no served engine can bundle as code and serve an empty body"
+
 echo "── validating: shipped-feature markers (overwrite tripwire)"
 node tools/check_markers.js >/dev/null
 echo "   ✓ no shipped feature regressed"
