@@ -1004,11 +1004,18 @@ export default {
       const envx = liftEnvelope(await env.EDITS.get('briefs', 'json'), now);
       const briefs = envelopeToClient(envx, {});
       const selfSrc = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
-      const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'], repair: true });   // ibfref repair self-heals mis-filed replies as the rolling window re-pushes
-      // …and the brief EMAIL is the backup copy of the ticket (Ray, 16 Sep 2026): an original
-      // [FS Brief] whose ibfref the store has never heard of rebuilds it. Create-only, so a
-      // ticket that has since moved on is never reset by its own original email.
+      // REBUILD FIRST, THEN MATCH (Ray, 23 Sep 2026: a brief Steven sent through the module,
+      // with Ray copied, was not in the Brief Ledger). The brief EMAIL is the backup copy of
+      // the ticket (16 Sep 2026): an original [FS Brief] whose ibfref the store has never
+      // heard of rebuilds it, create-only, so a ticket that has since moved on is never reset
+      // by its own original email. It used to run AFTER the matcher — and a batch carrying a
+      // brief AND its replies (which is what a live thread pushes) matched those replies
+      // against a store that did not yet hold the ticket, so they were dropped; the ticket
+      // was then created at `briefed` with no comms and no read-out, and because message ids
+      // are deduped server-side the replies never came back. Recovering first means the
+      // ticket exists by the time its own thread is read, so it lands carrying its real stage.
       const made = recoverBriefsFromEmail(briefs, messages, { now });
+      const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'], repair: true });   // ibfref repair self-heals mis-filed replies as the rolling window re-pushes
       if (res.matched || made.length || (res.repaired && res.repaired.length)) {
         mergeIntoEnvelope(envx, briefs, now, now, {});   // full map present → pure upserts, no deletions
         await env.EDITS.put('briefs', JSON.stringify(envx));
@@ -1022,7 +1029,7 @@ export default {
         runlog.push({ t: now, n: messages.length, m: res.matched, s: res.skipped, moved: res.moved.slice(0, 12) });
         await env.EDITS.put('gmailpushlog', JSON.stringify(runlog.slice(-60)));
       } catch (e) {}
-      return json({ ok: true, matched: res.matched, skipped: res.skipped, moved: res.moved, tickets: res.loggedTo });
+      return json({ ok: true, matched: res.matched, skipped: res.skipped, moved: res.moved, tickets: res.loggedTo, rebuilt: made });   // `rebuilt` is what the backfill sweep reports per page
     }
 
     // ---- due-today task reminders: preview + manual fire (owner-only) ----
@@ -2277,8 +2284,8 @@ export default {
         const envx = liftEnvelope(await env.EDITS.get('briefs', 'json'), now);
         const briefs = envelopeToClient(envx, {});
         const selfSrc = String(env.GMAIL_SELF || 'ray@feedspark.com').replace(/[.^$*+?()[\]{}|\\]/g, '\\$&');
+        const made = recoverBriefsFromEmail(briefs, messages, { now });   // rebuild any ticket only its email remembers — BEFORE the matcher, or this scan's own replies find no ticket
         const res = matchGmailToBriefs(briefs, messages, { now, selfRe: new RegExp(selfSrc, 'i'), aspl: ['Dinesh', 'Thia', 'Mariraj', 'Muji'], repair: true });
-        const made = recoverBriefsFromEmail(briefs, messages, { now });   // rebuild any ticket only its email remembers
         if (res.matched || made.length || (res.repaired && res.repaired.length)) {
           mergeIntoEnvelope(envx, briefs, now, now, {});   // full map present → pure upserts
           await env.EDITS.put('briefs', JSON.stringify(envx));
