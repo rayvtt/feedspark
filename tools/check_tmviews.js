@@ -10,6 +10,12 @@
    back with it. A view that quietly re-pointed the board at Superdry would look completely
    correct in the source.
 
+   It also holds the CONTROL ROW (Ray, 23 Sep 2026: "you see how many button there are here ? -
+   reorganise them to make it easy to see please, or add pop up menu/ on left and right to be less
+   cluttered"): twenty controls over three rows folded into six on one, behind three menus. A row
+   that quietly grows back to three lines, a panel that opens off the edge of the card, or two
+   panels open at once are all things only a rendered page can tell you.
+
    Run: NODE_PATH=$(npm root -g) node tools/check_tmviews.js   (presync) */
 const path = require('path');
 const fs = require('fs');
@@ -41,6 +47,11 @@ CLIENTS.forEach((c, ci) => { for (let m = 1; m <= 6 - ci; m++) for (let k = 0; k
     bucket: 'done', bill: 1 + (i % 3) * 0.5, nonbill: (i % 4) * 0.25,
     hours: 1 + (i % 3) * 0.5 + (i % 4) * 0.25, sched: 1, id: 1000 + i, ticket: 0, note: '' });
 } });
+// one rare, tiny task: the leader layout must REFUSE to label a sliver and fall it through to a
+// swatch instead, and that rule needs a sliver to act on
+rows.push({ d: '2026-03-02', client: 'Reiss', market: 'GB', am: 'Ray', owner: 'Ray',
+  title: 'Sliver task', status: 'done', cat: 'other', bucket: 'done',
+  bill: 0.25, nonbill: 0, hours: 0.25, sched: 0, id: 99999, ticket: 0, note: '' });
 const ACC = CLIENTS.map((c, n) => ({ cid: n + 1, tid: n + 1, client: c, market: 'GB', name: c + ' - GB',
   group: '', flag: 0, status: 'active', type: 'FM', am: 'Ray', am2: '', allowance: 35, used: 20,
   balance: 15, health: 'healthy', since: '2019-01-01' }));
@@ -48,6 +59,8 @@ const DATA = { from: '2025-10-01', to: '2026-09-23', months: 12, at: Date.now(),
   coverage: [], ticketCoverage: [], health: { read: 3, total: 3, partial: 0, oldest: Date.now(), newest: Date.now(), complete: true, staleHours: 0 },
   scoped: false, queuesTotal: 0 };
 
+// every control still has its own id — the menus MOVED the nodes, they did not rebuild them —
+// so the shape is read the same way whether a panel is open or shut
 const shape = () => ({
   q: document.getElementById('q').value.trim(),
   acct: document.getElementById('cacct').value,
@@ -77,20 +90,67 @@ const shape = () => ({
 
   // ---- the row is on screen, under the controls it belongs to -------------------------------
   const geo = await p.evaluate(() => {
-    const row = document.getElementById('cwviews');
-    const ctl = document.querySelector('.cw-ctl');
+    const row = document.querySelector('.cw-ctl');
     const stage = document.getElementById('cstage');
     const r = row && row.getBoundingClientRect();
     return { row: !!row, rect: r ? { x: Math.round(r.x), r: Math.round(r.right), y: Math.round(r.y) } : null,
-      vw: innerWidth, below: !!(ctl && row) && row.getBoundingClientRect().top >= ctl.getBoundingClientRect().bottom - 1,
+      vw: innerWidth,
       above: !!(stage && row) && row.getBoundingClientRect().bottom <= stage.getBoundingClientRect().top + 1,
       acct: !!document.getElementById('cacct'), view: !!document.getElementById('cview'),
       save: !!document.getElementById('vsave'), note: (document.getElementById('vnote') || {}).textContent || '' };
   });
-  ok('the views row renders', geo.row && geo.acct && geo.view && geo.save);
+  ok('the control row renders with every control on it', geo.row && geo.acct && geo.view && geo.save);
   ok('inside the card, not spilling out of it', !!geo.rect && geo.rect.x >= 0 && geo.rect.r <= geo.vw, geo.rect);
-  ok('under the split controls and above the chart', geo.below && geo.above, { below: geo.below, above: geo.above });
+  ok('above the chart', geo.above, { above: geo.above });
   ok('and it says the rule before anyone saves one', /keeps the shape, never the account/.test(geo.note), geo.note);
+
+  // ---- ONE ROW, NOT THREE ----------------------------------------------------------------
+  const row = await p.evaluate(() => {
+    const r = document.querySelector('.cw-ctl');
+    const kids = [...r.children].filter(el => el.getBoundingClientRect().width > 0);
+    // a 30px pill and a 34px select on the SAME line have different tops, so the test is whether
+    // their CENTRES agree — comparing tops would fail a row that is perfectly on one line
+    const mid = kids.map(el => { const b = el.getBoundingClientRect(); return b.top + b.height / 2; });
+    const spread = kids.length ? Math.round(Math.max(...mid) - Math.min(...mid)) : 0;
+    return { h: Math.round(r.getBoundingClientRect().height), n: kids.length, spread,
+      open: [...document.querySelectorAll('.cpop')].filter(x => getComputedStyle(x).display !== 'none').length,
+      // …and the three elements INSIDE the menus that set their own display and ship hidden
+      ghosts: ['vdel', 'vname', 'cuntag-l'].filter(i => {
+        const el = document.getElementById(i);
+        return el && el.hidden && getComputedStyle(el).display !== 'none';
+      }) };
+  });
+  ok('the whole control block is ONE line', row.spread <= 2 && row.h < 50, row);
+  ok('six controls on it, not twenty', row.n <= 6, row);
+  // a flex element ignores `hidden`, which would paint all three panels open on load
+  ok('and every menu starts shut', row.open === 0, row);
+  // a flex row IGNORES `hidden` — the UA's [hidden]{display:none} loses to any class that sets
+  // display — so this reads what is PAINTED, not what the property says. Trusting the property is
+  // what let the same bug ship open on the AI Quote card.
+  ok('nothing that ships hidden inside a menu is painted anyway', row.ghosts.length === 0, row.ghosts);
+
+  // ---- the menus ---------------------------------------------------------------------------
+  await p.click('#mb-disp');
+  await p.waitForTimeout(250);
+  const m1 = await p.evaluate(() => {
+    const c = document.getElementById('chartcard').getBoundingClientRect();
+    const r = document.getElementById('p-disp').getBoundingClientRect();
+    return { open: [...document.querySelectorAll('.cpop')].filter(x => getComputedStyle(x).display !== 'none').length,
+      inside: r.left >= c.left - 1 && r.right <= c.right + 1 && r.top >= 0,
+      rect: { l: Math.round(r.left), rr: Math.round(r.right) }, cardR: Math.round(c.right) };
+  });
+  ok('a menu opens', m1.open === 1, m1);
+  ok('and its panel is inside the card, not off the right edge', m1.inside, m1);
+  await p.click('#mb-view');
+  await p.waitForTimeout(250);
+  ok('opening another closes the first — two panels over one row is the clutter again',
+    await p.evaluate(() => [...document.querySelectorAll('.cpop')].filter(x => getComputedStyle(x).display !== 'none').length) === 1);
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(250);
+  ok('Esc closes the open menu',
+    await p.evaluate(() => [...document.querySelectorAll('.cpop')].filter(x => getComputedStyle(x).display !== 'none').length) === 0);
+  ok('and the drawer underneath was not what Esc reached',
+    await p.evaluate(() => !document.querySelector('.drawer.on')));
 
   const roster = await p.evaluate(() => [...document.querySelectorAll('#cacct option')].map(o => o.value));
   ok('every account in the book is offered', CLIENTS.every(c => roster.indexOf(c) >= 0), roster);
@@ -98,24 +158,35 @@ const shape = () => ({
   ok('and no account is selected while the query names none',
     await p.evaluate(() => document.getElementById('cacct').value === ''));
 
+  // the controls moved into menus, so the harness does what a person does: open the menu, use
+  // the control, let it close. Every id is unchanged.
+  const menu = async (m) => {
+    if (await p.evaluate(x => document.getElementById('p-' + x).hidden, m)) {
+      await p.click('#mb-' + m); await p.waitForTimeout(220);
+    }
+  };
+  const shut = async () => { await p.keyboard.press('Escape'); await p.waitForTimeout(160); };
+
   // ---- build a reading on one account --------------------------------------------------------
   await p.evaluate(() => { document.getElementById('q').value = 'client:Superdry bill:no'; });
   await p.evaluate(() => document.getElementById('q').dispatchEvent(new Event('input')));
   await p.waitForTimeout(400);
   await p.selectOption('#cdim', 'owner');
-  await p.selectOption('#cdim2', 'cat');
+  await menu('nest'); await p.selectOption('#cdim2', 'cat'); await shut();
   await p.selectOption('#cform', 'nest');
-  await p.selectOption('#cmeas', 'bill');
+  await menu('disp'); await p.selectOption('#cmeas', 'bill'); await shut();
   await p.waitForTimeout(300);
   const built = await p.evaluate(shape);
   ok('the picker follows a query typed into the search bar', built.acct === 'Superdry', built);
   ok('the reading is built', built.dim === 'owner' && built.dim2 === 'cat' && built.meas === 'bill', built);
 
   // ---- save it, and it must not carry the account --------------------------------------------
+  await menu('view');
   await p.click('#vsave');
   await p.fill('#vnm', 'Billable by owner');
   await p.click('#vok');
   await p.waitForTimeout(300);
+  await shut();
   const stored = await p.evaluate(() => JSON.parse(localStorage.getItem('fcc-tm-chartviews') || '[]'));
   ok('the view is kept on this device', stored.length === 1 && stored[0].name === 'Billable by owner', stored);
   ok('THE POINT — it carries no account at all',
@@ -148,17 +219,23 @@ const shape = () => ({
   // ---- change the shape, then restore the view ONTO THE ACCOUNT ON SCREEN ---------------------
   await p.selectOption('#cacct', 'Reiss');
   await p.waitForTimeout(300);
-  await p.selectOption('#cdim2', '');
+  await menu('nest'); await p.selectOption('#cdim2', ''); await shut();
   await p.selectOption('#cdim', 'month');
   await p.selectOption('#cform', 'stack');
-  await p.selectOption('#cmeas', 'hours');
+  await menu('disp'); await p.selectOption('#cmeas', 'hours'); await shut();
   await p.evaluate(() => { document.getElementById('cleg').checked = false; document.getElementById('cleg').dispatchEvent(new Event('change')); });
   await p.waitForTimeout(300);
   ok('the reading is changed away from the saved one',
     await p.evaluate(() => document.getElementById('cdim').value === 'month'));
 
+  await menu('view');
   await p.selectOption('#cview', { label: 'Billable by owner' });
   await p.waitForTimeout(500);
+  // the closed button names the open view, so a fold never hides which reading is on screen
+  ok('the Views button names the view that is open',
+    /Billable by owner/.test(await p.evaluate(() => document.getElementById('mb-view').textContent)),
+    await p.evaluate(() => document.getElementById('mb-view').textContent.trim()));
+  await shut();
   const back = await p.evaluate(shape);
   ok('the saved view restores the split and the nesting', back.dim === 'owner' && back.dim2 === 'cat', back);
   ok('the form and the series with it', back.form === 'nest' && back.meas === 'bill', back);
@@ -207,6 +284,67 @@ const shape = () => ({
   ok('clicking a client in the breakdown moves the picker too',
     await p.evaluate(() => document.getElementById('cacct').value === 'Reiss'));
 
+  // ---- DIRECT LABELS WITH A LEADER (Ray, 23 Sep 2026: "the label can appear with an arrow and
+  // light italic directly on chart like this") -------------------------------------------------
+  await p.evaluate(() => { document.getElementById('q').value = ''; document.getElementById('q').dispatchEvent(new Event('input')); });
+  await p.waitForTimeout(400);
+  // a second split makes the form list nested-only, so it has to go before a donut can be picked
+  await menu('nest'); await p.selectOption('#cdim2', ''); await shut();
+  await p.selectOption('#cdim', 'task');
+  await p.selectOption('#cform', 'donut');
+  await menu('disp');
+  await p.evaluate(() => { const c = document.getElementById('cleg'); if (!c.checked) { c.checked = true; c.dispatchEvent(new Event('change')); } });
+  await shut();
+  await p.waitForTimeout(500);
+
+  const lead = await p.evaluate(() => {
+    const svg = document.querySelector('#cstage svg');
+    const vb = (svg.getAttribute('viewBox') || '').split(/\s+/).map(Number);
+    const labs = [...svg.querySelectorAll('text')].filter(t => t.querySelector('tspan[font-style="italic"]'));
+    const box = labs.map(t => { const b = t.getBBox(); return { x: b.x, y: b.y, r: b.x + b.width, b: b.y + b.height, t: t.textContent }; });
+    // leader curves: a path with no fill, drawn in its slice's own colour
+    const curves = [...svg.querySelectorAll('path[fill="none"][stroke-linecap="round"]')];
+    const fills = [...svg.querySelectorAll('path.cg')].map(x => x.getAttribute('fill'));
+    return { vb, n: labs.length, box, curves: curves.length,
+      strokes: curves.map(c => c.getAttribute('stroke')), fills,
+      dots: svg.querySelectorAll('circle[r="2.6"]').length,
+      swatches: svg.querySelectorAll('rect[rx="2"]').length,
+      slices: fills.length,
+      italicWeight: labs.length ? labs[0].querySelector('tspan[font-style="italic"]').getAttribute('font-weight') : null,
+      valueWeight: labs.length ? labs[0].querySelectorAll('tspan')[1].getAttribute('font-weight') : null };
+  });
+  ok('the donut names its slices on the chart', lead.n >= 4, { labels: lead.n, slices: lead.slices });
+  ok('each one has its own leader curve and a dot on the arc',
+    lead.curves === lead.n && lead.dots === lead.n, lead);
+  ok('the leader is drawn in its own slice\'s colour, never a generic grey',
+    lead.strokes.every(c => lead.fills.indexOf(c) >= 0), lead.strokes);
+  ok('the NAME is the light italic half (Ray\'s words) and the FIGURE is not',
+    lead.italicWeight === '400' && lead.valueWeight === '800', lead);
+  // a leader layout that lets two labels sit on one line is worse than the legend it replaces
+  const pairs = [];
+  for (let i = 0; i < lead.box.length; i++) for (let j = i + 1; j < lead.box.length; j++) {
+    const a = lead.box[i], b = lead.box[j];
+    if (a.x < b.r && b.x < a.r && a.y < b.b && b.y < a.b) pairs.push([a.t, b.t]);
+  }
+  ok('and no two labels overlap', pairs.length === 0, pairs.slice(0, 3));
+  ok('every label is inside the drawing, not clipped by it',
+    lead.box.every(b => b.x >= -1 && b.r <= lead.vb[2] + 1 && b.y >= -1 && b.b <= lead.vb[3] + 1),
+    { vb: lead.vb, worst: lead.box.filter(b => b.x < -1 || b.r > lead.vb[2] + 1) });
+  // identity is never left to colour alone: what was too small to label keeps a swatch
+  ok('a slice too small for a leader still gets a swatch',
+    lead.n < lead.slices ? lead.swatches >= (lead.slices - lead.n) : true,
+    { labelled: lead.n, slices: lead.slices, swatches: lead.swatches });
+
+  await menu('disp');
+  await p.evaluate(() => { const c = document.getElementById('cleg'); c.checked = false; c.dispatchEvent(new Event('change')); });
+  await shut();
+  await p.waitForTimeout(400);
+  ok('unticking the toggle takes them away again',
+    await p.evaluate(() => document.querySelectorAll('#cstage svg tspan[font-style="italic"]').length) === 0);
+  await menu('disp');
+  await p.evaluate(() => { const c = document.getElementById('cleg'); c.checked = true; c.dispatchEvent(new Event('change')); });
+  await shut();
+
   // ---- it survives a reload, because it is the device's own shelf ------------------------------
   await p.reload({ waitUntil: 'domcontentloaded' });
   await p.waitForTimeout(1200);
@@ -217,7 +355,7 @@ const shape = () => ({
   await p.setViewportSize({ width: 390, height: 780 });
   await p.waitForTimeout(600);
   const phone = await p.evaluate(() => {
-    const row = document.getElementById('cwviews');
+    const row = document.querySelector('.cw-ctl');
     // the digest view folds sections on a phone — open the chart card before measuring it
     if (window.FCCDigest && window.FCCDigest.expandAll) window.FCCDigest.expandAll();
     const r = row.getBoundingClientRect();

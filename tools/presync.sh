@@ -210,9 +210,9 @@ if NODE_PATH=$(npm root -g) node -e "require('playwright')" 2>/dev/null; then
   echo "── validating: Task Manager ⇧ Import edits (the preview reaches the screen and applies)"
   NODE_PATH=$(npm root -g) node tools/check_tmimport.js || {
     echo "✗ import-preview tripwire failed — the Import edits dialog is off-screen, on the tags rail's host, or no longer applies"; exit 1; }
-  echo "── validating: Task Manager saved chart views (the shape travels, the account does not)"
+  echo "── validating: Task Manager chart card — one control row, three menus, leader labels, saved views"
   NODE_PATH=$(npm root -g) node tools/check_tmviews.js || {
-    echo "✗ saved-views tripwire failed — a view carried its own account across to another client, or the account picker stopped following the query"; exit 1; }
+    echo "✗ chart-card tripwire failed — the control row grew back, a menu painted open, a leader label went missing, or a view carried its own account to another client"; exit 1; }
   echo "── validating: guard cards — population tables on /labels /ptypes /golden, collapse all + individual"
   NODE_PATH=$(npm root -g) node tools/test_guardcards.mjs || {
     echo "✗ guard-cards tripwire failed — a population table, a sheet-backed note, or the brand-card collapse regressed"; exit 1; }

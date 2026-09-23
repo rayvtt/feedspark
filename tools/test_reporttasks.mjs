@@ -1559,8 +1559,10 @@ ok(/keeps its true size/.test(PAGE_SRC),
   'but it keeps its true SIZE — shrinking the part nobody has judged would be the dishonest kind '
   + 'of hiding');
 
-console.log('\n── the legend, on the chart');
-ok(/id="cleg" checked> Legend on chart/.test(PAGE_SRC), 'a toggle, default on');
+console.log('\n── naming the marks, on the chart');
+ok(/id="cleg" checked> Name the marks on the chart/.test(PAGE_SRC),
+  'one toggle, default on — and its wording names what it does on BOTH forms (a leader per slice '
+  + 'on a pie or donut, a key across the top on everything else), not just the one it started as');
 ok(/function legendRows\(items, W\)/.test(PAGE_SRC) && /function legendOn\(\)/.test(PAGE_SRC),
   'drawn INSIDE the svg');
 ok(/the ⬇ PNG\n     carries it/.test(PAGE_SRC) || /it rides the PNG export too/.test(PAGE_SRC),
@@ -1828,6 +1830,65 @@ ok(/l: 'Everything else here'/.test(PAGE_SRC),
   'and the cell\'s out-of-key remainder is no longer a second row reading "Other" beside the '
   + 'engine\'s own "Other (N more)" fold — invisible in a 40px ring, unanswerable once expanded');
 
+console.log('\n── one control row, three menus (Ray, 23 Sep 2026: "you see how many button there are here ? - reorganise them")');
+// the menus MOVED the nodes, they did not rebuild them — every id the page, the harness and the
+// saved-view restore already reach for has to still be there
+for (const id of ['cacct', 'cdim', 'cdim2', 'cdim3', 'cform', 'cmeas', 'clab', 'cleg', 'cuntag',
+  'cuntag-l', 'ctab', 'cview', 'vsave', 'vdel', 'vnm', 'vok', 'vno', 'vnote']) {
+  ok(new RegExp('id="' + id + '"').test(PAGE_SRC), `#${id} survives the reorganisation`);
+}
+ok(/<div class="cw-ctl">/.test(PAGE_SRC) && !/cw-views/.test(PAGE_SRC),
+  'and there is ONE control block, not a second row under it');
+for (const m of ['nest', 'disp', 'view']) {
+  ok(new RegExp('id="mb-' + m + '"[^>]*aria-expanded="false"[^>]*aria-haspopup').test(PAGE_SRC.replace(/\n\s*/g, ' ')),
+    `the ${m} menu button announces itself as a menu, shut`);
+  ok(new RegExp('id="p-' + m + '" hidden').test(PAGE_SRC), `and its panel ships hidden`);
+}
+// A FLEX ROW IGNORES `hidden`. This bit the AI Quote card (.aim-r) and would have painted all
+// three panels open on load, so the rule is asserted by SHAPE rather than trusted to a comment.
+ok(/\.cpop\[hidden\],\.cpop \.vname\[hidden\],\.cpop \.btn\[hidden\],\.cpop \.tog\[hidden\]\{display:none\}/.test(PAGE_SRC),
+  'every element in a menu that sets its own display also states [hidden] — a flex row ignores it');
+ok(/\.cw-ctl \.cmb\.on\{/.test(PAGE_SRC) && /\.cw-ctl \.cmb \.cdot\{/.test(PAGE_SRC),
+  'a folded control that is off its default says so on the closed button');
+ok(/function ctlChips\(\)/.test(PAGE_SRC) && /var cul = \$\('cuntag-l'\); if \(cul\) cul\.hidden = !tagDim\(\);\s*\n\s*ctlChips\(\);/.test(PAGE_SRC),
+  'and the buttons are re-read on every render, so a restored view puts the row back in step');
+ok(/if \(e\.key === 'Escape' && MOPEN\)/.test(PAGE_SRC),
+  'Esc closes the open menu before anything underneath it');
+ok(/if \(MOPEN === m\) \{ menuClose\(\); return; \}\s*\n\s*menuClose\(\);/.test(PAGE_SRC),
+  'and only one panel is ever open — two over one row is the clutter again');
+
+console.log('\n── direct labels with a leader (Ray, 23 Sep 2026: "the label can appear with an arrow and light italic directly on chart like this")');
+const LEAD = liftPageSrc('leaderLabels');
+ok(/font-style="italic" font-weight="400"/.test(LEAD),
+  'the NAME is the light italic half');
+ok(/font-weight="800"/.test(LEAD) && !/font-style="italic"[^>]*font-weight="800"/.test(LEAD),
+  'and the FIGURE is never italic — it is what gets read off the chart');
+ok((LEAD.match(/esc\(p\.m\.c\)/g) || []).length >= 2
+  && /<path d=[\s\S]*?stroke="' \+ esc\(p\.m\.c\)/.test(LEAD) && /<circle[\s\S]*?fill="' \+ esc\(p\.m\.c\)/.test(LEAD),
+  'the leader and its dot are drawn in the slice\'s OWN colour, which is what ties them together');
+// the refusal has to be about ROOM. An angle-only floor refused 2.2% wedges with a half-empty
+// column, which is how this shipped wrong the first time.
+ok(/var cap = Math\.max\(2, Math\.floor\(\(H - 22\) \/ LEAD_GAP\)\) \* 2/.test(LEAD),
+  'how many labels fit is read off the box, not guessed');
+ok(/sort\(function \(a, b\) \{ return b\.sweep - a\.sweep; \}\)/.test(LEAD),
+  'and the cap is filled biggest-first, so what it drops is what a reader was least looking for');
+ok(/if \(!keep\[i\]\) \{ rest\.push\(m\); continue; \}/.test(LEAD),
+  'whatever is not labelled falls through to `rest` rather than vanishing');
+ok(/lead\.rest\.length[\s\S]{0,220}legendRows\(/.test(PAGE_SRC),
+  'and `rest` is drawn as swatches — no wedge is ever identified by its colour alone');
+ok(/var over = a\[a\.length - 1\]\.y - \(H - 9\);\s*\n\s*if \(over > 0\) for \(j = 0; j < a\.length; j\+\+\) a\[j\]\.y -= over;/.test(LEAD),
+  'a column that runs past the box is SHIFTED whole, keeping its spacing — clamping each label '
+  + 'would land two of them on one line');
+ok(/if \(a\[j\]\.y - a\[j - 1\]\.y < LEAD_GAP\) a\[j\]\.y = a\[j - 1\]\.y \+ LEAD_GAP/.test(LEAD),
+  'and labels are pushed apart in the order their slices sit round the ring, so no two leaders cross');
+ok(/nm\.length > room/.test(LEAD) && !/val = val\.slice/.test(LEAD),
+  'the NAME takes the truncation, never the figure — a truncated figure is a wrong figure');
+ok(/family=Lato:ital,wght@0,400;0,700;0,900;1,400/.test(PAGE_SRC),
+  'the real italic is loaded — a synthesised oblique at 400 is a smear, and these labels are the '
+  + 'chart\'s only naming of a slice');
+ok(/if \(!legendOn\(\) \|\| g\.length < 2\)/.test(PAGE_SRC),
+  'a single-slice ring keeps its centre figure and gets no leader to itself');
+
 console.log('\n── one control scale (Ray, 18 Sep 2026: "the box and button in the task manager are not equal size, so it looks messy")');
 ok(/:root\{--h-field:34px;--h-pill:30px\}/.test(PAGE_SRC),
   'two roles, two sizes: a FIELD you open or type in, a PILL you press');
@@ -1838,11 +1899,11 @@ ok(/\.cw-ctl select,[^{]*\.pq-bar input\{height:var\(--h-field\)/.test(PAGE_SRC)
   'and the select and the text input stop being 33px and 37.5px');
 // a control added later is a control that drifts off the scale unless it joins the rule — the
 // views row is two selects, a text input and three buttons directly under the control block
-ok(/\.cw-ctl select,\.cw-views select,\.cw-views input,\.pq-bar input\{height:var\(--h-field\)/.test(PAGE_SRC),
-  'the saved-views row rides the same field height rather than opening a sixth size');
-ok(/\.cw-ctl label,\.cw-views label\{font-size:11px/.test(PAGE_SRC)
-  && /\.cw-ctl select,\.cw-views select,\.cw-views input\{font:inherit/.test(PAGE_SRC),
-  'and the same label type and field chrome, so one band of controls reads as one component');
+ok(/\.cw-ctl select,\.cpop select,\.cpop input,\.pq-bar input\{height:var\(--h-field\)/.test(PAGE_SRC),
+  'a control inside a menu rides the same field height rather than opening a sixth size');
+ok(/\.cw-ctl label,\.cpop label\{font-size:11px/.test(PAGE_SRC)
+  && /\.cw-ctl select,\.cpop select,\.cpop input\{font:inherit/.test(PAGE_SRC),
+  'and the same label type and field chrome, so folding a control never restyles it');
 ok(/HEIGHT IS SET EXPLICITLY, not left to padding/.test(PAGE_SRC),
   'height is set outright: padding + line-height + font-size lands somewhere different for every '
   + 'font size, which is exactly how one page reached ten heights');

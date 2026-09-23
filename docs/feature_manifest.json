@@ -9614,6 +9614,36 @@
       "pattern": "var PB_FLOOR={req:0.99,cond:0.9,rec:0.6};",
       "forbidden": true,
       "pr": 507
+    },
+    {
+      "name": "Task Manager: the chart card's controls are one row behind three menus",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "cw-ctl .cmb",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: a folded menu element that sets its own display also states [hidden] (a flex row ignores it)",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": ".cpop[hidden],.cpop .vname[hidden]",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: a closed menu button states its own off-default state",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function ctlChips",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: a pie/donut names each slice beside itself with a leader, not a swatch block",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "function leaderLabels",
+      "pr": 0
+    },
+    {
+      "name": "Task Manager: the leader cap is the column's own height in labels, filled biggest-first",
+      "file": "docs/FeedSpark_TaskManager.html",
+      "pattern": "LEAD_GAP)) * 2",
+      "pr": 0
     }
   ]
 }
