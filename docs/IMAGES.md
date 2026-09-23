@@ -48,12 +48,19 @@ harness `tools/test_images.mjs`.
    shot, so they never decide anything.
 2. **`commonStem(stems)`** — the longest substring (≥4 chars) present in *all* of one product's
    filenames. Bounded by design: at most 11 short strings per product.
-3. **`residue(stem, common)`** — what is left once the stem is masked, tidied to a stable key.
+3. **`snapStem(common)`** — when the stem contains a separator it is trimmed back to
+   segment edges. Without this the greedy common substring swallows a digit of the prefix on
+   a product with only two images (both ending `_1`), so the same photograph came back as `0`
+   on one product and `01` on the next — one shot, two codes, purely because of how deep that
+   product's gallery is. A stem with *no* separator (Schuh's `8341007080`, Reiss's `Y76182s`,
+   Superdry's hash) is left exactly as it is: there is no edge to snap to and trimming would
+   leak the SKU itself into the code.
+4. **`residue(stem, common)`** — what is left once the stem is masked, tidied to a stable key.
    Pieces either side are joined with `|`; an image that *is* the stem yields `·` (the primary).
-4. **head vs full grouping** — Monsoon's `01|1` and `01|5` are the same shot code with a
+5. **head vs full grouping** — Monsoon's `01|1` and `01|5` are the same shot code with a
    drifting image index, so the collector builds both groupings and keeps whichever explains as
    much of the feed with fewer codes. Almost always `head`.
-5. **the learnable verdict** — supported codes (≥0.5% of products) must cover ≥60% of images,
+6. **the learnable verdict** — supported codes (≥0.5% of products) must cover ≥60% of images,
    number **≤20**, and the vocabulary must not have overflowed the 60-code cap. Anything else is
    reported as `learnable:false` and the page says *unpatterned* rather than inventing a
    taxonomy. Overflow is tracked **per grouping**: the full-token bag routinely overflows on a
@@ -116,7 +123,7 @@ Module slug `images`, grantable in the access directory like every other module.
 
 ## Harness
 
-`node tools/test_images.mjs` — 54 assertions over the real URL shapes of all five brands: the
+`node tools/test_images.mjs` — 61 assertions over the real URL shapes of all five brands: the
 token differencing (prefix, suffix, trailing index, both-ends), the slot model including
 `|||N` and `(N)` header forms, a mid-stream header growth, the grouping choice, the honest
 refusal on opaque filenames, the per-grouping overflow regression, tag precedence and coverage.

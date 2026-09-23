@@ -110,6 +110,27 @@
     return null;
   }
 
+  /* The stem has to mean the same thing however many images a product happens to carry.
+   * On a product with four images the stem lands on `_20001600003_` and the codes read
+   * 01 / 21 / 02 / 03; on a product with only two — both ending `_1` — the longest common
+   * substring greedily swallows a digit of the prefix too (`1_20001600003_1`), and the same
+   * photograph would come back as `0` instead of `01`. One shot, two codes, purely because
+   * of how deep that product's gallery is.
+   * So when the stem CONTAINS a separator, it is trimmed back to separator boundaries: the
+   * stem can then only ever start and end on a real segment edge, and the two products agree.
+   * When it contains none (Schuh's 8341007080, Reiss's Y76182s, Superdry's hash) it is left
+   * exactly as it is — trimming there has no boundary to find and would leak the SKU itself
+   * into the code. */
+  var SEP_RE = /[_\-.]/;
+  function snapStem(c) {
+    if (!SEP_RE.test(c)) return c;
+    var a = c.search(SEP_RE), b = c.length - 1;
+    while (b >= 0 && !SEP_RE.test(c.charAt(b))) b--;
+    if (a < 0 || b < a) return c;
+    var t = c.slice(a, b + 1);
+    return t.length >= 2 ? t : c;     // never trim away the whole stem
+  }
+
   // the fragment left once the shared stem is masked out, tidied to a stable key
   function residue(stem, common) {
     var i = stem.indexOf(common);
@@ -129,6 +150,7 @@
     if (stems.length === 1) return ['·'];
     var c = commonStem(stems);
     if (!c) { for (i = 0; i < stems.length; i++) out.push(null); return out; }
+    c = snapStem(c);
     for (i = 0; i < stems.length; i++) out.push(residue(stems[i], c));
     return out;
   }
@@ -289,6 +311,6 @@
   }
 
   return { VERSION: VERSION, MAX_SLOTS: MAX_SLOTS, TOK_SAMPLES: TOK_SAMPLES, LEARN_MAX_CODES: LEARN_MAX_CODES, TAXONOMY: TAXONOMY, TAX_IDS: TAX_IDS,
-    normKey: normKey, fileStem: fileStem, commonStem: commonStem, residue: residue, shotTokens: shotTokens,
+    normKey: normKey, fileStem: fileStem, commonStem: commonStem, snapStem: snapStem, residue: residue, shotTokens: shotTokens,
     headOf: headOf, imageCollector: imageCollector, tagFor: tagFor, coverageOf: coverageOf };
 }));

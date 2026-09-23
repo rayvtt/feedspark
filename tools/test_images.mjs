@@ -33,8 +33,28 @@ console.log('· shot tokens — Monsoon (Demandware: the code is the filename PR
   const u = [MON('01', '20001600003', 1), MON('21', '20001600003', 1), MON('22', '20001600003', 1), MON('24', '20001600003', 1)];
   const k = I.shotTokens(u);
   t('one token per image, in feed order', k.length === 4);
-  t('the varying prefix is the token', JSON.stringify(k) === '["01","21","22","24"]', JSON.stringify(k));
+  t('the varying prefix is the code', JSON.stringify(k.map(I.headOf)) === '["01","21","22","24"]', JSON.stringify(k));
   t('the SKU never leaks into the token', !k.some((x) => /20001600003/.test(x)));
+}
+console.log('· a shot keeps its code however deep the product\'s gallery is');
+{
+  // the greedy common substring used to swallow a digit of the prefix when a product had only
+  // two images (both ending _1), so the same photograph came back as "0" on one product and
+  // "01" on the next. snapStem trims the stem back to segment edges, so they agree.
+  const sku = '20001600003';
+  const two = I.shotTokens([MON('01', sku, 1), MON('21', sku, 1)]).map(I.headOf);
+  const four = I.shotTokens([MON('01', sku, 1), MON('21', sku, 1), MON('02', sku, 2), MON('03', sku, 3)]).map(I.headOf);
+  t('a two-image and a four-image product agree on the shared shots', two[0] === four[0] && two[1] === four[1],
+    JSON.stringify([two, four.slice(0, 2)]));
+  t('and the code is the prefix, not half of it', two.join(',') === '01,21', JSON.stringify(two));
+}
+console.log('· snapStem only acts where there IS a segment edge to snap to');
+{
+  t('a stem with separators trims to them', I.snapStem('1_20001600003_1') === '_20001600003_', I.snapStem('1_20001600003_1'));
+  t('a stem already on edges is untouched', I.snapStem('_20001600003_') === '_20001600003_');
+  t('Schuh\'s separator-free SKU stem is left exactly as it is', I.snapStem('8341007080') === '8341007080');
+  t('so is Reiss\'s — trimming there would leak the SKU into the code', I.snapStem('Y76182s') === 'Y76182s');
+  t('a stem that is nothing but a separator is not trimmed away', I.snapStem('_') === '_');
 }
 console.log('· shot tokens — Accessorize (prefix AND index move together)');
 {
