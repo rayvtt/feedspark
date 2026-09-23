@@ -366,9 +366,6 @@ window.addEventListener('load',restore);
     <div class="dp-leg" id="dpleg"></div>
     <div class="verdict" id="dpverdict" data-instr></div>
     <div class="dp-cov" id="dpcov" data-instr></div>
-    <!-- THE CROSS-CHECK (Ray, 22 Sep 2026): the Task Manager's own is_urgent, beside the tag.
-         Two rows, never one number — they are not two measurements of one quantity. -->
-    <div class="xchk" id="dpxchk" hidden></div>
   </section>
 
   <section class="card" id="chartcard">
@@ -445,16 +442,6 @@ window.addEventListener('load',restore);
   #dispcard .dp-leg span{display:inline-flex;align-items:center;gap:6px}
   #dispcard .dp-leg i{width:9px;height:9px;border-radius:2px;flex:0 0 9px}
   #dispcard .dp-leg b{font-variant-numeric:tabular-nums}
-  /* the cross-check: two labelled readings on one rule, and the sentence that says why they are
-     not added together */
-  .xchk{margin-top:12px;border-top:1px solid var(--line,#E6E6E6);padding-top:10px}
-  .xchk .xh{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
-    color:var(--muted);margin-bottom:8px}
-  .xchk .xr{display:flex;align-items:baseline;gap:10px;padding:5px 0;font-size:13px;flex-wrap:wrap}
-  .xchk .xr .xn{font-weight:900;font-variant-numeric:tabular-nums;min-width:74px}
-  .xchk .xr .xl{font-weight:700}
-  .xchk .xr .xs{color:var(--muted);font-size:12px}
-  .xchk .xwhy{margin-top:8px;font-size:12px;color:var(--muted);line-height:1.5}
   .u-yes{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:100px;
     font-size:11px;font-weight:800;background:#FEE2E2;border:1px solid #FCA5A5;color:#B91C1C}
   .u-no{color:var(--muted)}
@@ -1069,35 +1056,6 @@ window.addEventListener('load',restore);
     return o;
   }
 
-  /* IS_URGENT — THE TASK MANAGER'S OWN JUDGEMENT, KEPT APART FROM THE TAG (Ray, 22 Sep 2026:
-     "can you bring in the is_urgent from FR mcp? it'll be used to cross-check with my tag").
-
-     The live book decides the shape: `is_urgent` is on NEITHER a task row nor the ticket list —
-     only on get_ticket_detail, one call per ticket — and `ticket_id` is 0 on every one of the
-     18,000+ task rows checked, so a task cannot be asked whether its ticket was urgent.
-
-     So this returns TWO readings and never one: `tag` is judged on TASKS, `tm` is flagged on
-     TICKETS. Nothing subtracts one from the other, because they do not count the same objects. */
-  function urgencyCheck(tasks, tickets, defs) {
-    var tag = displacement(tasks || [], defs || []);
-    var tm = { n: 0, hours: 0, tasks: 0, read: 0, total: 0, unread: 0, pct: 0, readPct: 0, readHours: 0 };
-    var readHours = 0, i, t;
-    for (i = 0; i < (tickets || []).length; i++) {
-      t = tickets[i]; if (!t) continue;
-      tm.total++;
-      if (t.urgent == null) { tm.unread++; continue; }
-      tm.read++; readHours += (t.hours || 0);
-      if (t.urgent) { tm.n++; tm.hours += (t.hours || 0); tm.tasks += (t.tasks || 0); }
-    }
-    tm.hours = r2(tm.hours);
-    // the share is of the hours on tickets actually READ — an unread ticket in the denominator
-    // would make the figure fall every time the queue grew
-    tm.pct = readHours ? Math.round((tm.hours / readHours) * 1000) / 10 : 0;
-    tm.readHours = r2(readHours);
-    tm.readPct = tm.total ? Math.round((tm.read / tm.total) * 1000) / 10 : 0;
-    return { tag: tag, tm: tm, joinable: false };
-  }
-
   function rulePreview(rows, rule, assign) {
     var hits = 0, held = 0, hours = 0;
     for (var i = 0; i < (rows || []).length; i++) {
@@ -1649,37 +1607,6 @@ window.addEventListener('load',restore);
     $('dpsub').textContent = DEFS().length + ' tag' + (DEFS().length === 1 ? '' : 's') + ' · '
       + RULES().length + ' keyword rule' + (RULES().length === 1 ? '' : 's');
 
-    /* THE CROSS-CHECK (Ray, 22 Sep 2026: "bring in the is_urgent … it'll be used to cross-check
-       with my tag"). The two readings sit on one rule and are NEVER added, differenced or scored
-       for agreement — the live book does not allow it:
-
-         · is_urgent is flagged on a TICKET; the tag is judged on a TASK.
-         · a task row carries no ticket id (0 on every one of 18,000 checked), so no task can be
-           asked whether its ticket was urgent.
-
-       What the pair IS good for is the thing Ray built the tag for: a second opinion on how much
-       of an account is reactive, from a source that has no idea what he tagged. When they
-       disagree badly, one of them is missing something — and that is the finding. */
-    var xc = urgencyCheck(FT, FK, DEFS()), xw = $('dpxchk');
-    if (!xc.tm.total) { xw.hidden = true; } else {
-      xw.hidden = false;
-      var tmLine = xc.tm.read
-        ? '<span class="xn">' + hrs(xc.tm.hours) + ' h</span><span class="xl">flagged urgent in the Task Manager</span>'
-          + '<span class="xs">' + num(xc.tm.n) + ' of ' + num(xc.tm.read) + ' tickets read'
-          + (xc.tm.unread ? ' · ' + num(xc.tm.unread) + ' not read yet' : '')
-          + (xc.tm.tasks ? ' · ' + num(xc.tm.tasks) + ' tasks sit under them' : '') + '</span>'
-        : '<span class="xn">—</span><span class="xl">flagged urgent in the Task Manager</span>'
-          + '<span class="xs">none of these ' + num(xc.tm.total) + ' tickets has been read yet — the flag is fetched one ticket at a time</span>';
-      xw.innerHTML = '<div class="xh">Cross-check · the Task Manager\u2019s own urgency</div>'
-        + '<div class="xr"><span class="xn">' + hrs(xc.tag.dispHours) + ' h</span>'
-        + '<span class="xl">judged ' + esc(dispLabel.toLowerCase()) + ' by the team</span>'
-        + '<span class="xs">' + num(xc.tag.dispN) + ' tasks · ' + xc.tag.coverage + '% of these hours judged at all</span></div>'
-        + '<div class="xr">' + tmLine + '</div>'
-        + '<div class="xwhy">These are <b>two readings, not one figure</b>: a tag is your judgement about a '
-        + '<b>task</b>, <code>is_urgent</code> is a flag on a <b>ticket</b>, and the reports database carries '
-        + 'no ticket id on a task row — so nothing here adds them together or scores them for agreement. '
-        + 'Read them side by side: a gap means one of the two is seeing work the other is not.</div>';
-    }
   }
 
   function typeCell(t) {

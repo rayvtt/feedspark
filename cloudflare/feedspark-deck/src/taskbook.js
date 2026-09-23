@@ -1046,11 +1046,13 @@ export function unpackTicket(a, client, am, urg) {
        those 18,000 task rows. The link is in the source database (a ticket row states its own
        task_count) but the task payload does not carry it.
 
-   So a task cannot be asked whether its ticket was urgent, and the two readings are kept APART
-   rather than reconciled: Ray's tag is a judgement about a TASK, is_urgent is a flag on a TICKET,
-   and the honest thing a surface can do is show both with what each is measured on. Inventing the
-   join by matching titles would be exactly the fuzzy-unattended matching every other lane in the
-   FCC refuses.
+   So a task cannot be asked whether its ticket was urgent. The flag is therefore surfaced only
+   where it belongs — on the TICKET — and is never set against the tag as though the two counted
+   the same objects. (A cross-check band that showed both readings side by side shipped in #495
+   and Ray removed it on 22 Sep 2026: with the rotation still filling, it read "0 h flagged" beside
+   a full tag figure, which looks like a contradiction rather than two measurements. The reading
+   itself is unaffected — only that panel is gone.) Inventing the join by matching titles would be
+   exactly the fuzzy-unattended matching every other lane in the FCC refuses.
 --------------------------------------------------------------------------------------------- */
 
 /** Ticket details to read per firing, and how long a flag stands before it is re-read. */
@@ -1095,43 +1097,6 @@ export function urgApply(urg, ticketId, isUrgent, now) {
   return o;
 }
 
-/**
- * The cross-check itself — TWO readings, never one number.
- *
- * `tag` is Ray's judgement, on TASKS, in task hours. `tm` is the Task Manager's own flag, on
- * TICKETS, in the hours the TM itself attributes to those tickets. They are not two measurements
- * of one quantity, so nothing here subtracts one from the other or reports agreement: a ticket
- * carries N tasks and this feed will not say which, so a per-row comparison is not available and
- * claiming one would be a fabrication.
- *
- * Coverage travels with BOTH, for the same reason the displacement card carries it: an unread
- * ticket is not a calm one, and an untagged task is not a routine one.
- */
-export function urgencyCheck(tasks, tickets, defs) {
-  const tag = displacement(tasks || [], defs || []);
-  const tm = { n: 0, hours: 0, tasks: 0, read: 0, total: 0, unread: 0, pct: 0, readPct: 0 };
-  let readHours = 0;
-  for (const t of (Array.isArray(tickets) ? tickets : [])) {
-    if (!t) continue;
-    tm.total++;
-    if (t.urgent == null) { tm.unread++; continue; }
-    tm.read++; readHours += (t.hours || 0);
-    if (t.urgent) { tm.n++; tm.hours += (t.hours || 0); tm.tasks += (t.tasks || 0); }
-  }
-  tm.hours = r2(tm.hours);
-  // the share is of the hours on tickets we have actually READ — a denominator including
-  // unread tickets would report a number that falls every time the queue grows
-  tm.pct = readHours ? Math.round((tm.hours / readHours) * 1000) / 10 : 0;
-  tm.readHours = r2(readHours);
-  tm.readPct = tm.total ? Math.round((tm.read / tm.total) * 1000) / 10 : 0;
-  return {
-    tag: tag, tm: tm,
-    // stated, not implied: why there is no single reconciled figure
-    joinable: false,
-    why: 'a tag is judged on a task, is_urgent is flagged on a ticket, and this feed carries no '
-      + 'ticket id on a task row — so the two are counted side by side, never against each other',
-  };
-}
 
 /**
  * Which markets to read next.

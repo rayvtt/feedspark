@@ -659,20 +659,15 @@ ticket row states its own `task_count`), but the task payload does not carry it,
 cannot be asked whether its ticket was urgent.** Matching them on title or wording would be
 precisely the fuzzy-unattended matching every other lane in the FCC refuses.
 
-**So the two readings are shown side by side and never reconciled.** The cross-check band under
-*Where the hours went* prints:
+**So the flag is surfaced only where it belongs — on the ticket — and is never set against the
+tag as though the two counted the same objects.**
 
-- **the tag** — your judgement, on **tasks**, in task hours, with the share of those hours judged
-  at all; and
-- **the Task Manager's flag** — on **tickets**, in the hours the TM itself attributes to them,
-  with how many tickets have been read and how many have not.
-
-…then says in words why there is no third number: *"a tag is your judgement about a task,
-`is_urgent` is a flag on a ticket, and the reports database carries no ticket id on a task row —
-so nothing here adds them together or scores them for agreement."* What the pair is genuinely good
-for is the thing the tag was built for: **a second opinion on how reactive an account is, from a
-source that has no idea what you tagged.** A wide gap means one of the two is seeing work the
-other is not, and that is the finding.
+A cross-check band under *Where the hours went*, showing both readings side by side with the
+reason they are not added, shipped in #495 and **Ray removed it the same day**: with the rotation
+still filling, it read *"0 h flagged urgent · 0 of 24 tickets read"* beside a full tag figure,
+which reads as a contradiction rather than as two measurements of different things. The reading
+itself is unaffected — only that panel is gone, and the flag stays on the Tickets tab and in the
+search grammar.
 
 **Reading it costs a call per ticket**, so it rides a rotation of its own (`urgPlan`), right after
 the queue pull, on the queue that firing just read — `URG_TICKETS` (12) at a time, never-read

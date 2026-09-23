@@ -53,8 +53,7 @@ function liftPage() {
     'CATS', 'CAT_LABEL', 'DIMS', 'BUCKET_LABEL', 'STATUS_BUCKET',
     'TAG_SEED', 'normTagSlug', 'taggable', 'ruleHits', 'tagsOf', 'decorateTags',
     'displacement', 'rulePreview', 'groupNested', 'flattenNested', 'NEST_CAPS',
-    'typeOf', 'decorateTypes', 'seriesByMonth', 'monthOf', 'isoOf', 'MEASURES', 'mOf',
-    'urgencyCheck'];
+    'typeOf', 'decorateTypes', 'seriesByMonth', 'monthOf', 'isoOf', 'MEASURES', 'mOf'];
   // eslint-disable-next-line no-new-func
   const f = new Function(body + '\nreturn {' + names.join(',') + '};');
   return f();
@@ -827,49 +826,9 @@ console.log('\n── is_urgent: read on its own rotation, never merged into the
   eq(M.normTicket({ ticket_id: 1, is_urgent: false }).urgent, false, '...and an explicit false is false');
 }
 
-{
-  const defs = [{ slug: 'urgent', label: 'Urgent', displaces: true }, { slug: 'agency', label: 'Agency work' }];
-  const tasks = [
-    { id: 1, hours: 4, bill: 4, nonbill: 0, cat: 'opt', tags: [] },
-    { id: 2, hours: 2, bill: 2, nonbill: 0, cat: 'tech', tags: ['urgent'] },
-    { id: 3, hours: 1, bill: 1, nonbill: 0, cat: 'acct', tags: ['agency'] },
-  ];
-  const tickets = [
-    { id: 1, hours: 3, tasks: 2, urgent: true },
-    { id: 2, hours: 5, tasks: 1, urgent: false },
-    { id: 3, hours: 9, tasks: 4, urgent: null },
-  ];
-  const x = M.urgencyCheck(tasks, tickets, defs);
-  eq(x.tag.dispHours, 2, 'the tag side is the team\'s own displacement reading, unchanged');
-  eq(x.tm.n, 1, 'the TM side counts flagged tickets');
-  eq(x.tm.hours, 3, '...and the hours the TM itself puts on them');
-  eq(x.tm.tasks, 2, '...and says how many tasks sit under them');
-  eq(x.tm.read, 2, 'coverage is the tickets READ');
-  eq(x.tm.unread, 1, '...and the unread ones are named, not counted as calm');
-  eq(x.tm.total, 3, '...against the whole queue');
-  // 3 of (3+5) read hours = 37.5%; the unread ticket's 9h is NOT in the denominator
-  eq(x.tm.pct, 37.5, 'the share is of hours on tickets actually read — an unread ticket never dilutes it');
-  eq(x.tm.readHours, 8, '...and the denominator is stated');
-  eq(x.joinable, false, 'the two are never reported as joinable');
-  ok(x.tm.hours !== x.tag.dispHours, 'they are different numbers off different objects — that is the point');
-
-  const none = M.urgencyCheck(tasks, [{ id: 1, hours: 3, tasks: 1, urgent: null }], defs);
-  eq(none.tm.read, 0, 'nothing read yet reads as nothing read');
-  eq(none.tm.pct, 0, '...and states no share rather than a fabricated 0%');
-  eq(M.urgencyCheck(tasks, [], defs).tm.total, 0, 'an empty queue is empty, not urgent');
-}
 
 console.log('\n── urgent: the page twin reads it the same way');
 {
-  const defs = [{ slug: 'urgent', label: 'Urgent', displaces: true }];
-  const tasks = [{ id: 1, hours: 4, bill: 4, nonbill: 0, cat: 'opt', tags: [] },
-    { id: 2, hours: 2, bill: 2, nonbill: 0, cat: 'tech', tags: ['urgent'] }];
-  const tickets = [{ id: 1, hours: 3, tasks: 2, urgent: true }, { id: 2, hours: 5, tasks: 1, urgent: false },
-    { id: 3, hours: 9, tasks: 4, urgent: null }];
-  const a = M.urgencyCheck(tasks, tickets, defs), b = P.urgencyCheck(tasks, tickets, defs);
-  eq(JSON.stringify(b.tm), JSON.stringify(a.tm), 'the page twin and the engine agree on the TM reading');
-  eq(b.tag.dispHours, a.tag.dispHours, '...and on the tag reading');
-  eq(b.joinable, false, '...and both refuse to call them joinable');
   // the grammar, through the page's own matcher
   const tk = (u) => ({ id: 1, client: 'Reiss', am: 'Ray', subject: 'x', status: 'open', d: '2026-09-16',
     first: '', by: '', origin: '', from: '', age: 1, level: 'ok', idle: 0, msgs: 1, tasks: 1, hours: 1, urgent: u });
@@ -1160,12 +1119,9 @@ console.log('\n── urgent: on the page');
   ok(/function colIdx\(/.test(PAGE_SRC), 'the totals row still resolves its columns BY KEY');
   const hrsIdx = cols.map((c) => c.k).indexOf('hours');
   eq(hrsIdx, cols.length - 1, '...and the hour total is still the last column');
-  // the cross-check band
-  ok(/id="dpxchk"/.test(PAGE_SRC), 'the hours card carries the cross-check band');
-  ok(/urgencyCheck\(FT, FK, DEFS\(\)\)/.test(PAGE_SRC), '...fed by the same search the card reads');
-  ok(/two readings, not one figure/i.test(PAGE_SRC),
-    '...and says in words that the two are not one number');
-  ok(/no ticket id on a task row/i.test(PAGE_SRC), '...and why: the join does not exist in this feed');
+  // the band that once set this against the tag was REMOVED at Ray's ask (22 Sep 2026); the
+  // flag stays where it belongs, on the ticket
+  ok(!/dpxchk|urgencyCheck/.test(PAGE_SRC), 'no cross-check band sets the ticket flag against the tag');
   ok(/data-ins="urgent:yes"/.test(PAGE_SRC), 'urgent: is offered in the search hints');
 }
 

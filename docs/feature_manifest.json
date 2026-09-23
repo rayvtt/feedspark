@@ -9345,12 +9345,6 @@
       "pr": 0
     },
     {
-      "name": "is_urgent: two readings, never reconciled — a tag is on a task, the flag is on a ticket",
-      "file": "cloudflare/feedspark-deck/src/taskbook.js",
-      "pattern": "export function urgencyCheck",
-      "pr": 0
-    },
-    {
       "name": "is_urgent: merged on READ, never folded into the queue record the queue pull rewrites",
       "file": "cloudflare/feedspark-deck/src/worker.js",
       "pattern": "tmurg:",
@@ -9366,18 +9360,6 @@
       "name": "is_urgent: three states on the Tickets tab — flagged, calm, not read yet",
       "file": "docs/FeedSpark_TaskManager.html",
       "pattern": "function urgCell",
-      "pr": 0
-    },
-    {
-      "name": "is_urgent: the cross-check band under Where the hours went",
-      "file": "docs/FeedSpark_TaskManager.html",
-      "pattern": "id=\"dpxchk\"",
-      "pr": 0
-    },
-    {
-      "name": "is_urgent: the page states why the two are not one figure",
-      "file": "docs/FeedSpark_TaskManager.html",
-      "pattern": "two readings, not one figure",
       "pr": 0
     },
     {
