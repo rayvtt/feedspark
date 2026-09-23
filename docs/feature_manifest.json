@@ -9537,19 +9537,6 @@
       "pr": 0
     },
     {
-      "name": "AI Quote — THE PRODUCT VOLUME BAR CHART IN THE NEW-PRODUCTS CARD (Ray, 17 Sep 2026: 'within AI quote the new products — pull in the product volume bar chart pls to make it easier to convince for client — make sure its organised'): the card is two named halves, EVIDENCE (what the feed has actually done) and COMMERCIAL (forecast, override, bands, bundle)",
-      "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "class=\"upd-grid\"",
-      "min": 1,
-      "pr": 438
-    },
-    {
-      "name": "AI Quote: band boxes select on focus and swallow the click's mouseup (the £15,100 prepend trap)",
-      "file": "docs/FeedSpark_AIQuote.html",
-      "pattern": "addEventListener('mouseup',function(e){ if(e.target===_selFx){ e.preventDefault();",
-      "pr": 465
-    },
-    {
       "name": "Audit colour legend on /golden (dial, estate, fill + content-quality bars)",
       "file": "docs/FeedSpark_GoldenRecord.html",
       "pattern": "return BAND_COL[auditBand(s)];",
