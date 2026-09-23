@@ -697,6 +697,9 @@ ok(/var gap=\(i&&tkGid\(k\)!==tkGid\(ids\[i-1\]\)\)\?'<tr class="t-gap" aria-hid
 ok(/\.tk tr\.t-gap td,\.tk tbody tr\.t-gap:hover td\{padding:2px 0;height:auto;line-height:0;font-size:0;background:transparent;border-top:0\}/.test(src)
   && /\.tk tr\.t-gap td::before\{content:'';display:block;border-top:1px dotted rgba\(51,51,51,\.28\)\}/.test(src) && /\[data-theme=dark\] \.tk tr\.t-gap td::before\{border-top-color:rgba\(255,255,255,\.2\)\}/.test(src) && /\.tk tr\.t-gap\+tr td\{border-top:0\}/.test(src),
   'the spacer is a subtle 1px dotted rule on a transparent row, no hover wash, its own dark-mode tone (Ray, 22 Sep 2026: "replace it with dotted lines instead and make it just subtle")');
+ok(/UPD-BUNDLE-FOLD/.test(src) && /#upd-card:not\(\.upd-bopen\) \.upd-box\.ucm\{display:none\}/.test(src)
+  && /updEvidence\(\)\s*\+'<label class="qopt upd-on">/.test(src) && /fcc-upd-bundle/.test(src) && /id="upd-binfo"/.test(src),
+  'the bundle price folds behind the heading\u2019s \u24d8 (closed by default) and the tick sits under the arrivals chart');
 
 console.log('\n' + (fails ? `✗ ${fails} of ${n} failed` : `✓ all ${n} passed`));
 process.exit(fails ? 1 : 0);

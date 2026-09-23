@@ -9445,6 +9445,12 @@
       "file": "tools/test_kwcal_pdf.mjs",
       "pattern": "the design scale holds",
       "pr": 0
+    },
+    {
+      "name": "AI Quote bundle price folds behind ⓘ, tick under the arrivals chart",
+      "file": "docs/FeedSpark_AIQuote.html",
+      "pattern": "UPD-BUNDLE-FOLD",
+      "pr": 0
     }
   ]
 }

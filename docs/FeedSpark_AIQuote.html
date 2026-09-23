@@ -521,6 +521,11 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   @media (min-width:880px){ .upd-grid{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)} }
   .upd-box{border:1px solid var(--line);border-radius:12px;padding:10px 14px 12px;background:var(--wash);min-width:0}
   .upd-box.ucm{background:var(--paper)}
+  #upd-card:not(.upd-bopen) .upd-box.ucm{display:none}
+  #upd-card:not(.upd-bopen) .upd-grid{grid-template-columns:1fr}
+  .upd-binfo{margin-left:6px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--muted);font-size:12px;cursor:pointer;vertical-align:middle;padding:0}
+  .upd-binfo.on{border-color:var(--orange,#F5A623);color:var(--ink)}
+  .upd-box .upd-on{margin:10px 0 0}
   .upd-box .upd-fc{margin:0;border:0;background:transparent;padding:0} .upd-box .upd-tiers{margin:11px 0 8px}
   .upd-kpis{display:flex;flex-wrap:wrap;gap:4px 20px;margin:7px 0 4px}
   .upd-kpi b{display:block;font-size:17px;font-weight:900;line-height:1.2;color:var(--vin);font-variant-numeric:tabular-nums}
@@ -829,7 +834,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
   </div>
 
   <div class="card" id="upd-card" data-tp="ai aim">
-    <h3>Monthly update — new products</h3>
+    <h3>Monthly update — new products <button type="button" class="upd-binfo" id="upd-binfo" aria-expanded="false" title="Show / hide the bundle price — for the AM to adjust; keep it hidden when quoting live with the client">ⓘ</button></h3>
     <div class="ch"><b>Key message:</b> every new product is updated the month it lands — no waiting for a quarterly catch-up. Priced as a monthly bundle by expected new SKUs per month (minimum £100 a month), sized from the feed's own arrivals history so the forecast pulls straight into the quote.</div>
     <div id="upd-body"></div>
   </div>
@@ -1381,14 +1386,21 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
     return hd+'<div class="upd-foot" style="margin-top:4px">'+((v&&v.pending)?'Reading the feed\u2019s arrivals history\u2026'
       :'No arrivals history for this feed yet'+((v&&v.tracked==='sheet')?' \u2014 a sheet-backed feed is not on the daily XML scan':'')+'. Type an estimate on the right and the bundle prices from that.')+'</div>';
   }
+  function updBundleOpen(){ try{ return localStorage.getItem('fcc-upd-bundle')==='1'; }catch(e){ return false; } }
   function renderUpd(){ var el=$('#upd-body'); if(!el)return; var u=updRec(), T=updTiers(), f=updForecast(), v=VOL[volKey()], i=updTierIdx(), ai=updAutoIdx();
     var fc=f?(f.basis==='dob'?('<b>'+fmt(f.monthly)+'</b> new SKUs / month priced — from '+esc(f.basisTxt)+' · ≈ '+fmt(f.quarter)+' a quarter · ≈ '+fmt(f.year)+' a year <span class="hint">· the arrivals chart in this card is where this comes from</span>')
       :('<b>'+fmt(f.monthly)+'</b> new SKUs / month expected — from '+f.days+' day'+(f.days===1?'':'s')+' of feed arrivals ('+esc(f.from)+' → '+esc(f.to)+': '+fmt(f.inS)+' in · '+fmt(f.outS)+' out, avg '+(Math.round(f.perDay*10)/10)+' a day) · ≈ '+fmt(f.monthly*12)+' a year'
         +(f.days<14?' <span class="hint">· only '+f.days+' day'+(f.days===1?'':'s')+' of history — indicative; type an estimate if you know the run-rate</span>':'')))
       :((v&&v.pending)?'Reading the feed’s arrivals history…':'No arrivals history for this feed yet'+((v&&v.tracked==='sheet')?' — a sheet-backed feed is not on the daily XML scan':'')+' — type an estimate');
-    el.innerHTML='<label class="qopt upd-on"><input type="checkbox" class="cbx" id="upd-on"'+(u.on?' checked':'')+'> <b>Include monthly new-product updates</b> — every new product is updated the month it lands, instead of a quarterly re-quote</label>'
-      +'<div class="upd-grid">'
-      +'<div class="upd-box">'+updEvidence()+'</div>'
+    /* UPD-BUNDLE-FOLD (Ray, 23 Sep 2026: "this section is doubled, move the checkbox to below the
+       new arrival chart and hide the bundle price in an [i] icon for AM to adjust and hide when doing
+       the quote live with client"): the tick sits under the chart it is justified by, and the priced
+       half folds behind the heading's ⓘ, closed by default, per device (fcc-upd-bundle). */
+    var bOpen=updBundleOpen(); $('#upd-card').classList.toggle('upd-bopen',bOpen);
+    var bb=$('#upd-binfo'); if(bb){ bb.setAttribute('aria-expanded',bOpen?'true':'false'); bb.classList.toggle('on',bOpen); }
+    el.innerHTML='<div class="upd-grid">'
+      +'<div class="upd-box">'+updEvidence()
+      +'<label class="qopt upd-on"><input type="checkbox" class="cbx" id="upd-on"'+(u.on?' checked':'')+'> <b>Include monthly new-product updates</b> — every new product is updated the month it lands, instead of a quarterly re-quote</label></div>'
       +'<div class="upd-box ucm">'
       +'<div class="upd-fc"><div class="upd-fl">The bundle · what we charge</div><div class="upd-ft" id="upd-ftxt">'+fc+'</div>'
       +'<div class="upd-est">Estimate / override <input type="text" id="upd-est" inputmode="numeric" placeholder="'+(f?fmt(f.monthly):'SKUs / month')+'" value="'+((u.est!=null&&u.est!=='')?esc(String(u.est)):'')+'"> new SKUs / month'
@@ -2412,6 +2424,7 @@ window.DECK_EDITOR_SELECTOR='h1,h2,h3,h4,h5,p,li,td,th,blockquote,figcaption,.le
       var x=t.closest&&t.closest('.xf-x'); if(x){ var i=+x.getAttribute('data-i'); feedsRec().splice(i,1); var r=rec(); if(r.dflags){ var nd={}; Object.keys(r.dflags).forEach(function(k){ var mm=/^feed:(\d+)$/.exec(k); if(!mm){nd[k]=r.dflags[k];return;} var j=+mm[1]; if(j<i)nd[k]=r.dflags[k]; else if(j>i)nd['feed:'+(j-1)]=r.dflags[k]; }); r.dflags=nd; } renderX(); foot(); saveSoon(); } });
   })();
   $('#valid').addEventListener('input',function(){ var v=String(this.value).replace(/[^0-9]/g,''); rec().valid=v===''?null:+v; saveSoon(); });
+  $('#upd-binfo').addEventListener('click',function(){ var o=!updBundleOpen(); try{ localStorage.setItem('fcc-upd-bundle',o?'1':'0'); }catch(e){} renderUpd(); });
   $('#upd-card').addEventListener('change',function(e){ if(e.target.id==='upd-on'){ updRec().on=e.target.checked; updRefresh(); foot(); saveSoon(); }
     else if(e.target.id==='upd-disc'){ updRec().disc=e.target.checked; foot(); saveSoon(); }
     /* on blur the box snaps to the price that was actually stored — the £100 floor clamps on the way
