@@ -68,6 +68,7 @@ import WORKFLOW from "../../../docs/FeedSpark_Workflow.html";
 import DECK_TEMPLATE from "../../../docs/FeedSpark_Strategy_Review_Template.html";
 import DECK_REISS from "../../../docs/Reiss_Strategy_Review_FY2526.html";
 import DECK_SUPERDRY from "../../../docs/Superdry_Strategy_Review_AllTime.html";
+import CASE_BRIEF from "../../../docs/FCC_Business_Case_Brief.html";
 // Tachyon copilot widget (style + script fragment). Injected on the app pages only —
 // never on client-facing decks. Reads window.PLANTASKS and calls /api/claude.
 // FCC-PRESENCE: Google-Docs-style live avatars in the topbar — injected on app pages only.
@@ -224,7 +225,16 @@ const PAGES = {
   '/deck/yumove': { html: DECK_YUMOVE, slug: 'yumove' },
   '/deck/reiss':  { html: DECK_REISS,  slug: 'reiss' },
   '/deck/superdry': { html: DECK_SUPERDRY, slug: 'superdry' },
+  '/case':        { html: CASE_BRIEF,  slug: 'case' },
 };
+
+// DOCUMENTS, NOT APP PAGES. /case is the FCC business case — a narrative that is read
+// straight through and presented from, not a module worked in. It gets the live editor
+// (Ray rewords copy before a meeting) and nothing else: no module switcher or presence
+// avatars over somebody's shoulder in a meeting room, no Feed Chat bubble sitting on the
+// page's own section rail, and no skim view folding a scroll built to be scrolled. Exactly
+// the boundary /deck/ already draws — this is the same kind of thing at a different path.
+const DOC_PATHS = new Set(['/case']);
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -2618,7 +2628,7 @@ export default {
       // exists, append to the end otherwise (trailing <style>/<script> parse into body fine).
       const inject = (html, extra) => (html.indexOf('</body>') >= 0 ? html.replace('</body>', extra + '\n</body>') : html + '\n' + extra);
       let html = inject(page.html, getEditorScript(page.slug));
-      if (!path.startsWith('/deck/')) {
+      if (!path.startsWith('/deck/') && !DOC_PATHS.has(path)) {
         // MODULE ACCESS (Ray Sep 2026): a non-owner whose directory row restricts modules can't
         // open a module page outside their grant — bounced to the always-open landing. Leadership
         // & Activity are already owner-gated above; the landing (/) is never blocked. The same
