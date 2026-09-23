@@ -319,8 +319,10 @@ together, different fields AND. **A space means AND, a comma means OR.**
 | `min:` `max:` | total hours on the row |
 | `-call`, `-client:Schuh` | exclude |
 
-`/` focuses it, `?q=` deep-links a view, chips run the common ones, **＋ Save this view** keeps a
-query per device, and clicking a breakdown row toggles that filter in.
+`/` focuses it, `?q=` deep-links a view, chips run the common ones, **＋ Save this search** keeps a
+query per device, and clicking a breakdown row toggles that filter in. (The chart's own shape is
+saved separately, by **★ Save view** — see *Saved views* below. Two buttons called "save this view"
+on one page would have been two names for two different things.)
 
 ### A comma is OR, a space is AND
 
@@ -599,6 +601,63 @@ Three rules keep it from becoming a number that quietly went missing:
    so, with the way back.
 3. **The displacement card is untouched.** Coverage, and what has not been judged, is the question
    that card exists to answer; this toggle governs the chart below it and nothing else.
+
+### Saved views — the shape, never the account
+
+> Ray, 23 Sep 2026: *"in this chart dissection > allow option to save a view and that same view can
+> be applied across different client."*
+
+A **view** is the *shape* of a reading: what it splits by, how deep it nests, which form draws it,
+which series it counts, what the value labels say, and the rest of the query. The **account** is not
+part of that shape — it is the thing the shape gets pointed at.
+
+So the two live in their own controls, on one row under the split block:
+
+| Control | What it is |
+|---|---|
+| **Account** | the one thing a reading is pointed at. Picking another rewrites *only* the `client:` clause — the split, the nesting, the form, the series, the labels and every other search term stay exactly as they were. |
+| **Saved view** | a named shape, kept per device, that restores all of the above **and runs against whichever account is picked beside it**. |
+
+That is the whole feature: build the reading once on Superdry, save it, pick Reiss.
+
+**The client term is lifted out when a view is saved and put back when it is applied** — rather than
+riding inside the view and quietly answering about Superdry on a screen headed Reiss. The lift is
+`liftClient()` / `withClient()` in `src/taskbook.js`, twinned into the page and run against one
+assertion table by `tools/test_reporttasks.mjs`.
+
+Five judgement calls, each of which could have gone wrong quietly:
+
+1. **A negated account is lifted too.** Leaving `-client:Superdry` in a saved view and then applying
+   it *to* Superdry returns nothing and reads as a view that is broken rather than one that was
+   re-pointed. The clause comes out whole, and what it was travels with the view as `was` — named on
+   the card ("saved from Superdry, account left out") and in the save confirmation, so nothing is
+   dropped silently.
+2. **A name with a space or a comma is quoted back in.** `client:House of Bruar` reads as three
+   terms and `client:Monsoon, Accessorize` reads as a *list* of accounts — either way the view lands
+   on the wrong rows.
+3. **The picker follows the query, wherever the query came from** — a typed `client:`, a preset chip,
+   a breakdown-row click, a deep link. It is never a second source of truth about which account is
+   on screen.
+4. **Three states, because two would lie.** One account reads as that account; none reads as *every
+   account*; and a query naming two (`client:Reiss client:Schuh`) or excluding one reads as neither —
+   it says so in its own option, because a picker reading "every account" over that would be the
+   control lying about what is drawn. A **typed prefix** (`client:rei`) is its own case again: it
+   really does filter to Reiss, but it is not the roster's spelling, so it is offered verbatim as
+   *"rei — as typed"* rather than snapped to a name nobody typed.
+5. **Per device, like every other reading preference here** (`fcc-tm-meas` / `-lab` / `-cleg` /
+   `-untag`). A view describes how one screen wants to read the book, not a fact about the work, so
+   it never reaches `/api/state`. Handing one to a colleague is what **🔗 Link** is for — it already
+   carries the whole state, account included. Store: `fcc-tm-chartviews`, bounded at twelve, junk
+   and duplicate names dropped on read.
+
+**QA.** `tools/test_reporttasks.mjs` pins the lift, the put-back, the round trip, the three picker
+states and the shelf, against both copies. The other half — whether the controls exist and whether a
+restored view really lands on the account *on screen* — cannot be reached by reading source, so
+`tools/check_tmviews.js` (presync) drives the real page in Chromium: it builds a reading on Superdry,
+saves it, reads the stored record back to prove it carries no account, points it at Reiss and at
+House of Bruar and checks the chart is drawn from *those* rows, changes the shape, restores the view
+and asserts it comes back onto Reiss with no trace of Superdry. Three of its assertions fail the
+moment `packView` stops lifting; four more fail if the picker stops following the query.
 
 ### The import preview has to be on screen
 

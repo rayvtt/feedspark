@@ -265,6 +265,130 @@ export function parseQuery(q) {
   return out;
 }
 
+
+/* ---------------------------------------------------------------------------------------------
+ * SAVED CHART VIEWS — THE SHAPE, NEVER THE ACCOUNT
+ * (Ray, 23 Sep 2026: "in this chart dissection > allow option to save a view and that same view
+ * can be applied across different client")
+ *
+ * A view is the SHAPE of a reading: what it splits by, how deep it nests, which form draws it,
+ * which series it counts, what the value labels say, and the rest of the query. The ACCOUNT is
+ * not part of that shape — it is the thing the shape gets pointed at. So the client term is
+ * LIFTED OUT of the query when a view is saved and put back when it is applied, rather than
+ * riding inside it and quietly answering about Superdry on a screen headed Reiss.
+ *
+ * A NEGATED client term is lifted too. Leaving `-client:Superdry` in place and then applying the
+ * view TO Superdry would return nothing and read as a broken view — so the account clause comes
+ * out WHOLE, and what it was travels with the view as `was`, named on the chip rather than
+ * silently rewritten.
+ * ------------------------------------------------------------------------------------------- */
+
+/** The query fields that name an account. Both of the grammar's spellings, so neither survives. */
+export const CLIENT_FIELDS = ['client', 'brand'];
+const CLIENT_TOK = /^(-?)(?:client|brand):(.+)$/i;
+export const VIEW_MAX = 12;
+
+/**
+ * Tokenise a query keeping each token's OWN text, quotes and all, so the survivors can be
+ * re-joined into a query that still reads the way the person typed it. parseQuery's tokeniser
+ * throws the quotes away, which is right for matching and wrong for re-emitting.
+ */
+function rawToks(src) {
+  const out = [];
+  let cur = '', quote = false;
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    if (c === '"') { quote = !quote; cur += c; continue; }
+    if (!quote && /\s/.test(c)) { if (cur) out.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
+/** TMVIEW-LIFT — take the account clause out of a query. Returns the rest, and what it named. */
+export function liftClient(q) {
+  const keep = [], was = [];
+  for (const t of rawToks(String(q || ''))) {
+    const m = t.match(CLIENT_TOK);
+    if (m) { was.push((m[1] ? '-' : '') + m[2].split('"').join('')); continue; }
+    keep.push(t);
+  }
+  return { rest: keep.join(' ').trim(), was };
+}
+
+/** Point a query at one account. '' is every account, and writes no term at all. */
+export function withClient(rest, client) {
+  const r = String(rest || '').trim();
+  const c = String(client || '').split('"').join('').trim();
+  if (!c) return r;
+  // a name carrying a space reads as two terms and one carrying a comma reads as a LIST of
+  // accounts, so either has to be quoted or the view lands on the wrong rows
+  const v = /[\s,]/.test(c) ? '"' + c + '"' : c;
+  return 'client:' + v + (r ? ' ' + r : '');
+}
+
+/**
+ * What the account picker should READ for a query: the one account it names, or nothing.
+ *
+ * `multi` is the honest third answer. A query naming two accounts, or excluding one, has no
+ * single account to show — and a picker reading "every account" over `client:Reiss client:Schuh`
+ * would be the control lying about what is on screen.
+ */
+export function accountPick(q) {
+  const was = liftClient(q).was;
+  const pos = was.filter((w) => w.charAt(0) !== '-');
+  if (was.length === 1 && pos.length === 1) return { v: pos[0], multi: false, was };
+  return { v: '', multi: was.length > 0, was };
+}
+
+/** Pack the chart's current state as a named, account-free view. */
+export function packView(name, st) {
+  const s = st || {};
+  const { rest, was } = liftClient(s.q);
+  return {
+    name: String(name || '').trim().slice(0, 40) || 'Untitled view',
+    q: rest,
+    was,
+    dim: String(s.dim || 'total'),
+    dim2: String(s.dim2 || ''),
+    dim3: String(s.dim3 || ''),
+    form: String(s.form || 'donut'),
+    meas: String(s.meas || 'hours'),
+    lab: String(s.lab || 'hours'),
+    leg: s.leg !== false,
+    untag: s.untag !== false,
+    table: !!s.table,
+    at: Number(s.at) || Date.now(),
+  };
+}
+
+/** The query a saved view runs as, pointed at one account ('' = every account). */
+export function viewQuery(view, client) {
+  return withClient(view && view.q, client);
+}
+
+/**
+ * Guard a list read back out of the device's own storage: anything shaped wrong is dropped, a
+ * name is only ever used once, and `was` survives the round trip (packView would recompute it
+ * from an already-lifted query and report that the view had never carried an account).
+ */
+export function sanitizeViews(raw) {
+  const l = Array.isArray(raw) ? raw : [];
+  const out = [], seen = {};
+  for (const v of l) {
+    if (!v || typeof v !== 'object' || !String(v.name || '').trim()) continue;
+    const p = packView(v.name, v);
+    if (Array.isArray(v.was)) p.was = v.was.map(String).slice(0, 6);
+    const k = p.name.toLowerCase();
+    if (seen[k]) continue;
+    seen[k] = 1;
+    out.push(p);
+    if (out.length >= VIEW_MAX) break;
+  }
+  return out;
+}
+
 const fold = (s) => String(s || '').toLowerCase();
 // A field value matches when it equals the typed value or starts with it — "client:Rei" finds
 // Reiss, "owner:Ste" finds Steven Opuni. Never a bare substring: "market:E" must not match every
